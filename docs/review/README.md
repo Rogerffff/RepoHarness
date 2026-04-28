@@ -9,3 +9,4 @@ Review files:
 - `03-implementation-feasibility-review.md`
 - `04-safety-scope-review.md`
 - `05-review-synthesis-and-revisions.md`
+- `06-external-review-followup.md`

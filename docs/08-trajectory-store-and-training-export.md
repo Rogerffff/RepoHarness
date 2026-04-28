@@ -16,6 +16,7 @@ runs/
     events.jsonl
     final.patch
     final.diff
+    dependency_state.json
     verifier.json
     metrics.json
     summary.md
@@ -39,7 +40,8 @@ events 面向评测统计、训练分析和失败诊断，记录结构化字段�
 - `transcript.jsonl`：可重放对话，每行是 system、user、assistant、tool call、tool result、verifier result 或 termination summary。
 - `events.jsonl`：结构化运行事件，用于统计、诊断、reward metadata 和训练导出。
 - `final.patch`：可应用 patch，面向复现最终修改。
-- `final.diff`：完整 Git diff，面向人工审查和 patch size 统计。
+- `final.diff`：从 `agent_start_snapshot` 到最终 workspace 的完整 Git diff，面向人工审查和 patch size 统计。
+- `dependency_state.json`：正式 agent run 开始前恢复的依赖状态、缓存路径、排除 diff 路径和 setup artifact 引用。
 - `verifier.json`：final verifier 输出。即使任务失败，也应尽量生成。
 - `metrics.json`：从 events、diff 和 verifier 输出聚合出来的运行指标。
 - `summary.md`：面向人阅读的简要结论、失败原因和关键 artifact 路径。
@@ -47,6 +49,8 @@ events 面向评测统计、训练分析和失败诊断，记录结构化字段�
 失败运行也应该尽量生成完整产物。如果 run 在 workspace 创建前失败，可以只生成 `events.jsonl`、`metrics.json` 和 `summary.md`，并在 summary 中说明缺失 artifact 的原因。
 
 完整工具输出不应塞进 transcript。大输出应写入 run directory 的 artifact 文件，并在 tool result 或 event 中记录 `output_path`。
+
+如果未来实现支持中间 turn resume，需要额外保存 `checkpoints/` 目录，例如 per-turn patch chain 或 workspace snapshot。第一版默认只要求从 final workspace 继续，不要求恢复到任意中间 turn。
 
 ## Event 字段
 
@@ -101,7 +105,9 @@ verifier 事件扩展字段：
 
 终止事件扩展字段：
 
-- `termination_reason`
+- `agent_stop_reason`
+- `final_verifier_status`
+- `run_outcome`
 - `final_verifier_accepted`
 - `metrics_path`
 - `summary`
@@ -145,7 +151,7 @@ Reinforcement learning rollout JSONL：
       "observation": {"preview": "calculator.py:12:def divide", "truncated": false}
     }
   ],
-  "reward": 0.73,
+  "reward": 0.89,
   "reward_metadata": {"reward_version": "repo_harness_reward_v0"},
   "metadata": {"source_run_id": "run_0001", "verifier_result_path": "verifier.json"}
 }

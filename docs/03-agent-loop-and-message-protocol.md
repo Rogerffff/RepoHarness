@@ -22,11 +22,12 @@ while turn < max_turns:
     recorder.record_tool_results(tool_results)
 
     if last_tool_was_run_tests and last_verifier_result.accepted:
-        terminate("tests_passed")
+        stop_agent_loop("feedback_tests_passed")
         break
 
 final_verifier_result = run_final_verifier(workspace)
 recorder.record_verifier_result(final_verifier_result)
+run_outcome = derive_run_outcome(agent_stop_reason, final_verifier_result)
 ```
 
 这个流程参考 Claude Code 的 `query()`：工具不是旁路副作用，工具结果必须进入下一轮模型上下文。最终验收 verifier 必须在 agent 停止后基于最终工作区重新运行一次，避免模型上下文中的旧测试结果和最终文件状态不一致。
@@ -41,7 +42,7 @@ recorder.record_verifier_result(final_verifier_result)
 - tool call：模型请求执行工具的结构化动作。
 - tool result：工具返回的观察结果，必须可进入下一轮模型上下文。
 - verifier result：测试和验证器输出，可以作为 tool result 或独立事件进入 trajectory。
-- termination summary：运行结束原因、最终 patch、verifier 结果和关键 metrics。
+- termination summary：agent 停止原因、final verifier 状态、最终 run outcome、最终 patch 和关键 metrics。
 
 ## Verifier 触发策略
 
@@ -64,19 +65,23 @@ RepoHarness 需要区分三类 verifier 使用场景：
 - `messages`
 - `workspace_state`
 - `last_verifier_result`
-- `termination_reason`
+- `agent_stop_reason`
+- `final_verifier_status`
+- `run_outcome`
 - `token_usage`
 - `started_at`
 - `ended_at`
 
 状态必须可以写入 events，并能支持后续 session resume 设计。
 
-## 终止原因
+## Agent Stop Reason、Final Verifier Status 和 Run Outcome
 
-标准终止原因：
+RepoHarness 必须区分三层结论，不能只用一个 `termination_reason` 表达所有含义：
+
+`agent_stop_reason` 只描述 agent loop 为什么停止：
 
 - `final_answer`
-- `tests_passed`
+- `feedback_tests_passed`
 - `max_turns`
 - `max_tool_calls`
 - `timeout`
@@ -86,9 +91,28 @@ RepoHarness 需要区分三类 verifier 使用场景：
 - `context_limit`
 - `manual_stop`
 
-这些终止原因既用于评测统计，也用于面试中的失败模式分析。
+`final_verifier_status` 只描述 agent 停止后 final verifier 的结果：
 
-`tests_passed` 只能表示中间 feedback verifier 已经接受当前工作区。最终 metrics 仍然必须以 final verifier 为准。如果 final verifier 发现回归，最终运行应记录 `regression_detected` 或对应 verifier error type，而不是只相信早先的 `tests_passed`。
+- `accepted`
+- `failed`
+- `timeout`
+- `error`
+- `skipped`
+
+`run_outcome` 是面向评测、训练导出和报告的最终结论：
+
+- `success`
+- `failed`
+- `invalid_task`
+- `flaky_task`
+- `interrupted`
+- `inconclusive`
+
+例如，一个 run 可以因为 `agent_stop_reason = "feedback_tests_passed"` 停止，但 final verifier 发现 pass-to-pass regression，此时应记录 `final_verifier_status = "failed"`，`run_outcome = "failed"`，并把失败类型标记为 `regression_detected`。
+
+这些字段都用于评测统计和面试中的失败模式分析，但用途不同：agent stop reason 用于分析 agent 行为，final verifier status 用于验证最终工作区，run outcome 用于成功率、训练过滤和简历报告口径。
+
+`feedback_tests_passed` 只能表示中间 feedback verifier 已经接受当前工作区。最终 metrics 仍然必须以 final verifier 为准。如果 final verifier 发现回归，最终运行应记录 `regression_detected` 或对应 verifier error type，而不是只相信早先的 feedback result。
 
 ## 错误恢复设计
 

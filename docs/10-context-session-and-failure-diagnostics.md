@@ -31,15 +31,26 @@
 
 ## Session Resume
 
-第一版 session resume 设计为从 run directory 恢复：
+第一版 session resume 不承诺恢复到任意中间 turn。没有 per-turn workspace checkpoint 或 patch chain 时，仅凭 `final.diff`、`transcript.jsonl` 和 `events.jsonl` 不能可靠恢复到“最后一个稳定 turn”。
+
+第一版应把 resume 降级为“从 final workspace 继续”：
 
 - 读取 `transcript.jsonl`。
 - 读取 `events.jsonl`。
 - 读取 `final.diff`。
+- 用任务 source checkout、`dependency_state` 和 `final.patch` 重建 final workspace。
 - 重新运行 verifier。
-- 从最后一个稳定 turn 继续。
+- 以新的 `run_id` 继续，记录 `parent_run_id` 和 `resume_from = "final_workspace"`。
 
 resume 不要求恢复每个未完成工具进程。未完成工具必须标记为 interrupted 或 timeout。
+
+如果未来希望恢复到中间 turn，必须额外设计至少一种可恢复依据：
+
+- `checkpoints/turn_0007.patch` 形式的 per-turn patch chain。
+- `checkpoints/turn_0007_workspace/` 形式的 workspace snapshot。
+- `events.jsonl` 中可重放且确定性的文件写入事件序列。
+
+在没有这些 artifact 之前，文档和实现都不应声称可以恢复到任意中间稳定 turn。
 
 ## Failure Diagnostics
 

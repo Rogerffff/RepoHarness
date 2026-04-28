@@ -80,7 +80,9 @@ pass_to_pass_tests:
   "permission_denial_count": 0,
   "patch_added_lines": 8,
   "patch_removed_lines": 2,
-  "termination_reason": "tests_passed"
+  "agent_stop_reason": "feedback_tests_passed",
+  "final_verifier_status": "accepted",
+  "run_outcome": "success"
 }
 ```
 

@@ -51,7 +51,8 @@ reward = 0.7 * fail_to_pass_ratio
 ```json
 {
   "reward_version": "repo_harness_reward_v0",
-  "final_reward": 0.73,
+  "final_reward": 0.89,
+  "formula": "0.7 * fail_to_pass_score + 0.2 * pass_to_pass_score + 0.1 * accepted_bonus - cost_penalty - patch_size_penalty - regression_penalty - timeout_penalty",
   "verifier": {
     "accepted": true,
     "fail_to_pass": {"passed": 5, "total": 5},
@@ -79,6 +80,8 @@ reward = 0.7 * fail_to_pass_ratio
   "invalid_reason": null
 }
 ```
+
+`components` 中的 score 字段是归一化后的原始分量，penalty 字段是已经按当前 reward version 换算后的扣分值。以上示例的计算过程是 `0.7 * 1.0 + 0.2 * 1.0 + 0.1 * 1.0 - 0.08 - 0.03 = 0.89`。如果未来实现改成保存加权后分量，必须在 `reward_version` 和 `formula` 中明确说明，不能让示例值和公式不一致。
 
 字段来源必须可追溯：
 
@@ -110,7 +113,9 @@ reward = 0.7 * fail_to_pass_ratio
 - invalid tool call rate。
 - permission denial rate。
 - average patch size。
-- termination reason distribution。
+- agent stop reason distribution。
+- final verifier status distribution。
+- run outcome distribution。
 
 这些指标必须来自 events 和 verifier 输出，而不是人工观察。
 

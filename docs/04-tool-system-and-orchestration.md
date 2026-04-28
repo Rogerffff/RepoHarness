@@ -60,6 +60,8 @@ Tool System 的职责是把模型请求转换成受控的工具调用。它不�
 
 `run_tests` 是 verifier 的中间反馈入口。它不应自己解析测试日志，而应调用 verifier 的 feedback path，并返回结构化 `VerifierResult` 摘要给 agent loop。
 
+如果模型通过 `bash` 请求运行任务测试命令或可识别测试命令，Tool System 应默认把它路由到 `run_tests`，除非配置显式允许“普通 bash observation”。普通 bash observation 可以进入模型上下文，但不能进入 success rate、reward metadata、fail-to-pass 或 pass-to-pass 统计。
+
 ## 并发编排
 
 连续的并发安全工具可以并发执行，例如多个 `read_file` 或 `search`。写文件、应用 patch、运行 bash、运行测试必须串行，因为它们会改变 workspace state 或依赖当前文件系统状态。
@@ -68,21 +70,47 @@ Tool System 的职责是把模型请求转换成受控的工具调用。它不�
 
 ## 工具输出规范
 
-每个工具结果至少包含：
+ToolResult 应采用“通用字段 + 按工具类型扩展字段”的结构，避免让只读工具伪造命令执行字段。
+
+通用字段至少包含：
 
 - `tool_name`
 - `tool_call_id`
 - `tool_input`
-- `stdout_preview`
-- `stderr_preview`
-- `exit_code`
+- `status`：`ok`、`error`、`denied` 或 `timeout`。
+- `content_preview`
 - `duration_ms`
 - `error_type`
 - `truncated`
-- `output_path`
+- `artifact_paths`
 - `permission_decision`
 
-stdout 和 stderr 必须限制长度；完整输出可以在未来实现中保存到 run directory。
+命令类工具扩展字段：
+
+- `stdout_preview`
+- `stderr_preview`
+- `exit_code`
+- `output_path`
+
+文件读取类工具扩展字段：
+
+- `path`
+- `start_line`
+- `end_line`
+- `content_hash`
+
+搜索类工具扩展字段：
+
+- `query`
+- `match_count`
+- `result_preview`
+
+diff 类工具扩展字段：
+
+- `diff_preview`
+- `patch_stats`
+
+stdout、stderr、文件内容和搜索结果都必须限制长度；完整输出可以在未来实现中保存到 run directory。
 
 `run_tests` 的 tool result 还应包含 `verifier_result_preview` 和 `verifier_result_path`，让模型看到关键失败信息，同时让评测和训练导出能够读取完整结构化结果。
 

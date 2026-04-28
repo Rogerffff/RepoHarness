@@ -40,15 +40,17 @@ Docker execution mode 用于本地或离线批量评测。它把任务工作区�
 
 ## 命令安全规则
 
-默认允许的命令类型：
+默认可由 `bash` 处理的非测试命令类型：
 
-- `pytest`
-- `python -m pytest`
-- `npm test`
-- `pnpm test`
-- `ruff`
-- `mypy`
-- 任务 schema 中明确声明的 test command
+- 非测试类诊断命令，例如 `ruff`、`mypy`、`python -m compileall`。
+- 任务 schema 中明确声明为普通诊断的命令。
+- 只读文件系统查询命令，例如 `pwd`、`ls`、`find` 的受限形式。
+
+测试类命令必须特殊处理：
+
+- 如果模型通过 `bash` 请求运行任务 `test_command`，或者请求 `pytest`、`python -m pytest`、`npm test`、`pnpm test` 等可识别测试命令，Tool System 应默认路由到 `run_tests`。
+- 如果实现允许用户显式把测试类命令作为普通 `bash` observation 运行，结果只能进入模型上下文和 events，不能计入 success rate、reward metadata、fail-to-pass 或 pass-to-pass 统计。
+- `run_tests` 和 final verifier 才能产生结构化 `VerifierResult`。
 
 默认拒绝或强约束：
 

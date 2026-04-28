@@ -69,14 +69,14 @@ logging:
 | --- | --- | --- | --- |
 | `TaskDefinition` | `id`、`repo`、`issue`、`test_command`、`timeout_sec`、`tags` | Task Adapter | Task Adapter、Trajectory Store |
 | `RunnableTask` | `task_id`、`issue_statement`、`repo_source`、`setup_command`、`verifier_config`、`metadata` | Task Adapter | Agent Loop、Workspace Adapter、Verifier |
-| `BaselineResult` | `status`、`initial_fail_to_pass_tests`、`initial_pass_to_pass_tests`、`flaky_tests`、`workspace_snapshot` | Workspace Adapter、Verifier | Eval Runner、Verifier、Trajectory Store |
+| `BaselineResult` | `status`、`initial_fail_to_pass_tests`、`initial_pass_to_pass_tests`、`flaky_tests`、`dependency_state`、`agent_start_snapshot`、`agent_diff_base` | Workspace Adapter、Verifier | Eval Runner、Verifier、Trajectory Store |
 | `RunWorkspace` | `run_id`、`workspace_path`、`repo_base_commit`、`execution_mode`、`artifact_dir` | Workspace Adapter | Tool System、Verifier、Trajectory Store |
-| `AgentLoopState` | `messages`、`turn_count`、`tool_call_count`、`last_verifier_result`、`termination_reason` | Agent Loop | Agent Loop、Trajectory Store |
+| `AgentLoopState` | `messages`、`turn_count`、`tool_call_count`、`last_verifier_result`、`agent_stop_reason`、`final_verifier_status`、`run_outcome` | Agent Loop | Agent Loop、Trajectory Store |
 | `ModelMessage` | `role`、`content`、`tool_calls`、`metadata` | Agent Loop、Model Client | Agent Loop、Transcript Export |
 | `ToolCall` | `tool_call_id`、`tool_name`、`arguments`、`turn` | Model Client、Agent Loop | Tool System、Permission System |
 | `PermissionDecision` | `decision`、`mode`、`matched_rule`、`reason`、`requires_user_input` | Permission System | Tool System、Trajectory Store |
 | `ExecutionResult` | `exit_code`、`stdout_preview`、`stderr_preview`、`output_path`、`duration_ms`、`timeout` | Workspace Adapter | Tool System、Verifier |
-| `ToolResult` | `tool_call_id`、`tool_name`、`content`、`error_type`、`truncated`、`artifact_paths` | Tool System | Agent Loop、Trajectory Store |
+| `ToolResult` | `tool_call_id`、`tool_name`、`status`、`content_preview`、`error_type`、`truncated`、`artifact_paths`、typed extension fields | Tool System | Agent Loop、Trajectory Store |
 | `VerifierConfig` | `test_command`、`timeout_sec`、`fail_to_pass_tests`、`pass_to_pass_tests`、`parser` | Task Adapter | Verifier |
 | `VerifierResult` | `accepted`、`pass_ratio`、`fail_to_pass`、`pass_to_pass`、`exit_code`、`timeout`、`error_type` | Verifier | Eval Runner、Reward、Trajectory Store |
 | `RewardMetadata` | `reward_version`、`final_reward`、`components`、`sources`、`invalid_for_training` | Reward module | Training Exporter、Metrics |
@@ -87,9 +87,9 @@ logging:
 
 1. Eval Runner 读取 `RunConfig` 和任务路径列表。
 2. Task Adapter 读取 `TaskDefinition`，校验字段，并生成 `RunnableTask`。
-3. Workspace Adapter 创建准备工作区，执行 setup 和 baseline verifier。
-4. Baseline verifier 生成 `BaselineResult`。如果任务是 `invalid` 或 `flaky`，默认不进入正式 agent run。
-5. Eval Runner 为有效任务创建正式 `RunWorkspace`，并初始化 run directory。
+3. Workspace Adapter 创建 setup workspace，执行 dependency setup 和 baseline verifier。
+4. Baseline verifier 生成 `BaselineResult`，包括 `dependency_state` 和 `agent_start_snapshot` 计划。如果任务是 `invalid` 或 `flaky`，默认不进入正式 agent run。
+5. Eval Runner 为有效任务从 source checkout 创建正式 `RunWorkspace`，恢复 `dependency_state`，并以 `agent_start_snapshot` 作为 agent diff 基线。
 6. Agent Loop 根据 scaffold、`RunnableTask` 和 `RunConfig` 构造 system message 与 user task message。
 7. 模型输出 `ToolCall`，Tool System 进行工具查找、schema 校验和工具级输入校验。
 8. Permission System 返回 `PermissionDecision`。
@@ -97,11 +97,12 @@ logging:
 10. Workspace Adapter 返回 `ExecutionResult`，Tool System 转换为 `ToolResult`。
 11. Agent Loop 把 `ToolResult` 写回 messages，Trajectory Store 写入 transcript 和 events。
 12. `run_tests` 调用 verifier feedback path，并把结构化结果作为中间反馈回流模型上下文。
-13. Agent Loop 因 final answer、tests passed、预算耗尽、timeout 或错误进入终止流程。
+13. Agent Loop 因 final answer、feedback tests passed、预算耗尽、timeout 或错误停止，并记录 `agent_stop_reason`。
 14. Final verifier 基于最终工作区重新运行，生成最终 `VerifierResult`。
-15. Reward module 根据 final verifier、events 和 diff 生成 `RewardMetadata`。
-16. Trajectory Store 写出 `final.patch`、`final.diff`、`verifier.json`、`metrics.json` 和 `summary.md`。
-17. Training Exporter 从完整 run artifacts 生成 SFT、reinforcement learning rollout 或 preference pair `ExportRecord`。
+15. Eval Runner 根据 final verifier 生成 `final_verifier_status` 和 `run_outcome`。
+16. Reward module 根据 final verifier、events 和 diff 生成 `RewardMetadata`。
+17. Trajectory Store 写出 `final.patch`、`final.diff`、`verifier.json`、`metrics.json` 和 `summary.md`。
+18. Training Exporter 从完整 run artifacts 生成 SFT、reinforcement learning rollout 或 preference pair `ExportRecord`。
 
 ## 统一错误与终止口径
 
