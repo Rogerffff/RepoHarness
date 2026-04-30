@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -110,6 +111,8 @@ class RunRecorder:
         metadata: Mapping[str, Any] | None = None,
     ) -> ArtifactRef:
         metadata = metadata or {}
+        explicit_created_by_event_id = metadata.get("created_by_event_id")
+        created_by_event_id = explicit_created_by_event_id or self.next_event_id("artifact")
         self._artifact_counter += 1
         artifact_id = f"{self.run_id}_artifact_{self._artifact_counter:06d}"
         suffix = _artifact_suffix(data, metadata)
@@ -135,13 +138,31 @@ class RunRecorder:
             kind=kind,
             sha256=digest,
             size_bytes=size_bytes,
-            created_by_event_id=metadata.get("created_by_event_id"),
+            created_by_event_id=created_by_event_id,
             redaction_status=metadata.get("redaction_status", "not_scanned"),
             retention_policy=metadata.get("retention_policy", "keep"),
         )
         manifest = self._read_manifest()
         manifest.append(ref.model_dump(mode="json"))
         self._write_manifest(manifest)
+        if explicit_created_by_event_id is None:
+            self.append_event(
+                TrajectoryEvent(
+                    event_id=created_by_event_id,
+                    timestamp=_timestamp(),
+                    run_id=self.run_id,
+                    task_id=self.task_id,
+                    event_type="artifact_created",
+                    severity="debug",
+                    artifact_refs=[ref],
+                    data={
+                        "artifact_id": ref.artifact_id,
+                        "kind": ref.kind,
+                        "relative_path": ref.relative_path,
+                        "size_bytes": ref.size_bytes,
+                    },
+                )
+            )
         return ref
 
     def write_json_artifact(
@@ -282,6 +303,10 @@ def _count_jsonl_records(path: Path) -> int:
 
 def _safe_filename(kind: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.-]+", "_", kind).strip("_") or "artifact"
+
+
+def _timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _artifact_suffix(data: bytes | str | Path, metadata: Mapping[str, Any]) -> str:

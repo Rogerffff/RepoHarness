@@ -134,6 +134,25 @@ def test_manifest_verification_detects_tampered_artifact(tmp_path: Path):
     assert "Artifacts manifest: invalid" in inspect_run(run_dir)
 
 
+def test_artifacts_without_explicit_event_id_get_creation_event(tmp_path: Path):
+    run_dir = tmp_path / "run_001"
+    with RunRecorder("run_001", run_dir, task_id="task_001") as recorder:
+        artifact = recorder.write_json_artifact("verifier_result", {"accepted": True})
+
+    events = read_jsonl(run_dir / "events.jsonl")
+    manifest = json.loads((run_dir / "artifacts.json").read_text(encoding="utf-8"))
+    manifest_ref = manifest["artifacts"][0]
+
+    assert artifact.created_by_event_id is not None
+    assert manifest_ref["created_by_event_id"] == artifact.created_by_event_id
+    assert any(
+        event["event_id"] == artifact.created_by_event_id
+        and event["event_type"] == "artifact_created"
+        and event["artifact_refs"][0]["artifact_id"] == artifact.artifact_id
+        for event in events
+    )
+
+
 def test_manifest_verification_rejects_unsafe_relative_path(tmp_path: Path):
     run_dir = tmp_path / "run_001"
     with RunRecorder("run_001", run_dir) as recorder:
