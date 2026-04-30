@@ -87,7 +87,7 @@ class ContextManager:
             context_revision=self.context_revision,
             context_event=event,
             content_replacement_state=state,
-            token_estimate=max(1, len(str(messages)) // 4),
+            token_estimate=max(1, len(str(prepared_messages)) // 4),
         )
 
     def _reduce_messages(

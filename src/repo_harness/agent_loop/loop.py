@@ -5,19 +5,29 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from repo_harness.agent_loop.schemas import AgentLoopState
-from repo_harness.budget import BudgetState
+from repo_harness.budget import BudgetManager, BudgetState
 from repo_harness.config import ContextManagementConfig
 from repo_harness.context import ContextManager
 from repo_harness.model_client import ReplayModelClient
+from repo_harness.schema_base import stable_hash
+from repo_harness.scaffolds import SimpleReactScaffold, build_scaffold
+from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolResult
 from repo_harness.trajectory import RunRecorder, TranscriptRecord, TrajectoryEvent
 
 
 class AgentLoop:
-    def __init__(self, *, model_client: ReplayModelClient, tool_executor: ToolExecutor) -> None:
+    def __init__(
+        self,
+        *,
+        model_client: ReplayModelClient,
+        tool_executor: ToolExecutor,
+        scaffold: SimpleReactScaffold | None = None,
+    ) -> None:
         self.model_client = model_client
         self.tool_executor = tool_executor
         self.context_manager = ContextManager()
+        self.scaffold = scaffold or build_scaffold("simple_react")
 
     def run(
         self,
@@ -29,7 +39,9 @@ class AgentLoop:
         recorder: RunRecorder,
         max_turns: int,
         context_config: ContextManagementConfig | None = None,
+        budget_manager: BudgetManager | None = None,
     ) -> AgentLoopState:
+        budget_manager = budget_manager or _default_budget_manager(max_turns)
         messages = list(initial_messages)
         state = AgentLoopState(
             run_id=run_id,
@@ -53,8 +65,9 @@ class AgentLoop:
                 )
             )
 
-        for turn in range(1, max_turns + 1):
+        for turn in range(1, budget_manager.max_turns + 1):
             state.turn_count = turn
+            state.budget_state.turn_count = turn
             prepared = self.context_manager.prepare_messages(
                 messages=messages,
                 recorder=recorder,
@@ -64,6 +77,26 @@ class AgentLoop:
             )
             state.context_revision = prepared.context_revision
             recorder.append_event(prepared.context_event)
+            if prepared.token_estimate > budget_manager.max_context_tokens:
+                state.agent_stop_reason = "context_limit"
+                state.budget_state.stop_reason = "context_limit"
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("budget"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="budget_exhausted",
+                        severity="warning",
+                        error_type="context_limit",
+                        data={
+                            "token_estimate": prepared.token_estimate,
+                            "max_context_tokens": budget_manager.max_context_tokens,
+                        },
+                    )
+                )
+                break
             recorder.append_event(
                 TrajectoryEvent(
                     event_id=recorder.next_event_id("model"),
@@ -147,24 +180,56 @@ class AgentLoop:
             )
             if response.model_error_type:
                 state.agent_stop_reason = "model_error"
+                state.budget_state.stop_reason = "model_error"
                 state.last_model_error = response.model_error_type
                 break
             if not response.tool_calls:
-                state.agent_stop_reason = "final_answer"
+                if self.scaffold.is_valid_final_answer(
+                    response.assistant_message.content,
+                    response.finish_reason,
+                ):
+                    state.agent_stop_reason = "final_answer"
+                else:
+                    state.agent_stop_reason = "model_error"
+                    state.last_model_error = "invalid_final_answer"
+                state.budget_state.stop_reason = state.agent_stop_reason
                 break
-            for tool_call in response.tool_calls:
-                state.tool_call_count += 1
-                recorder.append_event(
-                    TrajectoryEvent(
-                        event_id=recorder.next_event_id("tool"),
-                        timestamp=_timestamp(),
+            stop_after_tools = False
+            for tool_index, tool_call in enumerate(response.tool_calls):
+                _record_tool_requested(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    tool_call=tool_call,
+                    recorder=recorder,
+                )
+                if state.tool_call_count >= budget_manager.max_tool_calls:
+                    state.agent_stop_reason = "max_tool_calls"
+                    state.budget_state.stop_reason = "max_tool_calls"
+                    _record_tool_result(
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
-                        event_type="tool_requested",
-                        data=tool_call.model_dump(mode="json"),
+                        tool_result=_interrupted_tool_result(tool_call, "max_tool_calls"),
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
                     )
-                )
+                    _record_interrupted_tool_calls(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_calls=response.tool_calls[tool_index + 1 :],
+                        reason="max_tool_calls",
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                        emit_tool_requested=True,
+                    )
+                    stop_after_tools = True
+                    break
+                state.tool_call_count += 1
+                state.budget_state.tool_call_count = state.tool_call_count
                 if not self.tool_executor.is_known(tool_call.tool_name):
                     state.invalid_tool_call_count += 1
                     recorder.append_event(
@@ -216,6 +281,33 @@ class AgentLoop:
                         messages=messages,
                     )
                     continue
+                normalized_request = self.tool_executor.normalize(tool_call, tool_context)
+                if normalized_request.effective_tool_name == "run_tests":
+                    if state.budget_state.test_run_count >= budget_manager.max_test_runs:
+                        state.agent_stop_reason = "max_test_runs"
+                        state.budget_state.stop_reason = "max_test_runs"
+                        _record_tool_result(
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            tool_result=_interrupted_tool_result(tool_call, "max_test_runs"),
+                            state=state,
+                            recorder=recorder,
+                            messages=messages,
+                        )
+                        _record_interrupted_tool_calls(
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            tool_calls=response.tool_calls[tool_index + 1 :],
+                            reason="max_test_runs",
+                            state=state,
+                            recorder=recorder,
+                            messages=messages,
+                            emit_tool_requested=True,
+                        )
+                        stop_after_tools = True
+                        break
                 permission = self.tool_executor.check_permission(tool_call, tool_context)
                 recorder.append_event(
                     TrajectoryEvent(
@@ -257,10 +349,56 @@ class AgentLoop:
                     recorder=recorder,
                     messages=messages,
                 )
+                if tool_result.effective_tool_name == "run_tests":
+                    state.budget_state.test_run_count += 1
+                    state.last_verifier_result = tool_result.typed.get("verifier_result_preview")
+                    if (
+                        isinstance(state.last_verifier_result, dict)
+                        and state.last_verifier_result.get("accepted") is True
+                    ):
+                        state.agent_stop_reason = "feedback_tests_passed"
+                        state.budget_state.stop_reason = "feedback_tests_passed"
+                        _record_interrupted_tool_calls(
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            tool_calls=response.tool_calls[tool_index + 1 :],
+                            reason="feedback_tests_passed",
+                            state=state,
+                            recorder=recorder,
+                            messages=messages,
+                            emit_tool_requested=True,
+                        )
+                        stop_after_tools = True
+                        break
+            if stop_after_tools:
+                break
         else:
             state.agent_stop_reason = "max_turns"
+            state.budget_state.stop_reason = "max_turns"
         state.messages = messages
         return state
+
+
+def _record_tool_requested(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    tool_call: ToolCall,
+    recorder: RunRecorder,
+) -> None:
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("tool"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="tool_requested",
+            data=tool_call.model_dump(mode="json"),
+        )
+    )
 
 
 def _record_tool_result(
@@ -333,3 +471,69 @@ def _tool_event_type(tool_result: ToolResult) -> str:
     if tool_result.status == "interrupted":
         return "tool_interrupted"
     return "tool_failed"
+
+
+def _default_budget_manager(max_turns: int) -> BudgetManager:
+    return BudgetManager(
+        max_turns=max_turns,
+        max_tool_calls=1000,
+        max_test_runs=1000,
+        task_timeout_sec=3600,
+        command_timeout_sec=120,
+        verifier_timeout_sec=120,
+        max_tool_output_chars=12000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+    )
+
+
+def _record_interrupted_tool_calls(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    tool_calls: list[ToolCall],
+    reason: str,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    messages: list[dict[str, object]],
+    emit_tool_requested: bool,
+) -> None:
+    for remaining in tool_calls:
+        if remaining.tool_call_id in state.tool_pairing_state.tool_result_ids:
+            continue
+        if emit_tool_requested:
+            _record_tool_requested(
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                tool_call=remaining,
+                recorder=recorder,
+            )
+        _record_tool_result(
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            tool_result=_interrupted_tool_result(remaining, reason),
+            state=state,
+            recorder=recorder,
+            messages=messages,
+        )
+
+
+def _interrupted_tool_result(tool_call: ToolCall, reason: str) -> ToolResult:
+    return ToolResult(
+        tool_result_id=f"{tool_call.tool_call_id}_result",
+        tool_call_id=tool_call.tool_call_id,
+        tool_name=tool_call.tool_name,
+        requested_tool_name=tool_call.tool_name,
+        effective_tool_name=tool_call.tool_name,
+        requested_arguments=tool_call.arguments,
+        normalized_arguments=tool_call.arguments,
+        effective_arguments=tool_call.arguments,
+        normalized_input_hash=stable_hash(tool_call.arguments),
+        status="interrupted",
+        content_preview=f"Tool call interrupted before execution: {reason}",
+        error_type=reason,
+        typed={"status": "interrupted", "error_type": reason},
+    )

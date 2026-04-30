@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from repo_harness.agent_loop import AgentLoop
+from repo_harness.budget import BudgetManager
 from repo_harness.config import RunConfig, load_run_config
 from repo_harness.context import ContextBuilder
 from repo_harness.errors import ConfigError, WorkspaceError
@@ -179,6 +180,7 @@ def run_task(
             recorder=recorder,
             max_turns=config.runtime.max_turns,
             context_config=config.context_management,
+            budget_manager=BudgetManager.from_run_config(config),
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         try:

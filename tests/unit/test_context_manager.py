@@ -61,6 +61,8 @@ def test_context_manager_replaces_large_old_tool_output_deterministically(tmp_pa
     assert first.content_replacement_state is not None
     assert first.content_replacement_state.records[0].replacement_preview_hash is not None
     assert first.context_event.data["tool_pairing_validation"]["ok"] is True
+    assert first.token_estimate == first.context_event.data["tokens_after"]
+    assert first.context_event.data["tokens_after"] < first.context_event.data["tokens_before"]
     state_ref = first.context_event.data["content_replacement_state_ref"]
     persisted_state = json.loads((run_dir / state_ref["relative_path"]).read_text(encoding="utf-8"))
     assert persisted_state["records"][0]["replacement_preview_hash"] is not None

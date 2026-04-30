@@ -9,6 +9,7 @@ from typing import Any
 from repo_harness.config import RunConfig
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.schema_versions import CONTEXT_BUILDER_VERSION, PROMPT_TEMPLATE_VERSION
+from repo_harness.scaffolds import build_scaffold
 from repo_harness.tasks import RunnableTask
 from repo_harness.workspace import RunWorkspace
 
@@ -27,6 +28,7 @@ class ContextBuilder:
     ) -> list[dict[str, object]]:
         visible_task = task.agent_visible_view()
         repo_context = _read_repo_context(Path(workspace.workspace_path))
+        scaffold = build_scaffold(run_config.runtime.scaffold_id)
         system = (
             "You are RepoHarness simple_react agent. Use only the allowed tools. "
             "Never access hidden evaluator metadata, baseline logs, reward metadata, or files outside "
@@ -38,8 +40,8 @@ class ContextBuilder:
             "context_metadata": {
                 "context_builder_version": CONTEXT_BUILDER_VERSION,
                 "prompt_template_version": PROMPT_TEMPLATE_VERSION,
-                "scaffold_version": run_config.runtime.scaffold_id,
-                "scaffold_prompt_fragment": _scaffold_prompt_fragment(run_config.runtime.scaffold_id),
+                "scaffold_version": scaffold.scaffold_version,
+                "scaffold_prompt_fragment": scaffold.prompt_fragment,
                 "visible_context_policy": "exclude_evaluator_only_v0",
                 "current_date": date.today().isoformat(),
             },
@@ -79,12 +81,6 @@ def _language_for_task(task: RunnableTask) -> str:
     if task.environment.node_version:
         return "javascript"
     return "unknown"
-
-
-def _scaffold_prompt_fragment(scaffold_id: str) -> str:
-    if scaffold_id == "simple_react":
-        return "Iterate by requesting tools, reading observations, editing files, and verifying with run_tests."
-    return f"Use scaffold {scaffold_id} according to RepoHarness runtime rules."
 
 
 def _read_repo_context(workspace_path: Path) -> list[dict[str, Any]]:
