@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,7 @@ def run_task(
     output_dir: str | Path | None = None,
     run_id: str | None = None,
 ) -> Path:
+    run_started = time.monotonic()
     config = load_run_config(config_path, output_dir=output_dir)
     if config.model.provider != "replay":
         raise ConfigError("RepoHarness 第一版 run-task 只支持 model.provider=replay。")
@@ -232,26 +234,40 @@ def run_task(
             budget_manager=budget_manager,
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
-        try:
-            verification = adapter.create_verification_workspace(
-                source_checkout=source,
-                dependency_state=dependency_state,
-                final_patch_path=capture.patch_path,
-                setup_command=loaded.runnable_task.setup_command,
+        if _task_timeout_expired(config, run_started):
+            _append_task_timeout_event(
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
                 recorder=recorder,
-            )
-            final_verifier = verifier.run_final(verification, resolved_plan, recorder)
-        except WorkspaceError as exc:
-            replay_error = (
-                "patch_apply_failed"
-                if "final.patch" in str(exc)
-                else "verification_workspace_error"
+                phase="before_final_verifier",
             )
             final_verifier = build_error_verifier_result(
                 command="strict_patch_replay",
-                error_type=replay_error,
+                error_type="task_timeout",
                 verifier_stage="final",
+                timeout=True,
             )
+        else:
+            try:
+                verification = adapter.create_verification_workspace(
+                    source_checkout=source,
+                    dependency_state=dependency_state,
+                    final_patch_path=capture.patch_path,
+                    setup_command=loaded.runnable_task.setup_command,
+                    recorder=recorder,
+                )
+                final_verifier = verifier.run_final(verification, resolved_plan, recorder)
+            except WorkspaceError as exc:
+                replay_error = (
+                    "patch_apply_failed"
+                    if "final.patch" in str(exc)
+                    else "verification_workspace_error"
+                )
+                final_verifier = build_error_verifier_result(
+                    command="strict_patch_replay",
+                    error_type=replay_error,
+                    verifier_stage="final",
+                )
         final_verifier_ref = recorder.write_json_artifact(
             "final_verifier_result", final_verifier.model_dump(mode="json")
         )
@@ -631,6 +647,34 @@ def _batch_key_artifacts(run_dir: Path) -> dict[str, str]:
         if path.exists():
             artifacts[name] = str(path)
     return artifacts
+
+
+def _task_timeout_expired(config: RunConfig, run_started: float) -> bool:
+    return time.monotonic() - run_started >= config.runtime.task_timeout_sec
+
+
+def _append_task_timeout_event(
+    *,
+    run_id: str,
+    task_id: str,
+    recorder: RunRecorder,
+    phase: str,
+) -> None:
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("budget"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            event_type="budget_exhausted",
+            severity="warning",
+            error_type="timeout",
+            data={
+                "reason": "timeout",
+                "phase": phase,
+            },
+        )
+    )
 
 
 def _timestamp() -> str:

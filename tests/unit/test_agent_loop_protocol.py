@@ -1,9 +1,11 @@
 import json
+import time
 from pathlib import Path
 
 from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
-from repo_harness.model_client import FakeModelClient
+from repo_harness.model_client import FakeModelClient, ModelMessage
+from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutor
 from repo_harness.trajectory import RunRecorder
 
@@ -182,6 +184,52 @@ def test_agent_loop_max_cost_zero_stops_before_model_call(tmp_path: Path):
     assert not any(event["event_type"] == "model_call_started" for event in events)
 
 
+def test_agent_loop_timeout_after_model_interrupts_tool_calls_before_execution(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = FakeModelClient.from_steps(
+        script_id="timeout-after-model",
+        task_id="task",
+        steps=[{"step_id": "final", "action": "final_answer", "assistant_text": "unused"}],
+    )
+
+    def slow_tool_response(**_kwargs):  # noqa: ANN001
+        time.sleep(1.1)
+        return _SingleToolResponse()
+
+    client.generate = slow_tool_response  # type: ignore[method-assign]
+    budget = BudgetManager(
+        max_turns=1,
+        max_tool_calls=10,
+        max_test_runs=10,
+        task_timeout_sec=1,
+        command_timeout_sec=30,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+    )
+
+    with RunRecorder("timeout-after-model", run_dir, task_id="task") as recorder:
+        state = AgentLoop(model_client=client, tool_executor=ToolExecutor()).run(
+            run_id="timeout-after-model",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            budget_manager=budget,
+        )
+
+    events = _read_events(run_dir)
+    event_types = [event["event_type"] for event in events]
+    assert state.agent_stop_reason == "timeout"
+    assert state.tool_pairing_state.tool_result_ids["call_read"] == "call_read_result"
+    assert "permission_decision" not in event_types
+    assert "tool_completed" not in event_types
+    assert event_types.index("budget_exhausted") < event_types.index("tool_interrupted")
+    _assert_tool_events_are_paired(events)
+
+
 def test_agent_loop_max_tool_calls_pairs_interrupted_result(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = FakeModelClient.from_steps(
@@ -342,13 +390,22 @@ class _MultiToolExecutor(ToolExecutor):
 
 
 class _MultiToolResponse:
-    from repo_harness.model_client import ModelMessage
-    from repo_harness.tools import ToolCall
-
     assistant_message = ModelMessage(role="assistant", content=None)
     tool_calls = [
         ToolCall(tool_call_id="call_tests", tool_name="run_tests", arguments={}, turn=1),
         ToolCall(tool_call_id="call_after", tool_name="read_file", arguments={"path": "demo.py"}, turn=1),
+    ]
+    raw_provider_request_ref = None
+    raw_provider_response_ref = None
+    finish_reason = "tool_calls"
+    model_error_type = None
+    model_call_event = None
+
+
+class _SingleToolResponse:
+    assistant_message = ModelMessage(role="assistant", content=None)
+    tool_calls = [
+        ToolCall(tool_call_id="call_read", tool_name="read_file", arguments={"path": "demo.py"}, turn=1),
     ]
     raw_provider_request_ref = None
     raw_provider_response_ref = None

@@ -232,6 +232,109 @@ def test_injected_test_command_is_rejected_without_shell_execution(tmp_path: Pat
             assert "RH_TEST_COMMAND_INJECTION" not in artifact_text
 
 
+def test_task_timeout_before_final_verifier_skips_strict_replay(tmp_path: Path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "slow_valid_baseline"
+    task_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    task_path = task_dir / "task_slow_valid_baseline.yaml"
+    task_path.write_text(
+        textwrap.dedent(
+            """
+            id: task_slow_valid_baseline
+            task_version: task_slow_valid_baseline_v0
+            dataset_name: repo_harness_micro
+            source_kind: micro_repo_fixture
+            dataset_split: dev
+            created_at: "2026-04-30"
+            repo: ../repos/slow_valid_baseline
+            base_commit: fixture
+            issue: "Exercise final verifier budget cutoff."
+            setup_command: null
+            test_command: "python -c \\"import time; time.sleep(0.6); print('.')\\""
+            timeouts:
+              setup_timeout_sec: 60
+              test_timeout_sec: 30
+              agent_timeout_sec: 120
+              final_verifier_timeout_sec: 60
+            environment:
+              execution_image: "python:3.12-slim"
+              python_version: "3.12"
+              node_version: null
+              package_manager: pip
+              lockfile_hashes: []
+              setup_cache_key_inputs:
+                - pyproject.toml
+              required_system_packages: []
+              setup_network_policy: deny
+            expected_files: []
+            fail_to_pass_tests: []
+            pass_to_pass_tests: []
+            visibility:
+              issue: model_visible
+              expected_files: model_visible
+              fail_to_pass_tests: verifier_only
+              pass_to_pass_tests: verifier_only
+              gold_patch: hidden_reference
+            decontamination:
+              status: manual_checked
+              known_public_solution: false
+              source_url: null
+              overlap_check_notes: "hand-written fixture"
+              notes: null
+            declared_setup_mutations: []
+            generated_files: []
+            tags:
+              - python
+              - timeout
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    replay_path = tmp_path / "final_only.yaml"
+    replay_path.write_text(
+        """
+script_id: final_only
+task_id: task_slow_valid_baseline
+steps:
+  - step_id: final
+    action: final_answer
+    assistant_text: "No changes required."
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path = _write_replay_config(
+        tmp_path,
+        replay_path=replay_path,
+        output_dir=tmp_path / "runs",
+        run_id_prefix="stage11_final_timeout",
+        task_timeout_sec=1,
+    )
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage11-final-timeout",
+    )
+
+    metrics = _read_json(run_dir / "metrics.json")
+    verifier = _read_json(run_dir / "verifier.json")
+    events = _read_jsonl(run_dir / "events.jsonl")
+    event_types = [event["event_type"] for event in events]
+    assert metrics["final_verifier_status"] == "timeout"
+    assert metrics["run_outcome"] == "inconclusive"
+    assert verifier["timeout"] is True
+    assert verifier["verifier_stage"] == "final"
+    assert event_types.index("budget_exhausted") < event_types.index("verifier_final")
+    assert any(
+        event["event_type"] == "budget_exhausted"
+        and event["data"].get("phase") == "before_final_verifier"
+        for event in events
+    )
+
+
 def test_final_verifier_failure_derives_failed_outcome(tmp_path: Path):
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_001.yaml",
@@ -601,6 +704,7 @@ def _write_replay_config(
     output_dir: Path,
     run_id_prefix: str,
     keep_workspace: bool = True,
+    task_timeout_sec: int = 900,
 ) -> Path:
     config_path = tmp_path / f"{run_id_prefix}_replay.yaml"
     config_path.write_text(
@@ -618,6 +722,7 @@ def _write_replay_config(
               max_turns: 8
               max_tool_calls: 20
               max_test_runs: 4
+              task_timeout_sec: {task_timeout_sec}
             workspace:
               output_dir: {output_dir}
               keep_workspace: {str(keep_workspace).lower()}

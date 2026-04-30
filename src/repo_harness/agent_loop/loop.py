@@ -194,6 +194,28 @@ class AgentLoop:
                     "model_error_type": response.model_error_type,
                 }
             )
+            budget_stop = _budget_stop_reason(budget_manager, state, loop_started)
+            if budget_stop is not None:
+                _record_budget_exhausted(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    reason=budget_stop,
+                    state=state,
+                    recorder=recorder,
+                )
+                _record_interrupted_tool_calls(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    tool_calls=response.tool_calls,
+                    reason=budget_stop,
+                    state=state,
+                    recorder=recorder,
+                    messages=messages,
+                    emit_tool_requested=True,
+                )
+                break
             if response.model_error_type:
                 state.agent_stop_reason = "model_error"
                 state.budget_state.stop_reason = "model_error"
@@ -219,6 +241,38 @@ class AgentLoop:
                     tool_call=tool_call,
                     recorder=recorder,
                 )
+                budget_stop = _budget_stop_reason(budget_manager, state, loop_started)
+                if budget_stop is not None:
+                    _record_budget_exhausted(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        reason=budget_stop,
+                        state=state,
+                        recorder=recorder,
+                    )
+                    _record_tool_result(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_result=_interrupted_tool_result(tool_call, budget_stop),
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                    )
+                    _record_interrupted_tool_calls(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_calls=response.tool_calls[tool_index + 1 :],
+                        reason=budget_stop,
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                        emit_tool_requested=True,
+                    )
+                    stop_after_tools = True
+                    break
                 if state.tool_call_count >= budget_manager.max_tool_calls:
                     state.agent_stop_reason = "max_tool_calls"
                     state.budget_state.stop_reason = "max_tool_calls"
