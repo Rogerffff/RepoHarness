@@ -1,0 +1,23 @@
+run_id_prefix: stage11_batch
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+  - tests/fixtures/tasks/task_invalid.yaml
+  - tests/fixtures/tasks/task_flaky.yaml
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: tests/fixtures/replays/task_001_success.yaml
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  max_turns: 8
+  max_tool_calls: 20
+  max_test_runs: 4
+workspace:
+  output_dir: runs/stage11-batch
+  keep_workspace: true
+  default_command_timeout_sec: 60
+evaluation:
+  concurrency: 1
+  fail_on_invalid_task: false

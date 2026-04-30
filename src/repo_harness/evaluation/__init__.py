@@ -3,12 +3,13 @@
 from repo_harness.evaluation.metrics import (
     build_metrics_record,
     derive_final_verifier_status,
-    derive_run_outcome,
 )
+from repo_harness.evaluation.outcome_policy import OUTCOME_POLICY_VERSION, derive_run_outcome
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
 
 __all__ = [
     "BaselineResult",
+    "OUTCOME_POLICY_VERSION",
     "ResolvedVerifierPlan",
     "build_metrics_record",
     "derive_final_verifier_status",

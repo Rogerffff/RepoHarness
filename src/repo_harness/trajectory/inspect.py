@@ -16,6 +16,9 @@ def inspect_run(run_dir: str | Path) -> str:
     events_path = run_path / "events.jsonl"
     manifest_path = run_path / "artifacts.json"
     metrics_path = run_path / "metrics.json"
+    baseline_path = run_path / "baseline.json"
+    verifier_path = run_path / "verifier.json"
+    reward_path = run_path / "reward.json"
     summary_path = run_path / "summary.md"
 
     status = "MISSING"
@@ -56,6 +59,9 @@ def inspect_run(run_dir: str | Path) -> str:
         f"Events: {len(events)}",
         f"Artifacts: {artifact_count}",
     ]
+    task_id = _task_id(events, baseline_path)
+    if task_id is not None:
+        lines.append(f"Task id: {task_id}")
     if manifest_missing:
         lines.append("Artifacts manifest: missing")
     elif artifact_errors:
@@ -68,11 +74,35 @@ def inspect_run(run_dir: str | Path) -> str:
         lines.append("Diagnostics:")
         lines.extend(f"- {diagnostic}" for diagnostic in diagnostics)
 
+    metrics = {}
     if metrics_path.exists():
         metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        interaction = metrics.get("interaction_efficiency", {})
         lines.append(f"Run outcome: {metrics.get('run_outcome', 'unknown')}")
+        lines.append(f"Agent stop reason: {interaction.get('agent_stop_reason', 'unknown')}")
+        lines.append(f"Final verifier status: {metrics.get('final_verifier_status', 'unknown')}")
     else:
         lines.append("Metrics: missing")
+
+    if baseline_path.exists():
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        lines.append(f"Baseline status: {baseline.get('status', 'unknown')}")
+    else:
+        lines.append("Baseline: missing")
+
+    if verifier_path.exists():
+        verifier = json.loads(verifier_path.read_text(encoding="utf-8"))
+        lines.append(f"Final verifier accepted: {verifier.get('accepted', 'unknown')}")
+        if verifier.get("error_type"):
+            lines.append(f"Final verifier error: {verifier['error_type']}")
+    else:
+        lines.append("Final verifier: missing or skipped")
+
+    if reward_path.exists():
+        reward = json.loads(reward_path.read_text(encoding="utf-8"))
+        lines.append(f"Reward: {reward.get('final_reward', 'unknown')}")
+    else:
+        lines.append("Reward: missing or skipped")
 
     if summary_path.exists():
         lines.append("Summary: present")
@@ -82,4 +112,38 @@ def inspect_run(run_dir: str | Path) -> str:
     if events:
         lines.append(f"Last event: {events[-1].get('event_type', 'unknown')}")
 
+    key_artifacts = [
+        name
+        for name in [
+            "summary.md",
+            "baseline.json",
+            "resolved_verifier_plan.json",
+            "final.patch",
+            "final.diff",
+            "verifier.json",
+            "reward.json",
+            "metrics.json",
+        ]
+        if (run_path / name).exists()
+    ]
+    if key_artifacts:
+        lines.append("Key artifacts:")
+        lines.extend(f"- {name}" for name in key_artifacts)
+
     return "\n".join(lines)
+
+
+def _task_id(events: list[dict], baseline_path: Path) -> str | None:
+    for event in events:
+        raw_task_id = event.get("task_id")
+        if isinstance(raw_task_id, str) and raw_task_id:
+            return raw_task_id
+    if baseline_path.exists():
+        try:
+            baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+        raw_task_id = baseline.get("task_id")
+        if isinstance(raw_task_id, str) and raw_task_id:
+            return raw_task_id
+    return None

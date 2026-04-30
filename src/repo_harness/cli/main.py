@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import json
 from collections.abc import Sequence
+from pathlib import Path
 
 from repo_harness import __version__
+from repo_harness.config import load_run_config
 from repo_harness.errors import RepoHarnessError
+from repo_harness.evaluation.runner import run_batch as run_batch_command
 from repo_harness.evaluation.runner import run_task as run_task_command
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
@@ -44,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run_batch = subparsers.add_parser(
         "run-batch",
-        help="按 RunConfig 顺序运行任务列表。阶段一暂未实现执行逻辑。",
+        help="按 RunConfig.tasks 顺序运行任务列表。",
     )
     run_batch.add_argument("--config", required=True, help="RunConfig YAML 文件路径。")
     run_batch.add_argument("--output-dir", default=None, help="运行产物根目录。")
@@ -101,9 +105,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"任务运行失败：{exc}\n")
         print(f"任务运行完成：{run_dir}")
+        config = load_run_config(args.config, output_dir=args.output_dir)
+        if config.evaluation.fail_on_invalid_task and _run_outcome(run_dir) in {
+            "invalid_task",
+            "flaky_task",
+        }:
+            return 1
         return 0
+    if args.command == "run-batch":
+        try:
+            manifest_path = run_batch_command(
+                config_path=args.config,
+                output_dir=args.output_dir,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"批量运行失败：{exc}\n")
+        print(f"批量运行完成：{manifest_path}")
+        manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+        return 1 if manifest.get("should_fail_command") else 0
     parser.error(f"命令 {args.command!r} 尚未在当前阶段实现")
     return 2
+
+
+def _run_outcome(run_dir: str | Path) -> str | None:
+    metrics_path = Path(run_dir) / "metrics.json"
+    if not metrics_path.exists():
+        return None
+    return json.loads(metrics_path.read_text(encoding="utf-8")).get("run_outcome")
 
 
 if __name__ == "__main__":

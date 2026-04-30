@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from repo_harness.evaluation.outcome_policy import OUTCOME_POLICY_VERSION
 from repo_harness.trajectory import MetricsRecord
 from repo_harness.verifier.schemas import VerifierResult
 
@@ -32,7 +33,10 @@ def build_metrics_record(
         patch_stats=patch_stats or {},
         permission_denial_count=permission_denial_count,
         invalid_tool_call_count=invalid_tool_call_count,
-        interaction_efficiency={"agent_stop_reason": agent_stop_reason},
+        interaction_efficiency={
+            "agent_stop_reason": agent_stop_reason,
+            "outcome_policy_version": OUTCOME_POLICY_VERSION,
+        },
     )
 
 
@@ -45,12 +49,16 @@ def derive_final_verifier_status(final_verifier: VerifierResult) -> str:
         "low_parser_confidence",
         "test_command_error",
         "dependency_error",
+        "patch_apply_failed",
+        "verification_workspace_error",
     }:
         return "error"
     return "failed"
 
 
 def derive_run_outcome(final_verifier_status: str) -> str:
+    """兼容早期调用方的 final-verifier-only outcome helper。"""
+
     if final_verifier_status == "accepted":
         return "success"
     if final_verifier_status == "failed":

@@ -83,6 +83,7 @@ def build_error_verifier_result(
     error_type: str,
     verifier_stage: str | None = None,
     timeout: bool = False,
+    raw_output_ref: object | None = None,
 ) -> VerifierResult:
     return apply_acceptance_policy(
         command=command,
@@ -94,4 +95,5 @@ def build_error_verifier_result(
         pass_to_pass_tests=[],
         error_type=error_type,
         verifier_stage=verifier_stage,
+        raw_output_ref=raw_output_ref,
     )

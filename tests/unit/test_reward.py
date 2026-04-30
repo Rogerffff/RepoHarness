@@ -64,16 +64,16 @@ def test_metrics_record_derives_final_status():
     assert metrics.patch_stats == {"added_lines": 1}
 
 
-def test_patch_apply_failure_is_counted_as_failed_run_outcome():
+def test_patch_apply_failure_is_counted_as_inconclusive_run_outcome():
     metrics = build_metrics_record(
         final_verifier=verifier_result(
             accepted=False,
             error_type="patch_apply_failed",
             parser_confidence=1.0,
         ),
-        run_outcome="failed",
+        run_outcome="inconclusive",
         agent_stop_reason="final_answer",
     )
 
-    assert metrics.final_verifier_status == "failed"
-    assert metrics.run_outcome == "failed"
+    assert metrics.final_verifier_status == "error"
+    assert metrics.run_outcome == "inconclusive"
