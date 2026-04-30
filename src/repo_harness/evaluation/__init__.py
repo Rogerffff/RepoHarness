@@ -1,6 +1,18 @@
 """评测运行器和指标模块。"""
 
-from repo_harness.evaluation.metrics import build_metrics_record
+from repo_harness.evaluation.metrics import (
+    build_metrics_record,
+    derive_final_verifier_status,
+    derive_run_outcome,
+)
+from repo_harness.evaluation.runner import run_task
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
 
-__all__ = ["BaselineResult", "ResolvedVerifierPlan", "build_metrics_record"]
+__all__ = [
+    "BaselineResult",
+    "ResolvedVerifierPlan",
+    "build_metrics_record",
+    "derive_final_verifier_status",
+    "derive_run_outcome",
+    "run_task",
+]

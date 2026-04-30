@@ -25,6 +25,7 @@ class ModelConfig(StrictBaseModel):
     schema_version: str = "repo_harness_model_config_v0"
     provider: str = "replay"
     model_id: str = "replay-script-v0"
+    replay_script_path: str | None = None
     temperature: float = Field(default=0.0, ge=0.0)
     max_output_tokens: int = Field(default=4096, gt=0)
     retry_policy: str = "none"

@@ -42,6 +42,8 @@ class AgentLoopState(StrictBaseModel):
     messages: list[dict[str, Any]] = Field(default_factory=list)
     turn_count: int = Field(default=0, ge=0)
     tool_call_count: int = Field(default=0, ge=0)
+    permission_denial_count: int = Field(default=0, ge=0)
+    invalid_tool_call_count: int = Field(default=0, ge=0)
     last_verifier_result: dict[str, Any] | None = None
     budget_state: BudgetState
     tool_pairing_state: ToolPairingState = Field(default_factory=ToolPairingState)

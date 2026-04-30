@@ -209,7 +209,6 @@ class RunnableTask(StrictBaseModel):
             "task_version": self.task_version,
             "dataset_name": self.dataset_name,
             "issue_statement": self.issue_statement,
-            "repo_source": self.repo_source,
             "base_commit": self.base_commit,
             "setup_command": self.setup_command,
             "test_command": self.verifier_config.test_command,

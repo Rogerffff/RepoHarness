@@ -105,6 +105,8 @@ def test_runnable_task_agent_visible_view_excludes_evaluator_only_metadata():
     assert "gold_patch" not in visible_text
     assert "fail_to_pass_tests" not in visible_text
     assert "pass_to_pass_tests" not in visible_text
+    assert "repo_source" not in visible_text
+    assert "tests/fixtures/repos" not in visible_text
     assert "private evaluator note" not in visible_text
     assert "decontamination" not in visible_text
 

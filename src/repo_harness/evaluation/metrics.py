@@ -20,11 +20,7 @@ def build_metrics_record(
     permission_denial_count: int = 0,
     invalid_tool_call_count: int = 0,
 ) -> MetricsRecord:
-    final_status = "accepted" if final_verifier.accepted else "failed"
-    if final_verifier.timeout:
-        final_status = "timeout"
-    elif final_verifier.error_type == "low_parser_confidence":
-        final_status = "error"
+    final_status = derive_final_verifier_status(final_verifier)
     return MetricsRecord(
         task_success=run_outcome == "success",
         final_verifier_status=final_status,
@@ -38,3 +34,27 @@ def build_metrics_record(
         invalid_tool_call_count=invalid_tool_call_count,
         interaction_efficiency={"agent_stop_reason": agent_stop_reason},
     )
+
+
+def derive_final_verifier_status(final_verifier: VerifierResult) -> str:
+    if final_verifier.accepted:
+        return "accepted"
+    if final_verifier.timeout:
+        return "timeout"
+    if final_verifier.parser_confidence < 0.5 or final_verifier.error_type in {
+        "low_parser_confidence",
+        "test_command_error",
+        "dependency_error",
+    }:
+        return "error"
+    return "failed"
+
+
+def derive_run_outcome(final_verifier_status: str) -> str:
+    if final_verifier_status == "accepted":
+        return "success"
+    if final_verifier_status == "failed":
+        return "failed"
+    if final_verifier_status in {"timeout", "error"}:
+        return "inconclusive"
+    return "inconclusive"

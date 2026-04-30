@@ -8,7 +8,7 @@ from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import REPLAY_SCRIPT_SCHEMA_VERSION
-from repo_harness.tools import ToolCall
+from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import ArtifactRef
 
 

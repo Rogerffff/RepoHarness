@@ -7,6 +7,7 @@ from collections.abc import Sequence
 
 from repo_harness import __version__
 from repo_harness.errors import RepoHarnessError
+from repo_harness.evaluation.runner import run_task as run_task_command
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
 
@@ -34,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run_task = subparsers.add_parser(
         "run-task",
-        help="运行单个任务的完整闭环。阶段一暂未实现执行逻辑。",
+        help="用 replay model 运行单个任务的最小完整闭环。",
     )
     run_task.add_argument("task_path", help="任务 YAML 文件路径。")
     run_task.add_argument("--config", required=True, help="RunConfig YAML 文件路径。")
@@ -62,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     inspect_run = subparsers.add_parser(
         "inspect-run",
-        help="只读检查 run directory。阶段一暂未实现读取逻辑。",
+        help="只读检查 run directory。",
     )
     inspect_run.add_argument("run_dir", help="run directory 路径。")
 
@@ -88,6 +89,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "inspect-run":
         print(inspect_run(args.run_dir))
+        return 0
+    if args.command == "run-task":
+        try:
+            run_dir = run_task_command(
+                args.task_path,
+                config_path=args.config,
+                output_dir=args.output_dir,
+                run_id=args.run_id,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"任务运行失败：{exc}\n")
+        print(f"任务运行完成：{run_dir}")
         return 0
     parser.error(f"命令 {args.command!r} 尚未在当前阶段实现")
     return 2

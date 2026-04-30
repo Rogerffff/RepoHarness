@@ -54,6 +54,8 @@ def test_fixture_agent_visible_view_does_not_leak_evaluator_only_fields(name: st
     assert "pass_to_pass_tests" not in visible_text
     assert "decontamination" not in visible_text
     assert "overlap_check_notes" not in visible_text
+    assert "repo_source" not in visible_text
+    assert "tests/fixtures/repos" not in visible_text
 
 
 def test_bad_visibility_task_is_rejected():
