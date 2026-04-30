@@ -7,6 +7,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -279,6 +280,7 @@ class LocalWorkspaceAdapter:
             command,
             cwd=workspace,
             shell=True,
+            env=_command_env(),
             start_new_session=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -442,3 +444,10 @@ def _preview(text: str, limit: int = 4000) -> str:
     if len(text) <= limit:
         return text
     return text[:limit] + "\n[truncated]"
+
+
+def _command_env() -> dict[str, str]:
+    env = os.environ.copy()
+    python_bin_dir = str(Path(sys.executable).parent)
+    env["PATH"] = f"{python_bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    return env

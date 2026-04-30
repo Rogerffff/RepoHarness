@@ -33,10 +33,12 @@ class TestCaseResult(StrictBaseModel):
 
 class VerifierResult(StrictBaseModel):
     schema_version: str = "repo_harness_verifier_result_v0"
+    verifier_stage: Literal["baseline", "feedback", "final"] | None = None
     parser_id: str = "pytest"
     parser_version: str = PYTEST_PARSER_VERSION
     parser_confidence: float = Field(ge=0.0, le=1.0)
     command: str
+    raw_output_ref: ArtifactRef | None = None
     test_cases: list[TestCaseResult] = Field(default_factory=list)
     accepted: bool
     acceptance_policy_version: str = ACCEPTANCE_POLICY_VERSION
