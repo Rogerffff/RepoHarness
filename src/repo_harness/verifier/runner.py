@@ -8,7 +8,7 @@ from pathlib import Path
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.tasks import VerifierConfig
 from repo_harness.trajectory import RunRecorder
-from repo_harness.verifier.acceptance import apply_acceptance_policy
+from repo_harness.verifier.acceptance import apply_acceptance_policy, build_error_verifier_result
 from repo_harness.verifier.pytest_parser import PytestTextParser
 from repo_harness.verifier.schemas import TestCaseResult, VerifierResult
 from repo_harness.workspace import LocalWorkspaceAdapter
@@ -76,9 +76,17 @@ class PytestVerifier:
             if stage == "final"
             else verifier_config.test_timeout_sec
         )
+        try:
+            command = _pytest_argv(verifier_config.test_command)
+        except ValueError:
+            return build_error_verifier_result(
+                command=verifier_config.test_command,
+                error_type="test_command_error",
+                verifier_stage=stage,
+            )
         full_result = self.workspace_adapter.run_command(
             workspace_path,
-            _normalize_pytest_command(verifier_config.test_command),
+            command,
             timeout_sec=timeout,
             recorder=recorder,
             command_semantics=f"verifier_{stage}",
@@ -124,7 +132,7 @@ class PytestVerifier:
             if test_id in seen:
                 continue
             seen.add(test_id)
-            command = f"python -m pytest -q {shlex.quote(test_id)}"
+            command = ["python", "-m", "pytest", "-q", test_id]
             execution = self.workspace_adapter.run_command(
                 workspace_path,
                 command,
@@ -154,10 +162,26 @@ class PytestVerifier:
         return results
 
 
-def _normalize_pytest_command(command: str) -> str:
+def _pytest_argv(command: str) -> list[str]:
     stripped = command.strip()
-    if stripped == "pytest":
-        return "python -m pytest"
-    if stripped.startswith("pytest "):
-        return "python -m pytest " + stripped[len("pytest ") :]
-    return command
+    try:
+        parts = shlex.split(stripped)
+    except ValueError as exc:
+        raise ValueError("test_command is not parseable.") from exc
+    if not parts:
+        raise ValueError("test_command must not be empty.")
+    if parts[0] == "pytest":
+        _reject_pytest_shell_fragments(parts[1:])
+        return ["python", "-m", "pytest", *parts[1:]]
+    if parts[:3] == ["python", "-m", "pytest"]:
+        _reject_pytest_shell_fragments(parts[3:])
+        return parts
+    if parts[:2] == ["python", "-c"] and len(parts) == 3:
+        return parts
+    raise ValueError("RepoHarness v1 only supports pytest test_command values.")
+
+
+def _reject_pytest_shell_fragments(args: list[str]) -> None:
+    forbidden_fragments = ["|", ">", "<", "&&", "||", ";", "`", "$", "\n", "&"]
+    if any(fragment in arg for arg in args for fragment in forbidden_fragments):
+        raise ValueError("test_command contains unsupported shell syntax.")

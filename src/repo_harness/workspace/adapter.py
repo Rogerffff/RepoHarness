@@ -27,6 +27,38 @@ DEFAULT_EXCLUDED_DIFF_PATHS = [
     ".mypy_cache/",
     "__pycache__/",
     "*.pyc",
+    ".env",
+    ".env.*",
+    "*.env",
+    ".npmrc",
+    ".pypirc",
+    ".netrc",
+    ".aws/",
+    ".config/gh/",
+    ".config/gcloud/",
+    ".ssh/",
+    ".gnupg/",
+    "pip.conf",
+    "pip.ini",
+    ".pip/pip.conf",
+    "credentials",
+    "credentials.json",
+    "*credentials*.json",
+    "token",
+    "token.*",
+    "secret",
+    "secret.*",
+    "secrets.json",
+    "id_rsa",
+    "id_dsa",
+    "id_ecdsa",
+    "id_ed25519",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    "*.crt",
+    "*.cer",
 ]
 
 SENSITIVE_NAMES = {
@@ -34,13 +66,35 @@ SENSITIVE_NAMES = {
     ".env",
     ".npmrc",
     ".pypirc",
+    ".netrc",
+    "pip.conf",
+    "pip.ini",
+    "credentials",
+    "credentials.json",
+    "token",
+    "token.json",
+    "token.txt",
+    "secret",
+    "secret.json",
+    "secret.txt",
+    "secrets.json",
     "id_rsa",
     "id_dsa",
     "id_ecdsa",
     "id_ed25519",
 }
 
+SENSITIVE_DIRS = {".aws", ".ssh", ".gnupg"}
+
 SENSITIVE_SUFFIXES = {".pem", ".key", ".p12", ".pfx", ".crt", ".cer"}
+
+SENSITIVE_RELATIVE_PARTS = {
+    (".aws", "credentials"),
+    (".config", "gh", "hosts.yml"),
+    (".config", "gh", "config.yml"),
+    (".config", "gcloud", "application_default_credentials.json"),
+    (".pip", "pip.conf"),
+}
 
 
 @dataclass(frozen=True)
@@ -156,7 +210,7 @@ class LocalWorkspaceAdapter:
         if dependency_state.strategy == "rerun_setup":
             if not setup_command:
                 raise WorkspaceError("dependency_state=rerun_setup 需要 setup_command。")
-            result = self.run_command(workspace_path, setup_command, recorder=recorder)
+            result = self.run_command(workspace_path, setup_command, recorder=recorder, allow_shell=True)
             if result.exit_code != 0 or result.timeout:
                 raise WorkspaceError(f"rerun_setup 失败：{result.stderr_preview or result.stdout_preview}")
             return
@@ -219,7 +273,7 @@ class LocalWorkspaceAdapter:
             raise WorkspaceError("apply_patch 必须提供 RunRecorder 以保存命令输出 artifact。")
         return self.run_command(
             workspace_path,
-            f"git apply --whitespace=nowarn {shlex.quote(str(Path(patch_path).resolve()))}",
+            ["git", "apply", "--whitespace=nowarn", str(Path(patch_path).resolve())],
             recorder=recorder,
             command_semantics="git_apply",
         )
@@ -270,22 +324,24 @@ class LocalWorkspaceAdapter:
     def run_command(
         self,
         workspace_path: str | Path,
-        command: str,
+        command: str | list[str],
         *,
         timeout_sec: float | None = None,
         recorder: RunRecorder | None = None,
         command_semantics: str = "generic",
+        allow_shell: bool = False,
     ) -> ExecutionResult:
         workspace = Path(workspace_path).resolve()
         self._assert_workspace_under_run_dir(workspace)
         if recorder is None:
             raise WorkspaceError("run_command 必须提供 RunRecorder 以保存 stdout/stderr artifact。")
+        command_args, command_display, use_shell = _prepare_command(command, allow_shell=allow_shell)
         started = time.monotonic()
         timeout = timeout_sec if timeout_sec is not None else self.default_command_timeout_sec
         process = subprocess.Popen(
-            command,
+            command_args,
             cwd=workspace,
-            shell=True,
+            shell=use_shell,
             env=_command_env(),
             start_new_session=True,
             stdout=subprocess.PIPE,
@@ -306,7 +362,7 @@ class LocalWorkspaceAdapter:
         duration_ms = int((time.monotonic() - started) * 1000)
         artifact_ref = recorder.write_artifact(
             "command_output",
-            f"$ {command}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
+            f"$ {command_display}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
             {"retention_policy": "keep"},
         )
         return ExecutionResult(
@@ -341,7 +397,7 @@ class LocalWorkspaceAdapter:
         exclude_file = workspace / ".git" / "info" / "exclude"
         exclude_file.parent.mkdir(parents=True, exist_ok=True)
         existing = exclude_file.read_text(encoding="utf-8") if exclude_file.exists() else ""
-        additions = "\n".join(excluded_diff_paths)
+        additions = "\n".join(dict.fromkeys([*excluded_diff_paths, *DEFAULT_EXCLUDED_DIFF_PATHS]))
         exclude_file.write_text(f"{existing.rstrip()}\n{additions}\n", encoding="utf-8")
         self._run_git_checked(workspace, ["add", "-A"], recorder=recorder)
         commit_result = self._run_git(
@@ -494,18 +550,41 @@ def _copy_tree(source: Path, destination: Path) -> None:
     )
 
 
+def _prepare_command(command: str | list[str], *, allow_shell: bool) -> tuple[str | list[str], str, bool]:
+    if isinstance(command, list):
+        if not command:
+            raise WorkspaceError("命令不能为空。")
+        return command, shlex.join(command), False
+    if allow_shell:
+        return command, command, True
+    try:
+        parts = shlex.split(command)
+    except ValueError as exc:
+        raise WorkspaceError(f"无法解析命令参数：{exc}") from exc
+    if not parts:
+        raise WorkspaceError("命令不能为空。")
+    return parts, shlex.join(parts), False
+
+
 def _reject_sensitive_path(relative_path: Path) -> None:
     if _is_sensitive_relative_path(relative_path):
         raise WorkspaceError(f"拒绝访问敏感路径：{relative_path}")
 
 
 def _is_sensitive_relative_path(relative_path: Path) -> bool:
-    for part in relative_path.parts:
+    parts = tuple(part.lower() for part in relative_path.parts)
+    for sensitive_parts in SENSITIVE_RELATIVE_PARTS:
+        for index in range(0, len(parts) - len(sensitive_parts) + 1):
+            if parts[index : index + len(sensitive_parts)] == sensitive_parts:
+                return True
+    for part in parts:
+        if part in SENSITIVE_DIRS:
+            return True
         if part in SENSITIVE_NAMES or part.startswith(".env"):
             return True
         if "id_rsa" in part or "id_ed25519" in part:
             return True
-    if relative_path.suffix in SENSITIVE_SUFFIXES:
+    if relative_path.suffix.lower() in SENSITIVE_SUFFIXES:
         return True
     return False
 

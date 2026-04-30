@@ -184,6 +184,34 @@ def test_bash_git_diff_no_index_outside_path_is_denied(tmp_path):
     _assert_tool_calls_are_paired(events)
 
 
+def test_bash_git_show_head_does_not_expose_sensitive_history(tmp_path):
+    task_path = _write_sensitive_repo_task(tmp_path, task_id="task_sensitive_git_history")
+    _, config_path = _write_single_bash_replay(
+        tmp_path,
+        command="git show HEAD",
+        run_id="stage08-sensitive-git-history",
+        task_id="task_sensitive_git_history",
+    )
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage08-sensitive-git-history",
+    )
+
+    events = _read_jsonl(run_dir / "events.jsonl")
+    transcript = _read_jsonl(run_dir / "transcript.jsonl")
+    decision = next(event["data"] for event in events if event["event_type"] == "permission_decision")
+    tool_result = next(record for record in transcript if record.get("tool_call_id") == "call_bash")
+    assert decision["decision"] == "deny"
+    assert decision["matched_rule"] == "bash_command_safety"
+    assert "explicit safe path" in decision["reason"]
+    assert "SUPER_SECRET" not in tool_result["content_preview"]
+    assert "id_rsa" not in tool_result["content_preview"]
+    _assert_tool_calls_are_paired(events)
+
+
 def test_grep_does_not_expose_sensitive_file_content(tmp_path):
     task_path = _write_sensitive_repo_task(tmp_path, task_id="task_sensitive_grep")
     replay_path = tmp_path / "sensitive_grep.yaml"

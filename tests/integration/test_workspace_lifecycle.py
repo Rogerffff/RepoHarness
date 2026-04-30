@@ -137,6 +137,40 @@ def test_workspace_patch_stats_mark_binary_and_symlink_changes(tmp_path: Path):
     assert "calculator_link.py" in capture.patch_stats["symlink_files"]
 
 
+def test_git_baseline_and_final_patch_exclude_sensitive_paths(tmp_path: Path):
+    loaded = load_task("tests/fixtures/tasks/task_001.yaml")
+    run_dir = tmp_path / "run_sensitive_patch"
+    with RunRecorder("run_sensitive_patch", run_dir, task_id=loaded.runnable_task.task_id) as recorder:
+        adapter = LocalWorkspaceAdapter(run_id="run_sensitive_patch", run_dir=run_dir)
+        source = adapter.create_source_checkout(loaded.runnable_task)
+        (source / ".env").write_text("TOKEN=secret\n", encoding="utf-8")
+        (source / ".aws").mkdir()
+        (source / ".aws" / "credentials").write_text("aws_secret_access_key=secret\n", encoding="utf-8")
+        (source / "credentials.json").write_text('{"token":"secret"}\n', encoding="utf-8")
+        dependency_state = adapter.capture_dependency_state(strategy="none")
+        run_workspace = adapter.create_agent_workspace(
+            task=loaded.runnable_task,
+            source_checkout=source,
+            dependency_state=dependency_state,
+            recorder=recorder,
+        )
+        tracked = adapter._run_git_checked(  # noqa: SLF001 - regression checks the git boundary directly.
+            Path(run_workspace.workspace_path),
+            ["ls-files"],
+            recorder=recorder,
+        )
+        adapter.write_text(run_workspace.workspace_path, "calculator.py", "def add(left, right):\n    return left + right\n")
+        (Path(run_workspace.workspace_path) / ".env").write_text("TOKEN=changed\n", encoding="utf-8")
+
+        capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
+
+    assert ".env" not in tracked
+    assert ".aws/credentials" not in tracked
+    assert "credentials.json" not in tracked
+    assert "TOKEN=changed" not in capture.patch_text
+    assert ".env" not in capture.patch_text
+
+
 def test_workspace_final_patch_uses_agent_start_snapshot_when_head_moves(tmp_path: Path):
     loaded = load_task("tests/fixtures/tasks/task_001.yaml")
     run_dir = tmp_path / "run_head_moves"
@@ -161,6 +195,7 @@ def test_workspace_final_patch_uses_agent_start_snapshot_when_head_moves(tmp_pat
             "git add calculator.py && git commit -m agent-moved-head",
             recorder=recorder,
             command_semantics="diagnostic_git",
+            allow_shell=True,
         )
 
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)

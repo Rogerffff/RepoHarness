@@ -300,6 +300,19 @@ def _validate_git_command(
             all_non_flag_operands_are_paths=True,
             default_path_args=["."],
         )
+    if subcommand == "show":
+        has_safe_path, path_reason = _validate_git_explicit_paths(rest, workspace_facade, workspace_path)
+        if path_reason is not None:
+            return path_reason
+        if not has_safe_path:
+            return "git show requires an explicit safe path to avoid exposing full history."
+    if subcommand == "log":
+        exposes_file_details = any(arg in {"-p", "--patch", "--name-only", "--name-status", "--stat"} for arg in rest)
+        has_safe_path, path_reason = _validate_git_explicit_paths(rest, workspace_facade, workspace_path)
+        if path_reason is not None:
+            return path_reason
+        if exposes_file_details and not has_safe_path:
+            return "git log file-detail output requires an explicit safe path."
     return _validate_path_operands(
         rest,
         workspace_facade,
@@ -373,6 +386,32 @@ def _validate_path_operands(
         if validate_path_like_operands:
             continue
     return None
+
+
+def _validate_git_explicit_paths(
+    args: list[str],
+    workspace_facade: Any,
+    workspace_path: str,
+) -> tuple[bool, str | None]:
+    explicit_paths: list[str] = []
+    path_mode = False
+    for arg in args:
+        if arg == "--":
+            path_mode = True
+            continue
+        if path_mode:
+            explicit_paths.append(arg)
+            continue
+        if arg.startswith("-"):
+            continue
+        path_part = _path_component(arg)
+        if path_part != arg:
+            explicit_paths.append(path_part)
+    for path in explicit_paths:
+        reason = _validate_single_path_operand(path, workspace_facade, workspace_path)
+        if reason is not None:
+            return False, reason
+    return bool(explicit_paths), None
 
 
 def _is_path_like_operand(arg: str, workspace_path: str) -> bool:

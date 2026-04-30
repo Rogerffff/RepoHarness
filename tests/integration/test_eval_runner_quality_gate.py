@@ -164,6 +164,41 @@ def test_keep_workspace_false_cleans_success_and_quality_gate_workspaces(tmp_pat
     assert not (invalid_run / "workspaces").exists()
 
 
+def test_injected_test_command_is_rejected_without_shell_execution(tmp_path: Path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "injected_test_command"
+    task_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    task_path = task_dir / "task_injected_test_command.yaml"
+    source = (ROOT / "tests/fixtures/tasks/task_001.yaml").read_text(encoding="utf-8")
+    task_path.write_text(
+        source.replace("id: task_001", "id: task_injected_test_command")
+        .replace("task_version: task_001_v0", "task_version: task_injected_test_command_v0")
+        .replace("repo: ../repos/buggy_calculator", "repo: ../repos/injected_test_command")
+        .replace('test_command: "pytest -q"', 'test_command: "pytest -q; printf RH_TEST_COMMAND_INJECTION"'),
+        encoding="utf-8",
+    )
+
+    run_dir = run_task(
+        task_path,
+        config_path=ROOT / "tests/fixtures/run_configs/replay_success.yaml",
+        output_dir=tmp_path / "runs",
+        run_id="stage11-injected-test-command",
+    )
+
+    baseline = _read_json(run_dir / "baseline.json")
+    metrics = _read_json(run_dir / "metrics.json")
+    assert baseline["status"] == "invalid"
+    assert baseline["dependency_error"] == "test_command_error"
+    assert metrics["run_outcome"] == "invalid_task"
+    manifest = _read_json(run_dir / "artifacts.json")
+    for artifact in manifest["artifacts"]:
+        if artifact["kind"] == "command_output":
+            artifact_text = (run_dir / artifact["relative_path"]).read_text(encoding="utf-8")
+            assert "RH_TEST_COMMAND_INJECTION" not in artifact_text
+
+
 def test_final_verifier_failure_derives_failed_outcome(tmp_path: Path):
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_001.yaml",

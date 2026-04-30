@@ -24,6 +24,18 @@ def test_workspace_path_resolution_rejects_outside_and_sensitive_paths(tmp_path:
         adapter.resolve_workspace_path(workspace, "secrets/id_rsa")
     with pytest.raises(WorkspaceError, match="敏感路径"):
         adapter.resolve_workspace_path(workspace, "certs/prod.pem")
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.resolve_workspace_path(workspace, ".netrc")
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.resolve_workspace_path(workspace, ".aws/credentials")
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.resolve_workspace_path(workspace, ".config/gh/hosts.yml")
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.resolve_workspace_path(workspace, "pip.conf")
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.resolve_workspace_path(workspace, "credentials.json")
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.resolve_workspace_path(workspace, "token")
 
 
 def test_workspace_path_resolution_rejects_symlink_to_outside(tmp_path: Path):
