@@ -316,12 +316,17 @@ class ToolExecutor:
         elif requested == "bash":
             command = str(args["command"]).strip()
             cwd = str(args.get("cwd", "."))
+            requested_timeout = int(args.get("timeout_sec", 30))
+            timeout = _clamp_command_timeout(requested_timeout, context)
             requested_cwd = cwd
             normalized_args = {
                 "command": command,
                 "cwd": cwd,
-                "timeout_sec": int(args.get("timeout_sec", 30)),
+                "timeout_sec": timeout,
             }
+            if timeout != requested_timeout:
+                normalized_args["requested_timeout_sec"] = requested_timeout
+                normalized_args["timeout_clamped_to_sec"] = timeout
             if _is_test_command(command, context.permission_context.test_command):
                 effective = "run_tests"
                 route_reason = "recognized_task_test_command"
@@ -807,6 +812,13 @@ def _is_test_command(command: str, configured_test_command: str) -> bool:
     }:
         return True
     return bool(parts and (parts[0] == "pytest" or parts[:3] == ["python", "-m", "pytest"]))
+
+
+def _clamp_command_timeout(requested_timeout: int, context: ToolExecutionContext) -> int:
+    command_timeout = getattr(context.budget_manager, "command_timeout_sec", None)
+    if command_timeout is None:
+        return requested_timeout
+    return max(1, min(requested_timeout, int(command_timeout)))
 
 
 def _resolve_cwd(context: ToolExecutionContext, cwd: str) -> str:

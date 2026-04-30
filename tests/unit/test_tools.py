@@ -3,6 +3,7 @@ import subprocess
 
 import pytest
 
+from repo_harness.budget import BudgetManager
 from repo_harness.permissions import PermissionContext
 from repo_harness.tools import (
     DEFAULT_TOOL_ORDER,
@@ -128,6 +129,34 @@ def test_bash_large_stdout_uses_preview_and_artifact(tmp_path: Path):
     assert result.artifact_refs
     assert len(result.content_preview) < 13000
     assert "[truncated]" in result.content_preview
+
+
+def test_bash_timeout_is_clamped_to_command_budget(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.budget_manager = BudgetManager(
+        max_turns=1,
+        max_tool_calls=10,
+        max_test_runs=10,
+        task_timeout_sec=60,
+        command_timeout_sec=2,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+    )
+    tool_call = ToolCall(
+        tool_call_id="call_timeout",
+        tool_name="bash",
+        arguments={"command": "pwd", "timeout_sec": 999},
+        turn=1,
+    )
+
+    normalized = ToolExecutor().normalize(tool_call, context)
+
+    assert normalized.requested_arguments["timeout_sec"] == 999
+    assert normalized.normalized_arguments["timeout_sec"] == 2
+    assert normalized.normalized_arguments["requested_timeout_sec"] == 999
+    assert normalized.normalized_arguments["timeout_clamped_to_sec"] == 2
 
 
 def _tool_context(tmp_path: Path) -> ToolExecutionContext:

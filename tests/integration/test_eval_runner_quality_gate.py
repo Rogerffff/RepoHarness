@@ -3,7 +3,10 @@ import shutil
 import textwrap
 from pathlib import Path
 
+import pytest
+
 from repo_harness.cli.main import main
+from repo_harness.errors import ConfigError
 from repo_harness.evaluation.runner import run_batch, run_task
 from repo_harness.trajectory import inspect_run
 
@@ -31,6 +34,36 @@ def test_invalid_baseline_blocks_agent_run(tmp_path: Path):
     assert not (run_dir / "resolved_verifier_plan.json").exists()
     assert not (run_dir / "workspaces/agent_workspace").exists()
     assert not any(event["event_type"] == "model_call_started" for event in events)
+
+
+def test_docker_execution_mode_is_rejected_in_v1(tmp_path: Path):
+    config_path = tmp_path / "docker_mode.yaml"
+    config_path.write_text(
+        f"""
+run_id_prefix: stage11_docker
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: {ROOT / "tests/fixtures/replays/task_001_success.yaml"}
+runtime:
+  scaffold_id: simple_react
+  execution_mode: docker
+  permission_mode: auto
+workspace:
+  output_dir: {tmp_path / "runs"}
+  keep_workspace: true
+  default_command_timeout_sec: 60
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="execution_mode=local_process"):
+        run_task(
+            ROOT / "tests/fixtures/tasks/task_001.yaml",
+            config_path=config_path,
+            output_dir=tmp_path / "runs",
+            run_id="stage11-docker",
+        )
 
 
 def test_test_command_error_without_generated_file_policy_blocks_agent_run(tmp_path: Path):

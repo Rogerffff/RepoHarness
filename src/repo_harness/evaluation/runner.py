@@ -37,6 +37,8 @@ def run_task(
     config = load_run_config(config_path, output_dir=output_dir)
     if config.model.provider != "replay":
         raise ConfigError("RepoHarness 第一版 run-task 只支持 model.provider=replay。")
+    if config.runtime.execution_mode != "local_process":
+        raise ConfigError("RepoHarness 第一版只支持 runtime.execution_mode=local_process。")
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)
@@ -197,6 +199,7 @@ def run_task(
         if replay_path is None:
             raise ConfigError("阶段七 run-task 需要 model.replay_script_path。")
         model = ReplayModelClient.from_path(replay_path)
+        budget_manager = BudgetManager.from_run_config(config)
         tool_context = ToolExecutionContext(
             run_id=actual_run_id,
             task_id=loaded.runnable_task.task_id,
@@ -213,6 +216,7 @@ def run_task(
             output_limits=ToolOutputLimits(
                 max_tool_output_chars=config.workspace.max_tool_output_chars,
             ),
+            budget_manager=budget_manager,
         )
         loop_state = AgentLoop(
             model_client=model,
@@ -225,7 +229,7 @@ def run_task(
             recorder=recorder,
             max_turns=config.runtime.max_turns,
             context_config=config.context_management,
-            budget_manager=BudgetManager.from_run_config(config),
+            budget_manager=budget_manager,
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         try:

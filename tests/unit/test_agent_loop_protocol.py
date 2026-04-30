@@ -143,6 +143,45 @@ def test_agent_loop_context_limit_records_prepared_context(tmp_path: Path):
     assert not any(event["event_type"] == "model_call_started" for event in events)
 
 
+def test_agent_loop_max_cost_zero_stops_before_model_call(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    budget = BudgetManager(
+        max_turns=1,
+        max_tool_calls=10,
+        max_test_runs=10,
+        task_timeout_sec=60,
+        command_timeout_sec=30,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+        max_cost=0.0,
+    )
+
+    with RunRecorder("max-cost", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=FakeModelClient.from_steps(
+                script_id="max-cost",
+                task_id="task",
+                steps=[{"step_id": "final", "action": "final_answer", "assistant_text": "done"}],
+            ),
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="max-cost",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            budget_manager=budget,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "max_cost"
+    assert any(event["event_type"] == "budget_exhausted" and event["error_type"] == "max_cost" for event in events)
+    assert not any(event["event_type"] == "model_call_started" for event in events)
+
+
 def test_agent_loop_max_tool_calls_pairs_interrupted_result(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = FakeModelClient.from_steps(

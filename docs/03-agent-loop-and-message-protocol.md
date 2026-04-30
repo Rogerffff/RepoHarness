@@ -302,9 +302,9 @@ RepoHarness 必须区分三层结论，不能只用一个 `termination_reason` �
 | baseline status 为 `invalid` | `invalid_task` | 不进入正式 agent run，也不计为模型失败。 |
 | baseline status 为 `flaky` | `flaky_task` | 默认不进入训练轨迹，可进入诊断集合。 |
 | final verifier status 为 `accepted` | `success` | 即使 agent stop reason 是 `timeout` 或 `max_turns`，只要最终 patch 被接受，评测成功率仍按成功统计，同时保留 stop reason。 |
-| final verifier status 为 `failed` | `failed` | 包括 assertion failure、pass-to-pass regression 和 patch apply failure。 |
+| final verifier status 为 `failed` | `failed` | 包括 assertion failure 和 pass-to-pass regression。 |
 | final verifier status 为 `timeout` 且没有可解析测试结果 | `inconclusive` | 若项目配置选择把 final timeout 计为失败，必须在 metrics 中记录该策略版本。 |
-| final verifier status 为 `error` | `inconclusive` | 例如 verifier parser 崩溃或执行环境异常。 |
+| final verifier status 为 `error` | `inconclusive` | 例如 verifier parser 崩溃、执行环境异常或 strict patch replay 阶段 `patch_apply_failed`。 |
 | manual stop 且未运行 final verifier | `interrupted` | 不作为成功或失败训练样本。 |
 
 这张表用于 metrics、训练过滤和简历报告口径。实现中可以增加细分字段，但不能把 `agent_stop_reason`、`final_verifier_status` 和 `run_outcome` 再合并成一个字段。

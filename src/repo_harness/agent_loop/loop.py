@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 
 from repo_harness.agent_loop.schemas import AgentLoopState
@@ -42,6 +43,7 @@ class AgentLoop:
         budget_manager: BudgetManager | None = None,
     ) -> AgentLoopState:
         budget_manager = budget_manager or _default_budget_manager(max_turns)
+        loop_started = time.monotonic()
         messages = list(initial_messages)
         state = AgentLoopState(
             run_id=run_id,
@@ -68,6 +70,17 @@ class AgentLoop:
         for turn in range(1, budget_manager.max_turns + 1):
             state.turn_count = turn
             state.budget_state.turn_count = turn
+            budget_stop = _budget_stop_reason(budget_manager, state, loop_started)
+            if budget_stop is not None:
+                _record_budget_exhausted(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    reason=budget_stop,
+                    state=state,
+                    recorder=recorder,
+                )
+                break
             prepared = self.context_manager.prepare_messages(
                 messages=messages,
                 recorder=recorder,
@@ -118,6 +131,9 @@ class AgentLoop:
                 recorder=recorder,
                 turn=turn,
             )
+            if response.model_call_event is not None:
+                state.budget_state.input_tokens += response.model_call_event.input_tokens
+                state.budget_state.output_tokens += response.model_call_event.output_tokens
             if response.model_call_event:
                 recorder.append_event(
                     TrajectoryEvent(
@@ -471,6 +487,47 @@ def _tool_event_type(tool_result: ToolResult) -> str:
     if tool_result.status == "interrupted":
         return "tool_interrupted"
     return "tool_failed"
+
+
+def _budget_stop_reason(
+    budget_manager: BudgetManager,
+    state: AgentLoopState,
+    loop_started: float,
+) -> str | None:
+    if time.monotonic() - loop_started >= budget_manager.task_timeout_sec:
+        return "timeout"
+    if budget_manager.max_cost is not None and state.budget_state.cost >= budget_manager.max_cost:
+        return "max_cost"
+    return None
+
+
+def _record_budget_exhausted(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    reason: str,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+) -> None:
+    state.agent_stop_reason = reason  # type: ignore[assignment]
+    state.budget_state.stop_reason = reason
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("budget"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="budget_exhausted",
+            severity="warning",
+            error_type=reason,
+            data={
+                "reason": reason,
+                "budget_state": state.budget_state.model_dump(mode="json"),
+            },
+        )
+    )
 
 
 def _default_budget_manager(max_turns: int) -> BudgetManager:
