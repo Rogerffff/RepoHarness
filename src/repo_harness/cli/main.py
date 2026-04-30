@@ -12,6 +12,7 @@ from repo_harness.config import load_run_config
 from repo_harness.errors import RepoHarnessError
 from repo_harness.evaluation.runner import run_batch as run_batch_command
 from repo_harness.evaluation.runner import run_task as run_task_command
+from repo_harness.export import export_run_or_runs
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
 
@@ -123,6 +124,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"批量运行完成：{manifest_path}")
         manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
         return 1 if manifest.get("should_fail_command") else 0
+    if args.command == "export":
+        try:
+            output_path = export_run_or_runs(
+                args.run_dir_or_runs_dir,
+                export_format=args.format,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"导出失败：{exc}\n")
+        print(f"导出完成：{output_path}")
+        return 0
     parser.error(f"命令 {args.command!r} 尚未在当前阶段实现")
     return 2
 
