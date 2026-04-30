@@ -119,7 +119,15 @@ def test_validate_task_cli_fails_for_invalid_task(capsys):
 
 @pytest.mark.parametrize(
     "name",
-    ["task_001_success.yaml", "task_001_failure.yaml", "security_negative.yaml"],
+    [
+        "task_001_success.yaml",
+        "task_001_failure.yaml",
+        "security_negative.yaml",
+        "task_003_create_file_success.yaml",
+        "task_001_bash_pytest.yaml",
+        "task_001_schema_error.yaml",
+        "task_001_unknown_tool.yaml",
+    ],
 )
 def test_replay_fixtures_are_static_and_schema_valid(name: str):
     replay_path = Path("tests/fixtures/replays") / name

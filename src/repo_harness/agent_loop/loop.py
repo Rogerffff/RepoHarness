@@ -8,12 +8,12 @@ from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetState
 from repo_harness.context import ContextManager
 from repo_harness.model_client import ReplayModelClient
-from repo_harness.tools import MINIMAL_TOOLS, MinimalToolContext, MinimalToolExecutor, ToolResult
+from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolResult
 from repo_harness.trajectory import RunRecorder, TranscriptRecord, TrajectoryEvent
 
 
 class AgentLoop:
-    def __init__(self, *, model_client: ReplayModelClient, tool_executor: MinimalToolExecutor) -> None:
+    def __init__(self, *, model_client: ReplayModelClient, tool_executor: ToolExecutor) -> None:
         self.model_client = model_client
         self.tool_executor = tool_executor
         self.context_manager = ContextManager()
@@ -24,7 +24,7 @@ class AgentLoop:
         run_id: str,
         task_id: str,
         initial_messages: list[dict[str, object]],
-        tool_context: MinimalToolContext,
+        tool_context: ToolExecutionContext,
         recorder: RunRecorder,
         max_turns: int,
     ) -> AgentLoopState:
@@ -146,7 +146,7 @@ class AgentLoop:
                         data=tool_call.model_dump(mode="json"),
                     )
                 )
-                if tool_call.tool_name not in MINIMAL_TOOLS:
+                if not self.tool_executor.is_known(tool_call.tool_name):
                     state.invalid_tool_call_count += 1
                     recorder.append_event(
                         TrajectoryEvent(
@@ -171,8 +171,22 @@ class AgentLoop:
                         messages=messages,
                     )
                     continue
-                validation_error = self.tool_executor.validate_input(tool_call)
+                validation_error = self.tool_executor.validate_input(tool_call, tool_context)
                 if validation_error is not None:
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("tool"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="tool_validation_failed",
+                            severity="warning",
+                            error_type=validation_error.error_type,
+                            artifact_refs=validation_error.artifact_refs,
+                            data=validation_error.model_dump(mode="json"),
+                        )
+                    )
                     _record_tool_result(
                         run_id=run_id,
                         task_id=task_id,
@@ -199,11 +213,16 @@ class AgentLoop:
                 )
                 if permission.decision == "deny":
                     state.permission_denial_count += 1
+                    state.permission_denial_reasons.append(permission.reason)
                     _record_tool_result(
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
-                        tool_result=self.tool_executor.denied_result(tool_call, permission),
+                        tool_result=self.tool_executor.denied_result(
+                            tool_call,
+                            permission,
+                            tool_context,
+                        ),
                         state=state,
                         recorder=recorder,
                         messages=messages,
@@ -244,7 +263,7 @@ def _record_tool_result(
             run_id=run_id,
             task_id=task_id,
             turn=turn,
-            event_type="tool_completed" if tool_result.status == "ok" else "tool_failed",
+            event_type=_tool_event_type(tool_result),
             error_type=tool_result.error_type,
             artifact_refs=tool_result.artifact_refs,
             data=tool_result.model_dump(mode="json"),
@@ -278,3 +297,15 @@ def _record_tool_result(
 
 def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _tool_event_type(tool_result: ToolResult) -> str:
+    if tool_result.status == "ok":
+        return "tool_completed"
+    if tool_result.status == "denied":
+        return "tool_denied"
+    if tool_result.status == "timeout":
+        return "tool_timeout"
+    if tool_result.status == "interrupted":
+        return "tool_interrupted"
+    return "tool_failed"

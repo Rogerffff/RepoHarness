@@ -16,9 +16,10 @@ from repo_harness.evaluation.metrics import (
 )
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
 from repo_harness.model_client import ReplayModelClient
+from repo_harness.permissions import PermissionContext
 from repo_harness.reward import compute_reward_metadata
 from repo_harness.tasks import load_task
-from repo_harness.tools import MINIMAL_TOOLS, MinimalToolContext, MinimalToolExecutor
+from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolExecutionContext, ToolExecutor, ToolOutputLimits
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
 from repo_harness.verifier import PytestVerifier, build_error_verifier_result
 from repo_harness.workspace import LocalWorkspaceAdapter
@@ -144,23 +145,32 @@ def run_task(
             workspace=run_workspace,
             run_config=config,
             resolved_verifier_plan=resolved_plan,
-            allowed_tools=MINIMAL_TOOLS,
+            allowed_tools=DEFAULT_TOOL_ORDER,
         )
         replay_path = config.model.replay_script_path
         if replay_path is None:
             raise ConfigError("阶段七 run-task 需要 model.replay_script_path。")
         model = ReplayModelClient.from_path(replay_path)
-        tool_context = MinimalToolContext(
-            workspace_adapter=adapter,
+        tool_context = ToolExecutionContext(
+            run_id=actual_run_id,
+            task_id=loaded.runnable_task.task_id,
+            workspace_facade=adapter,
             run_workspace=run_workspace,
-            verifier=verifier,
+            artifact_writer=recorder,
+            permission_context=PermissionContext(
+                mode=config.runtime.permission_mode,
+                network_policy=config.workspace.network_policy,
+                test_command=resolved_plan.verifier_config.test_command,
+            ),
+            verifier_feedback_facade=verifier,
             resolved_verifier_plan=resolved_plan,
-            recorder=recorder,
-            permission_mode=config.runtime.permission_mode,
+            output_limits=ToolOutputLimits(
+                max_tool_output_chars=config.workspace.max_tool_output_chars,
+            ),
         )
         loop_state = AgentLoop(
             model_client=model,
-            tool_executor=MinimalToolExecutor(),
+            tool_executor=ToolExecutor(),
         ).run(
             run_id=actual_run_id,
             task_id=loaded.runnable_task.task_id,
@@ -230,6 +240,8 @@ def run_task(
             f"- agent_stop_reason: {loop_state.agent_stop_reason}\n"
             f"- final_verifier_status: {final_status}\n"
             f"- run_outcome: {run_outcome}\n"
+            f"- permission_denial_count: {loop_state.permission_denial_count}\n"
+            f"{_permission_denial_summary(loop_state.permission_denial_reasons)}"
             f"- final.patch: final.patch\n"
             f"- final.diff: final.diff\n"
         )
@@ -263,3 +275,12 @@ def _timestamp() -> str:
 
 def _count_test_runs(messages: list[dict[str, object]]) -> int:
     return sum(1 for message in messages if "run_tests" in str(message))
+
+
+def _permission_denial_summary(reasons: list[str]) -> str:
+    if not reasons:
+        return ""
+    unique_reasons = list(dict.fromkeys(reasons))
+    lines = ["- permission_denial_reasons:"]
+    lines.extend(f"  - {reason}" for reason in unique_reasons[:5])
+    return "\n".join(lines) + "\n"

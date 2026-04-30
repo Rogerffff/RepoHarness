@@ -1,0 +1,24 @@
+script_id: task_001_bash_pytest
+task_id: task_001
+steps:
+  - step_id: edit_divide
+    action: tool_call
+    tool_call_id: call_edit_divide
+    tool_name: edit_file
+    arguments:
+      path: calculator.py
+      old_text: "def divide(left: int, right: int) -> float:\n    return left / right\n"
+      new_text: "def divide(left: int, right: int) -> float:\n    if right == 0:\n        raise ValueError(\"division by zero\")\n    return left / right\n"
+  - step_id: bash_pytest
+    action: tool_call
+    tool_call_id: call_bash_pytest
+    tool_name: bash
+    arguments:
+      command: "pytest -q"
+  - step_id: final
+    action: final_answer
+    assistant_text: "Verified by requesting pytest through bash routing."
+expected_outcome:
+  accepted: true
+metadata:
+  fixture_kind: bash_route

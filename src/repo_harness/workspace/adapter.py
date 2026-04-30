@@ -447,7 +447,14 @@ def _preview(text: str, limit: int = 4000) -> str:
 
 
 def _command_env() -> dict[str, str]:
-    env = os.environ.copy()
+    source_env = os.environ
+    env = {
+        key: source_env[key]
+        for key in ("TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL", "LC_CTYPE")
+        if key in source_env
+    }
     python_bin_dir = str(Path(sys.executable).parent)
-    env["PATH"] = f"{python_bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    env["PATH"] = f"{python_bin_dir}{os.pathsep}{source_env.get('PATH', '')}"
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONNOUSERSITE"] = "1"
     return env

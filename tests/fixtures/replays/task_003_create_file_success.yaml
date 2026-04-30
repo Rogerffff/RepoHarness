@@ -1,0 +1,29 @@
+script_id: task_003_create_file_success
+task_id: task_003_create_file
+steps:
+  - step_id: list_app
+    action: tool_call
+    tool_call_id: call_list_app
+    tool_name: list_files
+    arguments:
+      path: app
+      pattern: "app/*.py"
+  - step_id: create_helpers
+    action: tool_call
+    tool_call_id: call_create_helpers
+    tool_name: create_file
+    arguments:
+      path: app/helpers.py
+      content: "def normalize_name(name: str) -> str:\n    return \" \".join(name.split()).title()\n"
+  - step_id: run_tests
+    action: tool_call
+    tool_call_id: call_run_tests
+    tool_name: run_tests
+    arguments: {}
+  - step_id: final
+    action: final_answer
+    assistant_text: "Added the missing helpers module and verified the tests."
+expected_outcome:
+  accepted: true
+metadata:
+  fixture_kind: create_file_success

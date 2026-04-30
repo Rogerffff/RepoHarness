@@ -5,7 +5,6 @@ from repo_harness.evaluation.metrics import (
     derive_final_verifier_status,
     derive_run_outcome,
 )
-from repo_harness.evaluation.runner import run_task
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
 
 __all__ = [
@@ -14,5 +13,4 @@ __all__ = [
     "build_metrics_record",
     "derive_final_verifier_status",
     "derive_run_outcome",
-    "run_task",
 ]

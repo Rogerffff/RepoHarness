@@ -77,7 +77,7 @@ def test_replay_failure_still_writes_reviewable_artifacts(tmp_path):
     _assert_tool_calls_are_paired(_read_jsonl(run_dir / "events.jsonl"))
 
 
-def test_security_negative_replay_records_denials_and_invalid_tools(tmp_path):
+def test_security_negative_replay_records_permission_denials(tmp_path):
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_security_probe.yaml",
         config_path=ROOT / "tests/fixtures/run_configs/replay_security_negative_minimal.yaml",
@@ -93,8 +93,8 @@ def test_security_negative_replay_records_denials_and_invalid_tools(tmp_path):
         and event["data"]["decision"] == "deny"
     ]
     invalid = [event for event in events if event["event_type"] == "invalid_tool"]
-    assert len(denied) == 2
-    assert len(invalid) == 2
+    assert len(denied) == 4
+    assert len(invalid) == 0
     _assert_tool_calls_are_paired(events)
 
     transcript = _read_jsonl(run_dir / "transcript.jsonl")
@@ -168,7 +168,13 @@ def _assert_tool_calls_are_paired(events: list[dict]) -> None:
     completed = {
         event["data"]["tool_call_id"]
         for event in events
-        if event["event_type"] in {"tool_completed", "tool_failed"}
+        if event["event_type"] in {
+            "tool_completed",
+            "tool_denied",
+            "tool_failed",
+            "tool_timeout",
+            "tool_interrupted",
+        }
     }
     assert requested == completed
 

@@ -1,0 +1,16 @@
+script_id: task_001_unknown_tool
+task_id: task_001
+steps:
+  - step_id: unknown_tool
+    action: tool_call
+    tool_call_id: call_unknown
+    tool_name: open_everything
+    arguments:
+      path: calculator.py
+  - step_id: final
+    action: final_answer
+    assistant_text: "This replay intentionally requests an unknown tool."
+expected_outcome:
+  unknown_tool: true
+metadata:
+  fixture_kind: unknown_tool

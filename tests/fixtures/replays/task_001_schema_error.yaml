@@ -1,0 +1,15 @@
+script_id: task_001_schema_error
+task_id: task_001
+steps:
+  - step_id: invalid_read_file
+    action: tool_call
+    tool_call_id: call_invalid_read
+    tool_name: read_file
+    arguments: {}
+  - step_id: final
+    action: final_answer
+    assistant_text: "This replay intentionally triggers schema validation."
+expected_outcome:
+  schema_error: true
+metadata:
+  fixture_kind: schema_error

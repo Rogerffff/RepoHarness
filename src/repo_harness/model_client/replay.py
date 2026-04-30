@@ -9,6 +9,7 @@ import yaml
 from repo_harness.context.schemas import PreparedMessages
 from repo_harness.model_client.schemas import ModelCallEvent, ModelMessage, ModelResponse, ReplayScript
 from repo_harness.schema_base import stable_hash
+from repo_harness.tools import DEFAULT_TOOL_ORDER
 from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import RunRecorder
 
@@ -90,7 +91,7 @@ class ReplayModelClient:
             prepared_messages_ref=prepared_messages.prepared_messages_ref,
             model_input_hash=prepared_messages.model_input_hash,
             provider_message_format="repo_harness_replay_v0",
-            tool_schema_hash=stable_hash(["read_file", "edit_file", "run_tests", "git_diff"]),
+            tool_schema_hash=stable_hash(DEFAULT_TOOL_ORDER),
             model_error_type=model_error_type,
         )
         return ModelResponse(
