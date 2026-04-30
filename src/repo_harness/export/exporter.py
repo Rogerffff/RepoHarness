@@ -134,8 +134,12 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
             "termination_summary": _read_text_if_exists(run_path / "summary.md"),
         },
         "verifier": _safe_verifier_summary(run_path),
-        "reward_metadata_ref": _relative_ref(run_path, "reward.json", "reward_metadata"),
-        "final_verifier_ref": _relative_ref(run_path, "verifier.json", "final_verifier_result"),
+        "reward_metadata_ref": _manifest_ref(
+            run_path, "reward_metadata", "reward.json", "reward_metadata"
+        ),
+        "final_verifier_ref": _manifest_ref(
+            run_path, "final_verifier_result", "verifier.json", "final_verifier_result"
+        ),
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
     }
@@ -160,7 +164,9 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
         "reward": float(reward.get("final_reward", 0.0)) if reward else 0.0,
         "reward_metadata": {
             "reward_version": reward.get("reward_version") if reward else None,
-            "reward_metadata_ref": _relative_ref(run_path, "reward.json", "reward_metadata"),
+            "reward_metadata_ref": _manifest_ref(
+                run_path, "reward_metadata", "reward.json", "reward_metadata"
+            ),
             "source": (
                 "formal_final_verifier"
                 if formal_final_reason is None
@@ -168,7 +174,9 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
             ),
             "formal_final_verifier": formal_final_reason is None,
         },
-        "final_verifier_ref": _relative_ref(run_path, "verifier.json", "final_verifier_result"),
+        "final_verifier_ref": _manifest_ref(
+            run_path, "final_verifier_result", "verifier.json", "final_verifier_result"
+        ),
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
     }
@@ -210,11 +218,17 @@ def _build_preference_records(root: Path) -> list[ExportRecord]:
         metadata = {
             "export_policy_version": ExportPolicy().export_policy_version,
             "pairing_policy": "same_task_rollout_ranking_v0",
-            "chosen_verifier_result_ref": _relative_ref(
-                Path(chosen["run_dir"]), "verifier.json", "final_verifier_result"
+            "chosen_verifier_result_ref": _manifest_ref(
+                Path(chosen["run_dir"]),
+                "final_verifier_result",
+                "verifier.json",
+                "final_verifier_result",
             ),
-            "rejected_verifier_result_ref": _relative_ref(
-                Path(rejected["run_dir"]), "verifier.json", "final_verifier_result"
+            "rejected_verifier_result_ref": _manifest_ref(
+                Path(rejected["run_dir"]),
+                "final_verifier_result",
+                "verifier.json",
+                "final_verifier_result",
             ),
         }
         records.append(
@@ -549,7 +563,21 @@ def _relative_ref(run_path: Path, relative_path: str, kind: str) -> dict[str, An
         "kind": kind,
         "relative_path": relative_path,
         "exists": path.exists(),
+        "manifest_backed": False,
     }
+
+
+def _manifest_ref(
+    run_path: Path,
+    artifact_kind: str,
+    fallback_relative_path: str,
+    fallback_kind: str,
+) -> dict[str, Any]:
+    manifest = _read_json_if_exists(run_path / "artifacts.json")
+    for artifact in manifest.get("artifacts", []):
+        if artifact.get("kind") == artifact_kind:
+            return {**artifact, "manifest_backed": True}
+    return _relative_ref(run_path, fallback_relative_path, fallback_kind)
 
 
 def _outcome_rank(run_outcome: str | None) -> int:

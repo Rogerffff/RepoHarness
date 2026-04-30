@@ -23,7 +23,7 @@ def test_sft_export_from_success_run_masks_assistant_actions(tmp_path: Path):
     assert 1 in record["payload"]["loss_mask"]
     assert 1 in record["payload"]["observation_mask"]
     assert record["payload"]["loss_mask"][record["payload"]["observation_mask"].index(1)] == 0
-    assert record["payload"]["reward_metadata_ref"]["relative_path"] == "reward.json"
+    assert record["payload"]["reward_metadata_ref"]["kind"] == "reward_metadata"
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
     assert any(
@@ -43,8 +43,8 @@ def test_rl_export_uses_final_reward_metadata(tmp_path: Path):
     reward = _read_json(run_dir / "reward.json")
 
     assert record["payload"]["reward"] == reward["final_reward"]
-    assert record["payload"]["reward_metadata"]["reward_metadata_ref"]["relative_path"] == "reward.json"
-    assert record["payload"]["final_verifier_ref"]["relative_path"] == "verifier.json"
+    assert record["payload"]["reward_metadata"]["reward_metadata_ref"]["kind"] == "reward_metadata"
+    assert record["payload"]["final_verifier_ref"]["kind"] == "final_verifier_result"
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
     assert record["payload"]["trajectory"]
@@ -117,6 +117,10 @@ def _read_jsonl(path: Path) -> list[dict]:
 def _assert_refs_exist(run_dir: Path, record: dict) -> None:
     for ref_key in ("reward_metadata_ref", "final_verifier_ref"):
         ref = record["payload"][ref_key]
+        assert ref["artifact_id"]
+        assert ref["sha256"]
+        assert ref["size_bytes"] > 0
+        assert ref["relative_path"].startswith("artifacts/")
         assert (run_dir / ref["relative_path"]).exists()
 
 

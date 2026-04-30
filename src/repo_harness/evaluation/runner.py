@@ -280,6 +280,7 @@ def run_task(
                 },
             },
         )
+        recorder.write_json_artifact("reward_metadata", reward.model_dump(mode="json"))
         final_status = derive_final_verifier_status(final_verifier)
         run_outcome = derive_run_outcome(
             baseline_status=baseline.status,
