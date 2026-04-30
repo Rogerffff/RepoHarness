@@ -193,3 +193,22 @@ def test_artifact_ref_schema_can_validate_manifest_entry(tmp_path: Path):
 
     assert ref.relative_path.startswith("artifacts/")
     assert not Path(ref.relative_path).is_absolute()
+
+
+def test_run_recorder_truncates_artifacts_over_configured_budget(tmp_path: Path):
+    run_dir = tmp_path / "run_budget"
+    with RunRecorder("run_budget", run_dir, task_id="task_001", max_artifact_bytes=20) as recorder:
+        artifact = recorder.write_artifact("command_output", "x" * 100)
+
+    events = read_jsonl(run_dir / "events.jsonl")
+    stored = (run_dir / artifact.relative_path).read_bytes()
+
+    assert artifact.size_bytes <= 20
+    assert len(stored) <= 20
+    assert verify_artifact_manifest(run_dir) == []
+    assert any(
+        event["event_type"] == "artifact_budget_exhausted"
+        and event["data"]["artifact_id"] == artifact.artifact_id
+        and event["data"]["original_size_bytes"] == 100
+        for event in events
+    )

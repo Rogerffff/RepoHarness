@@ -35,6 +35,7 @@ class BudgetManager(StrictBaseModel):
             max_tool_output_chars=config.workspace.max_tool_output_chars,
             max_context_tokens=config.context_management.max_context_tokens,
             max_output_tokens=config.model.max_output_tokens,
+            max_artifact_bytes=config.workspace.max_artifact_bytes,
             max_concurrent_tasks=config.evaluation.concurrency,
         )
 

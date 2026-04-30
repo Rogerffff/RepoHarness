@@ -29,6 +29,7 @@ runtime:
     assert config.model.provider == "replay"
     assert config.context_management.token_estimator == TOKEN_ESTIMATOR_VERSION
     assert config.evaluation.final_verifier_mode == "strict_patch_replay"
+    assert config.workspace.max_artifact_bytes is None
 
 
 def test_batch_config_rejects_ask_permission_mode(tmp_path: Path):

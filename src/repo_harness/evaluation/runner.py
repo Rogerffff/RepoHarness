@@ -49,7 +49,12 @@ def run_task(
     run_dir = Path(config.workspace.output_dir) / actual_run_id
     if run_dir.exists():
         raise ConfigError(f"run directory 已存在，请使用新的 run id 或先手动归档：{run_dir}")
-    with RunRecorder(actual_run_id, run_dir, task_id=loaded.runnable_task.task_id) as recorder:
+    with RunRecorder(
+        actual_run_id,
+        run_dir,
+        task_id=loaded.runnable_task.task_id,
+        max_artifact_bytes=config.workspace.max_artifact_bytes,
+    ) as recorder:
         recorder.append_event(
             TrajectoryEvent(
                 event_id=recorder.next_event_id("run"),

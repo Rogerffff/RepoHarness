@@ -27,9 +27,19 @@ class RunRecorderError(RepoHarnessError):
 class RunRecorder:
     """统一写入 transcript、events 和 artifact manifest。"""
 
-    def __init__(self, run_id: str, run_dir: str | Path, *, task_id: str | None = None) -> None:
+    def __init__(
+        self,
+        run_id: str,
+        run_dir: str | Path,
+        *,
+        task_id: str | None = None,
+        max_artifact_bytes: int | None = None,
+    ) -> None:
         self.run_id = run_id
         self.task_id = task_id
+        if max_artifact_bytes is not None and max_artifact_bytes <= 0:
+            raise RunRecorderError("max_artifact_bytes 必须为正数。")
+        self.max_artifact_bytes = max_artifact_bytes
         self.run_dir = Path(run_dir)
         self.artifact_dir = self.run_dir / "artifacts"
         self.transcript_path = self.run_dir / "transcript.jsonl"
@@ -110,12 +120,20 @@ class RunRecorder:
         data: bytes | str | Path,
         metadata: Mapping[str, Any] | None = None,
     ) -> ArtifactRef:
-        metadata = metadata or {}
+        metadata = dict(metadata or {})
         explicit_created_by_event_id = metadata.get("created_by_event_id")
         created_by_event_id = explicit_created_by_event_id or self.next_event_id("artifact")
         self._artifact_counter += 1
         artifact_id = f"{self.run_id}_artifact_{self._artifact_counter:06d}"
         suffix = _artifact_suffix(data, metadata)
+        original_size_bytes = _artifact_size_bytes(data)
+        truncated = (
+            self.max_artifact_bytes is not None
+            and original_size_bytes > self.max_artifact_bytes
+        )
+        if truncated:
+            data = _truncate_artifact_data(data, self.max_artifact_bytes or 0)
+            metadata["retention_policy"] = "truncated"
         filename = f"{artifact_id}_{_safe_filename(kind)}{suffix}"
         relative_path = Path("artifacts") / filename
         target_path = self.run_dir / relative_path
@@ -160,6 +178,27 @@ class RunRecorder:
                         "kind": ref.kind,
                         "relative_path": ref.relative_path,
                         "size_bytes": ref.size_bytes,
+                    },
+                )
+            )
+        if truncated:
+            self.append_event(
+                TrajectoryEvent(
+                    event_id=self.next_event_id("artifact_budget"),
+                    timestamp=_timestamp(),
+                    run_id=self.run_id,
+                    task_id=self.task_id,
+                    event_type="artifact_budget_exhausted",
+                    severity="warning",
+                    artifact_refs=[ref],
+                    data={
+                        "artifact_id": ref.artifact_id,
+                        "kind": ref.kind,
+                        "relative_path": ref.relative_path,
+                        "original_size_bytes": original_size_bytes,
+                        "stored_size_bytes": ref.size_bytes,
+                        "max_artifact_bytes": self.max_artifact_bytes,
+                        "truncated": True,
                     },
                 )
             )
@@ -318,6 +357,28 @@ def _artifact_suffix(data: bytes | str | Path, metadata: Mapping[str, Any]) -> s
     if isinstance(data, bytes):
         return ".bin"
     return ".txt"
+
+
+def _artifact_size_bytes(data: bytes | str | Path) -> int:
+    if isinstance(data, Path):
+        return data.stat().st_size
+    if isinstance(data, bytes):
+        return len(data)
+    return len(data.encode("utf-8"))
+
+
+def _truncate_artifact_data(data: bytes | str | Path, max_bytes: int) -> bytes | str:
+    if isinstance(data, Path):
+        return data.read_bytes()[:max_bytes]
+    if isinstance(data, bytes):
+        return data[:max_bytes]
+    marker = "\n[artifact truncated by max_artifact_bytes]\n"
+    marker_bytes = marker.encode("utf-8")
+    raw = data.encode("utf-8")
+    if max_bytes <= len(marker_bytes):
+        return marker_bytes[:max_bytes].decode("utf-8", errors="ignore")
+    keep = max_bytes - len(marker_bytes)
+    return raw[:keep].decode("utf-8", errors="ignore") + marker
 
 
 def _sha256_file(path: Path) -> str:

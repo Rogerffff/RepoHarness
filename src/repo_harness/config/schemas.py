@@ -52,6 +52,7 @@ class WorkspaceConfig(StrictBaseModel):
     keep_workspace: bool = True
     default_command_timeout_sec: int = Field(default=120, gt=0)
     max_tool_output_chars: int = Field(default=12000, gt=0)
+    max_artifact_bytes: int | None = Field(default=None, gt=0)
     network_policy: str = "deny_agent_run"
 
 
