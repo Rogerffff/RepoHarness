@@ -569,8 +569,12 @@ def _record_tool_result(
     messages.append(
         {
             "role": "tool",
+            "turn": turn,
             "tool_call_id": tool_result.tool_call_id,
             "tool_result_id": tool_result.tool_result_id,
+            "tool_name": tool_result.tool_name,
+            "requested_tool_name": tool_result.requested_tool_name,
+            "effective_tool_name": tool_result.effective_tool_name,
             "content": tool_result.content_preview,
             "status": tool_result.status,
             "error_type": tool_result.error_type,

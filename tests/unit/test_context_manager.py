@@ -132,3 +132,60 @@ def test_context_manager_preserves_first_visible_record_when_replacing_later(tmp
     assert second_record.first_visible_form == "preview"
     assert second_record.first_seen_at_context_revision == first_record.first_seen_at_context_revision
     assert second_record.first_visible_content_hash == first_record.first_visible_content_hash
+
+
+def test_context_manager_preserves_recent_test_feedback_over_older_output(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    old_output = "older output " * 10
+    recent_feedback = "run_tests accepted=True pass_ratio=1.00"
+    messages = [
+        {
+            "role": "assistant",
+            "content": None,
+            "turn": 1,
+            "tool_calls": [{"tool_call_id": "call_old", "tool_name": "bash", "arguments": {}}],
+        },
+        {
+            "role": "tool",
+            "turn": 1,
+            "tool_call_id": "call_old",
+            "tool_result_id": "call_old_result",
+            "tool_name": "bash",
+            "content": old_output,
+        },
+        {
+            "role": "assistant",
+            "content": None,
+            "turn": 2,
+            "tool_calls": [{"tool_call_id": "call_tests", "tool_name": "run_tests", "arguments": {}}],
+        },
+        {
+            "role": "tool",
+            "turn": 2,
+            "tool_call_id": "call_tests",
+            "tool_result_id": "call_tests_result",
+            "tool_name": "run_tests",
+            "effective_tool_name": "run_tests",
+            "content": recent_feedback,
+            "typed": {"verifier_result_preview": {"accepted": True}},
+        },
+    ]
+
+    with RunRecorder("context-recent-tests", run_dir, task_id="task") as recorder:
+        prepared = ContextManager().prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=3,
+            context_config=ContextManagementConfig(
+                tool_result_aggregate_budget_chars=len(old_output) + 5,
+                keep_recent_test_results=1,
+                keep_recent_turns=0,
+            ),
+        )
+
+    old_tool = prepared.messages[1]
+    test_tool = prepared.messages[3]
+    assert "[tool result replaced]" in str(old_tool["content"])
+    assert test_tool["content"] == recent_feedback
+    assert not test_tool.get("context_replacement", False)

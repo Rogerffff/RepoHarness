@@ -98,22 +98,27 @@ class ContextManager:
         config: ContextManagementConfig,
     ) -> tuple[list[dict[str, object]], dict[str, Any]]:
         prepared: list[dict[str, object]] = []
-        aggregate_tool_chars = 0
         replaced_tool_result_ids: list[str] = []
         replacement_refs: list[ArtifactRef] = []
+        tool_infos = _tool_message_infos(messages)
+        protected_tool_result_ids = _protected_tool_result_ids(
+            tool_infos,
+            keep_recent_turns=config.keep_recent_turns,
+            keep_recent_test_results=config.keep_recent_test_results,
+        )
+        replace_tool_result_ids = _replacement_candidates(
+            tool_infos,
+            protected_tool_result_ids,
+            existing_replacement_ids=set(self._replacement_text_by_tool_result_id),
+            budget_chars=config.tool_result_aggregate_budget_chars,
+        )
         for message in messages:
             if message.get("role") != "tool":
                 prepared.append(dict(message))
                 continue
             tool_result_id = str(message.get("tool_result_id") or message.get("tool_call_id") or "")
             content = str(message.get("content", ""))
-            aggregate_tool_chars += len(content)
-            should_replace = (
-                tool_result_id in self._replacement_text_by_tool_result_id
-                or len(content) > config.tool_result_aggregate_budget_chars
-                or aggregate_tool_chars > config.tool_result_aggregate_budget_chars
-            )
-            if should_replace:
+            if tool_result_id in replace_tool_result_ids:
                 replacement, ref = self._replacement_for_tool_result(
                     tool_result_id=tool_result_id,
                     message=message,
@@ -136,6 +141,7 @@ class ContextManager:
                 prepared.append(dict(message))
         return prepared, {
             "replaced_tool_result_ids": replaced_tool_result_ids,
+            "protected_tool_result_ids": sorted(protected_tool_result_ids),
             "replacement_artifact_refs": [ref.model_dump(mode="json") for ref in replacement_refs],
         }
 
@@ -240,6 +246,100 @@ def _head_tail(text: str, line_count: int = 3) -> tuple[str, str]:
     head = "\n".join(lines[:line_count])
     tail = "\n".join(lines[-line_count:]) if len(lines) > line_count else head
     return head, tail
+
+
+def _tool_message_infos(messages: list[dict[str, object]]) -> list[dict[str, Any]]:
+    infos: list[dict[str, Any]] = []
+    inferred_turn: int | None = None
+    for index, message in enumerate(messages):
+        if message.get("role") == "assistant":
+            inferred_turn = _message_turn(message, fallback=inferred_turn)
+            continue
+        if message.get("role") != "tool":
+            continue
+        tool_result_id = str(message.get("tool_result_id") or message.get("tool_call_id") or "")
+        if not tool_result_id:
+            continue
+        turn = _message_turn(message, fallback=inferred_turn)
+        infos.append(
+            {
+                "index": index,
+                "tool_result_id": tool_result_id,
+                "content_chars": len(str(message.get("content", ""))),
+                "turn": turn,
+                "is_test_result": _is_test_result_message(message),
+            }
+        )
+    return infos
+
+
+def _protected_tool_result_ids(
+    tool_infos: list[dict[str, Any]],
+    *,
+    keep_recent_turns: int,
+    keep_recent_test_results: int,
+) -> set[str]:
+    protected: set[str] = set()
+    turns = [info["turn"] for info in tool_infos if isinstance(info.get("turn"), int)]
+    if keep_recent_turns > 0 and turns:
+        oldest_kept_turn = max(turns) - keep_recent_turns + 1
+        protected.update(
+            str(info["tool_result_id"])
+            for info in tool_infos
+            if isinstance(info.get("turn"), int) and info["turn"] >= oldest_kept_turn
+        )
+    if keep_recent_test_results > 0:
+        test_infos = [info for info in tool_infos if info.get("is_test_result")]
+        protected.update(str(info["tool_result_id"]) for info in test_infos[-keep_recent_test_results:])
+    return protected
+
+
+def _replacement_candidates(
+    tool_infos: list[dict[str, Any]],
+    protected_tool_result_ids: set[str],
+    *,
+    existing_replacement_ids: set[str],
+    budget_chars: int,
+) -> set[str]:
+    replace_ids = {
+        str(info["tool_result_id"])
+        for info in tool_infos
+        if str(info["tool_result_id"]) in existing_replacement_ids
+        and str(info["tool_result_id"]) not in protected_tool_result_ids
+    }
+    total_chars = sum(
+        int(info["content_chars"])
+        for info in tool_infos
+        if str(info["tool_result_id"]) not in replace_ids
+    )
+    for info in tool_infos:
+        tool_result_id = str(info["tool_result_id"])
+        if total_chars <= budget_chars:
+            break
+        if tool_result_id in replace_ids or tool_result_id in protected_tool_result_ids:
+            continue
+        replace_ids.add(tool_result_id)
+        total_chars -= int(info["content_chars"])
+    return replace_ids
+
+
+def _message_turn(message: dict[str, object], *, fallback: int | None) -> int | None:
+    turn = message.get("turn")
+    if isinstance(turn, int):
+        return turn
+    tool_calls = message.get("tool_calls")
+    if isinstance(tool_calls, list):
+        for tool_call in tool_calls:
+            if isinstance(tool_call, dict) and isinstance(tool_call.get("turn"), int):
+                return int(tool_call["turn"])
+    return fallback
+
+
+def _is_test_result_message(message: dict[str, object]) -> bool:
+    if message.get("effective_tool_name") == "run_tests" or message.get("tool_name") == "run_tests":
+        return True
+    typed = message.get("typed")
+    return isinstance(typed, dict) and "verifier_result_preview" in typed
 
 
 def _validate_tool_pairing(messages: list[dict[str, object]]) -> dict[str, Any]:
