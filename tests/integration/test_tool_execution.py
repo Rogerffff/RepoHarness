@@ -154,6 +154,31 @@ def test_bash_cwd_escape_returns_denied_tool_result(tmp_path):
     _assert_tool_calls_are_paired(events)
 
 
+def test_bash_git_diff_no_index_outside_path_is_denied(tmp_path):
+    _, config_path = _write_single_bash_replay(
+        tmp_path,
+        command="git diff --no-index /etc/hosts calculator.py",
+        run_id="stage08-git-diff-no-index",
+    )
+    run_dir = run_task(
+        ROOT / "tests/fixtures/tasks/task_001.yaml",
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage08-git-diff-no-index",
+    )
+
+    events = _read_jsonl(run_dir / "events.jsonl")
+    transcript = _read_jsonl(run_dir / "transcript.jsonl")
+    decision = next(event["data"] for event in events if event["event_type"] == "permission_decision")
+    tool_result = next(record for record in transcript if record.get("tool_call_id") == "call_bash")
+    assert decision["decision"] == "deny"
+    assert decision["matched_rule"] == "bash_command_safety"
+    assert "--no-index" in decision["reason"]
+    assert tool_result["tool_result_id"] == "call_bash_result"
+    assert "root:" not in tool_result["content_preview"]
+    _assert_tool_calls_are_paired(events)
+
+
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 

@@ -232,20 +232,179 @@ def _deny_reason_for_bash(
     if command_name in {"curl", "wget", "ssh", "scp", "sudo", "rm"}:
         return f"Command is denied by default: {command_name}"
     if command_name == "git":
-        if len(parts) < 2:
-            return "git command must include an allowed read-only subcommand."
-        if parts[1] not in {"status", "diff", "show", "log", "ls-files"}:
-            return f"git subcommand is denied by default: {parts[1]}"
-        return None
+        return _validate_git_command(parts[1:], workspace_facade, workspace_path)
     if command_name == "ls":
         return _validate_bash_paths(parts[1:], workspace_facade, workspace_path, allow_flags=True)
     if command_name == "find":
         return _validate_bash_paths(parts[1:] or ["."], workspace_facade, workspace_path, allow_flags=False)
-    if command_name in {"pwd", "ruff", "mypy"}:
+    if command_name == "pwd":
         return None
+    if command_name == "ruff":
+        return _validate_ruff_command(parts[1:], workspace_facade, workspace_path)
+    if command_name == "mypy":
+        return _validate_path_operands(
+            parts[1:],
+            workspace_facade,
+            workspace_path,
+            allowed_flags={
+                "--strict",
+                "--ignore-missing-imports",
+                "--show-error-codes",
+                "--pretty",
+                "--no-color-output",
+                "-q",
+            },
+            default_path_args=["."],
+        )
     if parts[:3] == ["python", "-m", "compileall"]:
-        return None
+        return _validate_path_operands(
+            parts[3:],
+            workspace_facade,
+            workspace_path,
+            allowed_flags={"-q", "-qq", "-f", "-b", "-l"},
+            default_path_args=["."],
+        )
     return f"Command is not in the stage eight bash allowlist: {command_name}"
+
+
+def _validate_git_command(
+    args: list[str],
+    workspace_facade: Any,
+    workspace_path: str,
+) -> str | None:
+    if not args:
+        return "git command must include an allowed read-only subcommand."
+    subcommand = args[0]
+    if subcommand not in {"status", "diff", "show", "log", "ls-files"}:
+        return f"git subcommand is denied by default: {subcommand}"
+    rest = args[1:]
+    if subcommand == "diff" and "--no-index" in rest:
+        return "git diff --no-index is not allowed in agent bash."
+    if subcommand in {"status", "ls-files"}:
+        return _validate_path_operands(
+            rest,
+            workspace_facade,
+            workspace_path,
+            allowed_flags={
+                "--short",
+                "-s",
+                "--porcelain",
+                "--porcelain=v1",
+                "--porcelain=v2",
+                "--cached",
+                "--deleted",
+                "--modified",
+                "--others",
+                "--stage",
+            },
+            all_non_flag_operands_are_paths=True,
+            default_path_args=["."],
+        )
+    return _validate_path_operands(
+        rest,
+        workspace_facade,
+        workspace_path,
+        allowed_flags={
+            "--",
+            "--cached",
+            "--staged",
+            "--stat",
+            "--name-only",
+            "--name-status",
+            "--oneline",
+            "--decorate",
+            "--no-color",
+            "--color=never",
+            "-p",
+        },
+        allowed_flag_prefixes={"--pretty=", "--format=", "--max-count=", "-n"},
+        validate_path_like_operands=True,
+    )
+
+
+def _validate_ruff_command(
+    args: list[str],
+    workspace_facade: Any,
+    workspace_path: str,
+) -> str | None:
+    if not args:
+        return _validate_path_operands(["."], workspace_facade, workspace_path)
+    subcommand = args[0]
+    if subcommand != "check":
+        return f"ruff subcommand is denied by default: {subcommand}"
+    return _validate_path_operands(
+        args[1:],
+        workspace_facade,
+        workspace_path,
+        allowed_flags={"--quiet", "--no-cache", "--no-fix", "--show-files", "--show-settings"},
+        allowed_flag_prefixes={"--output-format="},
+        default_path_args=["."],
+    )
+
+
+def _validate_path_operands(
+    args: list[str],
+    workspace_facade: Any,
+    workspace_path: str,
+    *,
+    allowed_flags: set[str] | None = None,
+    allowed_flag_prefixes: set[str] | None = None,
+    default_path_args: list[str] | None = None,
+    all_non_flag_operands_are_paths: bool = False,
+    validate_path_like_operands: bool = False,
+) -> str | None:
+    allowed_flags = allowed_flags or set()
+    allowed_flag_prefixes = allowed_flag_prefixes or set()
+    operands = args or (default_path_args or [])
+    path_mode = False
+    for arg in operands:
+        if arg == "--":
+            path_mode = True
+            continue
+        if not path_mode and arg.startswith("-"):
+            if arg in allowed_flags or any(arg.startswith(prefix) for prefix in allowed_flag_prefixes):
+                continue
+            return f"Unsupported argument for restricted command: {arg}"
+        if path_mode or all_non_flag_operands_are_paths or _is_path_like_operand(arg, workspace_path):
+            reason = _validate_single_path_operand(arg, workspace_facade, workspace_path)
+            if reason is not None:
+                return reason
+            continue
+        if validate_path_like_operands:
+            continue
+    return None
+
+
+def _is_path_like_operand(arg: str, workspace_path: str) -> bool:
+    candidate = _path_component(arg)
+    raw = Path(candidate)
+    if raw.is_absolute() or candidate.startswith((".", "..")):
+        return True
+    if "/" in candidate or "\\" in candidate:
+        return True
+    return (Path(workspace_path) / candidate).exists()
+
+
+def _validate_single_path_operand(
+    arg: str,
+    workspace_facade: Any,
+    workspace_path: str,
+) -> str | None:
+    path_arg = _path_component(arg)
+    if path_arg.startswith(":("):
+        return f"Unsupported pathspec syntax for restricted command: {arg}"
+    try:
+        workspace_facade.resolve_workspace_path(workspace_path, path_arg, must_exist=True)
+    except WorkspaceError as exc:
+        return str(exc)
+    return None
+
+
+def _path_component(arg: str) -> str:
+    if ":" not in arg:
+        return arg
+    _, path_part = arg.rsplit(":", 1)
+    return path_part or arg
 
 
 def _validate_bash_paths(

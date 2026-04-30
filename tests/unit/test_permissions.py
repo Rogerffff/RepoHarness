@@ -70,6 +70,29 @@ def test_bash_unsafe_commands_are_denied(tmp_path: Path, command: str):
     assert decision.matched_rule == "bash_command_safety"
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git diff --no-index /etc/hosts file.py",
+        "git show /etc/hosts",
+        "git ls-files /etc",
+        "ruff check /etc",
+        "mypy /etc",
+        "python -m compileall /etc",
+    ],
+)
+def test_bash_allowed_commands_reject_outside_path_arguments(tmp_path: Path, command: str):
+    decision = _check(
+        tmp_path,
+        tool_name="bash",
+        args={"command": command},
+        mode="auto",
+    )
+
+    assert decision.decision == "deny"
+    assert decision.matched_rule == "bash_command_safety"
+
+
 def test_bash_pytest_routes_to_run_tests_and_is_allowed_in_auto(tmp_path: Path):
     decision = PermissionSystem().check(
         tool_call_id="call_bash",
