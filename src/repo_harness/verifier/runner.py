@@ -176,8 +176,6 @@ def _pytest_argv(command: str) -> list[str]:
     if parts[:3] == ["python", "-m", "pytest"]:
         _reject_pytest_shell_fragments(parts[3:])
         return parts
-    if parts[:2] == ["python", "-c"] and len(parts) == 3:
-        return parts
     raise ValueError("RepoHarness v1 only supports pytest test_command values.")
 
 

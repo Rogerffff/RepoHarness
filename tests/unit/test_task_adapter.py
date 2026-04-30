@@ -99,6 +99,52 @@ visibility:
         load_task(task)
 
 
+@pytest.mark.parametrize(
+    ("field", "command", "match"),
+    [
+        ("test_command", "python -c \"print('unsafe')\"", "test_command"),
+        ("test_command", "pytest -q; printf unsafe", "shell"),
+        ("setup_command", "python - <<'PY'\nprint('unsafe')\nPY", "setup_command"),
+        ("setup_command", "python setup.py; printf unsafe", "shell"),
+    ],
+)
+def test_task_adapter_rejects_unsafe_task_commands(
+    tmp_path: Path,
+    field: str,
+    command: str,
+    match: str,
+):
+    fixture_tasks = tmp_path / "tests" / "fixtures" / "tasks"
+    fixture_repos = tmp_path / "tests" / "fixtures" / "repos"
+    repo = fixture_repos / "repo"
+    fixture_tasks.mkdir(parents=True)
+    repo.mkdir(parents=True)
+    task = fixture_tasks / "unsafe_command.yaml"
+    payload = _minimal_task_payload("../repos/repo")
+    payload[field] = command
+    task.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(TaskValidationError, match=match):
+        load_task(task)
+
+
+def test_task_adapter_allows_conservative_setup_command(tmp_path: Path):
+    fixture_tasks = tmp_path / "tests" / "fixtures" / "tasks"
+    fixture_repos = tmp_path / "tests" / "fixtures" / "repos"
+    repo = fixture_repos / "repo"
+    fixture_tasks.mkdir(parents=True)
+    repo.mkdir(parents=True)
+    (repo / "setup_task.py").write_text("print('setup')\n", encoding="utf-8")
+    task = fixture_tasks / "safe_setup.yaml"
+    payload = _minimal_task_payload("../repos/repo")
+    payload["setup_command"] = "python setup_task.py"
+    task.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    loaded = load_task(task)
+
+    assert loaded.runnable_task.setup_command == "python setup_task.py"
+
+
 def test_validate_task_cli_succeeds_for_valid_task(capsys):
     exit_code = main(["validate-task", str(task_path("task_001.yaml"))])
 
@@ -136,3 +182,35 @@ def test_replay_fixtures_are_static_and_schema_valid(name: str):
 
     assert script.steps
     assert "expected_outcome" not in str(visible)
+
+
+def _minimal_task_payload(repo: str) -> dict:
+    return {
+        "id": "command_task",
+        "task_version": "command_task_v0",
+        "dataset_name": "repo_harness_micro",
+        "source_kind": "micro_repo_fixture",
+        "created_at": "2026-04-30",
+        "repo": repo,
+        "issue": "Exercise task command validation.",
+        "setup_command": None,
+        "test_command": "pytest -q",
+        "timeouts": {
+            "setup_timeout_sec": 60,
+            "test_timeout_sec": 30,
+            "agent_timeout_sec": 120,
+            "final_verifier_timeout_sec": 60,
+        },
+        "environment": {
+            "execution_image": "python:3.12-slim",
+            "python_version": "3.12",
+            "package_manager": "pip",
+        },
+        "visibility": {
+            "issue": "model_visible",
+            "expected_files": "model_visible",
+            "fail_to_pass_tests": "verifier_only",
+            "pass_to_pass_tests": "verifier_only",
+            "gold_patch": "hidden_reference",
+        },
+    }

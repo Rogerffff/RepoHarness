@@ -455,7 +455,6 @@ def _run_setup_command(
         timeout_sec=task.timeouts.setup_timeout_sec,
         recorder=recorder,
         command_semantics="setup",
-        allow_shell=True,
     )
     recorder.append_event(
         TrajectoryEvent(

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from repo_harness.cli.main import main
-from repo_harness.errors import ConfigError
+from repo_harness.errors import ConfigError, TaskValidationError
 from repo_harness.evaluation.runner import run_batch, run_task
 from repo_harness.trajectory import inspect_run
 
@@ -197,7 +197,7 @@ def test_keep_workspace_false_cleans_success_and_quality_gate_workspaces(tmp_pat
     assert not (invalid_run / "workspaces").exists()
 
 
-def test_injected_test_command_is_rejected_without_shell_execution(tmp_path: Path):
+def test_injected_test_command_is_rejected_by_static_task_validation(tmp_path: Path):
     fixture_root = tmp_path / "fixtures"
     task_dir = fixture_root / "tasks"
     repo_dir = fixture_root / "repos" / "injected_test_command"
@@ -213,23 +213,15 @@ def test_injected_test_command_is_rejected_without_shell_execution(tmp_path: Pat
         encoding="utf-8",
     )
 
-    run_dir = run_task(
-        task_path,
-        config_path=ROOT / "tests/fixtures/run_configs/replay_success.yaml",
-        output_dir=tmp_path / "runs",
-        run_id="stage11-injected-test-command",
-    )
+    with pytest.raises(TaskValidationError, match="test_command"):
+        run_task(
+            task_path,
+            config_path=ROOT / "tests/fixtures/run_configs/replay_success.yaml",
+            output_dir=tmp_path / "runs",
+            run_id="stage11-injected-test-command",
+        )
 
-    baseline = _read_json(run_dir / "baseline.json")
-    metrics = _read_json(run_dir / "metrics.json")
-    assert baseline["status"] == "invalid"
-    assert baseline["dependency_error"] == "test_command_error"
-    assert metrics["run_outcome"] == "invalid_task"
-    manifest = _read_json(run_dir / "artifacts.json")
-    for artifact in manifest["artifacts"]:
-        if artifact["kind"] == "command_output":
-            artifact_text = (run_dir / artifact["relative_path"]).read_text(encoding="utf-8")
-            assert "RH_TEST_COMMAND_INJECTION" not in artifact_text
+    assert not (tmp_path / "runs" / "stage11-injected-test-command").exists()
 
 
 def test_task_timeout_before_final_verifier_skips_strict_replay(tmp_path: Path):
@@ -238,6 +230,12 @@ def test_task_timeout_before_final_verifier_skips_strict_replay(tmp_path: Path):
     repo_dir = fixture_root / "repos" / "slow_valid_baseline"
     task_dir.mkdir(parents=True)
     shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    shutil.rmtree(repo_dir / "tests")
+    (repo_dir / "tests").mkdir()
+    (repo_dir / "tests/test_sleep.py").write_text(
+        "import time\n\n\ndef test_slow_pass():\n    time.sleep(0.6)\n    assert True\n",
+        encoding="utf-8",
+    )
     task_path = task_dir / "task_slow_valid_baseline.yaml"
     task_path.write_text(
         textwrap.dedent(
@@ -252,7 +250,7 @@ def test_task_timeout_before_final_verifier_skips_strict_replay(tmp_path: Path):
             base_commit: fixture
             issue: "Exercise final verifier budget cutoff."
             setup_command: null
-            test_command: "python -c \\"import time; time.sleep(0.6); print('.')\\""
+            test_command: "pytest -q"
             timeouts:
               setup_timeout_sec: 60
               test_timeout_sec: 30
@@ -365,6 +363,22 @@ def test_strict_patch_replay_failure_derives_inconclusive_outcome(tmp_path: Path
     repo_dir = fixture_root / "repos" / "buggy_calculator_patch_replay"
     task_dir.mkdir(parents=True)
     shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    (repo_dir / "setup_mutation.py").write_text(
+        textwrap.dedent(
+            """
+            from pathlib import Path
+
+            p = Path("calculator.py")
+            text = p.read_text()
+            marker = Path.cwd().name
+            p.write_text(text.replace(
+                "    return left / right\\n",
+                f"    return left / right  # {marker}\\n",
+            ))
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
     task_path = task_dir / "task_patch_replay_failure.yaml"
     task_path.write_text(
         textwrap.dedent(
@@ -378,14 +392,7 @@ def test_strict_patch_replay_failure_derives_inconclusive_outcome(tmp_path: Path
             repo: ../repos/buggy_calculator_patch_replay
             base_commit: fixture
             issue: "Update calculator.divide so division by zero raises ValueError with a clear message."
-            setup_command: |
-              python - <<'PY'
-              from pathlib import Path
-              p = Path("calculator.py")
-              text = p.read_text()
-              marker = Path.cwd().name
-              p.write_text(text.replace("    return left / right\\n", f"    return left / right  # {marker}\\n"))
-              PY
+            setup_command: "python setup_mutation.py"
             test_command: "pytest -q"
             timeouts:
               setup_timeout_sec: 60
@@ -490,6 +497,8 @@ def test_low_parser_confidence_blocks_agent_run(tmp_path: Path):
     repo_dir = fixture_root / "repos" / "buggy_calculator_low_parser"
     task_dir.mkdir(parents=True)
     shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    shutil.rmtree(repo_dir / "tests")
+    (repo_dir / "tests").mkdir()
     task_path = task_dir / "task_low_parser_confidence.yaml"
     task_path.write_text(
         textwrap.dedent(
@@ -504,7 +513,7 @@ def test_low_parser_confidence_blocks_agent_run(tmp_path: Path):
             base_commit: fixture
             issue: "Exercise the baseline quality gate for a low-confidence verifier parse."
             setup_command: null
-            test_command: "python -c \\"print('ambiguous verifier output'); raise SystemExit(2)\\""
+            test_command: "pytest -q"
             timeouts:
               setup_timeout_sec: 60
               test_timeout_sec: 30

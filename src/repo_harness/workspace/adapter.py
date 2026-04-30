@@ -210,7 +210,7 @@ class LocalWorkspaceAdapter:
         if dependency_state.strategy == "rerun_setup":
             if not setup_command:
                 raise WorkspaceError("dependency_state=rerun_setup 需要 setup_command。")
-            result = self.run_command(workspace_path, setup_command, recorder=recorder, allow_shell=True)
+            result = self.run_command(workspace_path, setup_command, recorder=recorder)
             if result.exit_code != 0 or result.timeout:
                 raise WorkspaceError(f"rerun_setup 失败：{result.stderr_preview or result.stdout_preview}")
             return
