@@ -1,15 +1,26 @@
 [project]
 name = "repo-harness"
 version = "0.1.0"
-description = "Design-stage Python skeleton for a training-aware software engineering agent harness."
+description = "轻量级、面向训练的软件工程智能体 harness。"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "RepoHarness contributors" }]
-dependencies = []
+dependencies = [
+  "pydantic>=2,<3",
+  "PyYAML>=6,<7",
+]
 
 [project.optional-dependencies]
-dev = []
+dev = [
+  "pytest>=8,<9",
+]
+
+[project.scripts]
+repo-harness = "repo_harness.cli.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

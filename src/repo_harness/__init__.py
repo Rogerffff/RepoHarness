@@ -1,9 +1,9 @@
-"""RepoHarness design-stage package.
+"""RepoHarness Python package.
 
-This package intentionally contains no runtime implementation yet. The first
-phase of the project is to define a decision-complete design for a future
-software engineering agent harness.
+本包提供 RepoHarness 第一版实现需要的命令行入口、核心 schema、
+运行记录、工作区、工具、验证器和导出模块。
 """
 
-__all__: list[str] = []
+__all__ = ["__version__"]
 
+__version__ = "0.1.0"
