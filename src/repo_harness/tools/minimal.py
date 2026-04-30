@@ -576,14 +576,16 @@ class ToolExecutor:
             "feedback_verifier_result",
             result.model_dump(mode="json"),
         )
+        timed_out = bool(result.timeout)
         return _tool_result(
             tool_call,
             normalized=normalized,
-            status="ok",
+            status="timeout" if timed_out else "ok",
             content=(
                 f"run_tests accepted={result.accepted} pass_ratio={result.pass_ratio:.2f} "
                 f"fail_to_pass={result.fail_to_pass} pass_to_pass={result.pass_to_pass}"
             ),
+            error_type="test_timeout" if timed_out else None,
             artifact_refs=[ref],
             typed={
                 "verifier_result_preview": {

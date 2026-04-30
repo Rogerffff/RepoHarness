@@ -237,6 +237,70 @@ steps:
     assert "id_rsa" not in tool_result["content_preview"]
 
 
+def test_run_tests_timeout_returns_tool_timeout_event(tmp_path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "feedback_timeout"
+    task_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    task_path = task_dir / "task_feedback_timeout.yaml"
+    source = (ROOT / "tests/fixtures/tasks/task_001.yaml").read_text(encoding="utf-8")
+    task_path.write_text(
+        source.replace("id: task_001", "id: task_feedback_timeout")
+        .replace("task_version: task_001_v0", "task_version: task_feedback_timeout_v0")
+        .replace("repo: ../repos/buggy_calculator", "repo: ../repos/feedback_timeout")
+        .replace("test_timeout_sec: 30", "test_timeout_sec: 1")
+        .replace("final_verifier_timeout_sec: 60", "final_verifier_timeout_sec: 1"),
+        encoding="utf-8",
+    )
+    replay_path = tmp_path / "feedback_timeout.yaml"
+    replay_path.write_text(
+        """
+script_id: feedback_timeout
+task_id: task_feedback_timeout
+steps:
+  - step_id: slow_tests
+    action: tool_call
+    tool_call_id: call_slow_tests
+    tool_name: edit_file
+    arguments:
+      path: tests/test_calculator.py
+      old_text: "import pytest\\n\\nfrom calculator import add, divide\\n"
+      new_text: "import pytest\\nimport time\\n\\ntime.sleep(2)\\n\\nfrom calculator import add, divide\\n"
+  - step_id: run_tests
+    action: tool_call
+    tool_call_id: call_run_tests
+    tool_name: run_tests
+    arguments: {}
+  - step_id: final
+    action: final_answer
+    assistant_text: "The feedback verifier is expected to time out."
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path = _write_replay_config(tmp_path, replay_path, run_id="stage08-feedback-timeout")
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage08-feedback-timeout",
+    )
+
+    events = _read_jsonl(run_dir / "events.jsonl")
+    timeout_event = next(
+        event
+        for event in events
+        if event["data"].get("tool_call_id") == "call_run_tests"
+        and event["event_type"].startswith("tool_")
+        and event["event_type"] != "tool_requested"
+    )
+    assert timeout_event["event_type"] == "tool_timeout"
+    assert timeout_event["data"]["status"] == "timeout"
+    assert timeout_event["data"]["error_type"] == "test_timeout"
+    _assert_tool_calls_are_paired(events)
+
+
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
