@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 import json
 import re
 from pathlib import Path
@@ -11,7 +10,7 @@ from typing import Any, Literal
 from repo_harness.errors import ExportError
 from repo_harness.export.schemas import ExportPolicy, ExportRecord
 from repo_harness.schema_versions import EXPORT_SCHEMA_VERSION
-from repo_harness.trajectory import read_jsonl
+from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
 
 ExportFormat = Literal["sft_jsonl", "rl_jsonl", "preference_jsonl"]
 
@@ -104,6 +103,7 @@ def export_preference_jsonl(runs_dir: str | Path) -> Path:
 def _build_sft_record(run_path: Path) -> ExportRecord:
     transcript = read_jsonl(run_path / "transcript.jsonl")
     prepared_observations = _prepared_tool_observations(run_path)
+    assistant_tool_calls = _assistant_tool_calls_by_turn(run_path)
     messages: list[dict[str, Any]] = []
     loss_mask: list[int] = []
     observation_mask: list[int] = []
@@ -111,7 +111,7 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
     for record in transcript:
         if not record.get("model_visible", False):
             continue
-        message = _message_from_transcript(record, prepared_observations)
+        message = _message_from_transcript(record, prepared_observations, assistant_tool_calls)
         if message is None:
             continue
         message = _sanitize_for_export(message)
@@ -246,13 +246,14 @@ def _build_preference_records(root: Path) -> list[ExportRecord]:
 def _message_from_transcript(
     record: dict[str, Any],
     prepared_observations: dict[str, dict[str, Any]],
+    assistant_tool_calls: dict[int, list[dict[str, Any]]],
 ) -> dict[str, Any] | None:
     role = record.get("role")
     content = record.get("content_preview", "")
     if role in {"system", "user"}:
         return {"role": role, "content": content}
     if role == "assistant":
-        tool_calls = _parse_tool_calls(content)
+        tool_calls = assistant_tool_calls.get(int(record.get("turn") or 0), [])
         if tool_calls:
             return {"role": "assistant", "content": None, "tool_calls": tool_calls}
         return {"role": "assistant", "content": content}
@@ -281,33 +282,31 @@ def _message_from_transcript(
     return None
 
 
-def _parse_tool_calls(content: str) -> list[dict[str, Any]]:
-    try:
-        parsed = ast.literal_eval(content)
-    except (SyntaxError, ValueError):
-        return []
-    if not isinstance(parsed, list):
-        return []
-    tool_calls = []
-    for item in parsed:
-        if not isinstance(item, dict):
+def _assistant_tool_calls_by_turn(run_path: Path) -> dict[int, list[dict[str, Any]]]:
+    calls_by_turn: dict[int, list[dict[str, Any]]] = {}
+    for event in read_jsonl(run_path / "events.jsonl"):
+        if event.get("event_type") != "tool_requested":
             continue
-        tool_calls.append(
+        turn = event.get("turn")
+        if not isinstance(turn, int):
+            continue
+        call = event.get("data", {})
+        calls_by_turn.setdefault(turn, []).append(
             {
-                "tool_call_id": item.get("tool_call_id"),
-                "tool_name": item.get("tool_name"),
-                "arguments": item.get("arguments", {}),
-                "turn": item.get("turn"),
+                "tool_call_id": call.get("tool_call_id"),
+                "tool_name": call.get("tool_name"),
+                "arguments": call.get("arguments", {}),
+                "turn": call.get("turn", turn),
             }
         )
-    return tool_calls
+    return calls_by_turn
 
 
 def _prompt_from_prepared_messages(run_path: Path) -> dict[str, Any]:
     prepared = _prepared_message_artifacts(run_path)
     if not prepared:
         return {"messages": []}
-    first = _read_json(run_path / prepared[0]["relative_path"])
+    first = _read_artifact_json(run_path, prepared[0])
     messages = [
         message
         for message in first.get("messages", [])
@@ -419,7 +418,7 @@ def _initial_user_field(run_path: Path, key: str) -> Any:
     prepared = _prepared_message_artifacts(run_path)
     if not prepared:
         return None
-    payload = _read_json(run_path / prepared[0]["relative_path"])
+    payload = _read_artifact_json(run_path, prepared[0])
     for message in payload.get("messages", []):
         if message.get("role") != "user":
             continue
@@ -506,7 +505,7 @@ def _preference_side(run: dict[str, Any]) -> dict[str, Any]:
 def _prepared_tool_observations(run_path: Path) -> dict[str, dict[str, Any]]:
     observations: dict[str, dict[str, Any]] = {}
     for prepared_ref in _prepared_message_artifacts(run_path):
-        payload = _read_json_if_exists(run_path / prepared_ref["relative_path"])
+        payload = _read_artifact_json(run_path, prepared_ref)
         state_ref = payload.get("content_replacement_state_ref")
         for message in payload.get("messages", []):
             if message.get("role") != "tool":
@@ -526,7 +525,7 @@ def _prepared_tool_observations(run_path: Path) -> dict[str, dict[str, Any]]:
 
 
 def _prepared_message_artifacts(run_path: Path) -> list[dict[str, Any]]:
-    manifest = _read_json_if_exists(run_path / "artifacts.json")
+    manifest = _safe_artifact_manifest(run_path)
     return [
         artifact
         for artifact in manifest.get("artifacts", [])
@@ -535,12 +534,35 @@ def _prepared_message_artifacts(run_path: Path) -> list[dict[str, Any]]:
 
 
 def _content_replacement_state_artifacts(run_path: Path) -> list[dict[str, Any]]:
-    manifest = _read_json_if_exists(run_path / "artifacts.json")
+    manifest = _safe_artifact_manifest(run_path)
     return [
         artifact
         for artifact in manifest.get("artifacts", [])
         if artifact.get("kind") == "content_replacement_state"
     ]
+
+
+def _safe_artifact_manifest(run_path: Path) -> dict[str, Any]:
+    errors = verify_artifact_manifest(run_path)
+    if errors:
+        raise ExportError(f"artifact manifest invalid: {errors[0]}")
+    return _read_json_if_exists(run_path / "artifacts.json")
+
+
+def _read_artifact_json(run_path: Path, artifact_ref: dict[str, Any]) -> dict[str, Any]:
+    return _read_json(_artifact_path(run_path, artifact_ref))
+
+
+def _artifact_path(run_path: Path, artifact_ref: dict[str, Any]) -> Path:
+    relative = Path(str(artifact_ref.get("relative_path", "")))
+    if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("artifacts",):
+        raise ExportError("artifact manifest contains unsafe relative_path.")
+    artifact_path = (run_path / relative).resolve()
+    try:
+        artifact_path.relative_to((run_path / "artifacts").resolve())
+    except ValueError as exc:
+        raise ExportError("artifact manifest contains path escaping artifacts/.") from exc
+    return artifact_path
 
 
 def _task_id(run_path: Path) -> str:
@@ -573,7 +595,7 @@ def _manifest_ref(
     fallback_relative_path: str,
     fallback_kind: str,
 ) -> dict[str, Any]:
-    manifest = _read_json_if_exists(run_path / "artifacts.json")
+    manifest = _safe_artifact_manifest(run_path)
     for artifact in manifest.get("artifacts", []):
         if artifact.get("kind") == artifact_kind:
             return {**artifact, "manifest_backed": True}

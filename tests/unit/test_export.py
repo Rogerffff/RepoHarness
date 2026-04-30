@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 
-from repo_harness.export.exporter import export_preference_jsonl, export_rl_jsonl
+import pytest
+
+from repo_harness.errors import ExportError
+from repo_harness.export.exporter import export_preference_jsonl, export_rl_jsonl, export_sft_jsonl
 from repo_harness.export.exporter import _sanitize_text
 
 
@@ -45,6 +48,76 @@ def test_rl_export_without_formal_final_verifier_is_invalid_for_training(tmp_pat
     assert record["invalid_for_training"] is True
     assert record["invalid_reason"] == "missing_formal_final_verifier"
     assert record["payload"]["reward_metadata"]["formal_final_verifier"] is False
+
+
+def test_export_rejects_manifest_artifact_path_escape(tmp_path: Path):
+    run_dir = _minimal_run(tmp_path / "runs" / "run_escape", task_id="task_001")
+    leak = tmp_path / "leak.json"
+    leak.write_text('{"messages": [{"role": "system", "content": "LEAK"}]}\n', encoding="utf-8")
+    (run_dir / "artifacts.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_run_v0",
+                "run_id": "run_escape",
+                "artifacts": [
+                    {
+                        "schema_version": "repo_harness_artifact_v0",
+                        "artifact_id": "escape_artifact",
+                        "relative_path": "../../leak.json",
+                        "kind": "prepared_messages",
+                        "sha256": "not_checked_before_fix",
+                        "size_bytes": 1,
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ExportError, match="artifact manifest"):
+        export_rl_jsonl(run_dir)
+
+
+def test_sft_export_uses_structured_tool_call_events_not_preview(tmp_path: Path):
+    run_dir = _minimal_run(tmp_path / "run_structured_sft", task_id="task_001")
+    long_content = "x" * 5000
+    (run_dir / "transcript.jsonl").write_text(
+        json.dumps(
+            {
+                "role": "assistant",
+                "turn": 1,
+                "content_preview": "[{'tool_call_id': 'call_big', 'tool_name': 'create_file', 'arguments': {'content': '",
+                "model_visible": True,
+                "trainable": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "tool_requested",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": "call_big",
+                    "tool_name": "create_file",
+                    "arguments": {"path": "big.txt", "content": long_content},
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_sft_jsonl(run_dir)
+    record = _read_jsonl(output)[0]
+    assistant = next(message for message in record["payload"]["messages"] if message["role"] == "assistant")
+
+    assert assistant["content"] is None
+    assert assistant["tool_calls"][0]["tool_call_id"] == "call_big"
+    assert assistant["tool_calls"][0]["arguments"]["content"] == long_content
 
 
 def test_preference_export_pairs_equal_reward_when_outcome_differs(tmp_path: Path):
