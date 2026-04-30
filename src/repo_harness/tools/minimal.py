@@ -5,7 +5,6 @@ from __future__ import annotations
 import fnmatch
 import json
 import shlex
-import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -414,36 +413,6 @@ class ToolExecutor:
     ) -> ToolResult:
         query = str(normalized.normalized_arguments["query"])
         root = str(normalized.normalized_arguments["root"])
-        if shutil.which("rg"):
-            command = (
-                "rg --line-number --no-heading --color never -- "
-                f"{shlex.quote(query)} {shlex.quote(root)}"
-            )
-            result = context.workspace_adapter.run_command(
-                context.run_workspace.workspace_path,
-                command,
-                recorder=context.recorder,
-                command_semantics="grep",
-            )
-            if result.exit_code not in {0, 1}:
-                return _tool_result(
-                    tool_call,
-                    normalized=normalized,
-                    status="error",
-                    content=result.stderr_preview or result.stdout_preview,
-                    error_type="grep_error",
-                    artifact_refs=[result.output_artifact_ref] if result.output_artifact_ref else [],
-                    typed={"exit_code": result.exit_code},
-                )
-            lines = result.stdout_preview.splitlines() if result.stdout_preview else []
-            return _tool_result(
-                tool_call,
-                normalized=normalized,
-                status="ok",
-                content=result.stdout_preview or "No matches.",
-                artifact_refs=[result.output_artifact_ref] if result.output_artifact_ref else [],
-                typed={"query": query, "match_count": len(lines), "exit_code": result.exit_code},
-            )
         matches = _python_grep(context, root, query)
         ref = context.recorder.write_json_artifact("grep_results", {"query": query, "matches": matches})
         preview = "\n".join(matches) if matches else "No matches."
@@ -870,6 +839,8 @@ def _python_grep(context: ToolExecutionContext, root: str, query: str) -> list[s
             continue
         try:
             rel_path = path.relative_to(workspace).as_posix()
+            if context.workspace_adapter.is_sensitive_relative_path(rel_path):
+                continue
             text = context.workspace_adapter.read_text(context.run_workspace.workspace_path, rel_path)
         except (UnicodeDecodeError, ValueError, WorkspaceError):
             continue

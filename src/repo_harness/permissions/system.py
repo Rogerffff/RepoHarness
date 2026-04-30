@@ -234,9 +234,9 @@ def _deny_reason_for_bash(
     if command_name == "git":
         return _validate_git_command(parts[1:], workspace_facade, workspace_path)
     if command_name == "ls":
-        return _validate_bash_paths(parts[1:], workspace_facade, workspace_path, allow_flags=True)
+        return _validate_ls_command(parts[1:], workspace_facade, workspace_path)
     if command_name == "find":
-        return _validate_bash_paths(parts[1:] or ["."], workspace_facade, workspace_path, allow_flags=False)
+        return "find is not allowed in bash; use list_files for sensitive-path-filtered enumeration."
     if command_name == "pwd":
         return None
     if command_name == "ruff":
@@ -423,6 +423,25 @@ def _validate_bash_paths(
             workspace_facade.resolve_workspace_path(workspace_path, arg, must_exist=True)
         except WorkspaceError as exc:
             return str(exc)
+    return None
+
+
+def _validate_ls_command(
+    args: list[str],
+    workspace_facade: Any,
+    workspace_path: str,
+) -> str | None:
+    if not args:
+        return "ls without explicit file operands is not allowed; use list_files for directory enumeration."
+    for arg in args:
+        if arg.startswith("-"):
+            return f"Unsupported ls argument for restricted command: {arg}"
+        try:
+            resolved = workspace_facade.resolve_workspace_path(workspace_path, arg, must_exist=True)
+        except WorkspaceError as exc:
+            return str(exc)
+        if resolved.is_dir():
+            return "ls on directories is not allowed; use list_files for sensitive-path-filtered enumeration."
     return None
 
 

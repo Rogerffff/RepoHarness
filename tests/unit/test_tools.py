@@ -82,14 +82,11 @@ def test_grep_no_match_is_successful_observation(tmp_path: Path):
     assert result.typed["match_count"] == 0
 
 
-def test_grep_python_fallback_respects_workspace_sensitive_policy(tmp_path: Path, monkeypatch):
-    import repo_harness.tools.minimal as minimal_tools
-
+def test_grep_respects_workspace_sensitive_policy(tmp_path: Path):
     context = _tool_context(tmp_path)
     workspace = Path(context.run_workspace.workspace_path)
     (workspace / ".env").write_text("SECRET_TOKEN=abc\n", encoding="utf-8")
     (workspace / "notes.txt").write_text("public\n", encoding="utf-8")
-    monkeypatch.setattr(minimal_tools.shutil, "which", lambda _name: None)
     tool_call = ToolCall(
         tool_call_id="call_grep_secret",
         tool_name="grep",
