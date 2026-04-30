@@ -27,9 +27,14 @@ def test_replay_success_vertical_slice(tmp_path):
 
     verifier = _read_json(run_dir / "verifier.json")
     metrics = _read_json(run_dir / "metrics.json")
+    reward = _read_json(run_dir / "reward.json")
     assert verifier["accepted"] is True
     assert metrics["run_outcome"] == "success"
     assert metrics["final_verifier_status"] == "accepted"
+    assert reward["sources"]["final_verifier_ref"]["artifact_id"]
+    assert reward["sources"]["final_patch_ref"]["sha256"]
+    assert reward["sources"]["final_diff_ref"]["sha256"]
+    assert reward["sources"]["events_ref"]["relative_path"] == "events.jsonl"
 
     events = _read_jsonl(run_dir / "events.jsonl")
     event_types = {event["event_type"] for event in events}

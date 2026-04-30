@@ -269,6 +269,16 @@ def run_task(
                 "tool_call_count": loop_state.tool_call_count,
                 "test_run_count": _count_test_runs(loop_state.messages),
             },
+            source_refs={
+                "final_verifier_ref": final_verifier_ref.model_dump(mode="json"),
+                "final_patch_ref": capture.patch_artifact_ref.model_dump(mode="json"),
+                "final_diff_ref": capture.diff_artifact_ref.model_dump(mode="json"),
+                "events_ref": {
+                    "kind": "events",
+                    "relative_path": "events.jsonl",
+                    "exists": (run_dir / "events.jsonl").exists(),
+                },
+            },
         )
         final_status = derive_final_verifier_status(final_verifier)
         run_outcome = derive_run_outcome(

@@ -14,9 +14,11 @@ def compute_reward_metadata(
     *,
     patch_stats: dict[str, Any] | None = None,
     event_counts: dict[str, int] | None = None,
+    source_refs: dict[str, Any] | None = None,
 ) -> RewardMetadata:
     patch_stats = patch_stats or {}
     event_counts = event_counts or {}
+    source_refs = source_refs or {}
     fail_total = final_verifier.fail_to_pass.get("total", 0)
     pass_total = final_verifier.pass_to_pass.get("total", 0)
     if fail_total > 0:
@@ -92,6 +94,7 @@ def compute_reward_metadata(
             "test_run_count": event_counts.get("test_run_count", 0),
             "patch_added_lines": added,
             "patch_removed_lines": removed,
+            **source_refs,
         },
         invalid_for_training=invalid_for_training,
         invalid_reason=invalid_reason,
