@@ -32,8 +32,12 @@ RepoHarness 计划把这些能力迁移到 repository-level software engineering
 - 一个 `task.yaml`，展示 issue-style repository task。
 - 一段 `transcript.jsonl`，展示模型如何调用工具、观察结果并继续修复。
 - 一段 `events.jsonl`，展示工具事件、权限事件、verifier 事件和终止事件。
-- 一个 `final.diff`，展示最终 patch。
+- 一个 `artifacts.json`，展示完整日志、原始响应、测试输出和 diff artifact 的 manifest。
+- 一个 `dependency_state.json`，展示正式运行前恢复的依赖状态和排除 diff 路径。
+- 一个 `final.patch`，展示可应用的最终 patch。
+- 一个 `final.diff`，展示最终 diff。
 - 一个 `verifier.json`，展示 fail-to-pass、pass-to-pass、accepted 和 error type。
+- 一个 `reward.json`，展示 verifier-aligned reward metadata。
 - 一个 `metrics.json`，展示任务成功率、工具调用数、测试次数、patch size 和终止原因。
 - 一个 reinforcement learning rollout JSONL 样例，展示 action-observation trajectory 和 reward metadata。
 - 一个 preference pair JSONL 样例，展示同任务不同 rollout 如何按 final verifier 和 regression 情况排序。
@@ -42,28 +46,62 @@ RepoHarness 计划把这些能力迁移到 repository-level software engineering
 
 ```yaml
 id: repo_task_001
+task_version: repo_task_001_v0
+dataset_name: repo_harness_micro
+source_kind: micro_repo_fixture
+dataset_split: dev
+created_at: "2026-04-30"
 repo: ./fixtures/repos/buggy_calculator
 issue: "Fix division by zero handling in calculator.divide without regressing existing arithmetic tests."
 test_command: "pytest -q"
-timeout_sec: 120
+timeouts:
+  setup_timeout_sec: 300
+  test_timeout_sec: 120
+  agent_timeout_sec: 900
+  final_verifier_timeout_sec: 180
+environment:
+  execution_image: python:3.12-slim
+  python_version: "3.12"
+  node_version: null
+  package_manager: pip
+  lockfile_hashes: []
+  setup_cache_key_inputs: []
+  required_system_packages: []
+  setup_network_policy: allow_public_package_indexes
 fail_to_pass_tests:
   - tests/test_calculator.py::test_divide_by_zero
 pass_to_pass_tests:
   - tests/test_calculator.py::test_add
   - tests/test_calculator.py::test_multiply
+visibility:
+  issue: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
 ```
 
 ## Illustrative Verifier Result
 
 ```json
 {
+  "parser_id": "pytest",
+  "parser_version": "pytest_parser_v0",
+  "parser_confidence": 0.95,
+  "command": "pytest -q",
   "accepted": true,
   "pass_ratio": 1.0,
   "fail_to_pass": {"passed": 1, "total": 1},
   "pass_to_pass": {"passed": 2, "total": 2},
+  "test_cases": [
+    {"test_id": "tests/test_calculator.py::test_divide_by_zero", "status": "passed", "duration_ms": 12},
+    {"test_id": "tests/test_calculator.py::test_add", "status": "passed", "duration_ms": 8},
+    {"test_id": "tests/test_calculator.py::test_multiply", "status": "passed", "duration_ms": 9}
+  ],
   "exit_code": 0,
   "timeout": false,
-  "error_type": null
+  "error_type": null,
+  "acceptance_policy_version": "repo_harness_acceptance_policy_v0",
+  "accepted_fallback_reason": null
 }
 ```
 
@@ -92,24 +130,30 @@ Reinforcement learning rollout record:
 
 ```json
 {
+  "schema_version": "repo_harness_export_v0",
   "sample_id": "repo_task_001_run_0001_rl",
   "task_id": "repo_task_001",
   "trajectory": [
     {
       "turn": 1,
-      "action": {"type": "tool_call", "tool_name": "search", "arguments": {"query": "divide"}},
+      "action": {"type": "tool_call", "tool_name": "grep", "arguments": {"query": "divide"}},
       "observation": {"preview": "calculator.py:12:def divide(a, b):"}
     }
   ],
   "reward": 0.91,
   "reward_metadata": {
     "reward_version": "repo_harness_reward_v0",
+    "reward_metadata_ref": {"artifact_id": "artifact_reward_001", "relative_path": "reward.json"},
     "components": {
       "fail_to_pass_score": 1.0,
       "pass_to_pass_score": 1.0,
+      "accepted_bonus": 1.0,
+      "cost_penalty": 0.07,
       "patch_size_penalty": 0.02
     }
-  }
+  },
+  "invalid_for_training": false,
+  "invalid_reason": null
 }
 ```
 
@@ -117,11 +161,13 @@ Preference pair record:
 
 ```json
 {
+  "schema_version": "repo_harness_export_v0",
   "sample_id": "repo_task_001_pair_0001",
   "task_id": "repo_task_001",
   "chosen": {"source_run_id": "run_success", "reward": 0.91},
   "rejected": {"source_run_id": "run_regression", "reward": 0.18},
-  "reason": "chosen_passed_fail_to_pass_and_preserved_pass_to_pass"
+  "reason": "chosen_passed_fail_to_pass_and_preserved_pass_to_pass",
+  "metadata": {"pairing_policy": "same_task_rollout_ranking_v0"}
 }
 ```
 

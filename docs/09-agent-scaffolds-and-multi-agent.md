@@ -10,7 +10,7 @@ RepoHarness 第一版只设计 scaffold 接口和少量策略，不实现复杂�
 
 一个 scaffold 至少决定：
 
-- 初始 system prompt。
+- system prompt fragment 和角色策略。
 - 每轮是否允许工具调用。
 - 如何处理测试失败反馈。
 - 是否有 planning 阶段。
@@ -18,6 +18,31 @@ RepoHarness 第一版只设计 scaffold 接口和少量策略，不实现复杂�
 - 何时停止。
 
 Scaffold 必须可替换，以便同一批任务、同一套工具和同一 verifier 下比较不同 agent 策略。
+
+## Scaffold 接口
+
+第一版 scaffold 应是 agent loop 外层的策略接口，而不是另一个模型运行时。建议最小接口：
+
+```text
+Scaffold:
+  scaffold_id
+  scaffold_version
+  system_prompt_fragment(task, run_config)
+  context_requirements(task, run_config)
+  allowed_tools(turn_state)
+  next_phase(turn_state, tool_result, verifier_feedback)
+  should_stop(state)
+```
+
+职责边界：
+
+- Scaffold 可以决定 prompt fragment、允许工具、规划阶段、修复阶段和停止条件。
+- Scaffold 不直接构造最终初始 messages。最终 system message、user task message、工具说明、权限说明、隐藏字段隔离和版本记录必须由 `ContextBuilder.build_initial_messages(...)` 统一完成。
+- Scaffold 不应该直接读写 workspace，不应该直接执行 verifier，也不应该绕过 Tool System。
+- Agent Loop 仍然负责模型调用、工具结果回流、预算检查和终止记录。
+- Tool System、Workspace Adapter、Verifier、Trajectory Store 在不同 scaffold 下必须保持同一套实现，方便做公平对比实验。
+
+每次运行必须记录 `scaffold_id` 和 `scaffold_version`。如果 scaffold 改变 prompt fragment、允许工具集合、phase transition 或 verifier feedback 处理策略，必须递增版本或在 run metadata 中记录差异。Context Builder 应同时记录 `context_builder_version`、`prompt_template_version` 和 `scaffold_version`，避免每个 scaffold 自己拼接 prompt 后绕过字段可见性规则。
 
 ## 第一版 Scaffold
 
@@ -40,7 +65,9 @@ planner-coder-verifier：
 - verifier 运行测试、总结失败、请求继续修复。
 - 第一版是顺序式多角色 scaffold，不是独立后台多代理系统，不需要真实后台 agent。
 
-planner、coder 和 verifier role 可以共享同一个 workspace、tool system、permission system 和 trajectory store。它们的区别主要体现在 prompt、允许动作、停止条件和如何消费 verifier feedback，而不是启动多个互相通信的远程代理。
+planner、coder 和 verifier role 可以共享同一个 workspace、tool system、permission system 和 trajectory store。它们的区别主要体现在 prompt fragment、允许动作、停止条件和如何消费 verifier feedback，而不是启动多个互相通信的远程代理。
+
+这里的 verifier role 是 scaffold 内的“读测试反馈并建议下一步”的模型角色，不等同于 `Verifier` 模块。正式 `Verifier` 模块仍然是运行测试、解析结果、生成 `VerifierResult` 和 reward evidence 的系统组件，不能被 scaffold 角色替代。
 
 ## 多代理边界
 

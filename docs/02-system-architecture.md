@@ -8,11 +8,14 @@ RepoHarness 的目标架构是分层的训练友好 Harness。下面的图不是
 Control Plane
   CLI / Eval Runner
     -> Task Adapter
+    -> Context Builder
     -> Agent Loop
     -> Scaffold
 
 Execution Plane
   Agent Loop
+    -> Context Manager
+    -> Model Client
     -> Tool System
     -> Permission System
     -> Workspace / Sandbox Adapter
@@ -38,6 +41,12 @@ CLI 与配置层负责读取任务列表、模型配置、运行参数、权限�
 
 Task Adapter 负责把自建任务、issue-style fixture tasks、未来 SWE-Bench Lite 子集或未来 GitHub Issue / Pull Request 数据转换成统一任务对象。
 
+Context Builder 负责把任务、工作区、`ResolvedVerifierPlan` 中允许模型看到的测试目标摘要、scaffold、工具规则、权限模式和预算配置构造成模型可见的初始 messages，并防止 `gold_patch`、隐藏测试、baseline 原始细节和奖励元数据等 evaluator-only metadata 泄漏给模型。
+
+Context Manager 负责每轮模型调用前的运行时上下文治理，包括消息预算、工具输出替换、旧测试输出摘要、provider message normalization、context event 记录和 tool call / tool result 配对校验。它不构造初始任务 prompt，也不重新解释 reward 或 verifier 结果。
+
+Model Client 负责把标准化 messages 和 tools 发送给具体模型供应商，并把供应商响应、工具调用、token usage、错误类型和原始响应 artifact 标准化为 `ModelResponse`。
+
 Workspace / Sandbox Adapter 负责创建任务工作区、复制仓库、执行命令、保存 diff 和清理环境。
 
 Agent Loop 负责维护消息、调用模型、解析工具调用、回填工具结果、控制终止条件。
@@ -48,16 +57,41 @@ Permission System 负责判断一次工具调用是否允许执行，和 workspa
 
 Verifier / Reward 负责运行测试、解析结果、生成评测指标和 reward metadata。
 
-Trajectory Store 负责保存 transcript、events、final patch、verifier result、metrics 和 summary。
+Trajectory Store 负责保存 transcript、events、artifact manifest、final patch、verifier result、reward metadata、metrics 和 summary。
 
 Training Exporter 负责把轨迹转换为 SFT、reinforcement learning rollout 或 preference pair 数据。
+
+## 第一版 CLI / Eval Runner 操作面
+
+第一版应先提供可验收的命令行入口，让实现者可以从端到端行为反推模块边界，而不是只写库函数。建议最小入口：
+
+```text
+repo-harness validate-task <task_path>
+repo-harness run-task <task_path> --config <run_config>
+repo-harness run-batch --config <run_config>
+repo-harness export <run_dir_or_runs_dir> --format <sft_jsonl|rl_jsonl|preference_jsonl>
+repo-harness inspect-run <run_dir>
+```
+
+入口语义：
+
+- `validate-task`：只调用 Task Adapter 做 schema、visibility、环境身份和静态 verifier 配置校验，不创建正式 workspace，不运行模型。
+- `run-task`：运行单个任务的完整闭环，包括 baseline、agent loop、final patch 冻结、strict final verifier、reward metadata 和 artifacts。
+- `run-batch`：按 `RunConfig` 加载任务列表，逐个或有限并发运行，遇到 invalid 或 flaky task 时按 `fail_on_invalid_task` 决定跳过还是让命令失败。
+- `export`：只读取已有 run directory 或 runs directory，不重新运行 verifier，不修改原始轨迹。
+- `inspect-run`：读取 transcript、events、artifacts、metrics 和 summary，帮助人工诊断一次运行。
+
+Eval Runner 是这些入口背后的编排者。它可以调用 Task Adapter、Workspace Adapter、Verifier、Agent Loop、Trajectory Store 和 Training Exporter，但不直接执行工具、不解析测试日志、不把隐藏答案注入模型上下文。
 
 ## 模块所有权表
 
 | 模块 | 拥有的数据 | 不应该直接负责 | 可以调用的下游 | 必须记录的事件 |
 | --- | --- | --- | --- | --- |
-| CLI / Eval Runner | `RunConfig`、任务列表、输出目录、预算 | 具体工具执行、测试解析 | Task Adapter、Agent Loop、Trajectory Store | run started、run finished、export requested |
-| Task Adapter | `TaskDefinition`、`RunnableTask`、verifier 配置 | 模型调用、reward 公式 | Workspace Adapter、Verifier baseline path | task loaded、task invalid、baseline completed |
+| CLI / Eval Runner | `RunConfig`、任务列表、输出目录、预算 | 具体工具执行、测试解析 | Task Adapter、Workspace Adapter、Verifier baseline path、Agent Loop、Trajectory Store | run started、baseline completed、run finished、export requested |
+| Task Adapter | `TaskDefinition`、`RunnableTask`、verifier 配置 | 模型调用、reward 公式、baseline 执行、workspace 创建 | 无运行时下游；只能使用只读 schema、路径和任务元数据解析 helper | task loaded、task invalid |
+| Context Builder | 初始 messages、prompt/context 版本、可见上下文策略 | 执行工具、读取隐藏评测答案、修改 `ResolvedVerifierPlan` | Scaffold、Agent Loop | context built、context truncated |
+| Context Manager | `context_revision`、context reduction policy、content replacement state、provider-ready messages | 构造初始任务 prompt、执行工具、修改 transcript 事实 | Agent Loop、Trajectory Store | context prepared、tool result replaced、context_limit |
+| Model Client | `ModelResponse`、token usage、provider request id、模型错误 | 工具执行、权限判断、trajectory 决策 | Agent Loop | model call started、model call completed、model call failed |
 | Workspace / Sandbox Adapter | `RunWorkspace`、路径边界、命令执行、diff 捕获 | 权限策略、模型消息 | Permission System 的决策结果、底层执行环境 | workspace created、command executed、diff captured |
 | Agent Loop | `AgentLoopState`、messages、终止原因 | 文件系统边界、测试解析 | Model Client、Tool System、Verifier feedback path | model call、assistant message、termination |
 | Tool System | `Tool` definition、`ToolCall`、`ToolResult` | 直接绕过 workspace 写文件或执行命令 | Permission System、Workspace Adapter、Verifier feedback path | tool requested、tool completed、tool failed |
@@ -73,21 +107,25 @@ Training Exporter 负责把轨迹转换为 SFT、reinforcement learning rollout 
 完整数据流在 `11-object-model-config-and-data-flow.md` 中集中定义。系统架构层面应保持以下顺序：
 
 1. `TaskDefinition` 从 YAML 或 JSON 进入 Task Adapter。
-2. Task Adapter 输出 `RunnableTask`、`VerifierConfig` 和可选的 `BaselineResult`。
-3. Workspace Adapter 创建 `RunWorkspace`，保存 baseline 状态或干净起点。
-4. Agent Loop 根据 `RunnableTask`、`RunConfig` 和 scaffold 构造初始 messages。
-5. 模型输出 `ToolCall` 或 final answer。
-6. Tool System 校验 `ToolCall`，请求 `PermissionDecision`。
-7. Workspace Adapter 在允许的执行边界内完成文件或命令操作。
-8. `ToolResult` 回流到 messages，并写入 transcript 和 events。
-9. `run_tests` 可以触发 verifier 的中间反馈路径；agent 停止后必须触发最终验收路径。
-10. `VerifierResult` 和 `RewardMetadata` 进入 trajectory、metrics 和 export metadata。
-11. Trajectory Store 保存 patch、diff、events、summary 和 verifier 输出。
-12. Training Exporter 从完整 run artifacts 生成 SFT、reinforcement learning rollout 或 preference pair 数据。
+2. Task Adapter 输出 `RunnableTask` 和静态 `VerifierConfig`。
+3. Eval Runner 调用 Workspace Adapter 与 Verifier 生成 `BaselineResult`，并根据 `BaselineResult.status` 判断是否进入正式 agent run。
+4. Eval Runner 基于 `VerifierConfig` 和 `BaselineResult` 生成运行时 `ResolvedVerifierPlan`。baseline 发现的 fail-to-pass、pass-to-pass、flaky tests 和 parser confidence 进入这个运行时计划，不反向修改 Task Adapter 的静态输出。
+5. Workspace Adapter 创建正式 `RunWorkspace`，恢复 `dependency_state`，建立 `agent_start_snapshot`。
+6. Context Builder 根据 `RunnableTask`、`RunConfig`、workspace、`ResolvedVerifierPlan` 和 scaffold 构造初始 messages。
+7. 每轮模型调用前，Context Manager 根据预算、tool pairing state 和 context policy 生成 provider-ready messages，并记录 context event。
+8. Agent Loop 通过 Model Client 调用模型，得到标准化 `ModelResponse`、`ToolCall` 或 final answer。
+9. Tool System 校验 `ToolCall`，请求 `PermissionDecision`，并保证每个 tool call 都配对 tool result。
+10. Workspace Adapter 在允许的执行边界内完成文件或命令操作。
+11. `ToolResult` 回流到 messages，并通过 RunRecorder 写入 transcript、events 和 artifact manifest。
+12. `run_tests` 可以触发 verifier 的中间反馈路径；agent 停止后必须触发最终验收路径。
+13. `VerifierResult` 和 `RewardMetadata` 进入 trajectory、metrics 和 export metadata。
+14. Trajectory Store 保存 patch、diff、events、artifact manifest、summary、verifier 输出和 reward metadata。
+15. Training Exporter 从完整 run artifacts 生成 SFT、reinforcement learning rollout 或 preference pair 数据。
 
 ## 关键不变量
 
 - 工具结果必须作为 tool result 回流到下一轮模型上下文。
+- 每轮模型调用前必须通过 Context Manager 生成可复盘的 provider-ready messages，训练导出的 observation 必须匹配当时模型实际可见内容。
 - 所有写操作必须限制在任务工作区内。
 - 训练奖励和离线评测必须共用同一套 verifier。
 - 轨迹记录不能依赖终端界面或人工观察。

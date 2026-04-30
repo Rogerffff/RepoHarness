@@ -21,12 +21,28 @@ RepoHarness 补齐第三块：真实或半真实仓库、多文件编辑、终�
 第一版未来实现目标包括：
 
 - 计划支持真实或半真实 repository-level software engineering tasks。
-- 计划支持 `read / search / edit / bash / test` 工具族。
+- 计划支持 `read / grep-style search / edit / bash / test` 工具族。
 - 计划支持多轮 action-observation agent loop。
 - 计划使用同一套 verifier 生成离线评测结果和训练 reward metadata。
 - 计划记录 JSONL transcript 和 events。
 - 计划支持批量 evaluation runner。
 - 计划支持导出 SFT JSONL、reinforcement learning rollout JSONL 和 preference pair JSONL。
+
+## 第一版最小可运行闭环
+
+正式开始实现时，第一版最小闭环应先收敛到一个可验收、可调试、可复盘的范围，而不是一开始追求完整真实模型评测平台。
+
+第一版最小闭环验收标准：
+
+- 能加载 3 到 5 个自建 micro-repo task。
+- 能创建 source checkout、setup workspace、agent run workspace 和 verification workspace。
+- 能运行 baseline verifier 和 strict patch replay final verifier。
+- 能用 fake model 或 replay model 跑通 tool call 到 tool result 的协议，不要求第一步就接入真实模型供应商。
+- 能实现 `list_files`、`read_file`、`grep`、`edit_file`、`create_file`、`bash`、`run_tests` 和 `git_diff` 的最小版本。
+- 能生成 `transcript.jsonl`、`events.jsonl`、`artifacts.json`、`dependency_state.json`、`final.patch`、`final.diff`、`verifier.json`、`reward.json`、`metrics.json` 和 `summary.md`。
+- 能导出至少一条监督微调 JSONL 和一条 reinforcement learning rollout JSONL。
+
+第一版之后再扩展真实模型长轨迹、多 scaffold 对比、20 到 50 个任务、preference pair 批量生成和 Docker execution mode 的完整覆盖。这样实现路线会先证明闭环，再逐步增加规模和复杂度。
 
 ## 非目标
 
@@ -52,6 +68,7 @@ RepoHarness 补齐第三块：真实或半真实仓库、多文件编辑、终�
 
 未来实现阶段成功标准：
 
+- 第一版最小闭环先在 3 到 5 个 micro-repo task 上稳定运行。
 - 能在 20 到 50 个软件工程任务上运行。
 - 每个任务都有 patch、测试结果、trajectory、verifier 输出和 metrics。
 - 能比较 single-shot patch、simple ReAct 和 planner-coder-verifier scaffold。

@@ -26,6 +26,13 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 4. `06-task-dataset-and-environment-adapters.md`
 5. `11-object-model-config-and-data-flow.md`
 
+准备正式开工实现第一版最小闭环：
+
+1. `01-project-positioning-and-requirements.md` 中的“第一版最小可运行闭环”。
+2. `02-system-architecture.md` 中的“第一版 CLI / Eval Runner 操作面”。
+3. `11-object-model-config-and-data-flow.md` 中的 `RunConfig`、核心对象清单和端到端数据流。
+4. `08-trajectory-store-and-training-export.md` 中的 `RunRecorder`、`TranscriptRecord` 和 artifact manifest。
+
 准备训练数据、评测和实验：
 
 1. `07-verifier-reward-and-evaluation.md`
@@ -45,9 +52,15 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 3. `07-verifier-reward-and-evaluation.md`
 4. `12-resume-narrative-and-demo-artifacts.md`
 
+准备对照工业界 agentic training 技术报告：
+
+1. `13-agentic-technical-report-reading-map.md`
+
 ## 项目边界
 
 RepoHarness 第一阶段只交付设计文档和 Python 骨架，不实现具体功能代码。
+
+第一版正式实现时，最小验收目标不是完整产品，而是能在少量 micro-repo task 上跑通一条可复盘闭环：任务加载、workspace 准备、fake 或 replay model 工具调用、工具结果回流、final patch 冻结、strict final verifier、reward metadata、metrics 和训练导出样例。
 
 它不是 Claude Code、Cursor、OpenHands 或 SWE-agent 的复刻。它借鉴产品级 agent 系统的关键架构不变量：统一 agent loop、工具能力契约、权限判断、工具结果回流、轨迹存储和失败诊断。
 
