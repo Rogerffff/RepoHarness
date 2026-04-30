@@ -54,6 +54,7 @@ class ContextManager:
             {
                 "messages": prepared_messages,
                 "context_revision": self.context_revision,
+                "model_input_hash": model_input_hash,
                 "provider_format": "repo_harness_messages_v0",
                 "content_replacement_state": state.model_dump(mode="json"),
                 "content_replacement_state_ref": state_ref.model_dump(mode="json"),

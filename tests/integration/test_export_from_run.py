@@ -48,6 +48,7 @@ def test_rl_export_uses_final_reward_metadata(tmp_path: Path):
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
     assert record["payload"]["trajectory"]
+    assert record["payload"]["prompt"]["model_input_hash"]
     assert any(
         step["observation"].get("observation_source") == "prepared_messages"
         for step in record["payload"]["trajectory"]

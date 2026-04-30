@@ -66,6 +66,10 @@ def test_context_manager_replaces_large_old_tool_output_deterministically(tmp_pa
     state_ref = first.context_event.data["content_replacement_state_ref"]
     persisted_state = json.loads((run_dir / state_ref["relative_path"]).read_text(encoding="utf-8"))
     assert persisted_state["records"][0]["replacement_preview_hash"] is not None
+    prepared_payload = json.loads(
+        (run_dir / first.prepared_messages_ref.relative_path).read_text(encoding="utf-8")
+    )
+    assert prepared_payload["model_input_hash"] == first.model_input_hash
 
 
 def test_context_manager_detects_missing_tool_result(tmp_path: Path):
