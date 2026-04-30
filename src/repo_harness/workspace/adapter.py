@@ -53,6 +53,7 @@ class PatchCapture:
     diff_text: str
     added_lines: int
     removed_lines: int
+    patch_stats: dict[str, object]
 
 
 class LocalWorkspaceAdapter:
@@ -191,6 +192,7 @@ class LocalWorkspaceAdapter:
         patch_ref = recorder.write_artifact("final_patch", patch_text, {"suffix": ".patch"})
         diff_ref = recorder.write_artifact("final_diff", diff_text, {"suffix": ".diff"})
         added, removed = _count_diff_lines(diff_text)
+        patch_stats = self._collect_patch_stats(workspace, base, added, removed, recorder)
         return PatchCapture(
             patch_path=patch_path,
             diff_path=diff_path,
@@ -200,6 +202,7 @@ class LocalWorkspaceAdapter:
             diff_text=diff_text,
             added_lines=added,
             removed_lines=removed,
+            patch_stats=patch_stats,
         )
 
     def apply_patch(
@@ -409,6 +412,77 @@ class LocalWorkspaceAdapter:
             raise WorkspaceError(result.stderr.strip() or result.stdout.strip())
         return result.stdout
 
+    def _collect_patch_stats(
+        self,
+        workspace: Path,
+        base: str,
+        added_lines: int,
+        removed_lines: int,
+        recorder: RunRecorder | None,
+    ) -> dict[str, object]:
+        status_text = self._run_git_checked(
+            workspace, ["diff", "--name-status", base], recorder=recorder
+        )
+        numstat_text = self._run_git_checked(
+            workspace, ["diff", "--numstat", base], recorder=recorder
+        )
+        summary_text = self._run_git_checked(
+            workspace, ["diff", "--summary", base], recorder=recorder
+        )
+        added_files: list[str] = []
+        modified_files: list[str] = []
+        deleted_files: list[str] = []
+        renamed_files: list[dict[str, str]] = []
+        changed_files: list[str] = []
+
+        for line in status_text.splitlines():
+            if not line.strip():
+                continue
+            parts = line.split("\t")
+            status = parts[0]
+            if status.startswith("R") and len(parts) >= 3:
+                old_path, new_path = parts[1], parts[2]
+                renamed_files.append({"old_path": old_path, "new_path": new_path})
+                changed_files.append(new_path)
+                continue
+            if len(parts) < 2:
+                continue
+            path = parts[-1]
+            changed_files.append(path)
+            if status == "A":
+                added_files.append(path)
+            elif status == "D":
+                deleted_files.append(path)
+            else:
+                modified_files.append(path)
+
+        binary_files = _binary_files_from_numstat(numstat_text)
+        symlink_files = _symlink_files_from_summary(summary_text)
+        for path in changed_files:
+            candidate = workspace / path
+            if candidate.exists() and candidate.is_symlink() and path not in symlink_files:
+                symlink_files.append(path)
+        untracked_text_files = [
+            path
+            for path in added_files
+            if path not in binary_files
+            and path not in symlink_files
+            and _is_text_file(workspace / path)
+        ]
+
+        return {
+            "added_lines": added_lines,
+            "removed_lines": removed_lines,
+            "changed_files": changed_files,
+            "added_files": added_files,
+            "modified_files": modified_files,
+            "deleted_files": deleted_files,
+            "renamed_files": renamed_files,
+            "untracked_text_files": untracked_text_files,
+            "binary_files": binary_files,
+            "symlink_files": symlink_files,
+        }
+
 
 def _copy_tree(source: Path, destination: Path) -> None:
     if destination.exists():
@@ -447,6 +521,37 @@ def _count_diff_lines(diff_text: str) -> tuple[int, int]:
         elif line.startswith("-"):
             removed += 1
     return added, removed
+
+
+def _binary_files_from_numstat(numstat_text: str) -> list[str]:
+    binary_files: list[str] = []
+    for line in numstat_text.splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 3 and parts[0] == "-" and parts[1] == "-":
+            binary_files.append(parts[-1])
+    return binary_files
+
+
+def _symlink_files_from_summary(summary_text: str) -> list[str]:
+    symlink_files: list[str] = []
+    for line in summary_text.splitlines():
+        if "mode 120000" not in line:
+            continue
+        parts = line.split()
+        if parts:
+            symlink_files.append(parts[-1])
+    return symlink_files
+
+
+def _is_text_file(path: Path) -> bool:
+    if not path.exists() or not path.is_file() or path.is_symlink():
+        return False
+    try:
+        with path.open("r", encoding="utf-8") as file:
+            file.read(4096)
+    except UnicodeDecodeError:
+        return False
+    return True
 
 
 def _preview(text: str, limit: int = 4000) -> str:

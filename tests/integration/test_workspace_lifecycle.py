@@ -103,8 +103,38 @@ def test_workspace_patch_replay_includes_new_and_deleted_text_files(tmp_path: Pa
 
     assert "new_file.txt" in capture.patch_text
     assert "deleted file mode" in capture.patch_text
+    assert "notes/new_file.txt" in capture.patch_stats["added_files"]
+    assert "notes/new_file.txt" in capture.patch_stats["untracked_text_files"]
+    assert "pyproject.toml" in capture.patch_stats["deleted_files"]
+    assert capture.patch_stats["binary_files"] == []
+    assert capture.patch_stats["symlink_files"] == []
     assert (verification / "notes" / "new_file.txt").read_text(encoding="utf-8") == "new content\n"
     assert not (verification / "pyproject.toml").exists()
+
+
+def test_workspace_patch_stats_mark_binary_and_symlink_changes(tmp_path: Path):
+    loaded = load_task("tests/fixtures/tasks/task_001.yaml")
+    run_dir = tmp_path / "run_patch_stats"
+    with RunRecorder("run_patch_stats", run_dir, task_id=loaded.runnable_task.task_id) as recorder:
+        adapter = LocalWorkspaceAdapter(run_id="run_patch_stats", run_dir=run_dir)
+        source = adapter.create_source_checkout(loaded.runnable_task)
+        dependency_state = adapter.capture_dependency_state(strategy="none")
+        run_workspace = adapter.create_agent_workspace(
+            task=loaded.runnable_task,
+            source_checkout=source,
+            dependency_state=dependency_state,
+            recorder=recorder,
+        )
+        workspace = Path(run_workspace.workspace_path)
+        (workspace / "data.bin").write_bytes(b"\x00\xff\x00\xfe")
+        (workspace / "calculator_link.py").symlink_to("calculator.py")
+
+        capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
+
+    assert "data.bin" in capture.patch_stats["added_files"]
+    assert "data.bin" in capture.patch_stats["binary_files"]
+    assert "calculator_link.py" in capture.patch_stats["added_files"]
+    assert "calculator_link.py" in capture.patch_stats["symlink_files"]
 
 
 def test_workspace_final_patch_uses_agent_start_snapshot_when_head_moves(tmp_path: Path):

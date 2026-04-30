@@ -20,6 +20,8 @@ def test_create_file_replay_succeeds(tmp_path):
     metrics = _read_json(run_dir / "metrics.json")
     assert verifier["accepted"] is True
     assert metrics["run_outcome"] == "success"
+    assert "app/helpers.py" in metrics["patch_stats"]["added_files"]
+    assert "app/helpers.py" in metrics["patch_stats"]["untracked_text_files"]
     assert "app/helpers.py" in (run_dir / "final.diff").read_text(encoding="utf-8")
 
 

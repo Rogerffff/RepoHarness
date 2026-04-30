@@ -263,7 +263,7 @@ def run_task(
         )
         reward = compute_reward_metadata(
             final_verifier,
-            patch_stats={"added_lines": capture.added_lines, "removed_lines": capture.removed_lines},
+            patch_stats=capture.patch_stats,
             event_counts={
                 "turn_count": loop_state.turn_count,
                 "tool_call_count": loop_state.tool_call_count,
@@ -284,7 +284,7 @@ def run_task(
             turn_count=loop_state.turn_count,
             tool_call_count=loop_state.tool_call_count,
             test_run_count=_count_test_runs(loop_state.messages),
-            patch_stats={"added_lines": capture.added_lines, "removed_lines": capture.removed_lines},
+            patch_stats=capture.patch_stats,
             permission_denial_count=loop_state.permission_denial_count,
             invalid_tool_call_count=loop_state.invalid_tool_call_count,
         )
@@ -309,6 +309,7 @@ def run_task(
             f"- outcome_policy_version: {OUTCOME_POLICY_VERSION}\n"
             f"- permission_denial_count: {loop_state.permission_denial_count}\n"
             f"{_permission_denial_summary(loop_state.permission_denial_reasons)}"
+            f"{_patch_stats_summary(capture.patch_stats)}"
             f"- resolved_verifier_plan: resolved_verifier_plan.json\n"
             f"- final.patch: final.patch\n"
             f"- final.diff: final.diff\n"
@@ -631,3 +632,19 @@ def _permission_denial_summary(reasons: list[str]) -> str:
     lines = ["- permission_denial_reasons:"]
     lines.extend(f"  - {reason}" for reason in unique_reasons[:5])
     return "\n".join(lines) + "\n"
+
+
+def _patch_stats_summary(patch_stats: dict[str, object]) -> str:
+    deleted = patch_stats.get("deleted_files") or []
+    binary = patch_stats.get("binary_files") or []
+    symlinks = patch_stats.get("symlink_files") or []
+    untracked_text = patch_stats.get("untracked_text_files") or []
+    if not any([deleted, binary, symlinks, untracked_text]):
+        return ""
+    return (
+        "- patch_stats:\n"
+        f"  - untracked_text_files: {len(untracked_text)}\n"
+        f"  - deleted_files: {len(deleted)}\n"
+        f"  - binary_files: {len(binary)}\n"
+        f"  - symlink_files: {len(symlinks)}\n"
+    )
