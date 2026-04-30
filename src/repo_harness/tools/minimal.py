@@ -779,7 +779,7 @@ def _tool_result(
     normalized: NormalizedToolRequest | None = None,
     error_type: str | None = None,
     artifact_refs: list[ArtifactRef] | None = None,
-    typed: dict[str, Any] | None = None,
+        typed: dict[str, Any] | None = None,
 ) -> ToolResult:
     normalized = normalized or NormalizedToolRequest(
         requested_tool_name=tool_call.tool_name,
@@ -789,6 +789,10 @@ def _tool_result(
         effective_arguments=tool_call.arguments,
         normalized_input_hash=stable_hash(tool_call.arguments),
     )
+    result_typed = dict(typed or {})
+    result_typed.setdefault("status", status)
+    if error_type is not None:
+        result_typed.setdefault("error_type", error_type)
     return ToolResult(
         tool_result_id=f"{tool_call.tool_call_id}_result",
         tool_call_id=tool_call.tool_call_id,
@@ -804,7 +808,7 @@ def _tool_result(
         content_preview=content,
         error_type=error_type,
         artifact_refs=artifact_refs or [],
-        typed=typed or {},
+        typed=result_typed,
     )
 
 

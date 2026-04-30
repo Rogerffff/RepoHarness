@@ -1,5 +1,6 @@
 """模型客户端和 replay 客户端模块。"""
 
+from repo_harness.model_client.fake import FakeModelClient
 from repo_harness.model_client.replay import ReplayModelClient
 from repo_harness.model_client.schemas import (
     ModelCallEvent,
@@ -15,6 +16,7 @@ __all__ = [
     "ModelCallEvent",
     "ModelMessage",
     "ModelResponse",
+    "FakeModelClient",
     "ProviderCredentialPolicy",
     "ReplayModelClient",
     "ReplayScript",

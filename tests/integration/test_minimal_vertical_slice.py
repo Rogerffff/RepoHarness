@@ -184,6 +184,8 @@ def _assert_model_calls_have_prepared_messages(events: list[dict]) -> None:
     assert completed
     for event in completed:
         assert event["data"]["prepared_messages_ref"]["relative_path"].startswith("artifacts/")
+        assert event["data"]["raw_provider_request_ref"]["relative_path"].startswith("artifacts/")
+        assert event["data"]["raw_provider_request_ref"] != event["data"]["prepared_messages_ref"]
         assert event["data"]["model_input_hash"]
 
 

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetState
+from repo_harness.config import ContextManagementConfig
 from repo_harness.context import ContextManager
 from repo_harness.model_client import ReplayModelClient
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolResult
@@ -27,6 +28,7 @@ class AgentLoop:
         tool_context: ToolExecutionContext,
         recorder: RunRecorder,
         max_turns: int,
+        context_config: ContextManagementConfig | None = None,
     ) -> AgentLoopState:
         messages = list(initial_messages)
         state = AgentLoopState(
@@ -58,6 +60,7 @@ class AgentLoop:
                 recorder=recorder,
                 task_id=task_id,
                 turn=turn,
+                context_config=context_config,
             )
             state.context_revision = prepared.context_revision
             recorder.append_event(prepared.context_event)
@@ -92,11 +95,26 @@ class AgentLoop:
                         turn=turn,
                         event_type="model_call_completed",
                         artifact_refs=[
-                            response.raw_provider_response_ref
-                        ]
-                        if response.raw_provider_response_ref
-                        else [],
-                        data=response.model_call_event.model_dump(mode="json"),
+                            ref
+                            for ref in [
+                                response.raw_provider_request_ref,
+                                response.raw_provider_response_ref,
+                            ]
+                            if ref is not None
+                        ],
+                        data={
+                            **response.model_call_event.model_dump(mode="json"),
+                            "raw_provider_request_ref": (
+                                response.raw_provider_request_ref.model_dump(mode="json")
+                                if response.raw_provider_request_ref
+                                else None
+                            ),
+                            "raw_provider_response_ref": (
+                                response.raw_provider_response_ref.model_dump(mode="json")
+                                if response.raw_provider_response_ref
+                                else None
+                            ),
+                        },
                     )
                 )
             assistant_preview = response.assistant_message.content or str(
@@ -124,6 +142,7 @@ class AgentLoop:
                     "role": "assistant",
                     "content": response.assistant_message.content,
                     "tool_calls": [call.model_dump(mode="json") for call in response.tool_calls],
+                    "model_error_type": response.model_error_type,
                 }
             )
             if response.model_error_type:
@@ -290,7 +309,12 @@ def _record_tool_result(
         {
             "role": "tool",
             "tool_call_id": tool_result.tool_call_id,
+            "tool_result_id": tool_result.tool_result_id,
             "content": tool_result.content_preview,
+            "status": tool_result.status,
+            "error_type": tool_result.error_type,
+            "typed": tool_result.typed,
+            "artifact_refs": [ref.model_dump(mode="json") for ref in tool_result.artifact_refs],
         }
     )
 

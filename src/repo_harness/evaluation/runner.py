@@ -178,6 +178,7 @@ def run_task(
             tool_context=tool_context,
             recorder=recorder,
             max_turns=config.runtime.max_turns,
+            context_config=config.context_management,
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         try:
