@@ -1,71 +1,91 @@
 # RepoHarness
 
-RepoHarness is a design-stage Python project for a lightweight software engineering agent harness aimed at agentic training, post-training, and verifier-aligned trajectory collection.
-
-The project goal is not to reimplement Claude Code, Cursor, OpenHands, or any production coding assistant. The first phase is a documented architecture and Python package skeleton for a future implementation.
-
-## Project Definition
-
-RepoHarness is intended to support this closed loop:
+RepoHarness 是一个面向 agentic training / post-training 的轻量级软件工程智能体 Harness。第一版已经可以在微型仓库任务上跑通下面这条闭环：
 
 ```text
 task -> executable workspace -> tools -> agent loop -> trajectory -> verifier -> reward/eval/export
 ```
 
-The eventual implementation will let a model work on real or semi-real repository tasks through tools such as file reading, search, patch editing, shell commands, and tests. It will record action-observation trajectories and use the same verifier surface for evaluation, reward metadata, and training-data export.
+它的目标是让真实或半真实仓库任务产生可执行、可审计、可导出的训练轨迹，而不是复刻 Claude Code、Cursor、OpenHands 或 SWE-Bench。第一版使用本地微型仓库、脚本回放模型和模拟模型来验证协议，不接入真实模型供应商。
 
-## Current Phase
+## 第一版已经实现
 
-This repository currently contains:
+- Task Adapter：读取、校验和规范化任务定义；不创建 workspace，不运行测试，不生成 baseline。
+- Workspace Adapter：创建 source/setup/agent/verification workspace，通过本地进程执行命令，捕获 `final.patch` 和 `final.diff`。
+- Verifier：基于 pytest 的 baseline、feedback 和 final verifier，共用 `VerifierResult` schema 和 accepted policy。
+- Tool System：`list_files`、`read_file`、`grep`、`edit_file`、`create_file`、受限 `bash`、`run_tests`、`git_diff`。
+- Permission System：工具 schema 校验后才进入权限决策；未知工具在工具查找阶段生成 invalid tool event 和配对 ToolResult。
+- Context Builder / Context Manager：构建模型可见上下文，记录 `PreparedMessages`、context event 和 content replacement state。
+- Fake Model / Replay Model：模拟模型和脚本回放模型，用于验证 tool call / tool result 协议、权限拒绝、上下文事件和 final verifier。
+- Agent Loop：多轮 action-observation 循环，支持 final answer、feedback tests passed、预算停止和中断 tool result 配对。
+- Eval Runner 和 CLI：`validate-task`、`run-task`、`run-batch`、`inspect-run`。
+- Training Exporter：监督微调 JSONL（`sft_jsonl`）、强化学习 rollout JSONL（`rl_jsonl`）和最小 preference pair JSONL 导出，只读取已有 run directory。
 
-- A Python package skeleton under `src/repo_harness/`.
-- Design documents under `docs/`.
-- Review records under `docs/review/`.
-- Local Claude Code reference material under `reference/`.
+## 明确没有实现
 
-It does not yet contain a working agent loop, tool runtime, sandbox executor, verifier, or reinforcement learning integration.
+- 没有生产级安全沙箱；第一版只是本地执行边界和路径/权限约束。
+- 没有接入真实模型供应商；第一版使用 replay/fake model 验证协议。
+- 没有声称完成强化学习训练；这里只导出可供后续训练使用的数据。
+- 没有完整 SWE-Bench 复现。
+- 没有完整 secret scanner；导出阶段只做基础字段过滤、本机路径脱敏和常见凭据正则脱敏。
 
-## Reading Path
+## 快速运行
 
-Start with:
+安装开发依赖后，可以直接运行：
 
-1. `docs/00-reading-guide.md`
-2. `docs/01-project-positioning-and-requirements.md`
-3. `docs/02-system-architecture.md`
+```bash
+python -m pip install -e '.[dev]'
+```
 
-Then read the module documents in order from `03` to `10`.
+然后校验任务、运行单个 replay agent，并检查运行产物：
 
-For implementation handoff and resume packaging, also read:
+```bash
+repo-harness validate-task tests/fixtures/tasks/task_001.yaml
 
-1. `docs/11-object-model-config-and-data-flow.md`
-2. `docs/12-resume-narrative-and-demo-artifacts.md`
+repo-harness run-task \
+  tests/fixtures/tasks/task_001.yaml \
+  --config tests/fixtures/run_configs/replay_success.yaml \
+  --output-dir runs/demo \
+  --run-id demo-success
 
-## Project Lineage
+repo-harness inspect-run runs/demo/demo-success
+```
 
-RepoHarness is designed to complement two existing reinforcement learning oriented projects:
+批量运行和导出：
 
-- CaRR DeepSearch contributes experience with long-horizon search agents, asynchronous rollout infrastructure, reward history, and trajectory diagnostics.
-- Coding GRPO contributes experience with verifier-based coding post-training, executable feedback, shared verifier design, and checkpoint evaluation.
-- RepoHarness transfers those ideas to repository-level software engineering tasks, where the important artifacts are workspace state, tool calls, tests, patches, trajectories, verifier results, and training export records.
+```bash
+repo-harness run-batch \
+  --config tests/fixtures/run_configs/batch_replay.yaml \
+  --output-dir runs/demo-batch
 
-This repository is still a design-stage repository. The lineage above describes the intended technical continuity, not a claim that RepoHarness already trains or evaluates a model end to end.
+repo-harness export runs/demo-batch --format sft_jsonl
+repo-harness export runs/demo-batch --format rl_jsonl
+repo-harness export runs/demo-batch --format preference_jsonl
+```
 
-## Explicit Boundaries
+## 运行产物
 
-RepoHarness is:
+每个 run directory 至少包含这些可复盘文件中的一部分：
 
-- A lightweight, training-aware software engineering agent harness design.
-- A future framework for executable repository tasks, trajectory logging, verifier-aligned evaluation, and training export.
-- A project inspired by product-grade agent architecture patterns, especially the separation of agent loop, tool contract, permission checks, and transcript storage.
+- `events.jsonl`：结构化轨迹事件。
+- `transcript.jsonl`：模型可见和训练相关消息记录。
+- `artifacts.json`：artifact manifest。
+- `baseline.json`：baseline quality gate 结果。
+- `resolved_verifier_plan.json`：只有 baseline 通过后才生成。
+- `final.patch` / `final.diff`：Agent Loop 停止后冻结的最终补丁。
+- `verifier.json`：formal final verifier 结果。
+- `reward.json`：来自 formal final verifier 的 reward metadata。
+- `metrics.json`：运行结果、停止原因、权限拒绝、工具调用等指标。
+- `summary.md`：面向人的运行摘要。
 
-RepoHarness is not:
+## 推荐阅读
 
-- A production-grade secure sandbox.
-- A complete Claude Code, Cursor, OpenHands, or SWE-agent clone.
-- A new reinforcement learning algorithm.
-- A complete SWE-Bench reproduction.
-- A claim that a frontier coding agent has already been trained.
+- `docs/14-v1-implementation-plan.md`：第一版阶段计划和验收标准。
+- `docs/11-object-model-config-and-data-flow.md`：对象模型、配置和数据流。
+- `docs/v1-walkthrough.md`：第一版端到端使用说明。
+- `docs/v1-final-acceptance.md`：第一版最终验收记录。
+- `docs/developer-checklist.md`：后续开发检查清单。
 
-## Local Reference Material
+## 边界提醒
 
-`reference/claude-code-docs/` contains local analysis documents for Claude Code architecture. `reference/claude-code-typescript-src/` contains local TypeScript reference source and is ignored by Git by default.
+RepoHarness 的第一版适合用于协议验证、微型仓库任务评测、轨迹审计和训练数据导出实验。进入真实仓库、真实模型供应商或大规模训练前，需要补齐更强的隔离、secret scanning、并发控制、成本控制和真实模型错误恢复策略。

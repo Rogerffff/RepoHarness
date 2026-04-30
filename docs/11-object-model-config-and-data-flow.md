@@ -4,9 +4,9 @@
 
 这篇文档把 RepoHarness 的核心对象、配置字段、后续源代码目录和端到端数据流集中定义。它不包含具体实现代码，而是给下一阶段工程实现提供统一命名和边界，避免每个模块重复定义相似的数据结构。
 
-## 后续源代码目录规划
+## 源代码目录
 
-第一阶段只保留 Python 骨架，不创建完整运行时实现。未来实现可以按以下目录演进：
+本文最初用于规划第一版实现的模块边界。第一版完成后，代码已经按下面的目录结构落地；其中真实模型供应商接入、Docker 执行模式和更复杂 scaffold 仍然属于后续扩展，不属于第一版已实现能力。
 
 ```text
 src/repo_harness/
@@ -26,7 +26,7 @@ src/repo_harness/
   workspace/         # local process and Docker-based executable repository environment
 ```
 
-这些目录是实现计划，不表示当前仓库已经具备对应功能。
+这些目录用于维持对象所有权和模块边界。当前已实现范围以根目录 `README.md`、`docs/v1-walkthrough.md` 和 `docs/v1-final-acceptance.md` 为准。
 
 ## RunConfig
 
@@ -236,4 +236,4 @@ logging:
 
 ## 设计边界
 
-这篇文档只定义未来实现接口和对象流。它不要求第一阶段创建这些 Python 类，也不声称当前仓库已经能够运行评测、执行工具或导出训练数据。
+这篇文档定义第一版对象流和后续扩展接口。第一版已经实现最小可运行闭环，但本文中的真实模型供应商、Docker execution mode、复杂 scaffold 和更大规模导出能力仍然只是后续扩展方向，不能被 README、summary 或展示材料描述成已交付能力。

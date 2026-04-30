@@ -1,5 +1,6 @@
 import json
 import shutil
+import textwrap
 from pathlib import Path
 
 from repo_harness.cli.main import main
@@ -107,6 +108,217 @@ def test_final_verifier_failure_derives_failed_outcome(tmp_path: Path):
     assert metrics["final_verifier_status"] == "failed"
     assert metrics["run_outcome"] == "failed"
     assert "baseline_status: valid" in summary
+
+
+def test_strict_patch_replay_failure_derives_inconclusive_outcome(tmp_path: Path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "buggy_calculator_patch_replay"
+    task_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    task_path = task_dir / "task_patch_replay_failure.yaml"
+    task_path.write_text(
+        textwrap.dedent(
+            """
+            id: task_patch_replay_failure
+            task_version: task_patch_replay_failure_v0
+            dataset_name: repo_harness_micro
+            source_kind: micro_repo_fixture
+            dataset_split: dev
+            created_at: "2026-04-30"
+            repo: ../repos/buggy_calculator_patch_replay
+            base_commit: fixture
+            issue: "Update calculator.divide so division by zero raises ValueError with a clear message."
+            setup_command: |
+              python - <<'PY'
+              from pathlib import Path
+              p = Path("calculator.py")
+              text = p.read_text()
+              marker = Path.cwd().name
+              p.write_text(text.replace("    return left / right\\n", f"    return left / right  # {marker}\\n"))
+              PY
+            test_command: "pytest -q"
+            timeouts:
+              setup_timeout_sec: 60
+              test_timeout_sec: 30
+              agent_timeout_sec: 120
+              final_verifier_timeout_sec: 60
+            environment:
+              execution_image: "python:3.12-slim"
+              python_version: "3.12"
+              node_version: null
+              package_manager: pip
+              lockfile_hashes: []
+              setup_cache_key_inputs:
+                - pyproject.toml
+              required_system_packages: []
+              setup_network_policy: deny
+            expected_files:
+              - calculator.py
+            fail_to_pass_tests:
+              - tests/test_calculator.py::test_divide_zero
+            pass_to_pass_tests:
+              - tests/test_calculator.py::test_add
+              - tests/test_calculator.py::test_divide_regular_numbers
+            visibility:
+              issue: model_visible
+              expected_files: model_visible
+              fail_to_pass_tests: verifier_only
+              pass_to_pass_tests: verifier_only
+              gold_patch: hidden_reference
+            decontamination:
+              status: manual_checked
+              known_public_solution: false
+              source_url: null
+              overlap_check_notes: "hand-written fixture"
+              notes: null
+            declared_setup_mutations:
+              - path_pattern: calculator.py
+                allowed_stage: setup
+                include_in_final_patch: false
+                reason: "Integration test creates workspace-specific setup state."
+                artifact_policy: record
+            generated_files: []
+            tags:
+              - python
+              - patch-replay-failure
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    replay_path = tmp_path / "patch_replay_failure_replay.yaml"
+    replay_path.write_text(
+        textwrap.dedent(
+            """
+            script_id: patch_replay_failure
+            task_id: task_patch_replay_failure
+            steps:
+              - step_id: edit_divide
+                action: tool_call
+                tool_call_id: call_edit_divide
+                tool_name: edit_file
+                arguments:
+                  path: calculator.py
+                  old_text: "def divide(left: int, right: int) -> float:\\n    return left / right  # agent_workspace\\n"
+                  new_text: "def divide(left: int, right: int) -> float:\\n    if right == 0:\\n        raise ValueError(\\"division by zero\\")\\n    return left / right\\n"
+              - step_id: final
+                action: final_answer
+                assistant_text: "This replay intentionally creates a patch that fails strict replay."
+            metadata:
+              fixture_kind: patch_replay_failure
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    config_path = _write_replay_config(
+        tmp_path,
+        replay_path=replay_path,
+        output_dir=tmp_path / "runs",
+        run_id_prefix="stage13",
+    )
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage13-patch-replay-failure",
+    )
+
+    verifier = _read_json(run_dir / "verifier.json")
+    reward = _read_json(run_dir / "reward.json")
+    metrics = _read_json(run_dir / "metrics.json")
+    assert verifier["error_type"] == "patch_apply_failed"
+    assert verifier["verifier_stage"] == "final"
+    assert metrics["final_verifier_status"] == "error"
+    assert metrics["run_outcome"] == "inconclusive"
+    assert reward["invalid_for_training"] is True
+    assert reward["invalid_reason"] == "patch_apply_failed"
+
+
+def test_low_parser_confidence_blocks_agent_run(tmp_path: Path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "buggy_calculator_low_parser"
+    task_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    task_path = task_dir / "task_low_parser_confidence.yaml"
+    task_path.write_text(
+        textwrap.dedent(
+            """
+            id: task_low_parser_confidence
+            task_version: task_low_parser_confidence_v0
+            dataset_name: repo_harness_micro
+            source_kind: micro_repo_fixture
+            dataset_split: dev
+            created_at: "2026-04-30"
+            repo: ../repos/buggy_calculator_low_parser
+            base_commit: fixture
+            issue: "Exercise the baseline quality gate for a low-confidence verifier parse."
+            setup_command: null
+            test_command: "python -c \\"print('ambiguous verifier output'); raise SystemExit(2)\\""
+            timeouts:
+              setup_timeout_sec: 60
+              test_timeout_sec: 30
+              agent_timeout_sec: 120
+              final_verifier_timeout_sec: 60
+            environment:
+              execution_image: "python:3.12-slim"
+              python_version: "3.12"
+              node_version: null
+              package_manager: pip
+              lockfile_hashes: []
+              setup_cache_key_inputs:
+                - pyproject.toml
+              required_system_packages: []
+              setup_network_policy: deny
+            expected_files:
+              - calculator.py
+            fail_to_pass_tests: []
+            pass_to_pass_tests: []
+            visibility:
+              issue: model_visible
+              expected_files: model_visible
+              fail_to_pass_tests: verifier_only
+              pass_to_pass_tests: verifier_only
+              gold_patch: hidden_reference
+            decontamination:
+              status: manual_checked
+              known_public_solution: false
+              source_url: null
+              overlap_check_notes: "hand-written fixture"
+              notes: null
+            declared_setup_mutations: []
+            generated_files: []
+            tags:
+              - python
+              - low-parser-confidence
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    config_path = _write_replay_config(
+        tmp_path,
+        replay_path=ROOT / "tests/fixtures/replays/task_001_success.yaml",
+        output_dir=tmp_path / "runs",
+        run_id_prefix="stage13",
+    )
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage13-low-parser",
+    )
+
+    baseline = _read_json(run_dir / "baseline.json")
+    metrics = _read_json(run_dir / "metrics.json")
+    summary = (run_dir / "summary.md").read_text(encoding="utf-8")
+    assert baseline["status"] == "invalid"
+    assert baseline["parser_confidence"] < 0.5
+    assert baseline["dependency_error"] == "low_parser_confidence"
+    assert metrics["run_outcome"] == "invalid_task"
+    assert "quality_gate_reason: low_parser_confidence" in summary
+    assert not (run_dir / "workspaces/agent_workspace").exists()
 
 
 def test_run_batch_writes_manifest_for_success_invalid_and_flaky(tmp_path: Path):
@@ -243,3 +455,39 @@ def _read_jsonl(path: Path) -> list[dict]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _write_replay_config(
+    tmp_path: Path,
+    *,
+    replay_path: Path,
+    output_dir: Path,
+    run_id_prefix: str,
+) -> Path:
+    config_path = tmp_path / f"{run_id_prefix}_replay.yaml"
+    config_path.write_text(
+        textwrap.dedent(
+            f"""
+            run_id_prefix: {run_id_prefix}
+            model:
+              provider: replay
+              model_id: replay-script-v0
+              replay_script_path: {replay_path}
+            runtime:
+              scaffold_id: simple_react
+              execution_mode: local_process
+              permission_mode: auto
+              max_turns: 8
+              max_tool_calls: 20
+              max_test_runs: 4
+            workspace:
+              output_dir: {output_dir}
+              keep_workspace: true
+              default_command_timeout_sec: 60
+            evaluation:
+              fail_on_invalid_task: false
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    return config_path

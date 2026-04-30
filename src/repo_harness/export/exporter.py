@@ -23,12 +23,35 @@ def export_run_or_runs(
 ) -> Path:
     path = Path(run_dir_or_runs_dir)
     if export_format == "sft_jsonl":
-        return export_sft_jsonl(path)
+        if _looks_like_run_dir(path):
+            return export_sft_jsonl(path)
+        return _export_many(path, export_format)
     if export_format == "rl_jsonl":
-        return export_rl_jsonl(path)
+        if _looks_like_run_dir(path):
+            return export_rl_jsonl(path)
+        return _export_many(path, export_format)
     if export_format == "preference_jsonl":
         return export_preference_jsonl(path)
     raise ExportError(f"不支持的导出格式：{export_format}")
+
+
+def _export_many(runs_dir: Path, export_format: Literal["sft_jsonl", "rl_jsonl"]) -> Path:
+    if not runs_dir.exists() or not runs_dir.is_dir():
+        raise ExportError(f"runs directory 不存在：{runs_dir}")
+    builders = {
+        "sft_jsonl": _build_sft_record,
+        "rl_jsonl": _build_rl_record,
+    }
+    records = [
+        builders[export_format](run_dir).model_dump(mode="json")
+        for run_dir in sorted(runs_dir.iterdir())
+        if _looks_like_run_dir(run_dir)
+    ]
+    if not records:
+        raise ExportError(f"runs directory 中没有可导出的 run：{runs_dir}")
+    output_path = runs_dir / "exports" / ("sft.jsonl" if export_format == "sft_jsonl" else "rl.jsonl")
+    _write_jsonl(output_path, records)
+    return output_path
 
 
 def export_sft_jsonl(run_dir: str | Path) -> Path:

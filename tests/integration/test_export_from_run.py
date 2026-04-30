@@ -86,6 +86,12 @@ def test_cli_export_commands(tmp_path: Path, capsys):
     assert main(["export", str(tmp_path / "runs"), "--format", "preference_jsonl"]) == 0
     assert (tmp_path / "runs/exports/preference_skipped.json").exists()
 
+    assert main(["export", str(tmp_path / "runs"), "--format", "sft_jsonl"]) == 0
+    assert (tmp_path / "runs/exports/sft.jsonl").exists()
+
+    assert main(["export", str(tmp_path / "runs"), "--format", "rl_jsonl"]) == 0
+    assert (tmp_path / "runs/exports/rl.jsonl").exists()
+
 
 def _success_run(tmp_path: Path, run_id: str) -> Path:
     return run_task(

@@ -1,8 +1,14 @@
-# `repo_harness` Package Skeleton
+# `repo_harness` Package
 
-This package is a placeholder for the future RepoHarness implementation.
+This package contains the RepoHarness v1 implementation.
 
-The planned implementation modules are documented in `docs/` and will be added only after the design review phase is complete. The first implementation pass should create modules for:
+RepoHarness v1 is a lightweight local-process harness for replay-based software engineering agent runs. It implements the first executable loop described in the project design documents:
+
+```text
+task -> executable workspace -> tools -> agent loop -> trajectory -> verifier -> reward/eval/export
+```
+
+Implemented package areas include:
 
 - `cli`
 - `agent_loop`
@@ -16,6 +22,13 @@ The planned implementation modules are documented in `docs/` and will be added o
 - `evaluation`
 - `export`
 
-The planned object model and module boundaries are centralized in `docs/11-object-model-config-and-data-flow.md`.
+The object model and module boundaries are centralized in `docs/11-object-model-config-and-data-flow.md`.
 
-Until then, this package should stay minimal so the repository remains a design-first project.
+Important v1 boundaries:
+
+- No production-grade secure sandbox.
+- No real model provider integration.
+- No claim of completed reinforcement learning training.
+- No complete SWE-Bench reproduction.
+
+Use `repo-harness --help` for command line entry points.
