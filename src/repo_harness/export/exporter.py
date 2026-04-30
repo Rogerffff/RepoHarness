@@ -272,13 +272,7 @@ def _message_from_transcript(
                 "content_replacement_state_ref": prepared["content_replacement_state_ref"],
                 "context_replacement": prepared["context_replacement"],
             }
-        return {
-            "role": "tool",
-            "tool_call_id": tool_call_id,
-            "content": content,
-            "artifact_refs": record.get("content_artifact_refs", []),
-            "observation_source": "transcript_preview_without_followup_context",
-        }
+        return None
     return None
 
 
@@ -356,12 +350,7 @@ def _trajectory_from_events(run_path: Path) -> list[dict[str, Any]]:
                 }
             else:
                 observation = {
-                    "status": data.get("status"),
-                    "preview": data.get("content_preview", ""),
-                    "truncated": data.get("truncated", False),
-                    "artifact_refs": data.get("artifact_refs", []),
-                    "error_type": data.get("error_type"),
-                    "observation_source": "event_preview_without_followup_context",
+                    "observation_source": "not_observed_by_model",
                 }
         trajectory.append(
             _sanitize_for_export(

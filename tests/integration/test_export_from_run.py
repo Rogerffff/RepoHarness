@@ -31,6 +31,12 @@ def test_sft_export_from_success_run_masks_assistant_actions(tmp_path: Path):
         for message in record["payload"]["messages"]
         if message.get("role") == "tool"
     )
+    assert all(
+        message.get("observation_source") == "prepared_messages"
+        for message in record["payload"]["messages"]
+        if message.get("role") == "tool"
+    )
+    assert "without_followup_context" not in text
     _assert_refs_exist(run_dir, record)
     _assert_no_hidden_or_local_text(text)
 
@@ -53,6 +59,12 @@ def test_rl_export_uses_final_reward_metadata(tmp_path: Path):
         step["observation"].get("observation_source") == "prepared_messages"
         for step in record["payload"]["trajectory"]
     )
+    for step in record["payload"]["trajectory"]:
+        source = step["observation"].get("observation_source")
+        assert source in {"prepared_messages", "not_observed_by_model"}
+        if source == "not_observed_by_model":
+            assert "preview" not in step["observation"]
+            assert "artifact_refs" not in step["observation"]
     _assert_no_hidden_or_local_text(output.read_text(encoding="utf-8"))
 
 
