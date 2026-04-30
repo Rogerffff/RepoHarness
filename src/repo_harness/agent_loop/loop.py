@@ -41,6 +41,7 @@ class AgentLoop:
         max_turns: int,
         context_config: ContextManagementConfig | None = None,
         budget_manager: BudgetManager | None = None,
+        task_deadline_monotonic: float | None = None,
     ) -> AgentLoopState:
         budget_manager = budget_manager or _default_budget_manager(max_turns)
         loop_started = time.monotonic()
@@ -70,7 +71,12 @@ class AgentLoop:
         for turn in range(1, budget_manager.max_turns + 1):
             state.turn_count = turn
             state.budget_state.turn_count = turn
-            budget_stop = _budget_stop_reason(budget_manager, state, loop_started)
+            budget_stop = _budget_stop_reason(
+                budget_manager,
+                state,
+                loop_started,
+                task_deadline_monotonic=task_deadline_monotonic,
+            )
             if budget_stop is not None:
                 _record_budget_exhausted(
                     run_id=run_id,
@@ -194,7 +200,12 @@ class AgentLoop:
                     "model_error_type": response.model_error_type,
                 }
             )
-            budget_stop = _budget_stop_reason(budget_manager, state, loop_started)
+            budget_stop = _budget_stop_reason(
+                budget_manager,
+                state,
+                loop_started,
+                task_deadline_monotonic=task_deadline_monotonic,
+            )
             if budget_stop is not None:
                 _record_budget_exhausted(
                     run_id=run_id,
@@ -241,7 +252,12 @@ class AgentLoop:
                     tool_call=tool_call,
                     recorder=recorder,
                 )
-                budget_stop = _budget_stop_reason(budget_manager, state, loop_started)
+                budget_stop = _budget_stop_reason(
+                    budget_manager,
+                    state,
+                    loop_started,
+                    task_deadline_monotonic=task_deadline_monotonic,
+                )
                 if budget_stop is not None:
                     _record_budget_exhausted(
                         run_id=run_id,
@@ -352,6 +368,43 @@ class AgentLoop:
                     )
                     continue
                 normalized_request = self.tool_executor.normalize(tool_call, tool_context)
+                budget_stop = _budget_stop_reason(
+                    budget_manager,
+                    state,
+                    loop_started,
+                    task_deadline_monotonic=task_deadline_monotonic,
+                )
+                if budget_stop is not None:
+                    _record_budget_exhausted(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        reason=budget_stop,
+                        state=state,
+                        recorder=recorder,
+                    )
+                    _record_tool_result(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_result=_interrupted_tool_result(tool_call, budget_stop),
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                    )
+                    _record_interrupted_tool_calls(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_calls=response.tool_calls[tool_index + 1 :],
+                        reason=budget_stop,
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                        emit_tool_requested=True,
+                    )
+                    stop_after_tools = True
+                    break
                 if normalized_request.effective_tool_name == "run_tests":
                     if state.budget_state.test_run_count >= budget_manager.max_test_runs:
                         state.agent_stop_reason = "max_test_runs"
@@ -547,8 +600,15 @@ def _budget_stop_reason(
     budget_manager: BudgetManager,
     state: AgentLoopState,
     loop_started: float,
+    *,
+    task_deadline_monotonic: float | None = None,
 ) -> str | None:
-    if time.monotonic() - loop_started >= budget_manager.task_timeout_sec:
+    deadline = (
+        task_deadline_monotonic
+        if task_deadline_monotonic is not None
+        else loop_started + budget_manager.task_timeout_sec
+    )
+    if time.monotonic() >= deadline:
         return "timeout"
     if budget_manager.max_cost is not None and state.budget_state.cost >= budget_manager.max_cost:
         return "max_cost"

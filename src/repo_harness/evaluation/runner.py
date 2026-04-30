@@ -37,6 +37,7 @@ def run_task(
 ) -> Path:
     run_started = time.monotonic()
     config = load_run_config(config_path, output_dir=output_dir)
+    task_deadline_monotonic = run_started + config.runtime.task_timeout_sec
     if config.model.provider != "replay":
         raise ConfigError("RepoHarness 第一版 run-task 只支持 model.provider=replay。")
     if config.runtime.execution_mode != "local_process":
@@ -232,9 +233,10 @@ def run_task(
             max_turns=config.runtime.max_turns,
             context_config=config.context_management,
             budget_manager=budget_manager,
+            task_deadline_monotonic=task_deadline_monotonic,
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
-        if _task_timeout_expired(config, run_started):
+        if _task_timeout_expired(task_deadline_monotonic):
             _append_task_timeout_event(
                 run_id=actual_run_id,
                 task_id=loaded.runnable_task.task_id,
@@ -649,8 +651,8 @@ def _batch_key_artifacts(run_dir: Path) -> dict[str, str]:
     return artifacts
 
 
-def _task_timeout_expired(config: RunConfig, run_started: float) -> bool:
-    return time.monotonic() - run_started >= config.runtime.task_timeout_sec
+def _task_timeout_expired(task_deadline_monotonic: float) -> bool:
+    return time.monotonic() >= task_deadline_monotonic
 
 
 def _append_task_timeout_event(

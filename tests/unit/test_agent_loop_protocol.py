@@ -230,6 +230,46 @@ def test_agent_loop_timeout_after_model_interrupts_tool_calls_before_execution(t
     _assert_tool_events_are_paired(events)
 
 
+def test_agent_loop_uses_external_task_deadline_before_model_call(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    budget = BudgetManager(
+        max_turns=1,
+        max_tool_calls=10,
+        max_test_runs=10,
+        task_timeout_sec=60,
+        command_timeout_sec=30,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+    )
+
+    with RunRecorder("external-deadline", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=FakeModelClient.from_steps(
+                script_id="external-deadline",
+                task_id="task",
+                steps=[{"step_id": "final", "action": "final_answer", "assistant_text": "done"}],
+            ),
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="external-deadline",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            budget_manager=budget,
+            task_deadline_monotonic=time.monotonic() - 1,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "timeout"
+    assert any(event["event_type"] == "budget_exhausted" for event in events)
+    assert not any(event["event_type"] == "context_prepared" for event in events)
+    assert not any(event["event_type"] == "model_call_started" for event in events)
+
+
 def test_agent_loop_max_tool_calls_pairs_interrupted_result(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = FakeModelClient.from_steps(

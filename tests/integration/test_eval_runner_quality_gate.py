@@ -292,12 +292,19 @@ def test_task_timeout_before_final_verifier_skips_strict_replay(tmp_path: Path):
         ).lstrip(),
         encoding="utf-8",
     )
-    replay_path = tmp_path / "final_only.yaml"
+    replay_path = tmp_path / "list_then_final.yaml"
     replay_path.write_text(
         """
-script_id: final_only
+script_id: list_then_final
 task_id: task_slow_valid_baseline
 steps:
+  - step_id: list
+    action: tool_call
+    tool_call_id: call_list
+    tool_name: list_files
+    arguments:
+      root: "."
+      pattern: "*.py"
   - step_id: final
     action: final_answer
     assistant_text: "No changes required."
@@ -328,6 +335,8 @@ steps:
     assert verifier["timeout"] is True
     assert verifier["verifier_stage"] == "final"
     assert event_types.index("budget_exhausted") < event_types.index("verifier_final")
+    assert "model_call_started" not in event_types
+    assert "tool_completed" not in event_types
     assert any(
         event["event_type"] == "budget_exhausted"
         and event["data"].get("phase") == "before_final_verifier"
