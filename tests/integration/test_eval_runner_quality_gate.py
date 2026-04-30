@@ -89,10 +89,43 @@ def test_flaky_baseline_blocks_agent_run(tmp_path: Path):
     summary = (run_dir / "summary.md").read_text(encoding="utf-8")
 
     assert baseline["status"] == "flaky"
+    assert baseline["baseline_rerun_count"] == 2
+    assert baseline["dependency_error"] == "flaky_baseline_inconsistent"
     assert metrics["run_outcome"] == "flaky_task"
     assert metrics["final_verifier_status"] == "skipped"
-    assert "quality_gate_reason: baseline_marked_flaky" in summary
+    assert "quality_gate_reason: flaky_baseline_inconsistent" in summary
     assert not (run_dir / "workspaces/agent_workspace").exists()
+
+
+def test_flaky_tag_alone_does_not_block_agent_run(tmp_path: Path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "tagged_but_stable"
+    task_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    task_path = task_dir / "task_tagged_but_stable.yaml"
+    source = (ROOT / "tests/fixtures/tasks/task_001.yaml").read_text(encoding="utf-8")
+    task_path.write_text(
+        source.replace("id: task_001", "id: task_tagged_but_stable")
+        .replace("task_version: task_001_v0", "task_version: task_tagged_but_stable_v0")
+        .replace("repo: ../repos/buggy_calculator", "repo: ../repos/tagged_but_stable")
+        .replace("  - calculator\n", "  - calculator\n  - flaky-task\n"),
+        encoding="utf-8",
+    )
+
+    run_dir = run_task(
+        task_path,
+        config_path=ROOT / "tests/fixtures/run_configs/replay_success.yaml",
+        output_dir=tmp_path / "runs",
+        run_id="stage11-flaky-tag-stable",
+    )
+
+    baseline = _read_json(run_dir / "baseline.json")
+    metrics = _read_json(run_dir / "metrics.json")
+    assert baseline["status"] == "valid"
+    assert baseline["baseline_rerun_count"] == 2
+    assert metrics["run_outcome"] == "success"
+    assert (run_dir / "resolved_verifier_plan.json").exists()
 
 
 def test_final_verifier_failure_derives_failed_outcome(tmp_path: Path):

@@ -79,24 +79,40 @@ def run_task(
         dependency_state = adapter.capture_dependency_state(strategy=dependency_strategy)
         _write_json(run_dir / "dependency_state.json", dependency_state.model_dump(mode="json"))
         if setup_result is not None and not _setup_succeeded(setup_result):
-            baseline_verifier = build_error_verifier_result(
-                command=loaded.runnable_task.setup_command or "setup",
-                error_type="setup_failed" if not setup_result.timeout else "setup_timeout",
-                verifier_stage="baseline",
-                timeout=setup_result.timeout,
-                raw_output_ref=setup_result.output_artifact_ref,
-            )
+            baseline_verifiers = [
+                build_error_verifier_result(
+                    command=loaded.runnable_task.setup_command or "setup",
+                    error_type="setup_failed" if not setup_result.timeout else "setup_timeout",
+                    verifier_stage="baseline",
+                    timeout=setup_result.timeout,
+                    raw_output_ref=setup_result.output_artifact_ref,
+                )
+            ]
         else:
-            baseline_verifier = verifier.run_baseline(setup, loaded.verifier_config, recorder)
+            baseline_verifiers = [
+                verifier.run_baseline(setup, loaded.verifier_config, recorder)
+                for _ in range(2)
+            ]
+        baseline_verifier = baseline_verifiers[0]
         baseline_ref = recorder.write_json_artifact(
-            "baseline_verifier_result", baseline_verifier.model_dump(mode="json")
+            "baseline_verifier_results",
+            {
+                "results": [
+                    result.model_dump(mode="json")
+                    for result in baseline_verifiers
+                ]
+            },
         )
-        baseline_status = _derive_baseline_status(
+        baseline_status, baseline_dependency_error = _derive_baseline_status(
             generated_file_count=len(loaded.runnable_task.generated_files_policy),
-            task_tags=loaded.definition.tags,
-            verifier_result=baseline_verifier,
+            verifier_results=baseline_verifiers,
             setup_result=setup_result,
         )
+        baseline_artifact_refs = [
+            result.raw_output_ref
+            for result in baseline_verifiers
+            if result.raw_output_ref is not None
+        ]
         baseline = BaselineResult(
             task_id=loaded.runnable_task.task_id,
             status=baseline_status,
@@ -108,16 +124,12 @@ def run_task(
                 if setup_result and setup_result.output_artifact_ref is not None
                 else []
             ),
-            baseline_artifact_refs=(
-                [baseline_verifier.raw_output_ref]
-                if baseline_verifier.raw_output_ref is not None
-                else []
-            ),
-            parser_confidence=baseline_verifier.parser_confidence,
+            baseline_artifact_refs=baseline_artifact_refs,
+            parser_confidence=min(result.parser_confidence for result in baseline_verifiers),
             baseline_rerun_count=(
                 0
                 if setup_result is not None and not _setup_succeeded(setup_result)
-                else 2 if baseline_status == "flaky" else 1
+                else len(baseline_verifiers)
             ),
             initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
             initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
@@ -127,7 +139,7 @@ def run_task(
                 else []
             ),
             dependency_error=(
-                baseline_verifier.error_type if baseline_status in {"invalid", "flaky"} else None
+                baseline_dependency_error if baseline_status in {"invalid", "flaky"} else None
             ),
             dependency_state=dependency_state,
             agent_run_start_policy={
@@ -431,33 +443,68 @@ def _setup_succeeded(result: ExecutionResult | None) -> bool:
 def _derive_baseline_status(
     *,
     generated_file_count: int = 0,
-    task_tags: list[str],
-    verifier_result: object,
+    verifier_results: list[object],
     setup_result: ExecutionResult | None,
-) -> str:
+) -> tuple[str, str | None]:
     if not _setup_succeeded(setup_result):
-        return "invalid"
-    result = verifier_result  # readability for attribute access below
+        return "invalid", "setup_failed"
+    result = verifier_results[0]
+    for candidate in verifier_results:
+        hard_error = _baseline_hard_error(candidate, generated_file_count)
+        if hard_error is not None:
+            return "invalid", hard_error
+    if len({_baseline_signature(candidate) for candidate in verifier_results}) > 1:
+        return "flaky", "flaky_baseline_inconsistent"
     if getattr(result, "timeout", False):
-        return "invalid"
+        return "invalid", "test_timeout"
     if getattr(result, "parser_confidence", 0.0) < 0.5:
-        return "invalid"
+        return "invalid", "low_parser_confidence"
     if getattr(result, "error_type", None) in {
         "dependency_error",
         "low_parser_confidence",
     }:
-        return "invalid"
+        return "invalid", getattr(result, "error_type", None)
     if getattr(result, "error_type", None) == "test_command_error" and generated_file_count == 0:
-        return "invalid"
+        return "invalid", "test_command_error"
     pass_to_pass = getattr(result, "pass_to_pass", {"passed": 0, "total": 0})
     if pass_to_pass.get("passed", 0) < pass_to_pass.get("total", 0):
-        return "invalid"
+        return "invalid", "pass_to_pass_initial_failure"
     fail_to_pass = getattr(result, "fail_to_pass", {"passed": 0, "total": 0})
     if fail_to_pass.get("total", 0) and fail_to_pass.get("passed", 0) == fail_to_pass.get("total", 0):
-        return "invalid"
-    if "flaky-task" in task_tags:
-        return "flaky"
-    return "valid"
+        return "invalid", "fail_to_pass_initially_passing"
+    return "valid", None
+
+
+def _baseline_hard_error(result: object, generated_file_count: int) -> str | None:
+    if getattr(result, "timeout", False):
+        return "test_timeout"
+    if getattr(result, "parser_confidence", 0.0) < 0.5:
+        return "low_parser_confidence"
+    error_type = getattr(result, "error_type", None)
+    if error_type in {"dependency_error", "low_parser_confidence"}:
+        return str(error_type)
+    if error_type == "test_command_error" and generated_file_count == 0:
+        return "test_command_error"
+    return None
+
+
+def _baseline_signature(result: object) -> str:
+    test_cases = getattr(result, "test_cases", [])
+    case_signature = tuple(
+        (getattr(case, "test_id", None), getattr(case, "status", None))
+        for case in test_cases
+    )
+    payload = {
+        "accepted": getattr(result, "accepted", None),
+        "exit_code": getattr(result, "exit_code", None),
+        "timeout": getattr(result, "timeout", None),
+        "error_type": getattr(result, "error_type", None),
+        "pass_ratio": getattr(result, "pass_ratio", None),
+        "fail_to_pass": getattr(result, "fail_to_pass", None),
+        "pass_to_pass": getattr(result, "pass_to_pass", None),
+        "test_cases": case_signature,
+    }
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
 
 
 def _finalize_quality_gate_run(
@@ -527,7 +574,7 @@ def _finalize_quality_gate_run(
 
 def _quality_gate_reason(baseline: BaselineResult) -> str:
     if baseline.status == "flaky":
-        return "baseline_marked_flaky"
+        return baseline.dependency_error or "flaky_baseline_inconsistent"
     if baseline.dependency_error:
         return baseline.dependency_error
     if baseline.parser_confidence < 0.5:
