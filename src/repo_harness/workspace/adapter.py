@@ -252,6 +252,9 @@ class LocalWorkspaceAdapter:
                 raise WorkspaceError(f"符号链接指向 workspace 外部：{requested_path}") from exc
         return resolved
 
+    def is_sensitive_relative_path(self, relative_path: str | Path) -> bool:
+        return _is_sensitive_relative_path(Path(relative_path))
+
     def read_text(self, workspace_path: str | Path, requested_path: str | Path) -> str:
         path = self.resolve_workspace_path(workspace_path, requested_path, must_exist=True)
         return path.read_text(encoding="utf-8")
@@ -418,13 +421,19 @@ def _copy_tree(source: Path, destination: Path) -> None:
 
 
 def _reject_sensitive_path(relative_path: Path) -> None:
+    if _is_sensitive_relative_path(relative_path):
+        raise WorkspaceError(f"拒绝访问敏感路径：{relative_path}")
+
+
+def _is_sensitive_relative_path(relative_path: Path) -> bool:
     for part in relative_path.parts:
         if part in SENSITIVE_NAMES or part.startswith(".env"):
-            raise WorkspaceError(f"拒绝访问敏感路径：{relative_path}")
+            return True
         if "id_rsa" in part or "id_ed25519" in part:
-            raise WorkspaceError(f"拒绝访问敏感路径：{relative_path}")
+            return True
     if relative_path.suffix in SENSITIVE_SUFFIXES:
-        raise WorkspaceError(f"拒绝访问敏感路径：{relative_path}")
+        return True
+    return False
 
 
 def _count_diff_lines(diff_text: str) -> tuple[int, int]:

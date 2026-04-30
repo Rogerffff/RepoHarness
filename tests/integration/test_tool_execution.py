@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 from repo_harness.evaluation.runner import run_task
@@ -179,6 +180,61 @@ def test_bash_git_diff_no_index_outside_path_is_denied(tmp_path):
     _assert_tool_calls_are_paired(events)
 
 
+def test_list_files_does_not_expose_sensitive_file_names(tmp_path):
+    fixture_root = tmp_path / "fixtures"
+    task_dir = fixture_root / "tasks"
+    repo_dir = fixture_root / "repos" / "sensitive_listing"
+    task_dir.mkdir(parents=True)
+
+    shutil.copytree(ROOT / "tests/fixtures/repos/buggy_calculator", repo_dir)
+    (repo_dir / ".env").write_text("TOKEN=secret\n", encoding="utf-8")
+    (repo_dir / "private.pem").write_text("-----BEGIN PRIVATE KEY-----\n", encoding="utf-8")
+    (repo_dir / "nested").mkdir()
+    (repo_dir / "nested" / "id_rsa").write_text("secret\n", encoding="utf-8")
+    task_path = task_dir / "task_sensitive_listing.yaml"
+    source = (ROOT / "tests/fixtures/tasks/task_001.yaml").read_text(encoding="utf-8")
+    task_path.write_text(
+        source.replace("id: task_001", "id: task_sensitive_listing")
+        .replace("task_version: task_001_v0", "task_version: task_sensitive_listing_v0")
+        .replace("repo: ../repos/buggy_calculator", "repo: ../repos/sensitive_listing"),
+        encoding="utf-8",
+    )
+    replay_path = tmp_path / "sensitive_listing.yaml"
+    replay_path.write_text(
+        """
+script_id: sensitive_listing
+task_id: task_sensitive_listing
+steps:
+  - step_id: list_root
+    action: tool_call
+    tool_call_id: call_list
+    tool_name: list_files
+    arguments:
+      path: "."
+      pattern: "**/*"
+  - step_id: final
+    action: final_answer
+    assistant_text: "Listed files."
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path = _write_replay_config(tmp_path, replay_path, run_id="stage08-sensitive-listing")
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage08-sensitive-listing",
+    )
+
+    transcript = _read_jsonl(run_dir / "transcript.jsonl")
+    tool_result = next(record for record in transcript if record.get("tool_call_id") == "call_list")
+    assert "calculator.py" in tool_result["content_preview"]
+    assert ".env" not in tool_result["content_preview"]
+    assert "private.pem" not in tool_result["content_preview"]
+    assert "id_rsa" not in tool_result["content_preview"]
+
+
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -260,3 +316,29 @@ workspace:
         encoding="utf-8",
     )
     return replay_path, config_path
+
+
+def _write_replay_config(tmp_path: Path, replay_path: Path, *, run_id: str) -> Path:
+    config_path = tmp_path / f"{run_id}_config.yaml"
+    config_path.write_text(
+        f"""
+run_id_prefix: stage08
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: {replay_path}
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  max_turns: 4
+  max_tool_calls: 8
+  max_test_runs: 2
+workspace:
+  output_dir: {tmp_path / "runs"}
+  keep_workspace: true
+  default_command_timeout_sec: 60
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return config_path

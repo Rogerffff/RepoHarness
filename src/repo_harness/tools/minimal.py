@@ -366,6 +366,8 @@ class ToolExecutor:
             rel = path.relative_to(workspace).as_posix()
             if ".git" in path.parts or "__pycache__" in path.parts:
                 continue
+            if context.workspace_adapter.is_sensitive_relative_path(rel):
+                continue
             if path.is_file() and fnmatch.fnmatch(rel, pattern):
                 files.append(rel)
         ref = context.recorder.write_json_artifact("list_files", {"files": files})
