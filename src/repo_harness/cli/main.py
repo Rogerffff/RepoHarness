@@ -56,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     export = subparsers.add_parser(
         "export",
-        help="从已有 run directory 导出训练数据。阶段一暂未实现执行逻辑。",
+        help="从已有 run directory 或 runs 根目录导出训练数据。",
     )
     export.add_argument("run_dir_or_runs_dir", help="单个 run directory 或 runs 根目录。")
     export.add_argument(

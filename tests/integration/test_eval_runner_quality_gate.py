@@ -128,6 +128,42 @@ def test_flaky_tag_alone_does_not_block_agent_run(tmp_path: Path):
     assert (run_dir / "resolved_verifier_plan.json").exists()
 
 
+def test_keep_workspace_false_cleans_success_and_quality_gate_workspaces(tmp_path: Path):
+    success_config = _write_replay_config(
+        tmp_path,
+        replay_path=ROOT / "tests/fixtures/replays/task_003_create_file_success.yaml",
+        output_dir=tmp_path / "runs",
+        run_id_prefix="stage11_keep_false_success",
+        keep_workspace=False,
+    )
+    success_run = run_task(
+        ROOT / "tests/fixtures/tasks/task_003_create_file.yaml",
+        config_path=success_config,
+        output_dir=tmp_path / "runs",
+        run_id="stage11-keep-false-success",
+    )
+
+    invalid_config = _write_replay_config(
+        tmp_path,
+        replay_path=ROOT / "tests/fixtures/replays/task_001_success.yaml",
+        output_dir=tmp_path / "runs",
+        run_id_prefix="stage11_keep_false_invalid",
+        keep_workspace=False,
+    )
+    invalid_run = run_task(
+        ROOT / "tests/fixtures/tasks/task_invalid.yaml",
+        config_path=invalid_config,
+        output_dir=tmp_path / "runs",
+        run_id="stage11-keep-false-invalid",
+    )
+
+    assert (success_run / "final.patch").exists()
+    assert (success_run / "final.diff").exists()
+    assert not (success_run / "workspaces").exists()
+    assert _read_json(invalid_run / "metrics.json")["run_outcome"] == "invalid_task"
+    assert not (invalid_run / "workspaces").exists()
+
+
 def test_final_verifier_failure_derives_failed_outcome(tmp_path: Path):
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_001.yaml",
@@ -496,6 +532,7 @@ def _write_replay_config(
     replay_path: Path,
     output_dir: Path,
     run_id_prefix: str,
+    keep_workspace: bool = True,
 ) -> Path:
     config_path = tmp_path / f"{run_id_prefix}_replay.yaml"
     config_path.write_text(
@@ -515,7 +552,7 @@ def _write_replay_config(
               max_test_runs: 4
             workspace:
               output_dir: {output_dir}
-              keep_workspace: true
+              keep_workspace: {str(keep_workspace).lower()}
               default_command_timeout_sec: 60
             evaluation:
               fail_on_invalid_task: false

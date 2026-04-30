@@ -168,6 +168,7 @@ def run_task(
                 run_dir=run_dir,
                 recorder=recorder,
             )
+            adapter.cleanup_workspaces()
             return run_dir
         resolved_plan = ResolvedVerifierPlan(
             verifier_config=loaded.verifier_config,
@@ -343,6 +344,7 @@ def run_task(
             )
         )
         recorder.finalize_run(summary)
+        adapter.cleanup_workspaces()
     return run_dir
 
 
