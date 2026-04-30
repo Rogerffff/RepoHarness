@@ -6,6 +6,7 @@ import argparse
 from collections.abc import Sequence
 
 from repo_harness import __version__
+from repo_harness.trajectory import inspect_run
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -73,6 +74,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command is None:
         parser.print_help()
+        return 0
+    if args.command == "inspect-run":
+        print(inspect_run(args.run_dir))
         return 0
     parser.error(f"命令 {args.command!r} 尚未在当前阶段实现")
     return 2
