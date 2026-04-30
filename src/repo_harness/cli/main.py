@@ -6,6 +6,8 @@ import argparse
 from collections.abc import Sequence
 
 from repo_harness import __version__
+from repo_harness.errors import RepoHarnessError
+from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
 
 
@@ -74,6 +76,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command is None:
         parser.print_help()
+        return 0
+    if args.command == "validate-task":
+        try:
+            loaded = load_task(args.task_path)
+        except RepoHarnessError as exc:
+            parser.exit(1, f"任务校验失败：{exc}\n")
+        print(f"任务校验通过：{loaded.runnable_task.task_id}")
+        print(f"仓库：{loaded.runnable_task.repo_source}")
+        print(f"测试命令：{loaded.verifier_config.test_command}")
         return 0
     if args.command == "inspect-run":
         print(inspect_run(args.run_dir))

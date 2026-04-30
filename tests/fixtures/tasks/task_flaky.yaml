@@ -1,0 +1,43 @@
+id: task_flaky
+task_version: task_flaky_v0
+dataset_name: repo_harness_micro
+source_kind: micro_repo_fixture
+dataset_split: dev
+created_at: "2026-04-30"
+repo: ../repos/flaky_counter
+base_commit: fixture
+issue: "This task is used by a deterministic flaky baseline simulator in later stages."
+setup_command: null
+test_command: "pytest -q"
+timeouts:
+  timeout_sec: 60
+environment:
+  execution_image: "python:3.12-slim"
+  python_version: "3.12"
+  node_version: null
+  package_manager: pip
+  lockfile_hashes: []
+  setup_cache_key_inputs:
+    - pyproject.toml
+  required_system_packages: []
+  setup_network_policy: deny
+expected_files:
+  - counter.py
+fail_to_pass_tests: []
+pass_to_pass_tests:
+  - tests/test_counter.py::test_value
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: false
+  source_url: null
+  overlap_check_notes: "flaky simulator fixture"
+declared_setup_mutations: []
+generated_files: []
+tags:
+  - flaky-task

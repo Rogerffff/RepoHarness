@@ -1,0 +1,29 @@
+script_id: task_001_success
+task_id: task_001
+steps:
+  - step_id: read_calculator
+    action: tool_call
+    tool_call_id: call_read_calculator
+    tool_name: read_file
+    arguments:
+      path: calculator.py
+  - step_id: edit_divide
+    action: tool_call
+    tool_call_id: call_edit_divide
+    tool_name: edit_file
+    arguments:
+      path: calculator.py
+      old_text: "def divide(left: int, right: int) -> float:\n    return left / right\n"
+      new_text: "def divide(left: int, right: int) -> float:\n    if right == 0:\n        raise ValueError(\"division by zero\")\n    return left / right\n"
+  - step_id: run_tests
+    action: tool_call
+    tool_call_id: call_run_tests
+    tool_name: run_tests
+    arguments: {}
+  - step_id: final
+    action: final_answer
+    assistant_text: "Implemented the divide-by-zero guard and verified the tests."
+expected_outcome:
+  accepted: true
+metadata:
+  fixture_kind: success

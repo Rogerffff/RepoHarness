@@ -1,0 +1,50 @@
+id: task_003_create_file
+task_version: task_003_create_file_v0
+dataset_name: repo_harness_micro
+source_kind: micro_repo_fixture
+dataset_split: dev
+created_at: "2026-04-30"
+repo: ../repos/missing_helper_file
+base_commit: fixture
+issue: "Add the missing app.helpers module so greeting normalizes extra spaces and title-cases names."
+setup_command: null
+test_command: "pytest -q"
+timeouts:
+  timeout_sec: 60
+environment:
+  execution_image: "python:3.12-slim"
+  python_version: "3.12"
+  node_version: null
+  package_manager: pip
+  lockfile_hashes: []
+  setup_cache_key_inputs:
+    - pyproject.toml
+  required_system_packages: []
+  setup_network_policy: deny
+expected_files:
+  - app/helpers.py
+  - app/main.py
+fail_to_pass_tests:
+  - tests/test_main.py::test_greeting_normalizes_name
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: false
+  source_url: null
+  overlap_check_notes: "hand-written fixture"
+declared_setup_mutations: []
+generated_files:
+  - path_pattern: app/helpers.py
+    allowed_stage: agent_run
+    include_in_final_patch: true
+    reason: "The task requires adding the missing helper module."
+    artifact_policy: record
+tags:
+  - python
+  - create-file

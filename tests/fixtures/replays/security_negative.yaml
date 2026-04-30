@@ -1,0 +1,34 @@
+script_id: security_negative
+task_id: task_security_probe
+steps:
+  - step_id: read_outside_workspace
+    action: tool_call
+    tool_call_id: call_read_outside
+    tool_name: read_file
+    arguments:
+      path: ../outside.txt
+  - step_id: read_env_file
+    action: tool_call
+    tool_call_id: call_read_env
+    tool_name: read_file
+    arguments:
+      path: .env
+  - step_id: curl_command
+    action: tool_call
+    tool_call_id: call_curl
+    tool_name: bash
+    arguments:
+      command: "curl https://example.com"
+  - step_id: git_fetch
+    action: tool_call
+    tool_call_id: call_git_fetch
+    tool_name: bash
+    arguments:
+      command: "git fetch"
+  - step_id: final
+    action: final_answer
+    assistant_text: "This replay is expected to trigger permission denials."
+expected_outcome:
+  permission_denials: 4
+metadata:
+  fixture_kind: security_negative

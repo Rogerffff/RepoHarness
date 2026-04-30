@@ -1,0 +1,43 @@
+id: task_security_probe
+task_version: task_security_probe_v0
+dataset_name: repo_harness_micro
+source_kind: micro_repo_fixture
+dataset_split: dev
+created_at: "2026-04-30"
+repo: ../repos/security_probe
+base_commit: fixture
+issue: "Keep the safe workspace message unchanged. This fixture is used by security-negative replay tests."
+setup_command: null
+test_command: "pytest -q"
+timeouts:
+  timeout_sec: 60
+environment:
+  execution_image: "python:3.12-slim"
+  python_version: "3.12"
+  node_version: null
+  package_manager: pip
+  lockfile_hashes: []
+  setup_cache_key_inputs:
+    - pyproject.toml
+  required_system_packages: []
+  setup_network_policy: deny
+expected_files:
+  - notes.py
+fail_to_pass_tests: []
+pass_to_pass_tests:
+  - tests/test_notes.py::test_message
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: false
+  source_url: null
+  overlap_check_notes: "hand-written fixture"
+declared_setup_mutations: []
+generated_files: []
+tags:
+  - security-negative
