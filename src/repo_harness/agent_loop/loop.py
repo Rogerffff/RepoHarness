@@ -73,6 +73,7 @@ class AgentLoop:
             task_id=task_id,
             messages=messages,
             budget_state=BudgetState(started_at=_timestamp()),
+            current_phase=self.scaffold.initial_phase,
             test_feedback_policy=self.test_feedback_policy,
             feedback_tests_passed_policy=self.feedback_tests_passed_policy,
             hidden_feedback_visible_to_model=self.hidden_feedback_visible_to_model,
@@ -112,8 +113,22 @@ class AgentLoop:
                     recorder=recorder,
                 )
                 break
-            prepared = self.context_manager.prepare_messages(
+            current_phase = state.current_phase or self.scaffold.initial_phase
+            phase_allowed_tool_names = _allowed_tools_for_phase(
+                scaffold=self.scaffold,
+                phase=current_phase,
+                resolved_allowed_tool_names=self.allowed_tool_names,
+                test_feedback_policy=self.test_feedback_policy,
+            )
+            phase_start_test_run_count = state.budget_state.test_run_count
+            context_messages = _messages_with_phase_metadata(
                 messages=messages,
+                scaffold=self.scaffold,
+                phase=current_phase,
+                allowed_tool_names=phase_allowed_tool_names,
+            )
+            prepared = self.context_manager.prepare_messages(
+                messages=context_messages,
                 recorder=recorder,
                 task_id=task_id,
                 turn=turn,
@@ -155,9 +170,9 @@ class AgentLoop:
                         "context_revision": prepared.context_revision,
                         "model_input_hash": prepared.model_input_hash,
                         "scaffold_id": self.scaffold.scaffold_id,
-                        "scaffold_phase": self.scaffold.initial_phase,
+                        "scaffold_phase": current_phase,
                         "budget_state": state.budget_state.model_dump(mode="json"),
-                        "allowed_tools": self.allowed_tool_names,
+                        "allowed_tools": phase_allowed_tool_names,
                         "tool_schema_snapshot_ref": (
                             tool_schema_snapshot_ref.model_dump(mode="json")
                             if tool_schema_snapshot_ref is not None
@@ -182,9 +197,10 @@ class AgentLoop:
                 provider_options=provider_options
                 or ModelProviderOptions(provider="replay", model_id="replay-script-v0"),
                 scaffold=self.scaffold,
+                scaffold_phase=current_phase,
                 allowed_tool_definitions=_tool_definitions_for_allowed_tools(
                     self.tool_executor,
-                    self.allowed_tool_names,
+                    phase_allowed_tool_names,
                 ),
                 tool_schema_snapshot_ref=tool_schema_snapshot_ref
                 or _placeholder_artifact_ref("tool_schema_snapshot"),
@@ -225,9 +241,9 @@ class AgentLoop:
                             **response.model_call_event.model_dump(mode="json"),
                             "turn": turn,
                             "scaffold_id": self.scaffold.scaffold_id,
-                            "scaffold_phase": self.scaffold.initial_phase,
+                            "scaffold_phase": current_phase,
                             "budget_state": state.budget_state.model_dump(mode="json"),
-                            "allowed_tools": self.allowed_tool_names,
+                            "allowed_tools": phase_allowed_tool_names,
                             "run_config_facts_ref": (
                                 run_config_facts_ref.model_dump(mode="json")
                                 if run_config_facts_ref is not None
@@ -269,11 +285,12 @@ class AgentLoop:
             messages.append(
                 {
                     "role": "assistant",
-                    "content": response.assistant_message.content,
-                    "tool_calls": [call.model_dump(mode="json") for call in response.tool_calls],
-                    "model_error_type": response.model_error_type,
-                }
-            )
+                "content": response.assistant_message.content,
+                "tool_calls": [call.model_dump(mode="json") for call in response.tool_calls],
+                "model_error_type": response.model_error_type,
+                "scaffold_phase": current_phase,
+            }
+        )
             budget_stop = _budget_stop_reason(
                 budget_manager,
                 state,
@@ -321,6 +338,19 @@ class AgentLoop:
                     state.agent_stop_reason = "final_answer" if patch_applied else "model_error"
                     state.budget_state.stop_reason = state.agent_stop_reason
                     break
+                if _uses_phase_transitions(self.scaffold) and current_phase != "final":
+                    _record_phase_transition(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        from_phase=current_phase,
+                        to_phase=_next_phase_after_assistant_message(current_phase),
+                        reason="assistant_message_without_tool",
+                        scaffold=self.scaffold,
+                        state=state,
+                        recorder=recorder,
+                    )
+                    continue
                 if self.scaffold.is_valid_final_answer(
                     response.assistant_message.content,
                     response.finish_reason,
@@ -372,7 +402,7 @@ class AgentLoop:
                 )
                 if (
                     self.tool_executor.is_known(tool_call.tool_name)
-                    and tool_call.tool_name not in self.allowed_tool_names
+                    and tool_call.tool_name not in phase_allowed_tool_names
                 ):
                     recorder.append_event(
                         TrajectoryEvent(
@@ -386,8 +416,9 @@ class AgentLoop:
                             error_type="tool_not_allowed_by_scaffold",
                             data={
                                 **tool_call.model_dump(mode="json"),
-                                "allowed_tools": self.allowed_tool_names,
+                                "allowed_tools": phase_allowed_tool_names,
                                 "scaffold_id": self.scaffold.scaffold_id,
+                                "scaffold_phase": current_phase,
                             },
                         )
                     )
@@ -700,6 +731,24 @@ class AgentLoop:
                             break
             if stop_after_tools:
                 break
+            if _uses_phase_transitions(self.scaffold):
+                next_phase, transition_reason = _next_phase_after_tools(
+                    current_phase=current_phase,
+                    state=state,
+                    phase_start_test_run_count=phase_start_test_run_count,
+                )
+                if next_phase != current_phase:
+                    _record_phase_transition(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        from_phase=current_phase,
+                        to_phase=next_phase,
+                        reason=transition_reason,
+                        scaffold=self.scaffold,
+                        state=state,
+                        recorder=recorder,
+                    )
         else:
             state.agent_stop_reason = "max_turns"
             state.budget_state.stop_reason = "max_turns"
@@ -960,6 +1009,127 @@ def _record_patch_action_transcript(
     )
 
 
+def _uses_phase_transitions(scaffold: ScaffoldDefinition) -> bool:
+    return len(scaffold.phases()) > 1
+
+
+def _allowed_tools_for_phase(
+    *,
+    scaffold: ScaffoldDefinition,
+    phase: str,
+    resolved_allowed_tool_names: list[str],
+    test_feedback_policy: str,
+) -> list[str]:
+    allowed = [
+        name
+        for name in scaffold.allowed_tools_for_phase(phase)
+        if name in resolved_allowed_tool_names
+    ]
+    if test_feedback_policy == "disabled":
+        allowed = [name for name in allowed if name != "run_tests"]
+    return allowed
+
+
+def _messages_with_phase_metadata(
+    *,
+    messages: list[dict[str, object]],
+    scaffold: ScaffoldDefinition,
+    phase: str,
+    allowed_tool_names: list[str],
+) -> list[dict[str, object]]:
+    if not _uses_phase_transitions(scaffold):
+        return messages
+    return [
+        *messages,
+        {
+            "role": "user",
+            "content": {
+                "scaffold_phase_metadata": {
+                    "schema_version": "repo_harness_scaffold_phase_context_v0",
+                    "scaffold_id": scaffold.scaffold_id,
+                    "scaffold_version": scaffold.scaffold_version,
+                    "current_phase": phase,
+                    "phase_sequence": scaffold.phases(),
+                    "phase_prompt": scaffold.prompt_fragment_for_phase(phase),
+                    "allowed_tools_for_phase": allowed_tool_names,
+                    "phase_transition_policy": scaffold.phase_transition_policy,
+                }
+            },
+        },
+    ]
+
+
+def _next_phase_after_assistant_message(current_phase: str) -> str:
+    transitions = {
+        "planner": "coder",
+        "coder": "verifier",
+        "verifier": "final",
+        "repair": "verifier",
+    }
+    return transitions.get(current_phase, current_phase)
+
+
+def _next_phase_after_tools(
+    *,
+    current_phase: str,
+    state: AgentLoopState,
+    phase_start_test_run_count: int,
+) -> tuple[str, str]:
+    if current_phase == "planner":
+        return "coder", "planner_phase_completed"
+    if current_phase == "coder":
+        return "verifier", "coder_phase_completed"
+    if current_phase == "verifier":
+        if state.feedback_verifier_accepted:
+            return "final", "feedback_verifier_accepted"
+        if state.budget_state.test_run_count > phase_start_test_run_count:
+            return "repair", "feedback_verifier_not_accepted"
+        return "final", "verifier_phase_completed_without_test_feedback"
+    if current_phase == "repair":
+        return "verifier", "repair_phase_completed"
+    return current_phase, "phase_unchanged"
+
+
+def _record_phase_transition(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    from_phase: str,
+    to_phase: str,
+    reason: str,
+    scaffold: ScaffoldDefinition,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+) -> None:
+    if from_phase == to_phase:
+        return
+    record = {
+        "schema_version": "repo_harness_scaffold_phase_transition_v0",
+        "scaffold_id": scaffold.scaffold_id,
+        "scaffold_version": scaffold.scaffold_version,
+        "phase_transition_policy": scaffold.phase_transition_policy,
+        "from_phase": from_phase,
+        "to_phase": to_phase,
+        "reason": reason,
+        "turn": turn,
+        "phase_sequence": scaffold.phases(),
+    }
+    state.current_phase = to_phase
+    state.phase_history.append(record)
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("phase"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="scaffold_phase_transition",
+            data=record,
+        )
+    )
+
+
 def _build_model_request_context(
     *,
     run_id: str,
@@ -971,6 +1141,7 @@ def _build_model_request_context(
     context_revision: int,
     provider_options: ModelProviderOptions,
     scaffold: ScaffoldDefinition,
+    scaffold_phase: str,
     allowed_tool_definitions: list[dict[str, object]],
     tool_schema_snapshot_ref: ArtifactRef,
     run_config_facts_ref: RunConfigFactsRef,
@@ -999,7 +1170,7 @@ def _build_model_request_context(
         tool_schema_snapshot_ref=tool_schema_snapshot_ref,
         provider_options=provider_options,
         scaffold_id=scaffold.scaffold_id,
-        scaffold_phase=scaffold.initial_phase,
+        scaffold_phase=scaffold_phase,
         run_config_facts_ref=run_config_facts_ref,
         budget_state=budget_state,
         request_timeout_seconds=request_timeout_seconds,

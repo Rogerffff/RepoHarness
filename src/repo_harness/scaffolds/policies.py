@@ -76,6 +76,17 @@ def resolve_allowed_tools(
     return allowed
 
 
+def resolve_allowed_tools_for_phase(
+    *,
+    scaffold: ScaffoldDefinition,
+    feedback_policy: ResolvedFeedbackPolicyFacts,
+    phase: str,
+) -> list[str]:
+    allowed = resolve_allowed_tools(scaffold=scaffold, feedback_policy=feedback_policy)
+    phase_allowed = scaffold.allowed_tools_for_phase(phase)
+    return [name for name in phase_allowed if name in allowed]
+
+
 def tool_registry_for_allowed_tools(allowed_tools: list[str]) -> ToolRegistry:
     return ToolRegistry([build_tool(name) for name in allowed_tools])
 

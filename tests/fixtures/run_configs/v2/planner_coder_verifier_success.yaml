@@ -1,0 +1,16 @@
+run_id_prefix: stage09
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: tests/fixtures/replays/task_001_planner_coder_verifier_success.yaml
+runtime:
+  scaffold_id: planner_coder_verifier
+  execution_mode: local_process
+  permission_mode: auto
+  max_turns: 6
+  max_tool_calls: 20
+  max_test_runs: 2
+workspace:
+  output_dir: runs
+  keep_workspace: true
+  default_command_timeout_sec: 60

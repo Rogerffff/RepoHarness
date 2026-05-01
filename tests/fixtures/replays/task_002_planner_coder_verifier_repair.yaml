@@ -1,0 +1,42 @@
+script_id: task_002_planner_coder_verifier_repair
+task_id: task_002
+steps:
+  - step_id: planner_read_settings
+    action: tool_call
+    tool_call_id: call_planner_read
+    tool_name: read_file
+    arguments:
+      path: app/settings.py
+  - step_id: coder_edit_wrong_default
+    action: tool_call
+    tool_call_id: call_coder_edit
+    tool_name: edit_file
+    arguments:
+      path: app/settings.py
+      old_text: "def get_feature_flag(name: str) -> bool:\n    return DEFAULT_FLAGS[name]\n"
+      new_text: "def get_feature_flag(name: str) -> bool:\n    return DEFAULT_FLAGS.get(name, True)\n"
+  - step_id: verifier_run_tests_failed
+    action: tool_call
+    tool_call_id: call_verifier_tests
+    tool_name: run_tests
+    arguments: {}
+  - step_id: repair_edit_default
+    action: tool_call
+    tool_call_id: call_repair_edit
+    tool_name: edit_file
+    arguments:
+      path: app/settings.py
+      old_text: "def get_feature_flag(name: str) -> bool:\n    return DEFAULT_FLAGS.get(name, True)\n"
+      new_text: "def get_feature_flag(name: str) -> bool:\n    return DEFAULT_FLAGS.get(name, False)\n"
+  - step_id: verifier_run_tests_passed
+    action: tool_call
+    tool_call_id: call_verifier_tests_after_repair
+    tool_name: run_tests
+    arguments: {}
+  - step_id: final
+    action: final_answer
+    assistant_text: "Updated unknown feature flags to default to False after the repair pass."
+expected_outcome:
+  accepted: true
+metadata:
+  fixture_kind: planner_coder_verifier_repair

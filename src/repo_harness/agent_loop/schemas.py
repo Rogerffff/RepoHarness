@@ -49,6 +49,8 @@ class AgentLoopState(StrictBaseModel):
     budget_state: BudgetState
     tool_pairing_state: ToolPairingState = Field(default_factory=ToolPairingState)
     context_revision: int = Field(default=0, ge=0)
+    current_phase: str | None = None
+    phase_history: list[dict[str, Any]] = Field(default_factory=list)
     last_model_error: str | None = None
     last_tool_parse_error: str | None = None
     agent_stop_reason: AgentStopReason | None = None

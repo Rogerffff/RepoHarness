@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from repo_harness.errors import ConfigError
+from repo_harness.scaffolds.planner_coder_verifier import build_planner_coder_verifier_scaffold
 from repo_harness.scaffolds.schemas import ScaffoldDefinition
 from repo_harness.scaffolds.single_shot_patch import build_single_shot_patch_scaffold
 from repo_harness.scaffolds.simple_react import build_simple_react_scaffold
@@ -14,6 +15,7 @@ class ScaffoldRegistry:
         for definition in definitions or [
             build_simple_react_scaffold(),
             build_single_shot_patch_scaffold(),
+            build_planner_coder_verifier_scaffold(),
         ]:
             self.register(definition)
 

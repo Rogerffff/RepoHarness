@@ -22,6 +22,18 @@ class ScaffoldDefinition:
     allows_feedback_verifier_repair: bool
     allowed_tools: list[str] = field(default_factory=lambda: list(DEFAULT_TOOL_ORDER))
     initial_phase: str = "act"
+    phase_sequence: list[str] = field(default_factory=list)
+    phase_allowed_tools: dict[str, list[str]] = field(default_factory=dict)
+    phase_prompt_fragments: dict[str, str] = field(default_factory=dict)
+
+    def phases(self) -> list[str]:
+        return list(self.phase_sequence or [self.initial_phase])
+
+    def allowed_tools_for_phase(self, phase: str) -> list[str]:
+        return list(self.phase_allowed_tools.get(phase, self.allowed_tools))
+
+    def prompt_fragment_for_phase(self, phase: str) -> str | None:
+        return self.phase_prompt_fragments.get(phase)
 
     def is_valid_final_answer(self, content: str | None, finish_reason: str | None) -> bool:
         if not self.allows_final_answer_without_tool or finish_reason != "stop":

@@ -55,13 +55,24 @@ def test_experiment_config_allows_single_shot_patch_after_scaffold_registry():
     assert config.scaffold_id == "single_shot_patch"
 
 
-def test_experiment_config_rejects_stage08_unregistered_scaffold():
-    with pytest.raises(ValidationError, match="simple_react 或 single_shot_patch"):
+def test_experiment_config_allows_planner_coder_verifier_after_stage09():
+    config = ExperimentConfig(
+        experiment_id="planner_coder_verifier",
+        tasks=["tests/fixtures/tasks/task_001.yaml"],
+        rollout_count=1,
+        scaffold_id="planner_coder_verifier",
+    )
+
+    assert config.scaffold_id == "planner_coder_verifier"
+
+
+def test_experiment_config_rejects_stage09_unregistered_scaffold():
+    with pytest.raises(ValidationError, match="planner_coder_verifier"):
         ExperimentConfig(
             experiment_id="bad_scaffold",
             tasks=["tests/fixtures/tasks/task_001.yaml"],
             rollout_count=1,
-            scaffold_id="planner_coder_verifier",
+            scaffold_id="unknown_scaffold",
         )
 
 
