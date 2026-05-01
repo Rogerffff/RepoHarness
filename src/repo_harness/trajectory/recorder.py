@@ -127,9 +127,11 @@ class RunRecorder:
         artifact_id = f"{self.run_id}_artifact_{self._artifact_counter:06d}"
         suffix = _artifact_suffix(data, metadata)
         original_size_bytes = _artifact_size_bytes(data)
+        preserve_json = metadata.get("budget_policy") == "preserve_json"
         truncated = (
             self.max_artifact_bytes is not None
             and original_size_bytes > self.max_artifact_bytes
+            and not preserve_json
         )
         if truncated:
             data = _truncate_artifact_data(data, self.max_artifact_bytes or 0)
@@ -211,7 +213,7 @@ class RunRecorder:
         metadata: Mapping[str, Any] | None = None,
     ) -> ArtifactRef:
         data = json.dumps(obj, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
-        merged = {"suffix": ".json", **(metadata or {})}
+        merged = {"suffix": ".json", "budget_policy": "preserve_json", **(metadata or {})}
         return self.write_artifact(kind, data, merged)
 
     def finalize_run(self, summary: str, *, status: RunStatus = "FINALIZED") -> None:
