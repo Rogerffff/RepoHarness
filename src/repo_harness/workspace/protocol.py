@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from pydantic import Field
 
+from repo_harness.errors import RepoHarnessError
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.workspace.schemas import DependencyState, RunWorkspace
@@ -19,8 +20,7 @@ class WorkspaceBackend(str, Enum):
     local_process = "local_process"
     docker = "docker"
 
-
-class WorkspaceBackendError(Exception):
+class WorkspaceBackendError(RepoHarnessError):
     """工作区后端不可用或拒绝执行时使用的明确错误。"""
 
 
@@ -48,6 +48,7 @@ class WorkspaceCommandResult(StrictBaseModel):
     exit_code_interpretation: str = "unknown"
 
 
+@runtime_checkable
 class WorkspaceAdapter(Protocol):
     """工作区生命周期和命令执行后端必须实现的最小契约。"""
 

@@ -58,7 +58,11 @@ def run_task(
     if config.model.provider == "openai" and not _is_openai_fallback_config(config.model.provider_specific_options):
         raise ConfigError("model.provider=openai 只允许作为 DeepSeek fallback smoke run，不能作为 primary provider。")
     if config.runtime.execution_mode != "local_process":
-        raise ConfigError("RepoHarness 第一版只支持 runtime.execution_mode=local_process。")
+        raise ConfigError(
+            "runtime.execution_mode=docker 是为 Docker-based executable repository environment "
+            "保留的后端接口；当前 Stage 14 选择 interface_only 完成方式，因此会清晰拒绝，"
+            "不会静默降级为 execution_mode=local_process。"
+        )
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)

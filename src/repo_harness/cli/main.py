@@ -21,6 +21,7 @@ from repo_harness.model_client.mock_smoke import inspect_mock_provider_smoke
 from repo_harness.model_client.real_smoke import inspect_real_provider_smoke, run_real_provider_smoke
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
+from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -167,6 +168,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="报告显示有凭证时要求 accepted 或 fallback_success。",
     )
 
+    workspace_backend_status = subparsers.add_parser(
+        "workspace-backend-status",
+        help="生成 Stage 14 docker_stage_status.json。",
+    )
+    workspace_backend_status.add_argument("--output", required=True, help="docker_stage_status.json 输出路径。")
+    workspace_backend_status.add_argument(
+        "--mode",
+        required=True,
+        choices=["interface-only", "docker-backend"],
+        help="Stage 14 完成方式；写入 JSON 时映射为 interface_only 或 docker_backend。",
+    )
+
+    inspect_workspace_backend = subparsers.add_parser(
+        "inspect-workspace-backend",
+        help="只读检查 Stage 14 docker_stage_status.json。",
+    )
+    inspect_workspace_backend.add_argument("--status-file", required=True, help="docker_stage_status.json 路径。")
+    inspect_workspace_backend.add_argument("--assert-interface-only", action="store_true", help="要求 interface_only 验收通过。")
+    inspect_workspace_backend.add_argument("--assert-docker-backend", action="store_true", help="要求 docker_backend 验收通过。")
+    inspect_workspace_backend.add_argument("--assert-stage-complete", action="store_true", help="要求 Stage 14 在任一允许模式下完成。")
+
     return parser
 
 
@@ -240,6 +262,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"real provider smoke 检查失败：{exc}\n")
+        return 0
+    if args.command == "workspace-backend-status":
+        mode = "interface_only" if args.mode == "interface-only" else "docker_backend"
+        try:
+            output_path = write_workspace_backend_status(output=args.output, mode=mode)
+        except RepoHarnessError as exc:
+            parser.exit(1, f"workspace backend status 生成失败：{exc}\n")
+        print(f"workspace backend status：{output_path}")
+        return 0
+    if args.command == "inspect-workspace-backend":
+        try:
+            print(
+                inspect_workspace_backend_status(
+                    status_file=args.status_file,
+                    assert_interface_only=args.assert_interface_only,
+                    assert_docker_backend=args.assert_docker_backend,
+                    assert_stage_complete=args.assert_stage_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"workspace backend 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
