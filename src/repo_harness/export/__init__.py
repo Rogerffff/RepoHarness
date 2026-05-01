@@ -6,6 +6,7 @@ from repo_harness.export.exporter import (
     export_run_or_runs,
     export_sft_jsonl,
 )
+from repo_harness.export.inspect import inspect_export
 from repo_harness.export.schemas import (
     CompareScope,
     ExportAuditItem,
@@ -32,4 +33,5 @@ __all__ = [
     "export_rl_jsonl",
     "export_run_or_runs",
     "export_sft_jsonl",
+    "inspect_export",
 ]

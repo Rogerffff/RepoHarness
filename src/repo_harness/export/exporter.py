@@ -8,7 +8,24 @@ from pathlib import Path
 from typing import Any, Literal
 
 from repo_harness.errors import ExportError
-from repo_harness.export.schemas import ExportPolicy, ExportRecord
+from repo_harness.export.audit import (
+    audit_export_records,
+    build_audit_report,
+    render_audit_markdown,
+)
+from repo_harness.export.manifest import (
+    CONVENIENCE_FILE_NAMES,
+    DATA_FILE_NAMES,
+    EXPORTER_VERSION,
+    build_data_file,
+    build_export_id,
+    build_export_manifest,
+    utc_timestamp,
+    write_json,
+    write_jsonl,
+    write_text,
+)
+from repo_harness.export.schemas import ExportPolicy, ExportRecord, ExportRecordQuality
 from repo_harness.schema_versions import EXPORT_SCHEMA_VERSION
 from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
 
@@ -19,85 +36,292 @@ def export_run_or_runs(
     run_dir_or_runs_dir: str | Path,
     *,
     export_format: ExportFormat,
+    policy: ExportPolicy | None = None,
 ) -> Path:
     path = Path(run_dir_or_runs_dir)
     if export_format == "sft_jsonl":
         if _looks_like_run_dir(path):
-            return export_sft_jsonl(path)
-        return _export_many(path, export_format)
+            return export_sft_jsonl(path, policy=policy)
+        return _export_many(path, export_format, policy=policy)
     if export_format == "rl_jsonl":
         if _looks_like_run_dir(path):
-            return export_rl_jsonl(path)
-        return _export_many(path, export_format)
+            return export_rl_jsonl(path, policy=policy)
+        return _export_many(path, export_format, policy=policy)
     if export_format == "preference_jsonl":
-        return export_preference_jsonl(path)
+        return export_preference_jsonl(path, policy=policy)
     raise ExportError(f"不支持的导出格式：{export_format}")
 
 
-def _export_many(runs_dir: Path, export_format: Literal["sft_jsonl", "rl_jsonl"]) -> Path:
+def _export_many(
+    runs_dir: Path,
+    export_format: Literal["sft_jsonl", "rl_jsonl"],
+    *,
+    policy: ExportPolicy | None = None,
+) -> Path:
     if not runs_dir.exists() or not runs_dir.is_dir():
         raise ExportError(f"runs directory 不存在：{runs_dir}")
     builders = {
         "sft_jsonl": _build_sft_record,
         "rl_jsonl": _build_rl_record,
     }
-    records = [
-        builders[export_format](run_dir).model_dump(mode="json")
-        for run_dir in sorted(runs_dir.iterdir())
-        if _looks_like_run_dir(run_dir)
-    ]
+    run_paths = [run_dir for run_dir in sorted(runs_dir.iterdir()) if _looks_like_run_dir(run_dir)]
+    records = [_build_record_safely(run_dir, export_format, builders[export_format]) for run_dir in run_paths]
     if not records:
         raise ExportError(f"runs directory 中没有可导出的 run：{runs_dir}")
-    output_path = runs_dir / "exports" / ("sft.jsonl" if export_format == "sft_jsonl" else "rl.jsonl")
-    _write_jsonl(output_path, records)
-    return output_path
+    return _write_format_export(
+        export_root=runs_dir / "exports",
+        export_format=export_format,
+        records=records,
+        run_paths=run_paths,
+        skipped_reason=None,
+        policy=policy or ExportPolicy(),
+    )
 
 
-def export_sft_jsonl(run_dir: str | Path) -> Path:
+def export_sft_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None) -> Path:
     run_path = _require_run_dir(run_dir)
-    record = _build_sft_record(run_path)
-    output_path = run_path / "exports" / "sft.jsonl"
-    _write_jsonl(output_path, [record.model_dump(mode="json")])
-    return output_path
+    record = _build_record_safely(run_path, "sft_jsonl", _build_sft_record)
+    return _write_format_export(
+        export_root=run_path / "exports",
+        export_format="sft_jsonl",
+        records=[record],
+        run_paths=[run_path],
+        skipped_reason=None,
+        policy=policy or ExportPolicy(),
+    )
 
 
-def export_rl_jsonl(run_dir: str | Path) -> Path:
+def export_rl_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None) -> Path:
     run_path = _require_run_dir(run_dir)
-    record = _build_rl_record(run_path)
-    output_path = run_path / "exports" / "rl.jsonl"
-    _write_jsonl(output_path, [record.model_dump(mode="json")])
-    return output_path
+    record = _build_record_safely(run_path, "rl_jsonl", _build_rl_record)
+    return _write_format_export(
+        export_root=run_path / "exports",
+        export_format="rl_jsonl",
+        records=[record],
+        run_paths=[run_path],
+        skipped_reason=None,
+        policy=policy or ExportPolicy(),
+    )
 
 
-def export_preference_jsonl(runs_dir: str | Path) -> Path:
+def export_preference_jsonl(runs_dir: str | Path, *, policy: ExportPolicy | None = None) -> Path:
     root = Path(runs_dir)
     if not root.exists() or not root.is_dir():
         raise ExportError(f"runs directory 不存在：{root}")
     records = _build_preference_records(root)
-    output_dir = root / "exports"
-    output_dir.mkdir(parents=True, exist_ok=True)
     if not records:
-        skipped_path = output_dir / "preference_skipped.json"
-        skipped_path.write_text(
-            json.dumps(
-                {
-                    "schema_version": EXPORT_SCHEMA_VERSION,
-                    "format": "preference_jsonl",
-                    "filter_status": "skipped",
-                    "reason": "not_enough_runs_for_same_task",
-                    "export_policy_version": ExportPolicy().export_policy_version,
-                },
-                ensure_ascii=False,
-                indent=2,
-                sort_keys=True,
-            )
-            + "\n",
-            encoding="utf-8",
+        return _write_preference_skipped_export(
+            export_root=root / "exports",
+            source_run_dirs=_source_run_dirs([run_dir for run_dir in sorted(root.iterdir()) if _looks_like_run_dir(run_dir)]),
+            reason="not_enough_runs_for_same_task",
+            policy=policy or ExportPolicy(),
         )
-        return skipped_path
-    output_path = output_dir / "preference.jsonl"
-    _write_jsonl(output_path, [record.model_dump(mode="json") for record in records])
-    return output_path
+    return _write_format_export(
+        export_root=root / "exports",
+        export_format="preference_jsonl",
+        records=records,
+        run_paths=[run_dir for run_dir in sorted(root.iterdir()) if _looks_like_run_dir(run_dir)],
+        skipped_reason=None,
+        policy=policy or ExportPolicy(),
+    )
+
+
+def _build_record_safely(
+    run_path: Path,
+    export_format: ExportFormat,
+    builder: Any,
+) -> ExportRecord:
+    try:
+        return builder(run_path)
+    except (ExportError, ValueError, json.JSONDecodeError) as exc:
+        reason = _export_failure_reason(exc)
+        return ExportRecord(
+            sample_id=f"{run_path.name}_{_format_short_name(export_format)}",
+            task_id=_task_id(run_path),
+            source_run_id=run_path.name,
+            payload={},
+            quality=ExportRecordQuality(
+                training_eligibility="invalid",
+                quality_reasons=[reason],
+                artifact_manifest_status="invalid" if "artifact_manifest" in reason else "not_checked",
+                redaction_status="failed" if "hidden" in reason else "not_checked",
+            ),
+            metadata={
+                "export_policy_version": ExportPolicy().export_policy_version,
+                "export_format": export_format,
+                "source_run_id": run_path.name,
+                "build_error_type": type(exc).__name__,
+            },
+            filter_status="filtered",
+            invalid_for_training=True,
+            invalid_reason=reason,
+        )
+
+
+def _write_format_export(
+    *,
+    export_root: Path,
+    export_format: ExportFormat,
+    records: list[ExportRecord],
+    run_paths: list[Path],
+    skipped_reason: str | None,
+    policy: ExportPolicy,
+) -> Path:
+    generated_at = utc_timestamp()
+    source_run_dirs = _source_run_dirs(run_paths)
+    export_id = build_export_id(export_format, source_run_dirs=source_run_dirs, generated_at=generated_at)
+    export_dir = export_root / export_id
+    data_file_name = DATA_FILE_NAMES[export_format]
+    data_path = export_dir / data_file_name
+    convenience_path = export_root / CONVENIENCE_FILE_NAMES[export_format]
+    run_paths_by_id = {run_path.name: run_path for run_path in run_paths}
+    audited = audit_export_records(
+        records,
+        run_paths=run_paths_by_id,
+        export_format=export_format,
+        policy=policy,
+    )
+    trainable_records = [
+        audited_record.record
+        for audited_record in audited
+        if audited_record.record.quality.training_eligibility == "trainable"
+    ]
+    write_jsonl(data_path, [record.model_dump(mode="json") for record in trainable_records])
+    write_jsonl(convenience_path, [audited_record.record.model_dump(mode="json") for audited_record in audited])
+    line_numbers = {record.sample_id: index + 1 for index, record in enumerate(trainable_records)}
+    report = build_audit_report(
+        audited,
+        export_id=export_id,
+        export_format=export_format,
+        source_run_dirs=source_run_dirs,
+        data_file_relative_path=data_file_name,
+        generated_at=generated_at,
+        line_numbers=line_numbers,
+        skipped_reason=skipped_reason,
+    )
+    audit_json_sha = write_json(export_dir / "audit_report.json", report.model_dump(mode="json"))
+    audit_md = render_audit_markdown(report)
+    audit_md_sha = write_text(export_dir / "audit_report.md", audit_md)
+    data_files = [build_data_file(data_path, relative_path=data_file_name, record_count=len(trainable_records))]
+    manifest = build_export_manifest(
+        export_id=export_id,
+        export_format=export_format,
+        source_run_dirs=source_run_dirs,
+        command_args={
+            "format": export_format,
+            "include_diagnostic": False,
+            "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
+        },
+        data_files=data_files,
+        generated_at=generated_at,
+        audit_report_path="audit_report.json",
+        audit_report_sha256=audit_json_sha,
+        audit_report_md_path="audit_report.md",
+        audit_report_md_sha256=audit_md_sha,
+        record_count=len(audited),
+        included_count=len(trainable_records),
+        filtered_count=sum(1 for item in audited if item.record.filter_status == "filtered"),
+        skipped_count=sum(1 for item in audited if item.record.quality.training_eligibility == "skipped"),
+        invalid_count=sum(1 for item in audited if item.record.quality.training_eligibility == "invalid"),
+        diagnostic_only_count=sum(
+            1 for item in audited if item.record.quality.training_eligibility == "diagnostic_only"
+        ),
+        policy=policy,
+    )
+    write_json(export_dir / "export_manifest.json", manifest.model_dump(mode="json"))
+    return convenience_path
+
+
+def _write_preference_skipped_export(
+    *,
+    export_root: Path,
+    source_run_dirs: list[str],
+    reason: str,
+    policy: ExportPolicy,
+) -> Path:
+    generated_at = utc_timestamp()
+    export_id = build_export_id(
+        "preference_jsonl",
+        source_run_dirs=source_run_dirs,
+        generated_at=generated_at,
+    )
+    export_dir = export_root / export_id
+    skipped_payload = {
+        "schema_version": EXPORT_SCHEMA_VERSION,
+        "format": "preference_jsonl",
+        "filter_status": "skipped",
+        "reason": reason,
+        "export_policy_version": policy.export_policy_version,
+    }
+    canonical_path = export_dir / "preference_skipped.json"
+    convenience_path = export_root / "preference_skipped.json"
+    write_json(canonical_path, skipped_payload)
+    write_json(convenience_path, skipped_payload)
+    report = build_audit_report(
+        [],
+        export_id=export_id,
+        export_format="preference_jsonl",
+        source_run_dirs=source_run_dirs,
+        data_file_relative_path="preference_skipped.json",
+        generated_at=generated_at,
+        line_numbers={},
+        skipped_reason=reason,
+    )
+    audit_json_sha = write_json(export_dir / "audit_report.json", report.model_dump(mode="json"))
+    audit_md_sha = write_text(export_dir / "audit_report.md", render_audit_markdown(report))
+    data_files = [
+        build_data_file(
+            canonical_path,
+            relative_path="preference_skipped.json",
+            record_count=0,
+        )
+    ]
+    manifest = build_export_manifest(
+        export_id=export_id,
+        export_format="preference_jsonl",
+        source_run_dirs=source_run_dirs,
+        command_args={
+            "format": "preference_jsonl",
+            "include_diagnostic": False,
+            "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
+        },
+        data_files=data_files,
+        generated_at=generated_at,
+        audit_report_path="audit_report.json",
+        audit_report_sha256=audit_json_sha,
+        audit_report_md_path="audit_report.md",
+        audit_report_md_sha256=audit_md_sha,
+        record_count=0,
+        included_count=0,
+        filtered_count=0,
+        skipped_count=1,
+        invalid_count=0,
+        diagnostic_only_count=0,
+        policy=policy,
+    )
+    write_json(export_dir / "export_manifest.json", manifest.model_dump(mode="json"))
+    return convenience_path
+
+
+def _source_run_dirs(run_paths: list[Path]) -> list[str]:
+    return [run_path.name for run_path in run_paths]
+
+
+def _format_short_name(export_format: str) -> str:
+    return {
+        "sft_jsonl": "sft",
+        "rl_jsonl": "rl",
+        "preference_jsonl": "preference",
+    }.get(export_format, export_format)
+
+
+def _export_failure_reason(exc: Exception) -> str:
+    message = str(exc)
+    if "artifact manifest" in message:
+        return "artifact_manifest_invalid"
+    if "隐藏" in message or "hidden" in message:
+        return "hidden_fields_absent"
+    return "export_record_build_failed"
 
 
 def _build_sft_record(run_path: Path) -> ExportRecord:
@@ -218,17 +442,24 @@ def _build_preference_records(root: Path) -> list[ExportRecord]:
         metadata = {
             "export_policy_version": ExportPolicy().export_policy_version,
             "pairing_policy": "same_task_rollout_ranking_v0",
-            "chosen_verifier_result_ref": _manifest_ref(
-                Path(chosen["run_dir"]),
-                "final_verifier_result",
-                "verifier.json",
-                "final_verifier_result",
+            "source_run_ids": [chosen["run_id"], rejected["run_id"]],
+            "chosen_verifier_result_ref": _with_source_run_id(
+                _manifest_ref(
+                    Path(chosen["run_dir"]),
+                    "final_verifier_result",
+                    "verifier.json",
+                    "final_verifier_result",
+                ),
+                chosen["run_id"],
             ),
-            "rejected_verifier_result_ref": _manifest_ref(
-                Path(rejected["run_dir"]),
-                "final_verifier_result",
-                "verifier.json",
-                "final_verifier_result",
+            "rejected_verifier_result_ref": _with_source_run_id(
+                _manifest_ref(
+                    Path(rejected["run_dir"]),
+                    "final_verifier_result",
+                    "verifier.json",
+                    "final_verifier_result",
+                ),
+                rejected["run_id"],
             ),
         }
         records.append(
@@ -378,26 +609,45 @@ def _context_revision_for_turn(events: list[dict[str, Any]], turn: int | None) -
 
 
 def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
+    run_config = _read_json_if_exists(run_path / "run_config_facts.json")
+    run_metadata = _read_json_if_exists(run_path / "run_metadata.json")
     task = _read_json_if_exists(run_path / "task.yaml")
     metrics = _read_json_if_exists(run_path / "metrics.json")
     events = read_jsonl(run_path / "events.jsonl")
     first_model = next((event for event in events if event.get("event_type") == "model_call_completed"), {})
     model_data = first_model.get("data", {})
+    metadata_source = run_metadata.get("metadata_source") or (
+        "v2_config_facts" if run_config else "legacy_inferred"
+    )
+    tool_protocol = run_config.get("tool_protocol") or run_metadata.get("tool_protocol") or {}
+    environment = run_config.get("environment_fingerprint", {})
+    workspace_execution = environment.get("workspace_execution", {})
+    workspace_backend = workspace_execution.get("workspace_backend", {})
     return _sanitize_for_export(
         {
             "export_policy_version": ExportPolicy().export_policy_version,
             "export_format": export_format,
             "source_run_id": run_path.name,
-            "model_id": model_data.get("model_id"),
-            "task_version": task.get("task_version"),
-            "dataset_name": task.get("dataset_name"),
+            "metadata_source": metadata_source,
+            "provider": run_config.get("provider") or model_data.get("provider"),
+            "model_id": run_config.get("model_id") or model_data.get("model_id"),
+            "task_version": run_config.get("task_version") or task.get("task_version"),
+            "dataset_name": run_config.get("dataset_name") or task.get("dataset_name"),
             "dataset_split": task.get("dataset_split"),
-            "source_kind": task.get("source_kind"),
+            "source_kind": run_config.get("source_kind") or task.get("source_kind"),
             "decontamination_status": task.get("decontamination", {}).get("status"),
-            "repo_base_commit": task.get("base_commit"),
-            "scaffold_id": metrics.get("interaction_efficiency", {}).get("scaffold_id", "simple_react"),
-            "permission_mode": _initial_user_field(run_path, "permission_mode"),
-            "execution_mode": _initial_user_field(run_path, "execution_mode"),
+            "repo_base_commit": run_config.get("base_commit") or task.get("base_commit"),
+            "scaffold_id": run_config.get("scaffold_id") or metrics.get("interaction_efficiency", {}).get("scaffold_id", "simple_react"),
+            "scaffold_version": run_config.get("scaffold_version"),
+            "permission_mode": run_config.get("permission_mode") or _initial_user_field(run_path, "permission_mode"),
+            "permission_policy_version": run_config.get("permission_policy_version"),
+            "execution_mode": workspace_backend.get("backend") or _initial_user_field(run_path, "execution_mode"),
+            "tool_policy_version": run_config.get("allowed_tools_policy"),
+            "tool_schema_snapshot_hash": tool_protocol.get("tool_schema_snapshot_sha256"),
+            "context_policy_version": run_config.get("context_policy_version"),
+            "prompt_template_version": run_config.get("prompt_template_version"),
+            "reward_formula_version": run_config.get("reward_formula_version"),
+            "final_verifier_mode": run_config.get("final_verifier_mode"),
             "schema_version": EXPORT_SCHEMA_VERSION,
         }
     )
@@ -589,6 +839,10 @@ def _manifest_ref(
         if artifact.get("kind") == artifact_kind:
             return {**artifact, "manifest_backed": True}
     return _relative_ref(run_path, fallback_relative_path, fallback_kind)
+
+
+def _with_source_run_id(ref: dict[str, Any], source_run_id: str) -> dict[str, Any]:
+    return {**ref, "source_run_id": source_run_id}
 
 
 def _outcome_rank(run_outcome: str | None) -> int:

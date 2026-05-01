@@ -12,7 +12,7 @@ from repo_harness.config import load_run_config
 from repo_harness.errors import RepoHarnessError
 from repo_harness.evaluation.runner import run_batch as run_batch_command
 from repo_harness.evaluation.runner import run_task as run_task_command
-from repo_harness.export import export_run_or_runs
+from repo_harness.export import ExportPolicy, export_run_or_runs, inspect_export
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
 
@@ -65,12 +65,36 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["sft_jsonl", "rl_jsonl", "preference_jsonl"],
         help="导出格式。",
     )
+    export.add_argument(
+        "--allow-oracle-feedback-training",
+        action="store_true",
+        help="显式允许 oracle_hidden_feedback 样本进入正式训练数据；默认不允许。",
+    )
 
     inspect_run = subparsers.add_parser(
         "inspect-run",
         help="只读检查 run directory。",
     )
     inspect_run.add_argument("run_dir", help="run directory 路径。")
+
+    inspect_export_parser = subparsers.add_parser(
+        "inspect-export",
+        help="只读检查规范导出目录。",
+    )
+    inspect_export_parser.add_argument("export_dir", help="单个规范导出目录或 exports 根目录。")
+    inspect_export_parser.add_argument("--all", action="store_true", help="检查 exports 根目录下全部规范导出目录。")
+    inspect_export_parser.add_argument(
+        "--format",
+        choices=["sft_jsonl", "rl_jsonl", "preference_jsonl"],
+        default=None,
+        help="只检查指定导出格式。",
+    )
+    inspect_export_parser.add_argument("--assert-clean", action="store_true", help="发现导出审计问题时返回失败。")
+    inspect_export_parser.add_argument(
+        "--require-trainable-samples",
+        action="store_true",
+        help="要求至少有一个 trainable 样本进入正式训练数据文件。",
+    )
 
     return parser
 
@@ -94,6 +118,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "inspect-run":
         print(inspect_run(args.run_dir))
+        return 0
+    if args.command == "inspect-export":
+        try:
+            print(
+                inspect_export(
+                    args.export_dir,
+                    all_exports=args.all,
+                    export_format=args.format,
+                    assert_clean=args.assert_clean,
+                    require_trainable_samples=args.require_trainable_samples,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"导出检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
@@ -129,6 +167,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_path = export_run_or_runs(
                 args.run_dir_or_runs_dir,
                 export_format=args.format,
+                policy=ExportPolicy(
+                    allow_oracle_feedback_training=args.allow_oracle_feedback_training,
+                    filter_rules=(
+                        ["allow_oracle_feedback_training"]
+                        if args.allow_oracle_feedback_training
+                        else []
+                    ),
+                ),
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"导出失败：{exc}\n")

@@ -59,6 +59,7 @@ class ExportPolicy(StrictBaseModel):
     export_policy_version: str = EXPORT_POLICY_VERSION
     loss_mask_policy: str = "assistant_actions_only_v0"
     observation_mask_policy: str = "tool_results_are_observations_v0"
+    allow_oracle_feedback_training: bool = False
     filter_rules: list[str] = Field(default_factory=list)
     redaction_policy: str = "repo_harness_export_redaction_v0"
 
@@ -202,6 +203,8 @@ class ExportAuditSample(StrictBaseModel):
     quality_reasons: list[str] = Field(default_factory=list)
     audit_items: list[ExportAuditItem] = Field(default_factory=list)
     artifact_refs: list[dict[str, Any]] = Field(default_factory=list)
+    metadata_source: str | None = None
+    source_run_ids: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def failed_items_must_explain_quality(self) -> "ExportAuditSample":
