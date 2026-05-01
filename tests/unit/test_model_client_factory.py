@@ -4,7 +4,7 @@ import pytest
 
 from repo_harness.config import ModelConfig
 from repo_harness.errors import ConfigError
-from repo_harness.model_client import FakeModelClient, ReplayModelClient, create_model_client
+from repo_harness.model_client import FakeModelClient, MockProviderClient, ReplayModelClient, create_model_client
 
 
 def test_model_client_factory_constructs_replay(tmp_path: Path):
@@ -27,9 +27,15 @@ def test_model_client_factory_constructs_fake(tmp_path: Path):
     assert isinstance(client, FakeModelClient)
 
 
+def test_model_client_factory_constructs_mock():
+    client = create_model_client(ModelConfig(provider="mock", model_id="mock-v0"))
+
+    assert isinstance(client, MockProviderClient)
+
+
 def test_model_client_factory_rejects_unsupported_provider():
-    with pytest.raises(ConfigError, match="model.provider=replay 或 model.provider=fake"):
-        create_model_client(ModelConfig(provider="mock", model_id="mock-v0"))
+    with pytest.raises(ConfigError, match="replay、fake 或 mock"):
+        create_model_client(ModelConfig(provider="deepseek", model_id="deepseek-v4-pro"))
 
 
 def test_model_client_factory_requires_script_path_for_fake():

@@ -194,6 +194,7 @@ def _run_config_payload(config: ExperimentConfig, *, task_path: str) -> dict[str
             "replay_script_path": config.replay_script_path,
             "temperature": config.temperature,
             "max_output_tokens": config.max_output_tokens,
+            "provider_specific_options": {},
         },
         "runtime": {
             "scaffold_id": config.scaffold_id,

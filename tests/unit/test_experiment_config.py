@@ -34,13 +34,24 @@ def test_experiment_config_allows_fake_provider_after_model_client_factory():
     assert config.model_provider == "fake"
 
 
-def test_experiment_config_rejects_stage07_out_of_scope_provider():
-    with pytest.raises(ValidationError, match="replay 或 fake"):
+def test_experiment_config_allows_mock_provider_after_stage10():
+    config = ExperimentConfig(
+        experiment_id="mock_provider",
+        tasks=["tests/fixtures/tasks/task_001.yaml"],
+        rollout_count=1,
+        model_provider="mock",
+    )
+
+    assert config.model_provider == "mock"
+
+
+def test_experiment_config_rejects_stage10_out_of_scope_provider():
+    with pytest.raises(ValidationError, match="replay、fake 或 mock"):
         ExperimentConfig(
             experiment_id="bad_provider",
             tasks=["tests/fixtures/tasks/task_001.yaml"],
             rollout_count=1,
-            model_provider="mock",
+            model_provider="deepseek",
         )
 
 

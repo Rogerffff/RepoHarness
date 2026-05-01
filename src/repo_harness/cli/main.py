@@ -17,6 +17,7 @@ from repo_harness.evaluation.experiment import (
 )
 from repo_harness.evaluation.experiment import run_experiment as run_experiment_command
 from repo_harness.export import ExportPolicy, export_run_or_runs, inspect_export
+from repo_harness.model_client.mock_smoke import inspect_mock_provider_smoke
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
 
@@ -123,6 +124,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="要求至少有一个 trainable 样本进入正式训练数据文件。",
     )
 
+    inspect_mock = subparsers.add_parser(
+        "inspect-mock-provider-smoke",
+        help="生成并检查 mock provider smoke report。",
+    )
+    inspect_mock.add_argument("--run-dir", required=True, help="mock provider run directory。")
+    inspect_mock.add_argument("--output", required=True, help="mock_provider_smoke_report.json 输出路径。")
+    inspect_mock.add_argument("--assert-accepted", action="store_true", help="要求 smoke run accepted。")
+    inspect_mock.add_argument("--assert-export-clean", action="store_true", help="要求已有导出审计 clean。")
+
     return parser
 
 
@@ -159,6 +169,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"导出检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-mock-provider-smoke":
+        try:
+            print(
+                inspect_mock_provider_smoke(
+                    run_dir=args.run_dir,
+                    output=args.output,
+                    assert_accepted=args.assert_accepted,
+                    assert_export_clean=args.assert_export_clean,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"mock provider smoke 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

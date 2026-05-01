@@ -758,7 +758,15 @@ def _invalid_for_training(run_path: Path) -> bool:
     return bool(
         reward.get("invalid_for_training")
         or _formal_final_verifier_invalid_reason(run_path) is not None
-        or metrics.get("run_outcome") in {"invalid_task", "flaky_task", "interrupted", "inconclusive"}
+        or metrics.get("run_outcome") in {
+            "failed",
+            "invalid_task",
+            "flaky_task",
+            "interrupted",
+            "inconclusive",
+        }
+        or metrics.get("interaction_efficiency", {}).get("agent_stop_reason") == "model_error"
+        or _has_model_error_event(run_path)
         or metrics.get("final_verifier_status") in {"timeout", "error"}
     )
 
@@ -771,9 +779,24 @@ def _invalid_reason(run_path: Path) -> str | None:
     return (
         reward.get("invalid_reason")
         or _formal_final_verifier_invalid_reason(run_path)
+        or _model_error_invalid_reason(run_path)
         or metrics.get("run_outcome")
         or "filtered_by_export_policy"
     )
+
+
+def _has_model_error_event(run_path: Path) -> bool:
+    return _model_error_invalid_reason(run_path) is not None
+
+
+def _model_error_invalid_reason(run_path: Path) -> str | None:
+    for event in read_jsonl(run_path / "events.jsonl"):
+        if event.get("event_type") != "model_call_completed":
+            continue
+        model_error_type = event.get("data", {}).get("model_error_type")
+        if model_error_type:
+            return f"model_error:{model_error_type}"
+    return None
 
 
 def _formal_final_verifier_invalid_reason(run_path: Path) -> str | None:

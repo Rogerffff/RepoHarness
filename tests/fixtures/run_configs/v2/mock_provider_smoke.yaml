@@ -1,0 +1,19 @@
+run_id_prefix: stage10
+model:
+  provider: mock
+  model_id: mock-provider-v0
+  temperature: 0.0
+  max_output_tokens: 4096
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  test_feedback_policy: public_only
+  feedback_tests_passed_policy: require_model_final
+  max_turns: 4
+  max_tool_calls: 10
+  max_test_runs: 2
+workspace:
+  output_dir: runs
+  keep_workspace: true
+  default_command_timeout_sec: 60

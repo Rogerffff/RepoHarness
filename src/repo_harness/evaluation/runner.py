@@ -52,8 +52,8 @@ def run_task(
     run_started = time.monotonic()
     config = load_run_config(config_path, output_dir=output_dir)
     task_deadline_monotonic = run_started + config.runtime.task_timeout_sec
-    if config.model.provider not in {"replay", "fake"}:
-        raise ConfigError("Stage 07 run-task 只支持 model.provider=replay 或 fake。")
+    if config.model.provider not in {"replay", "fake", "mock"}:
+        raise ConfigError("Stage 10 run-task 只支持 model.provider=replay、fake 或 mock。")
     if config.runtime.execution_mode != "local_process":
         raise ConfigError("RepoHarness 第一版只支持 runtime.execution_mode=local_process。")
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
@@ -272,8 +272,8 @@ def run_task(
             scaffold=scaffold,
         )
         replay_path = config.model.replay_script_path
-        if replay_path is None:
-            raise ConfigError("阶段七 run-task 需要 model.replay_script_path。")
+        if config.model.provider in {"replay", "fake"} and replay_path is None:
+            raise ConfigError("replay/fake run-task 需要 model.replay_script_path。")
         model = create_model_client(config.model)
         budget_manager = BudgetManager.from_run_config(config)
         tool_context = ToolExecutionContext(

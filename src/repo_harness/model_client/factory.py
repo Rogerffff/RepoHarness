@@ -1,17 +1,18 @@
-"""Model client factory for stage seven providers."""
+"""Model client factory."""
 
 from __future__ import annotations
 
 from repo_harness.config import ModelConfig
 from repo_harness.errors import ConfigError
 from repo_harness.model_client.fake import FakeModelClient
+from repo_harness.model_client.mock import MockProviderClient
 from repo_harness.model_client.protocol import ModelClient
 from repo_harness.model_client.replay import ReplayModelClient
 from repo_harness.model_client.schemas import ModelProviderOptions, ProviderCredentialPolicy
 
 
 def create_model_client(model_config: ModelConfig) -> ModelClient:
-    """Build a model client for providers supported before real-provider stages."""
+    """Build a model client for providers supported by the current implementation."""
 
     if model_config.provider == "replay":
         if model_config.replay_script_path is None:
@@ -21,8 +22,10 @@ def create_model_client(model_config: ModelConfig) -> ModelClient:
         if model_config.replay_script_path is None:
             raise ConfigError("model.provider=fake 需要 model.replay_script_path。")
         return FakeModelClient.from_path(model_config.replay_script_path)
+    if model_config.provider == "mock":
+        return MockProviderClient()
     raise ConfigError(
-        "Stage 07 只支持 model.provider=replay 或 model.provider=fake；"
+        "Stage 10 只支持 model.provider=replay、fake 或 mock；"
         f"收到 {model_config.provider!r}。"
     )
 
@@ -40,5 +43,6 @@ def provider_options_from_model_config(model_config: ModelConfig) -> ModelProvid
         provider_specific_options={
             "temperature": model_config.temperature,
             "max_output_tokens": model_config.max_output_tokens,
+            **model_config.provider_specific_options,
         },
     )

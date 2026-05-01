@@ -84,6 +84,7 @@ class ModelGenerationRequest(StrictBaseModel):
 class ModelCallEvent(StrictBaseModel):
     schema_version: str = "repo_harness_model_call_event_v0"
     model_call_id: str
+    provider: str | None = None
     model_id: str
     provider_request_id: str | None = None
     context_revision: int = Field(ge=0)

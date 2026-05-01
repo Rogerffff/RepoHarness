@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -31,6 +31,7 @@ class ModelConfig(StrictBaseModel):
     retry_policy: str = "none"
     credential_policy: str = "env_only"
     provider_request_logging: str = "redact_secrets"
+    provider_specific_options: dict[str, Any] = Field(default_factory=dict)
 
 
 class RuntimeConfig(StrictBaseModel):

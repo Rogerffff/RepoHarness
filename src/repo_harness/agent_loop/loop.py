@@ -278,7 +278,7 @@ class AgentLoop:
                     else None,
                     content_preview=assistant_preview[:4000],
                     model_visible=True,
-                    trainable=True,
+                    trainable=response.model_error_type is None,
                     created_at=_timestamp(),
                 )
             )

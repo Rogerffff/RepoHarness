@@ -2,6 +2,7 @@
 
 from repo_harness.model_client.factory import create_model_client, provider_options_from_model_config
 from repo_harness.model_client.fake import FakeModelClient
+from repo_harness.model_client.mock import MockProviderClient
 from repo_harness.model_client.protocol import ModelClient
 from repo_harness.model_client.replay import ReplayModelClient
 from repo_harness.model_client.schemas import (
@@ -26,6 +27,7 @@ __all__ = [
     "ModelRequestContext",
     "ModelResponse",
     "FakeModelClient",
+    "MockProviderClient",
     "ProviderCredentialPolicy",
     "ReplayModelClient",
     "ReplayScript",

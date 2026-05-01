@@ -152,6 +152,7 @@ class ReplayModelClient:
         )
         model_call_event = ModelCallEvent(
             model_call_id=request.model_call_id,
+            provider=request.provider_options.provider,
             model_id=request.provider_options.model_id,
             provider_request_id=step.step_id if step is not None else None,
             context_revision=request.context_revision,
@@ -215,6 +216,7 @@ class ReplayModelClient:
         )
         model_call_event = ModelCallEvent(
             model_call_id=request.model_call_id,
+            provider=request.provider_options.provider,
             model_id=request.provider_options.model_id,
             context_revision=request.context_revision,
             prepared_messages_ref=request.prepared_messages_ref,
