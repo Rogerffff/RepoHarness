@@ -127,8 +127,9 @@ class ToolCallParseResult(StrictBaseModel):
 class ReplayStep(StrictBaseModel):
     schema_version: str = REPLAY_SCRIPT_SCHEMA_VERSION
     step_id: str
-    action: Literal["assistant", "tool_call", "final_answer", "model_error"]
+    action: Literal["assistant", "tool_call", "final_answer", "model_error", "patch_action"]
     assistant_text: str | None = None
+    patch_text: str | None = None
     tool_call_id: str | None = None
     tool_name: str | None = None
     arguments: dict[str, Any] | None = None
@@ -145,6 +146,8 @@ class ReplayStep(StrictBaseModel):
             raise ValueError("final_answer replay step 必须包含 assistant_text。")
         if self.action == "model_error" and not self.model_error_type:
             raise ValueError("model_error replay step 必须包含 model_error_type。")
+        if self.action == "patch_action" and not (self.patch_text or self.assistant_text):
+            raise ValueError("patch_action replay step 必须包含 patch_text 或 assistant_text。")
         return self
 
     def model_visible_payload(self) -> dict[str, Any]:
@@ -154,6 +157,7 @@ class ReplayStep(StrictBaseModel):
             "step_id": self.step_id,
             "action": self.action,
             "assistant_text": self.assistant_text,
+            "patch_text": self.patch_text,
             "tool_call_id": self.tool_call_id,
             "tool_name": self.tool_name,
             "arguments": self.arguments,

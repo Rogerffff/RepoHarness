@@ -823,7 +823,13 @@ def _timestamp() -> str:
 
 
 def _count_test_runs(messages: list[dict[str, object]]) -> int:
-    return sum(1 for message in messages if "run_tests" in str(message))
+    return sum(
+        1
+        for message in messages
+        if message.get("role") == "tool"
+        and message.get("effective_tool_name") == "run_tests"
+        and message.get("status") in {"ok", "timeout"}
+    )
 
 
 def _permission_denial_summary(reasons: list[str]) -> str:

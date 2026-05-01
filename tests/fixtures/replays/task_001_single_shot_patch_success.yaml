@@ -1,0 +1,18 @@
+script_id: task_001_single_shot_patch_success
+task_id: task_001
+steps:
+  - step_id: patch
+    action: patch_action
+    patch_text: |
+      diff --git a/calculator.py b/calculator.py
+      --- a/calculator.py
+      +++ b/calculator.py
+      @@ -5,2 +5,4 @@
+       def divide(left: int, right: int) -> float:
+      +    if right == 0:
+      +        raise ValueError("division by zero")
+           return left / right
+expected_outcome:
+  accepted: true
+metadata:
+  fixture_kind: single_shot_patch_success

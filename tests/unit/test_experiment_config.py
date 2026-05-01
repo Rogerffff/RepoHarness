@@ -44,13 +44,24 @@ def test_experiment_config_rejects_stage07_out_of_scope_provider():
         )
 
 
-def test_experiment_config_rejects_stage07_unregistered_scaffold():
-    with pytest.raises(ValidationError, match="simple_react"):
+def test_experiment_config_allows_single_shot_patch_after_scaffold_registry():
+    config = ExperimentConfig(
+        experiment_id="single_shot",
+        tasks=["tests/fixtures/tasks/task_001.yaml"],
+        rollout_count=1,
+        scaffold_id="single_shot_patch",
+    )
+
+    assert config.scaffold_id == "single_shot_patch"
+
+
+def test_experiment_config_rejects_stage08_unregistered_scaffold():
+    with pytest.raises(ValidationError, match="simple_react 或 single_shot_patch"):
         ExperimentConfig(
             experiment_id="bad_scaffold",
             tasks=["tests/fixtures/tasks/task_001.yaml"],
             rollout_count=1,
-            scaffold_id="single_shot_patch",
+            scaffold_id="planner_coder_verifier",
         )
 
 

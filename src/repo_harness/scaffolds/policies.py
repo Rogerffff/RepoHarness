@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from repo_harness.config import RunConfig
+from repo_harness.errors import ConfigError
 from repo_harness.evaluation.schemas import (
     FeedbackTestsPassedPolicy,
     ResolvedFeedbackPolicyFacts,
@@ -29,6 +30,15 @@ def resolve_feedback_policy(
         if run_config.runtime.feedback_tests_passed_policy is not None
         else None
     )
+    if (
+        scaffold.scaffold_id == "single_shot_patch"
+        and runtime_test_policy is not None
+        and runtime_test_policy != TestFeedbackPolicy.disabled
+    ):
+        raise ConfigError(
+            "single_shot_patch scaffold requires test_feedback_policy=disabled; "
+            f"received {runtime_test_policy.value!r}."
+        )
     resolved_test_policy = (
         runtime_test_policy
         or scaffold.default_test_feedback_policy

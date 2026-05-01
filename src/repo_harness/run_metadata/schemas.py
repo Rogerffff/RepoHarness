@@ -177,10 +177,10 @@ class ToolSchemaEntry(StrictBaseModel):
 class ToolSchemaSnapshot(StrictBaseModel):
     schema_version: str = TOOL_SCHEMA_SNAPSHOT_VERSION
     snapshot_id: str
-    tool_order: list[str] = Field(min_length=1)
+    tool_order: list[str] = Field(default_factory=list)
     tool_parser_version: str
     tool_result_format_version: str
-    tools: list[ToolSchemaEntry] = Field(min_length=1)
+    tools: list[ToolSchemaEntry] = Field(default_factory=list)
     snapshot_sha256: str = Field(pattern=SHA256_PATTERN)
 
     @model_validator(mode="after")
@@ -195,7 +195,7 @@ class ToolProtocolFacts(StrictBaseModel):
     schema_version: str = "repo_harness_tool_protocol_facts_v2_v0"
     tool_schema_snapshot_ref: ArtifactRef
     tool_schema_snapshot_sha256: str = Field(pattern=SHA256_PATTERN)
-    tool_order: list[str] = Field(min_length=1)
+    tool_order: list[str] = Field(default_factory=list)
     tool_parser_version: str
     tool_result_format_version: str
     tool_policy_version: str

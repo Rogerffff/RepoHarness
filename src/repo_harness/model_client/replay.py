@@ -123,6 +123,15 @@ class ReplayModelClient:
                 tool_calls = []
                 finish_reason = "error"
                 model_error_type = step.model_error_type
+            elif step.action == "patch_action":
+                assistant = ModelMessage(
+                    role="assistant",
+                    content=step.patch_text or step.assistant_text,
+                    metadata={"replay_step_id": step.step_id, "action": step.action},
+                )
+                tool_calls = []
+                finish_reason = "stop"
+                model_error_type = None
             else:
                 assistant = ModelMessage(
                     role="assistant",

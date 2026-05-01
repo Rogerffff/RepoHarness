@@ -1,0 +1,11 @@
+script_id: task_001_single_shot_patch_malformed
+task_id: task_001
+steps:
+  - step_id: malformed_patch
+    action: patch_action
+    patch_text: |
+      I would update calculator.py to raise ValueError before division by zero.
+expected_outcome:
+  accepted: false
+metadata:
+  fixture_kind: single_shot_patch_malformed

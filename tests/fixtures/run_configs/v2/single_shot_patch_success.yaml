@@ -1,0 +1,18 @@
+run_id_prefix: stage08
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: tests/fixtures/replays/task_001_single_shot_patch_success.yaml
+runtime:
+  scaffold_id: single_shot_patch
+  execution_mode: local_process
+  permission_mode: auto
+  max_turns: 1
+  max_tool_calls: 0
+  max_test_runs: 0
+workspace:
+  output_dir: runs/stage08
+  keep_workspace: true
+  default_command_timeout_sec: 60

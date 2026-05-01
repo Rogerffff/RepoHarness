@@ -16,6 +16,7 @@ from repo_harness.model_client import (
 )
 from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.schema_base import stable_hash
+from repo_harness.scaffolds.patch_action import PatchActionParseResult, parse_patch_action
 from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolDefinition, ToolExecutionContext, ToolExecutor, ToolResult
@@ -306,6 +307,20 @@ class AgentLoop:
                 state.last_model_error = response.model_error_type
                 break
             if not response.tool_calls:
+                if self.scaffold.scaffold_id == "single_shot_patch":
+                    patch_applied = _handle_single_shot_patch_response(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        content=response.assistant_message.content,
+                        tool_context=tool_context,
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                    )
+                    state.agent_stop_reason = "final_answer" if patch_applied else "model_error"
+                    state.budget_state.stop_reason = state.agent_stop_reason
+                    break
                 if self.scaffold.is_valid_final_answer(
                     response.assistant_message.content,
                     response.finish_reason,
@@ -315,6 +330,36 @@ class AgentLoop:
                     state.agent_stop_reason = "model_error"
                     state.last_model_error = "invalid_final_answer"
                 state.budget_state.stop_reason = state.agent_stop_reason
+                break
+            if self.scaffold.scaffold_id == "single_shot_patch":
+                for tool_call in response.tool_calls:
+                    _record_tool_requested(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_call=tool_call,
+                        recorder=recorder,
+                    )
+                    state.tool_call_count += 1
+                    state.budget_state.tool_call_count = state.tool_call_count
+                    _record_tool_result(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_result=self.tool_executor.disallowed_tool_result(
+                            tool_call,
+                            reason=(
+                                "single_shot_patch accepts one patch action and does not allow "
+                                "model tool calls or intermediate test feedback."
+                            ),
+                        ),
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                    )
+                state.agent_stop_reason = "model_error"
+                state.budget_state.stop_reason = "model_error"
+                state.last_model_error = "single_shot_patch_tool_call_not_allowed"
                 break
             stop_after_tools = False
             for tool_index, tool_call in enumerate(response.tool_calls):
@@ -660,6 +705,259 @@ class AgentLoop:
             state.budget_state.stop_reason = "max_turns"
         state.messages = messages
         return state
+
+
+def _handle_single_shot_patch_response(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    content: str | None,
+    tool_context: ToolExecutionContext,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    messages: list[dict[str, object]],
+) -> bool:
+    parse = parse_patch_action(content)
+    if parse.success:
+        patch_ref = recorder.write_artifact(
+            "single_shot_patch_action",
+            parse.patch_text,
+            {"suffix": ".patch", "budget_policy": "preserve_json"},
+        )
+        unsafe = _unsafe_patch_path(parse, tool_context)
+        if unsafe is not None:
+            failed = parse.model_copy(
+                update={
+                    "success": False,
+                    "error_type": "unsafe_patch_path",
+                    "message": unsafe,
+                }
+            )
+            _record_patch_parse_failed(
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                parse=failed,
+                recorder=recorder,
+                patch_ref=patch_ref,
+            )
+            _record_patch_action_transcript(
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                content=f"single_shot_patch parse failed: {unsafe}",
+                recorder=recorder,
+                messages=messages,
+                status="error",
+                error_type="unsafe_patch_path",
+            )
+            state.last_model_error = "unsafe_patch_path"
+            return False
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("patch_action"),
+                timestamp=_timestamp(),
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                event_type="patch_action_parsed",
+                artifact_refs=[patch_ref],
+                data=_patch_parse_event_data(parse),
+            )
+        )
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("patch_apply"),
+                timestamp=_timestamp(),
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                event_type="patch_apply_started",
+                artifact_refs=[patch_ref],
+                data={"changed_paths": parse.changed_paths},
+            )
+        )
+        result = tool_context.workspace_adapter.apply_patch(
+            tool_context.run_workspace.workspace_path,
+            recorder.run_dir / patch_ref.relative_path,
+            recorder=recorder,
+        )
+        apply_summary_ref = recorder.write_json_artifact(
+            "single_shot_patch_apply_result",
+            {
+                "success": result.exit_code == 0 and not result.timeout,
+                "patch_ref": patch_ref.model_dump(mode="json"),
+                "changed_paths": parse.changed_paths,
+                "execution_result": result.model_dump(mode="json"),
+            },
+        )
+        event_type = (
+            "patch_apply_completed"
+            if result.exit_code == 0 and not result.timeout
+            else "patch_apply_failed"
+        )
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("patch_apply"),
+                timestamp=_timestamp(),
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                event_type=event_type,
+                severity="info" if event_type == "patch_apply_completed" else "error",
+                error_type=None if event_type == "patch_apply_completed" else "patch_apply_failed",
+                artifact_refs=[
+                    ref
+                    for ref in [patch_ref, result.output_artifact_ref, apply_summary_ref]
+                    if ref is not None
+                ],
+                data={
+                    "changed_paths": parse.changed_paths,
+                    "exit_code": result.exit_code,
+                    "timeout": result.timeout,
+                    "apply_result_ref": apply_summary_ref.model_dump(mode="json"),
+                },
+            )
+        )
+        if result.exit_code != 0 or result.timeout:
+            _record_patch_action_transcript(
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                content=f"single_shot_patch apply failed: {result.stderr_preview or result.stdout_preview}",
+                recorder=recorder,
+                messages=messages,
+                status="error",
+                error_type="patch_apply_failed",
+            )
+            state.last_model_error = "patch_apply_failed"
+            return False
+        _record_patch_action_transcript(
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            content=f"single_shot_patch applied successfully: {', '.join(parse.changed_paths)}",
+            recorder=recorder,
+            messages=messages,
+            status="ok",
+            error_type=None,
+        )
+        return True
+    parse_ref = recorder.write_json_artifact(
+        "single_shot_patch_parse_failed",
+        parse.model_dump(mode="json"),
+    )
+    _record_patch_parse_failed(
+        run_id=run_id,
+        task_id=task_id,
+        turn=turn,
+        parse=parse,
+        recorder=recorder,
+        patch_ref=parse_ref,
+    )
+    _record_patch_action_transcript(
+        run_id=run_id,
+        task_id=task_id,
+        turn=turn,
+        content=f"single_shot_patch parse failed: {parse.error_type}",
+        recorder=recorder,
+        messages=messages,
+        status="error",
+        error_type=parse.error_type,
+    )
+    state.last_model_error = parse.error_type or "patch_action_parse_failed"
+    return False
+
+
+def _unsafe_patch_path(
+    parse: PatchActionParseResult,
+    tool_context: ToolExecutionContext,
+) -> str | None:
+    for changed_path in parse.changed_paths:
+        try:
+            tool_context.workspace_adapter.resolve_workspace_path(
+                tool_context.run_workspace.workspace_path,
+                changed_path,
+            )
+        except Exception as exc:  # noqa: BLE001 - path safety errors become structured patch failures
+            return str(exc)
+    return None
+
+
+def _record_patch_parse_failed(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    parse: PatchActionParseResult,
+    recorder: RunRecorder,
+    patch_ref: ArtifactRef,
+) -> None:
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("patch_action"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="patch_action_parse_failed",
+            severity="error",
+            error_type=parse.error_type,
+            artifact_refs=[patch_ref],
+            data=_patch_parse_event_data(parse),
+        )
+    )
+
+
+def _patch_parse_event_data(parse: PatchActionParseResult) -> dict[str, object]:
+    return {
+        "schema_version": parse.schema_version,
+        "success": parse.success,
+        "patch_sha256": parse.patch_sha256,
+        "changed_paths": parse.changed_paths,
+        "error_type": parse.error_type,
+        "message": parse.message,
+        "patch_text_artifact_only": bool(parse.patch_text),
+    }
+
+
+def _record_patch_action_transcript(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    content: str,
+    recorder: RunRecorder,
+    messages: list[dict[str, object]],
+    status: str,
+    error_type: str | None,
+) -> None:
+    message_id = f"single_shot_patch_result_{turn}"
+    recorder.append_transcript(
+        TranscriptRecord(
+            record_id=recorder.next_record_id(),
+            run_id=run_id,
+            task_id=task_id,
+            message_id=message_id,
+            turn=turn,
+            role="tool",
+            content_preview=content[:4000],
+            model_visible=True,
+            trainable=False,
+            created_at=_timestamp(),
+        )
+    )
+    messages.append(
+        {
+            "role": "tool",
+            "turn": turn,
+            "tool_name": "single_shot_patch",
+            "content": content,
+            "status": status,
+            "error_type": error_type,
+        }
+    )
 
 
 def _build_model_request_context(

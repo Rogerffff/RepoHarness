@@ -1,0 +1,18 @@
+script_id: task_001_single_shot_patch_bad_patch
+task_id: task_001
+steps:
+  - step_id: bad_patch
+    action: patch_action
+    patch_text: |
+      diff --git a/calculator.py b/calculator.py
+      --- a/calculator.py
+      +++ b/calculator.py
+      @@ -5,2 +5,4 @@
+       def missing_context(left: int, right: int) -> float:
+      +    if right == 0:
+      +        raise ValueError("division by zero")
+           return left / right
+expected_outcome:
+  accepted: false
+metadata:
+  fixture_kind: single_shot_patch_bad_patch
