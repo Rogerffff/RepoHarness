@@ -1,0 +1,18 @@
+id: v2_calc_zero_013
+task_version: v2_calc_zero_013_v0
+dataset_name: repo_harness_v2_task_set
+source_kind: repository_style_fixture
+dataset_split: dev
+created_at: "2026-05-01"
+repo: ../../repos/buggy_calculator
+base_commit: fixture
+issue: "The calculator zero-divisor behavior should be explicit and testable; patch divide accordingly."
+setup_command: null
+test_command: "pytest -q"
+timeouts: {timeout_sec: 60}
+environment: {execution_image: "python:3.12-slim", python_version: "3.12", package_manager: pip}
+expected_files: [calculator.py]
+fail_to_pass_tests: [tests/test_calculator.py::test_divide_zero]
+pass_to_pass_tests: [tests/test_calculator.py::test_add, tests/test_calculator.py::test_divide_regular_numbers]
+visibility: {issue: model_visible, expected_files: model_visible, fail_to_pass_tests: verifier_only, pass_to_pass_tests: verifier_only, gold_patch: hidden_reference}
+tags: [v2-task-set, python, calculator]

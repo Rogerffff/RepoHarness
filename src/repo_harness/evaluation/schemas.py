@@ -130,6 +130,12 @@ class ExperimentConfig(StrictBaseModel):
     scaffold_id: str = "simple_react"
     permission_mode: Literal["plan", "ask", "auto", "deny"] = "auto"
     execution_mode: Literal["local_process"] = "local_process"
+    test_feedback_policy: Literal[
+        "disabled", "public_only", "structured_public_feedback", "oracle_hidden_feedback"
+    ] | None = None
+    feedback_tests_passed_policy: Literal[
+        "stop_immediately", "require_model_final", "continue"
+    ] | None = None
     output_dir: str = "runs"
     run_id_template: str = "{experiment_id}_{task_id}_{model_alias}_{scaffold_id}_r{rollout_index:03d}"
     compare_scope: CompareScope = Field(default_factory=CompareScope)
@@ -172,8 +178,14 @@ class ExperimentConfig(StrictBaseModel):
 class ExperimentMinimums(StrictBaseModel):
     schema_version: str = "repo_harness_experiment_minimums_v2_v0"
     min_total_runs: int = Field(default=1, ge=0)
+    min_task_count: int = Field(default=0, ge=0)
     min_recorded_runs: int = Field(default=1, ge=0)
+    min_agent_loop_runs: int = Field(default=0, ge=0)
+    min_formal_final_verifier_runs: int = Field(default=0, ge=0)
+    min_success_count: int = Field(default=0, ge=0)
+    min_structured_skipped_runs: int = Field(default=0, ge=0)
     require_experiment_manifest: bool = True
     require_aggregate_metrics: bool = True
     require_failure_records: bool = False
     require_no_all_skipped_success: bool = False
+    require_export_audit_clean: bool = False

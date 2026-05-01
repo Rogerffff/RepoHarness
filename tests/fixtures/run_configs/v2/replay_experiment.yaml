@@ -1,0 +1,39 @@
+experiment_id: v2_task_set_replay
+tasks:
+  - tests/fixtures/tasks/v2/calc_zero_001.yaml
+  - tests/fixtures/tasks/v2/calc_zero_002.yaml
+  - tests/fixtures/tasks/v2/calc_zero_003.yaml
+  - tests/fixtures/tasks/v2/calc_zero_004.yaml
+  - tests/fixtures/tasks/v2/calc_zero_005.yaml
+  - tests/fixtures/tasks/v2/calc_zero_006.yaml
+  - tests/fixtures/tasks/v2/calc_zero_007.yaml
+  - tests/fixtures/tasks/v2/calc_zero_008.yaml
+  - tests/fixtures/tasks/v2/calc_zero_009.yaml
+  - tests/fixtures/tasks/v2/calc_zero_010.yaml
+  - tests/fixtures/tasks/v2/calc_zero_011.yaml
+  - tests/fixtures/tasks/v2/calc_zero_012.yaml
+  - tests/fixtures/tasks/v2/calc_zero_013.yaml
+  - tests/fixtures/tasks/v2/calc_zero_014.yaml
+  - tests/fixtures/tasks/v2/calc_zero_015.yaml
+  - tests/fixtures/tasks/v2/calc_zero_016.yaml
+  - tests/fixtures/tasks/v2/calc_zero_017.yaml
+  - tests/fixtures/tasks/v2/calc_zero_018.yaml
+  - tests/fixtures/tasks/task_invalid.yaml
+  - tests/fixtures/tasks/task_invalid_baseline.yaml
+rollout_count: 1
+model_provider: replay
+model_alias: replay
+model_id: replay-script-v0
+replay_script_path: tests/fixtures/replays/task_001_success.yaml
+scaffold_id: simple_react
+permission_mode: auto
+test_feedback_policy: public_only
+feedback_tests_passed_policy: stop_immediately
+run_id_template: "{experiment_id}_{task_id}_{model_alias}_{scaffold_id}_r{rollout_index:03d}"
+max_turns: 8
+max_tool_calls: 20
+max_test_runs: 4
+task_timeout_sec: 120
+command_timeout_sec: 60
+generate_aggregate_report: true
+generate_preference_export: false

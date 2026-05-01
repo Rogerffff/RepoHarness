@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from repo_harness.errors import ConfigError, RepoHarnessError
 from repo_harness.evaluation.runner import run_task
 from repo_harness.evaluation.schemas import ExperimentConfig, ExperimentMinimums
-from repo_harness.export import export_preference_jsonl
+from repo_harness.export import export_preference_jsonl, inspect_export
 
 
 def load_experiment_config(path: str | Path, *, output_dir: str | Path | None = None) -> ExperimentConfig:
@@ -76,14 +76,29 @@ def run_experiment(
                     run_id=run_id,
                 )
                 metrics = _read_json(run_dir / "metrics.json")
+                verifier = _read_json_if_exists(run_dir / "verifier.json")
+                interaction = metrics.get("interaction_efficiency", {})
+                patch_stats = metrics.get("patch_stats", {})
                 record.update(
                     {
                         "status": str(metrics.get("run_outcome", "unknown")),
                         "run_dir": str(run_dir),
-                        "agent_stop_reason": metrics.get("interaction_efficiency", {}).get(
-                            "agent_stop_reason"
-                        ),
+                        "entered_agent_loop": (run_dir / "resolved_verifier_plan.json").exists(),
+                        "formal_final_verifier_ran": verifier.get("verifier_stage") == "final",
+                        "baseline_status": interaction.get("baseline_status"),
+                        "quality_gate_reason": interaction.get("quality_gate_reason"),
+                        "agent_stop_reason": interaction.get("agent_stop_reason"),
                         "final_verifier_status": metrics.get("final_verifier_status"),
+                        "turn_count": metrics.get("turn_count", 0),
+                        "tool_call_count": metrics.get("tool_call_count", 0),
+                        "test_run_count": metrics.get("test_run_count", 0),
+                        "timeout": metrics.get("timeout", False),
+                        "permission_denial_count": metrics.get("permission_denial_count", 0),
+                        "invalid_tool_call_count": metrics.get("invalid_tool_call_count", 0),
+                        "patch_added_lines": patch_stats.get("added_lines", 0),
+                        "patch_removed_lines": patch_stats.get("removed_lines", 0),
+                        "fail_to_pass": verifier.get("fail_to_pass", {}),
+                        "pass_to_pass": verifier.get("pass_to_pass", {}),
                         "failure_reason": None if metrics.get("run_outcome") == "success" else metrics.get("run_outcome"),
                     }
                 )
@@ -147,8 +162,18 @@ def inspect_experiment(
         failures.append("require_aggregate_metrics not satisfied")
     if int(aggregate.get("total_runs", 0)) < minimums.min_total_runs:
         failures.append("min_total_runs not satisfied")
+    if int(aggregate.get("task_count", 0)) < minimums.min_task_count:
+        failures.append("min_task_count not satisfied")
     if int(aggregate.get("recorded_runs", 0)) < minimums.min_recorded_runs:
         failures.append("min_recorded_runs not satisfied")
+    if int(aggregate.get("agent_loop_runs", 0)) < minimums.min_agent_loop_runs:
+        failures.append("min_agent_loop_runs not satisfied")
+    if int(aggregate.get("formal_final_verifier_runs", 0)) < minimums.min_formal_final_verifier_runs:
+        failures.append("min_formal_final_verifier_runs not satisfied")
+    if int(aggregate.get("success_count", 0)) < minimums.min_success_count:
+        failures.append("min_success_count not satisfied")
+    if int(aggregate.get("structured_skipped_runs", 0)) < minimums.min_structured_skipped_runs:
+        failures.append("min_structured_skipped_runs not satisfied")
     if minimums.require_failure_records and "error" not in aggregate.get("status_distribution", {}):
         failures.append("require_failure_records not satisfied")
     if minimums.require_failure_records:
@@ -169,13 +194,22 @@ def inspect_experiment(
         )
         if total > 0 and skipped == total:
             failures.append("all runs were skipped or inconclusive")
+    if minimums.require_export_audit_clean:
+        export_status = _export_audit_status(root)
+        if export_status["status"] != "clean":
+            failures.append(f"export audit not clean: {export_status['reason']}")
 
     lines = [
         f"Experiment directory: {root}",
         f"Experiment manifest: {'present' if manifest_path.exists() else 'missing'}",
         f"Aggregate metrics: {'present' if aggregate_path.exists() else 'missing'}",
         f"Total runs: {aggregate.get('total_runs', 0)}",
+        f"Task count: {aggregate.get('task_count', 0)}",
         f"Recorded runs: {aggregate.get('recorded_runs', 0)}",
+        f"Agent loop runs: {aggregate.get('agent_loop_runs', 0)}",
+        f"Formal final verifier runs: {aggregate.get('formal_final_verifier_runs', 0)}",
+        f"Success count: {aggregate.get('success_count', 0)}",
+        f"Structured skipped runs: {aggregate.get('structured_skipped_runs', 0)}",
         f"Error runs: {aggregate.get('error_runs', 0)}",
     ]
     if failures:
@@ -200,6 +234,16 @@ def _run_config_payload(config: ExperimentConfig, *, task_path: str) -> dict[str
             "scaffold_id": config.scaffold_id,
             "execution_mode": config.execution_mode,
             "permission_mode": config.permission_mode,
+            **(
+                {"test_feedback_policy": config.test_feedback_policy}
+                if config.test_feedback_policy is not None
+                else {}
+            ),
+            **(
+                {"feedback_tests_passed_policy": config.feedback_tests_passed_policy}
+                if config.feedback_tests_passed_policy is not None
+                else {}
+            ),
             "max_turns": config.max_turns,
             "max_tool_calls": config.max_tool_calls,
             "max_test_runs": config.max_test_runs,
@@ -242,17 +286,120 @@ def _task_id(task_path: str | Path) -> str:
 
 def _aggregate_metrics(records: list[dict[str, Any]]) -> dict[str, Any]:
     status_distribution = Counter(str(record.get("status", "unknown")) for record in records)
+    recorded = [record for record in records if record.get("status") != "error"]
+    success_count = status_distribution.get("success", 0)
+    fail_to_pass_passed = sum(
+        int((record.get("fail_to_pass") or {}).get("passed", 0))
+        for record in recorded
+    )
+    fail_to_pass_total = sum(
+        int((record.get("fail_to_pass") or {}).get("total", 0))
+        for record in recorded
+    )
+    pass_to_pass_passed = sum(
+        int((record.get("pass_to_pass") or {}).get("passed", 0))
+        for record in recorded
+    )
+    pass_to_pass_total = sum(
+        int((record.get("pass_to_pass") or {}).get("total", 0))
+        for record in recorded
+    )
+    structured_skipped = [
+        record
+        for record in recorded
+        if record.get("status") in {"invalid_task", "flaky_task", "inconclusive"}
+        and (record.get("quality_gate_reason") or record.get("failure_reason"))
+    ]
     return {
         "schema_version": "repo_harness_aggregate_metrics_v2_v0",
         "total_runs": len(records),
-        "recorded_runs": sum(1 for record in records if record.get("status") != "error"),
+        "task_count": len({record.get("task_id") for record in records}),
+        "recorded_runs": len(recorded),
         "error_runs": status_distribution.get("error", 0),
         "status_distribution": dict(sorted(status_distribution.items())),
         "final_verifier_status_distribution": dict(
             sorted(Counter(str(record.get("final_verifier_status", "unknown")) for record in records).items())
         ),
-        "success_count": status_distribution.get("success", 0),
+        "run_outcome_distribution": dict(sorted(status_distribution.items())),
+        "success_count": success_count,
+        "task_success_rate": (success_count / len(recorded)) if recorded else 0.0,
+        "agent_loop_runs": sum(1 for record in recorded if record.get("entered_agent_loop")),
+        "formal_final_verifier_runs": sum(
+            1 for record in recorded if record.get("formal_final_verifier_ran")
+        ),
+        "structured_skipped_runs": len(structured_skipped),
+        "quality_gate_reason_distribution": dict(
+            sorted(
+                Counter(
+                    str(record.get("quality_gate_reason") or "none")
+                    for record in recorded
+                    if record.get("quality_gate_reason")
+                ).items()
+            )
+        ),
+        "fail_to_pass_pass_rate": (
+            fail_to_pass_passed / fail_to_pass_total if fail_to_pass_total else None
+        ),
+        "pass_to_pass_keep_rate": (
+            pass_to_pass_passed / pass_to_pass_total if pass_to_pass_total else None
+        ),
+        "average_turn_count": _average(recorded, "turn_count"),
+        "average_tool_call_count": _average(recorded, "tool_call_count"),
+        "average_test_run_count": _average(recorded, "test_run_count"),
+        "permission_denial_rate": (
+            sum(int(record.get("permission_denial_count", 0)) for record in recorded)
+            / len(recorded)
+            if recorded
+            else 0.0
+        ),
+        "invalid_tool_call_rate": (
+            sum(int(record.get("invalid_tool_call_count", 0)) for record in recorded)
+            / len(recorded)
+            if recorded
+            else 0.0
+        ),
+        "timeout_rate": (
+            sum(1 for record in recorded if record.get("timeout")) / len(recorded)
+            if recorded
+            else 0.0
+        ),
+        "patch_size": {
+            "average_added_lines": _average(recorded, "patch_added_lines"),
+            "average_removed_lines": _average(recorded, "patch_removed_lines"),
+        },
+        "environment_failure_distribution": dict(
+            sorted(
+                Counter(
+                    str(record.get("quality_gate_reason") or record.get("failure_reason"))
+                    for record in recorded
+                    if record.get("status") in {"invalid_task", "flaky_task", "inconclusive"}
+                ).items()
+            )
+        ),
     }
+
+
+def _average(records: list[dict[str, Any]], key: str) -> float:
+    if not records:
+        return 0.0
+    return sum(float(record.get(key, 0) or 0) for record in records) / len(records)
+
+
+def _export_audit_status(root: Path) -> dict[str, str]:
+    exports = root / "exports"
+    if not exports.exists() or not exports.is_dir():
+        return {"status": "missing", "reason": "exports directory missing"}
+    try:
+        inspect_export(exports, all_exports=True, assert_clean=True)
+    except RepoHarnessError as exc:
+        return {"status": "failed", "reason": str(exc)}
+    return {"status": "clean", "reason": "inspect-export --assert-clean passed"}
+
+
+def _read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return _read_json(path)
 
 
 def _load_minimums(path: str | Path | None) -> ExperimentMinimums:
