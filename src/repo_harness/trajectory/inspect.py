@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from repo_harness.run_metadata.reader import inspect_run_metadata
 from repo_harness.trajectory.recorder import read_jsonl, verify_artifact_manifest
 
 
@@ -52,13 +53,28 @@ def inspect_run(run_dir: str | Path) -> str:
         except json.JSONDecodeError:
             status = "CORRUPT_PARTIAL"
             diagnostics.append("artifacts.json is corrupt")
+    metadata_inspection = inspect_run_metadata(run_path)
 
     lines = [
         f"Run directory: {run_path}",
         f"Status: {status}",
         f"Events: {len(events)}",
         f"Artifacts: {artifact_count}",
+        f"Run config facts: {metadata_inspection.run_config_facts_status}",
+        f"Run metadata: {metadata_inspection.run_metadata_status}",
+        f"Metadata source: {metadata_inspection.metadata_source}",
+        f"Tool schema snapshot: {metadata_inspection.tool_schema_snapshot_status}",
+        f"Export audit: {metadata_inspection.export_audit_status}",
     ]
+    if metadata_inspection.provider:
+        lines.append(f"Provider: {metadata_inspection.provider}")
+    if metadata_inspection.model_id:
+        lines.append(f"Model id: {metadata_inspection.model_id}")
+    if metadata_inspection.scaffold_id:
+        scaffold = metadata_inspection.scaffold_id
+        if metadata_inspection.scaffold_version:
+            scaffold = f"{scaffold} ({metadata_inspection.scaffold_version})"
+        lines.append(f"Scaffold: {scaffold}")
     task_id = _task_id(events, baseline_path)
     if task_id is not None:
         lines.append(f"Task id: {task_id}")
@@ -73,6 +89,9 @@ def inspect_run(run_dir: str | Path) -> str:
     if diagnostics:
         lines.append("Diagnostics:")
         lines.extend(f"- {diagnostic}" for diagnostic in diagnostics)
+    if metadata_inspection.diagnostics:
+        lines.append("Metadata diagnostics:")
+        lines.extend(f"- {diagnostic}" for diagnostic in metadata_inspection.diagnostics)
 
     metrics = {}
     if metrics_path.exists():
@@ -111,6 +130,9 @@ def inspect_run(run_dir: str | Path) -> str:
 
     if events:
         lines.append(f"Last event: {events[-1].get('event_type', 'unknown')}")
+    if metadata_inspection.failure_diagnostics:
+        lines.append("Failure diagnostics:")
+        lines.extend(f"- {item}" for item in metadata_inspection.failure_diagnostics)
 
     key_artifacts = [
         name
