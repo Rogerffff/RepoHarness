@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import shlex
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +9,19 @@ import yaml
 from pydantic import ValidationError
 
 from repo_harness.errors import TaskValidationError
-from repo_harness.tasks.schemas import RunnableTask, TaskDefinition, VerifierConfig
+from repo_harness.tasks.command_policy import (
+    validate_setup_command,
+    validate_test_command,
+)
+from repo_harness.tasks.schemas import (
+    FixtureRepositorySource,
+    LocalArchiveSource,
+    LocalRepositorySource,
+    PublicSnapshotSource,
+    RunnableTask,
+    TaskDefinition,
+    VerifierConfig,
+)
 
 
 class LoadedTask:
@@ -46,9 +57,9 @@ class TaskAdapter:
         except ValidationError as exc:
             raise TaskValidationError(str(exc)) from exc
 
-        repo_path = self._resolve_repo_path(definition.repo, resolved_task_path)
-        normalized_definition = definition.model_copy(update={"repo": repo_path.as_posix()})
-        self._validate_commands(normalized_definition, repo_path)
+        normalized_definition = self._normalize_repo_source(definition, resolved_task_path)
+        repo_path_for_command_checks = self._command_validation_repo_path(normalized_definition)
+        self._validate_commands(normalized_definition, repo_path_for_command_checks)
         verifier_config = normalized_definition.to_verifier_config()
         runnable = RunnableTask.from_definition(normalized_definition)
         return LoadedTask(
@@ -57,6 +68,62 @@ class TaskAdapter:
             verifier_config=verifier_config,
             task_path=resolved_task_path,
         )
+
+    def _normalize_repo_source(self, definition: TaskDefinition, task_path: Path) -> TaskDefinition:
+        if definition.repo_source_spec is None:
+            repo_path = self._resolve_repo_path(definition.repo, task_path)
+            source_spec = FixtureRepositorySource(
+                path=repo_path.as_posix(),
+                base_commit=definition.base_commit,
+                synthetic_base_id=None if definition.base_commit else f"{definition.id}_synthetic_base",
+            )
+            return definition.model_copy(
+                update={
+                    "repo": repo_path.as_posix(),
+                    "repo_source_spec": source_spec,
+                }
+            )
+
+        source = definition.repo_source_spec
+        if isinstance(source, LocalArchiveSource):
+            archive_path = _resolve_relative_path(source.archive_path, task_path)
+            normalized = source.model_copy(update={"archive_path": archive_path.as_posix()})
+            return definition.model_copy(
+                update={
+                    "repo": archive_path.as_posix(),
+                    "repo_source_spec": normalized,
+                    "source_archive_sha256": source.archive_sha256,
+                    "base_commit": source.base_commit or definition.base_commit,
+                }
+            )
+        if isinstance(source, LocalRepositorySource):
+            source_path = _resolve_relative_path(source.source_path, task_path)
+            normalized = source.model_copy(update={"source_path": source_path.as_posix()})
+            return definition.model_copy(
+                update={
+                    "repo": source_path.as_posix(),
+                    "repo_source_spec": normalized,
+                    "base_commit": source.base_commit or source.current_commit or definition.base_commit,
+                }
+            )
+        if isinstance(source, PublicSnapshotSource):
+            updates: dict[str, Any] = {}
+            if source.archive_path is not None:
+                archive_path = _resolve_relative_path(source.archive_path, task_path)
+                updates["archive_path"] = archive_path.as_posix()
+                repo = archive_path.as_posix()
+            else:
+                repo = source.remote_url
+            normalized = source.model_copy(update=updates)
+            return definition.model_copy(
+                update={
+                    "repo": repo,
+                    "repo_source_spec": normalized,
+                    "source_archive_sha256": source.archive_sha256,
+                    "base_commit": source.commit_sha,
+                }
+            )
+        raise TaskValidationError(f"不支持的 repo_source_spec 类型：{type(source).__name__}")
 
     def _resolve_repo_path(self, repo: str, task_path: Path) -> Path:
         raw_path = Path(repo)
@@ -81,100 +148,27 @@ class TaskAdapter:
                     return candidate.resolve()
         raise TaskValidationError(f"无法从任务路径定位 fixture repos 根目录：{task_path}")
 
-    def _validate_commands(self, definition: TaskDefinition, repo_path: Path) -> None:
-        _validate_test_command(definition.test_command)
-        _validate_setup_command(definition.setup_command, repo_path)
+    def _validate_commands(self, definition: TaskDefinition, repo_path: Path | None) -> None:
+        validate_test_command(definition.test_command)
+        validate_setup_command(definition.setup_command, repo_path)
+
+    def _command_validation_repo_path(self, definition: TaskDefinition) -> Path | None:
+        source = definition.repo_source_spec
+        if isinstance(source, (FixtureRepositorySource, LocalRepositorySource)):
+            return Path(definition.repo)
+        if isinstance(source, (LocalArchiveSource, PublicSnapshotSource)):
+            return None
+        return Path(definition.repo)
 
 
 def load_task(task_path: str | Path) -> LoadedTask:
     return TaskAdapter().load(task_path)
 
 
-_FORBIDDEN_SHELL_FRAGMENTS = ["|", ">", "<", "&&", "||", ";", "`", "$", "\n", "&"]
-_PYTEST_FLAG_ALLOWLIST = {
-    "-q",
-    "--quiet",
-    "-v",
-    "-vv",
-    "-s",
-    "-x",
-    "--disable-warnings",
-    "--strict-config",
-    "--strict-markers",
-}
-_PYTEST_TB_VALUES = {"auto", "long", "short", "line", "native", "no"}
-
-
-def _validate_test_command(command: str) -> None:
-    parts = _split_static_command(command, field_name="test_command")
-    if parts[0] == "pytest":
-        _validate_pytest_args(parts[1:])
-        return
-    if parts[:3] == ["python", "-m", "pytest"]:
-        _validate_pytest_args(parts[3:])
-        return
-    raise TaskValidationError(
-        "test_command 第一版只允许 pytest 或 python -m pytest 形式。"
-    )
-
-
-def _validate_setup_command(command: str | None, repo_path: Path) -> None:
-    if command is None or not command.strip():
-        return
-    parts = _split_static_command(command, field_name="setup_command")
-    if len(parts) == 2 and parts[0] == "python" and parts[1].endswith(".py"):
-        script_path = _resolve_command_path(repo_path, parts[1], field_name="setup_command")
-        if not script_path.exists() or not script_path.is_file():
-            raise TaskValidationError(f"setup_command 脚本不存在：{parts[1]}")
-        return
-    raise TaskValidationError(
-        "setup_command 第一版只允许 python <repo_script.py> 形式。"
-    )
-
-
-def _split_static_command(command: str, *, field_name: str) -> list[str]:
-    if any(fragment in command for fragment in _FORBIDDEN_SHELL_FRAGMENTS):
-        raise TaskValidationError(f"{field_name} 包含不支持的 shell 语法。")
-    try:
-        parts = shlex.split(command)
-    except ValueError as exc:
-        raise TaskValidationError(f"{field_name} 无法解析：{exc}") from exc
-    if not parts:
-        raise TaskValidationError(f"{field_name} 不能为空。")
-    return parts
-
-
-def _validate_pytest_args(args: list[str]) -> None:
-    for arg in args:
-        if any(fragment in arg for fragment in _FORBIDDEN_SHELL_FRAGMENTS):
-            raise TaskValidationError("test_command 包含不支持的 shell 语法。")
-        if arg.startswith("-"):
-            _validate_pytest_flag(arg)
-            continue
-        if arg in {".", ":", "::"}:
-            continue
-        path_candidate = Path(arg.split("::", 1)[0])
-        if path_candidate.is_absolute() or ".." in path_candidate.parts:
-            raise TaskValidationError("test_command 参数路径不能是绝对路径或包含 ..。")
-
-
-def _validate_pytest_flag(arg: str) -> None:
-    if arg in _PYTEST_FLAG_ALLOWLIST:
-        return
-    if arg.startswith("--tb=") and arg.split("=", 1)[1] in _PYTEST_TB_VALUES:
-        return
-    if arg.startswith("--maxfail=") and arg.split("=", 1)[1].isdigit():
-        return
-    raise TaskValidationError(f"pytest 参数不在第一版白名单：{arg}")
-
-
-def _resolve_command_path(repo_path: Path, requested_path: str, *, field_name: str) -> Path:
-    raw = Path(requested_path)
-    if raw.is_absolute() or ".." in raw.parts:
-        raise TaskValidationError(f"{field_name} 脚本路径不能是绝对路径或包含 ..。")
-    resolved = (repo_path / raw).resolve()
-    try:
-        resolved.relative_to(repo_path.resolve())
-    except ValueError as exc:
-        raise TaskValidationError(f"{field_name} 脚本路径越过 repo 边界。") from exc
+def _resolve_relative_path(path: str, task_path: Path) -> Path:
+    raw = Path(path)
+    candidate = raw if raw.is_absolute() else (task_path.parent / raw)
+    resolved = candidate.resolve()
+    if not resolved.exists():
+        raise TaskValidationError(f"repo source path 不存在：{resolved}")
     return resolved

@@ -120,6 +120,7 @@ class WorkspaceBackendFacts(StrictBaseModel):
 class SourceCheckoutFacts(StrictBaseModel):
     schema_version: str = "repo_harness_source_checkout_facts_v2_v0"
     source_kind: str
+    source_type: str | None = None
     base_commit: str | None = None
     synthetic_base_id: str | None = None
     source_archive_sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
@@ -127,6 +128,13 @@ class SourceCheckoutFacts(StrictBaseModel):
     checkout_path_status: Literal["recorded", "redacted", "unknown"] = "unknown"
     decontamination_status: str | None = None
     decontamination_metadata_ref: ArtifactRef | None = None
+    current_commit: str | None = None
+    working_tree_clean: bool | None = None
+    dirty_snapshot_allowed: bool = False
+    remotes_stripped: bool | None = None
+    branches_stripped: bool | None = None
+    tags_stripped: bool | None = None
+    materialization_policy_version: str = "repo_harness_source_materialization_v0"
 
     @model_validator(mode="after")
     def require_base_identity(self) -> "SourceCheckoutFacts":
@@ -337,6 +345,8 @@ class RunMetadata(StrictBaseModel):
     reward_status: Literal["present", "missing", "not_applicable", "invalid"]
     final_verifier_status: Literal["accepted", "failed", "timeout", "error", "skipped"]
     final_verifier_mode: str | None = None
+    source_checkout: SourceCheckoutFacts | None = None
+    environment_spec_hash: str | None = Field(default=None, pattern=SHA256_PATTERN)
     scaffold_id: str | None = None
     scaffold_version: str | None = None
     scaffold_facts: dict[str, Any] = Field(default_factory=dict)

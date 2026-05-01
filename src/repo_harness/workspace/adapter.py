@@ -15,6 +15,7 @@ from pathlib import Path
 from repo_harness.errors import WorkspaceError
 from repo_harness.tasks import RunnableTask
 from repo_harness.trajectory import ArtifactRef, RunRecorder
+from repo_harness.workspace.materialization import SourceCheckout, materialize_source
 from repo_harness.workspace.protocol import WorkspaceBackend
 from repo_harness.workspace.schemas import DependencyState, ExecutionResult, RunWorkspace
 
@@ -129,12 +130,14 @@ class LocalWorkspaceAdapter:
         self.workspaces_dir = self.run_dir / "workspaces"
         self.default_command_timeout_sec = default_command_timeout_sec
         self.keep_workspace = keep_workspace
+        self.last_source_checkout: SourceCheckout | None = None
         self.workspaces_dir.mkdir(parents=True, exist_ok=True)
 
     def create_source_checkout(self, task: RunnableTask) -> Path:
         source_path = self.workspaces_dir / "source_checkout"
-        _copy_tree(Path(task.repo_source), source_path)
-        return source_path
+        checkout = materialize_source(task, source_path)
+        self.last_source_checkout = checkout
+        return checkout.root
 
     def create_setup_workspace(self, source_checkout: str | Path) -> Path:
         setup_path = self.workspaces_dir / "setup_workspace"

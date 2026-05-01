@@ -48,6 +48,83 @@ class LockfileHash(StrictBaseModel):
     sha256: str
 
 
+class FixtureRepositorySource(StrictBaseModel):
+    schema_version: str = "repo_harness_fixture_repository_source_v0"
+    source_type: Literal["fixture_path"] = "fixture_path"
+    path: str
+    base_commit: str | None = None
+    synthetic_base_id: str | None = None
+
+
+class LocalArchiveSource(StrictBaseModel):
+    schema_version: str = "repo_harness_local_archive_source_v0"
+    source_type: Literal["local_archive"] = "local_archive"
+    archive_path: str
+    archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_root_directory: str
+    base_commit: str | None = None
+    synthetic_base_id: str | None = None
+    decontamination_status: str = "unknown"
+    decontamination_metadata_ref: str | None = None
+
+    @model_validator(mode="after")
+    def require_base_identity(self) -> "LocalArchiveSource":
+        if not self.base_commit and not self.synthetic_base_id:
+            raise ValueError("local_archive source 必须记录 base_commit 或 synthetic_base_id。")
+        return self
+
+
+class LocalRepositorySource(StrictBaseModel):
+    schema_version: str = "repo_harness_local_repository_source_v0"
+    source_type: Literal["local_repository"] = "local_repository"
+    source_path: str
+    current_commit: str | None = None
+    working_tree_clean: bool | None = None
+    allow_dirty_snapshot: bool = False
+    base_commit: str | None = None
+    synthetic_base_id: str | None = None
+    decontamination_status: str = "unknown"
+    decontamination_metadata_ref: str | None = None
+
+
+class PublicSnapshotSource(StrictBaseModel):
+    schema_version: str = "repo_harness_public_snapshot_source_v0"
+    source_type: Literal["public_snapshot"] = "public_snapshot"
+    remote_url: str
+    commit_sha: str
+    mirror_source: str
+    archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    archive_path: str | None = None
+    expected_root_directory: str | None = None
+    decontamination_status: str
+    decontamination_metadata_ref: str | None = None
+    remotes_stripped: bool = True
+    branches_stripped: bool = True
+    tags_stripped: bool = True
+
+
+RepoSource = (
+    FixtureRepositorySource
+    | LocalArchiveSource
+    | LocalRepositorySource
+    | PublicSnapshotSource
+)
+
+
+class RepoMaterializationResult(StrictBaseModel):
+    schema_version: str = "repo_harness_repo_materialization_result_v0"
+    source_type: str
+    checkout_path_status: Literal["recorded", "redacted", "unknown"] = "redacted"
+    source_tree_hash: str
+    base_commit: str | None = None
+    synthetic_base_id: str | None = None
+    source_archive_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    working_tree_clean: bool | None = None
+    remotes_stripped: bool | None = None
+    branches_stripped: bool | None = None
+    tags_stripped: bool | None = None
+
+
 class EnvironmentSpec(StrictBaseModel):
     schema_version: str = "repo_harness_environment_spec_v0"
     execution_image: str | None = None
@@ -58,6 +135,11 @@ class EnvironmentSpec(StrictBaseModel):
     setup_cache_key_inputs: list[str] = Field(default_factory=list)
     required_system_packages: list[str] = Field(default_factory=list)
     setup_network_policy: str = "deny"
+    dependency_state_policy: str = "none"
+    setup_artifact_hash: str | None = None
+    source_archive_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    dependency_state_ref: str | None = None
+    allow_dirty_dependency_state: bool = False
 
 
 class VisibilityPolicy(StrictBaseModel):
@@ -103,8 +185,9 @@ class TaskDefinition(StrictBaseModel):
     dataset_split: str | None = None
     created_at: str
     repo: str
+    repo_source_spec: RepoSource | None = None
     base_commit: str | None = None
-    source_archive_sha256: str | None = None
+    source_archive_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     issue: str
     setup_command: str | None = None
     test_command: str
@@ -161,7 +244,9 @@ class RunnableTask(StrictBaseModel):
     dataset_name: str
     issue_statement: str
     repo_source: str
+    repo_source_spec: RepoSource | None = None
     base_commit: str | None = None
+    source_archive_sha256: str | None = None
     environment: EnvironmentSpec
     setup_command: str | None = None
     timeouts: TaskTimeouts
@@ -183,7 +268,9 @@ class RunnableTask(StrictBaseModel):
             dataset_name=task.dataset_name,
             issue_statement=task.issue,
             repo_source=task.repo,
+            repo_source_spec=task.repo_source_spec,
             base_commit=task.base_commit,
+            source_archive_sha256=task.source_archive_sha256,
             environment=task.environment,
             setup_command=task.setup_command,
             timeouts=task.timeouts,

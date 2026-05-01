@@ -1,11 +1,26 @@
 """任务定义和任务适配器模块。"""
 
 from repo_harness.tasks.adapter import LoadedTask, TaskAdapter, load_task
+from repo_harness.tasks.command_policy import (
+    CommandPolicy,
+    CommandPolicyDecision,
+    SetupCommandPolicy,
+    TestCommandPolicy,
+    evaluate_model_bash_command,
+    is_recognized_test_command,
+)
+from repo_harness.tasks.environment import compute_environment_spec_hash
 from repo_harness.tasks.schemas import (
     DecontaminationMetadata,
     EnvironmentSpec,
+    FixtureRepositorySource,
     LockfileHash,
+    LocalArchiveSource,
+    LocalRepositorySource,
     MutationRule,
+    PublicSnapshotSource,
+    RepoSource,
+    RepoMaterializationResult,
     RunnableTask,
     TaskDefinition,
     TaskTimeouts,
@@ -14,16 +29,29 @@ from repo_harness.tasks.schemas import (
 )
 
 __all__ = [
+    "CommandPolicy",
+    "CommandPolicyDecision",
     "DecontaminationMetadata",
     "EnvironmentSpec",
+    "FixtureRepositorySource",
     "LoadedTask",
     "LockfileHash",
+    "LocalArchiveSource",
+    "LocalRepositorySource",
     "MutationRule",
+    "PublicSnapshotSource",
+    "RepoSource",
+    "RepoMaterializationResult",
     "RunnableTask",
+    "SetupCommandPolicy",
     "TaskAdapter",
     "TaskDefinition",
     "TaskTimeouts",
+    "TestCommandPolicy",
     "VerifierConfig",
     "VisibilityPolicy",
+    "compute_environment_spec_hash",
+    "evaluate_model_bash_command",
+    "is_recognized_test_command",
     "load_task",
 ]

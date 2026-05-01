@@ -13,6 +13,7 @@ from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.errors import WorkspaceError
 from repo_harness.permissions import PermissionContext, PermissionDecision, PermissionSystem
 from repo_harness.schema_base import stable_hash
+from repo_harness.tasks.command_policy import is_recognized_test_command
 from repo_harness.tools.schemas import ToolCall, ToolResult
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.verifier import PytestVerifier
@@ -878,23 +879,7 @@ def _is_permission_workspace_error(message: str) -> bool:
 
 
 def _is_test_command(command: str, configured_test_command: str) -> bool:
-    normalized = command.strip()
-    configured = configured_test_command.strip()
-    if _has_forbidden_shell_syntax(normalized):
-        return False
-    try:
-        parts = shlex.split(normalized)
-    except ValueError:
-        return False
-    if normalized in {
-        configured,
-        "pytest",
-        "pytest -q",
-        "python -m pytest",
-        "python -m pytest -q",
-    }:
-        return True
-    return bool(parts and (parts[0] == "pytest" or parts[:3] == ["python", "-m", "pytest"]))
+    return is_recognized_test_command(command, configured_test_command)
 
 
 def _clamp_command_timeout(requested_timeout: int, context: ToolExecutionContext) -> int:

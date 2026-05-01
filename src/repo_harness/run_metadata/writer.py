@@ -19,11 +19,13 @@ from repo_harness.run_metadata.schemas import (
     RunConfigFactsRef,
     RunMetadata,
     RunMetadataRef,
+    SourceCheckoutFacts,
     ToolProtocolFacts,
 )
 from repo_harness.schema_versions import OUTCOME_POLICY_VERSION, REWARD_VERSION
 from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import TaskDefinition
+from repo_harness.tasks.command_policy import COMMAND_POLICY_VERSION
 from repo_harness.trajectory import verify_artifact_manifest
 
 
@@ -91,7 +93,7 @@ def build_run_config_facts(
         permission_mode=config.runtime.permission_mode,
         permission_policy_version=config.versions.permission_policy_version,
         network_policy=config.workspace.network_policy,
-        shell_command_policy_version="repo_harness_shell_policy_v0",
+        shell_command_policy_version=COMMAND_POLICY_VERSION,
         verifier_name=verifier_config.parser,
         verifier_version=verifier_config.parser_version,
         final_verifier_mode=config.evaluation.final_verifier_mode,
@@ -141,6 +143,11 @@ def build_run_metadata(
     export_readiness = _export_readiness(run_path, artifact_errors)
     config_facts = _read_json_if_exists(run_path / run_config_facts_ref.relative_path)
     feedback_policy_resolution = config_facts.get("feedback_policy_resolution", {})
+    workspace_execution = config_facts.get("environment_fingerprint", {}).get(
+        "workspace_execution",
+        {},
+    )
+    source_checkout = _source_checkout_from_config(workspace_execution)
     return RunMetadata(
         run_id=run_id,
         task_id=task_id,
@@ -152,6 +159,8 @@ def build_run_metadata(
         reward_status="present" if (run_path / "reward.json").exists() else "missing",
         final_verifier_status=final_verifier_status,  # type: ignore[arg-type]
         final_verifier_mode=final_verifier_mode,
+        source_checkout=source_checkout,
+        environment_spec_hash=workspace_execution.get("environment_spec_hash"),
         scaffold_id=config_facts.get("scaffold_id"),
         scaffold_version=config_facts.get("scaffold_version"),
         scaffold_facts={
@@ -205,6 +214,13 @@ def _read_json_if_exists(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _source_checkout_from_config(workspace_execution: dict[str, Any]) -> SourceCheckoutFacts | None:
+    raw = workspace_execution.get("source_checkout")
+    if not isinstance(raw, dict):
+        return None
+    return SourceCheckoutFacts.model_validate(raw)
 
 
 def _metrics_summary(metrics: dict[str, Any]) -> dict[str, Any]:

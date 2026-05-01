@@ -33,6 +33,7 @@ from repo_harness.tasks import RunnableTask, load_task
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
 from repo_harness.verifier import PytestVerifier, build_error_verifier_result
+from repo_harness.verifier.parser_policy import VerifierParserPolicy
 from repo_harness.workspace import ExecutionResult, LocalWorkspaceAdapter
 from repo_harness.scaffolds import (
     build_scaffold,
@@ -216,6 +217,11 @@ def run_task(
             ),
             command_timeout_sec=config.workspace.default_command_timeout_sec,
             network_policy=config.workspace.network_policy,
+            source_checkout_facts=(
+                adapter.last_source_checkout.facts
+                if adapter.last_source_checkout is not None
+                else None
+            ),
         )
         run_config_facts = build_run_config_facts(
             run_id=actual_run_id,
@@ -625,6 +631,9 @@ def _derive_baseline_status(
         return "flaky", "flaky_baseline_inconsistent"
     if getattr(result, "timeout", False):
         return "invalid", "test_timeout"
+    parser_policy_issue = _baseline_parser_policy_issue(result)
+    if parser_policy_issue is not None:
+        return "invalid", parser_policy_issue
     if getattr(result, "parser_confidence", 0.0) < 0.5:
         return "invalid", "low_parser_confidence"
     if getattr(result, "error_type", None) in {
@@ -646,13 +655,29 @@ def _derive_baseline_status(
 def _baseline_hard_error(result: object, generated_file_count: int) -> str | None:
     if getattr(result, "timeout", False):
         return "test_timeout"
-    if getattr(result, "parser_confidence", 0.0) < 0.5:
-        return "low_parser_confidence"
+    parser_policy_issue = _baseline_parser_policy_issue(result)
+    if parser_policy_issue is not None:
+        return parser_policy_issue
     error_type = getattr(result, "error_type", None)
     if error_type in {"dependency_error", "low_parser_confidence"}:
         return str(error_type)
     if error_type == "test_command_error" and generated_file_count == 0:
         return "test_command_error"
+    return None
+
+
+def _baseline_parser_policy_issue(result: object) -> str | None:
+    parser_id = str(getattr(result, "parser_id", "pytest") or "pytest")
+    if parser_id not in {"pytest", "generic_exit_code"}:
+        return "unsupported_parser"
+    policy = VerifierParserPolicy(
+        parser_id=parser_id,  # type: ignore[arg-type]
+        parser_version=str(getattr(result, "parser_version", "unknown")),
+        low_confidence_threshold=0.5,
+    )
+    confidence = float(getattr(result, "parser_confidence", 0.0))
+    if policy.block_low_confidence and confidence < policy.low_confidence_threshold:
+        return "low_parser_confidence"
     return None
 
 

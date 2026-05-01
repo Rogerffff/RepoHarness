@@ -1,6 +1,7 @@
 """工作区适配器模块。"""
 
 from repo_harness.workspace.adapter import LocalWorkspaceAdapter, PatchCapture
+from repo_harness.workspace.materialization import SourceCheckout, materialize_source
 from repo_harness.workspace.protocol import (
     WorkspaceAdapter,
     WorkspaceBackend,
@@ -16,9 +17,11 @@ __all__ = [
     "LocalWorkspaceAdapter",
     "PatchCapture",
     "RunWorkspace",
+    "SourceCheckout",
     "WorkspaceAdapter",
     "WorkspaceBackend",
     "WorkspaceBackendError",
     "WorkspaceCommandResult",
     "WorkspacePaths",
+    "materialize_source",
 ]

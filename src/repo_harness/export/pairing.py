@@ -155,7 +155,10 @@ def _compare_facts(
         "task_id": config.get("task_id") or baseline.get("task_id"),
         "task_version": config.get("task_version"),
         "base_commit": config.get("base_commit") or source_checkout.get("base_commit"),
-        "source_archive_sha256": config.get("source_archive_sha256"),
+        "source_archive_sha256": (
+            config.get("source_archive_sha256")
+            or source_checkout.get("source_archive_sha256")
+        ),
         "environment_spec_hash": environment.get("environment_spec_hash")
         or workspace_execution.get("environment_spec_hash"),
         "dependency_state_policy": _dependency_state_policy(workspace_execution),

@@ -698,6 +698,7 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
     environment = run_config.get("environment_fingerprint", {})
     workspace_execution = environment.get("workspace_execution", {})
     workspace_backend = workspace_execution.get("workspace_backend", {})
+    source_checkout = workspace_execution.get("source_checkout", {})
     return _sanitize_for_export(
         {
             "export_policy_version": ExportPolicy().export_policy_version,
@@ -710,8 +711,23 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
             "dataset_name": run_config.get("dataset_name") or task.get("dataset_name"),
             "dataset_split": task.get("dataset_split"),
             "source_kind": run_config.get("source_kind") or task.get("source_kind"),
-            "decontamination_status": task.get("decontamination", {}).get("status"),
-            "repo_base_commit": run_config.get("base_commit") or task.get("base_commit"),
+            "source_type": source_checkout.get("source_type"),
+            "source_tree_hash": source_checkout.get("source_tree_hash"),
+            "source_archive_sha256": (
+                run_config.get("source_archive_sha256")
+                or source_checkout.get("source_archive_sha256")
+            ),
+            "working_tree_clean": source_checkout.get("working_tree_clean"),
+            "dirty_snapshot_allowed": source_checkout.get("dirty_snapshot_allowed"),
+            "decontamination_status": (
+                source_checkout.get("decontamination_status")
+                or task.get("decontamination", {}).get("status")
+            ),
+            "repo_base_commit": (
+                run_config.get("base_commit")
+                or source_checkout.get("base_commit")
+                or task.get("base_commit")
+            ),
             "scaffold_id": run_config.get("scaffold_id") or metrics.get("interaction_efficiency", {}).get("scaffold_id", "simple_react"),
             "scaffold_version": run_config.get("scaffold_version"),
             "permission_mode": run_config.get("permission_mode") or _initial_user_field(run_path, "permission_mode"),
