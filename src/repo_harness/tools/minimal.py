@@ -106,6 +106,8 @@ class ToolExecutionContext:
     resolved_verifier_plan: ResolvedVerifierPlan
     output_limits: ToolOutputLimits = field(default_factory=ToolOutputLimits)
     tool_policy: ToolPolicy = field(default_factory=ToolPolicy)
+    test_feedback_policy: str = "oracle_hidden_feedback"
+    feedback_tests_passed_policy: str = "stop_immediately"
     budget_manager: object | None = None
     abort_signal: object | None = None
     file_state_cache: dict[str, str] = field(default_factory=dict)
@@ -219,6 +221,40 @@ class ToolExecutor:
             status="error",
             content=f"Unknown tool: {tool_call.tool_name}",
             error_type="unknown_tool",
+        )
+
+    def disallowed_tool_result(
+        self,
+        tool_call: ToolCall,
+        *,
+        reason: str,
+    ) -> ToolResult:
+        return _tool_result(
+            tool_call,
+            status="denied",
+            content=reason,
+            error_type="tool_not_allowed_by_scaffold",
+            typed={"policy_reason": reason},
+        )
+
+    def disabled_test_feedback_result(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+    ) -> ToolResult:
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status="denied",
+            content=(
+                "run_tests is disabled by test_feedback_policy=disabled; "
+                "formal final verifier still runs after the agent stops."
+            ),
+            error_type="test_feedback_disabled",
+            typed={
+                "test_feedback_policy": "disabled",
+                "feedback_tests_passed_policy": "not_applicable",
+            },
         )
 
     def execute(self, tool_call: ToolCall, context: ToolExecutionContext) -> ToolResult:
@@ -541,33 +577,80 @@ class ToolExecutor:
         normalized: NormalizedToolRequest,
         context: ToolExecutionContext,
     ) -> ToolResult:
-        result = context.verifier.run_feedback(
-            context.run_workspace.workspace_path,
-            context.resolved_verifier_plan,
-            context.recorder,
-        )
+        if context.test_feedback_policy == "disabled":
+            return self.disabled_test_feedback_result(tool_call, normalized)
+        hidden_feedback_ran = context.test_feedback_policy == "oracle_hidden_feedback"
+        if hidden_feedback_ran:
+            result = context.verifier.run_feedback(
+                context.run_workspace.workspace_path,
+                context.resolved_verifier_plan,
+                context.recorder,
+            )
+        else:
+            result = context.verifier.run_feedback_public(
+                context.run_workspace.workspace_path,
+                context.resolved_verifier_plan,
+                context.recorder,
+            )
         ref = context.recorder.write_json_artifact(
             "feedback_verifier_result",
             result.model_dump(mode="json"),
         )
         timed_out = bool(result.timeout)
+        if hidden_feedback_ran:
+            content = (
+                f"run_tests accepted={result.accepted} pass_ratio={result.pass_ratio:.2f} "
+                f"fail_to_pass={result.fail_to_pass} pass_to_pass={result.pass_to_pass}"
+            )
+            preview = {
+                "accepted": result.accepted,
+                "pass_ratio": result.pass_ratio,
+                "error_type": result.error_type,
+                "fail_to_pass": result.fail_to_pass,
+                "pass_to_pass": result.pass_to_pass,
+            }
+        elif context.test_feedback_policy == "structured_public_feedback":
+            content = (
+                "run_tests public_feedback="
+                + json.dumps(
+                    {
+                        "accepted": result.accepted,
+                        "pass_ratio": round(result.pass_ratio, 4),
+                        "error_type": result.error_type,
+                    },
+                    sort_keys=True,
+                )
+            )
+            preview = {
+                "accepted": result.accepted,
+                "pass_ratio": result.pass_ratio,
+                "error_type": result.error_type,
+            }
+        else:
+            status = "accepted" if result.accepted else "failed"
+            content = (
+                f"run_tests public_status={status} pass_ratio={result.pass_ratio:.2f} "
+                f"error_type={result.error_type or 'none'}"
+            )
+            preview = {
+                "accepted": result.accepted,
+                "pass_ratio": result.pass_ratio,
+                "error_type": result.error_type,
+            }
         return _tool_result(
             tool_call,
             normalized=normalized,
             status="timeout" if timed_out else "ok",
-            content=(
-                f"run_tests accepted={result.accepted} pass_ratio={result.pass_ratio:.2f} "
-                f"fail_to_pass={result.fail_to_pass} pass_to_pass={result.pass_to_pass}"
-            ),
+            content=content,
             error_type="test_timeout" if timed_out else None,
             artifact_refs=[ref],
             typed={
-                "verifier_result_preview": {
-                    "accepted": result.accepted,
-                    "pass_ratio": result.pass_ratio,
-                    "error_type": result.error_type,
-                },
+                "verifier_result_preview": preview,
                 "verifier_result_ref": ref.model_dump(mode="json"),
+                "test_feedback_policy": context.test_feedback_policy,
+                "feedback_tests_passed_policy": context.feedback_tests_passed_policy,
+                "public_tests_ran": not hidden_feedback_ran,
+                "hidden_feedback_ran": hidden_feedback_ran,
             },
         )
 

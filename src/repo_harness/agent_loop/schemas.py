@@ -52,3 +52,11 @@ class AgentLoopState(StrictBaseModel):
     last_model_error: str | None = None
     last_tool_parse_error: str | None = None
     agent_stop_reason: AgentStopReason | None = None
+    feedback_verifier_accepted: bool = False
+    first_feedback_accept_turn: int | None = Field(default=None, ge=0)
+    first_feedback_accept_ref: dict[str, Any] | None = None
+    feedback_tests_passed_policy: str = "stop_immediately"
+    test_feedback_policy: str = "oracle_hidden_feedback"
+    hidden_feedback_visible_to_model: bool = True
+    public_tests_ran: bool = False
+    hidden_feedback_ran: bool = False

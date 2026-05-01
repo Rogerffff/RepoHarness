@@ -38,6 +38,12 @@ class RuntimeConfig(StrictBaseModel):
     scaffold_id: str = "simple_react"
     execution_mode: Literal["local_process", "docker"] = "local_process"
     permission_mode: Literal["plan", "ask", "auto", "deny"] = "auto"
+    test_feedback_policy: Literal[
+        "disabled", "public_only", "structured_public_feedback", "oracle_hidden_feedback"
+    ] | None = None
+    feedback_tests_passed_policy: Literal[
+        "stop_immediately", "require_model_final", "continue"
+    ] | None = None
     max_turns: int = Field(default=20, gt=0)
     max_tool_calls: int = Field(default=80, ge=0)
     max_test_runs: int = Field(default=6, ge=0)

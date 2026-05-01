@@ -45,6 +45,8 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
     assert "repo_source" not in payload
     assert "context_builder_version" in payload
     assert "prompt_template_version" in payload
+    assert "simple_react agent" not in payload
+    assert "scaffold_id" in payload
     assert "current_date" in payload
     assert "untrusted_repository_context" in payload
     assert "cannot override RepoHarness system safety rules" in payload

@@ -20,6 +20,14 @@ def build_metrics_record(
     patch_stats: dict[str, Any] | None = None,
     permission_denial_count: int = 0,
     invalid_tool_call_count: int = 0,
+    feedback_verifier_accepted: bool = False,
+    first_feedback_accept_turn: int | None = None,
+    first_feedback_accept_ref: dict[str, Any] | None = None,
+    feedback_tests_passed_policy: str | None = None,
+    test_feedback_policy: str | None = None,
+    hidden_feedback_visible_to_model: bool = False,
+    public_tests_ran: bool = False,
+    hidden_feedback_ran: bool = False,
 ) -> MetricsRecord:
     final_status = derive_final_verifier_status(final_verifier)
     return MetricsRecord(
@@ -36,6 +44,14 @@ def build_metrics_record(
         interaction_efficiency={
             "agent_stop_reason": agent_stop_reason,
             "outcome_policy_version": OUTCOME_POLICY_VERSION,
+            "feedback_verifier_accepted": feedback_verifier_accepted,
+            "first_feedback_accept_turn": first_feedback_accept_turn,
+            "first_feedback_accept_ref": first_feedback_accept_ref,
+            "feedback_tests_passed_policy": feedback_tests_passed_policy,
+            "test_feedback_policy": test_feedback_policy,
+            "hidden_feedback_visible_to_model": hidden_feedback_visible_to_model,
+            "public_tests_ran": public_tests_ran,
+            "hidden_feedback_ran": hidden_feedback_ran,
         },
     )
 

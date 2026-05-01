@@ -1,0 +1,20 @@
+run_id_prefix: stage07
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: tests/fixtures/replays/task_001_success.yaml
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  test_feedback_policy: oracle_hidden_feedback
+  feedback_tests_passed_policy: require_model_final
+  max_turns: 8
+  max_tool_calls: 20
+  max_test_runs: 4
+workspace:
+  output_dir: runs/stage07
+  keep_workspace: true
+  default_command_timeout_sec: 60

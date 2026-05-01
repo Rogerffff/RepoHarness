@@ -22,6 +22,42 @@ def test_agent_loop_replay_stops_on_feedback_tests_passed(tmp_path):
     assert json.loads((run_dir / "verifier.json").read_text(encoding="utf-8"))["accepted"] is True
 
 
+def test_agent_loop_fake_provider_uses_replay_compatible_factory(tmp_path):
+    config_path = tmp_path / "fake_config.yaml"
+    config_path.write_text(
+        f"""
+run_id_prefix: stage07
+model:
+  provider: fake
+  model_id: fake-script-v0
+  replay_script_path: {ROOT / "tests/fixtures/replays/task_001_success.yaml"}
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  max_turns: 8
+  max_tool_calls: 20
+  max_test_runs: 4
+workspace:
+  output_dir: {tmp_path / "runs"}
+  keep_workspace: true
+  default_command_timeout_sec: 60
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    run_dir = run_task(
+        ROOT / "tests/fixtures/tasks/task_001.yaml",
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="stage07-fake-provider",
+    )
+
+    facts = json.loads((run_dir / "run_config_facts.json").read_text(encoding="utf-8"))
+    assert facts["provider"] == "fake"
+    assert json.loads((run_dir / "verifier.json").read_text(encoding="utf-8"))["accepted"] is True
+
+
 def test_agent_loop_replay_schema_error_can_continue(tmp_path):
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_001.yaml",

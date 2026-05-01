@@ -44,6 +44,23 @@ class PytestVerifier:
             pass_to_pass_tests=resolved_verifier_plan.initial_pass_to_pass_tests,
         )
 
+    def run_feedback_public(
+        self,
+        workspace_path: str | Path,
+        resolved_verifier_plan: ResolvedVerifierPlan,
+        recorder: RunRecorder,
+    ) -> VerifierResult:
+        """Run model-visible feedback without hidden fail/pass suite counters."""
+
+        return self._run(
+            workspace_path,
+            resolved_verifier_plan.verifier_config,
+            recorder,
+            stage="feedback",
+            fail_to_pass_tests=[],
+            pass_to_pass_tests=[],
+        )
+
     def run_final(
         self,
         workspace_path: str | Path,
@@ -69,8 +86,16 @@ class PytestVerifier:
         fail_to_pass_tests: list[str] | None = None,
         pass_to_pass_tests: list[str] | None = None,
     ) -> VerifierResult:
-        fail_to_pass = fail_to_pass_tests or verifier_config.fail_to_pass_tests
-        pass_to_pass = pass_to_pass_tests or verifier_config.pass_to_pass_tests
+        fail_to_pass = (
+            verifier_config.fail_to_pass_tests
+            if fail_to_pass_tests is None
+            else fail_to_pass_tests
+        )
+        pass_to_pass = (
+            verifier_config.pass_to_pass_tests
+            if pass_to_pass_tests is None
+            else pass_to_pass_tests
+        )
         timeout = (
             verifier_config.final_verifier_timeout_sec
             if stage == "final"

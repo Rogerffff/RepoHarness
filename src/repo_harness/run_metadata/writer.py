@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from repo_harness.config import RunConfig
-from repo_harness.evaluation.schemas import BaselineResult
+from repo_harness.evaluation.schemas import BaselineResult, ResolvedFeedbackPolicyFacts
 from repo_harness.run_metadata.schemas import (
     EnvironmentFingerprint,
     ExportReadinessFacts,
@@ -22,6 +22,7 @@ from repo_harness.run_metadata.schemas import (
     ToolProtocolFacts,
 )
 from repo_harness.schema_versions import OUTCOME_POLICY_VERSION, REWARD_VERSION
+from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import TaskDefinition
 from repo_harness.trajectory import verify_artifact_manifest
 
@@ -31,10 +32,18 @@ def build_run_config_facts(
     run_id: str,
     task_definition: TaskDefinition,
     config: RunConfig,
+    scaffold: ScaffoldDefinition | None = None,
+    feedback_policy: ResolvedFeedbackPolicyFacts | None = None,
     tool_protocol: ToolProtocolFacts,
     environment_fingerprint: EnvironmentFingerprint,
 ) -> RunConfigFacts:
     verifier_config = task_definition.to_verifier_config()
+    scaffold = scaffold or build_scaffold(config.runtime.scaffold_id)
+    feedback_policy = feedback_policy or resolve_feedback_policy(
+        run_config=config,
+        scaffold=scaffold,
+        task=task_definition,
+    )
     return RunConfigFacts(
         run_id=run_id,
         task_id=task_definition.id,
@@ -52,14 +61,15 @@ def build_run_config_facts(
         credential_policy=config.model.credential_policy,
         provider_request_logging_policy=config.model.provider_request_logging,
         scaffold_id=config.runtime.scaffold_id,
-        scaffold_version="repo_harness_simple_react_v0",
-        allowed_tools_policy=config.versions.tool_policy_version,
-        phase_policy="repo_harness_simple_react_single_phase_v0",
-        stop_policy="repo_harness_feedback_tests_passed_stop_v0",
-        test_feedback_policy="oracle_hidden_feedback",
-        feedback_tests_passed_policy="stop_immediately",
-        hidden_feedback_visible_to_model=True,
-        swe_bench_like_final_only=False,
+        scaffold_version=scaffold.scaffold_version,
+        allowed_tools_policy=scaffold.allowed_tools_policy,
+        phase_policy=scaffold.phase_transition_policy,
+        stop_policy=scaffold.default_stop_policy,
+        test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+        feedback_tests_passed_policy=feedback_policy.resolved_feedback_tests_passed_policy,
+        feedback_policy_resolution=feedback_policy.model_dump(mode="json"),
+        hidden_feedback_visible_to_model=feedback_policy.hidden_feedback_visible_to_model,
+        swe_bench_like_final_only=feedback_policy.swe_bench_like_final_only,
         tool_protocol=tool_protocol,
         context_builder_version=config.versions.context_builder_version,
         context_policy_version=config.context_management.context_policy_version,
@@ -116,6 +126,8 @@ def build_run_metadata(
         agent_stop_reason=agent_stop_reason,
     )
     export_readiness = _export_readiness(run_path, artifact_errors)
+    config_facts = _read_json_if_exists(run_path / run_config_facts_ref.relative_path)
+    feedback_policy_resolution = config_facts.get("feedback_policy_resolution", {})
     return RunMetadata(
         run_id=run_id,
         task_id=task_id,
@@ -127,6 +139,19 @@ def build_run_metadata(
         reward_status="present" if (run_path / "reward.json").exists() else "missing",
         final_verifier_status=final_verifier_status,  # type: ignore[arg-type]
         final_verifier_mode=final_verifier_mode,
+        scaffold_id=config_facts.get("scaffold_id"),
+        scaffold_version=config_facts.get("scaffold_version"),
+        scaffold_facts={
+            "scaffold_id": config_facts.get("scaffold_id"),
+            "scaffold_version": config_facts.get("scaffold_version"),
+            "allowed_tools_policy": config_facts.get("allowed_tools_policy"),
+            "phase_policy": config_facts.get("phase_policy"),
+            "stop_policy": config_facts.get("stop_policy"),
+        },
+        feedback_policy_resolution=feedback_policy_resolution,
+        test_feedback_policy=config_facts.get("test_feedback_policy"),
+        feedback_tests_passed_policy=config_facts.get("feedback_tests_passed_policy"),
+        hidden_feedback_visible_to_model=config_facts.get("hidden_feedback_visible_to_model"),
         metrics_summary=_metrics_summary(metrics),
         tool_call_summary={
             "tool_call_count": metrics.get("tool_call_count", 0),

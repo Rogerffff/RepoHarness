@@ -256,6 +256,7 @@ class RunConfigFacts(StrictBaseModel):
     feedback_tests_passed_policy: Literal[
         "stop_immediately", "require_model_final", "continue", "not_applicable"
     ]
+    feedback_policy_resolution: dict[str, Any] = Field(default_factory=dict)
     hidden_feedback_visible_to_model: bool
     swe_bench_like_final_only: bool = False
     tool_protocol: ToolProtocolFacts
@@ -329,6 +330,13 @@ class RunMetadata(StrictBaseModel):
     reward_status: Literal["present", "missing", "not_applicable", "invalid"]
     final_verifier_status: Literal["accepted", "failed", "timeout", "error", "skipped"]
     final_verifier_mode: str | None = None
+    scaffold_id: str | None = None
+    scaffold_version: str | None = None
+    scaffold_facts: dict[str, Any] = Field(default_factory=dict)
+    feedback_policy_resolution: dict[str, Any] = Field(default_factory=dict)
+    test_feedback_policy: str | None = None
+    feedback_tests_passed_policy: str | None = None
+    hidden_feedback_visible_to_model: bool | None = None
     metrics_summary: dict[str, Any] = Field(default_factory=dict)
     tool_call_summary: dict[str, Any] = Field(default_factory=dict)
     model_call_summary: dict[str, Any] = Field(default_factory=dict)

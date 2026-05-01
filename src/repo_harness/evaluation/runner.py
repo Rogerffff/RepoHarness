@@ -18,7 +18,7 @@ from repo_harness.evaluation.metrics import (
 )
 from repo_harness.evaluation.outcome_policy import OUTCOME_POLICY_VERSION, derive_run_outcome
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
-from repo_harness.model_client import ReplayModelClient
+from repo_harness.model_client import create_model_client, provider_options_from_model_config
 from repo_harness.permissions import PermissionContext
 from repo_harness.reward import compute_reward_metadata
 from repo_harness.run_metadata.fingerprint import build_local_environment_fingerprint
@@ -30,10 +30,16 @@ from repo_harness.run_metadata.writer import (
     write_run_metadata,
 )
 from repo_harness.tasks import RunnableTask, load_task
-from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolExecutionContext, ToolExecutor, ToolOutputLimits
+from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
 from repo_harness.verifier import PytestVerifier, build_error_verifier_result
 from repo_harness.workspace import ExecutionResult, LocalWorkspaceAdapter
+from repo_harness.scaffolds import (
+    build_scaffold,
+    resolve_allowed_tools,
+    resolve_feedback_policy,
+    tool_registry_for_allowed_tools,
+)
 
 
 def run_task(
@@ -46,13 +52,20 @@ def run_task(
     run_started = time.monotonic()
     config = load_run_config(config_path, output_dir=output_dir)
     task_deadline_monotonic = run_started + config.runtime.task_timeout_sec
-    if config.model.provider != "replay":
-        raise ConfigError("RepoHarness 第一版 run-task 只支持 model.provider=replay。")
+    if config.model.provider not in {"replay", "fake"}:
+        raise ConfigError("Stage 07 run-task 只支持 model.provider=replay 或 fake。")
     if config.runtime.execution_mode != "local_process":
         raise ConfigError("RepoHarness 第一版只支持 runtime.execution_mode=local_process。")
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)
+    scaffold = build_scaffold(config.runtime.scaffold_id)
+    feedback_policy = resolve_feedback_policy(
+        run_config=config,
+        scaffold=scaffold,
+        task=loaded.runnable_task,
+    )
+    allowed_tools = resolve_allowed_tools(scaffold=scaffold, feedback_policy=feedback_policy)
     actual_run_id = run_id or f"{config.run_id_prefix}_{loaded.runnable_task.task_id}"
     run_dir = Path(config.workspace.output_dir) / actual_run_id
     if run_dir.exists():
@@ -184,7 +197,11 @@ def run_task(
                 data=baseline.model_dump(mode="json"),
             )
         )
-        _, _, tool_protocol = write_tool_schema_snapshot(recorder)
+        allowed_tool_registry = tool_registry_for_allowed_tools(allowed_tools)
+        _, tool_schema_snapshot_ref, tool_protocol = write_tool_schema_snapshot(
+            recorder,
+            registry=allowed_tool_registry,
+        )
         environment_fingerprint = build_local_environment_fingerprint(
             task_definition=loaded.definition,
             source_checkout=source,
@@ -202,6 +219,8 @@ def run_task(
             run_id=actual_run_id,
             task_definition=loaded.definition,
             config=config,
+            scaffold=scaffold,
+            feedback_policy=feedback_policy,
             tool_protocol=tool_protocol,
             environment_fingerprint=environment_fingerprint,
         )
@@ -249,12 +268,13 @@ def run_task(
             workspace=run_workspace,
             run_config=config,
             resolved_verifier_plan=resolved_plan,
-            allowed_tools=DEFAULT_TOOL_ORDER,
+            allowed_tools=allowed_tools,
+            scaffold=scaffold,
         )
         replay_path = config.model.replay_script_path
         if replay_path is None:
             raise ConfigError("阶段七 run-task 需要 model.replay_script_path。")
-        model = ReplayModelClient.from_path(replay_path)
+        model = create_model_client(config.model)
         budget_manager = BudgetManager.from_run_config(config)
         tool_context = ToolExecutionContext(
             run_id=actual_run_id,
@@ -272,11 +292,18 @@ def run_task(
             output_limits=ToolOutputLimits(
                 max_tool_output_chars=config.workspace.max_tool_output_chars,
             ),
+            test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+            feedback_tests_passed_policy=feedback_policy.resolved_feedback_tests_passed_policy,
             budget_manager=budget_manager,
         )
         loop_state = AgentLoop(
             model_client=model,
             tool_executor=ToolExecutor(),
+            scaffold=scaffold,
+            allowed_tool_names=allowed_tools,
+            test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+            feedback_tests_passed_policy=feedback_policy.resolved_feedback_tests_passed_policy,
+            hidden_feedback_visible_to_model=feedback_policy.hidden_feedback_visible_to_model,
         ).run(
             run_id=actual_run_id,
             task_id=loaded.runnable_task.task_id,
@@ -288,6 +315,17 @@ def run_task(
             budget_manager=budget_manager,
             task_deadline_monotonic=task_deadline_monotonic,
             run_config_facts_ref=run_config_facts_ref,
+            tool_schema_snapshot_ref=tool_schema_snapshot_ref,
+            provider_options=provider_options_from_model_config(config.model),
+            generation_config={
+                "temperature": config.model.temperature,
+                "max_output_tokens": config.model.max_output_tokens,
+                "seed": config.runtime.seed,
+            },
+            provider_model_settings={},
+            request_timeout_seconds=config.runtime.task_timeout_sec,
+            raw_request_logging_policy=config.model.provider_request_logging,
+            retry_policy=config.model.retry_policy,
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         if _task_timeout_expired(task_deadline_monotonic):
@@ -381,6 +419,14 @@ def run_task(
             patch_stats=capture.patch_stats,
             permission_denial_count=loop_state.permission_denial_count,
             invalid_tool_call_count=loop_state.invalid_tool_call_count,
+            feedback_verifier_accepted=loop_state.feedback_verifier_accepted,
+            first_feedback_accept_turn=loop_state.first_feedback_accept_turn,
+            first_feedback_accept_ref=loop_state.first_feedback_accept_ref,
+            feedback_tests_passed_policy=loop_state.feedback_tests_passed_policy,
+            test_feedback_policy=loop_state.test_feedback_policy,
+            hidden_feedback_visible_to_model=loop_state.hidden_feedback_visible_to_model,
+            public_tests_ran=loop_state.public_tests_ran,
+            hidden_feedback_ran=loop_state.hidden_feedback_ran,
         )
         metrics.interaction_efficiency.update(
             {

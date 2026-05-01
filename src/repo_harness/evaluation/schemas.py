@@ -149,17 +149,17 @@ class ExperimentConfig(StrictBaseModel):
 
     @model_validator(mode="after")
     def validate_stage06_scope(self) -> "ExperimentConfig":
-        if self.model_provider != "replay":
-            raise ValueError("Stage 06 ExperimentConfig 只支持 replay provider。")
+        if self.model_provider not in {"replay", "fake"}:
+            raise ValueError("Stage 07 ExperimentConfig 只支持 replay 或 fake provider。")
         if self.scaffold_id != "simple_react":
-            raise ValueError("Stage 06 ExperimentConfig 只支持 simple_react scaffold。")
+            raise ValueError("Stage 07 ExperimentConfig 只支持 simple_react scaffold。")
         if self.permission_mode == "ask":
-            raise ValueError("Stage 06 ExperimentConfig 不能使用 permission_mode=ask。")
+            raise ValueError("Stage 07 ExperimentConfig 不能使用 permission_mode=ask。")
         required_tokens = ["{task_id}", "{model_alias}", "{scaffold_id}", "{rollout_index"]
         missing = [token for token in required_tokens if token not in self.run_id_template]
         if missing:
             raise ValueError(
-                "Stage 06 run_id_template 必须包含 task_id、model_alias、scaffold_id 和 rollout_index。"
+                "Stage 07 run_id_template 必须包含 task_id、model_alias、scaffold_id 和 rollout_index。"
             )
         if self.auto_export_preference:
             self.generate_preference_export = True

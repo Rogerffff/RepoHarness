@@ -4,14 +4,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 import yaml
 
 from repo_harness.context.schemas import PreparedMessages
-from repo_harness.model_client.schemas import ModelCallEvent, ModelMessage, ModelResponse, ReplayScript
+from repo_harness.model_client.schemas import (
+    ModelCallEvent,
+    ModelMessage,
+    ModelProviderOptions,
+    ModelRequestContext,
+    ModelResponse,
+    ProviderCredentialPolicy,
+    ReplayScript,
+)
+from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.schema_base import stable_hash
 from repo_harness.tools import DEFAULT_TOOL_ORDER
 from repo_harness.tools.schemas import ToolCall
-from repo_harness.trajectory import RunRecorder
+from repo_harness.trajectory import ArtifactRef, RunRecorder
 
 
 class ReplayModelClient:
@@ -52,17 +62,30 @@ class ReplayModelClient:
 
     def generate(
         self,
+        request: ModelRequestContext | None = None,
+        recorder: RunRecorder | None = None,
         *,
-        prepared_messages: PreparedMessages,
-        recorder: RunRecorder,
-        turn: int,
+        prepared_messages: PreparedMessages | None = None,
+        turn: int | None = None,
     ) -> ModelResponse:
-        alignment_error = self._validate_prepared_messages(prepared_messages)
-        if alignment_error is not None:
-            return self._model_error_response(
+        if request is None:
+            if prepared_messages is None or recorder is None or turn is None:
+                raise TypeError(
+                    "ReplayModelClient.generate 需要 ModelRequestContext 和 RunRecorder；"
+                    "legacy 调用必须提供 prepared_messages、recorder 和 turn。"
+                )
+            request = _legacy_request_context(
                 prepared_messages=prepared_messages,
                 recorder=recorder,
                 turn=turn,
+            )
+        if recorder is None:
+            raise TypeError("ReplayModelClient.generate 需要 recorder。")
+        alignment_error = self._validate_prepared_messages(request.prepared_messages)
+        if alignment_error is not None:
+            return self._model_error_response(
+                request=request,
+                recorder=recorder,
                 model_error_type=alignment_error,
                 content=f"Replay alignment error: {alignment_error}",
             )
@@ -77,10 +100,10 @@ class ReplayModelClient:
             self.index += 1
             if step.action == "tool_call":
                 tool_call = ToolCall(
-                    tool_call_id=step.tool_call_id or f"replay_tool_{turn}",
+                    tool_call_id=step.tool_call_id or f"replay_tool_{request.turn}",
                     tool_name=step.tool_name or "unknown",
                     arguments=step.arguments or {},
-                    turn=turn,
+                    turn=request.turn,
                 )
                 assistant = ModelMessage(
                     role="assistant",
@@ -109,7 +132,7 @@ class ReplayModelClient:
                 tool_calls = []
                 finish_reason = "stop"
                 model_error_type = None
-        raw_request_ref = self._write_raw_request(prepared_messages, recorder)
+        raw_request_ref = self._write_raw_request(request, recorder)
         raw_response_ref = recorder.write_json_artifact(
             "raw_replay_response",
             {
@@ -118,16 +141,15 @@ class ReplayModelClient:
                 "model_error_type": model_error_type,
             },
         )
-        model_call_id = f"{recorder.run_id}_model_call_{turn:04d}"
         model_call_event = ModelCallEvent(
-            model_call_id=model_call_id,
-            model_id="replay-script-v0",
+            model_call_id=request.model_call_id,
+            model_id=request.provider_options.model_id,
             provider_request_id=step.step_id if step is not None else None,
-            context_revision=prepared_messages.context_revision,
-            prepared_messages_ref=prepared_messages.prepared_messages_ref,
-            model_input_hash=prepared_messages.model_input_hash,
-            provider_message_format="repo_harness_replay_v0",
-            tool_schema_hash=stable_hash(DEFAULT_TOOL_ORDER),
+            context_revision=request.context_revision,
+            prepared_messages_ref=request.prepared_messages_ref,
+            model_input_hash=request.model_input_hash,
+            provider_message_format=request.provider_message_format,
+            tool_schema_hash=stable_hash(request.allowed_tool_definitions),
             model_error_type=model_error_type,
         )
         return ModelResponse(
@@ -141,13 +163,13 @@ class ReplayModelClient:
             model_call_event=model_call_event,
         )
 
-    def _validate_prepared_messages(self, prepared_messages: PreparedMessages) -> str | None:
+    def _validate_prepared_messages(self, prepared_messages: list[dict[str, Any]]) -> str | None:
         if self.index == 0:
             return None
         expected_step = self.script.steps[self.index - 1]
         if expected_step.action != "tool_call":
             return None
-        assistant_call = _last_assistant_tool_call(prepared_messages.messages)
+        assistant_call = _last_assistant_tool_call(prepared_messages)
         if assistant_call is None:
             return "replay_missing_assistant_tool_call"
         if assistant_call.get("tool_call_id") != expected_step.tool_call_id:
@@ -156,7 +178,7 @@ class ReplayModelClient:
             return "replay_tool_name_mismatch"
         if assistant_call.get("arguments") != (expected_step.arguments or {}):
             return "replay_tool_arguments_mismatch"
-        tool_result = _tool_result_for_call(prepared_messages.messages, str(expected_step.tool_call_id))
+        tool_result = _tool_result_for_call(prepared_messages, str(expected_step.tool_call_id))
         if tool_result is None:
             return "replay_missing_tool_result"
         expected = expected_step.expected_outcome or {}
@@ -169,13 +191,12 @@ class ReplayModelClient:
     def _model_error_response(
         self,
         *,
-        prepared_messages: PreparedMessages,
+        request: ModelRequestContext,
         recorder: RunRecorder,
-        turn: int,
         model_error_type: str,
         content: str,
     ) -> ModelResponse:
-        raw_request_ref = self._write_raw_request(prepared_messages, recorder)
+        raw_request_ref = self._write_raw_request(request, recorder)
         raw_response_ref = recorder.write_json_artifact(
             "raw_replay_response",
             {
@@ -184,13 +205,13 @@ class ReplayModelClient:
             },
         )
         model_call_event = ModelCallEvent(
-            model_call_id=f"{recorder.run_id}_model_call_{turn:04d}",
-            model_id="replay-script-v0",
-            context_revision=prepared_messages.context_revision,
-            prepared_messages_ref=prepared_messages.prepared_messages_ref,
-            model_input_hash=prepared_messages.model_input_hash,
-            provider_message_format="repo_harness_replay_v0",
-            tool_schema_hash=stable_hash(DEFAULT_TOOL_ORDER),
+            model_call_id=request.model_call_id,
+            model_id=request.provider_options.model_id,
+            context_revision=request.context_revision,
+            prepared_messages_ref=request.prepared_messages_ref,
+            model_input_hash=request.model_input_hash,
+            provider_message_format=request.provider_message_format,
+            tool_schema_hash=stable_hash(request.allowed_tool_definitions),
             model_error_type=model_error_type,
         )
         return ModelResponse(
@@ -204,19 +225,71 @@ class ReplayModelClient:
 
     def _write_raw_request(
         self,
-        prepared_messages: PreparedMessages,
+        request: ModelRequestContext,
         recorder: RunRecorder,
     ):
         return recorder.write_json_artifact(
             "raw_replay_request",
             {
-                "prepared_messages_ref": prepared_messages.prepared_messages_ref.model_dump(mode="json"),
-                "context_revision": prepared_messages.context_revision,
-                "model_input_hash": prepared_messages.model_input_hash,
-                "tool_order": DEFAULT_TOOL_ORDER,
-                "provider_message_format": "repo_harness_replay_request_v0",
+                "model_call_id": request.model_call_id,
+                "prepared_messages_ref": request.prepared_messages_ref.model_dump(mode="json"),
+                "context_revision": request.context_revision,
+                "model_input_hash": request.model_input_hash,
+                "tool_order": [tool.get("name") for tool in request.allowed_tool_definitions],
+                "tool_schema_snapshot_ref": request.tool_schema_snapshot_ref.model_dump(mode="json"),
+                "provider_message_format": request.provider_message_format,
+                "scaffold_id": request.scaffold_id,
+                "scaffold_phase": request.scaffold_phase,
+                "run_config_facts_ref": request.run_config_facts_ref.model_dump(mode="json"),
+                "budget_state": request.budget_state,
+                "generation_config": request.generation_config,
+                "provider_options": request.provider_options.model_dump(mode="json"),
             },
         )
+
+
+def _legacy_request_context(
+    *,
+    prepared_messages: PreparedMessages,
+    recorder: RunRecorder,
+    turn: int,
+) -> ModelRequestContext:
+    return ModelRequestContext(
+        run_id=recorder.run_id,
+        task_id=recorder.task_id or "unknown_task",
+        turn=turn,
+        model_call_id=f"{recorder.run_id}_model_call_{turn:04d}",
+        prepared_messages=prepared_messages.messages,
+        prepared_messages_ref=prepared_messages.prepared_messages_ref,
+        model_input_hash=prepared_messages.model_input_hash,
+        context_revision=prepared_messages.context_revision,
+        provider_message_format="repo_harness_replay_v0",
+        context_truncation_facts={},
+        omitted_context_facts={},
+        generation_config={"temperature": 0.0, "max_output_tokens": 4096},
+        provider_model_settings={},
+        allowed_tool_definitions=[{"name": name} for name in DEFAULT_TOOL_ORDER],
+        tool_schema_snapshot_ref=_placeholder_artifact_ref("tool_schema_snapshot"),
+        provider_options=ModelProviderOptions(provider="replay", model_id="replay-script-v0"),
+        scaffold_id="simple_react",
+        scaffold_phase="act",
+        run_config_facts_ref=RunConfigFactsRef(sha256="0" * 64),
+        budget_state={},
+        request_timeout_seconds=60,
+        raw_request_logging_policy="redact_secrets",
+        credential_policy=ProviderCredentialPolicy(),
+        retry_policy="none",
+    )
+
+
+def _placeholder_artifact_ref(kind: str) -> ArtifactRef:
+    return ArtifactRef(
+        artifact_id=f"{kind}_unavailable",
+        relative_path=f"artifacts/{kind}_unavailable.json",
+        kind=kind,
+        sha256="0" * 64,
+        size_bytes=0,
+    )
 
 
 def _last_assistant_tool_call(messages: list[dict[str, object]]) -> dict[str, object] | None:

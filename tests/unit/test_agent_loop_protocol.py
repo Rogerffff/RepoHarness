@@ -4,7 +4,7 @@ from pathlib import Path
 
 from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
-from repo_harness.model_client import FakeModelClient, ModelMessage
+from repo_harness.model_client import FakeModelClient, ModelMessage, ModelResponse
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutor
 from repo_harness.trajectory import RunRecorder
@@ -19,6 +19,36 @@ def test_agent_loop_accepts_valid_final_answer(tmp_path: Path):
     assert state.agent_stop_reason == "final_answer"
 
 
+def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RecordingClient()
+    with RunRecorder("request-context", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="request-context",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert client.request is not None
+    assert client.request.model_call_id == "request-context_model_call_0001"
+    assert client.request.turn == 1
+    assert client.request.scaffold_phase == "act"
+    assert client.request.budget_state["turn_count"] == 1
+    assert [tool["name"] for tool in client.request.allowed_tool_definitions] == ["read_file"]
+    events = _read_events(run_dir)
+    started = next(event for event in events if event["event_type"] == "model_call_started")
+    assert started["data"]["scaffold_phase"] == "act"
+    assert started["data"]["budget_state"]["turn_count"] == 1
+
+
 def test_agent_loop_rejects_empty_no_tool_response(tmp_path: Path):
     state = _run_loop(
         tmp_path,
@@ -27,6 +57,43 @@ def test_agent_loop_rejects_empty_no_tool_response(tmp_path: Path):
 
     assert state.agent_stop_reason == "model_error"
     assert state.last_model_error == "invalid_final_answer"
+
+
+def test_agent_loop_scaffold_allowed_tools_block_disallowed_known_tool(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = FakeModelClient.from_steps(
+        script_id="restricted",
+        task_id="task",
+        steps=[
+            {
+                "step_id": "diff",
+                "action": "tool_call",
+                "tool_call_id": "call_diff",
+                "tool_name": "git_diff",
+                "arguments": {},
+            },
+            {"step_id": "final", "action": "final_answer", "assistant_text": "done"},
+        ],
+    )
+
+    with RunRecorder("restricted", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="restricted",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=2,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "final_answer"
+    assert any(event["event_type"] == "tool_not_allowed" for event in events)
+    assert not any(event["event_type"] == "permission_decision" for event in events)
 
 
 def test_agent_loop_rejects_refusal_like_final_answer(tmp_path: Path):
@@ -426,6 +493,18 @@ class _MultiToolExecutor(ToolExecutor):
             status="ok",
             content_preview="tests passed",
             typed={"status": "ok", "verifier_result_preview": {"accepted": True}},
+        )
+
+
+class _RecordingClient:
+    def __init__(self) -> None:
+        self.request = None
+
+    def generate(self, request, recorder):  # noqa: ANN001
+        self.request = request
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
         )
 
 

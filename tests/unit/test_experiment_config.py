@@ -22,8 +22,20 @@ def test_experiment_config_loads_smoke_fixture():
     assert config.generate_preference_export is True
 
 
-def test_experiment_config_rejects_stage06_out_of_scope_provider():
-    with pytest.raises(ValidationError, match="replay provider"):
+def test_experiment_config_allows_fake_provider_after_model_client_factory():
+    config = ExperimentConfig(
+        experiment_id="fake_provider",
+        tasks=["tests/fixtures/tasks/task_001.yaml"],
+        rollout_count=1,
+        model_provider="fake",
+        replay_script_path="tests/fixtures/replays/task_001_success.yaml",
+    )
+
+    assert config.model_provider == "fake"
+
+
+def test_experiment_config_rejects_stage07_out_of_scope_provider():
+    with pytest.raises(ValidationError, match="replay 或 fake"):
         ExperimentConfig(
             experiment_id="bad_provider",
             tasks=["tests/fixtures/tasks/task_001.yaml"],
@@ -32,7 +44,7 @@ def test_experiment_config_rejects_stage06_out_of_scope_provider():
         )
 
 
-def test_experiment_config_rejects_stage06_unregistered_scaffold():
+def test_experiment_config_rejects_stage07_unregistered_scaffold():
     with pytest.raises(ValidationError, match="simple_react"):
         ExperimentConfig(
             experiment_id="bad_scaffold",
