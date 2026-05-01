@@ -127,14 +127,25 @@ class RunRecorder:
         artifact_id = f"{self.run_id}_artifact_{self._artifact_counter:06d}"
         suffix = _artifact_suffix(data, metadata)
         original_size_bytes = _artifact_size_bytes(data)
-        preserve_json = metadata.get("budget_policy") == "preserve_json"
-        truncated = (
+        budget_policy = str(metadata.get("budget_policy", "truncate"))
+        preserve_artifact = budget_policy == "preserve_json"
+        oversized = (
             self.max_artifact_bytes is not None
             and original_size_bytes > self.max_artifact_bytes
-            and not preserve_json
+        )
+        truncated = (
+            oversized
+            and not preserve_artifact
         )
         if truncated:
-            data = _truncate_artifact_data(data, self.max_artifact_bytes or 0)
+            if suffix == ".json" and budget_policy == "truncate_json":
+                data = _truncate_json_artifact_data(
+                    kind=kind,
+                    original_size_bytes=original_size_bytes,
+                    max_bytes=self.max_artifact_bytes or 0,
+                )
+            else:
+                data = _truncate_artifact_data(data, self.max_artifact_bytes or 0)
             metadata["retention_policy"] = "truncated"
         filename = f"{artifact_id}_{_safe_filename(kind)}{suffix}"
         relative_path = Path("artifacts") / filename
@@ -183,7 +194,7 @@ class RunRecorder:
                     },
                 )
             )
-        if truncated:
+        if oversized:
             self.append_event(
                 TrajectoryEvent(
                     event_id=self.next_event_id("artifact_budget"),
@@ -200,7 +211,9 @@ class RunRecorder:
                         "original_size_bytes": original_size_bytes,
                         "stored_size_bytes": ref.size_bytes,
                         "max_artifact_bytes": self.max_artifact_bytes,
-                        "truncated": True,
+                        "budget_policy": budget_policy,
+                        "truncated": truncated,
+                        "preserved": preserve_artifact,
                     },
                 )
             )
@@ -213,7 +226,7 @@ class RunRecorder:
         metadata: Mapping[str, Any] | None = None,
     ) -> ArtifactRef:
         data = json.dumps(obj, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
-        merged = {"suffix": ".json", "budget_policy": "preserve_json", **(metadata or {})}
+        merged = {"suffix": ".json", "budget_policy": "truncate_json", **(metadata or {})}
         return self.write_artifact(kind, data, merged)
 
     def finalize_run(self, summary: str, *, status: RunStatus = "FINALIZED") -> None:
@@ -381,6 +394,31 @@ def _truncate_artifact_data(data: bytes | str | Path, max_bytes: int) -> bytes |
         return marker_bytes[:max_bytes].decode("utf-8", errors="ignore")
     keep = max_bytes - len(marker_bytes)
     return raw[:keep].decode("utf-8", errors="ignore") + marker
+
+
+def _truncate_json_artifact_data(
+    *,
+    kind: str,
+    original_size_bytes: int,
+    max_bytes: int,
+) -> str:
+    candidates = [
+        {
+            "schema_version": "repo_harness_truncated_json_artifact_v0",
+            "truncated": True,
+            "kind": kind,
+            "original_size_bytes": original_size_bytes,
+        },
+        {"truncated": True, "kind": kind},
+        {"truncated": True},
+    ]
+    for candidate in candidates:
+        text = json.dumps(candidate, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        if len(text.encode("utf-8")) <= max_bytes:
+            return text
+    if max_bytes >= 2:
+        return "{}"
+    return "0"
 
 
 def _sha256_file(path: Path) -> str:

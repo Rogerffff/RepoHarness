@@ -112,6 +112,7 @@ def run_task(
                     for result in baseline_verifiers
                 ]
             },
+            {"budget_policy": "preserve_json"},
         )
         baseline_status, baseline_dependency_error = _derive_baseline_status(
             generated_file_count=len(loaded.runnable_task.generated_files_policy),
@@ -276,7 +277,9 @@ def run_task(
                     verifier_stage="final",
                 )
         final_verifier_ref = recorder.write_json_artifact(
-            "final_verifier_result", final_verifier.model_dump(mode="json")
+            "final_verifier_result",
+            final_verifier.model_dump(mode="json"),
+            {"budget_policy": "preserve_json"},
         )
         recorder.append_event(
             TrajectoryEvent(
@@ -308,7 +311,11 @@ def run_task(
                 },
             },
         )
-        recorder.write_json_artifact("reward_metadata", reward.model_dump(mode="json"))
+        recorder.write_json_artifact(
+            "reward_metadata",
+            reward.model_dump(mode="json"),
+            {"budget_policy": "preserve_json"},
+        )
         final_status = derive_final_verifier_status(final_verifier)
         run_outcome = derive_run_outcome(
             baseline_status=baseline.status,

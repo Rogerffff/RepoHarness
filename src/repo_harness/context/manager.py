@@ -48,6 +48,7 @@ class ContextManager:
         state_ref = recorder.write_json_artifact(
             "content_replacement_state",
             state.model_dump(mode="json"),
+            {"budget_policy": "preserve_json"},
         )
         prepared_ref = recorder.write_json_artifact(
             "prepared_messages",
@@ -59,6 +60,7 @@ class ContextManager:
                 "content_replacement_state": state.model_dump(mode="json"),
                 "content_replacement_state_ref": state_ref.model_dump(mode="json"),
             },
+            {"budget_policy": "preserve_json"},
         )
         event = TrajectoryEvent(
             event_id=recorder.next_event_id("context"),
@@ -199,6 +201,7 @@ class ContextManager:
                 "reason": reason,
                 "source_artifact_ref": artifact_data,
             },
+            {"budget_policy": "preserve_json"},
         )
         existing_record = self._records_by_tool_result_id.get(tool_result_id)
         record = ContentReplacementRecord(

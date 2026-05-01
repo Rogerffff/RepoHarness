@@ -218,7 +218,11 @@ def test_run_recorder_preserves_json_artifacts_over_text_budget(tmp_path: Path):
     run_dir = tmp_path / "run_json_budget"
     payload = {"messages": [{"role": "system", "content": "x" * 200}]}
     with RunRecorder("run_json_budget", run_dir, task_id="task_001", max_artifact_bytes=20) as recorder:
-        artifact = recorder.write_json_artifact("prepared_messages", payload)
+        artifact = recorder.write_json_artifact(
+            "prepared_messages",
+            payload,
+            {"budget_policy": "preserve_json"},
+        )
 
     stored = json.loads((run_dir / artifact.relative_path).read_text(encoding="utf-8"))
     events = read_jsonl(run_dir / "events.jsonl")
@@ -226,4 +230,33 @@ def test_run_recorder_preserves_json_artifacts_over_text_budget(tmp_path: Path):
     assert stored == payload
     assert artifact.size_bytes > 20
     assert verify_artifact_manifest(run_dir) == []
-    assert not any(event["event_type"] == "artifact_budget_exhausted" for event in events)
+    assert any(
+        event["event_type"] == "artifact_budget_exhausted"
+        and event["data"]["artifact_id"] == artifact.artifact_id
+        and event["data"]["truncated"] is False
+        and event["data"]["preserved"] is True
+        for event in events
+    )
+
+
+def test_run_recorder_truncates_noncritical_json_with_valid_wrapper(tmp_path: Path):
+    run_dir = tmp_path / "run_json_truncated"
+    payload = {"items": ["x" * 20 for _ in range(10)]}
+    with RunRecorder("run_json_truncated", run_dir, task_id="task_001", max_artifact_bytes=20) as recorder:
+        artifact = recorder.write_json_artifact("list_files", payload)
+
+    stored_text = (run_dir / artifact.relative_path).read_text(encoding="utf-8")
+    stored = json.loads(stored_text)
+    events = read_jsonl(run_dir / "events.jsonl")
+
+    assert artifact.size_bytes <= 20
+    assert len(stored_text.encode("utf-8")) <= 20
+    assert stored == {"truncated": True}
+    assert verify_artifact_manifest(run_dir) == []
+    assert any(
+        event["event_type"] == "artifact_budget_exhausted"
+        and event["data"]["artifact_id"] == artifact.artifact_id
+        and event["data"]["truncated"] is True
+        and event["data"]["preserved"] is False
+        for event in events
+    )
