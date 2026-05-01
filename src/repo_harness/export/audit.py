@@ -34,6 +34,7 @@ CRITICAL_AUDIT_ITEMS = {
     "local_paths_redacted",
     "provider_raw_response_not_target",
     "tool_schema_snapshot_valid",
+    "preference_pairing_policy_satisfied",
 }
 
 HIDDEN_MARKERS = (
@@ -65,6 +66,14 @@ PROVIDER_RAW_MARKERS = (
     "reasoning_content",
     "authorization",
 )
+
+PREFERENCE_PAIRING_METADATA_KEYS = {
+    "pairing_policy_version",
+    "compare_scope",
+    "blocked_reasons",
+    "chosen_run_metadata",
+    "rejected_run_metadata",
+}
 
 
 @dataclass(frozen=True)
@@ -267,6 +276,19 @@ def _audit_record(
         items.append(_item("provider_raw_response_not_target", "failed", "error", provider_raw_reason))
     else:
         items.append(_item("provider_raw_response_not_target", "passed", "info", "provider raw payload is absent"))
+
+    pairing_reason = _preference_pairing_reason(record, export_format)
+    if pairing_reason:
+        items.append(_item("preference_pairing_policy_satisfied", "failed", "error", pairing_reason))
+    elif export_format == "preference_jsonl":
+        items.append(
+            _item(
+                "preference_pairing_policy_satisfied",
+                "passed",
+                "info",
+                "preference pair satisfies pairing policy",
+            )
+        )
 
     feedback_policy = _feedback_policy(run_paths)
     hidden_feedback_reason = _marker_reason(payload_text, HIDDEN_FEEDBACK_MARKERS)
@@ -629,6 +651,42 @@ def _marker_reason(text: str, markers: tuple[str, ...]) -> str | None:
     for marker in markers:
         if marker.lower() in lowered:
             return f"contains blocked marker {marker}"
+    return None
+
+
+def _preference_pairing_reason(record: ExportRecord, export_format: str) -> str | None:
+    if export_format != "preference_jsonl":
+        return None
+    metadata = record.metadata
+    missing = sorted(key for key in PREFERENCE_PAIRING_METADATA_KEYS if key not in metadata)
+    if missing:
+        return f"preference pair missing pairing metadata: {', '.join(missing)}"
+    if metadata.get("blocked_reasons"):
+        return "preference pair has blocked reasons"
+    chosen = metadata.get("chosen_run_metadata")
+    rejected = metadata.get("rejected_run_metadata")
+    if not isinstance(chosen, dict) or not isinstance(rejected, dict):
+        return "preference pair missing run metadata summaries"
+    required = [
+        "verifier_name",
+        "verifier_version",
+        "reward_formula_version",
+        "final_verifier_mode",
+        "model_provider",
+        "model_id",
+        "temperature",
+        "max_output_tokens",
+        "scaffold_id",
+        "scaffold_version",
+        "turn_budget",
+        "tool_budget",
+        "test_budget",
+        "task_timeout",
+    ]
+    for side_name, summary in (("chosen", chosen), ("rejected", rejected)):
+        missing_fields = [field for field in required if field not in summary]
+        if missing_fields:
+            return f"{side_name} run metadata summary missing: {', '.join(missing_fields)}"
     return None
 
 

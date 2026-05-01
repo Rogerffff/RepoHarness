@@ -100,6 +100,12 @@ def test_preference_export_pairs_two_runs_for_same_task(tmp_path: Path):
     assert canonical_records
     assert canonical_records[0]["quality"]["training_eligibility"] == "trainable"
     assert audit["samples"][0]["source_run_ids"] == [success.name, failure.name]
+    pair_audit = [
+        item
+        for item in audit["samples"][0]["audit_items"]
+        if item["name"] == "preference_pairing_policy_satisfied"
+    ]
+    assert pair_audit and pair_audit[0]["status"] == "passed"
     _assert_no_hidden_or_local_text(output.read_text(encoding="utf-8"))
 
 

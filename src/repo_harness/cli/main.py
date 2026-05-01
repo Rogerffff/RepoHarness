@@ -70,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="显式允许 oracle_hidden_feedback 样本进入正式训练数据；默认不允许。",
     )
+    export.add_argument(
+        "--compare-scope",
+        default=None,
+        help="Preference export 使用的 CompareScope 或 PairingPolicy JSON 文件路径。",
+    )
 
     inspect_run = subparsers.add_parser(
         "inspect-run",
@@ -167,6 +172,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_path = export_run_or_runs(
                 args.run_dir_or_runs_dir,
                 export_format=args.format,
+                compare_scope_path=args.compare_scope,
                 policy=ExportPolicy(
                     allow_oracle_feedback_training=args.allow_oracle_feedback_training,
                     filter_rules=(

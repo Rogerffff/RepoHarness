@@ -7,6 +7,13 @@ from repo_harness.export.exporter import (
     export_sft_jsonl,
 )
 from repo_harness.export.inspect import inspect_export
+from repo_harness.export.pairing import (
+    PairDecision,
+    PairingResult,
+    PairingSummary,
+    build_preference_pairing,
+    load_pairing_policy,
+)
 from repo_harness.export.schemas import (
     CompareScope,
     ExportAuditItem,
@@ -29,9 +36,14 @@ __all__ = [
     "ExportRecord",
     "ExportRecordQuality",
     "PairingPolicy",
+    "PairDecision",
+    "PairingResult",
+    "PairingSummary",
+    "build_preference_pairing",
     "export_preference_jsonl",
     "export_rl_jsonl",
     "export_run_or_runs",
     "export_sft_jsonl",
     "inspect_export",
+    "load_pairing_policy",
 ]

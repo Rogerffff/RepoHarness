@@ -25,6 +25,12 @@ from repo_harness.export.manifest import (
     write_jsonl,
     write_text,
 )
+from repo_harness.export.pairing import (
+    PairDecision,
+    PairingSummary,
+    build_preference_pairing,
+    load_pairing_policy,
+)
 from repo_harness.export.schemas import ExportPolicy, ExportRecord, ExportRecordQuality
 from repo_harness.schema_versions import EXPORT_SCHEMA_VERSION
 from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
@@ -37,6 +43,7 @@ def export_run_or_runs(
     *,
     export_format: ExportFormat,
     policy: ExportPolicy | None = None,
+    compare_scope_path: str | Path | None = None,
 ) -> Path:
     path = Path(run_dir_or_runs_dir)
     if export_format == "sft_jsonl":
@@ -48,7 +55,7 @@ def export_run_or_runs(
             return export_rl_jsonl(path, policy=policy)
         return _export_many(path, export_format, policy=policy)
     if export_format == "preference_jsonl":
-        return export_preference_jsonl(path, policy=policy)
+        return export_preference_jsonl(path, policy=policy, compare_scope_path=compare_scope_path)
     raise ExportError(f"不支持的导出格式：{export_format}")
 
 
@@ -104,25 +111,41 @@ def export_rl_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None) 
     )
 
 
-def export_preference_jsonl(runs_dir: str | Path, *, policy: ExportPolicy | None = None) -> Path:
+def export_preference_jsonl(
+    runs_dir: str | Path,
+    *,
+    policy: ExportPolicy | None = None,
+    compare_scope_path: str | Path | None = None,
+) -> Path:
     root = Path(runs_dir)
     if not root.exists() or not root.is_dir():
         raise ExportError(f"runs directory 不存在：{root}")
-    records = _build_preference_records(root)
+    resolved_policy = policy or ExportPolicy()
+    pairing_policy = load_pairing_policy(compare_scope_path)
+    run_paths = [run_dir for run_dir in sorted(root.iterdir()) if _looks_like_run_dir(run_dir)]
+    pairing = build_preference_pairing(
+        run_paths,
+        pairing_policy=pairing_policy,
+        export_policy=resolved_policy,
+    )
+    records = _build_preference_records(pairing.decisions, pairing_summary=pairing.summary, export_policy=resolved_policy)
     if not records:
         return _write_preference_skipped_export(
             export_root=root / "exports",
-            source_run_dirs=_source_run_dirs([run_dir for run_dir in sorted(root.iterdir()) if _looks_like_run_dir(run_dir)]),
-            reason="not_enough_runs_for_same_task",
-            policy=policy or ExportPolicy(),
+            source_run_dirs=_source_run_dirs(run_paths),
+            reason=_preference_skipped_reason(pairing.summary),
+            policy=resolved_policy,
+            pairing_summary=pairing.summary,
+            compare_scope_path=compare_scope_path,
         )
     return _write_format_export(
         export_root=root / "exports",
         export_format="preference_jsonl",
         records=records,
-        run_paths=[run_dir for run_dir in sorted(root.iterdir()) if _looks_like_run_dir(run_dir)],
+        run_paths=run_paths,
         skipped_reason=None,
-        policy=policy or ExportPolicy(),
+        policy=resolved_policy,
+        command_args_extra=_pairing_command_args(pairing.summary, compare_scope_path=compare_scope_path),
     )
 
 
@@ -166,6 +189,7 @@ def _write_format_export(
     run_paths: list[Path],
     skipped_reason: str | None,
     policy: ExportPolicy,
+    command_args_extra: dict[str, Any] | None = None,
 ) -> Path:
     generated_at = utc_timestamp()
     source_run_dirs = _source_run_dirs(run_paths)
@@ -203,15 +227,17 @@ def _write_format_export(
     audit_md = render_audit_markdown(report)
     audit_md_sha = write_text(export_dir / "audit_report.md", audit_md)
     data_files = [build_data_file(data_path, relative_path=data_file_name, record_count=len(trainable_records))]
+    command_args = {
+        "format": export_format,
+        "include_diagnostic": False,
+        "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
+    }
+    command_args.update(command_args_extra or {})
     manifest = build_export_manifest(
         export_id=export_id,
         export_format=export_format,
         source_run_dirs=source_run_dirs,
-        command_args={
-            "format": export_format,
-            "include_diagnostic": False,
-            "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
-        },
+        command_args=command_args,
         data_files=data_files,
         generated_at=generated_at,
         audit_report_path="audit_report.json",
@@ -238,6 +264,8 @@ def _write_preference_skipped_export(
     source_run_dirs: list[str],
     reason: str,
     policy: ExportPolicy,
+    pairing_summary: PairingSummary | None = None,
+    compare_scope_path: str | Path | None = None,
 ) -> Path:
     generated_at = utc_timestamp()
     export_id = build_export_id(
@@ -251,6 +279,13 @@ def _write_preference_skipped_export(
         "format": "preference_jsonl",
         "filter_status": "skipped",
         "reason": reason,
+        "candidate_run_count": pairing_summary.candidate_run_count if pairing_summary else 0,
+        "blocked_pair_count": pairing_summary.blocked_pair_count if pairing_summary else 0,
+        "blocked_reason_distribution": (
+            pairing_summary.blocked_reason_distribution if pairing_summary else {}
+        ),
+        "pairing_policy_version": pairing_summary.pairing_policy_version if pairing_summary else None,
+        "compare_scope": pairing_summary.compare_scope if pairing_summary else None,
         "export_policy_version": policy.export_policy_version,
     }
     canonical_path = export_dir / "preference_skipped.json"
@@ -276,15 +311,17 @@ def _write_preference_skipped_export(
             record_count=0,
         )
     ]
+    command_args = {
+        "format": "preference_jsonl",
+        "include_diagnostic": False,
+        "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
+    }
+    command_args.update(_pairing_command_args(pairing_summary, compare_scope_path=compare_scope_path))
     manifest = build_export_manifest(
         export_id=export_id,
         export_format="preference_jsonl",
         source_run_dirs=source_run_dirs,
-        command_args={
-            "format": "preference_jsonl",
-            "include_diagnostic": False,
-            "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
-        },
+        command_args=command_args,
         data_files=data_files,
         generated_at=generated_at,
         audit_report_path="audit_report.json",
@@ -305,6 +342,33 @@ def _write_preference_skipped_export(
 
 def _source_run_dirs(run_paths: list[Path]) -> list[str]:
     return [run_path.name for run_path in run_paths]
+
+
+def _preference_skipped_reason(pairing_summary: PairingSummary) -> str:
+    if pairing_summary.candidate_run_count < 2:
+        return "not_enough_runs_for_same_task"
+    if pairing_summary.blocked_pair_count:
+        top_reason = next(iter(pairing_summary.blocked_reason_distribution), "compare_key_mismatch")
+        return f"all_candidate_pairs_blocked:{top_reason}"
+    return "not_enough_runs_for_same_task"
+
+
+def _pairing_command_args(
+    pairing_summary: PairingSummary | None,
+    *,
+    compare_scope_path: str | Path | None,
+) -> dict[str, Any]:
+    if pairing_summary is None:
+        return {}
+    return {
+        "pairing_policy_version": pairing_summary.pairing_policy_version,
+        "compare_scope": pairing_summary.compare_scope,
+        "compare_scope_path": str(compare_scope_path) if compare_scope_path is not None else None,
+        "candidate_run_count": pairing_summary.candidate_run_count,
+        "candidate_pair_count": pairing_summary.candidate_pair_count,
+        "blocked_pair_count": pairing_summary.blocked_pair_count,
+        "blocked_reason_distribution": pairing_summary.blocked_reason_distribution,
+    }
 
 
 def _format_short_name(export_format: str) -> str:
@@ -415,33 +479,33 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
     )
 
 
-def _build_preference_records(root: Path) -> list[ExportRecord]:
-    runs = [_run_score(run_dir) for run_dir in sorted(root.iterdir()) if _looks_like_run_dir(run_dir)]
-    grouped: dict[str, list[dict[str, Any]]] = {}
-    for run in runs:
-        grouped.setdefault(run["task_id"], []).append(run)
+def _build_preference_records(
+    decisions: list[PairDecision],
+    *,
+    pairing_summary: PairingSummary,
+    export_policy: ExportPolicy,
+) -> list[ExportRecord]:
     records: list[ExportRecord] = []
-    for task_id, task_runs in grouped.items():
-        if len(task_runs) < 2:
+    pair_index = 0
+    for decision in decisions:
+        if not decision.allowed:
             continue
-        ranked = sorted(
-            task_runs,
-            key=lambda run: (run["reward"], _outcome_rank(run.get("run_outcome"))),
-            reverse=True,
-        )
-        chosen, rejected = ranked[0], ranked[-1]
-        chosen_score = (chosen["reward"], _outcome_rank(chosen.get("run_outcome")))
-        rejected_score = (rejected["reward"], _outcome_rank(rejected.get("run_outcome")))
-        if chosen["run_id"] == rejected["run_id"] or chosen_score == rejected_score:
-            continue
+        pair_index += 1
+        chosen = _candidate_to_run_dict(decision.chosen)
+        rejected = _candidate_to_run_dict(decision.rejected)
         payload = {
             "chosen": _preference_side(chosen),
             "rejected": _preference_side(rejected),
             "reason": "higher_final_reward_and_verifier_outcome",
         }
         metadata = {
-            "export_policy_version": ExportPolicy().export_policy_version,
-            "pairing_policy": "same_task_rollout_ranking_v0",
+            "export_policy_version": export_policy.export_policy_version,
+            "pairing_policy": pairing_summary.pairing_policy_version,
+            "pairing_policy_version": pairing_summary.pairing_policy_version,
+            "compare_scope": pairing_summary.compare_scope,
+            "blocked_reasons": [],
+            "chosen_run_metadata": decision.chosen.metadata_summary,
+            "rejected_run_metadata": decision.rejected.metadata_summary,
             "source_run_ids": [chosen["run_id"], rejected["run_id"]],
             "chosen_verifier_result_ref": _with_source_run_id(
                 _manifest_ref(
@@ -464,14 +528,25 @@ def _build_preference_records(root: Path) -> list[ExportRecord]:
         }
         records.append(
             ExportRecord(
-                sample_id=f"{task_id}_preference_0001",
-                task_id=task_id,
+                sample_id=f"{decision.chosen.task_id}_preference_{pair_index:04d}",
+                task_id=decision.chosen.task_id,
                 source_run_id=f"{chosen['run_id']}__vs__{rejected['run_id']}",
                 payload=_sanitize_for_export(payload),
                 metadata=_sanitize_for_export(metadata),
             )
         )
     return records
+
+
+def _candidate_to_run_dict(candidate: Any) -> dict[str, Any]:
+    return {
+        "run_id": candidate.run_id,
+        "run_dir": str(candidate.run_dir),
+        "task_id": candidate.task_id,
+        "reward": float(candidate.reward or 0.0),
+        "run_outcome": candidate.run_outcome,
+        "final_verifier_status": candidate.final_verifier_status,
+    }
 
 
 def _message_from_transcript(

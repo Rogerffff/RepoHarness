@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from repo_harness.errors import ExportError
-from repo_harness.export import inspect_export
+from repo_harness.export import CompareScope, inspect_export
 from repo_harness.export.exporter import export_preference_jsonl, export_rl_jsonl, export_sft_jsonl
 from repo_harness.export.exporter import _sanitize_text
 
@@ -154,11 +154,10 @@ def test_preference_export_pairs_equal_reward_when_outcome_differs(tmp_path: Pat
     )
 
     output = export_preference_jsonl(runs_dir)
-    record = _read_jsonl(output)[0]
+    skipped = json.loads(output.read_text(encoding="utf-8"))
 
-    assert output.name == "preference.jsonl"
-    assert record["payload"]["chosen"]["source_run_id"] == "run_success"
-    assert record["payload"]["rejected"]["source_run_id"] == "run_failed"
+    assert output.name == "preference_skipped.json"
+    assert skipped["blocked_reason_distribution"] == {"reward_tie": 1}
 
 
 def test_export_writes_manifest_audit_and_formal_trainable_file(tmp_path: Path):
@@ -259,15 +258,12 @@ def test_preference_export_audits_underlying_source_runs(tmp_path: Path):
     )
 
     output = export_preference_jsonl(runs_dir)
-    record = _read_jsonl(output)[0]
+    skipped = json.loads(output.read_text(encoding="utf-8"))
     export_dir = _latest_export_dir(runs_dir / "exports")
-    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
 
-    assert record["quality"]["training_eligibility"] == "invalid"
-    assert record["invalid_reason"] == "run_failed: missing_formal_final_verifier"
-    assert audit["samples"][0]["source_run_ids"] == ["run_success", "run_failed"]
-    assert audit["samples"][0]["metadata_source"] == "v2"
-    assert _read_jsonl(export_dir / "data.preference.jsonl") == []
+    assert skipped["blocked_pair_count"] == 1
+    assert skipped["blocked_reason_distribution"] == {"missing_formal_final_verifier": 1}
+    assert (export_dir / "preference_skipped.json").exists()
 
 
 def test_export_metadata_reads_v2_run_config_facts(tmp_path: Path):
@@ -285,6 +281,111 @@ def test_export_metadata_reads_v2_run_config_facts(tmp_path: Path):
     assert record["metadata"]["model_id"] == "replay-script-v0"
     assert record["metadata"]["scaffold_version"] == "repo_harness_simple_react_v0"
     assert record["metadata"]["tool_schema_snapshot_hash"] == "b" * 64
+
+
+def test_preference_export_blocks_base_commit_mismatch(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(runs_dir / "run_b", {"base_commit": "other"})
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"compare_key_mismatch": 1}
+
+
+def test_preference_export_blocks_tool_schema_snapshot_mismatch(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(
+        runs_dir / "run_b",
+        {"tool_protocol": {"tool_schema_snapshot_sha256": "d" * 64}},
+        merge_tool_protocol=True,
+    )
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"tool_schema_snapshot_mismatch": 1}
+
+
+def test_preference_export_blocks_scaffold_mismatch_unless_compare_scope_allows(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(
+        runs_dir / "run_b",
+        {
+            "scaffold_id": "single_shot_patch",
+            "scaffold_version": "repo_harness_single_shot_patch_v0",
+        },
+    )
+
+    blocked = json.loads(export_preference_jsonl(runs_dir).read_text(encoding="utf-8"))
+    compare_scope_path = tmp_path / "compare_scope.json"
+    compare_scope_path.write_text(
+        json.dumps(
+            CompareScope(
+                experimental_variables=["scaffold_id", "scaffold_version"],
+                training_export_allowed=True,
+            ).model_dump(mode="json"),
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    allowed_output = export_preference_jsonl(runs_dir, compare_scope_path=compare_scope_path)
+
+    assert blocked["blocked_reason_distribution"] == {"compare_key_mismatch": 1}
+    assert _read_jsonl(allowed_output)[0]["metadata"]["compare_scope"]["experimental_variables"] == [
+        "scaffold_id",
+        "scaffold_version",
+    ]
+
+
+def test_preference_export_allows_different_seed_same_compare_key(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_seed_1", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_seed_2", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(runs_dir / "run_seed_1", {"seed": 1})
+    _update_run_config(runs_dir / "run_seed_2", {"seed": 2})
+
+    output = export_preference_jsonl(runs_dir)
+
+    assert _read_jsonl(output)
+
+
+def test_preference_export_blocks_reward_tie_and_missing_reward(tmp_path: Path):
+    tie_runs = tmp_path / "tie_runs"
+    _minimal_run(tie_runs / "run_a", task_id="task_001", reward=0.5, include_formal_verifier=True)
+    _minimal_run(tie_runs / "run_b", task_id="task_001", reward=0.5, include_formal_verifier=True)
+    tie_output = export_preference_jsonl(tie_runs)
+
+    missing_runs = tmp_path / "missing_runs"
+    _minimal_run(missing_runs / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(missing_runs / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    (missing_runs / "run_b" / "reward.json").unlink()
+    missing_output = export_preference_jsonl(missing_runs)
+
+    assert json.loads(tie_output.read_text(encoding="utf-8"))["blocked_reason_distribution"] == {"reward_tie": 1}
+    assert json.loads(missing_output.read_text(encoding="utf-8"))["blocked_reason_distribution"] == {"missing_reward": 1}
+
+
+def test_preference_export_blocks_non_formal_verifier_source(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    (runs_dir / "run_b" / "verifier.json").write_text(
+        json.dumps({"verifier_stage": "feedback"}) + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"non_formal_reward_source": 1}
 
 
 def _minimal_run(
@@ -371,16 +472,50 @@ def _write_minimal_v2_metadata(run_dir: Path) -> None:
     tool_protocol = {
         "tool_schema_snapshot_ref": artifact_ref,
         "tool_schema_snapshot_sha256": snapshot_sha,
+        "tool_order": ["read_file", "create_file", "run_tests"],
+        "tool_parser_version": "repo_harness_tool_call_parser_v0",
+        "tool_result_format_version": "repo_harness_tool_result_v0",
     }
     (run_dir / "artifacts.json").write_text(
         json.dumps({"artifacts": [artifact_ref]}, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     run_config = {
+        "task_id": "task_001",
+        "task_version": "task_001_v0",
+        "base_commit": "fixture",
+        "source_archive_sha256": None,
+        "environment_fingerprint": {
+            "environment_spec_hash": "c" * 64,
+            "workspace_execution": {
+                "environment_spec_hash": "c" * 64,
+                "setup_artifact_hash": "none",
+                "workspace_backend": {
+                    "backend": "local_process",
+                    "execution_mode": {"resolved_execution_mode": "local_process"},
+                },
+                "source_checkout": {"base_commit": "fixture"},
+            },
+        },
         "provider": "replay",
         "model_id": "replay-script-v0",
+        "temperature": 0.0,
+        "max_output_tokens": 1024,
         "scaffold_id": "simple_react",
         "scaffold_version": "repo_harness_simple_react_v0",
+        "allowed_tools_policy": "repo_harness_tools_v0",
+        "phase_policy": "repo_harness_simple_react_single_phase_v0",
+        "verifier_name": "pytest",
+        "verifier_version": "pytest_parser_v0",
+        "reward_formula_version": "repo_harness_reward_v0",
+        "final_verifier_mode": "strict_patch_replay",
+        "context_policy_version": "repo_harness_context_policy_v0",
+        "prompt_template_version": "repo_harness_prompt_v0",
+        "permission_policy_version": "repo_harness_permissions_v0",
+        "max_turns": 8,
+        "max_tool_calls": 20,
+        "max_test_runs": 4,
+        "task_timeout_sec": 120,
         "test_feedback_policy": "public_only",
         "hidden_feedback_visible_to_model": False,
         "tool_protocol": tool_protocol,
@@ -405,6 +540,28 @@ def _write_minimal_v2_metadata(run_dir: Path) -> None:
         + "\n",
         encoding="utf-8",
     )
+
+
+def _update_run_config(
+    run_dir: Path,
+    updates: dict,
+    *,
+    merge_tool_protocol: bool = False,
+) -> None:
+    config_path = run_dir / "run_config_facts.json"
+    metadata_path = run_dir / "run_metadata.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    if merge_tool_protocol and "tool_protocol" in updates:
+        merged = {**config.get("tool_protocol", {}), **updates["tool_protocol"]}
+        updates = {**updates, "tool_protocol": merged}
+    config.update(updates)
+    config_path.write_text(json.dumps(config, sort_keys=True) + "\n", encoding="utf-8")
+    if metadata_path.exists():
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata["run_config_facts_ref"]["sha256"] = _sha256_file(config_path)
+        if "tool_protocol" in updates:
+            metadata["tool_protocol"] = updates["tool_protocol"]
+        metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _sha256_file(path: Path) -> str:
