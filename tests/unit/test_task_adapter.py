@@ -104,8 +104,10 @@ visibility:
     [
         ("test_command", "python -c \"print('unsafe')\"", "test_command"),
         ("test_command", "pytest -q; printf unsafe", "shell"),
+        ("test_command", "pytest --basetemp=../../outside -q", "pytest"),
         ("setup_command", "python - <<'PY'\nprint('unsafe')\nPY", "setup_command"),
         ("setup_command", "python setup.py; printf unsafe", "shell"),
+        ("setup_command", "python -m pip install definitely-not-safe", "setup_command"),
     ],
 )
 def test_task_adapter_rejects_unsafe_task_commands(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import shlex
 from pathlib import Path
 from typing import Any
@@ -92,16 +91,27 @@ def load_task(task_path: str | Path) -> LoadedTask:
 
 
 _FORBIDDEN_SHELL_FRAGMENTS = ["|", ">", "<", "&&", "||", ";", "`", "$", "\n", "&"]
-_PYTHON_MODULE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
+_PYTEST_FLAG_ALLOWLIST = {
+    "-q",
+    "--quiet",
+    "-v",
+    "-vv",
+    "-s",
+    "-x",
+    "--disable-warnings",
+    "--strict-config",
+    "--strict-markers",
+}
+_PYTEST_TB_VALUES = {"auto", "long", "short", "line", "native", "no"}
 
 
 def _validate_test_command(command: str) -> None:
     parts = _split_static_command(command, field_name="test_command")
     if parts[0] == "pytest":
-        _reject_unsafe_command_args(parts[1:], field_name="test_command")
+        _validate_pytest_args(parts[1:])
         return
     if parts[:3] == ["python", "-m", "pytest"]:
-        _reject_unsafe_command_args(parts[3:], field_name="test_command")
+        _validate_pytest_args(parts[3:])
         return
     raise TaskValidationError(
         "test_command 第一版只允许 pytest 或 python -m pytest 形式。"
@@ -112,20 +122,13 @@ def _validate_setup_command(command: str | None, repo_path: Path) -> None:
     if command is None or not command.strip():
         return
     parts = _split_static_command(command, field_name="setup_command")
-    if parts[:2] == ["python", "-m"] and len(parts) >= 3:
-        module = parts[2]
-        if not _PYTHON_MODULE_RE.fullmatch(module):
-            raise TaskValidationError("setup_command 包含不安全的 Python module 名称。")
-        _reject_unsafe_command_args(parts[3:], field_name="setup_command")
-        return
-    if len(parts) >= 2 and parts[0] == "python" and parts[1].endswith(".py"):
-        _reject_unsafe_command_args(parts[1:], field_name="setup_command")
+    if len(parts) == 2 and parts[0] == "python" and parts[1].endswith(".py"):
         script_path = _resolve_command_path(repo_path, parts[1], field_name="setup_command")
         if not script_path.exists() or not script_path.is_file():
             raise TaskValidationError(f"setup_command 脚本不存在：{parts[1]}")
         return
     raise TaskValidationError(
-        "setup_command 第一版只允许 python -m <module> 或 python <script.py> 形式。"
+        "setup_command 第一版只允许 python <repo_script.py> 形式。"
     )
 
 
@@ -141,17 +144,28 @@ def _split_static_command(command: str, *, field_name: str) -> list[str]:
     return parts
 
 
-def _reject_unsafe_command_args(args: list[str], *, field_name: str) -> None:
+def _validate_pytest_args(args: list[str]) -> None:
     for arg in args:
         if any(fragment in arg for fragment in _FORBIDDEN_SHELL_FRAGMENTS):
-            raise TaskValidationError(f"{field_name} 包含不支持的 shell 语法。")
+            raise TaskValidationError("test_command 包含不支持的 shell 语法。")
         if arg.startswith("-"):
+            _validate_pytest_flag(arg)
             continue
         if arg in {".", ":", "::"}:
             continue
         path_candidate = Path(arg.split("::", 1)[0])
         if path_candidate.is_absolute() or ".." in path_candidate.parts:
-            raise TaskValidationError(f"{field_name} 参数路径不能是绝对路径或包含 ..。")
+            raise TaskValidationError("test_command 参数路径不能是绝对路径或包含 ..。")
+
+
+def _validate_pytest_flag(arg: str) -> None:
+    if arg in _PYTEST_FLAG_ALLOWLIST:
+        return
+    if arg.startswith("--tb=") and arg.split("=", 1)[1] in _PYTEST_TB_VALUES:
+        return
+    if arg.startswith("--maxfail=") and arg.split("=", 1)[1].isdigit():
+        return
+    raise TaskValidationError(f"pytest 参数不在第一版白名单：{arg}")
 
 
 def _resolve_command_path(repo_path: Path, requested_path: str, *, field_name: str) -> Path:
