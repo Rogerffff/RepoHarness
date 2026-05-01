@@ -15,6 +15,7 @@ from pathlib import Path
 from repo_harness.errors import WorkspaceError
 from repo_harness.tasks import RunnableTask
 from repo_harness.trajectory import ArtifactRef, RunRecorder
+from repo_harness.workspace.protocol import WorkspaceBackend
 from repo_harness.workspace.schemas import DependencyState, ExecutionResult, RunWorkspace
 
 DEFAULT_EXCLUDED_DIFF_PATHS = [
@@ -112,6 +113,8 @@ class PatchCapture:
 
 class LocalWorkspaceAdapter:
     """本地进程工作区生命周期和执行边界。"""
+
+    backend = WorkspaceBackend.local_process
 
     def __init__(
         self,

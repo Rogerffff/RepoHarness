@@ -7,9 +7,12 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
-from repo_harness.schema_versions import REPLAY_SCRIPT_SCHEMA_VERSION
+from repo_harness.schema_versions import MODEL_CLIENT_PROTOCOL_VERSION, REPLAY_SCRIPT_SCHEMA_VERSION
+from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import ArtifactRef
+
+SHA256_PATTERN = r"^[0-9a-f]{64}$"
 
 
 class ModelMessage(StrictBaseModel):
@@ -27,6 +30,55 @@ class ProviderCredentialPolicy(StrictBaseModel):
     redact_request_headers: bool = True
     redact_provider_response: bool = True
     secret_scan_policy: str = "default"
+    local_secret_file_policy: str = "disabled"
+    credential_source_label: str | None = None
+
+
+class ModelProviderOptions(StrictBaseModel):
+    schema_version: str = "repo_harness_model_provider_options_v2_v0"
+    provider: str
+    model_id: str
+    endpoint_category: str = "default"
+    credential_policy: ProviderCredentialPolicy = Field(default_factory=ProviderCredentialPolicy)
+    provider_specific_options: dict[str, Any] = Field(default_factory=dict)
+
+
+class ModelRequestContext(StrictBaseModel):
+    schema_version: str = MODEL_CLIENT_PROTOCOL_VERSION
+    run_id: str
+    task_id: str
+    turn: int = Field(ge=0)
+    model_call_id: str
+    prepared_messages: list[dict[str, Any]]
+    prepared_messages_ref: ArtifactRef
+    model_input_hash: str = Field(pattern=SHA256_PATTERN)
+    context_revision: int = Field(ge=0)
+    provider_message_format: str
+    context_truncation_facts: dict[str, Any]
+    omitted_context_facts: dict[str, Any]
+    generation_config: dict[str, Any]
+    provider_model_settings: dict[str, Any]
+    allowed_tool_definitions: list[dict[str, Any]]
+    tool_choice: str | dict[str, Any] | None = None
+    tool_schema_snapshot_ref: ArtifactRef
+    provider_options: ModelProviderOptions
+    scaffold_id: str
+    scaffold_phase: str
+    run_config_facts_ref: RunConfigFactsRef
+    budget_state: dict[str, Any]
+    request_timeout_seconds: float = Field(gt=0)
+    raw_request_logging_policy: str
+    credential_policy: ProviderCredentialPolicy
+    retry_policy: str
+
+
+class ModelGenerationRequest(StrictBaseModel):
+    schema_version: str = "repo_harness_model_generation_request_v2_v0"
+    protocol_version: str = MODEL_CLIENT_PROTOCOL_VERSION
+    context: ModelRequestContext
+    messages: list[dict[str, Any]]
+    tools: list[dict[str, Any]]
+    provider_options: ModelProviderOptions
 
 
 class ModelCallEvent(StrictBaseModel):

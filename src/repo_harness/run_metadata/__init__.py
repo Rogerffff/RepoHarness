@@ -1,0 +1,41 @@
+"""第二版 run metadata schema。"""
+
+from repo_harness.run_metadata.schemas import (
+    EnvironmentFingerprint,
+    ExecutionModeFacts,
+    ExportReadinessFacts,
+    FailureCategory,
+    FailureDiagnostics,
+    FailureType,
+    RunConfigFacts,
+    RunConfigFactsRef,
+    RunMetadata,
+    RunMetadataRef,
+    RunMetadataSource,
+    SourceCheckoutFacts,
+    ToolProtocolFacts,
+    ToolSchemaEntry,
+    ToolSchemaSnapshot,
+    WorkspaceBackendFacts,
+    WorkspaceExecutionFacts,
+)
+
+__all__ = [
+    "EnvironmentFingerprint",
+    "ExecutionModeFacts",
+    "ExportReadinessFacts",
+    "FailureCategory",
+    "FailureDiagnostics",
+    "FailureType",
+    "RunConfigFacts",
+    "RunConfigFactsRef",
+    "RunMetadata",
+    "RunMetadataRef",
+    "RunMetadataSource",
+    "SourceCheckoutFacts",
+    "ToolProtocolFacts",
+    "ToolSchemaEntry",
+    "ToolSchemaSnapshot",
+    "WorkspaceBackendFacts",
+    "WorkspaceExecutionFacts",
+]

@@ -3,7 +3,10 @@
 from repo_harness.model_client.fake import FakeModelClient
 from repo_harness.model_client.replay import ReplayModelClient
 from repo_harness.model_client.schemas import (
+    ModelGenerationRequest,
     ModelCallEvent,
+    ModelProviderOptions,
+    ModelRequestContext,
     ModelMessage,
     ModelResponse,
     ProviderCredentialPolicy,
@@ -14,7 +17,10 @@ from repo_harness.model_client.schemas import (
 
 __all__ = [
     "ModelCallEvent",
+    "ModelGenerationRequest",
     "ModelMessage",
+    "ModelProviderOptions",
+    "ModelRequestContext",
     "ModelResponse",
     "FakeModelClient",
     "ProviderCredentialPolicy",

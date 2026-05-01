@@ -1,4 +1,4 @@
-"""RepoHarness 第一版 schema 和策略版本常量。"""
+"""RepoHarness schema 和策略版本常量。"""
 
 SCHEMA_VERSION = "repo_harness_schema_v0"
 TASK_SCHEMA_VERSION = "repo_harness_task_v0"
@@ -20,3 +20,14 @@ REWARD_VERSION = "repo_harness_reward_v0"
 PYTEST_PARSER_VERSION = "pytest_parser_v0"
 TOKEN_ESTIMATOR_VERSION = "char4_token_estimator_v0"
 REPLAY_SCRIPT_SCHEMA_VERSION = "repo_harness_replay_script_v0"
+
+# 第二版新增事实、审计、实验和模型协议版本。
+RUN_METADATA_SCHEMA_VERSION = "repo_harness_run_metadata_v2_v0"
+ENVIRONMENT_FINGERPRINT_VERSION = "repo_harness_environment_fingerprint_v2_v0"
+TOOL_SCHEMA_SNAPSHOT_VERSION = "repo_harness_tool_schema_snapshot_v2_v0"
+EXPORT_AUDIT_SCHEMA_VERSION = "repo_harness_export_audit_v2_v0"
+EXPORT_MANIFEST_SCHEMA_VERSION = "repo_harness_export_manifest_v2_v0"
+PAIRING_POLICY_VERSION = "repo_harness_pairing_policy_v2_v0"
+EXPERIMENT_SCHEMA_VERSION = "repo_harness_experiment_v2_v0"
+SCAFFOLD_REGISTRY_VERSION = "repo_harness_scaffold_registry_v2_v0"
+MODEL_CLIENT_PROTOCOL_VERSION = "repo_harness_model_client_protocol_v2_v0"

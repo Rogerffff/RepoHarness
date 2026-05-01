@@ -2,15 +2,75 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
-from repo_harness.schema_versions import ACCEPTANCE_POLICY_VERSION
+from repo_harness.schema_versions import ACCEPTANCE_POLICY_VERSION, EXPERIMENT_SCHEMA_VERSION
+from repo_harness.export.schemas import CompareScope
 from repo_harness.tasks import VerifierConfig
 from repo_harness.trajectory import ArtifactRef
 from repo_harness.workspace import DependencyState
+
+
+class TestFeedbackPolicy(str, Enum):
+    """模型可见测试反馈策略。"""
+
+    disabled = "disabled"
+    public_only = "public_only"
+    structured_public_feedback = "structured_public_feedback"
+    oracle_hidden_feedback = "oracle_hidden_feedback"
+
+
+class FeedbackTestsPassedPolicy(str, Enum):
+    """feedback verifier accepted 后 Agent Loop 的可配置停止策略。"""
+
+    stop_immediately = "stop_immediately"
+    require_model_final = "require_model_final"
+    continue_ = "continue"
+
+
+ResolvedFeedbackTestsPassedPolicy = Literal[
+    "stop_immediately", "require_model_final", "continue", "not_applicable"
+]
+
+
+class FeedbackPolicyConfig(StrictBaseModel):
+    schema_version: str = "repo_harness_feedback_policy_config_v2_v0"
+    test_feedback_policy: TestFeedbackPolicy
+    feedback_tests_passed_policy: FeedbackTestsPassedPolicy
+
+
+class ResolvedFeedbackPolicyFacts(StrictBaseModel):
+    schema_version: str = "repo_harness_resolved_feedback_policy_facts_v2_v0"
+    scaffold_default_test_feedback_policy: TestFeedbackPolicy
+    scaffold_default_feedback_tests_passed_policy: FeedbackTestsPassedPolicy
+    runtime_test_feedback_policy: TestFeedbackPolicy | None = None
+    runtime_feedback_tests_passed_policy: FeedbackTestsPassedPolicy | None = None
+    resolved_test_feedback_policy: TestFeedbackPolicy
+    resolved_feedback_tests_passed_policy: ResolvedFeedbackTestsPassedPolicy
+    hidden_feedback_visible_to_model: bool
+    swe_bench_like_final_only: bool = False
+
+    @model_validator(mode="after")
+    def validate_feedback_visibility(self) -> "ResolvedFeedbackPolicyFacts":
+        if (
+            self.resolved_test_feedback_policy == TestFeedbackPolicy.oracle_hidden_feedback
+            and self.swe_bench_like_final_only
+        ):
+            raise ValueError("SWE-Bench-like final-only task 不能使用 oracle_hidden_feedback。")
+        if self.resolved_test_feedback_policy == TestFeedbackPolicy.disabled:
+            if self.resolved_feedback_tests_passed_policy != "not_applicable":
+                raise ValueError("disabled 测试反馈策略必须解析为 not_applicable。")
+            if self.hidden_feedback_visible_to_model:
+                raise ValueError("disabled 测试反馈策略不能向模型暴露隐藏反馈。")
+        if self.hidden_feedback_visible_to_model and (
+            self.resolved_test_feedback_policy != TestFeedbackPolicy.oracle_hidden_feedback
+        ):
+            raise ValueError("只有 oracle_hidden_feedback 可以向模型暴露隐藏反馈。")
+        return self
 
 
 class BaselineResult(StrictBaseModel):
@@ -47,3 +107,27 @@ class ResolvedVerifierPlan(StrictBaseModel):
     parser_confidence: float = Field(ge=0.0, le=1.0)
     acceptance_policy_version: str = ACCEPTANCE_POLICY_VERSION
     resolved_verifier_plan_id: str
+
+
+class ExperimentRunSpec(StrictBaseModel):
+    schema_version: str = "repo_harness_experiment_run_spec_v2_v0"
+    task_path: str
+    rollout_index: int = Field(ge=0)
+    model_alias: str
+    scaffold_id: str
+    run_id_suffix: str | None = None
+
+
+class ExperimentConfig(StrictBaseModel):
+    schema_version: str = EXPERIMENT_SCHEMA_VERSION
+    experiment_id: str
+    tasks: list[str] = Field(min_length=1)
+    rollout_count: int = Field(gt=0)
+    model_provider: str = "replay"
+    model_id: str = "replay-script-v0"
+    scaffold_id: str = "simple_react"
+    permission_mode: Literal["plan", "ask", "auto", "deny"] = "auto"
+    output_dir: str = "runs"
+    compare_scope: CompareScope = Field(default_factory=CompareScope)
+    generate_aggregate_report: bool = True
+    auto_export_preference: bool = False
