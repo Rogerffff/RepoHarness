@@ -1,0 +1,19 @@
+experiment_id: v2_exp_smoke
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+  - tests/fixtures/tasks/missing_task_for_experiment_error.yaml
+rollout_count: 2
+model_provider: replay
+model_alias: replay
+model_id: replay-script-v0
+replay_script_path: tests/fixtures/replays/task_001_success.yaml
+scaffold_id: simple_react
+permission_mode: auto
+run_id_template: "{experiment_id}_{task_id}_{model_alias}_{scaffold_id}_r{rollout_index:03d}"
+max_turns: 8
+max_tool_calls: 20
+max_test_runs: 4
+task_timeout_sec: 120
+command_timeout_sec: 60
+generate_aggregate_report: true
+generate_preference_export: true

@@ -124,10 +124,53 @@ class ExperimentConfig(StrictBaseModel):
     tasks: list[str] = Field(min_length=1)
     rollout_count: int = Field(gt=0)
     model_provider: str = "replay"
+    model_alias: str = "replay"
     model_id: str = "replay-script-v0"
+    replay_script_path: str | None = None
     scaffold_id: str = "simple_react"
     permission_mode: Literal["plan", "ask", "auto", "deny"] = "auto"
+    execution_mode: Literal["local_process"] = "local_process"
     output_dir: str = "runs"
+    run_id_template: str = "{experiment_id}_{task_id}_{model_alias}_{scaffold_id}_r{rollout_index:03d}"
     compare_scope: CompareScope = Field(default_factory=CompareScope)
     generate_aggregate_report: bool = True
     auto_export_preference: bool = False
+    max_turns: int = Field(default=8, gt=0)
+    max_tool_calls: int = Field(default=20, ge=0)
+    max_test_runs: int = Field(default=4, ge=0)
+    task_timeout_sec: int = Field(default=120, gt=0)
+    command_timeout_sec: int = Field(default=60, gt=0)
+    max_output_tokens: int = Field(default=4096, gt=0)
+    temperature: float = Field(default=0.0, ge=0.0)
+    seed: int | None = 42
+    keep_workspace: bool = True
+    fail_on_invalid_task: bool = False
+    generate_preference_export: bool = False
+
+    @model_validator(mode="after")
+    def validate_stage06_scope(self) -> "ExperimentConfig":
+        if self.model_provider != "replay":
+            raise ValueError("Stage 06 ExperimentConfig 只支持 replay provider。")
+        if self.scaffold_id != "simple_react":
+            raise ValueError("Stage 06 ExperimentConfig 只支持 simple_react scaffold。")
+        if self.permission_mode == "ask":
+            raise ValueError("Stage 06 ExperimentConfig 不能使用 permission_mode=ask。")
+        required_tokens = ["{task_id}", "{model_alias}", "{scaffold_id}", "{rollout_index"]
+        missing = [token for token in required_tokens if token not in self.run_id_template]
+        if missing:
+            raise ValueError(
+                "Stage 06 run_id_template 必须包含 task_id、model_alias、scaffold_id 和 rollout_index。"
+            )
+        if self.auto_export_preference:
+            self.generate_preference_export = True
+        return self
+
+
+class ExperimentMinimums(StrictBaseModel):
+    schema_version: str = "repo_harness_experiment_minimums_v2_v0"
+    min_total_runs: int = Field(default=1, ge=0)
+    min_recorded_runs: int = Field(default=1, ge=0)
+    require_experiment_manifest: bool = True
+    require_aggregate_metrics: bool = True
+    require_failure_records: bool = False
+    require_no_all_skipped_success: bool = False

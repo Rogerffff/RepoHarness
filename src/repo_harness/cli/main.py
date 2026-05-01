@@ -12,6 +12,10 @@ from repo_harness.config import load_run_config
 from repo_harness.errors import RepoHarnessError
 from repo_harness.evaluation.runner import run_batch as run_batch_command
 from repo_harness.evaluation.runner import run_task as run_task_command
+from repo_harness.evaluation.experiment import (
+    inspect_experiment as inspect_experiment_command,
+)
+from repo_harness.evaluation.experiment import run_experiment as run_experiment_command
 from repo_harness.export import ExportPolicy, export_run_or_runs, inspect_export
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
@@ -53,6 +57,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_batch.add_argument("--config", required=True, help="RunConfig YAML 文件路径。")
     run_batch.add_argument("--output-dir", default=None, help="运行产物根目录。")
+
+    run_experiment = subparsers.add_parser(
+        "run-experiment",
+        help="按 ExperimentConfig 顺序运行最小多 rollout 实验。",
+    )
+    run_experiment.add_argument("--config", required=True, help="ExperimentConfig YAML 文件路径。")
+    run_experiment.add_argument("--output-dir", default=None, help="实验产物目录。")
+
+    inspect_experiment = subparsers.add_parser(
+        "inspect-experiment",
+        help="只读检查实验目录。",
+    )
+    inspect_experiment.add_argument("experiment_dir", help="实验目录路径。")
+    inspect_experiment.add_argument(
+        "--assert-minimums",
+        default=None,
+        help="实验 smoke 阈值 YAML 文件路径。",
+    )
 
     export = subparsers.add_parser(
         "export",
@@ -167,6 +189,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"批量运行完成：{manifest_path}")
         manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
         return 1 if manifest.get("should_fail_command") else 0
+    if args.command == "run-experiment":
+        try:
+            manifest_path = run_experiment_command(
+                config_path=args.config,
+                output_dir=args.output_dir,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"实验运行失败：{exc}\n")
+        print(f"实验运行完成：{manifest_path}")
+        return 0
+    if args.command == "inspect-experiment":
+        try:
+            print(
+                inspect_experiment_command(
+                    args.experiment_dir,
+                    minimums_path=args.assert_minimums,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"实验检查失败：{exc}\n")
+        return 0
     if args.command == "export":
         try:
             output_path = export_run_or_runs(

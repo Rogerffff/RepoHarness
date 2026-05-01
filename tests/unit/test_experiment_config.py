@@ -1,0 +1,68 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
+
+from repo_harness.evaluation.experiment import load_experiment_config
+from repo_harness.evaluation.schemas import ExperimentConfig, ExperimentMinimums
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_experiment_config_loads_smoke_fixture():
+    config = load_experiment_config(ROOT / "tests/fixtures/run_configs/v2/experiment_smoke.yaml")
+
+    assert config.experiment_id == "v2_exp_smoke"
+    assert config.model_provider == "replay"
+    assert config.scaffold_id == "simple_react"
+    assert config.rollout_count == 2
+    assert config.generate_preference_export is True
+
+
+def test_experiment_config_rejects_stage06_out_of_scope_provider():
+    with pytest.raises(ValidationError, match="replay provider"):
+        ExperimentConfig(
+            experiment_id="bad_provider",
+            tasks=["tests/fixtures/tasks/task_001.yaml"],
+            rollout_count=1,
+            model_provider="mock",
+        )
+
+
+def test_experiment_config_rejects_stage06_unregistered_scaffold():
+    with pytest.raises(ValidationError, match="simple_react"):
+        ExperimentConfig(
+            experiment_id="bad_scaffold",
+            tasks=["tests/fixtures/tasks/task_001.yaml"],
+            rollout_count=1,
+            scaffold_id="single_shot_patch",
+        )
+
+
+def test_experiment_config_rejects_run_id_template_missing_required_dimensions():
+    with pytest.raises(ValidationError, match="run_id_template"):
+        ExperimentConfig(
+            experiment_id="bad_template",
+            tasks=["tests/fixtures/tasks/task_001.yaml"],
+            rollout_count=1,
+            run_id_template="{experiment_id}_{rollout_index:03d}",
+        )
+
+
+def test_experiment_minimums_loads_fixture():
+    config = ExperimentMinimums.model_validate(
+        {
+            "min_total_runs": 2,
+            "min_recorded_runs": 2,
+            "require_experiment_manifest": True,
+            "require_aggregate_metrics": True,
+            "require_failure_records": True,
+            "require_no_all_skipped_success": True,
+        }
+    )
+
+    assert config.min_total_runs == 2
+    assert config.require_failure_records is True
