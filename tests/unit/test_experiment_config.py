@@ -45,13 +45,25 @@ def test_experiment_config_allows_mock_provider_after_stage10():
     assert config.model_provider == "mock"
 
 
-def test_experiment_config_rejects_stage10_out_of_scope_provider():
-    with pytest.raises(ValidationError, match="replay、fake 或 mock"):
+def test_experiment_config_allows_real_provider_after_stage11():
+    config = ExperimentConfig(
+        experiment_id="deepseek_provider",
+        tasks=["tests/fixtures/tasks/task_001.yaml"],
+        rollout_count=1,
+        model_provider="deepseek",
+        model_id="deepseek-v4-pro",
+    )
+
+    assert config.model_provider == "deepseek"
+
+
+def test_experiment_config_rejects_stage11_out_of_scope_provider():
+    with pytest.raises(ValidationError, match="replay、fake、mock 或 deepseek"):
         ExperimentConfig(
             experiment_id="bad_provider",
             tasks=["tests/fixtures/tasks/task_001.yaml"],
             rollout_count=1,
-            model_provider="deepseek",
+            model_provider="anthropic",
         )
 
 

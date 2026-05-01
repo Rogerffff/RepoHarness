@@ -149,8 +149,8 @@ class ExperimentConfig(StrictBaseModel):
 
     @model_validator(mode="after")
     def validate_stage06_scope(self) -> "ExperimentConfig":
-        if self.model_provider not in {"replay", "fake", "mock"}:
-            raise ValueError("Stage 10 ExperimentConfig 只支持 replay、fake 或 mock provider。")
+        if self.model_provider not in {"replay", "fake", "mock", "deepseek"}:
+            raise ValueError("Stage 11 ExperimentConfig 只支持 replay、fake、mock 或 deepseek provider；openai 只允许作为 DeepSeek fallback smoke run。")
         if self.scaffold_id not in {"simple_react", "single_shot_patch", "planner_coder_verifier"}:
             raise ValueError(
                 "Stage 09 ExperimentConfig 只支持 simple_react、single_shot_patch "

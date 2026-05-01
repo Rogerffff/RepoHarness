@@ -52,8 +52,10 @@ def run_task(
     run_started = time.monotonic()
     config = load_run_config(config_path, output_dir=output_dir)
     task_deadline_monotonic = run_started + config.runtime.task_timeout_sec
-    if config.model.provider not in {"replay", "fake", "mock"}:
-        raise ConfigError("Stage 10 run-task 只支持 model.provider=replay、fake 或 mock。")
+    if config.model.provider not in {"replay", "fake", "mock", "deepseek", "openai"}:
+        raise ConfigError("Stage 11 run-task 只支持 model.provider=replay、fake、mock、deepseek；openai 只允许作为 DeepSeek fallback 内部运行。")
+    if config.model.provider == "openai" and not _is_openai_fallback_config(config.model.provider_specific_options):
+        raise ConfigError("model.provider=openai 只允许作为 DeepSeek fallback smoke run，不能作为 primary provider。")
     if config.runtime.execution_mode != "local_process":
         raise ConfigError("RepoHarness 第一版只支持 runtime.execution_mode=local_process。")
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
@@ -591,6 +593,15 @@ def _run_setup_command(
         )
     )
     return result
+
+
+def _is_openai_fallback_config(options: dict[str, Any]) -> bool:
+    return (
+        options.get("requested_provider") == "deepseek"
+        and options.get("actual_provider") == "openai"
+        and bool(options.get("fallback_reason"))
+        and bool(options.get("fallback_policy_version"))
+    )
 
 
 def _setup_succeeded(result: ExecutionResult | None) -> bool:

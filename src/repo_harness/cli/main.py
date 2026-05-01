@@ -18,6 +18,7 @@ from repo_harness.evaluation.experiment import (
 from repo_harness.evaluation.experiment import run_experiment as run_experiment_command
 from repo_harness.export import ExportPolicy, export_run_or_runs, inspect_export
 from repo_harness.model_client.mock_smoke import inspect_mock_provider_smoke
+from repo_harness.model_client.real_smoke import inspect_real_provider_smoke, run_real_provider_smoke
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
 
@@ -133,6 +134,39 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_mock.add_argument("--assert-accepted", action="store_true", help="要求 smoke run accepted。")
     inspect_mock.add_argument("--assert-export-clean", action="store_true", help="要求已有导出审计 clean。")
 
+    run_real = subparsers.add_parser(
+        "run-real-provider-smoke",
+        help="运行 Stage 11 真实 provider smoke；无凭证时生成结构化 skip report。",
+    )
+    run_real.add_argument("--output-dir", required=True, help="真实 provider smoke 输出目录。")
+    run_real.add_argument("--report", default=None, help="real_provider_smoke_report.json 输出路径。")
+    run_real.add_argument(
+        "--allow-openai-fallback",
+        action="store_true",
+        help="DeepSeek 缺凭证或失败时允许显式 OpenAI 备用 smoke。",
+    )
+    run_real.add_argument(
+        "--allow-local-secret-file",
+        action="store_true",
+        help="允许 Stage 11 smoke 从 reference/deepseek_api.md 读取本地 DeepSeek 密钥；报告只记录脱敏来源标签。",
+    )
+
+    inspect_real = subparsers.add_parser(
+        "inspect-real-provider-smoke",
+        help="只读检查 real_provider_smoke_report.json。",
+    )
+    inspect_real.add_argument("--report", required=True, help="real_provider_smoke_report.json 路径。")
+    inspect_real.add_argument(
+        "--allow-skip-without-credentials",
+        action="store_true",
+        help="无凭证时允许结构化 skip。",
+    )
+    inspect_real.add_argument(
+        "--require-accepted-with-credentials",
+        action="store_true",
+        help="报告显示有凭证时要求 accepted 或 fallback_success。",
+    )
+
     return parser
 
 
@@ -182,6 +216,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"mock provider smoke 检查失败：{exc}\n")
+        return 0
+    if args.command == "run-real-provider-smoke":
+        try:
+            report_path = run_real_provider_smoke(
+                output_dir=args.output_dir,
+                report_path=args.report,
+                allow_openai_fallback=args.allow_openai_fallback,
+                allow_local_secret_file=args.allow_local_secret_file,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"real provider smoke 运行失败：{exc}\n")
+        print(f"真实 provider smoke report：{report_path}")
+        return 0
+    if args.command == "inspect-real-provider-smoke":
+        try:
+            print(
+                inspect_real_provider_smoke(
+                    report=args.report,
+                    allow_skip_without_credentials=args.allow_skip_without_credentials,
+                    require_accepted_with_credentials=args.require_accepted_with_credentials,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"real provider smoke 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

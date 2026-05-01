@@ -11,6 +11,7 @@ from repo_harness.model_client.schemas import (
     ModelRequestContext,
     ModelResponse,
 )
+from repo_harness.model_client.redaction import REDACTED_CREDENTIAL, redact_provider_payload
 from repo_harness.schema_base import stable_hash
 from repo_harness.tools import ToolCall
 from repo_harness.trajectory import RunRecorder
@@ -51,7 +52,7 @@ class MockProviderClient:
                     "status": "error",
                     "model_error_type": model_error_type,
                     "message": _error_message(model_error_type),
-                    "authorization": "<REDACTED_CREDENTIAL>",
+                    "authorization": REDACTED_CREDENTIAL,
                     "checked_at": _timestamp(),
                 },
                 {
@@ -86,7 +87,7 @@ class MockProviderClient:
                 "assistant_message": assistant.model_dump(mode="json"),
                 "tool_calls": [call.model_dump(mode="json") for call in tool_calls],
                 "usage": {"input_tokens": _token_estimate(request.prepared_messages), "output_tokens": 16},
-                "authorization": "<REDACTED_CREDENTIAL>",
+                "authorization": REDACTED_CREDENTIAL,
                 "checked_at": _timestamp(),
             },
             {
@@ -179,59 +180,23 @@ def _mock_request_payload(request: ModelRequestContext, *, scenario: str) -> dic
         "tools": request.allowed_tool_definitions,
         "tool_choice": request.tool_choice,
         "tool_schema_snapshot_ref": request.tool_schema_snapshot_ref.model_dump(mode="json"),
-        "generation_config": _redact_secrets(request.generation_config),
-        "provider_model_settings": _redact_secrets(request.provider_model_settings),
+        "generation_config": redact_provider_payload(request.generation_config),
+        "provider_model_settings": redact_provider_payload(request.provider_model_settings),
         "provider_options": _redacted_provider_options(request),
         "scaffold_id": request.scaffold_id,
         "scaffold_phase": request.scaffold_phase,
         "request_timeout_seconds": request.request_timeout_seconds,
         "raw_request_logging_policy": request.raw_request_logging_policy,
-        "credential_policy": _redact_secrets(request.credential_policy.model_dump(mode="json")),
-        "authorization": "<REDACTED_CREDENTIAL>",
+        "credential_policy": redact_provider_payload(request.credential_policy.model_dump(mode="json")),
+        "authorization": REDACTED_CREDENTIAL,
     }
 
 
 def _redacted_provider_options(request: ModelRequestContext) -> dict[str, Any]:
-    options = _redact_secrets(request.provider_options.model_dump(mode="json"))
-    options["credential_policy"] = _redact_secrets(request.credential_policy.model_dump(mode="json"))
-    options["authorization"] = "<REDACTED_CREDENTIAL>"
+    options = redact_provider_payload(request.provider_options.model_dump(mode="json"))
+    options["credential_policy"] = redact_provider_payload(request.credential_policy.model_dump(mode="json"))
+    options["authorization"] = REDACTED_CREDENTIAL
     return options
-
-
-def _redact_secrets(value: Any) -> Any:
-    if isinstance(value, dict):
-        redacted: dict[str, Any] = {}
-        for key, nested in value.items():
-            if _secret_key(str(key)):
-                redacted[key] = "<REDACTED_CREDENTIAL>"
-            else:
-                redacted[key] = _redact_secrets(nested)
-        return redacted
-    if isinstance(value, list):
-        return [_redact_secrets(item) for item in value]
-    if isinstance(value, str):
-        lowered = value.lower()
-        if "bearer " in lowered or "authorization:" in lowered:
-            return "<REDACTED_CREDENTIAL>"
-        if _looks_secret_like(value):
-            return "<REDACTED_CREDENTIAL>"
-    return value
-
-
-def _secret_key(key: str) -> bool:
-    lowered = key.lower().replace("-", "_")
-    if any(marker in lowered for marker in ("api_key", "apikey", "authorization", "password", "secret")):
-        return True
-    return lowered == "token" or lowered.endswith("_token")
-
-
-def _looks_secret_like(text: str) -> bool:
-    if text.startswith("sk-"):
-        return True
-    compact = text.replace("_", "").replace("-", "")
-    return len(compact) >= 32 and any(char.isdigit() for char in compact) and any(
-        char.isalpha() for char in compact
-    )
 
 
 def _response(

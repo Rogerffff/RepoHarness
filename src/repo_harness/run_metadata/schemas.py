@@ -239,6 +239,13 @@ class RunConfigFacts(StrictBaseModel):
     source_archive_sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
     provider: str
     model_id: str
+    requested_provider: str | None = None
+    actual_provider: str | None = None
+    fallback_reason: str | None = None
+    fallback_policy_version: str | None = None
+    provider_base_url: str | None = None
+    provider_endpoint_category: str | None = None
+    credential_source: str | None = None
     temperature: float = Field(ge=0.0)
     seed: int | None = None
     max_output_tokens: int = Field(gt=0)

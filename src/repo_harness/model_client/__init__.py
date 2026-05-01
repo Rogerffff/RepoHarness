@@ -4,6 +4,7 @@ from repo_harness.model_client.factory import create_model_client, provider_opti
 from repo_harness.model_client.fake import FakeModelClient
 from repo_harness.model_client.mock import MockProviderClient
 from repo_harness.model_client.protocol import ModelClient
+from repo_harness.model_client.providers import DeepSeekProviderClient, OpenAIProviderClient
 from repo_harness.model_client.replay import ReplayModelClient
 from repo_harness.model_client.schemas import (
     ModelGenerationRequest,
@@ -28,6 +29,8 @@ __all__ = [
     "ModelResponse",
     "FakeModelClient",
     "MockProviderClient",
+    "DeepSeekProviderClient",
+    "OpenAIProviderClient",
     "ProviderCredentialPolicy",
     "ReplayModelClient",
     "ReplayScript",
