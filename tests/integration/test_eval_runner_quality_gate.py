@@ -24,12 +24,17 @@ def test_invalid_baseline_blocks_agent_run(tmp_path: Path):
 
     baseline = _read_json(run_dir / "baseline.json")
     metrics = _read_json(run_dir / "metrics.json")
+    run_metadata = _read_json(run_dir / "run_metadata.json")
     summary = (run_dir / "summary.md").read_text(encoding="utf-8")
     events = _read_jsonl(run_dir / "events.jsonl")
 
     assert baseline["status"] == "invalid"
     assert metrics["run_outcome"] == "invalid_task"
     assert metrics["final_verifier_status"] == "skipped"
+    assert run_metadata["run_status"] == "skipped"
+    assert run_metadata["run_config_facts_ref"]["relative_path"] == "run_config_facts.json"
+    assert run_metadata["export_readiness"]["training_export_ready"] is False
+    assert "has_final_patch" in run_metadata["export_readiness"]["blocking_reasons"]
     assert "resolved_verifier_plan: not_generated" in summary
     assert not (run_dir / "resolved_verifier_plan.json").exists()
     assert not (run_dir / "workspaces/agent_workspace").exists()

@@ -322,6 +322,7 @@ class RunMetadata(StrictBaseModel):
     run_id: str
     task_id: str | None = None
     run_config_facts_ref: RunConfigFactsRef
+    tool_protocol: ToolProtocolFacts
     run_status: Literal["completed", "skipped", "failed", "interrupted"]
     agent_stop_reason: str | None = None
     run_outcome: str

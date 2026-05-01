@@ -21,6 +21,14 @@ from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
 from repo_harness.model_client import ReplayModelClient
 from repo_harness.permissions import PermissionContext
 from repo_harness.reward import compute_reward_metadata
+from repo_harness.run_metadata.fingerprint import build_local_environment_fingerprint
+from repo_harness.run_metadata.tool_snapshot import write_tool_schema_snapshot
+from repo_harness.run_metadata.writer import (
+    build_run_config_facts,
+    build_run_metadata,
+    write_run_config_facts,
+    write_run_metadata,
+)
 from repo_harness.tasks import RunnableTask, load_task
 from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolExecutionContext, ToolExecutor, ToolOutputLimits
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
@@ -88,6 +96,11 @@ def run_task(
         )
         dependency_state = adapter.capture_dependency_state(strategy=dependency_strategy)
         _write_json(run_dir / "dependency_state.json", dependency_state.model_dump(mode="json"))
+        dependency_state_ref = recorder.write_json_artifact(
+            "dependency_state",
+            dependency_state.model_dump(mode="json"),
+            {"budget_policy": "preserve_json"},
+        )
         if setup_result is not None and not _setup_succeeded(setup_result):
             baseline_verifiers = [
                 build_error_verifier_result(
@@ -171,6 +184,38 @@ def run_task(
                 data=baseline.model_dump(mode="json"),
             )
         )
+        _, _, tool_protocol = write_tool_schema_snapshot(recorder)
+        environment_fingerprint = build_local_environment_fingerprint(
+            task_definition=loaded.definition,
+            source_checkout=source,
+            dependency_state=dependency_state,
+            dependency_state_ref=dependency_state_ref,
+            setup_artifact_hash=(
+                setup_result.output_artifact_ref.sha256
+                if setup_result is not None and setup_result.output_artifact_ref is not None
+                else ("missing" if setup_result is not None else "none")
+            ),
+            command_timeout_sec=config.workspace.default_command_timeout_sec,
+            network_policy=config.workspace.network_policy,
+        )
+        run_config_facts = build_run_config_facts(
+            run_id=actual_run_id,
+            task_definition=loaded.definition,
+            config=config,
+            tool_protocol=tool_protocol,
+            environment_fingerprint=environment_fingerprint,
+        )
+        run_config_facts_ref = write_run_config_facts(run_dir, run_config_facts)
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("run_config_facts"),
+                timestamp=_timestamp(),
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                event_type="run_config_facts_written",
+                data={"run_config_facts_ref": run_config_facts_ref.model_dump(mode="json")},
+            )
+        )
         if not baseline.can_enter_agent_run:
             _finalize_quality_gate_run(
                 run_id=actual_run_id,
@@ -178,6 +223,8 @@ def run_task(
                 baseline=baseline,
                 run_dir=run_dir,
                 recorder=recorder,
+                run_config_facts_ref=run_config_facts_ref,
+                tool_protocol=tool_protocol,
             )
             adapter.cleanup_workspaces()
             return run_dir
@@ -240,6 +287,7 @@ def run_task(
             context_config=config.context_management,
             budget_manager=budget_manager,
             task_deadline_monotonic=task_deadline_monotonic,
+            run_config_facts_ref=run_config_facts_ref,
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         if _task_timeout_expired(task_deadline_monotonic):
@@ -357,6 +405,8 @@ def run_task(
             f"{_permission_denial_summary(loop_state.permission_denial_reasons)}"
             f"{_patch_stats_summary(capture.patch_stats)}"
             f"- resolved_verifier_plan: resolved_verifier_plan.json\n"
+            f"- run_config_facts: {run_config_facts_ref.relative_path}\n"
+            f"- run_metadata: run_metadata.json\n"
             f"- final.patch: final.patch\n"
             f"- final.diff: final.diff\n"
         )
@@ -378,6 +428,19 @@ def run_task(
             )
         )
         recorder.finalize_run(summary)
+        run_metadata = build_run_metadata(
+            run_dir=run_dir,
+            run_id=actual_run_id,
+            task_id=loaded.runnable_task.task_id,
+            run_config_facts_ref=run_config_facts_ref,
+            tool_protocol=tool_protocol,
+            baseline=baseline,
+            run_outcome=run_outcome,
+            final_verifier_status=final_status,
+            agent_stop_reason=loop_state.agent_stop_reason,
+            final_verifier_mode=config.evaluation.final_verifier_mode,
+        )
+        write_run_metadata(run_dir, run_metadata)
         adapter.cleanup_workspaces()
     return run_dir
 
@@ -562,6 +625,8 @@ def _finalize_quality_gate_run(
     baseline: BaselineResult,
     run_dir: Path,
     recorder: RunRecorder,
+    run_config_facts_ref,
+    tool_protocol,
 ) -> None:
     run_outcome = derive_run_outcome(
         baseline_status=baseline.status,
@@ -597,6 +662,8 @@ def _finalize_quality_gate_run(
         f"- final_verifier_mode: skipped\n"
         f"- run_outcome: {run_outcome}\n"
         f"- resolved_verifier_plan: not_generated\n"
+        f"- run_config_facts: {run_config_facts_ref.relative_path}\n"
+        f"- run_metadata: run_metadata.json\n"
         f"- outcome_policy_version: {OUTCOME_POLICY_VERSION}\n"
     )
     recorder.append_event(
@@ -618,6 +685,19 @@ def _finalize_quality_gate_run(
         )
     )
     recorder.finalize_run(summary)
+    run_metadata = build_run_metadata(
+        run_dir=run_dir,
+        run_id=run_id,
+        task_id=task_id,
+        run_config_facts_ref=run_config_facts_ref,
+        tool_protocol=tool_protocol,
+        baseline=baseline,
+        run_outcome=run_outcome,
+        final_verifier_status="skipped",
+        agent_stop_reason=agent_stop_reason,
+        final_verifier_mode="skipped",
+    )
+    write_run_metadata(run_dir, run_metadata)
 
 
 def _quality_gate_reason(baseline: BaselineResult) -> str:

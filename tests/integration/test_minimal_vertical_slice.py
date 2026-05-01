@@ -20,6 +20,8 @@ def test_replay_success_vertical_slice(tmp_path):
     )
 
     assert (run_dir / "dependency_state.json").is_file()
+    assert (run_dir / "run_config_facts.json").is_file()
+    assert (run_dir / "run_metadata.json").is_file()
     assert (run_dir / "final.diff").is_file()
     assert (run_dir / "final.patch").is_file()
     assert (run_dir / "verifier.json").is_file()
@@ -28,6 +30,8 @@ def test_replay_success_vertical_slice(tmp_path):
     verifier = _read_json(run_dir / "verifier.json")
     metrics = _read_json(run_dir / "metrics.json")
     reward = _read_json(run_dir / "reward.json")
+    run_config_facts = _read_json(run_dir / "run_config_facts.json")
+    run_metadata = _read_json(run_dir / "run_metadata.json")
     assert verifier["accepted"] is True
     assert metrics["run_outcome"] == "success"
     assert metrics["final_verifier_status"] == "accepted"
@@ -35,6 +39,24 @@ def test_replay_success_vertical_slice(tmp_path):
     assert reward["sources"]["final_patch_ref"]["sha256"]
     assert reward["sources"]["final_diff_ref"]["sha256"]
     assert reward["sources"]["events_ref"]["relative_path"] == "events.jsonl"
+    assert run_config_facts["run_id"] == "stage07-success"
+    assert run_config_facts["tool_protocol"]["tool_schema_snapshot_ref"]["relative_path"].startswith(
+        "artifacts/"
+    )
+    assert run_config_facts["test_feedback_policy"] == "oracle_hidden_feedback"
+    assert run_config_facts["hidden_feedback_visible_to_model"] is True
+    assert run_metadata["run_config_facts_ref"]["relative_path"] == "run_config_facts.json"
+    assert run_metadata["run_config_facts_ref"]["sha256"]
+    assert run_metadata["tool_protocol"]["tool_schema_snapshot_ref"]["artifact_id"]
+    assert run_metadata["export_readiness"]["has_formal_final_verifier"] is True
+    assert run_metadata["export_readiness"]["training_export_ready"] is True
+    assert run_config_facts["environment_fingerprint"]["workspace_execution"]["dependency_state_ref"][
+        "artifact_id"
+    ]
+    assert (
+        run_config_facts["environment_fingerprint"]["workspace_execution"]["setup_artifact_hash"]
+        == "none"
+    )
 
     events = _read_jsonl(run_dir / "events.jsonl")
     event_types = {event["event_type"] for event in events}
@@ -47,6 +69,9 @@ def test_replay_success_vertical_slice(tmp_path):
     assert "run_finished" in event_types
     _assert_tool_calls_are_paired(events)
     _assert_model_calls_have_prepared_messages(events)
+    _assert_model_calls_reference_run_config_facts_only(events)
+    _assert_tool_schema_snapshot_ref_is_manifest_backed(run_dir, run_config_facts)
+    _assert_root_fact_files_are_not_artifacts(run_dir)
 
     prepared_payloads = _artifact_payloads(run_dir, kind="prepared_messages")
     prepared_text = json.dumps(prepared_payloads, ensure_ascii=False)
@@ -192,6 +217,32 @@ def _assert_model_calls_have_prepared_messages(events: list[dict]) -> None:
         assert event["data"]["raw_provider_request_ref"]["relative_path"].startswith("artifacts/")
         assert event["data"]["raw_provider_request_ref"] != event["data"]["prepared_messages_ref"]
         assert event["data"]["model_input_hash"]
+
+
+def _assert_model_calls_reference_run_config_facts_only(events: list[dict]) -> None:
+    for event in events:
+        if event["event_type"] not in {"model_call_started", "model_call_completed"}:
+            continue
+        data = event["data"]
+        assert data["run_config_facts_ref"]["relative_path"] == "run_config_facts.json"
+        assert "run_metadata_ref" not in data
+
+
+def _assert_tool_schema_snapshot_ref_is_manifest_backed(run_dir: Path, run_config_facts: dict) -> None:
+    ref = run_config_facts["tool_protocol"]["tool_schema_snapshot_ref"]
+    manifest = _read_json(run_dir / "artifacts.json")
+    artifact = next(
+        item for item in manifest["artifacts"] if item["artifact_id"] == ref["artifact_id"]
+    )
+    assert artifact["kind"] == "tool_schema_snapshot"
+    assert (run_dir / artifact["relative_path"]).is_file()
+
+
+def _assert_root_fact_files_are_not_artifacts(run_dir: Path) -> None:
+    manifest = _read_json(run_dir / "artifacts.json")
+    relative_paths = {artifact["relative_path"] for artifact in manifest["artifacts"]}
+    assert "run_config_facts.json" not in relative_paths
+    assert "run_metadata.json" not in relative_paths
 
 
 def _artifact_payloads(run_dir: Path, *, kind: str) -> list[dict]:

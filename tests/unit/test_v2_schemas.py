@@ -171,6 +171,7 @@ def run_metadata() -> RunMetadata:
         run_id="run_001",
         task_id="task_001",
         run_config_facts_ref=fact_ref(),
+        tool_protocol=tool_protocol_facts(),
         run_status="completed",
         agent_stop_reason="feedback_tests_passed",
         run_outcome="success",

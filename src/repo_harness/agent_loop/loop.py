@@ -10,6 +10,7 @@ from repo_harness.budget import BudgetManager, BudgetState
 from repo_harness.config import ContextManagementConfig
 from repo_harness.context import ContextManager
 from repo_harness.model_client import ReplayModelClient
+from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds import SimpleReactScaffold, build_scaffold
 from repo_harness.tools import ToolCall
@@ -42,6 +43,7 @@ class AgentLoop:
         context_config: ContextManagementConfig | None = None,
         budget_manager: BudgetManager | None = None,
         task_deadline_monotonic: float | None = None,
+        run_config_facts_ref: RunConfigFactsRef | None = None,
     ) -> AgentLoopState:
         budget_manager = budget_manager or _default_budget_manager(max_turns)
         loop_started = time.monotonic()
@@ -129,6 +131,11 @@ class AgentLoop:
                         "model_call_id": f"{run_id}_model_call_{turn:04d}",
                         "context_revision": prepared.context_revision,
                         "model_input_hash": prepared.model_input_hash,
+                        "run_config_facts_ref": (
+                            run_config_facts_ref.model_dump(mode="json")
+                            if run_config_facts_ref is not None
+                            else None
+                        ),
                     },
                 )
             )
@@ -159,6 +166,11 @@ class AgentLoop:
                         ],
                         data={
                             **response.model_call_event.model_dump(mode="json"),
+                            "run_config_facts_ref": (
+                                run_config_facts_ref.model_dump(mode="json")
+                                if run_config_facts_ref is not None
+                                else None
+                            ),
                             "raw_provider_request_ref": (
                                 response.raw_provider_request_ref.model_dump(mode="json")
                                 if response.raw_provider_request_ref
