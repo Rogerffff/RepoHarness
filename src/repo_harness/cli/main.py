@@ -21,6 +21,11 @@ from repo_harness.model_client.mock_smoke import inspect_mock_provider_smoke
 from repo_harness.model_client.real_smoke import inspect_real_provider_smoke, run_real_provider_smoke
 from repo_harness.tasks import load_task
 from repo_harness.trajectory import inspect_run
+from repo_harness.v2_acceptance import (
+    build_v2_acceptance_report,
+    inspect_feedback_policy_coverage,
+    inspect_v2_acceptance,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -189,6 +194,39 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_workspace_backend.add_argument("--assert-docker-backend", action="store_true", help="要求 docker_backend 验收通过。")
     inspect_workspace_backend.add_argument("--assert-stage-complete", action="store_true", help="要求 Stage 14 在任一允许模式下完成。")
 
+    feedback_policy = subparsers.add_parser(
+        "inspect-feedback-policy-coverage",
+        help="生成并检查 Stage 15 feedback policy 覆盖报告。",
+    )
+    feedback_policy.add_argument("--experiment-dir", required=True, help="Stage 13 或最终 task set experiment 目录。")
+    feedback_policy.add_argument("--output", required=True, help="feedback_policy_report.json 输出路径。")
+    feedback_policy.add_argument("--assert-complete", action="store_true", help="要求 feedback policy 覆盖完整。")
+
+    build_acceptance = subparsers.add_parser(
+        "build-v2-acceptance-report",
+        help="汇总既有机器产物，生成全局 v2_acceptance_report.json。",
+    )
+    build_acceptance.add_argument("--v1-regression-dir", required=True, help="第一版 replay 回归 runs 目录。")
+    build_acceptance.add_argument("--task-set-manifest", required=True, help="Stage 13 task set experiment_manifest.json。")
+    build_acceptance.add_argument("--mock-provider-report", required=True, help="mock_provider_smoke_report.json。")
+    build_acceptance.add_argument("--real-provider-report", required=True, help="real_provider_smoke_report.json。")
+    build_acceptance.add_argument("--feedback-policy-report", required=True, help="feedback_policy_report.json。")
+    build_acceptance.add_argument(
+        "--export-audit-root",
+        action="append",
+        default=[],
+        help="包含规范 export audit directories 的 exports 根目录；可重复传入。",
+    )
+    build_acceptance.add_argument("--docker-status", required=True, help="docker_stage_status.json。")
+    build_acceptance.add_argument("--output", required=True, help="v2_acceptance_report.json 输出路径。")
+
+    inspect_acceptance = subparsers.add_parser(
+        "inspect-v2-acceptance",
+        help="只读检查全局 v2_acceptance_report.json。",
+    )
+    inspect_acceptance.add_argument("report", help="v2_acceptance_report.json 路径。")
+    inspect_acceptance.add_argument("--assert-complete", action="store_true", help="要求第二版最终验收完成。")
+
     return parser
 
 
@@ -283,6 +321,45 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"workspace backend 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-feedback-policy-coverage":
+        try:
+            print(
+                inspect_feedback_policy_coverage(
+                    experiment_dir=args.experiment_dir,
+                    output=args.output,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"feedback policy 覆盖检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v2-acceptance-report":
+        try:
+            output_path = build_v2_acceptance_report(
+                v1_regression_dir=args.v1_regression_dir,
+                task_set_manifest=args.task_set_manifest,
+                mock_provider_report=args.mock_provider_report,
+                real_provider_report=args.real_provider_report,
+                feedback_policy_report=args.feedback_policy_report,
+                export_audit_roots=args.export_audit_root,
+                docker_status=args.docker_status,
+                output=args.output,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V2 acceptance report 生成失败：{exc}\n")
+        print(f"V2 acceptance report：{output_path}")
+        return 0
+    if args.command == "inspect-v2-acceptance":
+        try:
+            print(
+                inspect_v2_acceptance(
+                    args.report,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V2 acceptance 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
