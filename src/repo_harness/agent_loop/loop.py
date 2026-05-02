@@ -590,6 +590,48 @@ class AgentLoop:
                         messages=messages,
                     )
                     continue
+                if (
+                    self.tool_executor.is_known(normalized_request.effective_tool_name)
+                    and normalized_request.effective_tool_name not in phase_allowed_tool_names
+                ):
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("tool"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="tool_not_allowed",
+                            severity="warning",
+                            error_type="tool_not_allowed_by_scaffold",
+                            data={
+                                **tool_call.model_dump(mode="json"),
+                                "allowed_tools": phase_allowed_tool_names,
+                                "scaffold_id": self.scaffold.scaffold_id,
+                                "scaffold_phase": current_phase,
+                                "requested_tool_name": normalized_request.requested_tool_name,
+                                "effective_tool_name": normalized_request.effective_tool_name,
+                                "route_reason": normalized_request.route_reason,
+                            },
+                        )
+                    )
+                    _record_tool_result(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_result=self.tool_executor.disallowed_tool_result(
+                            tool_call,
+                            normalized=normalized_request,
+                            reason=(
+                                f"Tool {normalized_request.effective_tool_name!r} is not allowed by scaffold "
+                                f"{self.scaffold.scaffold_id!r} in phase {current_phase!r} after tool normalization."
+                            ),
+                        ),
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                    )
+                    continue
                 budget_stop = _budget_stop_reason(
                     budget_manager,
                     state,

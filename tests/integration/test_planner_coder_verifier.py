@@ -70,6 +70,56 @@ def test_planner_phase_blocks_edit_before_permission(tmp_path: Path):
     assert not any(event["event_type"] == "permission_decision" for event in events)
 
 
+def test_coder_phase_blocks_bash_pytest_after_normalization(tmp_path: Path):
+    replay_path = tmp_path / "coder_bash_pytest.yaml"
+    replay_path.write_text(
+        """
+script_id: coder_bash_pytest
+task_id: task_001
+steps:
+  - step_id: planner_message
+    action: final_answer
+    assistant_text: "Plan: edit the calculator, then verify later."
+  - step_id: coder_bash_pytest
+    action: tool_call
+    tool_call_id: call_coder_bash_pytest
+    tool_name: bash
+    arguments:
+      command: "pytest -q"
+""".lstrip(),
+        encoding="utf-8",
+    )
+    config_path = _write_planner_coder_verifier_config(
+        tmp_path,
+        replay_path=replay_path,
+        max_turns=2,
+    )
+
+    run_dir = run_task(
+        ROOT / "tests/fixtures/tasks/task_001.yaml",
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="coder-bash-pytest-blocked",
+    )
+
+    metrics = _read_json(run_dir / "metrics.json")
+    events = _read_jsonl(run_dir / "events.jsonl")
+    assert metrics["interaction_efficiency"]["hidden_feedback_ran"] is False
+    assert metrics["test_run_count"] == 0
+    assert any(
+        event["event_type"] == "tool_not_allowed"
+        and event["data"]["scaffold_phase"] == "coder"
+        and event["data"]["requested_tool_name"] == "bash"
+        and event["data"]["effective_tool_name"] == "run_tests"
+        for event in events
+    )
+    assert not any(
+        event["event_type"] == "tool_completed"
+        and event["data"].get("effective_tool_name") == "run_tests"
+        for event in events
+    )
+
+
 def test_planner_coder_verifier_can_enter_repair_after_failed_feedback(tmp_path: Path):
     config_path = _write_planner_coder_verifier_config(
         tmp_path,

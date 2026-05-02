@@ -229,9 +229,11 @@ class ToolExecutor:
         tool_call: ToolCall,
         *,
         reason: str,
+        normalized: NormalizedToolRequest | None = None,
     ) -> ToolResult:
         return _tool_result(
             tool_call,
+            normalized=normalized,
             status="denied",
             content=reason,
             error_type="tool_not_allowed_by_scaffold",
