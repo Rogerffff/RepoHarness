@@ -26,6 +26,10 @@ from repo_harness.v2_acceptance import (
     inspect_feedback_policy_coverage,
     inspect_v2_acceptance,
 )
+from repo_harness.v3_swebench_fixture import (
+    inspect_v3_swebench_fixture,
+    prepare_v3_swebench_fixture,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -227,6 +231,23 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_acceptance.add_argument("report", help="v2_acceptance_report.json 路径。")
     inspect_acceptance.add_argument("--assert-complete", action="store_true", help="要求第二版最终验收完成。")
 
+    prepare_v3_fixture = subparsers.add_parser(
+        "prepare-v3-swebench-fixture",
+        help="把 V3 前置 SWE-Bench-like 可实现性实验冻结为受版本控制输入。",
+    )
+    prepare_v3_fixture.add_argument("--feasibility-root", required=True, help="V3 SWE feasibility 实验目录。")
+    prepare_v3_fixture.add_argument("--fixture-dir", required=True, help="V3 fixture 根目录。")
+    prepare_v3_fixture.add_argument("--evidence-dir", required=True, help="V3 evaluator-only evidence 根目录。")
+
+    inspect_v3_fixture = subparsers.add_parser(
+        "inspect-v3-swebench-fixture",
+        help="只读检查 V3 SWE-Bench-like 固定输入和 evaluator-only evidence。",
+    )
+    inspect_v3_fixture.add_argument("--fixture-dir", required=True, help="V3 fixture 根目录。")
+    inspect_v3_fixture.add_argument("--evidence-dir", required=True, help="V3 evaluator-only evidence 根目录。")
+    inspect_v3_fixture.add_argument("--manifest", required=True, help="v3_feasibility_input_manifest.json 路径。")
+    inspect_v3_fixture.add_argument("--assert-frozen", action="store_true", help="要求固定输入完整且无 adapter 污染。")
+
     return parser
 
 
@@ -360,6 +381,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V2 acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "prepare-v3-swebench-fixture":
+        try:
+            manifest_path = prepare_v3_swebench_fixture(
+                feasibility_root=args.feasibility_root,
+                fixture_dir=args.fixture_dir,
+                evidence_dir=args.evidence_dir,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 SWE-Bench-like fixture 冻结失败：{exc}\n")
+        print(f"V3 SWE-Bench-like fixture manifest：{manifest_path}")
+        return 0
+    if args.command == "inspect-v3-swebench-fixture":
+        try:
+            print(
+                inspect_v3_swebench_fixture(
+                    fixture_dir=args.fixture_dir,
+                    evidence_dir=args.evidence_dir,
+                    manifest=args.manifest,
+                    assert_frozen=args.assert_frozen,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 SWE-Bench-like fixture 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
