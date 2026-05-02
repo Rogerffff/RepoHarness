@@ -12,7 +12,12 @@ _OPENAI_STYLE_KEY_RE = re.compile(r"\bsk-[A-Za-z0-9_\-]{8,}\b")
 _BEARER_RE = re.compile(r"bearer\s+[A-Za-z0-9_\-./=:+]{6,}", re.IGNORECASE)
 
 
-def redact_provider_payload(value: Any, *, redact_reasoning: bool = True) -> Any:
+def redact_provider_payload(
+    value: Any,
+    *,
+    redact_reasoning: bool = True,
+    _parent_key: str | None = None,
+) -> Any:
     """Recursively redact credentials and provider-only reasoning fields."""
 
     if isinstance(value, dict):
@@ -27,15 +32,20 @@ def redact_provider_payload(value: Any, *, redact_reasoning: bool = True) -> Any
                 redacted[key] = redact_provider_payload(
                     nested,
                     redact_reasoning=redact_reasoning,
+                    _parent_key=key_text,
                 )
         return redacted
     if isinstance(value, list):
         return [
-            redact_provider_payload(item, redact_reasoning=redact_reasoning)
+            redact_provider_payload(
+                item,
+                redact_reasoning=redact_reasoning,
+                _parent_key=_parent_key,
+            )
             for item in value
         ]
     if isinstance(value, str):
-        if _looks_secret_like(value):
+        if not _non_secret_value_key(_parent_key) and _looks_secret_like(value):
             return REDACTED_CREDENTIAL
     return value
 
@@ -67,6 +77,20 @@ def _secret_key(key: str) -> bool:
 def _reasoning_key(key: str) -> bool:
     lowered = key.lower().replace("-", "_")
     return lowered in {"reasoning_content", "reasoning_summary", "hidden_thoughts"}
+
+
+def _non_secret_value_key(key: str | None) -> bool:
+    if key is None:
+        return False
+    lowered = key.lower().replace("-", "_")
+    if _secret_key(lowered):
+        return False
+    return lowered in {
+        "schema_version",
+        "provider_adapter_version",
+        "adapter_version",
+        "protocol_version",
+    } or lowered.endswith("_version") or lowered.endswith("_policy_version")
 
 
 def _looks_secret_like(text: str) -> bool:

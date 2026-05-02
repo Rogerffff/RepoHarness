@@ -13,6 +13,7 @@ from repo_harness.model_client.providers.deepseek import (
 from repo_harness.errors import ConfigError
 from repo_harness.model_client.providers.openai import OpenAIProviderClient
 from repo_harness.model_client.providers.common import ProviderCredential
+from repo_harness.model_client.redaction import REDACTED_CREDENTIAL, redact_provider_payload
 from repo_harness.model_client.schemas import (
     ModelProviderOptions,
     ModelRequestContext,
@@ -174,6 +175,22 @@ def test_reference_deepseek_api_file_is_gitignored():
     gitignore = (Path(__file__).resolve().parents[2] / ".gitignore").read_text(encoding="utf-8")
 
     assert "reference/deepseek_api.md" in gitignore
+
+
+def test_provider_redaction_preserves_non_secret_version_fields():
+    payload = {
+        "schema_version": "repo_harness_deepseek_provider_response_v0",
+        "provider_adapter_version": "repo_harness_deepseek_adapter_v2_v0",
+        "api_key": "sk-test-secret-value-1234567890",
+        "opaque_value": "repo_harness_deepseek_provider_response_v0",
+    }
+
+    redacted = redact_provider_payload(payload)
+
+    assert redacted["schema_version"] == "repo_harness_deepseek_provider_response_v0"
+    assert redacted["provider_adapter_version"] == "repo_harness_deepseek_adapter_v2_v0"
+    assert redacted["api_key"] == REDACTED_CREDENTIAL
+    assert redacted["opaque_value"] == REDACTED_CREDENTIAL
 
 
 def test_openai_provider_uses_sdk_shape_with_injected_client(tmp_path: Path):
