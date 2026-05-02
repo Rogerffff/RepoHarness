@@ -88,9 +88,9 @@ Stage 15 的提交会包含本文档、walkthrough、implementation log index、
 
 格式分布：
 
-- `sft_jsonl`：3 个 audit report。
-- `rl_jsonl`：3 个 audit report。
-- `preference_jsonl`：2 个 audit report。
+- `sft_jsonl`：6 个 audit report。
+- `rl_jsonl`：6 个 audit report。
+- `preference_jsonl`：5 个 audit report。
 
 V1 replay 回归中的 oracle hidden feedback 样本默认是 `diagnostic_only`，因此 SFT 和 RL 正式数据文件没有 trainable 行。mock provider 和 Stage 13 task set 使用 `public_only`，SFT 和 RL 导出包含 trainable 样本。
 
