@@ -3,6 +3,7 @@ import zipfile
 from pathlib import Path
 
 from repo_harness.evaluation.runner import run_task
+from repo_harness.export import ExportPolicy
 from repo_harness.export.exporter import export_sft_jsonl
 from repo_harness.run_metadata.fingerprint import compute_file_sha256
 
@@ -39,7 +40,7 @@ def test_local_archive_materialization_smoke_records_source_facts_and_exports_me
     ]
     assert run_config["source_archive_sha256"] == archive_sha
 
-    export_sft_jsonl(run_dir)
+    export_sft_jsonl(run_dir, policy=ExportPolicy(allow_oracle_feedback_training=True))
     exported = _read_jsonl(run_dir / "exports" / "sft.jsonl")
     assert exported
     metadata = exported[0]["metadata"]
