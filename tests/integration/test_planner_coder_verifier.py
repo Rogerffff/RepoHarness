@@ -55,6 +55,7 @@ def test_planner_phase_blocks_edit_before_permission(tmp_path: Path):
     metrics = _read_json(run_dir / "metrics.json")
     events = _read_jsonl(run_dir / "events.jsonl")
     assert metrics["run_outcome"] == "failed"
+    assert metrics["tool_call_count"] == 1
     assert any(
         event["event_type"] == "tool_denied"
         and event["error_type"] == "tool_not_allowed_by_scaffold"

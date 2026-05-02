@@ -411,44 +411,6 @@ class AgentLoop:
                     tool_call=tool_call,
                     recorder=recorder,
                 )
-                if (
-                    self.tool_executor.is_known(tool_call.tool_name)
-                    and tool_call.tool_name not in phase_allowed_tool_names
-                ):
-                    recorder.append_event(
-                        TrajectoryEvent(
-                            event_id=recorder.next_event_id("tool"),
-                            timestamp=_timestamp(),
-                            run_id=run_id,
-                            task_id=task_id,
-                            turn=turn,
-                            event_type="tool_not_allowed",
-                            severity="warning",
-                            error_type="tool_not_allowed_by_scaffold",
-                            data={
-                                **tool_call.model_dump(mode="json"),
-                                "allowed_tools": phase_allowed_tool_names,
-                                "scaffold_id": self.scaffold.scaffold_id,
-                                "scaffold_phase": current_phase,
-                            },
-                        )
-                    )
-                    _record_tool_result(
-                        run_id=run_id,
-                        task_id=task_id,
-                        turn=turn,
-                        tool_result=self.tool_executor.disallowed_tool_result(
-                            tool_call,
-                            reason=(
-                                f"Tool {tool_call.tool_name!r} is not allowed by scaffold "
-                                f"{self.scaffold.scaffold_id!r} with the resolved runtime policy."
-                            ),
-                        ),
-                        state=state,
-                        recorder=recorder,
-                        messages=messages,
-                    )
-                    continue
                 budget_stop = _budget_stop_reason(
                     budget_manager,
                     state,
@@ -513,6 +475,44 @@ class AgentLoop:
                     break
                 state.tool_call_count += 1
                 state.budget_state.tool_call_count = state.tool_call_count
+                if (
+                    self.tool_executor.is_known(tool_call.tool_name)
+                    and tool_call.tool_name not in phase_allowed_tool_names
+                ):
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("tool"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="tool_not_allowed",
+                            severity="warning",
+                            error_type="tool_not_allowed_by_scaffold",
+                            data={
+                                **tool_call.model_dump(mode="json"),
+                                "allowed_tools": phase_allowed_tool_names,
+                                "scaffold_id": self.scaffold.scaffold_id,
+                                "scaffold_phase": current_phase,
+                            },
+                        )
+                    )
+                    _record_tool_result(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        tool_result=self.tool_executor.disallowed_tool_result(
+                            tool_call,
+                            reason=(
+                                f"Tool {tool_call.tool_name!r} is not allowed by scaffold "
+                                f"{self.scaffold.scaffold_id!r} with the resolved runtime policy."
+                            ),
+                        ),
+                        state=state,
+                        recorder=recorder,
+                        messages=messages,
+                    )
+                    continue
                 if not self.tool_executor.is_known(tool_call.tool_name):
                     state.invalid_tool_call_count += 1
                     recorder.append_event(
