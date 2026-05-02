@@ -5,17 +5,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from repo_harness.errors import ConfigError
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import (
     CONTEXT_BUILDER_VERSION,
     CONTEXT_POLICY_VERSION,
+    DOCKER_RUNTIME_CONFIG_VERSION,
     EXPORT_POLICY_VERSION,
     PERMISSION_POLICY_VERSION,
     PROMPT_TEMPLATE_VERSION,
     RUN_SCHEMA_VERSION,
+    SWEBENCH_LIKE_CONFIG_VERSION,
     TOKEN_ESTIMATOR_VERSION,
     TOOL_POLICY_VERSION,
 )
@@ -34,10 +36,21 @@ class ModelConfig(StrictBaseModel):
     provider_specific_options: dict[str, Any] = Field(default_factory=dict)
 
 
+class DockerRuntimeConfig(StrictBaseModel):
+    schema_version: str = DOCKER_RUNTIME_CONFIG_VERSION
+    requested_container_platform: Literal["linux/amd64", "linux/arm64"] | None = None
+    network_policy: str = "deny_agent_run"
+    mount_policy: str = "workspace_read_write_tmp_only"
+    cleanup_policy: str = "remove_containers_keep_images"
+    command_timeout_sec: int = Field(default=120, gt=0)
+    max_parallel_runs: int = Field(default=1, gt=0)
+
+
 class RuntimeConfig(StrictBaseModel):
     schema_version: str = "repo_harness_runtime_config_v0"
     scaffold_id: str = "simple_react"
     execution_mode: Literal["local_process", "docker"] = "local_process"
+    docker_backend: DockerRuntimeConfig = Field(default_factory=DockerRuntimeConfig)
     permission_mode: Literal["plan", "ask", "auto", "deny"] = "auto"
     test_feedback_policy: Literal[
         "disabled", "public_only", "structured_public_feedback", "oracle_hidden_feedback"
@@ -84,6 +97,13 @@ class EvaluationConfig(StrictBaseModel):
     fail_on_invalid_task: bool = False
 
 
+class SweBenchLikeConfig(StrictBaseModel):
+    schema_version: str = SWEBENCH_LIKE_CONFIG_VERSION
+    max_workers: int | None = Field(default=None, gt=0)
+    effective_max_workers: int = Field(default=1, gt=0)
+    max_workers_resolution: str = "unset_uses_evaluation_concurrency"
+
+
 class VersionConfig(StrictBaseModel):
     schema_version: str = RUN_SCHEMA_VERSION
     prompt_template_version: str = PROMPT_TEMPLATE_VERSION
@@ -109,8 +129,35 @@ class RunConfig(StrictBaseModel):
     workspace: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
     context_management: ContextManagementConfig = Field(default_factory=ContextManagementConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
+    swebench_like: SweBenchLikeConfig = Field(default_factory=SweBenchLikeConfig)
     versions: VersionConfig = Field(default_factory=VersionConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+
+    @model_validator(mode="after")
+    def resolve_swebench_like_workers(self) -> "RunConfig":
+        configured = self.swebench_like.max_workers
+        if configured is None:
+            effective = self.evaluation.concurrency
+            reason = "unset_uses_evaluation_concurrency"
+        else:
+            effective = min(configured, self.evaluation.concurrency)
+            reason = (
+                "min_swebench_like_max_workers_and_evaluation_concurrency"
+                if configured != effective
+                else "matches_evaluation_concurrency_or_lower"
+            )
+        object.__setattr__(
+            self,
+            "swebench_like",
+            self.swebench_like.model_copy(
+                update={
+                    "max_workers": configured,
+                    "effective_max_workers": effective,
+                    "max_workers_resolution": reason,
+                }
+            ),
+        )
+        return self
 
     def ensure_batch_safe(self) -> None:
         """批量评测不能使用需要人工确认的 ask 模式。"""

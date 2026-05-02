@@ -7,9 +7,18 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
-from repo_harness.schema_versions import PYTEST_PARSER_VERSION, TASK_SCHEMA_VERSION
+from repo_harness.schema_versions import (
+    PYTEST_PARSER_VERSION,
+    REAL_REPOSITORY_SOURCE_FACTS_SCHEMA_VERSION,
+    SWEBENCH_LIKE_ENVIRONMENT_SPEC_VERSION,
+    SWEBENCH_LIKE_TASK_FACTS_SCHEMA_VERSION,
+    TASK_ADAPTER_FACTS_SCHEMA_VERSION,
+    TASK_SCHEMA_VERSION,
+)
+from repo_harness.trajectory import ArtifactRef
 
 Visibility = Literal["model_visible", "verifier_only", "reward_only", "hidden_reference"]
+SHA256_PATTERN = r"^[0-9a-f]{64}$"
 
 
 class TaskTimeouts(StrictBaseModel):
@@ -123,6 +132,87 @@ class RepoMaterializationResult(StrictBaseModel):
     remotes_stripped: bool | None = None
     branches_stripped: bool | None = None
     tags_stripped: bool | None = None
+
+
+class RealRepositorySourceFacts(StrictBaseModel):
+    schema_version: str = REAL_REPOSITORY_SOURCE_FACTS_SCHEMA_VERSION
+    source_kind: Literal["public_archive", "fixed_local_mirror"]
+    remote_url: str
+    base_commit: str
+    dataset_source_revision: str | None = None
+    archive_sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
+    mirror_sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
+    source_tree_hash: str = Field(pattern=SHA256_PATTERN)
+    local_materialization_ref: ArtifactRef
+    verifier_evidence_ref: ArtifactRef
+    network_source_allowed_for_formal_run: bool = False
+
+    @model_validator(mode="after")
+    def require_fixed_source_hash(self) -> "RealRepositorySourceFacts":
+        if not self.archive_sha256 and not self.mirror_sha256:
+            raise ValueError("真实仓库 source facts 必须记录 archive_sha256 或 mirror_sha256。")
+        if self.network_source_allowed_for_formal_run:
+            raise ValueError("正式 V3 run 不能从浮动网络 source 读取源码。")
+        return self
+
+
+class SweBenchLikeTaskFacts(StrictBaseModel):
+    schema_version: str = SWEBENCH_LIKE_TASK_FACTS_SCHEMA_VERSION
+    instance_id: str
+    repo: str
+    base_commit: str
+    dataset_name: str
+    dataset_revision: str
+    dataset_split: str
+    task_hash: str = Field(pattern=SHA256_PATTERN)
+    adapter_input_ref: ArtifactRef
+    evaluator_evidence_manifest_ref: ArtifactRef
+    final_only: bool = True
+    model_visible_contains_hidden_material: bool = False
+    benchmark_comparability: Literal["not_public_leaderboard_comparable"] = (
+        "not_public_leaderboard_comparable"
+    )
+
+    @model_validator(mode="after")
+    def final_only_tasks_hide_verifier_material(self) -> "SweBenchLikeTaskFacts":
+        if not self.final_only:
+            raise ValueError("V3 SWE-Bench-like task 必须是 final-only。")
+        if self.model_visible_contains_hidden_material:
+            raise ValueError("SWE-Bench-like adapter-visible facts 不能包含 hidden verifier material。")
+        return self
+
+
+class TaskAdapterFacts(StrictBaseModel):
+    schema_version: str = TASK_ADAPTER_FACTS_SCHEMA_VERSION
+    adapter_name: str
+    adapter_version: str
+    input_manifest_ref: ArtifactRef
+    output_task_ref: ArtifactRef
+    task_hash: str = Field(pattern=SHA256_PATTERN)
+    visibility_policy_ref: ArtifactRef
+    decontamination_evidence_refs: list[ArtifactRef] = Field(default_factory=list)
+    final_only_policy: Literal["disabled_feedback_only", "not_final_only"]
+    generated_task_schema_version: str = TASK_SCHEMA_VERSION
+
+
+class SweBenchLikeEnvironmentSpec(StrictBaseModel):
+    schema_version: str = SWEBENCH_LIKE_ENVIRONMENT_SPEC_VERSION
+    instance_id: str
+    repo: str
+    base_commit: str
+    execution_image: str
+    requested_container_platform: Literal["linux/amd64", "linux/arm64"]
+    python_version: str | None = None
+    setup_commands_ref: ArtifactRef
+    dependency_lock_ref: ArtifactRef | None = None
+    network_policy: str = "deny_agent_run"
+    hidden_verifier_command_visible_to_model: bool = False
+
+    @model_validator(mode="after")
+    def hidden_verifier_command_is_not_visible(self) -> "SweBenchLikeEnvironmentSpec":
+        if self.hidden_verifier_command_visible_to_model:
+            raise ValueError("hidden verifier command 不能进入模型可见上下文。")
+        return self
 
 
 class EnvironmentSpec(StrictBaseModel):

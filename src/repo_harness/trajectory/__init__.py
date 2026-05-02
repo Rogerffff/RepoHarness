@@ -4,6 +4,7 @@ from repo_harness.trajectory.schemas import (
     ArtifactRef,
     MetricsRecord,
     RunSummary,
+    TrajectoryStoreFacts,
     TrajectoryEvent,
     TranscriptRecord,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "RunRecorderError",
     "RunSummary",
     "TrajectoryEvent",
+    "TrajectoryStoreFacts",
     "TranscriptRecord",
     "inspect_run",
     "load_artifact_manifest",

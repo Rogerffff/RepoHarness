@@ -9,6 +9,7 @@ from pydantic import Field
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import (
     CONTEXT_BUILDER_VERSION,
+    CONTEXT_COMPACTION_FACTS_SCHEMA_VERSION,
     CONTEXT_POLICY_VERSION,
     PROMPT_TEMPLATE_VERSION,
     TOKEN_ESTIMATOR_VERSION,
@@ -71,3 +72,25 @@ class PreparedMessages(StrictBaseModel):
     content_replacement_state: ContentReplacementState | None = None
     token_estimate: int = Field(ge=0)
     token_estimator_version: str = TOKEN_ESTIMATOR_VERSION
+
+
+class ContextCompactionFacts(StrictBaseModel):
+    schema_version: str = CONTEXT_COMPACTION_FACTS_SCHEMA_VERSION
+    run_id: str
+    trigger_event_id: str
+    context_revision_before: int = Field(ge=0)
+    context_revision_after: int = Field(ge=0)
+    tokens_before: int = Field(ge=0)
+    tokens_after: int = Field(ge=0)
+    compaction_strategy: str = "deterministic_preview_replacement"
+    content_replacement_state_ref: ArtifactRef
+    observation_replacement_refs: list[ArtifactRef] = Field(default_factory=list)
+    model_visible_summary_ref: ArtifactRef | None = None
+    original_content_retained_evaluator_only: bool = True
+    contamination_scan_status: Literal["clean", "failed", "not_scanned"]
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.context_revision_after <= self.context_revision_before:
+            raise ValueError("context_revision_after 必须大于 context_revision_before。")
+        if self.tokens_after > self.tokens_before:
+            raise ValueError("context compaction 后 token 数不能增加。")

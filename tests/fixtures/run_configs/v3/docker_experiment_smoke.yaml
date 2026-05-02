@@ -1,0 +1,25 @@
+experiment_id: v3_docker_exp_smoke
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+rollout_count: 1
+model_provider: replay
+model_alias: replay
+model_id: replay-script-v0
+replay_script_path: tests/fixtures/replays/task_001_success.yaml
+scaffold_id: simple_react
+permission_mode: auto
+execution_mode: docker
+docker_backend:
+  requested_container_platform: linux/amd64
+  network_policy: deny_agent_run
+  mount_policy: workspace_read_write_tmp_only
+  cleanup_policy: remove_containers_keep_images
+swebench_like:
+  max_workers: 4
+run_id_template: "{experiment_id}_{task_id}_{model_alias}_{scaffold_id}_r{rollout_index:03d}"
+max_turns: 8
+max_tool_calls: 20
+max_test_runs: 4
+task_timeout_sec: 120
+command_timeout_sec: 60
+generate_aggregate_report: true

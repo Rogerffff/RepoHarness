@@ -11,7 +11,9 @@ from pydantic import Field, model_validator
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import (
     ENVIRONMENT_FINGERPRINT_VERSION,
+    POLICY_SNAPSHOT_SCHEMA_VERSION,
     RUN_METADATA_SCHEMA_VERSION,
+    TOOL_CONTRACT_SNAPSHOT_SCHEMA_VERSION,
     TOOL_SCHEMA_SNAPSHOT_VERSION,
 )
 from repo_harness.trajectory import ArtifactRef
@@ -207,6 +209,65 @@ class ToolProtocolFacts(StrictBaseModel):
     tool_parser_version: str
     tool_result_format_version: str
     tool_policy_version: str
+
+
+class PermissionPolicySnapshot(StrictBaseModel):
+    schema_version: str = POLICY_SNAPSHOT_SCHEMA_VERSION
+    snapshot_kind: Literal["permission_policy"] = "permission_policy"
+    policy_version: str
+    snapshot_id: str
+    policy_sha256: str = Field(pattern=SHA256_PATTERN)
+    mode: str
+    rules_ref: ArtifactRef | None = None
+
+
+class HookPolicySnapshot(StrictBaseModel):
+    schema_version: str = POLICY_SNAPSHOT_SCHEMA_VERSION
+    snapshot_kind: Literal["hook_policy"] = "hook_policy"
+    policy_version: str = "repo_harness_hook_policy_v3_v0"
+    snapshot_id: str
+    hooks_enabled: bool = False
+    hook_generated_observation_model_visible: bool = False
+    disabled_reason: str | None = "v3_core_hooks_disabled"
+
+    @model_validator(mode="after")
+    def hook_observations_are_not_visible_when_disabled(self) -> "HookPolicySnapshot":
+        if not self.hooks_enabled and self.hook_generated_observation_model_visible:
+            raise ValueError("hooks disabled 时不能有 hook-generated model-visible observation。")
+        return self
+
+
+class MCPPolicySnapshot(StrictBaseModel):
+    schema_version: str = POLICY_SNAPSHOT_SCHEMA_VERSION
+    snapshot_kind: Literal["mcp_policy"] = "mcp_policy"
+    policy_version: str = "repo_harness_mcp_policy_v3_v0"
+    snapshot_id: str
+    mcp_enabled: bool = False
+    external_tool_surface_frozen: bool = True
+    dynamic_tool_discovery_allowed: bool = False
+
+    @model_validator(mode="after")
+    def dynamic_mcp_tools_are_not_allowed(self) -> "MCPPolicySnapshot":
+        if self.dynamic_tool_discovery_allowed:
+            raise ValueError("V3 核心不允许 dynamic MCP tool discovery。")
+        return self
+
+
+class ToolContractSnapshot(StrictBaseModel):
+    schema_version: str = TOOL_CONTRACT_SNAPSHOT_SCHEMA_VERSION
+    snapshot_id: str
+    tool_contract_version: str = "repo_harness_tool_contract_v3_v0"
+    tool_schema_refs: list[ArtifactRef] = Field(default_factory=list)
+    tool_schema_sha256: str = Field(pattern=SHA256_PATTERN)
+    tool_result_pairing_policy: str = "all_tool_calls_receive_tool_results"
+    large_output_artifact_policy: str = "artifact_ref_with_preview"
+    tool_call_id_policy: str = "stable_unique_per_call"
+    tool_contract_visibility: Literal["model_visible_schema_only", "audit_only"] = (
+        "model_visible_schema_only"
+    )
+    permission_policy_snapshot_ref: ArtifactRef
+    hook_policy_snapshot_ref: ArtifactRef
+    mcp_policy_snapshot_ref: ArtifactRef
 
 
 class FailureDiagnostics(StrictBaseModel):

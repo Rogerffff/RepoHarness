@@ -233,6 +233,7 @@ def _run_config_payload(config: ExperimentConfig, *, task_path: str) -> dict[str
         "runtime": {
             "scaffold_id": config.scaffold_id,
             "execution_mode": config.execution_mode,
+            "docker_backend": config.docker_backend.model_dump(mode="json"),
             "permission_mode": config.permission_mode,
             **(
                 {"test_feedback_policy": config.test_feedback_policy}
@@ -260,6 +261,7 @@ def _run_config_payload(config: ExperimentConfig, *, task_path: str) -> dict[str
             "fail_on_invalid_task": config.fail_on_invalid_task,
             "final_verifier_mode": "strict_patch_replay",
         },
+        "swebench_like": config.swebench_like.model_dump(mode="json"),
     }
 
 

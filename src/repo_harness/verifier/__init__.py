@@ -8,12 +8,18 @@ from repo_harness.verifier.parser_policy import (
 )
 from repo_harness.verifier.pytest_parser import PytestTextParser
 from repo_harness.verifier.runner import PytestVerifier
-from repo_harness.verifier.schemas import TestCaseResult, VerifierParser, VerifierResult
+from repo_harness.verifier.schemas import (
+    SweBenchLikeVerifierPlan,
+    TestCaseResult,
+    VerifierParser,
+    VerifierResult,
+)
 
 __all__ = [
     "PytestTextParser",
     "PytestVerifier",
     "ParserPolicyDecision",
+    "SweBenchLikeVerifierPlan",
     "TestCaseResult",
     "VerifierParser",
     "VerifierParserPolicy",

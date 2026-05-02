@@ -17,10 +17,18 @@ from repo_harness.workspace.protocol import (
     WorkspaceCommandResult,
     WorkspacePaths,
 )
-from repo_harness.workspace.schemas import DependencyState, ExecutionResult, RunWorkspace
+from repo_harness.workspace.schemas import (
+    ContainerExecutionFacts,
+    DependencyState,
+    DockerBackendFacts,
+    ExecutionResult,
+    RunWorkspace,
+)
 
 __all__ = [
+    "ContainerExecutionFacts",
     "DependencyState",
+    "DockerBackendFacts",
     "ExecutionResult",
     "LocalWorkspaceAdapter",
     "PatchCapture",

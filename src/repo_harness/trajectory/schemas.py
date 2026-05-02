@@ -10,6 +10,7 @@ from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import (
     ARTIFACT_SCHEMA_VERSION,
     EVENT_SCHEMA_VERSION,
+    TRAJECTORY_STORE_FACTS_SCHEMA_VERSION,
     TRANSCRIPT_SCHEMA_VERSION,
 )
 
@@ -89,3 +90,21 @@ class MetricsRecord(StrictBaseModel):
     code_quality_checks: dict[str, Any] = Field(default_factory=dict)
     interaction_efficiency: dict[str, Any] = Field(default_factory=dict)
     patch_locality: dict[str, Any] = Field(default_factory=dict)
+
+
+class TrajectoryStoreFacts(StrictBaseModel):
+    schema_version: str = TRAJECTORY_STORE_FACTS_SCHEMA_VERSION
+    run_id: str
+    transcript_ref: ArtifactRef
+    events_ref: ArtifactRef
+    artifacts_manifest_ref: ArtifactRef
+    run_config_facts_ref: ArtifactRef
+    run_metadata_ref: ArtifactRef | None = None
+    transcript_readable: bool
+    events_readable: bool
+    artifacts_resolvable: bool
+    interrupted_or_crashed: bool = False
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.interrupted_or_crashed and self.run_metadata_ref is None:
+            raise ValueError("completed / terminal run 的 trajectory facts 必须引用 run_metadata。")

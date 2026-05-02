@@ -8,7 +8,13 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
-from repo_harness.schema_versions import ACCEPTANCE_POLICY_VERSION, EXPERIMENT_SCHEMA_VERSION
+from repo_harness.schema_versions import (
+    ACCEPTANCE_POLICY_VERSION,
+    EXPERIMENT_RESUME_MANIFEST_SCHEMA_VERSION,
+    EXPERIMENT_SCHEMA_VERSION,
+    RUN_CHECKPOINT_SCHEMA_VERSION,
+)
+from repo_harness.config.schemas import DockerRuntimeConfig, SweBenchLikeConfig
 from repo_harness.export.schemas import CompareScope
 from repo_harness.tasks import VerifierConfig
 from repo_harness.trajectory import ArtifactRef
@@ -129,7 +135,9 @@ class ExperimentConfig(StrictBaseModel):
     replay_script_path: str | None = None
     scaffold_id: str = "simple_react"
     permission_mode: Literal["plan", "ask", "auto", "deny"] = "auto"
-    execution_mode: Literal["local_process"] = "local_process"
+    execution_mode: Literal["local_process", "docker"] = "local_process"
+    docker_backend: DockerRuntimeConfig = Field(default_factory=DockerRuntimeConfig)
+    swebench_like: SweBenchLikeConfig = Field(default_factory=SweBenchLikeConfig)
     test_feedback_policy: Literal[
         "disabled", "public_only", "structured_public_feedback", "oracle_hidden_feedback"
     ] | None = None
@@ -171,7 +179,91 @@ class ExperimentConfig(StrictBaseModel):
                 "Stage 07 run_id_template 必须包含 task_id、model_alias、scaffold_id 和 rollout_index。"
             )
         if self.auto_export_preference:
-            self.generate_preference_export = True
+            object.__setattr__(self, "generate_preference_export", True)
+        if self.swebench_like.max_workers is None:
+            object.__setattr__(
+                self,
+                "swebench_like",
+                self.swebench_like.model_copy(
+                    update={
+                        "max_workers": 1,
+                        "effective_max_workers": 1,
+                        "max_workers_resolution": "experiment_runner_serial_default",
+                    }
+                ),
+            )
+        elif self.swebench_like.max_workers != 1:
+            object.__setattr__(
+                self,
+                "swebench_like",
+                self.swebench_like.model_copy(
+                    update={
+                        "max_workers": 1,
+                        "effective_max_workers": 1,
+                        "max_workers_resolution": "experiment_runner_v3_stage1_serial_cap",
+                    }
+                ),
+            )
+        return self
+
+
+class RunCheckpoint(StrictBaseModel):
+    schema_version: str = RUN_CHECKPOINT_SCHEMA_VERSION
+    run_id: str
+    status: Literal[
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "skipped",
+        "interrupted",
+        "crashed",
+    ]
+    run_config_facts_ref: ArtifactRef | None = None
+    event_offset: int = Field(default=0, ge=0)
+    transcript_offset: int = Field(default=0, ge=0)
+    artifact_manifest_ref: ArtifactRef | None = None
+    run_metadata_ref: ArtifactRef | None = None
+    interrupted_or_crash_facts_ref: ArtifactRef | None = None
+
+    @model_validator(mode="after")
+    def validate_final_metadata_timing(self) -> "RunCheckpoint":
+        if self.run_metadata_ref is not None and self.status not in {"completed", "failed"}:
+            raise ValueError("run_metadata_ref 只能在最终 metadata 已写入后出现。")
+        if self.status in {"interrupted", "crashed"} and self.run_metadata_ref is not None:
+            raise ValueError("interrupted / crashed checkpoint 不能要求最终 run_metadata.json。")
+        return self
+
+
+class ExperimentResumeManifest(StrictBaseModel):
+    schema_version: str = EXPERIMENT_RESUME_MANIFEST_SCHEMA_VERSION
+    experiment_id: str
+    resume_policy_version: str = "repo_harness_resume_policy_v3_v0"
+    docker_backend_facts_ref: ArtifactRef | None = None
+    run_checkpoints: list[RunCheckpoint] = Field(default_factory=list)
+    completed_run_ids: list[str] = Field(default_factory=list)
+    pending_run_ids: list[str] = Field(default_factory=list)
+    interrupted_run_ids: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def listed_ids_match_checkpoints(self) -> "ExperimentResumeManifest":
+        by_status = {
+            status: {
+                checkpoint.run_id
+                for checkpoint in self.run_checkpoints
+                if checkpoint.status == status
+            }
+            for status in {"completed", "pending", "interrupted"}
+        }
+        completed = by_status["completed"]
+        pending = by_status["pending"]
+        interrupted = by_status["interrupted"]
+        if set(self.completed_run_ids) != completed:
+            raise ValueError("completed_run_ids 必须和 completed checkpoints 一致。")
+        if set(self.pending_run_ids) != pending:
+            raise ValueError("pending_run_ids 必须和 pending checkpoints 一致。")
+        if set(self.interrupted_run_ids) != interrupted:
+            raise ValueError("interrupted_run_ids 必须和 interrupted checkpoints 一致。")
         return self
 
 

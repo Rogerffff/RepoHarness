@@ -6,6 +6,7 @@ from repo_harness.context.schemas import (
     ContentReplacementRecord,
     ContentReplacementState,
     ContextBuilderConfig,
+    ContextCompactionFacts,
     ContextReductionRecord,
     PreparedMessages,
 )
@@ -15,6 +16,7 @@ __all__ = [
     "ContentReplacementState",
     "ContextBuilder",
     "ContextBuilderConfig",
+    "ContextCompactionFacts",
     "ContextManager",
     "ContextReductionRecord",
     "PreparedMessages",

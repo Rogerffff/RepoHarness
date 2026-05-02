@@ -58,3 +58,33 @@ def test_output_dir_override_keeps_other_config():
 
     assert config.workspace.output_dir == "runs/original"
     assert updated.workspace.output_dir == "runs/override"
+
+
+def test_run_config_accepts_v3_docker_backend_and_resolves_workers():
+    config = RunConfig.model_validate(
+        {
+            "runtime": {
+                "execution_mode": "docker",
+                "docker_backend": {
+                    "requested_container_platform": "linux/amd64",
+                    "network_policy": "deny_agent_run",
+                },
+            },
+            "evaluation": {"concurrency": 2},
+            "swebench_like": {"max_workers": 4},
+        }
+    )
+
+    assert config.runtime.execution_mode == "docker"
+    assert config.runtime.docker_backend.requested_container_platform == "linux/amd64"
+    assert config.swebench_like.effective_max_workers == 2
+    assert config.swebench_like.max_workers_resolution == (
+        "min_swebench_like_max_workers_and_evaluation_concurrency"
+    )
+
+
+def test_run_config_defaults_swebench_workers_to_evaluation_concurrency():
+    config = RunConfig.model_validate({"evaluation": {"concurrency": 3}})
+
+    assert config.swebench_like.effective_max_workers == 3
+    assert config.swebench_like.max_workers_resolution == "unset_uses_evaluation_concurrency"
