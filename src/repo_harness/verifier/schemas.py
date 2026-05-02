@@ -61,8 +61,12 @@ class SweBenchLikeVerifierPlan(StrictBaseModel):
     base_test_command: str
     fail_to_pass_command: str
     pass_to_pass_command: str
+    selector_conversion_rule: str = "path_node_id_passthrough_or_bare_function_to_patch_file"
     selector_source: Literal["evaluator_only_manifest_ref"]
     selector_cache_ref: ArtifactRef
+    fail_to_pass_selector_count: int = Field(default=1, ge=1)
+    pass_to_pass_selector_count: int = Field(default=1, ge=1)
+    selector_failure_strategy: str = "fail_closed_on_empty_or_unresolved_selector"
     verifier_patch_ref: ArtifactRef
     per_command_timeout_sec: int = Field(gt=0)
     parser_policy_version: str = PYTEST_PARSER_VERSION

@@ -34,6 +34,7 @@ from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
 )
+from repo_harness.v3_swebench_like import build_v3_swebench_like, inspect_swebench_like
 from repo_harness.v3_task_set import build_v3_task_set, inspect_v3_task_set
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
@@ -287,6 +288,24 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v3_sources.add_argument("--report", required=True, help="source_materialization_report.json 路径。")
     inspect_v3_sources.add_argument("--assert-complete", action="store_true", help="要求 source materialization 完整。")
 
+    build_swebench_like = subparsers.add_parser(
+        "build-v3-swebench-like",
+        help="生成 SWE-Bench-like verifier plan 并运行 RepoHarness 自有 F2P/P2P verifier。",
+    )
+    build_swebench_like.add_argument("--source-materialization-run", required=True, help="阶段 5 source materialization 目录。")
+    build_swebench_like.add_argument("--hidden-verifier-inputs", required=True, help="阶段 0 evaluator-only hidden verifier inputs JSONL。")
+    build_swebench_like.add_argument("--gold-patch-predictions", required=True, help="阶段 0 evaluator-only gold patch predictions JSONL。")
+    build_swebench_like.add_argument("--output-dir", required=True, help="SWE-Bench-like verifier 产物目录。")
+    build_swebench_like.add_argument("--skip-execute", action="store_true", help="只生成结构，不执行 verifier；仅用于负例测试。")
+
+    inspect_swebench = subparsers.add_parser(
+        "inspect-swebench-like",
+        help="检查 SWE-Bench-like verifier plan 和 RepoHarness 自有 verifier evidence。",
+    )
+    inspect_swebench.add_argument("run_dir", help="SWE-Bench-like verifier 产物目录。")
+    inspect_swebench.add_argument("--manifest", required=True, help="swebench_like_task_manifest.json 路径。")
+    inspect_swebench.add_argument("--assert-complete", action="store_true", help="要求 verifier plan 和 evidence 完整。")
+
     return parser
 
 
@@ -492,6 +511,31 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 source materialization 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-swebench-like":
+        try:
+            output_path = build_v3_swebench_like(
+                source_materialization_run=args.source_materialization_run,
+                hidden_verifier_inputs=args.hidden_verifier_inputs,
+                gold_patch_predictions=args.gold_patch_predictions,
+                output_dir=args.output_dir,
+                execute=not args.skip_execute,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"SWE-Bench-like verifier 构建失败：{exc}\n")
+        print(f"SWE-Bench-like verifier 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-swebench-like":
+        try:
+            print(
+                inspect_swebench_like(
+                    args.run_dir,
+                    manifest=args.manifest,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"SWE-Bench-like verifier 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

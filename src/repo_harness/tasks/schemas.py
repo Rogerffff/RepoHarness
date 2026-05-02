@@ -207,12 +207,17 @@ class SweBenchLikeEnvironmentSpec(StrictBaseModel):
     instance_id: str
     repo: str
     base_commit: str
+    environment_setup_commit: str | None = None
     execution_image: str
+    image_build_source: str | None = None
     requested_container_platform: Literal["linux/amd64", "linux/arm64"]
     python_version: str | None = None
     setup_commands_ref: ArtifactRef
+    setup_timeout_sec: int = Field(default=900, gt=0)
     dependency_lock_ref: ArtifactRef | None = None
-    network_policy: str = "deny_agent_run"
+    network_policy: str = "controlled_network_for_setup_only"
+    mount_policy: str = "workspace_bind_mount_read_write"
+    expected_parser: str = "pytest"
     hidden_verifier_command_visible_to_model: bool = False
 
     @model_validator(mode="after")
