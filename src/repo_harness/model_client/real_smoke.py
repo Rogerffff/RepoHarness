@@ -429,6 +429,9 @@ def _run_config_payload(
     output_dir: Path,
     provider_specific_options: dict[str, Any],
 ) -> dict[str, Any]:
+    credential_policy = _credential_policy_for_source(
+        provider_specific_options.get("credential_source")
+    )
     return {
         "run_id_prefix": "v2_real_provider_smoke",
         "model": {
@@ -437,7 +440,7 @@ def _run_config_payload(
             "temperature": 0.0,
             "max_output_tokens": 2048,
             "retry_policy": "none",
-            "credential_policy": "env_only",
+            "credential_policy": credential_policy,
             "provider_request_logging": "redact_secrets",
             "provider_specific_options": provider_specific_options,
         },
@@ -461,6 +464,16 @@ def _run_config_payload(
             "final_verifier_mode": "strict_patch_replay",
         },
     }
+
+
+def _credential_policy_for_source(credential_source: object) -> str:
+    if credential_source == "local_secret_file_redacted":
+        return "local_secret_file_redacted"
+    if credential_source == "environment":
+        return "env_only"
+    if credential_source in {None, "none"}:
+        return "none"
+    return str(credential_source)
 
 
 def _raw_artifact_facts(run_dir: Path, provider: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str, dict[str, bool]]:

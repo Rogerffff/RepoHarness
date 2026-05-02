@@ -5,6 +5,7 @@ import pytest
 
 from repo_harness.errors import ConfigError, RepoHarnessError
 from repo_harness.model_client.real_smoke import (
+    _run_config_payload,
     inspect_real_provider_smoke,
     run_real_provider_smoke,
 )
@@ -58,6 +59,32 @@ def test_real_provider_smoke_does_not_use_local_secret_file_by_default(
     assert payload["status"] == "skipped_no_credentials"
     assert payload["credential_status"] == "missing_all"
     assert payload["credential_source"] == "none"
+
+
+def test_real_provider_run_config_policy_matches_local_secret_source(tmp_path: Path):
+    payload = _run_config_payload(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        output_dir=tmp_path,
+        provider_specific_options={
+            "credential_source": "local_secret_file_redacted",
+        },
+    )
+
+    assert payload["model"]["credential_policy"] == "local_secret_file_redacted"
+
+
+def test_real_provider_run_config_policy_keeps_environment_source_as_env_only(tmp_path: Path):
+    payload = _run_config_payload(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        output_dir=tmp_path,
+        provider_specific_options={
+            "credential_source": "environment",
+        },
+    )
+
+    assert payload["model"]["credential_policy"] == "env_only"
 
 
 def test_inspect_real_provider_smoke_accepts_deepseek_accepted_schema(tmp_path: Path):
