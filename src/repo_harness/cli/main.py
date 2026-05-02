@@ -30,6 +30,10 @@ from repo_harness.v3_swebench_fixture import (
     inspect_v3_swebench_fixture,
     prepare_v3_swebench_fixture,
 )
+from repo_harness.v3_agent_loop import (
+    build_v3_agent_loop_integration,
+    inspect_v3_agent_loop_integration,
+)
 from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
@@ -306,6 +310,24 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_swebench.add_argument("--manifest", required=True, help="swebench_like_task_manifest.json 路径。")
     inspect_swebench.add_argument("--assert-complete", action="store_true", help="要求 verifier plan 和 evidence 完整。")
 
+    build_v3_agent_loop = subparsers.add_parser(
+        "build-v3-agent-loop-integration",
+        help="运行 V3 Stage 7 Agent Loop 集成 smoke，并生成污染扫描报告。",
+    )
+    build_v3_agent_loop.add_argument("--source-materialization-run", required=True, help="阶段 5 source materialization 目录。")
+    build_v3_agent_loop.add_argument("--swebench-like-run", required=True, help="阶段 6 SWE-Bench-like verifier 目录。")
+    build_v3_agent_loop.add_argument("--output-dir", required=True, help="Stage 7 Agent Loop 集成产物目录。")
+    build_v3_agent_loop.add_argument("--real-task-id", default="realrepo_local_buggy_calculator", help="真实仓库任务 id。")
+    build_v3_agent_loop.add_argument("--swebench-task-id", default="pytest-dev__pytest-7220", help="SWE-Bench-like 任务 id。")
+
+    inspect_v3_agent_loop = subparsers.add_parser(
+        "inspect-v3-agent-loop-integration",
+        help="只读检查 V3 Stage 7 Agent Loop 集成报告。",
+    )
+    inspect_v3_agent_loop.add_argument("run_dir", help="Stage 7 Agent Loop 集成产物目录。")
+    inspect_v3_agent_loop.add_argument("--report", required=True, help="v3_agent_loop_integration_report.json 路径。")
+    inspect_v3_agent_loop.add_argument("--assert-complete", action="store_true", help="要求 Stage 7 Agent Loop 集成完整。")
+
     return parser
 
 
@@ -536,6 +558,31 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"SWE-Bench-like verifier 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-agent-loop-integration":
+        try:
+            output_path = build_v3_agent_loop_integration(
+                source_materialization_run=args.source_materialization_run,
+                swebench_like_run=args.swebench_like_run,
+                output_dir=args.output_dir,
+                real_task_id=args.real_task_id,
+                swebench_task_id=args.swebench_task_id,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 Agent Loop 集成构建失败：{exc}\n")
+        print(f"V3 Agent Loop 集成产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-v3-agent-loop-integration":
+        try:
+            print(
+                inspect_v3_agent_loop_integration(
+                    args.run_dir,
+                    report=args.report,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 Agent Loop 集成检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

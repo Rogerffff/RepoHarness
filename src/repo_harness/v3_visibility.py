@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import Field, model_validator
@@ -149,7 +150,7 @@ class V3ContaminationDenylist(StrictBaseModel):
         ],
     })
     host_path_prefixes: list[str] = Field(
-        default_factory=lambda: ["/Users/", "/private/", "/home/", "C:\\", "D:\\"]
+        default_factory=lambda: _default_host_path_prefixes()
     )
     status_value_terms: dict[str, str] = Field(
         default_factory=lambda: {
@@ -279,3 +280,11 @@ def _is_status_key(normalized_key: str) -> bool:
         "unresolved",
         "officialstatus",
     }
+
+
+def _default_host_path_prefixes() -> list[str]:
+    prefixes = ["/Users/", "/private/", "C:\\", "D:\\"]
+    home = Path.home().as_posix().rstrip("/")
+    if home and home not in {"/", "/root"}:
+        prefixes.append(f"{home}/")
+    return list(dict.fromkeys(prefixes))
