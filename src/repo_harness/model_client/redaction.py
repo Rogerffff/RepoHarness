@@ -45,6 +45,8 @@ def redact_provider_payload(
             for item in value
         ]
     if isinstance(value, str):
+        if _contains_explicit_secret(value):
+            return REDACTED_CREDENTIAL
         if not _non_secret_value_key(_parent_key) and _looks_secret_like(value):
             return REDACTED_CREDENTIAL
     return value
@@ -94,11 +96,17 @@ def _non_secret_value_key(key: str | None) -> bool:
 
 
 def _looks_secret_like(text: str) -> bool:
-    if _OPENAI_STYLE_KEY_RE.search(text):
-        return True
-    if _BEARER_RE.search(text):
+    if _contains_explicit_secret(text):
         return True
     compact = text.replace("_", "").replace("-", "")
     return len(compact) >= 32 and any(char.isdigit() for char in compact) and any(
         char.isalpha() for char in compact
     )
+
+
+def _contains_explicit_secret(text: str) -> bool:
+    if _OPENAI_STYLE_KEY_RE.search(text):
+        return True
+    if _BEARER_RE.search(text):
+        return True
+    return False

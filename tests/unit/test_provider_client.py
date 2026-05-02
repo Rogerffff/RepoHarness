@@ -193,6 +193,22 @@ def test_provider_redaction_preserves_non_secret_version_fields():
     assert redacted["opaque_value"] == REDACTED_CREDENTIAL
 
 
+def test_provider_redaction_redacts_explicit_secrets_in_version_fields():
+    payload = {
+        "schema_version": "sk-test-secret-value-1234567890",
+        "provider_adapter_version": "Bearer sk-test-secret-value-1234567890",
+        "nested": {
+            "fallback_policy_version": "Bearer visible-token-12345",
+        },
+    }
+
+    redacted = redact_provider_payload(payload)
+
+    assert redacted["schema_version"] == REDACTED_CREDENTIAL
+    assert redacted["provider_adapter_version"] == REDACTED_CREDENTIAL
+    assert redacted["nested"]["fallback_policy_version"] == REDACTED_CREDENTIAL
+
+
 def test_openai_provider_uses_sdk_shape_with_injected_client(tmp_path: Path):
     client = OpenAIProviderClient(
         model_id="gpt-5-mini",
