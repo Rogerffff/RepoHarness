@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
@@ -54,12 +54,25 @@ from repo_harness.scaffolds import (
 )
 
 
+InjectInterruptPoint = Literal["baseline", "agent_loop", "final_verifier"]
+
+
+class InjectedInterruptError(RepoHarnessError):
+    """Raised after writing structured interrupted run facts for V3 resume tests."""
+
+    def __init__(self, *, phase: InjectInterruptPoint, run_dir: Path) -> None:
+        self.phase = phase
+        self.run_dir = run_dir
+        super().__init__(f"Injected V3 experiment interruption after {phase}: {run_dir}")
+
+
 def run_task(
     task_path: str | Path,
     *,
     config_path: str | Path,
     output_dir: str | Path | None = None,
     run_id: str | None = None,
+    inject_interrupt_after: InjectInterruptPoint | None = None,
 ) -> Path:
     run_started = time.monotonic()
     config = load_run_config(config_path, output_dir=output_dir)
@@ -308,6 +321,16 @@ def run_task(
                 data={"run_config_facts_ref": run_config_facts_ref.model_dump(mode="json")},
             )
         )
+        if inject_interrupt_after == "baseline":
+            _interrupt_run_for_v3_resume(
+                phase="baseline",
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                run_dir=run_dir,
+                recorder=recorder,
+                adapter=adapter,
+                config=config,
+            )
         if not baseline.can_enter_agent_run:
             _finalize_quality_gate_run(
                 run_id=actual_run_id,
@@ -402,6 +425,16 @@ def run_task(
             raw_request_logging_policy=config.model.provider_request_logging,
             retry_policy=config.model.retry_policy,
         )
+        if inject_interrupt_after == "agent_loop":
+            _interrupt_run_for_v3_resume(
+                phase="agent_loop",
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                run_dir=run_dir,
+                recorder=recorder,
+                adapter=adapter,
+                config=config,
+            )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         if _task_timeout_expired(task_deadline_monotonic):
             _append_task_timeout_event(
@@ -476,6 +509,16 @@ def run_task(
                 data=final_verifier.model_dump(mode="json"),
             )
         )
+        if inject_interrupt_after == "final_verifier":
+            _interrupt_run_for_v3_resume(
+                phase="final_verifier",
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                run_dir=run_dir,
+                recorder=recorder,
+                adapter=adapter,
+                config=config,
+            )
         reward = compute_reward_metadata(
             final_verifier,
             patch_stats=capture.patch_stats,
@@ -660,6 +703,66 @@ def run_batch(
     return manifest_path
 
 
+def _interrupt_run_for_v3_resume(
+    *,
+    phase: InjectInterruptPoint,
+    run_id: str,
+    task_id: str,
+    run_dir: Path,
+    recorder: RunRecorder,
+    adapter: WorkspaceAdapter,
+    config: RunConfig,
+) -> None:
+    facts = {
+        "schema_version": "repo_harness_v3_interrupted_run_facts_v0",
+        "run_id": run_id,
+        "task_id": task_id,
+        "interrupted_after": phase,
+        "created_at": _timestamp(),
+        "resume_policy": "run_level_continuation_new_run_id",
+        "run_metadata_expected": False,
+        "required_files": {
+            "transcript_jsonl": (run_dir / "transcript.jsonl").exists(),
+            "events_jsonl": (run_dir / "events.jsonl").exists(),
+            "artifacts_json": (run_dir / "artifacts.json").exists(),
+            "run_config_facts_json": (run_dir / "run_config_facts.json").exists(),
+            "run_metadata_json": (run_dir / "run_metadata.json").exists(),
+        },
+        "event_offset": _jsonl_record_count(run_dir / "events.jsonl"),
+        "transcript_offset": _jsonl_record_count(run_dir / "transcript.jsonl"),
+        "resume_eligibility": "eligible",
+        "blocked_resume_input_categories": [
+            "evaluator_only_verifier_outputs",
+            "post_run_scoring_artifacts",
+            "terminal_result_facts",
+            "evaluator_only_failure_details",
+        ],
+    }
+    _write_json(run_dir / "interrupted_run_facts.json", facts)
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("run"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            event_type="run_interrupted",
+            severity="warning",
+            error_type="injected_v3_resume_interrupt",
+            data=facts,
+        )
+    )
+    _write_backend_status_if_supported(adapter, config)
+    adapter.cleanup_workspaces()
+    recorder.mark_interrupted(
+        "# RepoHarness Interrupted Run\n\n"
+        f"- run_id: {run_id}\n"
+        f"- task_id: {task_id}\n"
+        f"- interrupted_after: {phase}\n"
+        "- run_metadata: not written before final metadata boundary\n"
+    )
+    raise InjectedInterruptError(phase=phase, run_dir=run_dir)
+
+
 def _run_setup_command(
     *,
     adapter: WorkspaceAdapter,
@@ -690,6 +793,12 @@ def _run_setup_command(
         )
     )
     return result
+
+
+def _jsonl_record_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
 
 
 def _write_backend_status_if_supported(adapter: WorkspaceAdapter, config: RunConfig) -> None:

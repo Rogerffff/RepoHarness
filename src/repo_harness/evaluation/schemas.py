@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
@@ -209,7 +209,19 @@ class ExperimentConfig(StrictBaseModel):
 
 class RunCheckpoint(StrictBaseModel):
     schema_version: str = RUN_CHECKPOINT_SCHEMA_VERSION
+    checkpoint_id: str | None = None
     run_id: str
+    checkpoint_type: Literal[
+        "created",
+        "baseline_completed",
+        "agent_loop_started",
+        "agent_loop_completed",
+        "final_patch_frozen",
+        "final_verifier_completed",
+        "export_completed",
+        "interrupted",
+    ] = "created"
+    created_at: str | None = None
     status: Literal[
         "pending",
         "running",
@@ -223,8 +235,16 @@ class RunCheckpoint(StrictBaseModel):
     event_offset: int = Field(default=0, ge=0)
     transcript_offset: int = Field(default=0, ge=0)
     artifact_manifest_ref: ArtifactRef | None = None
+    workspace_snapshot_ref: ArtifactRef | None = None
+    final_patch_ref: ArtifactRef | None = None
     run_metadata_ref: ArtifactRef | None = None
     interrupted_or_crash_facts_ref: ArtifactRef | None = None
+    resume_eligibility: Literal[
+        "eligible",
+        "not_needed",
+        "not_recoverable",
+        "not_evaluated",
+    ] = "not_evaluated"
 
     @model_validator(mode="after")
     def validate_final_metadata_timing(self) -> "RunCheckpoint":
@@ -235,11 +255,70 @@ class RunCheckpoint(StrictBaseModel):
         return self
 
 
+class ExperimentResumeRunEntry(StrictBaseModel):
+    schema_version: str = "repo_harness_experiment_resume_run_entry_v3_v0"
+    run_id: str
+    task_id: str
+    rollout_index: int = Field(ge=0)
+    model_alias: str
+    scaffold_id: str
+    status: Literal[
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "skipped",
+        "interrupted",
+        "crashed",
+    ]
+    attempt: int = Field(default=1, ge=1)
+    run_dir: str
+    last_checkpoint_ref: ArtifactRef | None = None
+    failure_category: Literal[
+        "none",
+        "provider_transient",
+        "docker_infrastructure",
+        "environment_setup",
+        "deterministic_verifier",
+        "task_quality",
+        "permission",
+        "tool_protocol",
+        "context_limit",
+        "interrupted",
+        "unknown",
+    ] = "none"
+    failure_type: str | None = None
+    retryable: bool = False
+    resume_action: Literal[
+        "none",
+        "skip_completed",
+        "continue_pending",
+        "continue_interrupted_as_new_run",
+        "retry_failed",
+        "not_recoverable",
+        "structured_skip",
+    ] = "none"
+    parent_run_id: str | None = None
+    continuation_reason: str | None = None
+    resume_from: str | None = None
+
+
 class ExperimentResumeManifest(StrictBaseModel):
     schema_version: str = EXPERIMENT_RESUME_MANIFEST_SCHEMA_VERSION
     experiment_id: str
+    config_hash: str | None = None
     resume_policy_version: str = "repo_harness_resume_policy_v3_v0"
+    retry_policy: str = "pending_and_interrupted_only_v0"
+    max_parallel_runs: int = Field(default=1, ge=1)
+    generated_at: str | None = None
+    updated_at: str | None = None
     docker_backend_facts_ref: ArtifactRef | None = None
+    runs: list[ExperimentResumeRunEntry] = Field(default_factory=list)
+    state_distribution: dict[str, int] = Field(default_factory=dict)
+    failure_distribution: dict[str, int] = Field(default_factory=dict)
+    completed_run_refs: list[ArtifactRef] = Field(default_factory=list)
+    pending_run_specs: list[dict[str, Any]] = Field(default_factory=list)
+    interrupted_run_refs: list[ArtifactRef] = Field(default_factory=list)
     run_checkpoints: list[RunCheckpoint] = Field(default_factory=list)
     completed_run_ids: list[str] = Field(default_factory=list)
     pending_run_ids: list[str] = Field(default_factory=list)

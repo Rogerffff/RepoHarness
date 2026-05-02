@@ -34,6 +34,10 @@ from repo_harness.v3_agent_loop import (
     build_v3_agent_loop_integration,
     inspect_v3_agent_loop_integration,
 )
+from repo_harness.v3_experiment_resume import (
+    build_v3_experiment_resume,
+    inspect_experiment_resume,
+)
 from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
@@ -72,6 +76,12 @@ def build_parser() -> argparse.ArgumentParser:
     run_task.add_argument("--config", required=True, help="RunConfig YAML 文件路径。")
     run_task.add_argument("--output-dir", default=None, help="运行产物根目录。")
     run_task.add_argument("--run-id", default=None, help="显式指定本次 run id。")
+    run_task.add_argument(
+        "--inject-interrupt-after",
+        choices=["baseline", "agent_loop", "final_verifier"],
+        default=None,
+        help="V3 resume 测试专用：在固定 phase 后结构化中断 run。",
+    )
 
     run_batch = subparsers.add_parser(
         "run-batch",
@@ -327,6 +337,27 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v3_agent_loop.add_argument("run_dir", help="Stage 7 Agent Loop 集成产物目录。")
     inspect_v3_agent_loop.add_argument("--report", required=True, help="v3_agent_loop_integration_report.json 路径。")
     inspect_v3_agent_loop.add_argument("--assert-complete", action="store_true", help="要求 Stage 7 Agent Loop 集成完整。")
+
+    build_v3_resume = subparsers.add_parser(
+        "build-v3-experiment-resume",
+        help="构造 V3 Stage 8 可恢复实验、中断注入和 resume evidence。",
+    )
+    build_v3_resume.add_argument("--config", required=True, help="ExperimentConfig YAML 文件路径。")
+    build_v3_resume.add_argument("--output-dir", required=True, help="Stage 8 experiment resume 产物目录。")
+    build_v3_resume.add_argument(
+        "--inject-interrupt-after",
+        choices=["baseline", "agent_loop", "final_verifier"],
+        default="baseline",
+        help="固定中断注入点。",
+    )
+
+    inspect_resume = subparsers.add_parser(
+        "inspect-experiment-resume",
+        help="只读检查 V3 experiment resume manifest、checkpoint 和中断诊断。",
+    )
+    inspect_resume.add_argument("run_dir", help="Stage 8 experiment resume 产物目录。")
+    inspect_resume.add_argument("--manifest", required=True, help="experiment_resume_manifest.json 路径。")
+    inspect_resume.add_argument("--assert-resumable", action="store_true", help="要求 resume evidence 完整。")
 
     return parser
 
@@ -584,6 +615,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 Agent Loop 集成检查失败：{exc}\n")
         return 0
+    if args.command == "build-v3-experiment-resume":
+        try:
+            output_path = build_v3_experiment_resume(
+                config_path=args.config,
+                output_dir=args.output_dir,
+                inject_interrupt_after=args.inject_interrupt_after,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 experiment resume 构建失败：{exc}\n")
+        print(f"V3 experiment resume 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-experiment-resume":
+        try:
+            print(
+                inspect_experiment_resume(
+                    args.run_dir,
+                    manifest=args.manifest,
+                    assert_resumable=args.assert_resumable,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 experiment resume 检查失败：{exc}\n")
+        return 0
     if args.command == "run-task":
         try:
             run_dir = run_task_command(
@@ -591,6 +645,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 config_path=args.config,
                 output_dir=args.output_dir,
                 run_id=args.run_id,
+                inject_interrupt_after=args.inject_interrupt_after,
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"任务运行失败：{exc}\n")
