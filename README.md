@@ -85,6 +85,9 @@ repo-harness export runs/demo-batch --format preference_jsonl
 - `docs/v1-walkthrough.md`：第一版端到端使用说明。
 - `docs/v1-final-acceptance.md`：第一版最终验收记录。
 - `docs/developer-checklist.md`：后续开发检查清单。
+- `docs/v2/scope-and-roadmap.md`：第二版范围、路线图和进入实施计划前的验收口径。
+- `docs/v2/implementation-plan.md`：第二版阶段实施计划、里程碑门和验收命令。
+- `docs/v2/final-acceptance.md`：第二版最终验收记录、机器产物路径和残余边界。
 
 ## 边界提醒
 
