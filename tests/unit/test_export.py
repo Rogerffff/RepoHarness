@@ -203,6 +203,41 @@ def test_export_writes_manifest_audit_and_formal_trainable_file(tmp_path: Path):
     assert "Inspect export: clean" in inspect_export(export_dir, assert_clean=True, require_trainable_samples=True)
 
 
+def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_max_turns_success",
+        task_id="task_001",
+        reward=0.996,
+        run_outcome="success",
+        final_verifier_status="accepted",
+        include_formal_verifier=True,
+    )
+    _write_max_turns_metrics_and_events(run_dir)
+
+    sft_output = export_sft_jsonl(run_dir)
+    sft_export_dir = _latest_export_dir(run_dir / "exports")
+    sft_audit = json.loads((sft_export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    rl_output = export_rl_jsonl(run_dir)
+    rl_export_dir = _latest_export_dir(run_dir / "exports")
+    rl_audit = json.loads((rl_export_dir / "audit_report.json").read_text(encoding="utf-8"))
+
+    for output, audit in ((sft_output, sft_audit), (rl_output, rl_audit)):
+        assert _read_jsonl(output) == []
+        sample = audit["samples"][0]
+        assert sample["training_eligibility"] == "diagnostic_only"
+        assert sample["invalid_for_training"] is True
+        assert {
+            "agent_stop_reason_max_turns",
+            "require_model_final_not_satisfied",
+            "last_tool_observation_not_observed_by_model",
+        }.issubset(set(sample["quality_reasons"]))
+        assert any(
+            item["name"] == "trajectory_terminal_quality"
+            and item["status"] == "warning"
+            for item in sample["audit_items"]
+        )
+
+
 def test_provider_raw_response_in_payload_is_audit_invalid(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_provider_raw",
@@ -448,6 +483,54 @@ def _minimal_run(
     if include_run_metadata:
         _write_minimal_v2_metadata(run_dir)
     return run_dir
+
+
+def _write_max_turns_metrics_and_events(run_dir: Path) -> None:
+    (run_dir / "metrics.json").write_text(
+        json.dumps(
+            {
+                "run_outcome": "success",
+                "final_verifier_status": "accepted",
+                "interaction_efficiency": {
+                    "agent_stop_reason": "max_turns",
+                    "feedback_tests_passed_policy": "require_model_final",
+                    "final_verifier_mode": "strict_patch_replay",
+                    "feedback_verifier_accepted": False,
+                    "public_tests_ran": False,
+                    "hidden_feedback_ran": False,
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "tool_requested",
+                "turn": 8,
+                "data": {
+                    "tool_call_id": "call_final_edit",
+                    "tool_name": "edit_file",
+                    "arguments": {"path": "calculator.py", "old_text": "bad", "new_text": "good"},
+                },
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "event_type": "tool_completed",
+                "turn": 8,
+                "data": {
+                    "tool_call_id": "call_final_edit",
+                    "status": "ok",
+                    "effective_tool_name": "edit_file",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def _read_jsonl(path: Path) -> list[dict]:

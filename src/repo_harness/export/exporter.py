@@ -731,6 +731,7 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
             ),
             "scaffold_id": run_config.get("scaffold_id") or metrics.get("interaction_efficiency", {}).get("scaffold_id", "simple_react"),
             "scaffold_version": run_config.get("scaffold_version"),
+            "export_quality_diagnostic_reasons": _export_quality_diagnostic_reasons(run_path),
             "permission_mode": run_config.get("permission_mode") or _initial_user_field(run_path, "permission_mode"),
             "permission_policy_version": run_config.get("permission_policy_version"),
             "execution_mode": workspace_backend.get("backend") or _initial_user_field(run_path, "execution_mode"),
@@ -786,6 +787,58 @@ def _invalid_for_training(run_path: Path) -> bool:
         or _has_model_error_event(run_path)
         or metrics.get("final_verifier_status") in {"timeout", "error"}
     )
+
+
+def _export_quality_diagnostic_reasons(run_path: Path) -> list[str]:
+    metrics = _read_json_if_exists(run_path / "metrics.json")
+    facts = _read_json_if_exists(run_path / "run_config_facts.json")
+    interaction = metrics.get("interaction_efficiency", {})
+    agent_stop_reason = interaction.get("agent_stop_reason")
+    feedback_tests_passed_policy = (
+        interaction.get("feedback_tests_passed_policy")
+        or facts.get("feedback_tests_passed_policy")
+    )
+    reasons: list[str] = []
+    if agent_stop_reason == "max_turns":
+        reasons.append("agent_stop_reason_max_turns")
+    if feedback_tests_passed_policy == "require_model_final" and agent_stop_reason != "final_answer":
+        reasons.append("require_model_final_not_satisfied")
+    should_check_unobserved_terminal_tool = agent_stop_reason == "max_turns" or (
+        feedback_tests_passed_policy == "require_model_final"
+        and agent_stop_reason not in {None, "final_answer"}
+    )
+    if should_check_unobserved_terminal_tool and _last_successful_tool_observation_unseen(
+        run_path,
+        agent_stop_reason=agent_stop_reason,
+    ):
+        reasons.append("last_tool_observation_not_observed_by_model")
+    return reasons
+
+
+def _last_successful_tool_observation_unseen(
+    run_path: Path,
+    *,
+    agent_stop_reason: str | None,
+) -> bool:
+    if agent_stop_reason == "feedback_tests_passed":
+        return False
+    events = read_jsonl(run_path / "events.jsonl")
+    terminal_events = [
+        event
+        for event in events
+        if event.get("event_type")
+        in {"tool_completed", "tool_denied", "tool_failed", "tool_timeout", "tool_interrupted"}
+    ]
+    if not terminal_events:
+        return False
+    last_terminal = terminal_events[-1]
+    data = last_terminal.get("data", {})
+    if last_terminal.get("event_type") != "tool_completed" or data.get("status") != "ok":
+        return False
+    tool_call_id = str(data.get("tool_call_id") or "")
+    if not tool_call_id:
+        return False
+    return tool_call_id not in _prepared_tool_observations(run_path)
 
 
 def _invalid_reason(run_path: Path) -> str | None:

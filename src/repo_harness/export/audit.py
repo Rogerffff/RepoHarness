@@ -238,6 +238,20 @@ def _audit_record(
     else:
         items.append(_item("loss_targets_valid", "passed", "info", "loss targets cover assistant actions only"))
 
+    terminal_quality_reasons = _record_export_quality_diagnostic_reasons(record)
+    if terminal_quality_reasons:
+        diagnostic_reasons.extend(terminal_quality_reasons)
+        items.append(
+            _item(
+                "trajectory_terminal_quality",
+                "warning",
+                "warning",
+                ", ".join(terminal_quality_reasons),
+            )
+        )
+    else:
+        items.append(_item("trajectory_terminal_quality", "passed", "info", "terminal trajectory quality is trainable"))
+
     formal_reason = None if run_skipped_reason else _formal_final_verifier_invalid_reason(run_paths)
     if run_skipped_reason:
         items.append(_item("formal_final_verifier_source_valid", "skipped", "info", run_skipped_reason))
@@ -571,6 +585,13 @@ def _loss_target_error(record: ExportRecord, export_format: str) -> str | None:
         if observation_mask[index]:
             return f"loss target covers tool observation at index {index}"
     return None
+
+
+def _record_export_quality_diagnostic_reasons(record: ExportRecord) -> list[str]:
+    reasons = record.metadata.get("export_quality_diagnostic_reasons", [])
+    if not isinstance(reasons, list):
+        return []
+    return sorted({str(reason) for reason in reasons if reason})
 
 
 def _feedback_policy(run_paths: list[Path]) -> str | None:
