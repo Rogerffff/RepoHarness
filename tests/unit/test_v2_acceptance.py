@@ -52,6 +52,56 @@ def test_feedback_policy_coverage_rejects_missing_aggregate_metrics(tmp_path: Pa
         )
 
 
+def test_feedback_policy_coverage_rejects_single_success_without_policy_evidence(tmp_path: Path):
+    experiment_dir = tmp_path / "experiment"
+    experiment_dir.mkdir()
+    public_run = _write_policy_run(
+        experiment_dir,
+        "only-public-success",
+        test_feedback_policy="public_only",
+        feedback_tests_passed_policy="stop_immediately",
+        hidden_feedback_visible_to_model=False,
+        public_tests_ran=True,
+        hidden_feedback_ran=False,
+        agent_stop_reason="feedback_tests_passed",
+        feedback_verifier_accepted=True,
+        final_verifier_status="accepted",
+        run_outcome="success",
+    )
+    _write_json(
+        experiment_dir / "experiment_manifest.json",
+        {
+            "experiment_id": "single_success",
+            "runs": [
+                {
+                    "run_id": public_run.name,
+                    "run_dir": str(public_run),
+                    "status": "success",
+                }
+            ],
+        },
+    )
+    _write_json(
+        experiment_dir / "aggregate_metrics.json",
+        {
+            "task_count": 1,
+            "total_runs": 1,
+            "recorded_runs": 1,
+            "agent_loop_runs": 1,
+            "formal_final_verifier_runs": 1,
+            "success_count": 1,
+            "structured_skipped_runs": 0,
+            "status_distribution": {"success": 1},
+        },
+    )
+
+    with pytest.raises(ConfigError, match="structured_public_feedback is not covered"):
+        inspect_feedback_policy_coverage(
+            experiment_dir=experiment_dir,
+            assert_complete=True,
+        )
+
+
 def test_build_and_inspect_v2_acceptance_report(tmp_path: Path):
     paths = _write_acceptance_inputs(tmp_path)
     acceptance = tmp_path / "acceptance" / "v2_acceptance_report.json"
@@ -399,11 +449,86 @@ def _write_acceptance_inputs(tmp_path: Path) -> dict[str, Path]:
 def _write_experiment(tmp_path: Path) -> Path:
     experiment_dir = tmp_path / "experiment"
     experiment_dir.mkdir(exist_ok=True)
+    evidence_runs = [
+        _write_policy_run(
+            experiment_dir,
+            "policy-disabled",
+            test_feedback_policy="disabled",
+            feedback_tests_passed_policy="not_applicable",
+            hidden_feedback_visible_to_model=False,
+            public_tests_ran=False,
+            hidden_feedback_ran=False,
+            agent_stop_reason="final_answer",
+            feedback_verifier_accepted=False,
+            final_verifier_status="accepted",
+            run_outcome="success",
+        ),
+        _write_policy_run(
+            experiment_dir,
+            "policy-public-stop",
+            test_feedback_policy="public_only",
+            feedback_tests_passed_policy="stop_immediately",
+            hidden_feedback_visible_to_model=False,
+            public_tests_ran=True,
+            hidden_feedback_ran=False,
+            agent_stop_reason="feedback_tests_passed",
+            feedback_verifier_accepted=True,
+            final_verifier_status="accepted",
+            run_outcome="success",
+        ),
+        _write_policy_run(
+            experiment_dir,
+            "policy-structured-public",
+            test_feedback_policy="structured_public_feedback",
+            feedback_tests_passed_policy="stop_immediately",
+            hidden_feedback_visible_to_model=False,
+            public_tests_ran=True,
+            hidden_feedback_ran=False,
+            agent_stop_reason="feedback_tests_passed",
+            feedback_verifier_accepted=True,
+            final_verifier_status="accepted",
+            run_outcome="success",
+        ),
+        _write_policy_run(
+            experiment_dir,
+            "policy-oracle-require-final",
+            test_feedback_policy="oracle_hidden_feedback",
+            feedback_tests_passed_policy="require_model_final",
+            hidden_feedback_visible_to_model=True,
+            public_tests_ran=True,
+            hidden_feedback_ran=True,
+            agent_stop_reason="final_answer",
+            feedback_verifier_accepted=True,
+            final_verifier_status="accepted",
+            run_outcome="success",
+        ),
+        _write_policy_run(
+            experiment_dir,
+            "policy-oracle-continue",
+            test_feedback_policy="oracle_hidden_feedback",
+            feedback_tests_passed_policy="continue",
+            hidden_feedback_visible_to_model=True,
+            public_tests_ran=True,
+            hidden_feedback_ran=True,
+            agent_stop_reason="final_answer",
+            feedback_verifier_accepted=True,
+            final_verifier_status="failed",
+            run_outcome="failed",
+        ),
+    ]
     _write_json(
         experiment_dir / "experiment_manifest.json",
         {
             "experiment_id": "unit_v2_task_set",
-            "runs": [{"run_id": f"run_{index}", "status": "success"} for index in range(20)],
+            "runs": [
+                {
+                    "run_id": run_dir.name,
+                    "run_dir": str(run_dir),
+                    "status": "success" if run_dir.name != "policy-oracle-continue" else "failed",
+                }
+                for run_dir in evidence_runs
+            ]
+            + [{"run_id": f"run_{index}", "status": "success"} for index in range(15)],
         },
     )
     _write_json(
@@ -419,7 +544,59 @@ def _write_experiment(tmp_path: Path) -> Path:
             "status_distribution": {"success": 18, "invalid_task": 2},
         },
     )
+    _write_json(
+        experiment_dir / "feedback_policy_evidence.json",
+        {"run_dirs": [str(run_dir) for run_dir in evidence_runs]},
+    )
     return experiment_dir
+
+
+def _write_policy_run(
+    experiment_dir: Path,
+    run_id: str,
+    *,
+    test_feedback_policy: str,
+    feedback_tests_passed_policy: str,
+    hidden_feedback_visible_to_model: bool,
+    public_tests_ran: bool,
+    hidden_feedback_ran: bool,
+    agent_stop_reason: str,
+    feedback_verifier_accepted: bool,
+    final_verifier_status: str,
+    run_outcome: str,
+) -> Path:
+    run_dir = experiment_dir / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        run_dir / "run_config_facts.json",
+        {
+            "run_id": run_id,
+            "task_id": "task_001",
+            "scaffold_id": "simple_react",
+            "test_feedback_policy": test_feedback_policy,
+            "feedback_tests_passed_policy": feedback_tests_passed_policy,
+            "hidden_feedback_visible_to_model": hidden_feedback_visible_to_model,
+        },
+    )
+    _write_json(
+        run_dir / "metrics.json",
+        {
+            "final_verifier_status": final_verifier_status,
+            "run_outcome": run_outcome,
+            "interaction_efficiency": {
+                "agent_stop_reason": agent_stop_reason,
+                "feedback_tests_passed_policy": feedback_tests_passed_policy,
+                "feedback_verifier_accepted": feedback_verifier_accepted,
+                "final_verifier_mode": "strict_patch_replay",
+                "first_feedback_accept_turn": 1 if feedback_verifier_accepted else None,
+                "hidden_feedback_ran": hidden_feedback_ran,
+                "hidden_feedback_visible_to_model": hidden_feedback_visible_to_model,
+                "public_tests_ran": public_tests_ran,
+                "test_feedback_policy": test_feedback_policy,
+            },
+        },
+    )
+    return run_dir
 
 
 def _write_export(root: Path, dirname: str, export_format: str, data_file: str) -> None:

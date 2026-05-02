@@ -15,6 +15,7 @@ from repo_harness.workspace import inspect_workspace_backend_status, load_worksp
 
 V2_ACCEPTANCE_REPORT_VERSION = "repo_harness_v2_acceptance_report_v0"
 FEEDBACK_POLICY_COVERAGE_VERSION = "repo_harness_feedback_policy_coverage_v0"
+FEEDBACK_POLICY_EVIDENCE_FILE = "feedback_policy_evidence.json"
 
 REQUIRED_TEST_FEEDBACK_POLICIES = {
     "disabled",
@@ -64,9 +65,15 @@ def inspect_feedback_policy_coverage(
         {
             "status": report["status"],
             "experiment_dir": report["experiment_dir"],
-            "covered_test_feedback_policies": sorted(report["test_feedback_policy_coverage"]),
+            "covered_test_feedback_policies": sorted(
+                name
+                for name, entry in report["test_feedback_policy_coverage"].items()
+                if entry.get("status") == "covered"
+            ),
             "covered_feedback_tests_passed_policies": sorted(
-                report["feedback_tests_passed_policy_coverage"]
+                name
+                for name, entry in report["feedback_tests_passed_policy_coverage"].items()
+                if entry.get("status") == "covered"
             ),
             "checks": ["feedback_policy_coverage=passed"] if assert_complete else [],
         },
@@ -80,13 +87,14 @@ def build_feedback_policy_coverage_report(experiment_dir: str | Path) -> dict[st
     root = Path(experiment_dir)
     manifest_path = root / "experiment_manifest.json"
     aggregate_path = root / "aggregate_metrics.json"
+    evidence_path = root / FEEDBACK_POLICY_EVIDENCE_FILE
     manifest = _read_json_if_exists(manifest_path)
     aggregate = _read_json_if_exists(aggregate_path)
-    public_run_ids = [
-        str(run.get("run_id"))
-        for run in manifest.get("runs", [])
-        if run.get("status") == "success"
-    ][:3]
+    samples = _feedback_policy_samples(
+        root=root,
+        manifest=manifest,
+        evidence_path=evidence_path,
+    )
     report = {
         "schema_version": FEEDBACK_POLICY_COVERAGE_VERSION,
         "status": "passed",
@@ -94,101 +102,14 @@ def build_feedback_policy_coverage_report(experiment_dir: str | Path) -> dict[st
         "experiment_dir": str(root),
         "experiment_manifest_ref": _file_ref(manifest_path) if manifest_path.exists() else None,
         "aggregate_metrics_ref": _file_ref(aggregate_path) if aggregate_path.exists() else None,
-        "test_feedback_policy_coverage": {
-            "disabled": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_test_feedback_policy.py::test_test_feedback_disabled_hides_run_tests_and_blocks_direct_call",
-                    "tests/integration/test_command_environment_policy_gate.py::test_disabled_feedback_policy_blocks_bash_pytest_bypass_in_full_run",
-                ],
-                "sample": {
-                    "feedback_tests_passed_policy": "not_applicable",
-                    "hidden_feedback_visible_to_model": False,
-                    "public_tests_ran": False,
-                    "hidden_feedback_ran": False,
-                    "agent_stop_reason_not_feedback_tests_passed": True,
-                },
-            },
-            "public_only": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_test_feedback_policy.py::test_public_only_test_feedback_sanitizes_model_visible_result",
-                    str(manifest_path),
-                ],
-                "sample": {
-                    "experiment_success_run_ids": public_run_ids,
-                    "hidden_feedback_visible_to_model": False,
-                    "public_tests_ran": True,
-                    "hidden_feedback_ran": False,
-                },
-            },
-            "structured_public_feedback": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_test_feedback_policy.py::test_structured_public_test_feedback_sanitizes_model_visible_result",
-                ],
-                "sample": {
-                    "hidden_feedback_visible_to_model": False,
-                    "public_feedback_shape": "structured_public_summary_only",
-                    "hidden_feedback_ran": False,
-                },
-            },
-            "oracle_hidden_feedback": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_feedback_tests_passed_policy.py::test_feedback_tests_passed_stop_immediately_preserves_replay_default",
-                    "tests/integration/test_export_from_run.py::test_sft_export_from_success_run_filters_default_oracle_feedback",
-                ],
-                "sample": {
-                    "hidden_feedback_visible_to_model": True,
-                    "default_training_eligibility": "diagnostic_only",
-                    "explicit_training_requires_export_policy": True,
-                    "swe_bench_like_final_only_allowed": False,
-                },
-            },
-        },
-        "feedback_tests_passed_policy_coverage": {
-            "stop_immediately": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_feedback_tests_passed_policy.py::test_feedback_tests_passed_stop_immediately_preserves_replay_default",
-                ],
-                "sample": {
-                    "agent_stop_reason": "feedback_tests_passed",
-                    "feedback_verifier_accepted": True,
-                },
-            },
-            "require_model_final": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_feedback_tests_passed_policy.py::test_feedback_tests_passed_require_model_final_consumes_replay_final_answer",
-                ],
-                "sample": {
-                    "agent_stop_reason": "final_answer",
-                    "feedback_verifier_accepted": True,
-                },
-            },
-            "continue": {
-                "status": "covered",
-                "evidence": [
-                    "tests/unit/test_feedback_tests_passed_policy.py::test_feedback_tests_passed_continue_keeps_negative_final_verifier_sample",
-                ],
-                "sample": {
-                    "agent_stop_reason": "final_answer",
-                    "feedback_verifier_accepted": True,
-                    "final_verifier_status": "failed",
-                },
-            },
-        },
-        "disabled_combination": {
-            "status": "covered",
-            "feedback_tests_passed_policy": "not_applicable",
-            "cannot_trigger_feedback_tests_passed_stop": True,
-        },
+        "feedback_policy_evidence_ref": _file_ref(evidence_path) if evidence_path.exists() else None,
+        "evidence_run_count": len(samples),
+        "test_feedback_policy_coverage": _test_feedback_policy_coverage(samples),
+        "feedback_tests_passed_policy_coverage": _feedback_tests_passed_policy_coverage(samples),
+        "disabled_combination": _disabled_feedback_combination(samples),
         "experiment_summary": {
             "task_count": aggregate.get("task_count", 0),
             "success_count": aggregate.get("success_count", 0),
-            "test_feedback_policy": "public_only",
         },
     }
     failures = _feedback_policy_failures(report)
@@ -565,6 +486,219 @@ def _docker_stage_failures(docker_stage: dict[str, Any]) -> list[str]:
     return []
 
 
+def _feedback_policy_samples(
+    *,
+    root: Path,
+    manifest: dict[str, Any],
+    evidence_path: Path,
+) -> list[dict[str, Any]]:
+    run_dirs: dict[str, Path] = {}
+    for run in manifest.get("runs", []):
+        if not isinstance(run, dict):
+            continue
+        run_dir = run.get("run_dir")
+        if isinstance(run_dir, str) and run_dir:
+            path = _resolve_run_dir(root, run_dir)
+            run_dirs[str(path)] = path
+    if evidence_path.exists():
+        evidence = _read_json(evidence_path)
+        for entry in evidence.get("run_dirs", []):
+            run_dir = None
+            if isinstance(entry, str):
+                run_dir = entry
+            elif isinstance(entry, dict):
+                run_dir = entry.get("run_dir") or entry.get("path")
+            if isinstance(run_dir, str) and run_dir:
+                path = _resolve_run_dir(root, run_dir)
+                run_dirs[str(path)] = path
+
+    samples = []
+    for run_dir in sorted(run_dirs.values(), key=lambda path: str(path)):
+        sample = _feedback_policy_sample_for_run(run_dir)
+        if sample is not None:
+            samples.append(sample)
+    return samples
+
+
+def _resolve_run_dir(root: Path, run_dir: str) -> Path:
+    path = Path(run_dir)
+    if path.is_absolute():
+        return path
+    candidates = [root / path, Path.cwd() / path]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return root / path
+
+
+def _feedback_policy_sample_for_run(run_dir: Path) -> dict[str, Any] | None:
+    facts_path = run_dir / "run_config_facts.json"
+    metrics_path = run_dir / "metrics.json"
+    if not facts_path.exists() or not metrics_path.exists():
+        return None
+    facts = _read_json(facts_path)
+    metrics = _read_json(metrics_path)
+    interaction = metrics.get("interaction_efficiency", {})
+    run_id = str(facts.get("run_id") or metrics.get("run_id") or run_dir.name)
+    run_outcome = metrics.get("run_outcome")
+    success_run_ids = [run_id] if run_outcome == "success" else []
+    return {
+        "run_dir": str(run_dir),
+        "run_id": run_id,
+        "task_id": facts.get("task_id"),
+        "scaffold_id": facts.get("scaffold_id"),
+        "run_config_facts_ref": _file_ref(facts_path),
+        "metrics_ref": _file_ref(metrics_path),
+        "test_feedback_policy": facts.get("test_feedback_policy")
+        or interaction.get("test_feedback_policy"),
+        "feedback_tests_passed_policy": facts.get("feedback_tests_passed_policy")
+        or interaction.get("feedback_tests_passed_policy"),
+        "hidden_feedback_visible_to_model": bool(
+            facts.get("hidden_feedback_visible_to_model")
+            or interaction.get("hidden_feedback_visible_to_model")
+        ),
+        "public_tests_ran": bool(interaction.get("public_tests_ran")),
+        "hidden_feedback_ran": bool(interaction.get("hidden_feedback_ran")),
+        "agent_stop_reason": interaction.get("agent_stop_reason"),
+        "agent_stop_reason_not_feedback_tests_passed": (
+            interaction.get("agent_stop_reason") != "feedback_tests_passed"
+        ),
+        "feedback_verifier_accepted": bool(interaction.get("feedback_verifier_accepted")),
+        "first_feedback_accept_turn": interaction.get("first_feedback_accept_turn"),
+        "final_verifier_status": metrics.get("final_verifier_status"),
+        "run_outcome": run_outcome,
+        "experiment_success_run_ids": success_run_ids,
+    }
+
+
+def _test_feedback_policy_coverage(samples: list[dict[str, Any]]) -> dict[str, Any]:
+    coverage = {
+        name: {"status": "missing", "evidence": [], "sample": {}}
+        for name in sorted(REQUIRED_TEST_FEEDBACK_POLICIES)
+    }
+    matchers = {
+        "disabled": _is_disabled_feedback_sample,
+        "public_only": _is_public_only_feedback_sample,
+        "structured_public_feedback": _is_structured_public_feedback_sample,
+        "oracle_hidden_feedback": _is_oracle_hidden_feedback_sample,
+    }
+    for policy, matcher in matchers.items():
+        sample = next((candidate for candidate in samples if matcher(candidate)), None)
+        if sample is not None:
+            coverage[policy] = _coverage_entry(sample)
+    return coverage
+
+
+def _feedback_tests_passed_policy_coverage(samples: list[dict[str, Any]]) -> dict[str, Any]:
+    coverage = {
+        name: {"status": "missing", "evidence": [], "sample": {}}
+        for name in sorted(REQUIRED_FEEDBACK_TESTS_PASSED_POLICIES)
+    }
+    matchers = {
+        "continue": _is_continue_feedback_tests_sample,
+        "require_model_final": _is_require_model_final_feedback_tests_sample,
+        "stop_immediately": _is_stop_immediately_feedback_tests_sample,
+    }
+    for policy, matcher in matchers.items():
+        sample = next((candidate for candidate in samples if matcher(candidate)), None)
+        if sample is not None:
+            coverage[policy] = _coverage_entry(sample)
+    return coverage
+
+
+def _disabled_feedback_combination(samples: list[dict[str, Any]]) -> dict[str, Any]:
+    sample = next((candidate for candidate in samples if _is_disabled_feedback_sample(candidate)), None)
+    if sample is None:
+        return {
+            "status": "missing",
+            "feedback_tests_passed_policy": None,
+            "cannot_trigger_feedback_tests_passed_stop": False,
+            "sample": {},
+        }
+    return {
+        "status": "covered",
+        "feedback_tests_passed_policy": sample.get("feedback_tests_passed_policy"),
+        "cannot_trigger_feedback_tests_passed_stop": sample.get(
+            "agent_stop_reason_not_feedback_tests_passed"
+        )
+        is True,
+        "sample": sample,
+    }
+
+
+def _coverage_entry(sample: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": "covered",
+        "evidence": [
+            sample["run_config_facts_ref"]["path"],
+            sample["metrics_ref"]["path"],
+        ],
+        "sample": sample,
+    }
+
+
+def _is_disabled_feedback_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("test_feedback_policy") == "disabled"
+        and sample.get("feedback_tests_passed_policy") == "not_applicable"
+        and sample.get("hidden_feedback_visible_to_model") is False
+        and sample.get("public_tests_ran") is False
+        and sample.get("hidden_feedback_ran") is False
+        and sample.get("agent_stop_reason_not_feedback_tests_passed") is True
+    )
+
+
+def _is_public_only_feedback_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("test_feedback_policy") == "public_only"
+        and sample.get("hidden_feedback_visible_to_model") is False
+        and sample.get("public_tests_ran") is True
+        and sample.get("hidden_feedback_ran") is False
+        and bool(sample.get("experiment_success_run_ids"))
+    )
+
+
+def _is_structured_public_feedback_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("test_feedback_policy") == "structured_public_feedback"
+        and sample.get("hidden_feedback_visible_to_model") is False
+        and sample.get("public_tests_ran") is True
+        and sample.get("hidden_feedback_ran") is False
+    )
+
+
+def _is_oracle_hidden_feedback_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("test_feedback_policy") == "oracle_hidden_feedback"
+        and sample.get("hidden_feedback_visible_to_model") is True
+        and sample.get("hidden_feedback_ran") is True
+    )
+
+
+def _is_stop_immediately_feedback_tests_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("feedback_tests_passed_policy") == "stop_immediately"
+        and sample.get("feedback_verifier_accepted") is True
+        and sample.get("agent_stop_reason") == "feedback_tests_passed"
+    )
+
+
+def _is_require_model_final_feedback_tests_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("feedback_tests_passed_policy") == "require_model_final"
+        and sample.get("feedback_verifier_accepted") is True
+        and sample.get("agent_stop_reason") == "final_answer"
+    )
+
+
+def _is_continue_feedback_tests_sample(sample: dict[str, Any]) -> bool:
+    return (
+        sample.get("feedback_tests_passed_policy") == "continue"
+        and sample.get("feedback_verifier_accepted") is True
+        and sample.get("agent_stop_reason") == "final_answer"
+    )
+
+
 def _feedback_policy_failures(report: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     if report.get("status") != "passed":
@@ -581,31 +715,59 @@ def _feedback_policy_failures(report: dict[str, Any]) -> list[str]:
             report.get("aggregate_metrics_ref"),
         )
     )
+    if report.get("feedback_policy_evidence_ref") is not None:
+        failures.extend(
+            _file_ref_failures(
+                "feedback policy evidence ref",
+                report.get("feedback_policy_evidence_ref"),
+            )
+        )
     experiment_summary = report.get("experiment_summary", {})
     if int(experiment_summary.get("task_count", 0)) <= 0:
         failures.append("feedback policy coverage requires aggregate task_count evidence")
+    if int(report.get("evidence_run_count", 0)) <= 0:
+        failures.append("feedback policy coverage requires machine-readable run evidence")
     test_policy = report.get("test_feedback_policy_coverage", {})
     missing_test = sorted(REQUIRED_TEST_FEEDBACK_POLICIES - set(test_policy))
     if missing_test:
         failures.append("missing test_feedback_policy coverage: " + ", ".join(missing_test))
     for name in REQUIRED_TEST_FEEDBACK_POLICIES:
-        if test_policy.get(name, {}).get("status") != "covered":
+        entry = test_policy.get(name, {})
+        if entry.get("status") != "covered":
             failures.append(f"test_feedback_policy {name} is not covered")
+        failures.extend(_feedback_sample_ref_failures(f"test_feedback_policy {name}", entry))
     feedback_policy = report.get("feedback_tests_passed_policy_coverage", {})
     missing_feedback = sorted(REQUIRED_FEEDBACK_TESTS_PASSED_POLICIES - set(feedback_policy))
     if missing_feedback:
         failures.append("missing feedback_tests_passed_policy coverage: " + ", ".join(missing_feedback))
     for name in REQUIRED_FEEDBACK_TESTS_PASSED_POLICIES:
-        if feedback_policy.get(name, {}).get("status") != "covered":
+        entry = feedback_policy.get(name, {})
+        if entry.get("status") != "covered":
             failures.append(f"feedback_tests_passed_policy {name} is not covered")
+        failures.extend(_feedback_sample_ref_failures(f"feedback_tests_passed_policy {name}", entry))
     disabled = report.get("disabled_combination", {})
+    if disabled.get("status") != "covered":
+        failures.append("disabled feedback combination is not covered")
     if disabled.get("feedback_tests_passed_policy") != "not_applicable":
         failures.append("disabled feedback policy must resolve feedback_tests_passed_policy to not_applicable")
     if disabled.get("cannot_trigger_feedback_tests_passed_stop") is not True:
         failures.append("disabled feedback policy must not trigger feedback_tests_passed stop")
+    failures.extend(_feedback_sample_ref_failures("disabled feedback combination", disabled))
     public_sample = test_policy.get("public_only", {}).get("sample", {})
     if not public_sample.get("experiment_success_run_ids"):
         failures.append("public_only feedback coverage requires experiment success run evidence")
+    return failures
+
+
+def _feedback_sample_ref_failures(name: str, entry: dict[str, Any]) -> list[str]:
+    if entry.get("status") != "covered":
+        return []
+    sample = entry.get("sample")
+    if not isinstance(sample, dict) or not sample:
+        return [f"{name} coverage missing machine-readable sample"]
+    failures: list[str] = []
+    failures.extend(_file_ref_failures(f"{name} run_config_facts_ref", sample.get("run_config_facts_ref")))
+    failures.extend(_file_ref_failures(f"{name} metrics_ref", sample.get("metrics_ref")))
     return failures
 
 
