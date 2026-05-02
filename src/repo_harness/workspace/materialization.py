@@ -9,6 +9,7 @@ import tempfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from repo_harness.errors import WorkspaceError
 from repo_harness.run_metadata.schemas import SourceCheckoutFacts
@@ -51,13 +52,21 @@ def materialize_source(task: RunnableTask, destination: str | Path) -> SourceChe
             task=task,
             root=destination_path,
             source_type="fixture_path",
+            remote_url=task.decontamination_metadata.source_url,
+            mirror_source="fixture_path",
             base_commit=task.base_commit or source.base_commit,
+            resolved_commit=task.base_commit or source.base_commit,
             synthetic_base_id=source.synthetic_base_id,
             archive_sha256=task.source_archive_sha256,
+            mirror_sha256=None,
             decontamination_status=task.decontamination_metadata.status,
             remotes_stripped=True,
             branches_stripped=True,
             tags_stripped=True,
+            materialization_command_facts=_copy_command_facts(
+                source_type="fixture_path",
+                input_kind="fixture_path",
+            ),
         )
         return SourceCheckout(root=destination_path, facts=facts)
     if isinstance(source, LocalRepositorySource):
@@ -110,7 +119,59 @@ def _materialize_local_repository(
     source_path = Path(source.source_path)
     if not source_path.exists() or not source_path.is_dir():
         raise WorkspaceError(f"local_repository source does not exist: {source_path}")
+    if not (source_path / ".git").exists() and source.base_commit:
+        _copy_source_tree(source_path, destination)
+        facts = _facts_for_local_tree(
+            task=task,
+            root=destination,
+            source_type="fixed_local_mirror",
+            remote_url=task.decontamination_metadata.source_url,
+            mirror_source=task.decontamination_metadata.source_url or "fixed_local_mirror",
+            base_commit=source.base_commit,
+            resolved_commit=source.base_commit,
+            synthetic_base_id=None,
+            archive_sha256=task.source_archive_sha256,
+            mirror_sha256=_metadata_sha256(task, "source_tree_hash"),
+            decontamination_status=source.decontamination_status,
+            current_commit=None,
+            working_tree_clean=source.working_tree_clean,
+            dirty_snapshot_allowed=source.allow_dirty_snapshot,
+            remotes_stripped=True,
+            branches_stripped=True,
+            tags_stripped=True,
+            materialization_command_facts=_copy_command_facts(
+                source_type="fixed_local_mirror",
+                input_kind="local_directory",
+            ),
+        )
+        return SourceCheckout(root=destination, facts=facts)
     git_commit = _git_output(source_path, ["rev-parse", "HEAD"])
+    if git_commit is None and source.base_commit:
+        _copy_source_tree(source_path, destination)
+        facts = _facts_for_local_tree(
+            task=task,
+            root=destination,
+            source_type="fixed_local_mirror",
+            remote_url=task.decontamination_metadata.source_url,
+            mirror_source=task.decontamination_metadata.source_url or "fixed_local_mirror",
+            base_commit=source.base_commit,
+            resolved_commit=source.base_commit,
+            synthetic_base_id=None,
+            archive_sha256=task.source_archive_sha256,
+            mirror_sha256=_metadata_sha256(task, "source_tree_hash"),
+            decontamination_status=source.decontamination_status,
+            current_commit=None,
+            working_tree_clean=source.working_tree_clean,
+            dirty_snapshot_allowed=source.allow_dirty_snapshot,
+            remotes_stripped=True,
+            branches_stripped=True,
+            tags_stripped=True,
+            materialization_command_facts=_copy_command_facts(
+                source_type="fixed_local_mirror",
+                input_kind="local_directory",
+            ),
+        )
+        return SourceCheckout(root=destination, facts=facts)
     if git_commit is None:
         raise WorkspaceError("local_repository source must be a Git repository with readable HEAD.")
     if source.current_commit is not None and git_commit is not None and source.current_commit != git_commit:
@@ -144,9 +205,13 @@ def _materialize_local_repository(
         task=task,
         root=destination,
         source_type="local_repository",
+        remote_url=task.decontamination_metadata.source_url,
+        mirror_source=task.decontamination_metadata.source_url or "local_repository",
         base_commit=source.base_commit or current_commit or task.base_commit,
+        resolved_commit=current_commit or source.base_commit or task.base_commit,
         synthetic_base_id=source.synthetic_base_id if not (source.base_commit or current_commit or task.base_commit) else None,
         archive_sha256=task.source_archive_sha256,
+        mirror_sha256=None,
         decontamination_status=source.decontamination_status,
         current_commit=current_commit,
         working_tree_clean=working_tree_clean,
@@ -154,6 +219,10 @@ def _materialize_local_repository(
         remotes_stripped=True,
         branches_stripped=True,
         tags_stripped=True,
+        materialization_command_facts=_copy_command_facts(
+            source_type="local_repository",
+            input_kind="git_worktree_copy",
+        ),
     )
     return SourceCheckout(root=destination, facts=facts)
 
@@ -198,13 +267,21 @@ def _materialize_archive(
         task=task,
         root=destination,
         source_type=source_type,
+        remote_url=getattr(source, "remote_url", None) or task.decontamination_metadata.source_url,
+        mirror_source=getattr(source, "mirror_source", None) or source_type,
         base_commit=base_commit,
+        resolved_commit=base_commit,
         synthetic_base_id=synthetic_base_id,
         archive_sha256=archive_sha256,
+        mirror_sha256=None,
         decontamination_status=decontamination_status,
         remotes_stripped=remotes_stripped,
         branches_stripped=branches_stripped,
         tags_stripped=tags_stripped,
+        materialization_command_facts=_extract_command_facts(
+            source_type=source_type,
+            expected_root_directory=expected_root_directory,
+        ),
     )
     return SourceCheckout(root=destination, facts=facts)
 
@@ -214,9 +291,13 @@ def _facts_for_local_tree(
     task: RunnableTask,
     root: Path,
     source_type: str,
+    remote_url: str | None,
+    mirror_source: str | None,
     base_commit: str | None,
+    resolved_commit: str | None,
     synthetic_base_id: str | None,
     archive_sha256: str | None,
+    mirror_sha256: str | None,
     decontamination_status: str | None,
     current_commit: str | None = None,
     working_tree_clean: bool | None = None,
@@ -224,13 +305,18 @@ def _facts_for_local_tree(
     remotes_stripped: bool | None = None,
     branches_stripped: bool | None = None,
     tags_stripped: bool | None = None,
+    materialization_command_facts: dict[str, Any] | None = None,
 ) -> SourceCheckoutFacts:
     return SourceCheckoutFacts(
         source_kind=task.metadata.get("source_kind") or source_type,
         source_type=source_type,
+        remote_url=remote_url,
+        mirror_source=mirror_source,
         base_commit=base_commit,
+        resolved_commit=resolved_commit or current_commit or base_commit,
         synthetic_base_id=synthetic_base_id if not base_commit else None,
         source_archive_sha256=archive_sha256,
+        mirror_sha256=mirror_sha256,
         source_tree_hash=compute_source_tree_hash(root),
         checkout_path_status="redacted",
         decontamination_status=decontamination_status,
@@ -241,7 +327,49 @@ def _facts_for_local_tree(
         branches_stripped=branches_stripped,
         tags_stripped=tags_stripped,
         materialization_policy_version=SOURCE_MATERIALIZATION_POLICY_VERSION,
+        materialization_command_facts=materialization_command_facts or {},
     )
+
+
+def _copy_command_facts(*, source_type: str, input_kind: str) -> dict[str, Any]:
+    return {
+        "schema_version": "repo_harness_source_materialization_command_facts_v3_v0",
+        "command_name": "copy_source_tree",
+        "argv": ["copy_source_tree", "<source:redacted>", "<destination:redacted>"],
+        "source_type": source_type,
+        "input_kind": input_kind,
+        "cwd_status": "not_applicable",
+        "input_path_status": "redacted",
+        "output_path_status": "redacted",
+        "network_used": False,
+    }
+
+
+def _extract_command_facts(*, source_type: str, expected_root_directory: str) -> dict[str, Any]:
+    return {
+        "schema_version": "repo_harness_source_materialization_command_facts_v3_v0",
+        "command_name": "extract_fixed_archive",
+        "argv": [
+            "extract_fixed_archive",
+            "<archive:redacted>",
+            expected_root_directory,
+            "<destination:redacted>",
+        ],
+        "source_type": source_type,
+        "input_kind": "fixed_archive",
+        "cwd_status": "not_applicable",
+        "input_path_status": "redacted",
+        "output_path_status": "redacted",
+        "expected_root_directory": expected_root_directory,
+        "network_used": False,
+    }
+
+
+def _metadata_sha256(task: RunnableTask, key: str) -> str | None:
+    value = task.metadata.get(key)
+    if isinstance(value, str) and len(value) == 64:
+        return value
+    return None
 
 
 def _copy_source_tree(source: Path, destination: Path) -> None:
@@ -266,7 +394,7 @@ def _extract_archive(archive_path: Path, destination: Path) -> None:
         with tarfile.open(archive_path) as archive:
             for member in archive.getmembers():
                 _ensure_safe_archive_member(destination, member.name)
-            archive.extractall(destination)
+            archive.extractall(destination, filter="data")
         return
     raise WorkspaceError(f"unsupported archive format: {archive_path.name}")
 

@@ -30,6 +30,10 @@ from repo_harness.v3_swebench_fixture import (
     inspect_v3_swebench_fixture,
     prepare_v3_swebench_fixture,
 )
+from repo_harness.v3_source_materialization import (
+    build_v3_source_materialization,
+    inspect_v3_source_materialization,
+)
 from repo_harness.v3_task_set import build_v3_task_set, inspect_v3_task_set
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
@@ -266,6 +270,23 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v3_tasks.add_argument("run_dir", help="包含 task_adapter_facts.json 的目录。")
     inspect_v3_tasks.add_argument("--assert-complete", action="store_true", help="要求 V3 task set 完整。")
 
+    build_v3_sources = subparsers.add_parser(
+        "build-v3-source-materialization",
+        help="从固定本地 archive/mirror materialize V3 source 并准备 verifier workspace。",
+    )
+    build_v3_sources.add_argument("--task-set-dir", required=True, help="阶段 4 task set 产物目录。")
+    build_v3_sources.add_argument("--swebench-source-manifest", required=True, help="SWE-Bench-like 固定源码 archive manifest。")
+    build_v3_sources.add_argument("--hidden-verifier-inputs", required=True, help="阶段 0 evaluator-only hidden verifier inputs JSONL。")
+    build_v3_sources.add_argument("--output-dir", required=True, help="source materialization 产物目录。")
+
+    inspect_v3_sources = subparsers.add_parser(
+        "inspect-v3-source-materialization",
+        help="只读检查 V3 source materialization 产物。",
+    )
+    inspect_v3_sources.add_argument("run_dir", help="source materialization 产物目录。")
+    inspect_v3_sources.add_argument("--report", required=True, help="source_materialization_report.json 路径。")
+    inspect_v3_sources.add_argument("--assert-complete", action="store_true", help="要求 source materialization 完整。")
+
     return parser
 
 
@@ -447,6 +468,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 task set 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-source-materialization":
+        try:
+            output_path = build_v3_source_materialization(
+                task_set_dir=args.task_set_dir,
+                swebench_source_manifest=args.swebench_source_manifest,
+                hidden_verifier_inputs=args.hidden_verifier_inputs,
+                output_dir=args.output_dir,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 source materialization 构建失败：{exc}\n")
+        print(f"V3 source materialization 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-v3-source-materialization":
+        try:
+            print(
+                inspect_v3_source_materialization(
+                    args.run_dir,
+                    report=args.report,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 source materialization 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

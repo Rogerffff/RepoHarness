@@ -123,9 +123,13 @@ class SourceCheckoutFacts(StrictBaseModel):
     schema_version: str = "repo_harness_source_checkout_facts_v2_v0"
     source_kind: str
     source_type: str | None = None
+    remote_url: str | None = None
+    mirror_source: str | None = None
     base_commit: str | None = None
+    resolved_commit: str | None = None
     synthetic_base_id: str | None = None
     source_archive_sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
+    mirror_sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
     source_tree_hash: str
     checkout_path_status: Literal["recorded", "redacted", "unknown"] = "unknown"
     decontamination_status: str | None = None
@@ -137,6 +141,7 @@ class SourceCheckoutFacts(StrictBaseModel):
     branches_stripped: bool | None = None
     tags_stripped: bool | None = None
     materialization_policy_version: str = "repo_harness_source_materialization_v0"
+    materialization_command_facts: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def require_base_identity(self) -> "SourceCheckoutFacts":
