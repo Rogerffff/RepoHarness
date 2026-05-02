@@ -2,11 +2,11 @@
 
 ## 设计目标
 
-这篇文档把 RepoHarness 的核心对象、配置字段、后续源代码目录和端到端数据流集中定义。它不包含具体实现代码，而是给下一阶段工程实现提供统一命名和边界，避免每个模块重复定义相似的数据结构。
+这篇文档把 RepoHarness 的核心对象、配置字段、源代码目录和端到端数据流集中定义。它不替代第二版范围文档或实施计划，而是给工程实现提供统一命名和边界，避免每个模块重复定义相似的数据结构。
 
 ## 源代码目录
 
-本文最初用于规划第一版实现的模块边界。第一版完成后，代码已经按下面的目录结构落地；其中真实模型供应商接入、Docker 执行模式和更复杂 scaffold 仍然属于后续扩展，不属于第一版已实现能力。
+本文最初用于规划第一版实现的模块边界。第二版实现后，代码已经按下面的目录结构扩展到 run metadata、导出审计、多 rollout、scaffold registry、mock provider、DeepSeek 主 provider、OpenAI fallback provider、任务集扩展和 Docker execution mode 的 interface-only 可审计路径。Docker backend 仍未实现，不能描述为生产级安全沙箱或已经交付的容器执行后端。
 
 ```text
 src/repo_harness/
@@ -26,7 +26,7 @@ src/repo_harness/
   workspace/         # local process and Docker-based executable repository environment
 ```
 
-这些目录用于维持对象所有权和模块边界。当前已实现范围以根目录 `README.md`、`docs/v1-walkthrough.md` 和 `docs/v1-final-acceptance.md` 为准。
+这些目录用于维持对象所有权和模块边界。第一版兼容范围以 `docs/v1-walkthrough.md` 和 `docs/v1-final-acceptance.md` 为准；第二版能力边界以 `docs/v2/scope-and-roadmap.md`、`docs/v2/implementation-plan.md` 和 `docs/v2/final-acceptance.md` 为准。
 
 ## RunConfig
 
@@ -236,4 +236,4 @@ logging:
 
 ## 设计边界
 
-这篇文档定义第一版对象流和后续扩展接口。第一版已经实现最小可运行闭环，但本文中的真实模型供应商、Docker execution mode、复杂 scaffold 和更大规模导出能力仍然只是后续扩展方向，不能被 README、summary 或展示材料描述成已交付能力。
+这篇文档定义 RepoHarness 的对象流和扩展接口。第一版已经实现 replay-only 最小可运行闭环；第二版已经在该闭环上交付更强 run metadata、导出审计、多 rollout、scaffold registry、`single_shot_patch`、计划内 `planner_coder_verifier`、mock provider、DeepSeek provider、OpenAI fallback provider、20 个任务级 fixture 和 Docker interface-only 状态检查。Docker backend、生产级安全沙箱、完整公开榜单基础设施和新的强化学习算法仍然不属于当前已交付能力，不能被 README、summary 或展示材料描述成已经完成。
