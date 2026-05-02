@@ -17,6 +17,7 @@ from repo_harness.model_client.providers.deepseek import (
     DEEPSEEK_OFFICIAL_DOCS_URL,
     deepseek_credential_status,
 )
+from repo_harness.model_client.redaction import sanitize_provider_error_message
 from repo_harness.model_client.providers.openai import (
     OPENAI_BASE_URL,
     OPENAI_DEFAULT_MODEL,
@@ -309,6 +310,7 @@ def _failed_report_from_exception(
     exc: Exception,
     primary_report: dict[str, Any] | None,
 ) -> dict[str, Any]:
+    safe_reason = sanitize_provider_error_message(str(exc))[:1000]
     return {
         **_base_report(
             status="provider_error",
@@ -335,10 +337,10 @@ def _failed_report_from_exception(
             {
                 "provider": provider,
                 "model_error_type": "provider_error",
-                "reason": str(exc)[:1000],
+                "reason": safe_reason,
             },
         ],
-        "failures": [str(exc)[:1000]],
+        "failures": [safe_reason],
     }
 
 

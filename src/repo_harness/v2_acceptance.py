@@ -137,7 +137,7 @@ def build_feedback_policy_coverage_report(experiment_dir: str | Path) -> dict[st
                 "status": "covered",
                 "evidence": [
                     "tests/unit/test_feedback_tests_passed_policy.py::test_feedback_tests_passed_stop_immediately_preserves_replay_default",
-                    "tests/integration/test_export_from_run.py::test_sft_export_from_success_run_masks_assistant_actions",
+                    "tests/integration/test_export_from_run.py::test_sft_export_from_success_run_filters_default_oracle_feedback",
                 ],
                 "sample": {
                     "hidden_feedback_visible_to_model": True,
@@ -456,6 +456,7 @@ def _source_consistency_failures(report: dict[str, Any]) -> list[str]:
             ["format_distribution"],
         )
     )
+    failures.extend(_export_summary_mismatches(report_exports, export_summary))
     failures.extend(_real_provider_failures(real))
     failures.extend(_docker_stage_failures(docker))
     failures.extend(_feedback_policy_failures(feedback))
@@ -568,6 +569,21 @@ def _feedback_policy_failures(report: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     if report.get("status") != "passed":
         failures.append("feedback policy coverage report did not pass")
+    failures.extend(
+        _file_ref_failures(
+            "feedback policy experiment_manifest_ref",
+            report.get("experiment_manifest_ref"),
+        )
+    )
+    failures.extend(
+        _file_ref_failures(
+            "feedback policy aggregate_metrics_ref",
+            report.get("aggregate_metrics_ref"),
+        )
+    )
+    experiment_summary = report.get("experiment_summary", {})
+    if int(experiment_summary.get("task_count", 0)) <= 0:
+        failures.append("feedback policy coverage requires aggregate task_count evidence")
     test_policy = report.get("test_feedback_policy_coverage", {})
     missing_test = sorted(REQUIRED_TEST_FEEDBACK_POLICIES - set(test_policy))
     if missing_test:
@@ -587,6 +603,9 @@ def _feedback_policy_failures(report: dict[str, Any]) -> list[str]:
         failures.append("disabled feedback policy must resolve feedback_tests_passed_policy to not_applicable")
     if disabled.get("cannot_trigger_feedback_tests_passed_stop") is not True:
         failures.append("disabled feedback policy must not trigger feedback_tests_passed stop")
+    public_sample = test_policy.get("public_only", {}).get("sample", {})
+    if not public_sample.get("experiment_success_run_ids"):
+        failures.append("public_only feedback coverage requires experiment success run evidence")
     return failures
 
 
@@ -609,6 +628,10 @@ def _export_audit_failures(export_audits: dict[str, Any]) -> list[str]:
     scan = export_audits.get("training_payload_scan", {})
     if scan.get("provider_raw_markers_found"):
         failures.append("provider raw response markers found in training payload")
+    if scan.get("non_trainable_records_found"):
+        failures.append("non-trainable sample found in training payload")
+    if scan.get("jsonl_parse_failures"):
+        failures.append("training payload JSONL parse failures found")
     return failures
 
 
@@ -660,29 +683,106 @@ def _formal_training_data_only_trainable(audit: dict[str, Any]) -> bool:
     return True
 
 
+def _export_summary_mismatches(actual: dict[str, Any], expected: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    actual_roots = actual.get("roots", [])
+    expected_roots = expected.get("roots", [])
+    if len(actual_roots) != len(expected_roots):
+        return ["export_audits root count does not match referenced sources"]
+    for index, (actual_root, expected_root) in enumerate(zip(actual_roots, expected_roots, strict=True)):
+        root_label = expected_root.get("root_path") or f"root[{index}]"
+        for key in ("root_path", "inspect_status", "inspect_error"):
+            if actual_root.get(key) != expected_root.get(key):
+                failures.append(f"export_audits summary does not match referenced source {root_label}: {key}")
+        actual_audits = actual_root.get("audits", [])
+        expected_audits = expected_root.get("audits", [])
+        if len(actual_audits) != len(expected_audits):
+            failures.append(f"export_audits summary does not match referenced source {root_label}: audit count")
+            continue
+        for actual_audit, expected_audit in zip(actual_audits, expected_audits, strict=True):
+            audit_label = expected_audit.get("audit_report_path") or expected_audit.get("export_dir")
+            for key in (
+                "export_dir",
+                "format",
+                "status",
+                "audit_report_path",
+                "audit_report_sha256",
+                "audit_report_md_path",
+                "audit_report_md_sha256",
+                "export_manifest_path",
+                "export_manifest_sha256",
+                "summary",
+                "record_count",
+                "formal_training_data_only_trainable",
+            ):
+                if actual_audit.get(key) != expected_audit.get(key):
+                    failures.append(
+                        f"export_audits summary does not match referenced source {audit_label}: {key}"
+                    )
+    actual_scan = actual.get("training_payload_scan", {})
+    expected_scan = expected.get("training_payload_scan", {})
+    for key in (
+        "scanned_files",
+        "provider_raw_markers_found",
+        "non_trainable_records_found",
+        "jsonl_parse_failures",
+    ):
+        if actual_scan.get(key) != expected_scan.get(key):
+            failures.append(f"export_audits training payload scan does not match referenced sources: {key}")
+    return failures
+
+
 def _training_payload_scan(export_summaries: list[dict[str, Any]]) -> dict[str, Any]:
     findings: list[dict[str, str]] = []
+    non_trainable_records: list[dict[str, Any]] = []
+    parse_failures: list[dict[str, Any]] = []
     markers = tuple(marker.lower() for marker in PROVIDER_RAW_MARKERS)
     for root in export_summaries:
         root_path = Path(root["root_path"])
-        candidates = [
+        candidates = sorted(
             path
             for path in root_path.rglob("*.jsonl")
             if path.name in TRAINING_DATA_FILENAMES
-        ]
+        )
         for path in candidates:
             text = path.read_text(encoding="utf-8").lower()
             for marker in markers:
                 if marker in text:
                     findings.append({"path": str(path), "marker": marker})
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    parse_failures.append(
+                        {
+                            "path": str(path),
+                            "line_number": line_number,
+                            "error": str(exc),
+                        }
+                    )
+                    continue
+                eligibility = record.get("quality", {}).get("training_eligibility")
+                if eligibility != "trainable" or record.get("invalid_for_training"):
+                    non_trainable_records.append(
+                        {
+                            "path": str(path),
+                            "line_number": line_number,
+                            "training_eligibility": eligibility,
+                            "invalid_for_training": bool(record.get("invalid_for_training")),
+                        }
+                    )
     return {
         "scanned_files": [
             str(path)
             for root in export_summaries
-            for path in Path(root["root_path"]).rglob("*.jsonl")
+            for path in sorted(Path(root["root_path"]).rglob("*.jsonl"))
             if path.name in TRAINING_DATA_FILENAMES
         ],
         "provider_raw_markers_found": findings,
+        "non_trainable_records_found": non_trainable_records,
+        "jsonl_parse_failures": parse_failures,
     }
 
 

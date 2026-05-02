@@ -34,6 +34,24 @@ def test_feedback_policy_coverage_report_asserts_complete(tmp_path: Path):
     assert "feedback_policy_coverage=passed" in output
 
 
+def test_feedback_policy_coverage_rejects_missing_aggregate_metrics(tmp_path: Path):
+    experiment_dir = tmp_path / "experiment"
+    experiment_dir.mkdir()
+    _write_json(
+        experiment_dir / "experiment_manifest.json",
+        {
+            "experiment_id": "missing_aggregate",
+            "runs": [{"run_id": "run_001", "status": "success"}],
+        },
+    )
+
+    with pytest.raises(ConfigError, match="aggregate_metrics_ref"):
+        inspect_feedback_policy_coverage(
+            experiment_dir=experiment_dir,
+            assert_complete=True,
+        )
+
+
 def test_build_and_inspect_v2_acceptance_report(tmp_path: Path):
     paths = _write_acceptance_inputs(tmp_path)
     acceptance = tmp_path / "acceptance" / "v2_acceptance_report.json"
@@ -208,6 +226,56 @@ def test_inspect_v2_acceptance_rejects_provider_raw_marker_in_training_payload(t
     _write_json(manifest_path, manifest)
 
     with pytest.raises(ConfigError, match="provider raw response markers"):
+        inspect_v2_acceptance(acceptance, assert_complete=True)
+
+
+def test_inspect_v2_acceptance_rejects_non_trainable_convenience_jsonl(tmp_path: Path):
+    paths = _write_acceptance_inputs(tmp_path)
+    acceptance = tmp_path / "acceptance" / "v2_acceptance_report.json"
+    build_v2_acceptance_report(
+        v1_regression_dir=paths["v1_dir"],
+        task_set_manifest=paths["task_manifest"],
+        mock_provider_report=paths["mock_report"],
+        real_provider_report=paths["real_report"],
+        feedback_policy_report=paths["feedback_report"],
+        export_audit_roots=[paths["exports_root"]],
+        docker_status=paths["docker_status"],
+        output=acceptance,
+    )
+    convenience = Path(paths["exports_root"]) / "sft.jsonl"
+    convenience.write_text(
+        json.dumps(
+            {
+                "quality": {"training_eligibility": "diagnostic_only"},
+                "invalid_for_training": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="non-trainable sample found in training payload"):
+        inspect_v2_acceptance(acceptance, assert_complete=True)
+
+
+def test_inspect_v2_acceptance_rejects_tampered_export_summary_hash(tmp_path: Path):
+    paths = _write_acceptance_inputs(tmp_path)
+    acceptance = tmp_path / "acceptance" / "v2_acceptance_report.json"
+    build_v2_acceptance_report(
+        v1_regression_dir=paths["v1_dir"],
+        task_set_manifest=paths["task_manifest"],
+        mock_provider_report=paths["mock_report"],
+        real_provider_report=paths["real_report"],
+        feedback_policy_report=paths["feedback_report"],
+        export_audit_roots=[paths["exports_root"]],
+        docker_status=paths["docker_status"],
+        output=acceptance,
+    )
+    payload = _read_json(acceptance)
+    payload["export_audits"]["roots"][0]["audits"][0]["audit_report_sha256"] = "0" * 64
+    _write_json(acceptance, payload)
+
+    with pytest.raises(ConfigError, match="export_audits summary does not match"):
         inspect_v2_acceptance(acceptance, assert_complete=True)
 
 

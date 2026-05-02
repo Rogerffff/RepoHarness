@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from repo_harness.errors import ConfigError
+from repo_harness.errors import ConfigError, RepoHarnessError
 from repo_harness.model_client.real_smoke import (
     inspect_real_provider_smoke,
     run_real_provider_smoke,
@@ -139,6 +139,29 @@ def test_inspect_real_provider_smoke_accepts_provider_error_schema(tmp_path: Pat
     output = inspect_real_provider_smoke(report=report, allow_skip_without_credentials=True)
 
     assert "Inspect real provider smoke: passed" in output
+
+
+def test_real_provider_smoke_redacts_exception_messages(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    secret = "sk-testsecret123456789"
+    monkeypatch.setenv("DEEPSEEK_API_KEY", secret)
+
+    def fail_run_task(*args, **kwargs):  # noqa: ANN001, ARG001
+        raise RepoHarnessError(f"Authorization: Bearer {secret}")
+
+    monkeypatch.setattr("repo_harness.model_client.real_smoke.run_task", fail_run_task)
+    report = tmp_path / "real_provider_smoke_report.json"
+
+    run_real_provider_smoke(output_dir=tmp_path, report_path=report)
+
+    text = report.read_text(encoding="utf-8")
+    payload = json.loads(text)
+    assert payload["status"] == "provider_error"
+    assert secret not in text
+    assert "Bearer sk-" not in text
+    assert "<REDACTED_CREDENTIAL>" in text
 
 
 def test_inspect_real_provider_smoke_rejects_fallback_masquerading_as_primary(tmp_path: Path):
