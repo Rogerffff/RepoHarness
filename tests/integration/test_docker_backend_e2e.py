@@ -61,6 +61,10 @@ def test_docker_backend_replay_smoke_records_facts(tmp_path: Path):
         assert_docker_backend=True,
     )
     status = json.loads(status_path.read_text(encoding="utf-8"))
+    matrix = json.loads((run_dir / "docker_phase_coverage_matrix.json").read_text(encoding="utf-8"))
+    container_manifest = json.loads(
+        (run_dir / "container_execution_facts" / "manifest.json").read_text(encoding="utf-8")
+    )
     metrics = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
     run_config_facts = json.loads((run_dir / "run_config_facts.json").read_text(encoding="utf-8"))
 
@@ -72,6 +76,22 @@ def test_docker_backend_replay_smoke_records_facts(tmp_path: Path):
     assert status["container_uname_m"]
     assert status["cleanup_status"] == "completed"
     assert status["container_execution_facts_refs"]
+    assert status["container_execution_manifest_ref"] == "container_execution_facts/manifest.json"
+    assert status["docker_phase_coverage_matrix_ref"] == "docker_phase_coverage_matrix.json"
+    assert container_manifest["entry_count"] == len(container_manifest["entries"])
+    phase_status = {phase["phase"]: phase["status"] for phase in matrix["phases"]}
+    assert phase_status["source_checkout"] == "passed"
+    assert phase_status["setup"] == "passed"
+    assert phase_status["agent_tool"] == "passed"
+    assert phase_status["run_tests"] == "passed"
+    assert phase_status["final_patch_capture"] == "passed"
+    assert phase_status["verification_workspace_creation"] == "passed"
+    assert phase_status["model_final_patch_apply"] == "passed"
+    assert phase_status["fail_to_pass_test_execution"] == "passed"
+    assert phase_status["pass_to_pass_test_execution"] == "passed"
+    assert phase_status["final_verifier"] == "passed"
+    assert phase_status["verifier_patch_apply"] == "not_applicable"
+    assert phase_status["test_patch_apply"] == "not_applicable"
     assert metrics["run_outcome"] == "success"
     assert (
         run_config_facts["environment_fingerprint"]["workspace_execution"]["workspace_backend"][

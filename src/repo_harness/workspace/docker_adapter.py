@@ -42,6 +42,40 @@ from repo_harness.workspace.schemas import (
 )
 
 CONTAINER_RUN_ROOT = PurePosixPath("/repo-harness-run")
+REQUIRED_DOCKER_PHASES = [
+    "source_checkout",
+    "setup",
+    "agent_tool",
+    "run_tests",
+    "final_patch_capture",
+    "verification_workspace_creation",
+    "verifier_patch_apply",
+    "test_patch_apply",
+    "model_final_patch_apply",
+    "fail_to_pass_test_execution",
+    "pass_to_pass_test_execution",
+    "final_verifier",
+]
+PHASE_NOT_APPLICABLE_REASONS = {
+    "verifier_patch_apply": "no verifier patch is configured for this Stage 3 replay smoke task",
+    "test_patch_apply": "no test patch is configured for this Stage 3 replay smoke task",
+}
+SEMANTICS_TO_PHASE = {
+    "source_checkout": "source_checkout",
+    "setup": "setup",
+    "file_read": "agent_tool",
+    "file_write": "agent_tool",
+    "agent_tool": "agent_tool",
+    "bash_diagnostic": "agent_tool",
+    "git_diff": "agent_tool",
+    "verifier_feedback": "run_tests",
+    "final_patch_capture": "final_patch_capture",
+    "verification_workspace_creation": "verification_workspace_creation",
+    "model_final_patch_apply": "model_final_patch_apply",
+    "fail_to_pass_test_execution": "fail_to_pass_test_execution",
+    "pass_to_pass_test_execution": "pass_to_pass_test_execution",
+    "verifier_final": "final_verifier",
+}
 DEFAULT_DOCKERFILE = """\
 FROM python:3.12-slim
 RUN apt-get update \
@@ -218,8 +252,20 @@ class DockerWorkspaceAdapter:
         verification_path = self.workspaces_dir / "verification_workspace"
         _copy_tree(self._host_path(source_checkout), verification_path)
         self.restore_dependency_state(verification_path, dependency_state, setup_command, recorder)
+        self._execute_in_container(
+            ["python", "-c", "pass"],
+            workspace_path=verification_path,
+            timeout_sec=30,
+            command_semantics="verification_workspace_creation",
+            recorder=recorder,
+        )
         self.create_agent_start_snapshot(verification_path, dependency_state.excluded_diff_paths, recorder)
-        result = self.apply_patch(verification_path, final_patch_path, recorder=recorder)
+        result = self.apply_patch(
+            verification_path,
+            final_patch_path,
+            recorder=recorder,
+            command_semantics="model_final_patch_apply",
+        )
         if result.exit_code != 0 or result.timeout:
             raise WorkspaceError(f"final.patch 无法应用：{result.stderr_preview or result.stdout_preview}")
         return self._container_path(verification_path).as_posix()
@@ -263,8 +309,18 @@ class DockerWorkspaceAdapter:
         if not base:
             raise WorkspaceError("RunWorkspace 缺少 agent_start_snapshot，无法冻结 final.patch。")
         self._refresh_intent_to_add(workspace, recorder)
-        patch_text = self._run_git_checked(workspace, ["diff", "--binary", base], recorder=recorder)
-        diff_text = self._run_git_checked(workspace, ["diff", base], recorder=recorder)
+        patch_text = self._run_git_checked(
+            workspace,
+            ["diff", "--binary", base],
+            recorder=recorder,
+            command_semantics="final_patch_capture",
+        )
+        diff_text = self._run_git_checked(
+            workspace,
+            ["diff", base],
+            recorder=recorder,
+            command_semantics="final_patch_capture",
+        )
         patch_path = self.run_dir / "final.patch"
         diff_path = self.run_dir / "final.diff"
         patch_path.write_text(patch_text, encoding="utf-8")
@@ -291,6 +347,7 @@ class DockerWorkspaceAdapter:
         patch_path: str | Path,
         *,
         recorder: RunRecorder | None = None,
+        command_semantics: str = "git_apply",
     ) -> ExecutionResult:
         host_patch = self._host_path(patch_path, must_be_workspace=False)
         patch_text = host_patch.read_text(encoding="utf-8")
@@ -302,7 +359,7 @@ class DockerWorkspaceAdapter:
             workspace_path,
             ["git", "apply", "--whitespace=nowarn", self._container_path(host_patch).as_posix()],
             recorder=recorder,
-            command_semantics="git_apply",
+            command_semantics=command_semantics,
         )
 
     def resolve_workspace_path(
@@ -351,14 +408,43 @@ class DockerWorkspaceAdapter:
         pattern: str | None = None,
     ) -> list[str]:
         root_path = self.resolve_workspace_path(workspace_path, root, must_exist=True)
-        workspace = self._host_path(workspace_path)
         match_all = pattern in {None, "", "**/*"}
-        files: list[str] = []
-        paths = root_path.rglob("*") if root_path.is_dir() else [root_path]
-        for path in sorted(paths):
-            if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+        output = self._execute_in_container(
+            [
+                "python",
+                "-c",
+                (
+                    "from pathlib import Path; import json, sys; "
+                    "workspace=Path(sys.argv[1]); root=Path(sys.argv[2]); "
+                    "paths=root.rglob('*') if root.is_dir() else [root]; "
+                    "out=[]; "
+                    "\nfor path in sorted(paths):\n"
+                    "    parts=path.parts\n"
+                    "    if not path.is_file() or '.git' in parts or '__pycache__' in parts:\n"
+                    "        continue\n"
+                    "    out.append(path.relative_to(workspace).as_posix())\n"
+                    "print(json.dumps(out, sort_keys=True))"
+                ),
+                self._container_path(self._host_path(workspace_path)).as_posix(),
+                self._container_path(root_path).as_posix(),
+            ],
+            workspace_path=workspace_path,
+            timeout_sec=self.default_command_timeout_sec,
+            command_semantics="agent_tool",
+            recorder=None,
+        )
+        if output.exit_code != 0 or output.timeout:
+            raise WorkspaceError(output.stderr or output.stdout or f"无法列出文件：{root}")
+        try:
+            raw_files = json.loads(output.stdout.strip() or "[]")
+        except json.JSONDecodeError as exc:
+            raise WorkspaceError("Docker list_files 返回了非 JSON 输出。") from exc
+        if not isinstance(raw_files, list):
+            raise WorkspaceError("Docker list_files 返回值必须是列表。")
+        files = []
+        for rel in raw_files:
+            if not isinstance(rel, str):
                 continue
-            rel = path.relative_to(workspace).as_posix()
             if self.is_sensitive_relative_path(rel):
                 continue
             if match_all or fnmatch.fnmatch(rel, str(pattern)):
@@ -367,12 +453,51 @@ class DockerWorkspaceAdapter:
 
     def read_text(self, workspace_path: str | Path, requested_path: str | Path) -> str:
         path = self.resolve_workspace_path(workspace_path, requested_path, must_exist=True)
-        return path.read_text(encoding="utf-8")
+        output = self._execute_in_container(
+            [
+                "python",
+                "-c",
+                (
+                    "from pathlib import Path; import sys; "
+                    "sys.stdout.write(Path(sys.argv[1]).read_text(encoding='utf-8'))"
+                ),
+                self._container_path(path).as_posix(),
+            ],
+            workspace_path=workspace_path,
+            timeout_sec=self.default_command_timeout_sec,
+            command_semantics="file_read",
+            recorder=None,
+        )
+        if output.exit_code != 0 or output.timeout:
+            raise WorkspaceError(output.stderr or output.stdout or f"无法读取文件：{requested_path}")
+        return output.stdout
 
     def write_text(self, workspace_path: str | Path, requested_path: str | Path, content: str) -> None:
         path = self.resolve_workspace_path(workspace_path, requested_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        inputs_dir = self.run_dir / "docker_file_inputs"
+        inputs_dir.mkdir(parents=True, exist_ok=True)
+        input_path = inputs_dir / f"write_{self._command_counter + 1:06d}.txt"
+        input_path.write_text(content, encoding="utf-8")
+        output = self._execute_in_container(
+            [
+                "python",
+                "-c",
+                (
+                    "from pathlib import Path; import sys; "
+                    "Path(sys.argv[1]).parent.mkdir(parents=True, exist_ok=True); "
+                    "Path(sys.argv[1]).write_bytes(Path(sys.argv[2]).read_bytes())"
+                ),
+                self._container_path(path).as_posix(),
+                self._container_path(input_path).as_posix(),
+            ],
+            workspace_path=workspace_path,
+            timeout_sec=self.default_command_timeout_sec,
+            command_semantics="file_write",
+            recorder=None,
+        )
+        if output.exit_code != 0 or output.timeout:
+            raise WorkspaceError(output.stderr or output.stdout or f"无法写入文件：{requested_path}")
 
     def run_command(
         self,
@@ -449,7 +574,11 @@ class DockerWorkspaceAdapter:
             cleanup_status=self.backend_facts.cleanup_status,
             docker_backend_facts_ref="docker_backend_facts.json",
             container_execution_facts_refs=self.container_execution_facts_refs(),
+            container_execution_manifest_ref="container_execution_facts/manifest.json",
+            docker_phase_coverage_matrix_ref="docker_phase_coverage_matrix.json",
         )
+        self._write_container_execution_manifest()
+        self._write_docker_phase_coverage_matrix()
         payload = status.model_dump(mode="json")
         self._write_json(self.run_dir / "docker_backend_status.json", payload)
         self._write_json(self.run_dir / "docker_stage_status.json", payload)
@@ -458,6 +587,7 @@ class DockerWorkspaceAdapter:
         return [
             path.relative_to(self.run_dir).as_posix()
             for path in sorted(self.facts_dir.glob("*.json"))
+            if path.name != "manifest.json"
         ]
 
     def _ensure_image(self) -> str:
@@ -598,6 +728,7 @@ class DockerWorkspaceAdapter:
             requested_container_platform=self.requested_container_platform,
             container_uname_m=getattr(self, "container_uname_m", "unknown"),
             command=command,
+            command_semantics=command_semantics,
             workdir=container_workdir,
             exit_code=exit_code,
             timeout=timed_out,
@@ -656,7 +787,9 @@ class DockerWorkspaceAdapter:
         additions = "\n".join(dict.fromkeys([*excluded_diff_paths, *DEFAULT_EXCLUDED_DIFF_PATHS]))
         exclude_file.write_text(f"{existing.rstrip()}\n{additions}\n", encoding="utf-8")
         self._run_git_checked(workspace, ["add", "-A"], recorder=recorder)
-        commit_result = self._run_git(workspace, ["commit", "-m", "repo harness agent start snapshot"], recorder=recorder)
+        commit_result = self._run_git(
+            workspace, ["commit", "-m", "repo harness agent start snapshot"], recorder=recorder
+        )
         if commit_result.exit_code != 0 and "nothing to commit" not in commit_result.stdout.lower():
             if "nothing to commit" not in commit_result.stderr.lower():
                 raise WorkspaceError(commit_result.stderr.strip() or commit_result.stdout.strip())
@@ -670,13 +803,14 @@ class DockerWorkspaceAdapter:
         args: list[str],
         *,
         recorder: RunRecorder | None = None,
+        command_semantics: str = "git",
     ) -> DockerCommandOutput:
         self._assert_workspace_under_run_dir(workspace)
         return self._execute_in_container(
             ["git", *args],
             workspace_path=workspace,
             timeout_sec=self.default_command_timeout_sec,
-            command_semantics="git",
+            command_semantics=command_semantics,
             recorder=recorder,
         )
 
@@ -686,8 +820,9 @@ class DockerWorkspaceAdapter:
         args: list[str],
         *,
         recorder: RunRecorder | None = None,
+        command_semantics: str = "git",
     ) -> str:
-        result = self._run_git(workspace, args, recorder=recorder)
+        result = self._run_git(workspace, args, recorder=recorder, command_semantics=command_semantics)
         if result.exit_code != 0:
             raise WorkspaceError(result.stderr.strip() or result.stdout.strip())
         return result.stdout
@@ -700,9 +835,15 @@ class DockerWorkspaceAdapter:
         removed_lines: int,
         recorder: RunRecorder | None,
     ) -> dict[str, object]:
-        status_text = self._run_git_checked(workspace, ["diff", "--name-status", base], recorder=recorder)
-        numstat_text = self._run_git_checked(workspace, ["diff", "--numstat", base], recorder=recorder)
-        summary_text = self._run_git_checked(workspace, ["diff", "--summary", base], recorder=recorder)
+        status_text = self._run_git_checked(
+            workspace, ["diff", "--name-status", base], recorder=recorder, command_semantics="final_patch_capture"
+        )
+        numstat_text = self._run_git_checked(
+            workspace, ["diff", "--numstat", base], recorder=recorder, command_semantics="final_patch_capture"
+        )
+        summary_text = self._run_git_checked(
+            workspace, ["diff", "--summary", base], recorder=recorder, command_semantics="final_patch_capture"
+        )
         added_files: list[str] = []
         modified_files: list[str] = []
         deleted_files: list[str] = []
@@ -789,6 +930,72 @@ class DockerWorkspaceAdapter:
     def _write_json(self, path: Path, payload: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def _write_container_execution_manifest(self) -> None:
+        entries = []
+        for ref in self.container_execution_facts_refs():
+            payload = json.loads((self.run_dir / ref).read_text(encoding="utf-8"))
+            entries.append(
+                {
+                    "command_id": payload["command_id"],
+                    "facts_ref": ref,
+                    "command_semantics": payload.get("command_semantics", "generic"),
+                    "phase": SEMANTICS_TO_PHASE.get(payload.get("command_semantics", "generic")),
+                    "exit_code": payload.get("exit_code"),
+                    "timeout": payload.get("timeout", False),
+                    "cleanup_status": payload.get("cleanup_status"),
+                }
+            )
+        self._write_json(
+            self.run_dir / "container_execution_facts" / "manifest.json",
+            {
+                "schema_version": "repo_harness_container_execution_manifest_v3_v0",
+                "run_id": self.run_id,
+                "entry_count": len(entries),
+                "entries": entries,
+            },
+        )
+
+    def _write_docker_phase_coverage_matrix(self) -> None:
+        manifest_path = self.run_dir / "container_execution_facts" / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        by_phase: dict[str, list[dict[str, Any]]] = {phase: [] for phase in REQUIRED_DOCKER_PHASES}
+        for entry in manifest["entries"]:
+            phase = entry.get("phase")
+            if phase in by_phase:
+                by_phase[phase].append(entry)
+        phases = []
+        for phase in REQUIRED_DOCKER_PHASES:
+            entries = by_phase[phase]
+            if entries:
+                phases.append(
+                    {
+                        "phase": phase,
+                        "status": "passed",
+                        "facts_refs": [entry["facts_ref"] for entry in entries],
+                        "command_semantics": sorted({entry["command_semantics"] for entry in entries}),
+                    }
+                )
+            else:
+                reason = PHASE_NOT_APPLICABLE_REASONS.get(phase)
+                phases.append(
+                    {
+                        "phase": phase,
+                        "status": "not_applicable" if reason else "missing",
+                        "facts_refs": [],
+                        "structured_reason": reason,
+                    }
+                )
+        self._write_json(
+            self.run_dir / "docker_phase_coverage_matrix.json",
+            {
+                "schema_version": "repo_harness_docker_phase_coverage_matrix_v3_v0",
+                "run_id": self.run_id,
+                "container_execution_manifest_ref": "container_execution_facts/manifest.json",
+                "required_phases": REQUIRED_DOCKER_PHASES,
+                "phases": phases,
+            },
+        )
 
 
 def inspect_docker_environment() -> DockerEnvironment:

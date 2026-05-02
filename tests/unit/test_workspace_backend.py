@@ -180,6 +180,29 @@ def test_docker_backend_inspect_rejects_inconsistent_evidence(tmp_path: Path):
     with pytest.raises(WorkspaceBackendError, match="image platform"):
         inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
 
+    _write_status(status_path, status)
+    matrix_path = tmp_path / status.docker_phase_coverage_matrix_ref
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    matrix["phases"] = [phase for phase in matrix["phases"] if phase["phase"] != "final_verifier"]
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(WorkspaceBackendError, match="final_verifier"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    _write_status(status_path, status)
+    manifest_path = tmp_path / status.container_execution_manifest_ref
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["entry_count"] = manifest["entry_count"] + 1
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(WorkspaceBackendError, match="entry_count"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    _write_status(status_path, status)
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    matrix["container_execution_manifest_ref"] = "container_execution_facts/other_manifest.json"
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(WorkspaceBackendError, match="manifest ref"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
 
 def test_workspace_backend_status_requires_explicit_key_fields(tmp_path: Path):
     status = build_workspace_backend_status(
@@ -265,6 +288,8 @@ def _valid_docker_backend_status():
         cleanup_status="completed",
         docker_backend_facts_ref="docker_backend_facts.json",
         container_execution_facts_refs=["container_execution_facts/probe.json"],
+        container_execution_manifest_ref="container_execution_facts/manifest.json",
+        docker_phase_coverage_matrix_ref="docker_phase_coverage_matrix.json",
     )
 
 
@@ -319,6 +344,72 @@ def _write_status(path: Path, status) -> None:
                     "network_policy": status.network_policy,
                     "mount_policy": status.mount_policy,
                     "cleanup_status": status.cleanup_status,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    if status.container_execution_manifest_ref:
+        manifest_path = path.parent / status.container_execution_manifest_ref
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "repo_harness_container_execution_manifest_v3_v0",
+                    "run_id": "run",
+                    "entry_count": len(status.container_execution_facts_refs),
+                    "entries": [
+                        {
+                            "command_id": "cmd",
+                            "facts_ref": status.container_execution_facts_refs[0],
+                            "command_semantics": "source_checkout",
+                            "phase": "source_checkout",
+                            "exit_code": 0,
+                            "timeout": False,
+                            "cleanup_status": "completed",
+                        }
+                    ],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    if status.docker_phase_coverage_matrix_ref:
+        matrix_path = path.parent / status.docker_phase_coverage_matrix_ref
+        matrix_path.parent.mkdir(parents=True, exist_ok=True)
+        required_phases = [
+            "source_checkout",
+            "setup",
+            "agent_tool",
+            "run_tests",
+            "final_patch_capture",
+            "verification_workspace_creation",
+            "verifier_patch_apply",
+            "test_patch_apply",
+            "model_final_patch_apply",
+            "fail_to_pass_test_execution",
+            "pass_to_pass_test_execution",
+            "final_verifier",
+        ]
+        matrix_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "repo_harness_docker_phase_coverage_matrix_v3_v0",
+                    "run_id": "run",
+                    "container_execution_manifest_ref": "container_execution_facts/manifest.json",
+                    "required_phases": required_phases,
+                    "phases": [
+                        {
+                            "phase": phase,
+                            "status": "passed",
+                            "facts_refs": [status.container_execution_facts_refs[0]],
+                        }
+                        for phase in required_phases
+                    ],
                 },
                 ensure_ascii=False,
                 indent=2,

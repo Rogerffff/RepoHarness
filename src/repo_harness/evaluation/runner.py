@@ -123,6 +123,12 @@ def run_task(
         _write_backend_status_if_supported(adapter, config)
         verifier = PytestVerifier(adapter)
         source = adapter.create_source_checkout(loaded.runnable_task)
+        _record_docker_phase_noop(
+            adapter=adapter,
+            workspace_path=source,
+            recorder=recorder,
+            command_semantics="source_checkout",
+        )
         setup = adapter.create_setup_workspace(source)
         setup_result = _run_setup_command(
             adapter=adapter,
@@ -130,6 +136,13 @@ def run_task(
             task=loaded.runnable_task,
             recorder=recorder,
         )
+        if setup_result is None:
+            _record_docker_phase_noop(
+                adapter=adapter,
+                workspace_path=setup,
+                recorder=recorder,
+                command_semantics="setup",
+            )
         dependency_strategy = (
             "rerun_setup"
             if loaded.runnable_task.setup_command and _setup_succeeded(setup_result)
@@ -663,6 +676,25 @@ def _write_docker_backend_initialization_failure(
     payload = status.model_dump(mode="json")
     _write_json(run_dir / "docker_backend_status.json", payload)
     _write_json(run_dir / "docker_stage_status.json", payload)
+
+
+def _record_docker_phase_noop(
+    *,
+    adapter: WorkspaceAdapter,
+    workspace_path: str | Path,
+    recorder: RunRecorder,
+    command_semantics: str,
+) -> None:
+    backend = getattr(adapter, "backend", None)
+    if getattr(backend, "value", backend) != "docker":
+        return
+    adapter.run_command(
+        workspace_path,
+        ["python", "-c", "pass"],
+        timeout_sec=30,
+        recorder=recorder,
+        command_semantics=command_semantics,
+    )
 
 
 def _is_openai_fallback_config(options: dict[str, Any]) -> bool:

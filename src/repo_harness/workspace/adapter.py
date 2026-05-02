@@ -272,6 +272,7 @@ class LocalWorkspaceAdapter:
         patch_path: str | Path,
         *,
         recorder: RunRecorder | None = None,
+        command_semantics: str = "git_apply",
     ) -> ExecutionResult:
         patch_text = Path(patch_path).read_text(encoding="utf-8")
         if not patch_text.strip():
@@ -282,7 +283,7 @@ class LocalWorkspaceAdapter:
             workspace_path,
             ["git", "apply", "--whitespace=nowarn", str(Path(patch_path).resolve())],
             recorder=recorder,
-            command_semantics="git_apply",
+            command_semantics=command_semantics,
         )
 
     def resolve_workspace_path(

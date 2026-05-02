@@ -136,6 +136,7 @@ class WorkspaceAdapter(Protocol):
         patch_path: str | Path,
         *,
         recorder: RunRecorder | None = None,
+        command_semantics: str = "git_apply",
     ) -> ExecutionResult:
         ...
 

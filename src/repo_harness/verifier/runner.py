@@ -127,7 +127,8 @@ class PytestVerifier:
         )
         test_cases = self._run_declared_tests(
             workspace_path,
-            [*fail_to_pass, *pass_to_pass],
+            fail_to_pass,
+            pass_to_pass,
             timeout,
             recorder,
         )
@@ -147,13 +148,18 @@ class PytestVerifier:
     def _run_declared_tests(
         self,
         workspace_path: str | Path,
-        test_ids: list[str],
+        fail_to_pass_test_ids: list[str],
+        pass_to_pass_test_ids: list[str],
         timeout_sec: int,
         recorder: RunRecorder,
     ) -> list[TestCaseResult]:
         seen: set[str] = set()
         results: list[TestCaseResult] = []
-        for test_id in test_ids:
+        ordered_tests = [
+            *((test_id, "fail_to_pass_test_execution") for test_id in fail_to_pass_test_ids),
+            *((test_id, "pass_to_pass_test_execution") for test_id in pass_to_pass_test_ids),
+        ]
+        for test_id, command_semantics in ordered_tests:
             if test_id in seen:
                 continue
             seen.add(test_id)
@@ -163,7 +169,7 @@ class PytestVerifier:
                 command,
                 timeout_sec=timeout_sec,
                 recorder=recorder,
-                command_semantics="verifier_single_test",
+                command_semantics=command_semantics,
             )
             if execution.timeout:
                 status = "timeout"

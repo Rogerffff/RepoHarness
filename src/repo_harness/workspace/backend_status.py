@@ -15,6 +15,21 @@ from repo_harness.schema_base import StrictBaseModel
 from repo_harness.workspace.protocol import WorkspaceBackendError
 from repo_harness.workspace.schemas import ContainerExecutionFacts, DockerBackendFacts
 
+REQUIRED_DOCKER_PHASES = {
+    "source_checkout",
+    "setup",
+    "agent_tool",
+    "run_tests",
+    "final_patch_capture",
+    "verification_workspace_creation",
+    "verifier_patch_apply",
+    "test_patch_apply",
+    "model_final_patch_apply",
+    "fail_to_pass_test_execution",
+    "pass_to_pass_test_execution",
+    "final_verifier",
+}
+
 WORKSPACE_BACKEND_STAGE_STATUS_VERSION = "repo_harness_docker_stage_status_v2_v0"
 WORKSPACE_BACKEND_VERSION = "repo_harness_workspace_backend_stage14_v0"
 DOCKER_BACKEND_IMPLEMENTED = True
@@ -96,6 +111,8 @@ class DockerStageStatus(StrictBaseModel):
     cleanup_status: str | None = None
     docker_backend_facts_ref: str | None = None
     container_execution_facts_refs: list[str] = Field(default_factory=list)
+    container_execution_manifest_ref: str | None = None
+    docker_phase_coverage_matrix_ref: str | None = None
     docker_execution_mode_description: Literal["Docker-based executable repository environment"] = (
         "Docker-based executable repository environment"
     )
@@ -126,6 +143,8 @@ def build_workspace_backend_status(
     cleanup_status: str | None = None,
     docker_backend_facts_ref: str | None = None,
     container_execution_facts_refs: list[str] | None = None,
+    container_execution_manifest_ref: str | None = None,
+    docker_phase_coverage_matrix_ref: str | None = None,
 ) -> DockerStageStatus:
     """Build the Stage 14 machine-readable workspace backend status."""
 
@@ -206,6 +225,8 @@ def build_workspace_backend_status(
             cleanup_status,
             docker_backend_facts_ref,
             container_execution_facts_refs,
+            container_execution_manifest_ref,
+            docker_phase_coverage_matrix_ref,
         ]
     )
     return DockerStageStatus(
@@ -267,6 +288,8 @@ def build_workspace_backend_status(
         cleanup_status=cleanup_status,
         docker_backend_facts_ref=docker_backend_facts_ref,
         container_execution_facts_refs=container_execution_facts_refs or [],
+        container_execution_manifest_ref=container_execution_manifest_ref,
+        docker_phase_coverage_matrix_ref=docker_phase_coverage_matrix_ref,
         generated_at=generated_at,
     )
 
@@ -418,8 +441,13 @@ def _assert_docker_backend(status: DockerStageStatus, *, evidence_root: Path | N
         raise WorkspaceBackendError("docker_backend 必须记录 docker_backend_facts_ref。")
     if not status.container_execution_facts_refs:
         raise WorkspaceBackendError("docker_backend 必须记录 container_execution_facts_refs。")
+    if not status.container_execution_manifest_ref:
+        raise WorkspaceBackendError("docker_backend 必须记录 container_execution_manifest_ref。")
+    if not status.docker_phase_coverage_matrix_ref:
+        raise WorkspaceBackendError("docker_backend 必须记录 docker_phase_coverage_matrix_ref。")
     if evidence_root is not None:
         _assert_docker_evidence_refs(status, evidence_root)
+        _assert_docker_phase_coverage(status, evidence_root)
     if status.local_process_mode_regression != "passed":
         raise WorkspaceBackendError("docker_backend 仍必须保留 local process mode 回归通过证据。")
     _require_test_passed(status.local_backend_tests, "workspace_backend_protocol")
@@ -481,6 +509,69 @@ def _assert_docker_evidence_refs(status: DockerStageStatus, evidence_root: Path)
             raise WorkspaceBackendError(
                 f"container execution facts requested platform 与 status 不一致：{ref}"
             )
+
+
+def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path) -> None:
+    if status.container_execution_manifest_ref is None:
+        raise WorkspaceBackendError("container_execution_manifest_ref 缺失。")
+    if status.docker_phase_coverage_matrix_ref is None:
+        raise WorkspaceBackendError("docker_phase_coverage_matrix_ref 缺失。")
+    manifest = _read_evidence_json(evidence_root, status.container_execution_manifest_ref)
+    matrix = _read_evidence_json(evidence_root, status.docker_phase_coverage_matrix_ref)
+    if matrix.get("container_execution_manifest_ref") != status.container_execution_manifest_ref:
+        raise WorkspaceBackendError("docker phase matrix manifest ref 与 status 不一致。")
+    entries = manifest.get("entries")
+    if not isinstance(entries, list) or not entries:
+        raise WorkspaceBackendError("container execution manifest 必须包含 entries。")
+    if manifest.get("entry_count") != len(entries):
+        raise WorkspaceBackendError("container execution manifest entry_count 与 entries 数量不一致。")
+    refs_in_status = set(status.container_execution_facts_refs)
+    refs_in_manifest: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise WorkspaceBackendError("container execution manifest entries 必须是 JSON object。")
+        ref = entry.get("facts_ref")
+        if not isinstance(ref, str):
+            raise WorkspaceBackendError("container execution manifest entry 缺少 facts_ref。")
+        if ref not in refs_in_status:
+            raise WorkspaceBackendError(f"container execution manifest 引用了 status 外的 facts ref：{ref}")
+        _read_evidence_json(evidence_root, ref)
+        refs_in_manifest.add(ref)
+    missing_manifest_refs = refs_in_status.difference(refs_in_manifest)
+    if missing_manifest_refs:
+        raise WorkspaceBackendError(
+            "container execution manifest 缺少 status facts refs：" + ", ".join(sorted(missing_manifest_refs))
+        )
+    phases = matrix.get("phases")
+    if not isinstance(phases, list):
+        raise WorkspaceBackendError("docker phase coverage matrix 缺少 phases。")
+    by_phase = {
+        phase.get("phase"): phase
+        for phase in phases
+        if isinstance(phase, dict) and isinstance(phase.get("phase"), str)
+    }
+    missing = sorted(REQUIRED_DOCKER_PHASES.difference(by_phase))
+    if missing:
+        raise WorkspaceBackendError("docker phase coverage matrix 缺少 phase：" + ", ".join(missing))
+    for phase_name in sorted(REQUIRED_DOCKER_PHASES):
+        phase = by_phase[phase_name]
+        status_value = phase.get("status")
+        if status_value == "missing":
+            raise WorkspaceBackendError(f"docker phase coverage 缺失：{phase_name}")
+        if status_value == "not_applicable":
+            if not phase.get("structured_reason"):
+                raise WorkspaceBackendError(f"docker phase coverage not_applicable 缺少 reason：{phase_name}")
+            continue
+        if status_value != "passed":
+            raise WorkspaceBackendError(f"docker phase coverage status 非法：{phase_name}={status_value}")
+        facts_refs = phase.get("facts_refs")
+        if not isinstance(facts_refs, list) or not facts_refs:
+            raise WorkspaceBackendError(f"docker phase coverage 缺少 facts refs：{phase_name}")
+        for ref in facts_refs:
+            if ref not in refs_in_manifest:
+                raise WorkspaceBackendError(
+                    f"docker phase coverage 引用了 manifest 外的 facts ref：{phase_name}:{ref}"
+                )
 
 
 def _read_evidence_json(evidence_root: Path, relative_ref: str) -> dict[str, object]:

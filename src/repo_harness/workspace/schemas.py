@@ -75,6 +75,7 @@ class ContainerExecutionFacts(StrictBaseModel):
     requested_container_platform: Literal["linux/amd64", "linux/arm64"]
     container_uname_m: str
     command: list[str]
+    command_semantics: str = "generic"
     workdir: str
     exit_code: int | None = None
     timeout: bool = False
