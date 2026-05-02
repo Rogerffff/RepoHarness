@@ -322,6 +322,17 @@ class AgentLoop:
                 state.agent_stop_reason = "model_error"
                 state.budget_state.stop_reason = "model_error"
                 state.last_model_error = response.model_error_type
+                _record_interrupted_tool_calls(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    tool_calls=response.tool_calls,
+                    reason=response.model_error_type,
+                    state=state,
+                    recorder=recorder,
+                    messages=messages,
+                    emit_tool_requested=True,
+                )
                 break
             if not response.tool_calls:
                 if self.scaffold.scaffold_id == "single_shot_patch":

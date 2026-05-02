@@ -145,6 +145,33 @@ def test_agent_loop_stops_on_model_error(tmp_path: Path):
     assert state.last_model_error == "provider_error"
 
 
+def test_agent_loop_pairs_tool_calls_returned_with_model_error(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    with RunRecorder("model-error-tools", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=_ModelErrorWithToolCallsClient(),
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="model-error-tools",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "model_error"
+    assert state.last_model_error == "provider_error"
+    assert any(
+        event["event_type"] == "tool_interrupted"
+        and event["data"]["tool_call_id"] == "call_after_error"
+        and event["data"]["error_type"] == "provider_error"
+        for event in events
+    )
+    _assert_tool_events_are_paired(events)
+
+
 def test_agent_loop_max_turns_is_deterministic(tmp_path: Path):
     state = _run_loop(
         tmp_path,
@@ -505,6 +532,23 @@ class _RecordingClient:
         return ModelResponse(
             assistant_message=ModelMessage(role="assistant", content="done"),
             finish_reason="stop",
+        )
+
+
+class _ModelErrorWithToolCallsClient:
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content=None),
+            tool_calls=[
+                ToolCall(
+                    tool_call_id="call_after_error",
+                    tool_name="read_file",
+                    arguments={"path": "demo.py"},
+                    turn=1,
+                )
+            ],
+            finish_reason="tool_calls",
+            model_error_type="provider_error",
         )
 
 

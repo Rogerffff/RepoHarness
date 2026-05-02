@@ -485,7 +485,6 @@ def run_task(
                 },
             )
         )
-        recorder.finalize_run(summary)
         run_metadata = build_run_metadata(
             run_dir=run_dir,
             run_id=actual_run_id,
@@ -499,6 +498,7 @@ def run_task(
             final_verifier_mode=config.evaluation.final_verifier_mode,
         )
         write_run_metadata(run_dir, run_metadata)
+        recorder.finalize_run(summary)
         adapter.cleanup_workspaces()
     return run_dir
 
@@ -770,7 +770,6 @@ def _finalize_quality_gate_run(
             },
         )
     )
-    recorder.finalize_run(summary)
     run_metadata = build_run_metadata(
         run_dir=run_dir,
         run_id=run_id,
@@ -784,6 +783,7 @@ def _finalize_quality_gate_run(
         final_verifier_mode="skipped",
     )
     write_run_metadata(run_dir, run_metadata)
+    recorder.finalize_run(summary)
 
 
 def _quality_gate_reason(baseline: BaselineResult) -> str:

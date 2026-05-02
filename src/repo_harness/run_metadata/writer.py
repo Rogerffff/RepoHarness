@@ -190,6 +190,8 @@ def build_run_metadata(
 
 def write_run_metadata(run_dir: str | Path, metadata: RunMetadata) -> RunMetadataRef:
     path = Path(run_dir) / "run_metadata.json"
+    if path.exists():
+        raise FileExistsError(f"run_metadata.json 已存在，不能改写最终运行元数据：{path}")
     digest = _write_json_atomic(path, metadata.model_dump(mode="json"))
     return RunMetadataRef(relative_path="run_metadata.json", sha256=digest)
 

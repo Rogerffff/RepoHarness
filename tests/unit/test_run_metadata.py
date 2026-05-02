@@ -108,6 +108,8 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
             final_verifier_mode="strict_patch_replay",
         )
         metadata_ref = write_run_metadata(run_dir, metadata)
+        with pytest.raises(FileExistsError, match="run_metadata.json 已存在"):
+            write_run_metadata(run_dir, metadata)
 
     facts_payload = json.loads((run_dir / "run_config_facts.json").read_text(encoding="utf-8"))
     metadata_payload = json.loads((run_dir / "run_metadata.json").read_text(encoding="utf-8"))
