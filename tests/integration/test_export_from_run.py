@@ -9,17 +9,38 @@ from repo_harness.export import ExportPolicy, export_preference_jsonl, export_rl
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_sft_export_from_success_run_masks_assistant_actions(tmp_path: Path):
+def test_sft_export_from_success_run_filters_default_oracle_feedback(tmp_path: Path):
     run_dir = _success_run(tmp_path, "stage12-sft")
 
     output = export_sft_jsonl(run_dir)
+    default_records = _read_jsonl(output)
+    text = output.read_text(encoding="utf-8")
+    default_export_dir = _latest_export_dir(run_dir / "exports")
+    canonical_records = _read_jsonl(default_export_dir / "data.sft.jsonl")
+    audit = _read_json(default_export_dir / "audit_report.json")
+
+    assert default_records == []
+    assert canonical_records == []
+    assert audit["summary"]["diagnostic_only_count"] == 1
+    assert audit["status"] == "passed_with_warnings"
+    assert audit["samples"][0]["training_eligibility"] == "diagnostic_only"
+    assert audit["samples"][0]["invalid_reason"] == "oracle_hidden_feedback_diagnostic_only"
+    assert "without_followup_context" not in text
+    _assert_no_hidden_or_local_text(text)
+
+    output = export_sft_jsonl(
+        run_dir,
+        policy=ExportPolicy(allow_oracle_feedback_training=True),
+    )
     record = _read_jsonl(output)[0]
     text = output.read_text(encoding="utf-8")
+    explicit_export_dir = _latest_export_dir(run_dir / "exports")
+    explicit_canonical_records = _read_jsonl(explicit_export_dir / "data.sft.jsonl")
+    explicit_audit = _read_json(explicit_export_dir / "audit_report.json")
 
-    assert record["filter_status"] == "filtered"
-    assert record["invalid_for_training"] is True
-    assert record["quality"]["training_eligibility"] == "diagnostic_only"
-    assert record["invalid_reason"] == "oracle_hidden_feedback_diagnostic_only"
+    assert record["filter_status"] == "included"
+    assert record["invalid_for_training"] is False
+    assert record["quality"]["training_eligibility"] == "trainable"
     assert any(message.get("role") == "assistant" and message.get("tool_calls") for message in record["payload"]["messages"])
     assert any(message.get("role") == "tool" for message in record["payload"]["messages"])
     assert 1 in record["payload"]["loss_mask"]
@@ -41,18 +62,17 @@ def test_sft_export_from_success_run_masks_assistant_actions(tmp_path: Path):
     assert "without_followup_context" not in text
     _assert_refs_exist(run_dir, record)
     _assert_no_hidden_or_local_text(text)
-    export_dir = _latest_export_dir(run_dir / "exports")
-    canonical_records = _read_jsonl(export_dir / "data.sft.jsonl")
-    audit = _read_json(export_dir / "audit_report.json")
-    assert canonical_records == []
-    assert audit["summary"]["diagnostic_only_count"] == 1
-    assert audit["status"] == "passed_with_warnings"
+    assert explicit_canonical_records[0]["quality"]["training_eligibility"] == "trainable"
+    assert explicit_audit["status"] == "passed"
 
 
 def test_rl_export_uses_final_reward_metadata(tmp_path: Path):
     run_dir = _success_run(tmp_path, "stage12-rl")
 
-    output = export_rl_jsonl(run_dir)
+    output = export_rl_jsonl(
+        run_dir,
+        policy=ExportPolicy(allow_oracle_feedback_training=True),
+    )
     record = _read_jsonl(output)[0]
     reward = _read_json(run_dir / "reward.json")
 

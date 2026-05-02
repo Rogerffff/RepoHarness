@@ -210,8 +210,9 @@ def _write_format_export(
         for audited_record in audited
         if audited_record.record.quality.training_eligibility == "trainable"
     ]
-    write_jsonl(data_path, [record.model_dump(mode="json") for record in trainable_records])
-    write_jsonl(convenience_path, [audited_record.record.model_dump(mode="json") for audited_record in audited])
+    trainable_payloads = [record.model_dump(mode="json") for record in trainable_records]
+    write_jsonl(data_path, trainable_payloads)
+    write_jsonl(convenience_path, trainable_payloads)
     line_numbers = {record.sample_id: index + 1 for index, record in enumerate(trainable_records)}
     report = build_audit_report(
         audited,

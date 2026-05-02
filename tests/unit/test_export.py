@@ -50,11 +50,15 @@ def test_rl_export_without_formal_final_verifier_is_invalid_for_training(tmp_pat
     run_dir = _minimal_run(tmp_path / "run_missing_formal", task_id="task_001")
 
     output = export_rl_jsonl(run_dir)
-    record = _read_jsonl(output)[0]
+    export_dir = _latest_export_dir(run_dir / "exports")
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    manifest = json.loads((export_dir / "export_manifest.json").read_text(encoding="utf-8"))
 
-    assert record["invalid_for_training"] is True
-    assert record["invalid_reason"] == "missing_formal_final_verifier"
-    assert record["payload"]["reward_metadata"]["formal_final_verifier"] is False
+    assert _read_jsonl(output) == []
+    assert manifest["included_count"] == 0
+    assert manifest["invalid_count"] == 1
+    assert audit["samples"][0]["invalid_for_training"] is True
+    assert audit["samples"][0]["invalid_reason"] == "missing_formal_final_verifier"
 
 
 def test_export_rejects_manifest_artifact_path_escape(tmp_path: Path):
@@ -83,18 +87,21 @@ def test_export_rejects_manifest_artifact_path_escape(tmp_path: Path):
     )
 
     output = export_rl_jsonl(run_dir)
-    record = _read_jsonl(output)[0]
     export_dir = _latest_export_dir(run_dir / "exports")
     audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
 
-    assert record["invalid_for_training"] is True
-    assert record["invalid_reason"] == "artifact_manifest_invalid"
+    assert _read_jsonl(output) == []
     assert audit["status"] == "failed"
     assert audit["samples"][0]["training_eligibility"] == "invalid"
+    assert audit["samples"][0]["invalid_reason"] == "artifact_manifest_invalid"
 
 
 def test_sft_export_uses_structured_tool_call_events_not_preview(tmp_path: Path):
-    run_dir = _minimal_run(tmp_path / "run_structured_sft", task_id="task_001")
+    run_dir = _minimal_run(
+        tmp_path / "run_structured_sft",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
     long_content = "x" * 5000
     (run_dir / "transcript.jsonl").write_text(
         json.dumps(
@@ -118,6 +125,18 @@ def test_sft_export_uses_structured_tool_call_events_not_preview(tmp_path: Path)
                     "tool_call_id": "call_big",
                     "tool_name": "create_file",
                     "arguments": {"path": "big.txt", "content": long_content},
+                },
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "event_type": "tool_completed",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": "call_big",
+                    "status": "ok",
+                    "effective_tool_name": "create_file",
                 },
             }
         )
@@ -228,13 +247,13 @@ def test_provider_raw_response_in_payload_is_audit_invalid(tmp_path: Path):
     )
 
     output = export_sft_jsonl(run_dir)
-    record = _read_jsonl(output)[0]
     export_dir = _latest_export_dir(run_dir / "exports")
     audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
 
-    assert record["quality"]["training_eligibility"] == "invalid"
-    assert record["invalid_reason"] == "contains blocked marker raw_response"
+    assert _read_jsonl(output) == []
     assert audit["status"] == "failed"
+    assert audit["samples"][0]["training_eligibility"] == "invalid"
+    assert audit["samples"][0]["invalid_reason"] == "contains blocked marker raw_response"
     with pytest.raises(ExportError, match="audit_report status is failed"):
         inspect_export(export_dir, assert_clean=True)
 
