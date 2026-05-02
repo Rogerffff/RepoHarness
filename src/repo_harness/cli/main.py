@@ -38,6 +38,11 @@ from repo_harness.v3_experiment_resume import (
     build_v3_experiment_resume,
     inspect_experiment_resume,
 )
+from repo_harness.v3_context_diagnostics import (
+    build_v3_context_diagnostics,
+    inspect_context_report,
+    inspect_long_rollout_diagnostics,
+)
 from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
@@ -359,6 +364,33 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_resume.add_argument("--manifest", required=True, help="experiment_resume_manifest.json 路径。")
     inspect_resume.add_argument("--assert-resumable", action="store_true", help="要求 resume evidence 完整。")
 
+    build_v3_context = subparsers.add_parser(
+        "build-v3-context-diagnostics",
+        help="构造 V3 Stage 9 context compaction 和 long rollout diagnostics evidence。",
+    )
+    build_v3_context.add_argument("--output-dir", required=True, help="Stage 9 context diagnostics 产物目录。")
+    build_v3_context.add_argument(
+        "--task-path",
+        default="tests/fixtures/tasks/task_001.yaml",
+        help="用于 Stage 9 long-output replay 的任务 YAML。",
+    )
+
+    inspect_context = subparsers.add_parser(
+        "inspect-context-report",
+        help="只读检查 V3 context_compaction_report.json。",
+    )
+    inspect_context.add_argument("run_dir", help="Stage 9 context diagnostics 产物目录。")
+    inspect_context.add_argument("--report", required=True, help="context_compaction_report.json 路径。")
+    inspect_context.add_argument("--assert-consistent", action="store_true", help="要求 compaction evidence 一致。")
+
+    inspect_long_rollout = subparsers.add_parser(
+        "inspect-long-rollout-diagnostics",
+        help="只读检查 V3 long_rollout_diagnostics.json。",
+    )
+    inspect_long_rollout.add_argument("run_dir", help="Stage 9 context diagnostics 产物目录。")
+    inspect_long_rollout.add_argument("--report", required=True, help="long_rollout_diagnostics.json 路径。")
+    inspect_long_rollout.add_argument("--assert-complete", action="store_true", help="要求 long rollout diagnostics 完整。")
+
     return parser
 
 
@@ -637,6 +669,40 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 experiment resume 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-context-diagnostics":
+        try:
+            output_path = build_v3_context_diagnostics(
+                output_dir=args.output_dir,
+                task_path=args.task_path,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 context diagnostics 构建失败：{exc}\n")
+        print(f"V3 context diagnostics 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-context-report":
+        try:
+            print(
+                inspect_context_report(
+                    args.run_dir,
+                    report=args.report,
+                    assert_consistent=args.assert_consistent,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 context report 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-long-rollout-diagnostics":
+        try:
+            print(
+                inspect_long_rollout_diagnostics(
+                    args.run_dir,
+                    report=args.report,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 long rollout diagnostics 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
