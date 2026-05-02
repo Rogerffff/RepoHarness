@@ -324,7 +324,9 @@ class ToolExecutor:
         effective_cwd = None
 
         if requested == "list_files":
-            normalized_args = {"root": args.get("path", args.get("root", ".")), "pattern": args.get("pattern", "**/*")}
+            normalized_args = {"root": args.get("path", args.get("root", "."))}
+            if "pattern" in args:
+                normalized_args["pattern"] = args["pattern"]
             effective_args = dict(normalized_args)
         elif requested == "read_file":
             normalized_args = {"path": args["path"]}
@@ -402,7 +404,8 @@ class ToolExecutor:
             str(normalized.normalized_arguments["root"]),
             must_exist=True,
         )
-        pattern = str(normalized.normalized_arguments["pattern"])
+        pattern = normalized.normalized_arguments.get("pattern")
+        match_all = pattern in {None, "", "**/*"}
         workspace = Path(context.run_workspace.workspace_path).resolve()
         files: list[str] = []
         for path in sorted(root.rglob("*")):
@@ -411,7 +414,7 @@ class ToolExecutor:
                 continue
             if context.workspace_adapter.is_sensitive_relative_path(rel):
                 continue
-            if path.is_file() and fnmatch.fnmatch(rel, pattern):
+            if path.is_file() and (match_all or fnmatch.fnmatch(rel, str(pattern))):
                 files.append(rel)
         ref = context.recorder.write_json_artifact("list_files", {"files": files})
         preview = "\n".join(files) if files else "No files matched."

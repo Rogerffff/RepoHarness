@@ -296,7 +296,6 @@ steps:
     tool_name: list_files
     arguments:
       path: "."
-      pattern: "**/*"
   - step_id: final
     action: final_answer
     assistant_text: "Listed files."
@@ -314,7 +313,9 @@ steps:
 
     transcript = _read_jsonl(run_dir / "transcript.jsonl")
     tool_result = next(record for record in transcript if record.get("tool_call_id") == "call_list")
-    assert "calculator.py" in tool_result["content_preview"]
+    listed_files = set(tool_result["content_preview"].splitlines())
+    assert "calculator.py" in listed_files
+    assert "tests/test_calculator.py" in listed_files
     assert ".env" not in tool_result["content_preview"]
     assert "private.pem" not in tool_result["content_preview"]
     assert "id_rsa" not in tool_result["content_preview"]
