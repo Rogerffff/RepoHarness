@@ -30,6 +30,7 @@ from repo_harness.v3_swebench_fixture import (
     inspect_v3_swebench_fixture,
     prepare_v3_swebench_fixture,
 )
+from repo_harness.v3_task_set import build_v3_task_set, inspect_v3_task_set
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -248,6 +249,23 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v3_fixture.add_argument("--manifest", required=True, help="v3_feasibility_input_manifest.json 路径。")
     inspect_v3_fixture.add_argument("--assert-frozen", action="store_true", help="要求固定输入完整且无 adapter 污染。")
 
+    build_v3_tasks = subparsers.add_parser(
+        "build-v3-task-set",
+        help="读取 V3 真实仓库任务输入和固定 SWE-Bench-like JSONL，生成 task adapter facts。",
+    )
+    build_v3_tasks.add_argument("--real-repository-inputs", required=True, help="真实仓库任务输入 JSON。")
+    build_v3_tasks.add_argument("--swebench-fixture-dir", required=True, help="阶段 0 SWE-Bench-like fixture 根目录。")
+    build_v3_tasks.add_argument("--swebench-manifest", required=True, help="阶段 0 task_input_manifest.json。")
+    build_v3_tasks.add_argument("--swebench-evidence-dir", required=True, help="阶段 0 evaluator-only evidence 根目录。")
+    build_v3_tasks.add_argument("--output-dir", required=True, help="V3 task adapter 产物目录。")
+
+    inspect_v3_tasks = subparsers.add_parser(
+        "inspect-v3-task-set",
+        help="只读检查 V3 真实仓库和 SWE-Bench-like task adapter 产物。",
+    )
+    inspect_v3_tasks.add_argument("run_dir", help="包含 task_adapter_facts.json 的目录。")
+    inspect_v3_tasks.add_argument("--assert-complete", action="store_true", help="要求 V3 task set 完整。")
+
     return parser
 
 
@@ -405,6 +423,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 SWE-Bench-like fixture 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-task-set":
+        try:
+            output_path = build_v3_task_set(
+                real_repository_inputs=args.real_repository_inputs,
+                swebench_fixture_dir=args.swebench_fixture_dir,
+                swebench_manifest=args.swebench_manifest,
+                swebench_evidence_dir=args.swebench_evidence_dir,
+                output_dir=args.output_dir,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 task set 构建失败：{exc}\n")
+        print(f"V3 task set 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-v3-task-set":
+        try:
+            print(
+                inspect_v3_task_set(
+                    args.run_dir,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 task set 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

@@ -161,10 +161,17 @@ class SweBenchLikeTaskFacts(StrictBaseModel):
     instance_id: str
     repo: str
     base_commit: str
+    environment_setup_commit: str
     dataset_name: str
     dataset_revision: str
     dataset_split: str
     task_hash: str = Field(pattern=SHA256_PATTERN)
+    problem_statement_sha256: str = Field(pattern=SHA256_PATTERN)
+    test_patch_sha256: str = Field(pattern=SHA256_PATTERN)
+    fail_to_pass_selectors_sha256: str = Field(pattern=SHA256_PATTERN)
+    pass_to_pass_selectors_sha256: str = Field(pattern=SHA256_PATTERN)
+    fail_to_pass_selector_count: int = Field(ge=1)
+    pass_to_pass_selector_count: int = Field(ge=1)
     adapter_input_ref: ArtifactRef
     evaluator_evidence_manifest_ref: ArtifactRef
     final_only: bool = True

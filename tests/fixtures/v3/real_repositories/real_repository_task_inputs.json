@@ -1,0 +1,99 @@
+{
+  "schema_version": "repo_harness_v3_real_repository_task_inputs_v0",
+  "dataset_source_revision": "repo_harness_v3_real_repository_tasks_20260502",
+  "generated_at": "2026-05-02T00:00:00Z",
+  "tasks": [
+    {
+      "task_id": "realrepo_public_sampleproject_add_two",
+      "task_version": "realrepo_public_sampleproject_add_two_v0",
+      "source_kind": "public_archive",
+      "dataset_split": "v3_stage_04",
+      "created_at": "2026-05-02",
+      "remote_url": "https://github.com/pypa/sampleproject",
+      "base_commit": "621e4974ca25ce531773def586ba3ed8e736b3fc",
+      "archive_path": "tests/fixtures/v3/real_repositories/archives/pypa-sampleproject-621e4974ca25ce531773def586ba3ed8e736b3fc.tar.gz",
+      "expected_root_directory": "sampleproject-621e4974ca25ce531773def586ba3ed8e736b3fc",
+      "archive_sha256": "fd8597e4d351a9fd42007f48339dc93ee6469d8555fd0ff24906c69905357c01",
+      "source_tree_hash": "896fc3bd548f853cde5e94c504ba7a23cad936401332ec6043c931595b8bbd21",
+      "decontamination_status": "public_source_fixed_archive_issue_synthetic",
+      "verifier_evidence_path": "tests/fixtures/v3/real_repositories/verifier_evidence/realrepo_public_sampleproject_add_two.json",
+      "issue": "Add a sample.simple.add_two(number) helper that returns number plus 2 while leaving add_one behavior unchanged.",
+      "test_command": "pytest -q",
+      "fail_to_pass_tests": [
+        "tests/test_add_two_behavior.py::test_add_two"
+      ],
+      "pass_to_pass_tests": [
+        "tests/test_simple.py::TestSimple::test_add_one"
+      ],
+      "expected_files": [
+        "src/sample/simple.py"
+      ],
+      "tags": [
+        "v3",
+        "real_repository",
+        "public_archive"
+      ]
+    },
+    {
+      "task_id": "realrepo_local_buggy_calculator",
+      "task_version": "realrepo_local_buggy_calculator_v0",
+      "source_kind": "fixed_local_mirror",
+      "dataset_split": "v3_stage_04",
+      "created_at": "2026-05-02",
+      "remote_url": "local://tests/fixtures/repos/buggy_calculator",
+      "base_commit": "fixture-buggy-calculator-v0",
+      "source_path": "tests/fixtures/repos/buggy_calculator",
+      "mirror_sha256": "5dc1bb255a425bf6f1cb58ca979bfbfc5df0da02b551f6da160730047898b068",
+      "source_tree_hash": "5dc1bb255a425bf6f1cb58ca979bfbfc5df0da02b551f6da160730047898b068",
+      "decontamination_status": "hand_written_fixture_source_checked",
+      "verifier_evidence_path": "tests/fixtures/v3/real_repositories/verifier_evidence/realrepo_local_buggy_calculator.json",
+      "issue": "Update calculator.divide so division by zero raises ValueError with a clear message instead of leaking ZeroDivisionError.",
+      "test_command": "pytest -q",
+      "fail_to_pass_tests": [
+        "tests/test_calculator.py::test_divide_zero"
+      ],
+      "pass_to_pass_tests": [
+        "tests/test_calculator.py::test_add",
+        "tests/test_calculator.py::test_divide_regular_numbers"
+      ],
+      "expected_files": [
+        "calculator.py"
+      ],
+      "tags": [
+        "v3",
+        "real_repository",
+        "fixed_local_mirror"
+      ]
+    },
+    {
+      "task_id": "realrepo_local_import_config_bug",
+      "task_version": "realrepo_local_import_config_bug_v0",
+      "source_kind": "fixed_local_mirror",
+      "dataset_split": "v3_stage_04",
+      "created_at": "2026-05-02",
+      "remote_url": "local://tests/fixtures/repos/import_config_bug",
+      "base_commit": "fixture-import-config-bug-v0",
+      "source_path": "tests/fixtures/repos/import_config_bug",
+      "mirror_sha256": "52d26005c2937073860c8920d188eae570f44b94840ed9a780c74baf9ecd7d40",
+      "source_tree_hash": "52d26005c2937073860c8920d188eae570f44b94840ed9a780c74baf9ecd7d40",
+      "decontamination_status": "hand_written_fixture_source_checked",
+      "verifier_evidence_path": "tests/fixtures/v3/real_repositories/verifier_evidence/realrepo_local_import_config_bug.json",
+      "issue": "Make app.get_feature_flag return False for unknown feature names while preserving known flags.",
+      "test_command": "pytest -q",
+      "fail_to_pass_tests": [
+        "tests/test_settings.py::test_unknown_flag_defaults_to_false"
+      ],
+      "pass_to_pass_tests": [
+        "tests/test_settings.py::test_known_flag"
+      ],
+      "expected_files": [
+        "app/settings.py"
+      ],
+      "tags": [
+        "v3",
+        "real_repository",
+        "fixed_local_mirror"
+      ]
+    }
+  ]
+}

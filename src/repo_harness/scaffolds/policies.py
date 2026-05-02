@@ -39,11 +39,15 @@ def resolve_feedback_policy(
             "single_shot_patch scaffold requires test_feedback_policy=disabled; "
             f"received {runtime_test_policy.value!r}."
         )
-    resolved_test_policy = (
-        runtime_test_policy
-        or scaffold.default_test_feedback_policy
-        or _default_test_feedback_policy_for_task(task)
-    )
+    swe_bench_like_final_only = _is_swe_bench_like_final_only(task)
+    if runtime_test_policy is None and swe_bench_like_final_only:
+        resolved_test_policy = TestFeedbackPolicy.disabled
+    else:
+        resolved_test_policy = (
+            runtime_test_policy
+            or scaffold.default_test_feedback_policy
+            or _default_test_feedback_policy_for_task(task)
+        )
     if resolved_test_policy == TestFeedbackPolicy.disabled:
         resolved_passed_policy = "not_applicable"
     else:
@@ -61,7 +65,7 @@ def resolve_feedback_policy(
         resolved_test_feedback_policy=resolved_test_policy,
         resolved_feedback_tests_passed_policy=resolved_passed_policy,
         hidden_feedback_visible_to_model=resolved_test_policy == TestFeedbackPolicy.oracle_hidden_feedback,
-        swe_bench_like_final_only=_is_swe_bench_like_final_only(task),
+        swe_bench_like_final_only=swe_bench_like_final_only,
     )
 
 
