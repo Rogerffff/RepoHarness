@@ -10,7 +10,9 @@ scaffold_id: simple_react
 permission_mode: auto
 execution_mode: docker
 docker_backend:
-  requested_container_platform: linux/amd64
+  image_ref: repo-harness-v3-python:stage2
+  build_if_missing: true
+  requested_container_platform: linux/arm64
   network_policy: deny_agent_run
   mount_policy: workspace_read_write_tmp_only
   cleanup_policy: remove_containers_keep_images

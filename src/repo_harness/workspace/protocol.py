@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from pydantic import Field
 
 from repo_harness.errors import RepoHarnessError
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.trajectory import ArtifactRef, RunRecorder
-from repo_harness.workspace.schemas import DependencyState, RunWorkspace
+from repo_harness.workspace.schemas import DependencyState, ExecutionResult, RunWorkspace
 
 
 class WorkspaceBackend(str, Enum):
@@ -82,5 +82,68 @@ class WorkspaceAdapter(Protocol):
         final_patch_path: str | Path,
         setup_command: str | None = None,
         recorder: RunRecorder,
+    ) -> str | Path:
+        ...
+
+    def restore_dependency_state(
+        self,
+        workspace_path: str | Path,
+        dependency_state: DependencyState,
+        setup_command: str | None,
+        recorder: RunRecorder | None = None,
+    ) -> None:
+        ...
+
+    def run_command(
+        self,
+        workspace_path: str | Path,
+        command: str | list[str],
+        *,
+        timeout_sec: float | None = None,
+        recorder: RunRecorder | None = None,
+        command_semantics: str = "generic",
+        allow_shell: bool = False,
+    ) -> ExecutionResult:
+        ...
+
+    def resolve_workspace_path(
+        self,
+        workspace_path: str | Path,
+        requested_path: str | Path,
+        *,
+        must_exist: bool = False,
     ) -> Path:
+        ...
+
+    def read_text(self, workspace_path: str | Path, requested_path: str | Path) -> str:
+        ...
+
+    def write_text(self, workspace_path: str | Path, requested_path: str | Path, content: str) -> None:
+        ...
+
+    def list_files(
+        self,
+        workspace_path: str | Path,
+        root: str | Path = ".",
+        *,
+        pattern: str | None = None,
+    ) -> list[str]:
+        ...
+
+    def apply_patch(
+        self,
+        workspace_path: str | Path,
+        patch_path: str | Path,
+        *,
+        recorder: RunRecorder | None = None,
+    ) -> ExecutionResult:
+        ...
+
+    def capture_final_patch(self, run_workspace: RunWorkspace, *, recorder: RunRecorder) -> Any:
+        ...
+
+    def cleanup_workspaces(self) -> None:
+        ...
+
+    def is_sensitive_relative_path(self, relative_path: str | Path) -> bool:
         ...

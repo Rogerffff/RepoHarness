@@ -118,8 +118,67 @@ def test_forged_docker_backend_passed_status_is_rejected(tmp_path: Path):
         encoding="utf-8",
     )
 
-    with pytest.raises(WorkspaceBackendError, match="当前构建未实现 Docker backend"):
+    with pytest.raises(WorkspaceBackendError, match="16 GiB"):
         inspect_workspace_backend_status(status_file=status_path, assert_stage_complete=True)
+
+
+def test_docker_backend_status_requires_v3_resource_and_worker_facts(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    status = _valid_docker_backend_status().model_copy(update={"docker_mem_total_bytes": 8})
+    _write_status(status_path, status)
+    with pytest.raises(WorkspaceBackendError, match="16 GiB"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    status = _valid_docker_backend_status().model_copy(update={"evaluation_concurrency": 2})
+    _write_status(status_path, status)
+    with pytest.raises(WorkspaceBackendError, match="evaluation.concurrency"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    status = _valid_docker_backend_status().model_copy(
+        update={"swebench_like_effective_max_workers": 2}
+    )
+    _write_status(status_path, status)
+    with pytest.raises(WorkspaceBackendError, match="effective SWE workers"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    status = _valid_docker_backend_status().model_copy(update={"container_uname_m": ""})
+    _write_status(status_path, status)
+    with pytest.raises(WorkspaceBackendError, match="uname -m"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    _write_status(status_path, _valid_docker_backend_status())
+    summary = inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+    assert "docker_backend=passed" in summary
+
+
+def test_docker_backend_inspect_rejects_inconsistent_evidence(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    status = _valid_docker_backend_status()
+    _write_status(status_path, status)
+    facts_path = tmp_path / status.container_execution_facts_refs[0]
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["container_uname_m"] = ""
+    facts_path.write_text(json.dumps(facts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(WorkspaceBackendError, match="container architecture"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    _write_status(status_path, status)
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["cleanup_status"] = "skipped"
+    facts_path.write_text(json.dumps(facts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(WorkspaceBackendError, match="cleanup status"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    _write_status(status_path, status)
+    backend_path = tmp_path / status.docker_backend_facts_ref
+    backend_facts = json.loads(backend_path.read_text(encoding="utf-8"))
+    backend_facts["image_platform"] = "linux/amd64"
+    backend_path.write_text(
+        json.dumps(backend_facts, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(WorkspaceBackendError, match="image platform"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
 
 
 def test_workspace_backend_status_requires_explicit_key_fields(tmp_path: Path):
@@ -181,3 +240,89 @@ def test_interface_only_requires_docker_rejection_evidence(tmp_path: Path):
 
     with pytest.raises(WorkspaceBackendError, match="docker_mode_rejected"):
         inspect_workspace_backend_status(status_file=status_path, assert_stage_complete=True)
+
+
+def _valid_docker_backend_status():
+    return build_workspace_backend_status(
+        mode="docker_backend",
+        docker_available=True,
+        docker_available_reason="test_docker_available",
+        docker_context="desktop-linux",
+        docker_server_platform="linux",
+        docker_server_architecture="arm64",
+        docker_mem_total_bytes=32 * 1024 * 1024 * 1024,
+        evaluation_concurrency=1,
+        swebench_like_effective_max_workers=1,
+        requested_container_platform="linux/arm64",
+        container_uname_m="aarch64",
+        image_id="a" * 64,
+        image_platform="linux/arm64",
+        build_mode="prebuilt",
+        network_policy="deny_agent_run",
+        mount_policy="workspace_read_write_tmp_only",
+        command_timeout_sec=60,
+        cleanup_policy="remove_containers_keep_images",
+        cleanup_status="completed",
+        docker_backend_facts_ref="docker_backend_facts.json",
+        container_execution_facts_refs=["container_execution_facts/probe.json"],
+    )
+
+
+def _write_status(path: Path, status) -> None:
+    path.write_text(
+        json.dumps(status.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    if status.docker_backend_facts_ref:
+        backend_path = path.parent / status.docker_backend_facts_ref
+        backend_path.parent.mkdir(parents=True, exist_ok=True)
+        backend_path.write_text(
+            json.dumps(
+                {
+                    "docker_context": status.docker_context,
+                    "docker_server_version": "29.4.1",
+                    "server_platform": status.docker_server_platform,
+                    "server_architecture": status.docker_server_architecture,
+                    "requested_container_platform": status.requested_container_platform,
+                    "image_ref": "repo-harness-v3-python:stage2",
+                    "image_id": status.image_id,
+                    "image_platform": status.image_platform,
+                    "build_mode": status.build_mode,
+                    "cross_architecture_emulation": False,
+                    "network_policy": status.network_policy,
+                    "mount_policy": status.mount_policy,
+                    "timeout_sec": status.command_timeout_sec,
+                    "cleanup_policy": status.cleanup_policy,
+                    "cleanup_status": status.cleanup_status,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    for ref in status.container_execution_facts_refs:
+        facts_path = path.parent / ref
+        facts_path.parent.mkdir(parents=True, exist_ok=True)
+        facts_path.write_text(
+            json.dumps(
+                {
+                    "command_id": "cmd",
+                    "container_id": "container",
+                    "image_id": status.image_id,
+                    "requested_container_platform": status.requested_container_platform,
+                    "container_uname_m": status.container_uname_m,
+                    "command": ["uname", "-m"],
+                    "workdir": "/repo-harness-run/workspaces/source_checkout",
+                    "exit_code": 0,
+                    "duration_ms": 1,
+                    "network_policy": status.network_policy,
+                    "mount_policy": status.mount_policy,
+                    "cleanup_status": status.cleanup_status,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import fnmatch
 import json
 import shlex
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
@@ -17,7 +15,7 @@ from repo_harness.tasks.command_policy import is_recognized_test_command
 from repo_harness.tools.schemas import ToolCall, ToolResult
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.verifier import PytestVerifier
-from repo_harness.workspace import LocalWorkspaceAdapter, RunWorkspace
+from repo_harness.workspace import RunWorkspace, WorkspaceAdapter
 
 DEFAULT_TOOL_ORDER = [
     "list_files",
@@ -99,7 +97,7 @@ class ToolPolicy:
 class ToolExecutionContext:
     run_id: str
     task_id: str
-    workspace_facade: LocalWorkspaceAdapter
+    workspace_facade: WorkspaceAdapter
     run_workspace: RunWorkspace
     artifact_writer: RunRecorder
     permission_context: PermissionContext
@@ -114,7 +112,7 @@ class ToolExecutionContext:
     file_state_cache: dict[str, str] = field(default_factory=dict)
 
     @property
-    def workspace_adapter(self) -> LocalWorkspaceAdapter:
+    def workspace_adapter(self) -> WorkspaceAdapter:
         return self.workspace_facade
 
     @property
@@ -399,23 +397,16 @@ class ToolExecutor:
         normalized: NormalizedToolRequest,
         context: ToolExecutionContext,
     ) -> ToolResult:
-        root = context.workspace_adapter.resolve_workspace_path(
+        context.workspace_adapter.resolve_workspace_path(
             context.run_workspace.workspace_path,
             str(normalized.normalized_arguments["root"]),
             must_exist=True,
         )
-        pattern = normalized.normalized_arguments.get("pattern")
-        match_all = pattern in {None, "", "**/*"}
-        workspace = Path(context.run_workspace.workspace_path).resolve()
-        files: list[str] = []
-        for path in sorted(root.rglob("*")):
-            rel = path.relative_to(workspace).as_posix()
-            if ".git" in path.parts or "__pycache__" in path.parts:
-                continue
-            if context.workspace_adapter.is_sensitive_relative_path(rel):
-                continue
-            if path.is_file() and (match_all or fnmatch.fnmatch(rel, str(pattern))):
-                files.append(rel)
+        files = context.workspace_adapter.list_files(
+            context.run_workspace.workspace_path,
+            str(normalized.normalized_arguments["root"]),
+            pattern=normalized.normalized_arguments.get("pattern"),
+        )
         ref = context.recorder.write_json_artifact("list_files", {"files": files})
         preview = "\n".join(files) if files else "No files matched."
         return _tool_result(
@@ -912,20 +903,9 @@ def _slice_text(content: str, start_line: Any, end_line: Any) -> str:
 
 
 def _python_grep(context: ToolExecutionContext, root: str, query: str) -> list[str]:
-    root_path = context.workspace_adapter.resolve_workspace_path(
-        context.run_workspace.workspace_path,
-        root,
-        must_exist=True,
-    )
-    workspace = Path(context.run_workspace.workspace_path).resolve()
     matches: list[str] = []
-    for path in sorted(root_path.rglob("*") if root_path.is_dir() else [root_path]):
-        if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
-            continue
+    for rel_path in context.workspace_adapter.list_files(context.run_workspace.workspace_path, root):
         try:
-            rel_path = path.relative_to(workspace).as_posix()
-            if context.workspace_adapter.is_sensitive_relative_path(rel_path):
-                continue
             text = context.workspace_adapter.read_text(context.run_workspace.workspace_path, rel_path)
         except (UnicodeDecodeError, ValueError, WorkspaceError):
             continue

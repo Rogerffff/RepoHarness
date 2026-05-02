@@ -11,7 +11,12 @@ from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.schema_versions import CONTEXT_BUILDER_VERSION, PROMPT_TEMPLATE_VERSION
 from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold
 from repo_harness.tasks import RunnableTask
-from repo_harness.workspace import RunWorkspace
+from repo_harness.workspace import (
+    RunWorkspace,
+    WorkspaceAdapter,
+    WorkspaceBackendError,
+)
+from repo_harness.errors import WorkspaceError
 
 REPO_CONTEXT_FILES = ["AGENT.md", "README.md", "CLAUDE.md", "CONTRIBUTING.md"]
 
@@ -26,9 +31,14 @@ class ContextBuilder:
         resolved_verifier_plan: ResolvedVerifierPlan,
         allowed_tools: list[str],
         scaffold: ScaffoldDefinition | None = None,
+        workspace_facade: WorkspaceAdapter | None = None,
     ) -> list[dict[str, object]]:
         visible_task = task.agent_visible_view()
-        repo_context = _read_repo_context(Path(workspace.workspace_path))
+        repo_context = _read_repo_context(
+            workspace.workspace_path,
+            workspace_facade=workspace_facade,
+            execution_mode=workspace.execution_mode,
+        )
         scaffold = scaffold or build_scaffold(run_config.runtime.scaffold_id)
         system = (
             "You are RepoHarness software engineering agent. Use only the allowed tools and "
@@ -89,15 +99,27 @@ def _language_for_task(task: RunnableTask) -> str:
     return "unknown"
 
 
-def _read_repo_context(workspace_path: Path) -> list[dict[str, Any]]:
+def _read_repo_context(
+    workspace_path: str | Path,
+    *,
+    workspace_facade: WorkspaceAdapter | None = None,
+    execution_mode: str = "local_process",
+) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for name in REPO_CONTEXT_FILES:
-        path = workspace_path / name
-        if not path.exists() or not path.is_file():
-            continue
         try:
-            text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
+            if workspace_facade is None:
+                if execution_mode == "docker":
+                    raise WorkspaceBackendError(
+                        "Docker mode context builder requires workspace facade reads."
+                    )
+                path = Path(workspace_path) / name
+                if not path.exists() or not path.is_file():
+                    continue
+                text = path.read_text(encoding="utf-8")
+            else:
+                text = workspace_facade.read_text(workspace_path, name)
+        except (UnicodeDecodeError, WorkspaceBackendError, WorkspaceError):
             continue
         preview = text[:2000]
         records.append(

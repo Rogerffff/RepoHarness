@@ -5,6 +5,7 @@ from __future__ import annotations
 import platform
 import sys
 from pathlib import Path
+from typing import Literal
 
 from repo_harness.run_metadata.schemas import (
     EnvironmentFingerprint,
@@ -32,6 +33,9 @@ def build_local_environment_fingerprint(
     setup_artifact_hash: str = "none",
     shell_command_policy_version: str = COMMAND_POLICY_VERSION,
     source_checkout_facts: SourceCheckoutFacts | None = None,
+    execution_mode: Literal["local_process", "docker"] = "local_process",
+    backend_version: str | None = None,
+    isolation_claims: list[str] | None = None,
 ) -> EnvironmentFingerprint:
     source_tree_hash = compute_source_tree_hash(source_checkout)
     if source_checkout_facts is None:
@@ -49,17 +53,31 @@ def build_local_environment_fingerprint(
         source_facts = source_checkout_facts.model_copy(
             update={"source_tree_hash": source_tree_hash}
         )
-    execution_mode = ExecutionModeFacts(
-        requested_execution_mode="local_process",
-        resolved_execution_mode="local_process",
+    execution_mode_facts = ExecutionModeFacts(
+        requested_execution_mode=execution_mode,
+        resolved_execution_mode=execution_mode,
         execution_mode_status="active",
     )
     backend = WorkspaceBackendFacts(
-        backend="local_process",
-        backend_version="repo_harness_local_workspace_adapter_v0",
-        execution_mode=execution_mode,
+        backend=execution_mode,
+        backend_version=backend_version
+        or (
+            "repo_harness_docker_workspace_adapter_v3_v0"
+            if execution_mode == "docker"
+            else "repo_harness_local_workspace_adapter_v0"
+        ),
+        execution_mode=execution_mode_facts,
         network_policy=network_policy,
-        isolation_claims=["task_level_workspace_boundary", "command_policy_checks"],
+        isolation_claims=isolation_claims
+        or (
+            [
+                "docker_container_command_execution",
+                "bounded_run_directory_bind_mount",
+                "command_policy_checks",
+            ]
+            if execution_mode == "docker"
+            else ["task_level_workspace_boundary", "command_policy_checks"]
+        ),
     )
     lockfile_hashes = {
         item.path: item.sha256
@@ -69,7 +87,7 @@ def build_local_environment_fingerprint(
         environment=task_definition.environment,
         source_checkout_facts=source_facts,
         dependency_state_strategy=dependency_state.strategy,
-        execution_mode="local_process",
+        execution_mode=execution_mode,
         setup_artifact_hash=setup_artifact_hash,
     )
     workspace_execution = WorkspaceExecutionFacts(

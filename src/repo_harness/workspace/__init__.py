@@ -1,6 +1,7 @@
 """工作区适配器模块。"""
 
 from repo_harness.workspace.adapter import LocalWorkspaceAdapter, PatchCapture
+from repo_harness.workspace.backend_factory import create_workspace_adapter
 from repo_harness.workspace.backend_status import (
     DockerStageStatus,
     WorkspaceBackendTestStatus,
@@ -9,6 +10,7 @@ from repo_harness.workspace.backend_status import (
     load_workspace_backend_status,
     write_workspace_backend_status,
 )
+from repo_harness.workspace.docker_adapter import DockerWorkspaceAdapter, inspect_docker_environment
 from repo_harness.workspace.materialization import SourceCheckout, materialize_source
 from repo_harness.workspace.protocol import (
     WorkspaceAdapter,
@@ -29,6 +31,7 @@ __all__ = [
     "ContainerExecutionFacts",
     "DependencyState",
     "DockerBackendFacts",
+    "DockerWorkspaceAdapter",
     "ExecutionResult",
     "LocalWorkspaceAdapter",
     "PatchCapture",
@@ -42,6 +45,8 @@ __all__ = [
     "WorkspaceCommandResult",
     "WorkspacePaths",
     "build_workspace_backend_status",
+    "create_workspace_adapter",
+    "inspect_docker_environment",
     "inspect_workspace_backend_status",
     "load_workspace_backend_status",
     "materialize_source",

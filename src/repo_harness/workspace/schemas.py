@@ -26,6 +26,9 @@ class ExecutionResult(StrictBaseModel):
     timeout: bool = False
     command_semantics: str = "generic"
     exit_code_interpretation: str = "unknown"
+    execution_backend: Literal["local_process", "docker"] = "local_process"
+    execution_id: str | None = None
+    container_execution_facts_ref: str | None = None
 
 
 class DependencyState(StrictBaseModel):

@@ -27,11 +27,12 @@ def test_experiment_config_accepts_v3_docker_backend_fixture():
     payload = _run_config_payload(config, task_path=config.tasks[0])
 
     assert config.execution_mode == "docker"
-    assert config.docker_backend.requested_container_platform == "linux/amd64"
+    assert config.docker_backend.image_ref == "repo-harness-v3-python:stage2"
+    assert config.docker_backend.requested_container_platform == "linux/arm64"
     assert config.swebench_like.effective_max_workers == 1
     assert config.swebench_like.max_workers_resolution == "experiment_runner_v3_stage1_serial_cap"
     assert payload["runtime"]["execution_mode"] == "docker"
-    assert payload["runtime"]["docker_backend"]["requested_container_platform"] == "linux/amd64"
+    assert payload["runtime"]["docker_backend"]["requested_container_platform"] == "linux/arm64"
     assert payload["swebench_like"]["effective_max_workers"] == 1
 
 

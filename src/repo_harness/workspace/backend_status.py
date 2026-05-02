@@ -13,10 +13,12 @@ from pydantic import Field
 
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.workspace.protocol import WorkspaceBackendError
+from repo_harness.workspace.schemas import ContainerExecutionFacts, DockerBackendFacts
 
 WORKSPACE_BACKEND_STAGE_STATUS_VERSION = "repo_harness_docker_stage_status_v2_v0"
 WORKSPACE_BACKEND_VERSION = "repo_harness_workspace_backend_stage14_v0"
-DOCKER_BACKEND_IMPLEMENTED = False
+DOCKER_BACKEND_IMPLEMENTED = True
+MIN_DOCKER_MEM_TOTAL_BYTES = 16 * 1024 * 1024 * 1024
 REQUIRED_STAGE_STATUS_KEYS = {
     "schema_version",
     "stage",
@@ -76,6 +78,24 @@ class DockerStageStatus(StrictBaseModel):
     docker_backend_adapter: str | None = None
     docker_backend_evidence_refs: list[str] = Field(default_factory=list)
     production_sandbox_claimed: bool = False
+    docker_context: str | None = None
+    docker_server_platform: str | None = None
+    docker_server_architecture: str | None = None
+    docker_mem_total_bytes: int | None = Field(default=None, ge=0)
+    evaluation_concurrency: int | None = Field(default=None, ge=1)
+    swebench_like_effective_max_workers: int | None = Field(default=None, ge=1)
+    requested_container_platform: str | None = None
+    container_uname_m: str | None = None
+    image_id: str | None = None
+    image_platform: str | None = None
+    build_mode: str | None = None
+    network_policy: str | None = None
+    mount_policy: str | None = None
+    command_timeout_sec: int | None = Field(default=None, gt=0)
+    cleanup_policy: str | None = None
+    cleanup_status: str | None = None
+    docker_backend_facts_ref: str | None = None
+    container_execution_facts_refs: list[str] = Field(default_factory=list)
     docker_execution_mode_description: Literal["Docker-based executable repository environment"] = (
         "Docker-based executable repository environment"
     )
@@ -88,6 +108,24 @@ def build_workspace_backend_status(
     mode: Literal["interface_only", "docker_backend"],
     docker_available: bool | None = None,
     docker_available_reason: str | None = None,
+    docker_context: str | None = None,
+    docker_server_platform: str | None = None,
+    docker_server_architecture: str | None = None,
+    docker_mem_total_bytes: int | None = None,
+    evaluation_concurrency: int | None = None,
+    swebench_like_effective_max_workers: int | None = None,
+    requested_container_platform: str | None = None,
+    container_uname_m: str | None = None,
+    image_id: str | None = None,
+    image_platform: str | None = None,
+    build_mode: str | None = None,
+    network_policy: str | None = None,
+    mount_policy: str | None = None,
+    command_timeout_sec: int | None = None,
+    cleanup_policy: str | None = None,
+    cleanup_status: str | None = None,
+    docker_backend_facts_ref: str | None = None,
+    container_execution_facts_refs: list[str] | None = None,
 ) -> DockerStageStatus:
     """Build the Stage 14 machine-readable workspace backend status."""
 
@@ -147,14 +185,38 @@ def build_workspace_backend_status(
             generated_at=generated_at,
         )
 
+    docker_backend_ready = all(
+        [
+            docker_available,
+            docker_context,
+            docker_server_platform,
+            docker_server_architecture,
+            docker_mem_total_bytes is not None,
+            evaluation_concurrency == 1,
+            swebench_like_effective_max_workers == 1,
+            requested_container_platform,
+            container_uname_m,
+            image_id,
+            image_platform,
+            build_mode,
+            network_policy,
+            mount_policy,
+            command_timeout_sec,
+            cleanup_policy,
+            cleanup_status,
+            docker_backend_facts_ref,
+            container_execution_facts_refs,
+        ]
+    )
     return DockerStageStatus(
         mode="docker_backend",
-        status="failed",
+        status="passed" if docker_backend_ready else "failed",
         docker_available=docker_available,
         docker_available_reason=docker_available_reason,
         reason=(
-            "Docker backend mode was requested, but this implementation has only completed "
-            "the interface-only rejection path."
+            "Docker backend is implemented and has container execution evidence."
+            if docker_backend_ready
+            else "Docker backend mode was requested, but required Docker facts or evidence are missing."
         ),
         local_backend_tests=local_tests,
         docker_rejection_tests=[
@@ -167,15 +229,44 @@ def build_workspace_backend_status(
         docker_backend_tests=[
             WorkspaceBackendTestStatus(
                 name="docker_backend_end_to_end",
-                status="failed",
-                reason="No DockerWorkspaceAdapter or container execution context is implemented.",
+                status="passed" if docker_backend_ready else "failed",
+                reason=(
+                    "DockerWorkspaceAdapter recorded container execution facts."
+                    if docker_backend_ready
+                    else "Docker backend evidence is incomplete."
+                ),
             )
         ],
         local_process_mode_regression="passed",
-        docker_execution_mode_behavior="failed",
-        docker_backend_implemented=False,
-        docker_backend_adapter=None,
-        docker_backend_evidence_refs=[],
+        docker_execution_mode_behavior="docker_backend_active" if docker_backend_ready else "failed",
+        docker_backend_implemented=True,
+        docker_backend_adapter="DockerWorkspaceAdapter",
+        docker_backend_evidence_refs=[
+            ref
+            for ref in [
+                docker_backend_facts_ref,
+                *(container_execution_facts_refs or []),
+            ]
+            if ref
+        ],
+        docker_context=docker_context,
+        docker_server_platform=docker_server_platform,
+        docker_server_architecture=docker_server_architecture,
+        docker_mem_total_bytes=docker_mem_total_bytes,
+        evaluation_concurrency=evaluation_concurrency,
+        swebench_like_effective_max_workers=swebench_like_effective_max_workers,
+        requested_container_platform=requested_container_platform,
+        container_uname_m=container_uname_m,
+        image_id=image_id,
+        image_platform=image_platform,
+        build_mode=build_mode,
+        network_policy=network_policy,
+        mount_policy=mount_policy,
+        command_timeout_sec=command_timeout_sec,
+        cleanup_policy=cleanup_policy,
+        cleanup_status=cleanup_status,
+        docker_backend_facts_ref=docker_backend_facts_ref,
+        container_execution_facts_refs=container_execution_facts_refs or [],
         generated_at=generated_at,
     )
 
@@ -202,16 +293,17 @@ def inspect_workspace_backend_status(
     assert_docker_backend: bool = False,
     assert_stage_complete: bool = False,
 ) -> str:
-    status = load_workspace_backend_status(status_file)
+    status_path = Path(status_file)
+    status = load_workspace_backend_status(status_path)
     checks: list[str] = []
     if assert_interface_only:
         _assert_interface_only(status)
         checks.append("interface_only=passed")
     if assert_docker_backend:
-        _assert_docker_backend(status)
+        _assert_docker_backend(status, evidence_root=status_path.parent)
         checks.append("docker_backend=passed")
     if assert_stage_complete:
-        _assert_stage_complete(status)
+        _assert_stage_complete(status, evidence_root=status_path.parent)
         checks.append("stage_complete=passed")
     return json.dumps(
         {
@@ -287,7 +379,7 @@ def _assert_interface_only(status: DockerStageStatus) -> None:
     _require_test_passed(status.docker_rejection_tests, "docker_mode_rejected")
 
 
-def _assert_docker_backend(status: DockerStageStatus) -> None:
+def _assert_docker_backend(status: DockerStageStatus, *, evidence_root: Path | None = None) -> None:
     if status.mode != "docker_backend":
         raise WorkspaceBackendError(f"期望 mode=docker_backend，实际为 {status.mode}。")
     if status.status != "passed":
@@ -306,6 +398,28 @@ def _assert_docker_backend(status: DockerStageStatus) -> None:
         raise WorkspaceBackendError("docker_backend 必须记录 Docker backend adapter。")
     if not status.docker_backend_evidence_refs:
         raise WorkspaceBackendError("docker_backend 必须记录 container execution evidence。")
+    if status.docker_mem_total_bytes is None or status.docker_mem_total_bytes < MIN_DOCKER_MEM_TOTAL_BYTES:
+        raise WorkspaceBackendError("Docker Desktop Linux VM memory 必须至少为 16 GiB。")
+    if status.evaluation_concurrency != 1:
+        raise WorkspaceBackendError("V3 Docker backend 起步要求 evaluation.concurrency == 1。")
+    if status.swebench_like_effective_max_workers != 1:
+        raise WorkspaceBackendError("V3 Docker backend 起步要求 effective SWE workers == 1。")
+    if not status.container_uname_m:
+        raise WorkspaceBackendError("docker_backend 必须记录 container uname -m。")
+    if not status.requested_container_platform:
+        raise WorkspaceBackendError("docker_backend 必须记录 requested container platform。")
+    if not status.image_id or not status.image_platform:
+        raise WorkspaceBackendError("docker_backend 必须记录 image id 和 image platform。")
+    if not status.cleanup_status:
+        raise WorkspaceBackendError("docker_backend 必须记录 cleanup status。")
+    if status.cleanup_status != "completed":
+        raise WorkspaceBackendError(f"docker_backend cleanup status 必须 completed，实际为 {status.cleanup_status}。")
+    if not status.docker_backend_facts_ref:
+        raise WorkspaceBackendError("docker_backend 必须记录 docker_backend_facts_ref。")
+    if not status.container_execution_facts_refs:
+        raise WorkspaceBackendError("docker_backend 必须记录 container_execution_facts_refs。")
+    if evidence_root is not None:
+        _assert_docker_evidence_refs(status, evidence_root)
     if status.local_process_mode_regression != "passed":
         raise WorkspaceBackendError("docker_backend 仍必须保留 local process mode 回归通过证据。")
     _require_test_passed(status.local_backend_tests, "workspace_backend_protocol")
@@ -313,12 +427,12 @@ def _assert_docker_backend(status: DockerStageStatus) -> None:
     _require_test_passed(status.docker_backend_tests, "docker_backend_end_to_end")
 
 
-def _assert_stage_complete(status: DockerStageStatus) -> None:
+def _assert_stage_complete(status: DockerStageStatus, *, evidence_root: Path | None = None) -> None:
     if status.mode == "interface_only":
         _assert_interface_only(status)
         return
     if status.mode == "docker_backend":
-        _assert_docker_backend(status)
+        _assert_docker_backend(status, evidence_root=evidence_root)
         return
     raise WorkspaceBackendError(f"未知 workspace backend stage mode：{status.mode}")
 
@@ -331,3 +445,59 @@ def _require_test_passed(tests: list[WorkspaceBackendTestStatus], name: str) -> 
         raise WorkspaceBackendError(
             f"workspace backend 验收测试 {name} 必须为 passed，实际为 {matching[0].status}。"
         )
+
+
+def _assert_docker_evidence_refs(status: DockerStageStatus, evidence_root: Path) -> None:
+    if status.docker_backend_facts_ref is None:
+        raise WorkspaceBackendError("docker_backend_facts_ref 缺失。")
+    backend_payload = _read_evidence_json(evidence_root, status.docker_backend_facts_ref)
+    try:
+        backend_facts = DockerBackendFacts.model_validate(backend_payload)
+    except Exception as exc:
+        raise WorkspaceBackendError("docker_backend_facts_ref schema 校验失败。") from exc
+    if not backend_facts.requested_container_platform:
+        raise WorkspaceBackendError("docker_backend_facts_ref 缺少 requested container platform。")
+    if backend_facts.cleanup_status != "completed":
+        raise WorkspaceBackendError("docker_backend_facts_ref cleanup status 必须 completed。")
+    if backend_facts.image_id != status.image_id:
+        raise WorkspaceBackendError("docker_backend_facts_ref image id 与 status 不一致。")
+    if backend_facts.image_platform != status.image_platform:
+        raise WorkspaceBackendError("docker_backend_facts_ref image platform 与 status 不一致。")
+    if backend_facts.requested_container_platform != status.requested_container_platform:
+        raise WorkspaceBackendError("docker_backend_facts_ref requested platform 与 status 不一致。")
+    for ref in status.container_execution_facts_refs:
+        payload = _read_evidence_json(evidence_root, ref)
+        try:
+            execution_facts = ContainerExecutionFacts.model_validate(payload)
+        except Exception as exc:
+            raise WorkspaceBackendError(f"container execution facts schema 校验失败：{ref}") from exc
+        if not execution_facts.container_uname_m.strip():
+            raise WorkspaceBackendError(f"container execution facts 缺少 container architecture：{ref}")
+        if execution_facts.cleanup_status != "completed":
+            raise WorkspaceBackendError(f"container execution facts cleanup status 必须 completed：{ref}")
+        if execution_facts.image_id != status.image_id:
+            raise WorkspaceBackendError(f"container execution facts image id 与 status 不一致：{ref}")
+        if execution_facts.requested_container_platform != status.requested_container_platform:
+            raise WorkspaceBackendError(
+                f"container execution facts requested platform 与 status 不一致：{ref}"
+            )
+
+
+def _read_evidence_json(evidence_root: Path, relative_ref: str) -> dict[str, object]:
+    relative_path = Path(relative_ref)
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        raise WorkspaceBackendError(f"Docker evidence ref 必须是安全相对路径：{relative_ref}")
+    path = (evidence_root / relative_path).resolve()
+    try:
+        path.relative_to(evidence_root.resolve())
+    except ValueError as exc:
+        raise WorkspaceBackendError(f"Docker evidence ref 越过 status directory：{relative_ref}") from exc
+    if not path.exists() or not path.is_file():
+        raise WorkspaceBackendError(f"Docker evidence ref 缺失：{relative_ref}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise WorkspaceBackendError(f"Docker evidence ref 不是有效 JSON：{relative_ref}") from exc
+    if not isinstance(payload, dict):
+        raise WorkspaceBackendError(f"Docker evidence ref 顶层必须是 JSON object：{relative_ref}")
+    return payload

@@ -34,7 +34,13 @@ from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLim
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
 from repo_harness.verifier import PytestVerifier, build_error_verifier_result
 from repo_harness.verifier.parser_policy import VerifierParserPolicy
-from repo_harness.workspace import ExecutionResult, LocalWorkspaceAdapter
+from repo_harness.workspace import (
+    ExecutionResult,
+    WorkspaceAdapter,
+    build_workspace_backend_status,
+    create_workspace_adapter,
+)
+from repo_harness.workspace.backend_factory import DockerBackendInitializationError
 from repo_harness.scaffolds import (
     build_scaffold,
     resolve_allowed_tools,
@@ -57,12 +63,6 @@ def run_task(
         raise ConfigError("Stage 11 run-task 只支持 model.provider=replay、fake、mock、deepseek；openai 只允许作为 DeepSeek fallback 内部运行。")
     if config.model.provider == "openai" and not _is_openai_fallback_config(config.model.provider_specific_options):
         raise ConfigError("model.provider=openai 只允许作为 DeepSeek fallback smoke run，不能作为 primary provider。")
-    if config.runtime.execution_mode != "local_process":
-        raise ConfigError(
-            "runtime.execution_mode=docker 是为 Docker-based executable repository environment "
-            "保留的后端接口；当前 Stage 14 选择 interface_only 完成方式，因此会清晰拒绝，"
-            "不会静默降级为 execution_mode=local_process。"
-        )
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)
@@ -94,12 +94,33 @@ def run_task(
             )
         )
         _write_json(run_dir / "task.yaml", loaded.definition.model_dump(mode="json"))
-        adapter = LocalWorkspaceAdapter(
-            run_id=actual_run_id,
-            run_dir=run_dir,
-            default_command_timeout_sec=config.workspace.default_command_timeout_sec,
-            keep_workspace=config.workspace.keep_workspace,
-        )
+        try:
+            adapter = create_workspace_adapter(config=config, run_id=actual_run_id, run_dir=run_dir)
+        except DockerBackendInitializationError as exc:
+            _write_docker_backend_initialization_failure(
+                run_dir=run_dir,
+                config=config,
+                reason=exc.structured_failure_reason,
+                message=str(exc),
+            )
+            recorder.append_event(
+                TrajectoryEvent(
+                    event_id=recorder.next_event_id("docker"),
+                    timestamp=_timestamp(),
+                    run_id=actual_run_id,
+                    task_id=loaded.runnable_task.task_id,
+                    event_type="docker_backend_initialization_failed",
+                    severity="error",
+                    error_type=exc.structured_failure_reason,
+                    data={
+                        "failure_reason": exc.structured_failure_reason,
+                        "message": str(exc),
+                        "execution_mode": config.runtime.execution_mode,
+                    },
+                )
+            )
+            raise WorkspaceError(str(exc)) from exc
+        _write_backend_status_if_supported(adapter, config)
         verifier = PytestVerifier(adapter)
         source = adapter.create_source_checkout(loaded.runnable_task)
         setup = adapter.create_setup_workspace(source)
@@ -222,10 +243,11 @@ def run_task(
             command_timeout_sec=config.workspace.default_command_timeout_sec,
             network_policy=config.workspace.network_policy,
             source_checkout_facts=(
-                adapter.last_source_checkout.facts
-                if adapter.last_source_checkout is not None
+                getattr(adapter, "last_source_checkout").facts
+                if getattr(adapter, "last_source_checkout", None) is not None
                 else None
             ),
+            execution_mode=config.runtime.execution_mode,
         )
         run_config_facts = build_run_config_facts(
             run_id=actual_run_id,
@@ -257,6 +279,7 @@ def run_task(
                 run_config_facts_ref=run_config_facts_ref,
                 tool_protocol=tool_protocol,
             )
+            _write_backend_status_if_supported(adapter, config)
             adapter.cleanup_workspaces()
             return run_dir
         resolved_plan = ResolvedVerifierPlan(
@@ -282,6 +305,7 @@ def run_task(
             resolved_verifier_plan=resolved_plan,
             allowed_tools=allowed_tools,
             scaffold=scaffold,
+            workspace_facade=adapter,
         )
         replay_path = config.model.replay_script_path
         if config.model.provider in {"replay", "fake"} and replay_path is None:
@@ -498,6 +522,7 @@ def run_task(
             final_verifier_mode=config.evaluation.final_verifier_mode,
         )
         write_run_metadata(run_dir, run_metadata)
+        _write_backend_status_if_supported(adapter, config)
         recorder.finalize_run(summary)
         adapter.cleanup_workspaces()
     return run_dir
@@ -575,7 +600,7 @@ def run_batch(
 
 def _run_setup_command(
     *,
-    adapter: LocalWorkspaceAdapter,
+    adapter: WorkspaceAdapter,
     setup_workspace: Path,
     task: RunnableTask,
     recorder: RunRecorder,
@@ -603,6 +628,41 @@ def _run_setup_command(
         )
     )
     return result
+
+
+def _write_backend_status_if_supported(adapter: WorkspaceAdapter, config: RunConfig) -> None:
+    writer = getattr(adapter, "write_backend_status", None)
+    if writer is None:
+        return
+    writer(
+        evaluation_concurrency=config.evaluation.concurrency,
+        swebench_like_effective_max_workers=config.swebench_like.effective_max_workers,
+    )
+
+
+def _write_docker_backend_initialization_failure(
+    *,
+    run_dir: Path,
+    config: RunConfig,
+    reason: str,
+    message: str,
+) -> None:
+    status = build_workspace_backend_status(
+        mode="docker_backend",
+        docker_available=False,
+        docker_available_reason=f"{reason}:{message}",
+        evaluation_concurrency=config.evaluation.concurrency,
+        swebench_like_effective_max_workers=config.swebench_like.effective_max_workers,
+        requested_container_platform=config.runtime.docker_backend.requested_container_platform,
+        network_policy=config.runtime.docker_backend.network_policy,
+        mount_policy=config.runtime.docker_backend.mount_policy,
+        command_timeout_sec=config.runtime.docker_backend.command_timeout_sec,
+        cleanup_policy=config.runtime.docker_backend.cleanup_policy,
+        cleanup_status="failed",
+    )
+    payload = status.model_dump(mode="json")
+    _write_json(run_dir / "docker_backend_status.json", payload)
+    _write_json(run_dir / "docker_stage_status.json", payload)
 
 
 def _is_openai_fallback_config(options: dict[str, Any]) -> bool:

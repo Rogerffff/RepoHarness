@@ -11,13 +11,13 @@ from repo_harness.trajectory import RunRecorder
 from repo_harness.verifier.acceptance import apply_acceptance_policy, build_error_verifier_result
 from repo_harness.verifier.pytest_parser import PytestTextParser
 from repo_harness.verifier.schemas import TestCaseResult, VerifierResult
-from repo_harness.workspace import LocalWorkspaceAdapter
+from repo_harness.workspace import WorkspaceAdapter
 
 
 class PytestVerifier:
     """运行 pytest verifier，并生成结构化 VerifierResult。"""
 
-    def __init__(self, workspace_adapter: LocalWorkspaceAdapter) -> None:
+    def __init__(self, workspace_adapter: WorkspaceAdapter) -> None:
         self.workspace_adapter = workspace_adapter
         self.parser = PytestTextParser()
 

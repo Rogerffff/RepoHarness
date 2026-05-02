@@ -1,0 +1,26 @@
+run_id_prefix: v3_docker
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: tests/fixtures/replays/task_001_success.yaml
+runtime:
+  scaffold_id: simple_react
+  execution_mode: docker
+  permission_mode: auto
+  docker_backend:
+    image_ref: repo-harness-v3-python:stage2
+    build_if_missing: true
+    requested_container_platform: linux/arm64
+    network_policy: deny_agent_run
+    mount_policy: workspace_read_write_tmp_only
+    cleanup_policy: remove_containers_keep_images
+workspace:
+  output_dir: runs/v3-stage-02-docker-smoke
+  keep_workspace: true
+  default_command_timeout_sec: 90
+evaluation:
+  concurrency: 1
+swebench_like:
+  max_workers: 1

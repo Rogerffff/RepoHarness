@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import fnmatch
 import shlex
 import shutil
 import signal
@@ -317,6 +318,28 @@ class LocalWorkspaceAdapter:
 
     def is_sensitive_relative_path(self, relative_path: str | Path) -> bool:
         return _is_sensitive_relative_path(Path(relative_path))
+
+    def list_files(
+        self,
+        workspace_path: str | Path,
+        root: str | Path = ".",
+        *,
+        pattern: str | None = None,
+    ) -> list[str]:
+        root_path = self.resolve_workspace_path(workspace_path, root, must_exist=True)
+        workspace = Path(workspace_path).resolve()
+        match_all = pattern in {None, "", "**/*"}
+        files: list[str] = []
+        paths = root_path.rglob("*") if root_path.is_dir() else [root_path]
+        for path in sorted(paths):
+            if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+                continue
+            rel = path.relative_to(workspace).as_posix()
+            if self.is_sensitive_relative_path(rel):
+                continue
+            if match_all or fnmatch.fnmatch(rel, str(pattern)):
+                files.append(rel)
+        return files
 
     def read_text(self, workspace_path: str | Path, requested_path: str | Path) -> str:
         path = self.resolve_workspace_path(workspace_path, requested_path, must_exist=True)
