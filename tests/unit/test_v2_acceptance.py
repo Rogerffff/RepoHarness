@@ -308,6 +308,36 @@ def test_inspect_v2_acceptance_rejects_non_trainable_convenience_jsonl(tmp_path:
         inspect_v2_acceptance(acceptance, assert_complete=True)
 
 
+def test_inspect_v2_acceptance_rejects_marker_free_convenience_jsonl_tamper(tmp_path: Path):
+    paths = _write_acceptance_inputs(tmp_path)
+    acceptance = tmp_path / "acceptance" / "v2_acceptance_report.json"
+    build_v2_acceptance_report(
+        v1_regression_dir=paths["v1_dir"],
+        task_set_manifest=paths["task_manifest"],
+        mock_provider_report=paths["mock_report"],
+        real_provider_report=paths["real_report"],
+        feedback_policy_report=paths["feedback_report"],
+        export_audit_roots=[paths["exports_root"]],
+        docker_status=paths["docker_status"],
+        output=acceptance,
+    )
+    convenience = Path(paths["exports_root"]) / "sft.jsonl"
+    convenience.write_text(
+        json.dumps(
+            {
+                "sample_id": "tampered-but-trainable",
+                "quality": {"training_eligibility": "trainable"},
+                "invalid_for_training": False,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="root_convenience_files"):
+        inspect_v2_acceptance(acceptance, assert_complete=True)
+
+
 def test_inspect_v2_acceptance_rejects_tampered_export_summary_hash(tmp_path: Path):
     paths = _write_acceptance_inputs(tmp_path)
     acceptance = tmp_path / "acceptance" / "v2_acceptance_report.json"
@@ -603,10 +633,14 @@ def _write_export(root: Path, dirname: str, export_format: str, data_file: str) 
     export_dir = root / dirname
     export_dir.mkdir(parents=True)
     data_path = export_dir / data_file
-    data_path.write_text(
-        json.dumps({"quality": {"training_eligibility": "trainable"}, "invalid_for_training": False}) + "\n",
-        encoding="utf-8",
-    )
+    data_text = json.dumps({"quality": {"training_eligibility": "trainable"}, "invalid_for_training": False}) + "\n"
+    data_path.write_text(data_text, encoding="utf-8")
+    convenience_name = {
+        "sft_jsonl": "sft.jsonl",
+        "rl_jsonl": "rl.jsonl",
+        "preference_jsonl": "preference.jsonl",
+    }[export_format]
+    (root / convenience_name).write_text(data_text, encoding="utf-8")
     audit = {
         "export_id": dirname,
         "format": export_format,

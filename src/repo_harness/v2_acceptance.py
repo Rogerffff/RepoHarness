@@ -28,13 +28,11 @@ REQUIRED_FEEDBACK_TESTS_PASSED_POLICIES = {
     "require_model_final",
     "continue",
 }
-TRAINING_DATA_FILENAMES = {
-    "data.sft.jsonl",
-    "data.rl.jsonl",
-    "data.preference.jsonl",
+ROOT_CONVENIENCE_FILENAMES = {
     "sft.jsonl",
     "rl.jsonl",
     "preference.jsonl",
+    "preference_skipped.json",
 }
 REQUIRED_EVIDENCE_REFS = {
     "v1_batch_manifest",
@@ -787,6 +785,13 @@ def _export_audit_failures(export_audits: dict[str, Any]) -> list[str]:
                 failures.append(f"export audit markdown missing: {audit.get('audit_report_path')}")
             if not audit.get("formal_training_data_only_trainable", False):
                 failures.append(f"non-trainable sample entered training JSONL: {audit.get('audit_report_path')}")
+            for data_file in audit.get("data_files", []):
+                failures.extend(_file_ref_failures("export data file", data_file))
+        root_convenience_files = root.get("root_convenience_files", [])
+        if not root_convenience_files:
+            failures.append(f"export root convenience files are not anchored: {root.get('root_path')}")
+        for ref in root_convenience_files:
+            failures.extend(_file_ref_failures("export root convenience file", ref))
     scan = export_audits.get("training_payload_scan", {})
     if scan.get("provider_raw_markers_found"):
         failures.append("provider raw response markers found in training payload")
@@ -825,6 +830,7 @@ def _export_root_summary(root: Path) -> dict[str, Any]:
                 "audit_report_md_sha256": _sha256_file(audit_md_path) if audit_md_path.exists() else None,
                 "export_manifest_path": str(manifest_path) if manifest_path.exists() else None,
                 "export_manifest_sha256": _sha256_file(manifest_path) if manifest_path.exists() else None,
+                "data_files": _manifest_data_file_refs(export_dir, manifest),
                 "summary": audit.get("summary", {}),
                 "record_count": manifest.get("record_count", 0),
                 "formal_training_data_only_trainable": _formal_training_data_only_trainable(audit),
@@ -834,8 +840,48 @@ def _export_root_summary(root: Path) -> dict[str, Any]:
         "root_path": str(root),
         "inspect_status": inspect_status,
         "inspect_error": inspect_error,
+        "root_convenience_files": _root_convenience_file_refs(root),
         "audits": audits,
     }
+
+
+def _manifest_data_file_refs(export_dir: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    refs = []
+    for data_file in manifest.get("data_files", []):
+        if not isinstance(data_file, dict):
+            continue
+        relative_path = data_file.get("relative_path")
+        if not isinstance(relative_path, str):
+            continue
+        path = export_dir / relative_path
+        refs.append(
+            {
+                "path": str(path),
+                "relative_path": relative_path,
+                "sha256": data_file.get("sha256"),
+                "record_count": data_file.get("record_count"),
+            }
+        )
+    return refs
+
+
+def _root_convenience_file_refs(root: Path) -> list[dict[str, Any]]:
+    refs = []
+    for filename in sorted(ROOT_CONVENIENCE_FILENAMES):
+        path = root / filename
+        if not path.exists():
+            continue
+        ref = {
+            "path": str(path),
+            "relative_path": filename,
+            "sha256": _sha256_file(path),
+        }
+        if path.suffix == ".jsonl":
+            ref["record_count"] = len(
+                [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            )
+        refs.append(ref)
+    return refs
 
 
 def _formal_training_data_only_trainable(audit: dict[str, Any]) -> bool:
@@ -856,6 +902,10 @@ def _export_summary_mismatches(actual: dict[str, Any], expected: dict[str, Any])
         for key in ("root_path", "inspect_status", "inspect_error"):
             if actual_root.get(key) != expected_root.get(key):
                 failures.append(f"export_audits summary does not match referenced source {root_label}: {key}")
+        if actual_root.get("root_convenience_files") != expected_root.get("root_convenience_files"):
+            failures.append(
+                f"export_audits summary does not match referenced source {root_label}: root_convenience_files"
+            )
         actual_audits = actual_root.get("audits", [])
         expected_audits = expected_root.get("audits", [])
         if len(actual_audits) != len(expected_audits):
@@ -873,6 +923,7 @@ def _export_summary_mismatches(actual: dict[str, Any], expected: dict[str, Any])
                 "audit_report_md_sha256",
                 "export_manifest_path",
                 "export_manifest_sha256",
+                "data_files",
                 "summary",
                 "record_count",
                 "formal_training_data_only_trainable",
@@ -899,53 +950,61 @@ def _training_payload_scan(export_summaries: list[dict[str, Any]]) -> dict[str, 
     non_trainable_records: list[dict[str, Any]] = []
     parse_failures: list[dict[str, Any]] = []
     markers = tuple(marker.lower() for marker in PROVIDER_RAW_MARKERS)
-    for root in export_summaries:
-        root_path = Path(root["root_path"])
-        candidates = sorted(
-            path
-            for path in root_path.rglob("*.jsonl")
-            if path.name in TRAINING_DATA_FILENAMES
-        )
-        for path in candidates:
-            text = path.read_text(encoding="utf-8").lower()
-            for marker in markers:
-                if marker in text:
-                    findings.append({"path": str(path), "marker": marker})
-            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-                if not line.strip():
-                    continue
-                try:
-                    record = json.loads(line)
-                except json.JSONDecodeError as exc:
-                    parse_failures.append(
-                        {
-                            "path": str(path),
-                            "line_number": line_number,
-                            "error": str(exc),
-                        }
-                    )
-                    continue
-                eligibility = record.get("quality", {}).get("training_eligibility")
-                if eligibility != "trainable" or record.get("invalid_for_training"):
-                    non_trainable_records.append(
-                        {
-                            "path": str(path),
-                            "line_number": line_number,
-                            "training_eligibility": eligibility,
-                            "invalid_for_training": bool(record.get("invalid_for_training")),
-                        }
-                    )
+    candidates = _training_payload_candidate_paths(export_summaries)
+    for path in candidates:
+        if not path.exists():
+            parse_failures.append({"path": str(path), "line_number": None, "error": "file missing"})
+            continue
+        text = path.read_text(encoding="utf-8")
+        lowered = text.lower()
+        for marker in markers:
+            if marker in lowered:
+                findings.append({"path": str(path), "marker": marker})
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as exc:
+                parse_failures.append(
+                    {
+                        "path": str(path),
+                        "line_number": line_number,
+                        "error": str(exc),
+                    }
+                )
+                continue
+            eligibility = record.get("quality", {}).get("training_eligibility")
+            if eligibility != "trainable" or record.get("invalid_for_training"):
+                non_trainable_records.append(
+                    {
+                        "path": str(path),
+                        "line_number": line_number,
+                        "training_eligibility": eligibility,
+                        "invalid_for_training": bool(record.get("invalid_for_training")),
+                    }
+                )
     return {
-        "scanned_files": [
-            str(path)
-            for root in export_summaries
-            for path in sorted(Path(root["root_path"]).rglob("*.jsonl"))
-            if path.name in TRAINING_DATA_FILENAMES
-        ],
+        "scanned_files": [str(path) for path in candidates],
         "provider_raw_markers_found": findings,
         "non_trainable_records_found": non_trainable_records,
         "jsonl_parse_failures": parse_failures,
     }
+
+
+def _training_payload_candidate_paths(export_summaries: list[dict[str, Any]]) -> list[Path]:
+    candidates: dict[str, Path] = {}
+    for root in export_summaries:
+        for audit in root.get("audits", []):
+            for data_file in audit.get("data_files", []):
+                path = Path(str(data_file.get("path", "")))
+                if path.suffix == ".jsonl":
+                    candidates[str(path)] = path
+        for ref in root.get("root_convenience_files", []):
+            path = Path(str(ref.get("path", "")))
+            if path.suffix == ".jsonl":
+                candidates[str(path)] = path
+    return [candidates[key] for key in sorted(candidates)]
 
 
 def _v1_regression_summary(manifest_path: Path) -> dict[str, Any]:
