@@ -403,6 +403,7 @@ class AgentLoop:
                 state.last_model_error = "single_shot_patch_tool_call_not_allowed"
                 break
             stop_after_tools = False
+            successful_tool_observation = False
             for tool_index, tool_call in enumerate(response.tool_calls):
                 _record_tool_requested(
                     run_id=run_id,
@@ -747,6 +748,8 @@ class AgentLoop:
                     recorder=recorder,
                     messages=messages,
                 )
+                if tool_result.status == "ok":
+                    successful_tool_observation = True
                 if tool_result.effective_tool_name == "run_tests":
                     state.budget_state.test_run_count += 1
                     state.last_verifier_result = tool_result.typed.get("verifier_result_preview")
@@ -784,7 +787,7 @@ class AgentLoop:
                             break
             if stop_after_tools:
                 break
-            if _uses_phase_transitions(self.scaffold):
+            if _uses_phase_transitions(self.scaffold) and successful_tool_observation:
                 next_phase, transition_reason = _next_phase_after_tools(
                     current_phase=current_phase,
                     state=state,

@@ -69,6 +69,7 @@ def test_planner_phase_blocks_edit_before_permission(tmp_path: Path):
         for event in events
     )
     assert not any(event["event_type"] == "permission_decision" for event in events)
+    assert not any(event["event_type"] == "scaffold_phase_transition" for event in events)
 
 
 def test_coder_phase_blocks_bash_pytest_after_normalization(tmp_path: Path):
@@ -119,6 +120,7 @@ steps:
         and event["data"].get("effective_tool_name") == "run_tests"
         for event in events
     )
+    assert _phase_pairs(events) == [("planner", "coder")]
 
 
 def test_planner_coder_verifier_can_enter_repair_after_failed_feedback(tmp_path: Path):
