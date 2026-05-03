@@ -376,13 +376,21 @@ def _build_preference_baseline_report(*, output_root: Path, preference_export_di
         or skipped.get("blocked_reason_distribution")
         or {}
     )
+    diagnostic_pair_count = int(manifest.get("diagnostic_only_count", 0) or 0)
+    if not records and diagnostic_pair_count == 0 and not blocked_distribution:
+        blocked_distribution = {"no_trainable_preference_pair": 1}
+    blocked_pair_count = int(
+        command_args.get("blocked_pair_count") or skipped.get("blocked_pair_count") or 0
+    )
+    if blocked_pair_count == 0 and blocked_distribution:
+        blocked_pair_count = sum(int(value or 0) for value in blocked_distribution.values())
     return {
         "schema_version": V3_PREFERENCE_BASELINE_REPORT_VERSION,
         "generated_at": _utc_timestamp(),
         "preference_export_ref": _artifact_ref(preference_export_dir, base_dir=output_root, artifact_id="preference_export_dir", kind="directory"),
         "eligible_pair_count": len(records),
-        "diagnostic_pair_count": int(manifest.get("diagnostic_only_count", 0) or 0),
-        "blocked_pair_count": int(command_args.get("blocked_pair_count") or skipped.get("blocked_pair_count") or 0),
+        "diagnostic_pair_count": diagnostic_pair_count,
+        "blocked_pair_count": blocked_pair_count,
         "blocked_reason_distribution": blocked_distribution,
         "compare_scope": compare_scope,
         "compare_scope_contains_v2_fields": set(STRICT_COMPARE_FIELDS).issubset(set(compare_scope.get("canonical_key_fields", []))),

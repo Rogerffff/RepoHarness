@@ -111,6 +111,34 @@ def test_v3_export_audit_cli(tmp_path: Path, capsys):
     assert "Inspect V3 export audit: passed" in capsys.readouterr().out
 
 
+def test_v3_export_audit_records_blocked_preference_reason_without_pairs(tmp_path: Path):
+    runs_dir = tmp_path / "runs_no_pair"
+    success = _run_replay(
+        runs_dir,
+        run_id="v3_export_no_pair_success",
+        replay="tests/fixtures/replays/task_001_success.yaml",
+    )
+    output_dir = build_v3_export_audit(
+        run_dirs=[success],
+        output_dir=tmp_path / "v3_export_no_pair",
+    )
+
+    inspect_v3_export_audit(
+        output_dir,
+        manifest=output_dir / "export_manifest.json",
+        audit_report=output_dir / "audit_report.json",
+        assert_clean=True,
+    )
+    preference = _read_json(output_dir / "preference_pair_baseline_report.json")
+
+    assert preference["eligible_pair_count"] == 0
+    assert preference["diagnostic_pair_count"] == 0
+    assert preference["blocked_pair_count"] == 1
+    assert preference["blocked_reason_distribution"] == {
+        "no_trainable_preference_pair": 1
+    }
+
+
 def test_inspect_v3_export_audit_rejects_data_sha_drift(tmp_path: Path):
     runs_dir = tmp_path / "runs_bad_sha"
     success = _run_replay(
