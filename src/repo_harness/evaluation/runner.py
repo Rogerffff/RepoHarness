@@ -451,17 +451,12 @@ def run_task(
             )
         elif swebench_like_runtime_plan is not None:
             try:
-                adapter.create_verification_workspace(
-                    source_checkout=source,
-                    dependency_state=dependency_state,
-                    final_patch_path=capture.patch_path,
-                    setup_command=loaded.runnable_task.setup_command,
-                    recorder=recorder,
-                )
                 final_verifier = run_swebench_like_final_verifier(
                     plan=swebench_like_runtime_plan,
                     final_patch_path=capture.patch_path,
                     run_dir=run_dir,
+                    adapter=adapter,
+                    recorder=recorder,
                 )
             except WorkspaceError:
                 final_verifier = build_error_verifier_result(

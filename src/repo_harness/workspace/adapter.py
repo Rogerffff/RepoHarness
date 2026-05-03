@@ -360,6 +360,7 @@ class LocalWorkspaceAdapter:
         recorder: RunRecorder | None = None,
         command_semantics: str = "generic",
         allow_shell: bool = False,
+        artifact_metadata: dict[str, Any] | None = None,
     ) -> ExecutionResult:
         workspace = Path(workspace_path).resolve()
         self._assert_workspace_under_run_dir(workspace)
@@ -393,7 +394,7 @@ class LocalWorkspaceAdapter:
         artifact_ref = recorder.write_artifact(
             "command_output",
             f"$ {command_display}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
-            {"retention_policy": "keep"},
+            {"retention_policy": "keep", **(artifact_metadata or {})},
         )
         return ExecutionResult(
             exit_code=process.returncode,

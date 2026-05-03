@@ -57,8 +57,8 @@ REQUIRED_DOCKER_PHASES = [
     "final_verifier",
 ]
 PHASE_NOT_APPLICABLE_REASONS = {
-    "verifier_patch_apply": "no verifier patch is configured for this Stage 3 replay smoke task",
-    "test_patch_apply": "no test patch is configured for this Stage 3 replay smoke task",
+    "verifier_patch_apply": "no verifier patch is configured for this task",
+    "test_patch_apply": "no test patch is configured for this task",
 }
 SEMANTICS_TO_PHASE = {
     "source_checkout": "source_checkout",
@@ -76,12 +76,12 @@ SEMANTICS_TO_PHASE = {
     "pass_to_pass_test_execution": "pass_to_pass_test_execution",
     "verifier_final": "final_verifier",
 }
-DEFAULT_DOCKERFILE = """\
-FROM python:3.12-slim
+DEFAULT_DOCKERFILE_TEMPLATE = """\
+FROM {base_image}
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
-RUN python -m pip install --no-cache-dir pytest
+RUN python -m pip install --no-cache-dir pytest mpmath
 WORKDIR /workspace
 """
 
@@ -508,6 +508,7 @@ class DockerWorkspaceAdapter:
         recorder: RunRecorder | None = None,
         command_semantics: str = "generic",
         allow_shell: bool = False,
+        artifact_metadata: dict[str, Any] | None = None,
     ) -> ExecutionResult:
         if recorder is None:
             raise WorkspaceError("run_command 必须提供 RunRecorder 以保存 stdout/stderr artifact。")
@@ -524,7 +525,7 @@ class DockerWorkspaceAdapter:
         artifact_ref = recorder.write_artifact(
             "command_output",
             f"$ {command_display}\n\n[stdout]\n{output.stdout}\n\n[stderr]\n{output.stderr}",
-            {"retention_policy": "keep"},
+            {"retention_policy": "keep", **(artifact_metadata or {})},
         )
         return ExecutionResult(
             exit_code=output.exit_code,
@@ -605,7 +606,7 @@ class DockerWorkspaceAdapter:
                 self.image_ref,
                 "-",
             ],
-            input=DEFAULT_DOCKERFILE,
+            input=_dockerfile_for_base_image(self.config.build_base_image),
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -964,6 +965,15 @@ class DockerWorkspaceAdapter:
             phase = entry.get("phase")
             if phase in by_phase:
                 by_phase[phase].append(entry)
+        final_test_entries = [
+            *by_phase["fail_to_pass_test_execution"],
+            *by_phase["pass_to_pass_test_execution"],
+        ]
+        if final_test_entries:
+            if not by_phase["run_tests"]:
+                by_phase["run_tests"] = final_test_entries
+            if not by_phase["final_verifier"]:
+                by_phase["final_verifier"] = final_test_entries
         phases = []
         for phase in REQUIRED_DOCKER_PHASES:
             entries = by_phase[phase]
@@ -1070,6 +1080,12 @@ def _normalize_architecture(architecture: str) -> str:
 
 def _docker_network_mode(policy: str) -> str:
     return "none" if policy in {"deny", "deny_agent_run", "none"} else "bridge"
+
+
+def _dockerfile_for_base_image(base_image: str) -> str:
+    if not base_image or any(char in base_image for char in "\r\n"):
+        raise WorkspaceError("Docker build_base_image 必须是单行非空 image ref。")
+    return DEFAULT_DOCKERFILE_TEMPLATE.format(base_image=base_image)
 
 
 def _safe_container_name(value: str) -> str:

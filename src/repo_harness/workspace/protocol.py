@@ -103,6 +103,7 @@ class WorkspaceAdapter(Protocol):
         recorder: RunRecorder | None = None,
         command_semantics: str = "generic",
         allow_shell: bool = False,
+        artifact_metadata: dict[str, Any] | None = None,
     ) -> ExecutionResult:
         ...
 

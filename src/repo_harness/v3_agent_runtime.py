@@ -10,15 +10,21 @@ from typing import Any
 
 from repo_harness.errors import ConfigError
 from repo_harness.tasks import RunnableTask
-from repo_harness.trajectory import ArtifactRef
+from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.v3_swebench_like import (
+    PATCH_APPLY_FACTS_VERSION,
     SWEBENCH_LIKE_COMMAND_RESULT_VERSION,
     _aggregate_final_result,
     _apply_patch,
     _read_json,
     _run_verifier_command,
+    _suite_status,
+    _test_shell,
 )
+from repo_harness.verifier.pytest_parser import PytestTextParser
 from repo_harness.verifier.schemas import TestCaseResult, VerifierResult
+from repo_harness.workspace.protocol import WorkspaceAdapter
+from repo_harness.workspace.schemas import ExecutionResult
 from repo_harness.workspace.source_hash import compute_file_sha256, compute_source_tree_hash
 
 AGENT_LOOP_RUNTIME_VERSION = "repo_harness_v3_agent_loop_runtime_v0"
@@ -115,6 +121,8 @@ def run_swebench_like_final_verifier(
     plan: SweBenchLikeRuntimePlan,
     final_patch_path: str | Path,
     run_dir: str | Path,
+    adapter: WorkspaceAdapter | None = None,
+    recorder: RunRecorder | None = None,
 ) -> VerifierResult:
     """Replay the model final patch in an independent SWE-Bench-like verifier workspace."""
 
@@ -127,47 +135,98 @@ def run_swebench_like_final_verifier(
         plan.manifest_root,
         plan.entry["baseline_workspace_ref"]["relative_path"],
     )
-    verification_workspace = task_root / "verification_workspace"
-    shutil.copytree(
-        baseline_workspace,
-        verification_workspace,
-        symlinks=True,
-        ignore=shutil.ignore_patterns(".pytest_cache", "__pycache__", "*.pyc"),
-    )
-    patch_apply = _apply_patch(
-        workspace=verification_workspace,
-        patch_path=Path(final_patch_path),
-        task_root=task_root,
-        label=f"{plan.task_id}_agent_loop_final_patch_apply",
-        execute=True,
-    )
     environment = _environment_from_plan(plan)
-    if patch_apply.get("status") == "passed":
-        f2p = _run_verifier_command(
-            task_id=plan.task_id,
-            task_root=task_root,
-            workspace=verification_workspace,
-            environment=environment,
-            command=plan.plan["fail_to_pass_command"],
-            selectors=plan.selector_cache["expanded_fail_to_pass"],
-            phase="agent_loop_final",
-            suite="fail_to_pass",
-            execute=True,
+
+    if adapter is not None and recorder is not None:
+        verification_workspace = run_root / "workspaces" / "swebench_like_final_verification_workspace"
+        if verification_workspace.exists():
+            shutil.rmtree(verification_workspace)
+        shutil.copytree(
+            baseline_workspace,
+            verification_workspace,
+            symlinks=True,
+            ignore=shutil.ignore_patterns(".pytest_cache", "__pycache__", "*.pyc"),
         )
-        p2p = _run_verifier_command(
-            task_id=plan.task_id,
-            task_root=task_root,
-            workspace=verification_workspace,
-            environment=environment,
-            command=plan.plan["pass_to_pass_command"],
-            selectors=plan.selector_cache["expanded_pass_to_pass"],
-            phase="agent_loop_final",
-            suite="pass_to_pass",
-            execute=True,
+        adapter.run_command(
+            verification_workspace,
+            ["python", "-c", "pass"],
+            timeout_sec=30,
+            recorder=recorder,
+            command_semantics="verification_workspace_creation",
+            artifact_metadata={"redaction_status": "evaluator_only"},
         )
+        patch_apply_result = adapter.apply_patch(
+            verification_workspace,
+            final_patch_path,
+            recorder=recorder,
+            command_semantics="model_final_patch_apply",
+        )
+        patch_apply = _patch_apply_facts_from_execution(patch_apply_result)
+        if patch_apply.get("status") == "passed":
+            f2p = _run_verifier_command_with_adapter(
+                plan=plan,
+                task_root=task_root,
+                verification_workspace=verification_workspace,
+                environment=environment,
+                adapter=adapter,
+                recorder=recorder,
+                suite="fail_to_pass",
+                command_semantics="fail_to_pass_test_execution",
+            )
+            p2p = _run_verifier_command_with_adapter(
+                plan=plan,
+                task_root=task_root,
+                verification_workspace=verification_workspace,
+                environment=environment,
+                adapter=adapter,
+                recorder=recorder,
+                suite="pass_to_pass",
+                command_semantics="pass_to_pass_test_execution",
+            )
+        else:
+            f2p = _skipped_command_result(plan, "fail_to_pass", "patch_apply_failed")
+            p2p = _skipped_command_result(plan, "pass_to_pass", "patch_apply_failed")
     else:
-        f2p = _skipped_command_result(plan, "fail_to_pass", "patch_apply_failed")
-        p2p = _skipped_command_result(plan, "pass_to_pass", "patch_apply_failed")
+        verification_workspace = task_root / "verification_workspace"
+        shutil.copytree(
+            baseline_workspace,
+            verification_workspace,
+            symlinks=True,
+            ignore=shutil.ignore_patterns(".pytest_cache", "__pycache__", "*.pyc"),
+        )
+        patch_apply = _apply_patch(
+            workspace=verification_workspace,
+            patch_path=Path(final_patch_path),
+            task_root=task_root,
+            label=f"{plan.task_id}_agent_loop_final_patch_apply",
+            execute=True,
+        )
+        if patch_apply.get("status") == "passed":
+            f2p = _run_verifier_command(
+                task_id=plan.task_id,
+                task_root=task_root,
+                workspace=verification_workspace,
+                environment=environment,
+                command=plan.plan["fail_to_pass_command"],
+                selectors=plan.selector_cache["expanded_fail_to_pass"],
+                phase="agent_loop_final",
+                suite="fail_to_pass",
+                execute=True,
+            )
+            p2p = _run_verifier_command(
+                task_id=plan.task_id,
+                task_root=task_root,
+                workspace=verification_workspace,
+                environment=environment,
+                command=plan.plan["pass_to_pass_command"],
+                selectors=plan.selector_cache["expanded_pass_to_pass"],
+                phase="agent_loop_final",
+                suite="pass_to_pass",
+                execute=True,
+            )
+        else:
+            f2p = _skipped_command_result(plan, "fail_to_pass", "patch_apply_failed")
+            p2p = _skipped_command_result(plan, "pass_to_pass", "patch_apply_failed")
     final_result = _aggregate_final_result(
         task_id=plan.task_id,
         final_patch_apply=patch_apply,
@@ -205,6 +264,101 @@ def run_swebench_like_final_verifier(
     }
     _write_json(task_root / "swebench_like_agent_loop_final_verifier_report.json", report)
     return _verifier_result_from_swebench_result(final_result)
+
+
+def _run_verifier_command_with_adapter(
+    *,
+    plan: SweBenchLikeRuntimePlan,
+    task_root: Path,
+    verification_workspace: Path,
+    environment: dict[str, Any],
+    adapter: WorkspaceAdapter,
+    recorder: RunRecorder,
+    suite: str,
+    command_semantics: str,
+) -> dict[str, Any]:
+    selectors = plan.selector_cache[
+        "expanded_fail_to_pass" if suite == "fail_to_pass" else "expanded_pass_to_pass"
+    ]
+    command = plan.plan["fail_to_pass_command" if suite == "fail_to_pass" else "pass_to_pass_command"]
+    result = adapter.run_command(
+        verification_workspace,
+        _test_shell(command, environment),
+        timeout_sec=environment["test_timeout_sec"],
+        recorder=recorder,
+        command_semantics=command_semantics,
+        allow_shell=True,
+        artifact_metadata={"redaction_status": "evaluator_only"},
+    )
+    stdout, stderr = _read_execution_output(run_root=Path(recorder.run_dir), result=result)
+    parser = PytestTextParser()
+    parser_confidence = parser.parser_confidence(stdout, stderr, result.exit_code)
+    error_type = parser.error_type(stdout, stderr, result.exit_code, result.timeout)
+    status = _suite_status(result.exit_code, result.timeout)
+    test_cases = [{"test_id": selector, "status": status} for selector in selectors]
+    payload = {
+        "schema_version": SWEBENCH_LIKE_COMMAND_RESULT_VERSION,
+        "instance_id": plan.task_id,
+        "phase": "agent_loop_final",
+        "suite": suite,
+        "command": command,
+        "selectors": selectors,
+        "exit_code": result.exit_code,
+        "timeout": result.timeout,
+        "parser_id": parser.parser_id,
+        "parser_version": parser.parser_version,
+        "parser_confidence": parser_confidence,
+        "error_type": error_type,
+        "test_cases": test_cases,
+        "passed_count": sum(1 for case in test_cases if case["status"] == "passed"),
+        "total_count": len(test_cases),
+        "output_artifact_ref": (
+            result.output_artifact_ref.model_dump(mode="json")
+            if result.output_artifact_ref is not None
+            else None
+        ),
+        "container_execution_facts_ref": result.container_execution_facts_ref,
+        "execution_backend": result.execution_backend,
+    }
+    output_path = task_root / f"{suite}.json"
+    _write_json(output_path, payload)
+    return payload
+
+
+def _patch_apply_facts_from_execution(result: ExecutionResult) -> dict[str, Any]:
+    if result.timeout:
+        status = "timeout"
+    elif result.exit_code == 0:
+        status = "passed"
+    else:
+        status = "failed"
+    return {
+        "schema_version": PATCH_APPLY_FACTS_VERSION,
+        "status": status,
+        "exit_code": result.exit_code,
+        "timeout": result.timeout,
+        "execution_backend": result.execution_backend,
+        "output_artifact_ref": (
+            result.output_artifact_ref.model_dump(mode="json")
+            if result.output_artifact_ref is not None
+            else None
+        ),
+        "container_execution_facts_ref": result.container_execution_facts_ref,
+    }
+
+
+def _read_execution_output(*, run_root: Path, result: ExecutionResult) -> tuple[str, str]:
+    if result.output_artifact_ref is None:
+        return result.stdout_preview, result.stderr_preview
+    output_path = run_root / result.output_artifact_ref.relative_path
+    text = output_path.read_text(encoding="utf-8")
+    stdout_marker = "\n\n[stdout]\n"
+    stderr_marker = "\n\n[stderr]\n"
+    if stdout_marker not in text or stderr_marker not in text:
+        return result.stdout_preview, result.stderr_preview
+    stdout_part = text.split(stdout_marker, 1)[1]
+    stdout, stderr = stdout_part.split(stderr_marker, 1)
+    return stdout, stderr
 
 
 def _verifier_result_from_swebench_result(payload: dict[str, Any]) -> VerifierResult:

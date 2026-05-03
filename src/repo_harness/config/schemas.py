@@ -39,6 +39,7 @@ class ModelConfig(StrictBaseModel):
 class DockerRuntimeConfig(StrictBaseModel):
     schema_version: str = DOCKER_RUNTIME_CONFIG_VERSION
     image_ref: str = "repo-harness-v3-python:stage2"
+    build_base_image: str = "python:3.12-slim"
     build_if_missing: bool = True
     requested_container_platform: Literal["linux/amd64", "linux/arm64"] | None = None
     network_policy: str = "deny_agent_run"
