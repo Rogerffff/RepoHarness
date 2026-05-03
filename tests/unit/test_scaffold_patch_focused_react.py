@@ -22,13 +22,15 @@ def test_patch_focused_react_scaffold_declares_restricted_tool_surface():
     scaffold = build_scaffold("patch_focused_react")
 
     assert scaffold.scaffold_id == "patch_focused_react"
-    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v0"
+    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v1"
     assert scaffold.initial_phase == "patch"
     assert scaffold.allowed_tools == PATCH_FOCUSED_REACT_TOOL_ORDER
     assert "bash" not in scaffold.allowed_tools
     assert "create_file" not in scaffold.allowed_tools
     assert "durable source patch" in scaffold.prompt_fragment
     assert "persistent project files" in scaffold.prompt_fragment
+    assert "fallback semantic" in scaffold.prompt_fragment
+    assert "environment-derived value" in scaffold.prompt_fragment
     assert "run_tests" in scaffold.prompt_fragment
     assert "git_diff" in scaffold.prompt_fragment
 

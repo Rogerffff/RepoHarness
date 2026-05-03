@@ -22,16 +22,19 @@ class PatchFocusedReactScaffold(ScaffoldDefinition):
 def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
     return PatchFocusedReactScaffold(
         scaffold_id="patch_focused_react",
-        scaffold_version="repo_harness_patch_focused_react_v0",
+        scaffold_version="repo_harness_patch_focused_react_v1",
         prompt_fragment=(
             "Focus on a durable source patch. Use the allowed read, search, edit, "
             "test, and diff tools to inspect the repository and update persistent "
             "project files. Do not rely on shell commands or scratch diagnostic "
             "files for the final change. If temporary investigation was already "
             "performed, keep the final diff limited to the repository files needed "
-            "for the task. When available in allowed_tools, use run_tests for "
-            "configured feedback and git_diff to review the final diff before "
-            "answering."
+            "for the task. When existing code already has a fallback for an "
+            "unavailable or unusable environment-derived value, preserve that "
+            "fallback semantic instead of inventing a new identifier unless the "
+            "task explicitly asks for one. When available in allowed_tools, use "
+            "run_tests for configured feedback and git_diff to review the final "
+            "diff before answering."
         ),
         allowed_tools_policy="repo_harness_patch_focused_react_allowed_tools_v0",
         phase_transition_policy="repo_harness_patch_focused_react_single_phase_v0",
