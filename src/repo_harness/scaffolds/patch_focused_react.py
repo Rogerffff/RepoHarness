@@ -22,7 +22,7 @@ class PatchFocusedReactScaffold(ScaffoldDefinition):
 def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
     return PatchFocusedReactScaffold(
         scaffold_id="patch_focused_react",
-        scaffold_version="repo_harness_patch_focused_react_v2",
+        scaffold_version="repo_harness_patch_focused_react_v3",
         prompt_fragment=(
             "Focus on a durable source patch. Use the allowed read, search, edit, "
             "test, and diff tools to inspect the repository and update persistent "
@@ -36,7 +36,9 @@ def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
             "login, or environment data and the surrounding code treats None as "
             "unavailable so it can use an established fallback, prefer that "
             "existing fallback over sanitizing the invalid value into a new "
-            "directory or identifier. When available in allowed_tools, use "
+            "directory or identifier. For helpers annotated as Optional, "
+            "returning None for an invalid or unusable value is often the "
+            "intended way to activate that caller fallback. When available in allowed_tools, use "
             "run_tests for configured feedback and git_diff to review the final "
             "diff before answering."
         ),
