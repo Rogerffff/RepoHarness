@@ -22,7 +22,7 @@ class PatchFocusedReactScaffold(ScaffoldDefinition):
 def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
     return PatchFocusedReactScaffold(
         scaffold_id="patch_focused_react",
-        scaffold_version="repo_harness_patch_focused_react_v4",
+        scaffold_version="repo_harness_patch_focused_react_v5",
         prompt_fragment=(
             "Focus on a durable source patch. Use the allowed read, search, edit, "
             "test, and diff tools to inspect the repository and update persistent "
@@ -38,7 +38,9 @@ def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
             "existing fallback over sanitizing the invalid value into a new "
             "directory or identifier. For helpers annotated as Optional, "
             "returning None for an invalid or unusable value is often the "
-            "intended way to activate that caller fallback. For operator "
+            "intended way to activate that caller fallback; do not sanitize "
+            "such a value unless the surrounding code lacks a fallback path. "
+            "For operator "
             "regressions where the public issue says an expression collapses "
             "to scalar 1 but should preserve a quantity or prefixed quantity, "
             "inspect the operand classes' dunder methods. Keep scalar identity "
