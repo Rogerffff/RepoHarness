@@ -42,6 +42,7 @@ from repo_harness.workspace.schemas import (
 )
 
 CONTAINER_RUN_ROOT = PurePosixPath("/repo-harness-run")
+EFFECTIVE_DOCKER_MOUNT_POLICY = "run_dir_read_only_workspace_read_write"
 REQUIRED_DOCKER_PHASES = [
     "source_checkout",
     "setup",
@@ -138,7 +139,8 @@ class DockerWorkspaceAdapter:
         self.config = docker_config
         self.image_ref = docker_config.image_ref
         self.network_policy = docker_config.network_policy
-        self.mount_policy = docker_config.mount_policy
+        self.configured_mount_policy = docker_config.mount_policy
+        self.mount_policy = EFFECTIVE_DOCKER_MOUNT_POLICY
         self.cleanup_policy = docker_config.cleanup_policy
         self.facts_dir = self.run_dir / "container_execution_facts"
         self.last_source_checkout: SourceCheckout | None = None
@@ -686,7 +688,8 @@ class DockerWorkspaceAdapter:
             "-e",
             "GIT_CONFIG_VALUE_0=*",
             "-v",
-            f"{self.run_dir.as_posix()}:{CONTAINER_RUN_ROOT.as_posix()}",
+            f"{self.run_dir.as_posix()}:{CONTAINER_RUN_ROOT.as_posix()}:ro",
+            *self._workspace_mount_args(host_workspace),
             "-w",
             container_workdir,
             self.image_ref,
@@ -769,6 +772,16 @@ class DockerWorkspaceAdapter:
             cleanup_status=cleanup_status,
             facts_ref=facts_path.relative_to(self.run_dir).as_posix(),
         )
+
+    def _workspace_mount_args(self, host_workspace: Path) -> list[str]:
+        try:
+            host_workspace.resolve().relative_to(self.workspaces_dir.resolve())
+        except ValueError:
+            return []
+        return [
+            "-v",
+            f"{host_workspace.as_posix()}:{self._container_path(host_workspace).as_posix()}:rw",
+        ]
 
     def _ensure_git_baseline(
         self, workspace: Path, excluded_diff_paths: list[str], recorder: RunRecorder | None = None

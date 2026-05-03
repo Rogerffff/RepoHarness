@@ -5,8 +5,14 @@ from pathlib import Path
 
 import pytest
 
+from repo_harness.config import DockerRuntimeConfig
 from repo_harness.evaluation.runner import run_task
+from repo_harness.trajectory import RunRecorder
 from repo_harness.workspace import inspect_workspace_backend_status
+from repo_harness.workspace.docker_adapter import (
+    EFFECTIVE_DOCKER_MOUNT_POLICY,
+    DockerWorkspaceAdapter,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -99,6 +105,43 @@ def test_docker_backend_replay_smoke_records_facts(tmp_path: Path):
         ]
         == "docker"
     )
+    assert status["mount_policy"] == EFFECTIVE_DOCKER_MOUNT_POLICY
+
+
+def test_docker_backend_mounts_run_evidence_read_only(tmp_path: Path):
+    platform = _docker_platform_or_skip()
+    run_dir = tmp_path / "run"
+    workspace = run_dir / "workspaces" / "tamper_workspace"
+    workspace.mkdir(parents=True)
+    guard_path = run_dir / "evidence_guard.json"
+    guard_path.write_text("original\n", encoding="utf-8")
+
+    adapter = DockerWorkspaceAdapter(
+        run_id="v3-docker-mount-guard",
+        run_dir=run_dir,
+        docker_config=DockerRuntimeConfig(
+            image_ref="repo-harness-v3-python:stage2",
+            build_if_missing=True,
+            requested_container_platform=platform,
+            network_policy="deny_agent_run",
+            mount_policy="workspace_read_write_tmp_only",
+            cleanup_policy="remove_containers_keep_images",
+        ),
+        default_command_timeout_sec=90,
+    )
+
+    with RunRecorder("v3-docker-mount-guard", run_dir, task_id="mount_guard") as recorder:
+        result = adapter.run_command(
+            workspace,
+            "printf workspace-ok > workspace_ok.txt; printf tampered > /repo-harness-run/evidence_guard.json",
+            recorder=recorder,
+            allow_shell=True,
+            command_semantics="agent_tool",
+        )
+
+    assert result.exit_code != 0
+    assert (workspace / "workspace_ok.txt").read_text(encoding="utf-8") == "workspace-ok"
+    assert guard_path.read_text(encoding="utf-8") == "original\n"
 
 
 def _docker_platform_or_skip() -> str:
