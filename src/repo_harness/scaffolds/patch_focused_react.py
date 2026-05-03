@@ -22,7 +22,7 @@ class PatchFocusedReactScaffold(ScaffoldDefinition):
 def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
     return PatchFocusedReactScaffold(
         scaffold_id="patch_focused_react",
-        scaffold_version="repo_harness_patch_focused_react_v6",
+        scaffold_version="repo_harness_patch_focused_react_v7",
         prompt_fragment=(
             "Focus on a durable source patch. Use the allowed read, search, edit, "
             "test, and diff tools to inspect the repository and update persistent "
@@ -45,7 +45,13 @@ def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
             "platform-invalid path characters in user, login, or environment "
             "strings as making the whole component unavailable; return None "
             "from the helper rather than translating the invalid component "
-            "into a different identity. "
+            "into a different identity. Do not implement this class of path "
+            "component failure by replacing invalid user, login, or "
+            "environment characters such as slashes, backslashes, or colons "
+            "with underscores when a nearby caller already has a fallback "
+            "for None, for example helper() or 'unknown'. In that pattern, "
+            "the durable fix is to return None from the helper for an invalid "
+            "path component and let the existing fallback own the identity. "
             "For operator "
             "regressions where the public issue says an expression collapses "
             "to scalar 1 but should preserve a quantity or prefixed quantity, "

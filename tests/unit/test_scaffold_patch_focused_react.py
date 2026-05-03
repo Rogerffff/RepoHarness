@@ -22,7 +22,7 @@ def test_patch_focused_react_scaffold_declares_restricted_tool_surface():
     scaffold = build_scaffold("patch_focused_react")
 
     assert scaffold.scaffold_id == "patch_focused_react"
-    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v6"
+    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v7"
     assert scaffold.initial_phase == "patch"
     assert scaffold.allowed_tools == PATCH_FOCUSED_REACT_TOOL_ORDER
     assert "bash" not in scaffold.allowed_tools
@@ -38,6 +38,9 @@ def test_patch_focused_react_scaffold_declares_restricted_tool_surface():
     assert "helper() or fallback" in scaffold.prompt_fragment
     assert "whole component unavailable" in scaffold.prompt_fragment
     assert "return None" in scaffold.prompt_fragment
+    assert "with underscores" in scaffold.prompt_fragment
+    assert "helper() or 'unknown'" in scaffold.prompt_fragment
+    assert "let the existing fallback own the identity" in scaffold.prompt_fragment
     assert "operator regressions" in scaffold.prompt_fragment
     assert "type-specific quantity" in scaffold.prompt_fragment
     assert "run_tests" in scaffold.prompt_fragment
