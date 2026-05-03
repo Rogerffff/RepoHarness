@@ -8,6 +8,7 @@ import pytest
 from repo_harness.errors import ConfigError
 from repo_harness.trajectory import ArtifactRef
 from repo_harness.v3_swebench_like import expand_swebench_selectors, inspect_swebench_like
+from repo_harness.v3_swebench_like import _test_shell
 from repo_harness.workspace.source_hash import compute_file_sha256
 
 
@@ -42,6 +43,19 @@ diff --git a/tests/test_b.py b/tests/test_b.py
 
     with pytest.raises(ConfigError, match="裸函数名 selector 无法唯一映射"):
         expand_swebench_selectors(["test_a"], test_patch=patch, instance_id="example")
+
+
+def test_swebench_like_test_shell_uses_cwd_relative_verifier_venv():
+    shell = _test_shell(
+        "python -m pytest -q tests/test_example.py",
+        {"pythonpath": "src"},
+    )
+
+    assert 'export VIRTUAL_ENV="$PWD/.v3_verifier_venv"' in shell
+    assert 'export PATH="$VIRTUAL_ENV/bin:$PATH"' in shell
+    assert ". .v3_verifier_venv/bin/activate" not in shell
+    assert "export PYTHONPATH=src" in shell
+    assert shell.endswith("python -m pytest -q tests/test_example.py")
 
 
 def test_inspect_swebench_like_rejects_empty_selector_cache(tmp_path: Path):

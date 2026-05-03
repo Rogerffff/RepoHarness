@@ -976,7 +976,11 @@ def _test_shell(command: str, environment: dict[str, Any]) -> str:
     exports = ""
     if environment.get("pythonpath"):
         exports = f"export PYTHONPATH={shlex.quote(environment['pythonpath'])} && "
-    return f". .v3_verifier_venv/bin/activate && {exports}{command}"
+    return (
+        'export VIRTUAL_ENV="$PWD/.v3_verifier_venv" '
+        '&& export PATH="$VIRTUAL_ENV/bin:$PATH" '
+        f"&& {exports}{command}"
+    )
 
 
 def _pytest_command(selectors: list[str]) -> str:
