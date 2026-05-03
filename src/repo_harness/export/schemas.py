@@ -125,6 +125,16 @@ class ExportRecord(StrictBaseModel):
             "reward_only",
             "reward_only_metadata",
             "decontamination_metadata",
+            "final_verifier_ref",
+            "reward_metadata_ref",
+            "reward_metadata",
+            "verifier",
+            "run_outcome",
+            "final_verifier_status",
+            "chosen_run_metadata",
+            "rejected_run_metadata",
+            "chosen_verifier_result_ref",
+            "rejected_verifier_result_ref",
         }
         for location, value in (("payload", self.payload), ("metadata", self.metadata)):
             found = _find_blocked_export_value(value, blocked_keys)

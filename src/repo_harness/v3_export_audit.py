@@ -38,6 +38,18 @@ V3_COMPARE_SCOPE_FIELDS = (
     "verifier_plan_ref",
 )
 V3_REQUIRED_COMPARE_SCOPE_FIELDS = tuple(dict.fromkeys((*STRICT_COMPARE_FIELDS, *V3_COMPARE_SCOPE_FIELDS)))
+FORMAL_TRAINING_FORBIDDEN_FIELDS = {
+    "final_verifier_ref",
+    "reward_metadata_ref",
+    "reward_metadata",
+    "verifier",
+    "run_outcome",
+    "final_verifier_status",
+    "chosen_run_metadata",
+    "rejected_run_metadata",
+    "chosen_verifier_result_ref",
+    "rejected_verifier_result_ref",
+}
 
 
 def build_v3_export_audit(
@@ -426,11 +438,17 @@ def _scan_v3_surfaces(
             path = output_root / ref["relative_path"]
             if path.suffix == ".jsonl":
                 surface = _surface_for_export_format(str(entry.get("format") or ""))
-                formal_payloads_by_surface.setdefault(surface, []).extend(
-                    _training_payload_projection(record) for record in _read_jsonl(path)
-                )
+                records = _read_jsonl(path)
+                formal_payloads_by_surface.setdefault(surface, []).extend(records)
     for surface, payloads in sorted(formal_payloads_by_surface.items()):
-        scans.append(_scan_result(denylist, surface=surface, payload=payloads, subject="formal_training_payload"))
+        scans.append(
+            _formal_training_scan_result(
+                denylist,
+                surface=surface,
+                payload=payloads,
+                subject="formal_training_payload_actual",
+            )
+        )
     scans.append(
         _scan_result(
             denylist,
@@ -451,6 +469,41 @@ def _scan_result(denylist: V3ContaminationDenylist, *, surface: str, payload: An
         "finding_count": len(result.findings),
         "matched_terms": sorted({finding.matched_term for finding in result.findings}),
     }
+
+
+def _formal_training_scan_result(
+    denylist: V3ContaminationDenylist,
+    *,
+    surface: str,
+    payload: Any,
+    subject: str,
+) -> dict[str, Any]:
+    result = denylist.scan_payload(surface=surface, payload=payload)
+    forbidden_fields = sorted(set(_find_formal_training_forbidden_fields(payload)))
+    return {
+        "surface": surface,
+        "subject": subject,
+        "clean": result.clean and not forbidden_fields,
+        "finding_count": len(result.findings) + len(forbidden_fields),
+        "matched_terms": sorted(
+            {finding.matched_term for finding in result.findings}.union(forbidden_fields)
+        ),
+    }
+
+
+def _find_formal_training_forbidden_fields(value: Any, path: str = "$") -> list[str]:
+    findings: list[str] = []
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            key_text = str(key)
+            child_path = f"{path}.{key_text}"
+            if key_text.lower() in FORMAL_TRAINING_FORBIDDEN_FIELDS:
+                findings.append(child_path)
+            findings.extend(_find_formal_training_forbidden_fields(nested, child_path))
+    elif isinstance(value, list):
+        for index, nested in enumerate(value):
+            findings.extend(_find_formal_training_forbidden_fields(nested, f"{path}[{index}]"))
+    return findings
 
 
 def _training_payload_projection(record: dict[str, Any]) -> dict[str, Any]:
@@ -869,11 +922,17 @@ def _inspect_format_export(root: Path, entry: dict[str, Any], failures: list[str
     for data_ref in entry.get("data_file_refs", []):
         data_path = _inspect_artifact_ref(root, data_ref, failures, label="data_file_ref")
         if data_path and data_path.suffix == ".jsonl":
-            for record in _read_jsonl(data_path):
+            for line_number, record in enumerate(_read_jsonl(data_path), start=1):
                 if record.get("quality", {}).get("training_eligibility") != "trainable":
                     failures.append(f"{data_ref.get('relative_path')}: formal JSONL 中包含非 trainable 样本。")
                 if record.get("invalid_for_training"):
                     failures.append(f"{data_ref.get('relative_path')}: formal JSONL 中包含 invalid 样本。")
+                forbidden = _find_formal_training_forbidden_fields(record)
+                if forbidden:
+                    failures.append(
+                        f"{data_ref.get('relative_path')}:{line_number}: formal JSONL 包含 evaluator/result 字段："
+                        + ", ".join(forbidden[:5])
+                    )
                 _inspect_record_bindings(record, failures)
     if export_dir is not None:
         manifest = _read_json_for_inspect(export_dir / "export_manifest.json", failures)

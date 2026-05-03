@@ -421,15 +421,7 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
         "observation_mask": observation_mask,
         "target": {
             "final_patch": _read_text_if_exists(run_path / "final.patch"),
-            "termination_summary": _read_text_if_exists(run_path / "summary.md"),
         },
-        "verifier": _safe_verifier_summary(run_path),
-        "reward_metadata_ref": _manifest_ref(
-            run_path, "reward_metadata", "reward.json", "reward_metadata"
-        ),
-        "final_verifier_ref": _manifest_ref(
-            run_path, "final_verifier_result", "verifier.json", "final_verifier_result"
-        ),
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
         "v3_observation_bindings": _v3_observation_bindings(run_path),
@@ -453,21 +445,6 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
         "prompt": _prompt_from_prepared_messages(run_path),
         "trajectory": _trajectory_from_events(run_path),
         "reward": float(reward.get("final_reward", 0.0)) if reward else 0.0,
-        "reward_metadata": {
-            "reward_version": reward.get("reward_version") if reward else None,
-            "reward_metadata_ref": _manifest_ref(
-                run_path, "reward_metadata", "reward.json", "reward_metadata"
-            ),
-            "source": (
-                "formal_final_verifier"
-                if formal_final_reason is None
-                else "missing_or_non_formal_final_verifier"
-            ),
-            "formal_final_verifier": formal_final_reason is None,
-        },
-        "final_verifier_ref": _manifest_ref(
-            run_path, "final_verifier_result", "verifier.json", "final_verifier_result"
-        ),
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
         "v3_observation_bindings": _v3_observation_bindings(run_path),
@@ -500,7 +477,6 @@ def _build_preference_records(
         payload = {
             "chosen": _preference_side(chosen),
             "rejected": _preference_side(rejected),
-            "reason": "higher_final_reward_and_verifier_outcome",
         }
         metadata = {
             "export_policy_version": export_policy.export_policy_version,
@@ -508,27 +484,7 @@ def _build_preference_records(
             "pairing_policy_version": pairing_summary.pairing_policy_version,
             "compare_scope": pairing_summary.compare_scope,
             "blocked_reasons": [],
-            "chosen_run_metadata": decision.chosen.metadata_summary,
-            "rejected_run_metadata": decision.rejected.metadata_summary,
             "source_run_ids": [chosen["run_id"], rejected["run_id"]],
-            "chosen_verifier_result_ref": _with_source_run_id(
-                _manifest_ref(
-                    Path(chosen["run_dir"]),
-                    "final_verifier_result",
-                    "verifier.json",
-                    "final_verifier_result",
-                ),
-                chosen["run_id"],
-            ),
-            "rejected_verifier_result_ref": _with_source_run_id(
-                _manifest_ref(
-                    Path(rejected["run_dir"]),
-                    "final_verifier_result",
-                    "verifier.json",
-                    "final_verifier_result",
-                ),
-                rejected["run_id"],
-            ),
         }
         records.append(
             ExportRecord(
@@ -916,9 +872,6 @@ def _preference_side(run: dict[str, Any]) -> dict[str, Any]:
     run_path = Path(run["run_dir"])
     return {
         "source_run_id": run["run_id"],
-        "reward": run["reward"],
-        "run_outcome": run["run_outcome"],
-        "final_verifier_status": run["final_verifier_status"],
         "final_patch": _read_text_if_exists(run_path / "final.patch"),
     }
 

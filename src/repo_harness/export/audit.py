@@ -71,8 +71,7 @@ PREFERENCE_PAIRING_METADATA_KEYS = {
     "pairing_policy_version",
     "compare_scope",
     "blocked_reasons",
-    "chosen_run_metadata",
-    "rejected_run_metadata",
+    "source_run_ids",
 }
 
 
@@ -865,30 +864,12 @@ def _preference_pairing_reason(record: ExportRecord, export_format: str) -> str 
         return f"preference pair missing pairing metadata: {', '.join(missing)}"
     if metadata.get("blocked_reasons"):
         return "preference pair has blocked reasons"
-    chosen = metadata.get("chosen_run_metadata")
-    rejected = metadata.get("rejected_run_metadata")
-    if not isinstance(chosen, dict) or not isinstance(rejected, dict):
-        return "preference pair missing run metadata summaries"
-    required = [
-        "verifier_name",
-        "verifier_version",
-        "reward_formula_version",
-        "final_verifier_mode",
-        "model_provider",
-        "model_id",
-        "temperature",
-        "max_output_tokens",
-        "scaffold_id",
-        "scaffold_version",
-        "turn_budget",
-        "tool_budget",
-        "test_budget",
-        "task_timeout",
-    ]
-    for side_name, summary in (("chosen", chosen), ("rejected", rejected)):
-        missing_fields = [field for field in required if field not in summary]
-        if missing_fields:
-            return f"{side_name} run metadata summary missing: {', '.join(missing_fields)}"
+    source_run_ids = metadata.get("source_run_ids")
+    if not isinstance(source_run_ids, list) or len(source_run_ids) != 2:
+        return "preference pair must bind exactly two source run ids"
+    compare_scope = metadata.get("compare_scope")
+    if not isinstance(compare_scope, dict) or not compare_scope.get("canonical_key_fields"):
+        return "preference pair missing compare scope fields"
     return None
 
 

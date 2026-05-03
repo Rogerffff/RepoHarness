@@ -10,6 +10,20 @@ from repo_harness.export.exporter import export_preference_jsonl, export_rl_json
 from repo_harness.export.exporter import _sanitize_text
 
 
+FORBIDDEN_FORMAL_FIELDS = {
+    "final_verifier_ref",
+    "reward_metadata_ref",
+    "reward_metadata",
+    "verifier",
+    "run_outcome",
+    "final_verifier_status",
+    "chosen_run_metadata",
+    "rejected_run_metadata",
+    "chosen_verifier_result_ref",
+    "rejected_verifier_result_ref",
+}
+
+
 def test_preference_export_writes_skipped_manifest_when_not_enough_runs(tmp_path: Path):
     runs_dir = tmp_path / "runs"
     run_dir = runs_dir / "run_one"
@@ -200,7 +214,40 @@ def test_export_writes_manifest_audit_and_formal_trainable_file(tmp_path: Path):
     assert manifest["data_files"][0]["relative_path"] == "data.rl.jsonl"
     assert audit["status"] == "passed"
     assert data_records[0]["quality"]["training_eligibility"] == "trainable"
+    assert _forbidden_formal_field_paths(data_records[0]) == []
     assert "Inspect export: clean" in inspect_export(export_dir, assert_clean=True, require_trainable_samples=True)
+
+
+def test_formal_trainable_jsonl_omits_evaluator_and_result_fields(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_clean_training_payload",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    sft_record = _read_jsonl(export_sft_jsonl(run_dir))[0]
+    rl_record = _read_jsonl(export_rl_jsonl(run_dir))[0]
+
+    preference_runs = tmp_path / "preference_runs"
+    _minimal_run(
+        preference_runs / "chosen",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    _minimal_run(
+        preference_runs / "rejected",
+        task_id="task_001",
+        reward=0.0,
+        run_outcome="failed",
+        final_verifier_status="failed",
+        include_formal_verifier=True,
+    )
+    preference_record = _read_jsonl(export_preference_jsonl(preference_runs))[0]
+
+    for record in (sft_record, rl_record, preference_record):
+        assert record["quality"]["training_eligibility"] == "trainable"
+        assert _forbidden_formal_field_paths(record) == []
 
 
 def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
@@ -539,6 +586,23 @@ def _read_jsonl(path: Path) -> list[dict]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _forbidden_formal_field_paths(value: object, path: str = "$") -> list[str]:
+    if isinstance(value, dict):
+        paths: list[str] = []
+        for key, nested in value.items():
+            child_path = f"{path}.{key}"
+            if str(key).lower() in FORBIDDEN_FORMAL_FIELDS:
+                paths.append(child_path)
+            paths.extend(_forbidden_formal_field_paths(nested, child_path))
+        return paths
+    if isinstance(value, list):
+        paths = []
+        for index, nested in enumerate(value):
+            paths.extend(_forbidden_formal_field_paths(nested, f"{path}[{index}]"))
+        return paths
+    return []
 
 
 def _latest_export_dir(exports_dir: Path) -> Path:

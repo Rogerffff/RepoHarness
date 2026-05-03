@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -136,6 +137,50 @@ def test_inspect_v3_export_audit_rejects_data_sha_drift(tmp_path: Path):
     )
 
     with pytest.raises(ConfigError, match="sha256"):
+        inspect_v3_export_audit(
+            output_dir,
+            manifest=manifest_path,
+            audit_report=output_dir / "audit_report.json",
+            assert_clean=True,
+        )
+
+
+def test_inspect_v3_export_audit_rejects_formal_jsonl_result_fields(tmp_path: Path):
+    runs_dir = tmp_path / "runs_result_field"
+    success = _run_replay(
+        runs_dir,
+        run_id="v3_export_result_field_success",
+        replay="tests/fixtures/replays/task_001_success.yaml",
+    )
+    _run_replay(
+        runs_dir,
+        run_id="v3_export_result_field_failure",
+        replay="tests/fixtures/replays/task_001_failure.yaml",
+    )
+    output_dir = build_v3_export_audit(
+        run_dirs=[success],
+        output_dir=tmp_path / "v3_export_result_field",
+        preference_runs_dir=runs_dir,
+    )
+    manifest_path = output_dir / "export_manifest.json"
+    manifest = _read_json(manifest_path)
+    sft_entry = next(entry for entry in manifest["format_exports"] if entry["format"] == "sft_jsonl")
+    data_ref = sft_entry["data_file_refs"][0]
+    data_path = output_dir / data_ref["relative_path"]
+    rows = _read_jsonl(data_path)
+    rows[0]["payload"]["final_verifier_ref"] = {"relative_path": "verifier.json"}
+    data_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    data_ref["sha256"] = hashlib.sha256(data_path.read_bytes()).hexdigest()
+    data_ref["size_bytes"] = data_path.stat().st_size
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="evaluator/result"):
         inspect_v3_export_audit(
             output_dir,
             manifest=manifest_path,
