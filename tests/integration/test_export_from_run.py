@@ -46,7 +46,8 @@ def test_sft_export_from_success_run_filters_default_oracle_feedback(tmp_path: P
     assert 1 in record["payload"]["loss_mask"]
     assert 1 in record["payload"]["observation_mask"]
     assert record["payload"]["loss_mask"][record["payload"]["observation_mask"].index(1)] == 0
-    assert record["payload"]["reward_metadata_ref"]["kind"] == "reward_metadata"
+    assert "reward_metadata_ref" not in record["payload"]
+    assert "final_verifier_ref" not in record["payload"]
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
     assert any(
@@ -77,8 +78,8 @@ def test_rl_export_uses_final_reward_metadata(tmp_path: Path):
     reward = _read_json(run_dir / "reward.json")
 
     assert record["payload"]["reward"] == reward["final_reward"]
-    assert record["payload"]["reward_metadata"]["reward_metadata_ref"]["kind"] == "reward_metadata"
-    assert record["payload"]["final_verifier_ref"]["kind"] == "final_verifier_result"
+    assert "reward_metadata" not in record["payload"]
+    assert "final_verifier_ref" not in record["payload"]
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
     assert record["payload"]["trajectory"]
@@ -116,7 +117,10 @@ def test_preference_export_pairs_two_runs_for_same_task(tmp_path: Path):
 
     assert success.name in record["payload"]["chosen"]["source_run_id"]
     assert failure.name in record["payload"]["rejected"]["source_run_id"]
-    assert record["payload"]["chosen"]["reward"] > record["payload"]["rejected"]["reward"]
+    assert "reward" not in record["payload"]["chosen"]
+    assert "reward" not in record["payload"]["rejected"]
+    assert "run_outcome" not in record["payload"]["chosen"]
+    assert "run_outcome" not in record["payload"]["rejected"]
     assert canonical_records
     assert canonical_records[0]["quality"]["training_eligibility"] == "trainable"
     assert audit["samples"][0]["source_run_ids"] == [success.name, failure.name]
@@ -176,13 +180,13 @@ def _read_jsonl(path: Path) -> list[dict]:
 
 
 def _assert_refs_exist(run_dir: Path, record: dict) -> None:
-    for ref_key in ("reward_metadata_ref", "final_verifier_ref"):
-        ref = record["payload"][ref_key]
-        assert ref["artifact_id"]
-        assert ref["sha256"]
-        assert ref["size_bytes"] > 0
-        assert ref["relative_path"].startswith("artifacts/")
-        assert (run_dir / ref["relative_path"]).exists()
+    for ref_key in ("prepared_message_refs", "content_replacement_state_refs"):
+        for ref in record["payload"][ref_key]:
+            assert ref["artifact_id"]
+            assert ref["sha256"]
+            assert ref["size_bytes"] > 0
+            assert ref["relative_path"].startswith("artifacts/")
+            assert (run_dir / ref["relative_path"]).exists()
 
 
 def _assert_no_hidden_or_local_text(text: str) -> None:
