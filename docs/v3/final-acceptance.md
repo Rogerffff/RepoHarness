@@ -5,19 +5,19 @@
 
 ## 验收结论
 
-RepoHarness 第三版（V3）已经完成阶段 0 至阶段 13 的实现闭环。由于最终验收后发现阶段 7 至阶段 10 原始阶段审查曾因为子代理智能体线程未清理而退回自审，本次已补充追溯子代理智能体审查，修复阶段 9 发现的 P2 审计一致性问题，并重新构建最终验收报告。新的最终验收报告路径为：
+RepoHarness 第三版（V3）已经完成阶段 0 至阶段 13 的实现闭环。由于最终验收后发现阶段 7 至阶段 10 原始阶段审查曾因为子代理智能体线程未清理而退回自审，项目已补充追溯子代理智能体审查，修复阶段 9 发现的 P2 审计一致性问题，并重新构建最终验收报告。随后又发现旧验收报告没有拦截 SWE-Bench-like selected run 的 Docker final verifier phase 缺失，并且 acceptance contamination scan 对若干 surface 使用占位 payload。本次已经修复这些 P1 缺口，重新生成并检查新的最终验收报告。新的最终验收报告路径为：
 
-- `runs/v3-final-acceptance-20260503T043025Z/acceptance/v3_acceptance_report.json`
+- `runs/v3-final-acceptance-20260503T095012Z/acceptance/v3_acceptance_report.json`
 - 报告状态：`passed`
 - `inspect-v3-acceptance --assert-complete`：通过
-- 报告 sha256：`d53db62e60930475e8b0ca138e602aa116048f22ba161af426c2aa11812cd718`
+- 报告 sha256：`6d6e65904aa07b2d08e1b026c34f6462ac5c50deef8f2e5ee1f12e114ba9cdff`
 
 最终验收包路径为：
 
-- `runs/v3-final-acceptance-20260503T043025Z/acceptance/acceptance_bundle_manifest.json`
+- `runs/v3-final-acceptance-20260503T095012Z/acceptance/acceptance_bundle_manifest.json`
 - `inspect-acceptance-bundle --assert-immutable`：通过
 
-先前的 `runs/v3-final-acceptance-20260503T034631Z/acceptance/v3_acceptance_report.json` 保留为历史验收证据，但已被本次重新构建的最终验收报告取代。
+先前的 `runs/v3-final-acceptance-20260503T034631Z/acceptance/v3_acceptance_report.json` 和 `runs/v3-final-acceptance-20260503T043025Z/acceptance/v3_acceptance_report.json` 保留为历史验收证据，但已被本次重新构建的最终验收报告取代。新版本 `inspect-v3-acceptance` 会重新读取被绑定的 Docker backend evidence，因此旧 `20260503T043025Z` 报告现在会因为 SWE-Bench-like Docker phase coverage 缺失而被拒绝。
 
 第三版（V3）仍然保持实施计划限定的定位：它是可执行、可审计、可导出的 repository-level evaluation harness。它不是完整 SWE-Bench Lite 公开榜单复现，不声称生产级安全沙箱，不声称工业级分布式 rollout 服务，也不声称已经训练出了 coding agent。
 
@@ -38,22 +38,23 @@ RepoHarness 第三版（V3）已经完成阶段 0 至阶段 13 的实现闭环�
 - 阶段 12：`b0491af feat: add v3 acceptance inspection bundle`
 - 阶段 13：`7167508 docs: add v3 final acceptance closure`
 - 阶段 7 至阶段 10 追溯补审与阶段 9 修复：本文件所在后续补充提交，内容包括阶段 7 至阶段 10 追溯子代理智能体审查、阶段 9 context compaction 审计修复、新的阶段 9/10 机器产物和重新构建的最终验收证据。
+- P1 验收修复：`ee01fcd fix: record swebench verifier docker phases`、`c7692f3 fix: enforce v3 acceptance docker inspection`、`bf987d0 fix: scan acceptance evidence surfaces`、`a6cfd67 fix: project export payload contamination scans`。
 
 ## 预验收测试证据
 
 预验收测试证据先写入独立目录，再由 `build-v3-acceptance-inputs` 显式绑定，未提前写入最终 `ACCEPTANCE_DIR`。
 
-- 预验收证据目录：`runs/v3-final-pre-acceptance-20260503T043025Z/evidence`
-- 预验收命令日志：`runs/v3-final-pre-acceptance-20260503T043025Z/pre_acceptance_command_log.jsonl`
-- 预验收文档清单：`runs/v3-final-pre-acceptance-20260503T043025Z/manifests/pre_acceptance_documentation_manifest.json`
+- 预验收证据目录：`runs/v3-final-pre-acceptance-20260503T095012Z/evidence`
+- 预验收命令日志：`runs/v3-final-pre-acceptance-20260503T095012Z/pre_acceptance_command_log.jsonl`
+- 预验收文档清单：`runs/v3-final-pre-acceptance-20260503T095012Z/manifests/pre_acceptance_documentation_manifest.json`
 
 全量测试：
 
-- 命令：`PATH=.venv/bin:$PATH python -m pytest -q`
-- 结果：`449 passed in 236.72s`
-- stdout sha256：`f0dbef545bf0965b0e6a4558e55c4acbb37295a39fea0ae08d47876f59c1eb1b`
+- 命令：`PATH=.venv/bin:$PATH python -m pytest`
+- 结果：`452 passed in 253.02s`
+- stdout sha256：`3b5b3a4f7cf7d21aa945650f3b41be43d777e550d8bf3cdec8993a5f5886f4fe`
 - stderr sha256：`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-- exit code sha256：`9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa`
+- result.json sha256：`7d2c9858482cdc5531e9bae9f1bf51d87a8bb009ed0e823cd9206acfb0285ce0`
 
 第二版（V2）回归：
 
@@ -61,7 +62,7 @@ RepoHarness 第三版（V3）已经完成阶段 0 至阶段 13 的实现闭环�
 - 结果：`status=passed`，`task_count=20`，mock provider 为 `accepted`，真实 provider 为 `accepted_with_credentials`
 - stdout sha256：`a32dc40c6e7cadd37511855ad46786fa454d28870883a4b0c6cbf69c82b200dc`
 - stderr sha256：`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-- exit code sha256：`9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa`
+- result.json sha256：`2318c9e48326b76a6a0859b40e26764244a9c544d19512363cc98a88e6f6b02b`
 
 阶段 9 和阶段 10 补审修复相关 inspect 也写入同一预验收证据目录：
 
@@ -73,13 +74,13 @@ RepoHarness 第三版（V3）已经完成阶段 0 至阶段 13 的实现闭环�
 
 最终运行选择清单：
 
-- 路径：`runs/v3-final-acceptance-20260503T043025Z/run_selection_manifest.json`
-- sha256：`533df5dd9b134046b1176bf3f75a7e589abb1fe81f7251a2abbe87ce919760c4`
+- 路径：`runs/v3-final-acceptance-20260503T095012Z/run_selection_manifest.json`
+- sha256：`55ba29a89f15d938581aa863b0e32a7ec2f8f07ee3b2bce66bb4e81440247909`
 
 最终验收输入清单：
 
-- 路径：`runs/v3-final-acceptance-20260503T043025Z/v3_acceptance_inputs.json`
-- sha256：`05064e1cd5230af6e87dfa55f1f8d1166031ade414799243fe458e5c6cc0603d`
+- 路径：`runs/v3-final-acceptance-20260503T095012Z/v3_acceptance_inputs.json`
+- sha256：`7811734f0d0a8d38f106511ec1b1fb5718c51431028c5b6fda20953a93f5aa81`
 
 最终验收报告绑定的 `ACCEPTANCE_INPUTS` 包含以下类别：
 
@@ -93,9 +94,10 @@ RepoHarness 第三版（V3）已经完成阶段 0 至阶段 13 的实现闭环�
 
 最终 run selection 显式绑定了 replay、mock provider、credential-gated real provider、真实 repository-level、SWE-Bench-like、resume、context、long rollout 和 failure diagnostics 角色。SWE-Bench-like 角色使用 `sympy__sympy-24909` 的第三版第十三阶段 Agent Loop 运行：
 
-- `runs/v3-final-swebench-agent-loop-20260503T035615Z/agent_loop_runs/v3_stage_13_sympy__sympy-24909_public_issue_patch_v3`
+- `runs/v3-final-swebench-agent-loop-20260503T-p1-docker-facts/agent_loop_runs/v3_stage_13_sympy__sympy-24909_public_issue_patch_v3_p1_python311_docker_facts`
 - 运行结果：`run_outcome=success`
 - final verifier：`accepted`
+- Docker phase coverage：`source_checkout`、`setup`、`agent_tool`、`run_tests`、`final_patch_capture`、`verification_workspace_creation`、`model_final_patch_apply`、`fail_to_pass_test_execution`、`pass_to_pass_test_execution` 和 `final_verifier` 均有 Docker facts；`verifier_patch_apply` 和 `test_patch_apply` 仅在该任务无对应 patch 时结构化标记为 not applicable。
 - 补丁来源：adapter-visible problem statement 和固定本地 source checkout；未把 evaluator-only patch、隐藏 selector 或官方 harness 报告放入模型可见上下文。
 
 本次重建的 context、long rollout 和 failure diagnostics 角色绑定修复后的补充产物：

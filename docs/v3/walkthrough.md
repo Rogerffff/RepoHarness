@@ -64,17 +64,17 @@ PATH=.venv/bin:$PATH repo-harness inspect-v3-export-audit runs/v3-stage-11-expor
 
 最终验收前先运行并记录全量测试和第二版回归。输出写入独立预验收证据目录：
 
-- `runs/v3-final-pre-acceptance-20260503T043025Z/evidence/`
+- `runs/v3-final-pre-acceptance-20260503T095012Z/evidence/`
 
 全量测试：
 
 ```bash
-PATH=.venv/bin:$PATH python -m pytest -q
+PATH=.venv/bin:$PATH python -m pytest
 ```
 
 记录结果：
 
-- `449 passed in 236.72s`
+- `452 passed in 253.02s`
 
 第二版回归：
 
@@ -91,11 +91,11 @@ PATH=.venv/bin:$PATH repo-harness inspect-v2-acceptance runs/v2-final-acceptance
 
 预验收命令日志：
 
-- `runs/v3-final-pre-acceptance-20260503T043025Z/pre_acceptance_command_log.jsonl`
+- `runs/v3-final-pre-acceptance-20260503T095012Z/pre_acceptance_command_log.jsonl`
 
 预验收文档清单：
 
-- `runs/v3-final-pre-acceptance-20260503T043025Z/manifests/pre_acceptance_documentation_manifest.json`
+- `runs/v3-final-pre-acceptance-20260503T095012Z/manifests/pre_acceptance_documentation_manifest.json`
 
 ## 4. 最终验收报告
 
@@ -105,21 +105,21 @@ PATH=.venv/bin:$PATH repo-harness inspect-v2-acceptance runs/v2-final-acceptance
 PATH=.venv/bin:$PATH repo-harness build-v3-run-selection-manifest \
   --run-ref role=replay,path=runs/v3-stage-11-preference-inputs-20260503T023000Z/v3_stage_11_pref_success_public \
   --run-ref role=mock_provider,path=runs/v2-final-mock-provider-20260501T223447Z/mock_provider_smoke_report.json \
-  --run-ref role=credential_gated_real_provider,path=runs/v2-real-provider-smoke-20260502T091000Z/real_provider_smoke_report.json \
+  --run-ref role=credential_gated_real_provider,path=runs/v3-independent-real-provider-smoke-20260503T-audit/real_provider_smoke_report.json \
   --run-ref role=real_repository,path=runs/v3-stage-07-agent-loop-20260502T203000Z/agent_loop_runs/v3_stage_07_realrepo_local_buggy_calculator \
-  --run-ref role=swebench_like,path=runs/v3-final-swebench-agent-loop-20260503T035615Z/agent_loop_runs/v3_stage_13_sympy__sympy-24909_public_issue_patch_v3 \
+  --run-ref role=swebench_like,path=runs/v3-final-swebench-agent-loop-20260503T-p1-docker-facts/agent_loop_runs/v3_stage_13_sympy__sympy-24909_public_issue_patch_v3_p1_python311_docker_facts \
   --run-ref role=resume,path=runs/v3-stage-08-experiment-resume-20260502T214500Z \
   --run-ref role=context,path=runs/v3-stage-09-context-diagnostics-20260503T-stage9-subagent-fix \
   --run-ref role=long_rollout,path=runs/v3-stage-09-context-diagnostics-20260503T-stage9-subagent-fix \
   --run-ref role=failure_diagnostics,path=runs/v3-stage-10-failure-diagnostics-20260503T-stage9-subagent-fix \
-  --output runs/v3-final-acceptance-20260503T043025Z/run_selection_manifest.json
+  --output runs/v3-final-acceptance-20260503T095012Z/run_selection_manifest.json
 ```
 
 然后显式绑定 acceptance inputs：
 
 ```bash
 PATH=.venv/bin:$PATH repo-harness build-v3-acceptance-inputs \
-  --run-selection-manifest runs/v3-final-acceptance-20260503T043025Z/run_selection_manifest.json \
+  --run-selection-manifest runs/v3-final-acceptance-20260503T095012Z/run_selection_manifest.json \
   --export-root runs/v3-stage-11-export-audit-20260503T030000Z \
   --v2-report runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json \
   --pre-acceptance-doc docs/v3/scope-and-roadmap.md \
@@ -128,17 +128,17 @@ PATH=.venv/bin:$PATH repo-harness build-v3-acceptance-inputs \
   --pre-acceptance-doc docs/v3/review/implementation-plan-review.md \
   --pre-acceptance-doc docs/v3/review/swe-task-feasibility-results.md \
   --pre-acceptance-doc docs/v3/swe-task-feasibility-experiment-plan.md \
-  --documentation-manifest runs/v3-final-pre-acceptance-20260503T043025Z/manifests/pre_acceptance_documentation_manifest.json \
-  --command-log runs/v3-final-pre-acceptance-20260503T043025Z/pre_acceptance_command_log.jsonl \
-  --test-evidence runs/v3-final-pre-acceptance-20260503T043025Z/evidence \
-  --output runs/v3-final-acceptance-20260503T043025Z/v3_acceptance_inputs.json
+  --documentation-manifest runs/v3-final-pre-acceptance-20260503T095012Z/manifests/pre_acceptance_documentation_manifest.json \
+  --command-log runs/v3-final-pre-acceptance-20260503T095012Z/pre_acceptance_command_log.jsonl \
+  --test-evidence runs/v3-final-pre-acceptance-20260503T095012Z/evidence \
+  --output runs/v3-final-acceptance-20260503T095012Z/v3_acceptance_inputs.json
 ```
 
 最后构建并检查新验收目录：
 
 ```bash
-PATH=.venv/bin:$PATH repo-harness build-v3-acceptance-report --acceptance-dir runs/v3-final-acceptance-20260503T043025Z/acceptance --input-manifest runs/v3-final-acceptance-20260503T043025Z/v3_acceptance_inputs.json --output runs/v3-final-acceptance-20260503T043025Z/acceptance/v3_acceptance_report.json
-PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-acceptance-20260503T043025Z/acceptance/v3_acceptance_report.json --assert-complete
+PATH=.venv/bin:$PATH repo-harness build-v3-acceptance-report --acceptance-dir runs/v3-final-acceptance-20260503T095012Z/acceptance --input-manifest runs/v3-final-acceptance-20260503T095012Z/v3_acceptance_inputs.json --output runs/v3-final-acceptance-20260503T095012Z/acceptance/v3_acceptance_report.json
+PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-acceptance-20260503T095012Z/acceptance/v3_acceptance_report.json --assert-complete
 ```
 
 最终结果：
@@ -153,22 +153,22 @@ PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-acceptance
 
 ```bash
 PATH=.venv/bin:$PATH repo-harness build-v3-acceptance-bundle \
-  --acceptance-dir runs/v3-final-acceptance-20260503T043025Z/acceptance \
-  --input-manifest runs/v3-final-acceptance-20260503T043025Z/v3_acceptance_inputs.json \
-  --report runs/v3-final-acceptance-20260503T043025Z/acceptance/v3_acceptance_report.json \
+  --acceptance-dir runs/v3-final-acceptance-20260503T095012Z/acceptance \
+  --input-manifest runs/v3-final-acceptance-20260503T095012Z/v3_acceptance_inputs.json \
+  --report runs/v3-final-acceptance-20260503T095012Z/acceptance/v3_acceptance_report.json \
   --documentation-ref docs/v3/final-acceptance.md \
   --documentation-ref docs/v3/walkthrough.md \
   --documentation-ref docs/v3/implementation-log/13-stage-13-final-acceptance-and-docs.md \
   --documentation-ref docs/v3/review/implementation/stage-13-review.md \
   --documentation-ref docs/v3/implementation-log/post-acceptance-stage-07-to-10-subagent-review-and-stage-09-fix.md \
   --documentation-ref docs/v3/review/implementation/stage-07-to-10-retrospective-subagent-review.md \
-  --output runs/v3-final-acceptance-20260503T043025Z/acceptance/acceptance_bundle_manifest.json
+  --output runs/v3-final-acceptance-20260503T095012Z/acceptance/acceptance_bundle_manifest.json
 ```
 
 验收包检查：
 
 ```bash
-PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v3-final-acceptance-20260503T043025Z/acceptance/acceptance_bundle_manifest.json --assert-immutable
+PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v3-final-acceptance-20260503T095012Z/acceptance/acceptance_bundle_manifest.json --assert-immutable
 ```
 
 验收包的用途是证明最终报告、报告输入、验收命令日志和 post-acceptance 文档在报告生成之后被显式绑定，并且重新计算 sha256 后仍然一致。
