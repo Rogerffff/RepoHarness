@@ -668,6 +668,7 @@ def inspect_acceptance_bundle(
     for index, ref in enumerate(docs, start=1):
         _inspect_file_ref(ref, failures, label=f"documentation_refs[{index}]")
     _inspect_manifest_safe_for_acceptance(payload, failures, label="acceptance_bundle_manifest")
+    _inspect_post_acceptance_docs_not_report_inputs(payload, failures)
 
     report_ref = payload.get("report_ref")
     if isinstance(report_ref, dict):
@@ -696,6 +697,82 @@ def inspect_acceptance_bundle(
         lines.append("Inspect acceptance bundle: immutable")
     lines.append("Inspect acceptance bundle: passed")
     return "\n".join(lines)
+
+
+def _inspect_post_acceptance_docs_not_report_inputs(
+    payload: dict[str, Any],
+    failures: list[str],
+) -> None:
+    docs = payload.get("documentation_refs", [])
+    if not isinstance(docs, list):
+        return
+    post_doc_paths = {
+        _normalise_manifest_path(ref.get("path") or ref.get("relative_path"))
+        for ref in docs
+        if isinstance(ref, dict)
+    }
+    input_ref = payload.get("input_manifest_ref")
+    if not isinstance(input_ref, dict):
+        return
+    input_path = _resolve_file_ref(input_ref)
+    if not input_path.exists():
+        return
+    inputs = _read_json_for_inspect(input_path, failures)
+    report_input_doc_paths = _acceptance_input_documentation_paths(inputs, failures)
+    overlap = sorted(post_doc_paths.intersection(report_input_doc_paths))
+    if overlap:
+        failures.append(
+            "post-acceptance documentation 不能同时作为 acceptance report input："
+            + ", ".join(overlap)
+        )
+
+
+def _acceptance_input_documentation_paths(
+    inputs: dict[str, Any],
+    failures: list[str],
+) -> set[str]:
+    paths: set[str] = set()
+    for ref in inputs.get("pre_acceptance_doc_refs", []):
+        if isinstance(ref, dict):
+            raw = ref.get("path") or ref.get("relative_path")
+            if raw:
+                paths.add(_normalise_manifest_path(raw))
+    refs_by_category = inputs.get("input_refs_by_category", {})
+    if isinstance(refs_by_category, dict):
+        for ref in refs_by_category.get("pre_acceptance_docs", []):
+            if isinstance(ref, dict):
+                raw = ref.get("path") or ref.get("relative_path")
+                if raw:
+                    paths.add(_normalise_manifest_path(raw))
+    documentation_ref = inputs.get("documentation_manifest_ref")
+    if isinstance(documentation_ref, dict):
+        documentation_path = _resolve_file_ref(documentation_ref)
+        if documentation_path.exists():
+            documentation_payload = _read_json_for_inspect(documentation_path, failures)
+            paths.update(_collect_documentation_manifest_paths(documentation_payload))
+    return paths
+
+
+def _collect_documentation_manifest_paths(value: Any) -> set[str]:
+    paths: set[str] = set()
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if str(key) in {"path", "relative_path"} and _looks_like_documentation_path(nested):
+                paths.add(_normalise_manifest_path(nested))
+            paths.update(_collect_documentation_manifest_paths(nested))
+    elif isinstance(value, list):
+        for nested in value:
+            paths.update(_collect_documentation_manifest_paths(nested))
+    elif _looks_like_documentation_path(value):
+        paths.add(_normalise_manifest_path(value))
+    return paths
+
+
+def _looks_like_documentation_path(value: Any) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    suffix = Path(value).suffix.lower()
+    return suffix in {".md", ".markdown"}
 
 
 def _parse_run_ref(raw: str) -> dict[str, str]:
