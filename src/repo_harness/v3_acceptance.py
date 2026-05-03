@@ -1167,6 +1167,11 @@ def _inspect_contamination_scan(path: Path, failures: list[str]) -> None:
             continue
         if result.get("clean") is not True:
             failures.append(f"contamination scan failed: {result.get('surface')}")
+        source_errors = result.get("source_errors", [])
+        if isinstance(source_errors, list) and source_errors:
+            failures.append(
+                f"contamination scan source errors: {result.get('surface')}:{len(source_errors)}"
+            )
 
 
 def _inspect_manifest_safe_for_acceptance(payload: Any, failures: list[str], *, label: str) -> None:
@@ -1180,24 +1185,396 @@ def _inspect_manifest_safe_for_acceptance(payload: Any, failures: list[str], *, 
 
 def _scan_acceptance_surfaces(input_payload: dict[str, Any], *, run_selection_payload: dict[str, Any]) -> list[dict[str, Any]]:
     denylist = V3ContaminationDenylist()
+    payloads, source_errors = _collect_acceptance_scan_payloads(
+        input_payload,
+        run_selection_payload=run_selection_payload,
+    )
     results = []
     for surface in V3_VISIBILITY_SURFACES:
-        if surface == "acceptance_input":
-            payload = {
-                "acceptance_inputs": _safe_scan_projection(input_payload),
-                "run_selection_manifest": _safe_scan_projection(run_selection_payload),
-            }
-        else:
-            payload = {"surface": surface, "acceptance_binding": "no_model_visible_payload"}
+        raw_payload = payloads.get(surface, {"surface": surface, "sources": []})
+        payload = _safe_scan_projection(raw_payload)
         result = denylist.scan_payload(surface=surface, payload=payload)
+        errors = source_errors.get(surface, [])
         results.append(
             {
                 "surface": surface,
-                "clean": result.clean,
+                "clean": result.clean and not errors,
                 "findings": [finding.model_dump(mode="json") for finding in result.findings],
+                "source_count": len(payload.get("sources", [])) if isinstance(payload, dict) else 0,
+                "source_errors": errors,
             }
         )
     return results
+
+
+def _collect_acceptance_scan_payloads(
+    input_payload: dict[str, Any],
+    *,
+    run_selection_payload: dict[str, Any],
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[str]]]:
+    payloads = {
+        surface: {"surface": surface, "sources": []}
+        for surface in V3_VISIBILITY_SURFACES
+    }
+    errors = {surface: [] for surface in V3_VISIBILITY_SURFACES}
+    payloads["acceptance_input"]["sources"].append(
+        {
+            "source": "acceptance_inputs_and_run_selection_manifest",
+            "acceptance_inputs": _safe_scan_projection(input_payload),
+            "run_selection_manifest": _safe_scan_projection(run_selection_payload),
+        }
+    )
+    for entry in _run_selection_entries(run_selection_payload):
+        path = _entry_path(entry)
+        if path is None or not path.exists():
+            continue
+        if path.is_dir():
+            _collect_run_transcript_scan_payloads(payloads, errors, entry=entry, run_dir=path)
+            _collect_prepared_message_scan_payloads(payloads, errors, entry=entry, run_dir=path)
+            _collect_checkpoint_scan_payloads(payloads, errors, entry=entry, run_dir=path)
+            _collect_context_scan_payloads(payloads, errors, entry=entry, run_dir=path)
+        else:
+            _collect_file_scan_payload(
+                payloads["acceptance_input"]["sources"],
+                errors["acceptance_input"],
+                path=path,
+                label=f"run_selection:{entry.get('role')}",
+            )
+    _collect_export_scan_payloads(payloads, errors, input_payload=input_payload)
+    return payloads, errors
+
+
+def _run_selection_entries(run_selection_payload: dict[str, Any]) -> list[dict[str, Any]]:
+    entries = run_selection_payload.get("entries", [])
+    return [entry for entry in entries if isinstance(entry, dict)]
+
+
+def _entry_path(entry: dict[str, Any]) -> Path | None:
+    ref = entry.get("path_ref")
+    if not isinstance(ref, dict):
+        return None
+    return _resolve_file_ref(ref)
+
+
+def _collect_run_transcript_scan_payloads(
+    payloads: dict[str, dict[str, Any]],
+    errors: dict[str, list[str]],
+    *,
+    entry: dict[str, Any],
+    run_dir: Path,
+) -> None:
+    transcript_path = run_dir / "transcript.jsonl"
+    if not transcript_path.exists():
+        return
+    records = _read_jsonl_for_scan(transcript_path, errors["transcript"])
+    model_visible = [
+        {
+            "run_role": entry.get("role"),
+            "run_id": entry.get("run_id"),
+            "record_id": record.get("record_id"),
+            "role": record.get("role"),
+            "content_preview": record.get("content_preview"),
+            "content_artifact_refs": record.get("content_artifact_refs", []),
+            "context_revision": record.get("context_revision"),
+        }
+        for record in records
+        if record.get("model_visible")
+    ]
+    payloads["transcript"]["sources"].append(
+        {
+            "source": _relative_path(transcript_path, Path.cwd()),
+            "records": _safe_scan_projection(model_visible),
+        }
+    )
+    tool_records = [
+        record
+        for record in model_visible
+        if record.get("role") == "tool" or record.get("content_artifact_refs")
+    ]
+    if tool_records:
+        payloads["tool_observation"]["sources"].append(
+            {
+                "source": _relative_path(transcript_path, Path.cwd()),
+                "records": _safe_scan_projection(tool_records),
+            }
+        )
+
+
+def _collect_prepared_message_scan_payloads(
+    payloads: dict[str, dict[str, Any]],
+    errors: dict[str, list[str]],
+    *,
+    entry: dict[str, Any],
+    run_dir: Path,
+) -> None:
+    for ref_payload in _artifact_refs_by_kind(run_dir, "prepared_messages", errors["prepared_messages"]):
+        artifact_path = _artifact_path_for_scan(run_dir, ref_payload, errors["prepared_messages"])
+        if artifact_path is None:
+            continue
+        payload = _read_file_payload_for_scan(artifact_path, errors["prepared_messages"])
+        if payload is None:
+            continue
+        payloads["prepared_messages"]["sources"].append(
+            {
+                "source": _relative_path(artifact_path, Path.cwd()),
+                "run_role": entry.get("role"),
+                "run_id": entry.get("run_id"),
+                "artifact_ref": _safe_scan_projection(ref_payload),
+                "payload": _safe_scan_projection(payload),
+            }
+        )
+        messages = payload.get("messages", []) if isinstance(payload, dict) else []
+        prompt_messages = [
+            message
+            for message in messages
+            if isinstance(message, dict) and str(message.get("role")) in {"system", "developer", "user"}
+        ]
+        payloads["prompt"]["sources"].append(
+            {
+                "source": _relative_path(artifact_path, Path.cwd()),
+                "run_role": entry.get("role"),
+                "run_id": entry.get("run_id"),
+                "messages": _safe_scan_projection(prompt_messages),
+            }
+        )
+
+
+def _collect_checkpoint_scan_payloads(
+    payloads: dict[str, dict[str, Any]],
+    errors: dict[str, list[str]],
+    *,
+    entry: dict[str, Any],
+    run_dir: Path,
+) -> None:
+    if entry.get("role") != "resume":
+        return
+    candidates = [
+        run_dir / "run_checkpoint_manifest.json",
+        run_dir / "experiment_resume_manifest.json",
+        run_dir / "checkpoint_manifest.json",
+    ]
+    checkpoint_dir = run_dir / "checkpoints"
+    if checkpoint_dir.exists():
+        candidates.extend(sorted(checkpoint_dir.glob("*.json")))
+    for path in candidates:
+        if path.exists():
+            _collect_file_scan_payload(
+                payloads["checkpoint"]["sources"],
+                errors["checkpoint"],
+                path=path,
+                label=f"checkpoint:{entry.get('role')}",
+            )
+
+
+def _collect_context_scan_payloads(
+    payloads: dict[str, dict[str, Any]],
+    errors: dict[str, list[str]],
+    *,
+    entry: dict[str, Any],
+    run_dir: Path,
+) -> None:
+    if entry.get("role") not in {"context", "long_rollout"}:
+        return
+    context_path = run_dir / "context_compaction_report.json"
+    if context_path.exists():
+        _collect_file_scan_payload(
+            payloads["context_compaction_report"]["sources"],
+            errors["context_compaction_report"],
+            path=context_path,
+            label=f"context_compaction_report:{entry.get('role')}",
+        )
+
+
+def _collect_export_scan_payloads(
+    payloads: dict[str, dict[str, Any]],
+    errors: dict[str, list[str]],
+    *,
+    input_payload: dict[str, Any],
+) -> None:
+    for ref_payload in _input_refs(input_payload, "export_root"):
+        export_root = _resolve_file_ref(ref_payload)
+        if not export_root.exists() or not export_root.is_dir():
+            errors["sft_export"].append(f"export root missing or not a directory: {export_root}")
+            errors["rl_export"].append(f"export root missing or not a directory: {export_root}")
+            errors["preference_export"].append(f"export root missing or not a directory: {export_root}")
+            continue
+        manifest = _read_json_if_exists(export_root / "export_manifest.json")
+        if not manifest:
+            for surface in ("sft_export", "rl_export", "preference_export"):
+                errors[surface].append(f"export_manifest.json missing or invalid: {export_root}")
+            continue
+        for export in manifest.get("format_exports", []):
+            if not isinstance(export, dict):
+                continue
+            surface = _surface_for_export_format(str(export.get("format") or export.get("export_id") or ""))
+            if surface is None:
+                continue
+            payloads[surface]["sources"].append(
+                {
+                    "source": _relative_path(export_root / "export_manifest.json", Path.cwd()),
+                    "export_summary": _safe_scan_projection(export),
+                }
+            )
+            for ref in _export_data_refs(export):
+                _collect_export_ref_payload(
+                    payloads[surface]["sources"],
+                    errors[surface],
+                    export_root=export_root,
+                    ref_payload=ref,
+                )
+        for name, surface in (
+            ("audit_report.json", "sft_export"),
+            ("audit_report.json", "rl_export"),
+            ("preference_pair_baseline_report.json", "preference_export"),
+            ("v3_preference_compare_scope.json", "preference_export"),
+        ):
+            path = export_root / name
+            if path.exists():
+                _collect_file_scan_payload(
+                    payloads[surface]["sources"],
+                    errors[surface],
+                    path=path,
+                    label=f"{surface}:{name}",
+                )
+
+
+def _input_refs(input_payload: dict[str, Any], category: str) -> list[dict[str, Any]]:
+    refs = input_payload.get("input_refs_by_category", {}).get(category, [])
+    return [ref for ref in refs if isinstance(ref, dict)]
+
+
+def _surface_for_export_format(format_name: str) -> str | None:
+    lowered = format_name.lower()
+    if "preference" in lowered:
+        return "preference_export"
+    if "sft" in lowered or "supervised" in lowered:
+        return "sft_export"
+    if "rl" in lowered or "rollout" in lowered:
+        return "rl_export"
+    return None
+
+
+def _export_data_refs(export: dict[str, Any]) -> list[dict[str, Any]]:
+    refs = []
+    for key in (
+        "convenience_ref",
+        "export_manifest_ref",
+        "audit_report_ref",
+        "skipped_manifest_ref",
+    ):
+        ref = export.get(key)
+        if isinstance(ref, dict):
+            refs.append(ref)
+    refs.extend(ref for ref in export.get("data_file_refs", []) if isinstance(ref, dict))
+    return refs
+
+
+def _collect_export_ref_payload(
+    sources: list[dict[str, Any]],
+    errors: list[str],
+    *,
+    export_root: Path,
+    ref_payload: dict[str, Any],
+) -> None:
+    artifact_path = _artifact_path_for_scan(export_root, ref_payload, errors)
+    if artifact_path is not None:
+        _collect_file_scan_payload(sources, errors, path=artifact_path, label="export_ref")
+
+
+def _artifact_refs_by_kind(run_dir: Path, kind: str, errors: list[str]) -> list[dict[str, Any]]:
+    manifest_path = run_dir / "artifacts.json"
+    if not manifest_path.exists():
+        return []
+    manifest = _read_file_payload_for_scan(manifest_path, errors)
+    if not isinstance(manifest, dict):
+        return []
+    refs = manifest.get("artifacts", [])
+    if not isinstance(refs, list):
+        errors.append(f"artifact manifest artifacts must be a list: {manifest_path}")
+        return []
+    return [
+        ref
+        for ref in refs
+        if isinstance(ref, dict) and ref.get("kind") == kind
+    ]
+
+
+def _artifact_path_for_scan(base_dir: Path, ref_payload: dict[str, Any], errors: list[str]) -> Path | None:
+    try:
+        ref = ArtifactRef.model_validate(ref_payload)
+    except ValidationError as exc:
+        errors.append(f"artifact ref schema invalid: {exc}")
+        return None
+    path = _resolve_artifact_ref_path(ref, base_dir=base_dir)
+    try:
+        path.resolve().relative_to(base_dir.resolve())
+    except ValueError:
+        errors.append(f"artifact ref escapes base directory: {ref.relative_path}")
+        return None
+    if not path.exists() or not path.is_file():
+        errors.append(f"artifact ref target missing: {ref.relative_path}")
+        return None
+    if _hash_path(path) != ref.sha256:
+        errors.append(f"artifact ref sha256 mismatch: {ref.relative_path}")
+    if path.stat().st_size != ref.size_bytes:
+        errors.append(f"artifact ref size mismatch: {ref.relative_path}")
+    return path
+
+
+def _collect_file_scan_payload(
+    sources: list[dict[str, Any]],
+    errors: list[str],
+    *,
+    path: Path,
+    label: str,
+) -> None:
+    payload = _read_file_payload_for_scan(path, errors)
+    if payload is None:
+        return
+    sources.append(
+        {
+            "source": _relative_path(path, Path.cwd()),
+            "label": label,
+            "payload": _safe_scan_projection(payload),
+        }
+    )
+
+
+def _read_jsonl_for_scan(path: Path, errors: list[str]) -> list[dict[str, Any]]:
+    try:
+        rows = read_jsonl(path)
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"jsonl read failed: {path}:{exc}")
+        return []
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def _read_file_payload_for_scan(path: Path, errors: list[str]) -> Any:
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        errors.append(f"file read failed: {path}:{exc}")
+        return None
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as exc:
+            errors.append(f"json read failed: {path}:{exc}")
+            return None
+    if suffix == ".jsonl":
+        rows = []
+        for index, line in enumerate(text.splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:
+                errors.append(f"jsonl read failed: {path}:{index}:{exc}")
+                return None
+            rows.append(row)
+        return rows
+    return text
 
 
 def _append_scan_failures(failures: list[str], *, surface: str, payload: Any, label: str) -> None:
@@ -1210,6 +1587,9 @@ def _append_scan_failures(failures: list[str], *, surface: str, payload: Any, la
 def _scan_failures_from_results(results: list[dict[str, Any]]) -> list[str]:
     failures = []
     for result in results:
+        source_errors = result.get("source_errors", [])
+        if isinstance(source_errors, list) and source_errors:
+            failures.append(f"{result.get('surface')}:source_errors:{len(source_errors)}")
         if result.get("clean") is not True:
             terms = ", ".join(
                 sorted(
@@ -1229,7 +1609,7 @@ def _safe_scan_projection(value: Any) -> Any:
         return {
             _safe_scan_key(str(key)): (
                 _safe_path_text(nested)
-                if str(key) in {"path", "relative_path", "cwd"} and isinstance(nested, str)
+                if str(key) in {"path", "relative_path", "cwd", "source"} and isinstance(nested, str)
                 else _safe_scan_projection(nested)
             )
             for key, nested in value.items()

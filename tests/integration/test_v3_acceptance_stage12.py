@@ -249,6 +249,24 @@ def test_v3_stage12_acceptance_rejects_selected_docker_run_missing_verifier_phas
         inspect_v3_acceptance(report, assert_complete=True)
 
 
+def test_v3_stage12_acceptance_scans_bound_prepared_messages_artifact(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(
+        tmp_path / "v3_stage_12_run",
+        prepared_message_content="model visible gold_patch leak",
+    )
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+    report_payload = _read_json(report)
+    assert report_payload["status"] == "failed"
+    with pytest.raises(ConfigError, match="prepared_messages|prompt"):
+        inspect_v3_acceptance(report, assert_complete=True)
+
+
 def test_v3_stage12_acceptance_bundle_rechecks_report_transitively(tmp_path: Path) -> None:
     run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
     run_selection = _build_full_run_selection(tmp_path, run_dir)
@@ -496,6 +514,7 @@ def _make_minimal_v3_run(
     run_outcome: str = "success",
     final_verifier_status: str = "accepted",
     missing_docker_phase: str | None = None,
+    prepared_message_content: str = "safe public task context",
 ) -> Path:
     run_dir.mkdir(parents=True)
     artifacts_dir = run_dir / "artifacts"
@@ -540,12 +559,42 @@ def _make_minimal_v3_run(
         "redaction_status": "not_scanned",
         "retention_policy": "keep",
     }
+    prepared_messages_path = artifacts_dir / "v3_stage_12_run_artifact_000002_prepared_messages.json"
+    _write_json(
+        prepared_messages_path,
+        {
+            "provider_format": "chat",
+            "context_revision": 1,
+            "model_input_hash": "b" * 64,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "RepoHarness test system prompt.",
+                },
+                {
+                    "role": "user",
+                    "content": prepared_message_content,
+                },
+            ],
+        },
+    )
+    prepared_messages_ref = {
+        "schema_version": "repo_harness_artifact_v0",
+        "artifact_id": "v3_stage_12_run_artifact_000002",
+        "relative_path": "artifacts/v3_stage_12_run_artifact_000002_prepared_messages.json",
+        "kind": "prepared_messages",
+        "sha256": sha256_file(prepared_messages_path),
+        "size_bytes": prepared_messages_path.stat().st_size,
+        "created_by_event_id": "event_002",
+        "redaction_status": "not_scanned",
+        "retention_policy": "keep",
+    }
     _write_json(
         run_dir / "artifacts.json",
         {
             "schema_version": "repo_harness_schema_v0",
             "run_id": "v3_stage_12_run",
-            "artifacts": [snapshot_ref],
+            "artifacts": [snapshot_ref, prepared_messages_ref],
         },
     )
     run_config = {
