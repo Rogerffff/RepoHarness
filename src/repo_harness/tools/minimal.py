@@ -332,6 +332,11 @@ class ToolExecutor:
                 normalized_args["start_line"] = args["start_line"]
             if "end_line" in args:
                 normalized_args["end_line"] = args["end_line"]
+            if "offset" in args and "start_line" not in normalized_args:
+                normalized_args["start_line"] = args["offset"]
+            if "limit" in args and "end_line" not in normalized_args:
+                start_line = int(normalized_args.get("start_line", 1))
+                normalized_args["end_line"] = start_line + int(args["limit"]) - 1
             effective_args = dict(normalized_args)
         elif requested == "grep":
             normalized_args = {
@@ -694,8 +699,21 @@ def build_tool(name: str) -> ToolDefinition:
             name="read_file",
             tool_version="repo_harness_read_file_v0",
             model_visible_description="Read a UTF-8 text file inside the workspace.",
-            model_visible_prompt="Use read_file with a workspace-relative path.",
-            input_schema={"type": "object", "required": ["path"]},
+            model_visible_prompt=(
+                "Use read_file with a workspace-relative path. Optionally pass start_line "
+                "and end_line; offset and limit are accepted as aliases."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "start_line": {"type": "integer"},
+                    "end_line": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "limit": {"type": "integer"},
+                },
+            },
             output_schema={"type": "object", "properties": {"content_preview": {"type": "string"}}},
             max_result_size=4000,
             is_read_only=True,
@@ -773,6 +791,8 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "read_file.path": (str, True),
         "read_file.start_line": (int, False),
         "read_file.end_line": (int, False),
+        "read_file.offset": (int, False),
+        "read_file.limit": (int, False),
         "grep.query": (str, True),
         "grep.path": (str, False),
         "grep.root": (str, False),
@@ -796,6 +816,13 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
             return _issue(field_name, _type_name(expected_type), None, retryable=True)
         if field_name in args and not _is_exact_type(args[field_name], expected_type):
             return _issue(field_name, _type_name(expected_type), args[field_name], retryable=True)
+        if (
+            tool_name == "read_file"
+            and field_name in {"start_line", "end_line", "offset", "limit"}
+            and field_name in args
+            and args[field_name] < 1
+        ):
+            return _issue(field_name, "positive integer", args[field_name], retryable=True)
     for field_name in args:
         if field_name not in tool_rules:
             return _issue(field_name, "known field", args[field_name], retryable=True)

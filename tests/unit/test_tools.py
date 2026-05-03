@@ -65,6 +65,49 @@ def test_schema_validation_error_returns_model_visible_tool_result(tmp_path: Pat
     assert result.artifact_refs
 
 
+def test_read_file_accepts_offset_limit_aliases(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "notes.txt").write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    tool_call = ToolCall(
+        tool_call_id="call_read_slice",
+        tool_name="read_file",
+        arguments={"path": "notes.txt", "offset": 2, "limit": 2},
+        turn=1,
+    )
+
+    validation = ToolExecutor().validate_input(tool_call, context)
+    normalized = ToolExecutor().normalize(tool_call, context)
+    result = ToolExecutor().execute(tool_call, context)
+
+    assert validation is None
+    assert normalized.normalized_arguments["start_line"] == 2
+    assert normalized.normalized_arguments["end_line"] == 3
+    assert "two\nthree" in result.content_preview
+    assert "one" not in result.content_preview
+
+
+@pytest.mark.parametrize("field", ["start_line", "end_line", "offset", "limit"])
+def test_read_file_rejects_non_positive_slice_arguments(tmp_path: Path, field: str):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "notes.txt").write_text("one\ntwo\n", encoding="utf-8")
+    tool_call = ToolCall(
+        tool_call_id=f"call_bad_{field}",
+        tool_name="read_file",
+        arguments={"path": "notes.txt", field: 0},
+        turn=1,
+    )
+
+    result = ToolExecutor().validate_input(tool_call, context)
+
+    assert result is not None
+    assert result.status == "error"
+    assert result.error_type == "schema_validation_failed"
+    assert result.typed["field"] == field
+    assert result.typed["expected_type"] == "positive integer"
+
+
 def test_grep_no_match_is_successful_observation(tmp_path: Path):
     context = _tool_context(tmp_path)
     Path(context.run_workspace.workspace_path, "notes.txt").write_text("hello\n", encoding="utf-8")
