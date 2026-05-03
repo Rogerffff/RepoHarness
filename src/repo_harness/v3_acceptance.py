@@ -22,6 +22,7 @@ from repo_harness.schema_versions import (
 )
 from repo_harness.trajectory import ArtifactRef, read_jsonl, verify_artifact_manifest
 from repo_harness.v3_visibility import V3ContaminationDenylist, V3_VISIBILITY_SURFACES
+from repo_harness.workspace import WorkspaceBackendError, inspect_workspace_backend_status
 from repo_harness.workspace.source_hash import compute_source_tree_hash
 
 
@@ -47,6 +48,10 @@ V3_TRAJECTORY_RUN_ROLES = {
     "real_repository",
     "swebench_like",
 }
+V3_REQUIRED_DOCKER_BACKEND_ROLES = {
+    "real_repository",
+    "swebench_like",
+}
 V3_REQUIRED_ACCEPTANCE_INPUT_CATEGORIES = (
     "run_selection_manifest",
     "export_root",
@@ -69,6 +74,10 @@ V3_REQUIRED_TRAJECTORY_FILES = (
     "events.jsonl",
     "artifacts.json",
     "run_config_facts.json",
+)
+V3_DOCKER_BACKEND_STATUS_FILES = (
+    "docker_backend_status.json",
+    "docker_stage_status.json",
 )
 
 
@@ -608,6 +617,7 @@ def build_v3_acceptance_bundle(
         "bundle_policy": {
             "post_acceptance_docs_not_report_inputs": True,
             "inspect_recomputes_all_sha256": True,
+            "inspect_rechecks_v3_acceptance_report": True,
             "no_latest_run_discovery": True,
         },
     }
@@ -668,6 +678,10 @@ def inspect_acceptance_bundle(
                 and input_ref.get("sha256") != report_input_ref.get("sha256")
             ):
                 failures.append("bundle input_manifest_ref 与 report input_manifest_ref sha256 不一致。")
+            try:
+                inspect_v3_acceptance(report_path, assert_complete=assert_immutable)
+            except ConfigError as exc:
+                failures.append(f"acceptance bundle 传递性复查 v3_acceptance_report 失败：{exc}")
     lines = [
         f"V3 acceptance bundle: {manifest_path}",
         f"Documentation refs: {len(docs) if isinstance(docs, list) else 0}",
@@ -825,12 +839,48 @@ def _inspect_run_selection_manifest_payload(payload: dict[str, Any], *, assert_c
                     inspect_tool_contract(path, assert_frozen=True)
                 except ConfigError as exc:
                     failures.append(f"{role} run inspection failed：{exc}")
+                _inspect_selected_docker_backend_status(entry, path, failures)
             elif role not in {"credential_gated_real_provider", "mock_provider"}:
                 failures.append(f"{role} run ref 必须指向包含 run_config_facts.json 的 run directory。")
         if assert_complete and entry.get("stage_family") == "pre_v3" and role not in {"mock_provider", "credential_gated_real_provider"}:
             failures.append(f"{role} run ref 指向 V3 之前的旧 RUN_DIR。")
     if failures:
         raise ConfigError("; ".join(failures))
+
+
+def _inspect_selected_docker_backend_status(
+    entry: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+) -> None:
+    role = str(entry.get("role") or "")
+    backend = str(entry.get("workspace_backend") or "").lower()
+    requires_docker_backend = role in V3_REQUIRED_DOCKER_BACKEND_ROLES or backend == "docker"
+    if not requires_docker_backend:
+        return
+    evidence_refs = entry.get("evidence_refs", {})
+    if not isinstance(evidence_refs, dict):
+        evidence_refs = {}
+    inspected_status_files = []
+    for name in V3_DOCKER_BACKEND_STATUS_FILES:
+        status_path = run_dir / name
+        if not status_path.exists():
+            continue
+        inspected_status_files.append(name)
+        try:
+            inspect_workspace_backend_status(
+                status_file=status_path,
+                assert_docker_backend=True,
+            )
+        except WorkspaceBackendError as exc:
+            failures.append(f"{role} docker backend inspection failed ({name})：{exc}")
+    if not inspected_status_files:
+        failures.append(f"{role} docker backend run 缺少 docker_backend_status.json。")
+    elif "docker_backend_status.json" not in inspected_status_files:
+        failures.append(f"{role} docker backend run 缺少 V3 docker_backend_status.json。")
+    for name in inspected_status_files:
+        if name not in evidence_refs:
+            failures.append(f"{role} run_selection evidence_refs 缺少 {name}。")
 
 
 def _inspect_acceptance_inputs_payload(payload: dict[str, Any], *, assert_complete: bool) -> None:

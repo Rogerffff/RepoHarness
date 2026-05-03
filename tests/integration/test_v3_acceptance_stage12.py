@@ -19,6 +19,7 @@ from repo_harness.v3_acceptance import (
     inspect_trajectory_store,
     inspect_v3_acceptance,
 )
+from repo_harness.workspace.backend_status import build_workspace_backend_status
 
 
 REQUIRED_DOCS = [
@@ -219,6 +220,76 @@ def test_v3_stage12_acceptance_inspect_detects_tampering(tmp_path: Path) -> None
     _write_json(tampered_report, report_payload)
     with pytest.raises(ConfigError, match="sha256"):
         inspect_v3_acceptance(tampered_report, assert_complete=False)
+
+
+def test_v3_stage12_acceptance_rejects_selected_docker_run_missing_verifier_phase(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    bad_swebench_run = _make_minimal_v3_run(
+        tmp_path / "v3_stage_12_bad_swebench_run",
+        missing_docker_phase="fail_to_pass_test_execution",
+    )
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    replacement = build_v3_run_selection_manifest(
+        run_refs=[f"role=swebench_like,path={bad_swebench_run}"],
+        output=tmp_path / "bad_swebench_selection.json",
+    )
+    bad_entry = _read_json(replacement)["entries"][0]
+    payload = _read_json(run_selection)
+    for entry in payload["entries"]:
+        if entry["role"] == "swebench_like":
+            entry.update(bad_entry)
+    _write_json(run_selection, payload)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+    with pytest.raises(ConfigError, match="docker phase coverage 缺失：fail_to_pass_test_execution"):
+        inspect_v3_acceptance(report, assert_complete=True)
+
+
+def test_v3_stage12_acceptance_bundle_rechecks_report_transitively(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    acceptance_dir = tmp_path / "v3_acceptance"
+    acceptance_dir.mkdir()
+    _write_valid_command_log(acceptance_dir / "acceptance_command_log.jsonl")
+    final_doc = tmp_path / "final-acceptance.md"
+    walkthrough = tmp_path / "walkthrough.md"
+    final_doc.write_text("# Final acceptance\n", encoding="utf-8")
+    walkthrough.write_text("# Walkthrough\n", encoding="utf-8")
+    bad_report = acceptance_dir / "v3_acceptance_report.json"
+    input_ref = {
+        "schema_version": "repo_harness_artifact_v0",
+        "artifact_id": "bad_report_input_ref",
+        "relative_path": inputs.as_posix(),
+        "kind": "json",
+        "sha256": sha256_file(inputs),
+        "size_bytes": inputs.stat().st_size,
+        "created_by_event_id": "bad_report",
+        "redaction_status": "not_scanned",
+        "retention_policy": "keep",
+    }
+    _write_json(
+        bad_report,
+        {
+            "schema_version": "repo_harness_v3_acceptance_report_v0",
+            "acceptance_id": "bad",
+            "status": "passed",
+            "input_manifest_ref": input_ref,
+        },
+    )
+    bundle = build_v3_acceptance_bundle(
+        acceptance_dir=acceptance_dir,
+        input_manifest=inputs,
+        report=bad_report,
+        documentation_refs=[final_doc, walkthrough],
+        output=acceptance_dir / "acceptance_bundle_manifest.json",
+    )
+    with pytest.raises(ConfigError, match="传递性复查 v3_acceptance_report 失败"):
+        inspect_acceptance_bundle(bundle, assert_immutable=True)
 
 
 def test_v3_stage12_acceptance_detects_credential_skip_disguised_as_accepted(tmp_path: Path) -> None:
@@ -424,6 +495,7 @@ def _make_minimal_v3_run(
     provider: str = "replay",
     run_outcome: str = "success",
     final_verifier_status: str = "accepted",
+    missing_docker_phase: str | None = None,
 ) -> Path:
     run_dir.mkdir(parents=True)
     artifacts_dir = run_dir / "artifacts"
@@ -547,7 +619,132 @@ def _make_minimal_v3_run(
         encoding="utf-8",
     )
     (run_dir / "summary.md").write_text("# Summary\n", encoding="utf-8")
+    _write_docker_backend_status(run_dir, missing_phase=missing_docker_phase)
     return run_dir
+
+
+def _write_docker_backend_status(run_dir: Path, *, missing_phase: str | None = None) -> None:
+    facts_ref = "container_execution_facts/probe.json"
+    status = build_workspace_backend_status(
+        mode="docker_backend",
+        docker_available=True,
+        docker_available_reason="test_docker_available",
+        docker_context="desktop-linux",
+        docker_server_platform="linux",
+        docker_server_architecture="arm64",
+        docker_mem_total_bytes=32 * 1024 * 1024 * 1024,
+        evaluation_concurrency=1,
+        swebench_like_effective_max_workers=1,
+        requested_container_platform="linux/arm64",
+        container_uname_m="aarch64",
+        image_id="a" * 64,
+        image_platform="linux/arm64",
+        build_mode="prebuilt",
+        network_policy="deny_agent_run",
+        mount_policy="workspace_read_write_tmp_only",
+        command_timeout_sec=60,
+        cleanup_policy="remove_containers_keep_images",
+        cleanup_status="completed",
+        docker_backend_facts_ref="docker_backend_facts.json",
+        container_execution_facts_refs=[facts_ref],
+        container_execution_manifest_ref="container_execution_facts/manifest.json",
+        docker_phase_coverage_matrix_ref="docker_phase_coverage_matrix.json",
+    )
+    _write_json(run_dir / "docker_backend_status.json", status.model_dump(mode="json"))
+    _write_json(
+        run_dir / "docker_backend_facts.json",
+        {
+            "schema_version": "repo_harness_docker_backend_facts_v3_v0",
+            "backend": "docker",
+            "backend_version": "repo_harness_docker_backend_v3_v0",
+            "docker_context": "desktop-linux",
+            "docker_cli_version": "test",
+            "docker_server_version": "test",
+            "server_platform": "linux",
+            "server_architecture": "arm64",
+            "requested_container_platform": "linux/arm64",
+            "image_ref": "repo-harness-v3-test",
+            "image_id": "a" * 64,
+            "image_platform": "linux/arm64",
+            "build_mode": "prebuilt",
+            "cross_architecture_emulation": False,
+            "network_policy": "deny_agent_run",
+            "mount_policy": "workspace_read_write_tmp_only",
+            "timeout_sec": 60,
+            "cleanup_policy": "remove_containers_keep_images",
+            "cleanup_status": "completed",
+        },
+    )
+    _write_json(
+        run_dir / facts_ref,
+        {
+            "schema_version": "repo_harness_container_execution_facts_v3_v0",
+            "command_id": "cmd",
+            "container_id": "container",
+            "image_id": "a" * 64,
+            "requested_container_platform": "linux/arm64",
+            "container_uname_m": "aarch64",
+            "command": ["python", "-c", "pass"],
+            "command_semantics": "final_verifier",
+            "workdir": "/repo-harness-run/workspaces/source_checkout",
+            "exit_code": 0,
+            "timeout": False,
+            "duration_ms": 1,
+            "network_policy": "deny_agent_run",
+            "mount_policy": "workspace_read_write_tmp_only",
+            "cleanup_status": "completed",
+        },
+    )
+    _write_json(
+        run_dir / "container_execution_facts" / "manifest.json",
+        {
+            "schema_version": "repo_harness_container_execution_manifest_v3_v0",
+            "run_id": run_dir.name,
+            "entry_count": 1,
+            "entries": [
+                {
+                    "command_id": "cmd",
+                    "facts_ref": facts_ref,
+                    "command_semantics": "final_verifier",
+                    "phase": "final_verifier",
+                    "exit_code": 0,
+                    "timeout": False,
+                    "cleanup_status": "completed",
+                }
+            ],
+        },
+    )
+    required_phases = [
+        "source_checkout",
+        "setup",
+        "agent_tool",
+        "run_tests",
+        "final_patch_capture",
+        "verification_workspace_creation",
+        "verifier_patch_apply",
+        "test_patch_apply",
+        "model_final_patch_apply",
+        "fail_to_pass_test_execution",
+        "pass_to_pass_test_execution",
+        "final_verifier",
+    ]
+    _write_json(
+        run_dir / "docker_phase_coverage_matrix.json",
+        {
+            "schema_version": "repo_harness_docker_phase_coverage_matrix_v3_v0",
+            "run_id": run_dir.name,
+            "container_execution_manifest_ref": "container_execution_facts/manifest.json",
+            "required_phases": required_phases,
+            "phases": [
+                {
+                    "phase": phase,
+                    "status": "missing" if phase == missing_phase else "passed",
+                    "facts_refs": [] if phase == missing_phase else [facts_ref],
+                }
+                for phase in required_phases
+            ],
+        },
+    )
 
 
 def _copy_tree(source: Path, target: Path) -> Path:
