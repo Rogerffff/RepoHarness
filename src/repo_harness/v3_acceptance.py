@@ -52,6 +52,10 @@ V3_REQUIRED_DOCKER_BACKEND_ROLES = {
     "real_repository",
     "swebench_like",
 }
+V3_CORE_AGENT_LOOP_ROLES = {
+    "real_repository",
+    "swebench_like",
+}
 V3_REQUIRED_ACCEPTANCE_INPUT_CATEGORIES = (
     "run_selection_manifest",
     "export_root",
@@ -823,9 +827,13 @@ def _inspect_run_selection_manifest_payload(payload: dict[str, Any], *, assert_c
                 failures.append("replay role 必须绑定 replay provider evidence。")
             if not _entry_is_success(entry):
                 failures.append("replay role 必须 success/accepted。")
-        if assert_complete and role in {"real_repository", "swebench_like"} and not entry.get("structured_skip_reason"):
+        if assert_complete and role in V3_CORE_AGENT_LOOP_ROLES and not entry.get("structured_skip_reason"):
             if not _entry_is_success(entry):
                 failures.append(f"{role} role 必须 success/accepted，不能用失败 run 通过 acceptance。")
+            if not _is_real_provider_entry(entry):
+                failures.append(f"{role} role 必须绑定真实 provider Agent Loop evidence，不能由 replay/mock/fake 替代。")
+            if not _entry_entered_agent_loop(entry):
+                failures.append(f"{role} role 必须绑定实际进入 Agent Loop 的 run evidence。")
         if (
             assert_complete
             and role in V3_TRAJECTORY_RUN_ROLES
@@ -1038,7 +1046,7 @@ def _status_values_from_path(path: Path) -> set[str]:
 
 def _is_real_provider_entry(entry: dict[str, Any]) -> bool:
     providers = _provider_values(entry)
-    return bool(providers.intersection({"deepseek", "openai"})) and not providers.intersection({"mock", "replay"})
+    return bool(providers.intersection({"deepseek", "openai"})) and not providers.intersection({"mock", "replay", "fake"})
 
 
 def _is_mock_provider_entry(entry: dict[str, Any]) -> bool:
@@ -1048,7 +1056,7 @@ def _is_mock_provider_entry(entry: dict[str, Any]) -> bool:
 
 def _has_non_real_provider_identity(entry: dict[str, Any]) -> bool:
     providers = _provider_values(entry)
-    return bool(providers.intersection({"mock", "replay"}))
+    return bool(providers.intersection({"mock", "replay", "fake"}))
 
 
 def _provider_values(entry: dict[str, Any]) -> set[str]:
@@ -1105,6 +1113,26 @@ def _provider_and_status_payloads(path: Path) -> list[dict[str, Any]]:
         if payload:
             payloads.append(payload)
     return payloads
+
+
+def _entry_entered_agent_loop(entry: dict[str, Any]) -> bool:
+    path_ref = entry.get("path_ref")
+    if not isinstance(path_ref, dict):
+        return False
+    path = _resolve_file_ref(path_ref)
+    if not path.is_dir():
+        return False
+    events_path = path / "events.jsonl"
+    if not events_path.exists():
+        return False
+    try:
+        return any(
+            event.get("event_type") == "model_call_started"
+            for event in read_jsonl(events_path)
+            if isinstance(event, dict)
+        )
+    except Exception:
+        return False
 
 
 def _inspect_command_log(path: Path, failures: list[str]) -> None:

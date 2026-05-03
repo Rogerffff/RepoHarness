@@ -189,6 +189,16 @@ def test_docker_backend_inspect_rejects_inconsistent_evidence(tmp_path: Path):
         inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
 
     _write_status(status_path, status)
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    reused_ref = status.container_execution_facts_refs[0]
+    for phase in matrix["phases"]:
+        if phase["status"] == "passed":
+            phase["facts_refs"] = [reused_ref]
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(WorkspaceBackendError, match="command_semantics|facts phase"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    _write_status(status_path, status)
     manifest_path = tmp_path / status.container_execution_manifest_ref
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["entry_count"] = manifest["entry_count"] + 1
@@ -266,6 +276,10 @@ def test_interface_only_requires_docker_rejection_evidence(tmp_path: Path):
 
 
 def _valid_docker_backend_status():
+    facts_refs = [
+        f"container_execution_facts/{phase}.json"
+        for phase, _, _ in _docker_phase_specs()
+    ]
     return build_workspace_backend_status(
         mode="docker_backend",
         docker_available=True,
@@ -287,7 +301,7 @@ def _valid_docker_backend_status():
         cleanup_policy="remove_containers_keep_images",
         cleanup_status="completed",
         docker_backend_facts_ref="docker_backend_facts.json",
-        container_execution_facts_refs=["container_execution_facts/probe.json"],
+        container_execution_facts_refs=facts_refs,
         container_execution_manifest_ref="container_execution_facts/manifest.json",
         docker_phase_coverage_matrix_ref="docker_phase_coverage_matrix.json",
     )
@@ -326,20 +340,28 @@ def _write_status(path: Path, status) -> None:
             + "\n",
             encoding="utf-8",
         )
+    specs_by_ref = {
+        f"container_execution_facts/{phase}.json": (phase, semantics, manifest_phase)
+        for phase, semantics, manifest_phase in _docker_phase_specs()
+    }
     for ref in status.container_execution_facts_refs:
+        phase, semantics, _manifest_phase = specs_by_ref.get(ref, ("source_checkout", "source_checkout", "source_checkout"))
         facts_path = path.parent / ref
         facts_path.parent.mkdir(parents=True, exist_ok=True)
         facts_path.write_text(
             json.dumps(
                 {
-                    "command_id": "cmd",
+                    "schema_version": "repo_harness_container_execution_facts_v3_v0",
+                    "command_id": f"cmd_{phase}",
                     "container_id": "container",
                     "image_id": status.image_id,
                     "requested_container_platform": status.requested_container_platform,
                     "container_uname_m": status.container_uname_m,
                     "command": ["uname", "-m"],
+                    "command_semantics": semantics,
                     "workdir": "/repo-harness-run/workspaces/source_checkout",
                     "exit_code": 0,
+                    "timeout": False,
                     "duration_ms": 1,
                     "network_policy": status.network_policy,
                     "mount_policy": status.mount_policy,
@@ -362,14 +384,15 @@ def _write_status(path: Path, status) -> None:
                     "entry_count": len(status.container_execution_facts_refs),
                     "entries": [
                         {
-                            "command_id": "cmd",
-                            "facts_ref": status.container_execution_facts_refs[0],
-                            "command_semantics": "source_checkout",
-                            "phase": "source_checkout",
+                            "command_id": f"cmd_{specs_by_ref.get(ref, ('source_checkout', 'source_checkout', 'source_checkout'))[0]}",
+                            "facts_ref": ref,
+                            "command_semantics": specs_by_ref.get(ref, ("source_checkout", "source_checkout", "source_checkout"))[1],
+                            "phase": specs_by_ref.get(ref, ("source_checkout", "source_checkout", "source_checkout"))[2],
                             "exit_code": 0,
                             "timeout": False,
                             "cleanup_status": "completed",
                         }
+                        for ref in status.container_execution_facts_refs
                     ],
                 },
                 ensure_ascii=False,
@@ -405,8 +428,9 @@ def _write_status(path: Path, status) -> None:
                     "phases": [
                         {
                             "phase": phase,
-                            "status": "passed",
-                            "facts_refs": [status.container_execution_facts_refs[0]],
+                            "status": "not_applicable" if phase in {"verifier_patch_apply", "test_patch_apply"} else "passed",
+                            "structured_reason": "phase_not_required_for_unit_fixture" if phase in {"verifier_patch_apply", "test_patch_apply"} else None,
+                            "facts_refs": [] if phase in {"verifier_patch_apply", "test_patch_apply"} else [f"container_execution_facts/{phase}.json"],
                         }
                         for phase in required_phases
                     ],
@@ -417,3 +441,30 @@ def _write_status(path: Path, status) -> None:
             + "\n",
             encoding="utf-8",
         )
+
+
+def _docker_phase_specs() -> list[tuple[str, str, str]]:
+    return [
+        ("source_checkout", "source_checkout", "source_checkout"),
+        ("setup", "setup", "setup"),
+        ("agent_tool", "file_read", "agent_tool"),
+        ("run_tests", "verifier_feedback", "run_tests"),
+        ("final_patch_capture", "final_patch_capture", "final_patch_capture"),
+        (
+            "verification_workspace_creation",
+            "verification_workspace_creation",
+            "verification_workspace_creation",
+        ),
+        ("model_final_patch_apply", "model_final_patch_apply", "model_final_patch_apply"),
+        (
+            "fail_to_pass_test_execution",
+            "fail_to_pass_test_execution",
+            "fail_to_pass_test_execution",
+        ),
+        (
+            "pass_to_pass_test_execution",
+            "pass_to_pass_test_execution",
+            "pass_to_pass_test_execution",
+        ),
+        ("final_verifier", "verifier_final", "final_verifier"),
+    ]

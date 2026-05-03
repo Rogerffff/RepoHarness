@@ -30,6 +30,40 @@ REQUIRED_DOCKER_PHASES = {
     "final_verifier",
 }
 
+PHASE_ALLOWED_MANIFEST_PHASES = {
+    "source_checkout": {"source_checkout"},
+    "setup": {"setup"},
+    "agent_tool": {"agent_tool"},
+    "run_tests": {"run_tests", "fail_to_pass_test_execution", "pass_to_pass_test_execution"},
+    "final_patch_capture": {"final_patch_capture"},
+    "verification_workspace_creation": {"verification_workspace_creation"},
+    "verifier_patch_apply": {"verifier_patch_apply"},
+    "test_patch_apply": {"test_patch_apply"},
+    "model_final_patch_apply": {"model_final_patch_apply"},
+    "fail_to_pass_test_execution": {"fail_to_pass_test_execution"},
+    "pass_to_pass_test_execution": {"pass_to_pass_test_execution"},
+    "final_verifier": {
+        "final_verifier",
+        "fail_to_pass_test_execution",
+        "pass_to_pass_test_execution",
+    },
+}
+
+PHASE_ALLOWED_COMMAND_SEMANTICS = {
+    "source_checkout": {"source_checkout"},
+    "setup": {"setup"},
+    "agent_tool": {"agent_tool", "file_read", "file_write", "bash_diagnostic", "git_diff"},
+    "run_tests": {"run_tests", "verifier_feedback", "fail_to_pass_test_execution", "pass_to_pass_test_execution"},
+    "final_patch_capture": {"final_patch_capture"},
+    "verification_workspace_creation": {"verification_workspace_creation"},
+    "verifier_patch_apply": {"verifier_patch_apply"},
+    "test_patch_apply": {"test_patch_apply"},
+    "model_final_patch_apply": {"model_final_patch_apply"},
+    "fail_to_pass_test_execution": {"fail_to_pass_test_execution"},
+    "pass_to_pass_test_execution": {"pass_to_pass_test_execution"},
+    "final_verifier": {"verifier_final", "fail_to_pass_test_execution", "pass_to_pass_test_execution"},
+}
+
 WORKSPACE_BACKEND_STAGE_STATUS_VERSION = "repo_harness_docker_stage_status_v2_v0"
 WORKSPACE_BACKEND_VERSION = "repo_harness_workspace_backend_stage14_v0"
 DOCKER_BACKEND_IMPLEMENTED = True
@@ -527,6 +561,8 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
         raise WorkspaceBackendError("container execution manifest entry_count 与 entries 数量不一致。")
     refs_in_status = set(status.container_execution_facts_refs)
     refs_in_manifest: set[str] = set()
+    manifest_by_ref: dict[str, dict[str, object]] = {}
+    facts_by_ref: dict[str, ContainerExecutionFacts] = {}
     for entry in entries:
         if not isinstance(entry, dict):
             raise WorkspaceBackendError("container execution manifest entries 必须是 JSON object。")
@@ -535,8 +571,15 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
             raise WorkspaceBackendError("container execution manifest entry 缺少 facts_ref。")
         if ref not in refs_in_status:
             raise WorkspaceBackendError(f"container execution manifest 引用了 status 外的 facts ref：{ref}")
-        _read_evidence_json(evidence_root, ref)
+        facts_payload = _read_evidence_json(evidence_root, ref)
+        try:
+            facts = ContainerExecutionFacts.model_validate(facts_payload)
+        except Exception as exc:
+            raise WorkspaceBackendError(f"container execution facts schema 校验失败：{ref}") from exc
+        _assert_manifest_entry_matches_facts(entry, facts, ref)
         refs_in_manifest.add(ref)
+        manifest_by_ref[ref] = entry
+        facts_by_ref[ref] = facts
     missing_manifest_refs = refs_in_status.difference(refs_in_manifest)
     if missing_manifest_refs:
         raise WorkspaceBackendError(
@@ -572,6 +615,73 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
                 raise WorkspaceBackendError(
                     f"docker phase coverage 引用了 manifest 外的 facts ref：{phase_name}:{ref}"
                 )
+            entry = manifest_by_ref[ref]
+            facts = facts_by_ref[ref]
+            _assert_phase_ref_matches_execution(phase_name, ref, entry, facts)
+        if phase_name == "final_verifier":
+            _assert_final_verifier_phase_has_complete_semantics(facts_refs, facts_by_ref)
+
+
+def _assert_manifest_entry_matches_facts(
+    entry: dict[str, object],
+    facts: ContainerExecutionFacts,
+    ref: str,
+) -> None:
+    if entry.get("command_id") != facts.command_id:
+        raise WorkspaceBackendError(f"container manifest command_id 与 facts 不一致：{ref}")
+    if entry.get("command_semantics") != facts.command_semantics:
+        raise WorkspaceBackendError(f"container manifest command_semantics 与 facts 不一致：{ref}")
+    if entry.get("exit_code") != facts.exit_code:
+        raise WorkspaceBackendError(f"container manifest exit_code 与 facts 不一致：{ref}")
+    if entry.get("timeout") != facts.timeout:
+        raise WorkspaceBackendError(f"container manifest timeout 与 facts 不一致：{ref}")
+    if entry.get("cleanup_status") != facts.cleanup_status:
+        raise WorkspaceBackendError(f"container manifest cleanup_status 与 facts 不一致：{ref}")
+
+
+def _assert_phase_ref_matches_execution(
+    phase_name: str,
+    ref: str,
+    entry: dict[str, object],
+    facts: ContainerExecutionFacts,
+) -> None:
+    manifest_phase = entry.get("phase")
+    command_semantics = facts.command_semantics
+    allowed_phases = PHASE_ALLOWED_MANIFEST_PHASES.get(phase_name, {phase_name})
+    if manifest_phase not in allowed_phases:
+        raise WorkspaceBackendError(
+            f"docker phase coverage facts phase 不匹配：{phase_name}:{ref}:{manifest_phase}"
+        )
+    allowed_semantics = PHASE_ALLOWED_COMMAND_SEMANTICS.get(phase_name, {phase_name})
+    if command_semantics not in allowed_semantics:
+        raise WorkspaceBackendError(
+            f"docker phase coverage command_semantics 不匹配：{phase_name}:{ref}:{command_semantics}"
+        )
+    if facts.timeout:
+        raise WorkspaceBackendError(f"docker phase coverage 不能把 timeout facts 标为 passed：{phase_name}:{ref}")
+    if facts.cleanup_status != "completed":
+        raise WorkspaceBackendError(
+            f"docker phase coverage cleanup_status 不是 completed：{phase_name}:{ref}"
+        )
+
+
+def _assert_final_verifier_phase_has_complete_semantics(
+    facts_refs: list[object],
+    facts_by_ref: dict[str, ContainerExecutionFacts],
+) -> None:
+    semantics = {
+        facts_by_ref[ref].command_semantics
+        for ref in facts_refs
+        if isinstance(ref, str) and ref in facts_by_ref
+    }
+    if "verifier_final" in semantics:
+        return
+    required = {"fail_to_pass_test_execution", "pass_to_pass_test_execution"}
+    missing = sorted(required.difference(semantics))
+    if missing:
+        raise WorkspaceBackendError(
+            "docker final_verifier aggregate 缺少语义：" + ", ".join(missing)
+        )
 
 
 def _read_evidence_json(evidence_root: Path, relative_ref: str) -> dict[str, object]:

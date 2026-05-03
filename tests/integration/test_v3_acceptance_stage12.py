@@ -355,6 +355,33 @@ def test_v3_stage12_acceptance_rejects_wrong_provider_and_failed_role(tmp_path: 
         inspect_v3_acceptance(report, assert_complete=True)
 
 
+def test_v3_stage12_acceptance_rejects_replay_core_agent_loop_roles(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    payload = _read_json(run_selection)
+    replay_entry = next(entry for entry in payload["entries"] if entry["role"] == "replay")
+    for entry in payload["entries"]:
+        if entry["role"] in {"real_repository", "swebench_like"}:
+            entry["path_ref"] = replay_entry["path_ref"]
+            entry["evidence_refs"] = replay_entry["evidence_refs"]
+            entry["provider"] = "replay"
+            entry["actual_provider"] = "replay"
+            entry["requested_provider"] = "replay"
+            entry["accepted"] = True
+            entry["run_state"] = "success"
+            entry["run_outcome"] = "success"
+            entry["final_verifier_status"] = "accepted"
+    _write_json(run_selection, payload)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+    with pytest.raises(ConfigError, match="real_repository|swebench_like"):
+        inspect_v3_acceptance(report, assert_complete=True)
+
+
 def test_v3_stage12_acceptance_rejects_replay_identity_on_credential_skip(tmp_path: Path) -> None:
     run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
     run_selection = _build_full_run_selection(tmp_path, run_dir)
@@ -494,9 +521,19 @@ def _build_full_run_selection(tmp_path: Path, run_dir: Path) -> Path:
         tmp_path / "v3_stage_12_real_provider_run",
         provider="deepseek",
     )
+    real_repository_run = _make_minimal_v3_run(
+        tmp_path / "v3_stage_12_real_repository_run",
+        provider="deepseek",
+    )
+    swebench_like_run = _make_minimal_v3_run(
+        tmp_path / "v3_stage_12_swebench_like_run",
+        provider="deepseek",
+    )
     role_paths = {
         "mock_provider": mock_run,
         "credential_gated_real_provider": real_provider_run,
+        "real_repository": real_repository_run,
+        "swebench_like": swebench_like_run,
     }
     return build_v3_run_selection_manifest(
         run_refs=[
@@ -654,7 +691,10 @@ def _make_minimal_v3_run(
         },
     )
     _write_json(run_dir / "run_status.json", {"schema_version": "repo_harness_schema_v0", "run_id": "v3_stage_12_run", "status": "FINALIZED"})
-    (run_dir / "events.jsonl").write_text('{"event_type":"completed"}\n', encoding="utf-8")
+    (run_dir / "events.jsonl").write_text(
+        '{"event_type":"model_call_started"}\n{"event_type":"completed"}\n',
+        encoding="utf-8",
+    )
     (run_dir / "transcript.jsonl").write_text(
         json.dumps(
             {
@@ -673,7 +713,11 @@ def _make_minimal_v3_run(
 
 
 def _write_docker_backend_status(run_dir: Path, *, missing_phase: str | None = None) -> None:
-    facts_ref = "container_execution_facts/probe.json"
+    executed_specs = _docker_phase_specs()
+    facts_refs = [
+        f"container_execution_facts/{phase}.json"
+        for phase, _, _ in executed_specs
+    ]
     status = build_workspace_backend_status(
         mode="docker_backend",
         docker_available=True,
@@ -695,7 +739,7 @@ def _write_docker_backend_status(run_dir: Path, *, missing_phase: str | None = N
         cleanup_policy="remove_containers_keep_images",
         cleanup_status="completed",
         docker_backend_facts_ref="docker_backend_facts.json",
-        container_execution_facts_refs=[facts_ref],
+        container_execution_facts_refs=facts_refs,
         container_execution_manifest_ref="container_execution_facts/manifest.json",
         docker_phase_coverage_matrix_ref="docker_phase_coverage_matrix.json",
     )
@@ -724,42 +768,44 @@ def _write_docker_backend_status(run_dir: Path, *, missing_phase: str | None = N
             "cleanup_status": "completed",
         },
     )
-    _write_json(
-        run_dir / facts_ref,
-        {
-            "schema_version": "repo_harness_container_execution_facts_v3_v0",
-            "command_id": "cmd",
-            "container_id": "container",
-            "image_id": "a" * 64,
-            "requested_container_platform": "linux/arm64",
-            "container_uname_m": "aarch64",
-            "command": ["python", "-c", "pass"],
-            "command_semantics": "final_verifier",
-            "workdir": "/repo-harness-run/workspaces/source_checkout",
-            "exit_code": 0,
-            "timeout": False,
-            "duration_ms": 1,
-            "network_policy": "deny_agent_run",
-            "mount_policy": "workspace_read_write_tmp_only",
-            "cleanup_status": "completed",
-        },
-    )
+    for phase, semantics, _manifest_phase in executed_specs:
+        _write_json(
+            run_dir / f"container_execution_facts/{phase}.json",
+            {
+                "schema_version": "repo_harness_container_execution_facts_v3_v0",
+                "command_id": f"cmd_{phase}",
+                "container_id": "container",
+                "image_id": "a" * 64,
+                "requested_container_platform": "linux/arm64",
+                "container_uname_m": "aarch64",
+                "command": ["python", "-c", "pass"],
+                "command_semantics": semantics,
+                "workdir": "/repo-harness-run/workspaces/source_checkout",
+                "exit_code": 0,
+                "timeout": False,
+                "duration_ms": 1,
+                "network_policy": "deny_agent_run",
+                "mount_policy": "workspace_read_write_tmp_only",
+                "cleanup_status": "completed",
+            },
+        )
     _write_json(
         run_dir / "container_execution_facts" / "manifest.json",
         {
             "schema_version": "repo_harness_container_execution_manifest_v3_v0",
             "run_id": run_dir.name,
-            "entry_count": 1,
+            "entry_count": len(executed_specs),
             "entries": [
                 {
-                    "command_id": "cmd",
-                    "facts_ref": facts_ref,
-                    "command_semantics": "final_verifier",
-                    "phase": "final_verifier",
+                    "command_id": f"cmd_{phase}",
+                    "facts_ref": f"container_execution_facts/{phase}.json",
+                    "command_semantics": semantics,
+                    "phase": manifest_phase,
                     "exit_code": 0,
                     "timeout": False,
                     "cleanup_status": "completed",
                 }
+                for phase, semantics, manifest_phase in executed_specs
             ],
         },
     )
@@ -787,13 +833,55 @@ def _write_docker_backend_status(run_dir: Path, *, missing_phase: str | None = N
             "phases": [
                 {
                     "phase": phase,
-                    "status": "missing" if phase == missing_phase else "passed",
-                    "facts_refs": [] if phase == missing_phase else [facts_ref],
+                    "status": (
+                        "missing"
+                        if phase == missing_phase
+                        else "not_applicable"
+                        if phase in {"verifier_patch_apply", "test_patch_apply"}
+                        else "passed"
+                    ),
+                    "structured_reason": (
+                        "phase_not_required_for_test_fixture"
+                        if phase in {"verifier_patch_apply", "test_patch_apply"} and phase != missing_phase
+                        else None
+                    ),
+                    "facts_refs": (
+                        []
+                        if phase == missing_phase or phase in {"verifier_patch_apply", "test_patch_apply"}
+                        else [f"container_execution_facts/{phase}.json"]
+                    ),
                 }
                 for phase in required_phases
             ],
         },
     )
+
+
+def _docker_phase_specs() -> list[tuple[str, str, str]]:
+    return [
+        ("source_checkout", "source_checkout", "source_checkout"),
+        ("setup", "setup", "setup"),
+        ("agent_tool", "file_read", "agent_tool"),
+        ("run_tests", "verifier_feedback", "run_tests"),
+        ("final_patch_capture", "final_patch_capture", "final_patch_capture"),
+        (
+            "verification_workspace_creation",
+            "verification_workspace_creation",
+            "verification_workspace_creation",
+        ),
+        ("model_final_patch_apply", "model_final_patch_apply", "model_final_patch_apply"),
+        (
+            "fail_to_pass_test_execution",
+            "fail_to_pass_test_execution",
+            "fail_to_pass_test_execution",
+        ),
+        (
+            "pass_to_pass_test_execution",
+            "pass_to_pass_test_execution",
+            "pass_to_pass_test_execution",
+        ),
+        ("final_verifier", "verifier_final", "final_verifier"),
+    ]
 
 
 def _copy_tree(source: Path, target: Path) -> Path:
