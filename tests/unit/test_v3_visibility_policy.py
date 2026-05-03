@@ -50,6 +50,30 @@ def test_v3_contamination_denylist_allows_clean_public_payload():
         surface="prepared_messages",
         payload={"content": "This public issue was resolved upstream."},
     )
+    denylist.assert_clean(
+        surface="transcript",
+        payload={
+            "content_preview": (
+                "WindowsPath('C:/Users/john_doe/AppData/Local/Temp/"
+                "pytest-of-contoso/john_doe')"
+            )
+        },
+    )
+
+
+def test_v3_contamination_denylist_rejects_delimited_host_paths():
+    denylist = V3ContaminationDenylist()
+
+    payloads = [
+        {"content_preview": "artifact path: /Users/roger/Desktop/secret.txt"},
+        {"content_preview": "artifact uri: file:///Users/roger/Desktop/secret.txt"},
+        {"content_preview": "artifact path:/Users/roger/Desktop/secret.txt"},
+    ]
+
+    for payload in payloads:
+        result = denylist.scan_payload(surface="transcript", payload=payload)
+        assert result.clean is False
+        assert any(finding.matched_term == "/Users/" for finding in result.findings)
 
 
 def test_v3_contamination_denylist_rejects_normalized_key_and_value_forms():

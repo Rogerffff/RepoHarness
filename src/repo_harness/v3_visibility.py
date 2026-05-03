@@ -238,7 +238,7 @@ class V3ContaminationDenylist(StrictBaseModel):
                         )
                     )
         for prefix in self.host_path_prefixes:
-            if prefix in text:
+            if _contains_host_path_prefix(text, prefix):
                 findings.append(
                     V3ContaminationFinding(
                         surface=surface,
@@ -280,6 +280,33 @@ def _is_status_key(normalized_key: str) -> bool:
         "unresolved",
         "officialstatus",
     }
+
+
+def _contains_host_path_prefix(text: str, prefix: str) -> bool:
+    start = text.find(prefix)
+    while start != -1:
+        if _is_windows_drive_path_prefix(text, start):
+            start = text.find(prefix, start + 1)
+            continue
+        if start == 0:
+            return True
+        previous = text[start - 1]
+        if previous.isspace() or previous in {"'", '"', "`", "(", "[", "{", "<", "=", ":", "/"}:
+            return True
+        start = text.find(prefix, start + 1)
+    return False
+
+
+def _is_windows_drive_path_prefix(text: str, prefix_start: int) -> bool:
+    drive_index = prefix_start - 2
+    colon_index = prefix_start - 1
+    if drive_index < 0 or text[colon_index] != ":":
+        return False
+    if not text[drive_index].isalpha():
+        return False
+    if drive_index == 0:
+        return True
+    return not text[drive_index - 1].isalnum()
 
 
 def _default_host_path_prefixes() -> list[str]:
