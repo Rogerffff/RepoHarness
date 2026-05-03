@@ -51,6 +51,16 @@ from repo_harness.v3_export_audit import (
     build_v3_export_audit,
     inspect_v3_export_audit,
 )
+from repo_harness.v3_acceptance import (
+    build_v3_acceptance_bundle,
+    build_v3_acceptance_inputs,
+    build_v3_acceptance_report,
+    build_v3_run_selection_manifest,
+    inspect_acceptance_bundle,
+    inspect_tool_contract,
+    inspect_trajectory_store,
+    inspect_v3_acceptance,
+)
 from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
@@ -434,6 +444,87 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v3_export.add_argument("--audit-report", required=True, help="V3 audit_report.json 路径。")
     inspect_v3_export.add_argument("--assert-clean", action="store_true", help="要求 V3 export audit 无结构或污染失败。")
 
+    inspect_trajectory = subparsers.add_parser(
+        "inspect-trajectory-store",
+        help="只读检查 V3 run trajectory store 的 transcript/events/artifacts/facts 可读性。",
+    )
+    inspect_trajectory.add_argument("run_dir", help="run directory 路径。")
+    inspect_trajectory.add_argument("--assert-readable", action="store_true", help="要求 trajectory store 完整可读。")
+
+    inspect_tool = subparsers.add_parser(
+        "inspect-tool-contract",
+        help="只读检查 V3 tool contract、tool schema snapshot 和 policy snapshot 冻结事实。",
+    )
+    inspect_tool.add_argument("run_dir", help="run directory 路径。")
+    inspect_tool.add_argument("--assert-frozen", action="store_true", help="要求 tool contract 和 policy facts 已冻结。")
+
+    build_run_selection = subparsers.add_parser(
+        "build-v3-run-selection-manifest",
+        help="构建显式 typed V3 run selection manifest，不读取 latest run。",
+    )
+    build_run_selection.add_argument(
+        "--run-ref",
+        action="append",
+        required=True,
+        help="显式 run 引用，格式 role=ROLE,path=PATH，可附加 run_state、accepted、structured_skip_reason；可重复。",
+    )
+    build_run_selection.add_argument("--output", required=True, help="RUN_SELECTION_MANIFEST 输出路径。")
+
+    build_acceptance_inputs = subparsers.add_parser(
+        "build-v3-acceptance-inputs",
+        help="构建显式 V3 ACCEPTANCE_INPUTS manifest。",
+    )
+    build_acceptance_inputs.add_argument("--run-selection-manifest", required=True, help="RUN_SELECTION_MANIFEST 路径。")
+    build_acceptance_inputs.add_argument("--export-root", required=True, help="V3 export audit 根目录。")
+    build_acceptance_inputs.add_argument("--v2-report", required=True, help="V2 final acceptance report 路径。")
+    build_acceptance_inputs.add_argument(
+        "--pre-acceptance-doc",
+        action="append",
+        required=True,
+        help="pre-acceptance 文档路径；可重复。",
+    )
+    build_acceptance_inputs.add_argument("--documentation-manifest", default=None, help="pre-acceptance 阶段日志和审查文档 manifest。")
+    build_acceptance_inputs.add_argument("--command-log", default=None, help="pre-acceptance command_log.jsonl 路径。")
+    build_acceptance_inputs.add_argument("--test-evidence", default=None, help="pre-acceptance 测试 evidence 目录或 manifest。")
+    build_acceptance_inputs.add_argument("--output", required=True, help="ACCEPTANCE_INPUTS 输出路径。")
+
+    build_acceptance_report = subparsers.add_parser(
+        "build-v3-acceptance-report",
+        help="从 ACCEPTANCE_INPUTS 构建 fresh V3 acceptance report。",
+    )
+    build_acceptance_report.add_argument("--acceptance-dir", required=True, help="不存在的新 ACCEPTANCE_DIR。")
+    build_acceptance_report.add_argument("--input-manifest", required=True, help="ACCEPTANCE_INPUTS 路径。")
+    build_acceptance_report.add_argument("--output", required=True, help="v3_acceptance_report.json 输出路径。")
+
+    inspect_v3_acceptance_parser = subparsers.add_parser(
+        "inspect-v3-acceptance",
+        help="只读检查 V3 acceptance report 和所有绑定 evidence。",
+    )
+    inspect_v3_acceptance_parser.add_argument("report", help="v3_acceptance_report.json 路径。")
+    inspect_v3_acceptance_parser.add_argument("--assert-complete", action="store_true", help="要求 V3 acceptance 完整通过。")
+
+    build_acceptance_bundle = subparsers.add_parser(
+        "build-v3-acceptance-bundle",
+        help="绑定 post-acceptance 文档并构建 acceptance bundle manifest。",
+    )
+    build_acceptance_bundle.add_argument("--acceptance-dir", required=True, help="ACCEPTANCE_DIR 路径。")
+    build_acceptance_bundle.add_argument("--input-manifest", required=True, help="ACCEPTANCE_INPUTS 路径。")
+    build_acceptance_bundle.add_argument("--report", required=True, help="v3_acceptance_report.json 路径。")
+    build_acceptance_bundle.add_argument(
+        "--documentation-ref",
+        action="append",
+        required=True,
+        help="post-acceptance 文档路径；可重复。",
+    )
+    build_acceptance_bundle.add_argument("--output", required=True, help="acceptance_bundle_manifest.json 输出路径。")
+
+    inspect_bundle = subparsers.add_parser(
+        "inspect-acceptance-bundle",
+        help="只读检查 acceptance bundle manifest 不可变性。",
+    )
+    inspect_bundle.add_argument("manifest", help="acceptance_bundle_manifest.json 路径。")
+    inspect_bundle.add_argument("--assert-immutable", action="store_true", help="要求 bundle refs sha256 全部匹配。")
+
     return parser
 
 
@@ -795,6 +886,100 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 export audit 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-trajectory-store":
+        try:
+            print(
+                inspect_trajectory_store(
+                    args.run_dir,
+                    assert_readable=args.assert_readable,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 trajectory store 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-tool-contract":
+        try:
+            print(
+                inspect_tool_contract(
+                    args.run_dir,
+                    assert_frozen=args.assert_frozen,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 tool contract 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-run-selection-manifest":
+        try:
+            output_path = build_v3_run_selection_manifest(
+                run_refs=args.run_ref,
+                output=args.output,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 run selection manifest 构建失败：{exc}\n")
+        print(f"V3 run selection manifest：{output_path}")
+        return 0
+    if args.command == "build-v3-acceptance-inputs":
+        try:
+            output_path = build_v3_acceptance_inputs(
+                run_selection_manifest=args.run_selection_manifest,
+                export_root=args.export_root,
+                v2_report=args.v2_report,
+                pre_acceptance_docs=args.pre_acceptance_doc,
+                documentation_manifest=args.documentation_manifest,
+                command_log=args.command_log,
+                test_evidence=args.test_evidence,
+                output=args.output,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 acceptance inputs 构建失败：{exc}\n")
+        print(f"V3 acceptance inputs：{output_path}")
+        return 0
+    if args.command == "build-v3-acceptance-report":
+        try:
+            output_path = build_v3_acceptance_report(
+                acceptance_dir=args.acceptance_dir,
+                input_manifest=args.input_manifest,
+                output=args.output,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 acceptance report 构建失败：{exc}\n")
+        print(f"V3 acceptance report：{output_path}")
+        return 0
+    if args.command == "inspect-v3-acceptance":
+        try:
+            print(
+                inspect_v3_acceptance(
+                    args.report,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-acceptance-bundle":
+        try:
+            output_path = build_v3_acceptance_bundle(
+                acceptance_dir=args.acceptance_dir,
+                input_manifest=args.input_manifest,
+                report=args.report,
+                documentation_refs=args.documentation_ref,
+                output=args.output,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 acceptance bundle 构建失败：{exc}\n")
+        print(f"V3 acceptance bundle：{output_path}")
+        return 0
+    if args.command == "inspect-acceptance-bundle":
+        try:
+            print(
+                inspect_acceptance_bundle(
+                    args.manifest,
+                    assert_immutable=args.assert_immutable,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 acceptance bundle 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
