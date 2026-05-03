@@ -1234,11 +1234,13 @@ def _collect_acceptance_scan_payloads(
             _collect_checkpoint_scan_payloads(payloads, errors, entry=entry, run_dir=path)
             _collect_context_scan_payloads(payloads, errors, entry=entry, run_dir=path)
         else:
-            _collect_file_scan_payload(
-                payloads["acceptance_input"]["sources"],
-                errors["acceptance_input"],
-                path=path,
-                label=f"run_selection:{entry.get('role')}",
+            payloads["acceptance_input"]["sources"].append(
+                {
+                    "source": _relative_path(path, Path.cwd()),
+                    "label": f"run_selection:{entry.get('role')}",
+                    "path_ref": _safe_scan_projection(entry.get("path_ref", {})),
+                    "path_kind": entry.get("path_kind"),
+                }
             )
     _collect_export_scan_payloads(payloads, errors, input_payload=input_payload)
     return payloads, errors
@@ -1421,20 +1423,7 @@ def _collect_export_scan_payloads(
                     errors[surface],
                     export_root=export_root,
                     ref_payload=ref,
-                )
-        for name, surface in (
-            ("audit_report.json", "sft_export"),
-            ("audit_report.json", "rl_export"),
-            ("preference_pair_baseline_report.json", "preference_export"),
-            ("v3_preference_compare_scope.json", "preference_export"),
-        ):
-            path = export_root / name
-            if path.exists():
-                _collect_file_scan_payload(
-                    payloads[surface]["sources"],
-                    errors[surface],
-                    path=path,
-                    label=f"{surface}:{name}",
+                    surface=surface,
                 )
 
 
@@ -1456,12 +1445,7 @@ def _surface_for_export_format(format_name: str) -> str | None:
 
 def _export_data_refs(export: dict[str, Any]) -> list[dict[str, Any]]:
     refs = []
-    for key in (
-        "convenience_ref",
-        "export_manifest_ref",
-        "audit_report_ref",
-        "skipped_manifest_ref",
-    ):
+    for key in ("convenience_ref",):
         ref = export.get(key)
         if isinstance(ref, dict):
             refs.append(ref)
@@ -1475,10 +1459,96 @@ def _collect_export_ref_payload(
     *,
     export_root: Path,
     ref_payload: dict[str, Any],
+    surface: str,
 ) -> None:
     artifact_path = _artifact_path_for_scan(export_root, ref_payload, errors)
     if artifact_path is not None:
-        _collect_file_scan_payload(sources, errors, path=artifact_path, label="export_ref")
+        payload = _read_file_payload_for_scan(artifact_path, errors)
+        if payload is None:
+            return
+        sources.append(
+            {
+                "source": _relative_path(artifact_path, Path.cwd()),
+                "label": "formal_training_payload",
+                "payload": _safe_scan_projection(_project_export_payload_for_scan(surface, payload)),
+            }
+        )
+
+
+def _project_export_payload_for_scan(surface: str, payload: Any) -> Any:
+    if isinstance(payload, list):
+        return [_project_export_row_for_scan(surface, row) for row in payload if isinstance(row, dict)]
+    if isinstance(payload, dict):
+        return _project_export_row_for_scan(surface, payload)
+    return payload
+
+
+def _project_export_row_for_scan(surface: str, row: dict[str, Any]) -> dict[str, Any]:
+    projected: dict[str, Any] = {
+        "sample_id": row.get("sample_id"),
+        "task_id": row.get("task_id"),
+        "filter_status": row.get("filter_status"),
+        "invalid_for_training": row.get("invalid_for_training"),
+        "metadata": _project_export_metadata_for_scan(row.get("metadata", {})),
+    }
+    payload = row.get("payload", {})
+    if not isinstance(payload, dict):
+        projected["payload"] = payload
+        return projected
+    if surface in {"sft_export", "rl_export"}:
+        target = payload.get("target")
+        projected["payload"] = {
+            "messages": payload.get("messages"),
+            "trainable_messages": payload.get("trainable_messages"),
+            "loss_mask": payload.get("loss_mask"),
+            "observation_mask": payload.get("observation_mask"),
+            "target": (
+                {"final_patch": target.get("final_patch")}
+                if isinstance(target, dict)
+                else target
+            ),
+        }
+    elif surface == "preference_export":
+        chosen = payload.get("chosen")
+        rejected = payload.get("rejected")
+        projected["payload"] = {
+            "chosen": _project_preference_side_for_scan(chosen),
+            "rejected": _project_preference_side_for_scan(rejected),
+        }
+    else:
+        projected["payload"] = payload
+    return projected
+
+
+def _project_export_metadata_for_scan(metadata: Any) -> dict[str, Any]:
+    if not isinstance(metadata, dict):
+        return {}
+    allowed = {
+        "context_policy_version",
+        "dataset_name",
+        "dataset_split",
+        "execution_mode",
+        "export_format",
+        "export_policy_version",
+        "model_id",
+        "permission_mode",
+        "provider",
+        "repo_base_commit",
+        "scaffold_id",
+        "scaffold_version",
+        "source_archive_sha256",
+        "source_tree_hash",
+        "task_version",
+        "tool_policy_version",
+        "tool_schema_snapshot_hash",
+    }
+    return {key: metadata.get(key) for key in sorted(allowed) if key in metadata}
+
+
+def _project_preference_side_for_scan(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {"final_patch": value.get("final_patch")}
+    return value
 
 
 def _artifact_refs_by_kind(run_dir: Path, kind: str, errors: list[str]) -> list[dict[str, Any]]:
