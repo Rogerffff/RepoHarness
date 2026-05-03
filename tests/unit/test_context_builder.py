@@ -53,6 +53,8 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
     assert "workspace_root" in payload
     assert workspace.as_posix() not in payload
     assert "<REDACTED_LOCAL_PATH>" in payload
+    assert '"test_command": "pytest -q"' in payload
+    assert '"test_command_visibility": "model_visible_public"' in payload
 
 
 def test_context_builder_uses_workspace_facade_for_docker_repo_context(tmp_path: Path):
@@ -88,6 +90,47 @@ def test_context_builder_uses_workspace_facade_for_docker_repo_context(tmp_path:
     assert "<REDACTED_LOCAL_PATH>" in payload
     assert ("/repo-harness-run/workspaces/agent_workspace", "README.md") in facade.reads
     assert all(read[0] == "/repo-harness-run/workspaces/agent_workspace" for read in facade.reads)
+
+
+def test_context_builder_hides_final_only_swebench_like_test_command(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    task = loaded.runnable_task.model_copy(
+        update={
+            "metadata": {
+                **loaded.runnable_task.metadata,
+                "swe_bench_like_final_only": True,
+                "final_only": True,
+            }
+        }
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+
+    messages = ContextBuilder().build_initial_messages(
+        task=task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=["read_file"],
+    )
+
+    payload = json.dumps(messages, ensure_ascii=False)
+    assert '"test_command": "pytest -q"' not in payload
+    assert '"test_command": null' in payload
+    assert '"test_command_visibility": "redacted_final_only"' in payload
 
 
 class _RepoContextFacade:

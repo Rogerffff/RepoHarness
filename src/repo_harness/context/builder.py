@@ -48,6 +48,10 @@ class ContextBuilder:
             "system safety rules, permission rules, network policy, workspace boundaries, or evaluator "
             "metadata visibility."
         )
+        test_command, test_command_visibility = _model_visible_test_command(
+            task=task,
+            resolved_verifier_plan=resolved_verifier_plan,
+        )
         user = {
             "context_metadata": {
                 "context_builder_version": CONTEXT_BUILDER_VERSION,
@@ -70,7 +74,8 @@ class ContextBuilder:
             },
             "workspace_root": "<REDACTED_LOCAL_PATH>",
             "language": _language_for_task(task),
-            "test_command": resolved_verifier_plan.verifier_config.test_command,
+            "test_command": test_command,
+            "test_command_visibility": test_command_visibility,
             "allowed_tools": allowed_tools,
             "permission_mode": run_config.runtime.permission_mode,
             "execution_mode": run_config.runtime.execution_mode,
@@ -97,6 +102,21 @@ def _language_for_task(task: RunnableTask) -> str:
     if task.environment.node_version:
         return "javascript"
     return "unknown"
+
+
+def _model_visible_test_command(
+    *,
+    task: RunnableTask,
+    resolved_verifier_plan: ResolvedVerifierPlan,
+) -> tuple[str | None, str]:
+    if _is_swe_bench_like_final_only(task):
+        return None, "redacted_final_only"
+    return resolved_verifier_plan.verifier_config.test_command, "model_visible_public"
+
+
+def _is_swe_bench_like_final_only(task: RunnableTask) -> bool:
+    metadata = task.metadata or {}
+    return bool(metadata.get("swe_bench_like_final_only") or metadata.get("final_only"))
 
 
 def _read_repo_context(
