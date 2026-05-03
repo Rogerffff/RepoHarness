@@ -37,6 +37,7 @@ def test_v3_context_diagnostics_builds_and_inspects(tmp_path: Path):
     assert context_report["compaction_observed"] is True
     assert context_report["observation_matches_prepared_messages"] is True
     assert context_report["context_events"][0]["replaced_tool_result_ids"]
+    assert context_report["context_events"][0]["kept_tool_result_ids"] == []
     assert "repeated_tool_call" in long_report["diagnostic_type_distribution"]
     assert long_report["context_report_ref"]
 
@@ -80,6 +81,44 @@ def test_inspect_context_report_rejects_prepared_message_sha_drift(tmp_path: Pat
     )
 
     with pytest.raises(ConfigError, match="prepared_messages_sha256"):
+        inspect_context_report(
+            result_dir,
+            report=report_path,
+            assert_consistent=True,
+        )
+
+
+def test_inspect_context_report_rejects_future_kept_tool_result(tmp_path: Path):
+    output_dir = tmp_path / "v3_context_future_kept"
+    result_dir = build_v3_context_diagnostics(output_dir=output_dir)
+    report_path = result_dir / "context_compaction_report.json"
+    report = _read_json(report_path)
+    report["context_events"][0]["kept_tool_result_ids"] = ["call_long_output_repeat_result"]
+    report_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="kept_tool_result_ids"):
+        inspect_context_report(
+            result_dir,
+            report=report_path,
+            assert_consistent=True,
+        )
+
+
+def test_inspect_context_report_rejects_content_replacement_state_hash_drift(tmp_path: Path):
+    output_dir = tmp_path / "v3_context_state_hash"
+    result_dir = build_v3_context_diagnostics(output_dir=output_dir)
+    report_path = result_dir / "context_compaction_report.json"
+    report = _read_json(report_path)
+    report["context_events"][0]["content_replacement_state_hash"] = "0" * 64
+    report_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="content_replacement_state_hash"):
         inspect_context_report(
             result_dir,
             report=report_path,

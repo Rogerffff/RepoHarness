@@ -219,7 +219,10 @@ def _build_context_report(*, run_dir: Path, output_root: Path) -> dict[str, Any]
                 "context_event_id": event.get("event_id"),
                 "tokens_before": event.get("data", {}).get("tokens_before"),
                 "tokens_after": event.get("data", {}).get("tokens_after"),
-                "kept_tool_result_ids": _kept_tool_result_ids(transcript, replaced_ids),
+                "kept_tool_result_ids": _kept_tool_result_ids(
+                    prepared_messages=prepared_messages,
+                    replaced_ids=replaced_ids,
+                ),
                 "dropped_tool_result_ids": [],
                 "replaced_tool_result_ids": replaced_ids,
                 "protected_tool_result_ids": reduction.get("protected_tool_result_ids", []),
@@ -455,6 +458,19 @@ def _inspect_context_events(*, run_path: Path, payload: dict[str, Any], failures
         for check in event.get("replacement_checks", []):
             if check.get("matched") is not True:
                 failures.append(f"替换后的 observation 未出现在 prepared messages：{check}")
+        expected_kept_ids = _kept_tool_result_ids(
+            prepared_messages=prepared_payload.get("messages", []),
+            replaced_ids=[str(item) for item in event.get("replaced_tool_result_ids", [])],
+        )
+        if sorted(str(item) for item in event.get("kept_tool_result_ids", [])) != expected_kept_ids:
+            failures.append("kept_tool_result_ids 与 prepared messages 当前 revision 不一致。")
+        state_ref = event.get("content_replacement_state_ref")
+        if isinstance(state_ref, dict):
+            state_path = _resolve_ref(run_path, state_ref, failures)
+            if state_path is not None:
+                state_payload = _read_json_for_inspect(state_path, failures)
+                if state_payload.get("state_hash") != event.get("content_replacement_state_hash"):
+                    failures.append("content_replacement_state_hash 与 state payload 不一致。")
 
 
 def _repeated_tool_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -517,14 +533,15 @@ def _replacement_checks(
     return checks
 
 
-def _kept_tool_result_ids(transcript: list[dict[str, Any]], replaced_ids: list[str]) -> list[str]:
+def _kept_tool_result_ids(*, prepared_messages: list[dict[str, Any]], replaced_ids: list[str]) -> list[str]:
     replaced = set(replaced_ids)
     return sorted(
         {
-            str(record.get("tool_result_id") or record.get("tool_call_id"))
-            for record in transcript
-            if record.get("role") == "tool"
-            and str(record.get("tool_result_id") or record.get("tool_call_id")) not in replaced
+            str(message.get("tool_result_id") or message.get("tool_call_id"))
+            for message in prepared_messages
+            if message.get("role") == "tool"
+            and message.get("context_replacement") is not True
+            and str(message.get("tool_result_id") or message.get("tool_call_id")) not in replaced
         }
     )
 
