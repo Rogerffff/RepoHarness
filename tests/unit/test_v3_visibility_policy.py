@@ -59,6 +59,10 @@ def test_v3_contamination_denylist_allows_clean_public_payload():
             )
         },
     )
+    denylist.assert_clean(
+        surface="transcript",
+        payload={"content_preview": r"C:\Python38\lib\pathlib.py:1266: FileNotFoundError"},
+    )
 
 
 def test_v3_contamination_denylist_rejects_delimited_host_paths():
@@ -74,6 +78,15 @@ def test_v3_contamination_denylist_rejects_delimited_host_paths():
         result = denylist.scan_payload(surface="transcript", payload=payload)
         assert result.clean is False
         assert any(finding.matched_term == "/Users/" for finding in result.findings)
+
+    windows_home = "C:\\Users\\roger\\"
+    windows_denylist = V3ContaminationDenylist(host_path_prefixes=[windows_home])
+    result = windows_denylist.scan_payload(
+        surface="transcript",
+        payload={"content_preview": r"artifact path: C:\Users\roger\Desktop\secret.txt"},
+    )
+    assert result.clean is False
+    assert any(finding.matched_term == windows_home for finding in result.findings)
 
 
 def test_v3_contamination_denylist_rejects_normalized_key_and_value_forms():

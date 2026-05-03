@@ -310,8 +310,11 @@ def _is_windows_drive_path_prefix(text: str, prefix_start: int) -> bool:
 
 
 def _default_host_path_prefixes() -> list[str]:
-    prefixes = ["/Users/", "/private/", "C:\\", "D:\\"]
+    prefixes = ["/Users/", "/private/"]
     home = Path.home().as_posix().rstrip("/")
     if home and home not in {"/", "/root"}:
         prefixes.append(f"{home}/")
+        native_home = str(Path.home()).rstrip("\\/")
+        if native_home and native_home != home:
+            prefixes.append(f"{native_home}\\")
     return list(dict.fromkeys(prefixes))
