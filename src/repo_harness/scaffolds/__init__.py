@@ -6,6 +6,11 @@ from repo_harness.scaffolds.policies import (
     resolve_feedback_policy,
     tool_registry_for_allowed_tools,
 )
+from repo_harness.scaffolds.patch_focused_react import (
+    PATCH_FOCUSED_REACT_TOOL_ORDER,
+    PatchFocusedReactScaffold,
+    build_patch_focused_react_scaffold,
+)
 from repo_harness.scaffolds.planner_coder_verifier import (
     PlannerCoderVerifierScaffold,
     build_planner_coder_verifier_scaffold,
@@ -21,9 +26,12 @@ from repo_harness.scaffolds.simple_react import SimpleReactScaffold, build_simpl
 __all__ = [
     "ScaffoldDefinition",
     "ScaffoldRegistry",
+    "PATCH_FOCUSED_REACT_TOOL_ORDER",
+    "PatchFocusedReactScaffold",
     "PlannerCoderVerifierScaffold",
     "SingleShotPatchScaffold",
     "SimpleReactScaffold",
+    "build_patch_focused_react_scaffold",
     "build_planner_coder_verifier_scaffold",
     "build_scaffold",
     "build_single_shot_patch_scaffold",

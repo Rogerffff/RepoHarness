@@ -92,6 +92,17 @@ def test_experiment_config_allows_single_shot_patch_after_scaffold_registry():
     assert config.scaffold_id == "single_shot_patch"
 
 
+def test_experiment_config_allows_patch_focused_react_after_scaffold_registry():
+    config = ExperimentConfig(
+        experiment_id="patch_focused",
+        tasks=["tests/fixtures/tasks/task_001.yaml"],
+        rollout_count=1,
+        scaffold_id="patch_focused_react",
+    )
+
+    assert config.scaffold_id == "patch_focused_react"
+
+
 def test_experiment_config_allows_planner_coder_verifier_after_stage09():
     config = ExperimentConfig(
         experiment_id="planner_coder_verifier",

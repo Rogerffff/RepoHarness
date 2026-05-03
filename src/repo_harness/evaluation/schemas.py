@@ -165,10 +165,15 @@ class ExperimentConfig(StrictBaseModel):
     def validate_stage06_scope(self) -> "ExperimentConfig":
         if self.model_provider not in {"replay", "fake", "mock", "deepseek"}:
             raise ValueError("Stage 11 ExperimentConfig 只支持 replay、fake、mock 或 deepseek provider；openai 只允许作为 DeepSeek fallback smoke run。")
-        if self.scaffold_id not in {"simple_react", "single_shot_patch", "planner_coder_verifier"}:
+        if self.scaffold_id not in {
+            "simple_react",
+            "patch_focused_react",
+            "single_shot_patch",
+            "planner_coder_verifier",
+        }:
             raise ValueError(
-                "Stage 09 ExperimentConfig 只支持 simple_react、single_shot_patch "
-                "或 planner_coder_verifier scaffold。"
+                "Stage 09 ExperimentConfig 只支持 simple_react、patch_focused_react、"
+                "single_shot_patch 或 planner_coder_verifier scaffold。"
             )
         if self.permission_mode == "ask":
             raise ValueError("Stage 07 ExperimentConfig 不能使用 permission_mode=ask。")
