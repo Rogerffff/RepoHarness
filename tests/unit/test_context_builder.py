@@ -133,6 +133,75 @@ def test_context_builder_hides_final_only_swebench_like_test_command(tmp_path: P
     assert '"test_command_visibility": "redacted_final_only"' in payload
 
 
+def test_context_builder_hides_tag_only_final_only_test_command(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    task = loaded.runnable_task.model_copy(
+        update={"metadata": {**loaded.runnable_task.metadata, "tags": ["final_only"]}}
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+
+    messages = ContextBuilder().build_initial_messages(
+        task=task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=["read_file"],
+    )
+
+    payload = json.dumps(messages, ensure_ascii=False)
+    assert '"test_command": "pytest -q"' not in payload
+    assert '"test_command": null' in payload
+    assert '"test_command_visibility": "redacted_final_only"' in payload
+
+
+def test_context_builder_ignores_non_list_metadata_tags_for_final_only(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    task = loaded.runnable_task.model_copy(
+        update={"metadata": {**loaded.runnable_task.metadata, "tags": "not_final_only"}}
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+
+    messages = ContextBuilder().build_initial_messages(
+        task=task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=["read_file", "run_tests"],
+    )
+
+    payload = json.dumps(messages, ensure_ascii=False)
+    assert '"test_command": "pytest -q"' in payload
+    assert '"test_command_visibility": "model_visible_public"' in payload
+
+
 class _RepoContextFacade:
     def __init__(self, files: dict[str, str]) -> None:
         self.files = files

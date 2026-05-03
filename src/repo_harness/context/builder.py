@@ -116,7 +116,14 @@ def _model_visible_test_command(
 
 def _is_swe_bench_like_final_only(task: RunnableTask) -> bool:
     metadata = task.metadata or {}
-    return bool(metadata.get("swe_bench_like_final_only") or metadata.get("final_only"))
+    raw_tags = metadata.get("tags") or []
+    tags = raw_tags if isinstance(raw_tags, list) else []
+    return bool(
+        metadata.get("swe_bench_like_final_only")
+        or metadata.get("final_only")
+        or "swe_bench_like_final_only" in tags
+        or "final_only" in tags
+    )
 
 
 def _read_repo_context(

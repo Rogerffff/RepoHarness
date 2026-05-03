@@ -383,10 +383,11 @@ class RunnableTask(StrictBaseModel):
             visibility_policy=task.visibility,
             decontamination_metadata=task.decontamination,
             metadata={
+                **task.metadata,
                 "source_kind": task.source_kind,
                 "dataset_split": task.dataset_split,
                 "created_at": task.created_at,
-                **task.metadata,
+                "tags": list(task.tags),
             },
         )
 

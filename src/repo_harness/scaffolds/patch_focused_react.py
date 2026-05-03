@@ -22,7 +22,7 @@ class PatchFocusedReactScaffold(ScaffoldDefinition):
 def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
     return PatchFocusedReactScaffold(
         scaffold_id="patch_focused_react",
-        scaffold_version="repo_harness_patch_focused_react_v1",
+        scaffold_version="repo_harness_patch_focused_react_v2",
         prompt_fragment=(
             "Focus on a durable source patch. Use the allowed read, search, edit, "
             "test, and diff tools to inspect the repository and update persistent "
@@ -32,7 +32,11 @@ def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
             "for the task. When existing code already has a fallback for an "
             "unavailable or unusable environment-derived value, preserve that "
             "fallback semantic instead of inventing a new identifier unless the "
-            "task explicitly asks for one. When available in allowed_tools, use "
+            "task explicitly asks for one. If a path component comes from user, "
+            "login, or environment data and the surrounding code treats None as "
+            "unavailable so it can use an established fallback, prefer that "
+            "existing fallback over sanitizing the invalid value into a new "
+            "directory or identifier. When available in allowed_tools, use "
             "run_tests for configured feedback and git_diff to review the final "
             "diff before answering."
         ),
