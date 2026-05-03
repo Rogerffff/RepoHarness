@@ -43,6 +43,10 @@ from repo_harness.v3_context_diagnostics import (
     inspect_context_report,
     inspect_long_rollout_diagnostics,
 )
+from repo_harness.v3_failure_diagnostics import (
+    build_v3_failure_diagnostics,
+    inspect_reward_diagnostics,
+)
 from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
@@ -391,6 +395,24 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_long_rollout.add_argument("--report", required=True, help="long_rollout_diagnostics.json 路径。")
     inspect_long_rollout.add_argument("--assert-complete", action="store_true", help="要求 long rollout diagnostics 完整。")
 
+    build_v3_failure = subparsers.add_parser(
+        "build-v3-reward-diagnostics",
+        help="构造 V3 Stage 10 core failure diagnostics 和 filtering evidence。",
+    )
+    build_v3_failure.add_argument("--run-dir", required=True, help="已有 RepoHarness run directory。")
+    build_v3_failure.add_argument("--output-dir", required=True, help="Stage 10 failure diagnostics 产物目录。")
+    build_v3_failure.add_argument("--context-report", default=None, help="可选 context_compaction_report.json。")
+    build_v3_failure.add_argument("--long-rollout-report", default=None, help="可选 long_rollout_diagnostics.json。")
+
+    inspect_reward = subparsers.add_parser(
+        "inspect-reward-diagnostics",
+        help="只读检查 V3 failure_diagnostics_core_report.json 和 failure_distribution_report.json。",
+    )
+    inspect_reward.add_argument("run_dir", help="Stage 10 failure diagnostics 产物目录。")
+    inspect_reward.add_argument("--core-report", required=True, help="failure_diagnostics_core_report.json 路径。")
+    inspect_reward.add_argument("--distribution-report", required=True, help="failure_distribution_report.json 路径。")
+    inspect_reward.add_argument("--assert-core-complete", action="store_true", help="要求核心失败诊断字段完整。")
+
     return parser
 
 
@@ -703,6 +725,31 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 long rollout diagnostics 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-reward-diagnostics":
+        try:
+            output_path = build_v3_failure_diagnostics(
+                run_dir=args.run_dir,
+                output_dir=args.output_dir,
+                context_report=args.context_report,
+                long_rollout_report=args.long_rollout_report,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 reward diagnostics 构建失败：{exc}\n")
+        print(f"V3 reward diagnostics 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-reward-diagnostics":
+        try:
+            print(
+                inspect_reward_diagnostics(
+                    args.run_dir,
+                    core_report=args.core_report,
+                    distribution_report=args.distribution_report,
+                    assert_core_complete=args.assert_core_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 reward diagnostics 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

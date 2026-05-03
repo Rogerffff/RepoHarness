@@ -43,6 +43,29 @@ class CoreFailureDiagnostics(StrictBaseModel):
     source_component: str
     blocks_training: bool
     diagnostic_only: bool = True
+    patch_size: int = Field(default=0, ge=0)
+    files_changed: list[str] = Field(default_factory=list)
+    tool_call_count: int = Field(default=0, ge=0)
+    test_run_count: int = Field(default=0, ge=0)
+    invalid_tool_call_count: int = Field(default=0, ge=0)
+    permission_violation_count: int = Field(default=0, ge=0)
+    regression_detected: bool = False
+    environment_failure_category: str = "none"
+    environment_unstable: bool = False
+    docker_backend_failure: bool = False
+    container_timeout: bool = False
+    source_materialization_failed: bool = False
+    dependency_setup_failed: bool = False
+    parser_low_confidence: bool = False
+    public_tests_pass_hidden_tests_fail: bool = False
+    unfinished_trajectory: bool = False
+    no_patch_generated: bool = False
+    no_progress: bool = False
+    repeated_tool_call_loop: bool = False
+    context_limit_failure: bool = False
+    provider_transient: bool = False
+    deterministic_verifier_failure: bool = False
+    reward_hacking_suspected: bool = False
     model_visible_summary: str | None = None
     hidden_details_ref: ArtifactRef | None = None
     reward_metadata_visible_to_model: bool = False
