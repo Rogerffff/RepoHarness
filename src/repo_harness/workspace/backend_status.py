@@ -30,6 +30,11 @@ REQUIRED_DOCKER_PHASES = {
     "final_verifier",
 }
 
+PHASE_ALLOWED_NOT_APPLICABLE_REASONS = {
+    "verifier_patch_apply": "no verifier patch is configured for this task",
+    "test_patch_apply": "no test patch is configured for this task",
+}
+
 PHASE_ALLOWED_MANIFEST_PHASES = {
     "source_checkout": {"source_checkout"},
     "setup": {"setup"},
@@ -602,8 +607,14 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
         if status_value == "missing":
             raise WorkspaceBackendError(f"docker phase coverage 缺失：{phase_name}")
         if status_value == "not_applicable":
-            if not phase.get("structured_reason"):
-                raise WorkspaceBackendError(f"docker phase coverage not_applicable 缺少 reason：{phase_name}")
+            expected_reason = PHASE_ALLOWED_NOT_APPLICABLE_REASONS.get(phase_name)
+            if expected_reason is None:
+                raise WorkspaceBackendError(f"docker phase coverage 不能把 required phase 标记为 not_applicable：{phase_name}")
+            if phase.get("structured_reason") != expected_reason:
+                raise WorkspaceBackendError(f"docker phase coverage not_applicable reason 非法：{phase_name}")
+            if phase.get("facts_refs"):
+                raise WorkspaceBackendError(f"docker phase coverage not_applicable 不能包含 facts refs：{phase_name}")
+            _assert_no_manifest_facts_for_not_applicable_phase(phase_name, refs_in_manifest, manifest_by_ref)
             continue
         if status_value != "passed":
             raise WorkspaceBackendError(f"docker phase coverage status 非法：{phase_name}={status_value}")
@@ -637,6 +648,20 @@ def _assert_manifest_entry_matches_facts(
         raise WorkspaceBackendError(f"container manifest timeout 与 facts 不一致：{ref}")
     if entry.get("cleanup_status") != facts.cleanup_status:
         raise WorkspaceBackendError(f"container manifest cleanup_status 与 facts 不一致：{ref}")
+
+
+def _assert_no_manifest_facts_for_not_applicable_phase(
+    phase_name: str,
+    refs_in_manifest: set[str],
+    manifest_by_ref: dict[str, dict[str, object]],
+) -> None:
+    allowed_manifest_phases = PHASE_ALLOWED_MANIFEST_PHASES.get(phase_name, {phase_name})
+    for ref in refs_in_manifest:
+        manifest_phase = manifest_by_ref[ref].get("phase")
+        if manifest_phase in allowed_manifest_phases:
+            raise WorkspaceBackendError(
+                f"docker phase coverage not_applicable 与 manifest facts 冲突：{phase_name}:{ref}"
+            )
 
 
 def _assert_phase_ref_matches_execution(

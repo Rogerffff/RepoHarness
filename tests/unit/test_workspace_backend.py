@@ -214,6 +214,55 @@ def test_docker_backend_inspect_rejects_inconsistent_evidence(tmp_path: Path):
         inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
 
 
+def test_docker_backend_inspect_rejects_required_phase_not_applicable(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    status = _valid_docker_backend_status()
+    _write_status(status_path, status)
+    matrix_path = tmp_path / status.docker_phase_coverage_matrix_ref
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    for phase in matrix["phases"]:
+        if phase["phase"] == "source_checkout":
+            phase["status"] = "not_applicable"
+            phase["structured_reason"] = "not needed for this synthetic run"
+            phase["facts_refs"] = []
+            break
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(WorkspaceBackendError, match="不能把 required phase 标记为 not_applicable"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+
+def test_docker_backend_inspect_rejects_not_applicable_phase_with_manifest_fact(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    extra_ref = "container_execution_facts/verifier_patch_apply.json"
+    status = _valid_docker_backend_status().model_copy(
+        update={
+            "container_execution_facts_refs": [
+                *_valid_docker_backend_status().container_execution_facts_refs,
+                extra_ref,
+            ]
+        }
+    )
+    _write_status(status_path, status)
+    facts_path = tmp_path / extra_ref
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["command_id"] = "cmd_verifier_patch_apply"
+    facts["command_semantics"] = "verifier_patch_apply"
+    facts_path.write_text(json.dumps(facts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest_path = tmp_path / status.container_execution_manifest_ref
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for entry in manifest["entries"]:
+        if entry["facts_ref"] == extra_ref:
+            entry["command_id"] = "cmd_verifier_patch_apply"
+            entry["command_semantics"] = "verifier_patch_apply"
+            entry["phase"] = "verifier_patch_apply"
+            break
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(WorkspaceBackendError, match="not_applicable 与 manifest facts 冲突"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+
 def test_workspace_backend_status_requires_explicit_key_fields(tmp_path: Path):
     status = build_workspace_backend_status(
         mode="interface_only",
@@ -429,7 +478,13 @@ def _write_status(path: Path, status) -> None:
                         {
                             "phase": phase,
                             "status": "not_applicable" if phase in {"verifier_patch_apply", "test_patch_apply"} else "passed",
-                            "structured_reason": "phase_not_required_for_unit_fixture" if phase in {"verifier_patch_apply", "test_patch_apply"} else None,
+                            "structured_reason": (
+                                "no verifier patch is configured for this task"
+                                if phase == "verifier_patch_apply"
+                                else "no test patch is configured for this task"
+                                if phase == "test_patch_apply"
+                                else None
+                            ),
                             "facts_refs": [] if phase in {"verifier_patch_apply", "test_patch_apply"} else [f"container_execution_facts/{phase}.json"],
                         }
                         for phase in required_phases

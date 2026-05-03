@@ -904,7 +904,9 @@ def _inspect_run_selection_manifest_payload(payload: dict[str, Any], *, assert_c
                 failures.append("replay role 必须绑定 replay provider evidence。")
             if not _entry_is_success(entry):
                 failures.append("replay role 必须 success/accepted。")
-        if assert_complete and role in V3_CORE_AGENT_LOOP_ROLES and not entry.get("structured_skip_reason"):
+        if assert_complete and role in V3_CORE_AGENT_LOOP_ROLES:
+            if entry.get("structured_skip_reason"):
+                failures.append(f"{role} role 是 V3 核心 Agent Loop evidence，不能用 structured skip 通过 acceptance。")
             if not _entry_is_success(entry):
                 failures.append(f"{role} role 必须 success/accepted，不能用失败 run 通过 acceptance。")
             if not _is_real_provider_entry(entry):

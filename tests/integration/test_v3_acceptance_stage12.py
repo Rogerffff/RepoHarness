@@ -430,6 +430,29 @@ def test_v3_stage12_acceptance_rejects_replay_core_agent_loop_roles(tmp_path: Pa
         inspect_v3_acceptance(report, assert_complete=True)
 
 
+def test_v3_stage12_acceptance_rejects_core_agent_loop_structured_skip(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    payload = _read_json(run_selection)
+    for entry in payload["entries"]:
+        if entry["role"] == "real_repository":
+            entry["structured_skip_reason"] = "temporarily unavailable"
+            entry["accepted"] = False
+            entry["run_state"] = "skipped"
+            entry["run_outcome"] = "skipped"
+            entry["final_verifier_status"] = "skipped"
+            break
+    _write_json(run_selection, payload)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+    with pytest.raises(ConfigError, match="不能用 structured skip"):
+        inspect_v3_acceptance(report, assert_complete=True)
+
+
 def test_v3_stage12_acceptance_rejects_replay_identity_on_credential_skip(tmp_path: Path) -> None:
     run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
     run_selection = _build_full_run_selection(tmp_path, run_dir)
@@ -889,7 +912,9 @@ def _write_docker_backend_status(run_dir: Path, *, missing_phase: str | None = N
                         else "passed"
                     ),
                     "structured_reason": (
-                        "phase_not_required_for_test_fixture"
+                        "no verifier patch is configured for this task"
+                        if phase == "verifier_patch_apply"
+                        else "no test patch is configured for this task"
                         if phase in {"verifier_patch_apply", "test_patch_apply"} and phase != missing_phase
                         else None
                     ),
