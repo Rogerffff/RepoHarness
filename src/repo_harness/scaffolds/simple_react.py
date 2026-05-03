@@ -14,10 +14,16 @@ class SimpleReactScaffold(ScaffoldDefinition):
 def build_simple_react_scaffold() -> SimpleReactScaffold:
     return SimpleReactScaffold(
         scaffold_id="simple_react",
-        scaffold_version="repo_harness_simple_react_v0",
+        scaffold_version="repo_harness_simple_react_v1",
         prompt_fragment=(
             "Iterate by requesting tools, reading observations, editing files, "
-            "and using the configured test feedback policy."
+            "and using the configured test feedback policy. Aim for a durable "
+            "repository change that addresses the task. Scratch files or temporary "
+            "diagnostic scripts created only for investigation should be removed "
+            "before the final diff. After identifying a likely fix, edit the "
+            "relevant persistent project files; when available in allowed_tools, "
+            "use git_diff to review the final diff and run_tests for configured "
+            "feedback."
         ),
         allowed_tools_policy="repo_harness_simple_react_allowed_tools_v0",
         phase_transition_policy="repo_harness_simple_react_single_phase_v0",

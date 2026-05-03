@@ -24,7 +24,7 @@ def test_feedback_tests_passed_stop_immediately_preserves_replay_default(tmp_pat
     assert facts["test_feedback_policy"] == "oracle_hidden_feedback"
     assert facts["feedback_tests_passed_policy"] == "stop_immediately"
     assert metadata["scaffold_id"] == "simple_react"
-    assert metadata["scaffold_version"] == "repo_harness_simple_react_v0"
+    assert metadata["scaffold_version"] == "repo_harness_simple_react_v1"
     assert metadata["test_feedback_policy"] == "oracle_hidden_feedback"
     assert metadata["feedback_tests_passed_policy"] == "stop_immediately"
     assert metadata["feedback_policy_resolution"]["resolved_feedback_tests_passed_policy"] == "stop_immediately"
