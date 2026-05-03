@@ -255,11 +255,76 @@ def test_docker_backend_inspect_rejects_not_applicable_phase_with_manifest_fact(
         if entry["facts_ref"] == extra_ref:
             entry["command_id"] = "cmd_verifier_patch_apply"
             entry["command_semantics"] = "verifier_patch_apply"
-            entry["phase"] = "verifier_patch_apply"
+            entry["phase"] = "source_checkout"
             break
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     with pytest.raises(WorkspaceBackendError, match="not_applicable 与 manifest facts 冲突"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+
+def test_docker_backend_inspect_rejects_manifest_fact_not_covered_by_matrix(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    extra_ref = "container_execution_facts/orphan_agent_tool.json"
+    base_status = _valid_docker_backend_status()
+    status = base_status.model_copy(
+        update={"container_execution_facts_refs": [*base_status.container_execution_facts_refs, extra_ref]}
+    )
+    _write_status(status_path, status)
+    facts_path = tmp_path / extra_ref
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["command_id"] = "cmd_orphan_agent_tool"
+    facts["command_semantics"] = "file_read"
+    facts_path.write_text(json.dumps(facts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest_path = tmp_path / status.container_execution_manifest_ref
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for entry in manifest["entries"]:
+        if entry["facts_ref"] == extra_ref:
+            entry["command_id"] = "cmd_orphan_agent_tool"
+            entry["command_semantics"] = "file_read"
+            entry["phase"] = "agent_tool"
+            break
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(WorkspaceBackendError, match="未被 docker phase matrix 覆盖"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+
+def test_docker_backend_inspect_rejects_supporting_required_command_semantics(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    extra_ref = "container_execution_facts/supporting_model_final_patch_apply.json"
+    base_status = _valid_docker_backend_status()
+    status = base_status.model_copy(
+        update={"container_execution_facts_refs": [*base_status.container_execution_facts_refs, extra_ref]}
+    )
+    _write_status(status_path, status)
+    facts_path = tmp_path / extra_ref
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["command_id"] = "cmd_supporting_model_final_patch_apply"
+    facts["command_semantics"] = "model_final_patch_apply"
+    facts_path.write_text(json.dumps(facts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest_path = tmp_path / status.container_execution_manifest_ref
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for entry in manifest["entries"]:
+        if entry["facts_ref"] == extra_ref:
+            entry["command_id"] = "cmd_supporting_model_final_patch_apply"
+            entry["command_semantics"] = "model_final_patch_apply"
+            entry["phase"] = None
+            break
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    matrix_path = tmp_path / status.docker_phase_coverage_matrix_ref
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    matrix["phases"].append(
+        {
+            "phase": "supporting_execution",
+            "status": "passed",
+            "facts_refs": [extra_ref],
+            "command_semantics": ["model_final_patch_apply"],
+        }
+    )
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(WorkspaceBackendError, match="不能覆盖 required command_semantics"):
         inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
 
 

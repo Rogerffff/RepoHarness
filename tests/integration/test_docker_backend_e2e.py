@@ -98,6 +98,14 @@ def test_docker_backend_replay_smoke_records_facts(tmp_path: Path):
     assert phase_status["final_verifier"] == "passed"
     assert phase_status["verifier_patch_apply"] == "not_applicable"
     assert phase_status["test_patch_apply"] == "not_applicable"
+    assert phase_status["supporting_execution"] == "passed"
+    covered_refs = {
+        ref
+        for phase in matrix["phases"]
+        for ref in phase.get("facts_refs", [])
+    }
+    manifest_refs = {entry["facts_ref"] for entry in container_manifest["entries"]}
+    assert manifest_refs == covered_refs
     assert metrics["run_outcome"] == "success"
     assert (
         run_config_facts["environment_fingerprint"]["workspace_execution"]["workspace_backend"][

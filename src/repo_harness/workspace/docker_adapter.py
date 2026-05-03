@@ -57,6 +57,7 @@ REQUIRED_DOCKER_PHASES = [
     "pass_to_pass_test_execution",
     "final_verifier",
 ]
+SUPPORTING_DOCKER_PHASE = "supporting_execution"
 PHASE_NOT_APPLICABLE_REASONS = {
     "verifier_patch_apply": "no verifier patch is configured for this task",
     "test_patch_apply": "no test patch is configured for this task",
@@ -69,9 +70,12 @@ SEMANTICS_TO_PHASE = {
     "agent_tool": "agent_tool",
     "bash_diagnostic": "agent_tool",
     "git_diff": "agent_tool",
+    "run_tests": "run_tests",
     "verifier_feedback": "run_tests",
     "final_patch_capture": "final_patch_capture",
     "verification_workspace_creation": "verification_workspace_creation",
+    "verifier_patch_apply": "verifier_patch_apply",
+    "test_patch_apply": "test_patch_apply",
     "model_final_patch_apply": "model_final_patch_apply",
     "fail_to_pass_test_execution": "fail_to_pass_test_execution",
     "pass_to_pass_test_execution": "pass_to_pass_test_execution",
@@ -974,10 +978,13 @@ class DockerWorkspaceAdapter:
         manifest_path = self.run_dir / "container_execution_facts" / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         by_phase: dict[str, list[dict[str, Any]]] = {phase: [] for phase in REQUIRED_DOCKER_PHASES}
+        supporting_entries: list[dict[str, Any]] = []
         for entry in manifest["entries"]:
             phase = entry.get("phase")
             if phase in by_phase:
                 by_phase[phase].append(entry)
+            else:
+                supporting_entries.append(entry)
         final_test_entries = [
             *by_phase["fail_to_pass_test_execution"],
             *by_phase["pass_to_pass_test_execution"],
@@ -1009,6 +1016,16 @@ class DockerWorkspaceAdapter:
                         "structured_reason": reason,
                     }
                 )
+        if supporting_entries:
+            phases.append(
+                {
+                    "phase": SUPPORTING_DOCKER_PHASE,
+                    "status": "passed",
+                    "facts_refs": [entry["facts_ref"] for entry in supporting_entries],
+                    "command_semantics": sorted({entry["command_semantics"] for entry in supporting_entries}),
+                    "structured_reason": "supporting container executions outside required V3 phase matrix",
+                }
+            )
         self._write_json(
             self.run_dir / "docker_phase_coverage_matrix.json",
             {

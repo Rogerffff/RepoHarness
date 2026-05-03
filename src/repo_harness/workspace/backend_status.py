@@ -29,6 +29,7 @@ REQUIRED_DOCKER_PHASES = {
     "pass_to_pass_test_execution",
     "final_verifier",
 }
+SUPPORTING_DOCKER_PHASES = {"supporting_execution"}
 
 PHASE_ALLOWED_NOT_APPLICABLE_REASONS = {
     "verifier_patch_apply": "no verifier patch is configured for this task",
@@ -68,6 +69,7 @@ PHASE_ALLOWED_COMMAND_SEMANTICS = {
     "pass_to_pass_test_execution": {"pass_to_pass_test_execution"},
     "final_verifier": {"verifier_final", "fail_to_pass_test_execution", "pass_to_pass_test_execution"},
 }
+REQUIRED_DOCKER_COMMAND_SEMANTICS = set().union(*PHASE_ALLOWED_COMMAND_SEMANTICS.values())
 
 WORKSPACE_BACKEND_STAGE_STATUS_VERSION = "repo_harness_docker_stage_status_v2_v0"
 WORKSPACE_BACKEND_VERSION = "repo_harness_workspace_backend_stage14_v0"
@@ -601,6 +603,7 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
     missing = sorted(REQUIRED_DOCKER_PHASES.difference(by_phase))
     if missing:
         raise WorkspaceBackendError("docker phase coverage matrix 缺少 phase：" + ", ".join(missing))
+    refs_in_matrix: set[str] = set()
     for phase_name in sorted(REQUIRED_DOCKER_PHASES):
         phase = by_phase[phase_name]
         status_value = phase.get("status")
@@ -614,7 +617,12 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
                 raise WorkspaceBackendError(f"docker phase coverage not_applicable reason 非法：{phase_name}")
             if phase.get("facts_refs"):
                 raise WorkspaceBackendError(f"docker phase coverage not_applicable 不能包含 facts refs：{phase_name}")
-            _assert_no_manifest_facts_for_not_applicable_phase(phase_name, refs_in_manifest, manifest_by_ref)
+            _assert_no_manifest_facts_for_not_applicable_phase(
+                phase_name,
+                refs_in_manifest,
+                manifest_by_ref,
+                facts_by_ref,
+            )
             continue
         if status_value != "passed":
             raise WorkspaceBackendError(f"docker phase coverage status 非法：{phase_name}={status_value}")
@@ -629,8 +637,21 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
             entry = manifest_by_ref[ref]
             facts = facts_by_ref[ref]
             _assert_phase_ref_matches_execution(phase_name, ref, entry, facts)
+            refs_in_matrix.add(ref)
         if phase_name == "final_verifier":
             _assert_final_verifier_phase_has_complete_semantics(facts_refs, facts_by_ref)
+    extra_phases = sorted(set(by_phase).difference(REQUIRED_DOCKER_PHASES).difference(SUPPORTING_DOCKER_PHASES))
+    if extra_phases:
+        raise WorkspaceBackendError("docker phase coverage matrix 包含未知 phase：" + ", ".join(extra_phases))
+    for phase_name in sorted(SUPPORTING_DOCKER_PHASES.intersection(by_phase)):
+        phase = by_phase[phase_name]
+        _assert_supporting_phase_refs(phase_name, phase, refs_in_manifest, manifest_by_ref, facts_by_ref, refs_in_matrix)
+    uncovered_manifest_refs = refs_in_manifest.difference(refs_in_matrix)
+    if uncovered_manifest_refs:
+        raise WorkspaceBackendError(
+            "container execution manifest facts 未被 docker phase matrix 覆盖："
+            + ", ".join(sorted(uncovered_manifest_refs))
+        )
 
 
 def _assert_manifest_entry_matches_facts(
@@ -654,14 +675,54 @@ def _assert_no_manifest_facts_for_not_applicable_phase(
     phase_name: str,
     refs_in_manifest: set[str],
     manifest_by_ref: dict[str, dict[str, object]],
+    facts_by_ref: dict[str, ContainerExecutionFacts],
 ) -> None:
     allowed_manifest_phases = PHASE_ALLOWED_MANIFEST_PHASES.get(phase_name, {phase_name})
+    allowed_semantics = PHASE_ALLOWED_COMMAND_SEMANTICS.get(phase_name, {phase_name})
     for ref in refs_in_manifest:
         manifest_phase = manifest_by_ref[ref].get("phase")
-        if manifest_phase in allowed_manifest_phases:
+        command_semantics = facts_by_ref[ref].command_semantics
+        if manifest_phase in allowed_manifest_phases or command_semantics in allowed_semantics:
             raise WorkspaceBackendError(
                 f"docker phase coverage not_applicable 与 manifest facts 冲突：{phase_name}:{ref}"
             )
+
+
+def _assert_supporting_phase_refs(
+    phase_name: str,
+    phase: dict[str, object],
+    refs_in_manifest: set[str],
+    manifest_by_ref: dict[str, dict[str, object]],
+    facts_by_ref: dict[str, ContainerExecutionFacts],
+    refs_in_matrix: set[str],
+) -> None:
+    if phase.get("status") != "passed":
+        raise WorkspaceBackendError(f"docker phase coverage supporting phase status 非法：{phase_name}")
+    facts_refs = phase.get("facts_refs")
+    if not isinstance(facts_refs, list) or not facts_refs:
+        raise WorkspaceBackendError(f"docker phase coverage supporting phase 缺少 facts refs：{phase_name}")
+    for ref in facts_refs:
+        if ref not in refs_in_manifest:
+            raise WorkspaceBackendError(
+                f"docker phase coverage supporting phase 引用了 manifest 外的 facts ref：{phase_name}:{ref}"
+            )
+        if manifest_by_ref[ref].get("phase") is not None:
+            raise WorkspaceBackendError(
+                f"docker phase coverage supporting phase 只能覆盖未映射 manifest facts：{phase_name}:{ref}"
+            )
+        facts = facts_by_ref[ref]
+        if facts.command_semantics in REQUIRED_DOCKER_COMMAND_SEMANTICS:
+            raise WorkspaceBackendError(
+                f"docker phase coverage supporting phase 不能覆盖 required command_semantics："
+                f"{phase_name}:{ref}:{facts.command_semantics}"
+            )
+        if facts.timeout:
+            raise WorkspaceBackendError(f"docker phase coverage supporting phase 不能覆盖 timeout facts：{phase_name}:{ref}")
+        if facts.cleanup_status != "completed":
+            raise WorkspaceBackendError(
+                f"docker phase coverage supporting phase cleanup_status 不是 completed：{phase_name}:{ref}"
+            )
+        refs_in_matrix.add(ref)
 
 
 def _assert_phase_ref_matches_execution(
