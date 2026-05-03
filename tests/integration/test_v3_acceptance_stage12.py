@@ -358,6 +358,59 @@ def test_v3_stage12_acceptance_bundle_rejects_post_docs_in_report_inputs(tmp_pat
         inspect_acceptance_bundle(bundle, assert_immutable=True)
 
 
+def test_v3_stage12_acceptance_bundle_allows_explicitly_excluded_post_docs(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    final_doc = tmp_path / "final-acceptance.md"
+    walkthrough = tmp_path / "walkthrough.md"
+    final_doc.write_text("# Final acceptance\n", encoding="utf-8")
+    walkthrough.write_text("# Walkthrough\n", encoding="utf-8")
+    documentation_manifest = tmp_path / "pre_acceptance_documentation_manifest.json"
+    documentation_manifest.write_text(
+        json.dumps(
+            {
+                "documentation_refs": [{"path": "docs/v3/implementation-log/stage-00.md"}],
+                "excluded_post_acceptance_docs": [final_doc.as_posix(), walkthrough.as_posix()],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    export_root = tmp_path / "v3_export_root"
+    export_root.mkdir()
+    (export_root / "export_manifest.json").write_text('{"schema_version":"test"}\n', encoding="utf-8")
+    command_log = tmp_path / "pre_acceptance_command_log.jsonl"
+    _write_valid_command_log(command_log)
+    evidence = tmp_path / "pre_acceptance_evidence"
+    evidence.mkdir()
+    (evidence / "pytest.json").write_text('{"exit_code":0}\n', encoding="utf-8")
+    inputs = build_v3_acceptance_inputs(
+        run_selection_manifest=run_selection,
+        export_root=export_root,
+        v2_report=V2_ACCEPTANCE_REPORT,
+        pre_acceptance_docs=[Path(doc) for doc in REQUIRED_DOCS],
+        documentation_manifest=documentation_manifest,
+        command_log=command_log,
+        test_evidence=evidence,
+        output=tmp_path / "v3_acceptance_inputs.json",
+    )
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+    bundle = build_v3_acceptance_bundle(
+        acceptance_dir=report.parent,
+        input_manifest=report.parent / "acceptance_inputs_manifest.json",
+        report=report,
+        documentation_refs=[final_doc, walkthrough],
+        output=report.parent / "acceptance_bundle_manifest.json",
+    )
+
+    assert "Inspect acceptance bundle: immutable" in inspect_acceptance_bundle(bundle, assert_immutable=True)
+
+
 def test_v3_stage12_acceptance_detects_credential_skip_disguised_as_accepted(tmp_path: Path) -> None:
     run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
     run_selection = _build_full_run_selection(tmp_path, run_dir)

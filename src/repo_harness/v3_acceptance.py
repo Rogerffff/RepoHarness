@@ -757,6 +757,8 @@ def _collect_documentation_manifest_paths(value: Any) -> set[str]:
     paths: set[str] = set()
     if isinstance(value, dict):
         for key, nested in value.items():
+            if str(key) == "excluded_post_acceptance_docs":
+                continue
             if str(key) in {"path", "relative_path"} and _looks_like_documentation_path(nested):
                 paths.add(_normalise_manifest_path(nested))
             paths.update(_collect_documentation_manifest_paths(nested))
