@@ -19,6 +19,13 @@ def test_tool_schema_snapshot_records_stable_tool_order():
     read_file = next(tool for tool in snapshot.tools if tool.name == "read_file")
     assert read_file.read_only is True
     assert read_file.permission_required is True
+    grep = next(tool for tool in snapshot.tools if tool.name == "grep")
+    bash = next(tool for tool in snapshot.tools if tool.name == "bash")
+    run_tests = next(tool for tool in snapshot.tools if tool.name == "run_tests")
+    assert "literal substring" in grep.model_visible_description
+    assert "not a general shell" in bash.model_visible_description
+    assert "takes no arguments" in run_tests.model_visible_description
+    assert run_tests.input_schema["additionalProperties"] is False
 
 
 def test_tool_schema_snapshot_is_manifest_backed_artifact(tmp_path: Path):

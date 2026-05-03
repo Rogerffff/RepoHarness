@@ -83,7 +83,7 @@ class PermissionSystem:
                     requested_arguments=requested_arguments,
                     normalized_arguments=normalized_arguments,
                     decision="deny",
-                    reason=command_issue,
+                    reason=_with_bash_recovery_guidance(command_issue),
                     matched_rule="bash_command_safety",
                     resolved_paths=resolved_paths,
                     command_category="diagnostic",
@@ -265,6 +265,20 @@ def _deny_reason_for_bash(
             default_path_args=["."],
         )
     return f"Command is not in the stage eight bash allowlist: {command_name}"
+
+
+_BASH_RECOVERY_GUIDANCE = (
+    "bash is restricted: pass one allowlisted diagnostic command only; do not use cd, "
+    "pipes, redirects, shell composition, variable expansion, or arbitrary python -c. "
+    "Use cwd for directories, read_file/grep for inspection, run_tests for configured "
+    "test feedback, and git_diff for patch review."
+)
+
+
+def _with_bash_recovery_guidance(reason: str) -> str:
+    if _BASH_RECOVERY_GUIDANCE in reason:
+        return reason
+    return f"{reason}. {_BASH_RECOVERY_GUIDANCE}"
 
 
 def _validate_git_command(

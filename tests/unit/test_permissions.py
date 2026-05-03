@@ -71,6 +71,36 @@ def test_bash_unsafe_commands_are_denied(tmp_path: Path, command: str):
 
 
 @pytest.mark.parametrize(
+    "command, expected_fragment",
+    [
+        ("cd src", "Command is not in the stage eight bash allowlist: cd"),
+        ("cd /workspace && python -c 'print(1)'", "Unsupported shell syntax: &&"),
+        ("python -c 'print(1); print(2)'", "Unsupported shell syntax: ;"),
+        ("pytest -q | tee out.txt", "Unsupported shell syntax: |"),
+        ("python -c 'print(1)'", "Command is not in the stage eight bash allowlist: python"),
+    ],
+)
+def test_bash_denial_reason_includes_recovery_guidance(
+    tmp_path: Path,
+    command: str,
+    expected_fragment: str,
+):
+    decision = _check(
+        tmp_path,
+        tool_name="bash",
+        args={"command": command},
+        mode="auto",
+    )
+
+    assert decision.decision == "deny"
+    assert decision.matched_rule == "bash_command_safety"
+    assert expected_fragment in decision.reason
+    assert "bash is restricted" in decision.reason
+    assert "Use cwd for directories" in decision.reason
+    assert "run_tests for configured test feedback" in decision.reason
+
+
+@pytest.mark.parametrize(
     "command",
     [
         "git diff --no-index /etc/hosts file.py",

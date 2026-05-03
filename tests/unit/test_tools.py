@@ -39,6 +39,26 @@ def test_tool_definition_requires_model_visible_contract():
         )
 
 
+def test_tool_model_visible_contract_explains_restricted_workflow():
+    grep = build_tool("grep")
+    bash = build_tool("bash")
+    run_tests = build_tool("run_tests")
+
+    assert "literal substring" in grep.model_visible_description
+    assert "regular expressions" in grep.model_visible_description
+    assert grep.input_schema["properties"]["query"]["description"] == "Literal substring to find."
+
+    assert "not a general shell" in bash.model_visible_description
+    assert "do not use cd" in bash.model_visible_description
+    assert "arbitrary python -c" in bash.model_visible_description
+    assert "do not combine commands" in bash.model_visible_prompt
+    assert bash.input_schema["properties"]["cwd"]["description"].startswith("Optional workspace-relative")
+
+    assert "takes no arguments" in run_tests.model_visible_description
+    assert "does not run arbitrary shell commands" in run_tests.model_visible_prompt
+    assert run_tests.input_schema["additionalProperties"] is False
+
+
 def test_registry_rejects_duplicate_tool_names():
     registry = ToolRegistry([build_tool("read_file")])
 

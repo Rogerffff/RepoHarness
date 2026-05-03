@@ -698,7 +698,10 @@ def build_tool(name: str) -> ToolDefinition:
         "read_file": ToolDefinition(
             name="read_file",
             tool_version="repo_harness_read_file_v0",
-            model_visible_description="Read a UTF-8 text file inside the workspace.",
+            model_visible_description=(
+                "Read a UTF-8 text file using a workspace-relative path. "
+                "Absolute container paths are not accepted."
+            ),
             model_visible_prompt=(
                 "Use read_file with a workspace-relative path. Optionally pass start_line "
                 "and end_line; offset and limit are accepted as aliases."
@@ -722,9 +725,23 @@ def build_tool(name: str) -> ToolDefinition:
         "grep": ToolDefinition(
             name="grep",
             tool_version="repo_harness_grep_v0",
-            model_visible_description="Search text inside workspace files.",
-            model_visible_prompt="Use grep with query and optional path.",
-            input_schema={"type": "object", "required": ["query"]},
+            model_visible_description=(
+                "Search workspace files for a literal substring. grep does not evaluate "
+                "regular expressions; paths must be workspace-relative."
+            ),
+            model_visible_prompt=(
+                "Use grep with query and optional root/path. Query is a literal substring, "
+                "not a regex."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                    "query": {"type": "string", "description": "Literal substring to find."},
+                    "root": {"type": "string", "description": "Optional workspace-relative search root."},
+                    "path": {"type": "string", "description": "Alias for root; workspace-relative."},
+                },
+            },
             output_schema={"type": "object", "properties": {"matches": {"type": "array"}}},
             max_result_size=4000,
             is_read_only=True,
@@ -751,17 +768,39 @@ def build_tool(name: str) -> ToolDefinition:
         "bash": ToolDefinition(
             name="bash",
             tool_version="repo_harness_bash_v0",
-            model_visible_description="Run a restricted diagnostic command inside the workspace.",
-            model_visible_prompt="Use bash with command, optional cwd, and optional timeout_sec.",
-            input_schema={"type": "object", "required": ["command"]},
+            model_visible_description=(
+                "Run a restricted diagnostic command inside the workspace. This is not a "
+                "general shell: do not use cd, pipes, redirects, shell composition, "
+                "variable expansion, or arbitrary python -c snippets. Use cwd for "
+                "directories, read_file/grep for inspection, run_tests for configured "
+                "test feedback, and git_diff for patch review."
+            ),
+            model_visible_prompt=(
+                "Use bash only for the restricted allowlist. Pass a single command plus "
+                "optional cwd and timeout_sec; do not combine commands."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["command"],
+                "properties": {
+                    "command": {"type": "string", "description": "Single restricted diagnostic command."},
+                    "cwd": {"type": "string", "description": "Optional workspace-relative working directory."},
+                    "timeout_sec": {"type": "integer", "description": "Optional command timeout in seconds."},
+                },
+            },
             output_schema={"type": "object", "properties": {"stdout_preview": {"type": "string"}}},
             max_result_size=4000,
         ),
         "run_tests": ToolDefinition(
             name="run_tests",
             tool_version="repo_harness_run_tests_v0",
-            model_visible_description="Run the task verifier as intermediate feedback.",
-            model_visible_prompt="Use run_tests without arguments.",
+            model_visible_description=(
+                "Run the current task's configured intermediate feedback path. "
+                "Do not pass a command; this tool takes no arguments."
+            ),
+            model_visible_prompt=(
+                "Use run_tests without arguments. It does not run arbitrary shell commands."
+            ),
             input_schema={"type": "object", "additionalProperties": False},
             output_schema={"type": "object", "properties": {"accepted": {"type": "boolean"}}},
             max_result_size=4000,
