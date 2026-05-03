@@ -22,7 +22,7 @@ class PatchFocusedReactScaffold(ScaffoldDefinition):
 def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
     return PatchFocusedReactScaffold(
         scaffold_id="patch_focused_react",
-        scaffold_version="repo_harness_patch_focused_react_v5",
+        scaffold_version="repo_harness_patch_focused_react_v6",
         prompt_fragment=(
             "Focus on a durable source patch. Use the allowed read, search, edit, "
             "test, and diff tools to inspect the repository and update persistent "
@@ -40,6 +40,12 @@ def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
             "returning None for an invalid or unusable value is often the "
             "intended way to activate that caller fallback; do not sanitize "
             "such a value unless the surrounding code lacks a fallback path. "
+            "If a caller uses a pattern such as helper() or fallback, and the "
+            "helper returns Optional[str], treat path separators or "
+            "platform-invalid path characters in user, login, or environment "
+            "strings as making the whole component unavailable; return None "
+            "from the helper rather than translating the invalid component "
+            "into a different identity. "
             "For operator "
             "regressions where the public issue says an expression collapses "
             "to scalar 1 but should preserve a quantity or prefixed quantity, "
