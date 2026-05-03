@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from repo_harness.export.manifest import EXPORTER_VERSION
+from repo_harness.export.manifest import EXPORTER_VERSION, sha256_file
 from repo_harness.export.schemas import (
     ExportAuditItem,
     ExportAuditReport,
@@ -226,7 +226,7 @@ def _audit_record(
     else:
         items.append(_item("tool_call_pairing_valid", "passed", "info", "tool calls have terminal results"))
 
-    prepared_error = _prepared_observation_error(record, export_format)
+    prepared_error = _prepared_observation_error(record, export_format, run_paths=run_paths)
     if prepared_error:
         items.append(_item("prepared_observation_source_valid", "failed", "error", prepared_error))
     else:
@@ -555,17 +555,198 @@ def _tool_pairing_error(run_paths: list[Path]) -> str | None:
     return None
 
 
-def _prepared_observation_error(record: ExportRecord, export_format: str) -> str | None:
+def _prepared_observation_error(
+    record: ExportRecord,
+    export_format: str,
+    *,
+    run_paths: list[Path],
+) -> str | None:
+    binding_error = _v3_binding_error(record, run_paths=run_paths)
+    if binding_error:
+        return binding_error
     if export_format == "sft_jsonl":
         for message in record.payload.get("messages", []):
             if message.get("role") == "tool" and message.get("observation_source") != "prepared_messages":
                 return "tool observation does not come from prepared_messages"
+            if message.get("role") == "tool":
+                missing = _missing_v3_observation_fields(message)
+                if missing:
+                    return f"tool observation missing V3 binding fields: {', '.join(missing)}"
+                source_error = _prepared_binding_source_error(
+                    message,
+                    run_paths=run_paths,
+                    expected_content=message.get("content"),
+                    tool_call_id=message.get("tool_call_id"),
+                )
+                if source_error:
+                    return source_error
     if export_format == "rl_jsonl":
         for step in record.payload.get("trajectory", []):
             observation = step.get("observation", {})
             if "preview" in observation and observation.get("observation_source") != "prepared_messages":
                 return "trajectory observation preview does not come from prepared_messages"
+            if observation.get("observation_source") == "prepared_messages":
+                missing = _missing_v3_observation_fields(observation)
+                if missing:
+                    return f"trajectory observation missing V3 binding fields: {', '.join(missing)}"
+                source_error = _prepared_binding_source_error(
+                    observation,
+                    run_paths=run_paths,
+                    expected_content=observation.get("preview"),
+                    tool_call_id=step.get("action", {}).get("tool_call_id"),
+                )
+                if source_error:
+                    return source_error
     return None
+
+
+def _v3_binding_error(record: ExportRecord, *, run_paths: list[Path]) -> str | None:
+    bindings = record.payload.get("v3_observation_bindings", [])
+    if bindings is None:
+        bindings = []
+    if not isinstance(bindings, list):
+        return "v3_observation_bindings must be a list"
+    for index, binding in enumerate(bindings):
+        if not isinstance(binding, dict):
+            return f"v3_observation_bindings[{index}] is not an object"
+        missing = _missing_v3_observation_fields(binding)
+        if missing:
+            return f"v3_observation_bindings[{index}] missing: {', '.join(missing)}"
+        if binding.get("observation_matches_prepared_messages") is not True:
+            return f"v3_observation_bindings[{index}] observation does not match prepared messages"
+        source_error = _prepared_binding_source_error(
+            binding,
+            run_paths=run_paths,
+            expected_content=None,
+            tool_call_id=binding.get("tool_call_id"),
+        )
+        if source_error:
+            return f"v3_observation_bindings[{index}] {source_error}"
+    return None
+
+
+def _prepared_binding_source_error(
+    binding: dict[str, Any],
+    *,
+    run_paths: list[Path],
+    expected_content: Any,
+    tool_call_id: Any,
+) -> str | None:
+    ref = binding.get("prepared_messages_ref")
+    if not isinstance(ref, dict):
+        return "prepared_messages_ref is not an object"
+    run_path = _run_path_for_ref(run_paths, ref)
+    if run_path is None:
+        return "prepared_messages_ref source_run_id is unknown"
+    relative_path = Path(str(ref.get("relative_path", "")))
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        return "prepared_messages_ref has unsafe relative_path"
+    prepared_path = run_path / relative_path
+    if not prepared_path.exists():
+        return "prepared_messages_ref does not exist"
+    actual_sha = sha256_file(prepared_path)
+    expected_sha = binding.get("prepared_messages_sha256")
+    if expected_sha != actual_sha:
+        return "prepared_messages_sha256 does not match prepared_messages_ref"
+    if ref.get("sha256") and ref.get("sha256") != actual_sha:
+        return "prepared_messages_ref sha256 does not match file"
+    try:
+        payload = json.loads(prepared_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return "prepared_messages_ref is not valid JSON"
+    if payload.get("model_input_hash") != binding.get("model_input_hash"):
+        return "model_input_hash does not match prepared_messages artifact"
+    if payload.get("context_revision") != binding.get("context_revision"):
+        return "context_revision does not match prepared_messages artifact"
+    if payload.get("content_replacement_state_ref") != binding.get("content_replacement_state_ref"):
+        return "content_replacement_state_ref does not match prepared_messages artifact"
+    tool_message = _prepared_tool_message(payload, str(tool_call_id or binding.get("tool_call_id") or ""))
+    if tool_message is None:
+        return "prepared_messages artifact does not contain matching tool_call_id"
+    if expected_content is not None and tool_message.get("content") != expected_content:
+        return "tool observation content does not match prepared_messages artifact"
+    tool_observation_ref = binding.get("tool_observation_ref")
+    if (
+        isinstance(tool_observation_ref, dict)
+        and tool_observation_ref.get("kind") == "trajectory_event"
+        and tool_observation_ref.get("event_id") != binding.get("observation_source_event_ref")
+    ):
+        return "tool_observation_ref event_id does not match observation_source_event_ref"
+    if not _tool_observation_ref_matches(tool_observation_ref, tool_message):
+        return "tool_observation_ref does not match prepared_messages artifact"
+    event_error = _tool_event_source_error(
+        run_path,
+        event_id=binding.get("observation_source_event_ref"),
+        tool_call_id=str(tool_call_id or binding.get("tool_call_id") or ""),
+    )
+    if event_error:
+        return event_error
+    return None
+
+
+def _run_path_for_ref(run_paths: list[Path], ref: dict[str, Any]) -> Path | None:
+    source_run_id = ref.get("source_run_id")
+    if isinstance(source_run_id, str):
+        return {run_path.name: run_path for run_path in run_paths}.get(source_run_id)
+    if len(run_paths) == 1:
+        return run_paths[0]
+    return None
+
+
+def _prepared_tool_message(payload: dict[str, Any], tool_call_id: str) -> dict[str, Any] | None:
+    for message in payload.get("messages", []):
+        if message.get("role") == "tool" and str(message.get("tool_call_id") or "") == tool_call_id:
+            return message
+    return None
+
+
+def _tool_observation_ref_matches(ref: Any, tool_message: dict[str, Any]) -> bool:
+    if not isinstance(ref, dict):
+        return False
+    if ref.get("kind") == "trajectory_event" and ref.get("event_id"):
+        return True
+    artifact_refs = tool_message.get("artifact_refs", [])
+    if not isinstance(artifact_refs, list):
+        return False
+    return any(
+        isinstance(artifact_ref, dict)
+        and artifact_ref.get("artifact_id") == ref.get("artifact_id")
+        and artifact_ref.get("sha256") == ref.get("sha256")
+        for artifact_ref in artifact_refs
+    )
+
+
+def _tool_event_source_error(run_path: Path, *, event_id: Any, tool_call_id: str) -> str | None:
+    if not isinstance(event_id, str) or not event_id:
+        return "observation_source_event_ref is missing"
+    for event in read_jsonl(run_path / "events.jsonl"):
+        if event.get("event_id") != event_id:
+            continue
+        if event.get("event_type") not in {"tool_completed", "tool_denied", "tool_failed", "tool_timeout", "tool_interrupted"}:
+            return "observation_source_event_ref is not a terminal tool event"
+        if str(event.get("data", {}).get("tool_call_id") or "") != tool_call_id:
+            return "observation_source_event_ref tool_call_id mismatch"
+        return None
+    return "observation_source_event_ref does not exist"
+
+
+def _missing_v3_observation_fields(value: dict[str, Any]) -> list[str]:
+    required = [
+        "prepared_messages_ref",
+        "prepared_messages_sha256",
+        "model_input_hash",
+        "context_revision",
+        "content_replacement_state_ref",
+        "tool_observation_ref",
+        "observation_source_event_ref",
+        "observation_matches_prepared_messages",
+    ]
+    missing = []
+    for field in required:
+        field_value = value.get(field)
+        if field_value is None or field_value == "":
+            missing.append(field)
+    return missing
 
 
 def _loss_target_error(record: ExportRecord, export_format: str) -> str | None:

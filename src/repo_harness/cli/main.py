@@ -47,6 +47,10 @@ from repo_harness.v3_failure_diagnostics import (
     build_v3_failure_diagnostics,
     inspect_reward_diagnostics,
 )
+from repo_harness.v3_export_audit import (
+    build_v3_export_audit,
+    inspect_v3_export_audit,
+)
 from repo_harness.v3_source_materialization import (
     build_v3_source_materialization,
     inspect_v3_source_materialization,
@@ -413,6 +417,23 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_reward.add_argument("--distribution-report", required=True, help="failure_distribution_report.json 路径。")
     inspect_reward.add_argument("--assert-core-complete", action="store_true", help="要求核心失败诊断字段完整。")
 
+    build_v3_export = subparsers.add_parser(
+        "build-v3-export-audit",
+        help="构造 V3 Stage 11 export audit 和 preference baseline evidence。",
+    )
+    build_v3_export.add_argument("--run-dir", action="append", required=True, help="需要导出的已有 run directory；可重复。")
+    build_v3_export.add_argument("--output-dir", required=True, help="Stage 11 export audit 产物目录。")
+    build_v3_export.add_argument("--preference-runs-dir", default=None, help="可选同条件 preference baseline runs 目录。")
+
+    inspect_v3_export = subparsers.add_parser(
+        "inspect-v3-export-audit",
+        help="只读检查 V3 export_manifest.json 和 audit_report.json。",
+    )
+    inspect_v3_export.add_argument("run_dir", help="Stage 11 export audit 产物目录。")
+    inspect_v3_export.add_argument("--manifest", required=True, help="V3 export_manifest.json 路径。")
+    inspect_v3_export.add_argument("--audit-report", required=True, help="V3 audit_report.json 路径。")
+    inspect_v3_export.add_argument("--assert-clean", action="store_true", help="要求 V3 export audit 无结构或污染失败。")
+
     return parser
 
 
@@ -750,6 +771,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 reward diagnostics 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v3-export-audit":
+        try:
+            output_path = build_v3_export_audit(
+                run_dirs=args.run_dir,
+                output_dir=args.output_dir,
+                preference_runs_dir=args.preference_runs_dir,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 export audit 构建失败：{exc}\n")
+        print(f"V3 export audit 产物目录：{output_path}")
+        return 0
+    if args.command == "inspect-v3-export-audit":
+        try:
+            print(
+                inspect_v3_export_audit(
+                    args.run_dir,
+                    manifest=args.manifest,
+                    audit_report=args.audit_report,
+                    assert_clean=args.assert_clean,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V3 export audit 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

@@ -21,6 +21,7 @@ from repo_harness.export.manifest import (
     build_export_id,
     build_export_manifest,
     utc_timestamp,
+    sha256_file,
     write_json,
     write_jsonl,
     write_text,
@@ -431,6 +432,7 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
         ),
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
+        "v3_observation_bindings": _v3_observation_bindings(run_path),
     }
     return ExportRecord(
         sample_id=f"{run_path.name}_sft",
@@ -468,6 +470,7 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
         ),
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
+        "v3_observation_bindings": _v3_observation_bindings(run_path),
     }
     return ExportRecord(
         sample_id=f"{run_path.name}_rl",
@@ -576,7 +579,12 @@ def _message_from_transcript(
                 "observation_source": "prepared_messages",
                 "context_revision": prepared["context_revision"],
                 "prepared_messages_ref": prepared["prepared_messages_ref"],
+                "prepared_messages_sha256": prepared["prepared_messages_sha256"],
+                "model_input_hash": prepared["model_input_hash"],
                 "content_replacement_state_ref": prepared["content_replacement_state_ref"],
+                "tool_observation_ref": prepared["tool_observation_ref"],
+                "observation_source_event_ref": prepared["observation_source_event_ref"],
+                "observation_matches_prepared_messages": prepared["observation_matches_prepared_messages"],
                 "context_replacement": prepared["context_replacement"],
             }
         return None
@@ -651,8 +659,14 @@ def _trajectory_from_events(run_path: Path) -> list[dict[str, Any]]:
                     "artifact_refs": prepared["artifact_refs"],
                     "error_type": data.get("error_type"),
                     "observation_source": "prepared_messages",
+                    "context_revision": prepared["context_revision"],
                     "prepared_messages_ref": prepared["prepared_messages_ref"],
+                    "prepared_messages_sha256": prepared["prepared_messages_sha256"],
+                    "model_input_hash": prepared["model_input_hash"],
                     "content_replacement_state_ref": prepared["content_replacement_state_ref"],
+                    "tool_observation_ref": prepared["tool_observation_ref"],
+                    "observation_source_event_ref": prepared["observation_source_event_ref"],
+                    "observation_matches_prepared_messages": prepared["observation_matches_prepared_messages"],
                     "context_replacement": prepared["context_replacement"],
                 }
             else:
@@ -911,24 +925,67 @@ def _preference_side(run: dict[str, Any]) -> dict[str, Any]:
 
 def _prepared_tool_observations(run_path: Path) -> dict[str, dict[str, Any]]:
     observations: dict[str, dict[str, Any]] = {}
+    source_events = _tool_observation_source_events(run_path)
     for prepared_ref in _prepared_message_artifacts(run_path):
         payload = _read_artifact_json(run_path, prepared_ref)
         state_ref = payload.get("content_replacement_state_ref")
+        prepared_sha = prepared_ref.get("sha256") or sha256_file(run_path / prepared_ref["relative_path"])
         for message in payload.get("messages", []):
             if message.get("role") != "tool":
                 continue
             tool_call_id = str(message.get("tool_call_id") or "")
             if not tool_call_id or tool_call_id in observations:
                 continue
+            artifact_refs = message.get("artifact_refs", [])
             observations[tool_call_id] = {
                 "content": str(message.get("content", "")),
-                "artifact_refs": message.get("artifact_refs", []),
+                "artifact_refs": artifact_refs,
                 "context_revision": payload.get("context_revision"),
                 "prepared_messages_ref": prepared_ref,
+                "prepared_messages_sha256": prepared_sha,
+                "model_input_hash": payload.get("model_input_hash"),
                 "content_replacement_state_ref": state_ref,
+                "tool_observation_ref": (
+                    artifact_refs[0]
+                    if artifact_refs
+                    else {
+                        "kind": "trajectory_event",
+                        "event_id": source_events.get(tool_call_id),
+                    }
+                ),
+                "observation_source_event_ref": source_events.get(tool_call_id),
+                "observation_matches_prepared_messages": True,
                 "context_replacement": bool(message.get("context_replacement", False)),
             }
     return observations
+
+
+def _v3_observation_bindings(run_path: Path) -> list[dict[str, Any]]:
+    return [
+        {
+            "tool_call_id": tool_call_id,
+            "prepared_messages_ref": observation["prepared_messages_ref"],
+            "prepared_messages_sha256": observation["prepared_messages_sha256"],
+            "model_input_hash": observation["model_input_hash"],
+            "context_revision": observation["context_revision"],
+            "content_replacement_state_ref": observation["content_replacement_state_ref"],
+            "tool_observation_ref": observation["tool_observation_ref"],
+            "observation_source_event_ref": observation["observation_source_event_ref"],
+            "observation_matches_prepared_messages": observation["observation_matches_prepared_messages"],
+            "context_replacement": observation["context_replacement"],
+        }
+        for tool_call_id, observation in sorted(_prepared_tool_observations(run_path).items())
+    ]
+
+
+def _tool_observation_source_events(run_path: Path) -> dict[str, str]:
+    return {
+        str(event.get("data", {}).get("tool_call_id")): str(event.get("event_id"))
+        for event in read_jsonl(run_path / "events.jsonl")
+        if event.get("event_type")
+        in {"tool_completed", "tool_denied", "tool_failed", "tool_timeout", "tool_interrupted"}
+        and event.get("data", {}).get("tool_call_id")
+    }
 
 
 def _prepared_message_artifacts(run_path: Path) -> list[dict[str, Any]]:

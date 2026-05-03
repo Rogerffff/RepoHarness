@@ -68,7 +68,7 @@ class ContextBuilder:
                 "issue_statement": visible_task["issue_statement"],
                 "expected_files": visible_task.get("expected_files", []),
             },
-            "workspace_root": workspace.workspace_path,
+            "workspace_root": "<REDACTED_LOCAL_PATH>",
             "language": _language_for_task(task),
             "test_command": resolved_verifier_plan.verifier_config.test_command,
             "allowed_tools": allowed_tools,

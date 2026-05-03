@@ -1,0 +1,22 @@
+run_id_prefix: v3_stage_11_export_audit
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+model:
+  provider: replay
+  model_id: replay-script-v0
+  replay_script_path: tests/fixtures/replays/task_001_failure.yaml
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  test_feedback_policy: structured_public_feedback
+  feedback_tests_passed_policy: require_model_final
+  max_turns: 8
+  max_tool_calls: 20
+  max_test_runs: 4
+workspace:
+  output_dir: runs/v3-stage-11-preference-inputs
+  keep_workspace: true
+  default_command_timeout_sec: 60
+evaluation:
+  final_verifier_mode: strict_patch_replay

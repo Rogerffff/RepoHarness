@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from repo_harness.export.schemas import CompareScope, ExportPolicy, PairingPolicy
+from repo_harness.schema_base import stable_hash
+from repo_harness.trajectory import read_jsonl
 from repo_harness.trajectory import verify_artifact_manifest
 
 OPTIONAL_COMPARE_FIELDS = {"source_archive_sha256"}
@@ -131,6 +133,15 @@ def _candidate_from_run(run_path: Path, *, export_policy: ExportPolicy) -> PairC
             "tool_budget": facts.get("tool_budget"),
             "test_budget": facts.get("test_budget"),
             "task_timeout": facts.get("task_timeout"),
+            "docker_backend": facts.get("docker_backend"),
+            "source_tree_hash": facts.get("source_tree_hash"),
+            "tool_contract_snapshot_hash": facts.get("tool_contract_snapshot_hash"),
+            "permission_policy_snapshot_hash": facts.get("permission_policy_snapshot_hash"),
+            "hook_policy_snapshot_state": facts.get("hook_policy_snapshot_state"),
+            "mcp_policy_snapshot_state": facts.get("mcp_policy_snapshot_state"),
+            "context_revision": facts.get("context_revision"),
+            "source_materialization_ref": facts.get("source_materialization_ref"),
+            "verifier_plan_ref": facts.get("verifier_plan_ref"),
             "reward": reward.get("final_reward"),
             "run_outcome": metrics.get("run_outcome"),
             "final_verifier_status": metrics.get("final_verifier_status"),
@@ -151,6 +162,9 @@ def _compare_facts(
     execution_mode = workspace_backend.get("execution_mode", {})
     source_checkout = workspace_execution.get("source_checkout", {})
     tool_protocol = config.get("tool_protocol", {})
+    backend_name = execution_mode.get("resolved_execution_mode") or workspace_backend.get("backend")
+    source_tree_hash = source_checkout.get("source_tree_hash") or config.get("source_tree_hash")
+    tool_schema_hash = tool_protocol.get("tool_schema_snapshot_sha256")
     return {
         "task_id": config.get("task_id") or baseline.get("task_id"),
         "task_version": config.get("task_version"),
@@ -186,6 +200,26 @@ def _compare_facts(
         "tool_budget": config.get("max_tool_calls"),
         "test_budget": config.get("max_test_runs"),
         "task_timeout": config.get("task_timeout_sec"),
+        "docker_backend": backend_name or "local_process",
+        "source_tree_hash": source_tree_hash or "unknown_source_tree",
+        "tool_contract_snapshot_hash": config.get("tool_contract_snapshot_sha256") or tool_schema_hash,
+        "permission_policy_snapshot_hash": stable_hash(
+            {
+                "permission_mode": config.get("permission_mode"),
+                "permission_policy_version": config.get("permission_policy_version"),
+            }
+        ),
+        "hook_policy_snapshot_state": config.get("hook_policy_snapshot_state") or "hooks_disabled",
+        "mcp_policy_snapshot_state": config.get("mcp_policy_snapshot_state") or "mcp_disabled_frozen",
+        "context_revision": _first_context_revision(run_path),
+        "source_materialization_ref": stable_hash(
+            {
+                "source_type": source_checkout.get("source_type"),
+                "source_tree_hash": source_tree_hash,
+                "materialization_policy_version": source_checkout.get("materialization_policy_version"),
+            }
+        ),
+        "verifier_plan_ref": _verifier_plan_compare_ref(run_path),
     }
 
 
@@ -265,7 +299,13 @@ def _compare_blockers(
 
 
 def _field_blocked_reason(field_name: str) -> str:
-    if field_name in {"tool_schema_snapshot_hash", "tool_order", "tool_parser_version", "tool_result_format_version"}:
+    if field_name in {
+        "tool_schema_snapshot_hash",
+        "tool_contract_snapshot_hash",
+        "tool_order",
+        "tool_parser_version",
+        "tool_result_format_version",
+    }:
         return "tool_schema_snapshot_mismatch"
     if field_name in {"context_policy_version", "prompt_template_version"}:
         return "context_policy_mismatch"
@@ -311,6 +351,32 @@ def _dependency_state_policy(workspace_execution: dict[str, Any]) -> str | None:
     if setup_hash:
         return f"setup_artifact_hash:{setup_hash}"
     return None
+
+
+def _first_context_revision(run_path: Path) -> int:
+    for event in read_jsonl(run_path / "events.jsonl"):
+        if event.get("event_type") == "context_prepared":
+            revision = event.get("data", {}).get("context_revision")
+            if isinstance(revision, int):
+                return revision
+    return 0
+
+
+def _verifier_plan_compare_ref(run_path: Path) -> str:
+    payload = _read_json_if_exists(run_path / "resolved_verifier_plan.json")
+    verifier_config = payload.get("verifier_config", {})
+    if not verifier_config:
+        return "missing_verifier_plan"
+    return stable_hash(
+        {
+            "acceptance_policy_version": payload.get("acceptance_policy_version"),
+            "initial_fail_to_pass_tests": payload.get("initial_fail_to_pass_tests", []),
+            "initial_pass_to_pass_tests": payload.get("initial_pass_to_pass_tests", []),
+            "flaky_tests": payload.get("flaky_tests", []),
+            "parser_confidence": payload.get("parser_confidence"),
+            "verifier_config": verifier_config,
+        }
+    )
 
 
 def _reward_score(candidate: PairCandidate) -> float:

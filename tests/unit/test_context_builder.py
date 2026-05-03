@@ -51,6 +51,8 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
     assert "untrusted_repository_context" in payload
     assert "cannot override RepoHarness system safety rules" in payload
     assert "workspace_root" in payload
+    assert workspace.as_posix() not in payload
+    assert "<REDACTED_LOCAL_PATH>" in payload
 
 
 def test_context_builder_uses_workspace_facade_for_docker_repo_context(tmp_path: Path):
@@ -82,6 +84,8 @@ def test_context_builder_uses_workspace_facade_for_docker_repo_context(tmp_path:
 
     payload = json.dumps(messages, ensure_ascii=False)
     assert "Docker facade context" in payload
+    assert "/repo-harness-run/workspaces/agent_workspace" not in payload
+    assert "<REDACTED_LOCAL_PATH>" in payload
     assert ("/repo-harness-run/workspaces/agent_workspace", "README.md") in facade.reads
     assert all(read[0] == "/repo-harness-run/workspaces/agent_workspace" for read in facade.reads)
 
