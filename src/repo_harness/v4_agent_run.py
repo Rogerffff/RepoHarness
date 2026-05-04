@@ -117,7 +117,7 @@ def build_v4_agent_run_integration(
         run_records.append(run_build["run_record"])
         prepared_bindings.append(run_build["prepared_binding"])
         all_artifact_refs.extend(run_build["artifact_refs"])
-        if spec["status"] == "completed":
+        if spec["status"] in {"completed", "interrupted"}:
             final_verifier_records.append(run_build["final_verifier_record"])
         else:
             recovery_records.append(run_build["recovery_record"])
@@ -490,6 +490,30 @@ def _write_run_directory(
         }
         _write_json(run_dir / "interrupted_run_facts.json", facts)
         artifacts.append(_artifact_entry(root, run_dir / "interrupted_run_facts.json", "interrupted_run_facts", model_visible=False))
+        final_verifier_event = {
+            "schema_version": EVENT_RECORD_VERSION,
+            "event_id": f"event-{spec['run_id']}-004",
+            "offset": 3,
+            "run_id": spec["run_id"],
+            "event_type": "final_verifier",
+            "record_id": f"event-record-{spec['run_id']}-004",
+            "after_agent_stop_event_ref": terminal_event["event_id"],
+            "formal_verifier_mode": "strict_clean_checkout",
+            "final_verifier_result": "rejected",
+            "result_source": "formal_final_verifier",
+            "model_visible": False,
+        }
+        events.append(final_verifier_event)
+        final_verifier_record = {
+            "run_id": spec["run_id"],
+            "agent_stop_event_ref": terminal_event["event_id"],
+            "final_verifier_event_ref": final_verifier_event["event_id"],
+            "after_agent_stop": True,
+            "formal_verifier_mode": "strict_clean_checkout",
+            "final_verifier_result": "rejected",
+            "final_verifier_result_model_visible": False,
+            "authority": "final_verifier",
+        }
         recovery_record = _recovery_record(spec, run_dir, root, "interrupted_run_facts.json")
     else:
         facts = {

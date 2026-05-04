@@ -7,6 +7,7 @@ from repo_harness.cli.main import main
 from repo_harness.errors import ConfigError
 from repo_harness.v4_agent_run import build_v4_agent_run_integration
 from repo_harness.v4_export_quality import build_v4_export_quality, inspect_v4_export_quality
+from repo_harness.v4_visibility import v4_contamination_denylist_sha256
 from tests.unit.test_v4_agent_run import _external_inputs
 
 
@@ -15,6 +16,32 @@ def test_v4_export_quality_build_and_inspect_pass(tmp_path: Path) -> None:
 
     assert "complete" in inspect_v4_export_quality(export_dir, assert_complete=True)
     assert main(["inspect-v4-export-quality", str(export_dir), "--assert-complete"]) == 0
+
+
+def test_v4_export_quality_uses_unified_contamination_denylist_sha256(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    manifest = export_dir / "trajectory_quality_manifest.json"
+    payload = _read_json(manifest)
+    assert payload["denylist_sha256"] == v4_contamination_denylist_sha256()
+
+    payload["denylist_sha256"] = "726436df4d92301a909a7951cf900ec0e6a45a7fb0a19077b87fe20da7afde99"
+    _write_json(manifest, payload)
+
+    with pytest.raises(ConfigError, match="denylist_sha256"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_unbound_final_verifier_result(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][1]["run_id"] = "v4-run-crashed-001"
+    payload["samples"][1]["final_verifier_result"] = "rejected"
+    payload["samples"][1]["final_verifier_result_ref"] = "audit-only:final-verifier:v4-run-crashed-001:rejected"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="final_verifier_boundary_report"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
 
 
 def test_v4_export_quality_rejects_reward_scalar_in_trainable_target(tmp_path: Path) -> None:
@@ -118,6 +145,18 @@ def test_v4_export_quality_rejects_reward_metadata_or_structured_reward_model_vi
     _write_json(reward, payload)
 
     with pytest.raises(ConfigError, match="model_visible=false"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_reward_fields_outside_allowlist(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["reward_metadata"]["normalizer_debug_note"] = "audit-only extra field"
+    payload["reward_records"][0]["structured_reward"]["normalizer_debug_note"] = "audit-only extra field"
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="allowlist"):
         inspect_v4_export_quality(export_dir, assert_complete=True)
 
 
@@ -230,6 +269,41 @@ def test_v4_export_quality_rejects_invalid_trainable_preference_pair(tmp_path: P
     _write_json(report, payload)
 
     with pytest.raises(ConfigError, match="chosen_sample_id|rejected_sample_id|baseline_blocked|compare_scope"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "task_id",
+        "source_tree_hash",
+        "baseline_verifier_plan_hash",
+        "final_verifier_plan_hash",
+        "tool_schema_snapshot_hash",
+        "context_strategy_id",
+    ],
+)
+def test_v4_export_quality_rejects_preference_pair_compare_fact_mismatch(tmp_path: Path, field: str) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][1][field] = f"mismatch-{field}"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="可比较字段"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_preference_pair_without_comparable_formal_outcomes(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][1]["final_verifier_result"] = "accepted"
+    payload["samples"][1]["final_verifier_result_ref"] = "audit-only:final-verifier:v4-run-interrupted-001:accepted"
+    payload["samples"][1]["outcome_tier"] = "verifier_accepted"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="rejected_sample_id|final_verifier_boundary_report"):
         inspect_v4_export_quality(export_dir, assert_complete=True)
 
 

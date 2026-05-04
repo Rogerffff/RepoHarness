@@ -16,7 +16,7 @@ from repo_harness.schema_versions import (
     V4_EXPORT_QUALITY_MANIFEST_VERSION,
     V4_TRAJECTORY_STORE_INTEGRITY_REPORT_VERSION,
 )
-from repo_harness.v4_visibility import V4ContaminationDenylist
+from repo_harness.v4_visibility import V4ContaminationDenylist, v4_contamination_denylist_sha256
 
 
 SAMPLE_TIER_MANIFEST_VERSION = "repo_harness_v4_sample_tier_manifest_v0"
@@ -78,6 +78,47 @@ OUTCOME_TO_FINAL_VERIFIER = {
     "verifier_rejected": "rejected",
     "verifier_inconclusive": "inconclusive",
 }
+COMPARABLE_SAMPLE_FIELDS = (
+    "task_id",
+    "task_family",
+    "source_tree_hash",
+    "baseline_verifier_plan_hash",
+    "final_verifier_plan_hash",
+    "tool_schema_snapshot_hash",
+    "context_strategy_id",
+)
+REWARD_AUDIT_ALLOWED_FIELD_PATHS = (
+    "$.schema_version",
+    "$.generated_at",
+    "$.reward_metadata_visibility",
+    "$.reward_allowlist_policy_version",
+    "$.reward_metadata_allowed_field_paths",
+    "$.reward_metadata_allowed_field_paths[*]",
+    "$.final_verifier_authority_preserved",
+    "$.reward_records",
+    "$.reward_records[*].sample_id",
+    "$.reward_records[*].final_verifier_result",
+    "$.reward_records[*].final_verifier_result_ref",
+    "$.reward_records[*].reward_audit_outcome",
+    "$.reward_records[*].structured_reward",
+    "$.reward_records[*].structured_reward.model_visible",
+    "$.reward_records[*].structured_reward.value",
+    "$.reward_records[*].reward_metadata",
+    "$.reward_records[*].reward_metadata.reward_version",
+    "$.reward_records[*].reward_metadata.formula",
+    "$.reward_records[*].reward_metadata.components",
+    "$.reward_records[*].reward_metadata.components[*].name",
+    "$.reward_records[*].reward_metadata.components[*].weight",
+    "$.reward_records[*].reward_metadata.sources",
+    "$.reward_records[*].reward_metadata.sources[*].source",
+    "$.reward_records[*].reward_metadata.sources[*].model_visible",
+    "$.reward_records[*].reward_metadata.invalid_for_training",
+    "$.reward_records[*].reward_metadata.invalid_reason",
+    "$.reward_records[*].reward_metadata.acceptance_policy_version",
+    "$.reward_records[*].reward_metadata.reward_clip_range",
+    "$.reward_records[*].reward_metadata.reward_clip_range[*]",
+    "$.reward_records[*].reward_metadata.model_visible",
+)
 
 
 def build_v4_export_quality(
@@ -95,19 +136,31 @@ def build_v4_export_quality(
             raise ConfigError("V4 stage 6 输出已存在，不能覆盖旧 evidence：" + ", ".join(str(path) for path in existing))
     output_path.mkdir(parents=True, exist_ok=True)
     trajectory_ref = _trajectory_ref(agent_run_integration)
-    denylist = V4ContaminationDenylist()
-    denylist_payload = denylist.model_dump(mode="json")
-    denylist_sha = _sha256_payload(denylist_payload)
+    final_verifier_boundary_ref = _final_verifier_boundary_ref(agent_run_integration)
+    final_verifier_records = _load_final_verifier_records(final_verifier_boundary_ref)
+    _require_final_verifier_record(final_verifier_records, "v4-run-completed-001", "accepted")
+    _require_final_verifier_record(final_verifier_records, "v4-run-interrupted-001", "rejected")
+    denylist_sha = v4_contamination_denylist_sha256()
+    comparable_scope = {
+        "task_id": "v4_go_cobra_completion_args",
+        "task_family": "pr_issue_constructed_real_repository",
+        "source_tree_hash": _sha256_payload({"source": "v4_go_cobra_completion_args", "revision": "fixed"}),
+        "baseline_verifier_plan_hash": _sha256_payload({"baseline_verifier": "v4_go_cobra_completion_args"}),
+        "final_verifier_plan_hash": _sha256_payload({"final_verifier": "v4_go_cobra_completion_args", "mode": "strict_clean_checkout"}),
+        "tool_schema_snapshot_hash": "stage5-bound-tool-schema",
+        "context_strategy_id": "repo_harness_v4_default_context_strategy_v0",
+    }
 
     fixture_refs = _write_export_fixtures(output_path)
     sample_tier_path = output_path / "sample_tier_manifest.json"
     sample_records = [
         {
             "sample_id": "sample-accepted-trainable-sft",
-            "task_id": "v4_go_cobra_completion_args",
+            **comparable_scope,
             "run_id": "v4-run-completed-001",
             "outcome_tier": "verifier_accepted",
             "final_verifier_result": "accepted",
+            "final_verifier_result_ref": _final_verifier_ref("v4-run-completed-001", "accepted"),
             "trainability_status": "trainable",
             "trainable_payload": {
                 "format": "sft",
@@ -119,20 +172,22 @@ def build_v4_export_quality(
         },
         {
             "sample_id": "sample-rejected-diagnostic-failure",
-            "task_id": "v4_py_click_help_hint_shadowing",
+            **comparable_scope,
             "run_id": "v4-run-interrupted-001",
             "outcome_tier": "verifier_rejected",
             "final_verifier_result": "rejected",
+            "final_verifier_result_ref": _final_verifier_ref("v4-run-interrupted-001", "rejected"),
             "trainability_status": "diagnostic_only",
             "invalid_for_training": True,
             "invalid_reason": "final_verifier_rejected",
         },
         {
             "sample_id": "sample-accepted-diagnostic-excessive-patch",
-            "task_id": "v4_go_testify_numeric_equal_values",
+            **comparable_scope,
             "run_id": "v4-run-completed-001",
             "outcome_tier": "verifier_accepted",
             "final_verifier_result": "accepted",
+            "final_verifier_result_ref": _final_verifier_ref("v4-run-completed-001", "accepted"),
             "trainability_status": "diagnostic_only",
             "invalid_for_training": True,
             "invalid_reason": "excessive_patch_requires_manual_review",
@@ -156,12 +211,12 @@ def build_v4_export_quality(
             "failure_id": "failure-v4-py-click-help-hint-shadowing-turn-002",
             "sample_id": "sample-rejected-diagnostic-failure",
             "run_id": "v4-run-interrupted-001",
-            "task_id": "v4_py_click_help_hint_shadowing",
+            "task_id": comparable_scope["task_id"],
             "failure_category": "incorrect_patch_behavior",
             "turn_id": "turn-002",
             "tool_call_id": "tool-call-v4-run-interrupted-001",
             "workspace_state_ref": "workspace-state:v4-run-interrupted-001:after-tool-result",
-            "final_verifier_result_ref": "audit-only:final-verifier:v4-run-interrupted-001",
+            "final_verifier_result_ref": _final_verifier_ref("v4-run-interrupted-001", "rejected"),
             "failure_source_component": "agent_patch_generation",
             "evidence_ref": {"kind": "artifact_ref", "path": "runs/v4-run-interrupted-001/events.jsonl"},
             "trainability_status": "diagnostic_only",
@@ -198,6 +253,7 @@ def build_v4_export_quality(
         _reward_record(
             sample_id="sample-accepted-trainable-sft",
             final_verifier_result="accepted",
+            final_verifier_result_ref=_final_verifier_ref("v4-run-completed-001", "accepted"),
             reward_audit_outcome="verifier_accepted",
             invalid_for_training=False,
             invalid_reason=None,
@@ -205,6 +261,7 @@ def build_v4_export_quality(
         _reward_record(
             sample_id="sample-rejected-diagnostic-failure",
             final_verifier_result="rejected",
+            final_verifier_result_ref=_final_verifier_ref("v4-run-interrupted-001", "rejected"),
             reward_audit_outcome="verifier_rejected",
             invalid_for_training=True,
             invalid_reason="final_verifier_rejected",
@@ -218,8 +275,7 @@ def build_v4_export_quality(
             "reward_metadata_visibility": "audit_only_model_visible_false",
             "reward_allowlist_policy_version": V4_ALLOWLIST_POLICY_VERSION,
             "reward_metadata_allowed_field_paths": [
-                "$.reward_records[*].reward_metadata",
-                "$.reward_records[*].structured_reward",
+                *REWARD_AUDIT_ALLOWED_FIELD_PATHS,
             ],
             "final_verifier_authority_preserved": True,
             "reward_records": reward_records,
@@ -308,9 +364,10 @@ def build_v4_export_quality(
                     "chosen_sample_id": "sample-accepted-trainable-sft",
                     "rejected_sample_id": "sample-rejected-diagnostic-failure",
                     "compare_scope": {
-                        "task_family": "pr_issue_constructed_real_repository",
-                        "final_verifier_mode": "strict_clean_checkout",
-                        "tool_schema_snapshot_hash": "stage5-bound-tool-schema",
+                        **comparable_scope,
+                        "chosen_outcome_tier": "verifier_accepted",
+                        "rejected_outcome_tier": "verifier_rejected",
+                        "comparable_outcome_policy": "accepted_vs_rejected_same_task_and_verifier_plan",
                     },
                     "trainability_status": "trainable",
                     "baseline_blocked": False,
@@ -348,6 +405,7 @@ def build_v4_export_quality(
             "denylist_sha256": denylist_sha,
             "allowlist_policy_version": V4_ALLOWLIST_POLICY_VERSION,
             "trajectory_store_ref": trajectory_ref,
+            "final_verifier_boundary_ref": final_verifier_boundary_ref,
             "sample_tier_manifest_ref": _file_ref(sample_tier_path, output_path),
             "failure_dataset_ref": _file_ref(failure_dataset_path, output_path),
             "packing_manifest_ref": _file_ref(packing_path, output_path),
@@ -383,25 +441,25 @@ def inspect_v4_export_quality(path: str | Path, *, assert_complete: bool = False
     _expect(overfitting, "schema_version", TEST_OVERFITTING_RISK_AUDIT_REPORT_VERSION, failures, "test_overfitting_risk_audit_report")
     _expect(preference, "schema_version", PREFERENCE_PAIR_TRAINABILITY_REPORT_VERSION, failures, "preference_pair_trainability_report")
     _expect(blocked, "schema_version", BLOCKED_PAIR_REPORT_VERSION, failures, "blocked_pair_report")
-    _inspect_manifest_refs(manifest, target, failures)
-    _inspect_sample_tiers(sample_tier, failures)
-    _inspect_failure_dataset(failure_records, failures)
+    final_verifier_records = _inspect_manifest_refs(manifest, target, failures)
+    sample_records = _inspect_sample_tiers(sample_tier, final_verifier_records, failures)
+    _inspect_failure_dataset(failure_records, sample_records, final_verifier_records, failures)
     _inspect_packing(packing, failures)
-    _inspect_reward_audit(reward, failures)
+    _inspect_reward_audit(reward, sample_records, final_verifier_records, failures)
     _inspect_reward_hacking(hacking, failures)
     _inspect_patch_quality(patch_quality, failures)
     _inspect_test_overfitting(overfitting, failures)
-    _inspect_preference_pairs(preference, blocked, failures)
+    _inspect_preference_pairs(preference, blocked, sample_records, failures)
     _inspect_export_fixtures(manifest, target, failures)
     return _inspect_result("inspect-v4-export-quality", target, failures, assert_complete, "complete")
 
 
-def _inspect_manifest_refs(manifest: dict[str, Any], root: Path, failures: list[str]) -> None:
+def _inspect_manifest_refs(manifest: dict[str, Any], root: Path, failures: list[str]) -> dict[tuple[str, str], dict[str, Any]]:
     if manifest.get("final_verifier_is_authority") is not True:
         failures.append("trajectory_quality_manifest 必须声明 final verifier 是 authority。")
     if manifest.get("trainable_payload_contamination_status") != "clean":
         failures.append("trajectory_quality_manifest trainable payload contamination 必须 clean。")
-    expected_denylist_sha = _sha256_payload(V4ContaminationDenylist().model_dump(mode="json"))
+    expected_denylist_sha = v4_contamination_denylist_sha256()
     if manifest.get("denylist_sha256") != expected_denylist_sha:
         failures.append("trajectory_quality_manifest denylist_sha256 不匹配统一 V4 denylist。")
     trajectory_ref = manifest.get("trajectory_store_ref")
@@ -409,6 +467,11 @@ def _inspect_manifest_refs(manifest: dict[str, Any], root: Path, failures: list[
     if trajectory_path:
         payload = _read_json_for_inspect(trajectory_path, failures)
         _expect(payload, "schema_version", V4_TRAJECTORY_STORE_INTEGRITY_REPORT_VERSION, failures, "trajectory_store_ref")
+    final_boundary_records: dict[tuple[str, str], dict[str, Any]] = {}
+    final_boundary_path = _inspect_external_file_ref(manifest.get("final_verifier_boundary_ref"), failures, label="final_verifier_boundary_ref")
+    if final_boundary_path:
+        final_boundary_payload = _read_json_for_inspect(final_boundary_path, failures)
+        final_boundary_records = _final_verifier_record_map(final_boundary_payload, failures, final_boundary_path.parent)
     for field in (
         "sample_tier_manifest_ref",
         "failure_dataset_ref",
@@ -416,27 +479,127 @@ def _inspect_manifest_refs(manifest: dict[str, Any], root: Path, failures: list[
         "reward_audit_report_ref",
     ):
         _inspect_file_ref(manifest.get(field), root, failures, label=field)
+    return final_boundary_records
 
 
-def _inspect_sample_tiers(sample_tier: dict[str, Any], failures: list[str]) -> None:
+def _final_verifier_record_map(
+    payload: dict[str, Any],
+    failures: list[str],
+    root: Path,
+) -> dict[tuple[str, str], dict[str, Any]]:
+    records: dict[tuple[str, str], dict[str, Any]] = {}
+    if payload.get("schema_version") != "repo_harness_v4_final_verifier_boundary_report_v0":
+        failures.append("final_verifier_boundary_report schema_version 不匹配。")
+    if payload.get("formal_final_verifier_authority") is not True:
+        failures.append("final_verifier_boundary_report 必须声明 final verifier authority。")
+    for index, record in enumerate(payload.get("final_verifier_records") or [], start=1):
+        run_id = str(record.get("run_id") or "")
+        result = str(record.get("final_verifier_result") or "")
+        if not run_id or result not in {"accepted", "rejected", "inconclusive"}:
+            failures.append(f"final_verifier_records[{index}] 缺少 run_id 或合法 final_verifier_result。")
+            continue
+        if record.get("after_agent_stop") is not True:
+            failures.append(f"final_verifier_records[{index}] 必须 after_agent_stop=true。")
+        if record.get("authority") != "final_verifier":
+            failures.append(f"final_verifier_records[{index}] authority 必须是 final_verifier。")
+        if record.get("final_verifier_result_model_visible") is not False:
+            failures.append(f"final_verifier_records[{index}] final verifier result 必须 model_visible=false。")
+        if record.get("formal_verifier_mode") != "strict_clean_checkout":
+            failures.append(f"final_verifier_records[{index}] formal_verifier_mode 必须是 strict_clean_checkout。")
+        if not record.get("final_verifier_event_ref"):
+            failures.append(f"final_verifier_records[{index}] 缺少 final_verifier_event_ref。")
+        events_path = root / "runs" / run_id / "events.jsonl"
+        if events_path.exists():
+            events = _read_jsonl_for_inspect(events_path, failures)
+            event = next((event for event in events if event.get("event_id") == record.get("final_verifier_event_ref")), None)
+            if event is None:
+                failures.append(f"final_verifier_records[{index}] final_verifier_event_ref 不存在于 events.jsonl。")
+            elif event.get("event_type") != "final_verifier" or event.get("model_visible") is not False:
+                failures.append(f"final_verifier_records[{index}] final verifier event 必须是非模型可见 final_verifier。")
+        else:
+            failures.append(f"final_verifier_records[{index}] 对应 run events.jsonl 不存在。")
+        records[(run_id, result)] = record
+    return records
+
+
+def _inspect_sample_final_verifier_binding(
+    sample: dict[str, Any],
+    final_verifier_records: dict[tuple[str, str], dict[str, Any]],
+    failures: list[str],
+    label: str,
+) -> None:
+    run_id = str(sample.get("run_id") or "")
+    result = str(sample.get("final_verifier_result") or "")
+    expected_ref = _final_verifier_ref(run_id, result) if run_id and result else ""
+    if sample.get("final_verifier_result_ref") != expected_ref:
+        failures.append(f"{label} final_verifier_result_ref 与 run_id/result 不一致。")
+    record = final_verifier_records.get((run_id, result))
+    if record is None:
+        failures.append(f"{label} final_verifier_result 没有关联 final_verifier_boundary_report 记录。")
+
+
+def _inspect_reward_allowed_paths(payload: dict[str, Any], failures: list[str]) -> None:
+    allowed = set(REWARD_AUDIT_ALLOWED_FIELD_PATHS)
+    for path in _json_leaf_paths(payload):
+        if path not in allowed:
+            failures.append(f"reward_audit_report 字段路径未列入 allowlist：{path}")
+
+
+def _json_leaf_paths(value: Any, path: str = "$") -> list[str]:
+    if isinstance(value, dict):
+        paths: list[str] = []
+        for key, child in value.items():
+            paths.extend(_json_leaf_paths(child, f"{path}.{key}"))
+        return paths
+    if isinstance(value, list):
+        paths = [path]
+        for child in value:
+            paths.extend(_json_leaf_paths(child, f"{path}[*]"))
+        return paths
+    return [path]
+
+
+def _inspect_sample_tiers(
+    sample_tier: dict[str, Any],
+    final_verifier_records: dict[tuple[str, str], dict[str, Any]],
+    failures: list[str],
+) -> dict[str, dict[str, Any]]:
     if sample_tier.get("outcome_tier_distinct_from_trainability_status") is not True:
         failures.append("sample_tier_manifest 必须区分 outcome tier 和 trainability status。")
+    samples_by_id: dict[str, dict[str, Any]] = {}
     for index, sample in enumerate(sample_tier.get("samples") or [], start=1):
+        sample_id = str(sample.get("sample_id") or "")
+        if not sample_id:
+            failures.append(f"samples[{index}] 缺少 sample_id。")
+        elif sample_id in samples_by_id:
+            failures.append(f"samples[{index}] sample_id 重复。")
+        else:
+            samples_by_id[sample_id] = sample
         outcome = sample.get("outcome_tier")
         trainability = sample.get("trainability_status")
+        for field in COMPARABLE_SAMPLE_FIELDS:
+            if not sample.get(field):
+                failures.append(f"samples[{index}] 缺少可比较样本字段：{field}。")
         if outcome in {"trainable", "diagnostic_only", "invalid"}:
             failures.append(f"samples[{index}] outcome_tier 与 trainability_status 混用。")
         if trainability in {"verifier_accepted", "verifier_rejected"}:
             failures.append(f"samples[{index}] trainability_status 与 outcome_tier 混用。")
         if outcome in OUTCOME_TO_FINAL_VERIFIER and sample.get("final_verifier_result") != OUTCOME_TO_FINAL_VERIFIER[outcome]:
             failures.append(f"samples[{index}] outcome_tier 必须与 final_verifier_result 一致。")
+        _inspect_sample_final_verifier_binding(sample, final_verifier_records, failures, f"samples[{index}]")
         if trainability == "trainable" and sample.get("final_verifier_result") != "accepted":
             failures.append(f"samples[{index}] trainable 样本必须来自 final verifier accepted。")
         if trainability == "trainable":
             _inspect_trainable_payload_clean(sample.get("trainable_payload"), failures, f"samples[{index}].trainable_payload")
+    return samples_by_id
 
 
-def _inspect_failure_dataset(records: list[dict[str, Any]], failures: list[str]) -> None:
+def _inspect_failure_dataset(
+    records: list[dict[str, Any]],
+    samples_by_id: dict[str, dict[str, Any]],
+    final_verifier_records: dict[tuple[str, str], dict[str, Any]],
+    failures: list[str],
+) -> None:
     for index, record in enumerate(records, start=1):
         _expect(record, "schema_version", FAILURE_DATASET_ENTRY_VERSION, failures, f"failure_dataset[{index}]")
         for field in FAILURE_DATASET_REQUIRED_FIELDS:
@@ -444,6 +607,22 @@ def _inspect_failure_dataset(records: list[dict[str, Any]], failures: list[str])
                 failures.append(f"failure_dataset[{index}] 缺少 {field}。")
         if record.get("trainability_status") == "trainable":
             failures.append(f"failure_dataset[{index}] failure dataset 不得标为 trainable。")
+        sample = samples_by_id.get(str(record.get("sample_id") or ""))
+        if sample is None:
+            failures.append(f"failure_dataset[{index}] sample_id 未绑定 sample tier。")
+            continue
+        if record.get("run_id") != sample.get("run_id") or record.get("task_id") != sample.get("task_id"):
+            failures.append(f"failure_dataset[{index}] run_id/task_id 必须与 sample tier 一致。")
+        _inspect_sample_final_verifier_binding(
+            {
+                "run_id": record.get("run_id"),
+                "final_verifier_result": sample.get("final_verifier_result"),
+                "final_verifier_result_ref": record.get("final_verifier_result_ref"),
+            },
+            final_verifier_records,
+            failures,
+            f"failure_dataset[{index}]",
+        )
 
 
 def _inspect_packing(packing: dict[str, Any], failures: list[str]) -> None:
@@ -454,12 +633,38 @@ def _inspect_packing(packing: dict[str, Any], failures: list[str]) -> None:
             failures.append(f"packed_samples[{index}] 缺少 sample_id 或 pack_id。")
 
 
-def _inspect_reward_audit(reward: dict[str, Any], failures: list[str]) -> None:
+def _inspect_reward_audit(
+    reward: dict[str, Any],
+    samples_by_id: dict[str, dict[str, Any]],
+    final_verifier_records: dict[tuple[str, str], dict[str, Any]],
+    failures: list[str],
+) -> None:
     if reward.get("final_verifier_authority_preserved") is not True:
         failures.append("reward_audit_report 不得覆盖 final verifier authority。")
+    if reward.get("reward_allowlist_policy_version") != V4_ALLOWLIST_POLICY_VERSION:
+        failures.append("reward_audit_report reward_allowlist_policy_version 不匹配。")
+    if reward.get("reward_metadata_allowed_field_paths") != list(REWARD_AUDIT_ALLOWED_FIELD_PATHS):
+        failures.append("reward_audit_report reward_metadata_allowed_field_paths 必须等于实现层 allowlist。")
+    _inspect_reward_allowed_paths(reward, failures)
     for index, record in enumerate(reward.get("reward_records") or [], start=1):
         metadata = record.get("reward_metadata") or {}
         structured_reward = record.get("structured_reward") or {}
+        sample = samples_by_id.get(str(record.get("sample_id") or ""))
+        if sample is None:
+            failures.append(f"reward_records[{index}] sample_id 未绑定 sample tier。")
+        else:
+            if record.get("final_verifier_result") != sample.get("final_verifier_result"):
+                failures.append(f"reward_records[{index}] final_verifier_result 必须与 sample tier 一致。")
+            _inspect_sample_final_verifier_binding(
+                {
+                    "run_id": sample.get("run_id"),
+                    "final_verifier_result": record.get("final_verifier_result"),
+                    "final_verifier_result_ref": record.get("final_verifier_result_ref"),
+                },
+                final_verifier_records,
+                failures,
+                f"reward_records[{index}]",
+            )
         for field in REWARD_METADATA_REQUIRED_FIELDS:
             if field not in metadata:
                 failures.append(f"reward_records[{index}].reward_metadata 缺少 {field}。")
@@ -508,7 +713,12 @@ def _inspect_test_overfitting(overfitting: dict[str, Any], failures: list[str]) 
                 failures.append(f"risk_records[{risk_type}] 必须 flagged=true 且 export_blocked=true。")
 
 
-def _inspect_preference_pairs(preference: dict[str, Any], blocked: dict[str, Any], failures: list[str]) -> None:
+def _inspect_preference_pairs(
+    preference: dict[str, Any],
+    blocked: dict[str, Any],
+    samples_by_id: dict[str, dict[str, Any]],
+    failures: list[str],
+) -> None:
     pair_records = preference.get("pair_records") or []
     trainable_pairs = [record for record in pair_records if record.get("trainability_status") == "trainable"]
     blocked_pairs = [record for record in pair_records if record.get("trainability_status") == "blocked"]
@@ -518,17 +728,26 @@ def _inspect_preference_pairs(preference: dict[str, Any], blocked: dict[str, Any
         failures.append("preference_pair_trainability_report blocked_pair_count 与 pair_records 不一致。")
     for index, record in enumerate(pair_records, start=1):
         if record.get("trainability_status") == "trainable":
-            if not record.get("chosen_sample_id") or not record.get("rejected_sample_id"):
+            chosen = samples_by_id.get(str(record.get("chosen_sample_id") or ""))
+            rejected = samples_by_id.get(str(record.get("rejected_sample_id") or ""))
+            if chosen is None or rejected is None:
                 failures.append(f"pair_records[{index}] trainable pair 缺少 chosen/rejected sample id。")
+                continue
             if record.get("baseline_blocked") is not False:
                 failures.append(f"pair_records[{index}] trainable pair baseline_blocked 必须为 false。")
             scope = record.get("compare_scope")
-            if not isinstance(scope, dict) or not scope.get("task_family") or not scope.get("final_verifier_mode") or not scope.get("tool_schema_snapshot_hash"):
+            if not isinstance(scope, dict):
                 failures.append(f"pair_records[{index}] trainable pair 缺少 compare_scope。")
-            if record.get("chosen_sample_id") != "sample-accepted-trainable-sft":
+                scope = {}
+            for field in COMPARABLE_SAMPLE_FIELDS:
+                if chosen.get(field) != rejected.get(field) or scope.get(field) != chosen.get(field):
+                    failures.append(f"pair_records[{index}] trainable pair 必须共享可比较字段：{field}。")
+            if chosen.get("final_verifier_result") != "accepted" or chosen.get("trainability_status") != "trainable":
                 failures.append(f"pair_records[{index}] chosen_sample_id 必须引用 final verifier accepted trainable 样本。")
-            if record.get("rejected_sample_id") != "sample-rejected-diagnostic-failure":
+            if rejected.get("final_verifier_result") not in {"rejected", "inconclusive"} or rejected.get("trainability_status") == "trainable":
                 failures.append(f"pair_records[{index}] rejected_sample_id 必须引用 final verifier rejected diagnostic 样本。")
+            if scope.get("chosen_outcome_tier") != chosen.get("outcome_tier") or scope.get("rejected_outcome_tier") != rejected.get("outcome_tier"):
+                failures.append(f"pair_records[{index}] compare_scope outcome 必须与 chosen/rejected 样本一致。")
         if record.get("trainability_status") == "blocked" and not record.get("blocked_reason"):
             failures.append(f"pair_records[{index}] blocked pair 缺少 blocked_reason。")
     if preference.get("trainable_preference_pair_count", 0) < 1 and blocked.get("warning") is not True:
@@ -631,6 +850,7 @@ def _reward_record(
     *,
     sample_id: str,
     final_verifier_result: str,
+    final_verifier_result_ref: str,
     reward_audit_outcome: str,
     invalid_for_training: bool,
     invalid_reason: str | None,
@@ -638,6 +858,7 @@ def _reward_record(
     return {
         "sample_id": sample_id,
         "final_verifier_result": final_verifier_result,
+        "final_verifier_result_ref": final_verifier_result_ref,
         "reward_audit_outcome": reward_audit_outcome,
         "structured_reward": {"model_visible": False, "value": 1.0 if final_verifier_result == "accepted" else 0.0},
         "reward_metadata": {
@@ -665,6 +886,46 @@ def _trajectory_ref(agent_run_integration: str | Path) -> dict[str, Any]:
         "sha256": sha256_file(path),
         "size_bytes": path.stat().st_size,
     }
+
+
+def _final_verifier_boundary_ref(agent_run_integration: str | Path) -> dict[str, Any]:
+    path = Path(agent_run_integration)
+    if path.is_dir():
+        path = path / "final_verifier_boundary_report.json"
+    else:
+        path = path.parent / "final_verifier_boundary_report.json"
+    if not path.exists():
+        raise ConfigError(f"Stage 6 必需 final verifier boundary 输入不存在：{path}")
+    return {
+        "path": path.resolve().as_posix(),
+        "sha256": sha256_file(path),
+        "size_bytes": path.stat().st_size,
+    }
+
+
+def _final_verifier_ref(run_id: str, final_verifier_result: str) -> str:
+    return f"audit-only:final-verifier:{run_id}:{final_verifier_result}"
+
+
+def _load_final_verifier_records(ref: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+    failures: list[str] = []
+    path = _inspect_external_file_ref(ref, failures, label="final_verifier_boundary_ref")
+    if path is None:
+        raise ConfigError("; ".join(failures))
+    payload = _read_json_for_inspect(path, failures)
+    records = _final_verifier_record_map(payload, failures, path.parent)
+    if failures:
+        raise ConfigError("; ".join(failures))
+    return records
+
+
+def _require_final_verifier_record(
+    records: dict[tuple[str, str], dict[str, Any]],
+    run_id: str,
+    final_verifier_result: str,
+) -> None:
+    if (run_id, final_verifier_result) not in records:
+        raise ConfigError(f"缺少正式 final verifier 边界记录：{run_id}/{final_verifier_result}")
 
 
 def _inspect_external_file_ref(ref: Any, failures: list[str], *, label: str) -> Path | None:
