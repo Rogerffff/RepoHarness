@@ -11,12 +11,14 @@ from repo_harness.schema_versions import (
     V4_ACCEPTANCE_INPUTS_VERSION,
     V4_ACCEPTANCE_REPORT_VERSION,
     V4_AGENT_RUN_INTEGRATION_REPORT_VERSION,
+    V4_ALLOWLIST_POLICY_VERSION,
     V4_ARTIFACT_INSPECT_TRACKING_TABLE_VERSION,
     V4_BATCH_RESUME_REPORT_VERSION,
     V4_BUDGET_CONTROL_REPORT_VERSION,
     V4_CARDS_MANIFEST_VERSION,
     V4_CHECKPOINT_STATE_REPORT_VERSION,
     V4_CONTAMINATION_SCAN_REPORT_VERSION,
+    V4_CONTAMINATION_DENYLIST_VERSION,
     V4_EXPORT_QUALITY_MANIFEST_VERSION,
     V4_LEASE_STATE_REPORT_VERSION,
     V4_RESOURCE_LOCK_REPORT_VERSION,
@@ -31,6 +33,11 @@ from repo_harness.schema_versions import (
     V4_TOOL_LIFECYCLE_TRACE_ENTRY_VERSION,
     V4_TRAJECTORY_STORE_INTEGRITY_REPORT_VERSION,
     V4_WORKER_RUN_LOG_ENTRY_VERSION,
+)
+from repo_harness.v4_visibility import (
+    V4_CARD_CLAIM_DENYLIST_VERSION,
+    v4_card_claim_denylist_sha256,
+    v4_contamination_denylist_sha256,
 )
 from repo_harness.v4_stage1 import (
     V4_ARTIFACT_SET_SPECS,
@@ -160,6 +167,35 @@ def test_v4_stage1_rejects_schema_version_mismatch(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError, match="schema_version 不匹配"):
         inspect_v4_artifact_set("rollout_retry", paths["rollout_dir"], assert_complete=True)
+
+
+def test_v4_contamination_scan_rejects_missing_card_claim_policy(tmp_path: Path) -> None:
+    paths = _write_valid_stage1_fixture(tmp_path)
+    payload = _read_json(paths["scan_report"])
+    payload.pop("card_claim_denylist_sha256")
+    _write_json(paths["scan_report"], payload)
+
+    with pytest.raises(ConfigError, match="card_claim_denylist_sha256"):
+        inspect_v4_artifact_set("contamination_scan", paths["scan_report"], assert_complete=True)
+
+
+def test_v4_contamination_scan_rejects_stale_clean_with_findings(tmp_path: Path) -> None:
+    paths = _write_valid_stage1_fixture(tmp_path)
+    payload = _read_json(paths["scan_report"])
+    payload["findings"] = [
+        {
+            "schema_version": "repo_harness_v4_card_claim_finding_v0",
+            "surface": "dataset_card",
+            "path": "$",
+            "matched_term": "forbidden-card-claim-fixture",
+            "category": "forbidden_card_claim",
+            "policy_version": V4_CARD_CLAIM_DENYLIST_VERSION,
+        }
+    ]
+    _write_json(paths["scan_report"], payload)
+
+    with pytest.raises(ConfigError, match="findings 必须为空"):
+        inspect_v4_artifact_set("contamination_scan", paths["scan_report"], assert_complete=True)
 
 
 def test_v4_inputs_reject_missing_sha_and_sha_mismatch(tmp_path: Path) -> None:
@@ -307,6 +343,12 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
         {
             "schema_version": V4_CONTAMINATION_SCAN_REPORT_VERSION,
             "clean": True,
+            "findings": [],
+            "denylist_version": V4_CONTAMINATION_DENYLIST_VERSION,
+            "denylist_sha256": v4_contamination_denylist_sha256(),
+            "allowlist_policy_version": V4_ALLOWLIST_POLICY_VERSION,
+            "card_claim_denylist_version": V4_CARD_CLAIM_DENYLIST_VERSION,
+            "card_claim_denylist_sha256": v4_card_claim_denylist_sha256(),
             "artifact_refs_by_name": {
                 "task_visibility_scan_report.json": _file_ref(task_visibility_scan, "task_visibility_scan"),
                 "contamination_scan_summary.json": _file_ref(scan_summary, "contamination_scan_summary")

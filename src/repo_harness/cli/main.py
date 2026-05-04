@@ -106,6 +106,10 @@ from repo_harness.v4_export_quality import (
     build_v4_export_quality,
     inspect_v4_export_quality as inspect_v4_export_quality_stage6,
 )
+from repo_harness.v4_cards import (
+    build_v4_cards,
+    inspect_v4_cards as inspect_v4_cards_stage7,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -653,6 +657,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-if-output-exists",
         action="store_true",
         help="如果目标 Stage 6 输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v4_cards_parser = subparsers.add_parser(
+        "build-v4-cards",
+        help="构建 V4 阶段 7 dataset、run、export cards 和 provenance 产物。",
+    )
+    build_v4_cards_parser.add_argument("--output-dir", required=True, help="Stage 7 cards 产物目录。")
+    build_v4_cards_parser.add_argument("--task-freeze", required=True, help="Stage 2 task_freeze_manifest.json 或 task freeze 产物目录。")
+    build_v4_cards_parser.add_argument("--agent-run-integration", required=True, help="Stage 5 agent run integration 产物目录或 report。")
+    build_v4_cards_parser.add_argument("--export-quality", required=True, help="Stage 6 export quality 产物目录或 trajectory_quality_manifest.json。")
+    build_v4_cards_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        help="如果目标 Stage 7 输出已存在，则失败，避免覆盖 evidence。",
     )
 
     inspect_v4_acceptance_inputs = subparsers.add_parser(
@@ -1269,15 +1287,26 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.exit(1, f"V4 export quality 构建失败：{exc}\n")
         print(f"V4 export quality manifest：{output_path}")
         return 0
+    if args.command == "build-v4-cards":
+        try:
+            output_path = build_v4_cards(
+                output_dir=args.output_dir,
+                task_freeze=args.task_freeze,
+                agent_run_integration=args.agent_run_integration,
+                export_quality=args.export_quality,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 cards 构建失败：{exc}\n")
+        print(f"V4 cards manifest：{output_path}")
+        return 0
     if args.command == "inspect-v4-inputs":
         try:
             print(inspect_v4_inputs(args.manifest, assert_complete=args.assert_complete))
         except RepoHarnessError as exc:
             parser.exit(1, f"V4 acceptance inputs 检查失败：{exc}\n")
         return 0
-    v4_artifact_command_map = {
-        "inspect-v4-cards": "cards",
-    }
+    v4_artifact_command_map = {}
     if args.command in v4_artifact_command_map:
         try:
             print(
@@ -1347,6 +1376,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(inspect_v4_export_quality_stage6(args.path, assert_complete=args.assert_complete))
         except RepoHarnessError as exc:
             parser.exit(1, f"inspect-v4-export-quality 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-cards":
+        try:
+            print(inspect_v4_cards_stage7(args.path, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-cards 检查失败：{exc}\n")
         return 0
     if args.command == "inspect-v4-contamination-scan":
         try:

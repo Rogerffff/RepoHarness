@@ -14,12 +14,14 @@ from repo_harness.schema_versions import (
     V4_ACCEPTANCE_INPUTS_VERSION,
     V4_ACCEPTANCE_REPORT_VERSION,
     V4_AGENT_RUN_INTEGRATION_REPORT_VERSION,
+    V4_ALLOWLIST_POLICY_VERSION,
     V4_ARTIFACT_INSPECT_TRACKING_TABLE_VERSION,
     V4_BATCH_RESUME_REPORT_VERSION,
     V4_BUDGET_CONTROL_REPORT_VERSION,
     V4_CARDS_MANIFEST_VERSION,
     V4_CHECKPOINT_STATE_REPORT_VERSION,
     V4_CONTAMINATION_SCAN_REPORT_VERSION,
+    V4_CONTAMINATION_DENYLIST_VERSION,
     V4_EXPORT_QUALITY_MANIFEST_VERSION,
     V4_LEASE_STATE_REPORT_VERSION,
     V4_RESOURCE_LOCK_REPORT_VERSION,
@@ -34,6 +36,11 @@ from repo_harness.schema_versions import (
     V4_TOOL_LIFECYCLE_TRACE_ENTRY_VERSION,
     V4_TRAJECTORY_STORE_INTEGRITY_REPORT_VERSION,
     V4_WORKER_RUN_LOG_ENTRY_VERSION,
+)
+from repo_harness.v4_visibility import (
+    V4_CARD_CLAIM_DENYLIST_VERSION,
+    v4_card_claim_denylist_sha256,
+    v4_contamination_denylist_sha256,
 )
 from repo_harness.workspace.source_hash import compute_source_tree_hash
 
@@ -427,7 +434,15 @@ V4_ARTIFACT_SET_SPECS: dict[str, V4ArtifactSetSpec] = {
         input_kind="file",
         complete_label="clean",
         direct_schema_version=V4_CONTAMINATION_SCAN_REPORT_VERSION,
-        required_fields=("clean",),
+        required_fields=(
+            "clean",
+            "findings",
+            "denylist_version",
+            "denylist_sha256",
+            "allowlist_policy_version",
+            "card_claim_denylist_version",
+            "card_claim_denylist_sha256",
+        ),
         referenced_artifacts=("task_visibility_scan_report.json", "contamination_scan_summary.json"),
     ),
 }
@@ -469,8 +484,8 @@ def inspect_v4_artifact_set(
                 failures=failures,
                 label=target.name,
             )
-            if spec_id == "contamination_scan" and payload.get("clean") is not True:
-                failures.append("V4 contamination scan report clean 必须为 true。")
+            if spec_id == "contamination_scan":
+                _inspect_v4_contamination_scan_report(payload, failures)
 
     lines = [
         f"{spec.command_name}: {target}",
@@ -485,6 +500,26 @@ def inspect_v4_artifact_set(
         lines.append(f"{spec.command_name}: {spec.complete_label}")
     lines.append(f"{spec.command_name}: passed")
     return "\n".join(lines)
+
+
+def _inspect_v4_contamination_scan_report(payload: dict[str, Any], failures: list[str]) -> None:
+    if payload.get("clean") is not True:
+        failures.append("V4 contamination scan report clean 必须为 true。")
+    findings = payload.get("findings")
+    if not isinstance(findings, list):
+        failures.append("V4 contamination scan report findings 必须是 list。")
+    elif findings:
+        failures.append("V4 contamination scan report findings 必须为空。")
+    if payload.get("denylist_version") != V4_CONTAMINATION_DENYLIST_VERSION:
+        failures.append("V4 contamination scan report denylist_version 不匹配。")
+    if payload.get("denylist_sha256") != v4_contamination_denylist_sha256():
+        failures.append("V4 contamination scan report denylist_sha256 不匹配。")
+    if payload.get("allowlist_policy_version") != V4_ALLOWLIST_POLICY_VERSION:
+        failures.append("V4 contamination scan report allowlist_policy_version 不匹配。")
+    if payload.get("card_claim_denylist_version") != V4_CARD_CLAIM_DENYLIST_VERSION:
+        failures.append("V4 contamination scan report card_claim_denylist_version 不匹配。")
+    if payload.get("card_claim_denylist_sha256") != v4_card_claim_denylist_sha256():
+        failures.append("V4 contamination scan report card_claim_denylist_sha256 不匹配。")
 
 
 def inspect_v4_inputs(manifest: str | Path, *, assert_complete: bool = False) -> str:

@@ -42,6 +42,19 @@ V4_VISIBILITY_SURFACES = (
     "acceptance_command_log",
     "acceptance_bundle",
 )
+V4_CARD_CLAIM_DENYLIST_VERSION = "repo_harness_v4_card_claim_denylist_v0"
+V4_FORBIDDEN_CARD_CLAIMS = (
+    "无需人工审查即可直接训练",
+    "直接训练即可",
+    "公开 leaderboard 可比",
+    "public leaderboard comparable",
+    "生产级安全沙箱",
+    "production grade sandbox",
+    "complete SWE-Bench Lite",
+    "完整 SWE-Bench Lite",
+    "已经训练出 coding agent",
+    "trained a coding agent",
+)
 
 
 class V4ContaminationFinding(StrictBaseModel):
@@ -121,6 +134,8 @@ class V4ContaminationDenylist(StrictBaseModel):
                 "pr_diff",
                 "review comment",
                 "review suggestion",
+                "raw commit message",
+                "raw_commit_message",
                 "commit message after base",
                 "fix commit url",
                 "merge commit url",
@@ -303,3 +318,37 @@ def v4_contamination_denylist_sha256() -> str:
     }
     canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def v4_card_claim_denylist_sha256() -> str:
+    """Return a stable hash for V4 card claim deny rules."""
+
+    payload = {
+        "schema_version": V4_CARD_CLAIM_DENYLIST_VERSION,
+        "visibility_policy_version": V4_VISIBILITY_POLICY_VERSION,
+        "allowlist_policy_version": V4_ALLOWLIST_POLICY_VERSION,
+        "forbidden_claims": list(V4_FORBIDDEN_CARD_CLAIMS),
+    }
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def scan_v4_forbidden_card_claims(*, surface: str, payload: Any) -> list[dict[str, str]]:
+    """Scan cards and card-adjacent docs for prohibited Stage 7 claims."""
+
+    text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    lowered = text.lower()
+    findings: list[dict[str, str]] = []
+    for claim in V4_FORBIDDEN_CARD_CLAIMS:
+        if claim.lower() in lowered:
+            findings.append(
+                {
+                    "schema_version": "repo_harness_v4_card_claim_finding_v0",
+                    "surface": surface,
+                    "path": "$",
+                    "matched_term": claim,
+                    "category": "forbidden_card_claim",
+                    "policy_version": V4_CARD_CLAIM_DENYLIST_VERSION,
+                }
+            )
+    return findings
