@@ -1,0 +1,85 @@
+{
+  "dynamic_tool_discovery_allowed": false,
+  "dynamic_tool_surface_freeze_status": "frozen",
+  "generated_at": "2026-05-04T14:09:27Z",
+  "hook_policy_snapshot_ref": {
+    "category": "hook_policy_snapshot",
+    "kind": "json",
+    "model_visible": false,
+    "path": "docs/v4/evidence/tool-lifecycle/hook_policy_snapshot.json",
+    "sha256": "72b9f81c10ec538586d8eedd3c3f9e30d030f74534a8a7c557fdc9df618f0ea6",
+    "size_bytes": 577
+  },
+  "large_output_artifact_policy": "large_outputs_must_be_artifact_refs",
+  "mcp_enabled": false,
+  "mcp_policy_snapshot_ref": {
+    "category": "mcp_policy_snapshot",
+    "kind": "json",
+    "model_visible": false,
+    "path": "docs/v4/evidence/tool-lifecycle/mcp_policy_snapshot.json",
+    "sha256": "778a19f35d16b37bc7e054ebe013ecf8f0637f0859759d506b78c65737552b40",
+    "size_bytes": 521
+  },
+  "permission_policy_dataset_manifest_ref": {
+    "category": "permission_policy_dataset_manifest",
+    "kind": "json",
+    "model_visible": false,
+    "path": "docs/v4/evidence/tool-lifecycle/permission_policy_dataset_manifest.json",
+    "sha256": "695b811a0ad1445666fcebb9e0ae1797cc8e0b10ec2fe8f44a1626ac12eeb99a",
+    "size_bytes": 811
+  },
+  "permission_policy_snapshot_ref": {
+    "category": "permission_policy_snapshot",
+    "kind": "json",
+    "model_visible": false,
+    "path": "docs/v4/evidence/tool-lifecycle/permission_policy_snapshot.json",
+    "sha256": "99f3df7e7545a5b7c4f64406949fe8abcb07cd3b2fc92c1c1c38e76d55511fed",
+    "size_bytes": 1118
+  },
+  "repo_harness_version": "0.1.0",
+  "schema_version": "repo_harness_v4_tool_contract_snapshot_v0",
+  "stable_external_tool_surface_hash": "5dcf5b2423fc02e7ad5248c706e8f731e78b0040c2e754e9cb1918801870a609",
+  "stable_tool_order": [
+    "read_file",
+    "list_files",
+    "apply_patch",
+    "run_tests"
+  ],
+  "tool_result_pairing_policy": "every_tool_call_requires_paired_tool_result",
+  "tool_schema_hash": "93c61faae39ea251e52f666defb041f5972a8ea5b80e8827aad51716b4b4672f",
+  "tool_schemas": {
+    "apply_patch": {
+      "args": {
+        "patch_ref": "ArtifactRef"
+      },
+      "result": {
+        "patch_applied": "bool"
+      }
+    },
+    "list_files": {
+      "args": {
+        "path": "string"
+      },
+      "result": {
+        "entries": "list"
+      }
+    },
+    "read_file": {
+      "args": {
+        "path": "string"
+      },
+      "result": {
+        "content_ref": "ArtifactRef"
+      }
+    },
+    "run_tests": {
+      "args": {
+        "command": "list"
+      },
+      "result": {
+        "exit_code": "int",
+        "output_ref": "ArtifactRef"
+      }
+    }
+  }
+}

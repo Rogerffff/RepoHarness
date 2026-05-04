@@ -1,0 +1,40 @@
+{
+  "audit_only": true,
+  "deny_execution_requires_no_tool_call": true,
+  "generated_at": "2026-05-04T14:09:27Z",
+  "permission_policy_id": "repo_harness_v4_permission_policy_audit_only_v0",
+  "rules": [
+    {
+      "decision": "allow",
+      "reason": "read_file_allowed_by_stage4_policy",
+      "rule_id": "allow_read_file",
+      "tool": "read_file"
+    },
+    {
+      "decision": "deny",
+      "reason": "network_shell_not_allowed",
+      "rule_id": "deny_network_shell",
+      "tool": "run_tests"
+    },
+    {
+      "decision": "ask",
+      "reason": "write_operation_requires_explicit_permission",
+      "rule_id": "ask_before_write",
+      "tool": "apply_patch"
+    },
+    {
+      "decision": "safety_deny",
+      "reason": "credential_path",
+      "rule_id": "safety_deny_secret_access",
+      "tool": "read_file"
+    },
+    {
+      "decision": "hook_deny",
+      "reason": "hook_policy_disabled_audit_only",
+      "rule_id": "hook_deny_audit_only_no_execution",
+      "tool": "run_tests"
+    }
+  ],
+  "safety_deny_preserves_reason": true,
+  "schema_version": "repo_harness_v4_permission_policy_snapshot_v0"
+}
