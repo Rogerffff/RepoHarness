@@ -16,6 +16,7 @@ from repo_harness.export.manifest import sha256_file
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import (
     COMMAND_LOG_ENTRY_SCHEMA_VERSION,
+    V4_ACCEPTANCE_BUNDLE_MANIFEST_VERSION,
     V3_CONTAMINATION_DENYLIST_VERSION,
     V3_ACCEPTANCE_REPORT_SCHEMA_VERSION,
     V3_VISIBILITY_POLICY_VERSION,
@@ -641,6 +642,10 @@ def inspect_acceptance_bundle(
     manifest_path = Path(manifest)
     failures: list[str] = []
     payload = _read_json_for_inspect(manifest_path, failures)
+    if payload.get("schema_version") == V4_ACCEPTANCE_BUNDLE_MANIFEST_VERSION:
+        from repo_harness.v4_stage1 import inspect_v4_acceptance_bundle
+
+        return inspect_v4_acceptance_bundle(manifest_path, assert_immutable=assert_immutable)
     if payload.get("schema_version") != V3_ACCEPTANCE_BUNDLE_MANIFEST_VERSION:
         failures.append("acceptance_bundle_manifest.json schema_version 无效。")
     for label in (

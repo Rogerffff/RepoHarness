@@ -71,6 +71,11 @@ from repo_harness.v4_implementation_inputs import (
     build_v4_implementation_inputs,
     inspect_v4_implementation_inputs,
 )
+from repo_harness.v4_stage1 import (
+    inspect_v4_acceptance,
+    inspect_v4_artifact_set,
+    inspect_v4_inputs,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -559,6 +564,79 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v4_inputs.add_argument("manifest", help="v4_implementation_input_manifest.json 路径。")
     inspect_v4_inputs.add_argument("--assert-complete", action="store_true", help="要求 Stage 0 input freeze 完整通过。")
 
+    inspect_v4_acceptance_inputs = subparsers.add_parser(
+        "inspect-v4-inputs",
+        help="只读检查 V4 final acceptance inputs skeleton。",
+    )
+    inspect_v4_acceptance_inputs.add_argument("manifest", help="v4_acceptance_inputs.json 路径。")
+    inspect_v4_acceptance_inputs.add_argument("--assert-complete", action="store_true", help="要求 V4 acceptance inputs 完整。")
+
+    for command_name, help_text in (
+        ("inspect-rollout-queue", "只读检查 V4 rollout queue skeleton。"),
+        ("inspect-rollout-leases", "只读检查 V4 rollout lease skeleton。"),
+        ("inspect-rollout-retry", "只读检查 V4 rollout retry skeleton。"),
+        ("inspect-rollout-budget", "只读检查 V4 rollout budget skeleton。"),
+        ("inspect-resource-locks", "只读检查 V4 resource lock skeleton。"),
+        ("inspect-resource-usage", "只读检查 V4 resource usage skeleton。"),
+        ("inspect-rollout-resume", "只读检查 V4 rollout resume skeleton。"),
+        ("inspect-v4-tool-lifecycle", "只读检查 V4 tool lifecycle skeleton。"),
+        ("inspect-v4-agent-run-integration", "只读检查 V4 agent run integration skeleton。"),
+        ("inspect-v4-export-quality", "只读检查 V4 export quality skeleton。"),
+        ("inspect-v4-cards", "只读检查 V4 cards skeleton。"),
+    ):
+        skeleton = subparsers.add_parser(command_name, help=help_text)
+        skeleton.add_argument("path", help="显式输入路径。")
+        skeleton.add_argument("--assert-complete", action="store_true", help="要求 skeleton 产物完整。")
+
+    inspect_run_selection_query = subparsers.add_parser(
+        "inspect-run-selection-query",
+        help="只读检查 V4 run selection query report skeleton。",
+    )
+    inspect_run_selection_query.add_argument("path", help="run_selection_query_report.json 路径。")
+    inspect_run_selection_query.add_argument("--assert-complete", action="store_true", help="要求 skeleton 产物完整。")
+
+    inspect_v4_task_freeze = subparsers.add_parser(
+        "inspect-v4-task-freeze",
+        help="只读检查 V4 task freeze manifest skeleton。",
+    )
+    inspect_v4_task_freeze.add_argument("path", help="TASK_FREEZE_MANIFEST.json 路径。")
+    inspect_v4_task_freeze.add_argument("--assert-complete", action="store_true", help="要求 skeleton 产物完整。")
+
+    inspect_v4_task_validity = subparsers.add_parser(
+        "inspect-v4-task-validity",
+        help="只读检查 V4 task validity report skeleton。",
+    )
+    inspect_v4_task_validity.add_argument("path", help="TASK_VALIDITY_REPORT.json 路径。")
+    inspect_v4_task_validity.add_argument("--assert-complete", action="store_true", help="要求 skeleton 产物完整。")
+
+    inspect_v4_tool_contract = subparsers.add_parser(
+        "inspect-v4-tool-contract",
+        help="只读检查 V4 tool contract skeleton。",
+    )
+    inspect_v4_tool_contract.add_argument("path", help="RUN_DIR 路径。")
+    inspect_v4_tool_contract.add_argument("--assert-frozen", action="store_true", help="要求 V4 tool contract 冻结。")
+
+    inspect_v4_trajectory = subparsers.add_parser(
+        "inspect-v4-trajectory-store",
+        help="只读检查 V4 trajectory store skeleton。",
+    )
+    inspect_v4_trajectory.add_argument("path", help="RUN_DIR 路径。")
+    inspect_v4_trajectory.add_argument("--assert-readable", action="store_true", help="要求 V4 trajectory store 可读。")
+
+    inspect_v4_scan = subparsers.add_parser(
+        "inspect-v4-contamination-scan",
+        help="只读检查 V4 contamination scan skeleton。",
+    )
+    inspect_v4_scan.add_argument("path", help="SCAN_REPORT.json 路径。")
+    inspect_v4_scan.add_argument("--assert-clean", action="store_true", help="要求污染扫描 clean。")
+
+    inspect_v4_acceptance_parser = subparsers.add_parser(
+        "inspect-v4-acceptance",
+        help="只读检查 V4 acceptance report skeleton。",
+    )
+    inspect_v4_acceptance_parser.add_argument("report", help="v4_acceptance_report.json 路径。")
+    inspect_v4_acceptance_parser.add_argument("--assert-complete", action="store_true", help="要求 V4 acceptance 完整通过。")
+
     return parser
 
 
@@ -1043,6 +1121,64 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V4 implementation inputs 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-inputs":
+        try:
+            print(inspect_v4_inputs(args.manifest, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 acceptance inputs 检查失败：{exc}\n")
+        return 0
+    v4_artifact_command_map = {
+        "inspect-rollout-queue": "rollout_queue",
+        "inspect-rollout-leases": "rollout_leases",
+        "inspect-rollout-retry": "rollout_retry",
+        "inspect-rollout-budget": "rollout_budget",
+        "inspect-resource-locks": "resource_locks",
+        "inspect-resource-usage": "resource_usage",
+        "inspect-rollout-resume": "rollout_resume",
+        "inspect-run-selection-query": "run_selection_query",
+        "inspect-v4-task-freeze": "task_freeze",
+        "inspect-v4-task-validity": "task_validity",
+        "inspect-v4-tool-lifecycle": "tool_lifecycle",
+        "inspect-v4-agent-run-integration": "agent_run_integration",
+        "inspect-v4-export-quality": "export_quality",
+        "inspect-v4-cards": "cards",
+    }
+    if args.command in v4_artifact_command_map:
+        try:
+            print(
+                inspect_v4_artifact_set(
+                    v4_artifact_command_map[args.command],
+                    args.path,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"{args.command} 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-tool-contract":
+        try:
+            print(inspect_v4_artifact_set("tool_contract", args.path, assert_complete=args.assert_frozen))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-tool-contract 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-trajectory-store":
+        try:
+            print(inspect_v4_artifact_set("trajectory_store", args.path, assert_complete=args.assert_readable))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-trajectory-store 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-contamination-scan":
+        try:
+            print(inspect_v4_artifact_set("contamination_scan", args.path, assert_complete=args.assert_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-contamination-scan 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-acceptance":
+        try:
+            print(inspect_v4_acceptance(args.report, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 acceptance 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

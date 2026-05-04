@@ -1,0 +1,214 @@
+{
+  "required_inspect_commands": [
+    "inspect-acceptance-bundle",
+    "inspect-resource-locks",
+    "inspect-resource-usage",
+    "inspect-rollout-budget",
+    "inspect-rollout-leases",
+    "inspect-rollout-queue",
+    "inspect-rollout-resume",
+    "inspect-rollout-retry",
+    "inspect-run-selection-query",
+    "inspect-v4-acceptance",
+    "inspect-v4-agent-run-integration",
+    "inspect-v4-cards",
+    "inspect-v4-contamination-scan",
+    "inspect-v4-export-quality",
+    "inspect-v4-implementation-inputs",
+    "inspect-v4-inputs",
+    "inspect-v4-task-freeze",
+    "inspect-v4-task-validity",
+    "inspect-v4-tool-contract",
+    "inspect-v4-tool-lifecycle",
+    "inspect-v4-trajectory-store"
+  ],
+  "rows": [
+    {
+      "artifacts": [
+        "v4_implementation_input_manifest.json",
+        "v4_feasibility_input_binding.json",
+        "v4_baseline_check_report.json"
+      ],
+      "inspect_command": "inspect-v4-implementation-inputs",
+      "scope": "Stage 0 input freeze"
+    },
+    {
+      "artifacts": [
+        "rollout_queue_manifest.json",
+        "worker_run_log.jsonl"
+      ],
+      "inspect_command": "inspect-rollout-queue",
+      "scope": "P0-1 queue"
+    },
+    {
+      "artifacts": [
+        "lease_state_report.json"
+      ],
+      "inspect_command": "inspect-rollout-leases",
+      "scope": "P0-1 lease"
+    },
+    {
+      "artifacts": [
+        "retry_policy_report.json"
+      ],
+      "inspect_command": "inspect-rollout-retry",
+      "scope": "P0-1 retry"
+    },
+    {
+      "artifacts": [
+        "budget_control_report.json"
+      ],
+      "inspect_command": "inspect-rollout-budget",
+      "scope": "P0-1 budget"
+    },
+    {
+      "artifacts": [
+        "resource_lock_report.json"
+      ],
+      "inspect_command": "inspect-resource-locks",
+      "scope": "P0-1 resource locks"
+    },
+    {
+      "artifacts": [
+        "resource_usage_report.json"
+      ],
+      "inspect_command": "inspect-resource-usage",
+      "scope": "P0-1 resource usage"
+    },
+    {
+      "artifacts": [
+        "batch_resume_report.json",
+        "checkpoint_state_report.json"
+      ],
+      "inspect_command": "inspect-rollout-resume",
+      "scope": "P0-1 resume"
+    },
+    {
+      "artifacts": [
+        "run_selection_query_report.json"
+      ],
+      "inspect_command": "inspect-run-selection-query",
+      "scope": "P0-1 selection"
+    },
+    {
+      "artifacts": [
+        "pr_task_construction_manifest.json",
+        "source_archive_manifest.json",
+        "adapter_visible_task_input_manifest.json",
+        "evaluator_only_evidence_manifest.json"
+      ],
+      "inspect_command": "inspect-v4-task-freeze",
+      "scope": "P0-2 task freeze"
+    },
+    {
+      "artifacts": [
+        "source_materialization_report.json",
+        "baseline_verifier_report.json",
+        "post_patch_verifier_report.json",
+        "flaky_detection_report.json",
+        "environment_stability_report.json",
+        "dependency_cache_report.json",
+        "license_provenance_review_report.json",
+        "use_boundary_review_report.json",
+        "task_validity_report.json"
+      ],
+      "inspect_command": "inspect-v4-task-validity",
+      "scope": "P0-2 task validity"
+    },
+    {
+      "artifacts": [
+        "permission_policy_snapshot.json",
+        "hook_policy_snapshot.json",
+        "mcp_policy_snapshot.json",
+        "tool_contract_v4_snapshot.json"
+      ],
+      "inspect_command": "inspect-v4-tool-contract",
+      "scope": "P1-2 tool contract"
+    },
+    {
+      "artifacts": [
+        "permission_decision_trace.jsonl",
+        "tool_lifecycle_trace.jsonl",
+        "hook_audit_report.json"
+      ],
+      "inspect_command": "inspect-v4-tool-lifecycle",
+      "scope": "P1-2 lifecycle"
+    },
+    {
+      "artifacts": [
+        "v4_agent_run_integration_report.json",
+        "runspec_metadata_report.json",
+        "final_verifier_boundary_report.json",
+        "prepared_messages_binding_report.json"
+      ],
+      "inspect_command": "inspect-v4-agent-run-integration",
+      "scope": "Stage 5 run integration"
+    },
+    {
+      "artifacts": [
+        "transcript.jsonl",
+        "events.jsonl",
+        "artifacts.json",
+        "run_config_facts.json",
+        "run_metadata.json",
+        "trajectory_store_integrity_report.json"
+      ],
+      "inspect_command": "inspect-v4-trajectory-store",
+      "scope": "Stage 5 trajectory store"
+    },
+    {
+      "artifacts": [
+        "trajectory_quality_manifest.json",
+        "sample_tier_manifest.json",
+        "failure_dataset.jsonl",
+        "packing_manifest.json",
+        "reward_audit_report.json",
+        "reward_hacking_risk_audit_report.json",
+        "patch_quality_report.json",
+        "test_overfitting_risk_audit_report.json",
+        "preference_pair_trainability_report.json",
+        "blocked_pair_report.json"
+      ],
+      "inspect_command": "inspect-v4-export-quality",
+      "scope": "P0-3 export quality"
+    },
+    {
+      "artifacts": [
+        "dataset_card.md",
+        "dataset_card.json",
+        "run_card.json",
+        "export_card.json",
+        "provenance_summary.json",
+        "contamination_scan_summary.json",
+        "repro_command_index.json"
+      ],
+      "inspect_command": "inspect-v4-cards",
+      "scope": "P1-4 cards"
+    },
+    {
+      "artifacts": [
+        "contamination_scan_report.json",
+        "task_visibility_scan_report.json",
+        "contamination_scan_summary.json"
+      ],
+      "inspect_command": "inspect-v4-contamination-scan",
+      "scope": "Global contamination scan"
+    },
+    {
+      "artifacts": [
+        "run_selection_manifest.json",
+        "v4_acceptance_inputs.json",
+        "v4_acceptance_report.json",
+        "acceptance_bundle_manifest.json",
+        "acceptance_command_log.jsonl"
+      ],
+      "inspect_command": "inspect-v4-acceptance",
+      "scope": "Final acceptance",
+      "secondary_inspect_commands": [
+        "inspect-v4-inputs",
+        "inspect-acceptance-bundle"
+      ]
+    }
+  ],
+  "schema_version": "repo_harness_v4_artifact_inspect_tracking_table_v0"
+}
