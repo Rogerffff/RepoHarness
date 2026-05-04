@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-05-04T14:39:54Z",
+  "outcome_tier_distinct_from_trainability_status": true,
+  "outcome_tier_policy": "repo_harness_v4_outcome_tier_policy_v0",
+  "samples": [
+    {
+      "final_verifier_result": "accepted",
+      "model_visible": true,
+      "outcome_tier": "verifier_accepted",
+      "reward_metadata_ref": "audit-only:reward-metadata-sample-accepted-trainable-sft",
+      "run_id": "v4-run-completed-001",
+      "sample_id": "sample-accepted-trainable-sft",
+      "task_id": "v4_go_cobra_completion_args",
+      "trainability_status": "trainable",
+      "trainable_payload": {
+        "assistant_target": "Apply a minimal patch and run the public verifier command.",
+        "format": "sft",
+        "prompt_text": "Use public task context and repository observations."
+      }
+    },
+    {
+      "final_verifier_result": "rejected",
+      "invalid_for_training": true,
+      "invalid_reason": "final_verifier_rejected",
+      "outcome_tier": "verifier_rejected",
+      "run_id": "v4-run-interrupted-001",
+      "sample_id": "sample-rejected-diagnostic-failure",
+      "task_id": "v4_py_click_help_hint_shadowing",
+      "trainability_status": "diagnostic_only"
+    },
+    {
+      "final_verifier_result": "accepted",
+      "invalid_for_training": true,
+      "invalid_reason": "excessive_patch_requires_manual_review",
+      "outcome_tier": "verifier_accepted",
+      "run_id": "v4-run-completed-001",
+      "sample_id": "sample-accepted-diagnostic-excessive-patch",
+      "task_id": "v4_go_testify_numeric_equal_values",
+      "trainability_status": "diagnostic_only"
+    }
+  ],
+  "schema_version": "repo_harness_v4_sample_tier_manifest_v0",
+  "trainability_policy": "repo_harness_v4_trainability_policy_v0"
+}

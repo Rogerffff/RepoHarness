@@ -1,0 +1,79 @@
+{
+  "final_verifier_authority_preserved": true,
+  "generated_at": "2026-05-04T14:39:54Z",
+  "reward_allowlist_policy_version": "repo_harness_v4_allowlist_policy_v0",
+  "reward_metadata_allowed_field_paths": [
+    "$.reward_records[*].reward_metadata",
+    "$.reward_records[*].structured_reward"
+  ],
+  "reward_metadata_visibility": "audit_only_model_visible_false",
+  "reward_records": [
+    {
+      "final_verifier_result": "accepted",
+      "reward_audit_outcome": "verifier_accepted",
+      "reward_metadata": {
+        "acceptance_policy_version": "repo_harness_v4_acceptance_policy_v0",
+        "components": [
+          {
+            "name": "formal_final_verifier",
+            "weight": 1.0
+          }
+        ],
+        "formula": "final_verifier_acceptance_clipped",
+        "invalid_for_training": false,
+        "invalid_reason": null,
+        "model_visible": false,
+        "reward_clip_range": [
+          0.0,
+          1.0
+        ],
+        "reward_version": "repo_harness_v4_reward_metadata_v0",
+        "sources": [
+          {
+            "model_visible": false,
+            "source": "formal_final_verifier"
+          }
+        ]
+      },
+      "sample_id": "sample-accepted-trainable-sft",
+      "structured_reward": {
+        "model_visible": false,
+        "value": 1.0
+      }
+    },
+    {
+      "final_verifier_result": "rejected",
+      "reward_audit_outcome": "verifier_rejected",
+      "reward_metadata": {
+        "acceptance_policy_version": "repo_harness_v4_acceptance_policy_v0",
+        "components": [
+          {
+            "name": "formal_final_verifier",
+            "weight": 1.0
+          }
+        ],
+        "formula": "final_verifier_acceptance_clipped",
+        "invalid_for_training": true,
+        "invalid_reason": "final_verifier_rejected",
+        "model_visible": false,
+        "reward_clip_range": [
+          0.0,
+          1.0
+        ],
+        "reward_version": "repo_harness_v4_reward_metadata_v0",
+        "sources": [
+          {
+            "model_visible": false,
+            "source": "formal_final_verifier"
+          }
+        ]
+      },
+      "sample_id": "sample-rejected-diagnostic-failure",
+      "structured_reward": {
+        "model_visible": false,
+        "value": 0.0
+      }
+    }
+  ],
+  "schema_version": "repo_harness_v4_reward_audit_report_v0"
+}

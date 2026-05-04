@@ -1,0 +1,313 @@
+import json
+from pathlib import Path
+
+import pytest
+
+from repo_harness.cli.main import main
+from repo_harness.errors import ConfigError
+from repo_harness.v4_agent_run import build_v4_agent_run_integration
+from repo_harness.v4_export_quality import build_v4_export_quality, inspect_v4_export_quality
+from tests.unit.test_v4_agent_run import _external_inputs
+
+
+def test_v4_export_quality_build_and_inspect_pass(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+
+    assert "complete" in inspect_v4_export_quality(export_dir, assert_complete=True)
+    assert main(["inspect-v4-export-quality", str(export_dir), "--assert-complete"]) == 0
+
+
+def test_v4_export_quality_rejects_reward_scalar_in_trainable_target(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][0]["trainable_payload"]["assistant_target"] = "include reward scalar in target"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="reward scalar"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_reward_label_in_trainable_target(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][0]["trainable_payload"]["assistant_target"] = "include reward label in target"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="reward label"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_hidden_selector_in_trainable_payload(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    fixture = export_dir / "fixtures" / "sft_valid.jsonl"
+    records = _read_jsonl(fixture)
+    records[0]["payload"]["messages"][0]["content"] = "use hidden_selector details"
+    _write_jsonl(fixture, records)
+    _refresh_manifest_fixture_ref(export_dir, "sft", "valid_fixture_ref", fixture)
+
+    with pytest.raises(ConfigError, match="hidden_selector|hidden selector"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_packed_sample_without_original_trajectory_ref(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    packing = export_dir / "packing_manifest.json"
+    payload = _read_json(packing)
+    payload["packed_samples"][0].pop("original_trajectory_ref")
+    _write_json(packing, payload)
+
+    with pytest.raises(ConfigError, match="original trajectory"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_reward_promoting_rejected_sample(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][1]["reward_audit_outcome"] = "accepted"
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="verifier rejected"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_outcome_tier_trainability_mixup(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][0]["outcome_tier"] = "trainable"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="outcome_tier"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_outcome_tier_final_verifier_mismatch(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    sample_tier = export_dir / "sample_tier_manifest.json"
+    payload = _read_json(sample_tier)
+    payload["samples"][1]["outcome_tier"] = "verifier_accepted"
+    payload["samples"][1]["final_verifier_result"] = "rejected"
+    _write_json(sample_tier, payload)
+
+    with pytest.raises(ConfigError, match="final_verifier_result"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_reward_metadata_missing_required_fields(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["reward_metadata"].pop("reward_version")
+    payload["reward_records"][0]["reward_metadata"].pop("formula")
+    payload["reward_records"][0]["reward_metadata"].pop("invalid_for_training")
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="reward_version|formula|invalid_for_training"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_reward_metadata_or_structured_reward_model_visible(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["reward_metadata"]["model_visible"] = True
+    payload["reward_records"][0]["structured_reward"]["model_visible"] = True
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="model_visible=false"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_failure_dataset_missing_binding(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    failure = export_dir / "failure_dataset.jsonl"
+    records = _read_jsonl(failure)
+    records[0].pop("tool_call_id")
+    records[0].pop("workspace_state_ref")
+    records[0].pop("final_verifier_result_ref")
+    _write_jsonl(failure, records)
+
+    with pytest.raises(ConfigError, match="tool_call_id|workspace_state_ref|final_verifier_result_ref"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_failure_dataset_missing_run_or_category(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    failure = export_dir / "failure_dataset.jsonl"
+    records = _read_jsonl(failure)
+    records[0].pop("run_id")
+    records[0].pop("failure_category")
+    _write_jsonl(failure, records)
+
+    with pytest.raises(ConfigError, match="run_id|failure_category"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_missing_negative_fixture(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    manifest = export_dir / "trajectory_quality_manifest.json"
+    payload = _read_json(manifest)
+    payload["export_fixture_refs"]["rl"].pop("negative_fixture_ref")
+    _write_json(manifest, payload)
+
+    with pytest.raises(ConfigError, match="negative_fixture_ref"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_unflagged_test_overfitting_risk(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "test_overfitting_risk_audit_report.json"
+    payload = _read_json(report)
+    payload["risk_records"][0]["flagged"] = False
+    payload["risk_records"][0]["export_blocked"] = False
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="flagged=true"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_missing_verifier_overfitting_risk(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "test_overfitting_risk_audit_report.json"
+    payload = _read_json(report)
+    payload["risk_records"] = [
+        record for record in payload["risk_records"] if record["risk_type"] != "modified_verifier_configuration"
+    ]
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="modified_verifier_configuration"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_excessive_patch_as_main_fact(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "patch_quality_report.json"
+    payload = _read_json(report)
+    payload["patch_records"][1]["accepted_main_fact"] = True
+    payload["patch_records"][1]["reward_main_fact"] = True
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="excessive patch"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_missing_patch_quality_metrics(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "patch_quality_report.json"
+    payload = _read_json(report)
+    payload["patch_records"][0].pop("changed_file_count")
+    payload["patch_records"][0].pop("test_file_change_ratio")
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="patch quality metric"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_silent_blocked_pair_report(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "blocked_pair_report.json"
+    payload = _read_json(report)
+    payload["warning"] = False
+    payload["sample_count"] = 0
+    payload["rejected_reason_distribution"] = {}
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="blocked_pair_report"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_invalid_trainable_preference_pair(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "preference_pair_trainability_report.json"
+    payload = _read_json(report)
+    payload["pair_records"][0]["chosen_sample_id"] = "sample-rejected-diagnostic-failure"
+    payload["pair_records"][0]["rejected_sample_id"] = "sample-accepted-trainable-sft"
+    payload["pair_records"][0]["baseline_blocked"] = True
+    payload["pair_records"][0]["compare_scope"] = {}
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="chosen_sample_id|rejected_sample_id|baseline_blocked|compare_scope"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_preference_pair_count_mismatch(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    report = export_dir / "preference_pair_trainability_report.json"
+    payload = _read_json(report)
+    payload["trainable_preference_pair_count"] = 0
+    payload["blocked_pair_count"] = 0
+    _write_json(report, payload)
+
+    with pytest.raises(ConfigError, match="count"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_rejects_no_trainable_pair_without_specific_block_reason(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    preference = export_dir / "preference_pair_trainability_report.json"
+    pref_payload = _read_json(preference)
+    pref_payload["pair_records"] = [pref_payload["pair_records"][1]]
+    pref_payload["trainable_preference_pair_count"] = 0
+    pref_payload["blocked_pair_count"] = 1
+    _write_json(preference, pref_payload)
+    blocked = export_dir / "blocked_pair_report.json"
+    blocked_payload = _read_json(blocked)
+    blocked_payload["blocked_reason"] = "preference_pair_baseline_blocked"
+    _write_json(blocked, blocked_payload)
+
+    with pytest.raises(ConfigError, match="no_trainable_preference_pair"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+def test_v4_export_quality_build_respects_fail_if_output_exists(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+
+    with pytest.raises(ConfigError, match="输出已存在"):
+        build_v4_export_quality(
+            output_dir=export_dir,
+            agent_run_integration=tmp_path / "agent",
+            fail_if_output_exists=True,
+        )
+
+
+def _build(tmp_path: Path) -> Path:
+    agent_dir = tmp_path / "agent"
+    build_v4_agent_run_integration(output_dir=agent_dir, **_external_inputs(tmp_path))
+    export_dir = tmp_path / "export"
+    build_v4_export_quality(output_dir=export_dir, agent_run_integration=agent_dir)
+    return export_dir
+
+
+def _refresh_manifest_fixture_ref(export_dir: Path, export_format: str, ref_name: str, path: Path) -> None:
+    manifest = export_dir / "trajectory_quality_manifest.json"
+    payload = _read_json(manifest)
+    payload["export_fixture_refs"][export_format][ref_name]["sha256"] = _sha256_file(path)
+    payload["export_fixture_refs"][export_format][ref_name]["size_bytes"] = path.stat().st_size
+    _write_json(manifest, payload)
+
+
+def _read_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _write_jsonl(path: Path, records: list[dict]) -> None:
+    path.write_text("".join(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n" for record in records), encoding="utf-8")
+
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    digest.update(path.read_bytes())
+    return digest.hexdigest()
