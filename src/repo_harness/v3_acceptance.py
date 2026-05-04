@@ -83,6 +83,8 @@ V3_DOCKER_BACKEND_STATUS_FILES = (
     "docker_backend_status.json",
     "docker_stage_status.json",
 )
+V3_MUTABLE_REPO_COMMAND_INPUT_DIRS = {"src", "tests"}
+V3_HISTORICAL_REPO_INPUT_DRIFT_COMMANDS = {"python-m-pytest", "inspect-v2-acceptance"}
 
 
 class CommandLogEntry(StrictBaseModel):
@@ -1014,7 +1016,11 @@ def _inspect_acceptance_inputs_payload(payload: dict[str, Any], *, assert_comple
         for ref in refs_by_category.get("command_log", []):
             command_log_path = _inspect_file_ref(ref, failures, label="pre_acceptance_command_log")
             if command_log_path is not None:
-                _inspect_command_log(command_log_path, failures)
+                _inspect_command_log(
+                    command_log_path,
+                    failures,
+                    allow_historical_repo_input_drift=True,
+                )
     _inspect_manifest_safe_for_acceptance(payload, failures, label="ACCEPTANCE_INPUTS")
     if failures:
         raise ConfigError("; ".join(failures))
@@ -1216,7 +1222,12 @@ def _entry_entered_agent_loop(entry: dict[str, Any]) -> bool:
         return False
 
 
-def _inspect_command_log(path: Path, failures: list[str]) -> None:
+def _inspect_command_log(
+    path: Path,
+    failures: list[str],
+    *,
+    allow_historical_repo_input_drift: bool = False,
+) -> None:
     records = _read_jsonl_for_inspect(path, failures)
     if not records:
         failures.append(f"command log 为空：{path}")
@@ -1232,7 +1243,13 @@ def _inspect_command_log(path: Path, failures: list[str]) -> None:
                 failures.append(f"command log 第 {index} 行 {label} 必须是列表。")
                 continue
             for ref_index, ref in enumerate(refs, start=1):
-                _inspect_command_log_artifact_ref(ref, failures, label=f"command_log[{index}].{label}[{ref_index}]")
+                _inspect_command_log_artifact_ref(
+                    ref,
+                    failures,
+                    label=f"command_log[{index}].{label}[{ref_index}]",
+                    record=record,
+                    allow_historical_repo_input_drift=allow_historical_repo_input_drift,
+                )
         for ref_index, relative_path in enumerate(record.get("self_referential_output_paths", []), start=1):
             path_value = Path(str(relative_path))
             output_path = path_value if path_value.is_absolute() else Path.cwd() / path_value
@@ -1240,7 +1257,14 @@ def _inspect_command_log(path: Path, failures: list[str]) -> None:
                 failures.append(f"command_log[{index}].self_referential_output_paths[{ref_index}] 路径不存在。")
 
 
-def _inspect_command_log_artifact_ref(ref_payload: Any, failures: list[str], *, label: str) -> None:
+def _inspect_command_log_artifact_ref(
+    ref_payload: Any,
+    failures: list[str],
+    *,
+    label: str,
+    record: dict[str, Any],
+    allow_historical_repo_input_drift: bool,
+) -> None:
     if not isinstance(ref_payload, dict):
         failures.append(f"{label} 缺失或不是 object。")
         return
@@ -1255,9 +1279,37 @@ def _inspect_command_log_artifact_ref(ref_payload: Any, failures: list[str], *, 
         return
     actual_sha = _hash_path(path)
     if actual_sha != ref.sha256:
+        if _is_mutable_repo_command_input_ref(
+            ref=ref,
+            label=label,
+            record=record,
+            allow_historical_repo_input_drift=allow_historical_repo_input_drift,
+        ):
+            return
         failures.append(f"{label} sha256 不匹配：{ref.relative_path}")
     if not path.is_dir() and path.stat().st_size != ref.size_bytes:
         failures.append(f"{label} size_bytes 不匹配：{ref.relative_path}")
+
+
+def _is_mutable_repo_command_input_ref(
+    *,
+    ref: ArtifactRef,
+    label: str,
+    record: dict[str, Any],
+    allow_historical_repo_input_drift: bool,
+) -> bool:
+    """Allow historical V3 pre-acceptance command logs to outlive repo edits."""
+
+    if not allow_historical_repo_input_drift:
+        return False
+    if ".input_refs[" not in label:
+        return False
+    if record.get("command_name") not in V3_HISTORICAL_REPO_INPUT_DRIFT_COMMANDS:
+        return False
+    return (
+        ref.kind == "directory"
+        and ref.relative_path in V3_MUTABLE_REPO_COMMAND_INPUT_DIRS
+    )
 
 
 def _inspect_contamination_scan(path: Path, failures: list[str]) -> None:

@@ -67,6 +67,10 @@ from repo_harness.v3_source_materialization import (
 )
 from repo_harness.v3_swebench_like import build_v3_swebench_like, inspect_swebench_like
 from repo_harness.v3_task_set import build_v3_task_set, inspect_v3_task_set
+from repo_harness.v4_implementation_inputs import (
+    build_v4_implementation_inputs,
+    inspect_v4_implementation_inputs,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -525,6 +529,36 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_bundle.add_argument("manifest", help="acceptance_bundle_manifest.json 路径。")
     inspect_bundle.add_argument("--assert-immutable", action="store_true", help="要求 bundle refs sha256 全部匹配。")
 
+    build_v4_inputs = subparsers.add_parser(
+        "build-v4-implementation-inputs",
+        help="构建 V4 阶段 0 implementation input freeze 机器产物。",
+    )
+    build_v4_inputs.add_argument("--pr-issue-run", required=True, help="V4 PR / issue feasibility run 根目录。")
+    build_v4_inputs.add_argument("--public-swebench-run", required=True, help="V4 public SWE-Bench-like feasibility run 根目录。")
+    build_v4_inputs.add_argument("--output-dir", required=True, help="Stage 0 implementation input 产物目录。")
+    build_v4_inputs.add_argument("--v2-acceptance", required=True, help="V2 acceptance report 路径。")
+    build_v4_inputs.add_argument("--v3-acceptance", required=True, help="V3 acceptance report 路径。")
+    build_v4_inputs.add_argument("--v3-acceptance-bundle", required=True, help="V3 acceptance bundle manifest 路径。")
+    build_v4_inputs.add_argument("--baseline-commit", default="f38cb93", help="V4 planning baseline commit。")
+    build_v4_inputs.add_argument("--v3-closure-commit", default="17b1b95", help="V3 closure commit。")
+    build_v4_inputs.add_argument(
+        "--run-live-baseline-checks",
+        action="store_true",
+        help="在写入 Stage 0 产物前运行正式 baseline、acceptance 和 Docker 检查。",
+    )
+    build_v4_inputs.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        help="如果目标 Stage 0 输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    inspect_v4_inputs = subparsers.add_parser(
+        "inspect-v4-implementation-inputs",
+        help="只读检查 V4 阶段 0 implementation input manifest 和绑定 evidence。",
+    )
+    inspect_v4_inputs.add_argument("manifest", help="v4_implementation_input_manifest.json 路径。")
+    inspect_v4_inputs.add_argument("--assert-complete", action="store_true", help="要求 Stage 0 input freeze 完整通过。")
+
     return parser
 
 
@@ -980,6 +1014,35 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V3 acceptance bundle 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v4-implementation-inputs":
+        try:
+            output_path = build_v4_implementation_inputs(
+                pr_issue_run=args.pr_issue_run,
+                public_swebench_run=args.public_swebench_run,
+                output_dir=args.output_dir,
+                v2_acceptance=args.v2_acceptance,
+                v3_acceptance=args.v3_acceptance,
+                v3_acceptance_bundle=args.v3_acceptance_bundle,
+                baseline_commit=args.baseline_commit,
+                v3_closure_commit=args.v3_closure_commit,
+                run_live_baseline_checks=args.run_live_baseline_checks,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 implementation inputs 构建失败：{exc}\n")
+        print(f"V4 implementation input manifest：{output_path}")
+        return 0
+    if args.command == "inspect-v4-implementation-inputs":
+        try:
+            print(
+                inspect_v4_implementation_inputs(
+                    args.manifest,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 implementation inputs 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

@@ -54,3 +54,14 @@ TOOL_CONTRACT_SNAPSHOT_SCHEMA_VERSION = "repo_harness_tool_contract_snapshot_v3_
 POLICY_SNAPSHOT_SCHEMA_VERSION = "repo_harness_policy_snapshot_v3_v0"
 COMMAND_LOG_ENTRY_SCHEMA_VERSION = "repo_harness_command_log_entry_v3_v0"
 V3_ACCEPTANCE_REPORT_SCHEMA_VERSION = "repo_harness_v3_acceptance_report_v0"
+
+# 第四版新增 schema、可见性和输入冻结版本。
+V4_SCHEMA_VERSION = "repo_harness_v4_schema_v0"
+V4_VISIBILITY_POLICY_VERSION = "repo_harness_v4_visibility_policy_v0"
+V4_ALLOWLIST_POLICY_VERSION = "repo_harness_v4_allowlist_policy_v0"
+V4_CONTAMINATION_DENYLIST_VERSION = "repo_harness_v4_contamination_denylist_v0"
+V4_COMMAND_LOG_ENTRY_SCHEMA_VERSION = "repo_harness_command_log_entry_v4_v0"
+V4_BASELINE_CHECK_REPORT_VERSION = "repo_harness_v4_baseline_check_report_v0"
+V4_FEASIBILITY_INPUT_BINDING_VERSION = "repo_harness_v4_feasibility_input_binding_v0"
+V4_IMPLEMENTATION_INPUT_AUDIT_REPORT_VERSION = "repo_harness_v4_implementation_input_audit_report_v0"
+V4_IMPLEMENTATION_INPUT_MANIFEST_VERSION = "repo_harness_v4_implementation_input_manifest_v0"

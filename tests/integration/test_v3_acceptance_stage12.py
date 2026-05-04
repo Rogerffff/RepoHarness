@@ -222,6 +222,58 @@ def test_v3_stage12_acceptance_inspect_detects_tampering(tmp_path: Path) -> None
         inspect_v3_acceptance(tampered_report, assert_complete=False)
 
 
+def test_v3_acceptance_allows_historical_repo_command_input_drift(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    input_payload = _read_json(inputs)
+    command_log_ref = input_payload["command_log_ref"]
+    command_log = Path(command_log_ref["path"])
+    _write_command_log_with_historical_repo_refs(command_log)
+    refreshed_ref = {
+        **command_log_ref,
+        "sha256": sha256_file(command_log),
+        "size_bytes": command_log.stat().st_size,
+    }
+    input_payload["command_log_ref"] = refreshed_ref
+    input_payload["input_refs_by_category"]["command_log"][0] = refreshed_ref
+    _write_json(inputs, input_payload)
+
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+
+    assert "Inspect V3 acceptance: complete" in inspect_v3_acceptance(report, assert_complete=True)
+
+
+def test_v3_acceptance_rejects_unmarked_repo_command_input_drift(tmp_path: Path) -> None:
+    run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
+    run_selection = _build_full_run_selection(tmp_path, run_dir)
+    inputs = _minimal_acceptance_inputs(tmp_path, run_selection)
+    input_payload = _read_json(inputs)
+    command_log_ref = input_payload["command_log_ref"]
+    command_log = Path(command_log_ref["path"])
+    _write_command_log_with_historical_repo_refs(command_log, command_name="pre-acceptance-test")
+    refreshed_ref = {
+        **command_log_ref,
+        "sha256": sha256_file(command_log),
+        "size_bytes": command_log.stat().st_size,
+    }
+    input_payload["command_log_ref"] = refreshed_ref
+    input_payload["input_refs_by_category"]["command_log"][0] = refreshed_ref
+    _write_json(inputs, input_payload)
+    report = build_v3_acceptance_report(
+        acceptance_dir=tmp_path / "v3_acceptance",
+        input_manifest=inputs,
+        output=tmp_path / "v3_acceptance" / "v3_acceptance_report.json",
+    )
+
+    with pytest.raises(ConfigError, match="sha256 不匹配：src"):
+        inspect_v3_acceptance(report, assert_complete=True)
+
+
 def test_v3_stage12_acceptance_rejects_selected_docker_run_missing_verifier_phase(tmp_path: Path) -> None:
     run_dir = _make_minimal_v3_run(tmp_path / "v3_stage_12_run")
     bad_swebench_run = _make_minimal_v3_run(
@@ -1035,6 +1087,44 @@ def _write_valid_command_log(path: Path) -> None:
                 "argv": ["python", "-m", "pytest", "-q"],
                 "cwd": str(Path.cwd()),
                 "input_refs": [],
+                "output_refs": [],
+                "exit_code": 0,
+                "tool_or_cli_version": "pytest",
+                "started_at": "2026-05-03T00:00:00Z",
+                "finished_at": "2026-05-03T00:00:01Z",
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_command_log_with_historical_repo_refs(
+    path: Path,
+    *,
+    command_name: str = "python-m-pytest",
+) -> None:
+    refs = [
+        {
+            "artifact_id": f"historical_repo_input_{index}",
+            "relative_path": relative_path,
+            "kind": "directory",
+            "sha256": "0" * 64,
+            "size_bytes": 0,
+            "redaction_status": "not_required",
+            "retention_policy": "keep",
+        }
+        for index, relative_path in enumerate(("src", "tests"), start=1)
+    ]
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_command_log_entry_v3_v0",
+                "command_name": command_name,
+                "argv": ["python", "-m", "pytest", "-q"],
+                "cwd": str(Path.cwd()),
+                "input_refs": refs,
                 "output_refs": [],
                 "exit_code": 0,
                 "tool_or_cli_version": "pytest",
