@@ -67,6 +67,7 @@ V4_REQUIRED_ACCEPTANCE_INPUT_CATEGORIES = (
     "trajectory_store",
     "export_quality",
     "cards",
+    "contamination_scan",
     "command_log",
     "pre_acceptance_docs",
 )
@@ -522,6 +523,109 @@ def _inspect_v4_contamination_scan_report(payload: dict[str, Any], failures: lis
         failures.append("V4 contamination scan report card_claim_denylist_sha256 不匹配。")
 
 
+def _inspect_v4_command_log(path: Path, failures: list[str]) -> None:
+    if not path.exists():
+        failures.append(f"acceptance_command_log 不存在：{path}")
+        return
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if not lines:
+        failures.append("acceptance_command_log 必须至少包含一条记录。")
+        return
+    for index, line in enumerate(lines, start=1):
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            failures.append(f"acceptance_command_log 第 {index} 行不是合法 JSON：{exc}")
+            continue
+        if not isinstance(record, dict):
+            failures.append(f"acceptance_command_log 第 {index} 行顶层必须是 object。")
+            continue
+        if record.get("schema_version") != "repo_harness_command_log_entry_v4_v0":
+            failures.append(f"acceptance_command_log 第 {index} 行 schema_version 不匹配。")
+        for field in ("command_name", "argv", "cwd", "tool_or_cli_version", "started_at", "finished_at"):
+            if not record.get(field):
+                failures.append(f"acceptance_command_log 第 {index} 行缺少 {field}。")
+        if record.get("exit_code") is None and not record.get("structured_skip_reason"):
+            failures.append(f"acceptance_command_log 第 {index} 行缺少 exit_code 或 structured skip reason。")
+        for refs_field in ("input_refs", "output_refs"):
+            refs = record.get(refs_field)
+            if refs is None:
+                failures.append(f"acceptance_command_log 第 {index} 行缺少 {refs_field}。")
+                continue
+            if not isinstance(refs, list):
+                failures.append(f"acceptance_command_log 第 {index} 行 {refs_field} 必须是 list。")
+                continue
+            for ref_index, ref in enumerate(refs, start=1):
+                _inspect_command_log_artifact_ref(ref, failures, label=f"acceptance_command_log[{index}].{refs_field}[{ref_index}]")
+
+
+def _inspect_command_log_artifact_ref(ref: Any, failures: list[str], *, label: str) -> None:
+    if not isinstance(ref, dict):
+        failures.append(f"{label} artifact ref 缺失或不是 object。")
+        return
+    raw = str(ref.get("path") or ref.get("relative_path") or "")
+    if not raw:
+        failures.append(f"{label} artifact ref 缺少 path。")
+        return
+    if not ref.get("sha256"):
+        failures.append(f"{label} artifact ref 缺少 sha256。")
+        return
+    path = Path(raw)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    if not path.exists():
+        failures.append(f"{label} artifact ref 路径不存在：{raw}")
+        return
+    actual_sha = _hash_path(path)
+    if actual_sha != ref.get("sha256"):
+        failures.append(f"{label} sha256 不匹配：{raw}")
+    if not path.is_dir() and ref.get("size_bytes") is not None and path.stat().st_size != ref.get("size_bytes"):
+        failures.append(f"{label} size_bytes 不匹配：{raw}")
+
+
+def _inspect_v4_acceptance_role_evidence(role_evidence_refs: Any, failures: list[str]) -> None:
+    if not isinstance(role_evidence_refs, dict):
+        return
+    try:
+        from repo_harness.v2_acceptance import inspect_v2_acceptance
+        from repo_harness.v3_acceptance import inspect_v3_acceptance
+        from repo_harness.v4_agent_run import inspect_v4_agent_run_integration
+        from repo_harness.v4_cards import inspect_v4_cards
+        from repo_harness.v4_export_quality import inspect_v4_export_quality
+        from repo_harness.v4_rollout import inspect_rollout_queue, inspect_rollout_resume
+        from repo_harness.v4_task_freeze import inspect_v4_task_freeze, inspect_v4_task_validity
+        from repo_harness.v4_tool_lifecycle import inspect_v4_tool_lifecycle
+    except ImportError as exc:
+        failures.append(f"V4 acceptance role evidence inspector import failed：{exc}")
+        return
+    inspectors = {
+        "v2_regression": lambda path: inspect_v2_acceptance(path, assert_complete=True),
+        "v3_regression": lambda path: inspect_v3_acceptance(path, assert_complete=True),
+        "real_repository_regression": lambda path: inspect_v4_task_freeze(path, assert_complete=True),
+        "swebench_like_regression": lambda path: inspect_v4_task_validity(path, assert_complete=True),
+        "v4_pr_issue_task_freeze": lambda path: inspect_v4_task_freeze(path, assert_complete=True),
+        "v4_swebench_like_task_freeze": lambda path: inspect_v4_task_validity(path, assert_complete=True),
+        "v4_rollout_orchestration": lambda path: inspect_rollout_queue(path, assert_complete=True),
+        "v4_rollout_resume": lambda path: inspect_rollout_resume(path, assert_complete=True),
+        "v4_agent_run_integration": lambda path: inspect_v4_agent_run_integration(path, assert_complete=True),
+        "v4_export_quality": lambda path: inspect_v4_export_quality(path, assert_complete=True),
+        "v4_tool_lifecycle_audit": lambda path: inspect_v4_tool_lifecycle(path, assert_complete=True),
+        "v4_cards": lambda path: inspect_v4_cards(path, assert_complete=True),
+    }
+    for role in V4_REQUIRED_FINAL_ACCEPTANCE_ROLES:
+        ref = role_evidence_refs.get(role)
+        if not isinstance(ref, dict):
+            failures.append(f"role_evidence_refs 缺少 {role}。")
+            continue
+        path = _inspect_file_ref(ref, failures, label=f"role_evidence_refs.{role}")
+        if path is None:
+            continue
+        try:
+            inspectors[role](path)
+        except ConfigError as exc:
+            failures.append(f"role_evidence_refs.{role} 递归复核失败：{exc}")
+
+
 def inspect_v4_inputs(manifest: str | Path, *, assert_complete: bool = False) -> str:
     manifest_path = Path(manifest)
     failures: list[str] = []
@@ -594,11 +698,22 @@ def inspect_v4_acceptance(report: str | Path, *, assert_complete: bool = False) 
         missing_roles = [role for role in V4_REQUIRED_FINAL_ACCEPTANCE_ROLES if role_statuses.get(role) != "passed"]
         if missing_roles:
             failures.append("V4 acceptance report 缺少通过的必需 role：" + ", ".join(missing_roles))
+        _inspect_v4_acceptance_role_evidence(payload.get("role_evidence_refs"), failures)
+        if payload.get("accepted_auditable_task_definition_count", 0) < 8:
+            failures.append("V4 acceptance report accepted / auditable task definitions 少于 8。")
+        if payload.get("pr_issue_accepted_auditable_task_definition_count", 0) < 4:
+            failures.append("V4 acceptance report PR / issue accepted / auditable task definitions 少于 4。")
+        if payload.get("final_verifier_authority_preserved") is not True:
+            failures.append("V4 acceptance report 必须保留 final verifier authority。")
+        if payload.get("trainable_payload_contamination_status") != "clean":
+            failures.append("V4 acceptance report trainable payload contamination status 必须 clean。")
+        if payload.get("evaluator_only_evidence_model_visible") is not False:
+            failures.append("V4 acceptance report 必须证明 evaluator-only evidence 没有进入模型可见上下文。")
     command_log_ref = payload.get("acceptance_command_log_ref")
     if command_log_ref is not None:
         command_log_path = _inspect_file_ref(command_log_ref, failures, label="acceptance_command_log_ref")
         if command_log_path:
-            _inspect_jsonl_file(command_log_path, None, failures, label="acceptance_command_log")
+            _inspect_v4_command_log(command_log_path, failures)
     lines = [
         f"V4 acceptance report: {report_path}",
         f"Report status: {payload.get('status')}",
@@ -630,6 +745,13 @@ def inspect_v4_acceptance_bundle(manifest: str | Path, *, assert_immutable: bool
     for label in ("acceptance_inputs_ref", "acceptance_command_log_ref"):
         if payload.get(label) is not None:
             _inspect_file_ref(payload.get(label), failures, label=label)
+    docs = payload.get("documentation_refs")
+    if assert_immutable and (not isinstance(docs, list) or not docs):
+        failures.append("V4 acceptance bundle 必须绑定 post-acceptance documentation refs。")
+    if isinstance(docs, list):
+        for index, ref in enumerate(docs, start=1):
+            _inspect_file_ref(ref, failures, label=f"documentation_refs[{index}]")
+    _inspect_v4_post_docs_not_report_inputs(payload, failures)
     lines = [
         f"V4 acceptance bundle: {manifest_path}",
         f"Schema version: {payload.get('schema_version')}",
@@ -705,6 +827,7 @@ def _inspect_bound_acceptance_categories(
     refs_by_category: dict[str, Any],
     failures: list[str],
 ) -> None:
+    _inspect_external_acceptance_categories(refs_by_category, failures)
     category_specs = {
         "rollout_queue": "rollout_queue",
         "lease_state": "rollout_leases",
@@ -739,6 +862,10 @@ def _inspect_bound_acceptance_categories(
                 from repo_harness.v4_task_freeze import inspect_v4_task_validity
 
                 inspect_v4_task_validity(path, assert_complete=True)
+            elif spec_id == "trajectory_store":
+                from repo_harness.v4_agent_run import inspect_v4_trajectory_store
+
+                inspect_v4_trajectory_store(path, assert_readable=True)
             else:
                 inspect_v4_artifact_set(spec_id, path, assert_complete=True)
         except ConfigError as exc:
@@ -751,6 +878,63 @@ def _inspect_bound_acceptance_categories(
                 inspect_v4_artifact_set("contamination_scan", path, assert_complete=True)
             except ConfigError as exc:
                 failures.append(f"contamination_scan 绑定产物递归复核失败：{exc}")
+
+
+def _inspect_external_acceptance_categories(refs_by_category: dict[str, Any], failures: list[str]) -> None:
+    external = {
+        "v2_acceptance": ("v2_acceptance", lambda path: __import__("repo_harness.v2_acceptance", fromlist=["inspect_v2_acceptance"]).inspect_v2_acceptance(path, assert_complete=True)),
+        "v3_acceptance": ("v3_acceptance", lambda path: __import__("repo_harness.v3_acceptance", fromlist=["inspect_v3_acceptance"]).inspect_v3_acceptance(path, assert_complete=True)),
+        "v3_acceptance_bundle": ("v3_acceptance_bundle", lambda path: __import__("repo_harness.v3_acceptance", fromlist=["inspect_acceptance_bundle"]).inspect_acceptance_bundle(path, assert_immutable=True)),
+        "implementation_inputs": ("implementation_inputs", lambda path: __import__("repo_harness.v4_implementation_inputs", fromlist=["inspect_v4_implementation_inputs"]).inspect_v4_implementation_inputs(path, assert_complete=True)),
+    }
+    for category, (_, inspector) in external.items():
+        refs = refs_by_category.get(category)
+        if not isinstance(refs, list) or not refs:
+            continue
+        path = _path_from_ref(refs[0])
+        if path is None or not path.exists():
+            continue
+        try:
+            inspector(path)
+        except ConfigError as exc:
+            failures.append(f"{category} 绑定产物递归复核失败：{exc}")
+    command_refs = refs_by_category.get("command_log")
+    if isinstance(command_refs, list) and command_refs:
+        path = _path_from_ref(command_refs[0])
+        if path is not None and path.exists():
+            _inspect_v4_command_log(path, failures)
+    doc_refs = refs_by_category.get("pre_acceptance_docs")
+    if isinstance(doc_refs, list):
+        for index, ref in enumerate(doc_refs, start=1):
+            path = _inspect_file_ref(ref, failures, label=f"pre_acceptance_docs[{index}]")
+            if path is not None and path.suffix.lower() != ".md":
+                failures.append(f"pre_acceptance_docs[{index}] 必须是 markdown 文档。")
+
+
+def _inspect_v4_post_docs_not_report_inputs(bundle_payload: dict[str, Any], failures: list[str]) -> None:
+    docs = bundle_payload.get("documentation_refs")
+    input_ref = bundle_payload.get("acceptance_inputs_ref")
+    if not isinstance(docs, list) or not isinstance(input_ref, dict):
+        return
+    input_path = _path_from_ref(input_ref)
+    if input_path is None or not input_path.exists():
+        return
+    input_payload = _read_json_for_inspect(input_path, failures)
+    report_input_paths: set[str] = set()
+    for refs in (input_payload.get("input_refs_by_category") or {}).values():
+        if not isinstance(refs, list):
+            continue
+        for ref in refs:
+            if isinstance(ref, dict):
+                raw = str(ref.get("path") or ref.get("relative_path") or "")
+                if raw:
+                    report_input_paths.add(raw)
+    for index, ref in enumerate(docs, start=1):
+        if not isinstance(ref, dict):
+            continue
+        raw = str(ref.get("path") or ref.get("relative_path") or "")
+        if raw and raw in report_input_paths:
+            failures.append(f"post-acceptance documentation_refs[{index}] 不能作为 acceptance report 输入。")
 
 
 def _inspect_embedded_artifact_refs(

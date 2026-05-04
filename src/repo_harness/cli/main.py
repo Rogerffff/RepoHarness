@@ -110,6 +110,12 @@ from repo_harness.v4_cards import (
     build_v4_cards,
     inspect_v4_cards as inspect_v4_cards_stage7,
 )
+from repo_harness.v4_acceptance import (
+    build_v4_acceptance_bundle,
+    build_v4_acceptance_inputs,
+    build_v4_acceptance_report,
+    build_v4_run_selection_manifest,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -671,6 +677,82 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-if-output-exists",
         action="store_true",
         help="如果目标 Stage 7 输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v4_run_selection_parser = subparsers.add_parser(
+        "build-v4-run-selection-manifest",
+        help="构建 V4 final acceptance run selection manifest。",
+    )
+    build_v4_run_selection_parser.add_argument("--query", required=True, help="V4_QUERY_SPEC.json 路径。")
+    build_v4_run_selection_parser.add_argument("--output", required=True, help="run_selection_manifest.json 输出路径。")
+    build_v4_run_selection_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v4_inputs_parser = subparsers.add_parser(
+        "build-v4-acceptance-inputs",
+        help="构建 V4 final acceptance explicit inputs manifest。",
+    )
+    build_v4_inputs_parser.add_argument("--run-selection", required=True)
+    build_v4_inputs_parser.add_argument("--v2-acceptance", required=True)
+    build_v4_inputs_parser.add_argument("--v3-acceptance", required=True)
+    build_v4_inputs_parser.add_argument("--v3-acceptance-bundle", required=True)
+    build_v4_inputs_parser.add_argument("--implementation-inputs", required=True)
+    build_v4_inputs_parser.add_argument("--rollout-queue", required=True)
+    build_v4_inputs_parser.add_argument("--lease-state", required=True)
+    build_v4_inputs_parser.add_argument("--retry-policy", required=True)
+    build_v4_inputs_parser.add_argument("--budget-control", required=True)
+    build_v4_inputs_parser.add_argument("--resource-locks", required=True)
+    build_v4_inputs_parser.add_argument("--resource-usage", required=True)
+    build_v4_inputs_parser.add_argument("--batch-resume", required=True)
+    build_v4_inputs_parser.add_argument("--run-selection-query", required=True)
+    build_v4_inputs_parser.add_argument("--task-freeze", required=True)
+    build_v4_inputs_parser.add_argument("--task-validity", required=True)
+    build_v4_inputs_parser.add_argument("--tool-contract", required=True)
+    build_v4_inputs_parser.add_argument("--tool-lifecycle", required=True)
+    build_v4_inputs_parser.add_argument("--agent-run-integration", required=True)
+    build_v4_inputs_parser.add_argument("--trajectory-store", required=True)
+    build_v4_inputs_parser.add_argument("--export-quality", required=True)
+    build_v4_inputs_parser.add_argument("--cards", required=True)
+    build_v4_inputs_parser.add_argument("--contamination-scan", required=True)
+    build_v4_inputs_parser.add_argument("--command-log", required=True)
+    build_v4_inputs_parser.add_argument("--pre-acceptance-doc", action="append", default=[], help="可重复提供的 pre-acceptance 文档。")
+    build_v4_inputs_parser.add_argument("--output", required=True)
+    build_v4_inputs_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v4_report_parser = subparsers.add_parser(
+        "build-v4-acceptance-report",
+        help="构建 V4 final acceptance report。",
+    )
+    build_v4_report_parser.add_argument("--acceptance-inputs", required=True)
+    build_v4_report_parser.add_argument("--output", required=True)
+    build_v4_report_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标 acceptance evidence 已存在，则失败。",
+    )
+
+    build_v4_bundle_parser = subparsers.add_parser(
+        "build-v4-acceptance-bundle",
+        help="构建 V4 final acceptance bundle manifest。",
+    )
+    build_v4_bundle_parser.add_argument("--acceptance-report", required=True)
+    build_v4_bundle_parser.add_argument("--documentation-ref", action="append", default=[], help="可重复提供的 post-acceptance 文档。")
+    build_v4_bundle_parser.add_argument("--output", required=True)
+    build_v4_bundle_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标 bundle 已存在，则失败。",
     )
 
     inspect_v4_acceptance_inputs = subparsers.add_parser(
@@ -1299,6 +1381,74 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V4 cards 构建失败：{exc}\n")
         print(f"V4 cards manifest：{output_path}")
+        return 0
+    if args.command == "build-v4-run-selection-manifest":
+        try:
+            output_path = build_v4_run_selection_manifest(
+                query=args.query,
+                output=args.output,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 run selection manifest 构建失败：{exc}\n")
+        print(f"V4 run selection manifest：{output_path}")
+        return 0
+    if args.command == "build-v4-acceptance-inputs":
+        try:
+            output_path = build_v4_acceptance_inputs(
+                output=args.output,
+                pre_acceptance_docs=args.pre_acceptance_doc,
+                fail_if_output_exists=args.fail_if_output_exists,
+                run_selection=args.run_selection,
+                v2_acceptance=args.v2_acceptance,
+                v3_acceptance=args.v3_acceptance,
+                v3_acceptance_bundle=args.v3_acceptance_bundle,
+                implementation_inputs=args.implementation_inputs,
+                rollout_queue=args.rollout_queue,
+                lease_state=args.lease_state,
+                retry_policy=args.retry_policy,
+                budget_control=args.budget_control,
+                resource_locks=args.resource_locks,
+                resource_usage=args.resource_usage,
+                batch_resume=args.batch_resume,
+                run_selection_query=args.run_selection_query,
+                task_freeze=args.task_freeze,
+                task_validity=args.task_validity,
+                tool_contract=args.tool_contract,
+                tool_lifecycle=args.tool_lifecycle,
+                agent_run_integration=args.agent_run_integration,
+                trajectory_store=args.trajectory_store,
+                export_quality=args.export_quality,
+                cards=args.cards,
+                contamination_scan=args.contamination_scan,
+                command_log=args.command_log,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 acceptance inputs 构建失败：{exc}\n")
+        print(f"V4 acceptance inputs：{output_path}")
+        return 0
+    if args.command == "build-v4-acceptance-report":
+        try:
+            output_path = build_v4_acceptance_report(
+                acceptance_inputs=args.acceptance_inputs,
+                output=args.output,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 acceptance report 构建失败：{exc}\n")
+        print(f"V4 acceptance report：{output_path}")
+        return 0
+    if args.command == "build-v4-acceptance-bundle":
+        try:
+            output_path = build_v4_acceptance_bundle(
+                acceptance_report=args.acceptance_report,
+                output=args.output,
+                documentation_refs=args.documentation_ref,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 acceptance bundle 构建失败：{exc}\n")
+        print(f"V4 acceptance bundle：{output_path}")
         return 0
     if args.command == "inspect-v4-inputs":
         try:

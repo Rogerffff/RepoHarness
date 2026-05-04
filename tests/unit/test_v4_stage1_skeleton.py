@@ -147,6 +147,19 @@ def test_v4_acceptance_recursively_uses_stage2_task_validity_inspect(tmp_path: P
         inspect_v4_inputs(paths["acceptance_inputs"], assert_complete=True)
 
 
+def test_v4_acceptance_recursively_uses_stage5_trajectory_store_inspect(tmp_path: Path) -> None:
+    paths = _write_valid_stage1_fixture(tmp_path)
+    integrity = paths["run_dir"] / "trajectory_store_integrity_report.json"
+    payload = _read_json(integrity)
+    payload["artifact_refs_resolvable"] = False
+    _write_json(integrity, payload)
+    _refresh_ref_in_inputs(paths["acceptance_inputs"], "agent_run_integration", paths["run_dir"])
+    _refresh_ref_in_inputs(paths["acceptance_inputs"], "trajectory_store", paths["run_dir"])
+
+    with pytest.raises(ConfigError, match="trajectory_store 绑定产物递归复核失败|ArtifactRef"):
+        inspect_v4_inputs(paths["acceptance_inputs"], assert_complete=True)
+
+
 def test_v4_stage1_rejects_missing_schema_version(tmp_path: Path) -> None:
     paths = _write_valid_stage1_fixture(tmp_path)
     queue_manifest = paths["rollout_dir"] / "rollout_queue_manifest.json"
@@ -369,17 +382,40 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
         },
     )
     command_log = tmp_path / "acceptance_command_log.jsonl"
-    _write_jsonl(command_log, [{"schema_version": "repo_harness_command_log_entry_v4_v0", "command_name": "fixture"}])
     doc = tmp_path / "pre_acceptance_doc.md"
     doc.write_text("# Pre acceptance\n", encoding="utf-8")
+    final_doc = tmp_path / "final_acceptance.md"
+    final_doc.write_text("# Final acceptance\n", encoding="utf-8")
+    _write_jsonl(
+        command_log,
+        [
+            {
+                "schema_version": "repo_harness_command_log_entry_v4_v0",
+                "command_name": "fixture",
+                "argv": ["repo-harness", "fixture"],
+                "cwd": tmp_path.as_posix(),
+                "input_refs": [_file_ref(doc, "fixture_input")],
+                "output_refs": [_file_ref(final_doc, "fixture_output")],
+                "exit_code": 0,
+                "tool_or_cli_version": "repo-harness test",
+                "started_at": "2026-05-04T00:00:00Z",
+                "finished_at": "2026-05-04T00:00:01Z",
+            }
+        ],
+    )
 
     acceptance_inputs = tmp_path / "v4_acceptance_inputs.json"
+    v2_acceptance = Path("runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json")
+    v3_acceptance = Path("runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json")
+    v3_acceptance_bundle = Path("runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json")
+    implementation_inputs = Path("docs/v4/evidence/implementation-inputs/v4_implementation_input_manifest.json")
+    real_trajectory_store = Path("docs/v4/evidence/agent-run-integration")
     refs_by_category = {
         "run_selection_manifest": [_file_ref(run_selection, "run_selection_manifest")],
-        "v2_acceptance": [_file_ref(task_freeze, "v2_acceptance")],
-        "v3_acceptance": [_file_ref(task_freeze, "v3_acceptance")],
-        "v3_acceptance_bundle": [_file_ref(task_freeze, "v3_acceptance_bundle")],
-        "implementation_inputs": [_file_ref(task_freeze, "implementation_inputs")],
+        "v2_acceptance": [_file_ref(v2_acceptance, "v2_acceptance")],
+        "v3_acceptance": [_file_ref(v3_acceptance, "v3_acceptance")],
+        "v3_acceptance_bundle": [_file_ref(v3_acceptance_bundle, "v3_acceptance_bundle")],
+        "implementation_inputs": [_file_ref(implementation_inputs, "implementation_inputs")],
         "rollout_queue": [_file_ref(rollout_dir, "rollout_queue")],
         "lease_state": [_file_ref(rollout_dir, "lease_state")],
         "retry_policy": [_file_ref(rollout_dir, "retry_policy")],
@@ -393,9 +429,10 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
         "tool_contract": [_file_ref(tool_dir, "tool_contract")],
         "tool_lifecycle": [_file_ref(tool_dir, "tool_lifecycle")],
         "agent_run_integration": [_file_ref(run_dir, "agent_run_integration")],
-        "trajectory_store": [_file_ref(run_dir, "trajectory_store")],
+        "trajectory_store": [_file_ref(real_trajectory_store, "trajectory_store")],
         "export_quality": [_file_ref(export_dir, "export_quality")],
         "cards": [_file_ref(cards_dir, "cards")],
+        "contamination_scan": [_file_ref(scan_report, "contamination_scan")],
         "command_log": [_file_ref(command_log, "command_log")],
         "pre_acceptance_docs": [_file_ref(doc, "pre_acceptance_docs")],
     }
@@ -417,6 +454,11 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
             "status": "passed",
             "acceptance_inputs_ref": _file_ref(acceptance_inputs, "v4_acceptance_inputs"),
             "acceptance_command_log_ref": _file_ref(command_log, "acceptance_command_log"),
+            "accepted_auditable_task_definition_count": 8,
+            "pr_issue_accepted_auditable_task_definition_count": 4,
+            "final_verifier_authority_preserved": True,
+            "trainable_payload_contamination_status": "clean",
+            "evaluator_only_evidence_model_visible": False,
             "role_statuses": {
                 "v3_regression": "passed",
                 "v2_regression": "passed",
@@ -441,6 +483,7 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
             "acceptance_report_ref": _file_ref(acceptance_report, "v4_acceptance_report"),
             "acceptance_inputs_ref": _file_ref(acceptance_inputs, "v4_acceptance_inputs"),
             "acceptance_command_log_ref": _file_ref(command_log, "acceptance_command_log"),
+            "documentation_refs": [_file_ref(final_doc, "post_acceptance_documentation")],
         },
     )
     return {
