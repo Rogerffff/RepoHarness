@@ -112,8 +112,19 @@ V4_ARTIFACT_INSPECT_TRACKING_ROWS: tuple[dict[str, Any], ...] = (
         "artifacts": [
             "pr_task_construction_manifest.json",
             "source_archive_manifest.json",
+            "source_materialization_report.json",
+            "baseline_verifier_report.json",
+            "post_patch_verifier_report.json",
+            "flaky_detection_report.json",
+            "environment_stability_report.json",
+            "dependency_cache_report.json",
+            "license_provenance_review_report.json",
+            "use_boundary_review_report.json",
+            "task_validity_report.json",
+            "generated_task_definition.jsonl",
             "adapter_visible_task_input_manifest.json",
             "evaluator_only_evidence_manifest.json",
+            "task_visibility_scan_report.json",
         ],
         "inspect_command": "inspect-v4-task-freeze",
     },
@@ -296,8 +307,19 @@ V4_ARTIFACT_SET_SPECS: dict[str, V4ArtifactSetSpec] = {
         referenced_artifacts=(
             "pr_task_construction_manifest.json",
             "source_archive_manifest.json",
+            "source_materialization_report.json",
+            "baseline_verifier_report.json",
+            "post_patch_verifier_report.json",
+            "flaky_detection_report.json",
+            "environment_stability_report.json",
+            "dependency_cache_report.json",
+            "license_provenance_review_report.json",
+            "use_boundary_review_report.json",
+            "task_validity_report.json",
+            "generated_task_definition.jsonl",
             "adapter_visible_task_input_manifest.json",
             "evaluator_only_evidence_manifest.json",
+            "task_visibility_scan_report.json",
         ),
     ),
     "task_validity": V4ArtifactSetSpec(
@@ -666,7 +688,16 @@ def _inspect_bound_acceptance_categories(
         if path is None or not path.exists():
             continue
         try:
-            inspect_v4_artifact_set(spec_id, path, assert_complete=True)
+            if spec_id == "task_freeze":
+                from repo_harness.v4_task_freeze import inspect_v4_task_freeze
+
+                inspect_v4_task_freeze(path, assert_complete=True)
+            elif spec_id == "task_validity":
+                from repo_harness.v4_task_freeze import inspect_v4_task_validity
+
+                inspect_v4_task_validity(path, assert_complete=True)
+            else:
+                inspect_v4_artifact_set(spec_id, path, assert_complete=True)
         except ConfigError as exc:
             failures.append(f"{category} 绑定产物递归复核失败：{exc}")
     scan_refs = refs_by_category.get("contamination_scan") or refs_by_category.get("contamination_summary")

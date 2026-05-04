@@ -76,6 +76,11 @@ from repo_harness.v4_stage1 import (
     inspect_v4_artifact_set,
     inspect_v4_inputs,
 )
+from repo_harness.v4_task_freeze import (
+    build_v4_task_freeze,
+    inspect_v4_task_freeze as inspect_v4_task_freeze_stage2,
+    inspect_v4_task_validity as inspect_v4_task_validity_stage2,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -563,6 +568,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_v4_inputs.add_argument("manifest", help="v4_implementation_input_manifest.json 路径。")
     inspect_v4_inputs.add_argument("--assert-complete", action="store_true", help="要求 Stage 0 input freeze 完整通过。")
+
+    build_v4_task_freeze_parser = subparsers.add_parser(
+        "build-v4-task-freeze",
+        help="构建 V4 阶段 2 task source freeze 和 task adapter integration 产物。",
+    )
+    build_v4_task_freeze_parser.add_argument("--implementation-inputs", required=True, help="Stage 0 v4_implementation_input_manifest.json 路径。")
+    build_v4_task_freeze_parser.add_argument("--output-dir", required=True, help="Stage 2 task freeze 产物目录。")
+    build_v4_task_freeze_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        help="如果目标 Stage 2 输出已存在，则失败，避免覆盖 evidence。",
+    )
 
     inspect_v4_acceptance_inputs = subparsers.add_parser(
         "inspect-v4-inputs",
@@ -1122,6 +1139,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V4 implementation inputs 检查失败：{exc}\n")
         return 0
+    if args.command == "build-v4-task-freeze":
+        try:
+            output_path = build_v4_task_freeze(
+                implementation_inputs=args.implementation_inputs,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 task freeze 构建失败：{exc}\n")
+        print(f"V4 task freeze manifest：{output_path}")
+        return 0
     if args.command == "inspect-v4-inputs":
         try:
             print(inspect_v4_inputs(args.manifest, assert_complete=args.assert_complete))
@@ -1137,8 +1165,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         "inspect-resource-usage": "resource_usage",
         "inspect-rollout-resume": "rollout_resume",
         "inspect-run-selection-query": "run_selection_query",
-        "inspect-v4-task-freeze": "task_freeze",
-        "inspect-v4-task-validity": "task_validity",
         "inspect-v4-tool-lifecycle": "tool_lifecycle",
         "inspect-v4-agent-run-integration": "agent_run_integration",
         "inspect-v4-export-quality": "export_quality",
@@ -1155,6 +1181,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"{args.command} 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-task-freeze":
+        try:
+            print(inspect_v4_task_freeze_stage2(args.path, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-task-freeze 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v4-task-validity":
+        try:
+            print(inspect_v4_task_validity_stage2(args.path, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-task-validity 检查失败：{exc}\n")
         return 0
     if args.command == "inspect-v4-tool-contract":
         try:

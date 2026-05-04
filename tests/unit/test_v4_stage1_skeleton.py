@@ -39,6 +39,7 @@ from repo_harness.v4_stage1 import (
     inspect_v4_artifact_set,
     inspect_v4_inputs,
 )
+from repo_harness.v4_task_freeze import build_v4_task_freeze
 from repo_harness.workspace.source_hash import compute_source_tree_hash
 
 
@@ -119,6 +120,23 @@ def test_v4_acceptance_recursively_rejects_bound_artifact_contract_failure(tmp_p
     (paths["cards_dir"] / "run_card.json").unlink()
 
     with pytest.raises(ConfigError, match="cards 绑定产物递归复核失败"):
+        inspect_v4_inputs(paths["acceptance_inputs"], assert_complete=True)
+
+
+def test_v4_acceptance_recursively_uses_stage2_task_validity_inspect(tmp_path: Path) -> None:
+    paths = _write_valid_stage1_fixture(tmp_path)
+    validity = paths["task_validity"]
+    payload = _read_json(validity)
+    payload["accepted_task_definitions"][0]["flaky_probe_status"] = "flaky_probe_unstable"
+    _write_json(validity, payload)
+    task_freeze = paths["task_freeze"]
+    task_freeze_payload = _read_json(task_freeze)
+    task_freeze_payload["artifact_refs_by_name"]["task_validity_report.json"] = _file_ref(validity, "task_validity_report")
+    _write_json(task_freeze, task_freeze_payload)
+    _refresh_ref_in_inputs(paths["acceptance_inputs"], "task_freeze", task_freeze)
+    _refresh_ref_in_inputs(paths["acceptance_inputs"], "task_validity", validity)
+
+    with pytest.raises(ConfigError, match="task_validity 绑定产物递归复核失败|flaky probe 未通过"):
         inspect_v4_inputs(paths["acceptance_inputs"], assert_complete=True)
 
 
@@ -234,46 +252,11 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
             "input_manifest_hash": "1" * 64,
         },
     )
-    task_freeze = tmp_path / "task_freeze_manifest.json"
-    task_validity = tmp_path / "task_validity_report.json"
-    task_freeze_refs = {}
-    for name in (
-        "pr_task_construction_manifest.json",
-        "source_archive_manifest.json",
-        "adapter_visible_task_input_manifest.json",
-        "evaluator_only_evidence_manifest.json",
-    ):
-        path = tmp_path / name
-        _write_json(path, {"schema_version": f"repo_harness_v4_{name.removesuffix('.json')}_v0"})
-        task_freeze_refs[name] = _file_ref(path, name)
-    _write_json(
-        task_freeze,
-        {
-            "schema_version": V4_TASK_FREEZE_MANIFEST_VERSION,
-            "artifact_refs_by_name": task_freeze_refs,
-        },
+    task_freeze = build_v4_task_freeze(
+        implementation_inputs=Path("docs/v4/evidence/implementation-inputs/v4_implementation_input_manifest.json"),
+        output_dir=tmp_path / "task-freeze-artifacts",
     )
-    task_validity_refs = {}
-    for name in (
-        "source_materialization_report.json",
-        "baseline_verifier_report.json",
-        "post_patch_verifier_report.json",
-        "flaky_detection_report.json",
-        "environment_stability_report.json",
-        "dependency_cache_report.json",
-        "license_provenance_review_report.json",
-        "use_boundary_review_report.json",
-    ):
-        path = tmp_path / name
-        _write_json(path, {"schema_version": f"repo_harness_v4_{name.removesuffix('.json')}_v0"})
-        task_validity_refs[name] = _file_ref(path, name)
-    _write_json(
-        task_validity,
-        {
-            "schema_version": V4_TASK_VALIDITY_REPORT_VERSION,
-            "artifact_refs_by_name": task_validity_refs,
-        },
-    )
+    task_validity = task_freeze.parent / "task_validity_report.json"
 
     _write_json(tool_dir / "permission_policy_snapshot.json", {"schema_version": "repo_harness_v4_permission_policy_snapshot_v0"})
     _write_json(tool_dir / "hook_policy_snapshot.json", {"schema_version": "repo_harness_v4_hook_policy_snapshot_v0"})
