@@ -97,6 +97,11 @@ from repo_harness.v4_tool_lifecycle import (
     inspect_v4_tool_contract as inspect_v4_tool_contract_stage4,
     inspect_v4_tool_lifecycle as inspect_v4_tool_lifecycle_stage4,
 )
+from repo_harness.v4_agent_run import (
+    build_v4_agent_run_integration,
+    inspect_v4_agent_run_integration as inspect_v4_agent_run_integration_stage5,
+    inspect_v4_trajectory_store as inspect_v4_trajectory_store_stage5,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -618,6 +623,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-if-output-exists",
         action="store_true",
         help="如果目标 Stage 4 输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v4_agent_run_parser = subparsers.add_parser(
+        "build-v4-agent-run-integration",
+        help="构建 V4 阶段 5 Agent run integration 和 trajectory store 产物。",
+    )
+    build_v4_agent_run_parser.add_argument("--output-dir", required=True, help="Stage 5 agent run integration 产物目录。")
+    build_v4_agent_run_parser.add_argument("--task-freeze", required=True, help="Stage 2 task_freeze_manifest.json 或 task freeze 产物目录。")
+    build_v4_agent_run_parser.add_argument("--tool-lifecycle", required=True, help="Stage 4 tool lifecycle 产物目录或 tool contract snapshot。")
+    build_v4_agent_run_parser.add_argument("--rollout-queue", required=True, help="Stage 3 rollout_queue_manifest.json 或 rollout 产物目录。")
+    build_v4_agent_run_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        help="如果目标 Stage 5 输出已存在，则失败，避免覆盖 evidence。",
     )
 
     inspect_v4_acceptance_inputs = subparsers.add_parser(
@@ -1210,6 +1229,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.exit(1, f"V4 tool lifecycle 构建失败：{exc}\n")
         print(f"V4 tool contract snapshot：{output_path}")
         return 0
+    if args.command == "build-v4-agent-run-integration":
+        try:
+            output_path = build_v4_agent_run_integration(
+                output_dir=args.output_dir,
+                task_freeze=args.task_freeze,
+                tool_lifecycle=args.tool_lifecycle,
+                rollout_queue=args.rollout_queue,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 agent run integration 构建失败：{exc}\n")
+        print(f"V4 agent run integration report：{output_path}")
+        return 0
     if args.command == "inspect-v4-inputs":
         try:
             print(inspect_v4_inputs(args.manifest, assert_complete=args.assert_complete))
@@ -1217,7 +1249,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.exit(1, f"V4 acceptance inputs 检查失败：{exc}\n")
         return 0
     v4_artifact_command_map = {
-        "inspect-v4-agent-run-integration": "agent_run_integration",
         "inspect-v4-export-quality": "export_quality",
         "inspect-v4-cards": "cards",
     }
@@ -1273,9 +1304,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"inspect-v4-tool-lifecycle 检查失败：{exc}\n")
         return 0
+    if args.command == "inspect-v4-agent-run-integration":
+        try:
+            print(inspect_v4_agent_run_integration_stage5(args.path, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"inspect-v4-agent-run-integration 检查失败：{exc}\n")
+        return 0
     if args.command == "inspect-v4-trajectory-store":
         try:
-            print(inspect_v4_artifact_set("trajectory_store", args.path, assert_complete=args.assert_readable))
+            print(inspect_v4_trajectory_store_stage5(args.path, assert_readable=args.assert_readable))
         except RepoHarnessError as exc:
             parser.exit(1, f"inspect-v4-trajectory-store 检查失败：{exc}\n")
         return 0
