@@ -96,6 +96,7 @@ REWARD_AUDIT_ALLOWED_FIELD_PATHS = (
     "$.reward_metadata_allowed_field_paths[*]",
     "$.final_verifier_authority_preserved",
     "$.reward_records",
+    "$.reward_records[*]",
     "$.reward_records[*].sample_id",
     "$.reward_records[*].final_verifier_result",
     "$.reward_records[*].final_verifier_result_ref",
@@ -107,9 +108,11 @@ REWARD_AUDIT_ALLOWED_FIELD_PATHS = (
     "$.reward_records[*].reward_metadata.reward_version",
     "$.reward_records[*].reward_metadata.formula",
     "$.reward_records[*].reward_metadata.components",
+    "$.reward_records[*].reward_metadata.components[*]",
     "$.reward_records[*].reward_metadata.components[*].name",
     "$.reward_records[*].reward_metadata.components[*].weight",
     "$.reward_records[*].reward_metadata.sources",
+    "$.reward_records[*].reward_metadata.sources[*]",
     "$.reward_records[*].reward_metadata.sources[*].source",
     "$.reward_records[*].reward_metadata.sources[*].model_visible",
     "$.reward_records[*].reward_metadata.invalid_for_training",
@@ -540,23 +543,22 @@ def _inspect_sample_final_verifier_binding(
 
 def _inspect_reward_allowed_paths(payload: dict[str, Any], failures: list[str]) -> None:
     allowed = set(REWARD_AUDIT_ALLOWED_FIELD_PATHS)
-    for path in _json_leaf_paths(payload):
+    for path in _json_field_paths(payload):
         if path not in allowed:
             failures.append(f"reward_audit_report 字段路径未列入 allowlist：{path}")
 
 
-def _json_leaf_paths(value: Any, path: str = "$") -> list[str]:
+def _json_field_paths(value: Any, path: str = "$") -> list[str]:
+    paths: list[str] = [] if path == "$" else [path]
     if isinstance(value, dict):
-        paths: list[str] = []
         for key, child in value.items():
-            paths.extend(_json_leaf_paths(child, f"{path}.{key}"))
+            paths.extend(_json_field_paths(child, f"{path}.{key}"))
         return paths
     if isinstance(value, list):
-        paths = [path]
         for child in value:
-            paths.extend(_json_leaf_paths(child, f"{path}[*]"))
+            paths.extend(_json_field_paths(child, f"{path}[*]"))
         return paths
-    return [path]
+    return paths
 
 
 def _inspect_sample_tiers(

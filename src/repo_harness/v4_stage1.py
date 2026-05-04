@@ -27,6 +27,7 @@ from repo_harness.schema_versions import (
     V4_RESOURCE_LOCK_REPORT_VERSION,
     V4_RESOURCE_USAGE_REPORT_VERSION,
     V4_RETRY_POLICY_REPORT_VERSION,
+    V4_REGRESSION_EVIDENCE_REPORT_VERSION,
     V4_ROLLOUT_QUEUE_MANIFEST_VERSION,
     V4_RUN_SELECTION_MANIFEST_VERSION,
     V4_RUN_SELECTION_QUERY_REPORT_VERSION,
@@ -50,6 +51,8 @@ V4_REQUIRED_ACCEPTANCE_INPUT_CATEGORIES = (
     "v2_acceptance",
     "v3_acceptance",
     "v3_acceptance_bundle",
+    "real_repository_regression",
+    "swebench_like_regression",
     "implementation_inputs",
     "rollout_queue",
     "lease_state",
@@ -70,6 +73,13 @@ V4_REQUIRED_ACCEPTANCE_INPUT_CATEGORIES = (
     "contamination_scan",
     "command_log",
     "pre_acceptance_docs",
+)
+
+
+V4_FINAL_ACCEPTANCE_COMMAND_LOG_REQUIRED_COMMANDS = (
+    "inspect-v4-acceptance",
+    "build-v4-acceptance-bundle",
+    "inspect-acceptance-bundle",
 )
 
 
@@ -150,6 +160,15 @@ V4_ARTIFACT_INSPECT_TRACKING_ROWS: tuple[dict[str, Any], ...] = (
             "task_validity_report.json",
         ],
         "inspect_command": "inspect-v4-task-validity",
+    },
+    {
+        "scope": "Final regression evidence",
+        "artifacts": [
+            "real_repository_regression_report.json",
+            "swebench_like_regression_report.json",
+        ],
+        "inspect_command": "inspect-v4-acceptance",
+        "secondary_inspect_commands": ["inspect-v4-inputs"],
     },
     {
         "scope": "P1-2 tool contract",
@@ -557,6 +576,17 @@ def _inspect_v4_command_log(path: Path, failures: list[str]) -> None:
                 continue
             for ref_index, ref in enumerate(refs, start=1):
                 _inspect_command_log_artifact_ref(ref, failures, label=f"acceptance_command_log[{index}].{refs_field}[{ref_index}]")
+        for paths_field, reason_field in (
+            ("self_referential_input_paths", "self_referential_input_reason"),
+            ("self_referential_output_paths", "self_referential_output_reason"),
+        ):
+            paths = record.get(paths_field)
+            if paths in (None, []):
+                continue
+            if not isinstance(paths, list) or not all(isinstance(item, str) and item for item in paths):
+                failures.append(f"acceptance_command_log 第 {index} 行 {paths_field} 必须是非空字符串列表。")
+            if not record.get(reason_field):
+                failures.append(f"acceptance_command_log 第 {index} 行声明 {paths_field} 时必须提供 {reason_field}。")
 
 
 def _inspect_command_log_artifact_ref(ref: Any, failures: list[str], *, label: str) -> None:
@@ -583,6 +613,116 @@ def _inspect_command_log_artifact_ref(ref: Any, failures: list[str], *, label: s
         failures.append(f"{label} size_bytes 不匹配：{raw}")
 
 
+def inspect_v4_regression_evidence_report(
+    report: str | Path,
+    *,
+    expected_role: str | None = None,
+    assert_complete: bool = False,
+) -> str:
+    report_path = Path(report)
+    failures: list[str] = []
+    payload = _read_json_for_inspect(report_path, failures)
+    if payload:
+        _inspect_schema_version(payload, V4_REGRESSION_EVIDENCE_REPORT_VERSION, failures, label=report_path.name)
+    role = payload.get("role")
+    if expected_role is not None and role != expected_role:
+        failures.append(f"V4 regression evidence role 不匹配：expected={expected_role} actual={role}")
+    if role not in {"real_repository_regression", "swebench_like_regression"}:
+        failures.append("V4 regression evidence role 必须是 real_repository_regression 或 swebench_like_regression。")
+    if payload.get("model_visible") is not False:
+        failures.append("V4 regression evidence 必须声明 model_visible=false。")
+    if payload.get("independent_regression_evidence") is not True:
+        failures.append("V4 regression evidence 必须声明 independent_regression_evidence=true。")
+    if payload.get("source_role_reused_as_regression_evidence") is not False:
+        failures.append("V4 regression evidence 不能复用 task freeze / validity 作为 regression 主证据。")
+    if assert_complete and payload.get("result") != "passed":
+        failures.append("V4 regression evidence assert-complete 要求 result=passed。")
+    for label in ("regression_command_log_ref", "source_task_freeze_ref", "source_task_validity_ref"):
+        ref_path = _inspect_file_ref(payload.get(label), failures, label=label)
+        if label == "regression_command_log_ref" and ref_path is not None:
+            _inspect_v4_command_log(ref_path, failures)
+    refs_by_category = payload.get("regression_evidence_refs_by_category")
+    if not isinstance(refs_by_category, dict) or not refs_by_category:
+        failures.append("V4 regression evidence 缺少 regression_evidence_refs_by_category。")
+    elif assert_complete:
+        for category in ("agent_run_integration", "export_quality"):
+            refs = refs_by_category.get(category)
+            if not isinstance(refs, list) or not refs:
+                failures.append(f"V4 regression evidence 缺少 {category} evidence ref。")
+                continue
+            for index, ref in enumerate(refs, start=1):
+                _inspect_file_ref(ref, failures, label=f"regression_evidence_refs_by_category.{category}[{index}]")
+    policy = payload.get("role_evidence_independence_policy")
+    if not isinstance(policy, dict):
+        failures.append("V4 regression evidence 缺少 role_evidence_independence_policy。")
+    elif assert_complete:
+        for field in (
+            "must_not_equal_v4_pr_issue_task_freeze_ref",
+            "must_not_equal_v4_swebench_like_task_freeze_ref",
+            "acceptance_report_must_bind_this_report_directly",
+        ):
+            if policy.get(field) is not True:
+                failures.append(f"V4 regression evidence independence policy 缺少或未启用：{field}")
+    lines = [
+        f"V4 regression evidence report: {report_path}",
+        f"Role: {role}",
+    ]
+    if failures:
+        if assert_complete:
+            raise ConfigError("; ".join(failures))
+        lines.append("Diagnostics:")
+        lines.extend(f"- {failure}" for failure in failures)
+    if assert_complete:
+        lines.append("Inspect V4 regression evidence: complete")
+    lines.append("Inspect V4 regression evidence: passed")
+    return "\n".join(lines)
+
+
+def _inspect_v4_final_acceptance_command_log(
+    path: Path,
+    *,
+    bundle_manifest_path: Path,
+    failures: list[str],
+) -> None:
+    if not path.exists():
+        failures.append(f"final acceptance command log 不存在：{path}")
+        return
+    records: list[dict[str, Any]] = []
+    for index, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            failures.append(f"final acceptance command log 第 {index} 行不是合法 JSON：{exc}")
+            continue
+        if not isinstance(record, dict):
+            failures.append(f"final acceptance command log 第 {index} 行顶层必须是 object。")
+            continue
+        records.append(record)
+    by_command: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        by_command.setdefault(str(record.get("command_name") or ""), []).append(record)
+    missing = [
+        command
+        for command in V4_FINAL_ACCEPTANCE_COMMAND_LOG_REQUIRED_COMMANDS
+        if not by_command.get(command)
+    ]
+    if missing:
+        failures.append("final acceptance command log 缺少最终验收命令：" + ", ".join(missing))
+    for command in V4_FINAL_ACCEPTANCE_COMMAND_LOG_REQUIRED_COMMANDS:
+        for record in by_command.get(command, []):
+            if record.get("exit_code") != 0:
+                failures.append(f"final acceptance command log {command} 必须 exit_code=0。")
+    bundle_relative = _relative_path(bundle_manifest_path, Path.cwd())
+    build_records = by_command.get("build-v4-acceptance-bundle") or []
+    if build_records and not any(bundle_relative in (record.get("self_referential_output_paths") or []) for record in build_records):
+        failures.append("build-v4-acceptance-bundle 记录必须把 bundle manifest 声明为自引用输出。")
+    inspect_records = by_command.get("inspect-acceptance-bundle") or []
+    if inspect_records and not any(bundle_relative in (record.get("self_referential_input_paths") or []) for record in inspect_records):
+        failures.append("inspect-acceptance-bundle 记录必须把 bundle manifest 声明为自引用输入。")
+
+
 def _inspect_v4_acceptance_role_evidence(role_evidence_refs: Any, failures: list[str]) -> None:
     if not isinstance(role_evidence_refs, dict):
         return
@@ -601,8 +741,16 @@ def _inspect_v4_acceptance_role_evidence(role_evidence_refs: Any, failures: list
     inspectors = {
         "v2_regression": lambda path: inspect_v2_acceptance(path, assert_complete=True),
         "v3_regression": lambda path: inspect_v3_acceptance(path, assert_complete=True),
-        "real_repository_regression": lambda path: inspect_v4_task_freeze(path, assert_complete=True),
-        "swebench_like_regression": lambda path: inspect_v4_task_validity(path, assert_complete=True),
+        "real_repository_regression": lambda path: inspect_v4_regression_evidence_report(
+            path,
+            expected_role="real_repository_regression",
+            assert_complete=True,
+        ),
+        "swebench_like_regression": lambda path: inspect_v4_regression_evidence_report(
+            path,
+            expected_role="swebench_like_regression",
+            assert_complete=True,
+        ),
         "v4_pr_issue_task_freeze": lambda path: inspect_v4_task_freeze(path, assert_complete=True),
         "v4_swebench_like_task_freeze": lambda path: inspect_v4_task_validity(path, assert_complete=True),
         "v4_rollout_orchestration": lambda path: inspect_rollout_queue(path, assert_complete=True),
@@ -612,6 +760,18 @@ def _inspect_v4_acceptance_role_evidence(role_evidence_refs: Any, failures: list
         "v4_tool_lifecycle_audit": lambda path: inspect_v4_tool_lifecycle(path, assert_complete=True),
         "v4_cards": lambda path: inspect_v4_cards(path, assert_complete=True),
     }
+    duplicate_pairs = (
+        ("real_repository_regression", "v4_pr_issue_task_freeze"),
+        ("swebench_like_regression", "v4_swebench_like_task_freeze"),
+    )
+    for regression_role, source_role in duplicate_pairs:
+        regression_ref = role_evidence_refs.get(regression_role)
+        source_ref = role_evidence_refs.get(source_role)
+        if isinstance(regression_ref, dict) and isinstance(source_ref, dict):
+            if _role_evidence_identity(regression_ref) == _role_evidence_identity(source_ref):
+                failures.append(f"role_evidence_refs.{regression_role} 不能复用 {source_role} 的同一证据。")
+            if regression_ref.get("category") != regression_role:
+                failures.append(f"role_evidence_refs.{regression_role} category 必须是 {regression_role}。")
     for role in V4_REQUIRED_FINAL_ACCEPTANCE_ROLES:
         ref = role_evidence_refs.get(role)
         if not isinstance(ref, dict):
@@ -624,6 +784,14 @@ def _inspect_v4_acceptance_role_evidence(role_evidence_refs: Any, failures: list
             inspectors[role](path)
         except ConfigError as exc:
             failures.append(f"role_evidence_refs.{role} 递归复核失败：{exc}")
+
+
+def _role_evidence_identity(ref: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(ref.get("path") or ref.get("relative_path") or ""),
+        str(ref.get("sha256") or ""),
+        str(ref.get("kind") or ""),
+    )
 
 
 def inspect_v4_inputs(manifest: str | Path, *, assert_complete: bool = False) -> str:
@@ -745,6 +913,23 @@ def inspect_v4_acceptance_bundle(manifest: str | Path, *, assert_immutable: bool
     for label in ("acceptance_inputs_ref", "acceptance_command_log_ref"):
         if payload.get(label) is not None:
             _inspect_file_ref(payload.get(label), failures, label=label)
+    final_command_log_ref = payload.get("final_acceptance_command_log_ref")
+    if assert_immutable and not isinstance(final_command_log_ref, dict):
+        failures.append("V4 acceptance bundle 缺少 final_acceptance_command_log_ref。")
+    final_command_log_path = None
+    if final_command_log_ref is not None:
+        final_command_log_path = _inspect_file_ref(
+            final_command_log_ref,
+            failures,
+            label="final_acceptance_command_log_ref",
+        )
+    if final_command_log_path is not None:
+        _inspect_v4_command_log(final_command_log_path, failures)
+        _inspect_v4_final_acceptance_command_log(
+            final_command_log_path,
+            bundle_manifest_path=manifest_path,
+            failures=failures,
+        )
     docs = payload.get("documentation_refs")
     if assert_immutable and (not isinstance(docs, list) or not docs):
         failures.append("V4 acceptance bundle 必须绑定 post-acceptance documentation refs。")
@@ -846,6 +1031,17 @@ def _inspect_bound_acceptance_categories(
         "export_quality": "export_quality",
         "cards": "cards",
     }
+    for category in ("real_repository_regression", "swebench_like_regression"):
+        refs = refs_by_category.get(category)
+        if not isinstance(refs, list) or not refs:
+            continue
+        path = _path_from_ref(refs[0])
+        if path is None or not path.exists():
+            continue
+        try:
+            inspect_v4_regression_evidence_report(path, expected_role=category, assert_complete=True)
+        except ConfigError as exc:
+            failures.append(f"{category} 绑定产物递归复核失败：{exc}")
     for category, spec_id in category_specs.items():
         refs = refs_by_category.get(category)
         if not isinstance(refs, list) or not refs:
@@ -1009,6 +1205,14 @@ def _path_from_ref(ref: Any) -> Path | None:
         return None
     path = Path(raw)
     return path if path.is_absolute() else Path.cwd() / path
+
+
+def _relative_path(path: Path, base_dir: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(base_dir.resolve()).as_posix()
+    except ValueError:
+        return resolved.as_posix()
 
 
 def _inspect_jsonl_file(path: Path, expected_schema_version: str | None, failures: list[str], *, label: str) -> None:

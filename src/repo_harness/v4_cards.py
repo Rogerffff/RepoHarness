@@ -518,6 +518,8 @@ def _implementation_log_findings(denylist: V4ContaminationDenylist, text: str) -
 def _implementation_log_policy_context(line: str) -> bool:
     lowered = line.lower()
     stripped = line.strip()
+    if _implementation_log_contains_raw_leak_payload(lowered):
+        return False
     if stripped.startswith("- `") and stripped.endswith("`") and any(
         stripped.endswith(suffix) for suffix in (".json`", ".jsonl`", ".md`", ".txt`")
     ):
@@ -540,6 +542,7 @@ def _implementation_log_policy_context(line: str) -> bool:
         "没有",
         "marker",
         "inspect",
+        "审查发现",
     )
     if any(marker in lowered for marker in explicit_policy_markers):
         return True
@@ -548,6 +551,23 @@ def _implementation_log_policy_context(line: str) -> bool:
     if any(marker in lowered for marker in structural_markers) and any(verb in lowered for verb in structural_verbs):
         return True
     return "denylist" in lowered and any(marker in lowered for marker in ("检查", "扫描", "负例", "覆盖"))
+
+
+def _implementation_log_contains_raw_leak_payload(lowered_line: str) -> bool:
+    return any(
+        marker in lowered_line
+        for marker in (
+            "leaked",
+            "leak ",
+            "raw payload",
+            "secret",
+            "credential",
+            "access token",
+            "api key",
+            "泄露",
+            "明文凭据",
+        )
+    )
 
 
 def _inspect_no_forbidden_card_claims(payloads: list[Any], failures: list[str]) -> None:
@@ -567,6 +587,10 @@ def _inspect_scan_clean(scan_report: dict[str, Any], failures: list[str]) -> Non
     findings = scan_report.get("findings")
     if not isinstance(findings, list) or findings:
         failures.append("contamination_scan_report findings 必须为空列表。")
+    if scan_report.get("denylist_version") != V4_CONTAMINATION_DENYLIST_VERSION:
+        failures.append("contamination_scan_report denylist_version 不匹配。")
+    if scan_report.get("denylist_sha256") != v4_contamination_denylist_sha256():
+        failures.append("contamination_scan_report denylist_sha256 不匹配。")
     if scan_report.get("card_claim_denylist_sha256") != v4_card_claim_denylist_sha256():
         failures.append("contamination_scan_report card_claim_denylist_sha256 不匹配。")
     refs = scan_report.get("artifact_refs_by_name")

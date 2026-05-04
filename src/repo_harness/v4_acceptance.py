@@ -17,6 +17,7 @@ from repo_harness.schema_versions import (
     V4_ACCEPTANCE_REPORT_VERSION,
     V4_ARTIFACT_INSPECT_TRACKING_TABLE_VERSION,
     V4_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
+    V4_REGRESSION_EVIDENCE_REPORT_VERSION,
     V4_RUN_SELECTION_MANIFEST_VERSION,
 )
 from repo_harness.v2_acceptance import inspect_v2_acceptance
@@ -39,6 +40,7 @@ from repo_harness.v4_stage1 import (
     build_artifact_inspect_tracking_table_payload,
     inspect_v4_artifact_set,
     inspect_v4_inputs,
+    inspect_v4_regression_evidence_report,
 )
 from repo_harness.v4_task_freeze import inspect_v4_task_freeze, inspect_v4_task_validity
 from repo_harness.v4_tool_lifecycle import inspect_v4_tool_contract, inspect_v4_tool_lifecycle
@@ -51,6 +53,8 @@ V4_ACCEPTANCE_INPUT_BUILD_INPUTS: tuple[str, ...] = (
     "v2_acceptance",
     "v3_acceptance",
     "v3_acceptance_bundle",
+    "real_repository_regression",
+    "swebench_like_regression",
     "implementation_inputs",
     "rollout_queue",
     "lease_state",
@@ -172,6 +176,12 @@ def build_v4_acceptance_inputs(
         "v2_acceptance": [_file_ref(Path(inputs["v2_acceptance"]), category="v2_acceptance")],
         "v3_acceptance": [_file_ref(Path(inputs["v3_acceptance"]), category="v3_acceptance")],
         "v3_acceptance_bundle": [_file_ref(Path(inputs["v3_acceptance_bundle"]), category="v3_acceptance_bundle")],
+        "real_repository_regression": [
+            _file_ref(Path(inputs["real_repository_regression"]), category="real_repository_regression")
+        ],
+        "swebench_like_regression": [
+            _file_ref(Path(inputs["swebench_like_regression"]), category="swebench_like_regression")
+        ],
         "implementation_inputs": [_file_ref(Path(inputs["implementation_inputs"]), category="implementation_inputs")],
         "rollout_queue": [_file_ref(_normalize_dir(inputs["rollout_queue"]), category="rollout_queue")],
         "lease_state": [_file_ref(_normalize_dir(inputs["lease_state"]), category="lease_state")],
@@ -309,6 +319,7 @@ def build_v4_acceptance_bundle(
     acceptance_report: str | Path,
     output: str | Path,
     documentation_refs: list[str | Path],
+    final_command_log: str | Path,
     fail_if_output_exists: bool = True,
 ) -> Path:
     """Bind V4 final acceptance report, command log, inputs, and post docs."""
@@ -319,6 +330,9 @@ def build_v4_acceptance_bundle(
         raise ConfigError(f"V4 acceptance bundle 已存在：{output_path}")
     if not documentation_refs:
         raise ConfigError("至少需要一个 --documentation-ref。")
+    final_command_log_path = Path(final_command_log)
+    if not final_command_log_path.exists():
+        raise ConfigError(f"final acceptance command log 不存在：{final_command_log_path}")
     if output_path.parent.resolve() != report_path.parent.resolve():
         raise ConfigError("V4 acceptance bundle output 必须与 acceptance report 位于同一 acceptance directory。")
     from repo_harness.v4_stage1 import inspect_v4_acceptance
@@ -339,6 +353,10 @@ def build_v4_acceptance_bundle(
         "acceptance_report_ref": _file_ref(report_path, category="v4_acceptance_report"),
         "acceptance_inputs_ref": input_ref,
         "acceptance_command_log_ref": command_log_ref,
+        "final_acceptance_command_log_ref": _file_ref(
+            final_command_log_path,
+            category="final_acceptance_command_log",
+        ),
         "documentation_refs": [
             _file_ref(Path(doc), category="post_acceptance_documentation")
             for doc in documentation_refs
@@ -368,11 +386,21 @@ def _run_final_acceptance_checks(refs: dict[str, list[dict[str, Any]]]) -> tuple
     checks.append("v3_acceptance_bundle_immutable")
     inspect_v4_task_freeze(_path_from_ref(refs["task_freeze"][0]), assert_complete=True)
     inspect_v4_task_validity(_path_from_ref(refs["task_validity"][0]), assert_complete=True)
+    inspect_v4_regression_evidence_report(
+        _path_from_ref(refs["real_repository_regression"][0]),
+        expected_role="real_repository_regression",
+        assert_complete=True,
+    )
+    inspect_v4_regression_evidence_report(
+        _path_from_ref(refs["swebench_like_regression"][0]),
+        expected_role="swebench_like_regression",
+        assert_complete=True,
+    )
     evidence["v4_pr_issue_task_freeze"] = refs["task_freeze"][0]
     evidence["v4_swebench_like_task_freeze"] = refs["task_validity"][0]
-    evidence["real_repository_regression"] = refs["task_freeze"][0]
-    evidence["swebench_like_regression"] = refs["task_validity"][0]
-    checks.append("v4_task_freeze_and_validity_passed")
+    evidence["real_repository_regression"] = refs["real_repository_regression"][0]
+    evidence["swebench_like_regression"] = refs["swebench_like_regression"][0]
+    checks.append("v4_task_freeze_validity_and_regression_evidence_passed")
     rollout_dir = _path_from_ref(refs["rollout_queue"][0])
     inspect_rollout_queue(rollout_dir, assert_complete=True)
     inspect_rollout_leases(_path_from_ref(refs["lease_state"][0]), assert_complete=True)
@@ -401,6 +429,60 @@ def _run_final_acceptance_checks(refs: dict[str, list[dict[str, Any]]]) -> tuple
     evidence["v4_cards"] = refs["cards"][0]
     checks.append("v4_cards_and_contamination_scan_passed")
     return statuses, evidence, checks
+
+
+def build_v4_regression_evidence_report(
+    *,
+    output: str | Path,
+    role: str,
+    regression_scope: str,
+    regression_command_log: str | Path,
+    task_freeze: str | Path,
+    task_validity: str | Path,
+    agent_run_integration: str | Path,
+    export_quality: str | Path,
+    fail_if_output_exists: bool = True,
+) -> Path:
+    """Build independent audit evidence for V4 final regression roles."""
+
+    output_path = Path(output)
+    if fail_if_output_exists and output_path.exists():
+        raise ConfigError(f"V4 regression evidence report 已存在：{output_path}")
+    if role not in {"real_repository_regression", "swebench_like_regression"}:
+        raise ConfigError(f"V4 regression role 不受支持：{role}")
+    if regression_scope not in {"real_repository", "swebench_like"}:
+        raise ConfigError(f"V4 regression scope 不受支持：{regression_scope}")
+    task_freeze_path = Path(task_freeze)
+    task_validity_path = Path(task_validity)
+    command_log_path = Path(regression_command_log)
+    inspect_v4_task_freeze(task_freeze_path, assert_complete=True)
+    inspect_v4_task_validity(task_validity_path, assert_complete=True)
+    payload = {
+        "schema_version": V4_REGRESSION_EVIDENCE_REPORT_VERSION,
+        "generated_at": _utc_timestamp(),
+        "role": role,
+        "regression_scope": regression_scope,
+        "model_visible": False,
+        "independent_regression_evidence": True,
+        "source_role_reused_as_regression_evidence": False,
+        "regression_verifier_authority": "final_verifier_or_stage_inspect_evidence_only",
+        "regression_command_log_ref": _file_ref(command_log_path, category="regression_command_log"),
+        "source_task_freeze_ref": _file_ref(task_freeze_path, category="task_freeze_source_ref"),
+        "source_task_validity_ref": _file_ref(task_validity_path, category="task_validity_source_ref"),
+        "regression_evidence_refs_by_category": {
+            "agent_run_integration": [_file_ref(_normalize_dir(agent_run_integration), category="agent_run_integration")],
+            "export_quality": [_file_ref(_normalize_dir(export_quality), category="export_quality")],
+        },
+        "role_evidence_independence_policy": {
+            "must_not_equal_v4_pr_issue_task_freeze_ref": True,
+            "must_not_equal_v4_swebench_like_task_freeze_ref": True,
+            "acceptance_report_must_bind_this_report_directly": True,
+        },
+        "result": "passed",
+    }
+    _write_json(output_path, payload)
+    inspect_v4_regression_evidence_report(output_path, expected_role=role, assert_complete=True)
+    return output_path
 
 
 def _append_command_log(

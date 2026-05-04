@@ -24,6 +24,7 @@ from repo_harness.schema_versions import (
     V4_RESOURCE_LOCK_REPORT_VERSION,
     V4_RESOURCE_USAGE_REPORT_VERSION,
     V4_RETRY_POLICY_REPORT_VERSION,
+    V4_REGRESSION_EVIDENCE_REPORT_VERSION,
     V4_ROLLOUT_QUEUE_MANIFEST_VERSION,
     V4_RUN_SELECTION_MANIFEST_VERSION,
     V4_RUN_SELECTION_QUERY_REPORT_VERSION,
@@ -102,6 +103,7 @@ def test_v4_stage1_schema_fixture_directory_covers_required_versions() -> None:
         V4_ARTIFACT_INSPECT_TRACKING_TABLE_VERSION,
         V4_RUN_SELECTION_MANIFEST_VERSION,
         V4_CONTAMINATION_SCAN_REPORT_VERSION,
+        V4_REGRESSION_EVIDENCE_REPORT_VERSION,
     }
     for spec in V4_ARTIFACT_SET_SPECS.values():
         if spec.direct_schema_version:
@@ -403,6 +405,37 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
             }
         ],
     )
+    regression_dir = tmp_path / "regression"
+    real_repository_regression = regression_dir / "real_repository_regression_report.json"
+    swebench_like_regression = regression_dir / "swebench_like_regression_report.json"
+    for role, path in (
+        ("real_repository_regression", real_repository_regression),
+        ("swebench_like_regression", swebench_like_regression),
+    ):
+        _write_json(
+            path,
+            {
+                "schema_version": V4_REGRESSION_EVIDENCE_REPORT_VERSION,
+                "role": role,
+                "regression_scope": "real_repository" if role == "real_repository_regression" else "swebench_like",
+                "model_visible": False,
+                "independent_regression_evidence": True,
+                "source_role_reused_as_regression_evidence": False,
+                "result": "passed",
+                "regression_command_log_ref": _file_ref(command_log, "regression_command_log"),
+                "source_task_freeze_ref": _file_ref(task_freeze, "task_freeze_source_ref"),
+                "source_task_validity_ref": _file_ref(task_validity, "task_validity_source_ref"),
+                "regression_evidence_refs_by_category": {
+                    "agent_run_integration": [_file_ref(run_dir, "agent_run_integration")],
+                    "export_quality": [_file_ref(export_dir, "export_quality")],
+                },
+                "role_evidence_independence_policy": {
+                    "must_not_equal_v4_pr_issue_task_freeze_ref": True,
+                    "must_not_equal_v4_swebench_like_task_freeze_ref": True,
+                    "acceptance_report_must_bind_this_report_directly": True,
+                },
+            },
+        )
 
     acceptance_inputs = tmp_path / "v4_acceptance_inputs.json"
     v2_acceptance = Path("runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json")
@@ -410,11 +443,18 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
     v3_acceptance_bundle = Path("runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json")
     implementation_inputs = Path("docs/v4/evidence/implementation-inputs/v4_implementation_input_manifest.json")
     real_trajectory_store = Path("docs/v4/evidence/agent-run-integration")
+    real_rollout_dir = Path("docs/v4/evidence/rollout-orchestration")
+    real_agent_run_dir = Path("docs/v4/evidence/agent-run-integration")
+    real_export_dir = Path("docs/v4/evidence/export-quality")
+    real_tool_dir = Path("docs/v4/evidence/tool-lifecycle")
+    real_cards_dir = Path("docs/v4/evidence/cards")
     refs_by_category = {
         "run_selection_manifest": [_file_ref(run_selection, "run_selection_manifest")],
         "v2_acceptance": [_file_ref(v2_acceptance, "v2_acceptance")],
         "v3_acceptance": [_file_ref(v3_acceptance, "v3_acceptance")],
         "v3_acceptance_bundle": [_file_ref(v3_acceptance_bundle, "v3_acceptance_bundle")],
+        "real_repository_regression": [_file_ref(real_repository_regression, "real_repository_regression")],
+        "swebench_like_regression": [_file_ref(swebench_like_regression, "swebench_like_regression")],
         "implementation_inputs": [_file_ref(implementation_inputs, "implementation_inputs")],
         "rollout_queue": [_file_ref(rollout_dir, "rollout_queue")],
         "lease_state": [_file_ref(rollout_dir, "lease_state")],
@@ -473,9 +513,69 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
                 "v4_tool_lifecycle_audit": "passed",
                 "v4_cards": "passed",
             },
+            "role_evidence_refs": {
+                "v3_regression": _file_ref(v3_acceptance, "v3_acceptance"),
+                "v2_regression": _file_ref(v2_acceptance, "v2_acceptance"),
+                "real_repository_regression": _file_ref(real_repository_regression, "real_repository_regression"),
+                "swebench_like_regression": _file_ref(swebench_like_regression, "swebench_like_regression"),
+                "v4_pr_issue_task_freeze": _file_ref(task_freeze, "task_freeze"),
+                "v4_swebench_like_task_freeze": _file_ref(task_validity, "task_validity"),
+                "v4_rollout_orchestration": _file_ref(real_rollout_dir, "rollout_queue"),
+                "v4_rollout_resume": _file_ref(real_rollout_dir, "batch_resume"),
+                "v4_agent_run_integration": _file_ref(real_agent_run_dir, "agent_run_integration"),
+                "v4_export_quality": _file_ref(real_export_dir, "export_quality"),
+                "v4_tool_lifecycle_audit": _file_ref(real_tool_dir, "tool_lifecycle"),
+                "v4_cards": _file_ref(real_cards_dir, "cards"),
+            },
         },
     )
     acceptance_bundle = tmp_path / "acceptance_bundle_manifest.json"
+    final_command_log = tmp_path / "final_acceptance_command_log.jsonl"
+    _write_jsonl(
+        final_command_log,
+        [
+            {
+                "schema_version": "repo_harness_command_log_entry_v4_v0",
+                "command_name": "inspect-v4-acceptance",
+                "argv": ["repo-harness", "inspect-v4-acceptance", acceptance_report.as_posix(), "--assert-complete"],
+                "cwd": tmp_path.as_posix(),
+                "input_refs": [_file_ref(acceptance_report, "v4_acceptance_report")],
+                "output_refs": [_file_ref(final_doc, "inspect_output")],
+                "exit_code": 0,
+                "tool_or_cli_version": "repo-harness test",
+                "started_at": "2026-05-04T00:00:01Z",
+                "finished_at": "2026-05-04T00:00:02Z",
+            },
+            {
+                "schema_version": "repo_harness_command_log_entry_v4_v0",
+                "command_name": "build-v4-acceptance-bundle",
+                "argv": ["repo-harness", "build-v4-acceptance-bundle", "--output", acceptance_bundle.as_posix()],
+                "cwd": tmp_path.as_posix(),
+                "input_refs": [_file_ref(acceptance_report, "v4_acceptance_report")],
+                "output_refs": [_file_ref(final_doc, "bundle_output")],
+                "self_referential_output_paths": [acceptance_bundle.as_posix()],
+                "self_referential_output_reason": "fixture bundle binds final command log.",
+                "exit_code": 0,
+                "tool_or_cli_version": "repo-harness test",
+                "started_at": "2026-05-04T00:00:02Z",
+                "finished_at": "2026-05-04T00:00:03Z",
+            },
+            {
+                "schema_version": "repo_harness_command_log_entry_v4_v0",
+                "command_name": "inspect-acceptance-bundle",
+                "argv": ["repo-harness", "inspect-acceptance-bundle", acceptance_bundle.as_posix(), "--assert-immutable"],
+                "cwd": tmp_path.as_posix(),
+                "input_refs": [],
+                "output_refs": [_file_ref(final_doc, "inspect_bundle_output")],
+                "self_referential_input_paths": [acceptance_bundle.as_posix()],
+                "self_referential_input_reason": "fixture bundle binds final command log.",
+                "exit_code": 0,
+                "tool_or_cli_version": "repo-harness test",
+                "started_at": "2026-05-04T00:00:03Z",
+                "finished_at": "2026-05-04T00:00:04Z",
+            },
+        ],
+    )
     _write_json(
         acceptance_bundle,
         {
@@ -483,6 +583,7 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
             "acceptance_report_ref": _file_ref(acceptance_report, "v4_acceptance_report"),
             "acceptance_inputs_ref": _file_ref(acceptance_inputs, "v4_acceptance_inputs"),
             "acceptance_command_log_ref": _file_ref(command_log, "acceptance_command_log"),
+            "final_acceptance_command_log_ref": _file_ref(final_command_log, "final_acceptance_command_log"),
             "documentation_refs": [_file_ref(final_doc, "post_acceptance_documentation")],
         },
     )

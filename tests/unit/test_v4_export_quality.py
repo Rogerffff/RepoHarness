@@ -160,6 +160,17 @@ def test_v4_export_quality_rejects_reward_fields_outside_allowlist(tmp_path: Pat
         inspect_v4_export_quality(export_dir, assert_complete=True)
 
 
+def test_v4_export_quality_rejects_empty_object_reward_fields_outside_allowlist(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["reward_metadata"]["unauthorized_empty_object"] = {}
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="allowlist"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
 def test_v4_export_quality_rejects_failure_dataset_missing_binding(tmp_path: Path) -> None:
     export_dir = _build(tmp_path)
     failure = export_dir / "failure_dataset.jsonl"

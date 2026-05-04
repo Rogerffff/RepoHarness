@@ -700,6 +700,8 @@ def build_parser() -> argparse.ArgumentParser:
     build_v4_inputs_parser.add_argument("--v2-acceptance", required=True)
     build_v4_inputs_parser.add_argument("--v3-acceptance", required=True)
     build_v4_inputs_parser.add_argument("--v3-acceptance-bundle", required=True)
+    build_v4_inputs_parser.add_argument("--real-repository-regression", required=True)
+    build_v4_inputs_parser.add_argument("--swebench-like-regression", required=True)
     build_v4_inputs_parser.add_argument("--implementation-inputs", required=True)
     build_v4_inputs_parser.add_argument("--rollout-queue", required=True)
     build_v4_inputs_parser.add_argument("--lease-state", required=True)
@@ -746,6 +748,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="构建 V4 final acceptance bundle manifest。",
     )
     build_v4_bundle_parser.add_argument("--acceptance-report", required=True)
+    build_v4_bundle_parser.add_argument("--final-command-log", required=True)
     build_v4_bundle_parser.add_argument("--documentation-ref", action="append", default=[], help="可重复提供的 post-acceptance 文档。")
     build_v4_bundle_parser.add_argument("--output", required=True)
     build_v4_bundle_parser.add_argument(
@@ -1403,6 +1406,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 v2_acceptance=args.v2_acceptance,
                 v3_acceptance=args.v3_acceptance,
                 v3_acceptance_bundle=args.v3_acceptance_bundle,
+                real_repository_regression=args.real_repository_regression,
+                swebench_like_regression=args.swebench_like_regression,
                 implementation_inputs=args.implementation_inputs,
                 rollout_queue=args.rollout_queue,
                 lease_state=args.lease_state,
@@ -1444,6 +1449,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 acceptance_report=args.acceptance_report,
                 output=args.output,
                 documentation_refs=args.documentation_ref,
+                final_command_log=args.final_command_log,
                 fail_if_output_exists=args.fail_if_output_exists,
             )
         except RepoHarnessError as exc:

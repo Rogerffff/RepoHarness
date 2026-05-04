@@ -202,6 +202,37 @@ def test_v4_cards_reject_polluted_implementation_log_even_with_evidence_word(tmp
         inspect_v4_cards(cards_dir, assert_complete=True)
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        "provider_raw_response 检查 leaked raw payload\n",
+        "raw commit message 检查 leaked raw payload\n",
+    ],
+)
+def test_v4_cards_reject_polluted_implementation_log_even_with_policy_marker_word(tmp_path: Path, line: str) -> None:
+    cards_dir = _build(tmp_path)
+    polluted = tmp_path / "polluted-log.md"
+    polluted.write_text(line, encoding="utf-8")
+    log_index = cards_dir / "implementation_log_index.json"
+    payload = _read_json(log_index)
+    payload["stage_logs"] = [polluted.as_posix()]
+    _write_json(log_index, payload)
+
+    with pytest.raises(ConfigError, match="implementation_log"):
+        inspect_v4_cards(cards_dir, assert_complete=True)
+
+
+def test_v4_cards_reject_scan_report_denylist_sha_mismatch(tmp_path: Path) -> None:
+    cards_dir = _build(tmp_path)
+    scan_report = cards_dir / "contamination_scan_report.json"
+    payload = _read_json(scan_report)
+    payload["denylist_sha256"] = "0" * 64
+    _write_json(scan_report, payload)
+
+    with pytest.raises(ConfigError, match="denylist_sha256"):
+        inspect_v4_cards(cards_dir, assert_complete=True)
+
+
 def test_v4_cards_reject_manifest_ref_sha_mismatch(tmp_path: Path) -> None:
     cards_dir = _build(tmp_path)
     manifest = cards_dir / "cards_manifest.json"
