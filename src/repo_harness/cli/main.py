@@ -81,6 +81,17 @@ from repo_harness.v4_task_freeze import (
     inspect_v4_task_freeze as inspect_v4_task_freeze_stage2,
     inspect_v4_task_validity as inspect_v4_task_validity_stage2,
 )
+from repo_harness.v4_rollout import (
+    build_v4_rollout_orchestration,
+    inspect_resource_locks as inspect_v4_resource_locks_stage3,
+    inspect_resource_usage as inspect_v4_resource_usage_stage3,
+    inspect_rollout_budget as inspect_v4_rollout_budget_stage3,
+    inspect_rollout_leases as inspect_v4_rollout_leases_stage3,
+    inspect_rollout_queue as inspect_v4_rollout_queue_stage3,
+    inspect_rollout_resume as inspect_v4_rollout_resume_stage3,
+    inspect_rollout_retry as inspect_v4_rollout_retry_stage3,
+    inspect_run_selection_query as inspect_v4_run_selection_query_stage3,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -579,6 +590,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-if-output-exists",
         action="store_true",
         help="如果目标 Stage 2 输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v4_rollout_parser = subparsers.add_parser(
+        "build-v4-rollout-orchestration",
+        help="构建 V4 阶段 3 单机 rollout queue、lease、retry、budget、resource 和 resume 产物。",
+    )
+    build_v4_rollout_parser.add_argument("--task-freeze", required=True, help="Stage 2 task_freeze_manifest.json 路径。")
+    build_v4_rollout_parser.add_argument("--output-dir", required=True, help="Stage 3 rollout orchestration 产物目录。")
+    build_v4_rollout_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        help="如果目标 Stage 3 输出已存在，则失败，避免覆盖 evidence。",
     )
 
     inspect_v4_acceptance_inputs = subparsers.add_parser(
@@ -1150,6 +1173,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.exit(1, f"V4 task freeze 构建失败：{exc}\n")
         print(f"V4 task freeze manifest：{output_path}")
         return 0
+    if args.command == "build-v4-rollout-orchestration":
+        try:
+            output_path = build_v4_rollout_orchestration(
+                task_freeze=args.task_freeze,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V4 rollout orchestration 构建失败：{exc}\n")
+        print(f"V4 rollout queue manifest：{output_path}")
+        return 0
     if args.command == "inspect-v4-inputs":
         try:
             print(inspect_v4_inputs(args.manifest, assert_complete=args.assert_complete))
@@ -1157,14 +1191,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.exit(1, f"V4 acceptance inputs 检查失败：{exc}\n")
         return 0
     v4_artifact_command_map = {
-        "inspect-rollout-queue": "rollout_queue",
-        "inspect-rollout-leases": "rollout_leases",
-        "inspect-rollout-retry": "rollout_retry",
-        "inspect-rollout-budget": "rollout_budget",
-        "inspect-resource-locks": "resource_locks",
-        "inspect-resource-usage": "resource_usage",
-        "inspect-rollout-resume": "rollout_resume",
-        "inspect-run-selection-query": "run_selection_query",
         "inspect-v4-tool-lifecycle": "tool_lifecycle",
         "inspect-v4-agent-run-integration": "agent_run_integration",
         "inspect-v4-export-quality": "export_quality",
@@ -1179,6 +1205,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                     assert_complete=args.assert_complete,
                 )
             )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"{args.command} 检查失败：{exc}\n")
+        return 0
+    v4_rollout_command_map = {
+        "inspect-rollout-queue": inspect_v4_rollout_queue_stage3,
+        "inspect-rollout-leases": inspect_v4_rollout_leases_stage3,
+        "inspect-rollout-retry": inspect_v4_rollout_retry_stage3,
+        "inspect-rollout-budget": inspect_v4_rollout_budget_stage3,
+        "inspect-resource-locks": inspect_v4_resource_locks_stage3,
+        "inspect-resource-usage": inspect_v4_resource_usage_stage3,
+        "inspect-rollout-resume": inspect_v4_rollout_resume_stage3,
+        "inspect-run-selection-query": inspect_v4_run_selection_query_stage3,
+    }
+    if args.command in v4_rollout_command_map:
+        try:
+            print(v4_rollout_command_map[args.command](args.path, assert_complete=args.assert_complete))
         except RepoHarnessError as exc:
             parser.exit(1, f"{args.command} 检查失败：{exc}\n")
         return 0
