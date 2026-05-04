@@ -549,7 +549,16 @@ def _write_valid_stage1_fixture(tmp_path: Path) -> dict[str, Path]:
             {
                 "schema_version": "repo_harness_command_log_entry_v4_v0",
                 "command_name": "build-v4-acceptance-bundle",
-                "argv": ["repo-harness", "build-v4-acceptance-bundle", "--output", acceptance_bundle.as_posix()],
+                "argv": [
+                    "repo-harness",
+                    "build-v4-acceptance-bundle",
+                    "--acceptance-report",
+                    acceptance_report.as_posix(),
+                    "--final-command-log",
+                    final_command_log.as_posix(),
+                    "--output",
+                    acceptance_bundle.as_posix(),
+                ],
                 "cwd": tmp_path.as_posix(),
                 "input_refs": [_file_ref(acceptance_report, "v4_acceptance_report")],
                 "output_refs": [_file_ref(final_doc, "bundle_output")],

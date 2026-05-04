@@ -171,6 +171,114 @@ def test_v4_export_quality_rejects_empty_object_reward_fields_outside_allowlist(
         inspect_v4_export_quality(export_dir, assert_complete=True)
 
 
+def test_v4_export_quality_rejects_structured_reward_missing_value(tmp_path: Path) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["structured_reward"] = {"model_visible": False}
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="structured_reward.*value"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["1.0", True, -0.1, 1.1],
+)
+def test_v4_export_quality_rejects_invalid_structured_reward_value(tmp_path: Path, value) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["structured_reward"]["value"] = value
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="structured_reward.*value"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["components", "sources"],
+)
+def test_v4_export_quality_rejects_reward_metadata_empty_object_structure(tmp_path: Path, field: str) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["reward_metadata"][field] = {}
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match=field):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["components", "sources"],
+)
+def test_v4_export_quality_rejects_reward_metadata_empty_list_structure(tmp_path: Path, field: str) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    payload["reward_records"][0]["reward_metadata"][field] = []
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match=field):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda metadata: metadata["components"][0].pop("name"),
+        lambda metadata: metadata["components"][0].pop("weight"),
+        lambda metadata: metadata["components"].__setitem__(0, []),
+        lambda metadata: metadata["components"][0].__setitem__("weight", True),
+        lambda metadata: metadata["sources"][0].pop("source"),
+        lambda metadata: metadata["sources"][0].pop("model_visible"),
+        lambda metadata: metadata["sources"].__setitem__(0, []),
+        lambda metadata: metadata["sources"][0].__setitem__("model_visible", True),
+    ],
+)
+def test_v4_export_quality_rejects_reward_metadata_element_schema_gaps(tmp_path: Path, mutation) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    mutation(payload["reward_records"][0]["reward_metadata"])
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match="components|sources"):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        (lambda metadata: metadata.__setitem__("reward_version", ""), "reward_version"),
+        (lambda metadata: metadata.__setitem__("formula", 7), "formula"),
+        (lambda metadata: metadata.__setitem__("acceptance_policy_version", ""), "acceptance_policy_version"),
+        (lambda metadata: metadata.__setitem__("invalid_for_training", "false"), "invalid_for_training"),
+        (lambda metadata: metadata.__setitem__("invalid_reason", 42), "invalid_reason"),
+        (lambda metadata: metadata.__setitem__("reward_clip_range", [0.0]), "reward_clip_range"),
+        (lambda metadata: metadata.__setitem__("reward_clip_range", [1.0, 0.0]), "reward_clip_range"),
+        (lambda metadata: metadata.__setitem__("reward_clip_range", [False, 1.0]), "reward_clip_range"),
+    ],
+)
+def test_v4_export_quality_rejects_reward_metadata_scalar_schema_gaps(
+    tmp_path: Path,
+    mutation,
+    expected: str,
+) -> None:
+    export_dir = _build(tmp_path)
+    reward = export_dir / "reward_audit_report.json"
+    payload = _read_json(reward)
+    mutation(payload["reward_records"][0]["reward_metadata"])
+    _write_json(reward, payload)
+
+    with pytest.raises(ConfigError, match=expected):
+        inspect_v4_export_quality(export_dir, assert_complete=True)
+
+
 def test_v4_export_quality_rejects_failure_dataset_missing_binding(tmp_path: Path) -> None:
     export_dir = _build(tmp_path)
     failure = export_dir / "failure_dataset.jsonl"

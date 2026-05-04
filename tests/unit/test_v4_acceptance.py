@@ -331,6 +331,95 @@ def test_v4_acceptance_bundle_rejects_incomplete_final_command_log(tmp_path: Pat
         inspect_v4_acceptance_bundle(bundle, assert_immutable=True)
 
 
+@pytest.mark.parametrize(
+    ("command_name", "mutate", "expected"),
+    [
+        (
+            "inspect-v4-acceptance",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"argv": ["repo-harness", "inspect-v4-acceptance", "runs/not-the-current-report/v4_acceptance_report.json", "--assert-complete"]}
+            ),
+            "当前 v4_acceptance_report",
+        ),
+        (
+            "inspect-v4-acceptance",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"input_refs": [_artifact_ref(Path("runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json"), "wrong_report")]}
+            ),
+            "当前 v4_acceptance_report",
+        ),
+        (
+            "build-v4-acceptance-bundle",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"argv": ["repo-harness", "build-v4-acceptance-bundle", "--acceptance-report", "runs/not-the-current-report/v4_acceptance_report.json", "--final-command-log", _command_log.as_posix(), "--output", _bundle.as_posix()]}
+            ),
+            "当前 v4_acceptance_report",
+        ),
+        (
+            "build-v4-acceptance-bundle",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"input_refs": [_artifact_ref(Path("runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json"), "wrong_report")]}
+            ),
+            "当前 v4_acceptance_report",
+        ),
+        (
+            "build-v4-acceptance-bundle",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"argv": ["repo-harness", "build-v4-acceptance-bundle", "--acceptance-report", _report.as_posix(), "--final-command-log", "runs/not-the-current-log/final_acceptance_command_log.jsonl", "--output", _bundle.as_posix()]}
+            ),
+            "当前 final command log",
+        ),
+        (
+            "build-v4-acceptance-bundle",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"argv": ["repo-harness", "build-v4-acceptance-bundle", "--acceptance-report", _report.as_posix(), "--final-command-log", _command_log.as_posix(), "--output", "runs/not-the-current-bundle/acceptance_bundle_manifest.json"]}
+            ),
+            "当前 acceptance_bundle_manifest",
+        ),
+        (
+            "inspect-acceptance-bundle",
+            lambda record, _report, _bundle, _command_log: record.update(
+                {"argv": ["repo-harness", "inspect-acceptance-bundle", "runs/not-the-current-bundle/acceptance_bundle_manifest.json", "--assert-immutable"]}
+            ),
+            "当前 acceptance_bundle_manifest",
+        ),
+    ],
+)
+def test_v4_acceptance_bundle_rejects_final_command_log_wrong_current_artifact_binding(
+    tmp_path: Path,
+    command_name: str,
+    mutate,
+    expected: str,
+) -> None:
+    query = _write_query(tmp_path)
+    run_selection = build_v4_run_selection_manifest(query=query, output=tmp_path / "run_selection_manifest.json")
+    command_log = _write_command_log(tmp_path)
+    inputs = _build_inputs(tmp_path, run_selection, command_log)
+    report = build_v4_acceptance_report(
+        acceptance_inputs=inputs,
+        output=tmp_path / "acceptance" / "v4_acceptance_report.json",
+    )
+    final_doc = tmp_path / "docs" / "final.md"
+    final_doc.parent.mkdir(parents=True)
+    final_doc.write_text("# Final\n", encoding="utf-8")
+    bundle_path = report.parent / "acceptance_bundle_manifest.json"
+    final_command_log = _write_final_command_log(tmp_path, report=report, bundle=bundle_path)
+    records = _read_jsonl(final_command_log)
+    for record in records:
+        if record["command_name"] == command_name:
+            mutate(record, report, bundle_path, final_command_log)
+    _write_jsonl(final_command_log, records)
+    bundle = build_v4_acceptance_bundle(
+        acceptance_report=report,
+        output=bundle_path,
+        documentation_refs=[final_doc],
+        final_command_log=final_command_log,
+    )
+
+    with pytest.raises(ConfigError, match=expected):
+        inspect_v4_acceptance_bundle(bundle, assert_immutable=True)
+
+
 def _build_inputs(
     tmp_path: Path,
     run_selection: Path,
@@ -436,6 +525,7 @@ def _write_final_command_log(
     stdout.write_text("ok\n", encoding="utf-8")
     stderr.write_text("", encoding="utf-8")
     bundle_ref = bundle.as_posix()
+    command_log = tmp_path / "final_acceptance_command_log.jsonl"
     records = [
         {
             "schema_version": V4_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
@@ -452,7 +542,16 @@ def _write_final_command_log(
         {
             "schema_version": V4_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
             "command_name": "build-v4-acceptance-bundle",
-            "argv": ["repo-harness", "build-v4-acceptance-bundle", "--output", bundle_ref],
+            "argv": [
+                "repo-harness",
+                "build-v4-acceptance-bundle",
+                "--acceptance-report",
+                report.as_posix(),
+                "--final-command-log",
+                command_log.as_posix(),
+                "--output",
+                bundle_ref,
+            ],
             "cwd": Path.cwd().as_posix(),
             "input_refs": [_artifact_ref(report, "v4_acceptance_report")],
             "output_refs": [_artifact_ref(stdout, "build_v4_bundle_stdout"), _artifact_ref(stderr, "build_v4_bundle_stderr")],
@@ -478,7 +577,6 @@ def _write_final_command_log(
             "finished_at": "2026-05-04T00:00:04Z",
         },
     ]
-    command_log = tmp_path / "final_acceptance_command_log.jsonl"
     command_log.write_text(
         "".join(
             json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n"
@@ -516,6 +614,17 @@ def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _read_jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_jsonl(path: Path, records: list[dict]) -> None:
+    path.write_text(
+        "".join(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n" for record in records),
+        encoding="utf-8",
+    )

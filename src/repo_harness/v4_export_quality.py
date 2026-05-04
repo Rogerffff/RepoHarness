@@ -670,12 +670,74 @@ def _inspect_reward_audit(
         for field in REWARD_METADATA_REQUIRED_FIELDS:
             if field not in metadata:
                 failures.append(f"reward_records[{index}].reward_metadata 缺少 {field}。")
+        _inspect_reward_metadata_schema(metadata, failures, f"reward_records[{index}].reward_metadata")
+        _inspect_structured_reward_schema(structured_reward, failures, f"reward_records[{index}].structured_reward")
         if metadata.get("model_visible") is not False:
             failures.append(f"reward_records[{index}].reward_metadata 必须 model_visible=false。")
         if structured_reward.get("model_visible") is not False:
             failures.append(f"reward_records[{index}].structured_reward 必须 model_visible=false。")
         if record.get("final_verifier_result") == "rejected" and record.get("reward_audit_outcome") == "accepted":
             failures.append(f"reward_records[{index}] verifier rejected 样本不得被 reward audit 改成 accepted。")
+
+
+def _inspect_structured_reward_schema(structured_reward: Any, failures: list[str], label: str) -> None:
+    if not isinstance(structured_reward, dict):
+        failures.append(f"{label} 必须是 object。")
+        return
+    if "value" not in structured_reward:
+        failures.append(f"{label} 缺少 value。")
+    elif isinstance(structured_reward.get("value"), bool) or not isinstance(structured_reward.get("value"), (int, float)):
+        failures.append(f"{label}.value 必须是数值。")
+    elif not 0.0 <= float(structured_reward["value"]) <= 1.0:
+        failures.append(f"{label}.value 必须在 reward clip range 内。")
+    if structured_reward.get("model_visible") is not False:
+        failures.append(f"{label} 必须 model_visible=false。")
+
+
+def _inspect_reward_metadata_schema(metadata: Any, failures: list[str], label: str) -> None:
+    if not isinstance(metadata, dict):
+        failures.append(f"{label} 必须是 object。")
+        return
+    for field in ("reward_version", "formula", "acceptance_policy_version"):
+        if not isinstance(metadata.get(field), str) or not metadata.get(field):
+            failures.append(f"{label}.{field} 必须是非空字符串。")
+    if not isinstance(metadata.get("invalid_for_training"), bool):
+        failures.append(f"{label}.invalid_for_training 必须是 bool。")
+    invalid_reason = metadata.get("invalid_reason")
+    if invalid_reason is not None and not isinstance(invalid_reason, str):
+        failures.append(f"{label}.invalid_reason 必须是字符串或 null。")
+    clip_range = metadata.get("reward_clip_range")
+    if (
+        not isinstance(clip_range, list)
+        or len(clip_range) != 2
+        or any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in clip_range)
+        or float(clip_range[0]) > float(clip_range[1])
+    ):
+        failures.append(f"{label}.reward_clip_range 必须是两个递增数值。")
+    components = metadata.get("components")
+    if not isinstance(components, list) or not components:
+        failures.append(f"{label}.components 必须是非空列表。")
+    else:
+        for index, component in enumerate(components, start=1):
+            if not isinstance(component, dict):
+                failures.append(f"{label}.components[{index}] 必须是 object。")
+                continue
+            if not isinstance(component.get("name"), str) or not component.get("name"):
+                failures.append(f"{label}.components[{index}].name 必须是非空字符串。")
+            if isinstance(component.get("weight"), bool) or not isinstance(component.get("weight"), (int, float)):
+                failures.append(f"{label}.components[{index}].weight 必须是数值。")
+    sources = metadata.get("sources")
+    if not isinstance(sources, list) or not sources:
+        failures.append(f"{label}.sources 必须是非空列表。")
+    else:
+        for index, source in enumerate(sources, start=1):
+            if not isinstance(source, dict):
+                failures.append(f"{label}.sources[{index}] 必须是 object。")
+                continue
+            if not isinstance(source.get("source"), str) or not source.get("source"):
+                failures.append(f"{label}.sources[{index}].source 必须是非空字符串。")
+            if source.get("model_visible") is not False:
+                failures.append(f"{label}.sources[{index}] 必须 model_visible=false。")
 
 
 def _inspect_reward_hacking(hacking: dict[str, Any], failures: list[str]) -> None:

@@ -682,6 +682,7 @@ def _inspect_v4_final_acceptance_command_log(
     path: Path,
     *,
     bundle_manifest_path: Path,
+    acceptance_report_path: Path,
     failures: list[str],
 ) -> None:
     if not path.exists():
@@ -715,12 +716,89 @@ def _inspect_v4_final_acceptance_command_log(
             if record.get("exit_code") != 0:
                 failures.append(f"final acceptance command log {command} 必须 exit_code=0。")
     bundle_relative = _relative_path(bundle_manifest_path, Path.cwd())
+    report_relative = _relative_path(acceptance_report_path, Path.cwd())
+    inspect_acceptance_records = by_command.get("inspect-v4-acceptance") or []
+    for record in inspect_acceptance_records:
+        if not _record_argv_contains_path(record, acceptance_report_path):
+            failures.append("inspect-v4-acceptance argv 必须指向当前 v4_acceptance_report。")
+        if "--assert-complete" not in (record.get("argv") or []):
+            failures.append("inspect-v4-acceptance argv 必须包含 --assert-complete。")
+        if not _record_refs_contain_path(record, "input_refs", acceptance_report_path):
+            failures.append("inspect-v4-acceptance input_refs 必须绑定当前 v4_acceptance_report。")
     build_records = by_command.get("build-v4-acceptance-bundle") or []
-    if build_records and not any(bundle_relative in (record.get("self_referential_output_paths") or []) for record in build_records):
-        failures.append("build-v4-acceptance-bundle 记录必须把 bundle manifest 声明为自引用输出。")
+    for record in build_records:
+        if not _record_argv_option_matches_path(record, "--acceptance-report", acceptance_report_path):
+            failures.append("build-v4-acceptance-bundle argv 必须用 --acceptance-report 指向当前 v4_acceptance_report。")
+        if not _record_argv_option_matches_path(record, "--output", bundle_manifest_path):
+            failures.append("build-v4-acceptance-bundle argv 必须用 --output 指向当前 acceptance_bundle_manifest。")
+        if not _record_argv_option_matches_path(record, "--final-command-log", path):
+            failures.append("build-v4-acceptance-bundle argv 必须用 --final-command-log 指向当前 final command log。")
+        if not _record_refs_contain_path(record, "input_refs", acceptance_report_path):
+            failures.append("build-v4-acceptance-bundle input_refs 必须绑定当前 v4_acceptance_report。")
+        if bundle_relative not in (record.get("self_referential_output_paths") or []):
+            failures.append("build-v4-acceptance-bundle 记录必须把 bundle manifest 声明为自引用输出。")
     inspect_records = by_command.get("inspect-acceptance-bundle") or []
-    if inspect_records and not any(bundle_relative in (record.get("self_referential_input_paths") or []) for record in inspect_records):
-        failures.append("inspect-acceptance-bundle 记录必须把 bundle manifest 声明为自引用输入。")
+    for record in inspect_records:
+        if not _record_argv_contains_path(record, bundle_manifest_path):
+            failures.append("inspect-acceptance-bundle argv 必须指向当前 acceptance_bundle_manifest。")
+        if "--assert-immutable" not in (record.get("argv") or []):
+            failures.append("inspect-acceptance-bundle argv 必须包含 --assert-immutable。")
+        if bundle_relative not in (record.get("self_referential_input_paths") or []):
+            failures.append("inspect-acceptance-bundle 记录必须把 bundle manifest 声明为自引用输入。")
+    if report_relative == bundle_relative:
+        failures.append("final command log 当前 report 和 bundle 路径不能相同。")
+
+
+def _record_argv_option_matches_path(record: dict[str, Any], option: str, expected_path: Path) -> bool:
+    argv = record.get("argv")
+    if not isinstance(argv, list):
+        return False
+    for index, arg in enumerate(argv):
+        if arg == option and index + 1 < len(argv):
+            return _command_arg_matches_path(str(argv[index + 1]), expected_path)
+        prefix = f"{option}="
+        if isinstance(arg, str) and arg.startswith(prefix):
+            return _command_arg_matches_path(arg[len(prefix):], expected_path)
+    return False
+
+
+def _record_argv_contains_path(record: dict[str, Any], expected_path: Path) -> bool:
+    argv = record.get("argv")
+    if not isinstance(argv, list):
+        return False
+    return any(_command_arg_matches_path(str(arg), expected_path) for arg in argv)
+
+
+def _command_arg_matches_path(raw_arg: str, expected_path: Path) -> bool:
+    if not raw_arg or raw_arg.startswith("-"):
+        return False
+    expected_resolved = expected_path.resolve(strict=False)
+    expected_relative = _relative_path(expected_path, Path.cwd())
+    if raw_arg == expected_relative or raw_arg == expected_resolved.as_posix():
+        return True
+    candidate = Path(raw_arg)
+    if not candidate.is_absolute():
+        candidate = Path.cwd() / candidate
+    return candidate.resolve(strict=False) == expected_resolved
+
+
+def _record_refs_contain_path(record: dict[str, Any], refs_field: str, expected_path: Path) -> bool:
+    refs = record.get(refs_field)
+    if not isinstance(refs, list):
+        return False
+    expected_resolved = expected_path.resolve(strict=False)
+    for ref in refs:
+        if not isinstance(ref, dict):
+            continue
+        raw = str(ref.get("path") or ref.get("relative_path") or "")
+        if not raw:
+            continue
+        candidate = Path(raw)
+        if not candidate.is_absolute():
+            candidate = Path.cwd() / candidate
+        if candidate.resolve(strict=False) == expected_resolved:
+            return True
+    return False
 
 
 def _inspect_v4_acceptance_role_evidence(role_evidence_refs: Any, failures: list[str]) -> None:
@@ -928,6 +1006,7 @@ def inspect_v4_acceptance_bundle(manifest: str | Path, *, assert_immutable: bool
         _inspect_v4_final_acceptance_command_log(
             final_command_log_path,
             bundle_manifest_path=manifest_path,
+            acceptance_report_path=report_path,
             failures=failures,
         )
     docs = payload.get("documentation_refs")
