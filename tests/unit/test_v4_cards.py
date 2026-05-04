@@ -153,10 +153,46 @@ def test_v4_cards_reject_missing_implementation_log_file(tmp_path: Path) -> None
         inspect_v4_cards(cards_dir, assert_complete=True)
 
 
+def test_v4_cards_index_covers_all_actual_implementation_logs(tmp_path: Path) -> None:
+    cards_dir = _build(tmp_path)
+    payload = _read_json(cards_dir / "implementation_log_index.json")
+    expected = [path.as_posix() for path in sorted(Path("docs/v4/implementation-log").glob("[0-9][0-9]-*.md"))]
+
+    assert payload["stage_logs"] == expected
+    assert "docs/v4/implementation-log/00-baseline-and-input-freeze.md" in payload["stage_logs"]
+    assert "docs/v4/implementation-log/08-final-acceptance.md" in payload["stage_logs"]
+
+
+def test_v4_cards_reject_missing_actual_implementation_log_from_index(tmp_path: Path) -> None:
+    cards_dir = _build(tmp_path)
+    log_index = cards_dir / "implementation_log_index.json"
+    payload = _read_json(log_index)
+    payload["stage_logs"] = [
+        path for path in payload["stage_logs"] if path != "docs/v4/implementation-log/00-baseline-and-input-freeze.md"
+    ]
+    _write_json(log_index, payload)
+
+    with pytest.raises(ConfigError, match="缺少实际阶段日志"):
+        inspect_v4_cards(cards_dir, assert_complete=True)
+
+
 def test_v4_cards_reject_polluted_implementation_log_file(tmp_path: Path) -> None:
     cards_dir = _build(tmp_path)
     polluted = tmp_path / "polluted-log.md"
     polluted.write_text("raw commit message must fail\n", encoding="utf-8")
+    log_index = cards_dir / "implementation_log_index.json"
+    payload = _read_json(log_index)
+    payload["stage_logs"] = [polluted.as_posix()]
+    _write_json(log_index, payload)
+
+    with pytest.raises(ConfigError, match="implementation_log"):
+        inspect_v4_cards(cards_dir, assert_complete=True)
+
+
+def test_v4_cards_reject_polluted_implementation_log_even_with_evidence_word(tmp_path: Path) -> None:
+    cards_dir = _build(tmp_path)
+    polluted = tmp_path / "polluted-log.md"
+    polluted.write_text("provider_raw_response evidence: leaked raw payload\n", encoding="utf-8")
     log_index = cards_dir / "implementation_log_index.json"
     payload = _read_json(log_index)
     payload["stage_logs"] = [polluted.as_posix()]
