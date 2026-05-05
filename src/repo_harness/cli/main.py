@@ -138,6 +138,12 @@ from repo_harness.v5_task_set import (
 from repo_harness.v5_task_set import build_task_set_manifest as build_v5_task_set_manifest
 from repo_harness.v5_task_set import merge_task_set_manifests as merge_v5_task_set_manifests
 from repo_harness.v5_export_pack import build_export_result_pack as build_v5_export_result_pack
+from repo_harness.v5_demo_artifacts import (
+    build_demo_artifacts as build_v5_demo_artifacts,
+)
+from repo_harness.v5_demo_artifacts import (
+    build_interview_result_pack as build_v5_interview_result_pack,
+)
 from repo_harness.v5_provider_gate import (
     build_provider_cost_budget_report as build_v5_provider_cost_budget_report,
 )
@@ -1097,6 +1103,37 @@ def build_parser() -> argparse.ArgumentParser:
     build_v5_export_pack_parser.add_argument("--stage3-claim-gate-report", required=True)
     build_v5_export_pack_parser.add_argument("--output-dir", required=True)
     build_v5_export_pack_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_demo_artifacts_parser = subparsers.add_parser(
+        "build-v5-demo-artifacts",
+        help="构建 V5 Stage 5 interview demo card、public-safe bundle 和 result summary。",
+    )
+    build_v5_demo_artifacts_parser.add_argument("--task-set-manifest", required=True)
+    build_v5_demo_artifacts_parser.add_argument("--executed-run-matrix-manifest", required=True)
+    build_v5_demo_artifacts_parser.add_argument("--export-pack-manifest", required=True)
+    build_v5_demo_artifacts_parser.add_argument("--stage4-claim-gate-report", required=True)
+    build_v5_demo_artifacts_parser.add_argument("--output-dir", required=True)
+    build_v5_demo_artifacts_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_interview_result_pack_parser = subparsers.add_parser(
+        "build-v5-interview-result-pack",
+        help="构建 V5 Stage 5 interview result pack、简历模板和问答证据索引。",
+    )
+    build_v5_interview_result_pack_parser.add_argument("--resume-artifact-index", required=True)
+    build_v5_interview_result_pack_parser.add_argument("--stage5-claim-gate-report", required=True)
+    build_v5_interview_result_pack_parser.add_argument("--docs12-path", required=True)
+    build_v5_interview_result_pack_parser.add_argument("--output-dir", required=True)
+    build_v5_interview_result_pack_parser.add_argument(
         "--fail-if-output-exists",
         action="store_true",
         default=True,
@@ -2079,6 +2116,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 export pack 构建失败：{exc}\n")
         print(f"V5 export result pack manifest：{output_path}")
+        return 0
+    if args.command == "build-v5-demo-artifacts":
+        try:
+            output_path = build_v5_demo_artifacts(
+                task_set_manifest=args.task_set_manifest,
+                executed_run_matrix_manifest=args.executed_run_matrix_manifest,
+                export_pack_manifest=args.export_pack_manifest,
+                stage4_claim_gate_report=args.stage4_claim_gate_report,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 demo artifacts 构建失败：{exc}\n")
+        print(f"V5 resume artifact index：{output_path}")
+        return 0
+    if args.command == "build-v5-interview-result-pack":
+        try:
+            output_path = build_v5_interview_result_pack(
+                resume_artifact_index=args.resume_artifact_index,
+                stage5_claim_gate_report=args.stage5_claim_gate_report,
+                docs12_path=args.docs12_path,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 interview result pack 构建失败：{exc}\n")
+        print(f"V5 interview result pack manifest：{output_path}")
         return 0
     if args.command == "inspect-v5-run-matrix":
         try:

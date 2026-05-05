@@ -1698,7 +1698,65 @@ def inspect_v5_demo_artifacts(index: str | Path, *, assert_share_safe: bool = Fa
         failures.append("public demo bundle 不能包含 evaluator-only content。")
     if payload.get("model_visible_leak_count", 0) != 0:
         failures.append("demo transcript 不能包含 model-visible leak。")
+    _inspect_v5_demo_artifacts_deep(payload, failures)
     return _schema_inspect_result("Inspect V5 demo artifacts", path, failures, assert_complete=assert_share_safe)
+
+
+def _inspect_v5_demo_artifacts_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    schema_version = payload.get("schema_version")
+    if schema_version == V5_RESUME_ARTIFACT_INDEX_VERSION:
+        for ref in payload.get("artifact_refs") or []:
+            if isinstance(ref, dict):
+                if ref.get("share_safe") is not True or ref.get("visibility") != "public_safe":
+                    failures.append("resume artifact index 只能引用 public_safe 且 share_safe=true 的 artifact。")
+        public_bundle = _read_ref_payload(payload.get("public_demo_bundle_ref"), failures)
+        if public_bundle:
+            if public_bundle.get("share_safe_status") != "passed":
+                failures.append("public demo bundle share_safe_status 必须为 passed。")
+            if public_bundle.get("provider_raw_content_count", 0) != 0:
+                failures.append("public demo bundle provider raw content count 必须为 0。")
+            if public_bundle.get("evaluator_only_content_count", 0) != 0:
+                failures.append("public demo bundle evaluator-only content count 必须为 0。")
+            marker_scan = public_bundle.get("public_marker_scan") or {}
+            if marker_scan.get("finding_count", 0) != 0:
+                failures.append("public demo bundle marker scan 必须无发现。")
+        transcript = _read_ref_payload(payload.get("demo_transcript_index_ref"), failures)
+        if transcript and transcript.get("model_visible_leak_count", 0) != 0:
+            failures.append("demo transcript index model_visible_leak_count 必须为 0。")
+        result_summary = _read_ref_payload(payload.get("result_summary_ref"), failures)
+        if result_summary:
+            for field in V5_PARTITION_COUNT_FIELDS:
+                if result_summary.get(field) is None:
+                    failures.append(f"result summary 缺少 {field}。")
+            denominator_excludes = _get_path(result_summary, "real_provider_runs.denominator_excludes") or []
+            for excluded in ("credential_missing_skip", "mock_or_replay_records", "synthetic_safe_stress_records"):
+                if excluded not in denominator_excludes:
+                    failures.append(f"result summary denominator_excludes 缺少 {excluded}。")
+        claim_gate = _read_ref_payload(payload.get("resume_claim_gate_ref"), failures)
+        if claim_gate:
+            if claim_gate.get("stage") != "stage5_final":
+                failures.append("Stage 5 resume artifact index 必须绑定 stage5_final claim gate。")
+            if claim_gate.get("demo_share_safe_status") != "passed":
+                failures.append("Stage 5 claim gate demo_share_safe_status 必须为 passed。")
+            if claim_gate.get("provider_claim_status") != "allowed" and "multi-provider agent runs" in claim_gate.get("allowed_claims", []):
+                failures.append("provider claim 未允许时不能允许 multi-provider agent runs。")
+            if claim_gate.get("preference_pair_claim_status") != "allowed" and "preference export completed" in claim_gate.get("allowed_claims", []):
+                failures.append("preference pair 未允许时不能允许 preference export completed。")
+    elif schema_version == V5_PUBLIC_DEMO_BUNDLE_MANIFEST_VERSION:
+        for ref in payload.get("artifact_refs") or []:
+            if isinstance(ref, dict) and (ref.get("share_safe") is not True or ref.get("visibility") != "public_safe"):
+                failures.append("public demo bundle artifact refs 必须 public_safe 且 share_safe=true。")
+        marker_scan = payload.get("public_marker_scan") or {}
+        if marker_scan.get("finding_count", 0) != 0:
+            failures.append("public demo bundle marker scan 必须无发现。")
+    elif schema_version == V5_INTERVIEW_RESULT_PACK_MANIFEST_VERSION:
+        if payload.get("blocked_claims_enforced") is not True:
+            failures.append("interview result pack 必须记录 blocked_claims_enforced=true。")
+        if payload.get("copy_safe_blocked_claims_count", 0) != 0:
+            failures.append("interview result pack 的 copy-safe blocked claims count 必须为 0。")
+        claim_gate = _read_ref_payload(payload.get("resume_claim_gate_ref"), failures)
+        if claim_gate and claim_gate.get("stage") != "stage5_final":
+            failures.append("interview result pack 必须引用 stage5_final claim gate。")
 
 
 def inspect_v5_inputs(inputs: str | Path, *, assert_complete: bool = False) -> str:
