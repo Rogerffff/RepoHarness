@@ -1,0 +1,86 @@
+id: v5_pr_issue_attrs_1428
+task_version: v5_pr_issue_attrs_1428_stage3b_v0
+dataset_name: repo_harness_v5
+source_kind: pr_issue_flow
+dataset_split: v5_stage3b
+created_at: '2026-05-05'
+repo: /Users/roger/Desktop/claude-code/runs/v5-stage2b-supplemental-pr-issue-20260505T151015Z/candidates/python_attrs_attrs_1428/archives/v5_pr_issue_attrs_1428_source.tar
+repo_source_spec:
+  source_type: local_archive
+  archive_path: /Users/roger/Desktop/claude-code/runs/v5-stage2b-supplemental-pr-issue-20260505T151015Z/candidates/python_attrs_attrs_1428/archives/v5_pr_issue_attrs_1428_source.tar
+  archive_sha256: f469a546b7631b7ca400203bf28d2276331d65ca8cb0d999a16c62c16c4916cc
+  expected_root_directory: .
+  base_commit: 94caa57142c057ce52504cdf239ae0ed3168f9b5
+  decontamination_status: manual_checked
+base_commit: 94caa57142c057ce52504cdf239ae0ed3168f9b5
+source_archive_sha256: f469a546b7631b7ca400203bf28d2276331d65ca8cb0d999a16c62c16c4916cc
+issue: 'In the attrs repository, ensure __attrs_pre_init__ receives the values supplied
+  to __init__ for positional, defaulted, factory-backed, keyword-only, and keyword-only
+  defaulted attributes.
+
+
+  Visible constraints:
+
+  - Use the fixed repository revision and the provided final verifier command.
+
+  - Use only the sanitized task statement and repository workspace as model-visible
+  input; audit-only materials stay outside the prompt.'
+setup_command: null
+test_command: python -m pytest -q tests/test_make.py::TestAttributes::test_pre_init_with_mixture_of_defaults_and_kw_only
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 120
+  agent_timeout_sec: 240
+  final_verifier_timeout_sec: 120
+environment:
+  execution_image: local_process
+  python_version: '3.12'
+  package_manager: pip
+  setup_network_policy: deny
+  source_archive_sha256: f469a546b7631b7ca400203bf28d2276331d65ca8cb0d999a16c62c16c4916cc
+expected_files: []
+fail_to_pass_tests: []
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: null
+  source_url: https://github.com/python-attrs/attrs.git
+  overlap_check_notes: V5 Stage 3B uses sanitized adapter-visible task input only.
+declared_setup_mutations: []
+generated_files: []
+tags:
+- v5
+- stage3b
+- python
+metadata:
+  v5_task_definition_ref:
+    inspect_command: inspect-v5-task-set
+    kind: v5_task_definition
+    path: runs/v5-stage2b-supplemental-pr-issue-20260505T151015Z/candidates/python_attrs_attrs_1428/task_definition.json
+    producer_command: build-v5-supplemental-pr-issue-candidates
+    producer_stage: v5_stage2b_supplemental_pr_issue_candidates
+    purpose: Supplemental V5 task definition for python-attrs/attrs#1428
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: eb6502faf1b462e3d032ed8569fe9fdd8efc22f98716fee1b11a896ecf10da0d
+    share_safe: false
+    size_bytes: 10989
+    visibility: audit_only
+  v5_final_verifier_plan_ref:
+    inspect_command: inspect-v5-task-set
+    kind: final_verifier_probe_report
+    path: runs/v5-stage2b-supplemental-pr-issue-20260505T151015Z/candidates/python_attrs_attrs_1428/post_patch_verifier_probe_report.json
+    producer_command: build-v5-supplemental-pr-issue-candidates
+    producer_stage: v5_stage2b_supplemental_pr_issue_candidates
+    purpose: Final verifier plan and probe for python-attrs/attrs#1428
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 817e7593a99b80cc35689b9ea9323dd0076d098daeffce1823fc3b09e7b69146
+    share_safe: false
+    size_bytes: 1717
+    visibility: audit_only
+  v5_stage3b_generated: true

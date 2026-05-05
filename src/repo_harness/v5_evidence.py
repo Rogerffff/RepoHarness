@@ -1202,11 +1202,116 @@ def inspect_v5_task_visibility(report: str | Path, *, assert_clean: bool = False
 
 
 def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False) -> str:
+    path = Path(manifest)
     failures = _inspect_schema_file(
-        Path(manifest),
+        path,
         expected_schema_names={"V5RunMatrixManifest", "V5MatrixCellResult", "V5MatrixCompareScopeReport"},
     )
-    return _schema_inspect_result("Inspect V5 run matrix", Path(manifest), failures, assert_complete=assert_complete)
+    payload = _read_json_for_inspect(path, failures)
+    _inspect_v5_run_matrix_deep(payload, failures)
+    return _schema_inspect_result("Inspect V5 run matrix", path, failures, assert_complete=assert_complete)
+
+
+def _inspect_v5_run_matrix_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    cells = payload.get("planned_matrix_cells")
+    if not isinstance(cells, list):
+        failures.append("planned_matrix_cells 必须是 list。")
+        cells = []
+    if payload.get("planned_matrix_cell_count") is not None and payload.get("planned_matrix_cell_count") != len(cells):
+        failures.append("planned_matrix_cell_count 必须等于 planned_matrix_cells 数量。")
+    for index, cell in enumerate(cells):
+        if not isinstance(cell, dict):
+            failures.append(f"planned_matrix_cells[{index}] 必须是 object。")
+            continue
+        if cell.get("provider_id") == "openai" and cell.get("provider_mode") == "primary":
+            failures.append("OpenAI fallback-only adapter 不能出现在 primary provider planned cell 中。")
+        if cell.get("provider_id") == "openai" and cell.get("counts_toward_resume_ready_multi_provider") is True:
+            failures.append("OpenAI fallback-only cell 不能计入 resume-ready multi-provider。")
+        for ref_field in ("generated_task_ref", "controlled_variables_ref"):
+            if cell.get(ref_field):
+                _inspect_v5_ref(cell.get(ref_field), failures, label=f"planned_matrix_cells[{index}].{ref_field}")
+    if payload.get("agent_run_started") is True:
+        if payload.get("provider_api_called") is not True:
+            failures.append("agent_run_started=true 时 provider_api_called 必须为 true。")
+        results_ref = payload.get("matrix_cell_results_ref")
+        _inspect_v5_ref(results_ref, failures, label="matrix_cell_results_ref")
+        results_path = _path_from_ref(results_ref)
+        results = _read_jsonl_for_inspect(results_path, failures) if results_path is not None else []
+        if len(results) < 6:
+            failures.append("Stage 3B executed run matrix 至少需要 6 条 matrix cell results。")
+        actual_run_count = sum(1 for item in results if item.get("actual_provider_call_count", 0) > 0)
+        if actual_run_count < 6:
+            failures.append("Stage 3B executed run matrix 至少需要 6 个真实 provider agent run evidence。")
+        families = {
+            item.get("provider_id")
+            for item in results
+            if item.get("actual_provider_call_count", 0) > 0
+        }
+        if "deepseek" not in families:
+            failures.append("Stage 3B executed run matrix 必须至少包含 DeepSeek real provider family evidence。")
+        for index, result in enumerate(results):
+            _inspect_v5_matrix_cell_result(result, failures, label=f"matrix_cell_results[{index}]")
+        execution_report_ref = payload.get("run_matrix_execution_report_ref")
+        if execution_report_ref:
+            _inspect_v5_ref(execution_report_ref, failures, label="run_matrix_execution_report_ref")
+            report = _read_ref_payload(execution_report_ref, failures)
+            if report:
+                if report.get("actual_provider_calls", 0) > report.get("max_real_provider_calls", 0):
+                    failures.append("run matrix execution report actual_provider_calls 超过 max_real_provider_calls。")
+                if report.get("real_agent_run_task_count", 0) < 6:
+                    failures.append("run matrix execution report real_agent_run_task_count 必须至少为 6。")
+    else:
+        if payload.get("provider_api_called") is not False:
+            failures.append("planned run matrix 在 agent_run_started=false 时 provider_api_called 必须为 false。")
+
+
+def _inspect_v5_matrix_cell_result(result: dict[str, Any], failures: list[str], *, label: str) -> None:
+    if result.get("schema_version") != V5_MATRIX_CELL_RESULT_VERSION:
+        failures.append(f"{label}.schema_version 不匹配。")
+    if result.get("normalized_provider_status") not in V5_PROVIDER_STATUS_VALUES:
+        failures.append(f"{label}.normalized_provider_status 枚举值无效。")
+    if result.get("normalized_provider_status") == "fallback_success" and result.get("counts_toward_primary_accepted_rate") is True:
+        failures.append(f"{label}.fallback_success 不能计入 primary accepted rate。")
+    if result.get("provider_id") == "openai" and result.get("provider_mode") == "primary":
+        failures.append(f"{label}.OpenAI fallback-only adapter 不能作为 primary provider result。")
+    if result.get("provider_id") == "openai" and result.get("counts_toward_core_real_provider_floor") is True:
+        failures.append(f"{label}.OpenAI fallback-only result 不能计入 core real provider floor。")
+    if result.get("provider_api_called") is True and result.get("actual_provider_call_count", 0) <= 0:
+        failures.append(f"{label}.provider_api_called=true 时 actual_provider_call_count 必须大于 0。")
+    if result.get("actual_provider_call_count", 0) > 0:
+        if not result.get("trajectory_ref"):
+            failures.append(f"{label}.真实 provider result 缺少 trajectory_ref。")
+        if not result.get("final_verifier_boundary_ref"):
+            failures.append(f"{label}.真实 provider result 缺少 final_verifier_boundary_ref。")
+    for ref_field in ("trajectory_ref", "transcript_ref", "artifact_manifest_ref", "final_verifier_boundary_ref", "controlled_variables_ref"):
+        if result.get(ref_field):
+            _inspect_v5_ref(result.get(ref_field), failures, label=f"{label}.{ref_field}")
+    redaction = result.get("raw_provider_redaction")
+    if isinstance(redaction, dict):
+        if redaction.get("raw_provider_redaction_failure_count", 0) != 0:
+            failures.append(f"{label}.raw provider artifact redaction 存在失败。")
+
+
+def _read_jsonl_for_inspect(path: Path | None, failures: list[str]) -> list[dict[str, Any]]:
+    if path is None:
+        return []
+    if not path.exists():
+        failures.append(f"JSONL 输入不存在：{path}")
+        return []
+    rows: list[dict[str, Any]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError as exc:
+            failures.append(f"{path}:{line_number} 不是合法 JSON：{exc}")
+            continue
+        if not isinstance(item, dict):
+            failures.append(f"{path}:{line_number} 顶层必须是 object。")
+            continue
+        rows.append(item)
+    return rows
 
 
 def inspect_v5_provider_gate(report: str | Path, *, assert_consistent: bool = False) -> str:

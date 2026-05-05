@@ -1,0 +1,87 @@
+id: v5_task_003
+task_version: v5_task_003_stage3b_v0
+dataset_name: repo_harness_v5
+source_kind: pr_issue_flow
+dataset_split: v5_stage3b
+created_at: '2026-05-05'
+repo: /Users/roger/Desktop/claude-code/runs/v5-source-materialization-preflight-20260505T082123Z/source_archives/pallets__click_3208-8d3449517a97b6fd457a025bd9c3d2acfd301fa4.tar
+repo_source_spec:
+  source_type: local_archive
+  archive_path: /Users/roger/Desktop/claude-code/runs/v5-source-materialization-preflight-20260505T082123Z/source_archives/pallets__click_3208-8d3449517a97b6fd457a025bd9c3d2acfd301fa4.tar
+  archive_sha256: 6fd084b024f143591fa036b65419fb04bbc6695a3bff8b1d8d7b8e18045f3108
+  expected_root_directory: pallets__click_3208-8d3449517a97b6fd457a025bd9c3d2acfd301fa4
+  base_commit: 8d3449517a97b6fd457a025bd9c3d2acfd301fa4
+  decontamination_status: manual_checked
+base_commit: 8d3449517a97b6fd457a025bd9c3d2acfd301fa4
+source_archive_sha256: 6fd084b024f143591fa036b65419fb04bbc6695a3bff8b1d8d7b8e18045f3108
+issue: 'Command error output should display a helpful help-option hint only when the
+  relevant help option is actually available, including cases where a subcommand option
+  shadows a parent option.
+
+
+  Visible constraints:
+
+  - work only inside the provided frozen repository workspace
+
+  - do not use network access during verifier execution
+
+  - do not inspect evaluator-only evidence or hidden tests'
+setup_command: null
+test_command: python -m pytest -q tests/test_formatting.py::test_formatting_usage_error_help_hint
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 120
+  agent_timeout_sec: 240
+  final_verifier_timeout_sec: 120
+environment:
+  execution_image: local_process
+  python_version: '3.12'
+  package_manager: pip
+  setup_network_policy: deny
+  source_archive_sha256: 6fd084b024f143591fa036b65419fb04bbc6695a3bff8b1d8d7b8e18045f3108
+expected_files: []
+fail_to_pass_tests: []
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: null
+  source_url: https://github.com/pallets/click
+  overlap_check_notes: V5 Stage 3B uses sanitized adapter-visible task input only.
+declared_setup_mutations: []
+generated_files: []
+tags:
+- v5
+- stage3b
+- python
+metadata:
+  v5_task_definition_ref:
+    inspect_command: inspect-v5-task-set
+    kind: v5_task_definition
+    path: runs/v5-stage2a-initial-task-set-20260505T145206Z/task_definitions/v5_task_003.json
+    producer_command: build-v5-task-set
+    producer_stage: v5_stage2a_initial_task_set
+    purpose: Formal V5 task definition for v5_task_003
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 9afca1d2a1817f192f73633642fd7aadee96050a21ffd08ef3b9de19254ff58c
+    share_safe: false
+    size_bytes: 10052
+    visibility: audit_only
+  v5_final_verifier_plan_ref:
+    inspect_command: inspect-v5-task-set
+    kind: final_verifier_plan
+    path: runs/v5-verifier-execution-retry-20260505T113000Z/reports/v5_verifier_execution_first_batch_retry_report.json
+    producer_command: v5 verifier preflight
+    producer_stage: v5_preimplementation_input
+    purpose: Final verifier evidence source for v5_task_003
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 57349170931ad1a8bdaa90f1ce7d43586b05ea2fe9eec5e008a53d0094efd9fb
+    share_safe: false
+    size_bytes: 62727
+    visibility: evaluator_only
+  v5_stage3b_generated: true

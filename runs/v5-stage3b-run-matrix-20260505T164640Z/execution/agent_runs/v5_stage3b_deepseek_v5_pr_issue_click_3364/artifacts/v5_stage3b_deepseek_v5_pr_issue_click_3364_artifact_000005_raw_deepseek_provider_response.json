@@ -1,0 +1,48 @@
+{
+  "export_allowed": false,
+  "provider": "deepseek",
+  "provider_adapter_version": "repo_harness_deepseek_provider_v0",
+  "provider_request_id": "<REDACTED_CREDENTIAL>",
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "I'll start by exploring the repository structure to understand the codebase and then locate the relevant code for `default_map` handling in Click.",
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"path\": \".\"}",
+                "name": "list_files"
+              },
+              "id": "call_00_5aaJyf9MHCTOUswpi2kD3914",
+              "index": 0,
+              "type": "function"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1777998210,
+    "id": "<REDACTED_CREDENTIAL>",
+    "model": "deepseek-v4-flash",
+    "object": "chat.completion",
+    "system_fingerprint": "<REDACTED_CREDENTIAL>",
+    "usage": {
+      "completion_tokens": 70,
+      "prompt_cache_hit_tokens": 896,
+      "prompt_cache_miss_tokens": 355,
+      "prompt_tokens": 1251,
+      "prompt_tokens_details": {
+        "cached_tokens": 896
+      },
+      "total_tokens": 1321
+    }
+  },
+  "schema_version": "repo_harness_deepseek_provider_response_v0",
+  "status": "ok",
+  "training_payload_allowed": false
+}

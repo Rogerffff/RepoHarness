@@ -1,0 +1,48 @@
+{
+  "export_allowed": false,
+  "provider": "deepseek",
+  "provider_adapter_version": "repo_harness_deepseek_provider_v0",
+  "provider_request_id": "<REDACTED_CREDENTIAL>",
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "I'll start by exploring the repository structure to understand the codebase and then formulate a plan.",
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"path\": \".\"}",
+                "name": "list_files"
+              },
+              "id": "call_00_8lZlavd4tnfKw7kVHszz1319",
+              "index": 0,
+              "type": "function"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1777998202,
+    "id": "<REDACTED_CREDENTIAL>",
+    "model": "deepseek-v4-flash",
+    "object": "chat.completion",
+    "system_fingerprint": "<REDACTED_CREDENTIAL>",
+    "usage": {
+      "completion_tokens": 61,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 1218,
+      "prompt_tokens": 1218,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 1279
+    }
+  },
+  "schema_version": "repo_harness_deepseek_provider_response_v0",
+  "status": "ok",
+  "training_payload_allowed": false
+}

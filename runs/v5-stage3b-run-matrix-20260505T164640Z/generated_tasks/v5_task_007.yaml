@@ -1,0 +1,86 @@
+id: v5_task_007
+task_version: v5_task_007_stage3b_v0
+dataset_name: repo_harness_v5
+source_kind: swebench_like_anchor
+dataset_split: v5_stage3b
+created_at: '2026-05-05'
+repo: /Users/roger/Desktop/claude-code/runs/v5-swe-anchor-supplement-preflight-20260505T100000Z/source_archives/matplotlib__matplotlib_18869_primary.tar
+repo_source_spec:
+  source_type: local_archive
+  archive_path: /Users/roger/Desktop/claude-code/runs/v5-swe-anchor-supplement-preflight-20260505T100000Z/source_archives/matplotlib__matplotlib_18869_primary.tar
+  archive_sha256: 0fb52a2326ed409e1ee0894038254a66d241769399776364970fa2d8abca43e9
+  expected_root_directory: matplotlib__matplotlib_18869-b7d05919865fc0c37a0164cf467d5d5513bd0ede
+  base_commit: b7d05919865fc0c37a0164cf467d5d5513bd0ede
+  decontamination_status: manual_checked
+base_commit: b7d05919865fc0c37a0164cf467d5d5513bd0ede
+source_archive_sha256: 0fb52a2326ed409e1ee0894038254a66d241769399776364970fa2d8abca43e9
+issue: 'Expose comparable version metadata derived from version strings, including
+  final releases, release candidates, development versions, and post-release forms.
+
+
+  Visible constraints:
+
+  - work only inside the provided frozen repository workspace
+
+  - do not use network access during verifier execution
+
+  - do not inspect evaluator-only evidence or hidden tests'
+setup_command: null
+test_command: python -m pytest -q lib/matplotlib/tests/test_matplotlib.py::test_parse_to_version_info
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 120
+  agent_timeout_sec: 240
+  final_verifier_timeout_sec: 120
+environment:
+  execution_image: local_process
+  python_version: '3.12'
+  package_manager: pip
+  setup_network_policy: deny
+  source_archive_sha256: 0fb52a2326ed409e1ee0894038254a66d241769399776364970fa2d8abca43e9
+expected_files: []
+fail_to_pass_tests: []
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: null
+  source_url: https://github.com/matplotlib/matplotlib
+  overlap_check_notes: V5 Stage 3B uses sanitized adapter-visible task input only.
+declared_setup_mutations: []
+generated_files: []
+tags:
+- v5
+- stage3b
+- python
+metadata:
+  v5_task_definition_ref:
+    inspect_command: inspect-v5-task-set
+    kind: v5_task_definition
+    path: runs/v5-stage2a-initial-task-set-20260505T145206Z/task_definitions/v5_task_007.json
+    producer_command: build-v5-task-set
+    producer_stage: v5_stage2a_initial_task_set
+    purpose: Formal V5 task definition for v5_task_007
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: b831c6c2fac6eb7f3f6a423b7400db52dcd4e7db32e6c1cc2708405eb573b369
+    share_safe: false
+    size_bytes: 10093
+    visibility: audit_only
+  v5_final_verifier_plan_ref:
+    inspect_command: inspect-v5-task-set
+    kind: final_verifier_plan
+    path: runs/v5-verifier-execution-retry-20260505T113000Z/reports/v5_verifier_execution_first_batch_retry_report.json
+    producer_command: v5 verifier preflight
+    producer_stage: v5_preimplementation_input
+    purpose: Final verifier evidence source for v5_task_007
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 57349170931ad1a8bdaa90f1ce7d43586b05ea2fe9eec5e008a53d0094efd9fb
+    share_safe: false
+    size_bytes: 62727
+    visibility: evaluator_only
+  v5_stage3b_generated: true
