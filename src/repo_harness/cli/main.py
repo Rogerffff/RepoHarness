@@ -132,7 +132,11 @@ from repo_harness.v5_evidence import (
     inspect_v5_task_set,
     inspect_v5_task_visibility,
 )
+from repo_harness.v5_task_set import (
+    build_supplemental_pr_issue_candidates as build_v5_supplemental_pr_issue_candidates,
+)
 from repo_harness.v5_task_set import build_task_set_manifest as build_v5_task_set_manifest
+from repo_harness.v5_task_set import merge_task_set_manifests as merge_v5_task_set_manifests
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -939,6 +943,36 @@ def build_parser() -> argparse.ArgumentParser:
     build_v5_task_set_parser.add_argument("--source-materialization-report", action="append", required=True)
     build_v5_task_set_parser.add_argument("--output-dir", required=True)
     build_v5_task_set_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_supplemental_parser = subparsers.add_parser(
+        "build-v5-supplemental-pr-issue-candidates",
+        help="构建 V5 Stage 2B supplemental PR / issue candidate probe evidence。",
+    )
+    build_v5_supplemental_parser.add_argument("--candidate-id", action="append", required=True)
+    build_v5_supplemental_parser.add_argument("--source-preflight-root", required=True)
+    build_v5_supplemental_parser.add_argument("--output-dir", required=True)
+    build_v5_supplemental_parser.add_argument("--max-accepted", type=int, default=2)
+    build_v5_supplemental_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    merge_v5_task_set_parser = subparsers.add_parser(
+        "merge-v5-task-set",
+        help="合并 V5 Stage 2A initial task set 和 Stage 2B supplemental tasks。",
+    )
+    merge_v5_task_set_parser.add_argument("--base-task-set", required=True)
+    merge_v5_task_set_parser.add_argument("--supplemental-report", required=True)
+    merge_v5_task_set_parser.add_argument("--output", required=True)
+    merge_v5_task_set_parser.add_argument("--output-inventory", required=True)
+    merge_v5_task_set_parser.add_argument(
         "--fail-if-output-exists",
         action="store_true",
         default=True,
@@ -1819,6 +1853,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 task set 构建失败：{exc}\n")
         print(f"V5 task set manifest：{output_path}")
+        return 0
+    if args.command == "build-v5-supplemental-pr-issue-candidates":
+        try:
+            output_path = build_v5_supplemental_pr_issue_candidates(
+                candidate_ids=args.candidate_id,
+                source_preflight_root=args.source_preflight_root,
+                output_dir=args.output_dir,
+                max_accepted=args.max_accepted,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 supplemental PR / issue candidate 构建失败：{exc}\n")
+        print(f"V5 supplemental PR / issue candidate report：{output_path}")
+        return 0
+    if args.command == "merge-v5-task-set":
+        try:
+            output_path = merge_v5_task_set_manifests(
+                base_task_set=args.base_task_set,
+                supplemental_report=args.supplemental_report,
+                output=args.output,
+                output_inventory=args.output_inventory,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 task set merge 失败：{exc}\n")
+        print(f"V5 merged task set manifest：{output_path}")
         return 0
     if args.command == "inspect-v5-task-set":
         try:

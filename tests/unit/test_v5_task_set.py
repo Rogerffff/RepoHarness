@@ -12,7 +12,12 @@ from repo_harness.schema_versions import (
     V5_TASK_VISIBILITY_SCAN_REPORT_VERSION,
 )
 from repo_harness.v5_evidence import V5_FORBIDDEN_ADAPTER_VISIBLE_MARKERS, inspect_v5_task_set, inspect_v5_task_visibility
-from repo_harness.v5_task_set import build_task_set_manifest
+from repo_harness.v5_task_set import (
+    DEFAULT_SUPPLEMENTAL_CANDIDATES,
+    build_supplemental_pr_issue_candidates,
+    build_task_set_manifest,
+    merge_task_set_manifests,
+)
 
 
 def test_v5_task_set_builder_imports_initial_10_without_claiming_full_inventory(tmp_path: Path) -> None:
@@ -146,6 +151,129 @@ def test_v5_task_set_builder_refuses_existing_outputs(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError, match="已存在"):
         build_task_set_manifest(output_dir=output_dir, **inputs)
+
+
+def test_v5_stage2b_supplemental_candidates_merge_close_inventory_gate(tmp_path: Path) -> None:
+    inputs = _write_stage2a_inputs(tmp_path)
+    base_manifest = build_task_set_manifest(output_dir=tmp_path / "stage2a", **inputs)
+    preflight_root = tmp_path / "preflight-root"
+    preflight_root.mkdir()
+    (preflight_root / "binding.txt").write_text("explicit preflight root\n", encoding="utf-8")
+
+    supplemental_report = build_supplemental_pr_issue_candidates(
+        candidate_ids=["pallets/click#3364", "python-attrs/attrs#1428"],
+        source_preflight_root=preflight_root,
+        output_dir=tmp_path / "stage2b-supplemental",
+        execute_live_probes=False,
+    )
+    _mark_supplemental_report_live(supplemental_report)
+    merged_manifest = merge_task_set_manifests(
+        base_task_set=base_manifest,
+        supplemental_report=supplemental_report,
+        output=tmp_path / "merged/v5_task_set_manifest.json",
+        output_inventory=tmp_path / "merged/v5_task_inventory_report.json",
+    )
+
+    manifest = _read_json(merged_manifest)
+    inventory = _read_json(tmp_path / "merged/v5_task_inventory_report.json")
+    visibility = _read_json(tmp_path / "merged/v5_task_visibility_scan_report.json")
+    assert manifest["task_set_stage"] == "stage2b_merged_12"
+    assert manifest["accepted_auditable_task_count"] == 12
+    assert manifest["pr_issue_task_count"] == 8
+    assert manifest["swebench_like_anchor_count"] == 4
+    assert manifest["strict_inventory_gate"] == "passed"
+    assert manifest["claims_full_inventory_gate"] is True
+    assert len(manifest["supplemental_task_refs"]) == 2
+    assert inventory["supplemental_required"] is False
+    assert visibility["model_visible_leak_count"] == 0
+    assert "Inspect V5 task set: complete" in inspect_v5_task_set(merged_manifest, assert_complete=True)
+    assert "Inspect V5 task set: complete" in inspect_v5_task_set(supplemental_report, assert_complete=True)
+    assert "Inspect V5 task visibility: complete" in inspect_v5_task_visibility(
+        tmp_path / "merged/v5_task_visibility_scan_report.json",
+        assert_clean=True,
+    )
+
+
+def test_v5_stage2b_merge_rejects_offline_supplemental_report(tmp_path: Path) -> None:
+    inputs = _write_stage2a_inputs(tmp_path)
+    base_manifest = build_task_set_manifest(output_dir=tmp_path / "stage2a", **inputs)
+    preflight_root = tmp_path / "preflight-root"
+    preflight_root.mkdir()
+    supplemental_report = build_supplemental_pr_issue_candidates(
+        candidate_ids=["pallets/click#3364", "python-attrs/attrs#1428"],
+        source_preflight_root=preflight_root,
+        output_dir=tmp_path / "stage2b-supplemental",
+        execute_live_probes=False,
+    )
+
+    with pytest.raises(ConfigError, match="live probes"):
+        inspect_v5_task_set(supplemental_report, assert_complete=True)
+    with pytest.raises(ConfigError, match="live probes"):
+        merge_task_set_manifests(
+            base_task_set=base_manifest,
+            supplemental_report=supplemental_report,
+            output=tmp_path / "merged/v5_task_set_manifest.json",
+            output_inventory=tmp_path / "merged/v5_task_inventory_report.json",
+        )
+
+
+def test_v5_stage2b_merge_rejects_single_supplemental_task(tmp_path: Path) -> None:
+    inputs = _write_stage2a_inputs(tmp_path)
+    base_manifest = build_task_set_manifest(output_dir=tmp_path / "stage2a", **inputs)
+    preflight_root = tmp_path / "preflight-root"
+    preflight_root.mkdir()
+    supplemental_report = build_supplemental_pr_issue_candidates(
+        candidate_ids=["pallets/click#3364"],
+        source_preflight_root=preflight_root,
+        output_dir=tmp_path / "stage2b-supplemental",
+        execute_live_probes=False,
+        max_accepted=1,
+    )
+    _mark_supplemental_report_live(supplemental_report)
+
+    with pytest.raises(ConfigError, match="选择 2|至少"):
+        merge_task_set_manifests(
+            base_task_set=base_manifest,
+            supplemental_report=supplemental_report,
+            output=tmp_path / "merged/v5_task_set_manifest.json",
+            output_inventory=tmp_path / "merged/v5_task_inventory_report.json",
+        )
+
+
+def test_v5_stage2b_rejects_report_with_reordered_default_candidates(tmp_path: Path) -> None:
+    inputs = _write_stage2a_inputs(tmp_path)
+    base_manifest = build_task_set_manifest(output_dir=tmp_path / "stage2a", **inputs)
+    preflight_root = tmp_path / "preflight-root"
+    preflight_root.mkdir()
+    supplemental_report = build_supplemental_pr_issue_candidates(
+        candidate_ids=["python-attrs/attrs#1428", "pallets/click#3364"],
+        source_preflight_root=preflight_root,
+        output_dir=tmp_path / "stage2b-supplemental",
+        execute_live_probes=False,
+    )
+    _mark_supplemental_report_live(supplemental_report)
+
+    with pytest.raises(ConfigError, match="默认顺序"):
+        inspect_v5_task_set(supplemental_report, assert_complete=True)
+    with pytest.raises(ConfigError, match="默认顺序"):
+        merge_task_set_manifests(
+            base_task_set=base_manifest,
+            supplemental_report=supplemental_report,
+            output=tmp_path / "merged/v5_task_set_manifest.json",
+            output_inventory=tmp_path / "merged/v5_task_inventory_report.json",
+        )
+
+
+def test_v5_stage2b_default_supplemental_registry_covers_reviewed_order() -> None:
+    assert [
+        "pallets/click#3364",
+        "python-attrs/attrs#1428",
+        "pypa/packaging#1124",
+        "hynek/structlog#620",
+        "chalk/chalk#335",
+        "sindresorhus/execa#1176",
+        "clap-rs/clap#6340",
+    ] == [candidate_id for candidate_id in DEFAULT_SUPPLEMENTAL_CANDIDATES]
 
 
 def _write_stage2a_inputs(tmp_path: Path) -> dict:
@@ -301,6 +429,28 @@ def _write_stage2a_inputs(tmp_path: Path) -> dict:
         "flaky_probe_report": flaky_path,
         "source_materialization_reports": [source_report_path],
     }
+
+
+def _mark_supplemental_report_live(report_path: Path) -> None:
+    report = _read_json(report_path)
+    report["live_probes_executed"] = True
+    for record in report["candidate_records"]:
+        record["live_probe_executed"] = True
+        task_ref = record.get("task_definition_ref")
+        if isinstance(task_ref, dict) and task_ref.get("path"):
+            task_path = Path(task_ref["path"])
+            if not task_path.is_absolute():
+                task_path = Path.cwd() / task_path
+            task_payload = _read_json(task_path)
+            task_payload["live_probe_executed"] = True
+            _write_json(task_path, task_payload)
+            task_ref["sha256"] = sha256_file(task_path)
+            task_ref["size_bytes"] = task_path.stat().st_size
+            for accepted_ref in report.get("accepted_task_definition_refs", []):
+                if isinstance(accepted_ref, dict) and accepted_ref.get("path") == task_ref.get("path"):
+                    accepted_ref["sha256"] = task_ref["sha256"]
+                    accepted_ref["size_bytes"] = task_ref["size_bytes"]
+    _write_json(report_path, report)
 
 
 def _write_json(path: Path, payload: dict) -> None:

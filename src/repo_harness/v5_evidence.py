@@ -42,6 +42,7 @@ from repo_harness.schema_versions import (
     V5_REWARD_SOURCE_TAXONOMY_REPORT_VERSION,
     V5_RUN_MATRIX_MANIFEST_VERSION,
     V5_SCHEMA_TRACKING_TABLE_VERSION,
+    V5_SUPPLEMENTAL_PR_ISSUE_CANDIDATE_REPORT_VERSION,
     V5_TASK_INVENTORY_REPORT_VERSION,
     V5_TASK_DEFINITION_VERSION,
     V5_TASK_SET_MANIFEST_VERSION,
@@ -55,6 +56,16 @@ V5_BASELINE_COMMIT = "9fd7007"
 V5_V4_CLOSURE_COMMIT = "e0da89c"
 V5_PREFLIGHT_ROOT = "runs/v5-flaky-visibility-run-matrix-freeze-20260505T130000Z"
 V5_PARTIAL_THRESHOLD_STATUS = "partial_below_12_total_and_8_pr_issue_preflight_threshold"
+
+V5_DEFAULT_SUPPLEMENTAL_CANDIDATE_ORDER = (
+    "pallets/click#3364",
+    "python-attrs/attrs#1428",
+    "pypa/packaging#1124",
+    "hynek/structlog#620",
+    "chalk/chalk#335",
+    "sindresorhus/execa#1176",
+    "clap-rs/clap#6340",
+)
 
 V5_REVIEWED_BASELINE_DOCS = (
     "docs/v5/scope-and-roadmap.md",
@@ -301,6 +312,25 @@ V5_SCHEMA_SPECS: tuple[dict[str, Any], ...] = (
         "inspect_command": "inspect-v5-task-visibility",
         "valid_fixture": "tests/fixtures/v5/task_visibility_valid.json",
         "negative_fixture": "tests/fixtures/v5/task_visibility_model_visible_leak.json",
+    },
+    {
+        "schema_name": "V5SupplementalPRIssueCandidateReport",
+        "schema_version": V5_SUPPLEMENTAL_PR_ISSUE_CANDIDATE_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "candidate_order",
+            "candidate_records",
+            "accepted_supplemental_count",
+            "required_supplemental_count",
+            "selected_candidate_ids",
+            "accepted_task_definition_refs",
+            "command_log_ref",
+            "live_probes_executed",
+            "status",
+        ),
+        "inspect_command": "inspect-v5-task-set",
+        "valid_fixture": "tests/fixtures/v5/supplemental_pr_issue_candidate_report_valid.json",
+        "negative_fixture": "tests/fixtures/v5/supplemental_pr_issue_candidate_report_not_live.json",
     },
     {
         "schema_name": "V5ProviderCredentialGateReport",
@@ -1124,12 +1154,21 @@ def inspect_v5_evidence_integrity(
 
 def inspect_v5_task_set(manifest: str | Path, *, assert_complete: bool = False) -> str:
     path = Path(manifest)
-    failures = _inspect_schema_file(path, expected_schema_names={"V5TaskSetManifest", "V5TaskInventoryReport"})
+    failures = _inspect_schema_file(
+        path,
+        expected_schema_names={
+            "V5TaskSetManifest",
+            "V5TaskInventoryReport",
+            "V5SupplementalPRIssueCandidateReport",
+        },
+    )
     payload = _read_json_for_inspect(path, failures)
     if payload.get("schema_version") == V5_TASK_SET_MANIFEST_VERSION:
         _inspect_v5_task_set_manifest_deep(payload, failures)
     elif payload.get("schema_version") == V5_TASK_INVENTORY_REPORT_VERSION:
         _inspect_v5_task_inventory_deep(payload, failures)
+    elif payload.get("schema_version") == V5_SUPPLEMENTAL_PR_ISSUE_CANDIDATE_REPORT_VERSION:
+        _inspect_v5_supplemental_pr_issue_report_deep(payload, failures)
     return _schema_inspect_result("Inspect V5 task set", path, failures, assert_complete=assert_complete)
 
 
@@ -2016,6 +2055,15 @@ def _inspect_schema_specific_constraints(payload: dict[str, Any], schema_name: s
         if payload.get("model_visible_leak_count", 0) != 0:
             failures.append("model_visible_leak_count 必须为 0。")
         _inspect_adapter_visible_refs_for_forbidden_markers(payload, failures)
+    elif schema_name == "V5SupplementalPRIssueCandidateReport":
+        if payload.get("required_supplemental_count") != 2:
+            failures.append("Stage 2B supplemental report required_supplemental_count 必须为 2。")
+        if payload.get("accepted_supplemental_count", 0) < 2:
+            failures.append("Stage 2B supplemental report 至少需要 2 个 accepted supplemental tasks。")
+        if payload.get("live_probes_executed") is not True:
+            failures.append("Stage 2B supplemental report 必须来自 live probes，不能用 offline fixture 关闭库存门。")
+        if payload.get("status") != "passed":
+            failures.append("Stage 2B supplemental report status 必须为 passed。")
     elif schema_name == "V5ProviderCredentialGateReport":
         if payload.get("raw_secret_value_present") is not False:
             failures.append("raw_secret_value_present 必须为 false。")
@@ -2110,6 +2158,154 @@ def _inspect_v5_task_inventory_deep(payload: dict[str, Any], failures: list[str]
             failures.append("accepted_auditable_task_count 必须等于 task_definition_refs 数量。")
         for index, ref in enumerate(refs, start=1):
             _inspect_v5_ref(ref, failures, label=f"task_definition_refs[{index}]")
+
+
+def _inspect_v5_supplemental_pr_issue_report_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    if payload.get("live_probes_executed") is not True:
+        failures.append("Stage 2B supplemental report 必须记录 live_probes_executed=true。")
+    if payload.get("required_supplemental_count") != 2:
+        failures.append("Stage 2B supplemental report required_supplemental_count 必须等于 2。")
+    selected_ids = payload.get("selected_candidate_ids")
+    if not isinstance(selected_ids, list) or len(selected_ids) != 2:
+        failures.append("Stage 2B supplemental report 必须选择 2 个 candidate。")
+        selected_ids = []
+    accepted_refs = payload.get("accepted_task_definition_refs")
+    if not isinstance(accepted_refs, list) or len(accepted_refs) < 2:
+        failures.append("Stage 2B supplemental report accepted_task_definition_refs 至少需要 2 个。")
+        accepted_refs = []
+    _inspect_v5_ref(payload.get("command_log_ref"), failures, label="supplemental.command_log_ref")
+    _inspect_v5_ref(payload.get("source_preflight_root_ref"), failures, label="supplemental.source_preflight_root_ref")
+
+    task_ids_from_refs: list[str] = []
+    candidate_ids_from_refs: list[str] = []
+    for index, ref in enumerate(accepted_refs, start=1):
+        _inspect_v5_ref(ref, failures, label=f"accepted_task_definition_refs[{index}]")
+        task_payload = _read_ref_payload(ref, failures)
+        if not isinstance(task_payload, dict):
+            continue
+        if task_payload.get("schema_version") != V5_TASK_DEFINITION_VERSION:
+            failures.append(f"accepted_task_definition_refs[{index}] 必须指向 V5 task definition。")
+        if task_payload.get("accepted_auditable") is not True:
+            failures.append(f"accepted_task_definition_refs[{index}] 必须 accepted_auditable=true。")
+        if task_payload.get("agent_run_ready") is not True:
+            failures.append(f"accepted_task_definition_refs[{index}] 必须 agent_run_ready=true。")
+        if task_payload.get("source_kind") != "pr_issue_flow":
+            failures.append(f"accepted_task_definition_refs[{index}] 必须是 PR / issue flow。")
+        if task_payload.get("live_probe_executed") is not True:
+            failures.append(f"accepted_task_definition_refs[{index}] 必须绑定 live probe evidence。")
+        task_ids_from_refs.append(str(task_payload.get("task_id") or ""))
+        candidate_ids_from_refs.append(str(task_payload.get("candidate_id") or ""))
+    if selected_ids and candidate_ids_from_refs[: len(selected_ids)] != [str(item) for item in selected_ids]:
+        failures.append("selected_candidate_ids 必须和 accepted_task_definition_refs 前两个 candidate_id 一致。")
+
+    records = payload.get("candidate_records")
+    if not isinstance(records, list) or not records:
+        failures.append("Stage 2B supplemental report candidate_records 必须是非空 list。")
+        return
+    by_candidate = {str(record.get("candidate_id")): record for record in records if isinstance(record, dict)}
+    unknown_candidates = sorted(set(by_candidate).difference(V5_DEFAULT_SUPPLEMENTAL_CANDIDATE_ORDER))
+    if unknown_candidates:
+        failures.append("candidate_records 包含未在默认补位顺序中审查过的候选：" + ", ".join(unknown_candidates))
+    missing_selected = [str(item) for item in selected_ids if str(item) not in by_candidate]
+    if missing_selected:
+        failures.append("selected_candidate_ids 缺少 candidate_records：" + ", ".join(missing_selected))
+    ready_in_order: list[str] = []
+    for candidate_id in V5_DEFAULT_SUPPLEMENTAL_CANDIDATE_ORDER:
+        record = by_candidate.get(candidate_id)
+        if isinstance(record, dict) and _supplemental_record_ready(record):
+            ready_in_order.append(candidate_id)
+    if selected_ids and ready_in_order[:2] != [str(item) for item in selected_ids]:
+        failures.append("selected_candidate_ids 必须是默认顺序中最早满足 freeze_ready、agent_run_ready 和 visibility clean 的 2 个候选。")
+
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            failures.append(f"candidate_records[{index}] 必须是 object。")
+            continue
+        label = f"candidate_records[{index}]"
+        _inspect_v5_ref(record.get("candidate_command_log_ref"), failures, label=f"{label}.candidate_command_log_ref")
+        _inspect_candidate_command_log_ref(record.get("candidate_command_log_ref"), failures, label=label)
+        if record.get("selected_for_stage2b_merge") is True:
+            if record.get("candidate_id") not in selected_ids:
+                failures.append(f"{label} selected_for_stage2b_merge=true 但不在 selected_candidate_ids 中。")
+            for field in (
+                "source_materialization_report_ref",
+                "source_archive_manifest_ref",
+                "dependency_probe_report_ref",
+                "baseline_verifier_probe_report_ref",
+                "post_patch_verifier_probe_report_ref",
+                "flaky_probe_report_ref",
+                "adapter_visible_denylist_scan_report_ref",
+                "training_export_boundary_probe_report_ref",
+                "provider_raw_content_leak_probe_report_ref",
+                "task_definition_ref",
+            ):
+                _inspect_v5_ref(record.get(field), failures, label=f"{label}.{field}")
+            if not _supplemental_record_ready(record):
+                failures.append(f"{label} 被选中但未满足 freeze_ready、agent_run_ready、visibility clean、baseline failure、post-patch pass 和 stable flaky probe。")
+            if record.get("live_probe_executed") is not True:
+                failures.append(f"{label} 被选中但 live_probe_executed 不是 true。")
+        else:
+            if record.get("freeze_ready") is False:
+                for field in ("failure_owner", "failure_category", "replacement_reason", "failed_command_name", "stdout_sha256", "stderr_sha256"):
+                    if not record.get(field):
+                        failures.append(f"{label} 未通过补位门时必须记录 {field}。")
+            elif not record.get("replacement_reason"):
+                failures.append(f"{label} 未被选择时必须记录 replacement_reason。")
+
+
+def _supplemental_record_ready(record: dict[str, Any]) -> bool:
+    counters = record.get("visibility_counters")
+    return (
+        record.get("freeze_ready") is True
+        and record.get("agent_run_ready") is True
+        and record.get("baseline_expected_failure") is True
+        and record.get("post_patch_passed") is True
+        and record.get("flaky_probe_status") == "stable"
+        and isinstance(counters, dict)
+        and all(
+            int(counters.get(key) or 0) == 0
+            for key in (
+                "model_visible_leak_count",
+                "share_safe_violation_count",
+                "trainable_payload_contamination_count",
+                "raw_provider_content_leak_count",
+                "credential_marker_leak_count",
+            )
+        )
+    )
+
+
+def _inspect_candidate_command_log_ref(ref: Any, failures: list[str], *, label: str) -> None:
+    path = _path_from_ref(ref)
+    if path is None or not path.exists() or path.is_dir():
+        return
+    records = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError as exc:
+            failures.append(f"{label}.candidate_command_log_ref 第 {line_number} 行不是合法 JSON：{exc}")
+            continue
+        if not isinstance(payload, dict):
+            failures.append(f"{label}.candidate_command_log_ref 第 {line_number} 行必须是 object。")
+            continue
+        records.append(payload)
+        if payload.get("schema_version") != V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION:
+            failures.append(f"{label}.candidate_command_log_ref 第 {line_number} 行 schema_version 不匹配。")
+        for field in ("command_name", "argv", "cwd", "started_at", "finished_at", "exit_code", "stdout_sha256", "stderr_sha256"):
+            if field not in payload:
+                failures.append(f"{label}.candidate_command_log_ref 第 {line_number} 行缺少 {field}。")
+        for ref_field in ("input_refs", "output_refs"):
+            refs = payload.get(ref_field)
+            if not isinstance(refs, list):
+                failures.append(f"{label}.candidate_command_log_ref 第 {line_number} 行 {ref_field} 必须是 list。")
+                continue
+            for ref_index, nested_ref in enumerate(refs, start=1):
+                _inspect_v5_ref(nested_ref, failures, label=f"{label}.candidate_command_log_ref[{line_number}].{ref_field}[{ref_index}]")
+    if not records:
+        failures.append(f"{label}.candidate_command_log_ref 必须至少包含 1 条 command log entry。")
 
 
 def _inspect_adapter_visible_refs_for_forbidden_markers(payload: dict[str, Any], failures: list[str]) -> None:
@@ -2343,6 +2539,58 @@ def _valid_schema_fixture_payload(schema_name: str, target: Path) -> dict[str, A
             "findings": [],
             "status": "passed",
         }
+    if schema_name == "V5SupplementalPRIssueCandidateReport":
+        return {
+            "schema_version": V5_SUPPLEMENTAL_PR_ISSUE_CANDIDATE_REPORT_VERSION,
+            "candidate_order": ["owner/repo#1", "owner/repo#2"],
+            "candidate_records": [
+                {
+                    "candidate_id": "owner/repo#1",
+                    "freeze_ready": True,
+                    "agent_run_ready": True,
+                    "baseline_expected_failure": True,
+                    "post_patch_passed": True,
+                    "flaky_probe_status": "stable",
+                    "selected_for_stage2b_merge": True,
+                    "live_probe_executed": True,
+                    "visibility_counters": {
+                        "model_visible_leak_count": 0,
+                        "share_safe_violation_count": 0,
+                        "trainable_payload_contamination_count": 0,
+                        "raw_provider_content_leak_count": 0,
+                        "credential_marker_leak_count": 0,
+                    },
+                    "candidate_command_log_ref": ref,
+                    "task_definition_ref": ref,
+                },
+                {
+                    "candidate_id": "owner/repo#2",
+                    "freeze_ready": True,
+                    "agent_run_ready": True,
+                    "baseline_expected_failure": True,
+                    "post_patch_passed": True,
+                    "flaky_probe_status": "stable",
+                    "selected_for_stage2b_merge": True,
+                    "live_probe_executed": True,
+                    "visibility_counters": {
+                        "model_visible_leak_count": 0,
+                        "share_safe_violation_count": 0,
+                        "trainable_payload_contamination_count": 0,
+                        "raw_provider_content_leak_count": 0,
+                        "credential_marker_leak_count": 0,
+                    },
+                    "candidate_command_log_ref": ref,
+                    "task_definition_ref": ref,
+                },
+            ],
+            "accepted_supplemental_count": 2,
+            "required_supplemental_count": 2,
+            "selected_candidate_ids": ["owner/repo#1", "owner/repo#2"],
+            "accepted_task_definition_refs": [ref, ref],
+            "command_log_ref": ref,
+            "live_probes_executed": True,
+            "status": "passed",
+        }
     if schema_name == "V5ProviderCredentialGateReport":
         return {
             "schema_version": V5_PROVIDER_CREDENTIAL_GATE_REPORT_VERSION,
@@ -2521,6 +2769,8 @@ def _negative_schema_fixture_payload(schema_name: str, target: Path) -> dict[str
     elif schema_name == "V5TaskVisibilityScanReport":
         payload["model_visible_leak_count"] = 1
         payload["status"] = "failed"
+    elif schema_name == "V5SupplementalPRIssueCandidateReport":
+        payload["live_probes_executed"] = False
     elif schema_name == "V5ProviderCredentialGateReport":
         payload["raw_secret_value_present"] = True
     elif schema_name == "V5ProviderCostBudgetReport":
