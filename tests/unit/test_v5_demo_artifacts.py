@@ -27,6 +27,12 @@ def test_v5_demo_artifacts_and_interview_pack_are_share_safe(tmp_path: Path) -> 
     result_summary = _read_json(tmp_path / "stage5" / "v5_result_summary_table.json")
     assert result_summary["real_provider_runs"]["denominator"] == 3
     assert "mock_or_replay_records" in result_summary["real_provider_runs"]["denominator_excludes"]
+    assert result_summary["task_inventory"]["accepted_auditable_task_count"] == 15
+    assert result_summary["task_inventory"]["pr_issue_task_count"] == 9
+    assert result_summary["task_inventory"]["swebench_like_anchor_task_count"] == 6
+    assert result_summary["task_inventory"]["threshold_source"] == task_set.as_posix()
+    repro = _read_json(tmp_path / "stage5" / "v5_repro_command_index.json")
+    assert export_pack.as_posix() in repro["commands"][1]["command"]
 
     docs12 = tmp_path / "docs" / "12-resume-narrative-and-demo-artifacts.md"
     docs12.parent.mkdir(parents=True)
@@ -77,8 +83,9 @@ def _write_task_set(tmp_path: Path) -> Path:
         task_set,
         {
             "schema_version": "repo_harness_v5_task_set_manifest_v0",
-            "accepted_auditable_task_count": 12,
-            "pr_issue_task_count": 8,
+            "accepted_auditable_task_count": 15,
+            "pr_issue_task_count": 9,
+            "swebench_like_anchor_count": 6,
             "initial_task_refs": [_ref(task_definition, "v5_task_definition")],
             "supplemental_task_refs": [],
             "status": "passed",

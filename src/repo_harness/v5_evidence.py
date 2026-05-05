@@ -847,12 +847,23 @@ def build_schema_fixtures(
 
     target = fixture_root / "evidence_ref_target.txt"
     _write_text(target, "V5 evidence ref fixture target\n")
+    v4_doc_sync_target = fixture_root / V4_DOC_SYNC_BUNDLE_NAME
+    _write_text(v4_doc_sync_target, "V5 V4 doc-sync acceptance bundle fixture target\n")
     valid_paths: dict[str, Path] = {}
     negative_paths: dict[str, Path] = {}
     for spec in V5_SCHEMA_SPECS:
         valid_path = root / spec["valid_fixture"]
         negative_path = root / spec["negative_fixture"]
-        _write_json(valid_path, _valid_schema_fixture_payload(str(spec["schema_name"]), target))
+        schema_name = str(spec["schema_name"])
+        _write_json(
+            valid_path,
+            _valid_schema_fixture_payload(
+                schema_name,
+                target,
+                acceptance_inputs_path=valid_paths.get("V5AcceptanceInputs"),
+                v4_doc_sync_path=v4_doc_sync_target,
+            ),
+        )
         _write_json(negative_path, _negative_schema_fixture_payload(str(spec["schema_name"]), target))
         valid_paths[str(spec["schema_name"])] = valid_path
         negative_paths[str(spec["schema_name"])] = negative_path
@@ -1599,8 +1610,6 @@ def _inspect_v5_export_pack_manifest_deep(payload: dict[str, Any], failures: lis
     if missing:
         failures.append("partition_counts 缺少：" + ", ".join(missing))
     if payload.get("producer_stage") == "v5_stage4_export_pack":
-        if partition_counts.get("real_provider_trainable_records", 0) < 1:
-            failures.append("Stage 4 export pack 至少需要 1 个 real provider trainable record。")
         if partition_counts.get("diagnostic_records", 0) < 1:
             failures.append("Stage 4 export pack 至少需要 1 个 diagnostic record。")
         if partition_counts.get("blocked_records", 0) < 1:
@@ -1621,9 +1630,10 @@ def _inspect_v5_export_pack_manifest_deep(payload: dict[str, Any], failures: lis
     ):
         if payload.get(ref_field):
             _inspect_v5_ref(payload.get(ref_field), failures, label=ref_field)
+    trainable_minimum = 1 if partition_counts.get("real_provider_trainable_records", 0) > 0 else 0
     for jsonl_field, minimum in (
-        ("sft_export_ref", 1),
-        ("rl_rollout_export_ref", 1),
+        ("sft_export_ref", trainable_minimum),
+        ("rl_rollout_export_ref", trainable_minimum),
         ("failure_dataset_ref", 1),
         ("diagnostic_only_records_ref", 1),
         ("blocked_export_records_ref", 1),
@@ -1670,6 +1680,10 @@ def _inspect_v5_export_record(record: dict[str, Any], failures: list[str], *, la
         return
     if record.get("record_partition") in {"diagnostic_only", "blocked"} and record.get("trainable") is not False:
         failures.append(f"{label} diagnostic-only 或 blocked record 不能标记为 trainable。")
+    if record.get("trainable") is True and (
+        record.get("accepted") is not True or record.get("final_verifier_status") != "accepted"
+    ):
+        failures.append(f"{label} trainable record 必须绑定 accepted final verifier outcome。")
     text = json.dumps(record, ensure_ascii=False).lower()
     for marker in ("raw_deepseek_provider_request", "raw_deepseek_provider_response", "authorization", "bearer"):
         if marker in text:
@@ -1780,6 +1794,7 @@ def inspect_v5_acceptance(
     path = Path(report)
     failures = _inspect_schema_file(path, expected_schema_names={"V5AcceptanceReport"})
     payload = _read_json_for_inspect(path, failures)
+    _inspect_v5_acceptance_reference_integrity(payload, failures)
     core_status = _get_path(payload, "core_acceptance.status")
     resume_status = _get_path(payload, "resume_ready_acceptance.status")
     if assert_core_complete and core_status != "passed":
@@ -1817,6 +1832,16 @@ def _inspect_v5_inputs_deep(payload: dict[str, Any], failures: list[str]) -> Non
     if not isinstance(refs, list) or not refs:
         failures.append("V5 acceptance inputs 必须包含 v5_evidence_refs。")
         return
+    for field in (
+        "v2_acceptance_report_ref",
+        "v3_acceptance_report_ref",
+        "v3_acceptance_bundle_ref",
+        "v4_acceptance_inputs_ref",
+        "v4_acceptance_report_ref",
+        "v4_doc_sync_acceptance_bundle_ref",
+        "v4_doc_sync_final_command_log_ref",
+    ):
+        _inspect_v5_ref(payload.get(field), failures, label=field)
     kinds = {ref.get("kind") for ref in refs if isinstance(ref, dict)}
     required = {
         "v5_preflight_input_binding",
@@ -1833,11 +1858,66 @@ def _inspect_v5_inputs_deep(payload: dict[str, Any], failures: list[str]) -> Non
     missing = sorted(required.difference(kinds))
     if missing:
         failures.append("V5 acceptance inputs 缺少必需 evidence refs：" + ", ".join(missing))
-    for ref in refs:
+    for index, ref in enumerate(refs, start=1):
         if isinstance(ref, dict):
+            _inspect_v5_ref(ref, failures, label=f"v5_evidence_refs[{index}]")
             path_value = str(ref.get("path") or "")
             if "acceptance_report_reference_integrity_report" in path_value or "acceptance_bundle_manifest" in path_value:
                 failures.append("V5 acceptance inputs 不能绑定 post-report 或 bundle final outputs。")
+        else:
+            failures.append(f"v5_evidence_refs[{index}] 必须是 evidence ref object。")
+
+
+def _inspect_v5_acceptance_reference_integrity(payload: dict[str, Any], failures: list[str]) -> None:
+    if not payload:
+        return
+    inputs_ref = payload.get("acceptance_inputs_ref")
+    _inspect_v5_ref(inputs_ref, failures, label="acceptance_inputs_ref")
+    inputs_path = _path_from_ref(inputs_ref)
+    if inputs_path is None or not inputs_path.exists():
+        failures.append("acceptance report reference integrity 无法读取 acceptance_inputs_ref。")
+        return
+    input_failures: list[str] = []
+    inputs_payload = _read_json_for_inspect(inputs_path, input_failures)
+    if input_failures:
+        failures.extend(f"acceptance_inputs_ref.{item}" for item in input_failures)
+        return
+    _inspect_v5_inputs_deep(inputs_payload, failures)
+    allowed = _acceptance_input_ref_keys(inputs_payload)
+    report_refs = _report_ref_keys(payload)
+    unbound = sorted(ref for ref in report_refs if ref not in allowed and not ref.startswith("v5_acceptance_inputs|"))
+    if unbound:
+        failures.append(
+            "acceptance report reference integrity failed，存在未由 acceptance inputs 绑定的关键 evidence refs："
+            + ", ".join(unbound)
+        )
+
+
+def _acceptance_input_ref_keys(inputs: dict[str, Any]) -> set[str]:
+    return {_v5_ref_key(ref) for ref in _all_acceptance_input_refs(inputs) if _v5_ref_key(ref)}
+
+
+def _all_acceptance_input_refs(inputs: dict[str, Any]) -> list[dict[str, Any]]:
+    refs: list[dict[str, Any]] = []
+    for key, value in inputs.items():
+        if key.endswith("_ref") and isinstance(value, dict):
+            refs.append(value)
+    refs.extend(ref for ref in inputs.get("v5_evidence_refs") or [] if isinstance(ref, dict))
+    return refs
+
+
+def _report_ref_keys(report: dict[str, Any]) -> set[str]:
+    refs: list[dict[str, Any]] = []
+    for key, value in report.items():
+        if key.endswith("_ref") and isinstance(value, dict):
+            refs.append(value)
+        if key.endswith("_refs") and isinstance(value, list):
+            refs.extend(ref for ref in value if isinstance(ref, dict))
+    return {_v5_ref_key(ref) for ref in refs if _v5_ref_key(ref)}
+
+
+def _v5_ref_key(ref: dict[str, Any]) -> str:
+    return f"{ref.get('kind')}|{ref.get('path')}|{ref.get('sha256')}"
 
 
 def _baseline_commands(
@@ -3021,7 +3101,13 @@ def _looks_like_evidence_ref(payload: dict[str, Any]) -> bool:
     return all(field in payload for field in V5_SCHEMA_SPECS[0]["required_fields"])
 
 
-def _valid_schema_fixture_payload(schema_name: str, target: Path) -> dict[str, Any]:
+def _valid_schema_fixture_payload(
+    schema_name: str,
+    target: Path,
+    *,
+    acceptance_inputs_path: Path | None = None,
+    v4_doc_sync_path: Path | None = None,
+) -> dict[str, Any]:
     ref = _evidence_ref(
         target,
         kind="fixture_target",
@@ -3034,29 +3120,80 @@ def _valid_schema_fixture_payload(schema_name: str, target: Path) -> dict[str, A
     if schema_name == "V5EvidenceRef":
         return ref
     if schema_name == "V5AcceptanceInputs":
+        def kind_ref(kind: str) -> dict[str, Any]:
+            return {**ref, "kind": kind}
+
+        v4_doc_sync_ref = _evidence_ref(
+            v4_doc_sync_path or target,
+            kind="v4_doc_sync_acceptance_bundle",
+            purpose="Valid V4 doc-sync bundle fixture",
+            visibility="audit_only",
+            producer_command="build-v5-schema-fixtures",
+            producer_stage="v5_stage1_schema_and_evidence_integrity",
+            inspect_command="inspect-acceptance-bundle",
+        )
+
+        required_kinds = [
+            "v5_preflight_input_binding",
+            "v5_pre_acceptance_evidence_integrity_report",
+            "v5_task_set_manifest",
+            "v5_run_matrix_manifest_executed",
+            "v5_resume_claim_gate_report",
+            "v5_export_result_pack_manifest",
+            "v5_public_demo_bundle_manifest",
+            "v5_resume_artifact_index",
+            "v5_result_summary_table",
+            "v5_final_acceptance_pretest_report",
+        ]
         return {
             "schema_version": V5_ACCEPTANCE_INPUTS_VERSION,
             "created_at": "2026-05-05T00:00:00Z",
             "current_head": "0" * 40,
-            "v2_acceptance_report_ref": ref,
-            "v3_acceptance_report_ref": ref,
-            "v3_acceptance_bundle_ref": ref,
-            "v4_acceptance_inputs_ref": ref,
-            "v4_acceptance_report_ref": ref,
-            "v4_doc_sync_acceptance_bundle_ref": {**ref, "path": f"runs/{V4_DOC_SYNC_BUNDLE_NAME}"},
-            "v4_doc_sync_final_command_log_ref": ref,
-            "v5_evidence_refs": [ref],
+            "selection_mode": "explicit",
+            "latest_run_auto_selection": False,
+            "v2_acceptance_report_ref": kind_ref("v2_acceptance_report"),
+            "v3_acceptance_report_ref": kind_ref("v3_acceptance_report"),
+            "v3_acceptance_bundle_ref": kind_ref("v3_acceptance_bundle"),
+            "v4_acceptance_inputs_ref": kind_ref("v4_acceptance_inputs"),
+            "v4_acceptance_report_ref": kind_ref("v4_acceptance_report"),
+            "v4_doc_sync_acceptance_bundle_ref": v4_doc_sync_ref,
+            "v4_doc_sync_final_command_log_ref": kind_ref("v4_doc_sync_final_command_log"),
+            "v5_evidence_refs": [kind_ref(kind) for kind in required_kinds],
             "stress_test_executed": False,
+            "post_report_outputs_included": False,
+            "bundle_final_outputs_included": False,
         }
     if schema_name == "V5AcceptanceReport":
+        input_refs_by_kind: dict[str, dict[str, Any]] = {}
+        if acceptance_inputs_path is not None and acceptance_inputs_path.exists():
+            acceptance_inputs_payload = json.loads(acceptance_inputs_path.read_text(encoding="utf-8"))
+            for item in acceptance_inputs_payload.get("v5_evidence_refs") or []:
+                if isinstance(item, dict):
+                    input_refs_by_kind[str(item.get("kind"))] = item
+        acceptance_inputs_ref = (
+            _evidence_ref(
+                acceptance_inputs_path,
+                kind="v5_acceptance_inputs",
+                purpose="Valid V5 acceptance inputs fixture",
+                visibility="audit_only",
+                producer_command="build-v5-schema-fixtures",
+                producer_stage="v5_stage1_schema_and_evidence_integrity",
+                inspect_command="inspect-v5-inputs",
+            )
+            if acceptance_inputs_path is not None
+            else ref
+        )
         return {
             "schema_version": V5_ACCEPTANCE_REPORT_VERSION,
-            "acceptance_inputs_ref": ref,
+            "acceptance_inputs_ref": acceptance_inputs_ref,
             "core_acceptance": {"status": "passed", "required_checks": []},
             "resume_ready_acceptance": {"status": "blocked", "required_checks": []},
             "allowed_claims": ["core_acceptance"],
             "blocked_claims": ["resume_ready_acceptance"],
-            "claim_gate_report_ref": ref,
+            "claim_gate_report_ref": input_refs_by_kind.get("v5_resume_claim_gate_report", {**ref, "kind": "v5_resume_claim_gate_report"}),
+            "critical_evidence_refs": [
+                input_refs_by_kind.get("v5_task_set_manifest", {**ref, "kind": "v5_task_set_manifest"})
+            ],
             "acceptance_report_reference_integrity": {"expected_check": "inspect-v5-acceptance_after_report_generation"},
         }
     if schema_name == "V5TaskSetManifest":

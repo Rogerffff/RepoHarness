@@ -108,7 +108,7 @@ def build_demo_artifacts(
 
     partition_counts = export_manifest.get("partition_counts") or {}
     result_summary_path = root / "v5_result_summary_table.json"
-    result_summary = _result_summary(run_matrix, real_results, export_manifest, stage4_claim_gate)
+    result_summary = _result_summary(run_matrix, real_results, task_set, task_set_path, export_manifest, stage4_claim_gate)
     _write_json(result_summary_path, result_summary)
 
     demo_card_json_path = root / "v5_interview_demo_card.json"
@@ -121,7 +121,7 @@ def build_demo_artifacts(
     _write_text(walkthrough_path, _walkthrough_markdown(task_definition, adapter_input, canonical_run))
 
     repro_command_path = root / "v5_repro_command_index.json"
-    _write_json(repro_command_path, _repro_command_index(result_summary_path))
+    _write_json(repro_command_path, _repro_command_index(result_summary_path, export_manifest_path))
     permission_audit_path = root / "v5_permission_network_risk_audit_report.json"
     _write_json(permission_audit_path, _permission_network_risk_audit(real_results))
     invariant_mapping_path = root / "v5_claude_code_invariant_mapping.json"
@@ -414,6 +414,8 @@ def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], r
 def _result_summary(
     run_matrix: dict[str, Any],
     real_results: list[dict[str, Any]],
+    task_set: dict[str, Any],
+    task_set_path: Path,
     export_manifest: dict[str, Any],
     stage4_claim_gate: dict[str, Any],
 ) -> dict[str, Any]:
@@ -429,10 +431,11 @@ def _result_summary(
         "blocked_records": export_manifest.get("partition_counts", {}).get("blocked_records", 0),
         "synthetic_safe_stress_records": export_manifest.get("partition_counts", {}).get("synthetic_safe_stress_records", 0),
         "task_inventory": {
-            "accepted_auditable_task_count": 12,
-            "pr_issue_task_count": 8,
-            "swebench_like_anchor_task_count": 4,
-            "threshold_source": "runs/v5-stage2b-merged-task-set-20260505T152756Z/v5_task_set_manifest.json",
+            "accepted_auditable_task_count": task_set.get("accepted_auditable_task_count"),
+            "pr_issue_task_count": task_set.get("pr_issue_task_count"),
+            "swebench_like_anchor_task_count": task_set.get("swebench_like_anchor_count")
+            or task_set.get("swe_bench_like_anchor_task_count"),
+            "threshold_source": task_set_path.as_posix(),
         },
         "real_provider_runs": {
             "denominator_definition": (
@@ -652,7 +655,7 @@ def _public_safe_artifact_mapping(public_lookup: dict[str, dict[str, Any]], docs
     }
 
 
-def _repro_command_index(result_summary_path: Path) -> dict[str, Any]:
+def _repro_command_index(result_summary_path: Path, export_manifest_path: Path) -> dict[str, Any]:
     return {
         "schema_version": "repo_harness_v5_repro_command_index_v0",
         "created_at": _utc_timestamp(),
@@ -664,7 +667,7 @@ def _repro_command_index(result_summary_path: Path) -> dict[str, Any]:
             },
             {
                 "purpose": "检查 Stage 4 export pack clean 状态",
-                "command": "PATH=.venv/bin:$PATH repo-harness inspect-v5-export-pack runs/v5-stage4-export-pack-20260505T174200Z/v5_export_result_pack_manifest.json --assert-clean",
+                "command": f"PATH=.venv/bin:$PATH repo-harness inspect-v5-export-pack {export_manifest_path.as_posix()} --assert-clean",
                 "expected_result": "Inspect V5 export pack: passed",
             },
         ],

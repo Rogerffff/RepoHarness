@@ -68,9 +68,10 @@ def build_export_result_pack(
     real_results = [item for item in results if item.get("actual_provider_call_count", 0) > 0]
     if len(real_results) < 3:
         raise ConfigError("Stage 4 export pack 需要至少 3 条真实 provider result。")
+    trainable_results = [item for item in real_results if _is_final_verifier_accepted(item)]
 
-    sft_record = _sft_record(real_results[0])
-    rl_record = _rl_rollout_record(real_results[0])
+    sft_records = [_sft_record(item) for item in trainable_results[:1]]
+    rl_records = [_rl_rollout_record(item) for item in trainable_results[:1]]
     failure_record = _failure_record(real_results[1])
     diagnostic_record = _diagnostic_record(real_results[2])
     blocked_record = _blocked_export_record()
@@ -80,8 +81,8 @@ def build_export_result_pack(
     failure_path = root / "v5_failure_dataset.jsonl"
     diagnostic_path = root / "v5_diagnostic_only_records.jsonl"
     blocked_path = root / "v5_blocked_export_records.jsonl"
-    _write_jsonl(sft_path, [sft_record])
-    _write_jsonl(rl_path, [rl_record])
+    _write_jsonl(sft_path, sft_records)
+    _write_jsonl(rl_path, rl_records)
     _write_jsonl(failure_path, [failure_record])
     _write_jsonl(diagnostic_path, [diagnostic_record])
     _write_jsonl(blocked_path, [blocked_record])
@@ -115,8 +116,8 @@ def build_export_result_pack(
         {
             "schema_version": "repo_harness_v5_duplicate_record_report_v0",
             "record_ids_checked": [
-                sft_record["record_id"],
-                rl_record["record_id"],
+                *[record["record_id"] for record in sft_records],
+                *[record["record_id"] for record in rl_records],
                 failure_record["record_id"],
                 diagnostic_record["record_id"],
                 blocked_record["record_id"],
@@ -155,17 +156,14 @@ def build_export_result_pack(
             "provider_raw_model_visible_count": 0,
             "reward_scalar_model_visible_count": 0,
             "reward_label_model_visible_count": 0,
-            "non_accepted_trainable_record_count": 2,
-            "non_accepted_trainable_record_policy": (
-                "Records are trainable as plan/rollout format examples only; they are not "
-                "accepted patch outcomes and do not count toward accepted rate."
-            ),
+            "non_accepted_trainable_record_count": 0,
+            "non_accepted_trainable_record_policy": "non-accepted or non-executed final verifier runs are diagnostic-only or failure records, not trainable records.",
             "status": "passed",
         },
     )
 
     partition_counts = {
-        "real_provider_trainable_records": 2,
+        "real_provider_trainable_records": len(sft_records) + len(rl_records),
         "mock_or_replay_records": 0,
         "diagnostic_records": 1,
         "blocked_records": 1,
@@ -178,7 +176,7 @@ def build_export_result_pack(
             "schema_version": "repo_harness_v5_export_partition_summary_v0",
             "partition_counts": partition_counts,
             "stress_partition_status": "not_executed",
-            "real_provider_trainable_record_policy": "plan_and_rollout_format_only_not_final_verifier_accepted",
+            "real_provider_trainable_record_policy": "requires accepted=true and final_verifier_status=accepted; current Stage 3B minimal provider loop has no trainable records",
             "status": "passed",
         },
     )
@@ -250,14 +248,14 @@ def _sft_record(result: dict[str, Any]) -> dict[str, Any]:
         "source_run_id": result["run_id"],
         "provider_id": result["provider_id"],
         "trainable": True,
-        "accepted": False,
+        "accepted": True,
         "final_verifier_status": result.get("final_verifier_status"),
         "input_messages": transcript["initial_messages"],
         "target_message": transcript["assistant_message"],
         "visibility_policy": _trainable_visibility_policy(),
-        "reward_source_type": "rubric",
-        "reward_authoritative_for_outcome": False,
-        "notes": "Trainable only as a sanitized plan-format SFT example, not as an accepted patch outcome.",
+        "reward_source_type": "rule_based_verifier",
+        "reward_authoritative_for_outcome": True,
+        "notes": "Trainable SFT records require an accepted final verifier boundary.",
     }
 
 
@@ -270,18 +268,16 @@ def _rl_rollout_record(result: dict[str, Any]) -> dict[str, Any]:
         "source_run_id": result["run_id"],
         "provider_id": result["provider_id"],
         "trainable": True,
-        "accepted": False,
+        "accepted": True,
         "final_verifier_status": result.get("final_verifier_status"),
-        "trajectory_ref": result.get("trajectory_ref"),
-        "final_verifier_boundary_ref": result.get("final_verifier_boundary_ref"),
         "reward_metadata": {
-            "reward_source_type": "rubric",
-            "authoritative_for_outcome": False,
+            "reward_source_type": "rule_based_verifier",
+            "authoritative_for_outcome": True,
             "reward_scalar_in_trainable_payload": False,
             "reward_label_in_trainable_payload": False,
         },
         "visibility_policy": _trainable_visibility_policy(),
-        "notes": "Rollout format example preserves final verifier boundary and does not claim acceptance.",
+        "notes": "Trainable rollout records omit evaluator-only trajectory and verifier refs from trainable payload.",
     }
 
 
@@ -316,6 +312,10 @@ def _diagnostic_record(result: dict[str, Any]) -> dict[str, Any]:
         "failure_owner": "verifier_or_config_issue",
         "failure_category": "diagnostic_only_minimal_provider_loop",
     }
+
+
+def _is_final_verifier_accepted(result: dict[str, Any]) -> bool:
+    return result.get("accepted") is True and result.get("final_verifier_status") == "accepted"
 
 
 def _blocked_export_record() -> dict[str, Any]:
@@ -409,10 +409,11 @@ def _stage4_claim_gate(
     blocked = list(dict.fromkeys([
         *stage3_claim_gate.get("blocked_claims", []),
         "preference export completed",
+        "trainable export completed",
     ]))
     allowed = list(dict.fromkeys([
         *stage3_claim_gate.get("allowed_claims", []),
-        "partitioned SFT, RL rollout, failure, diagnostic-only and blocked export pack generated",
+        "partitioned failure, diagnostic-only and blocked export pack generated; trainable records require accepted final verifier evidence",
     ]))
     return {
         "schema_version": V5_RESUME_CLAIM_GATE_REPORT_VERSION,
@@ -423,6 +424,7 @@ def _stage4_claim_gate(
         "blocking_reasons": {
             **stage3_claim_gate.get("blocking_reasons", {}),
             "preference_pair": "no real comparable preference pair passed compare scope gate",
+            "trainable_export": "no accepted final verifier outcome is available for SFT or RL rollout trainable records",
             "demo_share_safe": "pending Stage 5 public-safe demo artifacts",
         },
         "provider_claim_status": stage3_claim_gate.get("provider_claim_status", "blocked"),

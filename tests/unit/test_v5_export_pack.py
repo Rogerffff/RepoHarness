@@ -20,15 +20,20 @@ def test_v5_export_pack_builder_partitions_records_and_blocks_preference_claim(t
         assert_clean=True,
     )
     manifest = _read_json(manifest_path)
-    assert manifest["partition_counts"]["real_provider_trainable_records"] == 2
+    assert manifest["partition_counts"]["real_provider_trainable_records"] == 0
     assert manifest["partition_counts"]["diagnostic_records"] == 1
     assert manifest["partition_counts"]["blocked_records"] == 1
+    assert (tmp_path / "export_pack" / "v5_sft_export.jsonl").read_text(encoding="utf-8") == ""
+    assert (tmp_path / "export_pack" / "v5_rl_rollout_export.jsonl").read_text(encoding="utf-8") == ""
     preference_blocked = _read_json(tmp_path / "export_pack" / "v5_preference_pair_blocked_report.json")
     assert preference_blocked["claim_gate_effect"] == "disable_preference_export_completed_claim"
+    export_audit = _read_json(tmp_path / "export_pack" / "v5_export_audit_report.json")
+    assert export_audit["non_accepted_trainable_record_count"] == 0
     stage4_claim_gate = _read_json(tmp_path / "export_pack" / "v5_resume_claim_gate_report.json")
     assert stage4_claim_gate["stage"] == "stage4_partial"
     assert stage4_claim_gate["preference_pair_claim_status"] == "blocked_no_real_comparable_pair"
     assert "preference export completed" in stage4_claim_gate["blocked_claims"]
+    assert "trainable export completed" in stage4_claim_gate["blocked_claims"]
 
 
 def _write_executed_manifest(tmp_path: Path) -> Path:

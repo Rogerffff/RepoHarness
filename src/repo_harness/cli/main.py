@@ -1249,6 +1249,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_v5_acceptance_bundle_parser.add_argument("--documentation-ref", action="append", required=True)
     build_v5_acceptance_bundle_parser.add_argument("--output", required=True)
     build_v5_acceptance_bundle_parser.add_argument("--doc-sync-from-bundle")
+    build_v5_acceptance_bundle_parser.add_argument("--final-command-log")
     build_v5_acceptance_bundle_parser.add_argument(
         "--fail-if-output-exists",
         action="store_true",
@@ -2374,6 +2375,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 bundle_build_command_log_entry_output=args.bundle_build_command_log_entry_output,
                 output=args.output,
                 doc_sync_from_bundle=args.doc_sync_from_bundle,
+                final_command_log=args.final_command_log,
                 fail_if_output_exists=args.fail_if_output_exists,
             )
         except RepoHarnessError as exc:

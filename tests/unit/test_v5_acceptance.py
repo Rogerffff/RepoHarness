@@ -54,16 +54,16 @@ def test_v5_acceptance_core_bundle_passes_and_resume_ready_is_blocked(tmp_path: 
     final_doc = _write_json_file(tmp_path / "docs" / "v5" / "final-acceptance.md", {"doc": "final"})
     walkthrough = _write_json_file(tmp_path / "docs" / "v5" / "walkthrough.md", {"doc": "walkthrough"})
     bundle_entry = tmp_path / "acceptance" / "build_v5_acceptance_bundle_command_log_entry.json"
-    bundle = build_acceptance_bundle(
+    pre_final_bundle = build_acceptance_bundle(
         acceptance_report=report,
         post_report_inspect_output=integrity,
         pre_bundle_command_log=pre_bundle,
         bundle_build_command_log_entry_output=bundle_entry,
         documentation_refs=[final_doc, walkthrough],
-        output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest.json",
+        output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest_pre_final_log.json",
     )
     inspect_entry = plan_acceptance_bundle_inspect_entry(
-        acceptance_bundle=bundle,
+        acceptance_bundle=pre_final_bundle,
         final_command_log=tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl",
         output=tmp_path / "acceptance" / "inspect_acceptance_bundle_command_log_entry.json",
     )
@@ -72,11 +72,121 @@ def test_v5_acceptance_core_bundle_passes_and_resume_ready_is_blocked(tmp_path: 
         command_log_entries=[bundle_entry, inspect_entry],
         output=tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl",
     )
+    final_bundle = build_acceptance_bundle(
+        acceptance_report=report,
+        post_report_inspect_output=integrity,
+        pre_bundle_command_log=pre_bundle,
+        bundle_build_command_log_entry_output=tmp_path / "acceptance" / "build_v5_acceptance_bundle_final_command_log_sync_entry.json",
+        documentation_refs=[final_doc, walkthrough],
+        output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest.json",
+        doc_sync_from_bundle=pre_final_bundle,
+        final_command_log=final_log,
+    )
     assert "Inspect acceptance bundle: immutable" in inspect_acceptance_bundle(
-        bundle,
+        final_bundle,
         final_command_log=final_log,
         assert_immutable=True,
     )
+
+
+def test_v5_inputs_rejects_tampered_evidence_ref(tmp_path: Path) -> None:
+    paths = _write_stage6_inputs(tmp_path)
+    acceptance_inputs = build_acceptance_inputs(
+        output_dir=tmp_path / "acceptance",
+        full_test_summary="765 passed in 706.29s",
+        v5_implementation_logs=[paths["implementation_log"]],
+        v5_review_records=[paths["review_record"]],
+        **{key: value for key, value in paths.items() if key not in {"implementation_log", "review_record"}},
+    )
+    payload = _read_json(acceptance_inputs)
+    payload["v5_evidence_refs"][0]["path"] = "does/not/exist.json"
+    payload["v5_evidence_refs"][0]["sha256"] = "0" * 64
+    payload["v5_evidence_refs"][0]["size_bytes"] = 999999
+    acceptance_inputs.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(ConfigError):
+        inspect_v5_inputs(acceptance_inputs, assert_complete=True)
+
+
+def test_v5_acceptance_core_rejects_failed_reference_integrity(tmp_path: Path) -> None:
+    paths = _write_stage6_inputs(tmp_path)
+    acceptance_inputs = build_acceptance_inputs(
+        output_dir=tmp_path / "acceptance",
+        full_test_summary="765 passed in 706.29s",
+        v5_implementation_logs=[paths["implementation_log"]],
+        v5_review_records=[paths["review_record"]],
+        **{key: value for key, value in paths.items() if key not in {"implementation_log", "review_record"}},
+    )
+    report = build_acceptance_report(acceptance_inputs=acceptance_inputs, output_dir=tmp_path / "acceptance")
+    payload = _read_json(report)
+    payload["acceptance_inputs_ref"]["path"] = "does/not/exist.json"
+    report.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(ConfigError):
+        inspect_v5_acceptance(report, assert_core_complete=True)
+
+
+def test_v5_bundle_rejects_tampered_final_command_log(tmp_path: Path) -> None:
+    paths = _write_stage6_inputs(tmp_path)
+    acceptance_inputs = build_acceptance_inputs(
+        output_dir=tmp_path / "acceptance",
+        full_test_summary="765 passed in 706.29s",
+        v5_implementation_logs=[paths["implementation_log"]],
+        v5_review_records=[paths["review_record"]],
+        **{key: value for key, value in paths.items() if key not in {"implementation_log", "review_record"}},
+    )
+    report = build_acceptance_report(acceptance_inputs=acceptance_inputs, output_dir=tmp_path / "acceptance")
+    integrity = tmp_path / "acceptance" / "v5_acceptance_report_reference_integrity_report.json"
+    core_entry = tmp_path / "acceptance" / "inspect_v5_acceptance_core_command_log_entry.json"
+    inspect_v5_acceptance(report, assert_core_complete=True, reference_integrity_output=integrity, command_log_entry_output=core_entry)
+    resume_entry = tmp_path / "acceptance" / "inspect_v5_acceptance_resume_ready_command_log_entry.json"
+    with pytest.raises(ConfigError):
+        inspect_v5_acceptance(report, assert_resume_ready=True, reference_integrity_input=integrity, command_log_entry_output=resume_entry)
+    pre_bundle = build_pre_bundle_command_log(
+        base_command_log=tmp_path / "acceptance" / "v5_stage6_command_log_draft.jsonl",
+        command_log_entries=[core_entry, resume_entry],
+        output=tmp_path / "acceptance" / "v5_pre_bundle_command_log.jsonl",
+    )
+    final_doc = _write_json_file(tmp_path / "docs" / "v5" / "final-acceptance.md", {"doc": "final"})
+    walkthrough = _write_json_file(tmp_path / "docs" / "v5" / "walkthrough.md", {"doc": "walkthrough"})
+    bundle_entry = tmp_path / "acceptance" / "build_v5_acceptance_bundle_command_log_entry.json"
+    pre_final_bundle = build_acceptance_bundle(
+        acceptance_report=report,
+        post_report_inspect_output=integrity,
+        pre_bundle_command_log=pre_bundle,
+        bundle_build_command_log_entry_output=bundle_entry,
+        documentation_refs=[final_doc, walkthrough],
+        output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest_pre_final_log.json",
+    )
+    inspect_entry = plan_acceptance_bundle_inspect_entry(
+        acceptance_bundle=pre_final_bundle,
+        final_command_log=tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl",
+        output=tmp_path / "acceptance" / "inspect_acceptance_bundle_command_log_entry.json",
+    )
+    final_log = build_final_command_log(
+        pre_bundle_command_log=pre_bundle,
+        command_log_entries=[bundle_entry, inspect_entry],
+        output=tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl",
+    )
+    final_bundle = build_acceptance_bundle(
+        acceptance_report=report,
+        post_report_inspect_output=integrity,
+        pre_bundle_command_log=pre_bundle,
+        bundle_build_command_log_entry_output=tmp_path / "acceptance" / "build_v5_acceptance_bundle_final_command_log_sync_entry.json",
+        documentation_refs=[final_doc, walkthrough],
+        output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest.json",
+        doc_sync_from_bundle=pre_final_bundle,
+        final_command_log=final_log,
+    )
+    entries = [json.loads(line) for line in final_log.read_text(encoding="utf-8").splitlines() if line.strip()]
+    for entry in entries:
+        if entry.get("command_name") == "inspect-acceptance-bundle":
+            entry["argv"][2] = (tmp_path / "acceptance" / "wrong_bundle.json").as_posix()
+            entry["input_refs"][0]["path"] = (tmp_path / "acceptance" / "wrong_bundle.json").as_posix()
+    final_log.write_text("".join(json.dumps(entry, ensure_ascii=False, sort_keys=True) + "\n" for entry in entries), encoding="utf-8")
+
+    with pytest.raises(ConfigError):
+        inspect_acceptance_bundle(final_bundle, final_command_log=final_log, assert_immutable=True)
 
 
 def _write_stage6_inputs(tmp_path: Path) -> dict:
@@ -197,3 +307,7 @@ def _write_json_file(path: Path, payload: dict) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
+
+
+def _read_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
