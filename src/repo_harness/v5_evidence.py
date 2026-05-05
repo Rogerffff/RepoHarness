@@ -1572,16 +1572,108 @@ def inspect_v5_export_pack(manifest: str | Path, *, assert_clean: bool = False) 
         },
     )
     payload = _read_json_for_inspect(path, failures)
-    partition_counts = payload.get("partition_counts")
-    if isinstance(partition_counts, dict):
-        missing = sorted(set(V5_PARTITION_COUNT_FIELDS).difference(partition_counts))
-        if missing:
-            failures.append("partition_counts 缺少：" + ", ".join(missing))
+    if (
+        payload.get("schema_version") == V5_EXPORT_RESULT_PACK_MANIFEST_VERSION
+        and payload.get("producer_stage") == "v5_stage4_export_pack"
+    ):
+        _inspect_v5_export_pack_manifest_deep(payload, failures)
+    else:
+        partition_counts = payload.get("partition_counts")
+        if isinstance(partition_counts, dict):
+            missing = sorted(set(V5_PARTITION_COUNT_FIELDS).difference(partition_counts))
+            if missing:
+                failures.append("partition_counts 缺少：" + ", ".join(missing))
     if payload.get("reward_scalar_model_visible_count", 0) != 0:
         failures.append("reward_scalar_model_visible_count 必须为 0。")
     if payload.get("reward_label_model_visible_count", 0) != 0:
         failures.append("reward_label_model_visible_count 必须为 0。")
     return _schema_inspect_result("Inspect V5 export pack", path, failures, assert_complete=assert_clean)
+
+
+def _inspect_v5_export_pack_manifest_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    partition_counts = payload.get("partition_counts")
+    if not isinstance(partition_counts, dict):
+        failures.append("partition_counts 必须是 object。")
+        partition_counts = {}
+    missing = sorted(set(V5_PARTITION_COUNT_FIELDS).difference(partition_counts))
+    if missing:
+        failures.append("partition_counts 缺少：" + ", ".join(missing))
+    if payload.get("producer_stage") == "v5_stage4_export_pack":
+        if partition_counts.get("real_provider_trainable_records", 0) < 1:
+            failures.append("Stage 4 export pack 至少需要 1 个 real provider trainable record。")
+        if partition_counts.get("diagnostic_records", 0) < 1:
+            failures.append("Stage 4 export pack 至少需要 1 个 diagnostic record。")
+        if partition_counts.get("blocked_records", 0) < 1:
+            failures.append("Stage 4 export pack 至少需要 1 个 blocked record。")
+    for ref_field in (
+        "sft_export_ref",
+        "rl_rollout_export_ref",
+        "failure_dataset_ref",
+        "diagnostic_only_records_ref",
+        "blocked_export_records_ref",
+        "preference_pair_blocked_report_ref",
+        "reward_source_taxonomy_ref",
+        "failure_taxonomy_ref",
+        "export_audit_ref",
+        "duplicate_record_report_ref",
+        "training_payload_visibility_report_ref",
+        "export_partition_summary_ref",
+    ):
+        if payload.get(ref_field):
+            _inspect_v5_ref(payload.get(ref_field), failures, label=ref_field)
+    for jsonl_field, minimum in (
+        ("sft_export_ref", 1),
+        ("rl_rollout_export_ref", 1),
+        ("failure_dataset_ref", 1),
+        ("diagnostic_only_records_ref", 1),
+        ("blocked_export_records_ref", 1),
+    ):
+        ref = payload.get(jsonl_field)
+        path = _path_from_ref(ref)
+        rows = _read_jsonl_for_inspect(path, failures) if path is not None else []
+        if len(rows) < minimum:
+            failures.append(f"{jsonl_field} 至少需要 {minimum} 条记录。")
+        for index, row in enumerate(rows):
+            _inspect_v5_export_record(row, failures, label=f"{jsonl_field}[{index}]")
+    blocked = _read_ref_payload(payload.get("preference_pair_blocked_report_ref"), failures)
+    if blocked:
+        if not blocked.get("blocked_reason"):
+            failures.append("preference pair blocked report 缺少 blocked_reason。")
+        if blocked.get("claim_gate_effect") != "disable_preference_export_completed_claim":
+            failures.append("preference pair blocked report 必须禁用 preference export completed claim。")
+    reward = _read_ref_payload(payload.get("reward_source_taxonomy_ref"), failures)
+    if reward:
+        if reward.get("reward_scalar_model_visible_count", 0) != 0:
+            failures.append("reward source taxonomy 中 reward scalar 不能进入 model-visible。")
+        if reward.get("reward_label_model_visible_count", 0) != 0:
+            failures.append("reward source taxonomy 中 reward label 不能进入 model-visible。")
+    audit = _read_ref_payload(payload.get("export_audit_ref"), failures)
+    if audit:
+        for key in (
+            "trainable_payload_contamination_count",
+            "diagnostic_only_trainable_count",
+            "blocked_trainable_count",
+            "provider_raw_trainable_count",
+            "provider_raw_model_visible_count",
+            "reward_scalar_model_visible_count",
+            "reward_label_model_visible_count",
+        ):
+            if audit.get(key, 0) != 0:
+                failures.append(f"export audit {key} 必须为 0。")
+        if audit.get("status") != "passed":
+            failures.append("export audit status 必须为 passed。")
+
+
+def _inspect_v5_export_record(record: dict[str, Any], failures: list[str], *, label: str) -> None:
+    if not isinstance(record, dict):
+        failures.append(f"{label} 必须是 object。")
+        return
+    if record.get("record_partition") in {"diagnostic_only", "blocked"} and record.get("trainable") is not False:
+        failures.append(f"{label} diagnostic-only 或 blocked record 不能标记为 trainable。")
+    text = json.dumps(record, ensure_ascii=False).lower()
+    for marker in ("raw_deepseek_provider_request", "raw_deepseek_provider_response", "authorization", "bearer"):
+        if marker in text:
+            failures.append(f"{label} 不能包含 provider raw marker：{marker}")
 
 
 def inspect_v5_demo_artifacts(index: str | Path, *, assert_share_safe: bool = False) -> str:
