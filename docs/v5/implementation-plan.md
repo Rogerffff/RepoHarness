@@ -617,8 +617,8 @@ Stage 3 先使用当前初始 10 候选中的 6 个 primary agent-run tasks，�
 - 至少 6 个任务产生真实 agent run evidence。
 - 至少 4 个任务进入 comparison proof。
 - 至少 1 个真实 provider family 有实际 agent run evidence。
-- 至少 2 个 scaffold：`simple_react` 和 `planner_coder_verifier`。
-- 至少 2 档 budget：`standard` 和 `constrained`。
+- core 层只要求 scaffold、budget、tool policy、context policy 和 environment id 被显式记录，并且 comparison proof 明确写出受控变量。当前 core 层可以先使用单一 scaffold 和单一 budget 形成 diagnostic comparison proof，但不能据此给出 scaffold 或 budget 胜负结论。
+- 至少 2 个 scaffold 和至少 2 档 budget 属于 resume-ready comparison 目标；如果没有执行对应矩阵，claim gate 必须阻断 scaffold comparison conclusion 和 budget comparison conclusion。
 
 Resume-ready matrix：
 
