@@ -1,0 +1,113 @@
+{
+  "actual_records_by_provider": {
+    "deepseek": 6
+  },
+  "blocking_reason": "only_deepseek_real_provider_family_has_actual_runs",
+  "compared_cells": [],
+  "comparison_axis": "provider",
+  "comparison_validity": "invalid",
+  "controlled_variables": [
+    "task_id",
+    "source_tree_hash",
+    "final_verifier_plan_ref",
+    "tool_policy_id",
+    "context_policy_id",
+    "scaffold_id",
+    "budget_policy_id",
+    "environment_id"
+  ],
+  "counts_toward_core_real_provider_floor": true,
+  "counts_toward_resume_ready_acceptance": false,
+  "created_at": "2026-05-05T16:41:24Z",
+  "matrix_cell_results_ref": {
+    "inspect_command": "inspect-v5-run-matrix",
+    "kind": "v5_matrix_cell_results",
+    "path": "runs/v5-stage3b-run-matrix-20260505T164640Z/execution/v5_matrix_cell_results.jsonl",
+    "producer_command": "external",
+    "producer_stage": "v5_stage3b_run_matrix",
+    "purpose": "V5 Stage 3B input: v5_matrix_cell_results",
+    "schema_version": "repo_harness_v5_evidence_ref_v0",
+    "sha256": "a699e6483d966a35e38e247346d2afef8112867c5a81edb53d87cb3d6101fedf",
+    "share_safe": false,
+    "size_bytes": 26830,
+    "visibility": "audit_only"
+  },
+  "producer_stage": "v5_stage3c_comparison_reports",
+  "provider_families_with_actual_runs": [
+    "deepseek"
+  ],
+  "provider_gate_ref": {
+    "inspect_command": "inspect-v5-provider-gate",
+    "kind": "v5_provider_credential_gate_report",
+    "path": "runs/v5-stage3a-provider-gate-20260505T155636Z/v5_provider_credential_gate_report.json",
+    "producer_command": "external",
+    "producer_stage": "v5_stage3b_run_matrix",
+    "purpose": "V5 Stage 3B input: v5_provider_credential_gate_report",
+    "schema_version": "repo_harness_v5_evidence_ref_v0",
+    "sha256": "6934ac7082af1a3e3d9e81841da98922971651ed8cab6bb7a50e6935c76fd4e7",
+    "share_safe": false,
+    "size_bytes": 6312,
+    "visibility": "audit_only"
+  },
+  "required_resume_ready_shape": "2 tasks x 2 real provider families x same scaffold x same budget",
+  "resume_ready_provider_comparison_satisfied": false,
+  "run_matrix_manifest_ref": {
+    "inspect_command": "inspect-v5-run-matrix",
+    "kind": "v5_run_matrix_manifest_executed",
+    "path": "runs/v5-stage3b-run-matrix-20260505T164640Z/execution/v5_run_matrix_manifest_executed.json",
+    "producer_command": "external",
+    "producer_stage": "v5_stage3b_run_matrix",
+    "purpose": "V5 Stage 3B input: v5_run_matrix_manifest_executed",
+    "schema_version": "repo_harness_v5_evidence_ref_v0",
+    "sha256": "e1f03beab6267aebda6a3c725961b73dfbd9315e5ebfe524e622df91d62ad8f6",
+    "share_safe": false,
+    "size_bytes": 31911,
+    "visibility": "audit_only"
+  },
+  "schema_version": "repo_harness_v5_provider_comparison_report_v0",
+  "structured_skips": [
+    {
+      "adapter_status": "fallback_only",
+      "affected_matrix_cells": [
+        "openai_fallback_stage3a_smoke"
+      ],
+      "affects_core_acceptance": false,
+      "affects_resume_ready_acceptance": true,
+      "counts_toward_primary_accepted_rate": false,
+      "counts_toward_real_provider_accepted_rate": false,
+      "credential_status": "missing",
+      "provider_id": "openai",
+      "skip_reason": "OpenAI fallback smoke has no active environment credential.",
+      "skip_type": "credential_missing_skip"
+    },
+    {
+      "adapter_status": "fallback_only",
+      "affected_matrix_cells": [
+        "openai_primary_provider_comparison_cells"
+      ],
+      "affects_core_acceptance": false,
+      "affects_resume_ready_acceptance": true,
+      "counts_toward_primary_accepted_rate": false,
+      "counts_toward_real_provider_accepted_rate": false,
+      "credential_status": "missing",
+      "provider_id": "openai",
+      "skip_reason": "OpenAI is still limited to DeepSeek fallback smoke and cannot count as a primary provider comparison family.",
+      "skip_type": "primary_provider_comparison_not_enabled_skip"
+    },
+    {
+      "adapter_status": "adapter_not_implemented",
+      "affected_matrix_cells": [
+        "anthropic_claude_primary_stage3a_smoke",
+        "anthropic_claude_provider_comparison_cells"
+      ],
+      "affects_core_acceptance": false,
+      "affects_resume_ready_acceptance": true,
+      "counts_toward_primary_accepted_rate": false,
+      "counts_toward_real_provider_accepted_rate": false,
+      "credential_status": "missing",
+      "provider_id": "anthropic_claude",
+      "skip_reason": "Anthropic Claude provider adapter is not implemented in the current codebase.",
+      "skip_type": "adapter_not_implemented_skip"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ from repo_harness.schema_versions import (
     V5_TASK_SET_MANIFEST_VERSION,
 )
 from repo_harness.v5_evidence import _evidence_ref, inspect_v5_run_matrix
-from repo_harness.v5_run_matrix import build_run_matrix_manifest
+from repo_harness.v5_run_matrix import build_comparison_reports, build_run_matrix_manifest
 
 
 def test_v5_run_matrix_builder_creates_planned_manifest(tmp_path: Path) -> None:
@@ -173,6 +173,29 @@ def test_v5_run_matrix_inspect_accepts_executed_real_provider_evidence(tmp_path:
     )
 
 
+def test_v5_comparison_reports_block_resume_ready_multi_provider_claim(tmp_path: Path) -> None:
+    executed_path = _write_executed_run_matrix_fixture(tmp_path)
+    provider_gate = _write_provider_gate(tmp_path)
+
+    compare_scope_path = build_comparison_reports(
+        executed_run_matrix_manifest=executed_path,
+        provider_gate_report=provider_gate,
+        output_dir=tmp_path / "comparison",
+    )
+
+    assert "Inspect V5 run matrix: complete" in inspect_v5_run_matrix(
+        compare_scope_path,
+        assert_complete=True,
+    )
+    claim_gate = _read_json(tmp_path / "comparison" / "v5_resume_claim_gate_report.json")
+    assert claim_gate["stage"] == "stage3_partial"
+    assert "multi-provider agent runs" in claim_gate["blocked_claims"]
+    assert claim_gate["provider_claim_status"] == "blocked_single_provider_family_deepseek_only"
+    provider_report = _read_json(tmp_path / "comparison" / "v5_provider_comparison_report.json")
+    assert provider_report["resume_ready_provider_comparison_satisfied"] is False
+    assert provider_report["provider_families_with_actual_runs"] == ["deepseek"]
+
+
 def _write_task_set(tmp_path: Path, *, count: int) -> Path:
     task_refs = []
     for index in range(1, count + 1):
@@ -249,6 +272,100 @@ def _write_task_set(tmp_path: Path, *, count: int) -> Path:
         },
     )
     return task_set
+
+
+def _write_executed_run_matrix_fixture(tmp_path: Path) -> Path:
+    task_set = _write_task_set(tmp_path, count=6)
+    provider_gate = _write_provider_gate(tmp_path)
+    cost_budget = _write_cost_budget(tmp_path)
+    manifest_path = build_run_matrix_manifest(
+        task_set_manifest=task_set,
+        provider_gate_report=provider_gate,
+        provider_cost_budget_report=cost_budget,
+        output_dir=tmp_path / "matrix_for_comparison",
+        task_ids=[f"v5_task_{index:03d}" for index in range(1, 7)],
+    )
+    manifest = _read_json(manifest_path)
+    execution_dir = tmp_path / "execution_for_comparison"
+    runs_dir = execution_dir / "agent_runs"
+    results_path = execution_dir / "v5_matrix_cell_results.jsonl"
+    report_path = execution_dir / "v5_stage3b_run_matrix_execution_report.json"
+    execution_dir.mkdir(parents=True)
+    results = []
+    for cell in manifest["planned_matrix_cells"]:
+        run_id = f"v5_stage3b_deepseek_{cell['task_id']}"
+        run_dir = runs_dir / run_id
+        run_dir.mkdir(parents=True)
+        _write_json(
+            run_dir / "artifacts.json",
+            {"schema_version": "repo_harness_schema_v0", "run_id": run_id, "artifacts": []},
+        )
+        _write_json(run_dir / "final_verifier_boundary.json", {"accepted": False})
+        _write_jsonl(
+            run_dir / "events.jsonl",
+            [{"event_type": "model_call_completed", "data": {"provider": "deepseek"}}],
+        )
+        _write_jsonl(run_dir / "transcript.jsonl", [{"role": "assistant", "content_preview": "ok"}])
+        results.append(
+            {
+                "schema_version": V5_MATRIX_CELL_RESULT_VERSION,
+                "cell_id": cell["cell_id"],
+                "task_id": cell["task_id"],
+                "provider_id": "deepseek",
+                "provider_mode": "primary",
+                "scaffold_id": cell["scaffold_id"],
+                "budget_policy_id": cell["budget_policy_id"],
+                "tool_policy_id": cell["tool_policy_id"],
+                "context_policy_id": cell["context_policy_id"],
+                "environment_id": cell["environment_id"],
+                "source_tree_hash": cell["source_tree_hash"],
+                "run_id": run_id,
+                "run_dir": run_dir.as_posix(),
+                "final_verifier_status": "not_executed_stage3b_minimal_provider_loop",
+                "trajectory_ref": _ref(run_dir / "events.jsonl", "trajectory_events"),
+                "transcript_ref": _ref(run_dir / "transcript.jsonl", "trajectory_transcript"),
+                "artifact_manifest_ref": _ref(run_dir / "artifacts.json", "artifact_manifest"),
+                "final_verifier_boundary_ref": _ref(run_dir / "final_verifier_boundary.json", "final_verifier_boundary"),
+                "controlled_variables_ref": cell["controlled_variables_ref"],
+                "normalized_provider_status": "primary_attempted",
+                "actual_provider_call_count": 1,
+                "provider_api_called": True,
+                "raw_provider_redaction": {
+                    "raw_provider_artifact_count": 0,
+                    "raw_provider_redaction_failure_count": 0,
+                    "all_raw_provider_artifacts_redacted": True,
+                },
+                "counts_toward_primary_accepted_rate": False,
+                "counts_toward_core_real_provider_floor": True,
+            }
+        )
+    _write_jsonl(results_path, results)
+    _write_json(
+        report_path,
+        {
+            "schema_version": "repo_harness_v5_run_matrix_execution_report_v0",
+            "actual_provider_calls": 6,
+            "max_real_provider_calls": 24,
+            "real_agent_run_task_count": 6,
+            "status": "passed",
+        },
+    )
+    executed_path = execution_dir / "v5_run_matrix_manifest_executed.json"
+    _write_json(
+        executed_path,
+        {
+            **manifest,
+            "agent_run_started": True,
+            "provider_api_called": True,
+            "matrix_cell_results_ref": _ref(results_path, "v5_matrix_cell_results"),
+            "run_matrix_execution_report_ref": _ref(report_path, "v5_run_matrix_execution_report"),
+            "actual_provider_calls": 6,
+            "real_agent_run_task_count": 6,
+            "real_provider_families_with_actual_runs": ["deepseek"],
+            "status": "passed",
+        },
+    )
+    return executed_path
 
 
 def _write_provider_gate(tmp_path: Path, *, deepseek_status: str = "present") -> Path:

@@ -142,6 +142,9 @@ from repo_harness.v5_provider_gate import (
 )
 from repo_harness.v5_provider_gate import build_provider_gate_report as build_v5_provider_gate_report
 from repo_harness.v5_run_matrix import (
+    build_comparison_reports as build_v5_comparison_reports,
+)
+from repo_harness.v5_run_matrix import (
     build_run_matrix_manifest as build_v5_run_matrix_manifest,
 )
 from repo_harness.v5_run_matrix import run_matrix_cells as run_v5_run_matrix_cells
@@ -1065,6 +1068,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="允许 DeepSeek 使用本地脱敏 secret file 作为 active credential source；运行产物仍不得写入 raw secret value。",
     )
     run_v5_run_matrix_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_comparison_reports_parser = subparsers.add_parser(
+        "build-v5-comparison-reports",
+        help="构建 V5 Stage 3C comparison reports 和阶段性 resume claim gate。",
+    )
+    build_v5_comparison_reports_parser.add_argument("--executed-run-matrix-manifest", required=True)
+    build_v5_comparison_reports_parser.add_argument("--provider-gate-report", required=True)
+    build_v5_comparison_reports_parser.add_argument("--output-dir", required=True)
+    build_v5_comparison_reports_parser.add_argument(
         "--fail-if-output-exists",
         action="store_true",
         default=True,
@@ -2023,6 +2040,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 run matrix 执行失败：{exc}\n")
         print(f"V5 executed run matrix manifest：{output_path}")
+        return 0
+    if args.command == "build-v5-comparison-reports":
+        try:
+            output_path = build_v5_comparison_reports(
+                executed_run_matrix_manifest=args.executed_run_matrix_manifest,
+                provider_gate_report=args.provider_gate_report,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 comparison reports 构建失败：{exc}\n")
+        print(f"V5 matrix compare scope report：{output_path}")
         return 0
     if args.command == "inspect-v5-run-matrix":
         try:

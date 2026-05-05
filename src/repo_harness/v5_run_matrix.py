@@ -22,6 +22,8 @@ from repo_harness.scaffolds import build_scaffold
 from repo_harness.schema_versions import (
     V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
     V5_MATRIX_CELL_RESULT_VERSION,
+    V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
+    V5_RESUME_CLAIM_GATE_REPORT_VERSION,
     V5_RUN_MATRIX_MANIFEST_VERSION,
 )
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits
@@ -70,6 +72,16 @@ V5_STAGE3B_RUN_OUTPUT_NAMES = (
     "v5_stage3b_run_matrix_execution_report.json",
     "run_v5_run_matrix_command_log_entry.json",
     "v5_stage3b_run_matrix_run_command_log.jsonl",
+)
+
+V5_STAGE3C_OUTPUT_NAMES = (
+    "v5_matrix_compare_scope_report.json",
+    "v5_provider_comparison_report.json",
+    "v5_scaffold_comparison_report.json",
+    "v5_budget_comparison_report.json",
+    "v5_resume_claim_gate_report.json",
+    "build_v5_comparison_reports_command_log_entry.json",
+    "v5_stage3c_comparison_reports_command_log.jsonl",
 )
 
 
@@ -312,6 +324,202 @@ def run_matrix_cells(
     _write_json(command_entry_path, command_entry)
     _write_jsonl(command_log_path, [command_entry])
     return executed_manifest_path
+
+
+def build_comparison_reports(
+    *,
+    executed_run_matrix_manifest: str | Path,
+    provider_gate_report: str | Path,
+    output_dir: str | Path,
+    fail_if_output_exists: bool = True,
+) -> Path:
+    """Build Stage 3C comparison reports and blocked resume-ready claim gate."""
+
+    root = Path(output_dir)
+    _refuse_existing(root, V5_STAGE3C_OUTPUT_NAMES, fail_if_output_exists)
+    root.mkdir(parents=True, exist_ok=True)
+    manifest_path = Path(executed_run_matrix_manifest)
+    provider_gate_path = Path(provider_gate_report)
+    manifest = _read_json(manifest_path)
+    provider_gate = _read_json(provider_gate_path)
+    if manifest.get("agent_run_started") is not True or manifest.get("provider_api_called") is not True:
+        raise ConfigError("Stage 3C comparison reports 需要已执行且发生 provider API 调用的 run matrix。")
+    results_ref = manifest.get("matrix_cell_results_ref")
+    results_path = _path_from_ref(results_ref)
+    if results_path is None:
+        raise ConfigError("executed run matrix 缺少 matrix_cell_results_ref。")
+    results = _read_jsonl(results_path)
+    real_results = [item for item in results if item.get("actual_provider_call_count", 0) > 0]
+    if len(real_results) < 6:
+        raise ConfigError("Stage 3C comparison reports 需要至少 6 条真实 provider result。")
+
+    real_provider_families = sorted({str(item["provider_id"]) for item in real_results})
+    actual_records_by_provider = {
+        provider: sum(1 for item in real_results if item.get("provider_id") == provider)
+        for provider in real_provider_families
+    }
+    comparison_cells = real_results[:4]
+    common_controlled_variables = [
+        "task_id",
+        "source_tree_hash",
+        "final_verifier_plan_ref",
+        "tool_policy_id",
+        "context_policy_id",
+        "environment_id",
+        "provider_id",
+        "scaffold_id",
+        "budget_policy_id",
+    ]
+    matrix_ref = _artifact_ref_for_input(manifest_path, "v5_run_matrix_manifest_executed", "inspect-v5-run-matrix")
+    results_evidence_ref = _artifact_ref_for_input(results_path, "v5_matrix_cell_results", "inspect-v5-run-matrix")
+    provider_gate_ref = _artifact_ref_for_input(provider_gate_path, "v5_provider_credential_gate_report", "inspect-v5-provider-gate")
+
+    compare_scope_path = root / "v5_matrix_compare_scope_report.json"
+    compare_scope = {
+        "schema_version": V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
+        "created_at": _utc_timestamp(),
+        "producer_stage": "v5_stage3c_comparison_reports",
+        "comparison_axis": "diagnostic_baseline",
+        "controlled_variables": common_controlled_variables,
+        "compared_cells": [item["cell_id"] for item in comparison_cells],
+        "compared_task_ids": [item["task_id"] for item in comparison_cells],
+        "comparison_validity": "diagnostic_only",
+        "comparison_validity_reason": (
+            "Stage 3C has one real provider family and one scaffold/budget shape; "
+            "the report proves controlled-variable binding for four real provider tasks "
+            "but does not support multi-provider, scaffold, or budget win-rate claims."
+        ),
+        "counts_toward_core_comparison_proof": True,
+        "counts_toward_resume_ready_provider_comparison": False,
+        "run_matrix_manifest_ref": matrix_ref,
+        "matrix_cell_results_ref": results_evidence_ref,
+    }
+    _write_json(compare_scope_path, compare_scope)
+
+    provider_report_path = root / "v5_provider_comparison_report.json"
+    provider_report = {
+        "schema_version": "repo_harness_v5_provider_comparison_report_v0",
+        "created_at": _utc_timestamp(),
+        "producer_stage": "v5_stage3c_comparison_reports",
+        "comparison_axis": "provider",
+        "comparison_validity": "invalid",
+        "controlled_variables": [
+            "task_id",
+            "source_tree_hash",
+            "final_verifier_plan_ref",
+            "tool_policy_id",
+            "context_policy_id",
+            "scaffold_id",
+            "budget_policy_id",
+            "environment_id",
+        ],
+        "compared_cells": [],
+        "provider_families_with_actual_runs": real_provider_families,
+        "actual_records_by_provider": actual_records_by_provider,
+        "required_resume_ready_shape": "2 tasks x 2 real provider families x same scaffold x same budget",
+        "resume_ready_provider_comparison_satisfied": False,
+        "blocking_reason": "only_deepseek_real_provider_family_has_actual_runs",
+        "provider_gate_ref": provider_gate_ref,
+        "run_matrix_manifest_ref": matrix_ref,
+        "matrix_cell_results_ref": results_evidence_ref,
+        "structured_skips": provider_gate.get("structured_skips", []),
+        "counts_toward_core_real_provider_floor": True,
+        "counts_toward_resume_ready_acceptance": False,
+    }
+    _write_json(provider_report_path, provider_report)
+
+    scaffold_report_path = root / "v5_scaffold_comparison_report.json"
+    scaffold_report = _blocked_axis_report(
+        axis="scaffold",
+        observed_values=sorted({str(item["scaffold_id"]) for item in real_results}),
+        required_shape="2 tasks x 2 scaffold policies x same provider x same budget",
+        blocking_reason="stage3b_executed_only_simple_react_cells",
+        matrix_ref=matrix_ref,
+        results_ref=results_evidence_ref,
+    )
+    _write_json(scaffold_report_path, scaffold_report)
+
+    budget_report_path = root / "v5_budget_comparison_report.json"
+    budget_report = _blocked_axis_report(
+        axis="budget",
+        observed_values=sorted({str(item["budget_policy_id"]) for item in real_results}),
+        required_shape="2 tasks x 2 budget policies x same provider x same scaffold",
+        blocking_reason="stage3b_executed_only_constrained_budget_cells",
+        matrix_ref=matrix_ref,
+        results_ref=results_evidence_ref,
+    )
+    _write_json(budget_report_path, budget_report)
+
+    claim_gate_path = root / "v5_resume_claim_gate_report.json"
+    claim_gate = {
+        "schema_version": V5_RESUME_CLAIM_GATE_REPORT_VERSION,
+        "created_at": _utc_timestamp(),
+        "stage": "stage3_partial",
+        "allowed_claims": [
+            "core real provider floor satisfied with one DeepSeek provider family",
+            "credential-gated provider registry with structured skips",
+            "diagnostic baseline comparison proof for four controlled real-provider tasks",
+        ],
+        "blocked_claims": [
+            "multi-provider agent runs",
+            "controlled multi-provider comparison",
+            "resume-ready provider comparison",
+            "scaffold comparison conclusion",
+            "budget comparison conclusion",
+            "preference export completed",
+            "interview-grade evaluation pack",
+            "resumable export stress tests",
+        ],
+        "blocking_reasons": {
+            "provider": "only one real provider family has actual run evidence",
+            "scaffold": "no alternate scaffold cells have been executed yet",
+            "budget": "no alternate budget cells have been executed yet",
+            "preference_pair": "pending Stage 4 export pack",
+            "demo_share_safe": "pending Stage 5 public-safe demo artifacts",
+            "stress_test": "not claimed in Stage 3C",
+        },
+        "provider_claim_status": "blocked_single_provider_family_deepseek_only",
+        "preference_pair_claim_status": "pending_stage4",
+        "demo_share_safe_status": "pending_stage5",
+        "stress_test_claim_status": "not_claimed",
+        "source_reports": [
+            matrix_ref,
+            results_evidence_ref,
+            provider_gate_ref,
+            _evidence_ref(compare_scope_path, kind="v5_matrix_compare_scope_report", purpose="Stage 3C diagnostic comparison scope", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
+            _evidence_ref(provider_report_path, kind="v5_provider_comparison_report", purpose="Stage 3C provider comparison blocked report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
+            _evidence_ref(scaffold_report_path, kind="v5_scaffold_comparison_report", purpose="Stage 3C scaffold comparison blocked report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
+            _evidence_ref(budget_report_path, kind="v5_budget_comparison_report", purpose="Stage 3C budget comparison blocked report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
+        ],
+        "core_comparison_proof": {
+            "status": "diagnostic_only",
+            "task_count": len(comparison_cells),
+            "comparison_axis": "diagnostic_baseline",
+        },
+        "real_provider_families_with_actual_runs": real_provider_families,
+        "actual_records_by_provider": actual_records_by_provider,
+        "resume_ready_provider_comparison_satisfied": False,
+    }
+    _write_json(claim_gate_path, claim_gate)
+
+    command_entry = _builder_command_log_entry(
+        command_name="build-v5-comparison-reports",
+        input_paths=[manifest_path, provider_gate_path],
+        output_paths=[
+            compare_scope_path,
+            provider_report_path,
+            scaffold_report_path,
+            budget_report_path,
+            claim_gate_path,
+        ],
+        producer_stage="v5_stage3c_comparison_reports",
+    )
+    command_entry["schema_version"] = V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION
+    command_entry_path = root / "build_v5_comparison_reports_command_log_entry.json"
+    command_log_path = root / "v5_stage3c_comparison_reports_command_log.jsonl"
+    _write_json(command_entry_path, command_entry)
+    _write_jsonl(command_log_path, [command_entry])
+    return compare_scope_path
 
 
 def _run_one_cell(
@@ -864,6 +1072,40 @@ def _controlled_variables_payload(*, task: dict[str, Any], task_yaml_path: Path)
     }
 
 
+def _blocked_axis_report(
+    *,
+    axis: str,
+    observed_values: list[str],
+    required_shape: str,
+    blocking_reason: str,
+    matrix_ref: dict[str, Any],
+    results_ref: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "schema_version": f"repo_harness_v5_{axis}_comparison_report_v0",
+        "created_at": _utc_timestamp(),
+        "producer_stage": "v5_stage3c_comparison_reports",
+        "comparison_axis": axis,
+        "comparison_validity": "invalid",
+        "controlled_variables": [
+            "task_id",
+            "source_tree_hash",
+            "final_verifier_plan_ref",
+            "tool_policy_id",
+            "context_policy_id",
+            "environment_id",
+        ],
+        "compared_cells": [],
+        "observed_values": observed_values,
+        "required_shape": required_shape,
+        "blocking_reason": blocking_reason,
+        "counts_toward_core_comparison_proof": False,
+        "counts_toward_resume_ready_acceptance": False,
+        "run_matrix_manifest_ref": matrix_ref,
+        "matrix_cell_results_ref": results_ref,
+    }
+
+
 def _require_stage3b_inputs(
     *,
     task_set: dict[str, Any],
@@ -968,6 +1210,12 @@ def _artifact_ref_for_input(path: Path, kind: str, inspect_command: str) -> dict
     )
 
 
+def _path_from_ref(ref: Any) -> Path | None:
+    if not isinstance(ref, dict) or not ref.get("path"):
+        return None
+    return Path(str(ref["path"]))
+
+
 def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise ConfigError(f"输入文件不存在：{path}")
@@ -1014,6 +1262,7 @@ def _refuse_existing(root: Path, names: tuple[str, ...], fail_if_output_exists: 
 
 
 __all__ = [
+    "build_comparison_reports",
     "build_run_matrix_manifest",
     "run_matrix_cells",
 ]

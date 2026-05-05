@@ -1208,7 +1208,13 @@ def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False
         expected_schema_names={"V5RunMatrixManifest", "V5MatrixCellResult", "V5MatrixCompareScopeReport"},
     )
     payload = _read_json_for_inspect(path, failures)
-    _inspect_v5_run_matrix_deep(payload, failures)
+    schema_version = payload.get("schema_version")
+    if schema_version == V5_RUN_MATRIX_MANIFEST_VERSION:
+        _inspect_v5_run_matrix_deep(payload, failures)
+    elif schema_version == V5_MATRIX_CELL_RESULT_VERSION:
+        _inspect_v5_matrix_cell_result(payload, failures, label="matrix_cell_result")
+    elif schema_version == V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION:
+        _inspect_v5_matrix_compare_scope_report(payload, failures)
     return _schema_inspect_result("Inspect V5 run matrix", path, failures, assert_complete=assert_complete)
 
 
@@ -1290,6 +1296,22 @@ def _inspect_v5_matrix_cell_result(result: dict[str, Any], failures: list[str], 
     if isinstance(redaction, dict):
         if redaction.get("raw_provider_redaction_failure_count", 0) != 0:
             failures.append(f"{label}.raw provider artifact redaction 存在失败。")
+
+
+def _inspect_v5_matrix_compare_scope_report(payload: dict[str, Any], failures: list[str]) -> None:
+    if payload.get("comparison_axis") not in V5_COMPARISON_AXES:
+        failures.append("comparison_axis 枚举值无效。")
+    controlled = payload.get("controlled_variables")
+    if not isinstance(controlled, list) or not controlled:
+        failures.append("controlled_variables 必须是非空 list。")
+    compared = payload.get("compared_cells")
+    if not isinstance(compared, list) or not compared:
+        failures.append("compared_cells 必须是非空 list。")
+    if payload.get("comparison_validity") not in {"valid", "diagnostic_only", "invalid"}:
+        failures.append("comparison_validity 必须是 valid、diagnostic_only 或 invalid。")
+    for ref_field in ("run_matrix_manifest_ref", "matrix_cell_results_ref"):
+        if payload.get(ref_field):
+            _inspect_v5_ref(payload.get(ref_field), failures, label=ref_field)
 
 
 def _read_jsonl_for_inspect(path: Path | None, failures: list[str]) -> list[dict[str, Any]]:
