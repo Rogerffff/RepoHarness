@@ -1760,8 +1760,11 @@ def _inspect_v5_demo_artifacts_deep(payload: dict[str, Any], failures: list[str]
 
 
 def inspect_v5_inputs(inputs: str | Path, *, assert_complete: bool = False) -> str:
-    failures = _inspect_schema_file(Path(inputs), expected_schema_names={"V5AcceptanceInputs"})
-    return _schema_inspect_result("Inspect V5 inputs", Path(inputs), failures, assert_complete=assert_complete)
+    path = Path(inputs)
+    failures = _inspect_schema_file(path, expected_schema_names={"V5AcceptanceInputs"})
+    payload = _read_json_for_inspect(path, failures)
+    _inspect_v5_inputs_deep(payload, failures)
+    return _schema_inspect_result("Inspect V5 inputs", path, failures, assert_complete=assert_complete)
 
 
 def inspect_v5_acceptance(
@@ -1770,6 +1773,9 @@ def inspect_v5_acceptance(
     assert_core_complete: bool = False,
     assert_resume_ready: bool = False,
     assert_complete: bool = False,
+    reference_integrity_output: str | Path | None = None,
+    reference_integrity_input: str | Path | None = None,
+    command_log_entry_output: str | Path | None = None,
 ) -> str:
     path = Path(report)
     failures = _inspect_schema_file(path, expected_schema_names={"V5AcceptanceReport"})
@@ -1780,12 +1786,58 @@ def inspect_v5_acceptance(
         failures.append("core_acceptance.status 必须为 passed。")
     if (assert_resume_ready or assert_complete) and resume_status != "passed":
         failures.append("resume_ready_acceptance.status 必须为 passed。")
-    return _schema_inspect_result(
-        "Inspect V5 acceptance",
-        path,
-        failures,
-        assert_complete=assert_core_complete or assert_resume_ready or assert_complete,
+    assert_requested = assert_core_complete or assert_resume_ready or assert_complete
+    exit_code = 1 if failures and assert_requested else 0
+    from repo_harness.v5_acceptance import write_acceptance_inspect_outputs
+
+    write_acceptance_inspect_outputs(
+        report=path,
+        reference_integrity_output=reference_integrity_output,
+        reference_integrity_input=reference_integrity_input,
+        command_log_entry_output=command_log_entry_output,
+        exit_code=exit_code,
     )
+    return _schema_inspect_result("Inspect V5 acceptance", path, failures, assert_complete=assert_requested)
+
+
+def _inspect_v5_inputs_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    if not payload:
+        return
+    if payload.get("selection_mode") != "explicit":
+        failures.append("V5 acceptance inputs 必须使用 explicit selection_mode。")
+    if payload.get("latest_run_auto_selection") is not False:
+        failures.append("V5 acceptance inputs 禁止 latest run 自动选择。")
+    if payload.get("post_report_outputs_included") is not False:
+        failures.append("V5 acceptance inputs 不能包含 post-report inspect outputs。")
+    if payload.get("bundle_final_outputs_included") is not False:
+        failures.append("V5 acceptance inputs 不能包含 bundle final outputs。")
+    if payload.get("stress_test_executed") is not False and payload.get("stress_test_executed") is not True:
+        failures.append("stress_test_executed 必须是 boolean。")
+    refs = payload.get("v5_evidence_refs")
+    if not isinstance(refs, list) or not refs:
+        failures.append("V5 acceptance inputs 必须包含 v5_evidence_refs。")
+        return
+    kinds = {ref.get("kind") for ref in refs if isinstance(ref, dict)}
+    required = {
+        "v5_preflight_input_binding",
+        "v5_pre_acceptance_evidence_integrity_report",
+        "v5_task_set_manifest",
+        "v5_run_matrix_manifest_executed",
+        "v5_resume_claim_gate_report",
+        "v5_export_result_pack_manifest",
+        "v5_public_demo_bundle_manifest",
+        "v5_resume_artifact_index",
+        "v5_result_summary_table",
+        "v5_final_acceptance_pretest_report",
+    }
+    missing = sorted(required.difference(kinds))
+    if missing:
+        failures.append("V5 acceptance inputs 缺少必需 evidence refs：" + ", ".join(missing))
+    for ref in refs:
+        if isinstance(ref, dict):
+            path_value = str(ref.get("path") or "")
+            if "acceptance_report_reference_integrity_report" in path_value or "acceptance_bundle_manifest" in path_value:
+                failures.append("V5 acceptance inputs 不能绑定 post-report 或 bundle final outputs。")
 
 
 def _baseline_commands(

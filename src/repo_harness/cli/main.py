@@ -144,6 +144,22 @@ from repo_harness.v5_demo_artifacts import (
 from repo_harness.v5_demo_artifacts import (
     build_interview_result_pack as build_v5_interview_result_pack,
 )
+from repo_harness.v5_acceptance import (
+    build_acceptance_bundle as build_v5_acceptance_bundle,
+)
+from repo_harness.v5_acceptance import (
+    build_acceptance_inputs as build_v5_acceptance_inputs,
+)
+from repo_harness.v5_acceptance import (
+    build_acceptance_report as build_v5_acceptance_report,
+)
+from repo_harness.v5_acceptance import build_final_command_log as build_v5_final_command_log
+from repo_harness.v5_acceptance import (
+    build_pre_bundle_command_log as build_v5_pre_bundle_command_log,
+)
+from repo_harness.v5_acceptance import (
+    plan_acceptance_bundle_inspect_entry as plan_v5_acceptance_bundle_inspect_entry,
+)
 from repo_harness.v5_provider_gate import (
     build_provider_cost_budget_report as build_v5_provider_cost_budget_report,
 )
@@ -611,6 +627,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="只读检查 acceptance bundle manifest 不可变性。",
     )
     inspect_bundle.add_argument("manifest", help="acceptance_bundle_manifest.json 路径。")
+    inspect_bundle.add_argument("--final-command-log", help="V5 final acceptance command log 路径。")
     inspect_bundle.add_argument("--assert-immutable", action="store_true", help="要求 bundle refs sha256 全部匹配。")
 
     build_v4_inputs = subparsers.add_parser(
@@ -1140,6 +1157,133 @@ def build_parser() -> argparse.ArgumentParser:
         help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
     )
 
+    build_v5_acceptance_inputs_parser = subparsers.add_parser(
+        "build-v5-acceptance-inputs",
+        help="构建 V5 Stage 6 acceptance inputs 和 final pretest report。",
+    )
+    build_v5_acceptance_inputs_parser.add_argument("--output-dir", required=True)
+    for option in (
+        "v2-acceptance-report",
+        "v3-acceptance-report",
+        "v3-acceptance-bundle",
+        "v4-acceptance-inputs",
+        "v4-acceptance-report",
+        "v4-doc-sync-acceptance-bundle",
+        "v4-doc-sync-final-command-log",
+        "v5-baseline-check-report",
+        "v5-v4-closure-report",
+        "v5-documentation-sync-report",
+        "v5-preflight-input-binding",
+        "v5-pre-acceptance-evidence-integrity-report",
+        "v5-task-set-manifest",
+        "v5-task-inventory-report",
+        "v5-task-diversity-report",
+        "v5-task-visibility-scan-report",
+        "v5-run-matrix-manifest",
+        "v5-executed-run-matrix-manifest",
+        "v5-matrix-compare-scope-report",
+        "v5-provider-credential-gate-report",
+        "v5-provider-cost-budget-report",
+        "v5-resume-claim-gate-report",
+        "v5-export-result-pack-manifest",
+        "v5-preference-pair-blocked-report",
+        "v5-failure-taxonomy-report",
+        "v5-reward-source-taxonomy-report",
+        "v5-interview-demo-card",
+        "v5-canonical-demo-walkthrough",
+        "v5-public-demo-bundle-manifest",
+        "v5-resume-artifact-index",
+        "v5-repro-command-index",
+        "v5-result-summary-table",
+        "v5-demo-transcript-index",
+        "v5-permission-network-risk-audit-report",
+        "v5-claude-code-invariant-mapping",
+        "v5-interview-result-pack-manifest",
+    ):
+        build_v5_acceptance_inputs_parser.add_argument(f"--{option}", required=True)
+    build_v5_acceptance_inputs_parser.add_argument("--v5-implementation-log", action="append", required=True)
+    build_v5_acceptance_inputs_parser.add_argument("--v5-review-record", action="append", required=True)
+    build_v5_acceptance_inputs_parser.add_argument("--full-test-summary", required=True)
+    build_v5_acceptance_inputs_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_acceptance_report_parser = subparsers.add_parser(
+        "build-v5-acceptance-report",
+        help="构建 V5 Stage 6 acceptance report。",
+    )
+    build_v5_acceptance_report_parser.add_argument("--acceptance-inputs", required=True)
+    build_v5_acceptance_report_parser.add_argument("--output-dir", required=True)
+    build_v5_acceptance_report_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_pre_bundle_command_log_parser = subparsers.add_parser(
+        "build-v5-pre-bundle-command-log",
+        help="合并 V5 Stage 6 pre-bundle command log。",
+    )
+    build_v5_pre_bundle_command_log_parser.add_argument("--base-command-log", required=True)
+    build_v5_pre_bundle_command_log_parser.add_argument("--command-log-entry", action="append", required=True)
+    build_v5_pre_bundle_command_log_parser.add_argument("--output", required=True)
+    build_v5_pre_bundle_command_log_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_acceptance_bundle_parser = subparsers.add_parser(
+        "build-v5-acceptance-bundle",
+        help="构建 V5 acceptance bundle 或 doc-sync bundle。",
+    )
+    build_v5_acceptance_bundle_parser.add_argument("--acceptance-report", required=False)
+    build_v5_acceptance_bundle_parser.add_argument("--post-report-inspect-output", required=False)
+    build_v5_acceptance_bundle_parser.add_argument("--pre-bundle-command-log", required=False)
+    build_v5_acceptance_bundle_parser.add_argument("--bundle-build-command-log-entry-output", required=True)
+    build_v5_acceptance_bundle_parser.add_argument("--documentation-ref", action="append", required=True)
+    build_v5_acceptance_bundle_parser.add_argument("--output", required=True)
+    build_v5_acceptance_bundle_parser.add_argument("--doc-sync-from-bundle")
+    build_v5_acceptance_bundle_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    plan_acceptance_bundle_inspect_entry_parser = subparsers.add_parser(
+        "plan-acceptance-bundle-inspect-entry",
+        help="生成 V5 acceptance bundle inspect planned command entry。",
+    )
+    plan_acceptance_bundle_inspect_entry_parser.add_argument("--acceptance-bundle", required=True)
+    plan_acceptance_bundle_inspect_entry_parser.add_argument("--final-command-log", required=True)
+    plan_acceptance_bundle_inspect_entry_parser.add_argument("--output", required=True)
+    plan_acceptance_bundle_inspect_entry_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_final_command_log_parser = subparsers.add_parser(
+        "build-v5-final-command-log",
+        help="构建 V5 final acceptance command log。",
+    )
+    build_v5_final_command_log_parser.add_argument("--pre-bundle-command-log", required=True)
+    build_v5_final_command_log_parser.add_argument("--command-log-entry", action="append", required=True)
+    build_v5_final_command_log_parser.add_argument("--output", required=True)
+    build_v5_final_command_log_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
     inspect_v5_run_matrix_parser = subparsers.add_parser(
         "inspect-v5-run-matrix",
         help="只读检查 V5 run matrix manifest skeleton。",
@@ -1190,6 +1334,9 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v5_acceptance_parser.add_argument("--assert-core-complete", action="store_true", help="要求 core_acceptance 通过。")
     inspect_v5_acceptance_parser.add_argument("--assert-resume-ready", action="store_true", help="要求 resume_ready_acceptance 通过。")
     inspect_v5_acceptance_parser.add_argument("--assert-complete", action="store_true", help="等价于 --assert-resume-ready。")
+    inspect_v5_acceptance_parser.add_argument("--reference-integrity-output")
+    inspect_v5_acceptance_parser.add_argument("--reference-integrity-input")
+    inspect_v5_acceptance_parser.add_argument("--command-log-entry-output")
 
     return parser
 
@@ -1641,6 +1788,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(
                 inspect_acceptance_bundle(
                     args.manifest,
+                    final_command_log=args.final_command_log,
                     assert_immutable=args.assert_immutable,
                 )
             )
@@ -2144,6 +2292,118 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.exit(1, f"V5 interview result pack 构建失败：{exc}\n")
         print(f"V5 interview result pack manifest：{output_path}")
         return 0
+    if args.command == "build-v5-acceptance-inputs":
+        try:
+            output_path = build_v5_acceptance_inputs(
+                output_dir=args.output_dir,
+                v2_acceptance_report=args.v2_acceptance_report,
+                v3_acceptance_report=args.v3_acceptance_report,
+                v3_acceptance_bundle=args.v3_acceptance_bundle,
+                v4_acceptance_inputs=args.v4_acceptance_inputs,
+                v4_acceptance_report=args.v4_acceptance_report,
+                v4_doc_sync_acceptance_bundle=args.v4_doc_sync_acceptance_bundle,
+                v4_doc_sync_final_command_log=args.v4_doc_sync_final_command_log,
+                v5_baseline_check_report=args.v5_baseline_check_report,
+                v5_v4_closure_report=args.v5_v4_closure_report,
+                v5_documentation_sync_report=args.v5_documentation_sync_report,
+                v5_preflight_input_binding=args.v5_preflight_input_binding,
+                v5_pre_acceptance_evidence_integrity_report=args.v5_pre_acceptance_evidence_integrity_report,
+                v5_task_set_manifest=args.v5_task_set_manifest,
+                v5_task_inventory_report=args.v5_task_inventory_report,
+                v5_task_diversity_report=args.v5_task_diversity_report,
+                v5_task_visibility_scan_report=args.v5_task_visibility_scan_report,
+                v5_run_matrix_manifest=args.v5_run_matrix_manifest,
+                v5_executed_run_matrix_manifest=args.v5_executed_run_matrix_manifest,
+                v5_matrix_compare_scope_report=args.v5_matrix_compare_scope_report,
+                v5_provider_credential_gate_report=args.v5_provider_credential_gate_report,
+                v5_provider_cost_budget_report=args.v5_provider_cost_budget_report,
+                v5_resume_claim_gate_report=args.v5_resume_claim_gate_report,
+                v5_export_result_pack_manifest=args.v5_export_result_pack_manifest,
+                v5_preference_pair_blocked_report=args.v5_preference_pair_blocked_report,
+                v5_failure_taxonomy_report=args.v5_failure_taxonomy_report,
+                v5_reward_source_taxonomy_report=args.v5_reward_source_taxonomy_report,
+                v5_interview_demo_card=args.v5_interview_demo_card,
+                v5_canonical_demo_walkthrough=args.v5_canonical_demo_walkthrough,
+                v5_public_demo_bundle_manifest=args.v5_public_demo_bundle_manifest,
+                v5_resume_artifact_index=args.v5_resume_artifact_index,
+                v5_repro_command_index=args.v5_repro_command_index,
+                v5_result_summary_table=args.v5_result_summary_table,
+                v5_demo_transcript_index=args.v5_demo_transcript_index,
+                v5_permission_network_risk_audit_report=args.v5_permission_network_risk_audit_report,
+                v5_claude_code_invariant_mapping=args.v5_claude_code_invariant_mapping,
+                v5_interview_result_pack_manifest=args.v5_interview_result_pack_manifest,
+                v5_implementation_logs=args.v5_implementation_log,
+                v5_review_records=args.v5_review_record,
+                full_test_summary=args.full_test_summary,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 acceptance inputs 构建失败：{exc}\n")
+        print(f"V5 acceptance inputs：{output_path}")
+        return 0
+    if args.command == "build-v5-acceptance-report":
+        try:
+            output_path = build_v5_acceptance_report(
+                acceptance_inputs=args.acceptance_inputs,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 acceptance report 构建失败：{exc}\n")
+        print(f"V5 acceptance report：{output_path}")
+        return 0
+    if args.command == "build-v5-pre-bundle-command-log":
+        try:
+            output_path = build_v5_pre_bundle_command_log(
+                base_command_log=args.base_command_log,
+                command_log_entries=args.command_log_entry,
+                output=args.output,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 pre-bundle command log 构建失败：{exc}\n")
+        print(f"V5 pre-bundle command log：{output_path}")
+        return 0
+    if args.command == "build-v5-acceptance-bundle":
+        try:
+            output_path = build_v5_acceptance_bundle(
+                acceptance_report=args.acceptance_report,
+                post_report_inspect_output=args.post_report_inspect_output,
+                pre_bundle_command_log=args.pre_bundle_command_log,
+                documentation_refs=args.documentation_ref,
+                bundle_build_command_log_entry_output=args.bundle_build_command_log_entry_output,
+                output=args.output,
+                doc_sync_from_bundle=args.doc_sync_from_bundle,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 acceptance bundle 构建失败：{exc}\n")
+        print(f"V5 acceptance bundle：{output_path}")
+        return 0
+    if args.command == "plan-acceptance-bundle-inspect-entry":
+        try:
+            output_path = plan_v5_acceptance_bundle_inspect_entry(
+                acceptance_bundle=args.acceptance_bundle,
+                final_command_log=args.final_command_log,
+                output=args.output,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 acceptance bundle inspect entry 生成失败：{exc}\n")
+        print(f"V5 inspect acceptance bundle command entry：{output_path}")
+        return 0
+    if args.command == "build-v5-final-command-log":
+        try:
+            output_path = build_v5_final_command_log(
+                pre_bundle_command_log=args.pre_bundle_command_log,
+                command_log_entries=args.command_log_entry,
+                output=args.output,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 final command log 构建失败：{exc}\n")
+        print(f"V5 final command log：{output_path}")
+        return 0
     if args.command == "inspect-v5-run-matrix":
         try:
             print(inspect_v5_run_matrix(args.manifest, assert_complete=args.assert_complete))
@@ -2188,6 +2448,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     assert_core_complete=args.assert_core_complete,
                     assert_resume_ready=args.assert_resume_ready,
                     assert_complete=args.assert_complete,
+                    reference_integrity_output=args.reference_integrity_output,
+                    reference_integrity_input=args.reference_integrity_input,
+                    command_log_entry_output=args.command_log_entry_output,
                 )
             )
         except RepoHarnessError as exc:
