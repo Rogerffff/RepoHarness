@@ -62,6 +62,8 @@ PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-
 
 如果任何命令失败，V5 implementation 不得继续扩大范围。必须先修复 V4 baseline 或生成结构化阻塞报告。
 
+这些命令是 V5 preimplementation baseline gate，只能在 V5 修改 `src/`、`tests/` 或 V4 doc-sync bundle 已绑定文档之前，在可信工作区执行并记录。通过结果必须写入 `v5_baseline_check_report.json`、`v5_preflight_input_binding.json` 和对应 command log。V5 一旦开始实现并修改源码、测试或新版本文档，旧 V4 doc-sync acceptance bundle 的 `--assert-immutable` 检查不得再作为同一工作区的阶段门；如果确实需要重新运行该不可变检查，必须使用精确还原到 V4 doc-sync bundle 绑定字节的独立 worktree 或快照，并把结果作为 Stage 0 baseline proof 的补充证据绑定。
+
 V4 latest acceptance bundle 必须使用文档同步后的 bundle：
 
 ```text
@@ -330,7 +332,7 @@ docs/v5/review/implementation/
 
 ### 4.2 主要工作
 
-1. 执行 V2、V3、V4 baseline inspect 和 bundle inspect。
+1. 在 V5 修改源码、测试或 V4 doc-sync bundle 已绑定文档之前，执行一次 V2、V3、V4 baseline inspect 和 bundle inspect。
 2. 生成 `v5_baseline_check_report.json`，记录命令、exit code、stdout / stderr sha256、当前 HEAD 和 V4 closure baseline。
 3. 生成 `v4_review_findings_closure_report.json`，逐项绑定 V4 修复前 finding、修复 commit、重新生成 evidence、inspect 命令和最新 acceptance bundle。
 4. 生成 `v5_documentation_sync_report.json`，检查项目入口文档是否仍然把 V4 描述为待修复状态，是否仍引用旧 V4 acceptance 路径，是否已经纳入 V5 文档入口。
@@ -356,7 +358,7 @@ repo-harness inspect-v5-preimplementation V5_PREFLIGHT_INPUT_BINDING --assert-co
 通过条件：
 
 - `e0da89c` 是当前 HEAD 的祖先。
-- V2、V3、V4 acceptance inspect 和 bundle inspect 全部通过。
+- V2、V3、V4 acceptance inspect 和 bundle inspect 已在 Stage 0 preimplementation baseline 上全部通过，并由 `v5_baseline_check_report.json` 绑定。
 - `v5_preflight_input_binding.json` 显式绑定当前 10 候选 preflight 产物。
 - input binding 中的所有 artifact path 存在，sha256 匹配。
 - input binding 清楚标记 `full_v5_threshold_status=partial_below_12_total_and_8_pr_issue_preflight_threshold`。
@@ -896,6 +898,8 @@ V5 acceptance inputs 至少绑定：
 - V5 review records。
 - V5 final acceptance pre-test evidence。
 
+这些 V4 latest refs 是 Stage 0 baseline proof 的显式证据引用，不表示 Stage 6 要在已经包含 V5 源码变更的当前工作区重新执行旧 V4 doc-sync bundle immutable inspect。Stage 6 对 V4 基线的检查口径是复核 `v5_baseline_check_report.json`、`v5_preflight_input_binding.json` 和 command log lineage 是否绑定了 Stage 0 的通过结果。
+
 如果实际执行 P1 export stress test，acceptance inputs 还必须绑定 `v5_export_stress_manifest.json`、`v5_export_resume_report.json` 和相关 stress result summary；如果没有执行 P1 stress test，acceptance inputs 必须记录 `stress_test_executed=false` 或等价字段，final acceptance 和简历表述不得声称完成 export stress test。
 
 Acceptance inputs 不得绑定 post-report inspect outputs 或 bundle final outputs。
@@ -936,9 +940,7 @@ PATH=.venv/bin:$PATH python -m pytest -q
 PATH=.venv/bin:$PATH repo-harness inspect-v2-acceptance runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json --assert-immutable
-PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json --assert-complete
-PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T194758Z/acceptance/v4_acceptance_report.json --assert-complete
-PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json --assert-immutable
+PATH=.venv/bin:$PATH repo-harness inspect-v5-preimplementation V5_PREFLIGHT_INPUT_BINDING --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-v5-inputs V5_ACCEPTANCE_INPUTS --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance V5_ACCEPTANCE_REPORT --assert-core-complete --reference-integrity-output V5_ACCEPTANCE_REPORT_REFERENCE_INTEGRITY_REPORT --command-log-entry-output INSPECT_V5_ACCEPTANCE_CORE_COMMAND_LOG_ENTRY
 PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance V5_ACCEPTANCE_REPORT --assert-resume-ready --reference-integrity-input V5_ACCEPTANCE_REPORT_REFERENCE_INTEGRITY_REPORT --command-log-entry-output INSPECT_V5_ACCEPTANCE_RESUME_READY_COMMAND_LOG_ENTRY
@@ -1014,7 +1016,7 @@ PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle V5_ACCEPTANCE_BUNDLE
 `core_acceptance` 必须满足：
 
 - 全量测试通过。
-- V2、V3、V4 回归 inspect 通过。
+- V2 / V3 当前兼容性 inspect 通过；V4 closure baseline 的 immutable inspect 通过结果已经由 Stage 0 的 `v5_baseline_check_report.json`、`v5_preflight_input_binding.json` 和 command log 绑定，并由 `inspect-v5-preimplementation` 复核。不得要求已经包含 V5 源码变更的当前工作区重新通过旧 V4 doc-sync bundle immutable inspect。
 - V5 pre-acceptance evidence integrity inspect 通过。
 - V5 task set inspect 通过。
 - 至少 12 个 accepted / auditable task definitions，除非范围文档经过正式修订。

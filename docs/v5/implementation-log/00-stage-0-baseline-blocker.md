@@ -2,9 +2,11 @@
 
 日期：2026-05-05
 
+后续时序澄清：本记录描述的是 V5 开始实现之前的 Stage 0 baseline gate 阻塞。旧 V4 doc-sync acceptance bundle 的 immutable inspect 只适合作为 preimplementation baseline proof；V5 源码、测试或文档已经发生实现改动后，不能在同一工作区把旧 V4 bundle 的历史哈希检查继续当作阶段门。
+
 ## 目标
 
-在进入 V5 实现之前，确认当前分支满足 V5 正式实施基线、V4 closure baseline、V2 / V3 / V4 回归验收和本机 Docker execution mode 预检要求。
+在进入 V5 实现之前，确认当前分支满足 V5 正式实施基线、V4 closure baseline、V2 / V3 当前兼容性检查、V4 preimplementation baseline proof 和本机 Docker execution mode 预检要求。
 
 ## 结论
 

@@ -2,6 +2,8 @@
 
 日期：2026-05-05
 
+后续时序澄清：本审查只判断 V5 开始实现之前的 Stage 0 baseline gate 是否可信。旧 V4 doc-sync acceptance bundle 的 immutable inspect 通过结果应由 Stage 0 绑定；V5 源码、测试或文档已经发生实现改动后，不应在同一工作区把旧 V4 bundle 的历史哈希检查继续作为阶段门。
+
 ## 审查方式
 
 本轮没有启动 subagent。原因是 Stage 0 的硬性基线门禁已经在主流程中失败，继续进入实现审查没有意义。这里记录等价的只读自审结论，审查范围仅限已经执行的预检命令、工作区状态和是否允许进入 V5 Stage 1。
@@ -11,7 +13,7 @@
 - V5 baseline commit 是否正确。
 - V4 closure commit 是否仍是当前分支祖先。
 - `docs/v5` 是否缺失、删除、未跟踪或被意外修改。
-- V2 / V3 / V4 回归 inspect 是否通过。
+- V2 / V3 当前兼容性 inspect 是否通过，以及 V4 preimplementation baseline proof 是否通过。
 - 当前工作区是否是可信的 V5 implementation baseline。
 - 是否存在可以安全降级的阻塞项。
 

@@ -74,7 +74,7 @@
 处理结果：
 
 - Stage 0 documentation sync report 覆盖 README、AGENTS、`docs/00-reading-guide.md`、`docs/01-project-positioning-and-requirements.md`、`docs/12-resume-narrative-and-demo-artifacts.md` 和 `docs/v4/final-acceptance.md`。
-- V5 基线命令和 Stage 6 命令补入 `inspect-v4-inputs runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json --assert-complete`。
+- V5 基线命令补入 `inspect-v4-inputs runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json --assert-complete`。后续 V5 文档时序澄清后，该命令只作为 Stage 0 preimplementation baseline gate；Stage 6 复核 `v5_baseline_check_report.json` 和 `v5_preflight_input_binding.json`，不在已经包含 V5 源码变更的当前工作区重跑旧 V4 doc-sync bundle immutable inspect。
 - V5 final acceptance 必要输入补入 V4 latest acceptance inputs、V4 review findings closure report、V5 documentation sync report。
 - Scope 明确旧 V4 path 只能作为历史记录，不能作为 V5 baseline。
 
