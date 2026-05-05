@@ -116,6 +116,10 @@ from repo_harness.v4_acceptance import (
     build_v4_acceptance_report,
     build_v4_run_selection_manifest,
 )
+from repo_harness.v5_evidence import (
+    build_v5_preimplementation,
+    inspect_v5_preimplementation,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -830,6 +834,50 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_v4_acceptance_parser.add_argument("report", help="v4_acceptance_report.json 路径。")
     inspect_v4_acceptance_parser.add_argument("--assert-complete", action="store_true", help="要求 V4 acceptance 完整通过。")
+
+    build_v5_preimplementation_parser = subparsers.add_parser(
+        "build-v5-preimplementation",
+        help="构建 V5 Stage 0 preimplementation baseline 和 preflight input binding。",
+    )
+    build_v5_preimplementation_parser.add_argument("--output-dir", required=True)
+    build_v5_preimplementation_parser.add_argument("--v2-acceptance-report", required=True)
+    build_v5_preimplementation_parser.add_argument("--v3-acceptance-report", required=True)
+    build_v5_preimplementation_parser.add_argument("--v3-acceptance-bundle", required=True)
+    build_v5_preimplementation_parser.add_argument("--v4-acceptance-inputs", required=True)
+    build_v5_preimplementation_parser.add_argument("--v4-acceptance-report", required=True)
+    build_v5_preimplementation_parser.add_argument("--v4-doc-sync-acceptance-bundle", required=True)
+    build_v5_preimplementation_parser.add_argument("--v4-doc-sync-final-command-log", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-root", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-flaky-probe-report", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-visibility-probe-summary", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-run-matrix-manifest", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-task-selection-report", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-resume-claim-gate-report", required=True)
+    build_v5_preimplementation_parser.add_argument("--preflight-evidence-manifest", required=True)
+    build_v5_preimplementation_parser.add_argument("--baseline-commit", default="9fd7007")
+    build_v5_preimplementation_parser.add_argument("--v4-closure-commit", default="e0da89c")
+    build_v5_preimplementation_parser.add_argument(
+        "--baseline-command-cwd",
+        help="显式指定执行 Stage 0 baseline 命令的干净 worktree；默认使用当前目录。",
+    )
+    build_v5_preimplementation_parser.add_argument(
+        "--run-live-baseline-checks",
+        action="store_true",
+        help="实际执行 Stage 0 baseline 命令。最终 Stage 0 产物必须启用。",
+    )
+    build_v5_preimplementation_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    inspect_v5_preimplementation_parser = subparsers.add_parser(
+        "inspect-v5-preimplementation",
+        help="只读检查 V5 Stage 0 preflight input binding。",
+    )
+    inspect_v5_preimplementation_parser.add_argument("binding", help="v5_preflight_input_binding.json 路径。")
+    inspect_v5_preimplementation_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 Stage 0 输入完整。")
 
     return parser
 
@@ -1550,6 +1598,45 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(inspect_v4_acceptance(args.report, assert_complete=args.assert_complete))
         except RepoHarnessError as exc:
             parser.exit(1, f"V4 acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v5-preimplementation":
+        try:
+            output_path = build_v5_preimplementation(
+                output_dir=args.output_dir,
+                v2_acceptance_report=args.v2_acceptance_report,
+                v3_acceptance_report=args.v3_acceptance_report,
+                v3_acceptance_bundle=args.v3_acceptance_bundle,
+                v4_acceptance_inputs=args.v4_acceptance_inputs,
+                v4_acceptance_report=args.v4_acceptance_report,
+                v4_doc_sync_acceptance_bundle=args.v4_doc_sync_acceptance_bundle,
+                v4_doc_sync_final_command_log=args.v4_doc_sync_final_command_log,
+                preflight_root=args.preflight_root,
+                preflight_flaky_probe_report=args.preflight_flaky_probe_report,
+                preflight_visibility_probe_summary=args.preflight_visibility_probe_summary,
+                preflight_run_matrix_manifest=args.preflight_run_matrix_manifest,
+                preflight_task_selection_report=args.preflight_task_selection_report,
+                preflight_resume_claim_gate_report=args.preflight_resume_claim_gate_report,
+                preflight_evidence_manifest=args.preflight_evidence_manifest,
+                baseline_commit=args.baseline_commit,
+                v4_closure_commit=args.v4_closure_commit,
+                baseline_command_cwd=args.baseline_command_cwd,
+                run_live_baseline_checks=args.run_live_baseline_checks,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 preimplementation 构建失败：{exc}\n")
+        print(f"V5 preflight input binding：{output_path}")
+        return 0
+    if args.command == "inspect-v5-preimplementation":
+        try:
+            print(
+                inspect_v5_preimplementation(
+                    args.binding,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 preimplementation 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

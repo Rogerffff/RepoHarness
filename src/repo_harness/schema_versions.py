@@ -90,3 +90,12 @@ V4_TRAJECTORY_STORE_INTEGRITY_REPORT_VERSION = "repo_harness_v4_trajectory_store
 V4_EXPORT_QUALITY_MANIFEST_VERSION = "repo_harness_v4_export_quality_manifest_v0"
 V4_CARDS_MANIFEST_VERSION = "repo_harness_v4_cards_manifest_v0"
 V4_CONTAMINATION_SCAN_REPORT_VERSION = "repo_harness_v4_contamination_scan_report_v0"
+
+# 第五版 Stage 0 和 Stage 1 前置 schema 版本。
+V5_SCHEMA_VERSION = "repo_harness_v5_schema_v0"
+V5_EVIDENCE_REF_VERSION = "repo_harness_v5_evidence_ref_v0"
+V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION = "repo_harness_command_log_entry_v5_v0"
+V5_BASELINE_CHECK_REPORT_VERSION = "repo_harness_v5_baseline_check_report_v0"
+V5_V4_CLOSURE_REPORT_VERSION = "repo_harness_v5_v4_closure_report_v0"
+V5_DOCUMENTATION_SYNC_REPORT_VERSION = "repo_harness_v5_documentation_sync_report_v0"
+V5_PREFLIGHT_INPUT_BINDING_VERSION = "repo_harness_v5_preflight_input_binding_v0"
