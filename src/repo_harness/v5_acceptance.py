@@ -358,9 +358,19 @@ def build_acceptance_bundle(
         "status": report.get("status"),
     }
     _write_json(output_path, payload)
+    command_input_paths = [
+        report_path,
+        Path(post_report_inspect_output),
+        Path(pre_bundle_command_log),
+        *[Path(path) for path in documentation_refs],
+    ]
+    if doc_sync_from_bundle:
+        command_input_paths.append(Path(doc_sync_from_bundle))
+    if final_command_log:
+        command_input_paths.append(Path(final_command_log))
     command_entry = _builder_command_log_entry(
         command_name="build-v5-acceptance-bundle",
-        input_paths=[report_path, Path(post_report_inspect_output), Path(pre_bundle_command_log), *[Path(path) for path in documentation_refs]],
+        input_paths=command_input_paths,
         output_paths=[output_path, lineage_path],
         producer_stage="v5_stage6_acceptance_bundle",
     )

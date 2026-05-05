@@ -82,6 +82,10 @@ def test_v5_acceptance_core_bundle_passes_and_resume_ready_is_blocked(tmp_path: 
         doc_sync_from_bundle=pre_final_bundle,
         final_command_log=final_log,
     )
+    final_sync_entry = _read_json(tmp_path / "acceptance" / "build_v5_acceptance_bundle_final_command_log_sync_entry.json")
+    final_sync_input_paths = {ref["path"] for ref in final_sync_entry["input_refs"]}
+    assert pre_final_bundle.as_posix() in final_sync_input_paths
+    assert final_log.as_posix() in final_sync_input_paths
     assert "Inspect acceptance bundle: immutable" in inspect_acceptance_bundle(
         final_bundle,
         final_command_log=final_log,
