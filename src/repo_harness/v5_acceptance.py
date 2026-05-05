@@ -530,7 +530,11 @@ def _inspect_final_command_log_entries(
         if not isinstance(input_refs, list) or not input_refs:
             failures.append(f"final command log inspect entry[{index}] input_refs 必须绑定 acceptance bundle。")
         else:
-            ref_paths = {_path_from_ref(ref).resolve().as_posix() for ref in input_refs if isinstance(ref, dict)}
+            ref_paths = set()
+            for ref_index, ref in enumerate(input_refs, start=1):
+                _inspect_ref(ref, failures, label=f"final command log inspect entry[{index}].input_refs[{ref_index}]")
+                if isinstance(ref, dict):
+                    ref_paths.add(_path_from_ref(ref).resolve().as_posix())
             if not allowed_bundle_paths.intersection(ref_paths):
                 failures.append(f"final command log inspect entry[{index}] input_refs 未绑定当前 bundle 或 previous bundle。")
 
@@ -786,6 +790,10 @@ def _inspect_ref(ref: Any, failures: list[str], *, label: str) -> None:
     actual = _hash_path(path)
     if expected and actual != expected:
         failures.append(f"{label} sha256 不匹配：{path}")
+    if "size_bytes" not in ref:
+        failures.append(f"{label} 缺少 size_bytes。")
+    elif not path.is_dir() and ref.get("size_bytes") != path.stat().st_size:
+        failures.append(f"{label} size_bytes 不匹配：{path}")
 
 
 def _path_from_ref(ref: Any) -> Path:
