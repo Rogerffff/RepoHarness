@@ -132,6 +132,7 @@ from repo_harness.v5_evidence import (
     inspect_v5_task_set,
     inspect_v5_task_visibility,
 )
+from repo_harness.v5_task_set import build_task_set_manifest as build_v5_task_set_manifest
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -923,6 +924,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_v5_evidence_integrity_parser.add_argument("report", help="v5_pre_acceptance_evidence_integrity_report.json 路径。")
     inspect_v5_evidence_integrity_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 pre-acceptance evidence integrity 完整通过。")
+
+    build_v5_task_set_parser = subparsers.add_parser(
+        "build-v5-task-set",
+        help="从显式 V5 preflight 输入构建 Stage 2A task set manifest。",
+    )
+    build_v5_task_set_parser.add_argument("--preflight-input-binding", required=True)
+    build_v5_task_set_parser.add_argument("--adapter-visible-task-draft", required=True)
+    build_v5_task_set_parser.add_argument("--evaluator-only-evidence-manifest", required=True)
+    build_v5_task_set_parser.add_argument("--run-matrix-preflight-manifest", required=True)
+    build_v5_task_set_parser.add_argument("--task-selection-preflight-report", required=True)
+    build_v5_task_set_parser.add_argument("--visibility-scan-report", required=True)
+    build_v5_task_set_parser.add_argument("--flaky-probe-report", required=True)
+    build_v5_task_set_parser.add_argument("--source-materialization-report", action="append", required=True)
+    build_v5_task_set_parser.add_argument("--output-dir", required=True)
+    build_v5_task_set_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
 
     inspect_v5_task_set_parser = subparsers.add_parser(
         "inspect-v5-task-set",
@@ -1780,6 +1801,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 evidence integrity 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v5-task-set":
+        try:
+            output_path = build_v5_task_set_manifest(
+                preflight_input_binding=args.preflight_input_binding,
+                adapter_visible_task_draft=args.adapter_visible_task_draft,
+                evaluator_only_evidence_manifest=args.evaluator_only_evidence_manifest,
+                run_matrix_preflight_manifest=args.run_matrix_preflight_manifest,
+                task_selection_preflight_report=args.task_selection_preflight_report,
+                visibility_scan_report=args.visibility_scan_report,
+                flaky_probe_report=args.flaky_probe_report,
+                source_materialization_reports=args.source_materialization_report,
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 task set 构建失败：{exc}\n")
+        print(f"V5 task set manifest：{output_path}")
         return 0
     if args.command == "inspect-v5-task-set":
         try:

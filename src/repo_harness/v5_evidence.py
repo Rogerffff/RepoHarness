@@ -43,6 +43,7 @@ from repo_harness.schema_versions import (
     V5_RUN_MATRIX_MANIFEST_VERSION,
     V5_SCHEMA_TRACKING_TABLE_VERSION,
     V5_TASK_INVENTORY_REPORT_VERSION,
+    V5_TASK_DEFINITION_VERSION,
     V5_TASK_SET_MANIFEST_VERSION,
     V5_TASK_VISIBILITY_SCAN_REPORT_VERSION,
     V5_V4_CLOSURE_REPORT_VERSION,
@@ -126,16 +127,50 @@ V5_PARTITION_COUNT_FIELDS = (
 V5_FORBIDDEN_PUBLIC_OR_TRAINABLE_MARKERS = (
     "evaluator-only",
     "evaluator_only",
+    "evaluator only",
     "gold patch",
+    "gold_patch",
     "raw test patch",
+    "raw_test_patch",
     "provider raw request",
     "provider_raw_request",
     "provider raw response",
     "provider_raw_response",
+    "provider raw content",
+    "provider_raw_content",
     "credential",
     "authorization",
     "reward scalar",
+    "reward_scalar",
     "reward label",
+    "reward_label",
+)
+V5_FORBIDDEN_ADAPTER_VISIBLE_MARKERS = tuple(
+    marker
+    for marker in V5_FORBIDDEN_PUBLIC_OR_TRAINABLE_MARKERS
+    if marker not in {"evaluator-only", "evaluator_only", "evaluator only"}
+) + (
+    "evaluator-only content:",
+    "evaluator_only_content",
+    "evaluator only content",
+    "raw pr body",
+    "raw_pr_body",
+    "raw pr diff",
+    "raw_pr_diff",
+    "review comment",
+    "review_comment",
+    "fix commit url",
+    "fix_commit_url",
+    "merge commit url",
+    "merge_commit_url",
+    "hidden selector",
+    "hidden_selector",
+    "official resolved status",
+    "official_resolved_status",
+    "claude.ai/share",
+    "chat.openai.com/share",
+    "coding session url",
+    "coding_session_url",
 )
 V5_POST_REPORT_EVIDENCE_CLASSES = (
     "acceptance_report_reference_integrity",
@@ -1088,8 +1123,14 @@ def inspect_v5_evidence_integrity(
 
 
 def inspect_v5_task_set(manifest: str | Path, *, assert_complete: bool = False) -> str:
-    failures = _inspect_schema_file(Path(manifest), expected_schema_names={"V5TaskSetManifest", "V5TaskInventoryReport"})
-    return _schema_inspect_result("Inspect V5 task set", Path(manifest), failures, assert_complete=assert_complete)
+    path = Path(manifest)
+    failures = _inspect_schema_file(path, expected_schema_names={"V5TaskSetManifest", "V5TaskInventoryReport"})
+    payload = _read_json_for_inspect(path, failures)
+    if payload.get("schema_version") == V5_TASK_SET_MANIFEST_VERSION:
+        _inspect_v5_task_set_manifest_deep(payload, failures)
+    elif payload.get("schema_version") == V5_TASK_INVENTORY_REPORT_VERSION:
+        _inspect_v5_task_inventory_deep(payload, failures)
+    return _schema_inspect_result("Inspect V5 task set", path, failures, assert_complete=assert_complete)
 
 
 def inspect_v5_task_visibility(report: str | Path, *, assert_clean: bool = False) -> str:
@@ -1102,6 +1143,7 @@ def inspect_v5_task_visibility(report: str | Path, *, assert_clean: bool = False
         failures.append("share_safe_violation_count 必须为 0。")
     if payload.get("trainable_payload_contamination_count", 0) != 0:
         failures.append("trainable_payload_contamination_count 必须为 0。")
+    _inspect_adapter_visible_refs_for_forbidden_markers(payload, failures)
     if payload.get("status") != "passed":
         failures.append("task visibility scan status 必须为 passed。")
     return _schema_inspect_result("Inspect V5 task visibility", path, failures, assert_complete=assert_clean)
@@ -1946,19 +1988,34 @@ def _inspect_schema_specific_constraints(payload: dict[str, Any], schema_name: s
         if isinstance(integrity, dict) and any(key.endswith("_ref") for key in integrity):
             failures.append("acceptance_report_reference_integrity.expected_check 只能描述待检集合，不能引用 post-report output。")
     elif schema_name == "V5TaskSetManifest":
-        if payload.get("accepted_auditable_task_count", 0) < 12:
-            failures.append("accepted_auditable_task_count 必须至少为 12。")
-        if payload.get("pr_issue_task_count", 0) < 8:
-            failures.append("pr_issue_task_count 必须至少为 8。")
+        if payload.get("task_set_stage") == "stage2a_initial_10":
+            if payload.get("accepted_auditable_task_count") != 10:
+                failures.append("Stage 2A initial task set 必须正好包含 10 个 accepted / auditable 候选。")
+            if payload.get("pr_issue_task_count") != 6:
+                failures.append("Stage 2A initial task set 必须正好包含 6 个 PR / issue 候选。")
+            if payload.get("strict_inventory_gate") != "blocked_pending_stage2b":
+                failures.append("Stage 2A initial task set 必须把 strict inventory gate 标记为 blocked_pending_stage2b。")
+            if payload.get("supplemental_required") is not True:
+                failures.append("Stage 2A initial task set 必须声明 Stage 2B supplemental tasks 仍然必需。")
+            if payload.get("claims_full_inventory_gate") is not False:
+                failures.append("Stage 2A initial task set 不能宣称已经满足完整任务库存门。")
+        else:
+            if payload.get("accepted_auditable_task_count", 0) < 12:
+                failures.append("accepted_auditable_task_count 必须至少为 12。")
+            if payload.get("pr_issue_task_count", 0) < 8:
+                failures.append("pr_issue_task_count 必须至少为 8。")
         if payload.get("swebench_like_anchor_count", 0) < 3:
             failures.append("swebench_like_anchor_count 必须至少为 3。")
     elif schema_name == "V5TaskInventoryReport":
         gate = payload.get("strict_inventory_gate")
-        if gate not in {"passed", "blocked"}:
-            failures.append("strict_inventory_gate 必须是 passed 或 blocked。")
+        if gate not in {"passed", "blocked", "blocked_pending_stage2b"}:
+            failures.append("strict_inventory_gate 必须是 passed、blocked 或 blocked_pending_stage2b。")
+        if gate == "blocked_pending_stage2b" and payload.get("claims_full_inventory_gate") is not False:
+            failures.append("blocked_pending_stage2b 时不能宣称完整任务库存门已通过。")
     elif schema_name == "V5TaskVisibilityScanReport":
         if payload.get("model_visible_leak_count", 0) != 0:
             failures.append("model_visible_leak_count 必须为 0。")
+        _inspect_adapter_visible_refs_for_forbidden_markers(payload, failures)
     elif schema_name == "V5ProviderCredentialGateReport":
         if payload.get("raw_secret_value_present") is not False:
             failures.append("raw_secret_value_present 必须为 false。")
@@ -2042,6 +2099,156 @@ def _inspect_schema_specific_constraints(payload: dict[str, Any], schema_name: s
                 text = f"{ref.get('kind', '')} {ref.get('purpose', '')}".lower()
                 if "provider raw" in text:
                     failures.append(f"{key} 不能引用 provider raw content。")
+
+
+def _inspect_v5_task_inventory_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    refs = payload.get("task_definition_refs")
+    if refs is not None and not isinstance(refs, list):
+        failures.append("task_definition_refs 必须是 list。")
+    if isinstance(refs, list):
+        if payload.get("accepted_auditable_task_count") != len(refs):
+            failures.append("accepted_auditable_task_count 必须等于 task_definition_refs 数量。")
+        for index, ref in enumerate(refs, start=1):
+            _inspect_v5_ref(ref, failures, label=f"task_definition_refs[{index}]")
+
+
+def _inspect_adapter_visible_refs_for_forbidden_markers(payload: dict[str, Any], failures: list[str]) -> None:
+    refs = payload.get("adapter_visible_input_refs")
+    if refs is None:
+        return
+    if not isinstance(refs, list):
+        failures.append("adapter_visible_input_refs 必须是 list。")
+        return
+    for index, ref in enumerate(refs, start=1):
+        _inspect_v5_ref(ref, failures, label=f"adapter_visible_input_refs[{index}]")
+        path = _path_from_ref(ref)
+        if path is None or not path.exists() or path.is_dir():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8").lower()
+        except UnicodeDecodeError:
+            failures.append(f"adapter_visible_input_refs[{index}] 不是 UTF-8 文本，无法检查可见性边界。")
+            continue
+        for marker in V5_FORBIDDEN_ADAPTER_VISIBLE_MARKERS:
+            if marker.lower() in text:
+                failures.append(
+                    f"adapter_visible_input_refs[{index}] 包含禁止进入模型可见输入的标记：{marker}"
+                )
+
+
+def _inspect_v5_task_set_manifest_deep(payload: dict[str, Any], failures: list[str]) -> None:
+    task_refs = payload.get("task_refs")
+    if not isinstance(task_refs, list) or not task_refs:
+        failures.append("task_refs 必须是非空 list。")
+        return
+    _inspect_v5_ref(payload.get("inventory_report_ref"), failures, label="inventory_report_ref")
+    _inspect_v5_ref(payload.get("visibility_scan_ref"), failures, label="visibility_scan_ref")
+    formal_task_set = bool(payload.get("task_set_stage")) or any(
+        isinstance(ref, dict) and ref.get("kind") == "v5_task_definition" for ref in task_refs
+    )
+    if not formal_task_set:
+        return
+    visibility_payload = _read_ref_payload(payload.get("visibility_scan_ref"), failures)
+    if visibility_payload is not None:
+        if visibility_payload.get("status") != "passed":
+            failures.append("visibility_scan_ref 指向的 visibility report 必须 status=passed。")
+        for counter in (
+            "model_visible_leak_count",
+            "share_safe_violation_count",
+            "trainable_payload_contamination_count",
+        ):
+            if visibility_payload.get(counter, 0) != 0:
+                failures.append(f"visibility_scan_ref 指向的 visibility report {counter} 必须为 0。")
+
+    task_payloads: list[dict[str, Any]] = []
+    for index, ref in enumerate(task_refs, start=1):
+        _inspect_v5_ref(ref, failures, label=f"task_refs[{index}]")
+        task_payload = _read_ref_payload(ref, failures)
+        if task_payload is not None:
+            task_payloads.append(task_payload)
+
+    if not task_payloads:
+        return
+    required_task_fields = (
+        "task_id",
+        "task_family",
+        "source_kind",
+        "repo_url_or_archive_id",
+        "base_commit",
+        "source_archive_sha256",
+        "source_tree_hash",
+        "task_input_hash",
+        "adapter_visible_input_ref",
+        "evaluator_only_evidence_ref",
+        "baseline_verifier_plan_ref",
+        "final_verifier_plan_ref",
+        "fail_to_pass_evidence_ref",
+        "pass_to_pass_evidence_ref",
+        "flaky_probe_report_ref",
+        "license_provenance_ref",
+        "dependency_cache_ref",
+        "environment_stability_ref",
+        "contamination_scan_ref",
+        "visibility_scan_ref",
+        "task_diversity_ref",
+    )
+    ref_fields = tuple(field for field in required_task_fields if field.endswith("_ref"))
+    task_ids: set[str] = set()
+    accepted_count = 0
+    pr_issue_count = 0
+    swebench_count = 0
+    for task_index, task in enumerate(task_payloads, start=1):
+        label = f"task_definition[{task_index}]"
+        if task.get("schema_version") != V5_TASK_DEFINITION_VERSION:
+            failures.append(f"{label} schema_version 不匹配。")
+        for field in required_task_fields:
+            if task.get(field) in (None, ""):
+                failures.append(f"{label} 缺少字段：{field}")
+        task_id = str(task.get("task_id") or "")
+        if task_id in task_ids:
+            failures.append(f"task_id 重复：{task_id}")
+        task_ids.add(task_id)
+        if task.get("accepted_auditable") is True:
+            accepted_count += 1
+            if task.get("source_kind") == "pr_issue_flow":
+                pr_issue_count += 1
+            if task.get("source_kind") == "swebench_like_anchor":
+                swebench_count += 1
+        for field in ref_fields:
+            _inspect_v5_ref(task.get(field), failures, label=f"{label}.{field}")
+        adapter_ref = task.get("adapter_visible_input_ref")
+        if isinstance(adapter_ref, dict):
+            if adapter_ref.get("visibility") != "model_visible":
+                failures.append(f"{label}.adapter_visible_input_ref visibility 必须是 model_visible。")
+            if adapter_ref.get("share_safe") is not True:
+                failures.append(f"{label}.adapter_visible_input_ref 必须 share_safe=true。")
+        evaluator_ref = task.get("evaluator_only_evidence_ref")
+        if isinstance(evaluator_ref, dict):
+            if evaluator_ref.get("visibility") != "evaluator_only":
+                failures.append(f"{label}.evaluator_only_evidence_ref visibility 必须是 evaluator_only。")
+            if evaluator_ref.get("share_safe") is True:
+                failures.append(f"{label}.evaluator_only_evidence_ref 不能 share_safe=true。")
+        source_archive_ref = task.get("source_archive_ref")
+        if isinstance(source_archive_ref, dict):
+            _inspect_v5_ref(source_archive_ref, failures, label=f"{label}.source_archive_ref")
+            if task.get("source_archive_sha256") != source_archive_ref.get("sha256"):
+                failures.append(f"{label}.source_archive_sha256 必须等于 source_archive_ref.sha256。")
+
+    if payload.get("accepted_auditable_task_count") != accepted_count:
+        failures.append("accepted_auditable_task_count 必须等于 accepted task definition 数量。")
+    if payload.get("pr_issue_task_count") != pr_issue_count:
+        failures.append("pr_issue_task_count 必须等于 PR / issue task definition 数量。")
+    if payload.get("swebench_like_anchor_count") != swebench_count:
+        failures.append("swebench_like_anchor_count 必须等于 SWE-Bench-like task definition 数量。")
+    if payload.get("task_set_stage") == "stage2a_initial_10":
+        if len(task_payloads) != 10:
+            failures.append("Stage 2A initial task set 必须有 10 个 task definition。")
+        if payload.get("full_v5_threshold_status") != V5_PARTIAL_THRESHOLD_STATUS:
+            failures.append("Stage 2A initial task set 必须记录 partial threshold status。")
+        if payload.get("strict_inventory_gate") != "blocked_pending_stage2b":
+            failures.append("Stage 2A initial task set 必须阻塞完整库存门，等待 Stage 2B。")
+    elif accepted_count < 12 or pr_issue_count < 8:
+        failures.append("非 Stage 2A task set 必须满足 12 total / 8 PR-issue 任务库存门。")
 
 
 def _schema_inspect_result(label: str, path: Path, failures: list[str], *, assert_complete: bool) -> str:
