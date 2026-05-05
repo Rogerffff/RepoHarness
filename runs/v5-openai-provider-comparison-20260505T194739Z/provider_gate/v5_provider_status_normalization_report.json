@@ -1,0 +1,50 @@
+{
+  "adapter_not_implemented_skip_counts_as_real_provider_run": false,
+  "created_at": "2026-05-05T19:48:42Z",
+  "credential_missing_skip_counts_as_real_provider_run": false,
+  "fallback_success_counts_as_primary_openai_run": false,
+  "legacy_statuses_allowed_only_in_audit_fields": [
+    "skipped_no_credentials"
+  ],
+  "normalization_rules": [
+    {
+      "counts_toward_primary_accepted_rate": true,
+      "normalized_provider_status": "primary_attempted",
+      "raw_status": "accepted_with_credentials",
+      "required_conditions": "actual_provider equals requested_provider and final verifier accepted"
+    },
+    {
+      "counts_toward_primary_accepted_rate": false,
+      "normalized_provider_status": "fallback_success",
+      "raw_status": "fallback_success",
+      "required_conditions": "actual_provider is fallback provider; never counted as primary OpenAI accepted run"
+    },
+    {
+      "counts_toward_primary_accepted_rate": false,
+      "normalized_provider_status": "credential_missing_skip",
+      "raw_status": "skipped_no_credentials",
+      "required_conditions": "active credential source is missing"
+    },
+    {
+      "counts_toward_primary_accepted_rate": false,
+      "normalized_provider_status": "adapter_not_implemented_skip",
+      "raw_status": "adapter_not_implemented",
+      "required_conditions": "adapter is absent from the current codebase"
+    },
+    {
+      "counts_toward_primary_accepted_rate": false,
+      "normalized_provider_status": "cost_limited_structured_skip",
+      "raw_status": "budget_exhausted_before_run",
+      "required_conditions": "cost budget gate stops the call before provider invocation"
+    },
+    {
+      "counts_toward_primary_accepted_rate": false,
+      "normalized_provider_status": "provider_error",
+      "raw_status": "provider_error",
+      "required_conditions": "provider call was attempted and returned a structured provider error"
+    }
+  ],
+  "producer_stage": "v5_stage3a_provider_gate",
+  "schema_version": "repo_harness_v5_provider_status_normalization_report_v0",
+  "status": "passed"
+}

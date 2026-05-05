@@ -1,0 +1,87 @@
+id: v5_task_005
+task_version: v5_task_005_stage3b_v0
+dataset_name: repo_harness_v5
+source_kind: swebench_like_anchor
+dataset_split: v5_stage3b
+created_at: '2026-05-05'
+repo: /Users/roger/Desktop/claude-code/runs/v5-source-materialization-preflight-20260505T082123Z/source_archives/sphinx_doc__sphinx_7686-752d3285d250bbaf673cff25e83f03f247502021.tar
+repo_source_spec:
+  source_type: local_archive
+  archive_path: /Users/roger/Desktop/claude-code/runs/v5-source-materialization-preflight-20260505T082123Z/source_archives/sphinx_doc__sphinx_7686-752d3285d250bbaf673cff25e83f03f247502021.tar
+  archive_sha256: 4eb849b3e0fa232aa01e95ed24111502c9288762fcc91be3f1ed1d405c731952
+  expected_root_directory: sphinx_doc__sphinx_7686-752d3285d250bbaf673cff25e83f03f247502021
+  base_commit: 752d3285d250bbaf673cff25e83f03f247502021
+  decontamination_status: manual_checked
+base_commit: 752d3285d250bbaf673cff25e83f03f247502021
+source_archive_sha256: 4eb849b3e0fa232aa01e95ed24111502c9288762fcc91be3f1ed1d405c731952
+issue: 'Autosummary module rendering should separate local module members from imported
+  members according to configuration, while still respecting member-skip hooks and
+  existing template context behavior.
+
+
+  Visible constraints:
+
+  - work only inside the provided frozen repository workspace
+
+  - do not use network access during verifier execution
+
+  - do not inspect evaluator-only evidence or hidden tests'
+setup_command: null
+test_command: python -m pytest -q tests/test_ext_autosummary.py::test_autosummary_generate_content_for_module
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 120
+  agent_timeout_sec: 240
+  final_verifier_timeout_sec: 120
+environment:
+  execution_image: local_process
+  python_version: '3.12'
+  package_manager: pip
+  setup_network_policy: deny
+  source_archive_sha256: 4eb849b3e0fa232aa01e95ed24111502c9288762fcc91be3f1ed1d405c731952
+expected_files: []
+fail_to_pass_tests: []
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: null
+  source_url: https://github.com/sphinx-doc/sphinx
+  overlap_check_notes: V5 Stage 3B uses sanitized adapter-visible task input only.
+declared_setup_mutations: []
+generated_files: []
+tags:
+- v5
+- stage3b
+- python
+metadata:
+  v5_task_definition_ref:
+    inspect_command: inspect-v5-task-set
+    kind: v5_task_definition
+    path: runs/v5-stage2a-initial-task-set-20260505T145206Z/task_definitions/v5_task_005.json
+    producer_command: build-v5-task-set
+    producer_stage: v5_stage2a_initial_task_set
+    purpose: Formal V5 task definition for v5_task_005
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 405ec860ba1f6f34b59140f8d3b94f84334a6af120a5a3b4e8735639d8945012
+    share_safe: false
+    size_bytes: 10080
+    visibility: audit_only
+  v5_final_verifier_plan_ref:
+    inspect_command: inspect-v5-task-set
+    kind: final_verifier_plan
+    path: runs/v5-verifier-execution-retry-20260505T113000Z/reports/v5_verifier_execution_first_batch_retry_report.json
+    producer_command: v5 verifier preflight
+    producer_stage: v5_preimplementation_input
+    purpose: Final verifier evidence source for v5_task_005
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 57349170931ad1a8bdaa90f1ce7d43586b05ea2fe9eec5e008a53d0094efd9fb
+    share_safe: false
+    size_bytes: 62727
+    visibility: evaluator_only
+  v5_stage3b_generated: true

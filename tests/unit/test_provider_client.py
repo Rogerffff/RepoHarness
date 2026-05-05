@@ -12,6 +12,7 @@ from repo_harness.model_client.providers.deepseek import (
 )
 from repo_harness.errors import ConfigError
 from repo_harness.model_client.providers.openai import OpenAIProviderClient
+from repo_harness.model_client.providers.openai import _sdk_body as _openai_sdk_body
 from repo_harness.model_client.providers.common import ProviderCredential
 from repo_harness.model_client.redaction import REDACTED_CREDENTIAL, redact_provider_payload
 from repo_harness.model_client.schemas import (
@@ -227,6 +228,21 @@ def test_openai_provider_uses_sdk_shape_with_injected_client(tmp_path: Path):
         encoding="utf-8"
     )
     assert "sk-test-openai-secret" not in raw_text
+
+
+def test_openai_gpt5_chat_body_uses_max_completion_tokens():
+    body = {
+        "model": "gpt-5.4-nano",
+        "messages": [{"role": "user", "content": "hello"}],
+        "max_tokens": 32,
+        "temperature": 0.0,
+    }
+
+    payload = _openai_sdk_body(body)
+
+    assert "max_tokens" not in payload
+    assert "temperature" not in payload
+    assert payload["max_completion_tokens"] == 32
 
 
 class _DeepSeekStub(DeepSeekProviderClient):

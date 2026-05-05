@@ -1037,7 +1037,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_v5_provider_gate_parser.add_argument(
         "--allow-local-secret-file",
         action="store_true",
-        help="允许 DeepSeek 使用本地脱敏 secret file 作为 active credential source；报告仍不得写入 raw secret value。",
+        help="允许 DeepSeek 和 OpenAI 使用本地脱敏 secret file 作为 active credential source；报告仍不得写入 raw secret value。",
     )
     build_v5_provider_gate_parser.add_argument(
         "--fail-if-output-exists",
@@ -1073,6 +1073,14 @@ def build_parser() -> argparse.ArgumentParser:
     build_v5_run_matrix_parser.add_argument("--output-dir", required=True)
     build_v5_run_matrix_parser.add_argument("--task-id", action="append", default=None)
     build_v5_run_matrix_parser.add_argument(
+        "--provider-id",
+        action="append",
+        default=None,
+        help="显式选择 Stage 3B provider cell；可重复传入 deepseek 和 openai。默认只生成 deepseek。",
+    )
+    build_v5_run_matrix_parser.add_argument("--deepseek-model-id", default="deepseek-v4-flash")
+    build_v5_run_matrix_parser.add_argument("--openai-model-id", default="gpt-5.4-nano")
+    build_v5_run_matrix_parser.add_argument(
         "--fail-if-output-exists",
         action="store_true",
         default=True,
@@ -1089,7 +1097,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_v5_run_matrix_parser.add_argument(
         "--allow-local-secret-file",
         action="store_true",
-        help="允许 DeepSeek 使用本地脱敏 secret file 作为 active credential source；运行产物仍不得写入 raw secret value。",
+        help="允许 DeepSeek 和 OpenAI 使用本地脱敏 secret file 作为 active credential source；运行产物仍不得写入 raw secret value。",
     )
     run_v5_run_matrix_parser.add_argument(
         "--fail-if-output-exists",
@@ -1103,6 +1111,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="构建 V5 Stage 3C comparison reports 和阶段性 resume claim gate。",
     )
     build_v5_comparison_reports_parser.add_argument("--executed-run-matrix-manifest", required=True)
+    build_v5_comparison_reports_parser.add_argument(
+        "--additional-executed-run-matrix-manifest",
+        action="append",
+        default=None,
+        help="额外绑定一个已执行 run matrix manifest，用于组合 DeepSeek 和 OpenAI provider comparison evidence。",
+    )
     build_v5_comparison_reports_parser.add_argument("--provider-gate-report", required=True)
     build_v5_comparison_reports_parser.add_argument("--output-dir", required=True)
     build_v5_comparison_reports_parser.add_argument(
@@ -2223,6 +2237,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 provider_cost_budget_report=args.provider_cost_budget_report,
                 output_dir=args.output_dir,
                 task_ids=args.task_id,
+                provider_ids=args.provider_id,
+                deepseek_model_id=args.deepseek_model_id,
+                openai_model_id=args.openai_model_id,
                 fail_if_output_exists=args.fail_if_output_exists,
             )
         except RepoHarnessError as exc:
@@ -2246,6 +2263,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             output_path = build_v5_comparison_reports(
                 executed_run_matrix_manifest=args.executed_run_matrix_manifest,
+                additional_executed_run_matrix_manifests=args.additional_executed_run_matrix_manifest,
                 provider_gate_report=args.provider_gate_report,
                 output_dir=args.output_dir,
                 fail_if_output_exists=args.fail_if_output_exists,

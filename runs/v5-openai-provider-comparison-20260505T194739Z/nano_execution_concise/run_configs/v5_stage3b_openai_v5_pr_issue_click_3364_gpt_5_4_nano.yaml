@@ -1,0 +1,28 @@
+run_id_prefix: v5_stage3b
+model:
+  provider: openai
+  model_id: gpt-5.4-nano
+  temperature: 0.0
+  max_output_tokens: 512
+  retry_policy: none
+  credential_policy: local_secret_file_redacted
+  provider_request_logging: redact_secrets
+  provider_specific_options:
+    allow_local_secret_file: true
+runtime:
+  scaffold_id: simple_react
+  permission_mode: auto
+  test_feedback_policy: disabled
+  feedback_tests_passed_policy: require_model_final
+  max_turns: 1
+  max_tool_calls: 0
+  max_test_runs: 0
+  task_timeout_sec: 240
+  seed: 42
+workspace:
+  output_dir: runs/v5-openai-provider-comparison-20260505T194739Z/nano_execution_concise/agent_runs
+  keep_workspace: true
+  default_command_timeout_sec: 60
+  network_policy: deny_agent_run
+evaluation:
+  final_verifier_mode: strict_patch_replay

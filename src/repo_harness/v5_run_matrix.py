@@ -16,6 +16,8 @@ from repo_harness.config import ContextManagementConfig, ModelConfig
 from repo_harness.errors import ConfigError, RepoHarnessError
 from repo_harness.export.manifest import sha256_file
 from repo_harness.model_client.factory import create_model_client, provider_options_from_model_config
+from repo_harness.model_client.providers.deepseek import normalize_deepseek_model_id
+from repo_harness.model_client.providers.openai import normalize_openai_model_id
 from repo_harness.permissions import PermissionContext
 from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.scaffolds import build_scaffold
@@ -45,6 +47,13 @@ V5_STAGE3B_DEFAULT_TASK_IDS = (
     "v5_pr_issue_click_3364",
     "v5_pr_issue_attrs_1428",
 )
+
+V5_STAGE3B_DEFAULT_PROVIDER_IDS = ("deepseek",)
+V5_STAGE3B_DEFAULT_MODELS = {
+    "deepseek": "deepseek-v4-flash",
+    "openai": "gpt-5.4-nano",
+}
+V5_STAGE3B_PROVIDER_IDS = ("deepseek", "openai")
 
 V5_STAGE3B_TEST_COMMANDS = {
     "v5_task_003": "python -m pytest -q tests/test_formatting.py::test_formatting_usage_error_help_hint",
@@ -92,9 +101,12 @@ def build_run_matrix_manifest(
     provider_cost_budget_report: str | Path,
     output_dir: str | Path,
     task_ids: list[str] | None = None,
+    provider_ids: list[str] | None = None,
+    deepseek_model_id: str = "deepseek-v4-flash",
+    openai_model_id: str = "gpt-5.4-nano",
     fail_if_output_exists: bool = True,
 ) -> Path:
-    """Build a V5 Stage 3B DeepSeek primary run matrix manifest."""
+    """Build a V5 Stage 3B primary-provider run matrix manifest."""
 
     root = Path(output_dir)
     _refuse_existing(root, V5_STAGE3B_OUTPUT_NAMES, fail_if_output_exists)
@@ -105,7 +117,17 @@ def build_run_matrix_manifest(
     task_set = _read_json(task_set_path)
     provider_gate = _read_json(provider_gate_path)
     provider_cost = _read_json(provider_cost_path)
-    _require_stage3b_inputs(task_set=task_set, provider_gate=provider_gate, provider_cost=provider_cost)
+    selected_providers = tuple(provider_ids or V5_STAGE3B_DEFAULT_PROVIDER_IDS)
+    model_by_provider = _model_by_provider(
+        deepseek_model_id=deepseek_model_id,
+        openai_model_id=openai_model_id,
+    )
+    _require_stage3b_inputs(
+        task_set=task_set,
+        provider_gate=provider_gate,
+        provider_cost=provider_cost,
+        provider_ids=selected_providers,
+    )
 
     selected_ids = tuple(task_ids or V5_STAGE3B_DEFAULT_TASK_IDS)
     tasks_by_id = _load_task_definitions(task_set)
@@ -117,7 +139,8 @@ def build_run_matrix_manifest(
     generated_task_dir.mkdir(parents=True, exist_ok=True)
     controlled_dir.mkdir(parents=True, exist_ok=True)
 
-    for index, task_id in enumerate(selected_ids, start=1):
+    cell_index = 0
+    for task_id in selected_ids:
         task = tasks_by_id.get(task_id)
         if task is None:
             raise ConfigError(f"run matrix selected task 不存在：{task_id}")
@@ -127,9 +150,6 @@ def build_run_matrix_manifest(
         task_yaml = _task_yaml_payload(task=task, adapter_visible=adapter_visible)
         task_yaml_path = generated_task_dir / f"{task_id}.yaml"
         _write_yaml(task_yaml_path, task_yaml)
-        controlled = _controlled_variables_payload(task=task, task_yaml_path=task_yaml_path)
-        controlled_path = controlled_dir / f"{task_id}_deepseek_simple_react_constrained.json"
-        _write_json(controlled_path, controlled)
         generated_ref = _evidence_ref(
             task_yaml_path,
             kind="v5_stage3b_generated_task_yaml",
@@ -139,38 +159,49 @@ def build_run_matrix_manifest(
             producer_stage="v5_stage3b_run_matrix",
             inspect_command="inspect-v5-run-matrix",
         )
-        controlled_ref = _evidence_ref(
-            controlled_path,
-            kind="v5_matrix_controlled_variables",
-            purpose=f"Controlled variables for {task_id} DeepSeek run",
-            visibility="audit_only",
-            producer_command="build-v5-run-matrix",
-            producer_stage="v5_stage3b_run_matrix",
-            inspect_command="inspect-v5-run-matrix",
-        )
         generated_task_refs.append(generated_ref)
-        controlled_refs.append(controlled_ref)
-        cells.append(
-            {
-                "cell_id": f"v5_stage3b_cell_{index:02d}_{task_id}_deepseek_simple_react_constrained",
-                "task_id": task_id,
-                "task_ref": _task_ref(task),
-                "generated_task_ref": generated_ref,
-                "provider_id": "deepseek",
-                "provider_mode": "primary",
-                "model_id": "deepseek-v4-flash",
-                "scaffold_id": "simple_react",
-                "budget_policy_id": "stage3b_constrained_one_turn_no_tool_calls",
-                "tool_policy_id": "stage3b_no_tool_calls",
-                "context_policy_id": "stage3b_default_context_compaction",
-                "environment_id": task.get("environment_id"),
-                "source_tree_hash": task.get("source_tree_hash"),
-                "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
-                "controlled_variables_ref": controlled_ref,
-                "counts_toward_core_real_provider_floor": True,
-                "counts_toward_resume_ready_multi_provider": False,
-            }
-        )
+        for provider_id in selected_providers:
+            cell_index += 1
+            controlled = _controlled_variables_payload(
+                task=task,
+                task_yaml_path=task_yaml_path,
+                provider_id=provider_id,
+                scaffold_id="simple_react",
+                budget_policy_id="stage3b_constrained_one_turn_no_tool_calls",
+            )
+            controlled_path = controlled_dir / f"{task_id}_{provider_id}_simple_react_constrained.json"
+            _write_json(controlled_path, controlled)
+            controlled_ref = _evidence_ref(
+                controlled_path,
+                kind="v5_matrix_controlled_variables",
+                purpose=f"Controlled variables for {task_id} {provider_id} run",
+                visibility="audit_only",
+                producer_command="build-v5-run-matrix",
+                producer_stage="v5_stage3b_run_matrix",
+                inspect_command="inspect-v5-run-matrix",
+            )
+            controlled_refs.append(controlled_ref)
+            cells.append(
+                {
+                    "cell_id": f"v5_stage3b_cell_{cell_index:02d}_{task_id}_{provider_id}_simple_react_constrained",
+                    "task_id": task_id,
+                    "task_ref": _task_ref(task),
+                    "generated_task_ref": generated_ref,
+                    "provider_id": provider_id,
+                    "provider_mode": "primary",
+                    "model_id": model_by_provider[provider_id],
+                    "scaffold_id": "simple_react",
+                    "budget_policy_id": "stage3b_constrained_one_turn_no_tool_calls",
+                    "tool_policy_id": "stage3b_no_tool_calls",
+                    "context_policy_id": "stage3b_default_context_compaction",
+                    "environment_id": task.get("environment_id"),
+                    "source_tree_hash": task.get("source_tree_hash"),
+                    "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
+                    "controlled_variables_ref": controlled_ref,
+                    "counts_toward_core_real_provider_floor": True,
+                    "counts_toward_resume_ready_multi_provider": provider_id in {"deepseek", "openai"},
+                }
+            )
 
     manifest_path = root / "v5_run_matrix_manifest.json"
     manifest = {
@@ -184,6 +215,8 @@ def build_run_matrix_manifest(
         "planned_matrix_cell_count": len(cells),
         "generated_task_refs": generated_task_refs,
         "controlled_variables_refs": controlled_refs,
+        "planned_provider_ids": list(selected_providers),
+        "planned_model_ids_by_provider": model_by_provider,
         "comparison_axes": ["scaffold", "budget", "provider"],
         "comparison_ready_task_count": sum(1 for cell in cells if tasks_by_id[cell["task_id"]].get("comparison_ready")),
         "agent_run_started": False,
@@ -215,7 +248,7 @@ def run_matrix_cells(
     allow_local_secret_file: bool = True,
     fail_if_output_exists: bool = True,
 ) -> Path:
-    """Run V5 Stage 3B DeepSeek matrix cells and write result evidence."""
+    """Run V5 Stage 3B primary-provider matrix cells and write result evidence."""
 
     root = Path(output_dir)
     _refuse_existing(root, V5_STAGE3B_RUN_OUTPUT_NAMES, fail_if_output_exists)
@@ -243,13 +276,16 @@ def run_matrix_cells(
     actual_provider_calls = 0
     for cell in cells:
         task_yaml_path = Path(cell["generated_task_ref"]["path"])
-        run_id = f"v5_stage3b_{cell['provider_id']}_{cell['task_id']}"
+        model_slug = _slug(str(cell["model_id"]))
+        run_id = f"v5_stage3b_{cell['provider_id']}_{cell['task_id']}_{model_slug}"
         config_path = configs_dir / f"{run_id}.yaml"
         _write_yaml(
             config_path,
             _run_config_payload(
                 output_dir=agent_runs_dir,
                 allow_local_secret_file=allow_local_secret_file,
+                provider_id=str(cell["provider_id"]),
+                model_id=str(cell["model_id"]),
             ),
         )
         result = _run_one_cell(
@@ -261,10 +297,18 @@ def run_matrix_cells(
         )
         actual_provider_calls += result["actual_provider_call_count"]
         results.append(result)
+        if _should_stop_after_provider_error(result):
+            break
 
     _write_jsonl(results_path, results)
     real_run_count = sum(1 for item in results if item.get("actual_provider_call_count", 0) > 0)
     primary_attempted_count = sum(1 for item in results if item.get("normalized_provider_status") == "primary_attempted")
+    provider_families = sorted({
+        str(item["provider_id"])
+        for item in results
+        if item.get("actual_provider_call_count", 0) > 0
+    })
+    hard_stop_reason = _hard_stop_reason(results)
     report = {
         "schema_version": "repo_harness_v5_run_matrix_execution_report_v0",
         "created_at": _utc_timestamp(),
@@ -285,9 +329,10 @@ def run_matrix_cells(
         "real_agent_run_task_count": real_run_count,
         "primary_attempted_count": primary_attempted_count,
         "provider_api_called": actual_provider_calls > 0,
-        "real_provider_families_with_actual_runs": ["deepseek"] if actual_provider_calls > 0 else [],
+        "real_provider_families_with_actual_runs": provider_families,
         "core_real_provider_floor_satisfied": real_run_count >= 6 and actual_provider_calls > 0,
-        "status": "passed" if real_run_count >= 6 and actual_provider_calls <= max_calls else "blocked",
+        "hard_stop_reason": hard_stop_reason,
+        "status": "passed" if real_run_count >= 6 and actual_provider_calls <= max_calls and hard_stop_reason is None else "blocked",
     }
     _write_json(report_path, report)
     executed_manifest = {
@@ -309,6 +354,7 @@ def run_matrix_cells(
         "actual_provider_calls": actual_provider_calls,
         "real_agent_run_task_count": real_run_count,
         "real_provider_families_with_actual_runs": report["real_provider_families_with_actual_runs"],
+        "hard_stop_reason": hard_stop_reason,
         "status": report["status"],
     }
     _write_json(executed_manifest_path, executed_manifest)
@@ -329,36 +375,45 @@ def run_matrix_cells(
 def build_comparison_reports(
     *,
     executed_run_matrix_manifest: str | Path,
+    additional_executed_run_matrix_manifests: list[str | Path] | None = None,
     provider_gate_report: str | Path,
     output_dir: str | Path,
     fail_if_output_exists: bool = True,
 ) -> Path:
-    """Build Stage 3C comparison reports and blocked resume-ready claim gate."""
+    """Build Stage 3C comparison reports and resume claim gate."""
 
     root = Path(output_dir)
     _refuse_existing(root, V5_STAGE3C_OUTPUT_NAMES, fail_if_output_exists)
     root.mkdir(parents=True, exist_ok=True)
-    manifest_path = Path(executed_run_matrix_manifest)
+    manifest_paths = [
+        Path(executed_run_matrix_manifest),
+        *[Path(path) for path in (additional_executed_run_matrix_manifests or [])],
+    ]
     provider_gate_path = Path(provider_gate_report)
-    manifest = _read_json(manifest_path)
     provider_gate = _read_json(provider_gate_path)
-    if manifest.get("agent_run_started") is not True or manifest.get("provider_api_called") is not True:
-        raise ConfigError("Stage 3C comparison reports 需要已执行且发生 provider API 调用的 run matrix。")
-    results_ref = manifest.get("matrix_cell_results_ref")
-    results_path = _path_from_ref(results_ref)
-    if results_path is None:
-        raise ConfigError("executed run matrix 缺少 matrix_cell_results_ref。")
-    results = _read_jsonl(results_path)
+    manifests = [_read_json(path) for path in manifest_paths]
+    result_paths: list[Path] = []
+    for index, manifest in enumerate(manifests):
+        if manifest.get("agent_run_started") is not True or manifest.get("provider_api_called") is not True:
+            raise ConfigError("Stage 3C comparison reports 需要已执行且发生 provider API 调用的 run matrix。")
+        results_ref = manifest.get("matrix_cell_results_ref")
+        results_path = _path_from_ref(results_ref)
+        if results_path is None:
+            raise ConfigError(f"executed run matrix[{index}] 缺少 matrix_cell_results_ref。")
+        result_paths.append(results_path)
+    results = [item for path in result_paths for item in _read_jsonl(path)]
     real_results = [item for item in results if item.get("actual_provider_call_count", 0) > 0]
-    if len(real_results) < 6:
-        raise ConfigError("Stage 3C comparison reports 需要至少 6 条真实 provider result。")
 
     real_provider_families = sorted({str(item["provider_id"]) for item in real_results})
     actual_records_by_provider = {
         provider: sum(1 for item in real_results if item.get("provider_id") == provider)
         for provider in real_provider_families
     }
-    comparison_cells = real_results[:4]
+    provider_pairs = _provider_comparison_pairs(real_results)
+    provider_comparison_valid = len(provider_pairs) >= 2
+    if len(real_results) < 6 and not provider_comparison_valid:
+        raise ConfigError("Stage 3C comparison reports 需要至少 6 条真实 provider result，或至少 2 个 DeepSeek/OpenAI 成对 provider comparison 任务。")
+    comparison_cells = _comparison_cells_from_pairs(provider_pairs) if provider_comparison_valid else real_results[:4]
     common_controlled_variables = [
         "task_id",
         "source_tree_hash",
@@ -366,12 +421,19 @@ def build_comparison_reports(
         "tool_policy_id",
         "context_policy_id",
         "environment_id",
-        "provider_id",
         "scaffold_id",
         "budget_policy_id",
     ]
-    matrix_ref = _artifact_ref_for_input(manifest_path, "v5_run_matrix_manifest_executed", "inspect-v5-run-matrix")
-    results_evidence_ref = _artifact_ref_for_input(results_path, "v5_matrix_cell_results", "inspect-v5-run-matrix")
+    matrix_refs = [
+        _artifact_ref_for_input(path, "v5_run_matrix_manifest_executed", "inspect-v5-run-matrix")
+        for path in manifest_paths
+    ]
+    result_refs = [
+        _artifact_ref_for_input(path, "v5_matrix_cell_results", "inspect-v5-run-matrix")
+        for path in result_paths
+    ]
+    matrix_ref = matrix_refs[0]
+    results_evidence_ref = result_refs[0]
     provider_gate_ref = _artifact_ref_for_input(provider_gate_path, "v5_provider_credential_gate_report", "inspect-v5-provider-gate")
 
     compare_scope_path = root / "v5_matrix_compare_scope_report.json"
@@ -379,20 +441,33 @@ def build_comparison_reports(
         "schema_version": V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
         "created_at": _utc_timestamp(),
         "producer_stage": "v5_stage3c_comparison_reports",
-        "comparison_axis": "diagnostic_baseline",
+        "comparison_axis": "provider" if provider_comparison_valid else "diagnostic_baseline",
         "controlled_variables": common_controlled_variables,
         "compared_cells": [item["cell_id"] for item in comparison_cells],
-        "compared_task_ids": [item["task_id"] for item in comparison_cells],
-        "comparison_validity": "diagnostic_only",
+        "compared_task_ids": (
+            [pair["task_id"] for pair in provider_pairs]
+            if provider_comparison_valid
+            else [item["task_id"] for item in comparison_cells]
+        ),
+        "comparison_validity": "valid" if provider_comparison_valid else "diagnostic_only",
         "comparison_validity_reason": (
-            "Stage 3C has one real provider family and one scaffold/budget shape; "
-            "the report proves controlled-variable binding for four real provider tasks "
-            "but does not support multi-provider, scaffold, or budget win-rate claims."
+            "Stage 3C has at least two tasks with DeepSeek and OpenAI real provider runs "
+            "under matching task, scaffold, budget, tool, context, environment, source tree, "
+            "and final verifier plan variables."
+            if provider_comparison_valid
+            else (
+                "Stage 3C has one real provider family and one scaffold/budget shape; "
+                "the report proves controlled-variable binding for four real provider tasks "
+                "but does not support multi-provider, scaffold, or budget win-rate claims."
+            )
         ),
         "counts_toward_core_comparison_proof": True,
-        "counts_toward_resume_ready_provider_comparison": False,
+        "counts_toward_resume_ready_provider_comparison": provider_comparison_valid,
         "run_matrix_manifest_ref": matrix_ref,
         "matrix_cell_results_ref": results_evidence_ref,
+        "run_matrix_manifest_refs": matrix_refs,
+        "matrix_cell_results_refs": result_refs,
+        "provider_pair_count": len(provider_pairs),
     }
     _write_json(compare_scope_path, compare_scope)
 
@@ -402,7 +477,7 @@ def build_comparison_reports(
         "created_at": _utc_timestamp(),
         "producer_stage": "v5_stage3c_comparison_reports",
         "comparison_axis": "provider",
-        "comparison_validity": "invalid",
+        "comparison_validity": "valid" if provider_comparison_valid else "invalid",
         "controlled_variables": [
             "task_id",
             "source_tree_hash",
@@ -413,18 +488,22 @@ def build_comparison_reports(
             "budget_policy_id",
             "environment_id",
         ],
-        "compared_cells": [],
+        "compared_cells": [item["cell_id"] for item in _comparison_cells_from_pairs(provider_pairs)],
+        "compared_task_ids": [pair["task_id"] for pair in provider_pairs],
+        "provider_pairs": provider_pairs,
         "provider_families_with_actual_runs": real_provider_families,
         "actual_records_by_provider": actual_records_by_provider,
         "required_resume_ready_shape": "2 tasks x 2 real provider families x same scaffold x same budget",
-        "resume_ready_provider_comparison_satisfied": False,
-        "blocking_reason": "only_deepseek_real_provider_family_has_actual_runs",
+        "resume_ready_provider_comparison_satisfied": provider_comparison_valid,
+        "blocking_reason": None if provider_comparison_valid else "missing_two_task_deepseek_openai_provider_pairs",
         "provider_gate_ref": provider_gate_ref,
         "run_matrix_manifest_ref": matrix_ref,
         "matrix_cell_results_ref": results_evidence_ref,
+        "run_matrix_manifest_refs": matrix_refs,
+        "matrix_cell_results_refs": result_refs,
         "structured_skips": provider_gate.get("structured_skips", []),
         "counts_toward_core_real_provider_floor": True,
-        "counts_toward_resume_ready_acceptance": False,
+        "counts_toward_resume_ready_acceptance": provider_comparison_valid,
     }
     _write_json(provider_report_path, provider_report)
 
@@ -451,60 +530,73 @@ def build_comparison_reports(
     _write_json(budget_report_path, budget_report)
 
     claim_gate_path = root / "v5_resume_claim_gate_report.json"
+    allowed_claims = [
+        "core real provider floor satisfied with real provider family evidence",
+        "credential-gated provider registry with structured skips",
+    ]
+    blocked_claims = [
+        "resume-ready provider comparison" if not provider_comparison_valid else None,
+        "scaffold comparison conclusion",
+        "budget comparison conclusion",
+        "preference export completed",
+        "interview-grade evaluation pack",
+        "resumable export stress tests",
+    ]
+    if provider_comparison_valid:
+        allowed_claims.extend(
+            [
+                "multi-provider agent runs",
+                "controlled multi-provider comparison",
+                "provider comparison proof for two tasks across DeepSeek and OpenAI",
+            ]
+        )
+    else:
+        blocked_claims.extend(["multi-provider agent runs", "controlled multi-provider comparison"])
     claim_gate = {
         "schema_version": V5_RESUME_CLAIM_GATE_REPORT_VERSION,
         "created_at": _utc_timestamp(),
         "stage": "stage3_partial",
-        "allowed_claims": [
-            "core real provider floor satisfied with one DeepSeek provider family",
-            "credential-gated provider registry with structured skips",
-            "diagnostic baseline comparison proof for four controlled real-provider tasks",
-        ],
-        "blocked_claims": [
-            "multi-provider agent runs",
-            "controlled multi-provider comparison",
-            "resume-ready provider comparison",
-            "scaffold comparison conclusion",
-            "budget comparison conclusion",
-            "preference export completed",
-            "interview-grade evaluation pack",
-            "resumable export stress tests",
-        ],
+        "allowed_claims": allowed_claims,
+        "blocked_claims": [claim for claim in blocked_claims if claim],
         "blocking_reasons": {
-            "provider": "only one real provider family has actual run evidence",
+            "provider": None if provider_comparison_valid else "missing two-task DeepSeek/OpenAI provider pairs",
             "scaffold": "no alternate scaffold cells have been executed yet",
             "budget": "no alternate budget cells have been executed yet",
             "preference_pair": "pending Stage 4 export pack",
             "demo_share_safe": "pending Stage 5 public-safe demo artifacts",
             "stress_test": "not claimed in Stage 3C",
         },
-        "provider_claim_status": "blocked_single_provider_family_deepseek_only",
+        "provider_claim_status": (
+            "satisfied_two_task_deepseek_openai_provider_pairs"
+            if provider_comparison_valid
+            else "blocked_missing_two_task_deepseek_openai_provider_pairs"
+        ),
         "preference_pair_claim_status": "pending_stage4",
         "demo_share_safe_status": "pending_stage5",
         "stress_test_claim_status": "not_claimed",
         "source_reports": [
-            matrix_ref,
-            results_evidence_ref,
+            *matrix_refs,
+            *result_refs,
             provider_gate_ref,
-            _evidence_ref(compare_scope_path, kind="v5_matrix_compare_scope_report", purpose="Stage 3C diagnostic comparison scope", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
-            _evidence_ref(provider_report_path, kind="v5_provider_comparison_report", purpose="Stage 3C provider comparison blocked report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
+            _evidence_ref(compare_scope_path, kind="v5_matrix_compare_scope_report", purpose="Stage 3C provider comparison scope", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
+            _evidence_ref(provider_report_path, kind="v5_provider_comparison_report", purpose="Stage 3C provider comparison report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
             _evidence_ref(scaffold_report_path, kind="v5_scaffold_comparison_report", purpose="Stage 3C scaffold comparison blocked report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
             _evidence_ref(budget_report_path, kind="v5_budget_comparison_report", purpose="Stage 3C budget comparison blocked report", visibility="audit_only", producer_command="build-v5-comparison-reports", producer_stage="v5_stage3c_comparison_reports", inspect_command="inspect-v5-run-matrix"),
         ],
         "core_comparison_proof": {
-            "status": "diagnostic_only",
-            "task_count": len(comparison_cells),
-            "comparison_axis": "diagnostic_baseline",
+            "status": "provider_valid" if provider_comparison_valid else "diagnostic_only",
+            "task_count": len(provider_pairs) if provider_comparison_valid else len(comparison_cells),
+            "comparison_axis": "provider" if provider_comparison_valid else "diagnostic_baseline",
         },
         "real_provider_families_with_actual_runs": real_provider_families,
         "actual_records_by_provider": actual_records_by_provider,
-        "resume_ready_provider_comparison_satisfied": False,
+        "resume_ready_provider_comparison_satisfied": provider_comparison_valid,
     }
     _write_json(claim_gate_path, claim_gate)
 
     command_entry = _builder_command_log_entry(
         command_name="build-v5-comparison-reports",
-        input_paths=[manifest_path, provider_gate_path],
+        input_paths=[*manifest_paths, provider_gate_path],
         output_paths=[
             compare_scope_path,
             provider_report_path,
@@ -572,7 +664,7 @@ def _run_one_cell(
     provider_call_events = [
         event for event in events
         if event.get("event_type") == "model_call_completed"
-        and event.get("data", {}).get("provider") == "deepseek"
+        and event.get("data", {}).get("provider") == cell["provider_id"]
     ]
     model_error_type = next(
         (
@@ -660,17 +752,14 @@ def _run_minimal_provider_agent_loop(
     if run_dir.exists():
         raise ConfigError(f"Stage 3B run directory 已存在，不能覆盖：{run_dir}")
     model_config = ModelConfig(
-        provider="deepseek",
-        model_id="deepseek-v4-flash",
+        provider=str(cell["provider_id"]),
+        model_id=str(cell["model_id"]),
         temperature=0.0,
         max_output_tokens=512,
         retry_policy="none",
         credential_policy="local_secret_file_redacted",
         provider_request_logging="redact_secrets",
-        provider_specific_options={
-            "allow_local_secret_file": True,
-            "thinking": {"type": "disabled"},
-        },
+        provider_specific_options=_provider_specific_options_for_cell(cell, allow_local_secret_file=True),
     )
     budget_manager = BudgetManager(
         max_turns=1,
@@ -814,7 +903,8 @@ def _stage3b_initial_messages(*, cell: dict[str, Any], task_yaml: dict[str, Any]
         "allowed_tools": [],
         "instruction": (
             "Return a concise engineering plan or final answer based only on this sanitized task input. "
-            "Do not invent hidden tests, gold patches, raw provider data, reward values, or verifier output."
+            "Keep the answer under 120 words. Do not invent hidden tests, gold patches, raw provider data, "
+            "reward values, or verifier output."
         ),
     }
     return [
@@ -909,7 +999,8 @@ def _write_stage3b_boundary_and_metrics(
         f"- run_id: {run_id}\n"
         f"- task_id: {cell['task_id']}\n"
         "- execution_path: minimal_provider_agent_loop\n"
-        "- provider_id: deepseek\n"
+        f"- provider_id: {cell['provider_id']}\n"
+        f"- model_id: {cell['model_id']}\n"
         f"- agent_stop_reason: {state.agent_stop_reason}\n"
         "- final_verifier_status: not_executed_stage3b_minimal_provider_loop\n"
         "- accepted: false\n"
@@ -922,31 +1013,39 @@ def _cell_identity(cell: dict[str, Any], *, run_id: str) -> dict[str, Any]:
         "task_id": cell["task_id"],
         "provider_id": cell["provider_id"],
         "provider_mode": cell["provider_mode"],
+        "model_id": cell["model_id"],
         "scaffold_id": cell["scaffold_id"],
         "budget_policy_id": cell["budget_policy_id"],
         "tool_policy_id": cell["tool_policy_id"],
         "context_policy_id": cell["context_policy_id"],
         "environment_id": cell["environment_id"],
         "source_tree_hash": cell["source_tree_hash"],
+        "final_verifier_plan_ref": cell.get("final_verifier_plan_ref"),
         "run_id": run_id,
     }
 
 
-def _run_config_payload(*, output_dir: Path, allow_local_secret_file: bool) -> dict[str, Any]:
+def _run_config_payload(
+    *,
+    output_dir: Path,
+    allow_local_secret_file: bool,
+    provider_id: str,
+    model_id: str,
+) -> dict[str, Any]:
     return {
         "run_id_prefix": "v5_stage3b",
         "model": {
-            "provider": "deepseek",
-            "model_id": "deepseek-v4-flash",
+            "provider": provider_id,
+            "model_id": model_id,
             "temperature": 0.0,
             "max_output_tokens": 512,
             "retry_policy": "none",
             "credential_policy": "local_secret_file_redacted" if allow_local_secret_file else "env_only",
             "provider_request_logging": "redact_secrets",
-            "provider_specific_options": {
-                "allow_local_secret_file": allow_local_secret_file,
-                "thinking": {"type": "disabled"},
-            },
+            "provider_specific_options": _provider_specific_options(
+                provider_id=provider_id,
+                allow_local_secret_file=allow_local_secret_file,
+            ),
         },
         "runtime": {
             "scaffold_id": "simple_react",
@@ -1054,7 +1153,14 @@ def _test_command_for_task(*, task: dict[str, Any], adapter_visible: dict[str, A
     raise ConfigError(f"{task_id} 没有 Stage 3B 可用的 pytest verifier command。")
 
 
-def _controlled_variables_payload(*, task: dict[str, Any], task_yaml_path: Path) -> dict[str, Any]:
+def _controlled_variables_payload(
+    *,
+    task: dict[str, Any],
+    task_yaml_path: Path,
+    provider_id: str,
+    scaffold_id: str,
+    budget_policy_id: str,
+) -> dict[str, Any]:
     return {
         "schema_version": "repo_harness_v5_matrix_controlled_variables_v0",
         "task_id": task["task_id"],
@@ -1064,12 +1170,153 @@ def _controlled_variables_payload(*, task: dict[str, Any], task_yaml_path: Path)
         "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
         "tool_policy_id": "stage3b_no_tool_calls",
         "context_policy_id": "stage3b_default_context_compaction",
-        "provider_id": "deepseek",
-        "scaffold_id": "simple_react",
-        "budget_policy_id": "stage3b_constrained_one_turn_no_tool_calls",
+        "provider_id": provider_id,
+        "scaffold_id": scaffold_id,
+        "budget_policy_id": budget_policy_id,
         "environment_id": task.get("environment_id"),
-        "comparison_validity_scope": "single_provider_core_real_run_floor",
+        "comparison_validity_scope": "provider_axis_controlled_run_floor",
     }
+
+
+def _model_by_provider(*, deepseek_model_id: str, openai_model_id: str) -> dict[str, str]:
+    return {
+        "deepseek": normalize_deepseek_model_id(deepseek_model_id),
+        "openai": normalize_openai_model_id(openai_model_id),
+    }
+
+
+def _provider_specific_options_for_cell(
+    cell: dict[str, Any],
+    *,
+    allow_local_secret_file: bool,
+) -> dict[str, Any]:
+    return _provider_specific_options(
+        provider_id=str(cell["provider_id"]),
+        allow_local_secret_file=allow_local_secret_file,
+    )
+
+
+def _provider_specific_options(*, provider_id: str, allow_local_secret_file: bool) -> dict[str, Any]:
+    options: dict[str, Any] = {"allow_local_secret_file": allow_local_secret_file}
+    if provider_id == "deepseek":
+        options["thinking"] = {"type": "disabled"}
+    return options
+
+
+def _slug(value: str) -> str:
+    return "".join(ch if ch.isalnum() else "_" for ch in value).strip("_")
+
+
+def _should_stop_after_provider_error(result: dict[str, Any]) -> bool:
+    if result.get("normalized_provider_status") != "provider_error":
+        return False
+    error_type = str(result.get("model_error_type") or "").lower()
+    message = str(result.get("failure_message_preview") or "").lower()
+    stop_markers = (
+        "auth_error",
+        "rate_limited",
+        "quota",
+        "insufficient",
+        "billing",
+        "credit",
+        "balance",
+    )
+    return any(marker in error_type or marker in message for marker in stop_markers)
+
+
+def _hard_stop_reason(results: list[dict[str, Any]]) -> str | None:
+    if not results:
+        return None
+    last = results[-1]
+    if _should_stop_after_provider_error(last):
+        error_type = last.get("model_error_type") or "provider_error"
+        return f"stopped_after_{error_type}"
+    return None
+
+
+def _provider_comparison_pairs(real_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[str, dict[str, dict[str, Any]]] = {}
+    for result in real_results:
+        if result.get("normalized_provider_status") != "primary_attempted":
+            continue
+        provider_id = str(result.get("provider_id"))
+        if provider_id not in {"deepseek", "openai"}:
+            continue
+        key = _provider_comparison_key(result)
+        groups.setdefault(key, {})[provider_id] = result
+    pairs: list[dict[str, Any]] = []
+    for by_provider in groups.values():
+        if {"deepseek", "openai"}.issubset(by_provider):
+            deepseek = by_provider["deepseek"]
+            openai = by_provider["openai"]
+            pairs.append(
+                {
+                    "task_id": str(deepseek["task_id"]),
+                    "providers": ["deepseek", "openai"],
+                    "cell_ids": [deepseek["cell_id"], openai["cell_id"]],
+                    "model_ids_by_provider": {
+                        "deepseek": deepseek.get("model_id"),
+                        "openai": openai.get("model_id"),
+                    },
+                    "controlled_variables": {
+                        "source_tree_hash": _controlled_value(deepseek, "source_tree_hash"),
+                        "final_verifier_plan_ref": _controlled_value(deepseek, "final_verifier_plan_ref"),
+                        "tool_policy_id": _controlled_value(deepseek, "tool_policy_id"),
+                        "context_policy_id": _controlled_value(deepseek, "context_policy_id"),
+                        "scaffold_id": _controlled_value(deepseek, "scaffold_id"),
+                        "budget_policy_id": _controlled_value(deepseek, "budget_policy_id"),
+                        "environment_id": _controlled_value(deepseek, "environment_id"),
+                    },
+                }
+            )
+    return sorted(pairs, key=lambda item: str(item["task_id"]))
+
+
+def _comparison_cells_from_pairs(provider_pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    cells: list[dict[str, Any]] = []
+    for pair in provider_pairs:
+        for cell_id in pair["cell_ids"]:
+            cells.append({"cell_id": cell_id, "task_id": pair["task_id"]})
+    return cells
+
+
+def _provider_comparison_key(result: dict[str, Any]) -> str:
+    key_payload = {
+        "task_id": _controlled_value(result, "task_id"),
+        "source_tree_hash": _controlled_value(result, "source_tree_hash"),
+        "final_verifier_plan_ref": _controlled_value(result, "final_verifier_plan_ref"),
+        "tool_policy_id": _controlled_value(result, "tool_policy_id"),
+        "context_policy_id": _controlled_value(result, "context_policy_id"),
+        "scaffold_id": _controlled_value(result, "scaffold_id"),
+        "budget_policy_id": _controlled_value(result, "budget_policy_id"),
+        "environment_id": _controlled_value(result, "environment_id"),
+    }
+    return json.dumps(key_payload, ensure_ascii=False, sort_keys=True)
+
+
+def _controlled_value(result: dict[str, Any], key: str) -> Any:
+    if key in result:
+        return result.get(key)
+    payload = _controlled_payload(result)
+    if key in payload:
+        return payload.get(key)
+    return None
+
+
+def _controlled_payload(result: dict[str, Any]) -> dict[str, Any]:
+    cached = result.get("_controlled_variables_payload")
+    if isinstance(cached, dict):
+        return cached
+    path = _path_from_ref(result.get("controlled_variables_ref"))
+    if path is None or not path.exists():
+        result["_controlled_variables_payload"] = {}
+        return {}
+    try:
+        payload = _read_json(path)
+    except ConfigError:
+        payload = {}
+    result["_controlled_variables_payload"] = payload
+    return payload
 
 
 def _blocked_axis_report(
@@ -1111,13 +1358,21 @@ def _require_stage3b_inputs(
     task_set: dict[str, Any],
     provider_gate: dict[str, Any],
     provider_cost: dict[str, Any],
+    provider_ids: tuple[str, ...],
 ) -> None:
     if task_set.get("strict_inventory_gate") != "passed":
         raise ConfigError("Stage 3B run matrix 需要 strict_inventory_gate=passed 的 task set。")
-    if provider_gate.get("credential_status_by_provider", {}).get("deepseek") != "present":
-        raise ConfigError("Stage 3B run matrix 需要 DeepSeek active credential present。")
-    if provider_gate.get("adapter_status_by_provider", {}).get("deepseek") != "primary_supported":
-        raise ConfigError("Stage 3B run matrix 需要 DeepSeek primary_supported。")
+    if not provider_ids:
+        raise ConfigError("Stage 3B run matrix 至少需要一个 provider_id。")
+    credential_status = provider_gate.get("credential_status_by_provider", {})
+    adapter_status = provider_gate.get("adapter_status_by_provider", {})
+    for provider_id in provider_ids:
+        if provider_id not in V5_STAGE3B_PROVIDER_IDS:
+            raise ConfigError(f"Stage 3B run matrix 不支持 provider_id={provider_id!r}。")
+        if credential_status.get(provider_id) != "present":
+            raise ConfigError(f"Stage 3B run matrix 需要 {provider_id} active credential present。")
+        if adapter_status.get(provider_id) != "primary_supported":
+            raise ConfigError(f"Stage 3B run matrix 需要 {provider_id} primary_supported。")
     if provider_cost.get("budget_exhausted_before_run") is True:
         raise ConfigError("Stage 3B run matrix 不能在 provider budget 已耗尽时启动。")
 

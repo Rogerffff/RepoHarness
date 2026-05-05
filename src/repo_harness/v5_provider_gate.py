@@ -21,6 +21,8 @@ from repo_harness.model_client.providers.openai import (
     OPENAI_DEFAULT_MODEL,
     OPENAI_ENDPOINT_CATEGORY,
     OPENAI_OFFICIAL_DOCS_URL,
+    OPENAI_PRICING_DOCS_URL,
+    OPENAI_STAGE3_ALLOWED_MODELS,
     openai_credential_status,
     openai_sdk_available,
 )
@@ -214,9 +216,10 @@ def build_provider_cost_budget_report(
                 "counts_toward_core_acceptance_if_actual_run_exists": True,
             },
             "openai": {
-                "primary_family": False,
-                "fallback_only_current_adapter": True,
-                "counts_toward_resume_ready_provider_comparison": False,
+                "primary_family": True,
+                "fallback_only_current_adapter": False,
+                "default_max_calls_reserved_for_stage3b": max(0, max_real_provider_calls),
+                "counts_toward_resume_ready_provider_comparison": True,
             },
             "anthropic_claude": {
                 "primary_family": False,
@@ -284,18 +287,22 @@ def _provider_registry_payload(*, task_set_path: Path, allow_local_secret_file: 
                 "provider_id": "openai",
                 "provider_family": "openai",
                 "adapter_module": "repo_harness.model_client.providers.openai.OpenAIProviderClient",
-                "adapter_status": "fallback_only",
-                "primary_provider_supported": False,
-                "fallback_only_current_adapter": True,
+                "adapter_status": "primary_supported",
+                "primary_provider_supported": True,
+                "fallback_only_current_adapter": False,
                 "default_model": OPENAI_DEFAULT_MODEL,
+                "allowed_models": sorted(OPENAI_STAGE3_ALLOWED_MODELS),
                 "base_url_category": OPENAI_ENDPOINT_CATEGORY,
                 "base_url": OPENAI_BASE_URL,
                 "official_docs_url": OPENAI_OFFICIAL_DOCS_URL,
+                "official_pricing_docs_url": OPENAI_PRICING_DOCS_URL,
                 "credential_env_var": "OPENAI_API_KEY",
+                "credential_policy": "env_only" if not allow_local_secret_file else "env_or_local_secret_file_redacted",
                 "openai_sdk_available": openai_sdk_available(),
-                "counts_toward_core_acceptance_if_actual_run_exists": False,
-                "counts_toward_resume_ready_provider_comparison": False,
-                "fallback_policy": "may only run as DeepSeek fallback until primary-provider gates are implemented",
+                "http_fallback_available": True,
+                "counts_toward_core_acceptance_if_actual_run_exists": True,
+                "counts_toward_resume_ready_provider_comparison": True,
+                "pricing_policy": "Use gpt-5.4-nano for low-cost path testing before gpt-5.5 formal comparison runs.",
             },
             {
                 "provider_id": "anthropic_claude",
@@ -334,7 +341,7 @@ def _credential_gate_payload(
     allow_local_secret_file: bool,
 ) -> dict[str, Any]:
     adapter_status = {
-        "openai": "fallback_only",
+        "openai": "primary_supported",
         "deepseek": "primary_supported",
         "anthropic_claude": "adapter_not_implemented",
     }
@@ -407,7 +414,7 @@ def _credential_gate_payload(
         },
         "credential_policy": {
             "deepseek": "env_only" if not allow_local_secret_file else "env_or_local_secret_file_redacted",
-            "openai": "env_only",
+            "openai": "env_only" if not allow_local_secret_file else "env_or_local_secret_file_redacted",
             "anthropic_claude": "env_only_but_adapter_not_implemented",
         },
         "adapter_status_by_provider": adapter_status,
@@ -433,7 +440,7 @@ def _credential_facts(*, allow_local_secret_file: bool) -> dict[str, dict[str, A
         and deepseek_any["credential_status"] == "present"
     ):
         non_active_sources.append(deepseek_any["credential_source"])
-    openai_status = openai_credential_status()
+    openai_status = openai_credential_status(allow_local_secret_file=allow_local_secret_file)
     anthropic_status = _anthropic_credential_status()
     return {
         "deepseek": {
@@ -488,24 +495,12 @@ def _structured_skips(
                 skip_type="credential_missing_skip",
                 credential_status="missing",
                 adapter_status=adapter_status_by_provider["openai"],
-                skip_reason="OpenAI fallback smoke has no active environment credential.",
-                affected_matrix_cells=["openai_fallback_stage3a_smoke"],
+                skip_reason="OpenAI provider comparison has no active credential under the Stage 3A credential policy.",
+                affected_matrix_cells=["openai_primary_stage3a_smoke", "openai_provider_comparison_cells"],
                 affects_core_acceptance=False,
                 affects_resume_ready_acceptance=True,
             )
         )
-    skips.append(
-        _skip(
-            provider_id="openai",
-            skip_type="primary_provider_comparison_not_enabled_skip",
-            credential_status=credential_status_by_provider.get("openai", "missing"),
-            adapter_status=adapter_status_by_provider["openai"],
-            skip_reason="OpenAI is still limited to DeepSeek fallback smoke and cannot count as a primary provider comparison family.",
-            affected_matrix_cells=["openai_primary_provider_comparison_cells"],
-            affects_core_acceptance=False,
-            affects_resume_ready_acceptance=True,
-        )
-    )
     skips.append(
         _skip(
             provider_id="anthropic_claude",
@@ -565,14 +560,14 @@ def _provider_smoke_payload(*, credential_facts: dict[str, dict[str, Any]]) -> d
     statuses.append(
         {
             "provider_id": "openai",
-            "provider_mode": "fallback_only",
+            "provider_mode": "primary",
             "raw_smoke_status": "not_executed" if openai_status == "present" else "skipped_no_credentials",
-            "normalized_smoke_status": "ready_for_stage3b_fallback_smoke" if openai_status == "present" else "credential_missing_skip",
+            "normalized_smoke_status": "ready_for_stage3b_primary_smoke" if openai_status == "present" else "credential_missing_skip",
             "credential_status": openai_status,
-            "adapter_status": "fallback_only",
+            "adapter_status": "primary_supported",
             "provider_api_called": False,
             "counts_toward_real_provider_accepted_rate": False,
-            "counts_toward_primary_openai_provider_family": False,
+            "counts_toward_primary_openai_provider_family": openai_status == "present",
         }
     )
     statuses.append(

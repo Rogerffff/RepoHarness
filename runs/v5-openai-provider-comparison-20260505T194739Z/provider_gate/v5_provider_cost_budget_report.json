@@ -1,0 +1,49 @@
+{
+  "actual_cost_proxy_usd": 0.0,
+  "actual_real_provider_calls": 0,
+  "budget_exhausted_before_run": false,
+  "cost_limited_structured_skip": [],
+  "cost_proxy_formula": "actual_cost_proxy_usd is supplied by the run matrix builder; Stage 3A records zero calls before real agent runs.",
+  "created_at": "2026-05-05T19:48:43Z",
+  "hard_stop_policy": {
+    "stop_before_call_when_max_cost_usd_reached": true,
+    "stop_before_call_when_max_real_provider_calls_reached": true,
+    "structured_skip_status": "cost_limited_structured_skip"
+  },
+  "max_cost_usd": 1.0,
+  "max_real_provider_calls": 8,
+  "producer_stage": "v5_stage3a_provider_gate",
+  "provider_family_budget_policy": {
+    "anthropic_claude": {
+      "adapter_status": "adapter_not_implemented",
+      "counts_toward_resume_ready_provider_comparison": false,
+      "primary_family": false
+    },
+    "deepseek": {
+      "counts_toward_core_acceptance_if_actual_run_exists": true,
+      "default_max_calls_reserved_for_stage3b": 8,
+      "primary_family": true
+    },
+    "openai": {
+      "counts_toward_resume_ready_provider_comparison": true,
+      "default_max_calls_reserved_for_stage3b": 8,
+      "fallback_only_current_adapter": false,
+      "primary_family": true
+    }
+  },
+  "provider_gate_ref": {
+    "inspect_command": "inspect-v5-provider-gate",
+    "kind": "v5_provider_credential_gate_report",
+    "path": "runs/v5-openai-provider-comparison-20260505T194739Z/provider_gate/v5_provider_credential_gate_report.json",
+    "producer_command": "build-v5-provider-gate",
+    "producer_stage": "v5_stage3a_provider_gate",
+    "purpose": "V5 Stage 3A provider credential gate report",
+    "schema_version": "repo_harness_v5_evidence_ref_v0",
+    "sha256": "98a9e5ae64ed255a89b6838ffad331d0f59c643578b0e21629744c6d19535390",
+    "share_safe": false,
+    "size_bytes": 5296,
+    "visibility": "audit_only"
+  },
+  "schema_version": "repo_harness_v5_provider_cost_budget_report_v0",
+  "status": "passed"
+}

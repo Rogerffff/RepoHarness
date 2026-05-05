@@ -1,0 +1,217 @@
+{
+  "authorization": "<REDACTED_CREDENTIAL>",
+  "base_url": "https://api.openai.com/v1",
+  "body": {
+    "max_tokens": 512,
+    "messages": [
+      {
+        "content": "<REDACTED_CREDENTIAL>",
+        "role": "system"
+      },
+      {
+        "content": "<REDACTED_CREDENTIAL>",
+        "role": "user"
+      }
+    ],
+    "model": "gpt-5.5",
+    "stream": false,
+    "temperature": 0.0,
+    "tool_choice": "auto",
+    "tools": [
+      {
+        "function": {
+          "description": "List files inside the workspace.\nUse list_files with optional path and pattern.",
+          "name": "list_files",
+          "parameters": {
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "pattern": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "<REDACTED_CREDENTIAL>",
+          "name": "read_file",
+          "parameters": {
+            "properties": {
+              "end_line": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "path": {
+                "type": "string"
+              },
+              "start_line": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Search workspace files for a literal substring. grep does not evaluate regular expressions; paths must be workspace-relative.\nUse grep with query and optional root/path. Query is a literal substring, not a regex.",
+          "name": "grep",
+          "parameters": {
+            "properties": {
+              "path": {
+                "description": "Alias for root; workspace-relative.",
+                "type": "string"
+              },
+              "query": {
+                "description": "Literal substring to find.",
+                "type": "string"
+              },
+              "root": {
+                "description": "Optional workspace-relative search root.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "<REDACTED_CREDENTIAL>",
+          "name": "edit_file",
+          "parameters": {
+            "properties": {
+              "new_text": {
+                "type": "string"
+              },
+              "old_text": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "old_text",
+              "new_text"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "<REDACTED_CREDENTIAL>",
+          "name": "create_file",
+          "parameters": {
+            "properties": {
+              "content": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "content"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Run a restricted diagnostic command inside the workspace. This is not a general shell: do not use cd, pipes, redirects, shell composition, variable expansion, or arbitrary python -c snippets. Use cwd for directories, read_file/grep for inspection, run_tests for configured test feedback, and git_diff for patch review.\nUse bash only for the restricted allowlist. Pass a single command plus optional cwd and timeout_sec; do not combine commands.",
+          "name": "bash",
+          "parameters": {
+            "properties": {
+              "command": {
+                "description": "Single restricted diagnostic command.",
+                "type": "string"
+              },
+              "cwd": {
+                "description": "Optional workspace-relative working directory.",
+                "type": "string"
+              },
+              "timeout_sec": {
+                "description": "Optional command timeout in seconds.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "command"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Show the current workspace diff.\nUse git_diff without arguments.",
+          "name": "git_diff",
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ]
+  },
+  "credential_policy": {
+    "credential_source": "local_secret_file_redacted",
+    "credential_source_label": "local_secret_file_redacted",
+    "local_secret_file_policy": "<REDACTED_CREDENTIAL>",
+    "redact_provider_response": true,
+    "redact_request_headers": true,
+    "required_env_vars": [
+      "OPENAI_API_KEY"
+    ],
+    "schema_version": "repo_harness_provider_credential_policy_v0",
+    "secret_scan_policy": "<REDACTED_CREDENTIAL>"
+  },
+  "credential_source": "local_secret_file_redacted",
+  "export_allowed": false,
+  "model_call_id": "<REDACTED_CREDENTIAL>",
+  "provider": "openai",
+  "provider_adapter_version": "repo_harness_openai_provider_v0",
+  "raw_request_logging_policy": "redact_secrets",
+  "request_timeout_seconds": 240.0,
+  "schema_version": "repo_harness_provider_chat_completion_request_v0",
+  "tool_schema_snapshot_ref": {
+    "artifact_id": "<REDACTED_CREDENTIAL>",
+    "created_by_event_id": "<REDACTED_CREDENTIAL>",
+    "kind": "tool_schema_snapshot",
+    "redaction_status": "not_scanned",
+    "relative_path": "<REDACTED_CREDENTIAL>",
+    "retention_policy": "keep",
+    "schema_version": "repo_harness_artifact_v0",
+    "sha256": "<REDACTED_CREDENTIAL>",
+    "size_bytes": 221
+  },
+  "training_payload_allowed": false
+}

@@ -593,10 +593,11 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-task-visibility V5_TASK_VISIBILITY_
 
 ### 7.2 provider 策略
 
-当前代码事实是：
+当前代码事实分为原始 Stage 3 baseline 和后续 provider comparison 扩展两层：
 
 - `deepseek` 可以作为 primary real provider。
-- `openai` 当前只允许作为 DeepSeek fallback smoke run，不能直接计入 primary provider comparison。
+- 原始 Stage 3 baseline 中，`openai` 只允许作为 DeepSeek fallback smoke run，不能直接计入 primary provider comparison。
+- `runs/v5-openai-provider-comparison-20260505T194739Z/` 扩展实现之后，`openai` 已经可以作为 primary real provider 进入 V5 run matrix。低成本链路测试使用 `gpt-5.4-nano`，正式 provider comparison 使用 `gpt-5.5`；两种模型和价格必须以 OpenAI 官方 pricing 文档为准。OpenAI fallback success 仍然不能被重新解释为 primary OpenAI provider evidence。
 - `anthropic_claude` 需要进入 provider registry 和 credential gate；如果 adapter 尚未实现，只能记录 `adapter_not_implemented_skip`，不能计入真实 provider family。
 
 V5 Stage 3 的默认实现策略是：
@@ -604,7 +605,7 @@ V5 Stage 3 的默认实现策略是：
 1. 先完成 provider registry 和 credential gate，不调用 provider API。
 2. 执行低成本 provider smoke，验证 raw request / response redaction 和 structured skip。
 3. 在 Stage 2B 严格任务库存门关闭后，让 DeepSeek 先产生至少 1 个真实 provider family 的实际 agent run evidence，满足 `core_acceptance` 的真实 provider 下限。
-4. 如果 OpenAI 可以被实现为 primary provider 并通过 smoke，则用 OpenAI 作为第二个真实 provider family，争取 `resume_ready_acceptance` 的 multi-provider gate。
+4. 如果 OpenAI 可以被实现为 primary provider 并通过 smoke，则用 OpenAI 作为第二个真实 provider family，争取 `resume_ready_acceptance` 的 multi-provider gate。当前扩展证据已经在 provider axis 上形成 `2 个任务 x DeepSeek/OpenAI x 同一 scaffold x 同一 budget` 的 valid comparison proof，但还没有补齐 scaffold comparison、budget comparison、preference pair 和最终 Stage 6 acceptance regeneration。
 5. 如果 Anthropic Claude adapter 可以在 V5 范围内安全实现并通过 smoke，则作为第三个 provider family 或 structured skip 记录；如果实现成本过高，不阻塞 `core_acceptance`。
 6. OpenAI fallback success 只能作为 fallback evidence，不能伪装成 primary OpenAI provider accepted run。
 
@@ -633,7 +634,7 @@ Resume-ready matrix：
 2. 定义并实现 `v5_provider_credential_gate_report.json`。
 3. 定义并实现 `v5_provider_cost_budget_report.json`，记录 `max_real_provider_calls`、`max_cost_usd`、cost proxy、actual calls 和 cost-limited structured skip。
 4. 实现或扩展 provider smoke，使 DeepSeek、OpenAI 和 Anthropic Claude 都能产生 accepted、provider_error、credential_missing_skip、adapter_not_implemented_skip 或 cost_limited_structured_skip。
-5. 如果要让 OpenAI 计入 resume-ready provider family，必须解除当前 primary 限制并新增测试，证明 `model.provider=openai` 作为 primary provider 时不会与 fallback policy 混淆。这个变更必须同时覆盖 `model_client.factory`、`evaluation.runner`、`evaluation.schemas.ExperimentConfig.model_provider` allowlist 和对应单元 / 集成测试，避免出现单任务入口可运行但实验矩阵调度入口拒绝 OpenAI primary 的断层。
+5. 如果要让 OpenAI 计入 resume-ready provider family，必须解除当前 primary 限制并新增测试，证明 `model.provider=openai` 作为 primary provider 时不会与 fallback policy 混淆。当前扩展已经覆盖 `model_client.factory`、OpenAI provider adapter、V5 provider gate、V5 run matrix、V5 comparison gate、CLI 和对应单元测试；如果后续把 V5 run matrix 接入更高层 evaluation runner 或 experiment config，还必须同步更新这些入口的 provider allowlist，避免出现单任务入口可运行但实验矩阵调度入口拒绝 OpenAI primary 的断层。
 6. 如果实现 Anthropic Claude adapter，必须提供官方 SDK 或 HTTP 调用策略、redaction policy、credential policy、token usage proxy 和 negative tests。
 7. 定义 V5 provider status normalization，把现有 smoke 报告中的 `skipped_no_credentials` 归一化为 V5 的 `credential_missing_skip`，并把 `fallback_success`、`provider_error`、`adapter_not_implemented_skip` 和 `cost_limited_structured_skip` 分别写入稳定枚举。旧状态可以作为 raw status 保留在 audit-only 字段中，但 result summary 和 claim gate 只能使用 V5 归一化状态。
 8. 实现 `v5_run_matrix_manifest.json` 和 `v5_matrix_cell_results.jsonl`。

@@ -1,11 +1,15 @@
-"""OpenAI fallback provider adapter using the official Python SDK when available."""
+"""OpenAI provider adapter for Chat Completions-compatible RepoHarness runs."""
 
 from __future__ import annotations
 
 import importlib
 import json
 import os
+import re
 import time
+import urllib.error
+import urllib.request
+from pathlib import Path
 from typing import Any
 
 from repo_harness.errors import ConfigError
@@ -27,10 +31,17 @@ from repo_harness.model_client.schemas import ModelRequestContext, ModelResponse
 from repo_harness.trajectory import RunRecorder
 
 OPENAI_PROVIDER_VERSION = "repo_harness_openai_provider_v0"
-OPENAI_DEFAULT_MODEL = "gpt-5-mini"
+OPENAI_DEFAULT_MODEL = "gpt-5.4-nano"
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 OPENAI_ENDPOINT_CATEGORY = "openai_chat_completions_sdk"
 OPENAI_OFFICIAL_DOCS_URL = "https://developers.openai.com/api/docs/quickstart?language=python"
+OPENAI_PRICING_DOCS_URL = "https://developers.openai.com/api/docs/pricing"
+OPENAI_CHAT_COMPLETIONS_PATH = "/chat/completions"
+OPENAI_STAGE3_ALLOWED_MODELS = {
+    "gpt-5.4-nano",
+    "gpt-5.5",
+    "gpt-5-mini",
+}
 
 
 class OpenAIProviderClient:
@@ -38,10 +49,12 @@ class OpenAIProviderClient:
         self,
         *,
         model_id: str = OPENAI_DEFAULT_MODEL,
+        base_url: str = OPENAI_BASE_URL,
         credential: ProviderCredential,
         client_factory: Any | None = None,
     ) -> None:
-        self.model_id = model_id
+        self.model_id = normalize_openai_model_id(model_id)
+        self.base_url = base_url.rstrip("/")
         self.credential = credential
         self._client_factory = client_factory
 
@@ -50,13 +63,14 @@ class OpenAIProviderClient:
         cls,
         *,
         model_id: str = OPENAI_DEFAULT_MODEL,
+        base_url: str = OPENAI_BASE_URL,
+        allow_local_secret_file: bool = False,
     ) -> "OpenAIProviderClient":
-        credential = resolve_openai_credential()
+        model_id = normalize_openai_model_id(model_id)
+        credential = resolve_openai_credential(allow_local_secret_file=allow_local_secret_file)
         if credential is None:
             raise ConfigError("model.provider=openai 缺少 OPENAI_API_KEY 凭证。")
-        if not openai_sdk_available():
-            raise ConfigError("model.provider=openai 需要安装官方 openai Python SDK。")
-        return cls(model_id=model_id, credential=credential)
+        return cls(model_id=model_id, base_url=base_url, credential=credential)
 
     def generate(self, *, request: ModelRequestContext, recorder: RunRecorder) -> ModelResponse:
         started = time.monotonic()
@@ -64,7 +78,7 @@ class OpenAIProviderClient:
             request,
             model_id=self.model_id,
             provider="openai",
-            base_url=OPENAI_BASE_URL,
+            base_url=self.base_url,
         )
         request_payload["provider_adapter_version"] = OPENAI_PROVIDER_VERSION
         request_payload["credential_source"] = self.credential.source
@@ -112,6 +126,8 @@ class OpenAIProviderClient:
         )
 
     def _create_completion(self, body: dict[str, Any], request: ModelRequestContext) -> dict[str, Any]:
+        if self._client_factory is None and not openai_sdk_available():
+            return self._post_json(body, request)
         try:
             client = self._build_client()
             response = client.chat.completions.create(
@@ -130,6 +146,77 @@ class OpenAIProviderClient:
             )
         return payload
 
+    def _post_json(
+        self,
+        body: dict[str, Any],
+        request: ModelRequestContext,
+    ) -> dict[str, Any]:
+        url = f"{self.base_url}{OPENAI_CHAT_COMPLETIONS_PATH}"
+        data = json.dumps(_sdk_body(body), ensure_ascii=False).encode("utf-8")
+        http_request = urllib.request.Request(
+            url,
+            data=data,
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.credential.value}",
+            },
+        )
+        try:
+            with urllib.request.urlopen(http_request, timeout=request.request_timeout_seconds) as response:
+                text = response.read().decode("utf-8")
+                payload = json.loads(text)
+                if isinstance(payload, dict):
+                    request_id = response.headers.get("x-request-id")
+                    if request_id and "_request_id" not in payload:
+                        payload["_request_id"] = request_id
+                    return payload
+                raise ProviderRequestError(
+                    ProviderErrorInfo(
+                        model_error_type="invalid_response",
+                        message="OpenAI HTTP response was not a JSON object",
+                    )
+                )
+        except TimeoutError as exc:
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message=sanitize_provider_error_message(str(exc)),
+                    retryable=True,
+                )
+            ) from exc
+        except urllib.error.HTTPError as exc:
+            payload = _read_error_payload(exc)
+            message = _error_message_from_payload(payload) or f"OpenAI HTTP {exc.code}"
+            error_type = classify_http_status(exc.code, payload=payload, message=message)
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type=error_type,
+                    message=message,
+                    status_code=exc.code,
+                    retryable=exc.code in {429, 500, 503, 504},
+                    provider_request_id=exc.headers.get("x-request-id"),
+                    payload=payload,
+                )
+            ) from exc
+        except urllib.error.URLError as exc:
+            reason = sanitize_provider_error_message(str(exc.reason))
+            error_type = "provider_timeout" if "timed out" in reason.lower() else "provider_error"
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type=error_type,
+                    message=reason,
+                    retryable=True,
+                )
+            ) from exc
+        except json.JSONDecodeError as exc:
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="invalid_response",
+                    message=sanitize_provider_error_message(str(exc)),
+                )
+            ) from exc
+
     def _build_client(self) -> Any:
         if self._client_factory is not None:
             return self._client_factory(api_key=self.credential.value)
@@ -137,15 +224,32 @@ class OpenAIProviderClient:
         return module.OpenAI(api_key=self.credential.value)
 
 
-def resolve_openai_credential() -> ProviderCredential | None:
+def normalize_openai_model_id(model_id: str | None) -> str:
+    if model_id in {None, "", "replay-script-v0"}:
+        return OPENAI_DEFAULT_MODEL
+    if model_id not in OPENAI_STAGE3_ALLOWED_MODELS:
+        raise ConfigError(
+            "OpenAI V5 provider comparison 当前只允许 gpt-5.4-nano、gpt-5.5 或 gpt-5-mini。"
+        )
+    return str(model_id)
+
+
+def resolve_openai_credential(*, allow_local_secret_file: bool = False) -> ProviderCredential | None:
     value = os.environ.get("OPENAI_API_KEY")
     if not value:
+        if os.environ.get("REPO_HARNESS_DISABLE_LOCAL_SECRET_FILE") == "1":
+            return None
+        if not allow_local_secret_file:
+            return None
+        local_secret = _read_local_openai_secret()
+        if local_secret:
+            return ProviderCredential(value=local_secret, source="local_secret_file_redacted")
         return None
     return ProviderCredential(value=value, source="environment")
 
 
-def openai_credential_status() -> dict[str, str]:
-    credential = resolve_openai_credential()
+def openai_credential_status(*, allow_local_secret_file: bool = False) -> dict[str, str]:
+    credential = resolve_openai_credential(allow_local_secret_file=allow_local_secret_file)
     if credential is None:
         return {"credential_status": "missing", "credential_source": "none"}
     return {"credential_status": "present", "credential_source": credential.source}
@@ -158,6 +262,11 @@ def openai_sdk_available() -> bool:
 def _sdk_body(body: dict[str, Any]) -> dict[str, Any]:
     payload = dict(body)
     payload.pop("extra_body", None)
+    model_id = str(payload.get("model") or "")
+    if model_id.startswith("gpt-5") and "max_tokens" in payload:
+        payload["max_completion_tokens"] = payload.pop("max_tokens")
+    if model_id.startswith("gpt-5"):
+        payload.pop("temperature", None)
     return payload
 
 
@@ -194,6 +303,39 @@ def _exception_payload(exc: Exception) -> dict[str, Any]:
     if isinstance(body, dict):
         return body
     return {}
+
+
+def _read_local_openai_secret() -> str | None:
+    path = Path("reference/deepseek_api.md")
+    if not path.exists() or not path.is_file():
+        return None
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(r"(?im)^\s*OPENAI_API_KEY\s*:\s*(sk-[^\s`]+)\s*$", text)
+    return match.group(1) if match else None
+
+
+def _read_error_payload(exc: urllib.error.HTTPError) -> dict[str, Any]:
+    try:
+        text = exc.read().decode("utf-8")
+    except Exception:
+        return {"error": {"message": f"HTTP {exc.code}"}}
+    try:
+        payload = json.loads(text)
+        return payload if isinstance(payload, dict) else {"raw_error": text}
+    except json.JSONDecodeError:
+        return {"raw_error": text}
+
+
+def _error_message_from_payload(payload: dict[str, Any]) -> str | None:
+    error = payload.get("error")
+    if isinstance(error, dict):
+        message = error.get("message")
+        return sanitize_provider_error_message(str(message)) if message is not None else None
+    message = payload.get("message")
+    return sanitize_provider_error_message(str(message)) if message is not None else None
 
 
 def _object_to_dict(value: Any) -> dict[str, Any]:

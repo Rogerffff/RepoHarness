@@ -1221,7 +1221,7 @@ def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False
     payload = _read_json_for_inspect(path, failures)
     schema_version = payload.get("schema_version")
     if schema_version == V5_RUN_MATRIX_MANIFEST_VERSION:
-        _inspect_v5_run_matrix_deep(payload, failures)
+        _inspect_v5_run_matrix_deep(payload, failures, require_complete=assert_complete)
     elif schema_version == V5_MATRIX_CELL_RESULT_VERSION:
         _inspect_v5_matrix_cell_result(payload, failures, label="matrix_cell_result")
     elif schema_version == V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION:
@@ -1229,7 +1229,12 @@ def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False
     return _schema_inspect_result("Inspect V5 run matrix", path, failures, assert_complete=assert_complete)
 
 
-def _inspect_v5_run_matrix_deep(payload: dict[str, Any], failures: list[str]) -> None:
+def _inspect_v5_run_matrix_deep(
+    payload: dict[str, Any],
+    failures: list[str],
+    *,
+    require_complete: bool,
+) -> None:
     cells = payload.get("planned_matrix_cells")
     if not isinstance(cells, list):
         failures.append("planned_matrix_cells 必须是 list。")
@@ -1240,10 +1245,8 @@ def _inspect_v5_run_matrix_deep(payload: dict[str, Any], failures: list[str]) ->
         if not isinstance(cell, dict):
             failures.append(f"planned_matrix_cells[{index}] 必须是 object。")
             continue
-        if cell.get("provider_id") == "openai" and cell.get("provider_mode") == "primary":
-            failures.append("OpenAI fallback-only adapter 不能出现在 primary provider planned cell 中。")
-        if cell.get("provider_id") == "openai" and cell.get("counts_toward_resume_ready_multi_provider") is True:
-            failures.append("OpenAI fallback-only cell 不能计入 resume-ready multi-provider。")
+        if cell.get("provider_id") == "openai" and cell.get("provider_mode") == "fallback_only":
+            failures.append("OpenAI provider comparison cell 不能再作为 fallback_only planned cell。")
         for ref_field in ("generated_task_ref", "controlled_variables_ref"):
             if cell.get(ref_field):
                 _inspect_v5_ref(cell.get(ref_field), failures, label=f"planned_matrix_cells[{index}].{ref_field}")
@@ -1254,18 +1257,19 @@ def _inspect_v5_run_matrix_deep(payload: dict[str, Any], failures: list[str]) ->
         _inspect_v5_ref(results_ref, failures, label="matrix_cell_results_ref")
         results_path = _path_from_ref(results_ref)
         results = _read_jsonl_for_inspect(results_path, failures) if results_path is not None else []
-        if len(results) < 6:
+        enforce_core_floor = require_complete or payload.get("status") == "passed"
+        if enforce_core_floor and len(results) < 6:
             failures.append("Stage 3B executed run matrix 至少需要 6 条 matrix cell results。")
         actual_run_count = sum(1 for item in results if item.get("actual_provider_call_count", 0) > 0)
-        if actual_run_count < 6:
+        if enforce_core_floor and actual_run_count < 6:
             failures.append("Stage 3B executed run matrix 至少需要 6 个真实 provider agent run evidence。")
         families = {
             item.get("provider_id")
             for item in results
             if item.get("actual_provider_call_count", 0) > 0
         }
-        if "deepseek" not in families:
-            failures.append("Stage 3B executed run matrix 必须至少包含 DeepSeek real provider family evidence。")
+        if not families.intersection({"deepseek", "openai"}):
+            failures.append("Stage 3B executed run matrix 必须至少包含一个真实 provider family evidence。")
         for index, result in enumerate(results):
             _inspect_v5_matrix_cell_result(result, failures, label=f"matrix_cell_results[{index}]")
         execution_report_ref = payload.get("run_matrix_execution_report_ref")
@@ -1275,7 +1279,7 @@ def _inspect_v5_run_matrix_deep(payload: dict[str, Any], failures: list[str]) ->
             if report:
                 if report.get("actual_provider_calls", 0) > report.get("max_real_provider_calls", 0):
                     failures.append("run matrix execution report actual_provider_calls 超过 max_real_provider_calls。")
-                if report.get("real_agent_run_task_count", 0) < 6:
+                if enforce_core_floor and report.get("real_agent_run_task_count", 0) < 6:
                     failures.append("run matrix execution report real_agent_run_task_count 必须至少为 6。")
     else:
         if payload.get("provider_api_called") is not False:
@@ -1289,10 +1293,8 @@ def _inspect_v5_matrix_cell_result(result: dict[str, Any], failures: list[str], 
         failures.append(f"{label}.normalized_provider_status 枚举值无效。")
     if result.get("normalized_provider_status") == "fallback_success" and result.get("counts_toward_primary_accepted_rate") is True:
         failures.append(f"{label}.fallback_success 不能计入 primary accepted rate。")
-    if result.get("provider_id") == "openai" and result.get("provider_mode") == "primary":
-        failures.append(f"{label}.OpenAI fallback-only adapter 不能作为 primary provider result。")
-    if result.get("provider_id") == "openai" and result.get("counts_toward_core_real_provider_floor") is True:
-        failures.append(f"{label}.OpenAI fallback-only result 不能计入 core real provider floor。")
+    if result.get("provider_id") == "openai" and result.get("provider_mode") == "fallback_only":
+        failures.append(f"{label}.OpenAI provider comparison result 不能标记为 fallback_only。")
     if result.get("provider_api_called") is True and result.get("actual_provider_call_count", 0) <= 0:
         failures.append(f"{label}.provider_api_called=true 时 actual_provider_call_count 必须大于 0。")
     if result.get("actual_provider_call_count", 0) > 0:
@@ -1376,8 +1378,8 @@ def inspect_v5_provider_gate(report: str | Path, *, assert_consistent: bool = Fa
                 failures.append(f"{provider} adapter_status 无效：{status}")
         if adapter_status.get("deepseek") != "primary_supported":
             failures.append("deepseek 必须保持 primary_supported。")
-        if adapter_status.get("openai") != "fallback_only":
-            failures.append("openai 当前只能是 fallback_only，不能伪装成 primary provider。")
+        if adapter_status.get("openai") not in {"fallback_only", "primary_supported"}:
+            failures.append("openai adapter_status 必须是 fallback_only 或 primary_supported。")
         if adapter_status.get("anthropic_claude") != "adapter_not_implemented":
             failures.append("anthropic_claude 当前必须记录 adapter_not_implemented，除非后续阶段正式实现 adapter。")
     if payload.get("provider_raw_content_policy") != V5_PROVIDER_RAW_CONTENT_POLICY:
@@ -1489,10 +1491,19 @@ def _inspect_provider_registry_ref(ref: Any, failures: list[str]) -> None:
             failures.append(f"provider registry report 缺少 {provider}。")
     if by_id.get("deepseek", {}).get("adapter_status") != "primary_supported":
         failures.append("provider registry 必须把 deepseek 记录为 primary_supported。")
-    if by_id.get("openai", {}).get("adapter_status") != "fallback_only":
-        failures.append("provider registry 必须把 openai 记录为 fallback_only。")
-    if by_id.get("openai", {}).get("counts_toward_resume_ready_provider_comparison") is not False:
+    openai_adapter_status = by_id.get("openai", {}).get("adapter_status")
+    if openai_adapter_status not in {"fallback_only", "primary_supported"}:
+        failures.append("provider registry 必须把 openai 记录为 fallback_only 或 primary_supported。")
+    if (
+        openai_adapter_status == "fallback_only"
+        and by_id.get("openai", {}).get("counts_toward_resume_ready_provider_comparison") is not False
+    ):
         failures.append("OpenAI fallback-only registry entry 不能计入 resume-ready provider comparison。")
+    if (
+        openai_adapter_status == "primary_supported"
+        and by_id.get("openai", {}).get("counts_toward_resume_ready_provider_comparison") is not True
+    ):
+        failures.append("OpenAI primary-supported registry entry 必须允许计入 resume-ready provider comparison。")
     if by_id.get("anthropic_claude", {}).get("adapter_status") != "adapter_not_implemented":
         failures.append("provider registry 必须把 anthropic_claude 记录为 adapter_not_implemented。")
 
@@ -1515,7 +1526,11 @@ def _inspect_provider_smoke_ref(ref: Any, failures: list[str]) -> None:
     for provider in V5_PROVIDER_FAMILIES:
         if provider not in by_provider:
             failures.append(f"provider_smoke_statuses 缺少 {provider}。")
-    if by_provider.get("openai", {}).get("counts_toward_primary_openai_provider_family") is not False:
+    openai_smoke = by_provider.get("openai", {})
+    if (
+        openai_smoke.get("provider_mode") == "fallback_only"
+        and openai_smoke.get("counts_toward_primary_openai_provider_family") is not False
+    ):
         failures.append("OpenAI fallback smoke 不能计入 primary OpenAI provider family。")
     if by_provider.get("anthropic_claude", {}).get("normalized_smoke_status") != "adapter_not_implemented_skip":
         failures.append("Anthropic Claude smoke 必须归一化为 adapter_not_implemented_skip。")

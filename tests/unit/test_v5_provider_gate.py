@@ -37,7 +37,7 @@ def test_v5_provider_gate_builder_redacts_env_credentials_and_inspects(
     payload = _read_json(gate_path)
     assert payload["credential_status_by_provider"]["deepseek"] == "present"
     assert payload["credential_status_by_provider"]["openai"] == "present"
-    assert payload["adapter_status_by_provider"]["openai"] == "fallback_only"
+    assert payload["adapter_status_by_provider"]["openai"] == "primary_supported"
     assert payload["adapter_status_by_provider"]["anthropic_claude"] == "adapter_not_implemented"
     assert payload["fallback_success_counts_toward_primary_openai"] is False
     assert "Inspect V5 provider gate: complete" in inspect_v5_provider_gate(
@@ -76,7 +76,7 @@ def test_v5_provider_gate_records_missing_credential_and_adapter_skips(
     skip_types = {(item["provider_id"], item["skip_type"]) for item in payload["structured_skips"]}
     assert ("deepseek", "credential_missing_skip") in skip_types
     assert ("openai", "credential_missing_skip") in skip_types
-    assert ("openai", "primary_provider_comparison_not_enabled_skip") in skip_types
+    assert ("openai", "primary_provider_comparison_not_enabled_skip") not in skip_types
     assert ("anthropic_claude", "adapter_not_implemented_skip") in skip_types
     assert payload["actual_real_provider_calls"] == 0
     assert inspect_v5_provider_gate(gate_path, assert_consistent=True)
@@ -97,16 +97,16 @@ def test_v5_provider_gate_refuses_task_set_before_strict_inventory_gate(tmp_path
         )
 
 
-def test_v5_provider_gate_inspect_rejects_openai_primary_or_secret_marker(tmp_path: Path) -> None:
+def test_v5_provider_gate_inspect_rejects_openai_invalid_status_or_secret_marker(tmp_path: Path) -> None:
     gate_path = build_provider_gate_report(
         task_set_manifest=_write_task_set(tmp_path),
         output_dir=tmp_path / "provider_gate",
     )
     payload = _read_json(gate_path)
-    payload["adapter_status_by_provider"]["openai"] = "primary_supported"
+    payload["adapter_status_by_provider"]["openai"] = "adapter_not_implemented"
     bad_openai = tmp_path / "bad_openai_provider_gate.json"
     _write_json(bad_openai, payload)
-    with pytest.raises(ConfigError, match="openai 当前只能是 fallback_only"):
+    with pytest.raises(ConfigError, match="openai adapter_status"):
         inspect_v5_provider_gate(bad_openai, assert_consistent=True)
 
     payload = _read_json(gate_path)

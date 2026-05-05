@@ -12,6 +12,7 @@ from repo_harness.model_client.providers.deepseek import (
     DEEPSEEK_DEFAULT_BASE_URL,
     normalize_deepseek_model_id,
 )
+from repo_harness.model_client.providers.openai import OPENAI_BASE_URL, normalize_openai_model_id
 from repo_harness.model_client.replay import ReplayModelClient
 from repo_harness.model_client.schemas import ModelProviderOptions, ProviderCredentialPolicy
 
@@ -41,16 +42,18 @@ def create_model_client(model_config: ModelConfig) -> ModelClient:
             ),
         )
     if model_config.provider == "openai":
-        if not _is_openai_fallback_options(model_config.provider_specific_options):
-            raise ConfigError(
-                "model.provider=openai 只允许作为 DeepSeek fallback smoke run；"
-                "请记录 requested_provider=deepseek、actual_provider=openai、fallback_reason "
-                "和 fallback_policy_version。"
-            )
-        return OpenAIProviderClient.from_options(model_id=model_config.model_id)
+        return OpenAIProviderClient.from_options(
+            model_id=normalize_openai_model_id(model_config.model_id),
+            base_url=str(
+                model_config.provider_specific_options.get("base_url")
+                or OPENAI_BASE_URL
+            ),
+            allow_local_secret_file=bool(
+                model_config.provider_specific_options.get("allow_local_secret_file", False)
+            ),
+        )
     raise ConfigError(
-        "Stage 11 支持 model.provider=replay、fake、mock、deepseek；"
-        "openai 只允许作为 DeepSeek fallback 内部运行；"
+        "Stage 11 支持 model.provider=replay、fake、mock、deepseek、openai；"
         f"收到 {model_config.provider!r}。"
     )
 
@@ -79,12 +82,3 @@ def _required_env_vars(provider: str) -> list[str]:
     if provider == "openai":
         return ["OPENAI_API_KEY"]
     return []
-
-
-def _is_openai_fallback_options(options: dict[str, object]) -> bool:
-    return (
-        options.get("requested_provider") == "deepseek"
-        and options.get("actual_provider") == "openai"
-        and bool(options.get("fallback_reason"))
-        and bool(options.get("fallback_policy_version"))
-    )
