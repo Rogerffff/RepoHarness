@@ -117,8 +117,20 @@ from repo_harness.v4_acceptance import (
     build_v4_run_selection_manifest,
 )
 from repo_harness.v5_evidence import (
+    build_pre_acceptance_integrity_report,
+    build_schema_fixtures,
     build_v5_preimplementation,
+    inspect_v5_acceptance,
+    inspect_v5_demo_artifacts,
+    inspect_v5_evidence_integrity,
+    inspect_v5_export_pack,
+    inspect_v5_inputs,
     inspect_v5_preimplementation,
+    inspect_v5_provider_cost_budget,
+    inspect_v5_provider_gate,
+    inspect_v5_run_matrix,
+    inspect_v5_task_set,
+    inspect_v5_task_visibility,
 )
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
@@ -879,6 +891,104 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v5_preimplementation_parser.add_argument("binding", help="v5_preflight_input_binding.json 路径。")
     inspect_v5_preimplementation_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 Stage 0 输入完整。")
 
+    build_v5_schema_fixtures_parser = subparsers.add_parser(
+        "build-v5-schema-fixtures",
+        help="构建 V5 Stage 1 schema fixtures、tracking table 和 lineage schema report。",
+    )
+    build_v5_schema_fixtures_parser.add_argument("--output-dir", required=True)
+    build_v5_schema_fixtures_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_evidence_integrity_parser = subparsers.add_parser(
+        "build-v5-evidence-integrity",
+        help="构建 V5 pre-acceptance evidence integrity report。",
+    )
+    build_v5_evidence_integrity_parser.add_argument("--critical-evidence-manifest", required=True)
+    build_v5_evidence_integrity_parser.add_argument("--pre-acceptance-command-log", required=True)
+    build_v5_evidence_integrity_parser.add_argument("--output", required=True)
+    build_v5_evidence_integrity_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    inspect_v5_evidence_integrity_parser = subparsers.add_parser(
+        "inspect-v5-evidence-integrity",
+        help="只读检查 V5 pre-acceptance evidence integrity report。",
+    )
+    inspect_v5_evidence_integrity_parser.add_argument("report", help="v5_pre_acceptance_evidence_integrity_report.json 路径。")
+    inspect_v5_evidence_integrity_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 pre-acceptance evidence integrity 完整通过。")
+
+    inspect_v5_task_set_parser = subparsers.add_parser(
+        "inspect-v5-task-set",
+        help="只读检查 V5 task set manifest skeleton。",
+    )
+    inspect_v5_task_set_parser.add_argument("manifest", help="v5_task_set_manifest.json 路径。")
+    inspect_v5_task_set_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 task set 完整通过。")
+
+    inspect_v5_task_visibility_parser = subparsers.add_parser(
+        "inspect-v5-task-visibility",
+        help="只读检查 V5 task visibility scan report skeleton。",
+    )
+    inspect_v5_task_visibility_parser.add_argument("report", help="v5_task_visibility_scan_report.json 路径。")
+    inspect_v5_task_visibility_parser.add_argument("--assert-clean", action="store_true", help="要求 V5 task visibility scan 无泄漏。")
+
+    inspect_v5_run_matrix_parser = subparsers.add_parser(
+        "inspect-v5-run-matrix",
+        help="只读检查 V5 run matrix manifest skeleton。",
+    )
+    inspect_v5_run_matrix_parser.add_argument("manifest", help="v5_run_matrix_manifest.json 路径。")
+    inspect_v5_run_matrix_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 run matrix 完整通过。")
+
+    inspect_v5_provider_gate_parser = subparsers.add_parser(
+        "inspect-v5-provider-gate",
+        help="只读检查 V5 provider credential gate report skeleton。",
+    )
+    inspect_v5_provider_gate_parser.add_argument("report", help="v5_provider_credential_gate_report.json 路径。")
+    inspect_v5_provider_gate_parser.add_argument("--assert-consistent", action="store_true", help="要求 provider gate 一致。")
+
+    inspect_v5_provider_cost_budget_parser = subparsers.add_parser(
+        "inspect-v5-provider-cost-budget",
+        help="只读检查 V5 provider cost budget report skeleton。",
+    )
+    inspect_v5_provider_cost_budget_parser.add_argument("report", help="v5_provider_cost_budget_report.json 路径。")
+    inspect_v5_provider_cost_budget_parser.add_argument("--assert-consistent", action="store_true", help="要求 provider cost budget 一致。")
+
+    inspect_v5_export_pack_parser = subparsers.add_parser(
+        "inspect-v5-export-pack",
+        help="只读检查 V5 export result pack manifest skeleton。",
+    )
+    inspect_v5_export_pack_parser.add_argument("manifest", help="v5_export_result_pack_manifest.json 路径。")
+    inspect_v5_export_pack_parser.add_argument("--assert-clean", action="store_true", help="要求 V5 export pack 无污染。")
+
+    inspect_v5_demo_artifacts_parser = subparsers.add_parser(
+        "inspect-v5-demo-artifacts",
+        help="只读检查 V5 resume/demo artifacts skeleton。",
+    )
+    inspect_v5_demo_artifacts_parser.add_argument("index", help="v5_resume_artifact_index.json 或相关 demo artifact manifest 路径。")
+    inspect_v5_demo_artifacts_parser.add_argument("--assert-share-safe", action="store_true", help="要求 demo artifacts share-safe。")
+
+    inspect_v5_inputs_parser = subparsers.add_parser(
+        "inspect-v5-inputs",
+        help="只读检查 V5 acceptance inputs skeleton。",
+    )
+    inspect_v5_inputs_parser.add_argument("inputs", help="v5_acceptance_inputs.json 路径。")
+    inspect_v5_inputs_parser.add_argument("--assert-complete", action="store_true", help="要求 V5 acceptance inputs 完整通过。")
+
+    inspect_v5_acceptance_parser = subparsers.add_parser(
+        "inspect-v5-acceptance",
+        help="只读检查 V5 acceptance report skeleton。",
+    )
+    inspect_v5_acceptance_parser.add_argument("report", help="v5_acceptance_report.json 路径。")
+    inspect_v5_acceptance_parser.add_argument("--assert-core-complete", action="store_true", help="要求 core_acceptance 通过。")
+    inspect_v5_acceptance_parser.add_argument("--assert-resume-ready", action="store_true", help="要求 resume_ready_acceptance 通过。")
+    inspect_v5_acceptance_parser.add_argument("--assert-complete", action="store_true", help="等价于 --assert-resume-ready。")
+
     return parser
 
 
@@ -1637,6 +1747,100 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 preimplementation 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v5-schema-fixtures":
+        try:
+            output_path = build_schema_fixtures(
+                output_dir=args.output_dir,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 schema fixtures 构建失败：{exc}\n")
+        print(f"V5 schema tracking table：{output_path}")
+        return 0
+    if args.command == "build-v5-evidence-integrity":
+        try:
+            output_path = build_pre_acceptance_integrity_report(
+                critical_evidence_manifest=args.critical_evidence_manifest,
+                pre_acceptance_command_log=args.pre_acceptance_command_log,
+                output=args.output,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 evidence integrity 构建失败：{exc}\n")
+        print(f"V5 pre-acceptance evidence integrity report：{output_path}")
+        return 0
+    if args.command == "inspect-v5-evidence-integrity":
+        try:
+            print(
+                inspect_v5_evidence_integrity(
+                    args.report,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 evidence integrity 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-task-set":
+        try:
+            print(inspect_v5_task_set(args.manifest, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 task set 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-task-visibility":
+        try:
+            print(inspect_v5_task_visibility(args.report, assert_clean=args.assert_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 task visibility 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-run-matrix":
+        try:
+            print(inspect_v5_run_matrix(args.manifest, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 run matrix 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-provider-gate":
+        try:
+            print(inspect_v5_provider_gate(args.report, assert_consistent=args.assert_consistent))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 provider gate 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-provider-cost-budget":
+        try:
+            print(inspect_v5_provider_cost_budget(args.report, assert_consistent=args.assert_consistent))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 provider cost budget 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-export-pack":
+        try:
+            print(inspect_v5_export_pack(args.manifest, assert_clean=args.assert_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 export pack 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-demo-artifacts":
+        try:
+            print(inspect_v5_demo_artifacts(args.index, assert_share_safe=args.assert_share_safe))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 demo artifacts 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-inputs":
+        try:
+            print(inspect_v5_inputs(args.inputs, assert_complete=args.assert_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 acceptance inputs 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-v5-acceptance":
+        try:
+            print(
+                inspect_v5_acceptance(
+                    args.report,
+                    assert_core_complete=args.assert_core_complete,
+                    assert_resume_ready=args.assert_resume_ready,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 acceptance 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:

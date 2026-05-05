@@ -15,11 +15,36 @@ from repo_harness import __version__
 from repo_harness.errors import ConfigError
 from repo_harness.export.manifest import sha256_file
 from repo_harness.schema_versions import (
+    V5_ACCEPTANCE_INPUTS_VERSION,
+    V5_ACCEPTANCE_LINEAGE_SCHEMA_REPORT_VERSION,
+    V5_ACCEPTANCE_REPORT_VERSION,
+    V5_ARTIFACT_INSPECT_TRACKING_TABLE_VERSION,
     V5_BASELINE_CHECK_REPORT_VERSION,
     V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
+    V5_CRITICAL_EVIDENCE_MANIFEST_VERSION,
+    V5_DEMO_TRANSCRIPT_INDEX_VERSION,
     V5_DOCUMENTATION_SYNC_REPORT_VERSION,
     V5_EVIDENCE_REF_VERSION,
+    V5_EXPORT_RESULT_PACK_MANIFEST_VERSION,
+    V5_FAILURE_TAXONOMY_REPORT_VERSION,
+    V5_INTERVIEW_RESULT_PACK_MANIFEST_VERSION,
+    V5_MATRIX_CELL_RESULT_VERSION,
+    V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
+    V5_PRE_ACCEPTANCE_EVIDENCE_INTEGRITY_REPORT_VERSION,
+    V5_PREFERENCE_PAIR_BLOCKED_REPORT_VERSION,
     V5_PREFLIGHT_INPUT_BINDING_VERSION,
+    V5_PROVIDER_COST_BUDGET_REPORT_VERSION,
+    V5_PROVIDER_CREDENTIAL_GATE_REPORT_VERSION,
+    V5_PUBLIC_DEMO_BUNDLE_MANIFEST_VERSION,
+    V5_RESULT_SUMMARY_TABLE_VERSION,
+    V5_RESUME_ARTIFACT_INDEX_VERSION,
+    V5_RESUME_CLAIM_GATE_REPORT_VERSION,
+    V5_REWARD_SOURCE_TAXONOMY_REPORT_VERSION,
+    V5_RUN_MATRIX_MANIFEST_VERSION,
+    V5_SCHEMA_TRACKING_TABLE_VERSION,
+    V5_TASK_INVENTORY_REPORT_VERSION,
+    V5_TASK_SET_MANIFEST_VERSION,
+    V5_TASK_VISIBILITY_SCAN_REPORT_VERSION,
     V5_V4_CLOSURE_REPORT_VERSION,
 )
 from repo_harness.workspace.source_hash import compute_source_tree_hash
@@ -68,6 +93,436 @@ V5_STAGE0_OUTPUT_NAMES = (
 V4_LATEST_DIR = "runs/v4-final-rerun-20260504T194758Z"
 V4_DOC_SYNC_BUNDLE_NAME = "acceptance_bundle_manifest_doc_sync_20260505T075410Z.json"
 V4_DOC_SYNC_COMMAND_LOG_NAME = "final_acceptance_command_log_doc_sync_20260505T075410Z.jsonl"
+
+V5_VISIBILITY_VALUES = (
+    "model_visible",
+    "trainable",
+    "diagnostic_only",
+    "audit_only",
+    "evaluator_only",
+    "public_safe",
+)
+V5_ACCEPTANCE_STATUS_VALUES = ("passed", "failed", "blocked")
+V5_PROVIDER_FAMILIES = ("openai", "deepseek", "anthropic_claude")
+V5_CREDENTIAL_STATUS_VALUES = ("present", "missing", "not_configured")
+V5_ADAPTER_STATUS_VALUES = ("primary_supported", "fallback_only", "adapter_not_implemented")
+V5_PROVIDER_STATUS_VALUES = (
+    "primary_attempted",
+    "credential_missing_skip",
+    "adapter_not_implemented_skip",
+    "cost_limited_structured_skip",
+    "fallback_success",
+    "provider_error",
+)
+V5_CLAIM_GATE_STAGE_VALUES = ("stage3_partial", "stage4_partial", "stage5_final", "acceptance_final")
+V5_COMPARISON_AXES = ("provider", "scaffold", "budget", "diagnostic_baseline")
+V5_PARTITION_COUNT_FIELDS = (
+    "real_provider_trainable_records",
+    "mock_or_replay_records",
+    "diagnostic_records",
+    "blocked_records",
+    "synthetic_safe_stress_records",
+)
+V5_FORBIDDEN_PUBLIC_OR_TRAINABLE_MARKERS = (
+    "evaluator-only",
+    "evaluator_only",
+    "gold patch",
+    "raw test patch",
+    "provider raw request",
+    "provider_raw_request",
+    "provider raw response",
+    "provider_raw_response",
+    "credential",
+    "authorization",
+    "reward scalar",
+    "reward label",
+)
+V5_POST_REPORT_EVIDENCE_CLASSES = (
+    "acceptance_report_reference_integrity",
+    "acceptance_bundle_command_lineage_integrity",
+    "post_report_inspect_output",
+    "bundle_final_output",
+    "doc_sync_output",
+)
+V5_CRITICAL_EVIDENCE_CLASSES = (
+    "baseline_proof",
+    "regression_acceptance",
+    "v4_closure_baseline",
+    "task_definition",
+    "visibility_scan",
+    "provider_gate",
+    "run_matrix",
+    "export_pack",
+    "demo_artifact",
+    "acceptance_pretest",
+    "pre_acceptance_command_log",
+    "final_verifier_boundary",
+    "trajectory",
+    "claim_gate",
+)
+
+V5_SCHEMA_SPECS: tuple[dict[str, Any], ...] = (
+    {
+        "schema_name": "V5EvidenceRef",
+        "schema_version": V5_EVIDENCE_REF_VERSION,
+        "required_fields": (
+            "path",
+            "sha256",
+            "size_bytes",
+            "kind",
+            "purpose",
+            "visibility",
+            "share_safe",
+            "producer_command",
+            "producer_stage",
+            "inspect_command",
+        ),
+        "inspect_command": "inspect-v5-evidence-integrity",
+        "valid_fixture": "tests/fixtures/v5/evidence_ref_valid.json",
+        "negative_fixture": "tests/fixtures/v5/evidence_ref_sha256_mismatch.json",
+    },
+    {
+        "schema_name": "V5AcceptanceInputs",
+        "schema_version": V5_ACCEPTANCE_INPUTS_VERSION,
+        "required_fields": (
+            "schema_version",
+            "created_at",
+            "current_head",
+            "v2_acceptance_report_ref",
+            "v3_acceptance_report_ref",
+            "v3_acceptance_bundle_ref",
+            "v4_acceptance_inputs_ref",
+            "v4_acceptance_report_ref",
+            "v4_doc_sync_acceptance_bundle_ref",
+            "v4_doc_sync_final_command_log_ref",
+            "v5_evidence_refs",
+            "stress_test_executed",
+        ),
+        "inspect_command": "inspect-v5-inputs",
+        "valid_fixture": "tests/fixtures/v5/acceptance_inputs_valid.json",
+        "negative_fixture": "tests/fixtures/v5/acceptance_inputs_post_report_leak.json",
+    },
+    {
+        "schema_name": "V5AcceptanceReport",
+        "schema_version": V5_ACCEPTANCE_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "acceptance_inputs_ref",
+            "core_acceptance.status",
+            "core_acceptance.required_checks",
+            "resume_ready_acceptance.status",
+            "resume_ready_acceptance.required_checks",
+            "allowed_claims",
+            "blocked_claims",
+            "claim_gate_report_ref",
+            "acceptance_report_reference_integrity.expected_check",
+        ),
+        "inspect_command": "inspect-v5-acceptance",
+        "valid_fixture": "tests/fixtures/v5/acceptance_report_valid_core.json",
+        "negative_fixture": "tests/fixtures/v5/acceptance_report_references_post_report_output.json",
+    },
+    {
+        "schema_name": "V5TaskSetManifest",
+        "schema_version": V5_TASK_SET_MANIFEST_VERSION,
+        "required_fields": (
+            "schema_version",
+            "accepted_auditable_task_count",
+            "pr_issue_task_count",
+            "swebench_like_anchor_count",
+            "task_refs",
+            "inventory_report_ref",
+            "visibility_scan_ref",
+        ),
+        "inspect_command": "inspect-v5-task-set",
+        "valid_fixture": "tests/fixtures/v5/task_set_valid.json",
+        "negative_fixture": "tests/fixtures/v5/task_set_below_inventory_gate.json",
+    },
+    {
+        "schema_name": "V5TaskInventoryReport",
+        "schema_version": V5_TASK_INVENTORY_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "accepted_auditable_task_count",
+            "pr_issue_task_count",
+            "swebench_like_anchor_count",
+            "strict_inventory_gate",
+            "source_mix",
+        ),
+        "inspect_command": "inspect-v5-task-set",
+        "valid_fixture": "tests/fixtures/v5/task_inventory_valid.json",
+        "negative_fixture": "tests/fixtures/v5/task_inventory_missing_pr_issue_count.json",
+    },
+    {
+        "schema_name": "V5TaskVisibilityScanReport",
+        "schema_version": V5_TASK_VISIBILITY_SCAN_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "model_visible_leak_count",
+            "share_safe_violation_count",
+            "trainable_payload_contamination_count",
+            "findings",
+            "status",
+        ),
+        "inspect_command": "inspect-v5-task-visibility",
+        "valid_fixture": "tests/fixtures/v5/task_visibility_valid.json",
+        "negative_fixture": "tests/fixtures/v5/task_visibility_model_visible_leak.json",
+    },
+    {
+        "schema_name": "V5ProviderCredentialGateReport",
+        "schema_version": V5_PROVIDER_CREDENTIAL_GATE_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "provider_families",
+            "credential_status_by_provider",
+            "adapter_status_by_provider",
+            "structured_skips",
+            "raw_secret_value_present",
+            "provider_raw_content_policy",
+        ),
+        "inspect_command": "inspect-v5-provider-gate",
+        "valid_fixture": "tests/fixtures/v5/provider_gate_valid.json",
+        "negative_fixture": "tests/fixtures/v5/provider_gate_secret_leak.json",
+    },
+    {
+        "schema_name": "V5ProviderCostBudgetReport",
+        "schema_version": V5_PROVIDER_COST_BUDGET_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "max_real_provider_calls",
+            "max_cost_usd",
+            "cost_proxy_formula",
+            "actual_real_provider_calls",
+            "actual_cost_proxy_usd",
+            "cost_limited_structured_skip",
+            "budget_exhausted_before_run",
+        ),
+        "inspect_command": "inspect-v5-provider-cost-budget",
+        "valid_fixture": "tests/fixtures/v5/provider_cost_budget_valid.json",
+        "negative_fixture": "tests/fixtures/v5/provider_cost_budget_overrun.json",
+    },
+    {
+        "schema_name": "V5RunMatrixManifest",
+        "schema_version": V5_RUN_MATRIX_MANIFEST_VERSION,
+        "required_fields": (
+            "schema_version",
+            "task_set_ref",
+            "provider_gate_ref",
+            "provider_cost_budget_ref",
+            "planned_matrix_cells",
+            "controlled_variables_refs",
+            "comparison_axes",
+            "agent_run_started",
+            "provider_api_called",
+        ),
+        "inspect_command": "inspect-v5-run-matrix",
+        "valid_fixture": "tests/fixtures/v5/run_matrix_valid.json",
+        "negative_fixture": "tests/fixtures/v5/run_matrix_missing_controlled_variables.json",
+    },
+    {
+        "schema_name": "V5MatrixCellResult",
+        "schema_version": V5_MATRIX_CELL_RESULT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "task_id",
+            "provider_id",
+            "provider_mode",
+            "normalized_provider_status",
+            "scaffold_id",
+            "budget_policy_id",
+            "tool_policy_id",
+            "context_policy_id",
+            "environment_id",
+            "source_tree_hash",
+            "run_id",
+            "run_dir",
+            "final_verifier_status",
+            "trajectory_ref",
+            "final_verifier_boundary_ref",
+            "controlled_variables_ref",
+        ),
+        "inspect_command": "inspect-v5-run-matrix",
+        "valid_fixture": "tests/fixtures/v5/matrix_cell_valid.json",
+        "negative_fixture": "tests/fixtures/v5/matrix_cell_fallback_marked_primary.json",
+    },
+    {
+        "schema_name": "V5MatrixCompareScopeReport",
+        "schema_version": V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "comparison_axis",
+            "controlled_variables",
+            "compared_cells",
+            "comparison_validity",
+        ),
+        "inspect_command": "inspect-v5-run-matrix",
+        "valid_fixture": "tests/fixtures/v5/matrix_compare_scope_valid.json",
+        "negative_fixture": "tests/fixtures/v5/matrix_compare_scope_missing_controlled_variables.json",
+    },
+    {
+        "schema_name": "V5ExportResultPackManifest",
+        "schema_version": V5_EXPORT_RESULT_PACK_MANIFEST_VERSION,
+        "required_fields": (
+            "schema_version",
+            "sft_export_ref",
+            "rl_rollout_export_ref",
+            "failure_dataset_ref",
+            "partition_counts",
+            "reward_source_taxonomy_ref",
+            "failure_taxonomy_ref",
+            "export_audit_ref",
+        ),
+        "one_of_required_fields": (("preference_pair_export_ref", "preference_pair_blocked_report_ref"),),
+        "inspect_command": "inspect-v5-export-pack",
+        "valid_fixture": "tests/fixtures/v5/export_pack_valid.json",
+        "negative_fixture": "tests/fixtures/v5/export_pack_missing_blocked_partition.json",
+    },
+    {
+        "schema_name": "V5RewardSourceTaxonomyReport",
+        "schema_version": V5_REWARD_SOURCE_TAXONOMY_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "allowed_reward_metadata_paths",
+            "reward_scalar_model_visible_count",
+            "reward_label_model_visible_count",
+            "status",
+        ),
+        "inspect_command": "inspect-v5-export-pack",
+        "valid_fixture": "tests/fixtures/v5/reward_source_taxonomy_valid.json",
+        "negative_fixture": "tests/fixtures/v5/reward_source_taxonomy_model_visible_reward.json",
+    },
+    {
+        "schema_name": "V5FailureTaxonomyReport",
+        "schema_version": V5_FAILURE_TAXONOMY_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "categories",
+            "records",
+            "status",
+        ),
+        "inspect_command": "inspect-v5-export-pack",
+        "valid_fixture": "tests/fixtures/v5/failure_taxonomy_valid.json",
+        "negative_fixture": "tests/fixtures/v5/failure_taxonomy_missing_categories.json",
+    },
+    {
+        "schema_name": "V5PreferencePairBlockedReport",
+        "schema_version": V5_PREFERENCE_PAIR_BLOCKED_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "blocked_reason",
+            "failure_owner",
+            "failure_category",
+            "claim_gate_effect",
+        ),
+        "inspect_command": "inspect-v5-export-pack",
+        "valid_fixture": "tests/fixtures/v5/preference_pair_blocked_valid.json",
+        "negative_fixture": "tests/fixtures/v5/preference_pair_blocked_missing_reason.json",
+    },
+    {
+        "schema_name": "V5ResumeArtifactIndex",
+        "schema_version": V5_RESUME_ARTIFACT_INDEX_VERSION,
+        "required_fields": (
+            "schema_version",
+            "artifact_refs",
+            "share_safe_status",
+            "public_demo_bundle_ref",
+        ),
+        "inspect_command": "inspect-v5-demo-artifacts",
+        "valid_fixture": "tests/fixtures/v5/resume_artifact_index_valid.json",
+        "negative_fixture": "tests/fixtures/v5/resume_artifact_index_evaluator_only_share_safe.json",
+    },
+    {
+        "schema_name": "V5ResultSummaryTable",
+        "schema_version": V5_RESULT_SUMMARY_TABLE_VERSION,
+        "required_fields": (
+            "schema_version",
+            "real_provider_trainable_records",
+            "mock_or_replay_records",
+            "diagnostic_records",
+            "blocked_records",
+            "synthetic_safe_stress_records",
+        ),
+        "inspect_command": "inspect-v5-demo-artifacts",
+        "valid_fixture": "tests/fixtures/v5/result_summary_table_valid.json",
+        "negative_fixture": "tests/fixtures/v5/result_summary_table_missing_blocked_records.json",
+    },
+    {
+        "schema_name": "V5PublicDemoBundleManifest",
+        "schema_version": V5_PUBLIC_DEMO_BUNDLE_MANIFEST_VERSION,
+        "required_fields": (
+            "schema_version",
+            "artifact_refs",
+            "share_safe_status",
+            "provider_raw_content_count",
+            "evaluator_only_content_count",
+        ),
+        "inspect_command": "inspect-v5-demo-artifacts",
+        "valid_fixture": "tests/fixtures/v5/public_demo_bundle_valid.json",
+        "negative_fixture": "tests/fixtures/v5/public_demo_bundle_raw_provider_leak.json",
+    },
+    {
+        "schema_name": "V5DemoTranscriptIndex",
+        "schema_version": V5_DEMO_TRANSCRIPT_INDEX_VERSION,
+        "required_fields": (
+            "schema_version",
+            "transcript_refs",
+            "model_visible_leak_count",
+            "share_safe_status",
+        ),
+        "inspect_command": "inspect-v5-demo-artifacts",
+        "valid_fixture": "tests/fixtures/v5/demo_transcript_index_valid.json",
+        "negative_fixture": "tests/fixtures/v5/demo_transcript_index_model_visible_leak.json",
+    },
+    {
+        "schema_name": "V5ResumeClaimGateReport",
+        "schema_version": V5_RESUME_CLAIM_GATE_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "stage",
+            "allowed_claims",
+            "blocked_claims",
+            "blocking_reasons",
+            "provider_claim_status",
+            "preference_pair_claim_status",
+            "demo_share_safe_status",
+            "stress_test_claim_status",
+            "source_reports",
+        ),
+        "inspect_command": "inspect-v5-demo-artifacts",
+        "valid_fixture": "tests/fixtures/v5/claim_gate_valid_final.json",
+        "negative_fixture": "tests/fixtures/v5/claim_gate_allows_blocked_provider.json",
+    },
+    {
+        "schema_name": "V5InterviewResultPackManifest",
+        "schema_version": V5_INTERVIEW_RESULT_PACK_MANIFEST_VERSION,
+        "required_fields": (
+            "schema_version",
+            "demo_card_ref",
+            "walkthrough_ref",
+            "result_summary_ref",
+            "resume_templates_ref",
+            "resume_bullets_ref",
+            "interview_qa_evidence_ref",
+            "public_safe_mapping_ref",
+        ),
+        "inspect_command": "inspect-v5-demo-artifacts",
+        "valid_fixture": "tests/fixtures/v5/interview_result_pack_valid.json",
+        "negative_fixture": "tests/fixtures/v5/interview_result_pack_raw_provider_leak.json",
+    },
+)
+
+V5_REQUIRED_INSPECT_COMMANDS = (
+    "inspect-v5-preimplementation",
+    "inspect-v5-evidence-integrity",
+    "inspect-v5-task-set",
+    "inspect-v5-task-visibility",
+    "inspect-v5-run-matrix",
+    "inspect-v5-provider-gate",
+    "inspect-v5-provider-cost-budget",
+    "inspect-v5-export-pack",
+    "inspect-v5-demo-artifacts",
+    "inspect-v5-inputs",
+    "inspect-v5-acceptance",
+)
 
 
 def build_v5_preimplementation(
@@ -282,6 +737,478 @@ def inspect_v5_preimplementation(
         lines.append("Inspect V5 preimplementation: complete")
     lines.append("Inspect V5 preimplementation: passed")
     return "\n".join(lines)
+
+
+def build_schema_fixtures(
+    *,
+    output_dir: str | Path,
+    fail_if_output_exists: bool = True,
+) -> Path:
+    """Build V5 Stage 1 schema fixtures and tracking tables."""
+
+    root = Path(output_dir)
+    output_names = (
+        "v5_schema_tracking_table.json",
+        "v5_artifact_inspect_tracking_table.json",
+        "v5_acceptance_lineage_schema_report.json",
+        "build_v5_schema_fixtures_command_log_entry.json",
+    )
+    if fail_if_output_exists:
+        existing = [root / name for name in output_names if (root / name).exists()]
+        fixture_root = root / "tests" / "fixtures" / "v5"
+        if fixture_root.exists() and any(fixture_root.iterdir()):
+            existing.append(fixture_root)
+        if existing:
+            raise ConfigError(
+                "V5 schema fixture 输出已存在，不能覆盖旧 evidence："
+                + ", ".join(path.as_posix() for path in existing)
+            )
+    root.mkdir(parents=True, exist_ok=True)
+    fixture_root = root / "tests" / "fixtures" / "v5"
+    fixture_root.mkdir(parents=True, exist_ok=True)
+
+    target = fixture_root / "evidence_ref_target.txt"
+    _write_text(target, "V5 evidence ref fixture target\n")
+    valid_paths: dict[str, Path] = {}
+    negative_paths: dict[str, Path] = {}
+    for spec in V5_SCHEMA_SPECS:
+        valid_path = root / spec["valid_fixture"]
+        negative_path = root / spec["negative_fixture"]
+        _write_json(valid_path, _valid_schema_fixture_payload(str(spec["schema_name"]), target))
+        _write_json(negative_path, _negative_schema_fixture_payload(str(spec["schema_name"]), target))
+        valid_paths[str(spec["schema_name"])] = valid_path
+        negative_paths[str(spec["schema_name"])] = negative_path
+
+    schema_tracking_path = root / "v5_schema_tracking_table.json"
+    artifact_tracking_path = root / "v5_artifact_inspect_tracking_table.json"
+    lineage_path = root / "v5_acceptance_lineage_schema_report.json"
+    command_log_entry_path = root / "build_v5_schema_fixtures_command_log_entry.json"
+
+    schema_tracking = build_v5_schema_tracking_table_payload(
+        valid_paths=valid_paths,
+        negative_paths=negative_paths,
+    )
+    _write_json(schema_tracking_path, schema_tracking)
+    artifact_tracking = build_v5_artifact_inspect_tracking_table_payload()
+    _write_json(artifact_tracking_path, artifact_tracking)
+    lineage_report = {
+        "schema_version": V5_ACCEPTANCE_LINEAGE_SCHEMA_REPORT_VERSION,
+        "created_at": _utc_timestamp(),
+        "pre_acceptance_evidence_integrity_scope": "pre_report_evidence_only",
+        "acceptance_report_reference_integrity_scope": "inspect-v5-acceptance_after_report_generation",
+        "acceptance_bundle_command_lineage_scope": "inspect-acceptance-bundle_after_bundle_generation",
+        "pre_acceptance_must_not_reference_acceptance_report": True,
+        "acceptance_inputs_must_not_bind_post_report_outputs": True,
+        "status": "passed",
+    }
+    _write_json(lineage_path, lineage_report)
+
+    command_entry = _builder_command_log_entry(
+        command_name="build-v5-schema-fixtures",
+        input_paths=[],
+        output_paths=[schema_tracking_path, artifact_tracking_path, lineage_path, fixture_root],
+        producer_stage="v5_stage1_schema_and_evidence_integrity",
+    )
+    _write_json(command_log_entry_path, command_entry)
+    return schema_tracking_path
+
+
+def build_v5_schema_tracking_table_payload(
+    *,
+    valid_paths: dict[str, Path] | None = None,
+    negative_paths: dict[str, Path] | None = None,
+) -> dict[str, Any]:
+    valid_paths = valid_paths or {}
+    negative_paths = negative_paths or {}
+    rows = []
+    for spec in V5_SCHEMA_SPECS:
+        schema_name = str(spec["schema_name"])
+        row: dict[str, Any] = {
+            "schema_name": schema_name,
+            "schema_version": spec["schema_version"],
+            "required_fields": list(spec["required_fields"]),
+            "one_of_required_fields": [list(group) for group in spec.get("one_of_required_fields", ())],
+            "inspect_command": spec["inspect_command"],
+            "valid_fixture": spec["valid_fixture"],
+            "negative_fixture": spec["negative_fixture"],
+        }
+        if schema_name in valid_paths:
+            row["valid_fixture_ref"] = _evidence_ref(
+                valid_paths[schema_name],
+                kind="schema_fixture",
+                purpose=f"Valid fixture for {schema_name}",
+                visibility="audit_only",
+                producer_command="build-v5-schema-fixtures",
+                producer_stage="v5_stage1_schema_and_evidence_integrity",
+                inspect_command="inspect-v5-evidence-integrity",
+            )
+        if schema_name in negative_paths:
+            row["negative_fixture_ref"] = _evidence_ref(
+                negative_paths[schema_name],
+                kind="negative_schema_fixture",
+                purpose=f"Negative fixture for {schema_name}",
+                visibility="audit_only",
+                producer_command="build-v5-schema-fixtures",
+                producer_stage="v5_stage1_schema_and_evidence_integrity",
+                inspect_command="inspect-v5-evidence-integrity",
+            )
+        rows.append(row)
+    return {
+        "schema_version": V5_SCHEMA_TRACKING_TABLE_VERSION,
+        "created_at": _utc_timestamp(),
+        "schemas": rows,
+        "status": "passed",
+    }
+
+
+def build_v5_artifact_inspect_tracking_table_payload() -> dict[str, Any]:
+    return {
+        "schema_version": V5_ARTIFACT_INSPECT_TRACKING_TABLE_VERSION,
+        "created_at": _utc_timestamp(),
+        "required_inspect_commands": list(V5_REQUIRED_INSPECT_COMMANDS),
+        "artifact_rows": [
+            {
+                "scope": "Stage 0 preimplementation baseline",
+                "artifacts": [
+                    "v5_baseline_check_report.json",
+                    "v5_preflight_input_binding.json",
+                    "v5_preimplementation_command_log.jsonl",
+                ],
+                "inspect_command": "inspect-v5-preimplementation",
+            },
+            {
+                "scope": "Stage 1 schema and pre-acceptance evidence integrity",
+                "artifacts": [
+                    "v5_schema_tracking_table.json",
+                    "v5_artifact_inspect_tracking_table.json",
+                    "v5_pre_acceptance_evidence_integrity_report.json",
+                    "v5_acceptance_lineage_schema_report.json",
+                ],
+                "inspect_command": "inspect-v5-evidence-integrity",
+            },
+            {
+                "scope": "Stage 2 task set",
+                "artifacts": [
+                    "v5_task_set_manifest.json",
+                    "v5_task_inventory_report.json",
+                    "v5_task_visibility_scan_report.json",
+                ],
+                "inspect_command": "inspect-v5-task-set",
+                "secondary_inspect_commands": ["inspect-v5-task-visibility"],
+            },
+            {
+                "scope": "Stage 3 provider and run matrix",
+                "artifacts": [
+                    "v5_provider_credential_gate_report.json",
+                    "v5_provider_cost_budget_report.json",
+                    "v5_run_matrix_manifest.json",
+                    "v5_matrix_compare_scope_report.json",
+                ],
+                "inspect_command": "inspect-v5-run-matrix",
+                "secondary_inspect_commands": ["inspect-v5-provider-gate"],
+            },
+            {
+                "scope": "Stage 4 export result pack",
+                "artifacts": [
+                    "v5_export_result_pack_manifest.json",
+                    "v5_reward_source_taxonomy_report.json",
+                    "v5_failure_taxonomy_report.json",
+                    "v5_preference_pair_blocked_report.json",
+                ],
+                "inspect_command": "inspect-v5-export-pack",
+            },
+            {
+                "scope": "Stage 5 interview demo artifacts",
+                "artifacts": [
+                    "v5_resume_artifact_index.json",
+                    "v5_public_demo_bundle_manifest.json",
+                    "v5_result_summary_table.json",
+                    "v5_demo_transcript_index.json",
+                ],
+                "inspect_command": "inspect-v5-demo-artifacts",
+            },
+            {
+                "scope": "Stage 6 final acceptance",
+                "artifacts": [
+                    "v5_acceptance_inputs.json",
+                    "v5_acceptance_report.json",
+                    "v5_acceptance_bundle_manifest.json",
+                    "v5_final_acceptance_command_log.jsonl",
+                ],
+                "inspect_command": "inspect-v5-acceptance",
+                "secondary_inspect_commands": ["inspect-v5-inputs", "inspect-acceptance-bundle"],
+            },
+        ],
+        "status": "passed",
+    }
+
+
+def build_pre_acceptance_integrity_report(
+    *,
+    critical_evidence_manifest: str | Path,
+    pre_acceptance_command_log: str | Path,
+    output: str | Path,
+    fail_if_output_exists: bool = True,
+) -> Path:
+    """Build a V5 pre-acceptance evidence integrity report from explicit inputs."""
+
+    output_path = Path(output)
+    if fail_if_output_exists and output_path.exists():
+        raise ConfigError(f"V5 evidence integrity 输出已存在，不能覆盖旧 evidence：{output_path}")
+    manifest_path = Path(critical_evidence_manifest)
+    command_log_path = Path(pre_acceptance_command_log)
+    failures: list[str] = []
+    manifest = _read_json_for_inspect(manifest_path, failures)
+    command_log_failures: list[str] = []
+    _inspect_v5_command_log(command_log_path, command_log_failures)
+    findings = _pre_acceptance_integrity_findings(manifest, manifest_path=manifest_path)
+    findings.extend(
+        {
+            "finding_type": "pre_acceptance_command_log_invalid",
+            "severity": "critical",
+            "message": failure,
+        }
+        for failure in command_log_failures
+    )
+    findings.extend(
+        {
+            "finding_type": "critical_evidence_manifest_invalid",
+            "severity": "critical",
+            "message": failure,
+        }
+        for failure in failures
+    )
+    counts = _finding_counts(findings)
+    report = {
+        "schema_version": V5_PRE_ACCEPTANCE_EVIDENCE_INTEGRITY_REPORT_VERSION,
+        "created_at": _utc_timestamp(),
+        "phase": "pre_acceptance_evidence_integrity",
+        "critical_evidence_manifest_ref": _evidence_ref(
+            manifest_path,
+            kind="critical_evidence_manifest",
+            purpose="V5 pre-acceptance critical evidence manifest",
+            visibility="audit_only",
+            producer_command="build-v5-evidence-integrity",
+            producer_stage="v5_stage1_schema_and_evidence_integrity",
+            inspect_command="inspect-v5-evidence-integrity",
+        ),
+        "pre_acceptance_command_log_ref": _evidence_ref(
+            command_log_path,
+            kind="pre_acceptance_command_log",
+            purpose="V5 pre-acceptance command log",
+            visibility="audit_only",
+            producer_command="build-v5-evidence-integrity",
+            producer_stage="v5_stage1_schema_and_evidence_integrity",
+            inspect_command="inspect-v5-evidence-integrity",
+        ),
+        "acceptance_report_reference_integrity_included": False,
+        "acceptance_bundle_command_lineage_integrity_included": False,
+        "findings": findings,
+        "finding_counts": counts,
+        "status": "passed" if not findings else "failed",
+    }
+    _write_json(output_path, report)
+    command_entry_path = output_path.with_name("build_v5_evidence_integrity_command_log_entry.json")
+    _write_json(
+        command_entry_path,
+        _builder_command_log_entry(
+            command_name="build-v5-evidence-integrity",
+            input_paths=[manifest_path, command_log_path],
+            output_paths=[output_path],
+            producer_stage="v5_stage1_schema_and_evidence_integrity",
+        ),
+    )
+    return output_path
+
+
+def inspect_v5_evidence_integrity(
+    report: str | Path,
+    *,
+    assert_complete: bool = False,
+) -> str:
+    """Read-only inspect for V5 pre-acceptance evidence integrity reports."""
+
+    report_path = Path(report)
+    failures: list[str] = []
+    payload = _read_json_for_inspect(report_path, failures)
+    if payload.get("schema_version") != V5_PRE_ACCEPTANCE_EVIDENCE_INTEGRITY_REPORT_VERSION:
+        failures.append("v5_pre_acceptance_evidence_integrity_report schema_version 不匹配。")
+    if payload.get("phase") != "pre_acceptance_evidence_integrity":
+        failures.append("evidence integrity phase 必须是 pre_acceptance_evidence_integrity。")
+    if payload.get("acceptance_report_ref"):
+        failures.append("pre-acceptance evidence integrity report 不能引用 acceptance report。")
+    if payload.get("acceptance_report_reference_integrity_included") is not False:
+        failures.append("pre-acceptance evidence integrity 不能包含 acceptance report reference integrity。")
+    if payload.get("acceptance_bundle_command_lineage_integrity_included") is not False:
+        failures.append("pre-acceptance evidence integrity 不能包含 acceptance bundle command lineage integrity。")
+    manifest = _read_ref_payload(payload.get("critical_evidence_manifest_ref"), failures)
+    command_log_path = _path_from_ref(payload.get("pre_acceptance_command_log_ref"))
+    _inspect_v5_ref(payload.get("critical_evidence_manifest_ref"), failures, label="critical_evidence_manifest_ref")
+    _inspect_v5_ref(payload.get("pre_acceptance_command_log_ref"), failures, label="pre_acceptance_command_log_ref")
+    if command_log_path is not None:
+        _inspect_v5_command_log(command_log_path, failures)
+    if manifest:
+        recomputed_findings = _pre_acceptance_integrity_findings(manifest, manifest_path=_path_from_ref(payload.get("critical_evidence_manifest_ref")) or Path("."))
+        if recomputed_findings:
+            failures.extend(f"recomputed evidence finding: {finding['finding_type']} {finding['message']}" for finding in recomputed_findings)
+    findings = payload.get("findings")
+    if not isinstance(findings, list):
+        failures.append("findings 必须是 list。")
+    elif findings:
+        failures.append("pre-acceptance evidence integrity report 存在 finding。")
+    counts = payload.get("finding_counts")
+    if not isinstance(counts, dict):
+        failures.append("finding_counts 必须是 object。")
+    else:
+        for key in (
+            "unbound_critical_evidence_findings",
+            "sha256_drift_findings",
+            "visibility_policy_findings",
+            "post_report_reference_findings",
+            "provider_raw_or_secret_findings",
+        ):
+            if counts.get(key, 0) != 0:
+                failures.append(f"finding_counts.{key} 必须为 0。")
+    if payload.get("status") != "passed":
+        failures.append("v5_pre_acceptance_evidence_integrity_report status 必须为 passed。")
+
+    lines = [
+        f"V5 evidence integrity report: {report_path}",
+        f"Status: {payload.get('status')}",
+    ]
+    if failures:
+        if assert_complete:
+            raise ConfigError("; ".join(failures))
+        lines.append("Diagnostics:")
+        lines.extend(f"- {failure}" for failure in failures)
+    if assert_complete:
+        lines.append("Inspect V5 evidence integrity: complete")
+    lines.append("Inspect V5 evidence integrity: passed")
+    return "\n".join(lines)
+
+
+def inspect_v5_task_set(manifest: str | Path, *, assert_complete: bool = False) -> str:
+    failures = _inspect_schema_file(Path(manifest), expected_schema_names={"V5TaskSetManifest", "V5TaskInventoryReport"})
+    return _schema_inspect_result("Inspect V5 task set", Path(manifest), failures, assert_complete=assert_complete)
+
+
+def inspect_v5_task_visibility(report: str | Path, *, assert_clean: bool = False) -> str:
+    path = Path(report)
+    failures = _inspect_schema_file(path, expected_schema_names={"V5TaskVisibilityScanReport"})
+    payload = _read_json_for_inspect(path, failures)
+    if payload.get("model_visible_leak_count", 0) != 0:
+        failures.append("model_visible_leak_count 必须为 0。")
+    if payload.get("share_safe_violation_count", 0) != 0:
+        failures.append("share_safe_violation_count 必须为 0。")
+    if payload.get("trainable_payload_contamination_count", 0) != 0:
+        failures.append("trainable_payload_contamination_count 必须为 0。")
+    if payload.get("status") != "passed":
+        failures.append("task visibility scan status 必须为 passed。")
+    return _schema_inspect_result("Inspect V5 task visibility", path, failures, assert_complete=assert_clean)
+
+
+def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False) -> str:
+    failures = _inspect_schema_file(
+        Path(manifest),
+        expected_schema_names={"V5RunMatrixManifest", "V5MatrixCellResult", "V5MatrixCompareScopeReport"},
+    )
+    return _schema_inspect_result("Inspect V5 run matrix", Path(manifest), failures, assert_complete=assert_complete)
+
+
+def inspect_v5_provider_gate(report: str | Path, *, assert_consistent: bool = False) -> str:
+    path = Path(report)
+    failures = _inspect_schema_file(path, expected_schema_names={"V5ProviderCredentialGateReport"})
+    payload = _read_json_for_inspect(path, failures)
+    if payload.get("raw_secret_value_present") is not False:
+        failures.append("provider credential gate 不能包含 raw secret value。")
+    families = set(payload.get("provider_families") or [])
+    missing = sorted(set(V5_PROVIDER_FAMILIES).difference(families))
+    if missing:
+        failures.append("provider_families 缺少：" + ", ".join(missing))
+    return _schema_inspect_result("Inspect V5 provider gate", path, failures, assert_complete=assert_consistent)
+
+
+def inspect_v5_provider_cost_budget(report: str | Path, *, assert_consistent: bool = False) -> str:
+    failures = _inspect_schema_file(Path(report), expected_schema_names={"V5ProviderCostBudgetReport"})
+    return _schema_inspect_result("Inspect V5 provider cost budget", Path(report), failures, assert_complete=assert_consistent)
+
+
+def inspect_v5_export_pack(manifest: str | Path, *, assert_clean: bool = False) -> str:
+    path = Path(manifest)
+    failures = _inspect_schema_file(
+        path,
+        expected_schema_names={
+            "V5ExportResultPackManifest",
+            "V5RewardSourceTaxonomyReport",
+            "V5FailureTaxonomyReport",
+            "V5PreferencePairBlockedReport",
+        },
+    )
+    payload = _read_json_for_inspect(path, failures)
+    partition_counts = payload.get("partition_counts")
+    if isinstance(partition_counts, dict):
+        missing = sorted(set(V5_PARTITION_COUNT_FIELDS).difference(partition_counts))
+        if missing:
+            failures.append("partition_counts 缺少：" + ", ".join(missing))
+    if payload.get("reward_scalar_model_visible_count", 0) != 0:
+        failures.append("reward_scalar_model_visible_count 必须为 0。")
+    if payload.get("reward_label_model_visible_count", 0) != 0:
+        failures.append("reward_label_model_visible_count 必须为 0。")
+    return _schema_inspect_result("Inspect V5 export pack", path, failures, assert_complete=assert_clean)
+
+
+def inspect_v5_demo_artifacts(index: str | Path, *, assert_share_safe: bool = False) -> str:
+    path = Path(index)
+    failures = _inspect_schema_file(
+        path,
+        expected_schema_names={
+            "V5ResumeArtifactIndex",
+            "V5ResultSummaryTable",
+            "V5PublicDemoBundleManifest",
+            "V5DemoTranscriptIndex",
+            "V5ResumeClaimGateReport",
+            "V5InterviewResultPackManifest",
+        },
+    )
+    payload = _read_json_for_inspect(path, failures)
+    if payload.get("share_safe_status") not in {None, "passed"}:
+        failures.append("share_safe_status 必须为 passed。")
+    if payload.get("provider_raw_content_count", 0) != 0:
+        failures.append("public demo bundle 不能包含 provider raw content。")
+    if payload.get("evaluator_only_content_count", 0) != 0:
+        failures.append("public demo bundle 不能包含 evaluator-only content。")
+    if payload.get("model_visible_leak_count", 0) != 0:
+        failures.append("demo transcript 不能包含 model-visible leak。")
+    return _schema_inspect_result("Inspect V5 demo artifacts", path, failures, assert_complete=assert_share_safe)
+
+
+def inspect_v5_inputs(inputs: str | Path, *, assert_complete: bool = False) -> str:
+    failures = _inspect_schema_file(Path(inputs), expected_schema_names={"V5AcceptanceInputs"})
+    return _schema_inspect_result("Inspect V5 inputs", Path(inputs), failures, assert_complete=assert_complete)
+
+
+def inspect_v5_acceptance(
+    report: str | Path,
+    *,
+    assert_core_complete: bool = False,
+    assert_resume_ready: bool = False,
+    assert_complete: bool = False,
+) -> str:
+    path = Path(report)
+    failures = _inspect_schema_file(path, expected_schema_names={"V5AcceptanceReport"})
+    payload = _read_json_for_inspect(path, failures)
+    core_status = _get_path(payload, "core_acceptance.status")
+    resume_status = _get_path(payload, "resume_ready_acceptance.status")
+    if assert_core_complete and core_status != "passed":
+        failures.append("core_acceptance.status 必须为 passed。")
+    if (assert_resume_ready or assert_complete) and resume_status != "passed":
+        failures.append("resume_ready_acceptance.status 必须为 passed。")
+    return _schema_inspect_result(
+        "Inspect V5 acceptance",
+        path,
+        failures,
+        assert_complete=assert_core_complete or assert_resume_ready or assert_complete,
+    )
 
 
 def _baseline_commands(
@@ -961,6 +1888,606 @@ def _input_ref_policy(command_cwd: Path) -> str:
     if command_cwd.resolve() == Path.cwd().resolve():
         return "explicit argv paths are bound when they exist under the invocation worktree"
     return "explicit argv paths are recorded in argv; external baseline worktree inputs are not rebound into V5 refs"
+
+
+def _inspect_schema_file(path: Path, *, expected_schema_names: set[str]) -> list[str]:
+    failures: list[str] = []
+    payload = _read_json_for_inspect(path, failures)
+    if not payload:
+        return failures
+    spec = _schema_spec_for_payload(payload)
+    if spec is None:
+        failures.append("未知 V5 schema_version。")
+        return failures
+    schema_name = str(spec["schema_name"])
+    if schema_name not in expected_schema_names:
+        failures.append(f"schema {schema_name} 不能由当前 inspect 命令检查。")
+    _inspect_payload_against_schema_spec(payload, spec, failures)
+    _inspect_schema_specific_constraints(payload, schema_name, failures)
+    return failures
+
+
+def _schema_spec_for_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
+    version = payload.get("schema_version")
+    for spec in V5_SCHEMA_SPECS:
+        if spec.get("schema_version") == version:
+            return spec
+    if _looks_like_evidence_ref(payload):
+        return V5_SCHEMA_SPECS[0]
+    return None
+
+
+def _inspect_payload_against_schema_spec(payload: dict[str, Any], spec: dict[str, Any], failures: list[str]) -> None:
+    for field in spec.get("required_fields", ()):
+        if _get_path(payload, str(field)) is None:
+            failures.append(f"{spec['schema_name']} 缺少 required field：{field}")
+    for group in spec.get("one_of_required_fields", ()):
+        if not any(_get_path(payload, str(field)) is not None for field in group):
+            failures.append(f"{spec['schema_name']} 必须至少包含一个字段：" + " 或 ".join(group))
+
+
+def _inspect_schema_specific_constraints(payload: dict[str, Any], schema_name: str, failures: list[str]) -> None:
+    if schema_name == "V5EvidenceRef":
+        _inspect_v5_ref(payload, failures, label="V5EvidenceRef")
+        return
+    if schema_name == "V5AcceptanceInputs":
+        bundle_path = str((payload.get("v4_doc_sync_acceptance_bundle_ref") or {}).get("path") or "")
+        if V4_DOC_SYNC_BUNDLE_NAME not in bundle_path:
+            failures.append("V5AcceptanceInputs 必须引用 V4 doc-sync acceptance bundle。")
+        for ref in payload.get("v5_evidence_refs") or []:
+            if isinstance(ref, dict) and ref.get("evidence_class") in V5_POST_REPORT_EVIDENCE_CLASSES:
+                failures.append("V5AcceptanceInputs 不能绑定 post-report evidence。")
+    elif schema_name == "V5AcceptanceReport":
+        for path in ("core_acceptance.status", "resume_ready_acceptance.status"):
+            value = _get_path(payload, path)
+            if value not in V5_ACCEPTANCE_STATUS_VALUES:
+                failures.append(f"{path} 枚举值无效。")
+        integrity = payload.get("acceptance_report_reference_integrity")
+        if isinstance(integrity, dict) and any(key.endswith("_ref") for key in integrity):
+            failures.append("acceptance_report_reference_integrity.expected_check 只能描述待检集合，不能引用 post-report output。")
+    elif schema_name == "V5TaskSetManifest":
+        if payload.get("accepted_auditable_task_count", 0) < 12:
+            failures.append("accepted_auditable_task_count 必须至少为 12。")
+        if payload.get("pr_issue_task_count", 0) < 8:
+            failures.append("pr_issue_task_count 必须至少为 8。")
+        if payload.get("swebench_like_anchor_count", 0) < 3:
+            failures.append("swebench_like_anchor_count 必须至少为 3。")
+    elif schema_name == "V5TaskInventoryReport":
+        gate = payload.get("strict_inventory_gate")
+        if gate not in {"passed", "blocked"}:
+            failures.append("strict_inventory_gate 必须是 passed 或 blocked。")
+    elif schema_name == "V5TaskVisibilityScanReport":
+        if payload.get("model_visible_leak_count", 0) != 0:
+            failures.append("model_visible_leak_count 必须为 0。")
+    elif schema_name == "V5ProviderCredentialGateReport":
+        if payload.get("raw_secret_value_present") is not False:
+            failures.append("raw_secret_value_present 必须为 false。")
+        if not set(V5_PROVIDER_FAMILIES).issubset(set(payload.get("provider_families") or [])):
+            failures.append("provider_families 必须覆盖 openai、deepseek 和 anthropic_claude。")
+    elif schema_name == "V5ProviderCostBudgetReport":
+        if payload.get("actual_real_provider_calls", 0) > payload.get("max_real_provider_calls", 0):
+            failures.append("actual_real_provider_calls 不能超过 max_real_provider_calls。")
+        if payload.get("actual_cost_proxy_usd", 0) > payload.get("max_cost_usd", 0):
+            failures.append("actual_cost_proxy_usd 不能超过 max_cost_usd。")
+    elif schema_name == "V5RunMatrixManifest":
+        axes = set(payload.get("comparison_axes") or [])
+        if not axes.intersection(V5_COMPARISON_AXES):
+            failures.append("comparison_axes 至少需要包含 provider、scaffold、budget 或 diagnostic_baseline。")
+        if not payload.get("controlled_variables_refs"):
+            failures.append("controlled_variables_refs 不能为空。")
+    elif schema_name == "V5MatrixCellResult":
+        if payload.get("normalized_provider_status") not in V5_PROVIDER_STATUS_VALUES:
+            failures.append("normalized_provider_status 枚举值无效。")
+        if payload.get("normalized_provider_status") == "fallback_success" and payload.get("counts_toward_primary_accepted_rate") is True:
+            failures.append("fallback_success 不能计入 primary accepted rate。")
+    elif schema_name == "V5MatrixCompareScopeReport":
+        if payload.get("comparison_axis") not in V5_COMPARISON_AXES:
+            failures.append("comparison_axis 枚举值无效。")
+        if not payload.get("controlled_variables"):
+            failures.append("controlled_variables 不能为空。")
+    elif schema_name == "V5ExportResultPackManifest":
+        counts = payload.get("partition_counts")
+        if not isinstance(counts, dict):
+            failures.append("partition_counts 必须是 object。")
+        else:
+            missing = sorted(set(V5_PARTITION_COUNT_FIELDS).difference(counts))
+            if missing:
+                failures.append("partition_counts 缺少：" + ", ".join(missing))
+    elif schema_name == "V5RewardSourceTaxonomyReport":
+        if payload.get("reward_scalar_model_visible_count", 0) != 0:
+            failures.append("reward scalar 不能进入 model-visible content。")
+        if payload.get("reward_label_model_visible_count", 0) != 0:
+            failures.append("reward label 不能进入 model-visible content。")
+    elif schema_name == "V5FailureTaxonomyReport":
+        if not payload.get("categories"):
+            failures.append("failure taxonomy categories 不能为空。")
+    elif schema_name == "V5PreferencePairBlockedReport":
+        if not payload.get("blocked_reason"):
+            failures.append("preference pair blocked report 必须记录 blocked_reason。")
+    elif schema_name == "V5ResumeArtifactIndex":
+        for ref in payload.get("artifact_refs") or []:
+            if isinstance(ref, dict) and (ref.get("share_safe") is not True or ref.get("visibility") == "evaluator_only"):
+                failures.append("resume artifact refs 必须 share_safe 且不能是 evaluator_only。")
+    elif schema_name == "V5ResultSummaryTable":
+        for field in V5_PARTITION_COUNT_FIELDS:
+            if payload.get(field) is None:
+                failures.append(f"result summary 缺少 {field}。")
+    elif schema_name == "V5PublicDemoBundleManifest":
+        if payload.get("provider_raw_content_count", 0) != 0:
+            failures.append("public demo bundle 不能包含 provider raw content。")
+        if payload.get("evaluator_only_content_count", 0) != 0:
+            failures.append("public demo bundle 不能包含 evaluator-only content。")
+    elif schema_name == "V5DemoTranscriptIndex":
+        if payload.get("model_visible_leak_count", 0) != 0:
+            failures.append("demo transcript 不能包含 model-visible leak。")
+    elif schema_name == "V5ResumeClaimGateReport":
+        if payload.get("stage") not in V5_CLAIM_GATE_STAGE_VALUES:
+            failures.append("claim gate stage 枚举值无效。")
+        if payload.get("provider_claim_status") == "blocked" and "multi-provider agent runs" in payload.get("allowed_claims", []):
+            failures.append("provider blocked 时不能允许 multi-provider agent runs 声明。")
+    elif schema_name == "V5InterviewResultPackManifest":
+        for key in (
+            "demo_card_ref",
+            "walkthrough_ref",
+            "result_summary_ref",
+            "resume_templates_ref",
+            "resume_bullets_ref",
+            "interview_qa_evidence_ref",
+            "public_safe_mapping_ref",
+        ):
+            ref = payload.get(key)
+            if isinstance(ref, dict):
+                if ref.get("share_safe") is not True or ref.get("visibility") != "public_safe":
+                    failures.append(f"{key} 必须 share_safe=true 且 visibility=public_safe。")
+                text = f"{ref.get('kind', '')} {ref.get('purpose', '')}".lower()
+                if "provider raw" in text:
+                    failures.append(f"{key} 不能引用 provider raw content。")
+
+
+def _schema_inspect_result(label: str, path: Path, failures: list[str], *, assert_complete: bool) -> str:
+    lines = [f"{label}: {path}"]
+    if failures:
+        if assert_complete:
+            raise ConfigError("; ".join(failures))
+        lines.append("Diagnostics:")
+        lines.extend(f"- {failure}" for failure in failures)
+    if assert_complete:
+        lines.append(f"{label}: complete")
+    lines.append(f"{label}: passed")
+    return "\n".join(lines)
+
+
+def _get_path(payload: dict[str, Any], path: str) -> Any:
+    current: Any = payload
+    for part in path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    return current
+
+
+def _looks_like_evidence_ref(payload: dict[str, Any]) -> bool:
+    return all(field in payload for field in V5_SCHEMA_SPECS[0]["required_fields"])
+
+
+def _valid_schema_fixture_payload(schema_name: str, target: Path) -> dict[str, Any]:
+    ref = _evidence_ref(
+        target,
+        kind="fixture_target",
+        purpose="Valid V5 evidence ref target",
+        visibility="audit_only",
+        producer_command="build-v5-schema-fixtures",
+        producer_stage="v5_stage1_schema_and_evidence_integrity",
+        inspect_command="inspect-v5-evidence-integrity",
+    )
+    if schema_name == "V5EvidenceRef":
+        return ref
+    if schema_name == "V5AcceptanceInputs":
+        return {
+            "schema_version": V5_ACCEPTANCE_INPUTS_VERSION,
+            "created_at": "2026-05-05T00:00:00Z",
+            "current_head": "0" * 40,
+            "v2_acceptance_report_ref": ref,
+            "v3_acceptance_report_ref": ref,
+            "v3_acceptance_bundle_ref": ref,
+            "v4_acceptance_inputs_ref": ref,
+            "v4_acceptance_report_ref": ref,
+            "v4_doc_sync_acceptance_bundle_ref": {**ref, "path": f"runs/{V4_DOC_SYNC_BUNDLE_NAME}"},
+            "v4_doc_sync_final_command_log_ref": ref,
+            "v5_evidence_refs": [ref],
+            "stress_test_executed": False,
+        }
+    if schema_name == "V5AcceptanceReport":
+        return {
+            "schema_version": V5_ACCEPTANCE_REPORT_VERSION,
+            "acceptance_inputs_ref": ref,
+            "core_acceptance": {"status": "passed", "required_checks": []},
+            "resume_ready_acceptance": {"status": "blocked", "required_checks": []},
+            "allowed_claims": ["core_acceptance"],
+            "blocked_claims": ["resume_ready_acceptance"],
+            "claim_gate_report_ref": ref,
+            "acceptance_report_reference_integrity": {"expected_check": "inspect-v5-acceptance_after_report_generation"},
+        }
+    if schema_name == "V5TaskSetManifest":
+        return {
+            "schema_version": V5_TASK_SET_MANIFEST_VERSION,
+            "accepted_auditable_task_count": 12,
+            "pr_issue_task_count": 8,
+            "swebench_like_anchor_count": 4,
+            "task_refs": [ref],
+            "inventory_report_ref": ref,
+            "visibility_scan_ref": ref,
+        }
+    if schema_name == "V5TaskInventoryReport":
+        return {
+            "schema_version": V5_TASK_INVENTORY_REPORT_VERSION,
+            "accepted_auditable_task_count": 12,
+            "pr_issue_task_count": 8,
+            "swebench_like_anchor_count": 4,
+            "strict_inventory_gate": "passed",
+            "source_mix": {"pr_issue": 8, "swebench_like_anchor": 4},
+        }
+    if schema_name == "V5TaskVisibilityScanReport":
+        return {
+            "schema_version": V5_TASK_VISIBILITY_SCAN_REPORT_VERSION,
+            "model_visible_leak_count": 0,
+            "share_safe_violation_count": 0,
+            "trainable_payload_contamination_count": 0,
+            "findings": [],
+            "status": "passed",
+        }
+    if schema_name == "V5ProviderCredentialGateReport":
+        return {
+            "schema_version": V5_PROVIDER_CREDENTIAL_GATE_REPORT_VERSION,
+            "provider_families": list(V5_PROVIDER_FAMILIES),
+            "credential_status_by_provider": {provider: "missing" for provider in V5_PROVIDER_FAMILIES},
+            "adapter_status_by_provider": {
+                "openai": "primary_supported",
+                "deepseek": "primary_supported",
+                "anthropic_claude": "adapter_not_implemented",
+            },
+            "structured_skips": [],
+            "raw_secret_value_present": False,
+            "provider_raw_content_policy": "audit_only_redacted_never_model_visible",
+        }
+    if schema_name == "V5ProviderCostBudgetReport":
+        return {
+            "schema_version": V5_PROVIDER_COST_BUDGET_REPORT_VERSION,
+            "max_real_provider_calls": 12,
+            "max_cost_usd": 5.0,
+            "cost_proxy_formula": "actual_real_provider_calls * configured_cost_proxy",
+            "actual_real_provider_calls": 0,
+            "actual_cost_proxy_usd": 0.0,
+            "cost_limited_structured_skip": [],
+            "budget_exhausted_before_run": False,
+        }
+    if schema_name == "V5RunMatrixManifest":
+        return {
+            "schema_version": V5_RUN_MATRIX_MANIFEST_VERSION,
+            "task_set_ref": ref,
+            "provider_gate_ref": ref,
+            "provider_cost_budget_ref": ref,
+            "planned_matrix_cells": [],
+            "controlled_variables_refs": [ref],
+            "comparison_axes": ["provider"],
+            "agent_run_started": False,
+            "provider_api_called": False,
+        }
+    if schema_name == "V5MatrixCellResult":
+        return {
+            "schema_version": V5_MATRIX_CELL_RESULT_VERSION,
+            "task_id": "v5_fixture_task",
+            "provider_id": "deepseek",
+            "provider_mode": "primary",
+            "normalized_provider_status": "primary_attempted",
+            "scaffold_id": "baseline",
+            "budget_policy_id": "small",
+            "tool_policy_id": "standard",
+            "context_policy_id": "default",
+            "environment_id": "docker_local",
+            "source_tree_hash": "a" * 64,
+            "run_id": "fixture_run",
+            "run_dir": "runs/fixture_run",
+            "final_verifier_status": "accepted",
+            "trajectory_ref": ref,
+            "final_verifier_boundary_ref": ref,
+            "controlled_variables_ref": ref,
+        }
+    if schema_name == "V5MatrixCompareScopeReport":
+        return {
+            "schema_version": V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
+            "comparison_axis": "provider",
+            "controlled_variables": ["task", "source_tree", "final_verifier_plan", "tool_policy"],
+            "compared_cells": ["cell_a", "cell_b"],
+            "comparison_validity": "valid",
+        }
+    if schema_name == "V5ExportResultPackManifest":
+        return {
+            "schema_version": V5_EXPORT_RESULT_PACK_MANIFEST_VERSION,
+            "sft_export_ref": ref,
+            "rl_rollout_export_ref": ref,
+            "failure_dataset_ref": ref,
+            "preference_pair_blocked_report_ref": ref,
+            "partition_counts": {field: 0 for field in V5_PARTITION_COUNT_FIELDS},
+            "reward_source_taxonomy_ref": ref,
+            "failure_taxonomy_ref": ref,
+            "export_audit_ref": ref,
+        }
+    if schema_name == "V5RewardSourceTaxonomyReport":
+        return {
+            "schema_version": V5_REWARD_SOURCE_TAXONOMY_REPORT_VERSION,
+            "allowed_reward_metadata_paths": ["audit_only.reward_metadata"],
+            "reward_scalar_model_visible_count": 0,
+            "reward_label_model_visible_count": 0,
+            "status": "passed",
+        }
+    if schema_name == "V5FailureTaxonomyReport":
+        return {
+            "schema_version": V5_FAILURE_TAXONOMY_REPORT_VERSION,
+            "categories": ["final_verifier_rejected", "provider_blocked"],
+            "records": [],
+            "status": "passed",
+        }
+    if schema_name == "V5PreferencePairBlockedReport":
+        return {
+            "schema_version": V5_PREFERENCE_PAIR_BLOCKED_REPORT_VERSION,
+            "blocked_reason": "no_real_comparable_pair_yet",
+            "failure_owner": "stage3_run_matrix",
+            "failure_category": "comparison_scope_blocked",
+            "claim_gate_effect": "disable_preference_export_completed_claim",
+        }
+    if schema_name == "V5ResumeArtifactIndex":
+        public_ref = {**ref, "visibility": "public_safe", "share_safe": True}
+        return {
+            "schema_version": V5_RESUME_ARTIFACT_INDEX_VERSION,
+            "artifact_refs": [public_ref],
+            "share_safe_status": "passed",
+            "public_demo_bundle_ref": public_ref,
+        }
+    if schema_name == "V5ResultSummaryTable":
+        return {
+            "schema_version": V5_RESULT_SUMMARY_TABLE_VERSION,
+            "real_provider_trainable_records": 1,
+            "mock_or_replay_records": 0,
+            "diagnostic_records": 1,
+            "blocked_records": 1,
+            "synthetic_safe_stress_records": 0,
+        }
+    if schema_name == "V5PublicDemoBundleManifest":
+        public_ref = {**ref, "visibility": "public_safe", "share_safe": True}
+        return {
+            "schema_version": V5_PUBLIC_DEMO_BUNDLE_MANIFEST_VERSION,
+            "artifact_refs": [public_ref],
+            "share_safe_status": "passed",
+            "provider_raw_content_count": 0,
+            "evaluator_only_content_count": 0,
+        }
+    if schema_name == "V5DemoTranscriptIndex":
+        public_ref = {**ref, "visibility": "public_safe", "share_safe": True}
+        return {
+            "schema_version": V5_DEMO_TRANSCRIPT_INDEX_VERSION,
+            "transcript_refs": [public_ref],
+            "model_visible_leak_count": 0,
+            "share_safe_status": "passed",
+        }
+    if schema_name == "V5ResumeClaimGateReport":
+        return {
+            "schema_version": V5_RESUME_CLAIM_GATE_REPORT_VERSION,
+            "stage": "stage5_final",
+            "allowed_claims": ["core_acceptance"],
+            "blocked_claims": [],
+            "blocking_reasons": {},
+            "provider_claim_status": "allowed",
+            "preference_pair_claim_status": "blocked",
+            "demo_share_safe_status": "passed",
+            "stress_test_claim_status": "not_claimed",
+            "source_reports": [ref],
+        }
+    if schema_name == "V5InterviewResultPackManifest":
+        public_ref = {**ref, "visibility": "public_safe", "share_safe": True}
+        return {
+            "schema_version": V5_INTERVIEW_RESULT_PACK_MANIFEST_VERSION,
+            "demo_card_ref": public_ref,
+            "walkthrough_ref": public_ref,
+            "result_summary_ref": public_ref,
+            "resume_templates_ref": public_ref,
+            "resume_bullets_ref": public_ref,
+            "interview_qa_evidence_ref": public_ref,
+            "public_safe_mapping_ref": public_ref,
+        }
+    raise ConfigError(f"未知 V5 schema fixture：{schema_name}")
+
+
+def _negative_schema_fixture_payload(schema_name: str, target: Path) -> dict[str, Any]:
+    payload = _valid_schema_fixture_payload(schema_name, target)
+    if schema_name == "V5EvidenceRef":
+        payload["sha256"] = "0" * 64
+    elif schema_name == "V5AcceptanceInputs":
+        payload["v5_evidence_refs"].append({"evidence_class": "post_report_inspect_output", "path": "post_report/inspect.txt"})
+    elif schema_name == "V5AcceptanceReport":
+        payload["acceptance_report_reference_integrity"]["post_report_output_ref"] = {"path": "post_report/inspect.txt"}
+    elif schema_name == "V5TaskSetManifest":
+        payload["accepted_auditable_task_count"] = 10
+        payload["pr_issue_task_count"] = 6
+    elif schema_name == "V5TaskInventoryReport":
+        payload.pop("pr_issue_task_count", None)
+    elif schema_name == "V5TaskVisibilityScanReport":
+        payload["model_visible_leak_count"] = 1
+        payload["status"] = "failed"
+    elif schema_name == "V5ProviderCredentialGateReport":
+        payload["raw_secret_value_present"] = True
+    elif schema_name == "V5ProviderCostBudgetReport":
+        payload["actual_real_provider_calls"] = payload["max_real_provider_calls"] + 1
+    elif schema_name == "V5RunMatrixManifest":
+        payload["controlled_variables_refs"] = []
+    elif schema_name == "V5MatrixCellResult":
+        payload["normalized_provider_status"] = "fallback_success"
+        payload["counts_toward_primary_accepted_rate"] = True
+    elif schema_name == "V5MatrixCompareScopeReport":
+        payload["controlled_variables"] = []
+    elif schema_name == "V5ExportResultPackManifest":
+        payload["partition_counts"].pop("blocked_records", None)
+    elif schema_name == "V5RewardSourceTaxonomyReport":
+        payload["reward_scalar_model_visible_count"] = 1
+    elif schema_name == "V5FailureTaxonomyReport":
+        payload["categories"] = []
+    elif schema_name == "V5PreferencePairBlockedReport":
+        payload["blocked_reason"] = ""
+    elif schema_name == "V5ResumeArtifactIndex":
+        payload["artifact_refs"][0]["visibility"] = "evaluator_only"
+    elif schema_name == "V5ResultSummaryTable":
+        payload.pop("blocked_records", None)
+    elif schema_name == "V5PublicDemoBundleManifest":
+        payload["provider_raw_content_count"] = 1
+    elif schema_name == "V5DemoTranscriptIndex":
+        payload["model_visible_leak_count"] = 1
+    elif schema_name == "V5ResumeClaimGateReport":
+        payload["stage"] = "acceptance_final"
+        payload["allowed_claims"].append("multi-provider agent runs")
+        payload["provider_claim_status"] = "blocked"
+    elif schema_name == "V5InterviewResultPackManifest":
+        payload["demo_card_ref"] = {**payload["demo_card_ref"], "purpose": "provider raw request fixture"}
+    return payload
+
+
+def _pre_acceptance_integrity_findings(manifest: dict[str, Any], *, manifest_path: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    if manifest.get("schema_version") != V5_CRITICAL_EVIDENCE_MANIFEST_VERSION:
+        findings.append(
+            {
+                "finding_type": "critical_evidence_manifest_schema_mismatch",
+                "severity": "critical",
+                "message": "critical evidence manifest schema_version 不匹配。",
+            }
+        )
+    if manifest.get("acceptance_report_ref"):
+        findings.append(
+            {
+                "finding_type": "post_report_reference",
+                "severity": "critical",
+                "message": "pre-acceptance critical evidence manifest 不能引用 acceptance report。",
+            }
+        )
+    records = manifest.get("critical_evidence")
+    if not isinstance(records, list):
+        return findings + [
+            {
+                "finding_type": "critical_evidence_manifest_invalid",
+                "severity": "critical",
+                "message": "critical_evidence 必须是 list。",
+            }
+        ]
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            findings.append({"finding_type": "critical_evidence_record_invalid", "severity": "critical", "message": f"critical_evidence[{index}] 不是 object。"})
+            continue
+        evidence_class = str(record.get("evidence_class") or "")
+        if evidence_class in V5_POST_REPORT_EVIDENCE_CLASSES:
+            findings.append({"finding_type": "post_report_reference", "severity": "critical", "message": f"{evidence_class} 不能进入 pre-acceptance evidence integrity。"})
+        elif evidence_class not in V5_CRITICAL_EVIDENCE_CLASSES:
+            findings.append({"finding_type": "unknown_critical_evidence_class", "severity": "critical", "message": f"未知 critical evidence class：{evidence_class}"})
+        if record.get("criticality") == "critical" and record.get("planned_acceptance_inputs_binding") is not True:
+            findings.append({"finding_type": "unbound_critical_evidence", "severity": "critical", "message": f"critical_evidence[{index}] 未声明会进入 acceptance inputs。"})
+        ref = record.get("ref")
+        ref_failures: list[str] = []
+        _inspect_v5_ref(ref, ref_failures, label=f"critical_evidence[{index}].ref")
+        for failure in ref_failures:
+            finding_type = "sha256_drift" if "sha256" in failure else "critical_evidence_ref_invalid"
+            findings.append({"finding_type": finding_type, "severity": "critical", "message": failure})
+        if isinstance(ref, dict):
+            visibility = str(ref.get("visibility") or "")
+            purpose = str(ref.get("purpose") or "").lower()
+            kind = str(ref.get("kind") or "").lower()
+            if visibility in {"model_visible", "trainable", "public_safe"}:
+                marker = next((item for item in V5_FORBIDDEN_PUBLIC_OR_TRAINABLE_MARKERS if item in purpose or item in kind), None)
+                if marker:
+                    findings.append(
+                        {
+                            "finding_type": "visibility_policy_violation",
+                            "severity": "critical",
+                            "message": f"critical_evidence[{index}] 在 {visibility} 中包含禁止标记：{marker}",
+                        }
+                    )
+            if ref.get("share_safe") is True and visibility == "evaluator_only":
+                findings.append(
+                    {
+                        "finding_type": "visibility_policy_violation",
+                        "severity": "critical",
+                        "message": f"critical_evidence[{index}] evaluator_only evidence 不能 share_safe=true。",
+                    }
+                )
+    if not manifest_path.exists():
+        findings.append({"finding_type": "critical_evidence_manifest_missing", "severity": "critical", "message": f"manifest path 不存在：{manifest_path}"})
+    return findings
+
+
+def _finding_counts(findings: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "total_findings": len(findings),
+        "unbound_critical_evidence_findings": sum(1 for item in findings if item.get("finding_type") == "unbound_critical_evidence"),
+        "sha256_drift_findings": sum(1 for item in findings if item.get("finding_type") == "sha256_drift"),
+        "visibility_policy_findings": sum(1 for item in findings if item.get("finding_type") == "visibility_policy_violation"),
+        "post_report_reference_findings": sum(1 for item in findings if item.get("finding_type") == "post_report_reference"),
+        "provider_raw_or_secret_findings": sum(
+            1
+            for item in findings
+            if "provider raw" in str(item.get("message") or "").lower()
+            or "credential" in str(item.get("message") or "").lower()
+            or "authorization" in str(item.get("message") or "").lower()
+        ),
+    }
+
+
+def _builder_command_log_entry(
+    *,
+    command_name: str,
+    input_paths: list[Path],
+    output_paths: list[Path],
+    producer_stage: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
+        "command_name": command_name,
+        "argv": sys.argv,
+        "cwd": Path.cwd().as_posix(),
+        "builder_invocation_cwd": Path.cwd().as_posix(),
+        "env_policy": "builder records argv and artifact refs; provider credential values are not recorded",
+        "network_policy": "local_only",
+        "risk_command_hits": _risk_command_hits(sys.argv),
+        "input_ref_policy": "explicit builder inputs are bound by path, sha256, and size_bytes",
+        "input_refs": [
+            _evidence_ref(
+                path,
+                kind="builder_input",
+                purpose=f"{command_name} input",
+                visibility="audit_only",
+                producer_command="external",
+                producer_stage=producer_stage,
+                inspect_command="inspect-v5-evidence-integrity",
+            )
+            for path in input_paths
+        ],
+        "output_refs": [
+            _evidence_ref(
+                path,
+                kind="builder_output",
+                purpose=f"{command_name} output",
+                visibility="audit_only",
+                producer_command=command_name,
+                producer_stage=producer_stage,
+                inspect_command="inspect-v5-evidence-integrity",
+            )
+            for path in output_paths
+        ],
+        "started_at": _utc_timestamp(),
+        "finished_at": _utc_timestamp(),
+        "exit_code": 0,
+        "stdout_sha256": hashlib.sha256(b"").hexdigest(),
+        "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+        "structured_skip_reason": None,
+        "structured_failure_reason": None,
+        "tool_or_cli_version": f"repo-harness {__version__}",
+    }
 
 
 def _read_ref_payload(ref: Any, failures: list[str]) -> dict[str, Any] | None:

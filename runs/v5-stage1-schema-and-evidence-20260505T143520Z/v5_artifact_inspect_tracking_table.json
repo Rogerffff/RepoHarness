@@ -1,0 +1,98 @@
+{
+  "artifact_rows": [
+    {
+      "artifacts": [
+        "v5_baseline_check_report.json",
+        "v5_preflight_input_binding.json",
+        "v5_preimplementation_command_log.jsonl"
+      ],
+      "inspect_command": "inspect-v5-preimplementation",
+      "scope": "Stage 0 preimplementation baseline"
+    },
+    {
+      "artifacts": [
+        "v5_schema_tracking_table.json",
+        "v5_artifact_inspect_tracking_table.json",
+        "v5_pre_acceptance_evidence_integrity_report.json",
+        "v5_acceptance_lineage_schema_report.json"
+      ],
+      "inspect_command": "inspect-v5-evidence-integrity",
+      "scope": "Stage 1 schema and pre-acceptance evidence integrity"
+    },
+    {
+      "artifacts": [
+        "v5_task_set_manifest.json",
+        "v5_task_inventory_report.json",
+        "v5_task_visibility_scan_report.json"
+      ],
+      "inspect_command": "inspect-v5-task-set",
+      "scope": "Stage 2 task set",
+      "secondary_inspect_commands": [
+        "inspect-v5-task-visibility"
+      ]
+    },
+    {
+      "artifacts": [
+        "v5_provider_credential_gate_report.json",
+        "v5_provider_cost_budget_report.json",
+        "v5_run_matrix_manifest.json",
+        "v5_matrix_compare_scope_report.json"
+      ],
+      "inspect_command": "inspect-v5-run-matrix",
+      "scope": "Stage 3 provider and run matrix",
+      "secondary_inspect_commands": [
+        "inspect-v5-provider-gate"
+      ]
+    },
+    {
+      "artifacts": [
+        "v5_export_result_pack_manifest.json",
+        "v5_reward_source_taxonomy_report.json",
+        "v5_failure_taxonomy_report.json",
+        "v5_preference_pair_blocked_report.json"
+      ],
+      "inspect_command": "inspect-v5-export-pack",
+      "scope": "Stage 4 export result pack"
+    },
+    {
+      "artifacts": [
+        "v5_resume_artifact_index.json",
+        "v5_public_demo_bundle_manifest.json",
+        "v5_result_summary_table.json",
+        "v5_demo_transcript_index.json"
+      ],
+      "inspect_command": "inspect-v5-demo-artifacts",
+      "scope": "Stage 5 interview demo artifacts"
+    },
+    {
+      "artifacts": [
+        "v5_acceptance_inputs.json",
+        "v5_acceptance_report.json",
+        "v5_acceptance_bundle_manifest.json",
+        "v5_final_acceptance_command_log.jsonl"
+      ],
+      "inspect_command": "inspect-v5-acceptance",
+      "scope": "Stage 6 final acceptance",
+      "secondary_inspect_commands": [
+        "inspect-v5-inputs",
+        "inspect-acceptance-bundle"
+      ]
+    }
+  ],
+  "created_at": "2026-05-05T14:35:24Z",
+  "required_inspect_commands": [
+    "inspect-v5-preimplementation",
+    "inspect-v5-evidence-integrity",
+    "inspect-v5-task-set",
+    "inspect-v5-task-visibility",
+    "inspect-v5-run-matrix",
+    "inspect-v5-provider-gate",
+    "inspect-v5-provider-cost-budget",
+    "inspect-v5-export-pack",
+    "inspect-v5-demo-artifacts",
+    "inspect-v5-inputs",
+    "inspect-v5-acceptance"
+  ],
+  "schema_version": "repo_harness_v5_artifact_inspect_tracking_table_v0",
+  "status": "passed"
+}

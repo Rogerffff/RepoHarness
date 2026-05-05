@@ -1,0 +1,72 @@
+{
+  "argv": [
+    ".venv/bin/repo-harness",
+    "build-v5-evidence-integrity",
+    "--critical-evidence-manifest",
+    "runs/v5-stage1-schema-and-evidence-20260505T143520Z/v5_critical_evidence_manifest.json",
+    "--pre-acceptance-command-log",
+    "runs/v5-stage0-preimplementation-20260505T143530Z/v5_preimplementation_command_log.jsonl",
+    "--output",
+    "runs/v5-stage1-schema-and-evidence-20260505T143520Z/v5_pre_acceptance_evidence_integrity_report.json",
+    "--fail-if-output-exists"
+  ],
+  "builder_invocation_cwd": "/Users/roger/Desktop/claude-code",
+  "command_name": "build-v5-evidence-integrity",
+  "cwd": "/Users/roger/Desktop/claude-code",
+  "env_policy": "builder records argv and artifact refs; provider credential values are not recorded",
+  "exit_code": 0,
+  "finished_at": "2026-05-05T14:35:46Z",
+  "input_ref_policy": "explicit builder inputs are bound by path, sha256, and size_bytes",
+  "input_refs": [
+    {
+      "inspect_command": "inspect-v5-evidence-integrity",
+      "kind": "builder_input",
+      "path": "runs/v5-stage1-schema-and-evidence-20260505T143520Z/v5_critical_evidence_manifest.json",
+      "producer_command": "external",
+      "producer_stage": "v5_stage1_schema_and_evidence_integrity",
+      "purpose": "build-v5-evidence-integrity input",
+      "schema_version": "repo_harness_v5_evidence_ref_v0",
+      "sha256": "eece94707eb48bfc66d44c814b980bb68f240fdcae397a4520606775887b507f",
+      "share_safe": false,
+      "size_bytes": 8017,
+      "visibility": "audit_only"
+    },
+    {
+      "inspect_command": "inspect-v5-evidence-integrity",
+      "kind": "builder_input",
+      "path": "runs/v5-stage0-preimplementation-20260505T143530Z/v5_preimplementation_command_log.jsonl",
+      "producer_command": "external",
+      "producer_stage": "v5_stage1_schema_and_evidence_integrity",
+      "purpose": "build-v5-evidence-integrity input",
+      "schema_version": "repo_harness_v5_evidence_ref_v0",
+      "sha256": "2487764380d01e32b08bb47cd3959bb0005fa0bdd767e4df7a844452f1e98697",
+      "share_safe": false,
+      "size_bytes": 63051,
+      "visibility": "audit_only"
+    }
+  ],
+  "network_policy": "local_only",
+  "output_refs": [
+    {
+      "inspect_command": "inspect-v5-evidence-integrity",
+      "kind": "builder_output",
+      "path": "runs/v5-stage1-schema-and-evidence-20260505T143520Z/v5_pre_acceptance_evidence_integrity_report.json",
+      "producer_command": "build-v5-evidence-integrity",
+      "producer_stage": "v5_stage1_schema_and_evidence_integrity",
+      "purpose": "build-v5-evidence-integrity output",
+      "schema_version": "repo_harness_v5_evidence_ref_v0",
+      "sha256": "89fd2211a74b3791b33faaefa80c90bdf6f2df3b30e7182cb30da7051e53d28c",
+      "share_safe": false,
+      "size_bytes": 1864,
+      "visibility": "audit_only"
+    }
+  ],
+  "risk_command_hits": [],
+  "schema_version": "repo_harness_command_log_entry_v5_v0",
+  "started_at": "2026-05-05T14:35:46Z",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "structured_failure_reason": null,
+  "structured_skip_reason": null,
+  "tool_or_cli_version": "repo-harness 0.1.0"
+}
