@@ -1,0 +1,49 @@
+{
+  "accepted_with_credentials_count": 0,
+  "actual_real_provider_calls": 0,
+  "adapter_not_implemented_skip_count": 1,
+  "created_at": "2026-05-05T15:56:40Z",
+  "credential_missing_skip_count": 1,
+  "fallback_success_count": 0,
+  "producer_stage": "v5_stage3a_provider_gate",
+  "provider_api_called": false,
+  "provider_error_count": 0,
+  "provider_smoke_statuses": [
+    {
+      "adapter_status": "primary_supported",
+      "counts_toward_real_provider_accepted_rate": false,
+      "credential_status": "present",
+      "normalized_smoke_status": "ready_for_stage3b_primary_smoke",
+      "provider_api_called": false,
+      "provider_id": "deepseek",
+      "provider_mode": "primary",
+      "raw_smoke_status": "not_executed"
+    },
+    {
+      "adapter_status": "fallback_only",
+      "counts_toward_primary_openai_provider_family": false,
+      "counts_toward_real_provider_accepted_rate": false,
+      "credential_status": "missing",
+      "normalized_smoke_status": "credential_missing_skip",
+      "provider_api_called": false,
+      "provider_id": "openai",
+      "provider_mode": "fallback_only",
+      "raw_smoke_status": "skipped_no_credentials"
+    },
+    {
+      "adapter_status": "adapter_not_implemented",
+      "counts_toward_real_provider_accepted_rate": false,
+      "credential_status": "missing",
+      "normalized_smoke_status": "adapter_not_implemented_skip",
+      "provider_api_called": false,
+      "provider_id": "anthropic_claude",
+      "provider_mode": "primary",
+      "raw_smoke_status": "adapter_not_implemented"
+    }
+  ],
+  "raw_provider_request_response_written": false,
+  "raw_secret_value_present": false,
+  "schema_version": "repo_harness_v5_provider_smoke_report_v0",
+  "smoke_execution_mode": "credential_and_adapter_structured_probe_no_provider_api_call",
+  "status": "passed"
+}

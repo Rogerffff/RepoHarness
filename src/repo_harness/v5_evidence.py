@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -35,6 +36,10 @@ from repo_harness.schema_versions import (
     V5_PREFLIGHT_INPUT_BINDING_VERSION,
     V5_PROVIDER_COST_BUDGET_REPORT_VERSION,
     V5_PROVIDER_CREDENTIAL_GATE_REPORT_VERSION,
+    V5_PROVIDER_RAW_CONTENT_REDACTION_REPORT_VERSION,
+    V5_PROVIDER_REGISTRY_REPORT_VERSION,
+    V5_PROVIDER_SMOKE_REPORT_VERSION,
+    V5_PROVIDER_STATUS_NORMALIZATION_REPORT_VERSION,
     V5_PUBLIC_DEMO_BUNDLE_MANIFEST_VERSION,
     V5_RESULT_SUMMARY_TABLE_VERSION,
     V5_RESUME_ARTIFACT_INDEX_VERSION,
@@ -126,6 +131,14 @@ V5_PROVIDER_STATUS_VALUES = (
     "fallback_success",
     "provider_error",
 )
+V5_PROVIDER_GATE_STRUCTURED_SKIP_TYPES = (
+    "credential_missing_skip",
+    "adapter_not_implemented_skip",
+    "cost_limited_structured_skip",
+    "primary_provider_comparison_not_enabled_skip",
+)
+V5_PROVIDER_RAW_CONTENT_POLICY = "audit_only_redacted_never_model_visible"
+V5_RAW_SECRET_MARKER_RE = r"\bsk-(?:proj-|ant-api03-)?[A-Za-z0-9_\-]{12,}\b"
 V5_CLAIM_GATE_STAGE_VALUES = ("stage3_partial", "stage4_partial", "stage5_final", "acceptance_final")
 V5_COMPARISON_AXES = ("provider", "scaffold", "budget", "diagnostic_baseline")
 V5_PARTITION_COUNT_FIELDS = (
@@ -1202,16 +1215,222 @@ def inspect_v5_provider_gate(report: str | Path, *, assert_consistent: bool = Fa
     payload = _read_json_for_inspect(path, failures)
     if payload.get("raw_secret_value_present") is not False:
         failures.append("provider credential gate 不能包含 raw secret value。")
+    _inspect_no_raw_secret_markers(payload, failures, label="provider credential gate")
     families = set(payload.get("provider_families") or [])
     missing = sorted(set(V5_PROVIDER_FAMILIES).difference(families))
     if missing:
         failures.append("provider_families 缺少：" + ", ".join(missing))
+    credential_status = payload.get("credential_status_by_provider")
+    if not isinstance(credential_status, dict):
+        failures.append("credential_status_by_provider 必须是 object。")
+    else:
+        for provider in V5_PROVIDER_FAMILIES:
+            status = credential_status.get(provider)
+            if status not in V5_CREDENTIAL_STATUS_VALUES:
+                failures.append(f"{provider} credential_status 无效：{status}")
+    adapter_status = payload.get("adapter_status_by_provider")
+    if not isinstance(adapter_status, dict):
+        failures.append("adapter_status_by_provider 必须是 object。")
+    else:
+        for provider in V5_PROVIDER_FAMILIES:
+            status = adapter_status.get(provider)
+            if status not in V5_ADAPTER_STATUS_VALUES:
+                failures.append(f"{provider} adapter_status 无效：{status}")
+        if adapter_status.get("deepseek") != "primary_supported":
+            failures.append("deepseek 必须保持 primary_supported。")
+        if adapter_status.get("openai") != "fallback_only":
+            failures.append("openai 当前只能是 fallback_only，不能伪装成 primary provider。")
+        if adapter_status.get("anthropic_claude") != "adapter_not_implemented":
+            failures.append("anthropic_claude 当前必须记录 adapter_not_implemented，除非后续阶段正式实现 adapter。")
+    if payload.get("provider_raw_content_policy") != V5_PROVIDER_RAW_CONTENT_POLICY:
+        failures.append("provider_raw_content_policy 必须是 audit_only_redacted_never_model_visible。")
+    if payload.get("fallback_success_counts_toward_primary_openai") is not False:
+        failures.append("OpenAI fallback success 不能计入 primary OpenAI provider。")
+    if payload.get("credential_missing_skip_counts_toward_real_provider_accepted_rate") is not False:
+        failures.append("credential_missing_skip 不能计入真实 provider accepted rate。")
+    _inspect_provider_structured_skips(payload.get("structured_skips"), failures)
+    _inspect_provider_registry_ref(payload.get("provider_registry_report_ref"), failures)
+    _inspect_provider_smoke_ref(payload.get("provider_smoke_report_ref"), failures)
+    _inspect_provider_raw_content_redaction_ref(payload.get("provider_raw_content_redaction_report_ref"), failures)
+    _inspect_provider_status_normalization_ref(payload.get("provider_status_normalization_report_ref"), failures)
     return _schema_inspect_result("Inspect V5 provider gate", path, failures, assert_complete=assert_consistent)
 
 
 def inspect_v5_provider_cost_budget(report: str | Path, *, assert_consistent: bool = False) -> str:
-    failures = _inspect_schema_file(Path(report), expected_schema_names={"V5ProviderCostBudgetReport"})
-    return _schema_inspect_result("Inspect V5 provider cost budget", Path(report), failures, assert_complete=assert_consistent)
+    path = Path(report)
+    failures = _inspect_schema_file(path, expected_schema_names={"V5ProviderCostBudgetReport"})
+    payload = _read_json_for_inspect(path, failures)
+    for key in ("max_real_provider_calls", "actual_real_provider_calls"):
+        value = payload.get(key)
+        if not isinstance(value, int) or value < 0:
+            failures.append(f"{key} 必须是非负整数。")
+    for key in ("max_cost_usd", "actual_cost_proxy_usd"):
+        value = payload.get(key)
+        if not isinstance(value, int | float) or value < 0:
+            failures.append(f"{key} 必须是非负数值。")
+    if payload.get("actual_real_provider_calls", 0) > payload.get("max_real_provider_calls", 0):
+        failures.append("actual_real_provider_calls 不能超过 max_real_provider_calls。")
+    if payload.get("actual_cost_proxy_usd", 0) > payload.get("max_cost_usd", 0):
+        failures.append("actual_cost_proxy_usd 不能超过 max_cost_usd。")
+    if not payload.get("cost_proxy_formula"):
+        failures.append("cost_proxy_formula 不能为空。")
+    skips = payload.get("cost_limited_structured_skip")
+    if not isinstance(skips, list):
+        failures.append("cost_limited_structured_skip 必须是 list。")
+    else:
+        for index, skip in enumerate(skips):
+            if not isinstance(skip, dict):
+                failures.append(f"cost_limited_structured_skip[{index}] 必须是 object。")
+                continue
+            if skip.get("skip_type") != "cost_limited_structured_skip":
+                failures.append(f"cost_limited_structured_skip[{index}] skip_type 无效。")
+            if skip.get("counts_toward_real_provider_accepted_rate") is not False:
+                failures.append(f"cost_limited_structured_skip[{index}] 不能计入真实 provider accepted rate。")
+    gate_ref = payload.get("provider_gate_ref")
+    if gate_ref:
+        _inspect_v5_ref(gate_ref, failures, label="provider_gate_ref")
+        gate_path = _path_from_ref(gate_ref)
+        if gate_path is not None and gate_path.exists():
+            try:
+                inspect_v5_provider_gate(gate_path, assert_consistent=True)
+            except ConfigError as exc:
+                failures.append(f"provider_gate_ref 检查失败：{exc}")
+    return _schema_inspect_result("Inspect V5 provider cost budget", path, failures, assert_complete=assert_consistent)
+
+
+def _inspect_no_raw_secret_markers(payload: dict[str, Any], failures: list[str], *, label: str) -> None:
+    text = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    lowered = text.lower()
+    if re.search(V5_RAW_SECRET_MARKER_RE, text):
+        failures.append(f"{label} 包含疑似 raw provider credential marker。")
+    if "authorization: bearer" in lowered or '"authorization"' in lowered:
+        failures.append(f"{label} 不能包含 Authorization marker。")
+
+
+def _inspect_provider_structured_skips(skips: Any, failures: list[str]) -> None:
+    if not isinstance(skips, list):
+        failures.append("structured_skips 必须是 list。")
+        return
+    for index, skip in enumerate(skips):
+        if not isinstance(skip, dict):
+            failures.append(f"structured_skips[{index}] 必须是 object。")
+            continue
+        if skip.get("provider_id") not in V5_PROVIDER_FAMILIES:
+            failures.append(f"structured_skips[{index}] provider_id 无效。")
+        if skip.get("skip_type") not in V5_PROVIDER_GATE_STRUCTURED_SKIP_TYPES:
+            failures.append(f"structured_skips[{index}] skip_type 无效。")
+        if skip.get("credential_status") not in V5_CREDENTIAL_STATUS_VALUES:
+            failures.append(f"structured_skips[{index}] credential_status 无效。")
+        if skip.get("adapter_status") not in V5_ADAPTER_STATUS_VALUES:
+            failures.append(f"structured_skips[{index}] adapter_status 无效。")
+        if not skip.get("skip_reason"):
+            failures.append(f"structured_skips[{index}] 缺少 skip_reason。")
+        if not skip.get("affected_matrix_cells"):
+            failures.append(f"structured_skips[{index}] 缺少 affected_matrix_cells。")
+        if skip.get("counts_toward_real_provider_accepted_rate") is not False:
+            failures.append(f"structured_skips[{index}] 不能计入真实 provider accepted rate。")
+        if skip.get("counts_toward_primary_accepted_rate") is not False:
+            failures.append(f"structured_skips[{index}] 不能计入 primary accepted rate。")
+
+
+def _inspect_provider_registry_ref(ref: Any, failures: list[str]) -> None:
+    _inspect_v5_ref(ref, failures, label="provider_registry_report_ref")
+    payload = _read_ref_payload(ref, failures)
+    if not payload:
+        return
+    _inspect_no_raw_secret_markers(payload, failures, label="provider registry report")
+    if payload.get("schema_version") != V5_PROVIDER_REGISTRY_REPORT_VERSION:
+        failures.append("provider registry report schema_version 不匹配。")
+    providers = payload.get("providers")
+    if not isinstance(providers, list):
+        failures.append("provider registry report providers 必须是 list。")
+        return
+    by_id = {item.get("provider_id"): item for item in providers if isinstance(item, dict)}
+    for provider in V5_PROVIDER_FAMILIES:
+        if provider not in by_id:
+            failures.append(f"provider registry report 缺少 {provider}。")
+    if by_id.get("deepseek", {}).get("adapter_status") != "primary_supported":
+        failures.append("provider registry 必须把 deepseek 记录为 primary_supported。")
+    if by_id.get("openai", {}).get("adapter_status") != "fallback_only":
+        failures.append("provider registry 必须把 openai 记录为 fallback_only。")
+    if by_id.get("openai", {}).get("counts_toward_resume_ready_provider_comparison") is not False:
+        failures.append("OpenAI fallback-only registry entry 不能计入 resume-ready provider comparison。")
+    if by_id.get("anthropic_claude", {}).get("adapter_status") != "adapter_not_implemented":
+        failures.append("provider registry 必须把 anthropic_claude 记录为 adapter_not_implemented。")
+
+
+def _inspect_provider_smoke_ref(ref: Any, failures: list[str]) -> None:
+    _inspect_v5_ref(ref, failures, label="provider_smoke_report_ref")
+    payload = _read_ref_payload(ref, failures)
+    if not payload:
+        return
+    _inspect_no_raw_secret_markers(payload, failures, label="provider smoke report")
+    if payload.get("schema_version") != V5_PROVIDER_SMOKE_REPORT_VERSION:
+        failures.append("provider smoke report schema_version 不匹配。")
+    if payload.get("provider_api_called") is not False:
+        failures.append("Stage 3A provider smoke report 不能提前声明已经调用 provider API。")
+    statuses = payload.get("provider_smoke_statuses")
+    if not isinstance(statuses, list):
+        failures.append("provider_smoke_statuses 必须是 list。")
+        return
+    by_provider = {item.get("provider_id"): item for item in statuses if isinstance(item, dict)}
+    for provider in V5_PROVIDER_FAMILIES:
+        if provider not in by_provider:
+            failures.append(f"provider_smoke_statuses 缺少 {provider}。")
+    if by_provider.get("openai", {}).get("counts_toward_primary_openai_provider_family") is not False:
+        failures.append("OpenAI fallback smoke 不能计入 primary OpenAI provider family。")
+    if by_provider.get("anthropic_claude", {}).get("normalized_smoke_status") != "adapter_not_implemented_skip":
+        failures.append("Anthropic Claude smoke 必须归一化为 adapter_not_implemented_skip。")
+
+
+def _inspect_provider_raw_content_redaction_ref(ref: Any, failures: list[str]) -> None:
+    _inspect_v5_ref(ref, failures, label="provider_raw_content_redaction_report_ref")
+    payload = _read_ref_payload(ref, failures)
+    if not payload:
+        return
+    _inspect_no_raw_secret_markers(payload, failures, label="provider raw content redaction report")
+    if payload.get("schema_version") != V5_PROVIDER_RAW_CONTENT_REDACTION_REPORT_VERSION:
+        failures.append("provider raw content redaction report schema_version 不匹配。")
+    for key in (
+        "raw_request_model_visible_count",
+        "raw_response_model_visible_count",
+        "raw_request_trainable_count",
+        "raw_response_trainable_count",
+        "raw_request_public_safe_count",
+        "raw_response_public_safe_count",
+        "authorization_marker_count",
+        "provider_credential_marker_count",
+    ):
+        if payload.get(key, 0) != 0:
+            failures.append(f"{key} 必须为 0。")
+
+
+def _inspect_provider_status_normalization_ref(ref: Any, failures: list[str]) -> None:
+    _inspect_v5_ref(ref, failures, label="provider_status_normalization_report_ref")
+    payload = _read_ref_payload(ref, failures)
+    if not payload:
+        return
+    _inspect_no_raw_secret_markers(payload, failures, label="provider status normalization report")
+    if payload.get("schema_version") != V5_PROVIDER_STATUS_NORMALIZATION_REPORT_VERSION:
+        failures.append("provider status normalization report schema_version 不匹配。")
+    rules = payload.get("normalization_rules")
+    if not isinstance(rules, list):
+        failures.append("normalization_rules 必须是 list。")
+        return
+    mapping = {
+        rule.get("raw_status"): rule.get("normalized_provider_status")
+        for rule in rules
+        if isinstance(rule, dict)
+    }
+    if mapping.get("skipped_no_credentials") != "credential_missing_skip":
+        failures.append("skipped_no_credentials 必须归一化为 credential_missing_skip。")
+    for rule in rules:
+        if not isinstance(rule, dict):
+            continue
+        if rule.get("raw_status") == "fallback_success" and rule.get("counts_toward_primary_accepted_rate") is not False:
+            failures.append("fallback_success 不能计入 primary accepted rate。")
+    if payload.get("fallback_success_counts_as_primary_openai_run") is not False:
+        failures.append("status normalization 不能允许 fallback_success 计入 primary OpenAI run。")
 
 
 def inspect_v5_export_pack(manifest: str | Path, *, assert_clean: bool = False) -> str:
@@ -2597,11 +2816,36 @@ def _valid_schema_fixture_payload(schema_name: str, target: Path) -> dict[str, A
             "provider_families": list(V5_PROVIDER_FAMILIES),
             "credential_status_by_provider": {provider: "missing" for provider in V5_PROVIDER_FAMILIES},
             "adapter_status_by_provider": {
-                "openai": "primary_supported",
+                "openai": "fallback_only",
                 "deepseek": "primary_supported",
                 "anthropic_claude": "adapter_not_implemented",
             },
-            "structured_skips": [],
+            "structured_skips": [
+                {
+                    "provider_id": "openai",
+                    "skip_type": "primary_provider_comparison_not_enabled_skip",
+                    "credential_status": "missing",
+                    "adapter_status": "fallback_only",
+                    "skip_reason": "OpenAI is fallback-only in the current adapter.",
+                    "affected_matrix_cells": ["openai_primary_provider_comparison_cells"],
+                    "affects_core_acceptance": False,
+                    "affects_resume_ready_acceptance": True,
+                    "counts_toward_real_provider_accepted_rate": False,
+                    "counts_toward_primary_accepted_rate": False,
+                },
+                {
+                    "provider_id": "anthropic_claude",
+                    "skip_type": "adapter_not_implemented_skip",
+                    "credential_status": "missing",
+                    "adapter_status": "adapter_not_implemented",
+                    "skip_reason": "Anthropic Claude adapter is not implemented.",
+                    "affected_matrix_cells": ["anthropic_claude_provider_comparison_cells"],
+                    "affects_core_acceptance": False,
+                    "affects_resume_ready_acceptance": True,
+                    "counts_toward_real_provider_accepted_rate": False,
+                    "counts_toward_primary_accepted_rate": False,
+                },
+            ],
             "raw_secret_value_present": False,
             "provider_raw_content_policy": "audit_only_redacted_never_model_visible",
         }

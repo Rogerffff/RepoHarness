@@ -137,6 +137,10 @@ from repo_harness.v5_task_set import (
 )
 from repo_harness.v5_task_set import build_task_set_manifest as build_v5_task_set_manifest
 from repo_harness.v5_task_set import merge_task_set_manifests as merge_v5_task_set_manifests
+from repo_harness.v5_provider_gate import (
+    build_provider_cost_budget_report as build_v5_provider_cost_budget_report,
+)
+from repo_harness.v5_provider_gate import build_provider_gate_report as build_v5_provider_gate_report
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -992,6 +996,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_v5_task_visibility_parser.add_argument("report", help="v5_task_visibility_scan_report.json 路径。")
     inspect_v5_task_visibility_parser.add_argument("--assert-clean", action="store_true", help="要求 V5 task visibility scan 无泄漏。")
+
+    build_v5_provider_gate_parser = subparsers.add_parser(
+        "build-v5-provider-gate",
+        help="构建 V5 Stage 3A provider registry、credential gate 和 provider smoke structured evidence。",
+    )
+    build_v5_provider_gate_parser.add_argument("--task-set-manifest", required=True)
+    build_v5_provider_gate_parser.add_argument("--output-dir", required=True)
+    build_v5_provider_gate_parser.add_argument(
+        "--allow-local-secret-file",
+        action="store_true",
+        help="允许 DeepSeek 使用本地脱敏 secret file 作为 active credential source；报告仍不得写入 raw secret value。",
+    )
+    build_v5_provider_gate_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    build_v5_provider_cost_budget_parser = subparsers.add_parser(
+        "build-v5-provider-cost-budget",
+        help="构建 V5 Stage 3A provider cost budget report。",
+    )
+    build_v5_provider_cost_budget_parser.add_argument("--provider-gate-report", required=True)
+    build_v5_provider_cost_budget_parser.add_argument("--output", required=True)
+    build_v5_provider_cost_budget_parser.add_argument("--max-real-provider-calls", type=int, default=24)
+    build_v5_provider_cost_budget_parser.add_argument("--max-cost-usd", type=float, default=5.0)
+    build_v5_provider_cost_budget_parser.add_argument("--actual-real-provider-calls", type=int, default=0)
+    build_v5_provider_cost_budget_parser.add_argument("--actual-cost-proxy-usd", type=float, default=0.0)
+    build_v5_provider_cost_budget_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
 
     inspect_v5_run_matrix_parser = subparsers.add_parser(
         "inspect-v5-run-matrix",
@@ -1891,6 +1930,33 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(inspect_v5_task_visibility(args.report, assert_clean=args.assert_clean))
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 task visibility 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-v5-provider-gate":
+        try:
+            output_path = build_v5_provider_gate_report(
+                task_set_manifest=args.task_set_manifest,
+                output_dir=args.output_dir,
+                allow_local_secret_file=args.allow_local_secret_file,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 provider gate 构建失败：{exc}\n")
+        print(f"V5 provider credential gate report：{output_path}")
+        return 0
+    if args.command == "build-v5-provider-cost-budget":
+        try:
+            output_path = build_v5_provider_cost_budget_report(
+                provider_gate_report=args.provider_gate_report,
+                output=args.output,
+                max_real_provider_calls=args.max_real_provider_calls,
+                max_cost_usd=args.max_cost_usd,
+                actual_real_provider_calls=args.actual_real_provider_calls,
+                actual_cost_proxy_usd=args.actual_cost_proxy_usd,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 provider cost budget 构建失败：{exc}\n")
+        print(f"V5 provider cost budget report：{output_path}")
         return 0
     if args.command == "inspect-v5-run-matrix":
         try:

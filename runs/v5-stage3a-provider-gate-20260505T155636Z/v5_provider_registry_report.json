@@ -1,0 +1,84 @@
+{
+  "created_at": "2026-05-05T15:56:40Z",
+  "producer_stage": "v5_stage3a_provider_gate",
+  "provider_families": [
+    "openai",
+    "deepseek",
+    "anthropic_claude"
+  ],
+  "provider_registry_policy": {
+    "adapter_not_implemented_skip_counts_as_real_provider_run": false,
+    "credential_missing_skip_counts_as_real_provider_run": false,
+    "fallback_success_counts_as_primary_openai_run": false,
+    "provider_raw_request_response_visibility": "audit_only_redacted"
+  },
+  "providers": [
+    {
+      "adapter_module": "repo_harness.model_client.providers.deepseek.DeepSeekProviderClient",
+      "adapter_status": "primary_supported",
+      "allowed_models": [
+        "deepseek-v4-flash",
+        "deepseek-v4-pro"
+      ],
+      "base_url": "https://api.deepseek.com",
+      "base_url_category": "deepseek_openai_compatible_chat_completions",
+      "counts_toward_core_acceptance_if_actual_run_exists": true,
+      "counts_toward_resume_ready_provider_comparison": true,
+      "credential_env_var": "DEEPSEEK_API_KEY",
+      "credential_policy": "env_or_local_secret_file_redacted",
+      "default_model": "deepseek-v4-pro",
+      "fallback_only_current_adapter": false,
+      "official_docs_url": "https://api-docs.deepseek.com/zh-cn/",
+      "primary_provider_supported": true,
+      "provider_family": "deepseek",
+      "provider_id": "deepseek"
+    },
+    {
+      "adapter_module": "repo_harness.model_client.providers.openai.OpenAIProviderClient",
+      "adapter_status": "fallback_only",
+      "base_url": "https://api.openai.com/v1",
+      "base_url_category": "openai_chat_completions_sdk",
+      "counts_toward_core_acceptance_if_actual_run_exists": false,
+      "counts_toward_resume_ready_provider_comparison": false,
+      "credential_env_var": "OPENAI_API_KEY",
+      "default_model": "gpt-5-mini",
+      "fallback_only_current_adapter": true,
+      "fallback_policy": "may only run as DeepSeek fallback until primary-provider gates are implemented",
+      "official_docs_url": "https://developers.openai.com/api/docs/quickstart?language=python",
+      "openai_sdk_available": false,
+      "primary_provider_supported": false,
+      "provider_family": "openai",
+      "provider_id": "openai"
+    },
+    {
+      "adapter_module": null,
+      "adapter_status": "adapter_not_implemented",
+      "base_url_category": "not_applicable_until_adapter_exists",
+      "counts_toward_core_acceptance_if_actual_run_exists": false,
+      "counts_toward_resume_ready_provider_comparison": false,
+      "credential_env_var": "ANTHROPIC_API_KEY or CLAUDE_API_KEY",
+      "default_model": null,
+      "fallback_only_current_adapter": false,
+      "official_docs_url": "https://docs.anthropic.com/en/api/messages",
+      "primary_provider_supported": false,
+      "provider_family": "anthropic_claude",
+      "provider_id": "anthropic_claude"
+    }
+  ],
+  "raw_provider_content_policy": "audit_only_redacted_never_model_visible",
+  "schema_version": "repo_harness_v5_provider_registry_report_v0",
+  "status": "passed",
+  "task_set_ref": {
+    "inspect_command": "inspect-v5-task-set",
+    "kind": "v5_task_set_manifest",
+    "path": "runs/v5-stage2b-merged-task-set-20260505T152756Z/v5_task_set_manifest.json",
+    "producer_command": "merge-v5-task-set",
+    "producer_stage": "v5_stage2b_task_set_merge",
+    "purpose": "V5 Stage 2B merged task set manifest used by Stage 3A provider gate",
+    "schema_version": "repo_harness_v5_evidence_ref_v0",
+    "sha256": "e77e197cd5e277bb4a389d7ace0e8475e78b6a274f77efcfd0308231e336771b",
+    "share_safe": false,
+    "size_bytes": 18160,
+    "visibility": "audit_only"
+  }
+}
