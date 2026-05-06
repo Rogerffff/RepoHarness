@@ -69,6 +69,14 @@
 
 结论：已修复。
 
+### P3：single_shot_patch 缺少公开源码上下文
+
+发现：`single_shot_patch` 不能调用工具，只有 README 级仓库上下文时，provider 容易生成错误文件或不可应用补丁。
+
+处理：`single_shot_patch` accepted run 为 `v5_task_008` 增加来自冻结 source archive 的公开 `unstable/parser.go` 片段。该片段属于模型在工具模式下本可读取的仓库源码，不包含 evaluator-only 测试补丁、gold patch 或 verifier 输出。
+
+结论：已修复。
+
 ## 验证命令和结果
 
 ```bash

@@ -1816,7 +1816,7 @@ def _runnable_task_for_accepted_run(
         task_id=str(task["task_id"]),
         task_version=f"{task['task_id']}_accepted_provider_v0",
         dataset_name="repo_harness_v5",
-        issue_statement=_accepted_issue_statement(adapter_visible, scaffold_id=scaffold_id),
+        issue_statement=_accepted_issue_statement(task, adapter_visible, scaffold_id=scaffold_id),
         repo_source=archive_path.as_posix(),
         repo_source_spec=source,
         base_commit=task.get("base_commit"),
@@ -2365,7 +2365,7 @@ def _accepted_task_yaml_payload(
     payload = _task_yaml_payload(task=task, adapter_visible=adapter_visible)
     payload["task_version"] = f"{task['task_id']}_accepted_provider_v0"
     payload["dataset_split"] = "v5_stage3b_accepted_provider"
-    payload["issue"] = _accepted_issue_statement(adapter_visible, scaffold_id=scaffold_id)
+    payload["issue"] = _accepted_issue_statement(task, adapter_visible, scaffold_id=scaffold_id)
     payload["test_command"] = "hidden_final_verifier_not_model_visible"
     payload["metadata"] = {
         **payload.get("metadata", {}),
@@ -2383,7 +2383,12 @@ def _issue_statement(adapter_visible: dict[str, Any]) -> str:
     return str(adapter_visible.get("task_statement", "")).strip() + suffix
 
 
-def _accepted_issue_statement(adapter_visible: dict[str, Any], *, scaffold_id: str) -> str:
+def _accepted_issue_statement(
+    task: dict[str, Any],
+    adapter_visible: dict[str, Any],
+    *,
+    scaffold_id: str,
+) -> str:
     common = (
         _issue_statement(adapter_visible)
         + "\n\nAccepted-run execution guidance:\n"
@@ -2396,12 +2401,69 @@ def _accepted_issue_statement(adapter_visible: dict[str, Any], *, scaffold_id: s
             common
             + "\n- Do not call tools. Return exactly one unified diff patch for the repository.\n"
             + "- The patch must start with standard diff headers such as `diff --git`, `---`, `+++`, and `@@` hunks."
+            + _accepted_public_source_context(task)
         )
     return (
         common
         + "\n- Do not spend the whole budget on analysis. After you locate the relevant implementation, call edit_file.\n"
         + "- Review the repository diff with git_diff before your final answer."
     )
+
+
+def _accepted_public_source_context(task: dict[str, Any]) -> str:
+    if str(task.get("task_id")) != "v5_task_008":
+        return ""
+    archive_ref = task.get("source_archive_ref")
+    if not isinstance(archive_ref, dict):
+        return ""
+    archive_path = Path(str(archive_ref.get("path", "")))
+    if not archive_path.exists():
+        return ""
+    excerpt = _archive_file_excerpt(
+        archive_path=archive_path,
+        suffix="unstable/parser.go",
+        start_marker="func (p *Parser) parseKeyval",
+        end_marker="//nolint:cyclop,funlen",
+        max_chars=2600,
+    )
+    if not excerpt:
+        return ""
+    return (
+        "\n\nPublic source context from the frozen repository archive, not evaluator-only evidence:\n"
+        "File: `unstable/parser.go`\n"
+        "```go\n"
+        f"{excerpt.rstrip()}\n"
+        "```"
+    )
+
+
+def _archive_file_excerpt(
+    *,
+    archive_path: Path,
+    suffix: str,
+    start_marker: str,
+    end_marker: str,
+    max_chars: int,
+) -> str:
+    try:
+        with tarfile.open(archive_path, "r") as archive:
+            member = next((item for item in archive.getmembers() if item.name.endswith(suffix)), None)
+            if member is None:
+                return ""
+            file_obj = archive.extractfile(member)
+            if file_obj is None:
+                return ""
+            text = file_obj.read().decode("utf-8")
+    except (OSError, tarfile.TarError, UnicodeDecodeError):
+        return ""
+    start = text.find(start_marker)
+    if start < 0:
+        return text[:max_chars]
+    end = text.find(end_marker, start)
+    if end < 0:
+        end = min(len(text), start + max_chars)
+    excerpt = text[start:end]
+    return excerpt[:max_chars]
 
 
 def _test_command_for_task(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> str:
