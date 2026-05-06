@@ -63,6 +63,47 @@ def test_v5_demo_artifacts_and_interview_pack_are_share_safe(tmp_path: Path) -> 
     assert "分区训练导出" not in resume_bullets
 
 
+def test_v5_demo_artifacts_can_bind_provider_axis_supplemental_proof(tmp_path: Path) -> None:
+    task_set = _write_task_set(tmp_path)
+    executed_manifest = _write_executed_manifest(tmp_path)
+    export_pack = _write_export_pack_manifest(tmp_path)
+    claim_gate = _write_stage4_claim_gate(tmp_path)
+    provider_report = _write_provider_comparison_report(tmp_path)
+
+    resume_index = build_demo_artifacts(
+        task_set_manifest=task_set,
+        executed_run_matrix_manifest=executed_manifest,
+        export_pack_manifest=export_pack,
+        stage4_claim_gate_report=claim_gate,
+        provider_comparison_report=provider_report,
+        output_dir=tmp_path / "stage5",
+    )
+
+    assert "Inspect V5 demo artifacts: complete" in inspect_v5_demo_artifacts(resume_index, assert_share_safe=True)
+    result_summary = _read_json(tmp_path / "stage5" / "v5_result_summary_table.json")
+    provider_conclusion = result_summary["provider_comparison_conclusion"]
+    assert provider_conclusion["status"] == "provider_axis_proof_available_not_resume_ready"
+    assert provider_conclusion["actual_records_by_provider"] == {"deepseek": 2, "openai": 2}
+    stage5_claim_gate = _read_json(tmp_path / "stage5" / "v5_resume_claim_gate_report.json")
+    assert stage5_claim_gate["provider_claim_status"] == "provider_axis_satisfied_two_task_deepseek_openai_pairs"
+    assert "provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI" in stage5_claim_gate["allowed_claims"]
+    assert "multi-provider agent runs" in stage5_claim_gate["blocked_claims"]
+
+    docs12 = tmp_path / "docs" / "12-resume-narrative-and-demo-artifacts.md"
+    docs12.parent.mkdir(parents=True)
+    docs12.write_text("# Resume Artifacts\n", encoding="utf-8")
+    build_interview_result_pack(
+        resume_artifact_index=resume_index,
+        stage5_claim_gate_report=tmp_path / "stage5" / "v5_resume_claim_gate_report.json",
+        docs12_path=docs12,
+        output_dir=tmp_path / "stage5",
+    )
+
+    qa = (tmp_path / "stage5" / "v5_interview_qa_evidence.md").read_text(encoding="utf-8")
+    assert "OpenAI / DeepSeek 两任务 provider-axis 补充证据" in qa
+    assert "当前只有一个真实 provider family" not in qa
+
+
 def _write_task_set(tmp_path: Path) -> Path:
     adapter_input = tmp_path / "task" / "adapter_visible.json"
     _write_json(
@@ -188,6 +229,64 @@ def _write_stage4_claim_gate(tmp_path: Path) -> Path:
             "demo_share_safe_status": "pending_stage5",
             "stress_test_claim_status": "not_claimed",
             "source_reports": [],
+        },
+    )
+    return path
+
+
+def _write_provider_comparison_report(tmp_path: Path) -> Path:
+    provider_gate = tmp_path / "provider" / "v5_provider_credential_gate_report.json"
+    _write_json(provider_gate, {"schema_version": "repo_harness_v5_provider_credential_gate_report_v0", "status": "passed"})
+    matrix = tmp_path / "provider" / "v5_run_matrix_manifest_executed.json"
+    _write_json(matrix, {"schema_version": "repo_harness_v5_run_matrix_manifest_v0", "status": "passed"})
+    results = tmp_path / "provider" / "v5_matrix_cell_results.jsonl"
+    _write_jsonl(results, [{"schema_version": "repo_harness_v5_matrix_cell_result_v0", "cell_id": "cell"}])
+    path = tmp_path / "provider" / "v5_provider_comparison_report.json"
+    _write_json(
+        path,
+        {
+            "schema_version": "repo_harness_v5_provider_comparison_report_v0",
+            "comparison_axis": "provider",
+            "comparison_validity": "valid",
+            "controlled_variables": [
+                "task_id",
+                "source_tree_hash",
+                "final_verifier_plan_ref",
+                "tool_policy_id",
+                "context_policy_id",
+                "scaffold_id",
+                "budget_policy_id",
+                "environment_id",
+            ],
+            "compared_cells": [
+                "v5_task_003_deepseek",
+                "v5_task_003_openai",
+                "v5_task_004_deepseek",
+                "v5_task_004_openai",
+            ],
+            "compared_task_ids": ["v5_task_003", "v5_task_004"],
+            "provider_pairs": [
+                {
+                    "task_id": "v5_task_003",
+                    "providers": ["deepseek", "openai"],
+                    "controlled_variables": {"scaffold_id": "simple_react", "budget_policy_id": "constrained"},
+                },
+                {
+                    "task_id": "v5_task_004",
+                    "providers": ["deepseek", "openai"],
+                    "controlled_variables": {"scaffold_id": "simple_react", "budget_policy_id": "constrained"},
+                },
+            ],
+            "provider_families_with_actual_runs": ["deepseek", "openai"],
+            "actual_records_by_provider": {"deepseek": 2, "openai": 2},
+            "provider_axis_comparison_satisfied": True,
+            "resume_ready_provider_comparison_satisfied": False,
+            "counts_toward_resume_ready_acceptance": False,
+            "provider_gate_ref": _ref(provider_gate, "v5_provider_credential_gate_report"),
+            "run_matrix_manifest_ref": _ref(matrix, "v5_run_matrix_manifest"),
+            "matrix_cell_results_ref": _ref(results, "v5_matrix_cell_results"),
+            "run_matrix_manifest_refs": [_ref(matrix, "v5_run_matrix_manifest")],
+            "matrix_cell_results_refs": [_ref(results, "v5_matrix_cell_results")],
         },
     )
     return path

@@ -33,6 +33,7 @@ from repo_harness.schema_versions import (
     V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
     V5_PRE_ACCEPTANCE_EVIDENCE_INTEGRITY_REPORT_VERSION,
     V5_PREFERENCE_PAIR_BLOCKED_REPORT_VERSION,
+    V5_PROVIDER_COMPARISON_REPORT_VERSION,
     V5_PREFLIGHT_INPUT_BINDING_VERSION,
     V5_PROVIDER_COST_BUDGET_REPORT_VERSION,
     V5_PROVIDER_CREDENTIAL_GATE_REPORT_VERSION,
@@ -130,6 +131,19 @@ V5_PROVIDER_STATUS_VALUES = (
     "cost_limited_structured_skip",
     "fallback_success",
     "provider_error",
+)
+V5_PROVIDER_COMPARISON_CONTROLLED_FIELDS = (
+    "task_id",
+    "source_tree_hash",
+    "final_verifier_plan_ref",
+    "tool_policy_id",
+    "context_policy_id",
+    "scaffold_id",
+    "budget_policy_id",
+    "environment_id",
+)
+V5_PROVIDER_COMPARISON_PAIR_CONTROLLED_FIELDS = tuple(
+    field for field in V5_PROVIDER_COMPARISON_CONTROLLED_FIELDS if field != "task_id"
 )
 V5_PROVIDER_GATE_STRUCTURED_SKIP_TYPES = (
     "credential_missing_skip",
@@ -435,6 +449,24 @@ V5_SCHEMA_SPECS: tuple[dict[str, Any], ...] = (
         "inspect_command": "inspect-v5-run-matrix",
         "valid_fixture": "tests/fixtures/v5/matrix_compare_scope_valid.json",
         "negative_fixture": "tests/fixtures/v5/matrix_compare_scope_missing_controlled_variables.json",
+    },
+    {
+        "schema_name": "V5ProviderComparisonReport",
+        "schema_version": V5_PROVIDER_COMPARISON_REPORT_VERSION,
+        "required_fields": (
+            "schema_version",
+            "comparison_axis",
+            "comparison_validity",
+            "controlled_variables",
+            "compared_cells",
+            "provider_pairs",
+            "provider_axis_comparison_satisfied",
+            "resume_ready_provider_comparison_satisfied",
+            "counts_toward_resume_ready_acceptance",
+        ),
+        "inspect_command": "inspect-v5-run-matrix",
+        "valid_fixture": "tests/fixtures/v5/provider_comparison_valid.json",
+        "negative_fixture": "tests/fixtures/v5/provider_comparison_missing_controlled_variables.json",
     },
     {
         "schema_name": "V5ExportResultPackManifest",
@@ -1216,7 +1248,12 @@ def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False
     path = Path(manifest)
     failures = _inspect_schema_file(
         path,
-        expected_schema_names={"V5RunMatrixManifest", "V5MatrixCellResult", "V5MatrixCompareScopeReport"},
+        expected_schema_names={
+            "V5RunMatrixManifest",
+            "V5MatrixCellResult",
+            "V5MatrixCompareScopeReport",
+            "V5ProviderComparisonReport",
+        },
     )
     payload = _read_json_for_inspect(path, failures)
     schema_version = payload.get("schema_version")
@@ -1226,6 +1263,8 @@ def inspect_v5_run_matrix(manifest: str | Path, *, assert_complete: bool = False
         _inspect_v5_matrix_cell_result(payload, failures, label="matrix_cell_result")
     elif schema_version == V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION:
         _inspect_v5_matrix_compare_scope_report(payload, failures)
+    elif schema_version == V5_PROVIDER_COMPARISON_REPORT_VERSION:
+        _inspect_v5_provider_comparison_report(payload, failures)
     return _schema_inspect_result("Inspect V5 run matrix", path, failures, assert_complete=assert_complete)
 
 
@@ -1325,6 +1364,106 @@ def _inspect_v5_matrix_compare_scope_report(payload: dict[str, Any], failures: l
     for ref_field in ("run_matrix_manifest_ref", "matrix_cell_results_ref"):
         if payload.get(ref_field):
             _inspect_v5_ref(payload.get(ref_field), failures, label=ref_field)
+
+
+def _inspect_v5_provider_comparison_report(payload: dict[str, Any], failures: list[str]) -> None:
+    if payload.get("comparison_axis") != "provider":
+        failures.append("provider comparison report 的 comparison_axis 必须是 provider。")
+    if payload.get("comparison_validity") not in {"valid", "invalid", "diagnostic_only"}:
+        failures.append("provider comparison report 的 comparison_validity 枚举值无效。")
+    controlled = payload.get("controlled_variables")
+    if not isinstance(controlled, list) or not controlled:
+        failures.append("provider comparison report 的 controlled_variables 必须是非空 list。")
+        controlled_set: set[str] = set()
+    else:
+        controlled_set = {str(item) for item in controlled}
+        missing = sorted(set(V5_PROVIDER_COMPARISON_CONTROLLED_FIELDS).difference(controlled_set))
+        if missing:
+            failures.append("provider comparison report 缺少受控变量字段：" + ", ".join(missing))
+    compared_cells = payload.get("compared_cells")
+    if not isinstance(compared_cells, list):
+        failures.append("provider comparison report 的 compared_cells 必须是 list。")
+        compared_cell_set: set[str] = set()
+    else:
+        compared_cell_set = {str(item) for item in compared_cells}
+    compared_task_ids = payload.get("compared_task_ids")
+    if compared_task_ids is not None and not isinstance(compared_task_ids, list):
+        failures.append("provider comparison report 的 compared_task_ids 必须是 list。")
+        compared_task_set: set[str] = set()
+    else:
+        compared_task_set = {str(item) for item in (compared_task_ids or [])}
+    provider_pairs = payload.get("provider_pairs")
+    if not isinstance(provider_pairs, list):
+        failures.append("provider comparison report 的 provider_pairs 必须是 list。")
+        provider_pairs = []
+    if payload.get("comparison_validity") == "valid":
+        if payload.get("provider_axis_comparison_satisfied") is not True:
+            failures.append("valid provider comparison 必须 provider_axis_comparison_satisfied=true。")
+        if len(provider_pairs) < 2:
+            failures.append("valid provider comparison 至少需要 2 个 task-level provider pair。")
+        if not isinstance(compared_cells, list) or len(compared_cells) < 4:
+            failures.append("valid provider comparison 至少需要 4 个 compared_cells。")
+        if len(compared_task_set) < 2:
+            failures.append("valid provider comparison 至少需要 2 个 compared_task_ids。")
+    if payload.get("resume_ready_provider_comparison_satisfied") is not False:
+        failures.append("补充 provider-axis report 不能把 resume_ready_provider_comparison_satisfied 标为 true。")
+    if payload.get("counts_toward_resume_ready_acceptance") is not False:
+        failures.append("补充 provider-axis report 不能计入整体 resume_ready_acceptance。")
+    actual_by_provider = payload.get("actual_records_by_provider") or {}
+    if payload.get("provider_axis_comparison_satisfied") is True:
+        for provider in ("deepseek", "openai"):
+            if int(actual_by_provider.get(provider, 0)) < 2:
+                failures.append(f"provider-axis proof 中 {provider} 的真实运行记录少于 2。")
+    for index, pair in enumerate(provider_pairs, start=1):
+        if not isinstance(pair, dict):
+            failures.append(f"provider_pairs[{index}] 必须是 object。")
+            continue
+        providers = set(pair.get("providers") or [])
+        if payload.get("comparison_validity") == "valid" and providers != {"deepseek", "openai"}:
+            failures.append(f"provider_pairs[{index}] 必须比较 DeepSeek 和 OpenAI。")
+        task_id = pair.get("task_id")
+        if not isinstance(task_id, str) or not task_id:
+            failures.append(f"provider_pairs[{index}] 缺少 task_id。")
+        elif compared_task_set and task_id not in compared_task_set:
+            failures.append(f"provider_pairs[{index}].task_id 未进入 compared_task_ids。")
+        cell_ids = pair.get("cell_ids")
+        if not isinstance(cell_ids, list) or len(cell_ids) != 2:
+            failures.append(f"provider_pairs[{index}].cell_ids 必须包含 DeepSeek 和 OpenAI 两个 cell id。")
+        else:
+            for cell_id in cell_ids:
+                if compared_cell_set and str(cell_id) not in compared_cell_set:
+                    failures.append(f"provider_pairs[{index}].cell_ids 包含未进入 compared_cells 的 cell：{cell_id}")
+        pair_controlled = pair.get("controlled_variables")
+        if not isinstance(pair_controlled, dict) or not pair_controlled:
+            failures.append(f"provider_pairs[{index}] 缺少 controlled_variables。")
+        else:
+            missing = sorted(set(V5_PROVIDER_COMPARISON_PAIR_CONTROLLED_FIELDS).difference(pair_controlled))
+            if missing:
+                failures.append(f"provider_pairs[{index}].controlled_variables 缺少字段：" + ", ".join(missing))
+            verifier_ref = pair_controlled.get("final_verifier_plan_ref")
+            if verifier_ref and not _looks_like_evidence_ref(verifier_ref):
+                failures.append(f"provider_pairs[{index}].controlled_variables.final_verifier_plan_ref 必须是 evidence ref。")
+            for field in V5_PROVIDER_COMPARISON_PAIR_CONTROLLED_FIELDS:
+                if field == "final_verifier_plan_ref":
+                    continue
+                value = pair_controlled.get(field)
+                if value is None or value == "":
+                    failures.append(f"provider_pairs[{index}].controlled_variables.{field} 不能为空。")
+    for ref_field in (
+        "provider_gate_ref",
+        "run_matrix_manifest_ref",
+        "matrix_cell_results_ref",
+    ):
+        if payload.get(ref_field):
+            _inspect_v5_ref(payload.get(ref_field), failures, label=ref_field)
+    for list_field in ("run_matrix_manifest_refs", "matrix_cell_results_refs"):
+        refs = payload.get(list_field)
+        if refs is not None:
+            if not isinstance(refs, list):
+                failures.append(f"{list_field} 必须是 list。")
+            else:
+                for index, ref in enumerate(refs, start=1):
+                    _inspect_v5_ref(ref, failures, label=f"{list_field}[{index}]")
 
 
 def _read_jsonl_for_inspect(path: Path | None, failures: list[str]) -> list[dict[str, Any]]:
@@ -3565,6 +3704,58 @@ def _valid_schema_fixture_payload(
             "controlled_variables": ["task", "source_tree", "final_verifier_plan", "tool_policy"],
             "compared_cells": ["cell_a", "cell_b"],
             "comparison_validity": "valid",
+        }
+    if schema_name == "V5ProviderComparisonReport":
+        return {
+            "schema_version": V5_PROVIDER_COMPARISON_REPORT_VERSION,
+            "comparison_axis": "provider",
+            "comparison_validity": "valid",
+            "controlled_variables": [
+                "task_id",
+                "source_tree_hash",
+                "final_verifier_plan_ref",
+                "tool_policy_id",
+                "context_policy_id",
+                "scaffold_id",
+                "budget_policy_id",
+                "environment_id",
+            ],
+            "compared_cells": ["task_a_deepseek", "task_a_openai", "task_b_deepseek", "task_b_openai"],
+            "compared_task_ids": ["task_a", "task_b"],
+            "provider_pairs": [
+                {
+                    "task_id": "task_a",
+                    "providers": ["deepseek", "openai"],
+                    "cell_ids": ["task_a_deepseek", "task_a_openai"],
+                    "controlled_variables": {
+                        "source_tree_hash": "a" * 64,
+                        "final_verifier_plan_ref": ref,
+                        "tool_policy_id": "stage3b_no_tool_calls",
+                        "context_policy_id": "stage3b_default_context_compaction",
+                        "scaffold_id": "simple_react",
+                        "budget_policy_id": "constrained",
+                        "environment_id": "docker_local",
+                    },
+                },
+                {
+                    "task_id": "task_b",
+                    "providers": ["deepseek", "openai"],
+                    "cell_ids": ["task_b_deepseek", "task_b_openai"],
+                    "controlled_variables": {
+                        "source_tree_hash": "b" * 64,
+                        "final_verifier_plan_ref": ref,
+                        "tool_policy_id": "stage3b_no_tool_calls",
+                        "context_policy_id": "stage3b_default_context_compaction",
+                        "scaffold_id": "simple_react",
+                        "budget_policy_id": "constrained",
+                        "environment_id": "docker_local",
+                    },
+                },
+            ],
+            "provider_axis_comparison_satisfied": True,
+            "resume_ready_provider_comparison_satisfied": False,
+            "counts_toward_resume_ready_acceptance": False,
+            "actual_records_by_provider": {"deepseek": 2, "openai": 2},
         }
     if schema_name == "V5ExportResultPackManifest":
         return {

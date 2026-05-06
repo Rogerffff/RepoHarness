@@ -8,8 +8,8 @@ V5 walkthrough 的目标是让面试官沿着一条代表任务理解证据链�
 2. 查看真实 provider 运行矩阵：`runs/v5-stage3b-run-matrix-20260505T164640Z/execution/v5_run_matrix_manifest_executed.json`。
 3. 查看比较范围：`runs/v5-stage3c-comparison-reports-20260505T171500Z/v5_matrix_compare_scope_report.json`。
 4. 查看 hardening 后的导出分区：`runs/v5-stage4-export-pack-hardening-20260505T184706Z/v5_export_result_pack_manifest.json`。
-5. 查看 hardening follow-up 后的 public-safe 展示包：`runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/v5_resume_artifact_index.json`。
-6. 查看 hardening follow-up 后的最终验收报告：`runs/v5-final-acceptance-hardening-followup-20260506T062200Z/v5_acceptance_report.json`。
+5. 查看 hardening follow-up 后的 public-safe 展示包：`runs/v5-stage5-demo-artifacts-hardening-followup3-20260506T073000Z/v5_resume_artifact_index.json`。
+6. 查看 hardening follow-up 后的最终验收报告：`runs/v5-final-acceptance-hardening-followup3-20260506T100500Z/v5_acceptance_report.json`。
 7. 如果要展示新增 provider-axis 证据，再查看 OpenAI / DeepSeek 2 任务补充比较报告：`runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_provider_comparison_report.json`。
 
 ## 代表任务
@@ -37,23 +37,23 @@ Stage 3C 原始验收链证明四个任务进入 comparison proof，但 comparis
 
 Stage 4 hardening 后重新生成分区导出包。由于当前真实 provider run 的 `final_verifier_status=not_executed_stage3b_minimal_provider_loop`，SFT 和 reinforcement learning rollout trainable 分区为空，`real_provider_trainable_records=0`。这些运行只进入 failure、diagnostic-only 或 blocked 证据，不再被计入 trainable payload。
 
-Stage 5 hardening follow-up 后重新生成 public-safe demo card、canonical walkthrough、redacted transcript excerpt、result summary 和 interview result pack。所有公开 artifact 都只引用脱敏摘要，不引用 provider 私有载荷、evaluator-only 原始证据、隐藏测试、credential marker 或 reward 数值；新的 walkthrough 和简历 bullet 明确说明 trainable SFT / reinforcement learning rollout 分区为空。
+Stage 5 hardening follow-up 后重新生成 public-safe demo card、canonical walkthrough、redacted transcript excerpt、result summary 和 interview result pack。所有公开 artifact 都只引用脱敏摘要，不引用 provider 私有载荷、evaluator-only 原始证据、隐藏测试、credential marker 或 reward 数值；新的 walkthrough 和简历 bullet 明确说明 trainable SFT / reinforcement learning rollout 分区为空。result summary 同时记录 OpenAI / DeepSeek provider-axis proof exists，但仍明确说明它不能覆盖 scaffold comparison、budget comparison、preference pair 或 trainable export 的缺口。
 
-Stage 6 hardening 后生成 acceptance inputs、acceptance report、reference integrity report、acceptance bundle 和 final command log。当前 core acceptance 正确失败，resume-ready acceptance 继续阻断。这个结果比上一轮“core passed”的结论更保守，也更符合 final verifier 权威边界。
+Stage 6 hardening 后生成 acceptance inputs、acceptance report、reference integrity report、acceptance bundle 和 final command log。当前 core acceptance 正确失败，resume-ready acceptance 继续阻断。final command log 现在必须包含当前最终 bundle 的 planned build entry 和 planned inspect entry，不能只用 pre-final 或 previous bundle entry 作为替代。这个结果比上一轮“core passed”的结论更保守，也更符合 final verifier 权威边界。
 
 ## 现场演示命令
 
 ```bash
-PATH=.venv/bin:$PATH repo-harness inspect-v5-inputs runs/v5-final-acceptance-hardening-followup-20260506T062200Z/v5_acceptance_inputs.json --assert-complete
-PATH=.venv/bin:$PATH repo-harness inspect-v5-demo-artifacts runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/v5_resume_artifact_index.json --assert-share-safe
-PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v5-final-acceptance-hardening-followup-20260506T062200Z/v5_acceptance_bundle_manifest.json --final-command-log runs/v5-final-acceptance-hardening-followup-20260506T062200Z/v5_final_acceptance_command_log.jsonl --assert-immutable
+PATH=.venv/bin:$PATH repo-harness inspect-v5-inputs runs/v5-final-acceptance-hardening-followup3-20260506T100500Z/v5_acceptance_inputs.json --assert-complete
+PATH=.venv/bin:$PATH repo-harness inspect-v5-demo-artifacts runs/v5-stage5-demo-artifacts-hardening-followup3-20260506T073000Z/v5_resume_artifact_index.json --assert-share-safe
+PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v5-final-acceptance-hardening-followup3-20260506T100500Z/v5_acceptance_bundle_manifest.json --final-command-log runs/v5-final-acceptance-hardening-followup3-20260506T100500Z/v5_final_acceptance_command_log.jsonl --assert-immutable
 ```
 
 如果面试官追问为什么不能使用更强表述，可以展示：
 
 ```bash
-PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance-hardening-followup-20260506T062200Z/v5_acceptance_report.json --assert-core-complete
-PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance-hardening-followup-20260506T062200Z/v5_acceptance_report.json --assert-resume-ready
+PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance-hardening-followup3-20260506T100500Z/v5_acceptance_report.json --assert-core-complete
+PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance-hardening-followup3-20260506T100500Z/v5_acceptance_report.json --assert-resume-ready
 ```
 
 第一条命令会失败，因为当前没有任何通过 final verifier 的真实 provider trainable record。第二条命令会失败，因为当前没有满足 resume-ready 的多真实 provider、真实 preference pair、scaffold comparison 和 budget comparison 门槛。这两个失败都是 claim gate 和 final verifier boundary 的预期保护行为。

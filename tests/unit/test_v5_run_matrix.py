@@ -253,6 +253,17 @@ def test_v5_comparison_reports_accept_two_task_openai_deepseek_pairs(tmp_path: P
     assert provider_report["counts_toward_resume_ready_acceptance"] is False
     assert provider_report["comparison_validity"] == "valid"
     assert provider_report["actual_records_by_provider"]["openai"] == 2
+    assert "Inspect V5 run matrix: complete" in inspect_v5_run_matrix(
+        tmp_path / "comparison" / "v5_provider_comparison_report.json",
+        assert_complete=True,
+    )
+    weak_report_path = tmp_path / "comparison" / "v5_provider_comparison_report_weak_controlled.json"
+    weak_report = json.loads(json.dumps(provider_report))
+    weak_report["controlled_variables"] = ["task_id"]
+    weak_report["provider_pairs"][0]["controlled_variables"] = {"task_id": "v5_pr_issue_click_3364"}
+    _write_json(weak_report_path, weak_report)
+    with pytest.raises(ConfigError, match="缺少受控变量字段"):
+        inspect_v5_run_matrix(weak_report_path, assert_complete=True)
 
 
 def test_v5_comparison_reports_reject_mismatched_final_verifier_plan(tmp_path: Path) -> None:

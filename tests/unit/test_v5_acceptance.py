@@ -12,6 +12,7 @@ from repo_harness.v5_acceptance import (
     build_final_command_log,
     build_pre_bundle_command_log,
     inspect_acceptance_bundle,
+    plan_acceptance_bundle_build_entry,
     plan_acceptance_bundle_inspect_entry,
 )
 from repo_harness.v5_evidence import inspect_v5_acceptance, inspect_v5_inputs
@@ -54,24 +55,37 @@ def test_v5_acceptance_core_bundle_passes_and_resume_ready_is_blocked(tmp_path: 
     )
     final_doc = _write_json_file(tmp_path / "docs" / "v5" / "final-acceptance.md", {"doc": "final"})
     walkthrough = _write_json_file(tmp_path / "docs" / "v5" / "walkthrough.md", {"doc": "walkthrough"})
-    bundle_entry = tmp_path / "acceptance" / "build_v5_acceptance_bundle_command_log_entry.json"
     pre_final_bundle = build_acceptance_bundle(
         acceptance_report=report,
         post_report_inspect_output=integrity,
         pre_bundle_command_log=pre_bundle,
-        bundle_build_command_log_entry_output=bundle_entry,
+        bundle_build_command_log_entry_output=tmp_path / "acceptance" / "build_v5_acceptance_bundle_command_log_entry.json",
         documentation_refs=[final_doc, walkthrough],
         output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest_pre_final_log.json",
     )
+    final_bundle_path = tmp_path / "acceptance" / "v5_acceptance_bundle_manifest.json"
+    final_log_path = tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl"
+    planned_build_entry = plan_acceptance_bundle_build_entry(
+        acceptance_report=report,
+        post_report_inspect_output=integrity,
+        pre_bundle_command_log=pre_bundle,
+        documentation_refs=[final_doc, walkthrough],
+        bundle_build_command_log_entry_output=tmp_path / "acceptance" / "build_v5_acceptance_bundle_final_command_log_sync_entry.json",
+        output_bundle=final_bundle_path,
+        final_command_log=final_log_path,
+        doc_sync_from_bundle=pre_final_bundle,
+        output=tmp_path / "acceptance" / "plan_build_v5_acceptance_bundle_final_command_log_entry.json",
+    )
     inspect_entry = plan_acceptance_bundle_inspect_entry(
-        acceptance_bundle=pre_final_bundle,
-        final_command_log=tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl",
+        acceptance_bundle=final_bundle_path,
+        final_command_log=final_log_path,
+        self_referential_acceptance_bundle=True,
         output=tmp_path / "acceptance" / "inspect_acceptance_bundle_command_log_entry.json",
     )
     final_log = build_final_command_log(
         pre_bundle_command_log=pre_bundle,
-        command_log_entries=[bundle_entry, inspect_entry],
-        output=tmp_path / "acceptance" / "v5_final_acceptance_command_log.jsonl",
+        command_log_entries=[planned_build_entry, inspect_entry],
+        output=final_log_path,
     )
     final_bundle = build_acceptance_bundle(
         acceptance_report=report,
@@ -79,14 +93,23 @@ def test_v5_acceptance_core_bundle_passes_and_resume_ready_is_blocked(tmp_path: 
         pre_bundle_command_log=pre_bundle,
         bundle_build_command_log_entry_output=tmp_path / "acceptance" / "build_v5_acceptance_bundle_final_command_log_sync_entry.json",
         documentation_refs=[final_doc, walkthrough],
-        output=tmp_path / "acceptance" / "v5_acceptance_bundle_manifest.json",
+        output=final_bundle_path,
         doc_sync_from_bundle=pre_final_bundle,
         final_command_log=final_log,
     )
-    final_sync_entry = _read_json(tmp_path / "acceptance" / "build_v5_acceptance_bundle_final_command_log_sync_entry.json")
-    final_sync_input_paths = {ref["path"] for ref in final_sync_entry["input_refs"]}
-    assert pre_final_bundle.as_posix() in final_sync_input_paths
-    assert final_log.as_posix() in final_sync_input_paths
+    final_log_entries = [
+        json.loads(line)
+        for line in final_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    final_build_entries = [
+        entry for entry in final_log_entries if entry.get("command_name") == "build-v5-acceptance-bundle"
+    ]
+    assert final_build_entries[-1]["self_referential_output_paths"][0] == final_bundle.as_posix()
+    final_inspect_entries = [
+        entry for entry in final_log_entries if entry.get("command_name") == "inspect-acceptance-bundle"
+    ]
+    assert final_bundle.as_posix() in final_inspect_entries[-1]["self_referential_input_paths"]
     assert "Inspect acceptance bundle: immutable" in inspect_acceptance_bundle(
         final_bundle,
         final_command_log=final_log,
@@ -267,6 +290,8 @@ def test_v5_bundle_rejects_tampered_final_command_log(tmp_path: Path) -> None:
         doc_sync_from_bundle=pre_final_bundle,
         final_command_log=final_log,
     )
+    with pytest.raises(ConfigError, match="当前最终 bundle"):
+        inspect_acceptance_bundle(final_bundle, final_command_log=final_log, assert_immutable=True)
     entries = [json.loads(line) for line in final_log.read_text(encoding="utf-8").splitlines() if line.strip()]
     for entry in entries:
         if entry.get("command_name") == "inspect-acceptance-bundle":

@@ -86,6 +86,7 @@ def build_acceptance_inputs(
     v5_implementation_logs: list[str | Path],
     v5_review_records: list[str | Path],
     full_test_summary: str,
+    v5_provider_comparison_report: str | Path | None = None,
     fail_if_output_exists: bool = True,
 ) -> Path:
     """Build explicit V5 acceptance inputs from pre-report evidence."""
@@ -108,6 +109,11 @@ def build_acceptance_inputs(
         _input_ref(v5_run_matrix_manifest, "v5_run_matrix_manifest"),
         _input_ref(v5_executed_run_matrix_manifest, "v5_run_matrix_manifest_executed"),
         _input_ref(v5_matrix_compare_scope_report, "v5_matrix_compare_scope_report"),
+        *(
+            [_input_ref(v5_provider_comparison_report, "v5_provider_comparison_report")]
+            if v5_provider_comparison_report
+            else []
+        ),
         _input_ref(v5_provider_credential_gate_report, "v5_provider_credential_gate_report"),
         _input_ref(v5_provider_cost_budget_report, "v5_provider_cost_budget_report"),
         _input_ref(v5_resume_claim_gate_report, "v5_resume_claim_gate_report"),
@@ -186,6 +192,7 @@ def build_acceptance_inputs(
             Path(v5_run_matrix_manifest),
             Path(v5_executed_run_matrix_manifest),
             Path(v5_matrix_compare_scope_report),
+            *([Path(v5_provider_comparison_report)] if v5_provider_comparison_report else []),
             Path(v5_provider_credential_gate_report),
             Path(v5_provider_cost_budget_report),
             Path(v5_resume_claim_gate_report),
@@ -385,11 +392,18 @@ def plan_acceptance_bundle_inspect_entry(
     acceptance_bundle: str | Path,
     final_command_log: str | Path,
     output: str | Path,
+    self_referential_acceptance_bundle: bool = False,
     fail_if_output_exists: bool = True,
 ) -> Path:
     output_path = Path(output)
     if fail_if_output_exists and output_path.exists():
         raise ConfigError(f"inspect acceptance bundle command entry 输出已存在：{output_path}")
+    input_refs = []
+    self_referential_paths = [Path(final_command_log).as_posix()]
+    if self_referential_acceptance_bundle:
+        self_referential_paths.append(Path(acceptance_bundle).as_posix())
+    else:
+        input_refs.append(_input_ref(acceptance_bundle, "v5_acceptance_bundle"))
     entry = {
         "schema_version": V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
         "command_name": "inspect-acceptance-bundle",
@@ -402,10 +416,93 @@ def plan_acceptance_bundle_inspect_entry(
             "--assert-immutable",
         ],
         "cwd": Path.cwd().as_posix(),
-        "input_refs": [_input_ref(acceptance_bundle, "v5_acceptance_bundle")],
-        "self_referential_input_paths": [Path(final_command_log).as_posix()],
-        "self_referential_input_reason": "final command log contains this planned inspect entry; sha256 is checked by external final proof, not by the entry itself",
+        "input_refs": input_refs,
+        "self_referential_input_paths": self_referential_paths,
+        "self_referential_input_reason": (
+            "final command log contains this planned inspect entry. When the inspected bundle "
+            "also binds the same final command log, the bundle path is checked as a "
+            "self-referential input path to avoid a hash cycle."
+        ),
         "output_refs": [],
+        "started_at": _utc_timestamp(),
+        "finished_at": _utc_timestamp(),
+        "exit_code": 0,
+        "stdout_sha256": hashlib.sha256(b"").hexdigest(),
+        "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+        "tool_or_cli_version": f"repo-harness {__version__}",
+    }
+    _write_json(output_path, entry)
+    return output_path
+
+
+def plan_acceptance_bundle_build_entry(
+    *,
+    acceptance_report: str | Path,
+    post_report_inspect_output: str | Path,
+    pre_bundle_command_log: str | Path,
+    documentation_refs: list[str | Path],
+    bundle_build_command_log_entry_output: str | Path,
+    output_bundle: str | Path,
+    final_command_log: str | Path,
+    output: str | Path,
+    doc_sync_from_bundle: str | Path | None = None,
+    fail_if_output_exists: bool = True,
+) -> Path:
+    """Plan the self-referential final bundle build command entry."""
+
+    output_path = Path(output)
+    if fail_if_output_exists and output_path.exists():
+        raise ConfigError(f"build acceptance bundle command entry 输出已存在：{output_path}")
+    argv = [
+        "repo-harness",
+        "build-v5-acceptance-bundle",
+        "--acceptance-report",
+        Path(acceptance_report).as_posix(),
+        "--post-report-inspect-output",
+        Path(post_report_inspect_output).as_posix(),
+        "--pre-bundle-command-log",
+        Path(pre_bundle_command_log).as_posix(),
+        "--bundle-build-command-log-entry-output",
+        Path(bundle_build_command_log_entry_output).as_posix(),
+        "--output",
+        Path(output_bundle).as_posix(),
+        "--final-command-log",
+        Path(final_command_log).as_posix(),
+    ]
+    for doc in documentation_refs:
+        argv.extend(["--documentation-ref", Path(doc).as_posix()])
+    input_refs = [
+        _input_ref(acceptance_report, "v5_acceptance_report"),
+        _input_ref(post_report_inspect_output, "v5_acceptance_report_reference_integrity_report"),
+        _input_ref(pre_bundle_command_log, "v5_pre_bundle_command_log"),
+        *[_public_doc_ref(path) for path in documentation_refs],
+    ]
+    if doc_sync_from_bundle:
+        argv.extend(["--doc-sync-from-bundle", Path(doc_sync_from_bundle).as_posix()])
+        input_refs.append(_input_ref(doc_sync_from_bundle, "v5_previous_acceptance_bundle"))
+    entry = {
+        "schema_version": V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
+        "command_name": "build-v5-acceptance-bundle",
+        "argv": argv,
+        "cwd": Path.cwd().as_posix(),
+        "input_refs": input_refs,
+        "self_referential_input_paths": [Path(final_command_log).as_posix()],
+        "self_referential_input_reason": (
+            "the final bundle build consumes the final command log that records this planned "
+            "entry, so the final command log input is checked by the bundle manifest ref instead "
+            "of by this entry's own sha256."
+        ),
+        "output_refs": [],
+        "self_referential_output_paths": [
+            Path(output_bundle).as_posix(),
+            (Path(output_bundle).parent / "v5_acceptance_bundle_command_lineage_report.json").as_posix(),
+            Path(bundle_build_command_log_entry_output).as_posix(),
+        ],
+        "self_referential_output_reason": (
+            "the final bundle manifest binds the final command log that contains this planned "
+            "build entry. The current final bundle output is therefore path-bound here and "
+            "hash-checked by inspect-acceptance-bundle through the manifest."
+        ),
         "started_at": _utc_timestamp(),
         "finished_at": _utc_timestamp(),
         "exit_code": 0,
@@ -508,15 +605,23 @@ def _inspect_final_command_log_entries(
     failures: list[str],
 ) -> None:
     entries = _read_jsonl(final_log_path)
-    names = [entry.get("command_name") for entry in entries]
-    if "build-v5-acceptance-bundle" not in names:
+    build_entries = [entry for entry in entries if entry.get("command_name") == "build-v5-acceptance-bundle"]
+    if not build_entries:
         failures.append("final command log 缺少 build-v5-acceptance-bundle entry。")
+    else:
+        current_build_found = False
+        for index, entry in enumerate(build_entries, start=1):
+            if _entry_builds_current_bundle(entry, final_log_path, manifest_path, failures, index=index):
+                current_build_found = True
+        if not current_build_found:
+            failures.append("final command log 缺少绑定当前最终 bundle 的 build-v5-acceptance-bundle entry。")
     inspect_entries = [entry for entry in entries if entry.get("command_name") == "inspect-acceptance-bundle"]
     if not inspect_entries:
         failures.append("final command log 缺少 inspect-acceptance-bundle entry。")
         return
-    allowed_bundle_paths = _allowed_final_log_bundle_paths(manifest_path, bundle_payload)
-    allowed_log_paths = {final_log_path.resolve().as_posix(), final_log_path.as_posix()}
+    current_bundle_paths = _path_aliases(manifest_path)
+    allowed_log_paths = _path_aliases(final_log_path)
+    current_inspect_found = False
     for index, entry in enumerate(inspect_entries, start=1):
         argv = entry.get("argv")
         if not isinstance(argv, list):
@@ -526,39 +631,140 @@ def _inspect_final_command_log_entries(
         if "inspect-acceptance-bundle" not in argv_values or "--assert-immutable" not in argv_values:
             failures.append(f"final command log inspect entry[{index}] argv 必须执行 inspect-acceptance-bundle --assert-immutable。")
         argv_bundle_paths = {_normalize_cli_path(value, cwd=Path(str(entry.get("cwd") or Path.cwd()))) for value in argv_values}
-        if not allowed_bundle_paths.intersection(argv_bundle_paths):
-            failures.append(f"final command log inspect entry[{index}] argv 未指向当前 bundle 或 previous bundle。")
+        argv_points_current_bundle = bool(current_bundle_paths.intersection(argv_bundle_paths))
         if "--final-command-log" not in argv_values:
             failures.append(f"final command log inspect entry[{index}] argv 缺少 --final-command-log。")
+            argv_points_current_log = False
         else:
             log_index = argv_values.index("--final-command-log") + 1
             if log_index >= len(argv_values):
                 failures.append(f"final command log inspect entry[{index}] --final-command-log 缺少路径。")
+                argv_points_current_log = False
             else:
                 actual_log = _normalize_cli_path(argv_values[log_index], cwd=Path(str(entry.get("cwd") or Path.cwd())))
-                if actual_log not in allowed_log_paths:
+                argv_points_current_log = actual_log in allowed_log_paths
+                if not argv_points_current_log:
                     failures.append(f"final command log inspect entry[{index}] argv 的 final command log 路径不一致。")
-        input_refs = entry.get("input_refs")
-        if not isinstance(input_refs, list) or not input_refs:
-            failures.append(f"final command log inspect entry[{index}] input_refs 必须绑定 acceptance bundle。")
-        else:
-            ref_paths = set()
-            for ref_index, ref in enumerate(input_refs, start=1):
-                _inspect_ref(ref, failures, label=f"final command log inspect entry[{index}].input_refs[{ref_index}]")
-                if isinstance(ref, dict):
-                    ref_paths.add(_path_from_ref(ref).resolve().as_posix())
-            if not allowed_bundle_paths.intersection(ref_paths):
-                failures.append(f"final command log inspect entry[{index}] input_refs 未绑定当前 bundle 或 previous bundle。")
+        input_bound_current = _entry_binds_current_path(
+            entry,
+            current_bundle_paths,
+            failures,
+            label=f"final command log inspect entry[{index}]",
+            ref_field="input_refs",
+            self_field="self_referential_input_paths",
+            require=argv_points_current_bundle,
+        )
+        if argv_points_current_bundle and argv_points_current_log and input_bound_current:
+            current_inspect_found = True
+    if not current_inspect_found:
+        failures.append("final command log 缺少针对当前最终 bundle 的 inspect-acceptance-bundle --assert-immutable entry。")
 
 
-def _allowed_final_log_bundle_paths(manifest_path: Path, payload: dict[str, Any]) -> set[str]:
-    paths = {manifest_path.resolve().as_posix()}
-    previous_ref = payload.get("previous_bundle_ref")
-    if isinstance(previous_ref, dict):
-        previous_path = _path_from_ref(previous_ref)
-        if previous_path.exists():
-            paths.add(previous_path.resolve().as_posix())
-    return paths
+def _entry_builds_current_bundle(
+    entry: dict[str, Any],
+    final_log_path: Path,
+    manifest_path: Path,
+    failures: list[str],
+    *,
+    index: int,
+) -> bool:
+    argv = entry.get("argv")
+    if not isinstance(argv, list):
+        failures.append(f"final command log build entry[{index}] argv 必须是 list。")
+        return False
+    argv_values = [str(item) for item in argv]
+    if "build-v5-acceptance-bundle" not in argv_values:
+        failures.append(f"final command log build entry[{index}] argv 必须执行 build-v5-acceptance-bundle。")
+    cwd = Path(str(entry.get("cwd") or Path.cwd()))
+    current_bundle_paths = _path_aliases(manifest_path)
+    current_log_paths = _path_aliases(final_log_path)
+    output_path = _argv_value_after(argv_values, "--output")
+    output_points_current = (
+        _normalize_cli_path(output_path, cwd=cwd) in current_bundle_paths
+        if output_path
+        else False
+    )
+    if not output_points_current:
+        return False
+    final_log_arg = _argv_value_after(argv_values, "--final-command-log")
+    final_log_points_current = (
+        _normalize_cli_path(final_log_arg, cwd=cwd) in current_log_paths
+        if final_log_arg
+        else False
+    )
+    if "--final-command-log" not in argv_values:
+        failures.append(f"final command log build entry[{index}] argv 缺少 --final-command-log。")
+    elif not final_log_points_current:
+        failures.append(f"final command log build entry[{index}] argv 的 final command log 路径不一致。")
+    output_bound_current = _entry_binds_current_path(
+        entry,
+        current_bundle_paths,
+        failures,
+        label=f"final command log build entry[{index}]",
+        ref_field="output_refs",
+        self_field="self_referential_output_paths",
+    )
+    log_bound_current = _entry_binds_current_path(
+        entry,
+        current_log_paths,
+        failures,
+        label=f"final command log build entry[{index}]",
+        ref_field="input_refs",
+        self_field="self_referential_input_paths",
+        require=False,
+    )
+    return output_points_current and final_log_points_current and output_bound_current and log_bound_current
+
+
+def _entry_binds_current_path(
+    entry: dict[str, Any],
+    current_paths: set[str],
+    failures: list[str],
+    *,
+    label: str,
+    ref_field: str,
+    self_field: str,
+    require: bool = True,
+) -> bool:
+    matched = False
+    refs = entry.get(ref_field)
+    if refs is not None and not isinstance(refs, list):
+        failures.append(f"{label}.{ref_field} 必须是 list。")
+    elif isinstance(refs, list):
+        for ref_index, ref in enumerate(refs, start=1):
+            if isinstance(ref, dict):
+                ref_path = _path_from_ref(ref).resolve().as_posix()
+                if ref_path in current_paths:
+                    _inspect_ref(ref, failures, label=f"{label}.{ref_field}[{ref_index}]")
+                    matched = True
+            else:
+                failures.append(f"{label}.{ref_field}[{ref_index}] 必须是 evidence ref。")
+    self_paths = entry.get(self_field) or []
+    if not isinstance(self_paths, list):
+        failures.append(f"{label}.{self_field} 必须是 list。")
+    else:
+        normalized = {
+            _normalize_cli_path(str(value), cwd=Path(str(entry.get("cwd") or Path.cwd())))
+            for value in self_paths
+        }
+        if current_paths.intersection(normalized):
+            matched = True
+    if require and not matched:
+        failures.append(f"{label} 未绑定当前最终 bundle 或 final command log 的自引用路径。")
+    return matched
+
+
+def _argv_value_after(argv_values: list[str], option: str) -> str | None:
+    if option not in argv_values:
+        return None
+    index = argv_values.index(option) + 1
+    if index >= len(argv_values):
+        return None
+    return argv_values[index]
+
+
+def _path_aliases(path: Path) -> set[str]:
+    return {path.resolve().as_posix(), path.as_posix()}
 
 
 def _normalize_cli_path(value: str, *, cwd: Path) -> str:
@@ -701,10 +907,20 @@ def _core_failures(
 
 def _resume_failures(claim_gate: dict[str, Any]) -> list[str]:
     failures: list[str] = []
-    if claim_gate.get("provider_claim_status") == "allowed":
+    provider_status = claim_gate.get("provider_claim_status")
+    if provider_status == "allowed":
         pass
-    else:
+    elif provider_status == "provider_axis_satisfied_two_task_deepseek_openai_pairs":
+        failures.append(
+            "OpenAI / DeepSeek provider-axis 补充证据存在，但它没有计入整体 resume_ready_acceptance；"
+            "scaffold comparison、budget comparison、preference pair 和 trainable export 仍然阻断。"
+        )
+    elif provider_status == "blocked_missing_two_task_deepseek_openai_provider_pairs":
+        failures.append("缺少 2 个任务 x DeepSeek / OpenAI 的 provider-axis proof。")
+    elif provider_status == "blocked_single_provider_family_deepseek_only":
         failures.append("只有一个真实 provider family 有实际运行，不能通过 resume_ready provider comparison。")
+    else:
+        failures.append(f"provider comparison claim gate 未允许：{provider_status or 'unknown'}。")
     if claim_gate.get("preference_pair_claim_status") == "allowed":
         pass
     else:
@@ -928,6 +1144,7 @@ __all__ = [
     "build_acceptance_report",
     "build_pre_bundle_command_log",
     "build_acceptance_bundle",
+    "plan_acceptance_bundle_build_entry",
     "plan_acceptance_bundle_inspect_entry",
     "build_final_command_log",
     "inspect_acceptance_bundle",

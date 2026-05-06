@@ -25,6 +25,7 @@ from repo_harness.schema_versions import (
     V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
     V5_MATRIX_CELL_RESULT_VERSION,
     V5_MATRIX_COMPARE_SCOPE_REPORT_VERSION,
+    V5_PROVIDER_COMPARISON_REPORT_VERSION,
     V5_RESUME_CLAIM_GATE_REPORT_VERSION,
     V5_RUN_MATRIX_MANIFEST_VERSION,
 )
@@ -481,7 +482,7 @@ def build_comparison_reports(
 
     provider_report_path = root / "v5_provider_comparison_report.json"
     provider_report = {
-        "schema_version": "repo_harness_v5_provider_comparison_report_v0",
+        "schema_version": V5_PROVIDER_COMPARISON_REPORT_VERSION,
         "created_at": _utc_timestamp(),
         "producer_stage": "v5_stage3c_comparison_reports",
         "comparison_axis": "provider",

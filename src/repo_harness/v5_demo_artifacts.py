@@ -76,6 +76,7 @@ def build_demo_artifacts(
     export_pack_manifest: str | Path,
     stage4_claim_gate_report: str | Path,
     output_dir: str | Path,
+    provider_comparison_report: str | Path | None = None,
     fail_if_output_exists: bool = True,
 ) -> Path:
     """Build the Stage 5 public-safe demo artifacts and final claim gate."""
@@ -87,10 +88,12 @@ def build_demo_artifacts(
     run_matrix_path = Path(executed_run_matrix_manifest)
     export_manifest_path = Path(export_pack_manifest)
     stage4_claim_gate_path = Path(stage4_claim_gate_report)
+    provider_comparison_path = Path(provider_comparison_report) if provider_comparison_report else None
     task_set = _read_json(task_set_path)
     run_matrix = _read_json(run_matrix_path)
     export_manifest = _read_json(export_manifest_path)
     stage4_claim_gate = _read_json(stage4_claim_gate_path)
+    provider_comparison = _read_json(provider_comparison_path) if provider_comparison_path else None
     results_path = _path_from_ref(run_matrix.get("matrix_cell_results_ref"))
     if results_path is None:
         raise ConfigError("executed run matrix 缺少 matrix_cell_results_ref。")
@@ -109,7 +112,16 @@ def build_demo_artifacts(
 
     partition_counts = export_manifest.get("partition_counts") or {}
     result_summary_path = root / "v5_result_summary_table.json"
-    result_summary = _result_summary(run_matrix, real_results, task_set, task_set_path, export_manifest, stage4_claim_gate)
+    result_summary = _result_summary(
+        run_matrix,
+        real_results,
+        task_set,
+        task_set_path,
+        export_manifest,
+        stage4_claim_gate,
+        provider_comparison=provider_comparison,
+        provider_comparison_path=provider_comparison_path,
+    )
     _write_json(result_summary_path, result_summary)
 
     demo_card_json_path = root / "v5_interview_demo_card.json"
@@ -175,7 +187,14 @@ def build_demo_artifacts(
     stage5_claim_gate_path = root / "v5_resume_claim_gate_report.json"
     _write_json(
         stage5_claim_gate_path,
-        _stage5_claim_gate(stage4_claim_gate, export_manifest_path, result_summary_path, public_bundle_path),
+        _stage5_claim_gate(
+            stage4_claim_gate,
+            export_manifest_path,
+            result_summary_path,
+            public_bundle_path,
+            provider_comparison=provider_comparison,
+            provider_comparison_path=provider_comparison_path,
+        ),
     )
     artifact_refs = [
         *public_refs,
@@ -203,7 +222,13 @@ def build_demo_artifacts(
 
     command_entry = _builder_command_log_entry(
         command_name="build-v5-demo-artifacts",
-        input_paths=[task_set_path, run_matrix_path, export_manifest_path, stage4_claim_gate_path],
+        input_paths=[
+            task_set_path,
+            run_matrix_path,
+            export_manifest_path,
+            stage4_claim_gate_path,
+            *([provider_comparison_path] if provider_comparison_path else []),
+        ],
         output_paths=[
             demo_card_md_path,
             demo_card_json_path,
@@ -254,9 +279,9 @@ def build_interview_result_pack(
     bullets_path = root / "v5_resume_bullets.md"
     _write_text(bullets_path, _resume_bullets_markdown(claim_gate))
     qa_json_path = root / "v5_interview_qa_evidence.json"
-    _write_json(qa_json_path, _qa_evidence(public_lookup))
+    _write_json(qa_json_path, _qa_evidence(public_lookup, claim_gate))
     qa_md_path = root / "v5_interview_qa_evidence.md"
-    _write_text(qa_md_path, _qa_markdown())
+    _write_text(qa_md_path, _qa_markdown(claim_gate))
     mapping_path = root / "v5_public_safe_artifact_mapping.json"
     _write_json(mapping_path, _public_safe_artifact_mapping(public_lookup, docs12))
 
@@ -419,6 +444,9 @@ def _result_summary(
     task_set_path: Path,
     export_manifest: dict[str, Any],
     stage4_claim_gate: dict[str, Any],
+    *,
+    provider_comparison: dict[str, Any] | None = None,
+    provider_comparison_path: Path | None = None,
 ) -> dict[str, Any]:
     denominator = len(real_results)
     accepted_count = sum(1 for item in real_results if _is_final_verifier_accepted(item))
@@ -475,11 +503,10 @@ def _result_summary(
             "cost_proxy_usd": 0.0,
             "cost_source": "Stage 3A budget cap and Stage 3B call count; no raw billing data recorded",
         },
-        "provider_comparison_conclusion": {
-            "status": "blocked_single_provider_family",
-            "controlled_variables": "task, source tree, final verifier plan, tool policy, context policy, scaffold, budget and environment id",
-            "blocked_claim": "multi provider comparison",
-        },
+        "provider_comparison_conclusion": _provider_comparison_conclusion(
+            provider_comparison,
+            provider_comparison_path,
+        ),
         "scaffold_comparison_conclusion": {
             "status": "blocked_single_scaffold",
             "controlled_variables": "task, source tree, final verifier plan, provider, budget and environment id",
@@ -496,14 +523,67 @@ def _result_summary(
     }
 
 
+def _provider_axis_available(provider_comparison: dict[str, Any] | None) -> bool:
+    if not isinstance(provider_comparison, dict):
+        return False
+    return (
+        provider_comparison.get("comparison_axis") == "provider"
+        and provider_comparison.get("comparison_validity") == "valid"
+        and provider_comparison.get("provider_axis_comparison_satisfied") is True
+        and provider_comparison.get("resume_ready_provider_comparison_satisfied") is False
+        and provider_comparison.get("counts_toward_resume_ready_acceptance") is False
+    )
+
+
+def _provider_comparison_conclusion(
+    provider_comparison: dict[str, Any] | None,
+    provider_comparison_path: Path | None,
+) -> dict[str, Any]:
+    controlled_variables = "task, source tree, final verifier plan, tool policy, context policy, scaffold, budget and environment id"
+    if _provider_axis_available(provider_comparison):
+        assert provider_comparison is not None
+        conclusion: dict[str, Any] = {
+            "status": "provider_axis_proof_available_not_resume_ready",
+            "controlled_variables": provider_comparison.get("controlled_variables") or controlled_variables,
+            "compared_task_ids": provider_comparison.get("compared_task_ids") or [],
+            "provider_families_with_actual_runs": provider_comparison.get("provider_families_with_actual_runs") or [],
+            "actual_records_by_provider": provider_comparison.get("actual_records_by_provider") or {},
+            "blocked_claim": "resume-ready multi-provider comparison",
+            "boundary_note": (
+                "This supplemental report proves the provider axis only. It does not satisfy "
+                "scaffold comparison, budget comparison, preference pair or trainable export gates."
+            ),
+        }
+        if provider_comparison_path is not None:
+            conclusion["provider_comparison_report_ref"] = _audit_ref(
+                provider_comparison_path,
+                "v5_provider_comparison_report",
+            )
+        return conclusion
+    return {
+        "status": "blocked_single_provider_family",
+        "controlled_variables": controlled_variables,
+        "blocked_claim": "multi provider comparison",
+    }
+
+
 def _stage5_claim_gate(
     stage4_claim_gate: dict[str, Any],
     export_manifest_path: Path,
     result_summary_path: Path,
     public_bundle_path: Path,
+    *,
+    provider_comparison: dict[str, Any] | None = None,
+    provider_comparison_path: Path | None = None,
 ) -> dict[str, Any]:
+    provider_axis_available = _provider_axis_available(provider_comparison)
     allowed = list(dict.fromkeys([
         *stage4_claim_gate.get("allowed_claims", []),
+        *(
+            ["provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI"]
+            if provider_axis_available
+            else []
+        ),
         "share-safe demo artifacts generated",
         "result summary with explicit denominators generated",
     ]))
@@ -526,14 +606,48 @@ def _stage5_claim_gate(
         "blocking_reasons": {
             **stage4_claim_gate.get("blocking_reasons", {}),
             "demo_share_safe": "public-safe demo bundle generated and inspected",
-            "resume_ready": "blocked until a second real provider family and a real comparable preference pair are available",
+            "provider": (
+                "OpenAI / DeepSeek provider-axis proof exists as supplemental evidence, but it does "
+                "not satisfy overall resume-ready acceptance because scaffold comparison, budget "
+                "comparison, preference pair and trainable export gates remain blocked"
+                if provider_axis_available
+                else stage4_claim_gate.get("blocking_reasons", {}).get(
+                    "provider",
+                    "provider comparison evidence is not sufficient for resume-ready acceptance",
+                )
+            ),
+            "resume_ready": (
+                "blocked even with supplemental provider-axis proof until scaffold comparison, "
+                "budget comparison, a real comparable preference pair and trainable export are available"
+                if provider_axis_available
+                else "blocked until a second real provider family and a real comparable preference pair are available"
+            ),
         },
-        "provider_claim_status": stage4_claim_gate.get("provider_claim_status", "blocked"),
+        "provider_claim_status": (
+            "provider_axis_satisfied_two_task_deepseek_openai_pairs"
+            if provider_axis_available
+            else stage4_claim_gate.get("provider_claim_status", "blocked")
+        ),
         "preference_pair_claim_status": stage4_claim_gate.get("preference_pair_claim_status", "blocked_no_real_comparable_pair"),
         "demo_share_safe_status": "passed",
         "stress_test_claim_status": stage4_claim_gate.get("stress_test_claim_status", "not_claimed"),
+        "real_provider_families_with_actual_runs": (
+            provider_comparison.get("provider_families_with_actual_runs")
+            if provider_axis_available and provider_comparison
+            else stage4_claim_gate.get("real_provider_families_with_actual_runs")
+        ),
+        "actual_records_by_provider": (
+            provider_comparison.get("actual_records_by_provider")
+            if provider_axis_available and provider_comparison
+            else stage4_claim_gate.get("actual_records_by_provider")
+        ),
         "source_reports": [
             *_safe_refs(stage4_claim_gate.get("source_reports")),
+            *(
+                [_audit_ref(provider_comparison_path, "v5_provider_comparison_report")]
+                if provider_comparison_path
+                else []
+            ),
             _audit_ref(export_manifest_path, "v5_export_result_pack_manifest"),
             _public_ref(result_summary_path, "v5_result_summary_table"),
             _public_ref(public_bundle_path, "v5_public_demo_bundle_manifest"),
@@ -581,10 +695,24 @@ def _resume_bullets_markdown(claim_gate: dict[str, Any]) -> str:
 """
 
 
-def _qa_evidence(public_lookup: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def _claim_gate_has_provider_axis(claim_gate: dict[str, Any]) -> bool:
+    return claim_gate.get("provider_claim_status") == "provider_axis_satisfied_two_task_deepseek_openai_pairs"
+
+
+def _provider_qa_answer(claim_gate: dict[str, Any]) -> str:
+    if _claim_gate_has_provider_axis(claim_gate):
+        return (
+            "已有 OpenAI / DeepSeek 两任务 provider-axis 补充证据，但它只证明 provider 轴；"
+            "scaffold comparison、budget comparison、preference pair 和 trainable export 仍然阻断 resume-ready 强结论。"
+        )
+    return "当前只有 DeepSeek family 有真实运行，provider 对比强结论被阻断。"
+
+
+def _qa_evidence(public_lookup: dict[str, dict[str, Any]], claim_gate: dict[str, Any]) -> dict[str, Any]:
+    provider_answer = _provider_qa_answer(claim_gate)
     topics = [
         ("task_authenticity", "任务真实性来自 PR / issue flow 和 SWE-Bench-like anchor 混合库存。"),
-        ("provider_comparison", "当前只有 DeepSeek family 有真实运行，provider 对比强结论被阻断。"),
+        ("provider_comparison", provider_answer),
         ("controlled_variables", "比较报告声明固定 task、source tree、verifier plan、tool policy、context policy、scaffold、budget 和 environment。"),
         ("training_export_boundary", "Stage 4 区分 trainable、diagnostic-only、blocked、mock / replay 和 stress records。"),
         ("final_verifier_authority", "final verifier 未执行的 run 不会被提升为 accepted。"),
@@ -609,11 +737,17 @@ def _qa_evidence(public_lookup: dict[str, dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _qa_markdown() -> str:
-    return """# V5 面试问答证据索引
+def _qa_markdown(claim_gate: dict[str, Any]) -> str:
+    provider_line = (
+        "已有 OpenAI / DeepSeek 两任务 provider-axis 补充证据，但它只证明 provider 轴；"
+        "scaffold、budget、preference pair 和 trainable export 仍然阻断 resume-ready 强结论。"
+        if _claim_gate_has_provider_axis(claim_gate)
+        else "当前只有一个真实 provider family，因此强对比结论被阻断。"
+    )
+    return f"""# V5 面试问答证据索引
 
 - 任务真实性：查看 demo card 和 result summary 中的任务库存数字。
-- Provider 对比：查看 result summary，当前只有一个真实 provider family，因此强对比结论被阻断。
+- Provider 对比：查看 result summary，{provider_line}
 - 公平变量：查看 result summary 中 provider、scaffold 和 budget comparison conclusion 的 controlled variables。
 - 训练导出边界：查看 export partition summary，diagnostic-only 和 blocked records 不进入 trainable payload。
 - Final verifier 权威性：查看 demo walkthrough，未执行 final verifier 的 run 不会被写成 accepted。
