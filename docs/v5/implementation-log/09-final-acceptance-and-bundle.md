@@ -1,5 +1,7 @@
 # V5 Stage 6 Final Acceptance 和 Acceptance Bundle 实施日志
 
+> 历史记录说明：本日志记录的是 2026-05-05 首次 Stage 6 final acceptance 生成过程。后续 hardening 发现该轮存在验收假阳性，已经撤回 `core_acceptance.status=passed` 的当前结论。当前 V5 的可信状态是 evidence chain hardened，但 `core_acceptance.status=failed`，失败原因是没有通过 final verifier 的真实 provider trainable record。当前结论以 `docs/v5/implementation-log/10-hardening-fixes.md`、`docs/v5/final-acceptance.md` 和最新 hardening follow-up evidence 为准。
+
 ## 目标
 
 Stage 6 的目标是生成 V5 acceptance inputs、acceptance report、post-report reference integrity report、acceptance bundle、final command log、final acceptance 文档和 walkthrough，并严格保持 evidence 时序：
@@ -136,7 +138,7 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance
 
 ## 正例证据
 
-- `core_acceptance.status=passed`。
+- 历史假阳性：首次 Stage 6 曾记录 `core_acceptance.status=passed`。后续 hardening 已经撤回该结论；当前可信状态是 `core_acceptance.status=failed`，失败原因是缺少通过 final verifier 的真实 provider trainable record。
 - `resume_ready_acceptance.status=blocked`，并记录阻断原因。
 - `v5_acceptance_report_reference_integrity_report.json` 中 `unbound_critical_evidence_finding_count=0`。
 - `v5_acceptance_bundle_manifest.json` immutable inspect 通过。
@@ -150,8 +152,8 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance
 
 ## 允许降级项
 
-- V5 可以以 `core_acceptance.status=passed` 收口。
-- `resume_ready_acceptance.status=blocked` 是允许降级项，但最终文档和简历必须使用保守表述。
+- 首次 Stage 6 中“V5 可以以 `core_acceptance.status=passed` 收口”的判断已经撤回。
+- 当前允许降级项是 evidence chain hardened、public-safe demo artifacts generated 和 immutable bundle passed；不能把 core acceptance 写成 passed。
 
 ## 禁止降级项
 
@@ -175,4 +177,4 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance
 docs/v5/review/implementation/09-final-acceptance-and-bundle-review.md
 ```
 
-当前没有剩余 P1 或 P2。V5 core acceptance 已通过；resume-ready acceptance 阻断原因清楚、已被 claim gate 和 acceptance report 绑定。
+该历史自审结论已被 hardening 撤回。当前可信结论是：V5 core acceptance 没有通过；resume-ready acceptance 继续 blocked；claim gate 和 acceptance report 必须把这两个状态作为阻断证据，而不是成功证据。

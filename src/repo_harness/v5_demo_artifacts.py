@@ -408,7 +408,7 @@ def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], r
 
 ## 降级讲法
 
-如果现场不展示 provider 调用细节，只讲 evidence chain：task freeze -> real provider run metadata -> final verifier boundary -> export partition -> public-safe demo bundle -> acceptance binding。需要强调当前 V5 core 方向已具备证据链，但 resume-ready 的多 provider 和 preference pair 仍然被 claim gate 阻断。
+如果现场不展示 provider 调用细节，只讲 evidence chain：task freeze -> real provider run metadata -> final verifier boundary -> export partition -> public-safe demo bundle -> acceptance binding。需要强调当前 V5 具备可复核证据链，但 core acceptance 仍然因为缺少通过 final verifier 的真实 trainable record 而失败；resume-ready 的 provider、preference pair、scaffold 和 budget 门槛也仍然被 claim gate 阻断。
 """
 
 

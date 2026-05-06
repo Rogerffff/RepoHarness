@@ -33,7 +33,10 @@
 runs/v5-stage4-export-pack-hardening-20260505T184706Z/
 runs/v5-stage5-demo-artifacts-hardening-20260505T184706Z/
 runs/v5-final-acceptance-hardening-20260505T184706Z/
+runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/
 ```
+
+`runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/` 是 2026-05-06 使用修复后的 Stage 5 builder 重新生成的 public-safe demo artifact 目录。它修正了旧生成物中“从真实运行生成 sanitized SFT / rollout 格式样本”、“分区训练导出”和“core 方向已具备证据链”的过强或模糊表述，改为明确说明当前 trainable SFT / reinforcement learning rollout 分区为空，且 core acceptance 仍因缺少通过 final verifier 的真实 trainable record 而失败。
 
 ## 验证命令
 
@@ -41,7 +44,7 @@ runs/v5-final-acceptance-hardening-20260505T184706Z/
 PATH=.venv/bin:$PATH python -m compileall src
 PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_v5_*.py -p no:cacheprovider
 PATH=.venv/bin:$PATH repo-harness inspect-v5-export-pack runs/v5-stage4-export-pack-hardening-20260505T184706Z/v5_export_result_pack_manifest.json --assert-clean
-PATH=.venv/bin:$PATH repo-harness inspect-v5-demo-artifacts runs/v5-stage5-demo-artifacts-hardening-20260505T184706Z/v5_resume_artifact_index.json --assert-share-safe
+PATH=.venv/bin:$PATH repo-harness inspect-v5-demo-artifacts runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/v5_resume_artifact_index.json --assert-share-safe
 PATH=.venv/bin:$PATH repo-harness inspect-v5-inputs runs/v5-final-acceptance-hardening-20260505T184706Z/v5_acceptance_inputs.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v5-final-acceptance-hardening-20260505T184706Z/v5_acceptance_bundle_manifest.json --final-command-log runs/v5-final-acceptance-hardening-20260505T184706Z/v5_final_acceptance_command_log.jsonl --assert-immutable
 ```
@@ -50,7 +53,7 @@ PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v5-final-accept
 
 - V5 unit tests 覆盖 acceptance inputs ref 篡改、acceptance report ref 篡改、final command log 篡改和 non-accepted trainable export。
 - Hardening 后的 Stage 4 export pack 通过 clean inspect，且 `real_provider_trainable_records=0`。
-- Hardening 后的 Stage 5 public-safe demo artifact 通过 share-safe inspect。
+- Hardening follow-up 后的 Stage 5 public-safe demo artifact 通过 share-safe inspect，并且 generated walkthrough / resume bullet 不再使用已阻断的 trainable export 强表述。
 - Hardening 后的 V5 acceptance bundle 通过 immutable inspect，并绑定 final command log。
 
 ## 负例证据

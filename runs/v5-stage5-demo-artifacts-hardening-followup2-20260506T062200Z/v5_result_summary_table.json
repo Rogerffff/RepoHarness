@@ -1,0 +1,130 @@
+{
+  "accepted_rate_by_budget": {
+    "stage3b_constrained_one_turn_no_tool_calls": {
+      "accepted": 0,
+      "denominator": 6,
+      "rate": 0.0
+    }
+  },
+  "accepted_rate_by_provider_family": {
+    "deepseek": {
+      "accepted": 0,
+      "denominator": 6,
+      "rate": 0.0
+    }
+  },
+  "accepted_rate_by_scaffold": {
+    "simple_react": {
+      "accepted": 0,
+      "denominator": 6,
+      "rate": 0.0
+    }
+  },
+  "accepted_rate_by_task_family": {
+    "cli_error_formatting": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "documentation_generation": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "plugin_lifecycle": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "pr_issue_default_value_parsing": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "pr_issue_init_hook_argument_flow": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "version_metadata": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    }
+  },
+  "blocked_records": 1,
+  "budget_comparison_conclusion": {
+    "controlled_variables": "task, source tree, final verifier plan, provider, scaffold and environment id",
+    "status": "blocked_single_budget"
+  },
+  "claim_gate_snapshot": {
+    "stage4_preference_pair_claim_status": "blocked_no_real_comparable_pair",
+    "stage4_provider_claim_status": "blocked_single_provider_family_deepseek_only"
+  },
+  "cost_proxy_summary": {
+    "actual_provider_calls": 6,
+    "cost_proxy_usd": 0.0,
+    "cost_source": "Stage 3A budget cap and Stage 3B call count; no raw billing data recorded"
+  },
+  "created_at": "2026-05-06T06:24:42Z",
+  "diagnostic_records": 1,
+  "failure_owner_distribution": {
+    "verifier_or_config_issue": 6
+  },
+  "failure_type_distribution": {
+    "final_verifier_not_executed": 6
+  },
+  "mock_or_replay_records": 0,
+  "pass_to_pass_regression_rate": {
+    "denominator": 0,
+    "rate": null,
+    "regression_count": 0,
+    "status": "not_applicable_no_final_verifier_execution"
+  },
+  "provider_comparison_conclusion": {
+    "blocked_claim": "multi provider comparison",
+    "controlled_variables": "task, source tree, final verifier plan, tool policy, context policy, scaffold, budget and environment id",
+    "status": "blocked_single_provider_family"
+  },
+  "real_provider_runs": {
+    "accepted_count": 0,
+    "accepted_rate": 0.0,
+    "denominator": 6,
+    "denominator_definition": "actual primary provider calls that produced a structured terminal outcome in Stage 3B; structured skips, mock/replay records and stress records are excluded",
+    "denominator_excludes": [
+      "credential_missing_skip",
+      "adapter_not_implemented_skip",
+      "cost_limited_structured_skip",
+      "fallback_success",
+      "mock_or_replay_records",
+      "synthetic_safe_stress_records",
+      "diagnostic_only_records"
+    ]
+  },
+  "real_provider_trainable_records": 0,
+  "scaffold_comparison_conclusion": {
+    "controlled_variables": "task, source tree, final verifier plan, provider, budget and environment id",
+    "status": "blocked_single_scaffold"
+  },
+  "schema_version": "repo_harness_v5_result_summary_table_v0",
+  "status": "passed",
+  "synthetic_safe_stress_records": 0,
+  "task_inventory": {
+    "accepted_auditable_task_count": 12,
+    "pr_issue_task_count": 8,
+    "swebench_like_anchor_task_count": 4,
+    "threshold_source": "runs/v5-stage2b-merged-task-set-20260505T152756Z/v5_task_set_manifest.json"
+  },
+  "token_usage_summary": {
+    "cached_tokens": 3584,
+    "input_tokens": 7352,
+    "output_tokens": 384,
+    "total_tokens": 7736
+  },
+  "wall_time_summary": {
+    "average_seconds": 2.167,
+    "count": 6,
+    "max_seconds": 3.0,
+    "total_seconds": 13.0
+  }
+}

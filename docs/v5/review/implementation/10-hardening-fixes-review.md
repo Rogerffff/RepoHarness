@@ -44,14 +44,14 @@ PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_v5_*.py -p no:cacheprov
 
 ```bash
 PATH=.venv/bin:$PATH repo-harness inspect-v5-export-pack runs/v5-stage4-export-pack-hardening-20260505T184706Z/v5_export_result_pack_manifest.json --assert-clean
-PATH=.venv/bin:$PATH repo-harness inspect-v5-demo-artifacts runs/v5-stage5-demo-artifacts-hardening-20260505T184706Z/v5_resume_artifact_index.json --assert-share-safe
+PATH=.venv/bin:$PATH repo-harness inspect-v5-demo-artifacts runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/v5_resume_artifact_index.json --assert-share-safe
 ```
 
 ## 当前验收判断
 
 本轮 hardening 后不能继续声明 V5 core acceptance passed。原因是 trainable export 已按 final verifier 边界降级为 `real_provider_trainable_records=0`，所以 `inspect-v5-acceptance --assert-core-complete` 必须失败。
 
-这不是回归，而是修复假阳性后的正确状态。当前允许声明的是 evidence chain hardened、public-safe demo artifacts generated 和 immutable bundle passed。
+这不是回归，而是修复假阳性后的正确状态。当前允许声明的是 evidence chain hardened、public-safe demo artifacts generated、OpenAI / DeepSeek provider-axis proof available 和 immutable bundle passed。
 
 ## 是否允许进入最终提交
 

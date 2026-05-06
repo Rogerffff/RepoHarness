@@ -462,7 +462,15 @@ def build_comparison_reports(
             )
         ),
         "counts_toward_core_comparison_proof": True,
-        "counts_toward_resume_ready_provider_comparison": provider_comparison_valid,
+        "provider_axis_comparison_satisfied": provider_comparison_valid,
+        "counts_toward_resume_ready_provider_comparison": False,
+        "resume_ready_boundary_note": (
+            "Provider-axis proof is valid for this report, but it does not by itself satisfy "
+            "overall resume-ready acceptance because scaffold, budget, preference and trainable "
+            "export gates remain separate."
+            if provider_comparison_valid
+            else "Provider-axis proof is blocked because two DeepSeek/OpenAI task pairs are missing."
+        ),
         "run_matrix_manifest_ref": matrix_ref,
         "matrix_cell_results_ref": results_evidence_ref,
         "run_matrix_manifest_refs": matrix_refs,
@@ -493,17 +501,27 @@ def build_comparison_reports(
         "provider_pairs": provider_pairs,
         "provider_families_with_actual_runs": real_provider_families,
         "actual_records_by_provider": actual_records_by_provider,
-        "required_resume_ready_shape": "2 tasks x 2 real provider families x same scaffold x same budget",
-        "resume_ready_provider_comparison_satisfied": provider_comparison_valid,
-        "blocking_reason": None if provider_comparison_valid else "missing_two_task_deepseek_openai_provider_pairs",
+        "required_provider_axis_shape": "2 tasks x 2 real provider families x same scaffold x same budget",
+        "provider_axis_comparison_satisfied": provider_comparison_valid,
+        "resume_ready_provider_comparison_satisfied": False,
+        "blocking_reason": (
+            "provider_axis_only_not_overall_resume_ready_acceptance"
+            if provider_comparison_valid
+            else "missing_two_task_deepseek_openai_provider_pairs"
+        ),
         "provider_gate_ref": provider_gate_ref,
         "run_matrix_manifest_ref": matrix_ref,
         "matrix_cell_results_ref": results_evidence_ref,
         "run_matrix_manifest_refs": matrix_refs,
         "matrix_cell_results_refs": result_refs,
         "structured_skips": provider_gate.get("structured_skips", []),
-        "counts_toward_core_real_provider_floor": True,
-        "counts_toward_resume_ready_acceptance": provider_comparison_valid,
+        "counts_toward_core_real_provider_floor": False,
+        "counts_toward_resume_ready_acceptance": False,
+        "resume_ready_boundary_note": (
+            "This report proves the provider axis only. It must not be used as evidence that "
+            "overall resume-ready acceptance, scaffold comparison, budget comparison, preference "
+            "export or trainable export completed."
+        ),
     }
     _write_json(provider_report_path, provider_report)
 
@@ -545,9 +563,13 @@ def build_comparison_reports(
     if provider_comparison_valid:
         allowed_claims.extend(
             [
-                "multi-provider agent runs",
-                "controlled multi-provider comparison",
-                "provider comparison proof for two tasks across DeepSeek and OpenAI",
+                "provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI",
+            ]
+        )
+        blocked_claims.extend(
+            [
+                "resume-ready multi-provider comparison",
+                "controlled multi-provider comparison completed",
             ]
         )
     else:
@@ -567,7 +589,7 @@ def build_comparison_reports(
             "stress_test": "not claimed in Stage 3C",
         },
         "provider_claim_status": (
-            "satisfied_two_task_deepseek_openai_provider_pairs"
+            "provider_axis_satisfied_two_task_deepseek_openai_pairs"
             if provider_comparison_valid
             else "blocked_missing_two_task_deepseek_openai_provider_pairs"
         ),
@@ -590,7 +612,8 @@ def build_comparison_reports(
         },
         "real_provider_families_with_actual_runs": real_provider_families,
         "actual_records_by_provider": actual_records_by_provider,
-        "resume_ready_provider_comparison_satisfied": provider_comparison_valid,
+        "provider_axis_comparison_satisfied": provider_comparison_valid,
+        "resume_ready_provider_comparison_satisfied": False,
     }
     _write_json(claim_gate_path, claim_gate)
 

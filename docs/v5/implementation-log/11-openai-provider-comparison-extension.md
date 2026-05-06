@@ -58,12 +58,12 @@ runs/v5-openai-provider-comparison-20260505T194739Z/
 f80f167c48e6e9cd974d347431459915aab1f469f014df405d4fbf83f8c4cd43  runs/v5-openai-provider-comparison-20260505T194739Z/nano_execution_concise/v5_matrix_cell_results.jsonl
 f61b80fcaca4153b8a651f619c458d3aa57024de8228c908032d0d019ac6d770  runs/v5-openai-provider-comparison-20260505T194739Z/formal_execution_gpt55_retry/v5_run_matrix_manifest_executed.json
 76c22f058d97e1a10bd15267351ef8616295a380d178546447799afb48648084  runs/v5-openai-provider-comparison-20260505T194739Z/formal_execution_gpt55_retry/v5_matrix_cell_results.jsonl
-855fe4e28c3b0ce13f9be2f996314e7338fb8939c45f118a5b78a5fd93c0e59d  runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v2/v5_matrix_compare_scope_report.json
-52a639131a2aa1dfa15103e4f19145703ab02c8c774c2a42409be6e0f4122a5f  runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v2/v5_provider_comparison_report.json
-37adeb0679a8778074574b83de4b7e984a9c52c812be6bb8a33c178fbad4bbd0  runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v2/v5_resume_claim_gate_report.json
+26e96310dd02e70d842961602089f450221274736e4169ac484ad725a4a98520  runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_matrix_compare_scope_report.json
+9d5ec96363c821d71c14d0ed291d7877bebbe14ec7e4cbf8fa18f752cc39e526  runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_provider_comparison_report.json
+2e585717df16c8712877ae6bd61df467a16af5d8b6a39e1d59cde6b8cc091180  runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_resume_claim_gate_report.json
 ```
 
-说明：`comparison_reports_gpt55_final/` 是首次正式 comparison report，后续只读审查发现其中 `provider_pairs.controlled_variables.final_verifier_plan_ref` 没有从 `controlled_variables_ref` 回填，已经由 `comparison_reports_gpt55_final_v2/` 取代。`final_v2` 没有重新调用 provider API，只重新读取既有 `formal_execution_gpt55_retry` evidence 生成 comparison report。
+说明：`comparison_reports_gpt55_final/` 是首次正式 comparison report，后续只读审查发现其中 `provider_pairs.controlled_variables.final_verifier_plan_ref` 没有从 `controlled_variables_ref` 回填，已经由 `comparison_reports_gpt55_final_v2/` 取代。再后续 hardening follow-up 发现 `final_v2` 的 resume-ready 字段边界过强，已经由 `comparison_reports_gpt55_final_v3/` 取代。`final_v3` 没有重新调用 provider API，只重新读取既有 `formal_execution_gpt55_retry` evidence 生成 comparison report。
 
 ## 正例证据
 
@@ -85,7 +85,7 @@ f61b80fcaca4153b8a651f619c458d3aa57024de8228c908032d0d019ac6d770  runs/v5-openai
 - 结果：4 个 cells 均为 `primary_attempted`。
 - `v5_provider_comparison_report.json` 记录 `actual_records_by_provider.deepseek=2`、`actual_records_by_provider.openai=2`。
 - `v5_matrix_compare_scope_report.json` 记录 `comparison_axis=provider`、`comparison_validity=valid`、`provider_pair_count=2`。
-- `v5_resume_claim_gate_report.json` 允许 `multi-provider agent runs`、`controlled multi-provider comparison` 和 `provider comparison proof for two tasks across DeepSeek and OpenAI`。
+- 最新 conservative follow-up 中，`v5_resume_claim_gate_report.json` 只允许 `provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI`。它不再允许把这组补充证据写成 `multi-provider agent runs` 或 `controlled multi-provider comparison completed`，因为当前 Stage 4 / Stage 5 / Stage 6 仍没有 trainable export、scaffold comparison、budget comparison 和 preference pair 的通过证据。
 
 ## 负例证据和修复
 
@@ -101,7 +101,7 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-provider-gate runs/v5-openai-provid
 PATH=.venv/bin:$PATH repo-harness inspect-v5-provider-cost-budget runs/v5-openai-provider-comparison-20260505T194739Z/provider_gate/v5_provider_cost_budget_report.json --assert-consistent
 PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/nano_execution_concise/v5_run_matrix_manifest_executed.json
 PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/formal_execution_gpt55_retry/v5_run_matrix_manifest_executed.json
-PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v2/v5_matrix_compare_scope_report.json --assert-complete
+PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_matrix_compare_scope_report.json --assert-complete
 ```
 
 结果：
@@ -126,7 +126,7 @@ authorization_bearer_hits=0
 ## 允许降级项
 
 - Stage 3B 的 provider runs 仍是 one-turn、no-tool-call、diagnostic-only agent loop，不执行 final verifier，因此不能把这些运行计为 accepted task 或 trainable accepted record。
-- 当前 claim gate 只允许 provider axis 的 multi-provider comparison 表述。
+- 当前 claim gate 只允许 provider-axis supplemental proof 表述，不能写成整体 resume-ready multi-provider comparison completed。
 
 ## 禁止降级项
 

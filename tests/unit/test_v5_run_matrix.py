@@ -242,11 +242,15 @@ def test_v5_comparison_reports_accept_two_task_openai_deepseek_pairs(tmp_path: P
         assert_complete=True,
     )
     claim_gate = _read_json(tmp_path / "comparison" / "v5_resume_claim_gate_report.json")
-    assert claim_gate["provider_claim_status"] == "satisfied_two_task_deepseek_openai_provider_pairs"
-    assert "multi-provider agent runs" in claim_gate["allowed_claims"]
-    assert "controlled multi-provider comparison" in claim_gate["allowed_claims"]
+    assert claim_gate["provider_claim_status"] == "provider_axis_satisfied_two_task_deepseek_openai_pairs"
+    assert "provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI" in claim_gate["allowed_claims"]
+    assert "multi-provider agent runs" not in claim_gate["allowed_claims"]
+    assert "controlled multi-provider comparison" not in claim_gate["allowed_claims"]
+    assert "controlled multi-provider comparison completed" in claim_gate["blocked_claims"]
     provider_report = _read_json(tmp_path / "comparison" / "v5_provider_comparison_report.json")
-    assert provider_report["resume_ready_provider_comparison_satisfied"] is True
+    assert provider_report["provider_axis_comparison_satisfied"] is True
+    assert provider_report["resume_ready_provider_comparison_satisfied"] is False
+    assert provider_report["counts_toward_resume_ready_acceptance"] is False
     assert provider_report["comparison_validity"] == "valid"
     assert provider_report["actual_records_by_provider"]["openai"] == 2
 

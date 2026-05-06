@@ -36,7 +36,7 @@
 - `_provider_comparison_key()` 和 provider pair 报告现在通过 `_controlled_value()` 读取受控变量。
 - 如果旧 result 缺少顶层字段，`_controlled_value()` 会回读 `controlled_variables_ref` 指向的 JSON。
 - 新增负例测试：当 DeepSeek 和 OpenAI 都是 `primary_attempted`，但 final verifier plan 不一致时，provider comparison 必须保持 `invalid`，`resume_ready_provider_comparison_satisfied=false`，`provider_pairs=[]`。
-- 没有重新调用 provider API，只重新生成 comparison report，输出到 `comparison_reports_gpt55_final_v2/`。
+- 没有重新调用 provider API，只重新生成 comparison report，最终 conservative follow-up 输出到 `comparison_reports_gpt55_final_v3/`。
 
 ### P3
 
@@ -54,7 +54,7 @@
 - `src/repo_harness/v5_run_matrix.py` 已经把 `final_verifier_plan_ref` 纳入 provider comparison key。
 - 旧 result 缺少顶层 `final_verifier_plan_ref` 时，会回读 `controlled_variables_ref`。
 - `tests/unit/test_v5_run_matrix.py` 已新增 final verifier plan 不一致时 comparison invalid 的负例。
-- `runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v2/v5_provider_comparison_report.json` 中两组 provider pair 都包含非空 `final_verifier_plan_ref`，并且 provider comparison 仍为 `valid`。
+- `runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_provider_comparison_report.json` 中两组 provider pair 都包含非空 `final_verifier_plan_ref`，并且 provider comparison 仍为 `valid`；同时 `resume_ready_provider_comparison_satisfied=false`、`counts_toward_resume_ready_acceptance=false`，避免被误解为整体 resume-ready acceptance 已通过。
 
 ## 安全和边界核查
 
@@ -76,8 +76,8 @@ authorization_bearer_hits=0
 
 Provider claim gate：
 
-- 允许 provider-axis 的 `multi-provider agent runs`。
-- 允许 provider-axis 的 `controlled multi-provider comparison`。
+- 允许 provider-axis 的 `provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI`。
+- 不允许把 provider-axis proof 写成整体 `multi-provider agent runs` 或 `controlled multi-provider comparison completed`。
 - 继续阻断 `scaffold comparison conclusion`、`budget comparison conclusion`、`preference export completed`、完整 `interview-grade evaluation pack` 和 `resumable export stress tests`。
 
 ## 验证命令
@@ -90,7 +90,7 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-provider-gate runs/v5-openai-provid
 PATH=.venv/bin:$PATH repo-harness inspect-v5-provider-cost-budget runs/v5-openai-provider-comparison-20260505T194739Z/provider_gate/v5_provider_cost_budget_report.json --assert-consistent
 PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/nano_execution_concise/v5_run_matrix_manifest_executed.json
 PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/formal_execution_gpt55_retry/v5_run_matrix_manifest_executed.json
-PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v2/v5_matrix_compare_scope_report.json --assert-complete
+PATH=.venv/bin:$PATH repo-harness inspect-v5-run-matrix runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_matrix_compare_scope_report.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-v2-acceptance runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json --assert-immutable

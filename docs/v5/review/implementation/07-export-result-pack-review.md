@@ -1,5 +1,7 @@
 # V5 Stage 4 Export Result Pack 自审记录
 
+> 历史记录说明：本审查记录的是 2026-05-05 首次 Stage 4 export pack 的阶段审查。后续 hardening 已经修复未通过 final verifier 的记录进入 trainable export 的问题；当前可信状态是 `real_provider_trainable_records=0`，SFT 和 reinforcement learning rollout trainable 分区为空。本文件中关于 `real_provider_trainable_records=2` 或 `non_accepted_trainable_record_count=2` 的描述只保留为历史问题背景，不能作为当前 V5 验收证据。
+
 ## 审查范围
 
 本记录覆盖 V5 Stage 4 export result pack builder、export pack inspect、preference pair blocked report、reward source taxonomy、failure taxonomy、export audit 和阶段性 claim gate：
@@ -38,7 +40,7 @@
 
 风险：如果后续文档只写“trainable records”而不说明 final verifier 状态，读者可能误解为 accepted patch demonstrations。
 
-处理：每条 SFT 和 RL rollout record 均保留 `accepted=false`、`final_verifier_status=not_executed_stage3b_minimal_provider_loop`。`v5_export_audit_report.json` 记录 `non_accepted_trainable_record_count=2`，并说明这些记录只作为 plan / rollout format examples，不计入 accepted rate。
+历史处理：首次 Stage 4 曾让每条 SFT 和 RL rollout record 保留 `accepted=false`、`final_verifier_status=not_executed_stage3b_minimal_provider_loop`，并把它们解释为 plan / rollout format examples。后续 hardening 已经确认这种处理仍会让 trainable export 语义过强，当前可信实现要求这些记录不进入 SFT 或 reinforcement learning rollout trainable 分区。
 
 状态：记录为后续文档约束，不阻塞进入 Stage 5。
 
@@ -60,7 +62,7 @@
 已核查：
 
 ```text
-real_provider_trainable_records=2
+历史假阳性：real_provider_trainable_records=2。当前可信 hardening 结果已经修正为 real_provider_trainable_records=0。
 mock_or_replay_records=0
 diagnostic_records=1
 blocked_records=1

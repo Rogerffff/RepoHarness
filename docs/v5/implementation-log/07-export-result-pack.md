@@ -1,8 +1,10 @@
 # V5 Stage 4 Export Result Pack 实施日志
 
+> 历史记录说明：本日志记录的是 2026-05-05 首次 Stage 4 export pack 实施状态。后续 hardening 已经撤回“未通过 final verifier 的真实 provider run 可以进入 SFT 或 reinforcement learning rollout trainable 分区”的做法。当前可信状态以 `docs/v5/implementation-log/10-hardening-fixes.md`、`docs/v5/final-acceptance.md` 和最新 hardening evidence 为准；本文件中的 `real_provider_trainable_records=2` 只能作为历史假阳性记录理解，不能作为当前 V5 验收结论。
+
 ## 目标
 
-Stage 4 的目标是从 Stage 3 的真实 provider run evidence 生成严格分区、可审计、可导出的训练数据结果包。这个阶段不声称已经训练模型，也不把 Stage 3B 的最小 provider run 写成 final verifier accepted。SFT 和 reinforcement learning rollout 样本只作为 sanitized plan / rollout format examples；它们保留 `accepted=false` 和 `final_verifier_status=not_executed_stage3b_minimal_provider_loop`。
+Stage 4 的目标是从 Stage 3 的真实 provider run evidence 生成严格分区、可审计、可导出的训练数据结果包。这个阶段不声称已经训练模型，也不把 Stage 3B 的最小 provider run 写成 final verifier accepted。首次实现曾把未通过 final verifier 的运行写成 sanitized plan / rollout format examples；后续 hardening 已经确认这是历史假阳性，当前可信实现要求 SFT 和 reinforcement learning rollout trainable 分区只能接收 `accepted=true` 且 `final_verifier_status=accepted` 的真实 provider run。
 
 本阶段输入如下：
 
@@ -69,7 +71,7 @@ repo-harness build-v5-export-pack
 
 - `build-v5-export-pack` 可以从 executed run matrix 和 Stage 3C claim gate 生成 export pack。
 - `inspect-v5-export-pack --assert-clean` 可以复核 export pack。
-- manifest 中 `real_provider_trainable_records=2`、`diagnostic_records=1`、`blocked_records=1`。
+- 首次 manifest 曾记录 `real_provider_trainable_records=2`、`diagnostic_records=1`、`blocked_records=1`；该 trainable 计数已经被 hardening 撤回，当前可信 hardening export pack 中 `real_provider_trainable_records=0`。
 - preference pair blocked report 会禁用 `preference export completed` 强表述。
 - Stage 4 claim gate 会把 `preference_pair_claim_status` 设为 `blocked_no_real_comparable_pair`。
 
@@ -214,7 +216,7 @@ V2 regression inspect、V3 acceptance inspect、V3 acceptance bundle immutable i
 
 ## 正例证据
 
-- `partition_counts.real_provider_trainable_records=2`。
+- 历史假阳性：首次 Stage 4 记录过 `partition_counts.real_provider_trainable_records=2`。当前可信 hardening 结果已经将其修正为 `0`，因为没有任何真实 provider run 通过 final verifier。
 - `partition_counts.diagnostic_records=1`。
 - `partition_counts.blocked_records=1`。
 - `partition_counts.mock_or_replay_records=0`。
@@ -232,7 +234,7 @@ V2 regression inspect、V3 acceptance inspect、V3 acceptance bundle immutable i
 
 ## 允许降级项
 
-- SFT 和 reinforcement learning rollout 样本可以作为 sanitized plan / rollout format examples，但不得写成 accepted patch demonstrations。
+- 不再允许把未通过 final verifier 的 SFT 和 reinforcement learning rollout 样本作为 trainable 或可用降级项。它们只能作为历史假阳性背景说明；当前可信 trainable 分区必须为空，直到出现通过 final verifier 的真实 provider run。
 - Stress partition 可以记录为 `0` 和 `not_executed`，因为 V5 P1 stress test 不属于 Stage 4 core 工作。
 
 ## 禁止降级项
@@ -255,4 +257,4 @@ V2 regression inspect、V3 acceptance inspect、V3 acceptance bundle immutable i
 docs/v5/review/implementation/07-export-result-pack-review.md
 ```
 
-当前没有剩余 P1 或 P2。允许进入 V5 Stage 5，但 Stage 5 必须继续使用 Stage 4 的 partitioned export pack 和 blocked preference claim gate，不得放宽 preference export 强表述。
+该历史自审结论已被 hardening 撤回。当前可信结论是：Stage 4 的分区结构、failure / diagnostic / blocked evidence 和 preference blocked report 仍有展示价值，但 trainable export 未完成，不能作为 V5 core acceptance passed 的证据。

@@ -1,5 +1,7 @@
 # V5 Stage 6 Final Acceptance 和 Acceptance Bundle 自审记录
 
+> 历史记录说明：本审查记录的是 2026-05-05 首次 Stage 6 final acceptance 审查。后续 hardening 已经确认该轮 `core_acceptance.status=passed` 是假阳性，不能继续作为当前 V5 验收结论。当前可信状态是 V5 evidence chain hardened、acceptance bundle immutable inspect 可以通过，但 core acceptance 因 `real_provider_trainable_records=0` 正确失败。
+
 ## 审查范围
 
 本记录覆盖 V5 Stage 6 acceptance inputs、acceptance report、reference integrity report、acceptance bundle、final command log、final acceptance 文档和 walkthrough：
@@ -78,7 +80,7 @@
 
 已核查：
 
-- `core_acceptance.status=passed`。
+- 历史假阳性：首次 Stage 6 曾记录 `core_acceptance.status=passed`。后续 hardening 已经撤回该结论；当前可信状态是 `core_acceptance.status=failed`，失败原因是缺少通过 final verifier 的真实 provider trainable record。
 - `resume_ready_acceptance.status=blocked`。
 - `inspect-v5-acceptance --assert-resume-ready` 按预期失败。
 - `docs/v5/final-acceptance.md` 和 `docs/v5/walkthrough.md` 说明 resume-ready 阻断原因，并使用保守表述。
@@ -133,4 +135,4 @@ PATH=.venv/bin:$PATH repo-harness inspect-v5-acceptance runs/v5-final-acceptance
 
 ## 复审结论
 
-当前没有剩余 P1 或 P2。V5 core acceptance 已通过，resume-ready blocked 是明确且被证据绑定的允许降级项。
+该历史自审结论已被 hardening 撤回。当前可信结论是：V5 core acceptance 没有通过，resume-ready blocked 仍然成立；这两个状态都必须被写成阻断边界。

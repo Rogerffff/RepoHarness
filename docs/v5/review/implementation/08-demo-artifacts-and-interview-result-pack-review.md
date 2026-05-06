@@ -1,5 +1,7 @@
 # V5 Stage 5 Demo Artifacts 和 Interview Result Pack 自审记录
 
+> 历史记录说明：本审查记录的是 2026-05-05 首次 Stage 5 demo artifact 生成状态。后续 hardening 已经撤回 `real_provider_trainable_records=2` 和“分区训练导出”相关强表述。当前可信的公开展示生成物是 `runs/v5-stage5-demo-artifacts-hardening-followup2-20260506T062200Z/`，其中 trainable SFT / reinforcement learning rollout 分区为空，并且简历 bullet 已降级为“分区导出审计”。
+
 ## 审查范围
 
 本记录覆盖 V5 Stage 5 public-safe demo artifacts、result summary、claim gate、interview result pack 和对应 inspect 逻辑：
@@ -74,7 +76,7 @@
 - `real_provider_runs.accepted_count=0`。
 - `real_provider_runs.accepted_rate=0.0`。
 - `real_provider_runs.denominator_excludes` 明确包含 `credential_missing_skip`、`adapter_not_implemented_skip`、`cost_limited_structured_skip`、`fallback_success`、`mock_or_replay_records`、`synthetic_safe_stress_records` 和 `diagnostic_only_records`。
-- 分区统计包含 `real_provider_trainable_records=2`、`mock_or_replay_records=0`、`diagnostic_records=1`、`blocked_records=1`、`synthetic_safe_stress_records=0`。
+- 历史分区统计曾包含 `real_provider_trainable_records=2`、`mock_or_replay_records=0`、`diagnostic_records=1`、`blocked_records=1`、`synthetic_safe_stress_records=0`。该 trainable 计数已经被 hardening 撤回；当前可信 Stage 5 follow-up result summary 中 `real_provider_trainable_records=0`。
 
 结论：Result summary 没有把 skip、mock / replay、diagnostic-only 或 stress records 混入真实 provider accepted rate。
 
