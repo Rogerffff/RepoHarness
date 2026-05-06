@@ -17,6 +17,7 @@ from repo_harness.schema_versions import (
     V5_RESUME_CLAIM_GATE_REPORT_VERSION,
     V5_RESULT_SUMMARY_TABLE_VERSION,
 )
+from repo_harness.v5_export_pack import _is_final_verifier_accepted
 from repo_harness.v5_evidence import (
     _builder_command_log_entry,
     _evidence_ref,
@@ -394,7 +395,7 @@ def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], r
 4. Stage 3B 运行了真实 provider family `deepseek`，运行编号是 `{run.get('run_id')}`。
 5. 这条运行使用 `simple_react` scaffold 和 `{run.get('budget_policy_id')}` budget；本轮是最小真实 provider loop，没有执行仓库内工具或 final verifier。
 6. Final verifier 状态保留为 `{run.get('final_verifier_status')}`，因此 demo 不把它讲成 accepted patch。
-7. Stage 4 从真实运行生成 sanitized SFT / rollout 格式样本，同时把 diagnostic-only、blocked 和 failure dataset 分开。
+7. Stage 4 生成导出分区结构和审计证据；这条 run 未通过 final verifier，不进入 SFT / reinforcement learning rollout trainable 分区，diagnostic-only、blocked 和 failure dataset 单独分区。
 8. Stage 5 的 public-safe bundle 只引用脱敏摘要和 redacted transcript excerpt。
 
 ## 可展示的关键 observation
@@ -420,7 +421,7 @@ def _result_summary(
     stage4_claim_gate: dict[str, Any],
 ) -> dict[str, Any]:
     denominator = len(real_results)
-    accepted_count = sum(1 for item in real_results if item.get("final_verifier_status") == "accepted")
+    accepted_count = sum(1 for item in real_results if _is_final_verifier_accepted(item))
     token_usage = _sum_token_usage(real_results)
     return {
         "schema_version": V5_RESULT_SUMMARY_TABLE_VERSION,
@@ -458,7 +459,7 @@ def _result_summary(
         "accepted_rate_by_provider_family": _accepted_by(real_results, "provider_id"),
         "accepted_rate_by_scaffold": _accepted_by(real_results, "scaffold_id"),
         "accepted_rate_by_budget": _accepted_by(real_results, "budget_policy_id"),
-        "accepted_rate_by_task_family": {"unknown_from_stage3b_results": {"accepted": 0, "denominator": denominator, "rate": 0.0}},
+        "accepted_rate_by_task_family": _accepted_by_task_family(real_results, task_set),
         "pass_to_pass_regression_rate": {
             "status": "not_applicable_no_final_verifier_execution",
             "denominator": 0,
@@ -571,7 +572,7 @@ def _resume_bullets_markdown(claim_gate: dict[str, Any]) -> str:
 
 ## 当前可复制表述
 
-- 实现了 RepoHarness V5 的任务冻结、真实 provider 运行证据、分区训练导出、public-safe demo artifact 和可追溯 result summary，并用 claim gate 阻断未满足证据门槛的强表述。
+- 实现了 RepoHarness V5 的任务冻结、真实 provider 运行证据、分区导出审计、public-safe demo artifact 和可追溯 result summary，并用 claim gate 阻断未满足证据门槛的强表述。
 - 为软件工程智能体训练和评测构建了本地优先的证据链：固定任务、固定源码、固定 verifier 计划、固定工具策略、trajectory ref、export partition 和验收输入引用。
 
 ## 当前不可复制为完成能力的表述
@@ -810,12 +811,36 @@ def _accepted_by(results: list[dict[str, Any]], key: str) -> dict[str, dict[str,
         name = str(result.get(key) or "unknown")
         group = groups.setdefault(name, {"accepted": 0, "denominator": 0})
         group["denominator"] += 1
-        if result.get("final_verifier_status") == "accepted":
+        if _is_final_verifier_accepted(result):
             group["accepted"] += 1
     return {
         name: {**value, "rate": _ratio(value["accepted"], value["denominator"])}
         for name, value in groups.items()
     }
+
+
+def _accepted_by_task_family(results: list[dict[str, Any]], task_set: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    task_family_by_id = _task_family_by_task_id(task_set)
+    grouped_results = []
+    for result in results:
+        copied = dict(result)
+        copied["task_family"] = task_family_by_id.get(str(result.get("task_id") or ""), "unknown_from_stage3b_results")
+        grouped_results.append(copied)
+    return _accepted_by(grouped_results, "task_family")
+
+
+def _task_family_by_task_id(task_set: dict[str, Any]) -> dict[str, str]:
+    families: dict[str, str] = {}
+    refs = [*task_set.get("initial_task_refs", []), *task_set.get("supplemental_task_refs", [])]
+    for ref in refs:
+        path = _path_from_ref(ref)
+        if path is None:
+            continue
+        payload = _read_json(path)
+        task_id = payload.get("task_id")
+        if task_id:
+            families[str(task_id)] = str(payload.get("task_family") or "unknown_from_task_definition")
+    return families
 
 
 def _ratio(numerator: int, denominator: int) -> float | None:

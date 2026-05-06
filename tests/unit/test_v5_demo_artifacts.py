@@ -26,11 +26,18 @@ def test_v5_demo_artifacts_and_interview_pack_are_share_safe(tmp_path: Path) -> 
     assert "preference export completed" in stage5_claim_gate["blocked_claims"]
     result_summary = _read_json(tmp_path / "stage5" / "v5_result_summary_table.json")
     assert result_summary["real_provider_runs"]["denominator"] == 3
+    assert result_summary["real_provider_runs"]["accepted_count"] == 0
+    assert result_summary["accepted_rate_by_provider_family"]["deepseek"]["accepted"] == 0
+    assert result_summary["accepted_rate_by_task_family"]["cli_error_formatting"]["accepted"] == 0
+    assert result_summary["accepted_rate_by_task_family"]["cli_error_formatting"]["denominator"] == 3
     assert "mock_or_replay_records" in result_summary["real_provider_runs"]["denominator_excludes"]
     assert result_summary["task_inventory"]["accepted_auditable_task_count"] == 15
     assert result_summary["task_inventory"]["pr_issue_task_count"] == 9
     assert result_summary["task_inventory"]["swebench_like_anchor_task_count"] == 6
     assert result_summary["task_inventory"]["threshold_source"] == task_set.as_posix()
+    walkthrough = (tmp_path / "stage5" / "v5_canonical_demo_walkthrough.md").read_text(encoding="utf-8")
+    assert "生成导出分区结构和审计证据" in walkthrough
+    assert "生成 sanitized SFT / rollout 格式样本" not in walkthrough
     repro = _read_json(tmp_path / "stage5" / "v5_repro_command_index.json")
     assert export_pack.as_posix() in repro["commands"][1]["command"]
 
@@ -51,6 +58,9 @@ def test_v5_demo_artifacts_and_interview_pack_are_share_safe(tmp_path: Path) -> 
     pack = _read_json(interview_manifest)
     assert pack["blocked_claims_enforced"] is True
     assert pack["copy_safe_blocked_claims_count"] == 0
+    resume_bullets = (tmp_path / "stage5" / "v5_resume_bullets.md").read_text(encoding="utf-8")
+    assert "分区导出审计" in resume_bullets
+    assert "分区训练导出" not in resume_bullets
 
 
 def _write_task_set(tmp_path: Path) -> Path:
@@ -120,7 +130,8 @@ def _write_executed_manifest(tmp_path: Path) -> Path:
                 "scaffold_id": "simple_react",
                 "budget_policy_id": "stage3b_constrained_one_turn_no_tool_calls",
                 "actual_provider_call_count": 1,
-                "final_verifier_status": "not_executed_stage3b_minimal_provider_loop",
+                "accepted": False,
+                "final_verifier_status": "accepted" if index == 0 else "not_executed_stage3b_minimal_provider_loop",
                 "source_tree_hash": "a" * 64,
                 "started_at": "2026-05-05T16:00:00Z",
                 "finished_at": "2026-05-05T16:00:02Z",
