@@ -175,6 +175,34 @@ from repo_harness.v5_run_matrix import (
 )
 from repo_harness.v5_run_matrix import run_accepted_provider_task as run_v5_accepted_provider_task
 from repo_harness.v5_run_matrix import run_matrix_cells as run_v5_run_matrix_cells
+from repo_harness.pre_verl_evaluation import (
+    build_pre_verl_agent_evaluation,
+    build_pre_verl_baseline,
+    build_pre_verl_export_audit,
+    build_pre_verl_final,
+    build_pre_verl_materialized_task_set,
+    build_pre_verl_runtime_audit,
+    build_pre_verl_swebench_dev_materialization,
+    build_pre_verl_task_set,
+    build_pre_verl_verifier_correctness,
+    inspect_pre_verl_agent_evaluation,
+    inspect_pre_verl_baseline,
+    inspect_pre_verl_bundle,
+    inspect_pre_verl_claim_gate,
+    inspect_pre_verl_evaluation,
+    inspect_pre_verl_export_audit,
+    inspect_pre_verl_inputs,
+    inspect_pre_verl_phase_coverage,
+    inspect_pre_verl_public_safe,
+    inspect_pre_verl_readiness,
+    inspect_pre_verl_reward_boundary,
+    inspect_pre_verl_runtime_audit,
+    inspect_pre_verl_swebench_dev_materialization,
+    inspect_pre_verl_task_set,
+    inspect_pre_verl_task_visibility,
+    inspect_pre_verl_verifier_correctness,
+    run_pre_verl_agent_evaluation_pilot,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -1412,6 +1440,169 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_v5_acceptance_parser.add_argument("--reference-integrity-input")
     inspect_v5_acceptance_parser.add_argument("--command-log-entry-output")
 
+    pre_verl_baseline_parser = subparsers.add_parser(
+        "build-pre-verl-baseline",
+        help="构建 pre-verl Stage 0 baseline binding。",
+    )
+    pre_verl_baseline_parser.add_argument("--output-dir", required=True)
+    pre_verl_baseline_parser.add_argument("--v5-acceptance-report", required=True)
+    pre_verl_baseline_parser.add_argument("--v5-export-pack-manifest", required=True)
+    pre_verl_baseline_parser.add_argument("--v5-result-summary-table", required=True)
+    pre_verl_baseline_parser.add_argument("--v5-acceptance-bundle", required=True)
+    pre_verl_baseline_parser.add_argument("--v5-final-command-log", required=True)
+    pre_verl_baseline_parser.add_argument("--run-live-checks", action="store_true")
+    pre_verl_baseline_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_baseline_parser = subparsers.add_parser("inspect-pre-verl-baseline")
+    inspect_pre_verl_baseline_parser.add_argument("binding")
+    inspect_pre_verl_baseline_parser.add_argument("--assert-baseline-complete", action="store_true")
+
+    pre_verl_task_set_parser = subparsers.add_parser("build-pre-verl-task-set")
+    pre_verl_task_set_parser.add_argument("--output-dir", required=True)
+    pre_verl_task_set_parser.add_argument("--v5-task-set-manifest", required=True)
+    pre_verl_task_set_parser.add_argument("--v5-task-inventory-report", required=True)
+    pre_verl_task_set_parser.add_argument("--v5-task-visibility-scan-report", required=True)
+    pre_verl_task_set_parser.add_argument("--swebench-lite-dev-rows")
+    pre_verl_task_set_parser.add_argument("--swebench-lite-test-rows")
+    pre_verl_task_set_parser.add_argument("--supplemental-pr-issue-candidate-report")
+    pre_verl_task_set_parser.add_argument("--planned-dev-instances", type=int, default=23)
+    pre_verl_task_set_parser.add_argument("--planned-curated-lite", type=int, default=50)
+    pre_verl_task_set_parser.add_argument("--planned-github-issue", type=int, default=10)
+    pre_verl_task_set_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_task_set_parser = subparsers.add_parser("inspect-pre-verl-task-set")
+    inspect_pre_verl_task_set_parser.add_argument("manifest")
+    inspect_pre_verl_task_set_parser.add_argument("--assert-task-freeze-complete", action="store_true")
+
+    inspect_pre_verl_task_visibility_parser = subparsers.add_parser("inspect-pre-verl-task-visibility")
+    inspect_pre_verl_task_visibility_parser.add_argument("report")
+    inspect_pre_verl_task_visibility_parser.add_argument("--assert-clean", action="store_true")
+
+    pre_verl_swebench_materialization_parser = subparsers.add_parser("build-pre-verl-swebench-dev-materialization")
+    pre_verl_swebench_materialization_parser.add_argument("--output-dir", required=True)
+    pre_verl_swebench_materialization_parser.add_argument("--pre-verl-task-set-manifest", required=True)
+    pre_verl_swebench_materialization_parser.add_argument("--max-tasks", type=int)
+    pre_verl_swebench_materialization_parser.add_argument("--determinism-repeats", type=int, default=3)
+    pre_verl_swebench_materialization_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_swebench_materialization_parser = subparsers.add_parser("inspect-pre-verl-swebench-dev-materialization")
+    inspect_pre_verl_swebench_materialization_parser.add_argument("report")
+    inspect_pre_verl_swebench_materialization_parser.add_argument("--assert-materialized", action="store_true")
+
+    pre_verl_materialized_task_set_parser = subparsers.add_parser("build-pre-verl-materialized-task-set")
+    pre_verl_materialized_task_set_parser.add_argument("--output-dir", required=True)
+    pre_verl_materialized_task_set_parser.add_argument("--pre-verl-task-set-manifest", required=True)
+    pre_verl_materialized_task_set_parser.add_argument("--swebench-dev-materialization-report", required=True)
+    pre_verl_materialized_task_set_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    pre_verl_verifier_parser = subparsers.add_parser("build-pre-verl-verifier-correctness")
+    pre_verl_verifier_parser.add_argument("--output-dir", required=True)
+    pre_verl_verifier_parser.add_argument("--pre-verl-task-set-manifest", required=True)
+    pre_verl_verifier_parser.add_argument("--executed-run-matrix-manifest", required=True)
+    pre_verl_verifier_parser.add_argument("--swebench-dev-materialization-report")
+    pre_verl_verifier_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_verifier_parser = subparsers.add_parser("inspect-pre-verl-verifier-correctness")
+    inspect_pre_verl_verifier_parser.add_argument("report")
+    inspect_pre_verl_verifier_parser.add_argument("--assert-verifier-correctness-complete", action="store_true")
+    inspect_pre_verl_verifier_parser.add_argument("--assert-verifier-readiness-complete", action="store_true")
+
+    inspect_pre_verl_phase_parser = subparsers.add_parser("inspect-pre-verl-docker-phase-coverage")
+    inspect_pre_verl_phase_parser.add_argument("matrix")
+    inspect_pre_verl_phase_parser.add_argument("--assert-docker-phase-coverage-complete", action="store_true")
+    inspect_pre_verl_phase_parser.add_argument("--assert-docker-phase-minimum-complete", action="store_true")
+
+    pre_verl_agent_eval_parser = subparsers.add_parser("build-pre-verl-agent-evaluation-report")
+    pre_verl_agent_eval_parser.add_argument("--output-dir", required=True)
+    pre_verl_agent_eval_parser.add_argument("--pre-verl-task-set-manifest", required=True)
+    pre_verl_agent_eval_parser.add_argument("--executed-run-matrix-manifest", required=True)
+    pre_verl_agent_eval_parser.add_argument("--v5-result-summary-table", required=True)
+    pre_verl_agent_eval_parser.add_argument("--provider-comparison-report")
+    pre_verl_agent_eval_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    run_pre_verl_agent_eval_parser = subparsers.add_parser(
+        "run-pre-verl-agent-evaluation-pilot",
+        help="执行 pre-verl SWE-Bench development Pilot 真实 provider 修复、补丁应用和 final verifier 归因。",
+    )
+    run_pre_verl_agent_eval_parser.add_argument("--output-dir", required=True)
+    run_pre_verl_agent_eval_parser.add_argument("--pre-verl-task-set-manifest", required=True)
+    run_pre_verl_agent_eval_parser.add_argument("--swebench-dev-materialization-report", required=True)
+    run_pre_verl_agent_eval_parser.add_argument("--provider-id", default="deepseek")
+    run_pre_verl_agent_eval_parser.add_argument("--model-id", default="deepseek-v4-pro")
+    run_pre_verl_agent_eval_parser.add_argument(
+        "--allow-local-secret-file",
+        action="store_true",
+        help="允许从本地 reference/deepseek_api.md 读取 DeepSeek 密钥；产物只记录脱敏来源标签。",
+    )
+    run_pre_verl_agent_eval_parser.add_argument("--max-tasks", type=int)
+    run_pre_verl_agent_eval_parser.add_argument("--max-output-tokens", type=int, default=4096)
+    run_pre_verl_agent_eval_parser.add_argument("--request-timeout-seconds", type=int, default=120)
+    run_pre_verl_agent_eval_parser.add_argument("--temperature", type=float, default=0.0)
+    run_pre_verl_agent_eval_parser.add_argument("--max-source-context-chars", type=int, default=24000)
+    run_pre_verl_agent_eval_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_agent_eval_parser = subparsers.add_parser("inspect-pre-verl-agent-evaluation")
+    inspect_pre_verl_agent_eval_parser.add_argument("report")
+    inspect_pre_verl_agent_eval_parser.add_argument("--assert-agent-evaluation-pilot-complete", action="store_true")
+    inspect_pre_verl_agent_eval_parser.add_argument("--assert-agent-evaluation-readiness-complete", action="store_true")
+
+    pre_verl_runtime_parser = subparsers.add_parser("build-pre-verl-agent-runtime-audit")
+    pre_verl_runtime_parser.add_argument("--output-dir", required=True)
+    pre_verl_runtime_parser.add_argument("--executed-run-matrix-manifest", required=True)
+    pre_verl_runtime_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_runtime_parser = subparsers.add_parser("inspect-pre-verl-agent-runtime-audit")
+    inspect_pre_verl_runtime_parser.add_argument("report")
+    inspect_pre_verl_runtime_parser.add_argument("--assert-runtime-invariants-clean", action="store_true")
+
+    pre_verl_export_parser = subparsers.add_parser("build-pre-verl-export-audit")
+    pre_verl_export_parser.add_argument("--output-dir", required=True)
+    pre_verl_export_parser.add_argument("--v5-export-pack-manifest", required=True)
+    pre_verl_export_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_export_parser = subparsers.add_parser("inspect-pre-verl-export-audit")
+    inspect_pre_verl_export_parser.add_argument("manifest")
+    inspect_pre_verl_export_parser.add_argument("--assert-export-clean", action="store_true")
+
+    inspect_pre_verl_reward_parser = subparsers.add_parser("inspect-pre-verl-reward-boundary")
+    inspect_pre_verl_reward_parser.add_argument("report")
+    inspect_pre_verl_reward_parser.add_argument("--assert-reward-boundary-clean", action="store_true")
+
+    pre_verl_final_parser = subparsers.add_parser("build-pre-verl-evaluation-report")
+    pre_verl_final_parser.add_argument("--output-dir", required=True)
+    pre_verl_final_parser.add_argument("--baseline-binding", required=True)
+    pre_verl_final_parser.add_argument("--task-set-manifest", required=True)
+    pre_verl_final_parser.add_argument("--verifier-correctness-report", required=True)
+    pre_verl_final_parser.add_argument("--agent-evaluation-report", required=True)
+    pre_verl_final_parser.add_argument("--runtime-trace-report", required=True)
+    pre_verl_final_parser.add_argument("--export-pack-manifest", required=True)
+    pre_verl_final_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
+
+    inspect_pre_verl_inputs_parser = subparsers.add_parser("inspect-pre-verl-evaluation-inputs")
+    inspect_pre_verl_inputs_parser.add_argument("inputs")
+    inspect_pre_verl_inputs_parser.add_argument("--assert-evaluation-inputs-complete", action="store_true")
+
+    inspect_pre_verl_eval_parser = subparsers.add_parser("inspect-pre-verl-evaluation")
+    inspect_pre_verl_eval_parser.add_argument("report")
+    inspect_pre_verl_eval_parser.add_argument("--assert-evaluation-report-complete", action="store_true")
+
+    inspect_pre_verl_claim_parser = subparsers.add_parser("inspect-pre-verl-claim-gate")
+    inspect_pre_verl_claim_parser.add_argument("report")
+    inspect_pre_verl_claim_parser.add_argument("--assert-claims-consistent", action="store_true")
+
+    inspect_pre_verl_bundle_parser = subparsers.add_parser("inspect-pre-verl-evaluation-bundle")
+    inspect_pre_verl_bundle_parser.add_argument("bundle")
+    inspect_pre_verl_bundle_parser.add_argument("--final-command-log")
+    inspect_pre_verl_bundle_parser.add_argument("--assert-immutable", action="store_true")
+
+    inspect_pre_verl_public_parser = subparsers.add_parser("inspect-pre-verl-public-safe")
+    inspect_pre_verl_public_parser.add_argument("report")
+    inspect_pre_verl_public_parser.add_argument("--assert-share-safe", action="store_true")
+
+    inspect_pre_verl_readiness_parser = subparsers.add_parser("inspect-pre-verl-readiness")
+    inspect_pre_verl_readiness_parser.add_argument("report")
+    inspect_pre_verl_readiness_parser.add_argument("--assert-verl-ready", action="store_true")
+
     return parser
 
 
@@ -2577,6 +2768,265 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-baseline":
+        try:
+            output_path = build_pre_verl_baseline(
+                output_dir=args.output_dir,
+                v5_acceptance_report=args.v5_acceptance_report,
+                v5_export_pack_manifest=args.v5_export_pack_manifest,
+                v5_result_summary_table=args.v5_result_summary_table,
+                v5_acceptance_bundle=args.v5_acceptance_bundle,
+                v5_final_command_log=args.v5_final_command_log,
+                run_live_checks=args.run_live_checks,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl baseline 构建失败：{exc}\n")
+        print(f"pre-verl baseline binding：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-baseline":
+        try:
+            print(inspect_pre_verl_baseline(args.binding, assert_baseline_complete=args.assert_baseline_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl baseline 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-task-set":
+        try:
+            output_path = build_pre_verl_task_set(
+                output_dir=args.output_dir,
+                v5_task_set_manifest=args.v5_task_set_manifest,
+                v5_task_inventory_report=args.v5_task_inventory_report,
+                v5_task_visibility_scan_report=args.v5_task_visibility_scan_report,
+                swebench_lite_dev_rows=args.swebench_lite_dev_rows,
+                swebench_lite_test_rows=args.swebench_lite_test_rows,
+                supplemental_pr_issue_candidate_report=args.supplemental_pr_issue_candidate_report,
+                planned_dev_instances=args.planned_dev_instances,
+                planned_curated_lite=args.planned_curated_lite,
+                planned_github_issue=args.planned_github_issue,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl task set 构建失败：{exc}\n")
+        print(f"pre-verl task set manifest：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-task-set":
+        try:
+            print(inspect_pre_verl_task_set(args.manifest, assert_task_freeze_complete=args.assert_task_freeze_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl task set 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-task-visibility":
+        try:
+            print(inspect_pre_verl_task_visibility(args.report, assert_clean=args.assert_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl visibility 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-swebench-dev-materialization":
+        try:
+            output_path = build_pre_verl_swebench_dev_materialization(
+                output_dir=args.output_dir,
+                pre_verl_task_set_manifest=args.pre_verl_task_set_manifest,
+                max_tasks=args.max_tasks,
+                determinism_repeats=args.determinism_repeats,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl SWE-Bench development materialization 构建失败：{exc}\n")
+        print(f"pre-verl SWE-Bench development materialization report：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-swebench-dev-materialization":
+        try:
+            print(inspect_pre_verl_swebench_dev_materialization(args.report, assert_materialized=args.assert_materialized))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl SWE-Bench development materialization 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-materialized-task-set":
+        try:
+            output_path = build_pre_verl_materialized_task_set(
+                output_dir=args.output_dir,
+                pre_verl_task_set_manifest=args.pre_verl_task_set_manifest,
+                swebench_dev_materialization_report=args.swebench_dev_materialization_report,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl materialized task set 构建失败：{exc}\n")
+        print(f"pre-verl materialized task set manifest：{output_path}")
+        return 0
+    if args.command == "build-pre-verl-verifier-correctness":
+        try:
+            output_path = build_pre_verl_verifier_correctness(
+                output_dir=args.output_dir,
+                pre_verl_task_set_manifest=args.pre_verl_task_set_manifest,
+                executed_run_matrix_manifest=args.executed_run_matrix_manifest,
+                swebench_dev_materialization_report=args.swebench_dev_materialization_report,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl verifier correctness 构建失败：{exc}\n")
+        print(f"pre-verl verifier correctness report：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-verifier-correctness":
+        try:
+            print(
+                inspect_pre_verl_verifier_correctness(
+                    args.report,
+                    assert_verifier_correctness_complete=args.assert_verifier_correctness_complete,
+                    assert_verifier_readiness_complete=args.assert_verifier_readiness_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl verifier correctness 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-docker-phase-coverage":
+        try:
+            print(
+                inspect_pre_verl_phase_coverage(
+                    args.matrix,
+                    assert_complete=args.assert_docker_phase_coverage_complete,
+                    assert_minimum_complete=args.assert_docker_phase_minimum_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl phase coverage 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-agent-evaluation-report":
+        try:
+            output_path = build_pre_verl_agent_evaluation(
+                output_dir=args.output_dir,
+                pre_verl_task_set_manifest=args.pre_verl_task_set_manifest,
+                executed_run_matrix_manifest=args.executed_run_matrix_manifest,
+                v5_result_summary_table=args.v5_result_summary_table,
+                provider_comparison_report=args.provider_comparison_report,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl agent evaluation 构建失败：{exc}\n")
+        print(f"pre-verl agent evaluation report：{output_path}")
+        return 0
+    if args.command == "run-pre-verl-agent-evaluation-pilot":
+        try:
+            output_path = run_pre_verl_agent_evaluation_pilot(
+                output_dir=args.output_dir,
+                pre_verl_task_set_manifest=args.pre_verl_task_set_manifest,
+                swebench_dev_materialization_report=args.swebench_dev_materialization_report,
+                provider_id=args.provider_id,
+                model_id=args.model_id,
+                allow_local_secret_file=args.allow_local_secret_file,
+                max_tasks=args.max_tasks,
+                max_output_tokens=args.max_output_tokens,
+                request_timeout_seconds=args.request_timeout_seconds,
+                temperature=args.temperature,
+                max_source_context_chars=args.max_source_context_chars,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl agent evaluation Pilot 执行失败：{exc}\n")
+        print(f"pre-verl agent evaluation Pilot report：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-agent-evaluation":
+        try:
+            print(
+                inspect_pre_verl_agent_evaluation(
+                    args.report,
+                    assert_agent_evaluation_pilot_complete=args.assert_agent_evaluation_pilot_complete,
+                    assert_agent_evaluation_readiness_complete=args.assert_agent_evaluation_readiness_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl agent evaluation 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-agent-runtime-audit":
+        try:
+            output_path = build_pre_verl_runtime_audit(
+                output_dir=args.output_dir,
+                executed_run_matrix_manifest=args.executed_run_matrix_manifest,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl runtime audit 构建失败：{exc}\n")
+        print(f"pre-verl runtime trace report：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-agent-runtime-audit":
+        try:
+            print(inspect_pre_verl_runtime_audit(args.report, assert_runtime_invariants_clean=args.assert_runtime_invariants_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl runtime audit 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-export-audit":
+        try:
+            output_path = build_pre_verl_export_audit(
+                output_dir=args.output_dir,
+                v5_export_pack_manifest=args.v5_export_pack_manifest,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl export audit 构建失败：{exc}\n")
+        print(f"pre-verl export result pack manifest：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-export-audit":
+        try:
+            print(inspect_pre_verl_export_audit(args.manifest, assert_export_clean=args.assert_export_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl export audit 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-reward-boundary":
+        try:
+            print(inspect_pre_verl_reward_boundary(args.report, assert_reward_boundary_clean=args.assert_reward_boundary_clean))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl reward boundary 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-evaluation-report":
+        try:
+            output_path = build_pre_verl_final(
+                output_dir=args.output_dir,
+                baseline_binding=args.baseline_binding,
+                task_set_manifest=args.task_set_manifest,
+                verifier_correctness_report=args.verifier_correctness_report,
+                agent_evaluation_report=args.agent_evaluation_report,
+                runtime_trace_report=args.runtime_trace_report,
+                export_pack_manifest=args.export_pack_manifest,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl final report 构建失败：{exc}\n")
+        print(f"pre-verl evaluation report：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-evaluation-inputs":
+        try:
+            print(inspect_pre_verl_inputs(args.inputs, assert_complete=args.assert_evaluation_inputs_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl evaluation inputs 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-evaluation":
+        try:
+            print(inspect_pre_verl_evaluation(args.report, assert_evaluation_report_complete=args.assert_evaluation_report_complete))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl evaluation 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-claim-gate":
+        try:
+            print(inspect_pre_verl_claim_gate(args.report, assert_claims_consistent=args.assert_claims_consistent))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl claim gate 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-evaluation-bundle":
+        try:
+            print(inspect_pre_verl_bundle(args.bundle, final_command_log=args.final_command_log, assert_immutable=args.assert_immutable))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl bundle 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-public-safe":
+        try:
+            print(inspect_pre_verl_public_safe(args.report, assert_share_safe=args.assert_share_safe))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl public-safe 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-readiness":
+        try:
+            print(inspect_pre_verl_readiness(args.report, assert_verl_ready=args.assert_verl_ready))
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl readiness 检查失败：{exc}\n")
         return 0
     if args.command == "run-task":
         try:
