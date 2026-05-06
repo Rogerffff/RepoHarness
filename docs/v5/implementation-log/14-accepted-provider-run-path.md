@@ -9,6 +9,7 @@
 - 新增 `repo-harness run-v5-accepted-provider-task` 命令，显式接收 task set、provider gate、provider cost budget、输出目录、任务标识、provider、模型、既有 executed run matrix manifest 和预算参数。
 - 新增 `run_accepted_provider_task` builder，默认不覆盖既有输出，并写入 command log entry。
 - accepted run 使用 `patch_focused_react` scaffold，允许读取、搜索、编辑和查看 diff，但禁用模型可见测试反馈。
+- accepted run 的模型可见任务提示明确要求生成持久源码补丁，避免模型把全部 turn 花在分析上；该提示不包含隐藏测试、gold patch 或 verifier 输出。
 - final verifier 使用严格复放路径：从冻结源码重新创建 verification workspace，应用 provider 产出的 final patch，再应用 evaluator-only 测试补丁，最后执行冻结 verifier 命令。
 - accepted 判定必须同时满足：
   - baseline workspace 成功应用 evaluator-only 测试补丁；

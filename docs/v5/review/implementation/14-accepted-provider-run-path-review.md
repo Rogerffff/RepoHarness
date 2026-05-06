@@ -61,6 +61,14 @@
 
 结论：已修复。
 
+### P3：模型可见指令允许分析耗尽预算
+
+发现：DeepSeek V4 Flash 和 DeepSeek V4 Pro 的首次运行都能定位相关代码，但没有在预算内调用 `edit_file`，最终补丁为空。
+
+处理：accepted-run 的模型可见任务提示增加执行约束：该运行只有产生持久源码补丁才有用，定位相关代码后应调用 `edit_file`，最终回答前应使用 `git_diff` 查看 diff。该约束不包含隐藏测试、gold patch 或 verifier 输出。
+
+结论：已修复。
+
 ## 验证命令和结果
 
 ```bash

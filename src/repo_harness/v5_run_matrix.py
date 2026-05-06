@@ -1793,7 +1793,7 @@ def _runnable_task_for_accepted_run(*, task: dict[str, Any], adapter_visible: di
         task_id=str(task["task_id"]),
         task_version=f"{task['task_id']}_accepted_provider_v0",
         dataset_name="repo_harness_v5",
-        issue_statement=_issue_statement(adapter_visible),
+        issue_statement=_accepted_issue_statement(adapter_visible),
         repo_source=archive_path.as_posix(),
         repo_source_spec=source,
         base_commit=task.get("base_commit"),
@@ -2336,6 +2336,7 @@ def _accepted_task_yaml_payload(*, task: dict[str, Any], adapter_visible: dict[s
     payload = _task_yaml_payload(task=task, adapter_visible=adapter_visible)
     payload["task_version"] = f"{task['task_id']}_accepted_provider_v0"
     payload["dataset_split"] = "v5_stage3b_accepted_provider"
+    payload["issue"] = _accepted_issue_statement(adapter_visible)
     payload["test_command"] = "hidden_final_verifier_not_model_visible"
     payload["metadata"] = {
         **payload.get("metadata", {}),
@@ -2351,6 +2352,17 @@ def _issue_statement(adapter_visible: dict[str, Any]) -> str:
     constraints = adapter_visible.get("visible_constraints") or []
     suffix = "\n\nVisible constraints:\n" + "\n".join(f"- {item}" for item in constraints)
     return str(adapter_visible.get("task_statement", "")).strip() + suffix
+
+
+def _accepted_issue_statement(adapter_visible: dict[str, Any]) -> str:
+    return (
+        _issue_statement(adapter_visible)
+        + "\n\nAccepted-run execution guidance:\n"
+        "- This run is only useful if you create a durable source patch in the repository.\n"
+        "- Do not spend the whole budget on analysis. After you locate the relevant implementation, call edit_file.\n"
+        "- Do not finish with an analysis-only answer. Review the repository diff with git_diff before your final answer.\n"
+        "- You cannot see hidden tests or evaluator-only evidence; infer the fix from the public task statement and repository code only."
+    )
 
 
 def _test_command_for_task(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> str:
