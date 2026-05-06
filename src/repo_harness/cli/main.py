@@ -1121,6 +1121,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_v5_accepted_provider_parser.add_argument("--task-id", required=True)
     run_v5_accepted_provider_parser.add_argument("--provider-id", default="deepseek")
     run_v5_accepted_provider_parser.add_argument("--model-id", default="deepseek-v4-pro")
+    run_v5_accepted_provider_parser.add_argument("--scaffold-id", default="patch_focused_react")
     run_v5_accepted_provider_parser.add_argument("--prior-executed-run-matrix-manifest")
     run_v5_accepted_provider_parser.add_argument(
         "--allow-local-secret-file",
@@ -2327,6 +2328,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 task_id=args.task_id,
                 provider_id=args.provider_id,
                 model_id=args.model_id,
+                scaffold_id=args.scaffold_id,
                 prior_executed_run_matrix_manifest=args.prior_executed_run_matrix_manifest,
                 allow_local_secret_file=args.allow_local_secret_file,
                 max_turns=args.max_turns,

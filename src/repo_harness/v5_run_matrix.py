@@ -420,6 +420,7 @@ def run_accepted_provider_task(
     task_id: str,
     provider_id: str = "deepseek",
     model_id: str = "deepseek-v4-pro",
+    scaffold_id: str = "patch_focused_react",
     prior_executed_run_matrix_manifest: str | Path | None = None,
     allow_local_secret_file: bool = True,
     max_turns: int = 12,
@@ -446,6 +447,7 @@ def run_accepted_provider_task(
     )
     if int(provider_cost.get("max_real_provider_calls", 0)) < 1:
         raise ConfigError("accepted provider run 至少需要 1 次 provider call budget。")
+    scaffold_id = _normalize_accepted_scaffold_id(scaffold_id)
     normalized_model_id = _normalize_model_for_provider(provider_id, model_id)
     tasks_by_id = _load_task_definitions(task_set)
     task = tasks_by_id.get(task_id)
@@ -464,7 +466,14 @@ def run_accepted_provider_task(
     configs_dir.mkdir(parents=True, exist_ok=True)
     agent_runs_dir.mkdir(parents=True, exist_ok=True)
     task_yaml_path = generated_dir / f"{task_id}_accepted_provider.yaml"
-    _write_yaml(task_yaml_path, _accepted_task_yaml_payload(task=task, adapter_visible=adapter_visible))
+    _write_yaml(
+        task_yaml_path,
+        _accepted_task_yaml_payload(
+            task=task,
+            adapter_visible=adapter_visible,
+            scaffold_id=scaffold_id,
+        ),
+    )
     generated_task_ref = _evidence_ref(
         task_yaml_path,
         kind="v5_accepted_provider_generated_task_yaml",
@@ -482,11 +491,11 @@ def run_accepted_provider_task(
         "source_tree_hash": task.get("source_tree_hash"),
         "source_archive_sha256": task.get("source_archive_sha256"),
         "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
-        "tool_policy_id": "v5_accepted_patch_read_write_no_hidden_feedback",
-        "context_policy_id": "v5_accepted_patch_final_only_context",
+        "tool_policy_id": _accepted_tool_policy_id(scaffold_id),
+        "context_policy_id": _accepted_context_policy_id(scaffold_id),
         "provider_id": provider_id,
-        "scaffold_id": "patch_focused_react",
-        "budget_policy_id": "v5_accepted_patch_bounded_tool_loop",
+        "scaffold_id": scaffold_id,
+        "budget_policy_id": _accepted_budget_policy_id(scaffold_id),
         "environment_id": task.get("environment_id"),
         "comparison_validity_scope": "accepted_provider_strict_replay_single_task",
     }
@@ -508,6 +517,7 @@ def run_accepted_provider_task(
             output_dir=agent_runs_dir,
             provider_id=provider_id,
             model_id=normalized_model_id,
+            scaffold_id=scaffold_id,
             allow_local_secret_file=allow_local_secret_file,
             max_turns=max_turns,
             max_tool_calls=max_tool_calls,
@@ -515,17 +525,17 @@ def run_accepted_provider_task(
         ),
     )
     cell = {
-        "cell_id": f"v5_accepted_cell_{task_id}_{provider_id}_patch_focused_react",
+        "cell_id": f"v5_accepted_cell_{task_id}_{provider_id}_{scaffold_id}",
         "task_id": task_id,
         "task_ref": _task_ref(task),
         "generated_task_ref": generated_task_ref,
         "provider_id": provider_id,
         "provider_mode": "primary",
         "model_id": normalized_model_id,
-        "scaffold_id": "patch_focused_react",
-        "budget_policy_id": "v5_accepted_patch_bounded_tool_loop",
-        "tool_policy_id": "v5_accepted_patch_read_write_no_hidden_feedback",
-        "context_policy_id": "v5_accepted_patch_final_only_context",
+        "scaffold_id": scaffold_id,
+        "budget_policy_id": _accepted_budget_policy_id(scaffold_id),
+        "tool_policy_id": _accepted_tool_policy_id(scaffold_id),
+        "context_policy_id": _accepted_context_policy_id(scaffold_id),
         "environment_id": task.get("environment_id"),
         "source_tree_hash": task.get("source_tree_hash"),
         "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
@@ -542,6 +552,7 @@ def run_accepted_provider_task(
         agent_runs_dir=agent_runs_dir,
         run_id=run_id,
         allow_local_secret_file=allow_local_secret_file,
+        scaffold_id=scaffold_id,
         max_turns=max_turns,
         max_tool_calls=max_tool_calls,
         max_output_tokens=max_output_tokens,
@@ -1184,6 +1195,7 @@ def _run_one_accepted_provider_cell(
     agent_runs_dir: Path,
     run_id: str,
     allow_local_secret_file: bool,
+    scaffold_id: str,
     max_turns: int,
     max_tool_calls: int,
     max_output_tokens: int,
@@ -1203,6 +1215,7 @@ def _run_one_accepted_provider_cell(
             agent_runs_dir=agent_runs_dir,
             run_id=run_id,
             allow_local_secret_file=allow_local_secret_file,
+            scaffold_id=scaffold_id,
             max_turns=max_turns,
             max_tool_calls=max_tool_calls,
             max_output_tokens=max_output_tokens,
@@ -1359,6 +1372,7 @@ def _run_accepted_provider_agent_loop(
     agent_runs_dir: Path,
     run_id: str,
     allow_local_secret_file: bool,
+    scaffold_id: str,
     max_turns: int,
     max_tool_calls: int,
     max_output_tokens: int,
@@ -1381,7 +1395,7 @@ def _run_accepted_provider_agent_loop(
         run_id_prefix="v5_accepted",
         model=model_config,
         runtime=RuntimeConfig(
-            scaffold_id="patch_focused_react",
+            scaffold_id=scaffold_id,
             permission_mode="auto",
             test_feedback_policy="disabled",
             feedback_tests_passed_policy="require_model_final",
@@ -1401,7 +1415,11 @@ def _run_accepted_provider_agent_loop(
         evaluation=EvaluationConfig(final_verifier_mode="strict_patch_replay"),
         context_management=ContextManagementConfig(max_context_tokens=120000),
     )
-    runnable = _runnable_task_for_accepted_run(task=task, adapter_visible=adapter_visible)
+    runnable = _runnable_task_for_accepted_run(
+        task=task,
+        adapter_visible=adapter_visible,
+        scaffold_id=scaffold_id,
+    )
     resolved_plan = ResolvedVerifierPlan(
         verifier_config=runnable.verifier_config,
         initial_fail_to_pass_tests=[],
@@ -1410,7 +1428,7 @@ def _run_accepted_provider_agent_loop(
         parser_confidence=1.0,
         resolved_verifier_plan_id=f"{run_id}_strict_replay_final_only",
     )
-    scaffold = build_scaffold("patch_focused_react")
+    scaffold = build_scaffold(scaffold_id)
     feedback_policy = resolve_feedback_policy(run_config=run_config, scaffold=scaffold, task=runnable)
     allowed_tools = resolve_allowed_tools(scaffold=scaffold, feedback_policy=feedback_policy)
     budget_manager = BudgetManager(
@@ -1777,7 +1795,12 @@ def _accepted_workspace_adapter(*, run_id: str, run_dir: Path) -> LocalWorkspace
     )
 
 
-def _runnable_task_for_accepted_run(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> RunnableTask:
+def _runnable_task_for_accepted_run(
+    *,
+    task: dict[str, Any],
+    adapter_visible: dict[str, Any],
+    scaffold_id: str,
+) -> RunnableTask:
     archive_ref = task.get("source_archive_ref")
     if not isinstance(archive_ref, dict):
         raise ConfigError(f"{task.get('task_id')} 缺少 source_archive_ref。")
@@ -1793,7 +1816,7 @@ def _runnable_task_for_accepted_run(*, task: dict[str, Any], adapter_visible: di
         task_id=str(task["task_id"]),
         task_version=f"{task['task_id']}_accepted_provider_v0",
         dataset_name="repo_harness_v5",
-        issue_statement=_accepted_issue_statement(adapter_visible),
+        issue_statement=_accepted_issue_statement(adapter_visible, scaffold_id=scaffold_id),
         repo_source=archive_path.as_posix(),
         repo_source_spec=source,
         base_commit=task.get("base_commit"),
@@ -2222,6 +2245,7 @@ def _accepted_run_config_payload(
     output_dir: Path,
     provider_id: str,
     model_id: str,
+    scaffold_id: str,
     allow_local_secret_file: bool,
     max_turns: int,
     max_tool_calls: int,
@@ -2243,7 +2267,7 @@ def _accepted_run_config_payload(
             ),
         },
         "runtime": {
-            "scaffold_id": "patch_focused_react",
+            "scaffold_id": scaffold_id,
             "permission_mode": "auto",
             "test_feedback_policy": "disabled",
             "feedback_tests_passed_policy": "require_model_final",
@@ -2332,11 +2356,16 @@ def _task_yaml_payload(*, task: dict[str, Any], adapter_visible: dict[str, Any])
     }
 
 
-def _accepted_task_yaml_payload(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> dict[str, Any]:
+def _accepted_task_yaml_payload(
+    *,
+    task: dict[str, Any],
+    adapter_visible: dict[str, Any],
+    scaffold_id: str,
+) -> dict[str, Any]:
     payload = _task_yaml_payload(task=task, adapter_visible=adapter_visible)
     payload["task_version"] = f"{task['task_id']}_accepted_provider_v0"
     payload["dataset_split"] = "v5_stage3b_accepted_provider"
-    payload["issue"] = _accepted_issue_statement(adapter_visible)
+    payload["issue"] = _accepted_issue_statement(adapter_visible, scaffold_id=scaffold_id)
     payload["test_command"] = "hidden_final_verifier_not_model_visible"
     payload["metadata"] = {
         **payload.get("metadata", {}),
@@ -2354,14 +2383,24 @@ def _issue_statement(adapter_visible: dict[str, Any]) -> str:
     return str(adapter_visible.get("task_statement", "")).strip() + suffix
 
 
-def _accepted_issue_statement(adapter_visible: dict[str, Any]) -> str:
-    return (
+def _accepted_issue_statement(adapter_visible: dict[str, Any], *, scaffold_id: str) -> str:
+    common = (
         _issue_statement(adapter_visible)
         + "\n\nAccepted-run execution guidance:\n"
         "- This run is only useful if you create a durable source patch in the repository.\n"
-        "- Do not spend the whole budget on analysis. After you locate the relevant implementation, call edit_file.\n"
-        "- Do not finish with an analysis-only answer. Review the repository diff with git_diff before your final answer.\n"
+        "- Do not finish with an analysis-only answer.\n"
         "- You cannot see hidden tests or evaluator-only evidence; infer the fix from the public task statement and repository code only."
+    )
+    if scaffold_id == "single_shot_patch":
+        return (
+            common
+            + "\n- Do not call tools. Return exactly one unified diff patch for the repository.\n"
+            + "- The patch must start with standard diff headers such as `diff --git`, `---`, `+++`, and `@@` hunks."
+        )
+    return (
+        common
+        + "\n- Do not spend the whole budget on analysis. After you locate the relevant implementation, call edit_file.\n"
+        + "- Review the repository diff with git_diff before your final answer."
     )
 
 
@@ -2413,6 +2452,32 @@ def _normalize_model_for_provider(provider_id: str, model_id: str) -> str:
     if provider_id == "openai":
         return normalize_openai_model_id(model_id)
     raise ConfigError(f"V5 accepted provider run 不支持 provider_id={provider_id!r}。")
+
+
+def _normalize_accepted_scaffold_id(scaffold_id: str) -> str:
+    if scaffold_id not in {"patch_focused_react", "single_shot_patch"}:
+        raise ConfigError(
+            "V5 accepted provider run 只支持 scaffold_id=patch_focused_react 或 single_shot_patch。"
+        )
+    return scaffold_id
+
+
+def _accepted_tool_policy_id(scaffold_id: str) -> str:
+    if scaffold_id == "single_shot_patch":
+        return "v5_accepted_single_shot_no_model_tools"
+    return "v5_accepted_patch_read_write_no_hidden_feedback"
+
+
+def _accepted_context_policy_id(scaffold_id: str) -> str:
+    if scaffold_id == "single_shot_patch":
+        return "v5_accepted_single_shot_final_only_context"
+    return "v5_accepted_patch_final_only_context"
+
+
+def _accepted_budget_policy_id(scaffold_id: str) -> str:
+    if scaffold_id == "single_shot_patch":
+        return "v5_accepted_single_shot_patch_budget"
+    return "v5_accepted_patch_bounded_tool_loop"
 
 
 def _provider_specific_options_for_cell(
