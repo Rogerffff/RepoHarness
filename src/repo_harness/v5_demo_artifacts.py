@@ -125,13 +125,20 @@ def build_demo_artifacts(
     _write_json(result_summary_path, result_summary)
 
     demo_card_json_path = root / "v5_interview_demo_card.json"
-    demo_card = _demo_card(task_definition, adapter_input, canonical_run, result_summary, partition_counts)
+    demo_card = _demo_card(
+        task_definition,
+        adapter_input,
+        canonical_run,
+        result_summary,
+        partition_counts,
+        provider_comparison=provider_comparison,
+    )
     _write_json(demo_card_json_path, demo_card)
     demo_card_md_path = root / "v5_interview_demo_card.md"
     _write_text(demo_card_md_path, _demo_card_markdown(demo_card))
 
     walkthrough_path = root / "v5_canonical_demo_walkthrough.md"
-    _write_text(walkthrough_path, _walkthrough_markdown(task_definition, adapter_input, canonical_run))
+    _write_text(walkthrough_path, _walkthrough_markdown(task_definition, adapter_input, canonical_run, partition_counts))
 
     repro_command_path = root / "v5_repro_command_index.json"
     _write_json(repro_command_path, _repro_command_index(result_summary_path, export_manifest_path))
@@ -329,6 +336,8 @@ def _demo_card(
     run: dict[str, Any],
     result_summary: dict[str, Any],
     partition_counts: dict[str, Any],
+    *,
+    provider_comparison: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "schema_version": "repo_harness_v5_interview_demo_card_v0",
@@ -364,6 +373,9 @@ def _demo_card(
         },
         "claim_boundary": {
             "can_claim_core_provider_floor": True,
+            "can_claim_accepted_run_evidence": _is_final_verifier_accepted(run),
+            "can_claim_trainable_export_completed": int(partition_counts.get("real_provider_trainable_records", 0) or 0) > 0,
+            "can_claim_provider_axis_supplemental_proof": _provider_axis_available(provider_comparison),
             "cannot_claim_resume_ready": True,
             "cannot_claim_preference_export_completed": True,
         },
@@ -405,12 +417,42 @@ def _demo_card_markdown(card: dict[str, Any]) -> str:
 
 ## 声明边界
 
-当前可以展示 V5 已经具备任务冻结、单 provider 真实运行证据、分区导出和 public-safe demo artifact。当前不能声称多 provider 可比结论、preference export 已完成，或 export stress test 已完成。
+{_demo_card_claim_boundary(card)}
 """
 
 
-def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], run: dict[str, Any]) -> str:
+def _demo_card_claim_boundary(card: dict[str, Any]) -> str:
+    boundary = card.get("claim_boundary") or {}
+    has_accepted_run = boundary.get("can_claim_accepted_run_evidence") is True
+    has_trainable_export = boundary.get("can_claim_trainable_export_completed") is True
+    has_provider_axis = boundary.get("can_claim_provider_axis_supplemental_proof") is True
+    run_phrase = (
+        "真实 provider accepted run evidence"
+        if has_accepted_run
+        else "真实 provider run evidence"
+    )
+    export_phrase = (
+        "trainable 分区导出"
+        if has_trainable_export
+        else "分区导出审计"
+    )
+    provider_phrase = "、provider-axis 补充证据" if has_provider_axis else ""
+    return (
+        f"当前可以展示 V5 已经具备任务冻结、{run_phrase}、{export_phrase}"
+        f"{provider_phrase}和 public-safe demo artifact。当前不能声称 resume-ready 多 provider 结论、"
+        "preference export 已完成，或 export stress test 已完成。"
+    )
+
+
+def _walkthrough_markdown(
+    task: dict[str, Any],
+    adapter_input: dict[str, Any],
+    run: dict[str, Any],
+    partition_counts: dict[str, Any],
+) -> str:
     accepted = _is_final_verifier_accepted(run)
+    trainable_count = int(partition_counts.get("real_provider_trainable_records", 0) or 0)
+    accepted_and_trainable = accepted and trainable_count > 0
     run_step = (
         f"5. 这条运行使用 `{run.get('scaffold_id')}` scaffold 和 `{run.get('budget_policy_id')}` budget；"
         "provider 产出补丁后，RepoHarness 在独立 verification workspace 中重放 final patch。"
@@ -421,14 +463,29 @@ def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], r
         )
     )
     verifier_step = (
-        "6. Strict final verifier 状态为 `accepted`，因此这条 run 可以进入 trainable SFT 和 reinforcement learning rollout 分区。"
+        (
+            "6. Strict final verifier 状态为 `accepted`，并且 Stage 4 export pack 记录了真实 provider "
+            "trainable record，因此这条 run 可以进入 trainable SFT 和 reinforcement learning rollout 分区。"
+        )
+        if accepted_and_trainable
+        else (
+            "6. Strict final verifier 状态为 `accepted`，但 Stage 4 export pack 没有记录真实 provider "
+            "trainable record，因此 demo 只能展示 accepted run boundary，不能声称 trainable export completed。"
+        )
         if accepted
         else f"6. Final verifier 状态保留为 `{run.get('final_verifier_status')}`，因此 demo 不把它讲成 accepted patch。"
     )
     export_step = (
         "7. Stage 4 生成导出分区结构和审计证据；accepted run 进入 SFT / reinforcement learning rollout trainable 分区，diagnostic-only、blocked 和 failure dataset 继续单独分区。"
+        if accepted_and_trainable
+        else "7. Stage 4 生成导出分区结构和审计证据；这条 accepted run 尚未进入 trainable 分区，不能把导出讲成已完成。"
         if accepted
         else "7. Stage 4 生成导出分区结构和审计证据；这条 run 未通过 final verifier，不进入 SFT / reinforcement learning rollout trainable 分区，diagnostic-only、blocked 和 failure dataset 单独分区。"
+    )
+    downgrade_claim = (
+        "需要强调当前 V5 具备通过 final verifier 的真实 trainable record 和可复核证据链；"
+        if accepted_and_trainable
+        else "需要强调当前 V5 具备真实 provider run evidence 和可复核证据链，但 trainable export completed 仍由 Stage 4 claim gate 决定；"
     )
     return f"""# V5 Canonical Demo Walkthrough
 
@@ -453,7 +510,7 @@ def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], r
 
 ## 降级讲法
 
-如果现场不展示 provider 调用细节，只讲 evidence chain：task freeze -> real provider run metadata -> final verifier boundary -> export partition -> public-safe demo bundle -> acceptance binding。需要强调当前 V5 具备可复核证据链，但 core acceptance 仍然因为缺少通过 final verifier 的真实 trainable record 而失败；resume-ready 的 provider、preference pair、scaffold 和 budget 门槛也仍然被 claim gate 阻断。
+如果现场不展示 provider 调用细节，只讲 evidence chain：task freeze -> real provider run metadata -> final verifier boundary -> export partition -> public-safe demo bundle -> acceptance binding。{downgrade_claim}resume-ready 的 scaffold comparison、budget comparison 和 preference pair 门槛仍然被 claim gate 阻断。
 """
 
 
@@ -600,7 +657,7 @@ def _provider_comparison_conclusion(
             "blocked_claim": "resume-ready multi-provider comparison",
             "boundary_note": (
                 "This supplemental report proves the provider axis only. It does not satisfy "
-                "scaffold comparison, budget comparison, preference pair or trainable export gates."
+                "scaffold comparison, budget comparison or preference pair gates."
             ),
         }
         if provider_comparison_path is not None:
@@ -626,6 +683,7 @@ def _stage5_claim_gate(
     provider_comparison_path: Path | None = None,
 ) -> dict[str, Any]:
     provider_axis_available = _provider_axis_available(provider_comparison)
+    trainable_count = _trainable_count_from_ref(export_manifest_path)
     allowed = list(dict.fromkeys([
         *stage4_claim_gate.get("allowed_claims", []),
         *(
@@ -636,13 +694,25 @@ def _stage5_claim_gate(
         "share-safe demo artifacts generated",
         "result summary with explicit denominators generated",
     ]))
-    blocked = list(dict.fromkeys(stage4_claim_gate.get("blocked_claims", [])))
+    stale_unblocked_claims = set()
+    if trainable_count > 0:
+        stale_unblocked_claims.add("trainable export completed")
+    if provider_axis_available:
+        stale_unblocked_claims.update({
+            "multi-provider agent runs",
+            "controlled multi-provider comparison",
+        })
+    blocked = [
+        claim
+        for claim in dict.fromkeys(stage4_claim_gate.get("blocked_claims", []))
+        if claim not in stale_unblocked_claims
+    ]
     for claim in (
-        "multi-provider agent runs",
-        "controlled multi-provider comparison",
         "preference export completed",
         "interview-grade evaluation pack",
         "resumable export stress tests",
+        "resume-ready multi-provider comparison",
+        "controlled multi-provider comparison completed",
     ):
         if claim not in blocked:
             blocked.append(claim)
@@ -658,7 +728,7 @@ def _stage5_claim_gate(
             "provider": (
                 "OpenAI / DeepSeek provider-axis proof exists as supplemental evidence, but it does "
                 "not satisfy overall resume-ready acceptance because scaffold comparison, budget "
-                "comparison, preference pair and trainable export gates remain blocked"
+                "comparison and preference pair gates remain blocked"
                 if provider_axis_available
                 else stage4_claim_gate.get("blocking_reasons", {}).get(
                     "provider",
@@ -667,7 +737,7 @@ def _stage5_claim_gate(
             ),
             "resume_ready": (
                 "blocked even with supplemental provider-axis proof until scaffold comparison, "
-                "budget comparison, a real comparable preference pair and trainable export are available"
+                "budget comparison and a real comparable preference pair are available"
                 if provider_axis_available
                 else "blocked until a second real provider family and a real comparable preference pair are available"
             ),
@@ -730,6 +800,15 @@ def _resume_claim_templates(claim_gate: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _trainable_count_from_ref(export_manifest_path: Path) -> int:
+    try:
+        export_manifest = _read_json(export_manifest_path)
+    except (OSError, json.JSONDecodeError):
+        return 0
+    counts = export_manifest.get("partition_counts") or {}
+    return int(counts.get("real_provider_trainable_records", 0) or 0)
+
+
 def _resume_bullets_markdown(claim_gate: dict[str, Any]) -> str:
     return f"""# V5 简历 Bullet 草稿
 
@@ -752,7 +831,7 @@ def _provider_qa_answer(claim_gate: dict[str, Any]) -> str:
     if _claim_gate_has_provider_axis(claim_gate):
         return (
             "已有 OpenAI / DeepSeek 两任务 provider-axis 补充证据，但它只证明 provider 轴；"
-            "scaffold comparison、budget comparison、preference pair 和 trainable export 仍然阻断 resume-ready 强结论。"
+            "scaffold comparison、budget comparison 和 preference pair 仍然阻断 resume-ready 强结论。"
         )
     return "当前只有 DeepSeek family 有真实运行，provider 对比强结论被阻断。"
 
@@ -789,7 +868,7 @@ def _qa_evidence(public_lookup: dict[str, dict[str, Any]], claim_gate: dict[str,
 def _qa_markdown(claim_gate: dict[str, Any]) -> str:
     provider_line = (
         "已有 OpenAI / DeepSeek 两任务 provider-axis 补充证据，但它只证明 provider 轴；"
-        "scaffold、budget、preference pair 和 trainable export 仍然阻断 resume-ready 强结论。"
+        "scaffold、budget 和 preference pair 仍然阻断 resume-ready 强结论。"
         if _claim_gate_has_provider_axis(claim_gate)
         else "当前只有一个真实 provider family，因此强对比结论被阻断。"
     )

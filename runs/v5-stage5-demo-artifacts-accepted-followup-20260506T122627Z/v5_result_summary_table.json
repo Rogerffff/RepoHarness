@@ -1,0 +1,182 @@
+{
+  "accepted_rate_by_budget": {
+    "stage3b_constrained_one_turn_no_tool_calls": {
+      "accepted": 0,
+      "denominator": 6,
+      "rate": 0.0
+    },
+    "v5_accepted_single_shot_patch_budget": {
+      "accepted": 1,
+      "denominator": 1,
+      "rate": 1.0
+    }
+  },
+  "accepted_rate_by_provider_family": {
+    "deepseek": {
+      "accepted": 1,
+      "denominator": 7,
+      "rate": 0.142857
+    }
+  },
+  "accepted_rate_by_scaffold": {
+    "simple_react": {
+      "accepted": 0,
+      "denominator": 6,
+      "rate": 0.0
+    },
+    "single_shot_patch": {
+      "accepted": 1,
+      "denominator": 1,
+      "rate": 1.0
+    }
+  },
+  "accepted_rate_by_task_family": {
+    "cli_error_formatting": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "documentation_generation": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "parser_error_location": {
+      "accepted": 1,
+      "denominator": 1,
+      "rate": 1.0
+    },
+    "plugin_lifecycle": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "pr_issue_default_value_parsing": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "pr_issue_init_hook_argument_flow": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "version_metadata": {
+      "accepted": 0,
+      "denominator": 1,
+      "rate": 0.0
+    }
+  },
+  "blocked_records": 1,
+  "budget_comparison_conclusion": {
+    "controlled_variables": "task, source tree, final verifier plan, provider, scaffold and environment id",
+    "status": "blocked_single_budget"
+  },
+  "claim_gate_snapshot": {
+    "current_provider_axis_status": "provider_axis_supplemental_proof_available",
+    "historical_stage4_provider_claim_status": "provider_axis_satisfied_two_task_deepseek_openai_pairs",
+    "stage4_preference_pair_claim_status": "blocked_no_real_comparable_pair"
+  },
+  "cost_proxy_summary": {
+    "actual_provider_calls": 7,
+    "cost_proxy_usd": 0.0,
+    "cost_source": "Stage 3A budget cap and Stage 3B call count; no raw billing data recorded"
+  },
+  "created_at": "2026-05-06T12:27:11Z",
+  "diagnostic_records": 1,
+  "failure_owner_distribution": {
+    "verifier_or_config_issue": 6
+  },
+  "failure_type_distribution": {
+    "accepted": 1,
+    "final_verifier_not_executed": 6
+  },
+  "mock_or_replay_records": 0,
+  "pass_to_pass_regression_rate": {
+    "denominator": 1,
+    "rate": 0.0,
+    "regression_count": 0,
+    "status": "tracked_for_accepted_strict_replay_runs"
+  },
+  "provider_comparison_conclusion": {
+    "actual_records_by_provider": {
+      "deepseek": 2,
+      "openai": 2
+    },
+    "blocked_claim": "resume-ready multi-provider comparison",
+    "boundary_note": "This supplemental report proves the provider axis only. It does not satisfy scaffold comparison, budget comparison or preference pair gates.",
+    "compared_task_ids": [
+      "v5_pr_issue_click_3364",
+      "v5_task_005"
+    ],
+    "controlled_variables": [
+      "task_id",
+      "source_tree_hash",
+      "final_verifier_plan_ref",
+      "tool_policy_id",
+      "context_policy_id",
+      "scaffold_id",
+      "budget_policy_id",
+      "environment_id"
+    ],
+    "provider_comparison_report_ref": {
+      "inspect_command": "inspect-v5-evidence-integrity",
+      "kind": "v5_provider_comparison_report",
+      "path": "runs/v5-openai-provider-comparison-20260505T194739Z/comparison_reports_gpt55_final_v3/v5_provider_comparison_report.json",
+      "producer_command": "external",
+      "producer_stage": "v5_stage5_demo_artifacts",
+      "purpose": "V5 Stage 5 audit input: v5_provider_comparison_report",
+      "schema_version": "repo_harness_v5_evidence_ref_v0",
+      "sha256": "9d5ec96363c821d71c14d0ed291d7877bebbe14ec7e4cbf8fa18f752cc39e526",
+      "share_safe": false,
+      "size_bytes": 8677,
+      "visibility": "audit_only"
+    },
+    "provider_families_with_actual_runs": [
+      "deepseek",
+      "openai"
+    ],
+    "status": "provider_axis_proof_available_not_resume_ready"
+  },
+  "real_provider_runs": {
+    "accepted_count": 1,
+    "accepted_rate": 0.142857,
+    "denominator": 7,
+    "denominator_definition": "actual primary provider calls that produced a structured terminal outcome in Stage 3B; structured skips, mock/replay records and stress records are excluded",
+    "denominator_excludes": [
+      "credential_missing_skip",
+      "adapter_not_implemented_skip",
+      "cost_limited_structured_skip",
+      "fallback_success",
+      "mock_or_replay_records",
+      "synthetic_safe_stress_records",
+      "diagnostic_only_records"
+    ]
+  },
+  "real_provider_trainable_records": 2,
+  "scaffold_comparison_conclusion": {
+    "controlled_variables": "task, source tree, final verifier plan, provider, budget and environment id",
+    "status": "blocked_single_scaffold"
+  },
+  "schema_version": "repo_harness_v5_result_summary_table_v0",
+  "status": "passed",
+  "synthetic_safe_stress_records": 0,
+  "task_inventory": {
+    "accepted_auditable_task_count": 12,
+    "pr_issue_task_count": 8,
+    "swebench_like_anchor_task_count": 4,
+    "threshold_source": "runs/v5-stage2b-merged-task-set-20260505T152756Z/v5_task_set_manifest.json"
+  },
+  "token_usage_summary": {
+    "cached_tokens": 5376,
+    "input_tokens": 9629,
+    "output_tokens": 560,
+    "total_tokens": 10189
+  },
+  "wall_time_summary": {
+    "average_seconds": 3.714,
+    "count": 7,
+    "max_seconds": 13.0,
+    "total_seconds": 26.0
+  }
+}

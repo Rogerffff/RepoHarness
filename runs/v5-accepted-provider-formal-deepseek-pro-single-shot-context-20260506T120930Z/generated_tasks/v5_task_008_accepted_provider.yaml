@@ -1,0 +1,103 @@
+id: v5_task_008
+task_version: v5_task_008_accepted_provider_v0
+dataset_name: repo_harness_v5
+source_kind: pr_issue_flow
+dataset_split: v5_stage3b_accepted_provider
+created_at: '2026-05-05'
+repo: /Users/roger/Desktop/claude-code/runs/v5-source-materialization-preflight-20260505T082123Z/source_archives/pelletier__go_toml_1041-e14bde7c1d0e055cc26b8348f7a08ba0c7af1cdb.tar
+repo_source_spec:
+  source_type: local_archive
+  archive_path: /Users/roger/Desktop/claude-code/runs/v5-source-materialization-preflight-20260505T082123Z/source_archives/pelletier__go_toml_1041-e14bde7c1d0e055cc26b8348f7a08ba0c7af1cdb.tar
+  archive_sha256: 01d5915d750689f5b6fb52650b00e3feaa41514ab98d66edd176eac4d959d76b
+  expected_root_directory: pelletier__go_toml_1041-e14bde7c1d0e055cc26b8348f7a08ba0c7af1cdb
+  base_commit: e14bde7c1d0e055cc26b8348f7a08ba0c7af1cdb
+  decontamination_status: manual_checked
+base_commit: e14bde7c1d0e055cc26b8348f7a08ba0c7af1cdb
+source_archive_sha256: 01d5915d750689f5b6fb52650b00e3feaa41514ab98d66edd176eac4d959d76b
+issue: "Parser errors for an incomplete key at the end of a document without a trailing\
+  \ newline should point at the incomplete key position rather than the document end.\n\
+  \nVisible constraints:\n- work only inside the provided frozen repository workspace\n\
+  - do not use network access during verifier execution\n- do not inspect evaluator-only\
+  \ evidence or hidden tests\n\nAccepted-run execution guidance:\n- This run is only\
+  \ useful if you create a durable source patch in the repository.\n- Do not finish\
+  \ with an analysis-only answer.\n- You cannot see hidden tests or evaluator-only\
+  \ evidence; infer the fix from the public task statement and repository code only.\n\
+  - Do not call tools. Return exactly one unified diff patch for the repository.\n\
+  - The patch must start with standard diff headers such as `diff --git`, `---`, `+++`,\
+  \ and `@@` hunks.\n\nPublic source context from the frozen repository archive, not\
+  \ evaluator-only evidence:\nFile: `unstable/parser.go`\n```go\nfunc (p *Parser)\
+  \ parseKeyval(b []byte) (reference, []byte, error) {\n\t// keyval = key keyval-sep\
+  \ val\n\t// Track the start position for Raw range\n\tstartB := b\n\n\tref := p.builder.Push(Node{\n\
+  \t\tKind: KeyValue,\n\t})\n\n\tkey, b, err := p.parseKey(b)\n\tif err != nil {\n\
+  \t\treturn invalidReference, nil, err\n\t}\n\n\t// keyval-sep = ws %x3D ws ; =\n\
+  \n\tb = p.parseWhitespace(b)\n\n\tif len(b) == 0 {\n\t\treturn invalidReference,\
+  \ nil, NewParserError(b, \"expected = after a key, but the document ends there\"\
+  )\n\t}\n\n\tb, err = expect('=', b)\n\tif err != nil {\n\t\treturn invalidReference,\
+  \ nil, err\n\t}\n\n\tb = p.parseWhitespace(b)\n\n\tvalRef, b, err := p.parseVal(b)\n\
+  \tif err != nil {\n\t\treturn ref, b, err\n\t}\n\n\tp.builder.Chain(valRef, key)\n\
+  \tp.builder.AttachChild(ref, valRef)\n\n\t// Set Raw to span the entire key-value\
+  \ expression\n\tnode := p.builder.NodeAt(ref)\n\tnode.Raw = p.rangeOfToken(startB[:len(startB)-len(b)],\
+  \ b)\n\n\treturn ref, b, err\n}\n```"
+setup_command: null
+test_command: hidden_final_verifier_not_model_visible
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 120
+  agent_timeout_sec: 240
+  final_verifier_timeout_sec: 120
+environment:
+  execution_image: local_process
+  python_version: '3.12'
+  package_manager: pip
+  setup_network_policy: deny
+  source_archive_sha256: 01d5915d750689f5b6fb52650b00e3feaa41514ab98d66edd176eac4d959d76b
+expected_files: []
+fail_to_pass_tests: []
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: null
+  source_url: https://github.com/pelletier/go-toml
+  overlap_check_notes: V5 Stage 3B uses sanitized adapter-visible task input only.
+declared_setup_mutations: []
+generated_files: []
+tags:
+- v5
+- stage3b
+- go
+metadata:
+  v5_task_definition_ref:
+    inspect_command: inspect-v5-task-set
+    kind: v5_task_definition
+    path: runs/v5-stage2a-initial-task-set-20260505T145206Z/task_definitions/v5_task_008.json
+    producer_command: build-v5-task-set
+    producer_stage: v5_stage2a_initial_task_set
+    purpose: Formal V5 task definition for v5_task_008
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: de9b799bce1b8f4c0f80f574ef69e4b3b849228b37e5566db0e49df9fc707077
+    share_safe: false
+    size_bytes: 10051
+    visibility: audit_only
+  v5_final_verifier_plan_ref:
+    inspect_command: inspect-v5-task-set
+    kind: final_verifier_plan
+    path: runs/v5-verifier-execution-backup-20260505T120000Z/reports/v5_verifier_execution_backup_three_report.json
+    producer_command: v5 verifier preflight
+    producer_stage: v5_preimplementation_input
+    purpose: Final verifier evidence source for v5_task_008
+    schema_version: repo_harness_v5_evidence_ref_v0
+    sha256: 8cd33c2ee385db58ee2e717b7612ee6397587a865c375805be02c6f2663225d3
+    share_safe: false
+    size_bytes: 26314
+    visibility: evaluator_only
+  v5_stage3b_generated: true
+  v5_accepted_provider_generated: true
+  final_only: true
+  swe_bench_like_final_only: true
+  hidden_final_verifier_command_model_visible: false

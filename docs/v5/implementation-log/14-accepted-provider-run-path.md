@@ -85,10 +85,50 @@ git diff --check -- src/repo_harness/v5_run_matrix.py src/repo_harness/v5_eviden
 - 不允许把 provider raw request、provider raw response 或 credential raw value 写入模型可见内容、训练 payload、public-safe demo bundle 或最终验收文档。
 - 不允许在 V5 源码变更后把旧 V4 doc-sync bundle immutable inspect 当作当前阶段门。
 
+## 实际 provider 执行结果
+
+本轮后续执行了 DeepSeek provider accepted-run 链路：
+
+- DeepSeek V4 Flash 链路烟测目录：`runs/v5-accepted-provider-smoke-deepseek-flash-20260506T114718Z/`。该运行完成真实 provider 调用，但没有产出可接受 final patch，因此没有进入 trainable export。
+- DeepSeek V4 Pro 多轮正式尝试目录包括：
+  - `runs/v5-accepted-provider-formal-deepseek-pro-20260506T114822Z/`
+  - `runs/v5-accepted-provider-formal-deepseek-pro-retry-20260506T115126Z/`
+  - `runs/v5-accepted-provider-formal-deepseek-pro-guided-20260506T115710Z/`
+  - `runs/v5-accepted-provider-formal-deepseek-pro-single-shot-20260506T120515Z/`
+- 最终通过的 accepted run 目录：`runs/v5-accepted-provider-formal-deepseek-pro-single-shot-context-20260506T120930Z/`。
+
+最终 accepted run 的关键事实：
+
+- `provider_id=deepseek`
+- `model_id=deepseek-v4-pro`
+- `task_id=v5_task_008`
+- `scaffold_id=single_shot_patch`
+- `accepted=true`
+- `final_verifier_ran=true`
+- `final_verifier_status=accepted`
+- `final_verifier_mode=strict_patch_replay`
+- `exit_code=0`
+- `timed_out=false`
+- `actual_provider_call_count=1`
+
+## 后续导出和验收证据
+
+- Stage 4 accepted export pack：`runs/v5-stage4-export-pack-accepted-20260506T121016Z/v5_export_result_pack_manifest.json`。
+- Stage 5 accepted demo artifacts：`runs/v5-stage5-demo-artifacts-accepted-followup-20260506T122627Z/v5_resume_artifact_index.json`。
+- Stage 6 accepted final acceptance：`runs/v5-final-acceptance-accepted-20260506T130655Z/v5_acceptance_report.json`。
+
+Stage 4 export pack 现在记录：
+
+- `real_provider_trainable_records=2`
+- `diagnostic_records=1`
+- `blocked_records=1`
+- `mock_or_replay_records=0`
+- `synthetic_safe_stress_records=0`
+
 ## 已知限制
 
-- 本日志提交时尚未执行 DeepSeek V4 Flash / DeepSeek V4 Pro 的正式 accepted run。
 - resume-ready acceptance 仍需要额外的 scaffold comparison、budget comparison 和真实可比较 preference pair。
+- OpenAI / DeepSeek provider-axis proof 是补充证据，不能单独覆盖 scaffold、budget 和 preference pair 的缺口。
 
 ## 审查结论
 

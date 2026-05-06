@@ -913,7 +913,7 @@ def _resume_failures(claim_gate: dict[str, Any]) -> list[str]:
     elif provider_status == "provider_axis_satisfied_two_task_deepseek_openai_pairs":
         failures.append(
             "OpenAI / DeepSeek provider-axis 补充证据存在，但它没有计入整体 resume_ready_acceptance；"
-            "scaffold comparison、budget comparison、preference pair 和 trainable export 仍然阻断。"
+            "scaffold comparison、budget comparison 和 preference pair 仍然阻断。"
         )
     elif provider_status == "blocked_missing_two_task_deepseek_openai_provider_pairs":
         failures.append("缺少 2 个任务 x DeepSeek / OpenAI 的 provider-axis proof。")
@@ -925,7 +925,11 @@ def _resume_failures(claim_gate: dict[str, Any]) -> list[str]:
         pass
     else:
         failures.append("没有真实可比较 preference pair。")
-    for claim in ("multi-provider agent runs", "preference export completed", "interview-grade evaluation pack"):
+    for claim in (
+        "resume-ready multi-provider comparison",
+        "preference export completed",
+        "interview-grade evaluation pack",
+    ):
         if claim in claim_gate.get("blocked_claims", []):
             failures.append(f"claim gate 阻断强表述：{claim}")
     return failures

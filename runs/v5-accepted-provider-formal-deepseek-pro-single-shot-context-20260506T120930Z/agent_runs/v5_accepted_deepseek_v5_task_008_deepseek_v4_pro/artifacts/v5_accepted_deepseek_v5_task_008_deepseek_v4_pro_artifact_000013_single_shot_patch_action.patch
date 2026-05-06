@@ -1,0 +1,13 @@
+diff --git a/unstable/parser.go b/unstable/parser.go
+index 1111111..2222222 100644
+--- a/unstable/parser.go
++++ b/unstable/parser.go
+@@ -123,7 +123,7 @@ func (p *Parser) parseKeyval(b []byte) (reference, []byte, error) {
+ 	b = p.parseWhitespace(b)
+ 
+ 	if len(b) == 0 {
+-		return invalidReference, nil, NewParserError(b, "expected = after a key, but the document ends there")
++		return invalidReference, nil, NewParserError(startB[:len(startB)-len(b)], "expected = after a key, but the document ends there")
+ 	}
+ 
+ 	b, err = expect('=', b)

@@ -1,0 +1,19 @@
+$ git diff cb4e7bce35fb35c98ae230f8fde7c1e440f7b738
+
+[stdout]
+diff --git a/unstable/parser.go b/unstable/parser.go
+index e2c973b..d97dc34 100644
+--- a/unstable/parser.go
++++ b/unstable/parser.go
+@@ -345,7 +345,7 @@ func (p *Parser) parseKeyval(b []byte) (reference, []byte, error) {
+ 	b = p.parseWhitespace(b)
+ 
+ 	if len(b) == 0 {
+-		return invalidReference, nil, NewParserError(b, "expected = after a key, but the document ends there")
++		return invalidReference, nil, NewParserError(startB[:len(startB)-len(b)], "expected = after a key, but the document ends there")
+ 	}
+ 
+ 	b, err = expect('=', b)
+
+
+[stderr]

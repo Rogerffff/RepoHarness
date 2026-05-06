@@ -38,6 +38,9 @@ def test_v5_demo_artifacts_and_interview_pack_are_share_safe(tmp_path: Path) -> 
     walkthrough = (tmp_path / "stage5" / "v5_canonical_demo_walkthrough.md").read_text(encoding="utf-8")
     assert "生成导出分区结构和审计证据" in walkthrough
     assert "生成 sanitized SFT / rollout 格式样本" not in walkthrough
+    demo_card = (tmp_path / "stage5" / "v5_interview_demo_card.md").read_text(encoding="utf-8")
+    assert "真实 provider run evidence" in demo_card
+    assert "真实 provider accepted run evidence" not in demo_card
     repro = _read_json(tmp_path / "stage5" / "v5_repro_command_index.json")
     assert export_pack.as_posix() in repro["commands"][1]["command"]
 
@@ -65,7 +68,7 @@ def test_v5_demo_artifacts_and_interview_pack_are_share_safe(tmp_path: Path) -> 
 
 def test_v5_demo_artifacts_can_bind_provider_axis_supplemental_proof(tmp_path: Path) -> None:
     task_set = _write_task_set(tmp_path)
-    executed_manifest = _write_executed_manifest(tmp_path)
+    executed_manifest = _write_executed_manifest(tmp_path, accepted_first=True)
     export_pack = _write_export_pack_manifest(tmp_path)
     claim_gate = _write_stage4_claim_gate(tmp_path)
     provider_report = _write_provider_comparison_report(tmp_path)
@@ -87,7 +90,10 @@ def test_v5_demo_artifacts_can_bind_provider_axis_supplemental_proof(tmp_path: P
     stage5_claim_gate = _read_json(tmp_path / "stage5" / "v5_resume_claim_gate_report.json")
     assert stage5_claim_gate["provider_claim_status"] == "provider_axis_satisfied_two_task_deepseek_openai_pairs"
     assert "provider-axis supplemental comparison proof for two tasks across DeepSeek and OpenAI" in stage5_claim_gate["allowed_claims"]
-    assert "multi-provider agent runs" in stage5_claim_gate["blocked_claims"]
+    assert "multi-provider agent runs" not in stage5_claim_gate["blocked_claims"]
+    assert "controlled multi-provider comparison" not in stage5_claim_gate["blocked_claims"]
+    assert "resume-ready multi-provider comparison" in stage5_claim_gate["blocked_claims"]
+    assert "trainable export completed" not in stage5_claim_gate["blocked_claims"]
 
     docs12 = tmp_path / "docs" / "12-resume-narrative-and-demo-artifacts.md"
     docs12.parent.mkdir(parents=True)
@@ -102,6 +108,84 @@ def test_v5_demo_artifacts_can_bind_provider_axis_supplemental_proof(tmp_path: P
     qa = (tmp_path / "stage5" / "v5_interview_qa_evidence.md").read_text(encoding="utf-8")
     assert "OpenAI / DeepSeek 两任务 provider-axis 补充证据" in qa
     assert "当前只有一个真实 provider family" not in qa
+
+    demo_card = (tmp_path / "stage5" / "v5_interview_demo_card.md").read_text(encoding="utf-8")
+    assert "provider-axis 补充证据" in demo_card
+
+
+def test_v5_demo_artifacts_without_provider_axis_does_not_claim_provider_axis(tmp_path: Path) -> None:
+    task_set = _write_task_set(tmp_path)
+    executed_manifest = _write_executed_manifest(tmp_path)
+    export_pack = _write_export_pack_manifest(tmp_path)
+    claim_gate = _write_stage4_claim_gate(tmp_path)
+
+    build_demo_artifacts(
+        task_set_manifest=task_set,
+        executed_run_matrix_manifest=executed_manifest,
+        export_pack_manifest=export_pack,
+        stage4_claim_gate_report=claim_gate,
+        output_dir=tmp_path / "stage5",
+    )
+
+    demo_card = (tmp_path / "stage5" / "v5_interview_demo_card.md").read_text(encoding="utf-8")
+    assert "provider-axis 补充证据" not in demo_card
+
+
+def test_v5_demo_walkthrough_does_not_claim_trainable_export_without_trainable_records(tmp_path: Path) -> None:
+    task_set = _write_task_set(tmp_path)
+    executed_manifest = _write_executed_manifest(tmp_path, accepted_first=True)
+    export_pack = _write_export_pack_manifest(tmp_path, real_provider_trainable_records=0)
+    claim_gate = _write_stage4_claim_gate(tmp_path)
+
+    build_demo_artifacts(
+        task_set_manifest=task_set,
+        executed_run_matrix_manifest=executed_manifest,
+        export_pack_manifest=export_pack,
+        stage4_claim_gate_report=claim_gate,
+        output_dir=tmp_path / "stage5",
+    )
+
+    walkthrough = (tmp_path / "stage5" / "v5_canonical_demo_walkthrough.md").read_text(encoding="utf-8")
+    assert "真实 trainable record 和可复核证据链" not in walkthrough
+    assert "不能声称 trainable export completed" in walkthrough
+
+
+def test_v5_demo_walkthrough_claims_trainable_export_for_accepted_trainable_run(tmp_path: Path) -> None:
+    task_set = _write_task_set(tmp_path)
+    executed_manifest = _write_executed_manifest(tmp_path, accepted_first=True)
+    export_pack = _write_export_pack_manifest(tmp_path, real_provider_trainable_records=2)
+    claim_gate = _write_stage4_claim_gate(tmp_path)
+
+    build_demo_artifacts(
+        task_set_manifest=task_set,
+        executed_run_matrix_manifest=executed_manifest,
+        export_pack_manifest=export_pack,
+        stage4_claim_gate_report=claim_gate,
+        output_dir=tmp_path / "stage5",
+    )
+
+    walkthrough = (tmp_path / "stage5" / "v5_canonical_demo_walkthrough.md").read_text(encoding="utf-8")
+    assert "真实 trainable record 和可复核证据链" in walkthrough
+    assert "accepted run 进入 SFT / reinforcement learning rollout trainable 分区" in walkthrough
+
+
+def test_v5_demo_card_claims_accepted_run_only_when_canonical_run_is_accepted(tmp_path: Path) -> None:
+    task_set = _write_task_set(tmp_path)
+    executed_manifest = _write_executed_manifest(tmp_path, accepted_first=True)
+    export_pack = _write_export_pack_manifest(tmp_path)
+    claim_gate = _write_stage4_claim_gate(tmp_path)
+
+    build_demo_artifacts(
+        task_set_manifest=task_set,
+        executed_run_matrix_manifest=executed_manifest,
+        export_pack_manifest=export_pack,
+        stage4_claim_gate_report=claim_gate,
+        output_dir=tmp_path / "stage5",
+    )
+
+    demo_card = (tmp_path / "stage5" / "v5_interview_demo_card.md").read_text(encoding="utf-8")
+    assert "真实 provider accepted run evidence" in demo_card
+    assert "trainable 分区导出" in demo_card
 
 
 def _write_task_set(tmp_path: Path) -> Path:
@@ -145,7 +229,7 @@ def _write_task_set(tmp_path: Path) -> Path:
     return task_set
 
 
-def _write_executed_manifest(tmp_path: Path) -> Path:
+def _write_executed_manifest(tmp_path: Path, *, accepted_first: bool = False) -> Path:
     results_path = tmp_path / "matrix" / "v5_matrix_cell_results.jsonl"
     results = []
     for index in range(3):
@@ -153,6 +237,10 @@ def _write_executed_manifest(tmp_path: Path) -> Path:
         run_dir = tmp_path / "runs" / run_id
         run_dir.mkdir(parents=True)
         transcript_path = run_dir / "transcript.jsonl"
+        final_result_path = run_dir / "final_verifier_result.json"
+        final_boundary_path = run_dir / "final_verifier_boundary.json"
+        final_patch_path = run_dir / "final.patch"
+        accepted = accepted_first and index == 0
         _write_jsonl(
             transcript_path,
             [
@@ -160,6 +248,27 @@ def _write_executed_manifest(tmp_path: Path) -> Path:
                 {"message_id": "initial_1", "role": "user", "run_id": run_id, "task_id": "v5_task_003", "turn": 0, "content_preview": "sanitized task"},
                 {"message_id": "assistant_1", "role": "assistant", "run_id": run_id, "task_id": "v5_task_003", "turn": 1, "content_preview": "plan"},
             ],
+        )
+        final_patch_path.write_text(
+            "diff --git a/a.py b/a.py\n--- a/a.py\n+++ b/a.py\n@@ -1 +1 @@\n-a\n+b\n",
+            encoding="utf-8",
+        )
+        _write_json(final_result_path, {"accepted": accepted, "exit_code": 0 if accepted else 1, "timed_out": False})
+        patch_apply_result = {"exit_code": 0 if accepted else 1, "timeout": False}
+        _write_json(
+            final_boundary_path,
+            {
+                "accepted": accepted,
+                "final_verifier_ran": accepted,
+                "final_verifier_status": "accepted" if accepted else "failed",
+                "provider_final_patch_nonempty": accepted,
+                "provider_api_called": True,
+                "baseline_hidden_patch_apply_ok": accepted,
+                "final_hidden_patch_apply_ok": accepted,
+                "baseline_hidden_patch_apply_result": patch_apply_result,
+                "final_hidden_patch_apply_result": patch_apply_result,
+                "final_verifier_result_ref": _ref(final_result_path, "final_verifier_result"),
+            },
         )
         results.append(
             {
@@ -171,13 +280,18 @@ def _write_executed_manifest(tmp_path: Path) -> Path:
                 "scaffold_id": "simple_react",
                 "budget_policy_id": "stage3b_constrained_one_turn_no_tool_calls",
                 "actual_provider_call_count": 1,
-                "accepted": False,
+                "accepted": accepted,
+                "final_verifier_ran": accepted,
                 "final_verifier_status": "accepted" if index == 0 else "not_executed_stage3b_minimal_provider_loop",
+                "final_verifier_mode": "strict_patch_replay" if accepted else "boundary_recorded_not_executed",
                 "source_tree_hash": "a" * 64,
                 "started_at": "2026-05-05T16:00:00Z",
                 "finished_at": "2026-05-05T16:00:02Z",
                 "token_usage": {"input_tokens": 10, "output_tokens": 2, "cached_tokens": 0},
                 "transcript_ref": _ref(transcript_path, "trajectory_transcript"),
+                "final_verifier_boundary_ref": _ref(final_boundary_path, "final_verifier_boundary"),
+                "final_verifier_result_ref": _ref(final_result_path, "final_verifier_result"),
+                "final_patch_ref": _ref(final_patch_path, "final_patch"),
             }
         )
     _write_jsonl(results_path, results)
@@ -195,14 +309,14 @@ def _write_executed_manifest(tmp_path: Path) -> Path:
     return manifest
 
 
-def _write_export_pack_manifest(tmp_path: Path) -> Path:
+def _write_export_pack_manifest(tmp_path: Path, *, real_provider_trainable_records: int = 2) -> Path:
     path = tmp_path / "export" / "v5_export_result_pack_manifest.json"
     _write_json(
         path,
         {
             "schema_version": "repo_harness_v5_export_result_pack_manifest_v0",
             "partition_counts": {
-                "real_provider_trainable_records": 2,
+                "real_provider_trainable_records": real_provider_trainable_records,
                 "mock_or_replay_records": 0,
                 "diagnostic_records": 1,
                 "blocked_records": 1,

@@ -93,6 +93,26 @@ git diff --check -- src/repo_harness/v5_run_matrix.py src/repo_harness/v5_eviden
 - 全部 V5 单元测试：66 passed。
 - V5 相关路径 diff check：通过。
 
+## 后续 accepted-run 复核
+
+DeepSeek V4 Flash 链路烟测和 DeepSeek V4 Pro 多轮正式尝试已经完成。失败尝试都只保留为 run evidence，没有进入 trainable export。最终 accepted run 使用 `single_shot_patch` scaffold 和公开源码上下文，在 `v5_task_008` 上生成了可应用补丁，并通过 strict final verifier。
+
+本轮 additional review 重点复核以下问题：
+
+- demo card 只有在 canonical run 满足 strict accepted predicate 时，才写“真实 provider accepted run evidence”；没有 accepted run 时只能写“真实 provider run evidence”。
+- walkthrough 只有在 canonical run accepted 且 Stage 4 export pack 记录 `real_provider_trainable_records > 0` 时，才写 trainable export completed 相关表述。
+- Stage 5 claim gate 在 provider-axis proof 存在时，不再保留旧的 `blocked_single_provider_family_deepseek_only` 口径；但仍阻断 resume-ready multi-provider comparison。
+- Stage 5 claim gate 在 accepted trainable record 存在时，不再保留旧的 `trainable export completed` blocked claim。
+- `accepted_rate_by_task_family` 复用与 Stage 4 相同的 strict accepted predicate，不再只看浅层 `final_verifier_status`。
+
+补充测试结果：
+
+```bash
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_v5_demo_artifacts.py tests/unit/test_v5_export_pack.py tests/unit/test_v5_acceptance.py
+```
+
+结果为 `16 passed`。完整测试在 Stage 6 pretest 中重新运行，结果为 `784 passed in 545.89s (0:09:05)`。
+
 ## 进入下一步结论
 
-当前没有未修复的 P1 或 P2。可以进入 DeepSeek V4 Flash 链路烟测和 DeepSeek V4 Pro 正式 accepted 尝试。若 provider 或 verifier 未通过，应生成 blocked evidence，不得生成 trainable SFT 或 reinforcement learning rollout records。
+当前没有未修复的 P1 或 P2。V5 已经具备一条通过 final verifier 的真实 provider accepted run，并且 Stage 4 只把该 accepted run 转换为 trainable SFT 和 reinforcement learning rollout records。可以进入 accepted-run 版本的 Stage 6 final acceptance bundle 构建。
