@@ -1873,9 +1873,21 @@ def _inspect_v5_inputs_deep(payload: dict[str, Any], failures: list[str]) -> Non
     missing = sorted(required.difference(kinds))
     if missing:
         failures.append("V5 acceptance inputs 缺少必需 evidence refs：" + ", ".join(missing))
+    hash_cache: dict[tuple[str, int, int], str] = {}
+    payload_cache: dict[str, list[Any]] = {}
+    key_cache: dict[str, set[str]] = {}
+    in_progress: set[str] = set()
     for index, ref in enumerate(refs, start=1):
         if isinstance(ref, dict):
-            _inspect_v5_ref_tree(ref, failures, label=f"v5_evidence_refs[{index}]")
+            _inspect_v5_ref_tree(
+                ref,
+                failures,
+                label=f"v5_evidence_refs[{index}]",
+                hash_cache=hash_cache,
+                payload_cache=payload_cache,
+                key_cache=key_cache,
+                in_progress=in_progress,
+            )
             path_value = str(ref.get("path") or "")
             if "acceptance_report_reference_integrity_report" in path_value or "acceptance_bundle_manifest" in path_value:
                 failures.append("V5 acceptance inputs 不能绑定 post-report 或 bundle final outputs。")
@@ -1910,10 +1922,24 @@ def _inspect_v5_acceptance_reference_integrity(payload: dict[str, Any], failures
 
 def _acceptance_input_ref_keys(inputs: dict[str, Any], failures: list[str] | None = None) -> set[str]:
     keys = {_v5_ref_key(ref) for ref in _all_acceptance_input_refs(inputs) if _v5_ref_key(ref)}
+    hash_cache: dict[tuple[str, int, int], str] = {}
+    payload_cache: dict[str, list[Any]] = {}
+    key_cache: dict[str, set[str]] = {}
+    in_progress: set[str] = set()
     for index, ref in enumerate(inputs.get("v5_evidence_refs") or [], start=1):
         if not isinstance(ref, dict):
             continue
-        keys.update(_nested_v5_ref_keys_from_ref(ref, failures=failures, label=f"v5_evidence_refs[{index}]"))
+        keys.update(
+            _nested_v5_ref_keys_from_ref(
+                ref,
+                failures=failures,
+                label=f"v5_evidence_refs[{index}]",
+                hash_cache=hash_cache,
+                payload_cache=payload_cache,
+                key_cache=key_cache,
+                in_progress=in_progress,
+            )
+        )
     return keys
 
 
@@ -2537,7 +2563,13 @@ def _inspect_v5_command_log(path: Path, failures: list[str]) -> None:
         failures.append("V5 command log 缺少关键命令：" + ", ".join(missing))
 
 
-def _inspect_v5_ref(ref: Any, failures: list[str], *, label: str) -> None:
+def _inspect_v5_ref(
+    ref: Any,
+    failures: list[str],
+    *,
+    label: str,
+    hash_cache: dict[tuple[str, int, int], str] | None = None,
+) -> None:
     if not isinstance(ref, dict):
         failures.append(f"{label} 不是 object。")
         return
@@ -2564,7 +2596,7 @@ def _inspect_v5_ref(ref: Any, failures: list[str], *, label: str) -> None:
     if not path.exists():
         failures.append(f"{label} 路径不存在：{ref.get('path')}")
         return
-    if _hash_path(path) != ref.get("sha256"):
+    if _hash_path_for_inspect(path, hash_cache=hash_cache) != ref.get("sha256"):
         failures.append(f"{label} sha256 不匹配：{ref.get('path')}")
     if not path.is_dir() and ref.get("size_bytes") != path.stat().st_size:
         failures.append(f"{label} size_bytes 不匹配：{ref.get('path')}")
@@ -2581,11 +2613,32 @@ def _inspect_v5_ref(ref: Any, failures: list[str], *, label: str) -> None:
         failures.append(f"{label} share_safe=true 时不能引用 evaluator-only artifact。")
 
 
-def _inspect_v5_ref_tree(ref: Any, failures: list[str], *, label: str) -> None:
-    _inspect_v5_ref(ref, failures, label=label)
+def _inspect_v5_ref_tree(
+    ref: Any,
+    failures: list[str],
+    *,
+    label: str,
+    hash_cache: dict[tuple[str, int, int], str] | None = None,
+    payload_cache: dict[str, list[Any]] | None = None,
+    key_cache: dict[str, set[str]] | None = None,
+    in_progress: set[str] | None = None,
+) -> None:
+    hash_cache = hash_cache if hash_cache is not None else {}
+    payload_cache = payload_cache if payload_cache is not None else {}
+    key_cache = key_cache if key_cache is not None else {}
+    in_progress = in_progress if in_progress is not None else set()
+    _inspect_v5_ref(ref, failures, label=label, hash_cache=hash_cache)
     if not isinstance(ref, dict):
         return
-    _nested_v5_ref_keys_from_ref(ref, failures=failures, label=label)
+    _nested_v5_ref_keys_from_ref(
+        ref,
+        failures=failures,
+        label=label,
+        hash_cache=hash_cache,
+        payload_cache=payload_cache,
+        key_cache=key_cache,
+        in_progress=in_progress,
+    )
 
 
 def _nested_v5_ref_keys_from_ref(
@@ -2593,19 +2646,25 @@ def _nested_v5_ref_keys_from_ref(
     *,
     failures: list[str] | None = None,
     label: str,
-    visited: set[str] | None = None,
+    hash_cache: dict[tuple[str, int, int], str] | None = None,
+    payload_cache: dict[str, list[Any]] | None = None,
+    key_cache: dict[str, set[str]] | None = None,
+    in_progress: set[str] | None = None,
 ) -> set[str]:
     path = _path_from_ref(ref)
     if path is None or not path.exists() or path.is_dir():
         return set()
     if path.suffix not in {".json", ".jsonl"}:
         return set()
-    visited = visited or set()
+    key_cache = key_cache if key_cache is not None else {}
+    in_progress = in_progress if in_progress is not None else set()
     visit_key = f"{path.resolve().as_posix()}|{ref.get('sha256')}"
-    if visit_key in visited:
+    if visit_key in key_cache:
+        return set(key_cache[visit_key])
+    if visit_key in in_progress:
         return set()
-    visited.add(visit_key)
-    payloads = _read_nested_ref_payloads(path, failures=failures, label=label)
+    in_progress.add(visit_key)
+    payloads = _read_nested_ref_payloads(path, failures=failures, label=label, payload_cache=payload_cache)
     nested_keys: set[str] = set()
     for payload_index, payload in enumerate(payloads, start=1):
         payload_label = f"{label}.{path.name}"
@@ -2616,12 +2675,33 @@ def _nested_v5_ref_keys_from_ref(
             if nested_key:
                 nested_keys.add(nested_key)
             if failures is not None:
-                _inspect_v5_ref(nested_ref, failures, label=nested_label)
-            nested_keys.update(_nested_v5_ref_keys_from_ref(nested_ref, failures=failures, label=nested_label, visited=visited))
+                _inspect_v5_ref(nested_ref, failures, label=nested_label, hash_cache=hash_cache)
+            nested_keys.update(
+                _nested_v5_ref_keys_from_ref(
+                    nested_ref,
+                    failures=failures,
+                    label=nested_label,
+                    hash_cache=hash_cache,
+                    payload_cache=payload_cache,
+                    key_cache=key_cache,
+                    in_progress=in_progress,
+                )
+            )
+    in_progress.remove(visit_key)
+    key_cache[visit_key] = set(nested_keys)
     return nested_keys
 
 
-def _read_nested_ref_payloads(path: Path, *, failures: list[str] | None, label: str) -> list[Any]:
+def _read_nested_ref_payloads(
+    path: Path,
+    *,
+    failures: list[str] | None,
+    label: str,
+    payload_cache: dict[str, list[Any]] | None = None,
+) -> list[Any]:
+    cache_key = path.resolve().as_posix()
+    if payload_cache is not None and cache_key in payload_cache:
+        return payload_cache[cache_key]
     if path.suffix == ".jsonl":
         payloads: list[Any] = []
         try:
@@ -2638,9 +2718,14 @@ def _read_nested_ref_payloads(path: Path, *, failures: list[str] | None, label: 
             except json.JSONDecodeError as exc:
                 if failures is not None:
                     failures.append(f"{label} 第 {line_number} 行不是合法 JSON：{exc}")
+        if payload_cache is not None:
+            payload_cache[cache_key] = payloads
         return payloads
     try:
-        return [json.loads(path.read_text(encoding="utf-8"))]
+        payloads = [json.loads(path.read_text(encoding="utf-8"))]
+        if payload_cache is not None:
+            payload_cache[cache_key] = payloads
+        return payloads
     except json.JSONDecodeError as exc:
         if failures is not None:
             failures.append(f"{label} 不是合法 JSON：{exc}")
@@ -2650,12 +2735,26 @@ def _read_nested_ref_payloads(path: Path, *, failures: list[str] | None, label: 
     return []
 
 
+def _hash_path_for_inspect(path: Path, *, hash_cache: dict[tuple[str, int, int], str] | None = None) -> str:
+    if hash_cache is None:
+        return _hash_path(path)
+    if path.is_dir():
+        stat = path.stat()
+        key = (path.resolve().as_posix(), stat.st_mtime_ns, _size_bytes(path))
+    else:
+        stat = path.stat()
+        key = (path.resolve().as_posix(), stat.st_mtime_ns, stat.st_size)
+    if key not in hash_cache:
+        hash_cache[key] = _hash_path(path)
+    return hash_cache[key]
+
+
 def _iter_nested_v5_refs(value: Any, *, label: str = "payload") -> list[tuple[str, dict[str, Any]]]:
     refs: list[tuple[str, dict[str, Any]]] = []
 
     def walk(current: Any, current_label: str) -> None:
         if isinstance(current, dict):
-            if _looks_like_evidence_ref(current):
+            if current.get("schema_version") == V5_EVIDENCE_REF_VERSION and _looks_like_evidence_ref(current):
                 refs.append((current_label, current))
                 return
             for key, nested in current.items():

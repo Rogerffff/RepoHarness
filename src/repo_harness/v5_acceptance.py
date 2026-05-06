@@ -763,9 +763,23 @@ def _refs_by_kind(inputs: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _acceptance_input_ref_keys(inputs: dict[str, Any], failures: list[str] | None = None) -> set[str]:
     keys = {_ref_key(ref) for ref in _all_input_refs(inputs) if _ref_key(ref)}
+    hash_cache: dict[tuple[str, int, int], str] = {}
+    payload_cache: dict[str, list[Any]] = {}
+    key_cache: dict[str, set[str]] = {}
+    in_progress: set[str] = set()
     for index, ref in enumerate(inputs.get("v5_evidence_refs") or [], start=1):
         if isinstance(ref, dict):
-            keys.update(_nested_v5_ref_keys_from_ref(ref, failures=failures, label=f"v5_evidence_refs[{index}]"))
+            keys.update(
+                _nested_v5_ref_keys_from_ref(
+                    ref,
+                    failures=failures,
+                    label=f"v5_evidence_refs[{index}]",
+                    hash_cache=hash_cache,
+                    payload_cache=payload_cache,
+                    key_cache=key_cache,
+                    in_progress=in_progress,
+                )
+            )
     return keys
 
 
