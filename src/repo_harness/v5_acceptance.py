@@ -20,6 +20,8 @@ from repo_harness.v5_evidence import (
     _builder_command_log_entry,
     _evidence_ref,
     _inspect_v5_acceptance_reference_integrity,
+    _iter_nested_v5_refs,
+    _nested_v5_ref_keys_from_ref,
     _utc_timestamp,
     _write_json,
     _write_jsonl,
@@ -578,7 +580,13 @@ def write_acceptance_inspect_outputs(
     report_payload = _read_json(report_path)
     if reference_integrity_output:
         input_path = _path_from_ref(report_payload.get("acceptance_inputs_ref"))
-        allowed = _acceptance_input_ref_keys(_read_json(input_path)) if input_path.exists() else set()
+        integrity_failures: list[str] = []
+        if input_path.exists():
+            allowed = _acceptance_input_ref_keys(_read_json(input_path), failures=integrity_failures)
+        else:
+            allowed = set()
+            integrity_failures.append("acceptance_inputs_ref 路径不存在。")
+        _inspect_v5_acceptance_reference_integrity(report_payload, integrity_failures)
         report_refs = _report_ref_keys(report_payload)
         unbound = sorted(ref for ref in report_refs if ref not in allowed and not ref.startswith("v5_acceptance_inputs|"))
         _write_json(
@@ -591,14 +599,16 @@ def write_acceptance_inspect_outputs(
                 "checked_report_ref_count": len(report_refs),
                 "unbound_critical_evidence_finding_count": len(unbound),
                 "unbound_critical_evidence_refs": unbound,
+                "recursive_evidence_ref_failure_count": len(integrity_failures),
+                "recursive_evidence_ref_failures": integrity_failures,
                 "post_report_output_used_as_report_input_count": 0,
                 "bundle_output_used_as_report_input_count": 0,
-                "status": "passed" if not unbound else "failed",
+                "status": "passed" if not unbound and not integrity_failures else "failed",
             },
         )
     if reference_integrity_input:
         integrity = _read_json(Path(reference_integrity_input))
-        if integrity.get("unbound_critical_evidence_finding_count", 0) != 0:
+        if not _reference_integrity_input_passed(integrity):
             raise ConfigError("acceptance report reference integrity input 不是 passed。")
     if command_log_entry_output:
         _write_json(
@@ -620,6 +630,23 @@ def write_acceptance_inspect_outputs(
                 "tool_or_cli_version": f"repo-harness {__version__}",
             },
         )
+
+
+def _reference_integrity_input_passed(integrity: dict[str, Any]) -> bool:
+    if integrity.get("status") != "passed":
+        return False
+    explicit_zero_fields = {
+        "unbound_critical_evidence_finding_count",
+        "post_report_output_used_as_report_input_count",
+        "bundle_output_used_as_report_input_count",
+    }
+    for field in explicit_zero_fields:
+        if integrity.get(field, 0) != 0:
+            return False
+    for field, value in integrity.items():
+        if field.endswith(("_failure_count", "_finding_count", "_violation_count")) and value != 0:
+            return False
+    return True
 
 
 def _core_failures(
@@ -734,8 +761,12 @@ def _refs_by_kind(inputs: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return refs
 
 
-def _acceptance_input_ref_keys(inputs: dict[str, Any]) -> set[str]:
-    return {_ref_key(ref) for ref in _all_input_refs(inputs) if _ref_key(ref)}
+def _acceptance_input_ref_keys(inputs: dict[str, Any], failures: list[str] | None = None) -> set[str]:
+    keys = {_ref_key(ref) for ref in _all_input_refs(inputs) if _ref_key(ref)}
+    for index, ref in enumerate(inputs.get("v5_evidence_refs") or [], start=1):
+        if isinstance(ref, dict):
+            keys.update(_nested_v5_ref_keys_from_ref(ref, failures=failures, label=f"v5_evidence_refs[{index}]"))
+    return keys
 
 
 def _all_input_refs(inputs: dict[str, Any]) -> list[dict[str, Any]]:
@@ -748,13 +779,7 @@ def _all_input_refs(inputs: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _report_ref_keys(report: dict[str, Any]) -> set[str]:
-    refs: list[dict[str, Any]] = []
-    for key, value in report.items():
-        if key.endswith("_ref") and isinstance(value, dict):
-            refs.append(value)
-        if key.endswith("_refs") and isinstance(value, list):
-            refs.extend(ref for ref in value if isinstance(ref, dict))
-    return {_ref_key(ref) for ref in refs if _ref_key(ref)}
+    return {_ref_key(ref) for _, ref in _iter_nested_v5_refs(report) if _ref_key(ref)}
 
 
 def _ref_key(ref: dict[str, Any]) -> str:

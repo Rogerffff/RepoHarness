@@ -1875,7 +1875,7 @@ def _inspect_v5_inputs_deep(payload: dict[str, Any], failures: list[str]) -> Non
         failures.append("V5 acceptance inputs 缺少必需 evidence refs：" + ", ".join(missing))
     for index, ref in enumerate(refs, start=1):
         if isinstance(ref, dict):
-            _inspect_v5_ref(ref, failures, label=f"v5_evidence_refs[{index}]")
+            _inspect_v5_ref_tree(ref, failures, label=f"v5_evidence_refs[{index}]")
             path_value = str(ref.get("path") or "")
             if "acceptance_report_reference_integrity_report" in path_value or "acceptance_bundle_manifest" in path_value:
                 failures.append("V5 acceptance inputs 不能绑定 post-report 或 bundle final outputs。")
@@ -1898,7 +1898,7 @@ def _inspect_v5_acceptance_reference_integrity(payload: dict[str, Any], failures
         failures.extend(f"acceptance_inputs_ref.{item}" for item in input_failures)
         return
     _inspect_v5_inputs_deep(inputs_payload, failures)
-    allowed = _acceptance_input_ref_keys(inputs_payload)
+    allowed = _acceptance_input_ref_keys(inputs_payload, failures=failures)
     report_refs = _report_ref_keys(payload)
     unbound = sorted(ref for ref in report_refs if ref not in allowed and not ref.startswith("v5_acceptance_inputs|"))
     if unbound:
@@ -1908,8 +1908,13 @@ def _inspect_v5_acceptance_reference_integrity(payload: dict[str, Any], failures
         )
 
 
-def _acceptance_input_ref_keys(inputs: dict[str, Any]) -> set[str]:
-    return {_v5_ref_key(ref) for ref in _all_acceptance_input_refs(inputs) if _v5_ref_key(ref)}
+def _acceptance_input_ref_keys(inputs: dict[str, Any], failures: list[str] | None = None) -> set[str]:
+    keys = {_v5_ref_key(ref) for ref in _all_acceptance_input_refs(inputs) if _v5_ref_key(ref)}
+    for index, ref in enumerate(inputs.get("v5_evidence_refs") or [], start=1):
+        if not isinstance(ref, dict):
+            continue
+        keys.update(_nested_v5_ref_keys_from_ref(ref, failures=failures, label=f"v5_evidence_refs[{index}]"))
+    return keys
 
 
 def _all_acceptance_input_refs(inputs: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1922,13 +1927,7 @@ def _all_acceptance_input_refs(inputs: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _report_ref_keys(report: dict[str, Any]) -> set[str]:
-    refs: list[dict[str, Any]] = []
-    for key, value in report.items():
-        if key.endswith("_ref") and isinstance(value, dict):
-            refs.append(value)
-        if key.endswith("_refs") and isinstance(value, list):
-            refs.extend(ref for ref in value if isinstance(ref, dict))
-    return {_v5_ref_key(ref) for ref in refs if _v5_ref_key(ref)}
+    return {_v5_ref_key(ref) for _, ref in _iter_nested_v5_refs(report) if _v5_ref_key(ref)}
 
 
 def _v5_ref_key(ref: dict[str, Any]) -> str:
@@ -2580,6 +2579,93 @@ def _inspect_v5_ref(ref: Any, failures: list[str], *, label: str) -> None:
         failures.append(f"{label} visibility 枚举值无效。")
     if ref.get("share_safe") is True and ref.get("visibility") in {"evaluator_only"}:
         failures.append(f"{label} share_safe=true 时不能引用 evaluator-only artifact。")
+
+
+def _inspect_v5_ref_tree(ref: Any, failures: list[str], *, label: str) -> None:
+    _inspect_v5_ref(ref, failures, label=label)
+    if not isinstance(ref, dict):
+        return
+    _nested_v5_ref_keys_from_ref(ref, failures=failures, label=label)
+
+
+def _nested_v5_ref_keys_from_ref(
+    ref: dict[str, Any],
+    *,
+    failures: list[str] | None = None,
+    label: str,
+    visited: set[str] | None = None,
+) -> set[str]:
+    path = _path_from_ref(ref)
+    if path is None or not path.exists() or path.is_dir():
+        return set()
+    if path.suffix not in {".json", ".jsonl"}:
+        return set()
+    visited = visited or set()
+    visit_key = f"{path.resolve().as_posix()}|{ref.get('sha256')}"
+    if visit_key in visited:
+        return set()
+    visited.add(visit_key)
+    payloads = _read_nested_ref_payloads(path, failures=failures, label=label)
+    nested_keys: set[str] = set()
+    for payload_index, payload in enumerate(payloads, start=1):
+        payload_label = f"{label}.{path.name}"
+        if len(payloads) > 1:
+            payload_label = f"{payload_label}[{payload_index}]"
+        for nested_label, nested_ref in _iter_nested_v5_refs(payload, label=payload_label):
+            nested_key = _v5_ref_key(nested_ref)
+            if nested_key:
+                nested_keys.add(nested_key)
+            if failures is not None:
+                _inspect_v5_ref(nested_ref, failures, label=nested_label)
+            nested_keys.update(_nested_v5_ref_keys_from_ref(nested_ref, failures=failures, label=nested_label, visited=visited))
+    return nested_keys
+
+
+def _read_nested_ref_payloads(path: Path, *, failures: list[str] | None, label: str) -> list[Any]:
+    if path.suffix == ".jsonl":
+        payloads: list[Any] = []
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            if failures is not None:
+                failures.append(f"{label} 无法读取 JSONL：{exc}")
+            return []
+        for line_number, line in enumerate(lines, start=1):
+            if not line.strip():
+                continue
+            try:
+                payloads.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                if failures is not None:
+                    failures.append(f"{label} 第 {line_number} 行不是合法 JSON：{exc}")
+        return payloads
+    try:
+        return [json.loads(path.read_text(encoding="utf-8"))]
+    except json.JSONDecodeError as exc:
+        if failures is not None:
+            failures.append(f"{label} 不是合法 JSON：{exc}")
+    except OSError as exc:
+        if failures is not None:
+            failures.append(f"{label} 无法读取 JSON：{exc}")
+    return []
+
+
+def _iter_nested_v5_refs(value: Any, *, label: str = "payload") -> list[tuple[str, dict[str, Any]]]:
+    refs: list[tuple[str, dict[str, Any]]] = []
+
+    def walk(current: Any, current_label: str) -> None:
+        if isinstance(current, dict):
+            if _looks_like_evidence_ref(current):
+                refs.append((current_label, current))
+                return
+            for key, nested in current.items():
+                walk(nested, f"{current_label}.{key}")
+        elif isinstance(current, list):
+            for index, nested in enumerate(current, start=1):
+                walk(nested, f"{current_label}[{index}]")
+
+    walk(value, label)
+    return refs
 
 
 def _input_refs_for_argv(argv: list[str], *, command_cwd: Path) -> list[dict[str, Any]]:

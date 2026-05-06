@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -112,6 +113,39 @@ def test_v5_inputs_rejects_tampered_evidence_ref(tmp_path: Path) -> None:
         inspect_v5_inputs(acceptance_inputs, assert_complete=True)
 
 
+def test_v5_inputs_rejects_tampered_nested_public_demo_artifact_ref(tmp_path: Path) -> None:
+    paths = _write_stage6_inputs(tmp_path)
+    public_artifact = _write_json_file(tmp_path / "public_artifact.json", {"schema_version": "public_artifact", "status": "passed"})
+    public_bundle = _read_json(paths["v5_public_demo_bundle_manifest"])
+    public_bundle["artifact_refs"] = [_v5_ref(public_artifact, "v5_public_artifact")]
+    paths["v5_public_demo_bundle_manifest"].write_text(
+        json.dumps(public_bundle, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    acceptance_inputs = build_acceptance_inputs(
+        output_dir=tmp_path / "acceptance",
+        full_test_summary="765 passed in 706.29s",
+        v5_implementation_logs=[paths["implementation_log"]],
+        v5_review_records=[paths["review_record"]],
+        **{key: value for key, value in paths.items() if key not in {"implementation_log", "review_record"}},
+    )
+
+    public_bundle["artifact_refs"][0]["path"] = (tmp_path / "missing_public_artifact.json").as_posix()
+    public_bundle["artifact_refs"][0]["sha256"] = "0" * 64
+    public_bundle["artifact_refs"][0]["size_bytes"] = 12345
+    paths["v5_public_demo_bundle_manifest"].write_text(
+        json.dumps(public_bundle, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_acceptance_inputs_ref(acceptance_inputs, "v5_public_demo_bundle_manifest", paths["v5_public_demo_bundle_manifest"])
+
+    with pytest.raises(ConfigError):
+        inspect_v5_inputs(acceptance_inputs, assert_complete=True)
+    report = build_acceptance_report(acceptance_inputs=acceptance_inputs, output_dir=tmp_path / "acceptance_report")
+    with pytest.raises(ConfigError):
+        inspect_v5_acceptance(report, assert_core_complete=True)
+
+
 def test_v5_acceptance_core_rejects_failed_reference_integrity(tmp_path: Path) -> None:
     paths = _write_stage6_inputs(tmp_path)
     acceptance_inputs = build_acceptance_inputs(
@@ -128,6 +162,57 @@ def test_v5_acceptance_core_rejects_failed_reference_integrity(tmp_path: Path) -
 
     with pytest.raises(ConfigError):
         inspect_v5_acceptance(report, assert_core_complete=True)
+
+
+def test_v5_acceptance_rejects_reference_integrity_input_with_failed_status(tmp_path: Path) -> None:
+    paths = _write_stage6_inputs(tmp_path)
+    acceptance_inputs = build_acceptance_inputs(
+        output_dir=tmp_path / "acceptance",
+        full_test_summary="765 passed in 706.29s",
+        v5_implementation_logs=[paths["implementation_log"]],
+        v5_review_records=[paths["review_record"]],
+        **{key: value for key, value in paths.items() if key not in {"implementation_log", "review_record"}},
+    )
+    report = build_acceptance_report(acceptance_inputs=acceptance_inputs, output_dir=tmp_path / "acceptance")
+    integrity = _write_json_file(
+        tmp_path / "acceptance" / "v5_acceptance_report_reference_integrity_report.json",
+        {
+            "schema_version": "repo_harness_v5_acceptance_report_reference_integrity_report_v0",
+            "status": "failed",
+            "unbound_critical_evidence_finding_count": 0,
+            "post_report_output_used_as_report_input_count": 0,
+            "bundle_output_used_as_report_input_count": 0,
+        },
+    )
+
+    with pytest.raises(ConfigError):
+        inspect_v5_acceptance(report, assert_core_complete=True, reference_integrity_input=integrity)
+
+
+def test_v5_acceptance_rejects_reference_integrity_input_with_nonzero_failure_count(tmp_path: Path) -> None:
+    paths = _write_stage6_inputs(tmp_path)
+    acceptance_inputs = build_acceptance_inputs(
+        output_dir=tmp_path / "acceptance",
+        full_test_summary="765 passed in 706.29s",
+        v5_implementation_logs=[paths["implementation_log"]],
+        v5_review_records=[paths["review_record"]],
+        **{key: value for key, value in paths.items() if key not in {"implementation_log", "review_record"}},
+    )
+    report = build_acceptance_report(acceptance_inputs=acceptance_inputs, output_dir=tmp_path / "acceptance")
+    integrity = _write_json_file(
+        tmp_path / "acceptance" / "v5_acceptance_report_reference_integrity_report.json",
+        {
+            "schema_version": "repo_harness_v5_acceptance_report_reference_integrity_report_v0",
+            "status": "passed",
+            "unbound_critical_evidence_finding_count": 0,
+            "recursive_evidence_ref_failure_count": 1,
+            "post_report_output_used_as_report_input_count": 0,
+            "bundle_output_used_as_report_input_count": 0,
+        },
+    )
+
+    with pytest.raises(ConfigError):
+        inspect_v5_acceptance(report, assert_core_complete=True, reference_integrity_input=integrity)
 
 
 def test_v5_bundle_rejects_tampered_final_command_log(tmp_path: Path) -> None:
@@ -315,3 +400,32 @@ def _write_json_file(path: Path, payload: dict) -> Path:
 
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _v5_ref(path: Path, kind: str) -> dict:
+    return {
+        "schema_version": "repo_harness_v5_evidence_ref_v0",
+        "path": path.as_posix(),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size_bytes": path.stat().st_size,
+        "kind": kind,
+        "purpose": "test fixture ref",
+        "visibility": "public_safe",
+        "share_safe": True,
+        "producer_command": "test",
+        "producer_stage": "test",
+        "inspect_command": "test",
+    }
+
+
+def _refresh_acceptance_inputs_ref(acceptance_inputs: Path, kind: str, path: Path) -> None:
+    payload = _read_json(acceptance_inputs)
+    for ref in payload["v5_evidence_refs"]:
+        if ref.get("kind") == kind:
+            ref["path"] = path.as_posix()
+            ref["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+            ref["size_bytes"] = path.stat().st_size
+            break
+    else:
+        raise AssertionError(f"missing acceptance inputs ref kind: {kind}")
+    acceptance_inputs.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
