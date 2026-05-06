@@ -173,6 +173,7 @@ from repo_harness.v5_run_matrix import (
 from repo_harness.v5_run_matrix import (
     build_run_matrix_manifest as build_v5_run_matrix_manifest,
 )
+from repo_harness.v5_run_matrix import run_accepted_provider_task as run_v5_accepted_provider_task
 from repo_harness.v5_run_matrix import run_matrix_cells as run_v5_run_matrix_cells
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
@@ -1103,6 +1104,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="允许 DeepSeek 和 OpenAI 使用本地脱敏 secret file 作为 active credential source；运行产物仍不得写入 raw secret value。",
     )
     run_v5_run_matrix_parser.add_argument(
+        "--fail-if-output-exists",
+        action="store_true",
+        default=True,
+        help="默认启用：如果目标输出已存在，则失败，避免覆盖 evidence。",
+    )
+
+    run_v5_accepted_provider_parser = subparsers.add_parser(
+        "run-v5-accepted-provider-task",
+        help="执行一个 V5 真实 provider 修复任务，并用 strict final verifier replay 生成 accepted-run evidence。",
+    )
+    run_v5_accepted_provider_parser.add_argument("--task-set-manifest", required=True)
+    run_v5_accepted_provider_parser.add_argument("--provider-gate-report", required=True)
+    run_v5_accepted_provider_parser.add_argument("--provider-cost-budget-report", required=True)
+    run_v5_accepted_provider_parser.add_argument("--output-dir", required=True)
+    run_v5_accepted_provider_parser.add_argument("--task-id", required=True)
+    run_v5_accepted_provider_parser.add_argument("--provider-id", default="deepseek")
+    run_v5_accepted_provider_parser.add_argument("--model-id", default="deepseek-v4-pro")
+    run_v5_accepted_provider_parser.add_argument("--prior-executed-run-matrix-manifest")
+    run_v5_accepted_provider_parser.add_argument(
+        "--allow-local-secret-file",
+        action="store_true",
+        help="允许 DeepSeek 和 OpenAI 使用本地脱敏 secret file 作为 active credential source；运行产物仍不得写入 raw secret value。",
+    )
+    run_v5_accepted_provider_parser.add_argument("--max-turns", type=int, default=12)
+    run_v5_accepted_provider_parser.add_argument("--max-tool-calls", type=int, default=40)
+    run_v5_accepted_provider_parser.add_argument("--max-output-tokens", type=int, default=4096)
+    run_v5_accepted_provider_parser.add_argument(
         "--fail-if-output-exists",
         action="store_true",
         default=True,
@@ -2288,6 +2316,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"V5 run matrix 执行失败：{exc}\n")
         print(f"V5 executed run matrix manifest：{output_path}")
+        return 0
+    if args.command == "run-v5-accepted-provider-task":
+        try:
+            output_path = run_v5_accepted_provider_task(
+                task_set_manifest=args.task_set_manifest,
+                provider_gate_report=args.provider_gate_report,
+                provider_cost_budget_report=args.provider_cost_budget_report,
+                output_dir=args.output_dir,
+                task_id=args.task_id,
+                provider_id=args.provider_id,
+                model_id=args.model_id,
+                prior_executed_run_matrix_manifest=args.prior_executed_run_matrix_manifest,
+                allow_local_secret_file=args.allow_local_secret_file,
+                max_turns=args.max_turns,
+                max_tool_calls=args.max_tool_calls,
+                max_output_tokens=args.max_output_tokens,
+                fail_if_output_exists=args.fail_if_output_exists,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"V5 accepted provider run 执行失败：{exc}\n")
+        print(f"V5 accepted provider executed run matrix manifest：{output_path}")
         return 0
     if args.command == "build-v5-comparison-reports":
         try:

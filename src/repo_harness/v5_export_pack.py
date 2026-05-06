@@ -69,11 +69,14 @@ def build_export_result_pack(
     if len(real_results) < 3:
         raise ConfigError("Stage 4 export pack 需要至少 3 条真实 provider result。")
     trainable_results = [item for item in real_results if _is_final_verifier_accepted(item)]
+    non_trainable_results = [item for item in real_results if not _is_final_verifier_accepted(item)]
+    if len(non_trainable_results) < 2:
+        raise ConfigError("Stage 4 export pack 需要至少 2 条非 trainable 真实 result 生成 failure 和 diagnostic 分区。")
 
     sft_records = [_sft_record(item) for item in trainable_results[:1]]
     rl_records = [_rl_rollout_record(item) for item in trainable_results[:1]]
-    failure_record = _failure_record(real_results[1])
-    diagnostic_record = _diagnostic_record(real_results[2])
+    failure_record = _failure_record(non_trainable_results[0])
+    diagnostic_record = _diagnostic_record(non_trainable_results[1])
     blocked_record = _blocked_export_record()
 
     sft_path = root / "v5_sft_export.jsonl"
@@ -176,7 +179,9 @@ def build_export_result_pack(
             "schema_version": "repo_harness_v5_export_partition_summary_v0",
             "partition_counts": partition_counts,
             "stress_partition_status": "not_executed",
-            "real_provider_trainable_record_policy": "requires accepted=true and final_verifier_status=accepted; current Stage 3B minimal provider loop has no trainable records",
+            "real_provider_trainable_record_policy": _real_provider_trainable_record_policy(
+                partition_counts["real_provider_trainable_records"]
+            ),
             "status": "passed",
         },
     )
@@ -282,6 +287,17 @@ def _rl_rollout_record(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def _failure_record(result: dict[str, Any]) -> dict[str, Any]:
+    final_verifier_ran = result.get("final_verifier_ran") is True
+    failure_category = (
+        str(result.get("failure_category") or "final_verifier_rejected")
+        if final_verifier_ran
+        else "final_verifier_not_executed"
+    )
+    failure_reason = (
+        "Strict final verifier replay ran but did not accept the provider patch."
+        if final_verifier_ran
+        else "Stage 3B minimal provider loop records the final verifier boundary but does not execute it."
+    )
     return {
         "schema_version": "repo_harness_v5_failure_dataset_record_v0",
         "record_id": f"v5_failure_{result['run_id']}",
@@ -292,11 +308,22 @@ def _failure_record(result: dict[str, Any]) -> dict[str, Any]:
         "trainable": False,
         "accepted": False,
         "final_verifier_status": result.get("final_verifier_status"),
-        "failure_owner": "verifier_or_config_issue",
-        "failure_category": "final_verifier_not_executed",
-        "failure_reason": "Stage 3B minimal provider loop records the final verifier boundary but does not execute it.",
+        "failure_owner": str(result.get("failure_owner") or "verifier_or_config_issue"),
+        "failure_category": failure_category,
+        "failure_reason": failure_reason,
         "trajectory_ref": result.get("trajectory_ref"),
     }
+
+
+def _real_provider_trainable_record_policy(trainable_count: int) -> str:
+    base = (
+        "requires accepted=true, final_verifier_ran=true, final_verifier_status=accepted, "
+        "strict_patch_replay mode, non-empty final patch, successful hidden patch application, "
+        "and final verifier result with exit_code=0 and timed_out=false"
+    )
+    if trainable_count:
+        return base + "; accepted provider run evidence produced trainable SFT and reinforcement learning rollout records"
+    return base + "; current executed run matrix has no accepted trainable records"
 
 
 def _diagnostic_record(result: dict[str, Any]) -> dict[str, Any]:
@@ -315,7 +342,69 @@ def _diagnostic_record(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def _is_final_verifier_accepted(result: dict[str, Any]) -> bool:
-    return result.get("accepted") is True and result.get("final_verifier_status") == "accepted"
+    if result.get("accepted") is not True:
+        return False
+    if result.get("final_verifier_ran") is not True:
+        return False
+    if result.get("final_verifier_status") != "accepted":
+        return False
+    if result.get("final_verifier_mode") != "strict_patch_replay":
+        return False
+    patch_ref = result.get("final_patch_ref")
+    if not isinstance(patch_ref, dict) or int(patch_ref.get("size_bytes", 0) or 0) <= 0:
+        return False
+    boundary = _read_ref_payload(result.get("final_verifier_boundary_ref"))
+    if not _accepted_boundary_complete(boundary):
+        return False
+    verifier_result = _read_ref_payload(result.get("final_verifier_result_ref"))
+    if not _accepted_final_verifier_result_complete(verifier_result):
+        return False
+    return True
+
+
+def _accepted_boundary_complete(boundary: dict[str, Any] | None) -> bool:
+    if not isinstance(boundary, dict):
+        return False
+    if boundary.get("accepted") is not True:
+        return False
+    if boundary.get("final_verifier_ran") is not True:
+        return False
+    if boundary.get("final_verifier_status") != "accepted":
+        return False
+    if boundary.get("provider_final_patch_nonempty") is not True:
+        return False
+    if boundary.get("provider_api_called") is not True:
+        return False
+    if boundary.get("baseline_hidden_patch_apply_ok") is not True:
+        return False
+    if boundary.get("final_hidden_patch_apply_ok") is not True:
+        return False
+    if not _command_result_ok(boundary.get("baseline_hidden_patch_apply_result")):
+        return False
+    if not _command_result_ok(boundary.get("final_hidden_patch_apply_result")):
+        return False
+    return _accepted_final_verifier_result_complete(_read_ref_payload(boundary.get("final_verifier_result_ref")))
+
+
+def _accepted_final_verifier_result_complete(payload: dict[str, Any] | None) -> bool:
+    return (
+        isinstance(payload, dict)
+        and payload.get("accepted") is True
+        and payload.get("exit_code") == 0
+        and payload.get("timed_out") is False
+    )
+
+
+def _command_result_ok(payload: Any) -> bool:
+    return isinstance(payload, dict) and payload.get("exit_code") == 0 and payload.get("timeout") is not True
+
+
+def _read_ref_payload(ref: Any) -> dict[str, Any] | None:
+    path = _path_from_ref(ref)
+    if path is None or not path.exists():
+        return None
+    payload = _read_json(path)
+    return payload if isinstance(payload, dict) else None
 
 
 def _blocked_export_record() -> dict[str, Any]:
@@ -406,27 +495,36 @@ def _stage4_claim_gate(
     export_manifest_path: Path,
     preference_blocked_path: Path,
 ) -> dict[str, Any]:
+    export_manifest = _read_json(export_manifest_path)
+    trainable_count = int((export_manifest.get("partition_counts") or {}).get("real_provider_trainable_records", 0) or 0)
     blocked = list(dict.fromkeys([
         *stage3_claim_gate.get("blocked_claims", []),
         "preference export completed",
-        "trainable export completed",
+        *([] if trainable_count > 0 else ["trainable export completed"]),
     ]))
     allowed = list(dict.fromkeys([
         *stage3_claim_gate.get("allowed_claims", []),
         "partitioned failure, diagnostic-only and blocked export pack generated; trainable records require accepted final verifier evidence",
+        *(
+            ["trainable export completed with accepted final verifier boundary"]
+            if trainable_count > 0
+            else []
+        ),
     ]))
+    blocking_reasons = {
+        **stage3_claim_gate.get("blocking_reasons", {}),
+        "preference_pair": "no real comparable preference pair passed compare scope gate",
+        "demo_share_safe": "pending Stage 5 public-safe demo artifacts",
+    }
+    if trainable_count == 0:
+        blocking_reasons["trainable_export"] = "no accepted final verifier outcome is available for SFT or RL rollout trainable records"
     return {
         "schema_version": V5_RESUME_CLAIM_GATE_REPORT_VERSION,
         "created_at": _utc_timestamp(),
         "stage": "stage4_partial",
         "allowed_claims": allowed,
         "blocked_claims": blocked,
-        "blocking_reasons": {
-            **stage3_claim_gate.get("blocking_reasons", {}),
-            "preference_pair": "no real comparable preference pair passed compare scope gate",
-            "trainable_export": "no accepted final verifier outcome is available for SFT or RL rollout trainable records",
-            "demo_share_safe": "pending Stage 5 public-safe demo artifacts",
-        },
+        "blocking_reasons": blocking_reasons,
         "provider_claim_status": stage3_claim_gate.get("provider_claim_status", "blocked"),
         "preference_pair_claim_status": "blocked_no_real_comparable_pair",
         "demo_share_safe_status": "pending_stage5",

@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import shutil
 import shlex
+import subprocess
 import tarfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -12,15 +15,26 @@ import yaml
 
 from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
-from repo_harness.config import ContextManagementConfig, ModelConfig
+from repo_harness.config import (
+    ContextManagementConfig,
+    EvaluationConfig,
+    ModelConfig,
+    RunConfig,
+    RuntimeConfig,
+    WorkspaceConfig,
+)
+from repo_harness.context import ContextBuilder
 from repo_harness.errors import ConfigError, RepoHarnessError
+from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.export.manifest import sha256_file
 from repo_harness.model_client.factory import create_model_client, provider_options_from_model_config
 from repo_harness.model_client.providers.deepseek import normalize_deepseek_model_id
 from repo_harness.model_client.providers.openai import normalize_openai_model_id
 from repo_harness.permissions import PermissionContext
 from repo_harness.run_metadata import RunConfigFactsRef
+from repo_harness.run_metadata.tool_snapshot import write_tool_schema_snapshot
 from repo_harness.scaffolds import build_scaffold
+from repo_harness.scaffolds import resolve_allowed_tools, resolve_feedback_policy, tool_registry_for_allowed_tools
 from repo_harness.schema_versions import (
     V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION,
     V5_MATRIX_CELL_RESULT_VERSION,
@@ -29,8 +43,18 @@ from repo_harness.schema_versions import (
     V5_RESUME_CLAIM_GATE_REPORT_VERSION,
     V5_RUN_MATRIX_MANIFEST_VERSION,
 )
+from repo_harness.tasks import (
+    DecontaminationMetadata,
+    EnvironmentSpec,
+    LocalArchiveSource,
+    RunnableTask,
+    TaskTimeouts,
+    VerifierConfig,
+    VisibilityPolicy,
+)
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits
 from repo_harness.trajectory import RunRecorder, TrajectoryEvent
+from repo_harness.workspace import LocalWorkspaceAdapter
 from repo_harness.v5_evidence import (
     _builder_command_log_entry,
     _evidence_ref,
@@ -68,6 +92,7 @@ V5_STAGE3B_TEST_COMMANDS = {
         "tests/test_ext_autosummary.py::test_autosummary_generate_content_for_module"
     ),
     "v5_task_007": "python -m pytest -q lib/matplotlib/tests/test_matplotlib.py::test_parse_to_version_info",
+    "v5_task_008": "go test . -run TestDecodeError_Position",
 }
 
 V5_STAGE3B_OUTPUT_NAMES = (
@@ -82,6 +107,19 @@ V5_STAGE3B_RUN_OUTPUT_NAMES = (
     "v5_stage3b_run_matrix_execution_report.json",
     "run_v5_run_matrix_command_log_entry.json",
     "v5_stage3b_run_matrix_run_command_log.jsonl",
+)
+
+V5_ACCEPTED_RUN_OUTPUT_NAMES = (
+    "v5_run_matrix_manifest_executed.json",
+    "v5_matrix_cell_results.jsonl",
+    "v5_stage3b_run_matrix_execution_report.json",
+    "accepted_run_config_facts.json",
+    "generated_tasks",
+    "controlled_variables",
+    "agent_runs",
+    "run_configs",
+    "run_v5_accepted_provider_task_command_log_entry.json",
+    "v5_stage3b_accepted_provider_run_command_log.jsonl",
 )
 
 V5_STAGE3C_OUTPUT_NAMES = (
@@ -368,6 +406,256 @@ def run_matrix_cells(
     command_entry["schema_version"] = V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION
     command_entry_path = root / "run_v5_run_matrix_command_log_entry.json"
     command_log_path = root / "v5_stage3b_run_matrix_run_command_log.jsonl"
+    _write_json(command_entry_path, command_entry)
+    _write_jsonl(command_log_path, [command_entry])
+    return executed_manifest_path
+
+
+def run_accepted_provider_task(
+    *,
+    task_set_manifest: str | Path,
+    provider_gate_report: str | Path,
+    provider_cost_budget_report: str | Path,
+    output_dir: str | Path,
+    task_id: str,
+    provider_id: str = "deepseek",
+    model_id: str = "deepseek-v4-pro",
+    prior_executed_run_matrix_manifest: str | Path | None = None,
+    allow_local_secret_file: bool = True,
+    max_turns: int = 12,
+    max_tool_calls: int = 40,
+    max_output_tokens: int = 4096,
+    fail_if_output_exists: bool = True,
+) -> Path:
+    """Run one V5 accepted-provider attempt with strict final verifier replay evidence."""
+
+    root = Path(output_dir)
+    _refuse_existing(root, V5_ACCEPTED_RUN_OUTPUT_NAMES, fail_if_output_exists)
+    root.mkdir(parents=True, exist_ok=True)
+    task_set_path = Path(task_set_manifest)
+    provider_gate_path = Path(provider_gate_report)
+    provider_cost_path = Path(provider_cost_budget_report)
+    task_set = _read_json(task_set_path)
+    provider_gate = _read_json(provider_gate_path)
+    provider_cost = _read_json(provider_cost_path)
+    _require_stage3b_inputs(
+        task_set=task_set,
+        provider_gate=provider_gate,
+        provider_cost=provider_cost,
+        provider_ids=(provider_id,),
+    )
+    if int(provider_cost.get("max_real_provider_calls", 0)) < 1:
+        raise ConfigError("accepted provider run 至少需要 1 次 provider call budget。")
+    normalized_model_id = _normalize_model_for_provider(provider_id, model_id)
+    tasks_by_id = _load_task_definitions(task_set)
+    task = tasks_by_id.get(task_id)
+    if task is None:
+        raise ConfigError(f"accepted provider run task 不存在：{task_id}")
+    if not task.get("agent_run_ready"):
+        raise ConfigError(f"accepted provider run task 不是 agent_run_ready：{task_id}")
+    adapter_visible = _read_json(Path(task["adapter_visible_input_ref"]["path"]))
+    verifier_entry = _verifier_entry_for_task(task)
+    generated_dir = root / "generated_tasks"
+    controlled_dir = root / "controlled_variables"
+    configs_dir = root / "run_configs"
+    agent_runs_dir = root / "agent_runs"
+    generated_dir.mkdir(parents=True, exist_ok=True)
+    controlled_dir.mkdir(parents=True, exist_ok=True)
+    configs_dir.mkdir(parents=True, exist_ok=True)
+    agent_runs_dir.mkdir(parents=True, exist_ok=True)
+    task_yaml_path = generated_dir / f"{task_id}_accepted_provider.yaml"
+    _write_yaml(task_yaml_path, _accepted_task_yaml_payload(task=task, adapter_visible=adapter_visible))
+    generated_task_ref = _evidence_ref(
+        task_yaml_path,
+        kind="v5_accepted_provider_generated_task_yaml",
+        purpose=f"Generated accepted-provider task YAML for {task_id}",
+        visibility="audit_only",
+        producer_command="run-v5-accepted-provider-task",
+        producer_stage="v5_stage3b_accepted_provider_run",
+        inspect_command="inspect-v5-run-matrix",
+    )
+    controlled_path = controlled_dir / f"{task_id}_{provider_id}_accepted_patch_strict_replay.json"
+    controlled = {
+        "schema_version": "repo_harness_v5_matrix_controlled_variables_v0",
+        "task_id": task_id,
+        "task_yaml_sha256": sha256_file(task_yaml_path),
+        "source_tree_hash": task.get("source_tree_hash"),
+        "source_archive_sha256": task.get("source_archive_sha256"),
+        "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
+        "tool_policy_id": "v5_accepted_patch_read_write_no_hidden_feedback",
+        "context_policy_id": "v5_accepted_patch_final_only_context",
+        "provider_id": provider_id,
+        "scaffold_id": "patch_focused_react",
+        "budget_policy_id": "v5_accepted_patch_bounded_tool_loop",
+        "environment_id": task.get("environment_id"),
+        "comparison_validity_scope": "accepted_provider_strict_replay_single_task",
+    }
+    _write_json(controlled_path, controlled)
+    controlled_ref = _evidence_ref(
+        controlled_path,
+        kind="v5_matrix_controlled_variables",
+        purpose=f"Controlled variables for accepted provider run {task_id}",
+        visibility="audit_only",
+        producer_command="run-v5-accepted-provider-task",
+        producer_stage="v5_stage3b_accepted_provider_run",
+        inspect_command="inspect-v5-run-matrix",
+    )
+    run_id = f"v5_accepted_{provider_id}_{task_id}_{_slug(normalized_model_id)}"
+    config_path = configs_dir / f"{run_id}.yaml"
+    _write_yaml(
+        config_path,
+        _accepted_run_config_payload(
+            output_dir=agent_runs_dir,
+            provider_id=provider_id,
+            model_id=normalized_model_id,
+            allow_local_secret_file=allow_local_secret_file,
+            max_turns=max_turns,
+            max_tool_calls=max_tool_calls,
+            max_output_tokens=max_output_tokens,
+        ),
+    )
+    cell = {
+        "cell_id": f"v5_accepted_cell_{task_id}_{provider_id}_patch_focused_react",
+        "task_id": task_id,
+        "task_ref": _task_ref(task),
+        "generated_task_ref": generated_task_ref,
+        "provider_id": provider_id,
+        "provider_mode": "primary",
+        "model_id": normalized_model_id,
+        "scaffold_id": "patch_focused_react",
+        "budget_policy_id": "v5_accepted_patch_bounded_tool_loop",
+        "tool_policy_id": "v5_accepted_patch_read_write_no_hidden_feedback",
+        "context_policy_id": "v5_accepted_patch_final_only_context",
+        "environment_id": task.get("environment_id"),
+        "source_tree_hash": task.get("source_tree_hash"),
+        "final_verifier_plan_ref": task.get("final_verifier_plan_ref"),
+        "controlled_variables_ref": controlled_ref,
+        "counts_toward_core_real_provider_floor": True,
+        "counts_toward_resume_ready_multi_provider": False,
+    }
+    result = _run_one_accepted_provider_cell(
+        cell=cell,
+        task=task,
+        adapter_visible=adapter_visible,
+        verifier_entry=verifier_entry,
+        config_path=config_path,
+        agent_runs_dir=agent_runs_dir,
+        run_id=run_id,
+        allow_local_secret_file=allow_local_secret_file,
+        max_turns=max_turns,
+        max_tool_calls=max_tool_calls,
+        max_output_tokens=max_output_tokens,
+    )
+    prior_manifest: dict[str, Any] | None = None
+    prior_results: list[dict[str, Any]] = []
+    prior_path = Path(prior_executed_run_matrix_manifest) if prior_executed_run_matrix_manifest else None
+    if prior_path is not None:
+        prior_manifest = _read_json(prior_path)
+        prior_results_ref = prior_manifest.get("matrix_cell_results_ref")
+        prior_results_path = _path_from_ref(prior_results_ref)
+        if prior_results_path is None:
+            raise ConfigError("prior executed run matrix 缺少 matrix_cell_results_ref。")
+        prior_results = _read_jsonl(prior_results_path)
+    results = [result, *prior_results]
+    results_path = root / "v5_matrix_cell_results.jsonl"
+    report_path = root / "v5_stage3b_run_matrix_execution_report.json"
+    executed_manifest_path = root / "v5_run_matrix_manifest_executed.json"
+    _write_jsonl(results_path, results)
+    actual_provider_calls = sum(int(item.get("actual_provider_call_count", 0) or 0) for item in results)
+    real_run_count = sum(1 for item in results if item.get("actual_provider_call_count", 0) > 0)
+    provider_families = sorted({
+        str(item.get("provider_id"))
+        for item in results
+        if item.get("actual_provider_call_count", 0) > 0
+    })
+    max_calls = int(provider_cost.get("max_real_provider_calls", 0))
+    hard_stop_reason = _hard_stop_reason(results)
+    report = {
+        "schema_version": "repo_harness_v5_run_matrix_execution_report_v0",
+        "created_at": _utc_timestamp(),
+        "producer_stage": "v5_stage3b_accepted_provider_run",
+        "run_matrix_manifest_ref": _artifact_ref_for_input(
+            prior_path or task_set_path,
+            "v5_run_matrix_manifest_executed" if prior_path else "v5_task_set_manifest",
+            "inspect-v5-run-matrix" if prior_path else "inspect-v5-task-set",
+        ),
+        "provider_cost_budget_ref": _artifact_ref_for_input(provider_cost_path, "v5_provider_cost_budget_report", "inspect-v5-provider-cost-budget"),
+        "matrix_cell_results_ref": _evidence_ref(
+            results_path,
+            kind="v5_matrix_cell_results",
+            purpose="V5 accepted provider run plus prior matrix cell results",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ),
+        "actual_provider_calls": actual_provider_calls,
+        "max_real_provider_calls": max_calls,
+        "real_agent_run_task_count": real_run_count,
+        "accepted_provider_run_count": sum(1 for item in results if item.get("accepted") is True and item.get("final_verifier_status") == "accepted"),
+        "provider_api_called": actual_provider_calls > 0,
+        "real_provider_families_with_actual_runs": provider_families,
+        "core_real_provider_floor_satisfied": real_run_count >= 6 and actual_provider_calls > 0,
+        "hard_stop_reason": hard_stop_reason,
+        "status": "passed" if real_run_count >= 6 and actual_provider_calls <= max_calls and hard_stop_reason is None else "blocked",
+    }
+    _write_json(report_path, report)
+    planned_cells = [cell]
+    generated_refs = [generated_task_ref]
+    controlled_refs = [controlled_ref]
+    if prior_manifest:
+        planned_cells = [cell, *list(prior_manifest.get("planned_matrix_cells") or [])]
+        generated_refs = [generated_task_ref, *list(prior_manifest.get("generated_task_refs") or [])]
+        controlled_refs = [controlled_ref, *list(prior_manifest.get("controlled_variables_refs") or [])]
+    executed_manifest = {
+        "schema_version": V5_RUN_MATRIX_MANIFEST_VERSION,
+        "created_at": _utc_timestamp(),
+        "producer_stage": "v5_stage3b_accepted_provider_run",
+        "task_set_ref": _artifact_ref_for_input(task_set_path, "v5_task_set_manifest", "inspect-v5-task-set"),
+        "provider_gate_ref": _artifact_ref_for_input(provider_gate_path, "v5_provider_credential_gate_report", "inspect-v5-provider-gate"),
+        "provider_cost_budget_ref": _artifact_ref_for_input(provider_cost_path, "v5_provider_cost_budget_report", "inspect-v5-provider-cost-budget"),
+        "prior_executed_run_matrix_ref": (
+            _artifact_ref_for_input(prior_path, "v5_run_matrix_manifest_executed", "inspect-v5-run-matrix")
+            if prior_path
+            else None
+        ),
+        "planned_matrix_cells": planned_cells,
+        "planned_matrix_cell_count": len(planned_cells),
+        "generated_task_refs": generated_refs,
+        "controlled_variables_refs": controlled_refs,
+        "planned_provider_ids": sorted({str(item.get("provider_id")) for item in planned_cells}),
+        "planned_model_ids_by_provider": {provider_id: normalized_model_id},
+        "comparison_axes": ["scaffold", "budget", "provider"],
+        "comparison_ready_task_count": sum(1 for item in planned_cells if str(item.get("task_id")) == task_id),
+        "agent_run_started": True,
+        "provider_api_called": actual_provider_calls > 0,
+        "matrix_cell_results_ref": report["matrix_cell_results_ref"],
+        "run_matrix_execution_report_ref": _evidence_ref(
+            report_path,
+            kind="v5_run_matrix_execution_report",
+            purpose="V5 accepted provider run execution report",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ),
+        "actual_provider_calls": actual_provider_calls,
+        "real_agent_run_task_count": real_run_count,
+        "real_provider_families_with_actual_runs": provider_families,
+        "accepted_provider_run_count": report["accepted_provider_run_count"],
+        "hard_stop_reason": hard_stop_reason,
+        "status": report["status"],
+    }
+    _write_json(executed_manifest_path, executed_manifest)
+    command_entry = _builder_command_log_entry(
+        command_name="run-v5-accepted-provider-task",
+        input_paths=[task_set_path, provider_gate_path, provider_cost_path, *([prior_path] if prior_path else [])],
+        output_paths=[executed_manifest_path, results_path, report_path, agent_runs_dir, configs_dir, generated_dir, controlled_dir],
+        producer_stage="v5_stage3b_accepted_provider_run",
+    )
+    command_entry["schema_version"] = V5_COMMAND_LOG_ENTRY_SCHEMA_VERSION
+    command_entry_path = root / "run_v5_accepted_provider_task_command_log_entry.json"
+    command_log_path = root / "v5_stage3b_accepted_provider_run_command_log.jsonl"
     _write_json(command_entry_path, command_entry)
     _write_jsonl(command_log_path, [command_entry])
     return executed_manifest_path
@@ -886,6 +1174,537 @@ def _run_minimal_provider_agent_loop(
     return run_dir
 
 
+def _run_one_accepted_provider_cell(
+    *,
+    cell: dict[str, Any],
+    task: dict[str, Any],
+    adapter_visible: dict[str, Any],
+    verifier_entry: dict[str, Any],
+    config_path: Path,
+    agent_runs_dir: Path,
+    run_id: str,
+    allow_local_secret_file: bool,
+    max_turns: int,
+    max_tool_calls: int,
+    max_output_tokens: int,
+) -> dict[str, Any]:
+    started_at = _utc_timestamp()
+    run_dir = agent_runs_dir / run_id
+    if run_dir.exists():
+        raise ConfigError(f"accepted provider run directory 已存在，不能覆盖：{run_dir}")
+    model_error: str | None = None
+    try:
+        _run_accepted_provider_agent_loop(
+            cell=cell,
+            task=task,
+            adapter_visible=adapter_visible,
+            verifier_entry=verifier_entry,
+            config_path=config_path,
+            agent_runs_dir=agent_runs_dir,
+            run_id=run_id,
+            allow_local_secret_file=allow_local_secret_file,
+            max_turns=max_turns,
+            max_tool_calls=max_tool_calls,
+            max_output_tokens=max_output_tokens,
+        )
+    except RepoHarnessError as exc:
+        model_error = str(exc)
+    finished_at = _utc_timestamp()
+    if not run_dir.exists():
+        return {
+            "schema_version": V5_MATRIX_CELL_RESULT_VERSION,
+            **_cell_identity(cell, run_id=run_id),
+            "run_dir": None,
+            "accepted": False,
+            "final_verifier_ran": False,
+            "final_verifier_status": None,
+            "final_verifier_mode": "strict_patch_replay",
+            "trajectory_ref": None,
+            "final_verifier_boundary_ref": None,
+            "controlled_variables_ref": cell["controlled_variables_ref"],
+            "normalized_provider_status": "credential_missing_skip" if model_error and "凭证" in model_error else "provider_error",
+            "actual_provider_call_count": 0,
+            "provider_api_called": False,
+            "counts_toward_primary_accepted_rate": False,
+            "counts_toward_core_real_provider_floor": False,
+            "failure_owner": "provider_error",
+            "failure_category": "accepted_run_failed_before_provider_call",
+            "failure_message_preview": (model_error or "")[:500],
+            "started_at": started_at,
+            "finished_at": finished_at,
+        }
+    metrics = _read_json(run_dir / "metrics.json")
+    events = _read_jsonl(run_dir / "events.jsonl")
+    artifacts = _read_json(run_dir / "artifacts.json")
+    provider_call_events = [
+        event for event in events
+        if event.get("event_type") == "model_call_completed"
+        and event.get("data", {}).get("provider") == cell["provider_id"]
+    ]
+    model_error_type = next(
+        (
+            event.get("data", {}).get("model_error_type")
+            for event in provider_call_events
+            if event.get("data", {}).get("model_error_type")
+        ),
+        None,
+    )
+    accepted = metrics.get("final_verifier_status") == "accepted" and metrics.get("accepted") is True
+    status = "provider_error" if model_error_type or model_error else "primary_attempted"
+    final_verifier_path = run_dir / "final_verifier_boundary.json"
+    final_result_path = run_dir / "final_verifier_result.json"
+    final_patch_path = run_dir / "final.patch"
+    final_diff_path = run_dir / "final.diff"
+    result = {
+        "schema_version": V5_MATRIX_CELL_RESULT_VERSION,
+        **_cell_identity(cell, run_id=run_id),
+        "run_dir": run_dir.as_posix(),
+        "accepted": accepted,
+        "final_verifier_ran": metrics.get("final_verifier_ran") is True,
+        "final_verifier_status": metrics.get("final_verifier_status"),
+        "final_verifier_mode": "strict_patch_replay",
+        "run_outcome": metrics.get("run_outcome"),
+        "trajectory_ref": _evidence_ref(
+            run_dir / "events.jsonl",
+            kind="trajectory_events",
+            purpose=f"Trajectory events for accepted provider run {run_id}",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ),
+        "transcript_ref": _evidence_ref(
+            run_dir / "transcript.jsonl",
+            kind="trajectory_transcript",
+            purpose=f"Transcript for accepted provider run {run_id}",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ),
+        "artifact_manifest_ref": _evidence_ref(
+            run_dir / "artifacts.json",
+            kind="artifact_manifest",
+            purpose=f"Artifact manifest for accepted provider run {run_id}",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ),
+        "final_verifier_boundary_ref": _evidence_ref(
+            final_verifier_path,
+            kind="final_verifier_boundary",
+            purpose=f"Final verifier boundary for accepted provider run {run_id}",
+            visibility="evaluator_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ) if final_verifier_path.exists() else None,
+        "final_verifier_result_ref": _evidence_ref(
+            final_result_path,
+            kind="final_verifier_result",
+            purpose=f"Final verifier result for accepted provider run {run_id}",
+            visibility="evaluator_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ) if final_result_path.exists() else None,
+        "final_patch_ref": _evidence_ref(
+            final_patch_path,
+            kind="final_patch",
+            purpose=f"Final provider patch for accepted provider run {run_id}",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ) if final_patch_path.exists() else None,
+        "final_diff_ref": _evidence_ref(
+            final_diff_path,
+            kind="final_diff",
+            purpose=f"Final provider diff for accepted provider run {run_id}",
+            visibility="audit_only",
+            producer_command="run-v5-accepted-provider-task",
+            producer_stage="v5_stage3b_accepted_provider_run",
+            inspect_command="inspect-v5-run-matrix",
+        ) if final_diff_path.exists() else None,
+        "controlled_variables_ref": cell["controlled_variables_ref"],
+        "normalized_provider_status": status,
+        "actual_provider_call_count": len(provider_call_events),
+        "provider_api_called": bool(provider_call_events),
+        "model_error_type": model_error_type,
+        "token_usage": _token_usage(provider_call_events),
+        "tool_call_count": metrics.get("tool_call_count", 0),
+        "test_run_count": metrics.get("test_run_count", 0),
+        "invalid_tool_call_count": metrics.get("invalid_tool_call_count", 0),
+        "permission_denial_count": metrics.get("permission_denial_count", 0),
+        "patch_stats": metrics.get("patch_stats", {}),
+        "raw_provider_redaction": _raw_provider_redaction_facts(run_dir, artifacts),
+        "counts_toward_primary_accepted_rate": accepted,
+        "counts_toward_core_real_provider_floor": bool(provider_call_events),
+        "failure_owner": None if accepted else metrics.get("failure_owner", "model_behavior"),
+        "failure_category": None if accepted else metrics.get("failure_category", "final_verifier_rejected"),
+        "started_at": started_at,
+        "finished_at": finished_at,
+    }
+    return result
+
+
+def _run_accepted_provider_agent_loop(
+    *,
+    cell: dict[str, Any],
+    task: dict[str, Any],
+    adapter_visible: dict[str, Any],
+    verifier_entry: dict[str, Any],
+    config_path: Path,
+    agent_runs_dir: Path,
+    run_id: str,
+    allow_local_secret_file: bool,
+    max_turns: int,
+    max_tool_calls: int,
+    max_output_tokens: int,
+) -> None:
+    run_dir = agent_runs_dir / run_id
+    model_config = ModelConfig(
+        provider=str(cell["provider_id"]),
+        model_id=str(cell["model_id"]),
+        temperature=0.0,
+        max_output_tokens=max_output_tokens,
+        retry_policy="none",
+        credential_policy="local_secret_file_redacted" if allow_local_secret_file else "env_only",
+        provider_request_logging="redact_secrets",
+        provider_specific_options=_provider_specific_options_for_cell(
+            cell,
+            allow_local_secret_file=allow_local_secret_file,
+        ),
+    )
+    run_config = RunConfig(
+        run_id_prefix="v5_accepted",
+        model=model_config,
+        runtime=RuntimeConfig(
+            scaffold_id="patch_focused_react",
+            permission_mode="auto",
+            test_feedback_policy="disabled",
+            feedback_tests_passed_policy="require_model_final",
+            max_turns=max_turns,
+            max_tool_calls=max_tool_calls,
+            max_test_runs=0,
+            task_timeout_sec=900,
+            seed=42,
+        ),
+        workspace=WorkspaceConfig(
+            output_dir=agent_runs_dir.as_posix(),
+            keep_workspace=True,
+            default_command_timeout_sec=90,
+            max_tool_output_chars=16000,
+            network_policy="deny_agent_run",
+        ),
+        evaluation=EvaluationConfig(final_verifier_mode="strict_patch_replay"),
+        context_management=ContextManagementConfig(max_context_tokens=120000),
+    )
+    runnable = _runnable_task_for_accepted_run(task=task, adapter_visible=adapter_visible)
+    resolved_plan = ResolvedVerifierPlan(
+        verifier_config=runnable.verifier_config,
+        initial_fail_to_pass_tests=[],
+        initial_pass_to_pass_tests=[],
+        flaky_tests=[],
+        parser_confidence=1.0,
+        resolved_verifier_plan_id=f"{run_id}_strict_replay_final_only",
+    )
+    scaffold = build_scaffold("patch_focused_react")
+    feedback_policy = resolve_feedback_policy(run_config=run_config, scaffold=scaffold, task=runnable)
+    allowed_tools = resolve_allowed_tools(scaffold=scaffold, feedback_policy=feedback_policy)
+    budget_manager = BudgetManager(
+        max_turns=max_turns,
+        max_tool_calls=max_tool_calls,
+        max_test_runs=0,
+        task_timeout_sec=900,
+        command_timeout_sec=90,
+        verifier_timeout_sec=2400,
+        max_tool_output_chars=16000,
+        max_context_tokens=120000,
+        max_output_tokens=max_output_tokens,
+    )
+    adapter = None
+    with RunRecorder(run_id=run_id, run_dir=run_dir, task_id=cell["task_id"]) as recorder:
+        adapter = _accepted_workspace_adapter(run_id=run_id, run_dir=run_dir)
+        source = adapter.create_source_checkout(runnable)
+        dependency_state = adapter.capture_dependency_state(strategy="none")
+        run_config_facts_ref = _write_accepted_run_config_facts(
+            run_dir=run_dir,
+            cell=cell,
+            config_path=config_path,
+            verifier_entry=verifier_entry,
+            allowed_tools=allowed_tools,
+        )
+        baseline_workspace = adapter.workspaces_dir / "baseline_verifier_workspace"
+        shutil.copytree(source, baseline_workspace)
+        baseline_patch_result = _apply_evaluator_patch(
+            adapter=adapter,
+            workspace=baseline_workspace,
+            patch_path=_test_patch_path_from_verifier_entry(verifier_entry),
+            recorder=recorder,
+            command_semantics="baseline_hidden_test_patch_apply",
+        )
+        baseline_verifier = _run_v5_external_verifier(
+            run_dir=run_dir,
+            workspace=baseline_workspace,
+            verifier_entry=verifier_entry,
+            stage="baseline",
+            command_id=f"{run_id}_baseline_strict_replay_command",
+        )
+        run_workspace = adapter.create_agent_workspace(
+            task=runnable,
+            source_checkout=source,
+            dependency_state=dependency_state,
+            setup_command=None,
+            recorder=recorder,
+        )
+        registry = tool_registry_for_allowed_tools(allowed_tools)
+        _, tool_schema_snapshot_ref, _ = write_tool_schema_snapshot(recorder, registry=registry)
+        initial_messages = ContextBuilder().build_initial_messages(
+            task=runnable,
+            workspace=run_workspace,
+            run_config=run_config,
+            resolved_verifier_plan=resolved_plan,
+            allowed_tools=allowed_tools,
+            scaffold=scaffold,
+            workspace_facade=adapter,
+        )
+        state = AgentLoop(
+            model_client=create_model_client(model_config),
+            tool_executor=ToolExecutor(registry=registry),
+            scaffold=scaffold,
+            allowed_tool_names=allowed_tools,
+            test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+            feedback_tests_passed_policy=feedback_policy.resolved_feedback_tests_passed_policy,
+            hidden_feedback_visible_to_model=False,
+        ).run(
+            run_id=run_id,
+            task_id=cell["task_id"],
+            initial_messages=initial_messages,
+            tool_context=ToolExecutionContext(
+                run_id=run_id,
+                task_id=cell["task_id"],
+                workspace_facade=adapter,
+                run_workspace=run_workspace,
+                artifact_writer=recorder,
+                permission_context=PermissionContext(
+                    mode="auto",
+                    network_policy="deny_agent_run",
+                    test_command="hidden_final_verifier_not_model_visible",
+                ),
+                verifier_feedback_facade=None,  # type: ignore[arg-type]
+                resolved_verifier_plan=resolved_plan,
+                output_limits=ToolOutputLimits(max_tool_output_chars=16000),
+                test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+                feedback_tests_passed_policy=feedback_policy.resolved_feedback_tests_passed_policy,
+                budget_manager=budget_manager,
+            ),
+            recorder=recorder,
+            max_turns=max_turns,
+            context_config=ContextManagementConfig(max_context_tokens=120000),
+            budget_manager=budget_manager,
+            run_config_facts_ref=run_config_facts_ref,
+            tool_schema_snapshot_ref=tool_schema_snapshot_ref,
+            provider_options=provider_options_from_model_config(model_config),
+            generation_config={
+                "temperature": model_config.temperature,
+                "max_output_tokens": model_config.max_output_tokens,
+                "seed": 42,
+            },
+            provider_model_settings={},
+            request_timeout_seconds=900.0,
+            raw_request_logging_policy=model_config.provider_request_logging,
+            retry_policy=model_config.retry_policy,
+        )
+        capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
+        verification_error: str | None = None
+        final_patch_apply_result: dict[str, Any] | None = None
+        final_hidden_patch_result: dict[str, Any] | None = None
+        final_verifier: dict[str, Any]
+        try:
+            verification = adapter.create_verification_workspace(
+                source_checkout=source,
+                dependency_state=dependency_state,
+                final_patch_path=capture.patch_path,
+                setup_command=None,
+                recorder=recorder,
+            )
+            final_patch_apply_result = {"exit_code": 0, "timeout": False, "status": "applied_by_create_verification_workspace"}
+            hidden_apply = _apply_evaluator_patch(
+                adapter=adapter,
+                workspace=verification,
+                patch_path=_test_patch_path_from_verifier_entry(verifier_entry),
+                recorder=recorder,
+                command_semantics="final_hidden_test_patch_apply",
+            )
+            final_hidden_patch_result = hidden_apply.model_dump(mode="json")
+            final_verifier = _run_v5_external_verifier(
+                run_dir=run_dir,
+                workspace=verification,
+                verifier_entry=verifier_entry,
+                stage="final",
+                command_id=f"{run_id}_final_strict_replay_command",
+            )
+        except RepoHarnessError as exc:
+            verification_error = str(exc)
+            final_verifier = _external_verifier_error(
+                stage="final",
+                command_id=f"{run_id}_final_strict_replay_command",
+                error_type="verification_workspace_error",
+                message=verification_error,
+            )
+        final_result_path = run_dir / "final_verifier_result.json"
+        _write_json(final_result_path, final_verifier)
+        baseline_result_path = run_dir / "baseline_verifier_result.json"
+        _write_json(
+            baseline_result_path,
+            {
+                "schema_version": "repo_harness_v5_accepted_provider_baseline_verifier_result_v0",
+                "baseline_hidden_patch_apply_result": baseline_patch_result.model_dump(mode="json"),
+                "baseline_verifier_result": baseline_verifier,
+                "baseline_expected_failure": baseline_verifier.get("exit_code") not in {0, None},
+            },
+        )
+        baseline_hidden_patch_apply_ok = _command_result_ok(baseline_patch_result.model_dump(mode="json"))
+        final_hidden_patch_apply_ok = _command_result_ok(final_hidden_patch_result)
+        baseline_failed = baseline_verifier.get("exit_code") not in {0, None}
+        final_exit_zero = final_verifier.get("exit_code") == 0 and final_verifier.get("timed_out") is False
+        patch_nonempty = bool(capture.patch_text.strip())
+        provider_call_count = sum(
+            1
+            for event in _read_jsonl(run_dir / "events.jsonl")
+            if event.get("event_type") == "model_call_completed"
+            and event.get("data", {}).get("provider") == cell["provider_id"]
+        )
+        accepted = (
+            baseline_hidden_patch_apply_ok
+            and final_hidden_patch_apply_ok
+            and baseline_failed
+            and final_exit_zero
+            and patch_nonempty
+            and provider_call_count > 0
+        )
+        final_status = "accepted" if accepted else ("failed" if final_verifier.get("exit_code") not in {None, 0} else "error")
+        boundary_path = run_dir / "final_verifier_boundary.json"
+        _write_json(
+            boundary_path,
+            {
+                "schema_version": "repo_harness_v5_accepted_provider_final_verifier_boundary_v0",
+                "run_id": run_id,
+                "task_id": cell["task_id"],
+                "authoritative_final_verifier_plan_ref": cell.get("final_verifier_plan_ref"),
+                "final_verifier_ran": True,
+                "final_verifier_mode": "strict_patch_replay",
+                "final_verifier_status": final_status,
+                "accepted": accepted,
+                "accepted_authority": "final_verifier_only",
+                "counts_toward_primary_accepted_rate": accepted,
+                "baseline_expected_failure": baseline_failed,
+                "baseline_hidden_patch_apply_ok": baseline_hidden_patch_apply_ok,
+                "final_hidden_patch_apply_ok": final_hidden_patch_apply_ok,
+                "provider_final_patch_nonempty": patch_nonempty,
+                "provider_api_called": provider_call_count > 0,
+                "final_verifier_result_ref": _evidence_ref(
+                    final_result_path,
+                    kind="final_verifier_result",
+                    purpose=f"Strict replay final verifier result for {run_id}",
+                    visibility="evaluator_only",
+                    producer_command="run-v5-accepted-provider-task",
+                    producer_stage="v5_stage3b_accepted_provider_run",
+                    inspect_command="inspect-v5-run-matrix",
+                ),
+                "baseline_verifier_result_ref": _evidence_ref(
+                    baseline_result_path,
+                    kind="baseline_verifier_result",
+                    purpose=f"Baseline hidden-test verifier result for {run_id}",
+                    visibility="evaluator_only",
+                    producer_command="run-v5-accepted-provider-task",
+                    producer_stage="v5_stage3b_accepted_provider_run",
+                    inspect_command="inspect-v5-run-matrix",
+                ),
+                "hidden_test_patch_ref": _evidence_ref(
+                    _test_patch_path_from_verifier_entry(verifier_entry),
+                    kind="evaluator_only_test_patch",
+                    purpose=f"Evaluator-only test patch for {cell['task_id']}",
+                    visibility="evaluator_only",
+                    producer_command="external",
+                    producer_stage="v5_stage3b_accepted_provider_run",
+                    inspect_command="inspect-v5-run-matrix",
+                ),
+                "final_patch_apply_result": final_patch_apply_result,
+                "baseline_hidden_patch_apply_result": baseline_patch_result.model_dump(mode="json"),
+                "final_hidden_patch_apply_result": final_hidden_patch_result,
+                "verification_error": verification_error,
+            },
+        )
+        metrics = {
+            "schema_version": "repo_harness_v5_accepted_provider_metrics_v0",
+            "run_id": run_id,
+            "task_id": cell["task_id"],
+            "accepted": accepted,
+            "run_outcome": "success" if accepted else "failed",
+            "final_verifier_status": final_status,
+            "final_verifier_ran": True,
+            "final_verifier_mode": "strict_patch_replay",
+            "agent_stop_reason": state.agent_stop_reason,
+            "model_error_type": state.last_model_error,
+            "turn_count": state.turn_count,
+            "tool_call_count": state.tool_call_count,
+            "test_run_count": state.budget_state.test_run_count,
+            "invalid_tool_call_count": state.invalid_tool_call_count,
+            "permission_denial_count": state.permission_denial_count,
+            "patch_stats": capture.patch_stats,
+            "failure_owner": None if accepted else "model_behavior",
+            "failure_category": None if accepted else "final_verifier_rejected",
+            "token_usage": {
+                "input_tokens": state.budget_state.input_tokens,
+                "output_tokens": state.budget_state.output_tokens,
+                "cached_tokens": 0,
+            },
+            "interaction_efficiency": {
+                "execution_path": "accepted_provider_patch_strict_replay",
+                "budget_policy_id": cell["budget_policy_id"],
+                "tool_policy_id": cell["tool_policy_id"],
+                "context_policy_id": cell["context_policy_id"],
+                "run_config_facts": run_config_facts_ref.relative_path,
+            },
+        }
+        _write_json(run_dir / "metrics.json", metrics)
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("run"),
+                timestamp=_utc_timestamp(),
+                run_id=run_id,
+                task_id=cell["task_id"],
+                event_type="run_finished",
+                data={
+                    "agent_stop_reason": state.agent_stop_reason,
+                    "final_verifier_status": final_status,
+                    "run_outcome": metrics["run_outcome"],
+                    "accepted": accepted,
+                },
+            )
+        )
+        recorder.finalize_run(
+            "# RepoHarness V5 Accepted Provider Run Summary\n\n"
+            f"- run_id: {run_id}\n"
+            f"- task_id: {cell['task_id']}\n"
+            "- execution_path: accepted_provider_patch_strict_replay\n"
+            f"- provider_id: {cell['provider_id']}\n"
+            f"- model_id: {cell['model_id']}\n"
+            f"- agent_stop_reason: {state.agent_stop_reason}\n"
+            f"- final_verifier_status: {final_status}\n"
+            f"- accepted: {str(accepted).lower()}\n"
+        )
+
+
+def _command_result_ok(result: Any) -> bool:
+    if not isinstance(result, dict):
+        return False
+    return result.get("exit_code") == 0 and result.get("timeout") is not True
+
+
 def _write_minimal_run_config_facts(
     *,
     run_dir: Path,
@@ -914,6 +1733,310 @@ def _write_minimal_run_config_facts(
         },
     )
     return RunConfigFactsRef(sha256=sha256_file(path))
+
+
+def _write_accepted_run_config_facts(
+    *,
+    run_dir: Path,
+    cell: dict[str, Any],
+    config_path: Path,
+    verifier_entry: dict[str, Any],
+    allowed_tools: list[str],
+) -> RunConfigFactsRef:
+    path = run_dir / "run_config_facts.json"
+    _write_json(
+        path,
+        {
+            "schema_version": "repo_harness_v5_accepted_provider_run_config_facts_v0",
+            "provider_id": cell["provider_id"],
+            "model_id": cell["model_id"],
+            "scaffold_id": cell["scaffold_id"],
+            "budget_policy_id": cell["budget_policy_id"],
+            "tool_policy_id": cell["tool_policy_id"],
+            "context_policy_id": cell["context_policy_id"],
+            "environment_id": cell["environment_id"],
+            "source_tree_hash": cell["source_tree_hash"],
+            "final_verifier_plan_ref": cell.get("final_verifier_plan_ref"),
+            "config_path": config_path.as_posix(),
+            "execution_path": "accepted_provider_patch_strict_replay",
+            "final_verifier_mode": "strict_patch_replay",
+            "hidden_verifier_command_model_visible": False,
+            "allowed_tools": allowed_tools,
+            "verifier_candidate_id": verifier_entry.get("candidate_id"),
+        },
+    )
+    return RunConfigFactsRef(sha256=sha256_file(path))
+
+
+def _accepted_workspace_adapter(*, run_id: str, run_dir: Path) -> LocalWorkspaceAdapter:
+    return LocalWorkspaceAdapter(
+        run_id=run_id,
+        run_dir=run_dir,
+        default_command_timeout_sec=90,
+        keep_workspace=True,
+    )
+
+
+def _runnable_task_for_accepted_run(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> RunnableTask:
+    archive_ref = task.get("source_archive_ref")
+    if not isinstance(archive_ref, dict):
+        raise ConfigError(f"{task.get('task_id')} 缺少 source_archive_ref。")
+    archive_path = Path(str(archive_ref["path"])).resolve()
+    source = LocalArchiveSource(
+        archive_path=archive_path.as_posix(),
+        archive_sha256=str(archive_ref["sha256"]),
+        expected_root_directory=_expected_root_directory(archive_path),
+        base_commit=task.get("base_commit"),
+        decontamination_status="manual_checked",
+    )
+    return RunnableTask(
+        task_id=str(task["task_id"]),
+        task_version=f"{task['task_id']}_accepted_provider_v0",
+        dataset_name="repo_harness_v5",
+        issue_statement=_issue_statement(adapter_visible),
+        repo_source=archive_path.as_posix(),
+        repo_source_spec=source,
+        base_commit=task.get("base_commit"),
+        source_archive_sha256=str(archive_ref["sha256"]),
+        environment=EnvironmentSpec(
+            execution_image="local_process_agent_workspace",
+            package_manager=str(adapter_visible.get("ecosystem") or "unknown"),
+            setup_network_policy="deny",
+            source_archive_sha256=str(archive_ref["sha256"]),
+        ),
+        setup_command=None,
+        timeouts=TaskTimeouts(
+            setup_timeout_sec=60,
+            test_timeout_sec=120,
+            agent_timeout_sec=900,
+            final_verifier_timeout_sec=2400,
+        ),
+        verifier_config=VerifierConfig(
+            test_command="hidden_final_verifier_not_model_visible",
+            test_timeout_sec=120,
+            final_verifier_timeout_sec=2400,
+            visibility_policy=VisibilityPolicy(
+                issue="model_visible",
+                expected_files="model_visible",
+                fail_to_pass_tests="verifier_only",
+                pass_to_pass_tests="verifier_only",
+                gold_patch="hidden_reference",
+            ),
+        ),
+        expected_files=[],
+        mutation_policy=[],
+        generated_files_policy=[],
+        visibility_policy=VisibilityPolicy(
+            issue="model_visible",
+            expected_files="model_visible",
+            fail_to_pass_tests="verifier_only",
+            pass_to_pass_tests="verifier_only",
+            gold_patch="hidden_reference",
+        ),
+        decontamination_metadata=DecontaminationMetadata(
+            status="manual_checked",
+            known_public_solution=None,
+            source_url=task.get("repo_url_or_archive_id"),
+            overlap_check_notes="V5 accepted-run uses sanitized adapter-visible task input only.",
+        ),
+        metadata={
+            "source_kind": task.get("source_kind"),
+            "dataset_split": "v5_stage3b_accepted_provider",
+            "created_at": "2026-05-06",
+            "final_only": True,
+            "swe_bench_like_final_only": True,
+            "tags": ["v5", "accepted_provider_run", "final_only", str(adapter_visible.get("ecosystem", "unknown"))],
+        },
+    )
+
+
+def _apply_evaluator_patch(
+    *,
+    adapter: LocalWorkspaceAdapter,
+    workspace: Path,
+    patch_path: Path,
+    recorder: RunRecorder,
+    command_semantics: str,
+) -> Any:
+    return adapter.run_command(
+        workspace,
+        ["patch", "-p1", "-i", patch_path.as_posix(), "--forward"],
+        timeout_sec=180,
+        recorder=recorder,
+        command_semantics=command_semantics,
+        artifact_metadata={"redaction_status": "evaluator_only"},
+    )
+
+
+def _run_v5_external_verifier(
+    *,
+    run_dir: Path,
+    workspace: Path,
+    verifier_entry: dict[str, Any],
+    stage: str,
+    command_id: str,
+) -> dict[str, Any]:
+    command = _verifier_shell_command(verifier_entry)
+    image = _verifier_image(verifier_entry)
+    cache_dir = run_dir / "verifier_caches" / stage / "go"
+    log_dir = run_dir / "verifier_logs"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    stdout_path = log_dir / f"{command_id}.stdout.log"
+    stderr_path = log_dir / f"{command_id}.stderr.log"
+    argv = [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "-e",
+        "CI=1",
+        "-e",
+        "TZ=UTC",
+        "-v",
+        f"{cache_dir.resolve()}:/go/pkg/mod",
+        "-v",
+        f"{workspace.resolve()}:/workspace",
+        "-w",
+        "/workspace",
+        image,
+        "sh",
+        "-c",
+        command,
+    ]
+    started_at = _utc_timestamp()
+    started = time.monotonic()
+    timed_out = False
+    try:
+        completed = subprocess.run(
+            argv,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2400,
+            check=False,
+        )
+        exit_code = completed.returncode
+        stdout = completed.stdout
+        stderr = completed.stderr
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        exit_code = None
+        stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+    stdout_path.write_text(stdout, encoding="utf-8")
+    stderr_path.write_text(stderr, encoding="utf-8")
+    return {
+        "schema_version": "repo_harness_v5_external_strict_replay_verifier_result_v0",
+        "command_id": command_id,
+        "stage": stage,
+        "argv": _redacted_verifier_argv(argv),
+        "cwd": ".",
+        "exit_code": exit_code,
+        "timed_out": timed_out,
+        "timeout_seconds": 2400,
+        "wall_time_seconds": round(time.monotonic() - started, 3),
+        "started_at": started_at,
+        "finished_at": _utc_timestamp(),
+        "stdout_ref": _plain_file_ref(stdout_path),
+        "stderr_ref": _plain_file_ref(stderr_path),
+        "accepted": stage == "final" and exit_code == 0 and not timed_out,
+    }
+
+
+def _external_verifier_error(*, stage: str, command_id: str, error_type: str, message: str) -> dict[str, Any]:
+    return {
+        "schema_version": "repo_harness_v5_external_strict_replay_verifier_result_v0",
+        "command_id": command_id,
+        "stage": stage,
+        "argv": [],
+        "cwd": ".",
+        "exit_code": None,
+        "timed_out": False,
+        "timeout_seconds": 2400,
+        "wall_time_seconds": 0.0,
+        "started_at": _utc_timestamp(),
+        "finished_at": _utc_timestamp(),
+        "stdout_ref": None,
+        "stderr_ref": None,
+        "accepted": False,
+        "error_type": error_type,
+        "message": message[:500],
+    }
+
+
+def _plain_file_ref(path: Path) -> dict[str, Any]:
+    return _evidence_ref(
+        path,
+        kind="verifier_command_log",
+        purpose=f"Verifier command output log: {path.name}",
+        visibility="evaluator_only",
+        producer_command="run-v5-accepted-provider-task",
+        producer_stage="v5_stage3b_accepted_provider_run",
+        inspect_command="inspect-v5-run-matrix",
+    )
+
+
+def _redacted_verifier_argv(argv: list[str]) -> list[str]:
+    redacted: list[str] = []
+    for item in argv:
+        if "/Users/" in item or item.startswith(str(Path.cwd())):
+            redacted.append("<local-path-redacted>")
+        else:
+            redacted.append(item)
+    return redacted
+
+
+def _test_patch_path_from_verifier_entry(entry: dict[str, Any]) -> Path:
+    patches = entry.get("patch_results", {}).get("baseline") or []
+    for patch_result in patches:
+        argv = patch_result.get("argv") or []
+        if "-i" in argv:
+            index = argv.index("-i")
+            if index + 1 < len(argv):
+                path = Path(str(argv[index + 1]))
+                if path.exists():
+                    return path
+    raise ConfigError("accepted provider run 无法从 verifier entry 找到 evaluator-only test patch。")
+
+
+def _verifier_shell_command(entry: dict[str, Any]) -> str:
+    argv = (entry.get("final_verifier_result") or entry.get("baseline_verifier_result") or {}).get("argv") or []
+    if "sh" in argv and "-c" in argv:
+        index = argv.index("-c")
+        if index + 1 < len(argv):
+            return str(argv[index + 1])
+    for item in argv:
+        if isinstance(item, str) and "go test" in item:
+            return item
+    raise ConfigError("accepted provider run 无法从 verifier entry 找到 final verifier command。")
+
+
+def _verifier_image(entry: dict[str, Any]) -> str:
+    argv = (entry.get("final_verifier_result") or entry.get("baseline_verifier_result") or {}).get("argv") or []
+    for item in argv:
+        if isinstance(item, str) and item.startswith("golang:"):
+            return item
+    return "golang:1.24-bookworm"
+
+
+def _verifier_entry_for_task(task: dict[str, Any]) -> dict[str, Any]:
+    ref = task.get("final_verifier_plan_ref")
+    path = _path_from_ref(ref)
+    if path is None:
+        raise ConfigError(f"{task.get('task_id')} 缺少 final_verifier_plan_ref。")
+    report = _read_json(path)
+    candidate_id = task.get("candidate_id")
+    repository = task.get("repository")
+    for entry in report.get("entries") or []:
+        if not isinstance(entry, dict):
+            continue
+        if candidate_id and entry.get("candidate_id") == candidate_id:
+            return entry
+        if repository and str(entry.get("candidate_id", "")).startswith(str(repository)):
+            return entry
+    raise ConfigError(f"{task.get('task_id')} 的 verifier report 中找不到匹配 entry。")
 
 
 def _stage3b_initial_messages(*, cell: dict[str, Any], task_yaml: dict[str, Any]) -> list[dict[str, object]]:
@@ -1094,6 +2217,54 @@ def _run_config_payload(
     }
 
 
+def _accepted_run_config_payload(
+    *,
+    output_dir: Path,
+    provider_id: str,
+    model_id: str,
+    allow_local_secret_file: bool,
+    max_turns: int,
+    max_tool_calls: int,
+    max_output_tokens: int,
+) -> dict[str, Any]:
+    return {
+        "run_id_prefix": "v5_accepted",
+        "model": {
+            "provider": provider_id,
+            "model_id": model_id,
+            "temperature": 0.0,
+            "max_output_tokens": max_output_tokens,
+            "retry_policy": "none",
+            "credential_policy": "local_secret_file_redacted" if allow_local_secret_file else "env_only",
+            "provider_request_logging": "redact_secrets",
+            "provider_specific_options": _provider_specific_options(
+                provider_id=provider_id,
+                allow_local_secret_file=allow_local_secret_file,
+            ),
+        },
+        "runtime": {
+            "scaffold_id": "patch_focused_react",
+            "permission_mode": "auto",
+            "test_feedback_policy": "disabled",
+            "feedback_tests_passed_policy": "require_model_final",
+            "max_turns": max_turns,
+            "max_tool_calls": max_tool_calls,
+            "max_test_runs": 0,
+            "task_timeout_sec": 900,
+            "seed": 42,
+        },
+        "workspace": {
+            "output_dir": output_dir.as_posix(),
+            "keep_workspace": True,
+            "default_command_timeout_sec": 90,
+            "network_policy": "deny_agent_run",
+        },
+        "evaluation": {
+            "final_verifier_mode": "strict_patch_replay",
+        },
+    }
+
+
 def _task_yaml_payload(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> dict[str, Any]:
     archive_ref = task.get("source_archive_ref")
     if not isinstance(archive_ref, dict):
@@ -1161,6 +2332,21 @@ def _task_yaml_payload(*, task: dict[str, Any], adapter_visible: dict[str, Any])
     }
 
 
+def _accepted_task_yaml_payload(*, task: dict[str, Any], adapter_visible: dict[str, Any]) -> dict[str, Any]:
+    payload = _task_yaml_payload(task=task, adapter_visible=adapter_visible)
+    payload["task_version"] = f"{task['task_id']}_accepted_provider_v0"
+    payload["dataset_split"] = "v5_stage3b_accepted_provider"
+    payload["test_command"] = "hidden_final_verifier_not_model_visible"
+    payload["metadata"] = {
+        **payload.get("metadata", {}),
+        "v5_accepted_provider_generated": True,
+        "final_only": True,
+        "swe_bench_like_final_only": True,
+        "hidden_final_verifier_command_model_visible": False,
+    }
+    return payload
+
+
 def _issue_statement(adapter_visible: dict[str, Any]) -> str:
     constraints = adapter_visible.get("visible_constraints") or []
     suffix = "\n\nVisible constraints:\n" + "\n".join(f"- {item}" for item in constraints)
@@ -1207,6 +2393,14 @@ def _model_by_provider(*, deepseek_model_id: str, openai_model_id: str) -> dict[
         "deepseek": normalize_deepseek_model_id(deepseek_model_id),
         "openai": normalize_openai_model_id(openai_model_id),
     }
+
+
+def _normalize_model_for_provider(provider_id: str, model_id: str) -> str:
+    if provider_id == "deepseek":
+        return normalize_deepseek_model_id(model_id)
+    if provider_id == "openai":
+        return normalize_openai_model_id(model_id)
+    raise ConfigError(f"V5 accepted provider run 不支持 provider_id={provider_id!r}。")
 
 
 def _provider_specific_options_for_cell(
@@ -1543,5 +2737,6 @@ def _refuse_existing(root: Path, names: tuple[str, ...], fail_if_output_exists: 
 __all__ = [
     "build_comparison_reports",
     "build_run_matrix_manifest",
+    "run_accepted_provider_task",
     "run_matrix_cells",
 ]

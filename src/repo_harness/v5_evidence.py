@@ -1341,13 +1341,89 @@ def _inspect_v5_matrix_cell_result(result: dict[str, Any], failures: list[str], 
             failures.append(f"{label}.真实 provider result 缺少 trajectory_ref。")
         if not result.get("final_verifier_boundary_ref"):
             failures.append(f"{label}.真实 provider result 缺少 final_verifier_boundary_ref。")
-    for ref_field in ("trajectory_ref", "transcript_ref", "artifact_manifest_ref", "final_verifier_boundary_ref", "controlled_variables_ref"):
+    for ref_field in (
+        "trajectory_ref",
+        "transcript_ref",
+        "artifact_manifest_ref",
+        "final_verifier_boundary_ref",
+        "final_verifier_result_ref",
+        "final_patch_ref",
+        "final_diff_ref",
+        "controlled_variables_ref",
+    ):
         if result.get(ref_field):
             _inspect_v5_ref(result.get(ref_field), failures, label=f"{label}.{ref_field}")
+    if result.get("accepted") is True:
+        if result.get("actual_provider_call_count", 0) <= 0:
+            failures.append(f"{label}.accepted=true 必须来自真实 provider call。")
+        if result.get("final_verifier_ran") is not True:
+            failures.append(f"{label}.accepted=true 必须 final_verifier_ran=true。")
+        if result.get("final_verifier_status") != "accepted":
+            failures.append(f"{label}.accepted=true 必须 final_verifier_status=accepted。")
+        if result.get("final_verifier_mode") != "strict_patch_replay":
+            failures.append(f"{label}.accepted=true 必须使用 strict_patch_replay。")
+        patch_ref = result.get("final_patch_ref")
+        if not isinstance(patch_ref, dict) or int(patch_ref.get("size_bytes", 0) or 0) <= 0:
+            failures.append(f"{label}.accepted=true 必须绑定非空 final_patch_ref。")
+        boundary = _read_ref_payload(result.get("final_verifier_boundary_ref"), failures)
+        if boundary:
+            if boundary.get("accepted") is not True:
+                failures.append(f"{label}.accepted=true 与 final_verifier_boundary.accepted 不一致。")
+            if boundary.get("final_verifier_ran") is not True:
+                failures.append(f"{label}.accepted=true 与 final_verifier_boundary.final_verifier_ran 不一致。")
+            if boundary.get("final_verifier_status") != "accepted":
+                failures.append(f"{label}.accepted=true 与 final_verifier_boundary.final_verifier_status 不一致。")
+            if boundary.get("provider_final_patch_nonempty") is not True:
+                failures.append(f"{label}.accepted=true 要求 boundary.provider_final_patch_nonempty=true。")
+            if boundary.get("provider_api_called") is not True:
+                failures.append(f"{label}.accepted=true 要求 boundary.provider_api_called=true。")
+            if boundary.get("baseline_hidden_patch_apply_ok") is not True:
+                failures.append(f"{label}.accepted=true 要求 boundary.baseline_hidden_patch_apply_ok=true。")
+            if boundary.get("final_hidden_patch_apply_ok") is not True:
+                failures.append(f"{label}.accepted=true 要求 boundary.final_hidden_patch_apply_ok=true。")
+            if not _command_result_ok(boundary.get("baseline_hidden_patch_apply_result")):
+                failures.append(f"{label}.accepted=true 要求 baseline hidden patch apply result 成功。")
+            if not _command_result_ok(boundary.get("final_hidden_patch_apply_result")):
+                failures.append(f"{label}.accepted=true 要求 final hidden patch apply result 成功。")
+            boundary_result_ref = boundary.get("final_verifier_result_ref")
+            if not boundary_result_ref:
+                failures.append(f"{label}.accepted=true 要求 boundary.final_verifier_result_ref。")
+            else:
+                _inspect_v5_ref(boundary_result_ref, failures, label=f"{label}.boundary.final_verifier_result_ref")
+                boundary_result = _read_ref_payload(boundary_result_ref, failures)
+                if boundary_result:
+                    _inspect_accepted_final_verifier_result(
+                        boundary_result,
+                        failures,
+                        label=f"{label}.boundary.final_verifier_result",
+                    )
+        if not result.get("final_verifier_result_ref"):
+            failures.append(f"{label}.accepted=true 要求 final_verifier_result_ref。")
+        verifier_result = _read_ref_payload(result.get("final_verifier_result_ref"), failures)
+        if verifier_result:
+            _inspect_accepted_final_verifier_result(verifier_result, failures, label=f"{label}.final_verifier_result")
     redaction = result.get("raw_provider_redaction")
     if isinstance(redaction, dict):
         if redaction.get("raw_provider_redaction_failure_count", 0) != 0:
             failures.append(f"{label}.raw provider artifact redaction 存在失败。")
+
+
+def _inspect_accepted_final_verifier_result(
+    payload: dict[str, Any],
+    failures: list[str],
+    *,
+    label: str,
+) -> None:
+    if payload.get("exit_code") != 0:
+        failures.append(f"{label}.accepted=true 要求 final verifier exit_code=0。")
+    if payload.get("timed_out") is not False:
+        failures.append(f"{label}.accepted=true 要求 final verifier timed_out=false。")
+    if payload.get("accepted") is not True:
+        failures.append(f"{label}.accepted=true 要求 final verifier result accepted=true。")
+
+
+def _command_result_ok(payload: Any) -> bool:
+    return isinstance(payload, dict) and payload.get("exit_code") == 0 and payload.get("timeout") is not True
 
 
 def _inspect_v5_matrix_compare_scope_report(payload: dict[str, Any], failures: list[str]) -> None:

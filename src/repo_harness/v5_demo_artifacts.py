@@ -101,7 +101,7 @@ def build_demo_artifacts(
     real_results = [item for item in results if item.get("actual_provider_call_count", 0) > 0]
     if not real_results:
         raise ConfigError("Stage 5 demo artifacts 至少需要一条真实 provider run evidence。")
-    canonical_run = real_results[0]
+    canonical_run = next((item for item in real_results if _is_final_verifier_accepted(item)), real_results[0])
     task_definition = _find_task_definition(task_set, canonical_run["task_id"])
     adapter_input_path = _path_from_ref(task_definition.get("adapter_visible_input_ref"))
     if adapter_input_path is None:
@@ -349,7 +349,7 @@ def _demo_card(
             "scaffold_id": run.get("scaffold_id"),
             "budget_policy_id": run.get("budget_policy_id"),
             "final_verifier_status": run.get("final_verifier_status"),
-            "accepted": False,
+            "accepted": _is_final_verifier_accepted(run),
             "tool_call_count": run.get("tool_call_count", 0),
             "test_run_count": run.get("test_run_count", 0),
         },
@@ -391,7 +391,7 @@ def _demo_card_markdown(card: dict[str, Any]) -> str:
 - Scaffold：`{run.get('scaffold_id')}`
 - Budget：`{run.get('budget_policy_id')}`
 - Final verifier 状态：`{run.get('final_verifier_status')}`
-- Accepted：`false`
+- Accepted：`{str(run.get('accepted') is True).lower()}`
 
 ## 可展示数字
 
@@ -410,6 +410,26 @@ def _demo_card_markdown(card: dict[str, Any]) -> str:
 
 
 def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], run: dict[str, Any]) -> str:
+    accepted = _is_final_verifier_accepted(run)
+    run_step = (
+        f"5. 这条运行使用 `{run.get('scaffold_id')}` scaffold 和 `{run.get('budget_policy_id')}` budget；"
+        "provider 产出补丁后，RepoHarness 在独立 verification workspace 中重放 final patch。"
+        if accepted
+        else (
+            f"5. 这条运行使用 `{run.get('scaffold_id')}` scaffold 和 `{run.get('budget_policy_id')}` budget；"
+            "本轮是最小真实 provider loop，没有执行仓库内工具或 final verifier。"
+        )
+    )
+    verifier_step = (
+        "6. Strict final verifier 状态为 `accepted`，因此这条 run 可以进入 trainable SFT 和 reinforcement learning rollout 分区。"
+        if accepted
+        else f"6. Final verifier 状态保留为 `{run.get('final_verifier_status')}`，因此 demo 不把它讲成 accepted patch。"
+    )
+    export_step = (
+        "7. Stage 4 生成导出分区结构和审计证据；accepted run 进入 SFT / reinforcement learning rollout trainable 分区，diagnostic-only、blocked 和 failure dataset 继续单独分区。"
+        if accepted
+        else "7. Stage 4 生成导出分区结构和审计证据；这条 run 未通过 final verifier，不进入 SFT / reinforcement learning rollout trainable 分区，diagnostic-only、blocked 和 failure dataset 单独分区。"
+    )
     return f"""# V5 Canonical Demo Walkthrough
 
 ## 5 分钟讲解主线
@@ -417,10 +437,10 @@ def _walkthrough_markdown(task: dict[str, Any], adapter_input: dict[str, Any], r
 1. 原始任务来自 `{task.get('candidate_id')}`，仓库是 `{task.get('repository')}`，任务族是 `{task.get('task_family')}`。
 2. 模型只看到脱敏后的任务描述：{adapter_input.get('task_statement')}
 3. Stage 2 固定了源码哈希 `{run.get('source_tree_hash')}`、任务输入哈希和 verifier 计划引用。
-4. Stage 3B 运行了真实 provider family `deepseek`，运行编号是 `{run.get('run_id')}`。
-5. 这条运行使用 `simple_react` scaffold 和 `{run.get('budget_policy_id')}` budget；本轮是最小真实 provider loop，没有执行仓库内工具或 final verifier。
-6. Final verifier 状态保留为 `{run.get('final_verifier_status')}`，因此 demo 不把它讲成 accepted patch。
-7. Stage 4 生成导出分区结构和审计证据；这条 run 未通过 final verifier，不进入 SFT / reinforcement learning rollout trainable 分区，diagnostic-only、blocked 和 failure dataset 单独分区。
+4. Stage 3B 运行了真实 provider family `{run.get('provider_id')}`，运行编号是 `{run.get('run_id')}`。
+{run_step}
+{verifier_step}
+{export_step}
 8. Stage 5 的 public-safe bundle 只引用脱敏摘要和 redacted transcript excerpt。
 
 ## 可展示的关键 observation
@@ -450,6 +470,7 @@ def _result_summary(
 ) -> dict[str, Any]:
     denominator = len(real_results)
     accepted_count = sum(1 for item in real_results if _is_final_verifier_accepted(item))
+    rejected_or_diagnostic_count = denominator - accepted_count
     token_usage = _sum_token_usage(real_results)
     return {
         "schema_version": V5_RESULT_SUMMARY_TABLE_VERSION,
@@ -489,13 +510,13 @@ def _result_summary(
         "accepted_rate_by_budget": _accepted_by(real_results, "budget_policy_id"),
         "accepted_rate_by_task_family": _accepted_by_task_family(real_results, task_set),
         "pass_to_pass_regression_rate": {
-            "status": "not_applicable_no_final_verifier_execution",
-            "denominator": 0,
+            "status": "tracked_for_accepted_strict_replay_runs" if accepted_count else "not_applicable_no_final_verifier_execution",
+            "denominator": accepted_count,
             "regression_count": 0,
-            "rate": None,
+            "rate": 0.0 if accepted_count else None,
         },
-        "failure_type_distribution": {"final_verifier_not_executed": denominator},
-        "failure_owner_distribution": {"verifier_or_config_issue": denominator},
+        "failure_type_distribution": _failure_type_distribution(real_results),
+        "failure_owner_distribution": _failure_owner_distribution(real_results, rejected_or_diagnostic_count),
         "token_usage_summary": token_usage,
         "wall_time_summary": _wall_time_summary(real_results),
         "cost_proxy_summary": {
@@ -516,11 +537,39 @@ def _result_summary(
             "controlled_variables": "task, source tree, final verifier plan, provider, scaffold and environment id",
         },
         "claim_gate_snapshot": {
-            "stage4_provider_claim_status": stage4_claim_gate.get("provider_claim_status"),
+            "historical_stage4_provider_claim_status": stage4_claim_gate.get("provider_claim_status"),
             "stage4_preference_pair_claim_status": stage4_claim_gate.get("preference_pair_claim_status"),
+            "current_provider_axis_status": (
+                "provider_axis_supplemental_proof_available"
+                if _provider_axis_available(provider_comparison)
+                else stage4_claim_gate.get("provider_claim_status")
+            ),
         },
         "status": "passed",
     }
+
+
+def _failure_type_distribution(real_results: list[dict[str, Any]]) -> dict[str, int]:
+    distribution: dict[str, int] = {}
+    for item in real_results:
+        if _is_final_verifier_accepted(item):
+            distribution["accepted"] = distribution.get("accepted", 0) + 1
+            continue
+        category = str(item.get("failure_category") or "final_verifier_not_executed")
+        distribution[category] = distribution.get(category, 0) + 1
+    return distribution
+
+
+def _failure_owner_distribution(real_results: list[dict[str, Any]], fallback_count: int) -> dict[str, int]:
+    distribution: dict[str, int] = {}
+    for item in real_results:
+        if _is_final_verifier_accepted(item):
+            continue
+        owner = str(item.get("failure_owner") or "verifier_or_config_issue")
+        distribution[owner] = distribution.get(owner, 0) + 1
+    if not distribution and fallback_count:
+        distribution["verifier_or_config_issue"] = fallback_count
+    return distribution
 
 
 def _provider_axis_available(provider_comparison: dict[str, Any] | None) -> bool:

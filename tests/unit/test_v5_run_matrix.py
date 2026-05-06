@@ -202,6 +202,182 @@ def test_v5_run_matrix_inspect_accepts_executed_real_provider_evidence(tmp_path:
     )
 
 
+def test_v5_run_matrix_inspect_checks_accepted_boundary_consistency(tmp_path: Path) -> None:
+    task_set = _write_task_set(tmp_path, count=6)
+    provider_gate = _write_provider_gate(tmp_path)
+    cost_budget = _write_cost_budget(tmp_path)
+    manifest_path = build_run_matrix_manifest(
+        task_set_manifest=task_set,
+        provider_gate_report=provider_gate,
+        provider_cost_budget_report=cost_budget,
+        output_dir=tmp_path / "matrix",
+        task_ids=[f"v5_task_{index:03d}" for index in range(1, 7)],
+    )
+    manifest = _read_json(manifest_path)
+    execution_dir = tmp_path / "accepted_execution"
+    runs_dir = execution_dir / "agent_runs"
+    results_path = execution_dir / "v5_matrix_cell_results.jsonl"
+    report_path = execution_dir / "v5_stage3b_run_matrix_execution_report.json"
+    execution_dir.mkdir(parents=True)
+    results = []
+    for index, cell in enumerate(manifest["planned_matrix_cells"]):
+        run_id = f"v5_accepted_deepseek_{cell['task_id']}"
+        run_dir = runs_dir / run_id
+        run_dir.mkdir(parents=True)
+        _write_json(run_dir / "artifacts.json", {"schema_version": "repo_harness_schema_v0", "run_id": run_id, "artifacts": []})
+        _write_jsonl(run_dir / "events.jsonl", [{"event_type": "model_call_completed", "data": {"provider": "deepseek"}}])
+        _write_jsonl(run_dir / "transcript.jsonl", [{"role": "assistant", "content_preview": "ok"}])
+        accepted = index == 0
+        (run_dir / "final.patch").write_text("diff --git a/a.py b/a.py\n--- a/a.py\n+++ b/a.py\n@@ -1 +1 @@\n-a\n+b\n", encoding="utf-8")
+        (run_dir / "final.diff").write_text((run_dir / "final.patch").read_text(encoding="utf-8"), encoding="utf-8")
+        _write_json(
+            run_dir / "final_verifier_result.json",
+            {"accepted": accepted, "exit_code": 0 if accepted else 1, "timed_out": False},
+        )
+        patch_apply_result = {"exit_code": 0 if accepted else 1, "timeout": False}
+        _write_json(
+            run_dir / "final_verifier_boundary.json",
+            {
+                "schema_version": "repo_harness_v5_accepted_provider_final_verifier_boundary_v0",
+                "accepted": accepted,
+                "final_verifier_ran": accepted,
+                "final_verifier_status": "accepted" if accepted else "failed",
+                "provider_final_patch_nonempty": accepted,
+                "provider_api_called": True,
+                "baseline_hidden_patch_apply_ok": accepted,
+                "final_hidden_patch_apply_ok": accepted,
+                "baseline_hidden_patch_apply_result": patch_apply_result,
+                "final_hidden_patch_apply_result": patch_apply_result,
+                "final_verifier_result_ref": _ref(run_dir / "final_verifier_result.json", "final_verifier_result"),
+            },
+        )
+        results.append(
+            {
+                "schema_version": V5_MATRIX_CELL_RESULT_VERSION,
+                "cell_id": cell["cell_id"],
+                "task_id": cell["task_id"],
+                "provider_id": "deepseek",
+                "provider_mode": "primary",
+                "model_id": cell.get("model_id", "deepseek-v4-flash"),
+                "scaffold_id": cell["scaffold_id"],
+                "budget_policy_id": cell["budget_policy_id"],
+                "tool_policy_id": cell["tool_policy_id"],
+                "context_policy_id": cell["context_policy_id"],
+                "environment_id": cell["environment_id"],
+                "source_tree_hash": cell["source_tree_hash"],
+                "final_verifier_plan_ref": cell.get("final_verifier_plan_ref"),
+                "run_id": run_id,
+                "run_dir": run_dir.as_posix(),
+                "accepted": accepted,
+                "final_verifier_ran": accepted,
+                "final_verifier_status": "accepted" if accepted else "failed",
+                "final_verifier_mode": "strict_patch_replay" if accepted else "boundary_recorded_not_executed",
+                "trajectory_ref": _ref(run_dir / "events.jsonl", "trajectory_events"),
+                "transcript_ref": _ref(run_dir / "transcript.jsonl", "trajectory_transcript"),
+                "artifact_manifest_ref": _ref(run_dir / "artifacts.json", "artifact_manifest"),
+                "final_verifier_boundary_ref": _ref(run_dir / "final_verifier_boundary.json", "final_verifier_boundary"),
+                "final_verifier_result_ref": _ref(run_dir / "final_verifier_result.json", "final_verifier_result"),
+                "final_patch_ref": _ref(run_dir / "final.patch", "final_patch"),
+                "final_diff_ref": _ref(run_dir / "final.diff", "final_diff"),
+                "controlled_variables_ref": cell["controlled_variables_ref"],
+                "normalized_provider_status": "primary_attempted",
+                "actual_provider_call_count": 1,
+                "provider_api_called": True,
+                "raw_provider_redaction": {
+                    "raw_provider_artifact_count": 0,
+                    "raw_provider_redaction_failure_count": 0,
+                    "all_raw_provider_artifacts_redacted": True,
+                },
+                "counts_toward_primary_accepted_rate": accepted,
+                "counts_toward_core_real_provider_floor": True,
+            }
+        )
+    _write_jsonl(results_path, results)
+    _write_json(report_path, {"schema_version": "repo_harness_v5_run_matrix_execution_report_v0", "actual_provider_calls": 6, "max_real_provider_calls": 24, "real_agent_run_task_count": 6, "status": "passed"})
+    executed_path = execution_dir / "v5_run_matrix_manifest_executed.json"
+    _write_json(
+        executed_path,
+        {
+            **manifest,
+            "agent_run_started": True,
+            "provider_api_called": True,
+            "matrix_cell_results_ref": _ref(results_path, "v5_matrix_cell_results"),
+            "run_matrix_execution_report_ref": _ref(report_path, "v5_run_matrix_execution_report"),
+            "actual_provider_calls": 6,
+            "real_agent_run_task_count": 6,
+            "real_provider_families_with_actual_runs": ["deepseek"],
+            "status": "passed",
+        },
+    )
+
+    assert "Inspect V5 run matrix: complete" in inspect_v5_run_matrix(executed_path, assert_complete=True)
+    final_result_path = runs_dir / "v5_accepted_deepseek_v5_task_001" / "final_verifier_result.json"
+    final_result = _read_json(final_result_path)
+    final_result.pop("timed_out")
+    _write_json(final_result_path, final_result)
+    tampered_results = _read_jsonl(results_path)
+    tampered_results[0]["final_verifier_result_ref"] = _ref(final_result_path, "final_verifier_result")
+    _write_jsonl(results_path, tampered_results)
+    manifest_payload = _read_json(executed_path)
+    manifest_payload["matrix_cell_results_ref"] = _ref(results_path, "v5_matrix_cell_results")
+    _write_json(executed_path, manifest_payload)
+    with pytest.raises(ConfigError, match="timed_out=false"):
+        inspect_v5_run_matrix(executed_path, assert_complete=True)
+
+    final_result["timed_out"] = True
+    _write_json(final_result_path, final_result)
+    tampered_results[0]["final_verifier_result_ref"] = _ref(final_result_path, "final_verifier_result")
+    _write_jsonl(results_path, tampered_results)
+    manifest_payload["matrix_cell_results_ref"] = _ref(results_path, "v5_matrix_cell_results")
+    _write_json(executed_path, manifest_payload)
+    with pytest.raises(ConfigError, match="timed_out=false"):
+        inspect_v5_run_matrix(executed_path, assert_complete=True)
+
+    final_result["timed_out"] = False
+    final_result["exit_code"] = 1
+    _write_json(final_result_path, final_result)
+    tampered_results[0]["final_verifier_result_ref"] = _ref(final_result_path, "final_verifier_result")
+    _write_jsonl(results_path, tampered_results)
+    manifest_payload["matrix_cell_results_ref"] = _ref(results_path, "v5_matrix_cell_results")
+    _write_json(executed_path, manifest_payload)
+    with pytest.raises(ConfigError, match="exit_code=0"):
+        inspect_v5_run_matrix(executed_path, assert_complete=True)
+
+    final_result["exit_code"] = 0
+    final_result["accepted"] = False
+    _write_json(final_result_path, final_result)
+    tampered_results = _read_jsonl(results_path)
+    tampered_results[0]["final_verifier_result_ref"] = _ref(final_result_path, "final_verifier_result")
+    _write_jsonl(results_path, tampered_results)
+    manifest_payload = _read_json(executed_path)
+    manifest_payload["matrix_cell_results_ref"] = _ref(results_path, "v5_matrix_cell_results")
+    _write_json(executed_path, manifest_payload)
+    with pytest.raises(ConfigError, match="final verifier result accepted=true"):
+        inspect_v5_run_matrix(executed_path, assert_complete=True)
+
+    final_result["accepted"] = True
+    _write_json(final_result_path, final_result)
+    tampered_results[0]["final_verifier_result_ref"] = _ref(final_result_path, "final_verifier_result")
+    _write_jsonl(results_path, tampered_results)
+    manifest_payload["matrix_cell_results_ref"] = _ref(results_path, "v5_matrix_cell_results")
+    _write_json(executed_path, manifest_payload)
+
+    boundary = _read_json(runs_dir / "v5_accepted_deepseek_v5_task_001" / "final_verifier_boundary.json")
+    boundary["accepted"] = False
+    _write_json(runs_dir / "v5_accepted_deepseek_v5_task_001" / "final_verifier_boundary.json", boundary)
+    tampered_results = _read_jsonl(results_path)
+    tampered_results[0]["final_verifier_boundary_ref"] = _ref(
+        runs_dir / "v5_accepted_deepseek_v5_task_001" / "final_verifier_boundary.json",
+        "final_verifier_boundary",
+    )
+    _write_jsonl(results_path, tampered_results)
+    manifest_payload = _read_json(executed_path)
+    manifest_payload["matrix_cell_results_ref"] = _ref(results_path, "v5_matrix_cell_results")
+    _write_json(executed_path, manifest_payload)
+    with pytest.raises(ConfigError, match="final_verifier_boundary.accepted"):
+        inspect_v5_run_matrix(executed_path, assert_complete=True)
+
+
 def test_v5_comparison_reports_block_resume_ready_multi_provider_claim(tmp_path: Path) -> None:
     executed_path = _write_executed_run_matrix_fixture(tmp_path)
     provider_gate = _write_provider_gate(tmp_path)
@@ -676,6 +852,14 @@ def _sha256(path: Path) -> str:
 
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def _write_json(path: Path, payload: dict) -> None:
