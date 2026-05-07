@@ -206,8 +206,10 @@ def main(argv: list[str] | None = None) -> int:
                 input_refs=[entry["task_definition_ref"], entry["run_config_ref"]],
             )
             entry["run_task_command_log_entry_ref"] = _file_ref(entry_path)
-            entry["status"] = "executed" if result.returncode == 0 else "command_failed"
             entry["run_task_exit_code"] = result.returncode
+            _annotate_run_task_entry(entry)
+            if result.returncode != 0:
+                entry["status"] = "command_failed"
             if result.returncode != 0 and not args.continue_on_task_command_failure:
                 _write_run_matrix(output_dir, entries, args)
                 raise SystemExit(result.returncode)
@@ -579,6 +581,18 @@ def _write_run_matrix(output_dir: Path, entries: list[dict[str, Any]], args: arg
             "mode": args.mode,
             "baseline_source": PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
             "entry_count": len(entries),
+            "formal_boundary_entry_count": sum(
+                1 for entry in entries if entry.get("final_verifier_boundary_available") is True
+            ),
+            "quality_gate_blocked_count": sum(
+                1 for entry in entries if entry.get("status") == "quality_gate_blocked"
+            ),
+            "incomplete_run_artifact_count": sum(
+                1 for entry in entries if entry.get("status") == "incomplete_run_artifacts"
+            ),
+            "command_failed_count": sum(
+                1 for entry in entries if entry.get("status") == "command_failed"
+            ),
             "entries": entries,
         },
     )
@@ -606,11 +620,68 @@ def _write_boundary_index(output_dir: Path, entries: list[dict[str, Any]]) -> Pa
                     "run_task_command_log_entry_ref": entry.get("run_task_command_log_entry_ref"),
                 }
                 for entry in entries
-                if entry.get("status") == "executed"
+                if entry.get("final_verifier_boundary_available") is True
             ],
         },
     )
     return path
+
+
+def _annotate_run_task_entry(entry: dict[str, Any]) -> None:
+    run_dir = Path(str(entry["run_task_run_dir"]))
+    baseline = _read_json_or_none(run_dir / "baseline.json") or {}
+    metrics = _read_json_or_none(run_dir / "metrics.json") or {}
+    metadata = _read_json_or_none(run_dir / "run_metadata.json") or {}
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    entry["run_task_run_dir_exists"] = run_dir.exists()
+    entry["final_verifier_boundary_available"] = boundary_path.exists()
+    missing_artifacts: list[str] = []
+    if run_dir.exists():
+        for filename, key in (
+            ("run_metadata.json", "run_metadata_ref"),
+            ("metrics.json", "metrics_ref"),
+            ("baseline.json", "baseline_ref"),
+        ):
+            artifact_path = run_dir / filename
+            if artifact_path.exists():
+                entry[key] = _file_ref(artifact_path)
+            else:
+                missing_artifacts.append(filename)
+    else:
+        missing_artifacts.extend(["run_metadata.json", "metrics.json", "baseline.json"])
+    entry["missing_run_artifacts"] = missing_artifacts
+    entry["baseline_status"] = baseline.get("status") or metadata.get("baseline_status")
+    entry["quality_gate_reason"] = (
+        metrics.get("interaction_efficiency", {}).get("quality_gate_reason")
+        if isinstance(metrics.get("interaction_efficiency"), dict)
+        else None
+    ) or baseline.get("dependency_error")
+    entry["agent_stop_reason"] = metadata.get("agent_stop_reason") or (
+        metrics.get("interaction_efficiency", {}).get("agent_stop_reason")
+        if isinstance(metrics.get("interaction_efficiency"), dict)
+        else None
+    )
+    entry["final_verifier_status"] = metadata.get("final_verifier_status") or metrics.get("final_verifier_status")
+    entry["run_outcome"] = metadata.get("run_outcome") or metrics.get("run_outcome")
+    if entry.get("run_task_exit_code") == 0 and boundary_path.exists():
+        entry["status"] = "executed_formal_boundary"
+        entry["final_verifier_boundary_ref"] = _file_ref(boundary_path)
+    elif entry.get("run_task_exit_code") == 0 and not missing_artifacts:
+        entry["status"] = "quality_gate_blocked"
+        entry["blocked_reason"] = entry.get("quality_gate_reason") or entry.get("agent_stop_reason") or "missing_final_verifier_boundary"
+    elif entry.get("run_task_exit_code") == 0:
+        entry["status"] = "incomplete_run_artifacts"
+        entry["blocked_reason"] = "missing_required_run_artifacts"
+
+
+def _read_json_or_none(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _verifier_command(env_spec: dict[str, Any]) -> str:

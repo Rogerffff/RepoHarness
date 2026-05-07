@@ -61,6 +61,91 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert "pre_verl_agentloop_baseline_source: repo_harness_agentloop_run_task" in generated_task
 
 
+def test_scheduler_boundary_index_skips_quality_gate_blocked_runs(tmp_path: Path) -> None:
+    script = _load_scheduler_module()
+    output_dir = tmp_path / "out"
+    output_dir.mkdir()
+    boundary_run = tmp_path / "runs" / "with_boundary"
+    blocked_run = tmp_path / "runs" / "blocked"
+    boundary_run.mkdir(parents=True)
+    blocked_run.mkdir(parents=True)
+    _write_json(boundary_run / "final_verifier_boundary.json", {"status": "present"})
+    _write_json(boundary_run / "run_metadata.json", {"run_outcome": "inconclusive"})
+    _write_json(boundary_run / "metrics.json", {"final_verifier_status": "error"})
+    _write_json(boundary_run / "baseline.json", {"status": "valid"})
+    _write_json(blocked_run / "run_metadata.json", {"agent_stop_reason": "skipped_invalid_baseline"})
+    _write_json(
+        blocked_run / "metrics.json",
+        {
+            "final_verifier_status": "skipped",
+            "interaction_efficiency": {"quality_gate_reason": "setup_failed"},
+        },
+    )
+    _write_json(blocked_run / "baseline.json", {"status": "invalid", "dependency_error": "setup_failed"})
+    entries = [
+        {
+            "task_id": "with_boundary",
+            "run_task_run_dir": boundary_run.as_posix(),
+            "run_task_exit_code": 0,
+            "scaffold_id": "patch_focused_react",
+            "provider": "deepseek",
+            "model_id": "deepseek-v4-flash",
+        },
+        {
+            "task_id": "blocked",
+            "run_task_run_dir": blocked_run.as_posix(),
+            "run_task_exit_code": 0,
+            "scaffold_id": "patch_focused_react",
+            "provider": "deepseek",
+            "model_id": "deepseek-v4-flash",
+        },
+    ]
+
+    for entry in entries:
+        script._annotate_run_task_entry(entry)
+    boundary_index = script._write_boundary_index(output_dir, entries)
+    run_matrix = script._write_run_matrix(output_dir, entries, _Args(mode="smoke"))
+
+    boundary_payload = _read_json(boundary_index)
+    matrix_payload = _read_json(run_matrix)
+    assert [entry["task_id"] for entry in boundary_payload["entries"]] == ["with_boundary"]
+    assert entries[0]["status"] == "executed_formal_boundary"
+    assert entries[1]["status"] == "quality_gate_blocked"
+    assert entries[1]["blocked_reason"] == "setup_failed"
+    assert matrix_payload["formal_boundary_entry_count"] == 1
+    assert matrix_payload["quality_gate_blocked_count"] == 1
+
+
+def test_scheduler_marks_missing_blocked_evidence_as_incomplete(tmp_path: Path) -> None:
+    script = _load_scheduler_module()
+    output_dir = tmp_path / "out"
+    output_dir.mkdir()
+    run_dir = tmp_path / "runs" / "incomplete"
+    run_dir.mkdir(parents=True)
+    entry = {
+        "task_id": "incomplete",
+        "run_task_run_dir": run_dir.as_posix(),
+        "run_task_exit_code": 0,
+        "scaffold_id": "patch_focused_react",
+        "provider": "deepseek",
+        "model_id": "deepseek-v4-flash",
+    }
+
+    script._annotate_run_task_entry(entry)
+    run_matrix = script._write_run_matrix(output_dir, [entry], _Args(mode="smoke"))
+    matrix_payload = _read_json(run_matrix)
+
+    assert entry["status"] == "incomplete_run_artifacts"
+    assert entry["blocked_reason"] == "missing_required_run_artifacts"
+    assert entry["missing_run_artifacts"] == [
+        "run_metadata.json",
+        "metrics.json",
+        "baseline.json",
+    ]
+    assert matrix_payload["incomplete_run_artifact_count"] == 1
+    assert matrix_payload["quality_gate_blocked_count"] == 0
+
+
 def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
     root = tmp_path / "materialized"
     freeze = tmp_path / "freeze"
@@ -193,3 +278,8 @@ def _read_json(path: Path) -> dict:
 def _write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
+class _Args:
+    def __init__(self, *, mode: str) -> None:
+        self.mode = mode
