@@ -211,6 +211,7 @@ def run_pre_verl_swebench_dev_final_verifier(
     adapter: WorkspaceAdapter,
     recorder: RunRecorder,
     setup_command: str | None = None,
+    agent_stop_reason: str | None = None,
 ) -> VerifierResult:
     run_root = Path(run_dir)
     verification_workspace = run_root / "workspaces" / "pre_verl_final_verification_workspace"
@@ -259,27 +260,89 @@ def run_pre_verl_swebench_dev_final_verifier(
             failure_owner = "harness_or_environment"
             final_status = "not_executed"
         else:
-            try:
-                adapter.restore_dependency_state(
-                    verification_workspace,
-                    dependency_state,
-                    setup_command,
-                    setup_timeout_sec=plan.setup_timeout_sec,
-                    recorder=recorder,
+            if failure_category is None and Path(final_patch_path).stat().st_size == 0:
+                empty_patch_path = run_root / "pre_verl_empty_final_patch_result.json"
+                failure_category = (
+                    "budget_exhausted_empty_patch"
+                    if agent_stop_reason
+                    in {"max_turns", "max_tool_calls", "task_timeout", "timeout", "context_limit"}
+                    else "empty_final_patch"
                 )
-            except Exception as exc:  # noqa: BLE001 - boundary must be written for terminal failures.
-                setup_path = run_root / "pre_verl_dependency_restore_error.json"
-                _write_json(setup_path, {"status": "failed", "message": str(exc)})
-                result_refs["dependency_restore_result_ref"] = _file_ref(
-                    setup_path,
+                failure_owner = (
+                    "budget_or_timeout"
+                    if failure_category == "budget_exhausted_empty_patch"
+                    else "model_no_patch_generated"
+                )
+                final_status = "not_executed"
+                _write_json(
+                    empty_patch_path,
+                    {
+                        "schema_version": "repo_harness_pre_verl_empty_final_patch_result_v0",
+                        "status": "failed",
+                        "failure_category": failure_category,
+                        "failure_owner": failure_owner,
+                        "agent_stop_reason": agent_stop_reason,
+                        "final_patch_path": str(final_patch_path),
+                        "final_patch_size_bytes": 0,
+                    },
+                )
+                result_refs["empty_final_patch_result_ref"] = _file_ref(
+                    empty_patch_path,
                     base_dir=run_root,
-                    artifact_id="pre_verl_dependency_restore_error",
-                    kind="pre_verl_dependency_restore_result",
+                    artifact_id="pre_verl_empty_final_patch_result",
+                    kind="pre_verl_empty_final_patch_result",
                     redaction_status="evaluator_only",
                 )
-                failure_category = "environment_setup_failed"
-                failure_owner = "harness_or_environment"
+            if (
+                failure_category is None
+                and agent_stop_reason in {"task_timeout", "timeout"}
+                and Path(final_patch_path).stat().st_size > 0
+            ):
+                timeout_skip_path = run_root / "pre_verl_final_verifier_task_timeout_skip.json"
+                failure_category = "task_timeout_before_final_verifier"
+                failure_owner = "budget_or_timeout"
                 final_status = "not_executed"
+                _write_json(
+                    timeout_skip_path,
+                    {
+                        "schema_version": "repo_harness_pre_verl_final_verifier_task_timeout_skip_v0",
+                        "status": "skipped",
+                        "failure_category": failure_category,
+                        "failure_owner": failure_owner,
+                        "agent_stop_reason": agent_stop_reason,
+                        "final_patch_path": str(final_patch_path),
+                        "final_patch_size_bytes": Path(final_patch_path).stat().st_size,
+                    },
+                )
+                result_refs["final_verifier_task_timeout_skip_ref"] = _file_ref(
+                    timeout_skip_path,
+                    base_dir=run_root,
+                    artifact_id="pre_verl_final_verifier_task_timeout_skip",
+                    kind="pre_verl_final_verifier_task_timeout_skip",
+                    redaction_status="evaluator_only",
+                )
+            if failure_category is None:
+                try:
+                    adapter.restore_dependency_state(
+                        verification_workspace,
+                        dependency_state,
+                        setup_command,
+                        setup_timeout_sec=plan.setup_timeout_sec,
+                        recorder=recorder,
+                    )
+                except Exception as exc:  # noqa: BLE001 - boundary must be written for terminal failures.
+                    setup_path = run_root / "pre_verl_dependency_restore_error.json"
+                    _write_json(setup_path, {"status": "failed", "message": str(exc)})
+                    result_refs["dependency_restore_result_ref"] = _file_ref(
+                        setup_path,
+                        base_dir=run_root,
+                        artifact_id="pre_verl_dependency_restore_error",
+                        kind="pre_verl_dependency_restore_result",
+                        redaction_status="evaluator_only",
+                    )
+                    failure_category = "environment_setup_failed"
+                    failure_owner = "harness_or_environment"
+                    final_status = "not_executed"
             if failure_category is None:
                 model_apply = adapter.apply_patch(
                     verification_workspace,
@@ -309,9 +372,17 @@ def run_pre_verl_swebench_dev_final_verifier(
                     final_status = "not_executed"
                 else:
                     after_model_hash = compute_source_tree_hash(verification_workspace)
+                    staged_hidden_patch_path = _stage_hidden_test_patch(plan, run_root)
+                    result_refs["staged_hidden_test_patch_ref"] = _file_ref(
+                        staged_hidden_patch_path,
+                        base_dir=run_root,
+                        artifact_id="pre_verl_staged_hidden_test_patch",
+                        kind="hidden_test_patch",
+                        redaction_status="evaluator_only",
+                    )
                     hidden_apply = adapter.apply_patch(
                         verification_workspace,
-                        plan.hidden_test_patch_path,
+                        staged_hidden_patch_path,
                         recorder=recorder,
                         command_semantics=_HIDDEN_PATCH_STEP,
                     )
@@ -380,18 +451,29 @@ def run_pre_verl_swebench_dev_final_verifier(
                             redaction_status="evaluator_only",
                         )
                         timeout = bool(f2p.get("timeout") or p2p.get("timeout"))
+                        selector_input_error = _selector_input_error(f2p) or _selector_input_error(p2p)
                         accepted = bool(
                             f2p.get("exit_code") == 0
                             and p2p.get("exit_code") == 0
                             and not timeout
+                            and not selector_input_error
                         )
-                        final_status = "accepted" if accepted else ("timeout" if timeout else "rejected")
-                        failure_category = None if accepted else (
-                            "verifier_timeout_budget" if timeout else "model_patch_rejected_by_final_verifier"
-                        )
-                        failure_owner = None if accepted else (
-                            "budget_or_timeout" if timeout else "model_wrong_fix"
-                        )
+                        if accepted:
+                            final_status = "accepted"
+                            failure_category = None
+                            failure_owner = None
+                        elif timeout:
+                            final_status = "timeout"
+                            failure_category = "verifier_timeout_budget"
+                            failure_owner = "budget_or_timeout"
+                        elif selector_input_error:
+                            final_status = "not_executed"
+                            failure_category = "selector_input_invalid"
+                            failure_owner = "harness_or_verifier_input"
+                        else:
+                            final_status = "rejected"
+                            failure_category = "model_patch_rejected_by_final_verifier"
+                            failure_owner = "model_wrong_fix"
     except Exception as exc:  # noqa: BLE001 - final verifier boundary is the authority record.
         failure_category = "verification_workspace_error"
         failure_owner = "harness_or_environment"
@@ -609,13 +691,39 @@ def _read_selector_ref(ref: dict[str, Any], base: Path) -> list[str]:
     path = _resolve_ref_path(ref, base)
     payload = _read_structured(path)
     if isinstance(payload, list):
-        return [str(item) for item in payload if str(item).strip()]
+        selectors = [str(item) for item in payload if str(item).strip()]
+        _validate_pytest_selector_shapes(selectors, path)
+        return selectors
     if isinstance(payload, dict):
         for key in ("selectors", "expanded_selectors", "FAIL_TO_PASS", "PASS_TO_PASS"):
             value = payload.get(key)
             if isinstance(value, list):
-                return [str(item) for item in value if str(item).strip()]
+                selectors = [str(item) for item in value if str(item).strip()]
+                _validate_pytest_selector_shapes(selectors, path)
+                return selectors
     raise ConfigError(f"selector ref 必须绑定 selector list：{path}")
+
+
+def _validate_pytest_selector_shapes(selectors: list[str], path: Path) -> None:
+    invalid = [selector for selector in selectors if not _pytest_selector_shape_is_collectable(selector)]
+    if invalid:
+        preview = ", ".join(invalid[:5])
+        raise ConfigError(f"selector ref 包含不可 collect 的 pytest selector：{path}: {preview}")
+
+
+def _pytest_selector_shape_is_collectable(selector: str) -> bool:
+    if not selector.strip() or "::" not in selector:
+        return False
+    suffix = selector.rsplit("::", 1)[-1]
+    return suffix.count("[") == suffix.count("]")
+
+
+def _stage_hidden_test_patch(plan: PreVerlSwebenchDevRuntimePlan, run_root: Path) -> Path:
+    staged_dir = run_root / "evaluator_only_inputs"
+    staged_dir.mkdir(parents=True, exist_ok=True)
+    staged_path = staged_dir / f"{plan.task_id}_hidden_test.patch"
+    shutil.copyfile(plan.hidden_test_patch_path, staged_path)
+    return staged_path
 
 
 def _run_selector_suite(
@@ -712,6 +820,10 @@ def _selector_result_payload(
         "command": command,
         "timeout_sec": plan.final_verifier_timeout_sec,
         "selectors": selectors,
+        "selector_input_validated": all(
+            _pytest_selector_shape_is_collectable(selector) for selector in selectors
+        ),
+        "selector_input_invalid": False,
         "exit_code": exit_code,
         "timeout": timeout,
         "parser_id": parser.parser_id,
@@ -731,6 +843,10 @@ def _selector_result_payload(
         ),
         "execution_backend": str(result.execution_backend) if result is not None else "not_executed",
     }
+
+
+def _selector_input_error(payload: dict[str, Any]) -> bool:
+    return bool(payload.get("selector_input_invalid"))
 
 
 def _execution_result_payload(result: ExecutionResult) -> dict[str, Any]:
@@ -1103,18 +1219,36 @@ def _inspect_boundary_command_order(
     if not isinstance(observed, list):
         failures.append(f"{label}: 缺少 observed_command_order")
         return
-    if _MODEL_PATCH_STEP not in observed:
+    empty_patch_failure = boundary.get("failure_category") in {
+        "empty_final_patch",
+        "budget_exhausted_empty_patch",
+    }
+    pre_patch_terminal_failure = boundary.get("failure_category") in {
+        "empty_final_patch",
+        "budget_exhausted_empty_patch",
+        "task_timeout_before_final_verifier",
+        "verification_workspace_creation_failed",
+        "environment_setup_failed",
+    }
+    if _MODEL_PATCH_STEP not in observed and not pre_patch_terminal_failure:
         failures.append(f"{label}: observed_command_order 缺少 {_MODEL_PATCH_STEP}")
-    if boundary.get("model_final_patch_apply_result_ref") is None:
+    if boundary.get("model_final_patch_apply_result_ref") is None and not pre_patch_terminal_failure:
         failures.append(f"{label}: 缺少 model_final_patch_apply_result_ref")
+    if empty_patch_failure and boundary.get("empty_final_patch_result_ref") is None:
+        failures.append(f"{label}: 空补丁失败必须绑定 empty_final_patch_result_ref")
     model_apply_failed = boundary.get("failure_category") == "model_patch_apply_failed"
-    if not model_apply_failed:
+    if not model_apply_failed and not pre_patch_terminal_failure:
         if _HIDDEN_PATCH_STEP not in observed:
             failures.append(f"{label}: observed_command_order 缺少 {_HIDDEN_PATCH_STEP}")
         if boundary.get("hidden_test_patch_apply_result_ref") is None:
             failures.append(f"{label}: 缺少 hidden_test_patch_apply_result_ref")
     hidden_patch_failed = str(boundary.get("failure_category") or "").startswith("hidden_test_patch")
-    if not model_apply_failed and not hidden_patch_failed and boundary.get("final_verifier_status") != "not_executed":
+    if (
+        not model_apply_failed
+        and not pre_patch_terminal_failure
+        and not hidden_patch_failed
+        and boundary.get("final_verifier_status") != "not_executed"
+    ):
         if _F2P_STEP not in observed:
             failures.append(f"{label}: observed_command_order 缺少 {_F2P_STEP}")
         if boundary.get("fail_to_pass_result_ref") is None:
@@ -1413,8 +1547,26 @@ def _inspect_evaluator_only_refs(
         size_bytes = ref.get("size_bytes")
         if not isinstance(size_bytes, int) or size_bytes < 0:
             failures.append(f"{path}: metadata.{key} must bind non-negative size_bytes")
+        if key.endswith("_selectors_ref"):
+            ref_path = _metadata_ref_path(ref, path.parent)
+            if ref_path.exists():
+                try:
+                    selectors = _read_selector_ref(ref, path.parent)
+                except ConfigError as exc:
+                    failures.append(f"{path}: metadata.{key} selector list invalid: {exc}")
+                else:
+                    if not selectors and key == "fail_to_pass_selectors_ref":
+                        failures.append(f"{path}: metadata.{key} must not be empty")
     if definition.gold_patch is not None:
         failures.append(f"{path}: formal pre-verl TaskDefinition must not inline raw gold_patch")
+
+
+def _metadata_ref_path(ref: dict[str, Any], base_dir: Path) -> Path:
+    value = ref.get("path") or ref.get("relative_path")
+    if not isinstance(value, str) or not value.strip():
+        return base_dir / "<missing-ref-path>"
+    raw = Path(value)
+    return raw if raw.is_absolute() else base_dir / raw
 
 
 def _inspect_model_visible_fields(

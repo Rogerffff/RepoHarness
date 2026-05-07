@@ -22,9 +22,9 @@ def derive_run_outcome(
         return "interrupted"
     if final_verifier_status == "accepted":
         return "success"
-    if final_verifier_status == "failed":
+    if final_verifier_status in {"failed", "rejected"}:
         return "failed"
-    if final_verifier_status in {"timeout", "error"}:
+    if final_verifier_status in {"timeout", "error", "not_executed"}:
         return "inconclusive"
     return "inconclusive"
 

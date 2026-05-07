@@ -62,6 +62,9 @@ PHASE_NOT_APPLICABLE_REASONS = {
     "verifier_patch_apply": "no verifier patch is configured for this task",
     "test_patch_apply": "no test patch is configured for this task",
 }
+PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON = (
+    "pre-verl final verifier was not executed for this terminal outcome"
+)
 SEMANTICS_TO_PHASE = {
     "source_checkout": "source_checkout",
     "setup": "setup",
@@ -74,11 +77,16 @@ SEMANTICS_TO_PHASE = {
     "verifier_feedback": "run_tests",
     "final_patch_capture": "final_patch_capture",
     "verification_workspace_creation": "verification_workspace_creation",
+    "pre_verl_verification_workspace_creation": "verification_workspace_creation",
     "verifier_patch_apply": "verifier_patch_apply",
     "test_patch_apply": "test_patch_apply",
+    "pre_verl_hidden_test_patch_apply": "test_patch_apply",
     "model_final_patch_apply": "model_final_patch_apply",
+    "pre_verl_model_final_patch_apply": "model_final_patch_apply",
     "fail_to_pass_test_execution": "fail_to_pass_test_execution",
+    "pre_verl_fail_to_pass_test_execution": "fail_to_pass_test_execution",
     "pass_to_pass_test_execution": "pass_to_pass_test_execution",
+    "pre_verl_pass_to_pass_test_execution": "pass_to_pass_test_execution",
     "verifier_final": "final_verifier",
 }
 DEFAULT_DOCKERFILE_TEMPLATE = """\
@@ -998,6 +1006,23 @@ class DockerWorkspaceAdapter:
     def _write_docker_phase_coverage_matrix(self) -> None:
         manifest_path = self.run_dir / "container_execution_facts" / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        phase_not_applicable_reasons = dict(PHASE_NOT_APPLICABLE_REASONS)
+        boundary_path = self.run_dir / "final_verifier_boundary.json"
+        if boundary_path.exists():
+            try:
+                boundary = json.loads(boundary_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                boundary = {}
+            if boundary.get("final_verifier_status") == "not_executed":
+                for phase in {
+                    "run_tests",
+                    "test_patch_apply",
+                    "model_final_patch_apply",
+                    "fail_to_pass_test_execution",
+                    "pass_to_pass_test_execution",
+                    "final_verifier",
+                }:
+                    phase_not_applicable_reasons[phase] = PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON
         by_phase: dict[str, list[dict[str, Any]]] = {phase: [] for phase in REQUIRED_DOCKER_PHASES}
         supporting_entries: list[dict[str, Any]] = []
         for entry in manifest["entries"]:
@@ -1028,7 +1053,7 @@ class DockerWorkspaceAdapter:
                     }
                 )
             else:
-                reason = PHASE_NOT_APPLICABLE_REASONS.get(phase)
+                reason = phase_not_applicable_reasons.get(phase)
                 phases.append(
                     {
                         "phase": phase,

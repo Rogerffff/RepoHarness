@@ -13,6 +13,7 @@ def build_metrics_record(
     *,
     final_verifier: VerifierResult,
     run_outcome: str,
+    final_verifier_status: str | None = None,
     agent_stop_reason: str | None = None,
     turn_count: int = 0,
     tool_call_count: int = 0,
@@ -29,7 +30,7 @@ def build_metrics_record(
     public_tests_ran: bool = False,
     hidden_feedback_ran: bool = False,
 ) -> MetricsRecord:
-    final_status = derive_final_verifier_status(final_verifier)
+    final_status = final_verifier_status or derive_final_verifier_status(final_verifier)
     return MetricsRecord(
         task_success=run_outcome == "success",
         final_verifier_status=final_status,
@@ -67,6 +68,12 @@ def derive_final_verifier_status(final_verifier: VerifierResult) -> str:
         "dependency_error",
         "patch_apply_failed",
         "verification_workspace_error",
+        "budget_exhausted_empty_patch",
+        "empty_final_patch",
+        "selector_input_invalid",
+        "model_patch_apply_failed",
+        "hidden_test_patch_conflict_after_candidate_patch",
+        "hidden_test_patch_apply_failed_on_clean_source",
     }:
         return "error"
     return "failed"

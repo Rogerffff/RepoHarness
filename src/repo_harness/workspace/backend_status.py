@@ -30,10 +30,21 @@ REQUIRED_DOCKER_PHASES = {
     "final_verifier",
 }
 SUPPORTING_DOCKER_PHASES = {"supporting_execution"}
+PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON = (
+    "pre-verl final verifier was not executed for this terminal outcome"
+)
 
 PHASE_ALLOWED_NOT_APPLICABLE_REASONS = {
     "verifier_patch_apply": "no verifier patch is configured for this task",
-    "test_patch_apply": "no test patch is configured for this task",
+    "test_patch_apply": {
+        "no test patch is configured for this task",
+        PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON,
+    },
+    "run_tests": PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON,
+    "model_final_patch_apply": PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON,
+    "fail_to_pass_test_execution": PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON,
+    "pass_to_pass_test_execution": PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON,
+    "final_verifier": PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON,
 }
 
 PHASE_ALLOWED_MANIFEST_PHASES = {
@@ -59,15 +70,37 @@ PHASE_ALLOWED_COMMAND_SEMANTICS = {
     "source_checkout": {"source_checkout"},
     "setup": {"setup"},
     "agent_tool": {"agent_tool", "file_read", "file_write", "bash_diagnostic", "git_diff"},
-    "run_tests": {"run_tests", "verifier_feedback", "fail_to_pass_test_execution", "pass_to_pass_test_execution"},
+    "run_tests": {
+        "run_tests",
+        "verifier_feedback",
+        "fail_to_pass_test_execution",
+        "pre_verl_fail_to_pass_test_execution",
+        "pass_to_pass_test_execution",
+        "pre_verl_pass_to_pass_test_execution",
+    },
     "final_patch_capture": {"final_patch_capture"},
-    "verification_workspace_creation": {"verification_workspace_creation"},
+    "verification_workspace_creation": {
+        "verification_workspace_creation",
+        "pre_verl_verification_workspace_creation",
+    },
     "verifier_patch_apply": {"verifier_patch_apply"},
-    "test_patch_apply": {"test_patch_apply"},
-    "model_final_patch_apply": {"model_final_patch_apply"},
-    "fail_to_pass_test_execution": {"fail_to_pass_test_execution"},
-    "pass_to_pass_test_execution": {"pass_to_pass_test_execution"},
-    "final_verifier": {"verifier_final", "fail_to_pass_test_execution", "pass_to_pass_test_execution"},
+    "test_patch_apply": {"test_patch_apply", "pre_verl_hidden_test_patch_apply"},
+    "model_final_patch_apply": {"model_final_patch_apply", "pre_verl_model_final_patch_apply"},
+    "fail_to_pass_test_execution": {
+        "fail_to_pass_test_execution",
+        "pre_verl_fail_to_pass_test_execution",
+    },
+    "pass_to_pass_test_execution": {
+        "pass_to_pass_test_execution",
+        "pre_verl_pass_to_pass_test_execution",
+    },
+    "final_verifier": {
+        "verifier_final",
+        "fail_to_pass_test_execution",
+        "pre_verl_fail_to_pass_test_execution",
+        "pass_to_pass_test_execution",
+        "pre_verl_pass_to_pass_test_execution",
+    },
 }
 REQUIRED_DOCKER_COMMAND_SEMANTICS = set().union(*PHASE_ALLOWED_COMMAND_SEMANTICS.values())
 
@@ -604,6 +637,7 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
     if missing:
         raise WorkspaceBackendError("docker phase coverage matrix 缺少 phase：" + ", ".join(missing))
     refs_in_matrix: set[str] = set()
+    pre_verl_not_executed_boundary = _pre_verl_boundary_status(evidence_root) == "not_executed"
     for phase_name in sorted(REQUIRED_DOCKER_PHASES):
         phase = by_phase[phase_name]
         status_value = phase.get("status")
@@ -613,8 +647,18 @@ def _assert_docker_phase_coverage(status: DockerStageStatus, evidence_root: Path
             expected_reason = PHASE_ALLOWED_NOT_APPLICABLE_REASONS.get(phase_name)
             if expected_reason is None:
                 raise WorkspaceBackendError(f"docker phase coverage 不能把 required phase 标记为 not_applicable：{phase_name}")
-            if phase.get("structured_reason") != expected_reason:
+            allowed_reasons = expected_reason if isinstance(expected_reason, set) else {expected_reason}
+            if phase.get("structured_reason") not in allowed_reasons:
                 raise WorkspaceBackendError(f"docker phase coverage not_applicable reason 非法：{phase_name}")
+            if (
+                phase.get("structured_reason") == PRE_VERL_FINAL_VERIFIER_NOT_EXECUTED_PHASE_REASON
+                and not pre_verl_not_executed_boundary
+            ):
+                raise WorkspaceBackendError(
+                    "docker phase coverage pre-verl not_applicable 需要 "
+                    "final_verifier_boundary.json 且 final_verifier_status=not_executed："
+                    f"{phase_name}"
+                )
             if phase.get("facts_refs"):
                 raise WorkspaceBackendError(f"docker phase coverage not_applicable 不能包含 facts refs：{phase_name}")
             _assert_no_manifest_facts_for_not_applicable_phase(
@@ -762,8 +806,17 @@ def _assert_final_verifier_phase_has_complete_semantics(
     }
     if "verifier_final" in semantics:
         return
-    required = {"fail_to_pass_test_execution", "pass_to_pass_test_execution"}
-    missing = sorted(required.difference(semantics))
+    has_fail_to_pass = bool(
+        semantics.intersection({"fail_to_pass_test_execution", "pre_verl_fail_to_pass_test_execution"})
+    )
+    has_pass_to_pass = bool(
+        semantics.intersection({"pass_to_pass_test_execution", "pre_verl_pass_to_pass_test_execution"})
+    )
+    missing = []
+    if not has_fail_to_pass:
+        missing.append("fail_to_pass_test_execution")
+    if not has_pass_to_pass:
+        missing.append("pass_to_pass_test_execution")
     if missing:
         raise WorkspaceBackendError(
             "docker final_verifier aggregate 缺少语义：" + ", ".join(missing)
@@ -788,3 +841,15 @@ def _read_evidence_json(evidence_root: Path, relative_ref: str) -> dict[str, obj
     if not isinstance(payload, dict):
         raise WorkspaceBackendError(f"Docker evidence ref 顶层必须是 JSON object：{relative_ref}")
     return payload
+
+
+def _pre_verl_boundary_status(evidence_root: Path) -> str | None:
+    boundary_path = evidence_root / "final_verifier_boundary.json"
+    if not boundary_path.exists():
+        return None
+    try:
+        payload = json.loads(boundary_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    status = payload.get("final_verifier_status")
+    return str(status) if isinstance(status, str) else None

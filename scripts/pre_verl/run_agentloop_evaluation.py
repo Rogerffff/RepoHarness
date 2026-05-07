@@ -347,10 +347,34 @@ def _write_task_definition(
     )
     f2p_path = selectors_dir / f"{task.task_id}_fail_to_pass_selectors.json"
     p2p_path = selectors_dir / f"{task.task_id}_pass_to_pass_selectors.json"
-    fail_to_pass = [str(item) for item in task.verifier_plan.get("fail_to_pass_selectors", [])]
-    pass_to_pass = [str(item) for item in task.evaluator_only_evidence.get("PASS_TO_PASS", [])]
+    normalization_path = selectors_dir / f"{task.task_id}_selector_normalization_report.json"
+    fail_to_pass, f2p_normalization_report = _normalize_pytest_selectors(
+        [str(item) for item in task.verifier_plan.get("fail_to_pass_selectors", [])],
+        task_id=task.task_id,
+        suite="fail_to_pass",
+    )
+    pass_to_pass, p2p_normalization_report = _normalize_pytest_selectors(
+        [str(item) for item in task.evaluator_only_evidence.get("PASS_TO_PASS", [])],
+        task_id=task.task_id,
+        suite="pass_to_pass",
+    )
+    selector_normalization_report = {
+        "schema_version": "repo_harness_pre_verl_selector_normalization_report_v0",
+        "task_id": task.task_id,
+        "reports": {
+            "fail_to_pass": f2p_normalization_report,
+            "pass_to_pass": p2p_normalization_report,
+        },
+        "status": (
+            "passed"
+            if f2p_normalization_report["status"] == "passed"
+            and p2p_normalization_report["status"] == "passed"
+            else "failed"
+        ),
+    }
     _write_json(f2p_path, fail_to_pass)
     _write_json(p2p_path, pass_to_pass)
+    _write_json(normalization_path, selector_normalization_report)
     materialization_entry_path = _path_from_ref(
         task.source_record["swebench_dev_materialization_entry_ref"],
         task_set_manifest_path.parent,
@@ -422,6 +446,10 @@ def _write_task_definition(
             "fail_to_pass_selectors_ref": _file_ref(f2p_path, visibility="evaluator_only"),
             "pass_to_pass_selectors_ref": _file_ref(p2p_path, visibility="evaluator_only"),
             "hidden_patch_clean_source_self_check_ref": hidden_self_check_ref,
+            "selector_normalization_report_ref": _file_ref(
+                normalization_path,
+                visibility="evaluator_only",
+            ),
             "source_tree_sha256": task.source_record.get("source_tree_sha256"),
             "custom_frozen_subset": True,
             "leaderboard_comparable": False,
@@ -433,6 +461,7 @@ def _write_task_definition(
         "fail_to_pass_selectors_ref": _file_ref(f2p_path, visibility="evaluator_only"),
         "pass_to_pass_selectors_ref": _file_ref(p2p_path, visibility="evaluator_only"),
         "hidden_test_patch_ref": hidden_test_patch_ref,
+        "selector_normalization_report_ref": _file_ref(normalization_path, visibility="evaluator_only"),
     }
 
 
@@ -733,6 +762,71 @@ def _budget_payload(args: argparse.Namespace) -> dict[str, Any]:
         "command_timeout_sec": args.command_timeout_sec,
         "max_output_tokens": args.max_output_tokens,
     }
+
+
+def _normalize_pytest_selectors(
+    selectors: list[str],
+    *,
+    task_id: str,
+    suite: str,
+) -> tuple[list[str], dict[str, Any]]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    changes: list[dict[str, Any]] = []
+    invalid_after_normalization: list[str] = []
+    for raw_selector in selectors:
+        raw = str(raw_selector).strip()
+        if not raw:
+            continue
+        fixed, reason = _normalize_pytest_selector(raw)
+        if reason is not None:
+            changes.append({"raw_selector": raw, "normalized_selector": fixed, "reason": reason})
+        if not _selector_shape_is_collectable(fixed):
+            invalid_after_normalization.append(fixed)
+            continue
+        if fixed not in seen:
+            seen.add(fixed)
+            normalized.append(fixed)
+    report = {
+        "schema_version": "repo_harness_pre_verl_selector_normalization_report_v0",
+        "task_id": task_id,
+        "suite": suite,
+        "input_selector_count": len([item for item in selectors if str(item).strip()]),
+        "normalized_selector_count": len(normalized),
+        "changed_selector_count": len(changes),
+        "dropped_duplicate_count": len([item for item in selectors if str(item).strip()]) - len(normalized),
+        "invalid_after_normalization_count": len(invalid_after_normalization),
+        "normalization_policy": (
+            "unbalanced pytest parametrization suffixes are widened to the parent test node "
+            "so final verifier does not fail with pytest collection errors caused by truncated "
+            "evaluator-only selector strings"
+        ),
+        "changes": changes,
+        "invalid_after_normalization": invalid_after_normalization,
+        "status": "passed" if not invalid_after_normalization else "failed",
+    }
+    if invalid_after_normalization:
+        raise SystemExit(
+            f"{task_id}: selector normalization produced invalid {suite} selectors: "
+            + ", ".join(invalid_after_normalization[:5])
+        )
+    return normalized, report
+
+
+def _normalize_pytest_selector(selector: str) -> tuple[str, str | None]:
+    if "[" not in selector:
+        return selector, None
+    suffix = selector.rsplit("::", 1)[-1]
+    if suffix.count("[") == suffix.count("]"):
+        return selector, None
+    return selector.rsplit("[", 1)[0], "truncated_parametrized_selector_widened_to_parent"
+
+
+def _selector_shape_is_collectable(selector: str) -> bool:
+    if not selector or "::" not in selector:
+        return False
+    suffix = selector.rsplit("::", 1)[-1]
+    return suffix.count("[") == suffix.count("]")
 
 
 def _run_checked_command(

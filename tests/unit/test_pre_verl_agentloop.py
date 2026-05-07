@@ -7,6 +7,7 @@ import yaml
 
 from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
+    _selector_input_error,
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
     load_pre_verl_swebench_dev_runtime_plan,
@@ -138,6 +139,24 @@ def test_pre_verl_agentloop_task_definitions_reject_bad_evaluator_refs(
         )
 
 
+def test_pre_verl_agentloop_task_definitions_reject_truncated_selector_ref(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path)
+    selector_path = task_path.parent / "evaluator" / "pass_to_pass.json"
+    selector_path.write_text(
+        '["tests/test_sample.py::test_valid["]\n',
+        encoding="utf-8",
+    )
+    manifest = _write_manifest(tmp_path, {"task_definition_refs": [{"path": _rel(tmp_path, task_path)}]})
+
+    with pytest.raises(ConfigError, match="不可 collect 的 pytest selector"):
+        inspect_pre_verl_agentloop_task_definitions(
+            manifest,
+            assert_evaluator_only_hidden_inputs=True,
+        )
+
+
 def test_pre_verl_agentloop_task_definitions_reject_hidden_visible_markers(
     tmp_path: Path,
 ) -> None:
@@ -152,6 +171,18 @@ def test_pre_verl_agentloop_task_definitions_reject_hidden_visible_markers(
             manifest,
             assert_no_hidden_material_in_model_visible_fields=True,
         )
+
+
+def test_pre_verl_selector_exit_code_four_is_not_implicitly_harness_input_error() -> None:
+    assert _selector_input_error(
+        {
+            "exit_code": 4,
+            "error_type": "test_command_error",
+            "selector_input_validated": True,
+            "selector_input_invalid": False,
+        }
+    ) is False
+    assert _selector_input_error({"selector_input_invalid": True}) is True
 
 
 def test_pre_verl_agentloop_run_config_passes_formal_gates(tmp_path: Path) -> None:

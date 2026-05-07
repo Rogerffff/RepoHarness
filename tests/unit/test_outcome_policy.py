@@ -25,6 +25,8 @@ def test_outcome_policy_prioritizes_baseline_gate():
 def test_outcome_policy_maps_final_verifier_status():
     assert derive_run_outcome(final_verifier_status="accepted") == "success"
     assert derive_run_outcome(final_verifier_status="failed") == "failed"
+    assert derive_run_outcome(final_verifier_status="rejected") == "failed"
+    assert derive_run_outcome(final_verifier_status="not_executed") == "inconclusive"
     assert derive_run_outcome(final_verifier_status="timeout") == "inconclusive"
     assert derive_run_outcome(final_verifier_status="error") == "inconclusive"
 

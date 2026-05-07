@@ -409,7 +409,15 @@ class RunMetadata(StrictBaseModel):
     agent_stop_reason: str | None = None
     run_outcome: str
     reward_status: Literal["present", "missing", "not_applicable", "invalid"]
-    final_verifier_status: Literal["accepted", "failed", "timeout", "error", "skipped"]
+    final_verifier_status: Literal[
+        "accepted",
+        "failed",
+        "rejected",
+        "not_executed",
+        "timeout",
+        "error",
+        "skipped",
+    ]
     final_verifier_mode: str | None = None
     source_checkout: SourceCheckoutFacts | None = None
     environment_spec_hash: str | None = Field(default=None, pattern=SHA256_PATTERN)

@@ -170,6 +170,28 @@ def test_scheduler_marks_missing_blocked_evidence_as_incomplete(tmp_path: Path) 
     assert matrix_payload["quality_gate_blocked_count"] == 0
 
 
+def test_scheduler_normalizes_truncated_parametrized_selectors() -> None:
+    script = _load_scheduler_module()
+
+    selectors, report = script._normalize_pytest_selectors(
+        [
+            "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid[",
+            "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid[1]",
+            "tests/test_cli.py::test__cli__command_fix_stdin[select",
+        ],
+        task_id="task",
+        suite="pass_to_pass",
+    )
+
+    assert selectors == [
+        "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid",
+        "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid[1]",
+        "tests/test_cli.py::test__cli__command_fix_stdin",
+    ]
+    assert report["changed_selector_count"] == 2
+    assert report["status"] == "passed"
+
+
 def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
     root = tmp_path / "materialized"
     freeze = tmp_path / "freeze"

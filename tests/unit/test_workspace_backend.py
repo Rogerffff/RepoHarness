@@ -232,6 +232,76 @@ def test_docker_backend_inspect_rejects_required_phase_not_applicable(tmp_path: 
         inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
 
 
+def test_docker_backend_inspect_allows_pre_verl_skipped_final_verifier_phases(tmp_path: Path):
+    status_path = tmp_path / "docker_backend_status.json"
+    skipped_phases = {
+        "run_tests",
+        "test_patch_apply",
+        "model_final_patch_apply",
+        "fail_to_pass_test_execution",
+        "pass_to_pass_test_execution",
+        "final_verifier",
+    }
+    status = _valid_docker_backend_status().model_copy(
+        update={
+            "container_execution_facts_refs": [
+                ref
+                for ref in _valid_docker_backend_status().container_execution_facts_refs
+                if Path(ref).stem not in skipped_phases
+            ]
+        }
+    )
+    _write_status(status_path, status)
+    matrix_path = tmp_path / status.docker_phase_coverage_matrix_ref
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    for phase in matrix["phases"]:
+        if phase["phase"] in skipped_phases:
+            phase["status"] = "not_applicable"
+            phase["structured_reason"] = "pre-verl final verifier was not executed for this terminal outcome"
+            phase["facts_refs"] = []
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (tmp_path / "final_verifier_boundary.json").write_text(
+        json.dumps({"final_verifier_status": "not_executed"}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    summary = inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+    assert "docker_backend=passed" in summary
+
+
+def test_docker_backend_inspect_rejects_pre_verl_not_applicable_without_not_executed_boundary(
+    tmp_path: Path,
+):
+    status_path = tmp_path / "docker_backend_status.json"
+    skipped_phase = "final_verifier"
+    status = _valid_docker_backend_status().model_copy(
+        update={
+            "container_execution_facts_refs": [
+                ref
+                for ref in _valid_docker_backend_status().container_execution_facts_refs
+                if Path(ref).stem != skipped_phase
+            ]
+        }
+    )
+    _write_status(status_path, status)
+    matrix_path = tmp_path / status.docker_phase_coverage_matrix_ref
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    for phase in matrix["phases"]:
+        if phase["phase"] == skipped_phase:
+            phase["status"] = "not_applicable"
+            phase["structured_reason"] = "pre-verl final verifier was not executed for this terminal outcome"
+            phase["facts_refs"] = []
+    matrix_path.write_text(json.dumps(matrix, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (tmp_path / "final_verifier_boundary.json").write_text(
+        json.dumps({"final_verifier_status": "accepted"}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(WorkspaceBackendError, match="final_verifier_status=not_executed"):
+        inspect_workspace_backend_status(status_file=status_path, assert_docker_backend=True)
+
+
 def test_docker_backend_inspect_rejects_not_applicable_phase_with_manifest_fact(tmp_path: Path):
     status_path = tmp_path / "docker_backend_status.json"
     extra_ref = "container_execution_facts/verifier_patch_apply.json"

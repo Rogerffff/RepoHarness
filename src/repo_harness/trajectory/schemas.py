@@ -67,7 +67,15 @@ class RunSummary(StrictBaseModel):
     run_id: str
     task_id: str | None = None
     agent_stop_reason: str | None = None
-    final_verifier_status: Literal["accepted", "failed", "timeout", "error", "skipped"] = "skipped"
+    final_verifier_status: Literal[
+        "accepted",
+        "failed",
+        "rejected",
+        "not_executed",
+        "timeout",
+        "error",
+        "skipped",
+    ] = "skipped"
     run_outcome: Literal["success", "failed", "invalid_task", "flaky_task", "interrupted", "inconclusive"]
     key_artifact_refs: list[ArtifactRef] = Field(default_factory=list)
     failure_diagnostics: list[str] = Field(default_factory=list)
@@ -77,7 +85,15 @@ class RunSummary(StrictBaseModel):
 class MetricsRecord(StrictBaseModel):
     schema_version: str = "repo_harness_metrics_v0"
     task_success: bool = False
-    final_verifier_status: Literal["accepted", "failed", "timeout", "error", "skipped"] = "skipped"
+    final_verifier_status: Literal[
+        "accepted",
+        "failed",
+        "rejected",
+        "not_executed",
+        "timeout",
+        "error",
+        "skipped",
+    ] = "skipped"
     run_outcome: Literal["success", "failed", "invalid_task", "flaky_task", "interrupted", "inconclusive"]
     turn_count: int = Field(default=0, ge=0)
     tool_call_count: int = Field(default=0, ge=0)

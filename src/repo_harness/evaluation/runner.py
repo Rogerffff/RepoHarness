@@ -456,15 +456,29 @@ def run_task(
                 recorder=recorder,
                 adapter=adapter,
                 config=config,
-            )
+        )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
-        if _task_timeout_expired(task_deadline_monotonic):
+        task_timeout_expired = _task_timeout_expired(task_deadline_monotonic)
+        if task_timeout_expired:
             _append_task_timeout_event(
                 run_id=actual_run_id,
                 task_id=loaded.runnable_task.task_id,
                 recorder=recorder,
                 phase="before_final_verifier",
             )
+        if task_timeout_expired and pre_verl_runtime_plan is not None:
+            final_verifier = run_pre_verl_swebench_dev_final_verifier(
+                plan=pre_verl_runtime_plan,
+                source_checkout=source,
+                dependency_state=dependency_state,
+                final_patch_path=capture.patch_path,
+                run_dir=run_dir,
+                adapter=adapter,
+                recorder=recorder,
+                setup_command=effective_setup_command,
+                agent_stop_reason=loop_state.agent_stop_reason or "task_timeout",
+            )
+        elif task_timeout_expired:
             final_verifier = build_error_verifier_result(
                 command="strict_patch_replay",
                 error_type="task_timeout",
@@ -481,6 +495,7 @@ def run_task(
                 adapter=adapter,
                 recorder=recorder,
                 setup_command=effective_setup_command,
+                agent_stop_reason=loop_state.agent_stop_reason,
             )
         elif swebench_like_runtime_plan is not None:
             try:
@@ -573,6 +588,8 @@ def run_task(
             {"budget_policy": "preserve_json"},
         )
         final_status = derive_final_verifier_status(final_verifier)
+        if pre_verl_runtime_plan is not None:
+            final_status = _pre_verl_boundary_final_verifier_status(run_dir) or final_status
         run_outcome = derive_run_outcome(
             baseline_status=baseline.status,
             final_verifier_status=final_status,
@@ -582,6 +599,7 @@ def run_task(
         metrics = build_metrics_record(
             final_verifier=final_verifier,
             run_outcome=run_outcome,
+            final_verifier_status=final_status,
             agent_stop_reason=loop_state.agent_stop_reason,
             turn_count=loop_state.turn_count,
             tool_call_count=loop_state.tool_call_count,
@@ -660,6 +678,20 @@ def run_task(
         recorder.finalize_run(summary)
         adapter.cleanup_workspaces()
     return run_dir
+
+
+def _pre_verl_boundary_final_verifier_status(run_dir: Path) -> str | None:
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    if not boundary_path.exists():
+        return None
+    try:
+        payload = json.loads(boundary_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    status = payload.get("final_verifier_status")
+    if status in {"accepted", "rejected", "not_executed", "timeout", "error"}:
+        return str(status)
+    return None
 
 
 def run_batch(

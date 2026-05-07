@@ -255,9 +255,11 @@ def _model_call_summary(run_path: Path) -> dict[str, Any]:
 
 
 def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadinessFacts:
-    has_final_patch = (run_path / "final.patch").exists()
+    final_patch = run_path / "final.patch"
+    has_final_patch = final_patch.exists() and final_patch.stat().st_size > 0
     verifier = _read_json_if_exists(run_path / "verifier.json")
     metrics = _read_json_if_exists(run_path / "metrics.json")
+    boundary = _read_json_if_exists(run_path / "final_verifier_boundary.json")
     has_formal_final_verifier = (
         verifier.get("verifier_stage") == "final"
         and metrics.get("interaction_efficiency", {}).get("final_verifier_mode") == "strict_patch_replay"
@@ -269,11 +271,20 @@ def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadi
         "clean_transcript": (run_path / "transcript.jsonl").exists(),
         "clean_artifact_manifest": not artifact_errors,
     }
+    training_checks = {
+        "accepted_by_final_verifier": metrics.get("final_verifier_status") == "accepted",
+        "successful_run_outcome": metrics.get("run_outcome") == "success",
+        "not_budget_exhausted": metrics.get("interaction_efficiency", {}).get("agent_stop_reason")
+        not in {"max_turns", "max_tool_calls", "task_timeout", "context_limit"},
+    }
+    if boundary.get("final_verifier_status") == "not_executed":
+        training_checks["accepted_by_final_verifier"] = False
     blockers = [
         name
         for name, ok in readiness.items()
         if not ok
     ]
+    blockers.extend(name for name, ok in training_checks.items() if not ok)
     return ExportReadinessFacts(
         **readiness,
         training_export_ready=not blockers,
@@ -298,7 +309,7 @@ def _failure_diagnostics(
                 message=baseline.dependency_error or f"baseline status: {baseline.status}",
             )
         ]
-    if final_verifier_status == "failed":
+    if final_verifier_status in {"failed", "rejected"}:
         return [
             FailureDiagnostics(
                 failure_category=FailureCategory.environment_failure,
