@@ -69,8 +69,19 @@ def test_scheduler_boundary_index_skips_quality_gate_blocked_runs(tmp_path: Path
     blocked_run = tmp_path / "runs" / "blocked"
     boundary_run.mkdir(parents=True)
     blocked_run.mkdir(parents=True)
-    _write_json(boundary_run / "final_verifier_boundary.json", {"status": "present"})
-    _write_json(boundary_run / "run_metadata.json", {"run_outcome": "inconclusive"})
+    _write_json(
+        boundary_run / "final_verifier_boundary.json",
+        {
+            "final_verifier_status": "rejected",
+            "accepted": False,
+            "failure_category": "model_patch_rejected_by_final_verifier",
+            "failure_owner": "model_wrong_fix",
+        },
+    )
+    _write_json(
+        boundary_run / "run_metadata.json",
+        {"run_outcome": "inconclusive", "final_verifier_status": "error"},
+    )
     _write_json(boundary_run / "metrics.json", {"final_verifier_status": "error"})
     _write_json(boundary_run / "baseline.json", {"status": "valid"})
     _write_json(blocked_run / "run_metadata.json", {"agent_stop_reason": "skipped_invalid_baseline"})
@@ -110,6 +121,11 @@ def test_scheduler_boundary_index_skips_quality_gate_blocked_runs(tmp_path: Path
     matrix_payload = _read_json(run_matrix)
     assert [entry["task_id"] for entry in boundary_payload["entries"]] == ["with_boundary"]
     assert entries[0]["status"] == "executed_formal_boundary"
+    assert entries[0]["final_verifier_status"] == "rejected"
+    assert entries[0]["final_verifier_status_source"] == "final_verifier_boundary"
+    assert entries[0]["failure_category"] == "model_patch_rejected_by_final_verifier"
+    assert matrix_payload["entries"][0]["final_verifier_status"] == "rejected"
+    assert matrix_payload["entries"][0]["final_verifier_status_source"] == "final_verifier_boundary"
     assert entries[1]["status"] == "quality_gate_blocked"
     assert entries[1]["blocked_reason"] == "setup_failed"
     assert matrix_payload["formal_boundary_entry_count"] == 1

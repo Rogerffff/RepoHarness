@@ -633,6 +633,7 @@ def _annotate_run_task_entry(entry: dict[str, Any]) -> None:
     metrics = _read_json_or_none(run_dir / "metrics.json") or {}
     metadata = _read_json_or_none(run_dir / "run_metadata.json") or {}
     boundary_path = run_dir / "final_verifier_boundary.json"
+    boundary = _read_json_or_none(boundary_path) if boundary_path.exists() else None
     entry["run_task_run_dir_exists"] = run_dir.exists()
     entry["final_verifier_boundary_available"] = boundary_path.exists()
     missing_artifacts: list[str] = []
@@ -661,7 +662,15 @@ def _annotate_run_task_entry(entry: dict[str, Any]) -> None:
         if isinstance(metrics.get("interaction_efficiency"), dict)
         else None
     )
-    entry["final_verifier_status"] = metadata.get("final_verifier_status") or metrics.get("final_verifier_status")
+    if isinstance(boundary, dict) and boundary.get("final_verifier_status"):
+        entry["final_verifier_status"] = boundary.get("final_verifier_status")
+        entry["final_verifier_status_source"] = "final_verifier_boundary"
+        entry["accepted"] = boundary.get("accepted")
+        entry["failure_category"] = boundary.get("failure_category")
+        entry["failure_owner"] = boundary.get("failure_owner")
+    else:
+        entry["final_verifier_status"] = metadata.get("final_verifier_status") or metrics.get("final_verifier_status")
+        entry["final_verifier_status_source"] = "run_metadata_or_metrics"
     entry["run_outcome"] = metadata.get("run_outcome") or metrics.get("run_outcome")
     if entry.get("run_task_exit_code") == 0 and boundary_path.exists():
         entry["status"] = "executed_formal_boundary"
