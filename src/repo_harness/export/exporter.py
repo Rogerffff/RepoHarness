@@ -36,7 +36,12 @@ from repo_harness.export.schemas import ExportPolicy, ExportRecord, ExportRecord
 from repo_harness.schema_versions import EXPORT_SCHEMA_VERSION
 from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
 
-ExportFormat = Literal["sft_jsonl", "rl_jsonl", "preference_jsonl"]
+ExportFormat = Literal[
+    "sft_jsonl",
+    "rl_jsonl",
+    "preference_jsonl",
+    "provider_reasoning_trace_training_export",
+]
 
 
 def export_run_or_runs(
@@ -57,6 +62,10 @@ def export_run_or_runs(
         return _export_many(path, export_format, policy=policy)
     if export_format == "preference_jsonl":
         return export_preference_jsonl(path, policy=policy, compare_scope_path=compare_scope_path)
+    if export_format == "provider_reasoning_trace_training_export":
+        if _looks_like_run_dir(path):
+            return export_provider_reasoning_trace_training_export(path, policy=policy)
+        return _export_many_provider_reasoning_trace(path, policy=policy)
     raise ExportError(f"不支持的导出格式：{export_format}")
 
 
@@ -110,6 +119,67 @@ def export_rl_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None) 
         skipped_reason=None,
         policy=policy or ExportPolicy(),
     )
+
+
+def export_provider_reasoning_trace_training_export(
+    run_dir: str | Path,
+    *,
+    policy: ExportPolicy | None = None,
+) -> Path:
+    resolved_policy = policy or ExportPolicy()
+    _require_provider_reasoning_trace_opt_in(resolved_policy)
+    run_path = _require_run_dir(run_dir)
+    record = _build_record_safely(
+        run_path,
+        "provider_reasoning_trace_training_export",
+        _build_provider_reasoning_trace_record,
+    )
+    return _write_format_export(
+        export_root=run_path / "exports",
+        export_format="provider_reasoning_trace_training_export",
+        records=[record],
+        run_paths=[run_path],
+        skipped_reason=None,
+        policy=resolved_policy,
+    )
+
+
+def _export_many_provider_reasoning_trace(
+    runs_dir: Path,
+    *,
+    policy: ExportPolicy | None = None,
+) -> Path:
+    resolved_policy = policy or ExportPolicy()
+    _require_provider_reasoning_trace_opt_in(resolved_policy)
+    if not runs_dir.exists() or not runs_dir.is_dir():
+        raise ExportError(f"runs directory 不存在：{runs_dir}")
+    run_paths = [run_dir for run_dir in sorted(runs_dir.iterdir()) if _looks_like_run_dir(run_dir)]
+    records = [
+        _build_record_safely(
+            run_dir,
+            "provider_reasoning_trace_training_export",
+            _build_provider_reasoning_trace_record,
+        )
+        for run_dir in run_paths
+    ]
+    if not records:
+        raise ExportError(f"runs directory 中没有可导出的 run：{runs_dir}")
+    return _write_format_export(
+        export_root=runs_dir / "exports",
+        export_format="provider_reasoning_trace_training_export",
+        records=records,
+        run_paths=run_paths,
+        skipped_reason=None,
+        policy=resolved_policy,
+    )
+
+
+def _require_provider_reasoning_trace_opt_in(policy: ExportPolicy) -> None:
+    if not policy.allow_provider_reasoning_trace_training:
+        raise ExportError(
+            "provider_reasoning_trace_training_export requires "
+            "allow_provider_reasoning_trace_training=true"
+        )
 
 
 def export_preference_jsonl(
@@ -233,6 +303,7 @@ def _write_format_export(
         "format": export_format,
         "include_diagnostic": False,
         "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
+        "allow_provider_reasoning_trace_training": policy.allow_provider_reasoning_trace_training,
     }
     command_args.update(command_args_extra or {})
     manifest = build_export_manifest(
@@ -317,6 +388,7 @@ def _write_preference_skipped_export(
         "format": "preference_jsonl",
         "include_diagnostic": False,
         "allow_oracle_feedback_training": policy.allow_oracle_feedback_training,
+        "allow_provider_reasoning_trace_training": policy.allow_provider_reasoning_trace_training,
     }
     command_args.update(_pairing_command_args(pairing_summary, compare_scope_path=compare_scope_path))
     manifest = build_export_manifest(
@@ -378,6 +450,7 @@ def _format_short_name(export_format: str) -> str:
         "sft_jsonl": "sft",
         "rl_jsonl": "rl",
         "preference_jsonl": "preference",
+        "provider_reasoning_trace_training_export": "provider_reasoning_trace",
     }.get(export_format, export_format)
 
 
@@ -457,6 +530,62 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
         metadata=metadata,
         invalid_for_training=_invalid_for_training(run_path),
         invalid_reason=_invalid_reason(run_path),
+    )
+
+
+def _build_provider_reasoning_trace_record(run_path: Path) -> ExportRecord:
+    metadata = _safe_metadata(
+        run_path,
+        export_format="provider_reasoning_trace_training_export",
+    )
+    traces = []
+    for index, ref in enumerate(_provider_reasoning_trace_artifacts(run_path), start=1):
+        source = _read_artifact_json(run_path, ref)
+        reasoning_content = source.get("reasoning_content")
+        if not isinstance(reasoning_content, str) or not reasoning_content:
+            continue
+        traces.append(
+            {
+                "trace_index": index,
+                "provider": source.get("provider", "deepseek"),
+                "model_call_id": source.get("model_call_id"),
+                "state_id": source.get("state_id"),
+                "target": {
+                    "type": "provider_reasoning_trace",
+                    "reasoning_content": _sanitize_text(reasoning_content),
+                },
+                "source_ref": ref,
+                "reasoning_trace_training_allowed": source.get(
+                    "reasoning_trace_training_allowed"
+                )
+                is True,
+                "ordinary_sft_target_allowed": False,
+                "default_training_payload_allowed": False,
+                "not_public_safe_by_default": True,
+                "requires_explicit_reasoning_export_policy": True,
+                "raw_provider_artifact": False,
+            }
+        )
+    invalid_reason = _invalid_reason(run_path)
+    if not traces:
+        invalid_reason = invalid_reason or "missing_provider_reasoning_trace_source"
+    payload = {
+        "target_type": "provider_reasoning_trace",
+        "provider": "deepseek",
+        "reasoning_trace_targets": traces,
+        "ordinary_sft_target_allowed": False,
+        "default_training_payload_allowed": False,
+        "not_public_safe_by_default": True,
+        "requires_explicit_reasoning_export_policy": True,
+    }
+    return ExportRecord(
+        sample_id=f"{run_path.name}_provider_reasoning_trace",
+        task_id=_task_id(run_path),
+        source_run_id=run_path.name,
+        payload=payload,
+        metadata=metadata,
+        invalid_for_training=bool(invalid_reason),
+        invalid_reason=invalid_reason,
     )
 
 
@@ -956,6 +1085,15 @@ def _content_replacement_state_artifacts(run_path: Path) -> list[dict[str, Any]]
         artifact
         for artifact in manifest.get("artifacts", [])
         if artifact.get("kind") == "content_replacement_state"
+    ]
+
+
+def _provider_reasoning_trace_artifacts(run_path: Path) -> list[dict[str, Any]]:
+    manifest = _safe_artifact_manifest(run_path)
+    return [
+        artifact
+        for artifact in manifest.get("artifacts", [])
+        if artifact.get("kind") == "deepseek_provider_reasoning_trace"
     ]
 
 

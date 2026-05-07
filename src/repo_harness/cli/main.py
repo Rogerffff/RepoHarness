@@ -279,7 +279,12 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument(
         "--format",
         required=True,
-        choices=["sft_jsonl", "rl_jsonl", "preference_jsonl"],
+        choices=[
+            "sft_jsonl",
+            "rl_jsonl",
+            "preference_jsonl",
+            "provider_reasoning_trace_training_export",
+        ],
         help="导出格式。",
     )
     export.add_argument(
@@ -291,6 +296,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--compare-scope",
         default=None,
         help="Preference export 使用的 CompareScope 或 PairingPolicy JSON 文件路径。",
+    )
+    export.add_argument(
+        "--allow-provider-reasoning-trace-training",
+        action="store_true",
+        help=(
+            "显式允许 provider_reasoning_trace_training_export 输出 DeepSeek reasoning trace "
+            "训练目标；默认不允许。"
+        ),
     )
 
     inspect_run = subparsers.add_parser(
@@ -307,7 +320,12 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_export_parser.add_argument("--all", action="store_true", help="检查 exports 根目录下全部规范导出目录。")
     inspect_export_parser.add_argument(
         "--format",
-        choices=["sft_jsonl", "rl_jsonl", "preference_jsonl"],
+        choices=[
+            "sft_jsonl",
+            "rl_jsonl",
+            "preference_jsonl",
+            "provider_reasoning_trace_training_export",
+        ],
         default=None,
         help="只检查指定导出格式。",
     )
@@ -3124,11 +3142,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                 compare_scope_path=args.compare_scope,
                 policy=ExportPolicy(
                     allow_oracle_feedback_training=args.allow_oracle_feedback_training,
-                    filter_rules=(
-                        ["allow_oracle_feedback_training"]
-                        if args.allow_oracle_feedback_training
-                        else []
+                    allow_provider_reasoning_trace_training=(
+                        args.allow_provider_reasoning_trace_training
                     ),
+                    filter_rules=[
+                        *(
+                            ["allow_oracle_feedback_training"]
+                            if args.allow_oracle_feedback_training
+                            else []
+                        ),
+                        *(
+                            ["allow_provider_reasoning_trace_training"]
+                            if args.allow_provider_reasoning_trace_training
+                            else []
+                        ),
+                    ],
                 ),
             )
         except RepoHarnessError as exc:

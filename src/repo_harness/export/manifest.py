@@ -18,12 +18,14 @@ DATA_FILE_NAMES = {
     "sft_jsonl": "data.sft.jsonl",
     "rl_jsonl": "data.rl.jsonl",
     "preference_jsonl": "data.preference.jsonl",
+    "provider_reasoning_trace_training_export": "data.provider_reasoning_trace.jsonl",
 }
 
 CONVENIENCE_FILE_NAMES = {
     "sft_jsonl": "sft.jsonl",
     "rl_jsonl": "rl.jsonl",
     "preference_jsonl": "preference.jsonl",
+    "provider_reasoning_trace_training_export": "provider_reasoning_trace_training_export.jsonl",
 }
 
 
@@ -41,6 +43,7 @@ def build_export_id(
         "sft_jsonl": "sft",
         "rl_jsonl": "rl",
         "preference_jsonl": "preference",
+        "provider_reasoning_trace_training_export": "provider_reasoning_trace",
     }.get(export_format, export_format)
     compact_time = generated_at.replace("-", "").replace(":", "").replace("+00:00", "Z")
     compact_time = compact_time.replace(".", "").replace("Z", "Z")

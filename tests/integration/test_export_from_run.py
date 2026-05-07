@@ -135,6 +135,7 @@ def test_preference_export_pairs_two_runs_for_same_task(tmp_path: Path):
 
 def test_cli_export_commands(tmp_path: Path, capsys):
     run_dir = _success_run(tmp_path, "stage12-cli")
+    _add_reasoning_trace_artifact(run_dir, "cli reasoning trace target")
 
     assert main(["export", str(run_dir), "--format", "sft_jsonl"]) == 0
     assert "导出完成" in capsys.readouterr().out
@@ -156,6 +157,20 @@ def test_cli_export_commands(tmp_path: Path, capsys):
 
     assert main(["export", str(tmp_path / "runs"), "--format", "rl_jsonl"]) == 0
     assert (tmp_path / "runs/exports/rl.jsonl").exists()
+
+    assert main(
+        [
+            "export",
+            str(run_dir),
+            "--format",
+            "provider_reasoning_trace_training_export",
+            "--allow-oracle-feedback-training",
+            "--allow-provider-reasoning-trace-training",
+        ]
+    ) == 0
+    reasoning_output = run_dir / "exports/provider_reasoning_trace_training_export.jsonl"
+    assert reasoning_output.exists()
+    assert "cli reasoning trace target" in reasoning_output.read_text(encoding="utf-8")
 
 
 def _success_run(tmp_path: Path, run_id: str) -> Path:
@@ -213,3 +228,51 @@ def _latest_export_dir(exports_dir: Path) -> Path:
     ]
     assert export_dirs
     return max(export_dirs, key=lambda path: path.stat().st_mtime_ns)
+
+
+def _add_reasoning_trace_artifact(run_dir: Path, reasoning_content: str) -> None:
+    artifact_path = run_dir / "artifacts" / "deepseek_reasoning_trace.json"
+    artifact_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_provider_reasoning_trace_training_source_v0",
+                "provider": "deepseek",
+                "state_id": f"{run_dir.name}_model_call_0001_deepseek_reasoning",
+                "run_id": run_dir.name,
+                "model_call_id": f"{run_dir.name}_model_call_0001",
+                "target_kind": "provider_reasoning_trace",
+                "reasoning_content": reasoning_content,
+                "reasoning_trace_training_allowed": True,
+                "ordinary_sft_target_allowed": False,
+                "default_training_payload_allowed": False,
+                "not_public_safe_by_default": True,
+                "public_demo_allowed": False,
+                "requires_explicit_reasoning_export_policy": True,
+                "raw_provider_artifact": False,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest_path = run_dir / "artifacts.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.setdefault("artifacts", []).append(
+        {
+            "schema_version": "repo_harness_artifact_v0",
+            "artifact_id": "artifact_deepseek_reasoning_trace",
+            "relative_path": "artifacts/deepseek_reasoning_trace.json",
+            "kind": "deepseek_provider_reasoning_trace",
+            "sha256": _sha256_file(artifact_path),
+            "size_bytes": artifact_path.stat().st_size,
+            "redaction_status": "not_redacted_explicit_reasoning_trace_opt_in",
+            "retention_policy": "provider_reasoning_trace_training_opt_in",
+        }
+    )
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()

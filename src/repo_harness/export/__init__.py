@@ -1,6 +1,7 @@
 """训练数据导出模块。"""
 
 from repo_harness.export.exporter import (
+    export_provider_reasoning_trace_training_export,
     export_preference_jsonl,
     export_rl_jsonl,
     export_run_or_runs,
@@ -40,6 +41,7 @@ __all__ = [
     "PairingResult",
     "PairingSummary",
     "build_preference_pairing",
+    "export_provider_reasoning_trace_training_export",
     "export_preference_jsonl",
     "export_rl_jsonl",
     "export_run_or_runs",

@@ -5,8 +5,14 @@ from pathlib import Path
 import pytest
 
 from repo_harness.errors import ExportError
-from repo_harness.export import CompareScope, inspect_export
-from repo_harness.export.exporter import export_preference_jsonl, export_rl_jsonl, export_sft_jsonl
+from repo_harness.export import CompareScope, ExportPolicy, inspect_export
+from repo_harness.export.exporter import (
+    export_preference_jsonl,
+    export_provider_reasoning_trace_training_export,
+    export_rl_jsonl,
+    export_run_or_runs,
+    export_sft_jsonl,
+)
 from repo_harness.export.exporter import _sanitize_text
 
 
@@ -58,6 +64,71 @@ def test_export_sanitizes_provider_credentials():
     assert "hunter2" not in sanitized
     assert "tok_123456789" not in sanitized
     assert sanitized.count("<REDACTED_CREDENTIAL>") >= 3
+
+
+def test_provider_reasoning_trace_export_requires_explicit_policy(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_reasoning_trace_no_policy",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    _add_reasoning_trace_artifact(run_dir, "DeepSeek private reasoning target")
+
+    with pytest.raises(ExportError, match="allow_provider_reasoning_trace_training=true"):
+        export_provider_reasoning_trace_training_export(run_dir)
+
+
+def test_provider_reasoning_trace_export_is_isolated_from_default_exports(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_reasoning_trace",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    _add_reasoning_trace_artifact(run_dir, "DeepSeek private reasoning target")
+
+    default_sft = export_sft_jsonl(run_dir)
+    default_rl = export_rl_jsonl(run_dir)
+    output = export_provider_reasoning_trace_training_export(
+        run_dir,
+        policy=ExportPolicy(allow_provider_reasoning_trace_training=True),
+    )
+    export_dir = _latest_export_dir(run_dir / "exports")
+    manifest = json.loads((export_dir / "export_manifest.json").read_text(encoding="utf-8"))
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    record = _read_jsonl(output)[0]
+
+    assert "DeepSeek private reasoning target" not in default_sft.read_text(encoding="utf-8")
+    assert "DeepSeek private reasoning target" not in default_rl.read_text(encoding="utf-8")
+    assert output.name == "provider_reasoning_trace_training_export.jsonl"
+    assert manifest["format"] == "provider_reasoning_trace_training_export"
+    assert manifest["included_count"] == 1
+    assert audit["status"] == "passed"
+    assert record["payload"]["reasoning_trace_targets"][0]["target"]["reasoning_content"] == (
+        "DeepSeek private reasoning target"
+    )
+    assert record["payload"]["ordinary_sft_target_allowed"] is False
+    assert record["payload"]["requires_explicit_reasoning_export_policy"] is True
+    assert record["payload"]["reasoning_trace_targets"][0]["raw_provider_artifact"] is False
+    assert "Inspect export: clean" in inspect_export(export_dir, assert_clean=True, require_trainable_samples=True)
+
+
+def test_provider_reasoning_trace_export_available_through_dispatcher(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_reasoning_trace_dispatch",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    _add_reasoning_trace_artifact(run_dir, "dispatch reasoning target")
+
+    output = export_run_or_runs(
+        run_dir,
+        export_format="provider_reasoning_trace_training_export",
+        policy=ExportPolicy(allow_provider_reasoning_trace_training=True),
+    )
+
+    assert _read_jsonl(output)[0]["payload"]["reasoning_trace_targets"][0]["target"][
+        "reasoning_content"
+    ] == "dispatch reasoning target"
 
 
 def test_rl_export_without_formal_final_verifier_is_invalid_for_training(tmp_path: Path):
@@ -530,6 +601,43 @@ def _minimal_run(
     if include_run_metadata:
         _write_minimal_v2_metadata(run_dir)
     return run_dir
+
+
+def _add_reasoning_trace_artifact(run_dir: Path, reasoning_content: str) -> None:
+    artifact_path = run_dir / "artifacts" / "deepseek_reasoning_trace.json"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": "repo_harness_provider_reasoning_trace_training_source_v0",
+        "provider": "deepseek",
+        "state_id": f"{run_dir.name}_model_call_0001_deepseek_reasoning",
+        "run_id": run_dir.name,
+        "model_call_id": f"{run_dir.name}_model_call_0001",
+        "target_kind": "provider_reasoning_trace",
+        "reasoning_content": reasoning_content,
+        "reasoning_trace_training_allowed": True,
+        "ordinary_sft_target_allowed": False,
+        "default_training_payload_allowed": False,
+        "not_public_safe_by_default": True,
+        "public_demo_allowed": False,
+        "requires_explicit_reasoning_export_policy": True,
+        "raw_provider_artifact": False,
+    }
+    artifact_path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    ref = {
+        "schema_version": "repo_harness_artifact_v0",
+        "artifact_id": "artifact_deepseek_reasoning_trace",
+        "relative_path": "artifacts/deepseek_reasoning_trace.json",
+        "kind": "deepseek_provider_reasoning_trace",
+        "sha256": _sha256_file(artifact_path),
+        "size_bytes": artifact_path.stat().st_size,
+        "redaction_status": "not_redacted_explicit_reasoning_trace_opt_in",
+        "retention_policy": "provider_reasoning_trace_training_opt_in",
+    }
+    manifest_path = run_dir / "artifacts.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    artifacts = manifest.setdefault("artifacts", [])
+    artifacts.append(ref)
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _write_max_turns_metrics_and_events(run_dir: Path) -> None:

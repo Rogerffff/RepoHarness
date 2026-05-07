@@ -16,7 +16,12 @@ from repo_harness.schema_versions import (
     PAIRING_POLICY_VERSION,
 )
 
-ExportFormat = Literal["sft_jsonl", "rl_jsonl", "preference_jsonl"]
+ExportFormat = Literal[
+    "sft_jsonl",
+    "rl_jsonl",
+    "preference_jsonl",
+    "provider_reasoning_trace_training_export",
+]
 AuditStatus = Literal["passed", "failed", "warning", "skipped"]
 TrainingEligibility = Literal["trainable", "diagnostic_only", "skipped", "invalid"]
 
@@ -60,6 +65,7 @@ class ExportPolicy(StrictBaseModel):
     loss_mask_policy: str = "assistant_actions_only_v0"
     observation_mask_policy: str = "tool_results_are_observations_v0"
     allow_oracle_feedback_training: bool = False
+    allow_provider_reasoning_trace_training: bool = False
     filter_rules: list[str] = Field(default_factory=list)
     redaction_policy: str = "repo_harness_export_redaction_v0"
 

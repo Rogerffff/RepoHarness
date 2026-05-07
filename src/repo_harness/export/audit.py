@@ -33,6 +33,7 @@ CRITICAL_AUDIT_ITEMS = {
     "hidden_test_feedback_not_visible",
     "local_paths_redacted",
     "provider_raw_response_not_target",
+    "provider_reasoning_trace_policy_satisfied",
     "tool_schema_snapshot_valid",
     "preference_pairing_policy_satisfied",
 }
@@ -284,11 +285,39 @@ def _audit_record(
     else:
         items.append(_item("local_paths_redacted", "passed", "info", "local paths are absent"))
 
-    provider_raw_reason = _marker_reason(payload_text, PROVIDER_RAW_MARKERS)
+    provider_raw_reason = _provider_raw_marker_reason(
+        payload_text,
+        export_format=export_format,
+        policy=policy,
+    )
     if provider_raw_reason:
         items.append(_item("provider_raw_response_not_target", "failed", "error", provider_raw_reason))
     else:
         items.append(_item("provider_raw_response_not_target", "passed", "info", "provider raw payload is absent"))
+
+    reasoning_trace_reason = _provider_reasoning_trace_policy_reason(
+        record,
+        export_format=export_format,
+        policy=policy,
+    )
+    if reasoning_trace_reason:
+        items.append(
+            _item(
+                "provider_reasoning_trace_policy_satisfied",
+                "failed",
+                "error",
+                reasoning_trace_reason,
+            )
+        )
+    elif export_format == "provider_reasoning_trace_training_export":
+        items.append(
+            _item(
+                "provider_reasoning_trace_policy_satisfied",
+                "passed",
+                "info",
+                "provider reasoning trace export is explicitly allowed and isolated",
+            )
+        )
 
     pairing_reason = _preference_pairing_reason(record, export_format)
     if pairing_reason:
@@ -749,6 +778,21 @@ def _missing_v3_observation_fields(value: dict[str, Any]) -> list[str]:
 
 
 def _loss_target_error(record: ExportRecord, export_format: str) -> str | None:
+    if export_format == "provider_reasoning_trace_training_export":
+        targets = record.payload.get("reasoning_trace_targets")
+        if not isinstance(targets, list) or not targets:
+            return "provider reasoning trace export missing reasoning_trace_targets"
+        for index, item in enumerate(targets):
+            if not isinstance(item, dict):
+                return f"reasoning_trace_targets[{index}] is not an object"
+            target = item.get("target")
+            if not isinstance(target, dict):
+                return f"reasoning_trace_targets[{index}].target is missing"
+            if target.get("type") != "provider_reasoning_trace":
+                return f"reasoning_trace_targets[{index}] target type mismatch"
+            if not isinstance(target.get("reasoning_content"), str) or not target.get("reasoning_content"):
+                return f"reasoning_trace_targets[{index}] missing reasoning_content target"
+        return None
     if export_format != "sft_jsonl":
         return None
     messages = record.payload.get("messages", [])
@@ -852,6 +896,65 @@ def _marker_reason(text: str, markers: tuple[str, ...]) -> str | None:
     for marker in markers:
         if marker.lower() in lowered:
             return f"contains blocked marker {marker}"
+    return None
+
+
+def _provider_raw_marker_reason(
+    text: str,
+    *,
+    export_format: str,
+    policy: ExportPolicy,
+) -> str | None:
+    markers = PROVIDER_RAW_MARKERS
+    if (
+        export_format == "provider_reasoning_trace_training_export"
+        and policy.allow_provider_reasoning_trace_training
+    ):
+        markers = tuple(marker for marker in markers if marker != "reasoning_content")
+    return _marker_reason(text, markers)
+
+
+def _provider_reasoning_trace_policy_reason(
+    record: ExportRecord,
+    *,
+    export_format: str,
+    policy: ExportPolicy,
+) -> str | None:
+    if export_format != "provider_reasoning_trace_training_export":
+        return None
+    if not policy.allow_provider_reasoning_trace_training:
+        return "provider reasoning trace training export requires explicit export policy opt-in"
+    if record.payload.get("ordinary_sft_target_allowed") is not False:
+        return "provider reasoning trace export must not allow ordinary SFT targets"
+    if record.payload.get("default_training_payload_allowed") is not False:
+        return "provider reasoning trace export must not allow default training payloads"
+    if record.payload.get("not_public_safe_by_default") is not True:
+        return "provider reasoning trace export must be marked not_public_safe_by_default"
+    if record.payload.get("requires_explicit_reasoning_export_policy") is not True:
+        return "provider reasoning trace export must require explicit reasoning export policy"
+    targets = record.payload.get("reasoning_trace_targets")
+    if not isinstance(targets, list) or not targets:
+        return "provider reasoning trace export contains no trace targets"
+    for index, item in enumerate(targets):
+        if not isinstance(item, dict):
+            return f"reasoning_trace_targets[{index}] is not an object"
+        if item.get("provider") != "deepseek":
+            return f"reasoning_trace_targets[{index}] provider must be deepseek"
+        if item.get("reasoning_trace_training_allowed") is not True:
+            return f"reasoning_trace_targets[{index}] missing source opt-in flag"
+        if item.get("ordinary_sft_target_allowed") is not False:
+            return f"reasoning_trace_targets[{index}] ordinary SFT target flag must be false"
+        if item.get("default_training_payload_allowed") is not False:
+            return f"reasoning_trace_targets[{index}] default training target flag must be false"
+        if item.get("not_public_safe_by_default") is not True:
+            return f"reasoning_trace_targets[{index}] must be marked not public safe"
+        if item.get("requires_explicit_reasoning_export_policy") is not True:
+            return f"reasoning_trace_targets[{index}] must require explicit export policy"
+        if item.get("raw_provider_artifact") is not False:
+            return f"reasoning_trace_targets[{index}] must not be a raw provider artifact"
+        source_ref = item.get("source_ref")
+        if not isinstance(source_ref, dict):
+            return f"reasoning_trace_targets[{index}] missing source_ref"
     return None
 
 

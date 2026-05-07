@@ -74,6 +74,7 @@ def capture_deepseek_reasoning_state(
     model_call_id: str,
     reasoning_content: str,
     replay_required: bool,
+    reasoning_trace_training_allowed: bool = False,
     recorder: RunRecorder,
 ) -> dict[str, Any]:
     """Store live DeepSeek reasoning and return a safe metadata handle."""
@@ -93,7 +94,11 @@ def capture_deepseek_reasoning_state(
             "reasoning_content_present": True,
             "reasoning_content_required_for_replay": replay_required,
             "export_allowed": False,
+            "default_training_payload_allowed": False,
             "training_payload_allowed": False,
+            "reasoning_trace_training_payload_allowed": (
+                "explicit_opt_in_only" if reasoning_trace_training_allowed else False
+            ),
             "public_demo_allowed": False,
             "live_state_persisted_in_prepared_messages": False,
         },
@@ -103,6 +108,32 @@ def capture_deepseek_reasoning_state(
             "budget_policy": "preserve_json",
         },
     )
+    if reasoning_trace_training_allowed:
+        recorder.write_json_artifact(
+            "deepseek_provider_reasoning_trace",
+            {
+                "schema_version": "repo_harness_provider_reasoning_trace_training_source_v0",
+                "provider": "deepseek",
+                "state_id": state.state_id,
+                "run_id": run_id,
+                "model_call_id": model_call_id,
+                "target_kind": "provider_reasoning_trace",
+                "reasoning_content": reasoning_content,
+                "reasoning_trace_training_allowed": True,
+                "ordinary_sft_target_allowed": False,
+                "default_training_payload_allowed": False,
+                "not_public_safe_by_default": True,
+                "public_demo_allowed": False,
+                "requires_explicit_reasoning_export_policy": True,
+                "raw_provider_artifact": False,
+                "redacted_state_ref": redacted_ref.model_dump(mode="json"),
+            },
+            {
+                "redaction_status": "not_redacted_explicit_reasoning_trace_opt_in",
+                "retention_policy": "provider_reasoning_trace_training_opt_in",
+                "budget_policy": "preserve_json",
+            },
+        )
     return {
         "format_version": DEEPSEEK_PRIVATE_FORMAT_VERSION,
         "state_id": state.state_id,
@@ -110,7 +141,11 @@ def capture_deepseek_reasoning_state(
         "reasoning_content_present": True,
         "reasoning_content_required_for_replay": replay_required,
         "export_allowed": False,
+        "default_training_payload_allowed": False,
         "training_payload_allowed": False,
+        "reasoning_trace_training_payload_allowed": (
+            "explicit_opt_in_only" if reasoning_trace_training_allowed else False
+        ),
         "public_demo_allowed": False,
         "live_state_persisted_in_prepared_messages": False,
     }

@@ -340,6 +340,7 @@ def _attach_deepseek_reasoning_state(
         model_call_id=request.model_call_id,
         reasoning_content=reasoning_content,
         replay_required=replay_required,
+        reasoning_trace_training_allowed=_deepseek_reasoning_trace_training_enabled(request),
         recorder=recorder,
     )
     existing_metadata = dict(response.assistant_message.metadata or {})
@@ -355,6 +356,15 @@ def _deepseek_thinking_enabled(request: ModelRequestContext) -> bool:
     if isinstance(thinking, dict):
         return thinking.get("type") != "disabled"
     return True
+
+
+def _deepseek_reasoning_trace_training_enabled(request: ModelRequestContext) -> bool:
+    option = request.provider_options.provider_specific_options.get(
+        "provider_reasoning_trace_training_export"
+    )
+    if isinstance(option, dict):
+        return option.get("enabled") is True
+    return option is True
 
 
 def _deepseek_reasoning_content(payload: dict[str, Any]) -> str | None:

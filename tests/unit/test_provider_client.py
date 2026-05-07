@@ -160,6 +160,11 @@ def test_deepseek_provider_replays_reasoning_content_after_tool_call(tmp_path: P
     ).read_text(encoding="utf-8")
     assert "private reasoning that must not enter artifacts" not in first_raw_response
     assert "<REDACTED_REASONING>" in first_raw_response
+    first_manifest = json.loads((tmp_path / "first" / "artifacts.json").read_text(encoding="utf-8"))
+    assert not any(
+        artifact["kind"] == "deepseek_provider_reasoning_trace"
+        for artifact in first_manifest["artifacts"]
+    )
 
     second_client = _DeepSeekStub(
         model_id="deepseek-v4-pro",
@@ -202,6 +207,68 @@ def test_deepseek_provider_replays_reasoning_content_after_tool_call(tmp_path: P
     ).read_text(encoding="utf-8")
     assert "private reasoning that must not enter artifacts" not in second_raw_request
     assert "<REDACTED_REASONING>" in second_raw_request
+
+
+def test_deepseek_reasoning_trace_training_opt_in_writes_dedicated_source_artifact(
+    tmp_path: Path,
+):
+    client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-reasoning-trace",
+            "choices": [
+                {
+                    "finish_reason": "tool_calls",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "reasoning_content": "provider trace target for explicit training",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "read_file",
+                                    "arguments": "{\"path\":\"calculator.py\"}",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        provider_specific_options={
+            "thinking": {"type": "enabled"},
+            "provider_reasoning_trace_training_export": {"enabled": True},
+        },
+    )
+
+    with RunRecorder("deepseek-reasoning-trace", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type is None
+    metadata_text = json.dumps(response.assistant_message.metadata, ensure_ascii=False)
+    assert "provider trace target for explicit training" not in metadata_text
+    manifest = json.loads((tmp_path / "run" / "artifacts.json").read_text(encoding="utf-8"))
+    trace_refs = [
+        artifact for artifact in manifest["artifacts"] if artifact["kind"] == "deepseek_provider_reasoning_trace"
+    ]
+    assert len(trace_refs) == 1
+    trace_payload = json.loads((tmp_path / "run" / trace_refs[0]["relative_path"]).read_text(encoding="utf-8"))
+    assert trace_payload["reasoning_content"] == "provider trace target for explicit training"
+    assert trace_payload["ordinary_sft_target_allowed"] is False
+    assert trace_payload["requires_explicit_reasoning_export_policy"] is True
+    raw_response = (tmp_path / "run" / response.raw_provider_response_ref.relative_path).read_text(
+        encoding="utf-8"
+    )
+    assert "provider trace target for explicit training" not in raw_response
+    assert "<REDACTED_REASONING>" in raw_response
 
 
 def test_deepseek_provider_protocol_error_when_required_reasoning_state_is_missing(
