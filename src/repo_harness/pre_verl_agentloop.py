@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
+from repo_harness.schema_base import stable_hash
 from repo_harness.config import RunConfig, load_run_config
 from repo_harness.context import ContextBuilder
 from repo_harness.errors import ConfigError, TaskValidationError
@@ -662,6 +663,56 @@ def inspect_pre_verl_agentloop_boundary_index(
             or assert_clean_source_origin
             or assert_run_task_lineage
             or assert_no_legacy_adapter
+        ),
+    )
+
+
+def inspect_model_visible_context(
+    run_dir: str | Path,
+    *,
+    assert_no_hidden_test_material: bool = False,
+    assert_prepared_messages_bound: bool = False,
+    assert_provider_body_equivalent: bool = False,
+    assert_tool_results_recoverable: bool = False,
+    assert_no_over_redaction: bool = False,
+) -> str:
+    run_path = Path(run_dir)
+    failures: list[str] = []
+    if not run_path.exists() or not run_path.is_dir():
+        failures.append(f"run_dir 不存在或不是目录：{run_path}")
+    events = _read_jsonl_events(run_path / "events.jsonl", failures, "model_visible_context.events")
+    transcript = _read_jsonl_events(run_path / "transcript.jsonl", failures, "model_visible_context.transcript")
+    prepared_payloads = _prepared_messages_payloads(events, run_path, failures)
+    if assert_prepared_messages_bound:
+        _inspect_prepared_messages_bound(events, run_path, failures)
+    if assert_provider_body_equivalent or assert_no_over_redaction:
+        _inspect_provider_artifacts(
+            events=events,
+            run_dir=run_path,
+            failures=failures,
+            assert_provider_body_equivalent=assert_provider_body_equivalent,
+            assert_no_over_redaction=assert_no_over_redaction,
+        )
+    if assert_tool_results_recoverable:
+        _inspect_tool_result_replacements(prepared_payloads, failures)
+    if assert_no_hidden_test_material:
+        _inspect_model_visible_hidden_material(
+            prepared_payloads=prepared_payloads,
+            transcript=transcript,
+            events=events,
+            run_dir=run_path,
+            failures=failures,
+        )
+    return _inspect_result(
+        "Inspect model-visible context",
+        run_path,
+        failures,
+        assert_requested=(
+            assert_no_hidden_test_material
+            or assert_prepared_messages_bound
+            or assert_provider_body_equivalent
+            or assert_tool_results_recoverable
+            or assert_no_over_redaction
         ),
     )
 
@@ -1493,6 +1544,543 @@ def _read_jsonl_events(path: Path, failures: list[str], label: str) -> list[dict
         if isinstance(payload, dict):
             events.append(payload)
     return events
+
+
+def _prepared_messages_payloads(
+    events: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for event in events:
+        if event.get("event_type") != "context_prepared":
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        ref = data.get("prepared_messages_ref")
+        if not isinstance(ref, dict):
+            for artifact_ref in event.get("artifact_refs", []) or []:
+                if isinstance(artifact_ref, dict) and artifact_ref.get("kind") == "prepared_messages":
+                    ref = artifact_ref
+                    break
+        if not isinstance(ref, dict):
+            failures.append("context_prepared 缺少 prepared_messages_ref")
+            continue
+        path = _ref_path(ref, run_dir)
+        if path.as_posix() in seen:
+            continue
+        seen.add(path.as_posix())
+        _inspect_run_artifact_ref(ref, run_dir, failures, f"prepared_messages_ref[{len(payloads)}]")
+        payload = _read_optional_json(path, failures, f"prepared_messages[{len(payloads)}]")
+        if isinstance(payload, dict):
+            payloads.append(payload)
+    return payloads
+
+
+def _inspect_prepared_messages_bound(
+    events: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+) -> None:
+    for index, event in enumerate(events):
+        if event.get("event_type") not in {"model_call_started", "model_call_completed"}:
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        if event.get("event_type") == "model_call_started":
+            _inspect_run_artifact_ref(
+                data.get("prepared_messages_ref"),
+                run_dir,
+                failures,
+                f"model_call_started[{index}].prepared_messages_ref",
+            )
+            continue
+        request_ref = data.get("raw_provider_request_ref")
+        _inspect_run_artifact_ref(
+            request_ref,
+            run_dir,
+            failures,
+            f"model_call_completed[{index}].raw_provider_request_ref",
+        )
+        if not isinstance(request_ref, dict):
+            continue
+        payload = _read_optional_json(_ref_path(request_ref, run_dir), failures, f"raw_provider_request[{index}]")
+        if not isinstance(payload, dict):
+            continue
+        _inspect_run_artifact_ref(
+            payload.get("prepared_messages_ref"),
+            run_dir,
+            failures,
+            f"raw_provider_request[{index}].prepared_messages_ref",
+        )
+        _inspect_run_artifact_ref(
+            payload.get("tool_schema_snapshot_ref"),
+            run_dir,
+            failures,
+            f"raw_provider_request[{index}].tool_schema_snapshot_ref",
+        )
+
+
+def _inspect_provider_artifacts(
+    *,
+    events: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+    assert_provider_body_equivalent: bool,
+    assert_no_over_redaction: bool,
+) -> None:
+    for index, event in enumerate(events):
+        if event.get("event_type") != "model_call_completed":
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        request_ref = data.get("raw_provider_request_ref")
+        response_ref = data.get("raw_provider_response_ref")
+        request_payload = _provider_artifact_payload(
+            request_ref,
+            run_dir,
+            failures,
+            f"raw_provider_request[{index}]",
+        )
+        if request_payload is not None:
+            if request_payload.get("export_allowed") is not False:
+                failures.append(f"raw_provider_request[{index}] export_allowed 必须是 false")
+            if request_payload.get("training_payload_allowed") is not False:
+                failures.append(f"raw_provider_request[{index}] training_payload_allowed 必须是 false")
+            if assert_provider_body_equivalent:
+                if request_payload.get("prepared_messages_body_equivalent") is not True:
+                    failures.append(f"raw_provider_request[{index}] prepared/provider messages 不等价")
+                for key in (
+                    "provider_body_hash_before_redaction",
+                    "redacted_body_hash",
+                    "provider_body_message_projection_hash",
+                    "prepared_messages_projection_hash",
+                ):
+                    if not isinstance(request_payload.get(key), str) or not request_payload[key]:
+                        failures.append(f"raw_provider_request[{index}] 缺少 {key}")
+                _inspect_provider_request_projection(
+                    request_payload=request_payload,
+                    run_dir=run_dir,
+                    failures=failures,
+                    label=f"raw_provider_request[{index}]",
+                )
+            if assert_no_over_redaction:
+                _inspect_no_over_redaction(request_payload, failures, f"raw_provider_request[{index}]")
+        response_payload = _provider_artifact_payload(
+            response_ref,
+            run_dir,
+            failures,
+            f"raw_provider_response[{index}]",
+        )
+        if response_payload is None:
+            continue
+        if response_payload.get("export_allowed") is not False:
+            failures.append(f"raw_provider_response[{index}] export_allowed 必须是 false")
+        if response_payload.get("training_payload_allowed") is not False:
+            failures.append(f"raw_provider_response[{index}] training_payload_allowed 必须是 false")
+        if assert_provider_body_equivalent:
+            _inspect_run_artifact_ref(
+                response_payload.get("raw_provider_request_ref"),
+                run_dir,
+                failures,
+                f"raw_provider_response[{index}].raw_provider_request_ref",
+            )
+            _inspect_provider_response_binding(
+                response_payload=response_payload,
+                request_payload=request_payload,
+                event_request_ref=request_ref,
+                run_dir=run_dir,
+                failures=failures,
+                label=f"raw_provider_response[{index}]",
+            )
+
+
+def _provider_artifact_payload(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> dict[str, Any] | None:
+    _inspect_run_artifact_ref(ref, run_dir, failures, label)
+    if not isinstance(ref, dict):
+        return None
+    payload = _read_optional_json(_ref_path(ref, run_dir), failures, label)
+    return payload if isinstance(payload, dict) else None
+
+
+def _inspect_provider_request_projection(
+    *,
+    request_payload: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    prepared_ref = request_payload.get("prepared_messages_ref")
+    prepared_payload = (
+        _read_optional_json(_ref_path(prepared_ref, run_dir), failures, f"{label}.prepared_messages")
+        if isinstance(prepared_ref, dict)
+        else None
+    )
+    if not isinstance(prepared_payload, dict):
+        failures.append(f"{label} 无法读取 prepared_messages_ref 以复算 projection")
+        return
+    provider = str(request_payload.get("provider") or "")
+    prepared_projection = _project_prepared_messages_for_inspect(
+        prepared_payload.get("messages"),
+        provider=provider,
+    )
+    body = request_payload.get("body") if isinstance(request_payload.get("body"), dict) else {}
+    provider_projection = _project_provider_body_messages_for_inspect(body)
+    prepared_hash = stable_hash(prepared_projection)
+    provider_hash = stable_hash(provider_projection)
+    if request_payload.get("prepared_messages_projection_hash") != prepared_hash:
+        failures.append(f"{label} prepared_messages_projection_hash 与复算值不一致")
+    if request_payload.get("provider_body_message_projection_hash") != provider_hash:
+        failures.append(f"{label} provider_body_message_projection_hash 与复算值不一致")
+    if prepared_hash != provider_hash or prepared_projection != provider_projection:
+        failures.append(f"{label} prepared messages projection 与 provider body projection 不一致")
+
+
+def _inspect_provider_response_binding(
+    *,
+    response_payload: dict[str, Any],
+    request_payload: dict[str, Any] | None,
+    event_request_ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    response_request_ref = response_payload.get("raw_provider_request_ref")
+    if isinstance(event_request_ref, dict) and isinstance(response_request_ref, dict):
+        for key in ("relative_path", "sha256", "size_bytes"):
+            if response_request_ref.get(key) != event_request_ref.get(key):
+                failures.append(f"{label}.raw_provider_request_ref 与 model_call_completed 不一致：{key}")
+    if request_payload is not None:
+        for key in ("prepared_messages_ref", "tool_schema_snapshot_ref"):
+            expected = request_payload.get(key)
+            observed = response_payload.get(key)
+            if isinstance(expected, dict) and isinstance(observed, dict):
+                for ref_key in ("relative_path", "sha256", "size_bytes"):
+                    if observed.get(ref_key) != expected.get(ref_key):
+                        failures.append(f"{label}.{key} 与 raw request 不一致：{ref_key}")
+            else:
+                failures.append(f"{label} 缺少 {key} 或 raw request 对应字段")
+    status = response_payload.get("status")
+    if status == "error":
+        return
+    for key in (
+        "response_body_hash_before_redaction",
+        "redacted_response_body_hash",
+        "parsed_tool_calls_hash",
+        "finish_reason",
+    ):
+        if response_payload.get(key) is None:
+            failures.append(f"{label} 缺少 {key}")
+    turn = request_payload.get("turn") if isinstance(request_payload, dict) else 0
+    parsed_hash = _parsed_tool_calls_hash_from_response_payload(
+        response_payload,
+        turn=turn if isinstance(turn, int) else 0,
+    )
+    if response_payload.get("parsed_tool_calls_hash") != parsed_hash:
+        failures.append(f"{label}.parsed_tool_calls_hash 与 raw response body 复算值不一致")
+
+
+def _project_provider_body_messages_for_inspect(body: Any) -> list[dict[str, Any]]:
+    if not isinstance(body, dict) or not isinstance(body.get("messages"), list):
+        return []
+    projected: list[dict[str, Any]] = []
+    for message in body["messages"]:
+        if not isinstance(message, dict):
+            continue
+        item = {
+            "role": message.get("role"),
+            "content": message.get("content"),
+            "tool_call_id": message.get("tool_call_id"),
+            "tool_calls": message.get("tool_calls"),
+        }
+        projected.append({key: value for key, value in item.items() if value is not None})
+    return projected
+
+
+def _project_prepared_messages_for_inspect(messages: Any, *, provider: str) -> list[dict[str, Any]]:
+    if not isinstance(messages, list):
+        return []
+    projected: list[dict[str, Any]] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        converted = _prepared_message_to_provider_projection(message, provider=provider)
+        item = {
+            "role": converted.get("role"),
+            "content": converted.get("content"),
+            "tool_call_id": converted.get("tool_call_id"),
+            "tool_calls": converted.get("tool_calls"),
+        }
+        projected.append({key: value for key, value in item.items() if value is not None})
+    return projected
+
+
+def _prepared_message_to_provider_projection(message: dict[str, Any], *, provider: str) -> dict[str, Any]:
+    role = message.get("role")
+    converted: dict[str, Any] = {"role": role}
+    if role == "assistant":
+        converted["content"] = _content_to_provider_string(message.get("content"))
+        tool_calls = message.get("tool_calls") or []
+        if tool_calls:
+            converted["tool_calls"] = [_tool_call_to_provider_projection(call) for call in tool_calls]
+        return converted
+    if role == "tool":
+        converted["content"] = _content_to_provider_string(message.get("content"))
+        converted["tool_call_id"] = str(message.get("tool_call_id") or message.get("tool_result_id") or "")
+        return converted
+    converted["content"] = _content_to_provider_string(message.get("content"))
+    return converted
+
+
+def _tool_call_to_provider_projection(call: Any) -> dict[str, Any]:
+    if not isinstance(call, dict):
+        call = {}
+    return {
+        "id": str(call.get("tool_call_id") or call.get("id") or ""),
+        "type": "function",
+        "function": {
+            "name": str(call.get("tool_name") or call.get("name") or ""),
+            "arguments": json.dumps(call.get("arguments") or {}, ensure_ascii=False, sort_keys=True),
+        },
+    }
+
+
+def _content_to_provider_string(content: Any) -> str | None:
+    if content is None:
+        return None
+    if isinstance(content, str):
+        return content
+    return json.dumps(content, ensure_ascii=False, sort_keys=True)
+
+
+def _parsed_tool_calls_hash_from_response_payload(payload: dict[str, Any], *, turn: int) -> str:
+    response = payload.get("response") if isinstance(payload.get("response"), dict) else payload
+    choice = {}
+    choices = response.get("choices") if isinstance(response, dict) else None
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        choice = choices[0]
+    message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
+    raw_tool_calls = message.get("tool_calls") if isinstance(message, dict) else None
+    if raw_tool_calls in (None, []):
+        return stable_hash({"error": None, "tool_calls": []})
+    if not isinstance(raw_tool_calls, list):
+        return stable_hash({"error": "provider tool_calls was not a list", "tool_calls": []})
+    parsed: list[dict[str, Any]] = []
+    for index, raw_call in enumerate(raw_tool_calls):
+        if not isinstance(raw_call, dict):
+            return stable_hash({"error": "provider tool call was not an object", "tool_calls": []})
+        function = raw_call.get("function") if isinstance(raw_call.get("function"), dict) else {}
+        name = function.get("name")
+        arguments_text = function.get("arguments")
+        if not isinstance(name, str) or not name:
+            return stable_hash({"error": "provider tool call missing function name", "tool_calls": []})
+        if isinstance(arguments_text, str):
+            try:
+                arguments = json.loads(arguments_text) if arguments_text else {}
+            except json.JSONDecodeError:
+                return stable_hash({"error": "provider tool call arguments were not valid JSON", "tool_calls": []})
+        elif isinstance(arguments_text, dict):
+            arguments = arguments_text
+        elif arguments_text is None:
+            arguments = {}
+        else:
+            return stable_hash({"error": "provider tool call arguments had unsupported type", "tool_calls": []})
+        if not isinstance(arguments, dict):
+            return stable_hash({"error": "provider tool call arguments were not a JSON object", "tool_calls": []})
+        parsed.append(
+            {
+                "schema_version": "repo_harness_tool_call_v0",
+                "tool_call_id": str(raw_call.get("id") or f"provider_tool_call_{turn}_{index}"),
+                "tool_name": name,
+                "arguments": arguments,
+                "turn": turn,
+            }
+        )
+    return stable_hash({"error": None, "tool_calls": parsed})
+
+
+def _inspect_no_over_redaction(payload: dict[str, Any], failures: list[str], label: str) -> None:
+    report = payload.get("redaction_report")
+    if not isinstance(report, dict):
+        failures.append(f"{label} 缺少 redaction_report")
+    elif report.get("ordinary_text_whole_field_redaction_allowed") is not False:
+        failures.append(f"{label} redaction_report 必须禁止普通文本整字段脱敏")
+    body = payload.get("body")
+    messages = body.get("messages") if isinstance(body, dict) else None
+    if not isinstance(messages, list):
+        return
+    for message_index, message in enumerate(messages):
+        if not isinstance(message, dict):
+            continue
+        if message.get("content") == "<REDACTED_CREDENTIAL>":
+            failures.append(f"{label}.body.messages[{message_index}].content 被整字段 credential 脱敏")
+
+
+def _inspect_tool_result_replacements(
+    prepared_payloads: list[dict[str, Any]],
+    failures: list[str],
+) -> None:
+    for payload_index, payload in enumerate(prepared_payloads):
+        messages = payload.get("messages")
+        if not isinstance(messages, list):
+            failures.append(f"prepared_messages[{payload_index}] 缺少 messages")
+            continue
+        for message_index, message in enumerate(messages):
+            if not isinstance(message, dict) or message.get("role") != "tool":
+                continue
+            if message.get("context_replacement") is not True:
+                continue
+            content = str(message.get("content") or "")
+            if "recovery_call:" not in content or "recovery_hint:" not in content:
+                failures.append(
+                    f"prepared_messages[{payload_index}].messages[{message_index}] replacement 缺少恢复指令"
+                )
+
+
+def _inspect_model_visible_hidden_material(
+    *,
+    prepared_payloads: list[dict[str, Any]],
+    transcript: list[dict[str, Any]],
+    events: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+) -> None:
+    evaluator_only_needles = _evaluator_only_needles(run_dir, failures)
+    for payload_index, payload in enumerate(prepared_payloads):
+        finding = _find_hidden_material(payload, evaluator_only_needles)
+        if finding:
+            failures.append(f"prepared_messages[{payload_index}] 包含隐藏材料标记 {finding!r}")
+    for record_index, record in enumerate(transcript):
+        if record.get("model_visible") is not True:
+            continue
+        finding = _find_hidden_material(record, evaluator_only_needles)
+        if finding:
+            failures.append(f"model_visible transcript[{record_index}] 包含隐藏材料标记 {finding!r}")
+    for index, event in enumerate(events):
+        if event.get("event_type") != "model_call_completed":
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        request_ref = data.get("raw_provider_request_ref")
+        if not isinstance(request_ref, dict):
+            continue
+        payload = _read_optional_json(_ref_path(request_ref, run_dir), failures, f"raw_provider_request[{index}]")
+        if isinstance(payload, dict):
+            body = payload.get("body") if isinstance(payload.get("body"), dict) else {}
+            finding = _find_hidden_material(body.get("messages", []), evaluator_only_needles)
+            if finding:
+                failures.append(f"raw_provider_request[{index}].body.messages 包含隐藏材料标记 {finding!r}")
+
+
+def _find_hidden_material(value: Any, evaluator_only_needles: list[str]) -> str | None:
+    marker = _find_hidden_marker(value)
+    if marker:
+        return marker
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True) if not isinstance(value, str) else value
+    for needle in evaluator_only_needles:
+        if needle and needle in text:
+            return needle[:120]
+    return None
+
+
+def _evaluator_only_needles(run_dir: Path, failures: list[str]) -> list[str]:
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    if not boundary_path.exists():
+        return []
+    boundary = _read_optional_json(boundary_path, failures, "final_verifier_boundary")
+    if not isinstance(boundary, dict):
+        return []
+    needles: list[str] = []
+    for key in ("fail_to_pass_selectors_ref", "pass_to_pass_selectors_ref"):
+        ref = boundary.get(key)
+        if isinstance(ref, dict):
+            needles.extend(_selector_needles_from_ref(ref, run_dir, failures, key))
+    ref = boundary.get("hidden_test_patch_ref")
+    if isinstance(ref, dict):
+        needles.extend(_patch_needles_from_ref(ref, run_dir, failures, "hidden_test_patch_ref"))
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for needle in needles:
+        normalized = needle.strip()
+        if len(normalized) < 12 or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(normalized)
+    return deduped
+
+
+def _selector_needles_from_ref(
+    ref: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> list[str]:
+    path = _evaluator_only_ref_path(ref, run_dir, failures, label)
+    if not path.exists():
+        return []
+    payload = _read_optional_json(path, failures, label)
+    selectors: list[str] = []
+    if isinstance(payload, list):
+        selectors = [str(item) for item in payload if str(item).strip()]
+    elif isinstance(payload, dict):
+        for key in ("selectors", "expanded_selectors", "FAIL_TO_PASS", "PASS_TO_PASS"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                selectors.extend(str(item) for item in value if str(item).strip())
+    return selectors
+
+
+def _patch_needles_from_ref(
+    ref: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> list[str]:
+    path = _evaluator_only_ref_path(ref, run_dir, failures, label)
+    if not path.exists():
+        return []
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        failures.append(f"{label}: 无法读取 evaluator-only patch ref: {exc}")
+        return []
+    needles: list[str] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if len(line) < 20:
+            continue
+        if line.startswith(("diff --git", "index ", "--- ", "+++ ", "@@")):
+            continue
+        if line[0] in {"+", "-"}:
+            line = line[1:].strip()
+        if len(line) >= 20:
+            needles.append(line)
+        if line.startswith("assert "):
+            assertion_body = line.removeprefix("assert ").strip()
+            if len(assertion_body) >= 20:
+                needles.append(assertion_body)
+    return needles
+
+
+def _evaluator_only_ref_path(
+    ref: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> Path:
+    value = ref.get("path") or ref.get("relative_path")
+    if not isinstance(value, str) or not value.strip():
+        failures.append(f"{label}: evaluator-only ref 缺少 path 或 relative_path")
+        return run_dir / "<missing-ref-path>"
+    raw = Path(value)
+    candidates = [raw] if raw.is_absolute() else [run_dir / raw, Path.cwd() / raw]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    failures.append(f"{label}: evaluator-only ref 路径不存在：{value}")
+    return candidates[0]
 
 
 def _ref_path(ref: dict[str, Any], base_dir: Path) -> Path:

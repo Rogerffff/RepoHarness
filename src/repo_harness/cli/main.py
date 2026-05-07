@@ -203,6 +203,7 @@ from repo_harness.pre_verl_evaluation import (
     inspect_pre_verl_verifier_correctness,
 )
 from repo_harness.pre_verl_agentloop import (
+    inspect_model_visible_context,
     inspect_pre_verl_agentloop_boundary_index,
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
@@ -1528,6 +1529,17 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-clean-source-origin", action="store_true")
     inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-run-task-lineage", action="store_true")
     inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-no-legacy-adapter", action="store_true")
+
+    inspect_model_visible_context_parser = subparsers.add_parser(
+        "inspect-model-visible-context",
+        help="只读检查一次 run 的模型可见上下文、prepared messages 和 provider body 绑定。",
+    )
+    inspect_model_visible_context_parser.add_argument("run_dir")
+    inspect_model_visible_context_parser.add_argument("--assert-no-hidden-test-material", action="store_true")
+    inspect_model_visible_context_parser.add_argument("--assert-prepared-messages-bound", action="store_true")
+    inspect_model_visible_context_parser.add_argument("--assert-provider-body-equivalent", action="store_true")
+    inspect_model_visible_context_parser.add_argument("--assert-tool-results-recoverable", action="store_true")
+    inspect_model_visible_context_parser.add_argument("--assert-no-over-redaction", action="store_true")
 
     pre_verl_swebench_materialization_parser = subparsers.add_parser("build-pre-verl-swebench-dev-materialization")
     pre_verl_swebench_materialization_parser.add_argument("--output-dir", required=True)
@@ -2896,6 +2908,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"pre-verl AgentLoop boundary index 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-model-visible-context":
+        try:
+            print(
+                inspect_model_visible_context(
+                    args.run_dir,
+                    assert_no_hidden_test_material=args.assert_no_hidden_test_material,
+                    assert_prepared_messages_bound=args.assert_prepared_messages_bound,
+                    assert_provider_body_equivalent=args.assert_provider_body_equivalent,
+                    assert_tool_results_recoverable=args.assert_tool_results_recoverable,
+                    assert_no_over_redaction=args.assert_no_over_redaction,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"模型可见上下文检查失败：{exc}\n")
         return 0
     if args.command == "build-pre-verl-swebench-dev-materialization":
         try:

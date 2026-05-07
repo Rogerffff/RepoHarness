@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -8,10 +10,12 @@ import yaml
 from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
     _selector_input_error,
+    inspect_model_visible_context,
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
     load_pre_verl_swebench_dev_runtime_plan,
 )
+from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds import build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import RunnableTask, TaskDefinition
 from repo_harness.config import load_run_config
@@ -183,6 +187,92 @@ def test_pre_verl_selector_exit_code_four_is_not_implicitly_harness_input_error(
         }
     ) is False
     assert _selector_input_error({"selector_input_invalid": True}) is True
+
+
+def test_inspect_model_visible_context_passes_bound_provider_body(tmp_path: Path) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+
+    result = inspect_model_visible_context(
+        run_dir,
+        assert_no_hidden_test_material=True,
+        assert_prepared_messages_bound=True,
+        assert_provider_body_equivalent=True,
+        assert_tool_results_recoverable=True,
+        assert_no_over_redaction=True,
+    )
+
+    assert "passed" in result
+
+
+def test_inspect_model_visible_context_rejects_hidden_marker(tmp_path: Path) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path, user_content="do not show hidden_test.patch")
+
+    with pytest.raises(ConfigError, match="hidden_test.patch"):
+        inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+
+def test_inspect_model_visible_context_rejects_evaluator_only_selector_leak(tmp_path: Path) -> None:
+    leaked_selector = "tests/test_private_behavior.py::test_private_case"
+    run_dir = _write_model_visible_context_run(tmp_path, user_content=f"Please run {leaked_selector}")
+
+    with pytest.raises(ConfigError, match="test_private_case"):
+        inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+
+def test_inspect_model_visible_context_rejects_root_relative_hidden_patch_leak(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    leaked_patch_line = "hidden_private_expected_value == actual_value"
+    run_dir = _write_model_visible_context_run(tmp_path, user_content=f"Maybe {leaked_patch_line} is relevant")
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    hidden_patch_path = evidence_dir / "hidden.patch"
+    hidden_patch_path.write_text(f"+assert {leaked_patch_line}\n", encoding="utf-8")
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    boundary = json.loads(boundary_path.read_text(encoding="utf-8"))
+    boundary["hidden_test_patch_ref"] = {
+        "path": "evidence/hidden.patch",
+        "sha256": hashlib.sha256(hidden_patch_path.read_bytes()).hexdigest(),
+        "size_bytes": hidden_patch_path.stat().st_size,
+        "visibility": "evaluator_only",
+    }
+    boundary_path.write_text(json.dumps(boundary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(ConfigError, match="hidden_private_expected_value"):
+        inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+
+def test_inspect_model_visible_context_rejects_whole_field_redaction(tmp_path: Path) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path, user_content="<REDACTED_CREDENTIAL>")
+
+    with pytest.raises(ConfigError, match="整字段 credential 脱敏"):
+        inspect_model_visible_context(run_dir, assert_no_over_redaction=True)
+
+
+def test_inspect_model_visible_context_recomputes_provider_projection_hash(tmp_path: Path) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    request_path = run_dir / "artifacts" / "raw_provider_request.json"
+    request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+    request_payload["body"]["messages"][1]["content"] = "different provider body"
+    request_path.write_text(json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _refresh_event_artifact_ref(run_dir, "raw_provider_request.json")
+
+    with pytest.raises(ConfigError, match="projection"):
+        inspect_model_visible_context(run_dir, assert_provider_body_equivalent=True)
+
+
+def test_inspect_model_visible_context_rejects_mismatched_response_request_ref(tmp_path: Path) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    response_path = run_dir / "artifacts" / "raw_provider_response.json"
+    response_payload = json.loads(response_path.read_text(encoding="utf-8"))
+    response_payload["raw_provider_request_ref"]["sha256"] = "9" * 64
+    response_path.write_text(json.dumps(response_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _refresh_event_artifact_ref(run_dir, "raw_provider_response.json")
+
+    with pytest.raises(ConfigError, match="raw_provider_request_ref"):
+        inspect_model_visible_context(run_dir, assert_provider_body_equivalent=True)
 
 
 def test_pre_verl_agentloop_run_config_passes_formal_gates(tmp_path: Path) -> None:
@@ -536,6 +626,199 @@ def _write_manifest(tmp_path: Path, payload: dict[str, object]) -> Path:
 
 def _rel(base: Path, path: Path) -> str:
     return path.relative_to(base).as_posix()
+
+
+def _write_model_visible_context_run(
+    tmp_path: Path,
+    *,
+    user_content: str = "Fix the parser bug.",
+) -> Path:
+    run_dir = tmp_path / "model_visible_run"
+    artifacts_dir = run_dir / "artifacts"
+    artifacts_dir.mkdir(parents=True)
+    prepared_messages = {
+        "messages": [
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": user_content},
+            {
+                "role": "tool",
+                "tool_call_id": "call_read",
+                "tool_result_id": "call_read_result",
+                "tool_name": "read_file",
+                "content": (
+                    "[tool result replaced]\n"
+                    "tool_name: read_file\n"
+                    "recovery_call: read_file(path='src/demo.py', start_line=20)\n"
+                    "recovery_hint: continue reading\n"
+                ),
+                "context_replacement": True,
+            },
+        ]
+    }
+    prepared_ref = _write_json_ref(run_dir, artifacts_dir / "prepared_messages.json", prepared_messages, "prepared_messages")
+    tool_schema_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "tool_schema_snapshot.json",
+        {"snapshot_sha256": "b" * 64},
+        "tool_schema_snapshot",
+    )
+    body_messages = [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": user_content},
+        {
+            "role": "tool",
+            "tool_call_id": "call_read",
+            "content": prepared_messages["messages"][2]["content"],
+        },
+    ]
+    projection_hash = stable_hash(body_messages)
+    raw_request = {
+        "export_allowed": False,
+        "training_payload_allowed": False,
+        "body": {"messages": body_messages},
+        "prepared_messages_ref": prepared_ref,
+        "tool_schema_snapshot_ref": tool_schema_ref,
+        "model_input_hash": "a" * 64,
+        "provider_body_hash_before_redaction": "c" * 64,
+        "redacted_body_hash": "d" * 64,
+        "provider_body_message_projection_hash": projection_hash,
+        "prepared_messages_projection_hash": projection_hash,
+        "prepared_messages_body_equivalent": True,
+        "redaction_report": {
+            "ordinary_text_whole_field_redaction_allowed": False,
+        },
+    }
+    raw_request_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "raw_provider_request.json",
+        raw_request,
+        "raw_provider_request",
+    )
+    raw_response = {
+        "export_allowed": False,
+        "training_payload_allowed": False,
+        "raw_provider_request_ref": raw_request_ref,
+        "prepared_messages_ref": prepared_ref,
+        "tool_schema_snapshot_ref": tool_schema_ref,
+        "response_body_hash_before_redaction": "f" * 64,
+        "redacted_response_body_hash": "f" * 64,
+        "parsed_tool_calls_hash": stable_hash({"error": None, "tool_calls": []}),
+        "finish_reason": "stop",
+    }
+    raw_response_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "raw_provider_response.json",
+        raw_response,
+        "raw_provider_response",
+    )
+    hidden_patch_ref = _write_text_ref(
+        run_dir,
+        artifacts_dir / "hidden_test.patch",
+        "+assert hidden_private_expected_value == actual_value\n",
+        "hidden_test_patch",
+    )
+    fail_to_pass_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "fail_to_pass_selectors.json",
+        ["tests/test_private_behavior.py::test_private_case"],
+        "fail_to_pass_selectors",
+    )
+    pass_to_pass_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "pass_to_pass_selectors.json",
+        ["tests/test_public.py::test_existing"],
+        "pass_to_pass_selectors",
+    )
+    (run_dir / "final_verifier_boundary.json").write_text(
+        json.dumps(
+            {
+                "hidden_test_patch_ref": hidden_patch_ref,
+                "fail_to_pass_selectors_ref": fail_to_pass_ref,
+                "pass_to_pass_selectors_ref": pass_to_pass_ref,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    events = [
+        {
+            "event_type": "context_prepared",
+            "data": {"prepared_messages_ref": prepared_ref},
+            "artifact_refs": [prepared_ref],
+        },
+        {"event_type": "model_call_started", "data": {"prepared_messages_ref": prepared_ref}},
+        {
+            "event_type": "model_call_completed",
+            "data": {
+                "raw_provider_request_ref": raw_request_ref,
+                "raw_provider_response_ref": raw_response_ref,
+            },
+        },
+    ]
+    (run_dir / "events.jsonl").write_text(
+        "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in events),
+        encoding="utf-8",
+    )
+    transcript = [
+        {
+            "role": "user",
+            "model_visible": True,
+            "content_preview": user_content,
+        }
+    ]
+    (run_dir / "transcript.jsonl").write_text(
+        "".join(json.dumps(record, ensure_ascii=False) + "\n" for record in transcript),
+        encoding="utf-8",
+    )
+    return run_dir
+
+
+def _write_json_ref(run_dir: Path, path: Path, payload: object, kind: str) -> dict[str, object]:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return _artifact_ref_for_path(run_dir, path, kind)
+
+
+def _write_text_ref(run_dir: Path, path: Path, text: str, kind: str) -> dict[str, object]:
+    path.write_text(text, encoding="utf-8")
+    return _artifact_ref_for_path(run_dir, path, kind)
+
+
+def _artifact_ref_for_path(run_dir: Path, path: Path, kind: str) -> dict[str, object]:
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {
+        "schema_version": "repo_harness_artifact_ref_v0",
+        "artifact_id": path.stem,
+        "relative_path": path.relative_to(run_dir).as_posix(),
+        "kind": kind,
+        "sha256": digest,
+        "size_bytes": path.stat().st_size,
+        "redaction_status": "redacted" if "raw_provider" in kind else "not_required",
+        "retention_policy": "keep",
+    }
+
+
+def _refresh_event_artifact_ref(run_dir: Path, artifact_filename: str) -> None:
+    artifact_path = run_dir / "artifacts" / artifact_filename
+    digest = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+    size_bytes = artifact_path.stat().st_size
+    events = [
+        json.loads(line)
+        for line in (run_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    for event in events:
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        for key in ("raw_provider_request_ref", "raw_provider_response_ref"):
+            ref = data.get(key)
+            if isinstance(ref, dict) and ref.get("relative_path") == f"artifacts/{artifact_filename}":
+                ref["sha256"] = digest
+                ref["size_bytes"] = size_bytes
+    (run_dir / "events.jsonl").write_text(
+        "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in events),
+        encoding="utf-8",
+    )
 
 
 def _evaluator_ref(path: str) -> dict[str, object]:
