@@ -22,29 +22,41 @@ def test_patch_focused_react_scaffold_declares_restricted_tool_surface():
     scaffold = build_scaffold("patch_focused_react")
 
     assert scaffold.scaffold_id == "patch_focused_react"
-    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v7"
+    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v8"
     assert scaffold.initial_phase == "patch"
     assert scaffold.allowed_tools == PATCH_FOCUSED_REACT_TOOL_ORDER
     assert "bash" not in scaffold.allowed_tools
     assert "create_file" not in scaffold.allowed_tools
-    assert "durable source patch" in scaffold.prompt_fragment
+    assert "durable, minimal source patch" in scaffold.prompt_fragment
     assert "persistent project files" in scaffold.prompt_fragment
-    assert "fallback semantic" in scaffold.prompt_fragment
-    assert "environment-derived value" in scaffold.prompt_fragment
-    assert "path component" in scaffold.prompt_fragment
-    assert "established fallback" in scaffold.prompt_fragment
-    assert "Optional" in scaffold.prompt_fragment
-    assert "lacks a fallback path" in scaffold.prompt_fragment
-    assert "helper() or fallback" in scaffold.prompt_fragment
-    assert "whole component unavailable" in scaffold.prompt_fragment
-    assert "return None" in scaffold.prompt_fragment
-    assert "with underscores" in scaffold.prompt_fragment
-    assert "helper() or 'unknown'" in scaffold.prompt_fragment
-    assert "let the existing fallback own the identity" in scaffold.prompt_fragment
-    assert "operator regressions" in scaffold.prompt_fragment
-    assert "type-specific quantity" in scaffold.prompt_fragment
+    assert "existing local patterns" in scaffold.prompt_fragment
+    assert "Do not assume a task category" in scaffold.prompt_fragment
+    assert "final strict verifier" in scaffold.prompt_fragment
     assert "run_tests" in scaffold.prompt_fragment
     assert "git_diff" in scaffold.prompt_fragment
+
+
+def test_patch_focused_react_prompt_avoids_task_type_specific_hints():
+    scaffold = build_scaffold("patch_focused_react")
+    lowered = scaffold.prompt_fragment.lower()
+
+    specialized_terms = [
+        "fallback semantic",
+        "environment-derived value",
+        "path component",
+        "established fallback",
+        "optional",
+        "helper() or fallback",
+        "return none",
+        "with underscores",
+        "helper() or 'unknown'",
+        "operator regressions",
+        "scalar 1",
+        "dunder",
+        "type-specific quantity",
+        "prefix handling",
+    ]
+    assert not any(term in lowered for term in specialized_terms)
 
 
 def test_patch_focused_react_prompt_does_not_expose_hidden_evaluator_terms():

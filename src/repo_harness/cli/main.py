@@ -201,7 +201,6 @@ from repo_harness.pre_verl_evaluation import (
     inspect_pre_verl_task_set,
     inspect_pre_verl_task_visibility,
     inspect_pre_verl_verifier_correctness,
-    run_pre_verl_agent_evaluation_pilot,
 )
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
@@ -1519,27 +1518,6 @@ def build_parser() -> argparse.ArgumentParser:
     pre_verl_agent_eval_parser.add_argument("--v5-result-summary-table", required=True)
     pre_verl_agent_eval_parser.add_argument("--provider-comparison-report")
     pre_verl_agent_eval_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
-
-    run_pre_verl_agent_eval_parser = subparsers.add_parser(
-        "run-pre-verl-agent-evaluation-pilot",
-        help="执行 pre-verl SWE-Bench development Pilot 真实 provider 修复、补丁应用和 final verifier 归因。",
-    )
-    run_pre_verl_agent_eval_parser.add_argument("--output-dir", required=True)
-    run_pre_verl_agent_eval_parser.add_argument("--pre-verl-task-set-manifest", required=True)
-    run_pre_verl_agent_eval_parser.add_argument("--swebench-dev-materialization-report", required=True)
-    run_pre_verl_agent_eval_parser.add_argument("--provider-id", default="deepseek")
-    run_pre_verl_agent_eval_parser.add_argument("--model-id", default="deepseek-v4-pro")
-    run_pre_verl_agent_eval_parser.add_argument(
-        "--allow-local-secret-file",
-        action="store_true",
-        help="允许从本地 reference/deepseek_api.md 读取 DeepSeek 密钥；产物只记录脱敏来源标签。",
-    )
-    run_pre_verl_agent_eval_parser.add_argument("--max-tasks", type=int)
-    run_pre_verl_agent_eval_parser.add_argument("--max-output-tokens", type=int, default=4096)
-    run_pre_verl_agent_eval_parser.add_argument("--request-timeout-seconds", type=int, default=120)
-    run_pre_verl_agent_eval_parser.add_argument("--temperature", type=float, default=0.0)
-    run_pre_verl_agent_eval_parser.add_argument("--max-source-context-chars", type=int, default=24000)
-    run_pre_verl_agent_eval_parser.add_argument("--fail-if-output-exists", action="store_true", default=True)
 
     inspect_pre_verl_agent_eval_parser = subparsers.add_parser("inspect-pre-verl-agent-evaluation")
     inspect_pre_verl_agent_eval_parser.add_argument("report")
@@ -2903,26 +2881,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"pre-verl agent evaluation 构建失败：{exc}\n")
         print(f"pre-verl agent evaluation report：{output_path}")
-        return 0
-    if args.command == "run-pre-verl-agent-evaluation-pilot":
-        try:
-            output_path = run_pre_verl_agent_evaluation_pilot(
-                output_dir=args.output_dir,
-                pre_verl_task_set_manifest=args.pre_verl_task_set_manifest,
-                swebench_dev_materialization_report=args.swebench_dev_materialization_report,
-                provider_id=args.provider_id,
-                model_id=args.model_id,
-                allow_local_secret_file=args.allow_local_secret_file,
-                max_tasks=args.max_tasks,
-                max_output_tokens=args.max_output_tokens,
-                request_timeout_seconds=args.request_timeout_seconds,
-                temperature=args.temperature,
-                max_source_context_chars=args.max_source_context_chars,
-                fail_if_output_exists=args.fail_if_output_exists,
-            )
-        except RepoHarnessError as exc:
-            parser.exit(1, f"pre-verl agent evaluation Pilot 执行失败：{exc}\n")
-        print(f"pre-verl agent evaluation Pilot report：{output_path}")
         return 0
     if args.command == "inspect-pre-verl-agent-evaluation":
         try:
