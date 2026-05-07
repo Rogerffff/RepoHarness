@@ -52,6 +52,77 @@ def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
     assert started["data"]["budget_state"]["turn_count"] == 1
 
 
+def test_agent_loop_stops_before_provider_on_context_pairing_error(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RaisingClient()
+    with RunRecorder("context-hard-gate", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="context-hard-gate",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {"tool_call_id": "missing_result", "tool_name": "read_file", "arguments": {}}
+                    ],
+                },
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "context_integrity_error"
+    assert state.last_model_error == "context_integrity_error"
+    assert any(event["event_type"] == "context_integrity_error" for event in events)
+    assert not any(event["event_type"] == "model_call_started" for event in events)
+
+
+def test_agent_loop_stops_before_provider_on_interrupted_tool_result_block(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RaisingClient()
+    with RunRecorder("context-block-order", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="context-block-order",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {"tool_call_id": "call_read", "tool_name": "read_file", "arguments": {}}
+                    ],
+                },
+                {"role": "user", "content": "interrupts tool result block"},
+                {"role": "tool", "tool_call_id": "call_read", "tool_result_id": "call_read_result", "content": "late"},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    events = _read_events(run_dir)
+    integrity = next(event for event in events if event["event_type"] == "context_integrity_error")
+    assert state.agent_stop_reason == "context_integrity_error"
+    assert integrity["data"]["tool_pairing_validation"]["out_of_order_tool_result_ids"] == [
+        "call_read",
+        "call_read",
+    ]
+    assert not any(event["event_type"] == "model_call_started" for event in events)
+
+
 def test_agent_loop_preserves_safe_provider_private_metadata_for_next_turn(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = _ProviderPrivateMetadataClient()
@@ -79,6 +150,38 @@ def test_agent_loop_preserves_safe_provider_private_metadata_for_next_turn(tmp_p
     message_text = json.dumps(second_messages, ensure_ascii=False)
     assert "must be redacted before messages" not in message_text
     assert '"reasoning_content":' not in message_text
+
+
+def test_agent_loop_transcript_preserves_content_and_tool_calls(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _ContentAndToolCallClient()
+    with RunRecorder("content-tool", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="content-tool",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    assert state.agent_stop_reason == "max_turns"
+    transcript = [
+        json.loads(line)
+        for line in (run_dir / "transcript.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assistant = next(record for record in transcript if record["role"] == "assistant")
+    assert "I will inspect the file first." in assistant["content_preview"]
+    assert "tool_calls=" in assistant["content_preview"]
+    artifact_ref = assistant["content_artifact_refs"][0]
+    payload = json.loads((run_dir / artifact_ref["relative_path"]).read_text(encoding="utf-8"))
+    assert payload["content"] == "I will inspect the file first."
+    assert payload["tool_calls"][0]["tool_name"] == "unknown_tool"
 
 
 def test_agent_loop_clears_provider_private_state_after_run(tmp_path: Path):
@@ -661,6 +764,22 @@ class _ProviderPrivateMetadataClient:
         return ModelResponse(
             assistant_message=ModelMessage(role="assistant", content="done"),
             finish_reason="stop",
+        )
+
+
+class _ContentAndToolCallClient:
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="I will inspect the file first."),
+            tool_calls=[
+                ToolCall(
+                    tool_call_id="call_unknown",
+                    tool_name="unknown_tool",
+                    arguments={"path": "demo.py"},
+                    turn=1,
+                )
+            ],
+            finish_reason="tool_calls",
         )
 
 

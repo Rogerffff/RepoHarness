@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from datetime import datetime, timezone
 from functools import wraps
@@ -156,6 +157,32 @@ class AgentLoop:
             )
             state.context_revision = prepared.context_revision
             recorder.append_event(prepared.context_event)
+            pairing_validation = prepared.context_event.data.get("tool_pairing_validation", {})
+            if not pairing_validation.get("ok", True):
+                state.agent_stop_reason = "context_integrity_error"
+                state.budget_state.stop_reason = "context_integrity_error"
+                state.last_model_error = "context_integrity_error"
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("context_integrity"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="context_integrity_error",
+                        severity="error",
+                        error_type="tool_call_result_pairing_failed",
+                        artifact_refs=[prepared.prepared_messages_ref],
+                        data={
+                            "context_revision": prepared.context_revision,
+                            "model_input_hash": prepared.model_input_hash,
+                            "tool_pairing_validation": pairing_validation,
+                            "formal_policy": "stop_before_provider_request",
+                            "tainted": False,
+                        },
+                    )
+                )
+                break
             if prepared.token_estimate > budget_manager.max_context_tokens:
                 state.agent_stop_reason = "context_limit"
                 state.budget_state.stop_reason = "context_limit"
@@ -282,8 +309,16 @@ class AgentLoop:
                         },
                     )
                 )
-            assistant_preview = response.assistant_message.content or str(
-                [call.model_dump(mode="json") for call in response.tool_calls]
+            assistant_artifact_ref = _write_assistant_message_artifact(
+                recorder=recorder,
+                content=response.assistant_message.content,
+                tool_calls=response.tool_calls,
+                finish_reason=response.finish_reason,
+                model_error_type=response.model_error_type,
+            )
+            assistant_preview = _assistant_transcript_preview(
+                content=response.assistant_message.content,
+                tool_calls=response.tool_calls,
             )
             recorder.append_transcript(
                 TranscriptRecord(
@@ -297,6 +332,7 @@ class AgentLoop:
                     if response.model_call_event
                     else None,
                     content_preview=assistant_preview[:4000],
+                    content_artifact_refs=[assistant_artifact_ref],
                     model_visible=True,
                     trainable=response.model_error_type is None,
                     created_at=_timestamp(),
@@ -1377,6 +1413,37 @@ def _record_tool_result(
 
 def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _write_assistant_message_artifact(
+    *,
+    recorder: RunRecorder,
+    content: str | None,
+    tool_calls: list[ToolCall],
+    finish_reason: str | None,
+    model_error_type: str | None,
+) -> ArtifactRef:
+    return recorder.write_json_artifact(
+        "assistant_message",
+        {
+            "schema_version": "repo_harness_assistant_message_transcript_payload_v0",
+            "content": content,
+            "tool_calls": [call.model_dump(mode="json") for call in tool_calls],
+            "finish_reason": finish_reason,
+            "model_error_type": model_error_type,
+        },
+        {"budget_policy": "preserve_json"},
+    )
+
+
+def _assistant_transcript_preview(*, content: str | None, tool_calls: list[ToolCall]) -> str:
+    parts: list[str] = []
+    if content:
+        parts.append(content)
+    if tool_calls:
+        calls = [call.model_dump(mode="json") for call in tool_calls]
+        parts.append("tool_calls=" + json.dumps(calls, ensure_ascii=False, sort_keys=True))
+    return "\n".join(parts) if parts else ""
 
 
 def _tool_event_type(tool_result: ToolResult) -> str:

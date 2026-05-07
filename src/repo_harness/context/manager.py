@@ -348,17 +348,63 @@ def _is_test_result_message(message: dict[str, object]) -> bool:
 def _validate_tool_pairing(messages: list[dict[str, object]]) -> dict[str, Any]:
     requested: list[str] = []
     observed: list[str] = []
-    for message in messages:
+    out_of_order: list[str] = []
+    pending_block: list[str] = []
+    pending_block_index: int | None = None
+    for index, message in enumerate(messages):
         if message.get("role") == "assistant":
+            if pending_block:
+                out_of_order.extend(pending_block)
+                pending_block = []
+                pending_block_index = None
             for tool_call in message.get("tool_calls", []) or []:
                 if isinstance(tool_call, dict) and tool_call.get("tool_call_id"):
-                    requested.append(str(tool_call["tool_call_id"]))
-        elif message.get("role") == "tool" and message.get("tool_call_id"):
-            observed.append(str(message["tool_call_id"]))
-    missing = [tool_call_id for tool_call_id in requested if tool_call_id not in observed]
-    orphaned = [tool_call_id for tool_call_id in observed if tool_call_id not in requested]
+                    tool_call_id = str(tool_call["tool_call_id"])
+                    requested.append(tool_call_id)
+                    pending_block.append(tool_call_id)
+            if pending_block:
+                pending_block_index = index
+            continue
+        if message.get("role") == "tool" and message.get("tool_call_id"):
+            tool_call_id = str(message["tool_call_id"])
+            observed.append(tool_call_id)
+            if pending_block_index is None or not pending_block:
+                out_of_order.append(tool_call_id)
+            elif tool_call_id != pending_block[0]:
+                out_of_order.append(tool_call_id)
+            else:
+                pending_block.pop(0)
+                if not pending_block:
+                    pending_block_index = None
+            continue
+        if pending_block:
+            out_of_order.extend(pending_block)
+            pending_block = []
+            pending_block_index = None
+    if pending_block:
+        out_of_order.extend(pending_block)
+    duplicate_requested = _duplicates(requested)
+    duplicate_observed = _duplicates(observed)
+    observed_set = set(observed)
+    requested_set = set(requested)
+    missing = [tool_call_id for tool_call_id in requested if tool_call_id not in observed_set]
+    orphaned = [tool_call_id for tool_call_id in observed if tool_call_id not in requested_set]
+    ok = not missing and not orphaned and not duplicate_requested and not duplicate_observed and not out_of_order
     return {
-        "ok": not missing and not orphaned,
+        "ok": ok,
         "missing_tool_result_ids": missing,
         "orphaned_tool_result_ids": orphaned,
+        "duplicate_tool_call_ids": duplicate_requested,
+        "duplicate_tool_result_ids": duplicate_observed,
+        "out_of_order_tool_result_ids": out_of_order,
     }
+
+
+def _duplicates(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for value in values:
+        if value in seen and value not in duplicates:
+            duplicates.append(value)
+        seen.add(value)
+    return duplicates

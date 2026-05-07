@@ -22,6 +22,7 @@ AgentStopReason = Literal[
     "tool_error",
     "invalid_tool_call",
     "context_limit",
+    "context_integrity_error",
     "model_error",
     "no_progress",
     "manual_stop",

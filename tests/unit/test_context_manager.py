@@ -91,6 +91,59 @@ def test_context_manager_detects_missing_tool_result(tmp_path: Path):
 
     assert prepared.context_event.data["tool_pairing_validation"]["ok"] is False
     assert prepared.context_event.data["tool_pairing_validation"]["missing_tool_result_ids"] == ["missing"]
+    assert prepared.context_event.data["tool_pairing_validation"]["duplicate_tool_call_ids"] == []
+    assert prepared.context_event.data["tool_pairing_validation"]["duplicate_tool_result_ids"] == []
+
+
+def test_context_manager_detects_duplicate_and_out_of_order_tool_results(tmp_path: Path):
+    messages = [
+        {"role": "tool", "tool_call_id": "call_late", "tool_result_id": "call_late_result", "content": "early"},
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [
+                {"tool_call_id": "call_late", "tool_name": "read_file", "arguments": {}},
+                {"tool_call_id": "call_late", "tool_name": "read_file", "arguments": {}},
+            ],
+        },
+        {"role": "tool", "tool_call_id": "call_late", "tool_result_id": "call_late_result_2", "content": "late"},
+    ]
+    with RunRecorder("context-duplicates", tmp_path / "run", task_id="task") as recorder:
+        prepared = ContextManager().prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+        )
+
+    validation = prepared.context_event.data["tool_pairing_validation"]
+    assert validation["ok"] is False
+    assert validation["duplicate_tool_call_ids"] == ["call_late"]
+    assert validation["duplicate_tool_result_ids"] == ["call_late"]
+    assert validation["out_of_order_tool_result_ids"] == ["call_late", "call_late"]
+
+
+def test_context_manager_rejects_interrupted_tool_result_block(tmp_path: Path):
+    messages = [
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{"tool_call_id": "call_read", "tool_name": "read_file", "arguments": {}}],
+        },
+        {"role": "user", "content": "unexpected user message"},
+        {"role": "tool", "tool_call_id": "call_read", "tool_result_id": "call_read_result", "content": "late"},
+    ]
+    with RunRecorder("context-interrupted-block", tmp_path / "run", task_id="task") as recorder:
+        prepared = ContextManager().prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+        )
+
+    validation = prepared.context_event.data["tool_pairing_validation"]
+    assert validation["ok"] is False
+    assert validation["out_of_order_tool_result_ids"] == ["call_read", "call_read"]
 
 
 def test_context_manager_preserves_first_visible_record_when_replacing_later(tmp_path: Path):
