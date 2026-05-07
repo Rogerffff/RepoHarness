@@ -86,6 +86,7 @@ class OpenAIProviderClient:
             provider="openai",
             recorder=recorder,
             payload=request_payload,
+            request=request,
         )
         try:
             response_payload = self._create_completion(request_payload["body"], request)
@@ -95,6 +96,8 @@ class OpenAIProviderClient:
                 provider="openai",
                 recorder=recorder,
                 payload=provider_error_payload(provider="openai", error=error),
+                request=request,
+                raw_request_ref=raw_request_ref,
             )
             return model_error_response(
                 provider="openai",
@@ -114,6 +117,8 @@ class OpenAIProviderClient:
                 "status": "ok",
                 "response": response_payload,
             },
+            request=request,
+            raw_request_ref=raw_request_ref,
         )
         return response_from_provider_payload(
             provider="openai",

@@ -91,11 +91,14 @@ class DeepSeekProviderClient:
                     "error": error.message,
                     "body": {"messages": "<not_built>"},
                 },
+                request=request,
             )
             raw_response_ref = write_provider_response_artifact(
                 provider="deepseek",
                 recorder=recorder,
                 payload=provider_error_payload(provider="deepseek", error=error),
+                request=request,
+                raw_request_ref=raw_request_ref,
             )
             return model_error_response(
                 provider="deepseek",
@@ -111,6 +114,7 @@ class DeepSeekProviderClient:
             provider="deepseek",
             recorder=recorder,
             payload=request_payload,
+            request=request,
         )
         try:
             response_payload, provider_request_id = self._post_json(request_payload["body"], request)
@@ -120,6 +124,8 @@ class DeepSeekProviderClient:
                 provider="deepseek",
                 recorder=recorder,
                 payload=provider_error_payload(provider="deepseek", error=error),
+                request=request,
+                raw_request_ref=raw_request_ref,
             )
             return model_error_response(
                 provider="deepseek",
@@ -140,6 +146,8 @@ class DeepSeekProviderClient:
                 "provider_request_id": provider_request_id,
                 "response": response_payload,
             },
+            request=request,
+            raw_request_ref=raw_request_ref,
         )
         response = response_from_provider_payload(
             provider="deepseek",
@@ -154,7 +162,7 @@ class DeepSeekProviderClient:
             response.model_error_type is None
             and response.tool_calls
             and _deepseek_thinking_enabled(request)
-            and not _deepseek_reasoning_content(response_payload)
+            and _deepseek_reasoning_content(response_payload) is None
         ):
             return model_error_response(
                 provider="deepseek",
@@ -330,7 +338,7 @@ def _attach_deepseek_reasoning_state(
     if response.model_error_type is not None:
         return response
     reasoning_content = _deepseek_reasoning_content(payload)
-    if not reasoning_content:
+    if reasoning_content is None:
         return response
     replay_required = bool(response.tool_calls) or _prepared_messages_include_tool_activity(
         request.prepared_messages
@@ -378,7 +386,7 @@ def _deepseek_reasoning_content(payload: dict[str, Any]) -> str | None:
     if not isinstance(message, dict):
         return None
     value = message.get("reasoning_content")
-    if isinstance(value, str) and value:
+    if isinstance(value, str):
         return value
     return None
 

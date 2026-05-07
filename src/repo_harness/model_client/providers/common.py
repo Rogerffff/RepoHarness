@@ -10,7 +10,7 @@ from typing import Any
 
 from repo_harness.model_client.redaction import (
     REDACTED_CREDENTIAL,
-    redact_provider_payload,
+    redact_provider_payload_with_report,
     sanitize_provider_error_message,
 )
 from repo_harness.model_client.provider_private_state import deepseek_reasoning_from_metadata
@@ -93,6 +93,12 @@ def build_chat_completion_payload(
         "base_url": base_url,
         "body": payload,
         "tool_schema_snapshot_ref": request.tool_schema_snapshot_ref.model_dump(mode="json"),
+        "prepared_messages_ref": request.prepared_messages_ref.model_dump(mode="json"),
+        "model_input_hash": request.model_input_hash,
+        "context_revision": request.context_revision,
+        "run_id": request.run_id,
+        "task_id": request.task_id,
+        "turn": request.turn,
         "model_call_id": request.model_call_id,
         "request_timeout_seconds": request.request_timeout_seconds,
         "raw_request_logging_policy": request.raw_request_logging_policy,
@@ -106,13 +112,28 @@ def write_provider_request_artifact(
     provider: str,
     recorder: RunRecorder,
     payload: dict[str, Any],
+    request: ModelRequestContext | None = None,
 ) -> ArtifactRef:
+    redacted_payload, redaction_report = redact_provider_payload_with_report(payload)
+    body = _object_to_dict(payload.get("body"))
+    redacted_body = _object_to_dict(redacted_payload.get("body")) if isinstance(redacted_payload, dict) else {}
+    request_binding = _provider_request_binding(payload=payload, request=request)
     return recorder.write_json_artifact(
         f"raw_{provider}_provider_request",
         {
+            **redacted_payload,
             "export_allowed": False,
             "training_payload_allowed": False,
-            **redact_provider_payload(payload),
+            "provider_body_hash_before_redaction": stable_hash(body),
+            "redacted_body_hash": stable_hash(redacted_body),
+            "redaction_report": redaction_report,
+            "prepared_messages_ref": request_binding["prepared_messages_ref"],
+            "tool_schema_snapshot_ref": request_binding["tool_schema_snapshot_ref"],
+            "model_input_hash": request_binding["model_input_hash"],
+            "model_call_id": request_binding["model_call_id"],
+            "provider_body_message_projection_hash": stable_hash(_project_provider_messages(body)),
+            "prepared_messages_projection_hash": request_binding["prepared_messages_projection_hash"],
+            "prepared_messages_body_equivalent": request_binding["prepared_messages_body_equivalent"],
         },
         {
             "redaction_status": "redacted",
@@ -127,13 +148,32 @@ def write_provider_response_artifact(
     provider: str,
     recorder: RunRecorder,
     payload: dict[str, Any],
+    request: ModelRequestContext | None = None,
+    raw_request_ref: ArtifactRef | None = None,
 ) -> ArtifactRef:
+    redacted_payload, redaction_report = redact_provider_payload_with_report(payload)
+    response_body = _response_body_for_hash(payload)
+    redacted_response_body = _response_body_for_hash(redacted_payload)
+    response_binding = _provider_response_binding(
+        payload=payload,
+        request=request,
+        raw_request_ref=raw_request_ref,
+    )
     return recorder.write_json_artifact(
         f"raw_{provider}_provider_response",
         {
+            **redacted_payload,
             "export_allowed": False,
             "training_payload_allowed": False,
-            **redact_provider_payload(payload),
+            "response_body_hash_before_redaction": stable_hash(response_body),
+            "redacted_response_body_hash": stable_hash(redacted_response_body),
+            "redaction_report": redaction_report,
+            "model_call_id": response_binding["model_call_id"],
+            "raw_provider_request_ref": response_binding["raw_provider_request_ref"],
+            "prepared_messages_ref": response_binding["prepared_messages_ref"],
+            "tool_schema_snapshot_ref": response_binding["tool_schema_snapshot_ref"],
+            "parsed_tool_calls_hash": response_binding["parsed_tool_calls_hash"],
+            "finish_reason": response_binding["finish_reason"],
         },
         {
             "redaction_status": "redacted",
@@ -352,7 +392,7 @@ def _to_chat_message(message: dict[str, Any], *, provider: str) -> dict[str, Any
             reasoning_content, replay_required = deepseek_reasoning_from_metadata(
                 message.get("metadata")
             )
-            if reasoning_content:
+            if reasoning_content is not None:
                 converted["reasoning_content"] = reasoning_content
             elif replay_required:
                 raise ProviderRequestError(
@@ -416,6 +456,122 @@ def _content_to_string(content: Any) -> str | None:
     if isinstance(content, str):
         return content
     return json.dumps(content, ensure_ascii=False, sort_keys=True)
+
+
+def _provider_request_binding(
+    *,
+    payload: dict[str, Any],
+    request: ModelRequestContext | None,
+) -> dict[str, Any]:
+    prepared_ref = (
+        request.prepared_messages_ref.model_dump(mode="json")
+        if request is not None
+        else payload.get("prepared_messages_ref")
+    )
+    tool_schema_ref = (
+        request.tool_schema_snapshot_ref.model_dump(mode="json")
+        if request is not None
+        else payload.get("tool_schema_snapshot_ref")
+    )
+    model_input_hash = request.model_input_hash if request is not None else payload.get("model_input_hash")
+    model_call_id = request.model_call_id if request is not None else payload.get("model_call_id")
+    body_messages = _project_provider_messages(_object_to_dict(payload.get("body")))
+    prepared_projection: list[dict[str, Any]] | dict[str, Any] | None
+    if request is None:
+        prepared_projection = None
+    else:
+        try:
+            prepared_projection = _project_prepared_messages(
+                request.prepared_messages,
+                provider=str(payload.get("provider") or ""),
+            )
+        except ProviderRequestError as exc:
+            prepared_projection = {
+                "projection_error": exc.info.model_error_type,
+                "message": sanitize_provider_error_message(exc.info.message),
+            }
+    return {
+        "prepared_messages_ref": prepared_ref,
+        "tool_schema_snapshot_ref": tool_schema_ref,
+        "model_input_hash": model_input_hash,
+        "model_call_id": model_call_id,
+        "prepared_messages_projection_hash": stable_hash(prepared_projection),
+        "prepared_messages_body_equivalent": prepared_projection == body_messages,
+    }
+
+
+def _provider_response_binding(
+    *,
+    payload: dict[str, Any],
+    request: ModelRequestContext | None,
+    raw_request_ref: ArtifactRef | None,
+) -> dict[str, Any]:
+    response_payload = _object_to_dict(payload.get("response")) or payload
+    choice = _first_choice(response_payload)
+    message = _object_to_dict(choice.get("message"))
+    parse = _parse_tool_calls(message.get("tool_calls"), request.turn if request is not None else 0)
+    parsed_tool_calls: dict[str, Any]
+    if parse.error:
+        parsed_tool_calls = {"error": parse.error, "tool_calls": []}
+    else:
+        parsed_tool_calls = {"error": None, "tool_calls": [call.model_dump(mode="json") for call in parse.tool_calls]}
+    return {
+        "model_call_id": request.model_call_id if request is not None else payload.get("model_call_id"),
+        "raw_provider_request_ref": raw_request_ref.model_dump(mode="json") if raw_request_ref else None,
+        "prepared_messages_ref": (
+            request.prepared_messages_ref.model_dump(mode="json") if request is not None else None
+        ),
+        "tool_schema_snapshot_ref": (
+            request.tool_schema_snapshot_ref.model_dump(mode="json") if request is not None else None
+        ),
+        "parsed_tool_calls_hash": stable_hash(parsed_tool_calls),
+        "finish_reason": choice.get("finish_reason") if isinstance(choice, dict) else None,
+    }
+
+
+def _response_body_for_hash(payload: Any) -> Any:
+    if isinstance(payload, dict) and "response" in payload:
+        return payload["response"]
+    return payload
+
+
+def _project_provider_messages(body: dict[str, Any]) -> list[dict[str, Any]]:
+    messages = body.get("messages")
+    if not isinstance(messages, list):
+        return []
+    projected: list[dict[str, Any]] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        item = {
+            "role": message.get("role"),
+            "content": message.get("content"),
+            "tool_call_id": message.get("tool_call_id"),
+            "tool_calls": message.get("tool_calls"),
+        }
+        projected.append({key: value for key, value in item.items() if value is not None})
+    return projected
+
+
+def _project_prepared_messages(messages: list[dict[str, Any]], *, provider: str) -> list[dict[str, Any]]:
+    projected: list[dict[str, Any]] = []
+    for message in messages:
+        converted = _to_chat_message(message, provider=provider)
+        item = {
+            "role": converted.get("role"),
+            "content": converted.get("content"),
+            "tool_call_id": converted.get("tool_call_id"),
+            "tool_calls": converted.get("tool_calls"),
+        }
+        projected.append({key: value for key, value in item.items() if value is not None})
+    return projected
+
+
+def _first_choice(payload: dict[str, Any]) -> dict[str, Any]:
+    choices = payload.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        return choices[0]
+    return {}
 
 
 @dataclass(frozen=True)

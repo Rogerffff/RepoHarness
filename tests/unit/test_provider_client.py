@@ -115,6 +115,86 @@ def test_deepseek_thinking_tool_call_without_reasoning_is_protocol_error(
     assert client.last_body["tools"][0]["function"]["name"] == "read_file"
 
 
+def test_deepseek_thinking_tool_call_allows_empty_reasoning_for_replay(
+    tmp_path: Path,
+):
+    first_client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-empty-reasoning",
+            "choices": [
+                {
+                    "finish_reason": "tool_calls",
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "reasoning_content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "read_file",
+                                    "arguments": "{\"path\":\"calculator.py\"}",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+    first_request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        provider_specific_options={"thinking": {"type": "enabled"}},
+    )
+    with RunRecorder("deepseek-empty-reasoning-1", tmp_path / "first", task_id="task_001") as recorder:
+        first_response = first_client.generate(request=first_request, recorder=recorder)
+
+    assert first_response.model_error_type is None
+    assistant_metadata = first_response.assistant_message.metadata
+    assert assistant_metadata["provider_private"]["deepseek"]["reasoning_content_present"] is True
+
+    second_client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-empty-reasoning-replay",
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "message": {"role": "assistant", "content": "done"},
+                }
+            ],
+        },
+    )
+    second_request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        prepared_messages=[
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": "fix"},
+            {
+                "role": "assistant",
+                "content": first_response.assistant_message.content,
+                "tool_calls": [call.model_dump(mode="json") for call in first_response.tool_calls],
+                "metadata": assistant_metadata,
+            },
+            {"role": "tool", "tool_call_id": "call_1", "content": "file contents"},
+        ],
+        provider_specific_options={"thinking": {"type": "enabled"}},
+    )
+    with RunRecorder("deepseek-empty-reasoning-2", tmp_path / "second", task_id="task_001") as recorder:
+        second_response = second_client.generate(request=second_request, recorder=recorder)
+
+    assert second_response.model_error_type is None
+    assert second_client.last_body["messages"][2]["reasoning_content"] == ""
+
+
 def test_deepseek_provider_replays_reasoning_content_after_tool_call(tmp_path: Path):
     first_client = _DeepSeekStub(
         model_id="deepseek-v4-pro",
@@ -428,7 +508,7 @@ def test_provider_redaction_preserves_non_secret_version_fields():
     assert redacted["schema_version"] == "repo_harness_deepseek_provider_response_v0"
     assert redacted["provider_adapter_version"] == "repo_harness_deepseek_adapter_v2_v0"
     assert redacted["api_key"] == REDACTED_CREDENTIAL
-    assert redacted["opaque_value"] == REDACTED_CREDENTIAL
+    assert redacted["opaque_value"] == "repo_harness_deepseek_provider_response_v0"
 
 
 def test_provider_redaction_redacts_explicit_secrets_in_version_fields():
@@ -443,8 +523,8 @@ def test_provider_redaction_redacts_explicit_secrets_in_version_fields():
     redacted = redact_provider_payload(payload)
 
     assert redacted["schema_version"] == REDACTED_CREDENTIAL
-    assert redacted["provider_adapter_version"] == REDACTED_CREDENTIAL
-    assert redacted["nested"]["fallback_policy_version"] == REDACTED_CREDENTIAL
+    assert redacted["provider_adapter_version"] == f"Bearer {REDACTED_CREDENTIAL}"
+    assert redacted["nested"]["fallback_policy_version"] == f"Bearer {REDACTED_CREDENTIAL}"
 
 
 def test_openai_provider_uses_sdk_shape_with_injected_client(tmp_path: Path):
