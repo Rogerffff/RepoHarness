@@ -73,6 +73,176 @@ def test_deepseek_provider_uses_openai_compatible_tool_calls(tmp_path: Path):
     assert "Authorization: Bearer" not in raw_text
 
 
+def test_deepseek_thinking_tool_call_without_reasoning_is_protocol_error(
+    tmp_path: Path,
+):
+    client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-missing-reasoning",
+            "choices": [
+                {
+                    "finish_reason": "tool_calls",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "read_file",
+                                    "arguments": "{\"path\":\"calculator.py\"}",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        provider_specific_options={"thinking": {"type": "enabled"}},
+    )
+    with RunRecorder("deepseek-missing-tool-reasoning", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type == "provider_protocol_error"
+    assert client.last_body["tools"][0]["function"]["name"] == "read_file"
+
+
+def test_deepseek_provider_replays_reasoning_content_after_tool_call(tmp_path: Path):
+    first_client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-reasoning-1",
+            "choices": [
+                {
+                    "finish_reason": "tool_calls",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "reasoning_content": "private reasoning that must not enter artifacts",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "read_file",
+                                    "arguments": "{\"path\":\"calculator.py\"}",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+    first_request = _request(provider="deepseek", model_id="deepseek-v4-pro")
+    with RunRecorder("deepseek-reasoning-1", tmp_path / "first", task_id="task_001") as recorder:
+        first_response = first_client.generate(request=first_request, recorder=recorder)
+
+    assistant_metadata = first_response.assistant_message.metadata
+    deepseek_private = assistant_metadata["provider_private"]["deepseek"]
+    assert deepseek_private["reasoning_content_present"] is True
+    assert deepseek_private["reasoning_content_required_for_replay"] is True
+    metadata_text = json.dumps(assistant_metadata, ensure_ascii=False)
+    assert "private reasoning that must not enter artifacts" not in metadata_text
+    assert '"reasoning_content":' not in metadata_text
+    first_raw_response = (
+        tmp_path / "first" / first_response.raw_provider_response_ref.relative_path
+    ).read_text(encoding="utf-8")
+    assert "private reasoning that must not enter artifacts" not in first_raw_response
+    assert "<REDACTED_REASONING>" in first_raw_response
+
+    second_client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-reasoning-2",
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "message": {"role": "assistant", "content": "done"},
+                }
+            ],
+        },
+    )
+    second_request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        prepared_messages=[
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": {"task": "fix calculator"}},
+            {
+                "role": "assistant",
+                "content": first_response.assistant_message.content,
+                "tool_calls": [call.model_dump(mode="json") for call in first_response.tool_calls],
+                "metadata": assistant_metadata,
+            },
+            {"role": "tool", "tool_call_id": "call_1", "content": "file contents"},
+        ],
+    )
+    with RunRecorder("deepseek-reasoning-2", tmp_path / "second", task_id="task_001") as recorder:
+        second_response = second_client.generate(request=second_request, recorder=recorder)
+
+    assert second_response.model_error_type is None
+    assert second_client.last_body["messages"][2]["reasoning_content"] == (
+        "private reasoning that must not enter artifacts"
+    )
+    second_raw_request = (
+        tmp_path / "second" / second_response.raw_provider_request_ref.relative_path
+    ).read_text(encoding="utf-8")
+    assert "private reasoning that must not enter artifacts" not in second_raw_request
+    assert "<REDACTED_REASONING>" in second_raw_request
+
+
+def test_deepseek_provider_protocol_error_when_required_reasoning_state_is_missing(
+    tmp_path: Path,
+):
+    client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": "done"}}]
+        },
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        prepared_messages=[
+            {"role": "system", "content": "system"},
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [],
+                "metadata": {
+                    "provider_private": {
+                        "deepseek": {
+                            "state_id": "missing-state",
+                            "reasoning_content_required_for_replay": True,
+                        }
+                    }
+                },
+            },
+        ],
+    )
+
+    with RunRecorder("deepseek-missing-reasoning", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type == "provider_protocol_error"
+    assert client.last_body == {}
+
+
 def test_deepseek_provider_maps_malformed_tool_call_to_model_error(tmp_path: Path):
     client = _DeepSeekStub(
         model_id="deepseek-v4-pro",
@@ -281,13 +451,20 @@ class _FakeCompletions:
         }
 
 
-def _request(*, provider: str, model_id: str) -> ModelRequestContext:
+def _request(
+    *,
+    provider: str,
+    model_id: str,
+    prepared_messages: list[dict[str, Any]] | None = None,
+    provider_specific_options: dict[str, Any] | None = None,
+) -> ModelRequestContext:
     return ModelRequestContext(
         run_id=f"{provider}-run",
         task_id="task_001",
         turn=1,
         model_call_id=f"{provider}_model_call_0001",
-        prepared_messages=[
+        prepared_messages=prepared_messages
+        or [
             {"role": "system", "content": "system"},
             {"role": "user", "content": {"task": "fix calculator"}},
         ],
@@ -312,7 +489,7 @@ def _request(*, provider: str, model_id: str) -> ModelRequestContext:
         provider_options=ModelProviderOptions(
             provider=provider,
             model_id=model_id,
-            provider_specific_options={"thinking": {"type": "disabled"}},
+            provider_specific_options=provider_specific_options or {"thinking": {"type": "disabled"}},
         ),
         scaffold_id="simple_react",
         scaffold_phase="react",

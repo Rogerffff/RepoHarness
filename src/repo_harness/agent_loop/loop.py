@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
+from functools import wraps
+from typing import Any, Callable
 
 from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetManager, BudgetState
@@ -14,6 +16,10 @@ from repo_harness.model_client import (
     ModelProviderOptions,
     ModelRequestContext,
 )
+from repo_harness.model_client.provider_private_state import (
+    provider_private_state_store,
+    sanitize_provider_private_metadata_for_messages,
+)
 from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds.patch_action import PatchActionParseResult, parse_patch_action
@@ -21,6 +27,19 @@ from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolDefinition, ToolExecutionContext, ToolExecutor, ToolResult
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TranscriptRecord, TrajectoryEvent
+
+
+def _cleanup_provider_private_state_on_exit(func: Callable[..., AgentLoopState]) -> Callable[..., AgentLoopState]:
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> AgentLoopState:
+        run_id = kwargs.get("run_id")
+        try:
+            return func(*args, **kwargs)
+        finally:
+            if isinstance(run_id, str):
+                provider_private_state_store().clear_run(run_id)
+
+    return wrapper
 
 
 class AgentLoop:
@@ -44,6 +63,7 @@ class AgentLoop:
         self.feedback_tests_passed_policy = feedback_tests_passed_policy
         self.hidden_feedback_visible_to_model = hidden_feedback_visible_to_model
 
+    @_cleanup_provider_private_state_on_exit
     def run(
         self,
         *,
@@ -282,15 +302,19 @@ class AgentLoop:
                     created_at=_timestamp(),
                 )
             )
-            messages.append(
-                {
-                    "role": "assistant",
+            assistant_message = {
+                "role": "assistant",
                 "content": response.assistant_message.content,
                 "tool_calls": [call.model_dump(mode="json") for call in response.tool_calls],
                 "model_error_type": response.model_error_type,
                 "scaffold_phase": current_phase,
             }
-        )
+            safe_metadata = sanitize_provider_private_metadata_for_messages(
+                response.assistant_message.metadata
+            )
+            if safe_metadata:
+                assistant_message["metadata"] = safe_metadata
+            messages.append(assistant_message)
             budget_stop = _budget_stop_reason(
                 budget_manager,
                 state,

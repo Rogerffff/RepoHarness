@@ -2,9 +2,12 @@ import json
 import time
 from pathlib import Path
 
+import pytest
+
 from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
 from repo_harness.model_client import FakeModelClient, ModelMessage, ModelResponse
+from repo_harness.model_client.provider_private_state import provider_private_state_store
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutor
 from repo_harness.trajectory import RunRecorder
@@ -47,6 +50,93 @@ def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
     started = next(event for event in events if event["event_type"] == "model_call_started")
     assert started["data"]["scaffold_phase"] == "act"
     assert started["data"]["budget_state"]["turn_count"] == 1
+
+
+def test_agent_loop_preserves_safe_provider_private_metadata_for_next_turn(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _ProviderPrivateMetadataClient()
+    with RunRecorder("provider-private", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="provider-private",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=2,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert len(client.requests) == 2
+    second_messages = client.requests[1].prepared_messages
+    assistant = next(message for message in second_messages if message.get("role") == "assistant")
+    assert assistant["metadata"]["provider_private"]["deepseek"]["state_id"] == "state-1"
+    assert assistant["metadata"]["provider_private"]["deepseek"]["redacted_state_ref"]["sha256"] == "a" * 64
+    assert assistant["metadata"]["provider_private"]["deepseek"]["api_key"] == "<REDACTED_CREDENTIAL>"
+    message_text = json.dumps(second_messages, ensure_ascii=False)
+    assert "must be redacted before messages" not in message_text
+    assert '"reasoning_content":' not in message_text
+
+
+def test_agent_loop_clears_provider_private_state_after_run(tmp_path: Path):
+    store = provider_private_state_store()
+    state_record = store.put_deepseek_reasoning(
+        run_id="provider-private-cleanup",
+        model_call_id="provider-private-cleanup_model_call_0001",
+        reasoning_content="live private state",
+    )
+    run_dir = tmp_path / "run"
+
+    with RunRecorder("provider-private-cleanup", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=FakeModelClient.from_steps(
+                script_id="cleanup",
+                task_id="task",
+                steps=[{"step_id": "final", "action": "final_answer", "assistant_text": "done"}],
+            ),
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="provider-private-cleanup",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert store.get_deepseek_reasoning(state_record.state_id) is None
+
+
+def test_agent_loop_clears_provider_private_state_after_exception(tmp_path: Path):
+    store = provider_private_state_store()
+    state_record = store.put_deepseek_reasoning(
+        run_id="provider-private-exception-cleanup",
+        model_call_id="provider-private-exception-cleanup_model_call_0001",
+        reasoning_content="live private state",
+    )
+    run_dir = tmp_path / "run"
+
+    with pytest.raises(RuntimeError, match="provider failed unexpectedly"):
+        with RunRecorder("provider-private-exception-cleanup", run_dir, task_id="task") as recorder:
+            AgentLoop(
+                model_client=_RaisingClient(),
+                tool_executor=ToolExecutor(),
+                allowed_tool_names=["read_file"],
+            ).run(
+                run_id="provider-private-exception-cleanup",
+                task_id="task",
+                initial_messages=[{"role": "system", "content": "system"}],
+                tool_context=None,  # type: ignore[arg-type]
+                recorder=recorder,
+                max_turns=1,
+            )
+
+    assert store.get_deepseek_reasoning(state_record.state_id) is None
 
 
 def test_agent_loop_rejects_empty_no_tool_response(tmp_path: Path):
@@ -533,6 +623,50 @@ class _RecordingClient:
             assistant_message=ModelMessage(role="assistant", content="done"),
             finish_reason="stop",
         )
+
+
+class _ProviderPrivateMetadataClient:
+    def __init__(self) -> None:
+        self.requests = []
+
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        self.requests.append(request)
+        if len(self.requests) == 1:
+            return ModelResponse(
+                assistant_message=ModelMessage(
+                    role="assistant",
+                    content=None,
+                    metadata={
+                        "provider_private": {
+                            "deepseek": {
+                                "state_id": "state-1",
+                                "redacted_state_ref": {"sha256": "a" * 64, "size_bytes": 123},
+                                "api_key": "sk-test-provider-private-secret-1234567890",
+                                "reasoning_content_required_for_replay": True,
+                                "reasoning_content": "must be redacted before messages",
+                            }
+                        }
+                    },
+                ),
+                tool_calls=[
+                    ToolCall(
+                        tool_call_id="call_unknown",
+                        tool_name="unknown_tool",
+                        arguments={},
+                        turn=1,
+                    )
+                ],
+                finish_reason="tool_calls",
+            )
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
+        )
+
+
+class _RaisingClient:
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        raise RuntimeError("provider failed unexpectedly")
 
 
 class _ModelErrorWithToolCallsClient:

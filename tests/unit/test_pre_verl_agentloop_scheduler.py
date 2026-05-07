@@ -48,6 +48,14 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert len(task_manifest["task_definition_refs"]) == 1
     run_config_manifest = _read_json(output_dir / "pre_verl_agentloop_run_config_manifest.json")
     assert run_config_manifest["entries"][0]["resolved_tools"] == configuration["resolved_tools"]
+    run_config = _read_yaml(
+        output_dir
+        / "run_configs"
+        / "pre_verl_dev_001_sqlfluff__sqlfluff_1625_deepseek_deepseek-v4-flash.yaml"
+    )
+    assert run_config["runtime"]["execution_mode"] == "docker"
+    assert run_config["runtime"]["docker_backend"]["build_base_image"] == "python:3.8"
+    assert run_config["model"]["provider_specific_options"]["thinking"] == {"type": "enabled"}
     command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(
         encoding="utf-8"
     )
@@ -289,6 +297,12 @@ def _ref(path: Path, *, visibility: str = "audit_only") -> dict[str, object]:
 
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_yaml(path: Path) -> dict:
+    import yaml
+
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
 def _write_json(path: Path, payload: object) -> None:

@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any
 
 from repo_harness.errors import ConfigError
+from repo_harness.model_client.provider_private_state import (
+    capture_deepseek_reasoning_state,
+)
 from repo_harness.model_client.providers.common import (
     ProviderCredential,
     ProviderErrorInfo,
@@ -66,13 +69,42 @@ class DeepSeekProviderClient:
 
     def generate(self, *, request: ModelRequestContext, recorder: RunRecorder) -> ModelResponse:
         started = time.monotonic()
-        request_payload = build_chat_completion_payload(
-            request,
-            model_id=self.model_id,
-            provider="deepseek",
-            base_url=self.base_url,
-            include_deepseek_options=True,
-        )
+        try:
+            request_payload = build_chat_completion_payload(
+                request,
+                model_id=self.model_id,
+                provider="deepseek",
+                base_url=self.base_url,
+                include_deepseek_options=True,
+            )
+        except ProviderRequestError as exc:
+            error = exc.info
+            raw_request_ref = write_provider_request_artifact(
+                provider="deepseek",
+                recorder=recorder,
+                payload={
+                    "schema_version": "repo_harness_deepseek_provider_request_v0",
+                    "provider": "deepseek",
+                    "provider_adapter_version": DEEPSEEK_PROVIDER_VERSION,
+                    "status": "provider_protocol_error",
+                    "model_call_id": request.model_call_id,
+                    "error": error.message,
+                    "body": {"messages": "<not_built>"},
+                },
+            )
+            raw_response_ref = write_provider_response_artifact(
+                provider="deepseek",
+                recorder=recorder,
+                payload=provider_error_payload(provider="deepseek", error=error),
+            )
+            return model_error_response(
+                provider="deepseek",
+                request=request,
+                raw_request_ref=raw_request_ref,
+                raw_response_ref=raw_response_ref,
+                error=error,
+                duration_ms=duration_ms_since(started),
+            )
         request_payload["provider_adapter_version"] = DEEPSEEK_PROVIDER_VERSION
         request_payload["credential_source"] = self.credential.source
         raw_request_ref = write_provider_request_artifact(
@@ -109,7 +141,7 @@ class DeepSeekProviderClient:
                 "response": response_payload,
             },
         )
-        return response_from_provider_payload(
+        response = response_from_provider_payload(
             provider="deepseek",
             request=request,
             raw_request_ref=raw_request_ref,
@@ -117,6 +149,34 @@ class DeepSeekProviderClient:
             payload=response_payload,
             duration_ms=duration_ms_since(started),
             provider_request_id=provider_request_id,
+        )
+        if (
+            response.model_error_type is None
+            and response.tool_calls
+            and _deepseek_thinking_enabled(request)
+            and not _deepseek_reasoning_content(response_payload)
+        ):
+            return model_error_response(
+                provider="deepseek",
+                request=request,
+                raw_request_ref=raw_request_ref,
+                raw_response_ref=raw_response_ref,
+                error=ProviderErrorInfo(
+                    model_error_type="provider_protocol_error",
+                    message=(
+                        "DeepSeek thinking mode returned tool calls without reasoning_content; "
+                        "RepoHarness cannot replay the next stateless request safely."
+                    ),
+                    provider_request_id=provider_request_id,
+                    payload=response_payload,
+                ),
+                duration_ms=duration_ms_since(started),
+            )
+        return _attach_deepseek_reasoning_state(
+            response=response,
+            request=request,
+            payload=response_payload,
+            recorder=recorder,
         )
 
     def _post_json(
@@ -258,3 +318,65 @@ def _error_message_from_payload(payload: dict[str, Any]) -> str | None:
         return sanitize_provider_error_message(str(message)) if message is not None else None
     message = payload.get("message")
     return sanitize_provider_error_message(str(message)) if message is not None else None
+
+
+def _attach_deepseek_reasoning_state(
+    *,
+    response: ModelResponse,
+    request: ModelRequestContext,
+    payload: dict[str, Any],
+    recorder: RunRecorder,
+) -> ModelResponse:
+    if response.model_error_type is not None:
+        return response
+    reasoning_content = _deepseek_reasoning_content(payload)
+    if not reasoning_content:
+        return response
+    replay_required = bool(response.tool_calls) or _prepared_messages_include_tool_activity(
+        request.prepared_messages
+    )
+    private_metadata = capture_deepseek_reasoning_state(
+        run_id=request.run_id,
+        model_call_id=request.model_call_id,
+        reasoning_content=reasoning_content,
+        replay_required=replay_required,
+        recorder=recorder,
+    )
+    existing_metadata = dict(response.assistant_message.metadata or {})
+    provider_private = dict(existing_metadata.get("provider_private") or {})
+    provider_private["deepseek"] = private_metadata
+    existing_metadata["provider_private"] = provider_private
+    assistant = response.assistant_message.model_copy(update={"metadata": existing_metadata})
+    return response.model_copy(update={"assistant_message": assistant})
+
+
+def _deepseek_thinking_enabled(request: ModelRequestContext) -> bool:
+    thinking = request.provider_options.provider_specific_options.get("thinking")
+    if isinstance(thinking, dict):
+        return thinking.get("type") != "disabled"
+    return True
+
+
+def _deepseek_reasoning_content(payload: dict[str, Any]) -> str | None:
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return None
+    choice = choices[0]
+    if not isinstance(choice, dict):
+        return None
+    message = choice.get("message")
+    if not isinstance(message, dict):
+        return None
+    value = message.get("reasoning_content")
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _prepared_messages_include_tool_activity(messages: list[dict[str, Any]]) -> bool:
+    for message in messages:
+        if message.get("role") == "tool":
+            return True
+        if message.get("role") == "assistant" and message.get("tool_calls"):
+            return True
+    return False

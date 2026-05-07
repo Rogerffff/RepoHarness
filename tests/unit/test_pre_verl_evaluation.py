@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+import repo_harness.pre_verl_evaluation as pre_verl_evaluation
 from repo_harness.errors import RepoHarnessError
 from repo_harness.pre_verl_evaluation import (
     _inspect_transcript,
@@ -61,6 +62,54 @@ def test_runtime_transcript_pairing_uses_tool_call_id_from_events(tmp_path: Path
     assert finding["tool_result_count"] == 1
     assert finding["unpaired_tool_use_count"] == 0
     assert finding["unpaired_tool_result_count"] == 0
+
+
+def test_legacy_pre_verl_deepseek_response_artifact_redacts_reasoning(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = {
+        "choices": [
+            {
+                "finish_reason": "stop",
+                "message": {
+                    "content": "done",
+                    "reasoning_content": "private reasoning from legacy path",
+                },
+            }
+        ],
+        "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+    }
+
+    class _Response:
+        def __enter__(self):  # noqa: ANN001
+            return self
+
+        def __exit__(self, exc_type, exc, tb):  # noqa: ANN001
+            return False
+
+        def read(self) -> bytes:
+            return json.dumps(payload).encode("utf-8")
+
+    monkeypatch.setattr(pre_verl_evaluation, "urlopen", lambda request, timeout: _Response())
+
+    result = pre_verl_evaluation._call_deepseek_for_patch(
+        messages=[{"role": "user", "content": "fix"}],
+        model_id="deepseek-v4-pro",
+        credential_value="sk-test-secret-value-1234567890",
+        credential_source="environment",
+        run_dir=tmp_path,
+        max_output_tokens=32,
+        request_timeout_seconds=5,
+        temperature=0.0,
+    )
+
+    assert result["status"] == "passed"
+    response_text = (tmp_path / "raw_deepseek_provider_response_redacted.json").read_text(
+        encoding="utf-8"
+    )
+    assert "private reasoning from legacy path" not in response_text
+    assert "<REDACTED_REASONING>" in response_text
 
 
 def test_runtime_transcript_pairing_reports_missing_terminal_event(tmp_path: Path) -> None:

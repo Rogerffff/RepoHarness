@@ -502,6 +502,12 @@ def inspect_pre_verl_agentloop_run_config(
                 failures.append(f"{config_path}: final-only task must set test_feedback_policy=disabled")
             if run_config.runtime.max_test_runs != 0:
                 failures.append(f"{config_path}: final-only task must set max_test_runs=0")
+        _inspect_deepseek_formal_provider_config(
+            definition=definition,
+            run_config=run_config,
+            config_path=config_path,
+            failures=failures,
+        )
         _inspect_resolved_policy_and_context(
             definition=definition,
             run_config=run_config,
@@ -1425,6 +1431,40 @@ def _inspect_model_visible_fields(
         finding = _find_hidden_marker(value)
         if finding:
             failures.append(f"{path}: model-visible field {field} contains hidden marker {finding!r}")
+
+
+def _inspect_deepseek_formal_provider_config(
+    *,
+    definition: TaskDefinition,
+    run_config: RunConfig,
+    config_path: Path,
+    failures: list[str],
+) -> None:
+    if run_config.model.provider != "deepseek":
+        return
+    if run_config.runtime.execution_mode != "docker":
+        failures.append(f"{config_path}: DeepSeek formal pre-verl run config must use execution_mode=docker")
+    expected_image = definition.environment.execution_image
+    actual_image = run_config.runtime.docker_backend.build_base_image
+    if not expected_image:
+        failures.append(
+            f"{config_path}: DeepSeek formal pre-verl task must set TaskDefinition.environment.execution_image"
+        )
+    elif actual_image != expected_image:
+        failures.append(
+            f"{config_path}: runtime.docker_backend.build_base_image={actual_image!r} "
+            f"must equal TaskDefinition.environment.execution_image={expected_image!r}"
+        )
+    thinking = run_config.model.provider_specific_options.get("thinking")
+    if not isinstance(thinking, dict) or thinking.get("type") not in {"enabled", "disabled"}:
+        failures.append(
+            f"{config_path}: DeepSeek formal pre-verl run config must explicitly set provider_specific_options.thinking.type"
+        )
+    compatibility = run_config.model.provider_specific_options.get("reasoning_compatibility")
+    if isinstance(thinking, dict) and thinking.get("type") == "enabled" and compatibility != "provider_private_state_replay":
+        failures.append(
+            f"{config_path}: DeepSeek thinking enabled requires reasoning_compatibility=provider_private_state_replay"
+        )
 
 
 def _inspect_resolved_policy_and_context(

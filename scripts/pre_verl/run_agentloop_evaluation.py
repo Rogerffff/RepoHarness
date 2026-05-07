@@ -260,8 +260,9 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--scaffold-id", default="patch_focused_react")
     parser.add_argument("--test-feedback-policy", default="disabled")
     parser.add_argument("--run-id-prefix", default="pre_verl_agentloop")
-    parser.add_argument("--execution-mode", choices=["local_process", "docker"], default="local_process")
+    parser.add_argument("--execution-mode", choices=["local_process", "docker"], default="docker")
     parser.add_argument("--permission-mode", choices=["plan", "ask", "auto", "deny"], default="auto")
+    parser.add_argument("--deepseek-thinking", choices=["enabled", "disabled"], default="enabled")
     parser.add_argument("--max-turns", type=int, default=24)
     parser.add_argument("--max-tool-calls", type=int, default=96)
     parser.add_argument("--max-test-runs", type=int, default=0)
@@ -285,6 +286,8 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         parser.error("formal pre-verl final-only 任务必须使用 test_feedback_policy=disabled")
     if args.max_test_runs != 0:
         parser.error("formal pre-verl final-only 任务必须设置 max_test_runs=0")
+    if args.mode == "formal" and args.execution_mode != "docker":
+        parser.error("formal pre-verl 23 题评测必须使用 Docker execution mode，不能使用 local_process")
     return args
 
 
@@ -440,7 +443,15 @@ def _write_run_config(
     output_dir: Path,
     args: argparse.Namespace,
 ) -> Path:
+    env_spec = _pre_verl_environment_for_repo(
+        str(task.source_record.get("repo") or ""),
+        str(task.source_record.get("version") or ""),
+    )
     provider_options = {"allow_local_secret_file": bool(args.allow_local_secret_file)}
+    if args.provider == "deepseek":
+        provider_options["thinking"] = {"type": args.deepseek_thinking}
+        provider_options["reasoning_compatibility"] = "provider_private_state_replay"
+    docker_base_image = str(env_spec.get("execution_image") or "python:3.12")
     config = {
         "run_id_prefix": args.run_id_prefix,
         "model": {
@@ -456,6 +467,15 @@ def _write_run_config(
         "runtime": {
             "scaffold_id": args.scaffold_id,
             "execution_mode": args.execution_mode,
+            "docker_backend": {
+                "image_ref": _docker_image_ref(docker_base_image),
+                "build_base_image": docker_base_image,
+                "build_if_missing": True,
+                "network_policy": "controlled_network_for_setup_only",
+                "mount_policy": "workspace_read_write_tmp_only",
+                "cleanup_policy": "remove_containers_keep_images",
+                "command_timeout_sec": args.command_timeout_sec,
+            },
             "permission_mode": args.permission_mode,
             "test_feedback_policy": args.test_feedback_policy,
             "max_turns": args.max_turns,
@@ -513,6 +533,7 @@ def _write_configuration_manifests(
         "provider": args.provider,
         "model_id": args.model_id,
         "scaffold_id": args.scaffold_id,
+        "execution_mode": args.execution_mode,
         "scaffold_version": scaffold.scaffold_version,
         "scaffold_prompt_sha256": prompt_hash,
         "test_feedback_policy": args.test_feedback_policy,
@@ -552,6 +573,7 @@ def _write_configuration_manifests(
             "budget": _budget_payload(args),
             "temperature": args.temperature,
             "seed": args.seed,
+            "deepseek_thinking": args.deepseek_thinking if args.provider == "deepseek" else None,
             "requires_new_baseline_id_if_changed": [
                 "max_turns",
                 "max_tool_calls",
@@ -563,6 +585,7 @@ def _write_configuration_manifests(
                 "scaffold_prompt_sha256",
                 "resolved_tools",
                 "model_id",
+                "deepseek_thinking",
             ],
         },
     )
@@ -824,6 +847,11 @@ def _sha256_file(path: Path) -> str:
 
 def _safe_id(value: str) -> str:
     return "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value)
+
+
+def _docker_image_ref(base_image: str) -> str:
+    safe = _safe_id(base_image.replace("/", "-").replace(":", "-").replace(".", "-"))
+    return f"repo-harness-pre-verl-{safe}:v0"
 
 
 def _timestamp() -> str:

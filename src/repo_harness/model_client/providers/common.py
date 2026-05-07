@@ -13,6 +13,7 @@ from repo_harness.model_client.redaction import (
     redact_provider_payload,
     sanitize_provider_error_message,
 )
+from repo_harness.model_client.provider_private_state import deepseek_reasoning_from_metadata
 from repo_harness.model_client.schemas import (
     ModelCallEvent,
     ModelMessage,
@@ -61,7 +62,10 @@ def build_chat_completion_payload(
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model_id,
-        "messages": [_to_chat_message(message) for message in request.prepared_messages],
+        "messages": [
+            _to_chat_message(message, provider=provider)
+            for message in request.prepared_messages
+        ],
         "stream": False,
     }
     tools = [_to_chat_tool(tool) for tool in request.allowed_tool_definitions]
@@ -336,7 +340,7 @@ def duration_ms_since(started: float) -> int:
     return max(0, int((time.monotonic() - started) * 1000))
 
 
-def _to_chat_message(message: dict[str, Any]) -> dict[str, Any]:
+def _to_chat_message(message: dict[str, Any], *, provider: str) -> dict[str, Any]:
     role = message.get("role")
     converted: dict[str, Any] = {"role": role}
     if role == "assistant":
@@ -344,6 +348,22 @@ def _to_chat_message(message: dict[str, Any]) -> dict[str, Any]:
         tool_calls = message.get("tool_calls") or []
         if tool_calls:
             converted["tool_calls"] = [_to_provider_tool_call(call) for call in tool_calls]
+        if provider == "deepseek":
+            reasoning_content, replay_required = deepseek_reasoning_from_metadata(
+                message.get("metadata")
+            )
+            if reasoning_content:
+                converted["reasoning_content"] = reasoning_content
+            elif replay_required:
+                raise ProviderRequestError(
+                    ProviderErrorInfo(
+                        model_error_type="provider_protocol_error",
+                        message=(
+                            "DeepSeek reasoning_content is required for replay, "
+                            "but the live provider private state is unavailable."
+                        ),
+                    )
+                )
         return converted
     if role == "tool":
         converted["content"] = _content_to_string(message.get("content"))

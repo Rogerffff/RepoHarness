@@ -36,6 +36,7 @@ from repo_harness.model_client.providers.deepseek import (
     normalize_deepseek_model_id,
     resolve_deepseek_credential,
 )
+from repo_harness.model_client.redaction import redact_provider_payload
 from repo_harness.pre_verl_agentloop import PRE_VERL_AGENTLOOP_BASELINE_SOURCE
 from repo_harness.scaffolds.patch_action import parse_patch_action
 
@@ -2636,7 +2637,7 @@ def _call_deepseek_for_patch(
                 "provider": "deepseek",
                 "status": "provider_error",
                 "status_code": exc.code,
-                "error": error_payload,
+                "error": redact_provider_payload(error_payload),
                 "export_allowed": False,
                 "training_payload_allowed": False,
             },
@@ -2698,7 +2699,7 @@ def _call_deepseek_for_patch(
             "status": "passed",
             "finish_reason": choice.get("finish_reason") if isinstance(choice, dict) else None,
             "usage": payload.get("usage") if isinstance(payload.get("usage"), dict) else {},
-            "response": payload,
+            "response": redact_provider_payload(payload),
             "export_allowed": False,
             "training_payload_allowed": False,
         },

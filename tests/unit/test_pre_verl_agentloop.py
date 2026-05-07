@@ -209,6 +209,156 @@ def test_pre_verl_agentloop_run_config_rejects_structured_public_feedback(
         )
 
 
+def test_pre_verl_agentloop_run_config_rejects_deepseek_without_formal_reasoning_policy(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path)
+    config_path = _write_run_config(
+        tmp_path,
+        test_feedback_policy="disabled",
+        max_test_runs=0,
+        provider="deepseek",
+        execution_mode="local_process",
+        provider_specific_options={"allow_local_secret_file": True},
+    )
+    manifest = _write_manifest(
+        tmp_path,
+        {
+            "entries": [
+                {
+                    "task_definition_ref": {"path": _rel(tmp_path, task_path)},
+                    "run_config_ref": {"path": config_path.name},
+                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                }
+            ]
+        },
+    )
+
+    with pytest.raises(ConfigError, match="execution_mode=docker"):
+        inspect_pre_verl_agentloop_run_config(
+            manifest,
+            assert_final_only_test_feedback_disabled=True,
+            assert_resolved_tools_derived=True,
+            assert_no_hidden_feedback_visible=True,
+        )
+
+
+def test_pre_verl_agentloop_run_config_rejects_deepseek_docker_image_mismatch(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path)
+    config_path = _write_run_config(
+        tmp_path,
+        test_feedback_policy="disabled",
+        max_test_runs=0,
+        provider="deepseek",
+        execution_mode="docker",
+        provider_specific_options={
+            "allow_local_secret_file": True,
+            "thinking": {"type": "enabled"},
+            "reasoning_compatibility": "provider_private_state_replay",
+        },
+        docker_build_base_image="python:3.11-slim",
+    )
+    manifest = _write_manifest(
+        tmp_path,
+        {
+            "entries": [
+                {
+                    "task_definition_ref": {"path": _rel(tmp_path, task_path)},
+                    "run_config_ref": {"path": config_path.name},
+                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                }
+            ]
+        },
+    )
+
+    with pytest.raises(ConfigError, match="docker_backend.build_base_image"):
+        inspect_pre_verl_agentloop_run_config(
+            manifest,
+            assert_final_only_test_feedback_disabled=True,
+            assert_resolved_tools_derived=True,
+            assert_no_hidden_feedback_visible=True,
+        )
+
+
+def test_pre_verl_agentloop_run_config_rejects_deepseek_missing_task_image(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path, execution_image=None)
+    config_path = _write_run_config(
+        tmp_path,
+        test_feedback_policy="disabled",
+        max_test_runs=0,
+        provider="deepseek",
+        execution_mode="docker",
+        provider_specific_options={
+            "allow_local_secret_file": True,
+            "thinking": {"type": "enabled"},
+            "reasoning_compatibility": "provider_private_state_replay",
+        },
+        docker_build_base_image="python:3.12-slim",
+    )
+    manifest = _write_manifest(
+        tmp_path,
+        {
+            "entries": [
+                {
+                    "task_definition_ref": {"path": _rel(tmp_path, task_path)},
+                    "run_config_ref": {"path": config_path.name},
+                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                }
+            ]
+        },
+    )
+
+    with pytest.raises(ConfigError, match="environment.execution_image"):
+        inspect_pre_verl_agentloop_run_config(
+            manifest,
+            assert_final_only_test_feedback_disabled=True,
+            assert_resolved_tools_derived=True,
+            assert_no_hidden_feedback_visible=True,
+        )
+
+
+def test_pre_verl_agentloop_run_config_rejects_deepseek_thinking_without_compatibility(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path)
+    config_path = _write_run_config(
+        tmp_path,
+        test_feedback_policy="disabled",
+        max_test_runs=0,
+        provider="deepseek",
+        execution_mode="docker",
+        provider_specific_options={
+            "allow_local_secret_file": True,
+            "thinking": {"type": "enabled"},
+        },
+        docker_build_base_image="python:3.12-slim",
+    )
+    manifest = _write_manifest(
+        tmp_path,
+        {
+            "entries": [
+                {
+                    "task_definition_ref": {"path": _rel(tmp_path, task_path)},
+                    "run_config_ref": {"path": config_path.name},
+                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                }
+            ]
+        },
+    )
+
+    with pytest.raises(ConfigError, match="reasoning_compatibility=provider_private_state_replay"):
+        inspect_pre_verl_agentloop_run_config(
+            manifest,
+            assert_final_only_test_feedback_disabled=True,
+            assert_resolved_tools_derived=True,
+            assert_no_hidden_feedback_visible=True,
+        )
+
+
 def test_feedback_policy_rejects_non_disabled_for_swebench_like_final_only(
     tmp_path: Path,
 ) -> None:
@@ -232,6 +382,7 @@ def _write_task_definition(
     metadata_updates: dict[str, object] | None = None,
     issue: str = "Fix the parser bug without using hidden verifier material.",
     tags: list[str] | None = None,
+    execution_image: str | None = "python:3.12-slim",
 ) -> Path:
     fixtures = tmp_path / "fixtures"
     tasks_dir = fixtures / "tasks"
@@ -276,7 +427,7 @@ def _write_task_definition(
             "final_verifier_timeout_sec": 60,
         },
         "environment": {
-            "execution_image": "python:3.12-slim",
+            "execution_image": execution_image,
             "python_version": "3.12",
             "package_manager": "pip",
             "setup_network_policy": "deny",
@@ -304,18 +455,23 @@ def _write_run_config(
     *,
     test_feedback_policy: str,
     max_test_runs: int,
+    provider: str = "replay",
+    execution_mode: str = "local_process",
+    provider_specific_options: dict[str, object] | None = None,
+    docker_build_base_image: str | None = None,
 ) -> Path:
     config = {
         "run_id_prefix": "pre_verl_formal_baseline",
         "model": {
-            "provider": "replay",
-            "model_id": "replay-script-v0",
+            "provider": provider,
+            "model_id": "deepseek-v4-flash" if provider == "deepseek" else "replay-script-v0",
             "temperature": 0.0,
             "max_output_tokens": 4096,
+            "provider_specific_options": provider_specific_options or {},
         },
         "runtime": {
             "scaffold_id": "patch_focused_react",
-            "execution_mode": "local_process",
+            "execution_mode": execution_mode,
             "permission_mode": "auto",
             "test_feedback_policy": test_feedback_policy,
             "feedback_tests_passed_policy": "require_model_final",
@@ -331,6 +487,11 @@ def _write_run_config(
             "network_policy": "deny_agent_run",
         },
     }
+    if docker_build_base_image is not None:
+        config["runtime"]["docker_backend"] = {
+            "build_base_image": docker_build_base_image,
+            "image_ref": "repo-harness-pre-verl-test:v0",
+        }
     config_path = tmp_path / "formal_run_config.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
     return config_path
