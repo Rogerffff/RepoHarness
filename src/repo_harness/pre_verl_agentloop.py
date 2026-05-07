@@ -2031,6 +2031,7 @@ def _evaluator_only_needles(run_dir: Path, failures: list[str]) -> list[str]:
     if not isinstance(boundary, dict):
         return []
     needles: list[str] = []
+    needles.extend(_evaluator_only_ref_sha_needles(boundary))
     for key in ("fail_to_pass_selectors_ref", "pass_to_pass_selectors_ref"):
         ref = boundary.get(key)
         if isinstance(ref, dict):
@@ -2047,6 +2048,31 @@ def _evaluator_only_needles(run_dir: Path, failures: list[str]) -> list[str]:
         seen.add(normalized)
         deduped.append(normalized)
     return deduped
+
+
+def _evaluator_only_ref_sha_needles(value: Any) -> list[str]:
+    needles: list[str] = []
+    if isinstance(value, dict):
+        sha256 = value.get("sha256")
+        is_evaluator_only_ref = (
+            value.get("visibility") == "evaluator_only"
+            or value.get("redaction_status") == "evaluator_only"
+            or value.get("kind")
+            in {
+                "hidden_test_patch",
+                "fail_to_pass_selectors",
+                "pass_to_pass_selectors",
+                "hidden_test_selector",
+            }
+        )
+        if is_evaluator_only_ref and isinstance(sha256, str):
+            needles.append(sha256)
+        for child in value.values():
+            needles.extend(_evaluator_only_ref_sha_needles(child))
+    elif isinstance(value, list):
+        for child in value:
+            needles.extend(_evaluator_only_ref_sha_needles(child))
+    return needles
 
 
 def _selector_needles_from_ref(

@@ -279,6 +279,49 @@ def test_inspect_model_visible_context_rejects_root_relative_hidden_patch_leak(
         inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
 
 
+@pytest.mark.parametrize("leak_target", ["prepared_messages", "transcript", "raw_provider_request"])
+def test_inspect_model_visible_context_rejects_evaluator_only_ref_sha_leak(
+    tmp_path: Path,
+    leak_target: str,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    boundary = json.loads((run_dir / "final_verifier_boundary.json").read_text(encoding="utf-8"))
+    hidden_sha = boundary["hidden_test_patch_ref"]["sha256"]
+    if leak_target == "prepared_messages":
+        prepared_path = run_dir / "artifacts" / "prepared_messages.json"
+        prepared_payload = json.loads(prepared_path.read_text(encoding="utf-8"))
+        prepared_payload["messages"][1]["content"] = f"maybe hidden sha {hidden_sha}"
+        prepared_path.write_text(
+            json.dumps(prepared_payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        _refresh_event_ref_for_artifact(run_dir, "artifacts/prepared_messages.json")
+    elif leak_target == "transcript":
+        transcript = [
+            {
+                "role": "user",
+                "model_visible": True,
+                "content_preview": f"maybe hidden sha {hidden_sha}",
+            }
+        ]
+        (run_dir / "transcript.jsonl").write_text(
+            "".join(json.dumps(record, ensure_ascii=False) + "\n" for record in transcript),
+            encoding="utf-8",
+        )
+    else:
+        request_path = run_dir / "artifacts" / "raw_provider_request.json"
+        request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+        request_payload["body"]["messages"][1]["content"] = f"maybe hidden sha {hidden_sha}"
+        request_path.write_text(
+            json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        _refresh_event_ref_for_artifact(run_dir, "artifacts/raw_provider_request.json")
+
+    with pytest.raises(ConfigError, match=hidden_sha[:24]):
+        inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+
 def test_inspect_model_visible_context_rejects_whole_field_redaction(tmp_path: Path) -> None:
     run_dir = _write_model_visible_context_run(tmp_path, user_content="<REDACTED_CREDENTIAL>")
 
@@ -865,21 +908,39 @@ def _artifact_ref_for_path(run_dir: Path, path: Path, kind: str) -> dict[str, ob
 
 
 def _refresh_event_artifact_ref(run_dir: Path, artifact_filename: str) -> None:
-    artifact_path = run_dir / "artifacts" / artifact_filename
+    _refresh_event_ref_for_artifact(run_dir, f"artifacts/{artifact_filename}")
+
+
+def _refresh_event_ref_for_artifact(run_dir: Path, relative_path: str) -> None:
+    artifact_path = run_dir / relative_path
     digest = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
     size_bytes = artifact_path.stat().st_size
+    _refresh_refs_in_events(run_dir, relative_path, digest, size_bytes)
+
+
+def _refresh_refs_in_events(
+    run_dir: Path,
+    relative_path: str,
+    digest: str,
+    size_bytes: int,
+) -> None:
+    def refresh(value: object) -> None:
+        if isinstance(value, dict):
+            if value.get("relative_path") == relative_path:
+                value["sha256"] = digest
+                value["size_bytes"] = size_bytes
+            for child in value.values():
+                refresh(child)
+        elif isinstance(value, list):
+            for child in value:
+                refresh(child)
+
     events = [
         json.loads(line)
         for line in (run_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
-    for event in events:
-        data = event.get("data") if isinstance(event.get("data"), dict) else {}
-        for key in ("raw_provider_request_ref", "raw_provider_response_ref"):
-            ref = data.get(key)
-            if isinstance(ref, dict) and ref.get("relative_path") == f"artifacts/{artifact_filename}":
-                ref["sha256"] = digest
-                ref["size_bytes"] = size_bytes
+    refresh(events)
     (run_dir / "events.jsonl").write_text(
         "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in events),
         encoding="utf-8",
