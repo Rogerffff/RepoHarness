@@ -71,6 +71,9 @@ class PreVerlSwebenchDevRuntimePlan:
     pass_to_pass_selectors_ref: dict[str, Any]
     hidden_patch_clean_source_self_check_ref: dict[str, Any] | None
     verifier_command: str
+    setup_shell: str | None
+    setup_timeout_sec: int
+    final_verifier_timeout_sec: int
     source_instance_id: str | None
     repo: str | None
     environment_id: str | None
@@ -148,6 +151,13 @@ def load_pre_verl_swebench_dev_runtime_plan(
             else None
         ),
         verifier_command=str(metadata.get("pre_verl_verifier_command") or task.verifier_config.test_command),
+        setup_shell=(
+            str(metadata.get("pre_verl_setup_shell"))
+            if metadata.get("pre_verl_setup_shell") is not None
+            else None
+        ),
+        setup_timeout_sec=task.timeouts.setup_timeout_sec,
+        final_verifier_timeout_sec=task.timeouts.final_verifier_timeout_sec,
         source_instance_id=(
             str(metadata.get("source_instance_id"))
             if metadata.get("source_instance_id") is not None
@@ -254,6 +264,7 @@ def run_pre_verl_swebench_dev_final_verifier(
                     verification_workspace,
                     dependency_state,
                     setup_command,
+                    setup_timeout_sec=plan.setup_timeout_sec,
                     recorder=recorder,
                 )
             except Exception as exc:  # noqa: BLE001 - boundary must be written for terminal failures.
@@ -552,7 +563,7 @@ def inspect_pre_verl_agentloop_boundary_index(
         if assert_command_order:
             _inspect_boundary_command_order(boundary, failures, label)
         if assert_run_task_lineage:
-            _inspect_run_task_lineage(run_dir, boundary, failures, label)
+            _inspect_run_task_lineage(run_dir, boundary, entry, index_path, failures, label)
     return _inspect_result(
         "Inspect pre-verl AgentLoop final verifier boundary index",
         index_path,
@@ -628,7 +639,7 @@ def _run_selector_suite(
     result = adapter.run_command(
         verification_workspace,
         command,
-        timeout_sec=None,
+        timeout_sec=plan.final_verifier_timeout_sec,
         recorder=recorder,
         command_semantics=command_semantics,
         allow_shell=isinstance(command, str),
@@ -655,6 +666,9 @@ def _run_selector_suite(
 
 
 def _selector_command(base_command: str, selectors: list[str]) -> list[str] | str:
+    if _requires_shell_selector_command(base_command):
+        quoted = " ".join(shlex.quote(item) for item in selectors)
+        return f"{base_command} {quoted}".strip()
     try:
         parts = shlex.split(base_command)
     except ValueError:
@@ -663,6 +677,11 @@ def _selector_command(base_command: str, selectors: list[str]) -> list[str] | st
     if not parts:
         parts = ["python", "-m", "pytest", "-q"]
     return [*parts, *selectors]
+
+
+def _requires_shell_selector_command(command: str) -> bool:
+    stripped = command.strip()
+    return any(marker in stripped for marker in ("&&", "||", ";", "|")) or stripped.startswith((". ", "source "))
 
 
 def _selector_result_payload(
@@ -685,6 +704,7 @@ def _selector_result_payload(
         "task_id": plan.task_id,
         "suite": suite,
         "command": command,
+        "timeout_sec": plan.final_verifier_timeout_sec,
         "selectors": selectors,
         "exit_code": exit_code,
         "timeout": timeout,
@@ -801,6 +821,8 @@ def _pre_verl_boundary_payload(
         "verifier_adapter_id": PRE_VERL_FINAL_VERIFIER_ADAPTER_ID,
         "baseline_source": PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
         "run_task_entrypoint": "repo-harness run-task",
+        "setup_timeout_sec": plan.setup_timeout_sec,
+        "final_verifier_timeout_sec": plan.final_verifier_timeout_sec,
         "verification_workspace_source": "clean_frozen_source",
         "workspace_created": workspace_created,
         "workspace_creation_input_ref": _file_ref(
@@ -1063,6 +1085,9 @@ def _inspect_boundary_command_order(
     failures: list[str],
     label: str,
 ) -> None:
+    timeout_sec = boundary.get("final_verifier_timeout_sec")
+    if not isinstance(timeout_sec, int) or timeout_sec <= 0:
+        failures.append(f"{label}: final_verifier_timeout_sec 必须显式绑定为正整数")
     if boundary.get("patch_application_order") != [
         "model_final_patch",
         "evaluator_only_hidden_test_patch",
@@ -1115,14 +1140,227 @@ def _require_order(
 def _inspect_run_task_lineage(
     run_dir: Path,
     boundary: dict[str, Any],
+    entry: dict[str, Any],
+    index_path: Path,
     failures: list[str],
     label: str,
 ) -> None:
     if boundary.get("run_task_entrypoint") != "repo-harness run-task":
         failures.append(f"{label}: run_task_entrypoint 必须是 repo-harness run-task")
+    if boundary.get("baseline_source") != PRE_VERL_AGENTLOOP_BASELINE_SOURCE:
+        failures.append(f"{label}: baseline_source 必须是 {PRE_VERL_AGENTLOOP_BASELINE_SOURCE}")
+    boundary_ref = entry.get("final_verifier_boundary_ref") or entry.get("boundary_ref")
+    _inspect_index_artifact_ref(boundary_ref, index_path.parent, failures, f"{label}.final_verifier_boundary_ref")
     metadata = _read_optional_json(run_dir / "run_metadata.json", failures, f"{label}.run_metadata")
-    if isinstance(metadata, dict) and not metadata.get("run_id"):
-        failures.append(f"{label}: run_metadata.json 缺少 run_id")
+    run_id = None
+    if isinstance(metadata, dict):
+        run_id = metadata.get("run_id")
+        if not run_id:
+            failures.append(f"{label}: run_metadata.json 缺少 run_id")
+        if metadata.get("scaffold_id") == "single_shot_patch_no_tools":
+            failures.append(f"{label}: run_metadata 不能使用 single_shot_patch_no_tools")
+    run_config_facts = _read_optional_json(
+        run_dir / "run_config_facts.json", failures, f"{label}.run_config_facts"
+    )
+    if isinstance(run_config_facts, dict):
+        if run_config_facts.get("final_verifier_mode") != "strict_patch_replay":
+            failures.append(f"{label}: run_config_facts.final_verifier_mode 必须是 strict_patch_replay")
+        if run_config_facts.get("test_feedback_policy") != "disabled":
+            failures.append(f"{label}: run_config_facts.test_feedback_policy 必须是 disabled")
+        if run_config_facts.get("scaffold_id") == "single_shot_patch_no_tools":
+            failures.append(f"{label}: run_config_facts 不能使用 single_shot_patch_no_tools")
+        tool_protocol = run_config_facts.get("tool_protocol")
+        tool_ref = tool_protocol.get("tool_schema_snapshot_ref") if isinstance(tool_protocol, dict) else None
+        _inspect_run_artifact_ref(tool_ref, run_dir, failures, f"{label}.tool_schema_snapshot_ref")
+    _inspect_run_task_command_entry(
+        entry=entry,
+        index_path=index_path,
+        run_id=str(run_id or ""),
+        failures=failures,
+        label=label,
+    )
+    events = _read_jsonl_events(run_dir / "events.jsonl", failures, f"{label}.events")
+    if not events:
+        failures.append(f"{label}: events.jsonl 为空，无法证明 AgentLoop events")
+    else:
+        _inspect_agentloop_events(events, run_dir, failures, label)
+    transcript_path = run_dir / "transcript.jsonl"
+    if not transcript_path.exists() or transcript_path.stat().st_size == 0:
+        failures.append(f"{label}: transcript.jsonl 缺失或为空，无法证明 AgentLoop transcript")
+
+
+def _inspect_run_task_command_entry(
+    *,
+    entry: dict[str, Any],
+    index_path: Path,
+    run_id: str,
+    failures: list[str],
+    label: str,
+) -> None:
+    ref = entry.get("run_task_command_log_entry_ref")
+    if not isinstance(ref, dict):
+        failures.append(f"{label}: 缺少 run_task_command_log_entry_ref")
+        return
+    _inspect_index_artifact_ref(ref, index_path.parent, failures, f"{label}.run_task_command_log_entry_ref")
+    path = _ref_path(ref, index_path.parent)
+    payload = _read_optional_json(path, failures, f"{label}.run_task_command_log_entry")
+    if not isinstance(payload, dict):
+        return
+    if payload.get("command_name") != "run-task":
+        failures.append(f"{label}: command log entry.command_name 必须是 run-task")
+    if payload.get("exit_code") != 0:
+        failures.append(f"{label}: run-task command log entry exit_code 必须是 0")
+    argv = payload.get("argv")
+    if not isinstance(argv, list):
+        failures.append(f"{label}: run-task command log entry argv 必须是 list")
+        return
+    argv_strings = [str(item) for item in argv]
+    if "run-task" not in argv_strings:
+        failures.append(f"{label}: run-task command log entry argv 缺少 run-task")
+    if run_id:
+        try:
+            run_id_index = argv_strings.index("--run-id")
+        except ValueError:
+            failures.append(f"{label}: run-task command log entry argv 缺少 --run-id")
+        else:
+            observed_run_id = argv_strings[run_id_index + 1] if run_id_index + 1 < len(argv_strings) else None
+            if observed_run_id != run_id:
+                failures.append(f"{label}: run-task command log entry --run-id 与 run_metadata.run_id 不一致")
+
+
+def _inspect_agentloop_events(
+    events: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    event_types = [str(event.get("event_type") or "") for event in events]
+    for required in ("run_started", "baseline_completed", "context_prepared", "model_call_started", "model_call_completed", "run_finished"):
+        if required not in event_types:
+            failures.append(f"{label}: events.jsonl 缺少 AgentLoop 事件 {required}")
+    started_calls = _model_call_ids(events, "model_call_started")
+    completed_calls = _model_call_ids(events, "model_call_completed")
+    if set(started_calls) != set(completed_calls):
+        failures.append(f"{label}: model_call_started 与 model_call_completed 不配对")
+    for index, event in enumerate(events):
+        if event.get("event_type") != "model_call_completed":
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        _inspect_run_artifact_ref(
+            data.get("raw_provider_request_ref"),
+            run_dir,
+            failures,
+            f"{label}.model_call_completed[{index}].raw_provider_request_ref",
+        )
+        _inspect_run_artifact_ref(
+            data.get("raw_provider_response_ref"),
+            run_dir,
+            failures,
+            f"{label}.model_call_completed[{index}].raw_provider_response_ref",
+        )
+    requested_tool_ids = _tool_call_ids(events, {"tool_requested"})
+    terminal_tool_ids = _tool_call_ids(
+        events,
+        {"tool_completed", "tool_denied", "tool_failed", "tool_timeout", "tool_interrupted"},
+    )
+    missing_results = sorted(set(requested_tool_ids) - set(terminal_tool_ids))
+    unexpected_results = sorted(set(terminal_tool_ids) - set(requested_tool_ids))
+    if missing_results:
+        failures.append(f"{label}: tool_use 缺少对应 tool_result: {missing_results}")
+    if unexpected_results:
+        failures.append(f"{label}: tool_result 没有对应 tool_use: {unexpected_results}")
+
+
+def _model_call_ids(events: list[dict[str, Any]], event_type: str) -> list[str]:
+    ids: list[str] = []
+    for event in events:
+        if event.get("event_type") != event_type:
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        model_call_id = data.get("model_call_id")
+        if isinstance(model_call_id, str) and model_call_id:
+            ids.append(model_call_id)
+    return ids
+
+
+def _tool_call_ids(events: list[dict[str, Any]], event_types: set[str]) -> list[str]:
+    ids: list[str] = []
+    for event in events:
+        if event.get("event_type") not in event_types:
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        tool_call_id = data.get("tool_call_id")
+        if isinstance(tool_call_id, str) and tool_call_id:
+            ids.append(tool_call_id)
+    return ids
+
+
+def _inspect_run_artifact_ref(ref: Any, run_dir: Path, failures: list[str], label: str) -> None:
+    if not isinstance(ref, dict):
+        failures.append(f"{label}: 缺少 artifact ref")
+        return
+    path = _ref_path(ref, run_dir)
+    if not path.exists():
+        failures.append(f"{label}: artifact path 不存在")
+        return
+    expected_sha = ref.get("sha256")
+    if not isinstance(expected_sha, str):
+        failures.append(f"{label}: artifact ref 缺少 sha256")
+    expected_size = ref.get("size_bytes")
+    if not isinstance(expected_size, int):
+        failures.append(f"{label}: artifact ref 缺少 size_bytes")
+    if isinstance(expected_size, int) and path.is_file() and path.stat().st_size != expected_size:
+        failures.append(f"{label}: artifact size_bytes drift")
+    if isinstance(expected_sha, str) and path.is_file() and compute_file_sha256(path) != expected_sha:
+        failures.append(f"{label}: artifact sha256 drift")
+
+
+def _inspect_index_artifact_ref(ref: Any, base_dir: Path, failures: list[str], label: str) -> None:
+    if not isinstance(ref, dict):
+        failures.append(f"{label}: 缺少 artifact ref")
+        return
+    path = _ref_path(ref, base_dir)
+    if not path.exists():
+        failures.append(f"{label}: artifact path 不存在")
+        return
+    expected_sha = ref.get("sha256")
+    if not isinstance(expected_sha, str):
+        failures.append(f"{label}: artifact ref 缺少 sha256")
+    expected_size = ref.get("size_bytes")
+    if not isinstance(expected_size, int):
+        failures.append(f"{label}: artifact ref 缺少 size_bytes")
+    if isinstance(expected_size, int) and path.is_file() and path.stat().st_size != expected_size:
+        failures.append(f"{label}: artifact size_bytes drift")
+    if isinstance(expected_sha, str) and path.is_file() and compute_file_sha256(path) != expected_sha:
+        failures.append(f"{label}: artifact sha256 drift")
+
+
+def _read_jsonl_events(path: Path, failures: list[str], label: str) -> list[dict[str, Any]]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        failures.append(f"{label}: 无法读取 {path}: {exc}")
+        return []
+    events: list[dict[str, Any]] = []
+    for line_number, line in enumerate(lines, start=1):
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError as exc:
+            failures.append(f"{label}: 第 {line_number} 行 JSON 解析失败: {exc}")
+            continue
+        if isinstance(payload, dict):
+            events.append(payload)
+    return events
+
+
+def _ref_path(ref: dict[str, Any], base_dir: Path) -> Path:
+    value = ref.get("path") or ref.get("relative_path")
+    if not isinstance(value, str) or not value.strip():
+        return base_dir / "<missing-ref-path>"
+    path = Path(value)
+    return path if path.is_absolute() else base_dir / path
 
 
 def _inspect_formal_metadata(definition: TaskDefinition, failures: list[str], path: Path) -> None:

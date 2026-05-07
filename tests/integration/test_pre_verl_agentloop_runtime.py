@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,24 @@ def test_pre_verl_agentloop_run_task_uses_clean_source_model_patch_hidden_patch_
     assert boundary["run_task_entrypoint"] == "repo-harness run-task"
 
     index_path = tmp_path / "boundary_index.json"
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_external_command_log_entry_v0",
+            "command_name": "run-task",
+            "argv": [
+                "repo-harness",
+                "run-task",
+                task_path.as_posix(),
+                "--config",
+                config_path.as_posix(),
+                "--run-id",
+                "pre-verl-agentloop-accepted",
+            ],
+            "exit_code": 0,
+        },
+    )
     _write_json(
         index_path,
         {
@@ -51,10 +70,9 @@ def test_pre_verl_agentloop_run_task_uses_clean_source_model_patch_hidden_patch_
                 {
                     "task_id": "pre_verl_order_fixture",
                     "run_task_run_dir": run_dir.as_posix(),
-                    "final_verifier_boundary_ref": {
-                        "path": (run_dir / "final_verifier_boundary.json").as_posix()
-                    },
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
                     "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
                 }
             ],
         },
@@ -87,6 +105,7 @@ def test_pre_verl_agentloop_boundary_index_rejects_hidden_patch_before_model_pat
             "task_id": "bad-order",
             "verifier_adapter_id": "pre_verl_swebench_lite_dev_final_verifier_v0",
             "run_task_entrypoint": "repo-harness run-task",
+            "final_verifier_timeout_sec": 60,
             "verification_workspace_source": "clean_frozen_source",
             "workspace_creation_input_ref": {"relative_path": "workspaces/source_checkout"},
             "clean_source_tree_sha256": "a" * 64,
@@ -124,6 +143,7 @@ def test_pre_verl_agentloop_boundary_index_rejects_missing_formal_steps(
             "task_id": "missing-steps",
             "verifier_adapter_id": "pre_verl_swebench_lite_dev_final_verifier_v0",
             "run_task_entrypoint": "repo-harness run-task",
+            "final_verifier_timeout_sec": 60,
             "verification_workspace_source": "clean_frozen_source",
             "workspace_creation_input_ref": {"relative_path": "workspaces/source_checkout"},
             "clean_source_tree_sha256": "a" * 64,
@@ -160,6 +180,7 @@ def test_pre_verl_agentloop_boundary_index_rejects_missing_pass_to_pass_step(
             "final_verifier_status": "accepted",
             "verifier_adapter_id": "pre_verl_swebench_lite_dev_final_verifier_v0",
             "run_task_entrypoint": "repo-harness run-task",
+            "final_verifier_timeout_sec": 60,
             "verification_workspace_source": "clean_frozen_source",
             "workspace_creation_input_ref": {"relative_path": "workspaces/source_checkout"},
             "clean_source_tree_sha256": "a" * 64,
@@ -213,6 +234,176 @@ def test_pre_verl_agentloop_boundary_index_requires_formal_run_artifacts(
 
     with pytest.raises(Exception, match="final.patch"):
         inspect_pre_verl_agentloop_boundary_index(index_path, assert_all_formal_runs_bound=True)
+
+
+def test_pre_verl_agentloop_boundary_index_requires_run_task_command_lineage(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=True)
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [{"run_task_run_dir": run_dir.as_posix(), "scaffold_id": "patch_focused_react"}],
+        },
+    )
+
+    with pytest.raises(Exception, match="run_task_command_log_entry_ref"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_requires_provider_raw_refs(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=False)
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="raw_provider_request_ref"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_rejects_empty_events_log(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=True)
+    (run_dir / "events.jsonl").write_text("", encoding="utf-8")
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="events.jsonl"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_requires_command_ref_fingerprint(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=True)
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": {"path": command_entry_path.as_posix()},
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="sha256"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_requires_event_raw_ref_fingerprint(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=True)
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    events = [
+        {"event_type": "run_started", "data": {}},
+        {"event_type": "baseline_completed", "data": {}},
+        {"event_type": "context_prepared", "data": {}},
+        {"event_type": "model_call_started", "data": {"model_call_id": "model-call-1"}},
+        {
+            "event_type": "model_call_completed",
+            "data": {
+                "model_call_id": "model-call-1",
+                "provider": "deepseek",
+                "raw_provider_request_ref": {"relative_path": "artifacts/raw_provider_request.json"},
+                "raw_provider_response_ref": {"relative_path": "artifacts/raw_provider_response.json"},
+            },
+        },
+        {"event_type": "run_finished", "data": {}},
+    ]
+    (run_dir / "events.jsonl").write_text(
+        "".join(json.dumps(event, sort_keys=True) + "\n" for event in events),
+        encoding="utf-8",
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="raw_provider_request_ref.*sha256"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
 
 
 def _write_pre_verl_fixture(tmp_path: Path) -> tuple[Path, Path]:
@@ -322,7 +513,8 @@ steps:
             "pre_verl_agentloop_baseline_source": "repo_harness_agentloop_run_task",
             "swe_bench_like_final_only": True,
             "final_only": True,
-            "pre_verl_verifier_command": "python -m pytest -q",
+            "pre_verl_setup_shell": "python -m venv .pre_verl_venv && . .pre_verl_venv/bin/activate && python -m pip install -q pytest",
+            "pre_verl_verifier_command": ". .pre_verl_venv/bin/activate && python -m pytest -q",
             "source_instance_id": "fixture__pre-verl-order",
             "repo": "fixture/pre_verl_repo",
             "environment_id": "local_pytest_fixture",
@@ -371,10 +563,84 @@ def _minimal_run_dir(run_dir: Path) -> Path:
     return run_dir
 
 
+def _formal_lineage_run_dir(run_dir: Path, *, include_raw_provider_refs: bool) -> Path:
+    run_dir = _minimal_run_dir(run_dir)
+    artifacts_dir = run_dir / "artifacts"
+    tool_schema_path = artifacts_dir / "tool_schema.json"
+    request_path = artifacts_dir / "raw_provider_request.json"
+    response_path = artifacts_dir / "raw_provider_response.json"
+    for path in (tool_schema_path, request_path, response_path):
+        _write_json(path, {"kind": path.stem})
+    _write_json(run_dir / "run_metadata.json", {"run_id": "formal-run", "scaffold_id": "patch_focused_react"})
+    _write_json(
+        run_dir / "run_config_facts.json",
+        {
+            "run_id": "formal-run",
+            "final_verifier_mode": "strict_patch_replay",
+            "test_feedback_policy": "disabled",
+            "scaffold_id": "patch_focused_react",
+            "tool_protocol": {"tool_schema_snapshot_ref": _artifact_ref(tool_schema_path, run_dir)},
+        },
+    )
+    completed_data = {
+        "model_call_id": "model-call-1",
+        "provider": "deepseek",
+    }
+    if include_raw_provider_refs:
+        completed_data.update(
+            {
+                "raw_provider_request_ref": _artifact_ref(request_path, run_dir),
+                "raw_provider_response_ref": _artifact_ref(response_path, run_dir),
+            }
+        )
+    events = [
+        {"event_type": "run_started", "data": {}},
+        {"event_type": "baseline_completed", "data": {}},
+        {"event_type": "context_prepared", "data": {}},
+        {"event_type": "model_call_started", "data": {"model_call_id": "model-call-1"}},
+        {"event_type": "model_call_completed", "data": completed_data},
+        {"event_type": "run_finished", "data": {}},
+    ]
+    (run_dir / "events.jsonl").write_text(
+        "".join(json.dumps(event, sort_keys=True) + "\n" for event in events),
+        encoding="utf-8",
+    )
+    (run_dir / "transcript.jsonl").write_text("{}\n", encoding="utf-8")
+    _write_json(
+        run_dir / "final_verifier_boundary.json",
+        {
+            "schema_version": "repo_harness_pre_verl_final_verifier_boundary_v0",
+            "task_id": "formal-task",
+            "verifier_adapter_id": "pre_verl_swebench_lite_dev_final_verifier_v0",
+            "baseline_source": "repo_harness_agentloop_run_task",
+            "run_task_entrypoint": "repo-harness run-task",
+            "final_verifier_timeout_sec": 60,
+            "verification_workspace_source": "clean_frozen_source",
+            "workspace_creation_input_ref": {"relative_path": "workspaces/source_checkout"},
+            "clean_source_tree_sha256": "a" * 64,
+            "patch_application_order": [
+                "model_final_patch",
+                "evaluator_only_hidden_test_patch",
+            ],
+            "observed_command_order": [],
+        },
+    )
+    return run_dir
+
+
+def _artifact_ref(path: Path, run_dir: Path) -> dict[str, object]:
+    return {
+        "relative_path": path.relative_to(run_dir).as_posix(),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size_bytes": path.stat().st_size,
+    }
+
+
 def _evaluator_ref(path: Path) -> dict[str, object]:
+    digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "a" * 64
     return {
         "path": path.as_posix(),
-        "sha256": "a" * 64,
+        "sha256": digest,
         "size_bytes": path.stat().st_size if path.exists() else 0,
         "visibility": "evaluator_only",
     }

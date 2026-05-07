@@ -36,6 +36,7 @@ from repo_harness.model_client.providers.deepseek import (
     normalize_deepseek_model_id,
     resolve_deepseek_credential,
 )
+from repo_harness.pre_verl_agentloop import PRE_VERL_AGENTLOOP_BASELINE_SOURCE
 from repo_harness.scaffolds.patch_action import parse_patch_action
 
 
@@ -857,7 +858,13 @@ def build_pre_verl_agent_evaluation(
     task_set = _read_json(pre_verl_task_set_manifest)
     matrix = _read_json(executed_run_matrix_manifest)
     result_summary = _read_json(v5_result_summary_table)
-    all_results = [item for item in _matrix_results(matrix) if item.get("actual_provider_call_count", 0) > 0]
+    raw_terminal_results = [
+        item for item in _matrix_results(matrix) if item.get("actual_provider_call_count", 0) > 0
+    ]
+    lineage_failures = _formal_agentloop_lineage_failures(raw_terminal_results)
+    all_results = [
+        item for item in raw_terminal_results if not _formal_agentloop_result_failures(item)
+    ]
     dev_result_ids = _agent_evaluation_dev_result_ids(task_set)
     expanded_pilot_results = [
         item for item in all_results if str(item.get("task_id") or "") in dev_result_ids or str(item.get("run_id") or "") in dev_result_ids
@@ -874,12 +881,20 @@ def build_pre_verl_agent_evaluation(
     minimum_failures: list[str] = []
     if denominator < 1:
         minimum_failures.append("at least one real provider terminal outcome is required")
+    if lineage_failures:
+        minimum_failures.append(
+            "all agent evaluation terminal outcomes must come from repo-harness run-task "
+            "with AgentLoop lineage, tool schema snapshot, provider raw refs, and final verifier boundary"
+        )
     report = {
         "schema_version": "repo_harness_pre_verl_agent_evaluation_report_v0",
         "created_at": _now(),
         "total_planned_tasks": task_set.get("planned_denominator", 0),
         "pilot_planned_development_instance_count": pilot_denominator,
         "current_v5_real_provider_terminal_outcome_count": len(all_results),
+        "raw_terminal_outcome_count": len(raw_terminal_results),
+        "rejected_non_agentloop_result_count": len(lineage_failures),
+        "rejected_non_agentloop_result_reasons": lineage_failures,
         "evaluation_scope": "expanded_development_pilot" if expanded_pilot_results else "current_v5_baseline_provider_outcomes",
         "expanded_pilot_actual_terminal_outcome_count": len(expanded_pilot_results),
         "expanded_pilot_status": "blocked" if expanded_pilot_blocked else "passed",
@@ -887,12 +902,17 @@ def build_pre_verl_agent_evaluation(
         "actual_provider_call_count": sum(int(item.get("actual_provider_call_count", 0)) for item in results),
         "submitted_patch_count": sum(1 for item in results if item.get("final_patch_ref")),
         "empty_patch_count": sum(1 for item in results if not item.get("final_patch_ref")),
+        "patch_apply_failed_count": sum(1 for item in results if item.get("failure_category") == "patch_apply_failed"),
+        "model_patch_rejected_by_final_verifier_count": sum(1 for item in results if item.get("failure_category") == "model_patch_rejected_by_final_verifier"),
+        "final_verifier_reached_count": sum(1 for item in results if item.get("final_verifier_boundary_ref")),
+        "final_verifier_not_executed_count": sum(1 for item in results if item.get("final_verifier_status") == "not_executed"),
+        "failure_category_distribution": _distribution(str(item.get("failure_category") or "accepted") for item in results),
         "accepted_count": len(accepted),
         "rejected_count": denominator - len(accepted),
         "diagnostic_only_count": 0,
         "blocked_count": max(pilot_denominator - len(expanded_pilot_results), 0),
         "environment_setup_failed_count": 0,
-        "verifier_failed_count": sum(1 for item in results if item.get("final_verifier_status") not in ("accepted", None)),
+        "verifier_failed_count": sum(1 for item in results if item.get("final_verifier_status") == "rejected"),
         "verifier_timed_out_count": sum(1 for item in results if item.get("final_verifier_status") == "timeout"),
         "provider_error_count": sum(1 for item in results if item.get("model_error_type")),
         "cost_limited_skip_count": 0,
@@ -902,7 +922,7 @@ def build_pre_verl_agent_evaluation(
         "accepted_rate_denominator_value": denominator,
         "accepted_rate_wilson_interval_95": interval,
         "empty_patch_rate_point_estimate": round(sum(1 for item in results if not item.get("final_patch_ref")) / denominator, 6) if denominator else 0.0,
-        "verifier_failure_rate_point_estimate": round(sum(1 for item in results if item.get("final_verifier_status") not in ("accepted", None)) / denominator, 6) if denominator else 0.0,
+        "verifier_failure_rate_point_estimate": round(sum(1 for item in results if item.get("final_verifier_status") == "rejected") / denominator, 6) if denominator else 0.0,
         "environment_failure_rate_point_estimate": 0.0,
         "mean_episode_time": result_summary.get("wall_time_summary", {}).get("average_seconds"),
         "p50_episode_time": None,
@@ -1078,6 +1098,11 @@ def run_pre_verl_agent_evaluation_pilot(
         "actual_provider_call_count": actual_provider_calls,
         "submitted_patch_count": sum(1 for item in terminal_results if item.get("final_patch_ref")),
         "empty_patch_count": sum(1 for item in terminal_results if item.get("failure_category") in {"empty_patch", "patch_extraction_failed"}),
+        "patch_apply_failed_count": sum(1 for item in terminal_results if item.get("failure_category") == "patch_apply_failed"),
+        "model_patch_rejected_by_final_verifier_count": sum(1 for item in terminal_results if item.get("failure_category") == "model_patch_rejected_by_final_verifier"),
+        "final_verifier_reached_count": sum(1 for item in terminal_results if item.get("final_verifier_boundary_ref")),
+        "final_verifier_not_executed_count": sum(1 for item in terminal_results if item.get("final_verifier_status") == "not_executed"),
+        "failure_category_distribution": _distribution(str(item.get("failure_category") or "accepted") for item in terminal_results),
         "accepted_count": len(accepted),
         "rejected_count": len(terminal_results) - len(accepted),
         "diagnostic_only_count": 0,
@@ -1392,6 +1417,7 @@ def build_pre_verl_final(
     inputs_path = root / "pre_verl_evaluation_inputs.json"
     _write_json(inputs_path, {"schema_version": "repo_harness_pre_verl_evaluation_inputs_v0", "created_at": _now(), "selection_mode": "explicit_paths", "evidence_refs": list(refs.values()), "status": "passed"})
     task_set = _read_json(task_set_manifest)
+    baseline = _read_json(baseline_binding)
     verifier = _read_json(verifier_correctness_report)
     agent_eval = _read_json(agent_evaluation_report)
     runtime = _read_json(runtime_trace_report)
@@ -1399,6 +1425,8 @@ def build_pre_verl_final(
     export = _read_json(export_pack_manifest)
     blocked_claims = []
     readiness_blockers = []
+    if baseline.get("status") != "passed":
+        readiness_blockers.append("V5 core acceptance baseline evidence present")
     if task_set.get("status") != "passed":
         readiness_blockers.append("expanded pre-verl task freeze complete")
     if verifier.get("status") != "passed":
@@ -1428,13 +1456,21 @@ def build_pre_verl_final(
     accepted_count = int(agent_eval.get("accepted_count", 0) or 0)
     accepted_denominator = int(agent_eval.get("accepted_rate_denominator_value", 0) or 0)
     allowed_claims = [
-        "V5 core acceptance evidence reused as pre-verl baseline",
         f"pre-verl expanded development Pilot produced {terminal_outcomes} real DeepSeek provider terminal outcomes from {provider_calls} provider calls",
         f"pre-verl strict final verifier accepted {accepted_count} provider patches out of {accepted_denominator} terminal outcomes",
         "current export audit has clean SFT and reinforcement learning rollout partitions",
-        "pre-verl readiness passed for safe verl adapter smoke and micro-RL integration",
     ]
+    baseline_claim = "V5 core acceptance evidence reused as pre-verl baseline"
+    if baseline.get("status") == "passed":
+        allowed_claims.insert(0, baseline_claim)
+    else:
+        blocked_claims.append(baseline_claim)
     readiness_status = "passed" if not readiness_blockers else "blocked"
+    readiness_claim = "pre-verl readiness passed for safe verl adapter smoke and micro-RL integration"
+    if readiness_status == "passed":
+        allowed_claims.append(readiness_claim)
+    else:
+        blocked_claims.append(readiness_claim)
     claim_gate_path = root / "pre_verl_resume_claim_gate_report.json"
     _write_json(
         claim_gate_path,
@@ -1668,10 +1704,408 @@ def _check_ref(ref: dict[str, Any], failures: list[str], label: str) -> None:
 
 
 def _matrix_results(matrix: dict[str, Any]) -> list[dict[str, Any]]:
+    entries = matrix.get("entries")
+    if isinstance(entries, list):
+        return [_agentloop_result_from_entry(entry) for entry in entries if isinstance(entry, dict)]
     ref = matrix.get("matrix_cell_results_ref")
     if not ref or not ref.get("path"):
         return []
     return _read_jsonl(Path(str(ref["path"])))
+
+
+def _agentloop_result_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    run_dir_value = entry.get("run_task_run_dir") or entry.get("run_dir")
+    run_dir = Path(str(run_dir_value)) if run_dir_value else Path("<missing-run-dir>")
+    metrics = _read_json_if_exists(run_dir / "metrics.json")
+    metadata = _read_json_if_exists(run_dir / "run_metadata.json")
+    run_config_facts = _read_json_if_exists(run_dir / "run_config_facts.json")
+    boundary = _read_json_if_exists(run_dir / "final_verifier_boundary.json")
+    events = _read_jsonl_if_exists(run_dir / "events.jsonl")
+    provider_call_events = [
+        event for event in events
+        if event.get("event_type") == "model_call_completed"
+        and ((event.get("data") or {}).get("provider") in {"deepseek", "openai"})
+    ]
+    final_patch_path = run_dir / "final.patch"
+    final_patch_ref = (
+        _ref(final_patch_path, "pre_verl_agent_final_patch", "inspect-pre-verl-agent-evaluation")
+        if final_patch_path.exists() and final_patch_path.stat().st_size > 0
+        else None
+    )
+    raw_request_refs = []
+    raw_response_refs = []
+    for event in provider_call_events:
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        if isinstance(data.get("raw_provider_request_ref"), dict):
+            raw_request_refs.append(data["raw_provider_request_ref"])
+        if isinstance(data.get("raw_provider_response_ref"), dict):
+            raw_response_refs.append(data["raw_provider_response_ref"])
+    tool_protocol = run_config_facts.get("tool_protocol") if isinstance(run_config_facts, dict) else {}
+    tool_schema_snapshot_ref = (
+        tool_protocol.get("tool_schema_snapshot_ref") if isinstance(tool_protocol, dict) else None
+    )
+    return {
+        "task_id": entry.get("task_id") or metadata.get("task_id") or boundary.get("task_id"),
+        "run_id": entry.get("run_id") or metadata.get("run_id"),
+        "baseline_source": entry.get("baseline_source") or boundary.get("baseline_source"),
+        "run_task_run_dir": run_dir.as_posix(),
+        "run_task_command_log_entry_ref": entry.get("run_task_command_log_entry_ref"),
+        "run_task_entrypoint": boundary.get("run_task_entrypoint"),
+        "actual_provider_call_count": len(provider_call_events),
+        "provider": entry.get("provider") or run_config_facts.get("actual_provider"),
+        "model_id": entry.get("model_id") or run_config_facts.get("model_id"),
+        "scaffold_id": entry.get("scaffold_id") or run_config_facts.get("scaffold_id") or metadata.get("scaffold_id"),
+        "accepted": boundary.get("accepted"),
+        "final_verifier_status": boundary.get("final_verifier_status") or metrics.get("final_verifier_status"),
+        "failure_category": boundary.get("failure_category"),
+        "failure_owner": boundary.get("failure_owner"),
+        "final_patch_ref": final_patch_ref,
+        "final_verifier_boundary_ref": (
+            _ref(run_dir / "final_verifier_boundary.json", "pre_verl_final_verifier_boundary", "inspect-pre-verl-agent-evaluation")
+            if (run_dir / "final_verifier_boundary.json").exists()
+            else None
+        ),
+        "final_verifier_mode": run_config_facts.get("final_verifier_mode"),
+        "tool_schema_snapshot_ref": tool_schema_snapshot_ref,
+        "event_log_ref": (
+            _ref(run_dir / "events.jsonl", "trajectory_event_log", "inspect-pre-verl-agent-runtime-audit")
+            if (run_dir / "events.jsonl").exists()
+            else None
+        ),
+        "transcript_ref": (
+            _ref(run_dir / "transcript.jsonl", "trajectory_transcript", "inspect-pre-verl-agent-runtime-audit")
+            if (run_dir / "transcript.jsonl").exists()
+            else None
+        ),
+        "raw_provider_request_refs": raw_request_refs,
+        "raw_provider_response_refs": raw_response_refs,
+        "tool_call_count": int(metrics.get("tool_call_count", 0) or 0),
+        "token_usage": _token_usage_from_events(provider_call_events),
+    }
+
+
+def _formal_agentloop_lineage_failures(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    failures = []
+    for result in results:
+        reasons = _formal_agentloop_result_failures(result)
+        if reasons:
+            failures.append(
+                {
+                    "task_id": result.get("task_id"),
+                    "run_id": result.get("run_id"),
+                    "reasons": reasons,
+                }
+            )
+    return failures
+
+
+def _formal_agentloop_result_failures(result: dict[str, Any]) -> list[str]:
+    failures = []
+    if result.get("baseline_source") != PRE_VERL_AGENTLOOP_BASELINE_SOURCE:
+        failures.append("baseline_source_not_repo_harness_agentloop_run_task")
+    run_dir = Path(str(result.get("run_task_run_dir") or ""))
+    if not result.get("run_task_run_dir") or not run_dir.exists():
+        failures.append("missing_run_task_run_dir")
+        return failures
+    _validate_pre_verl_run_metadata(run_dir, result, failures)
+    _validate_pre_verl_run_config_facts(run_dir, failures)
+    _validate_pre_verl_command_log_entry(result.get("run_task_command_log_entry_ref"), run_dir, result, failures)
+    if result.get("run_task_entrypoint") != "repo-harness run-task":
+        failures.append("missing_run_task_entrypoint")
+    if result.get("scaffold_id") == "single_shot_patch_no_tools":
+        failures.append("forbidden_single_shot_patch_no_tools")
+    for key in ("accepted", "final_verifier_status", "failure_category"):
+        if key not in result:
+            failures.append(f"missing_{key}")
+    if result.get("old_pilot_used") is True:
+        failures.append("result_old_pilot_used")
+    if result.get("legacy_v3_adapter_used") is True:
+        failures.append("result_legacy_v3_adapter_used")
+    for key in ("tool_schema_snapshot_ref", "event_log_ref", "transcript_ref", "final_verifier_boundary_ref"):
+        _validate_pre_verl_result_ref(result.get(key), run_dir, failures, key, require_fingerprint=True)
+    _validate_pre_verl_boundary_payload(result, run_dir, failures)
+    if not result.get("raw_provider_request_refs"):
+        failures.append("missing_raw_provider_request_refs")
+    else:
+        for index, ref in enumerate(result.get("raw_provider_request_refs", [])):
+            _validate_pre_verl_result_ref(
+                ref,
+                run_dir,
+                failures,
+                f"raw_provider_request_refs[{index}]",
+                require_fingerprint=True,
+            )
+    if not result.get("raw_provider_response_refs"):
+        failures.append("missing_raw_provider_response_refs")
+    else:
+        for index, ref in enumerate(result.get("raw_provider_response_refs", [])):
+            _validate_pre_verl_result_ref(
+                ref,
+                run_dir,
+                failures,
+                f"raw_provider_response_refs[{index}]",
+                require_fingerprint=True,
+            )
+    event_path = _result_ref_path(result.get("event_log_ref"), run_dir)
+    events = _read_jsonl_if_exists(event_path) if event_path is not None else []
+    failures.extend(_pre_verl_agentloop_event_failures(events, run_dir))
+    return failures
+
+
+def _validate_pre_verl_run_metadata(
+    run_dir: Path,
+    result: dict[str, Any],
+    failures: list[str],
+) -> None:
+    metadata = _read_json_if_exists(run_dir / "run_metadata.json")
+    if not metadata:
+        failures.append("missing_run_metadata_json")
+        return
+    run_id = metadata.get("run_id")
+    if not run_id:
+        failures.append("run_metadata_missing_run_id")
+    if result.get("run_id") and run_id and result.get("run_id") != run_id:
+        failures.append("run_metadata_run_id_mismatch")
+    if metadata.get("scaffold_id") == "single_shot_patch_no_tools":
+        failures.append("run_metadata_forbidden_single_shot_patch_no_tools")
+
+
+def _validate_pre_verl_run_config_facts(run_dir: Path, failures: list[str]) -> None:
+    facts = _read_json_if_exists(run_dir / "run_config_facts.json")
+    if not facts:
+        failures.append("missing_run_config_facts_json")
+        return
+    if facts.get("final_verifier_mode") != "strict_patch_replay":
+        failures.append("run_config_facts_final_verifier_mode_not_strict_patch_replay")
+    if facts.get("test_feedback_policy") != "disabled":
+        failures.append("run_config_facts_test_feedback_policy_not_disabled")
+    if facts.get("scaffold_id") == "single_shot_patch_no_tools":
+        failures.append("run_config_facts_forbidden_single_shot_patch_no_tools")
+    tool_protocol = facts.get("tool_protocol") if isinstance(facts.get("tool_protocol"), dict) else {}
+    _validate_pre_verl_result_ref(
+        tool_protocol.get("tool_schema_snapshot_ref"),
+        run_dir,
+        failures,
+        "run_config_facts.tool_schema_snapshot_ref",
+        require_fingerprint=True,
+    )
+
+
+def _validate_pre_verl_command_log_entry(
+    ref: Any,
+    run_dir: Path,
+    result: dict[str, Any],
+    failures: list[str],
+) -> None:
+    path = _validate_pre_verl_result_ref(
+        ref,
+        run_dir,
+        failures,
+        "run_task_command_log_entry_ref",
+        require_fingerprint=True,
+    )
+    if path is None:
+        return
+    payload = _read_json_if_exists(path)
+    if not payload:
+        failures.append("run_task_command_log_entry_ref_not_json_object")
+        return
+    if payload.get("command_name") != "run-task":
+        failures.append("run_task_command_log_entry_command_name_not_run_task")
+    if payload.get("exit_code") != 0:
+        failures.append("run_task_command_log_entry_exit_code_not_zero")
+    argv = payload.get("argv")
+    if not isinstance(argv, list):
+        failures.append("run_task_command_log_entry_argv_not_list")
+        return
+    argv_strings = [str(item) for item in argv]
+    if "run-task" not in argv_strings:
+        failures.append("run_task_command_log_entry_argv_missing_run_task")
+    expected_run_id = str(result.get("run_id") or "")
+    if expected_run_id:
+        try:
+            run_id_index = argv_strings.index("--run-id")
+        except ValueError:
+            failures.append("run_task_command_log_entry_argv_missing_run_id")
+        else:
+            observed = argv_strings[run_id_index + 1] if run_id_index + 1 < len(argv_strings) else None
+            if observed != expected_run_id:
+                failures.append("run_task_command_log_entry_run_id_mismatch")
+
+
+def _validate_pre_verl_result_ref(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+    *,
+    require_fingerprint: bool = False,
+) -> Path | None:
+    if not isinstance(ref, dict):
+        failures.append(f"missing_{label}")
+        return None
+    path = _result_ref_path(ref, run_dir)
+    if path is None:
+        failures.append(f"{label}_missing_path")
+        return None
+    if not path.exists():
+        failures.append(f"{label}_path_missing")
+        return None
+    expected_sha = ref.get("sha256")
+    if require_fingerprint and not isinstance(expected_sha, str):
+        failures.append(f"{label}_missing_sha256")
+    if isinstance(expected_sha, str) and path.is_file() and _sha256(path) != expected_sha:
+        failures.append(f"{label}_sha256_drift")
+    size_bytes = ref.get("size_bytes")
+    if require_fingerprint and not isinstance(size_bytes, int):
+        failures.append(f"{label}_missing_size_bytes")
+    if isinstance(size_bytes, int) and path.is_file() and path.stat().st_size != size_bytes:
+        failures.append(f"{label}_size_bytes_drift")
+    return path
+
+
+def _validate_pre_verl_boundary_payload(
+    result: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+) -> None:
+    boundary_path = _result_ref_path(result.get("final_verifier_boundary_ref"), run_dir)
+    if boundary_path is None or not boundary_path.exists():
+        return
+    boundary = _read_json_if_exists(boundary_path)
+    if not boundary:
+        failures.append("final_verifier_boundary_ref_not_json_object")
+        return
+    if boundary.get("baseline_source") != PRE_VERL_AGENTLOOP_BASELINE_SOURCE:
+        failures.append("final_verifier_boundary_baseline_source_mismatch")
+    if boundary.get("run_task_entrypoint") != "repo-harness run-task":
+        failures.append("final_verifier_boundary_run_task_entrypoint_mismatch")
+    if "accepted" not in boundary:
+        failures.append("final_verifier_boundary_missing_accepted")
+    elif "accepted" in result and bool(result.get("accepted")) != bool(boundary.get("accepted")):
+        failures.append("final_verifier_boundary_accepted_mismatch")
+    expected_status = result.get("final_verifier_status")
+    if "final_verifier_status" not in boundary:
+        failures.append("final_verifier_boundary_missing_status")
+    elif expected_status is not None and boundary.get("final_verifier_status") != expected_status:
+        failures.append("final_verifier_boundary_status_mismatch")
+    expected_category = result.get("failure_category")
+    if "failure_category" not in boundary:
+        failures.append("final_verifier_boundary_missing_failure_category")
+    elif boundary.get("failure_category") != expected_category:
+        failures.append("final_verifier_boundary_failure_category_mismatch")
+    for key in ("old_pilot_used", "legacy_v3_adapter_used"):
+        if key in result and result.get(key) != boundary.get(key):
+            failures.append(f"final_verifier_boundary_{key}_mismatch")
+    if boundary.get("old_pilot_used") is True:
+        failures.append("final_verifier_boundary_old_pilot_used")
+    if boundary.get("legacy_v3_adapter_used") is True:
+        failures.append("final_verifier_boundary_legacy_v3_adapter_used")
+
+
+def _result_ref_path(ref: Any, run_dir: Path) -> Path | None:
+    if not isinstance(ref, dict):
+        return None
+    value = ref.get("path") or ref.get("relative_path")
+    if not isinstance(value, str) or not value.strip():
+        return None
+    path = Path(value)
+    return path if path.is_absolute() else run_dir / path
+
+
+def _pre_verl_agentloop_event_failures(events: list[dict[str, Any]], run_dir: Path) -> list[str]:
+    failures: list[str] = []
+    if not events:
+        return ["events_jsonl_empty_or_unreadable"]
+    event_types = [str(event.get("event_type") or "") for event in events]
+    for required in ("run_started", "baseline_completed", "context_prepared", "model_call_started", "model_call_completed", "run_finished"):
+        if required not in event_types:
+            failures.append(f"events_missing_{required}")
+    started_ids = _pre_verl_event_ids(events, "model_call_started", "model_call_id")
+    completed_ids = _pre_verl_event_ids(events, "model_call_completed", "model_call_id")
+    if set(started_ids) != set(completed_ids):
+        failures.append("model_call_events_unpaired")
+    real_provider_completed = 0
+    for index, event in enumerate(events):
+        if event.get("event_type") != "model_call_completed":
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        if data.get("provider") not in {"deepseek", "openai"}:
+            continue
+        real_provider_completed += 1
+        _validate_pre_verl_result_ref(
+            data.get("raw_provider_request_ref"),
+            run_dir,
+            failures,
+            f"events_model_call_completed_{index}_raw_provider_request_ref",
+            require_fingerprint=True,
+        )
+        _validate_pre_verl_result_ref(
+            data.get("raw_provider_response_ref"),
+            run_dir,
+            failures,
+            f"events_model_call_completed_{index}_raw_provider_response_ref",
+            require_fingerprint=True,
+        )
+    if real_provider_completed == 0:
+        failures.append("events_missing_real_provider_model_call_completed")
+    requested = _pre_verl_event_ids(events, "tool_requested", "tool_call_id")
+    terminal = []
+    for event_type in ("tool_completed", "tool_denied", "tool_failed", "tool_timeout", "tool_interrupted"):
+        terminal.extend(_pre_verl_event_ids(events, event_type, "tool_call_id"))
+    if set(requested) - set(terminal):
+        failures.append("tool_use_missing_tool_result")
+    if set(terminal) - set(requested):
+        failures.append("tool_result_missing_tool_use")
+    return failures
+
+
+def _pre_verl_event_ids(events: list[dict[str, Any]], event_type: str, key: str) -> list[str]:
+    ids: list[str] = []
+    for event in events:
+        if event.get("event_type") != event_type:
+            continue
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        value = data.get(key)
+        if isinstance(value, str) and value:
+            ids.append(value)
+    return ids
+
+
+def _read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _read_jsonl_if_exists(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            rows.append(payload)
+    return rows
+
+
+def _token_usage_from_events(events: list[dict[str, Any]]) -> dict[str, int]:
+    input_tokens = 0
+    output_tokens = 0
+    for event in events:
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        input_tokens += int(data.get("input_tokens", 0) or 0)
+        output_tokens += int(data.get("output_tokens", 0) or 0)
+    return {"input_tokens": input_tokens, "output_tokens": output_tokens}
 
 
 def _is_accepted(item: dict[str, Any]) -> bool:
@@ -2065,7 +2499,7 @@ def _source_context_for_prompt(*, source_dir: Path, problem_statement: str, max_
             continue
         rel = path.relative_to(source_dir).as_posix()
         score = 0
-        if rel in mentioned_paths or path.name in mentioned_paths:
+        if _path_matches_mentioned_source(rel, path.name, mentioned_paths):
             score += 100
         lowered_rel = rel.lower()
         for token in tokens:
@@ -2106,6 +2540,22 @@ def _source_context_for_prompt(*, source_dir: Path, problem_statement: str, max_
     if not chunks:
         return "No source snippets selected by the bounded context heuristic."
     return "".join(chunks)
+
+
+def _path_matches_mentioned_source(rel: str, name: str, mentioned_paths: set[str]) -> bool:
+    for mentioned in mentioned_paths:
+        normalized = mentioned.strip("/").replace("\\", "/")
+        if not normalized:
+            continue
+        parts = [part for part in normalized.split("/") if part]
+        suffixes = {"/".join(parts[index:]) for index in range(len(parts))}
+        suffixes.add(normalized)
+        for suffix in suffixes:
+            if rel == suffix or name == suffix or rel.endswith(f"/{suffix}"):
+                return True
+        if parts and name == parts[-1]:
+            return True
+    return False
 
 
 def _problem_tokens(problem_statement: str) -> set[str]:

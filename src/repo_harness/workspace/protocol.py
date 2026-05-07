@@ -70,6 +70,7 @@ class WorkspaceAdapter(Protocol):
         source_checkout: str | Path,
         dependency_state: DependencyState,
         setup_command: str | None = None,
+        setup_timeout_sec: float | None = None,
         recorder: RunRecorder,
     ) -> RunWorkspace:
         ...
@@ -81,6 +82,7 @@ class WorkspaceAdapter(Protocol):
         dependency_state: DependencyState,
         final_patch_path: str | Path,
         setup_command: str | None = None,
+        setup_timeout_sec: float | None = None,
         recorder: RunRecorder,
     ) -> str | Path:
         ...
@@ -90,6 +92,7 @@ class WorkspaceAdapter(Protocol):
         workspace_path: str | Path,
         dependency_state: DependencyState,
         setup_command: str | None,
+        setup_timeout_sec: float | None = None,
         recorder: RunRecorder | None = None,
     ) -> None:
         ...

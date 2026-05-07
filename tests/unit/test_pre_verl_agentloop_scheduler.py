@@ -1,0 +1,195 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests(
+    tmp_path: Path,
+) -> None:
+    script = _load_scheduler_module()
+    manifest_path = _write_materialized_manifest_fixture(tmp_path)
+    output_dir = tmp_path / "prepared"
+
+    status = script.main(
+        [
+            "--pre-verl-task-set-manifest",
+            manifest_path.as_posix(),
+            "--output-dir",
+            output_dir.as_posix(),
+            "--mode",
+            "smoke",
+            "--task-id",
+            "pre_verl_dev_001_sqlfluff__sqlfluff_1625",
+            "--provider",
+            "deepseek",
+            "--model-id",
+            "deepseek-v4-flash",
+            "--repo-harness-bin",
+            f"{sys.executable} -m repo_harness.cli.main",
+        ]
+    )
+
+    assert status == 0
+    configuration = _read_json(output_dir / "pre_verl_agentloop_configuration_manifest.json")
+    assert configuration["baseline_source"] == "repo_harness_agentloop_run_task"
+    assert configuration["pre_verl_adapter"] == "swebench_lite_dev_agentloop_v0"
+    assert configuration["old_pilot_allowed"] is False
+    assert configuration["resolved_tools"] == [
+        "list_files",
+        "read_file",
+        "grep",
+        "edit_file",
+        "git_diff",
+    ]
+    task_manifest = _read_json(output_dir / "pre_verl_agentloop_task_definition_manifest.json")
+    assert len(task_manifest["task_definition_refs"]) == 1
+    run_config_manifest = _read_json(output_dir / "pre_verl_agentloop_run_config_manifest.json")
+    assert run_config_manifest["entries"][0]["resolved_tools"] == configuration["resolved_tools"]
+    command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(
+        encoding="utf-8"
+    )
+    assert "inspect-pre-verl-agentloop-task-definitions" in command_log
+    assert "inspect-pre-verl-agentloop-run-config" in command_log
+    generated_task = (output_dir / "task_definitions" / "pre_verl_dev_001_sqlfluff__sqlfluff_1625.yaml").read_text(
+        encoding="utf-8"
+    )
+    assert "setup_command: null" in generated_task
+    assert "pre_verl_setup_shell:" in generated_task
+    assert "pre_verl_agentloop_baseline_source: repo_harness_agentloop_run_task" in generated_task
+
+
+def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
+    root = tmp_path / "materialized"
+    freeze = tmp_path / "freeze"
+    task_id = "pre_verl_dev_001_sqlfluff__sqlfluff_1625"
+    source_dir = root / "source_checkouts" / task_id / "source"
+    task_dir = root / "tasks" / task_id
+    patches_dir = root / "patches" / task_id
+    visible_dir = freeze / "adapter_visible_task_inputs"
+    evaluator_dir = freeze / "evaluator_only_task_evidence"
+    definitions_dir = freeze / "task_definitions"
+    for directory in (source_dir, task_dir, patches_dir, visible_dir, evaluator_dir, definitions_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+    (source_dir / "requirements.txt").write_text("", encoding="utf-8")
+    (source_dir / "requirements_dev.txt").write_text("", encoding="utf-8")
+    hidden_patch_path = patches_dir / "hidden_test.patch"
+    hidden_patch_path.write_text(
+        "diff --git a/test_example.py b/test_example.py\n--- a/test_example.py\n+++ b/test_example.py\n",
+        encoding="utf-8",
+    )
+    adapter_input_path = visible_dir / f"{task_id}.json"
+    _write_json(
+        adapter_input_path,
+        {
+            "schema_version": "repo_harness_pre_verl_adapter_visible_task_input_v0",
+            "task_id": task_id,
+            "source_instance_id": "sqlfluff__sqlfluff-1625",
+            "repo": "sqlfluff/sqlfluff",
+            "problem_statement": "Fix a user-visible SQLFluff issue.",
+        },
+    )
+    evaluator_path = evaluator_dir / f"{task_id}.json"
+    _write_json(
+        evaluator_path,
+        {
+            "schema_version": "repo_harness_pre_verl_evaluator_only_task_evidence_v0",
+            "task_id": task_id,
+            "FAIL_TO_PASS": ["test_example.py::test_hidden"],
+            "PASS_TO_PASS": [],
+            "test_patch": hidden_patch_path.read_text(encoding="utf-8"),
+        },
+    )
+    materialization_entry_path = task_dir / "materialization_entry.json"
+    _write_json(
+        materialization_entry_path,
+        {
+            "schema_version": "repo_harness_pre_verl_swebench_dev_materialization_entry_v0",
+            "status": "passed",
+            "task_id": task_id,
+            "repo": "sqlfluff/sqlfluff",
+            "version": "0.6",
+            "source_tree_sha256": "a" * 64,
+            "test_patch_apply_status": "passed",
+            "test_patch_apply_result_ref": _ref(task_dir / "test_patch_apply_result.json"),
+        },
+    )
+    _write_json(task_dir / "test_patch_apply_result.json", {"status": "passed"})
+    verifier_plan_path = task_dir / "verifier_plan.json"
+    _write_json(
+        verifier_plan_path,
+        {
+            "schema_version": "repo_harness_pre_verl_swebench_dev_verifier_plan_v0",
+            "status": "passed",
+            "task_id": task_id,
+            "repo": "sqlfluff/sqlfluff",
+            "base_commit": "fixture",
+            "environment_id": "pre_verl_sqlfluff_0.6_python38_v0",
+            "execution_image": "python:3.8",
+            "pythonpath": "src",
+            "fail_to_pass_selectors": ["test_example.py::test_hidden"],
+            "pass_to_pass_selector_count": 0,
+            "test_patch_ref": _ref(hidden_patch_path, visibility="evaluator_only"),
+        },
+    )
+    source_record_path = definitions_dir / f"{task_id}.json"
+    _write_json(
+        source_record_path,
+        {
+            "schema_version": "repo_harness_pre_verl_task_definition_v0",
+            "task_id": task_id,
+            "tier": "swebench_lite_development",
+            "agent_run_ready": True,
+            "runnable": True,
+            "verifier_ready": True,
+            "repo": "sqlfluff/sqlfluff",
+            "version": "0.6",
+            "source_instance_id": "sqlfluff__sqlfluff-1625",
+            "base_commit": "fixture",
+            "source_tree_sha256": "a" * 64,
+            "adapter_visible_input_ref": _ref(adapter_input_path, visibility="model_visible"),
+            "evaluator_only_evidence_ref": _ref(evaluator_path, visibility="evaluator_only"),
+            "swebench_dev_materialization_entry_ref": _ref(materialization_entry_path),
+            "verifier_plan_ref": _ref(verifier_plan_path),
+        },
+    )
+    manifest_path = freeze / "pre_verl_task_set_manifest.json"
+    _write_json(
+        manifest_path,
+        {
+            "schema_version": "repo_harness_pre_verl_task_set_manifest_v0",
+            "task_definition_refs": [_ref(source_record_path)],
+        },
+    )
+    return manifest_path
+
+
+def _load_scheduler_module():
+    path = Path("scripts/pre_verl/run_agentloop_evaluation.py").resolve()
+    spec = importlib.util.spec_from_file_location("pre_verl_agentloop_scheduler", path)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _ref(path: Path, *, visibility: str = "audit_only") -> dict[str, object]:
+    return {
+        "path": path.as_posix(),
+        "sha256": "a" * 64,
+        "size_bytes": path.stat().st_size if path.exists() else 0,
+        "visibility": visibility,
+    }
+
+
+def _read_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")

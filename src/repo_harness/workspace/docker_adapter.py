@@ -227,11 +227,18 @@ class DockerWorkspaceAdapter:
         source_checkout: str | Path,
         dependency_state: DependencyState,
         setup_command: str | None = None,
+        setup_timeout_sec: float | None = None,
         recorder: RunRecorder,
     ) -> RunWorkspace:
         workspace_path = self.workspaces_dir / "agent_workspace"
         _copy_tree(self._host_path(source_checkout), workspace_path)
-        self.restore_dependency_state(workspace_path, dependency_state, setup_command, recorder)
+        self.restore_dependency_state(
+            workspace_path,
+            dependency_state,
+            setup_command,
+            setup_timeout_sec=setup_timeout_sec,
+            recorder=recorder,
+        )
         agent_start_snapshot = self.create_agent_start_snapshot(
             workspace_path, dependency_state.excluded_diff_paths, recorder
         )
@@ -253,11 +260,18 @@ class DockerWorkspaceAdapter:
         dependency_state: DependencyState,
         final_patch_path: str | Path,
         setup_command: str | None = None,
+        setup_timeout_sec: float | None = None,
         recorder: RunRecorder,
     ) -> str:
         verification_path = self.workspaces_dir / "verification_workspace"
         _copy_tree(self._host_path(source_checkout), verification_path)
-        self.restore_dependency_state(verification_path, dependency_state, setup_command, recorder)
+        self.restore_dependency_state(
+            verification_path,
+            dependency_state,
+            setup_command,
+            setup_timeout_sec=setup_timeout_sec,
+            recorder=recorder,
+        )
         self._execute_in_container(
             ["python", "-c", "pass"],
             workspace_path=verification_path,
@@ -281,6 +295,7 @@ class DockerWorkspaceAdapter:
         workspace_path: str | Path,
         dependency_state: DependencyState,
         setup_command: str | None,
+        setup_timeout_sec: float | None = None,
         recorder: RunRecorder | None = None,
     ) -> None:
         if dependency_state.strategy == "none":
@@ -288,7 +303,13 @@ class DockerWorkspaceAdapter:
         if dependency_state.strategy == "rerun_setup":
             if not setup_command:
                 raise WorkspaceError("dependency_state=rerun_setup 需要 setup_command。")
-            result = self.run_command(workspace_path, setup_command, recorder=recorder)
+            result = self.run_command(
+                workspace_path,
+                setup_command,
+                timeout_sec=setup_timeout_sec,
+                recorder=recorder,
+                allow_shell=_requires_shell_command(setup_command),
+            )
             if result.exit_code != 0 or result.timeout:
                 raise WorkspaceError(f"rerun_setup 失败：{result.stderr_preview or result.stdout_preview}")
             return
@@ -1121,6 +1142,15 @@ def _dockerfile_for_base_image(base_image: str) -> str:
 def _safe_container_name(value: str) -> str:
     safe = re.sub(r"[^a-zA-Z0-9_.-]", "-", value)
     return safe[:120].strip("-") or "repo-harness-container"
+
+
+def _requires_shell_command(command: str | list[str]) -> bool:
+    if not isinstance(command, str):
+        return False
+    stripped = command.strip()
+    return any(marker in stripped for marker in ("&&", "||", ";", "|")) or stripped.startswith(
+        (". ", "source ")
+    )
 
 
 def _timestamp() -> str:

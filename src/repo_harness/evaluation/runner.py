@@ -89,6 +89,13 @@ def run_task(
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)
+    pre_verl_runtime_plan = load_pre_verl_swebench_dev_runtime_plan(loaded.runnable_task)
+    swebench_like_runtime_plan = load_swebench_like_runtime_plan(loaded.runnable_task)
+    effective_setup_command = (
+        pre_verl_runtime_plan.setup_shell
+        if pre_verl_runtime_plan is not None and pre_verl_runtime_plan.setup_shell
+        else loaded.runnable_task.setup_command
+    )
     scaffold = build_scaffold(config.runtime.scaffold_id)
     feedback_policy = resolve_feedback_policy(
         run_config=config,
@@ -157,6 +164,7 @@ def run_task(
             adapter=adapter,
             setup_workspace=setup,
             task=loaded.runnable_task,
+            setup_command=effective_setup_command,
             recorder=recorder,
         )
         if setup_result is None:
@@ -168,7 +176,7 @@ def run_task(
             )
         dependency_strategy = (
             "rerun_setup"
-            if loaded.runnable_task.setup_command and _setup_succeeded(setup_result)
+            if effective_setup_command and _setup_succeeded(setup_result)
             else "none"
         )
         dependency_state = adapter.capture_dependency_state(strategy=dependency_strategy)
@@ -178,8 +186,6 @@ def run_task(
             dependency_state.model_dump(mode="json"),
             {"budget_policy": "preserve_json"},
         )
-        pre_verl_runtime_plan = load_pre_verl_swebench_dev_runtime_plan(loaded.runnable_task)
-        swebench_like_runtime_plan = load_swebench_like_runtime_plan(loaded.runnable_task)
         if (
             (pre_verl_runtime_plan is not None or swebench_like_runtime_plan is not None)
             and setup_result is not None
@@ -187,7 +193,7 @@ def run_task(
         ):
             baseline_verifiers = [
                 build_error_verifier_result(
-                    command=loaded.runnable_task.setup_command or "setup",
+                    command=effective_setup_command or "setup",
                     error_type="setup_failed" if not setup_result.timeout else "setup_timeout",
                     verifier_stage="baseline",
                     timeout=setup_result.timeout,
@@ -207,7 +213,7 @@ def run_task(
         elif setup_result is not None and not _setup_succeeded(setup_result):
             baseline_verifiers = [
                 build_error_verifier_result(
-                    command=loaded.runnable_task.setup_command or "setup",
+                    command=effective_setup_command or "setup",
                     error_type="setup_failed" if not setup_result.timeout else "setup_timeout",
                     verifier_stage="baseline",
                     timeout=setup_result.timeout,
@@ -371,7 +377,8 @@ def run_task(
             task=loaded.runnable_task,
             source_checkout=source,
             dependency_state=dependency_state,
-            setup_command=loaded.runnable_task.setup_command,
+            setup_command=effective_setup_command,
+            setup_timeout_sec=loaded.runnable_task.timeouts.setup_timeout_sec,
             recorder=recorder,
         )
         initial_messages = ContextBuilder().build_initial_messages(
@@ -472,7 +479,7 @@ def run_task(
                 run_dir=run_dir,
                 adapter=adapter,
                 recorder=recorder,
-                setup_command=loaded.runnable_task.setup_command,
+                setup_command=effective_setup_command,
             )
         elif swebench_like_runtime_plan is not None:
             try:
@@ -496,6 +503,7 @@ def run_task(
                     dependency_state=dependency_state,
                     final_patch_path=capture.patch_path,
                     setup_command=loaded.runnable_task.setup_command,
+                    setup_timeout_sec=loaded.runnable_task.timeouts.setup_timeout_sec,
                     recorder=recorder,
                 )
                 final_verifier = verifier.run_final(verification, resolved_plan, recorder)
@@ -788,16 +796,19 @@ def _run_setup_command(
     adapter: WorkspaceAdapter,
     setup_workspace: Path,
     task: RunnableTask,
+    setup_command: str | None = None,
     recorder: RunRecorder,
 ) -> ExecutionResult | None:
-    if not task.setup_command:
+    command = setup_command if setup_command is not None else task.setup_command
+    if not command:
         return None
     result = adapter.run_command(
         setup_workspace,
-        task.setup_command,
+        command,
         timeout_sec=task.timeouts.setup_timeout_sec,
         recorder=recorder,
         command_semantics="setup",
+        allow_shell=_requires_shell_command(command),
     )
     recorder.append_event(
         TrajectoryEvent(
@@ -813,6 +824,15 @@ def _run_setup_command(
         )
     )
     return result
+
+
+def _requires_shell_command(command: str | list[str]) -> bool:
+    if not isinstance(command, str):
+        return False
+    stripped = command.strip()
+    return any(marker in stripped for marker in ("&&", "||", ";", "|")) or stripped.startswith(
+        (". ", "source ")
+    )
 
 
 def _jsonl_record_count(path: Path) -> int:
