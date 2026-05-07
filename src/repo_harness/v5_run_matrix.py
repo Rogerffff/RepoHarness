@@ -1138,6 +1138,7 @@ def _run_minimal_provider_agent_loop(
                 mode="deny",
                 network_policy="deny_agent_run",
                 test_command="not_exposed_to_model",
+                test_feedback_policy="disabled",
             ),
             verifier_feedback_facade=None,  # type: ignore[arg-type]
             resolved_verifier_plan=None,  # type: ignore[arg-type]
@@ -1510,6 +1511,7 @@ def _run_accepted_provider_agent_loop(
                     mode="auto",
                     network_policy="deny_agent_run",
                     test_command="hidden_final_verifier_not_model_visible",
+                    test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
                 ),
                 verifier_feedback_facade=None,  # type: ignore[arg-type]
                 resolved_verifier_plan=resolved_plan,

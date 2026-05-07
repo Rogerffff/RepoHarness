@@ -67,7 +67,9 @@ def test_bash_unsafe_commands_are_denied(tmp_path: Path, command: str):
     )
 
     assert decision.decision == "deny"
-    assert decision.matched_rule == "bash_command_safety"
+    assert decision.matched_rule in {"bash_command_safety", "unsupported_shell_syntax"}
+    assert decision.policy_decision == "deny"
+    assert decision.shell_execution is False
 
 
 @pytest.mark.parametrize(
@@ -93,11 +95,13 @@ def test_bash_denial_reason_includes_recovery_guidance(
     )
 
     assert decision.decision == "deny"
-    assert decision.matched_rule == "bash_command_safety"
+    assert decision.matched_rule in {"bash_command_safety", "unsupported_shell_syntax"}
     assert expected_fragment in decision.reason
     assert "bash is restricted" in decision.reason
     assert "Use cwd for directories" in decision.reason
     assert "run_tests for configured test feedback" in decision.reason
+    assert decision.policy_decision == "deny"
+    assert decision.shell_execution is False
 
 
 @pytest.mark.parametrize(
@@ -138,6 +142,37 @@ def test_bash_pytest_routes_to_run_tests_and_is_allowed_in_auto(tmp_path: Path):
 
     assert decision.decision == "allow"
     assert decision.effective_tool_name == "run_tests"
+
+
+def test_bash_allowed_diagnostic_decision_records_safe_argv(tmp_path: Path):
+    args = {
+        "command": "pwd",
+        "cwd": ".",
+        "timeout_sec": 30,
+        "policy_decision": "allow",
+        "command_category": "diagnostic",
+        "reason_code": "diagnostic_bash_fallback",
+        "safe_argv": ["pwd"],
+        "recovery_hint": "Use dedicated tools when possible.",
+    }
+    decision = PermissionSystem().check(
+        tool_call_id="call_pwd",
+        requested_tool_name="bash",
+        effective_tool_name="bash",
+        tool_definition=build_tool("bash"),
+        requested_arguments={"command": "pwd"},
+        normalized_arguments=args,
+        permission_context=PermissionContext(mode="auto", test_command="pytest -q"),
+        workspace_facade=FakeWorkspaceFacade(tmp_path),
+        workspace_path=tmp_path.as_posix(),
+    )
+
+    assert decision.decision == "allow"
+    assert decision.safe_argv == ["pwd"]
+    assert decision.policy_decision == "allow"
+    assert decision.reason_code == "diagnostic_bash_fallback"
+    assert decision.timeout_sec == 30
+    assert decision.shell_execution is False
 
 
 @pytest.mark.parametrize("mode", ["plan", "ask", "deny"])

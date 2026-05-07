@@ -29,5 +29,11 @@ class PermissionDecision(StrictBaseModel):
     network_policy: str | None = None
     requested_cwd: str | None = None
     effective_cwd: str | None = None
+    policy_decision: str | None = None
+    reason_code: str | None = None
+    safe_argv: list[str] | None = None
+    recovery_hint: str | None = None
+    timeout_sec: int | None = None
+    shell_execution: bool = False
     non_interactive_resolution: str | None = None
     requires_user_input: bool = False

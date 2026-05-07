@@ -74,10 +74,23 @@ def test_test_feedback_disabled_blocks_bash_pytest_bypass(tmp_path: Path):
 
     events = _read_jsonl(run_dir / "events.jsonl")
     metrics = _read_json(run_dir / "metrics.json")
-    assert any(event["event_type"] == "test_feedback_disabled" for event in events)
+    denied_bash_tests = [
+        event
+        for event in events
+        if event["event_type"] == "tool_denied"
+        and event["error_type"] == "permission_denied"
+        and event["data"]["requested_tool_name"] == "bash"
+    ]
+    assert denied_bash_tests
+    denied_typed = denied_bash_tests[0]["data"]["typed"]
+    assert denied_typed["policy_decision"] == "deny"
+    assert denied_typed["command_category"] == "public_test"
+    assert denied_typed["reason_code"] == "denied_by_final_only_feedback_policy"
+    assert denied_typed["safe_argv"] == ["pytest", "-q"]
+    assert denied_typed["shell_execution"] is False
     assert any(
         event["event_type"] == "tool_denied"
-        and event["error_type"] == "test_feedback_disabled"
+        and event["error_type"] == "permission_denied"
         for event in events
     )
     assert metrics["interaction_efficiency"]["agent_stop_reason"] == "final_answer"

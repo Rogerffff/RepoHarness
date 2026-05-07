@@ -629,6 +629,89 @@ def test_bash_timeout_is_clamped_to_command_budget(tmp_path: Path):
     assert normalized.normalized_arguments["timeout_clamped_to_sec"] == 2
 
 
+def test_bash_test_command_variants_route_to_run_tests_policy(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.test_feedback_policy = "structured_public_feedback"
+    executor = ToolExecutor()
+
+    for index, command in enumerate(["tox", "nox -s tests", "python -m unittest tests.test_example"]):
+        normalized = executor.normalize(
+            ToolCall(
+                tool_call_id=f"call_bash_test_{index}",
+                tool_name="bash",
+                arguments={"command": command},
+                turn=1,
+            ),
+            context,
+        )
+
+        assert normalized.effective_tool_name == "run_tests"
+        assert normalized.route_reason == "model_bash_test_routed_to_run_tests"
+        assert normalized.normalized_arguments["command_category"] == "public_test"
+
+
+def test_bash_test_command_disabled_stays_bash_for_policy_denial(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.test_feedback_policy = "disabled"
+
+    normalized = ToolExecutor().normalize(
+        ToolCall(
+            tool_call_id="call_disabled_bash_test",
+            tool_name="bash",
+            arguments={"command": "python -m pytest -q"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert normalized.effective_tool_name == "bash"
+    assert normalized.normalized_arguments["policy_decision"] == "deny"
+    assert normalized.normalized_arguments["command_category"] == "public_test"
+    assert normalized.normalized_arguments["safe_argv"] == ["python", "-m", "pytest", "-q"]
+
+
+def test_bash_execution_uses_safe_argv_metadata(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    tool_call = ToolCall(
+        tool_call_id="call_pwd_safe_argv",
+        tool_name="bash",
+        arguments={"command": "pwd"},
+        turn=1,
+    )
+    executor = ToolExecutor()
+
+    assert executor.check_permission(tool_call, context).decision == "allow"
+    result = executor.execute(tool_call, context)
+
+    assert result.status == "ok"
+    assert result.typed["safe_argv"] == ["pwd"]
+    assert result.typed["policy_decision"] == "allow"
+    assert result.typed["command_category"] == "diagnostic"
+    assert result.typed["shell_execution"] is False
+
+
+def test_bash_execution_requires_policy_safe_argv(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    tool_call = ToolCall(
+        tool_call_id="call_pwd_missing_safe_argv",
+        tool_name="bash",
+        arguments={"command": "pwd"},
+        turn=1,
+    )
+    normalized = ToolExecutor().normalize(tool_call, context)
+    normalized.normalized_arguments["safe_argv"] = None
+
+    result = ToolExecutor().execute(tool_call, context)
+
+    assert result.status == "ok"
+    assert result.typed["safe_argv"] == ["pwd"]
+
+    direct_result = ToolExecutor()._bash(tool_call, normalized, context)  # noqa: SLF001
+    assert direct_result.status == "error"
+    assert direct_result.error_type == "bash_safe_argv_missing"
+    assert direct_result.typed["shell_execution"] is False
+
+
 def _tool_context(tmp_path: Path) -> ToolExecutionContext:
     run_dir = tmp_path / "run"
     workspace = run_dir / "workspaces" / "agent_workspace"

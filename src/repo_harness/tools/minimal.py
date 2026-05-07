@@ -15,7 +15,7 @@ from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.errors import WorkspaceError
 from repo_harness.permissions import PermissionContext, PermissionDecision, PermissionSystem
 from repo_harness.schema_base import stable_hash
-from repo_harness.tasks.command_policy import is_recognized_test_command
+from repo_harness.tasks.command_policy import evaluate_model_bash_command
 from repo_harness.tools.schemas import ToolCall, ToolResult
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.verifier import PytestVerifier
@@ -259,7 +259,16 @@ class ToolExecutor:
             status="denied",
             content=decision.reason,
             error_type="permission_denied",
-            typed={"permission_decision": decision.model_dump(mode="json")},
+            typed={
+                "permission_decision": decision.model_dump(mode="json"),
+                "policy_decision": decision.policy_decision,
+                "command_category": decision.command_category,
+                "reason_code": decision.reason_code,
+                "recovery_hint": decision.recovery_hint,
+                "safe_argv": decision.safe_argv,
+                "timeout_sec": decision.timeout_sec,
+                "shell_execution": decision.shell_execution,
+            },
         )
 
     def invalid_tool_result(self, tool_call: ToolCall) -> ToolResult:
@@ -425,18 +434,32 @@ class ToolExecutor:
             cwd = str(args.get("cwd", "."))
             requested_timeout = int(args.get("timeout_sec", 30))
             timeout = _clamp_command_timeout(requested_timeout, context)
+            command_policy_decision = evaluate_model_bash_command(
+                command,
+                configured_test_command=context.permission_context.test_command,
+                test_feedback_policy=context.test_feedback_policy,
+            )
             requested_cwd = cwd
             normalized_args = {
                 "command": command,
                 "cwd": cwd,
                 "timeout_sec": timeout,
+                "command_policy_decision": command_policy_decision.model_dump(mode="json"),
+                "policy_decision": command_policy_decision.decision,
+                "command_category": command_policy_decision.command_category,
+                "reason_code": command_policy_decision.reason_code or command_policy_decision.matched_rule,
+                "safe_argv": command_policy_decision.safe_argv,
+                "recovery_hint": command_policy_decision.recovery_hint,
             }
             if timeout != requested_timeout:
                 normalized_args["requested_timeout_sec"] = requested_timeout
                 normalized_args["timeout_clamped_to_sec"] = timeout
-            if _is_test_command(command, context.permission_context.test_command):
+            if (
+                command_policy_decision.command_category == "public_test"
+                and command_policy_decision.decision == "route_to_run_tests"
+            ):
                 effective = "run_tests"
-                route_reason = "recognized_task_test_command"
+                route_reason = "model_bash_test_routed_to_run_tests"
                 effective_args = {}
             else:
                 effective_args = dict(normalized_args)
@@ -852,12 +875,37 @@ class ToolExecutor:
     ) -> ToolResult:
         command = str(normalized.normalized_arguments["command"])
         cwd = _resolve_cwd(context, str(normalized.normalized_arguments["cwd"]))
+        safe_argv = normalized.normalized_arguments.get("safe_argv")
+        if not isinstance(safe_argv, list) or not all(isinstance(part, str) for part in safe_argv):
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="error",
+                content="bash command missing policy safe_argv; command was not executed.",
+                error_type="bash_safe_argv_missing",
+                typed={
+                    "command": command,
+                    "policy_decision": normalized.normalized_arguments.get("policy_decision"),
+                    "command_category": normalized.normalized_arguments.get("command_category"),
+                    "safe_argv": None,
+                    "shell_execution": False,
+                    "timeout_sec": normalized.normalized_arguments.get("timeout_sec"),
+                },
+            )
         result = context.workspace_adapter.run_command(
             cwd,
-            command,
+            safe_argv,
             timeout_sec=float(normalized.normalized_arguments["timeout_sec"]),
             recorder=context.recorder,
             command_semantics="bash_diagnostic",
+            artifact_metadata={
+                "policy_decision": normalized.normalized_arguments.get("policy_decision"),
+                "command_category": normalized.normalized_arguments.get("command_category"),
+                "reason_code": normalized.normalized_arguments.get("reason_code"),
+                "safe_argv": safe_argv,
+                "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                "shell_execution": False,
+            },
         )
         status = "timeout" if result.timeout else "ok"
         return _tool_result(
@@ -876,6 +924,13 @@ class ToolExecutor:
                 "exit_code": result.exit_code,
                 "command_semantics": result.command_semantics,
                 "exit_code_interpretation": result.exit_code_interpretation,
+                "policy_decision": normalized.normalized_arguments.get("policy_decision"),
+                "command_category": normalized.normalized_arguments.get("command_category"),
+                "reason_code": normalized.normalized_arguments.get("reason_code"),
+                "recovery_hint": normalized.normalized_arguments.get("recovery_hint"),
+                "safe_argv": safe_argv,
+                "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                "shell_execution": False,
             },
         )
 
@@ -1197,13 +1252,16 @@ def build_tool(name: str) -> ToolDefinition:
             model_visible_description=(
                 "Run a restricted diagnostic command inside the workspace. This is not a "
                 "general shell: do not use cd, pipes, redirects, shell composition, "
-                "variable expansion, or arbitrary python -c snippets. Use cwd for "
-                "directories, read_file/grep for inspection, run_tests for configured "
-                "test feedback, and git_diff for patch review."
+                "variable expansion, or arbitrary python -c snippets. Allowed diagnostic "
+                "families include pwd, file-specific ls, read-only git status/diff/show/log/ls-files, "
+                "ruff check, mypy, and python -m compileall. find, grep shell commands, curl, wget, "
+                "ssh, sudo, rm, and git diff --no-index are denied. Use cwd for directories, "
+                "read_file/grep for inspection, run_tests for configured test feedback, and git_diff for patch review."
             ),
             model_visible_prompt=(
                 "Use bash only for the restricted allowlist. Pass a single command plus "
-                "optional cwd and timeout_sec; do not combine commands."
+                "optional cwd and timeout_sec; do not combine commands. Do not use bash as a replacement "
+                "for read_file, grep, run_tests, or git_diff."
             ),
             input_schema={
                 "type": "object",
@@ -1403,10 +1461,6 @@ def _tool_result(
 
 def _is_permission_workspace_error(message: str) -> bool:
     return "拒绝" in message or "边界" in message or "敏感路径" in message
-
-
-def _is_test_command(command: str, configured_test_command: str) -> bool:
-    return is_recognized_test_command(command, configured_test_command)
 
 
 def _clamp_command_timeout(requested_timeout: int, context: ToolExecutionContext) -> int:

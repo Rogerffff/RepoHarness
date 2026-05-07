@@ -10,6 +10,7 @@ from typing import Any
 from repo_harness.errors import WorkspaceError
 from repo_harness.permissions.schemas import PermissionDecision
 from repo_harness.schema_base import stable_hash
+from repo_harness.tasks.command_policy import evaluate_model_bash_command
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,7 @@ class PermissionContext:
     mode: str = "auto"
     network_policy: str = "deny_agent_run"
     test_command: str = "pytest -q"
+    test_feedback_policy: str = "oracle_hidden_feedback"
 
 
 class PermissionSystem:
@@ -73,6 +75,39 @@ class PermissionSystem:
 
         if effective_tool_name == "bash":
             command = str(normalized_arguments.get("command", ""))
+            policy_decision = evaluate_model_bash_command(
+                command,
+                configured_test_command=permission_context.test_command,
+                test_feedback_policy=permission_context.test_feedback_policy,
+            )
+            if policy_decision.decision == "deny":
+                return self._decision(
+                    tool_call_id=tool_call_id,
+                    requested_tool_name=requested_tool_name,
+                    effective_tool_name=effective_tool_name,
+                    permission_context=permission_context,
+                    requested_arguments=requested_arguments,
+                    normalized_arguments=normalized_arguments,
+                    decision="deny",
+                    reason=_with_bash_recovery_guidance(
+                        policy_decision.reason
+                        + (
+                            f" {policy_decision.recovery_hint}"
+                            if policy_decision.recovery_hint
+                            else ""
+                        )
+                    ),
+                    matched_rule=policy_decision.matched_rule,
+                    resolved_paths=resolved_paths,
+                    command_category=policy_decision.command_category,
+                    requested_cwd=str(requested_cwd) if requested_cwd is not None else None,
+                    effective_cwd=effective_cwd,
+                    policy_decision=policy_decision.decision,
+                    reason_code=policy_decision.reason_code or policy_decision.matched_rule,
+                    safe_argv=policy_decision.safe_argv,
+                    recovery_hint=policy_decision.recovery_hint,
+                    timeout_sec=_timeout_from_args(normalized_arguments),
+                )
             command_issue = _deny_reason_for_bash(command, workspace_facade, workspace_path)
             if command_issue is not None:
                 return self._decision(
@@ -89,6 +124,11 @@ class PermissionSystem:
                     command_category="diagnostic",
                     requested_cwd=str(requested_cwd) if requested_cwd is not None else None,
                     effective_cwd=effective_cwd,
+                    policy_decision="deny",
+                    reason_code=_bash_reason_code(command_issue),
+                    safe_argv=policy_decision.safe_argv,
+                    recovery_hint=_bash_recovery_hint(command_issue),
+                    timeout_sec=_timeout_from_args(normalized_arguments),
                 )
 
         read_only = bool(getattr(tool_definition, "is_read_only", False))
@@ -154,6 +194,31 @@ class PermissionSystem:
             command_category=_command_category(effective_tool_name),
             requested_cwd=str(requested_cwd) if requested_cwd is not None else None,
             effective_cwd=effective_cwd,
+            policy_decision=(
+                str(normalized_arguments.get("policy_decision"))
+                if effective_tool_name == "bash" and normalized_arguments.get("policy_decision") is not None
+                else None
+            ),
+            reason_code=(
+                str(normalized_arguments.get("reason_code"))
+                if effective_tool_name == "bash" and normalized_arguments.get("reason_code") is not None
+                else None
+            ),
+            safe_argv=(
+                normalized_arguments.get("safe_argv")
+                if effective_tool_name == "bash" and isinstance(normalized_arguments.get("safe_argv"), list)
+                else None
+            ),
+            recovery_hint=(
+                str(normalized_arguments.get("recovery_hint"))
+                if effective_tool_name == "bash" and normalized_arguments.get("recovery_hint") is not None
+                else None
+            ),
+            timeout_sec=(
+                _timeout_from_args(normalized_arguments)
+                if effective_tool_name == "bash"
+                else None
+            ),
         )
 
     def _decision(
@@ -172,6 +237,11 @@ class PermissionSystem:
         command_category: str | None = None,
         requested_cwd: str | None = None,
         effective_cwd: str | None = None,
+        policy_decision: str | None = None,
+        reason_code: str | None = None,
+        safe_argv: list[str] | None = None,
+        recovery_hint: str | None = None,
+        timeout_sec: int | None = None,
         requires_user_input: bool = False,
         non_interactive_resolution: str | None = None,
     ) -> PermissionDecision:
@@ -191,6 +261,12 @@ class PermissionSystem:
             network_policy=permission_context.network_policy,
             requested_cwd=requested_cwd,
             effective_cwd=effective_cwd,
+            policy_decision=policy_decision,
+            reason_code=reason_code,
+            safe_argv=safe_argv,
+            recovery_hint=recovery_hint,
+            timeout_sec=timeout_sec,
+            shell_execution=False,
             requires_user_input=requires_user_input,
             non_interactive_resolution=non_interactive_resolution,
         )
@@ -279,6 +355,44 @@ def _with_bash_recovery_guidance(reason: str) -> str:
     if _BASH_RECOVERY_GUIDANCE in reason:
         return reason
     return f"{reason}. {_BASH_RECOVERY_GUIDANCE}"
+
+
+def _bash_reason_code(reason: str) -> str:
+    lowered = reason.lower()
+    if "find is not allowed" in lowered:
+        return "use_list_files_instead_of_find"
+    if "grep" in lowered and "not in" in lowered:
+        return "use_grep_tool_instead_of_bash_grep"
+    if "curl" in lowered or "wget" in lowered or "network" in lowered:
+        return "network_command_denied"
+    if "rm" in lowered or "destructive" in lowered:
+        return "destructive_command_denied"
+    if "unsupported shell syntax" in lowered:
+        return "unsupported_shell_syntax"
+    return "bash_command_safety_denied"
+
+
+def _bash_recovery_hint(reason: str) -> str:
+    lowered = reason.lower()
+    if "find is not allowed" in lowered:
+        return "Use list_files with path, glob, offset, and max_entries."
+    if "grep" in lowered:
+        return "Use the grep tool with literal or regex mode."
+    if "git diff" in lowered:
+        return "Use git_diff for patch review."
+    if "test_feedback_policy=disabled" in lowered:
+        return "Use source inspection and git_diff; tests are final-verifier-only."
+    return _BASH_RECOVERY_GUIDANCE
+
+
+def _timeout_from_args(arguments: dict[str, Any]) -> int | None:
+    value = arguments.get("timeout_sec")
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _validate_git_command(

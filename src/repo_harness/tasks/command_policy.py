@@ -65,6 +65,9 @@ class CommandPolicyDecision(StrictBaseModel):
     decision: Literal["allow", "deny", "route_to_run_tests"]
     reason: str
     matched_rule: str
+    reason_code: str | None = None
+    safe_argv: list[str] | None = None
+    recovery_hint: str | None = None
 
 
 class CommandPolicy(StrictBaseModel):
@@ -195,6 +198,8 @@ def evaluate_model_bash_command(
             decision="deny",
             reason="Model-visible bash cannot execute the hidden formal verifier command.",
             matched_rule="hidden_test_command_denied",
+            reason_code="hidden_test_command_denied",
+            recovery_hint="Use read_file, grep, edit_file, and git_diff; hidden verifier commands are evaluator-only.",
         )
     if category == "public_test":
         if test_feedback_policy == "disabled":
@@ -204,6 +209,9 @@ def evaluate_model_bash_command(
                 decision="deny",
                 reason="test_feedback_policy=disabled blocks model-visible test execution.",
                 matched_rule="test_feedback_disabled_blocks_bash_test",
+                reason_code="denied_by_final_only_feedback_policy",
+                safe_argv=_safe_split_or_none(command),
+                recovery_hint="This task does not expose tests to the model. Use source inspection and git_diff instead.",
             )
         return CommandPolicyDecision(
             command=command,
@@ -214,21 +222,35 @@ def evaluate_model_bash_command(
                 "route_to_run_tests",
             ),
             matched_rule="model_bash_test_routed_to_run_tests",
+            reason_code="route_public_test_to_run_tests",
+            safe_argv=_safe_split_or_none(command),
+            recovery_hint="Use the run_tests tool for configured public test feedback.",
         )
     if category == "invalid":
+        fragment = first_forbidden_shell_fragment(command)
         return CommandPolicyDecision(
             command=command,
             command_category="invalid",
             decision="deny",
-            reason="Command contains unsupported shell syntax.",
+            reason=(
+                f"Unsupported shell syntax: {fragment}"
+                if fragment is not None
+                else "Command contains unsupported shell syntax."
+            ),
             matched_rule="unsupported_shell_syntax",
+            reason_code="unsupported_shell_syntax",
+            recovery_hint="Pass one command without pipes, redirects, command composition, variable expansion, or background execution.",
         )
+    safe_argv = _safe_split_or_none(command)
     return CommandPolicyDecision(
         command=command,
         command_category="diagnostic",
         decision="allow",
         reason="Command is not recognized as a test command.",
         matched_rule="diagnostic_bash_fallback",
+        reason_code="diagnostic_bash_fallback",
+        safe_argv=safe_argv,
+        recovery_hint="Use dedicated tools for reading files, searching, test feedback, and diff review when possible.",
     )
 
 
@@ -249,8 +271,6 @@ def classify_bash_command(
         return "hidden_test"
     if is_recognized_test_command(command, configured_test_command):
         return "public_test"
-    if parts and parts[0] in {"tox", "nox"}:
-        return "public_test"
     return "diagnostic"
 
 
@@ -269,9 +289,17 @@ def is_recognized_test_command(command: str, configured_test_command: str) -> bo
         "pytest -q",
         "python -m pytest",
         "python -m pytest -q",
+        "python -m unittest",
     }:
         return True
-    return bool(parts and (parts[0] == "pytest" or parts[:3] == ["python", "-m", "pytest"]))
+    return bool(
+        parts
+        and (
+            parts[0] in {"pytest", "tox", "nox"}
+            or parts[:3] == ["python", "-m", "pytest"]
+            or parts[:3] == ["python", "-m", "unittest"]
+        )
+    )
 
 
 def split_static_command(command: str, *, field_name: str) -> list[str]:
@@ -324,3 +352,17 @@ def resolve_command_path(repo_path: Path, requested_path: str, *, field_name: st
 
 def has_forbidden_shell_syntax(command: str) -> bool:
     return any(fragment in command for fragment in FORBIDDEN_SHELL_FRAGMENTS)
+
+
+def first_forbidden_shell_fragment(command: str) -> str | None:
+    for fragment in FORBIDDEN_SHELL_FRAGMENTS:
+        if fragment in command:
+            return fragment
+    return None
+
+
+def _safe_split_or_none(command: str) -> list[str] | None:
+    try:
+        return shlex.split(command)
+    except ValueError:
+        return None

@@ -405,6 +405,7 @@ def run_task(
                 mode=config.runtime.permission_mode,
                 network_policy=config.workspace.network_policy,
                 test_command=resolved_plan.verifier_config.test_command,
+                test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
             ),
             verifier_feedback_facade=verifier,
             resolved_verifier_plan=resolved_plan,

@@ -91,3 +91,16 @@ def test_tox_and_nox_are_recognized_as_test_commands_for_policy_gate():
         test_feedback_policy="disabled",
     ).decision == "deny"
     assert is_recognized_test_command("pytest tests/test_example.py -q", "pytest -q")
+
+
+def test_unittest_is_recognized_as_test_command_for_policy_gate():
+    decision = CommandPolicy().evaluate_model_bash(
+        "python -m unittest tests.test_example",
+        configured_test_command="pytest -q",
+        test_feedback_policy="disabled",
+    )
+
+    assert decision.decision == "deny"
+    assert decision.command_category == "public_test"
+    assert decision.reason_code == "denied_by_final_only_feedback_policy"
+    assert decision.safe_argv == ["python", "-m", "unittest", "tests.test_example"]
