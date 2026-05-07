@@ -40,13 +40,29 @@ workspace:
     )
 
     events = _read_jsonl(run_dir / "events.jsonl")
-    assert any(event["event_type"] == "test_feedback_disabled" for event in events)
-    assert any(
-        event["event_type"] == "tool_denied"
-        and event["error_type"] == "test_feedback_disabled"
-        and event["data"]["effective_tool_name"] == "run_tests"
+    denied = next(
+        event["data"]
+        for event in events
+        if event["event_type"] == "tool_denied"
+        and event["data"]["tool_call_id"] == "call_bash_pytest"
+    )
+    typed = denied["typed"]
+    policy_decision = denied["effective_arguments"]["command_policy_decision"]
+    assert denied["requested_tool_name"] == "bash"
+    assert denied["effective_tool_name"] == "bash"
+    assert denied["error_type"] == "permission_denied"
+    assert typed["reason_code"] == "denied_by_final_only_feedback_policy"
+    assert typed["command_category"] == "public_test"
+    assert policy_decision["matched_rule"] == "test_feedback_disabled_blocks_bash_test"
+    assert policy_decision["safe_argv"] == ["pytest", "-q"]
+    assert not any(
+        event["event_type"] == "tool_completed"
+        and event["data"]["tool_call_id"] == "call_bash_pytest"
         for event in events
     )
+    metrics = _read_json(run_dir / "metrics.json")
+    assert metrics["interaction_efficiency"]["test_feedback_policy"] == "disabled"
+    assert metrics["interaction_efficiency"]["public_tests_ran"] is False
 
 
 def test_run_config_records_stage12_command_policy_and_environment_hash(tmp_path: Path):

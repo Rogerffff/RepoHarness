@@ -51,8 +51,10 @@ def test_bash_pytest_routes_to_run_tests(tmp_path):
 
     assert bash_result["requested_tool_name"] == "bash"
     assert bash_result["effective_tool_name"] == "run_tests"
-    assert bash_result["route_reason"] == "recognized_task_test_command"
+    assert bash_result["route_reason"] == "model_bash_test_routed_to_run_tests"
+    assert permission["requested_tool_name"] == "bash"
     assert permission["effective_tool_name"] == "run_tests"
+    assert permission["decision"] == "allow"
     assert _read_json(run_dir / "verifier.json")["accepted"] is True
 
 
