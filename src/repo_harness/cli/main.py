@@ -203,6 +203,7 @@ from repo_harness.pre_verl_evaluation import (
     inspect_pre_verl_verifier_correctness,
 )
 from repo_harness.pre_verl_agentloop import (
+    inspect_pre_verl_agentloop_boundary_index,
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
 )
@@ -1498,6 +1499,17 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_pre_verl_agentloop_config_parser.add_argument("--assert-final-only-test-feedback-disabled", action="store_true")
     inspect_pre_verl_agentloop_config_parser.add_argument("--assert-resolved-tools-derived", action="store_true")
     inspect_pre_verl_agentloop_config_parser.add_argument("--assert-no-hidden-feedback-visible", action="store_true")
+
+    inspect_pre_verl_agentloop_boundary_parser = subparsers.add_parser(
+        "inspect-pre-verl-agentloop-boundary-index",
+        help="只读检查 pre-verl formal AgentLoop final verifier boundary index。",
+    )
+    inspect_pre_verl_agentloop_boundary_parser.add_argument("index")
+    inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-all-formal-runs-bound", action="store_true")
+    inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-command-order", action="store_true")
+    inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-clean-source-origin", action="store_true")
+    inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-run-task-lineage", action="store_true")
+    inspect_pre_verl_agentloop_boundary_parser.add_argument("--assert-no-legacy-adapter", action="store_true")
 
     pre_verl_swebench_materialization_parser = subparsers.add_parser("build-pre-verl-swebench-dev-materialization")
     pre_verl_swebench_materialization_parser.add_argument("--output-dir", required=True)
@@ -2851,6 +2863,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"pre-verl AgentLoop run config 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-agentloop-boundary-index":
+        try:
+            print(
+                inspect_pre_verl_agentloop_boundary_index(
+                    args.index,
+                    assert_all_formal_runs_bound=args.assert_all_formal_runs_bound,
+                    assert_command_order=args.assert_command_order,
+                    assert_clean_source_origin=args.assert_clean_source_origin,
+                    assert_run_task_lineage=args.assert_run_task_lineage,
+                    assert_no_legacy_adapter=args.assert_no_legacy_adapter,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl AgentLoop boundary index 检查失败：{exc}\n")
         return 0
     if args.command == "build-pre-verl-swebench-dev-materialization":
         try:

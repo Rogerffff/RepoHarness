@@ -37,6 +37,11 @@ from repo_harness.v3_agent_runtime import (
     load_swebench_like_runtime_plan,
     run_swebench_like_final_verifier,
 )
+from repo_harness.pre_verl_agentloop import (
+    build_pre_verl_baseline_verifier,
+    load_pre_verl_swebench_dev_runtime_plan,
+    run_pre_verl_swebench_dev_final_verifier,
+)
 from repo_harness.verifier import PytestVerifier, build_error_verifier_result
 from repo_harness.verifier.parser_policy import VerifierParserPolicy
 from repo_harness.workspace import (
@@ -173,8 +178,13 @@ def run_task(
             dependency_state.model_dump(mode="json"),
             {"budget_policy": "preserve_json"},
         )
+        pre_verl_runtime_plan = load_pre_verl_swebench_dev_runtime_plan(loaded.runnable_task)
         swebench_like_runtime_plan = load_swebench_like_runtime_plan(loaded.runnable_task)
-        if swebench_like_runtime_plan is not None and setup_result is not None and not _setup_succeeded(setup_result):
+        if (
+            (pre_verl_runtime_plan is not None or swebench_like_runtime_plan is not None)
+            and setup_result is not None
+            and not _setup_succeeded(setup_result)
+        ):
             baseline_verifiers = [
                 build_error_verifier_result(
                     command=loaded.runnable_task.setup_command or "setup",
@@ -186,6 +196,10 @@ def run_task(
             ]
             baseline_status = "invalid"
             baseline_dependency_error = "setup_failed" if not setup_result.timeout else "setup_timeout"
+        elif pre_verl_runtime_plan is not None:
+            baseline_verifiers = [build_pre_verl_baseline_verifier(pre_verl_runtime_plan)]
+            baseline_status = "valid"
+            baseline_dependency_error = None
         elif swebench_like_runtime_plan is not None:
             baseline_verifiers = [build_swebench_like_baseline_verifier(swebench_like_runtime_plan)]
             baseline_status = "valid"
@@ -207,7 +221,7 @@ def run_task(
             ]
         baseline_verifier = baseline_verifiers[0]
         baseline_artifact_metadata = {"budget_policy": "preserve_json"}
-        if swebench_like_runtime_plan is not None:
+        if pre_verl_runtime_plan is not None or swebench_like_runtime_plan is not None:
             baseline_artifact_metadata["redaction_status"] = "evaluator_only"
         baseline_ref = recorder.write_json_artifact(
             "baseline_verifier_results",
@@ -219,7 +233,7 @@ def run_task(
             },
             baseline_artifact_metadata,
         )
-        if swebench_like_runtime_plan is None:
+        if pre_verl_runtime_plan is None and swebench_like_runtime_plan is None:
             baseline_status, baseline_dependency_error = _derive_baseline_status(
                 generated_file_count=len(loaded.runnable_task.generated_files_policy),
                 verifier_results=baseline_verifiers,
@@ -449,6 +463,17 @@ def run_task(
                 verifier_stage="final",
                 timeout=True,
             )
+        elif pre_verl_runtime_plan is not None:
+            final_verifier = run_pre_verl_swebench_dev_final_verifier(
+                plan=pre_verl_runtime_plan,
+                source_checkout=source,
+                dependency_state=dependency_state,
+                final_patch_path=capture.patch_path,
+                run_dir=run_dir,
+                adapter=adapter,
+                recorder=recorder,
+                setup_command=loaded.runnable_task.setup_command,
+            )
         elif swebench_like_runtime_plan is not None:
             try:
                 final_verifier = run_swebench_like_final_verifier(
@@ -486,7 +511,7 @@ def run_task(
                     verifier_stage="final",
                 )
         final_artifact_metadata = {"budget_policy": "preserve_json"}
-        if swebench_like_runtime_plan is not None:
+        if pre_verl_runtime_plan is not None or swebench_like_runtime_plan is not None:
             final_artifact_metadata["redaction_status"] = "evaluator_only"
         final_verifier_ref = recorder.write_json_artifact(
             "final_verifier_result",

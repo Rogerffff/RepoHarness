@@ -9,9 +9,10 @@ from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
+    load_pre_verl_swebench_dev_runtime_plan,
 )
 from repo_harness.scaffolds import build_scaffold, resolve_feedback_policy
-from repo_harness.tasks import TaskDefinition
+from repo_harness.tasks import RunnableTask, TaskDefinition
 from repo_harness.config import load_run_config
 
 
@@ -56,6 +57,19 @@ def test_pre_verl_agentloop_task_definitions_do_not_accept_tag_only_final_only(
 
     with pytest.raises(ConfigError, match="metadata.swe_bench_like_final_only"):
         inspect_pre_verl_agentloop_task_definitions(manifest, assert_run_task_compatible=True)
+
+
+def test_pre_verl_agentloop_runtime_helper_rejects_missing_final_only_metadata(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(
+        tmp_path,
+        metadata_updates={"swe_bench_like_final_only": None, "final_only": None},
+    )
+    definition = TaskDefinition.model_validate(yaml.safe_load(task_path.read_text(encoding="utf-8")))
+
+    with pytest.raises(ConfigError, match="metadata is incomplete"):
+        load_pre_verl_swebench_dev_runtime_plan(RunnableTask.from_definition(definition))
 
 
 @pytest.mark.parametrize(

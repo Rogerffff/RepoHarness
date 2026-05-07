@@ -42,7 +42,13 @@ class SweBenchLikeRuntimePlan:
 
 
 def load_swebench_like_runtime_plan(task: RunnableTask) -> SweBenchLikeRuntimePlan | None:
-    """Return the V3 final-only runtime plan declared in task metadata, if any."""
+    """Return the historical V3 final-only runtime plan, if declared.
+
+    This adapter is kept for V3/V4/V5 historical acceptance evidence replay only.
+    Formal pre-verl AgentLoop baseline runs must use
+    ``pre_verl_adapter=swebench_lite_dev_agentloop_v0`` instead of
+    ``v3_adapter=swebench_like_fixed``.
+    """
 
     if task.metadata.get("v3_adapter") != "swebench_like_fixed":
         return None
