@@ -50,6 +50,7 @@ def test_tool_model_visible_contract_explains_restricted_workflow():
     assert "mode='regex'" in grep.model_visible_description
     assert grep.input_schema["properties"]["mode"]["enum"] == ["literal", "regex"]
     assert "max_matches" in grep.input_schema["properties"]
+    assert "pattern" in grep.input_schema["properties"]
     assert "expected_content_hash" in build_tool("edit_file").input_schema["properties"]
     assert build_tool("edit_file").input_schema["properties"]["replace_all"]["default"] is False
 
@@ -154,6 +155,50 @@ def test_grep_no_match_is_successful_observation(tmp_path: Path):
     assert result.status == "ok"
     assert "No matches" in result.content_preview
     assert result.typed["match_count"] == 0
+
+
+def test_grep_accepts_pattern_alias_for_query(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    Path(context.run_workspace.workspace_path, "notes.txt").write_text("hello alias\n", encoding="utf-8")
+    tool_call = ToolCall(
+        tool_call_id="call_grep_pattern",
+        tool_name="grep",
+        arguments={"pattern": "hello"},
+        turn=1,
+    )
+
+    validation = ToolExecutor().validate_input(tool_call, context)
+    normalized = ToolExecutor().normalize(tool_call, context)
+    result = ToolExecutor().execute(tool_call, context)
+
+    assert validation is None
+    assert normalized.normalized_arguments["query"] == "hello"
+    assert result.status == "ok"
+    assert result.typed["query"] == "hello"
+    assert "notes.txt:1:>hello alias" in result.content_preview
+
+
+def test_grep_reads_workspace_files_without_per_file_adapter_calls(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    context = _tool_context(tmp_path)
+    Path(context.run_workspace.workspace_path, "notes.txt").write_text("fast grep path\n", encoding="utf-8")
+
+    def fail_read_text(*_args: object, **_kwargs: object) -> str:
+        raise AssertionError("grep should not call workspace_adapter.read_text once per candidate file")
+
+    monkeypatch.setattr(context.workspace_adapter, "read_text", fail_read_text)
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_direct_read",
+            tool_name="grep",
+            arguments={"query": "fast"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert "notes.txt:1:>fast grep path" in result.content_preview
 
 
 def test_grep_supports_regex_context_and_pagination(tmp_path: Path):

@@ -21,6 +21,7 @@ from repo_harness.errors import ConfigError, TaskValidationError
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.scaffolds import build_scaffold, resolve_allowed_tools, resolve_feedback_policy
 from repo_harness.tasks import RunnableTask, TaskAdapter, TaskDefinition
+from repo_harness.tools.minimal import _is_model_hidden_tool_path
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TrajectoryEvent
 from repo_harness.verifier.pytest_parser import PytestTextParser
 from repo_harness.verifier.schemas import TestCaseResult, VerifierResult
@@ -2245,21 +2246,85 @@ def _patch_needles_from_ref(
         failures.append(f"{label}: 无法读取 evaluator-only patch ref: {exc}")
         return []
     needles: list[str] = []
+    public_context = _model_visible_public_text_context(run_dir)
     for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if len(line) < 20:
+        if not raw_line.startswith("+") or raw_line.startswith("+++ "):
             continue
-        if line.startswith(("diff --git", "index ", "--- ", "+++ ", "@@")):
-            continue
-        if line[0] in {"+", "-"}:
-            line = line[1:].strip()
+        line = raw_line[1:].strip()
         if len(line) >= 20:
-            needles.append(line)
+            if not _needle_is_public_model_visible_text(line, public_context):
+                needles.append(line)
         if line.startswith("assert "):
             assertion_body = line.removeprefix("assert ").strip()
             if len(assertion_body) >= 20:
-                needles.append(assertion_body)
+                if not _needle_is_public_model_visible_text(assertion_body, public_context):
+                    needles.append(assertion_body)
     return needles
+
+
+def _model_visible_public_text_context(run_dir: Path) -> list[str]:
+    contexts: list[str] = []
+    task_path = run_dir / "task.yaml"
+    if task_path.exists():
+        try:
+            task_payload = yaml.safe_load(task_path.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError):
+            task_payload = None
+        if isinstance(task_payload, dict):
+            issue = task_payload.get("issue")
+            if isinstance(issue, str) and issue:
+                contexts.append(issue)
+            expected_files = task_payload.get("expected_files")
+            if isinstance(expected_files, list):
+                contexts.extend(str(item) for item in expected_files if str(item).strip())
+    source_root = run_dir / "workspaces" / "source_checkout"
+    if source_root.exists():
+        contexts.extend(_source_text_samples(source_root))
+    return contexts
+
+
+def _source_text_samples(source_root: Path) -> list[str]:
+    samples: list[str] = []
+    max_files = 5000
+    max_size_bytes = 1_000_000
+    scanned = 0
+    resolved_source_root = source_root.resolve()
+    for path in source_root.rglob("*"):
+        if scanned >= max_files:
+            break
+        if not path.is_file():
+            continue
+        try:
+            rel_path = path.relative_to(source_root).as_posix()
+        except ValueError:
+            continue
+        if _is_model_hidden_tool_path(rel_path):
+            continue
+        if path.is_symlink():
+            try:
+                target_rel = path.resolve().relative_to(resolved_source_root).as_posix()
+            except (OSError, ValueError):
+                continue
+            if _is_model_hidden_tool_path(target_rel):
+                continue
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+        if size <= 0 or size > max_size_bytes:
+            continue
+        try:
+            samples.append(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+        scanned += 1
+    return samples
+
+
+def _needle_is_public_model_visible_text(needle: str, contexts: list[str]) -> bool:
+    if not needle:
+        return False
+    return any(needle in context for context in contexts)
 
 
 def _evaluator_only_ref_path(

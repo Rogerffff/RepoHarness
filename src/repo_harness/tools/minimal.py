@@ -403,8 +403,9 @@ class ToolExecutor:
                 normalized_args["end_line"] = start_line + int(args["limit"]) - 1
             effective_args = dict(normalized_args)
         elif requested == "grep":
+            query = args.get("query", args.get("pattern"))
             normalized_args = {
-                "query": args["query"],
+                "query": query,
                 "root": args.get("path", args.get("root", ".")),
                 "mode": args.get("mode", "literal"),
                 "max_matches": int(args.get("max_matches", GREP_MAX_MATCHES)),
@@ -1200,6 +1201,7 @@ def build_tool(name: str) -> ToolDefinition:
                 "required": ["query"],
                 "properties": {
                     "query": {"type": "string", "description": "Literal substring or regular expression to find."},
+                    "pattern": {"type": "string", "description": "Legacy alias for query."},
                     "mode": {"type": "string", "enum": ["literal", "regex"], "description": "Search mode; defaults to literal."},
                     "root": {"type": "string", "description": "Optional workspace-relative search root."},
                     "path": {"type": "string", "description": "Alias for root; workspace-relative."},
@@ -1330,6 +1332,7 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "read_file.offset": (int, False),
         "read_file.limit": (int, False),
         "grep.query": (str, True),
+        "grep.pattern": (str, False),
         "grep.path": (str, False),
         "grep.root": (str, False),
         "grep.mode": (str, False),
@@ -1356,6 +1359,8 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
     tool_rules = {key.split(".", 1)[1]: value for key, value in rules.items() if key.startswith(f"{tool_name}.")}
     for field_name, (expected_type, required) in tool_rules.items():
         if required and field_name not in args:
+            if tool_name == "grep" and field_name == "query" and "pattern" in args:
+                continue
             return _issue(field_name, _type_name(expected_type), None, retryable=True)
         if field_name in args and not _is_exact_type(args[field_name], expected_type):
             return _issue(field_name, _type_name(expected_type), args[field_name], retryable=True)
@@ -1627,7 +1632,7 @@ def _grep_python(
             continue
         searched_file_count += 1
         try:
-            text = context.workspace_adapter.read_text(context.run_workspace.workspace_path, rel_path)
+            text = _read_model_visible_text_for_grep(context, rel_path)
         except (UnicodeDecodeError, ValueError, WorkspaceError):
             continue
         lines = text.splitlines()
@@ -1668,6 +1673,21 @@ def _grep_python(
         "next_offset": next_offset,
         "engine": "python_fallback",
     }
+
+
+def _read_model_visible_text_for_grep(context: ToolExecutionContext, rel_path: str) -> str:
+    workspace = Path(context.run_workspace.workspace_path).resolve()
+    candidate = (workspace / rel_path).resolve()
+    try:
+        candidate.relative_to(workspace)
+    except ValueError as exc:
+        raise WorkspaceError(f"路径越过 workspace 边界：{rel_path}") from exc
+    if not candidate.is_file():
+        raise WorkspaceError(f"路径不是文件：{rel_path}")
+    try:
+        return candidate.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise WorkspaceError(f"无法读取文件：{rel_path}") from exc
 
 
 def _parse_changed_files(name_status_text: str, numstat_text: str) -> list[dict[str, Any]]:

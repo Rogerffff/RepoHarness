@@ -55,7 +55,9 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     )
     assert run_config["runtime"]["execution_mode"] == "docker"
     assert run_config["runtime"]["docker_backend"]["build_base_image"] == "python:3.8"
+    assert run_config["context_management"]["max_context_tokens"] == 120000
     assert run_config["model"]["provider_specific_options"]["thinking"] == {"type": "enabled"}
+    assert configuration["budget"]["max_context_tokens"] == 120000
     command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(
         encoding="utf-8"
     )

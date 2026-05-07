@@ -285,6 +285,78 @@ def test_inspect_model_visible_context_rejects_root_relative_hidden_patch_leak(
         inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
 
 
+def test_inspect_model_visible_context_allows_public_issue_text_in_hidden_patch(
+    tmp_path: Path,
+) -> None:
+    public_issue_line = "class MySchema(Schema):"
+    run_dir = _write_model_visible_context_run(tmp_path, user_content=public_issue_line)
+    (run_dir / "task.yaml").write_text(
+        yaml.safe_dump({"issue": f"Public reproduction:\n{public_issue_line}\n"}),
+        encoding="utf-8",
+    )
+    hidden_patch_path = run_dir / "artifacts" / "hidden_test.patch"
+    hidden_patch_path.write_text(f"+        {public_issue_line}\n", encoding="utf-8")
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    boundary = json.loads(boundary_path.read_text(encoding="utf-8"))
+    boundary["hidden_test_patch_ref"] = _artifact_ref_for_path(
+        run_dir,
+        hidden_patch_path,
+        "hidden_test_patch",
+    )
+    boundary_path.write_text(json.dumps(boundary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    result = inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+    assert "passed" in result
+
+
+def test_inspect_model_visible_context_allows_public_source_text_in_hidden_patch(
+    tmp_path: Path,
+) -> None:
+    public_source_line = "# For details: https://github.com/example/project/blob/main/LICENSE"
+    run_dir = _write_model_visible_context_run(tmp_path, user_content=public_source_line)
+    source_file = run_dir / "workspaces" / "source_checkout" / "pkg" / "module.py"
+    source_file.parent.mkdir(parents=True)
+    source_file.write_text(public_source_line + "\n", encoding="utf-8")
+    hidden_patch_path = run_dir / "artifacts" / "hidden_test.patch"
+    hidden_patch_path.write_text(f"+{public_source_line}\n", encoding="utf-8")
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    boundary = json.loads(boundary_path.read_text(encoding="utf-8"))
+    boundary["hidden_test_patch_ref"] = _artifact_ref_for_path(
+        run_dir,
+        hidden_patch_path,
+        "hidden_test_patch",
+    )
+    boundary_path.write_text(json.dumps(boundary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    result = inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+    assert "passed" in result
+
+
+def test_inspect_model_visible_context_rejects_hidden_source_text_in_hidden_patch(
+    tmp_path: Path,
+) -> None:
+    hidden_source_line = "SECRET_ONLY_HIDDEN_TEST_VALUE = 'private'"
+    run_dir = _write_model_visible_context_run(tmp_path, user_content=f"Leaked value: {hidden_source_line}")
+    hidden_file = run_dir / "workspaces" / "source_checkout" / ".pre_verl_venv" / "pkg.py"
+    hidden_file.parent.mkdir(parents=True)
+    hidden_file.write_text(hidden_source_line + "\n", encoding="utf-8")
+    hidden_patch_path = run_dir / "artifacts" / "hidden_test.patch"
+    hidden_patch_path.write_text(f"+{hidden_source_line}\n", encoding="utf-8")
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    boundary = json.loads(boundary_path.read_text(encoding="utf-8"))
+    boundary["hidden_test_patch_ref"] = _artifact_ref_for_path(
+        run_dir,
+        hidden_patch_path,
+        "hidden_test_patch",
+    )
+    boundary_path.write_text(json.dumps(boundary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="SECRET_ONLY_HIDDEN_TEST_VALUE"):
+        inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+
 @pytest.mark.parametrize("leak_target", ["prepared_messages", "transcript", "raw_provider_request"])
 def test_inspect_model_visible_context_rejects_evaluator_only_ref_sha_leak(
     tmp_path: Path,

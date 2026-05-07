@@ -268,6 +268,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--max-test-runs", type=int, default=0)
     parser.add_argument("--task-timeout-sec", type=int, default=1200)
     parser.add_argument("--command-timeout-sec", type=int, default=90)
+    parser.add_argument("--max-context-tokens", type=int, default=120000)
     parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
@@ -520,7 +521,7 @@ def _write_run_config(
             "network_policy": "deny_agent_run",
         },
         "context_management": {
-            "max_context_tokens": 120000,
+            "max_context_tokens": args.max_context_tokens,
             "tool_result_aggregate_budget_chars": 40000,
             "keep_recent_turns": 6,
             "keep_recent_test_results": 0,
@@ -609,6 +610,7 @@ def _write_configuration_manifests(
                 "max_test_runs",
                 "task_timeout_sec",
                 "command_timeout_sec",
+                "max_context_tokens",
                 "max_output_tokens",
                 "temperature",
                 "scaffold_prompt_sha256",
@@ -760,6 +762,7 @@ def _budget_payload(args: argparse.Namespace) -> dict[str, Any]:
         "max_test_runs": args.max_test_runs,
         "task_timeout_sec": args.task_timeout_sec,
         "command_timeout_sec": args.command_timeout_sec,
+        "max_context_tokens": args.max_context_tokens,
         "max_output_tokens": args.max_output_tokens,
     }
 
