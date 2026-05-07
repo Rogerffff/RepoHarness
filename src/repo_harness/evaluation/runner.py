@@ -476,7 +476,7 @@ def run_task(
                 adapter=adapter,
                 recorder=recorder,
                 setup_command=effective_setup_command,
-                agent_stop_reason=loop_state.agent_stop_reason or "task_timeout",
+                agent_stop_reason="task_timeout",
             )
         elif task_timeout_expired:
             final_verifier = build_error_verifier_result(

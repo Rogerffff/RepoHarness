@@ -215,6 +215,7 @@ class AgentLoop:
                     data={
                         "model_call_id": f"{run_id}_model_call_{turn:04d}",
                         "context_revision": prepared.context_revision,
+                        "prepared_messages_ref": prepared.prepared_messages_ref.model_dump(mode="json"),
                         "model_input_hash": prepared.model_input_hash,
                         "scaffold_id": self.scaffold.scaffold_id,
                         "scaffold_phase": current_phase,

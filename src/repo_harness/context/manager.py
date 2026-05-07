@@ -190,12 +190,16 @@ class ContextManager:
         include_preview = not safe_artifact_data.get("redacted")
         if not include_preview:
             recovery = _redacted_recovery(recovery)
+        replacement_sha256 = _replacement_sha256_for_model_visible_text(
+            safe_artifact_data=safe_artifact_data,
+            original_content=original_content,
+        )
         replacement = (
             f"[tool result replaced]\n"
             f"tool_result_id: {tool_result_id}\n"
             f"tool_name: {recovery['tool_name']}\n"
             f"artifact_id: {safe_artifact_data.get('artifact_id', 'none')}\n"
-            f"sha256: {artifact_data.get('sha256', stable_hash(original_content))}\n"
+            f"sha256: {replacement_sha256}\n"
             f"reason: {reason}\n"
             f"normalized_arguments_sha256: {recovery['normalized_arguments_sha256']}\n"
             f"key_arguments: {recovery['key_arguments_preview']}\n"
@@ -422,15 +426,40 @@ def _key_arguments(tool_name: str, arguments: dict[str, Any], typed: dict[str, A
 
 def _artifact_data_for_replacement(artifact_data: dict[str, Any]) -> dict[str, Any]:
     redaction_status = str(artifact_data.get("redaction_status") or "not_scanned")
-    if redaction_status in {"evaluator_only", "secret", "credential", "provider_raw"}:
+    retention_policy = str(artifact_data.get("retention_policy") or "")
+    kind = str(artifact_data.get("kind") or "")
+    if (
+        redaction_status in {"evaluator_only", "secret", "credential", "provider_raw"}
+        or retention_policy
+        in {
+            "provider_raw_redacted",
+            "provider_private_state_redacted",
+            "provider_reasoning_trace_training_opt_in",
+        }
+        or kind in {"raw_provider_request", "raw_provider_response", "provider_private_state"}
+    ):
         return {
             "artifact_id": "redacted_sensitive_artifact",
             "kind": "redacted_sensitive_artifact",
-            "sha256": artifact_data.get("sha256"),
             "redaction_status": redaction_status,
+            "retention_policy": retention_policy or None,
+            "sha256_redacted": True,
             "redacted": True,
         }
     return dict(artifact_data)
+
+
+def _replacement_sha256_for_model_visible_text(
+    *,
+    safe_artifact_data: dict[str, Any],
+    original_content: str,
+) -> str:
+    if safe_artifact_data.get("redacted"):
+        return "redacted_sensitive_artifact_sha256"
+    sha256 = safe_artifact_data.get("sha256")
+    if isinstance(sha256, str) and sha256:
+        return sha256
+    return stable_hash(original_content)
 
 
 def _dict_value(value: object) -> dict[str, Any]:

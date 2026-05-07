@@ -7,8 +7,13 @@ from pathlib import Path
 import pytest
 import yaml
 
+import repo_harness.evaluation.runner as evaluation_runner
+from repo_harness.cli.main import main
 from repo_harness.evaluation.runner import run_task
-from repo_harness.pre_verl_agentloop import inspect_pre_verl_agentloop_boundary_index
+from repo_harness.pre_verl_agentloop import (
+    inspect_model_visible_context,
+    inspect_pre_verl_agentloop_boundary_index,
+)
 
 
 def test_pre_verl_agentloop_run_task_uses_clean_source_model_patch_hidden_patch_order(
@@ -42,6 +47,18 @@ def test_pre_verl_agentloop_run_task_uses_clean_source_model_patch_hidden_patch_
     assert boundary["after_model_patch_tree_sha256"]
     assert boundary["after_hidden_test_patch_tree_sha256"]
     assert boundary["run_task_entrypoint"] == "repo-harness run-task"
+    inspect_result = inspect_model_visible_context(
+        run_dir,
+        assert_prepared_messages_bound=True,
+    )
+    assert "passed" in inspect_result
+    assert main(
+        [
+            "inspect-model-visible-context",
+            run_dir.as_posix(),
+            "--assert-prepared-messages-bound",
+        ]
+    ) == 0
 
     index_path = tmp_path / "boundary_index.json"
     command_entry_path = tmp_path / "run_task_command_entry.json"
@@ -86,6 +103,37 @@ def test_pre_verl_agentloop_run_task_uses_clean_source_model_patch_hidden_patch_
         assert_no_legacy_adapter=True,
     )
     assert "passed" in result
+
+
+def test_pre_verl_task_timeout_forces_timeout_final_verifier_attribution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    task_path, config_path = _write_pre_verl_fixture(tmp_path)
+    monkeypatch.setattr(evaluation_runner, "_task_timeout_expired", lambda _deadline: True)
+
+    run_dir = run_task(
+        task_path,
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="pre-verl-agentloop-timeout-before-final",
+    )
+
+    boundary = _read_json(run_dir / "final_verifier_boundary.json")
+    verifier = _read_json(run_dir / "verifier.json")
+    events = _read_jsonl(run_dir / "events.jsonl")
+    assert boundary["final_verifier_status"] == "not_executed"
+    assert boundary["failure_category"] == "task_timeout_before_final_verifier"
+    assert boundary["failure_owner"] == "budget_or_timeout"
+    assert boundary["agent_stop_reason"] == "task_timeout"
+    assert boundary["accepted"] is False
+    assert verifier["error_type"] == "task_timeout_before_final_verifier"
+    assert "pre_verl_hidden_test_patch_apply" not in boundary["observed_command_order"]
+    assert any(
+        event["event_type"] == "budget_exhausted"
+        and event["data"].get("phase") == "before_final_verifier"
+        for event in events
+    )
 
 
 def test_pre_verl_agentloop_boundary_index_rejects_hidden_patch_before_model_patch(
@@ -648,6 +696,14 @@ def _evaluator_ref(path: Path) -> dict[str, object]:
 
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def _write_json(path: Path, payload: object) -> None:

@@ -9,6 +9,7 @@ import yaml
 
 from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
+    _empty_patch_failure_attribution,
     _selector_input_error,
     inspect_model_visible_context,
     inspect_pre_verl_agentloop_run_config,
@@ -189,6 +190,27 @@ def test_pre_verl_selector_exit_code_four_is_not_implicitly_harness_input_error(
     assert _selector_input_error({"selector_input_invalid": True}) is True
 
 
+@pytest.mark.parametrize(
+    ("agent_stop_reason", "expected_category", "expected_owner"),
+    [
+        ("max_turns", "budget_exhausted_empty_patch", "budget_or_timeout"),
+        ("task_timeout", "budget_exhausted_empty_patch", "budget_or_timeout"),
+        ("context_integrity_error", "harness_context_integrity_empty_patch", "harness_or_environment"),
+        ("model_error", "provider_or_model_error_empty_patch", "provider_or_model"),
+        ("final_answer", "empty_final_patch", "model_no_patch_generated"),
+    ],
+)
+def test_empty_patch_failure_attribution_preserves_harness_and_provider_causes(
+    agent_stop_reason: str,
+    expected_category: str,
+    expected_owner: str,
+) -> None:
+    assert _empty_patch_failure_attribution(agent_stop_reason) == (
+        expected_category,
+        expected_owner,
+    )
+
+
 def test_inspect_model_visible_context_passes_bound_provider_body(tmp_path: Path) -> None:
     run_dir = _write_model_visible_context_run(tmp_path)
 
@@ -200,6 +222,19 @@ def test_inspect_model_visible_context_passes_bound_provider_body(tmp_path: Path
         assert_tool_results_recoverable=True,
         assert_no_over_redaction=True,
     )
+
+    assert "passed" in result
+
+
+def test_inspect_model_visible_context_accepts_started_artifact_ref_binding(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(
+        tmp_path,
+        model_call_started_ref_location="artifact_refs",
+    )
+
+    result = inspect_model_visible_context(run_dir, assert_prepared_messages_bound=True)
 
     assert "passed" in result
 
@@ -249,6 +284,25 @@ def test_inspect_model_visible_context_rejects_whole_field_redaction(tmp_path: P
 
     with pytest.raises(ConfigError, match="整字段 credential 脱敏"):
         inspect_model_visible_context(run_dir, assert_no_over_redaction=True)
+
+
+def test_inspect_model_visible_context_rejects_redacted_replacement_sha256(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(
+        tmp_path,
+        replacement_content=(
+            "[tool result replaced]\n"
+            "tool_name: read_file\n"
+            f"sha256: {'a' * 64}\n"
+            "recovery_call: read_file(path='src/demo.py', start_line=20)\n"
+            "recovery_hint: continue reading\n"
+            "preview_redacted: source artifact is evaluator-only or secret\n"
+        ),
+    )
+
+    with pytest.raises(ConfigError, match="sha256"):
+        inspect_model_visible_context(run_dir, assert_tool_results_recoverable=True)
 
 
 def test_inspect_model_visible_context_recomputes_provider_projection_hash(tmp_path: Path) -> None:
@@ -632,6 +686,8 @@ def _write_model_visible_context_run(
     tmp_path: Path,
     *,
     user_content: str = "Fix the parser bug.",
+    replacement_content: str | None = None,
+    model_call_started_ref_location: str = "data",
 ) -> Path:
     run_dir = tmp_path / "model_visible_run"
     artifacts_dir = run_dir / "artifacts"
@@ -645,7 +701,8 @@ def _write_model_visible_context_run(
                 "tool_call_id": "call_read",
                 "tool_result_id": "call_read_result",
                 "tool_name": "read_file",
-                "content": (
+                "content": replacement_content
+                or (
                     "[tool result replaced]\n"
                     "tool_name: read_file\n"
                     "recovery_call: read_file(path='src/demo.py', start_line=20)\n"
@@ -748,7 +805,15 @@ def _write_model_visible_context_run(
             "data": {"prepared_messages_ref": prepared_ref},
             "artifact_refs": [prepared_ref],
         },
-        {"event_type": "model_call_started", "data": {"prepared_messages_ref": prepared_ref}},
+        (
+            {
+                "event_type": "model_call_started",
+                "data": {"model_call_id": "model-call-1"},
+                "artifact_refs": [prepared_ref],
+            }
+            if model_call_started_ref_location == "artifact_refs"
+            else {"event_type": "model_call_started", "data": {"prepared_messages_ref": prepared_ref}}
+        ),
         {
             "event_type": "model_call_completed",
             "data": {

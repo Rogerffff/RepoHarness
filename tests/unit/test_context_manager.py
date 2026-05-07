@@ -146,6 +146,8 @@ def test_context_manager_redacts_evaluator_only_replacement_preview(tmp_path: Pa
     assert "hidden.patch" not in replacement
     assert "hidden_test_selector_artifact" not in replacement
     assert "hidden_test_selector" not in replacement
+    assert "hidden-sha" not in replacement
+    assert "sha256: redacted_sensitive_artifact_sha256" in replacement
     assert "not_available_evaluator_only_source_artifact" in replacement
     replacement_ref = prepared.context_event.data["context_reduction"]["replacement_artifact_refs"][0]
     replacement_payload = json.loads(
@@ -154,7 +156,60 @@ def test_context_manager_redacts_evaluator_only_replacement_preview(tmp_path: Pa
     assert replacement_payload["source_artifact_ref"]["redacted"] is True
     assert replacement_payload["source_artifact_ref"]["artifact_id"] == "redacted_sensitive_artifact"
     assert replacement_payload["source_artifact_ref"]["kind"] == "redacted_sensitive_artifact"
+    assert "sha256" not in replacement_payload["source_artifact_ref"]
+    assert replacement_payload["source_artifact_ref"]["sha256_redacted"] is True
     assert replacement_payload["recovery"]["normalized_arguments"] == {"redacted": True}
+
+
+def test_context_manager_redacts_provider_raw_replacement_sha256(tmp_path: Path):
+    provider_raw_sha = "a" * 64
+    messages = [
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{"tool_call_id": "call_raw", "tool_name": "bash", "arguments": {}}],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_raw",
+            "tool_result_id": "call_raw_result",
+            "tool_name": "bash",
+            "content": "provider raw body\n" * 20,
+            "artifact_refs": [
+                {
+                    "schema_version": "repo_harness_artifact_ref_v0",
+                    "artifact_id": "raw_provider_request",
+                    "relative_path": "artifacts/raw_provider_request.json",
+                    "kind": "raw_provider_request",
+                    "sha256": provider_raw_sha,
+                    "size_bytes": 256,
+                    "redaction_status": "redacted",
+                    "retention_policy": "provider_raw_redacted",
+                }
+            ],
+        },
+    ]
+
+    with RunRecorder("context-provider-raw", tmp_path / "run", task_id="task") as recorder:
+        prepared = ContextManager().prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(tool_result_aggregate_budget_chars=1),
+        )
+
+    replacement = str(prepared.messages[1]["content"])
+    assert "provider raw body" not in replacement
+    assert provider_raw_sha not in replacement
+    assert "sha256: redacted_sensitive_artifact_sha256" in replacement
+    replacement_ref = prepared.context_event.data["context_reduction"]["replacement_artifact_refs"][0]
+    replacement_payload = json.loads(
+        ((tmp_path / "run") / replacement_ref["relative_path"]).read_text(encoding="utf-8")
+    )
+    assert replacement_payload["source_artifact_ref"]["redacted"] is True
+    assert replacement_payload["source_artifact_ref"]["retention_policy"] == "provider_raw_redacted"
+    assert "sha256" not in replacement_payload["source_artifact_ref"]
 
 
 def test_context_manager_recovery_call_preserves_grep_scope(tmp_path: Path):

@@ -38,6 +38,19 @@ PRE_VERL_AGENTLOOP_BOUNDARY_INDEX_VERSION = "repo_harness_pre_verl_agentloop_bou
 
 _MODEL_PATCH_STEP = "pre_verl_model_final_patch_apply"
 _HIDDEN_PATCH_STEP = "pre_verl_hidden_test_patch_apply"
+_BUDGET_EMPTY_PATCH_STOP_REASONS = {
+    "max_turns",
+    "max_tool_calls",
+    "task_timeout",
+    "timeout",
+    "context_limit",
+}
+_HARNESS_EMPTY_PATCH_STOP_REASONS = {
+    "context_integrity_error",
+}
+_PROVIDER_OR_MODEL_EMPTY_PATCH_STOP_REASONS = {
+    "model_error",
+}
 _F2P_STEP = "pre_verl_fail_to_pass_test_execution"
 _P2P_STEP = "pre_verl_pass_to_pass_test_execution"
 
@@ -263,16 +276,8 @@ def run_pre_verl_swebench_dev_final_verifier(
         else:
             if failure_category is None and Path(final_patch_path).stat().st_size == 0:
                 empty_patch_path = run_root / "pre_verl_empty_final_patch_result.json"
-                failure_category = (
-                    "budget_exhausted_empty_patch"
-                    if agent_stop_reason
-                    in {"max_turns", "max_tool_calls", "task_timeout", "timeout", "context_limit"}
-                    else "empty_final_patch"
-                )
-                failure_owner = (
-                    "budget_or_timeout"
-                    if failure_category == "budget_exhausted_empty_patch"
-                    else "model_no_patch_generated"
+                failure_category, failure_owner = _empty_patch_failure_attribution(
+                    agent_stop_reason
                 )
                 final_status = "not_executed"
                 _write_json(
@@ -505,6 +510,7 @@ def run_pre_verl_swebench_dev_final_verifier(
         final_status=final_status,
         failure_category=failure_category,
         failure_owner=failure_owner,
+        agent_stop_reason=agent_stop_reason,
         workspace_created=workspace_created,
     )
     boundary_path = run_root / "final_verifier_boundary.json"
@@ -983,6 +989,7 @@ def _pre_verl_boundary_payload(
     final_status: str,
     failure_category: str | None,
     failure_owner: str | None,
+    agent_stop_reason: str | None,
     workspace_created: bool,
 ) -> dict[str, Any]:
     boundary: dict[str, Any] = {
@@ -1042,6 +1049,7 @@ def _pre_verl_boundary_payload(
         "reward_authority": "strict_final_verifier",
         "failure_category": failure_category,
         "failure_owner": failure_owner,
+        "agent_stop_reason": agent_stop_reason,
         "legacy_v3_adapter_used": False,
         "old_pilot_used": False,
     }
@@ -1273,10 +1281,14 @@ def _inspect_boundary_command_order(
     empty_patch_failure = boundary.get("failure_category") in {
         "empty_final_patch",
         "budget_exhausted_empty_patch",
+        "harness_context_integrity_empty_patch",
+        "provider_or_model_error_empty_patch",
     }
     pre_patch_terminal_failure = boundary.get("failure_category") in {
         "empty_final_patch",
         "budget_exhausted_empty_patch",
+        "harness_context_integrity_empty_patch",
+        "provider_or_model_error_empty_patch",
         "task_timeout_before_final_verifier",
         "verification_workspace_creation_failed",
         "environment_setup_failed",
@@ -1546,6 +1558,17 @@ def _read_jsonl_events(path: Path, failures: list[str], label: str) -> list[dict
     return events
 
 
+def _prepared_messages_ref_from_event(event: dict[str, Any]) -> dict[str, Any] | None:
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    ref = data.get("prepared_messages_ref")
+    if isinstance(ref, dict):
+        return ref
+    for artifact_ref in event.get("artifact_refs", []) or []:
+        if isinstance(artifact_ref, dict) and artifact_ref.get("kind") == "prepared_messages":
+            return artifact_ref
+    return None
+
+
 def _prepared_messages_payloads(
     events: list[dict[str, Any]],
     run_dir: Path,
@@ -1556,13 +1579,7 @@ def _prepared_messages_payloads(
     for event in events:
         if event.get("event_type") != "context_prepared":
             continue
-        data = event.get("data") if isinstance(event.get("data"), dict) else {}
-        ref = data.get("prepared_messages_ref")
-        if not isinstance(ref, dict):
-            for artifact_ref in event.get("artifact_refs", []) or []:
-                if isinstance(artifact_ref, dict) and artifact_ref.get("kind") == "prepared_messages":
-                    ref = artifact_ref
-                    break
+        ref = _prepared_messages_ref_from_event(event)
         if not isinstance(ref, dict):
             failures.append("context_prepared 缺少 prepared_messages_ref")
             continue
@@ -1588,7 +1605,7 @@ def _inspect_prepared_messages_bound(
         data = event.get("data") if isinstance(event.get("data"), dict) else {}
         if event.get("event_type") == "model_call_started":
             _inspect_run_artifact_ref(
-                data.get("prepared_messages_ref"),
+                _prepared_messages_ref_from_event(event),
                 run_dir,
                 failures,
                 f"model_call_started[{index}].prepared_messages_ref",
@@ -1938,6 +1955,27 @@ def _inspect_tool_result_replacements(
                 failures.append(
                     f"prepared_messages[{payload_index}].messages[{message_index}] replacement 缺少恢复指令"
                 )
+            if "preview_redacted:" in content:
+                for line in content.splitlines():
+                    if line.startswith("sha256:") and _looks_like_sha256(line.partition(":")[2].strip()):
+                        failures.append(
+                            f"prepared_messages[{payload_index}].messages[{message_index}] "
+                            "redacted replacement 暴露了敏感 artifact sha256"
+                        )
+
+
+def _looks_like_sha256(value: str) -> bool:
+    return len(value) == 64 and all(char in "0123456789abcdefABCDEF" for char in value)
+
+
+def _empty_patch_failure_attribution(agent_stop_reason: str | None) -> tuple[str, str]:
+    if agent_stop_reason in _BUDGET_EMPTY_PATCH_STOP_REASONS:
+        return "budget_exhausted_empty_patch", "budget_or_timeout"
+    if agent_stop_reason in _HARNESS_EMPTY_PATCH_STOP_REASONS:
+        return "harness_context_integrity_empty_patch", "harness_or_environment"
+    if agent_stop_reason in _PROVIDER_OR_MODEL_EMPTY_PATCH_STOP_REASONS:
+        return "provider_or_model_error_empty_patch", "provider_or_model"
+    return "empty_final_patch", "model_no_patch_generated"
 
 
 def _inspect_model_visible_hidden_material(
