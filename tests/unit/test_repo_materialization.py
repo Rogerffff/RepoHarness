@@ -55,6 +55,27 @@ def test_local_repository_source_requires_git_repository(tmp_path: Path):
         materialize_source(loaded.runnable_task, tmp_path / "checkout")
 
 
+def test_local_repository_clean_status_materializes(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "repo-harness@example.test")
+    _git(repo, "config", "user.name", "Repo Harness")
+    (repo / "file.txt").write_text("clean\n", encoding="utf-8")
+    _git(repo, "add", "file.txt")
+    _git(repo, "commit", "-m", "initial")
+    task_path = _local_repo_task(tmp_path, repo, allow_dirty=False, working_tree_clean=True)
+    loaded = load_task(task_path)
+
+    checkout = materialize_source(loaded.runnable_task, tmp_path / "checkout")
+
+    assert (checkout.root / "file.txt").read_text(encoding="utf-8") == "clean\n"
+    assert checkout.facts.source_type == "local_repository"
+    assert checkout.facts.working_tree_clean is True
+    assert checkout.facts.dirty_snapshot_allowed is False
+    assert not (checkout.root / ".git").exists()
+
+
 def test_local_repository_dirty_status_declaration_cannot_override_git_status(tmp_path: Path):
     repo = tmp_path / "repo"
     repo.mkdir()

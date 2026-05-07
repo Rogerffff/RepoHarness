@@ -417,7 +417,7 @@ def _git_output(repo_path: Path, args: list[str]) -> str | None:
     )
     if result.returncode != 0:
         return None
-    return result.stdout.strip() or None
+    return result.stdout.strip()
 
 
 def _git_working_tree_clean(repo_path: Path) -> bool | None:
