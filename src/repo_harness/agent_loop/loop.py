@@ -115,6 +115,7 @@ class AgentLoop:
                 )
             )
 
+        malformed_tool_call_repair_count = 0
         for turn in range(1, budget_manager.max_turns + 1):
             state.turn_count = turn
             state.budget_state.turn_count = turn
@@ -268,6 +269,11 @@ class AgentLoop:
             if response.model_call_event is not None:
                 state.budget_state.input_tokens += response.model_call_event.input_tokens
                 state.budget_state.output_tokens += response.model_call_event.output_tokens
+            provider_attempt_refs = list(getattr(response, "provider_attempt_refs", []) or [])
+            retry_policy_ref = getattr(response, "retry_policy_ref", None)
+            attempt_count = int(getattr(response, "attempt_count", max(1, len(provider_attempt_refs))) or 1)
+            retry_count = int(getattr(response, "retry_count", max(0, attempt_count - 1)) or 0)
+            terminal_error_type = getattr(response, "terminal_error_type", response.model_error_type)
             if response.model_call_event:
                 recorder.append_event(
                     TrajectoryEvent(
@@ -282,6 +288,8 @@ class AgentLoop:
                             for ref in [
                                 response.raw_provider_request_ref,
                                 response.raw_provider_response_ref,
+                                retry_policy_ref,
+                                *provider_attempt_refs,
                             ]
                             if ref is not None
                         ],
@@ -307,6 +315,17 @@ class AgentLoop:
                                 if response.raw_provider_response_ref
                                 else None
                             ),
+                            "provider_attempt_refs": [
+                                ref.model_dump(mode="json") for ref in provider_attempt_refs
+                            ],
+                            "retry_policy_ref": (
+                                retry_policy_ref.model_dump(mode="json")
+                                if retry_policy_ref
+                                else None
+                            ),
+                            "attempt_count": attempt_count,
+                            "retry_count": retry_count,
+                            "terminal_error_type": terminal_error_type,
                         },
                     )
                 )
@@ -380,8 +399,58 @@ class AgentLoop:
                 )
                 break
             if response.model_error_type:
-                state.agent_stop_reason = "model_error"
-                state.budget_state.stop_reason = "model_error"
+                if (
+                    response.model_error_type == "tool_call_parse_failure"
+                    and malformed_tool_call_repair_count < 1
+                ):
+                    malformed_tool_call_repair_count += 1
+                    repair_message = _tool_call_parse_repair_message(response)
+                    messages.append(repair_message)
+                    recorder.append_transcript(
+                        TranscriptRecord(
+                            record_id=recorder.next_record_id(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            message_id=f"tool_call_repair_{turn}",
+                            turn=turn,
+                            role="user",
+                            content_preview=str(repair_message["content"])[:4000],
+                            model_visible=True,
+                            trainable=False,
+                            created_at=_timestamp(),
+                        )
+                    )
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("tool_call_repair"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="tool_call_repair_requested",
+                            severity="warning",
+                            error_type="tool_call_parse_failure",
+                            data={
+                                "repair_attempt": malformed_tool_call_repair_count,
+                                "max_attempts": 1,
+                                "model_error_type": response.model_error_type,
+                                "provider_error_message": response.assistant_message.metadata.get(
+                                    "provider_error_message"
+                                ),
+                                "raw_provider_artifact_visible": False,
+                            },
+                        )
+                    )
+                    continue
+                if response.model_error_type == "tool_call_parse_failure":
+                    state.agent_stop_reason = "tool_call_parse_failure_unrecovered"
+                    state.budget_state.stop_reason = "tool_call_parse_failure_unrecovered"
+                elif response.model_error_type == "output_token_limit_reached":
+                    state.agent_stop_reason = "output_token_limit_reached"
+                    state.budget_state.stop_reason = "output_token_limit_reached"
+                else:
+                    state.agent_stop_reason = "model_error"
+                    state.budget_state.stop_reason = "model_error"
                 state.last_model_error = response.model_error_type
                 _record_interrupted_tool_calls(
                     run_id=run_id,
@@ -1184,6 +1253,29 @@ def _next_phase_after_assistant_message(current_phase: str) -> str:
         "repair": "verifier",
     }
     return transitions.get(current_phase, current_phase)
+
+
+def _tool_call_parse_repair_message(response: object) -> dict[str, object]:
+    metadata = getattr(getattr(response, "assistant_message", None), "metadata", {}) or {}
+    provider_error_message = metadata.get("provider_error_message")
+    if not isinstance(provider_error_message, str) or not provider_error_message:
+        provider_error_message = "provider tool call payload could not be parsed"
+    return {
+        "role": "user",
+        "content": (
+            "上一轮 provider 返回的 tool call 结构不合法，RepoHarness 没有执行任何工具。"
+            "\n错误类别：tool_call_parse_failure。"
+            f"\n安全错误摘要：{provider_error_message[:400]}。"
+            "\n请重新输出一个合法 tool call，或者在已经完成修复时输出 final answer。"
+            "\n合法 tool call 必须包含唯一的 tool_call_id、function.name，"
+            "并且 function.arguments 必须是 JSON object；不要返回半截 JSON、数组或字符串参数。"
+        ),
+        "metadata": {
+            "repair_policy": "malformed_tool_call_repair_v0",
+            "repair_attempt": 1,
+            "max_attempts": 1,
+        },
+    }
 
 
 def _next_phase_after_tools(

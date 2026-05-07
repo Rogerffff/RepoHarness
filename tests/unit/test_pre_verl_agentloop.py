@@ -195,8 +195,14 @@ def test_pre_verl_selector_exit_code_four_is_not_implicitly_harness_input_error(
     [
         ("max_turns", "budget_exhausted_empty_patch", "budget_or_timeout"),
         ("task_timeout", "budget_exhausted_empty_patch", "budget_or_timeout"),
+        ("output_token_limit_reached", "output_token_limit_empty_patch", "budget_or_timeout"),
         ("context_integrity_error", "harness_context_integrity_empty_patch", "harness_or_environment"),
         ("model_error", "provider_or_model_error_empty_patch", "provider_or_model"),
+        (
+            "tool_call_parse_failure_unrecovered",
+            "tool_call_parse_failure_unrecovered",
+            "provider_or_model",
+        ),
         ("final_answer", "empty_final_patch", "model_no_patch_generated"),
     ],
 )

@@ -17,13 +17,19 @@ from repo_harness.model_client.providers.common import (
     ProviderCredential,
     ProviderErrorInfo,
     ProviderRequestError,
+    attach_provider_retry_metadata,
     build_chat_completion_payload,
     classify_http_status,
     duration_ms_since,
     model_error_response,
     provider_error_payload,
+    retry_delay_ms,
+    retry_policy_from_request,
     response_from_provider_payload,
+    should_retry_provider_error,
+    write_provider_attempt_artifact,
     write_provider_request_artifact,
+    write_provider_retry_policy_artifact,
     write_provider_response_artifact,
 )
 from repo_harness.model_client.redaction import sanitize_provider_error_message
@@ -82,53 +88,124 @@ class OpenAIProviderClient:
         )
         request_payload["provider_adapter_version"] = OPENAI_PROVIDER_VERSION
         request_payload["credential_source"] = self.credential.source
-        raw_request_ref = write_provider_request_artifact(
+        retry_policy = retry_policy_from_request(request)
+        retry_policy_ref = write_provider_retry_policy_artifact(
             provider="openai",
             recorder=recorder,
-            payload=request_payload,
             request=request,
+            policy=retry_policy,
         )
-        try:
-            response_payload = self._create_completion(request_payload["body"], request)
-        except ProviderRequestError as exc:
-            error = exc.info
+        attempt_refs = []
+        for attempt_index in range(1, retry_policy.max_attempts + 1):
+            delay_ms = retry_delay_ms(attempt_index=attempt_index - 1, policy=retry_policy)
+            if delay_ms and retry_policy.sleep_enabled:
+                time.sleep(delay_ms / 1000)
+            attempt_payload = {
+                **request_payload,
+                "attempt_index": attempt_index,
+                "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
+            }
+            raw_request_ref = write_provider_request_artifact(
+                provider="openai",
+                recorder=recorder,
+                payload=attempt_payload,
+                request=request,
+            )
+            try:
+                response_payload = self._create_completion(request_payload["body"], request)
+            except ProviderRequestError as exc:
+                error = exc.info
+                retryable = should_retry_provider_error(
+                    error=error,
+                    attempt_index=attempt_index,
+                    policy=retry_policy,
+                )
+                raw_response_ref = write_provider_response_artifact(
+                    provider="openai",
+                    recorder=recorder,
+                    payload=provider_error_payload(provider="openai", error=error),
+                    request=request,
+                    raw_request_ref=raw_request_ref,
+                )
+                attempt_refs.append(
+                    write_provider_attempt_artifact(
+                        provider="openai",
+                        recorder=recorder,
+                        request=request,
+                        attempt_index=attempt_index,
+                        retryable=retryable,
+                        error_type=error.model_error_type,
+                        delay_ms=delay_ms,
+                        request_ref=raw_request_ref,
+                        response_ref=raw_response_ref,
+                        provider_request_id=error.provider_request_id,
+                        duration_ms=duration_ms_since(started),
+                        terminal=not retryable,
+                    )
+                )
+                if retryable:
+                    continue
+                response = model_error_response(
+                    provider="openai",
+                    request=request,
+                    raw_request_ref=raw_request_ref,
+                    raw_response_ref=raw_response_ref,
+                    error=error,
+                    duration_ms=duration_ms_since(started),
+                )
+                return attach_provider_retry_metadata(
+                    response,
+                    attempt_refs=attempt_refs,
+                    retry_policy_ref=retry_policy_ref,
+                    terminal_error_type=error.model_error_type,
+                )
             raw_response_ref = write_provider_response_artifact(
                 provider="openai",
                 recorder=recorder,
-                payload=provider_error_payload(provider="openai", error=error),
+                payload={
+                    "schema_version": "repo_harness_openai_provider_response_v0",
+                    "provider": "openai",
+                    "provider_adapter_version": OPENAI_PROVIDER_VERSION,
+                    "status": "ok",
+                    "response": response_payload,
+                },
                 request=request,
                 raw_request_ref=raw_request_ref,
             )
-            return model_error_response(
+            provider_request_id = response_payload.get("_request_id") or response_payload.get("id")
+            response = response_from_provider_payload(
                 provider="openai",
                 request=request,
                 raw_request_ref=raw_request_ref,
                 raw_response_ref=raw_response_ref,
-                error=error,
+                payload=response_payload,
                 duration_ms=duration_ms_since(started),
+                provider_request_id=provider_request_id,
             )
-        raw_response_ref = write_provider_response_artifact(
-            provider="openai",
-            recorder=recorder,
-            payload={
-                "schema_version": "repo_harness_openai_provider_response_v0",
-                "provider": "openai",
-                "provider_adapter_version": OPENAI_PROVIDER_VERSION,
-                "status": "ok",
-                "response": response_payload,
-            },
-            request=request,
-            raw_request_ref=raw_request_ref,
-        )
-        return response_from_provider_payload(
-            provider="openai",
-            request=request,
-            raw_request_ref=raw_request_ref,
-            raw_response_ref=raw_response_ref,
-            payload=response_payload,
-            duration_ms=duration_ms_since(started),
-            provider_request_id=response_payload.get("_request_id") or response_payload.get("id"),
-        )
+            terminal_error_type = response.model_error_type
+            attempt_refs.append(
+                write_provider_attempt_artifact(
+                    provider="openai",
+                    recorder=recorder,
+                    request=request,
+                    attempt_index=attempt_index,
+                    retryable=False,
+                    error_type=terminal_error_type,
+                    delay_ms=delay_ms,
+                    request_ref=raw_request_ref,
+                    response_ref=raw_response_ref,
+                    provider_request_id=provider_request_id,
+                    duration_ms=duration_ms_since(started),
+                    terminal=True,
+                )
+            )
+            return attach_provider_retry_metadata(
+                response,
+                attempt_refs=attempt_refs,
+                retry_policy_ref=retry_policy_ref,
+                terminal_error_type=terminal_error_type,
+            )
+        raise AssertionError("provider retry loop exhausted without terminal response")
 
     def _create_completion(self, body: dict[str, Any], request: ModelRequestContext) -> dict[str, Any]:
         if self._client_factory is None and not openai_sdk_available():

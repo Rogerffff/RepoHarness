@@ -27,6 +27,10 @@ from repo_harness.trajectory import ArtifactRef, RunRecorder
 PROVIDER_ARTIFACT_RETENTION_POLICY = "provider_raw_redacted"
 OPENAI_COMPATIBLE_MESSAGE_FORMAT_VERSION = "repo_harness_openai_compatible_chat_v0"
 TOOL_CALL_PARSER_VERSION = "repo_harness_openai_compatible_tool_parser_v0"
+PROVIDER_RETRY_POLICY_VERSION = "repo_harness_provider_retry_policy_v0"
+PROVIDER_ATTEMPT_SCHEMA_VERSION = "repo_harness_provider_attempt_v0"
+RETRYABLE_PROVIDER_ERROR_TYPES = {"rate_limited", "provider_timeout", "provider_error"}
+PROVIDER_RETRY_POLICIES = {"provider_retry_v0", "provider_retry_no_sleep_v0"}
 
 
 @dataclass(frozen=True)
@@ -50,6 +54,152 @@ class ProviderCredential:
     value: str
     source: str
     status: str = "present"
+
+
+@dataclass(frozen=True)
+class ProviderRetryPolicy:
+    policy_id: str
+    max_attempts: int
+    backoff_delays_ms: tuple[int, ...]
+    sleep_enabled: bool
+    retryable_error_types: tuple[str, ...]
+
+
+def retry_policy_from_request(request: ModelRequestContext) -> ProviderRetryPolicy:
+    """Resolve a deterministic provider retry policy for one model call."""
+
+    policy_id = str(request.retry_policy or "none")
+    if policy_id not in PROVIDER_RETRY_POLICIES:
+        return ProviderRetryPolicy(
+            policy_id=policy_id,
+            max_attempts=1,
+            backoff_delays_ms=(0,),
+            sleep_enabled=False,
+            retryable_error_types=tuple(sorted(RETRYABLE_PROVIDER_ERROR_TYPES)),
+        )
+    return ProviderRetryPolicy(
+        policy_id=policy_id,
+        max_attempts=3,
+        backoff_delays_ms=(0, 250, 1000),
+        sleep_enabled=policy_id != "provider_retry_no_sleep_v0",
+        retryable_error_types=tuple(sorted(RETRYABLE_PROVIDER_ERROR_TYPES)),
+    )
+
+
+def write_provider_retry_policy_artifact(
+    *,
+    provider: str,
+    recorder: RunRecorder,
+    request: ModelRequestContext,
+    policy: ProviderRetryPolicy,
+) -> ArtifactRef:
+    return recorder.write_json_artifact(
+        "provider_retry_policy",
+        {
+            "schema_version": PROVIDER_RETRY_POLICY_VERSION,
+            "provider": provider,
+            "model_call_id": request.model_call_id,
+            "policy_id": policy.policy_id,
+            "max_attempts": policy.max_attempts,
+            "backoff_delays_ms": list(policy.backoff_delays_ms),
+            "sleep_enabled": policy.sleep_enabled,
+            "retryable_error_types": list(policy.retryable_error_types),
+            "fallback_provider": {"enabled": False},
+        },
+        {
+            "redaction_status": "not_sensitive",
+            "retention_policy": "keep",
+            "budget_policy": "preserve_json",
+        },
+    )
+
+
+def write_provider_attempt_artifact(
+    *,
+    provider: str,
+    recorder: RunRecorder,
+    request: ModelRequestContext,
+    attempt_index: int,
+    retryable: bool,
+    error_type: str | None,
+    delay_ms: int,
+    request_ref: ArtifactRef,
+    response_ref: ArtifactRef,
+    provider_request_id: str | None,
+    duration_ms: int,
+    terminal: bool,
+) -> ArtifactRef:
+    return recorder.write_json_artifact(
+        "provider_attempt",
+        {
+            "schema_version": PROVIDER_ATTEMPT_SCHEMA_VERSION,
+            "attempt_index": attempt_index,
+            "model_call_id": request.model_call_id,
+            "provider": provider,
+            "retryable": retryable,
+            "error_type": error_type,
+            "delay_ms": delay_ms,
+            "request_ref": request_ref.model_dump(mode="json"),
+            "response_ref": response_ref.model_dump(mode="json"),
+            "provider_request_id": provider_request_id,
+            "duration_ms": duration_ms,
+            "terminal": terminal,
+        },
+        {
+            "redaction_status": "not_sensitive",
+            "retention_policy": "keep",
+            "budget_policy": "preserve_json",
+        },
+    )
+
+
+def should_retry_provider_error(
+    *,
+    error: ProviderErrorInfo,
+    attempt_index: int,
+    policy: ProviderRetryPolicy,
+) -> bool:
+    return (
+        attempt_index < policy.max_attempts
+        and error.retryable
+        and error.model_error_type in set(policy.retryable_error_types)
+    )
+
+
+def retry_delay_ms(*, attempt_index: int, policy: ProviderRetryPolicy) -> int:
+    index = min(attempt_index, len(policy.backoff_delays_ms) - 1)
+    return policy.backoff_delays_ms[index]
+
+
+def attach_provider_retry_metadata(
+    response: ModelResponse,
+    *,
+    attempt_refs: list[ArtifactRef],
+    retry_policy_ref: ArtifactRef | None,
+    terminal_error_type: str | None,
+) -> ModelResponse:
+    attempt_count = max(1, len(attempt_refs))
+    retry_count = max(0, attempt_count - 1)
+    event = response.model_call_event
+    if event is not None:
+        event = event.model_copy(
+            update={
+                "attempt_count": attempt_count,
+                "retry_count": retry_count,
+                "terminal_error_type": terminal_error_type,
+                "retry_policy_ref": retry_policy_ref,
+            }
+        )
+    return response.model_copy(
+        update={
+            "provider_attempt_refs": attempt_refs,
+            "retry_policy_ref": retry_policy_ref,
+            "attempt_count": attempt_count,
+            "retry_count": retry_count,
+            "terminal_error_type": terminal_error_type,
+            "model_call_event": event,
+        }
+    )
 
 
 def build_chat_completion_payload(
@@ -246,8 +396,8 @@ def response_from_provider_payload(
             raw_request_ref=raw_request_ref,
             raw_response_ref=raw_response_ref,
             error=ProviderErrorInfo(
-                model_error_type="context_limit",
-                message="provider response finished because of length",
+                model_error_type="output_token_limit_reached",
+                message="provider response finished because of output length",
                 provider_request_id=provider_request_id or _payload_request_id(payload),
                 payload=payload,
             ),
@@ -317,6 +467,10 @@ def model_error_response(
         assistant_message=ModelMessage(
             role="assistant",
             content=f"{provider} provider returned structured error: {error.model_error_type}",
+            metadata={
+                "model_error_type": error.model_error_type,
+                "provider_error_message": safe_message,
+            },
         ),
         tool_calls=[],
         raw_provider_request_ref=raw_request_ref,
@@ -641,6 +795,7 @@ def _model_call_event(
         output_tokens=usage["output_tokens"],
         cached_tokens=usage["cached_tokens"],
         duration_ms=duration_ms,
+        terminal_error_type=model_error_type,
         retry_count=0,
         model_error_type=model_error_type,
     )

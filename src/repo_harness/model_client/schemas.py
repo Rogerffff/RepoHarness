@@ -96,7 +96,10 @@ class ModelCallEvent(StrictBaseModel):
     output_tokens: int = Field(default=0, ge=0)
     cached_tokens: int = Field(default=0, ge=0)
     duration_ms: int = Field(default=0, ge=0)
+    attempt_count: int = Field(default=1, ge=1)
     retry_count: int = Field(default=0, ge=0)
+    terminal_error_type: str | None = None
+    retry_policy_ref: ArtifactRef | None = None
     model_error_type: str | None = None
 
 
@@ -106,6 +109,11 @@ class ModelResponse(StrictBaseModel):
     tool_calls: list[ToolCall] = Field(default_factory=list)
     raw_provider_request_ref: ArtifactRef | None = None
     raw_provider_response_ref: ArtifactRef | None = None
+    provider_attempt_refs: list[ArtifactRef] = Field(default_factory=list)
+    retry_policy_ref: ArtifactRef | None = None
+    attempt_count: int = Field(default=1, ge=1)
+    retry_count: int = Field(default=0, ge=0)
+    terminal_error_type: str | None = None
     token_usage: dict[str, int] = Field(default_factory=dict)
     finish_reason: str | None = None
     model_error_type: str | None = None

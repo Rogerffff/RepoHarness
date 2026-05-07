@@ -13,7 +13,11 @@ from repo_harness.model_client.providers.deepseek import (
 from repo_harness.errors import ConfigError
 from repo_harness.model_client.providers.openai import OpenAIProviderClient
 from repo_harness.model_client.providers.openai import _sdk_body as _openai_sdk_body
-from repo_harness.model_client.providers.common import ProviderCredential
+from repo_harness.model_client.providers.common import (
+    ProviderCredential,
+    ProviderErrorInfo,
+    ProviderRequestError,
+)
 from repo_harness.model_client.redaction import REDACTED_CREDENTIAL, redact_provider_payload
 from repo_harness.model_client.schemas import (
     ModelProviderOptions,
@@ -431,6 +435,118 @@ def test_deepseek_provider_maps_malformed_tool_call_to_model_error(tmp_path: Pat
     assert raw_response["response"]["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"] == "{bad json"
 
 
+def test_deepseek_provider_retries_retryable_error_and_records_attempts(tmp_path: Path):
+    client = _DeepSeekSequenceStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        outcomes=[
+            ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="rate_limited",
+                    message="rate limit",
+                    status_code=429,
+                    retryable=True,
+                    provider_request_id="deepseek-request-rate-limited",
+                )
+            ),
+            {
+                "id": "deepseek-response-after-retry",
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": "done"},
+                    }
+                ],
+                "usage": {"prompt_tokens": 17, "completion_tokens": 3},
+            },
+        ],
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        retry_policy="provider_retry_no_sleep_v0",
+    )
+
+    with RunRecorder("deepseek-retry", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type is None
+    assert response.attempt_count == 2
+    assert response.retry_count == 1
+    assert len(response.provider_attempt_refs) == 2
+    assert response.model_call_event is not None
+    assert response.model_call_event.retry_count == 1
+    first_attempt = json.loads(
+        (tmp_path / "run" / response.provider_attempt_refs[0].relative_path).read_text(encoding="utf-8")
+    )
+    assert first_attempt["error_type"] == "rate_limited"
+    assert first_attempt["retryable"] is True
+    assert first_attempt["terminal"] is False
+    second_attempt = json.loads(
+        (tmp_path / "run" / response.provider_attempt_refs[1].relative_path).read_text(encoding="utf-8")
+    )
+    assert second_attempt["terminal"] is True
+
+
+def test_deepseek_provider_does_not_retry_non_retryable_auth_error(tmp_path: Path):
+    client = _DeepSeekSequenceStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        outcomes=[
+            ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="auth_error",
+                    message="invalid api key",
+                    status_code=401,
+                    retryable=False,
+                    provider_request_id="deepseek-request-auth",
+                )
+            )
+        ],
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        retry_policy="provider_retry_no_sleep_v0",
+    )
+
+    with RunRecorder("deepseek-auth", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type == "auth_error"
+    assert response.attempt_count == 1
+    assert response.retry_count == 0
+    assert len(response.provider_attempt_refs) == 1
+
+
+def test_provider_finish_reason_length_is_output_token_limit(tmp_path: Path):
+    client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-length",
+            "choices": [
+                {
+                    "finish_reason": "length",
+                    "message": {"role": "assistant", "content": "partial"},
+                }
+            ],
+        },
+    )
+
+    with RunRecorder("deepseek-length", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(
+            request=_request(provider="deepseek", model_id="deepseek-v4-pro"),
+            recorder=recorder,
+        )
+
+    assert response.model_error_type == "output_token_limit_reached"
+    assert response.terminal_error_type == "output_token_limit_reached"
+
+
 def test_provider_http_status_error_taxonomy():
     assert classify_http_status(401) == "auth_error"
     assert classify_http_status(429) == "rate_limited"
@@ -547,6 +663,80 @@ def test_openai_provider_uses_sdk_shape_with_injected_client(tmp_path: Path):
     assert "sk-test-openai-secret" not in raw_text
 
 
+def test_openai_provider_retries_retryable_error_and_records_attempts(tmp_path: Path):
+    client = _OpenAISequenceStub(
+        model_id="gpt-5-mini",
+        credential=ProviderCredential(value="sk-test-openai-secret-1234567890", source="environment"),
+        outcomes=[
+            ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message="timed out",
+                    retryable=True,
+                    provider_request_id="openai-timeout-1",
+                )
+            ),
+            {
+                "id": "openai-response-after-retry",
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": "done"},
+                    }
+                ],
+                "usage": {"prompt_tokens": 13, "completion_tokens": 2},
+            },
+        ],
+    )
+    request = _request(
+        provider="openai",
+        model_id="gpt-5-mini",
+        retry_policy="provider_retry_no_sleep_v0",
+    )
+
+    with RunRecorder("openai-retry", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type is None
+    assert response.attempt_count == 2
+    assert response.retry_count == 1
+    assert len(response.provider_attempt_refs) == 2
+    assert response.model_call_event is not None
+    assert response.model_call_event.retry_policy_ref == response.retry_policy_ref
+    assert response.model_call_event.retry_count == 1
+
+
+def test_openai_provider_does_not_retry_non_retryable_auth_error(tmp_path: Path):
+    client = _OpenAISequenceStub(
+        model_id="gpt-5-mini",
+        credential=ProviderCredential(value="sk-test-openai-secret-1234567890", source="environment"),
+        outcomes=[
+            ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="auth_error",
+                    message="invalid api key",
+                    status_code=401,
+                    retryable=False,
+                    provider_request_id="openai-auth",
+                )
+            )
+        ],
+    )
+    request = _request(
+        provider="openai",
+        model_id="gpt-5-mini",
+        retry_policy="provider_retry_no_sleep_v0",
+    )
+
+    with RunRecorder("openai-auth", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type == "auth_error"
+    assert response.attempt_count == 1
+    assert response.retry_count == 0
+    assert len(response.provider_attempt_refs) == 1
+
+
 def test_openai_gpt5_chat_body_uses_max_completion_tokens():
     body = {
         "model": "gpt-5.4-nano",
@@ -571,6 +761,20 @@ class _DeepSeekStub(DeepSeekProviderClient):
     def _post_json(self, body: dict[str, Any], request: ModelRequestContext) -> tuple[dict[str, Any], str | None]:
         self.last_body = body
         return self.response_payload, "deepseek-request-1"
+
+
+class _DeepSeekSequenceStub(DeepSeekProviderClient):
+    def __init__(self, *, outcomes: list[Any], **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.outcomes = list(outcomes)
+        self.last_body: dict[str, Any] = {}
+
+    def _post_json(self, body: dict[str, Any], request: ModelRequestContext) -> tuple[dict[str, Any], str | None]:
+        self.last_body = body
+        outcome = self.outcomes.pop(0)
+        if isinstance(outcome, ProviderRequestError):
+            raise outcome
+        return outcome, str(outcome.get("id") or "deepseek-request-sequence")
 
 
 class _FakeOpenAIClient:
@@ -598,12 +802,25 @@ class _FakeCompletions:
         }
 
 
+class _OpenAISequenceStub(OpenAIProviderClient):
+    def __init__(self, *, outcomes: list[Any], **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.outcomes = list(outcomes)
+
+    def _create_completion(self, body: dict[str, Any], request: ModelRequestContext) -> dict[str, Any]:
+        outcome = self.outcomes.pop(0)
+        if isinstance(outcome, ProviderRequestError):
+            raise outcome
+        return outcome
+
+
 def _request(
     *,
     provider: str,
     model_id: str,
     prepared_messages: list[dict[str, Any]] | None = None,
     provider_specific_options: dict[str, Any] | None = None,
+    retry_policy: str = "none",
 ) -> ModelRequestContext:
     return ModelRequestContext(
         run_id=f"{provider}-run",
@@ -648,7 +865,7 @@ def _request(
             credential_source="env_only",
             required_env_vars=["DEEPSEEK_API_KEY"] if provider == "deepseek" else ["OPENAI_API_KEY"],
         ),
-        retry_policy="none",
+        retry_policy=retry_policy,
     )
 
 

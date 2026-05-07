@@ -24,6 +24,8 @@ AgentStopReason = Literal[
     "context_limit",
     "context_integrity_error",
     "model_error",
+    "output_token_limit_reached",
+    "tool_call_parse_failure_unrecovered",
     "no_progress",
     "manual_stop",
 ]

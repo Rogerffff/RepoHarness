@@ -44,12 +44,14 @@ _BUDGET_EMPTY_PATCH_STOP_REASONS = {
     "task_timeout",
     "timeout",
     "context_limit",
+    "output_token_limit_reached",
 }
 _HARNESS_EMPTY_PATCH_STOP_REASONS = {
     "context_integrity_error",
 }
 _PROVIDER_OR_MODEL_EMPTY_PATCH_STOP_REASONS = {
     "model_error",
+    "tool_call_parse_failure_unrecovered",
 }
 _F2P_STEP = "pre_verl_fail_to_pass_test_execution"
 _P2P_STEP = "pre_verl_pass_to_pass_test_execution"
@@ -1283,12 +1285,16 @@ def _inspect_boundary_command_order(
         "budget_exhausted_empty_patch",
         "harness_context_integrity_empty_patch",
         "provider_or_model_error_empty_patch",
+        "output_token_limit_empty_patch",
+        "tool_call_parse_failure_unrecovered",
     }
     pre_patch_terminal_failure = boundary.get("failure_category") in {
         "empty_final_patch",
         "budget_exhausted_empty_patch",
         "harness_context_integrity_empty_patch",
         "provider_or_model_error_empty_patch",
+        "output_token_limit_empty_patch",
+        "tool_call_parse_failure_unrecovered",
         "task_timeout_before_final_verifier",
         "verification_workspace_creation_failed",
         "environment_setup_failed",
@@ -1969,6 +1975,10 @@ def _looks_like_sha256(value: str) -> bool:
 
 
 def _empty_patch_failure_attribution(agent_stop_reason: str | None) -> tuple[str, str]:
+    if agent_stop_reason == "output_token_limit_reached":
+        return "output_token_limit_empty_patch", "budget_or_timeout"
+    if agent_stop_reason == "tool_call_parse_failure_unrecovered":
+        return "tool_call_parse_failure_unrecovered", "provider_or_model"
     if agent_stop_reason in _BUDGET_EMPTY_PATCH_STOP_REASONS:
         return "budget_exhausted_empty_patch", "budget_or_timeout"
     if agent_stop_reason in _HARNESS_EMPTY_PATCH_STOP_REASONS:

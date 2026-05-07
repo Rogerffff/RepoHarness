@@ -215,6 +215,50 @@ def test_pre_verl_agentloop_boundary_index_rejects_missing_formal_steps(
         inspect_pre_verl_agentloop_boundary_index(index_path, assert_command_order=True)
 
 
+@pytest.mark.parametrize(
+    "failure_category",
+    ["output_token_limit_empty_patch", "tool_call_parse_failure_unrecovered"],
+)
+def test_pre_verl_agentloop_boundary_index_accepts_new_pre_patch_terminal_failures(
+    tmp_path: Path,
+    failure_category: str,
+) -> None:
+    run_dir = _minimal_run_dir(tmp_path / "run")
+    _write_json(
+        run_dir / "final_verifier_boundary.json",
+        {
+            "schema_version": "repo_harness_pre_verl_final_verifier_boundary_v0",
+            "task_id": "pre-patch-terminal",
+            "verifier_adapter_id": "pre_verl_swebench_lite_dev_final_verifier_v0",
+            "run_task_entrypoint": "repo-harness run-task",
+            "final_verifier_timeout_sec": 60,
+            "verification_workspace_source": "clean_frozen_source",
+            "workspace_creation_input_ref": {"relative_path": "workspaces/source_checkout"},
+            "clean_source_tree_sha256": "a" * 64,
+            "patch_application_order": [
+                "model_final_patch",
+                "evaluator_only_hidden_test_patch",
+            ],
+            "observed_command_order": [],
+            "failure_category": failure_category,
+            "final_verifier_status": "not_executed",
+            "empty_final_patch_result_ref": {"relative_path": "artifacts/empty_patch.json"},
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [{"run_task_run_dir": run_dir.as_posix()}],
+        },
+    )
+
+    result = inspect_pre_verl_agentloop_boundary_index(index_path, assert_command_order=True)
+
+    assert "passed" in result
+
+
 def test_pre_verl_agentloop_boundary_index_rejects_missing_pass_to_pass_step(
     tmp_path: Path,
 ) -> None:

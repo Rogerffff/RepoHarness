@@ -71,6 +71,8 @@ def derive_final_verifier_status(final_verifier: VerifierResult) -> str:
         "budget_exhausted_empty_patch",
         "harness_context_integrity_empty_patch",
         "provider_or_model_error_empty_patch",
+        "output_token_limit_empty_patch",
+        "tool_call_parse_failure_unrecovered",
         "empty_final_patch",
         "task_timeout_before_final_verifier",
         "selector_input_invalid",

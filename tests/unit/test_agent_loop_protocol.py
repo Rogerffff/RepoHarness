@@ -6,7 +6,7 @@ import pytest
 
 from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
-from repo_harness.model_client import FakeModelClient, ModelMessage, ModelResponse
+from repo_harness.model_client import FakeModelClient, ModelCallEvent, ModelMessage, ModelResponse
 from repo_harness.model_client.provider_private_state import provider_private_state_store
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutor
@@ -50,6 +50,81 @@ def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
     started = next(event for event in events if event["event_type"] == "model_call_started")
     assert started["data"]["scaffold_phase"] == "act"
     assert started["data"]["budget_state"]["turn_count"] == 1
+
+
+def test_agent_loop_repairs_one_malformed_tool_call_response(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _MalformedThenFinalClient()
+    with RunRecorder("tool-repair", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="tool-repair",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=3,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert len(client.requests) == 2
+    assert "tool call 结构不合法" in str(client.requests[1].prepared_messages[-1]["content"])
+    events = _read_events(run_dir)
+    assert any(event["event_type"] == "tool_call_repair_requested" for event in events)
+
+
+def test_agent_loop_binds_provider_retry_attempt_refs_in_model_event(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RetryMetadataClient()
+    with RunRecorder("retry-event", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="retry-event",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    events = _read_events(run_dir)
+    completed = next(event for event in events if event["event_type"] == "model_call_completed")
+    assert completed["data"]["attempt_count"] == 2
+    assert completed["data"]["retry_count"] == 1
+    assert len(completed["data"]["provider_attempt_refs"]) == 2
+    assert completed["data"]["retry_policy_ref"] is not None
+    for ref in completed["data"]["provider_attempt_refs"]:
+        assert (run_dir / ref["relative_path"]).exists()
+
+
+def test_agent_loop_marks_repeated_malformed_tool_call_unrecovered(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _AlwaysMalformedClient()
+    with RunRecorder("tool-repair-failed", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["read_file"],
+        ).run(
+            run_id="tool-repair-failed",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=3,
+        )
+
+    assert state.agent_stop_reason == "tool_call_parse_failure_unrecovered"
+    assert state.last_model_error == "tool_call_parse_failure"
+    events = _read_events(run_dir)
+    assert sum(1 for event in events if event["event_type"] == "tool_call_repair_requested") == 1
 
 
 def test_agent_loop_stops_before_provider_on_context_pairing_error(tmp_path: Path):
@@ -725,6 +800,89 @@ class _RecordingClient:
         return ModelResponse(
             assistant_message=ModelMessage(role="assistant", content="done"),
             finish_reason="stop",
+        )
+
+
+class _MalformedThenFinalClient:
+    def __init__(self) -> None:
+        self.requests = []
+
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        self.requests.append(request)
+        if len(self.requests) == 1:
+            return ModelResponse(
+                assistant_message=ModelMessage(
+                    role="assistant",
+                    content="malformed tool call",
+                    metadata={
+                        "provider_error_message": "provider tool call arguments were not valid JSON"
+                    },
+                ),
+                finish_reason="error",
+                model_error_type="tool_call_parse_failure",
+            )
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
+        )
+
+
+class _RetryMetadataClient:
+    def generate(self, request, recorder):  # noqa: ANN001
+        retry_policy_ref = recorder.write_json_artifact(
+            "provider_retry_policy",
+            {"policy_id": "provider_retry_no_sleep_v0", "max_attempts": 3},
+        )
+        first_attempt = recorder.write_json_artifact(
+            "provider_attempt",
+            {"attempt_index": 1, "retryable": True, "error_type": "rate_limited"},
+        )
+        second_attempt = recorder.write_json_artifact(
+            "provider_attempt",
+            {"attempt_index": 2, "retryable": False, "error_type": None},
+        )
+        raw_request_ref = recorder.write_json_artifact("raw_provider_request", {"body": {}})
+        raw_response_ref = recorder.write_json_artifact("raw_provider_response", {"status": "ok"})
+        event = ModelCallEvent(
+            model_call_id=request.model_call_id,
+            provider=request.provider_options.provider,
+            model_id=request.provider_options.model_id,
+            context_revision=request.context_revision,
+            prepared_messages_ref=request.prepared_messages_ref,
+            model_input_hash=request.model_input_hash,
+            provider_message_format=request.provider_message_format,
+            tool_schema_hash="1" * 64,
+            attempt_count=2,
+            retry_count=1,
+            retry_policy_ref=retry_policy_ref,
+        )
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            raw_provider_request_ref=raw_request_ref,
+            raw_provider_response_ref=raw_response_ref,
+            provider_attempt_refs=[first_attempt, second_attempt],
+            retry_policy_ref=retry_policy_ref,
+            attempt_count=2,
+            retry_count=1,
+            finish_reason="stop",
+            model_call_event=event,
+        )
+
+
+class _AlwaysMalformedClient:
+    def __init__(self) -> None:
+        self.requests = []
+
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        self.requests.append(request)
+        return ModelResponse(
+            assistant_message=ModelMessage(
+                role="assistant",
+                content="malformed tool call",
+                metadata={"provider_error_message": "provider tool call missing function name"},
+            ),
+            finish_reason="error",
+            model_error_type="tool_call_parse_failure",
         )
 
 
