@@ -38,9 +38,16 @@ from repo_harness.v3_agent_runtime import (
     run_swebench_like_final_verifier,
 )
 from repo_harness.pre_verl_agentloop import (
+    PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
     build_pre_verl_baseline_verifier,
     load_pre_verl_swebench_dev_runtime_plan,
     run_pre_verl_swebench_dev_final_verifier,
+)
+from repo_harness.pre_verl_run_facts import (
+    PRE_VERL_FORBIDDEN_SCAFFOLD_IDS,
+    provider_axis_scope_for_config,
+    write_permission_policy_manifest,
+    write_source_snapshot_and_context_index,
 )
 from repo_harness.verifier import PytestVerifier, build_error_verifier_result
 from repo_harness.verifier.parser_policy import VerifierParserPolicy
@@ -321,6 +328,30 @@ def run_task(
             ),
             execution_mode=config.runtime.execution_mode,
         )
+        permission_policy_manifest_ref = None
+        source_snapshot_ref = None
+        repo_context_index_ref = None
+        provider_axis_scope = None
+        baseline_source = None
+        forbidden_scaffold_ids: list[str] = []
+        if pre_verl_runtime_plan is not None:
+            permission_policy_manifest_ref = write_permission_policy_manifest(
+                recorder=recorder,
+                config=config,
+                feedback_policy=feedback_policy,
+                allowed_tools=allowed_tools,
+            )
+            source_snapshot_ref, repo_context_index_ref = write_source_snapshot_and_context_index(
+                recorder=recorder,
+                task_definition=loaded.definition,
+                config=config,
+                scaffold=scaffold,
+                source_checkout=source,
+                allowed_tools=allowed_tools,
+            )
+            provider_axis_scope = provider_axis_scope_for_config(config)
+            baseline_source = PRE_VERL_AGENTLOOP_BASELINE_SOURCE
+            forbidden_scaffold_ids = PRE_VERL_FORBIDDEN_SCAFFOLD_IDS
         run_config_facts = build_run_config_facts(
             run_id=actual_run_id,
             task_definition=loaded.definition,
@@ -329,6 +360,12 @@ def run_task(
             feedback_policy=feedback_policy,
             tool_protocol=tool_protocol,
             environment_fingerprint=environment_fingerprint,
+            permission_policy_manifest_ref=permission_policy_manifest_ref,
+            source_snapshot_ref=source_snapshot_ref,
+            repo_context_index_ref=repo_context_index_ref,
+            provider_axis_scope=provider_axis_scope,
+            baseline_source=baseline_source,
+            forbidden_scaffold_ids=forbidden_scaffold_ids,
         )
         run_config_facts_ref = write_run_config_facts(run_dir, run_config_facts)
         recorder.append_event(

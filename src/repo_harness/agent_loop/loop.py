@@ -16,6 +16,7 @@ from repo_harness.model_client import (
     ModelClient,
     ModelProviderOptions,
     ModelRequestContext,
+    ModelResponse,
 )
 from repo_harness.model_client.provider_private_state import (
     provider_private_state_store,
@@ -274,6 +275,17 @@ class AgentLoop:
             attempt_count = int(getattr(response, "attempt_count", max(1, len(provider_attempt_refs))) or 1)
             retry_count = int(getattr(response, "retry_count", max(0, attempt_count - 1)) or 0)
             terminal_error_type = getattr(response, "terminal_error_type", response.model_error_type)
+            budget_decision_trace_ref = None
+            if response.model_call_event is not None:
+                budget_decision_trace_ref = _write_budget_decision_trace_artifact(
+                    recorder=recorder,
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    budget_manager=budget_manager,
+                    state=state,
+                    response=response,
+                )
             if response.model_call_event:
                 recorder.append_event(
                     TrajectoryEvent(
@@ -289,6 +301,7 @@ class AgentLoop:
                                 response.raw_provider_request_ref,
                                 response.raw_provider_response_ref,
                                 retry_policy_ref,
+                                budget_decision_trace_ref,
                                 *provider_attempt_refs,
                             ]
                             if ref is not None
@@ -326,6 +339,11 @@ class AgentLoop:
                             "attempt_count": attempt_count,
                             "retry_count": retry_count,
                             "terminal_error_type": terminal_error_type,
+                            "budget_decision_trace_ref": (
+                                budget_decision_trace_ref.model_dump(mode="json")
+                                if budget_decision_trace_ref
+                                else None
+                            ),
                         },
                     )
                 )
@@ -1276,6 +1294,58 @@ def _tool_call_parse_repair_message(response: object) -> dict[str, object]:
             "max_attempts": 1,
         },
     }
+
+
+def _write_budget_decision_trace_artifact(
+    *,
+    recorder: RunRecorder,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    budget_manager: BudgetManager,
+    state: AgentLoopState,
+    response: ModelResponse,
+) -> ArtifactRef:
+    usage = response.token_usage or {}
+    event = response.model_call_event
+    input_tokens = int(usage.get("input_tokens", event.input_tokens if event else 0))
+    output_tokens = int(usage.get("output_tokens", event.output_tokens if event else 0))
+    cached_tokens = int(usage.get("cached_tokens", event.cached_tokens if event else 0))
+    max_cost_enforcement = "unavailable" if budget_manager.max_cost is not None else "disabled"
+    payload = {
+        "schema_version": "repo_harness_budget_decision_trace_v0",
+        "run_id": run_id,
+        "task_id": task_id,
+        "turn": turn,
+        "model_call_id": event.model_call_id if event else None,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "cached_tokens": cached_tokens,
+        "token_source": "provider_usage_metadata_or_estimator",
+        "cost_source": "provider_usage_metadata_missing",
+        "cost_available": False,
+        "estimated_cost": None,
+        "max_cost_enforcement": max_cost_enforcement,
+        "remaining_turn_budget": max(0, budget_manager.max_turns - turn),
+        "remaining_tool_call_budget": max(0, budget_manager.max_tool_calls - state.tool_call_count),
+        "remaining_test_run_budget": max(0, budget_manager.max_test_runs - state.budget_state.test_run_count),
+        "decision": "continue_or_terminal_by_agent_loop",
+        "decision_reason": (
+            "Token usage was recorded for audit. Provider did not return trusted cost, "
+            f"so cost_available=false and max_cost_enforcement={max_cost_enforcement}."
+        ),
+        "agent_stop_reason_at_record_time": state.agent_stop_reason,
+        "model_error_type": response.model_error_type,
+    }
+    return recorder.write_json_artifact(
+        "budget_decision_trace",
+        payload,
+        {
+            "redaction_status": "not_sensitive",
+            "retention_policy": "keep",
+            "budget_policy": "preserve_json",
+        },
+    )
 
 
 def _next_phase_after_tools(

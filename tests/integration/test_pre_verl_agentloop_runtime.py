@@ -47,6 +47,27 @@ def test_pre_verl_agentloop_run_task_uses_clean_source_model_patch_hidden_patch_
     assert boundary["after_model_patch_tree_sha256"]
     assert boundary["after_hidden_test_patch_tree_sha256"]
     assert boundary["run_task_entrypoint"] == "repo-harness run-task"
+    run_config_facts = _read_json(run_dir / "run_config_facts.json")
+    assert run_config_facts["baseline_source"] == "repo_harness_agentloop_run_task"
+    assert run_config_facts["provider_axis_scope"] == "replay_only"
+    assert "single_shot_patch_no_tools" in run_config_facts["forbidden_scaffold_ids"]
+    permission_manifest = _read_ref_json(run_dir, run_config_facts["permission_policy_manifest_ref"])
+    assert permission_manifest["hooks"]["enabled"] is False
+    assert permission_manifest["mcp"]["enabled"] is False
+    assert permission_manifest["bash"]["shell_execution"] is False
+    assert permission_manifest["bash"]["safe_argv_required"] is True
+    source_snapshot = _read_ref_json(run_dir, run_config_facts["source_snapshot_ref"])
+    repo_context_index = _read_ref_json(run_dir, run_config_facts["repo_context_index_ref"])
+    assert source_snapshot["source_tree_hash"]
+    assert repo_context_index["evaluator_only_material_excluded"] is True
+    assert repo_context_index["full_hierarchical_instruction_resolution"] is False
+    model_completed = [
+        event for event in _read_jsonl(run_dir / "events.jsonl") if event["event_type"] == "model_call_completed"
+    ]
+    assert model_completed
+    budget_trace = _read_ref_json(run_dir, model_completed[0]["data"]["budget_decision_trace_ref"])
+    assert budget_trace["cost_available"] is False
+    assert budget_trace["max_cost_enforcement"] in {"disabled", "unavailable"}
     inspect_result = inspect_model_visible_context(
         run_dir,
         assert_prepared_messages_bound=True,
@@ -331,7 +352,11 @@ def test_pre_verl_agentloop_boundary_index_requires_formal_run_artifacts(
 def test_pre_verl_agentloop_boundary_index_requires_run_task_command_lineage(
     tmp_path: Path,
 ) -> None:
-    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=True)
+    run_dir = _formal_lineage_run_dir(
+        tmp_path / "run",
+        include_raw_provider_refs=True,
+        include_formal_fact_refs=True,
+    )
     index_path = tmp_path / "boundary_index.json"
     _write_json(
         index_path,
@@ -375,6 +400,126 @@ def test_pre_verl_agentloop_boundary_index_requires_provider_raw_refs(
     )
 
     with pytest.raises(Exception, match="raw_provider_request_ref"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_requires_formal_run_fact_refs(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(tmp_path / "run", include_raw_provider_refs=True)
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="permission_policy_manifest_ref"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_rejects_wrong_provider_axis_scope(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(
+        tmp_path / "run",
+        include_raw_provider_refs=True,
+        include_formal_fact_refs=True,
+    )
+    run_config_facts = _read_json(run_dir / "run_config_facts.json")
+    run_config_facts["provider_axis_scope"] = "mixed_provider"
+    _write_json(run_dir / "run_config_facts.json", run_config_facts)
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="provider_axis_scope"):
+        inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
+
+
+def test_pre_verl_agentloop_boundary_index_rejects_bad_budget_trace_semantics(
+    tmp_path: Path,
+) -> None:
+    run_dir = _formal_lineage_run_dir(
+        tmp_path / "run",
+        include_raw_provider_refs=True,
+        include_formal_fact_refs=True,
+    )
+    budget_trace_path = run_dir / "artifacts" / "budget_decision_trace.json"
+    budget_payload = _read_json(budget_trace_path)
+    budget_payload["cost_available"] = True
+    _write_json(budget_trace_path, budget_payload)
+    events = _read_jsonl(run_dir / "events.jsonl")
+    events[4]["data"]["budget_decision_trace_ref"] = _artifact_ref(budget_trace_path, run_dir)
+    (run_dir / "events.jsonl").write_text(
+        "".join(json.dumps(event, sort_keys=True) + "\n" for event in events),
+        encoding="utf-8",
+    )
+    command_entry_path = tmp_path / "run_task_command_entry.json"
+    _write_json(
+        command_entry_path,
+        {
+            "command_name": "run-task",
+            "argv": ["repo-harness", "run-task", "task.yaml", "--run-id", "formal-run"],
+            "exit_code": 0,
+        },
+    )
+    index_path = tmp_path / "boundary_index.json"
+    _write_json(
+        index_path,
+        {
+            "schema_version": "repo_harness_pre_verl_agentloop_boundary_index_v0",
+            "entries": [
+                {
+                    "run_task_run_dir": run_dir.as_posix(),
+                    "final_verifier_boundary_ref": _evaluator_ref(run_dir / "final_verifier_boundary.json"),
+                    "scaffold_id": "patch_focused_react",
+                    "run_task_command_log_entry_ref": _evaluator_ref(command_entry_path),
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(Exception, match="cost_available"):
         inspect_pre_verl_agentloop_boundary_index(index_path, assert_run_task_lineage=True)
 
 
@@ -655,28 +800,66 @@ def _minimal_run_dir(run_dir: Path) -> Path:
     return run_dir
 
 
-def _formal_lineage_run_dir(run_dir: Path, *, include_raw_provider_refs: bool) -> Path:
+def _formal_lineage_run_dir(
+    run_dir: Path,
+    *,
+    include_raw_provider_refs: bool,
+    include_formal_fact_refs: bool = False,
+) -> Path:
     run_dir = _minimal_run_dir(run_dir)
     artifacts_dir = run_dir / "artifacts"
     tool_schema_path = artifacts_dir / "tool_schema.json"
     request_path = artifacts_dir / "raw_provider_request.json"
     response_path = artifacts_dir / "raw_provider_response.json"
-    for path in (tool_schema_path, request_path, response_path):
+    retry_policy_path = artifacts_dir / "provider_retry_policy.json"
+    attempt_path = artifacts_dir / "provider_attempt.json"
+    budget_trace_path = artifacts_dir / "budget_decision_trace.json"
+    for path in (tool_schema_path, request_path, response_path, retry_policy_path, attempt_path):
         _write_json(path, {"kind": path.stem})
+    _write_json(
+        budget_trace_path,
+        {
+            "kind": "budget_decision_trace",
+            "turn": 1,
+            "input_tokens": 10,
+            "output_tokens": 1,
+            "cached_tokens": 0,
+            "cost_source": "provider_usage_metadata_missing",
+            "cost_available": False,
+            "estimated_cost": None,
+            "max_cost_enforcement": "disabled",
+            "remaining_turn_budget": 1,
+            "remaining_tool_call_budget": 1,
+            "remaining_test_run_budget": 0,
+            "decision": "continue_or_terminal_by_agent_loop",
+            "decision_reason": "test fixture",
+        },
+    )
     _write_json(run_dir / "run_metadata.json", {"run_id": "formal-run", "scaffold_id": "patch_focused_react"})
     _write_json(
         run_dir / "run_config_facts.json",
         {
-            "run_id": "formal-run",
-            "final_verifier_mode": "strict_patch_replay",
-            "test_feedback_policy": "disabled",
-            "scaffold_id": "patch_focused_react",
-            "tool_protocol": {"tool_schema_snapshot_ref": _artifact_ref(tool_schema_path, run_dir)},
+            **{
+                "run_id": "formal-run",
+                "final_verifier_mode": "strict_patch_replay",
+                "test_feedback_policy": "disabled",
+                "scaffold_id": "patch_focused_react",
+                "provider": "deepseek",
+                "tool_protocol": {"tool_schema_snapshot_ref": _artifact_ref(tool_schema_path, run_dir)},
+            },
+            **(
+                _formal_fact_refs(run_dir)
+                if include_formal_fact_refs
+                else {}
+            ),
         },
     )
     completed_data = {
         "model_call_id": "model-call-1",
         "provider": "deepseek",
+        "retry_policy_ref": _artifact_ref(retry_policy_path, run_dir),
+        "provider_attempt_refs": [_artifact_ref(attempt_path, run_dir)],
+        "budget_decision_trace_ref": _artifact_ref(budget_trace_path, run_dir),
     }
     if include_raw_provider_refs:
         completed_data.update(
@@ -728,6 +911,37 @@ def _artifact_ref(path: Path, run_dir: Path) -> dict[str, object]:
     }
 
 
+def _formal_fact_refs(run_dir: Path) -> dict[str, object]:
+    artifacts_dir = run_dir / "artifacts"
+    permission_path = artifacts_dir / "permission_policy_manifest.json"
+    source_snapshot_path = artifacts_dir / "source_snapshot.json"
+    repo_context_path = artifacts_dir / "repo_context_index.json"
+    _write_json(
+        permission_path,
+        {
+            "hooks": {"enabled": False},
+            "mcp": {"enabled": False},
+            "bash": {"shell_execution": False, "safe_argv_required": True},
+        },
+    )
+    _write_json(source_snapshot_path, {"source_tree_hash": "a" * 64})
+    _write_json(
+        repo_context_path,
+        {
+            "evaluator_only_material_excluded": True,
+            "full_hierarchical_instruction_resolution": False,
+        },
+    )
+    return {
+        "baseline_source": "repo_harness_agentloop_run_task",
+        "provider_axis_scope": "deepseek_only",
+        "forbidden_scaffold_ids": ["single_shot_patch_no_tools"],
+        "permission_policy_manifest_ref": _artifact_ref(permission_path, run_dir),
+        "source_snapshot_ref": _artifact_ref(source_snapshot_path, run_dir),
+        "repo_context_index_ref": _artifact_ref(repo_context_path, run_dir),
+    }
+
+
 def _evaluator_ref(path: Path) -> dict[str, object]:
     digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "a" * 64
     return {
@@ -740,6 +954,10 @@ def _evaluator_ref(path: Path) -> dict[str, object]:
 
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_ref_json(run_dir: Path, ref: dict[str, object]) -> dict:
+    return _read_json(run_dir / str(ref["relative_path"]))
 
 
 def _read_jsonl(path: Path) -> list[dict]:

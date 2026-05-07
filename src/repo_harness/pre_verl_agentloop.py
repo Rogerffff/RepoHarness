@@ -1381,6 +1381,8 @@ def _inspect_run_task_lineage(
         tool_protocol = run_config_facts.get("tool_protocol")
         tool_ref = tool_protocol.get("tool_schema_snapshot_ref") if isinstance(tool_protocol, dict) else None
         _inspect_run_artifact_ref(tool_ref, run_dir, failures, f"{label}.tool_schema_snapshot_ref")
+        if boundary.get("baseline_source") == PRE_VERL_AGENTLOOP_BASELINE_SOURCE:
+            _inspect_pre_verl_run_fact_refs(run_config_facts, run_dir, failures, label)
     _inspect_run_task_command_entry(
         entry=entry,
         index_path=index_path,
@@ -1467,6 +1469,37 @@ def _inspect_agentloop_events(
             failures,
             f"{label}.model_call_completed[{index}].raw_provider_response_ref",
         )
+        _inspect_run_artifact_ref(
+            data.get("budget_decision_trace_ref"),
+            run_dir,
+            failures,
+            f"{label}.model_call_completed[{index}].budget_decision_trace_ref",
+        )
+        _inspect_budget_decision_trace(
+            data.get("budget_decision_trace_ref"),
+            run_dir,
+            failures,
+            f"{label}.model_call_completed[{index}].budget_decision_trace",
+        )
+        provider = data.get("provider")
+        if provider in {"deepseek", "openai"}:
+            _inspect_run_artifact_ref(
+                data.get("retry_policy_ref"),
+                run_dir,
+                failures,
+                f"{label}.model_call_completed[{index}].retry_policy_ref",
+            )
+            attempt_refs = data.get("provider_attempt_refs")
+            if not isinstance(attempt_refs, list) or not attempt_refs:
+                failures.append(f"{label}.model_call_completed[{index}]: 缺少 provider_attempt_refs")
+            else:
+                for attempt_index, attempt_ref in enumerate(attempt_refs):
+                    _inspect_run_artifact_ref(
+                        attempt_ref,
+                        run_dir,
+                        failures,
+                        f"{label}.model_call_completed[{index}].provider_attempt_refs[{attempt_index}]",
+                    )
     requested_tool_ids = _tool_call_ids(events, {"tool_requested"})
     terminal_tool_ids = _tool_call_ids(
         events,
@@ -1478,6 +1511,97 @@ def _inspect_agentloop_events(
         failures.append(f"{label}: tool_use 缺少对应 tool_result: {missing_results}")
     if unexpected_results:
         failures.append(f"{label}: tool_result 没有对应 tool_use: {unexpected_results}")
+
+
+def _inspect_pre_verl_run_fact_refs(
+    run_config_facts: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    if run_config_facts.get("baseline_source") != PRE_VERL_AGENTLOOP_BASELINE_SOURCE:
+        failures.append(f"{label}: run_config_facts.baseline_source 必须是 {PRE_VERL_AGENTLOOP_BASELINE_SOURCE}")
+    provider_axis_scope = run_config_facts.get("provider_axis_scope")
+    if not isinstance(provider_axis_scope, str) or not provider_axis_scope:
+        failures.append(f"{label}: run_config_facts 缺少 provider_axis_scope")
+    provider = run_config_facts.get("provider")
+    if provider in {"deepseek", "openai", "replay", "mock", "fake"}:
+        expected_scope = f"{provider}_only"
+        if provider_axis_scope != expected_scope:
+            failures.append(f"{label}: provider_axis_scope 必须冻结为 {expected_scope}")
+    forbidden = run_config_facts.get("forbidden_scaffold_ids")
+    if "single_shot_patch_no_tools" not in (forbidden if isinstance(forbidden, list) else []):
+        failures.append(f"{label}: run_config_facts.forbidden_scaffold_ids 缺少 single_shot_patch_no_tools")
+    for key in (
+        "permission_policy_manifest_ref",
+        "source_snapshot_ref",
+        "repo_context_index_ref",
+    ):
+        _inspect_run_artifact_ref(run_config_facts.get(key), run_dir, failures, f"{label}.{key}")
+    permission_ref = run_config_facts.get("permission_policy_manifest_ref")
+    permission_payload = _read_artifact_payload(permission_ref, run_dir, failures, f"{label}.permission_policy_manifest")
+    if isinstance(permission_payload, dict):
+        if permission_payload.get("hooks", {}).get("enabled") is not False:
+            failures.append(f"{label}: permission_policy_manifest 必须记录 hooks.enabled=false")
+        if permission_payload.get("mcp", {}).get("enabled") is not False:
+            failures.append(f"{label}: permission_policy_manifest 必须记录 mcp.enabled=false")
+        bash = permission_payload.get("bash")
+        if not isinstance(bash, dict) or bash.get("shell_execution") is not False:
+            failures.append(f"{label}: permission_policy_manifest 必须记录 bash.shell_execution=false")
+        if not isinstance(bash, dict) or bash.get("safe_argv_required") is not True:
+            failures.append(f"{label}: permission_policy_manifest 必须记录 bash.safe_argv_required=true")
+    context_ref = run_config_facts.get("repo_context_index_ref")
+    context_payload = _read_artifact_payload(context_ref, run_dir, failures, f"{label}.repo_context_index")
+    if isinstance(context_payload, dict):
+        if context_payload.get("evaluator_only_material_excluded") is not True:
+            failures.append(f"{label}: repo_context_index 必须记录 evaluator_only_material_excluded=true")
+        if context_payload.get("full_hierarchical_instruction_resolution") is not False:
+            failures.append(f"{label}: repo_context_index 必须诚实记录未启用完整层级 instruction resolver")
+
+
+def _read_artifact_payload(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> dict[str, Any] | None:
+    if not isinstance(ref, dict):
+        return None
+    path = _ref_path(ref, run_dir)
+    payload = _read_optional_json(path, failures, label)
+    return payload if isinstance(payload, dict) else None
+
+
+def _inspect_budget_decision_trace(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    payload = _read_artifact_payload(ref, run_dir, failures, label)
+    if not isinstance(payload, dict):
+        return
+    if payload.get("cost_available") is not False:
+        failures.append(f"{label}: cost_available 必须为 false，避免把缺失费用误写为真实低成本")
+    if payload.get("estimated_cost") is not None:
+        failures.append(f"{label}: cost 不可用时 estimated_cost 必须为 null")
+    if payload.get("cost_source") != "provider_usage_metadata_missing":
+        failures.append(f"{label}: cost_source 必须记录 provider_usage_metadata_missing")
+    if payload.get("max_cost_enforcement") not in {"disabled", "unavailable"}:
+        failures.append(f"{label}: max_cost_enforcement 必须是 disabled 或 unavailable")
+    for required in (
+        "turn",
+        "input_tokens",
+        "output_tokens",
+        "cached_tokens",
+        "remaining_turn_budget",
+        "remaining_tool_call_budget",
+        "remaining_test_run_budget",
+        "decision",
+        "decision_reason",
+    ):
+        if required not in payload:
+            failures.append(f"{label}: 缺少 {required}")
 
 
 def _model_call_ids(events: list[dict[str, Any]], event_type: str) -> list[str]:

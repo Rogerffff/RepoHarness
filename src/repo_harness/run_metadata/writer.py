@@ -27,6 +27,7 @@ from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold, resolve_f
 from repo_harness.tasks import TaskDefinition
 from repo_harness.tasks.command_policy import COMMAND_POLICY_VERSION
 from repo_harness.trajectory import verify_artifact_manifest
+from repo_harness.trajectory import ArtifactRef
 
 
 def build_run_config_facts(
@@ -38,6 +39,12 @@ def build_run_config_facts(
     feedback_policy: ResolvedFeedbackPolicyFacts | None = None,
     tool_protocol: ToolProtocolFacts,
     environment_fingerprint: EnvironmentFingerprint,
+    permission_policy_manifest_ref: ArtifactRef | None = None,
+    source_snapshot_ref: ArtifactRef | None = None,
+    repo_context_index_ref: ArtifactRef | None = None,
+    provider_axis_scope: str | None = None,
+    baseline_source: str | None = None,
+    forbidden_scaffold_ids: list[str] | None = None,
 ) -> RunConfigFacts:
     verifier_config = task_definition.to_verifier_config()
     scaffold = scaffold or build_scaffold(config.runtime.scaffold_id)
@@ -86,6 +93,12 @@ def build_run_config_facts(
         hidden_feedback_visible_to_model=feedback_policy.hidden_feedback_visible_to_model,
         swe_bench_like_final_only=feedback_policy.swe_bench_like_final_only,
         tool_protocol=tool_protocol,
+        permission_policy_manifest_ref=permission_policy_manifest_ref,
+        source_snapshot_ref=source_snapshot_ref,
+        repo_context_index_ref=repo_context_index_ref,
+        provider_axis_scope=provider_axis_scope,
+        baseline_source=baseline_source,
+        forbidden_scaffold_ids=forbidden_scaffold_ids or [],
         context_builder_version=config.versions.context_builder_version,
         context_policy_version=config.context_management.context_policy_version,
         prompt_template_version=config.versions.prompt_template_version,

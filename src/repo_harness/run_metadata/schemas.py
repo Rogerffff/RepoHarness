@@ -341,6 +341,12 @@ class RunConfigFacts(StrictBaseModel):
     hidden_feedback_visible_to_model: bool
     swe_bench_like_final_only: bool = False
     tool_protocol: ToolProtocolFacts
+    permission_policy_manifest_ref: ArtifactRef | None = None
+    source_snapshot_ref: ArtifactRef | None = None
+    repo_context_index_ref: ArtifactRef | None = None
+    provider_axis_scope: str | None = None
+    baseline_source: str | None = None
+    forbidden_scaffold_ids: list[str] = Field(default_factory=list)
     context_builder_version: str
     context_policy_version: str
     prompt_template_version: str
