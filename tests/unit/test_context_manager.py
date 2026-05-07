@@ -13,13 +13,33 @@ def test_context_manager_replaces_large_old_tool_output_deterministically(tmp_pa
         {
             "role": "assistant",
             "content": None,
-            "tool_calls": [{"tool_call_id": "call_big", "tool_name": "bash", "arguments": {}}],
+            "tool_calls": [
+                {
+                    "tool_call_id": "call_big",
+                    "tool_name": "read_file",
+                    "arguments": {"path": "src/example.py", "start_line": 1},
+                }
+            ],
         },
         {
             "role": "tool",
             "tool_call_id": "call_big",
             "tool_result_id": "call_big_result",
+            "tool_name": "read_file",
+            "requested_tool_name": "read_file",
+            "effective_tool_name": "read_file",
+            "requested_arguments": {"path": "src/example.py", "start_line": 1},
+            "normalized_arguments": {"path": "src/example.py", "start_line": 1, "max_lines": 200},
+            "effective_arguments": {"path": "src/example.py", "start_line": 1, "max_lines": 200},
+            "normalized_input_hash": "hash-read-file-input",
             "content": "\n".join(f"line {index}" for index in range(200)),
+            "typed": {
+                "path": "src/example.py",
+                "start_line": 1,
+                "end_line": 200,
+                "total_lines": 260,
+                "next_start_line": 201,
+            },
             "artifact_refs": [
                 {
                     "schema_version": "repo_harness_artifact_ref_v0",
@@ -57,6 +77,10 @@ def test_context_manager_replaces_large_old_tool_output_deterministically(tmp_pa
     assert first_tool["content"] == second_tool["content"]
     assert "[tool result replaced]" in str(first_tool["content"])
     assert "artifact_big" in str(first_tool["content"])
+    assert "tool_name: read_file" in str(first_tool["content"])
+    assert "normalized_arguments_sha256: hash-read-file-input" in str(first_tool["content"])
+    assert "recovery_call: read_file(path='src/example.py', start_line=201)" in str(first_tool["content"])
+    assert '"total_lines":260' in str(first_tool["content"])
     assert first.model_input_hash == second.model_input_hash
     assert first.content_replacement_state is not None
     assert first.content_replacement_state.records[0].replacement_preview_hash is not None
@@ -70,6 +94,136 @@ def test_context_manager_replaces_large_old_tool_output_deterministically(tmp_pa
         (run_dir / first.prepared_messages_ref.relative_path).read_text(encoding="utf-8")
     )
     assert prepared_payload["model_input_hash"] == first.model_input_hash
+    replacement_ref = first.context_event.data["context_reduction"]["replacement_artifact_refs"][0]
+    replacement_payload = json.loads(
+        (run_dir / replacement_ref["relative_path"]).read_text(encoding="utf-8")
+    )
+    assert replacement_payload["recovery"]["recommended_call"] == (
+        "read_file(path='src/example.py', start_line=201)"
+    )
+
+
+def test_context_manager_redacts_evaluator_only_replacement_preview(tmp_path: Path):
+    messages = [
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{"tool_call_id": "call_hidden", "tool_name": "read_file", "arguments": {}}],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_hidden",
+            "tool_result_id": "call_hidden_result",
+            "tool_name": "read_file",
+            "normalized_arguments": {"path": "hidden.patch"},
+            "content": "secret hidden selector output\n" * 20,
+            "artifact_refs": [
+                {
+                    "schema_version": "repo_harness_artifact_ref_v0",
+                    "artifact_id": "hidden_test_selector_artifact",
+                    "relative_path": "artifacts/hidden_selector.txt",
+                    "kind": "hidden_test_selector",
+                    "sha256": "hidden-sha",
+                    "size_bytes": 50,
+                    "redaction_status": "evaluator_only",
+                    "retention_policy": "keep",
+                }
+            ],
+        },
+    ]
+    with RunRecorder("context-hidden", tmp_path / "run", task_id="task") as recorder:
+        prepared = ContextManager().prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(tool_result_aggregate_budget_chars=1),
+        )
+
+    replacement = str(prepared.messages[1]["content"])
+    assert "preview_redacted" in replacement
+    assert "secret hidden selector output" not in replacement
+    assert "hidden.patch" not in replacement
+    assert "hidden_test_selector_artifact" not in replacement
+    assert "hidden_test_selector" not in replacement
+    assert "not_available_evaluator_only_source_artifact" in replacement
+    replacement_ref = prepared.context_event.data["context_reduction"]["replacement_artifact_refs"][0]
+    replacement_payload = json.loads(
+        ((tmp_path / "run") / replacement_ref["relative_path"]).read_text(encoding="utf-8")
+    )
+    assert replacement_payload["source_artifact_ref"]["redacted"] is True
+    assert replacement_payload["source_artifact_ref"]["artifact_id"] == "redacted_sensitive_artifact"
+    assert replacement_payload["source_artifact_ref"]["kind"] == "redacted_sensitive_artifact"
+    assert replacement_payload["recovery"]["normalized_arguments"] == {"redacted": True}
+
+
+def test_context_manager_recovery_call_preserves_grep_scope(tmp_path: Path):
+    messages = [
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [
+                {
+                    "tool_call_id": "call_grep",
+                    "tool_name": "grep",
+                    "arguments": {
+                        "query": "needle",
+                        "root": "tests",
+                        "glob": "*.py",
+                        "offset": 40,
+                    },
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_grep",
+            "tool_result_id": "call_grep_result",
+            "tool_name": "grep",
+            "requested_tool_name": "grep",
+            "effective_tool_name": "grep",
+            "normalized_arguments": {
+                "query": "needle",
+                "mode": "literal",
+                "root": "tests",
+                "glob": "*.py",
+                "offset": 40,
+                "max_matches": 25,
+                "context_lines": 2,
+            },
+            "normalized_input_hash": "hash-grep-input",
+            "content": "\n".join(f"tests/test_{index}.py: needle" for index in range(100)),
+            "typed": {"next_offset": 65},
+            "artifact_refs": [
+                {
+                    "schema_version": "repo_harness_artifact_ref_v0",
+                    "artifact_id": "grep_artifact",
+                    "relative_path": "artifacts/grep.txt",
+                    "kind": "tool_output",
+                    "sha256": "grep-sha",
+                    "size_bytes": 500,
+                    "redaction_status": "not_scanned",
+                    "retention_policy": "keep",
+                }
+            ],
+        },
+    ]
+    with RunRecorder("context-grep", tmp_path / "run", task_id="task") as recorder:
+        prepared = ContextManager().prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(tool_result_aggregate_budget_chars=1),
+        )
+
+    replacement = str(prepared.messages[1]["content"])
+    assert "recovery_call: grep(" in replacement
+    assert "root='tests'" in replacement
+    assert "glob='*.py'" in replacement
+    assert "offset=65" in replacement
+    assert "max_matches=25" in replacement
+    assert "context_lines=2" in replacement
 
 
 def test_context_manager_detects_missing_tool_result(tmp_path: Path):

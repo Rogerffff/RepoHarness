@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from repo_harness.config import ContextManagementConfig
@@ -184,22 +185,35 @@ class ContextManager:
         else:
             artifact_data = {}
         head, tail = _head_tail(original_content)
+        recovery = _replacement_recovery(message)
+        safe_artifact_data = _artifact_data_for_replacement(artifact_data)
+        include_preview = not safe_artifact_data.get("redacted")
+        if not include_preview:
+            recovery = _redacted_recovery(recovery)
         replacement = (
             f"[tool result replaced]\n"
             f"tool_result_id: {tool_result_id}\n"
-            f"artifact_id: {artifact_data.get('artifact_id', 'none')}\n"
+            f"tool_name: {recovery['tool_name']}\n"
+            f"artifact_id: {safe_artifact_data.get('artifact_id', 'none')}\n"
             f"sha256: {artifact_data.get('sha256', stable_hash(original_content))}\n"
             f"reason: {reason}\n"
-            f"head:\n{head}\n"
-            f"tail:\n{tail}"
+            f"normalized_arguments_sha256: {recovery['normalized_arguments_sha256']}\n"
+            f"key_arguments: {recovery['key_arguments_preview']}\n"
+            f"recovery_call: {recovery['recommended_call']}\n"
+            f"recovery_hint: {recovery['recovery_hint']}\n"
         )
+        if include_preview:
+            replacement += f"head:\n{head}\n" f"tail:\n{tail}"
+        else:
+            replacement += "preview_redacted: source artifact is evaluator-only or secret\n"
         replacement_ref = recorder.write_json_artifact(
             "context_replacement",
             {
                 "tool_result_id": tool_result_id,
                 "replacement_preview": replacement,
                 "reason": reason,
-                "source_artifact_ref": artifact_data,
+                "source_artifact_ref": safe_artifact_data,
+                "recovery": recovery,
             },
             {"budget_policy": "preserve_json"},
         )
@@ -249,6 +263,199 @@ def _head_tail(text: str, line_count: int = 3) -> tuple[str, str]:
     head = "\n".join(lines[:line_count])
     tail = "\n".join(lines[-line_count:]) if len(lines) > line_count else head
     return head, tail
+
+
+def _replacement_recovery(message: dict[str, object]) -> dict[str, Any]:
+    tool_name = str(
+        message.get("effective_tool_name")
+        or message.get("requested_tool_name")
+        or message.get("tool_name")
+        or "unknown_tool"
+    )
+    normalized_arguments = _dict_value(message.get("normalized_arguments"))
+    if not normalized_arguments:
+        normalized_arguments = _dict_value(message.get("effective_arguments"))
+    if not normalized_arguments:
+        normalized_arguments = _dict_value(message.get("requested_arguments"))
+    typed = _dict_value(message.get("typed"))
+    normalized_arguments_sha256 = str(
+        message.get("normalized_input_hash") or stable_hash(normalized_arguments)
+    )
+    recommended_call, recovery_hint = _recommended_recovery_call(
+        tool_name=tool_name,
+        arguments=normalized_arguments,
+        typed=typed,
+    )
+    return {
+        "tool_name": tool_name,
+        "requested_tool_name": message.get("requested_tool_name") or message.get("tool_name"),
+        "effective_tool_name": message.get("effective_tool_name") or tool_name,
+        "normalized_arguments": normalized_arguments,
+        "normalized_arguments_sha256": normalized_arguments_sha256,
+        "key_arguments_preview": _json_preview(_key_arguments(tool_name, normalized_arguments, typed)),
+        "recommended_call": recommended_call,
+        "recovery_hint": recovery_hint,
+    }
+
+
+def _redacted_recovery(recovery: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "tool_name": recovery.get("tool_name", "unknown_tool"),
+        "requested_tool_name": recovery.get("requested_tool_name"),
+        "effective_tool_name": recovery.get("effective_tool_name"),
+        "normalized_arguments": {"redacted": True},
+        "normalized_arguments_sha256": recovery.get("normalized_arguments_sha256"),
+        "key_arguments_preview": '{"redacted":true}',
+        "recommended_call": "not_available_evaluator_only_source_artifact",
+        "recovery_hint": "Recovery arguments are redacted because the source artifact is evaluator-only or secret.",
+    }
+
+
+def _recommended_recovery_call(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    typed: dict[str, Any],
+) -> tuple[str, str]:
+    if tool_name == "read_file":
+        path = _string_arg(arguments, "path")
+        next_start = typed.get("next_start_line")
+        start_line = next_start if isinstance(next_start, int) else arguments.get("start_line")
+        if not isinstance(start_line, int) or start_line <= 0:
+            start_line = 1
+        call = f"read_file(path={path!r}, start_line={start_line})"
+        if isinstance(next_start, int):
+            return call, "Continue reading from next_start_line to recover omitted content."
+        return call, "Re-read this file range with read_file when the omitted content is needed."
+    if tool_name == "grep":
+        query = _string_arg(arguments, "query")
+        mode = _string_arg(arguments, "mode", default="literal")
+        root = _string_arg(arguments, "root", default=".")
+        glob = _optional_string_arg(arguments, "glob")
+        max_matches = arguments.get("max_matches")
+        context_lines = arguments.get("context_lines")
+        next_offset = typed.get("next_offset")
+        offset = next_offset if isinstance(next_offset, int) else arguments.get("offset")
+        if not isinstance(offset, int) or offset < 0:
+            offset = 0
+        parts = [f"query={query!r}", f"mode={mode!r}", f"root={root!r}", f"offset={offset}"]
+        if glob:
+            parts.append(f"glob={glob!r}")
+        if isinstance(max_matches, int):
+            parts.append(f"max_matches={max_matches}")
+        if isinstance(context_lines, int):
+            parts.append(f"context_lines={context_lines}")
+        call = f"grep({', '.join(parts)})"
+        if isinstance(next_offset, int):
+            return call, "Use the next_offset page to continue the same search."
+        return call, "Re-run or narrow the grep query, root, or glob to recover omitted matches."
+    if tool_name == "list_files":
+        root = _string_arg(arguments, "root", default=".")
+        glob = _optional_string_arg(arguments, "glob")
+        max_entries = arguments.get("max_entries")
+        kind = _optional_string_arg(arguments, "kind")
+        next_offset = typed.get("next_offset")
+        offset = next_offset if isinstance(next_offset, int) else arguments.get("offset")
+        if not isinstance(offset, int) or offset < 0:
+            offset = 0
+        parts = [f"root={root!r}", f"offset={offset}"]
+        if glob:
+            parts.append(f"glob={glob!r}")
+        if kind:
+            parts.append(f"kind={kind!r}")
+        if isinstance(max_entries, int):
+            parts.append(f"max_entries={max_entries}")
+        call = f"list_files({', '.join(parts)})"
+        if isinstance(next_offset, int):
+            return call, "Use the next_offset page to continue listing files."
+        return call, "Re-run list_files with the same root or a narrower glob."
+    if tool_name == "git_diff":
+        changed_files = typed.get("changed_files")
+        path = _optional_string_arg(arguments, "path")
+        if not path and isinstance(changed_files, list):
+            path = next((str(item) for item in changed_files if item), None)
+        if path:
+            return f"git_diff(path={path!r})", "Re-run git_diff for this changed file."
+        return "git_diff()", "Re-run git_diff to recover the current patch context."
+    return (
+        f"{tool_name}(...)",
+        "Re-run the original tool with the same normalized arguments if the omitted content is needed.",
+    )
+
+
+def _key_arguments(tool_name: str, arguments: dict[str, Any], typed: dict[str, Any]) -> dict[str, Any]:
+    if tool_name == "read_file":
+        return {
+            "path": arguments.get("path"),
+            "start_line": arguments.get("start_line"),
+            "end_line": typed.get("end_line"),
+            "total_lines": typed.get("total_lines"),
+            "next_start_line": typed.get("next_start_line"),
+        }
+    if tool_name == "grep":
+        return {
+            "query": arguments.get("query"),
+            "mode": arguments.get("mode"),
+            "root": arguments.get("root"),
+            "glob": arguments.get("glob"),
+            "offset": arguments.get("offset"),
+            "max_matches": arguments.get("max_matches"),
+            "context_lines": arguments.get("context_lines"),
+            "next_offset": typed.get("next_offset"),
+        }
+    if tool_name == "list_files":
+        return {
+            "root": arguments.get("root"),
+            "glob": arguments.get("glob"),
+            "offset": arguments.get("offset"),
+            "max_entries": arguments.get("max_entries"),
+            "kind": arguments.get("kind"),
+            "next_offset": typed.get("next_offset"),
+        }
+    if tool_name == "git_diff":
+        return {
+            "path": arguments.get("path"),
+            "changed_files": typed.get("changed_files"),
+        }
+    return dict(arguments)
+
+
+def _artifact_data_for_replacement(artifact_data: dict[str, Any]) -> dict[str, Any]:
+    redaction_status = str(artifact_data.get("redaction_status") or "not_scanned")
+    if redaction_status in {"evaluator_only", "secret", "credential", "provider_raw"}:
+        return {
+            "artifact_id": "redacted_sensitive_artifact",
+            "kind": "redacted_sensitive_artifact",
+            "sha256": artifact_data.get("sha256"),
+            "redaction_status": redaction_status,
+            "redacted": True,
+        }
+    return dict(artifact_data)
+
+
+def _dict_value(value: object) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _string_arg(arguments: dict[str, Any], key: str, *, default: str = "") -> str:
+    value = arguments.get(key)
+    if isinstance(value, str) and value:
+        return value
+    return default
+
+
+def _optional_string_arg(arguments: dict[str, Any], key: str) -> str | None:
+    value = arguments.get(key)
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _json_preview(value: dict[str, Any]) -> str:
+    compact = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    if len(compact) <= 800:
+        return compact
+    return compact[:800] + "...[truncated]"
 
 
 def _tool_message_infos(messages: list[dict[str, object]]) -> list[dict[str, Any]]:
