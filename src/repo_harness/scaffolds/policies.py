@@ -40,6 +40,15 @@ def resolve_feedback_policy(
             f"received {runtime_test_policy.value!r}."
         )
     swe_bench_like_final_only = _is_swe_bench_like_final_only(task)
+    if (
+        swe_bench_like_final_only
+        and runtime_test_policy is not None
+        and runtime_test_policy != TestFeedbackPolicy.disabled
+    ):
+        raise ConfigError(
+            "SWE-Bench-like final-only task requires test_feedback_policy=disabled; "
+            f"received {runtime_test_policy.value!r}."
+        )
     if runtime_test_policy is None and swe_bench_like_final_only:
         resolved_test_policy = TestFeedbackPolicy.disabled
     else:

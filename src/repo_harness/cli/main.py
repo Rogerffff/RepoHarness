@@ -202,6 +202,10 @@ from repo_harness.pre_verl_evaluation import (
     inspect_pre_verl_task_visibility,
     inspect_pre_verl_verifier_correctness,
 )
+from repo_harness.pre_verl_agentloop import (
+    inspect_pre_verl_agentloop_run_config,
+    inspect_pre_verl_agentloop_task_definitions,
+)
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -1476,6 +1480,24 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_pre_verl_task_visibility_parser = subparsers.add_parser("inspect-pre-verl-task-visibility")
     inspect_pre_verl_task_visibility_parser.add_argument("report")
     inspect_pre_verl_task_visibility_parser.add_argument("--assert-clean", action="store_true")
+
+    inspect_pre_verl_agentloop_tasks_parser = subparsers.add_parser(
+        "inspect-pre-verl-agentloop-task-definitions",
+        help="只读检查 pre-verl formal AgentLoop 任务定义是否可被 run-task 正式链路消费。",
+    )
+    inspect_pre_verl_agentloop_tasks_parser.add_argument("manifest")
+    inspect_pre_verl_agentloop_tasks_parser.add_argument("--assert-run-task-compatible", action="store_true")
+    inspect_pre_verl_agentloop_tasks_parser.add_argument("--assert-evaluator-only-hidden-inputs", action="store_true")
+    inspect_pre_verl_agentloop_tasks_parser.add_argument("--assert-no-hidden-material-in-model-visible-fields", action="store_true")
+
+    inspect_pre_verl_agentloop_config_parser = subparsers.add_parser(
+        "inspect-pre-verl-agentloop-run-config",
+        help="只读检查 pre-verl formal AgentLoop 运行配置和解析后的工具策略。",
+    )
+    inspect_pre_verl_agentloop_config_parser.add_argument("manifest")
+    inspect_pre_verl_agentloop_config_parser.add_argument("--assert-final-only-test-feedback-disabled", action="store_true")
+    inspect_pre_verl_agentloop_config_parser.add_argument("--assert-resolved-tools-derived", action="store_true")
+    inspect_pre_verl_agentloop_config_parser.add_argument("--assert-no-hidden-feedback-visible", action="store_true")
 
     pre_verl_swebench_materialization_parser = subparsers.add_parser("build-pre-verl-swebench-dev-materialization")
     pre_verl_swebench_materialization_parser.add_argument("--output-dir", required=True)
@@ -2799,6 +2821,36 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(inspect_pre_verl_task_visibility(args.report, assert_clean=args.assert_clean))
         except RepoHarnessError as exc:
             parser.exit(1, f"pre-verl visibility 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-agentloop-task-definitions":
+        try:
+            print(
+                inspect_pre_verl_agentloop_task_definitions(
+                    args.manifest,
+                    assert_run_task_compatible=args.assert_run_task_compatible,
+                    assert_evaluator_only_hidden_inputs=args.assert_evaluator_only_hidden_inputs,
+                    assert_no_hidden_material_in_model_visible_fields=(
+                        args.assert_no_hidden_material_in_model_visible_fields
+                    ),
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl AgentLoop task definition 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-pre-verl-agentloop-run-config":
+        try:
+            print(
+                inspect_pre_verl_agentloop_run_config(
+                    args.manifest,
+                    assert_final_only_test_feedback_disabled=(
+                        args.assert_final_only_test_feedback_disabled
+                    ),
+                    assert_resolved_tools_derived=args.assert_resolved_tools_derived,
+                    assert_no_hidden_feedback_visible=args.assert_no_hidden_feedback_visible,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl AgentLoop run config 检查失败：{exc}\n")
         return 0
     if args.command == "build-pre-verl-swebench-dev-materialization":
         try:
