@@ -17,8 +17,11 @@ def test_tool_schema_snapshot_records_stable_tool_order():
     assert snapshot.tool_parser_version == "repo_harness_tool_call_parser_v0"
     assert snapshot.tool_result_format_version == "repo_harness_tool_result_v0"
     read_file = next(tool for tool in snapshot.tools if tool.name == "read_file")
+    recovery = next(tool for tool in snapshot.tools if tool.name == "read_tool_result_artifact")
     assert read_file.read_only is True
     assert read_file.permission_required is True
+    assert recovery.read_only is True
+    assert recovery.permission_required is False
     grep = next(tool for tool in snapshot.tools if tool.name == "grep")
     bash = next(tool for tool in snapshot.tools if tool.name == "bash")
     run_tests = next(tool for tool in snapshot.tools if tool.name == "run_tests")

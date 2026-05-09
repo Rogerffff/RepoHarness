@@ -12,6 +12,11 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from repo_harness.context.tool_result_artifacts import (
+    ToolResultArtifactError,
+    ToolResultArtifactIndex,
+    read_tool_result_artifact as read_tool_result_artifact_page,
+)
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.errors import WorkspaceError
 from repo_harness.permissions import PermissionContext, PermissionDecision, PermissionSystem
@@ -32,6 +37,7 @@ DEFAULT_TOOL_ORDER = [
     "list_files",
     "glob_files",
     "read_file",
+    "read_tool_result_artifact",
     "grep",
     "symbol_search",
     "update_working_state",
@@ -183,6 +189,7 @@ class ToolExecutionContext:
     abort_signal: object | None = None
     file_state_cache: dict[str, str] = field(default_factory=dict)
     working_state: dict[str, Any] | None = None
+    tool_result_artifact_index: ToolResultArtifactIndex | None = None
 
     @property
     def workspace_adapter(self) -> WorkspaceAdapter:
@@ -355,6 +362,8 @@ class ToolExecutor:
                 return self._list_files(tool_call, normalized, context)
             if normalized.effective_tool_name == "read_file":
                 return self._read_file(tool_call, normalized, context)
+            if normalized.effective_tool_name == "read_tool_result_artifact":
+                return self._read_tool_result_artifact(tool_call, normalized, context)
             if normalized.effective_tool_name == "grep":
                 return self._grep(tool_call, normalized, context)
             if normalized.effective_tool_name == "symbol_search":
@@ -445,6 +454,13 @@ class ToolExecutor:
             if "limit" in args and "end_line" not in normalized_args:
                 start_line = int(normalized_args.get("start_line", 1))
                 normalized_args["end_line"] = start_line + int(args["limit"]) - 1
+            effective_args = dict(normalized_args)
+        elif requested == "read_tool_result_artifact":
+            normalized_args = {
+                "artifact_id": str(args["artifact_id"]),
+                "offset": int(args.get("offset", 0)),
+                "limit": int(args.get("limit", 8000)),
+            }
             effective_args = dict(normalized_args)
         elif requested == "grep":
             query = args.get("query", args.get("pattern"))
@@ -857,6 +873,113 @@ class ToolExecutor:
                     artifact_backed_full_result=True,
                     recovery_call=recovery_call,
                     recovery_hint=recovery_hint,
+                    context_effects=["tool_result_recoverable"],
+                ),
+            },
+        )
+
+    def _read_tool_result_artifact(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        if context.tool_result_artifact_index is None:
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="error",
+                content="tool_result_artifact_index_unavailable: no recoverable tool result artifacts are registered for this run.",
+                error_type="tool_result_artifact_index_unavailable",
+                typed={
+                    "result_envelope": _result_envelope(
+                        result_kind="tool_result_artifact_index_unavailable",
+                        semantic_complete=True,
+                        recovery_hint="Continue with currently visible context or re-run an allowed workspace tool.",
+                    ),
+                },
+            )
+        try:
+            page = read_tool_result_artifact_page(
+                context.tool_result_artifact_index,
+                artifact_id=str(normalized.normalized_arguments["artifact_id"]),
+                offset=int(normalized.normalized_arguments.get("offset", 0)),
+                limit=int(normalized.normalized_arguments.get("limit", 8000)),
+            )
+        except ToolResultArtifactError as exc:
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="error",
+                content=f"tool_result_artifact_unavailable: {exc}",
+                error_type="tool_result_artifact_unavailable",
+                typed={
+                    "artifact_id": normalized.normalized_arguments.get("artifact_id"),
+                    "offset": normalized.normalized_arguments.get("offset"),
+                    "limit": normalized.normalized_arguments.get("limit"),
+                    "result_envelope": _result_envelope(
+                        result_kind="tool_result_artifact_unavailable",
+                        semantic_complete=True,
+                        recovery_hint="Only artifact ids from provider-committed persisted tool result previews can be recovered.",
+                    ),
+                },
+            )
+        content = str(page["content"])
+        visible_limit = max(1, context.output_limits.max_tool_output_chars)
+        visible_content_chars = min(len(content), visible_limit)
+        output_budget_truncated = len(content) > visible_content_chars
+        visible_content = content[:visible_content_chars]
+        visible_next_offset = (
+            int(page["offset"]) + visible_content_chars
+            if output_budget_truncated
+            else page["next_offset"]
+        )
+        if page["next_offset"] is not None:
+            content += (
+                "\n[truncated] call read_tool_result_artifact("
+                f"artifact_id={page['artifact_id']!r}, offset={page['next_offset']}, "
+                f"limit={page['limit']}) to continue."
+            )
+        if output_budget_truncated:
+            visible_content += (
+                "\n[truncated] call read_tool_result_artifact("
+                f"artifact_id={page['artifact_id']!r}, offset={visible_next_offset}, "
+                f"limit={page['limit']}) to continue."
+            )
+        elif page["next_offset"] is not None:
+            visible_content = content
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status="ok",
+            content=visible_content,
+            truncated=visible_next_offset is not None,
+            typed={
+                **page,
+                "next_offset": visible_next_offset,
+                "output_budget_truncated": output_budget_truncated,
+                "requested_page_next_offset": page["next_offset"],
+                "result_envelope": _result_envelope(
+                    result_kind=(
+                        "tool_result_artifact_page_truncated"
+                        if visible_next_offset is not None
+                        else "tool_result_artifact_page_complete"
+                    ),
+                    semantic_complete=visible_next_offset is None,
+                    model_visible_text_truncated=visible_next_offset is not None,
+                    artifact_backed_full_result=True,
+                    recovery_call=(
+                        "read_tool_result_artifact("
+                        f"artifact_id={page['artifact_id']!r}, offset={visible_next_offset}, "
+                        f"limit={page['limit']})"
+                        if visible_next_offset is not None
+                        else None
+                    ),
+                    recovery_hint=(
+                        "Use next_offset to continue reading this stored tool result."
+                        if visible_next_offset is not None
+                        else "This page covers the remaining stored tool result content."
+                    ),
                     context_effects=["tool_result_recoverable"],
                 ),
             },
@@ -2283,6 +2406,43 @@ def build_tool(name: str) -> ToolDefinition:
             is_read_only=True,
             is_concurrency_safe=True,
         ),
+        "read_tool_result_artifact": ToolDefinition(
+            name="read_tool_result_artifact",
+            tool_version="repo_harness_read_tool_result_artifact_v0",
+            model_visible_description=(
+                "Recover a paginated page from a stored tool result artifact that was explicitly "
+                "referenced by a provider-committed persisted tool result preview. The artifact_id "
+                "is an opaque capability id, not a workspace path."
+            ),
+            model_visible_prompt=(
+                "Use read_tool_result_artifact only when a previous persisted tool result preview "
+                "gave an artifact_id. Pass artifact_id plus optional offset and limit. Do not pass "
+                "workspace file paths or ordinary artifact manifest ids."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["artifact_id"],
+                "properties": {
+                    "artifact_id": {"type": "string", "description": "Opaque recoverable tool result artifact id."},
+                    "offset": {"type": "integer", "description": "Zero-based character offset."},
+                    "limit": {"type": "integer", "description": "Maximum characters to return."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string"},
+                    "next_offset": {"type": ["integer", "null"]},
+                    "content_sha256": {"type": "string"},
+                    "tool_result_id": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_read_only=True,
+            is_concurrency_safe=True,
+            requires_permission=False,
+        ),
         "grep": ToolDefinition(
             name="grep",
             tool_version="repo_harness_grep_v1",
@@ -2542,6 +2702,9 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "read_file.end_line": (int, False),
         "read_file.offset": (int, False),
         "read_file.limit": (int, False),
+        "read_tool_result_artifact.artifact_id": (str, True),
+        "read_tool_result_artifact.offset": (int, False),
+        "read_tool_result_artifact.limit": (int, False),
         "grep.query": (str, True),
         "grep.pattern": (str, False),
         "grep.path": (str, False),
@@ -2589,13 +2752,14 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         if field_name in args and not _is_exact_type(args[field_name], expected_type):
             return _issue(field_name, _type_name(expected_type), args[field_name], retryable=True)
         if (
-            tool_name in {"read_file", "list_files", "glob_files", "grep", "symbol_search"}
+            tool_name in {"read_file", "read_tool_result_artifact", "list_files", "glob_files", "grep", "symbol_search"}
             and field_name in {"start_line", "end_line", "offset", "limit", "max_entries", "max_matches", "max_results", "context_lines"}
             and field_name in args
             and args[field_name] < (
                 0
                 if (
                     (field_name == "offset" and tool_name in {"list_files", "glob_files", "grep", "symbol_search"})
+                    or (field_name == "offset" and tool_name == "read_tool_result_artifact")
                     or (field_name == "context_lines" and tool_name == "grep")
                 )
                 else 1
@@ -2605,6 +2769,7 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
                 "non-negative integer"
                 if (
                     (field_name == "offset" and tool_name in {"list_files", "glob_files", "grep", "symbol_search"})
+                    or (field_name == "offset" and tool_name == "read_tool_result_artifact")
                     or (field_name == "context_lines" and tool_name == "grep")
                 )
                 else "positive integer"

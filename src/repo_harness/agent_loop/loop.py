@@ -32,7 +32,7 @@ from repo_harness.trajectory import ArtifactRef, RunRecorder, TranscriptRecord, 
 
 
 NO_PROGRESS_DIAGNOSTIC_POLICY_VERSION = "repo_harness_loop_no_progress_diagnostic_v0"
-NO_PROGRESS_READ_ONLY_TOOL_NAMES = frozenset({"list_files", "glob_files", "read_file", "grep", "symbol_search", "git_diff"})
+NO_PROGRESS_READ_ONLY_TOOL_NAMES = frozenset({"list_files", "glob_files", "read_file", "read_tool_result_artifact", "grep", "symbol_search", "git_diff"})
 NO_PROGRESS_PATCH_TOOL_NAMES = frozenset({"edit_file", "create_file"})
 NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD = 10
 NO_PROGRESS_REPEATED_INPUT_THRESHOLD = 3

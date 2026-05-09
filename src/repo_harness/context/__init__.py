@@ -18,6 +18,13 @@ from repo_harness.context.schemas import (
     ToolResultArtifactRecord,
     ToolResultCompactRecord,
 )
+from repo_harness.context.tool_result_artifacts import (
+    ToolResultArtifactError,
+    ToolResultArtifactIndex,
+    build_persisted_tool_result_preview,
+    persist_tool_result_content,
+    read_tool_result_artifact,
+)
 
 __all__ = [
     "AutoCompactRecord",
@@ -34,6 +41,11 @@ __all__ = [
     "MicroCompactRecord",
     "ModelInputSnapshot",
     "PreparedMessages",
+    "ToolResultArtifactError",
+    "ToolResultArtifactIndex",
     "ToolResultArtifactRecord",
     "ToolResultCompactRecord",
+    "build_persisted_tool_result_preview",
+    "persist_tool_result_content",
+    "read_tool_result_artifact",
 ]

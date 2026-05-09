@@ -6,6 +6,10 @@ import pytest
 
 import repo_harness.tools.minimal as minimal_tools
 from repo_harness.budget import BudgetManager
+from repo_harness.context.tool_result_artifacts import (
+    ToolResultArtifactIndex,
+    persist_tool_result_content,
+)
 from repo_harness.permissions import PermissionContext
 from repo_harness.tools import (
     DEFAULT_TOOL_ORDER,
@@ -44,6 +48,7 @@ def test_tool_definition_requires_model_visible_contract():
 
 def test_tool_model_visible_contract_explains_restricted_workflow():
     glob_files = build_tool("glob_files")
+    recovery = build_tool("read_tool_result_artifact")
     grep = build_tool("grep")
     symbol_search = build_tool("symbol_search")
     working_state = build_tool("update_working_state")
@@ -64,6 +69,10 @@ def test_tool_model_visible_contract_explains_restricted_workflow():
     assert build_tool("edit_file").input_schema["properties"]["replace_all"]["default"] is False
     assert "prior read_file" in build_tool("edit_file").model_visible_prompt
     assert "Before the final answer" in build_tool("git_diff").model_visible_prompt
+    assert recovery.is_read_only is True
+    assert recovery.requires_permission is False
+    assert "opaque capability id" in recovery.model_visible_description
+    assert recovery.input_schema["required"] == ["artifact_id"]
 
     assert "not a general shell" in bash.model_visible_description
     assert "do not use cd" in bash.model_visible_description
@@ -127,6 +136,113 @@ def test_read_file_accepts_offset_limit_aliases(tmp_path: Path):
     assert result.typed["end_line"] == 3
     assert result.typed["content_sha256"] == hashlib.sha256("one\ntwo\nthree\nfour\n".encode()).hexdigest()
     assert result.typed["raw_content_preview"] == "two\nthree\n"
+
+
+def test_read_tool_result_artifact_recovers_unlocked_page(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    record = persist_tool_result_content(
+        recorder=context.recorder,
+        tool_result_id="call_big_result",
+        tool_call_id="call_big",
+        tool_name="grep",
+        content="abcdef" * 2000,
+        publishable_after_visibility_scan=True,
+        contamination_scan_status="clean",
+    )
+    index = ToolResultArtifactIndex(run_dir=context.recorder.run_dir)
+    index.add(record)
+    index.unlock_after_provider_commit(record.artifact_id)
+    context.tool_result_artifact_index = index
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_recover",
+            tool_name="read_tool_result_artifact",
+            arguments={"artifact_id": record.artifact_id, "offset": 0, "limit": 10},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.content_preview.startswith("abcdefabcd")
+    assert result.typed["next_offset"] == 10
+    assert result.typed["content_sha256"] == record.content_sha256
+
+
+def test_read_tool_result_artifact_rejects_paths_and_locked_artifacts(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    record = persist_tool_result_content(
+        recorder=context.recorder,
+        tool_result_id="call_big_result",
+        tool_call_id="call_big",
+        tool_name="grep",
+        content="locked",
+        publishable_after_visibility_scan=True,
+        contamination_scan_status="clean",
+    )
+    index = ToolResultArtifactIndex(run_dir=context.recorder.run_dir)
+    index.add(record)
+    context.tool_result_artifact_index = index
+
+    path_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_recover_path",
+            tool_name="read_tool_result_artifact",
+            arguments={"artifact_id": "../artifacts/secret.txt"},
+            turn=1,
+        ),
+        context,
+    )
+    locked_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_recover_locked",
+            tool_name="read_tool_result_artifact",
+            arguments={"artifact_id": record.artifact_id},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert path_result.status == "error"
+    assert path_result.error_type == "tool_result_artifact_unavailable"
+    assert locked_result.status == "error"
+    assert "not unlocked" in locked_result.content_preview
+
+
+def test_read_tool_result_artifact_respects_tool_output_budget(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.output_limits = minimal_tools.ToolOutputLimits(max_tool_output_chars=5)
+    record = persist_tool_result_content(
+        recorder=context.recorder,
+        tool_result_id="call_big_result",
+        tool_call_id="call_big",
+        tool_name="grep",
+        content="abcdefghijklmnopqrstuvwxyz",
+        publishable_after_visibility_scan=True,
+        contamination_scan_status="clean",
+    )
+    index = ToolResultArtifactIndex(run_dir=context.recorder.run_dir)
+    index.add(record)
+    index.unlock_after_provider_commit(record.artifact_id)
+    context.tool_result_artifact_index = index
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_recover_budget",
+            tool_name="read_tool_result_artifact",
+            arguments={"artifact_id": record.artifact_id, "offset": 0, "limit": 20},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.truncated is True
+    assert result.typed["next_offset"] == 5
+    assert result.typed["output_budget_truncated"] is True
+    assert result.typed["result_envelope"]["semantic_complete"] is False
+    assert "offset=5" in result.content_preview
 
 
 @pytest.mark.parametrize("field", ["start_line", "end_line", "offset", "limit"])

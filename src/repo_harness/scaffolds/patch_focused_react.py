@@ -9,6 +9,7 @@ PATCH_FOCUSED_REACT_TOOL_ORDER = [
     "list_files",
     "glob_files",
     "read_file",
+    "read_tool_result_artifact",
     "grep",
     "symbol_search",
     "update_working_state",
