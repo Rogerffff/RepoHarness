@@ -633,6 +633,10 @@ class DockerWorkspaceAdapter:
             return "prebuilt"
         if not self.config.build_if_missing:
             raise WorkspaceError(f"Docker image is missing and build_if_missing=false: {self.image_ref}")
+        self._build_image()
+        return "local_build"
+
+    def _build_image(self) -> None:
         process = subprocess.run(
             [
                 self.environment.docker_path,
@@ -655,17 +659,27 @@ class DockerWorkspaceAdapter:
                 "Docker backend image build failed: "
                 + (process.stderr.strip() or process.stdout.strip())
             )
-        return "local_build"
 
     def _image_exists(self) -> bool:
         result = subprocess.run(
-            [self.environment.docker_path, "image", "inspect", self.image_ref],
-            stdout=subprocess.DEVNULL,
+            [
+                self.environment.docker_path,
+                "image",
+                "inspect",
+                self.image_ref,
+                "--format",
+                "{{.Os}}/{{.Architecture}}",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=False,
             timeout=30,
         )
-        return result.returncode == 0
+        if result.returncode != 0:
+            return False
+        image_platform = result.stdout.strip().splitlines()[0] if result.stdout.strip() else ""
+        return image_platform == self.requested_container_platform
 
     def _inspect_image(self) -> tuple[str, str]:
         result = subprocess.run(

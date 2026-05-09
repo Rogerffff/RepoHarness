@@ -375,7 +375,7 @@ def _metadata_sha256(task: RunnableTask, key: str) -> str | None:
 def _copy_source_tree(source: Path, destination: Path) -> None:
     if not source.exists() or not source.is_dir():
         raise WorkspaceError(f"source directory does not exist: {source}")
-    shutil.copytree(source, destination, ignore=_ignore_source_control)
+    shutil.copytree(source, destination, ignore=_ignore_source_control, symlinks=True)
 
 
 def _ignore_source_control(_directory: str, names: list[str]) -> set[str]:

@@ -76,6 +76,38 @@ def test_local_repository_clean_status_materializes(tmp_path: Path):
     assert not (checkout.root / ".git").exists()
 
 
+def test_fixture_source_materialization_preserves_symlink_directories(tmp_path: Path):
+    source = tmp_path / "fixture_with_symlink"
+    source.mkdir()
+    (source / "file.txt").write_text("content\n", encoding="utf-8")
+    link = source / "loop"
+    try:
+        link.symlink_to(source, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is not supported in this environment: {exc}")
+    task_path = tmp_path / "fixture_task.yaml"
+    payload = _minimal_task_payload()
+    payload["repo"] = source.as_posix()
+    payload["repo_source_spec"] = {
+        "source_type": "local_repository",
+        "source_path": source.as_posix(),
+        "base_commit": "fixed-symlink-fixture-v0",
+        "synthetic_base_id": "fixed-symlink-fixture-v0",
+        "decontamination_status": "manual_checked",
+    }
+    payload["base_commit"] = "fixed-symlink-fixture-v0"
+    payload["expected_files"] = ["file.txt"]
+    task_path.write_text(_dump_json_as_yaml(payload), encoding="utf-8")
+    loaded = load_task(task_path)
+
+    checkout = materialize_source(loaded.runnable_task, tmp_path / "checkout")
+
+    assert (checkout.root / "file.txt").read_text(encoding="utf-8") == "content\n"
+    assert (checkout.root / "loop").is_symlink()
+    assert (checkout.root / "loop").readlink() == source
+    assert sorted(path.name for path in checkout.root.iterdir()) == ["file.txt", "loop"]
+
+
 def test_local_repository_dirty_status_declaration_cannot_override_git_status(tmp_path: Path):
     repo = tmp_path / "repo"
     repo.mkdir()

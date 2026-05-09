@@ -77,6 +77,25 @@ def test_workspace_command_timeout_is_reported(tmp_path: Path):
     assert result.output_artifact_ref is not None
 
 
+def test_workspace_copy_preserves_symlink_directories(tmp_path: Path):
+    run_dir = tmp_path / "run_symlink_copy"
+    adapter = LocalWorkspaceAdapter(run_id="run_symlink_copy", run_dir=run_dir)
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "file.txt").write_text("content\n", encoding="utf-8")
+    try:
+        (source / "loop").symlink_to(source, target_is_directory=True)
+    except OSError as exc:
+        import pytest
+
+        pytest.skip(f"symlink creation is not supported in this environment: {exc}")
+
+    setup = adapter.create_setup_workspace(source)
+
+    assert sorted(path.name for path in setup.iterdir()) == ["file.txt", "loop"]
+    assert (setup / "loop").is_symlink()
+
+
 def test_workspace_patch_replay_includes_new_and_deleted_text_files(tmp_path: Path):
     loaded = load_task("tests/fixtures/tasks/task_001.yaml")
     run_dir = tmp_path / "run_patch"

@@ -439,6 +439,7 @@ def _write_task_definition(
             "final_only": True,
             "pre_verl_setup_shell": env_spec["setup_shell"],
             "pre_verl_verifier_command": verifier_command,
+            "requested_container_platform": env_spec.get("requested_container_platform"),
             "source_instance_id": task.source_record.get("source_instance_id"),
             "repo": task.source_record.get("repo"),
             "version": task.source_record.get("version"),
@@ -482,6 +483,7 @@ def _write_run_config(
         provider_options["thinking"] = {"type": args.deepseek_thinking}
         provider_options["reasoning_compatibility"] = "provider_private_state_replay"
     docker_base_image = str(env_spec.get("execution_image") or "python:3.12")
+    requested_container_platform = env_spec.get("requested_container_platform")
     config = {
         "run_id_prefix": args.run_id_prefix,
         "model": {
@@ -501,6 +503,7 @@ def _write_run_config(
                 "image_ref": _docker_image_ref(docker_base_image),
                 "build_base_image": docker_base_image,
                 "build_if_missing": True,
+                "requested_container_platform": requested_container_platform,
                 "network_policy": "controlled_network_for_setup_only",
                 "mount_policy": "workspace_read_write_tmp_only",
                 "cleanup_policy": "remove_containers_keep_images",

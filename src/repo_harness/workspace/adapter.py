@@ -612,6 +612,7 @@ def _copy_tree(source: Path, destination: Path) -> None:
         source,
         destination,
         ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc", ".pytest_cache"),
+        symlinks=True,
     )
 
 

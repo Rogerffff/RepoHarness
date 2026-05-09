@@ -3321,6 +3321,9 @@ def _status_from_result_path(path: Path | None) -> str:
 
 def _pre_verl_environment_for_repo(repo: str, version: str) -> dict[str, Any]:
     common_prefix = "rm -rf .pre_verl_venv && python -m venv .pre_verl_venv && . .pre_verl_venv/bin/activate && python -m pip install -q --upgrade pip setuptools wheel"
+    pvlib_pretend_version = str(version or "0.9").strip()
+    if pvlib_pretend_version and pvlib_pretend_version.count(".") == 1:
+        pvlib_pretend_version = f"{pvlib_pretend_version}.0"
     if repo == "sqlfluff/sqlfluff":
         return {
             "environment_id": f"pre_verl_sqlfluff_{version or 'unknown'}_python38_v0",
@@ -3364,12 +3367,18 @@ def _pre_verl_environment_for_repo(repo: str, version: str) -> dict[str, Any]:
             "pythonpath": ".",
             "setup_timeout_sec": 1500,
             "test_timeout_sec": 420,
-            "setup_shell": f"{common_prefix} && python -m pip install -q 'setuptools<70' 'numpy<2' pandas scipy pytest pytz requests packaging matplotlib -e .",
+            "setup_shell": (
+                f"{common_prefix} && export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PVLIB="
+                f"{shlex.quote(pvlib_pretend_version or '0.9.0')} && "
+                "python -m pip install -q 'setuptools<70' 'numpy<2' pandas scipy pytest "
+                "pytz requests packaging matplotlib -e ."
+            ),
         }
     if repo == "pyvista/pyvista":
         return {
             "environment_id": f"pre_verl_pyvista_{version or 'unknown'}_python39_v0",
             "execution_image": "python:3.9",
+            "requested_container_platform": "linux/amd64",
             "pythonpath": ".",
             "setup_timeout_sec": 1800,
             "test_timeout_sec": 420,
