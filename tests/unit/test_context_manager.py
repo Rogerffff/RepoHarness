@@ -390,3 +390,175 @@ def test_committed_persisted_preview_is_replayed_and_recovery_unlocked(tmp_path:
     assert second.context_event.data["context_reduction"]["reapplied_persisted_tool_result_ids"] == [
         "call_grep_result"
     ]
+
+
+def test_microcompact_clears_old_committed_compactable_tool_results(tmp_path: Path):
+    messages = _tool_result_messages(count=32, tool_name="read_file")
+    manager = ContextManager()
+    with RunRecorder("context-microcompact", tmp_path / "run", task_id="task") as recorder:
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(
+                microcompact_trigger_compactable_tool_result_chars=1000,
+            ),
+        )
+        manager.commit_prepared_tool_result_decisions(
+            context_revision=first.context_revision,
+            prepared_messages_ref=first.prepared_messages_ref,
+            model_call_id="model-call-1",
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=2,
+            context_config=ContextManagementConfig(
+                microcompact_trigger_compactable_tool_result_chars=1000,
+            ),
+        )
+
+    reduction = second.context_event.data["context_reduction"]
+    cleared_ids = [f"call_{index}_result" for index in range(17)]
+    kept_ids = [f"call_{index}_result" for index in range(17, 32)]
+
+    assert reduction["microcompact_applied"] is True
+    assert reduction["microcompact_cleared_tool_result_ids"] == cleared_ids
+    assert reduction["microcompact_kept_recent_tool_result_ids"] == kept_ids
+    assert second.context_event.data["tool_pairing_validation"]["ok"] is True
+    for message in second.messages[1:18]:
+        assert message["content"] == "[Old tool result content cleared]"
+        assert message["typed"]["microcompact_cleared"] is True
+        assert message["typed"]["microcompact_recovery_status"] == "raw_trajectory_only"
+    for message in second.messages[18:]:
+        assert message["content"] != "[Old tool result content cleared]"
+    state = second.content_replacement_state
+    assert state is not None
+    assert {
+        record.replacement_decision
+        for record in state.records
+        if record.original_tool_result_id in cleared_ids
+    } == {"provider_committed_full_visible"}
+
+
+def test_microcompact_skips_non_allowlisted_tool_results(tmp_path: Path):
+    messages = _tool_result_messages(count=32, tool_name="run_tests")
+    manager = ContextManager()
+    with RunRecorder("context-microcompact-skip", tmp_path / "run", task_id="task") as recorder:
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(
+                microcompact_trigger_compactable_tool_result_chars=1000,
+            ),
+        )
+        manager.commit_prepared_tool_result_decisions(
+            context_revision=first.context_revision,
+            prepared_messages_ref=first.prepared_messages_ref,
+            model_call_id="model-call-1",
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=2,
+            context_config=ContextManagementConfig(
+                microcompact_trigger_compactable_tool_result_chars=1000,
+            ),
+        )
+
+    assert second.context_event.data["context_reduction"]["microcompact_applied"] is False
+    assert all(
+        message["content"] != "[Old tool result content cleared]"
+        for message in second.messages
+        if message.get("role") == "tool"
+    )
+
+
+def test_microcompact_does_not_clear_committed_persisted_preview(tmp_path: Path):
+    content = "large tool output\n" * 80
+    messages = [
+        {
+            "role": "assistant",
+            "content": "call tool",
+            "turn": 1,
+            "tool_calls": [
+                {"tool_call_id": "call_grep", "tool_name": "grep", "arguments": {}, "turn": 1}
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_grep",
+            "tool_result_id": "call_grep_result",
+            "tool_name": "grep",
+            "content": content,
+            "normalized_arguments": {"query": "needle"},
+        },
+    ]
+    manager = ContextManager()
+    with RunRecorder("context-microcompact-preview", tmp_path / "run", task_id="task") as recorder:
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10),
+        )
+        manager.commit_prepared_tool_result_decisions(
+            context_revision=first.context_revision,
+            prepared_messages_ref=first.prepared_messages_ref,
+            model_call_id="model-call-1",
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=2,
+            context_config=ContextManagementConfig(
+                microcompact_trigger_compactable_tool_result_count=1,
+                microcompact_trigger_compactable_tool_result_chars=1,
+            ),
+        )
+
+    assert second.context_event.data["context_reduction"]["microcompact_applied"] is False
+    assert second.messages[1]["content"] == first.messages[1]["content"]
+
+
+def _tool_result_messages(*, count: int, tool_name: str) -> list[dict[str, object]]:
+    tool_calls = [
+        {
+            "tool_call_id": f"call_{index}",
+            "tool_name": tool_name,
+            "arguments": {"path": f"file_{index}.py"},
+            "turn": 1,
+        }
+        for index in range(count)
+    ]
+    messages: list[dict[str, object]] = [
+        {
+            "role": "assistant",
+            "content": "call tools",
+            "turn": 1,
+            "tool_calls": tool_calls,
+        }
+    ]
+    for index in range(count):
+        messages.append(
+            {
+                "role": "tool",
+                "turn": 1,
+                "tool_call_id": f"call_{index}",
+                "tool_result_id": f"call_{index}_result",
+                "tool_name": tool_name,
+                "content": f"tool output {index}\n" + ("x" * 100),
+                "normalized_arguments": {"path": f"file_{index}.py"},
+                "status": "ok",
+                "typed": {},
+                "artifact_refs": [],
+            }
+        )
+    return messages

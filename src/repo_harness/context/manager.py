@@ -11,6 +11,7 @@ from repo_harness.context.schemas import (
     ContentReplacementState,
     PreparedMessages,
 )
+from repo_harness.context.microcompact import apply_microcompact
 from repo_harness.context.tool_result_artifacts import (
     ToolResultArtifactIndex,
     build_persisted_tool_result_preview,
@@ -63,6 +64,43 @@ class ContextManager:
         self._candidate_replacement_text_by_revision[
             self.context_revision
         ] = candidate_replacement_text
+        microcompact = apply_microcompact(
+            messages=prepared_messages,
+            config=config,
+            context_revision=self.context_revision,
+            eligible_tool_result_ids={
+                tool_result_id
+                for tool_result_id, record in self._records_by_tool_result_id.items()
+                if record.replacement_decision == "provider_committed_full_visible"
+            },
+        )
+        prepared_messages = microcompact.messages
+        microcompact_ref = None
+        if microcompact.record is not None:
+            microcompact_ref = recorder.write_json_artifact(
+                "microcompact_record",
+                microcompact.record.model_dump(mode="json"),
+                {"budget_policy": "preserve_json"},
+            )
+        reduction_data = {
+            **reduction_data,
+            "microcompact_applied": microcompact.record is not None,
+            "microcompact_record_ref": (
+                microcompact_ref.model_dump(mode="json") if microcompact_ref else None
+            ),
+            "microcompact_policy": config.microcompact_policy,
+            "microcompact_cleared_message": config.microcompact_cleared_message,
+            "microcompact_cleared_tool_result_ids": (
+                microcompact.record.cleared_tool_result_ids
+                if microcompact.record is not None
+                else []
+            ),
+            "microcompact_kept_recent_tool_result_ids": (
+                microcompact.record.kept_recent_tool_result_ids
+                if microcompact.record is not None
+                else []
+            ),
+        }
         model_input_hash = stable_hash(prepared_messages)
         internal_char_estimate_before = _internal_char_estimate(messages)
         internal_char_estimate = _internal_char_estimate(prepared_messages)
@@ -121,6 +159,9 @@ class ContextManager:
                 "internal_token_estimate": internal_token_estimate,
                 "threshold_decision_source": "provider_ready_token_estimate",
                 "content_replacement_state_ref": state_ref.model_dump(mode="json"),
+                "microcompact_record_ref": (
+                    microcompact_ref.model_dump(mode="json") if microcompact_ref else None
+                ),
             },
             {"budget_policy": "preserve_json"},
         )
@@ -131,7 +172,7 @@ class ContextManager:
             task_id=task_id,
             turn=turn,
             event_type="context_prepared",
-            artifact_refs=[prepared_ref, state_ref],
+            artifact_refs=[ref for ref in [prepared_ref, state_ref, microcompact_ref] if ref is not None],
             data={
                 "context_revision": self.context_revision,
                 "model_input_hash": model_input_hash,
