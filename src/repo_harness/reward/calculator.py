@@ -65,15 +65,21 @@ def compute_reward_metadata(
             - regression_penalty
             - timeout_penalty
         )
-    final_reward = max(0.0, min(1.0, raw_reward))
+    diagnostic_reward_before_invalid_clip = max(0.0, min(1.0, raw_reward))
     invalid_for_training = bool(
         final_verifier.timeout
-        or final_verifier.error_type in {"low_parser_confidence", "patch_apply_failed"}
+        or final_verifier.error_type
+        in {
+            "low_parser_confidence",
+            "patch_apply_failed",
+            "final_verifier_environment_error",
+        }
         or final_verifier.parser_confidence < 0.5
     )
     invalid_reason = None
     if invalid_for_training:
         invalid_reason = final_verifier.error_type or "inconclusive_final_verifier"
+    final_reward = 0.0 if invalid_for_training else diagnostic_reward_before_invalid_clip
 
     return RewardMetadata(
         reward_version=REWARD_VERSION,
@@ -87,6 +93,7 @@ def compute_reward_metadata(
             "patch_size_penalty": patch_size_penalty,
             "regression_penalty": regression_penalty,
             "timeout_penalty": timeout_penalty,
+            "diagnostic_reward_before_invalid_clip": diagnostic_reward_before_invalid_clip,
         },
         sources={
             "turn_count": event_counts.get("turn_count", 0),

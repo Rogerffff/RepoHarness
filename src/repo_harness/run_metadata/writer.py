@@ -149,6 +149,7 @@ def build_run_metadata(
     artifact_errors = verify_artifact_manifest(run_path)
     failure_diagnostics = _failure_diagnostics(
         baseline=baseline,
+        run_path=run_path,
         run_outcome=run_outcome,
         final_verifier_status=final_verifier_status,
         agent_stop_reason=agent_stop_reason,
@@ -308,10 +309,34 @@ def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadi
 def _failure_diagnostics(
     *,
     baseline: BaselineResult,
+    run_path: Path,
     run_outcome: str,
     final_verifier_status: str,
     agent_stop_reason: str | None,
 ) -> list[FailureDiagnostics]:
+    boundary = _read_json_if_exists(run_path / "final_verifier_boundary.json")
+    if (
+        boundary.get("final_verifier_status") == "not_executed"
+        and boundary.get("failure_category") == "final_verifier_environment_error"
+    ):
+        return [
+            FailureDiagnostics(
+                failure_category=FailureCategory.environment_failure,
+                failure_type=FailureType.final_verifier_environment_error,
+                recoverable=False,
+                source_component="final_verifier_boundary",
+                message=(
+                    "formal final verifier could not execute task assertions because "
+                    "the verifier environment failed"
+                ),
+                details={
+                    "final_verifier_boundary_status": boundary.get("final_verifier_status"),
+                    "final_verifier_boundary_failure_category": boundary.get("failure_category"),
+                    "final_verifier_boundary_failure_owner": boundary.get("failure_owner"),
+                    "invalid_for_training": True,
+                },
+            )
+        ]
     if baseline.status in {"invalid", "flaky"}:
         return [
             FailureDiagnostics(

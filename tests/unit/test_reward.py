@@ -49,6 +49,40 @@ def test_reward_marks_timeout_invalid_for_training():
 
     assert reward.invalid_for_training is True
     assert reward.invalid_reason == "test_timeout"
+    assert reward.final_reward == 0.0
+    assert reward.components["diagnostic_reward_before_invalid_clip"] > 0.0
+
+
+def test_reward_marks_final_verifier_environment_error_invalid_for_training():
+    reward = compute_reward_metadata(
+        verifier_result(
+            accepted=False,
+            parser_confidence=0.95,
+            fail_to_pass={"passed": 0, "total": 1},
+            pass_to_pass={"passed": 1, "total": 1},
+            error_type="final_verifier_environment_error",
+        ),
+    )
+
+    assert reward.invalid_for_training is True
+    assert reward.invalid_reason == "final_verifier_environment_error"
+    assert reward.final_reward == 0.0
+
+
+def test_reward_clips_not_executed_final_verifier_samples_to_zero():
+    reward = compute_reward_metadata(
+        verifier_result(
+            accepted=False,
+            parser_confidence=0.0,
+            fail_to_pass={"passed": 0, "total": 0},
+            pass_to_pass={"passed": 0, "total": 0},
+            error_type="task_timeout_before_final_verifier",
+        ),
+    )
+
+    assert reward.invalid_for_training is True
+    assert reward.invalid_reason == "task_timeout_before_final_verifier"
+    assert reward.final_reward == 0.0
 
 
 def test_metrics_record_derives_final_status():

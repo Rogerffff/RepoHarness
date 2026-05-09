@@ -461,11 +461,30 @@ def run_pre_verl_swebench_dev_final_verifier(
                         )
                         timeout = bool(f2p.get("timeout") or p2p.get("timeout"))
                         selector_input_error = _selector_input_error(f2p) or _selector_input_error(p2p)
+                        environment_error = _selector_environment_error(f2p) or _selector_environment_error(p2p)
+                        if environment_error:
+                            environment_error_path = run_root / "pre_verl_final_verifier_environment_error.json"
+                            _write_json(
+                                environment_error_path,
+                                {
+                                    "schema_version": "repo_harness_pre_verl_environment_error_v0",
+                                    "status": "failed",
+                                    **environment_error,
+                                },
+                            )
+                            result_refs["final_verifier_environment_error_ref"] = _file_ref(
+                                environment_error_path,
+                                base_dir=run_root,
+                                artifact_id="pre_verl_final_verifier_environment_error",
+                                kind="pre_verl_final_verifier_environment_error",
+                                redaction_status="evaluator_only",
+                            )
                         accepted = bool(
                             f2p.get("exit_code") == 0
                             and p2p.get("exit_code") == 0
                             and not timeout
                             and not selector_input_error
+                            and not environment_error
                         )
                         if accepted:
                             final_status = "accepted"
@@ -479,6 +498,10 @@ def run_pre_verl_swebench_dev_final_verifier(
                             final_status = "not_executed"
                             failure_category = "selector_input_invalid"
                             failure_owner = "harness_or_verifier_input"
+                        elif environment_error:
+                            final_status = "not_executed"
+                            failure_category = "final_verifier_environment_error"
+                            failure_owner = "harness_or_environment"
                         else:
                             final_status = "rejected"
                             failure_category = "model_patch_rejected_by_final_verifier"
@@ -1015,6 +1038,48 @@ def _selector_match_summary(test_cases: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _selector_input_error(payload: dict[str, Any]) -> bool:
     return bool(payload.get("selector_input_invalid"))
+
+
+_FINAL_VERIFIER_ENVIRONMENT_ERROR_MARKERS = (
+    "cannot open shared object file",
+    "libgl.so.1",
+    "libegl.so",
+    "libosmesa",
+    "libxrender.so",
+    "libxext.so",
+    "libsm.so",
+    "dlopen",
+    "shared library",
+)
+
+
+def _selector_environment_error(payload: dict[str, Any]) -> dict[str, Any] | None:
+    if str(payload.get("pytest_exit_reason") or "") != "pytest_config_or_import_error":
+        return None
+    stdout = str(payload.get("stdout_preview") or "")
+    stderr = str(payload.get("stderr_preview") or "")
+    combined = f"{stdout}\n{stderr}".lower()
+    matched_marker = next(
+        (marker for marker in _FINAL_VERIFIER_ENVIRONMENT_ERROR_MARKERS if marker in combined),
+        None,
+    )
+    if matched_marker is None:
+        return None
+    return {
+        "failure_category": "final_verifier_environment_error",
+        "failure_owner": "harness_or_environment",
+        "suite": payload.get("suite"),
+        "pytest_exit_reason": payload.get("pytest_exit_reason"),
+        "matched_environment_error_marker": matched_marker,
+        "exit_code": payload.get("exit_code"),
+        "timeout": payload.get("timeout"),
+        "stdout_preview": stdout,
+        "stderr_preview": stderr,
+        "output_artifact_ref": payload.get("output_artifact_ref"),
+        "stdout_ref": payload.get("stdout_ref"),
+        "stderr_ref": payload.get("stderr_ref"),
+        "container_execution_facts_ref": payload.get("container_execution_facts_ref"),
+    }
 
 
 def _execution_result_payload(result: ExecutionResult) -> dict[str, Any]:

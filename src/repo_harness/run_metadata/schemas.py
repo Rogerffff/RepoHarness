@@ -57,6 +57,7 @@ class FailureType(str, Enum):
     environment_setup_failed = "environment_setup_failed"
     baseline_quality_failed = "baseline_quality_failed"
     final_verifier_failed = "final_verifier_failed"
+    final_verifier_environment_error = "final_verifier_environment_error"
     reward_hacking_suspected = "reward_hacking_suspected"
     unknown_failure = "unknown_failure"
 

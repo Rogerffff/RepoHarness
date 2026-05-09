@@ -11,8 +11,10 @@ from repo_harness.run_metadata.fingerprint import (
     build_local_environment_fingerprint,
     compute_source_tree_hash,
 )
+from repo_harness.run_metadata.schemas import FailureCategory, FailureType
 from repo_harness.run_metadata.tool_snapshot import write_tool_schema_snapshot
 from repo_harness.run_metadata.writer import (
+    _failure_diagnostics,
     build_run_config_facts,
     build_run_metadata,
     write_run_config_facts,
@@ -159,6 +161,45 @@ def test_run_config_facts_are_immutable_root_facts(tmp_path: Path):
         write_run_config_facts(run_dir, facts)
         with pytest.raises(FileExistsError):
             write_run_config_facts(run_dir, facts)
+
+
+def test_failure_diagnostics_uses_boundary_for_final_verifier_environment_error(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run_final_verifier_environment_error"
+    run_dir.mkdir()
+    (run_dir / "events.jsonl").write_text("", encoding="utf-8")
+    (run_dir / "final_verifier_boundary.json").write_text(
+        json.dumps(
+            {
+                "final_verifier_status": "not_executed",
+                "final_verifier_ran": True,
+                "failure_category": "final_verifier_environment_error",
+                "failure_owner": "harness_or_environment",
+                "final_verifier_environment_error_ref": {
+                    "relative_path": "pre_verl_final_verifier_environment_error.json"
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="inconclusive",
+        final_verifier_status="not_executed",
+        agent_stop_reason="final_answer",
+    )
+
+    assert diagnostics[0].failure_category == FailureCategory.environment_failure
+    assert diagnostics[0].failure_type == FailureType.final_verifier_environment_error
+    assert (
+        diagnostics[0].details["final_verifier_boundary_failure_category"]
+        == "final_verifier_environment_error"
+    )
+    assert diagnostics[0].details["invalid_for_training"] is True
 
 
 def test_environment_fingerprint_records_setup_and_dependency_refs(tmp_path: Path):

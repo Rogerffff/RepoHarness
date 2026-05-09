@@ -12,6 +12,7 @@ from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
     _empty_patch_failure_attribution,
     _append_boundary_step_event,
+    _selector_environment_error,
     _selector_input_error,
     _selector_result_payload,
     inspect_model_visible_context,
@@ -370,6 +371,37 @@ def test_pre_verl_boundary_step_event_records_output_audit_fields(tmp_path: Path
     assert event["data"]["stdout_ref"]["artifact_id"] == "stdout"
     assert event["data"]["stderr_ref"]["artifact_id"] == "stderr"
     assert event["data"]["captured_output_empty"] is False
+
+
+def test_pre_verl_selector_environment_error_requires_external_library_marker() -> None:
+    environment_error = _selector_environment_error(
+        {
+            "suite": "fail_to_pass",
+            "exit_code": 4,
+            "timeout": False,
+            "pytest_exit_reason": "pytest_config_or_import_error",
+            "stderr_preview": "ImportError: libGL.so.1: cannot open shared object file",
+            "stderr_ref": {"artifact_id": "stderr"},
+        }
+    )
+
+    assert environment_error is not None
+    assert environment_error["failure_category"] == "final_verifier_environment_error"
+    assert environment_error["failure_owner"] == "harness_or_environment"
+    assert environment_error["matched_environment_error_marker"] == "cannot open shared object file"
+    assert environment_error["stderr_ref"] == {"artifact_id": "stderr"}
+
+    model_import_error = _selector_environment_error(
+        {
+            "suite": "pass_to_pass",
+            "exit_code": 2,
+            "timeout": False,
+            "pytest_exit_reason": "pytest_config_or_import_error",
+            "stderr_preview": "ModuleNotFoundError: No module named 'project_internal_module'",
+        }
+    )
+
+    assert model_import_error is None
 
 
 @pytest.mark.parametrize(
