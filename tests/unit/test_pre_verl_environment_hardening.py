@@ -78,3 +78,46 @@ def test_agentloop_scheduler_propagates_repo_requested_container_platform(tmp_pa
     payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     assert payload["runtime"]["docker_backend"]["build_base_image"] == "python:3.9"
     assert payload["runtime"]["docker_backend"]["requested_container_platform"] == "linux/amd64"
+
+
+def test_pyvista_task_definition_verifier_command_inherits_runtime_shell_prefix(tmp_path: Path) -> None:
+    script = _load_scheduler_module()
+    task_id = "pre_verl_dev_018_pyvista__pyvista_4315"
+    materialization_entry_path = tmp_path / "materialized" / "entries" / task_id / "entry.json"
+    materialization_entry_path.parent.mkdir(parents=True)
+    materialization_entry_path.write_text("{}", encoding="utf-8")
+    task = script.SelectedTask(
+        task_id=task_id,
+        source_record_path=tmp_path / "source_record.json",
+        source_record={
+            "repo": "pyvista/pyvista",
+            "version": "0.39",
+            "source_instance_id": task_id,
+            "swebench_dev_materialization_entry_ref": {"path": materialization_entry_path.as_posix()},
+            "source_tree_sha256": "0" * 64,
+        },
+        adapter_visible_input={"problem_statement": "PyVista needs OpenGL runtime libraries."},
+        evaluator_only_evidence={"PASS_TO_PASS": ["tests/test_smoke.py::test_import"]},
+        materialization_entry={
+            "test_patch_apply_result_ref": {"path": (tmp_path / "apply.json").as_posix()},
+            "test_patch_apply_status": "clean",
+        },
+        verifier_plan={
+            "fail_to_pass_selectors": ["tests/test_smoke.py::test_import"],
+            "test_patch_ref": {"path": (tmp_path / "hidden.patch").as_posix(), "sha256": "1" * 64},
+        },
+    )
+
+    task_path, _ = script._write_task_definition(
+        task=task,
+        task_set_manifest_path=tmp_path / "manifest.json",
+        tasks_dir=tmp_path / "tasks",
+        selectors_dir=tmp_path / "selectors",
+    )
+
+    payload = yaml.safe_load(task_path.read_text(encoding="utf-8"))
+    verifier_command = payload["metadata"]["pre_verl_verifier_command"]
+    assert "apt-get update" in verifier_command
+    assert "libgl1" in verifier_command
+    assert ". .pre_verl_venv/bin/activate" in verifier_command
+    assert "python -m pytest -q" in verifier_command

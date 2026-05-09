@@ -73,3 +73,77 @@ def test_dev23_issue_scanner_finds_slow_wide_symbol_search(tmp_path: Path) -> No
     kinds = {issue["kind"] for issue in report["issues"]}
     assert "slow_symbol_search" in kinds
     assert "wide_symbol_search_without_recovery" in kinds
+
+
+def test_dev23_issue_scanner_requires_split_output_refs_for_pytest_exit_code_4(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    task_dir = run_dir / "run_task_runs" / "task_001"
+    _write_json(
+        task_dir / "pre_verl_final_verifier_result.json",
+        {
+            "fail_to_pass_result": {
+                "exit_code": 4,
+                "summary_counts": {},
+                "failed_count": 0,
+                "error_count": 0,
+                "failed_nodeids": [],
+                "error_nodeids": [],
+                "output_artifact_ref": {"path": "combined.txt", "sha256": "0" * 64},
+                "pytest_exit_reason": "pytest_collection_error",
+            },
+        },
+    )
+
+    report = scan_run_dir(run_dir)
+
+    issues = [issue for issue in report["issues"] if issue["kind"] == "pytest_exit_code_4_missing_output_audit"]
+    assert len(issues) == 1
+    assert issues[0]["details"]["missing_output_audit"] is True
+
+
+def test_dev23_issue_scanner_environment_error_requires_system_library_marker(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    import_error_task = run_dir / "run_task_runs" / "task_import_error"
+    shared_library_task = run_dir / "run_task_runs" / "task_shared_library"
+    _write_json(
+        import_error_task / "pre_verl_final_verifier_result.json",
+        {
+            "fail_to_pass_result": {
+                "exit_code": 4,
+                "summary_counts": {},
+                "failed_count": 0,
+                "error_count": 0,
+                "failed_nodeids": [],
+                "error_nodeids": [],
+                "stdout_ref": {"path": "stdout.txt", "sha256": "0" * 64},
+                "stdout_preview": "ModuleNotFoundError: No module named 'project_internal_module'",
+                "pytest_exit_reason": "pytest_collection_error",
+            },
+        },
+    )
+    _write_json(
+        shared_library_task / "pre_verl_final_verifier_result.json",
+        {
+            "fail_to_pass_result": {
+                "exit_code": 4,
+                "summary_counts": {},
+                "failed_count": 0,
+                "error_count": 0,
+                "failed_nodeids": [],
+                "error_nodeids": [],
+                "stderr_ref": {"path": "stderr.txt", "sha256": "1" * 64},
+                "stderr_preview": "ImportError: libGL.so.1: cannot open shared object file",
+                "pytest_exit_reason": "pytest_config_or_import_error",
+            },
+        },
+    )
+
+    report = scan_run_dir(run_dir)
+
+    flagged_tasks = {
+        issue["task_run_id"]
+        for issue in report["issues"]
+        if issue["kind"] == "pytest_exit_code_4_environment_import_error"
+    }
+    assert "task_import_error" not in flagged_tasks
+    assert "task_shared_library" in flagged_tasks

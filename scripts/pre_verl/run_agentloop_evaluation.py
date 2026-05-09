@@ -751,11 +751,16 @@ def _read_json_or_none(path: Path) -> dict[str, Any] | None:
 
 
 def _verifier_command(env_spec: dict[str, Any]) -> str:
-    prefix = ". .pre_verl_venv/bin/activate"
+    command_parts: list[str] = []
+    runtime_prefix = str(env_spec.get("runtime_shell_prefix") or "").strip()
+    if runtime_prefix:
+        command_parts.append(runtime_prefix)
+    command_parts.append(". .pre_verl_venv/bin/activate")
     pythonpath = str(env_spec.get("pythonpath") or "").strip()
     if pythonpath:
-        prefix = f"{prefix} && export PYTHONPATH={shlex.quote(pythonpath)}"
-    return f"{prefix} && python -m pytest -q"
+        command_parts.append(f"export PYTHONPATH={shlex.quote(pythonpath)}")
+    command_parts.append("python -m pytest -q")
+    return " && ".join(command_parts)
 
 
 def _budget_payload(args: argparse.Namespace) -> dict[str, Any]:

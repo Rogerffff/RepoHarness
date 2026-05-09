@@ -12,6 +12,17 @@ from typing import Any
 SLOW_SYMBOL_SEARCH_MS = 5000
 WIDE_SYMBOL_SEARCH_CANDIDATE_THRESHOLD = 120
 STATUS_PREFIXES = ("FAILED ", "ERROR ", "PASSED ", "SKIPPED ", "XFAIL ", "XPASS ")
+ENVIRONMENT_IMPORT_ERROR_MARKERS = (
+    "cannot open shared object file",
+    "libgl.so.1",
+    "libegl.so",
+    "libosmesa",
+    "libxrender.so",
+    "libxext.so",
+    "libsm.so",
+    "shared library",
+    "dlopen",
+)
 
 
 def main() -> int:
@@ -140,16 +151,7 @@ def _scan_final_verifier_result(task_run_dir: Path) -> list[dict[str, Any]]:
                 )
             )
         if exit_code == 4:
-            missing_output = not any(
-                result.get(key)
-                for key in (
-                    "stdout_ref",
-                    "stderr_ref",
-                    "stdout_preview",
-                    "stderr_preview",
-                    "output_artifact_ref",
-                )
-            )
+            missing_output = not _has_split_verifier_output_audit(result)
             if missing_output or not result.get("pytest_exit_reason"):
                 issues.append(
                     _issue(
@@ -257,14 +259,19 @@ def _issue(
 
 def _looks_like_environment_import_error(text: str) -> bool:
     lowered = text.lower()
-    needles = (
-        "cannot open shared object file",
-        "libgl.so.1",
-        "modulenotfounderror",
-        "importerror",
-        "no module named",
+    return any(needle in lowered for needle in ENVIRONMENT_IMPORT_ERROR_MARKERS)
+
+
+def _has_split_verifier_output_audit(result: dict[str, Any]) -> bool:
+    return any(
+        result.get(key)
+        for key in (
+            "stdout_ref",
+            "stderr_ref",
+            "stdout_preview",
+            "stderr_preview",
+        )
     )
-    return any(needle in lowered for needle in needles)
 
 
 def _read_json(path: Path) -> Any:
