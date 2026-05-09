@@ -5,7 +5,12 @@ from pathlib import Path
 import pytest
 
 from repo_harness.agent_loop import AgentLoop
+from repo_harness.agent_loop.loop import _record_interrupted_tool_calls, _record_tool_result
+from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetManager
+from repo_harness.budget.schemas import BudgetState
+from repo_harness.config import ContextManagementConfig
+from repo_harness.context import ToolResultArtifactIndex
 from repo_harness.model_client import FakeModelClient, ModelCallEvent, ModelMessage, ModelResponse
 from repo_harness.model_client.provider_private_state import provider_private_state_store
 from repo_harness.schema_base import stable_hash
@@ -22,6 +27,134 @@ def test_agent_loop_accepts_valid_final_answer(tmp_path: Path):
     )
 
     assert state.agent_stop_reason == "final_answer"
+
+
+def test_record_tool_result_persists_single_oversized_result(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    messages: list[dict[str, object]] = []
+    state = AgentLoopState(
+        run_id="single-tool-budget",
+        task_id="task",
+        messages=messages,
+        budget_state=BudgetState(started_at="2026-05-10T00:00:00+00:00"),
+    )
+    content = "large tool output\n" * 20
+    tool_result = ToolResult(
+        tool_result_id="call_big_result",
+        tool_call_id="call_big",
+        tool_name="grep",
+        requested_tool_name="grep",
+        effective_tool_name="grep",
+        normalized_input_hash=stable_hash({"query": "large"}),
+        status="ok",
+        content_preview=content,
+    )
+    with RunRecorder("single-tool-budget", run_dir, task_id="task") as recorder:
+        index = ToolResultArtifactIndex(run_dir=run_dir)
+        _record_tool_result(
+            tool_result_artifact_index=index,
+            context_config=ContextManagementConfig(max_single_tool_result_chars=50),
+            run_id="single-tool-budget",
+            task_id="task",
+            turn=1,
+            tool_result=tool_result,
+            state=state,
+            recorder=recorder,
+            messages=messages,
+        )
+
+    assert len(index.records_by_artifact_id) == 1
+    record = next(iter(index.records_by_artifact_id.values()))
+    assert record.tool_result_id == "call_big_result"
+    assert record.recovery_unlocked_after_provider_commit is False
+    assert messages[0]["content"] != content
+    assert "<persisted-output>" in str(messages[0]["content"])
+    assert record.artifact_id in str(messages[0]["content"])
+    assert messages[0]["typed"]["single_tool_result_persisted"] is True
+    assert messages[0]["typed"]["single_tool_result_original_chars"] == len(content)
+    assert messages[0]["artifact_refs"][0]["kind"] == "tool_result_original_content"
+
+
+def test_record_tool_result_does_not_persist_recovery_tool_result(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    messages: list[dict[str, object]] = []
+    state = AgentLoopState(
+        run_id="recovery-tool-budget",
+        task_id="task",
+        messages=messages,
+        budget_state=BudgetState(started_at="2026-05-10T00:00:00+00:00"),
+    )
+    content = "recovered artifact content\n" * 20
+    tool_result = ToolResult(
+        tool_result_id="call_recover_result",
+        tool_call_id="call_recover",
+        tool_name="read_tool_result_artifact",
+        requested_tool_name="read_tool_result_artifact",
+        effective_tool_name="read_tool_result_artifact",
+        normalized_input_hash=stable_hash({"artifact_id": "tool-result/example"}),
+        status="ok",
+        content_preview=content,
+    )
+    with RunRecorder("recovery-tool-budget", run_dir, task_id="task") as recorder:
+        index = ToolResultArtifactIndex(run_dir=run_dir)
+        _record_tool_result(
+            tool_result_artifact_index=index,
+            context_config=ContextManagementConfig(max_single_tool_result_chars=1),
+            run_id="recovery-tool-budget",
+            task_id="task",
+            turn=1,
+            tool_result=tool_result,
+            state=state,
+            recorder=recorder,
+            messages=messages,
+        )
+
+    assert index.records_by_artifact_id == {}
+    assert messages[0]["content"] == content
+    assert messages[0]["typed"].get("single_tool_result_persisted") is None
+
+
+def test_interrupted_tool_calls_use_single_tool_result_budget(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    messages: list[dict[str, object]] = []
+    state = AgentLoopState(
+        run_id="interrupted-tool-budget",
+        task_id="task",
+        messages=messages,
+        budget_state=BudgetState(started_at="2026-05-10T00:00:00+00:00"),
+    )
+    calls = [
+        ToolCall(
+            tool_call_id="call_remaining",
+            tool_name="read_file",
+            arguments={"path": "demo.py"},
+            turn=1,
+        )
+    ]
+    with RunRecorder("interrupted-tool-budget", run_dir, task_id="task") as recorder:
+        index = ToolResultArtifactIndex(run_dir=run_dir)
+        _record_interrupted_tool_calls(
+            tool_result_artifact_index=index,
+            context_config=ContextManagementConfig(max_single_tool_result_chars=10),
+            run_id="interrupted-tool-budget",
+            task_id="task",
+            turn=1,
+            tool_calls=calls,
+            reason="max_tool_calls",
+            state=state,
+            recorder=recorder,
+            messages=messages,
+            emit_tool_requested=False,
+        )
+
+    assert len(index.records_by_artifact_id) == 1
+    record = next(iter(index.records_by_artifact_id.values()))
+    assert record.tool_result_id == "call_remaining_result"
+    assert messages[0]["tool_call_id"] == "call_remaining"
+    assert "<persisted-output>" in str(messages[0]["content"])
+    assert record.artifact_id in str(messages[0]["content"])
+    assert messages[0]["typed"]["single_tool_result_persisted"] is True
+    assert messages[0]["artifact_refs"][0]["kind"] == "tool_result_original_content"
 
 
 def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):

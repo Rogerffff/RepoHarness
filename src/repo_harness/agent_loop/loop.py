@@ -11,7 +11,12 @@ from typing import Any, Callable
 from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetManager, BudgetState
 from repo_harness.config import ContextManagementConfig
-from repo_harness.context import ContextManager
+from repo_harness.context import (
+    ContextManager,
+    ToolResultArtifactIndex,
+    build_persisted_tool_result_preview,
+    persist_tool_result_content,
+)
 from repo_harness.model_client import (
     ModelClient,
     ModelProviderOptions,
@@ -100,7 +105,15 @@ class AgentLoop:
         raw_request_logging_policy: str = "redact_secrets",
         retry_policy: str = "none",
     ) -> AgentLoopState:
+        context_config_resolved = context_config or ContextManagementConfig()
         budget_manager = budget_manager or _default_budget_manager(max_turns)
+        if (
+            tool_context is not None
+            and tool_context.tool_result_artifact_index is None
+        ):
+            tool_context.tool_result_artifact_index = ToolResultArtifactIndex(
+                run_dir=recorder.run_dir
+            )
         loop_started = time.monotonic()
         messages = list(initial_messages)
         state = AgentLoopState(
@@ -177,7 +190,7 @@ class AgentLoop:
                 recorder=recorder,
                 task_id=task_id,
                 turn=turn,
-                context_config=context_config,
+                context_config=context_config_resolved,
                 provider_name=provider_options_resolved.provider,
             )
             state.context_revision = prepared.context_revision
@@ -495,6 +508,8 @@ class AgentLoop:
                     recorder=recorder,
                 )
                 _record_interrupted_tool_calls(
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                    context_config=context_config_resolved,
                     run_id=run_id,
                     task_id=task_id,
                     turn=turn,
@@ -561,6 +576,8 @@ class AgentLoop:
                     state.budget_state.stop_reason = "model_error"
                 state.last_model_error = response.model_error_type
                 _record_interrupted_tool_calls(
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                    context_config=context_config_resolved,
                     run_id=run_id,
                     task_id=task_id,
                     turn=turn,
@@ -622,6 +639,8 @@ class AgentLoop:
                     state.tool_call_count += 1
                     state.budget_state.tool_call_count = state.tool_call_count
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -666,6 +685,8 @@ class AgentLoop:
                         recorder=recorder,
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -675,6 +696,8 @@ class AgentLoop:
                         messages=messages,
                     )
                     _record_interrupted_tool_calls(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -691,6 +714,8 @@ class AgentLoop:
                     state.agent_stop_reason = "max_tool_calls"
                     state.budget_state.stop_reason = "max_tool_calls"
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -700,6 +725,8 @@ class AgentLoop:
                         messages=messages,
                     )
                     _record_interrupted_tool_calls(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -737,6 +764,8 @@ class AgentLoop:
                         )
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -768,6 +797,8 @@ class AgentLoop:
                         )
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -794,6 +825,8 @@ class AgentLoop:
                         )
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -828,6 +861,8 @@ class AgentLoop:
                         )
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -866,6 +901,8 @@ class AgentLoop:
                         )
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -898,6 +935,8 @@ class AgentLoop:
                         recorder=recorder,
                     )
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -907,6 +946,8 @@ class AgentLoop:
                         messages=messages,
                     )
                     _record_interrupted_tool_calls(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -924,6 +965,8 @@ class AgentLoop:
                         state.agent_stop_reason = "max_test_runs"
                         state.budget_state.stop_reason = "max_test_runs"
                         _record_tool_result(
+                            tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                            context_config=context_config_resolved,
                             run_id=run_id,
                             task_id=task_id,
                             turn=turn,
@@ -933,6 +976,8 @@ class AgentLoop:
                             messages=messages,
                         )
                         _record_interrupted_tool_calls(
+                            tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                            context_config=context_config_resolved,
                             run_id=run_id,
                             task_id=task_id,
                             turn=turn,
@@ -963,6 +1008,8 @@ class AgentLoop:
                     state.permission_denial_count += 1
                     state.permission_denial_reasons.append(permission.reason)
                     _record_tool_result(
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                        context_config=context_config_resolved,
                         run_id=run_id,
                         task_id=task_id,
                         turn=turn,
@@ -981,6 +1028,8 @@ class AgentLoop:
                 tool_duration_ms = int((time.monotonic() - tool_started) * 1000)
                 tool_result = _attach_tool_duration(tool_result, tool_duration_ms)
                 _record_tool_result(
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                    context_config=context_config_resolved,
                     run_id=run_id,
                     task_id=task_id,
                     turn=turn,
@@ -1021,6 +1070,8 @@ class AgentLoop:
                             state.agent_stop_reason = "feedback_tests_passed"
                             state.budget_state.stop_reason = "feedback_tests_passed"
                             _record_interrupted_tool_calls(
+                                tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
+                                context_config=context_config_resolved,
                                 run_id=run_id,
                                 task_id=task_id,
                                 turn=turn,
@@ -2335,6 +2386,8 @@ def _record_tool_requested(
 
 def _record_tool_result(
     *,
+    tool_result_artifact_index: ToolResultArtifactIndex | None = None,
+    context_config: ContextManagementConfig | None = None,
     run_id: str,
     task_id: str,
     turn: int,
@@ -2343,6 +2396,12 @@ def _record_tool_result(
     recorder: RunRecorder,
     messages: list[dict[str, object]],
 ) -> None:
+    tool_result = _apply_single_tool_result_budget(
+        tool_result,
+        recorder=recorder,
+        context_config=context_config or ContextManagementConfig(),
+        tool_result_artifact_index=tool_result_artifact_index,
+    )
     if tool_result.duration_ms is None:
         tool_result = _attach_tool_duration(tool_result, 0)
     state.tool_pairing_state.completed_tool_call_ids.append(tool_result.tool_call_id)
@@ -2396,6 +2455,64 @@ def _record_tool_result(
             "error_type": tool_result.error_type,
             "typed": tool_result.typed,
             "artifact_refs": [ref.model_dump(mode="json") for ref in tool_result.artifact_refs],
+        }
+    )
+
+
+def _apply_single_tool_result_budget(
+    tool_result: ToolResult,
+    *,
+    recorder: RunRecorder,
+    context_config: ContextManagementConfig,
+    tool_result_artifact_index: ToolResultArtifactIndex | None,
+) -> ToolResult:
+    if tool_result.effective_tool_name == "read_tool_result_artifact":
+        return tool_result
+    content = tool_result.content_preview
+    if len(content) <= context_config.max_single_tool_result_chars:
+        return tool_result
+    record = persist_tool_result_content(
+        recorder=recorder,
+        tool_result_id=tool_result.tool_result_id,
+        tool_call_id=tool_result.tool_call_id,
+        tool_name=tool_result.effective_tool_name,
+        content=content,
+        publishable_after_visibility_scan=True,
+        contamination_scan_status="clean",
+    )
+    if tool_result_artifact_index is not None:
+        tool_result_artifact_index.add(record)
+    replacement = build_persisted_tool_result_preview(record, content)
+    typed = dict(tool_result.typed)
+    typed["single_tool_result_persisted"] = True
+    typed["single_tool_result_original_chars"] = len(content)
+    typed["single_tool_result_artifact_id"] = record.artifact_id
+    typed["single_tool_result_content_sha256"] = record.content_sha256
+    typed["single_tool_result_recovery_unlocked"] = record.recovery_unlocked_after_provider_commit
+    envelope = typed.get("result_envelope")
+    if isinstance(envelope, dict):
+        updated_envelope = dict(envelope)
+        updated_envelope["model_visible_text_truncated"] = True
+        updated_envelope["artifact_backed_full_result"] = True
+        updated_envelope["recovery_call"] = (
+            "read_tool_result_artifact("
+            f"artifact_id={record.artifact_id!r}, offset=0, limit=8000)"
+        )
+        updated_envelope["recovery_hint"] = (
+            "Use read_tool_result_artifact after this persisted preview has entered "
+            "an accepted model input."
+        )
+        context_effects = list(updated_envelope.get("context_effects") or [])
+        if "tool_result_recoverable" not in context_effects:
+            context_effects.append("tool_result_recoverable")
+        updated_envelope["context_effects"] = context_effects
+        typed["result_envelope"] = updated_envelope
+    return tool_result.model_copy(
+        update={
+            "content_preview": replacement,
+            "truncated": True,
+            "artifact_refs": [*tool_result.artifact_refs, record.artifact_ref],
+            "typed": typed,
         }
     )
 
@@ -2525,6 +2642,8 @@ def _default_budget_manager(max_turns: int) -> BudgetManager:
 
 def _record_interrupted_tool_calls(
     *,
+    tool_result_artifact_index: ToolResultArtifactIndex | None = None,
+    context_config: ContextManagementConfig | None = None,
     run_id: str,
     task_id: str,
     turn: int,
@@ -2547,6 +2666,8 @@ def _record_interrupted_tool_calls(
                 recorder=recorder,
             )
         _record_tool_result(
+            tool_result_artifact_index=tool_result_artifact_index,
+            context_config=context_config,
             run_id=run_id,
             task_id=task_id,
             turn=turn,
