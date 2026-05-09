@@ -18,7 +18,7 @@ from repo_harness.workspace import (
 )
 from repo_harness.errors import WorkspaceError
 
-REPO_CONTEXT_FILES = ["AGENT.md", "README.md", "CLAUDE.md", "CONTRIBUTING.md"]
+REPO_CONTEXT_FILES = ["AGENTS.md", "CLAUDE.md", "README.md", "CONTRIBUTING.md", "AGENT.md"]
 
 
 class ContextBuilder:
@@ -32,6 +32,7 @@ class ContextBuilder:
         allowed_tools: list[str],
         scaffold: ScaffoldDefinition | None = None,
         workspace_facade: WorkspaceAdapter | None = None,
+        model_visible_repo_context: dict[str, Any] | None = None,
     ) -> list[dict[str, object]]:
         visible_task = task.agent_visible_view()
         repo_context = _read_repo_context(
@@ -77,6 +78,7 @@ class ContextBuilder:
             "test_command": test_command,
             "test_command_visibility": test_command_visibility,
             "allowed_tools": allowed_tools,
+            "tool_use_guidance": _tool_use_guidance(allowed_tools),
             "permission_mode": run_config.runtime.permission_mode,
             "execution_mode": run_config.runtime.execution_mode,
             "network_policy": run_config.workspace.network_policy,
@@ -90,10 +92,149 @@ class ContextBuilder:
             },
             "repository_context": repo_context,
         }
+        if model_visible_repo_context is not None:
+            user["repository_context_index"] = model_visible_repo_context
+            action_index = model_visible_repo_context.get("repository_action_index")
+            if isinstance(action_index, dict):
+                user["repository_action_index"] = action_index
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
+
+
+def _tool_use_guidance(allowed_tools: list[str]) -> dict[str, Any]:
+    allowed = set(allowed_tools)
+    rules: list[dict[str, Any]] = []
+    discovery_tools = [
+        tool for tool in ["repository_action_index", "expected_files", "glob_files", "list_files"]
+        if tool in {"repository_action_index", "expected_files"} or tool in allowed
+    ]
+    rules.append(
+        {
+            "rule_id": "narrow_candidate_files_first",
+            "applies_to": discovery_tools,
+            "guidance": (
+                "Start from repository_action_index and expected_files when they are present. "
+                "Use allowed file discovery tools to narrow candidate source files before broad content search."
+            ),
+        }
+    )
+    if "read_file" in allowed:
+        rules.append(
+            {
+                "rule_id": "read_ranked_candidates_as_starting_points",
+                "applies_to": ["repository_action_index", "read_file"],
+                "guidance": (
+                    "When repository_action_index.candidate_entries are present, read the highest-ranked source "
+                    "candidates early. Treat them as starting points for inspection, not as guaranteed answers."
+                ),
+            }
+        )
+    if "symbol_search" in allowed:
+        rules.append(
+            {
+                "rule_id": "use_symbol_navigation_for_python_symbols",
+                "applies_to": ["symbol_search", "read_file"] if "read_file" in allowed else ["symbol_search"],
+                "guidance": (
+                    "For class, function, method, inheritance, or call-entry questions, use symbol_search "
+                    "to locate definitions before reading concrete files. When repository_action_index has "
+                    "candidate source directories, pass one of those directories as symbol_search.root before "
+                    "trying root='.'."
+                ),
+            }
+        )
+    if "grep" in allowed:
+        rules.append(
+            {
+                "rule_id": "make_search_facts_trustworthy",
+                "applies_to": ["grep"],
+                "guidance": (
+                    "Prefer narrow root, glob, and output_mode='files_with_matches' before reading large content. "
+                    "Do not treat partial_scan_no_match, incomplete scans, or result pages as proof that text is absent."
+                ),
+            }
+        )
+    if "edit_file" in allowed:
+        applies_to = ["edit_file"]
+        if "read_file" in allowed:
+            applies_to.insert(0, "read_file")
+        rules.append(
+            {
+                "rule_id": "read_before_edit",
+                "applies_to": applies_to,
+                "guidance": (
+                    "Before editing an existing file, read the target file first. In formal runtimes, edit_file may "
+                    "require that the file was previously read or that expected_content_hash matches the current file."
+                ),
+            }
+        )
+        rules.append(
+            {
+                "rule_id": "edit_old_text_from_raw_content",
+                "applies_to": applies_to,
+                "guidance": (
+                    "edit_file.old_text must be exact raw file text, preferably copied from read_file.raw_content_preview. "
+                    "Do not include line-number prefixes from numbered_content_preview."
+                ),
+            }
+        )
+    if "update_working_state" in allowed:
+        rules.append(
+            {
+                "rule_id": "record_state_when_exploration_branches",
+                "applies_to": ["update_working_state"],
+                "guidance": (
+                    "When exploration starts repeating or branching, briefly record the current hypothesis, candidate files, "
+                    "completed steps, and one concrete next_action."
+                ),
+            }
+        )
+    if "git_diff" in allowed:
+        rules.append(
+            {
+                "rule_id": "review_patch_before_final_answer",
+                "applies_to": ["git_diff"],
+                "guidance": "Before the final answer after editing, inspect the actual patch with git_diff.",
+            }
+        )
+    if allowed_tools:
+        rules.append(
+            {
+                "rule_id": "follow_tool_result_recovery",
+                "applies_to": list(allowed_tools),
+                "guidance": (
+                    "When a tool result reports semantic_complete=false, truncation, pagination, partial scans, "
+                    "or a recoverable error, follow result_envelope.recovery_call, recovery_hint, or "
+                    "recommended_next_calls before treating the observation as a complete fact."
+                ),
+            }
+        )
+    independent_tools = [
+        tool
+        for tool in ["list_files", "glob_files", "grep", "symbol_search", "read_file", "git_diff"]
+        if tool in allowed
+    ]
+    if len(independent_tools) > 1:
+        rules.append(
+            {
+                "rule_id": "parallel_independent_read_only_tools_only",
+                "applies_to": independent_tools,
+                "guidance": (
+                    "If calling multiple tools in one response, only combine independent read-only discovery, search, "
+                    "or file-read calls. Do not combine an edit with a read whose result the edit depends on."
+                ),
+            }
+        )
+    return {
+        "schema_version": "repo_harness_tool_use_guidance_v0",
+        "policy_version": "repo_harness_initial_tool_use_guidance_v0",
+        "input_scope_policy": (
+            "Generated only from currently allowed tools plus model-visible task fields. "
+            "It does not expose hidden evaluator materials."
+        ),
+        "rules": rules,
+    }
 
 
 def _language_for_task(task: RunnableTask) -> str:

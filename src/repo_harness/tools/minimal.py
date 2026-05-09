@@ -7,6 +7,7 @@ import hashlib
 import difflib
 import re
 import shlex
+import time
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -16,6 +17,12 @@ from repo_harness.errors import WorkspaceError
 from repo_harness.permissions import PermissionContext, PermissionDecision, PermissionSystem
 from repo_harness.schema_base import stable_hash
 from repo_harness.tasks.command_policy import evaluate_model_bash_command
+from repo_harness.tools.symbol_index import (
+    SUPPORTED_SYMBOL_KINDS,
+    SYMBOL_INDEX_POLICY_VERSION,
+    filter_symbols,
+    index_python_symbols,
+)
 from repo_harness.tools.schemas import ToolCall, ToolResult
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.verifier import PytestVerifier
@@ -23,8 +30,11 @@ from repo_harness.workspace import RunWorkspace, WorkspaceAdapter
 
 DEFAULT_TOOL_ORDER = [
     "list_files",
+    "glob_files",
     "read_file",
     "grep",
+    "symbol_search",
+    "update_working_state",
     "edit_file",
     "create_file",
     "bash",
@@ -32,6 +42,8 @@ DEFAULT_TOOL_ORDER = [
     "git_diff",
 ]
 MINIMAL_TOOLS = DEFAULT_TOOL_ORDER
+SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD = 120
+SYMBOL_SEARCH_SLOW_SCAN_THRESHOLD_MS = 5000
 MODEL_HIDDEN_TOOL_PATH_PARTS = frozenset(
     {
         ".git",
@@ -77,6 +89,17 @@ GREP_MAX_MATCHES = 200
 DEFAULT_RESOLVED_MAX_OUTPUT_CHARS = 12000
 LIST_FILES_DEFAULT_MAX_ENTRIES = 200
 GIT_DIFF_CHANGED_FILE_LIMIT = 200
+SEARCH_FACT_POLICY_VERSION = "repo_harness_search_fact_trust_v1"
+TOOL_RESULT_ENVELOPE_VERSION = "repo_harness_tool_result_envelope_v1"
+TOOL_RESULT_CONTEXT_EFFECTS = frozenset(
+    {
+        "repository_diff_observed",
+        "repository_file_state_updated",
+        "tool_result_recoverable",
+        "working_state_updated",
+    }
+)
+GREP_OUTPUT_MODES = {"content", "files_with_matches", "count"}
 
 @dataclass(frozen=True)
 class ToolDefinition:
@@ -139,6 +162,7 @@ class ToolOutputLimits:
 class ToolPolicy:
     tool_order: list[str] = field(default_factory=lambda: list(DEFAULT_TOOL_ORDER))
     tool_policy_version: str = "repo_harness_tool_policy_v0"
+    require_read_before_edit: bool = False
 
 
 @dataclass
@@ -158,6 +182,7 @@ class ToolExecutionContext:
     budget_manager: object | None = None
     abort_signal: object | None = None
     file_state_cache: dict[str, str] = field(default_factory=dict)
+    working_state: dict[str, Any] | None = None
 
     @property
     def workspace_adapter(self) -> WorkspaceAdapter:
@@ -194,6 +219,10 @@ class ToolExecutor:
     ) -> None:
         self.registry = registry or default_tool_registry()
         self.permission_system = permission_system or PermissionSystem()
+        self._symbol_index_cache: dict[
+            tuple[str, str],
+            tuple[list[dict[str, Any]], str | None],
+        ] = {}
 
     def is_known(self, tool_name: str) -> bool:
         return self.registry.has(tool_name)
@@ -322,10 +351,16 @@ class ToolExecutor:
         try:
             if normalized.effective_tool_name == "list_files":
                 return self._list_files(tool_call, normalized, context)
+            if normalized.effective_tool_name == "glob_files":
+                return self._list_files(tool_call, normalized, context)
             if normalized.effective_tool_name == "read_file":
                 return self._read_file(tool_call, normalized, context)
             if normalized.effective_tool_name == "grep":
                 return self._grep(tool_call, normalized, context)
+            if normalized.effective_tool_name == "symbol_search":
+                return self._symbol_search(tool_call, normalized, context)
+            if normalized.effective_tool_name == "update_working_state":
+                return self._update_working_state(tool_call, normalized, context)
             if normalized.effective_tool_name == "edit_file":
                 return self._edit_file(tool_call, normalized, context)
             if normalized.effective_tool_name == "create_file":
@@ -390,6 +425,15 @@ class ToolExecutor:
             elif "pattern" in args:
                 normalized_args["glob"] = args["pattern"]
             effective_args = dict(normalized_args)
+        elif requested == "glob_files":
+            normalized_args = {
+                "root": args.get("path", args.get("root", ".")),
+                "glob": args.get("pattern", args.get("glob")),
+                "offset": int(args.get("offset", 0)),
+                "max_entries": int(args.get("max_entries", LIST_FILES_DEFAULT_MAX_ENTRIES)),
+                "kind": "file",
+            }
+            effective_args = dict(normalized_args)
         elif requested == "read_file":
             normalized_args = {"path": args["path"]}
             if "start_line" in args:
@@ -408,12 +452,31 @@ class ToolExecutor:
                 "query": query,
                 "root": args.get("path", args.get("root", ".")),
                 "mode": args.get("mode", "literal"),
+                "output_mode": args.get("output_mode", "content"),
                 "max_matches": int(args.get("max_matches", GREP_MAX_MATCHES)),
                 "offset": int(args.get("offset", 0)),
                 "context_lines": int(args.get("context_lines", 0)),
             }
             if "glob" in args:
                 normalized_args["glob"] = args["glob"]
+            effective_args = dict(normalized_args)
+        elif requested == "symbol_search":
+            normalized_args = {
+                "query": args["query"],
+                "root": args.get("path", args.get("root", ".")),
+                "symbol_kind": args.get("symbol_kind", args.get("kind", "any")),
+                "offset": int(args.get("offset", 0)),
+                "max_results": int(args.get("max_results", 20)),
+            }
+            effective_args = dict(normalized_args)
+        elif requested == "update_working_state":
+            normalized_args = {
+                "current_hypothesis": str(args.get("current_hypothesis", "")),
+                "candidate_files": list(args.get("candidate_files", [])),
+                "next_action": str(args.get("next_action", "")),
+                "completed_steps": list(args.get("completed_steps", [])),
+                "blocking_question": str(args.get("blocking_question", "")),
+            }
             effective_args = dict(normalized_args)
         elif requested == "edit_file":
             normalized_args = {
@@ -497,7 +560,13 @@ class ToolExecutor:
         root = str(normalized.normalized_arguments["root"])
         glob = normalized.normalized_arguments.get("glob")
         offset = max(0, int(normalized.normalized_arguments.get("offset", 0)))
-        max_entries = max(1, min(int(normalized.normalized_arguments.get("max_entries", LIST_FILES_DEFAULT_MAX_ENTRIES)), 1000))
+        max_entries = max(
+            1,
+            min(
+                int(normalized.normalized_arguments.get("max_entries", LIST_FILES_DEFAULT_MAX_ENTRIES)),
+                1000,
+            ),
+        )
         kind = str(normalized.normalized_arguments.get("kind", "file"))
         if kind != "file":
             return _tool_result(
@@ -510,6 +579,12 @@ class ToolExecutor:
                     "kind": kind,
                     "supported_kinds": ["file"],
                     "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind="unsupported_kind",
+                        semantic_complete=True,
+                        recovery_call="list_files(kind='file')",
+                        recovery_hint="list_files currently supports kind='file' only.",
+                    ),
                 },
             )
         context.workspace_adapter.resolve_workspace_path(
@@ -523,23 +598,77 @@ class ToolExecutor:
             pattern=glob,
         )
         visible_files: list[str] = []
-        skipped_hidden_count = 0
-        skipped_symlink_count = 0
+        hidden_path_count = 0
+        symlink_outside_workspace_count = 0
+        workspace_boundary_or_missing_count = 0
+        visibility_error_count = 0
+        visibility_error_samples: list[dict[str, str]] = []
         for rel_path in files:
             visible, reason = _model_visible_path_status(context, rel_path)
             if visible:
                 visible_files.append(rel_path)
                 continue
-            if reason == "symlink_outside_workspace":
-                skipped_symlink_count += 1
+            if reason in {"hidden_path", "symlink_target_hidden_path"}:
+                hidden_path_count += 1
+            elif reason == "symlink_outside_workspace":
+                symlink_outside_workspace_count += 1
+            elif reason == "workspace_boundary_or_missing":
+                workspace_boundary_or_missing_count += 1
             else:
-                skipped_hidden_count += 1
+                visibility_error_count += 1
+                if len(visibility_error_samples) < 5:
+                    visibility_error_samples.append({"path": rel_path, "reason": reason or "visibility_error"})
         page = visible_files[offset : offset + max_entries]
         next_offset = offset + len(page) if offset + len(page) < len(visible_files) else None
         truncated = next_offset is not None
+        backend_mismatch_detected = _backend_mismatch_detected(context)
+        scan_complete = (
+            visibility_error_count == 0
+            and workspace_boundary_or_missing_count == 0
+            and not backend_mismatch_detected
+        )
+        scan_complete_reason = _scan_complete_reason(
+            scan_complete=scan_complete,
+            result_limit_reached=truncated,
+            scan_limit_reached=False,
+            read_error_count=0,
+            visibility_error_count=visibility_error_count,
+            workspace_boundary_or_missing_count=workspace_boundary_or_missing_count,
+            backend_mismatch_detected=backend_mismatch_detected,
+            total_match_count=len(visible_files),
+        )
+        result_kind = (
+            "result_page_truncated"
+            if truncated
+            else ("complete_file_listing" if scan_complete else "incomplete_file_listing")
+        )
+        recommended_next_calls = _list_files_recommended_next_calls(
+            root=root,
+            glob=str(glob) if glob is not None else None,
+            next_offset=next_offset,
+            max_entries=max_entries,
+            scan_complete=scan_complete,
+        )
+        if normalized.effective_tool_name == "glob_files":
+            recommended_next_calls = _glob_files_recommended_next_calls(
+                recommended_next_calls,
+                fallback_pattern=str(glob or "*"),
+            )
+        search_fact_fields = _search_fact_fields(
+            context=context,
+            root=root,
+            search_backend="workspace_adapter_list_files",
+            scan_complete_reason=scan_complete_reason,
+            read_error_count=0,
+            read_error_samples=[],
+            visibility_error_count=visibility_error_count,
+            visibility_error_samples=visibility_error_samples,
+            backend_mismatch_detected=backend_mismatch_detected,
+        )
         ref = context.recorder.write_json_artifact(
             "list_files",
             {
+                "tool_name": normalized.effective_tool_name,
                 "root": root,
                 "glob": glob,
                 "files": visible_files,
@@ -548,21 +677,68 @@ class ToolExecutor:
                 "returned_files": page,
                 "truncated": truncated,
                 "next_offset": next_offset,
-                "skipped_hidden_count": skipped_hidden_count,
-                "skipped_symlink_count": skipped_symlink_count,
+                "result_kind": result_kind,
+                "scan_complete": scan_complete,
+                "scan_complete_reason": scan_complete_reason,
+                "hidden_path_count": hidden_path_count,
+                "skipped_hidden_count": hidden_path_count,
+                "skipped_hidden_path_count": hidden_path_count,
+                "symlink_outside_workspace_count": symlink_outside_workspace_count,
+                "skipped_symlink_count": symlink_outside_workspace_count,
+                "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+                "recommended_next_calls": recommended_next_calls,
+                **search_fact_fields,
             },
         )
         preview = "\n".join(page) if page else "No files matched."
         if truncated:
+            if normalized.effective_tool_name == "glob_files":
+                recovery_text = (
+                    f"glob_files(pattern={str(glob)!r}, path={root!r}, offset={next_offset}, "
+                    f"max_entries={max_entries})"
+                )
+            else:
+                recovery_text = (
+                    f"list_files(path={root!r}, offset={next_offset}, "
+                    f"max_entries={max_entries})"
+                )
             preview += (
-                f"\n[truncated] call list_files(path={root!r}, offset={next_offset}, "
-                f"max_entries={max_entries}) for the next page."
+                f"\n[truncated] call {recovery_text} for the next page."
             )
+        if not scan_complete:
+            preview += (
+                "\n[incomplete_scan] Some candidate paths could not be classified by the workspace backend. "
+                "Do not treat this listing as a complete repository fact."
+            )
+        output_truncated = len(preview) > context.output_limits.max_tool_output_chars
+        if next_offset is not None and normalized.effective_tool_name == "glob_files":
+            recovery_call = (
+                f"glob_files(pattern={str(glob)!r}, path={root!r}, "
+                f"offset={next_offset}, max_entries={max_entries})"
+            )
+        elif next_offset is not None:
+            recovery_call = f"list_files(root={root!r}, offset={next_offset}, max_entries={max_entries})"
+        else:
+            recovery_call = None
+        recovery_hint = (
+            "Use next_offset to continue the same file listing page."
+            if next_offset is not None
+            else (
+                (
+                    "Re-run glob_files with a narrower path or pattern before treating this listing as complete."
+                    if normalized.effective_tool_name == "glob_files"
+                    else "Re-run list_files with a narrower root or glob before treating this listing as complete."
+                )
+                if not scan_complete
+                else None
+            )
+        )
         return _tool_result(
             tool_call,
             normalized=normalized,
             status="ok",
             content=_preview(preview, context.output_limits.max_tool_output_chars),
+            truncated=output_truncated,
             artifact_refs=[ref],
             typed={
                 "files": page,
@@ -571,11 +747,31 @@ class ToolExecutor:
                 "match_count": len(visible_files),
                 "offset": offset,
                 "max_entries": max_entries,
+                "result_kind": result_kind,
+                "scan_complete": scan_complete,
+                "scan_complete_reason": scan_complete_reason,
                 "truncated": truncated,
                 "next_offset": next_offset,
-                "skipped_hidden_count": skipped_hidden_count,
-                "skipped_symlink_count": skipped_symlink_count,
+                "hidden_path_count": hidden_path_count,
+                "skipped_hidden_count": hidden_path_count,
+                "skipped_hidden_path_count": hidden_path_count,
+                "symlink_outside_workspace_count": symlink_outside_workspace_count,
+                "skipped_symlink_count": symlink_outside_workspace_count,
+                "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+                "recommended_next_calls": recommended_next_calls,
+                **search_fact_fields,
                 "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind=result_kind,
+                    semantic_complete=scan_complete and not truncated,
+                    model_visible_text_truncated=output_truncated,
+                    result_limit_reached=truncated,
+                    artifact_backed_full_result=True,
+                    recommended_next_calls=recommended_next_calls,
+                    recovery_call=recovery_call,
+                    recovery_hint=recovery_hint,
+                    context_effects=["tool_result_recoverable"],
+                ),
             },
         )
 
@@ -597,7 +793,15 @@ class ToolExecutor:
                     "Inspect source and tests in the repository checkout instead."
                 ),
                 error_type="model_hidden_path",
-                typed={"path": path, "visibility_reason": visibility_reason},
+                typed={
+                    "path": path,
+                    "visibility_reason": visibility_reason,
+                    "result_envelope": _result_envelope(
+                        result_kind="model_hidden_path",
+                        semantic_complete=True,
+                        recovery_hint="Choose a model-visible source or test file inside the repository checkout.",
+                    ),
+                },
             )
         content = context.workspace_adapter.read_text(context.run_workspace.workspace_path, path)
         content_hash = _sha256_text(content)
@@ -615,11 +819,23 @@ class ToolExecutor:
                 f"\n[truncated] call read_file(path={path!r}, "
                 f"start_line={line_window['next_start_line']}) to continue."
             )
+        output_truncated = bool(line_window["truncated"]) or len(preview) > context.output_limits.max_tool_output_chars
+        recovery_call = (
+            f"read_file(path={path!r}, start_line={line_window['next_start_line']})"
+            if line_window["next_start_line"] is not None
+            else None
+        )
+        recovery_hint = (
+            "Use next_start_line to continue reading this file."
+            if line_window["next_start_line"] is not None
+            else "Re-read this file with a narrower line range if more context is needed."
+        )
         return _tool_result(
             tool_call,
             normalized=normalized,
             status="ok",
             content=_preview(preview, context.output_limits.max_tool_output_chars),
+            truncated=output_truncated,
             artifact_refs=[ref],
             typed={
                 "path": path,
@@ -633,6 +849,16 @@ class ToolExecutor:
                 "raw_content_preview": line_window["raw_content_preview"],
                 "numbered_content_preview": line_window["numbered_content"],
                 "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind="file_window_truncated" if line_window["truncated"] else "file_window_complete",
+                    semantic_complete=not bool(line_window["truncated"]),
+                    model_visible_text_truncated=output_truncated,
+                    result_limit_reached=bool(line_window["truncated"]),
+                    artifact_backed_full_result=True,
+                    recovery_call=recovery_call,
+                    recovery_hint=recovery_hint,
+                    context_effects=["tool_result_recoverable"],
+                ),
             },
         )
 
@@ -645,21 +871,44 @@ class ToolExecutor:
         query = str(normalized.normalized_arguments["query"])
         root = str(normalized.normalized_arguments["root"])
         mode = str(normalized.normalized_arguments.get("mode", "literal"))
+        output_mode = str(normalized.normalized_arguments.get("output_mode", "content"))
         glob = normalized.normalized_arguments.get("glob")
         offset = max(0, int(normalized.normalized_arguments.get("offset", 0)))
-        max_matches = max(1, min(int(normalized.normalized_arguments.get("max_matches", GREP_MAX_MATCHES)), GREP_MAX_MATCHES))
+        max_matches = max(
+            1,
+            min(int(normalized.normalized_arguments.get("max_matches", GREP_MAX_MATCHES)), GREP_MAX_MATCHES),
+        )
         context_lines = max(0, min(int(normalized.normalized_arguments.get("context_lines", 0)), 20))
         try:
-            payload = _grep_python(
-                context=context,
-                root=root,
-                query=query,
-                mode=mode,
-                glob=str(glob) if glob is not None else None,
-                offset=offset,
-                max_matches=max_matches,
-                context_lines=context_lines,
-            )
+            search_text = getattr(context.workspace_adapter, "search_text", None)
+            backend = getattr(context.workspace_adapter, "backend", None)
+            backend_value = getattr(backend, "value", backend)
+            if callable(search_text) and str(backend_value) == "docker":
+                payload = search_text(
+                    context.run_workspace.workspace_path,
+                    root=root,
+                    query=query,
+                    mode=mode,
+                    glob=str(glob) if glob is not None else None,
+                    output_mode=output_mode,
+                    offset=offset,
+                    max_matches=max_matches,
+                    context_lines=context_lines,
+                    timeout_sec=_clamp_command_timeout(30, context),
+                    recorder=context.recorder,
+                )
+            else:
+                payload = _grep_python(
+                    context=context,
+                    root=root,
+                    query=query,
+                    mode=mode,
+                    glob=str(glob) if glob is not None else None,
+                    offset=offset,
+                    max_matches=max_matches,
+                    context_lines=context_lines,
+                    output_mode=output_mode,
+                )
         except re.error as exc:
             return _tool_result(
                 tool_call,
@@ -672,6 +921,12 @@ class ToolExecutor:
                     "mode": mode,
                     "recovery_hint": "Use mode='literal' for exact text, or simplify the regular expression.",
                     "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind="invalid_regex",
+                        semantic_complete=True,
+                        recovery_call=f"grep(query={query!r}, mode='literal')",
+                        recovery_hint="Use mode='literal' for exact text, or simplify the regular expression.",
+                    ),
                 },
             )
         except WorkspaceError as exc:
@@ -681,69 +936,767 @@ class ToolExecutor:
                 status="error",
                 content=str(exc),
                 error_type="tool_execution_failed",
-                typed={"query": query, "mode": mode, "resolved_max_output_chars": context.output_limits.max_tool_output_chars},
+                typed={
+                    "query": query,
+                    "mode": mode,
+                    "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind="workspace_error",
+                        semantic_complete=False,
+                        recovery_hint="Retry with a model-visible workspace-relative root or narrower glob.",
+                    ),
+                },
             )
         matches = [str(match) for match in payload.get("matches", []) if isinstance(match, str)]
+        total_match_count = int(payload.get("total_match_count") or len(matches))
+        candidate_file_count = int(payload.get("candidate_file_count") or 0)
+        scanned_candidate_file_count = int(payload.get("scanned_candidate_file_count") or 0)
+        scanned_file_count = int(payload.get("scanned_file_count") or 0)
+        scanned_file_limit = int(payload.get("scanned_file_limit") or GREP_MAX_SCANNED_FILES)
+        unscanned_file_count = int(payload.get("unscanned_file_count") or 0)
+        scan_limit_reached = bool(payload.get("scan_limit_reached"))
+        result_limit_reached = payload.get("next_offset") is not None
+        scan_complete = bool(payload.get("scan_complete"))
+        read_error_count = int(payload.get("read_error_count") or 0)
+        visibility_error_count = int(payload.get("visibility_error_count") or 0)
+        workspace_boundary_or_missing_count = int(payload.get("workspace_boundary_or_missing_count") or 0)
+        backend_mismatch_detected = bool(payload.get("backend_mismatch_detected"))
+        scan_complete_reason = str(payload.get("scan_complete_reason") or "unknown")
+        result_kind = _grep_result_kind(
+            current_page_match_count=len(matches),
+            total_match_count=total_match_count,
+            result_limit_reached=result_limit_reached,
+            scan_complete=scan_complete,
+        )
         recovery_hint = None
         if not matches and mode == "literal" and _looks_like_regex(query):
             recovery_hint = "No literal matches. The query looks like a regular expression; retry with mode='regex'."
-        if payload.get("truncated") and payload.get("next_offset") is None:
+        if scan_limit_reached and payload.get("next_offset") is None:
             recovery_hint = "Search reached the scanned-file limit; narrow root, glob, or query instead of paginating."
+        recommended_next_calls = _grep_recommended_next_calls(
+            query=query,
+            mode=mode,
+            root=root,
+            glob=str(glob) if glob is not None else None,
+            next_offset=payload.get("next_offset"),
+            max_matches=max_matches,
+            scan_limit_reached=scan_limit_reached,
+            regex_hint=bool(not matches and mode == "literal" and _looks_like_regex(query)),
+        )
+        search_fact_fields = _search_fact_fields(
+            context=context,
+            root=root,
+            search_backend=str(payload.get("search_backend") or "workspace_adapter_python_fallback"),
+            scan_complete_reason=scan_complete_reason,
+            read_error_count=read_error_count,
+            read_error_samples=payload.get("read_error_samples") or [],
+            visibility_error_count=visibility_error_count,
+            visibility_error_samples=payload.get("visibility_error_samples") or [],
+            backend_mismatch_detected=backend_mismatch_detected,
+        )
         ref = context.recorder.write_json_artifact(
             "grep_results",
             {
                 "query": query,
                 "mode": mode,
+                "output_mode": output_mode,
                 "glob": glob,
                 "matches": matches,
+                "files_with_matches": payload.get("files_with_matches") or [],
+                "page_files_with_matches": payload.get("page_files_with_matches") or [],
                 "offset": offset,
                 "max_matches": max_matches,
                 "context_lines": context_lines,
-                "scanned_file_count": int(payload.get("scanned_file_count") or 0),
+                "result_kind": result_kind,
+                "scan_complete": scan_complete,
+                "scan_complete_reason": scan_complete_reason,
+                "scan_limit_reached": scan_limit_reached,
+                "result_limit_reached": result_limit_reached,
+                "candidate_file_count": candidate_file_count,
+                "scanned_candidate_file_count": scanned_candidate_file_count,
+                "scanned_file_count": scanned_file_count,
+                "scanned_file_limit": scanned_file_limit,
+                "unscanned_file_count": unscanned_file_count,
+                "hidden_path_count": int(payload.get("hidden_path_count") or 0),
                 "skipped_hidden_path_count": int(payload.get("skipped_hidden_path_count") or 0),
                 "skipped_hidden_count": int(payload.get("skipped_hidden_count") or 0),
+                "symlink_outside_workspace_count": int(payload.get("symlink_outside_workspace_count") or 0),
                 "skipped_symlink_count": int(payload.get("skipped_symlink_count") or 0),
+                "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+                "read_error_count": read_error_count,
+                "read_error_samples": payload.get("read_error_samples") or [],
+                "visibility_error_count": visibility_error_count,
+                "visibility_error_samples": payload.get("visibility_error_samples") or [],
+                "backend_mismatch_detected": backend_mismatch_detected,
                 "matched_file_count": int(payload.get("matched_file_count") or 0),
-                "truncated": bool(payload.get("truncated")),
+                "total_match_count": total_match_count,
+                "truncated": bool(result_limit_reached or not scan_complete),
                 "next_offset": payload.get("next_offset"),
+                "recommended_next_calls": recommended_next_calls,
                 "engine": payload.get("engine"),
+                "fallback_reason": payload.get("fallback_reason"),
+                "execution_duration_ms": payload.get("execution_duration_ms"),
+                "container_execution_facts_ref": payload.get("container_execution_facts_ref"),
+                "rg_exit_code": payload.get("rg_exit_code"),
+                "rg_timeout": payload.get("rg_timeout"),
+                "rg_summary_stats": payload.get("rg_summary_stats"),
+                **search_fact_fields,
             },
         )
-        preview = "\n".join(matches) if matches else "No matches."
-        if payload.get("truncated") and payload.get("next_offset") is not None:
+        if matches:
+            preview = "\n".join(matches)
+        elif result_kind == "page_empty_out_of_range":
+            preview = (
+                f"No matches on this result page: offset={offset} is outside the "
+                f"{total_match_count} available match(es). This does not mean the query is absent. "
+                "Retry with offset=0 or a smaller offset."
+            )
+        elif not scan_complete:
+            preview = (
+                "No matches found in the trusted scanned subset, but the search is incomplete "
+                f"(reason={scan_complete_reason}; scanned {scanned_candidate_file_count} candidate files "
+                f"out of {candidate_file_count}). Do not conclude the query is absent. "
+                "Narrow root, glob, or query and retry."
+            )
+        else:
+            preview = (
+                f"No matches found after scanning all {scanned_file_count} model-visible files "
+                f"under root={root!r}."
+            )
+        if result_limit_reached:
             preview += (
                 f"\n[truncated] call grep(query={query!r}, mode={mode!r}, "
                 f"offset={payload.get('next_offset')}, max_matches={max_matches}) for more matches."
             )
-        elif payload.get("truncated"):
-            preview += f"\n[truncated] {recovery_hint}"
+        if not scan_complete and matches:
+            preview += (
+                f"\n[partial_scan] Search is incomplete (reason={scan_complete_reason}) after "
+                f"scanning {scanned_candidate_file_count} candidate files out of {candidate_file_count}; "
+                "narrow root, glob, or query and retry if needed."
+            )
         elif recovery_hint:
             preview += f"\n{recovery_hint}"
+        output_truncated = len(preview) > context.output_limits.max_tool_output_chars
+        content_preview = _preview(preview, context.output_limits.max_tool_output_chars)
+        recovery_call, envelope_recovery_hint = _tool_recovery_call(
+            tool_name="grep",
+            arguments=normalized.normalized_arguments,
+            typed={
+                "query": query,
+                "mode": mode,
+                "next_offset": payload.get("next_offset"),
+            },
+        )
+        if not (result_limit_reached or not scan_complete or output_truncated):
+            recovery_call = None
+            envelope_recovery_hint = recovery_hint
         return _tool_result(
             tool_call,
             normalized=normalized,
             status="ok",
-            content=_preview(preview, context.output_limits.max_tool_output_chars),
+            content=content_preview,
+            truncated=output_truncated,
             artifact_refs=[ref],
             typed={
                 "query": query,
                 "mode": mode,
+                "output_mode": output_mode,
                 "glob": glob,
+                "result_kind": result_kind,
                 "match_count": len(matches),
-                "total_match_count": int(payload.get("total_match_count") or len(matches)),
-                "scanned_file_count": int(payload.get("scanned_file_count") or 0),
+                "total_match_count": total_match_count,
+                "scan_complete": scan_complete,
+                "scan_complete_reason": scan_complete_reason,
+                "scan_limit_reached": scan_limit_reached,
+                "result_limit_reached": result_limit_reached,
+                "output_truncated": output_truncated,
+                "candidate_file_count": candidate_file_count,
+                "scanned_candidate_file_count": scanned_candidate_file_count,
+                "scanned_file_count": scanned_file_count,
+                "scanned_file_limit": scanned_file_limit,
+                "unscanned_file_count": unscanned_file_count,
+                "hidden_path_count": int(payload.get("hidden_path_count") or 0),
                 "skipped_hidden_path_count": int(payload.get("skipped_hidden_path_count") or 0),
                 "skipped_hidden_count": int(payload.get("skipped_hidden_count") or 0),
+                "symlink_outside_workspace_count": int(payload.get("symlink_outside_workspace_count") or 0),
                 "skipped_symlink_count": int(payload.get("skipped_symlink_count") or 0),
+                "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+                "read_error_count": read_error_count,
+                "read_error_samples": payload.get("read_error_samples") or [],
+                "visibility_error_count": visibility_error_count,
+                "visibility_error_samples": payload.get("visibility_error_samples") or [],
+                "backend_mismatch_detected": backend_mismatch_detected,
                 "matched_file_count": int(payload.get("matched_file_count") or 0),
-                "truncated": bool(payload.get("truncated")),
+                "files_with_matches": payload.get("files_with_matches") or [],
+                "page_files_with_matches": payload.get("page_files_with_matches") or [],
+                "truncated": bool(result_limit_reached or not scan_complete),
                 "next_offset": payload.get("next_offset"),
                 "offset": offset,
                 "max_matches": max_matches,
                 "context_lines": context_lines,
                 "recovery_hint": recovery_hint,
+                "recommended_next_calls": recommended_next_calls,
                 "engine": payload.get("engine"),
+                "fallback_reason": payload.get("fallback_reason"),
+                "execution_duration_ms": payload.get("execution_duration_ms"),
+                "container_execution_facts_ref": payload.get("container_execution_facts_ref"),
+                "rg_exit_code": payload.get("rg_exit_code"),
+                "rg_timeout": payload.get("rg_timeout"),
+                "rg_summary_stats": payload.get("rg_summary_stats"),
+                **search_fact_fields,
                 "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind=result_kind,
+                    semantic_complete=scan_complete and not result_limit_reached,
+                    model_visible_text_truncated=output_truncated,
+                    result_limit_reached=result_limit_reached,
+                    artifact_backed_full_result=True,
+                    recommended_next_calls=recommended_next_calls,
+                    recovery_call=recovery_call,
+                    recovery_hint=envelope_recovery_hint,
+                    context_effects=["tool_result_recoverable"],
+                ),
+            },
+        )
+
+    def _symbol_search(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        started_at = time.monotonic()
+        query = str(normalized.normalized_arguments["query"])
+        root = str(normalized.normalized_arguments["root"])
+        symbol_kind = str(normalized.normalized_arguments.get("symbol_kind", "any"))
+        offset = max(0, int(normalized.normalized_arguments.get("offset", 0)))
+        max_results = max(1, min(int(normalized.normalized_arguments.get("max_results", 20)), 100))
+        context.workspace_adapter.resolve_workspace_path(
+            context.run_workspace.workspace_path,
+            root,
+            must_exist=True,
+        )
+        python_files = context.workspace_adapter.list_files(
+            context.run_workspace.workspace_path,
+            root,
+            pattern="*.py",
+        )
+        candidate_file_count = len(python_files)
+        backend_mismatch_detected = _backend_mismatch_detected(context)
+        if (
+            _is_wide_symbol_root(root)
+            and candidate_file_count > SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD
+        ):
+            return self._symbol_search_wide_root_guard_result(
+                tool_call=tool_call,
+                normalized=normalized,
+                context=context,
+                query=query,
+                root=root,
+                symbol_kind=symbol_kind,
+                offset=offset,
+                max_results=max_results,
+                candidate_file_count=candidate_file_count,
+                python_files=python_files,
+                backend_mismatch_detected=backend_mismatch_detected,
+                started_at=started_at,
+            )
+        symbols: list[dict[str, Any]] = []
+        hidden_path_count = 0
+        symlink_outside_workspace_count = 0
+        workspace_boundary_or_missing_count = 0
+        visibility_error_count = 0
+        visibility_error_samples: list[dict[str, str]] = []
+        read_error_count = 0
+        read_error_samples: list[dict[str, str]] = []
+        parse_error_count = 0
+        parse_error_samples: list[dict[str, str]] = []
+        scanned_file_count = 0
+        cache_hit_file_count = 0
+        cache_miss_file_count = 0
+        for rel_path in python_files:
+            visible, reason = _model_visible_path_status(context, rel_path)
+            if not visible:
+                if reason in {"hidden_path", "symlink_target_hidden_path"}:
+                    hidden_path_count += 1
+                elif reason == "symlink_outside_workspace":
+                    symlink_outside_workspace_count += 1
+                elif reason == "workspace_boundary_or_missing":
+                    workspace_boundary_or_missing_count += 1
+                else:
+                    visibility_error_count += 1
+                    if len(visibility_error_samples) < 5:
+                        visibility_error_samples.append({"path": rel_path, "reason": reason or "visibility_error"})
+                continue
+            try:
+                source = context.workspace_adapter.read_text(context.run_workspace.workspace_path, rel_path)
+            except WorkspaceError as exc:
+                read_error_count += 1
+                if len(read_error_samples) < 5:
+                    read_error_samples.append({"path": rel_path, "error": str(exc)[:300]})
+                continue
+            scanned_file_count += 1
+            source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+            cache_key = (rel_path, source_hash)
+            cached = self._symbol_index_cache.get(cache_key)
+            if cached is None:
+                cache_miss_file_count += 1
+                cached = index_python_symbols(path=rel_path, source=source)
+                self._symbol_index_cache[cache_key] = cached
+            else:
+                cache_hit_file_count += 1
+            file_symbols, parse_error = cached
+            if parse_error is not None:
+                parse_error_count += 1
+                if len(parse_error_samples) < 5:
+                    parse_error_samples.append({"path": rel_path, "error": parse_error[:300]})
+                continue
+            symbols.extend(file_symbols)
+        matches = filter_symbols(symbols, query=query, symbol_kind=symbol_kind)
+        total_match_count = len(matches)
+        page = matches[offset : offset + max_results]
+        next_offset = offset + len(page) if offset + len(page) < total_match_count else None
+        result_limit_reached = next_offset is not None
+        scan_complete = (
+            read_error_count == 0
+            and parse_error_count == 0
+            and visibility_error_count == 0
+            and workspace_boundary_or_missing_count == 0
+            and not backend_mismatch_detected
+        )
+        if parse_error_count:
+            scan_complete_reason = "parse_error_detected"
+        else:
+            scan_complete_reason = _scan_complete_reason(
+                scan_complete=scan_complete,
+                result_limit_reached=result_limit_reached,
+                scan_limit_reached=False,
+                read_error_count=read_error_count,
+                visibility_error_count=visibility_error_count,
+                workspace_boundary_or_missing_count=workspace_boundary_or_missing_count,
+                backend_mismatch_detected=backend_mismatch_detected,
+                total_match_count=total_match_count,
+            )
+        if not scan_complete:
+            result_kind = "partial_symbol_results"
+        elif result_limit_reached:
+            result_kind = "result_page_truncated"
+        elif total_match_count:
+            result_kind = "symbols_found"
+        else:
+            result_kind = "complete_no_symbol_match"
+        recommended_next_calls: list[dict[str, Any]] = []
+        if next_offset is not None:
+            recommended_next_calls.append(
+                {
+                    "tool": "symbol_search",
+                    "arguments": {
+                        "query": query,
+                        "root": root,
+                        "symbol_kind": symbol_kind,
+                        "offset": next_offset,
+                        "max_results": max_results,
+                    },
+                    "reason": "More symbol results are available through result pagination.",
+                }
+            )
+        if not scan_complete:
+            recommended_next_calls.append(
+                {
+                    "tool": "grep",
+                    "arguments": {"query": query, "root": root, "glob": "*.py", "output_mode": "files_with_matches"},
+                    "reason": "AST symbol search was partial; use grep to cross-check text-level matches.",
+                }
+            )
+        search_fact_fields = _search_fact_fields(
+            context=context,
+            root=root,
+            search_backend="python_ast_symbol_index",
+            scan_complete_reason=scan_complete_reason,
+            read_error_count=read_error_count,
+            read_error_samples=read_error_samples,
+            visibility_error_count=visibility_error_count,
+            visibility_error_samples=visibility_error_samples,
+            backend_mismatch_detected=backend_mismatch_detected,
+        )
+        duration_ms = int((time.monotonic() - started_at) * 1000)
+        slow_scan = duration_ms > SYMBOL_SEARCH_SLOW_SCAN_THRESHOLD_MS
+        semantic_complete = scan_complete and not result_limit_reached
+        ref = context.recorder.write_json_artifact(
+            "symbol_search_results",
+            {
+                "query": query,
+                "root": root,
+                "symbol_kind": symbol_kind,
+                "result_kind": result_kind,
+                "symbols": matches,
+                "returned_symbols": page,
+                "offset": offset,
+                "max_results": max_results,
+                "total_match_count": total_match_count,
+                "scanned_file_count": scanned_file_count,
+                "candidate_file_count": candidate_file_count,
+                "wide_root_candidate_file_threshold": SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD,
+                "scan_complete": scan_complete,
+                "scan_complete_reason": scan_complete_reason,
+                "semantic_complete": semantic_complete,
+                "cache_hit_file_count": cache_hit_file_count,
+                "cache_miss_file_count": cache_miss_file_count,
+                "slow_scan": slow_scan,
+                "slow_scan_threshold_ms": SYMBOL_SEARCH_SLOW_SCAN_THRESHOLD_MS,
+                "duration_ms": duration_ms,
+                "execution_duration_ms": duration_ms,
+                "recommended_narrow_roots": [],
+                "parse_error_count": parse_error_count,
+                "parse_error_samples": parse_error_samples,
+                "read_error_count": read_error_count,
+                "read_error_samples": read_error_samples,
+                "visibility_error_count": visibility_error_count,
+                "visibility_error_samples": visibility_error_samples,
+                "hidden_path_count": hidden_path_count,
+                "skipped_hidden_count": hidden_path_count,
+                "symlink_outside_workspace_count": symlink_outside_workspace_count,
+                "skipped_symlink_count": symlink_outside_workspace_count,
+                "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+                "backend_mismatch_detected": backend_mismatch_detected,
+                "next_offset": next_offset,
+                "recommended_next_calls": recommended_next_calls,
+                "symbol_index_policy_version": SYMBOL_INDEX_POLICY_VERSION,
+                **search_fact_fields,
+            },
+        )
+        if page:
+            lines = [
+                (
+                    f"{symbol['path']}:{symbol['line']}:"
+                    f"{symbol['symbol_kind']} {symbol['qualified_name']}"
+                )
+                for symbol in page
+            ]
+            preview = "\n".join(lines)
+        elif scan_complete:
+            preview = f"No Python symbols matched query={query!r} under root={root!r}."
+        else:
+            preview = (
+                f"No symbol matches in the parsed subset, but symbol search is incomplete "
+                f"(reason={scan_complete_reason}). Cross-check with grep."
+            )
+        if result_limit_reached:
+            preview += (
+                f"\n[truncated] call symbol_search(query={query!r}, root={root!r}, "
+                f"symbol_kind={symbol_kind!r}, offset={next_offset}, max_results={max_results}) for more symbols."
+            )
+        if not scan_complete and page:
+            preview += (
+                f"\n[partial_symbol_results] AST parsing was incomplete "
+                f"(reason={scan_complete_reason}); cross-check with grep if needed."
+            )
+        output_truncated = len(preview) > context.output_limits.max_tool_output_chars
+        recovery_call = (
+            f"symbol_search(query={query!r}, root={root!r}, symbol_kind={symbol_kind!r}, "
+            f"offset={next_offset}, max_results={max_results})"
+            if next_offset is not None
+            else None
+        )
+        recovery_hint = (
+            "Use next_offset to continue symbol pagination."
+            if next_offset is not None
+            else (
+                "AST symbol search was partial; use grep to cross-check text-level matches."
+                if not scan_complete
+                else None
+            )
+        )
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status="ok",
+            content=_preview(preview, context.output_limits.max_tool_output_chars),
+            truncated=output_truncated,
+            artifact_refs=[ref],
+            typed={
+                "query": query,
+                "root": root,
+                "symbol_kind": symbol_kind,
+                "symbols": page,
+                "returned_count": len(page),
+                "total_match_count": total_match_count,
+                "offset": offset,
+                "max_results": max_results,
+                "result_kind": result_kind,
+                "scan_complete": scan_complete,
+                "scan_complete_reason": scan_complete_reason,
+                "semantic_complete": semantic_complete,
+                "result_limit_reached": result_limit_reached,
+                "output_truncated": output_truncated,
+                "next_offset": next_offset,
+                "scanned_file_count": scanned_file_count,
+                "candidate_file_count": candidate_file_count,
+                "wide_root_candidate_file_threshold": SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD,
+                "cache_hit_file_count": cache_hit_file_count,
+                "cache_miss_file_count": cache_miss_file_count,
+                "slow_scan": slow_scan,
+                "slow_scan_threshold_ms": SYMBOL_SEARCH_SLOW_SCAN_THRESHOLD_MS,
+                "duration_ms": duration_ms,
+                "execution_duration_ms": duration_ms,
+                "recommended_narrow_roots": [],
+                "parse_error_count": parse_error_count,
+                "parse_error_samples": parse_error_samples,
+                "read_error_count": read_error_count,
+                "read_error_samples": read_error_samples,
+                "visibility_error_count": visibility_error_count,
+                "visibility_error_samples": visibility_error_samples,
+                "hidden_path_count": hidden_path_count,
+                "skipped_hidden_count": hidden_path_count,
+                "symlink_outside_workspace_count": symlink_outside_workspace_count,
+                "skipped_symlink_count": symlink_outside_workspace_count,
+                "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+                "backend_mismatch_detected": backend_mismatch_detected,
+                "recommended_next_calls": recommended_next_calls,
+                "symbol_index_policy_version": SYMBOL_INDEX_POLICY_VERSION,
+                **search_fact_fields,
+                "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind=result_kind,
+                    semantic_complete=semantic_complete,
+                    model_visible_text_truncated=output_truncated,
+                    result_limit_reached=result_limit_reached,
+                    artifact_backed_full_result=True,
+                    recommended_next_calls=recommended_next_calls,
+                    recovery_call=recovery_call,
+                    recovery_hint=recovery_hint,
+                    context_effects=["tool_result_recoverable"],
+                ),
+            },
+        )
+
+    def _symbol_search_wide_root_guard_result(
+        self,
+        *,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+        query: str,
+        root: str,
+        symbol_kind: str,
+        offset: int,
+        max_results: int,
+        candidate_file_count: int,
+        python_files: list[str],
+        backend_mismatch_detected: bool,
+        started_at: float,
+    ) -> ToolResult:
+        recommended_narrow_roots = _recommended_symbol_search_roots(python_files)
+        recommended_next_calls = [
+            {
+                "tool": "symbol_search",
+                "arguments": {
+                    "query": query,
+                    "root": narrow_root,
+                    "symbol_kind": symbol_kind,
+                    "offset": 0,
+                    "max_results": max_results,
+                },
+                "reason": (
+                    "Narrow symbol_search to a likely source package or directory before using root='.'."
+                ),
+            }
+            for narrow_root in recommended_narrow_roots[:3]
+        ]
+        recovery_call = (
+            f"symbol_search(query={query!r}, root={recommended_narrow_roots[0]!r}, "
+            f"symbol_kind={symbol_kind!r}, offset=0, max_results={max_results})"
+            if recommended_narrow_roots
+            else f"symbol_search(query={query!r}, root='<narrow-source-dir>', symbol_kind={symbol_kind!r})"
+        )
+        recovery_hint = (
+            "Wide root symbol search was not executed because it would scan too many Python files. "
+            "Choose a narrower root from recommended_narrow_roots or repository_action_index."
+        )
+        scan_complete_reason = "wide_root_candidate_file_limit"
+        result_kind = "scan_requires_narrow_root"
+        duration_ms = int((time.monotonic() - started_at) * 1000)
+        search_fact_fields = _search_fact_fields(
+            context=context,
+            root=root,
+            search_backend="python_ast_symbol_index",
+            scan_complete_reason=scan_complete_reason,
+            read_error_count=0,
+            read_error_samples=[],
+            visibility_error_count=0,
+            visibility_error_samples=[],
+            backend_mismatch_detected=backend_mismatch_detected,
+        )
+        payload = {
+            "query": query,
+            "root": root,
+            "symbol_kind": symbol_kind,
+            "result_kind": result_kind,
+            "symbols": [],
+            "returned_symbols": [],
+            "offset": offset,
+            "max_results": max_results,
+            "total_match_count": 0,
+            "returned_count": 0,
+            "scanned_file_count": 0,
+            "candidate_file_count": candidate_file_count,
+            "wide_root_candidate_file_threshold": SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD,
+            "scan_complete": False,
+            "scan_complete_reason": scan_complete_reason,
+            "semantic_complete": False,
+            "parse_error_count": 0,
+            "parse_error_samples": [],
+            "read_error_count": 0,
+            "read_error_samples": [],
+            "visibility_error_count": 0,
+            "visibility_error_samples": [],
+            "hidden_path_count": 0,
+            "skipped_hidden_count": 0,
+            "symlink_outside_workspace_count": 0,
+            "skipped_symlink_count": 0,
+            "workspace_boundary_or_missing_count": 0,
+            "backend_mismatch_detected": backend_mismatch_detected,
+            "next_offset": None,
+            "recommended_narrow_roots": recommended_narrow_roots,
+            "recommended_next_calls": recommended_next_calls,
+            "cache_hit_file_count": 0,
+            "cache_miss_file_count": 0,
+            "slow_scan": False,
+            "slow_scan_threshold_ms": SYMBOL_SEARCH_SLOW_SCAN_THRESHOLD_MS,
+            "duration_ms": duration_ms,
+            "execution_duration_ms": duration_ms,
+            "symbol_index_policy_version": SYMBOL_INDEX_POLICY_VERSION,
+            **search_fact_fields,
+        }
+        ref = context.recorder.write_json_artifact("symbol_search_results", payload)
+        root_preview = ", ".join(recommended_narrow_roots[:5]) or "<narrow-source-dir>"
+        preview = (
+            f"symbol_search(query={query!r}, root={root!r}) was not executed as a full AST scan: "
+            f"{candidate_file_count} Python files exceed the wide-root threshold "
+            f"{SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD}. "
+            f"Retry with a narrower root such as {root_preview}."
+        )
+        output_truncated = len(preview) > context.output_limits.max_tool_output_chars
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status="ok",
+            content=_preview(preview, context.output_limits.max_tool_output_chars),
+            truncated=output_truncated,
+            artifact_refs=[ref],
+            typed={
+                **payload,
+                "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind=result_kind,
+                    semantic_complete=False,
+                    model_visible_text_truncated=output_truncated,
+                    result_limit_reached=False,
+                    artifact_backed_full_result=True,
+                    recommended_next_calls=recommended_next_calls,
+                    recovery_call=recovery_call,
+                    recovery_hint=recovery_hint,
+                    context_effects=["tool_result_recoverable"],
+                ),
+            },
+        )
+
+    def _update_working_state(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        current_hypothesis = _bounded_string(
+            normalized.normalized_arguments.get("current_hypothesis"),
+            max_chars=800,
+        )
+        candidate_files, skipped_candidate_file_count = _candidate_file_list(
+            normalized.normalized_arguments.get("candidate_files"),
+            max_items=20,
+            max_chars=240,
+        )
+        next_action = _bounded_string(
+            normalized.normalized_arguments.get("next_action"),
+            max_chars=500,
+        )
+        completed_steps = _bounded_string_list(
+            normalized.normalized_arguments.get("completed_steps"),
+            max_items=20,
+            max_chars=300,
+        )
+        blocking_question = _bounded_string(
+            normalized.normalized_arguments.get("blocking_question"),
+            max_chars=500,
+        )
+        if not any([current_hypothesis, candidate_files, next_action, completed_steps, blocking_question]):
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="error",
+                content=(
+                    "working_state_empty: provide at least one of current_hypothesis, "
+                    "candidate_files, next_action, completed_steps, or blocking_question."
+                ),
+                error_type="working_state_empty",
+                typed={
+                    "result_envelope": _result_envelope(
+                        result_kind="working_state_empty",
+                        semantic_complete=True,
+                        recovery_call="update_working_state(next_action='...')",
+                        recovery_hint="Record the current hypothesis or next concrete action before continuing.",
+                    ),
+                },
+            )
+        working_state = {
+            "schema_version": "repo_harness_working_state_v0",
+            "current_hypothesis": current_hypothesis,
+            "candidate_files": candidate_files,
+            "next_action": next_action,
+            "completed_steps": completed_steps,
+            "blocking_question": blocking_question,
+            "skipped_candidate_file_count": skipped_candidate_file_count,
+            "policy_version": "repo_harness_update_working_state_v0",
+        }
+        context.working_state = working_state
+        ref = context.recorder.write_json_artifact(
+            "working_state_update",
+            {
+                "tool_call_id": tool_call.tool_call_id,
+                "working_state": working_state,
+            },
+            {"budget_policy": "preserve_json"},
+        )
+        preview = {
+            "working_state_updated": True,
+            "current_hypothesis": current_hypothesis,
+            "candidate_files": candidate_files,
+            "next_action": next_action,
+            "completed_step_count": len(completed_steps),
+            "blocking_question": blocking_question,
+        }
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status="ok",
+            content=_preview(
+                json.dumps(preview, ensure_ascii=False, sort_keys=True),
+                context.output_limits.max_tool_output_chars,
+            ),
+            artifact_refs=[ref],
+            typed={
+                "working_state": working_state,
+                "working_state_ref": ref.model_dump(mode="json"),
+                "policy_version": "repo_harness_update_working_state_v0",
+                "trainable": False,
+                "resolved_trainable": False,
+                "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind="working_state_updated",
+                    semantic_complete=True,
+                    artifact_backed_full_result=True,
+                    context_effects=["working_state_updated"],
+                ),
             },
         )
 
@@ -774,10 +1727,70 @@ class ToolExecutor:
                     "path": path,
                     "expected_content_hash": expected_hash,
                     "current_content_hash": current_hash,
+                    "policy_version": context.tool_policy.tool_policy_version,
+                    "require_read_before_edit": context.tool_policy.require_read_before_edit,
                     "recovery_hint": "Call read_file again, copy the raw_content_preview without line numbers, then retry edit_file.",
                     "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind="stale_file_state",
+                        semantic_complete=True,
+                        recovery_call=f"read_file(path={path!r})",
+                        recovery_hint="Call read_file again, then retry edit_file with the new content_hash.",
+                    ),
                 },
             )
+        cached_hash = context.file_state_cache.get(path)
+        if context.tool_policy.require_read_before_edit and expected_hash is None:
+            if cached_hash is None:
+                return _tool_result(
+                    tool_call,
+                    normalized=normalized,
+                    status="error",
+                    content=(
+                        "read_before_edit_required: call read_file on this path before edit_file, "
+                        "or pass expected_content_hash from a recent read_file result."
+                    ),
+                    error_type="read_before_edit_required",
+                    typed={
+                        "path": path,
+                        "policy_version": context.tool_policy.tool_policy_version,
+                        "require_read_before_edit": True,
+                        "recovery_hint": "Call read_file(path=...) and retry edit_file with the returned content_hash.",
+                        "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                        "result_envelope": _result_envelope(
+                            result_kind="read_before_edit_required",
+                            semantic_complete=True,
+                            recovery_call=f"read_file(path={path!r})",
+                            recovery_hint="Call read_file on this path before retrying edit_file.",
+                        ),
+                    },
+                )
+            if cached_hash != current_hash:
+                return _tool_result(
+                    tool_call,
+                    normalized=normalized,
+                    status="error",
+                    content=(
+                        "stale_file_state: the file changed after it was last read. "
+                        "Re-run read_file and retry edit_file with the refreshed content hash."
+                    ),
+                    error_type="stale_file_state",
+                    typed={
+                        "path": path,
+                        "cached_content_hash": cached_hash,
+                        "current_content_hash": current_hash,
+                        "policy_version": context.tool_policy.tool_policy_version,
+                        "require_read_before_edit": True,
+                        "recovery_hint": "Call read_file again, then retry edit_file with the new content_hash.",
+                        "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                        "result_envelope": _result_envelope(
+                            result_kind="stale_file_state",
+                            semantic_complete=True,
+                            recovery_call=f"read_file(path={path!r})",
+                            recovery_hint="Call read_file again, then retry edit_file with the new content_hash.",
+                        ),
+                    },
+                )
         if _looks_like_numbered_read_file_snippet(old_text):
             return _tool_result(
                 tool_call,
@@ -792,6 +1805,12 @@ class ToolExecutor:
                     "path": path,
                     "recovery_hint": "Re-read the file and copy old_text from raw_content_preview, not numbered_content_preview.",
                     "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind="line_number_prefix_in_old_text",
+                        semantic_complete=True,
+                        recovery_call=f"read_file(path={path!r})",
+                        recovery_hint="Copy old_text from raw_content_preview, not numbered_content_preview.",
+                    ),
                 },
             )
         count = content.count(old_text)
@@ -812,6 +1831,12 @@ class ToolExecutor:
                     "replace_all": replace_all,
                     "recovery_hint": "Use read_file with a wider line range and include surrounding lines so old_text is unique.",
                     "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind=error_type,
+                        semantic_complete=True,
+                        recovery_call=f"read_file(path={path!r})",
+                        recovery_hint="Use read_file with a wider line range and include enough surrounding raw text for a unique edit.",
+                    ),
                 },
             )
         updated = content.replace(old_text, new_text) if replace_all else content.replace(old_text, new_text, 1)
@@ -828,7 +1853,14 @@ class ToolExecutor:
                 "replacement_count": count if replace_all else 1,
                 "content_hash": updated_hash,
                 "content_sha256": updated_hash,
+                "policy_version": context.tool_policy.tool_policy_version,
+                "require_read_before_edit": context.tool_policy.require_read_before_edit,
                 "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind="edit_applied",
+                    semantic_complete=True,
+                    context_effects=["repository_file_state_updated"],
+                ),
             },
         )
 
@@ -1081,6 +2113,14 @@ class ToolExecutor:
             recovery_hint = "Diff output was truncated; call git_diff(path='relative/path.py') for one changed file."
         elif changed_files:
             recovery_hint = "Use git_diff(path='relative/path') to inspect a single changed file if needed."
+        recovery_call, envelope_recovery_hint = _tool_recovery_call(
+            tool_name="git_diff",
+            arguments=normalized.normalized_arguments,
+            typed={"changed_files": changed_files[:GIT_DIFF_CHANGED_FILE_LIMIT]},
+        )
+        if not (truncated or changed_files):
+            recovery_call = None
+            envelope_recovery_hint = None
         return _tool_result(
             tool_call,
             normalized=normalized,
@@ -1107,6 +2147,16 @@ class ToolExecutor:
                 "truncated": truncated,
                 "recovery_hint": recovery_hint,
                 "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind="diff_truncated" if truncated else ("diff_present" if diff_text else "no_diff"),
+                    semantic_complete=not truncated,
+                    model_visible_text_truncated=truncated,
+                    result_limit_reached=truncated,
+                    artifact_backed_full_result=True,
+                    recovery_call=recovery_call,
+                    recovery_hint=envelope_recovery_hint,
+                    context_effects=["repository_diff_observed", "tool_result_recoverable"],
+                ),
             },
         )
 
@@ -1119,14 +2169,16 @@ def build_tool(name: str) -> ToolDefinition:
     definitions = {
         "list_files": ToolDefinition(
             name="list_files",
-            tool_version="repo_harness_list_files_v0",
+            tool_version="repo_harness_list_files_v1",
             model_visible_description=(
-                "List model-visible files inside the workspace with pagination. "
+                "Discover model-visible files inside the workspace with pagination. "
+                "Use this before grep when you know a filename, module name, or glob pattern. "
                 "Hidden dependency, credential, build, cache, and version-control paths are excluded."
             ),
             model_visible_prompt=(
                 "Use list_files with optional path/root, glob, offset, and max_entries. "
-                "For symbols or text, prefer grep first and then read_file on the relevant file."
+                "For file discovery, call list_files first; then call grep(output_mode='files_with_matches') "
+                "or read_file on the relevant paths."
             ),
             input_schema={
                 "type": "object",
@@ -1140,7 +2192,53 @@ def build_tool(name: str) -> ToolDefinition:
                     "kind": {"type": "string", "enum": ["file"], "description": "Currently only file entries are returned."},
                 },
             },
-            output_schema={"type": "object", "properties": {"files": {"type": "array"}}},
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "files": {"type": "array"},
+                    "result_kind": {"type": "string"},
+                    "scan_complete_reason": {"type": "string"},
+                    "recommended_next_calls": {"type": "array"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_read_only=True,
+            is_concurrency_safe=True,
+        ),
+        "glob_files": ToolDefinition(
+            name="glob_files",
+            tool_version="repo_harness_glob_files_v0",
+            model_visible_description=(
+                "Discover model-visible files matching a fnmatch-style glob pattern. "
+                "This is a direct file-discovery alias for list_files with the same pagination, "
+                "workspace boundary, hidden path filtering, and scan completeness fields."
+            ),
+            model_visible_prompt=(
+                "Use glob_files(pattern='*.py') or glob_files(pattern='src/**/*.py', path='src') "
+                "when you know a filename shape or module path. Then use read_file or "
+                "grep(output_mode='files_with_matches') on the returned paths."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["pattern"],
+                "properties": {
+                    "pattern": {"type": "string", "description": "fnmatch-style file glob."},
+                    "path": {"type": "string", "description": "Workspace-relative search root."},
+                    "root": {"type": "string", "description": "Alias for path; workspace-relative search root."},
+                    "offset": {"type": "integer", "description": "Zero-based result offset for pagination."},
+                    "max_entries": {"type": "integer", "description": "Maximum returned entries for this page."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "files": {"type": "array"},
+                    "result_kind": {"type": "string"},
+                    "scan_complete_reason": {"type": "string"},
+                    "recommended_next_calls": {"type": "array"},
+                },
+            },
             max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
             is_read_only=True,
             is_concurrency_safe=True,
@@ -1187,14 +2285,17 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "grep": ToolDefinition(
             name="grep",
-            tool_version="repo_harness_grep_v0",
+            tool_version="repo_harness_grep_v1",
             model_visible_description=(
                 "Search model-visible workspace files. Default mode is literal substring; "
-                "set mode='regex' for regular expressions. Results are paginated and hidden paths are excluded."
+                "set mode='regex' for regular expressions. Results are paginated, hidden paths are excluded, "
+                "and scan completeness is reported explicitly."
             ),
             model_visible_prompt=(
-                "Use grep with query and optional root/path, mode, glob, offset, max_matches, "
-                "and context_lines. If a literal search for a regex-like query returns no matches, retry with mode='regex'."
+                "Use grep with query and optional root/path, mode, glob, output_mode, offset, max_matches, "
+                "and context_lines. Prefer output_mode='files_with_matches' before reading large content. "
+                "If a literal search for a regex-like query returns no matches, retry with mode='regex'. "
+                "Do not treat partial_scan_no_match or incomplete scan facts as proof that the query is absent."
             ),
             input_schema={
                 "type": "object",
@@ -1206,23 +2307,125 @@ def build_tool(name: str) -> ToolDefinition:
                     "root": {"type": "string", "description": "Optional workspace-relative search root."},
                     "path": {"type": "string", "description": "Alias for root; workspace-relative."},
                     "glob": {"type": "string", "description": "Optional fnmatch-style file glob."},
+                    "output_mode": {
+                        "type": "string",
+                        "enum": ["content", "files_with_matches", "count"],
+                        "description": "content returns matching lines, files_with_matches returns matching paths, count returns counts only.",
+                    },
                     "max_matches": {"type": "integer", "description": "Maximum returned matches for this page."},
                     "offset": {"type": "integer", "description": "Zero-based match offset for pagination."},
                     "context_lines": {"type": "integer", "description": "Line context before and after each match."},
                 },
             },
-            output_schema={"type": "object", "properties": {"matches": {"type": "array"}}},
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "matches": {"type": "array"},
+                    "files_with_matches": {"type": "array"},
+                    "result_kind": {"type": "string"},
+                    "scan_complete_reason": {"type": "string"},
+                    "read_error_count": {"type": "integer"},
+                    "visibility_error_count": {"type": "integer"},
+                },
+            },
             max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
             is_read_only=True,
             is_concurrency_safe=True,
+        ),
+        "symbol_search": ToolDefinition(
+            name="symbol_search",
+            tool_version="repo_harness_symbol_search_v0",
+            model_visible_description=(
+                "Search Python class, function, and method definitions using a lightweight AST index. "
+                "This is symbol navigation, not a full language server or complete static analysis."
+            ),
+            model_visible_prompt=(
+                "Use symbol_search when the task names a class, function, method, inheritance behavior, "
+                "or call-related entry point. Pass query plus optional root/path, symbol_kind, offset, "
+                "and max_results. Prefer a narrow package or source directory root from repository_action_index; "
+                "wide root='.' may return scan_requires_narrow_root with a recovery call. "
+                "If result_kind is partial_symbol_results, cross-check with grep."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                    "query": {"type": "string", "description": "Class, function, method, or symbol text."},
+                    "path": {"type": "string", "description": "Alias for root; workspace-relative search root."},
+                    "root": {"type": "string", "description": "Workspace-relative search root."},
+                    "symbol_kind": {
+                        "type": "string",
+                        "enum": ["any", "class", "function", "method"],
+                        "description": "Optional symbol kind filter.",
+                    },
+                    "kind": {"type": "string", "enum": ["any", "class", "function", "method"], "description": "Alias for symbol_kind."},
+                    "offset": {"type": "integer", "description": "Zero-based result offset for pagination."},
+                    "max_results": {"type": "integer", "description": "Maximum returned symbols for this page."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "symbols": {"type": "array"},
+                    "result_kind": {"type": "string"},
+                    "scan_complete_reason": {"type": "string"},
+                    "parse_error_count": {"type": "integer"},
+                    "candidate_file_count": {"type": "integer"},
+                    "scanned_file_count": {"type": "integer"},
+                    "semantic_complete": {"type": "boolean"},
+                    "slow_scan": {"type": "boolean"},
+                    "recommended_narrow_roots": {"type": "array"},
+                    "recommended_next_calls": {"type": "array"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_read_only=True,
+            is_concurrency_safe=True,
+        ),
+        "update_working_state": ToolDefinition(
+            name="update_working_state",
+            tool_version="repo_harness_update_working_state_v0",
+            model_visible_description=(
+                "Record the current investigation hypothesis, candidate files, completed steps, "
+                "next concrete action, and any blocking question. This tool does not modify repository files."
+            ),
+            model_visible_prompt=(
+                "Use update_working_state when exploration is starting to branch or repeat. "
+                "Keep it brief: state the current_hypothesis, candidate_files, next_action, "
+                "completed_steps, or blocking_question. Then continue with a concrete read, edit, or final answer."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "current_hypothesis": {"type": "string"},
+                    "candidate_files": {"type": "array", "items": {"type": "string"}},
+                    "next_action": {"type": "string"},
+                    "completed_steps": {"type": "array", "items": {"type": "string"}},
+                    "blocking_question": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "working_state": {"type": "object"},
+                    "policy_version": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_read_only=True,
+            is_concurrency_safe=False,
         ),
         "edit_file": ToolDefinition(
             name="edit_file",
             tool_version="repo_harness_edit_file_v0",
             model_visible_description="Replace exact text in an existing UTF-8 file.",
             model_visible_prompt=(
-                "Use edit_file with path, old_text, and new_text. "
-                "Prefer passing expected_content_hash from read_file. Do not include read_file line-number prefixes in old_text."
+                "Use edit_file with path, old_text, and new_text only after reading the target file. "
+                "In formal runtimes, edit_file may require a prior read_file observation or a matching "
+                "expected_content_hash from read_file. old_text must be exact raw text, not read_file "
+                "line-number prefixes."
             ),
             input_schema={
                 "type": "object",
@@ -1298,7 +2501,10 @@ def build_tool(name: str) -> ToolDefinition:
                 "Show the current workspace diff with a changed-file summary. "
                 "Use the optional path field to inspect one file when the full diff is truncated."
             ),
-            model_visible_prompt="Use git_diff with optional workspace-relative path.",
+            model_visible_prompt=(
+                "Use git_diff with optional workspace-relative path. Before the final answer after editing files, "
+                "inspect git_diff to verify the actual patch."
+            ),
             input_schema={
                 "type": "object",
                 "properties": {
@@ -1326,6 +2532,11 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "list_files.offset": (int, False),
         "list_files.max_entries": (int, False),
         "list_files.kind": (str, False),
+        "glob_files.pattern": (str, True),
+        "glob_files.path": (str, False),
+        "glob_files.root": (str, False),
+        "glob_files.offset": (int, False),
+        "glob_files.max_entries": (int, False),
         "read_file.path": (str, True),
         "read_file.start_line": (int, False),
         "read_file.end_line": (int, False),
@@ -1337,9 +2548,22 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "grep.root": (str, False),
         "grep.mode": (str, False),
         "grep.glob": (str, False),
+        "grep.output_mode": (str, False),
         "grep.max_matches": (int, False),
         "grep.offset": (int, False),
         "grep.context_lines": (int, False),
+        "symbol_search.query": (str, True),
+        "symbol_search.path": (str, False),
+        "symbol_search.root": (str, False),
+        "symbol_search.symbol_kind": (str, False),
+        "symbol_search.kind": (str, False),
+        "symbol_search.offset": (int, False),
+        "symbol_search.max_results": (int, False),
+        "update_working_state.current_hypothesis": (str, False),
+        "update_working_state.candidate_files": (list, False),
+        "update_working_state.next_action": (str, False),
+        "update_working_state.completed_steps": (list, False),
+        "update_working_state.blocking_question": (str, False),
         "edit_file.path": (str, True),
         "edit_file.old_text": (str, True),
         "edit_file.new_text": (str, True),
@@ -1365,13 +2589,13 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         if field_name in args and not _is_exact_type(args[field_name], expected_type):
             return _issue(field_name, _type_name(expected_type), args[field_name], retryable=True)
         if (
-            tool_name in {"read_file", "list_files", "grep"}
-            and field_name in {"start_line", "end_line", "offset", "limit", "max_entries", "max_matches", "context_lines"}
+            tool_name in {"read_file", "list_files", "glob_files", "grep", "symbol_search"}
+            and field_name in {"start_line", "end_line", "offset", "limit", "max_entries", "max_matches", "max_results", "context_lines"}
             and field_name in args
             and args[field_name] < (
                 0
                 if (
-                    (field_name == "offset" and tool_name in {"list_files", "grep"})
+                    (field_name == "offset" and tool_name in {"list_files", "glob_files", "grep", "symbol_search"})
                     or (field_name == "context_lines" and tool_name == "grep")
                 )
                 else 1
@@ -1380,7 +2604,7 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
             expected = (
                 "non-negative integer"
                 if (
-                    (field_name == "offset" and tool_name in {"list_files", "grep"})
+                    (field_name == "offset" and tool_name in {"list_files", "glob_files", "grep", "symbol_search"})
                     or (field_name == "context_lines" and tool_name == "grep")
                 )
                 else "positive integer"
@@ -1388,6 +2612,13 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
             return _issue(field_name, expected, args[field_name], retryable=True)
         if tool_name == "grep" and field_name == "mode" and field_name in args and args[field_name] not in {"literal", "regex"}:
             return _issue(field_name, "literal|regex", args[field_name], retryable=True)
+        if (
+            tool_name == "symbol_search"
+            and field_name in {"symbol_kind", "kind"}
+            and field_name in args
+            and args[field_name] not in SUPPORTED_SYMBOL_KINDS
+        ):
+            return _issue(field_name, "class|function|method|any", args[field_name], retryable=True)
         if tool_name == "list_files" and field_name == "kind" and field_name in args and args[field_name] not in {"file"}:
             return _issue(field_name, "file", args[field_name], retryable=True)
     for field_name in args:
@@ -1420,7 +2651,113 @@ def _type_name(expected_type: type) -> str:
         return "integer"
     if expected_type is bool:
         return "boolean"
+    if expected_type is list:
+        return "array"
     return expected_type.__name__
+
+
+def _result_envelope(
+    *,
+    result_kind: str,
+    semantic_complete: bool,
+    model_visible_text_truncated: bool = False,
+    result_limit_reached: bool = False,
+    artifact_backed_full_result: bool = False,
+    recommended_next_calls: list[dict[str, Any]] | None = None,
+    recovery_call: str | None = None,
+    recovery_hint: str | None = None,
+    context_effects: list[str] | None = None,
+) -> dict[str, Any]:
+    effects = [
+        effect
+        for effect in context_effects or []
+        if effect in TOOL_RESULT_CONTEXT_EFFECTS
+    ]
+    return {
+        "schema_version": TOOL_RESULT_ENVELOPE_VERSION,
+        "result_kind": result_kind,
+        "semantic_complete": semantic_complete,
+        "model_visible_text_truncated": model_visible_text_truncated,
+        "result_limit_reached": result_limit_reached,
+        "artifact_backed_full_result": artifact_backed_full_result,
+        "recommended_next_calls": recommended_next_calls or [],
+        "recovery_call": recovery_call,
+        "recovery_hint": recovery_hint,
+        "context_effects": effects,
+    }
+
+
+def _tool_recovery_call(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    typed: dict[str, Any],
+) -> tuple[str, str]:
+    if tool_name == "read_file":
+        path = str(arguments.get("path") or typed.get("path") or "")
+        start_line = typed.get("next_start_line") or arguments.get("start_line") or 1
+        call = f"read_file(path={path!r}, start_line={start_line})"
+        hint = (
+            "Continue reading from next_start_line to recover omitted content."
+            if typed.get("next_start_line") is not None
+            else "Re-read this file range with read_file when the omitted content is needed."
+        )
+        return call, hint
+    if tool_name == "grep":
+        query = str(arguments.get("query") or typed.get("query") or "")
+        mode = str(arguments.get("mode") or typed.get("mode") or "literal")
+        root = str(arguments.get("root") or arguments.get("path") or ".")
+        offset = typed.get("next_offset") if typed.get("next_offset") is not None else arguments.get("offset", 0)
+        parts = [f"query={query!r}", f"mode={mode!r}", f"root={root!r}", f"offset={offset}"]
+        glob = arguments.get("glob")
+        if isinstance(glob, str) and glob:
+            parts.append(f"glob={glob!r}")
+        max_matches = arguments.get("max_matches")
+        if isinstance(max_matches, int):
+            parts.append(f"max_matches={max_matches}")
+        call = f"grep({', '.join(parts)})"
+        hint = (
+            "Use the next_offset page to continue the same search."
+            if typed.get("next_offset") is not None
+            else "Re-run or narrow the grep query, root, or glob to recover omitted matches."
+        )
+        return call, hint
+    if tool_name == "list_files":
+        root = str(arguments.get("root") or arguments.get("path") or ".")
+        offset = typed.get("next_offset") if typed.get("next_offset") is not None else arguments.get("offset", 0)
+        parts = [f"root={root!r}", f"offset={offset}"]
+        glob = arguments.get("glob") or arguments.get("pattern")
+        if isinstance(glob, str) and glob:
+            parts.append(f"glob={glob!r}")
+        max_entries = arguments.get("max_entries")
+        if isinstance(max_entries, int):
+            parts.append(f"max_entries={max_entries}")
+        call = f"list_files({', '.join(parts)})"
+        hint = (
+            "Use the next_offset page to continue listing files."
+            if typed.get("next_offset") is not None
+            else "Re-run list_files with the same root or a narrower glob."
+        )
+        return call, hint
+    if tool_name == "git_diff":
+        path = arguments.get("path")
+        if not path:
+            changed_files = typed.get("changed_files")
+            if isinstance(changed_files, list):
+                for changed_file in changed_files:
+                    if isinstance(changed_file, dict) and changed_file.get("path"):
+                        path = changed_file["path"]
+                        break
+                    if isinstance(changed_file, str) and changed_file:
+                        path = changed_file
+                        break
+        if path:
+            return f"git_diff(path={str(path)!r})", "Re-run git_diff for this changed file."
+        return "git_diff()", "Re-run git_diff to recover the current patch context."
+    path = arguments.get("path") or typed.get("path")
+    if path:
+        return f"{tool_name}(path={str(path)!r}, ...)", "Retry the tool after refreshing the relevant file context."
+    return f"{tool_name}(...)", "Retry the tool with corrected arguments."
 
 
 def _tool_result(
@@ -1430,6 +2767,7 @@ def _tool_result(
     content: str,
     normalized: NormalizedToolRequest | None = None,
     error_type: str | None = None,
+    truncated: bool = False,
     artifact_refs: list[ArtifactRef] | None = None,
     typed: dict[str, Any] | None = None,
 ) -> ToolResult:
@@ -1459,6 +2797,7 @@ def _tool_result(
         status=status,  # type: ignore[arg-type]
         content_preview=content,
         error_type=error_type,
+        truncated=truncated,
         artifact_refs=artifact_refs or [],
         typed=result_typed,
     )
@@ -1565,24 +2904,47 @@ def _model_visible_path_status(
 ) -> tuple[bool, str | None]:
     if _is_model_hidden_tool_path(rel_path):
         return False, "hidden_path"
-    host_candidate = Path(context.run_workspace.workspace_path) / rel_path
-    if host_candidate.is_symlink():
-        try:
-            target_rel = host_candidate.resolve().relative_to(Path(context.run_workspace.workspace_path).resolve())
-        except ValueError:
-            return False, "symlink_outside_workspace"
-        if _is_model_hidden_tool_path(target_rel.as_posix()):
-            return False, "symlink_target_hidden_path"
     try:
-        context.workspace_adapter.resolve_workspace_path(
+        resolved = context.workspace_adapter.resolve_workspace_path(
             context.run_workspace.workspace_path,
             rel_path,
             must_exist=True,
         )
     except WorkspaceError as exc:
-        if "符号链接" in str(exc) or "symlink" in str(exc).lower():
+        message = str(exc)
+        lowered = message.lower()
+        if "符号链接" in message or "symlink" in lowered:
             return False, "symlink_outside_workspace"
+        if "敏感路径" in message or "sensitive" in lowered:
+            return False, "symlink_target_hidden_path"
+        if "边界" in message:
+            try:
+                context.workspace_adapter.resolve_workspace_path(
+                    context.run_workspace.workspace_path,
+                    rel_path,
+                    must_exist=False,
+                )
+            except WorkspaceError as symlink_probe_exc:
+                probe_message = str(symlink_probe_exc)
+                if "符号链接" in probe_message or "symlink" in probe_message.lower():
+                    return False, "symlink_outside_workspace"
+        if "路径不存在" in message or "不存在" in message or "missing" in lowered or "边界" in message:
+            return False, "workspace_boundary_or_missing"
         return False, "workspace_boundary_or_missing"
+    except Exception:
+        return False, "visibility_error"
+    try:
+        workspace_root = context.workspace_adapter.resolve_workspace_path(
+            context.run_workspace.workspace_path,
+            ".",
+            must_exist=True,
+        )
+        target_rel = resolved.relative_to(workspace_root)
+        target_rel_posix = target_rel.as_posix()
+        if target_rel_posix != rel_path and _is_model_hidden_tool_path(target_rel_posix):
+            return False, "symlink_target_hidden_path"
+    except Exception:
+        return False, "visibility_error"
     return True, None
 
 
@@ -1598,6 +2960,249 @@ def _looks_like_regex(query: str) -> bool:
     return bool(re.search(r"(?<!\\)(\.\*|\[[^\]]+\]|\([^)]*[|?+*][^)]*\)|\\d|\\w|\\s|\^|\$)", query))
 
 
+def _grep_result_kind(
+    *,
+    current_page_match_count: int,
+    total_match_count: int,
+    result_limit_reached: bool,
+    scan_complete: bool,
+) -> str:
+    if total_match_count > 0 and current_page_match_count == 0:
+        return "page_empty_out_of_range"
+    if total_match_count == 0:
+        return "complete_no_match" if scan_complete else "partial_scan_no_match"
+    if not scan_complete:
+        return "partial_scan_with_matches"
+    if result_limit_reached:
+        return "result_page_truncated"
+    return "complete_with_matches"
+
+
+def _is_wide_symbol_root(root: str) -> bool:
+    return root.strip() in {"", "."}
+
+
+def _recommended_symbol_search_roots(paths: list[str], *, max_roots: int = 6) -> list[str]:
+    ignored_first_parts = {
+        ".github",
+        "doc",
+        "docs",
+        "documentation",
+        "examples",
+        "images",
+        "img",
+        "news",
+        "requirements",
+        "scripts",
+        "test",
+        "tests",
+        "tools",
+    }
+    counts: dict[str, int] = {}
+    for path in paths:
+        parts = PurePosixPath(path).parts
+        if not parts:
+            continue
+        first = parts[0]
+        if first in ignored_first_parts or first.startswith("."):
+            continue
+        if first == "src" and len(parts) >= 2:
+            root = f"src/{parts[1]}"
+        elif len(parts) >= 3 and parts[1] in {"core", "nodes", "rules"}:
+            root = f"{parts[0]}/{parts[1]}"
+        else:
+            root = first
+        counts[root] = counts.get(root, 0) + 1
+    if not counts:
+        for path in paths:
+            parts = PurePosixPath(path).parts
+            if parts and not parts[0].startswith("."):
+                counts[parts[0]] = counts.get(parts[0], 0) + 1
+    return [
+        root
+        for root, _ in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:max_roots]
+    ]
+
+
+def _scan_complete_reason(
+    *,
+    scan_complete: bool,
+    result_limit_reached: bool,
+    scan_limit_reached: bool,
+    read_error_count: int,
+    visibility_error_count: int,
+    workspace_boundary_or_missing_count: int,
+    backend_mismatch_detected: bool,
+    total_match_count: int,
+) -> str:
+    if backend_mismatch_detected:
+        return "backend_mismatch_detected"
+    if scan_limit_reached:
+        return "scan_limit_reached"
+    if read_error_count:
+        return "read_errors_present"
+    if visibility_error_count:
+        return "visibility_errors_present"
+    if workspace_boundary_or_missing_count:
+        return "workspace_boundary_or_missing_present"
+    if result_limit_reached:
+        return "result_page_truncated"
+    if scan_complete and total_match_count == 0:
+        return "complete_no_match_all_visible_candidates_read"
+    if scan_complete:
+        return "complete_all_visible_candidates_read"
+    return "scan_incomplete"
+
+
+def _backend_mismatch_detected(context: ToolExecutionContext) -> bool:
+    backend = getattr(context.workspace_adapter, "backend", None)
+    backend_value = getattr(backend, "value", backend)
+    execution_mode = getattr(context.run_workspace, "execution_mode", None)
+    return bool(backend_value and execution_mode and str(backend_value) != str(execution_mode))
+
+
+def _search_fact_fields(
+    *,
+    context: ToolExecutionContext,
+    root: str,
+    search_backend: str,
+    scan_complete_reason: str,
+    read_error_count: int,
+    read_error_samples: list[dict[str, str]],
+    visibility_error_count: int,
+    visibility_error_samples: list[dict[str, str]],
+    backend_mismatch_detected: bool,
+) -> dict[str, Any]:
+    return {
+        "root": root,
+        "search_backend": search_backend,
+        "workspace_execution_mode": context.run_workspace.execution_mode,
+        "workspace_backend": str(getattr(getattr(context.workspace_adapter, "backend", ""), "value", getattr(context.workspace_adapter, "backend", ""))),
+        "read_error_count": read_error_count,
+        "read_error_samples": read_error_samples,
+        "visibility_error_count": visibility_error_count,
+        "visibility_error_samples": visibility_error_samples,
+        "scan_complete_reason": scan_complete_reason,
+        "backend_mismatch_detected": backend_mismatch_detected,
+        "search_fact_policy_version": SEARCH_FACT_POLICY_VERSION,
+    }
+
+
+def _grep_recommended_next_calls(
+    *,
+    query: str,
+    mode: str,
+    root: str,
+    glob: str | None,
+    next_offset: int | None,
+    max_matches: int,
+    scan_limit_reached: bool,
+    regex_hint: bool,
+) -> list[dict[str, Any]]:
+    calls: list[dict[str, Any]] = []
+    if next_offset is not None:
+        args: dict[str, Any] = {
+            "query": query,
+            "mode": mode,
+            "root": root,
+            "offset": next_offset,
+            "max_matches": max_matches,
+        }
+        if glob is not None:
+            args["glob"] = glob
+        calls.append(
+            {
+                "tool": "grep",
+                "arguments": args,
+                "reason": "More matches are available through result pagination.",
+            }
+        )
+    if scan_limit_reached:
+        narrowed_args: dict[str, Any] = {
+            "query": query,
+            "mode": mode,
+            "root": "src" if root == "." else root,
+        }
+        narrowed_args["glob"] = glob if glob is not None else "*.py"
+        calls.append(
+            {
+                "tool": "grep",
+                "arguments": narrowed_args,
+                "reason": "The previous search did not scan the full candidate set; narrow root or glob.",
+            }
+        )
+    if regex_hint:
+        args = {"query": query, "mode": "regex", "root": root}
+        if glob is not None:
+            args["glob"] = glob
+        calls.append(
+            {
+                "tool": "grep",
+                "arguments": args,
+                "reason": "The literal query looks like a regular expression.",
+            }
+        )
+    return calls
+
+
+def _list_files_recommended_next_calls(
+    *,
+    root: str,
+    glob: str | None,
+    next_offset: int | None,
+    max_entries: int,
+    scan_complete: bool,
+) -> list[dict[str, Any]]:
+    calls: list[dict[str, Any]] = []
+    if next_offset is not None:
+        args: dict[str, Any] = {"root": root, "offset": next_offset, "max_entries": max_entries}
+        if glob is not None:
+            args["glob"] = glob
+        calls.append(
+            {
+                "tool": "list_files",
+                "arguments": args,
+                "reason": "More files are available through result pagination.",
+            }
+        )
+    if not scan_complete:
+        args = {"root": "." if root == "/" else root, "max_entries": max_entries}
+        if glob is not None:
+            args["glob"] = glob
+        calls.append(
+            {
+                "tool": "list_files",
+                "arguments": args,
+                "reason": "The previous listing could not classify every candidate path; retry with a narrower root or glob.",
+            }
+        )
+    return calls
+
+
+def _glob_files_recommended_next_calls(
+    calls: list[dict[str, Any]],
+    *,
+    fallback_pattern: str,
+) -> list[dict[str, Any]]:
+    converted: list[dict[str, Any]] = []
+    for call in calls:
+        args = dict(call.get("arguments") or {})
+        pattern = args.pop("glob", fallback_pattern)
+        path = args.pop("root", ".")
+        converted.append(
+            {
+                **call,
+                "tool": "glob_files",
+                "arguments": {
+                    "pattern": pattern,
+                    "path": path,
+                    **args,
+                },
+            }
+        )
+    return converted
+
+
 def _grep_python(
     *,
     context: ToolExecutionContext,
@@ -1608,33 +3213,51 @@ def _grep_python(
     offset: int,
     max_matches: int,
     context_lines: int,
+    output_mode: str,
 ) -> dict[str, Any]:
     if mode not in {"literal", "regex"}:
         raise WorkspaceError("grep mode must be literal or regex.")
+    if output_mode not in GREP_OUTPUT_MODES:
+        raise WorkspaceError("grep output_mode must be content, files_with_matches, or count.")
     pattern = re.compile(query) if mode == "regex" else None
     all_matches: list[dict[str, Any]] = []
     searched_file_count = 0
-    skipped_hidden_count = 0
-    skipped_symlink_count = 0
+    hidden_path_count = 0
+    symlink_outside_workspace_count = 0
+    workspace_boundary_or_missing_count = 0
+    visibility_error_count = 0
+    visibility_error_samples: list[dict[str, str]] = []
+    read_error_count = 0
+    read_error_samples: list[dict[str, str]] = []
     matched_files: set[str] = set()
     files = context.workspace_adapter.list_files(
         context.run_workspace.workspace_path,
         root,
         pattern=glob,
     )
+    scanned_candidate_file_count = min(len(files), GREP_MAX_SCANNED_FILES)
     for rel_path in files[:GREP_MAX_SCANNED_FILES]:
         visible, reason = _model_visible_path_status(context, rel_path)
         if not visible:
-            if reason == "symlink_outside_workspace":
-                skipped_symlink_count += 1
+            if reason in {"hidden_path", "symlink_target_hidden_path"}:
+                hidden_path_count += 1
+            elif reason == "symlink_outside_workspace":
+                symlink_outside_workspace_count += 1
+            elif reason == "workspace_boundary_or_missing":
+                workspace_boundary_or_missing_count += 1
             else:
-                skipped_hidden_count += 1
+                visibility_error_count += 1
+                if len(visibility_error_samples) < 5:
+                    visibility_error_samples.append({"path": rel_path, "reason": reason or "visibility_error"})
             continue
-        searched_file_count += 1
         try:
             text = _read_model_visible_text_for_grep(context, rel_path)
-        except (UnicodeDecodeError, ValueError, WorkspaceError):
+        except (UnicodeDecodeError, ValueError, WorkspaceError) as exc:
+            read_error_count += 1
+            if len(read_error_samples) < 5:
+                read_error_samples.append({"path": rel_path, "reason": str(exc)[:240]})
             continue
+        searched_file_count += 1
         lines = text.splitlines()
         for index, line in enumerate(lines):
             matched = query in line if mode == "literal" else bool(pattern and pattern.search(line))
@@ -1654,40 +3277,76 @@ def _grep_python(
                     "rendered": "\n".join(rendered),
                 }
             )
-    if len(files) > GREP_MAX_SCANNED_FILES:
-        truncated_by_scan_limit = True
-    else:
-        truncated_by_scan_limit = False
+    scan_limit_reached = len(files) > GREP_MAX_SCANNED_FILES
     page = all_matches[offset : offset + max_matches]
     next_offset = offset + len(page) if offset + len(page) < len(all_matches) else None
+    result_limit_reached = next_offset is not None
+    backend_mismatch_detected = _backend_mismatch_detected(context)
+    scan_complete = not any(
+        [
+            scan_limit_reached,
+            read_error_count,
+            visibility_error_count,
+            workspace_boundary_or_missing_count,
+            backend_mismatch_detected,
+        ]
+    )
+    scan_complete_reason = _scan_complete_reason(
+        scan_complete=scan_complete,
+        result_limit_reached=result_limit_reached,
+        scan_limit_reached=scan_limit_reached,
+        read_error_count=read_error_count,
+        visibility_error_count=visibility_error_count,
+        workspace_boundary_or_missing_count=workspace_boundary_or_missing_count,
+        backend_mismatch_detected=backend_mismatch_detected,
+        total_match_count=len(all_matches),
+    )
+    page_matched_files = sorted({str(entry["path"]) for entry in page})
     return {
-        "matches": [entry["rendered"] for entry in page],
+        "matches": _grep_rendered_page(page, output_mode=output_mode),
+        "files_with_matches": sorted(matched_files),
+        "page_files_with_matches": page_matched_files,
         "total_match_count": len(all_matches),
+        "candidate_file_count": len(files),
+        "scanned_candidate_file_count": scanned_candidate_file_count,
         "scanned_file_count": searched_file_count,
         "searched_file_count": searched_file_count,
+        "scanned_file_limit": GREP_MAX_SCANNED_FILES,
+        "unscanned_file_count": max(0, len(files) - scanned_candidate_file_count),
+        "scan_limit_reached": scan_limit_reached,
+        "scan_complete": scan_complete,
+        "scan_complete_reason": scan_complete_reason,
+        "result_limit_reached": result_limit_reached,
         "matched_file_count": len(matched_files),
-        "skipped_hidden_count": skipped_hidden_count,
-        "skipped_hidden_path_count": skipped_hidden_count,
-        "skipped_symlink_count": skipped_symlink_count,
-        "truncated": bool(next_offset is not None or truncated_by_scan_limit),
+        "hidden_path_count": hidden_path_count,
+        "skipped_hidden_count": hidden_path_count,
+        "skipped_hidden_path_count": hidden_path_count,
+        "symlink_outside_workspace_count": symlink_outside_workspace_count,
+        "skipped_symlink_count": symlink_outside_workspace_count,
+        "workspace_boundary_or_missing_count": workspace_boundary_or_missing_count,
+        "read_error_count": read_error_count,
+        "read_error_samples": read_error_samples,
+        "visibility_error_count": visibility_error_count,
+        "visibility_error_samples": visibility_error_samples,
+        "backend_mismatch_detected": backend_mismatch_detected,
+        "truncated": bool(result_limit_reached or not scan_complete),
         "next_offset": next_offset,
         "engine": "python_fallback",
+        "search_backend": "workspace_adapter_python_fallback",
+        "output_mode": output_mode,
     }
 
 
 def _read_model_visible_text_for_grep(context: ToolExecutionContext, rel_path: str) -> str:
-    workspace = Path(context.run_workspace.workspace_path).resolve()
-    candidate = (workspace / rel_path).resolve()
-    try:
-        candidate.relative_to(workspace)
-    except ValueError as exc:
-        raise WorkspaceError(f"路径越过 workspace 边界：{rel_path}") from exc
-    if not candidate.is_file():
-        raise WorkspaceError(f"路径不是文件：{rel_path}")
-    try:
-        return candidate.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise WorkspaceError(f"无法读取文件：{rel_path}") from exc
+    return context.workspace_adapter.read_text(context.run_workspace.workspace_path, rel_path)
+
+
+def _grep_rendered_page(page: list[dict[str, Any]], *, output_mode: str) -> list[str]:
+    if output_mode == "files_with_matches":
+        return sorted({str(entry["path"]) for entry in page})
+    if output_mode == "count":
+        return []
+    return [str(entry["rendered"]) for entry in page]
 
 
 def _parse_changed_files(name_status_text: str, numstat_text: str) -> list[dict[str, Any]]:
@@ -1843,6 +3502,42 @@ def _command_preview(stdout: str, stderr: str) -> str:
     if stderr:
         return f"[stderr]\n{stderr}"
     return ""
+
+
+def _bounded_string(value: Any, *, max_chars: int) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "...[truncated]"
+
+
+def _bounded_string_list(value: Any, *, max_items: int, max_chars: int) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    items: list[str] = []
+    for item in value:
+        text = _bounded_string(item, max_chars=max_chars)
+        if not text:
+            continue
+        items.append(text)
+        if len(items) >= max_items:
+            break
+    return items
+
+
+def _candidate_file_list(value: Any, *, max_items: int, max_chars: int) -> tuple[list[str], int]:
+    files: list[str] = []
+    skipped = 0
+    for path in _bounded_string_list(value, max_items=max_items * 2, max_chars=max_chars):
+        if _is_model_hidden_tool_path(path):
+            skipped += 1
+            continue
+        files.append(path)
+        if len(files) >= max_items:
+            break
+    return files, skipped
 
 
 def _preview(text: str, limit: int = 4000) -> str:

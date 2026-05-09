@@ -13,6 +13,7 @@ from repo_harness.tools import (
     ToolExecutionContext,
     ToolExecutor,
     ToolRegistry,
+    ToolPolicy,
     build_tool,
     default_tool_registry,
 )
@@ -42,17 +43,27 @@ def test_tool_definition_requires_model_visible_contract():
 
 
 def test_tool_model_visible_contract_explains_restricted_workflow():
+    glob_files = build_tool("glob_files")
     grep = build_tool("grep")
+    symbol_search = build_tool("symbol_search")
+    working_state = build_tool("update_working_state")
     bash = build_tool("bash")
     run_tests = build_tool("run_tests")
 
+    assert "file-discovery alias" in glob_files.model_visible_description
+    assert glob_files.input_schema["required"] == ["pattern"]
+    assert "does not modify repository files" in working_state.model_visible_description
+    assert "not a full language server" in symbol_search.model_visible_description
     assert "Default mode is literal substring" in grep.model_visible_description
     assert "mode='regex'" in grep.model_visible_description
     assert grep.input_schema["properties"]["mode"]["enum"] == ["literal", "regex"]
     assert "max_matches" in grep.input_schema["properties"]
     assert "pattern" in grep.input_schema["properties"]
+    assert grep.input_schema["properties"]["output_mode"]["enum"] == ["content", "files_with_matches", "count"]
     assert "expected_content_hash" in build_tool("edit_file").input_schema["properties"]
     assert build_tool("edit_file").input_schema["properties"]["replace_all"]["default"] is False
+    assert "prior read_file" in build_tool("edit_file").model_visible_prompt
+    assert "Before the final answer" in build_tool("git_diff").model_visible_prompt
 
     assert "not a general shell" in bash.model_visible_description
     assert "do not use cd" in bash.model_visible_description
@@ -153,8 +164,15 @@ def test_grep_no_match_is_successful_observation(tmp_path: Path):
     result = ToolExecutor().execute(tool_call, context)
 
     assert result.status == "ok"
-    assert "No matches" in result.content_preview
+    assert "No matches found after scanning all 1 model-visible files" in result.content_preview
+    assert result.typed["result_kind"] == "complete_no_match"
+    assert result.typed["scan_complete"] is True
+    assert result.typed["scan_limit_reached"] is False
+    assert result.typed["result_limit_reached"] is False
+    assert result.typed["output_truncated"] is False
     assert result.typed["match_count"] == 0
+    _assert_search_fact_protocol(result.typed)
+    _assert_result_envelope(result.typed, result_kind="complete_no_match", semantic_complete=True)
 
 
 def test_grep_accepts_pattern_alias_for_query(tmp_path: Path):
@@ -178,14 +196,17 @@ def test_grep_accepts_pattern_alias_for_query(tmp_path: Path):
     assert "notes.txt:1:>hello alias" in result.content_preview
 
 
-def test_grep_reads_workspace_files_without_per_file_adapter_calls(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_grep_reads_workspace_files_through_workspace_adapter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     context = _tool_context(tmp_path)
     Path(context.run_workspace.workspace_path, "notes.txt").write_text("fast grep path\n", encoding="utf-8")
+    reads: list[str] = []
+    original_read_text = context.workspace_adapter.read_text
 
-    def fail_read_text(*_args: object, **_kwargs: object) -> str:
-        raise AssertionError("grep should not call workspace_adapter.read_text once per candidate file")
+    def tracking_read_text(workspace_path: str, requested_path: str) -> str:
+        reads.append(requested_path)
+        return original_read_text(workspace_path, requested_path)
 
-    monkeypatch.setattr(context.workspace_adapter, "read_text", fail_read_text)
+    monkeypatch.setattr(context.workspace_adapter, "read_text", tracking_read_text)
 
     result = ToolExecutor().execute(
         ToolCall(
@@ -199,6 +220,99 @@ def test_grep_reads_workspace_files_without_per_file_adapter_calls(tmp_path: Pat
 
     assert result.status == "ok"
     assert "notes.txt:1:>fast grep path" in result.content_preview
+    assert reads == ["notes.txt"]
+    assert result.typed["search_backend"] == "workspace_adapter_python_fallback"
+    assert result.typed["workspace_execution_mode"] == "local_process"
+    assert result.typed["read_error_count"] == 0
+    _assert_search_fact_protocol(result.typed)
+
+
+def test_grep_read_error_makes_no_match_incomplete(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    context = _tool_context(tmp_path)
+    Path(context.run_workspace.workspace_path, "notes.txt").write_text("fast grep path\n", encoding="utf-8")
+
+    def failing_read_text(_workspace_path: str, _requested_path: str) -> str:
+        from repo_harness.errors import WorkspaceError
+
+        raise WorkspaceError("backend read failed")
+
+    monkeypatch.setattr(context.workspace_adapter, "read_text", failing_read_text)
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_read_error",
+            tool_name="grep",
+            arguments={"query": "fast"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "partial_scan_no_match"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_complete_reason"] == "read_errors_present"
+    assert result.typed["read_error_count"] == 1
+    assert result.typed["read_error_samples"][0]["path"] == "notes.txt"
+    _assert_search_fact_protocol(result.typed)
+    assert "Do not conclude the query is absent" in result.content_preview
+
+
+def test_grep_backend_mismatch_blocks_trusted_no_match(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.run_workspace = context.run_workspace.model_copy(update={"execution_mode": "docker"})
+    Path(context.run_workspace.workspace_path, "notes.txt").write_text("hello\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_backend_mismatch",
+            tool_name="grep",
+            arguments={"query": "missing"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "partial_scan_no_match"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_complete_reason"] == "backend_mismatch_detected"
+    assert result.typed["backend_mismatch_detected"] is True
+    _assert_search_fact_protocol(result.typed)
+
+
+def test_grep_visibility_error_blocks_trusted_no_match(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    context = _tool_context(tmp_path)
+    Path(context.run_workspace.workspace_path, "notes.txt").write_text("hello\n", encoding="utf-8")
+
+    def broken_visibility(_context: ToolExecutionContext, rel_path: str) -> tuple[bool, str | None]:
+        return False, "visibility_error" if rel_path == "notes.txt" else None
+
+    monkeypatch.setattr(minimal_tools, "_model_visible_path_status", broken_visibility)
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_visibility_error",
+            tool_name="grep",
+            arguments={"query": "missing"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "partial_scan_no_match"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_complete_reason"] == "visibility_errors_present"
+    assert result.typed["visibility_error_count"] == 1
+    assert result.typed["visibility_error_samples"][0] == {
+        "path": "notes.txt",
+        "reason": "visibility_error",
+    }
+    _assert_search_fact_protocol(result.typed)
 
 
 def test_grep_supports_regex_context_and_pagination(tmp_path: Path):
@@ -242,12 +356,40 @@ def test_grep_supports_regex_context_and_pagination(tmp_path: Path):
     assert first.status == "ok"
     assert first.typed["match_count"] == 1
     assert first.typed["total_match_count"] == 2
+    assert first.typed["result_kind"] == "result_page_truncated"
+    assert first.typed["result_limit_reached"] is True
+    assert first.typed["scan_complete"] is True
     assert first.typed["truncated"] is True
+    assert first.typed["recommended_next_calls"][0]["arguments"]["offset"] == first.typed["next_offset"]
     assert "a.py:1:>alpha = 1" in first.content_preview
     assert "a.py:2: beta = 2" in first.content_preview
     assert "b.txt" not in first.content_preview
     assert second.status == "ok"
     assert "a.py:3:>alpha = 3" in second.content_preview
+
+
+def test_grep_files_with_matches_output_mode_omits_match_content(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "a.py").write_text("secret-ish public needle\n", encoding="utf-8")
+    (workspace / "b.py").write_text("needle again\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_files_only",
+            tool_name="grep",
+            arguments={"query": "needle", "output_mode": "files_with_matches"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["output_mode"] == "files_with_matches"
+    assert result.typed["files_with_matches"] == ["a.py", "b.py"]
+    assert "a.py" in result.content_preview
+    assert "b.py" in result.content_preview
+    assert "secret-ish public needle" not in result.content_preview
 
 
 def test_grep_invalid_regex_returns_recoverable_error(tmp_path: Path):
@@ -287,10 +429,47 @@ def test_grep_scan_limit_truncation_has_valid_recovery_hint(tmp_path: Path, monk
     )
 
     assert result.status == "ok"
+    assert result.typed["result_kind"] == "partial_scan_no_match"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_limit_reached"] is True
+    assert result.typed["result_limit_reached"] is False
+    assert result.typed["candidate_file_count"] == 3
+    assert result.typed["scanned_candidate_file_count"] == 1
+    assert result.typed["unscanned_file_count"] == 2
     assert result.typed["truncated"] is True
     assert result.typed["next_offset"] is None
     assert "offset=None" not in result.content_preview
-    assert "narrow root, glob, or query" in result.content_preview
+    assert "No matches found in the trusted scanned subset" in result.content_preview
+    assert "Do not conclude the query is absent" in result.content_preview
+    assert "Narrow root, glob, or query" in result.content_preview
+    assert result.typed["recommended_next_calls"][0]["tool"] == "grep"
+    envelope = _assert_result_envelope(result.typed, result_kind="partial_scan_no_match", semantic_complete=False)
+    assert envelope["result_limit_reached"] is False
+    assert envelope["recommended_next_calls"][0]["tool"] == "grep"
+
+
+def test_grep_out_of_range_page_is_not_reported_as_absent_query(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "a.py").write_text("needle = 1\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_out_of_range_page",
+            tool_name="grep",
+            arguments={"query": "needle", "offset": 10, "max_matches": 5},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "page_empty_out_of_range"
+    assert result.typed["match_count"] == 0
+    assert result.typed["total_match_count"] == 1
+    assert result.typed["scan_complete"] is True
+    assert "No matches on this result page" in result.content_preview
+    assert "This does not mean the query is absent" in result.content_preview
 
 
 def test_grep_respects_workspace_sensitive_policy(tmp_path: Path):
@@ -381,7 +560,293 @@ def test_list_files_paginates_and_reports_recovery(tmp_path: Path):
     assert result.typed["total_visible_count"] == 3
     assert result.typed["truncated"] is True
     assert result.typed["next_offset"] == 2
+    assert result.typed["result_kind"] == "result_page_truncated"
+    assert result.typed["scan_complete"] is True
+    assert result.typed["scan_complete_reason"] == "result_page_truncated"
+    assert result.typed["search_fact_policy_version"] == minimal_tools.SEARCH_FACT_POLICY_VERSION
+    assert result.typed["visibility_error_count"] == 0
+    assert result.typed["read_error_count"] == 0
+    _assert_search_fact_protocol(result.typed)
+    envelope = _assert_result_envelope(result.typed, result_kind="result_page_truncated", semantic_complete=False)
+    assert envelope["result_limit_reached"] is True
+    assert "offset=2" in str(envelope["recovery_call"])
     assert "offset=2" in result.content_preview
+
+
+def test_list_files_backend_mismatch_blocks_complete_listing(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.run_workspace = context.run_workspace.model_copy(update={"execution_mode": "docker"})
+    Path(context.run_workspace.workspace_path, "notes.txt").write_text("hello\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_list_backend_mismatch",
+            tool_name="list_files",
+            arguments={"path": "."},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "incomplete_file_listing"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_complete_reason"] == "backend_mismatch_detected"
+    assert result.typed["backend_mismatch_detected"] is True
+    _assert_search_fact_protocol(result.typed)
+
+
+def test_glob_files_uses_list_files_protocol_and_recovery(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "src").mkdir()
+    for name in ["a.py", "b.py", "notes.txt"]:
+        (workspace / "src" / name).write_text("# file\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_glob_files",
+            tool_name="glob_files",
+            arguments={"path": "src", "pattern": "*.py", "offset": 0, "max_entries": 1},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.tool_name == "glob_files"
+    assert result.normalized_arguments["root"] == "src"
+    assert result.normalized_arguments["glob"] == "*.py"
+    assert result.typed["files"] == ["src/a.py"]
+    assert result.typed["result_kind"] == "result_page_truncated"
+    assert result.typed["recommended_next_calls"][0]["tool"] == "glob_files"
+    assert result.typed["recommended_next_calls"][0]["arguments"]["pattern"] == "*.py"
+    _assert_search_fact_protocol(result.typed)
+    envelope = _assert_result_envelope(result.typed, result_kind="result_page_truncated", semantic_complete=False)
+    assert "glob_files(" in str(envelope["recovery_call"])
+    assert "offset=1" in result.content_preview
+
+
+def test_glob_files_incomplete_scan_hint_names_glob_files(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.run_workspace = context.run_workspace.model_copy(update={"execution_mode": "docker"})
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "src").mkdir()
+    (workspace / "src" / "a.py").write_text("# file\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_glob_incomplete",
+            tool_name="glob_files",
+            arguments={"path": "src", "pattern": "*.py"},
+            turn=1,
+        ),
+        context,
+    )
+
+    envelope = _assert_result_envelope(result.typed, result_kind="incomplete_file_listing", semantic_complete=False)
+
+    assert result.status == "ok"
+    assert envelope["recovery_hint"] is not None
+    assert "glob_files" in str(envelope["recovery_hint"])
+    assert "list_files" not in str(envelope["recovery_hint"])
+
+
+def test_update_working_state_records_state_without_repo_mutation(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "notes.txt").write_text("one\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_working_state",
+            tool_name="update_working_state",
+            arguments={
+                "current_hypothesis": "bug is in parser",
+                "candidate_files": ["notes.txt", ".git/config"],
+                "next_action": "read parser entrypoint",
+                "completed_steps": ["listed files"],
+                "blocking_question": "",
+            },
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert (workspace / "notes.txt").read_text(encoding="utf-8") == "one\n"
+    assert context.working_state is not None
+    assert context.working_state["current_hypothesis"] == "bug is in parser"
+    assert context.working_state["candidate_files"] == ["notes.txt"]
+    assert context.working_state["skipped_candidate_file_count"] == 1
+    assert result.typed["trainable"] is False
+    envelope = _assert_result_envelope(result.typed, result_kind="working_state_updated", semantic_complete=True)
+    assert "working_state_updated" in envelope["context_effects"]
+
+
+def test_symbol_search_finds_python_class_and_method_symbols(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    package = workspace / "pkg"
+    package.mkdir()
+    (package / "model.py").write_text(
+        "class MultiValue:\n"
+        "    def append_value(self, value):\n"
+        "        return value\n\n"
+        "def helper(value):\n"
+        "    return value\n",
+        encoding="utf-8",
+    )
+
+    class_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_symbol_class",
+            tool_name="symbol_search",
+            arguments={"query": "MultiValue", "root": "pkg", "symbol_kind": "class"},
+            turn=1,
+        ),
+        context,
+    )
+    method_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_symbol_method",
+            tool_name="symbol_search",
+            arguments={"query": "append_value", "root": "pkg", "symbol_kind": "method"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert class_result.status == "ok"
+    assert class_result.typed["result_kind"] == "symbols_found"
+    assert class_result.typed["symbols"][0]["qualified_name"] == "MultiValue"
+    assert class_result.typed["symbol_index_policy_version"] == minimal_tools.SYMBOL_INDEX_POLICY_VERSION
+    _assert_search_fact_protocol(class_result.typed)
+    _assert_result_envelope(class_result.typed, result_kind="symbols_found", semantic_complete=True)
+    assert method_result.typed["symbols"][0]["qualified_name"] == "MultiValue.append_value"
+
+
+def test_symbol_search_uses_cache_and_invalidates_on_source_hash_change(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    package = workspace / "pkg"
+    package.mkdir()
+    model = package / "model.py"
+    model.write_text(
+        "class Alpha:\n"
+        "    pass\n\n"
+        "class Beta:\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+    executor = ToolExecutor()
+
+    first = executor.execute(
+        ToolCall(
+            tool_call_id="call_symbol_alpha",
+            tool_name="symbol_search",
+            arguments={"query": "Alpha", "root": "pkg", "symbol_kind": "class"},
+            turn=1,
+        ),
+        context,
+    )
+    second = executor.execute(
+        ToolCall(
+            tool_call_id="call_symbol_beta",
+            tool_name="symbol_search",
+            arguments={"query": "Beta", "root": "pkg", "symbol_kind": "class"},
+            turn=2,
+        ),
+        context,
+    )
+    model.write_text(
+        "class Alpha:\n"
+        "    pass\n\n"
+        "class Gamma:\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+    third = executor.execute(
+        ToolCall(
+            tool_call_id="call_symbol_gamma",
+            tool_name="symbol_search",
+            arguments={"query": "Gamma", "root": "pkg", "symbol_kind": "class"},
+            turn=3,
+        ),
+        context,
+    )
+
+    assert first.typed["cache_miss_file_count"] == 1
+    assert first.typed["cache_hit_file_count"] == 0
+    assert second.typed["cache_miss_file_count"] == 0
+    assert second.typed["cache_hit_file_count"] == 1
+    assert third.typed["cache_miss_file_count"] == 1
+    assert third.typed["cache_hit_file_count"] == 0
+    assert third.typed["symbols"][0]["qualified_name"] == "Gamma"
+
+
+def test_symbol_search_wide_root_requires_narrow_root_before_full_scan(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    package = workspace / "pkg"
+    package.mkdir()
+    threshold = minimal_tools.SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD
+    for index in range(threshold + 1):
+        (package / f"module_{index}.py").write_text(
+            f"class Candidate{index}:\n    pass\n",
+            encoding="utf-8",
+        )
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_symbol_wide_root",
+            tool_name="symbol_search",
+            arguments={"query": "Candidate", "root": ".", "symbol_kind": "class"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "scan_requires_narrow_root"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["semantic_complete"] is False
+    assert result.typed["scan_complete_reason"] == "wide_root_candidate_file_limit"
+    assert result.typed["candidate_file_count"] == threshold + 1
+    assert result.typed["scanned_file_count"] == 0
+    assert result.typed["recommended_narrow_roots"][0] == "pkg"
+    assert result.typed["recommended_next_calls"][0]["arguments"]["root"] == "pkg"
+    assert result.typed["slow_scan"] is False
+    envelope = _assert_result_envelope(
+        result.typed,
+        result_kind="scan_requires_narrow_root",
+        semantic_complete=False,
+    )
+    assert "root='pkg'" in envelope["recovery_call"]
+
+
+def test_symbol_search_parse_error_is_partial_not_complete_no_match(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "bad.py").write_text("def broken(:\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_symbol_parse_error",
+            tool_name="symbol_search",
+            arguments={"query": "broken"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "partial_symbol_results"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_complete_reason"] == "parse_error_detected"
+    assert result.typed["parse_error_count"] == 1
+    envelope = _assert_result_envelope(result.typed, result_kind="partial_symbol_results", semantic_complete=False)
+    assert envelope["recommended_next_calls"][0]["tool"] == "grep"
 
 
 def test_source_inspection_tools_skip_symlink_to_outside_workspace(tmp_path: Path):
@@ -405,10 +870,14 @@ def test_source_inspection_tools_skip_symlink_to_outside_workspace(tmp_path: Pat
     assert "inside.txt" in list_result.content_preview
     assert "outside-link.txt" not in list_result.content_preview
     assert list_result.typed["skipped_symlink_count"] == 1
+    assert list_result.typed["read_error_count"] == 0
+    assert list_result.typed["visibility_error_count"] == 0
     assert grep_result.status == "ok"
     assert "inside.txt" in grep_result.content_preview
     assert "outside-link.txt" not in grep_result.content_preview
     assert grep_result.typed["skipped_symlink_count"] == 1
+    assert grep_result.typed["read_error_count"] == 0
+    assert grep_result.typed["visibility_error_count"] == 0
 
 
 def test_source_inspection_tools_skip_symlink_to_hidden_target(tmp_path: Path):
@@ -436,6 +905,8 @@ def test_source_inspection_tools_skip_symlink_to_hidden_target(tmp_path: Path):
     assert "visible-link.py" not in list_result.content_preview
     assert grep_result.status == "ok"
     assert grep_result.typed["match_count"] == 0
+    assert grep_result.typed["read_error_count"] == 0
+    assert grep_result.typed["visibility_error_count"] == 0
     assert read_result.status == "error"
     assert read_result.error_type == "model_hidden_path"
     assert read_result.typed["visibility_reason"] == "symlink_target_hidden_path"
@@ -455,6 +926,9 @@ def test_read_file_long_line_reports_truncation_recovery(tmp_path: Path):
     assert result.status == "ok"
     assert result.typed["truncated"] is True
     assert result.typed["next_start_line"] == 2
+    envelope = _assert_result_envelope(result.typed, result_kind="file_window_truncated", semantic_complete=False)
+    assert envelope["result_limit_reached"] is True
+    assert "start_line=2" in str(envelope["recovery_call"])
     assert "[line truncated]" in result.content_preview
 
 
@@ -533,6 +1007,103 @@ def test_edit_file_accepts_expected_content_sha256_alias(tmp_path: Path):
     assert result.typed["content_sha256"] == hashlib.sha256("two\n".encode()).hexdigest()
 
 
+def test_edit_file_requires_read_when_policy_enabled(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.tool_policy = ToolPolicy(
+        tool_policy_version="repo_harness_tool_policy_pre_verl_read_before_edit_v1",
+        require_read_before_edit=True,
+    )
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "notes.txt").write_text("one\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_edit_without_read",
+            tool_name="edit_file",
+            arguments={"path": "notes.txt", "old_text": "one\n", "new_text": "two\n"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "error"
+    assert result.error_type == "read_before_edit_required"
+    assert (workspace / "notes.txt").read_text(encoding="utf-8") == "one\n"
+    envelope = _assert_result_envelope(result.typed, result_kind="read_before_edit_required", semantic_complete=True)
+    assert envelope["recovery_call"] == "read_file(path='notes.txt')"
+
+
+def test_edit_file_allows_cached_read_and_rejects_stale_cache(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.tool_policy = ToolPolicy(
+        tool_policy_version="repo_harness_tool_policy_pre_verl_read_before_edit_v1",
+        require_read_before_edit=True,
+    )
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "notes.txt").write_text("one\n", encoding="utf-8")
+
+    read_result = ToolExecutor().execute(
+        ToolCall(tool_call_id="call_read_before_edit", tool_name="read_file", arguments={"path": "notes.txt"}, turn=1),
+        context,
+    )
+    edit_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_edit_after_read",
+            tool_name="edit_file",
+            arguments={"path": "notes.txt", "old_text": "one\n", "new_text": "two\n"},
+            turn=2,
+        ),
+        context,
+    )
+    (workspace / "notes.txt").write_text("three\n", encoding="utf-8")
+    stale_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_edit_stale_cache",
+            tool_name="edit_file",
+            arguments={"path": "notes.txt", "old_text": "three\n", "new_text": "four\n"},
+            turn=3,
+        ),
+        context,
+    )
+
+    assert read_result.status == "ok"
+    assert edit_result.status == "ok"
+    assert edit_result.typed["require_read_before_edit"] is True
+    assert stale_result.status == "error"
+    assert stale_result.error_type == "stale_file_state"
+    assert stale_result.typed["cached_content_hash"] == hashlib.sha256("two\n".encode()).hexdigest()
+    assert stale_result.typed["current_content_hash"] == hashlib.sha256("three\n".encode()).hexdigest()
+
+
+def test_edit_file_expected_hash_satisfies_read_before_edit_policy(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    context.tool_policy = ToolPolicy(
+        tool_policy_version="repo_harness_tool_policy_pre_verl_read_before_edit_v1",
+        require_read_before_edit=True,
+    )
+    workspace = Path(context.run_workspace.workspace_path)
+    original = "one\n"
+    (workspace / "notes.txt").write_text(original, encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_edit_expected_hash",
+            tool_name="edit_file",
+            arguments={
+                "path": "notes.txt",
+                "old_text": "one\n",
+                "new_text": "two\n",
+                "expected_content_hash": hashlib.sha256(original.encode()).hexdigest(),
+            },
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert (workspace / "notes.txt").read_text(encoding="utf-8") == "two\n"
+
+
 def test_git_diff_reports_changed_files_and_path_filter(tmp_path: Path):
     context = _tool_context(tmp_path)
     workspace = Path(context.run_workspace.workspace_path)
@@ -558,6 +1129,7 @@ def test_git_diff_reports_changed_files_and_path_filter(tmp_path: Path):
     assert all_diff.status == "ok"
     assert {entry["path"] for entry in all_diff.typed["changed_files"]} == {"a.py", "b.py"}
     assert all_diff.typed["diff_sha256"] == hashlib.sha256(all_diff.typed["diff_preview"].encode()).hexdigest()
+    _assert_result_envelope(all_diff.typed, result_kind="diff_present", semantic_complete=True)
     assert path_diff.status == "ok"
     assert "a.py" in path_diff.content_preview
     assert "b.py" not in path_diff.content_preview
@@ -778,3 +1350,36 @@ def _tool_context(tmp_path: Path) -> ToolExecutionContext:
         verifier_feedback_facade=None,  # type: ignore[arg-type]
         resolved_verifier_plan=None,  # type: ignore[arg-type]
     )
+
+
+def _assert_search_fact_protocol(typed: dict[str, object]) -> None:
+    assert typed["search_fact_policy_version"] == minimal_tools.SEARCH_FACT_POLICY_VERSION
+    assert isinstance(typed["root"], str)
+    assert isinstance(typed["search_backend"], str)
+    assert typed["workspace_execution_mode"] in {"local_process", "docker"}
+    assert isinstance(typed["workspace_backend"], str)
+    assert isinstance(typed["read_error_count"], int)
+    assert isinstance(typed["read_error_samples"], list)
+    assert isinstance(typed["visibility_error_count"], int)
+    assert isinstance(typed["visibility_error_samples"], list)
+    assert isinstance(typed["backend_mismatch_detected"], bool)
+    assert isinstance(typed["scan_complete_reason"], str)
+
+
+def _assert_result_envelope(
+    typed: dict[str, object],
+    *,
+    result_kind: str,
+    semantic_complete: bool,
+) -> dict[str, object]:
+    envelope = typed["result_envelope"]
+    assert isinstance(envelope, dict)
+    assert envelope["schema_version"] == minimal_tools.TOOL_RESULT_ENVELOPE_VERSION
+    assert envelope["result_kind"] == result_kind
+    assert envelope["semantic_complete"] is semantic_complete
+    assert isinstance(envelope["model_visible_text_truncated"], bool)
+    assert isinstance(envelope["result_limit_reached"], bool)
+    assert isinstance(envelope["artifact_backed_full_result"], bool)
+    assert isinstance(envelope["recommended_next_calls"], list)
+    assert isinstance(envelope["context_effects"], list)
+    return envelope
