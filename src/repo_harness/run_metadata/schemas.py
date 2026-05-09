@@ -405,6 +405,12 @@ class RunConfigFacts(StrictBaseModel):
     task_timeout_sec: int = Field(gt=0)
     command_timeout_sec: int = Field(gt=0)
     context_budget_tokens: int = Field(gt=0)
+    model_context_window_tokens: int | None = Field(default=None, gt=0)
+    model_context_window_resolution: str | None = None
+    effective_context_budget_tokens: int | None = Field(default=None, gt=0)
+    hard_context_limit_tokens: int | None = Field(default=None, gt=0)
+    main_output_reserve_tokens: int | None = Field(default=None, ge=0)
+    estimator_safety_margin_tokens: int | None = Field(default=None, ge=0)
     artifact_budget_bytes: int | None = Field(default=None, gt=0)
     environment_fingerprint: EnvironmentFingerprint
 

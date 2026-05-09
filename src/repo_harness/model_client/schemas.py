@@ -70,6 +70,10 @@ class ModelRequestContext(StrictBaseModel):
     raw_request_logging_policy: str
     credential_policy: ProviderCredentialPolicy
     retry_policy: str
+    provider_request_projection_hash: str | None = Field(default=None, pattern=SHA256_PATTERN)
+    provider_request_token_estimate: int = Field(default=0, ge=0)
+    provider_request_token_estimate_breakdown: dict[str, Any] = Field(default_factory=dict)
+    context_budget_facts: dict[str, Any] = Field(default_factory=dict)
 
 
 class ModelGenerationRequest(StrictBaseModel):

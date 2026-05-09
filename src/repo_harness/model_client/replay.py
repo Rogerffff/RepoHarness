@@ -246,6 +246,12 @@ class ReplayModelClient:
                 "prepared_messages_ref": request.prepared_messages_ref.model_dump(mode="json"),
                 "context_revision": request.context_revision,
                 "model_input_hash": request.model_input_hash,
+                "provider_request_projection_hash": request.provider_request_projection_hash,
+                "provider_request_token_estimate": request.provider_request_token_estimate,
+                "provider_request_token_estimate_breakdown": (
+                    request.provider_request_token_estimate_breakdown
+                ),
+                "context_budget_facts": request.context_budget_facts,
                 "tool_order": [tool.get("name") for tool in request.allowed_tool_definitions],
                 "tool_schema_snapshot_ref": request.tool_schema_snapshot_ref.model_dump(mode="json"),
                 "provider_message_format": request.provider_message_format,

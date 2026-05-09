@@ -132,9 +132,11 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
     assert facts_payload["provider_ready_token_estimator_version"] == (
         "provider_body_char4_token_estimator_v1"
     )
-    assert facts_payload["context_threshold_decision_source"] == "provider_ready_token_estimate"
+    assert facts_payload["context_threshold_decision_source"] == (
+        "provider_request_projection_estimate"
+    )
     assert facts_payload["compact_threshold_ratio_runtime_effect"] == (
-        "connected_to_tool_result_replacement_budget_v1"
+        "reserved_for_autocompact_v1"
     )
     assert facts_payload["context_policy_snapshot_version"] == (
         "repo_harness_context_policy_snapshot_v1"

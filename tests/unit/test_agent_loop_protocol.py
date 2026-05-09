@@ -181,10 +181,16 @@ def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
     assert client.request.scaffold_phase == "act"
     assert client.request.budget_state["turn_count"] == 1
     assert [tool["name"] for tool in client.request.allowed_tool_definitions] == ["read_file"]
+    assert client.request.provider_request_projection_hash is not None
+    assert client.request.provider_request_token_estimate > 0
+    assert client.request.context_budget_facts["effective_context_budget_tokens"] == 120000
     events = _read_events(run_dir)
     started = next(event for event in events if event["event_type"] == "model_call_started")
     assert started["data"]["scaffold_phase"] == "act"
     assert started["data"]["budget_state"]["turn_count"] == 1
+    assert started["data"]["provider_request_projection_hash"] == (
+        client.request.provider_request_projection_hash
+    )
 
 
 def test_agent_loop_accepts_model_input_before_freezing_tool_result_decisions(tmp_path: Path):
@@ -1025,7 +1031,7 @@ def test_agent_loop_context_warning_reprepares_before_provider_call(tmp_path: Pa
         command_timeout_sec=30,
         verifier_timeout_sec=30,
         max_tool_output_chars=4000,
-        max_context_tokens=2200,
+        max_context_tokens=7000,
         max_output_tokens=4096,
     )
 
@@ -1036,7 +1042,7 @@ def test_agent_loop_context_warning_reprepares_before_provider_call(tmp_path: Pa
         ).run(
             run_id="context-warning",
             task_id="task",
-            initial_messages=[{"role": "system", "content": "x" * 7200}],
+            initial_messages=[{"role": "system", "content": "x" * 10000}],
             tool_context=None,  # type: ignore[arg-type]
             recorder=recorder,
             max_turns=1,

@@ -281,6 +281,16 @@ def write_provider_request_artifact(
             "tool_schema_snapshot_ref": request_binding["tool_schema_snapshot_ref"],
             "model_input_hash": request_binding["model_input_hash"],
             "model_call_id": request_binding["model_call_id"],
+            "provider_request_projection_hash": request_binding[
+                "provider_request_projection_hash"
+            ],
+            "provider_request_token_estimate": request_binding[
+                "provider_request_token_estimate"
+            ],
+            "provider_request_token_estimate_breakdown": request_binding[
+                "provider_request_token_estimate_breakdown"
+            ],
+            "context_budget_facts": request_binding["context_budget_facts"],
             "provider_body_message_projection_hash": stable_hash(_project_provider_messages(body)),
             "prepared_messages_projection_hash": request_binding["prepared_messages_projection_hash"],
             "prepared_messages_body_equivalent": request_binding["prepared_messages_body_equivalent"],
@@ -649,6 +659,16 @@ def _provider_request_binding(
         "tool_schema_snapshot_ref": tool_schema_ref,
         "model_input_hash": model_input_hash,
         "model_call_id": model_call_id,
+        "provider_request_projection_hash": (
+            request.provider_request_projection_hash if request is not None else None
+        ),
+        "provider_request_token_estimate": (
+            request.provider_request_token_estimate if request is not None else 0
+        ),
+        "provider_request_token_estimate_breakdown": (
+            request.provider_request_token_estimate_breakdown if request is not None else {}
+        ),
+        "context_budget_facts": request.context_budget_facts if request is not None else {},
         "prepared_messages_projection_hash": stable_hash(prepared_projection),
         "prepared_messages_body_equivalent": prepared_projection == body_messages,
     }

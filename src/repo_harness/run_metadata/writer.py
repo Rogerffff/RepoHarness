@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from repo_harness.config import RunConfig
+from repo_harness.context.budget import resolve_context_budget
 from repo_harness.context.schemas import ContextPolicySnapshot
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedFeedbackPolicyFacts
 from repo_harness.run_metadata.schemas import (
@@ -56,6 +57,11 @@ def build_run_config_facts(
         task=task_definition,
     )
     context_policy_snapshot = _context_policy_snapshot(config)
+    context_budget_facts = resolve_context_budget(
+        config=config.context_management,
+        provider=config.model.provider,
+        model_id=config.model.model_id,
+    )
     return RunConfigFacts(
         run_id=run_id,
         task_id=task_definition.id,
@@ -106,10 +112,10 @@ def build_run_config_facts(
         repository_action_index_policy_version="repo_harness_repository_action_index_v1",
         convergence_nudge_policy_version="repo_harness_convergence_nudge_v2",
         context_warning_policy_version="repo_harness_context_warning_v1",
-        context_replacement_runtime_policy_version="deterministic_tool_result_replacement_runtime_v1",
+        context_replacement_runtime_policy_version="fresh_tool_result_budget_runtime_v1",
         provider_ready_token_estimator_version="provider_body_char4_token_estimator_v1",
-        context_threshold_decision_source="provider_ready_token_estimate",
-        compact_threshold_ratio_runtime_effect="connected_to_tool_result_replacement_budget_v1",
+        context_threshold_decision_source="provider_request_projection_estimate",
+        compact_threshold_ratio_runtime_effect="reserved_for_autocompact_v1",
         context_policy_snapshot_version=(
             config.context_management.context_policy_snapshot_version
         ),
@@ -142,7 +148,19 @@ def build_run_config_facts(
         max_test_runs=config.runtime.max_test_runs,
         task_timeout_sec=config.runtime.task_timeout_sec,
         command_timeout_sec=config.workspace.default_command_timeout_sec,
-        context_budget_tokens=config.context_management.max_context_tokens,
+        context_budget_tokens=context_budget_facts.effective_context_budget_tokens,
+        model_context_window_tokens=context_budget_facts.model_context_window_tokens,
+        model_context_window_resolution=(
+            context_budget_facts.model_context_window_resolution
+        ),
+        effective_context_budget_tokens=(
+            context_budget_facts.effective_context_budget_tokens
+        ),
+        hard_context_limit_tokens=context_budget_facts.hard_context_limit_tokens,
+        main_output_reserve_tokens=context_budget_facts.main_output_reserve_tokens,
+        estimator_safety_margin_tokens=(
+            context_budget_facts.estimator_safety_margin_tokens
+        ),
         artifact_budget_bytes=config.workspace.max_artifact_bytes,
         environment_fingerprint=environment_fingerprint,
     )

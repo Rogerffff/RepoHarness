@@ -15,7 +15,10 @@ from repo_harness.context import (
     ContextManager,
     ToolResultArtifactIndex,
     build_persisted_tool_result_preview,
+    build_provider_request_projection,
+    estimate_provider_request_projection,
     persist_tool_result_content,
+    resolve_context_budget,
 )
 from repo_harness.model_client import (
     ModelClient,
@@ -129,6 +132,7 @@ class AgentLoop:
         retry_policy: str = "none",
     ) -> AgentLoopState:
         context_config_resolved = context_config or ContextManagementConfig()
+        budget_manager_was_provided = budget_manager is not None
         budget_manager = budget_manager or _default_budget_manager(max_turns)
         if (
             tool_context is not None
@@ -170,6 +174,30 @@ class AgentLoop:
             provider="replay",
             model_id="replay-script-v0",
         )
+        context_budget_facts = resolve_context_budget(
+            config=context_config_resolved,
+            provider=provider_options_resolved.provider,
+            model_id=provider_options_resolved.model_id,
+        )
+        runtime_context_budget_tokens = (
+            min(context_budget_facts.effective_context_budget_tokens, budget_manager.max_context_tokens)
+            if budget_manager_was_provided
+            else context_budget_facts.effective_context_budget_tokens
+        )
+        runtime_hard_context_limit_tokens = (
+            min(
+                context_budget_facts.hard_context_limit_tokens,
+                max(1, int(runtime_context_budget_tokens * context_config_resolved.hard_context_limit_ratio)),
+            )
+            if budget_manager_was_provided
+            else context_budget_facts.hard_context_limit_tokens
+        )
+        context_budget_payload = {
+            **context_budget_facts.model_dump(mode="json"),
+            "runtime_context_budget_tokens": runtime_context_budget_tokens,
+            "runtime_hard_context_limit_tokens": runtime_hard_context_limit_tokens,
+            "budget_manager_was_explicit": budget_manager_was_provided,
+        }
         emitted_context_warning_levels: set[str] = set()
         emitted_no_progress_signal_keys: set[str] = set()
         emitted_convergence_nudge_scopes: set[str] = set()
@@ -201,6 +229,10 @@ class AgentLoop:
                 resolved_allowed_tool_names=self.allowed_tool_names,
                 test_feedback_policy=self.test_feedback_policy,
             )
+            phase_allowed_tool_definitions = _tool_definitions_for_allowed_tools(
+                self.tool_executor,
+                phase_allowed_tool_names,
+            )
             phase_start_test_run_count = state.budget_state.test_run_count
             context_messages = _messages_with_phase_metadata(
                 messages=messages,
@@ -218,6 +250,7 @@ class AgentLoop:
                 tool_result_artifact_index=tool_context.tool_result_artifact_index
                 if tool_context
                 else None,
+                context_budget_facts=context_budget_payload,
             )
             state.context_revision = prepared.context_revision
             recorder.append_event(prepared.context_event)
@@ -247,9 +280,18 @@ class AgentLoop:
                     )
                 )
                 break
+            projection_estimate = _build_provider_request_projection_estimate(
+                prepared_messages=prepared.messages,
+                provider_options=provider_options_resolved,
+                allowed_tool_definitions=phase_allowed_tool_definitions,
+                generation_config=generation_config or {},
+                provider_model_settings=provider_model_settings or {},
+                provider_message_format=f"repo_harness_{provider_options_resolved.provider}_messages_v0",
+                context_budget_facts=context_budget_facts,
+            )
             warning_level = _context_warning_level(
-                prepared=prepared,
-                max_context_tokens=budget_manager.max_context_tokens,
+                token_estimate=projection_estimate.provider_request_token_estimate,
+                max_context_tokens=runtime_context_budget_tokens,
                 emitted_levels=emitted_context_warning_levels,
             )
             if warning_level is not None:
@@ -261,8 +303,9 @@ class AgentLoop:
                     recorder=recorder,
                     messages=messages,
                     prepared=prepared,
+                    provider_request_projection_estimate=projection_estimate.model_dump(mode="json"),
                     warning_level=warning_level,
-                    max_context_tokens=budget_manager.max_context_tokens,
+                    max_context_tokens=runtime_context_budget_tokens,
                 )
                 emitted_context_warning_levels.add(warning_level)
                 context_messages = _messages_with_phase_metadata(
@@ -281,6 +324,7 @@ class AgentLoop:
                     tool_result_artifact_index=tool_context.tool_result_artifact_index
                     if tool_context
                     else None,
+                    context_budget_facts=context_budget_payload,
                 )
                 state.context_revision = prepared.context_revision
                 recorder.append_event(prepared.context_event)
@@ -311,7 +355,16 @@ class AgentLoop:
                         )
                     )
                     break
-            if prepared.token_estimate > budget_manager.max_context_tokens:
+                projection_estimate = _build_provider_request_projection_estimate(
+                    prepared_messages=prepared.messages,
+                    provider_options=provider_options_resolved,
+                    allowed_tool_definitions=phase_allowed_tool_definitions,
+                    generation_config=generation_config or {},
+                    provider_model_settings=provider_model_settings or {},
+                    provider_message_format=f"repo_harness_{provider_options_resolved.provider}_messages_v0",
+                    context_budget_facts=context_budget_facts,
+                )
+            if projection_estimate.provider_request_token_estimate > runtime_hard_context_limit_tokens:
                 state.agent_stop_reason = "context_limit"
                 state.budget_state.stop_reason = "context_limit"
                 recorder.append_event(
@@ -325,15 +378,23 @@ class AgentLoop:
                         severity="warning",
                         error_type="context_limit",
                         data={
-                            "token_estimate": prepared.token_estimate,
+                            "token_estimate": projection_estimate.provider_request_token_estimate,
                             "provider_ready_token_estimate": prepared.provider_ready_token_estimate,
                             "provider_body_char_estimate": prepared.provider_body_char_estimate,
                             "internal_token_estimate": prepared.internal_token_estimate,
-                            "threshold_decision_source": prepared.threshold_decision_source,
+                            "provider_request_projection_hash": (
+                                projection_estimate.provider_request_projection_hash
+                            ),
+                            "provider_request_projection_estimate": (
+                                projection_estimate.model_dump(mode="json")
+                            ),
+                            "threshold_decision_source": "provider_request_projection_estimate",
                             "provider_returned_prompt_tokens": None,
                             "provider_usage_metadata_status": "unavailable_before_provider_call",
                             "estimator_error_ratio": None,
-                            "max_context_tokens": budget_manager.max_context_tokens,
+                            "max_context_tokens": runtime_context_budget_tokens,
+                            "hard_context_limit_tokens": runtime_hard_context_limit_tokens,
+                            "context_budget_facts": context_budget_payload,
                         },
                     )
                 )
@@ -352,6 +413,13 @@ class AgentLoop:
                         "context_revision": prepared.context_revision,
                         "prepared_messages_ref": prepared.prepared_messages_ref.model_dump(mode="json"),
                         "model_input_hash": prepared.model_input_hash,
+                        "provider_request_projection_hash": (
+                            projection_estimate.provider_request_projection_hash
+                        ),
+                        "provider_request_projection_estimate": (
+                            projection_estimate.model_dump(mode="json")
+                        ),
+                        "context_budget_facts": context_budget_payload,
                         "scaffold_id": self.scaffold.scaffold_id,
                         "scaffold_phase": current_phase,
                         "budget_state": state.budget_state.model_dump(mode="json"),
@@ -380,10 +448,7 @@ class AgentLoop:
                 provider_options=provider_options_resolved,
                 scaffold=self.scaffold,
                 scaffold_phase=current_phase,
-                allowed_tool_definitions=_tool_definitions_for_allowed_tools(
-                    self.tool_executor,
-                    phase_allowed_tool_names,
-                ),
+                allowed_tool_definitions=phase_allowed_tool_definitions,
                 tool_schema_snapshot_ref=tool_schema_snapshot_ref
                 or _placeholder_artifact_ref("tool_schema_snapshot"),
                 run_config_facts_ref=run_config_facts_ref
@@ -394,6 +459,10 @@ class AgentLoop:
                 request_timeout_seconds=request_timeout_seconds,
                 raw_request_logging_policy=raw_request_logging_policy,
                 retry_policy=retry_policy,
+                provider_request_projection_hash=projection_estimate.provider_request_projection_hash,
+                provider_request_token_estimate=projection_estimate.provider_request_token_estimate,
+                provider_request_token_estimate_breakdown=projection_estimate.model_dump(mode="json"),
+                context_budget_facts=context_budget_payload,
             )
             response = self.model_client.generate(
                 request=model_request,
@@ -437,8 +506,13 @@ class AgentLoop:
                         data={
                             **commit_result,
                             "model_input_hash": prepared.model_input_hash,
-                            "provider_request_projection_hash": None,
-                            "provider_request_projection_status": "not_implemented_in_step_4",
+                            "provider_request_projection_hash": (
+                                projection_estimate.provider_request_projection_hash
+                            ),
+                            "provider_request_projection_estimate": (
+                                projection_estimate.model_dump(mode="json")
+                            ),
+                            "provider_request_projection_status": "materialized_before_provider_call",
                             "content_replacement_state_hash": committed_state.state_hash,
                             "content_replacement_state_ref": committed_state_ref.model_dump(
                                 mode="json"
@@ -1591,13 +1665,13 @@ def _tool_call_parse_repair_message(response: object) -> dict[str, object]:
 
 def _context_warning_level(
     *,
-    prepared: Any,
+    token_estimate: int,
     max_context_tokens: int,
     emitted_levels: set[str],
 ) -> str | None:
     if max_context_tokens <= 0:
         return None
-    estimate = int(getattr(prepared, "provider_ready_token_estimate", prepared.token_estimate))
+    estimate = int(token_estimate)
     if estimate > max_context_tokens:
         return None
     ratio = estimate / max_context_tokens
@@ -1617,10 +1691,16 @@ def _record_context_warning(
     recorder: RunRecorder,
     messages: list[dict[str, object]],
     prepared: Any,
+    provider_request_projection_estimate: dict[str, object],
     warning_level: str,
     max_context_tokens: int,
 ) -> None:
-    estimate = int(getattr(prepared, "provider_ready_token_estimate", prepared.token_estimate))
+    estimate = int(
+        provider_request_projection_estimate.get(
+            "provider_request_token_estimate",
+            getattr(prepared, "provider_ready_token_estimate", prepared.token_estimate),
+        )
+    )
     content = {
         "repo_harness_control_message": {
             "type": "context_warning",
@@ -1629,12 +1709,12 @@ def _record_context_warning(
             "turn": turn,
             "warning_level": warning_level,
             "provider_ready_token_estimate": estimate,
-            "max_context_tokens": max_context_tokens,
-            "threshold_decision_source": getattr(
-                prepared,
-                "threshold_decision_source",
-                "provider_ready_token_estimate",
+            "provider_request_token_estimate": estimate,
+            "provider_request_projection_hash": provider_request_projection_estimate.get(
+                "provider_request_projection_hash"
             ),
+            "max_context_tokens": max_context_tokens,
+            "threshold_decision_source": "provider_request_projection_estimate",
             "instruction": (
                 "当前对话已经接近上下文预算。请优先使用具体文件路径、最小必要读取范围和"
                 "可验证的补丁行动，避免重复读取大段内容。"
@@ -1658,6 +1738,9 @@ def _record_context_warning(
             "prepared_context_revision_before_warning": prepared.context_revision,
             "prepared_messages_ref_before_warning": prepared.prepared_messages_ref.model_dump(mode="json"),
             "provider_ready_token_estimate_before_warning": estimate,
+            "provider_request_projection_estimate_before_warning": (
+                provider_request_projection_estimate
+            ),
             "provider_body_char_estimate_before_warning": prepared.provider_body_char_estimate,
             "internal_token_estimate_before_warning": prepared.internal_token_estimate,
             "max_context_tokens": max_context_tokens,
@@ -1860,6 +1943,10 @@ def _build_model_request_context(
     request_timeout_seconds: float,
     raw_request_logging_policy: str,
     retry_policy: str,
+    provider_request_projection_hash: str | None,
+    provider_request_token_estimate: int,
+    provider_request_token_estimate_breakdown: dict[str, object],
+    context_budget_facts: dict[str, object],
 ) -> ModelRequestContext:
     return ModelRequestContext(
         run_id=run_id,
@@ -1886,6 +1973,36 @@ def _build_model_request_context(
         raw_request_logging_policy=raw_request_logging_policy,
         credential_policy=provider_options.credential_policy,
         retry_policy=retry_policy,
+        provider_request_projection_hash=provider_request_projection_hash,
+        provider_request_token_estimate=provider_request_token_estimate,
+        provider_request_token_estimate_breakdown=provider_request_token_estimate_breakdown,
+        context_budget_facts=context_budget_facts,
+    )
+
+
+def _build_provider_request_projection_estimate(
+    *,
+    prepared_messages: list[dict[str, object]],
+    provider_options: ModelProviderOptions,
+    allowed_tool_definitions: list[dict[str, object]],
+    generation_config: dict[str, object],
+    provider_model_settings: dict[str, object],
+    provider_message_format: str,
+    context_budget_facts: Any,
+):
+    projection = build_provider_request_projection(
+        provider=provider_options.provider,
+        model_id=provider_options.model_id,
+        provider_message_format=provider_message_format,
+        messages=[dict(message) for message in prepared_messages],
+        tools=[dict(tool) for tool in allowed_tool_definitions],
+        tool_choice=None,
+        generation_config=dict(generation_config),
+        provider_model_settings=dict(provider_model_settings),
+    )
+    return estimate_provider_request_projection(
+        projection=projection,
+        budget_facts=context_budget_facts,
     )
 
 

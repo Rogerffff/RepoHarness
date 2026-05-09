@@ -46,6 +46,7 @@ class ContextManager:
         context_config: ContextManagementConfig | None = None,
         provider_name: str = "generic",
         tool_result_artifact_index: ToolResultArtifactIndex | None = None,
+        context_budget_facts: dict[str, Any] | None = None,
     ) -> PreparedMessages:
         self.context_revision += 1
         config = context_config or ContextManagementConfig()
@@ -162,6 +163,7 @@ class ContextManager:
                 "microcompact_record_ref": (
                     microcompact_ref.model_dump(mode="json") if microcompact_ref else None
                 ),
+                "context_budget_facts": context_budget_facts or {},
             },
             {"budget_policy": "preserve_json"},
         )
@@ -192,6 +194,16 @@ class ContextManager:
                 "provider_returned_prompt_tokens": None,
                 "provider_usage_metadata_status": "unavailable_before_provider_call",
                 "estimator_error_ratio": None,
+                "context_budget_facts": context_budget_facts or {},
+                "effective_context_budget_tokens": (
+                    context_budget_facts or {}
+                ).get("effective_context_budget_tokens"),
+                "hard_context_limit_tokens": (
+                    context_budget_facts or {}
+                ).get("hard_context_limit_tokens"),
+                "model_context_window_resolution": (
+                    context_budget_facts or {}
+                ).get("model_context_window_resolution"),
                 "internal_char_estimate_before": internal_char_estimate_before,
                 "internal_char_estimate_after": internal_char_estimate,
                 "internal_token_estimate_before": internal_token_estimate_before,

@@ -1,6 +1,13 @@
 """上下文构建与上下文管理模块。"""
 
 from repo_harness.context.builder import ContextBuilder
+from repo_harness.context.budget import (
+    ContextBudgetFacts,
+    ProviderRequestProjectionEstimate,
+    build_provider_request_projection,
+    estimate_provider_request_projection,
+    resolve_context_budget,
+)
 from repo_harness.context.manager import ContextManager
 from repo_harness.context.schemas import (
     ContentReplacementRecord,
@@ -34,6 +41,7 @@ __all__ = [
     "ContentReplacementState",
     "ContextBuilder",
     "ContextBuilderConfig",
+    "ContextBudgetFacts",
     "ContextCompactionFacts",
     "ContextManager",
     "ContextPolicySnapshot",
@@ -41,11 +49,15 @@ __all__ = [
     "MicroCompactRecord",
     "ModelInputSnapshot",
     "PreparedMessages",
+    "ProviderRequestProjectionEstimate",
     "ToolResultArtifactError",
     "ToolResultArtifactIndex",
     "ToolResultArtifactRecord",
     "ToolResultCompactRecord",
+    "build_provider_request_projection",
+    "estimate_provider_request_projection",
     "build_persisted_tool_result_preview",
     "persist_tool_result_content",
     "read_tool_result_artifact",
+    "resolve_context_budget",
 ]

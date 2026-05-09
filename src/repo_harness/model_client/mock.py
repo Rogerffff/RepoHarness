@@ -176,6 +176,12 @@ def _mock_request_payload(request: ModelRequestContext, *, scenario: str) -> dic
         "mock_scenario": scenario,
         "model_call_id": request.model_call_id,
         "model_id": request.provider_options.model_id,
+        "provider_request_projection_hash": request.provider_request_projection_hash,
+        "provider_request_token_estimate": request.provider_request_token_estimate,
+        "provider_request_token_estimate_breakdown": (
+            request.provider_request_token_estimate_breakdown
+        ),
+        "context_budget_facts": request.context_budget_facts,
         "messages": request.prepared_messages,
         "tools": request.allowed_tool_definitions,
         "tool_choice": request.tool_choice,
