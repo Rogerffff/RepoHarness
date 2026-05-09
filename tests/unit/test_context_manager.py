@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from repo_harness.config import ContextManagementConfig
-from repo_harness.context import ContextManager
+from repo_harness.context import ContextManager, ToolResultArtifactIndex
 from repo_harness.context.schemas import ToolResultArtifactRecord
 from repo_harness.trajectory import RunRecorder
 
@@ -171,40 +171,222 @@ def test_prepared_messages_records_provider_ready_estimate_separately(tmp_path: 
     assert event_data["provider_usage_metadata_status"] == "unavailable_before_provider_call"
 
 
-def test_tool_result_replacement_prefers_result_envelope_recovery(tmp_path: Path):
+def test_current_turn_aggregate_budget_persists_largest_fresh_tool_result(tmp_path: Path):
+    large_content = "large tool output\n" * 80
+    small_content = "small output\n" * 5
     messages = [
-        {"role": "assistant", "content": "call tool", "turn": 1},
+        {
+            "role": "assistant",
+            "content": "call tools",
+            "turn": 1,
+            "tool_calls": [
+                {"tool_call_id": "call_large", "tool_name": "grep", "arguments": {}, "turn": 1},
+                {"tool_call_id": "call_small", "tool_name": "read_file", "arguments": {}, "turn": 1},
+            ],
+        },
         {
             "role": "tool",
-            "tool_call_id": "call_read",
-            "tool_result_id": "call_read_result",
+            "tool_call_id": "call_large",
+            "tool_result_id": "call_large_result",
+            "tool_name": "grep",
+            "content": large_content,
+            "normalized_arguments": {"query": "needle"},
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_small",
+            "tool_result_id": "call_small_result",
             "tool_name": "read_file",
-            "content": "large tool output\n" * 200,
-            "normalized_arguments": {"path": "large.py"},
-            "typed": {
-                "result_envelope": {
-                    "recovery_call": "read_file(path='large.py', start_line=88)",
-                    "recovery_hint": "Envelope recovery should survive replacement.",
-                }
-            },
+            "content": small_content,
+            "normalized_arguments": {"path": "small.py"},
         },
     ]
 
     with RunRecorder("context-replacement", tmp_path / "run", task_id="task") as recorder:
+        index = ToolResultArtifactIndex(run_dir=tmp_path / "run")
         prepared = ContextManager().prepare_messages(
             messages=messages,
             recorder=recorder,
             task_id="task",
             turn=2,
             context_config=ContextManagementConfig(
-                tool_result_aggregate_budget_chars=10,
-                keep_recent_turns=0,
-                keep_recent_test_results=0,
+                max_tool_results_per_turn_chars=len(small_content) + 20,
             ),
+            tool_result_artifact_index=index,
         )
 
-    replacement = prepared.messages[1]["content"]
+    large_replacement = prepared.messages[1]["content"]
 
-    assert "[tool result replaced]" in replacement
-    assert "recovery_call: read_file(path='large.py', start_line=88)" in replacement
-    assert "Envelope recovery should survive replacement." in replacement
+    assert "<persisted-output>" in large_replacement
+    assert "read_tool_result_artifact" in large_replacement
+    assert prepared.messages[2]["content"] == small_content
+    assert prepared.context_event.data["context_reduction"]["replaced_tool_result_ids"] == [
+        "call_large_result"
+    ]
+    assert prepared.context_event.data["context_reduction"]["fresh_tool_result_ids"] == [
+        "call_large_result",
+        "call_small_result",
+    ]
+    assert len(index.records_by_artifact_id) == 1
+    record = next(iter(index.records_by_artifact_id.values()))
+    assert record.tool_result_id == "call_large_result"
+    assert record.model_visible_recoverable is False
+    assert prepared.content_replacement_state is not None
+    large_state = next(
+        item
+        for item in prepared.content_replacement_state.records
+        if item.original_tool_result_id == "call_large_result"
+    )
+    assert large_state.replacement_decision == "prepared_candidate"
+    assert large_state.replaced is True
+
+
+def test_uncommitted_candidate_does_not_freeze_replacement_decision(tmp_path: Path):
+    content = "large tool output\n" * 80
+    messages = [
+        {
+            "role": "assistant",
+            "content": "call tool",
+            "turn": 1,
+            "tool_calls": [
+                {"tool_call_id": "call_large", "tool_name": "grep", "arguments": {}, "turn": 1}
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_large",
+            "tool_result_id": "call_large_result",
+            "tool_name": "grep",
+            "content": content,
+            "normalized_arguments": {"query": "needle"},
+        },
+    ]
+    manager = ContextManager()
+    with RunRecorder("context-candidate", tmp_path / "run", task_id="task") as recorder:
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10),
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10000),
+        )
+
+    assert "<persisted-output>" in str(first.messages[1]["content"])
+    assert second.messages[1]["content"] == content
+    assert second.context_event.data["context_reduction"]["replaced_tool_result_ids"] == []
+
+
+def test_committed_full_visible_tool_result_is_not_later_replaced_by_l0_budget(tmp_path: Path):
+    content = "visible once, then frozen"
+    messages = [
+        {
+            "role": "assistant",
+            "content": "call tool",
+            "turn": 1,
+            "tool_calls": [
+                {"tool_call_id": "call_read", "tool_name": "read_file", "arguments": {}, "turn": 1}
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_read",
+            "tool_result_id": "call_read_result",
+            "tool_name": "read_file",
+            "content": content,
+            "normalized_arguments": {"path": "demo.py"},
+        },
+    ]
+    manager = ContextManager()
+    with RunRecorder("context-frozen-full", tmp_path / "run", task_id="task") as recorder:
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10000),
+        )
+        commit = manager.commit_prepared_tool_result_decisions(
+            context_revision=first.context_revision,
+            prepared_messages_ref=first.prepared_messages_ref,
+            model_call_id="model-call-1",
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=2,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=1),
+        )
+
+    assert commit["committed_full_visible_tool_result_ids"] == ["call_read_result"]
+    assert second.messages[1]["content"] == content
+    assert second.context_event.data["context_reduction"]["replaced_tool_result_ids"] == []
+    state = second.content_replacement_state
+    assert state is not None
+    record = next(item for item in state.records if item.original_tool_result_id == "call_read_result")
+    assert record.replacement_decision == "provider_committed_full_visible"
+
+
+def test_committed_persisted_preview_is_replayed_and_recovery_unlocked(tmp_path: Path):
+    content = "large tool output\n" * 80
+    messages = [
+        {
+            "role": "assistant",
+            "content": "call tool",
+            "turn": 1,
+            "tool_calls": [
+                {"tool_call_id": "call_grep", "tool_name": "grep", "arguments": {}, "turn": 1}
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_grep",
+            "tool_result_id": "call_grep_result",
+            "tool_name": "grep",
+            "content": content,
+            "normalized_arguments": {"query": "needle"},
+        },
+    ]
+    run_dir = tmp_path / "run"
+    manager = ContextManager()
+    with RunRecorder("context-frozen-preview", run_dir, task_id="task") as recorder:
+        index = ToolResultArtifactIndex(run_dir=run_dir)
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10),
+            tool_result_artifact_index=index,
+        )
+        first_preview = first.messages[1]["content"]
+        commit = manager.commit_prepared_tool_result_decisions(
+            context_revision=first.context_revision,
+            prepared_messages_ref=first.prepared_messages_ref,
+            model_call_id="model-call-1",
+            tool_result_artifact_index=index,
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=2,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10000),
+            tool_result_artifact_index=index,
+        )
+
+    assert commit["committed_persisted_preview_tool_result_ids"] == ["call_grep_result"]
+    assert len(commit["unlocked_tool_result_artifact_ids"]) == 1
+    artifact_id = commit["unlocked_tool_result_artifact_ids"][0]
+    assert index.records_by_artifact_id[artifact_id].model_visible_recoverable is True
+    assert second.messages[1]["content"] == first_preview
+    assert second.context_event.data["context_reduction"]["reapplied_persisted_tool_result_ids"] == [
+        "call_grep_result"
+    ]

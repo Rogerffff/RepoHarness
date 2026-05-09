@@ -187,6 +187,129 @@ def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
     assert started["data"]["budget_state"]["turn_count"] == 1
 
 
+def test_agent_loop_accepts_model_input_before_freezing_tool_result_decisions(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    initial_messages = [
+        {
+            "role": "assistant",
+            "content": "call tool",
+            "turn": 1,
+            "tool_calls": [
+                {
+                    "tool_call_id": "call_large",
+                    "tool_name": "grep",
+                    "arguments": {"query": "needle"},
+                    "turn": 1,
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "turn": 1,
+            "tool_call_id": "call_large",
+            "tool_result_id": "call_large_result",
+            "tool_name": "grep",
+            "content": "large tool output\n" * 80,
+            "normalized_arguments": {"query": "needle"},
+            "normalized_input_hash": stable_hash({"query": "needle"}),
+            "status": "ok",
+            "typed": {},
+            "artifact_refs": [],
+        },
+    ]
+
+    with RunRecorder("accepted-input", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=FakeModelClient.from_steps(
+                script_id="accepted-input",
+                task_id="task",
+                steps=[{"step_id": "final", "action": "final_answer", "assistant_text": "done"}],
+            ),
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["grep"],
+        ).run(
+            run_id="accepted-input",
+            task_id="task",
+            initial_messages=initial_messages,
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10),
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    events = _read_events(run_dir)
+    accepted = next(event for event in events if event["event_type"] == "model_input_accepted")
+    assert accepted["data"]["committed_persisted_preview_tool_result_ids"] == [
+        "call_large_result"
+    ]
+    assert accepted["data"]["committed_full_visible_tool_result_ids"] == []
+    assert accepted["data"]["model_input_hash"]
+
+
+def test_agent_loop_does_not_freeze_tool_result_decisions_on_provider_context_limit(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run"
+    initial_messages = [
+        {
+            "role": "assistant",
+            "content": "call tool",
+            "turn": 1,
+            "tool_calls": [
+                {
+                    "tool_call_id": "call_large",
+                    "tool_name": "grep",
+                    "arguments": {"query": "needle"},
+                    "turn": 1,
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "turn": 1,
+            "tool_call_id": "call_large",
+            "tool_result_id": "call_large_result",
+            "tool_name": "grep",
+            "content": "large tool output\n" * 80,
+            "normalized_arguments": {"query": "needle"},
+            "normalized_input_hash": stable_hash({"query": "needle"}),
+            "status": "ok",
+            "typed": {},
+            "artifact_refs": [],
+        },
+    ]
+
+    with RunRecorder("rejected-input", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=FakeModelClient.from_steps(
+                script_id="rejected-input",
+                task_id="task",
+                steps=[
+                    {
+                        "step_id": "context-limit",
+                        "action": "model_error",
+                        "model_error_type": "context_limit",
+                    }
+                ],
+            ),
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["grep"],
+        ).run(
+            run_id="rejected-input",
+            task_id="task",
+            initial_messages=initial_messages,
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            context_config=ContextManagementConfig(max_tool_results_per_turn_chars=10),
+        )
+
+    events = _read_events(run_dir)
+    assert state.last_model_error == "context_limit"
+    assert not any(event["event_type"] == "model_input_accepted" for event in events)
+
+
 def test_agent_loop_repairs_one_malformed_tool_call_response(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = _MalformedThenFinalClient()

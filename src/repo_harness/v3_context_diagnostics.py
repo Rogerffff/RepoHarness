@@ -421,6 +421,7 @@ def _write_context_run_config(path: Path, *, replay_path: Path, output_dir: Path
         "context_management": {
             "max_context_tokens": 120000,
             "tool_result_aggregate_budget_chars": 800,
+            "max_tool_results_per_turn_chars": 800,
             "keep_recent_turns": 0,
             "keep_recent_test_results": 0,
             "compact_strategy": "deterministic_preview_replacement",

@@ -47,6 +47,21 @@ CONVERGENCE_NUDGE_MAX_PER_RUN = 3
 CONVERGENCE_NUDGE_MIN_TURN_GAP = 4
 NEAR_BUDGET_WITH_PATCH_TURN_THRESHOLD = 4
 CONTEXT_WARNING_POLICY_VERSION = "repo_harness_context_warning_v1"
+MODEL_INPUT_NOT_ACCEPTED_ERROR_TYPES = frozenset(
+    {
+        "context_limit",
+        "prompt_too_long",
+        "prompt too long",
+        "request_too_large",
+        "payload_too_large",
+    }
+)
+MODEL_INPUT_ACCEPTED_ERROR_TYPES = frozenset(
+    {
+        "output_token_limit_reached",
+        "tool_call_parse_failure",
+    }
+)
 
 
 def _cleanup_provider_private_state_on_exit(func: Callable[..., AgentLoopState]) -> Callable[..., AgentLoopState]:
@@ -60,6 +75,14 @@ def _cleanup_provider_private_state_on_exit(func: Callable[..., AgentLoopState])
                 provider_private_state_store().clear_run(run_id)
 
     return wrapper
+
+
+def _model_input_was_accepted(response: ModelResponse) -> bool:
+    if response.model_error_type is None:
+        return True
+    if response.model_error_type in MODEL_INPUT_NOT_ACCEPTED_ERROR_TYPES:
+        return False
+    return response.model_error_type in MODEL_INPUT_ACCEPTED_ERROR_TYPES
 
 
 class AgentLoop:
@@ -192,6 +215,9 @@ class AgentLoop:
                 turn=turn,
                 context_config=context_config_resolved,
                 provider_name=provider_options_resolved.provider,
+                tool_result_artifact_index=tool_context.tool_result_artifact_index
+                if tool_context
+                else None,
             )
             state.context_revision = prepared.context_revision
             recorder.append_event(prepared.context_event)
@@ -250,8 +276,11 @@ class AgentLoop:
                     recorder=recorder,
                     task_id=task_id,
                     turn=turn,
-                    context_config=context_config,
+                    context_config=context_config_resolved,
                     provider_name=provider_options_resolved.provider,
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index
+                    if tool_context
+                    else None,
                 )
                 state.context_revision = prepared.context_revision
                 recorder.append_event(prepared.context_event)
@@ -373,6 +402,53 @@ class AgentLoop:
             if response.model_call_event is not None:
                 state.budget_state.input_tokens += response.model_call_event.input_tokens
                 state.budget_state.output_tokens += response.model_call_event.output_tokens
+            if _model_input_was_accepted(response):
+                commit_result = self.context_manager.commit_prepared_tool_result_decisions(
+                    context_revision=prepared.context_revision,
+                    prepared_messages_ref=prepared.prepared_messages_ref,
+                    model_call_id=model_request.model_call_id,
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index
+                    if tool_context
+                    else None,
+                )
+                committed_state = commit_result.pop("content_replacement_state")
+                committed_state_ref = recorder.write_json_artifact(
+                    "content_replacement_state",
+                    committed_state.model_dump(mode="json"),
+                    {"budget_policy": "preserve_json"},
+                )
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("model_input"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="model_input_accepted",
+                        artifact_refs=[
+                            ref
+                            for ref in [
+                                prepared.prepared_messages_ref,
+                                committed_state_ref,
+                                response.raw_provider_request_ref,
+                            ]
+                            if ref is not None
+                        ],
+                        data={
+                            **commit_result,
+                            "model_input_hash": prepared.model_input_hash,
+                            "provider_request_projection_hash": None,
+                            "provider_request_projection_status": "not_implemented_in_step_4",
+                            "content_replacement_state_hash": committed_state.state_hash,
+                            "content_replacement_state_ref": committed_state_ref.model_dump(
+                                mode="json"
+                            ),
+                            "model_input_acceptance_policy": (
+                                "commit_after_non_context_limit_provider_response_v1"
+                            ),
+                        },
+                    )
+                )
             provider_attempt_refs = list(getattr(response, "provider_attempt_refs", []) or [])
             retry_policy_ref = getattr(response, "retry_policy_ref", None)
             attempt_count = int(getattr(response, "attempt_count", max(1, len(provider_attempt_refs))) or 1)

@@ -11,12 +11,17 @@ from repo_harness.context.schemas import (
     ContentReplacementState,
     PreparedMessages,
 )
+from repo_harness.context.tool_result_artifacts import (
+    ToolResultArtifactIndex,
+    build_persisted_tool_result_preview,
+    persist_tool_result_content,
+)
 from repo_harness.schema_base import stable_hash
 from repo_harness.schema_versions import CONTEXT_POLICY_VERSION
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TrajectoryEvent
 
 PROVIDER_READY_TOKEN_ESTIMATOR_VERSION = "provider_body_char4_token_estimator_v1"
-CONTEXT_REPLACEMENT_RUNTIME_POLICY_VERSION = "deterministic_tool_result_replacement_runtime_v1"
+CONTEXT_REPLACEMENT_RUNTIME_POLICY_VERSION = "fresh_tool_result_budget_runtime_v1"
 REPLACEMENT_PREVIEW_MAX_CHARS = 1200
 
 
@@ -25,6 +30,10 @@ class ContextManager:
         self.context_revision = 0
         self._records_by_tool_result_id: dict[str, ContentReplacementRecord] = {}
         self._replacement_text_by_tool_result_id: dict[str, str] = {}
+        self._candidate_records_by_revision: dict[
+            int, dict[str, ContentReplacementRecord]
+        ] = {}
+        self._candidate_replacement_text_by_revision: dict[int, dict[str, str]] = {}
 
     def prepare_messages(
         self,
@@ -35,14 +44,25 @@ class ContextManager:
         turn: int,
         context_config: ContextManagementConfig | None = None,
         provider_name: str = "generic",
+        tool_result_artifact_index: ToolResultArtifactIndex | None = None,
     ) -> PreparedMessages:
         self.context_revision += 1
         config = context_config or ContextManagementConfig()
-        prepared_messages, reduction_data = self._reduce_messages(
+        (
+            prepared_messages,
+            reduction_data,
+            candidate_records,
+            candidate_replacement_text,
+        ) = self._reduce_messages(
             messages,
             recorder,
             config,
+            tool_result_artifact_index,
         )
+        self._candidate_records_by_revision[self.context_revision] = candidate_records
+        self._candidate_replacement_text_by_revision[
+            self.context_revision
+        ] = candidate_replacement_text
         model_input_hash = stable_hash(prepared_messages)
         internal_char_estimate_before = _internal_char_estimate(messages)
         internal_char_estimate = _internal_char_estimate(prepared_messages)
@@ -69,10 +89,17 @@ class ContextManager:
             ),
         }
         pairing_validation = _validate_tool_pairing(prepared_messages)
+        state_records = {
+            **self._records_by_tool_result_id,
+            **candidate_records,
+        }
         state = ContentReplacementState(
-            seen_tool_result_ids=list(self._records_by_tool_result_id.keys()),
-            records=list(self._records_by_tool_result_id.values()),
-            state_hash=self._state_hash(),
+            seen_tool_result_ids=sorted(state_records),
+            records=[
+                state_records[tool_result_id]
+                for tool_result_id in sorted(state_records)
+            ],
+            state_hash=self._state_hash(state_records),
             last_context_revision=self.context_revision,
         )
         state_ref = recorder.write_json_artifact(
@@ -156,28 +183,37 @@ class ContextManager:
         messages: list[dict[str, object]],
         recorder: RunRecorder,
         config: ContextManagementConfig,
-    ) -> tuple[list[dict[str, object]], dict[str, Any]]:
+        tool_result_artifact_index: ToolResultArtifactIndex | None,
+    ) -> tuple[
+        list[dict[str, object]],
+        dict[str, Any],
+        dict[str, ContentReplacementRecord],
+        dict[str, str],
+    ]:
         prepared: list[dict[str, object]] = []
         replaced_tool_result_ids: list[str] = []
+        fresh_tool_result_ids: list[str] = []
+        candidate_full_visible_tool_result_ids: list[str] = []
+        already_persisted_tool_result_ids: list[str] = []
+        reapplied_persisted_tool_result_ids: list[str] = []
+        provider_committed_full_visible_tool_result_ids: list[str] = []
         replacement_refs: list[ArtifactRef] = []
+        candidate_records: dict[str, ContentReplacementRecord] = {}
+        candidate_replacement_text: dict[str, str] = {}
         tool_infos = _tool_message_infos(messages)
         internal_tokens_before_reduction = _char4_token_estimate_from_chars(
             _internal_char_estimate(messages)
         )
-        effective_budget, budget_reason = _effective_tool_result_budget_chars(
-            config=config,
-            internal_tokens_before_reduction=internal_tokens_before_reduction,
-        )
-        protected_tool_result_ids = _protected_tool_result_ids(
-            tool_infos,
-            keep_recent_turns=config.keep_recent_turns,
-            keep_recent_test_results=config.keep_recent_test_results,
-        )
-        replace_tool_result_ids = _replacement_candidates(
-            tool_infos,
-            protected_tool_result_ids,
-            existing_replacement_ids=set(self._replacement_text_by_tool_result_id),
-            budget_chars=effective_budget,
+        fresh_infos = [
+            info
+            for info in tool_infos
+            if str(info["tool_result_id"]) not in self._records_by_tool_result_id
+            and not bool(info.get("already_persisted_preview"))
+            and not bool(info.get("skip_tool_result_budget"))
+        ]
+        replace_tool_result_ids = _fresh_replacement_candidates_by_turn(
+            fresh_infos,
+            budget_chars=config.max_tool_results_per_turn_chars,
         )
         for message in messages:
             if message.get("role") != "tool":
@@ -185,150 +221,249 @@ class ContextManager:
                 continue
             tool_result_id = str(message.get("tool_result_id") or message.get("tool_call_id") or "")
             content = str(message.get("content", ""))
+            committed_record = self._records_by_tool_result_id.get(tool_result_id)
+            if committed_record is not None:
+                if committed_record.replacement_decision == "provider_committed_persisted_preview":
+                    replacement = self._replacement_text_by_tool_result_id.get(tool_result_id, content)
+                    replaced = dict(message)
+                    replaced["content"] = replacement
+                    replaced["context_replacement"] = True
+                    prepared.append(replaced)
+                    replaced_tool_result_ids.append(tool_result_id)
+                    reapplied_persisted_tool_result_ids.append(tool_result_id)
+                    replacement_refs.extend(committed_record.replacement_artifact_refs)
+                    continue
+                provider_committed_full_visible_tool_result_ids.append(tool_result_id)
+                prepared.append(dict(message))
+                continue
+
+            fresh_tool_result_ids.append(tool_result_id)
+            if _is_persisted_tool_result_message(message):
+                copied = dict(message)
+                prepared.append(copied)
+                already_persisted_tool_result_ids.append(tool_result_id)
+                record = self._candidate_record_for_tool_result(
+                    tool_result_id=tool_result_id,
+                    message=message,
+                    visible_content=content,
+                    replaced=True,
+                    replacement_artifact_refs=_artifact_refs_from_message(message),
+                )
+                candidate_records[tool_result_id] = record
+                candidate_replacement_text[tool_result_id] = content
+                replacement_refs.extend(record.replacement_artifact_refs)
+                continue
+
             if tool_result_id in replace_tool_result_ids:
-                replacement, ref = self._replacement_for_tool_result(
+                replacement, ref = self._persisted_replacement_for_tool_result(
                     tool_result_id=tool_result_id,
                     message=message,
                     original_content=content,
                     recorder=recorder,
+                    tool_result_artifact_index=tool_result_artifact_index,
                     reason="tool_result_aggregate_budget_exceeded",
                 )
                 replaced = dict(message)
                 replaced["content"] = replacement
                 replaced["context_replacement"] = True
+                typed = dict(replaced.get("typed") or {})
+                typed["aggregate_tool_result_persisted"] = True
+                typed["aggregate_tool_result_original_chars"] = len(content)
+                typed["aggregate_tool_result_artifact_id"] = ref.artifact_id
+                typed["aggregate_tool_result_recovery_unlocked"] = False
+                replaced["typed"] = typed
+                replaced["artifact_refs"] = [
+                    *[ref.model_dump(mode="json") for ref in _artifact_refs_from_message(message)],
+                    ref.model_dump(mode="json"),
+                ]
                 prepared.append(replaced)
                 replaced_tool_result_ids.append(tool_result_id)
                 replacement_refs.append(ref)
-            else:
-                self._record_first_visible(
+                record = self._candidate_record_for_tool_result(
                     tool_result_id=tool_result_id,
-                    tool_call_id=str(message.get("tool_call_id") or tool_result_id),
-                    content=content,
+                    message=message,
+                    visible_content=replacement,
+                    replaced=True,
+                    replacement_artifact_refs=[ref],
+                )
+                candidate_records[tool_result_id] = record
+                candidate_replacement_text[tool_result_id] = replacement
+            else:
+                candidate_full_visible_tool_result_ids.append(tool_result_id)
+                candidate_records[tool_result_id] = self._candidate_record_for_tool_result(
+                    tool_result_id=tool_result_id,
+                    message=message,
+                    visible_content=content,
+                    replaced=False,
+                    replacement_artifact_refs=[],
                 )
                 prepared.append(dict(message))
         return prepared, {
             "replaced_tool_result_ids": replaced_tool_result_ids,
-            "protected_tool_result_ids": sorted(protected_tool_result_ids),
+            "fresh_tool_result_ids": fresh_tool_result_ids,
+            "candidate_full_visible_tool_result_ids": candidate_full_visible_tool_result_ids,
+            "already_persisted_tool_result_ids": already_persisted_tool_result_ids,
+            "reapplied_persisted_tool_result_ids": reapplied_persisted_tool_result_ids,
+            "provider_committed_full_visible_tool_result_ids": (
+                provider_committed_full_visible_tool_result_ids
+            ),
+            "protected_tool_result_ids": [],
             "replacement_artifact_refs": [ref.model_dump(mode="json") for ref in replacement_refs],
             "context_replacement_runtime_policy_version": CONTEXT_REPLACEMENT_RUNTIME_POLICY_VERSION,
             "compact_threshold_ratio": config.compact_threshold_ratio,
-            "compact_threshold_ratio_runtime_effect": "connected_to_tool_result_replacement_budget_v1",
+            "compact_threshold_ratio_runtime_effect": "reserved_for_autocompact_v1",
             "tool_result_aggregate_budget_chars": config.tool_result_aggregate_budget_chars,
-            "effective_tool_result_aggregate_budget_chars": effective_budget,
-            "effective_budget_reason": budget_reason,
+            "max_tool_results_per_turn_chars": config.max_tool_results_per_turn_chars,
+            "effective_tool_result_aggregate_budget_chars": config.max_tool_results_per_turn_chars,
+            "effective_budget_reason": "fresh_tool_results_grouped_by_turn",
+            "legacy_history_tool_result_replacement": config.legacy_history_tool_result_replacement,
+            "tool_result_compact_policy": config.tool_result_compact_policy,
+            "freeze_tool_result_budget_decisions": config.freeze_tool_result_budget_decisions,
+            "freeze_tool_result_decisions_at": config.freeze_tool_result_decisions_at,
+            "prepared_candidate_tool_result_ids": sorted(candidate_records),
             "internal_tokens_before_reduction": internal_tokens_before_reduction,
             "replacement_preview_max_chars": REPLACEMENT_PREVIEW_MAX_CHARS,
             "replacement_preview_total_chars": sum(
-                len(self._replacement_text_by_tool_result_id.get(tool_result_id, ""))
+                len(candidate_replacement_text.get(tool_result_id, ""))
                 for tool_result_id in replaced_tool_result_ids
             ),
-            "replacement_cooldown_policy": "stable_existing_replacement_reused_by_tool_result_id",
-        }
+            "replacement_cooldown_policy": (
+                "provider_committed_decisions_replayed_by_tool_result_id"
+            ),
+        }, candidate_records, candidate_replacement_text
 
-    def _record_first_visible(self, *, tool_result_id: str, tool_call_id: str, content: str) -> None:
-        if not tool_result_id or tool_result_id in self._records_by_tool_result_id:
-            return
-        record = ContentReplacementRecord(
-            tool_call_id=tool_call_id,
+    def _candidate_record_for_tool_result(
+        self,
+        *,
+        tool_result_id: str,
+        message: dict[str, object],
+        visible_content: str,
+        replaced: bool,
+        replacement_artifact_refs: list[ArtifactRef],
+    ) -> ContentReplacementRecord:
+        return ContentReplacementRecord(
+            tool_call_id=str(message.get("tool_call_id") or tool_result_id),
             original_tool_result_id=tool_result_id,
-            replaced=False,
-            first_visible_form="preview",
-            first_visible_content_hash=stable_hash(content),
+            replacement_decision="prepared_candidate",
+            replaced=replaced,
+            first_visible_form="replacement" if replaced else "full",
+            first_visible_content_hash=stable_hash(visible_content),
             replacement_allowed_after_first_seen=True,
+            replacement_text_hash=stable_hash(visible_content) if replaced else None,
+            replacement_artifact_refs=replacement_artifact_refs,
+            replacement_preview_hash=stable_hash(visible_content) if replaced else None,
+            first_replaced_at_context_revision=self.context_revision if replaced else None,
             first_seen_at_context_revision=self.context_revision,
         )
-        self._records_by_tool_result_id[tool_result_id] = record
 
-    def _replacement_for_tool_result(
+    def _persisted_replacement_for_tool_result(
         self,
         *,
         tool_result_id: str,
         message: dict[str, object],
         original_content: str,
         recorder: RunRecorder,
+        tool_result_artifact_index: ToolResultArtifactIndex | None,
         reason: str,
     ) -> tuple[str, ArtifactRef]:
-        existing = self._replacement_text_by_tool_result_id.get(tool_result_id)
-        if existing is not None:
-            record = self._records_by_tool_result_id[tool_result_id]
-            return existing, record.replacement_artifact_refs[0]
-
-        artifact_refs = message.get("artifact_refs") or message.get("content_artifact_refs") or []
-        artifact = artifact_refs[0] if artifact_refs else None
-        if hasattr(artifact, "model_dump"):
-            artifact_data = artifact.model_dump(mode="json")
-        elif isinstance(artifact, dict):
-            artifact_data = artifact
-        else:
-            artifact_data = {}
-        head, tail = _head_tail(original_content, max_chars=REPLACEMENT_PREVIEW_MAX_CHARS)
-        recovery = _replacement_recovery(message)
-        safe_artifact_data = _artifact_data_for_replacement(artifact_data)
-        include_preview = not safe_artifact_data.get("redacted")
-        if not include_preview:
-            recovery = _redacted_recovery(recovery)
-        replacement_sha256 = _replacement_sha256_for_model_visible_text(
-            safe_artifact_data=safe_artifact_data,
-            original_content=original_content,
+        tool_name = str(
+            message.get("effective_tool_name")
+            or message.get("requested_tool_name")
+            or message.get("tool_name")
+            or "unknown_tool"
         )
-        replacement = (
-            f"[tool result replaced]\n"
-            f"tool_result_id: {tool_result_id}\n"
-            f"tool_name: {recovery['tool_name']}\n"
-            f"artifact_id: {safe_artifact_data.get('artifact_id', 'none')}\n"
-            f"sha256: {replacement_sha256}\n"
-            f"reason: {reason}\n"
-            f"normalized_arguments_sha256: {recovery['normalized_arguments_sha256']}\n"
-            f"key_arguments: {recovery['key_arguments_preview']}\n"
-            f"recovery_call: {recovery['recommended_call']}\n"
-            f"recovery_hint: {recovery['recovery_hint']}\n"
-        )
-        if include_preview:
-            replacement += f"head:\n{head}\n" f"tail:\n{tail}"
-        else:
-            replacement += "preview_redacted: source artifact is evaluator-only or secret\n"
-        replacement_ref = recorder.write_json_artifact(
-            "context_replacement",
-            {
-                "tool_result_id": tool_result_id,
-                "replacement_preview": replacement,
-                "reason": reason,
-                "source_artifact_ref": safe_artifact_data,
-                "recovery": recovery,
-            },
-            {"budget_policy": "preserve_json"},
-        )
-        existing_record = self._records_by_tool_result_id.get(tool_result_id)
-        record = ContentReplacementRecord(
+        record = persist_tool_result_content(
+            recorder=recorder,
+            tool_result_id=tool_result_id,
             tool_call_id=str(message.get("tool_call_id") or tool_result_id),
-            original_tool_result_id=tool_result_id,
-            replaced=True,
-            first_visible_form=existing_record.first_visible_form if existing_record else "replacement",
-            first_visible_content_hash=(
-                existing_record.first_visible_content_hash
-                if existing_record
-                else stable_hash(replacement)
-            ),
-            replacement_allowed_after_first_seen=True,
-            replacement_text_hash=stable_hash(replacement),
-            replacement_artifact_refs=[replacement_ref],
-            replacement_preview_hash=stable_hash(replacement),
-            first_replaced_at_context_revision=self.context_revision,
-            first_seen_at_context_revision=(
-                existing_record.first_seen_at_context_revision
-                if existing_record
-                else self.context_revision
-            ),
+            tool_name=tool_name,
+            content=original_content,
+            publishable_after_visibility_scan=True,
+            contamination_scan_status="clean",
         )
-        self._replacement_text_by_tool_result_id[tool_result_id] = replacement
-        self._records_by_tool_result_id[tool_result_id] = record
-        return replacement, replacement_ref
+        if tool_result_artifact_index is not None:
+            tool_result_artifact_index.add(record)
+        replacement = build_persisted_tool_result_preview(record, original_content)
+        return replacement, record.artifact_ref
 
-    def _state_hash(self) -> str:
+    def commit_prepared_tool_result_decisions(
+        self,
+        *,
+        context_revision: int,
+        prepared_messages_ref: ArtifactRef,
+        model_call_id: str,
+        tool_result_artifact_index: ToolResultArtifactIndex | None = None,
+    ) -> dict[str, Any]:
+        candidate_records = self._candidate_records_by_revision.pop(context_revision, {})
+        candidate_replacement_text = self._candidate_replacement_text_by_revision.pop(
+            context_revision,
+            {},
+        )
+        committed_ids: list[str] = []
+        committed_full_visible_ids: list[str] = []
+        committed_persisted_preview_ids: list[str] = []
+        unlocked_artifact_ids: list[str] = []
+        for tool_result_id in sorted(candidate_records):
+            candidate = candidate_records[tool_result_id]
+            decision = (
+                "provider_committed_persisted_preview"
+                if candidate.replaced
+                else "provider_committed_full_visible"
+            )
+            committed = candidate.model_copy(
+                update={
+                    "replacement_decision": decision,
+                    "replacement_allowed_after_first_seen": False,
+                }
+            )
+            self._records_by_tool_result_id[tool_result_id] = committed
+            committed_ids.append(tool_result_id)
+            if candidate.replaced:
+                committed_persisted_preview_ids.append(tool_result_id)
+                replacement_text = candidate_replacement_text.get(tool_result_id)
+                if replacement_text is not None:
+                    self._replacement_text_by_tool_result_id[tool_result_id] = replacement_text
+                if tool_result_artifact_index is not None:
+                    for artifact_ref in candidate.replacement_artifact_refs:
+                        if artifact_ref.kind != "tool_result_original_content":
+                            continue
+                        if artifact_ref.artifact_id not in tool_result_artifact_index.records_by_artifact_id:
+                            continue
+                        tool_result_artifact_index.unlock_after_provider_commit(
+                            artifact_ref.artifact_id
+                        )
+                        unlocked_artifact_ids.append(artifact_ref.artifact_id)
+            else:
+                committed_full_visible_ids.append(tool_result_id)
+        committed_state = ContentReplacementState(
+            seen_tool_result_ids=sorted(self._records_by_tool_result_id),
+            records=[
+                self._records_by_tool_result_id[tool_result_id]
+                for tool_result_id in sorted(self._records_by_tool_result_id)
+            ],
+            state_hash=self._state_hash(self._records_by_tool_result_id),
+            last_context_revision=context_revision,
+        )
+        return {
+            "model_call_id": model_call_id,
+            "context_revision": context_revision,
+            "prepared_messages_ref": prepared_messages_ref.model_dump(mode="json"),
+            "committed_tool_result_ids": committed_ids,
+            "committed_full_visible_tool_result_ids": committed_full_visible_ids,
+            "committed_persisted_preview_tool_result_ids": committed_persisted_preview_ids,
+            "unlocked_tool_result_artifact_ids": unlocked_artifact_ids,
+            "content_replacement_state": committed_state,
+        }
+
+    def _state_hash(
+        self,
+        records: dict[str, ContentReplacementRecord] | None = None,
+    ) -> str:
+        source = records if records is not None else self._records_by_tool_result_id
         return stable_hash(
             [
-                record.model_dump(mode="json")
-                for record in self._records_by_tool_result_id.values()
+                source[tool_result_id].model_dump(mode="json")
+                for tool_result_id in sorted(source)
             ]
         )
 
@@ -650,12 +785,72 @@ def _tool_message_infos(messages: list[dict[str, object]]) -> list[dict[str, Any
             {
                 "index": index,
                 "tool_result_id": tool_result_id,
+                "tool_call_id": str(message.get("tool_call_id") or tool_result_id),
+                "tool_name": str(
+                    message.get("effective_tool_name")
+                    or message.get("requested_tool_name")
+                    or message.get("tool_name")
+                    or "unknown_tool"
+                ),
                 "content_chars": len(str(message.get("content", ""))),
                 "turn": turn,
                 "is_test_result": _is_test_result_message(message),
+                "already_persisted_preview": _is_persisted_tool_result_message(message),
+                "skip_tool_result_budget": (
+                    str(message.get("effective_tool_name") or message.get("tool_name") or "")
+                    == "read_tool_result_artifact"
+                ),
             }
         )
     return infos
+
+
+def _fresh_replacement_candidates_by_turn(
+    tool_infos: list[dict[str, Any]],
+    *,
+    budget_chars: int,
+) -> set[str]:
+    replace_ids: set[str] = set()
+    groups: dict[object, list[dict[str, Any]]] = {}
+    for info in tool_infos:
+        groups.setdefault(info.get("turn"), []).append(info)
+    for group in groups.values():
+        remaining = sum(int(info["content_chars"]) for info in group)
+        if remaining <= budget_chars:
+            continue
+        for info in sorted(group, key=lambda item: int(item["content_chars"]), reverse=True):
+            if remaining <= budget_chars:
+                break
+            tool_result_id = str(info["tool_result_id"])
+            replace_ids.add(tool_result_id)
+            remaining -= int(info["content_chars"])
+    return replace_ids
+
+
+def _artifact_refs_from_message(message: dict[str, object]) -> list[ArtifactRef]:
+    refs: list[ArtifactRef] = []
+    for raw in message.get("artifact_refs") or message.get("content_artifact_refs") or []:
+        if isinstance(raw, ArtifactRef):
+            refs.append(raw)
+        elif isinstance(raw, dict):
+            try:
+                refs.append(ArtifactRef.model_validate(raw))
+            except Exception:
+                continue
+    return refs
+
+
+def _is_persisted_tool_result_message(message: dict[str, object]) -> bool:
+    typed = message.get("typed")
+    if isinstance(typed, dict) and (
+        typed.get("single_tool_result_persisted")
+        or typed.get("aggregate_tool_result_persisted")
+    ):
+        return True
+    content = str(message.get("content", ""))
+    if content.startswith("<persisted-output>"):
+        return True
+    return any(ref.kind == "tool_result_original_content" for ref in _artifact_refs_from_message(message))
 
 
 def _protected_tool_result_ids(
