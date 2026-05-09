@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from repo_harness.config import RunConfig
+from repo_harness.context.schemas import ContextPolicySnapshot
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedFeedbackPolicyFacts
 from repo_harness.run_metadata.schemas import (
     EnvironmentFingerprint,
@@ -23,6 +24,7 @@ from repo_harness.run_metadata.schemas import (
     ToolProtocolFacts,
 )
 from repo_harness.schema_versions import OUTCOME_POLICY_VERSION, REWARD_VERSION
+from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import TaskDefinition
 from repo_harness.tasks.command_policy import COMMAND_POLICY_VERSION
@@ -53,6 +55,7 @@ def build_run_config_facts(
         scaffold=scaffold,
         task=task_definition,
     )
+    context_policy_snapshot = _context_policy_snapshot(config)
     return RunConfigFacts(
         run_id=run_id,
         task_id=task_definition.id,
@@ -107,6 +110,16 @@ def build_run_config_facts(
         provider_ready_token_estimator_version="provider_body_char4_token_estimator_v1",
         context_threshold_decision_source="provider_ready_token_estimate",
         compact_threshold_ratio_runtime_effect="connected_to_tool_result_replacement_budget_v1",
+        context_policy_snapshot_version=(
+            config.context_management.context_policy_snapshot_version
+        ),
+        context_policy_snapshot_hash=stable_hash(context_policy_snapshot),
+        context_policy_snapshot=context_policy_snapshot,
+        context_budget_policy=config.context_management.context_budget_policy,
+        tool_result_compact_policy=config.context_management.tool_result_compact_policy,
+        microcompact_policy=config.context_management.microcompact_policy,
+        auto_compact_enabled=config.context_management.auto_compact_enabled,
+        reactive_compact_policy=config.context_management.reactive_compact_policy,
         harness_control_message_export_policy=(
             "exclude_harness_generated_untrainable_control_messages_v1"
         ),
@@ -133,6 +146,74 @@ def build_run_config_facts(
         artifact_budget_bytes=config.workspace.max_artifact_bytes,
         environment_fingerprint=environment_fingerprint,
     )
+
+
+def _context_policy_snapshot(config: RunConfig) -> dict[str, Any]:
+    context = config.context_management
+    snapshot = {
+        "schema_version": context.context_policy_snapshot_version,
+        "context_budget_policy": context.context_budget_policy,
+        "model_context_window_tokens": context.model_context_window_tokens,
+        "harness_context_cap_tokens": context.harness_context_cap_tokens,
+        "main_output_reserve_tokens": context.main_output_reserve_tokens,
+        "estimator_safety_margin_ratio": context.estimator_safety_margin_ratio,
+        "estimator_safety_margin_min_tokens": context.estimator_safety_margin_min_tokens,
+        "max_context_tokens": context.max_context_tokens,
+        "tool_result_aggregate_budget_chars": context.tool_result_aggregate_budget_chars,
+        "keep_recent_turns": context.keep_recent_turns,
+        "keep_recent_test_results": context.keep_recent_test_results,
+        "summarize_old_test_outputs": context.summarize_old_test_outputs,
+        "compact_strategy": context.compact_strategy,
+        "compact_threshold_ratio": context.compact_threshold_ratio,
+        "tool_result_compact_policy": context.tool_result_compact_policy,
+        "freeze_tool_result_budget_decisions": (
+            context.freeze_tool_result_budget_decisions
+        ),
+        "freeze_tool_result_decisions_at": context.freeze_tool_result_decisions_at,
+        "max_single_tool_result_chars": context.max_single_tool_result_chars,
+        "max_tool_results_per_turn_chars": context.max_tool_results_per_turn_chars,
+        "tool_result_recovery_tool": context.tool_result_recovery_tool,
+        "legacy_history_tool_result_replacement": (
+            context.legacy_history_tool_result_replacement
+        ),
+        "microcompact_enabled": context.microcompact_enabled,
+        "microcompact_policy": context.microcompact_policy,
+        "microcompact_trigger_compactable_tool_result_count": (
+            context.microcompact_trigger_compactable_tool_result_count
+        ),
+        "microcompact_trigger_compactable_tool_result_chars": (
+            context.microcompact_trigger_compactable_tool_result_chars
+        ),
+        "microcompact_keep_recent_compactable_tool_results": (
+            context.microcompact_keep_recent_compactable_tool_results
+        ),
+        "microcompact_cleared_message": context.microcompact_cleared_message,
+        "auto_compact_enabled": context.auto_compact_enabled,
+        "auto_compact_trigger_ratio": context.auto_compact_trigger_ratio,
+        "hard_context_limit_ratio": context.hard_context_limit_ratio,
+        "post_compact_target_ratio": context.post_compact_target_ratio,
+        "post_compact_target_max_tokens": context.post_compact_target_max_tokens,
+        "auto_compact_max_consecutive_failures": (
+            context.auto_compact_max_consecutive_failures
+        ),
+        "auto_compact_summary_max_output_tokens": (
+            context.auto_compact_summary_max_output_tokens
+        ),
+        "preserve_recent_turns_after_compact": (
+            context.preserve_recent_turns_after_compact
+        ),
+        "preserve_recent_tail_token_budget": (
+            context.preserve_recent_tail_token_budget
+        ),
+        "reactive_compact_enabled": context.reactive_compact_enabled,
+        "local_context_limit_policy": context.local_context_limit_policy,
+        "reactive_compact_policy": context.reactive_compact_policy,
+        "ptl_retry_policy": context.ptl_retry_policy,
+        "reactive_compact_retry_limit": context.reactive_compact_retry_limit,
+        "context_policy_version": context.context_policy_version,
+        "token_estimator": context.token_estimator,
+    }
+    return ContextPolicySnapshot.model_validate(snapshot).model_dump(mode="json")
 
 
 def write_run_config_facts(run_dir: str | Path, facts: RunConfigFacts) -> RunConfigFactsRef:

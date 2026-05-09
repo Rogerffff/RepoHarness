@@ -609,6 +609,31 @@ def test_preference_export_blocks_tool_schema_snapshot_mismatch(tmp_path: Path):
     assert skipped["blocked_reason_distribution"] == {"tool_schema_snapshot_mismatch": 1}
 
 
+def test_preference_export_blocks_context_policy_snapshot_mismatch(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(
+        runs_dir / "run_a",
+        {
+            "context_policy_snapshot_hash": "c" * 64,
+            "tool_result_compact_policy": "claude_code_fresh_only_v1",
+        },
+    )
+    _update_run_config(
+        runs_dir / "run_b",
+        {
+            "context_policy_snapshot_hash": "d" * 64,
+            "tool_result_compact_policy": "different_policy",
+        },
+    )
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"context_policy_mismatch": 1}
+
+
 def test_preference_export_blocks_scaffold_mismatch_unless_compare_scope_allows(tmp_path: Path):
     runs_dir = tmp_path / "runs"
     _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)

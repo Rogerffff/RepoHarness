@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import (
@@ -29,6 +29,12 @@ class ContentReplacementRecord(StrictBaseModel):
     schema_version: str = "repo_harness_content_replacement_record_v0"
     tool_call_id: str
     original_tool_result_id: str
+    replacement_decision: Literal[
+        "prepared_candidate",
+        "provider_committed_full_visible",
+        "provider_committed_persisted_preview",
+        "microcompact_cleared",
+    ] = "prepared_candidate"
     replaced: bool
     first_visible_form: Literal["full", "preview", "replacement"]
     first_visible_content_hash: str
@@ -47,6 +53,164 @@ class ContentReplacementState(StrictBaseModel):
     records: list[ContentReplacementRecord] = Field(default_factory=list)
     state_hash: str
     last_context_revision: int = Field(ge=0)
+
+
+class ToolResultCompactRecord(StrictBaseModel):
+    schema_version: str = "repo_harness_tool_result_compact_record_v1"
+    tool_call_id: str
+    tool_result_id: str
+    tool_name: str | None = None
+    replacement_decision: Literal[
+        "prepared_candidate",
+        "provider_committed_full_visible",
+        "provider_committed_persisted_preview",
+        "microcompact_cleared",
+    ]
+    candidate_prepared_messages_ref: ArtifactRef | None = None
+    provider_request_materialized_ref: ArtifactRef | None = None
+    provider_request_materialized_projection_hash: str | None = None
+    model_input_accepted_ref: ArtifactRef | None = None
+    original_content_hash: str
+    model_visible_content_hash: str
+    replacement_artifact_refs: list[ArtifactRef] = Field(default_factory=list)
+    first_seen_at_context_revision: int = Field(ge=0)
+
+
+class ToolResultArtifactRecord(StrictBaseModel):
+    schema_version: str = "repo_harness_tool_result_artifact_record_v1"
+    artifact_id: str
+    tool_result_id: str
+    tool_call_id: str
+    tool_name: str | None = None
+    content_sha256: str
+    size_chars: int = Field(ge=0)
+    artifact_ref: ArtifactRef
+    publishable_after_visibility_scan: bool = False
+    recovery_unlocked_after_provider_commit: bool = False
+    model_visible_recoverable: bool = False
+    contamination_scan_status: Literal["clean", "failed", "not_scanned"] = "not_scanned"
+    recovery_denial_reason: str | None = None
+
+    @model_validator(mode="after")
+    def derive_recoverable_flag(self) -> "ToolResultArtifactRecord":
+        if self.publishable_after_visibility_scan and self.contamination_scan_status != "clean":
+            raise ValueError(
+                "publishable_after_visibility_scan=true 时 contamination_scan_status 必须为 clean。"
+            )
+        if self.recovery_unlocked_after_provider_commit and not self.publishable_after_visibility_scan:
+            raise ValueError(
+                "recovery_unlocked_after_provider_commit=true 时必须已经通过可发布检查。"
+            )
+        recoverable = (
+            self.publishable_after_visibility_scan
+            and self.recovery_unlocked_after_provider_commit
+        )
+        object.__setattr__(self, "model_visible_recoverable", recoverable)
+        return self
+
+
+class MicroCompactRecord(StrictBaseModel):
+    schema_version: str = "repo_harness_microcompact_record_v1"
+    context_revision: int = Field(ge=0)
+    compactable_tool_result_count_before: int = Field(ge=0)
+    compactable_tool_result_chars_before: int = Field(ge=0)
+    cleared_tool_result_ids: list[str] = Field(default_factory=list)
+    kept_recent_tool_result_ids: list[str] = Field(default_factory=list)
+    cleared_message_hash: str
+
+
+class AutoCompactState(StrictBaseModel):
+    schema_version: str = "repo_harness_auto_compact_state_v1"
+    consecutive_failures: int = Field(default=0, ge=0)
+    last_trigger_reason: str | None = None
+    last_compact_record_ref: ArtifactRef | None = None
+    disabled_for_current_run: bool = False
+
+
+class AutoCompactRecord(StrictBaseModel):
+    schema_version: str = "repo_harness_auto_compact_record_v1"
+    trigger_reason: str
+    mode: Literal["proactive", "hard_preflight", "emergency"] = "proactive"
+    source_prepared_messages_ref: ArtifactRef
+    source_model_input_hash: str
+    tokens_before: int = Field(ge=0)
+    tokens_after: int = Field(ge=0)
+    effective_context_budget_tokens: int = Field(gt=0)
+    summary_artifact_ref: ArtifactRef | None = None
+    compact_model_call_ref: ArtifactRef | None = None
+    rebuilt_messages_ref: ArtifactRef | None = None
+    post_compact_above_target: bool = False
+    status: Literal["applied", "failed", "skipped"] = "applied"
+    failure_reason: str | None = None
+
+
+class CompactSummary(StrictBaseModel):
+    schema_version: str = "repo_harness_compact_summary_v1"
+    task_goal: str
+    current_status: str
+    files_touched: list[str] = Field(default_factory=list)
+    facts_to_preserve: list[str] = Field(default_factory=list)
+    failed_attempts: list[str] = Field(default_factory=list)
+    next_steps: list[str] = Field(default_factory=list)
+    tool_recovery_index: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ContextPolicySnapshot(StrictBaseModel):
+    schema_version: str = "repo_harness_context_policy_snapshot_v1"
+    context_budget_policy: str
+    model_context_window_tokens: int | Literal["auto"]
+    harness_context_cap_tokens: int | None = None
+    main_output_reserve_tokens: int
+    estimator_safety_margin_ratio: float
+    estimator_safety_margin_min_tokens: int
+    max_context_tokens: int
+    tool_result_aggregate_budget_chars: int
+    keep_recent_turns: int
+    keep_recent_test_results: int
+    summarize_old_test_outputs: bool
+    compact_strategy: str
+    compact_threshold_ratio: float
+    tool_result_compact_policy: str
+    freeze_tool_result_budget_decisions: bool
+    freeze_tool_result_decisions_at: str
+    max_single_tool_result_chars: int
+    max_tool_results_per_turn_chars: int
+    tool_result_recovery_tool: str
+    legacy_history_tool_result_replacement: bool
+    microcompact_enabled: bool
+    microcompact_policy: str
+    microcompact_trigger_compactable_tool_result_count: int
+    microcompact_trigger_compactable_tool_result_chars: int
+    microcompact_keep_recent_compactable_tool_results: int
+    microcompact_cleared_message: str
+    auto_compact_enabled: bool
+    auto_compact_trigger_ratio: float
+    hard_context_limit_ratio: float
+    post_compact_target_ratio: float
+    post_compact_target_max_tokens: int
+    auto_compact_max_consecutive_failures: int
+    auto_compact_summary_max_output_tokens: int
+    preserve_recent_turns_after_compact: int
+    preserve_recent_tail_token_budget: int
+    reactive_compact_enabled: bool
+    local_context_limit_policy: str
+    reactive_compact_policy: str
+    ptl_retry_policy: str
+    reactive_compact_retry_limit: int
+    context_policy_version: str
+    token_estimator: str
+
+
+class ModelInputSnapshot(StrictBaseModel):
+    schema_version: str = "repo_harness_model_input_snapshot_v1"
+    model_call_id: str
+    prepared_messages_ref: ArtifactRef
+    model_input_hash: str
+    provider_request_projection_hash: str
+    context_policy_snapshot_ref: ArtifactRef | None = None
+    provider_request_artifact_ref: ArtifactRef | None = None
+    context_compact_state_ref: ArtifactRef | None = None
+    trainable: bool = True
 
 
 class ContextReductionRecord(StrictBaseModel):

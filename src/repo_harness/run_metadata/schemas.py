@@ -374,6 +374,14 @@ class RunConfigFacts(StrictBaseModel):
     compact_threshold_ratio_runtime_effect: str = (
         "connected_to_tool_result_replacement_budget_v1"
     )
+    context_policy_snapshot_version: str = "repo_harness_context_policy_snapshot_v1"
+    context_policy_snapshot_hash: str | None = Field(default=None, pattern=SHA256_PATTERN)
+    context_policy_snapshot: dict[str, Any] = Field(default_factory=dict)
+    context_budget_policy: str = "model_window_with_optional_cap"
+    tool_result_compact_policy: str = "claude_code_fresh_only_v1"
+    microcompact_policy: str = "count_based_tool_result_clear_v1"
+    auto_compact_enabled: bool = True
+    reactive_compact_policy: str = "provider_verified_reactive"
     harness_control_message_export_policy: str = (
         "exclude_harness_generated_untrainable_control_messages_v1"
     )

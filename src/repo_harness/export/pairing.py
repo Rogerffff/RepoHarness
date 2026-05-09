@@ -13,7 +13,15 @@ from repo_harness.schema_base import stable_hash
 from repo_harness.trajectory import read_jsonl
 from repo_harness.trajectory import verify_artifact_manifest
 
-OPTIONAL_COMPARE_FIELDS = {"source_archive_sha256"}
+OPTIONAL_COMPARE_FIELDS = {
+    "source_archive_sha256",
+    "context_policy_snapshot_hash",
+    "context_budget_policy",
+    "tool_result_compact_policy",
+    "microcompact_policy",
+    "auto_compact_enabled",
+    "reactive_compact_policy",
+}
 
 
 @dataclass(frozen=True)
@@ -120,6 +128,12 @@ def _candidate_from_run(run_path: Path, *, export_policy: ExportPolicy) -> PairC
             "tool_parser_version": facts.get("tool_parser_version"),
             "tool_result_format_version": facts.get("tool_result_format_version"),
             "context_policy_version": facts.get("context_policy_version"),
+            "context_policy_snapshot_hash": facts.get("context_policy_snapshot_hash"),
+            "context_budget_policy": facts.get("context_budget_policy"),
+            "tool_result_compact_policy": facts.get("tool_result_compact_policy"),
+            "microcompact_policy": facts.get("microcompact_policy"),
+            "auto_compact_enabled": facts.get("auto_compact_enabled"),
+            "reactive_compact_policy": facts.get("reactive_compact_policy"),
             "prompt_template_version": facts.get("prompt_template_version"),
             "model_provider": facts.get("model_provider"),
             "model_id": facts.get("model_id"),
@@ -186,6 +200,12 @@ def _compare_facts(
         "tool_parser_version": tool_protocol.get("tool_parser_version"),
         "tool_result_format_version": tool_protocol.get("tool_result_format_version"),
         "context_policy_version": config.get("context_policy_version"),
+        "context_policy_snapshot_hash": config.get("context_policy_snapshot_hash"),
+        "context_budget_policy": config.get("context_budget_policy"),
+        "tool_result_compact_policy": config.get("tool_result_compact_policy"),
+        "microcompact_policy": config.get("microcompact_policy"),
+        "auto_compact_enabled": config.get("auto_compact_enabled"),
+        "reactive_compact_policy": config.get("reactive_compact_policy"),
         "prompt_template_version": config.get("prompt_template_version"),
         "export_policy_version": export_policy.export_policy_version,
         "scaffold_id": config.get("scaffold_id"),
@@ -307,7 +327,16 @@ def _field_blocked_reason(field_name: str) -> str:
         "tool_result_format_version",
     }:
         return "tool_schema_snapshot_mismatch"
-    if field_name in {"context_policy_version", "prompt_template_version"}:
+    if field_name in {
+        "context_policy_version",
+        "context_policy_snapshot_hash",
+        "context_budget_policy",
+        "tool_result_compact_policy",
+        "microcompact_policy",
+        "auto_compact_enabled",
+        "reactive_compact_policy",
+        "prompt_template_version",
+    }:
         return "context_policy_mismatch"
     if field_name in {"turn_budget", "tool_budget", "test_budget", "task_timeout", "max_output_tokens"}:
         return "budget_mismatch"

@@ -82,7 +82,16 @@ class WorkspaceConfig(StrictBaseModel):
 
 
 class ContextManagementConfig(StrictBaseModel):
-    schema_version: str = "repo_harness_context_management_config_v0"
+    schema_version: str = "repo_harness_context_management_config_v1"
+    context_policy_snapshot_version: str = "repo_harness_context_policy_snapshot_v1"
+
+    context_budget_policy: str = "model_window_with_optional_cap"
+    model_context_window_tokens: int | Literal["auto"] = "auto"
+    harness_context_cap_tokens: int | None = Field(default=None, gt=0)
+    main_output_reserve_tokens: int = Field(default=32000, ge=0)
+    estimator_safety_margin_ratio: float = Field(default=0.03, ge=0.0, lt=1.0)
+    estimator_safety_margin_min_tokens: int = Field(default=20000, ge=0)
+
     max_context_tokens: int = Field(default=120000, gt=0)
     tool_result_aggregate_budget_chars: int = Field(default=40000, gt=0)
     keep_recent_turns: int = Field(default=6, ge=0)
@@ -90,6 +99,38 @@ class ContextManagementConfig(StrictBaseModel):
     summarize_old_test_outputs: bool = True
     compact_strategy: str = "deterministic_preview_replacement"
     compact_threshold_ratio: float = Field(default=0.85, gt=0.0, le=1.0)
+
+    tool_result_compact_policy: str = "claude_code_fresh_only_v1"
+    freeze_tool_result_budget_decisions: bool = True
+    freeze_tool_result_decisions_at: str = "provider_committed"
+    max_single_tool_result_chars: int = Field(default=50000, gt=0)
+    max_tool_results_per_turn_chars: int = Field(default=200000, gt=0)
+    tool_result_recovery_tool: str = "read_tool_result_artifact"
+    legacy_history_tool_result_replacement: bool = False
+
+    microcompact_enabled: bool = True
+    microcompact_policy: str = "count_based_tool_result_clear_v1"
+    microcompact_trigger_compactable_tool_result_count: int = Field(default=30, ge=0)
+    microcompact_trigger_compactable_tool_result_chars: int = Field(default=60000, ge=0)
+    microcompact_keep_recent_compactable_tool_results: int = Field(default=15, ge=0)
+    microcompact_cleared_message: str = "[Old tool result content cleared]"
+
+    auto_compact_enabled: bool = True
+    auto_compact_trigger_ratio: float = Field(default=0.85, gt=0.0, le=1.0)
+    hard_context_limit_ratio: float = Field(default=0.97, gt=0.0, le=1.0)
+    post_compact_target_ratio: float = Field(default=0.60, gt=0.0, le=1.0)
+    post_compact_target_max_tokens: int = Field(default=300000, gt=0)
+    auto_compact_max_consecutive_failures: int = Field(default=3, ge=0)
+    auto_compact_summary_max_output_tokens: int = Field(default=16000, gt=0)
+    preserve_recent_turns_after_compact: int = Field(default=6, ge=0)
+    preserve_recent_tail_token_budget: int = Field(default=80000, ge=0)
+
+    reactive_compact_enabled: bool = True
+    local_context_limit_policy: str = "strict_local_preflight"
+    reactive_compact_policy: str = "provider_verified_reactive"
+    ptl_retry_policy: str = "auto_compact_then_round_truncate"
+    reactive_compact_retry_limit: int = Field(default=1, ge=0)
+
     context_policy_version: str = CONTEXT_POLICY_VERSION
     token_estimator: str = TOKEN_ESTIMATOR_VERSION
 

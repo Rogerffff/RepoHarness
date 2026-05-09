@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from repo_harness.config import RunConfig
+from repo_harness.context.schemas import ContextPolicySnapshot
 from repo_harness.evaluation import BaselineResult
 from repo_harness.run_metadata.fingerprint import (
     build_local_environment_fingerprint,
@@ -135,6 +136,22 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
     assert facts_payload["compact_threshold_ratio_runtime_effect"] == (
         "connected_to_tool_result_replacement_budget_v1"
     )
+    assert facts_payload["context_policy_snapshot_version"] == (
+        "repo_harness_context_policy_snapshot_v1"
+    )
+    assert facts_payload["context_policy_snapshot_hash"]
+    assert facts_payload["context_policy_snapshot"]["tool_result_compact_policy"] == (
+        "claude_code_fresh_only_v1"
+    )
+    assert facts_payload["context_policy_snapshot"]["max_single_tool_result_chars"] == 50000
+    assert facts_payload["context_policy_snapshot"]["max_tool_results_per_turn_chars"] == 200000
+    assert facts_payload["context_policy_snapshot"]["microcompact_policy"] == (
+        "count_based_tool_result_clear_v1"
+    )
+    assert facts_payload["context_policy_snapshot"]["reactive_compact_policy"] == (
+        "provider_verified_reactive"
+    )
+    assert ContextPolicySnapshot.model_validate(facts_payload["context_policy_snapshot"])
     assert facts_payload["harness_control_message_export_policy"] == (
         "exclude_harness_generated_untrainable_control_messages_v1"
     )
