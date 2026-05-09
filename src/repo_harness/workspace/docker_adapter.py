@@ -121,6 +121,9 @@ class DockerCommandOutput:
     container_name: str
     cleanup_status: str
     facts_ref: str
+    output_artifact_ref: ArtifactRef | None = None
+    stdout_ref: ArtifactRef | None = None
+    stderr_ref: ArtifactRef | None = None
 
 
 class DockerWorkspaceAdapter:
@@ -556,17 +559,16 @@ class DockerWorkspaceAdapter:
             timeout_sec=timeout_sec,
             command_semantics=command_semantics,
             recorder=recorder,
-        )
-        artifact_ref = recorder.write_artifact(
-            "command_output",
-            f"$ {command_display}\n\n[stdout]\n{output.stdout}\n\n[stderr]\n{output.stderr}",
-            {"retention_policy": "keep", **(artifact_metadata or {})},
+            command_display=command_display,
+            artifact_metadata=artifact_metadata,
         )
         return ExecutionResult(
             exit_code=output.exit_code,
             stdout_preview=_preview(output.stdout),
             stderr_preview=_preview(output.stderr),
-            output_artifact_ref=artifact_ref,
+            output_artifact_ref=output.output_artifact_ref,
+            stdout_ref=output.stdout_ref,
+            stderr_ref=output.stderr_ref,
             duration_ms=output.duration_ms,
             timeout=output.timeout,
             command_semantics=command_semantics,
@@ -695,6 +697,8 @@ class DockerWorkspaceAdapter:
         timeout_sec: float | None,
         command_semantics: str,
         recorder: RunRecorder | None,
+        command_display: str | None = None,
+        artifact_metadata: dict[str, Any] | None = None,
     ) -> DockerCommandOutput:
         self._command_counter += 1
         command_id = f"{self.run_id}_container_{self._command_counter:06d}"
@@ -758,6 +762,19 @@ class DockerWorkspaceAdapter:
             )
             cleanup_status = "completed" if cleanup.returncode == 0 else "failed"
         duration_ms = int((time.monotonic() - started) * 1000)
+        output_metadata = {"retention_policy": "keep", **(artifact_metadata or {})}
+        stdout_ref: ArtifactRef | None = None
+        stderr_ref: ArtifactRef | None = None
+        output_artifact_ref: ArtifactRef | None = None
+        if recorder is not None:
+            stdout_ref = recorder.write_artifact("command_stdout", stdout, output_metadata)
+            stderr_ref = recorder.write_artifact("command_stderr", stderr, output_metadata)
+            display = command_display or " ".join(shlex.quote(part) for part in command)
+            output_artifact_ref = recorder.write_artifact(
+                "command_output",
+                f"$ {display}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
+                output_metadata,
+            )
         facts = ContainerExecutionFacts(
             command_id=command_id,
             container_id=container_name,
@@ -773,6 +790,12 @@ class DockerWorkspaceAdapter:
             network_policy=self.network_policy,
             mount_policy=self.mount_policy,
             cleanup_status=cleanup_status,
+            output_artifact_ref=output_artifact_ref,
+            stdout_ref=stdout_ref,
+            stderr_ref=stderr_ref,
+            stdout_preview=_preview(stdout),
+            stderr_preview=_preview(stderr),
+            captured_output_empty=not bool(stdout or stderr),
         )
         facts_path = self.facts_dir / f"{command_id}.json"
         self._write_json(facts_path, facts.model_dump(mode="json"))
@@ -792,6 +815,12 @@ class DockerWorkspaceAdapter:
                         "execution_backend": "docker",
                         "exit_code": exit_code,
                         "timeout": timed_out,
+                        "output_artifact_ref": output_artifact_ref.model_dump(mode="json")
+                        if output_artifact_ref
+                        else None,
+                        "stdout_ref": stdout_ref.model_dump(mode="json") if stdout_ref else None,
+                        "stderr_ref": stderr_ref.model_dump(mode="json") if stderr_ref else None,
+                        "captured_output_empty": not bool(stdout or stderr),
                     },
                 }
             )
@@ -804,6 +833,9 @@ class DockerWorkspaceAdapter:
             container_name=container_name,
             cleanup_status=cleanup_status,
             facts_ref=facts_path.relative_to(self.run_dir).as_posix(),
+            output_artifact_ref=output_artifact_ref,
+            stdout_ref=stdout_ref,
+            stderr_ref=stderr_ref,
         )
 
     def _workspace_mount_args(self, host_workspace: Path) -> list[str]:

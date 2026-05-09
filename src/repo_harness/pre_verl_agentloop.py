@@ -891,6 +891,14 @@ def _selector_result_payload(
     selector_match_summary = _selector_match_summary(test_cases)
     failed_count = sum(1 for case in test_cases if "failed" in (case.get("failure_kinds") or []))
     error_count = sum(1 for case in test_cases if "error" in (case.get("failure_kinds") or []))
+    parse_warnings = list(parsed.parse_warnings)
+    verifier_output_unparsed = _verifier_output_unparsed(
+        exit_code=exit_code,
+        timeout=timeout,
+        parsed=parsed,
+    )
+    if verifier_output_unparsed and "nonzero_exit_without_parsed_test_facts" not in parse_warnings:
+        parse_warnings.append("nonzero_exit_without_parsed_test_facts")
     verifier_result_inconsistent = bool(
         (exit_code == 0 and (failed_count or error_count))
         or (
@@ -931,7 +939,10 @@ def _selector_result_payload(
         "unmatched_failed_nodeids": sorted(set(parsed.failed_nodeids) - matched_failed_nodeids),
         "unmatched_error_nodeids": sorted(set(parsed.error_nodeids) - matched_error_nodeids),
         "suite_completed": parsed.suite_completed,
-        "parse_warnings": parsed.parse_warnings,
+        "parse_warnings": parse_warnings,
+        "pytest_output_parse_warnings": parse_warnings,
+        "pytest_exit_reason": parsed.pytest_exit_reason,
+        "verifier_output_unparsed": verifier_output_unparsed,
         "error_type": parser.error_type(stdout, stderr, exit_code, timeout),
         "test_cases": test_cases,
         "selector_match_summary": selector_match_summary,
@@ -943,15 +954,40 @@ def _selector_result_payload(
         "unknown_count": sum(1 for case in test_cases if case["status"] == "unknown"),
         "total_count": len(test_cases),
         "output_artifact_ref": (
-            result.output_artifact_ref.model_dump(mode="json")
-            if result is not None and result.output_artifact_ref is not None
-            else None
+            _artifact_ref_payload(result.output_artifact_ref) if result is not None else None
         ),
+        "stdout_ref": (
+            _artifact_ref_payload(result.stdout_ref) if result is not None else None
+        ),
+        "stderr_ref": (
+            _artifact_ref_payload(result.stderr_ref) if result is not None else None
+        ),
+        "stdout_preview": result.stdout_preview if result is not None else "",
+        "stderr_preview": result.stderr_preview if result is not None else "",
+        "captured_output_empty": not bool(stdout or stderr),
         "container_execution_facts_ref": (
             result.container_execution_facts_ref if result is not None else None
         ),
         "execution_backend": str(result.execution_backend) if result is not None else "not_executed",
     }
+
+
+def _verifier_output_unparsed(
+    *,
+    exit_code: int | None,
+    timeout: bool,
+    parsed: Any,
+) -> bool:
+    parsed_fact_count = (
+        sum(int(value or 0) for value in parsed.summary_counts.values())
+        + len(parsed.passed_nodeids)
+        + len(parsed.failed_nodeids)
+        + len(parsed.error_nodeids)
+        + len(parsed.skipped_nodeids)
+        + len(parsed.xfailed_nodeids)
+        + len(parsed.xpassed_nodeids)
+    )
+    return bool(exit_code not in (0, None) and not timeout and parsed_fact_count == 0)
 
 
 def _selector_match_summary(test_cases: list[dict[str, Any]]) -> dict[str, Any]:
@@ -989,11 +1025,10 @@ def _execution_result_payload(result: ExecutionResult) -> dict[str, Any]:
         "timeout": result.timeout,
         "stdout_preview": result.stdout_preview,
         "stderr_preview": result.stderr_preview,
-        "output_artifact_ref": (
-            result.output_artifact_ref.model_dump(mode="json")
-            if result.output_artifact_ref is not None
-            else None
-        ),
+        "output_artifact_ref": _artifact_ref_payload(result.output_artifact_ref),
+        "stdout_ref": _artifact_ref_payload(result.stdout_ref),
+        "stderr_ref": _artifact_ref_payload(result.stderr_ref),
+        "captured_output_empty": not bool(result.stdout_preview or result.stderr_preview),
         "container_execution_facts_ref": result.container_execution_facts_ref,
         "execution_backend": str(result.execution_backend),
         "command_semantics": result.command_semantics,
@@ -1013,6 +1048,21 @@ def _append_boundary_step_event(
     command_semantics: str,
     result: ExecutionResult,
 ) -> None:
+    artifact_refs = [
+        ref
+        for ref in (result.output_artifact_ref, result.stdout_ref, result.stderr_ref)
+        if ref is not None
+    ]
+    pytest_exit_reason = (
+        PytestTextParser().pytest_exit_reason(
+            result.stdout_preview,
+            result.stderr_preview,
+            result.exit_code,
+            result.timeout,
+        )
+        if command_semantics in {_F2P_STEP, _P2P_STEP}
+        else None
+    )
     recorder.append_event(
         TrajectoryEvent(
             event_id=recorder.next_event_id("pre_verl_final_verifier"),
@@ -1020,18 +1070,32 @@ def _append_boundary_step_event(
             run_id=recorder.run_id,
             task_id=plan.task_id,
             event_type="pre_verl_final_verifier_step",
-            artifact_refs=[result.output_artifact_ref] if result.output_artifact_ref else [],
+            artifact_refs=artifact_refs,
             data={
                 "verifier_adapter_id": PRE_VERL_FINAL_VERIFIER_ADAPTER_ID,
                 "command_semantics": command_semantics,
                 "exit_code": result.exit_code,
                 "timeout": result.timeout,
+                "pytest_exit_reason": pytest_exit_reason,
+                "output_artifact_ref": _artifact_ref_payload(result.output_artifact_ref),
+                "stdout_ref": _artifact_ref_payload(result.stdout_ref),
+                "stderr_ref": _artifact_ref_payload(result.stderr_ref),
+                "stdout_preview": result.stdout_preview,
+                "stderr_preview": result.stderr_preview,
+                "captured_output_empty": not bool(result.stdout_preview or result.stderr_preview),
             },
         )
     )
 
 
 def _read_execution_output(*, run_root: Path, result: ExecutionResult) -> tuple[str, str]:
+    stdout = _read_artifact_text(run_root, result.stdout_ref)
+    stderr = _read_artifact_text(run_root, result.stderr_ref)
+    if stdout is not None or stderr is not None:
+        return (
+            stdout if stdout is not None else result.stdout_preview,
+            stderr if stderr is not None else result.stderr_preview,
+        )
     if result.output_artifact_ref is None:
         return result.stdout_preview, result.stderr_preview
     output_path = run_root / result.output_artifact_ref.relative_path
@@ -1045,6 +1109,19 @@ def _read_execution_output(*, run_root: Path, result: ExecutionResult) -> tuple[
     stdout_part = text.split(stdout_marker, 1)[1]
     stdout, stderr = stdout_part.split(stderr_marker, 1)
     return stdout, stderr
+
+
+def _artifact_ref_payload(ref: ArtifactRef | None) -> dict[str, Any] | None:
+    return ref.model_dump(mode="json") if ref is not None else None
+
+
+def _read_artifact_text(run_root: Path, ref: ArtifactRef | None) -> str | None:
+    if ref is None:
+        return None
+    path = run_root / ref.relative_path
+    if not path.exists():
+        return None
+    return path.read_text(encoding="utf-8")
 
 
 def _pre_verl_boundary_payload(

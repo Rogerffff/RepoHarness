@@ -70,6 +70,12 @@ def test_v3_docker_and_container_facts_round_trip():
         network_policy="deny_agent_run",
         mount_policy="workspace_read_write_tmp_only",
         cleanup_status="completed",
+        output_artifact_ref=artifact_ref("combined_output", "command_output"),
+        stdout_ref=artifact_ref("stdout", "command_stdout"),
+        stderr_ref=artifact_ref("stderr", "command_stderr"),
+        stdout_preview="ok",
+        stderr_preview="",
+        captured_output_empty=False,
     )
 
     assert DockerBackendFacts.model_validate(backend.model_dump(mode="json")) == backend

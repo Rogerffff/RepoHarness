@@ -22,6 +22,8 @@ class ExecutionResult(StrictBaseModel):
     stdout_preview: str = ""
     stderr_preview: str = ""
     output_artifact_ref: ArtifactRef | None = None
+    stdout_ref: ArtifactRef | None = None
+    stderr_ref: ArtifactRef | None = None
     duration_ms: int = Field(default=0, ge=0)
     timeout: bool = False
     command_semantics: str = "generic"
@@ -83,8 +85,12 @@ class ContainerExecutionFacts(StrictBaseModel):
     network_policy: str
     mount_policy: str
     cleanup_status: Literal["not_started", "completed", "failed", "skipped"]
+    output_artifact_ref: ArtifactRef | None = None
     stdout_ref: ArtifactRef | None = None
     stderr_ref: ArtifactRef | None = None
+    stdout_preview: str = ""
+    stderr_preview: str = ""
+    captured_output_empty: bool = False
 
 
 class RunWorkspace(StrictBaseModel):

@@ -412,16 +412,29 @@ class LocalWorkspaceAdapter:
                 os.killpg(process.pid, signal.SIGKILL)
                 stdout, stderr = process.communicate()
         duration_ms = int((time.monotonic() - started) * 1000)
+        output_metadata = {"retention_policy": "keep", **(artifact_metadata or {})}
+        stdout_ref = recorder.write_artifact(
+            "command_stdout",
+            stdout,
+            output_metadata,
+        )
+        stderr_ref = recorder.write_artifact(
+            "command_stderr",
+            stderr,
+            output_metadata,
+        )
         artifact_ref = recorder.write_artifact(
             "command_output",
             f"$ {command_display}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
-            {"retention_policy": "keep", **(artifact_metadata or {})},
+            output_metadata,
         )
         return ExecutionResult(
             exit_code=process.returncode,
             stdout_preview=_preview(stdout),
             stderr_preview=_preview(stderr),
             output_artifact_ref=artifact_ref,
+            stdout_ref=stdout_ref,
+            stderr_ref=stderr_ref,
             duration_ms=duration_ms,
             timeout=timed_out,
             command_semantics=command_semantics,

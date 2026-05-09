@@ -20,6 +20,7 @@ class PytestParseResult:
     xpassed_nodeids: set[str] = field(default_factory=set)
     suite_completed: bool = False
     parse_warnings: list[str] = field(default_factory=list)
+    pytest_exit_reason: str = "pytest_exit_reason_unknown"
 
 
 class PytestTextParser:
@@ -42,6 +43,16 @@ class PytestTextParser:
         if "error" in combined and "failed" not in combined:
             return "test_command_error"
         return "assertion_failure"
+
+    def pytest_exit_reason(
+        self,
+        stdout: str,
+        stderr: str,
+        exit_code: int | None,
+        timeout: bool,
+    ) -> str:
+        parsed = self.parse_output(stdout, stderr, exit_code, timeout=timeout)
+        return parsed.pytest_exit_reason
 
     def parse_output(
         self,
@@ -103,6 +114,15 @@ class PytestTextParser:
         parsed_failure_count = len(failed_nodeids) + len(error_nodeids)
         if summary_failure_count > parsed_failure_count:
             parse_warnings.append("summary_failures_without_complete_nodeids")
+        pytest_exit_reason = _pytest_exit_reason(
+            stdout=stdout,
+            stderr=stderr,
+            exit_code=exit_code,
+            timeout=timeout,
+            summary_counts=summary_counts,
+            failed_nodeids=failed_nodeids,
+            error_nodeids=error_nodeids,
+        )
         suite_completed = (
             not timeout
             and exit_code in {0, 1}
@@ -139,6 +159,7 @@ class PytestTextParser:
             xpassed_nodeids=xpassed_nodeids,
             suite_completed=suite_completed,
             parse_warnings=parse_warnings,
+            pytest_exit_reason=pytest_exit_reason,
         )
 
     def selector_statuses(
@@ -254,6 +275,86 @@ def _parse_summary_counts(text: str) -> dict[str, int]:
             normalized = "warnings"
         counts[normalized] = counts.get(normalized, 0) + int(count)
     return counts
+
+
+def _pytest_exit_reason(
+    *,
+    stdout: str,
+    stderr: str,
+    exit_code: int | None,
+    timeout: bool,
+    summary_counts: dict[str, int],
+    failed_nodeids: set[str],
+    error_nodeids: set[str],
+) -> str:
+    combined = f"{stdout}\n{stderr}".lower()
+    if timeout:
+        return "pytest_timeout"
+    if exit_code == 0:
+        return "pytest_passed"
+    if _looks_like_import_or_config_error(combined):
+        return "pytest_config_or_import_error"
+    if _looks_like_collection_error(combined):
+        return "pytest_collection_error"
+    if _looks_like_usage_error(combined):
+        return "pytest_usage_error"
+    if exit_code == 5 or "no tests ran" in combined or "no tests collected" in combined:
+        return "pytest_no_tests_collected"
+    if exit_code == 2:
+        return "pytest_interrupted"
+    if exit_code == 3:
+        return "pytest_internal_error"
+    if exit_code == 4:
+        return "pytest_usage_or_collection_error"
+    if exit_code == 1:
+        failure_count = int(summary_counts.get("failed", 0) or 0) + int(
+            summary_counts.get("errors", 0) or 0
+        )
+        if failure_count or failed_nodeids or error_nodeids:
+            return "pytest_test_failures"
+        return "pytest_nonzero_without_test_facts"
+    if exit_code is None:
+        return "pytest_exit_code_unavailable"
+    return "pytest_unknown_nonzero_exit"
+
+
+def _looks_like_import_or_config_error(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in (
+            "importerror",
+            "modulenotfounderror",
+            "cannot open shared object file",
+            "dlopen",
+            "shared library",
+        )
+    )
+
+
+def _looks_like_collection_error(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in (
+            "error collecting",
+            "errors during collection",
+            "collection error",
+            "collected 0 items /",
+        )
+    )
+
+
+def _looks_like_usage_error(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in (
+            "usage:",
+            "unrecognized arguments",
+            "file or directory not found",
+            "not found:",
+            "invalid choice",
+            "no match in any of",
+        )
+    )
 
 
 def _parse_nodeids(text: str, prefix: str) -> set[str]:

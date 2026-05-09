@@ -11,6 +11,7 @@ import yaml
 from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
     _empty_patch_failure_attribution,
+    _append_boundary_step_event,
     _selector_input_error,
     _selector_result_payload,
     inspect_model_visible_context,
@@ -22,6 +23,7 @@ from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds import build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import RunnableTask, TaskDefinition
 from repo_harness.config import load_run_config
+from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.workspace.schemas import ExecutionResult
 
 
@@ -282,6 +284,92 @@ ERROR tests/test_widget.py::test_import_error - ImportError: libGL.so.1
     assert payload["matched_error_nodeids"] == ["tests/test_widget.py::test_import_error"]
     assert payload["unmatched_error_nodeids"] == []
     assert payload["test_cases"][0]["status"] == "error"
+
+
+def test_pre_verl_selector_payload_exposes_exit_reason_and_output_refs() -> None:
+    plan = SimpleNamespace(task_id="task_001", final_verifier_timeout_sec=120)
+    output_ref = ArtifactRef(
+        artifact_id="out",
+        relative_path="artifacts/out.txt",
+        kind="command_output",
+        sha256="a" * 64,
+        size_bytes=1,
+    )
+    stdout_ref = ArtifactRef(
+        artifact_id="stdout",
+        relative_path="artifacts/stdout.txt",
+        kind="command_stdout",
+        sha256="b" * 64,
+        size_bytes=0,
+    )
+    stderr_ref = ArtifactRef(
+        artifact_id="stderr",
+        relative_path="artifacts/stderr.txt",
+        kind="command_stderr",
+        sha256="c" * 64,
+        size_bytes=21,
+    )
+
+    payload = _selector_result_payload(
+        plan=plan,
+        suite="fail_to_pass",
+        selectors=["tests/test_widget.py::test_import_error"],
+        command=["python", "-m", "pytest", "-q"],
+        result=ExecutionResult(
+            exit_code=4,
+            timeout=False,
+            stderr_preview="ImportError: libGL.so.1",
+            output_artifact_ref=output_ref,
+            stdout_ref=stdout_ref,
+            stderr_ref=stderr_ref,
+        ),
+        stdout="",
+        stderr="ImportError: libGL.so.1",
+    )
+
+    assert payload["pytest_exit_reason"] == "pytest_config_or_import_error"
+    assert payload["verifier_output_unparsed"] is True
+    assert "nonzero_exit_without_parsed_test_facts" in payload["parse_warnings"]
+    assert payload["stdout_ref"]["artifact_id"] == "stdout"
+    assert payload["stderr_ref"]["artifact_id"] == "stderr"
+    assert payload["output_artifact_ref"]["artifact_id"] == "out"
+    assert payload["stderr_preview"] == "ImportError: libGL.so.1"
+
+
+def test_pre_verl_boundary_step_event_records_output_audit_fields(tmp_path: Path) -> None:
+    stdout_ref = ArtifactRef(
+        artifact_id="stdout",
+        relative_path="artifacts/stdout.txt",
+        kind="command_stdout",
+        sha256="a" * 64,
+        size_bytes=0,
+    )
+    stderr_ref = ArtifactRef(
+        artifact_id="stderr",
+        relative_path="artifacts/stderr.txt",
+        kind="command_stderr",
+        sha256="b" * 64,
+        size_bytes=21,
+    )
+    with RunRecorder("run_event", tmp_path, task_id="task_001") as recorder:
+        _append_boundary_step_event(
+            recorder=recorder,
+            plan=SimpleNamespace(task_id="task_001"),
+            command_semantics="pre_verl_fail_to_pass_test_execution",
+            result=ExecutionResult(
+                exit_code=4,
+                timeout=False,
+                stderr_preview="ImportError: libGL.so.1",
+                stdout_ref=stdout_ref,
+                stderr_ref=stderr_ref,
+            ),
+        )
+
+    event = json.loads((tmp_path / "events.jsonl").read_text(encoding="utf-8").strip())
+    assert event["data"]["pytest_exit_reason"] == "pytest_config_or_import_error"
+    assert event["data"]["stdout_ref"]["artifact_id"] == "stdout"
+    assert event["data"]["stderr_ref"]["artifact_id"] == "stderr"
+    assert event["data"]["captured_output_empty"] is False
 
 
 @pytest.mark.parametrize(

@@ -22,6 +22,34 @@ def test_pytest_parser_marks_command_errors_and_timeouts():
     assert parser.parser_confidence("no tests ran", "", 5) < 0.5
 
 
+def test_pytest_parser_classifies_exit_reasons():
+    parser = PytestTextParser()
+
+    assert parser.pytest_exit_reason("1 passed", "", 0, False) == "pytest_passed"
+    assert parser.pytest_exit_reason("1 failed", "", 1, False) == "pytest_test_failures"
+    assert parser.pytest_exit_reason("", "", None, True) == "pytest_timeout"
+    assert parser.pytest_exit_reason("no tests ran", "", 5, False) == "pytest_no_tests_collected"
+    assert (
+        parser.pytest_exit_reason("", "ImportError: libGL.so.1: cannot open shared object file", 4, False)
+        == "pytest_config_or_import_error"
+    )
+    assert parser.pytest_exit_reason("", "ERROR collecting tests/test_api.py", 4, False) == "pytest_collection_error"
+    assert parser.pytest_exit_reason("", "usage: pytest [options]", 4, False) == "pytest_usage_error"
+    assert (
+        parser.pytest_exit_reason("no tests ran", "ERROR: file or directory not found: missing.py", 4, False)
+        == "pytest_usage_error"
+    )
+    assert (
+        parser.pytest_exit_reason(
+            "",
+            "ImportError while importing test module 'tests/test_api.py'.\nModuleNotFoundError: missing",
+            2,
+            False,
+        )
+        == "pytest_config_or_import_error"
+    )
+
+
 def test_pytest_parser_maps_selectors_from_failed_nodeids_without_suite_level_fanout():
     parser = PytestTextParser()
     stdout = """

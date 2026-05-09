@@ -40,6 +40,8 @@ class WorkspaceCommandResult(StrictBaseModel):
     stdout_preview: str = ""
     stderr_preview: str = ""
     output_artifact_ref: ArtifactRef | None = None
+    stdout_ref: ArtifactRef | None = None
+    stderr_ref: ArtifactRef | None = None
     duration_ms: int = Field(default=0, ge=0)
     timeout: bool = False
     execution_backend: WorkspaceBackend = WorkspaceBackend.local_process
