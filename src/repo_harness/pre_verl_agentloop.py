@@ -871,8 +871,38 @@ def _selector_result_payload(
     parser = PytestTextParser()
     exit_code = result.exit_code if result is not None else 0
     timeout = bool(result.timeout) if result is not None else False
-    status = "passed" if exit_code == 0 and not timeout else ("timeout" if timeout else "failed")
-    test_cases = [{"test_id": selector, "status": status} for selector in selectors]
+    test_cases, parsed = parser.selector_statuses(
+        selectors=selectors,
+        stdout=stdout,
+        stderr=stderr,
+        exit_code=exit_code,
+        timeout=timeout,
+    )
+    matched_failed_nodeids = {
+        str(case["matched_failed_nodeid"])
+        for case in test_cases
+        if case.get("matched_failed_nodeid")
+    }
+    matched_error_nodeids = {
+        str(case["matched_error_nodeid"])
+        for case in test_cases
+        if case.get("matched_error_nodeid")
+    }
+    selector_match_summary = _selector_match_summary(test_cases)
+    failed_count = sum(1 for case in test_cases if "failed" in (case.get("failure_kinds") or []))
+    error_count = sum(1 for case in test_cases if "error" in (case.get("failure_kinds") or []))
+    verifier_result_inconsistent = bool(
+        (exit_code == 0 and (failed_count or error_count))
+        or (
+            exit_code not in (0, None)
+            and not timeout
+            and not failed_count
+            and not error_count
+            and int(parsed.summary_counts.get("failed", 0) or 0)
+            + int(parsed.summary_counts.get("errors", 0) or 0)
+            > 0
+        )
+    )
     return {
         "schema_version": "repo_harness_pre_verl_selector_result_v0",
         "task_id": plan.task_id,
@@ -887,11 +917,30 @@ def _selector_result_payload(
         "exit_code": exit_code,
         "timeout": timeout,
         "parser_id": parser.parser_id,
-        "parser_version": parser.parser_version,
-        "parser_confidence": parser.parser_confidence(stdout, stderr, exit_code),
+        "parser_version": parsed.parser_version,
+        "parser_confidence": parsed.parser_confidence,
+        "summary_counts": parsed.summary_counts,
+        "passed_nodeids": sorted(parsed.passed_nodeids),
+        "failed_nodeids": sorted(parsed.failed_nodeids),
+        "error_nodeids": sorted(parsed.error_nodeids),
+        "skipped_nodeids": sorted(parsed.skipped_nodeids),
+        "xfailed_nodeids": sorted(parsed.xfailed_nodeids),
+        "xpassed_nodeids": sorted(parsed.xpassed_nodeids),
+        "matched_failed_nodeids": sorted(matched_failed_nodeids),
+        "matched_error_nodeids": sorted(matched_error_nodeids),
+        "unmatched_failed_nodeids": sorted(set(parsed.failed_nodeids) - matched_failed_nodeids),
+        "unmatched_error_nodeids": sorted(set(parsed.error_nodeids) - matched_error_nodeids),
+        "suite_completed": parsed.suite_completed,
+        "parse_warnings": parsed.parse_warnings,
         "error_type": parser.error_type(stdout, stderr, exit_code, timeout),
         "test_cases": test_cases,
+        "selector_match_summary": selector_match_summary,
+        "verifier_result_inconsistent": verifier_result_inconsistent,
         "passed_count": sum(1 for case in test_cases if case["status"] == "passed"),
+        "failed_count": failed_count,
+        "error_count": error_count,
+        "skipped_count": sum(1 for case in test_cases if case["status"] == "skipped"),
+        "unknown_count": sum(1 for case in test_cases if case["status"] == "unknown"),
         "total_count": len(test_cases),
         "output_artifact_ref": (
             result.output_artifact_ref.model_dump(mode="json")
@@ -902,6 +951,29 @@ def _selector_result_payload(
             result.container_execution_facts_ref if result is not None else None
         ),
         "execution_backend": str(result.execution_backend) if result is not None else "not_executed",
+    }
+
+
+def _selector_match_summary(test_cases: list[dict[str, Any]]) -> dict[str, Any]:
+    by_status: dict[str, int] = {}
+    by_match_strategy: dict[str, int] = {}
+    by_status_source: dict[str, int] = {}
+    failure_kind_counts: dict[str, int] = {}
+    for case in test_cases:
+        status = str(case.get("status") or "unknown")
+        by_status[status] = by_status.get(status, 0) + 1
+        strategy = str(case.get("match_strategy") or "none")
+        by_match_strategy[strategy] = by_match_strategy.get(strategy, 0) + 1
+        source = str(case.get("status_source") or "unknown")
+        by_status_source[source] = by_status_source.get(source, 0) + 1
+        for kind in case.get("failure_kinds") or []:
+            failure_kind = str(kind)
+            failure_kind_counts[failure_kind] = failure_kind_counts.get(failure_kind, 0) + 1
+    return {
+        "by_status": by_status,
+        "by_match_strategy": by_match_strategy,
+        "by_status_source": by_status_source,
+        "failure_kind_counts": failure_kind_counts,
     }
 
 

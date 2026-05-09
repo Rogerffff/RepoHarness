@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -11,6 +12,7 @@ from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
     _empty_patch_failure_attribution,
     _selector_input_error,
+    _selector_result_payload,
     inspect_model_visible_context,
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
@@ -20,6 +22,7 @@ from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds import build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import RunnableTask, TaskDefinition
 from repo_harness.config import load_run_config
+from repo_harness.workspace.schemas import ExecutionResult
 
 
 def test_pre_verl_agentloop_task_definitions_pass_formal_gates(tmp_path: Path) -> None:
@@ -188,6 +191,97 @@ def test_pre_verl_selector_exit_code_four_is_not_implicitly_harness_input_error(
         }
     ) is False
     assert _selector_input_error({"selector_input_invalid": True}) is True
+
+
+def test_pre_verl_selector_payload_uses_per_selector_pytest_facts() -> None:
+    plan = SimpleNamespace(task_id="task_001", final_verifier_timeout_sec=120)
+    stdout = """
+tests/test_widget.py::test_existing_a PASSED
+tests/test_widget.py::test_regression FAILED
+tests/test_widget.py::test_existing_b PASSED
+
+short test summary info
+FAILED tests/test_widget.py::test_regression - AssertionError: changed behavior
+========================= 1 failed, 2 passed in 0.12s =========================
+"""
+
+    payload = _selector_result_payload(
+        plan=plan,
+        suite="pass_to_pass",
+        selectors=[
+            "tests/test_widget.py::test_existing_a",
+            "tests/test_widget.py::test_regression",
+            "tests/test_widget.py::test_existing_b",
+        ],
+        command=["python", "-m", "pytest", "-q"],
+        result=ExecutionResult(exit_code=1, timeout=False),
+        stdout=stdout,
+        stderr="",
+    )
+
+    assert payload["parser_version"] == "pytest_parser_v1"
+    assert payload["passed_count"] == 2
+    assert payload["failed_count"] == 1
+    assert payload["unknown_count"] == 0
+    assert {case["test_id"]: case["status"] for case in payload["test_cases"]} == {
+        "tests/test_widget.py::test_existing_a": "passed",
+        "tests/test_widget.py::test_regression": "failed",
+        "tests/test_widget.py::test_existing_b": "passed",
+    }
+
+
+def test_pre_verl_selector_payload_attributes_parameterized_selector_failures() -> None:
+    plan = SimpleNamespace(task_id="task_001", final_verifier_timeout_sec=120)
+    stdout = """
+short test summary info
+FAILED tests/cli/test_fix.py::test__cli__command_fix_stdin[stdin0-output0] - AssertionError
+========================= 1 failed, 3 passed in 0.12s =========================
+"""
+
+    payload = _selector_result_payload(
+        plan=plan,
+        suite="pass_to_pass",
+        selectors=["tests/cli/test_fix.py::test__cli__command_fix_stdin"],
+        command=["python", "-m", "pytest", "-q"],
+        result=ExecutionResult(exit_code=1, timeout=False),
+        stdout=stdout,
+        stderr="",
+    )
+
+    assert payload["failed_count"] == 1
+    assert payload["passed_count"] == 0
+    assert payload["test_cases"][0]["status"] == "failed"
+    assert payload["test_cases"][0]["match_strategy"] == "parameterized_selector_prefix"
+    assert payload["matched_failed_nodeids"] == [
+        "tests/cli/test_fix.py::test__cli__command_fix_stdin[stdin0-output0]"
+    ]
+    assert payload["unmatched_failed_nodeids"] == []
+    assert payload["selector_match_summary"]["failure_kind_counts"] == {"failed": 1}
+
+
+def test_pre_verl_selector_payload_counts_error_nodeids_after_status_prefix_cleanup() -> None:
+    plan = SimpleNamespace(task_id="task_001", final_verifier_timeout_sec=120)
+    stdout = """
+ERROR tests/test_widget.py::test_import_error - ImportError: libGL.so.1
+========================= 1 error in 0.12s =========================
+"""
+
+    payload = _selector_result_payload(
+        plan=plan,
+        suite="fail_to_pass",
+        selectors=["tests/test_widget.py::test_import_error"],
+        command=["python", "-m", "pytest", "-q"],
+        result=ExecutionResult(exit_code=1, timeout=False),
+        stdout=stdout,
+        stderr="",
+    )
+
+    assert payload["failed_count"] == 0
+    assert payload["error_count"] == 1
+    assert payload["error_nodeids"] == ["tests/test_widget.py::test_import_error"]
+    assert payload["matched_error_nodeids"] == ["tests/test_widget.py::test_import_error"]
+    assert payload["unmatched_error_nodeids"] == []
+    assert payload["test_cases"][0]["status"] == "error"
 
 
 @pytest.mark.parametrize(
