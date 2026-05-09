@@ -91,11 +91,35 @@ def test_metrics_record_derives_final_status():
         run_outcome="inconclusive",
         agent_stop_reason="final_answer",
         patch_stats={"added_lines": 1},
+        loop_diagnostics_summary={"diagnostic_status": "no_progress_suspected"},
+        loop_diagnostic_count=2,
     )
 
     assert metrics.final_verifier_status == "timeout"
     assert metrics.run_outcome == "inconclusive"
     assert metrics.patch_stats == {"added_lines": 1}
+    assert metrics.interaction_efficiency["loop_diagnostics_summary"] == {
+        "diagnostic_status": "no_progress_suspected"
+    }
+    assert metrics.interaction_efficiency["loop_diagnostic_count"] == 2
+
+
+def test_metrics_record_can_mark_task_timeout_when_final_verifier_did_not_run():
+    metrics = build_metrics_record(
+        final_verifier=verifier_result(
+            accepted=False,
+            parser_confidence=0.0,
+            error_type="task_timeout_before_final_verifier",
+        ),
+        run_outcome="inconclusive",
+        final_verifier_status="not_executed",
+        agent_stop_reason="task_timeout",
+        timeout=True,
+    )
+
+    assert metrics.final_verifier_status == "not_executed"
+    assert metrics.timeout is True
+    assert metrics.interaction_efficiency["agent_stop_reason"] == "task_timeout"
 
 
 def test_patch_apply_failure_is_counted_as_inconclusive_run_outcome():

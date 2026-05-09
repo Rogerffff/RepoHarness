@@ -1,0 +1,1 @@
+python3 docs/build-your-own/toy_agent_deepseek.py "根据当前目录下docs/00-reading-guide.md文档内的介绍，读取所有项目设计文件，为我详细说明一下每一篇文档的内容，最终为我输出完整的关于这个项目的讲解"

@@ -122,6 +122,22 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
     assert metadata_ref.relative_path == "run_metadata.json"
     assert facts_payload["run_id"] == "run_001"
     assert facts_payload["tool_protocol"]["tool_schema_snapshot_ref"]["artifact_id"]
+    assert facts_payload["search_fact_policy_version"] == "repo_harness_search_fact_trust_v1"
+    assert facts_payload["repository_action_index_policy_version"] == (
+        "repo_harness_repository_action_index_v1"
+    )
+    assert facts_payload["convergence_nudge_policy_version"] == "repo_harness_convergence_nudge_v2"
+    assert facts_payload["context_warning_policy_version"] == "repo_harness_context_warning_v1"
+    assert facts_payload["provider_ready_token_estimator_version"] == (
+        "provider_body_char4_token_estimator_v1"
+    )
+    assert facts_payload["context_threshold_decision_source"] == "provider_ready_token_estimate"
+    assert facts_payload["compact_threshold_ratio_runtime_effect"] == (
+        "connected_to_tool_result_replacement_budget_v1"
+    )
+    assert facts_payload["harness_control_message_export_policy"] == (
+        "exclude_harness_generated_untrainable_control_messages_v1"
+    )
     assert metadata_payload["run_config_facts_ref"]["sha256"] == facts_ref.sha256
     assert metadata_payload["tool_protocol"]["tool_schema_snapshot_ref"]["artifact_id"]
     assert metadata_payload["export_readiness"]["training_export_ready"] is True
@@ -163,11 +179,151 @@ def test_run_config_facts_are_immutable_root_facts(tmp_path: Path):
             write_run_config_facts(run_dir, facts)
 
 
+def test_run_metadata_uses_pre_verl_boundary_for_rejected_model_patch(tmp_path: Path):
+    run_dir = tmp_path / "run_rejected"
+    task = TaskDefinition.model_validate(valid_task_payload())
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "calculator.py").write_text("def add(a, b): return a + b\n", encoding="utf-8")
+
+    with RunRecorder("run_rejected", run_dir, task_id=task.id) as recorder:
+        _, _, tool_protocol = write_tool_schema_snapshot(recorder)
+        dependency_state_ref = recorder.write_json_artifact(
+            "dependency_state",
+            DependencyState().model_dump(mode="json"),
+            {"budget_policy": "preserve_json"},
+        )
+        fingerprint = build_local_environment_fingerprint(
+            task_definition=task,
+            source_checkout=source,
+            dependency_state=DependencyState(),
+            dependency_state_ref=dependency_state_ref,
+            command_timeout_sec=120,
+            network_policy="deny_agent_run",
+        )
+        facts = build_run_config_facts(
+            run_id="run_rejected",
+            task_definition=task,
+            config=RunConfig(),
+            tool_protocol=tool_protocol,
+            environment_fingerprint=fingerprint,
+        )
+        facts_ref = write_run_config_facts(run_dir, facts)
+        (run_dir / "metrics.json").write_text(
+            json.dumps(
+                {
+                    "run_outcome": "failed",
+                    "final_verifier_status": "rejected",
+                    "task_success": False,
+                    "turn_count": 4,
+                    "tool_call_count": 7,
+                    "test_run_count": 0,
+                    "interaction_efficiency": {"final_verifier_mode": "strict_patch_replay"},
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        (run_dir / "final_verifier_boundary.json").write_text(
+            json.dumps(
+                {
+                    "final_verifier_status": "rejected",
+                    "accepted": False,
+                    "failure_category": "model_patch_rejected_by_final_verifier",
+                    "failure_owner": "model_wrong_fix",
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        metadata = build_run_metadata(
+            run_dir=run_dir,
+            run_id="run_rejected",
+            task_id=task.id,
+            run_config_facts_ref=facts_ref,
+            tool_protocol=tool_protocol,
+            baseline=BaselineResult(task_id=task.id, status="valid"),
+            run_outcome="failed",
+            final_verifier_status="rejected",
+            agent_stop_reason="final_answer",
+            final_verifier_mode="strict_patch_replay",
+        )
+
+    diagnostic = metadata.failure_diagnostics[0]
+    assert diagnostic.failure_category == FailureCategory.model_failure
+    assert diagnostic.failure_type == FailureType.final_verifier_failed
+    assert diagnostic.details == {
+        "final_verifier_boundary_status": "rejected",
+        "final_verifier_boundary_failure_category": "model_patch_rejected_by_final_verifier",
+        "final_verifier_boundary_failure_owner": "model_wrong_fix",
+        "diagnostic_subtypes": [],
+        "late_edit_summary": {"model_wrong_fix_after_late_edit": False},
+    }
+
+
+def test_failure_diagnostics_reports_empty_patch_after_nudge(tmp_path: Path):
+    run_dir = tmp_path / "run_empty_patch"
+    run_dir.mkdir()
+    (run_dir / "final.patch").write_text("", encoding="utf-8")
+    (run_dir / "events.jsonl").write_text(
+        json.dumps({"event_type": "convergence_nudge_injected", "turn": 10}) + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason="max_turns",
+    )
+
+    assert diagnostics[0].failure_type == FailureType.nudge_ignored_empty_patch
+    assert diagnostics[0].failure_category == FailureCategory.model_failure
+    assert diagnostics[0].details["convergence_nudge_injected"] is True
+
+
+def test_failure_diagnostics_uses_boundary_for_task_timeout_before_final_verifier(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run_task_timeout"
+    run_dir.mkdir()
+    (run_dir / "final.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+    (run_dir / "events.jsonl").write_text("", encoding="utf-8")
+    (run_dir / "final_verifier_boundary.json").write_text(
+        json.dumps(
+            {
+                "final_verifier_status": "not_executed",
+                "final_verifier_ran": False,
+                "failure_category": "task_timeout_before_final_verifier",
+                "failure_owner": "budget_or_timeout",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="inconclusive",
+        final_verifier_status="not_executed",
+        agent_stop_reason="task_timeout",
+    )
+
+    assert diagnostics[0].failure_category == FailureCategory.budget_or_timeout_failure
+    assert diagnostics[0].failure_type == FailureType.task_timeout_before_final_verifier
+    assert diagnostics[0].details["final_verifier_boundary_failure_owner"] == "budget_or_timeout"
+    assert diagnostics[0].details["invalid_for_training"] is True
+
+
 def test_failure_diagnostics_uses_boundary_for_final_verifier_environment_error(
     tmp_path: Path,
 ) -> None:
     run_dir = tmp_path / "run_final_verifier_environment_error"
     run_dir.mkdir()
+    (run_dir / "final.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
     (run_dir / "events.jsonl").write_text("", encoding="utf-8")
     (run_dir / "final_verifier_boundary.json").write_text(
         json.dumps(
@@ -200,6 +356,245 @@ def test_failure_diagnostics_uses_boundary_for_final_verifier_environment_error(
         == "final_verifier_environment_error"
     )
     assert diagnostics[0].details["invalid_for_training"] is True
+
+
+def test_failure_diagnostics_uses_boundary_for_budget_empty_patch(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run_boundary_empty_patch"
+    run_dir.mkdir()
+    (run_dir / "final.patch").write_text("", encoding="utf-8")
+    (run_dir / "events.jsonl").write_text(
+        json.dumps({"event_type": "convergence_nudge_injected", "turn": 10}) + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "final_verifier_boundary.json").write_text(
+        json.dumps(
+            {
+                "final_verifier_status": "not_executed",
+                "final_verifier_ran": False,
+                "failure_category": "budget_exhausted_empty_patch",
+                "failure_owner": "budget_or_timeout",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="inconclusive",
+        final_verifier_status="not_executed",
+        agent_stop_reason="max_turns",
+    )
+
+    assert diagnostics[0].failure_category == FailureCategory.budget_or_timeout_failure
+    assert diagnostics[0].failure_type == FailureType.budget_exhausted_empty_patch
+    assert diagnostics[0].details["diagnostic_subtypes"] == ["nudge_ignored_empty_patch"]
+
+
+def test_failure_diagnostics_reports_compaction_insufficient_context_limit(tmp_path: Path):
+    run_dir = tmp_path / "run_context_limit"
+    run_dir.mkdir()
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_type": "context_prepared",
+                        "turn": 45,
+                        "data": {
+                            "context_revision": 45,
+                            "provider_ready_token_estimate": 181000,
+                            "provider_body_char_estimate": 724000,
+                            "internal_token_estimate_after": 184098,
+                            "threshold_decision_source": "provider_ready_token_estimate",
+                            "context_reduction": {
+                                "replacement_applied_but_insufficient_context_limit": True,
+                                "replaced_tool_result_ids": ["call_1_result"],
+                            },
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_type": "budget_exhausted",
+                        "error_type": "context_limit",
+                        "turn": 45,
+                        "data": {
+                            "provider_ready_token_estimate": 181000,
+                            "max_context_tokens": 180000,
+                            "threshold_decision_source": "provider_ready_token_estimate",
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason="context_limit",
+    )
+
+    assert diagnostics[0].failure_type == (
+        FailureType.compaction_applied_but_insufficient_context_limit
+    )
+    assert diagnostics[0].source_component == "context_manager"
+    assert diagnostics[0].details["latest_context_prepared"]["provider_ready_token_estimate"] == 181000
+
+
+def test_failure_diagnostics_reports_search_backend_false_fact_suspected(tmp_path: Path):
+    run_dir = tmp_path / "run_search_issue"
+    run_dir.mkdir()
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "tool_completed",
+                "turn": 3,
+                "data": {
+                    "tool_call_id": "call_grep",
+                    "effective_tool_name": "grep",
+                    "typed": {
+                        "result_kind": "partial_scan_no_match",
+                        "scan_complete": False,
+                        "scan_complete_reason": "read_errors_present",
+                        "backend_mismatch_detected": False,
+                        "read_error_count": 1,
+                        "visibility_error_count": 0,
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason=None,
+    )
+
+    assert diagnostics[0].failure_type == FailureType.search_backend_false_fact_suspected
+    assert diagnostics[0].failure_category == FailureCategory.tool_protocol_failure
+    assert diagnostics[0].details["samples"][0]["scan_complete_reason"] == "read_errors_present"
+
+
+def test_failure_diagnostics_does_not_flag_search_false_fact_when_matches_exist(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run_search_match_with_error"
+    run_dir.mkdir()
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "tool_completed",
+                "turn": 3,
+                "data": {
+                    "tool_call_id": "call_grep",
+                    "effective_tool_name": "grep",
+                    "typed": {
+                        "result_kind": "partial_scan_with_matches",
+                        "scan_complete": False,
+                        "scan_complete_reason": "read_errors_present",
+                        "backend_mismatch_detected": False,
+                        "read_error_count": 1,
+                        "visibility_error_count": 0,
+                        "total_match_count": 2,
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason=None,
+    )
+
+    assert not diagnostics
+
+
+def test_failure_diagnostics_late_edit_requires_near_budget_and_final_answer(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run_rejected_late_edit"
+    run_dir.mkdir()
+    (run_dir / "run_config_facts.json").write_text(
+        json.dumps({"max_turns": 10}) + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_type": "tool_completed",
+                        "turn": 9,
+                        "data": {"effective_tool_name": "edit_file"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_type": "tool_completed",
+                        "turn": 9,
+                        "data": {"effective_tool_name": "grep"},
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "transcript.jsonl").write_text(
+        json.dumps(
+            {
+                "role": "assistant",
+                "turn": 10,
+                "content_preview": "done",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "final_verifier_boundary.json").write_text(
+        json.dumps(
+            {
+                "final_verifier_status": "rejected",
+                "failure_category": "model_patch_rejected_by_final_verifier",
+                "failure_owner": "model_wrong_fix",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="rejected",
+        agent_stop_reason="final_answer",
+    )
+
+    assert diagnostics[0].details["diagnostic_subtypes"] == [
+        FailureType.model_wrong_fix_after_late_edit.value
+    ]
+    assert diagnostics[0].details["late_edit_summary"]["near_turn_budget"] is True
 
 
 def test_environment_fingerprint_records_setup_and_dependency_refs(tmp_path: Path):

@@ -99,6 +99,18 @@ def build_run_config_facts(
         provider_axis_scope=provider_axis_scope,
         baseline_source=baseline_source,
         forbidden_scaffold_ids=forbidden_scaffold_ids or [],
+        search_fact_policy_version="repo_harness_search_fact_trust_v1",
+        repository_action_index_policy_version="repo_harness_repository_action_index_v1",
+        convergence_nudge_policy_version="repo_harness_convergence_nudge_v2",
+        context_warning_policy_version="repo_harness_context_warning_v1",
+        context_replacement_runtime_policy_version="deterministic_tool_result_replacement_runtime_v1",
+        provider_ready_token_estimator_version="provider_body_char4_token_estimator_v1",
+        context_threshold_decision_source="provider_ready_token_estimate",
+        compact_threshold_ratio_runtime_effect="connected_to_tool_result_replacement_budget_v1",
+        harness_control_message_export_policy=(
+            "exclude_harness_generated_untrainable_control_messages_v1"
+        ),
+        tool_call_repair_policy_version="malformed_tool_call_repair_v0",
         context_builder_version=config.versions.context_builder_version,
         context_policy_version=config.context_management.context_policy_version,
         prompt_template_version=config.versions.prompt_template_version,
@@ -314,29 +326,9 @@ def _failure_diagnostics(
     final_verifier_status: str,
     agent_stop_reason: str | None,
 ) -> list[FailureDiagnostics]:
+    search_false_fact = _search_backend_false_fact_suspected(run_path)
+    prefix_diagnostics = [search_false_fact] if search_false_fact is not None else []
     boundary = _read_json_if_exists(run_path / "final_verifier_boundary.json")
-    if (
-        boundary.get("final_verifier_status") == "not_executed"
-        and boundary.get("failure_category") == "final_verifier_environment_error"
-    ):
-        return [
-            FailureDiagnostics(
-                failure_category=FailureCategory.environment_failure,
-                failure_type=FailureType.final_verifier_environment_error,
-                recoverable=False,
-                source_component="final_verifier_boundary",
-                message=(
-                    "formal final verifier could not execute task assertions because "
-                    "the verifier environment failed"
-                ),
-                details={
-                    "final_verifier_boundary_status": boundary.get("final_verifier_status"),
-                    "final_verifier_boundary_failure_category": boundary.get("failure_category"),
-                    "final_verifier_boundary_failure_owner": boundary.get("failure_owner"),
-                    "invalid_for_training": True,
-                },
-            )
-        ]
     if baseline.status in {"invalid", "flaky"}:
         return [
             FailureDiagnostics(
@@ -347,8 +339,69 @@ def _failure_diagnostics(
                 message=baseline.dependency_error or f"baseline status: {baseline.status}",
             )
         ]
-    if final_verifier_status in {"failed", "rejected"}:
+    boundary_not_executed = _not_executed_boundary_diagnostic(
+        boundary=boundary,
+        run_path=run_path,
+        agent_stop_reason=agent_stop_reason,
+    )
+    if boundary_not_executed is not None:
+        return [*prefix_diagnostics, boundary_not_executed]
+    if agent_stop_reason in {"max_turns", "max_tool_calls"} and _final_patch_empty(run_path):
+        nudge_injected = _event_exists(run_path, "convergence_nudge_injected")
+        nudge_summary = _convergence_nudge_summary(run_path)
         return [
+            *prefix_diagnostics,
+            FailureDiagnostics(
+                failure_category=FailureCategory.model_failure,
+                failure_type=(
+                    FailureType.nudge_ignored_empty_patch
+                    if nudge_injected
+                    else FailureType.no_nudge_empty_patch
+                ),
+                recoverable=True,
+                source_component="agent_loop",
+                message=(
+                    "agent reached the interaction budget without producing a non-empty final patch"
+                ),
+                details={
+                    "agent_stop_reason": agent_stop_reason,
+                    "convergence_nudge_injected": nudge_injected,
+                    "convergence_nudge_summary": nudge_summary,
+                },
+            ),
+        ]
+    if final_verifier_status in {"failed", "rejected"}:
+        boundary_failure_category = boundary.get("failure_category")
+        boundary_failure_owner = boundary.get("failure_owner")
+        late_edit = _late_edit_summary(run_path)
+        if (
+            final_verifier_status == "rejected"
+            and boundary.get("final_verifier_status") == "rejected"
+            and boundary_failure_owner == "model_wrong_fix"
+        ):
+            return [
+                *prefix_diagnostics,
+                FailureDiagnostics(
+                    failure_category=FailureCategory.model_failure,
+                    failure_type=FailureType.final_verifier_failed,
+                    recoverable=False,
+                    source_component="final_verifier",
+                    message="formal final verifier rejected the model patch",
+                    details={
+                        "final_verifier_boundary_status": boundary.get("final_verifier_status"),
+                        "final_verifier_boundary_failure_category": boundary_failure_category,
+                        "final_verifier_boundary_failure_owner": boundary_failure_owner,
+                        "diagnostic_subtypes": (
+                            [FailureType.model_wrong_fix_after_late_edit.value]
+                            if late_edit.get("model_wrong_fix_after_late_edit")
+                            else []
+                        ),
+                        "late_edit_summary": late_edit,
+                    },
+                )
+            ]
+        return [
+            *prefix_diagnostics,
             FailureDiagnostics(
                 failure_category=FailureCategory.environment_failure,
                 failure_type=FailureType.final_verifier_failed,
@@ -358,20 +411,363 @@ def _failure_diagnostics(
             )
         ]
     if agent_stop_reason == "context_limit":
+        compaction_insufficient = _compaction_applied_but_insufficient(run_path)
         return [
+            *prefix_diagnostics,
             FailureDiagnostics(
                 failure_category=FailureCategory.model_failure,
-                failure_type=FailureType.context_limit,
+                failure_type=(
+                    FailureType.compaction_applied_but_insufficient_context_limit
+                    if compaction_insufficient
+                    else FailureType.context_limit
+                ),
                 recoverable=True,
-                source_component="agent_loop",
-                message="context limit reached",
+                source_component="context_manager" if compaction_insufficient else "agent_loop",
+                message=(
+                    "context replacement was applied but provider-ready context still exceeded the limit"
+                    if compaction_insufficient
+                    else "context limit reached"
+                ),
+                details=_latest_context_limit_details(run_path),
             )
         ]
     if run_outcome in {"success", "failed"}:
-        return []
+        return prefix_diagnostics
     return [
+        *prefix_diagnostics,
         FailureDiagnostics.unknown(
             source_component="eval_runner",
             message=f"run_outcome={run_outcome}",
         )
     ]
+
+
+def _not_executed_boundary_diagnostic(
+    *,
+    boundary: dict[str, Any],
+    run_path: Path,
+    agent_stop_reason: str | None,
+) -> FailureDiagnostics | None:
+    if boundary.get("final_verifier_status") != "not_executed":
+        return None
+    boundary_failure_category = str(boundary.get("failure_category") or "")
+    if not boundary_failure_category:
+        return None
+    boundary_failure_owner = str(boundary.get("failure_owner") or "")
+    nudge_injected = _event_exists(run_path, "convergence_nudge_injected")
+    nudge_summary = _convergence_nudge_summary(run_path)
+    diagnostic_subtypes: list[str] = []
+    if boundary_failure_category == "budget_exhausted_empty_patch":
+        diagnostic_subtypes.append(
+            FailureType.nudge_ignored_empty_patch.value
+            if nudge_injected
+            else FailureType.no_nudge_empty_patch.value
+        )
+    failure_category = _failure_category_from_boundary_owner(boundary_failure_owner)
+    failure_type = _failure_type_from_boundary_failure(boundary_failure_category)
+    return FailureDiagnostics(
+        failure_category=failure_category,
+        failure_type=failure_type,
+        recoverable=failure_category
+        in {
+            FailureCategory.budget_or_timeout_failure,
+            FailureCategory.model_failure,
+            FailureCategory.provider_failure,
+        },
+        source_component="final_verifier_boundary",
+        message=_boundary_failure_message(boundary_failure_category),
+        details={
+            "agent_stop_reason": agent_stop_reason,
+            "final_verifier_boundary_status": boundary.get("final_verifier_status"),
+            "final_verifier_boundary_failure_category": boundary_failure_category,
+            "final_verifier_boundary_failure_owner": boundary_failure_owner,
+            "final_verifier_ran": boundary.get("final_verifier_ran"),
+            "invalid_for_training": True,
+            "diagnostic_subtypes": diagnostic_subtypes,
+            "convergence_nudge_injected": nudge_injected,
+            "convergence_nudge_summary": nudge_summary,
+        },
+    )
+
+
+def _failure_category_from_boundary_owner(owner: str) -> FailureCategory:
+    if owner == "budget_or_timeout":
+        return FailureCategory.budget_or_timeout_failure
+    if owner in {"harness_or_environment", "harness_or_verifier_input"}:
+        return FailureCategory.environment_failure
+    if owner == "provider_or_model":
+        return FailureCategory.provider_failure
+    if owner in {
+        "model_wrong_fix",
+        "model_patch_quality",
+        "model_patch_format_or_path",
+        "model_no_patch_generated",
+    }:
+        return FailureCategory.model_failure
+    return FailureCategory.unknown_failure
+
+
+def _failure_type_from_boundary_failure(boundary_failure_category: str) -> FailureType:
+    mapping = {
+        "task_timeout_before_final_verifier": FailureType.task_timeout_before_final_verifier,
+        "budget_exhausted_empty_patch": FailureType.budget_exhausted_empty_patch,
+        "context_limit": FailureType.context_limit,
+        "environment_setup_failed": FailureType.environment_setup_failed,
+        "final_verifier_environment_error": FailureType.final_verifier_environment_error,
+        "verification_workspace_creation_failed": FailureType.environment_setup_failed,
+        "verification_workspace_error": FailureType.environment_setup_failed,
+    }
+    return mapping.get(boundary_failure_category, FailureType.final_verifier_not_executed)
+
+
+def _boundary_failure_message(boundary_failure_category: str) -> str:
+    if boundary_failure_category == "task_timeout_before_final_verifier":
+        return "task timeout expired before the formal final verifier could execute"
+    if boundary_failure_category == "budget_exhausted_empty_patch":
+        return "agent exhausted the interaction budget without producing a non-empty final patch"
+    if boundary_failure_category == "final_verifier_environment_error":
+        return "formal final verifier could not execute task assertions because the verifier environment failed"
+    return f"formal final verifier did not execute: {boundary_failure_category}"
+
+
+def _convergence_nudge_summary(run_path: Path) -> dict[str, Any]:
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    nudges = [
+        event for event in events if event.get("event_type") == "convergence_nudge_injected"
+    ]
+    if not nudges:
+        return {
+            "nudge_count": 0,
+            "levels": [],
+            "latest_nudge_turn": None,
+            "post_latest_nudge_action": "not_applicable",
+        }
+    latest = nudges[-1]
+    latest_turn = int(latest.get("turn") or 0)
+    tool_events_after = [
+        event
+        for event in events
+        if int(event.get("turn") or 0) > latest_turn
+        and event.get("event_type") == "tool_completed"
+    ]
+    edited_after = any(
+        ((event.get("data") or {}).get("effective_tool_name") in {"edit_file", "create_file"})
+        for event in tool_events_after
+    )
+    git_diff_after = any(
+        ((event.get("data") or {}).get("effective_tool_name") == "git_diff")
+        for event in tool_events_after
+    )
+    final_answer_turn = _final_answer_turn(run_path)
+    final_answer_after = final_answer_turn is not None and final_answer_turn > latest_turn
+    if edited_after:
+        post_action = "edited_after_nudge"
+    elif git_diff_after:
+        post_action = "git_diff_after_nudge"
+    elif final_answer_after:
+        post_action = "final_answer_after_nudge"
+    else:
+        post_action = "no_observed_action_after_nudge"
+    return {
+        "nudge_count": len(nudges),
+        "levels": [str((event.get("data") or {}).get("nudge_level") or "unknown") for event in nudges],
+        "latest_nudge_turn": latest_turn,
+        "latest_nudge_level": str((latest.get("data") or {}).get("nudge_level") or "unknown"),
+        "latest_turns_remaining": (latest.get("data") or {}).get("turns_remaining"),
+        "latest_has_patch": (latest.get("data") or {}).get("has_patch"),
+        "edited_after_latest_nudge": edited_after,
+        "git_diff_after_latest_nudge": git_diff_after,
+        "final_answer_after_latest_nudge": final_answer_after,
+        "post_latest_nudge_action": post_action,
+    }
+
+
+def _final_patch_empty(run_path: Path) -> bool:
+    patch_path = run_path / "final.patch"
+    if not patch_path.exists():
+        return True
+    return not patch_path.read_text(encoding="utf-8", errors="replace").strip()
+
+
+def _event_exists(run_path: Path, event_type: str) -> bool:
+    return any(event.get("event_type") == event_type for event in _read_jsonl_if_exists(run_path / "events.jsonl"))
+
+
+def _search_backend_false_fact_suspected(run_path: Path) -> FailureDiagnostics | None:
+    samples: list[dict[str, Any]] = []
+    for event in _read_jsonl_if_exists(run_path / "events.jsonl"):
+        if event.get("event_type") not in {"tool_completed", "tool_failed"}:
+            continue
+        data = event.get("data") or {}
+        if not isinstance(data, dict):
+            continue
+        typed = data.get("typed") if isinstance(data.get("typed"), dict) else data
+        if not isinstance(typed, dict):
+            continue
+        result_kind = str(typed.get("result_kind") or "")
+        total_match_count = int(typed.get("total_match_count") or typed.get("match_count") or 0)
+        can_form_absence_fact = result_kind in {
+            "partial_scan_no_match",
+            "complete_no_match",
+            "page_empty_out_of_range",
+            "incomplete_file_listing",
+        } or total_match_count == 0
+        search_issue = can_form_absence_fact and (
+            typed.get("backend_mismatch_detected") is True
+            or int(typed.get("read_error_count") or 0) > 0
+            or int(typed.get("visibility_error_count") or 0) > 0
+        )
+        if not search_issue:
+            continue
+        samples.append(
+            {
+                "turn": event.get("turn"),
+                "tool_call_id": data.get("tool_call_id"),
+                "tool_name": data.get("effective_tool_name") or data.get("tool_name"),
+                "result_kind": result_kind,
+                "scan_complete": typed.get("scan_complete"),
+                "scan_complete_reason": typed.get("scan_complete_reason"),
+                "backend_mismatch_detected": typed.get("backend_mismatch_detected"),
+                "read_error_count": typed.get("read_error_count"),
+                "visibility_error_count": typed.get("visibility_error_count"),
+                "absence_fact_risk": True,
+            }
+        )
+        if len(samples) >= 5:
+            break
+    if not samples:
+        return None
+    return FailureDiagnostics(
+        failure_category=FailureCategory.tool_protocol_failure,
+        failure_type=FailureType.search_backend_false_fact_suspected,
+        recoverable=True,
+        source_component="tool_system",
+        message=(
+            "search or listing results contained auditable backend/read/visibility anomalies; "
+            "complete-no-match facts from this run should be treated cautiously"
+        ),
+        details={"samples": samples},
+    )
+
+
+def _compaction_applied_but_insufficient(run_path: Path) -> bool:
+    for event in _read_jsonl_if_exists(run_path / "events.jsonl"):
+        if event.get("event_type") != "context_prepared":
+            continue
+        reduction = (event.get("data") or {}).get("context_reduction") or {}
+        if isinstance(reduction, dict) and reduction.get(
+            "replacement_applied_but_insufficient_context_limit"
+        ):
+            return True
+    return False
+
+
+def _latest_context_limit_details(run_path: Path) -> dict[str, Any]:
+    latest_context: dict[str, Any] = {}
+    latest_budget: dict[str, Any] = {}
+    for event in _read_jsonl_if_exists(run_path / "events.jsonl"):
+        if event.get("event_type") == "context_prepared":
+            latest_context = event.get("data") if isinstance(event.get("data"), dict) else {}
+        if event.get("event_type") == "budget_exhausted" and event.get("error_type") == "context_limit":
+            latest_budget = event.get("data") if isinstance(event.get("data"), dict) else {}
+    return {
+        "latest_context_prepared": {
+            "context_revision": latest_context.get("context_revision"),
+            "provider_ready_token_estimate": latest_context.get("provider_ready_token_estimate"),
+            "provider_body_char_estimate": latest_context.get("provider_body_char_estimate"),
+            "internal_token_estimate_after": latest_context.get("internal_token_estimate_after"),
+            "threshold_decision_source": latest_context.get("threshold_decision_source"),
+            "context_reduction": latest_context.get("context_reduction"),
+        },
+        "budget_exhausted": latest_budget,
+    }
+
+
+def _late_edit_summary(run_path: Path) -> dict[str, Any]:
+    tool_events = [
+        event
+        for event in _read_jsonl_if_exists(run_path / "events.jsonl")
+        if event.get("event_type") == "tool_completed"
+    ]
+    if not tool_events:
+        return {"model_wrong_fix_after_late_edit": False}
+    max_turn = max(int(event.get("turn") or 0) for event in tool_events)
+    edit_turns = [
+        int(event.get("turn") or 0)
+        for event in tool_events
+        if (event.get("data") or {}).get("effective_tool_name")
+        in {"edit_file", "create_file"}
+    ]
+    if not edit_turns:
+        return {"model_wrong_fix_after_late_edit": False}
+    last_edit_turn = max(edit_turns)
+    final_answer_turn = _final_answer_turn(run_path)
+    near_budget = _near_turn_budget_from_run_config(run_path)
+    late_edit = (
+        near_budget
+        and final_answer_turn is not None
+        and final_answer_turn - last_edit_turn <= 1
+        and last_edit_turn >= max(1, max_turn - 1)
+    )
+    return {
+        "model_wrong_fix_after_late_edit": late_edit,
+        "last_edit_turn": last_edit_turn,
+        "max_observed_tool_turn": max_turn,
+        "final_answer_turn": final_answer_turn,
+        "near_turn_budget": near_budget,
+        "late_edit_policy": "requires_near_budget_and_edit_immediately_before_final_answer",
+    }
+
+
+def _final_answer_turn(run_path: Path) -> int | None:
+    transcript_path = run_path / "transcript.jsonl"
+    if transcript_path.exists():
+        for record in _read_jsonl_if_exists(transcript_path):
+            if record.get("role") != "assistant":
+                continue
+            preview = str(record.get("content_preview") or "")
+            if "tool_calls=" in preview:
+                continue
+            turn = record.get("turn")
+            if isinstance(turn, int):
+                return turn
+    for event in _read_jsonl_if_exists(run_path / "events.jsonl"):
+        if event.get("event_type") in {"agent_finished", "model_final_answer", "final_answer"}:
+            turn = event.get("turn")
+            if isinstance(turn, int):
+                return turn
+        data = event.get("data")
+        if isinstance(data, dict) and data.get("agent_stop_reason") == "final_answer":
+            turn = event.get("turn")
+            if isinstance(turn, int):
+                return turn
+    return None
+
+
+def _near_turn_budget_from_run_config(run_path: Path) -> bool:
+    facts = _read_json_if_exists(run_path / "run_config_facts.json")
+    max_turns = facts.get("max_turns")
+    if not isinstance(max_turns, int) or max_turns <= 0:
+        return False
+    max_observed_turn = max(
+        [int(event.get("turn") or 0) for event in _read_jsonl_if_exists(run_path / "events.jsonl")]
+        or [0]
+    )
+    threshold = max(1, min(6, max_turns // 4))
+    return max_turns - max_observed_turn <= threshold
+
+
+def _read_jsonl_if_exists(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            records.append(payload)
+    return records

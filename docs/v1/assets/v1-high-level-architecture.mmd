@@ -1,0 +1,38 @@
+flowchart LR
+  classDef input fill:#edf5ff,stroke:#3b6ea8,color:#111;
+  classDef orchestration fill:#f5f7fa,stroke:#596579,color:#111;
+  classDef runtime fill:#eef8f2,stroke:#3c7a4f,color:#111;
+  classDef safety fill:#fff4e5,stroke:#a36500,color:#111;
+  classDef data fill:#f7efff,stroke:#6c3fa0,color:#111;
+  classDef store fill:#ffffff,stroke:#555,stroke-width:2px,color:#111;
+
+  Inputs["输入<br/>RunConfig<br/>TaskDefinition"]:::input
+  CLI["CLI<br/>validate-task<br/>run-task / run-batch<br/>export / inspect-run"]:::orchestration
+  TaskAdapter["Task Adapter<br/>任务规范化<br/>RunnableTask<br/>VerifierConfig"]:::orchestration
+  EvalRunner["Eval Runner<br/>运行总编排者<br/>质量门控<br/>最终验收<br/>结论派生"]:::orchestration
+  Gate["Baseline Quality Gate<br/>invalid task / flaky task 提前结束<br/>通过后进入正式 Agent run"]:::orchestration
+  AgentRuntime["Agent Runtime<br/>Context Builder / Manager<br/>Budget Manager<br/>Agent Loop<br/>Model Client<br/>Tool Executor"]:::runtime
+  Boundaries["执行与安全边界<br/>Permission System<br/>Workspace Adapter<br/>Verifier"]:::safety
+  Results["结果计算与轨迹记录<br/>Outcome Policy<br/>Reward / Metrics<br/>RunRecorder"]:::data
+  RunDir["Run Directory<br/>基础产物：task、baseline、metrics、summary<br/>完整 Agent run 追加：final.patch、final.diff、verifier、reward"]:::store
+  Consumers["下游消费者<br/>Training Exporter 读取运行事实并写 exports<br/>Inspect Run 仅读诊断"]:::data
+  ExportFiles["Export Files<br/>exports/sft.jsonl<br/>exports/rl.jsonl<br/>exports/preference.jsonl<br/>或 preference_skipped.json"]:::store
+
+  Inputs --> CLI
+  CLI -->|"validate-task"| TaskAdapter
+  CLI -->|"run-task / run-batch"| EvalRunner
+  CLI -.->|"export / inspect-run"| Consumers
+  EvalRunner -->|"load_task()"| TaskAdapter
+  TaskAdapter -->|"RunnableTask + VerifierConfig"| EvalRunner
+  EvalRunner --> Gate
+  Gate -->|"通过质量门控"| AgentRuntime
+  Gate -->|"invalid / flaky"| Results
+  AgentRuntime -->|"agent_stop_reason 与 loop state"| EvalRunner
+  EvalRunner -->|"最终验收与运行结论"| Results
+  AgentRuntime -->|"assistant、tool transcript 与 loop events"| Results
+  EvalRunner -->|"创建工作区、baseline、final verifier"| Boundaries
+  AgentRuntime -->|"工具权限、文件命令、run_tests 中间反馈"| Boundaries
+  Boundaries -->|"ExecutionResult、VerifierResult、patch artifacts"| Results
+  Results --> RunDir
+  RunDir -.->|"只读导出和诊断"| Consumers
+  Consumers -->|"导出命令写派生文件"| ExportFiles

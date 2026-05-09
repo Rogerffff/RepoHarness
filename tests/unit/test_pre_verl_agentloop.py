@@ -21,11 +21,15 @@ from repo_harness.pre_verl_agentloop import (
     load_pre_verl_swebench_dev_runtime_plan,
 )
 from repo_harness.schema_base import stable_hash
-from repo_harness.scaffolds import build_scaffold, resolve_feedback_policy
+from repo_harness.scaffolds import PATCH_FOCUSED_REACT_TOOL_ORDER, build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import RunnableTask, TaskDefinition
 from repo_harness.config import load_run_config
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.workspace.schemas import ExecutionResult
+
+PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS = [
+    tool for tool in PATCH_FOCUSED_REACT_TOOL_ORDER if tool != "run_tests"
+]
 
 
 def test_pre_verl_agentloop_task_definitions_pass_formal_gates(tmp_path: Path) -> None:
@@ -166,6 +170,30 @@ def test_pre_verl_agentloop_task_definitions_reject_truncated_selector_ref(
             manifest,
             assert_evaluator_only_hidden_inputs=True,
         )
+
+
+def test_pre_verl_agentloop_task_definitions_accept_selector_with_colons_inside_parameter(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path)
+    selector_path = task_path.parent / "evaluator" / "pass_to_pass.json"
+    selector_path.write_text(
+        json.dumps(
+            [
+                "test/dialects/ansi_test.py::test__dialect__ansi_specific_segment_parses[ExpressionSegment-NULL::INT]"
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest = _write_manifest(tmp_path, {"task_definition_refs": [{"path": _rel(tmp_path, task_path)}]})
+
+    result = inspect_pre_verl_agentloop_task_definitions(
+        manifest,
+        assert_evaluator_only_hidden_inputs=True,
+    )
+
+    assert "passed" in result
 
 
 def test_pre_verl_agentloop_task_definitions_reject_hidden_visible_markers(
@@ -614,6 +642,42 @@ def test_inspect_model_visible_context_rejects_evaluator_only_ref_sha_leak(
         inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
 
 
+def test_inspect_model_visible_context_allows_empty_artifact_sha_in_public_tool_result(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    prepared_path = run_dir / "artifacts" / "prepared_messages.json"
+    prepared_payload = json.loads(prepared_path.read_text(encoding="utf-8"))
+    empty_sha = hashlib.sha256(b"").hexdigest()
+    prepared_payload["messages"].append(
+        {
+            "role": "tool",
+            "tool_call_id": "call_diff",
+            "tool_result_id": "call_diff_result",
+            "tool_name": "git_diff",
+            "content": "No diff.",
+            "typed": {"diff_sha256": empty_sha, "changed_file_count": 0},
+        }
+    )
+    prepared_path.write_text(
+        json.dumps(prepared_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_event_ref_for_artifact(run_dir, "artifacts/prepared_messages.json")
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    boundary = json.loads(boundary_path.read_text(encoding="utf-8"))
+    empty_patch_path = run_dir / "final.patch"
+    empty_patch_path.write_text("", encoding="utf-8")
+    empty_ref = _artifact_ref_for_path(run_dir, empty_patch_path, "final_patch")
+    empty_ref["redaction_status"] = "evaluator_only"
+    boundary["final_patch_ref"] = empty_ref
+    boundary_path.write_text(json.dumps(boundary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    result = inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
+
+    assert "passed" in result
+
+
 def test_inspect_model_visible_context_rejects_whole_field_redaction(tmp_path: Path) -> None:
     run_dir = _write_model_visible_context_run(tmp_path, user_content="<REDACTED_CREDENTIAL>")
 
@@ -674,7 +738,7 @@ def test_pre_verl_agentloop_run_config_passes_formal_gates(tmp_path: Path) -> No
                 {
                     "task_definition_ref": {"path": _rel(tmp_path, task_path)},
                     "run_config_ref": {"path": config_path.name},
-                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                    "resolved_tools": PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS,
                 }
             ]
         },
@@ -738,13 +802,53 @@ def test_pre_verl_agentloop_run_config_rejects_deepseek_without_formal_reasoning
                 {
                     "task_definition_ref": {"path": _rel(tmp_path, task_path)},
                     "run_config_ref": {"path": config_path.name},
-                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                    "resolved_tools": PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS,
                 }
             ]
         },
     )
 
     with pytest.raises(ConfigError, match="execution_mode=docker"):
+        inspect_pre_verl_agentloop_run_config(
+            manifest,
+            assert_final_only_test_feedback_disabled=True,
+            assert_resolved_tools_derived=True,
+            assert_no_hidden_feedback_visible=True,
+        )
+
+
+def test_pre_verl_agentloop_run_config_rejects_deepseek_without_provider_retry(
+    tmp_path: Path,
+) -> None:
+    task_path = _write_task_definition(tmp_path)
+    config_path = _write_run_config(
+        tmp_path,
+        test_feedback_policy="disabled",
+        max_test_runs=0,
+        provider="deepseek",
+        execution_mode="docker",
+        provider_specific_options={
+            "allow_local_secret_file": True,
+            "thinking": {"type": "enabled"},
+            "reasoning_compatibility": "provider_private_state_replay",
+        },
+        docker_build_base_image="python:3.12-slim",
+        retry_policy="none",
+    )
+    manifest = _write_manifest(
+        tmp_path,
+        {
+            "entries": [
+                {
+                    "task_definition_ref": {"path": _rel(tmp_path, task_path)},
+                    "run_config_ref": {"path": config_path.name},
+                    "resolved_tools": PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS,
+                }
+            ]
+        },
+    )
+
+    with pytest.raises(ConfigError, match="model.retry_policy=provider_retry_v0"):
         inspect_pre_verl_agentloop_run_config(
             manifest,
             assert_final_only_test_feedback_disabled=True,
@@ -777,7 +881,7 @@ def test_pre_verl_agentloop_run_config_rejects_deepseek_docker_image_mismatch(
                 {
                     "task_definition_ref": {"path": _rel(tmp_path, task_path)},
                     "run_config_ref": {"path": config_path.name},
-                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                    "resolved_tools": PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS,
                 }
             ]
         },
@@ -816,7 +920,7 @@ def test_pre_verl_agentloop_run_config_rejects_deepseek_missing_task_image(
                 {
                     "task_definition_ref": {"path": _rel(tmp_path, task_path)},
                     "run_config_ref": {"path": config_path.name},
-                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                    "resolved_tools": PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS,
                 }
             ]
         },
@@ -854,7 +958,7 @@ def test_pre_verl_agentloop_run_config_rejects_deepseek_thinking_without_compati
                 {
                     "task_definition_ref": {"path": _rel(tmp_path, task_path)},
                     "run_config_ref": {"path": config_path.name},
-                    "resolved_tools": ["list_files", "read_file", "grep", "edit_file", "git_diff"],
+                    "resolved_tools": PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS,
                 }
             ]
         },
@@ -969,6 +1073,7 @@ def _write_run_config(
     execution_mode: str = "local_process",
     provider_specific_options: dict[str, object] | None = None,
     docker_build_base_image: str | None = None,
+    retry_policy: str | None = None,
 ) -> Path:
     config = {
         "run_id_prefix": "pre_verl_formal_baseline",
@@ -977,6 +1082,9 @@ def _write_run_config(
             "model_id": "deepseek-v4-flash" if provider == "deepseek" else "replay-script-v0",
             "temperature": 0.0,
             "max_output_tokens": 4096,
+            "retry_policy": retry_policy
+            if retry_policy is not None
+            else ("provider_retry_v0" if provider in {"deepseek", "openai"} else "none"),
             "provider_specific_options": provider_specific_options or {},
         },
         "runtime": {

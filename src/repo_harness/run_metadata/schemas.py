@@ -39,6 +39,7 @@ class FailureCategory(str, Enum):
     tool_protocol_failure = "tool_protocol_failure"
     permission_failure = "permission_failure"
     task_quality_failure = "task_quality_failure"
+    budget_or_timeout_failure = "budget_or_timeout_failure"
     unknown_failure = "unknown_failure"
 
 
@@ -57,7 +58,18 @@ class FailureType(str, Enum):
     environment_setup_failed = "environment_setup_failed"
     baseline_quality_failed = "baseline_quality_failed"
     final_verifier_failed = "final_verifier_failed"
+    final_verifier_not_executed = "final_verifier_not_executed"
     final_verifier_environment_error = "final_verifier_environment_error"
+    task_timeout_before_final_verifier = "task_timeout_before_final_verifier"
+    budget_exhausted_empty_patch = "budget_exhausted_empty_patch"
+    search_backend_false_fact_suspected = "search_backend_false_fact_suspected"
+    no_nudge_empty_patch = "no_nudge_empty_patch"
+    nudge_ignored_empty_patch = "nudge_ignored_empty_patch"
+    compaction_applied_but_insufficient_context_limit = (
+        "compaction_applied_but_insufficient_context_limit"
+    )
+    final_only_no_intermediate_feedback = "final_only_no_intermediate_feedback"
+    model_wrong_fix_after_late_edit = "model_wrong_fix_after_late_edit"
     reward_hacking_suspected = "reward_hacking_suspected"
     unknown_failure = "unknown_failure"
 
@@ -215,6 +227,8 @@ class ToolProtocolFacts(StrictBaseModel):
     tool_parser_version: str
     tool_result_format_version: str
     tool_policy_version: str
+    require_read_before_edit: bool = False
+    tool_policy_config: dict[str, Any] = Field(default_factory=dict)
 
 
 class PermissionPolicySnapshot(StrictBaseModel):
@@ -348,6 +362,22 @@ class RunConfigFacts(StrictBaseModel):
     provider_axis_scope: str | None = None
     baseline_source: str | None = None
     forbidden_scaffold_ids: list[str] = Field(default_factory=list)
+    search_fact_policy_version: str = "repo_harness_search_fact_trust_v1"
+    repository_action_index_policy_version: str = "repo_harness_repository_action_index_v1"
+    convergence_nudge_policy_version: str = "repo_harness_convergence_nudge_v2"
+    context_warning_policy_version: str = "repo_harness_context_warning_v1"
+    context_replacement_runtime_policy_version: str = (
+        "deterministic_tool_result_replacement_runtime_v1"
+    )
+    provider_ready_token_estimator_version: str = "provider_body_char4_token_estimator_v1"
+    context_threshold_decision_source: str = "provider_ready_token_estimate"
+    compact_threshold_ratio_runtime_effect: str = (
+        "connected_to_tool_result_replacement_budget_v1"
+    )
+    harness_control_message_export_policy: str = (
+        "exclude_harness_generated_untrainable_control_messages_v1"
+    )
+    tool_call_repair_policy_version: str = "malformed_tool_call_repair_v0"
     context_builder_version: str
     context_policy_version: str
     prompt_template_version: str

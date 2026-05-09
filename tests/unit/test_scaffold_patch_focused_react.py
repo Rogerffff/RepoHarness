@@ -22,7 +22,7 @@ def test_patch_focused_react_scaffold_declares_restricted_tool_surface():
     scaffold = build_scaffold("patch_focused_react")
 
     assert scaffold.scaffold_id == "patch_focused_react"
-    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v8"
+    assert scaffold.scaffold_version == "repo_harness_patch_focused_react_v9"
     assert scaffold.initial_phase == "patch"
     assert scaffold.allowed_tools == PATCH_FOCUSED_REACT_TOOL_ORDER
     assert "bash" not in scaffold.allowed_tools
@@ -96,8 +96,11 @@ def test_patch_focused_react_feedback_policy_controls_run_tests_only():
     )
     assert resolve_allowed_tools(scaffold=scaffold, feedback_policy=disabled_policy) == [
         "list_files",
+        "glob_files",
         "read_file",
         "grep",
+        "symbol_search",
+        "update_working_state",
         "edit_file",
         "git_diff",
     ]

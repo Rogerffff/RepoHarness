@@ -71,6 +71,8 @@ SEMANTICS_TO_PHASE = {
     "file_read": "agent_tool",
     "file_write": "agent_tool",
     "agent_tool": "agent_tool",
+    "agent_tool_search": "agent_tool",
+    "agent_tool_file_discovery": "agent_tool",
     "bash_diagnostic": "agent_tool",
     "git_diff": "agent_tool",
     "run_tests": "run_tests",
@@ -92,11 +94,87 @@ SEMANTICS_TO_PHASE = {
 DEFAULT_DOCKERFILE_TEMPLATE = """\
 FROM {base_image}
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
+    && apt-get install -y --no-install-recommends git ripgrep \
     && rm -rf /var/lib/apt/lists/*
 RUN python -m pip install --no-cache-dir pytest mpmath
 WORKDIR /workspace
 """
+RG_RESOURCE_ERROR_PATTERNS = (
+    "os error 11",
+    "resource temporarily unavailable",
+    "failed to spawn worker thread",
+    "could not spawn worker thread",
+)
+RG_EXCLUDED_GLOBS = (
+    "!.git/**",
+    "!.hg/**",
+    "!.svn/**",
+    "!.bzr/**",
+    "!__pycache__/**",
+    "!.pytest_cache/**",
+    "!.mypy_cache/**",
+    "!.ruff_cache/**",
+    "!.tox/**",
+    "!.venv/**",
+    "!.pre_verl_venv/**",
+    "!venv/**",
+    "!node_modules/**",
+    "!build/**",
+    "!dist/**",
+    "!.aws/**",
+    "!.ssh/**",
+    "!.gnupg/**",
+    "!.env",
+    "!.env.*",
+    "!**/.env",
+    "!**/.env.*",
+    "!.npmrc",
+    "!**/.npmrc",
+    "!.pypirc",
+    "!**/.pypirc",
+    "!.netrc",
+    "!**/.netrc",
+    "!pip.conf",
+    "!**/pip.conf",
+    "!pip.ini",
+    "!**/pip.ini",
+    "!credentials",
+    "!credentials.*",
+    "!*credentials*.json",
+    "!**/credentials",
+    "!**/credentials.*",
+    "!**/*credentials*.json",
+    "!token",
+    "!token.*",
+    "!**/token",
+    "!**/token.*",
+    "!secret",
+    "!secret.*",
+    "!secrets.json",
+    "!**/secret",
+    "!**/secret.*",
+    "!**/secrets.json",
+    "!id_rsa",
+    "!id_dsa",
+    "!id_ecdsa",
+    "!id_ed25519",
+    "!**/id_rsa",
+    "!**/id_dsa",
+    "!**/id_ecdsa",
+    "!**/id_ed25519",
+    "!*.pem",
+    "!*.key",
+    "!*.p12",
+    "!*.pfx",
+    "!*.crt",
+    "!*.cer",
+    "!**/*.pem",
+    "!**/*.key",
+    "!**/*.p12",
+    "!**/*.pfx",
+    "!**/*.crt",
+    "!**/*.cer",
+)
 
 
 @dataclass(frozen=True)
@@ -177,6 +255,32 @@ class DockerWorkspaceAdapter:
             recorder=None,
         )
         self.container_uname_m = probe.stdout.strip().splitlines()[0] if probe.stdout.strip() else "unknown"
+        rg_probe = self._probe_ripgrep()
+        if (
+            self.config.require_ripgrep_for_docker_search
+            and not rg_probe["rg_available"]
+            and self.config.build_if_missing
+            and build_mode == "prebuilt"
+        ):
+            self._build_image()
+            build_mode = "local_build"
+            self.image_id, self.image_platform = self._inspect_image()
+            probe = self._execute_in_container(
+                ["uname", "-m"],
+                workspace_path=self.run_dir,
+                timeout_sec=30,
+                command_semantics="docker_backend_probe",
+                recorder=None,
+            )
+            self.container_uname_m = (
+                probe.stdout.strip().splitlines()[0] if probe.stdout.strip() else "unknown"
+            )
+            rg_probe = self._probe_ripgrep()
+        if self.config.require_ripgrep_for_docker_search and not rg_probe["rg_available"]:
+            raise WorkspaceError(
+                "Docker search backend requires ripgrep, but rg probe failed: "
+                + (rg_probe.get("rg_version") or f"exit_code={rg_probe.get('rg_probe_exit_code')}")
+            )
         self.backend_facts = DockerBackendFacts(
             docker_context=self.environment.docker_context,
             docker_cli_version=self.environment.docker_cli_version,
@@ -196,6 +300,13 @@ class DockerWorkspaceAdapter:
             timeout_sec=int(default_command_timeout_sec),
             cleanup_policy=self.cleanup_policy,
             cleanup_status="completed",
+            rg_available=bool(rg_probe["rg_available"]),
+            rg_path=rg_probe.get("rg_path"),
+            rg_version=rg_probe.get("rg_version"),
+            rg_probe_exit_code=rg_probe.get("rg_probe_exit_code"),
+            search_backend_default="ripgrep" if rg_probe["rg_available"] else "unavailable",
+            require_ripgrep_for_docker_search=self.config.require_ripgrep_for_docker_search,
+            allow_degraded_python_search_fallback=self.config.allow_degraded_python_search_fallback,
         )
         self._write_json(self.run_dir / "docker_backend_facts.json", self.backend_facts.model_dump(mode="json"))
 
@@ -446,7 +557,34 @@ class DockerWorkspaceAdapter:
         pattern: str | None = None,
     ) -> list[str]:
         root_path = self.resolve_workspace_path(workspace_path, root, must_exist=True)
+        workspace = self._host_path(workspace_path)
         match_all = pattern in {None, "", "**/*"}
+        backend_facts = getattr(self, "backend_facts", None)
+        if backend_facts is not None and backend_facts.rg_available:
+            try:
+                root_arg = root_path.relative_to(workspace).as_posix()
+            except ValueError as exc:
+                raise WorkspaceError(f"文件发现 root 越过 workspace 边界：{root}") from exc
+            command = ["rg", "--files", "--hidden"]
+            for excluded in RG_EXCLUDED_GLOBS:
+                command.extend(["--glob", excluded])
+            if not match_all and pattern is not None:
+                command.extend(["--glob", str(pattern)])
+            command.append(root_arg or ".")
+            output = self._execute_in_container(
+                command,
+                workspace_path=workspace_path,
+                timeout_sec=self.default_command_timeout_sec,
+                command_semantics="agent_tool_file_discovery",
+                recorder=None,
+            )
+            if output.exit_code not in {0, 1} or output.timeout:
+                raise WorkspaceError(output.stderr or output.stdout or f"无法列出文件：{root}")
+            return [
+                rel
+                for rel in sorted(line.strip() for line in output.stdout.splitlines() if line.strip())
+                if not self.is_sensitive_relative_path(rel)
+            ]
         output = self._execute_in_container(
             [
                 "python",
@@ -509,6 +647,102 @@ class DockerWorkspaceAdapter:
         if output.exit_code != 0 or output.timeout:
             raise WorkspaceError(output.stderr or output.stdout or f"无法读取文件：{requested_path}")
         return output.stdout
+
+    def search_text(
+        self,
+        workspace_path: str | Path,
+        *,
+        root: str | Path = ".",
+        query: str,
+        mode: str = "literal",
+        glob: str | None = None,
+        output_mode: str = "content",
+        offset: int = 0,
+        max_matches: int = 200,
+        context_lines: int = 0,
+        timeout_sec: float | None = None,
+        recorder: RunRecorder | None = None,
+    ) -> dict[str, Any]:
+        if mode not in {"literal", "regex"}:
+            raise WorkspaceError("grep mode must be literal or regex.")
+        if output_mode not in {"content", "files_with_matches", "count"}:
+            raise WorkspaceError("grep output_mode must be content, files_with_matches, or count.")
+        if not self.backend_facts.rg_available:
+            if self.config.allow_degraded_python_search_fallback:
+                raise WorkspaceError("python_fallback_requested_but_not_implemented_for_docker_search")
+            raise WorkspaceError("Docker grep requires ripgrep; rg is unavailable.")
+
+        workspace = self._host_path(workspace_path)
+        root_path = self.resolve_workspace_path(workspace_path, root, must_exist=True)
+        try:
+            root_arg = root_path.relative_to(workspace).as_posix()
+        except ValueError as exc:
+            raise WorkspaceError(f"搜索 root 越过 workspace 边界：{root}") from exc
+        if root_arg == "":
+            root_arg = "."
+
+        command = self._ripgrep_command(
+            query=query,
+            mode=mode,
+            glob=glob,
+            output_mode=output_mode,
+            root_arg=root_arg,
+            context_lines=context_lines,
+            single_thread=False,
+        )
+        output = self._execute_in_container(
+            command,
+            workspace_path=workspace_path,
+            timeout_sec=timeout_sec or self.default_command_timeout_sec,
+            command_semantics="agent_tool_search",
+            recorder=recorder,
+        )
+        search_backend = "ripgrep"
+        fallback_reason = None
+        duration_ms = output.duration_ms
+        if _rg_resource_limited(output.stderr, output.stdout):
+            retry_command = self._ripgrep_command(
+                query=query,
+                mode=mode,
+                glob=glob,
+                output_mode=output_mode,
+                root_arg=root_arg,
+                context_lines=context_lines,
+                single_thread=True,
+            )
+            retry = self._execute_in_container(
+                retry_command,
+                workspace_path=workspace_path,
+                timeout_sec=timeout_sec or self.default_command_timeout_sec,
+                command_semantics="agent_tool_search",
+                recorder=recorder,
+            )
+            output = retry
+            duration_ms += retry.duration_ms
+            search_backend = "ripgrep_single_thread_retry"
+            fallback_reason = "ripgrep_resource_limited_single_thread_retry"
+
+        payload = _parse_ripgrep_json_output(
+            stdout=output.stdout,
+            stderr=output.stderr,
+            exit_code=output.exit_code,
+            timeout=output.timeout,
+            output_mode=output_mode,
+            offset=offset,
+            max_matches=max_matches,
+        )
+        payload.update(
+            {
+                "engine": "ripgrep",
+                "search_backend": search_backend,
+                "fallback_reason": fallback_reason,
+                "execution_duration_ms": duration_ms,
+                "container_execution_facts_ref": output.facts_ref,
+                "root": root_arg,
+                "glob": glob,
+            }
+        )
+        return payload
 
     def write_text(self, workspace_path: str | Path, requested_path: str | Path, content: str) -> None:
         path = self.resolve_workspace_path(workspace_path, requested_path)
@@ -627,6 +861,56 @@ class DockerWorkspaceAdapter:
             for path in sorted(self.facts_dir.glob("*.json"))
             if path.name != "manifest.json"
         ]
+
+    def _probe_ripgrep(self) -> dict[str, Any]:
+        output = self._execute_in_container(
+            ["sh", "-lc", "command -v rg && rg --version | head -1"],
+            workspace_path=self.run_dir,
+            timeout_sec=30,
+            command_semantics="docker_backend_probe",
+            recorder=None,
+        )
+        lines = [line.strip() for line in output.stdout.splitlines() if line.strip()]
+        return {
+            "rg_available": output.exit_code == 0 and bool(lines),
+            "rg_path": lines[0] if output.exit_code == 0 and lines else None,
+            "rg_version": lines[1] if output.exit_code == 0 and len(lines) > 1 else (output.stderr.strip() or None),
+            "rg_probe_exit_code": output.exit_code,
+        }
+
+    def _ripgrep_command(
+        self,
+        *,
+        query: str,
+        mode: str,
+        glob: str | None,
+        output_mode: str,
+        root_arg: str,
+        context_lines: int,
+        single_thread: bool,
+    ) -> list[str]:
+        command = [
+            "rg",
+            "--json",
+            "--hidden",
+            "--color",
+            "never",
+            "--line-number",
+        ]
+        if single_thread:
+            command.extend(["-j", "1"])
+        if mode == "literal":
+            command.append("-F")
+        if output_mode == "files_with_matches":
+            command.extend(["-m", "1"])
+        elif output_mode == "content" and context_lines > 0:
+            command.extend(["-C", str(max(0, min(context_lines, 20)))])
+        for excluded in RG_EXCLUDED_GLOBS:
+            command.extend(["--glob", excluded])
+        if glob:
+            command.extend(["--glob", glob])
+        command.extend(["--", query, root_arg])
+        return command
 
     def _ensure_image(self) -> str:
         if self._image_exists():
@@ -1208,6 +1492,174 @@ def _dockerfile_for_base_image(base_image: str) -> str:
     if not base_image or any(char in base_image for char in "\r\n"):
         raise WorkspaceError("Docker build_base_image 必须是单行非空 image ref。")
     return DEFAULT_DOCKERFILE_TEMPLATE.format(base_image=base_image)
+
+
+def _parse_ripgrep_json_output(
+    *,
+    stdout: str,
+    stderr: str,
+    exit_code: int | None,
+    timeout: bool,
+    output_mode: str,
+    offset: int,
+    max_matches: int,
+) -> dict[str, Any]:
+    rendered_matches: list[str] = []
+    matched_files: set[str] = set()
+    per_file_counts: dict[str, int] = {}
+    parse_error_samples: list[dict[str, str]] = []
+    summary_stats: dict[str, Any] = {}
+    match_event_count = 0
+    hidden_paths: set[str] = set()
+
+    for raw_line in stdout.splitlines():
+        if not raw_line.strip():
+            continue
+        try:
+            event = json.loads(raw_line)
+        except json.JSONDecodeError:
+            if len(parse_error_samples) < 5:
+                parse_error_samples.append({"line": raw_line[:240], "error": "invalid_json_line"})
+            continue
+        if not isinstance(event, dict):
+            continue
+        event_type = event.get("type")
+        data = event.get("data")
+        if not isinstance(data, dict):
+            continue
+        if event_type == "match":
+            path = _rg_event_path(data)
+            line_number = data.get("line_number")
+            line_text = _rg_event_line_text(data)
+            if path is None or not isinstance(line_number, int):
+                continue
+            if _is_sensitive_relative_path(Path(path)):
+                hidden_paths.add(path)
+                continue
+            matched_files.add(path)
+            submatches = data.get("submatches")
+            match_increments = len(submatches) if isinstance(submatches, list) and submatches else 1
+            per_file_counts[path] = per_file_counts.get(path, 0) + match_increments
+            match_event_count += match_increments
+            rendered_matches.append(f"{path}:{line_number}:>{line_text.rstrip()}")
+        elif event_type == "context" and output_mode == "content":
+            path = _rg_event_path(data)
+            line_number = data.get("line_number")
+            line_text = _rg_event_line_text(data)
+            if path is not None and isinstance(line_number, int):
+                if _is_sensitive_relative_path(Path(path)):
+                    hidden_paths.add(path)
+                    continue
+                rendered_matches.append(f"{path}:{line_number}: {line_text.rstrip()}")
+        elif event_type == "summary":
+            stats = data.get("stats")
+            if isinstance(stats, dict):
+                summary_stats = stats
+
+    parse_error_count = len(parse_error_samples)
+    if output_mode == "files_with_matches":
+        result_items = sorted(matched_files)
+        total_match_count = len(result_items)
+    elif output_mode == "count":
+        result_items = [f"{path}:{per_file_counts[path]}" for path in sorted(per_file_counts)]
+        total_match_count = sum(per_file_counts.values())
+    else:
+        result_items = rendered_matches
+        total_match_count = match_event_count
+
+    page = result_items[offset : offset + max_matches]
+    next_offset = offset + len(page) if offset + len(page) < len(result_items) else None
+    rg_completed = exit_code in {0, 1} and not timeout and parse_error_count == 0
+    read_error_count = 0 if rg_completed else 1
+    read_error_samples = []
+    if read_error_count:
+        read_error_samples.append(
+            {
+                "path": "<ripgrep>",
+                "reason": (
+                    "timeout"
+                    if timeout
+                    else (stderr.strip() or f"ripgrep exited with code {exit_code}")[:240]
+                ),
+            }
+        )
+    scanned_file_count = int(summary_stats.get("searches") or 0)
+    scan_complete = rg_completed
+    if timeout:
+        scan_complete_reason = "ripgrep_timeout"
+    elif parse_error_count:
+        scan_complete_reason = "parse_error_detected"
+    elif exit_code not in {0, 1}:
+        scan_complete_reason = "ripgrep_error"
+    elif next_offset is not None:
+        scan_complete_reason = "result_page_truncated"
+    elif total_match_count == 0:
+        scan_complete_reason = "complete_no_match_all_visible_candidates_read"
+    else:
+        scan_complete_reason = "complete_all_visible_candidates_read"
+
+    return {
+        "matches": page,
+        "files_with_matches": sorted(matched_files),
+        "page_files_with_matches": sorted({item.split(":", 1)[0] for item in page})
+        if output_mode != "files_with_matches"
+        else page,
+        "total_match_count": total_match_count,
+        "candidate_file_count": scanned_file_count,
+        "scanned_candidate_file_count": scanned_file_count,
+        "scanned_file_count": scanned_file_count,
+        "searched_file_count": scanned_file_count,
+        "scanned_file_limit": scanned_file_count,
+        "unscanned_file_count": 0,
+        "scan_limit_reached": False,
+        "scan_complete": scan_complete,
+        "scan_complete_reason": scan_complete_reason,
+        "result_limit_reached": next_offset is not None,
+        "matched_file_count": len(matched_files),
+        "hidden_path_count": len(hidden_paths),
+        "skipped_hidden_count": len(hidden_paths),
+        "skipped_hidden_path_count": len(hidden_paths),
+        "symlink_outside_workspace_count": 0,
+        "skipped_symlink_count": 0,
+        "workspace_boundary_or_missing_count": 0,
+        "read_error_count": read_error_count,
+        "read_error_samples": read_error_samples,
+        "visibility_error_count": 0,
+        "visibility_error_samples": [],
+        "backend_mismatch_detected": False,
+        "truncated": bool(next_offset is not None or not scan_complete),
+        "next_offset": next_offset,
+        "output_mode": output_mode,
+        "rg_exit_code": exit_code,
+        "rg_timeout": timeout,
+        "rg_stderr_preview": stderr[:500],
+        "rg_summary_stats": summary_stats,
+        "parse_error_count": parse_error_count,
+        "parse_error_samples": parse_error_samples,
+    }
+
+
+def _rg_event_path(data: dict[str, Any]) -> str | None:
+    path = data.get("path")
+    if isinstance(path, dict):
+        text = path.get("text")
+        if isinstance(text, str):
+            return text
+    return None
+
+
+def _rg_event_line_text(data: dict[str, Any]) -> str:
+    lines = data.get("lines")
+    if isinstance(lines, dict):
+        text = lines.get("text")
+        if isinstance(text, str):
+            return text
+    return ""
+
+
+def _rg_resource_limited(stderr: str, stdout: str) -> bool:
+    combined = f"{stderr}\n{stdout}".lower()
+    return any(pattern in combined for pattern in RG_RESOURCE_ERROR_PATTERNS)
 
 
 def _safe_container_name(value: str) -> str:

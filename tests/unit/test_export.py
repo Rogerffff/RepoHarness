@@ -131,6 +131,101 @@ def test_provider_reasoning_trace_export_available_through_dispatcher(tmp_path: 
     ] == "dispatch reasoning target"
 
 
+def test_default_sft_export_excludes_harness_convergence_nudge_context(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_convergence_nudge_export",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    (run_dir / "transcript.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "record_id": "record_1",
+                        "run_id": run_dir.name,
+                        "task_id": "task_001",
+                        "message_id": "initial_0",
+                        "turn": 0,
+                        "role": "system",
+                        "content_preview": "system",
+                        "model_visible": True,
+                        "trainable": False,
+                        "created_at": "2026-05-08T00:00:00+00:00",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "record_id": "record_2",
+                        "run_id": run_dir.name,
+                        "task_id": "task_001",
+                        "message_id": "convergence_nudge_3_1",
+                        "turn": 3,
+                        "role": "user",
+                        "content_preview": json.dumps(
+                            {
+                                "repo_harness_control_message": {
+                                    "type": "convergence_nudge",
+                                    "policy_version": "repo_harness_convergence_nudge_v1",
+                                }
+                            }
+                        ),
+                        "model_visible": True,
+                        "trainable": False,
+                        "created_at": "2026-05-08T00:00:01+00:00",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "record_id": "record_3",
+                        "run_id": run_dir.name,
+                        "task_id": "task_001",
+                        "message_id": "context_warning_4_warning_80",
+                        "turn": 4,
+                        "role": "user",
+                        "content_preview": json.dumps(
+                            {
+                                "repo_harness_control_message": {
+                                    "type": "context_warning",
+                                    "policy_version": "repo_harness_context_warning_v1",
+                                }
+                            }
+                        ),
+                        "model_visible": True,
+                        "trainable": False,
+                        "created_at": "2026-05-08T00:00:02+00:00",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "record_id": "record_4",
+                        "run_id": run_dir.name,
+                        "task_id": "task_001",
+                        "message_id": "assistant_4",
+                        "turn": 4,
+                        "role": "assistant",
+                        "content_preview": "final answer",
+                        "model_visible": True,
+                        "trainable": True,
+                        "created_at": "2026-05-08T00:00:03+00:00",
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_sft_jsonl(run_dir)
+    record = _read_jsonl(output)[0]
+    payload_text = json.dumps(record["payload"], ensure_ascii=False)
+
+    assert record["payload"]["excluded_harness_control_message_count"] == 2
+    assert "convergence_nudge" not in payload_text
+    assert "context_warning" not in payload_text
+    assert [message["role"] for message in record["payload"]["messages"]] == ["system", "assistant"]
+
+
 def test_rl_export_without_formal_final_verifier_is_invalid_for_training(tmp_path: Path):
     run_dir = _minimal_run(tmp_path / "run_missing_formal", task_id="task_001")
 
@@ -144,6 +239,37 @@ def test_rl_export_without_formal_final_verifier_is_invalid_for_training(tmp_pat
     assert manifest["invalid_count"] == 1
     assert audit["samples"][0]["invalid_for_training"] is True
     assert audit["samples"][0]["invalid_reason"] == "missing_formal_final_verifier"
+
+
+def test_rl_export_filters_invalid_reward_sample_even_with_formal_verifier(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_invalid_reward",
+        task_id="task_001",
+        reward=0.0,
+        include_formal_verifier=True,
+    )
+    (run_dir / "reward.json").write_text(
+        json.dumps(
+            {
+                "final_reward": 0.0,
+                "reward_version": "repo_harness_reward_v0",
+                "invalid_for_training": True,
+                "invalid_reason": "task_timeout_before_final_verifier",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_rl_jsonl(run_dir)
+    export_dir = _latest_export_dir(run_dir / "exports")
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    manifest = json.loads((export_dir / "export_manifest.json").read_text(encoding="utf-8"))
+
+    assert _read_jsonl(output) == []
+    assert manifest["included_count"] == 0
+    assert manifest["invalid_count"] == 1
+    assert audit["samples"][0]["invalid_reason"] == "task_timeout_before_final_verifier"
 
 
 def test_export_rejects_manifest_artifact_path_escape(tmp_path: Path):

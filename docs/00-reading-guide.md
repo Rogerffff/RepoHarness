@@ -2,7 +2,9 @@
 
 ## 一句话定义
 
-RepoHarness 是一个面向 agentic training 和 post-training 的轻量级软件工程智能体 Harness。第一版已经实现最小可运行闭环，可以在本地微型仓库任务中执行工具调用、收集轨迹、运行 verifier、生成 reward metadata，并导出监督微调或强化学习可用的数据。
+RepoHarness 是一个面向 agentic training 和 post-training 的轻量级软件工程智能体 Harness。它的目标是把真实或半真实仓库任务转化为可执行、可审计、可导出的训练轨迹。第一版已经实现本地微型仓库最小闭环；第二版扩展 provider、run metadata、导出审计和多 rollout；第三版交付 Docker-based executable repository environment、真实 repository-level task、固定 SWE-Bench-like 小子集和 acceptance bundle；第四版继续补强任务冻结、单机 rollout orchestration、工具生命周期审计、agent run integration、trajectory store、export quality、cards 和 final acceptance machinery。
+
+截至 2026-05-05，V4 已完成复核问题修复并重新生成验收证据。最新 V4 closure commit 为 `e0da89c test: refresh V4 acceptance evidence after hardening`，完整测试结果为 `712 passed`，修复后最终验收目录为 `runs/v4-final-rerun-20260504T194758Z/`。本轮文档同步后，当前文档哈希可复核的 bundle 是 `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`。阅读和引用 V4 结论时，应使用该目录下的 acceptance inputs、acceptance report、文档同步后的 acceptance bundle 和 final acceptance command log。
 
 核心闭环是：
 
@@ -26,7 +28,7 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 4. `06-task-dataset-and-environment-adapters.md`
 5. `11-object-model-config-and-data-flow.md`
 
-准备正式开工实现第一版最小闭环：
+理解历史 V1 最小闭环：
 
 1. `01-project-positioning-and-requirements.md` 中的“第一版最小可运行闭环”。
 2. `02-system-architecture.md` 中的“第一版 CLI / Eval Runner 操作面”。
@@ -56,13 +58,25 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 
 1. `13-agentic-technical-report-reading-map.md`
 
+准备接手当前 V4 状态或 V5 范围设计：
+
+1. `docs/v4/scope-and-roadmap.md`
+2. `docs/v4/implementation-plan.md`
+3. `docs/v4/review/implementation-plan-review.md`
+4. `docs/v4/final-acceptance.md`
+5. `docs/v4/walkthrough.md`
+6. `docs/v4/review/implementation/08-final-acceptance-review.md`
+7. `runs/v4-final-rerun-20260504T194758Z/` 下的最新修复后 acceptance evidence。
+8. `docs/v5/scope-and-roadmap.md`
+9. `docs/v5/review/scope-review.md`
+
 ## 项目边界
 
-RepoHarness 第一版不是完整产品，而是在少量 micro-repo task 上跑通一条可复盘闭环：任务加载、workspace 准备、fake model 或 replay model 工具调用、工具结果回流、final patch 冻结、strict final verifier、reward metadata、metrics 和训练导出样例。
+RepoHarness 的历史第一版不是完整产品，而是在少量 micro-repo task 上跑通一条可复盘闭环：任务加载、workspace 准备、fake model 或 replay model 工具调用、工具结果回流、final patch 冻结、strict final verifier、reward metadata、metrics 和训练导出样例。当前代码已经推进到 V4，但仍保持单机优先和训练轨迹生产链路定位。
 
 它不是 Claude Code、Cursor、OpenHands 或 SWE-agent 的复刻。它借鉴产品级 agent 系统的关键架构不变量：统一 agent loop、工具能力契约、权限判断、工具结果回流、轨迹存储和失败诊断。
 
-它也不是生产级安全沙箱。第一版使用本地进程执行边界和保守权限规则，不声称具备完整网络隔离、逃逸防护、审计、资源配额或企业权限能力。Docker-based executable repository environment 仍然是后续扩展方向，不是第一版硬性能力。
+它也不是生产级安全沙箱。第一版使用本地进程执行边界和保守权限规则；第三版开始交付真实 Docker-based executable repository environment；第四版增加 resource lock、checkpoint state 和更多审计事实。即便如此，Docker execution mode 仍只表示可复现执行边界，不声称具备完整网络隔离、逃逸防护、多租户安全或企业权限能力。
 
 ## 核心术语
 
@@ -72,7 +86,7 @@ RepoHarness 第一版不是完整产品，而是在少量 micro-repo task 上跑
 - trajectory：一次任务运行中的消息、工具调用、观察、测试结果和终止信息。
 - verifier：将代码修改结果转成可评测信号的组件，例如测试执行器和日志解析器。
 - reward metadata：由 verifier 和成本信息生成的训练奖励候选字段，不等于新的强化学习算法。
-- sandbox：任务执行边界。第一版只设计 local process 和 Docker execution mode。
+- sandbox：任务执行边界。RepoHarness 支持 local process 和 Docker-based executable repository environment，但 Docker 不等同于生产级安全沙箱。
 - task adapter：把任务数据集转换为 RepoHarness 可执行任务格式的适配层。
 - scaffold：控制模型如何规划、调用工具和利用反馈的策略层，例如 simple ReAct 或 planner-coder-verifier。
 - run config：一次批量评测或单任务运行的配置对象，包含模型、权限模式、执行模式、预算、输出目录和可复现实验字段。

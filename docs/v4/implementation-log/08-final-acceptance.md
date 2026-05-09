@@ -4,6 +4,8 @@
 
 阶段 8 的目标是生成 V4 final acceptance run selection manifest、acceptance inputs、acceptance report、acceptance command log 和 acceptance bundle，并在 acceptance report 通过后生成 post-acceptance 文档。
 
+本文最初记录的是 Stage 8 初始完成时的 `runs/v4-final-rerun-20260504T162105Z/` 证据。后续复核发现检查器和 evidence 绑定缺口，已经通过修复提交重新生成最终验收证据。当前 V4 最新收口目录是 `runs/v4-final-rerun-20260504T194758Z/`，完整测试结果为 `712 passed`，文档同步后的可复核 bundle 是 `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`。
+
 ## 实现内容
 
 - 新增 `repo-harness build-v4-run-selection-manifest`。
@@ -28,7 +30,7 @@
 
 ## 机器产物
 
-Final acceptance run：
+初始 final acceptance run，历史记录：
 
 - `runs/v4-final-rerun-20260504T162105Z/v4_query_spec.json`
 - `runs/v4-final-rerun-20260504T162105Z/run_selection_manifest.json`
@@ -37,7 +39,7 @@ Final acceptance run：
 - `runs/v4-final-rerun-20260504T162105Z/acceptance/acceptance_command_log.jsonl`
 - `runs/v4-final-rerun-20260504T162105Z/acceptance/acceptance_bundle_manifest.json`
 
-Pre-acceptance evidence：
+初始 pre-acceptance evidence，历史记录：
 
 - `runs/v4-pre-acceptance-evidence-20260504T162105Z/pre_acceptance_command_log.jsonl`
 - `runs/v4-pre-acceptance-evidence-20260504T162105Z/compileall.stdout.txt`
@@ -52,6 +54,16 @@ Post-acceptance documentation：
 - `docs/v4/final-acceptance.md`
 - `docs/v4/walkthrough.md`
 
+修复复核问题后的最新 V4 final acceptance evidence：
+
+- `runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json`
+- `runs/v4-final-rerun-20260504T194758Z/acceptance/v4_acceptance_report.json`
+- `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest.json`
+- `runs/v4-final-rerun-20260504T194758Z/acceptance/final_acceptance_command_log.jsonl`
+- `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`
+- `runs/v4-final-rerun-20260504T194758Z/acceptance/final_acceptance_command_log_doc_sync_20260505T075410Z.jsonl`
+- `runs/v4-pre-acceptance-evidence-20260504T192620Z/pre_acceptance_command_log.jsonl`
+
 ## 验证命令
 
 - `PATH=.venv/bin:$PATH python -m compileall src`
@@ -60,9 +72,12 @@ Post-acceptance documentation：
 - `PATH=.venv/bin:$PATH repo-harness inspect-v2-acceptance runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json --assert-complete`
 - `PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json --assert-complete`
 - `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json --assert-immutable`
-- `PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T162105Z/v4_acceptance_inputs.json --assert-complete`
-- `PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T162105Z/acceptance/v4_acceptance_report.json --assert-complete`
-- `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T162105Z/acceptance/acceptance_bundle_manifest.json --assert-immutable`
+- 初始 Stage 8 验证曾运行 `PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T162105Z/v4_acceptance_inputs.json --assert-complete`
+- 初始 Stage 8 验证曾运行 `PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T162105Z/acceptance/v4_acceptance_report.json --assert-complete`
+- 初始 Stage 8 验证曾运行 `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T162105Z/acceptance/acceptance_bundle_manifest.json --assert-immutable`
+- 最新 V4 收口验证应运行 `PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json --assert-complete`
+- 最新 V4 收口验证应运行 `PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T194758Z/acceptance/v4_acceptance_report.json --assert-complete`
+- 最新 V4 文档同步 bundle 验证应运行 `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json --assert-immutable`
 
 ## 验证结果
 
@@ -75,6 +90,14 @@ Post-acceptance documentation：
 - V4 acceptance inputs inspect 通过。
 - V4 acceptance report inspect 通过。
 - V4 acceptance bundle immutable inspect 通过。
+
+后续修复复核问题后的最新验证结果：
+
+- Full pytest 通过，712 个测试通过。
+- V4 acceptance inputs inspect 通过。
+- V4 acceptance report inspect 通过。
+- V4 文档同步后的 acceptance bundle immutable inspect 通过。
+- 复核中发现的 command log 绑定、reward audit schema、structured reward allowlist、preference pair 可比较性、独立 regression evidence 和 implementation log index 问题已经在最新 evidence 中收口。
 
 ## 正例证据
 

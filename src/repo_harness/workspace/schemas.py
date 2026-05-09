@@ -67,6 +67,13 @@ class DockerBackendFacts(StrictBaseModel):
     cleanup_policy: str
     cleanup_status: Literal["not_started", "completed", "failed", "skipped"]
     unavailable_reason: str | None = None
+    rg_available: bool = False
+    rg_path: str | None = None
+    rg_version: str | None = None
+    rg_probe_exit_code: int | None = None
+    search_backend_default: str = "unknown"
+    require_ripgrep_for_docker_search: bool = True
+    allow_degraded_python_search_fallback: bool = False
 
 
 class ContainerExecutionFacts(StrictBaseModel):

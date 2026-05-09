@@ -5,7 +5,7 @@ from __future__ import annotations
 from repo_harness.run_metadata.schemas import ToolProtocolFacts, ToolSchemaEntry, ToolSchemaSnapshot
 from repo_harness.schema_base import stable_hash
 from repo_harness.schema_versions import TOOL_POLICY_VERSION
-from repo_harness.tools import ToolRegistry, default_tool_registry
+from repo_harness.tools import ToolPolicy, ToolRegistry, default_tool_registry
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 
 TOOL_RESULT_FORMAT_VERSION = "repo_harness_tool_result_v0"
@@ -53,11 +53,20 @@ def build_tool_schema_snapshot(
 def write_tool_schema_snapshot(
     recorder: RunRecorder,
     registry: ToolRegistry | None = None,
+    tool_policy: ToolPolicy | None = None,
 ) -> tuple[ToolSchemaSnapshot, ArtifactRef, ToolProtocolFacts]:
     snapshot = build_tool_schema_snapshot(registry)
+    tool_policy = tool_policy or ToolPolicy()
     ref = recorder.write_json_artifact(
         "tool_schema_snapshot",
-        snapshot.model_dump(mode="json"),
+        {
+            **snapshot.model_dump(mode="json"),
+            "tool_policy_version": tool_policy.tool_policy_version,
+            "require_read_before_edit": tool_policy.require_read_before_edit,
+            "tool_policy_config": {
+                "require_read_before_edit": tool_policy.require_read_before_edit,
+            },
+        },
         {"budget_policy": "preserve_json"},
     )
     protocol = ToolProtocolFacts(
@@ -66,6 +75,10 @@ def write_tool_schema_snapshot(
         tool_order=snapshot.tool_order,
         tool_parser_version=snapshot.tool_parser_version,
         tool_result_format_version=snapshot.tool_result_format_version,
-        tool_policy_version=TOOL_POLICY_VERSION,
+        tool_policy_version=tool_policy.tool_policy_version or TOOL_POLICY_VERSION,
+        require_read_before_edit=tool_policy.require_read_before_edit,
+        tool_policy_config={
+            "require_read_before_edit": tool_policy.require_read_before_edit,
+        },
     )
     return snapshot, ref, protocol

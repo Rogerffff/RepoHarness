@@ -15,6 +15,10 @@ from repo_harness.schema_base import stable_hash
 from repo_harness.schema_versions import CONTEXT_POLICY_VERSION
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TrajectoryEvent
 
+PROVIDER_READY_TOKEN_ESTIMATOR_VERSION = "provider_body_char4_token_estimator_v1"
+CONTEXT_REPLACEMENT_RUNTIME_POLICY_VERSION = "deterministic_tool_result_replacement_runtime_v1"
+REPLACEMENT_PREVIEW_MAX_CHARS = 1200
+
 
 class ContextManager:
     def __init__(self) -> None:
@@ -30,6 +34,7 @@ class ContextManager:
         task_id: str,
         turn: int,
         context_config: ContextManagementConfig | None = None,
+        provider_name: str = "generic",
     ) -> PreparedMessages:
         self.context_revision += 1
         config = context_config or ContextManagementConfig()
@@ -39,6 +44,30 @@ class ContextManager:
             config,
         )
         model_input_hash = stable_hash(prepared_messages)
+        internal_char_estimate_before = _internal_char_estimate(messages)
+        internal_char_estimate = _internal_char_estimate(prepared_messages)
+        internal_token_estimate_before = _char4_token_estimate_from_chars(
+            internal_char_estimate_before
+        )
+        internal_token_estimate = _char4_token_estimate_from_chars(internal_char_estimate)
+        provider_body_projection = _provider_body_projection(
+            prepared_messages,
+            provider_name=provider_name,
+        )
+        provider_body_char_estimate = _json_char_estimate(provider_body_projection)
+        provider_ready_token_estimate = _char4_token_estimate_from_chars(
+            provider_body_char_estimate
+        )
+        reduction_data = {
+            **reduction_data,
+            "provider_ready_token_estimate": provider_ready_token_estimate,
+            "provider_body_char_estimate": provider_body_char_estimate,
+            "internal_token_estimate_after": internal_token_estimate,
+            "replacement_applied_but_insufficient_context_limit": bool(
+                reduction_data.get("replaced_tool_result_ids")
+                and provider_ready_token_estimate > config.max_context_tokens
+            ),
+        }
         pairing_validation = _validate_tool_pairing(prepared_messages)
         state = ContentReplacementState(
             seen_tool_result_ids=list(self._records_by_tool_result_id.keys()),
@@ -58,7 +87,12 @@ class ContextManager:
                 "context_revision": self.context_revision,
                 "model_input_hash": model_input_hash,
                 "provider_format": "repo_harness_messages_v0",
-                "content_replacement_state": state.model_dump(mode="json"),
+                "provider_body_projection_format": "repo_harness_provider_body_projection_v1",
+                "provider_body_char_estimate": provider_body_char_estimate,
+                "provider_ready_token_estimate": provider_ready_token_estimate,
+                "internal_char_estimate": internal_char_estimate,
+                "internal_token_estimate": internal_token_estimate,
+                "threshold_decision_source": "provider_ready_token_estimate",
                 "content_replacement_state_ref": state_ref.model_dump(mode="json"),
             },
             {"budget_policy": "preserve_json"},
@@ -75,9 +109,25 @@ class ContextManager:
                 "context_revision": self.context_revision,
                 "model_input_hash": model_input_hash,
                 "context_policy_version": CONTEXT_POLICY_VERSION,
-                "token_estimator_version": "repo_harness_char_estimator_v0",
-                "tokens_before": max(1, len(str(messages)) // 4),
-                "tokens_after": max(1, len(str(prepared_messages)) // 4),
+                "token_estimator_version": PROVIDER_READY_TOKEN_ESTIMATOR_VERSION,
+                "provider_ready_token_estimator_version": PROVIDER_READY_TOKEN_ESTIMATOR_VERSION,
+                "threshold_decision_source": "provider_ready_token_estimate",
+                "tokens_before": _char4_token_estimate_from_chars(
+                    _json_char_estimate(
+                        _provider_body_projection(messages, provider_name=provider_name)
+                    )
+                ),
+                "tokens_after": provider_ready_token_estimate,
+                "provider_ready_token_estimate": provider_ready_token_estimate,
+                "provider_body_char_estimate": provider_body_char_estimate,
+                "provider_body_projection_format": "repo_harness_provider_body_projection_v1",
+                "provider_returned_prompt_tokens": None,
+                "provider_usage_metadata_status": "unavailable_before_provider_call",
+                "estimator_error_ratio": None,
+                "internal_char_estimate_before": internal_char_estimate_before,
+                "internal_char_estimate_after": internal_char_estimate,
+                "internal_token_estimate_before": internal_token_estimate_before,
+                "internal_token_estimate_after": internal_token_estimate,
                 "tool_pairing_validation": pairing_validation,
                 "context_reduction": reduction_data,
                 "content_replacement_state_hash": state.state_hash,
@@ -91,7 +141,14 @@ class ContextManager:
             context_revision=self.context_revision,
             context_event=event,
             content_replacement_state=state,
-            token_estimate=max(1, len(str(prepared_messages)) // 4),
+            token_estimate=provider_ready_token_estimate,
+            token_estimator_version=PROVIDER_READY_TOKEN_ESTIMATOR_VERSION,
+            internal_char_estimate=internal_char_estimate,
+            internal_token_estimate=internal_token_estimate,
+            provider_body_char_estimate=provider_body_char_estimate,
+            provider_ready_token_estimate=provider_ready_token_estimate,
+            provider_ready_token_estimator_version=PROVIDER_READY_TOKEN_ESTIMATOR_VERSION,
+            threshold_decision_source="provider_ready_token_estimate",
         )
 
     def _reduce_messages(
@@ -104,6 +161,13 @@ class ContextManager:
         replaced_tool_result_ids: list[str] = []
         replacement_refs: list[ArtifactRef] = []
         tool_infos = _tool_message_infos(messages)
+        internal_tokens_before_reduction = _char4_token_estimate_from_chars(
+            _internal_char_estimate(messages)
+        )
+        effective_budget, budget_reason = _effective_tool_result_budget_chars(
+            config=config,
+            internal_tokens_before_reduction=internal_tokens_before_reduction,
+        )
         protected_tool_result_ids = _protected_tool_result_ids(
             tool_infos,
             keep_recent_turns=config.keep_recent_turns,
@@ -113,7 +177,7 @@ class ContextManager:
             tool_infos,
             protected_tool_result_ids,
             existing_replacement_ids=set(self._replacement_text_by_tool_result_id),
-            budget_chars=config.tool_result_aggregate_budget_chars,
+            budget_chars=effective_budget,
         )
         for message in messages:
             if message.get("role") != "tool":
@@ -146,6 +210,19 @@ class ContextManager:
             "replaced_tool_result_ids": replaced_tool_result_ids,
             "protected_tool_result_ids": sorted(protected_tool_result_ids),
             "replacement_artifact_refs": [ref.model_dump(mode="json") for ref in replacement_refs],
+            "context_replacement_runtime_policy_version": CONTEXT_REPLACEMENT_RUNTIME_POLICY_VERSION,
+            "compact_threshold_ratio": config.compact_threshold_ratio,
+            "compact_threshold_ratio_runtime_effect": "connected_to_tool_result_replacement_budget_v1",
+            "tool_result_aggregate_budget_chars": config.tool_result_aggregate_budget_chars,
+            "effective_tool_result_aggregate_budget_chars": effective_budget,
+            "effective_budget_reason": budget_reason,
+            "internal_tokens_before_reduction": internal_tokens_before_reduction,
+            "replacement_preview_max_chars": REPLACEMENT_PREVIEW_MAX_CHARS,
+            "replacement_preview_total_chars": sum(
+                len(self._replacement_text_by_tool_result_id.get(tool_result_id, ""))
+                for tool_result_id in replaced_tool_result_ids
+            ),
+            "replacement_cooldown_policy": "stable_existing_replacement_reused_by_tool_result_id",
         }
 
     def _record_first_visible(self, *, tool_result_id: str, tool_call_id: str, content: str) -> None:
@@ -184,7 +261,7 @@ class ContextManager:
             artifact_data = artifact
         else:
             artifact_data = {}
-        head, tail = _head_tail(original_content)
+        head, tail = _head_tail(original_content, max_chars=REPLACEMENT_PREVIEW_MAX_CHARS)
         recovery = _replacement_recovery(message)
         safe_artifact_data = _artifact_data_for_replacement(artifact_data)
         include_preview = not safe_artifact_data.get("redacted")
@@ -262,11 +339,20 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _head_tail(text: str, line_count: int = 3) -> tuple[str, str]:
+def _head_tail(text: str, line_count: int = 3, max_chars: int = REPLACEMENT_PREVIEW_MAX_CHARS) -> tuple[str, str]:
     lines = text.splitlines()
     head = "\n".join(lines[:line_count])
     tail = "\n".join(lines[-line_count:]) if len(lines) > line_count else head
+    per_side_budget = max(80, max_chars // 2)
+    head = _truncate_preview_side(head, per_side_budget)
+    tail = _truncate_preview_side(tail, per_side_budget)
     return head, tail
+
+
+def _truncate_preview_side(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "\n[preview truncated]"
 
 
 def _replacement_recovery(message: dict[str, object]) -> dict[str, Any]:
@@ -290,6 +376,13 @@ def _replacement_recovery(message: dict[str, object]) -> dict[str, Any]:
         arguments=normalized_arguments,
         typed=typed,
     )
+    envelope = _dict_value(typed.get("result_envelope"))
+    envelope_recovery_call = envelope.get("recovery_call")
+    envelope_recovery_hint = envelope.get("recovery_hint")
+    if isinstance(envelope_recovery_call, str) and envelope_recovery_call:
+        recommended_call = envelope_recovery_call
+    if isinstance(envelope_recovery_hint, str) and envelope_recovery_hint:
+        recovery_hint = envelope_recovery_hint
     return {
         "tool_name": tool_name,
         "requested_tool_name": message.get("requested_tool_name") or message.get("tool_name"),
@@ -485,6 +578,59 @@ def _json_preview(value: dict[str, Any]) -> str:
     if len(compact) <= 800:
         return compact
     return compact[:800] + "...[truncated]"
+
+
+def _internal_char_estimate(value: Any) -> int:
+    return len(str(value))
+
+
+def _json_char_estimate(value: Any) -> int:
+    return len(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+
+
+def _char4_token_estimate_from_chars(chars: int) -> int:
+    return max(1, chars // 4)
+
+
+def _provider_body_projection(
+    messages: list[dict[str, object]],
+    *,
+    provider_name: str,
+) -> dict[str, Any]:
+    return {
+        "provider": provider_name,
+        "projection_format": "repo_harness_provider_body_projection_v1",
+        "messages": [_provider_message_projection(message) for message in messages],
+    }
+
+
+def _provider_message_projection(message: dict[str, object]) -> dict[str, Any]:
+    projected: dict[str, Any] = {
+        "role": message.get("role"),
+        "content": message.get("content"),
+    }
+    for key in ("tool_call_id", "tool_calls", "name"):
+        if key in message:
+            projected[key] = message[key]
+    metadata = message.get("metadata")
+    if isinstance(metadata, dict) and "provider_private" in metadata:
+        projected["metadata"] = {"provider_private": metadata["provider_private"]}
+    return projected
+
+
+def _effective_tool_result_budget_chars(
+    *,
+    config: ContextManagementConfig,
+    internal_tokens_before_reduction: int,
+) -> tuple[int, str]:
+    base_budget = config.tool_result_aggregate_budget_chars
+    if internal_tokens_before_reduction >= int(config.max_context_tokens * 0.9):
+        return max(4000, base_budget // 4), "internal_estimate_at_or_above_90_percent_threshold"
+    if internal_tokens_before_reduction >= int(
+        config.max_context_tokens * config.compact_threshold_ratio
+    ):
+        return max(8000, base_budget // 2), "internal_estimate_at_or_above_compact_threshold"
+    return base_budget, "below_compact_threshold"
 
 
 def _tool_message_infos(messages: list[dict[str, object]]) -> list[dict[str, Any]]:

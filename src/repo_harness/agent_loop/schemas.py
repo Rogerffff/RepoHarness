@@ -65,3 +65,6 @@ class AgentLoopState(StrictBaseModel):
     hidden_feedback_visible_to_model: bool = True
     public_tests_ran: bool = False
     hidden_feedback_ran: bool = False
+    loop_diagnostics: list[dict[str, Any]] = Field(default_factory=list)
+    loop_diagnostics_summary: dict[str, Any] = Field(default_factory=dict)
+    working_state: dict[str, Any] | None = None

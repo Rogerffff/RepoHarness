@@ -21,8 +21,11 @@ def test_planner_coder_verifier_scaffold_declares_phase_policy():
     assert scaffold.phases() == ["planner", "coder", "verifier", "repair", "final"]
     assert scaffold.allowed_tools_for_phase("planner") == [
         "list_files",
+        "glob_files",
         "read_file",
         "grep",
+        "symbol_search",
+        "update_working_state",
         "git_diff",
     ]
     assert "edit_file" not in scaffold.allowed_tools_for_phase("planner")
@@ -47,7 +50,7 @@ def test_phase_allowed_tools_respect_disabled_test_feedback():
 
     assert "run_tests" not in allowed
     assert "run_tests" not in verifier_allowed
-    assert verifier_allowed == ["read_file", "grep", "git_diff"]
+    assert verifier_allowed == ["glob_files", "read_file", "grep", "symbol_search", "update_working_state", "git_diff"]
 
 
 def test_agent_loop_records_phase_transitions_and_phase_context(tmp_path: Path):
@@ -78,7 +81,7 @@ def test_agent_loop_records_phase_transitions_and_phase_context(tmp_path: Path):
         "current_phase": "planner",
         "phase_sequence": ["planner", "coder", "verifier", "repair", "final"],
         "phase_prompt": "Plan the repository change. Inspect files as needed, but do not edit code.",
-        "allowed_tools_for_phase": ["list_files", "read_file", "grep", "git_diff"],
+        "allowed_tools_for_phase": ["list_files", "glob_files", "read_file", "grep", "symbol_search", "update_working_state", "git_diff"],
         "phase_transition_policy": "repo_harness_planner_coder_verifier_linear_v0",
     }
     assert client.requests[0].allowed_tool_definitions[-1]["name"] == "git_diff"

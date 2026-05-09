@@ -14,13 +14,27 @@ class PlannerCoderVerifierScaffold(ScaffoldDefinition):
 PHASE_SEQUENCE = ["planner", "coder", "verifier", "repair", "final"]
 
 PHASE_ALLOWED_TOOLS = {
-    "planner": ["list_files", "read_file", "grep", "git_diff"],
-    "coder": ["list_files", "read_file", "grep", "edit_file", "create_file", "bash", "git_diff"],
-    "verifier": ["read_file", "grep", "run_tests", "git_diff"],
-    "repair": [
+    "planner": ["list_files", "glob_files", "read_file", "grep", "symbol_search", "update_working_state", "git_diff"],
+    "coder": [
         "list_files",
+        "glob_files",
         "read_file",
         "grep",
+        "symbol_search",
+        "update_working_state",
+        "edit_file",
+        "create_file",
+        "bash",
+        "git_diff",
+    ],
+    "verifier": ["glob_files", "read_file", "grep", "symbol_search", "update_working_state", "run_tests", "git_diff"],
+    "repair": [
+        "list_files",
+        "glob_files",
+        "read_file",
+        "grep",
+        "symbol_search",
+        "update_working_state",
         "edit_file",
         "create_file",
         "bash",

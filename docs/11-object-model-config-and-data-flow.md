@@ -6,7 +6,7 @@
 
 ## 源代码目录
 
-本文最初用于规划第一版实现的模块边界。第二版实现后，代码已经按下面的目录结构扩展到 run metadata、导出审计、多 rollout、scaffold registry、mock provider、DeepSeek 主 provider、OpenAI fallback provider、任务集扩展和 Docker execution mode 的 interface-only 可审计路径。Docker backend 仍未实现，不能描述为生产级安全沙箱或已经交付的容器执行后端。
+本文最初用于规划第一版实现的模块边界。第二版实现后，代码扩展到 run metadata、导出审计、多 rollout、scaffold registry、mock provider、DeepSeek 主 provider、OpenAI fallback provider、任务集扩展和 Docker execution mode 的 interface-only 可审计路径。第三版已经实现本地 Docker-based executable repository environment，并通过 V3 final acceptance；第四版在此基础上推进 task source freeze、rollout orchestration、tool lifecycle audit、agent run integration、export quality、cards 和 final acceptance machinery。Docker backend 已是 V3 已交付能力，但仍不能描述为生产级安全沙箱、多租户隔离环境或公开榜单等价执行基础设施。
 
 ```text
 src/repo_harness/
@@ -26,7 +26,7 @@ src/repo_harness/
   workspace/         # local process and Docker-based executable repository environment
 ```
 
-这些目录用于维持对象所有权和模块边界。第一版兼容范围以 `docs/v1-walkthrough.md` 和 `docs/v1-final-acceptance.md` 为准；第二版能力边界以 `docs/v2/scope-and-roadmap.md`、`docs/v2/implementation-plan.md` 和 `docs/v2/final-acceptance.md` 为准。
+这些目录用于维持对象所有权和模块边界。第一版兼容范围以 `docs/v1/walkthrough.md` 和 `docs/v1/final-acceptance.md` 为准；第二版能力边界以 `docs/v2/scope-and-roadmap.md`、`docs/v2/implementation-plan.md` 和 `docs/v2/final-acceptance.md` 为准；第三版能力边界以 `docs/v3/scope-and-roadmap.md`、`docs/v3/implementation-plan.md` 和 `docs/v3/final-acceptance.md` 为准；第四版实施边界以 `docs/v4/scope-and-roadmap.md`、`docs/v4/implementation-plan.md`、`docs/v4/final-acceptance.md`、`docs/v4/walkthrough.md` 和最新复核结论为准。
 
 ## RunConfig
 
@@ -177,7 +177,7 @@ logging:
 | `BudgetManager` | `max_turns`、`max_tool_calls`、`max_test_runs`、`task_timeout_sec`、`command_timeout_sec`、`verifier_timeout_sec`、`max_tool_output_chars`、`max_context_tokens`、`max_output_tokens`、`max_cost`、`max_artifact_bytes`、`max_concurrent_tasks` | Runtime | Agent Loop、Tool System、Verifier、Eval Runner |
 | `RunSummary` | `run_id`、`task_id`、`agent_stop_reason`、`final_verifier_status`、`run_outcome`、`key_artifact_refs`、`failure_diagnostics`、`human_summary` | Trajectory Store | CLI、Inspect、README demo artifacts |
 | `MetricsRecord` | `task_success`、`final_verifier_status`、`run_outcome`、`turn_count`、`tool_call_count`、`test_run_count`、`timeout`、`patch_stats`、`permission_denial_count`、`invalid_tool_call_count`、`cost_estimate`、`code_quality_checks`、`interaction_efficiency`、`patch_locality` | Evaluation | Metrics、Training Exporter、Reports |
-| `ExportPolicy` | `export_policy_version`、`loss_mask_policy`、`observation_mask_policy`、`filter_rules`、`redaction_policy` | Training Exporter | Exporter、Metrics |
+| `ExportPolicy` | `export_policy_version`、`loss_mask_policy`、`observation_mask_policy`、`filter_rules`、`redaction_policy`、`contamination_denylist_version`、`contamination_denylist_sha256`、`reward_allowlist_policy_version`、`allowed_structured_reward_paths`、`trainability_policy_version` | Training Exporter | Exporter、Metrics |
 | `ExportRecord` | `schema_version`、`sample_id`、`task_id`、`source_run_id`、`payload`、`metadata`、`filter_status`、`invalid_for_training`、`invalid_reason` | Training Exporter | Training pipelines |
 
 `TaskDefinition` 中的 `expected_files`、`fail_to_pass_tests`、`pass_to_pass_tests`、`gold_patch`、`declared_setup_mutations` 和 `generated_files` 都必须受 `visibility` / `visibility_policy` 约束。`gold_patch` 必须保持 `hidden_reference`；隐藏测试、reward-only 字段和 baseline 质量门控细节不得进入 ContextBuilder；`declared_setup_mutations` 和 `generated_files` 只用于 workspace 准备、patch 过滤、artifact 归因和训练样本边界控制。
@@ -236,4 +236,4 @@ logging:
 
 ## 设计边界
 
-这篇文档定义 RepoHarness 的对象流和扩展接口。第一版已经实现 replay-only 最小可运行闭环；第二版已经在该闭环上交付更强 run metadata、导出审计、多 rollout、scaffold registry、`single_shot_patch`、计划内 `planner_coder_verifier`、mock provider、DeepSeek provider、OpenAI fallback provider、20 个任务级 fixture 和 Docker interface-only 状态检查。Docker backend、生产级安全沙箱、完整公开榜单基础设施和新的强化学习算法仍然不属于当前已交付能力，不能被 README、summary 或展示材料描述成已经完成。
+这篇文档定义 RepoHarness 的对象流和扩展接口。第一版已经实现 replay-only 最小可运行闭环；第二版已经在该闭环上交付更强 run metadata、导出审计、多 rollout、scaffold registry、`single_shot_patch`、计划内 `planner_coder_verifier`、mock provider、DeepSeek provider、OpenAI fallback provider、20 个任务级 fixture 和 Docker interface-only 状态检查；第三版已经交付本地 Docker-based executable repository environment、repository-level task、固定 SWE-Bench-like 小子集、context compaction、export audit 和 acceptance bundle；第四版已经完成 implementation，并进入最新复核问题修复阶段。生产级安全沙箱、完整公开榜单基础设施、远程分布式执行平台和新的强化学习算法仍然不属于当前已交付能力，不能被 README、summary 或展示材料描述成已经完成。

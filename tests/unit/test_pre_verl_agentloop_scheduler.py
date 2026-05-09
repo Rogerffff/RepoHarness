@@ -5,6 +5,12 @@ import json
 import sys
 from pathlib import Path
 
+from repo_harness.scaffolds import PATCH_FOCUSED_REACT_TOOL_ORDER
+
+PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS = [
+    tool for tool in PATCH_FOCUSED_REACT_TOOL_ORDER if tool != "run_tests"
+]
+
 
 def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests(
     tmp_path: Path,
@@ -37,27 +43,48 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert configuration["baseline_source"] == "repo_harness_agentloop_run_task"
     assert configuration["pre_verl_adapter"] == "swebench_lite_dev_agentloop_v0"
     assert configuration["old_pilot_allowed"] is False
-    assert configuration["resolved_tools"] == [
-        "list_files",
-        "read_file",
-        "grep",
-        "edit_file",
-        "git_diff",
-    ]
+    assert configuration["baseline_id"] == "pre_verl_agentloop_smoke_deepseek_deepseek-v4-flash"
+    assert configuration["provider_axis_scope"] == "deepseek_only"
+    assert configuration["provider_retry_policy"] == {
+        "schema_version": "repo_harness_provider_retry_policy_v0",
+        "policy_id": "provider_retry_v0",
+        "max_attempts": 3,
+        "backoff_delays_ms": [0, 250, 1000],
+        "sleep_enabled": True,
+        "retryable_error_types": ["provider_error", "provider_timeout", "rate_limited"],
+    }
+    assert (
+        configuration["harness_tool_context_policy"]["convergence_nudge_policy_version"]
+        == "repo_harness_convergence_nudge_v2"
+    )
+    assert configuration["resolved_tools"] == PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS
     task_manifest = _read_json(output_dir / "pre_verl_agentloop_task_definition_manifest.json")
     assert len(task_manifest["task_definition_refs"]) == 1
     run_config_manifest = _read_json(output_dir / "pre_verl_agentloop_run_config_manifest.json")
+    assert run_config_manifest["baseline_id"] == configuration["baseline_id"]
+    assert run_config_manifest["provider_retry_policy"] == configuration["provider_retry_policy"]
     assert run_config_manifest["entries"][0]["resolved_tools"] == configuration["resolved_tools"]
+    assert run_config_manifest["entries"][0]["baseline_id"] == configuration["baseline_id"]
+    assert run_config_manifest["entries"][0]["retry_policy"] == "provider_retry_v0"
     run_config = _read_yaml(
         output_dir
         / "run_configs"
         / "pre_verl_dev_001_sqlfluff__sqlfluff_1625_deepseek_deepseek-v4-flash.yaml"
     )
     assert run_config["runtime"]["execution_mode"] == "docker"
+    assert run_config["model"]["retry_policy"] == "provider_retry_v0"
     assert run_config["runtime"]["docker_backend"]["build_base_image"] == "python:3.8"
     assert run_config["context_management"]["max_context_tokens"] == 120000
     assert run_config["model"]["provider_specific_options"]["thinking"] == {"type": "enabled"}
     assert configuration["budget"]["max_context_tokens"] == 120000
+    budget_freeze = _read_json(output_dir / "formal_budget_freeze_manifest.json")
+    assert budget_freeze["baseline_id"] == configuration["baseline_id"]
+    assert budget_freeze["provider_retry_policy"] == configuration["provider_retry_policy"]
+    assert (
+        budget_freeze["harness_tool_context_policy"]["convergence_nudge_policy_version"]
+        == "repo_harness_convergence_nudge_v2"
+    )
+    assert "retry_policy" in budget_freeze["requires_new_baseline_id_if_changed"]
     command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(
         encoding="utf-8"
     )
@@ -69,6 +96,52 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert "setup_command: null" in generated_task
     assert "pre_verl_setup_shell:" in generated_task
     assert "pre_verl_agentloop_baseline_source: repo_harness_agentloop_run_task" in generated_task
+
+
+def test_scheduler_freezes_repo_specific_environment_setup_and_platform(tmp_path: Path) -> None:
+    script = _load_scheduler_module()
+    manifest_path = _write_materialized_manifest_fixture(
+        tmp_path,
+        task_id="pre_verl_dev_018_pyvista__pyvista_4315",
+        repo="pyvista/pyvista",
+        version="0.39",
+    )
+    output_dir = tmp_path / "prepared"
+
+    status = script.main(
+        [
+            "--pre-verl-task-set-manifest",
+            manifest_path.as_posix(),
+            "--output-dir",
+            output_dir.as_posix(),
+            "--mode",
+            "formal",
+            "--task-id",
+            "pre_verl_dev_018_pyvista__pyvista_4315",
+            "--provider",
+            "deepseek",
+            "--model-id",
+            "deepseek-v4-pro",
+            "--repo-harness-bin",
+            f"{sys.executable} -m repo_harness.cli.main",
+        ]
+    )
+
+    assert status == 0
+    run_config = _read_yaml(
+        output_dir
+        / "run_configs"
+        / "pre_verl_dev_018_pyvista__pyvista_4315_deepseek_deepseek-v4-pro.yaml"
+    )
+    assert run_config["runtime"]["docker_backend"]["build_base_image"] == "python:3.9"
+    assert run_config["runtime"]["docker_backend"]["requested_container_platform"] == "linux/amd64"
+    generated_task = (
+        output_dir / "task_definitions" / "pre_verl_dev_018_pyvista__pyvista_4315.yaml"
+    ).read_text(encoding="utf-8")
+    assert "requested_container_platform: linux/amd64" in generated_task
+
+    pvlib_env = script._pre_verl_environment_for_repo("pvlib/pvlib-python", "0.9")
+    assert "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PVLIB=0.9.0" in pvlib_env["setup_shell"]
 
 
 def test_scheduler_boundary_index_skips_quality_gate_blocked_runs(tmp_path: Path) -> None:
@@ -180,6 +253,8 @@ def test_scheduler_normalizes_truncated_parametrized_selectors() -> None:
             "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid[",
             "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid[1]",
             "tests/test_cli.py::test__cli__command_fix_stdin[select",
+            "test/dialects/ansi_test.py::test__dialect__ansi_specific_segment_parses[ExpressionSegment-bits[OFFSET(0)]",
+            "test/dialects/ansi_test.py::test__dialect__ansi_specific_segment_parses[ExpressionSegment-NULL::INT]",
         ],
         task_id="task",
         suite="pass_to_pass",
@@ -189,15 +264,22 @@ def test_scheduler_normalizes_truncated_parametrized_selectors() -> None:
         "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid",
         "pydicom/tests/test_valuerep.py::TestIsValidDS::test_valid[1]",
         "tests/test_cli.py::test__cli__command_fix_stdin",
+        "test/dialects/ansi_test.py::test__dialect__ansi_specific_segment_parses",
+        "test/dialects/ansi_test.py::test__dialect__ansi_specific_segment_parses[ExpressionSegment-NULL::INT]",
     ]
-    assert report["changed_selector_count"] == 2
+    assert report["changed_selector_count"] == 3
     assert report["status"] == "passed"
 
 
-def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
+def _write_materialized_manifest_fixture(
+    tmp_path: Path,
+    *,
+    task_id: str = "pre_verl_dev_001_sqlfluff__sqlfluff_1625",
+    repo: str = "sqlfluff/sqlfluff",
+    version: str = "0.6",
+) -> Path:
     root = tmp_path / "materialized"
     freeze = tmp_path / "freeze"
-    task_id = "pre_verl_dev_001_sqlfluff__sqlfluff_1625"
     source_dir = root / "source_checkouts" / task_id / "source"
     task_dir = root / "tasks" / task_id
     patches_dir = root / "patches" / task_id
@@ -219,8 +301,8 @@ def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
         {
             "schema_version": "repo_harness_pre_verl_adapter_visible_task_input_v0",
             "task_id": task_id,
-            "source_instance_id": "sqlfluff__sqlfluff-1625",
-            "repo": "sqlfluff/sqlfluff",
+            "source_instance_id": task_id.removeprefix("pre_verl_dev_"),
+            "repo": repo,
             "problem_statement": "Fix a user-visible SQLFluff issue.",
         },
     )
@@ -242,8 +324,8 @@ def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
             "schema_version": "repo_harness_pre_verl_swebench_dev_materialization_entry_v0",
             "status": "passed",
             "task_id": task_id,
-            "repo": "sqlfluff/sqlfluff",
-            "version": "0.6",
+            "repo": repo,
+            "version": version,
             "source_tree_sha256": "a" * 64,
             "test_patch_apply_status": "passed",
             "test_patch_apply_result_ref": _ref(task_dir / "test_patch_apply_result.json"),
@@ -257,9 +339,9 @@ def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
             "schema_version": "repo_harness_pre_verl_swebench_dev_verifier_plan_v0",
             "status": "passed",
             "task_id": task_id,
-            "repo": "sqlfluff/sqlfluff",
+            "repo": repo,
             "base_commit": "fixture",
-            "environment_id": "pre_verl_sqlfluff_0.6_python38_v0",
+            "environment_id": f"pre_verl_fixture_{version}_v0",
             "execution_image": "python:3.8",
             "pythonpath": "src",
             "fail_to_pass_selectors": ["test_example.py::test_hidden"],
@@ -277,9 +359,9 @@ def _write_materialized_manifest_fixture(tmp_path: Path) -> Path:
             "agent_run_ready": True,
             "runnable": True,
             "verifier_ready": True,
-            "repo": "sqlfluff/sqlfluff",
-            "version": "0.6",
-            "source_instance_id": "sqlfluff__sqlfluff-1625",
+            "repo": repo,
+            "version": version,
+            "source_instance_id": task_id.removeprefix("pre_verl_dev_"),
             "base_commit": "fixture",
             "source_tree_sha256": "a" * 64,
             "adapter_visible_input_ref": _ref(adapter_input_path, visibility="model_visible"),
@@ -337,3 +419,8 @@ def _write_json(path: Path, payload: object) -> None:
 class _Args:
     def __init__(self, *, mode: str) -> None:
         self.mode = mode
+        self.baseline_id = "fixture_baseline"
+        self.parent_baseline_id = None
+        self.parent_run_dir = None
+        self.parent_status = None
+        self.baseline_change_summary = "fixture"

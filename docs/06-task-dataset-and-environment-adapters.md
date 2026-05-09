@@ -111,9 +111,9 @@ generated_files: []
 - `model_visible`：可以进入模型上下文，例如 issue statement、允许公开的 expected files。
 - `verifier_only`：只能给 Verifier 使用，例如隐藏测试、fail-to-pass 和 pass-to-pass 测试集合。
 - `reward_only`：只用于 reward metadata 或统计，不进入模型上下文。
-- `hidden_reference`：只用于离线分析或构造 preference pair，例如 `gold_patch`。
+- `hidden_reference`：只用于 evaluator-only 对照、审计或污染检查，例如 `gold_patch`。
 
-`gold_patch` 必须是 `hidden_reference`。隐藏测试、reward metadata 和 baseline 质量门控细节不得进入 ContextBuilder。`expected_files` 是否给模型看也应由 `visibility` 显式决定，不能靠字段名默认泄漏。
+`gold_patch` 必须是 `hidden_reference`。它只能作为 evaluator-only 或 audit-only 证据用于审计、对照或污染检查，不能进入模型可见上下文、assistant target、SFT target、preference target 或正式训练 payload。隐藏测试、reward metadata 和 baseline 质量门控细节不得进入 ContextBuilder。`expected_files` 是否给模型看也应由 `visibility` 显式决定，不能靠字段名默认泄漏。
 
 `task_version`、`dataset_name`、`source_kind`、`dataset_split`、`created_at` 和 `decontamination` 用于后续实验复现和数据污染分析。第一版 micro-repo task 也应填写这些字段，避免以后把训练集、验证集、测试集或公开来源混在一起。`decontamination` 不进入模型上下文，默认只进入 task metadata、metrics 和 export metadata。
 
@@ -151,13 +151,13 @@ TaskAdapter 不应该 checkout 仓库、复制仓库、安装依赖、运行测�
 - 自建 micro-repo tasks。
 - issue-style fixture tasks。
 
-后续预留：
+V1 时的后续预留：
 
 - SWE-Bench Lite subset。
 - GitHub Issue / Pull Request adapter。
 - 从真实 Pull Request 构造 fail-to-pass 和 pass-to-pass tests。
 
-这些后续能力只在接口层预留，不作为第一阶段实现目标，也不应在 README 中声称已经完成。
+这些能力在 V1 只作为接口层预留，不作为第一阶段实现目标。当前 V3 已经实现固定 SWE-Bench-like 小子集验收；V4 已经实现 PR / issue task construction 的 source freeze、adapter-visible input、evaluator-only evidence manifest 和 accepted / auditable task gate。此前 V4 复核发现的任务冻结、证据绑定和验收检查缺口已经在后续修复中收口；截至 2026-05-05，引用 V4 任务适配与任务冻结能力时，应以 `runs/v4-final-rerun-20260504T194758Z/` 下的修复后 acceptance evidence 为准。
 
 ## 环境准备流程
 

@@ -4,6 +4,8 @@
 
 软件工程 agent 的长轨迹会快速膨胀上下文：文件内容、搜索结果、测试输出、错误日志和多轮 patch 都可能占用大量 token。RepoHarness 必须从设计阶段就规划上下文和失败诊断。
 
+当前实现状态需要和历史 V1 设计区分：V3 已经实现 context compaction 和 long rollout diagnostics；V4 增加 batch resume、checkpoint state、resource lock 和 rollout resume 审计。这些能力用于单机 experiment / batch resume 和轨迹审计，不等同于 P1-3 session continuation、跨会话长期记忆、任意中间 turn 恢复，也不能继承 hidden verifier、reward 或 outcome facts。
+
 ## 上下文增长问题
 
 主要来源：
@@ -108,6 +110,8 @@ BudgetManager:
 ## Session Resume
 
 第一版 session resume 不承诺恢复到任意中间 turn。没有 per-turn workspace checkpoint 或 patch chain 时，仅凭 `final.diff`、`transcript.jsonl` 和 `events.jsonl` 不能可靠恢复到“最后一个稳定 turn”。
+
+V3/V4 的 experiment resume、batch resume、checkpoint state 和 resource lock 审计，是运行队列和批量实验层面的可恢复性；它们不是长期 session continuation，也不是允许模型在恢复后看到隐藏验证结果、reward 结果或最终 outcome 事实的机制。
 
 第一版应把 resume 降级为“从 final workspace 继续”：
 

@@ -14,6 +14,17 @@ Coding GRPO 项目提供了 verifier-based coding post-training 的经验基础�
 
 RepoHarness 补齐第三块：真实或半真实仓库、多文件编辑、终端命令、测试执行、patch diff、trajectory collection、verifier-aligned reward metadata 和训练评测一致性。
 
+## 当前实现状态
+
+本文最初是基础设计和第一版实施前的定位文档。当前仓库已经经历 V1 到 V4 的连续实现：
+
+- V1 已经跑通本地 micro-repo task 的最小闭环。
+- V2 已经扩展 run metadata、导出审计、多 rollout、scaffold、真实 provider 路径和 V2 final acceptance。
+- V3 已经交付 Docker-based executable repository environment、repository-level task、固定 SWE-Bench-like 小子集、source materialization、context compaction、resume、export audit 和 acceptance bundle。
+- V4 已经完成 implementation，并增加 task source freeze、rollout orchestration、resource lock、checkpoint state、tool lifecycle audit、agent run integration、trajectory store 字段级检查、export quality、reward / preference pair 审计和 cards。
+
+截至 2026-05-05，V4 已完成复核问题修复并通过修复后最终验收。最新 V4 closure commit 为 `e0da89c test: refresh V4 acceptance evidence after hardening`，完整测试结果为 `712 passed`，修复后最终验收目录为 `runs/v4-final-rerun-20260504T194758Z/`。因此，下面关于“第一版目标”和“未来实现阶段成功标准”的内容应作为历史设计边界理解，不应覆盖 `docs/v4/` 中的最新范围、审查记录、修复后 acceptance evidence 和 `docs/v5/` 中的下一阶段范围设计。
+
 ## 第一版目标
 
 第一阶段是设计和骨架，不写实际功能代码。最终设计必须足够清楚，让后续实现者可以直接进入实现。
@@ -42,7 +53,7 @@ RepoHarness 补齐第三块：真实或半真实仓库、多文件编辑、终�
 - 能生成 `transcript.jsonl`、`events.jsonl`、`artifacts.json`、`dependency_state.json`、`final.patch`、`final.diff`、`verifier.json`、`reward.json`、`metrics.json` 和 `summary.md`。
 - 能导出至少一条监督微调 JSONL 和一条 reinforcement learning rollout JSONL。
 
-第一版之后再扩展真实模型长轨迹、多 scaffold 对比、20 到 50 个任务、preference pair 批量生成和 Docker execution mode 的完整覆盖。这样实现路线会先证明闭环，再逐步增加规模和复杂度。
+第一版之后的早期规划曾设想继续扩展真实模型长轨迹、多 scaffold 对比、20 到 50 个任务、preference pair 批量生成和 Docker execution mode 的完整覆盖。这个规划用于解释路线演进，不是当前 V4 硬门；当前 V4 门槛以 `docs/v4/` 和最新复核记录为准。
 
 ## 非目标
 
@@ -66,13 +77,15 @@ RepoHarness 补齐第三块：真实或半真实仓库、多文件编辑、终�
 - 文档明确哪些能力第一版实现，哪些只预留扩展。
 - 多子代理审查后形成修订记录。
 
-未来实现阶段成功标准：
+历史未来实现阶段成功标准：
 
 - 第一版最小闭环先在 3 到 5 个 micro-repo task 上稳定运行。
-- 能在 20 到 50 个软件工程任务上运行。
+- 历史愿景曾设想扩展到 20 到 50 个软件工程任务，但这不是当前 V4 硬门。
 - 每个任务都有 patch、测试结果、trajectory、verifier 输出和 metrics。
 - 能比较 single-shot patch、simple ReAct 和 planner-coder-verifier scaffold。
 - 能导出训练可用轨迹数据。
+
+当前 V4 不把“20 到 50 个任务”作为硬门。V2 曾扩展任务级 fixture；V3/V4 的当前验收重点是可审计任务定义、真实仓库 / SWE-Bench-like 证据链、accepted / auditable task gate、trajectory production、export audit 和 acceptance bundle。具体数量和门槛以对应版本的 scope、implementation plan、final acceptance 和最新复核记录为准。
 
 ## 简历叙事
 

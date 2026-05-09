@@ -47,6 +47,8 @@ class DockerRuntimeConfig(StrictBaseModel):
     cleanup_policy: str = "remove_containers_keep_images"
     command_timeout_sec: int = Field(default=120, gt=0)
     max_parallel_runs: int = Field(default=1, gt=0)
+    require_ripgrep_for_docker_search: bool = True
+    allow_degraded_python_search_fallback: bool = False
 
 
 class RuntimeConfig(StrictBaseModel):

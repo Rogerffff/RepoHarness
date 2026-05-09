@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+import re
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
 from repo_harness.agent_loop import AgentLoop
@@ -12,6 +13,7 @@ from repo_harness.budget import BudgetManager
 from repo_harness.config import RunConfig, load_run_config
 from repo_harness.context import ContextBuilder
 from repo_harness.errors import ConfigError, RepoHarnessError, WorkspaceError
+from repo_harness.schema_base import stable_hash
 from repo_harness.evaluation.metrics import (
     build_metrics_record,
     derive_final_verifier_status,
@@ -30,7 +32,7 @@ from repo_harness.run_metadata.writer import (
     write_run_metadata,
 )
 from repo_harness.tasks import RunnableTask, load_task
-from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits
+from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits, ToolPolicy
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
 from repo_harness.v3_agent_runtime import (
     build_swebench_like_baseline_verifier,
@@ -305,9 +307,13 @@ def run_task(
             )
         )
         allowed_tool_registry = tool_registry_for_allowed_tools(allowed_tools)
+        tool_policy = _tool_policy_for_runtime(
+            pre_verl_enabled=pre_verl_runtime_plan is not None,
+        )
         _, tool_schema_snapshot_ref, tool_protocol = write_tool_schema_snapshot(
             recorder,
             registry=allowed_tool_registry,
+            tool_policy=tool_policy,
         )
         environment_fingerprint = build_local_environment_fingerprint(
             task_definition=loaded.definition,
@@ -426,6 +432,12 @@ def run_task(
             allowed_tools=allowed_tools,
             scaffold=scaffold,
             workspace_facade=adapter,
+            model_visible_repo_context=_model_visible_repo_context_summary(
+                source_snapshot_ref=source_snapshot_ref,
+                repo_context_index_ref=repo_context_index_ref,
+                task=loaded.runnable_task,
+                source_checkout=source if pre_verl_runtime_plan is not None else None,
+            ),
         )
         replay_path = config.model.replay_script_path
         if config.model.provider in {"replay", "fake"} and replay_path is None:
@@ -449,6 +461,7 @@ def run_task(
             output_limits=ToolOutputLimits(
                 max_tool_output_chars=config.workspace.max_tool_output_chars,
             ),
+            tool_policy=tool_policy,
             test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
             feedback_tests_passed_policy=feedback_policy.resolved_feedback_tests_passed_policy,
             budget_manager=budget_manager,
@@ -496,6 +509,9 @@ def run_task(
         )
         capture = adapter.capture_final_patch(run_workspace, recorder=recorder)
         task_timeout_expired = _task_timeout_expired(task_deadline_monotonic)
+        effective_agent_stop_reason = (
+            "task_timeout" if task_timeout_expired else loop_state.agent_stop_reason
+        )
         if task_timeout_expired:
             _append_task_timeout_event(
                 run_id=actual_run_id,
@@ -532,7 +548,7 @@ def run_task(
                 adapter=adapter,
                 recorder=recorder,
                 setup_command=effective_setup_command,
-                agent_stop_reason=loop_state.agent_stop_reason,
+                agent_stop_reason=effective_agent_stop_reason,
             )
         elif swebench_like_runtime_plan is not None:
             try:
@@ -625,19 +641,24 @@ def run_task(
             {"budget_policy": "preserve_json"},
         )
         final_status = derive_final_verifier_status(final_verifier)
+        pre_verl_boundary = _pre_verl_boundary_payload(run_dir) if pre_verl_runtime_plan is not None else {}
+        final_verifier_ran = True
         if pre_verl_runtime_plan is not None:
-            final_status = _pre_verl_boundary_final_verifier_status(run_dir) or final_status
+            final_status = str(pre_verl_boundary.get("final_verifier_status") or final_status)
+            if pre_verl_boundary:
+                final_verifier_ran = bool(pre_verl_boundary.get("final_verifier_ran"))
         run_outcome = derive_run_outcome(
             baseline_status=baseline.status,
             final_verifier_status=final_status,
-            agent_stop_reason=loop_state.agent_stop_reason,
-            final_verifier_ran=True,
+            agent_stop_reason=effective_agent_stop_reason,
+            final_verifier_ran=final_verifier_ran,
         )
         metrics = build_metrics_record(
             final_verifier=final_verifier,
             run_outcome=run_outcome,
             final_verifier_status=final_status,
-            agent_stop_reason=loop_state.agent_stop_reason,
+            agent_stop_reason=effective_agent_stop_reason,
+            timeout=bool(task_timeout_expired or final_verifier.timeout),
             turn_count=loop_state.turn_count,
             tool_call_count=loop_state.tool_call_count,
             test_run_count=_count_test_runs(loop_state.messages),
@@ -652,11 +673,16 @@ def run_task(
             hidden_feedback_visible_to_model=loop_state.hidden_feedback_visible_to_model,
             public_tests_ran=loop_state.public_tests_ran,
             hidden_feedback_ran=loop_state.hidden_feedback_ran,
+            loop_diagnostics_summary=loop_state.loop_diagnostics_summary,
+            loop_diagnostic_count=len(loop_state.loop_diagnostics),
         )
         metrics.interaction_efficiency.update(
             {
                 "baseline_status": baseline.status,
                 "final_verifier_mode": config.evaluation.final_verifier_mode,
+                "final_verifier_ran": final_verifier_ran,
+                "final_verifier_boundary_failure_category": pre_verl_boundary.get("failure_category"),
+                "final_verifier_boundary_failure_owner": pre_verl_boundary.get("failure_owner"),
             }
         )
         _write_json(run_dir / "verifier.json", final_verifier.model_dump(mode="json"))
@@ -667,7 +693,7 @@ def run_task(
             f"- run_id: {actual_run_id}\n"
             f"- task_id: {loaded.runnable_task.task_id}\n"
             f"- baseline_status: {baseline.status}\n"
-            f"- agent_stop_reason: {loop_state.agent_stop_reason}\n"
+            f"- agent_stop_reason: {effective_agent_stop_reason}\n"
             f"- final_verifier_status: {final_status}\n"
             f"- final_verifier_mode: {config.evaluation.final_verifier_mode}\n"
             f"- run_outcome: {run_outcome}\n"
@@ -689,9 +715,10 @@ def run_task(
                 task_id=loaded.runnable_task.task_id,
                 event_type="run_finished",
                 data={
-                    "agent_stop_reason": loop_state.agent_stop_reason,
+                    "agent_stop_reason": effective_agent_stop_reason,
                     "baseline_status": baseline.status,
                     "final_verifier_status": final_status,
+                    "final_verifier_ran": final_verifier_ran,
                     "final_verifier_mode": config.evaluation.final_verifier_mode,
                     "run_outcome": run_outcome,
                     "outcome_policy_version": OUTCOME_POLICY_VERSION,
@@ -707,7 +734,7 @@ def run_task(
             baseline=baseline,
             run_outcome=run_outcome,
             final_verifier_status=final_status,
-            agent_stop_reason=loop_state.agent_stop_reason,
+            agent_stop_reason=effective_agent_stop_reason,
             final_verifier_mode=config.evaluation.final_verifier_mode,
         )
         write_run_metadata(run_dir, run_metadata)
@@ -718,17 +745,22 @@ def run_task(
 
 
 def _pre_verl_boundary_final_verifier_status(run_dir: Path) -> str | None:
-    boundary_path = run_dir / "final_verifier_boundary.json"
-    if not boundary_path.exists():
-        return None
-    try:
-        payload = json.loads(boundary_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return None
+    payload = _pre_verl_boundary_payload(run_dir)
     status = payload.get("final_verifier_status")
     if status in {"accepted", "rejected", "not_executed", "timeout", "error"}:
         return str(status)
     return None
+
+
+def _pre_verl_boundary_payload(run_dir: Path) -> dict[str, Any]:
+    boundary_path = run_dir / "final_verifier_boundary.json"
+    if not boundary_path.exists():
+        return {}
+    try:
+        payload = json.loads(boundary_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def run_batch(
@@ -1214,6 +1246,567 @@ def _append_task_timeout_event(
             },
         )
     )
+
+
+def _model_visible_repo_context_summary(
+    *,
+    source_snapshot_ref,
+    repo_context_index_ref,
+    task: RunnableTask,
+    source_checkout: str | Path | None = None,
+) -> dict[str, Any] | None:
+    if source_snapshot_ref is None or repo_context_index_ref is None:
+        return None
+    visible_task = task.agent_visible_view()
+    raw_expected_files = visible_task.get("expected_files", [])
+    expected_files = raw_expected_files if isinstance(raw_expected_files, list) else []
+    issue_statement = str(visible_task.get("issue_statement") or "")
+    issue_terms = _action_index_terms(issue_statement)
+    candidate_source_entries = _repository_action_entries(
+        expected_files=expected_files,
+        issue_statement=issue_statement,
+        issue_terms=issue_terms,
+        source_checkout=Path(source_checkout) if source_checkout is not None else None,
+    )
+    repository_action_index = {
+        "schema_version": "repo_harness_repository_action_index_v1",
+        "policy_version": "repo_harness_repository_action_index_v1",
+        "candidate_entries": candidate_source_entries,
+        "candidate_entry_count": len(candidate_source_entries),
+        "evidence_policy": (
+            "Candidates are derived only from model-visible issue text, model-visible expected_files, "
+            "and a shallow public source path index. Hidden selectors, hidden tests, hidden reference fixes, "
+            "targeted smoke hindsight, and human posterior analysis are excluded."
+        ),
+        "issue_terms_used": issue_terms[:40],
+        "evaluator_only_material_excluded": True,
+        "hindsight_sources_excluded": True,
+    }
+    return {
+        "schema_version": "repo_harness_model_visible_repo_context_index_v0",
+        "context_selection_policy_version": "repo_harness_initial_context_selection_v0",
+        "source_snapshot_ref": _safe_model_visible_artifact_ref(source_snapshot_ref),
+        "repo_context_index_ref": _safe_model_visible_artifact_ref(repo_context_index_ref),
+        "expected_files": expected_files[:40],
+        "candidate_source_entries": candidate_source_entries,
+        "candidate_source_entry_count": len(candidate_source_entries),
+        "repository_action_index": repository_action_index,
+        "repository_action_index_hash": stable_hash(repository_action_index),
+        "evaluator_only_material_excluded": True,
+        "non_model_visible_material_excluded": True,
+        "non_model_visible_material_policy": (
+            "Only not_sensitive source snapshot and repository index artifact refs are exposed. "
+            "Verifier-private materials and scoring artifacts are excluded."
+        ),
+        "usage_hint": (
+            "Use repository_context, expected_files, candidate_source_entries, repository_action_index, "
+            "glob_files/list_files for file discovery, symbol_search for Python definitions, "
+            "grep with narrow root/glob/output_mode='files_with_matches' for content search, "
+            "read_file before edit_file, update_working_state when exploration branches, and git_diff "
+            "before the final answer."
+        ),
+    }
+
+
+def _repository_action_entries(
+    *,
+    expected_files: list[Any],
+    issue_statement: str,
+    issue_terms: list[str],
+    source_checkout: Path | None,
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for path in expected_files:
+        if not isinstance(path, str) or not path or path in seen:
+            continue
+        seen.add(path)
+        entries.append(
+            {
+                "path": path,
+                "evidence_source": "model_visible_expected_files",
+                "matched_terms": [],
+                "source_text_span_hash": stable_hash({"expected_file": path}),
+                "ranking_reason": "Task expected_files is model-visible and names this path.",
+                "policy_version": "repo_harness_repository_action_index_v1",
+            }
+        )
+        if len(entries) >= 40:
+            return entries
+    if source_checkout is None or not source_checkout.exists():
+        return entries
+    issue_path_mentions = _issue_path_mentions(issue_statement)
+    scored_candidates: list[dict[str, Any]] = []
+    for path in _shallow_source_paths(source_checkout):
+        if path in seen:
+            continue
+        score = _score_action_index_path(
+            source_root=source_checkout,
+            path=path,
+            issue_statement=issue_statement,
+            issue_terms=issue_terms,
+            issue_path_mentions=issue_path_mentions,
+        )
+        if score is None:
+            continue
+        scored_candidates.append(score)
+    scored_candidates.sort(
+        key=lambda item: (
+            -int(item["ranking_score"]),
+            int(item["path_depth"]),
+            str(item["path"]),
+        )
+    )
+    for candidate in scored_candidates:
+        path = str(candidate["path"])
+        if path in seen:
+            continue
+        seen.add(path)
+        entries.append(
+            {
+                "path": path,
+                "evidence_source": candidate["evidence_source"],
+                "matched_terms": candidate["matched_terms"][:12],
+                "source_text_span_hash": stable_hash(
+                    {
+                        "issue_statement_sha256": stable_hash(issue_statement),
+                        "matched_terms": candidate["matched_terms"][:12],
+                        "path": path,
+                        "public_source_signal_hash": candidate["public_source_signal_hash"],
+                    }
+                ),
+                "ranking_reason": candidate["ranking_reason"],
+                "ranking_score": candidate["ranking_score"],
+                "ranking_signals": candidate["ranking_signals"],
+                "policy_version": "repo_harness_repository_action_index_v1",
+            }
+        )
+        if len(entries) >= 40:
+            break
+    return entries
+
+
+def _action_index_terms(issue_statement: str) -> list[str]:
+    raw_identifiers = re.findall(r"[A-Za-z_][A-Za-z0-9_]{2,}|[A-Za-z]\d{3,}", issue_statement)
+    raw_code_tokens = re.findall(r"\b[A-Z]{2,5}\b", issue_statement)
+    stop_words = {
+        "about",
+        "actual",
+        "addition",
+        "all",
+        "also",
+        "and",
+        "any",
+        "appreciated",
+        "are",
+        "assume",
+        "behavior",
+        "behaviour",
+        "both",
+        "but",
+        "call",
+        "can",
+        "code",
+        "current",
+        "details",
+        "does",
+        "done",
+        "etc",
+        "file",
+        "files",
+        "for",
+        "this",
+        "that",
+        "the",
+        "then",
+        "these",
+        "they",
+        "type",
+        "with",
+        "without",
+        "works",
+        "from",
+        "when",
+        "where",
+        "which",
+        "should",
+        "would",
+        "could",
+        "there",
+        "their",
+        "expected",
+        "actual",
+        "error",
+        "failed",
+        "failure",
+        "has",
+        "have",
+        "import",
+        "test",
+        "tests",
+        "traceback",
+        "line",
+        "lines",
+        "like",
+        "list",
+        "module",
+        "new",
+        "not",
+        "object",
+        "only",
+        "output",
+        "point",
+        "problem",
+        "produced",
+        "provided",
+        "python",
+        "range",
+        "required",
+        "return",
+        "sample",
+        "same",
+        "set",
+        "some",
+        "structure",
+        "thank",
+        "try",
+        "unable",
+        "update",
+        "updating",
+        "using",
+        "value",
+        "version",
+        "while",
+        "you",
+        "user",
+        "users",
+        "attribute",
+    }
+    terms: list[str] = []
+    for raw in [*raw_identifiers, *raw_code_tokens]:
+        is_short_code_token = bool(re.fullmatch(r"[A-Z]{2,5}", raw))
+        for term in [raw.lower(), *_split_identifier_terms(raw)]:
+            if len(term) < 3 and not is_short_code_token:
+                continue
+            if term in stop_words or term in terms:
+                continue
+            terms.append(term)
+            if len(terms) >= 120:
+                break
+        if len(terms) >= 80:
+            break
+    return terms
+
+
+def _issue_path_mentions(issue_statement: str) -> set[str]:
+    mentions = set()
+    for raw in re.findall(r"[A-Za-z0-9_./\\-]+\.py", issue_statement):
+        mention = raw.replace("\\", "/").strip("./").lower()
+        if mention:
+            mentions.add(mention)
+    return mentions
+
+
+def _score_action_index_path(
+    *,
+    source_root: Path,
+    path: str,
+    issue_statement: str,
+    issue_terms: list[str],
+    issue_path_mentions: set[str],
+) -> dict[str, Any] | None:
+    path_lower = path.lower()
+    suffix = PurePosixPath(path).suffix.lower()
+    parts = tuple(part.lower() for part in PurePosixPath(path).parts)
+    if _is_action_index_excluded_path(parts=parts, suffix=suffix):
+        return None
+    is_test_path = any(part in {"tests", "test"} or part.startswith("test_") for part in parts)
+    path_tokens = _path_signal_tokens(path)
+    score = _actionable_path_base_score(parts=parts, suffix=suffix)
+    matched_terms: list[str] = []
+    ranking_signals: list[str] = []
+    public_source_signal_hash = "not_scanned"
+    if path_lower in issue_path_mentions or any(path_lower.endswith(mention) for mention in issue_path_mentions):
+        score += 420
+        ranking_signals.append("exact_model_visible_issue_path")
+    if any(mention.endswith(path_lower) for mention in issue_path_mentions):
+        score += 260
+        ranking_signals.append("suffix_model_visible_issue_path")
+    root_package_token = parts[0] if parts else ""
+    for term in issue_terms:
+        if term == root_package_token:
+            continue
+        term_weight = _action_index_term_weight(term)
+        if term in path_lower:
+            score += (90 if term in path_tokens else 55) * term_weight
+            if term in path_tokens and re.fullmatch(r"[a-z]\d{3,}", term):
+                score += 480
+                ranking_signals.append("issue_rule_id_path_match")
+            elif term in path_tokens and (len(term) >= 8 or "_" in term):
+                score += 120
+                ranking_signals.append("high_information_path_term_match")
+            _append_unique(matched_terms, term)
+            ranking_signals.append("path_term_match")
+        elif _fuzzy_token_match(term, path_tokens):
+            score += 45 * term_weight
+            if len(term) >= 8:
+                score += 90
+                ranking_signals.append("high_information_path_fuzzy_match")
+            _append_unique(matched_terms, term)
+            ranking_signals.append("path_fuzzy_term_match")
+    if not is_test_path and {"save_as", "save"} & set(issue_terms) and path_tokens & {"filewriter", "writer", "write"}:
+        score += 420
+        _append_unique(matched_terms, "save_as" if "save_as" in issue_terms else "save")
+        ranking_signals.append("save_operation_file_writer_path_match")
+    source_tokens = _public_source_signal_tokens(source_root / path, suffix=suffix)
+    if source_tokens:
+        public_source_signal_hash = stable_hash(sorted(source_tokens)[:200])
+    for term in issue_terms:
+        if term == root_package_token:
+            continue
+        term_weight = _action_index_term_weight(term)
+        if term in source_tokens:
+            score += 65 * term_weight
+            if re.fullmatch(r"[a-z]\d{3,}", term) or len(term) >= 8 or "_" in term:
+                score += 95
+                ranking_signals.append("high_information_public_source_term_match")
+            _append_unique(matched_terms, term)
+            ranking_signals.append("public_source_symbol_or_text_match")
+        elif _fuzzy_token_match(term, source_tokens):
+            score += 30 * term_weight
+            if len(term) >= 8:
+                score += 60
+                ranking_signals.append("high_information_public_source_fuzzy_match")
+            _append_unique(matched_terms, term)
+            ranking_signals.append("public_source_fuzzy_symbol_match")
+    if re.search(r"\bl\d{3}\b", " ".join(issue_terms)) and "/rules/" in path_lower:
+        score += 90
+        ranking_signals.append("rule_id_source_directory_boost")
+    if is_test_path:
+        score -= 900
+        ranking_signals.append("test_path_deprioritized")
+    if any(part in {"docs", "doc", "examples", "example"} for part in parts):
+        score -= 500
+        ranking_signals.append("documentation_path_deprioritized")
+    if score <= 0 or not matched_terms:
+        return None
+    return {
+        "path": path,
+        "matched_terms": matched_terms,
+        "ranking_score": score,
+        "path_depth": len(parts),
+        "ranking_signals": sorted(set(ranking_signals)),
+        "public_source_signal_hash": public_source_signal_hash,
+        "evidence_source": (
+            "model_visible_issue_text_and_public_source_symbol_index"
+            if source_tokens
+            else "model_visible_issue_text_and_public_source_path_index"
+        ),
+        "ranking_reason": (
+            "Public source path and shallow public source symbols were ranked against "
+            "model-visible issue terms."
+        ),
+    }
+
+
+def _split_identifier_terms(identifier: str) -> list[str]:
+    pieces: list[str] = []
+    for chunk in re.split(r"[^A-Za-z0-9]+", identifier):
+        if not chunk:
+            continue
+        camel_parts = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)|\d+", chunk)
+        for part in camel_parts:
+            lowered = part.lower()
+            if len(lowered) >= 3:
+                pieces.append(lowered)
+        lowered_chunk = chunk.lower()
+        if len(lowered_chunk) >= 3:
+            pieces.append(lowered_chunk)
+    return pieces
+
+
+def _action_index_term_weight(term: str) -> int:
+    if re.fullmatch(r"[a-z]\d{3,}", term):
+        return 6
+    if len(term) <= 2:
+        return 4
+    if "_" in term or len(term) >= 12:
+        return 5
+    if len(term) >= 8:
+        return 4
+    if len(term) >= 5:
+        return 2
+    return 1
+
+
+def _path_signal_tokens(path: str) -> set[str]:
+    tokens: set[str] = set()
+    normalized = PurePosixPath(path)
+    for part in normalized.parts:
+        stem = PurePosixPath(part).stem
+        for value in [part, stem, *_split_identifier_terms(stem), *_split_identifier_terms(part)]:
+            lowered = value.lower()
+            if len(lowered) >= 3:
+                tokens.add(lowered)
+            if lowered.endswith("writer"):
+                tokens.add("writer")
+                tokens.add("write")
+            if lowered.startswith("write"):
+                tokens.add("write")
+    return tokens
+
+
+def _public_source_signal_tokens(path: Path, *, suffix: str) -> set[str]:
+    if suffix not in {".py", ".pyi", ".js", ".jsx", ".ts", ".tsx", ".rs", ".go", ".java"}:
+        return set()
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")[:32000]
+    except OSError:
+        return set()
+    tokens: set[str] = set()
+    for match in re.finditer(
+        r"\b(?:class|def|async\s+def)\s+([A-Za-z_][A-Za-z0-9_]*)|"
+        r"\bfrom\s+([A-Za-z_][A-Za-z0-9_\.]*)\s+import\s+([A-Za-z_][A-Za-z0-9_,\s]*)|"
+        r"\bimport\s+([A-Za-z_][A-Za-z0-9_\.]*)|"
+        r"\b([A-Za-z_][A-Za-z0-9_]{2,})\b",
+        text,
+    ):
+        for group in match.groups():
+            if not group:
+                continue
+            for raw in re.split(r"[\s,\.]+", group):
+                if not raw:
+                    continue
+                lowered = raw.lower()
+                if len(lowered) >= 3:
+                    tokens.add(lowered)
+                tokens.update(_split_identifier_terms(raw))
+        if len(tokens) >= 400:
+            break
+    for code_token in re.findall(r"\b[A-Z]{2,5}\b", text):
+        tokens.add(code_token.lower())
+        if len(tokens) >= 450:
+            break
+    return tokens
+
+
+def _fuzzy_token_match(term: str, tokens: set[str]) -> bool:
+    if len(term) < 5:
+        return False
+    for token in tokens:
+        if len(token) < 5:
+            continue
+        if term.startswith(token) or token.startswith(term):
+            return True
+        if _without_vowels(term).startswith(_without_vowels(token)) or _without_vowels(token).startswith(_without_vowels(term)):
+            return True
+    return False
+
+
+def _without_vowels(value: str) -> str:
+    return re.sub(r"[aeiou]", "", value)
+
+
+def _append_unique(values: list[str], value: str) -> None:
+    if value not in values:
+        values.append(value)
+
+
+def _is_action_index_excluded_path(*, parts: tuple[str, ...], suffix: str) -> bool:
+    if suffix and suffix not in {
+        ".py",
+        ".pyi",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".go",
+        ".java",
+        ".toml",
+        ".yaml",
+        ".yml",
+        ".json",
+    }:
+        return True
+    excluded_parts = {
+        ".git",
+        ".github",
+        ".circleci",
+        ".tox",
+        ".venv",
+        ".pre_verl_venv",
+        "__pycache__",
+        "node_modules",
+        "build",
+        "dist",
+        "htmlcov",
+        "assets",
+        "img",
+        "images",
+        "static",
+    }
+    return any(part in excluded_parts for part in parts)
+
+
+def _actionable_path_base_score(*, parts: tuple[str, ...], suffix: str) -> int:
+    score = 0
+    if suffix in {".py", ".pyi"}:
+        score += 130
+    elif suffix in {".js", ".jsx", ".ts", ".tsx", ".rs", ".go", ".java"}:
+        score += 100
+    elif suffix in {".toml", ".yaml", ".yml", ".json"}:
+        score += 35
+    if any(part in {"src", "lib"} for part in parts):
+        score += 70
+    if parts and parts[0] not in {"docs", "doc", "tests", "test", "examples", "example"}:
+        score += 45
+    return score
+
+
+def _shallow_source_paths(source_root: Path) -> list[str]:
+    excluded_parts = {
+        ".git",
+        ".hg",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        ".venv",
+        ".pre_verl_venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "node_modules",
+    }
+    paths: list[str] = []
+    for path in sorted(source_root.rglob("*")):
+        rel = path.relative_to(source_root)
+        if any(part in excluded_parts for part in rel.parts):
+            continue
+        if path.is_file() and not path.is_symlink():
+            paths.append(rel.as_posix())
+        if len(paths) >= 2000:
+            break
+    return paths
+
+
+def _safe_model_visible_artifact_ref(ref) -> dict[str, Any]:
+    return {
+        "kind": ref.kind,
+        "relative_path": ref.relative_path,
+        "sha256": ref.sha256,
+        "redaction_status": ref.redaction_status,
+    }
+
+
+def _tool_policy_for_runtime(*, pre_verl_enabled: bool) -> ToolPolicy:
+    if pre_verl_enabled:
+        return ToolPolicy(
+            tool_policy_version="repo_harness_tool_policy_pre_verl_read_before_edit_v1",
+            require_read_before_edit=True,
+        )
+    return ToolPolicy()
 
 
 def _timestamp() -> str:

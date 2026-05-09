@@ -36,6 +36,8 @@ LEGACY_V3_SWEBENCH_LIKE_ADAPTER_ID = "swebench_like_fixed"
 PRE_VERL_FINAL_VERIFIER_ADAPTER_ID = "pre_verl_swebench_lite_dev_final_verifier_v0"
 PRE_VERL_FINAL_VERIFIER_BOUNDARY_VERSION = "repo_harness_pre_verl_final_verifier_boundary_v0"
 PRE_VERL_AGENTLOOP_BOUNDARY_INDEX_VERSION = "repo_harness_pre_verl_agentloop_boundary_index_v0"
+PRE_VERL_FORMAL_PROVIDER_RETRY_POLICY_ID = "provider_retry_v0"
+EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 _MODEL_PATCH_STEP = "pre_verl_model_final_patch_apply"
 _HIDDEN_PATCH_STEP = "pre_verl_hidden_test_patch_apply"
@@ -612,6 +614,11 @@ def inspect_pre_verl_agentloop_run_config(
         except ConfigError as exc:
             failures.append(f"{config_path}: invalid run config: {exc}")
             continue
+        _inspect_formal_provider_retry_config(
+            run_config=run_config,
+            config_path=config_path,
+            failures=failures,
+        )
         if assert_final_only_test_feedback_disabled:
             if run_config.runtime.test_feedback_policy != "disabled":
                 failures.append(f"{config_path}: final-only task must set test_feedback_policy=disabled")
@@ -797,8 +804,7 @@ def _validate_pytest_selector_shapes(selectors: list[str], path: Path) -> None:
 def _pytest_selector_shape_is_collectable(selector: str) -> bool:
     if not selector.strip() or "::" not in selector:
         return False
-    suffix = selector.rsplit("::", 1)[-1]
-    return suffix.count("[") == suffix.count("]")
+    return selector.count("[") == selector.count("]")
 
 
 def _stage_hidden_test_patch(plan: PreVerlSwebenchDevRuntimePlan, run_root: Path) -> Path:
@@ -1317,10 +1323,25 @@ def _skipped_selector_payload(boundary: dict[str, Any], suite: str) -> dict[str,
         "selectors": [],
         "exit_code": None,
         "timeout": False,
+        "parser_id": "pytest",
+        "parser_version": PytestTextParser.parser_version,
         "parser_confidence": 0.0,
+        "summary_counts": {},
+        "passed_nodeids": [],
+        "failed_nodeids": [],
+        "error_nodeids": [],
+        "skipped_nodeids": [],
+        "xfailed_nodeids": [],
+        "xpassed_nodeids": [],
+        "suite_completed": False,
+        "parse_warnings": ["selector_suite_not_executed"],
         "error_type": boundary.get("failure_category") or "not_executed",
         "test_cases": [],
         "passed_count": 0,
+        "failed_count": 0,
+        "error_count": 0,
+        "skipped_count": 0,
+        "unknown_count": 0,
         "total_count": 0,
     }
 
@@ -2414,7 +2435,12 @@ def _evaluator_only_ref_sha_needles(value: Any) -> list[str]:
                 "hidden_test_selector",
             }
         )
-        if is_evaluator_only_ref and isinstance(sha256, str):
+        size_bytes = value.get("size_bytes")
+        if (
+            is_evaluator_only_ref
+            and isinstance(sha256, str)
+            and not (sha256 == EMPTY_SHA256 and size_bytes == 0)
+        ):
             needles.append(sha256)
         for child in value.values():
             needles.extend(_evaluator_only_ref_sha_needles(child))
@@ -2681,6 +2707,21 @@ def _inspect_deepseek_formal_provider_config(
     if isinstance(thinking, dict) and thinking.get("type") == "enabled" and compatibility != "provider_private_state_replay":
         failures.append(
             f"{config_path}: DeepSeek thinking enabled requires reasoning_compatibility=provider_private_state_replay"
+        )
+
+
+def _inspect_formal_provider_retry_config(
+    *,
+    run_config: RunConfig,
+    config_path: Path,
+    failures: list[str],
+) -> None:
+    if run_config.model.provider not in {"deepseek", "openai"}:
+        return
+    if run_config.model.retry_policy != PRE_VERL_FORMAL_PROVIDER_RETRY_POLICY_ID:
+        failures.append(
+            f"{config_path}: formal pre-verl provider run config must set "
+            f"model.retry_policy={PRE_VERL_FORMAL_PROVIDER_RETRY_POLICY_ID}"
         )
 
 

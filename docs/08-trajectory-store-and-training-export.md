@@ -6,7 +6,7 @@ Trajectory Store 把一次 agent run 变成可重放、可统计、可训练的�
 
 ## 运行产物目录
 
-未来实现中，每次运行应保存到：
+基础设计中，每次运行应保存到类似下面的 run directory。当前 V1 到 V4 已经生成多类真实 run、export、audit 和 acceptance evidence；最新 V4 机器证据主要位于 `docs/v4/evidence/` 与 `runs/v4-final-rerun-20260504T194758Z/`。本轮文档同步后，当前文档哈希可复核的 V4 bundle 是 `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`。
 
 ```text
 runs/
@@ -54,7 +54,7 @@ events 面向评测统计、训练分析和失败诊断，记录结构化字段�
 
 完整工具输出不应塞进 transcript。大输出应写入 run directory 的 artifact 文件，并在 tool result 或 event 中记录 `artifact_refs`。`artifact_refs` 指向 `artifacts.json` 中的 `ArtifactRef`，而不是让每个模块各自保存裸路径字符串。
 
-如果未来实现支持中间 turn resume，需要额外保存 `checkpoints/` 目录，例如 per-turn patch chain 或 workspace snapshot。第一版默认只要求从 final workspace 继续，不要求恢复到任意中间 turn。
+如果支持中间 turn resume，需要额外保存 `checkpoints/` 目录，例如 per-turn patch chain 或 workspace snapshot。第一版默认只要求从 final workspace 继续，不要求恢复到任意中间 turn。V4 增加了 batch resume、checkpoint state 和 resource lock 审计，但它不是长期 session continuation，也不能继承 hidden verifier、reward 或 outcome facts。
 
 ## RunRecorder 与 Artifact Manifest
 
@@ -199,7 +199,7 @@ context event 必须能复盘模型本轮实际看到的 messages。训练导出
 
 ## 训练导出格式
 
-第一版设计三类导出。以下格式是未来实现的最小 schema，不表示当前仓库已经生成这些文件。
+第一版设计三类导出。以下格式是基础 schema 示例；当前实际 V4 export quality evidence 位于 `docs/v4/evidence/export-quality/`，最终验收产物位于 `runs/v4-final-rerun-20260504T194758Z/`。截至 2026-05-05，Stage 6 export quality 复核中发现的统一污染 denylist、final verifier boundary、structured reward allowlist、preference pair 可比较性和 reward audit schema 问题已经修复，并已进入最新 V4 acceptance evidence。示例仍然只用于解释基础数据形状，不能替代当前最新 evidence 检查。
 
 SFT JSONL：
 
@@ -248,7 +248,11 @@ Reinforcement learning rollout JSONL：
       "observation": {"preview": "calculator.py:12:def divide", "truncated": false}
     }
   ],
-  "reward": 0.89,
+  "structured_reward": {
+    "value": 0.89,
+    "model_visible": false,
+    "allowlist_path": "rl.structured_reward.value"
+  },
   "reward_metadata": {
     "reward_version": "repo_harness_reward_v0",
     "reward_metadata_ref": {"artifact_id": "artifact_reward_001", "relative_path": "reward.json"}
@@ -270,16 +274,20 @@ Preference pair JSONL：
   "schema_version": "repo_harness_export_v0",
   "sample_id": "repo_task_001_pair_0001",
   "task_id": "repo_task_001",
-  "chosen": {"source_run_id": "run_success", "reward": 0.91, "final_patch": "diff --git ..."},
-  "rejected": {"source_run_id": "run_failed", "reward": 0.22, "final_patch": "diff --git ..."},
+  "chosen": {"source_run_id": "run_success", "final_patch": "diff --git ..."},
+  "rejected": {"source_run_id": "run_failed", "final_patch": "diff --git ..."},
   "reason": "higher_final_verifier_score_and_no_regression",
   "metadata": {
     "pairing_policy": "same_task_rollout_ranking_v0",
     "chosen_verifier_result_ref": {"artifact_id": "artifact_success_verifier_001", "relative_path": "runs/run_success/verifier.json"},
-    "rejected_verifier_result_ref": {"artifact_id": "artifact_failed_verifier_001", "relative_path": "runs/run_failed/verifier.json"}
+    "rejected_verifier_result_ref": {"artifact_id": "artifact_failed_verifier_001", "relative_path": "runs/run_failed/verifier.json"},
+    "chosen_reward_metadata_ref": {"artifact_id": "artifact_success_reward_001", "relative_path": "runs/run_success/reward.json", "model_visible": false},
+    "rejected_reward_metadata_ref": {"artifact_id": "artifact_failed_reward_001", "relative_path": "runs/run_failed/reward.json", "model_visible": false}
   }
 }
 ```
+
+可训练 preference pair 必须来自同一 task、同一固定 source、同一 verifier plan、同一工具与上下文策略，并且 chosen / rejected 的 outcome tier 可比较。跨 task pair、缺少 final verifier boundary evidence 的 pair、或者只靠固定 sample id 绑定的 pair，只能标记为 diagnostic-only 或 blocked，不能进入正式 preference target。
 
 后续可以增加 `verl` parquet，但第一阶段只设计接口，不承诺实现。
 

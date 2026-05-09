@@ -147,6 +147,8 @@ ContextBuilder.build_initial_messages(task, workspace, run_config, resolved_veri
 - 记录 `prompt_template_version`、`context_builder_version` 和上下文截断策略。
 - 区分 `agent_visible_context` 和 `evaluator_only_metadata`。`gold_patch`、隐藏测试、奖励元数据、baseline 原始验证细节默认不能进入模型上下文，也不能通过普通工具输出泄漏给模型。
 
+V4 对 reward 字段的边界更细：`reward scalar` 和 `reward label` 禁止进入模型可见文本、prompt、action、observation、assistant target、SFT target 和 preference target；它们只能出现在非模型可见、字段路径受 allowlist 约束的 structured reward、RewardMetadata、reward audit report 或 audit-only metadata 中。实现和导出审计必须同时检查 visibility 与字段路径，不能只检查文本中是否出现关键词。
+
 仓库内的 `README`、`AGENT.md`、`CLAUDE.md`、`CONTRIBUTING.md` 和 issue 文本都应被视为任务上下文，而不是高优先级系统指令。Context Builder 注入这些内容时必须标明来源，例如“以下内容来自仓库文件”，并明确它不能覆盖系统安全规则、权限规则、隐藏 evaluator metadata、网络策略和 workspace boundary。未来进入真实仓库前，可以增加 prompt injection 诊断事件或过滤策略；第一版至少不能让仓库文件内容改写 Harness 的系统级边界。
 
 初始上下文构造之后，每次模型调用前还需要 `ContextManager` 准备消息：

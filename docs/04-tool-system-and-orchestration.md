@@ -129,6 +129,8 @@ ToolExecutionContext:
 
 工具注册顺序必须稳定。同一份 `RunConfig` 下应记录 `tool_policy_version`、`allowed_tools`、`tool_order` 和 `permission_policy_version`，避免不同运行中工具提示顺序变化影响模型行为和实验复现。
 
+V4 以后，工具面冻结还必须和 tool lifecycle audit 绑定：`ToolContractSnapshot`、`PermissionPolicySnapshot`、`HookPolicySnapshot` 或 hook disabled facts、`MCPPolicySnapshot` 或 MCP disabled / frozen facts、稳定工具顺序、permission decision trace 和 tool lifecycle trace 都应能被 inspect 命令复核。最新机器证据位于 `docs/v4/evidence/tool-lifecycle/`，实施要求见 `docs/v4/implementation-plan.md`。
+
 ## 工具输出规范
 
 ToolResult 应采用“通用字段 + 按工具类型扩展字段”的结构，避免让只读工具伪造命令执行字段。

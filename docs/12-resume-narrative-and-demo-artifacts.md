@@ -2,7 +2,7 @@
 
 ## 设计目标
 
-这篇文档服务于后续简历、面试和项目展示。它描述 RepoHarness 未来实现完成后应该如何被解释，以及哪些 artifacts 可以作为展示材料。当前内容是设计阶段的 illustrative example，不表示这些 artifacts 已经由仓库运行生成。
+这篇文档服务于后续简历、面试和项目展示。它描述 RepoHarness 应该如何被解释，以及哪些 artifacts 可以作为展示材料。本文中的 YAML、JSON 和 preference pair 片段仍是 illustrative examples；当前真实产物请优先查看 `docs/v4/final-acceptance.md`、`docs/v4/evidence/` 和 `runs/v4-final-rerun-20260504T194758Z/`。截至 2026-05-05，V4 已完成复核问题修复并通过修复后最终验收；完整测试结果为 `712 passed`，V4 acceptance report 和文档同步后的 acceptance bundle immutable inspect 均已通过。
 
 ## 一句话项目定位
 
@@ -25,9 +25,9 @@ RepoHarness 计划把这些能力迁移到 repository-level software engineering
 - 如何在同一任务、同一工具、同一 verifier 下比较 single-shot patch、simple ReAct 和 planner-coder-verifier scaffold。
 - 如何记录失败类型，例如依赖安装失败、测试超时、无效工具调用、权限拒绝、上下文限制和 pass-to-pass regression。
 
-## 未来展示 Artifact 清单
+## 当前展示 Artifact 清单
 
-未来实现完成后，一个最小展示案例可以包含：
+当前展示案例可以同时使用真实 acceptance evidence 和下面的基础 artifact 类型。真实路径以 `docs/v4/evidence/`、`runs/v4-final-rerun-20260504T194758Z/`、`docs/v3/final-acceptance.md` 和 `docs/v2/final-acceptance.md` 为准。
 
 - 一个 `task.yaml`，展示 issue-style repository task。
 - 一段 `transcript.jsonl`，展示模型如何调用工具、观察结果并继续修复。
@@ -140,17 +140,15 @@ Reinforcement learning rollout record:
       "observation": {"preview": "calculator.py:12:def divide(a, b):"}
     }
   ],
-  "reward": 0.91,
-  "reward_metadata": {
-    "reward_version": "repo_harness_reward_v0",
-    "reward_metadata_ref": {"artifact_id": "artifact_reward_001", "relative_path": "reward.json"},
-    "components": {
-      "fail_to_pass_score": 1.0,
-      "pass_to_pass_score": 1.0,
-      "accepted_bonus": 1.0,
-      "cost_penalty": 0.07,
-      "patch_size_penalty": 0.02
-    }
+  "structured_reward": {
+    "value": 0.91,
+    "model_visible": false,
+    "allowlist_path": "rl.structured_reward.value"
+  },
+  "reward_metadata_ref": {
+    "artifact_id": "artifact_reward_001",
+    "relative_path": "reward.json",
+    "model_visible": false
   },
   "invalid_for_training": false,
   "invalid_reason": null
@@ -164,16 +162,28 @@ Preference pair record:
   "schema_version": "repo_harness_export_v0",
   "sample_id": "repo_task_001_pair_0001",
   "task_id": "repo_task_001",
-  "chosen": {"source_run_id": "run_success", "reward": 0.91},
-  "rejected": {"source_run_id": "run_regression", "reward": 0.18},
+  "chosen": {"source_run_id": "run_success"},
+  "rejected": {"source_run_id": "run_regression"},
   "reason": "chosen_passed_fail_to_pass_and_preserved_pass_to_pass",
-  "metadata": {"pairing_policy": "same_task_rollout_ranking_v0"}
+  "metadata": {
+    "pairing_policy": "same_task_rollout_ranking_v0",
+    "chosen_verifier_result_ref": {"relative_path": "runs/run_success/verifier.json"},
+    "rejected_verifier_result_ref": {"relative_path": "runs/run_regression/verifier.json"},
+    "chosen_final_verifier_boundary_ref": {"relative_path": "runs/run_success/final_verifier_boundary.json"},
+    "rejected_final_verifier_boundary_ref": {"relative_path": "runs/run_regression/final_verifier_boundary.json"},
+    "chosen_reward_metadata_ref": {"relative_path": "runs/run_success/reward.json", "model_visible": false},
+    "rejected_reward_metadata_ref": {"relative_path": "runs/run_regression/reward.json", "model_visible": false}
+  }
 }
 ```
 
 ## 简历阶段安全表述
 
-设计阶段可以写：
+当前可以保守表述为：
+
+> Implemented a lightweight, local-first software engineering agent harness with V1-V4 trajectory recording, verifier-aligned evaluation, training export audit, Docker-based repository execution, rollout orchestration, export quality audit, cards evidence, and immutable V4 acceptance bundle after review hardening.
+
+历史设计阶段也可以写：
 
 > Designed a training-aware software engineering agent harness for repository-level tasks, specifying agent loop, tool contracts, permission boundaries, verifier-aligned reward metadata, trajectory logging, evaluation metrics, and training export schemas.
 

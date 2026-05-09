@@ -72,6 +72,12 @@ class PreparedMessages(StrictBaseModel):
     content_replacement_state: ContentReplacementState | None = None
     token_estimate: int = Field(ge=0)
     token_estimator_version: str = TOKEN_ESTIMATOR_VERSION
+    internal_char_estimate: int = Field(default=0, ge=0)
+    internal_token_estimate: int = Field(default=0, ge=0)
+    provider_body_char_estimate: int = Field(default=0, ge=0)
+    provider_ready_token_estimate: int = Field(default=0, ge=0)
+    provider_ready_token_estimator_version: str = "provider_body_char4_token_estimator_v1"
+    threshold_decision_source: str = "provider_ready_token_estimate"
 
 
 class ContextCompactionFacts(StrictBaseModel):

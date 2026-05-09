@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from repo_harness.run_metadata.tool_snapshot import build_tool_schema_snapshot, write_tool_schema_snapshot
-from repo_harness.tools import DEFAULT_TOOL_ORDER
+from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolPolicy
 from repo_harness.trajectory import RunRecorder
 
 
@@ -42,3 +42,22 @@ def test_tool_schema_snapshot_is_manifest_backed_artifact(tmp_path: Path):
     assert payload["snapshot_sha256"] == snapshot.snapshot_sha256
     assert protocol.tool_schema_snapshot_ref == ref
     assert protocol.tool_order == DEFAULT_TOOL_ORDER
+
+
+def test_tool_schema_snapshot_records_tool_policy_config(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    policy = ToolPolicy(
+        tool_policy_version="repo_harness_tool_policy_pre_verl_read_before_edit_v1",
+        require_read_before_edit=True,
+    )
+
+    with RunRecorder("run_001", run_dir, task_id="task_001") as recorder:
+        _, ref, protocol = write_tool_schema_snapshot(recorder, tool_policy=policy)
+
+    payload = json.loads((run_dir / ref.relative_path).read_text(encoding="utf-8"))
+
+    assert protocol.tool_policy_version == "repo_harness_tool_policy_pre_verl_read_before_edit_v1"
+    assert protocol.require_read_before_edit is True
+    assert protocol.tool_policy_config["require_read_before_edit"] is True
+    assert payload["require_read_before_edit"] is True
+    assert payload["tool_policy_config"]["require_read_before_edit"] is True

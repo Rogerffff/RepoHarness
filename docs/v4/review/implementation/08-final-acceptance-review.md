@@ -4,6 +4,8 @@
 
 本次审查覆盖 Stage 8 final acceptance builder、acceptance inputs 递归 inspect、acceptance report、acceptance bundle、pre-acceptance command log、post-acceptance documentation boundary 和对应负例测试。
 
+本文最初记录的是 Stage 8 初始验收复审。后续复核继续发现 command log 绑定、reward audit schema、structured reward allowlist、preference pair 可比较性、独立 regression evidence 和 implementation log index 等缺口；这些问题已经通过后续修复提交收口。当前 V4 最新验收目录是 `runs/v4-final-rerun-20260504T194758Z/`，文档同步后的可复核 bundle 是 `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`。
+
 ## 审查方式
 
 - Subagent Hegel 执行只读审查，未修改文件。
@@ -30,9 +32,16 @@
 - `PATH=.venv/bin:$PATH repo-harness inspect-v2-acceptance runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json --assert-complete` 通过。
 - `PATH=.venv/bin:$PATH repo-harness inspect-v3-acceptance runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json --assert-complete` 通过。
 - `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json --assert-immutable` 通过。
-- `PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T162105Z/v4_acceptance_inputs.json --assert-complete` 通过。
-- `PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T162105Z/acceptance/v4_acceptance_report.json --assert-complete` 通过。
-- `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T162105Z/acceptance/acceptance_bundle_manifest.json --assert-immutable` 通过。
+- 初始 Stage 8 验证中，`PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T162105Z/v4_acceptance_inputs.json --assert-complete` 通过。
+- 初始 Stage 8 验证中，`PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T162105Z/acceptance/v4_acceptance_report.json --assert-complete` 通过。
+- 初始 Stage 8 验证中，`PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T162105Z/acceptance/acceptance_bundle_manifest.json --assert-immutable` 通过。
+
+后续修复复核问题后的最新验证：
+
+- `PATH=.venv/bin:$PATH python -m pytest -q` 通过，712 个测试通过。
+- `PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json --assert-complete` 通过。
+- `PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T194758Z/acceptance/v4_acceptance_report.json --assert-complete` 通过。
+- `PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json --assert-immutable` 通过。
 
 ## 最终复审
 
@@ -40,4 +49,4 @@ Subagent Pasteur 对修复后的 Stage 8 执行最终只读复审，结论是未
 
 ## 最终结论
 
-P1 和 P2 均已修复。Stage 8 已通过最终验收重跑，可以提交。
+初始 Stage 8 审查中的 P1 和 P2 均已修复。后续复核继续发现的问题也已经修复并重新生成 `runs/v4-final-rerun-20260504T194758Z/` 下的验收证据。当前结论是：V4 已通过修复后最终验收，可以作为 V5 设计和后续实施的基线。

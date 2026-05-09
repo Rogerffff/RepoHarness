@@ -15,6 +15,7 @@ def build_metrics_record(
     run_outcome: str,
     final_verifier_status: str | None = None,
     agent_stop_reason: str | None = None,
+    timeout: bool | None = None,
     turn_count: int = 0,
     tool_call_count: int = 0,
     test_run_count: int = 0,
@@ -29,6 +30,8 @@ def build_metrics_record(
     hidden_feedback_visible_to_model: bool = False,
     public_tests_ran: bool = False,
     hidden_feedback_ran: bool = False,
+    loop_diagnostics_summary: dict[str, Any] | None = None,
+    loop_diagnostic_count: int = 0,
 ) -> MetricsRecord:
     final_status = final_verifier_status or derive_final_verifier_status(final_verifier)
     return MetricsRecord(
@@ -38,7 +41,7 @@ def build_metrics_record(
         turn_count=turn_count,
         tool_call_count=tool_call_count,
         test_run_count=test_run_count,
-        timeout=final_verifier.timeout,
+        timeout=final_verifier.timeout if timeout is None else timeout,
         patch_stats=patch_stats or {},
         permission_denial_count=permission_denial_count,
         invalid_tool_call_count=invalid_tool_call_count,
@@ -53,6 +56,8 @@ def build_metrics_record(
             "hidden_feedback_visible_to_model": hidden_feedback_visible_to_model,
             "public_tests_ran": public_tests_ran,
             "hidden_feedback_ran": hidden_feedback_ran,
+            "loop_diagnostics_summary": loop_diagnostics_summary or {},
+            "loop_diagnostic_count": loop_diagnostic_count,
         },
     )
 

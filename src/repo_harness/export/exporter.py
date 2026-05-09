@@ -471,8 +471,12 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
     loss_mask: list[int] = []
     observation_mask: list[int] = []
     trainable_messages: list[int] = []
+    excluded_control_message_count = 0
     for record in transcript:
         if not record.get("model_visible", False):
+            continue
+        if _is_default_export_excluded_control_message(record):
+            excluded_control_message_count += 1
             continue
         message = _message_from_transcript(record, prepared_observations, assistant_tool_calls)
         if message is None:
@@ -498,6 +502,8 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
         "v3_observation_bindings": _v3_observation_bindings(run_path),
+        "excluded_harness_control_message_count": excluded_control_message_count,
+        "harness_control_message_export_policy": "exclude_harness_generated_untrainable_control_messages_v1",
     }
     return ExportRecord(
         sample_id=f"{run_path.name}_sft",
@@ -674,6 +680,20 @@ def _message_from_transcript(
             }
         return None
     return None
+
+
+def _is_default_export_excluded_control_message(record: dict[str, Any]) -> bool:
+    if record.get("role") != "user":
+        return False
+    if record.get("trainable") is not False:
+        return False
+    message_id = str(record.get("message_id") or "")
+    if message_id.startswith(("convergence_nudge_", "context_warning_")):
+        return True
+    preview = str(record.get("content_preview") or "")
+    return "repo_harness_control_message" in preview and (
+        "convergence_nudge" in preview or "context_warning" in preview
+    )
 
 
 def _assistant_tool_calls_by_turn(run_path: Path) -> dict[int, list[dict[str, Any]]]:

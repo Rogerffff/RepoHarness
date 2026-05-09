@@ -52,6 +52,8 @@ class PermissionSystem:
                         "read_file",
                         "grep",
                         "list_files",
+                        "glob_files",
+                        "symbol_search",
                     },
                 )
             except WorkspaceError as exc:
@@ -275,8 +277,10 @@ class PermissionSystem:
 def _path_fields(tool_name: str) -> list[str]:
     fields = {
         "list_files": ["root"],
+        "glob_files": ["root"],
         "read_file": ["path"],
         "grep": ["root"],
+        "symbol_search": ["root"],
         "edit_file": ["path"],
         "create_file": ["path"],
         "bash": ["cwd"],

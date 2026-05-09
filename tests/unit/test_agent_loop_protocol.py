@@ -8,8 +8,10 @@ from repo_harness.agent_loop import AgentLoop
 from repo_harness.budget import BudgetManager
 from repo_harness.model_client import FakeModelClient, ModelCallEvent, ModelMessage, ModelResponse
 from repo_harness.model_client.provider_private_state import provider_private_state_store
+from repo_harness.schema_base import stable_hash
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutor
+from repo_harness.tools import ToolResult
 from repo_harness.trajectory import RunRecorder
 
 
@@ -468,6 +470,255 @@ def test_agent_loop_max_turns_is_deterministic(tmp_path: Path):
     assert state.agent_stop_reason == "max_turns"
 
 
+def test_agent_loop_records_no_progress_diagnostics_without_hard_stop(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    budget = BudgetManager(
+        max_turns=12,
+        max_tool_calls=20,
+        max_test_runs=10,
+        task_timeout_sec=60,
+        command_timeout_sec=30,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+    )
+
+    client = _RepeatedGrepClient()
+    with RunRecorder("no-progress", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=_NoProgressToolExecutor(),
+            allowed_tool_names=["grep"],
+        ).run(
+            run_id="no-progress",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=budget.max_turns,
+            budget_manager=budget,
+        )
+
+    events = _read_events(run_dir)
+    _assert_tool_events_are_paired(events)
+    diagnostic_events = [
+        event for event in events if event["event_type"] == "loop_progress_diagnostic"
+    ]
+    nudge_events = [
+        event for event in events if event["event_type"] == "convergence_nudge_injected"
+    ]
+    signal_keys = {
+        signal["signal_key"]
+        for event in diagnostic_events
+        for signal in event["data"]["signals"]
+    }
+
+    assert state.agent_stop_reason == "max_turns"
+    assert diagnostic_events
+    assert {
+        "long_read_only_streak",
+        "repeated_tool_input",
+        "empty_search_accumulation",
+        "near_turn_budget_without_patch",
+    }.issubset(signal_keys)
+    assert all(event["data"]["hard_stop_enabled"] is False for event in diagnostic_events)
+    assert all(event["data"]["agent_stop_reason_changed"] is False for event in diagnostic_events)
+    assert any(event["data"]["model_visible_message_injected"] is True for event in diagnostic_events)
+    assert nudge_events
+    nudge_levels = {event["data"]["nudge_level"] for event in nudge_events}
+    assert "exploration_no_progress" in nudge_levels
+    assert "near_budget_patch_or_stop" in nudge_levels
+    assert all(event["data"]["trainable"] is False for event in nudge_events)
+    assert all(event["data"]["resolved_trainable"] is False for event in nudge_events)
+    assert all(event["data"]["inserted_after_all_tool_results"] is True for event in nudge_events)
+    near_budget_nudge = next(
+        event for event in nudge_events if event["data"]["nudge_level"] == "near_budget_patch_or_stop"
+    )
+    assert near_budget_nudge["data"]["has_patch"] is False
+    assert near_budget_nudge["data"]["turns_remaining"] <= 6
+    first_nudge = nudge_events[0]
+    same_turn_event_types = [
+        event["event_type"] for event in events if event.get("turn") == first_nudge["turn"]
+    ]
+    assert same_turn_event_types.index("tool_completed") < same_turn_event_types.index(
+        "loop_progress_diagnostic"
+    )
+    assert same_turn_event_types.index("loop_progress_diagnostic") < same_turn_event_types.index(
+        "convergence_nudge_injected"
+    )
+    transcript = [
+        json.loads(line)
+        for line in (run_dir / "transcript.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    nudge_records = [
+        record for record in transcript if record["message_id"].startswith("convergence_nudge_")
+    ]
+    assert nudge_records
+    assert all(record["model_visible"] is True for record in nudge_records)
+    assert all(record["trainable"] is False for record in nudge_records)
+    nudge_text = json.dumps(nudge_records, ensure_ascii=False).lower()
+    assert "hidden" not in nudge_text
+    assert "gold" not in nudge_text
+    assert "selector" not in nudge_text
+    assert any(
+        "convergence_nudge" in json.dumps(request.prepared_messages, ensure_ascii=False)
+        for request in client.requests[1:]
+    )
+    assert state.loop_diagnostics
+    assert state.loop_diagnostics_summary["diagnostic_status"] == "no_progress_suspected"
+    assert state.loop_diagnostics_summary["patch_tool_call_count"] == 0
+    assert state.loop_diagnostics_summary["read_only_tool_call_count"] == 12
+
+
+def test_agent_loop_does_not_inject_convergence_nudge_on_final_turn(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    budget = BudgetManager(
+        max_turns=3,
+        max_tool_calls=20,
+        max_test_runs=10,
+        task_timeout_sec=60,
+        command_timeout_sec=30,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=120000,
+        max_output_tokens=4096,
+    )
+
+    with RunRecorder("no-progress-final-turn", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=_RepeatedGrepClient(),
+            tool_executor=_NoProgressToolExecutor(),
+            allowed_tool_names=["grep"],
+        ).run(
+            run_id="no-progress-final-turn",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=budget.max_turns,
+            budget_manager=budget,
+        )
+
+    events = _read_events(run_dir)
+    diagnostic_events = [
+        event for event in events if event["event_type"] == "loop_progress_diagnostic"
+    ]
+
+    assert state.agent_stop_reason == "max_turns"
+    assert diagnostic_events
+    assert not any(event["event_type"] == "convergence_nudge_injected" for event in events)
+    assert all(
+        event["data"]["model_visible_message_injected"] is False
+        for event in diagnostic_events
+    )
+
+
+def test_agent_loop_no_progress_summary_resets_after_patch_progress(tmp_path: Path):
+    run_dir = tmp_path / "run"
+
+    with RunRecorder("no-progress-reset", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=_SearchThenPatchClient(),
+            tool_executor=_NoProgressThenPatchToolExecutor(),
+            allowed_tool_names=["grep", "edit_file"],
+        ).run(
+            run_id="no-progress-reset",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=10,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "final_answer"
+    assert any(event["event_type"] == "loop_progress_diagnostic" for event in events)
+    assert state.loop_diagnostics_summary["diagnostic_status"] == "ok"
+    assert state.loop_diagnostics_summary["patch_tool_call_count"] == 1
+    assert state.loop_diagnostics_summary["read_only_tool_call_count"] == 0
+    assert state.loop_diagnostics_summary["total_read_only_tool_call_count"] == 4
+    assert state.loop_diagnostics_summary["analysis_window_started_after_patch_tool_call"] is True
+
+
+def test_agent_loop_no_progress_events_can_recur_after_patch_progress(tmp_path: Path):
+    run_dir = tmp_path / "run"
+
+    with RunRecorder("no-progress-recur", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=_SearchPatchThenSearchClient(),
+            tool_executor=_NoProgressThenPatchToolExecutor(),
+            allowed_tool_names=["grep", "edit_file"],
+        ).run(
+            run_id="no-progress-recur",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=10,
+        )
+
+    diagnostic_events = [
+        event for event in _read_events(run_dir) if event["event_type"] == "loop_progress_diagnostic"
+    ]
+    repeated_or_empty_events = [
+        event
+        for event in diagnostic_events
+        if {
+            "repeated_tool_input",
+            "empty_search_accumulation",
+        }.intersection(event["data"]["new_signal_keys"])
+    ]
+
+    assert state.agent_stop_reason == "final_answer"
+    assert len(repeated_or_empty_events) >= 2
+    assert repeated_or_empty_events[0]["data"]["diagnostic_dedupe_scope"] == "run_start"
+    assert repeated_or_empty_events[-1]["data"]["diagnostic_dedupe_scope"] == "call_edit_result"
+    assert state.loop_diagnostics_summary["diagnostic_status"] == "no_progress_suspected"
+    assert state.loop_diagnostics_summary["analysis_window_started_after_patch_tool_call"] is True
+    assert state.loop_diagnostics_summary["read_only_tool_call_count"] == 4
+
+
+def test_agent_loop_near_budget_finalize_nudge_after_patch_is_not_blocked_by_earlier_nudge(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run"
+
+    with RunRecorder("near-budget-finalize", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=_SearchPatchThenSearchClient(),
+            tool_executor=_NoProgressThenPatchToolExecutor(),
+            allowed_tool_names=["grep", "edit_file", "git_diff"],
+        ).run(
+            run_id="near-budget-finalize",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=10,
+        )
+
+    nudge_events = [
+        event for event in _read_events(run_dir) if event["event_type"] == "convergence_nudge_injected"
+    ]
+    levels = [event["data"]["nudge_level"] for event in nudge_events]
+
+    assert state.agent_stop_reason == "final_answer"
+    assert "exploration_no_progress" in levels
+    assert "near_budget_finalize_patch" in levels
+    finalize = next(
+        event for event in nudge_events if event["data"]["nudge_level"] == "near_budget_finalize_patch"
+    )
+    assert finalize["data"]["has_patch"] is True
+    assert finalize["data"]["turns_remaining"] <= 4
+    assert finalize["data"]["post_nudge_action"] == "pending_observation"
+    nudge_text = json.dumps(nudge_events, ensure_ascii=False).lower()
+    assert "hidden" not in nudge_text
+    assert "gold" not in nudge_text
+    assert "selector" not in nudge_text
+
+
 def test_agent_loop_context_limit_records_prepared_context(tmp_path: Path):
     run_dir = tmp_path / "run"
     budget = BudgetManager(
@@ -505,6 +756,53 @@ def test_agent_loop_context_limit_records_prepared_context(tmp_path: Path):
     assert any(event["event_type"] == "context_prepared" for event in events)
     assert any(event["event_type"] == "budget_exhausted" for event in events)
     assert not any(event["event_type"] == "model_call_started" for event in events)
+
+
+def test_agent_loop_context_warning_reprepares_before_provider_call(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RequestListClient()
+    budget = BudgetManager(
+        max_turns=1,
+        max_tool_calls=10,
+        max_test_runs=10,
+        task_timeout_sec=60,
+        command_timeout_sec=30,
+        verifier_timeout_sec=30,
+        max_tool_output_chars=4000,
+        max_context_tokens=2200,
+        max_output_tokens=4096,
+    )
+
+    with RunRecorder("context-warning", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="context-warning",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "x" * 7200}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            budget_manager=budget,
+        )
+
+    events = _read_events(run_dir)
+    context_events = [event for event in events if event["event_type"] == "context_prepared"]
+    warning_event = next(event for event in events if event["event_type"] == "context_warning_injected")
+    model_event = next(event for event in events if event["event_type"] == "model_call_started")
+    warning_index = events.index(warning_event)
+    model_index = events.index(model_event)
+    context_indices = [events.index(event) for event in context_events]
+
+    assert state.agent_stop_reason == "final_answer"
+    assert len(client.requests) == 1
+    assert len(context_events) == 2
+    assert context_indices[0] < warning_index < context_indices[1] < model_index
+    assert warning_event["data"]["requires_prepare_messages_rerun"] is True
+    assert warning_event["data"]["provider_request_created_before_warning"] is False
+    assert model_event["data"]["context_revision"] == context_events[1]["data"]["context_revision"]
+    assert "context_warning" in json.dumps(client.requests[0].prepared_messages, ensure_ascii=False)
 
 
 def test_agent_loop_max_cost_zero_stops_before_model_call(tmp_path: Path):
@@ -751,6 +1049,114 @@ def test_agent_loop_interrupts_remaining_tools_when_feedback_passes(tmp_path: Pa
     _assert_tool_events_are_paired(_read_events(run_dir))
 
 
+def test_agent_loop_updates_structured_working_state(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = FakeModelClient.from_steps(
+        script_id="working-state",
+        task_id="task",
+        steps=[
+            {
+                "step_id": "state",
+                "action": "tool_call",
+                "tool_call_id": "call_state",
+                "tool_name": "update_working_state",
+                "arguments": {"next_action": "read parser"},
+            }
+        ],
+    )
+
+    with RunRecorder("working-state", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=_WorkingStateExecutor(),
+            allowed_tool_names=["update_working_state"],
+        ).run(
+            run_id="working-state",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    assert state.working_state is not None
+    assert state.working_state["next_action"] == "read parser"
+    assert state.tool_pairing_state.tool_result_ids["call_state"] == "call_state_result"
+
+
+def test_agent_loop_records_tool_duration_on_event_and_result_payload(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = FakeModelClient.from_steps(
+        script_id="tool-duration",
+        task_id="task",
+        steps=[
+            {
+                "step_id": "state",
+                "action": "tool_call",
+                "tool_call_id": "call_state",
+                "tool_name": "update_working_state",
+                "arguments": {"next_action": "read parser"},
+            }
+        ],
+    )
+
+    with RunRecorder("tool-duration", run_dir, task_id="task") as recorder:
+        AgentLoop(
+            model_client=client,
+            tool_executor=_WorkingStateExecutor(),
+            allowed_tool_names=["update_working_state"],
+        ).run(
+            run_id="tool-duration",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    events = _read_events(run_dir)
+    completed = next(event for event in events if event["event_type"] == "tool_completed")
+    assert isinstance(completed["duration_ms"], int)
+    assert completed["duration_ms"] >= 0
+    assert completed["data"]["duration_ms"] == completed["duration_ms"]
+    assert completed["data"]["typed"]["duration_ms"] == completed["duration_ms"]
+    assert completed["data"]["typed"]["execution_duration_ms"] == completed["duration_ms"]
+
+
+def test_agent_loop_does_not_update_working_state_from_error_result(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = FakeModelClient.from_steps(
+        script_id="working-state-error",
+        task_id="task",
+        steps=[
+            {
+                "step_id": "state_error",
+                "action": "tool_call",
+                "tool_call_id": "call_state_error",
+                "tool_name": "update_working_state",
+                "arguments": {"next_action": "read parser"},
+            }
+        ],
+    )
+
+    with RunRecorder("working-state-error", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=_WorkingStateErrorExecutor(),
+            allowed_tool_names=["update_working_state"],
+        ).run(
+            run_id="working-state-error",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+        )
+
+    assert state.working_state is None
+    assert state.tool_pairing_state.tool_result_ids["call_state_error"] == "call_state_error_result"
+
+
 class _MultiToolExecutor(ToolExecutor):
     def is_known(self, tool_name: str) -> bool:
         return True
@@ -791,12 +1197,67 @@ class _MultiToolExecutor(ToolExecutor):
         )
 
 
+class _WorkingStateExecutor(_MultiToolExecutor):
+    def execute(self, tool_call, context):  # noqa: ANN001
+        from repo_harness.tools import ToolResult
+        from repo_harness.schema_base import stable_hash
+
+        working_state = {
+            "schema_version": "repo_harness_working_state_v0",
+            "current_hypothesis": "",
+            "candidate_files": [],
+            "next_action": tool_call.arguments["next_action"],
+            "completed_steps": [],
+            "blocking_question": "",
+            "skipped_candidate_file_count": 0,
+            "policy_version": "repo_harness_update_working_state_v0",
+        }
+        return ToolResult(
+            tool_result_id=f"{tool_call.tool_call_id}_result",
+            tool_call_id=tool_call.tool_call_id,
+            tool_name=tool_call.tool_name,
+            requested_tool_name=tool_call.tool_name,
+            effective_tool_name="update_working_state",
+            requested_arguments=tool_call.arguments,
+            normalized_arguments=tool_call.arguments,
+            effective_arguments=tool_call.arguments,
+            normalized_input_hash=stable_hash(tool_call.arguments),
+            status="ok",
+            content_preview="working_state_updated",
+            typed={"status": "ok", "working_state": working_state},
+        )
+
+
+class _WorkingStateErrorExecutor(_WorkingStateExecutor):
+    def execute(self, tool_call, context):  # noqa: ANN001
+        result = super().execute(tool_call, context)
+        return result.model_copy(
+            update={
+                "status": "error",
+                "error_type": "working_state_empty",
+                "content_preview": "working_state_empty",
+            }
+        )
+
+
 class _RecordingClient:
     def __init__(self) -> None:
         self.request = None
 
     def generate(self, request, recorder):  # noqa: ANN001
         self.request = request
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
+        )
+
+
+class _RequestListClient:
+    def __init__(self) -> None:
+        self.requests = []
+
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        self.requests.append(request)
         return ModelResponse(
             assistant_message=ModelMessage(role="assistant", content="done"),
             finish_reason="stop",
@@ -961,6 +1422,167 @@ class _ModelErrorWithToolCallsClient:
             finish_reason="tool_calls",
             model_error_type="provider_error",
         )
+
+
+class _RepeatedGrepClient:
+    def __init__(self) -> None:
+        self.requests = []
+
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        self.requests.append(request)
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content=None),
+            tool_calls=[
+                ToolCall(
+                    tool_call_id=f"call_grep_{request.turn}",
+                    tool_name="grep",
+                    arguments={"query": "missing-symbol", "root": "src"},
+                    turn=request.turn,
+                )
+            ],
+            finish_reason="tool_calls",
+        )
+
+
+class _SearchThenPatchClient:
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        if request.turn <= 4:
+            return ModelResponse(
+                assistant_message=ModelMessage(role="assistant", content=None),
+                tool_calls=[
+                    ToolCall(
+                        tool_call_id=f"call_grep_{request.turn}",
+                        tool_name="grep",
+                        arguments={"query": "missing-symbol", "root": "src"},
+                        turn=request.turn,
+                    )
+                ],
+                finish_reason="tool_calls",
+            )
+        if request.turn == 5:
+            return ModelResponse(
+                assistant_message=ModelMessage(role="assistant", content=None),
+                tool_calls=[
+                    ToolCall(
+                        tool_call_id="call_edit",
+                        tool_name="edit_file",
+                        arguments={
+                            "path": "src/demo.py",
+                            "old_text": "before",
+                            "new_text": "after",
+                        },
+                        turn=request.turn,
+                    )
+                ],
+                finish_reason="tool_calls",
+            )
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
+        )
+
+
+class _SearchPatchThenSearchClient:
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        if request.turn in {1, 2, 3, 4, 6, 7, 8, 9}:
+            return ModelResponse(
+                assistant_message=ModelMessage(role="assistant", content=None),
+                tool_calls=[
+                    ToolCall(
+                        tool_call_id=f"call_grep_{request.turn}",
+                        tool_name="grep",
+                        arguments={"query": "missing-symbol", "root": "src"},
+                        turn=request.turn,
+                    )
+                ],
+                finish_reason="tool_calls",
+            )
+        if request.turn == 5:
+            return ModelResponse(
+                assistant_message=ModelMessage(role="assistant", content=None),
+                tool_calls=[
+                    ToolCall(
+                        tool_call_id="call_edit",
+                        tool_name="edit_file",
+                        arguments={
+                            "path": "src/demo.py",
+                            "old_text": "before",
+                            "new_text": "after",
+                        },
+                        turn=request.turn,
+                    )
+                ],
+                finish_reason="tool_calls",
+            )
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
+        )
+
+
+class _NoProgressToolExecutor(ToolExecutor):
+    def validate_input(self, tool_call, context):  # noqa: ANN001, ARG002
+        return None
+
+    def check_permission(self, tool_call, context):  # noqa: ANN001, ARG002
+        from repo_harness.permissions import PermissionDecision
+
+        normalized = self.normalize(tool_call, context)
+        return PermissionDecision(
+            decision_id=f"{tool_call.tool_call_id}_permission",
+            tool_call_id=tool_call.tool_call_id,
+            tool_name=tool_call.tool_name,
+            requested_tool_name=normalized.requested_tool_name,
+            effective_tool_name=normalized.effective_tool_name,
+            decision="allow",
+            mode="auto",
+            reason="test allow",
+            normalized_input_hash=normalized.normalized_input_hash,
+        )
+
+    def execute(self, tool_call, context):  # noqa: ANN001, ARG002
+        normalized = self.normalize(tool_call, context)
+        return ToolResult(
+            tool_result_id=f"{tool_call.tool_call_id}_result",
+            tool_call_id=tool_call.tool_call_id,
+            tool_name=tool_call.tool_name,
+            requested_tool_name=normalized.requested_tool_name,
+            effective_tool_name=normalized.effective_tool_name,
+            requested_arguments=normalized.requested_arguments,
+            normalized_arguments=normalized.normalized_arguments,
+            effective_arguments=normalized.effective_arguments,
+            normalized_input_hash=stable_hash(normalized.normalized_arguments),
+            status="ok",
+            content_preview=(
+                "No matches found after scanning all 0 model-visible files under root='src'."
+            ),
+            typed={
+                "result_kind": "complete_no_match",
+                "total_match_count": 0,
+                "match_count": 0,
+            },
+        )
+
+
+class _NoProgressThenPatchToolExecutor(_NoProgressToolExecutor):
+    def execute(self, tool_call, context):  # noqa: ANN001, ARG002
+        normalized = self.normalize(tool_call, context)
+        if normalized.effective_tool_name == "edit_file":
+            return ToolResult(
+                tool_result_id=f"{tool_call.tool_call_id}_result",
+                tool_call_id=tool_call.tool_call_id,
+                tool_name=tool_call.tool_name,
+                requested_tool_name=normalized.requested_tool_name,
+                effective_tool_name=normalized.effective_tool_name,
+                requested_arguments=normalized.requested_arguments,
+                normalized_arguments=normalized.normalized_arguments,
+                effective_arguments=normalized.effective_arguments,
+                normalized_input_hash=stable_hash(normalized.normalized_arguments),
+                status="ok",
+                content_preview="Updated src/demo.py",
+                typed={"status": "ok", "path": "src/demo.py"},
+            )
+        return super().execute(tool_call, context)
 
 
 class _MultiToolResponse:

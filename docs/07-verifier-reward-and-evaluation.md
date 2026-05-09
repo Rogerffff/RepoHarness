@@ -191,6 +191,8 @@ reward = 0.7 * fail_to_pass_ratio
 - patch size 来自 `final.diff` 或 Git diff 统计。
 - timeout 和 permission denial 来自结构化 events。
 
+V4 以后，RewardMetadata 还必须保留 `version`、`formula`、`components`、`sources`、`invalid_for_training` 和 `invalid_reason` 等字段，并和 export audit 的训练资格判断分离。`reward scalar` 和 `reward label` 只能位于非模型可见、字段路径受 allowlist 约束的 structured reward、RewardMetadata、reward audit report 或 audit-only metadata 中，不能进入 prompt、action、observation、assistant target、SFT target 或 preference target。导出审计不能只检查 `model_visible = false`，还必须校验 allowlist 字段路径。
+
 边界条件必须保守处理：如果 `fail_to_pass.total = 0`，不能把 fail-to-pass score 默认为满分，应把任务标记为不适合该 reward 分量，或使用只依赖 pass-to-pass 和 accepted 的备用公式。flaky 或 invalid task 默认 `invalid_for_training = true`。一旦 final verifier 发现 pass-to-pass regression，应施加强惩罚，即使目标失败测试已经通过。
 
 第一版 `final_reward` 建议裁剪到 `[0.0, 1.0]`，并把裁剪区间写入 `RewardMetadata`。如果 `parser_confidence` 低于阈值、patch replay 失败、final verifier timeout 或 accepted policy 无法给出确定结论，应设置 `invalid_for_training = true` 或在 export filter 中标记为 `inconclusive`，不能把低置信 verifier 结果当作可靠强化学习奖励。
@@ -200,6 +202,8 @@ reward = 0.7 * fail_to_pass_ratio
 `run_tests` 是 agent 可以调用的中间反馈工具。它调用 verifier 的 feedback path，把测试失败摘要返回给模型，帮助模型继续修复。
 
 最终评测必须在 agent 停止后重新运行 final verifier。reward metadata、任务成功率、fail-to-pass、pass-to-pass 和训练导出默认都使用 final verifier 的结果。这样可以避免模型在中间测试通过后继续修改代码导致最终工作区回归。
+
+导出样本不能只声明 `final_verifier_result` 字段，还必须能回指同一 run 的 final verifier boundary evidence。V4 最新复核曾发现 Stage 6 导出样本引用了没有 Stage 5 boundary report 支撑的 final verifier 结果；修复完成前，任何 acceptance 或 export 结论都应显式检查这条证据链。
 
 正式评测模式应支持 strict final verifier：从 source checkout 创建 verification workspace，恢复合法 `dependency_state`，应用 `final.patch`，再运行 final verifier。快速调试模式可以直接在 agent run workspace 上运行 final verifier，但 metrics 和 summary 必须记录所用模式，避免把模型临时安装依赖或运行时副作用误当成可复现 patch 成功。
 

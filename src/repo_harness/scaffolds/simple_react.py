@@ -21,8 +21,11 @@ def build_simple_react_scaffold() -> SimpleReactScaffold:
             "repository change that addresses the task. Scratch files or temporary "
             "diagnostic scripts created only for investigation should be removed "
             "before the final diff. After identifying a likely fix, edit the "
-            "relevant persistent project files; when available in allowed_tools, "
-            "use git_diff to review the final diff and run_tests for configured "
+            "relevant persistent project files; use glob_files or list_files for "
+            "filename/module discovery and symbol_search for Python symbols when "
+            "available in allowed_tools, and "
+            "use update_working_state briefly when exploration repeats. Use git_diff "
+            "to review the final diff and run_tests for configured "
             "feedback."
         ),
         allowed_tools_policy="repo_harness_simple_react_allowed_tools_v0",

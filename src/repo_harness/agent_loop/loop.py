@@ -31,6 +31,19 @@ from repo_harness.tools import ToolDefinition, ToolExecutionContext, ToolExecuto
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TranscriptRecord, TrajectoryEvent
 
 
+NO_PROGRESS_DIAGNOSTIC_POLICY_VERSION = "repo_harness_loop_no_progress_diagnostic_v0"
+NO_PROGRESS_READ_ONLY_TOOL_NAMES = frozenset({"list_files", "glob_files", "read_file", "grep", "symbol_search", "git_diff"})
+NO_PROGRESS_PATCH_TOOL_NAMES = frozenset({"edit_file", "create_file"})
+NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD = 10
+NO_PROGRESS_REPEATED_INPUT_THRESHOLD = 3
+NO_PROGRESS_EMPTY_SEARCH_THRESHOLD = 4
+CONVERGENCE_NUDGE_POLICY_VERSION = "repo_harness_convergence_nudge_v2"
+CONVERGENCE_NUDGE_MAX_PER_RUN = 3
+CONVERGENCE_NUDGE_MIN_TURN_GAP = 4
+NEAR_BUDGET_WITH_PATCH_TURN_THRESHOLD = 4
+CONTEXT_WARNING_POLICY_VERSION = "repo_harness_context_warning_v1"
+
+
 def _cleanup_provider_private_state_on_exit(func: Callable[..., AgentLoopState]) -> Callable[..., AgentLoopState]:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> AgentLoopState:
@@ -114,9 +127,18 @@ class AgentLoop:
                     trainable=False,
                     created_at=_timestamp(),
                 )
-            )
+        )
 
         malformed_tool_call_repair_count = 0
+        provider_options_resolved = provider_options or ModelProviderOptions(
+            provider="replay",
+            model_id="replay-script-v0",
+        )
+        emitted_context_warning_levels: set[str] = set()
+        emitted_no_progress_signal_keys: set[str] = set()
+        emitted_convergence_nudge_scopes: set[str] = set()
+        convergence_nudge_count = 0
+        last_convergence_nudge_turn_by_level: dict[str, int] = {}
         for turn in range(1, budget_manager.max_turns + 1):
             state.turn_count = turn
             state.budget_state.turn_count = turn
@@ -156,6 +178,7 @@ class AgentLoop:
                 task_id=task_id,
                 turn=turn,
                 context_config=context_config,
+                provider_name=provider_options_resolved.provider,
             )
             state.context_revision = prepared.context_revision
             recorder.append_event(prepared.context_event)
@@ -185,6 +208,67 @@ class AgentLoop:
                     )
                 )
                 break
+            warning_level = _context_warning_level(
+                prepared=prepared,
+                max_context_tokens=budget_manager.max_context_tokens,
+                emitted_levels=emitted_context_warning_levels,
+            )
+            if warning_level is not None:
+                _record_context_warning(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    state=state,
+                    recorder=recorder,
+                    messages=messages,
+                    prepared=prepared,
+                    warning_level=warning_level,
+                    max_context_tokens=budget_manager.max_context_tokens,
+                )
+                emitted_context_warning_levels.add(warning_level)
+                context_messages = _messages_with_phase_metadata(
+                    messages=messages,
+                    scaffold=self.scaffold,
+                    phase=current_phase,
+                    allowed_tool_names=phase_allowed_tool_names,
+                )
+                prepared = self.context_manager.prepare_messages(
+                    messages=context_messages,
+                    recorder=recorder,
+                    task_id=task_id,
+                    turn=turn,
+                    context_config=context_config,
+                    provider_name=provider_options_resolved.provider,
+                )
+                state.context_revision = prepared.context_revision
+                recorder.append_event(prepared.context_event)
+                pairing_validation = prepared.context_event.data.get("tool_pairing_validation", {})
+                if not pairing_validation.get("ok", True):
+                    state.agent_stop_reason = "context_integrity_error"
+                    state.budget_state.stop_reason = "context_integrity_error"
+                    state.last_model_error = "context_integrity_error"
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("context_integrity"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="context_integrity_error",
+                            severity="error",
+                            error_type="tool_call_result_pairing_failed",
+                            artifact_refs=[prepared.prepared_messages_ref],
+                            data={
+                                "context_revision": prepared.context_revision,
+                                "model_input_hash": prepared.model_input_hash,
+                                "tool_pairing_validation": pairing_validation,
+                                "formal_policy": "stop_before_provider_request",
+                                "tainted": False,
+                                "after_context_warning_reprepare": True,
+                            },
+                        )
+                    )
+                    break
             if prepared.token_estimate > budget_manager.max_context_tokens:
                 state.agent_stop_reason = "context_limit"
                 state.budget_state.stop_reason = "context_limit"
@@ -200,6 +284,13 @@ class AgentLoop:
                         error_type="context_limit",
                         data={
                             "token_estimate": prepared.token_estimate,
+                            "provider_ready_token_estimate": prepared.provider_ready_token_estimate,
+                            "provider_body_char_estimate": prepared.provider_body_char_estimate,
+                            "internal_token_estimate": prepared.internal_token_estimate,
+                            "threshold_decision_source": prepared.threshold_decision_source,
+                            "provider_returned_prompt_tokens": None,
+                            "provider_usage_metadata_status": "unavailable_before_provider_call",
+                            "estimator_error_ratio": None,
                             "max_context_tokens": budget_manager.max_context_tokens,
                         },
                     )
@@ -244,8 +335,7 @@ class AgentLoop:
                 prepared_messages_ref=prepared.prepared_messages_ref,
                 model_input_hash=prepared.model_input_hash,
                 context_revision=prepared.context_revision,
-                provider_options=provider_options
-                or ModelProviderOptions(provider="replay", model_id="replay-script-v0"),
+                provider_options=provider_options_resolved,
                 scaffold=self.scaffold,
                 scaffold_phase=current_phase,
                 allowed_tool_definitions=_tool_definitions_for_allowed_tools(
@@ -886,7 +976,10 @@ class AgentLoop:
                         messages=messages,
                     )
                     continue
+                tool_started = time.monotonic()
                 tool_result = self.tool_executor.execute(tool_call, tool_context)
+                tool_duration_ms = int((time.monotonic() - tool_started) * 1000)
+                tool_result = _attach_tool_duration(tool_result, tool_duration_ms)
                 _record_tool_result(
                     run_id=run_id,
                     task_id=task_id,
@@ -898,6 +991,13 @@ class AgentLoop:
                 )
                 if tool_result.status == "ok":
                     successful_tool_observation = True
+                if (
+                    tool_result.status == "ok"
+                    and tool_result.effective_tool_name == "update_working_state"
+                ):
+                    working_state = tool_result.typed.get("working_state")
+                    if isinstance(working_state, dict):
+                        state.working_state = working_state
                 if tool_result.effective_tool_name == "run_tests":
                     state.budget_state.test_run_count += 1
                     state.last_verifier_result = tool_result.typed.get("verifier_result_preview")
@@ -933,8 +1033,69 @@ class AgentLoop:
                             )
                             stop_after_tools = True
                             break
+            loop_progress_summary = _build_loop_progress_summary(
+                messages=messages,
+                state=state,
+                budget_manager=budget_manager,
+            )
+            nudge_dedupe_scope, _, new_signal_keys = _loop_progress_signal_dedupe(
+                summary=loop_progress_summary,
+                emitted_signal_keys=emitted_no_progress_signal_keys,
+            )
+            nudge_level = _convergence_nudge_level(loop_progress_summary)
+            nudge_dedupe_scope = _convergence_nudge_dedupe_scope(
+                level=nudge_level,
+                base_scope=nudge_dedupe_scope,
+            )
+            should_inject_nudge = _should_inject_convergence_nudge(
+                summary=loop_progress_summary,
+                new_signal_keys=new_signal_keys,
+                turn=turn,
+                max_turns=budget_manager.max_turns,
+                stop_after_tools=stop_after_tools,
+                nudge_count=convergence_nudge_count,
+                last_nudge_turn=last_convergence_nudge_turn_by_level.get(
+                    nudge_level,
+                    -CONVERGENCE_NUDGE_MIN_TURN_GAP,
+                ),
+                nudge_level=nudge_level,
+                dedupe_scope=nudge_dedupe_scope,
+                emitted_nudge_scopes=emitted_convergence_nudge_scopes,
+            )
+            diagnostic = _record_loop_progress_diagnostic(
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                state=state,
+                recorder=recorder,
+                messages=messages,
+                budget_manager=budget_manager,
+                emitted_signal_keys=emitted_no_progress_signal_keys,
+                summary=loop_progress_summary,
+                dedupe_scope=nudge_dedupe_scope,
+                new_signal_keys=new_signal_keys,
+                model_visible_message_injected=should_inject_nudge,
+            )
             if stop_after_tools:
                 break
+            if should_inject_nudge and diagnostic is not None:
+                _record_convergence_nudge(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    state=state,
+                    recorder=recorder,
+                    messages=messages,
+                    diagnostic=diagnostic,
+                    nudge_count=convergence_nudge_count + 1,
+                    max_nudges=CONVERGENCE_NUDGE_MAX_PER_RUN,
+                    min_turn_gap=CONVERGENCE_NUDGE_MIN_TURN_GAP,
+                    nudge_level=nudge_level,
+                    dedupe_scope=nudge_dedupe_scope,
+                )
+                convergence_nudge_count += 1
+                last_convergence_nudge_turn_by_level[nudge_level] = turn
+                emitted_convergence_nudge_scopes.add(nudge_dedupe_scope)
             if _uses_phase_transitions(self.scaffold) and successful_tool_observation:
                 next_phase, transition_reason = _next_phase_after_tools(
                     current_phase=current_phase,
@@ -956,6 +1117,11 @@ class AgentLoop:
         else:
             state.agent_stop_reason = "max_turns"
             state.budget_state.stop_reason = "max_turns"
+        state.loop_diagnostics_summary = _build_loop_progress_summary(
+            messages=messages,
+            state=state,
+            budget_manager=budget_manager,
+        )
         state.messages = messages
         return state
 
@@ -1296,6 +1462,143 @@ def _tool_call_parse_repair_message(response: object) -> dict[str, object]:
     }
 
 
+def _context_warning_level(
+    *,
+    prepared: Any,
+    max_context_tokens: int,
+    emitted_levels: set[str],
+) -> str | None:
+    if max_context_tokens <= 0:
+        return None
+    estimate = int(getattr(prepared, "provider_ready_token_estimate", prepared.token_estimate))
+    if estimate > max_context_tokens:
+        return None
+    ratio = estimate / max_context_tokens
+    if ratio >= 0.9 and "critical_90" not in emitted_levels:
+        return "critical_90"
+    if ratio >= 0.8 and "warning_80" not in emitted_levels and "critical_90" not in emitted_levels:
+        return "warning_80"
+    return None
+
+
+def _record_context_warning(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    messages: list[dict[str, object]],
+    prepared: Any,
+    warning_level: str,
+    max_context_tokens: int,
+) -> None:
+    estimate = int(getattr(prepared, "provider_ready_token_estimate", prepared.token_estimate))
+    content = {
+        "repo_harness_control_message": {
+            "type": "context_warning",
+            "policy_version": CONTEXT_WARNING_POLICY_VERSION,
+            "trainable": False,
+            "turn": turn,
+            "warning_level": warning_level,
+            "provider_ready_token_estimate": estimate,
+            "max_context_tokens": max_context_tokens,
+            "threshold_decision_source": getattr(
+                prepared,
+                "threshold_decision_source",
+                "provider_ready_token_estimate",
+            ),
+            "instruction": (
+                "当前对话已经接近上下文预算。请优先使用具体文件路径、最小必要读取范围和"
+                "可验证的补丁行动，避免重复读取大段内容。"
+            ),
+            "input_scope_policy": (
+                "This warning is generated only from the current model-visible transcript and public budget state."
+            ),
+        }
+    }
+    ref = recorder.write_json_artifact(
+        "context_warning",
+        {
+            "schema_version": "repo_harness_context_warning_artifact_v0",
+            "policy_version": CONTEXT_WARNING_POLICY_VERSION,
+            "run_id": run_id,
+            "task_id": task_id,
+            "turn": turn,
+            "trainable": False,
+            "resolved_trainable": False,
+            "message": content,
+            "prepared_context_revision_before_warning": prepared.context_revision,
+            "prepared_messages_ref_before_warning": prepared.prepared_messages_ref.model_dump(mode="json"),
+            "provider_ready_token_estimate_before_warning": estimate,
+            "provider_body_char_estimate_before_warning": prepared.provider_body_char_estimate,
+            "internal_token_estimate_before_warning": prepared.internal_token_estimate,
+            "max_context_tokens": max_context_tokens,
+            "warning_level": warning_level,
+        },
+    )
+    recorder.append_transcript(
+        TranscriptRecord(
+            record_id=recorder.next_record_id(),
+            run_id=run_id,
+            task_id=task_id,
+            message_id=f"context_warning_{turn}_{warning_level}",
+            turn=turn,
+            role="user",
+            content_preview=json.dumps(content, ensure_ascii=False)[:4000],
+            content_artifact_refs=[ref],
+            model_visible=True,
+            trainable=False,
+            created_at=_timestamp(),
+        )
+    )
+    messages.append(
+        {
+            "role": "user",
+            "turn": turn,
+            "content": content,
+            "metadata": {
+                "source": "harness_context_warning",
+                "policy_version": CONTEXT_WARNING_POLICY_VERSION,
+                "trainable": False,
+                "resolved_trainable": False,
+            },
+        }
+    )
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("context_warning"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="context_warning_injected",
+            severity="warning",
+            artifact_refs=[ref],
+            data={
+                "schema_version": "repo_harness_context_warning_event_v0",
+                "policy_version": CONTEXT_WARNING_POLICY_VERSION,
+                "trainable": False,
+                "resolved_trainable": False,
+                "model_visible": True,
+                "warning_level": warning_level,
+                "provider_ready_token_estimate": estimate,
+                "provider_body_char_estimate": prepared.provider_body_char_estimate,
+                "internal_token_estimate": prepared.internal_token_estimate,
+                "max_context_tokens": max_context_tokens,
+                "inserted_after_prepare_messages": True,
+                "requires_prepare_messages_rerun": True,
+                "provider_request_created_before_warning": False,
+            },
+        )
+    )
+    state.loop_diagnostics_summary = {
+        **state.loop_diagnostics_summary,
+        "context_warning_level": warning_level,
+        "context_warning_turn": turn,
+    }
+
+
 def _write_budget_decision_trace_artifact(
     *,
     recorder: RunRecorder,
@@ -1493,6 +1796,522 @@ def _placeholder_artifact_ref(kind: str) -> ArtifactRef:
     )
 
 
+def _record_loop_progress_diagnostic(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    messages: list[dict[str, object]],
+    budget_manager: BudgetManager,
+    emitted_signal_keys: set[str],
+    summary: dict[str, Any] | None = None,
+    dedupe_scope: str | None = None,
+    new_signal_keys: list[str] | None = None,
+    model_visible_message_injected: bool = False,
+) -> dict[str, Any] | None:
+    summary = summary or _build_loop_progress_summary(
+        messages=messages,
+        state=state,
+        budget_manager=budget_manager,
+    )
+    state.loop_diagnostics_summary = summary
+    dedupe_scope, signal_dedupe_keys, computed_new_signal_keys = _loop_progress_signal_dedupe(
+        summary=summary,
+        emitted_signal_keys=emitted_signal_keys,
+    )
+    new_signal_keys = computed_new_signal_keys if new_signal_keys is None else new_signal_keys
+    if not new_signal_keys:
+        return None
+    emitted_signal_keys.update(signal_dedupe_keys[signal_key] for signal_key in new_signal_keys)
+    diagnostic = {
+        **summary,
+        "diagnostic_dedupe_scope": dedupe_scope,
+        "new_signal_keys": new_signal_keys,
+        "agent_stop_reason_before_event": state.agent_stop_reason,
+        "agent_stop_reason_changed": False,
+        "model_visible_message_injected": model_visible_message_injected,
+    }
+    state.loop_diagnostics.append(diagnostic)
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("loop_progress"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="loop_progress_diagnostic",
+            severity="warning",
+            error_type="no_progress_suspected",
+            data=diagnostic,
+        )
+    )
+    return diagnostic
+
+
+def _loop_progress_signal_dedupe(
+    *,
+    summary: dict[str, Any],
+    emitted_signal_keys: set[str],
+) -> tuple[str, dict[str, str], list[str]]:
+    signal_keys = [str(signal["signal_key"]) for signal in summary["signals"]]
+    dedupe_scope = str(summary.get("last_patch_progress_tool_result_id") or "run_start")
+    signal_dedupe_keys = {
+        signal_key: f"{dedupe_scope}:{signal_key}"
+        for signal_key in signal_keys
+    }
+    new_signal_keys = [
+        signal_key
+        for signal_key in signal_keys
+        if signal_dedupe_keys[signal_key] not in emitted_signal_keys
+    ]
+    return dedupe_scope, signal_dedupe_keys, new_signal_keys
+
+
+def _should_inject_convergence_nudge(
+    *,
+    summary: dict[str, Any],
+    new_signal_keys: list[str],
+    turn: int,
+    max_turns: int,
+    stop_after_tools: bool,
+    nudge_count: int,
+    last_nudge_turn: int,
+    nudge_level: str,
+    dedupe_scope: str,
+    emitted_nudge_scopes: set[str],
+) -> bool:
+    if stop_after_tools or not new_signal_keys:
+        return False
+    if turn >= max_turns:
+        return False
+    if nudge_count >= CONVERGENCE_NUDGE_MAX_PER_RUN:
+        return False
+    if turn - last_nudge_turn < CONVERGENCE_NUDGE_MIN_TURN_GAP:
+        return False
+    if dedupe_scope in emitted_nudge_scopes:
+        return False
+    if summary.get("diagnostic_status") != "no_progress_suspected":
+        return False
+    if nudge_level == "none":
+        return False
+    if int(summary.get("patch_tool_call_count") or 0) > 0 and not summary.get(
+        "analysis_window_started_after_patch_tool_call"
+    ):
+        return False
+    return True
+
+
+def _convergence_nudge_level(summary: dict[str, Any]) -> str:
+    signal_keys = {str(signal.get("signal_key")) for signal in summary.get("signals", [])}
+    if "near_turn_budget_with_patch" in signal_keys:
+        return "near_budget_finalize_patch"
+    if "near_turn_budget_without_patch" in signal_keys:
+        return "near_budget_patch_or_stop"
+    if signal_keys:
+        return "exploration_no_progress"
+    return "none"
+
+
+def _convergence_nudge_dedupe_scope(*, level: str, base_scope: str) -> str:
+    return f"{level}:{base_scope}"
+
+
+def _record_convergence_nudge(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    messages: list[dict[str, object]],
+    diagnostic: dict[str, Any],
+    nudge_count: int,
+    max_nudges: int,
+    min_turn_gap: int,
+    nudge_level: str,
+    dedupe_scope: str,
+) -> None:
+    signal_keys = [str(signal_key) for signal_key in diagnostic.get("new_signal_keys", [])]
+    nudge_reason, instruction = _convergence_nudge_text(nudge_level)
+    summary = diagnostic
+    content = {
+        "repo_harness_control_message": {
+            "type": "convergence_nudge",
+            "policy_version": CONVERGENCE_NUDGE_POLICY_VERSION,
+            "trainable": False,
+            "turn": turn,
+            "nudge_level": nudge_level,
+            "reason": nudge_reason,
+            "signals": signal_keys,
+            "instruction": instruction,
+            "input_scope_policy": (
+                "This reminder is generated only from the current model-visible transcript and public budget state."
+            ),
+            "turns_remaining": summary.get("remaining_turns"),
+            "has_patch": bool(summary.get("patch_tool_call_count")),
+            "first_edit_turn": summary.get("first_patch_progress_turn"),
+            "last_mutating_tool_turn": summary.get("last_patch_progress_turn"),
+            "git_diff_called_after_patch": summary.get("git_diff_called_after_patch"),
+            "nudge_count": nudge_count,
+            "max_nudges_per_run": max_nudges,
+            "min_turn_gap": min_turn_gap,
+            "dedupe_scope": dedupe_scope,
+        }
+    }
+    ref = recorder.write_json_artifact(
+        "convergence_nudge",
+        {
+            "schema_version": "repo_harness_convergence_nudge_artifact_v0",
+            "policy_version": CONVERGENCE_NUDGE_POLICY_VERSION,
+            "run_id": run_id,
+            "task_id": task_id,
+            "turn": turn,
+            "trainable": False,
+            "message": content,
+            "diagnostic": diagnostic,
+            "dedupe_scope": dedupe_scope,
+            "nudge_level": nudge_level,
+            "nudge_reason": nudge_reason,
+            "nudge_count": nudge_count,
+            "max_nudges_per_run": max_nudges,
+            "min_turn_gap": min_turn_gap,
+            "resolved_trainable": False,
+        },
+    )
+    recorder.append_transcript(
+        TranscriptRecord(
+            record_id=recorder.next_record_id(),
+            run_id=run_id,
+            task_id=task_id,
+            message_id=f"convergence_nudge_{turn}_{nudge_count}",
+            turn=turn,
+            role="user",
+            content_preview=json.dumps(content, ensure_ascii=False)[:4000],
+            content_artifact_refs=[ref],
+            model_visible=True,
+            trainable=False,
+            created_at=_timestamp(),
+        )
+    )
+    messages.append(
+        {
+            "role": "user",
+            "turn": turn,
+            "content": content,
+            "metadata": {
+                "source": "harness_convergence_nudge",
+                "policy_version": CONVERGENCE_NUDGE_POLICY_VERSION,
+                "trainable": False,
+                "resolved_trainable": False,
+                "dedupe_scope": dedupe_scope,
+                "nudge_level": nudge_level,
+            },
+        }
+    )
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("convergence"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="convergence_nudge_injected",
+            severity="warning",
+            artifact_refs=[ref],
+            data={
+                "schema_version": "repo_harness_convergence_nudge_event_v0",
+                "policy_version": CONVERGENCE_NUDGE_POLICY_VERSION,
+                "trainable": False,
+                "resolved_trainable": False,
+                "model_visible": True,
+                "inserted_after_all_tool_results": True,
+                "inserted_before_next_prepare_messages": True,
+                "max_nudges_per_run": max_nudges,
+                "min_turn_gap": min_turn_gap,
+                "nudge_level": nudge_level,
+                "nudge_reason": nudge_reason,
+                "turns_remaining": summary.get("remaining_turns"),
+                "has_patch": bool(summary.get("patch_tool_call_count")),
+                "first_edit_turn": summary.get("first_patch_progress_turn"),
+                "last_mutating_tool_turn": summary.get("last_patch_progress_turn"),
+                "git_diff_called_after_patch": summary.get("git_diff_called_after_patch"),
+                "post_nudge_action": "pending_observation",
+                "nudge_count": nudge_count,
+                "dedupe_scope": dedupe_scope,
+                "signal_keys": signal_keys,
+            },
+        )
+    )
+    state.loop_diagnostics_summary = {
+        **state.loop_diagnostics_summary,
+        "convergence_nudge_count": nudge_count,
+        "last_convergence_nudge_turn": turn,
+        "last_convergence_nudge_level": nudge_level,
+    }
+
+
+def _convergence_nudge_text(level: str) -> tuple[str, str]:
+    if level == "near_budget_patch_or_stop":
+        return (
+            "剩余工具轮数已经很少，并且当前还没有补丁，需要立即选择一个可完成路径。",
+            (
+                "请停止大范围探索。接下来只选择一个路径：如果已经知道最小安全修改，"
+                "请读取必要的精确上下文并提交补丁；如果只缺少 edit_file.old_text，"
+                "请只读取目标文件的最小范围再编辑；如果仍然无法定位安全修改，"
+                "请直接给出 final answer，明确说明未提交补丁。"
+            ),
+        )
+    if level == "near_budget_finalize_patch":
+        return (
+            "当前已经存在补丁且剩余工具轮数很少，需要收尾而不是继续大范围探索。",
+            (
+                "请调用 git_diff 检查真实补丁，只做必要的小范围修正，然后给出 final answer。"
+                "如果补丁已经足够，请不要继续等价搜索。"
+            ),
+        )
+    return (
+        "多轮只读探索已经触发收敛诊断，需要把下一步收束到可验证的最小行动。",
+        (
+            "请先用一句话写出当前最可能的定位假设，然后选择一个最小下一步："
+            "读取一个具体文件、编辑一个具体文件，或者在已经完成时给出 final answer。"
+            "如果当前假设和候选文件已经形成，请先用 update_working_state 简短记录。"
+            "不要重复等价搜索；如果搜索结果是 partial_scan_no_match，先收窄 root 或 glob。"
+        ),
+    )
+
+
+def _build_loop_progress_summary(
+    *,
+    messages: list[dict[str, object]],
+    state: AgentLoopState,
+    budget_manager: BudgetManager,
+) -> dict[str, Any]:
+    tool_messages = [message for message in messages if message.get("role") == "tool"]
+    analysis_tool_messages, last_patch_message = _tool_messages_after_last_patch_progress(tool_messages)
+    patch_tool_call_count = sum(1 for message in tool_messages if _is_patch_progress_tool_result(message))
+    patch_progress_messages = [
+        message for message in tool_messages if _is_patch_progress_tool_result(message)
+    ]
+    total_read_only_tool_call_count = sum(1 for message in tool_messages if _is_read_only_tool_result(message))
+    read_only_tool_call_count = sum(1 for message in analysis_tool_messages if _is_read_only_tool_result(message))
+    consecutive_read_only_tool_calls = _consecutive_read_only_tool_calls(analysis_tool_messages)
+    empty_search_count = sum(1 for message in analysis_tool_messages if _is_empty_search_tool_result(message))
+    consecutive_empty_search_count = _consecutive_empty_search_tool_calls(analysis_tool_messages)
+    repeated_input = _repeated_tool_input_summary(analysis_tool_messages)
+    remaining_turns = max(0, budget_manager.max_turns - state.turn_count)
+    near_turn_budget_threshold = _near_turn_budget_threshold(budget_manager.max_turns)
+    has_patch = patch_tool_call_count > 0
+    first_patch_progress_turn = (
+        min(int(message.get("turn") or 0) for message in patch_progress_messages)
+        if patch_progress_messages
+        else None
+    )
+    last_patch_progress_turn = (
+        int(last_patch_message.get("turn") or 0) if last_patch_message is not None else None
+    )
+    git_diff_called_after_patch = any(
+        _effective_tool_name(message) == "git_diff" and str(message.get("status")) == "ok"
+        for message in analysis_tool_messages
+    )
+    terminal_final_answer = state.agent_stop_reason == "final_answer"
+    signals: list[dict[str, Any]] = []
+
+    if consecutive_read_only_tool_calls >= NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD:
+        signals.append(
+            {
+                "signal_key": "long_read_only_streak",
+                "severity": "warning",
+                "value": consecutive_read_only_tool_calls,
+                "threshold": NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD,
+                "meaning": "模型已经连续多次使用只读工具，但没有产生补丁修改。",
+            }
+        )
+    if repeated_input["max_repeated_input_count"] >= NO_PROGRESS_REPEATED_INPUT_THRESHOLD:
+        signals.append(
+            {
+                "signal_key": "repeated_tool_input",
+                "severity": "warning",
+                "value": repeated_input["max_repeated_input_count"],
+                "threshold": NO_PROGRESS_REPEATED_INPUT_THRESHOLD,
+                "meaning": "模型重复调用了等价的工具输入，探索可能已经进入循环。",
+            }
+        )
+    if (
+        empty_search_count >= NO_PROGRESS_EMPTY_SEARCH_THRESHOLD
+        or consecutive_empty_search_count >= max(2, NO_PROGRESS_EMPTY_SEARCH_THRESHOLD - 1)
+    ):
+        signals.append(
+            {
+                "signal_key": "empty_search_accumulation",
+                "severity": "warning",
+                "value": empty_search_count,
+                "consecutive_value": consecutive_empty_search_count,
+                "threshold": NO_PROGRESS_EMPTY_SEARCH_THRESHOLD,
+                "meaning": "模型多次搜索没有得到匹配结果，需要重新选择定位假设或改用更具体的路径。",
+            }
+        )
+    if (
+        not terminal_final_answer
+        and not has_patch
+        and state.turn_count >= 3
+        and remaining_turns <= near_turn_budget_threshold
+    ):
+        signals.append(
+            {
+                "signal_key": "near_turn_budget_without_patch",
+                "severity": "high",
+                "value": remaining_turns,
+                "threshold": near_turn_budget_threshold,
+                "meaning": "任务接近轮次预算上限，但仍然没有任何补丁修改工具调用。",
+            }
+        )
+    if (
+        not terminal_final_answer
+        and has_patch
+        and remaining_turns <= NEAR_BUDGET_WITH_PATCH_TURN_THRESHOLD
+    ):
+        signals.append(
+            {
+                "signal_key": "near_turn_budget_with_patch",
+                "severity": "high",
+                "value": remaining_turns,
+                "threshold": NEAR_BUDGET_WITH_PATCH_TURN_THRESHOLD,
+                "meaning": "任务已经存在补丁并接近轮次预算上限，应优先检查 diff 并完成最终回答。",
+                "git_diff_called_after_patch": git_diff_called_after_patch,
+            }
+        )
+
+    return {
+        "schema_version": "repo_harness_loop_progress_diagnostic_v0",
+        "policy_version": NO_PROGRESS_DIAGNOSTIC_POLICY_VERSION,
+        "diagnostic_status": "no_progress_suspected" if signals else "ok",
+        "hard_stop_enabled": False,
+        "model_visible_message_injected": False,
+        "turn_count": state.turn_count,
+        "max_turns": budget_manager.max_turns,
+        "remaining_turns": remaining_turns,
+        "near_turn_budget_threshold": near_turn_budget_threshold,
+        "tool_call_count": state.tool_call_count,
+        "patch_tool_call_count": patch_tool_call_count,
+        "has_patch": has_patch,
+        "read_only_tool_call_count": read_only_tool_call_count,
+        "total_read_only_tool_call_count": total_read_only_tool_call_count,
+        "analysis_window_tool_call_count": len(analysis_tool_messages),
+        "analysis_window_started_after_patch_tool_call": last_patch_message is not None,
+        "first_patch_progress_turn": first_patch_progress_turn,
+        "last_patch_progress_turn": last_patch_progress_turn,
+        "last_patch_progress_tool_result_id": (
+            last_patch_message.get("tool_result_id") if last_patch_message is not None else None
+        ),
+        "consecutive_read_only_tool_calls": consecutive_read_only_tool_calls,
+        "empty_search_count": empty_search_count,
+        "consecutive_empty_search_count": consecutive_empty_search_count,
+        "repeated_tool_input_count": repeated_input["repeated_tool_input_count"],
+        "max_repeated_input_count": repeated_input["max_repeated_input_count"],
+        "most_repeated_tool_input": repeated_input["most_repeated_tool_input"],
+        "git_diff_called_after_patch": git_diff_called_after_patch,
+        "signals": signals,
+    }
+
+
+def _tool_messages_after_last_patch_progress(
+    tool_messages: list[dict[str, object]],
+) -> tuple[list[dict[str, object]], dict[str, object] | None]:
+    for index in range(len(tool_messages) - 1, -1, -1):
+        if _is_patch_progress_tool_result(tool_messages[index]):
+            return tool_messages[index + 1 :], tool_messages[index]
+    return tool_messages, None
+
+
+def _near_turn_budget_threshold(max_turns: int) -> int:
+    return max(1, min(6, max_turns // 4))
+
+
+def _is_read_only_tool_result(message: dict[str, object]) -> bool:
+    return (
+        str(message.get("status")) == "ok"
+        and _effective_tool_name(message) in NO_PROGRESS_READ_ONLY_TOOL_NAMES
+    )
+
+
+def _is_patch_progress_tool_result(message: dict[str, object]) -> bool:
+    return (
+        str(message.get("status")) == "ok"
+        and _effective_tool_name(message) in NO_PROGRESS_PATCH_TOOL_NAMES
+    )
+
+
+def _effective_tool_name(message: dict[str, object]) -> str:
+    return str(message.get("effective_tool_name") or message.get("tool_name") or "")
+
+
+def _consecutive_read_only_tool_calls(tool_messages: list[dict[str, object]]) -> int:
+    count = 0
+    for message in reversed(tool_messages):
+        if _is_patch_progress_tool_result(message):
+            break
+        if _is_read_only_tool_result(message):
+            count += 1
+    return count
+
+
+def _is_empty_search_tool_result(message: dict[str, object]) -> bool:
+    if _effective_tool_name(message) != "grep" or str(message.get("status")) != "ok":
+        return False
+    typed = message.get("typed")
+    if not isinstance(typed, dict):
+        return False
+    result_kind = str(typed.get("result_kind") or "")
+    if result_kind in {"complete_no_match", "partial_scan_no_match", "page_empty_out_of_range"}:
+        return True
+    total_match_count = typed.get("total_match_count")
+    match_count = typed.get("match_count")
+    return total_match_count == 0 and match_count in {0, None}
+
+
+def _consecutive_empty_search_tool_calls(tool_messages: list[dict[str, object]]) -> int:
+    count = 0
+    for message in reversed(tool_messages):
+        if _is_patch_progress_tool_result(message):
+            break
+        if _is_empty_search_tool_result(message):
+            count += 1
+    return count
+
+
+def _repeated_tool_input_summary(tool_messages: list[dict[str, object]]) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    labels: dict[str, dict[str, str]] = {}
+    for message in tool_messages:
+        normalized_input_hash = message.get("normalized_input_hash")
+        if not normalized_input_hash:
+            continue
+        tool_name = _effective_tool_name(message)
+        key = stable_hash({"tool_name": tool_name, "normalized_input_hash": normalized_input_hash})
+        counts[key] = counts.get(key, 0) + 1
+        labels[key] = {
+            "tool_name": tool_name,
+            "normalized_input_hash": str(normalized_input_hash),
+        }
+    if not counts:
+        return {
+            "repeated_tool_input_count": 0,
+            "max_repeated_input_count": 0,
+            "most_repeated_tool_input": None,
+        }
+    most_repeated_key = max(counts, key=counts.get)
+    return {
+        "repeated_tool_input_count": sum(max(0, count - 1) for count in counts.values()),
+        "max_repeated_input_count": counts[most_repeated_key],
+        "most_repeated_tool_input": {
+            **labels[most_repeated_key],
+            "count": counts[most_repeated_key],
+        },
+    }
+
+
 def _record_tool_requested(
     *,
     run_id: str,
@@ -1524,6 +2343,8 @@ def _record_tool_result(
     recorder: RunRecorder,
     messages: list[dict[str, object]],
 ) -> None:
+    if tool_result.duration_ms is None:
+        tool_result = _attach_tool_duration(tool_result, 0)
     state.tool_pairing_state.completed_tool_call_ids.append(tool_result.tool_call_id)
     state.tool_pairing_state.tool_result_ids[tool_result.tool_call_id] = tool_result.tool_result_id
     recorder.append_event(
@@ -1535,6 +2356,7 @@ def _record_tool_result(
             turn=turn,
             event_type=_tool_event_type(tool_result),
             error_type=tool_result.error_type,
+            duration_ms=tool_result.duration_ms,
             artifact_refs=tool_result.artifact_refs,
             data=tool_result.model_dump(mode="json"),
         )
@@ -1576,6 +2398,20 @@ def _record_tool_result(
             "artifact_refs": [ref.model_dump(mode="json") for ref in tool_result.artifact_refs],
         }
     )
+
+
+def _attach_tool_duration(tool_result: ToolResult, duration_ms: int) -> ToolResult:
+    duration = max(0, int(duration_ms))
+    typed = dict(tool_result.typed)
+    typed["duration_ms"] = duration
+    typed["execution_duration_ms"] = duration
+    envelope = typed.get("result_envelope")
+    if isinstance(envelope, dict):
+        updated_envelope = dict(envelope)
+        updated_envelope["duration_ms"] = duration
+        updated_envelope["execution_duration_ms"] = duration
+        typed["result_envelope"] = updated_envelope
+    return tool_result.model_copy(update={"duration_ms": duration, "typed": typed})
 
 
 def _timestamp() -> str:

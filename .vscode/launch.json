@@ -1,0 +1,65 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "RepoHarness: run-task walkthrough",
+      "type": "python",
+      "request": "launch",
+      "module": "repo_harness.cli.main",
+      "args": [
+        "run-task",
+        "tests/fixtures/tasks/task_001.yaml",
+        "--config",
+        "tests/fixtures/run_configs/replay_success.yaml",
+        "--output-dir",
+        "runs/debug-walkthrough",
+        "--run-id",
+        "${input:runId}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "RepoHarness: V2 mock provider walkthrough",
+      "type": "python",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "module": "repo_harness.cli.main",
+      "args": [
+        "run-task",
+        "tests/fixtures/tasks/task_001.yaml",
+        "--config",
+        "tests/fixtures/run_configs/v2/mock_provider_smoke.yaml",
+        "--output-dir",
+        "runs/teaching-v2-debug-mock",
+        "--run-id",
+        "${input:v2MockRunId}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "runId",
+      "type": "promptString",
+      "description": "Run id for this debug session. Use a new value each time.",
+      "default": "debug-walkthrough-001"
+    },
+    {
+      "id": "v2MockRunId",
+      "type": "promptString",
+      "description": "Run id for the V2 mock provider walkthrough. Use a new value each time.",
+      "default": "teaching-v2-mock-001"
+    }
+  ]
+}

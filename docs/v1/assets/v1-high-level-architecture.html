@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness V1 高层实体关系图</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f6f8;
+      color: #1f2933;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #d9dee7;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+    }
+    h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .hint {
+      font-size: 13px;
+      color: #52606d;
+    }
+    .controls {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    input[type="range"] { width: 220px; }
+    main {
+      height: calc(100vh - 57px);
+      overflow: auto;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .canvas {
+      width: max-content;
+      min-width: 100%;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    img {
+      display: block;
+      width: 1700px;
+      max-width: none;
+      height: auto;
+      border: 1px solid #d9dee7;
+      background: white;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
+      transform-origin: top left;
+    }
+    a { color: #1f5fbf; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #111827; color: #e5e7eb; }
+      header { background: rgba(17, 24, 39, 0.96); border-bottom-color: #374151; }
+      .hint { color: #cbd5e1; }
+      img { border-color: #374151; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35); }
+      a { color: #93c5fd; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RepoHarness V1 高层实体关系图</h1>
+    <span class="hint">快速理解系统主链路；使用滑块缩放。原始 SVG：<a href="v1-high-level-architecture.svg">v1-high-level-architecture.svg</a>；Mermaid 源码：<a href="v1-high-level-architecture.mmd">v1-high-level-architecture.mmd</a></span>
+    <label class="controls">缩放
+      <input id="zoom" type="range" min="1200" max="5200" step="200" value="1700">
+      <output id="zoomValue">1700px</output>
+    </label>
+  </header>
+  <main>
+    <div class="canvas">
+      <img id="diagram" src="v1-high-level-architecture.svg" alt="RepoHarness V1 高层实体关系图">
+    </div>
+  </main>
+  <script>
+    const zoom = document.getElementById('zoom');
+    const value = document.getElementById('zoomValue');
+    const diagram = document.getElementById('diagram');
+    zoom.addEventListener('input', () => {
+      diagram.style.width = `${zoom.value}px`;
+      value.textContent = `${zoom.value}px`;
+    });
+  </script>
+</body>
+</html>

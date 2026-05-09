@@ -1,0 +1,116 @@
+flowchart TD
+  classDef entry fill:#edf5ff,stroke:#3b6ea8,color:#111;
+  classDef orchestration fill:#f5f7fa,stroke:#596579,color:#111;
+  classDef runtime fill:#eef8f2,stroke:#3c7a4f,color:#111;
+  classDef safety fill:#fff4e5,stroke:#a36500,color:#111;
+  classDef data fill:#f7efff,stroke:#6c3fa0,color:#111;
+  classDef artifact fill:#ffffff,stroke:#555,stroke-width:2px,color:#111;
+
+  subgraph Entry["入口层"]
+    CLI["repo_harness.cli.main<br/>build_parser()<br/>main()<br/>validate-task<br/>run-task<br/>run-batch<br/>export<br/>inspect-run"]:::entry
+  end
+
+  subgraph TaskConfig["任务与配置层"]
+    Config["config.loader<br/>load_run_config()<br/>RunConfig<br/>ModelConfig<br/>RuntimeConfig<br/>WorkspaceConfig<br/>EvaluationConfig"]:::orchestration
+    TaskAdapter["tasks.adapter<br/>load_task()<br/>TaskAdapter.load()<br/>TaskDefinition -> RunnableTask<br/>RunnableTask.agent_visible_view()"]:::orchestration
+    ReplayScript["model_client.schemas<br/>ReplayScript<br/>ReplayStep<br/>model_visible_steps()<br/>model_visible_payload()<br/>expected_outcome 只供测试驱动校验使用"]:::orchestration
+  end
+
+  subgraph Evaluation["评测编排层"]
+    EvalRunner["evaluation.runner<br/>run_task()<br/>run_batch()<br/>_run_setup_command()<br/>_derive_baseline_status()<br/>_finalize_quality_gate_run()"]:::orchestration
+    Baseline["evaluation.schemas<br/>BaselineResult<br/>baseline_rerun_count<br/>无效任务 / 不稳定任务质量门控"]:::orchestration
+    ResolvedPlan["evaluation.schemas<br/>ResolvedVerifierPlan<br/>只在 baseline 质量门控通过后生成"]:::orchestration
+    OutcomePolicy["evaluation.outcome_policy<br/>derive_run_outcome()<br/>由 baseline、agent_stop_reason、final verifier、timeout 派生<br/>manual_stop 为预留 AgentStopReason 分支"]:::orchestration
+    Metrics["evaluation.metrics<br/>derive_final_verifier_status()<br/>build_metrics_record()"]:::orchestration
+  end
+
+  subgraph WorkspaceVerify["工作区与验证层"]
+    Workspace["workspace.adapter.LocalWorkspaceAdapter<br/>create_source_checkout()<br/>create_setup_workspace()<br/>capture_dependency_state()<br/>create_agent_workspace()<br/>create_verification_workspace()<br/>restore_dependency_state()<br/>create_agent_start_snapshot()<br/>capture_final_patch()<br/>resolve_workspace_path()<br/>read_text()<br/>write_text()<br/>apply_patch()<br/>run_command()<br/>cleanup_workspaces()<br/>is_sensitive_relative_path()"]:::safety
+    Verifier["verifier.runner.PytestVerifier<br/>run_baseline()<br/>run_feedback()<br/>run_final()<br/>PytestTextParser<br/>apply_acceptance_policy()<br/>build_error_verifier_result()"]:::runtime
+    WorkspaceSchemas["workspace.schemas<br/>RunWorkspace<br/>DependencyState<br/>ExecutionResult"]:::safety
+  end
+
+  subgraph AgentRuntime["Agent 运行时"]
+    Scaffold["scaffolds<br/>build_scaffold()<br/>SimpleReactScaffold.is_valid_final_answer()<br/>提供 prompt fragment、工具集合、停止策略"]:::runtime
+    ContextBuilder["context.builder.ContextBuilder<br/>build_initial_messages()<br/>只使用允许模型可见的数据：任务视图、verifier 摘要、运行配置、允许工具<br/>当前实现直接读取 workspace_path 下固定仓库预览文件"]:::runtime
+    Budget["budget.schemas.BudgetManager<br/>from_run_config()<br/>BudgetState"]:::runtime
+    ContextManager["context.manager.ContextManager<br/>prepare_messages()<br/>_validate_tool_pairing()<br/>PreparedMessages<br/>ContentReplacementState"]:::runtime
+    AgentLoop["agent_loop.loop.AgentLoop<br/>run()<br/>_record_tool_requested()<br/>_record_tool_result()<br/>_record_budget_exhausted()<br/>_record_interrupted_tool_calls()<br/>只产出 agent_stop_reason 和 loop state"]:::runtime
+    ModelClient["model_client<br/>ReplayModelClient.from_path()<br/>ReplayModelClient.generate()<br/>_validate_prepared_messages()<br/>FakeModelClient<br/>ModelResponse<br/>ModelCallEvent"]:::runtime
+  end
+
+  subgraph ToolsSafety["工具执行与权限边界"]
+    ToolExecutor["tools.minimal.ToolExecutor<br/>is_known()<br/>validate_input()<br/>normalize()<br/>check_permission()<br/>execute()<br/>invalid_tool_result()<br/>denied_result()"]:::safety
+    ToolImpl["tools.minimal 工具实现方法<br/>_list_files()<br/>_read_file()<br/>_grep()<br/>_edit_file()<br/>_create_file()<br/>_bash()<br/>_run_tests()<br/>_git_diff()<br/>default_tool_registry()"]:::safety
+    Permission["permissions.system.PermissionSystem<br/>check()<br/>_deny_reason_for_bash()<br/>_validate_git_command()<br/>_validate_path_operands()<br/>_validate_git_explicit_paths()<br/>_validate_ls_command()"]:::safety
+    ToolSchemas["tools.schemas<br/>ToolCall<br/>ToolResult"]:::safety
+    ToolRuntimeTypes["tools.minimal 关键类型<br/>ToolDefinition<br/>ToolRegistry<br/>ToolExecutionContext<br/>ToolPolicy<br/>NormalizedToolRequest"]:::safety
+  end
+
+  subgraph TrajectoryExport["轨迹、奖励、导出层"]
+    Recorder["trajectory.recorder.RunRecorder<br/>append_event()<br/>append_transcript()<br/>write_artifact()<br/>write_json_artifact()<br/>finalize_run()<br/>mark_interrupted()<br/>write_artifact 自动补 artifact_created 事件"]:::data
+    RunDir["run directory<br/>基础产物：task.yaml、events.jsonl、transcript.jsonl、artifacts.json、run_status.json、dependency_state.json、baseline.json、metrics.json、summary.md<br/>baseline 通过后追加：resolved_verifier_plan.json、final.patch、final.diff、verifier.json、reward.json"]:::artifact
+    Reward["reward.calculator<br/>compute_reward_metadata()<br/>RewardMetadata<br/>引用 final verifier、final.patch、final.diff、events"]:::data
+    Exporter["export.exporter<br/>export_run_or_runs()<br/>export_sft_jsonl()<br/>export_rl_jsonl()<br/>export_preference_jsonl()<br/>_manifest_ref()<br/>_sanitize_for_export()"]:::data
+    ExportOutput["export output<br/>exports/sft.jsonl<br/>exports/rl.jsonl<br/>exports/preference.jsonl<br/>exports/preference_skipped.json"]:::artifact
+    Inspector["trajectory.inspect<br/>inspect_run()"]:::data
+  end
+
+  CLI -->|"读取配置"| Config
+  CLI -->|"validate-task"| TaskAdapter
+  CLI -->|"run-task / run-batch"| EvalRunner
+  CLI -->|"export"| Exporter
+  CLI -->|"inspect-run"| Inspector
+
+  EvalRunner --> Config
+  EvalRunner --> TaskAdapter
+  EvalRunner --> Workspace
+  EvalRunner -->|"setup workspace 与 baseline"| Verifier
+  Verifier -->|"baseline verifier result"| Baseline
+  Baseline -->|"通过质量门控"| ResolvedPlan
+  Baseline -->|"invalid 或 flaky gate input"| EvalRunner
+  EvalRunner -->|"正式 agent run"| AgentLoop
+  EvalRunner -->|"最终验收和运行结论"| OutcomePolicy
+  EvalRunner --> Metrics
+  EvalRunner --> Reward
+  EvalRunner -->|"run events、agent_stop_reason、summary 运行产物"| Recorder
+
+  Workspace --> WorkspaceSchemas
+  Verifier -->|"通过 Workspace 执行 baseline、feedback 和 final 测试命令"| Workspace
+  Workspace -->|"ExecutionResult"| Verifier
+  Workspace -->|"final.patch / final.diff"| Recorder
+  Verifier -->|"VerifierResult"| EvalRunner
+
+  TaskAdapter -->|"模型可见任务视图"| ContextBuilder
+  ResolvedPlan -->|"模型可见 verifier 摘要"| ContextBuilder
+  Config --> ContextBuilder
+  Workspace -->|"RunWorkspace.workspace_path"| ContextBuilder
+  Scaffold --> ContextBuilder
+  AgentLoop -->|"校验 final answer 停止策略"| Scaffold
+  ContextBuilder -->|"initial messages"| AgentLoop
+  Budget --> AgentLoop
+  AgentLoop -->|"每轮调用前准备上下文"| ContextManager
+  ContextManager -->|"PreparedMessages + context_revision + model_input_hash"| ModelClient
+  ReplayScript -->|"ReplayModelClient 可读取完整脚本做对齐校验；响应产物只写 model_visible_payload()"| ModelClient
+  ModelClient -->|"ModelResponse / ToolCallParseResult"| AgentLoop
+  AgentLoop -->|"工具调用校验与执行生命周期"| ToolExecutor
+  ToolExecutor --> ToolSchemas
+  ToolExecutor --> ToolRuntimeTypes
+  ToolExecutor -->|"未知工具或 schema 错误<br/>不进入权限系统"| AgentLoop
+  ToolExecutor -->|"已知工具且 schema 校验通过"| Permission
+  Permission -->|"allow / deny PermissionDecision"| ToolExecutor
+  Permission -.->|"只读路径解析、存在性检查和敏感路径边界判断"| Workspace
+  ToolExecutor --> ToolImpl
+  ToolImpl -->|"所有文件读写和命令执行"| Workspace
+  ToolImpl -->|"run_tests 中间测试反馈路径<br/>VerifierResult 由 ToolExecutor 包装为 ToolResult"| Verifier
+  ToolExecutor -->|"ToolResult 必须配对回流"| AgentLoop
+
+  AgentLoop -->|"assistant message、tool result、loop events"| Recorder
+  AgentLoop -->|"agent_stop_reason 和 loop state"| EvalRunner
+  Recorder --> RunDir
+  Reward -->|"RewardMetadata"| EvalRunner
+  Metrics -->|"MetricsRecord 与 final_verifier_status"| EvalRunner
+  OutcomePolicy -->|"run_outcome"| EvalRunner
+  RunDir -.->|"提供原始运行事实，不重新评测"| Exporter
+  Exporter -->|"写派生导出文件"| ExportOutput
+  RunDir -.->|"只读诊断"| Inspector

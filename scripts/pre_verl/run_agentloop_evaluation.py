@@ -42,6 +42,27 @@ SMOKE_TASK_IDS = [
     "pre_verl_dev_020_pydicom__pydicom_1413",
 ]
 FORBIDDEN_SCAFFOLD_IDS = ["single_shot_patch_no_tools"]
+FORMAL_PROVIDER_RETRY_POLICY_ID = "provider_retry_v0"
+FORMAL_PROVIDER_RETRY_POLICY_VERSION = "repo_harness_provider_retry_policy_v0"
+FORMAL_PROVIDER_RETRY_MAX_ATTEMPTS = 3
+FORMAL_PROVIDER_RETRY_BACKOFF_DELAYS_MS = [0, 250, 1000]
+FORMAL_PROVIDER_RETRYABLE_ERROR_TYPES = [
+    "provider_error",
+    "provider_timeout",
+    "rate_limited",
+]
+HARNESS_TOOL_CONTEXT_POLICY = {
+    "search_fact_policy_version": "repo_harness_search_fact_trust_v1",
+    "repository_action_index_policy_version": "repo_harness_repository_action_index_v1",
+    "convergence_nudge_policy_version": "repo_harness_convergence_nudge_v2",
+    "context_warning_policy_version": "repo_harness_context_warning_v1",
+    "context_replacement_runtime_policy_version": "deterministic_tool_result_replacement_runtime_v1",
+    "provider_ready_token_estimator_version": "provider_body_char4_token_estimator_v1",
+    "context_threshold_decision_source": "provider_ready_token_estimate",
+    "compact_threshold_ratio_runtime_effect": "connected_to_tool_result_replacement_budget_v1",
+    "harness_control_message_export_policy": "exclude_harness_generated_untrainable_control_messages_v1",
+    "tool_call_repair_policy_version": "malformed_tool_call_repair_v0",
+}
 
 
 @dataclass(frozen=True)
@@ -114,6 +135,15 @@ def main(argv: list[str] | None = None) -> int:
                 "model_id": args.model_id,
                 "test_feedback_policy": args.test_feedback_policy,
                 "resolved_tools": resolved_tools,
+                "baseline_id": args.baseline_id,
+                "retry_policy": run_config.model.retry_policy,
+                "provider_retry_policy": _provider_retry_policy_payload(
+                    run_config.model.retry_policy
+                ),
+                "execution_image": loaded.runnable_task.environment.execution_image,
+                "requested_container_platform": loaded.definition.metadata.get(
+                    "requested_container_platform"
+                ),
                 "run_id": run_id,
                 "run_task_run_dir": (runs_dir / run_id).as_posix(),
                 "status": "planned",
@@ -143,8 +173,13 @@ def main(argv: list[str] | None = None) -> int:
             "schema_version": "repo_harness_pre_verl_agentloop_run_config_manifest_v0",
             "created_at": _timestamp(),
             "mode": args.mode,
+            "baseline_id": args.baseline_id,
+            "baseline_lineage": _baseline_lineage_payload(args),
             "baseline_source": PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
             "forbidden_scaffold_ids": FORBIDDEN_SCAFFOLD_IDS,
+            "provider_retry_policy": _provider_retry_policy_payload(
+                FORMAL_PROVIDER_RETRY_POLICY_ID
+            ),
             "entries": entries,
         },
     )
@@ -269,9 +304,19 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--task-timeout-sec", type=int, default=1200)
     parser.add_argument("--command-timeout-sec", type=int, default=90)
     parser.add_argument("--max-context-tokens", type=int, default=120000)
+    parser.add_argument("--tool-result-aggregate-budget-chars", type=int, default=40000)
+    parser.add_argument("--compact-threshold-ratio", type=float, default=0.85)
     parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--baseline-id")
+    parser.add_argument("--parent-baseline-id")
+    parser.add_argument("--parent-run-dir")
+    parser.add_argument("--parent-status")
+    parser.add_argument(
+        "--baseline-change-summary",
+        default="pre-verl AgentLoop baseline with frozen provider retry and harness hardening",
+    )
     parser.add_argument("--allow-local-secret-file", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--repo-harness-bin", default="repo-harness")
     parser.add_argument("--execute", action="store_true")
@@ -289,6 +334,8 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         parser.error("formal pre-verl final-only 任务必须设置 max_test_runs=0")
     if args.mode == "formal" and args.execution_mode != "docker":
         parser.error("formal pre-verl 23 题评测必须使用 Docker execution mode，不能使用 local_process")
+    if not args.baseline_id:
+        args.baseline_id = _default_baseline_id(args)
     return args
 
 
@@ -491,7 +538,7 @@ def _write_run_config(
             "model_id": args.model_id,
             "temperature": args.temperature,
             "max_output_tokens": args.max_output_tokens,
-            "retry_policy": "none",
+            "retry_policy": FORMAL_PROVIDER_RETRY_POLICY_ID,
             "credential_policy": "env_or_local_secret_file" if args.allow_local_secret_file else "env_only",
             "provider_request_logging": "redact_secrets",
             "provider_specific_options": provider_options,
@@ -525,10 +572,11 @@ def _write_run_config(
         },
         "context_management": {
             "max_context_tokens": args.max_context_tokens,
-            "tool_result_aggregate_budget_chars": 40000,
+            "tool_result_aggregate_budget_chars": args.tool_result_aggregate_budget_chars,
             "keep_recent_turns": 6,
             "keep_recent_test_results": 0,
             "summarize_old_test_outputs": True,
+            "compact_threshold_ratio": args.compact_threshold_ratio,
         },
         "evaluation": {
             "concurrency": 1,
@@ -555,6 +603,8 @@ def _write_configuration_manifests(
         "schema_version": "repo_harness_pre_verl_agentloop_configuration_manifest_v0",
         "created_at": _timestamp(),
         "mode": args.mode,
+        "baseline_id": args.baseline_id,
+        "baseline_lineage": _baseline_lineage_payload(args),
         "baseline_source": PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
         "pre_verl_adapter": PRE_VERL_AGENTLOOP_ADAPTER_ID,
         "pre_verl_swebench_dev_manifest_path": task_set_manifest_path.as_posix(),
@@ -565,6 +615,11 @@ def _write_configuration_manifests(
         "all_results_must_have_run_task_run_dir": True,
         "provider": args.provider,
         "model_id": args.model_id,
+        "provider_axis_scope": f"{args.provider}_only",
+        "provider_retry_policy": _provider_retry_policy_payload(
+            FORMAL_PROVIDER_RETRY_POLICY_ID
+        ),
+        "harness_tool_context_policy": HARNESS_TOOL_CONTEXT_POLICY,
         "scaffold_id": args.scaffold_id,
         "execution_mode": args.execution_mode,
         "scaffold_version": scaffold.scaffold_version,
@@ -601,8 +656,15 @@ def _write_configuration_manifests(
             "schema_version": "repo_harness_pre_verl_formal_budget_freeze_manifest_v0",
             "status": "frozen",
             "created_at": _timestamp(),
+            "baseline_id": args.baseline_id,
+            "baseline_lineage": _baseline_lineage_payload(args),
             "provider": args.provider,
             "model_id": args.model_id,
+            "provider_axis_scope": f"{args.provider}_only",
+            "provider_retry_policy": _provider_retry_policy_payload(
+                FORMAL_PROVIDER_RETRY_POLICY_ID
+            ),
+            "harness_tool_context_policy": HARNESS_TOOL_CONTEXT_POLICY,
             "budget": _budget_payload(args),
             "temperature": args.temperature,
             "seed": args.seed,
@@ -614,12 +676,22 @@ def _write_configuration_manifests(
                 "task_timeout_sec",
                 "command_timeout_sec",
                 "max_context_tokens",
+                "tool_result_aggregate_budget_chars",
+                "compact_threshold_ratio",
                 "max_output_tokens",
                 "temperature",
                 "scaffold_prompt_sha256",
                 "resolved_tools",
                 "model_id",
                 "deepseek_thinking",
+                "retry_policy",
+                "provider_axis_scope",
+                "search_fact_policy_version",
+                "repository_action_index_policy_version",
+                "convergence_nudge_policy_version",
+                "context_warning_policy_version",
+                "provider_ready_token_estimator_version",
+                "context_threshold_decision_source",
             ],
         },
     )
@@ -636,7 +708,13 @@ def _write_run_matrix(output_dir: Path, entries: list[dict[str, Any]], args: arg
             "schema_version": "repo_harness_pre_verl_agentloop_run_matrix_manifest_v0",
             "created_at": _timestamp(),
             "mode": args.mode,
+            "baseline_id": args.baseline_id,
+            "baseline_lineage": _baseline_lineage_payload(args),
             "baseline_source": PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
+            "provider_retry_policy": _provider_retry_policy_payload(
+                FORMAL_PROVIDER_RETRY_POLICY_ID
+            ),
+            "harness_tool_context_policy": HARNESS_TOOL_CONTEXT_POLICY,
             "entry_count": len(entries),
             "formal_boundary_entry_count": sum(
                 1 for entry in entries if entry.get("final_verifier_boundary_available") is True
@@ -771,7 +849,49 @@ def _budget_payload(args: argparse.Namespace) -> dict[str, Any]:
         "task_timeout_sec": args.task_timeout_sec,
         "command_timeout_sec": args.command_timeout_sec,
         "max_context_tokens": args.max_context_tokens,
+        "tool_result_aggregate_budget_chars": args.tool_result_aggregate_budget_chars,
+        "compact_threshold_ratio": args.compact_threshold_ratio,
         "max_output_tokens": args.max_output_tokens,
+    }
+
+
+def _default_baseline_id(args: argparse.Namespace) -> str:
+    return "_".join(
+        [
+            _safe_id(str(getattr(args, "run_id_prefix", "pre_verl_agentloop"))),
+            _safe_id(str(getattr(args, "mode", "unknown"))),
+            _safe_id(str(getattr(args, "provider", "unknown"))),
+            _safe_id(str(getattr(args, "model_id", "unknown"))),
+        ]
+    )
+
+
+def _baseline_lineage_payload(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "parent_baseline_id": getattr(args, "parent_baseline_id", None),
+        "parent_run_dir": getattr(args, "parent_run_dir", None),
+        "parent_status": getattr(args, "parent_status", None),
+        "change_summary": getattr(args, "baseline_change_summary", None),
+    }
+
+
+def _provider_retry_policy_payload(policy_id: str) -> dict[str, Any]:
+    if policy_id == FORMAL_PROVIDER_RETRY_POLICY_ID:
+        return {
+            "schema_version": FORMAL_PROVIDER_RETRY_POLICY_VERSION,
+            "policy_id": FORMAL_PROVIDER_RETRY_POLICY_ID,
+            "max_attempts": FORMAL_PROVIDER_RETRY_MAX_ATTEMPTS,
+            "backoff_delays_ms": FORMAL_PROVIDER_RETRY_BACKOFF_DELAYS_MS,
+            "sleep_enabled": True,
+            "retryable_error_types": FORMAL_PROVIDER_RETRYABLE_ERROR_TYPES,
+        }
+    return {
+        "schema_version": FORMAL_PROVIDER_RETRY_POLICY_VERSION,
+        "policy_id": policy_id,
+        "max_attempts": 1,
+        "backoff_delays_ms": [0],
+        "sleep_enabled": False,
+        "retryable_error_types": FORMAL_PROVIDER_RETRYABLE_ERROR_TYPES,
     }
 
 
@@ -827,17 +947,15 @@ def _normalize_pytest_selectors(
 def _normalize_pytest_selector(selector: str) -> tuple[str, str | None]:
     if "[" not in selector:
         return selector, None
-    suffix = selector.rsplit("::", 1)[-1]
-    if suffix.count("[") == suffix.count("]"):
+    if selector.count("[") == selector.count("]"):
         return selector, None
-    return selector.rsplit("[", 1)[0], "truncated_parametrized_selector_widened_to_parent"
+    return selector.split("[", 1)[0], "truncated_parametrized_selector_widened_to_parent"
 
 
 def _selector_shape_is_collectable(selector: str) -> bool:
     if not selector or "::" not in selector:
         return False
-    suffix = selector.rsplit("::", 1)[-1]
-    return suffix.count("[") == suffix.count("]")
+    return selector.count("[") == selector.count("]")
 
 
 def _run_checked_command(

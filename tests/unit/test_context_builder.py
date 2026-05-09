@@ -4,8 +4,12 @@ from pathlib import Path
 from repo_harness.config import RunConfig
 from repo_harness.context import ContextBuilder
 from repo_harness.evaluation import ResolvedVerifierPlan
+from repo_harness.evaluation.runner import _model_visible_repo_context_summary
 from repo_harness.tasks import load_task
+from repo_harness.tasks import RunnableTask, TaskDefinition
 from repo_harness.workspace import DependencyState, RunWorkspace
+
+from tests.unit.test_task_schema import valid_task_payload
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,6 +59,351 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
     assert "<REDACTED_LOCAL_PATH>" in payload
     assert '"test_command": "pytest -q"' in payload
     assert '"test_command_visibility": "model_visible_public"' in payload
+
+
+def test_context_builder_injects_agents_md_and_safe_repo_context_index(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "AGENTS.md").write_text("Use project conventions.", encoding="utf-8")
+    (workspace / "README.md").write_text("Repository hint.", encoding="utf-8")
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+    repo_context_index = {
+        "schema_version": "repo_harness_model_visible_repo_context_index_v0",
+        "source_snapshot_ref": {
+            "kind": "source_snapshot",
+            "relative_path": "artifacts/source_snapshot.json",
+            "sha256": "a" * 64,
+            "redaction_status": "not_sensitive",
+        },
+        "repo_context_index_ref": {
+            "kind": "repo_context_index",
+            "relative_path": "artifacts/repo_context_index.json",
+            "sha256": "b" * 64,
+            "redaction_status": "not_sensitive",
+        },
+        "candidate_source_entries": [
+            {
+                "path": "src/sample.py",
+                "evidence_source": "model_visible_expected_files",
+                "matched_terms": [],
+                "source_text_span_hash": "sample-hash",
+                "ranking_reason": "Task expected_files is model-visible and names this path.",
+                "policy_version": "repo_harness_repository_action_index_v1",
+            }
+        ],
+        "repository_action_index": {
+            "schema_version": "repo_harness_repository_action_index_v1",
+            "policy_version": "repo_harness_repository_action_index_v1",
+            "candidate_entries": [
+                {
+                    "path": "src/sample.py",
+                    "evidence_source": "model_visible_expected_files",
+                    "matched_terms": [],
+                    "source_text_span_hash": "sample-hash",
+                    "ranking_reason": "Task expected_files is model-visible and names this path.",
+                    "policy_version": "repo_harness_repository_action_index_v1",
+                }
+            ],
+            "candidate_entry_count": 1,
+        },
+        "evaluator_only_material_excluded": True,
+        "non_model_visible_material_policy": "Verifier-private materials and scoring artifacts are excluded.",
+    }
+
+    messages = ContextBuilder().build_initial_messages(
+        task=loaded.runnable_task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=["read_file", "run_tests"],
+        model_visible_repo_context=repo_context_index,
+    )
+
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
+    assert [record["path"] for record in user["repository_context"]] == ["AGENTS.md", "README.md"]
+    assert user["repository_context_index"] == repo_context_index
+    assert user["repository_action_index"] == repo_context_index["repository_action_index"]
+    payload = json.dumps(messages, ensure_ascii=False)
+    assert "Use project conventions" in payload
+    assert "src/sample.py" in payload
+    assert "FAIL_TO_PASS" not in payload
+    assert "gold_patch" not in payload
+    assert "gold patch" not in payload
+    assert "hidden patch" not in payload
+    assert "evaluator-only artifact hash" not in payload
+
+
+def test_context_builder_adds_dynamic_tool_use_guidance(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+
+    messages = ContextBuilder().build_initial_messages(
+        task=loaded.runnable_task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=[
+            "list_files",
+            "glob_files",
+            "read_file",
+            "grep",
+            "symbol_search",
+            "update_working_state",
+            "edit_file",
+            "git_diff",
+        ],
+    )
+
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
+    guidance = user["tool_use_guidance"]
+    rendered = json.dumps(guidance, ensure_ascii=False)
+    rule_ids = {rule["rule_id"] for rule in guidance["rules"]}
+
+    assert guidance["schema_version"] == "repo_harness_tool_use_guidance_v0"
+    assert "narrow_candidate_files_first" in rule_ids
+    assert "read_ranked_candidates_as_starting_points" in rule_ids
+    assert "use_symbol_navigation_for_python_symbols" in rule_ids
+    assert "make_search_facts_trustworthy" in rule_ids
+    assert "read_before_edit" in rule_ids
+    assert "edit_old_text_from_raw_content" in rule_ids
+    assert "record_state_when_exploration_branches" in rule_ids
+    assert "review_patch_before_final_answer" in rule_ids
+    assert "follow_tool_result_recovery" in rule_ids
+    assert "parallel_independent_read_only_tools_only" in rule_ids
+    assert "partial_scan_no_match" in rendered
+    assert "expected_content_hash" in rendered
+    assert "result_envelope.recovery_call" in rendered
+    assert "not as guaranteed answers" in rendered
+    assert "symbol_search.root" in rendered
+    assert "root='.'" in rendered
+    assert "git_diff" in rendered
+    assert "hidden evaluator" in rendered
+
+
+def test_context_builder_tool_use_guidance_only_mentions_allowed_tools(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+
+    messages = ContextBuilder().build_initial_messages(
+        task=loaded.runnable_task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=["read_file"],
+    )
+
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
+    rendered = json.dumps(user["tool_use_guidance"], ensure_ascii=False)
+
+    for absent_tool in ["glob_files", "symbol_search", "grep", "update_working_state", "edit_file", "git_diff"]:
+        assert absent_tool not in rendered
+
+
+def test_model_visible_repo_context_summary_respects_expected_files_visibility():
+    payload = valid_task_payload()
+    payload["expected_files"] = ["secret.py"]
+    payload["visibility"]["expected_files"] = "verifier_only"
+    task = RunnableTask.from_definition(TaskDefinition.model_validate(payload))
+
+    summary = _model_visible_repo_context_summary(
+        source_snapshot_ref=_Ref("source_snapshot", "artifacts/source_snapshot.json", "a" * 64),
+        repo_context_index_ref=_Ref("repo_context_index", "artifacts/repo_context_index.json", "b" * 64),
+        task=task,
+    )
+
+    assert summary is not None
+    assert summary["expected_files"] == []
+    assert summary["candidate_source_entries"] == []
+    assert summary["repository_action_index"]["candidate_entries"] == []
+    rendered = json.dumps(summary, ensure_ascii=False)
+    assert "secret.py" not in rendered
+    assert "gold patch" not in rendered
+    assert "hidden patch" not in rendered
+    assert "evaluator-only artifact hash" not in rendered
+
+
+def test_model_visible_repo_context_summary_builds_evidence_based_action_index(tmp_path: Path):
+    payload = valid_task_payload()
+    payload["issue"] = "MultiValue handling should use dataelem conversion in pydicom."
+    payload["expected_files"] = ["src/expected.py"]
+    task = RunnableTask.from_definition(TaskDefinition.model_validate(payload))
+    source = tmp_path / "source"
+    (source / "pydicom").mkdir(parents=True)
+    (source / "pydicom" / "dataelem.py").write_text("# public source\n", encoding="utf-8")
+    (source / "hidden.patch").write_text("gold patch", encoding="utf-8")
+
+    summary = _model_visible_repo_context_summary(
+        source_snapshot_ref=_Ref("source_snapshot", "artifacts/source_snapshot.json", "a" * 64),
+        repo_context_index_ref=_Ref("repo_context_index", "artifacts/repo_context_index.json", "b" * 64),
+        task=task,
+        source_checkout=source,
+    )
+
+    assert summary is not None
+    action_index = summary["repository_action_index"]
+    entries = action_index["candidate_entries"]
+    assert entries[0]["path"] == "src/expected.py"
+    assert entries[0]["evidence_source"] == "model_visible_expected_files"
+    assert entries[0]["source_text_span_hash"]
+    assert any(entry["path"] == "pydicom/dataelem.py" for entry in entries)
+    assert all(entry["policy_version"] == "repo_harness_repository_action_index_v1" for entry in entries)
+    rendered = json.dumps(action_index, ensure_ascii=False)
+    assert "hidden.patch" not in rendered
+    assert "gold patch" not in rendered
+    assert "hindsight_sources_excluded" in rendered
+    assert "symbol_search" in summary["usage_hint"]
+    assert "update_working_state" in summary["usage_hint"]
+    assert "git_diff" in summary["usage_hint"]
+
+
+def test_model_visible_repo_context_summary_targeted_smoke_action_index_gates(
+    tmp_path: Path,
+):
+    cases = [
+        {
+            "task_id": "pre_verl_dev_001_sqlfluff__sqlfluff_1625",
+            "issue": 'TSQL - L031 incorrectly triggers "Avoid using aliases in join condition"',
+            "files": {
+                "docs/sqlfluff_l031_notes.md": "L031 documentation noise",
+                ".github/workflows/sqlfluff.yml": "sqlfluff ci",
+                "src/sqlfluff/rules/L031.py": "class Rule_L031:\n    aliases = True\n",
+                "src/sqlfluff/core/rules/base.py": "class BaseRule: pass\n",
+            },
+            "required_targets": ["src/sqlfluff/rules/L031.py"],
+        },
+        {
+            "task_id": "pre_verl_dev_014_pylint_dev__astroid_1333",
+            "issue": (
+                "astroid 2.9.1 breaks pylint with missing __init__.py: "
+                "F0010: error while code parsing: Unable to load file __init__.py"
+            ),
+            "files": {
+                "doc/modutils.md": "load file notes",
+                "astroid/modutils.py": (
+                    "def modpath_from_file(filename): pass\n"
+                    "def load_module_from_file(filepath): pass\n"
+                    "def file_from_modpath(modpath): pass\n"
+                ),
+                "astroid/nodes/node_classes.py": "class Dict: pass\n",
+            },
+            "required_targets": ["astroid/modutils.py"],
+        },
+        {
+            "task_id": "pre_verl_dev_015_pylint_dev__astroid_1196",
+            "issue": (
+                "getitem does not infer the actual unpacked value. "
+                "Traceback points at astroid/nodes/node_classes.py line 2254 in getitem."
+            ),
+            "files": {
+                "doc/nodes.md": "getitem docs",
+                "astroid/nodes/node_classes.py": "class Dict:\n    def getitem(self, index): pass\n",
+                "astroid/modutils.py": "def get_module_part(): pass\n",
+            },
+            "required_targets": ["astroid/nodes/node_classes.py"],
+        },
+        {
+            "task_id": "pre_verl_dev_017_pylint_dev__astroid_1268",
+            "issue": (
+                "'AsStringVisitor' object has no attribute 'visit_unknown'. "
+                "Traceback points at astroid/nodes/as_string.py."
+            ),
+            "files": {
+                "doc/as_string.md": "AsStringVisitor docs",
+                "astroid/nodes/as_string.py": "class AsStringVisitor:\n    def visit_unknown(self, node): pass\n",
+                "astroid/nodes/node_ng.py": "class Unknown: pass\n",
+            },
+            "required_targets": ["astroid/nodes/as_string.py"],
+        },
+        {
+            "task_id": "pre_verl_dev_020_pydicom__pydicom_1413",
+            "issue": (
+                "Error : a bytes-like object is required, not 'MultiValue'. "
+                "The error gets produced only when the VR is given as OL and ds.save_as is called."
+            ),
+            "files": {
+                "doc/assets/img/pydicom_logo.png": "not source",
+                "pydicom/multival.py": "class MultiValue(list): pass\n",
+                "pydicom/dataelem.py": "class DataElement:\n    VR = 'OL'\n",
+                "pydicom/filewriter.py": "def write_OBvalue(fp, elem): pass\n",
+            },
+            "required_targets": ["pydicom/dataelem.py", "pydicom/filewriter.py", "pydicom/multival.py"],
+        },
+    ]
+
+    for case in cases:
+        source = tmp_path / case["task_id"] / "source"
+        for relative_path, text in case["files"].items():
+            path = source / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        payload = valid_task_payload()
+        payload["id"] = case["task_id"]
+        payload["issue"] = case["issue"]
+        payload["expected_files"] = []
+        task = RunnableTask.from_definition(TaskDefinition.model_validate(payload))
+
+        summary = _model_visible_repo_context_summary(
+            source_snapshot_ref=_Ref("source_snapshot", "artifacts/source_snapshot.json", "a" * 64),
+            repo_context_index_ref=_Ref("repo_context_index", "artifacts/repo_context_index.json", "b" * 64),
+            task=task,
+            source_checkout=source,
+        )
+
+        assert summary is not None
+        first_twenty = [
+            entry["path"]
+            for entry in summary["repository_action_index"]["candidate_entries"][:20]
+        ]
+        missing_targets = [
+            target
+            for target in case["required_targets"]
+            if not any(path == target or path.startswith(f"{target}/") for path in first_twenty)
+        ]
+        assert not missing_targets, (case["task_id"], missing_targets, first_twenty)
 
 
 def test_context_builder_uses_workspace_facade_for_docker_repo_context(tmp_path: Path):
@@ -214,3 +563,11 @@ class _RepoContextFacade:
 
             raise WorkspaceError("missing")
         return self.files[requested_path]
+
+
+class _Ref:
+    def __init__(self, kind: str, relative_path: str, sha256: str) -> None:
+        self.kind = kind
+        self.relative_path = relative_path
+        self.sha256 = sha256
+        self.redaction_status = "not_sensitive"
