@@ -129,10 +129,13 @@ class AutoCompactState(StrictBaseModel):
 
 class AutoCompactRecord(StrictBaseModel):
     schema_version: str = "repo_harness_auto_compact_record_v1"
+    compact_id: str
     trigger_reason: str
     mode: Literal["proactive", "hard_preflight", "emergency"] = "proactive"
     source_prepared_messages_ref: ArtifactRef
     source_model_input_hash: str
+    compact_source_messages_ref: ArtifactRef | None = None
+    compact_source_projection_hash: str | None = None
     tokens_before: int = Field(ge=0)
     tokens_after: int = Field(ge=0)
     effective_context_budget_tokens: int = Field(gt=0)
@@ -144,15 +147,72 @@ class AutoCompactRecord(StrictBaseModel):
     failure_reason: str | None = None
 
 
+class CompactPatchState(StrictBaseModel):
+    schema_version: str = "repo_harness_compact_patch_state_v1"
+    changed_files: list[str] = Field(default_factory=list)
+    important_diffs: list[str] = Field(default_factory=list)
+
+
+class CompactTestState(StrictBaseModel):
+    schema_version: str = "repo_harness_compact_test_state_v1"
+    commands_run: list[str] = Field(default_factory=list)
+    passing: list[str] = Field(default_factory=list)
+    failing: list[str] = Field(default_factory=list)
+    unknown: list[str] = Field(default_factory=list)
+
+
+class CompactToolRecoveryEntry(StrictBaseModel):
+    schema_version: str = "repo_harness_compact_tool_recovery_entry_v1"
+    tool_result_id: str | None = None
+    tool_call_id: str | None = None
+    tool_name: str | None = None
+    artifact_id: str | None = None
+    sha256: str | None = None
+    recovery_status: Literal[
+        "artifact_recoverable",
+        "cleared_without_recoverable_artifact",
+        "preview_only",
+        "not_needed",
+    ] = "not_needed"
+
+
 class CompactSummary(StrictBaseModel):
     schema_version: str = "repo_harness_compact_summary_v1"
-    task_goal: str
-    current_status: str
-    files_touched: list[str] = Field(default_factory=list)
-    facts_to_preserve: list[str] = Field(default_factory=list)
-    failed_attempts: list[str] = Field(default_factory=list)
-    next_steps: list[str] = Field(default_factory=list)
-    tool_recovery_index: list[dict[str, Any]] = Field(default_factory=list)
+    task_intent: str
+    repository_facts: list[str] = Field(default_factory=list)
+    actions_taken: list[str] = Field(default_factory=list)
+    patch_state: CompactPatchState = Field(default_factory=CompactPatchState)
+    test_state: CompactTestState = Field(default_factory=CompactTestState)
+    tool_recovery_index: list[CompactToolRecoveryEntry] = Field(default_factory=list)
+    open_questions: list[str] = Field(default_factory=list)
+    next_step: str
+    visibility_policy: Literal["model_visible_only"] = "model_visible_only"
+
+
+class AutoCompactResult(StrictBaseModel):
+    schema_version: str = "repo_harness_auto_compact_result_v1"
+    compact_id: str
+    mode: Literal["proactive", "hard_preflight", "emergency"]
+    trigger_reason: str
+    status: Literal["applied", "failed", "skipped"]
+    failure_reason: str | None = None
+    source_prepared_messages_ref: ArtifactRef
+    source_model_input_hash: str
+    compact_source_messages_ref: ArtifactRef | None = None
+    compact_source_projection_hash: str | None = None
+    compact_model_request_ref: ArtifactRef | None = None
+    compact_model_response_ref: ArtifactRef | None = None
+    summary_artifact_ref: ArtifactRef | None = None
+    rebuilt_messages_ref: ArtifactRef | None = None
+    record_ref: ArtifactRef | None = None
+    tokens_before: int = Field(ge=0)
+    tokens_after: int = Field(ge=0)
+    effective_context_budget_tokens: int = Field(gt=0)
+    post_compact_target_tokens: int = Field(gt=0)
+    hard_context_limit_tokens: int = Field(gt=0)
+    post_compact_above_target: bool = False
+    rebuilt_messages: list[dict[str, Any]] = Field(default_factory=list)
+    summary: CompactSummary | None = None
 
 
 class ContextPolicySnapshot(StrictBaseModel):
