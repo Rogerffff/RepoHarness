@@ -732,6 +732,19 @@ def inspect_model_visible_context(
             assert_provider_body_equivalent=assert_provider_body_equivalent,
             assert_no_over_redaction=assert_no_over_redaction,
         )
+    if (
+        assert_prepared_messages_bound
+        or assert_provider_body_equivalent
+        or assert_tool_results_recoverable
+        or assert_no_hidden_test_material
+    ):
+        _inspect_context_compaction_artifacts(
+            events=events,
+            transcript=transcript,
+            run_dir=run_path,
+            failures=failures,
+            assert_no_hidden_test_material=assert_no_hidden_test_material,
+        )
     if assert_tool_results_recoverable:
         _inspect_tool_result_replacements(prepared_payloads, failures)
     if assert_no_hidden_test_material:
@@ -2074,6 +2087,526 @@ def _inspect_provider_artifacts(
                 failures=failures,
                 label=f"raw_provider_response[{index}]",
             )
+
+
+def _inspect_context_compaction_artifacts(
+    *,
+    events: list[dict[str, Any]],
+    transcript: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+    assert_no_hidden_test_material: bool,
+) -> None:
+    compact_model_call_ids = _compact_model_call_ids(events, run_dir, failures)
+    for index, event in enumerate(events):
+        event_type = event.get("event_type")
+        if event_type == "auto_compact_model_call_started":
+            _inspect_compact_model_call_started(event, failures, f"events[{index}]")
+        elif event_type in {"auto_compact_applied", "reactive_compact_applied"}:
+            _inspect_auto_compact_applied_event(
+                event,
+                run_dir,
+                failures,
+                f"events[{index}]",
+                assert_no_hidden_test_material=assert_no_hidden_test_material,
+            )
+        elif event_type == "ptl_truncation_applied":
+            _inspect_ptl_truncation_event(event, run_dir, failures, f"events[{index}]")
+        elif event_type in {
+            "reactive_compact_triggered",
+            "reactive_compact_applied",
+            "reactive_compact_failed",
+            "reactive_compact_skipped",
+            "reactive_compact_retry_limit_exhausted",
+        }:
+            _inspect_reactive_compact_control_event(event, failures, f"events[{index}]")
+    _inspect_compact_model_call_not_in_transcript(
+        compact_model_call_ids,
+        transcript,
+        failures,
+    )
+    _inspect_reactive_context_limit_not_in_transcript(events, transcript, failures)
+
+
+def _inspect_compact_model_call_started(
+    event: dict[str, Any],
+    failures: list[str],
+    label: str,
+) -> None:
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    if data.get("scaffold_phase") != "compact":
+        failures.append(f"{label}: compact-only model call 必须记录 scaffold_phase=compact")
+    if data.get("allowed_tools") != []:
+        failures.append(f"{label}: compact-only model call 必须记录 allowed_tools=[]")
+    if data.get("tool_choice") != "none":
+        failures.append(f"{label}: compact-only model call 必须记录 tool_choice=none")
+    if data.get("trainable") is not False:
+        failures.append(f"{label}: compact-only model call 必须记录 trainable=false")
+
+
+def _inspect_auto_compact_applied_event(
+    event: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+    *,
+    assert_no_hidden_test_material: bool,
+) -> None:
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    if (
+        event.get("event_type") == "reactive_compact_applied"
+        and data.get("ordinary_assistant_message_appended") is not False
+    ):
+        failures.append(f"{label}: compact 控制事件不得追加普通 assistant message")
+    if data.get("trainable") is not False:
+        failures.append(f"{label}: compact 控制事件必须记录 trainable=false")
+    record_ref = _artifact_ref_from_event(event, "auto_compact_record")
+    if record_ref is None:
+        failures.append(f"{label}: 缺少 auto_compact_record artifact ref")
+        return
+    record = _artifact_payload_from_ref(record_ref, run_dir, failures, f"{label}.auto_compact_record")
+    if not isinstance(record, dict):
+        return
+    if record.get("schema_version") != "repo_harness_auto_compact_record_v1":
+        failures.append(f"{label}.auto_compact_record: schema_version 不匹配")
+    if record.get("trainable") is True:
+        failures.append(f"{label}.auto_compact_record: compact 记录不得标记为 trainable")
+    _inspect_auto_compact_event_record_consistency(data, record, failures, label)
+    _inspect_run_artifact_ref(
+        record.get("source_prepared_messages_ref"),
+        run_dir,
+        failures,
+        f"{label}.auto_compact_record.source_prepared_messages_ref",
+    )
+    source_ref = record.get("compact_source_messages_ref")
+    summary_ref = record.get("summary_artifact_ref")
+    rebuilt_ref = record.get("rebuilt_messages_ref")
+    model_call_ref = record.get("compact_model_call_ref")
+    if record.get("status") == "applied":
+        for key, ref in (
+            ("compact_source_messages_ref", source_ref),
+            ("summary_artifact_ref", summary_ref),
+            ("rebuilt_messages_ref", rebuilt_ref),
+            ("compact_model_call_ref", model_call_ref),
+        ):
+            _inspect_run_artifact_ref(ref, run_dir, failures, f"{label}.auto_compact_record.{key}")
+    _inspect_auto_compact_source_artifact(
+        source_ref,
+        run_dir,
+        failures,
+        f"{label}.auto_compact_source_messages",
+        record=record,
+        assert_no_hidden_test_material=assert_no_hidden_test_material,
+    )
+    _inspect_auto_compact_model_call_artifact(
+        model_call_ref,
+        run_dir,
+        failures,
+        f"{label}.auto_compact_model_call",
+    )
+    _inspect_auto_compact_summary_artifact(
+        summary_ref,
+        run_dir,
+        failures,
+        f"{label}.auto_compact_summary",
+        record=record,
+        assert_no_hidden_test_material=assert_no_hidden_test_material,
+    )
+    _inspect_auto_compact_rebuilt_artifact(
+        rebuilt_ref,
+        run_dir,
+        failures,
+        f"{label}.auto_compact_rebuilt_messages",
+        record=record,
+    )
+
+
+def _inspect_auto_compact_source_artifact(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+    *,
+    record: dict[str, Any],
+    assert_no_hidden_test_material: bool,
+) -> None:
+    payload = _artifact_payload_from_ref(ref, run_dir, failures, label)
+    if not isinstance(payload, dict):
+        return
+    if payload.get("schema_version") != "repo_harness_auto_compact_source_messages_v1":
+        failures.append(f"{label}: schema_version 不匹配")
+    if payload.get("provider_visible_projection_applied") is not True:
+        failures.append(f"{label}: 必须记录 provider_visible_projection_applied=true")
+    if payload.get("compact_id") != record.get("compact_id"):
+        failures.append(f"{label}: compact_id 与 auto_compact_record 不一致")
+    if not _same_artifact_ref(
+        payload.get("source_prepared_messages_ref"),
+        record.get("source_prepared_messages_ref"),
+    ):
+        failures.append(f"{label}: source_prepared_messages_ref 与 auto_compact_record 不一致")
+    if assert_no_hidden_test_material:
+        finding = _find_hidden_material(payload, _evaluator_only_needles(run_dir, failures))
+        if finding:
+            failures.append(f"{label}: 包含隐藏材料标记 {finding!r}")
+
+
+def _inspect_auto_compact_model_call_artifact(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    payload = _artifact_payload_from_ref(ref, run_dir, failures, label)
+    if not isinstance(payload, dict):
+        return
+    if payload.get("schema_version") != "repo_harness_auto_compact_model_call_v1":
+        failures.append(f"{label}: schema_version 不匹配")
+    if payload.get("trainable") is not False:
+        failures.append(f"{label}: compact-only model call artifact 必须记录 trainable=false")
+    if payload.get("scaffold_phase") != "compact":
+        failures.append(f"{label}: compact-only model call artifact 必须记录 scaffold_phase=compact")
+    if payload.get("allowed_tools") != []:
+        failures.append(f"{label}: compact-only model call artifact 必须记录 allowed_tools=[]")
+    if payload.get("tool_choice") != "none":
+        failures.append(f"{label}: compact-only model call artifact 必须记录 tool_choice=none")
+    _inspect_compact_raw_provider_request(
+        payload.get("raw_provider_request_ref"),
+        run_dir,
+        failures,
+        f"{label}.raw_provider_request",
+    )
+
+
+def _inspect_auto_compact_summary_artifact(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+    *,
+    record: dict[str, Any],
+    assert_no_hidden_test_material: bool,
+) -> None:
+    payload = _artifact_payload_from_ref(ref, run_dir, failures, label)
+    if not isinstance(payload, dict):
+        return
+    if payload.get("schema_version") != "repo_harness_auto_compact_summary_artifact_v1":
+        failures.append(f"{label}: schema_version 不匹配")
+    if payload.get("trainable") is not False:
+        failures.append(f"{label}: compact summary artifact 必须记录 trainable=false")
+    if payload.get("visibility_policy") != "model_visible_only":
+        failures.append(f"{label}: compact summary 必须记录 visibility_policy=model_visible_only")
+    if payload.get("compact_id") != record.get("compact_id"):
+        failures.append(f"{label}: compact_id 与 auto_compact_record 不一致")
+    if not _same_artifact_ref(
+        payload.get("source_prepared_messages_ref"),
+        record.get("source_prepared_messages_ref"),
+    ):
+        failures.append(f"{label}: source_prepared_messages_ref 与 auto_compact_record 不一致")
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    _inspect_compact_tool_recovery_index(summary, failures, f"{label}.summary")
+    if assert_no_hidden_test_material:
+        finding = _find_hidden_material(payload, _evaluator_only_needles(run_dir, failures))
+        if finding:
+            failures.append(f"{label}: 包含隐藏材料标记 {finding!r}")
+
+
+def _inspect_auto_compact_rebuilt_artifact(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+    *,
+    record: dict[str, Any],
+) -> None:
+    payload = _artifact_payload_from_ref(ref, run_dir, failures, label)
+    if not isinstance(payload, dict):
+        return
+    if payload.get("schema_version") != "repo_harness_auto_compact_rebuilt_messages_v1":
+        failures.append(f"{label}: schema_version 不匹配")
+    if payload.get("trainable") is not False:
+        failures.append(f"{label}: rebuilt compact messages artifact 必须记录 trainable=false")
+    if payload.get("compact_id") != record.get("compact_id"):
+        failures.append(f"{label}: compact_id 与 auto_compact_record 不一致")
+    if not _same_artifact_ref(
+        payload.get("source_prepared_messages_ref"),
+        record.get("source_prepared_messages_ref"),
+    ):
+        failures.append(f"{label}: source_prepared_messages_ref 与 auto_compact_record 不一致")
+    if not _same_artifact_ref(payload.get("summary_artifact_ref"), record.get("summary_artifact_ref")):
+        failures.append(f"{label}: summary_artifact_ref 与 auto_compact_record 不一致")
+    messages = payload.get("messages")
+    if not isinstance(messages, list) or not messages:
+        failures.append(f"{label}: rebuilt messages 不能为空")
+        return
+    text = json.dumps(messages, ensure_ascii=False, sort_keys=True)
+    if "repo_harness_auto_compact_summary" not in text:
+        failures.append(f"{label}: rebuilt messages 缺少 auto compact summary")
+
+
+def _inspect_compact_tool_recovery_index(
+    summary: dict[str, Any],
+    failures: list[str],
+    label: str,
+) -> None:
+    entries = summary.get("tool_recovery_index")
+    if entries is None:
+        return
+    if not isinstance(entries, list):
+        failures.append(f"{label}.tool_recovery_index 必须是 list")
+        return
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            failures.append(f"{label}.tool_recovery_index[{index}] 必须是 object")
+            continue
+        status = entry.get("recovery_status")
+        carries_identifier = bool(entry.get("artifact_id") or entry.get("sha256"))
+        if status != "artifact_recoverable" and carries_identifier:
+            failures.append(
+                f"{label}.tool_recovery_index[{index}] 非 artifact_recoverable 状态不得携带 artifact_id 或 sha256"
+            )
+        if status == "artifact_recoverable":
+            if not isinstance(entry.get("artifact_id"), str) or not entry.get("artifact_id"):
+                failures.append(f"{label}.tool_recovery_index[{index}] 缺少 artifact_id")
+            if not _looks_like_sha256(str(entry.get("sha256") or "")):
+                failures.append(f"{label}.tool_recovery_index[{index}] 缺少合法 sha256")
+
+
+def _inspect_ptl_truncation_event(
+    event: dict[str, Any],
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    if data.get("trainable") is not False:
+        failures.append(f"{label}: PTL truncation event 必须记录 trainable=false")
+    ref = data.get("ptl_truncation_ref") or _artifact_ref_from_event(event, "ptl_truncation_record")
+    record = _artifact_payload_from_ref(ref, run_dir, failures, f"{label}.ptl_truncation_record")
+    if not isinstance(record, dict):
+        return
+    if record.get("schema_version") != "repo_harness_ptl_truncation_record_v1":
+        failures.append(f"{label}.ptl_truncation_record: schema_version 不匹配")
+    if record.get("trainable") is not False:
+        failures.append(f"{label}.ptl_truncation_record: 必须记录 trainable=false")
+    if record.get("reason") != "provider_context_limit_retry":
+        failures.append(f"{label}.ptl_truncation_record: reason 必须是 provider_context_limit_retry")
+    if record.get("tool_pairing_preservation_policy") != "drop_complete_rounds_only_v1":
+        failures.append(f"{label}.ptl_truncation_record: tool pairing preservation policy 不匹配")
+    if record.get("original_model_call_id") != data.get("original_model_call_id"):
+        failures.append(f"{label}.ptl_truncation_record: original_model_call_id 与事件不一致")
+    if record.get("omitted_round_count") != data.get("omitted_round_count"):
+        failures.append(f"{label}.ptl_truncation_record: omitted_round_count 与事件不一致")
+    marker = record.get("synthetic_marker_message")
+    marker_text = json.dumps(marker, ensure_ascii=False, sort_keys=True)
+    if "repo_harness_ptl_truncation_marker" not in marker_text:
+        failures.append(f"{label}.ptl_truncation_record: synthetic marker 缺少 repo_harness_ptl_truncation_marker")
+    marker_metadata = marker.get("metadata") if isinstance(marker, dict) else None
+    if isinstance(marker, dict) and (
+        not isinstance(marker_metadata, dict)
+        or marker_metadata.get("trainable") is not False
+    ):
+        failures.append(f"{label}.ptl_truncation_record: synthetic marker 必须记录 trainable=false")
+    if not isinstance(record.get("omitted_rounds"), list):
+        failures.append(f"{label}.ptl_truncation_record: omitted_rounds 必须是 list")
+    if not isinstance(record.get("retained_rounds"), list):
+        failures.append(f"{label}.ptl_truncation_record: retained_rounds 必须是 list")
+    if not isinstance(record.get("token_estimate_before"), int) or not isinstance(
+        record.get("token_estimate_after"), int
+    ):
+        failures.append(f"{label}.ptl_truncation_record: 缺少 token estimate 字段")
+    elif record["token_estimate_after"] >= record["token_estimate_before"]:
+        failures.append(f"{label}.ptl_truncation_record: token_estimate_after 必须小于 token_estimate_before")
+    for key in (
+        "original_prepared_messages_ref",
+        "original_provider_request_ref",
+        "original_provider_response_ref",
+    ):
+        if record.get(key) is not None:
+            _inspect_run_artifact_ref(record.get(key), run_dir, failures, f"{label}.ptl_truncation_record.{key}")
+
+
+def _inspect_reactive_compact_control_event(
+    event: dict[str, Any],
+    failures: list[str],
+    label: str,
+) -> None:
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    if data.get("trainable") is not False:
+        failures.append(f"{label}: Reactive Compact 控制事件必须记录 trainable=false")
+    if (
+        "ordinary_assistant_message_appended" in data
+        and data.get("ordinary_assistant_message_appended") is not False
+    ):
+        failures.append(f"{label}: Reactive Compact 控制事件不得追加普通 assistant message")
+
+
+def _inspect_reactive_context_limit_not_in_transcript(
+    events: list[dict[str, Any]],
+    transcript: list[dict[str, Any]],
+    failures: list[str],
+) -> None:
+    rejected_model_call_ids = {
+        str(event.get("data", {}).get("model_call_id"))
+        for event in events
+        if event.get("event_type") == "reactive_compact_triggered"
+        and event.get("data", {}).get("model_call_id")
+    }
+    if not rejected_model_call_ids:
+        return
+    for index, record in enumerate(transcript):
+        if record.get("model_visible") is not True:
+            continue
+        model_call_id = str(record.get("model_call_id") or "")
+        if model_call_id in rejected_model_call_ids:
+            failures.append(
+                f"transcript[{index}] 把 provider 拒绝的 context_limit 调用写成了模型可见普通消息"
+            )
+
+
+def _inspect_compact_model_call_not_in_transcript(
+    compact_model_call_ids: set[str],
+    transcript: list[dict[str, Any]],
+    failures: list[str],
+) -> None:
+    if not compact_model_call_ids:
+        return
+    for index, record in enumerate(transcript):
+        model_call_id = str(record.get("model_call_id") or "")
+        if model_call_id not in compact_model_call_ids:
+            continue
+        if record.get("role") == "assistant" or record.get("model_visible") is True:
+            failures.append(
+                f"transcript[{index}] 把 compact-only model call 写成了普通模型可见消息"
+            )
+        if record.get("trainable") is not False:
+            failures.append(
+                f"transcript[{index}] compact-only model call transcript 必须记录 trainable=false"
+            )
+
+
+def _compact_model_call_ids(
+    events: list[dict[str, Any]],
+    run_dir: Path,
+    failures: list[str],
+) -> set[str]:
+    ids: set[str] = set()
+    for index, event in enumerate(events):
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        if event.get("event_type") == "auto_compact_model_call_started":
+            model_call_id = data.get("model_call_id")
+            if isinstance(model_call_id, str) and model_call_id:
+                ids.add(model_call_id)
+        if event.get("event_type") not in {"auto_compact_applied", "reactive_compact_applied"}:
+            continue
+        record_ref = _artifact_ref_from_event(event, "auto_compact_record")
+        if not isinstance(record_ref, dict):
+            continue
+        record = _read_optional_json(
+            _ref_path(record_ref, run_dir),
+            failures,
+            f"events[{index}].auto_compact_record",
+        )
+        if not isinstance(record, dict):
+            continue
+        model_call_ref = record.get("compact_model_call_ref")
+        if not isinstance(model_call_ref, dict):
+            continue
+        model_call = _read_optional_json(
+            _ref_path(model_call_ref, run_dir),
+            failures,
+            f"events[{index}].auto_compact_model_call",
+        )
+        if not isinstance(model_call, dict):
+            continue
+        model_call_id = model_call.get("model_call_id")
+        if isinstance(model_call_id, str) and model_call_id:
+            ids.add(model_call_id)
+    return ids
+
+
+def _inspect_auto_compact_event_record_consistency(
+    data: dict[str, Any],
+    record: dict[str, Any],
+    failures: list[str],
+    label: str,
+) -> None:
+    for key in (
+        "source_prepared_messages_ref",
+        "summary_artifact_ref",
+        "rebuilt_messages_ref",
+    ):
+        if key in data and data.get(key) is not None and not _same_artifact_ref(data.get(key), record.get(key)):
+            failures.append(f"{label}: event.data.{key} 与 auto_compact_record 不一致")
+    for key in (
+        "compact_id",
+        "mode",
+        "trigger_reason",
+        "tokens_before",
+        "tokens_after",
+        "effective_context_budget_tokens",
+        "post_compact_above_target",
+    ):
+        if key in data and data.get(key) != record.get(key):
+            failures.append(f"{label}: event.data.{key} 与 auto_compact_record 不一致")
+    if (
+        "source_model_input_hash" in data
+        and data.get("source_model_input_hash") != record.get("source_model_input_hash")
+    ):
+        failures.append(f"{label}: event.data.source_model_input_hash 与 auto_compact_record 不一致")
+
+
+def _inspect_compact_raw_provider_request(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> None:
+    if ref is None:
+        return
+    payload = _artifact_payload_from_ref(ref, run_dir, failures, label)
+    if not isinstance(payload, dict):
+        return
+    body = payload.get("body") if isinstance(payload.get("body"), dict) else {}
+    if body:
+        if body.get("tools") not in (None, []):
+            failures.append(f"{label}: compact-only provider request 不得携带 tools")
+        if body.get("tool_choice") != "none":
+            failures.append(f"{label}: compact-only provider request 必须使用 tool_choice=none")
+        return
+    if payload.get("tools") not in (None, []):
+        failures.append(f"{label}: compact-only mock provider request 不得携带 tools")
+    if payload.get("tool_choice") not in (None, "none"):
+        failures.append(f"{label}: compact-only mock provider request 必须使用 tool_choice=none")
+
+
+def _artifact_ref_from_event(event: dict[str, Any], kind: str) -> dict[str, Any] | None:
+    for ref in event.get("artifact_refs", []) or []:
+        if isinstance(ref, dict) and ref.get("kind") == kind:
+            return ref
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    for value in data.values():
+        if isinstance(value, dict) and value.get("kind") == kind:
+            return value
+    return None
+
+
+def _artifact_payload_from_ref(
+    ref: Any,
+    run_dir: Path,
+    failures: list[str],
+    label: str,
+) -> dict[str, Any] | None:
+    _inspect_run_artifact_ref(ref, run_dir, failures, label)
+    if not isinstance(ref, dict):
+        return None
+    payload = _read_optional_json(_ref_path(ref, run_dir), failures, label)
+    return payload if isinstance(payload, dict) else None
+
+
+def _same_artifact_ref(left: Any, right: Any) -> bool:
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return False
+    return all(left.get(key) == right.get(key) for key in ("artifact_id", "relative_path", "sha256"))
 
 
 def _provider_artifact_payload(

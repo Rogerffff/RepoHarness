@@ -599,6 +599,130 @@ def test_inspect_model_visible_context_rejects_hidden_source_text_in_hidden_patc
         inspect_model_visible_context(run_dir, assert_no_hidden_test_material=True)
 
 
+def test_inspect_model_visible_context_accepts_compaction_artifacts(tmp_path: Path) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    _add_auto_compact_inspect_fixture(run_dir)
+    _add_ptl_truncation_inspect_fixture(run_dir)
+
+    result = inspect_model_visible_context(
+        run_dir,
+        assert_prepared_messages_bound=True,
+        assert_no_hidden_test_material=True,
+    )
+
+    assert "passed" in result
+
+
+def test_inspect_model_visible_context_accepts_plain_auto_compact_applied_shape(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    _add_auto_compact_inspect_fixture(
+        run_dir,
+        applied_event_type="auto_compact_applied",
+        include_ordinary_assistant_flag=False,
+    )
+
+    result = inspect_model_visible_context(
+        run_dir,
+        assert_prepared_messages_bound=True,
+        assert_no_hidden_test_material=True,
+    )
+
+    assert "passed" in result
+
+
+def test_inspect_model_visible_context_rejects_hidden_auto_compact_summary(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    _add_auto_compact_inspect_fixture(
+        run_dir,
+        summary_updates={"task_intent": "Do not expose hidden_test.patch"},
+    )
+
+    with pytest.raises(ConfigError, match="auto_compact_summary"):
+        inspect_model_visible_context(
+            run_dir,
+            assert_prepared_messages_bound=True,
+            assert_no_hidden_test_material=True,
+        )
+
+
+def test_inspect_model_visible_context_rejects_context_limit_transcript_pollution(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    _append_events(
+        run_dir,
+        [
+            {
+                "event_type": "reactive_compact_triggered",
+                "data": {
+                    "model_call_id": "rejected_context_limit_call",
+                    "terminal_error_type": "context_limit",
+                    "ordinary_assistant_message_appended": False,
+                    "trainable": False,
+                },
+            }
+        ],
+    )
+    _append_transcript(
+        run_dir,
+        [
+            {
+                "role": "assistant",
+                "model_visible": True,
+                "trainable": False,
+                "model_call_id": "rejected_context_limit_call",
+                "content_preview": "provider context limit rejected this input",
+            }
+        ],
+    )
+
+    with pytest.raises(ConfigError, match="provider 拒绝的 context_limit 调用"):
+        inspect_model_visible_context(run_dir, assert_prepared_messages_bound=True)
+
+
+def test_inspect_model_visible_context_rejects_compact_only_transcript_action(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    _add_auto_compact_inspect_fixture(run_dir)
+    _append_transcript(
+        run_dir,
+        [
+            {
+                "role": "assistant",
+                "model_visible": True,
+                "trainable": True,
+                "model_call_id": "compact_model_call_1",
+                "content_preview": "compact-only response should not be an ordinary action",
+            }
+        ],
+    )
+
+    with pytest.raises(ConfigError, match="compact-only model call"):
+        inspect_model_visible_context(run_dir, assert_prepared_messages_bound=True)
+
+
+def test_inspect_model_visible_context_rejects_auto_compact_event_ref_mismatch(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(tmp_path)
+    _add_auto_compact_inspect_fixture(run_dir)
+    events = _read_events(run_dir)
+    for event in events:
+        if event["event_type"] == "reactive_compact_applied":
+            summary_ref = dict(event["artifact_refs"][1])
+            summary_ref["sha256"] = "0" * 64
+            event["data"]["summary_artifact_ref"] = summary_ref
+    _write_events(run_dir, events)
+
+    with pytest.raises(ConfigError, match="summary_artifact_ref 与 auto_compact_record 不一致"):
+        inspect_model_visible_context(run_dir, assert_prepared_messages_bound=True)
+
+
 @pytest.mark.parametrize("leak_target", ["prepared_messages", "transcript", "raw_provider_request"])
 def test_inspect_model_visible_context_rejects_evaluator_only_ref_sha_leak(
     tmp_path: Path,
@@ -1281,6 +1405,265 @@ def _write_model_visible_context_run(
         encoding="utf-8",
     )
     return run_dir
+
+
+def _add_auto_compact_inspect_fixture(
+    run_dir: Path,
+    *,
+    summary_updates: dict[str, object] | None = None,
+    applied_event_type: str = "reactive_compact_applied",
+    include_ordinary_assistant_flag: bool = True,
+) -> None:
+    artifacts_dir = run_dir / "artifacts"
+    events = _read_events(run_dir)
+    prepared_ref = events[0]["data"]["prepared_messages_ref"]
+    compact_id = "compact_inspect_1"
+    source_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "auto_compact_source_messages.json",
+        {
+            "schema_version": "repo_harness_auto_compact_source_messages_v1",
+            "policy_version": "repo_harness_auto_compact_v1",
+            "compact_id": compact_id,
+            "mode": "emergency",
+            "trigger_reason": "provider_context_limit_retry",
+            "source_prepared_messages_ref": prepared_ref,
+            "source_model_input_hash": "a" * 64,
+            "provider_visible_source_messages": [{"role": "user", "content": "Fix"}],
+            "compact_request_messages": [{"role": "user", "content": "Summarize"}],
+            "provider_visible_projection_applied": True,
+        },
+        "auto_compact_source_messages",
+    )
+    model_call_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "auto_compact_model_call.json",
+        {
+            "schema_version": "repo_harness_auto_compact_model_call_v1",
+            "policy_version": "repo_harness_auto_compact_v1",
+            "compact_id": compact_id,
+            "model_call_id": "compact_model_call_1",
+            "trainable": False,
+            "scaffold_phase": "compact",
+            "allowed_tools": [],
+            "tool_choice": "none",
+        },
+        "auto_compact_model_call",
+    )
+    summary = {
+        "schema_version": "repo_harness_compact_summary_v1",
+        "task_intent": "Fix the parser bug.",
+        "repository_facts": ["src/demo.py is relevant."],
+        "actions_taken": ["Read the current failure context."],
+        "patch_state": {"changed_files": [], "important_diffs": []},
+        "test_state": {"commands_run": [], "passing": [], "failing": [], "unknown": []},
+        "tool_recovery_index": [
+            {
+                "schema_version": "repo_harness_compact_tool_recovery_entry_v1",
+                "tool_result_id": None,
+                "tool_call_id": None,
+                "tool_name": None,
+                "artifact_id": None,
+                "sha256": None,
+                "recovery_status": "not_needed",
+            }
+        ],
+        "open_questions": [],
+        "next_step": "Continue from compacted context.",
+        "visibility_policy": "model_visible_only",
+    }
+    if summary_updates:
+        summary.update(summary_updates)
+    summary_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "auto_compact_summary.json",
+        {
+            "schema_version": "repo_harness_auto_compact_summary_artifact_v1",
+            "policy_version": "repo_harness_auto_compact_v1",
+            "compact_id": compact_id,
+            "summary": summary,
+            "source_prepared_messages_ref": prepared_ref,
+            "source_model_input_hash": "a" * 64,
+            "visibility_policy": "model_visible_only",
+            "trainable": False,
+        },
+        "auto_compact_summary",
+    )
+    rebuilt_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "auto_compact_rebuilt_messages.json",
+        {
+            "schema_version": "repo_harness_auto_compact_rebuilt_messages_v1",
+            "policy_version": "repo_harness_auto_compact_v1",
+            "compact_id": compact_id,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": {
+                        "repo_harness_auto_compact_summary": summary,
+                    },
+                    "metadata": {"trainable": False},
+                }
+            ],
+            "source_prepared_messages_ref": prepared_ref,
+            "summary_artifact_ref": summary_ref,
+            "trainable": False,
+        },
+        "auto_compact_rebuilt_messages",
+    )
+    record_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "auto_compact_record.json",
+        {
+            "schema_version": "repo_harness_auto_compact_record_v1",
+            "compact_id": compact_id,
+            "trigger_reason": "provider_context_limit_retry",
+            "mode": "emergency",
+            "source_prepared_messages_ref": prepared_ref,
+            "source_model_input_hash": "a" * 64,
+            "compact_source_messages_ref": source_ref,
+            "compact_source_projection_hash": "b" * 64,
+            "tokens_before": 1000,
+            "tokens_after": 400,
+            "effective_context_budget_tokens": 900,
+            "summary_artifact_ref": summary_ref,
+            "compact_model_call_ref": model_call_ref,
+            "rebuilt_messages_ref": rebuilt_ref,
+            "post_compact_above_target": False,
+            "status": "applied",
+            "failure_reason": None,
+        },
+        "auto_compact_record",
+    )
+    applied_event_data = {
+        "compact_id": compact_id,
+        "trigger_reason": "provider_context_limit_retry",
+        "mode": "emergency",
+        "source_prepared_messages_ref": prepared_ref,
+        "summary_artifact_ref": summary_ref,
+        "rebuilt_messages_ref": rebuilt_ref,
+        "tokens_before": 1000,
+        "tokens_after": 400,
+        "effective_context_budget_tokens": 900,
+        "post_compact_above_target": False,
+        "trainable": False,
+    }
+    if include_ordinary_assistant_flag:
+        applied_event_data["ordinary_assistant_message_appended"] = False
+    _append_events(
+        run_dir,
+        [
+            {
+                "event_type": "auto_compact_model_call_started",
+                "artifact_refs": [source_ref],
+                "data": {
+                    "model_call_id": "compact_model_call_1",
+                    "scaffold_phase": "compact",
+                    "allowed_tools": [],
+                    "tool_choice": "none",
+                    "trainable": False,
+                },
+            },
+            {
+                "event_type": applied_event_type,
+                "artifact_refs": [record_ref, summary_ref, rebuilt_ref],
+                "data": applied_event_data,
+            },
+        ],
+    )
+
+
+def _add_ptl_truncation_inspect_fixture(run_dir: Path) -> None:
+    artifacts_dir = run_dir / "artifacts"
+    events = _read_events(run_dir)
+    prepared_ref = events[0]["data"]["prepared_messages_ref"]
+    completed = next(event for event in events if event["event_type"] == "model_call_completed")
+    raw_request_ref = completed["data"]["raw_provider_request_ref"]
+    raw_response_ref = completed["data"]["raw_provider_response_ref"]
+    record = {
+        "schema_version": "repo_harness_ptl_truncation_record_v1",
+        "policy": "auto_compact_then_round_truncate",
+        "reason": "provider_context_limit_retry",
+        "original_model_call_id": "rejected_context_limit_call",
+        "original_prepared_messages_ref": prepared_ref,
+        "original_model_input_hash": "a" * 64,
+        "original_provider_request_ref": raw_request_ref,
+        "original_provider_response_ref": raw_response_ref,
+        "emergency_compact_record_ref": None,
+        "emergency_compact_failure_reason": "invalid_compact_summary:ValueError",
+        "ordinary_turn": 1,
+        "loop_turn": 1,
+        "synthetic_marker_id": "ptl_marker_demo",
+        "synthetic_marker_message": {
+            "role": "user",
+            "content": {"repo_harness_ptl_truncation_marker": {"omitted_round_count": 1}},
+            "metadata": {"synthetic": True, "trainable": False},
+        },
+        "omitted_rounds": [{"group_id": "round_0001", "roles": ["assistant", "tool"]}],
+        "retained_rounds": [{"group_id": "round_0002", "roles": ["user"]}],
+        "omitted_round_count": 1,
+        "retained_round_count": 1,
+        "message_count_before": 5,
+        "message_count_after": 4,
+        "token_estimate_before": 1200,
+        "token_estimate_after": 700,
+        "hard_context_limit_tokens": 1000,
+        "post_truncation_above_hard_limit": False,
+        "tool_pairing_preservation_policy": "drop_complete_rounds_only_v1",
+        "trainable": False,
+    }
+    ptl_ref = _write_json_ref(
+        run_dir,
+        artifacts_dir / "ptl_truncation_record.json",
+        record,
+        "ptl_truncation_record",
+    )
+    _append_events(
+        run_dir,
+        [
+            {
+                "event_type": "ptl_truncation_applied",
+                "artifact_refs": [ptl_ref],
+                "data": {
+                    "ptl_truncation_ref": ptl_ref,
+                    "original_model_call_id": "rejected_context_limit_call",
+                    "omitted_round_count": 1,
+                    "synthetic_marker_id": "ptl_marker_demo",
+                    "token_estimate_before": 1200,
+                    "token_estimate_after": 700,
+                    "post_truncation_above_hard_limit": False,
+                    "trainable": False,
+                },
+            }
+        ],
+    )
+
+
+def _read_events(run_dir: Path) -> list[dict[str, object]]:
+    return [
+        json.loads(line)
+        for line in (run_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def _append_events(run_dir: Path, events: list[dict[str, object]]) -> None:
+    with (run_dir / "events.jsonl").open("a", encoding="utf-8") as handle:
+        for event in events:
+            handle.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+
+def _write_events(run_dir: Path, events: list[dict[str, object]]) -> None:
+    (run_dir / "events.jsonl").write_text(
+        "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in events),
+        encoding="utf-8",
+    )
+
+
+def _append_transcript(run_dir: Path, records: list[dict[str, object]]) -> None:
+    with (run_dir / "transcript.jsonl").open("a", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def _write_json_ref(run_dir: Path, path: Path, payload: object, kind: str) -> dict[str, object]:
