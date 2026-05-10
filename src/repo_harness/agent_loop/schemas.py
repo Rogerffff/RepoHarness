@@ -68,6 +68,8 @@ class AgentLoopState(StrictBaseModel):
     reactive_compact_retry_count: int = Field(default=0, ge=0)
     last_reactive_compact_record_ref: dict[str, Any] | None = None
     last_reactive_compact_summary_ref: dict[str, Any] | None = None
+    ptl_truncation_count: int = Field(default=0, ge=0)
+    last_ptl_truncation_ref: dict[str, Any] | None = None
     current_phase: str | None = None
     phase_history: list[dict[str, Any]] = Field(default_factory=list)
     last_model_error: str | None = None

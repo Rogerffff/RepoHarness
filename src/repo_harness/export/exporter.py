@@ -1295,7 +1295,7 @@ def _model_error_invalid_reason(run_path: Path) -> str | None:
         if (
             model_error_type in rejected_context_limit_errors
             and model_call_id not in accepted_model_call_ids
-            and _has_later_model_input_accepted(events, index)
+            and _has_later_reactive_recovery_accepted(events, index)
         ):
             continue
         if model_error_type:
@@ -1303,11 +1303,18 @@ def _model_error_invalid_reason(run_path: Path) -> str | None:
     return None
 
 
-def _has_later_model_input_accepted(events: list[dict[str, Any]], index: int) -> bool:
-    return any(
-        event.get("event_type") == "model_input_accepted"
-        for event in events[index + 1 :]
-    )
+def _has_later_reactive_recovery_accepted(events: list[dict[str, Any]], index: int) -> bool:
+    saw_recovery = False
+    for event in events[index + 1 :]:
+        if event.get("event_type") in {
+            "reactive_compact_applied",
+            "ptl_truncation_applied",
+        }:
+            saw_recovery = True
+            continue
+        if saw_recovery and event.get("event_type") == "model_input_accepted":
+            return True
+    return False
 
 
 def _formal_final_verifier_invalid_reason(run_path: Path) -> str | None:

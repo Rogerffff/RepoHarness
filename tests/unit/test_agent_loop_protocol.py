@@ -1258,6 +1258,91 @@ def test_agent_loop_reactive_compact_retry_can_run_on_last_ordinary_turn(
     assert accepted_model_call_ids == ["loop-reactive-last-turn_model_call_0002"]
 
 
+def test_agent_loop_ptl_fallback_drops_complete_old_round_after_emergency_compact_failure(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run"
+    client = _ReactiveContextLimitEmergencyFailThenFinalClient()
+
+    with RunRecorder("loop-ptl-fallback", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["grep"],
+        ).run(
+            run_id="loop-ptl-fallback",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "Fix the bug."},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "turn": 1,
+                    "tool_calls": [
+                        {
+                            "tool_call_id": "call_old",
+                            "tool_name": "grep",
+                            "arguments": {"query": "old"},
+                            "turn": 1,
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "turn": 1,
+                    "tool_call_id": "call_old",
+                    "tool_result_id": "call_old_result",
+                    "tool_name": "grep",
+                    "content": "old provider-visible tool output " * 300,
+                    "normalized_arguments": {"query": "old"},
+                    "normalized_input_hash": stable_hash({"query": "old"}),
+                    "status": "ok",
+                    "typed": {},
+                    "artifact_refs": [],
+                },
+                {"role": "user", "content": "Recent visible requirement."},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=3,
+            context_config=ContextManagementConfig(
+                model_context_window_tokens=12000,
+                main_output_reserve_tokens=0,
+                estimator_safety_margin_ratio=0.0,
+                estimator_safety_margin_min_tokens=0,
+                auto_compact_trigger_ratio=0.99,
+                reactive_compact_enabled=True,
+                reactive_compact_retry_limit=1,
+                ptl_retry_policy="auto_compact_then_round_truncate",
+            ),
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert state.reactive_compact_count == 1
+    assert state.ptl_truncation_count == 1
+    assert [request.scaffold_phase for request in client.requests] == ["act", "compact", "act"]
+    retry_messages = json.dumps(client.requests[-1].prepared_messages, ensure_ascii=False)
+    assert "repo_harness_ptl_truncation_marker" in retry_messages
+    assert "old provider-visible tool output" not in retry_messages
+    assert "call_old" not in retry_messages
+    assert "Recent visible requirement." in retry_messages
+
+    events = _read_events(run_dir)
+    assert any(event["event_type"] == "ptl_truncation_applied" for event in events)
+    ptl_event = next(event for event in events if event["event_type"] == "ptl_truncation_applied")
+    ptl_record = _read_artifact_payload(run_dir, ptl_event["data"]["ptl_truncation_ref"])
+    assert ptl_record["omitted_round_count"] == 1
+    assert ptl_record["omitted_rounds"][0]["roles"] == ["assistant", "tool"]
+    assert "call_old" in ptl_record["omitted_rounds"][0]["tool_call_ids"]
+    accepted_model_call_ids = [
+        event["data"].get("model_call_id")
+        for event in events
+        if event["event_type"] == "model_input_accepted"
+    ]
+    assert accepted_model_call_ids == ["loop-ptl-fallback_model_call_0002"]
+
+
 def test_agent_loop_stops_on_second_context_limit_after_reactive_compact(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = _ReactiveContextLimitThenContextLimitClient()
@@ -1959,6 +2044,12 @@ class _ReactiveContextLimitThenContextLimitClient(_ReactiveContextLimitThenFinal
             finish_reason="error",
             model_error_type="context_limit",
         )
+
+
+class _ReactiveContextLimitEmergencyFailThenFinalClient(_ReactiveContextLimitThenFinalClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.compact_content = "not json"
 
 
 class _ContextLimitOnlyClient:

@@ -1157,6 +1157,76 @@ class AgentLoop:
                         )
                     )
                     continue
+                ptl_result = _truncate_head_for_ptl_retry(
+                    messages=messages,
+                    recorder=recorder,
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    ordinary_turn=state.turn_count,
+                    context_config=context_config_resolved,
+                    provider_options=provider_options_resolved,
+                    allowed_tool_definitions=phase_allowed_tool_definitions,
+                    generation_config=generation_config or {},
+                    provider_model_settings=provider_model_settings or {},
+                    context_budget_facts=context_budget_facts,
+                    hard_context_limit_tokens=runtime_hard_context_limit_tokens,
+                    original_model_call_id=model_request.model_call_id,
+                    original_prepared_messages_ref=prepared.prepared_messages_ref,
+                    original_model_input_hash=prepared.model_input_hash,
+                    original_provider_request_ref=response.raw_provider_request_ref,
+                    original_provider_response_ref=response.raw_provider_response_ref,
+                    emergency_compact_record_ref=emergency_result.record_ref,
+                    emergency_compact_failure_reason=emergency_result.failure_reason,
+                )
+                if ptl_result["status"] == "applied":
+                    state.reactive_compact_count += 1
+                    state.reactive_compact_retry_count += 1
+                    state.ptl_truncation_count += 1
+                    state.last_ptl_truncation_ref = ptl_result[
+                        "ptl_truncation_ref"
+                    ].model_dump(mode="json")
+                    messages = [dict(message) for message in ptl_result["messages"]]
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("ptl_truncation"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="ptl_truncation_applied",
+                            severity="warning",
+                            artifact_refs=[ptl_result["ptl_truncation_ref"]],
+                            data={
+                                "schema_version": "repo_harness_ptl_truncation_applied_v1",
+                                "ptl_truncation_ref": ptl_result[
+                                    "ptl_truncation_ref"
+                                ].model_dump(mode="json"),
+                                "original_model_call_id": model_request.model_call_id,
+                                "ordinary_turn": state.turn_count,
+                                "recovery_retry_index": (
+                                    state.reactive_compact_retry_count
+                                ),
+                                "omitted_round_count": ptl_result[
+                                    "omitted_round_count"
+                                ],
+                                "synthetic_marker_id": ptl_result[
+                                    "synthetic_marker_id"
+                                ],
+                                "token_estimate_before": ptl_result[
+                                    "token_estimate_before"
+                                ],
+                                "token_estimate_after": ptl_result[
+                                    "token_estimate_after"
+                                ],
+                                "post_truncation_above_hard_limit": ptl_result[
+                                    "post_truncation_above_hard_limit"
+                                ],
+                                "trainable": False,
+                            },
+                        )
+                    )
+                    continue
                 state.agent_stop_reason = "reactive_compact_failed"
                 state.budget_state.stop_reason = "reactive_compact_failed"
                 recorder.append_event(
@@ -1176,6 +1246,7 @@ class AgentLoop:
                                 emergency_result.record_ref,
                                 emergency_result.compact_model_request_ref,
                                 emergency_result.compact_model_response_ref,
+                                ptl_result.get("ptl_truncation_ref"),
                             ]
                             if ref is not None
                         ],
@@ -1184,6 +1255,15 @@ class AgentLoop:
                             "compact_id": emergency_result.compact_id,
                             "failure_reason": emergency_result.failure_reason,
                             "status": emergency_result.status,
+                            "ptl_fallback_status": ptl_result["status"],
+                            "ptl_fallback_failure_reason": ptl_result.get(
+                                "failure_reason"
+                            ),
+                            "ptl_truncation_ref": (
+                                ptl_result["ptl_truncation_ref"].model_dump(mode="json")
+                                if ptl_result.get("ptl_truncation_ref") is not None
+                                else None
+                            ),
                             "ordinary_assistant_message_appended": False,
                             "trainable": False,
                         },
@@ -2419,6 +2499,345 @@ def _write_context_policy_snapshot_artifact(recorder: RunRecorder) -> ArtifactRe
             "budget_policy": "preserve_json",
         },
     )
+
+
+def _truncate_head_for_ptl_retry(
+    *,
+    messages: list[dict[str, object]],
+    recorder: RunRecorder,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    ordinary_turn: int,
+    context_config: ContextManagementConfig,
+    provider_options: ModelProviderOptions,
+    allowed_tool_definitions: list[dict[str, object]],
+    generation_config: dict[str, object],
+    provider_model_settings: dict[str, object],
+    context_budget_facts: Any,
+    hard_context_limit_tokens: int,
+    original_model_call_id: str,
+    original_prepared_messages_ref: ArtifactRef,
+    original_model_input_hash: str,
+    original_provider_request_ref: ArtifactRef | None,
+    original_provider_response_ref: ArtifactRef | None,
+    emergency_compact_record_ref: ArtifactRef | None,
+    emergency_compact_failure_reason: str | None,
+) -> dict[str, Any]:
+    if context_config.ptl_retry_policy not in {
+        "auto_compact_then_round_truncate",
+        "round_truncate",
+    }:
+        return {
+            "status": "failed",
+            "failure_reason": "ptl_retry_policy_disabled",
+        }
+    prefix_count = _ptl_protected_prefix_count(messages)
+    groups = _ptl_round_groups(messages, start_index=prefix_count)
+    protected_group_ids = {
+        group["group_id"]
+        for group in groups
+        if any(_message_has_compact_summary(messages[index]) for index in group["indices"])
+    }
+    droppable_groups = [
+        group
+        for group in groups
+        if group["group_id"] not in protected_group_ids
+    ]
+    keep_recent_groups = 2
+    if len(droppable_groups) > keep_recent_groups:
+        droppable_groups = droppable_groups[:-keep_recent_groups]
+    elif len(droppable_groups) > 1:
+        droppable_groups = droppable_groups[:-1]
+    else:
+        droppable_groups = []
+    if not droppable_groups:
+        return {
+            "status": "failed",
+            "failure_reason": "ptl_no_complete_round_available_to_drop",
+        }
+
+    token_estimate_before = _ptl_provider_token_estimate(
+        messages=messages,
+        provider_options=provider_options,
+        allowed_tool_definitions=allowed_tool_definitions,
+        generation_config=generation_config,
+        provider_model_settings=provider_model_settings,
+        context_budget_facts=context_budget_facts,
+    )
+    selected_messages: list[dict[str, object]] | None = None
+    selected_dropped_groups: list[dict[str, Any]] = []
+    selected_token_estimate_after = token_estimate_before
+    for drop_count in range(1, len(droppable_groups) + 1):
+        dropped_groups = droppable_groups[:drop_count]
+        dropped_ids = {group["group_id"] for group in dropped_groups}
+        candidate_messages = _ptl_messages_after_drop(
+            messages=messages,
+            prefix_count=prefix_count,
+            groups=groups,
+            dropped_group_ids=dropped_ids,
+            original_model_call_id=original_model_call_id,
+            omitted_round_count=len(dropped_groups),
+        )
+        token_estimate_after = _ptl_provider_token_estimate(
+            messages=candidate_messages,
+            provider_options=provider_options,
+            allowed_tool_definitions=allowed_tool_definitions,
+            generation_config=generation_config,
+            provider_model_settings=provider_model_settings,
+            context_budget_facts=context_budget_facts,
+        )
+        selected_messages = candidate_messages
+        selected_dropped_groups = dropped_groups
+        selected_token_estimate_after = token_estimate_after
+        if token_estimate_after <= hard_context_limit_tokens:
+            break
+    if selected_messages is None or selected_token_estimate_after >= token_estimate_before:
+        return {
+            "status": "failed",
+            "failure_reason": "ptl_truncation_did_not_reduce_projection",
+        }
+
+    synthetic_marker = selected_messages[prefix_count]
+    synthetic_marker_id = str(
+        (synthetic_marker.get("metadata") or {}).get("synthetic_marker_id")
+        if isinstance(synthetic_marker.get("metadata"), dict)
+        else ""
+    )
+    omitted_rounds = [
+        _ptl_round_record(group, messages=messages)
+        for group in selected_dropped_groups
+    ]
+    retained_rounds = [
+        _ptl_round_record(group, messages=messages)
+        for group in groups
+        if group not in selected_dropped_groups
+    ]
+    record_payload = {
+        "schema_version": "repo_harness_ptl_truncation_record_v1",
+        "policy": context_config.ptl_retry_policy,
+        "reason": "provider_context_limit_retry",
+        "original_model_call_id": original_model_call_id,
+        "original_prepared_messages_ref": original_prepared_messages_ref.model_dump(
+            mode="json"
+        ),
+        "original_model_input_hash": original_model_input_hash,
+        "original_provider_request_ref": (
+            original_provider_request_ref.model_dump(mode="json")
+            if original_provider_request_ref
+            else None
+        ),
+        "original_provider_response_ref": (
+            original_provider_response_ref.model_dump(mode="json")
+            if original_provider_response_ref
+            else None
+        ),
+        "emergency_compact_record_ref": (
+            emergency_compact_record_ref.model_dump(mode="json")
+            if emergency_compact_record_ref
+            else None
+        ),
+        "emergency_compact_failure_reason": emergency_compact_failure_reason,
+        "ordinary_turn": ordinary_turn,
+        "loop_turn": turn,
+        "synthetic_marker_id": synthetic_marker_id,
+        "synthetic_marker_message": synthetic_marker,
+        "omitted_rounds": omitted_rounds,
+        "retained_rounds": retained_rounds,
+        "omitted_round_count": len(omitted_rounds),
+        "retained_round_count": len(retained_rounds),
+        "message_count_before": len(messages),
+        "message_count_after": len(selected_messages),
+        "token_estimate_before": token_estimate_before,
+        "token_estimate_after": selected_token_estimate_after,
+        "hard_context_limit_tokens": hard_context_limit_tokens,
+        "post_truncation_above_hard_limit": (
+            selected_token_estimate_after > hard_context_limit_tokens
+        ),
+        "tool_pairing_preservation_policy": "drop_complete_rounds_only_v1",
+        "trainable": False,
+    }
+    ref = recorder.write_json_artifact(
+        "ptl_truncation_record",
+        record_payload,
+        {
+            "redaction_status": "not_sensitive",
+            "retention_policy": "context_compaction_audit",
+            "budget_policy": "preserve_json",
+        },
+    )
+    return {
+        "status": "applied",
+        "messages": selected_messages,
+        "ptl_truncation_ref": ref,
+        "omitted_round_count": len(omitted_rounds),
+        "synthetic_marker_id": synthetic_marker_id,
+        "token_estimate_before": token_estimate_before,
+        "token_estimate_after": selected_token_estimate_after,
+        "post_truncation_above_hard_limit": (
+            selected_token_estimate_after > hard_context_limit_tokens
+        ),
+    }
+
+
+def _ptl_protected_prefix_count(messages: list[dict[str, object]]) -> int:
+    index = 0
+    while index < len(messages) and messages[index].get("role") == "system":
+        index += 1
+    if index < len(messages) and messages[index].get("role") == "user":
+        index += 1
+    return index
+
+
+def _ptl_round_groups(
+    messages: list[dict[str, object]],
+    *,
+    start_index: int,
+) -> list[dict[str, Any]]:
+    groups: list[dict[str, Any]] = []
+    index = start_index
+    group_id = 0
+    while index < len(messages):
+        start = index
+        role = messages[index].get("role")
+        if role == "user":
+            index += 1
+            while index < len(messages) and messages[index].get("role") not in {
+                "user",
+                "system",
+            }:
+                index += 1
+        elif role == "assistant":
+            index += 1
+            while index < len(messages) and messages[index].get("role") == "tool":
+                index += 1
+        else:
+            index += 1
+        indices = list(range(start, index))
+        groups.append(
+            {
+                "group_id": f"round_{group_id:04d}",
+                "start_index": start,
+                "end_index_exclusive": index,
+                "indices": indices,
+            }
+        )
+        group_id += 1
+    return groups
+
+
+def _ptl_messages_after_drop(
+    *,
+    messages: list[dict[str, object]],
+    prefix_count: int,
+    groups: list[dict[str, Any]],
+    dropped_group_ids: set[str],
+    original_model_call_id: str,
+    omitted_round_count: int,
+) -> list[dict[str, object]]:
+    dropped_indices = {
+        index
+        for group in groups
+        if group["group_id"] in dropped_group_ids
+        for index in group["indices"]
+    }
+    marker_id = f"ptl_marker_{stable_hash({'model_call_id': original_model_call_id, 'omitted': sorted(dropped_group_ids)})[:12]}"
+    marker = {
+        "role": "user",
+        "content": {
+            "repo_harness_ptl_truncation_marker": {
+                "policy_version": "repo_harness_ptl_round_truncate_v1",
+                "reason": "provider_context_limit_retry",
+                "original_model_call_id": original_model_call_id,
+                "omitted_round_count": omitted_round_count,
+                "instruction": (
+                    "Earlier conversation rounds were omitted because the provider "
+                    "rejected the previous request as too long. Continue using the "
+                    "visible task, any visible compact summary, and the remaining "
+                    "recent context. Do not infer facts from omitted rounds."
+                ),
+            }
+        },
+        "metadata": {
+            "synthetic": True,
+            "synthetic_marker_id": marker_id,
+            "model_visible": True,
+            "trainable": False,
+        },
+    }
+    kept = [
+        dict(message)
+        for index, message in enumerate(messages)
+        if index not in dropped_indices
+    ]
+    return [*kept[:prefix_count], marker, *kept[prefix_count:]]
+
+
+def _ptl_round_record(
+    group: dict[str, Any],
+    *,
+    messages: list[dict[str, object]],
+) -> dict[str, Any]:
+    group_messages = [messages[index] for index in group["indices"]]
+    return {
+        "group_id": group["group_id"],
+        "start_index": group["start_index"],
+        "end_index_exclusive": group["end_index_exclusive"],
+        "message_count": len(group_messages),
+        "roles": [message.get("role") for message in group_messages],
+        "message_hash": stable_hash(group_messages),
+        "char_estimate": len(json.dumps(group_messages, ensure_ascii=False, sort_keys=True)),
+        "token_estimate": max(
+            1,
+            len(json.dumps(group_messages, ensure_ascii=False, sort_keys=True)) // 4,
+        ),
+        "tool_call_ids": _tool_call_ids_in_messages(group_messages),
+        "tool_result_ids": [
+            str(message.get("tool_result_id") or "")
+            for message in group_messages
+            if message.get("role") == "tool" and message.get("tool_result_id")
+        ],
+    }
+
+
+def _tool_call_ids_in_messages(messages: list[dict[str, object]]) -> list[str]:
+    ids: list[str] = []
+    for message in messages:
+        for call in message.get("tool_calls") or []:
+            if isinstance(call, dict) and call.get("tool_call_id"):
+                ids.append(str(call["tool_call_id"]))
+        if message.get("role") == "tool" and message.get("tool_call_id"):
+            ids.append(str(message["tool_call_id"]))
+    return sorted(set(ids))
+
+
+def _message_has_compact_summary(message: dict[str, object]) -> bool:
+    return "repo_harness_auto_compact_summary" in json.dumps(
+        message,
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+
+
+def _ptl_provider_token_estimate(
+    *,
+    messages: list[dict[str, object]],
+    provider_options: ModelProviderOptions,
+    allowed_tool_definitions: list[dict[str, object]],
+    generation_config: dict[str, object],
+    provider_model_settings: dict[str, object],
+    context_budget_facts: Any,
+) -> int:
+    estimate = _build_provider_request_projection_estimate(
+        prepared_messages=messages,
+        provider_options=provider_options,
+        allowed_tool_definitions=allowed_tool_definitions,
+        generation_config=generation_config,
+        provider_model_settings=provider_model_settings,
+        provider_message_format=f"repo_harness_{provider_options.provider}_messages_v0",
+        context_budget_facts=context_budget_facts,
+    )
+    return estimate.provider_request_token_estimate
 
 
 def _write_budget_decision_trace_artifact(
