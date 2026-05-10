@@ -432,6 +432,10 @@ def test_synthetic_context_compaction_pipeline_covers_all_layers(
             max_turns=3,
             context_config=config,
         )
+        _write_training_files(run_dir, stop_reason=state.agent_stop_reason)
+        recorder.finalize_run(
+            "Synthetic context compaction pressure pipeline completed.\n"
+        )
 
     events = _read_jsonl(run_dir / "events.jsonl")
     context_events = [event for event in events if event["event_type"] == "context_prepared"]
@@ -460,11 +464,11 @@ def test_synthetic_context_compaction_pipeline_covers_all_layers(
     assert accepted_call_ids[-1] == "synthetic-context-pipeline_model_call_0002"
     assert "repo_harness_auto_compact_summary" in final_request_messages
     assert "provider context limit rejected this input" not in final_request_messages
-    _write_training_files(run_dir, stop_reason=state.agent_stop_reason)
     _assert_inspect_and_sft_export_clean(
         run_dir,
         assert_tool_results_recoverable=True,
-        assert_provider_body_equivalent=False,
+        assert_provider_body_equivalent=True,
+        assert_no_over_redaction=True,
     )
     exported_text = export_sft_jsonl(run_dir).read_text(encoding="utf-8")
     assert "provider context limit rejected this input" not in exported_text
@@ -651,6 +655,7 @@ def _assert_inspect_and_sft_export_clean(
     *,
     assert_tool_results_recoverable: bool = False,
     assert_provider_body_equivalent: bool = True,
+    assert_no_over_redaction: bool = False,
 ) -> None:
     inspect_result = inspect_model_visible_context(
         run_dir,
@@ -658,6 +663,7 @@ def _assert_inspect_and_sft_export_clean(
         assert_provider_body_equivalent=assert_provider_body_equivalent,
         assert_tool_results_recoverable=assert_tool_results_recoverable,
         assert_no_hidden_test_material=True,
+        assert_no_over_redaction=assert_no_over_redaction,
     )
     assert "passed" in inspect_result
     output = export_sft_jsonl(run_dir)
@@ -1062,6 +1068,14 @@ def _model_response_for_request(
     finish_reason: str,
     model_error_type: str | None,
 ) -> ModelResponse:
+    provider_projection = _provider_projection(request.prepared_messages)
+    request_body = {
+        "messages": provider_projection,
+        "tools": request.allowed_tool_definitions,
+        "tool_choice": request.tool_choice,
+    }
+    provider_projection_hash = stable_hash(provider_projection)
+    request_body_hash = stable_hash(request_body)
     tool_schema_ref = recorder.write_json_artifact(
         "tool_schema_snapshot",
         {
@@ -1073,25 +1087,50 @@ def _model_response_for_request(
         "raw_provider_request",
         {
             "model_call_id": request.model_call_id,
+            "provider": request.provider_options.provider,
+            "turn": request.turn,
+            "body": request_body,
             "prepared_messages_ref": request.prepared_messages_ref.model_dump(mode="json"),
             "tool_schema_snapshot_ref": tool_schema_ref.model_dump(mode="json"),
             "model_input_hash": request.model_input_hash,
             "export_allowed": False,
             "training_payload_allowed": False,
+            "prepared_messages_body_equivalent": True,
+            "provider_body_hash_before_redaction": request_body_hash,
+            "redacted_body_hash": request_body_hash,
+            "provider_body_message_projection_hash": provider_projection_hash,
+            "prepared_messages_projection_hash": provider_projection_hash,
             "redaction_report": {
                 "ordinary_text_whole_field_redaction_allowed": False,
             },
         },
     )
+    response_body = {
+        "choices": [
+            {
+                "message": {"content": content, "tool_calls": []},
+                "finish_reason": finish_reason,
+            }
+        ]
+    }
+    response_body_hash = stable_hash(response_body)
     raw_response_ref = recorder.write_json_artifact(
         "raw_provider_response",
         {
             "model_call_id": request.model_call_id,
             "content": content,
+            "status": "error" if model_error_type else "ok",
+            "response": response_body,
             "finish_reason": finish_reason,
             "model_error_type": model_error_type,
+            "raw_provider_request_ref": raw_request_ref.model_dump(mode="json"),
+            "prepared_messages_ref": request.prepared_messages_ref.model_dump(mode="json"),
+            "tool_schema_snapshot_ref": tool_schema_ref.model_dump(mode="json"),
             "export_allowed": False,
             "training_payload_allowed": False,
+            "response_body_hash_before_redaction": response_body_hash,
+            "redacted_response_body_hash": response_body_hash,
+            "parsed_tool_calls_hash": stable_hash({"error": None, "tool_calls": []}),
             "redaction_report": {
                 "ordinary_text_whole_field_redaction_allowed": False,
             },
