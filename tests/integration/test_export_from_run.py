@@ -21,10 +21,16 @@ def test_sft_export_from_success_run_filters_default_oracle_feedback(tmp_path: P
 
     assert default_records == []
     assert canonical_records == []
-    assert audit["summary"]["diagnostic_only_count"] == 1
+    assert audit["summary"]["diagnostic_only_count"] == len(audit["samples"])
     assert audit["status"] == "passed_with_warnings"
-    assert audit["samples"][0]["training_eligibility"] == "diagnostic_only"
-    assert audit["samples"][0]["invalid_reason"] == "oracle_hidden_feedback_diagnostic_only"
+    assert all(
+        sample["training_eligibility"] == "diagnostic_only"
+        for sample in audit["samples"]
+    )
+    assert all(
+        sample["invalid_reason"] == "oracle_hidden_feedback_diagnostic_only"
+        for sample in audit["samples"]
+    )
     assert "without_followup_context" not in text
     _assert_no_hidden_or_local_text(text)
 
@@ -32,38 +38,57 @@ def test_sft_export_from_success_run_filters_default_oracle_feedback(tmp_path: P
         run_dir,
         policy=ExportPolicy(allow_oracle_feedback_training=True),
     )
-    record = _read_jsonl(output)[0]
+    records = _read_jsonl(output)
+    record = records[0]
     text = output.read_text(encoding="utf-8")
     explicit_export_dir = _latest_export_dir(run_dir / "exports")
     explicit_canonical_records = _read_jsonl(explicit_export_dir / "data.sft.jsonl")
     explicit_audit = _read_json(explicit_export_dir / "audit_report.json")
 
-    assert record["filter_status"] == "included"
-    assert record["invalid_for_training"] is False
-    assert record["quality"]["training_eligibility"] == "trainable"
-    assert any(message.get("role") == "assistant" and message.get("tool_calls") for message in record["payload"]["messages"])
-    assert any(message.get("role") == "tool" for message in record["payload"]["messages"])
+    assert records
+    assert all(item["filter_status"] == "included" for item in records)
+    assert all(item["invalid_for_training"] is False for item in records)
+    assert all(item["quality"]["training_eligibility"] == "trainable" for item in records)
+    assert any(
+        message.get("role") == "assistant" and message.get("tool_calls")
+        for item in records
+        for message in item["payload"]["messages"]
+    )
+    tool_record = next(
+        item
+        for item in records
+        if any(message.get("role") == "tool" for message in item["payload"]["messages"])
+    )
     assert 1 in record["payload"]["loss_mask"]
-    assert 1 in record["payload"]["observation_mask"]
-    assert record["payload"]["loss_mask"][record["payload"]["observation_mask"].index(1)] == 0
+    assert 1 in tool_record["payload"]["observation_mask"]
+    assert (
+        tool_record["payload"]["loss_mask"][
+            tool_record["payload"]["observation_mask"].index(1)
+        ]
+        == 0
+    )
     assert "reward_metadata_ref" not in record["payload"]
     assert "final_verifier_ref" not in record["payload"]
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
     assert any(
         message.get("observation_source") == "prepared_messages"
-        for message in record["payload"]["messages"]
+        for message in tool_record["payload"]["messages"]
         if message.get("role") == "tool"
     )
     assert all(
         message.get("observation_source") == "prepared_messages"
-        for message in record["payload"]["messages"]
+        for message in tool_record["payload"]["messages"]
         if message.get("role") == "tool"
     )
     assert "without_followup_context" not in text
     _assert_refs_exist(run_dir, record)
+    _assert_refs_exist(run_dir, tool_record)
     _assert_no_hidden_or_local_text(text)
-    assert explicit_canonical_records[0]["quality"]["training_eligibility"] == "trainable"
+    assert all(
+        item["quality"]["training_eligibility"] == "trainable"
+        for item in explicit_canonical_records
+    )
     assert explicit_audit["status"] == "passed"
 
 

@@ -559,8 +559,15 @@ def _build_sft_record_from_model_input_snapshot(
     sample_index: int,
 ) -> ExportRecord:
     prepared_payload = binding["prepared_payload"]
+    source_events = _tool_observation_source_events(run_path)
     prepared_messages = [
-        _sanitize_for_export(message) for message in prepared_payload.get("messages", [])
+        _prepared_snapshot_message_for_export(
+            message,
+            binding=binding,
+            prepared_payload=prepared_payload,
+            source_events=source_events,
+        )
+        for message in prepared_payload.get("messages", [])
     ]
     assistant_target = _assistant_target_for_model_call(
         run_path,
@@ -627,6 +634,47 @@ def _build_sft_record_from_model_input_snapshot(
         invalid_reason=_invalid_reason(run_path)
         or (None if trainable_target else "model_input_snapshot_not_trainable"),
     )
+
+
+def _prepared_snapshot_message_for_export(
+    message: dict[str, Any],
+    *,
+    binding: dict[str, Any],
+    prepared_payload: dict[str, Any],
+    source_events: dict[str, str],
+) -> dict[str, Any]:
+    sanitized = _sanitize_for_export(message)
+    if sanitized.get("role") != "tool":
+        return sanitized
+    tool_call_id = str(sanitized.get("tool_call_id") or "")
+    artifact_refs = sanitized.get("artifact_refs", [])
+    if not isinstance(artifact_refs, list):
+        artifact_refs = []
+    observation_source_event_ref = source_events.get(tool_call_id)
+    tool_observation_ref = (
+        artifact_refs[0]
+        if artifact_refs
+        else {
+            "kind": "trajectory_event",
+            "event_id": observation_source_event_ref,
+        }
+    )
+    return {
+        **sanitized,
+        "artifact_refs": artifact_refs,
+        "observation_source": "prepared_messages",
+        "context_revision": prepared_payload.get("context_revision"),
+        "prepared_messages_ref": binding["prepared_messages_ref"],
+        "prepared_messages_sha256": binding["prepared_messages_sha256"],
+        "model_input_hash": prepared_payload.get("model_input_hash"),
+        "content_replacement_state_ref": prepared_payload.get(
+            "content_replacement_state_ref"
+        ),
+        "tool_observation_ref": tool_observation_ref,
+        "observation_source_event_ref": observation_source_event_ref,
+        "observation_matches_prepared_messages": True,
+        "context_replacement": bool(sanitized.get("context_replacement", False)),
+    }
 
 
 def _build_rl_record(run_path: Path) -> ExportRecord | list[ExportRecord]:

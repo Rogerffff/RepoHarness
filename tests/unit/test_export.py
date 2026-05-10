@@ -497,6 +497,44 @@ def test_exports_use_one_record_per_model_input_snapshot(tmp_path: Path):
     assert "post compact summary" in sft_text
 
 
+def test_sft_snapshot_tool_observation_uses_current_prepared_ref(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_current_tool_binding",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    first = _add_tool_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        tool_call_id="call_same",
+        tool_content="full original tool result",
+        assistant_content="first answer",
+    )
+    second = _add_tool_model_input_snapshot_fixture(
+        run_dir,
+        index=2,
+        tool_call_id="call_same",
+        tool_content="[Old tool result content cleared]",
+        assistant_content="second answer",
+    )
+
+    records = _read_jsonl(export_sft_jsonl(run_dir))
+
+    second_tool_message = next(
+        message
+        for message in records[1]["payload"]["messages"]
+        if message["role"] == "tool"
+    )
+    assert second_tool_message["content"] == "[Old tool result content cleared]"
+    assert second_tool_message["prepared_messages_ref"]["artifact_id"] == (
+        second["prepared_ref"]["artifact_id"]
+    )
+    assert second_tool_message["prepared_messages_ref"]["artifact_id"] != (
+        first["prepared_ref"]["artifact_id"]
+    )
+
+
 def test_exports_bind_reactive_retry_accepted_snapshot_not_rejected_context_limit(
     tmp_path: Path,
 ):
@@ -671,6 +709,107 @@ def test_exports_filter_ptl_retry_when_retry_still_context_limit(tmp_path: Path)
     assert _read_jsonl(rl_output) == []
     assert sft_audit["samples"][0]["invalid_reason"] == "model_error:context_limit"
     assert rl_audit["samples"][0]["invalid_reason"] == "model_error:context_limit"
+
+
+def test_export_audit_rejects_compact_only_transcript_action(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_compact_only_transcript_pollution",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="normal main model input",
+        assistant_content="normal main model answer",
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "auto_compact_model_call_started",
+            "turn": 1,
+            "data": {
+                "model_call_id": "compact_model_call_1",
+                "scaffold_phase": "compact",
+                "allowed_tools": [],
+                "tool_choice": "none",
+                "trainable": False,
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "transcript.jsonl",
+        {
+            "role": "assistant",
+            "turn": 1,
+            "model_call_id": "compact_model_call_1",
+            "content_preview": "compact-only response leaked as ordinary action",
+            "model_visible": True,
+            "trainable": True,
+        },
+    )
+
+    export_sft_jsonl(run_dir)
+    audit = json.loads(
+        (_latest_export_dir(run_dir / "exports") / "audit_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    sample = audit["samples"][0]
+    assert sample["training_eligibility"] == "invalid"
+    assert sample["invalid_reason"].startswith(f"{run_dir.name}: transcript")
+    assert any(
+        item["name"] == "compact_only_calls_not_trainable"
+        and item["status"] == "failed"
+        for item in sample["audit_items"]
+    )
+
+
+@pytest.mark.parametrize(
+    "blocked_marker",
+    [
+        "final_verifier_raw_output",
+        "accepted outcome",
+        "reward scalar",
+        "reward label",
+        "hidden test",
+        "evaluator_only_selector",
+        "evaluator_only_artifact",
+    ],
+)
+def test_export_audit_rejects_hidden_context_markers(
+    tmp_path: Path,
+    blocked_marker: str,
+):
+    run_dir = _minimal_run(
+        tmp_path / "run_blocked_marker_case",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="normal model input",
+        assistant_content=f"leaked {blocked_marker}",
+    )
+
+    export_sft_jsonl(run_dir)
+    audit = json.loads(
+        (_latest_export_dir(run_dir / "exports") / "audit_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    sample = audit["samples"][0]
+    assert sample["training_eligibility"] == "invalid"
+    assert sample["invalid_reason"] == f"contains blocked marker {blocked_marker}"
+    assert any(
+        item["name"] == "hidden_fields_absent" and item["status"] == "failed"
+        for item in sample["audit_items"]
+    )
 
 
 def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
@@ -1094,6 +1233,160 @@ def _add_model_input_snapshot_fixture(
             "trainable": True,
         },
     )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_input_accepted",
+            "turn": index,
+            "data": {
+                "model_call_id": model_call_id,
+                "model_input_snapshot_ref": snapshot_ref,
+                "prepared_messages_ref": prepared_ref,
+                "model_input_hash": model_input_hash,
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_call_completed",
+            "turn": index,
+            "data": {
+                "model_call_id": model_call_id,
+                "provider": "replay",
+                "model_id": "replay-script-v0",
+                "model_error_type": None,
+                "raw_provider_request_ref": request_ref,
+                "raw_provider_response_ref": response_ref,
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "transcript.jsonl",
+        {
+            "role": "assistant",
+            "turn": index,
+            "model_call_id": model_call_id,
+            "content_preview": assistant_content,
+            "content_artifact_refs": [assistant_ref],
+            "model_visible": True,
+            "trainable": True,
+        },
+    )
+    return {
+        "prepared_ref": prepared_ref,
+        "snapshot_ref": snapshot_ref,
+        "assistant_ref": assistant_ref,
+    }
+
+
+def _add_tool_model_input_snapshot_fixture(
+    run_dir: Path,
+    *,
+    index: int,
+    tool_call_id: str,
+    tool_content: str,
+    assistant_content: str,
+) -> dict[str, dict]:
+    model_call_id = f"{run_dir.name}_model_call_{index:04d}"
+    state_ref = _append_json_artifact(
+        run_dir,
+        kind="content_replacement_state",
+        filename=f"tool_content_replacement_state_{index}.json",
+        payload={
+            "schema_version": "repo_harness_content_replacement_state_v0",
+            "state_hash": f"{index}" * 64,
+            "records": [],
+            "seen_tool_result_ids": [],
+            "last_context_revision": index,
+        },
+    )
+    tool_artifact_ref = _append_json_artifact(
+        run_dir,
+        kind="read_file",
+        filename=f"tool_observation_{index}.json",
+        payload={"content": tool_content},
+    )
+    model_input_hash = f"{index}" * 64
+    prepared_ref = _append_json_artifact(
+        run_dir,
+        kind="prepared_messages",
+        filename=f"tool_prepared_messages_{index}.json",
+        payload={
+            "messages": [
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call_id,
+                    "tool_result_id": f"{tool_call_id}_result",
+                    "tool_name": "read_file",
+                    "content": tool_content,
+                    "artifact_refs": [tool_artifact_ref],
+                }
+            ],
+            "context_revision": index,
+            "model_input_hash": model_input_hash,
+            "content_replacement_state_ref": state_ref,
+        },
+    )
+    request_ref = _append_json_artifact(
+        run_dir,
+        kind="raw_replay_request",
+        filename=f"tool_raw_replay_request_{index}.json",
+        payload={
+            "model_call_id": model_call_id,
+            "prepared_messages_ref": prepared_ref,
+            "model_input_hash": model_input_hash,
+        },
+    )
+    response_ref = _append_json_artifact(
+        run_dir,
+        kind="raw_replay_response",
+        filename=f"tool_raw_replay_response_{index}.json",
+        payload={"model_call_id": model_call_id, "status": "ok"},
+    )
+    assistant_ref = _append_json_artifact(
+        run_dir,
+        kind="assistant_message",
+        filename=f"tool_assistant_message_{index}.json",
+        payload={
+            "schema_version": "repo_harness_assistant_message_transcript_payload_v0",
+            "content": assistant_content,
+            "tool_calls": [],
+            "finish_reason": "stop",
+            "model_error_type": None,
+        },
+    )
+    snapshot_ref = _append_json_artifact(
+        run_dir,
+        kind="model_input_snapshot",
+        filename=f"tool_model_input_snapshot_{index}.json",
+        payload={
+            "schema_version": "repo_harness_model_input_snapshot_v1",
+            "model_call_id": model_call_id,
+            "prepared_messages_ref": prepared_ref,
+            "model_input_hash": model_input_hash,
+            "provider_request_projection_hash": f"{index + 2}" * 64,
+            "context_policy_snapshot_ref": None,
+            "provider_request_artifact_ref": request_ref,
+            "provider_response_artifact_ref": response_ref,
+            "context_compact_state_ref": state_ref,
+            "trainable": True,
+        },
+    )
+    if index == 1:
+        _append_jsonl(
+            run_dir / "events.jsonl",
+            {
+                "event_id": f"{tool_call_id}_completed",
+                "event_type": "tool_completed",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": tool_call_id,
+                    "status": "ok",
+                    "effective_tool_name": "read_file",
+                },
+            },
+        )
     _append_jsonl(
         run_dir / "events.jsonl",
         {

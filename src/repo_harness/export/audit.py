@@ -36,6 +36,7 @@ CRITICAL_AUDIT_ITEMS = {
     "provider_reasoning_trace_policy_satisfied",
     "tool_schema_snapshot_valid",
     "preference_pairing_policy_satisfied",
+    "compact_only_calls_not_trainable",
 }
 
 HIDDEN_MARKERS = (
@@ -49,6 +50,21 @@ HIDDEN_MARKERS = (
     "baseline_stderr",
     "expected_outcome",
     "reward_only",
+    "reward scalar",
+    "reward_scalar",
+    "reward label",
+    "reward_label",
+    "accepted outcome",
+    "accepted_outcome",
+    "final_verifier_raw_output",
+    "hidden test",
+    "hidden_test_patch",
+    "fail_to_pass_selectors",
+    "pass_to_pass_selectors",
+    "hidden_test_selector",
+    "evaluator_only_selector",
+    "evaluator-only artifact",
+    "evaluator_only_artifact",
     "decontamination_metadata",
 )
 
@@ -353,6 +369,26 @@ def _audit_record(
     else:
         items.append(_item("oracle_feedback_labeled", "skipped", "info", "not oracle hidden feedback"))
         items.append(_item("oracle_feedback_training_allowed", "skipped", "info", "not oracle hidden feedback"))
+
+    compact_pollution_reason = _compact_only_training_pollution_reason(run_paths)
+    if compact_pollution_reason:
+        items.append(
+            _item(
+                "compact_only_calls_not_trainable",
+                "failed",
+                "error",
+                compact_pollution_reason,
+            )
+        )
+    else:
+        items.append(
+            _item(
+                "compact_only_calls_not_trainable",
+                "passed",
+                "info",
+                "compact-only calls are audit-only and absent from trainable transcript",
+            )
+        )
 
     for metadata_inspection in metadata_inspections:
         if metadata_inspection.run_metadata_status == "legacy_missing":
@@ -851,6 +887,90 @@ def _oracle_label_reason_for_run(run_path: Path) -> str | None:
     if facts.get("swe_bench_like_final_only") is True:
         return "oracle_hidden_feedback_on_swe_bench_like_final_only"
     return None
+
+
+def _compact_only_training_pollution_reason(run_paths: list[Path]) -> str | None:
+    for run_path in run_paths:
+        compact_model_call_ids = _compact_model_call_ids_for_run(run_path)
+        if not compact_model_call_ids:
+            continue
+        for event in read_jsonl(run_path / "events.jsonl"):
+            if event.get("event_type") != "model_input_accepted":
+                continue
+            model_call_id = str(event.get("data", {}).get("model_call_id") or "")
+            if model_call_id in compact_model_call_ids:
+                return f"{run_path.name}: compact-only model call {model_call_id} was accepted as main model input"
+        for artifact in _artifact_manifest_refs(run_path, kind="model_input_snapshot"):
+            payload = _artifact_payload(run_path, artifact)
+            model_call_id = str(payload.get("model_call_id") or "")
+            if model_call_id in compact_model_call_ids and payload.get("trainable") is not False:
+                return f"{run_path.name}: compact-only model call {model_call_id} has trainable model_input_snapshot"
+        for index, record in enumerate(read_jsonl(run_path / "transcript.jsonl")):
+            model_call_id = str(record.get("model_call_id") or "")
+            if model_call_id not in compact_model_call_ids:
+                continue
+            if record.get("role") == "assistant" or record.get("model_visible") is True:
+                return (
+                    f"{run_path.name}: transcript[{index}] contains compact-only "
+                    f"model call {model_call_id} as ordinary model-visible action"
+                )
+            if record.get("trainable") is not False:
+                return (
+                    f"{run_path.name}: transcript[{index}] contains compact-only "
+                    f"model call {model_call_id} without trainable=false"
+                )
+    return None
+
+
+def _compact_model_call_ids_for_run(run_path: Path) -> set[str]:
+    ids: set[str] = set()
+    for event in read_jsonl(run_path / "events.jsonl"):
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        if event.get("event_type") == "auto_compact_model_call_started":
+            model_call_id = data.get("model_call_id")
+            if isinstance(model_call_id, str) and model_call_id:
+                ids.add(model_call_id)
+        if event.get("event_type") not in {"auto_compact_applied", "reactive_compact_applied"}:
+            continue
+        record_ref = _event_artifact_ref(event, "auto_compact_record")
+        record = _artifact_payload(run_path, record_ref)
+        model_call = _artifact_payload(run_path, record.get("compact_model_call_ref"))
+        model_call_id = model_call.get("model_call_id")
+        if isinstance(model_call_id, str) and model_call_id:
+            ids.add(model_call_id)
+    return ids
+
+
+def _event_artifact_ref(event: dict[str, Any], kind: str) -> dict[str, Any] | None:
+    for ref in event.get("artifact_refs", []) or []:
+        if isinstance(ref, dict) and ref.get("kind") == kind:
+            return ref
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    for value in data.values():
+        if isinstance(value, dict) and value.get("kind") == kind:
+            return value
+    return None
+
+
+def _artifact_manifest_refs(run_path: Path, *, kind: str) -> list[dict[str, Any]]:
+    manifest = _read_json_if_exists(run_path / "artifacts.json")
+    return [
+        artifact
+        for artifact in manifest.get("artifacts", [])
+        if isinstance(artifact, dict) and artifact.get("kind") == kind
+    ]
+
+
+def _artifact_payload(run_path: Path, ref: Any) -> dict[str, Any]:
+    if not isinstance(ref, dict):
+        return {}
+    relative_path = ref.get("relative_path")
+    if not isinstance(relative_path, str) or not relative_path:
+        return {}
+    path = Path(relative_path)
+    if path.is_absolute() or ".." in path.parts:
+        return {}
+    return _read_json_if_exists(run_path / path)
 
 
 def _collect_artifact_refs(value: Any) -> list[dict[str, Any]]:
