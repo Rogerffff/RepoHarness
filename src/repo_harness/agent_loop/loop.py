@@ -216,9 +216,17 @@ class AgentLoop:
         emitted_convergence_nudge_scopes: set[str] = set()
         convergence_nudge_count = 0
         last_convergence_nudge_turn_by_level: dict[str, int] = {}
-        for turn in range(1, budget_manager.max_turns + 1):
-            state.turn_count = turn
-            state.budget_state.turn_count = turn
+        max_loop_iterations = (
+            budget_manager.max_turns
+            + context_config_resolved.reactive_compact_retry_limit
+        )
+        for turn in range(1, max_loop_iterations + 1):
+            if turn > budget_manager.max_turns + state.reactive_compact_retry_count:
+                state.agent_stop_reason = "max_turns"
+                state.budget_state.stop_reason = "max_turns"
+                break
+            state.turn_count = min(turn, budget_manager.max_turns)
+            state.budget_state.turn_count = state.turn_count
             budget_stop = _budget_stop_reason(
                 budget_manager,
                 state,

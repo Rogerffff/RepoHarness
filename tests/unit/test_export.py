@@ -497,6 +497,67 @@ def test_exports_use_one_record_per_model_input_snapshot(tmp_path: Path):
     assert "post compact summary" in sft_text
 
 
+def test_exports_bind_reactive_retry_accepted_snapshot_not_rejected_context_limit(
+    tmp_path: Path,
+):
+    run_dir = _minimal_run(
+        tmp_path / "run_reactive_retry_export",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_call_completed",
+            "turn": 1,
+            "data": {
+                "model_call_id": "run_reactive_retry_export_model_call_0001",
+                "provider": "replay",
+                "model_id": "replay-script-v0",
+                "model_error_type": "context_limit",
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "reactive_compact_applied",
+            "turn": 1,
+            "data": {
+                "compact_id": "compact-reactive-1",
+                "trigger_reason": "provider_context_limit_retry",
+                "mode": "emergency",
+            },
+        },
+    )
+    retry = _add_model_input_snapshot_fixture(
+        run_dir,
+        index=2,
+        model_visible_content="retry post reactive compact summary",
+        assistant_content="retry answer",
+    )
+
+    sft_records = _read_jsonl(export_sft_jsonl(run_dir))
+    rl_records = _read_jsonl(export_rl_jsonl(run_dir))
+
+    assert len(sft_records) == 1
+    assert len(rl_records) == 1
+    assert sft_records[0]["quality"]["training_eligibility"] == "trainable"
+    assert rl_records[0]["quality"]["training_eligibility"] == "trainable"
+    assert sft_records[0]["payload"]["model_call_id"] == (
+        "run_reactive_retry_export_model_call_0002"
+    )
+    assert sft_records[0]["payload"]["model_input_snapshot_ref"]["artifact_id"] == (
+        retry["snapshot_ref"]["artifact_id"]
+    )
+    assert "retry post reactive compact summary" in json.dumps(
+        rl_records[0]["payload"]["prompt"],
+        ensure_ascii=False,
+    )
+    assert "context_limit" not in json.dumps(sft_records[0]["payload"], ensure_ascii=False)
+
+
 def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_max_turns_success",

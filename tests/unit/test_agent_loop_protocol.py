@@ -1210,6 +1210,54 @@ def test_agent_loop_reactive_compact_retries_provider_context_limit_without_hist
     )
 
 
+def test_agent_loop_reactive_compact_retry_can_run_on_last_ordinary_turn(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run"
+    client = _ReactiveContextLimitThenFinalClient()
+
+    with RunRecorder("loop-reactive-last-turn", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="loop-reactive-last-turn",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "Fix the bug."},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            context_config=ContextManagementConfig(
+                model_context_window_tokens=12000,
+                main_output_reserve_tokens=0,
+                estimator_safety_margin_ratio=0.0,
+                estimator_safety_margin_min_tokens=0,
+                auto_compact_trigger_ratio=0.99,
+                reactive_compact_enabled=True,
+                reactive_compact_retry_limit=1,
+            ),
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert state.turn_count == 1
+    assert state.reactive_compact_retry_count == 1
+    assert [request.model_call_id for request in client.requests if request.scaffold_phase == "act"] == [
+        "loop-reactive-last-turn_model_call_0001",
+        "loop-reactive-last-turn_model_call_0002",
+    ]
+    events = _read_events(run_dir)
+    assert any(event["event_type"] == "reactive_compact_applied" for event in events)
+    accepted_model_call_ids = [
+        event["data"].get("model_call_id")
+        for event in events
+        if event["event_type"] == "model_input_accepted"
+    ]
+    assert accepted_model_call_ids == ["loop-reactive-last-turn_model_call_0002"]
+
+
 def test_agent_loop_stops_on_second_context_limit_after_reactive_compact(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = _ReactiveContextLimitThenContextLimitClient()

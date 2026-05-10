@@ -1272,13 +1272,42 @@ def _has_model_error_event(run_path: Path) -> bool:
 
 
 def _model_error_invalid_reason(run_path: Path) -> str | None:
-    for event in read_jsonl(run_path / "events.jsonl"):
+    events = read_jsonl(run_path / "events.jsonl")
+    accepted_model_call_ids = {
+        str(event.get("data", {}).get("model_call_id"))
+        for event in events
+        if event.get("event_type") == "model_input_accepted"
+        and event.get("data", {}).get("model_call_id")
+    }
+    rejected_context_limit_errors = {
+        "context_limit",
+        "prompt_too_long",
+        "prompt too long",
+        "request_too_large",
+        "payload_too_large",
+    }
+    for index, event in enumerate(events):
         if event.get("event_type") != "model_call_completed":
             continue
-        model_error_type = event.get("data", {}).get("model_error_type")
+        data = event.get("data", {})
+        model_error_type = data.get("model_error_type")
+        model_call_id = str(data.get("model_call_id") or "")
+        if (
+            model_error_type in rejected_context_limit_errors
+            and model_call_id not in accepted_model_call_ids
+            and _has_later_model_input_accepted(events, index)
+        ):
+            continue
         if model_error_type:
             return f"model_error:{model_error_type}"
     return None
+
+
+def _has_later_model_input_accepted(events: list[dict[str, Any]], index: int) -> bool:
+    return any(
+        event.get("event_type") == "model_input_accepted"
+        for event in events[index + 1 :]
+    )
 
 
 def _formal_final_verifier_invalid_reason(run_path: Path) -> str | None:
