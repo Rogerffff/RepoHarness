@@ -16,6 +16,7 @@ from repo_harness.run_metadata.schemas import FailureCategory, FailureType
 from repo_harness.run_metadata.tool_snapshot import write_tool_schema_snapshot
 from repo_harness.run_metadata.writer import (
     _failure_diagnostics,
+    _model_call_summary,
     build_run_config_facts,
     build_run_metadata,
     write_run_config_facts,
@@ -26,6 +27,71 @@ from repo_harness.trajectory import RunRecorder
 from repo_harness.workspace import DependencyState
 
 from tests.unit.test_task_schema import valid_task_payload
+
+
+def _artifact_ref(*, artifact_id: str, relative_path: str, kind: str) -> dict[str, object]:
+    return {
+        "schema_version": "repo_harness_artifact_v0",
+        "artifact_id": artifact_id,
+        "relative_path": relative_path,
+        "kind": kind,
+        "sha256": "0" * 64,
+        "size_bytes": 1,
+        "redaction_status": "not_sensitive",
+        "retention_policy": "context_compaction_audit",
+    }
+
+
+def _write_context_policy_fact(run_dir: Path) -> None:
+    (run_dir / "run_config_facts.json").write_text(
+        json.dumps(
+            {
+                "context_policy_snapshot": {
+                    "local_context_limit_policy": "strict_local_preflight",
+                    "reactive_compact_policy": "provider_verified_reactive",
+                },
+                "effective_context_budget_tokens": 930000,
+                "hard_context_limit_tokens": 970000,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_ptl_record_artifact(
+    run_dir: Path,
+    *,
+    artifact_id: str,
+    synthetic_marker_id: str,
+    omitted_round_count: int,
+    retained_round_count: int,
+    token_estimate_before: int,
+    token_estimate_after: int,
+    hard_context_limit_tokens: int,
+) -> dict[str, object]:
+    relative_path = f"artifacts/{artifact_id}.json"
+    payload = {
+        "schema_version": "repo_harness_ptl_truncation_record_v1",
+        "original_model_call_id": "run_model_call_original",
+        "synthetic_marker_id": synthetic_marker_id,
+        "omitted_round_count": omitted_round_count,
+        "retained_round_count": retained_round_count,
+        "token_estimate_before": token_estimate_before,
+        "token_estimate_after": token_estimate_after,
+        "hard_context_limit_tokens": hard_context_limit_tokens,
+        "post_truncation_above_hard_limit": (
+            token_estimate_after > hard_context_limit_tokens
+        ),
+    }
+    artifact_path = run_dir / relative_path
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    return _artifact_ref(
+        artifact_id=artifact_id,
+        relative_path=relative_path,
+        kind="ptl_truncation_record",
+    )
 
 
 def test_source_tree_hash_excludes_git_and_cache_dirs(tmp_path: Path):
@@ -467,6 +533,426 @@ def test_failure_diagnostics_reports_compaction_insufficient_context_limit(tmp_p
     )
     assert diagnostics[0].source_component == "context_manager"
     assert diagnostics[0].details["latest_context_prepared"]["provider_ready_token_estimate"] == 181000
+
+
+def test_failure_diagnostics_reports_auto_compact_failed_preflight_details(tmp_path: Path):
+    run_dir = tmp_path / "run_auto_compact_preflight"
+    run_dir.mkdir()
+    _write_context_policy_fact(run_dir)
+    auto_compact_record_ref = _artifact_ref(
+        artifact_id="auto_record_001",
+        relative_path="artifacts/auto_compact_record.json",
+        kind="auto_compact_record",
+    )
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_id": "auto_compact_0001",
+                        "event_type": "auto_compact_failed",
+                        "turn": 6,
+                        "data": {
+                            "source_prepared_messages_ref": {
+                                "artifact_id": "prepared_001",
+                                "relative_path": "artifacts/prepared_001.json",
+                                "kind": "prepared_messages",
+                            },
+                            "failure_reason": "compact_model_timeout",
+                            "tokens_before": 990000,
+                            "tokens_after": 990000,
+                            "effective_context_budget_tokens": 930000,
+                            "hard_context_limit_tokens": 970000,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "budget_0001",
+                        "event_type": "budget_exhausted",
+                        "error_type": "auto_compact_failed_preflight",
+                        "turn": 6,
+                        "data": {
+                            "token_estimate": 990000,
+                            "hard_context_limit_tokens": 970000,
+                            "auto_compact_failure_reason": "compact_model_timeout",
+                            "auto_compact_record_ref": auto_compact_record_ref,
+                            "provider_request_projection_hash": "projection_hash_001",
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason="auto_compact_failed_preflight",
+    )
+
+    assert diagnostics[0].failure_type == FailureType.auto_compact_failed_preflight
+    assert diagnostics[0].source_component == "context_manager"
+    assert diagnostics[0].details["local_context_limit_policy"] == "strict_local_preflight"
+    assert diagnostics[0].details["reactive_compact_policy"] == "provider_verified_reactive"
+    assert diagnostics[0].details["source_prepared_messages_ref"]["artifact_id"] == "prepared_001"
+    assert diagnostics[0].details["auto_compact_record_ref"]["artifact_id"] == "auto_record_001"
+    assert diagnostics[0].details["failure_reason"] == "compact_model_timeout"
+    assert diagnostics[0].details["tokens_before"] == 990000
+    assert diagnostics[0].details["tokens_after"] == 990000
+    assert diagnostics[0].details["effective_context_budget_tokens"] == 930000
+    assert diagnostics[0].details["hard_context_limit_tokens"] == 970000
+    assert diagnostics[0].details["provider_request_projection_hash"] == "projection_hash_001"
+
+
+def test_failure_diagnostics_reports_autocompact_applied_but_preflight_still_high(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run_autocompact_preflight_still_high"
+    run_dir.mkdir()
+    _write_context_policy_fact(run_dir)
+    summary_ref = _artifact_ref(
+        artifact_id="auto_summary_001",
+        relative_path="artifacts/auto_summary_001.json",
+        kind="auto_compact_summary",
+    )
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_id": "context_0001",
+                        "event_type": "context_prepared",
+                        "turn": 6,
+                        "data": {
+                            "context_revision": 6,
+                            "provider_ready_token_estimate": 980000,
+                            "provider_body_char_estimate": 3920000,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "auto_compact_0002",
+                        "event_type": "auto_compact_applied",
+                        "turn": 6,
+                        "data": {
+                            "source_prepared_messages_ref": {
+                                "artifact_id": "prepared_before_compact",
+                                "relative_path": "artifacts/prepared_before_compact.json",
+                                "kind": "prepared_messages",
+                            },
+                            "summary_artifact_ref": summary_ref,
+                            "tokens_before": 1040000,
+                            "tokens_after": 980000,
+                            "effective_context_budget_tokens": 930000,
+                            "hard_context_limit_tokens": 970000,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "budget_0002",
+                        "event_type": "budget_exhausted",
+                        "error_type": "context_limit_preflight_after_autocompact",
+                        "turn": 6,
+                        "data": {
+                            "token_estimate": 980000,
+                            "hard_context_limit_tokens": 970000,
+                            "provider_request_projection_hash": "projection_hash_002",
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason="context_limit_preflight_after_autocompact",
+    )
+
+    assert diagnostics[0].failure_type == (
+        FailureType.compaction_applied_but_insufficient_context_limit
+    )
+    assert diagnostics[0].source_component == "context_manager"
+    assert diagnostics[0].details["budget_exhausted"]["token_estimate"] == 980000
+    assert diagnostics[0].details["source_prepared_messages_ref"]["artifact_id"] == (
+        "prepared_before_compact"
+    )
+    assert diagnostics[0].details["summary_artifact_ref"]["artifact_id"] == "auto_summary_001"
+    assert diagnostics[0].details["tokens_before"] == 1040000
+    assert diagnostics[0].details["tokens_after"] == 980000
+
+
+def test_failure_diagnostics_reports_reactive_compact_failed_with_ptl_details(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run_reactive_failed"
+    run_dir.mkdir()
+    _write_context_policy_fact(run_dir)
+    ptl_ref = _write_ptl_record_artifact(
+        run_dir,
+        artifact_id="ptl_record_001",
+        synthetic_marker_id="ptl_marker_001",
+        omitted_round_count=3,
+        retained_round_count=2,
+        token_estimate_before=1010000,
+        token_estimate_after=980000,
+        hard_context_limit_tokens=970000,
+    )
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_id": "reactive_0001",
+                        "event_type": "reactive_compact_triggered",
+                        "turn": 7,
+                        "data": {
+                            "model_call_id": "run_model_call_0007",
+                            "prepared_messages_ref": {
+                                "artifact_id": "prepared_007",
+                                "relative_path": "artifacts/prepared_007.json",
+                                "kind": "prepared_messages",
+                            },
+                            "raw_provider_request_ref": {
+                                "artifact_id": "provider_request_007",
+                                "relative_path": "artifacts/provider_request_007.json",
+                                "kind": "provider_request",
+                            },
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "auto_compact_0001",
+                        "event_type": "auto_compact_failed",
+                        "turn": 7,
+                        "data": {
+                            "source_prepared_messages_ref": {
+                                "artifact_id": "prepared_007",
+                                "relative_path": "artifacts/prepared_007.json",
+                                "kind": "prepared_messages",
+                            },
+                            "failure_reason": "compact_source_too_large",
+                            "tokens_before": 1010000,
+                            "tokens_after": 1010000,
+                            "effective_context_budget_tokens": 930000,
+                            "hard_context_limit_tokens": 970000,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "reactive_0002",
+                        "event_type": "reactive_compact_failed",
+                        "error_type": "compact_source_too_large",
+                        "turn": 7,
+                        "data": {
+                            "compact_id": "compact_007",
+                            "failure_reason": "compact_source_too_large",
+                            "ptl_fallback_status": "failed",
+                            "ptl_fallback_failure_reason": (
+                                "ptl_truncation_did_not_reduce_projection"
+                            ),
+                            "ptl_truncation_ref": ptl_ref,
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason="reactive_compact_failed",
+    )
+
+    assert diagnostics[0].failure_type == FailureType.reactive_compact_failed
+    assert diagnostics[0].details["source_prepared_messages_ref"]["artifact_id"] == "prepared_007"
+    assert diagnostics[0].details["failure_reason"] == "compact_source_too_large"
+    assert diagnostics[0].details["original_model_call_id"] == "run_model_call_0007"
+    assert diagnostics[0].details["tokens_before"] == 1010000
+    assert diagnostics[0].details["ptl_fallback"]["synthetic_marker_id"] == "ptl_marker_001"
+    assert diagnostics[0].details["ptl_fallback"]["omitted_round_count"] == 3
+
+
+def test_failure_diagnostics_reports_context_limit_after_reactive_compact_retry(
+    tmp_path: Path,
+):
+    run_dir = tmp_path / "run_context_limit_after_reactive"
+    run_dir.mkdir()
+    _write_context_policy_fact(run_dir)
+    ptl_ref = _write_ptl_record_artifact(
+        run_dir,
+        artifact_id="ptl_record_002",
+        synthetic_marker_id="ptl_marker_002",
+        omitted_round_count=4,
+        retained_round_count=1,
+        token_estimate_before=1050000,
+        token_estimate_after=975000,
+        hard_context_limit_tokens=970000,
+    )
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_id": "ptl_0001",
+                        "event_type": "ptl_truncation_applied",
+                        "turn": 8,
+                        "data": {
+                            "ptl_truncation_ref": ptl_ref,
+                            "original_model_call_id": "run_model_call_0008",
+                            "omitted_round_count": 4,
+                            "synthetic_marker_id": "ptl_marker_002",
+                            "token_estimate_before": 1050000,
+                            "token_estimate_after": 975000,
+                            "post_truncation_above_hard_limit": True,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "model_0009",
+                        "event_type": "model_call_started",
+                        "turn": 9,
+                        "data": {"model_call_id": "run_model_call_0009"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "reactive_0003",
+                        "event_type": "reactive_compact_triggered",
+                        "turn": 9,
+                        "data": {
+                            "model_call_id": "run_model_call_0009",
+                            "prepared_messages_ref": {
+                                "artifact_id": "prepared_retry",
+                                "relative_path": "artifacts/prepared_retry.json",
+                                "kind": "prepared_messages",
+                            },
+                            "raw_provider_request_ref": {
+                                "artifact_id": "provider_request_retry",
+                                "relative_path": "artifacts/provider_request_retry.json",
+                                "kind": "provider_request",
+                            },
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "reactive_0004",
+                        "event_type": "reactive_compact_retry_limit_exhausted",
+                        "error_type": "context_limit_after_reactive_compact",
+                        "turn": 9,
+                        "data": {
+                            "reactive_compact_retry_count": 1,
+                            "reactive_compact_retry_limit": 1,
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="failed",
+        final_verifier_status="skipped",
+        agent_stop_reason="context_limit_after_reactive_compact",
+    )
+
+    assert diagnostics[0].failure_type == FailureType.context_limit_after_reactive_compact
+    assert diagnostics[0].details["retry_model_call_id"] == "run_model_call_0009"
+    assert diagnostics[0].details["ptl_truncation_ref"]["artifact_id"] == "ptl_record_002"
+    assert diagnostics[0].details["synthetic_marker_id"] == "ptl_marker_002"
+    assert diagnostics[0].details["omitted_round_count"] == 4
+    assert diagnostics[0].details["tokens_before"] == 1050000
+    assert diagnostics[0].details["tokens_after"] == 975000
+    assert diagnostics[0].details["hard_context_limit_tokens"] == 970000
+
+
+def test_model_call_summary_records_successful_ptl_retry_diagnostics(tmp_path: Path):
+    run_dir = tmp_path / "run_successful_ptl_retry"
+    run_dir.mkdir()
+    ptl_ref = _write_ptl_record_artifact(
+        run_dir,
+        artifact_id="ptl_record_003",
+        synthetic_marker_id="ptl_marker_003",
+        omitted_round_count=2,
+        retained_round_count=3,
+        token_estimate_before=1020000,
+        token_estimate_after=880000,
+        hard_context_limit_tokens=970000,
+    )
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_id": "ptl_0001",
+                        "event_type": "ptl_truncation_applied",
+                        "turn": 8,
+                        "data": {
+                            "ptl_truncation_ref": ptl_ref,
+                            "original_model_call_id": "run_model_call_0008",
+                            "synthetic_marker_id": "ptl_marker_003",
+                            "omitted_round_count": 2,
+                            "token_estimate_before": 1020000,
+                            "token_estimate_after": 880000,
+                            "post_truncation_above_hard_limit": False,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "model_input_0009",
+                        "event_type": "model_input_accepted",
+                        "turn": 9,
+                        "data": {"model_call_id": "run_model_call_0009"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "event_id": "model_completed_0009",
+                        "event_type": "model_call_completed",
+                        "turn": 9,
+                        "data": {"model_error_type": None},
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    summary = _model_call_summary(run_dir)
+
+    assert summary["model_call_count"] == 1
+    assert summary["ptl_truncation_count"] == 1
+    assert summary["latest_ptl_truncation"]["retry_model_call_id"] == "run_model_call_0009"
+    assert summary["latest_ptl_truncation"]["synthetic_marker_id"] == "ptl_marker_003"
+    assert summary["latest_ptl_truncation"]["omitted_round_count"] == 2
+    assert summary["latest_ptl_truncation"]["hard_context_limit_tokens"] == 970000
 
 
 def test_failure_diagnostics_reports_search_backend_false_fact_suspected(tmp_path: Path):

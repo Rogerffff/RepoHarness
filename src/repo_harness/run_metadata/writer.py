@@ -362,21 +362,31 @@ def _metrics_summary(metrics: dict[str, Any]) -> dict[str, Any]:
 
 
 def _model_call_summary(run_path: Path) -> dict[str, Any]:
-    events_path = run_path / "events.jsonl"
-    if not events_path.exists():
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    if not events:
         return {"model_call_count": 0, "model_error_count": 0}
     model_calls = 0
     model_errors = 0
-    for line in events_path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        event = json.loads(line)
+    for event in events:
         if event.get("event_type") != "model_call_completed":
             continue
         model_calls += 1
         if event.get("data", {}).get("model_error_type"):
             model_errors += 1
-    return {"model_call_count": model_calls, "model_error_count": model_errors}
+    latest_ptl = _latest_ptl_truncation_summary(run_path, events)
+    summary: dict[str, Any] = {
+        "model_call_count": model_calls,
+        "model_error_count": model_errors,
+        "reactive_compact_applied_count": sum(
+            1 for event in events if event.get("event_type") == "reactive_compact_applied"
+        ),
+        "ptl_truncation_count": sum(
+            1 for event in events if event.get("event_type") == "ptl_truncation_applied"
+        ),
+    }
+    if latest_ptl:
+        summary["latest_ptl_truncation"] = latest_ptl
+    return summary
 
 
 def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadinessFacts:
@@ -400,7 +410,17 @@ def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadi
         "accepted_by_final_verifier": metrics.get("final_verifier_status") == "accepted",
         "successful_run_outcome": metrics.get("run_outcome") == "success",
         "not_budget_exhausted": metrics.get("interaction_efficiency", {}).get("agent_stop_reason")
-        not in {"max_turns", "max_tool_calls", "task_timeout", "context_limit"},
+        not in {
+            "max_turns",
+            "max_tool_calls",
+            "task_timeout",
+            "context_limit",
+            "context_limit_preflight_after_autocompact",
+            "auto_compact_failed_preflight",
+            "reactive_compact_failed",
+            "context_limit_after_reactive_compact",
+            "context_limit_reactive_compact_disabled",
+        },
     }
     if boundary.get("final_verifier_status") == "not_executed":
         training_checks["accepted_by_final_verifier"] = False
@@ -509,6 +529,51 @@ def _failure_diagnostics(
                 message="formal final verifier failed",
             )
         ]
+    if agent_stop_reason == "auto_compact_failed_preflight":
+        return [
+            *prefix_diagnostics,
+            FailureDiagnostics(
+                failure_category=FailureCategory.model_failure,
+                failure_type=FailureType.auto_compact_failed_preflight,
+                recoverable=True,
+                source_component="context_manager",
+                message=(
+                    "local hard preflight stopped the run because AutoCompact failed "
+                    "and the provider request projection was still above the hard context limit"
+                ),
+                details=_auto_compact_preflight_failure_details(run_path),
+            ),
+        ]
+    if agent_stop_reason == "reactive_compact_failed":
+        return [
+            *prefix_diagnostics,
+            FailureDiagnostics(
+                failure_category=FailureCategory.model_failure,
+                failure_type=FailureType.reactive_compact_failed,
+                recoverable=True,
+                source_component="context_manager",
+                message=(
+                    "provider returned context_limit and Reactive Compact could not "
+                    "produce a retryable provider request"
+                ),
+                details=_reactive_compact_failure_details(run_path),
+            ),
+        ]
+    if agent_stop_reason == "context_limit_after_reactive_compact":
+        return [
+            *prefix_diagnostics,
+            FailureDiagnostics(
+                failure_category=FailureCategory.model_failure,
+                failure_type=FailureType.context_limit_after_reactive_compact,
+                recoverable=True,
+                source_component="context_manager",
+                message=(
+                    "provider still returned context_limit after a Reactive Compact "
+                    "or PTL fallback retry"
+                ),
+                details=_context_limit_after_reactive_compact_details(run_path),
+            ),
+        ]
     if agent_stop_reason == "context_limit":
         compaction_insufficient = _compaction_applied_but_insufficient(run_path)
         return [
@@ -529,6 +594,26 @@ def _failure_diagnostics(
                 ),
                 details=_latest_context_limit_details(run_path),
             )
+        ]
+    if agent_stop_reason == "context_limit_preflight_after_autocompact":
+        details = _latest_context_limit_details(
+            run_path,
+            error_type="context_limit_preflight_after_autocompact",
+        )
+        details.update(_latest_context_compaction_event_details(run_path))
+        return [
+            *prefix_diagnostics,
+            FailureDiagnostics(
+                failure_category=FailureCategory.model_failure,
+                failure_type=FailureType.compaction_applied_but_insufficient_context_limit,
+                recoverable=True,
+                source_component="context_manager",
+                message=(
+                    "AutoCompact was applied but the provider request projection "
+                    "remained above the local hard context limit"
+                ),
+                details=details,
+            ),
         ]
     if run_outcome in {"success", "failed"}:
         return prefix_diagnostics
@@ -749,6 +834,396 @@ def _search_backend_false_fact_suspected(run_path: Path) -> FailureDiagnostics |
     )
 
 
+def _auto_compact_preflight_failure_details(run_path: Path) -> dict[str, Any]:
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    budget_event = _latest_event(
+        events,
+        event_type="budget_exhausted",
+        error_type="auto_compact_failed_preflight",
+    )
+    auto_event = _latest_event(events, event_type="auto_compact_failed")
+    details = _context_policy_details(run_path)
+    budget_data = _event_data(budget_event)
+    auto_data = _event_data(auto_event)
+    details.update(
+        {
+            "agent_stop_reason": "auto_compact_failed_preflight",
+            "source_prepared_messages_ref": auto_data.get("source_prepared_messages_ref"),
+            "summary_artifact_ref": auto_data.get("summary_artifact_ref"),
+            "auto_compact_record_ref": (
+                budget_data.get("auto_compact_record_ref")
+                or _event_artifact_ref(auto_event, kind="auto_compact_record")
+            ),
+            "failure_reason": (
+                budget_data.get("auto_compact_failure_reason")
+                or auto_data.get("failure_reason")
+            ),
+            "tokens_before": auto_data.get("tokens_before") or budget_data.get("token_estimate"),
+            "tokens_after": auto_data.get("tokens_after") or auto_data.get("tokens_before"),
+            "effective_context_budget_tokens": _first_present(
+                auto_data.get("effective_context_budget_tokens"),
+                _context_budget_fact(budget_data, "effective_context_budget_tokens"),
+            ),
+            "hard_context_limit_tokens": _first_present(
+                budget_data.get("hard_context_limit_tokens"),
+                auto_data.get("hard_context_limit_tokens"),
+                _context_budget_fact(budget_data, "hard_context_limit_tokens"),
+            ),
+            "provider_request_projection_hash": budget_data.get(
+                "provider_request_projection_hash"
+            ),
+            "event_refs": _event_refs([auto_event, budget_event]),
+        }
+    )
+    return _drop_none_values(details)
+
+
+def _reactive_compact_failure_details(run_path: Path) -> dict[str, Any]:
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    failed_event = _latest_event(events, event_type="reactive_compact_failed")
+    failed_data = _event_data(failed_event)
+    trigger_event = _latest_event(events, event_type="reactive_compact_triggered")
+    trigger_data = _event_data(trigger_event)
+    auto_failed_event = _latest_event(events, event_type="auto_compact_failed")
+    auto_failed_data = _event_data(auto_failed_event)
+    details = _context_policy_details(run_path)
+    details.update(
+        {
+            "agent_stop_reason": "reactive_compact_failed",
+            "source_prepared_messages_ref": (
+                auto_failed_data.get("source_prepared_messages_ref")
+                or trigger_data.get("prepared_messages_ref")
+            ),
+            "summary_artifact_ref": failed_data.get("summary_artifact_ref"),
+            "failure_reason": failed_data.get("failure_reason"),
+            "compact_id": failed_data.get("compact_id"),
+            "ptl_fallback_status": failed_data.get("ptl_fallback_status"),
+            "ptl_fallback_failure_reason": failed_data.get(
+                "ptl_fallback_failure_reason"
+            ),
+            "tokens_before": auto_failed_data.get("tokens_before"),
+            "tokens_after": auto_failed_data.get("tokens_after")
+            or auto_failed_data.get("tokens_before"),
+            "effective_context_budget_tokens": auto_failed_data.get(
+                "effective_context_budget_tokens"
+            ),
+            "hard_context_limit_tokens": auto_failed_data.get("hard_context_limit_tokens"),
+            "original_model_call_id": trigger_data.get("model_call_id"),
+            "original_provider_request_ref": trigger_data.get("raw_provider_request_ref"),
+            "original_provider_response_ref": trigger_data.get("raw_provider_response_ref"),
+            "event_refs": _event_refs([trigger_event, auto_failed_event, failed_event]),
+        }
+    )
+    ptl_details = _ptl_details_from_ref(run_path, failed_data.get("ptl_truncation_ref"))
+    if ptl_details:
+        details["ptl_fallback"] = ptl_details
+    return _drop_none_values(details)
+
+
+def _context_limit_after_reactive_compact_details(run_path: Path) -> dict[str, Any]:
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    exhausted_index, exhausted_event = _latest_event_with_index(
+        events,
+        event_type="reactive_compact_retry_limit_exhausted",
+    )
+    exhausted_data = _event_data(exhausted_event)
+    latest_trigger = _latest_event(events, event_type="reactive_compact_triggered")
+    trigger_data = _event_data(latest_trigger)
+    latest_applied = _latest_event(events, event_type="reactive_compact_applied")
+    applied_data = _event_data(latest_applied)
+    latest_ptl_summary = _latest_ptl_truncation_summary(run_path, events)
+    details = _context_policy_details(run_path)
+    details.update(
+        {
+            "agent_stop_reason": "context_limit_after_reactive_compact",
+            "source_prepared_messages_ref": (
+                applied_data.get("source_prepared_messages_ref")
+                or trigger_data.get("prepared_messages_ref")
+            ),
+            "summary_artifact_ref": applied_data.get("summary_artifact_ref"),
+            "retry_model_call_id": _retry_model_call_id_after_recovery(
+                events,
+                before_index=exhausted_index,
+            )
+            or trigger_data.get("model_call_id"),
+            "rejected_retry_model_call_id": trigger_data.get("model_call_id"),
+            "reactive_compact_retry_count": exhausted_data.get(
+                "reactive_compact_retry_count"
+            ),
+            "reactive_compact_retry_limit": exhausted_data.get(
+                "reactive_compact_retry_limit"
+            ),
+            "original_provider_request_ref": trigger_data.get("raw_provider_request_ref"),
+            "original_provider_response_ref": trigger_data.get("raw_provider_response_ref"),
+            "event_refs": _event_refs([latest_applied, latest_trigger, exhausted_event]),
+        }
+    )
+    if latest_ptl_summary:
+        details["ptl_fallback"] = latest_ptl_summary
+        details.setdefault(
+            "ptl_truncation_ref",
+            latest_ptl_summary.get("ptl_truncation_ref"),
+        )
+        details.setdefault(
+            "synthetic_marker_id",
+            latest_ptl_summary.get("synthetic_marker_id"),
+        )
+        details.setdefault(
+            "omitted_round_count",
+            latest_ptl_summary.get("omitted_round_count"),
+        )
+        details.setdefault(
+            "tokens_before",
+            latest_ptl_summary.get("token_estimate_before"),
+        )
+        details.setdefault(
+            "tokens_after",
+            latest_ptl_summary.get("token_estimate_after"),
+        )
+        details.setdefault(
+            "hard_context_limit_tokens",
+            latest_ptl_summary.get("hard_context_limit_tokens"),
+        )
+    return _drop_none_values(details)
+
+
+def _latest_context_compaction_event_details(run_path: Path) -> dict[str, Any]:
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    latest_applied = _latest_event(events, event_type="auto_compact_applied")
+    applied_data = _event_data(latest_applied)
+    details = _context_policy_details(run_path)
+    details.update(
+        {
+            "source_prepared_messages_ref": applied_data.get(
+                "source_prepared_messages_ref"
+            ),
+            "summary_artifact_ref": applied_data.get("summary_artifact_ref"),
+            "tokens_before": applied_data.get("tokens_before"),
+            "tokens_after": applied_data.get("tokens_after"),
+            "effective_context_budget_tokens": applied_data.get(
+                "effective_context_budget_tokens"
+            ),
+            "hard_context_limit_tokens": applied_data.get("hard_context_limit_tokens"),
+            "event_refs": _event_refs([latest_applied]),
+        }
+    )
+    return _drop_none_values(details)
+
+
+def _latest_ptl_truncation_summary(
+    run_path: Path,
+    events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    ptl_index, ptl_event = _latest_event_with_index(events, event_type="ptl_truncation_applied")
+    ptl_data = _event_data(ptl_event)
+    ptl_ref = ptl_data.get("ptl_truncation_ref")
+    record = _artifact_payload_from_ref(run_path, ptl_ref)
+    summary = {
+        "ptl_truncation_ref": ptl_ref,
+        "original_model_call_id": _first_present(
+            ptl_data.get("original_model_call_id"),
+            record.get("original_model_call_id"),
+        ),
+        "retry_model_call_id": _retry_model_call_id_after_recovery(
+            events,
+            before_index=ptl_index,
+        ),
+        "synthetic_marker_id": _first_present(
+            ptl_data.get("synthetic_marker_id"),
+            record.get("synthetic_marker_id"),
+        ),
+        "omitted_round_count": _first_present(
+            ptl_data.get("omitted_round_count"),
+            record.get("omitted_round_count"),
+        ),
+        "retained_round_count": record.get("retained_round_count"),
+        "token_estimate_before": _first_present(
+            ptl_data.get("token_estimate_before"),
+            record.get("token_estimate_before"),
+        ),
+        "token_estimate_after": _first_present(
+            ptl_data.get("token_estimate_after"),
+            record.get("token_estimate_after"),
+        ),
+        "hard_context_limit_tokens": record.get("hard_context_limit_tokens"),
+        "post_truncation_above_hard_limit": _first_present(
+            ptl_data.get("post_truncation_above_hard_limit"),
+            record.get("post_truncation_above_hard_limit"),
+        ),
+    }
+    return _drop_none_values(summary)
+
+
+def _ptl_details_from_ref(run_path: Path, ref: Any) -> dict[str, Any]:
+    record = _artifact_payload_from_ref(run_path, ref)
+    if not record and not isinstance(ref, dict):
+        return {}
+    details = {
+        "ptl_truncation_ref": ref,
+        "original_model_call_id": record.get("original_model_call_id"),
+        "synthetic_marker_id": record.get("synthetic_marker_id"),
+        "omitted_round_count": record.get("omitted_round_count"),
+        "retained_round_count": record.get("retained_round_count"),
+        "token_estimate_before": record.get("token_estimate_before"),
+        "token_estimate_after": record.get("token_estimate_after"),
+        "hard_context_limit_tokens": record.get("hard_context_limit_tokens"),
+        "post_truncation_above_hard_limit": record.get(
+            "post_truncation_above_hard_limit"
+        ),
+    }
+    return _drop_none_values(details)
+
+
+def _context_policy_details(run_path: Path) -> dict[str, Any]:
+    config_facts = _read_json_if_exists(run_path / "run_config_facts.json")
+    snapshot = config_facts.get("context_policy_snapshot")
+    if not isinstance(snapshot, dict):
+        snapshot = {}
+    return _drop_none_values(
+        {
+            "local_context_limit_policy": (
+                snapshot.get("local_context_limit_policy")
+                or config_facts.get("local_context_limit_policy")
+            ),
+            "reactive_compact_policy": (
+                snapshot.get("reactive_compact_policy")
+                or config_facts.get("reactive_compact_policy")
+            ),
+            "effective_context_budget_tokens": (
+                config_facts.get("effective_context_budget_tokens")
+                or config_facts.get("context_budget_tokens")
+            ),
+            "hard_context_limit_tokens": config_facts.get("hard_context_limit_tokens"),
+        }
+    )
+
+
+def _context_budget_fact(data: dict[str, Any], key: str) -> Any:
+    facts = data.get("context_budget_facts")
+    return facts.get(key) if isinstance(facts, dict) else None
+
+
+def _latest_event(
+    events: list[dict[str, Any]],
+    *,
+    event_type: str,
+    error_type: str | None = None,
+) -> dict[str, Any]:
+    _, event = _latest_event_with_index(
+        events,
+        event_type=event_type,
+        error_type=error_type,
+    )
+    return event
+
+
+def _latest_event_with_index(
+    events: list[dict[str, Any]],
+    *,
+    event_type: str,
+    error_type: str | None = None,
+) -> tuple[int | None, dict[str, Any]]:
+    for index in range(len(events) - 1, -1, -1):
+        event = events[index]
+        if event.get("event_type") != event_type:
+            continue
+        if error_type is not None and event.get("error_type") != error_type:
+            continue
+        return index, event
+    return None, {}
+
+
+def _event_data(event: dict[str, Any]) -> dict[str, Any]:
+    data = event.get("data")
+    return data if isinstance(data, dict) else {}
+
+
+def _event_artifact_ref(event: dict[str, Any], *, kind: str) -> dict[str, Any] | None:
+    refs = event.get("artifact_refs")
+    if not isinstance(refs, list):
+        return None
+    for ref in refs:
+        if isinstance(ref, dict) and ref.get("kind") == kind:
+            return ref
+    return None
+
+
+def _event_refs(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    refs: list[dict[str, Any]] = []
+    for event in events:
+        if not event:
+            continue
+        refs.append(
+            _drop_none_values(
+                {
+                    "event_id": event.get("event_id"),
+                    "event_type": event.get("event_type"),
+                    "turn": event.get("turn"),
+                    "error_type": event.get("error_type"),
+                }
+            )
+        )
+    return refs
+
+
+def _retry_model_call_id_after_recovery(
+    events: list[dict[str, Any]],
+    *,
+    before_index: int | None,
+) -> str | None:
+    if before_index is None:
+        return None
+    for event in events[before_index + 1 :]:
+        if event.get("event_type") != "model_input_accepted":
+            continue
+        data = _event_data(event)
+        model_call_id = data.get("model_call_id")
+        if isinstance(model_call_id, str) and model_call_id:
+            return model_call_id
+    for event in events[before_index + 1 :]:
+        if event.get("event_type") != "model_call_started":
+            continue
+        data = _event_data(event)
+        model_call_id = data.get("model_call_id")
+        if isinstance(model_call_id, str) and model_call_id:
+            return model_call_id
+    return None
+
+
+def _artifact_payload_from_ref(run_path: Path, ref: Any) -> dict[str, Any]:
+    if not isinstance(ref, dict):
+        return {}
+    relative_path = ref.get("relative_path")
+    if not isinstance(relative_path, str) or not relative_path:
+        return {}
+    artifact_path = run_path / relative_path
+    try:
+        resolved = artifact_path.resolve()
+        run_root = run_path.resolve()
+    except OSError:
+        return {}
+    if run_root not in resolved.parents and resolved != run_root:
+        return {}
+    if not artifact_path.exists():
+        return {}
+    try:
+        payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _first_present(*values: Any) -> Any:
+    for value in values:
+        if value is not None:
+            return value
+    return None
+
+
+def _drop_none_values(payload: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in payload.items() if value is not None}
+
+
 def _compaction_applied_but_insufficient(run_path: Path) -> bool:
     for event in _read_jsonl_if_exists(run_path / "events.jsonl"):
         if event.get("event_type") != "context_prepared":
@@ -761,13 +1236,17 @@ def _compaction_applied_but_insufficient(run_path: Path) -> bool:
     return False
 
 
-def _latest_context_limit_details(run_path: Path) -> dict[str, Any]:
+def _latest_context_limit_details(
+    run_path: Path,
+    *,
+    error_type: str = "context_limit",
+) -> dict[str, Any]:
     latest_context: dict[str, Any] = {}
     latest_budget: dict[str, Any] = {}
     for event in _read_jsonl_if_exists(run_path / "events.jsonl"):
         if event.get("event_type") == "context_prepared":
             latest_context = event.get("data") if isinstance(event.get("data"), dict) else {}
-        if event.get("event_type") == "budget_exhausted" and event.get("error_type") == "context_limit":
+        if event.get("event_type") == "budget_exhausted" and event.get("error_type") == error_type:
             latest_budget = event.get("data") if isinstance(event.get("data"), dict) else {}
     return {
         "latest_context_prepared": {
