@@ -555,6 +555,8 @@ def test_provider_http_status_error_taxonomy():
     assert classify_http_status(422) == "invalid_response"
     assert classify_http_status(503) == "provider_error"
     assert classify_http_status(400, message="maximum context length exceeded") == "context_limit"
+    assert classify_http_status(400, message="prompt too long") == "context_limit"
+    assert classify_http_status(400, message="context length exceeded") == "context_limit"
     assert classify_http_status(400, payload={"error": {"message": "rate limit reached"}}) == "rate_limited"
 
 

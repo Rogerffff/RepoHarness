@@ -90,6 +90,16 @@ def _model_input_was_accepted(response: ModelResponse) -> bool:
     return response.model_error_type in MODEL_INPUT_ACCEPTED_ERROR_TYPES
 
 
+def _provider_context_limit_rejected_input(
+    response: ModelResponse,
+    terminal_error_type: str | None,
+) -> bool:
+    return (
+        terminal_error_type in MODEL_INPUT_NOT_ACCEPTED_ERROR_TYPES
+        or response.model_error_type in MODEL_INPUT_NOT_ACCEPTED_ERROR_TYPES
+    )
+
+
 class AgentLoop:
     def __init__(
         self,
@@ -916,6 +926,262 @@ class AgentLoop:
                         },
                     )
                 )
+            if _provider_context_limit_rejected_input(response, terminal_error_type):
+                state.last_model_error = terminal_error_type or response.model_error_type
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("reactive_compact"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="reactive_compact_triggered",
+                        severity="warning",
+                        error_type="provider_context_limit",
+                        artifact_refs=[
+                            ref
+                            for ref in [
+                                prepared.prepared_messages_ref,
+                                response.raw_provider_request_ref,
+                                response.raw_provider_response_ref,
+                            ]
+                            if ref is not None
+                        ],
+                        data={
+                            "schema_version": "repo_harness_reactive_compact_triggered_v1",
+                            "trigger_reason": "provider_context_limit_retry",
+                            "model_call_id": model_request.model_call_id,
+                            "context_revision": prepared.context_revision,
+                            "prepared_messages_ref": prepared.prepared_messages_ref.model_dump(
+                                mode="json"
+                            ),
+                            "model_input_hash": prepared.model_input_hash,
+                            "terminal_error_type": terminal_error_type,
+                            "model_error_type": response.model_error_type,
+                            "raw_provider_request_ref": (
+                                response.raw_provider_request_ref.model_dump(mode="json")
+                                if response.raw_provider_request_ref is not None
+                                else None
+                            ),
+                            "raw_provider_response_ref": (
+                                response.raw_provider_response_ref.model_dump(mode="json")
+                                if response.raw_provider_response_ref is not None
+                                else None
+                            ),
+                            "token_gap_status": "unknown",
+                            "ordinary_assistant_message_appended": False,
+                            "trainable": False,
+                        },
+                    )
+                )
+                if (
+                    not context_config_resolved.reactive_compact_enabled
+                    or context_config_resolved.reactive_compact_retry_limit <= 0
+                ):
+                    state.agent_stop_reason = "context_limit_reactive_compact_disabled"
+                    state.budget_state.stop_reason = "context_limit_reactive_compact_disabled"
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("reactive_compact"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="reactive_compact_skipped",
+                            severity="warning",
+                            error_type="context_limit_reactive_compact_disabled",
+                            artifact_refs=[
+                                ref
+                                for ref in [
+                                    prepared.prepared_messages_ref,
+                                    response.raw_provider_request_ref,
+                                    response.raw_provider_response_ref,
+                                ]
+                                if ref is not None
+                            ],
+                            data={
+                                "schema_version": "repo_harness_reactive_compact_skipped_v1",
+                                "reason": "reactive_compact_disabled_or_retry_limit_zero",
+                                "reactive_compact_enabled": (
+                                    context_config_resolved.reactive_compact_enabled
+                                ),
+                                "reactive_compact_retry_limit": (
+                                    context_config_resolved.reactive_compact_retry_limit
+                                ),
+                                "trainable": False,
+                            },
+                        )
+                    )
+                    break
+                if (
+                    state.reactive_compact_retry_count
+                    >= context_config_resolved.reactive_compact_retry_limit
+                ):
+                    state.agent_stop_reason = "context_limit_after_reactive_compact"
+                    state.budget_state.stop_reason = "context_limit_after_reactive_compact"
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("reactive_compact"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="reactive_compact_retry_limit_exhausted",
+                            severity="error",
+                            error_type="context_limit_after_reactive_compact",
+                            artifact_refs=[
+                                ref
+                                for ref in [
+                                    prepared.prepared_messages_ref,
+                                    response.raw_provider_request_ref,
+                                    response.raw_provider_response_ref,
+                                ]
+                                if ref is not None
+                            ],
+                            data={
+                                "schema_version": (
+                                    "repo_harness_reactive_compact_retry_limit_exhausted_v1"
+                                ),
+                                "reactive_compact_retry_count": (
+                                    state.reactive_compact_retry_count
+                                ),
+                                "reactive_compact_retry_limit": (
+                                    context_config_resolved.reactive_compact_retry_limit
+                                ),
+                                "trainable": False,
+                            },
+                        )
+                    )
+                    break
+                emergency_result = self.auto_compact_runner.run(
+                    mode="emergency",
+                    trigger_reason="provider_context_limit_retry",
+                    source_prepared=prepared,
+                    recorder=recorder,
+                    task_id=task_id,
+                    turn=turn,
+                    context_config=context_config_resolved,
+                    provider_options=provider_options_resolved,
+                    model_client=self.model_client,
+                    tool_schema_snapshot_ref=tool_schema_snapshot_ref
+                    or _placeholder_artifact_ref("tool_schema_snapshot"),
+                    run_config_facts_ref=run_config_facts_ref
+                    or RunConfigFactsRef(sha256="0" * 64),
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index
+                    if tool_context
+                    else None,
+                    generation_config=generation_config or {},
+                    provider_model_settings=provider_model_settings or {},
+                    budget_state=state.budget_state.model_dump(mode="json"),
+                    request_timeout_seconds=request_timeout_seconds,
+                    raw_request_logging_policy=raw_request_logging_policy,
+                    retry_policy=retry_policy,
+                    scaffold_id=self.scaffold.scaffold_id,
+                )
+                if emergency_result.status == "applied":
+                    state.auto_compact_count += 1
+                    state.reactive_compact_count += 1
+                    state.reactive_compact_retry_count += 1
+                    state.last_auto_compact_record_ref = (
+                        emergency_result.record_ref.model_dump(mode="json")
+                        if emergency_result.record_ref is not None
+                        else None
+                    )
+                    state.last_auto_compact_summary_ref = (
+                        emergency_result.summary_artifact_ref.model_dump(mode="json")
+                        if emergency_result.summary_artifact_ref is not None
+                        else None
+                    )
+                    state.last_reactive_compact_record_ref = state.last_auto_compact_record_ref
+                    state.last_reactive_compact_summary_ref = state.last_auto_compact_summary_ref
+                    messages = [dict(message) for message in emergency_result.rebuilt_messages]
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("reactive_compact"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="reactive_compact_applied",
+                            severity="warning",
+                            artifact_refs=[
+                                ref
+                                for ref in [
+                                    emergency_result.record_ref,
+                                    emergency_result.summary_artifact_ref,
+                                    emergency_result.rebuilt_messages_ref,
+                                ]
+                                if ref is not None
+                            ],
+                            data={
+                                "schema_version": "repo_harness_reactive_compact_applied_v1",
+                                "compact_id": emergency_result.compact_id,
+                                "trigger_reason": "provider_context_limit_retry",
+                                "mode": "emergency",
+                                "source_prepared_messages_ref": (
+                                    emergency_result.source_prepared_messages_ref.model_dump(
+                                        mode="json"
+                                    )
+                                ),
+                                "summary_artifact_ref": (
+                                    emergency_result.summary_artifact_ref.model_dump(
+                                        mode="json"
+                                    )
+                                    if emergency_result.summary_artifact_ref
+                                    else None
+                                ),
+                                "rebuilt_messages_ref": (
+                                    emergency_result.rebuilt_messages_ref.model_dump(
+                                        mode="json"
+                                    )
+                                    if emergency_result.rebuilt_messages_ref
+                                    else None
+                                ),
+                                "reactive_compact_retry_count": (
+                                    state.reactive_compact_retry_count
+                                ),
+                                "reactive_compact_retry_limit": (
+                                    context_config_resolved.reactive_compact_retry_limit
+                                ),
+                                "ordinary_assistant_message_appended": False,
+                                "trainable": False,
+                            },
+                        )
+                    )
+                    continue
+                state.agent_stop_reason = "reactive_compact_failed"
+                state.budget_state.stop_reason = "reactive_compact_failed"
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("reactive_compact"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="reactive_compact_failed",
+                        severity="error",
+                        error_type=emergency_result.failure_reason
+                        or "emergency_auto_compact_failed",
+                        artifact_refs=[
+                            ref
+                            for ref in [
+                                emergency_result.record_ref,
+                                emergency_result.compact_model_request_ref,
+                                emergency_result.compact_model_response_ref,
+                            ]
+                            if ref is not None
+                        ],
+                        data={
+                            "schema_version": "repo_harness_reactive_compact_failed_v1",
+                            "compact_id": emergency_result.compact_id,
+                            "failure_reason": emergency_result.failure_reason,
+                            "status": emergency_result.status,
+                            "ordinary_assistant_message_appended": False,
+                            "trainable": False,
+                        },
+                    )
+                )
+                break
             assistant_artifact_ref = _write_assistant_message_artifact(
                 recorder=recorder,
                 content=response.assistant_message.content,

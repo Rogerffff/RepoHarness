@@ -519,7 +519,18 @@ def classify_http_status(
     message: str | None = None,
 ) -> str:
     text = f"{message or ''} {payload or {}}".lower()
-    if any(marker in text for marker in ("context_length", "maximum context", "context limit", "too many tokens")):
+    if any(
+        marker in text
+        for marker in (
+            "context_length",
+            "context length",
+            "maximum context",
+            "context limit",
+            "prompt too long",
+            "too many tokens",
+            "maximum tokens",
+        )
+    ):
         return "context_limit"
     if "rate limit" in text or "rate_limit" in text:
         return "rate_limited"
