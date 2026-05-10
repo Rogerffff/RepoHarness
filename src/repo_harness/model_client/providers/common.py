@@ -224,12 +224,15 @@ def build_chat_completion_payload(
         payload["tool_choice"] = request.tool_choice or "auto"
     else:
         payload["tool_choice"] = "none"
-    if "temperature" in request.generation_config:
+    provider_options = request.provider_options.provider_specific_options
+    if "temperature" in request.generation_config and not _skip_temperature_for_deepseek_thinking(
+        include_deepseek_options=include_deepseek_options,
+        provider_options=provider_options,
+    ):
         payload["temperature"] = request.generation_config["temperature"]
     max_output_tokens = request.generation_config.get("max_output_tokens")
     if max_output_tokens is not None:
         payload["max_tokens"] = max_output_tokens
-    provider_options = request.provider_options.provider_specific_options
     if include_deepseek_options:
         thinking = provider_options.get("thinking")
         if thinking is not None:
@@ -255,6 +258,19 @@ def build_chat_completion_payload(
         "credential_policy": request.credential_policy.model_dump(mode="json"),
         "authorization": REDACTED_CREDENTIAL,
     }
+
+
+def _skip_temperature_for_deepseek_thinking(
+    *,
+    include_deepseek_options: bool,
+    provider_options: dict[str, Any],
+) -> bool:
+    if not include_deepseek_options:
+        return False
+    thinking = provider_options.get("thinking")
+    if isinstance(thinking, dict):
+        return thinking.get("type") != "disabled"
+    return False
 
 
 def write_provider_request_artifact(

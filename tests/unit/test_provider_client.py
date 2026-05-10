@@ -78,6 +78,43 @@ def test_deepseek_provider_uses_openai_compatible_tool_calls(tmp_path: Path):
     assert "Authorization: Bearer" not in raw_text
 
 
+def test_deepseek_thinking_enabled_omits_temperature(tmp_path: Path):
+    client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-thinking",
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "message": {"role": "assistant", "content": "done"},
+                }
+            ],
+            "usage": {"prompt_tokens": 11, "completion_tokens": 7},
+        },
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        provider_specific_options={
+            "thinking": {"type": "enabled"},
+            "reasoning_effort": "high",
+        },
+    )
+    with RunRecorder("deepseek-thinking-temperature", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type is None
+    assert "temperature" not in client.last_body
+    assert client.last_body["extra_body"] == {"thinking": {"type": "enabled"}}
+    assert client.last_body["reasoning_effort"] == "high"
+    raw_text = (tmp_path / "run" / response.raw_provider_request_ref.relative_path).read_text(
+        encoding="utf-8"
+    )
+    assert '"temperature"' not in raw_text
+
+
 def test_deepseek_thinking_tool_call_without_reasoning_is_protocol_error(
     tmp_path: Path,
 ):
