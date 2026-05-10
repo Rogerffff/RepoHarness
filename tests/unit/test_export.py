@@ -613,6 +613,66 @@ def test_exports_bind_ptl_retry_accepted_snapshot_not_rejected_context_limit(
     )
 
 
+def test_exports_filter_ptl_retry_when_retry_still_context_limit(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_ptl_retry_still_context_limit",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_call_completed",
+            "turn": 1,
+            "data": {
+                "model_call_id": "run_ptl_retry_still_context_limit_model_call_0001",
+                "provider": "replay",
+                "model_id": "replay-script-v0",
+                "model_error_type": "context_limit",
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "ptl_truncation_applied",
+            "turn": 1,
+            "data": {
+                "synthetic_marker_id": "ptl_marker_demo",
+                "original_model_call_id": (
+                    "run_ptl_retry_still_context_limit_model_call_0001"
+                ),
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_call_completed",
+            "turn": 2,
+            "data": {
+                "model_call_id": "run_ptl_retry_still_context_limit_model_call_0002",
+                "provider": "replay",
+                "model_id": "replay-script-v0",
+                "model_error_type": "context_limit",
+            },
+        },
+    )
+
+    sft_output = export_sft_jsonl(run_dir)
+    sft_export_dir = _latest_export_dir(run_dir / "exports")
+    sft_audit = json.loads((sft_export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    rl_output = export_rl_jsonl(run_dir)
+    rl_export_dir = _latest_export_dir(run_dir / "exports")
+    rl_audit = json.loads((rl_export_dir / "audit_report.json").read_text(encoding="utf-8"))
+
+    assert _read_jsonl(sft_output) == []
+    assert _read_jsonl(rl_output) == []
+    assert sft_audit["samples"][0]["invalid_reason"] == "model_error:context_limit"
+    assert rl_audit["samples"][0]["invalid_reason"] == "model_error:context_limit"
+
+
 def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_max_turns_success",

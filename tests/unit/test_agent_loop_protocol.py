@@ -1332,7 +1332,32 @@ def test_agent_loop_ptl_fallback_drops_complete_old_round_after_emergency_compac
     assert any(event["event_type"] == "ptl_truncation_applied" for event in events)
     ptl_event = next(event for event in events if event["event_type"] == "ptl_truncation_applied")
     ptl_record = _read_artifact_payload(run_dir, ptl_event["data"]["ptl_truncation_ref"])
+    assert state.last_ptl_truncation_ref == ptl_event["data"]["ptl_truncation_ref"]
+    assert ptl_event["data"]["original_model_call_id"] == "loop-ptl-fallback_model_call_0001"
+    assert ptl_event["data"]["recovery_retry_index"] == 1
+    assert ptl_event["data"]["token_estimate_before"] > ptl_event["data"]["token_estimate_after"]
+    assert ptl_event["data"]["synthetic_marker_id"] == ptl_record["synthetic_marker_id"]
+    assert ptl_record["schema_version"] == "repo_harness_ptl_truncation_record_v1"
+    assert ptl_record["policy"] == "auto_compact_then_round_truncate"
+    assert ptl_record["reason"] == "provider_context_limit_retry"
+    assert ptl_record["original_model_call_id"] == "loop-ptl-fallback_model_call_0001"
+    assert ptl_record["original_prepared_messages_ref"]["kind"] == "prepared_messages"
+    assert ptl_record["original_model_input_hash"]
+    assert ptl_record["original_provider_request_ref"]["kind"] == "raw_provider_request"
+    assert ptl_record["original_provider_response_ref"]["kind"] == "raw_provider_response"
+    assert ptl_record["emergency_compact_record_ref"]["kind"] == "auto_compact_record"
+    assert "invalid_compact_summary" in ptl_record["emergency_compact_failure_reason"]
+    assert ptl_record["synthetic_marker_message"]["role"] == "user"
+    marker_text = json.dumps(ptl_record["synthetic_marker_message"], ensure_ascii=False)
+    assert "repo_harness_ptl_truncation_marker" in marker_text
+    assert "provider context limit rejected this input" not in marker_text
     assert ptl_record["omitted_round_count"] == 1
+    assert ptl_record["retained_round_count"] >= 1
+    assert ptl_record["message_count_before"] > ptl_record["message_count_after"]
+    assert ptl_record["token_estimate_before"] > ptl_record["token_estimate_after"]
+    assert ptl_record["hard_context_limit_tokens"] > 0
+    assert isinstance(ptl_record["post_truncation_above_hard_limit"], bool)
+    assert ptl_record["tool_pairing_preservation_policy"] == "drop_complete_rounds_only_v1"
     assert ptl_record["omitted_rounds"][0]["roles"] == ["assistant", "tool"]
     assert "call_old" in ptl_record["omitted_rounds"][0]["tool_call_ids"]
     accepted_model_call_ids = [
@@ -1341,6 +1366,78 @@ def test_agent_loop_ptl_fallback_drops_complete_old_round_after_emergency_compac
         if event["event_type"] == "model_input_accepted"
     ]
     assert accepted_model_call_ids == ["loop-ptl-fallback_model_call_0002"]
+
+
+def test_agent_loop_ptl_retry_stops_when_retry_still_hits_context_limit(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _ReactiveContextLimitEmergencyFailThenContextLimitClient()
+
+    with RunRecorder("loop-ptl-fallback-second-limit", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["grep"],
+        ).run(
+            run_id="loop-ptl-fallback-second-limit",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "Fix the bug."},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "turn": 1,
+                    "tool_calls": [
+                        {
+                            "tool_call_id": "call_old",
+                            "tool_name": "grep",
+                            "arguments": {"query": "old"},
+                            "turn": 1,
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "turn": 1,
+                    "tool_call_id": "call_old",
+                    "tool_result_id": "call_old_result",
+                    "tool_name": "grep",
+                    "content": "old provider-visible tool output " * 300,
+                    "normalized_arguments": {"query": "old"},
+                    "normalized_input_hash": stable_hash({"query": "old"}),
+                    "status": "ok",
+                    "typed": {},
+                    "artifact_refs": [],
+                },
+                {"role": "user", "content": "Recent visible requirement."},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=3,
+            context_config=ContextManagementConfig(
+                model_context_window_tokens=12000,
+                main_output_reserve_tokens=0,
+                estimator_safety_margin_ratio=0.0,
+                estimator_safety_margin_min_tokens=0,
+                auto_compact_trigger_ratio=0.99,
+                reactive_compact_enabled=True,
+                reactive_compact_retry_limit=1,
+                ptl_retry_policy="auto_compact_then_round_truncate",
+            ),
+        )
+
+    assert state.agent_stop_reason == "context_limit_after_reactive_compact"
+    assert state.ptl_truncation_count == 1
+    events = _read_events(run_dir)
+    assert any(event["event_type"] == "ptl_truncation_applied" for event in events)
+    assert any(
+        event["event_type"] == "reactive_compact_retry_limit_exhausted"
+        for event in events
+    )
+    assert not any(event["event_type"] == "model_input_accepted" for event in events)
+    assert not any(
+        artifact["kind"] == "model_input_snapshot" for artifact in _read_artifacts(run_dir)
+    )
 
 
 def test_agent_loop_stops_on_second_context_limit_after_reactive_compact(tmp_path: Path):
@@ -2047,6 +2144,14 @@ class _ReactiveContextLimitThenContextLimitClient(_ReactiveContextLimitThenFinal
 
 
 class _ReactiveContextLimitEmergencyFailThenFinalClient(_ReactiveContextLimitThenFinalClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.compact_content = "not json"
+
+
+class _ReactiveContextLimitEmergencyFailThenContextLimitClient(
+    _ReactiveContextLimitThenContextLimitClient
+):
     def __init__(self) -> None:
         super().__init__()
         self.compact_content = "not json"
