@@ -81,6 +81,8 @@ def test_auto_compact_runner_applies_summary_with_compact_only_request(tmp_path:
     assert "repo_harness_auto_compact_recovery_index" in rebuilt_text
     assert artifact.artifact_id in rebuilt_text
     assert "Fix calculator division by zero." in rebuilt_text
+    assert "tool_result_1" in rebuilt_text
+    assert "effective_tool_name" in rebuilt_text
     assert "typed" not in rebuilt_text
 
     event_types = [event["event_type"] for event in read_jsonl(recorder.events_path)]
@@ -114,6 +116,60 @@ def test_auto_compact_runner_rejects_non_json_summary(tmp_path: Path) -> None:
     assert len(client.requests) == 1
     event_types = [event["event_type"] for event in read_jsonl(recorder.events_path)]
     assert "auto_compact_failed" in event_types
+
+
+def test_auto_compact_rebuilt_tail_preserves_tool_result_audit_fields(
+    tmp_path: Path,
+) -> None:
+    recorder = RunRecorder(run_id="run-auto", task_id="task-1", run_dir=tmp_path / "run")
+    tool_index = ToolResultArtifactIndex(run_dir=recorder.run_dir)
+    artifact = persist_tool_result_content(
+        recorder=recorder,
+        tool_result_id="tool_result_1",
+        tool_call_id="tool_1",
+        tool_name="grep",
+        content="full grep output",
+        publishable_after_visibility_scan=True,
+        contamination_scan_status="clean",
+    )
+    tool_index.add(artifact)
+    tool_index.unlock_after_provider_commit(artifact.artifact_id)
+    source = _source_prepared(
+        recorder,
+        tool_artifact_ref=artifact.artifact_ref,
+        tool_typed={
+            "single_tool_result_persisted": True,
+            "single_tool_result_original_chars": artifact.size_chars,
+            "verifier_result_preview": {"accepted": False},
+        },
+    )
+    client = _CompactFakeClient(content=json.dumps(_summary_payload()))
+
+    result = AutoCompactRunner().run(
+        mode="proactive",
+        trigger_reason="projection_above_auto_compact_trigger",
+        source_prepared=source,
+        recorder=recorder,
+        task_id="task-1",
+        turn=3,
+        context_config=ContextManagementConfig(),
+        provider_options=ModelProviderOptions(provider="mock", model_id="mock-v0"),
+        model_client=client,
+        tool_schema_snapshot_ref=_artifact_ref(recorder, "tool_schema_snapshot"),
+        run_config_facts_ref=RunConfigFactsRef(sha256="1" * 64),
+        tool_result_artifact_index=tool_index,
+    )
+
+    assert result.status == "applied"
+    tool_tail = next(
+        message for message in result.rebuilt_messages if message.get("role") == "tool"
+    )
+    assert tool_tail["tool_result_id"] == "tool_result_1"
+    assert tool_tail["tool_name"] == "grep"
+    assert tool_tail["effective_tool_name"] == "grep"
+    assert tool_tail["artifact_refs"][0]["artifact_id"] == artifact.artifact_id
+    assert tool_tail["typed"]["single_tool_result_persisted"] is True
+    assert "verifier_result_preview" not in tool_tail["typed"]
 
 
 def test_auto_compact_runner_rejects_forbidden_summary_content(tmp_path: Path) -> None:
@@ -279,7 +335,25 @@ class _CompactFakeClient:
         )
 
 
-def _source_prepared(recorder: RunRecorder, *, extra_content: str = "") -> PreparedMessages:
+def _source_prepared(
+    recorder: RunRecorder,
+    *,
+    extra_content: str = "",
+    tool_artifact_ref: ArtifactRef | None = None,
+    tool_typed: dict[str, Any] | None = None,
+) -> PreparedMessages:
+    tool_message: dict[str, Any] = {
+        "role": "tool",
+        "turn": 1,
+        "tool_call_id": "tool_1",
+        "tool_result_id": "tool_result_1",
+        "tool_name": "grep",
+        "effective_tool_name": "grep",
+        "content": f"divide appears in calculator.py {extra_content}",
+        "typed": tool_typed or {"verifier_result_preview": {"accepted": False}},
+    }
+    if tool_artifact_ref is not None:
+        tool_message["artifact_refs"] = [tool_artifact_ref.model_dump(mode="json")]
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": "system prompt"},
         {"role": "user", "content": "Fix calculator division by zero."},
@@ -295,14 +369,7 @@ def _source_prepared(recorder: RunRecorder, *, extra_content: str = "") -> Prepa
                 }
             ],
         },
-        {
-            "role": "tool",
-            "turn": 1,
-            "tool_call_id": "tool_1",
-            "tool_result_id": "tool_result_1",
-            "content": f"divide appears in calculator.py {extra_content}",
-            "typed": {"verifier_result_preview": {"accepted": False}},
-        },
+        tool_message,
         {"role": "user", "turn": 2, "content": "Continue from the grep result."},
     ]
     ref = recorder.write_json_artifact(

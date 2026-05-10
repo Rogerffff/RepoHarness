@@ -20,7 +20,8 @@ from repo_harness.context.schemas import (
     CompactSummary,
 )
 from repo_harness.context.tool_result_artifacts import ToolResultArtifactIndex
-from repo_harness.model_client import ModelClient, ModelProviderOptions, ModelRequestContext
+from repo_harness.model_client.protocol import ModelClient
+from repo_harness.model_client.schemas import ModelProviderOptions, ModelRequestContext
 from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.schema_base import stable_hash
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TrajectoryEvent
@@ -361,7 +362,7 @@ class AutoCompactRunner:
             mode=mode,
             trigger_reason=trigger_reason,
             source_prepared=source_prepared,
-            source_visible_messages=source_visible_messages,
+            source_runtime_messages=source_prepared.messages,
             summary=summary,
             summary_ref=summary_ref,
             context_config=context_config,
@@ -490,13 +491,19 @@ def provider_visible_messages_for_compact(
     return [_provider_visible_message(message) for message in messages]
 
 
+def runtime_messages_for_post_compact_rebuild(
+    messages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [_runtime_message_for_rebuild(message) for message in messages]
+
+
 def rebuild_messages_after_auto_compact(
     *,
     compact_id: str,
     mode: str,
     trigger_reason: str,
     source_prepared: Any,
-    source_visible_messages: list[dict[str, Any]],
+    source_runtime_messages: list[dict[str, Any]],
     summary: CompactSummary,
     summary_ref: ArtifactRef,
     context_config: ContextManagementConfig,
@@ -504,8 +511,11 @@ def rebuild_messages_after_auto_compact(
     post_compact_target_tokens: int,
     tool_result_artifact_index: ToolResultArtifactIndex | None = None,
 ) -> list[dict[str, Any]]:
+    source_runtime_messages = runtime_messages_for_post_compact_rebuild(
+        source_runtime_messages
+    )
     foundation_messages, historical_messages = _split_foundation_messages(
-        source_visible_messages
+        source_runtime_messages
     )
     preserved_tail = _select_preserved_tail(
         historical_messages,
@@ -650,6 +660,52 @@ def _provider_visible_message(message: dict[str, Any]) -> dict[str, Any]:
         return converted
     converted["content"] = _content_to_string(message.get("content"))
     return converted
+
+
+def _runtime_message_for_rebuild(message: dict[str, Any]) -> dict[str, Any]:
+    role = str(message.get("role") or "user")
+    if role == "tool":
+        return _runtime_tool_message_for_rebuild(message)
+    allowed = {
+        "role",
+        "content",
+        "turn",
+        "tool_calls",
+        "metadata",
+        "model_error_type",
+        "scaffold_phase",
+    }
+    return {key: value for key, value in message.items() if key in allowed}
+
+
+def _runtime_tool_message_for_rebuild(message: dict[str, Any]) -> dict[str, Any]:
+    allowed = {
+        "role",
+        "content",
+        "turn",
+        "tool_call_id",
+        "tool_result_id",
+        "tool_name",
+        "requested_tool_name",
+        "effective_tool_name",
+        "normalized_input_hash",
+        "status",
+        "error_type",
+        "artifact_refs",
+        "content_artifact_refs",
+    }
+    rebuilt = {key: value for key, value in message.items() if key in allowed}
+    typed = message.get("typed")
+    if isinstance(typed, dict):
+        safe_typed = {
+            key: value
+            for key, value in typed.items()
+            if key.startswith("single_tool_result_")
+            or key.startswith("aggregate_tool_result_")
+        }
+        if safe_typed:
+            rebuilt["typed"] = safe_typed
+    return rebuilt
 
 
 def _provider_visible_tool_call(call: Any) -> dict[str, Any]:
@@ -1027,4 +1083,5 @@ __all__ = [
     "AutoCompactRunner",
     "provider_visible_messages_for_compact",
     "rebuild_messages_after_auto_compact",
+    "runtime_messages_for_post_compact_rebuild",
 ]

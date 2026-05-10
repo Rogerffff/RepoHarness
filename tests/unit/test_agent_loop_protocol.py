@@ -1011,6 +1011,7 @@ def test_agent_loop_context_limit_records_prepared_context(tmp_path: Path):
             recorder=recorder,
             max_turns=1,
             budget_manager=budget,
+            context_config=ContextManagementConfig(auto_compact_enabled=False),
         )
 
     events = _read_events(run_dir)
@@ -1047,6 +1048,7 @@ def test_agent_loop_context_warning_reprepares_before_provider_call(tmp_path: Pa
             recorder=recorder,
             max_turns=1,
             budget_manager=budget,
+            context_config=ContextManagementConfig(auto_compact_enabled=False),
         )
 
     events = _read_events(run_dir)
@@ -1065,6 +1067,145 @@ def test_agent_loop_context_warning_reprepares_before_provider_call(tmp_path: Pa
     assert warning_event["data"]["provider_request_created_before_warning"] is False
     assert model_event["data"]["context_revision"] == context_events[1]["data"]["context_revision"]
     assert "context_warning" in json.dumps(client.requests[0].prepared_messages, ensure_ascii=False)
+
+
+def test_agent_loop_runs_auto_compact_before_main_model_call(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _AutoCompactThenFinalClient()
+    config = ContextManagementConfig(
+        model_context_window_tokens=12000,
+        main_output_reserve_tokens=0,
+        estimator_safety_margin_ratio=0.0,
+        estimator_safety_margin_min_tokens=0,
+        auto_compact_trigger_ratio=0.1,
+        hard_context_limit_ratio=0.95,
+        post_compact_target_max_tokens=2000,
+    )
+
+    with RunRecorder("loop-auto-compact", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="loop-auto-compact",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "Fix the bug."},
+                {"role": "assistant", "turn": 1, "content": "old analysis " * 600},
+                {"role": "user", "turn": 2, "content": "old follow up " * 600},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            context_config=config,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert state.auto_compact_count == 1
+    assert state.auto_compact_consecutive_failures == 0
+    assert len(client.requests) == 2
+    assert client.requests[0].scaffold_phase == "compact"
+    assert client.requests[0].allowed_tool_definitions == []
+    assert client.requests[0].tool_choice == "none"
+    assert client.requests[1].model_call_id == "loop-auto-compact_model_call_0001"
+    main_messages = json.dumps(client.requests[1].prepared_messages, ensure_ascii=False)
+    assert "repo_harness_auto_compact_boundary" in main_messages
+    assert "repo_harness_auto_compact_summary" in main_messages
+    assert "old analysis " not in main_messages
+
+    events = _read_events(run_dir)
+    event_types = [event["event_type"] for event in events]
+    assert "auto_compact_triggered" in event_types
+    assert "auto_compact_applied" in event_types
+    assert "context_post_compact_prepared" in event_types
+    model_started = next(event for event in events if event["event_type"] == "model_call_started")
+    post_prepared = next(
+        event for event in events if event["event_type"] == "context_post_compact_prepared"
+    )
+    assert model_started["data"]["prepared_messages_ref"] == post_prepared["data"]["prepared_messages_ref"]
+
+
+def test_agent_loop_continues_after_auto_compact_failure_below_hard_limit(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _AutoCompactThenFinalClient(compact_content="not json")
+    config = ContextManagementConfig(
+        model_context_window_tokens=12000,
+        main_output_reserve_tokens=0,
+        estimator_safety_margin_ratio=0.0,
+        estimator_safety_margin_min_tokens=0,
+        auto_compact_trigger_ratio=0.1,
+        hard_context_limit_ratio=0.95,
+        post_compact_target_max_tokens=2000,
+    )
+
+    with RunRecorder("loop-auto-compact-fail-soft", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="loop-auto-compact-fail-soft",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "Fix the bug."},
+                {"role": "assistant", "turn": 1, "content": "old analysis " * 600},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            context_config=config,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert state.auto_compact_count == 0
+    assert state.auto_compact_consecutive_failures == 1
+    assert len(client.requests) == 2
+    assert client.requests[0].scaffold_phase == "compact"
+    assert client.requests[1].scaffold_phase == "act"
+    events = _read_events(run_dir)
+    assert any(event["event_type"] == "auto_compact_failed" for event in events)
+    assert any(event["event_type"] == "model_call_started" for event in events)
+
+
+def test_agent_loop_stops_when_auto_compact_fails_above_hard_limit(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _AutoCompactThenFinalClient()
+    config = ContextManagementConfig(
+        model_context_window_tokens=1000,
+        main_output_reserve_tokens=0,
+        estimator_safety_margin_ratio=0.0,
+        estimator_safety_margin_min_tokens=0,
+        auto_compact_trigger_ratio=0.2,
+        hard_context_limit_ratio=0.3,
+        post_compact_target_max_tokens=800,
+    )
+
+    with RunRecorder("loop-auto-compact-fail-hard", run_dir, task_id="task") as recorder:
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+        ).run(
+            run_id="loop-auto-compact-fail-hard",
+            task_id="task",
+            initial_messages=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "Fix the bug."},
+                {"role": "assistant", "turn": 1, "content": "old analysis " * 2000},
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            context_config=config,
+        )
+
+    assert state.agent_stop_reason == "auto_compact_failed_preflight"
+    assert client.requests == []
+    events = _read_events(run_dir)
+    assert any(event["event_type"] == "auto_compact_failed" for event in events)
+    assert not any(event["event_type"] == "model_call_started" for event in events)
+    exhausted = next(event for event in events if event["event_type"] == "budget_exhausted")
+    assert exhausted["error_type"] == "auto_compact_failed_preflight"
 
 
 def test_agent_loop_max_cost_zero_stops_before_model_call(tmp_path: Path):
@@ -1520,6 +1661,61 @@ class _RequestListClient:
 
     def generate(self, request, recorder):  # noqa: ANN001, ARG002
         self.requests.append(request)
+        return ModelResponse(
+            assistant_message=ModelMessage(role="assistant", content="done"),
+            finish_reason="stop",
+        )
+
+
+class _AutoCompactThenFinalClient:
+    def __init__(self, *, compact_content: str | None = None) -> None:
+        self.requests = []
+        self.compact_content = compact_content or json.dumps(
+            {
+                "schema_version": "repo_harness_compact_summary_v1",
+                "task_intent": "Continue the task from visible context.",
+                "repository_facts": ["The task is to fix a public bug."],
+                "actions_taken": ["Earlier context was summarized."],
+                "patch_state": {
+                    "changed_files": [],
+                    "important_diffs": [],
+                },
+                "test_state": {
+                    "commands_run": [],
+                    "passing": [],
+                    "failing": [],
+                    "unknown": ["Verification has not run yet."],
+                },
+                "tool_recovery_index": [],
+                "open_questions": [],
+                "next_step": "Inspect the relevant code and make the smallest fix.",
+                "visibility_policy": "model_visible_only",
+            }
+        )
+
+    def generate(self, request, recorder):  # noqa: ANN001, ARG002
+        self.requests.append(request)
+        if request.scaffold_phase == "compact":
+            raw_request_ref = recorder.write_json_artifact(
+                "raw_auto_compact_test_request",
+                {
+                    "model_call_id": request.model_call_id,
+                    "messages": request.prepared_messages,
+                    "tools": request.allowed_tool_definitions,
+                    "tool_choice": request.tool_choice,
+                    "scaffold_phase": request.scaffold_phase,
+                },
+            )
+            raw_response_ref = recorder.write_json_artifact(
+                "raw_auto_compact_test_response",
+                {"content": self.compact_content},
+            )
+            return ModelResponse(
+                assistant_message=ModelMessage(role="assistant", content=self.compact_content),
+                raw_provider_request_ref=raw_request_ref,
+                raw_provider_response_ref=raw_response_ref,
+                finish_reason="stop",
+            )
         return ModelResponse(
             assistant_message=ModelMessage(role="assistant", content="done"),
             finish_reason="stop",

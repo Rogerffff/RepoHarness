@@ -11,6 +11,7 @@ from typing import Any, Callable
 from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetManager, BudgetState
 from repo_harness.config import ContextManagementConfig
+from repo_harness.context.auto_compact import AutoCompactRunner
 from repo_harness.context import (
     ContextManager,
     ToolResultArtifactIndex,
@@ -103,6 +104,7 @@ class AgentLoop:
         self.model_client = model_client
         self.tool_executor = tool_executor
         self.context_manager = ContextManager()
+        self.auto_compact_runner = AutoCompactRunner()
         self.scaffold = scaffold or build_scaffold("simple_react")
         self.allowed_tool_names = allowed_tool_names or list(self.scaffold.allowed_tools)
         self.test_feedback_policy = test_feedback_policy
@@ -364,9 +366,271 @@ class AgentLoop:
                     provider_message_format=f"repo_harness_{provider_options_resolved.provider}_messages_v0",
                     context_budget_facts=context_budget_facts,
                 )
+            auto_compact_applied_this_turn = False
+            auto_compact_trigger_tokens = max(
+                1,
+                int(
+                    runtime_context_budget_tokens
+                    * context_config_resolved.auto_compact_trigger_ratio
+                ),
+            )
+            if (
+                context_config_resolved.auto_compact_enabled
+                and context_config_resolved.auto_compact_max_consecutive_failures > 0
+                and state.auto_compact_consecutive_failures
+                < context_config_resolved.auto_compact_max_consecutive_failures
+                and projection_estimate.provider_request_token_estimate
+                >= auto_compact_trigger_tokens
+            ):
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("auto_compact"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="auto_compact_triggered",
+                        severity="warning",
+                        artifact_refs=[prepared.prepared_messages_ref],
+                        data={
+                            "schema_version": "repo_harness_auto_compact_triggered_v1",
+                            "trigger_reason": "projection_above_auto_compact_trigger",
+                            "context_revision": prepared.context_revision,
+                            "prepared_messages_ref": prepared.prepared_messages_ref.model_dump(
+                                mode="json"
+                            ),
+                            "model_input_hash": prepared.model_input_hash,
+                            "provider_request_projection_hash": (
+                                projection_estimate.provider_request_projection_hash
+                            ),
+                            "provider_request_token_estimate": (
+                                projection_estimate.provider_request_token_estimate
+                            ),
+                            "auto_compact_trigger_tokens": auto_compact_trigger_tokens,
+                            "auto_compact_trigger_ratio": (
+                                context_config_resolved.auto_compact_trigger_ratio
+                            ),
+                            "runtime_context_budget_tokens": runtime_context_budget_tokens,
+                            "hard_context_limit_tokens": runtime_hard_context_limit_tokens,
+                            "consecutive_failures": (
+                                state.auto_compact_consecutive_failures
+                            ),
+                            "trainable": False,
+                        },
+                    )
+                )
+                auto_compact_result = self.auto_compact_runner.run(
+                    mode="proactive",
+                    trigger_reason="projection_above_auto_compact_trigger",
+                    source_prepared=prepared,
+                    recorder=recorder,
+                    task_id=task_id,
+                    turn=turn,
+                    context_config=context_config_resolved,
+                    provider_options=provider_options_resolved,
+                    model_client=self.model_client,
+                    tool_schema_snapshot_ref=tool_schema_snapshot_ref
+                    or _placeholder_artifact_ref("tool_schema_snapshot"),
+                    run_config_facts_ref=run_config_facts_ref
+                    or RunConfigFactsRef(sha256="0" * 64),
+                    tool_result_artifact_index=tool_context.tool_result_artifact_index
+                    if tool_context
+                    else None,
+                    generation_config=generation_config or {},
+                    provider_model_settings=provider_model_settings or {},
+                    budget_state=state.budget_state.model_dump(mode="json"),
+                    request_timeout_seconds=request_timeout_seconds,
+                    raw_request_logging_policy=raw_request_logging_policy,
+                    retry_policy=retry_policy,
+                    scaffold_id=self.scaffold.scaffold_id,
+                )
+                state.last_auto_compact_record_ref = (
+                    auto_compact_result.record_ref.model_dump(mode="json")
+                    if auto_compact_result.record_ref is not None
+                    else None
+                )
+                state.last_auto_compact_summary_ref = (
+                    auto_compact_result.summary_artifact_ref.model_dump(mode="json")
+                    if auto_compact_result.summary_artifact_ref is not None
+                    else None
+                )
+                state.last_auto_compact_context_revision_before = prepared.context_revision
+                if auto_compact_result.status == "applied":
+                    state.auto_compact_count += 1
+                    state.auto_compact_consecutive_failures = 0
+                    messages = [dict(message) for message in auto_compact_result.rebuilt_messages]
+                    context_messages = _messages_with_phase_metadata(
+                        messages=messages,
+                        scaffold=self.scaffold,
+                        phase=current_phase,
+                        allowed_tool_names=phase_allowed_tool_names,
+                    )
+                    prepared = self.context_manager.prepare_messages(
+                        messages=context_messages,
+                        recorder=recorder,
+                        task_id=task_id,
+                        turn=turn,
+                        context_config=context_config_resolved,
+                        provider_name=provider_options_resolved.provider,
+                        tool_result_artifact_index=tool_context.tool_result_artifact_index
+                        if tool_context
+                        else None,
+                        context_budget_facts=context_budget_payload,
+                    )
+                    state.context_revision = prepared.context_revision
+                    state.last_auto_compact_context_revision_after = prepared.context_revision
+                    recorder.append_event(prepared.context_event)
+                    recorder.append_event(
+                        TrajectoryEvent(
+                            event_id=recorder.next_event_id("auto_compact"),
+                            timestamp=_timestamp(),
+                            run_id=run_id,
+                            task_id=task_id,
+                            turn=turn,
+                            event_type="context_post_compact_prepared",
+                            artifact_refs=[
+                                ref
+                                for ref in [
+                                    prepared.prepared_messages_ref,
+                                    auto_compact_result.rebuilt_messages_ref,
+                                    auto_compact_result.summary_artifact_ref,
+                                ]
+                                if ref is not None
+                            ],
+                            data={
+                                "schema_version": (
+                                    "repo_harness_context_post_compact_prepared_v1"
+                                ),
+                                "compact_id": auto_compact_result.compact_id,
+                                "context_revision_before": (
+                                    state.last_auto_compact_context_revision_before
+                                ),
+                                "context_revision_after": prepared.context_revision,
+                                "prepared_messages_ref": prepared.prepared_messages_ref.model_dump(
+                                    mode="json"
+                                ),
+                                "model_input_hash": prepared.model_input_hash,
+                                "rebuilt_messages_ref": (
+                                    auto_compact_result.rebuilt_messages_ref.model_dump(
+                                        mode="json"
+                                    )
+                                    if auto_compact_result.rebuilt_messages_ref
+                                    else None
+                                ),
+                                "summary_artifact_ref": (
+                                    auto_compact_result.summary_artifact_ref.model_dump(
+                                        mode="json"
+                                    )
+                                    if auto_compact_result.summary_artifact_ref
+                                    else None
+                                ),
+                                "trainable": False,
+                            },
+                        )
+                    )
+                    pairing_validation = prepared.context_event.data.get(
+                        "tool_pairing_validation", {}
+                    )
+                    if not pairing_validation.get("ok", True):
+                        state.agent_stop_reason = "context_integrity_error"
+                        state.budget_state.stop_reason = "context_integrity_error"
+                        state.last_model_error = "context_integrity_error"
+                        recorder.append_event(
+                            TrajectoryEvent(
+                                event_id=recorder.next_event_id("context_integrity"),
+                                timestamp=_timestamp(),
+                                run_id=run_id,
+                                task_id=task_id,
+                                turn=turn,
+                                event_type="context_integrity_error",
+                                severity="error",
+                                error_type="tool_call_result_pairing_failed",
+                                artifact_refs=[prepared.prepared_messages_ref],
+                                data={
+                                    "context_revision": prepared.context_revision,
+                                    "model_input_hash": prepared.model_input_hash,
+                                    "tool_pairing_validation": pairing_validation,
+                                    "formal_policy": "stop_before_provider_request",
+                                    "tainted": False,
+                                    "after_auto_compact": True,
+                                },
+                            )
+                        )
+                        break
+                    projection_estimate = _build_provider_request_projection_estimate(
+                        prepared_messages=prepared.messages,
+                        provider_options=provider_options_resolved,
+                        allowed_tool_definitions=phase_allowed_tool_definitions,
+                        generation_config=generation_config or {},
+                        provider_model_settings=provider_model_settings or {},
+                        provider_message_format=f"repo_harness_{provider_options_resolved.provider}_messages_v0",
+                        context_budget_facts=context_budget_facts,
+                    )
+                    state.post_compact_above_target = (
+                        projection_estimate.provider_request_token_estimate
+                        > context_budget_facts.post_compact_target_tokens
+                    )
+                    auto_compact_applied_this_turn = True
+                else:
+                    state.auto_compact_consecutive_failures += 1
+                    state.loop_diagnostics_summary = {
+                        **state.loop_diagnostics_summary,
+                        "last_auto_compact_failure_reason": (
+                            auto_compact_result.failure_reason
+                        ),
+                        "auto_compact_consecutive_failures": (
+                            state.auto_compact_consecutive_failures
+                        ),
+                    }
+                    if (
+                        projection_estimate.provider_request_token_estimate
+                        > runtime_hard_context_limit_tokens
+                    ):
+                        state.agent_stop_reason = "auto_compact_failed_preflight"
+                        state.budget_state.stop_reason = "auto_compact_failed_preflight"
+                        recorder.append_event(
+                            TrajectoryEvent(
+                                event_id=recorder.next_event_id("budget"),
+                                timestamp=_timestamp(),
+                                run_id=run_id,
+                                task_id=task_id,
+                                turn=turn,
+                                event_type="budget_exhausted",
+                                severity="warning",
+                                error_type="auto_compact_failed_preflight",
+                                data={
+                                    "token_estimate": (
+                                        projection_estimate.provider_request_token_estimate
+                                    ),
+                                    "provider_request_projection_hash": (
+                                        projection_estimate.provider_request_projection_hash
+                                    ),
+                                    "provider_request_projection_estimate": (
+                                        projection_estimate.model_dump(mode="json")
+                                    ),
+                                    "auto_compact_failure_reason": (
+                                        auto_compact_result.failure_reason
+                                    ),
+                                    "auto_compact_record_ref": (
+                                        state.last_auto_compact_record_ref
+                                    ),
+                                    "max_context_tokens": runtime_context_budget_tokens,
+                                    "hard_context_limit_tokens": (
+                                        runtime_hard_context_limit_tokens
+                                    ),
+                                    "context_budget_facts": context_budget_payload,
+                                },
+                            )
+                        )
+                        break
             if projection_estimate.provider_request_token_estimate > runtime_hard_context_limit_tokens:
-                state.agent_stop_reason = "context_limit"
-                state.budget_state.stop_reason = "context_limit"
+                stop_reason = (
+                    "context_limit_preflight_after_autocompact"
+                    if auto_compact_applied_this_turn
+                    else "context_limit"
+                )
+                state.agent_stop_reason = stop_reason
+                state.budget_state.stop_reason = stop_reason
                 recorder.append_event(
                     TrajectoryEvent(
                         event_id=recorder.next_event_id("budget"),
@@ -376,7 +640,7 @@ class AgentLoop:
                         turn=turn,
                         event_type="budget_exhausted",
                         severity="warning",
-                        error_type="context_limit",
+                        error_type=stop_reason,
                         data={
                             "token_estimate": projection_estimate.provider_request_token_estimate,
                             "provider_ready_token_estimate": prepared.provider_ready_token_estimate,
@@ -395,6 +659,9 @@ class AgentLoop:
                             "max_context_tokens": runtime_context_budget_tokens,
                             "hard_context_limit_tokens": runtime_hard_context_limit_tokens,
                             "context_budget_facts": context_budget_payload,
+                            "auto_compact_applied_this_turn": auto_compact_applied_this_turn,
+                            "auto_compact_record_ref": state.last_auto_compact_record_ref,
+                            "auto_compact_summary_ref": state.last_auto_compact_summary_ref,
                         },
                     )
                 )

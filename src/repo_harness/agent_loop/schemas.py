@@ -22,6 +22,11 @@ AgentStopReason = Literal[
     "tool_error",
     "invalid_tool_call",
     "context_limit",
+    "context_limit_preflight_after_autocompact",
+    "auto_compact_failed_preflight",
+    "reactive_compact_failed",
+    "context_limit_after_reactive_compact",
+    "context_limit_reactive_compact_disabled",
     "context_integrity_error",
     "model_error",
     "output_token_limit_reached",
@@ -52,6 +57,13 @@ class AgentLoopState(StrictBaseModel):
     budget_state: BudgetState
     tool_pairing_state: ToolPairingState = Field(default_factory=ToolPairingState)
     context_revision: int = Field(default=0, ge=0)
+    auto_compact_count: int = Field(default=0, ge=0)
+    auto_compact_consecutive_failures: int = Field(default=0, ge=0)
+    last_auto_compact_record_ref: dict[str, Any] | None = None
+    last_auto_compact_summary_ref: dict[str, Any] | None = None
+    last_auto_compact_context_revision_before: int | None = Field(default=None, ge=0)
+    last_auto_compact_context_revision_after: int | None = Field(default=None, ge=0)
+    post_compact_above_target: bool = False
     current_phase: str | None = None
     phase_history: list[dict[str, Any]] = Field(default_factory=list)
     last_model_error: str | None = None
