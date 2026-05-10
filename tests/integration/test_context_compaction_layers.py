@@ -506,6 +506,9 @@ def _bind_model_input_snapshot(
             "redacted_body_hash": stable_hash(request_body),
             "provider_body_message_projection_hash": projection_hash,
             "prepared_messages_projection_hash": projection_hash,
+            "redaction_report": {
+                "ordinary_text_whole_field_redaction_allowed": False,
+            },
         },
         {"budget_policy": "preserve_json"},
     )
@@ -534,6 +537,9 @@ def _bind_model_input_snapshot(
             "redacted_response_body_hash": stable_hash(response_payload["response"]),
             "parsed_tool_calls_hash": stable_hash({"error": None, "tool_calls": []}),
             "finish_reason": "stop",
+            "redaction_report": {
+                "ordinary_text_whole_field_redaction_allowed": False,
+            },
         },
         {"budget_policy": "preserve_json"},
     )
@@ -988,11 +994,23 @@ class _AutoCompactThenFinalClient:
                     "tools": request.allowed_tool_definitions,
                     "tool_choice": request.tool_choice,
                     "scaffold_phase": request.scaffold_phase,
+                    "export_allowed": False,
+                    "training_payload_allowed": False,
+                    "redaction_report": {
+                        "ordinary_text_whole_field_redaction_allowed": False,
+                    },
                 },
             )
             raw_response_ref = recorder.write_json_artifact(
                 "raw_auto_compact_test_response",
-                {"content": self.compact_content},
+                {
+                    "content": self.compact_content,
+                    "export_allowed": False,
+                    "training_payload_allowed": False,
+                    "redaction_report": {
+                        "ordinary_text_whole_field_redaction_allowed": False,
+                    },
+                },
             )
             return ModelResponse(
                 assistant_message=ModelMessage(role="assistant", content=self.compact_content),
@@ -1058,6 +1076,11 @@ def _model_response_for_request(
             "prepared_messages_ref": request.prepared_messages_ref.model_dump(mode="json"),
             "tool_schema_snapshot_ref": tool_schema_ref.model_dump(mode="json"),
             "model_input_hash": request.model_input_hash,
+            "export_allowed": False,
+            "training_payload_allowed": False,
+            "redaction_report": {
+                "ordinary_text_whole_field_redaction_allowed": False,
+            },
         },
     )
     raw_response_ref = recorder.write_json_artifact(
@@ -1067,6 +1090,11 @@ def _model_response_for_request(
             "content": content,
             "finish_reason": finish_reason,
             "model_error_type": model_error_type,
+            "export_allowed": False,
+            "training_payload_allowed": False,
+            "redaction_report": {
+                "ordinary_text_whole_field_redaction_allowed": False,
+            },
         },
     )
     event = ModelCallEvent(
