@@ -134,6 +134,7 @@ def build_persisted_tool_result_preview(
         f"tool_result_id: {record.tool_result_id}\n"
         f"sha256: {record.content_sha256}\n"
         f"recovery_call: read_tool_result_artifact(artifact_id={record.artifact_id!r}, offset=0, limit={DEFAULT_TOOL_RESULT_READ_LIMIT})\n\n"
+        "recovery_hint: Use read_tool_result_artifact only if the full output is needed for the current task.\n\n"
         f"Preview (first {min(preview_chars, len(original_content))} chars):\n"
         f"{preview}{suffix}\n"
         "</persisted-output>"
