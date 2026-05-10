@@ -1275,8 +1275,9 @@ def _model_visible_repo_context_summary(
         "candidate_entry_count": len(candidate_source_entries),
         "evidence_policy": (
             "Candidates are derived only from model-visible issue text, model-visible expected_files, "
-            "and a shallow public source path index. Hidden selectors, hidden tests, hidden reference fixes, "
-            "targeted smoke hindsight, and human posterior analysis are excluded."
+            "and a shallow public source path index. Private evaluator selectors, private evaluator "
+            "test identities, private reference fixes, targeted smoke hindsight, and human posterior "
+            "analysis are excluded."
         ),
         "issue_terms_used": issue_terms[:40],
         "evaluator_only_material_excluded": True,

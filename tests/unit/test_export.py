@@ -497,6 +497,81 @@ def test_exports_use_one_record_per_model_input_snapshot(tmp_path: Path):
     assert "post compact summary" in sft_text
 
 
+def test_default_snapshot_exports_strip_provider_private_metadata(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_deepseek_state",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    fixture = _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="visible request",
+        assistant_content="visible answer",
+    )
+    prepared_path = run_dir / fixture["prepared_ref"]["relative_path"]
+    prepared_payload = json.loads(prepared_path.read_text(encoding="utf-8"))
+    prepared_payload["messages"].append(
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [],
+            "metadata": {
+                "provider_private": {
+                    "deepseek": {
+                        "reasoning_content_present": True,
+                        "reasoning_content": "private reasoning should stay out",
+                    }
+                }
+            },
+        }
+    )
+    prepared_path.write_text(
+        json.dumps(prepared_payload, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_manifest_artifact_ref(run_dir, fixture["prepared_ref"])
+    snapshot_path = run_dir / fixture["snapshot_ref"]["relative_path"]
+    snapshot_payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    snapshot_payload["prepared_messages_ref"] = fixture["prepared_ref"]
+    snapshot_path.write_text(
+        json.dumps(snapshot_payload, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_manifest_artifact_ref(run_dir, fixture["snapshot_ref"])
+    events = [
+        json.loads(line)
+        for line in (run_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    for event in events:
+        data = event.get("data", {})
+        if data.get("prepared_messages_ref", {}).get("artifact_id") == fixture[
+            "prepared_ref"
+        ]["artifact_id"]:
+            data["prepared_messages_ref"] = fixture["prepared_ref"]
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(json.dumps(event, sort_keys=True) for event in events) + "\n",
+        encoding="utf-8",
+    )
+
+    sft_output = export_sft_jsonl(run_dir)
+    sft_export_dir = _latest_export_dir(run_dir / "exports")
+    rl_output = export_rl_jsonl(run_dir)
+    rl_export_dir = _latest_export_dir(run_dir / "exports")
+
+    exported_text = (
+        sft_output.read_text(encoding="utf-8")
+        + rl_output.read_text(encoding="utf-8")
+    )
+    assert "provider_private" not in exported_text
+    assert "reasoning_content" not in exported_text
+    assert "private reasoning should stay out" not in exported_text
+    assert "Inspect export: clean" in inspect_export(sft_export_dir, assert_clean=True)
+    assert "Inspect export: clean" in inspect_export(rl_export_dir, assert_clean=True)
+
+
 def test_sft_snapshot_tool_observation_uses_current_prepared_ref(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_snapshot_current_tool_binding",
@@ -1459,6 +1534,20 @@ def _append_json_artifact(
     manifest.setdefault("artifacts", []).append(ref)
     manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
     return ref
+
+
+def _refresh_manifest_artifact_ref(run_dir: Path, ref: dict) -> None:
+    artifact_path = run_dir / ref["relative_path"]
+    ref["sha256"] = _sha256_file(artifact_path)
+    ref["size_bytes"] = artifact_path.stat().st_size
+    manifest_path = run_dir / "artifacts.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for artifact in manifest["artifacts"]:
+        if artifact["artifact_id"] == ref["artifact_id"]:
+            artifact["sha256"] = ref["sha256"]
+            artifact["size_bytes"] = ref["size_bytes"]
+            break
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _append_jsonl(path: Path, payload: dict) -> None:

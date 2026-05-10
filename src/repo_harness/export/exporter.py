@@ -1614,7 +1614,11 @@ def _write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
 
 def _sanitize_for_export(value: Any) -> Any:
     if isinstance(value, dict):
-        return {key: _sanitize_for_export(nested) for key, nested in value.items()}
+        return {
+            key: _sanitize_for_export(nested)
+            for key, nested in value.items()
+            if key != "provider_private"
+        }
     if isinstance(value, list):
         return [_sanitize_for_export(nested) for nested in value]
     if isinstance(value, str):

@@ -263,6 +263,7 @@ def test_model_visible_repo_context_summary_respects_expected_files_visibility()
     assert "secret.py" not in rendered
     assert "gold patch" not in rendered
     assert "hidden patch" not in rendered
+    assert "hidden test" not in rendered.lower()
     assert "evaluator-only artifact hash" not in rendered
 
 
@@ -294,6 +295,7 @@ def test_model_visible_repo_context_summary_builds_evidence_based_action_index(t
     rendered = json.dumps(action_index, ensure_ascii=False)
     assert "hidden.patch" not in rendered
     assert "gold patch" not in rendered
+    assert "hidden test" not in rendered.lower()
     assert "hindsight_sources_excluded" in rendered
     assert "symbol_search" in summary["usage_hint"]
     assert "update_working_state" in summary["usage_hint"]
