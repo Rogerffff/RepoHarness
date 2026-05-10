@@ -6,6 +6,7 @@ import json
 import os
 import re
 import time
+import http.client
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -317,6 +318,17 @@ class DeepSeekProviderClient:
                     model_error_type=error_type,
                     message=reason,
                     retryable=True,
+                )
+            ) from exc
+        except (http.client.HTTPException, ConnectionError, OSError) as exc:
+            message = sanitize_provider_error_message(str(exc))
+            error_type = "provider_timeout" if "timed out" in message.lower() else "provider_error"
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type=error_type,
+                    message=message,
+                    retryable=True,
+                    payload={"exception_type": type(exc).__name__},
                 )
             ) from exc
         except json.JSONDecodeError as exc:

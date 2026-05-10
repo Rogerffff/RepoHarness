@@ -1,4 +1,5 @@
 import json
+import http.client
 from pathlib import Path
 from typing import Any
 
@@ -521,6 +522,37 @@ def test_deepseek_provider_does_not_retry_non_retryable_auth_error(tmp_path: Pat
     assert len(response.provider_attempt_refs) == 1
 
 
+def test_deepseek_http_incomplete_read_is_retryable_transport_error(monkeypatch: pytest.MonkeyPatch):
+    class _BrokenResponse:
+        headers: dict[str, str] = {}
+
+        def __enter__(self) -> "_BrokenResponse":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            raise http.client.IncompleteRead(b"")
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_args, **_kwargs: _BrokenResponse())
+    client = DeepSeekProviderClient(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+    )
+
+    with pytest.raises(ProviderRequestError) as exc_info:
+        client._post_json(
+            {"model": "deepseek-v4-pro", "messages": [{"role": "user", "content": "hello"}]},
+            _request(provider="deepseek", model_id="deepseek-v4-pro"),
+        )
+
+    assert exc_info.value.info.model_error_type == "provider_error"
+    assert exc_info.value.info.retryable is True
+    assert exc_info.value.info.payload == {"exception_type": "IncompleteRead"}
+
+
 def test_provider_finish_reason_length_is_output_token_limit(tmp_path: Path):
     client = _DeepSeekStub(
         model_id="deepseek-v4-pro",
@@ -737,6 +769,36 @@ def test_openai_provider_does_not_retry_non_retryable_auth_error(tmp_path: Path)
     assert response.attempt_count == 1
     assert response.retry_count == 0
     assert len(response.provider_attempt_refs) == 1
+
+
+def test_openai_http_incomplete_read_is_retryable_transport_error(monkeypatch: pytest.MonkeyPatch):
+    class _BrokenResponse:
+        headers: dict[str, str] = {}
+
+        def __enter__(self) -> "_BrokenResponse":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            raise http.client.IncompleteRead(b"")
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_args, **_kwargs: _BrokenResponse())
+    client = OpenAIProviderClient(
+        model_id="gpt-5-mini",
+        credential=ProviderCredential(value="sk-test-openai-secret-1234567890", source="environment"),
+    )
+
+    with pytest.raises(ProviderRequestError) as exc_info:
+        client._post_json(
+            {"model": "gpt-5-mini", "messages": [{"role": "user", "content": "hello"}]},
+            _request(provider="openai", model_id="gpt-5-mini"),
+        )
+
+    assert exc_info.value.info.model_error_type == "provider_error"
+    assert exc_info.value.info.retryable is True
+    assert exc_info.value.info.payload == {"exception_type": "IncompleteRead"}
 
 
 def test_openai_gpt5_chat_body_uses_max_completion_tokens():
