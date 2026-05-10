@@ -605,11 +605,6 @@ def _build_compact_request_messages(
         "compact_id": compact_id,
         "mode": mode,
         "trigger_reason": trigger_reason,
-        "source_context_revision": source_prepared.context_revision,
-        "source_model_input_hash": source_prepared.model_input_hash,
-        "source_prepared_messages_ref": (
-            source_prepared.prepared_messages_ref.model_dump(mode="json")
-        ),
         "messages": source_visible_messages,
     }
     return [
@@ -791,6 +786,10 @@ def _validate_summary_recovery_index(
 ) -> None:
     for entry in summary.tool_recovery_index:
         if entry.recovery_status != "artifact_recoverable":
+            if entry.artifact_id is not None or entry.sha256 is not None:
+                raise ValueError(
+                    "only artifact_recoverable entries may carry artifact identifiers"
+                )
             continue
         if not entry.artifact_id:
             raise ValueError("artifact_recoverable entry requires artifact_id")

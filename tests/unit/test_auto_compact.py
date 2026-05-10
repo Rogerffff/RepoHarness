@@ -72,6 +72,13 @@ def test_auto_compact_runner_applies_summary_with_compact_only_request(tmp_path:
 
     source_payload = _read_artifact(recorder, result.compact_source_messages_ref)
     assert "typed" not in json.dumps(source_payload, ensure_ascii=False)
+    compact_prompt_payload = json.dumps(
+        source_payload["compact_request_messages"],
+        ensure_ascii=False,
+    )
+    assert "source_context_revision" not in compact_prompt_payload
+    assert "source_model_input_hash" not in compact_prompt_payload
+    assert "source_prepared_messages_ref" not in compact_prompt_payload
     assert source_payload["compact_request_messages"][0]["role"] == "system"
     assert result.compact_source_projection_hash == request.provider_request_projection_hash
 
@@ -259,6 +266,40 @@ def test_auto_compact_runner_rejects_mismatched_recovery_claim_metadata(
         tool_schema_snapshot_ref=_artifact_ref(recorder, "tool_schema_snapshot"),
         run_config_facts_ref=RunConfigFactsRef(sha256="1" * 64),
         tool_result_artifact_index=tool_index,
+    )
+
+    assert result.status == "failed"
+    assert result.failure_reason == "invalid_compact_summary:ValueError"
+    assert result.summary_artifact_ref is None
+
+
+def test_auto_compact_runner_rejects_non_recoverable_artifact_identifiers(
+    tmp_path: Path,
+) -> None:
+    recorder = RunRecorder(run_id="run-auto", task_id="task-1", run_dir=tmp_path / "run")
+    source = _source_prepared(recorder)
+    payload = _summary_payload()
+    payload["tool_recovery_index"] = [
+        {
+            "recovery_status": "preview_only",
+            "artifact_id": "should-not-be-visible",
+            "sha256": "2" * 64,
+        }
+    ]
+    client = _CompactFakeClient(content=json.dumps(payload))
+
+    result = AutoCompactRunner().run(
+        mode="proactive",
+        trigger_reason="projection_above_auto_compact_trigger",
+        source_prepared=source,
+        recorder=recorder,
+        task_id="task-1",
+        turn=3,
+        context_config=ContextManagementConfig(),
+        provider_options=ModelProviderOptions(provider="mock", model_id="mock-v0"),
+        model_client=client,
+        tool_schema_snapshot_ref=_artifact_ref(recorder, "tool_schema_snapshot"),
+        run_config_facts_ref=RunConfigFactsRef(sha256="1" * 64),
     )
 
     assert result.status == "failed"
