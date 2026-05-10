@@ -251,6 +251,24 @@ def test_agent_loop_accepts_model_input_before_freezing_tool_result_decisions(tm
     ]
     assert accepted["data"]["committed_full_visible_tool_result_ids"] == []
     assert accepted["data"]["model_input_hash"]
+    assert accepted["data"]["model_call_id"] == "accepted-input_model_call_0001"
+    snapshot_ref = accepted["data"]["model_input_snapshot_ref"]
+    snapshot = _read_artifact_payload(run_dir, snapshot_ref)
+    assert snapshot["schema_version"] == "repo_harness_model_input_snapshot_v1"
+    assert snapshot["model_call_id"] == "accepted-input_model_call_0001"
+    assert snapshot["prepared_messages_ref"]["kind"] == "prepared_messages"
+    assert snapshot["model_input_hash"] == accepted["data"]["model_input_hash"]
+    assert snapshot["provider_request_projection_hash"] == (
+        accepted["data"]["provider_request_projection_hash"]
+    )
+    assert snapshot["provider_request_artifact_ref"]["kind"] == "raw_replay_request"
+    assert snapshot["provider_response_artifact_ref"]["kind"] == "raw_replay_response"
+    assert snapshot["context_compact_state_ref"] == accepted["data"][
+        "content_replacement_state_ref"
+    ]
+    assert snapshot["trainable"] is True
+    artifact_kinds = [artifact["kind"] for artifact in _read_artifacts(run_dir)]
+    assert "model_input_snapshot" in artifact_kinds
 
 
 def test_agent_loop_does_not_freeze_tool_result_decisions_on_provider_context_limit(
@@ -314,6 +332,9 @@ def test_agent_loop_does_not_freeze_tool_result_decisions_on_provider_context_li
     events = _read_events(run_dir)
     assert state.last_model_error == "context_limit"
     assert not any(event["event_type"] == "model_input_accepted" for event in events)
+    assert not any(
+        artifact["kind"] == "model_input_snapshot" for artifact in _read_artifacts(run_dir)
+    )
 
 
 def test_agent_loop_repairs_one_malformed_tool_call_response(tmp_path: Path):
@@ -2099,6 +2120,17 @@ def _read_events(run_dir: Path) -> list[dict]:
         for line in (run_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _read_artifacts(run_dir: Path) -> list[dict]:
+    return json.loads((run_dir / "artifacts.json").read_text(encoding="utf-8")).get(
+        "artifacts",
+        [],
+    )
+
+
+def _read_artifact_payload(run_dir: Path, ref: dict) -> dict:
+    return json.loads((run_dir / ref["relative_path"]).read_text(encoding="utf-8"))
 
 
 def _assert_tool_events_are_paired(events: list[dict]) -> None:

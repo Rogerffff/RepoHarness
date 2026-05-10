@@ -269,6 +269,7 @@ class ModelInputSnapshot(StrictBaseModel):
     provider_request_projection_hash: str
     context_policy_snapshot_ref: ArtifactRef | None = None
     provider_request_artifact_ref: ArtifactRef | None = None
+    provider_response_artifact_ref: ArtifactRef | None = None
     context_compact_state_ref: ArtifactRef | None = None
     trainable: bool = True
 

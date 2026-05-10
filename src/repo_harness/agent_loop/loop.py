@@ -14,6 +14,7 @@ from repo_harness.config import ContextManagementConfig
 from repo_harness.context.auto_compact import AutoCompactRunner
 from repo_harness.context import (
     ContextManager,
+    ModelInputSnapshot,
     ToolResultArtifactIndex,
     build_persisted_tool_result_preview,
     build_provider_request_projection,
@@ -753,6 +754,31 @@ class AgentLoop:
                     committed_state.model_dump(mode="json"),
                     {"budget_policy": "preserve_json"},
                 )
+                context_policy_snapshot_ref = _write_context_policy_snapshot_artifact(
+                    recorder
+                )
+                model_input_snapshot = ModelInputSnapshot(
+                    model_call_id=model_request.model_call_id,
+                    prepared_messages_ref=prepared.prepared_messages_ref,
+                    model_input_hash=prepared.model_input_hash,
+                    provider_request_projection_hash=(
+                        projection_estimate.provider_request_projection_hash
+                    ),
+                    context_policy_snapshot_ref=context_policy_snapshot_ref,
+                    provider_request_artifact_ref=response.raw_provider_request_ref,
+                    provider_response_artifact_ref=response.raw_provider_response_ref,
+                    context_compact_state_ref=committed_state_ref,
+                    trainable=response.model_error_type is None,
+                )
+                model_input_snapshot_ref = recorder.write_json_artifact(
+                    "model_input_snapshot",
+                    model_input_snapshot.model_dump(mode="json"),
+                    {
+                        "redaction_status": "not_sensitive",
+                        "retention_policy": "model_input_snapshot",
+                        "budget_policy": "preserve_json",
+                    },
+                )
                 recorder.append_event(
                     TrajectoryEvent(
                         event_id=recorder.next_event_id("model_input"),
@@ -766,12 +792,16 @@ class AgentLoop:
                             for ref in [
                                 prepared.prepared_messages_ref,
                                 committed_state_ref,
+                                context_policy_snapshot_ref,
+                                model_input_snapshot_ref,
                                 response.raw_provider_request_ref,
+                                response.raw_provider_response_ref,
                             ]
                             if ref is not None
                         ],
                         data={
                             **commit_result,
+                            "model_call_id": model_request.model_call_id,
                             "model_input_hash": prepared.model_input_hash,
                             "provider_request_projection_hash": (
                                 projection_estimate.provider_request_projection_hash
@@ -784,6 +814,25 @@ class AgentLoop:
                             "content_replacement_state_ref": committed_state_ref.model_dump(
                                 mode="json"
                             ),
+                            "context_policy_snapshot_ref": (
+                                context_policy_snapshot_ref.model_dump(mode="json")
+                                if context_policy_snapshot_ref is not None
+                                else None
+                            ),
+                            "model_input_snapshot_ref": model_input_snapshot_ref.model_dump(
+                                mode="json"
+                            ),
+                            "provider_request_artifact_ref": (
+                                response.raw_provider_request_ref.model_dump(mode="json")
+                                if response.raw_provider_request_ref is not None
+                                else None
+                            ),
+                            "provider_response_artifact_ref": (
+                                response.raw_provider_response_ref.model_dump(mode="json")
+                                if response.raw_provider_response_ref is not None
+                                else None
+                            ),
+                            "trainable": response.model_error_type is None,
                             "model_input_acceptance_policy": (
                                 "commit_after_non_context_limit_provider_response_v1"
                             ),
@@ -2074,6 +2123,28 @@ def _record_context_warning(
         "context_warning_level": warning_level,
         "context_warning_turn": turn,
     }
+
+
+def _write_context_policy_snapshot_artifact(recorder: RunRecorder) -> ArtifactRef | None:
+    run_config_path = recorder.run_dir / "run_config_facts.json"
+    if not run_config_path.exists():
+        return None
+    try:
+        run_config = json.loads(run_config_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    snapshot = run_config.get("context_policy_snapshot")
+    if not isinstance(snapshot, dict):
+        return None
+    return recorder.write_json_artifact(
+        "context_policy_snapshot",
+        snapshot,
+        {
+            "redaction_status": "not_sensitive",
+            "retention_policy": "context_policy_snapshot",
+            "budget_policy": "preserve_json",
+        },
+    )
 
 
 def _write_budget_decision_trace_artifact(
