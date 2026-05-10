@@ -82,7 +82,15 @@ def _export_many(
         "rl_jsonl": _build_rl_record,
     }
     run_paths = [run_dir for run_dir in sorted(runs_dir.iterdir()) if _looks_like_run_dir(run_dir)]
-    records = [_build_record_safely(run_dir, export_format, builders[export_format]) for run_dir in run_paths]
+    records = [
+        record
+        for run_dir in run_paths
+        for record in _build_records_safely(
+            run_dir,
+            export_format,
+            builders[export_format],
+        )
+    ]
     if not records:
         raise ExportError(f"runs directory 中没有可导出的 run：{runs_dir}")
     return _write_format_export(
@@ -97,11 +105,11 @@ def _export_many(
 
 def export_sft_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None) -> Path:
     run_path = _require_run_dir(run_dir)
-    record = _build_record_safely(run_path, "sft_jsonl", _build_sft_record)
+    records = _build_records_safely(run_path, "sft_jsonl", _build_sft_record)
     return _write_format_export(
         export_root=run_path / "exports",
         export_format="sft_jsonl",
-        records=[record],
+        records=records,
         run_paths=[run_path],
         skipped_reason=None,
         policy=policy or ExportPolicy(),
@@ -110,11 +118,11 @@ def export_sft_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None)
 
 def export_rl_jsonl(run_dir: str | Path, *, policy: ExportPolicy | None = None) -> Path:
     run_path = _require_run_dir(run_dir)
-    record = _build_record_safely(run_path, "rl_jsonl", _build_rl_record)
+    records = _build_records_safely(run_path, "rl_jsonl", _build_rl_record)
     return _write_format_export(
         export_root=run_path / "exports",
         export_format="rl_jsonl",
-        records=[record],
+        records=records,
         run_paths=[run_path],
         skipped_reason=None,
         policy=policy or ExportPolicy(),
@@ -225,31 +233,45 @@ def _build_record_safely(
     export_format: ExportFormat,
     builder: Any,
 ) -> ExportRecord:
+    records = _build_records_safely(run_path, export_format, builder)
+    return records[0]
+
+
+def _build_records_safely(
+    run_path: Path,
+    export_format: ExportFormat,
+    builder: Any,
+) -> list[ExportRecord]:
     try:
-        return builder(run_path)
+        result = builder(run_path)
+        return result if isinstance(result, list) else [result]
     except (ExportError, ValueError, json.JSONDecodeError) as exc:
         reason = _export_failure_reason(exc)
-        return ExportRecord(
-            sample_id=f"{run_path.name}_{_format_short_name(export_format)}",
-            task_id=_task_id(run_path),
-            source_run_id=run_path.name,
-            payload={},
-            quality=ExportRecordQuality(
-                training_eligibility="invalid",
-                quality_reasons=[reason],
-                artifact_manifest_status="invalid" if "artifact_manifest" in reason else "not_checked",
-                redaction_status="failed" if "hidden" in reason else "not_checked",
-            ),
-            metadata={
-                "export_policy_version": ExportPolicy().export_policy_version,
-                "export_format": export_format,
-                "source_run_id": run_path.name,
-                "build_error_type": type(exc).__name__,
-            },
-            filter_status="filtered",
-            invalid_for_training=True,
-            invalid_reason=reason,
-        )
+        return [
+            ExportRecord(
+                sample_id=f"{run_path.name}_{_format_short_name(export_format)}",
+                task_id=_task_id(run_path),
+                source_run_id=run_path.name,
+                payload={},
+                quality=ExportRecordQuality(
+                    training_eligibility="invalid",
+                    quality_reasons=[reason],
+                    artifact_manifest_status="invalid"
+                    if "artifact_manifest" in reason
+                    else "not_checked",
+                    redaction_status="failed" if "hidden" in reason else "not_checked",
+                ),
+                metadata={
+                    "export_policy_version": ExportPolicy().export_policy_version,
+                    "export_format": export_format,
+                    "source_run_id": run_path.name,
+                    "build_error_type": type(exc).__name__,
+                },
+                filter_status="filtered",
+                invalid_for_training=True,
+                invalid_reason=reason,
+            )
+        ]
 
 
 def _write_format_export(
@@ -463,7 +485,21 @@ def _export_failure_reason(exc: Exception) -> str:
     return "export_record_build_failed"
 
 
-def _build_sft_record(run_path: Path) -> ExportRecord:
+def _build_sft_record(run_path: Path) -> ExportRecord | list[ExportRecord]:
+    snapshots = _model_input_snapshot_bindings(run_path)
+    if snapshots:
+        return [
+            _build_sft_record_from_model_input_snapshot(
+                run_path,
+                binding,
+                sample_index=index,
+            )
+            for index, binding in enumerate(snapshots, start=1)
+        ]
+    return _build_legacy_sft_record(run_path)
+
+
+def _build_legacy_sft_record(run_path: Path) -> ExportRecord:
     transcript = read_jsonl(run_path / "transcript.jsonl")
     prepared_observations = _prepared_tool_observations(run_path)
     assistant_tool_calls = _assistant_tool_calls_by_turn(run_path)
@@ -516,7 +552,98 @@ def _build_sft_record(run_path: Path) -> ExportRecord:
     )
 
 
-def _build_rl_record(run_path: Path) -> ExportRecord:
+def _build_sft_record_from_model_input_snapshot(
+    run_path: Path,
+    binding: dict[str, Any],
+    *,
+    sample_index: int,
+) -> ExportRecord:
+    prepared_payload = binding["prepared_payload"]
+    prepared_messages = [
+        _sanitize_for_export(message) for message in prepared_payload.get("messages", [])
+    ]
+    assistant_target = _assistant_target_for_model_call(
+        run_path,
+        str(binding["snapshot"].get("model_call_id") or ""),
+    )
+    assistant_message = _sanitize_for_export(assistant_target["message"])
+    messages = [*prepared_messages, assistant_message]
+    trainable_target = (
+        binding["snapshot"].get("trainable") is True
+        and assistant_target.get("trainable") is True
+    )
+    metadata = _safe_metadata(run_path, export_format="sft_jsonl")
+    payload = {
+        "messages": messages,
+        "trainable_messages": [len(messages) - 1] if trainable_target else [],
+        "loss_mask": [0 for _ in prepared_messages] + [1 if trainable_target else 0],
+        "observation_mask": [
+            1 if message.get("role") == "tool" else 0 for message in prepared_messages
+        ]
+        + [0],
+        "target": {
+            "final_patch": _read_text_if_exists(run_path / "final.patch"),
+            "assistant_message": assistant_message,
+            "assistant_message_ref": assistant_target.get("assistant_message_ref"),
+        },
+        "training_sample_source": "model_input_snapshot",
+        "model_call_id": binding["snapshot"].get("model_call_id"),
+        "model_input_snapshot_ref": binding["snapshot_ref"],
+        "model_input_snapshot": binding["snapshot"],
+        "prepared_messages_ref": binding["prepared_messages_ref"],
+        "prepared_messages_sha256": binding["prepared_messages_sha256"],
+        "model_input_hash": binding["snapshot"].get("model_input_hash"),
+        "provider_request_projection_hash": binding["snapshot"].get(
+            "provider_request_projection_hash"
+        ),
+        "provider_request_artifact_ref": binding["snapshot"].get(
+            "provider_request_artifact_ref"
+        ),
+        "provider_response_artifact_ref": binding["snapshot"].get(
+            "provider_response_artifact_ref"
+        ),
+        "context_policy_snapshot_ref": binding["snapshot"].get(
+            "context_policy_snapshot_ref"
+        ),
+        "context_compact_state_ref": binding["snapshot"].get(
+            "context_compact_state_ref"
+        ),
+        "prepared_message_refs": [binding["prepared_messages_ref"]],
+        "model_input_snapshot_refs": [binding["snapshot_ref"]],
+        "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
+        "v3_observation_bindings": _v3_observation_bindings(run_path),
+        "excluded_harness_control_message_count": 0,
+        "harness_control_message_export_policy": "exact_model_input_snapshot_v1",
+    }
+    return ExportRecord(
+        sample_id=(
+            f"{run_path.name}_sft_model_call_{sample_index:04d}"
+        ),
+        task_id=_task_id(run_path),
+        source_run_id=run_path.name,
+        payload=_sanitize_for_export(payload),
+        metadata=metadata,
+        invalid_for_training=_invalid_for_training(run_path) or not trainable_target,
+        invalid_reason=_invalid_reason(run_path)
+        or (None if trainable_target else "model_input_snapshot_not_trainable"),
+    )
+
+
+def _build_rl_record(run_path: Path) -> ExportRecord | list[ExportRecord]:
+    snapshots = _model_input_snapshot_bindings(run_path)
+    if snapshots:
+        return [
+            _build_rl_record_from_model_input_snapshot(
+                run_path,
+                binding,
+                sample_index=index,
+            )
+            for index, binding in enumerate(snapshots, start=1)
+        ]
+    return _build_legacy_rl_record(run_path)
+
+
+def _build_legacy_rl_record(run_path: Path) -> ExportRecord:
     metadata = _safe_metadata(run_path, export_format="rl_jsonl")
     reward = _read_json_if_exists(run_path / "reward.json")
     formal_final_reason = _formal_final_verifier_invalid_reason(run_path)
@@ -536,6 +663,40 @@ def _build_rl_record(run_path: Path) -> ExportRecord:
         metadata=metadata,
         invalid_for_training=_invalid_for_training(run_path),
         invalid_reason=_invalid_reason(run_path),
+    )
+
+
+def _build_rl_record_from_model_input_snapshot(
+    run_path: Path,
+    binding: dict[str, Any],
+    *,
+    sample_index: int,
+) -> ExportRecord:
+    metadata = _safe_metadata(run_path, export_format="rl_jsonl")
+    reward = _read_json_if_exists(run_path / "reward.json")
+    trainable_snapshot = binding["snapshot"].get("trainable") is True
+    payload = {
+        "prompt": _prompt_from_model_input_snapshot_binding(binding),
+        "trajectory": _trajectory_from_events(run_path),
+        "reward": float(reward.get("final_reward", 0.0)) if reward else 0.0,
+        "training_sample_source": "model_input_snapshot",
+        "model_call_id": binding["snapshot"].get("model_call_id"),
+        "model_input_snapshot_ref": binding["snapshot_ref"],
+        "model_input_snapshot": binding["snapshot"],
+        "prepared_message_refs": [binding["prepared_messages_ref"]],
+        "model_input_snapshot_refs": [binding["snapshot_ref"]],
+        "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
+        "v3_observation_bindings": _v3_observation_bindings(run_path),
+    }
+    return ExportRecord(
+        sample_id=f"{run_path.name}_rl_model_call_{sample_index:04d}",
+        task_id=_task_id(run_path),
+        source_run_id=run_path.name,
+        payload=_sanitize_for_export(payload),
+        metadata=metadata,
+        invalid_for_training=_invalid_for_training(run_path) or not trainable_snapshot,
+        invalid_reason=_invalid_reason(run_path)
+        or (None if trainable_snapshot else "model_input_snapshot_not_trainable"),
     )
 
 
@@ -716,7 +877,139 @@ def _assistant_tool_calls_by_turn(run_path: Path) -> dict[int, list[dict[str, An
     return calls_by_turn
 
 
+def _model_input_snapshot_bindings(run_path: Path) -> list[dict[str, Any]]:
+    bindings: list[dict[str, Any]] = []
+    accepted_snapshot_events = _accepted_model_input_snapshot_events(run_path)
+    snapshot_artifacts = _model_input_snapshot_artifacts(run_path)
+    for snapshot_ref in snapshot_artifacts:
+        accepted_event = accepted_snapshot_events.get(str(snapshot_ref.get("artifact_id")))
+        if accepted_event is None:
+            continue
+        snapshot = _read_artifact_json(run_path, snapshot_ref)
+        event_data = accepted_event.get("data", {})
+        event_model_call_id = event_data.get("model_call_id")
+        if event_model_call_id and snapshot.get("model_call_id") != event_model_call_id:
+            raise ExportError("model_input_snapshot model_call_id does not match accepted event")
+        if event_data.get("model_input_hash") and snapshot.get("model_input_hash") != event_data.get(
+            "model_input_hash"
+        ):
+            raise ExportError("model_input_snapshot model_input_hash does not match accepted event")
+        prepared_ref = snapshot.get("prepared_messages_ref")
+        if not isinstance(prepared_ref, dict):
+            raise ExportError("model_input_snapshot missing prepared_messages_ref")
+        event_prepared_ref = event_data.get("prepared_messages_ref")
+        if isinstance(event_prepared_ref, dict) and (
+            event_prepared_ref.get("artifact_id") != prepared_ref.get("artifact_id")
+            or event_prepared_ref.get("sha256") != prepared_ref.get("sha256")
+        ):
+            raise ExportError("model_input_snapshot prepared_messages_ref does not match accepted event")
+        prepared_payload = _read_artifact_json(run_path, prepared_ref)
+        prepared_path = _artifact_path(run_path, prepared_ref)
+        prepared_sha = sha256_file(prepared_path)
+        if prepared_ref.get("sha256") and prepared_ref.get("sha256") != prepared_sha:
+            raise ExportError("model_input_snapshot prepared_messages_ref sha mismatch")
+        if prepared_payload.get("model_input_hash") != snapshot.get("model_input_hash"):
+            raise ExportError("model_input_snapshot model_input_hash mismatch")
+        bindings.append(
+            {
+                "snapshot_ref": snapshot_ref,
+                "snapshot": snapshot,
+                "prepared_messages_ref": prepared_ref,
+                "prepared_messages_sha256": prepared_sha,
+                "prepared_payload": prepared_payload,
+            }
+        )
+    if snapshot_artifacts and not bindings:
+        raise ExportError(
+            "model_input_snapshot artifacts exist but none are bound to model_input_accepted"
+        )
+    return bindings
+
+
+def _accepted_model_input_snapshot_events(run_path: Path) -> dict[str, dict[str, Any]]:
+    accepted: dict[str, dict[str, Any]] = {}
+    for event in read_jsonl(run_path / "events.jsonl"):
+        if event.get("event_type") != "model_input_accepted":
+            continue
+        ref = event.get("data", {}).get("model_input_snapshot_ref")
+        if not isinstance(ref, dict):
+            continue
+        artifact_id = ref.get("artifact_id")
+        if isinstance(artifact_id, str) and artifact_id:
+            accepted[artifact_id] = event
+    return accepted
+
+
+def _prompt_from_model_input_snapshot_binding(binding: dict[str, Any]) -> dict[str, Any]:
+    snapshot = binding["snapshot"]
+    prepared_payload = binding["prepared_payload"]
+    return _sanitize_for_export(
+        {
+            "messages": prepared_payload.get("messages", []),
+            "training_sample_source": "model_input_snapshot",
+            "model_call_id": snapshot.get("model_call_id"),
+            "model_input_snapshot_ref": binding["snapshot_ref"],
+            "prepared_messages_ref": binding["prepared_messages_ref"],
+            "prepared_messages_sha256": binding["prepared_messages_sha256"],
+            "context_revision": prepared_payload.get("context_revision"),
+            "model_input_hash": snapshot.get("model_input_hash"),
+            "provider_request_projection_hash": snapshot.get(
+                "provider_request_projection_hash"
+            ),
+            "content_replacement_state_ref": snapshot.get("context_compact_state_ref")
+            or prepared_payload.get("content_replacement_state_ref"),
+            "provider_request_artifact_ref": snapshot.get(
+                "provider_request_artifact_ref"
+            ),
+            "provider_response_artifact_ref": snapshot.get(
+                "provider_response_artifact_ref"
+            ),
+            "context_policy_snapshot_ref": snapshot.get("context_policy_snapshot_ref"),
+        }
+    )
+
+
+def _assistant_target_for_model_call(run_path: Path, model_call_id: str) -> dict[str, Any]:
+    for record in read_jsonl(run_path / "transcript.jsonl"):
+        if record.get("role") != "assistant":
+            continue
+        if str(record.get("model_call_id") or "") != model_call_id:
+            continue
+        for ref in record.get("content_artifact_refs", []) or []:
+            if isinstance(ref, dict) and ref.get("kind") == "assistant_message":
+                payload = _read_artifact_json(run_path, ref)
+                message = {
+                    "role": "assistant",
+                    "content": payload.get("content"),
+                }
+                tool_calls = payload.get("tool_calls") or []
+                if tool_calls:
+                    message["tool_calls"] = tool_calls
+                return {
+                    "message": message,
+                    "assistant_message_ref": ref,
+                    "trainable": record.get("trainable") is True
+                    and payload.get("model_error_type") is None,
+                }
+        return {
+            "message": {
+                "role": "assistant",
+                "content": record.get("content_preview", ""),
+            },
+            "assistant_message_ref": None,
+            "trainable": record.get("trainable") is True,
+        }
+    return {
+        "message": {"role": "assistant", "content": ""},
+        "assistant_message_ref": None,
+        "trainable": False,
+    }
+
+
 def _prompt_from_prepared_messages(run_path: Path) -> dict[str, Any]:
+    snapshots = _model_input_snapshot_bindings(run_path)
+    if snapshots:
+        return _prompt_from_model_input_snapshot_binding(snapshots[0])
     prepared = _prepared_message_artifacts(run_path)
     if not prepared:
         return {"messages": []}
@@ -1096,6 +1389,15 @@ def _prepared_message_artifacts(run_path: Path) -> list[dict[str, Any]]:
         artifact
         for artifact in manifest.get("artifacts", [])
         if artifact.get("kind") == "prepared_messages"
+    ]
+
+
+def _model_input_snapshot_artifacts(run_path: Path) -> list[dict[str, Any]]:
+    manifest = _safe_artifact_manifest(run_path)
+    return [
+        artifact
+        for artifact in manifest.get("artifacts", [])
+        if artifact.get("kind") == "model_input_snapshot"
     ]
 
 

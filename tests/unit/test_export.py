@@ -447,6 +447,56 @@ def test_formal_trainable_jsonl_omits_evaluator_and_result_fields(tmp_path: Path
         assert _forbidden_formal_field_paths(record) == []
 
 
+def test_exports_use_one_record_per_model_input_snapshot(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_export",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    first = _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="first visible input",
+        assistant_content="first answer",
+    )
+    second = _add_model_input_snapshot_fixture(
+        run_dir,
+        index=2,
+        model_visible_content="post compact summary",
+        assistant_content="answer after compact",
+    )
+
+    sft_records = _read_jsonl(export_sft_jsonl(run_dir))
+    rl_records = _read_jsonl(export_rl_jsonl(run_dir))
+    sft_text = json.dumps(sft_records, ensure_ascii=False)
+    second_rl_prompt = rl_records[1]["payload"]["prompt"]
+    second_rl_text = json.dumps(second_rl_prompt, ensure_ascii=False)
+
+    assert len(sft_records) == 2
+    assert len(rl_records) == 2
+    assert sft_records[0]["payload"]["model_input_snapshot_ref"]["artifact_id"] == (
+        first["snapshot_ref"]["artifact_id"]
+    )
+    assert sft_records[1]["payload"]["model_input_snapshot_ref"]["artifact_id"] == (
+        second["snapshot_ref"]["artifact_id"]
+    )
+    assert sft_records[1]["payload"]["model_call_id"] == "run_snapshot_export_model_call_0002"
+    assert sft_records[1]["payload"]["training_sample_source"] == "model_input_snapshot"
+    assert sft_records[1]["payload"]["messages"][0]["content"] == "post compact summary"
+    assert sft_records[1]["payload"]["messages"][-1]["content"] == "answer after compact"
+    assert rl_records[1]["payload"]["prompt"]["model_input_snapshot_ref"]["artifact_id"] == (
+        second["snapshot_ref"]["artifact_id"]
+    )
+    assert second_rl_prompt["provider_request_projection_hash"] == "4" * 64
+    assert second_rl_prompt["provider_request_artifact_ref"]["kind"] == "raw_replay_request"
+    assert second_rl_prompt["provider_response_artifact_ref"]["kind"] == "raw_replay_response"
+    assert "post compact summary" in second_rl_text
+    assert "first visible input" not in second_rl_text
+    assert "first visible input" in sft_text
+    assert "post compact summary" in sft_text
+
+
 def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_max_turns_success",
@@ -789,6 +839,162 @@ def _add_reasoning_trace_artifact(run_dir: Path, reasoning_content: str) -> None
     artifacts = manifest.setdefault("artifacts", [])
     artifacts.append(ref)
     manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _add_model_input_snapshot_fixture(
+    run_dir: Path,
+    *,
+    index: int,
+    model_visible_content: str,
+    assistant_content: str,
+) -> dict[str, dict]:
+    model_call_id = f"{run_dir.name}_model_call_{index:04d}"
+    state_ref = _append_json_artifact(
+        run_dir,
+        kind="content_replacement_state",
+        filename=f"content_replacement_state_{index}.json",
+        payload={
+            "schema_version": "repo_harness_content_replacement_state_v0",
+            "state_hash": f"{index}" * 64,
+            "records": [],
+            "seen_tool_result_ids": [],
+            "last_context_revision": index,
+        },
+    )
+    model_input_hash = f"{index}" * 64
+    prepared_ref = _append_json_artifact(
+        run_dir,
+        kind="prepared_messages",
+        filename=f"prepared_messages_{index}.json",
+        payload={
+            "messages": [{"role": "user", "content": model_visible_content}],
+            "context_revision": index,
+            "model_input_hash": model_input_hash,
+            "content_replacement_state_ref": state_ref,
+        },
+    )
+    request_ref = _append_json_artifact(
+        run_dir,
+        kind="raw_replay_request",
+        filename=f"raw_replay_request_{index}.json",
+        payload={
+            "model_call_id": model_call_id,
+            "prepared_messages_ref": prepared_ref,
+            "model_input_hash": model_input_hash,
+        },
+    )
+    response_ref = _append_json_artifact(
+        run_dir,
+        kind="raw_replay_response",
+        filename=f"raw_replay_response_{index}.json",
+        payload={"model_call_id": model_call_id, "status": "ok"},
+    )
+    assistant_ref = _append_json_artifact(
+        run_dir,
+        kind="assistant_message",
+        filename=f"assistant_message_{index}.json",
+        payload={
+            "schema_version": "repo_harness_assistant_message_transcript_payload_v0",
+            "content": assistant_content,
+            "tool_calls": [],
+            "finish_reason": "stop",
+            "model_error_type": None,
+        },
+    )
+    snapshot_ref = _append_json_artifact(
+        run_dir,
+        kind="model_input_snapshot",
+        filename=f"model_input_snapshot_{index}.json",
+        payload={
+            "schema_version": "repo_harness_model_input_snapshot_v1",
+            "model_call_id": model_call_id,
+            "prepared_messages_ref": prepared_ref,
+            "model_input_hash": model_input_hash,
+            "provider_request_projection_hash": f"{index + 2}" * 64,
+            "context_policy_snapshot_ref": None,
+            "provider_request_artifact_ref": request_ref,
+            "provider_response_artifact_ref": response_ref,
+            "context_compact_state_ref": state_ref,
+            "trainable": True,
+        },
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_input_accepted",
+            "turn": index,
+            "data": {
+                "model_call_id": model_call_id,
+                "model_input_snapshot_ref": snapshot_ref,
+                "prepared_messages_ref": prepared_ref,
+                "model_input_hash": model_input_hash,
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "events.jsonl",
+        {
+            "event_type": "model_call_completed",
+            "turn": index,
+            "data": {
+                "model_call_id": model_call_id,
+                "provider": "replay",
+                "model_id": "replay-script-v0",
+                "model_error_type": None,
+                "raw_provider_request_ref": request_ref,
+                "raw_provider_response_ref": response_ref,
+            },
+        },
+    )
+    _append_jsonl(
+        run_dir / "transcript.jsonl",
+        {
+            "role": "assistant",
+            "turn": index,
+            "model_call_id": model_call_id,
+            "content_preview": assistant_content,
+            "content_artifact_refs": [assistant_ref],
+            "model_visible": True,
+            "trainable": True,
+        },
+    )
+    return {
+        "prepared_ref": prepared_ref,
+        "snapshot_ref": snapshot_ref,
+        "assistant_ref": assistant_ref,
+    }
+
+
+def _append_json_artifact(
+    run_dir: Path,
+    *,
+    kind: str,
+    filename: str,
+    payload: dict,
+) -> dict:
+    artifact_path = run_dir / "artifacts" / filename
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    ref = {
+        "schema_version": "repo_harness_artifact_v0",
+        "artifact_id": f"artifact_{filename.replace('.', '_')}",
+        "relative_path": f"artifacts/{filename}",
+        "kind": kind,
+        "sha256": _sha256_file(artifact_path),
+        "size_bytes": artifact_path.stat().st_size,
+        "redaction_status": "not_sensitive",
+        "retention_policy": "keep",
+    }
+    manifest_path = run_dir / "artifacts.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.setdefault("artifacts", []).append(ref)
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+    return ref
+
+
+def _append_jsonl(path: Path, payload: dict) -> None:
+    with path.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(payload, sort_keys=True) + "\n")
 
 
 def _write_max_turns_metrics_and_events(run_dir: Path) -> None:
