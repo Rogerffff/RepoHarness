@@ -1406,7 +1406,7 @@ def _file_ref(
     kind: str,
     redaction_status: str = "not_required",
 ) -> dict[str, Any]:
-    target = path if path.is_absolute() else base_dir / path
+    target = _file_ref_target(path, base_dir)
     if target.is_dir():
         digest = compute_source_tree_hash(target)
         size_bytes = 0
@@ -1422,6 +1422,22 @@ def _file_ref(
         redaction_status=redaction_status,
         retention_policy="keep",
     ).model_dump(mode="json")
+
+
+def _file_ref_target(path: Path, base_dir: Path) -> Path:
+    if path.is_absolute():
+        return path
+    try:
+        path.resolve().relative_to(base_dir.resolve())
+        return path
+    except ValueError:
+        pass
+    candidate = base_dir / path
+    try:
+        candidate.resolve().relative_to(base_dir.resolve())
+    except ValueError as exc:
+        raise FileNotFoundError(candidate) from exc
+    return candidate
 
 
 def _relative_path(path: Path, base_dir: Path) -> str:

@@ -12,6 +12,7 @@ from repo_harness.errors import ConfigError
 from repo_harness.pre_verl_agentloop import (
     _empty_patch_failure_attribution,
     _append_boundary_step_event,
+    _file_ref,
     _selector_environment_error,
     _selector_input_error,
     _selector_result_payload,
@@ -457,6 +458,68 @@ def test_empty_patch_failure_attribution_preserves_harness_and_provider_causes(
         expected_category,
         expected_owner,
     )
+
+
+def test_pre_verl_file_ref_accepts_run_root_prefixed_relative_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_root = Path("runs") / "run_001"
+    run_root.mkdir(parents=True)
+    target = run_root / "pre_verl_verification_workspace_creation_result.json"
+    target.write_text('{"status": "ok"}\n', encoding="utf-8")
+
+    ref = _file_ref(
+        target,
+        base_dir=run_root,
+        artifact_id="pre_verl_verification_workspace_creation_result",
+        kind="pre_verl_verification_workspace_creation_result",
+        redaction_status="evaluator_only",
+    )
+
+    assert ref["relative_path"] == "pre_verl_verification_workspace_creation_result.json"
+    assert ref["size_bytes"] == target.stat().st_size
+
+
+def test_pre_verl_file_ref_does_not_escape_to_existing_cwd_relative_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_root = Path("runs") / "run_001"
+    run_root.mkdir(parents=True)
+    external = Path("external") / "artifact.json"
+    external.parent.mkdir()
+    external.write_text('{"status": "outside"}\n', encoding="utf-8")
+
+    with pytest.raises(FileNotFoundError):
+        _file_ref(
+            external,
+            base_dir=run_root,
+            artifact_id="external",
+            kind="external",
+        )
+
+
+def test_pre_verl_file_ref_rejects_parent_relative_escape(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    root = Path("runs")
+    run_root = root / "run_001"
+    run_root.mkdir(parents=True)
+    external = root / "external.json"
+    external.write_text('{"status": "outside"}\n', encoding="utf-8")
+
+    with pytest.raises(FileNotFoundError):
+        _file_ref(
+            Path("../external.json"),
+            base_dir=run_root,
+            artifact_id="external",
+            kind="external",
+        )
 
 
 def test_inspect_model_visible_context_passes_bound_provider_body(tmp_path: Path) -> None:
