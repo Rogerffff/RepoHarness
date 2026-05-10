@@ -356,6 +356,120 @@ def test_layer_reactive_compact_retries_without_context_limit_pollution(
     assert "provider context limit rejected this input" not in exported_text
 
 
+def test_synthetic_context_compaction_pipeline_covers_all_layers(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "synthetic_pipeline"
+    manager = ContextManager()
+    config = ContextManagementConfig(
+        max_tool_results_per_turn_chars=205000,
+        microcompact_trigger_compactable_tool_result_count=30,
+        microcompact_trigger_compactable_tool_result_chars=1000,
+        model_context_window_tokens=16000,
+        main_output_reserve_tokens=0,
+        estimator_safety_margin_ratio=0.0,
+        estimator_safety_margin_min_tokens=0,
+        auto_compact_trigger_ratio=0.1,
+        hard_context_limit_ratio=0.95,
+        reactive_compact_enabled=True,
+        reactive_compact_retry_limit=1,
+        post_compact_target_max_tokens=3000,
+    )
+    messages = _synthetic_pressure_messages()
+    client = _ReactiveContextLimitThenFinalClient()
+
+    with RunRecorder("synthetic-context-pipeline", run_dir, task_id="task") as recorder:
+        index = ToolResultArtifactIndex(run_dir=run_dir)
+        _append_terminal_tool_events(recorder, messages)
+        first = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=1,
+            context_config=config,
+            tool_result_artifact_index=index,
+        )
+        recorder.append_event(first.context_event)
+        manager.commit_prepared_tool_result_decisions(
+            context_revision=first.context_revision,
+            prepared_messages_ref=first.prepared_messages_ref,
+            model_call_id="synthetic-context-pipeline_layer_model_call_0001",
+            tool_result_artifact_index=index,
+        )
+        second = manager.prepare_messages(
+            messages=messages,
+            recorder=recorder,
+            task_id="task",
+            turn=2,
+            context_config=config,
+            tool_result_artifact_index=index,
+        )
+        recorder.append_event(second.context_event)
+        _bind_model_input_snapshot(
+            recorder=recorder,
+            run_dir=run_dir,
+            prepared=second,
+            model_call_id="synthetic-context-pipeline_layer_model_call_0002",
+            turn=2,
+        )
+        state = AgentLoop(
+            model_client=client,
+            tool_executor=ToolExecutor(),
+            allowed_tool_names=["grep", "read_file"],
+        ).run(
+            run_id="synthetic-context-pipeline",
+            task_id="task",
+            initial_messages=[
+                *second.messages,
+                {
+                    "role": "user",
+                    "turn": 3,
+                    "content": "Continue from the compressed tool history and finish.",
+                },
+            ],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=3,
+            context_config=config,
+        )
+
+    events = _read_jsonl(run_dir / "events.jsonl")
+    context_events = [event for event in events if event["event_type"] == "context_prepared"]
+    event_types = [event["event_type"] for event in events]
+    accepted_call_ids = [
+        event["data"].get("model_call_id")
+        for event in events
+        if event["event_type"] == "model_input_accepted"
+    ]
+    final_request_messages = json.dumps(client.requests[-1].prepared_messages, ensure_ascii=False)
+
+    assert state.agent_stop_reason == "final_answer"
+    assert len(context_events) >= 4
+    assert first.context_event.data["context_reduction"]["replaced_tool_result_ids"]
+    assert any(
+        ref.get("kind") == "tool_result_original_content"
+        for ref in first.context_event.data["context_reduction"]["replacement_artifact_refs"]
+    )
+    assert second.context_event.data["context_reduction"]["microcompact_applied"] is True
+    assert "auto_compact_model_call_started" in event_types
+    assert "auto_compact_applied" in event_types
+    assert "reactive_compact_triggered" in event_types
+    assert state.auto_compact_count >= 1
+    assert state.reactive_compact_count == 1
+    assert "synthetic-context-pipeline_model_call_0001" not in accepted_call_ids
+    assert accepted_call_ids[-1] == "synthetic-context-pipeline_model_call_0002"
+    assert "repo_harness_auto_compact_summary" in final_request_messages
+    assert "provider context limit rejected this input" not in final_request_messages
+    _write_training_files(run_dir, stop_reason=state.agent_stop_reason)
+    _assert_inspect_and_sft_export_clean(
+        run_dir,
+        assert_tool_results_recoverable=True,
+        assert_provider_body_equivalent=False,
+    )
+    exported_text = export_sft_jsonl(run_dir).read_text(encoding="utf-8")
+    assert "provider context limit rejected this input" not in exported_text
+
+
 def _bind_model_input_snapshot(
     *,
     recorder: RunRecorder,
@@ -736,6 +850,60 @@ def _tool_result_messages(*, count: int, tool_name: str) -> list[dict[str, objec
                 "tool_result_id": f"call_{index}_result",
                 "tool_name": tool_name,
                 "content": f"tool output {index}\n" + ("x" * 100),
+                "normalized_arguments": {"path": f"file_{index}.py"},
+                "status": "ok",
+                "typed": {},
+                "artifact_refs": [],
+            }
+        )
+    return messages
+
+
+def _synthetic_pressure_messages() -> list[dict[str, object]]:
+    tool_calls: list[dict[str, object]] = []
+    messages: list[dict[str, object]] = [
+        {"role": "system", "content": "system"},
+        {"role": "user", "turn": 1, "content": "Investigate a long-context issue."},
+        {"role": "assistant", "content": "call pressure tools", "turn": 1, "tool_calls": tool_calls},
+    ]
+    for index in range(10):
+        tool_call = {
+            "tool_call_id": f"call_large_{index}",
+            "tool_name": "grep",
+            "arguments": {"query": f"needle_{index}"},
+            "turn": 1,
+        }
+        tool_calls.append(tool_call)
+        messages.append(
+            {
+                "role": "tool",
+                "turn": 1,
+                "tool_call_id": f"call_large_{index}",
+                "tool_result_id": f"call_large_{index}_result",
+                "tool_name": "grep",
+                "content": f"large result {index}\n" + ("L" * 40000),
+                "normalized_arguments": {"query": f"needle_{index}"},
+                "status": "ok",
+                "typed": {},
+                "artifact_refs": [],
+            }
+        )
+    for index in range(32):
+        tool_call = {
+            "tool_call_id": f"call_read_{index}",
+            "tool_name": "read_file",
+            "arguments": {"path": f"file_{index}.py"},
+            "turn": 1,
+        }
+        tool_calls.append(tool_call)
+        messages.append(
+            {
+                "role": "tool",
+                "turn": 1,
+                "tool_call_id": f"call_read_{index}",
+                "tool_result_id": f"call_read_{index}_result",
+                "tool_name": "read_file",
+                "content": f"read result {index}\n" + ("R" * 120),
                 "normalized_arguments": {"path": f"file_{index}.py"},
                 "status": "ok",
                 "typed": {},
