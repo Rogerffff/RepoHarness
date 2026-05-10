@@ -3362,7 +3362,7 @@ def _pre_verl_environment_for_repo(repo: str, version: str) -> dict[str, Any]:
         }
     if repo == "pvlib/pvlib-python":
         return {
-            "environment_id": f"pre_verl_pvlib_{version or 'unknown'}_python39_v0",
+            "environment_id": f"pre_verl_pvlib_{version or 'unknown'}_python39_v1",
             "execution_image": "python:3.9",
             "pythonpath": ".",
             "setup_timeout_sec": 1500,
@@ -3370,7 +3370,7 @@ def _pre_verl_environment_for_repo(repo: str, version: str) -> dict[str, Any]:
             "setup_shell": (
                 f"{common_prefix} && export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PVLIB="
                 f"{shlex.quote(pvlib_pretend_version or '0.9.0')} && "
-                "python -m pip install -q 'setuptools<70' 'numpy<2' pandas scipy pytest "
+                "python -m pip install -q 'setuptools<70' 'numpy<2' pandas scipy pytest pytest-mock "
                 "pytz requests packaging matplotlib -e ."
             ),
         }

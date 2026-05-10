@@ -142,6 +142,8 @@ def test_scheduler_freezes_repo_specific_environment_setup_and_platform(tmp_path
 
     pvlib_env = script._pre_verl_environment_for_repo("pvlib/pvlib-python", "0.9")
     assert "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PVLIB=0.9.0" in pvlib_env["setup_shell"]
+    assert "pytest-mock" in pvlib_env["setup_shell"]
+    assert pvlib_env["environment_id"] == "pre_verl_pvlib_0.9_python39_v1"
 
 
 def test_scheduler_boundary_index_skips_quality_gate_blocked_runs(tmp_path: Path) -> None:

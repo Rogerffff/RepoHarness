@@ -28,6 +28,8 @@ def test_repo_specific_environment_freezes_pvlib_version_and_pyvista_platform() 
     pyvista = _pre_verl_environment_for_repo("pyvista/pyvista", "0.39")
 
     assert "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PVLIB=0.9.0" in pvlib["setup_shell"]
+    assert "pytest-mock" in pvlib["setup_shell"]
+    assert pvlib["environment_id"] == "pre_verl_pvlib_0.9_python39_v1"
     assert pyvista["requested_container_platform"] == "linux/amd64"
     assert "libgl1" in pyvista["setup_shell"]
     assert "libgl1" in pyvista["runtime_shell_prefix"]
