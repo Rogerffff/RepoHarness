@@ -1,6 +1,9 @@
 """上下文构建与上下文管理模块。"""
 
-from repo_harness.context.builder import ContextBuilder
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from repo_harness.context.budget import (
     ContextBudgetFacts,
     ProviderRequestProjectionEstimate,
@@ -33,6 +36,9 @@ from repo_harness.context.tool_result_artifacts import (
     read_tool_result_artifact,
 )
 
+if TYPE_CHECKING:
+    from repo_harness.context.builder import ContextBuilder
+
 __all__ = [
     "AutoCompactRecord",
     "AutoCompactState",
@@ -61,3 +67,11 @@ __all__ = [
     "read_tool_result_artifact",
     "resolve_context_budget",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name == "ContextBuilder":
+        from repo_harness.context.builder import ContextBuilder
+
+        return ContextBuilder
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
