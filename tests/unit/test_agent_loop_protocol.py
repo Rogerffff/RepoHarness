@@ -1712,6 +1712,66 @@ def test_agent_loop_uses_external_task_deadline_before_model_call(tmp_path: Path
     assert not any(event["event_type"] == "model_call_started" for event in events)
 
 
+def test_agent_loop_clamps_provider_request_timeout_to_remaining_deadline(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RequestListClient()
+
+    with RunRecorder("deadline-clamp", run_dir, task_id="task") as recorder:
+        state = AgentLoop(model_client=client, tool_executor=ToolExecutor()).run(
+            run_id="deadline-clamp",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            task_deadline_monotonic=time.monotonic() + 30,
+            request_timeout_seconds=2400,
+            provider_timeout_grace_sec=2,
+            min_provider_request_timeout_sec=5,
+        )
+
+    assert state.agent_stop_reason == "final_answer"
+    assert len(client.requests) == 1
+    request = client.requests[0]
+    assert 20 <= request.request_timeout_seconds <= 28
+    facts = request.request_timeout_policy_facts
+    assert facts["task_deadline_monotonic_present"] is True
+    assert facts["configured_request_timeout_seconds"] == 2400
+    assert facts["provider_timeout_grace_sec"] == 2
+    assert facts["absolute_deadline_enforced"] is True
+    assert facts["effective_request_timeout_seconds"] <= 28
+
+
+def test_agent_loop_skips_provider_call_when_deadline_too_close(tmp_path: Path):
+    run_dir = tmp_path / "run"
+    client = _RequestListClient()
+
+    with RunRecorder("deadline-skip", run_dir, task_id="task") as recorder:
+        state = AgentLoop(model_client=client, tool_executor=ToolExecutor()).run(
+            run_id="deadline-skip",
+            task_id="task",
+            initial_messages=[{"role": "system", "content": "system"}],
+            tool_context=None,  # type: ignore[arg-type]
+            recorder=recorder,
+            max_turns=1,
+            task_deadline_monotonic=time.monotonic() + 4,
+            request_timeout_seconds=2400,
+            provider_timeout_grace_sec=2,
+            min_provider_request_timeout_sec=5,
+        )
+
+    events = _read_events(run_dir)
+    assert state.agent_stop_reason == "timeout"
+    assert client.requests == []
+    assert any(
+        event["event_type"] == "provider_call_skipped_due_to_task_deadline"
+        and event["error_type"] == "task_timeout_before_provider_call"
+        for event in events
+    )
+    exhausted = next(event for event in events if event["event_type"] == "budget_exhausted")
+    assert exhausted["data"]["provider_call_skipped_due_to_task_deadline"] is True
+
+
 def test_agent_loop_max_tool_calls_pairs_interrupted_result(tmp_path: Path):
     run_dir = tmp_path / "run"
     client = FakeModelClient.from_steps(

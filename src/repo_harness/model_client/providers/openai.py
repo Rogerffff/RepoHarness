@@ -24,10 +24,13 @@ from repo_harness.model_client.providers.common import (
     duration_ms_since,
     model_error_response,
     provider_error_payload,
+    read_response_text_with_deadline,
+    request_for_provider_attempt,
     retry_delay_ms,
     retry_policy_from_request,
     response_from_provider_payload,
     should_retry_provider_error,
+    sleep_before_provider_retry_with_deadline,
     write_provider_attempt_artifact,
     write_provider_request_artifact,
     write_provider_retry_policy_artifact,
@@ -97,29 +100,32 @@ class OpenAIProviderClient:
             policy=retry_policy,
         )
         attempt_refs = []
+        call_deadline_monotonic = time.monotonic() + request.request_timeout_seconds
         for attempt_index in range(1, retry_policy.max_attempts + 1):
             delay_ms = retry_delay_ms(attempt_index=attempt_index - 1, policy=retry_policy)
-            if delay_ms and retry_policy.sleep_enabled:
-                time.sleep(delay_ms / 1000)
-            attempt_payload = {
-                **request_payload,
-                "attempt_index": attempt_index,
-                "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
-            }
-            raw_request_ref = write_provider_request_artifact(
-                provider="openai",
-                recorder=recorder,
-                payload=attempt_payload,
-                request=request,
-            )
             try:
-                response_payload = self._create_completion(request_payload["body"], request)
+                if delay_ms and retry_policy.sleep_enabled:
+                    sleep_before_provider_retry_with_deadline(
+                        delay_ms=delay_ms,
+                        call_deadline_monotonic=call_deadline_monotonic,
+                    )
+                attempt_request = request_for_provider_attempt(
+                    request,
+                    call_deadline_monotonic=call_deadline_monotonic,
+                )
             except ProviderRequestError as exc:
                 error = exc.info
-                retryable = should_retry_provider_error(
-                    error=error,
-                    attempt_index=attempt_index,
-                    policy=retry_policy,
+                attempt_payload = {
+                    **request_payload,
+                    "attempt_index": attempt_index,
+                    "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
+                    "status": "provider_deadline_exceeded_before_attempt",
+                }
+                raw_request_ref = write_provider_request_artifact(
+                    provider="openai",
+                    recorder=recorder,
+                    payload=attempt_payload,
+                    request=request,
                 )
                 raw_response_ref = write_provider_response_artifact(
                     provider="openai",
@@ -133,6 +139,63 @@ class OpenAIProviderClient:
                         provider="openai",
                         recorder=recorder,
                         request=request,
+                        attempt_index=attempt_index,
+                        retryable=False,
+                        error_type=error.model_error_type,
+                        delay_ms=delay_ms,
+                        request_ref=raw_request_ref,
+                        response_ref=raw_response_ref,
+                        provider_request_id=error.provider_request_id,
+                        duration_ms=duration_ms_since(started),
+                        terminal=True,
+                    )
+                )
+                response = model_error_response(
+                    provider="openai",
+                    request=request,
+                    raw_request_ref=raw_request_ref,
+                    raw_response_ref=raw_response_ref,
+                    error=error,
+                    duration_ms=duration_ms_since(started),
+                )
+                return attach_provider_retry_metadata(
+                    response,
+                    attempt_refs=attempt_refs,
+                    retry_policy_ref=retry_policy_ref,
+                    terminal_error_type=error.model_error_type,
+                )
+            attempt_payload = {
+                **request_payload,
+                "attempt_index": attempt_index,
+                "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
+            }
+            raw_request_ref = write_provider_request_artifact(
+                provider="openai",
+                recorder=recorder,
+                payload=attempt_payload,
+                request=attempt_request,
+            )
+            try:
+                response_payload = self._create_completion(request_payload["body"], attempt_request)
+            except ProviderRequestError as exc:
+                error = exc.info
+                retryable = should_retry_provider_error(
+                    error=error,
+                    attempt_index=attempt_index,
+                    policy=retry_policy,
+                )
+                raw_response_ref = write_provider_response_artifact(
+                    provider="openai",
+                    recorder=recorder,
+                    payload=provider_error_payload(provider="openai", error=error),
+                    request=attempt_request,
+                    raw_request_ref=raw_request_ref,
+                )
+                attempt_refs.append(
+                    write_provider_attempt_artifact(
+                        provider="openai",
+                        recorder=recorder,
+                        request=attempt_request,
                         attempt_index=attempt_index,
                         retryable=retryable,
                         error_type=error.model_error_type,
@@ -148,7 +211,7 @@ class OpenAIProviderClient:
                     continue
                 response = model_error_response(
                     provider="openai",
-                    request=request,
+                    request=attempt_request,
                     raw_request_ref=raw_request_ref,
                     raw_response_ref=raw_response_ref,
                     error=error,
@@ -170,13 +233,13 @@ class OpenAIProviderClient:
                     "status": "ok",
                     "response": response_payload,
                 },
-                request=request,
+                request=attempt_request,
                 raw_request_ref=raw_request_ref,
             )
             provider_request_id = response_payload.get("_request_id") or response_payload.get("id")
             response = response_from_provider_payload(
                 provider="openai",
-                request=request,
+                request=attempt_request,
                 raw_request_ref=raw_request_ref,
                 raw_response_ref=raw_response_ref,
                 payload=response_payload,
@@ -188,7 +251,7 @@ class OpenAIProviderClient:
                 write_provider_attempt_artifact(
                     provider="openai",
                     recorder=recorder,
-                    request=request,
+                    request=attempt_request,
                     attempt_index=attempt_index,
                     retryable=False,
                     error_type=terminal_error_type,
@@ -245,9 +308,13 @@ class OpenAIProviderClient:
                 "Authorization": f"Bearer {self.credential.value}",
             },
         )
+        request_deadline_monotonic = time.monotonic() + request.request_timeout_seconds
         try:
             with urllib.request.urlopen(http_request, timeout=request.request_timeout_seconds) as response:
-                text = response.read().decode("utf-8")
+                text = read_response_text_with_deadline(
+                    response,
+                    deadline_monotonic=request_deadline_monotonic,
+                )
                 payload = json.loads(text)
                 if isinstance(payload, dict):
                     request_id = response.headers.get("x-request-id")
@@ -269,7 +336,7 @@ class OpenAIProviderClient:
                 )
             ) from exc
         except urllib.error.HTTPError as exc:
-            payload = _read_error_payload(exc)
+            payload = _read_error_payload(exc, deadline_monotonic=request_deadline_monotonic)
             message = _error_message_from_payload(payload) or f"OpenAI HTTP {exc.code}"
             error_type = classify_http_status(exc.code, payload=payload, message=message)
             raise ProviderRequestError(
@@ -411,9 +478,21 @@ def _read_local_openai_secret() -> str | None:
     return match.group(1) if match else None
 
 
-def _read_error_payload(exc: urllib.error.HTTPError) -> dict[str, Any]:
+def _read_error_payload(
+    exc: urllib.error.HTTPError,
+    *,
+    deadline_monotonic: float | None = None,
+) -> dict[str, Any]:
     try:
-        text = exc.read().decode("utf-8")
+        if deadline_monotonic is None:
+            text = exc.read().decode("utf-8")
+        else:
+            text = read_response_text_with_deadline(
+                exc,
+                deadline_monotonic=deadline_monotonic,
+            )
+    except ProviderRequestError:
+        raise
     except Exception:
         return {"error": {"message": f"HTTP {exc.code}"}}
     try:

@@ -68,6 +68,10 @@ class RuntimeConfig(StrictBaseModel):
     max_test_runs: int = Field(default=6, ge=0)
     no_progress_patience: int = Field(default=3, ge=0)
     task_timeout_sec: int = Field(default=900, gt=0)
+    provider_request_timeout_sec: int | None = Field(default=None, gt=0)
+    provider_timeout_grace_sec: int = Field(default=2, ge=0)
+    min_provider_request_timeout_sec: int = Field(default=5, gt=0)
+    provider_timeout_policy: str = "task_deadline_clamped_provider_request_v0"
     seed: int | None = 42
 
 

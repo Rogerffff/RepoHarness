@@ -67,6 +67,7 @@ class ModelRequestContext(StrictBaseModel):
     run_config_facts_ref: RunConfigFactsRef
     budget_state: dict[str, Any]
     request_timeout_seconds: float = Field(gt=0)
+    request_timeout_policy_facts: dict[str, Any] = Field(default_factory=dict)
     raw_request_logging_policy: str
     credential_policy: ProviderCredentialPolicy
     retry_policy: str
@@ -100,6 +101,8 @@ class ModelCallEvent(StrictBaseModel):
     output_tokens: int = Field(default=0, ge=0)
     cached_tokens: int = Field(default=0, ge=0)
     duration_ms: int = Field(default=0, ge=0)
+    request_timeout_seconds: float | None = Field(default=None, gt=0)
+    request_timeout_policy_facts: dict[str, Any] = Field(default_factory=dict)
     attempt_count: int = Field(default=1, ge=1)
     retry_count: int = Field(default=0, ge=0)
     terminal_error_type: str | None = None

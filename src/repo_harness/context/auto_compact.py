@@ -57,6 +57,7 @@ class AutoCompactRunner:
         provider_model_settings: dict[str, Any] | None = None,
         budget_state: dict[str, Any] | None = None,
         request_timeout_seconds: float = 60.0,
+        request_timeout_policy_facts: dict[str, Any] | None = None,
         raw_request_logging_policy: str = "redact_secrets",
         retry_policy: str = "none",
         scaffold_id: str = "context_compaction",
@@ -206,6 +207,7 @@ class AutoCompactRunner:
             run_config_facts_ref=run_config_facts_ref,
             budget_state=budget_state or {},
             request_timeout_seconds=request_timeout_seconds,
+            request_timeout_policy_facts=request_timeout_policy_facts or {},
             raw_request_logging_policy=raw_request_logging_policy,
             credential_policy=provider_options.credential_policy,
             retry_policy=retry_policy,
@@ -244,6 +246,16 @@ class AutoCompactRunner:
                 ),
                 "model_error_type": response.model_error_type,
                 "finish_reason": response.finish_reason,
+                "request_timeout_seconds": (
+                    response.model_call_event.request_timeout_seconds
+                    if response.model_call_event
+                    else request_timeout_seconds
+                ),
+                "request_timeout_policy_facts": (
+                    response.model_call_event.request_timeout_policy_facts
+                    if response.model_call_event
+                    else request_timeout_policy_facts or {}
+                ),
             },
             {"budget_policy": "preserve_json", "redaction_status": "not_sensitive"},
         )
@@ -272,6 +284,16 @@ class AutoCompactRunner:
                     "trainable": False,
                     "model_error_type": response.model_error_type,
                     "finish_reason": response.finish_reason,
+                    "request_timeout_seconds": (
+                        response.model_call_event.request_timeout_seconds
+                        if response.model_call_event
+                        else request_timeout_seconds
+                    ),
+                    "request_timeout_policy_facts": (
+                        response.model_call_event.request_timeout_policy_facts
+                        if response.model_call_event
+                        else request_timeout_policy_facts or {}
+                    ),
                     "raw_provider_request_ref": (
                         response.raw_provider_request_ref.model_dump(mode="json")
                         if response.raw_provider_request_ref

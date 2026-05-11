@@ -54,6 +54,7 @@ class FailureType(str, Enum):
     provider_auth_error = "provider_auth_error"
     provider_rate_limit = "provider_rate_limit"
     provider_timeout = "provider_timeout"
+    task_timeout_before_provider_call = "task_timeout_before_provider_call"
     context_limit = "context_limit"
     auto_compact_failed_preflight = "auto_compact_failed_preflight"
     reactive_compact_failed = "reactive_compact_failed"
@@ -406,6 +407,10 @@ class RunConfigFacts(StrictBaseModel):
     max_tool_calls: int = Field(ge=0)
     max_test_runs: int = Field(ge=0)
     task_timeout_sec: int = Field(gt=0)
+    provider_request_timeout_sec: int | None = Field(default=None, gt=0)
+    provider_timeout_grace_sec: int = Field(default=2, ge=0)
+    min_provider_request_timeout_sec: int = Field(default=5, gt=0)
+    provider_timeout_policy: str = "task_deadline_clamped_provider_request_v0"
     command_timeout_sec: int = Field(gt=0)
     context_budget_tokens: int = Field(gt=0)
     model_context_window_tokens: int | None = Field(default=None, gt=0)

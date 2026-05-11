@@ -54,6 +54,8 @@ def test_auto_compact_runner_applies_summary_with_compact_only_request(tmp_path:
         tool_schema_snapshot_ref=_artifact_ref(recorder, "tool_schema_snapshot"),
         run_config_facts_ref=RunConfigFactsRef(sha256="1" * 64),
         tool_result_artifact_index=tool_index,
+        request_timeout_seconds=12.0,
+        request_timeout_policy_facts={"timeout_policy_version": "unit_test_timeout_policy"},
     )
 
     assert result.status == "applied"
@@ -68,6 +70,10 @@ def test_auto_compact_runner_applies_summary_with_compact_only_request(tmp_path:
     assert request.tool_choice == "none"
     assert request.provider_message_format == "repo_harness_compact_summary_request_v0"
     assert request.generation_config["max_output_tokens"] == 16000
+    assert request.request_timeout_seconds == 12.0
+    assert request.request_timeout_policy_facts == {
+        "timeout_policy_version": "unit_test_timeout_policy"
+    }
     assert not recorder.transcript_path.read_text(encoding="utf-8").strip()
 
     source_payload = _read_artifact(recorder, result.compact_source_messages_ref)
@@ -92,10 +98,18 @@ def test_auto_compact_runner_applies_summary_with_compact_only_request(tmp_path:
     assert "effective_tool_name" in rebuilt_text
     assert "typed" not in rebuilt_text
 
-    event_types = [event["event_type"] for event in read_jsonl(recorder.events_path)]
+    events = read_jsonl(recorder.events_path)
+    event_types = [event["event_type"] for event in events]
     assert "auto_compact_model_call_started" in event_types
     assert "auto_compact_model_call_completed" in event_types
     assert "auto_compact_applied" in event_types
+    completed = next(
+        event for event in events if event["event_type"] == "auto_compact_model_call_completed"
+    )
+    assert completed["data"]["request_timeout_seconds"] == 12.0
+    assert completed["data"]["request_timeout_policy_facts"] == {
+        "timeout_policy_version": "unit_test_timeout_policy"
+    }
 
 
 def test_auto_compact_runner_rejects_non_json_summary(tmp_path: Path) -> None:

@@ -62,6 +62,10 @@ STRICT_COMPARE_FIELDS = (
     "tool_budget",
     "test_budget",
     "task_timeout",
+    "provider_request_timeout",
+    "provider_timeout_grace",
+    "min_provider_request_timeout",
+    "provider_timeout_policy",
 )
 
 
@@ -278,6 +282,7 @@ class PairingPolicy(StrictBaseModel):
             "missing_formal_final_verifier",
             "non_formal_reward_source",
             "artifact_manifest_invalid",
+            "source_run_invalid_for_training",
             "tool_schema_snapshot_mismatch",
             "context_policy_mismatch",
             "budget_mismatch",

@@ -26,10 +26,13 @@ from repo_harness.model_client.providers.common import (
     duration_ms_since,
     model_error_response,
     provider_error_payload,
+    read_response_text_with_deadline,
+    request_for_provider_attempt,
     retry_delay_ms,
     retry_policy_from_request,
     response_from_provider_payload,
     should_retry_provider_error,
+    sleep_before_provider_retry_with_deadline,
     write_provider_attempt_artifact,
     write_provider_request_artifact,
     write_provider_retry_policy_artifact,
@@ -96,6 +99,7 @@ class DeepSeekProviderClient:
                     "status": "provider_protocol_error",
                     "model_call_id": request.model_call_id,
                     "error": error.message,
+                    "request_timeout_policy_facts": request.request_timeout_policy_facts,
                     "body": {"messages": "<not_built>"},
                 },
                 request=request,
@@ -125,29 +129,32 @@ class DeepSeekProviderClient:
             policy=retry_policy,
         )
         attempt_refs = []
+        call_deadline_monotonic = time.monotonic() + request.request_timeout_seconds
         for attempt_index in range(1, retry_policy.max_attempts + 1):
             delay_ms = retry_delay_ms(attempt_index=attempt_index - 1, policy=retry_policy)
-            if delay_ms and retry_policy.sleep_enabled:
-                time.sleep(delay_ms / 1000)
-            attempt_payload = {
-                **request_payload,
-                "attempt_index": attempt_index,
-                "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
-            }
-            raw_request_ref = write_provider_request_artifact(
-                provider="deepseek",
-                recorder=recorder,
-                payload=attempt_payload,
-                request=request,
-            )
             try:
-                response_payload, provider_request_id = self._post_json(request_payload["body"], request)
+                if delay_ms and retry_policy.sleep_enabled:
+                    sleep_before_provider_retry_with_deadline(
+                        delay_ms=delay_ms,
+                        call_deadline_monotonic=call_deadline_monotonic,
+                    )
+                attempt_request = request_for_provider_attempt(
+                    request,
+                    call_deadline_monotonic=call_deadline_monotonic,
+                )
             except ProviderRequestError as exc:
                 error = exc.info
-                retryable = should_retry_provider_error(
-                    error=error,
-                    attempt_index=attempt_index,
-                    policy=retry_policy,
+                attempt_payload = {
+                    **request_payload,
+                    "attempt_index": attempt_index,
+                    "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
+                    "status": "provider_deadline_exceeded_before_attempt",
+                }
+                raw_request_ref = write_provider_request_artifact(
+                    provider="deepseek",
+                    recorder=recorder,
+                    payload=attempt_payload,
+                    request=request,
                 )
                 raw_response_ref = write_provider_response_artifact(
                     provider="deepseek",
@@ -161,6 +168,66 @@ class DeepSeekProviderClient:
                         provider="deepseek",
                         recorder=recorder,
                         request=request,
+                        attempt_index=attempt_index,
+                        retryable=False,
+                        error_type=error.model_error_type,
+                        delay_ms=delay_ms,
+                        request_ref=raw_request_ref,
+                        response_ref=raw_response_ref,
+                        provider_request_id=error.provider_request_id,
+                        duration_ms=duration_ms_since(started),
+                        terminal=True,
+                    )
+                )
+                response = model_error_response(
+                    provider="deepseek",
+                    request=request,
+                    raw_request_ref=raw_request_ref,
+                    raw_response_ref=raw_response_ref,
+                    error=error,
+                    duration_ms=duration_ms_since(started),
+                )
+                return attach_provider_retry_metadata(
+                    response,
+                    attempt_refs=attempt_refs,
+                    retry_policy_ref=retry_policy_ref,
+                    terminal_error_type=error.model_error_type,
+                )
+            attempt_payload = {
+                **request_payload,
+                "attempt_index": attempt_index,
+                "retry_policy_ref": retry_policy_ref.model_dump(mode="json"),
+            }
+            raw_request_ref = write_provider_request_artifact(
+                provider="deepseek",
+                recorder=recorder,
+                payload=attempt_payload,
+                request=attempt_request,
+            )
+            try:
+                response_payload, provider_request_id = self._post_json(
+                    request_payload["body"],
+                    attempt_request,
+                )
+            except ProviderRequestError as exc:
+                error = exc.info
+                retryable = should_retry_provider_error(
+                    error=error,
+                    attempt_index=attempt_index,
+                    policy=retry_policy,
+                )
+                raw_response_ref = write_provider_response_artifact(
+                    provider="deepseek",
+                    recorder=recorder,
+                    payload=provider_error_payload(provider="deepseek", error=error),
+                    request=attempt_request,
+                    raw_request_ref=raw_request_ref,
+                )
+                attempt_refs.append(
+                    write_provider_attempt_artifact(
+                        provider="deepseek",
+                        recorder=recorder,
+                        request=attempt_request,
                         attempt_index=attempt_index,
                         retryable=retryable,
                         error_type=error.model_error_type,
@@ -176,7 +243,7 @@ class DeepSeekProviderClient:
                     continue
                 response = model_error_response(
                     provider="deepseek",
-                    request=request,
+                    request=attempt_request,
                     raw_request_ref=raw_request_ref,
                     raw_response_ref=raw_response_ref,
                     error=error,
@@ -199,12 +266,12 @@ class DeepSeekProviderClient:
                     "provider_request_id": provider_request_id,
                     "response": response_payload,
                 },
-                request=request,
+                request=attempt_request,
                 raw_request_ref=raw_request_ref,
             )
             response = response_from_provider_payload(
                 provider="deepseek",
-                request=request,
+                request=attempt_request,
                 raw_request_ref=raw_request_ref,
                 raw_response_ref=raw_response_ref,
                 payload=response_payload,
@@ -221,7 +288,7 @@ class DeepSeekProviderClient:
                 terminal_error_type = "provider_protocol_error"
                 response = model_error_response(
                     provider="deepseek",
-                    request=request,
+                    request=attempt_request,
                     raw_request_ref=raw_request_ref,
                     raw_response_ref=raw_response_ref,
                     error=ProviderErrorInfo(
@@ -239,7 +306,7 @@ class DeepSeekProviderClient:
                 write_provider_attempt_artifact(
                     provider="deepseek",
                     recorder=recorder,
-                    request=request,
+                    request=attempt_request,
                     attempt_index=attempt_index,
                     retryable=False,
                     error_type=terminal_error_type,
@@ -259,7 +326,7 @@ class DeepSeekProviderClient:
             )
             return _attach_deepseek_reasoning_state(
                 response=response,
-                request=request,
+                request=attempt_request,
                 payload=response_payload,
                 recorder=recorder,
             )
@@ -281,9 +348,13 @@ class DeepSeekProviderClient:
                 "Authorization": f"Bearer {self.credential.value}",
             },
         )
+        request_deadline_monotonic = time.monotonic() + request.request_timeout_seconds
         try:
             with urllib.request.urlopen(http_request, timeout=request.request_timeout_seconds) as response:
-                text = response.read().decode("utf-8")
+                text = read_response_text_with_deadline(
+                    response,
+                    deadline_monotonic=request_deadline_monotonic,
+                )
                 payload = json.loads(text)
                 return payload, response.headers.get("x-request-id") or payload.get("id")
         except TimeoutError as exc:
@@ -295,7 +366,7 @@ class DeepSeekProviderClient:
                 )
             ) from exc
         except urllib.error.HTTPError as exc:
-            payload = _read_error_payload(exc)
+            payload = _read_error_payload(exc, deadline_monotonic=request_deadline_monotonic)
             raise ProviderRequestError(
                 ProviderErrorInfo(
                     model_error_type=classify_http_status(
@@ -396,9 +467,21 @@ def _sdk_body_to_http_body(body: dict[str, Any]) -> dict[str, Any]:
     return http_body
 
 
-def _read_error_payload(exc: urllib.error.HTTPError) -> dict[str, Any]:
+def _read_error_payload(
+    exc: urllib.error.HTTPError,
+    *,
+    deadline_monotonic: float | None = None,
+) -> dict[str, Any]:
     try:
-        text = exc.read().decode("utf-8")
+        if deadline_monotonic is None:
+            text = exc.read().decode("utf-8")
+        else:
+            text = read_response_text_with_deadline(
+                exc,
+                deadline_monotonic=deadline_monotonic,
+            )
+    except ProviderRequestError:
+        raise
     except Exception:
         return {"error": {"message": f"HTTP {exc.code}"}}
     try:

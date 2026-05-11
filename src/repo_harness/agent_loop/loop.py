@@ -52,6 +52,7 @@ CONVERGENCE_NUDGE_MAX_PER_RUN = 3
 CONVERGENCE_NUDGE_MIN_TURN_GAP = 4
 NEAR_BUDGET_WITH_PATCH_TURN_THRESHOLD = 4
 CONTEXT_WARNING_POLICY_VERSION = "repo_harness_context_warning_v1"
+PROVIDER_TIMEOUT_POLICY_VERSION = "task_deadline_clamped_provider_request_v0"
 MODEL_INPUT_NOT_ACCEPTED_ERROR_TYPES = frozenset(
     {
         "context_limit",
@@ -141,6 +142,9 @@ class AgentLoop:
         generation_config: dict[str, object] | None = None,
         provider_model_settings: dict[str, object] | None = None,
         request_timeout_seconds: float = 60.0,
+        provider_timeout_grace_sec: float = 2.0,
+        min_provider_request_timeout_sec: float = 5.0,
+        provider_timeout_policy: str = PROVIDER_TIMEOUT_POLICY_VERSION,
         raw_request_logging_policy: str = "redact_secrets",
         retry_policy: str = "none",
     ) -> AgentLoopState:
@@ -438,6 +442,24 @@ class AgentLoop:
                         },
                     )
                 )
+                auto_compact_timeout = _resolve_provider_call_timeout(
+                    configured_request_timeout_seconds=request_timeout_seconds,
+                    task_deadline_monotonic=task_deadline_monotonic,
+                    provider_timeout_grace_sec=provider_timeout_grace_sec,
+                    min_provider_request_timeout_sec=min_provider_request_timeout_sec,
+                    provider_timeout_policy=provider_timeout_policy,
+                )
+                if not auto_compact_timeout["should_call_provider"]:
+                    _record_provider_call_skipped_due_to_deadline(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        state=state,
+                        recorder=recorder,
+                        timeout_facts=auto_compact_timeout["facts"],
+                        call_site="proactive_auto_compact",
+                    )
+                    break
                 auto_compact_result = self.auto_compact_runner.run(
                     mode="proactive",
                     trigger_reason="projection_above_auto_compact_trigger",
@@ -458,7 +480,8 @@ class AgentLoop:
                     generation_config=generation_config or {},
                     provider_model_settings=provider_model_settings or {},
                     budget_state=state.budget_state.model_dump(mode="json"),
-                    request_timeout_seconds=request_timeout_seconds,
+                    request_timeout_seconds=auto_compact_timeout["effective_request_timeout_seconds"],
+                    request_timeout_policy_facts=auto_compact_timeout["facts"],
                     raw_request_logging_policy=raw_request_logging_policy,
                     retry_policy=retry_policy,
                     scaffold_id=self.scaffold.scaffold_id,
@@ -723,6 +746,24 @@ class AgentLoop:
                     },
                 )
             )
+            model_call_timeout = _resolve_provider_call_timeout(
+                configured_request_timeout_seconds=request_timeout_seconds,
+                task_deadline_monotonic=task_deadline_monotonic,
+                provider_timeout_grace_sec=provider_timeout_grace_sec,
+                min_provider_request_timeout_sec=min_provider_request_timeout_sec,
+                provider_timeout_policy=provider_timeout_policy,
+            )
+            if not model_call_timeout["should_call_provider"]:
+                _record_provider_call_skipped_due_to_deadline(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    state=state,
+                    recorder=recorder,
+                    timeout_facts=model_call_timeout["facts"],
+                    call_site="main_model_call",
+                )
+                break
             model_request = _build_model_request_context(
                 run_id=run_id,
                 task_id=task_id,
@@ -742,7 +783,8 @@ class AgentLoop:
                 budget_state=state.budget_state.model_dump(mode="json"),
                 generation_config=generation_config or {},
                 provider_model_settings=provider_model_settings or {},
-                request_timeout_seconds=request_timeout_seconds,
+                request_timeout_seconds=model_call_timeout["effective_request_timeout_seconds"],
+                request_timeout_policy_facts=model_call_timeout["facts"],
                 raw_request_logging_policy=raw_request_logging_policy,
                 retry_policy=retry_policy,
                 provider_request_projection_hash=projection_estimate.provider_request_projection_hash,
@@ -1061,6 +1103,24 @@ class AgentLoop:
                         )
                     )
                     break
+                emergency_timeout = _resolve_provider_call_timeout(
+                    configured_request_timeout_seconds=request_timeout_seconds,
+                    task_deadline_monotonic=task_deadline_monotonic,
+                    provider_timeout_grace_sec=provider_timeout_grace_sec,
+                    min_provider_request_timeout_sec=min_provider_request_timeout_sec,
+                    provider_timeout_policy=provider_timeout_policy,
+                )
+                if not emergency_timeout["should_call_provider"]:
+                    _record_provider_call_skipped_due_to_deadline(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        state=state,
+                        recorder=recorder,
+                        timeout_facts=emergency_timeout["facts"],
+                        call_site="emergency_auto_compact",
+                    )
+                    break
                 emergency_result = self.auto_compact_runner.run(
                     mode="emergency",
                     trigger_reason="provider_context_limit_retry",
@@ -1081,7 +1141,8 @@ class AgentLoop:
                     generation_config=generation_config or {},
                     provider_model_settings=provider_model_settings or {},
                     budget_state=state.budget_state.model_dump(mode="json"),
-                    request_timeout_seconds=request_timeout_seconds,
+                    request_timeout_seconds=emergency_timeout["effective_request_timeout_seconds"],
+                    request_timeout_policy_facts=emergency_timeout["facts"],
                     raw_request_logging_policy=raw_request_logging_policy,
                     retry_policy=retry_policy,
                     scaffold_id=self.scaffold.scaffold_id,
@@ -2972,6 +3033,7 @@ def _build_model_request_context(
     generation_config: dict[str, object],
     provider_model_settings: dict[str, object],
     request_timeout_seconds: float,
+    request_timeout_policy_facts: dict[str, object],
     raw_request_logging_policy: str,
     retry_policy: str,
     provider_request_projection_hash: str | None,
@@ -3001,6 +3063,7 @@ def _build_model_request_context(
         run_config_facts_ref=run_config_facts_ref,
         budget_state=budget_state,
         request_timeout_seconds=request_timeout_seconds,
+        request_timeout_policy_facts=request_timeout_policy_facts,
         raw_request_logging_policy=raw_request_logging_policy,
         credential_policy=provider_options.credential_policy,
         retry_policy=retry_policy,
@@ -3821,6 +3884,100 @@ def _budget_stop_reason(
     return None
 
 
+def _resolve_provider_call_timeout(
+    *,
+    configured_request_timeout_seconds: float,
+    task_deadline_monotonic: float | None,
+    provider_timeout_grace_sec: float,
+    min_provider_request_timeout_sec: float,
+    provider_timeout_policy: str,
+) -> dict[str, Any]:
+    now = time.monotonic()
+    facts: dict[str, Any] = {
+        "timeout_policy_version": provider_timeout_policy,
+        "task_deadline_monotonic_present": task_deadline_monotonic is not None,
+        "configured_request_timeout_seconds": configured_request_timeout_seconds,
+        "provider_timeout_grace_sec": provider_timeout_grace_sec,
+        "min_provider_request_timeout_sec": min_provider_request_timeout_sec,
+        "absolute_deadline_enforced": task_deadline_monotonic is not None,
+    }
+    if task_deadline_monotonic is None:
+        facts.update(
+            {
+                "remaining_task_time_sec_before_provider_call": None,
+                "effective_request_timeout_seconds": configured_request_timeout_seconds,
+                "deadline_skip_reason": None,
+            }
+        )
+        return {
+            "should_call_provider": True,
+            "effective_request_timeout_seconds": configured_request_timeout_seconds,
+            "facts": facts,
+        }
+    remaining = task_deadline_monotonic - now
+    effective = min(
+        configured_request_timeout_seconds,
+        max(0.0, remaining - provider_timeout_grace_sec),
+    )
+    should_call = effective >= min_provider_request_timeout_sec
+    facts.update(
+        {
+            "remaining_task_time_sec_before_provider_call": round(remaining, 6),
+            "effective_request_timeout_seconds": round(effective, 6),
+            "deadline_skip_reason": None if should_call else "task_timeout_before_provider_call",
+        }
+    )
+    return {
+        "should_call_provider": should_call,
+        "effective_request_timeout_seconds": max(effective, 0.001),
+        "facts": facts,
+    }
+
+
+def _record_provider_call_skipped_due_to_deadline(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    timeout_facts: dict[str, Any],
+    call_site: str,
+) -> None:
+    state.agent_stop_reason = "timeout"
+    state.budget_state.stop_reason = "timeout"
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("budget"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type="provider_call_skipped_due_to_task_deadline",
+            severity="warning",
+            error_type="task_timeout_before_provider_call",
+            data={
+                "reason": "task_timeout_before_provider_call",
+                "call_site": call_site,
+                "timeout_policy_facts": timeout_facts,
+            },
+        )
+    )
+    _record_budget_exhausted(
+        run_id=run_id,
+        task_id=task_id,
+        turn=turn,
+        reason="timeout",
+        state=state,
+        recorder=recorder,
+        details={
+            "provider_call_skipped_due_to_task_deadline": True,
+            "provider_call_site": call_site,
+            "timeout_policy_facts": timeout_facts,
+        },
+    )
+
+
 def _record_budget_exhausted(
     *,
     run_id: str,
@@ -3829,6 +3986,7 @@ def _record_budget_exhausted(
     reason: str,
     state: AgentLoopState,
     recorder: RunRecorder,
+    details: dict[str, Any] | None = None,
 ) -> None:
     state.agent_stop_reason = reason  # type: ignore[assignment]
     state.budget_state.stop_reason = reason
@@ -3844,6 +4002,7 @@ def _record_budget_exhausted(
             error_type=reason,
             data={
                 "reason": reason,
+                **(details or {}),
                 "budget_state": state.budget_state.model_dump(mode="json"),
             },
         )

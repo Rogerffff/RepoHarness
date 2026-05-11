@@ -1243,7 +1243,8 @@ def _invalid_for_training(run_path: Path) -> bool:
             "interrupted",
             "inconclusive",
         }
-        or metrics.get("interaction_efficiency", {}).get("agent_stop_reason") == "model_error"
+        or metrics.get("interaction_efficiency", {}).get("agent_stop_reason")
+        in {"model_error", "timeout", "task_timeout"}
         or _has_model_error_event(run_path)
         or metrics.get("final_verifier_status") in {"timeout", "error"}
     )
@@ -1261,6 +1262,8 @@ def _export_quality_diagnostic_reasons(run_path: Path) -> list[str]:
     reasons: list[str] = []
     if agent_stop_reason == "max_turns":
         reasons.append("agent_stop_reason_max_turns")
+    if agent_stop_reason in {"timeout", "task_timeout"}:
+        reasons.append(f"agent_stop_reason_{agent_stop_reason}")
     if feedback_tests_passed_policy == "require_model_final" and agent_stop_reason != "final_answer":
         reasons.append("require_model_final_not_satisfied")
     should_check_unobserved_terminal_tool = agent_stop_reason == "max_turns" or (
@@ -1310,6 +1313,7 @@ def _invalid_reason(run_path: Path) -> str | None:
         reward.get("invalid_reason")
         or _formal_final_verifier_invalid_reason(run_path)
         or _model_error_invalid_reason(run_path)
+        or _agent_stop_invalid_reason(run_path)
         or metrics.get("run_outcome")
         or "filtered_by_export_policy"
     )
@@ -1317,6 +1321,14 @@ def _invalid_reason(run_path: Path) -> str | None:
 
 def _has_model_error_event(run_path: Path) -> bool:
     return _model_error_invalid_reason(run_path) is not None
+
+
+def _agent_stop_invalid_reason(run_path: Path) -> str | None:
+    metrics = _read_json_if_exists(run_path / "metrics.json")
+    agent_stop_reason = metrics.get("interaction_efficiency", {}).get("agent_stop_reason")
+    if agent_stop_reason in {"timeout", "task_timeout"}:
+        return f"agent_stop_reason:{agent_stop_reason}"
+    return None
 
 
 def _model_error_invalid_reason(run_path: Path) -> str | None:

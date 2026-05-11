@@ -147,6 +147,10 @@ def build_run_config_facts(
         max_tool_calls=config.runtime.max_tool_calls,
         max_test_runs=config.runtime.max_test_runs,
         task_timeout_sec=config.runtime.task_timeout_sec,
+        provider_request_timeout_sec=config.runtime.provider_request_timeout_sec,
+        provider_timeout_grace_sec=config.runtime.provider_timeout_grace_sec,
+        min_provider_request_timeout_sec=config.runtime.min_provider_request_timeout_sec,
+        provider_timeout_policy=config.runtime.provider_timeout_policy,
         command_timeout_sec=config.workspace.default_command_timeout_sec,
         context_budget_tokens=context_budget_facts.effective_context_budget_tokens,
         model_context_window_tokens=context_budget_facts.model_context_window_tokens,
@@ -413,6 +417,7 @@ def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadi
         not in {
             "max_turns",
             "max_tool_calls",
+            "timeout",
             "task_timeout",
             "context_limit",
             "context_limit_preflight_after_autocompact",
@@ -458,13 +463,22 @@ def _failure_diagnostics(
                 message=baseline.dependency_error or f"baseline status: {baseline.status}",
             )
         ]
+    provider_timeout_diagnostic = _provider_timeout_diagnostic(
+        run_path=run_path,
+        agent_stop_reason=agent_stop_reason,
+    )
     boundary_not_executed = _not_executed_boundary_diagnostic(
         boundary=boundary,
         run_path=run_path,
         agent_stop_reason=agent_stop_reason,
     )
     if boundary_not_executed is not None:
-        return [*prefix_diagnostics, boundary_not_executed]
+        diagnostics = [*prefix_diagnostics, boundary_not_executed]
+        if provider_timeout_diagnostic is not None:
+            diagnostics.append(provider_timeout_diagnostic)
+        return diagnostics
+    if provider_timeout_diagnostic is not None:
+        return [*prefix_diagnostics, provider_timeout_diagnostic]
     if agent_stop_reason in {"max_turns", "max_tool_calls"} and _final_patch_empty(run_path):
         nudge_injected = _event_exists(run_path, "convergence_nudge_injected")
         nudge_summary = _convergence_nudge_summary(run_path)
@@ -624,6 +638,79 @@ def _failure_diagnostics(
             message=f"run_outcome={run_outcome}",
         )
     ]
+
+
+def _provider_timeout_diagnostic(
+    *,
+    run_path: Path,
+    agent_stop_reason: str | None,
+) -> FailureDiagnostics | None:
+    if agent_stop_reason not in {"timeout", "task_timeout", "model_error"}:
+        return None
+    provider_timeout_details = _latest_provider_timeout_details(run_path)
+    if provider_timeout_details.get("provider_call_skipped_due_to_task_deadline"):
+        return FailureDiagnostics(
+            failure_category=FailureCategory.budget_or_timeout_failure,
+            failure_type=FailureType.task_timeout_before_provider_call,
+            recoverable=True,
+            source_component="agent_loop",
+            message="task deadline was too close to safely start another provider request",
+            details=provider_timeout_details,
+        )
+    if provider_timeout_details.get("model_error_type") == "provider_timeout":
+        return FailureDiagnostics(
+            failure_category=FailureCategory.provider_failure,
+            failure_type=FailureType.provider_timeout,
+            recoverable=True,
+            source_component="provider_client",
+            message="provider request timed out before the model call completed",
+            details=provider_timeout_details,
+        )
+    return None
+
+
+def _latest_provider_timeout_details(run_path: Path) -> dict[str, Any]:
+    events = _read_jsonl_if_exists(run_path / "events.jsonl")
+    skipped = [
+        event
+        for event in events
+        if event.get("event_type") == "provider_call_skipped_due_to_task_deadline"
+    ]
+    if skipped:
+        event = skipped[-1]
+        data = event.get("data") or {}
+        return {
+            "event_id": event.get("event_id"),
+            "turn": event.get("turn"),
+            "provider_call_skipped_due_to_task_deadline": True,
+            "reason": data.get("reason"),
+            "call_site": data.get("call_site"),
+            "timeout_policy_facts": data.get("timeout_policy_facts") or {},
+        }
+    provider_timeouts = [
+        event
+        for event in events
+        if event.get("event_type") == "model_call_completed"
+        and (event.get("data") or {}).get("model_error_type") == "provider_timeout"
+    ]
+    if not provider_timeouts:
+        return {}
+    event = provider_timeouts[-1]
+    data = event.get("data") or {}
+    timeout_facts = data.get("request_timeout_policy_facts") or {}
+    return {
+        "event_id": event.get("event_id"),
+        "turn": event.get("turn"),
+        "model_call_id": data.get("model_call_id"),
+        "model_error_type": data.get("model_error_type"),
+        "terminal_error_type": data.get("terminal_error_type"),
+        "request_timeout_seconds": data.get("request_timeout_seconds"),
+        "request_timeout_policy_facts": timeout_facts,
+        "deadline_aware_provider_timeout": bool(
+            timeout_facts.get("absolute_deadline_enforced")
+            or timeout_facts.get("provider_retry_deadline_enforced")
+        ),
+    }
 
 
 def _not_executed_boundary_diagnostic(

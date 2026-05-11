@@ -31,6 +31,8 @@ PROVIDER_RETRY_POLICY_VERSION = "repo_harness_provider_retry_policy_v0"
 PROVIDER_ATTEMPT_SCHEMA_VERSION = "repo_harness_provider_attempt_v0"
 RETRYABLE_PROVIDER_ERROR_TYPES = {"rate_limited", "provider_timeout", "provider_error"}
 PROVIDER_RETRY_POLICIES = {"provider_retry_v0", "provider_retry_no_sleep_v0"}
+TRANSPORT_SOCKET_TIMEOUT_CAP_SEC = 10.0
+TRANSPORT_READ_CHUNK_SIZE = 65536
 
 
 @dataclass(frozen=True)
@@ -47,6 +49,123 @@ class ProviderRequestError(Exception):
     def __init__(self, info: ProviderErrorInfo) -> None:
         super().__init__(info.message)
         self.info = info
+
+
+def read_response_text_with_deadline(
+    response: Any,
+    *,
+    timeout_seconds: float | None = None,
+    deadline_monotonic: float | None = None,
+    chunk_size: int = TRANSPORT_READ_CHUNK_SIZE,
+) -> str:
+    """Read an urllib response while checking a total-call deadline between chunks."""
+
+    if deadline_monotonic is None:
+        if timeout_seconds is None:
+            raise ValueError("timeout_seconds or deadline_monotonic is required")
+        deadline_monotonic = time.monotonic() + timeout_seconds
+    chunks: list[bytes] = []
+    while True:
+        remaining = deadline_monotonic - time.monotonic()
+        if remaining <= 0:
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message="provider request exceeded the configured absolute deadline",
+                    retryable=True,
+                    payload={"deadline_exceeded": True},
+                )
+            )
+        _set_response_socket_timeout(response, min(TRANSPORT_SOCKET_TIMEOUT_CAP_SEC, remaining))
+        try:
+            try:
+                chunk = response.read(chunk_size)
+            except TypeError:
+                chunk = response.read()
+        except TimeoutError as exc:
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message=sanitize_provider_error_message(str(exc)),
+                    retryable=True,
+                    payload={"deadline_exceeded": time.monotonic() >= deadline_monotonic},
+                )
+            ) from exc
+        if not chunk:
+            return b"".join(chunks).decode("utf-8")
+        if time.monotonic() >= deadline_monotonic:
+            raise ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message="provider request exceeded the configured absolute deadline",
+                    retryable=True,
+                    payload={"deadline_exceeded": True},
+                )
+            )
+        chunks.append(chunk)
+
+
+def request_for_provider_attempt(
+    request: ModelRequestContext,
+    *,
+    call_deadline_monotonic: float,
+) -> ModelRequestContext:
+    remaining = call_deadline_monotonic - time.monotonic()
+    if remaining <= 0:
+        raise _provider_deadline_error()
+    facts = {
+        **request.request_timeout_policy_facts,
+        "provider_retry_deadline_enforced": True,
+        "provider_retry_remaining_timeout_sec_before_attempt": round(remaining, 6),
+    }
+    return request.model_copy(
+        update={
+            "request_timeout_seconds": max(0.001, remaining),
+            "request_timeout_policy_facts": facts,
+        }
+    )
+
+
+def sleep_before_provider_retry_with_deadline(
+    *,
+    delay_ms: int,
+    call_deadline_monotonic: float,
+) -> None:
+    if delay_ms <= 0:
+        return
+    delay_sec = delay_ms / 1000
+    remaining = call_deadline_monotonic - time.monotonic()
+    if remaining <= delay_sec:
+        raise _provider_deadline_error(
+            payload={
+                "deadline_exceeded": True,
+                "retry_delay_ms": delay_ms,
+                "remaining_timeout_sec_before_retry_delay": round(remaining, 6),
+            }
+        )
+    time.sleep(delay_sec)
+
+
+def _provider_deadline_error(payload: dict[str, Any] | None = None) -> ProviderRequestError:
+    return ProviderRequestError(
+        ProviderErrorInfo(
+            model_error_type="provider_timeout",
+            message="provider request exceeded the configured absolute deadline",
+            retryable=True,
+            payload=payload or {"deadline_exceeded": True},
+        )
+    )
+
+
+def _set_response_socket_timeout(response: Any, timeout_seconds: float) -> None:
+    try:
+        fp = getattr(response, "fp", None)
+        raw = getattr(fp, "raw", None)
+        sock = getattr(raw, "_sock", None)
+        if sock is not None:
+            sock.settimeout(timeout_seconds)
+    except Exception:
+        return
 
 
 @dataclass(frozen=True)
@@ -254,6 +373,7 @@ def build_chat_completion_payload(
         "turn": request.turn,
         "model_call_id": request.model_call_id,
         "request_timeout_seconds": request.request_timeout_seconds,
+        "request_timeout_policy_facts": request.request_timeout_policy_facts,
         "raw_request_logging_policy": request.raw_request_logging_policy,
         "credential_policy": request.credential_policy.model_dump(mode="json"),
         "authorization": REDACTED_CREDENTIAL,
@@ -297,6 +417,10 @@ def write_provider_request_artifact(
             "tool_schema_snapshot_ref": request_binding["tool_schema_snapshot_ref"],
             "model_input_hash": request_binding["model_input_hash"],
             "model_call_id": request_binding["model_call_id"],
+            "request_timeout_seconds": request_binding["request_timeout_seconds"],
+            "request_timeout_policy_facts": request_binding[
+                "request_timeout_policy_facts"
+            ],
             "provider_request_projection_hash": request_binding[
                 "provider_request_projection_hash"
             ],
@@ -686,6 +810,16 @@ def _provider_request_binding(
         "tool_schema_snapshot_ref": tool_schema_ref,
         "model_input_hash": model_input_hash,
         "model_call_id": model_call_id,
+        "request_timeout_seconds": (
+            request.request_timeout_seconds
+            if request is not None
+            else payload.get("request_timeout_seconds")
+        ),
+        "request_timeout_policy_facts": (
+            request.request_timeout_policy_facts
+            if request is not None
+            else payload.get("request_timeout_policy_facts", {})
+        ),
         "provider_request_projection_hash": (
             request.provider_request_projection_hash if request is not None else None
         ),
@@ -842,6 +976,8 @@ def _model_call_event(
         output_tokens=usage["output_tokens"],
         cached_tokens=usage["cached_tokens"],
         duration_ms=duration_ms,
+        request_timeout_seconds=request.request_timeout_seconds,
+        request_timeout_policy_facts=request.request_timeout_policy_facts,
         terminal_error_type=model_error_type,
         retry_count=0,
         model_error_type=model_error_type,

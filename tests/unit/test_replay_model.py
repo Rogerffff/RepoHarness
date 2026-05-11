@@ -35,6 +35,9 @@ expected_outcome:
 
     assert response.raw_provider_request_ref is not None
     assert response.raw_provider_request_ref != prepared.prepared_messages_ref
+    assert response.model_call_event is not None
+    assert response.model_call_event.request_timeout_seconds == 60
+    assert response.model_call_event.request_timeout_policy_facts == {}
     raw_response = (tmp_path / "run" / response.raw_provider_response_ref.relative_path).read_text(encoding="utf-8")
     assert "expected_outcome" not in raw_response
 
@@ -230,6 +233,9 @@ steps:
         response = client.generate(prepared_messages=bad_args, recorder=recorder, turn=2)
 
     assert response.model_error_type == "replay_tool_arguments_mismatch"
+    assert response.model_call_event is not None
+    assert response.model_call_event.request_timeout_seconds == 60
+    assert response.model_call_event.request_timeout_policy_facts == {}
 
 
 def test_replay_model_detects_expected_outcome_status_mismatch(tmp_path: Path):

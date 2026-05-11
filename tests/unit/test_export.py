@@ -922,6 +922,42 @@ def test_export_downgrades_max_turns_success_to_diagnostic_only(tmp_path: Path):
         )
 
 
+def test_export_filters_timeout_success_even_with_accepted_final_verifier(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_timeout_success",
+        task_id="task_001",
+        reward=1.0,
+        run_outcome="success",
+        final_verifier_status="accepted",
+        include_formal_verifier=True,
+    )
+    (run_dir / "metrics.json").write_text(
+        json.dumps(
+            {
+                "run_outcome": "success",
+                "final_verifier_status": "accepted",
+                "interaction_efficiency": {
+                    "agent_stop_reason": "timeout",
+                    "final_verifier_mode": "strict_patch_replay",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_rl_jsonl(run_dir)
+    export_dir = _latest_export_dir(run_dir / "exports")
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    manifest = json.loads((export_dir / "export_manifest.json").read_text(encoding="utf-8"))
+
+    assert _read_jsonl(output) == []
+    assert manifest["included_count"] == 0
+    assert manifest["invalid_count"] == 1
+    assert audit["samples"][0]["training_eligibility"] == "invalid"
+    assert audit["samples"][0]["invalid_reason"] == "agent_stop_reason:timeout"
+
+
 def test_provider_raw_response_in_payload_is_audit_invalid(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_provider_raw",
@@ -1072,6 +1108,56 @@ def test_preference_export_blocks_context_policy_snapshot_mismatch(tmp_path: Pat
     skipped = json.loads(output.read_text(encoding="utf-8"))
 
     assert skipped["blocked_reason_distribution"] == {"context_policy_mismatch": 1}
+
+
+def test_preference_export_blocks_provider_timeout_policy_mismatch(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(
+        runs_dir / "run_b",
+        {
+            "provider_request_timeout_sec": 60,
+            "provider_timeout_grace_sec": 10,
+        },
+    )
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"budget_mismatch": 1}
+
+
+def test_preference_export_blocks_timeout_source_run(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    timeout_run = _minimal_run(
+        runs_dir / "run_b",
+        task_id="task_001",
+        reward=0.0,
+        include_formal_verifier=True,
+    )
+    (timeout_run / "metrics.json").write_text(
+        json.dumps(
+            {
+                "run_outcome": "success",
+                "final_verifier_status": "accepted",
+                "interaction_efficiency": {
+                    "agent_stop_reason": "timeout",
+                    "final_verifier_mode": "strict_patch_replay",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {
+        "source_run_invalid_for_training": 1
+    }
 
 
 def test_preference_export_blocks_scaffold_mismatch_unless_compare_scope_allows(tmp_path: Path):

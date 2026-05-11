@@ -192,6 +192,7 @@ def _mock_request_payload(request: ModelRequestContext, *, scenario: str) -> dic
         "scaffold_id": request.scaffold_id,
         "scaffold_phase": request.scaffold_phase,
         "request_timeout_seconds": request.request_timeout_seconds,
+        "request_timeout_policy_facts": request.request_timeout_policy_facts,
         "raw_request_logging_policy": request.raw_request_logging_policy,
         "credential_policy": redact_provider_payload(request.credential_policy.model_dump(mode="json")),
         "authorization": REDACTED_CREDENTIAL,
@@ -232,6 +233,8 @@ def _response(
         output_tokens=output_tokens,
         cached_tokens=0,
         duration_ms=0,
+        request_timeout_seconds=request.request_timeout_seconds,
+        request_timeout_policy_facts=request.request_timeout_policy_facts,
         retry_count=0,
         model_error_type=model_error_type,
     )

@@ -524,7 +524,12 @@ def run_task(
                 "seed": config.runtime.seed,
             },
             provider_model_settings={},
-            request_timeout_seconds=config.runtime.task_timeout_sec,
+            request_timeout_seconds=(
+                config.runtime.provider_request_timeout_sec or config.runtime.task_timeout_sec
+            ),
+            provider_timeout_grace_sec=config.runtime.provider_timeout_grace_sec,
+            min_provider_request_timeout_sec=config.runtime.min_provider_request_timeout_sec,
+            provider_timeout_policy=config.runtime.provider_timeout_policy,
             raw_request_logging_policy=config.model.provider_request_logging,
             retry_policy=config.model.retry_policy,
         )

@@ -208,6 +208,13 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
         "repo_harness_context_policy_snapshot_v1"
     )
     assert facts_payload["context_policy_snapshot_hash"]
+    assert facts_payload["provider_request_timeout_sec"] is None
+    assert facts_payload["provider_timeout_grace_sec"] == 2
+    assert facts_payload["min_provider_request_timeout_sec"] == 5
+    assert (
+        facts_payload["provider_timeout_policy"]
+        == "task_deadline_clamped_provider_request_v0"
+    )
     assert facts_payload["context_policy_snapshot"]["tool_result_compact_policy"] == (
         "claude_code_fresh_only_v1"
     )
@@ -401,6 +408,145 @@ def test_failure_diagnostics_uses_boundary_for_task_timeout_before_final_verifie
     assert diagnostics[0].failure_type == FailureType.task_timeout_before_final_verifier
     assert diagnostics[0].details["final_verifier_boundary_failure_owner"] == "budget_or_timeout"
     assert diagnostics[0].details["invalid_for_training"] is True
+
+
+def test_failure_diagnostics_reports_task_deadline_before_provider_call(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run_provider_deadline_skip"
+    run_dir.mkdir()
+    (run_dir / "final.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "provider_call_skipped_due_to_task_deadline",
+                "event_id": "budget_0001",
+                "turn": 12,
+                "data": {
+                    "reason": "task_timeout_before_provider_call",
+                    "call_site": "main_model_call",
+                    "timeout_policy_facts": {
+                        "timeout_policy_version": "task_deadline_clamped_provider_request_v0",
+                        "effective_request_timeout_seconds": 2.0,
+                        "min_provider_request_timeout_sec": 5,
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="inconclusive",
+        final_verifier_status="not_executed",
+        agent_stop_reason="timeout",
+    )
+
+    assert diagnostics[0].failure_category == FailureCategory.budget_or_timeout_failure
+    assert diagnostics[0].failure_type == FailureType.task_timeout_before_provider_call
+    assert diagnostics[0].source_component == "agent_loop"
+    assert diagnostics[0].details["provider_call_skipped_due_to_task_deadline"] is True
+    assert diagnostics[0].details["call_site"] == "main_model_call"
+    assert (
+        diagnostics[0].details["timeout_policy_facts"]["timeout_policy_version"]
+        == "task_deadline_clamped_provider_request_v0"
+    )
+
+
+def test_failure_diagnostics_keeps_final_verifier_boundary_before_provider_deadline_detail(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run_provider_deadline_with_boundary"
+    run_dir.mkdir()
+    (run_dir / "final.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "provider_call_skipped_due_to_task_deadline",
+                "event_id": "budget_0001",
+                "turn": 12,
+                "data": {
+                    "reason": "task_timeout_before_provider_call",
+                    "call_site": "main_model_call",
+                    "timeout_policy_facts": {
+                        "timeout_policy_version": "task_deadline_clamped_provider_request_v0",
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "final_verifier_boundary.json").write_text(
+        json.dumps(
+            {
+                "final_verifier_status": "not_executed",
+                "final_verifier_ran": False,
+                "failure_category": "task_timeout_before_final_verifier",
+                "failure_owner": "budget_or_timeout",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="inconclusive",
+        final_verifier_status="not_executed",
+        agent_stop_reason="timeout",
+    )
+
+    assert diagnostics[0].failure_type == FailureType.task_timeout_before_final_verifier
+    assert diagnostics[0].details["invalid_for_training"] is True
+    assert diagnostics[1].failure_type == FailureType.task_timeout_before_provider_call
+
+
+def test_failure_diagnostics_reports_deadline_aware_provider_timeout(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run_provider_deadline_timeout"
+    run_dir.mkdir()
+    (run_dir / "final.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "model_call_completed",
+                "event_id": "model_0001",
+                "turn": 8,
+                "data": {
+                    "model_call_id": "run_model_call_0008",
+                    "model_error_type": "provider_timeout",
+                    "terminal_error_type": "provider_timeout",
+                    "request_timeout_seconds": 27.5,
+                    "request_timeout_policy_facts": {
+                        "absolute_deadline_enforced": True,
+                        "effective_request_timeout_seconds": 27.5,
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    diagnostics = _failure_diagnostics(
+        baseline=BaselineResult(task_id="task_001", status="valid"),
+        run_path=run_dir,
+        run_outcome="inconclusive",
+        final_verifier_status="skipped",
+        agent_stop_reason="model_error",
+    )
+
+    assert diagnostics[0].failure_category == FailureCategory.provider_failure
+    assert diagnostics[0].failure_type == FailureType.provider_timeout
+    assert diagnostics[0].source_component == "provider_client"
+    assert diagnostics[0].details["deadline_aware_provider_timeout"] is True
+    assert diagnostics[0].details["request_timeout_seconds"] == 27.5
 
 
 def test_failure_diagnostics_uses_boundary_for_final_verifier_environment_error(

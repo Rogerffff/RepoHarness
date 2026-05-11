@@ -527,6 +527,85 @@ def test_deepseek_provider_retries_retryable_error_and_records_attempts(tmp_path
     assert second_attempt["terminal"] is True
 
 
+def test_deepseek_retry_stops_before_delay_would_exceed_provider_deadline(tmp_path: Path):
+    client = _DeepSeekSequenceStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        outcomes=[
+            ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message="timed out",
+                    retryable=True,
+                    provider_request_id="deepseek-timeout-1",
+                )
+            ),
+            {
+                "id": "deepseek-response-should-not-be-called",
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": "late"},
+                    }
+                ],
+            },
+        ],
+    )
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        retry_policy="provider_retry_v0",
+        request_timeout_seconds=0.05,
+        request_timeout_policy_facts={
+            "provider_timeout_policy": "task_deadline_clamped_provider_request_v0",
+            "effective_request_timeout_seconds": 0.05,
+        },
+    )
+
+    with RunRecorder("deepseek-retry-deadline", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type == "provider_timeout"
+    assert response.terminal_error_type == "provider_timeout"
+    assert response.attempt_count == 2
+    assert response.retry_count == 1
+    assert client.post_count == 1
+    assert client.request_timeouts_seen[0] <= 0.05
+
+    first_raw_request = json.loads(
+        (tmp_path / "run" / response.provider_attempt_refs[0].relative_path).read_text(
+            encoding="utf-8"
+        )
+    )
+    first_request_artifact = json.loads(
+        (tmp_path / "run" / first_raw_request["request_ref"]["relative_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert first_request_artifact["request_timeout_seconds"] <= 0.05
+    assert (
+        first_request_artifact["request_timeout_policy_facts"][
+            "provider_timeout_policy"
+        ]
+        == "task_deadline_clamped_provider_request_v0"
+    )
+    assert (
+        first_request_artifact["request_timeout_policy_facts"][
+            "provider_retry_deadline_enforced"
+        ]
+        is True
+    )
+
+    second_attempt = json.loads(
+        (tmp_path / "run" / response.provider_attempt_refs[1].relative_path).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert second_attempt["error_type"] == "provider_timeout"
+    assert second_attempt["terminal"] is True
+
+
 def test_deepseek_provider_does_not_retry_non_retryable_auth_error(tmp_path: Path):
     client = _DeepSeekSequenceStub(
         model_id="deepseek-v4-pro",
@@ -777,6 +856,70 @@ def test_openai_provider_retries_retryable_error_and_records_attempts(tmp_path: 
     assert response.model_call_event.retry_count == 1
 
 
+def test_openai_retry_stops_before_delay_would_exceed_provider_deadline(tmp_path: Path):
+    client = _OpenAISequenceStub(
+        model_id="gpt-5-mini",
+        credential=ProviderCredential(value="sk-test-openai-secret-1234567890", source="environment"),
+        outcomes=[
+            ProviderRequestError(
+                ProviderErrorInfo(
+                    model_error_type="provider_timeout",
+                    message="timed out",
+                    retryable=True,
+                    provider_request_id="openai-timeout-1",
+                )
+            ),
+            {
+                "id": "openai-response-should-not-be-called",
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": "late"},
+                    }
+                ],
+            },
+        ],
+    )
+    request = _request(
+        provider="openai",
+        model_id="gpt-5-mini",
+        retry_policy="provider_retry_v0",
+        request_timeout_seconds=0.05,
+        request_timeout_policy_facts={
+            "provider_timeout_policy": "task_deadline_clamped_provider_request_v0",
+            "effective_request_timeout_seconds": 0.05,
+        },
+    )
+
+    with RunRecorder("openai-retry-deadline", tmp_path / "run", task_id="task_001") as recorder:
+        response = client.generate(request=request, recorder=recorder)
+
+    assert response.model_error_type == "provider_timeout"
+    assert response.terminal_error_type == "provider_timeout"
+    assert response.attempt_count == 2
+    assert response.retry_count == 1
+    assert client.post_count == 1
+    assert client.request_timeouts_seen[0] <= 0.05
+
+    first_attempt = json.loads(
+        (tmp_path / "run" / response.provider_attempt_refs[0].relative_path).read_text(
+            encoding="utf-8"
+        )
+    )
+    first_request_artifact = json.loads(
+        (tmp_path / "run" / first_attempt["request_ref"]["relative_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert first_request_artifact["request_timeout_seconds"] <= 0.05
+    assert (
+        first_request_artifact["request_timeout_policy_facts"][
+            "provider_retry_deadline_enforced"
+        ]
+        is True
+    )
+
+
 def test_openai_provider_does_not_retry_non_retryable_auth_error(tmp_path: Path):
     client = _OpenAISequenceStub(
         model_id="gpt-5-mini",
@@ -869,9 +1012,13 @@ class _DeepSeekSequenceStub(DeepSeekProviderClient):
         super().__init__(**kwargs)
         self.outcomes = list(outcomes)
         self.last_body: dict[str, Any] = {}
+        self.post_count = 0
+        self.request_timeouts_seen: list[float] = []
 
     def _post_json(self, body: dict[str, Any], request: ModelRequestContext) -> tuple[dict[str, Any], str | None]:
         self.last_body = body
+        self.post_count += 1
+        self.request_timeouts_seen.append(request.request_timeout_seconds)
         outcome = self.outcomes.pop(0)
         if isinstance(outcome, ProviderRequestError):
             raise outcome
@@ -907,8 +1054,12 @@ class _OpenAISequenceStub(OpenAIProviderClient):
     def __init__(self, *, outcomes: list[Any], **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.outcomes = list(outcomes)
+        self.post_count = 0
+        self.request_timeouts_seen: list[float] = []
 
     def _create_completion(self, body: dict[str, Any], request: ModelRequestContext) -> dict[str, Any]:
+        self.post_count += 1
+        self.request_timeouts_seen.append(request.request_timeout_seconds)
         outcome = self.outcomes.pop(0)
         if isinstance(outcome, ProviderRequestError):
             raise outcome
@@ -922,6 +1073,8 @@ def _request(
     prepared_messages: list[dict[str, Any]] | None = None,
     provider_specific_options: dict[str, Any] | None = None,
     retry_policy: str = "none",
+    request_timeout_seconds: float = 10,
+    request_timeout_policy_facts: dict[str, Any] | None = None,
 ) -> ModelRequestContext:
     return ModelRequestContext(
         run_id=f"{provider}-run",
@@ -960,7 +1113,8 @@ def _request(
         scaffold_phase="react",
         run_config_facts_ref=RunConfigFactsRef(sha256="b" * 64),
         budget_state={"turn_count": 1},
-        request_timeout_seconds=10,
+        request_timeout_seconds=request_timeout_seconds,
+        request_timeout_policy_facts=request_timeout_policy_facts or {},
         raw_request_logging_policy="redact_secrets",
         credential_policy=ProviderCredentialPolicy(
             credential_source="env_only",

@@ -160,6 +160,8 @@ class ReplayModelClient:
             model_input_hash=request.model_input_hash,
             provider_message_format=request.provider_message_format,
             tool_schema_hash=stable_hash(request.allowed_tool_definitions),
+            request_timeout_seconds=request.request_timeout_seconds,
+            request_timeout_policy_facts=request.request_timeout_policy_facts,
             model_error_type=model_error_type,
         )
         return ModelResponse(
@@ -223,6 +225,8 @@ class ReplayModelClient:
             model_input_hash=request.model_input_hash,
             provider_message_format=request.provider_message_format,
             tool_schema_hash=stable_hash(request.allowed_tool_definitions),
+            request_timeout_seconds=request.request_timeout_seconds,
+            request_timeout_policy_facts=request.request_timeout_policy_facts,
             model_error_type=model_error_type,
         )
         return ModelResponse(
@@ -261,6 +265,8 @@ class ReplayModelClient:
                 "budget_state": request.budget_state,
                 "generation_config": request.generation_config,
                 "provider_options": request.provider_options.model_dump(mode="json"),
+                "request_timeout_seconds": request.request_timeout_seconds,
+                "request_timeout_policy_facts": request.request_timeout_policy_facts,
             },
         )
 

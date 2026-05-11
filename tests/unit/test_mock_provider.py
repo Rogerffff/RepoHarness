@@ -21,6 +21,10 @@ def test_mock_provider_builds_tool_call_from_model_request_context(tmp_path: Pat
     assert response.model_call_event is not None
     assert response.model_call_event.provider == "mock"
     assert response.model_call_event.model_id == "mock-provider-v0"
+    assert response.model_call_event.request_timeout_seconds == 12.5
+    assert response.model_call_event.request_timeout_policy_facts == {
+        "timeout_policy_version": "unit_test_timeout_policy"
+    }
     raw_request = _read_artifact(tmp_path / "run", response.raw_provider_request_ref)
     assert raw_request["tool_schema_snapshot_ref"]["artifact_id"] == "tool_schema"
     assert raw_request["generation_config"] == {"temperature": 0.2, "max_output_tokens": 123}
@@ -29,6 +33,9 @@ def test_mock_provider_builds_tool_call_from_model_request_context(tmp_path: Pat
     assert raw_request["provider_options"]["provider_specific_options"]["mock_scenario"] == "tool_call_success"
     assert raw_request["tool_choice"] == "auto"
     assert raw_request["request_timeout_seconds"] == 12.5
+    assert raw_request["request_timeout_policy_facts"] == {
+        "timeout_policy_version": "unit_test_timeout_policy"
+    }
     assert raw_request["raw_request_logging_policy"] == "redact_secrets"
 
 
@@ -130,6 +137,7 @@ def _request(tmp_path: Path, *, scenario: str = "tool_call_success") -> ModelReq
         run_config_facts_ref=RunConfigFactsRef(sha256="b" * 64),
         budget_state={"turn_count": 2},
         request_timeout_seconds=12.5,
+        request_timeout_policy_facts={"timeout_policy_version": "unit_test_timeout_policy"},
         raw_request_logging_policy="redact_secrets",
         credential_policy=ProviderCredentialPolicy(
             credential_source="env_only",

@@ -21,6 +21,7 @@ OPTIONAL_COMPARE_FIELDS = {
     "microcompact_policy",
     "auto_compact_enabled",
     "reactive_compact_policy",
+    "provider_request_timeout",
 }
 
 
@@ -147,6 +148,10 @@ def _candidate_from_run(run_path: Path, *, export_policy: ExportPolicy) -> PairC
             "tool_budget": facts.get("tool_budget"),
             "test_budget": facts.get("test_budget"),
             "task_timeout": facts.get("task_timeout"),
+            "provider_request_timeout": facts.get("provider_request_timeout"),
+            "provider_timeout_grace": facts.get("provider_timeout_grace"),
+            "min_provider_request_timeout": facts.get("min_provider_request_timeout"),
+            "provider_timeout_policy": facts.get("provider_timeout_policy"),
             "docker_backend": facts.get("docker_backend"),
             "source_tree_hash": facts.get("source_tree_hash"),
             "tool_contract_snapshot_hash": facts.get("tool_contract_snapshot_hash"),
@@ -220,6 +225,13 @@ def _compare_facts(
         "tool_budget": config.get("max_tool_calls"),
         "test_budget": config.get("max_test_runs"),
         "task_timeout": config.get("task_timeout_sec"),
+        "provider_request_timeout": config.get("provider_request_timeout_sec"),
+        "provider_timeout_grace": config.get("provider_timeout_grace_sec", 2),
+        "min_provider_request_timeout": config.get("min_provider_request_timeout_sec", 5),
+        "provider_timeout_policy": config.get(
+            "provider_timeout_policy",
+            "task_deadline_clamped_provider_request_v0",
+        ),
         "docker_backend": backend_name or "local_process",
         "source_tree_hash": source_tree_hash or "unknown_source_tree",
         "tool_contract_snapshot_hash": config.get("tool_contract_snapshot_sha256") or tool_schema_hash,
@@ -290,7 +302,20 @@ def _precondition_blockers(candidate: PairCandidate) -> list[str]:
         blocked.append("artifact_manifest_invalid")
     if not candidate.facts.get("tool_schema_snapshot_hash"):
         blocked.append("tool_schema_snapshot_mismatch")
+    if _source_run_invalid_for_preference(candidate.run_dir, metrics):
+        blocked.append("source_run_invalid_for_training")
     return blocked
+
+
+def _source_run_invalid_for_preference(run_dir: Path, metrics: dict[str, Any]) -> bool:
+    reward = _read_json_if_exists(run_dir / "reward.json")
+    interaction = metrics.get("interaction_efficiency", {})
+    agent_stop_reason = interaction.get("agent_stop_reason")
+    return bool(
+        reward.get("invalid_for_training")
+        or agent_stop_reason in {"model_error", "timeout", "task_timeout"}
+        or metrics.get("final_verifier_status") in {"timeout", "error"}
+    )
 
 
 def _compare_blockers(
@@ -338,7 +363,17 @@ def _field_blocked_reason(field_name: str) -> str:
         "prompt_template_version",
     }:
         return "context_policy_mismatch"
-    if field_name in {"turn_budget", "tool_budget", "test_budget", "task_timeout", "max_output_tokens"}:
+    if field_name in {
+        "turn_budget",
+        "tool_budget",
+        "test_budget",
+        "task_timeout",
+        "provider_request_timeout",
+        "provider_timeout_grace",
+        "min_provider_request_timeout",
+        "provider_timeout_policy",
+        "max_output_tokens",
+    }:
         return "budget_mismatch"
     return "compare_key_mismatch"
 
