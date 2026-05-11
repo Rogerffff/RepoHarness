@@ -26,3 +26,22 @@ def test_pre_verl_cli_rejects_legacy_agent_evaluation_pilot(
     captured = capsys.readouterr()
     assert "invalid choice" in captured.err
     assert "run-pre-verl-agent-evaluation-pilot" in captured.err
+
+
+def test_pre_verl_cli_dispatches_evidence_ledger_inspect(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[tuple[str, bool]] = []
+
+    def fake_inspect(ledger: str, *, assert_complete: bool) -> str:
+        calls.append((ledger, assert_complete))
+        return "ledger ok"
+
+    monkeypatch.setattr("repo_harness.cli.main.inspect_pre_verl_evidence_ledger", fake_inspect)
+
+    result = main(["inspect-pre-verl-evidence-ledger", "ledger.json", "--assert-complete"])
+
+    assert result == 0
+    assert calls == [("ledger.json", True)]
+    assert "ledger ok" in capsys.readouterr().out

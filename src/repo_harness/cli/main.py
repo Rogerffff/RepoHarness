@@ -208,6 +208,10 @@ from repo_harness.pre_verl_agentloop import (
     inspect_pre_verl_agentloop_run_config,
     inspect_pre_verl_agentloop_task_definitions,
 )
+from repo_harness.pre_verl_evidence_ledger import (
+    build_pre_verl_evidence_ledger,
+    inspect_pre_verl_evidence_ledger,
+)
 from repo_harness.pre_verl_failure_injection import (
     DEFAULT_PROVIDER_FAILURE_INJECTION_SCENARIOS,
     run_provider_failure_injection_smoke,
@@ -1544,6 +1548,20 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_model_visible_context_parser.add_argument("--assert-provider-body-equivalent", action="store_true")
     inspect_model_visible_context_parser.add_argument("--assert-tool-results-recoverable", action="store_true")
     inspect_model_visible_context_parser.add_argument("--assert-no-over-redaction", action="store_true")
+
+    build_pre_verl_evidence_ledger_parser = subparsers.add_parser(
+        "build-pre-verl-evidence-ledger",
+        help="构建 pre-verl 开发集正式 run 和 discarded attempt 的机器可读证据索引。",
+    )
+    build_pre_verl_evidence_ledger_parser.add_argument("run_root")
+    build_pre_verl_evidence_ledger_parser.add_argument("--output")
+
+    inspect_pre_verl_evidence_ledger_parser = subparsers.add_parser(
+        "inspect-pre-verl-evidence-ledger",
+        help="只读检查 pre-verl evidence ledger 的正式分母、导出和 verifier 一致性。",
+    )
+    inspect_pre_verl_evidence_ledger_parser.add_argument("ledger")
+    inspect_pre_verl_evidence_ledger_parser.add_argument("--assert-complete", action="store_true")
 
     provider_failure_injection_parser = subparsers.add_parser(
         "run-provider-failure-injection-smoke",
@@ -2938,6 +2956,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"模型可见上下文检查失败：{exc}\n")
+        return 0
+    if args.command == "build-pre-verl-evidence-ledger":
+        try:
+            output_path = build_pre_verl_evidence_ledger(
+                args.run_root,
+                output=args.output,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl evidence ledger 构建失败：{exc}\n")
+        print(f"pre-verl evidence ledger：{output_path}")
+        return 0
+    if args.command == "inspect-pre-verl-evidence-ledger":
+        try:
+            print(
+                inspect_pre_verl_evidence_ledger(
+                    args.ledger,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"pre-verl evidence ledger 检查失败：{exc}\n")
         return 0
     if args.command == "run-provider-failure-injection-smoke":
         try:
