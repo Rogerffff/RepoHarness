@@ -84,6 +84,62 @@ def test_agentloop_scheduler_propagates_repo_requested_container_platform(tmp_pa
     assert payload["runtime"]["docker_backend"]["requested_container_platform"] == "linux/amd64"
 
 
+def test_agentloop_scheduler_can_enable_reasoning_trace_without_thinking_temperature(
+    tmp_path: Path,
+) -> None:
+    script = _load_scheduler_module()
+    task = script.SelectedTask(
+        task_id="pre_verl_dev_003_sqlfluff__sqlfluff_1733",
+        source_record_path=tmp_path / "source_record.json",
+        source_record={"repo": "sqlfluff/sqlfluff", "version": "2.0"},
+        adapter_visible_input={},
+        evaluator_only_evidence={},
+        materialization_entry={},
+        verifier_plan={},
+    )
+    args = SimpleNamespace(
+        run_id_prefix="pre_verl_reasoning_trace",
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+        temperature=0.0,
+        max_output_tokens=32768,
+        provider_reasoning_trace_training_export=True,
+        allow_local_secret_file=True,
+        deepseek_thinking="enabled",
+        scaffold_id="patch_focused_react",
+        execution_mode="docker",
+        permission_mode="auto",
+        test_feedback_policy="disabled",
+        max_turns=60,
+        max_tool_calls=120,
+        max_test_runs=0,
+        task_timeout_sec=2400,
+        command_timeout_sec=90,
+        seed=42,
+        max_context_tokens=120000,
+        tool_result_aggregate_budget_chars=40000,
+        compact_threshold_ratio=0.85,
+    )
+
+    config_path = tmp_path / "run_config.yaml"
+    script._write_run_config(
+        task=task,
+        config_path=config_path,
+        output_dir=tmp_path,
+        args=args,
+    )
+
+    payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    assert "temperature" not in payload["model"]
+    assert payload["model"]["provider_specific_options"]["thinking"] == {"type": "enabled"}
+    assert payload["model"]["provider_specific_options"]["reasoning_compatibility"] == (
+        "provider_private_state_replay"
+    )
+    assert payload["model"]["provider_specific_options"]["provider_reasoning_trace_training_export"] == {
+        "enabled": True
+    }
+
+
 def test_pyvista_task_definition_verifier_command_inherits_runtime_shell_prefix(tmp_path: Path) -> None:
     script = _load_scheduler_module()
     task_id = "pre_verl_dev_018_pyvista__pyvista_4315"

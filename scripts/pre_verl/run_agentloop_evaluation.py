@@ -328,6 +328,14 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--compact-threshold-ratio", type=float, default=0.85)
     parser.add_argument("--max-output-tokens", type=int, default=32768)
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument(
+        "--provider-reasoning-trace-training-export",
+        action="store_true",
+        help=(
+            "显式打开 provider reasoning trace 明文训练源 artifact。"
+            "当前主要用于 DeepSeek thinking 轨迹私有审计，不应混入默认 SFT/RL 导出。"
+        ),
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--baseline-id")
     parser.add_argument("--parent-baseline-id")
@@ -549,14 +557,16 @@ def _write_run_config(
     if args.provider == "deepseek":
         provider_options["thinking"] = {"type": args.deepseek_thinking}
         provider_options["reasoning_compatibility"] = "provider_private_state_replay"
+        if getattr(args, "provider_reasoning_trace_training_export", False):
+            provider_options["provider_reasoning_trace_training_export"] = {"enabled": True}
     docker_base_image = str(env_spec.get("execution_image") or "python:3.12")
     requested_container_platform = env_spec.get("requested_container_platform")
+    write_temperature = _write_temperature_to_run_config(args)
     config = {
         "run_id_prefix": args.run_id_prefix,
         "model": {
             "provider": args.provider,
             "model_id": args.model_id,
-            "temperature": args.temperature,
             "max_output_tokens": args.max_output_tokens,
             "retry_policy": FORMAL_PROVIDER_RETRY_POLICY_ID,
             "credential_policy": "env_or_local_secret_file" if args.allow_local_secret_file else "env_only",
@@ -605,6 +615,8 @@ def _write_run_config(
             "fail_on_invalid_task": False,
         },
     }
+    if write_temperature:
+        config["model"]["temperature"] = args.temperature
     _write_yaml(config_path, config)
     return config_path
 
@@ -687,8 +699,12 @@ def _write_configuration_manifests(
             "harness_tool_context_policy": HARNESS_TOOL_CONTEXT_POLICY,
             "budget": _budget_payload(args),
             "temperature": args.temperature,
+            "temperature_written_to_run_config": _write_temperature_to_run_config(args),
             "seed": args.seed,
             "deepseek_thinking": args.deepseek_thinking if args.provider == "deepseek" else None,
+            "provider_reasoning_trace_training_export": bool(
+                getattr(args, "provider_reasoning_trace_training_export", False)
+            ),
             "requires_new_baseline_id_if_changed": [
                 "max_turns",
                 "max_tool_calls",
@@ -700,6 +716,7 @@ def _write_configuration_manifests(
                 "compact_threshold_ratio",
                 "max_output_tokens",
                 "temperature",
+                "provider_reasoning_trace_training_export",
                 "scaffold_prompt_sha256",
                 "resolved_tools",
                 "model_id",
@@ -873,6 +890,13 @@ def _budget_payload(args: argparse.Namespace) -> dict[str, Any]:
         "compact_threshold_ratio": args.compact_threshold_ratio,
         "max_output_tokens": args.max_output_tokens,
     }
+
+
+def _write_temperature_to_run_config(args: argparse.Namespace) -> bool:
+    return not (
+        getattr(args, "provider", None) == "deepseek"
+        and getattr(args, "deepseek_thinking", None) == "enabled"
+    )
 
 
 def _default_baseline_id(args: argparse.Namespace) -> str:
