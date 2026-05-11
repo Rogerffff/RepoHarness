@@ -31,7 +31,14 @@ def test_tool_result_artifact_preview_and_paged_recovery(tmp_path):
     assert record.artifact_id in preview
     assert record.content_sha256 in preview
     assert "read_tool_result_artifact" in preview
-    assert "Preview (first 50 chars)" in preview
+    assert "Use only the opaque artifact_id" in preview
+    assert "Do not pass workspace file paths" in preview
+    assert "recovery_call:" in preview
+    assert "artifact_id:" in preview
+    assert "content_sha256:" in preview
+    assert "tool_name: read_file" in preview
+    assert "preview_first (50 chars)" in preview
+    assert "preview_last (50 chars)" in preview
 
     with pytest.raises(ToolResultArtifactError, match="not unlocked"):
         read_tool_result_artifact(index, artifact_id=record.artifact_id)

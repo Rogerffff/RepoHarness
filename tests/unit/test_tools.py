@@ -168,6 +168,9 @@ def test_read_tool_result_artifact_recovers_unlocked_page(tmp_path: Path):
     assert result.content_preview.startswith("abcdefabcd")
     assert result.typed["next_offset"] == 10
     assert result.typed["content_sha256"] == record.content_sha256
+    assert "artifact_id_looks_like_path" not in result.typed
+    assert "suggested_tool" not in result.typed
+    assert "suggested_recovery_call" not in result.typed
 
 
 def test_read_tool_result_artifact_rejects_paths_and_locked_artifacts(tmp_path: Path):
@@ -206,8 +209,43 @@ def test_read_tool_result_artifact_rejects_paths_and_locked_artifacts(tmp_path: 
 
     assert path_result.status == "error"
     assert path_result.error_type == "tool_result_artifact_unavailable"
+    assert path_result.typed["artifact_id_looks_like_path"] is True
+    assert path_result.typed["suggested_tool"] == "read_file"
+    assert path_result.typed["suggested_recovery_call"] == "read_file(path='../artifacts/secret.txt')"
+    assert path_result.typed["result_envelope"]["recommended_next_calls"][0] == {
+        "tool": "read_file",
+        "arguments": {"path": "../artifacts/secret.txt"},
+    }
     assert locked_result.status == "error"
     assert "not unlocked" in locked_result.content_preview
+    assert locked_result.typed["artifact_id_looks_like_path"] is False
+    assert locked_result.typed["suggested_tool"] is None
+
+
+def test_read_tool_result_artifact_rejects_plain_manifest_artifact_with_persisted_preview_hint(tmp_path: Path):
+    context = _tool_context(tmp_path)
+    ref = context.recorder.write_artifact(
+        "plain_artifact",
+        "not recoverable through read_tool_result_artifact",
+        {"budget_policy": "preserve_json"},
+    )
+    context.tool_result_artifact_index = ToolResultArtifactIndex(run_dir=context.recorder.run_dir)
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_recover_manifest_id",
+            tool_name="read_tool_result_artifact",
+            arguments={"artifact_id": ref.artifact_id},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "error"
+    assert result.error_type == "tool_result_artifact_unavailable"
+    assert result.typed["artifact_id_looks_like_path"] is False
+    assert result.typed["suggested_tool"] is None
+    assert "Only opaque artifact_id values copied from provider-committed persisted tool result previews" in result.content_preview
 
 
 def test_read_tool_result_artifact_respects_tool_output_budget(tmp_path: Path):

@@ -884,25 +884,34 @@ class ToolExecutor:
         normalized: NormalizedToolRequest,
         context: ToolExecutionContext,
     ) -> ToolResult:
+        artifact_id = str(normalized.normalized_arguments.get("artifact_id") or "")
+        misuse_hint = _tool_result_artifact_misuse_hint(artifact_id)
         if context.tool_result_artifact_index is None:
             return _tool_result(
                 tool_call,
                 normalized=normalized,
                 status="error",
-                content="tool_result_artifact_index_unavailable: no recoverable tool result artifacts are registered for this run.",
+                content=(
+                    "tool_result_artifact_index_unavailable: no recoverable tool result artifacts "
+                    f"are registered for this run. {misuse_hint['message']}"
+                ),
                 error_type="tool_result_artifact_index_unavailable",
                 typed={
+                    "artifact_id": artifact_id,
+                    **misuse_hint["typed"],
                     "result_envelope": _result_envelope(
                         result_kind="tool_result_artifact_index_unavailable",
                         semantic_complete=True,
-                        recovery_hint="Continue with currently visible context or re-run an allowed workspace tool.",
+                        recovery_call=misuse_hint["typed"]["suggested_recovery_call"],
+                        recovery_hint=misuse_hint["message"],
+                        recommended_next_calls=misuse_hint["recommended_next_calls"],
                     ),
                 },
             )
         try:
             page = read_tool_result_artifact_page(
                 context.tool_result_artifact_index,
-                artifact_id=str(normalized.normalized_arguments["artifact_id"]),
+                artifact_id=artifact_id,
                 offset=int(normalized.normalized_arguments.get("offset", 0)),
                 limit=int(normalized.normalized_arguments.get("limit", 8000)),
             )
@@ -911,16 +920,19 @@ class ToolExecutor:
                 tool_call,
                 normalized=normalized,
                 status="error",
-                content=f"tool_result_artifact_unavailable: {exc}",
+                content=f"tool_result_artifact_unavailable: {exc} {misuse_hint['message']}",
                 error_type="tool_result_artifact_unavailable",
                 typed={
-                    "artifact_id": normalized.normalized_arguments.get("artifact_id"),
+                    "artifact_id": artifact_id,
                     "offset": normalized.normalized_arguments.get("offset"),
                     "limit": normalized.normalized_arguments.get("limit"),
+                    **misuse_hint["typed"],
                     "result_envelope": _result_envelope(
                         result_kind="tool_result_artifact_unavailable",
                         semantic_complete=True,
-                        recovery_hint="Only artifact ids from provider-committed persisted tool result previews can be recovered.",
+                        recovery_call=misuse_hint["typed"]["suggested_recovery_call"],
+                        recovery_hint=misuse_hint["message"],
+                        recommended_next_calls=misuse_hint["recommended_next_calls"],
                     ),
                 },
             )
@@ -2416,8 +2428,10 @@ def build_tool(name: str) -> ToolDefinition:
             ),
             model_visible_prompt=(
                 "Use read_tool_result_artifact only when a previous persisted tool result preview "
-                "gave an artifact_id. Pass artifact_id plus optional offset and limit. Do not pass "
-                "workspace file paths or ordinary artifact manifest ids."
+                "gave an opaque artifact_id. This is not a file-reading tool. Pass artifact_id plus "
+                "optional offset and limit. Do not pass workspace file paths or ordinary artifact "
+                "manifest ids. For workspace files use read_file. For ordinary grep or symbol_search "
+                "pagination, keep using that original tool with its offset or paging argument."
             ),
             input_schema={
                 "type": "object",
@@ -2436,6 +2450,9 @@ def build_tool(name: str) -> ToolDefinition:
                     "next_offset": {"type": ["integer", "null"]},
                     "content_sha256": {"type": "string"},
                     "tool_result_id": {"type": "string"},
+                    "artifact_id_looks_like_path": {"type": "boolean"},
+                    "suggested_tool": {"type": ["string", "null"]},
+                    "suggested_recovery_call": {"type": ["string", "null"]},
                 },
             },
             max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
@@ -2850,6 +2867,61 @@ def _result_envelope(
         "recovery_hint": recovery_hint,
         "context_effects": effects,
     }
+
+
+def _tool_result_artifact_misuse_hint(artifact_id: str) -> dict[str, Any]:
+    if _artifact_id_looks_like_workspace_path(artifact_id):
+        suggested_call = f"read_file(path={artifact_id!r})"
+        return {
+            "message": (
+                "This value looks like a workspace file path. read_tool_result_artifact is not a file reader; "
+                "use read_file for workspace files."
+            ),
+            "typed": {
+                "artifact_id_looks_like_path": True,
+                "suggested_tool": "read_file",
+                "suggested_recovery_call": suggested_call,
+            },
+            "recommended_next_calls": [
+                {"tool": "read_file", "arguments": {"path": artifact_id}},
+            ],
+        }
+    return {
+        "message": (
+            "Only opaque artifact_id values copied from provider-committed persisted tool result previews "
+            "can be recovered. For ordinary files use read_file; for ordinary search pagination use grep "
+            "or symbol_search with their paging arguments."
+        ),
+        "typed": {
+            "artifact_id_looks_like_path": False,
+            "suggested_tool": None,
+            "suggested_recovery_call": None,
+        },
+        "recommended_next_calls": [],
+    }
+
+
+def _artifact_id_looks_like_workspace_path(artifact_id: str) -> bool:
+    if not artifact_id:
+        return False
+    if "/" in artifact_id or "\\" in artifact_id:
+        return True
+    if artifact_id.startswith("."):
+        return True
+    suffixes = {
+        ".py",
+        ".pyi",
+        ".txt",
+        ".md",
+        ".json",
+        ".yaml",
+        ".yml",
+        ".toml",
+        ".ini",
+        ".cfg",
+        ".rst",
+    }
+    return PurePosixPath(artifact_id).suffix.lower() in suffixes
 
 
 def _tool_recovery_call(

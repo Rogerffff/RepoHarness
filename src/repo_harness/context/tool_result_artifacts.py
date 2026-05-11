@@ -125,18 +125,30 @@ def build_persisted_tool_result_preview(
             "available for model recovery because visibility scanning did not pass.\n"
             "</persisted-output>"
         )
-    preview = original_content[:preview_chars]
-    suffix = "\n...[preview truncated]" if len(original_content) > preview_chars else ""
+    preview_first = original_content[:preview_chars]
+    preview_last = (
+        original_content[-preview_chars:]
+        if len(original_content) > preview_chars
+        else original_content
+    )
     return (
         "<persisted-output>\n"
-        f"Output too large ({size_kb:.1f} KB). Full output saved as tool result artifact.\n"
+        "The full tool result was moved out of the model context and stored as a recoverable tool-result artifact.\n"
+        "Use only the opaque artifact_id shown below with read_tool_result_artifact.\n"
+        "Do not pass workspace file paths or ordinary artifact manifest ids to read_tool_result_artifact.\n\n"
+        "recovery_call:\n"
+        f"read_tool_result_artifact(artifact_id={record.artifact_id!r}, offset=0, limit={DEFAULT_TOOL_RESULT_READ_LIMIT})\n\n"
+        f"Output too large ({size_kb:.1f} KB).\n"
         f"artifact_id: {record.artifact_id}\n"
+        f"content_sha256: {record.content_sha256}\n"
         f"tool_result_id: {record.tool_result_id}\n"
-        f"sha256: {record.content_sha256}\n"
-        f"recovery_call: read_tool_result_artifact(artifact_id={record.artifact_id!r}, offset=0, limit={DEFAULT_TOOL_RESULT_READ_LIMIT})\n\n"
+        f"tool_call_id: {record.tool_call_id}\n"
+        f"tool_name: {record.tool_name or 'unknown'}\n"
         "recovery_hint: Use read_tool_result_artifact only if the full output is needed for the current task.\n\n"
-        f"Preview (first {min(preview_chars, len(original_content))} chars):\n"
-        f"{preview}{suffix}\n"
+        f"preview_first ({min(preview_chars, len(original_content))} chars):\n"
+        f"{preview_first}\n\n"
+        f"preview_last ({min(preview_chars, len(original_content))} chars):\n"
+        f"{preview_last}\n"
         "</persisted-output>"
     )
 
