@@ -31,7 +31,10 @@ PROVIDER_RETRY_POLICY_VERSION = "repo_harness_provider_retry_policy_v0"
 PROVIDER_ATTEMPT_SCHEMA_VERSION = "repo_harness_provider_attempt_v0"
 RETRYABLE_PROVIDER_ERROR_TYPES = {"rate_limited", "provider_timeout", "provider_error"}
 PROVIDER_RETRY_POLICIES = {"provider_retry_v0", "provider_retry_no_sleep_v0"}
-TRANSPORT_SOCKET_TIMEOUT_CAP_SEC = 10.0
+# Non-streaming thinking models can spend a long time before sending the first
+# response byte. Keep the socket timeout below the absolute request deadline,
+# but do not treat a short idle period as a provider timeout by itself.
+TRANSPORT_SOCKET_TIMEOUT_CAP_SEC = 120.0
 TRANSPORT_READ_CHUNK_SIZE = 65536
 
 

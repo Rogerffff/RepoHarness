@@ -5,6 +5,7 @@ import time
 import pytest
 
 from repo_harness.model_client.providers.common import (
+    TRANSPORT_SOCKET_TIMEOUT_CAP_SEC,
     ProviderRequestError,
     read_response_text_with_deadline,
 )
@@ -52,6 +53,17 @@ def test_deadline_transport_reuses_deadline_after_elapsed_setup_time() -> None:
     assert exc.value.info.model_error_type == "provider_timeout"
 
 
+def test_deadline_transport_socket_idle_cap_allows_long_thinking_gap() -> None:
+    response = _SocketTimeoutCapturingResponse([b'{"ok": true}'])
+
+    text = read_response_text_with_deadline(response, timeout_seconds=300.0, chunk_size=16)
+
+    assert text == '{"ok": true}'
+    assert response.sock.timeouts
+    assert response.sock.timeouts[0] == TRANSPORT_SOCKET_TIMEOUT_CAP_SEC
+    assert response.sock.timeouts[0] >= 60.0
+
+
 def test_http_error_payload_read_is_deadline_aware() -> None:
     error_response = _SlowHttpErrorBody(delay_per_read=0.03)
     deadline = time.monotonic() + 0.02
@@ -92,3 +104,33 @@ class _SlowHttpErrorBody:
 class _TimeoutResponse:
     def read(self, _size: int) -> bytes:
         raise TimeoutError("socket timed out")
+
+
+class _SocketTimeoutCapturingResponse:
+    def __init__(self, chunks: list[bytes]) -> None:
+        self.chunks = list(chunks)
+        self.sock = _CapturingSocket()
+        self.fp = _FakeFp(self.sock)
+
+    def read(self, _size: int) -> bytes:
+        if not self.chunks:
+            return b""
+        return self.chunks.pop(0)
+
+
+class _FakeFp:
+    def __init__(self, sock: "_CapturingSocket") -> None:
+        self.raw = _FakeRaw(sock)
+
+
+class _FakeRaw:
+    def __init__(self, sock: "_CapturingSocket") -> None:
+        self._sock = sock
+
+
+class _CapturingSocket:
+    def __init__(self) -> None:
+        self.timeouts: list[float] = []
+
+    def settimeout(self, timeout: float) -> None:
+        self.timeouts.append(timeout)
