@@ -66,6 +66,14 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert run_config_manifest["entries"][0]["resolved_tools"] == configuration["resolved_tools"]
     assert run_config_manifest["entries"][0]["baseline_id"] == configuration["baseline_id"]
     assert run_config_manifest["entries"][0]["retry_policy"] == "provider_retry_v0"
+    assert run_config_manifest["entries"][0]["run_config_preflight_status"] == "passed"
+    assert run_config_manifest["entries"][0]["run_config_preflight_failure_count"] == 0
+    preflight_path = Path(run_config_manifest["entries"][0]["run_config_preflight_ref"]["path"])
+    preflight = _read_json(preflight_path)
+    assert preflight["preflight_policy_version"] == "repo_harness_pre_verl_run_config_preflight_v0"
+    assert preflight["thinking_mode"] == "enabled"
+    assert preflight["max_output_tokens"] == 32768
+    assert preflight["failures"] == []
     run_config = _read_yaml(
         output_dir
         / "run_configs"
@@ -135,6 +143,13 @@ def test_scheduler_freezes_repo_specific_environment_setup_and_platform(tmp_path
     )
     assert run_config["runtime"]["docker_backend"]["build_base_image"] == "python:3.9"
     assert run_config["runtime"]["docker_backend"]["requested_container_platform"] == "linux/amd64"
+    run_config_manifest = _read_json(output_dir / "pre_verl_agentloop_run_config_manifest.json")
+    entry = run_config_manifest["entries"][0]
+    assert entry["run_config_preflight_status"] == "passed"
+    preflight = _read_json(Path(entry["run_config_preflight_ref"]["path"]))
+    assert preflight["required_container_platform"] == "linux/amd64"
+    assert preflight["resolved_container_platform"] == "linux/amd64"
+    assert preflight["failures"] == []
     generated_task = (
         output_dir / "task_definitions" / "pre_verl_dev_018_pyvista__pyvista_4315.yaml"
     ).read_text(encoding="utf-8")

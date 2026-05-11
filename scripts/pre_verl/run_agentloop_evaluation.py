@@ -28,6 +28,8 @@ from repo_harness.pre_verl_agentloop import (  # noqa: E402
     PRE_VERL_AGENTLOOP_BASELINE_SOURCE,
     PRE_VERL_AGENTLOOP_BOUNDARY_INDEX_VERSION,
     PRE_VERL_AGENTLOOP_MODE,
+    PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION,
+    validate_pre_verl_run_config_entry,
 )
 from repo_harness.pre_verl_evaluation import _pre_verl_environment_for_repo  # noqa: E402
 from repo_harness.scaffolds import build_scaffold, resolve_allowed_tools, resolve_feedback_policy  # noqa: E402
@@ -120,6 +122,17 @@ def main(argv: list[str] | None = None) -> int:
             task=loaded.runnable_task,
         )
         resolved_tools = resolve_allowed_tools(scaffold=scaffold, feedback_policy=feedback_policy)
+        preflight_report_path = (
+            output_dir / "run_config_preflight_reports" / f"{task.task_id}_{args.provider}_{_safe_id(args.model_id)}.json"
+        )
+        preflight_report = validate_pre_verl_run_config_entry(
+            task_definition_path=task_path,
+            config_path=config_path,
+            definition=loaded.definition,
+            run_config=run_config,
+            expected_resolved_tools=resolved_tools,
+            report_path=preflight_report_path,
+        )
         run_id = f"{args.run_id_prefix}_{task.task_id}_{args.provider}_{_safe_id(args.model_id)}"
         entries.append(
             {
@@ -140,6 +153,13 @@ def main(argv: list[str] | None = None) -> int:
                 "provider_retry_policy": _provider_retry_policy_payload(
                     run_config.model.retry_policy
                 ),
+                "preflight_policy_version": PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION,
+                "run_config_preflight_ref": _file_ref(preflight_report_path),
+                "run_config_preflight_status": (
+                    "passed" if preflight_report["passed"] else "failed"
+                ),
+                "run_config_preflight_failure_count": len(preflight_report["failures"]),
+                "run_config_preflight_warning_count": len(preflight_report["warnings"]),
                 "execution_image": loaded.runnable_task.environment.execution_image,
                 "requested_container_platform": loaded.definition.metadata.get(
                     "requested_container_platform"
@@ -306,7 +326,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--max-context-tokens", type=int, default=120000)
     parser.add_argument("--tool-result-aggregate-budget-chars", type=int, default=40000)
     parser.add_argument("--compact-threshold-ratio", type=float, default=0.85)
-    parser.add_argument("--max-output-tokens", type=int, default=4096)
+    parser.add_argument("--max-output-tokens", type=int, default=32768)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--baseline-id")

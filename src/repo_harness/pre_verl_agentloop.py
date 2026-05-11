@@ -37,6 +37,7 @@ PRE_VERL_FINAL_VERIFIER_ADAPTER_ID = "pre_verl_swebench_lite_dev_final_verifier_
 PRE_VERL_FINAL_VERIFIER_BOUNDARY_VERSION = "repo_harness_pre_verl_final_verifier_boundary_v0"
 PRE_VERL_AGENTLOOP_BOUNDARY_INDEX_VERSION = "repo_harness_pre_verl_agentloop_boundary_index_v0"
 PRE_VERL_FORMAL_PROVIDER_RETRY_POLICY_ID = "provider_retry_v0"
+PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION = "repo_harness_pre_verl_run_config_preflight_v0"
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 _MODEL_PATCH_STEP = "pre_verl_model_final_patch_apply"
@@ -603,42 +604,15 @@ def inspect_pre_verl_agentloop_run_config(
     if not entries:
         failures.append("run config manifest does not reference any task/config pairs")
     for entry in entries:
-        task_path = entry["task_path"]
-        config_path = entry["config_path"]
-        definition = _load_task_definition(task_path, failures)
-        if definition is None:
-            continue
-        _inspect_formal_metadata(definition, failures, task_path)
-        try:
-            run_config = load_run_config(config_path)
-        except ConfigError as exc:
-            failures.append(f"{config_path}: invalid run config: {exc}")
-            continue
-        _inspect_formal_provider_retry_config(
-            run_config=run_config,
-            config_path=config_path,
-            failures=failures,
-        )
-        if assert_final_only_test_feedback_disabled:
-            if run_config.runtime.test_feedback_policy != "disabled":
-                failures.append(f"{config_path}: final-only task must set test_feedback_policy=disabled")
-            if run_config.runtime.max_test_runs != 0:
-                failures.append(f"{config_path}: final-only task must set max_test_runs=0")
-        _inspect_deepseek_formal_provider_config(
-            definition=definition,
-            run_config=run_config,
-            config_path=config_path,
-            failures=failures,
-        )
-        _inspect_resolved_policy_and_context(
-            definition=definition,
-            run_config=run_config,
-            config_path=config_path,
+        report = validate_pre_verl_run_config_entry(
+            task_definition_path=entry["task_path"],
+            config_path=entry["config_path"],
             expected_resolved_tools=entry.get("resolved_tools"),
-            failures=failures,
+            assert_final_only_test_feedback_disabled=assert_final_only_test_feedback_disabled,
             assert_resolved_tools_derived=assert_resolved_tools_derived,
             assert_no_hidden_feedback_visible=assert_no_hidden_feedback_visible,
         )
+        failures.extend(str(item) for item in report.get("failures", []))
     return _inspect_result(
         "Inspect pre-verl AgentLoop run config",
         manifest_path,
@@ -649,6 +623,79 @@ def inspect_pre_verl_agentloop_run_config(
             or assert_no_hidden_feedback_visible
         ),
     )
+
+
+def validate_pre_verl_run_config_entry(
+    *,
+    task_definition_path: str | Path,
+    config_path: str | Path,
+    expected_resolved_tools: list[str] | None = None,
+    run_config: RunConfig | None = None,
+    definition: TaskDefinition | None = None,
+    report_path: str | Path | None = None,
+    assert_final_only_test_feedback_disabled: bool = True,
+    assert_resolved_tools_derived: bool = True,
+    assert_no_hidden_feedback_visible: bool = True,
+) -> dict[str, Any]:
+    """Validate one formal pre-verl task/config pair before provider work starts."""
+
+    task_path = Path(task_definition_path)
+    cfg_path = Path(config_path)
+    failures: list[str] = []
+    warnings: list[str] = []
+    loaded_definition = definition or _load_task_definition(task_path, failures)
+    loaded_config: RunConfig | None = run_config
+    if loaded_config is None:
+        try:
+            loaded_config = load_run_config(cfg_path)
+        except ConfigError as exc:
+            failures.append(f"{cfg_path}: invalid run config: {exc}")
+    is_formal = bool(
+        loaded_definition is not None
+        and is_formal_pre_verl_agentloop_metadata(loaded_definition.metadata)
+    )
+    if loaded_definition is not None and is_formal:
+        _inspect_formal_metadata(loaded_definition, failures, task_path)
+    elif loaded_definition is not None:
+        warnings.append("task is not formal pre-verl AgentLoop metadata; formal preflight gates skipped")
+    if loaded_definition is not None and loaded_config is not None and is_formal:
+        if assert_final_only_test_feedback_disabled:
+            if loaded_config.runtime.test_feedback_policy != "disabled":
+                failures.append(f"{cfg_path}: final-only task must set test_feedback_policy=disabled")
+            if loaded_config.runtime.max_test_runs != 0:
+                failures.append(f"{cfg_path}: final-only task must set max_test_runs=0")
+        _inspect_formal_provider_retry_config(
+            run_config=loaded_config,
+            config_path=cfg_path,
+            failures=failures,
+        )
+        _inspect_deepseek_formal_provider_config(
+            definition=loaded_definition,
+            run_config=loaded_config,
+            config_path=cfg_path,
+            failures=failures,
+        )
+        _inspect_resolved_policy_and_context(
+            definition=loaded_definition,
+            run_config=loaded_config,
+            config_path=cfg_path,
+            expected_resolved_tools=expected_resolved_tools,
+            failures=failures,
+            assert_resolved_tools_derived=assert_resolved_tools_derived,
+            assert_no_hidden_feedback_visible=assert_no_hidden_feedback_visible,
+        )
+    report = _pre_verl_run_config_preflight_report(
+        task_definition_path=task_path,
+        config_path=cfg_path,
+        definition=loaded_definition,
+        run_config=loaded_config,
+        is_formal_pre_verl=is_formal,
+        failures=failures,
+        warnings=warnings,
+    )
+    if report_path is not None:
+        _write_json(report_path, report)
+    return report
 
 
 def inspect_pre_verl_agentloop_boundary_index(
@@ -3247,6 +3294,13 @@ def _inspect_deepseek_formal_provider_config(
             f"{config_path}: runtime.docker_backend.build_base_image={actual_image!r} "
             f"must equal TaskDefinition.environment.execution_image={expected_image!r}"
         )
+    expected_platform = definition.metadata.get("requested_container_platform")
+    actual_platform = run_config.runtime.docker_backend.requested_container_platform
+    if expected_platform is not None and actual_platform != expected_platform:
+        failures.append(
+            f"{config_path}: runtime.docker_backend.requested_container_platform={actual_platform!r} "
+            f"must equal TaskDefinition.metadata.requested_container_platform={expected_platform!r}"
+        )
     thinking = run_config.model.provider_specific_options.get("thinking")
     if not isinstance(thinking, dict) or thinking.get("type") not in {"enabled", "disabled"}:
         failures.append(
@@ -3256,6 +3310,30 @@ def _inspect_deepseek_formal_provider_config(
     if isinstance(thinking, dict) and thinking.get("type") == "enabled" and compatibility != "provider_private_state_replay":
         failures.append(
             f"{config_path}: DeepSeek thinking enabled requires reasoning_compatibility=provider_private_state_replay"
+        )
+    allow_low_budget = bool(
+        run_config.model.provider_specific_options.get("allow_low_thinking_output_budget")
+    )
+    if (
+        isinstance(thinking, dict)
+        and thinking.get("type") == "enabled"
+        and run_config.model.max_output_tokens < 32768
+        and not allow_low_budget
+    ):
+        failures.append(
+            f"{config_path}: DeepSeek thinking enabled requires model.max_output_tokens>=32768 "
+            "or provider_specific_options.allow_low_thinking_output_budget=true"
+        )
+    unsupported = [
+        key
+        for key in ("top_p", "presence_penalty", "frequency_penalty")
+        if key in run_config.model.provider_specific_options
+    ]
+    if unsupported:
+        joined = ", ".join(sorted(unsupported))
+        failures.append(
+            f"{config_path}: DeepSeek thinking formal config must not place unsupported sampling fields "
+            f"in provider_specific_options: {joined}"
         )
 
 
@@ -3272,6 +3350,69 @@ def _inspect_formal_provider_retry_config(
             f"{config_path}: formal pre-verl provider run config must set "
             f"model.retry_policy={PRE_VERL_FORMAL_PROVIDER_RETRY_POLICY_ID}"
         )
+
+
+def _pre_verl_run_config_preflight_report(
+    *,
+    task_definition_path: Path,
+    config_path: Path,
+    definition: TaskDefinition | None,
+    run_config: RunConfig | None,
+    is_formal_pre_verl: bool,
+    failures: list[str],
+    warnings: list[str],
+) -> dict[str, Any]:
+    thinking: Any = None
+    if run_config is not None:
+        raw_thinking = run_config.model.provider_specific_options.get("thinking")
+        if isinstance(raw_thinking, dict):
+            thinking = raw_thinking.get("type")
+    return {
+        "schema_version": "repo_harness_pre_verl_run_config_preflight_report_v0",
+        "preflight_policy_version": PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION,
+        "created_at": _timestamp(),
+        "task_id": definition.id if definition is not None else None,
+        "config_path": config_path.as_posix(),
+        "task_definition_path": task_definition_path.as_posix(),
+        "is_formal_pre_verl": is_formal_pre_verl,
+        "passed": not failures,
+        "failures": failures,
+        "warnings": warnings,
+        "config_sha256": _file_sha256_or_missing(config_path),
+        "task_definition_sha256": _file_sha256_or_missing(task_definition_path),
+        "resolved_execution_image": (
+            definition.environment.execution_image if definition is not None else None
+        ),
+        "resolved_container_platform": (
+            run_config.runtime.docker_backend.requested_container_platform
+            if run_config is not None
+            else None
+        ),
+        "required_container_platform": (
+            definition.metadata.get("requested_container_platform")
+            if definition is not None
+            else None
+        ),
+        "provider": run_config.model.provider if run_config is not None else None,
+        "model_id": run_config.model.model_id if run_config is not None else None,
+        "max_output_tokens": (
+            run_config.model.max_output_tokens if run_config is not None else None
+        ),
+        "thinking_mode": thinking,
+        "execution_mode": run_config.runtime.execution_mode if run_config is not None else None,
+        "docker_build_base_image": (
+            run_config.runtime.docker_backend.build_base_image
+            if run_config is not None
+            else None
+        ),
+    }
+
+
+def _file_sha256_or_missing(path: Path) -> str | None:
+    try:
+        return compute_file_sha256(path)
+    except OSError:
+        return None
 
 
 def _inspect_resolved_policy_and_context(

@@ -44,6 +44,7 @@ from repo_harness.pre_verl_agentloop import (
     build_pre_verl_baseline_verifier,
     load_pre_verl_swebench_dev_runtime_plan,
     run_pre_verl_swebench_dev_final_verifier,
+    validate_pre_verl_run_config_entry,
 )
 from repo_harness.pre_verl_run_facts import (
     PRE_VERL_FORBIDDEN_SCAFFOLD_IDS,
@@ -98,13 +99,6 @@ def run_task(
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)
-    pre_verl_runtime_plan = load_pre_verl_swebench_dev_runtime_plan(loaded.runnable_task)
-    swebench_like_runtime_plan = load_swebench_like_runtime_plan(loaded.runnable_task)
-    effective_setup_command = (
-        pre_verl_runtime_plan.setup_shell
-        if pre_verl_runtime_plan is not None and pre_verl_runtime_plan.setup_shell
-        else loaded.runnable_task.setup_command
-    )
     scaffold = build_scaffold(config.runtime.scaffold_id)
     feedback_policy = resolve_feedback_policy(
         run_config=config,
@@ -112,6 +106,13 @@ def run_task(
         task=loaded.runnable_task,
     )
     allowed_tools = resolve_allowed_tools(scaffold=scaffold, feedback_policy=feedback_policy)
+    preflight_report = validate_pre_verl_run_config_entry(
+        task_definition_path=task_path,
+        config_path=config_path,
+        definition=loaded.definition,
+        run_config=config,
+        expected_resolved_tools=allowed_tools,
+    )
     actual_run_id = run_id or f"{config.run_id_prefix}_{loaded.runnable_task.task_id}"
     run_dir = Path(config.workspace.output_dir) / actual_run_id
     if run_dir.exists():
@@ -133,6 +134,36 @@ def run_task(
             )
         )
         _write_json(run_dir / "task.yaml", loaded.definition.model_dump(mode="json"))
+        _write_json(run_dir / "run_config_preflight_report.json", preflight_report)
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("run_config_preflight"),
+                timestamp=_timestamp(),
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                event_type="run_config_preflight_completed",
+                severity="error" if not preflight_report["passed"] else "info",
+                data={
+                    "preflight_policy_version": preflight_report["preflight_policy_version"],
+                    "passed": preflight_report["passed"],
+                    "failure_count": len(preflight_report["failures"]),
+                    "warning_count": len(preflight_report["warnings"]),
+                    "report_path": "run_config_preflight_report.json",
+                },
+            )
+        )
+        if not preflight_report["passed"]:
+            raise ConfigError(
+                "run_config_preflight_failed: "
+                + "; ".join(str(item) for item in preflight_report["failures"])
+            )
+        pre_verl_runtime_plan = load_pre_verl_swebench_dev_runtime_plan(loaded.runnable_task)
+        swebench_like_runtime_plan = load_swebench_like_runtime_plan(loaded.runnable_task)
+        effective_setup_command = (
+            pre_verl_runtime_plan.setup_shell
+            if pre_verl_runtime_plan is not None and pre_verl_runtime_plan.setup_shell
+            else loaded.runnable_task.setup_command
+        )
         try:
             adapter = create_workspace_adapter(config=config, run_id=actual_run_id, run_dir=run_dir)
         except DockerBackendInitializationError as exc:
