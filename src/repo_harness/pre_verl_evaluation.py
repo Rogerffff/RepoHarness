@@ -3386,7 +3386,8 @@ def _pre_verl_environment_for_repo(repo: str, version: str) -> dict[str, Any]:
             "setup_shell": (
                 "apt-get update -qq && apt-get install -y -qq --no-install-recommends "
                 f"libgl1 libxrender1 libxext6 libx11-6 libglib2.0-0 && {common_prefix} && "
-                "python -m pip install -q 'numpy<2' pytest matplotlib pillow imageio pooch scooby ipykernel 'vtk<9.3' -e ."
+                "python -m pip install -q 'numpy<2' pytest matplotlib pillow imageio pooch scooby "
+                "ipykernel 'meshio<5.4.0' 'tqdm<4.66.0' 'vtk<9.3' -e ."
             ),
         }
     raise ConfigError(f"pre-verl SWE-Bench Lite development repo environment 未实现：{repo}")

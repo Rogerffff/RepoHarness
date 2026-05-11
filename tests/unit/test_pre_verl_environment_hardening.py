@@ -33,6 +33,8 @@ def test_repo_specific_environment_freezes_pvlib_version_and_pyvista_platform() 
     assert pyvista["requested_container_platform"] == "linux/amd64"
     assert "libgl1" in pyvista["setup_shell"]
     assert "libgl1" in pyvista["runtime_shell_prefix"]
+    assert "'meshio<5.4.0'" in pyvista["setup_shell"]
+    assert "'tqdm<4.66.0'" in pyvista["setup_shell"]
 
 
 def test_agentloop_scheduler_propagates_repo_requested_container_platform(tmp_path: Path) -> None:
@@ -119,6 +121,9 @@ def test_pyvista_task_definition_verifier_command_inherits_runtime_shell_prefix(
 
     payload = yaml.safe_load(task_path.read_text(encoding="utf-8"))
     verifier_command = payload["metadata"]["pre_verl_verifier_command"]
+    setup_shell = payload["metadata"]["pre_verl_setup_shell"]
+    assert "'meshio<5.4.0'" in setup_shell
+    assert "'tqdm<4.66.0'" in setup_shell
     assert "apt-get update" in verifier_command
     assert "libgl1" in verifier_command
     assert ". .pre_verl_venv/bin/activate" in verifier_command
