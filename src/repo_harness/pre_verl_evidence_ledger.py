@@ -316,6 +316,7 @@ def _inspect_complete_ledger(
     expected_result_counts: dict[str, int],
 ) -> None:
     root = _ledger_run_root(payload, ledger_path, failures)
+    _inspect_baseline_id_consistency(payload, root, failures)
     expected_versions = {
         "harness_policy_version": PRE_VERL_EVIDENCE_LEDGER_HARNESS_POLICY_VERSION,
         "preflight_policy_version": PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION,
@@ -1078,10 +1079,57 @@ def _fix_commit_refs(section: str) -> list[str]:
 
 
 def _baseline_id(root: Path) -> str:
+    manifest_ids = _manifest_baseline_ids(root)
+    if manifest_ids:
+        return manifest_ids[0][1]
     name = root.name
     if name.endswith("Z") and "-" in name:
         name = re.sub(r"-\d{8}T\d{6}Z$", "", name)
     return name.replace("-", "_")
+
+
+def _inspect_baseline_id_consistency(
+    payload: dict[str, Any],
+    root: Path | None,
+    failures: list[str],
+) -> None:
+    if root is None:
+        return
+    ledger_baseline_id = payload.get("baseline_id")
+    if not isinstance(ledger_baseline_id, str) or not ledger_baseline_id:
+        failures.append("evidence ledger 缺少 baseline_id")
+        return
+    manifest_ids = _manifest_baseline_ids(root)
+    if not manifest_ids:
+        return
+    unique_ids = {baseline_id for _name, baseline_id in manifest_ids}
+    if len(unique_ids) > 1:
+        details = ", ".join(f"{name}={baseline_id}" for name, baseline_id in manifest_ids)
+        failures.append(f"baseline_id 在 run manifest 中不一致：{details}")
+        return
+    manifest_baseline_id = next(iter(unique_ids))
+    if ledger_baseline_id != manifest_baseline_id:
+        failures.append(
+            "evidence ledger baseline_id 必须与 run manifest 一致，"
+            f"ledger={ledger_baseline_id}, manifest={manifest_baseline_id}"
+        )
+
+
+def _manifest_baseline_ids(root: Path) -> list[tuple[str, str]]:
+    names = [
+        "pre_verl_agentloop_configuration_manifest.json",
+        "pre_verl_agentloop_run_config_manifest.json",
+        "pre_verl_agentloop_formal_run_matrix_manifest.json",
+        "pre_verl_agentloop_smoke_run_matrix_manifest.json",
+        "formal_budget_freeze_manifest.json",
+    ]
+    result: list[tuple[str, str]] = []
+    for name in names:
+        payload = _read_json_if_exists(root / name)
+        baseline_id = payload.get("baseline_id")
+        if isinstance(baseline_id, str) and baseline_id:
+            result.append((name, baseline_id))
+    return result
 
 
 def _relative(root: Path, path: Path) -> str:

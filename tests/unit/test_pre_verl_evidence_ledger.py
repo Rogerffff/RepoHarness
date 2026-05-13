@@ -50,6 +50,47 @@ def test_build_ledger_distinguishes_formal_and_discarded_attempts(tmp_path: Path
     )
 
 
+def test_build_ledger_uses_frozen_baseline_id_from_manifests(tmp_path: Path) -> None:
+    root = _write_root(tmp_path)
+    _write_baseline_manifests(root, "frozen_baseline")
+    _write_formal_run(root, "pre_verl_dev_001_demo", result="success", verifier="accepted", trainable=1)
+
+    ledger_path = build_pre_verl_evidence_ledger(
+        root,
+        context_inspector=lambda _run_dir: ("passed", None),
+    )
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+
+    assert ledger["baseline_id"] == "frozen_baseline"
+    assert "Inspect pre-verl evidence ledger: complete" in inspect_pre_verl_evidence_ledger(
+        ledger_path,
+        assert_complete=True,
+        expected_formal_denominator=1,
+        expected_result_counts={"success": 1, "failed": 0, "inconclusive": 0},
+    )
+
+
+def test_inspect_rejects_ledger_baseline_id_drift_from_manifests(tmp_path: Path) -> None:
+    root = _write_root(tmp_path)
+    _write_baseline_manifests(root, "frozen_baseline")
+    _write_formal_run(root, "pre_verl_dev_001_demo", result="success", verifier="accepted", trainable=1)
+    ledger_path = build_pre_verl_evidence_ledger(
+        root,
+        context_inspector=lambda _run_dir: ("passed", None),
+    )
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["baseline_id"] = "directory_derived_baseline"
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="baseline_id"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=1,
+            expected_result_counts={"success": 1, "failed": 0, "inconclusive": 0},
+        )
+
+
 def test_inspect_rejects_missing_discard_reason(tmp_path: Path) -> None:
     ledger_path = _good_ledger(tmp_path)
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
@@ -593,6 +634,15 @@ def _write_root(tmp_path: Path) -> Path:
         _write_task_definition(root, task_id)
         _write_run_config(root, task_id)
     return root
+
+
+def _write_baseline_manifests(root: Path, baseline_id: str) -> None:
+    for name in (
+        "pre_verl_agentloop_configuration_manifest.json",
+        "pre_verl_agentloop_run_config_manifest.json",
+        "formal_budget_freeze_manifest.json",
+    ):
+        _write_json(root / name, {"baseline_id": baseline_id})
 
 
 def _write_task_definition(root: Path, task_id: str) -> None:

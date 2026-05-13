@@ -319,6 +319,61 @@ def test_provider_reasoning_trace_export_is_isolated_from_default_exports(tmp_pa
     assert "Inspect export: clean" in inspect_export(export_dir, assert_clean=True, require_trainable_samples=True)
 
 
+def test_provider_reasoning_trace_inspect_allows_failed_run_diagnostic_export(
+    tmp_path: Path,
+):
+    run_dir = _minimal_run(
+        tmp_path / "run_reasoning_trace_failed_task",
+        task_id="task_001",
+        run_outcome="failed",
+        final_verifier_status="rejected",
+        include_formal_verifier=True,
+    )
+    _add_reasoning_trace_artifact(run_dir, "failed run reasoning target")
+
+    export_provider_reasoning_trace_training_export(
+        run_dir,
+        policy=ExportPolicy(allow_provider_reasoning_trace_training=True),
+    )
+    export_dir = _latest_export_dir(run_dir / "exports")
+
+    with pytest.raises(ExportError, match="audit_report status is failed"):
+        inspect_export(export_dir, assert_clean=True)
+
+    output = inspect_export(
+        export_dir,
+        assert_clean=True,
+        allow_provider_reasoning_trace_diagnostic_only=True,
+    )
+
+    assert "Audit status: failed" in output
+
+
+def test_provider_reasoning_trace_diagnostic_inspect_still_rejects_missing_trace(
+    tmp_path: Path,
+):
+    run_dir = _minimal_run(
+        tmp_path / "run_reasoning_trace_missing_trace",
+        task_id="task_001",
+        run_outcome="failed",
+        final_verifier_status="rejected",
+        include_formal_verifier=True,
+    )
+
+    export_provider_reasoning_trace_training_export(
+        run_dir,
+        policy=ExportPolicy(allow_provider_reasoning_trace_training=True),
+    )
+    export_dir = _latest_export_dir(run_dir / "exports")
+
+    with pytest.raises(ExportError, match="loss_targets_valid"):
+        inspect_export(
+            export_dir,
+            assert_clean=True,
+            allow_provider_reasoning_trace_diagnostic_only=True,
+        )
+
+
 def test_provider_reasoning_trace_export_available_through_dispatcher(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_reasoning_trace_dispatch",

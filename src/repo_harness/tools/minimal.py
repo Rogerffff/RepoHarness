@@ -3264,7 +3264,12 @@ def _looks_like_numbered_read_file_snippet(text: str) -> bool:
 
 
 def _looks_like_regex(query: str) -> bool:
-    return bool(re.search(r"(?<!\\)(\.\*|\[[^\]]+\]|\([^)]*[|?+*][^)]*\)|\\d|\\w|\\s|\^|\$)", query))
+    return bool(
+        re.search(
+            r"(?<!\\)(\.\*|\[[^\]]+\]|\([^)]*[|?+*][^)]*\)|\\[dws.]|\^|\$|\||\?)",
+            query,
+        )
+    )
 
 
 def _grep_result_kind(

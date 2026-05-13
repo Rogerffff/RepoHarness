@@ -345,6 +345,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="要求至少有一个 trainable 样本进入正式训练数据文件。",
     )
+    inspect_export_parser.add_argument(
+        "--allow-provider-reasoning-trace-diagnostic-only",
+        action="store_true",
+        help=(
+            "检查 provider_reasoning_trace_training_export 时，允许失败题的 reasoning trace "
+            "只作为诊断导出存在，但仍要求目标内容、隔离策略、文件哈希和审计项正确。"
+        ),
+    )
 
     inspect_mock = subparsers.add_parser(
         "inspect-mock-provider-smoke",
@@ -1734,6 +1742,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     export_format=args.format,
                     assert_clean=args.assert_clean,
                     require_trainable_samples=args.require_trainable_samples,
+                    allow_provider_reasoning_trace_diagnostic_only=(
+                        args.allow_provider_reasoning_trace_diagnostic_only
+                    ),
                 )
             )
         except RepoHarnessError as exc:

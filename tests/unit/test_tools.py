@@ -733,6 +733,35 @@ def test_grep_out_of_range_page_is_not_reported_as_absent_query(tmp_path: Path):
     assert "This does not mean the query is absent" in result.content_preview
 
 
+@pytest.mark.parametrize("query", ["__init__\\.py", "'OD'|'OV'|'SV'|'UV'"])
+def test_grep_recommends_regex_for_regex_like_literal_no_match(
+    tmp_path: Path,
+    query: str,
+) -> None:
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    (workspace / "sample.py").write_text("plain text only\n", encoding="utf-8")
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id=f"call_regex_hint_{hashlib.sha256(query.encode()).hexdigest()[:8]}",
+            tool_name="grep",
+            arguments={"query": query, "mode": "literal"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "complete_no_match"
+    assert "retry with mode='regex'" in result.content_preview
+    assert result.typed["recommended_next_calls"][0] == {
+        "tool": "grep",
+        "arguments": {"query": query, "mode": "regex", "root": "."},
+        "reason": "The literal query looks like a regular expression.",
+    }
+
+
 def test_grep_respects_workspace_sensitive_policy(tmp_path: Path):
     context = _tool_context(tmp_path)
     workspace = Path(context.run_workspace.workspace_path)

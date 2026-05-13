@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 from repo_harness.pre_verl_agentloop import PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION
 from repo_harness.scaffolds import PATCH_FOCUSED_REACT_TOOL_ORDER
@@ -62,13 +65,24 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
         == "repo_harness_convergence_nudge_v3"
     )
     assert configuration["resolved_tools"] == PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS
+    assert configuration["task_ids"] == ["pre_verl_dev_001_sqlfluff__sqlfluff_1625"]
+    assert configuration["deepseek_thinking"] == "enabled"
+    assert configuration["provider_reasoning_trace_training_export"] is False
+    assert configuration["post_run_provider_reasoning_trace_export"] is False
     task_manifest = _read_json(output_dir / "pre_verl_agentloop_task_definition_manifest.json")
     assert len(task_manifest["task_definition_refs"]) == 1
     run_config_manifest = _read_json(output_dir / "pre_verl_agentloop_run_config_manifest.json")
     assert run_config_manifest["baseline_id"] == configuration["baseline_id"]
+    assert run_config_manifest["task_ids"] == configuration["task_ids"]
+    assert run_config_manifest["repository_hints_mode"] == "balanced_eval"
+    assert run_config_manifest["deepseek_thinking"] == "enabled"
+    assert run_config_manifest["provider_reasoning_trace_training_export"] is False
     assert run_config_manifest["provider_retry_policy"] == configuration["provider_retry_policy"]
     assert run_config_manifest["entries"][0]["resolved_tools"] == configuration["resolved_tools"]
     assert run_config_manifest["entries"][0]["baseline_id"] == configuration["baseline_id"]
+    assert run_config_manifest["entries"][0]["repository_hints_mode"] == "balanced_eval"
+    assert run_config_manifest["entries"][0]["deepseek_thinking"] == "enabled"
+    assert run_config_manifest["entries"][0]["provider_reasoning_trace_training_export"] is False
     assert run_config_manifest["entries"][0]["retry_policy"] == "provider_retry_v0"
     assert run_config_manifest["entries"][0]["run_config_preflight_status"] == "passed"
     assert run_config_manifest["entries"][0]["run_config_preflight_failure_count"] == 0
@@ -100,9 +114,18 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
         budget_freeze["harness_tool_context_policy"]["convergence_nudge_policy_version"]
         == "repo_harness_convergence_nudge_v3"
     )
+    assert (
+        budget_freeze["harness_tool_context_policy"]["context_replacement_runtime_policy_version"]
+        == "fresh_tool_result_budget_runtime_v1"
+    )
+    assert (
+        budget_freeze["harness_tool_context_policy"]["context_threshold_decision_source"]
+        == "provider_request_projection_estimate"
+    )
     assert "retry_policy" in budget_freeze["requires_new_baseline_id_if_changed"]
     assert budget_freeze["repository_hints_mode"] == "balanced_eval"
     assert "repository_hints_mode" in budget_freeze["requires_new_baseline_id_if_changed"]
+    assert "repository_hints_policy_version" in budget_freeze["requires_new_baseline_id_if_changed"]
     command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(
         encoding="utf-8"
     )
@@ -155,6 +178,113 @@ def test_scheduler_can_disable_repository_hints_from_cli(tmp_path: Path) -> None
     assert configuration["repository_hints_mode"] == "disabled"
     assert budget_freeze["repository_hints_mode"] == "disabled"
     assert configuration["baseline_id"].endswith("_hints-disabled")
+
+
+def test_scheduler_requires_reasoning_artifacts_before_post_run_reasoning_export(
+    tmp_path: Path,
+) -> None:
+    script = _load_scheduler_module()
+    manifest_path = _write_materialized_manifest_fixture(tmp_path)
+
+    with pytest.raises(SystemExit):
+        script.main(
+            [
+                "--pre-verl-task-set-manifest",
+                manifest_path.as_posix(),
+                "--output-dir",
+                (tmp_path / "prepared").as_posix(),
+                "--mode",
+                "formal",
+                "--task-id",
+                "pre_verl_dev_001_sqlfluff__sqlfluff_1625",
+                "--execute",
+                "--post-run-provider-reasoning-trace-export",
+                "--repo-harness-bin",
+                f"{sys.executable} -m repo_harness.cli.main",
+            ]
+        )
+
+
+def test_post_run_reasoning_export_logs_export_and_ledger_commands(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_scheduler_module()
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    command_log_path = tmp_path / "command_log.jsonl"
+    command_log_path.write_text("", encoding="utf-8")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    _write_json(run_dir / "run_status.json", {"status": "FINALIZED"})
+    entry = {"run_task_run_dir": run_dir.as_posix(), "final_verifier_status": "accepted"}
+    calls: list[dict[str, object]] = []
+
+    def fake_run_logged_command(
+        argv,
+        *,
+        cwd,
+        logs_dir,
+        command_log_path,
+        command_name,
+        input_refs=None,
+    ):
+        calls.append({"argv": argv, "command_name": command_name, "input_refs": input_refs or []})
+        entry_path = logs_dir / f"{len(calls):04d}_{command_name}.entry.json"
+        _write_json(entry_path, {"command_name": command_name, "argv": argv})
+        if command_name == "export-provider-reasoning-trace-training":
+            export_root = run_dir / "exports"
+            export_dir = export_root / "export_0001"
+            export_dir.mkdir(parents=True)
+            (export_root / "provider_reasoning_trace_training_export.jsonl").write_text(
+                "", encoding="utf-8"
+            )
+            _write_json(
+                export_dir / "export_manifest.json",
+                {
+                    "format": "provider_reasoning_trace_training_export",
+                    "generated_at": "2026-05-14T00:00:00Z",
+                },
+            )
+        if command_name == "build-pre-verl-evidence-ledger":
+            output_index = argv.index("--output") + 1
+            _write_json(Path(argv[output_index]), {"formal_result_counts": {"success": 1}})
+        return subprocess.CompletedProcess(argv, 0, "", ""), entry_path
+
+    monkeypatch.setattr(script, "_run_logged_command", fake_run_logged_command)
+    args = _Args(mode="formal")
+    args.repo_harness_argv = [sys.executable, "-m", "repo_harness.cli.main"]
+
+    script._export_provider_reasoning_traces(
+        entries=[entry],
+        logs_dir=logs_dir,
+        command_log_path=command_log_path,
+        args=args,
+    )
+    ledger_path = script._build_and_inspect_post_run_evidence_ledger(
+        output_dir=tmp_path,
+        entries=[entry],
+        logs_dir=logs_dir,
+        command_log_path=command_log_path,
+        args=args,
+    )
+
+    assert entry["provider_reasoning_trace_export_status"] == "passed"
+    assert ledger_path == tmp_path / "pre_verl_evidence_ledger.json"
+    assert [call["command_name"] for call in calls] == [
+        "export-provider-reasoning-trace-training",
+        "inspect-provider-reasoning-trace-export",
+        "build-pre-verl-evidence-ledger",
+        "inspect-pre-verl-evidence-ledger",
+    ]
+    inspect_export_argv = calls[1]["argv"]
+    assert "--assert-clean" in inspect_export_argv
+    assert "--allow-provider-reasoning-trace-diagnostic-only" in inspect_export_argv
+    assert len(calls[1]["input_refs"]) == 2
+    inspect_ledger_argv = calls[-1]["argv"]
+    denominator_index = inspect_ledger_argv.index("--expected-formal-denominator") + 1
+    assert inspect_ledger_argv[denominator_index] == "1"
+    assert '{"failed": 0, "inconclusive": 0, "success": 1}' in inspect_ledger_argv
 
 
 def test_scheduler_freezes_repo_specific_environment_setup_and_platform(tmp_path: Path) -> None:

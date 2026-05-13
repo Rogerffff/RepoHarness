@@ -17,6 +17,7 @@ def inspect_export(
     export_format: str | None = None,
     assert_clean: bool = False,
     require_trainable_samples: bool = False,
+    allow_provider_reasoning_trace_diagnostic_only: bool = False,
 ) -> str:
     root = Path(export_path)
     export_dirs = _export_dirs(root, all_exports=all_exports)
@@ -33,7 +34,12 @@ def inspect_export(
     total_trainable = 0
     failures: list[str] = []
     for export_dir in export_dirs:
-        result = _inspect_one(export_dir)
+        result = _inspect_one(
+            export_dir,
+            allow_provider_reasoning_trace_diagnostic_only=(
+                allow_provider_reasoning_trace_diagnostic_only
+            ),
+        )
         lines.extend(result["lines"])
         total_trainable += result["trainable_count"]
         failures.extend(result["failures"])
@@ -70,7 +76,11 @@ def _export_dirs(path: Path, *, all_exports: bool) -> list[Path]:
     return []
 
 
-def _inspect_one(export_dir: Path) -> dict:
+def _inspect_one(
+    export_dir: Path,
+    *,
+    allow_provider_reasoning_trace_diagnostic_only: bool = False,
+) -> dict:
     failures: list[str] = []
     manifest_path = export_dir / "export_manifest.json"
     audit_path = export_dir / "audit_report.json"
@@ -96,7 +106,13 @@ def _inspect_one(export_dir: Path) -> dict:
         failures.append(f"{export_dir.name}: audit_report.md sha256 mismatch")
     if audit.get("export_id") != manifest.get("export_id"):
         failures.append(f"{export_dir.name}: audit export_id mismatch")
-    if audit.get("status") == "failed":
+    provider_trace_diagnostic_only = (
+        allow_provider_reasoning_trace_diagnostic_only
+        and manifest.get("format") == "provider_reasoning_trace_training_export"
+        and audit.get("format") == "provider_reasoning_trace_training_export"
+        and _provider_reasoning_trace_failure_is_diagnostic_only(audit)
+    )
+    if audit.get("status") == "failed" and not provider_trace_diagnostic_only:
         failures.append(f"{export_dir.name}: audit_report status is failed")
     for sample in audit.get("samples", []):
         for item in sample.get("audit_items", []):
@@ -134,6 +150,38 @@ def _inspect_one(export_dir: Path) -> dict:
         if sample.get("training_eligibility") == "invalid" and sample.get("line_number"):
             failures.append(f"{export_dir.name}: invalid sample has a formal data line")
     return {"lines": lines, "failures": failures, "trainable_count": trainable_count}
+
+
+def _provider_reasoning_trace_failure_is_diagnostic_only(audit: dict) -> bool:
+    samples = audit.get("samples", [])
+    if not isinstance(samples, list) or not samples:
+        return False
+    for sample in samples:
+        if not isinstance(sample, dict):
+            return False
+        for item in sample.get("audit_items", []):
+            if isinstance(item, dict) and item.get("status") == "failed":
+                return False
+        eligibility = sample.get("training_eligibility")
+        if eligibility == "trainable":
+            continue
+        if eligibility in {"diagnostic_only", "skipped"}:
+            continue
+        if eligibility != "invalid":
+            return False
+        if not _provider_reasoning_trace_diagnostic_invalid_reason(
+            str(sample.get("invalid_reason") or "")
+        ):
+            return False
+    return True
+
+
+def _provider_reasoning_trace_diagnostic_invalid_reason(reason: str) -> bool:
+    if reason in {"failed", "invalid_task", "flaky_task", "interrupted", "inconclusive"}:
+        return True
+    if reason.startswith("agent_stop_reason:"):
+        return True
+    return False
 
 
 def _read_json(path: Path) -> dict:

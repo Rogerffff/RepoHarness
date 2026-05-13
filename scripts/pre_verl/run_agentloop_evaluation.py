@@ -56,12 +56,13 @@ FORMAL_PROVIDER_RETRYABLE_ERROR_TYPES = [
 HARNESS_TOOL_CONTEXT_POLICY = {
     "search_fact_policy_version": "repo_harness_search_fact_trust_v1",
     "repository_action_index_policy_version": "repo_harness_repository_action_index_v1",
+    "repository_hints_policy_version": "repo_harness_repository_hints_config_v0",
     "convergence_nudge_policy_version": "repo_harness_convergence_nudge_v3",
     "context_warning_policy_version": "repo_harness_context_warning_v1",
-    "context_replacement_runtime_policy_version": "deterministic_tool_result_replacement_runtime_v1",
+    "context_replacement_runtime_policy_version": "fresh_tool_result_budget_runtime_v1",
     "provider_ready_token_estimator_version": "provider_body_char4_token_estimator_v1",
-    "context_threshold_decision_source": "provider_ready_token_estimate",
-    "compact_threshold_ratio_runtime_effect": "connected_to_tool_result_replacement_budget_v1",
+    "context_threshold_decision_source": "provider_request_projection_estimate",
+    "compact_threshold_ratio_runtime_effect": "reserved_for_autocompact_v1",
     "harness_control_message_export_policy": "exclude_harness_generated_untrainable_control_messages_v1",
     "tool_call_repair_policy_version": "malformed_tool_call_repair_v0",
 }
@@ -147,6 +148,14 @@ def main(argv: list[str] | None = None) -> int:
                 "provider": args.provider,
                 "model_id": args.model_id,
                 "test_feedback_policy": args.test_feedback_policy,
+                "repository_hints_mode": args.repository_hints_mode,
+                "deepseek_thinking": args.deepseek_thinking if args.provider == "deepseek" else None,
+                "provider_reasoning_trace_training_export": bool(
+                    getattr(args, "provider_reasoning_trace_training_export", False)
+                ),
+                "post_run_provider_reasoning_trace_export": bool(
+                    getattr(args, "post_run_provider_reasoning_trace_export", False)
+                ),
                 "resolved_tools": resolved_tools,
                 "baseline_id": args.baseline_id,
                 "retry_policy": run_config.model.retry_policy,
@@ -199,6 +208,16 @@ def main(argv: list[str] | None = None) -> int:
             "forbidden_scaffold_ids": FORBIDDEN_SCAFFOLD_IDS,
             "provider_retry_policy": _provider_retry_policy_payload(
                 FORMAL_PROVIDER_RETRY_POLICY_ID
+            ),
+            "task_ids": [entry["task_id"] for entry in entries],
+            "selected_task_count": len(entries),
+            "repository_hints_mode": args.repository_hints_mode,
+            "deepseek_thinking": args.deepseek_thinking if args.provider == "deepseek" else None,
+            "provider_reasoning_trace_training_export": bool(
+                getattr(args, "provider_reasoning_trace_training_export", False)
+            ),
+            "post_run_provider_reasoning_trace_export": bool(
+                getattr(args, "post_run_provider_reasoning_trace_export", False)
             ),
             "entries": entries,
         },
@@ -285,6 +304,22 @@ def main(argv: list[str] | None = None) -> int:
             command_log_path=command_log_path,
             command_name="inspect-pre-verl-agentloop-boundary-index",
         )
+        if args.post_run_provider_reasoning_trace_export:
+            _export_provider_reasoning_traces(
+                entries=entries,
+                logs_dir=logs_dir,
+                command_log_path=command_log_path,
+                args=args,
+            )
+            ledger_path = _build_and_inspect_post_run_evidence_ledger(
+                output_dir=output_dir,
+                entries=entries,
+                logs_dir=logs_dir,
+                command_log_path=command_log_path,
+                args=args,
+            )
+            for entry in entries:
+                entry["post_run_evidence_ledger_ref"] = _file_ref(ledger_path)
 
     run_matrix_path = _write_run_matrix(output_dir, entries, args)
     print(
@@ -345,6 +380,15 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "当前主要用于 DeepSeek thinking 轨迹私有审计，不应混入默认 SFT/RL 导出。"
         ),
     )
+    parser.add_argument(
+        "--post-run-provider-reasoning-trace-export",
+        action="store_true",
+        help=(
+            "在 --execute 完成后显式导出 provider reasoning trace 训练数据、检查导出审计，"
+            "并重建/检查 pre-verl evidence ledger。需要同时开启 "
+            "--provider-reasoning-trace-training-export。"
+        ),
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--baseline-id")
     parser.add_argument("--parent-baseline-id")
@@ -371,6 +415,17 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         parser.error("formal pre-verl final-only 任务必须设置 max_test_runs=0")
     if args.mode == "formal" and args.execution_mode != "docker":
         parser.error("formal pre-verl 23 题评测必须使用 Docker execution mode，不能使用 local_process")
+    if args.post_run_provider_reasoning_trace_export and not args.execute:
+        parser.error("--post-run-provider-reasoning-trace-export 只能和 --execute 一起使用")
+    if args.post_run_provider_reasoning_trace_export and not args.provider_reasoning_trace_training_export:
+        parser.error(
+            "--post-run-provider-reasoning-trace-export 需要同时开启 "
+            "--provider-reasoning-trace-training-export"
+        )
+    if args.post_run_provider_reasoning_trace_export and args.provider != "deepseek":
+        parser.error("--post-run-provider-reasoning-trace-export 目前只支持 provider=deepseek")
+    if args.post_run_provider_reasoning_trace_export and args.deepseek_thinking != "enabled":
+        parser.error("--post-run-provider-reasoning-trace-export 需要 --deepseek-thinking enabled")
     if not args.baseline_id:
         args.baseline_id = _default_baseline_id(args)
     return args
@@ -670,6 +725,14 @@ def _write_configuration_manifests(
         "scaffold_prompt_sha256": prompt_hash,
         "test_feedback_policy": args.test_feedback_policy,
         "repository_hints_mode": args.repository_hints_mode,
+        "deepseek_thinking": args.deepseek_thinking if args.provider == "deepseek" else None,
+        "provider_reasoning_trace_training_export": bool(
+            getattr(args, "provider_reasoning_trace_training_export", False)
+        ),
+        "post_run_provider_reasoning_trace_export": bool(
+            getattr(args, "post_run_provider_reasoning_trace_export", False)
+        ),
+        "task_ids": [entry["task_id"] for entry in entries],
         "resolved_tools": resolved_tools,
         "budget": _budget_payload(args),
         "selected_task_count": len(entries),
@@ -719,6 +782,9 @@ def _write_configuration_manifests(
             "provider_reasoning_trace_training_export": bool(
                 getattr(args, "provider_reasoning_trace_training_export", False)
             ),
+            "post_run_provider_reasoning_trace_export": bool(
+                getattr(args, "post_run_provider_reasoning_trace_export", False)
+            ),
             "requires_new_baseline_id_if_changed": [
                 "max_turns",
                 "max_tool_calls",
@@ -732,6 +798,7 @@ def _write_configuration_manifests(
                 "max_output_tokens",
                 "temperature",
                 "provider_reasoning_trace_training_export",
+                "post_run_provider_reasoning_trace_export",
                 "scaffold_prompt_sha256",
                 "resolved_tools",
                 "model_id",
@@ -740,6 +807,7 @@ def _write_configuration_manifests(
                 "provider_axis_scope",
                 "search_fact_policy_version",
                 "repository_action_index_policy_version",
+                "repository_hints_policy_version",
                 "convergence_nudge_policy_version",
                 "context_warning_policy_version",
                 "provider_ready_token_estimator_version",
@@ -814,6 +882,169 @@ def _write_boundary_index(output_dir: Path, entries: list[dict[str, Any]]) -> Pa
     return path
 
 
+def _export_provider_reasoning_traces(
+    *,
+    entries: list[dict[str, Any]],
+    logs_dir: Path,
+    command_log_path: Path,
+    args: argparse.Namespace,
+) -> None:
+    for entry in entries:
+        run_dir = Path(str(entry["run_task_run_dir"]))
+        if not run_dir.is_dir() or _run_status(run_dir) != "FINALIZED":
+            entry["provider_reasoning_trace_export_status"] = "skipped_non_finalized_run"
+            continue
+        export_result, export_entry_path = _run_logged_command(
+            [
+                *args.repo_harness_argv,
+                "export",
+                run_dir.as_posix(),
+                "--format",
+                "provider_reasoning_trace_training_export",
+                "--allow-provider-reasoning-trace-training",
+            ],
+            cwd=REPO_ROOT,
+            logs_dir=logs_dir,
+            command_log_path=command_log_path,
+            command_name="export-provider-reasoning-trace-training",
+            input_refs=[_file_ref(run_dir / "run_status.json")],
+        )
+        entry["provider_reasoning_trace_export_command_log_entry_ref"] = _file_ref(
+            export_entry_path
+        )
+        if export_result.returncode != 0:
+            entry["provider_reasoning_trace_export_status"] = "command_failed"
+            raise SystemExit(export_result.returncode)
+        inspect_result, inspect_entry_path = _run_logged_command(
+            [
+                *args.repo_harness_argv,
+                "inspect-export",
+                (run_dir / "exports").as_posix(),
+                "--all",
+                "--format",
+                "provider_reasoning_trace_training_export",
+                "--assert-clean",
+                "--allow-provider-reasoning-trace-diagnostic-only",
+            ],
+            cwd=REPO_ROOT,
+            logs_dir=logs_dir,
+            command_log_path=command_log_path,
+            command_name="inspect-provider-reasoning-trace-export",
+            input_refs=_provider_reasoning_trace_export_refs(run_dir),
+        )
+        entry["provider_reasoning_trace_export_inspect_command_log_entry_ref"] = (
+            _file_ref(inspect_entry_path)
+        )
+        if inspect_result.returncode != 0:
+            entry["provider_reasoning_trace_export_status"] = "inspect_failed"
+            raise SystemExit(inspect_result.returncode)
+        entry["provider_reasoning_trace_export_status"] = "passed"
+
+
+def _provider_reasoning_trace_export_refs(run_dir: Path) -> list[dict[str, Any]]:
+    refs = []
+    convenience_path = run_dir / "exports" / "provider_reasoning_trace_training_export.jsonl"
+    if convenience_path.exists():
+        refs.append(_file_ref(convenience_path))
+    latest_export_manifest = _latest_export_manifest_for_format(
+        run_dir / "exports",
+        "provider_reasoning_trace_training_export",
+    )
+    if latest_export_manifest is not None:
+        refs.append(_file_ref(latest_export_manifest))
+    return refs
+
+
+def _latest_export_manifest_for_format(exports_dir: Path, export_format: str) -> Path | None:
+    if not exports_dir.is_dir():
+        return None
+    candidates: list[tuple[str, Path]] = []
+    for child in exports_dir.iterdir():
+        manifest_path = child / "export_manifest.json"
+        if not child.is_dir() or not manifest_path.exists():
+            continue
+        try:
+            manifest = _read_json(manifest_path)
+        except (json.JSONDecodeError, OSError):
+            continue
+        if manifest.get("format") != export_format:
+            continue
+        candidates.append((str(manifest.get("generated_at") or ""), manifest_path))
+    if not candidates:
+        return None
+    return sorted(candidates, key=lambda item: item[0])[-1][1]
+
+
+def _build_and_inspect_post_run_evidence_ledger(
+    *,
+    output_dir: Path,
+    entries: list[dict[str, Any]],
+    logs_dir: Path,
+    command_log_path: Path,
+    args: argparse.Namespace,
+) -> Path:
+    ledger_path = output_dir / "pre_verl_evidence_ledger.json"
+    configuration_manifest = output_dir / "pre_verl_agentloop_configuration_manifest.json"
+    input_refs = [_file_ref(configuration_manifest)] if configuration_manifest.exists() else []
+    build_result, build_entry_path = _run_logged_command(
+        [
+            *args.repo_harness_argv,
+            "build-pre-verl-evidence-ledger",
+            output_dir.as_posix(),
+            "--output",
+            ledger_path.as_posix(),
+        ],
+        cwd=REPO_ROOT,
+        logs_dir=logs_dir,
+        command_log_path=command_log_path,
+        command_name="build-pre-verl-evidence-ledger",
+        input_refs=input_refs,
+    )
+    if build_result.returncode != 0:
+        raise SystemExit(build_result.returncode)
+    expected_counts = _formal_result_counts(entries)
+    inspect_result, inspect_entry_path = _run_logged_command(
+        [
+            *args.repo_harness_argv,
+            "inspect-pre-verl-evidence-ledger",
+            ledger_path.as_posix(),
+            "--assert-complete",
+            "--expected-formal-denominator",
+            str(len(entries)),
+            "--expected-result-counts",
+            json.dumps(expected_counts, sort_keys=True),
+        ],
+        cwd=REPO_ROOT,
+        logs_dir=logs_dir,
+        command_log_path=command_log_path,
+        command_name="inspect-pre-verl-evidence-ledger",
+        input_refs=[_file_ref(ledger_path)],
+    )
+    for entry in entries:
+        entry["post_run_evidence_ledger_build_command_log_entry_ref"] = _file_ref(
+            build_entry_path
+        )
+        entry["post_run_evidence_ledger_inspect_command_log_entry_ref"] = _file_ref(
+            inspect_entry_path
+        )
+    if inspect_result.returncode != 0:
+        raise SystemExit(inspect_result.returncode)
+    return ledger_path
+
+
+def _formal_result_counts(entries: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"success": 0, "failed": 0, "inconclusive": 0}
+    for entry in entries:
+        status = entry.get("final_verifier_status")
+        if status == "accepted":
+            counts["success"] += 1
+        elif status == "rejected":
+            counts["failed"] += 1
+        else:
+            counts["inconclusive"] += 1
+    return counts
+
+
 def _annotate_run_task_entry(entry: dict[str, Any]) -> None:
     run_dir = Path(str(entry["run_task_run_dir"]))
     baseline = _read_json_or_none(run_dir / "baseline.json") or {}
@@ -868,6 +1099,12 @@ def _annotate_run_task_entry(entry: dict[str, Any]) -> None:
     elif entry.get("run_task_exit_code") == 0:
         entry["status"] = "incomplete_run_artifacts"
         entry["blocked_reason"] = "missing_required_run_artifacts"
+
+
+def _run_status(run_dir: Path) -> str | None:
+    payload = _read_json_or_none(run_dir / "run_status.json") or {}
+    status = payload.get("status")
+    return status if isinstance(status, str) else None
 
 
 def _read_json_or_none(path: Path) -> dict[str, Any] | None:
