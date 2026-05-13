@@ -326,6 +326,15 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--max-context-tokens", type=int, default=120000)
     parser.add_argument("--tool-result-aggregate-budget-chars", type=int, default=40000)
     parser.add_argument("--compact-threshold-ratio", type=float, default=0.85)
+    parser.add_argument(
+        "--repository-hints-mode",
+        choices=["disabled", "strict_eval", "balanced_eval", "weak_model_scaffold"],
+        default="balanced_eval",
+        help=(
+            "控制首轮模型上下文中的 repository_hints 候选文件提示策略。"
+            "disabled 会完全关闭模型可见候选提示。"
+        ),
+    )
     parser.add_argument("--max-output-tokens", type=int, default=32768)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument(
@@ -607,6 +616,9 @@ def _write_run_config(
             "keep_recent_test_results": 0,
             "summarize_old_test_outputs": True,
             "compact_threshold_ratio": args.compact_threshold_ratio,
+            "repository_hints": {
+                "mode": args.repository_hints_mode,
+            },
         },
         "evaluation": {
             "concurrency": 1,
@@ -657,6 +669,7 @@ def _write_configuration_manifests(
         "scaffold_version": scaffold.scaffold_version,
         "scaffold_prompt_sha256": prompt_hash,
         "test_feedback_policy": args.test_feedback_policy,
+        "repository_hints_mode": args.repository_hints_mode,
         "resolved_tools": resolved_tools,
         "budget": _budget_payload(args),
         "selected_task_count": len(entries),
@@ -702,6 +715,7 @@ def _write_configuration_manifests(
             "temperature_written_to_run_config": _write_temperature_to_run_config(args),
             "seed": args.seed,
             "deepseek_thinking": args.deepseek_thinking if args.provider == "deepseek" else None,
+            "repository_hints_mode": args.repository_hints_mode,
             "provider_reasoning_trace_training_export": bool(
                 getattr(args, "provider_reasoning_trace_training_export", False)
             ),
@@ -714,6 +728,7 @@ def _write_configuration_manifests(
                 "max_context_tokens",
                 "tool_result_aggregate_budget_chars",
                 "compact_threshold_ratio",
+                "repository_hints_mode",
                 "max_output_tokens",
                 "temperature",
                 "provider_reasoning_trace_training_export",
@@ -906,6 +921,7 @@ def _default_baseline_id(args: argparse.Namespace) -> str:
             _safe_id(str(getattr(args, "mode", "unknown"))),
             _safe_id(str(getattr(args, "provider", "unknown"))),
             _safe_id(str(getattr(args, "model_id", "unknown"))),
+            f"hints-{_safe_id(str(getattr(args, 'repository_hints_mode', 'unknown')))}",
         ]
     )
 

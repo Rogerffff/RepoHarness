@@ -44,7 +44,10 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert configuration["baseline_source"] == "repo_harness_agentloop_run_task"
     assert configuration["pre_verl_adapter"] == "swebench_lite_dev_agentloop_v0"
     assert configuration["old_pilot_allowed"] is False
-    assert configuration["baseline_id"] == "pre_verl_agentloop_smoke_deepseek_deepseek-v4-flash"
+    assert (
+        configuration["baseline_id"]
+        == "pre_verl_agentloop_smoke_deepseek_deepseek-v4-flash_hints-balanced_eval"
+    )
     assert configuration["provider_axis_scope"] == "deepseek_only"
     assert configuration["provider_retry_policy"] == {
         "schema_version": "repo_harness_provider_retry_policy_v0",
@@ -86,6 +89,8 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert run_config["model"]["retry_policy"] == "provider_retry_v0"
     assert run_config["runtime"]["docker_backend"]["build_base_image"] == "python:3.8"
     assert run_config["context_management"]["max_context_tokens"] == 120000
+    assert run_config["context_management"]["repository_hints"] == {"mode": "balanced_eval"}
+    assert configuration["repository_hints_mode"] == "balanced_eval"
     assert run_config["model"]["provider_specific_options"]["thinking"] == {"type": "enabled"}
     assert configuration["budget"]["max_context_tokens"] == 120000
     budget_freeze = _read_json(output_dir / "formal_budget_freeze_manifest.json")
@@ -96,6 +101,8 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
         == "repo_harness_convergence_nudge_v3"
     )
     assert "retry_policy" in budget_freeze["requires_new_baseline_id_if_changed"]
+    assert budget_freeze["repository_hints_mode"] == "balanced_eval"
+    assert "repository_hints_mode" in budget_freeze["requires_new_baseline_id_if_changed"]
     command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(
         encoding="utf-8"
     )
@@ -107,6 +114,47 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert "setup_command: null" in generated_task
     assert "pre_verl_setup_shell:" in generated_task
     assert "pre_verl_agentloop_baseline_source: repo_harness_agentloop_run_task" in generated_task
+
+
+def test_scheduler_can_disable_repository_hints_from_cli(tmp_path: Path) -> None:
+    script = _load_scheduler_module()
+    manifest_path = _write_materialized_manifest_fixture(tmp_path)
+    output_dir = tmp_path / "prepared"
+
+    status = script.main(
+        [
+            "--pre-verl-task-set-manifest",
+            manifest_path.as_posix(),
+            "--output-dir",
+            output_dir.as_posix(),
+            "--mode",
+            "formal",
+            "--task-id",
+            "pre_verl_dev_001_sqlfluff__sqlfluff_1625",
+            "--provider",
+            "deepseek",
+            "--model-id",
+            "deepseek-v4-pro",
+            "--repository-hints-mode",
+            "disabled",
+            "--repo-harness-bin",
+            f"{sys.executable} -m repo_harness.cli.main",
+        ]
+    )
+
+    assert status == 0
+    run_config = _read_yaml(
+        output_dir
+        / "run_configs"
+        / "pre_verl_dev_001_sqlfluff__sqlfluff_1625_deepseek_deepseek-v4-pro.yaml"
+    )
+    configuration = _read_json(output_dir / "pre_verl_agentloop_configuration_manifest.json")
+    budget_freeze = _read_json(output_dir / "formal_budget_freeze_manifest.json")
+
+    assert run_config["context_management"]["repository_hints"] == {"mode": "disabled"}
+    assert configuration["repository_hints_mode"] == "disabled"
+    assert budget_freeze["repository_hints_mode"] == "disabled"
+    assert configuration["baseline_id"].endswith("_hints-disabled")
 
 
 def test_scheduler_freezes_repo_specific_environment_setup_and_platform(tmp_path: Path) -> None:
@@ -444,3 +492,4 @@ class _Args:
         self.parent_run_dir = None
         self.parent_status = None
         self.baseline_change_summary = "fixture"
+        self.repository_hints_mode = "balanced_eval"
