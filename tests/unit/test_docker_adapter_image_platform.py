@@ -187,6 +187,111 @@ def test_docker_search_text_uses_single_ripgrep_command(tmp_path: Path, monkeypa
     assert payload["container_execution_facts_ref"] == "container_execution_facts/000001.json"
 
 
+def test_docker_search_text_marks_file_root_candidate_count_from_path(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    workspace = tmp_path / "run" / "workspaces" / "agent_workspace"
+    (workspace / "src").mkdir(parents=True)
+    (workspace / "src" / "demo.py").write_text("present\n", encoding="utf-8")
+    adapter = object.__new__(DockerWorkspaceAdapter)
+    adapter.run_id = "run"
+    adapter.run_dir = tmp_path / "run"
+    adapter.workspaces_dir = tmp_path / "run" / "workspaces"
+    adapter.default_command_timeout_sec = 30
+    adapter.config = SimpleNamespace(allow_degraded_python_search_fallback=False)
+    adapter.backend_facts = SimpleNamespace(rg_available=True)
+    calls: list[list[str]] = []
+
+    def fake_execute(command, **kwargs):
+        calls.append(command)
+        stdout = (
+            '{"type":"summary","data":{"stats":{"searches":0,'
+            '"searches_with_match":0,"matched_lines":0,"matches":0}}}\n'
+        )
+        return DockerCommandOutput(
+            exit_code=1,
+            stdout=stdout,
+            stderr="",
+            duration_ms=12,
+            timeout=False,
+            container_name="container",
+            cleanup_status="completed",
+            facts_ref="container_execution_facts/000001.json",
+        )
+
+    monkeypatch.setattr(adapter, "_execute_in_container", fake_execute)
+
+    payload = adapter.search_text(workspace, root="src/demo.py", query="missing", mode="literal")
+
+    assert len(calls) == 1
+    assert payload["root_kind"] == "file"
+    assert payload["candidate_fact_source"] == "root_is_file"
+    assert payload["candidate_count_reliable"] is True
+    assert payload["candidate_file_count"] == 1
+    assert payload["scanned_candidate_file_count"] == 1
+    assert payload["scanned_file_count"] == 1
+    assert payload["scan_complete_reason"] == "complete_no_match_all_visible_candidates_read"
+
+
+def test_docker_search_text_recovers_directory_candidate_count_when_rg_summary_is_zero(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    workspace = tmp_path / "run" / "workspaces" / "agent_workspace"
+    (workspace / "src").mkdir(parents=True)
+    (workspace / "src" / "demo.py").write_text("present\n", encoding="utf-8")
+    adapter = object.__new__(DockerWorkspaceAdapter)
+    adapter.run_id = "run"
+    adapter.run_dir = tmp_path / "run"
+    adapter.workspaces_dir = tmp_path / "run" / "workspaces"
+    adapter.default_command_timeout_sec = 30
+    adapter.config = SimpleNamespace(allow_degraded_python_search_fallback=False)
+    adapter.backend_facts = SimpleNamespace(rg_available=True)
+    calls: list[list[str]] = []
+
+    def fake_execute(command, **kwargs):
+        calls.append(command)
+        if "--files" in command:
+            return DockerCommandOutput(
+                exit_code=0,
+                stdout="src/demo.py\n",
+                stderr="",
+                duration_ms=3,
+                timeout=False,
+                container_name="container",
+                cleanup_status="completed",
+                facts_ref="container_execution_facts/000002.json",
+            )
+        stdout = (
+            '{"type":"summary","data":{"stats":{"searches":0,'
+            '"searches_with_match":0,"matched_lines":0,"matches":0}}}\n'
+        )
+        return DockerCommandOutput(
+            exit_code=1,
+            stdout=stdout,
+            stderr="",
+            duration_ms=12,
+            timeout=False,
+            container_name="container",
+            cleanup_status="completed",
+            facts_ref="container_execution_facts/000001.json",
+        )
+
+    monkeypatch.setattr(adapter, "_execute_in_container", fake_execute)
+
+    payload = adapter.search_text(workspace, root="src", query="missing", mode="literal")
+
+    assert len(calls) == 2
+    assert payload["root_kind"] == "directory"
+    assert payload["candidate_fact_source"] == "workspace_adapter_list_files"
+    assert payload["candidate_count_reliable"] is True
+    assert payload["candidate_file_count"] == 1
+    assert payload["scanned_candidate_file_count"] == 1
+    assert payload["scanned_file_count"] == 1
+    assert payload["scan_complete_reason"] == "complete_no_match_all_visible_candidates_read"
+
+
 def test_docker_search_text_retries_resource_errors_with_single_thread(
     tmp_path: Path,
     monkeypatch,

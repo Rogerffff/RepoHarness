@@ -680,6 +680,7 @@ class DockerWorkspaceAdapter:
             raise WorkspaceError(f"搜索 root 越过 workspace 边界：{root}") from exc
         if root_arg == "":
             root_arg = "."
+        root_kind = "file" if root_path.is_file() else ("directory" if root_path.is_dir() else "other")
 
         command = self._ripgrep_command(
             query=query,
@@ -731,6 +732,53 @@ class DockerWorkspaceAdapter:
             offset=offset,
             max_matches=max_matches,
         )
+        rg_completed = (
+            payload.get("rg_exit_code") in {0, 1}
+            and not bool(payload.get("rg_timeout"))
+            and int(payload.get("parse_error_count") or 0) == 0
+        )
+        payload.update(
+            {
+                "root_kind": root_kind,
+                "candidate_fact_source": "ripgrep_summary_only",
+                "candidate_count_reliable": False,
+            }
+        )
+        if root_kind == "file":
+            payload["candidate_file_count"] = 1
+            payload["candidate_fact_source"] = "root_is_file"
+            payload["candidate_count_reliable"] = True
+            if rg_completed:
+                payload["scanned_candidate_file_count"] = 1
+                payload["scanned_file_count"] = max(int(payload.get("scanned_file_count") or 0), 1)
+                payload["searched_file_count"] = max(int(payload.get("searched_file_count") or 0), 1)
+                payload["scanned_file_limit"] = max(int(payload.get("scanned_file_limit") or 0), 1)
+                payload["unscanned_file_count"] = 0
+                if int(payload.get("total_match_count") or 0) == 0:
+                    payload["scan_complete_reason"] = "complete_no_match_all_visible_candidates_read"
+        elif (
+            root_kind == "directory"
+            and rg_completed
+            and int(payload.get("total_match_count") or 0) == 0
+            and int(payload.get("candidate_file_count") or 0) == 0
+        ):
+            try:
+                candidate_files = self.list_files(workspace_path, root=root, pattern=glob)
+            except WorkspaceError as exc:
+                payload["candidate_fact_error"] = str(exc)[:240]
+            else:
+                candidate_file_count = len(candidate_files)
+                payload["candidate_file_count"] = candidate_file_count
+                payload["scanned_candidate_file_count"] = candidate_file_count
+                payload["scanned_file_count"] = candidate_file_count
+                payload["searched_file_count"] = candidate_file_count
+                payload["scanned_file_limit"] = max(
+                    int(payload.get("scanned_file_limit") or 0),
+                    candidate_file_count,
+                )
+                payload["unscanned_file_count"] = 0
+                payload["candidate_fact_source"] = "workspace_adapter_list_files"
+                payload["candidate_count_reliable"] = True
         payload.update(
             {
                 "engine": "ripgrep",

@@ -63,9 +63,15 @@ def test_tool_model_visible_contract_explains_restricted_workflow():
     assert "mode='regex'" in grep.model_visible_description
     assert grep.input_schema["properties"]["mode"]["enum"] == ["literal", "regex"]
     assert "max_matches" in grep.input_schema["properties"]
-    assert "pattern" in grep.input_schema["properties"]
+    assert "pattern" not in build_tool("list_files").input_schema["properties"]
+    assert "pattern" not in grep.input_schema["properties"]
+    assert "file or directory" in grep.model_visible_description
+    assert "workspace-relative single file or directory" in grep.model_visible_prompt
+    assert "file or directory" in grep.input_schema["properties"]["root"]["description"]
+    assert "file or directory" in grep.input_schema["properties"]["path"]["description"]
     assert grep.input_schema["properties"]["output_mode"]["enum"] == ["content", "files_with_matches", "count"]
     assert "expected_content_hash" in build_tool("edit_file").input_schema["properties"]
+    assert "expected_content_sha256" not in build_tool("edit_file").input_schema["properties"]
     assert build_tool("edit_file").input_schema["properties"]["replace_all"]["default"] is False
     assert "prior read_file" in build_tool("edit_file").model_visible_prompt
     assert "Before the final answer" in build_tool("git_diff").model_visible_prompt
@@ -347,6 +353,10 @@ def test_grep_accepts_pattern_alias_for_query(tmp_path: Path):
     assert normalized.normalized_arguments["query"] == "hello"
     assert result.status == "ok"
     assert result.typed["query"] == "hello"
+    assert result.typed["legacy_query_alias_used"] is True
+    assert result.typed["canonical_query_source"] == "pattern"
+    assert "legacy alias" in result.content_preview
+    assert "Use query in future grep calls" in result.content_preview
     assert "notes.txt:1:>hello alias" in result.content_preview
 
 
@@ -433,6 +443,103 @@ def test_grep_backend_mismatch_blocks_trusted_no_match(tmp_path: Path):
     assert result.typed["scan_complete_reason"] == "backend_mismatch_detected"
     assert result.typed["backend_mismatch_detected"] is True
     _assert_search_fact_protocol(result.typed)
+
+
+def test_grep_file_root_no_match_is_not_empty_scan(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    context = _tool_context(tmp_path)
+    context.run_workspace = context.run_workspace.model_copy(update={"execution_mode": "docker"})
+
+    def file_root_search_text(*_args, **_kwargs):  # noqa: ANN002, ANN003
+        return {
+            "matches": [],
+            "total_match_count": 0,
+            "candidate_file_count": 1,
+            "scanned_candidate_file_count": 1,
+            "scanned_file_count": 1,
+            "scan_complete": True,
+            "scan_complete_reason": "complete_no_match_all_visible_candidates_read",
+            "search_backend": "ripgrep",
+            "root_kind": "file",
+            "candidate_fact_source": "root_is_file",
+            "candidate_count_reliable": True,
+        }
+
+    monkeypatch.setattr(context.workspace_adapter, "backend", "docker", raising=False)
+    monkeypatch.setattr(context.workspace_adapter, "search_text", file_root_search_text, raising=False)
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_file_root_no_match",
+            tool_name="grep",
+            arguments={"query": "missing", "root": "src/demo.py"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "complete_no_match"
+    assert result.typed["scan_complete"] is True
+    assert result.typed["scan_complete_reason"] == "complete_no_match_all_visible_candidates_read"
+    assert result.typed["empty_scan"] is False
+    assert result.typed["truncated"] is False
+    assert result.typed["root_kind"] == "file"
+    assert result.typed["candidate_fact_source"] == "root_is_file"
+    assert result.typed["candidate_count_reliable"] is True
+    assert "No matches found after searching file 'src/demo.py'." in result.content_preview
+    assert "did not scan any model-visible files" not in result.content_preview
+    _assert_result_envelope(result.typed, result_kind="complete_no_match", semantic_complete=True)
+
+
+def test_grep_reliable_zero_candidates_remains_empty_scan(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    context = _tool_context(tmp_path)
+    context.run_workspace = context.run_workspace.model_copy(update={"execution_mode": "docker"})
+
+    def zero_candidate_search_text(*_args, **_kwargs):  # noqa: ANN002, ANN003
+        return {
+            "matches": [],
+            "total_match_count": 0,
+            "candidate_file_count": 0,
+            "scanned_candidate_file_count": 0,
+            "scanned_file_count": 0,
+            "scan_complete": True,
+            "scan_complete_reason": "complete_no_match_all_visible_candidates_read",
+            "search_backend": "ripgrep",
+            "root_kind": "directory",
+            "candidate_fact_source": "workspace_adapter_list_files",
+            "candidate_count_reliable": True,
+        }
+
+    monkeypatch.setattr(context.workspace_adapter, "backend", "docker", raising=False)
+    monkeypatch.setattr(context.workspace_adapter, "search_text", zero_candidate_search_text, raising=False)
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_grep_empty_scan",
+            tool_name="grep",
+            arguments={"query": "missing", "root": "src", "glob": "*.py"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert result.typed["result_kind"] == "empty_scan_no_match"
+    assert result.typed["scan_complete"] is False
+    assert result.typed["scan_complete_reason"] == "no_model_visible_files_scanned"
+    assert result.typed["empty_scan"] is True
+    assert result.typed["truncated"] is True
+    assert "No model-visible candidate files were found under root='src' with glob='*.py'." in result.content_preview
+    assert "Do not conclude the query is absent" in result.content_preview
+    assert result.typed["recommended_next_calls"][0]["tool"] == "list_files"
+    envelope = _assert_result_envelope(result.typed, result_kind="empty_scan_no_match", semantic_complete=False)
+    assert envelope["recommended_next_calls"][0]["tool"] == "list_files"
 
 
 def test_grep_visibility_error_blocks_trusted_no_match(

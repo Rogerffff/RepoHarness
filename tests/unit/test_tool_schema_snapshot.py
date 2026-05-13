@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from repo_harness.run_metadata.tool_snapshot import build_tool_schema_snapshot, write_tool_schema_snapshot
-from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolPolicy
+from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolPolicy, default_tool_registry
 from repo_harness.trajectory import RunRecorder
 
 
@@ -29,6 +29,18 @@ def test_tool_schema_snapshot_records_stable_tool_order():
     assert "not a general shell" in bash.model_visible_description
     assert "takes no arguments" in run_tests.model_visible_description
     assert run_tests.input_schema["additionalProperties"] is False
+    rendered = json.dumps(snapshot.model_dump(mode="json"), ensure_ascii=False)
+    assert "repository_action_index" not in rendered
+    registry = default_tool_registry()
+    rendered_prompts = json.dumps(
+        [
+            registry.get(name).model_visible_prompt
+            for name in registry.names()
+        ],
+        ensure_ascii=False,
+    )
+    assert "repository_action_index" not in rendered_prompts
+    assert "repository_hints" in rendered_prompts
 
 
 def test_tool_schema_snapshot_is_manifest_backed_artifact(tmp_path: Path):

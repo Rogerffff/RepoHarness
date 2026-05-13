@@ -1005,6 +1005,10 @@ class ToolExecutor:
     ) -> ToolResult:
         query = str(normalized.normalized_arguments["query"])
         root = str(normalized.normalized_arguments["root"])
+        legacy_query_alias_used = (
+            "query" not in normalized.requested_arguments
+            and "pattern" in normalized.requested_arguments
+        )
         mode = str(normalized.normalized_arguments.get("mode", "literal"))
         output_mode = str(normalized.normalized_arguments.get("output_mode", "content"))
         glob = normalized.normalized_arguments.get("glob")
@@ -1097,15 +1101,40 @@ class ToolExecutor:
         workspace_boundary_or_missing_count = int(payload.get("workspace_boundary_or_missing_count") or 0)
         backend_mismatch_detected = bool(payload.get("backend_mismatch_detected"))
         scan_complete_reason = str(payload.get("scan_complete_reason") or "unknown")
+        root_kind = payload.get("root_kind")
+        candidate_fact_source = payload.get("candidate_fact_source")
+        candidate_count_reliable = payload.get("candidate_count_reliable")
+        candidate_fact_error = payload.get("candidate_fact_error")
         result_kind = _grep_result_kind(
             current_page_match_count=len(matches),
             total_match_count=total_match_count,
             result_limit_reached=result_limit_reached,
             scan_complete=scan_complete,
         )
+        reliable_empty_candidate_scan = (
+            candidate_count_reliable is True
+            and candidate_file_count == 0
+            and scanned_candidate_file_count == 0
+            and root_kind != "file"
+        )
+        empty_scan_no_match = (
+            not matches
+            and total_match_count == 0
+            and reliable_empty_candidate_scan
+        )
+        if empty_scan_no_match:
+            scan_complete = False
+            scan_complete_reason = "no_model_visible_files_scanned"
+            result_kind = "empty_scan_no_match"
         recovery_hint = None
         if not matches and mode == "literal" and _looks_like_regex(query):
             recovery_hint = "No literal matches. The query looks like a regular expression; retry with mode='regex'."
+        if empty_scan_no_match:
+            recovery_hint = (
+                "grep found no model-visible candidate files for this root/glob, so this is not proof "
+                "that the query is absent from the repository. Confirm the root or glob with list_files "
+                "before retrying grep."
+            )
         if scan_limit_reached and payload.get("next_offset") is None:
             recovery_hint = "Search reached the scanned-file limit; narrow root, glob, or query instead of paginating."
         recommended_next_calls = _grep_recommended_next_calls(
@@ -1118,6 +1147,15 @@ class ToolExecutor:
             scan_limit_reached=scan_limit_reached,
             regex_hint=bool(not matches and mode == "literal" and _looks_like_regex(query)),
         )
+        if empty_scan_no_match:
+            recommended_next_calls = [
+                {
+                    "tool": "list_files",
+                    "arguments": {"root": root, "max_entries": 50},
+                    "reason": "Confirm which model-visible files exist under this root before treating the no-match as evidence.",
+                },
+                *recommended_next_calls,
+            ]
         search_fact_fields = _search_fact_fields(
             context=context,
             root=root,
@@ -1150,6 +1188,10 @@ class ToolExecutor:
                 "candidate_file_count": candidate_file_count,
                 "scanned_candidate_file_count": scanned_candidate_file_count,
                 "scanned_file_count": scanned_file_count,
+                "root_kind": root_kind,
+                "candidate_fact_source": candidate_fact_source,
+                "candidate_count_reliable": candidate_count_reliable,
+                "candidate_fact_error": candidate_fact_error,
                 "scanned_file_limit": scanned_file_limit,
                 "unscanned_file_count": unscanned_file_count,
                 "hidden_path_count": int(payload.get("hidden_path_count") or 0),
@@ -1175,6 +1217,9 @@ class ToolExecutor:
                 "rg_exit_code": payload.get("rg_exit_code"),
                 "rg_timeout": payload.get("rg_timeout"),
                 "rg_summary_stats": payload.get("rg_summary_stats"),
+                "legacy_query_alias_used": legacy_query_alias_used,
+                "canonical_query_source": "pattern" if legacy_query_alias_used else "query",
+                "empty_scan": empty_scan_no_match,
                 **search_fact_fields,
             },
         )
@@ -1186,6 +1231,13 @@ class ToolExecutor:
                 f"{total_match_count} available match(es). This does not mean the query is absent. "
                 "Retry with offset=0 or a smaller offset."
             )
+        elif empty_scan_no_match:
+            preview = (
+                f"No model-visible candidate files were found under root={root!r}"
+                + (f" with glob={str(glob)!r}" if glob is not None else "")
+                + ". Do not conclude the query is absent from the repository. "
+                "Confirm the root or glob with list_files before retrying grep."
+            )
         elif not scan_complete:
             preview = (
                 "No matches found in the trusted scanned subset, but the search is incomplete "
@@ -1194,10 +1246,13 @@ class ToolExecutor:
                 "Narrow root, glob, or query and retry."
             )
         else:
-            preview = (
-                f"No matches found after scanning all {scanned_file_count} model-visible files "
-                f"under root={root!r}."
-            )
+            if root_kind == "file":
+                preview = f"No matches found after searching file {root!r}."
+            else:
+                preview = (
+                    f"No matches found after scanning all {scanned_file_count} model-visible files "
+                    f"under root={root!r}."
+                )
         if result_limit_reached:
             preview += (
                 f"\n[truncated] call grep(query={query!r}, mode={mode!r}, "
@@ -1211,6 +1266,12 @@ class ToolExecutor:
             )
         elif recovery_hint:
             preview += f"\n{recovery_hint}"
+        if legacy_query_alias_used:
+            preview = (
+                "[tool input normalized] grep(pattern=...) was accepted as a legacy alias "
+                "for grep(query=...). Use query in future grep calls.\n"
+                + preview
+            )
         output_truncated = len(preview) > context.output_limits.max_tool_output_chars
         content_preview = _preview(preview, context.output_limits.max_tool_output_chars)
         recovery_call, envelope_recovery_hint = _tool_recovery_call(
@@ -1248,6 +1309,10 @@ class ToolExecutor:
                 "candidate_file_count": candidate_file_count,
                 "scanned_candidate_file_count": scanned_candidate_file_count,
                 "scanned_file_count": scanned_file_count,
+                "root_kind": root_kind,
+                "candidate_fact_source": candidate_fact_source,
+                "candidate_count_reliable": candidate_count_reliable,
+                "candidate_fact_error": candidate_fact_error,
                 "scanned_file_limit": scanned_file_limit,
                 "unscanned_file_count": unscanned_file_count,
                 "hidden_path_count": int(payload.get("hidden_path_count") or 0),
@@ -1271,6 +1336,9 @@ class ToolExecutor:
                 "context_lines": context_lines,
                 "recovery_hint": recovery_hint,
                 "recommended_next_calls": recommended_next_calls,
+                "legacy_query_alias_used": legacy_query_alias_used,
+                "canonical_query_source": "pattern" if legacy_query_alias_used else "query",
+                "empty_scan": empty_scan_no_match,
                 "engine": payload.get("engine"),
                 "fallback_reason": payload.get("fallback_reason"),
                 "execution_duration_ms": payload.get("execution_duration_ms"),
@@ -1646,7 +1714,7 @@ class ToolExecutor:
         )
         recovery_hint = (
             "Wide root symbol search was not executed because it would scan too many Python files. "
-            "Choose a narrower root from recommended_narrow_roots or repository_action_index."
+            "Choose a narrower root from recommended_narrow_roots or repository_hints."
         )
         scan_complete_reason = "wide_root_candidate_file_limit"
         result_kind = "scan_requires_narrow_root"
@@ -2321,7 +2389,6 @@ def build_tool(name: str) -> ToolDefinition:
                     "path": {"type": "string", "description": "Alias for root; workspace-relative."},
                     "root": {"type": "string", "description": "Workspace-relative directory or file."},
                     "glob": {"type": "string", "description": "Optional fnmatch-style file glob."},
-                    "pattern": {"type": "string", "description": "Legacy alias for glob."},
                     "offset": {"type": "integer", "description": "Zero-based result offset for pagination."},
                     "max_entries": {"type": "integer", "description": "Maximum returned entries for this page."},
                     "kind": {"type": "string", "enum": ["file"], "description": "Currently only file entries are returned."},
@@ -2464,13 +2531,18 @@ def build_tool(name: str) -> ToolDefinition:
             name="grep",
             tool_version="repo_harness_grep_v1",
             model_visible_description=(
-                "Search model-visible workspace files. Default mode is literal substring; "
-                "set mode='regex' for regular expressions. Results are paginated, hidden paths are excluded, "
-                "and scan completeness is reported explicitly."
+                "Search model-visible workspace files. root/path may be a workspace-relative file "
+                "or directory. Default mode is literal substring; set mode='regex' for regular "
+                "expressions. Results are paginated, hidden paths are excluded, and scan "
+                "completeness is reported explicitly."
             ),
             model_visible_prompt=(
                 "Use grep with query and optional root/path, mode, glob, output_mode, offset, max_matches, "
-                "and context_lines. Prefer output_mode='files_with_matches' before reading large content. "
+                "and context_lines. root/path may name a workspace-relative single file or directory. Use "
+                "grep(query='needle', path='src/foo.py') to search one file, or "
+                "grep(query='needle', root='src', glob='*.py', output_mode='files_with_matches') "
+                "to search matching files under a directory. Prefer output_mode='files_with_matches' "
+                "before reading large content. "
                 "If a literal search for a regex-like query returns no matches, retry with mode='regex'. "
                 "Do not treat partial_scan_no_match or incomplete scan facts as proof that the query is absent."
             ),
@@ -2479,11 +2551,10 @@ def build_tool(name: str) -> ToolDefinition:
                 "required": ["query"],
                 "properties": {
                     "query": {"type": "string", "description": "Literal substring or regular expression to find."},
-                    "pattern": {"type": "string", "description": "Legacy alias for query."},
                     "mode": {"type": "string", "enum": ["literal", "regex"], "description": "Search mode; defaults to literal."},
-                    "root": {"type": "string", "description": "Optional workspace-relative search root."},
-                    "path": {"type": "string", "description": "Alias for root; workspace-relative."},
-                    "glob": {"type": "string", "description": "Optional fnmatch-style file glob."},
+                    "root": {"type": "string", "description": "Optional workspace-relative file or directory to search."},
+                    "path": {"type": "string", "description": "Alias for root; workspace-relative file or directory to search."},
+                    "glob": {"type": "string", "description": "Optional fnmatch-style file glob used when searching a directory root."},
                     "output_mode": {
                         "type": "string",
                         "enum": ["content", "files_with_matches", "count"],
@@ -2519,7 +2590,7 @@ def build_tool(name: str) -> ToolDefinition:
             model_visible_prompt=(
                 "Use symbol_search when the task names a class, function, method, inheritance behavior, "
                 "or call-related entry point. Pass query plus optional root/path, symbol_kind, offset, "
-                "and max_results. Prefer a narrow package or source directory root from repository_action_index; "
+                "and max_results. Prefer a narrow package or source directory root from repository_hints; "
                 "wide root='.' may return scan_requires_narrow_root with a recovery call. "
                 "If result_kind is partial_symbol_results, cross-check with grep."
             ),
@@ -2612,7 +2683,6 @@ def build_tool(name: str) -> ToolDefinition:
                     "old_text": {"type": "string"},
                     "new_text": {"type": "string"},
                     "expected_content_hash": {"type": "string", "description": "sha256 from read_file content_hash."},
-                    "expected_content_sha256": {"type": "string", "description": "Legacy alias for expected_content_hash."},
                     "replace_all": {"type": "boolean", "default": False},
                 },
             },
