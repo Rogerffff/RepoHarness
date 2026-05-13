@@ -23,6 +23,7 @@ from repo_harness.context import (
     resolve_context_budget,
 )
 from repo_harness.model_client import (
+    ModelCallEvent,
     ModelClient,
     ModelProviderOptions,
     ModelRequestContext,
@@ -47,7 +48,7 @@ NO_PROGRESS_PATCH_TOOL_NAMES = frozenset({"edit_file", "create_file"})
 NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD = 10
 NO_PROGRESS_REPEATED_INPUT_THRESHOLD = 3
 NO_PROGRESS_EMPTY_SEARCH_THRESHOLD = 4
-CONVERGENCE_NUDGE_POLICY_VERSION = "repo_harness_convergence_nudge_v2"
+CONVERGENCE_NUDGE_POLICY_VERSION = "repo_harness_convergence_nudge_v3"
 CONVERGENCE_NUDGE_MAX_PER_RUN = 3
 CONVERGENCE_NUDGE_MIN_TURN_GAP = 4
 NEAR_BUDGET_WITH_PATCH_TURN_THRESHOLD = 4
@@ -708,6 +709,24 @@ class AgentLoop:
                     )
                 )
                 break
+            model_call_timeout = _resolve_provider_call_timeout(
+                configured_request_timeout_seconds=request_timeout_seconds,
+                task_deadline_monotonic=task_deadline_monotonic,
+                provider_timeout_grace_sec=provider_timeout_grace_sec,
+                min_provider_request_timeout_sec=min_provider_request_timeout_sec,
+                provider_timeout_policy=provider_timeout_policy,
+            )
+            if not model_call_timeout["should_call_provider"]:
+                _record_provider_call_skipped_due_to_deadline(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    state=state,
+                    recorder=recorder,
+                    timeout_facts=model_call_timeout["facts"],
+                    call_site="main_model_call",
+                )
+                break
             recorder.append_event(
                 TrajectoryEvent(
                     event_id=recorder.next_event_id("model"),
@@ -731,6 +750,7 @@ class AgentLoop:
                         "context_budget_facts": context_budget_payload,
                         "scaffold_id": self.scaffold.scaffold_id,
                         "scaffold_phase": current_phase,
+                        "scaffold_policy_snapshot": _scaffold_policy_snapshot(self.scaffold),
                         "budget_state": state.budget_state.model_dump(mode="json"),
                         "allowed_tools": phase_allowed_tool_names,
                         "tool_schema_snapshot_ref": (
@@ -746,24 +766,6 @@ class AgentLoop:
                     },
                 )
             )
-            model_call_timeout = _resolve_provider_call_timeout(
-                configured_request_timeout_seconds=request_timeout_seconds,
-                task_deadline_monotonic=task_deadline_monotonic,
-                provider_timeout_grace_sec=provider_timeout_grace_sec,
-                min_provider_request_timeout_sec=min_provider_request_timeout_sec,
-                provider_timeout_policy=provider_timeout_policy,
-            )
-            if not model_call_timeout["should_call_provider"]:
-                _record_provider_call_skipped_due_to_deadline(
-                    run_id=run_id,
-                    task_id=task_id,
-                    turn=turn,
-                    state=state,
-                    recorder=recorder,
-                    timeout_facts=model_call_timeout["facts"],
-                    call_site="main_model_call",
-                )
-                break
             model_request = _build_model_request_context(
                 run_id=run_id,
                 task_id=task_id,
@@ -796,9 +798,39 @@ class AgentLoop:
                 request=model_request,
                 recorder=recorder,
             )
-            if response.model_call_event is not None:
-                state.budget_state.input_tokens += response.model_call_event.input_tokens
-                state.budget_state.output_tokens += response.model_call_event.output_tokens
+            model_call_event = response.model_call_event or _synthetic_model_call_event(
+                request=model_request,
+                response=response,
+                terminal_error_type=getattr(response, "terminal_error_type", None)
+                or getattr(response, "model_error_type", None),
+            )
+            if response.model_call_event is None:
+                recorder.append_event(
+                    TrajectoryEvent(
+                        event_id=recorder.next_event_id("model"),
+                        timestamp=_timestamp(),
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        event_type="model_call_event_reconstructed",
+                        severity="warning",
+                        artifact_refs=[
+                            ref
+                            for ref in [
+                                getattr(response, "raw_provider_request_ref", None),
+                                getattr(response, "raw_provider_response_ref", None),
+                            ]
+                            if ref is not None
+                        ],
+                        data={
+                            "model_call_id": model_call_event.model_call_id,
+                            "reason": "provider_response_missing_model_call_event",
+                            "trainable": False,
+                        },
+                    )
+                )
+            state.budget_state.input_tokens += model_call_event.input_tokens
+            state.budget_state.output_tokens += model_call_event.output_tokens
             if _model_input_was_accepted(response):
                 commit_result = self.context_manager.commit_prepared_tool_result_decisions(
                     context_revision=prepared.context_revision,
@@ -905,77 +937,82 @@ class AgentLoop:
             retry_count = int(getattr(response, "retry_count", max(0, attempt_count - 1)) or 0)
             terminal_error_type = getattr(response, "terminal_error_type", response.model_error_type)
             budget_decision_trace_ref = None
-            if response.model_call_event is not None:
-                budget_decision_trace_ref = _write_budget_decision_trace_artifact(
-                    recorder=recorder,
+            budget_decision_trace_ref = _write_budget_decision_trace_artifact(
+                recorder=recorder,
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                budget_manager=budget_manager,
+                state=state,
+                response=response,
+                model_call_event=model_call_event,
+            )
+            recorder.append_event(
+                TrajectoryEvent(
+                    event_id=recorder.next_event_id("model"),
+                    timestamp=_timestamp(),
                     run_id=run_id,
                     task_id=task_id,
                     turn=turn,
-                    budget_manager=budget_manager,
-                    state=state,
-                    response=response,
-                )
-            if response.model_call_event:
-                recorder.append_event(
-                    TrajectoryEvent(
-                        event_id=recorder.next_event_id("model"),
-                        timestamp=_timestamp(),
-                        run_id=run_id,
-                        task_id=task_id,
-                        turn=turn,
-                        event_type="model_call_completed",
-                        artifact_refs=[
-                            ref
-                            for ref in [
-                                response.raw_provider_request_ref,
-                                response.raw_provider_response_ref,
-                                retry_policy_ref,
-                                budget_decision_trace_ref,
-                                *provider_attempt_refs,
-                            ]
-                            if ref is not None
+                    event_type="model_call_completed",
+                    artifact_refs=[
+                        ref
+                        for ref in [
+                            response.raw_provider_request_ref,
+                            response.raw_provider_response_ref,
+                            retry_policy_ref,
+                            budget_decision_trace_ref,
+                            *provider_attempt_refs,
+                        ]
+                        if ref is not None
+                    ],
+                    data={
+                        **model_call_event.model_dump(mode="json"),
+                        "turn": turn,
+                        "scaffold_id": self.scaffold.scaffold_id,
+                        "scaffold_phase": current_phase,
+                        "budget_state": state.budget_state.model_dump(mode="json"),
+                        "allowed_tools": phase_allowed_tool_names,
+                        "run_config_facts_ref": (
+                            run_config_facts_ref.model_dump(mode="json")
+                            if run_config_facts_ref is not None
+                            else None
+                        ),
+                        "raw_provider_request_ref": (
+                            response.raw_provider_request_ref.model_dump(mode="json")
+                            if response.raw_provider_request_ref
+                            else None
+                        ),
+                        "raw_provider_response_ref": (
+                            response.raw_provider_response_ref.model_dump(mode="json")
+                            if response.raw_provider_response_ref
+                            else None
+                        ),
+                        "provider_attempt_refs": [
+                            ref.model_dump(mode="json") for ref in provider_attempt_refs
                         ],
-                        data={
-                            **response.model_call_event.model_dump(mode="json"),
-                            "turn": turn,
-                            "scaffold_id": self.scaffold.scaffold_id,
-                            "scaffold_phase": current_phase,
-                            "budget_state": state.budget_state.model_dump(mode="json"),
-                            "allowed_tools": phase_allowed_tool_names,
-                            "run_config_facts_ref": (
-                                run_config_facts_ref.model_dump(mode="json")
-                                if run_config_facts_ref is not None
-                                else None
-                            ),
-                            "raw_provider_request_ref": (
-                                response.raw_provider_request_ref.model_dump(mode="json")
-                                if response.raw_provider_request_ref
-                                else None
-                            ),
-                            "raw_provider_response_ref": (
-                                response.raw_provider_response_ref.model_dump(mode="json")
-                                if response.raw_provider_response_ref
-                                else None
-                            ),
-                            "provider_attempt_refs": [
-                                ref.model_dump(mode="json") for ref in provider_attempt_refs
-                            ],
-                            "retry_policy_ref": (
-                                retry_policy_ref.model_dump(mode="json")
-                                if retry_policy_ref
-                                else None
-                            ),
-                            "attempt_count": attempt_count,
-                            "retry_count": retry_count,
-                            "terminal_error_type": terminal_error_type,
-                            "budget_decision_trace_ref": (
-                                budget_decision_trace_ref.model_dump(mode="json")
-                                if budget_decision_trace_ref
-                                else None
-                            ),
-                        },
-                    )
+                        "retry_policy_ref": (
+                            retry_policy_ref.model_dump(mode="json")
+                            if retry_policy_ref
+                            else None
+                        ),
+                        "attempt_count": attempt_count,
+                        "retry_count": retry_count,
+                        "terminal_error_type": terminal_error_type,
+                        "model_call_event_reconstructed": response.model_call_event is None,
+                        "model_call_event_source": (
+                            "agent_loop_synthetic_missing_provider_event"
+                            if response.model_call_event is None
+                            else "provider_response"
+                        ),
+                        "budget_decision_trace_ref": (
+                            budget_decision_trace_ref.model_dump(mode="json")
+                            if budget_decision_trace_ref
+                            else None
+                        ),
+                    },
                 )
+            )
             if _provider_context_limit_rejected_input(response, terminal_error_type):
                 state.last_model_error = terminal_error_type or response.model_error_type
                 recorder.append_event(
@@ -1350,9 +1387,7 @@ class AgentLoop:
                     message_id=f"assistant_{turn}",
                     turn=turn,
                     role="assistant",
-                    model_call_id=response.model_call_event.model_call_id
-                    if response.model_call_event
-                    else None,
+                    model_call_id=model_call_event.model_call_id,
                     content_preview=assistant_preview[:4000],
                     content_artifact_refs=[assistant_artifact_ref],
                     model_visible=True,
@@ -2315,6 +2350,26 @@ def _uses_phase_transitions(scaffold: ScaffoldDefinition) -> bool:
     return len(scaffold.phases()) > 1
 
 
+def _scaffold_policy_snapshot(scaffold: ScaffoldDefinition) -> dict[str, object]:
+    phases = scaffold.phases()
+    return {
+        "schema_version": "repo_harness_scaffold_policy_snapshot_v0",
+        "scaffold_id": scaffold.scaffold_id,
+        "scaffold_version": scaffold.scaffold_version,
+        "allowed_tools_policy": scaffold.allowed_tools_policy,
+        "phase_transition_policy": scaffold.phase_transition_policy,
+        "default_stop_policy": scaffold.default_stop_policy,
+        "initial_phase": scaffold.initial_phase,
+        "phase_sequence": phases,
+        "phase_allowed_tools": {
+            phase: scaffold.allowed_tools_for_phase(phase) for phase in phases
+        },
+        "phase_prompt_fragments": {
+            phase: scaffold.prompt_fragment_for_phase(phase) for phase in phases
+        },
+    }
+
+
 def _allowed_tools_for_phase(
     *,
     scaffold: ScaffoldDefinition,
@@ -2346,15 +2401,10 @@ def _messages_with_phase_metadata(
         {
             "role": "user",
             "content": {
-                "scaffold_phase_metadata": {
-                    "schema_version": "repo_harness_scaffold_phase_context_v0",
-                    "scaffold_id": scaffold.scaffold_id,
-                    "scaffold_version": scaffold.scaffold_version,
-                    "current_phase": phase,
-                    "phase_sequence": scaffold.phases(),
-                    "phase_prompt": scaffold.prompt_fragment_for_phase(phase),
-                    "allowed_tools_for_phase": allowed_tool_names,
-                    "phase_transition_policy": scaffold.phase_transition_policy,
+                "scaffold_phase": {
+                    "phase": phase,
+                    "allowed_tools": allowed_tool_names,
+                    "instruction": scaffold.prompt_fragment_for_phase(phase),
                 }
             },
         },
@@ -2901,6 +2951,37 @@ def _ptl_provider_token_estimate(
     return estimate.provider_request_token_estimate
 
 
+def _synthetic_model_call_event(
+    *,
+    request: ModelRequestContext,
+    response: ModelResponse,
+    terminal_error_type: str | None,
+) -> ModelCallEvent:
+    usage = getattr(response, "token_usage", None) or {}
+    return ModelCallEvent(
+        model_call_id=request.model_call_id,
+        provider=request.provider_options.provider,
+        model_id=request.provider_options.model_id,
+        provider_request_id=getattr(response, "provider_request_id", None),
+        context_revision=request.context_revision,
+        prepared_messages_ref=request.prepared_messages_ref,
+        model_input_hash=request.model_input_hash,
+        provider_message_format=request.provider_message_format,
+        tool_schema_hash=stable_hash(request.allowed_tool_definitions),
+        input_tokens=int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0),
+        output_tokens=int(usage.get("output_tokens") or usage.get("completion_tokens") or 0),
+        cached_tokens=int(usage.get("cached_tokens") or 0),
+        duration_ms=0,
+        request_timeout_seconds=request.request_timeout_seconds,
+        request_timeout_policy_facts=request.request_timeout_policy_facts,
+        attempt_count=int(getattr(response, "attempt_count", 1) or 1),
+        retry_count=int(getattr(response, "retry_count", 0) or 0),
+        terminal_error_type=terminal_error_type,
+        retry_policy_ref=getattr(response, "retry_policy_ref", None),
+        model_error_type=getattr(response, "model_error_type", None),
+    )
+
+
 def _write_budget_decision_trace_artifact(
     *,
     recorder: RunRecorder,
@@ -2910,9 +2991,10 @@ def _write_budget_decision_trace_artifact(
     budget_manager: BudgetManager,
     state: AgentLoopState,
     response: ModelResponse,
+    model_call_event: ModelCallEvent | None = None,
 ) -> ArtifactRef:
-    usage = response.token_usage or {}
-    event = response.model_call_event
+    usage = getattr(response, "token_usage", None) or {}
+    event = model_call_event or response.model_call_event
     input_tokens = int(usage.get("input_tokens", event.input_tokens if event else 0))
     output_tokens = int(usage.get("output_tokens", event.output_tokens if event else 0))
     cached_tokens = int(usage.get("cached_tokens", event.cached_tokens if event else 0))
@@ -2993,6 +3075,7 @@ def _record_phase_transition(
         "scaffold_id": scaffold.scaffold_id,
         "scaffold_version": scaffold.scaffold_version,
         "phase_transition_policy": scaffold.phase_transition_policy,
+        "scaffold_policy_snapshot": _scaffold_policy_snapshot(scaffold),
         "from_phase": from_phase,
         "to_phase": to_phase,
         "reason": reason,
@@ -3273,6 +3356,7 @@ def _record_convergence_nudge(
 ) -> None:
     signal_keys = [str(signal_key) for signal_key in diagnostic.get("new_signal_keys", [])]
     nudge_reason, instruction = _convergence_nudge_text(nudge_level)
+    next_action_constraint = _convergence_nudge_next_action_constraint(nudge_level)
     summary = diagnostic
     content = {
         "repo_harness_control_message": {
@@ -3284,6 +3368,7 @@ def _record_convergence_nudge(
             "reason": nudge_reason,
             "signals": signal_keys,
             "instruction": instruction,
+            "next_action_constraint": next_action_constraint,
             "input_scope_policy": (
                 "This reminder is generated only from the current model-visible transcript and public budget state."
             ),
@@ -3315,6 +3400,7 @@ def _record_convergence_nudge(
             "nudge_count": nudge_count,
             "max_nudges_per_run": max_nudges,
             "min_turn_gap": min_turn_gap,
+            "next_action_constraint": next_action_constraint,
             "resolved_trainable": False,
         },
     )
@@ -3376,6 +3462,7 @@ def _record_convergence_nudge(
                 "last_mutating_tool_turn": summary.get("last_patch_progress_turn"),
                 "git_diff_called_after_patch": summary.get("git_diff_called_after_patch"),
                 "post_nudge_action": "pending_observation",
+                "next_action_constraint": next_action_constraint,
                 "nudge_count": nudge_count,
                 "dedupe_scope": dedupe_scope,
                 "signal_keys": signal_keys,
@@ -3395,10 +3482,11 @@ def _convergence_nudge_text(level: str) -> tuple[str, str]:
         return (
             "剩余工具轮数已经很少，并且当前还没有补丁，需要立即选择一个可完成路径。",
             (
-                "请停止大范围探索。接下来只选择一个路径：如果已经知道最小安全修改，"
-                "请读取必要的精确上下文并提交补丁；如果只缺少 edit_file.old_text，"
-                "请只读取目标文件的最小范围再编辑；如果仍然无法定位安全修改，"
-                "请直接给出 final answer，明确说明未提交补丁。"
+                "请停止大范围探索。下一次 assistant action 必须只选择一个可完成路径："
+                "如果已经知道最小安全修改，请调用 edit_file；如果只缺少 edit_file.old_text，"
+                "最多调用一次带精确 path 和行号范围的 read_file，然后立即编辑；"
+                "如果已经有补丁，请调用 git_diff；如果仍然无法定位安全修改，"
+                "请直接给出 final answer，明确说明未提交补丁。不要再做宽泛 grep、list_files、symbol_search 或等价重复搜索。"
             ),
         )
     if level == "near_budget_finalize_patch":
@@ -3418,6 +3506,65 @@ def _convergence_nudge_text(level: str) -> tuple[str, str]:
             "不要重复等价搜索；如果搜索结果是 partial_scan_no_match，先收窄 root 或 glob。"
         ),
     )
+
+
+def _convergence_nudge_next_action_constraint(level: str) -> dict[str, Any]:
+    if level == "near_budget_patch_or_stop":
+        return {
+            "constraint_kind": "patch_or_stop",
+            "required_behavior": (
+                "The next assistant action must be one of the listed allowed paths; broad exploration is no longer useful."
+            ),
+            "allowed_next_actions": [
+                "edit_file when the minimal safe change is known",
+                "read_file exactly once with a precise path and line range when old_text is the only missing input",
+                "git_diff only if a patch was just created",
+                "final_answer explaining that no safe patch was submitted",
+            ],
+            "disallowed_next_actions": [
+                "broad grep",
+                "broad list_files",
+                "broad symbol_search",
+                "repeating equivalent searches",
+                "reading multiple files without a concrete patch plan",
+            ],
+            "max_additional_read_file_calls_before_patch": 1,
+        }
+    if level == "near_budget_finalize_patch":
+        return {
+            "constraint_kind": "finalize_existing_patch",
+            "required_behavior": (
+                "The next assistant actions should verify and finish the existing patch rather than restart exploration."
+            ),
+            "allowed_next_actions": [
+                "git_diff",
+                "edit_file only for a small necessary correction",
+                "final_answer when the diff is sufficient",
+            ],
+            "disallowed_next_actions": [
+                "broad repository search",
+                "unrelated file reads",
+                "starting a new hypothesis without checking the current diff",
+            ],
+            "max_additional_read_file_calls_before_patch": 0,
+        }
+    return {
+        "constraint_kind": "minimal_next_step",
+        "required_behavior": (
+            "Choose one concrete next step that advances a patch hypothesis; do not repeat equivalent read-only exploration."
+        ),
+        "allowed_next_actions": [
+            "update_working_state with the current hypothesis",
+            "read_file for one concrete file",
+            "edit_file for one concrete file",
+            "final_answer if the task is already complete or blocked",
+        ],
+        "disallowed_next_actions": [
+            "repeating the same grep/list_files query",
+            "wide search without a narrowed root or glob",
+        ],
+        "max_additional_read_file_calls_before_patch": None,
+    }
 
 
 def _build_loop_progress_summary(

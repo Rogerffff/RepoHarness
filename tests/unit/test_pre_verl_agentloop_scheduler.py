@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from repo_harness.pre_verl_agentloop import PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION
 from repo_harness.scaffolds import PATCH_FOCUSED_REACT_TOOL_ORDER
 
 PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS = [
@@ -55,7 +56,7 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     }
     assert (
         configuration["harness_tool_context_policy"]["convergence_nudge_policy_version"]
-        == "repo_harness_convergence_nudge_v2"
+        == "repo_harness_convergence_nudge_v3"
     )
     assert configuration["resolved_tools"] == PRE_VERL_FINAL_ONLY_RESOLVED_TOOLS
     task_manifest = _read_json(output_dir / "pre_verl_agentloop_task_definition_manifest.json")
@@ -70,9 +71,11 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert run_config_manifest["entries"][0]["run_config_preflight_failure_count"] == 0
     preflight_path = Path(run_config_manifest["entries"][0]["run_config_preflight_ref"]["path"])
     preflight = _read_json(preflight_path)
-    assert preflight["preflight_policy_version"] == "repo_harness_pre_verl_run_config_preflight_v0"
+    assert preflight["preflight_policy_version"] == PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION
     assert preflight["thinking_mode"] == "enabled"
     assert preflight["max_output_tokens"] == 32768
+    assert preflight["tool_schema_snapshot_hash"]
+    assert preflight["context_policy_snapshot_hash"]
     assert preflight["failures"] == []
     run_config = _read_yaml(
         output_dir
@@ -90,7 +93,7 @@ def test_pre_verl_agentloop_scheduler_prepare_uses_run_task_compatible_manifests
     assert budget_freeze["provider_retry_policy"] == configuration["provider_retry_policy"]
     assert (
         budget_freeze["harness_tool_context_policy"]["convergence_nudge_policy_version"]
-        == "repo_harness_convergence_nudge_v2"
+        == "repo_harness_convergence_nudge_v3"
     )
     assert "retry_policy" in budget_freeze["requires_new_baseline_id_if_changed"]
     command_log = (output_dir / "pre_verl_agentloop_external_command_log.jsonl").read_text(

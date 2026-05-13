@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 
 from repo_harness.agent_loop import AgentLoop
-from repo_harness.agent_loop.loop import _record_interrupted_tool_calls, _record_tool_result
+from repo_harness.agent_loop.loop import (
+    _messages_with_phase_metadata,
+    _record_interrupted_tool_calls,
+    _record_tool_result,
+)
 from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.budget import BudgetManager
 from repo_harness.budget.schemas import BudgetState
@@ -14,6 +18,7 @@ from repo_harness.context import ToolResultArtifactIndex
 from repo_harness.model_client import FakeModelClient, ModelCallEvent, ModelMessage, ModelResponse
 from repo_harness.model_client.provider_private_state import provider_private_state_store
 from repo_harness.schema_base import stable_hash
+from repo_harness.scaffolds import build_scaffold
 from repo_harness.tools import ToolCall
 from repo_harness.tools import ToolExecutor
 from repo_harness.tools import ToolResult
@@ -27,6 +32,38 @@ def test_agent_loop_accepts_valid_final_answer(tmp_path: Path):
     )
 
     assert state.agent_stop_reason == "final_answer"
+
+
+def test_phase_message_projection_hides_internal_scaffold_policy_fields():
+    scaffold = build_scaffold("planner_coder_verifier")
+
+    messages = _messages_with_phase_metadata(
+        messages=[{"role": "system", "content": "system"}],
+        scaffold=scaffold,
+        phase="coder",
+        allowed_tool_names=["read_file", "edit_file", "git_diff"],
+    )
+
+    assert messages[-1] == {
+        "role": "user",
+        "content": {
+            "scaffold_phase": {
+                "phase": "coder",
+                "allowed_tools": ["read_file", "edit_file", "git_diff"],
+                "instruction": (
+                    "Apply the planned code change using editing tools and "
+                    "lightweight diagnostics."
+                ),
+            }
+        },
+    }
+    rendered = json.dumps(messages[-1], sort_keys=True)
+    assert "schema_version" not in rendered
+    assert "scaffold_id" not in rendered
+    assert "scaffold_version" not in rendered
+    assert "phase_sequence" not in rendered
+    assert "phase_transition_policy" not in rendered
+    assert "allowed_tools_for_phase" not in rendered
 
 
 def test_record_tool_result_persists_single_oversized_result(tmp_path: Path):
@@ -190,6 +227,15 @@ def test_agent_loop_calls_model_with_model_request_context(tmp_path: Path):
     assert started["data"]["budget_state"]["turn_count"] == 1
     assert started["data"]["provider_request_projection_hash"] == (
         client.request.provider_request_projection_hash
+    )
+    completed = next(event for event in events if event["event_type"] == "model_call_completed")
+    assert completed["data"]["model_call_id"] == "request-context_model_call_0001"
+    assert completed["data"]["model_call_event_reconstructed"] is True
+    assert completed["data"]["model_call_event_source"] == "agent_loop_synthetic_missing_provider_event"
+    assert any(
+        event["event_type"] == "model_call_event_reconstructed"
+        and event["data"]["reason"] == "provider_response_missing_model_call_event"
+        for event in events
     )
 
 
@@ -820,6 +866,11 @@ def test_agent_loop_records_no_progress_diagnostics_without_hard_stop(tmp_path: 
     )
     assert near_budget_nudge["data"]["has_patch"] is False
     assert near_budget_nudge["data"]["turns_remaining"] <= 6
+    constraint = near_budget_nudge["data"]["next_action_constraint"]
+    assert constraint["constraint_kind"] == "patch_or_stop"
+    assert "broad grep" in constraint["disallowed_next_actions"]
+    assert any("edit_file" in action for action in constraint["allowed_next_actions"])
+    assert constraint["max_additional_read_file_calls_before_patch"] == 1
     first_nudge = nudge_events[0]
     same_turn_event_types = [
         event["event_type"] for event in events if event.get("turn") == first_nudge["turn"]
@@ -845,6 +896,8 @@ def test_agent_loop_records_no_progress_diagnostics_without_hard_stop(tmp_path: 
     assert "hidden" not in nudge_text
     assert "gold" not in nudge_text
     assert "selector" not in nudge_text
+    assert "next_action_constraint" in nudge_text
+    assert "patch_or_stop" in nudge_text
     assert any(
         "convergence_nudge" in json.dumps(request.prepared_messages, ensure_ascii=False)
         for request in client.requests[1:]
@@ -1768,6 +1821,8 @@ def test_agent_loop_skips_provider_call_when_deadline_too_close(tmp_path: Path):
         and event["error_type"] == "task_timeout_before_provider_call"
         for event in events
     )
+    assert all(event["event_type"] != "model_call_started" for event in events)
+    assert all(event["event_type"] != "model_call_completed" for event in events)
     exhausted = next(event for event in events if event["event_type"] == "budget_exhausted")
     assert exhausted["data"]["provider_call_skipped_due_to_task_deadline"] is True
 

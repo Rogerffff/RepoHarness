@@ -56,7 +56,7 @@ FORMAL_PROVIDER_RETRYABLE_ERROR_TYPES = [
 HARNESS_TOOL_CONTEXT_POLICY = {
     "search_fact_policy_version": "repo_harness_search_fact_trust_v1",
     "repository_action_index_policy_version": "repo_harness_repository_action_index_v1",
-    "convergence_nudge_policy_version": "repo_harness_convergence_nudge_v2",
+    "convergence_nudge_policy_version": "repo_harness_convergence_nudge_v3",
     "context_warning_policy_version": "repo_harness_context_warning_v1",
     "context_replacement_runtime_policy_version": "deterministic_tool_result_replacement_runtime_v1",
     "provider_ready_token_estimator_version": "provider_body_char4_token_estimator_v1",

@@ -75,22 +75,52 @@ def test_agent_loop_records_phase_transitions_and_phase_context(tmp_path: Path):
 
     events = _read_events(run_dir)
     assert [request.scaffold_phase for request in client.requests] == ["planner", "coder"]
-    assert client.requests[0].prepared_messages[-1]["content"]["scaffold_phase_metadata"] == {
-        "schema_version": "repo_harness_scaffold_phase_context_v0",
-        "scaffold_id": "planner_coder_verifier",
-        "scaffold_version": "repo_harness_planner_coder_verifier_v0",
-        "current_phase": "planner",
-        "phase_sequence": ["planner", "coder", "verifier", "repair", "final"],
-        "phase_prompt": "Plan the repository change. Inspect files as needed, but do not edit code.",
-        "allowed_tools_for_phase": ["list_files", "glob_files", "read_file", "read_tool_result_artifact", "grep", "symbol_search", "update_working_state", "git_diff"],
-        "phase_transition_policy": "repo_harness_planner_coder_verifier_linear_v0",
+    phase_content = client.requests[0].prepared_messages[-1]["content"]
+    assert phase_content["scaffold_phase"] == {
+        "phase": "planner",
+        "allowed_tools": ["list_files", "glob_files", "read_file", "read_tool_result_artifact", "grep", "symbol_search", "update_working_state", "git_diff"],
+        "instruction": "Plan the repository change. Inspect files as needed, but do not edit code.",
     }
+    rendered_phase_content = json.dumps(phase_content, sort_keys=True)
+    assert "scaffold_phase_metadata" not in rendered_phase_content
+    assert "schema_version" not in rendered_phase_content
+    assert "scaffold_version" not in rendered_phase_content
+    assert "phase_sequence" not in rendered_phase_content
+    assert "phase_transition_policy" not in rendered_phase_content
     assert client.requests[0].allowed_tool_definitions[-1]["name"] == "git_diff"
     assert "edit_file" not in [tool["name"] for tool in client.requests[0].allowed_tool_definitions]
     assert client.requests[1].scaffold_phase == "coder"
     assert "edit_file" in [tool["name"] for tool in client.requests[1].allowed_tool_definitions]
     assert state.current_phase == "verifier"
     assert state.agent_stop_reason == "max_turns"
+    model_started = next(
+        event for event in events if event["event_type"] == "model_call_started"
+    )
+    policy_snapshot = model_started["data"]["scaffold_policy_snapshot"]
+    assert policy_snapshot["schema_version"] == "repo_harness_scaffold_policy_snapshot_v0"
+    assert policy_snapshot["scaffold_id"] == "planner_coder_verifier"
+    assert policy_snapshot["scaffold_version"] == "repo_harness_planner_coder_verifier_v0"
+    assert policy_snapshot["phase_transition_policy"] == (
+        "repo_harness_planner_coder_verifier_linear_v0"
+    )
+    assert policy_snapshot["phase_sequence"] == [
+        "planner",
+        "coder",
+        "verifier",
+        "repair",
+        "final",
+    ]
+    assert policy_snapshot["phase_allowed_tools"]["planner"] == [
+        "list_files",
+        "glob_files",
+        "read_file",
+        "read_tool_result_artifact",
+        "grep",
+        "symbol_search",
+        "update_working_state",
+        "git_diff",
+    ]
+    assert policy_snapshot["phase_allowed_tools"]["final"] == []
     transitions = [
         event["data"]
         for event in events
@@ -100,6 +130,11 @@ def test_agent_loop_records_phase_transitions_and_phase_context(tmp_path: Path):
         ("planner", "coder"),
         ("coder", "verifier"),
     ]
+    assert all(
+        event["scaffold_policy_snapshot"]["phase_allowed_tools"]
+        == policy_snapshot["phase_allowed_tools"]
+        for event in transitions
+    )
 
 
 def _run_config_with_disabled_feedback():
