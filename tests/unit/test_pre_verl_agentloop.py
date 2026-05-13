@@ -903,6 +903,49 @@ def test_inspect_model_visible_context_recomputes_provider_projection_hash(tmp_p
         inspect_model_visible_context(run_dir, assert_provider_body_equivalent=True)
 
 
+def test_inspect_model_visible_context_accepts_redacted_provider_body_messages(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_model_visible_context_run(
+        tmp_path,
+        user_content="Badge url: https://codecov.io/token=Buxy4WptLb",
+    )
+    request_path = run_dir / "artifacts" / "raw_provider_request.json"
+    request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+    request_payload["body"]["messages"][1]["content"] = (
+        "Badge url: https://codecov.io/token=<REDACTED_CREDENTIAL>"
+    )
+    request_payload["redaction_report"] = {
+        "ordinary_text_whole_field_redaction_allowed": False,
+        "secret_span_paths": ["$.body.messages[1].content"],
+        "secret_span_redaction_count": 1,
+    }
+    request_path.write_text(
+        json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    request_sha256 = hashlib.sha256(request_path.read_bytes()).hexdigest()
+    request_size = request_path.stat().st_size
+    response_path = run_dir / "artifacts" / "raw_provider_response.json"
+    response_payload = json.loads(response_path.read_text(encoding="utf-8"))
+    response_payload["raw_provider_request_ref"]["sha256"] = request_sha256
+    response_payload["raw_provider_request_ref"]["size_bytes"] = request_size
+    response_path.write_text(
+        json.dumps(response_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_event_artifact_ref(run_dir, "raw_provider_request.json")
+    _refresh_event_artifact_ref(run_dir, "raw_provider_response.json")
+
+    result = inspect_model_visible_context(
+        run_dir,
+        assert_provider_body_equivalent=True,
+        assert_no_over_redaction=True,
+    )
+
+    assert "passed" in result
+
+
 def test_inspect_model_visible_context_rejects_mismatched_response_request_ref(tmp_path: Path) -> None:
     run_dir = _write_model_visible_context_run(tmp_path)
     response_path = run_dir / "artifacts" / "raw_provider_response.json"

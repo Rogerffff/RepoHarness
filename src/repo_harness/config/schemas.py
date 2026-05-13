@@ -85,9 +85,89 @@ class WorkspaceConfig(StrictBaseModel):
     network_policy: str = "deny_agent_run"
 
 
+class RepositoryHintsConfig(StrictBaseModel):
+    schema_version: str = "repo_harness_repository_hints_config_v0"
+    mode: Literal[
+        "disabled",
+        "strict_eval",
+        "balanced_eval",
+        "weak_model_scaffold",
+        "custom",
+    ] = "balanced_eval"
+    max_candidate_files: int | None = Field(default=None, gt=0, le=20)
+    max_matched_terms_per_file: int = Field(default=6, ge=0)
+    max_fallback_search_terms: int = Field(default=8, ge=0)
+    include_low_confidence_limit: int = Field(default=0, ge=0)
+    expose_numeric_scores: bool = False
+
+    @model_validator(mode="after")
+    def require_custom_candidate_limit(self) -> "RepositoryHintsConfig":
+        if self.mode == "custom" and self.max_candidate_files is None:
+            raise ValueError(
+                "repository_hints.mode=custom 必须显式配置 max_candidate_files，避免静默退回默认候选数量。"
+            )
+        if self.mode == "disabled" and self.max_candidate_files is not None:
+            raise ValueError(
+                "repository_hints.mode=disabled 不能配置 max_candidate_files，避免禁用模式被反向打开。"
+            )
+        return self
+
+    @property
+    def resolved_max_candidate_files(self) -> int:
+        if self.mode == "disabled":
+            return 0
+        if self.max_candidate_files is not None:
+            return self.max_candidate_files
+        if self.mode == "strict_eval":
+            return 3
+        if self.mode == "weak_model_scaffold":
+            return 12
+        return 8
+
+    @property
+    def resolved_max_matched_terms_per_file(self) -> int:
+        if self.mode == "disabled":
+            return 0
+        return self.max_matched_terms_per_file
+
+    @property
+    def resolved_max_fallback_search_terms(self) -> int:
+        if self.mode == "disabled":
+            return 0
+        if self.mode == "strict_eval":
+            return min(self.max_fallback_search_terms, 5)
+        return self.max_fallback_search_terms
+
+    @property
+    def resolved_include_low_confidence_limit(self) -> int:
+        if self.mode == "disabled":
+            return 0
+        if self.mode == "weak_model_scaffold":
+            return self.include_low_confidence_limit or 2
+        if self.mode == "custom":
+            return self.include_low_confidence_limit
+        return 0
+
+    def resolved_facts(self) -> dict[str, Any]:
+        facts = self.model_dump(mode="json")
+        facts["resolved_max_candidate_files"] = self.resolved_max_candidate_files
+        facts["resolved_max_matched_terms_per_file"] = (
+            self.resolved_max_matched_terms_per_file
+        )
+        facts["resolved_max_fallback_search_terms"] = (
+            self.resolved_max_fallback_search_terms
+        )
+        facts["resolved_include_low_confidence_limit"] = (
+            self.resolved_include_low_confidence_limit
+        )
+        return facts
+
+
 class ContextManagementConfig(StrictBaseModel):
     schema_version: str = "repo_harness_context_management_config_v1"
     context_policy_snapshot_version: str = "repo_harness_context_policy_snapshot_v1"
+    initial_context_policy_version: str = "repo_harness_initial_context_policy_v1_lean_hints"
+    repository_hints: RepositoryHintsConfig = Field(default_factory=RepositoryHintsConfig)
 
     context_budget_policy: str = "model_window_with_optional_cap"
     model_context_window_tokens: int | Literal["auto"] = "auto"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -7,10 +8,14 @@ import pytest
 import yaml
 
 from repo_harness.errors import ConfigError
+from repo_harness.config import load_run_config
+from repo_harness.pre_verl_agentloop import validate_pre_verl_run_config_entry
 from repo_harness.pre_verl_evidence_ledger import (
     build_pre_verl_evidence_ledger,
     inspect_pre_verl_evidence_ledger,
 )
+from repo_harness.run_metadata.writer import _context_policy_snapshot
+from repo_harness.schema_base import stable_hash
 
 
 def test_build_ledger_distinguishes_formal_and_discarded_attempts(tmp_path: Path) -> None:
@@ -137,6 +142,257 @@ def test_inspect_rejects_missing_policy_versions(tmp_path: Path) -> None:
     ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
 
     with pytest.raises(ConfigError, match="timeout_policy_version"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_context_strategy_hash_drift(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entry = ledger["entries"][0]
+    entry["repository_hints_mode"] = "weak_model_scaffold"
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="context_strategy_hash"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_allows_task_specific_repository_hints_hashes(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    for index, entry in enumerate(ledger["entries"], start=1):
+        entry["repository_hints_model_visible_hash"] = f"{index}" * 64
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    assert "Inspect pre-verl evidence ledger: complete" in inspect_pre_verl_evidence_ledger(
+        ledger_path,
+        assert_complete=True,
+        expected_formal_denominator=3,
+        expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+    )
+
+
+def test_inspect_rejects_mixed_context_strategy_entries(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entry = ledger["entries"][1]
+    strategy = {
+        "initial_context_policy_version": entry["initial_context_policy_version"],
+        "repository_hints_mode": "disabled",
+        "repository_hints_config": entry["repository_hints_config"],
+        "tool_schema_snapshot_hash": entry["tool_schema_snapshot_hash"],
+        "context_policy_snapshot_hash": entry["context_policy_snapshot_hash"],
+    }
+    entry["repository_hints_mode"] = "disabled"
+    entry["repository_hints_model_visible_hash"] = "disabled"
+
+    entry["context_strategy_hash"] = stable_hash(strategy)
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="不同 context_strategy_hash"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_missing_context_policy_snapshot_hash(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["entries"][0].pop("context_policy_snapshot_hash")
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="context_policy_snapshot_hash"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_preflight_context_strategy_mismatch(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entry = ledger["entries"][0]
+    entry["tool_schema_snapshot_hash"] = "9" * 64
+    strategy = {
+        "initial_context_policy_version": entry["initial_context_policy_version"],
+        "repository_hints_mode": entry["repository_hints_mode"],
+        "repository_hints_config": entry["repository_hints_config"],
+        "tool_schema_snapshot_hash": entry["tool_schema_snapshot_hash"],
+        "context_policy_snapshot_hash": entry["context_policy_snapshot_hash"],
+    }
+    entry["context_strategy_hash"] = stable_hash(strategy)
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="config preflight 字段 tool_schema_snapshot_hash"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_empty_config_preflight_payload(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entry = ledger["entries"][0]
+    _rewrite_config_preflight_ref(
+        ledger_root=Path(ledger["run_root"]),
+        entry=entry,
+        raw_text="{}\n",
+    )
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="config preflight 缺少 initial_context_policy_version"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_invalid_config_preflight_payload(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entry = ledger["entries"][0]
+    _rewrite_config_preflight_ref(
+        ledger_root=Path(ledger["run_root"]),
+        entry=entry,
+        raw_text="{not-json}\n",
+    )
+    ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="config_preflight_ref 必须指向可解析的 JSON 对象"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_context_policy_snapshot_hash_content_drift(
+    tmp_path: Path,
+) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    root = Path(ledger["run_root"])
+    run_dir = root / ledger["entries"][0]["formal_run_dir"]
+    facts_path = run_dir / "run_config_facts.json"
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["context_policy_snapshot"] = {"changed": True}
+    facts_path.write_text(json.dumps(facts), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="context_policy_snapshot_hash"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_missing_formal_run_config_facts(tmp_path: Path) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    root = Path(ledger["run_root"])
+    run_dir = root / ledger["entries"][0]["formal_run_dir"]
+    (run_dir / "run_config_facts.json").unlink()
+
+    with pytest.raises(ConfigError, match="run_config_facts.json"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "expected_error"),
+    [
+        ("initial_context_policy_version", "initial_context_policy_version"),
+        ("repository_hints_mode", "repository_hints_mode"),
+        ("repository_hints_config", "repository_hints_config"),
+        ("tool_schema_snapshot_hash", "tool_schema_snapshot_hash"),
+        ("context_policy_snapshot_hash", "context_policy_snapshot_hash"),
+    ],
+)
+def test_inspect_rejects_formal_run_config_facts_missing_context_field(
+    tmp_path: Path,
+    field_name: str,
+    expected_error: str,
+) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    root = Path(ledger["run_root"])
+    run_dir = root / ledger["entries"][0]["formal_run_dir"]
+    facts_path = run_dir / "run_config_facts.json"
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    if field_name == "tool_schema_snapshot_hash":
+        facts["tool_protocol"].pop("tool_schema_snapshot_sha256")
+    else:
+        facts.pop(field_name)
+    facts_path.write_text(json.dumps(facts), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match=f"formal run_config_facts 缺少 {expected_error}"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_empty_formal_context_policy_snapshot(
+    tmp_path: Path,
+) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    root = Path(ledger["run_root"])
+    run_dir = root / ledger["entries"][0]["formal_run_dir"]
+    facts_path = run_dir / "run_config_facts.json"
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["context_policy_snapshot"] = {}
+    facts_path.write_text(json.dumps(facts), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="formal run_config_facts 缺少 context_policy_snapshot"):
+        inspect_pre_verl_evidence_ledger(
+            ledger_path,
+            assert_complete=True,
+            expected_formal_denominator=3,
+            expected_result_counts={"success": 1, "failed": 1, "inconclusive": 1},
+        )
+
+
+def test_inspect_rejects_missing_formal_context_policy_snapshot(
+    tmp_path: Path,
+) -> None:
+    ledger_path = _good_ledger(tmp_path)
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    root = Path(ledger["run_root"])
+    run_dir = root / ledger["entries"][0]["formal_run_dir"]
+    facts_path = run_dir / "run_config_facts.json"
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts.pop("context_policy_snapshot")
+    facts_path.write_text(json.dumps(facts), encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="formal run_config_facts 缺少 context_policy_snapshot"):
         inspect_pre_verl_evidence_ledger(
             ledger_path,
             assert_complete=True,
@@ -310,6 +566,21 @@ def _good_ledger(tmp_path: Path) -> Path:
     )
 
 
+def _rewrite_config_preflight_ref(
+    *,
+    ledger_root: Path,
+    entry: dict[str, object],
+    raw_text: str,
+) -> None:
+    ref = entry["config_preflight_ref"]
+    assert isinstance(ref, dict)
+    path = ref["path"]
+    assert isinstance(path, str)
+    target = ledger_root / path
+    target.write_text(raw_text, encoding="utf-8")
+    ref["sha256"] = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+
+
 def _write_root(tmp_path: Path) -> Path:
     root = tmp_path / "pre-verl-dev-ledger"
     for name in ("run_task_runs", "discarded_runs", "run_configs", "task_definitions", "analysis"):
@@ -429,12 +700,39 @@ def _write_formal_run(
 ) -> None:
     run_dir = root / "run_task_runs" / f"pre_verl_dev_ledger_{task_id}_deepseek_deepseek-v4-pro"
     run_dir.mkdir(parents=True)
+    config_path = root / "run_configs" / f"{task_id}_deepseek_deepseek-v4-pro.yaml"
+    task_definition_path = root / "task_definitions" / f"{task_id}.yaml"
+    preflight = validate_pre_verl_run_config_entry(
+        task_definition_path=task_definition_path,
+        config_path=config_path,
+        report_path=root / "analysis" / f"{task_id}_fixture_preflight.json",
+        assert_resolved_tools_derived=False,
+    )
+    run_config = load_run_config(config_path)
+    repository_hints_config = (
+        run_config.context_management.repository_hints.resolved_facts()
+    )
+    context_policy_snapshot = _context_policy_snapshot(run_config)
     _write_json(run_dir / "run_status.json", {"status": run_status})
     _write_json(
         run_dir / "metrics.json",
         {"run_outcome": result, "final_verifier_status": verifier, "turn_count": 1, "tool_call_count": 1},
     )
-    _write_json(run_dir / "run_metadata.json", {"task_id": task_id, "failure_diagnostics": []})
+    _write_json(
+        run_dir / "run_metadata.json",
+        {
+            "task_id": task_id,
+            "failure_diagnostics": [],
+            "initial_context_artifacts": {
+                "initial_context_policy_version": (
+                    "repo_harness_initial_context_policy_v1_lean_hints"
+                ),
+                "repository_hints_mode": "balanced_eval",
+                "repository_hints_config": repository_hints_config,
+                "repository_hints_model_visible_hash": "1" * 64,
+            },
+        },
+    )
     _write_json(
         run_dir / "final_verifier_boundary.json",
         {
@@ -445,7 +743,23 @@ def _write_formal_run(
         },
     )
     _write_json(run_dir / "reward.json", {"invalid_for_training": result == "inconclusive"})
-    _write_json(run_dir / "run_config_facts.json", {"task_id": task_id, "max_output_tokens": 32768})
+    _write_json(
+        run_dir / "run_config_facts.json",
+        {
+            "task_id": task_id,
+            "max_output_tokens": 32768,
+            "initial_context_policy_version": (
+                "repo_harness_initial_context_policy_v1_lean_hints"
+            ),
+            "repository_hints_mode": "balanced_eval",
+            "repository_hints_config": repository_hints_config,
+            "context_policy_snapshot_hash": preflight["context_policy_snapshot_hash"],
+            "context_policy_snapshot": context_policy_snapshot,
+            "tool_protocol": {
+                "tool_schema_snapshot_sha256": preflight["tool_schema_snapshot_hash"]
+            },
+        },
+    )
     _write_jsonl(
         run_dir / "events.jsonl",
         [{"event_type": "context_prepared", "data": {"context_reduction": {"microcompact_applied": False}}}],

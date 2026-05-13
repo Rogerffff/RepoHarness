@@ -19,7 +19,14 @@ from repo_harness.config import RunConfig, load_run_config
 from repo_harness.context import ContextBuilder
 from repo_harness.errors import ConfigError, TaskValidationError
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
-from repo_harness.scaffolds import build_scaffold, resolve_allowed_tools, resolve_feedback_policy
+from repo_harness.run_metadata.tool_snapshot import build_tool_schema_snapshot
+from repo_harness.run_metadata.writer import _context_policy_snapshot
+from repo_harness.scaffolds import (
+    build_scaffold,
+    resolve_allowed_tools,
+    resolve_feedback_policy,
+    tool_registry_for_allowed_tools,
+)
 from repo_harness.tasks import RunnableTask, TaskAdapter, TaskDefinition
 from repo_harness.tools.minimal import _is_model_hidden_tool_path
 from repo_harness.trajectory import ArtifactRef, RunRecorder, TrajectoryEvent
@@ -37,7 +44,9 @@ PRE_VERL_FINAL_VERIFIER_ADAPTER_ID = "pre_verl_swebench_lite_dev_final_verifier_
 PRE_VERL_FINAL_VERIFIER_BOUNDARY_VERSION = "repo_harness_pre_verl_final_verifier_boundary_v0"
 PRE_VERL_AGENTLOOP_BOUNDARY_INDEX_VERSION = "repo_harness_pre_verl_agentloop_boundary_index_v0"
 PRE_VERL_FORMAL_PROVIDER_RETRY_POLICY_ID = "provider_retry_v0"
-PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION = "repo_harness_pre_verl_run_config_preflight_v0"
+PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION = (
+    "repo_harness_pre_verl_run_config_preflight_v1_lean_initial_context"
+)
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 _MODEL_PATCH_STEP = "pre_verl_model_final_patch_apply"
@@ -2710,11 +2719,22 @@ def _inspect_provider_request_projection(
     provider_projection = _project_provider_body_messages_for_inspect(body)
     prepared_hash = stable_hash(prepared_projection)
     provider_hash = stable_hash(provider_projection)
+    recorded_provider_hash = request_payload.get("provider_body_message_projection_hash")
+    redacted_message_paths = _provider_body_message_redaction_paths(request_payload)
+    recorded_pre_redaction_binding = (
+        prepared_hash != provider_hash or prepared_projection != provider_projection
+    ) and (
+        request_payload.get("prepared_messages_body_equivalent") is True
+        and recorded_provider_hash == prepared_hash
+        and bool(redacted_message_paths)
+    )
     if request_payload.get("prepared_messages_projection_hash") != prepared_hash:
         failures.append(f"{label} prepared_messages_projection_hash 与复算值不一致")
-    if request_payload.get("provider_body_message_projection_hash") != provider_hash:
+    if recorded_provider_hash != provider_hash and not recorded_pre_redaction_binding:
         failures.append(f"{label} provider_body_message_projection_hash 与复算值不一致")
-    if prepared_hash != provider_hash or prepared_projection != provider_projection:
+    if (
+        prepared_hash != provider_hash or prepared_projection != provider_projection
+    ) and not recorded_pre_redaction_binding:
         failures.append(f"{label} prepared messages projection 与 provider body projection 不一致")
 
 
@@ -2896,6 +2916,23 @@ def _inspect_no_over_redaction(payload: dict[str, Any], failures: list[str], lab
             continue
         if message.get("content") == "<REDACTED_CREDENTIAL>":
             failures.append(f"{label}.body.messages[{message_index}].content 被整字段 credential 脱敏")
+
+
+def _provider_body_message_redaction_paths(payload: dict[str, Any]) -> list[str]:
+    report = payload.get("redaction_report")
+    if not isinstance(report, dict):
+        return []
+    paths: set[str] = set()
+    for key in (
+        "secret_span_paths",
+        "secret_field_paths",
+        "reasoning_field_paths",
+        "ordinary_text_span_paths",
+    ):
+        value = report.get(key)
+        if isinstance(value, list):
+            paths.update(str(item) for item in value if isinstance(item, str))
+    return sorted(path for path in paths if path.startswith("$.body.messages"))
 
 
 def _inspect_tool_result_replacements(
@@ -3367,6 +3404,28 @@ def _pre_verl_run_config_preflight_report(
         raw_thinking = run_config.model.provider_specific_options.get("thinking")
         if isinstance(raw_thinking, dict):
             thinking = raw_thinking.get("type")
+    context_policy_snapshot = (
+        _context_policy_snapshot(run_config) if run_config is not None else None
+    )
+    tool_schema_snapshot_hash = None
+    if run_config is not None and definition is not None:
+        try:
+            runnable = RunnableTask.from_definition(definition)
+            scaffold = build_scaffold(run_config.runtime.scaffold_id)
+            feedback_policy = resolve_feedback_policy(
+                run_config=run_config,
+                scaffold=scaffold,
+                task=runnable,
+            )
+            resolved_tools = resolve_allowed_tools(
+                scaffold=scaffold,
+                feedback_policy=feedback_policy,
+            )
+            tool_schema_snapshot_hash = build_tool_schema_snapshot(
+                tool_registry_for_allowed_tools(resolved_tools)
+            ).snapshot_sha256
+        except (ConfigError, TaskValidationError, ValidationError):
+            tool_schema_snapshot_hash = None
     return {
         "schema_version": "repo_harness_pre_verl_run_config_preflight_report_v0",
         "preflight_policy_version": PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION,
@@ -3403,6 +3462,27 @@ def _pre_verl_run_config_preflight_report(
         "docker_build_base_image": (
             run_config.runtime.docker_backend.build_base_image
             if run_config is not None
+            else None
+        ),
+        "initial_context_policy_version": (
+            run_config.context_management.initial_context_policy_version
+            if run_config is not None
+            else None
+        ),
+        "repository_hints_mode": (
+            run_config.context_management.repository_hints.mode
+            if run_config is not None
+            else None
+        ),
+        "repository_hints_resolved_max_candidate_files": (
+            run_config.context_management.repository_hints.resolved_max_candidate_files
+            if run_config is not None
+            else None
+        ),
+        "tool_schema_snapshot_hash": tool_schema_snapshot_hash,
+        "context_policy_snapshot_hash": (
+            stable_hash(context_policy_snapshot)
+            if context_policy_snapshot is not None
             else None
         ),
     }
@@ -3490,13 +3570,59 @@ def _inspect_context_redaction(
     if not isinstance(user_content, dict):
         failures.append(f"{config_path}: prepared user message is not structured")
         return
-    if user_content.get("test_command") is not None:
-        failures.append(f"{config_path}: prepared messages exposed test_command")
-    if user_content.get("test_command_visibility") != "redacted_final_only":
-        failures.append(f"{config_path}: test_command_visibility must be redacted_final_only")
+    constraints = user_content.get("constraints")
+    if not isinstance(constraints, dict):
+        failures.append(f"{config_path}: prepared user message missing constraints")
+    elif constraints.get("test_command") is not None:
+        failures.append(f"{config_path}: final-only prepared messages exposed test_command")
+    if "test_command_visibility" in user_content:
+        failures.append(f"{config_path}: prepared messages exposed legacy test_command_visibility")
+    forbidden = _lean_initial_context_forbidden_marker(messages)
+    if forbidden:
+        failures.append(f"{config_path}: prepared messages contain legacy initial context field {forbidden!r}")
+    hints = user_content.get("repository_hints")
+    if run_config.context_management.repository_hints.mode == "disabled":
+        if hints is not None:
+            failures.append(f"{config_path}: repository_hints.mode=disabled but hints are model-visible")
+    elif isinstance(hints, dict):
+        candidates = hints.get("candidate_files", [])
+        if isinstance(candidates, list):
+            limit = run_config.context_management.repository_hints.resolved_max_candidate_files
+            if len(candidates) > limit:
+                failures.append(f"{config_path}: repository_hints candidate count exceeds configured limit")
+            for candidate in candidates:
+                if not isinstance(candidate, dict):
+                    failures.append(f"{config_path}: repository_hints candidate must be an object")
+                    continue
+                extra = sorted(set(candidate) - {"path", "confidence", "matched_terms"})
+                if extra:
+                    failures.append(f"{config_path}: repository_hints candidate exposes extra fields: {', '.join(extra)}")
+    elif hints is not None:
+        failures.append(f"{config_path}: repository_hints must be an object when present")
     finding = _find_hidden_marker(messages)
     if finding:
         failures.append(f"{config_path}: prepared messages contain hidden marker {finding!r}")
+
+
+def _lean_initial_context_forbidden_marker(messages: list[dict[str, Any]]) -> str | None:
+    text = json.dumps(messages, ensure_ascii=False, sort_keys=True).lower()
+    for marker in (
+        "repository_action_index",
+        "repository_action_index_full",
+        "repository_context_index",
+        "source_text_span_hash",
+        "ranking_score",
+        "schema_version",
+        "policy_version",
+        "workspace_root",
+        "permission_mode",
+        "execution_mode",
+        "test_command_visibility",
+        "max_context_tokens",
+    ):
+        if marker in text:
+            return marker
+    return None
 
 
 def _collect_run_config_entries(payload: Any, base: Path) -> list[dict[str, Any]]:

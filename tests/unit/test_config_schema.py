@@ -28,6 +28,11 @@ runtime:
     assert config.tasks == ["tests/fixtures/tasks/task_001.yaml"]
     assert config.model.provider == "replay"
     assert config.context_management.token_estimator == TOKEN_ESTIMATOR_VERSION
+    assert config.context_management.repository_hints.mode == "balanced_eval"
+    assert (
+        config.context_management.initial_context_policy_version
+        == "repo_harness_initial_context_policy_v1_lean_hints"
+    )
     assert config.evaluation.final_verifier_mode == "strict_patch_replay"
     assert config.workspace.max_artifact_bytes is None
 
@@ -80,6 +85,28 @@ def test_run_config_accepts_v3_docker_backend_and_resolves_workers():
     assert config.swebench_like.effective_max_workers == 2
     assert config.swebench_like.max_workers_resolution == (
         "min_swebench_like_max_workers_and_evaluation_concurrency"
+    )
+
+
+def test_run_config_accepts_repository_hints_config():
+    config = RunConfig.model_validate(
+        {
+            "context_management": {
+                "repository_hints": {
+                    "mode": "weak_model_scaffold",
+                    "max_candidate_files": 10,
+                    "include_low_confidence_limit": 2,
+                    "expose_numeric_scores": False,
+                }
+            }
+        }
+    )
+
+    assert config.context_management.repository_hints.mode == "weak_model_scaffold"
+    assert config.context_management.repository_hints.resolved_max_candidate_files == 10
+    assert (
+        config.context_management.repository_hints.resolved_include_low_confidence_limit
+        == 2
     )
 
 

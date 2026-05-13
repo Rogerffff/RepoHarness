@@ -57,6 +57,7 @@ def build_run_config_facts(
         task=task_definition,
     )
     context_policy_snapshot = _context_policy_snapshot(config)
+    repository_hints_facts = config.context_management.repository_hints.resolved_facts()
     context_budget_facts = resolve_context_budget(
         config=config.context_management,
         provider=config.model.provider,
@@ -110,7 +111,7 @@ def build_run_config_facts(
         forbidden_scaffold_ids=forbidden_scaffold_ids or [],
         search_fact_policy_version="repo_harness_search_fact_trust_v1",
         repository_action_index_policy_version="repo_harness_repository_action_index_v1",
-        convergence_nudge_policy_version="repo_harness_convergence_nudge_v2",
+        convergence_nudge_policy_version="repo_harness_convergence_nudge_v3",
         context_warning_policy_version="repo_harness_context_warning_v1",
         context_replacement_runtime_policy_version="fresh_tool_result_budget_runtime_v1",
         provider_ready_token_estimator_version="provider_body_char4_token_estimator_v1",
@@ -121,6 +122,21 @@ def build_run_config_facts(
         ),
         context_policy_snapshot_hash=stable_hash(context_policy_snapshot),
         context_policy_snapshot=context_policy_snapshot,
+        initial_context_policy_version=config.context_management.initial_context_policy_version,
+        repository_hints_mode=config.context_management.repository_hints.mode,
+        repository_hints_config=repository_hints_facts,
+        repository_hints_resolved_max_candidate_files=(
+            config.context_management.repository_hints.resolved_max_candidate_files
+        ),
+        repository_hints_resolved_max_matched_terms_per_file=(
+            config.context_management.repository_hints.resolved_max_matched_terms_per_file
+        ),
+        repository_hints_resolved_max_fallback_search_terms=(
+            config.context_management.repository_hints.resolved_max_fallback_search_terms
+        ),
+        repository_hints_resolved_include_low_confidence_limit=(
+            config.context_management.repository_hints.resolved_include_low_confidence_limit
+        ),
         context_budget_policy=config.context_management.context_budget_policy,
         tool_result_compact_policy=config.context_management.tool_result_compact_policy,
         microcompact_policy=config.context_management.microcompact_policy,
@@ -174,6 +190,8 @@ def _context_policy_snapshot(config: RunConfig) -> dict[str, Any]:
     context = config.context_management
     snapshot = {
         "schema_version": context.context_policy_snapshot_version,
+        "initial_context_policy_version": context.initial_context_policy_version,
+        "repository_hints": context.repository_hints.resolved_facts(),
         "context_budget_policy": context.context_budget_policy,
         "model_context_window_tokens": context.model_context_window_tokens,
         "harness_context_cap_tokens": context.harness_context_cap_tokens,
@@ -311,6 +329,7 @@ def build_run_metadata(
             "invalid_tool_call_count": metrics.get("invalid_tool_call_count", 0),
         },
         model_call_summary=_model_call_summary(run_path),
+        initial_context_artifacts=_initial_context_artifacts(run_path),
         artifact_manifest_status="ok" if not artifact_errors else "invalid",
         failure_diagnostics=failure_diagnostics,
         export_readiness=export_readiness,
@@ -391,6 +410,59 @@ def _model_call_summary(run_path: Path) -> dict[str, Any]:
     if latest_ptl:
         summary["latest_ptl_truncation"] = latest_ptl
     return summary
+
+
+def _initial_context_artifacts(run_path: Path) -> dict[str, Any]:
+    manifest = _read_json_if_exists(run_path / "artifacts.json")
+    artifacts = [
+        artifact
+        for artifact in manifest.get("artifacts", [])
+        if isinstance(artifact, dict)
+    ]
+    profile_refs = [
+        artifact
+        for artifact in artifacts
+        if artifact.get("kind") == "initial_context_profile"
+    ]
+    latest_profile = profile_refs[-1] if profile_refs else None
+    profile_payload = (
+        _read_json_if_exists(run_path / str(latest_profile.get("relative_path")))
+        if latest_profile and latest_profile.get("relative_path")
+        else {}
+    )
+    return {
+        "initial_context_profile_ref": latest_profile,
+        "initial_context_policy_version": profile_payload.get(
+            "initial_context_policy_version"
+        ),
+        "repository_hints_mode": profile_payload.get("repository_hints_mode"),
+        "repository_hints_presence": profile_payload.get("repository_hints_presence"),
+        "repository_hints_absence_reason": profile_payload.get(
+            "repository_hints_absence_reason"
+        ),
+        "repository_hints_model_visible_hash": profile_payload.get(
+            "repository_hints_model_visible_hash"
+        ),
+        "repository_hints_model_visible_ref": profile_payload.get(
+            "repository_hints_model_visible_ref"
+        ),
+        "repository_action_index_full_hash": profile_payload.get(
+            "repository_action_index_full_hash"
+        ),
+        "repository_action_index_full_ref": profile_payload.get(
+            "repository_action_index_full_ref"
+        ),
+        "repository_context_index_full_hash": profile_payload.get(
+            "repository_context_index_full_hash"
+        ),
+        "repository_context_index_full_ref": profile_payload.get(
+            "repository_context_index_full_ref"
+        ),
+        "forbidden_model_visible_fields_present": profile_payload.get(
+            "forbidden_model_visible_fields_present",
+            [],
+        ),
+    }
 
 
 def _export_readiness(run_path: Path, artifact_errors: list[str]) -> ExportReadinessFacts:

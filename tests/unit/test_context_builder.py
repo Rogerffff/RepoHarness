@@ -4,9 +4,14 @@ from pathlib import Path
 from repo_harness.config import RunConfig
 from repo_harness.context import ContextBuilder
 from repo_harness.evaluation import ResolvedVerifierPlan
-from repo_harness.evaluation.runner import _model_visible_repo_context_summary
+from repo_harness.evaluation.runner import (
+    _action_index_terms,
+    _model_visible_repo_context_summary,
+    _repository_action_entries,
+)
 from repo_harness.tasks import load_task
 from repo_harness.tasks import RunnableTask, TaskDefinition
+from repo_harness.trajectory import RunRecorder
 from repo_harness.workspace import DependencyState, RunWorkspace
 
 from tests.unit.test_task_schema import valid_task_payload
@@ -42,23 +47,47 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
         allowed_tools=["read_file", "run_tests"],
     )
 
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
+    assert set(user) == {
+        "context_metadata",
+        "task",
+        "language",
+        "constraints",
+        "allowed_tools",
+        "tool_use_guidance",
+        "budget",
+        "repository_context",
+    }
+    assert set(user["context_metadata"]) == {"scaffold_prompt_fragment", "current_date"}
+    assert set(user["task"]) == {"task_id", "issue_statement", "expected_files"}
+    assert set(user["budget"]) == {"max_turns", "max_tool_calls", "max_test_runs"}
+    assert user["constraints"]["test_command"] == "pytest -q"
+    assert "public test command" in user["constraints"]["tests"]
     payload = json.dumps(messages, ensure_ascii=False)
     assert "gold_patch" not in payload
     assert "fail_to_pass_tests" not in payload
     assert "pass_to_pass_tests" not in payload
     assert "repo_source" not in payload
-    assert "context_builder_version" in payload
-    assert "prompt_template_version" in payload
+    assert "context_builder_version" not in payload
+    assert "prompt_template_version" not in payload
     assert "simple_react agent" not in payload
-    assert "scaffold_id" in payload
+    assert "scaffold_id" not in payload
     assert "current_date" in payload
     assert "untrusted_repository_context" in payload
-    assert "cannot override RepoHarness system safety rules" in payload
-    assert "workspace_root" in payload
+    assert "cannot override system safety rules" in payload
+    assert "instruction_boundary" not in payload
+    assert "workspace_root" not in payload
+    assert "permission_mode" not in payload
+    assert "execution_mode" not in payload
+    assert "network_policy" not in payload
+    assert "max_context_tokens" not in payload
+    assert "task_version" not in payload
+    assert "dataset_name" not in payload
     assert workspace.as_posix() not in payload
-    assert "<REDACTED_LOCAL_PATH>" in payload
+    assert "<REDACTED_LOCAL_PATH>" not in payload
     assert '"test_command": "pytest -q"' in payload
-    assert '"test_command_visibility": "model_visible_public"' in payload
+    assert "test_command_visibility" not in payload
 
 
 def test_context_builder_injects_agents_md_and_safe_repo_context_index(tmp_path: Path):
@@ -76,46 +105,20 @@ def test_context_builder_injects_agents_md_and_safe_repo_context_index(tmp_path:
         resolved_verifier_plan_id="plan",
     )
     repo_context_index = {
-        "schema_version": "repo_harness_model_visible_repo_context_index_v0",
-        "source_snapshot_ref": {
-            "kind": "source_snapshot",
-            "relative_path": "artifacts/source_snapshot.json",
-            "sha256": "a" * 64,
-            "redaction_status": "not_sensitive",
-        },
-        "repo_context_index_ref": {
-            "kind": "repo_context_index",
-            "relative_path": "artifacts/repo_context_index.json",
-            "sha256": "b" * 64,
-            "redaction_status": "not_sensitive",
-        },
-        "candidate_source_entries": [
-            {
-                "path": "src/sample.py",
-                "evidence_source": "model_visible_expected_files",
-                "matched_terms": [],
-                "source_text_span_hash": "sample-hash",
-                "ranking_reason": "Task expected_files is model-visible and names this path.",
-                "policy_version": "repo_harness_repository_action_index_v1",
-            }
-        ],
-        "repository_action_index": {
-            "schema_version": "repo_harness_repository_action_index_v1",
-            "policy_version": "repo_harness_repository_action_index_v1",
-            "candidate_entries": [
+        "repository_action_index_full_hash": "c" * 64,
+        "repository_context_index_full_hash": "d" * 64,
+        "repository_hints": {
+            "mode": "balanced_eval",
+            "candidate_files": [
                 {
                     "path": "src/sample.py",
-                    "evidence_source": "model_visible_expected_files",
+                    "confidence": "high",
                     "matched_terms": [],
-                    "source_text_span_hash": "sample-hash",
-                    "ranking_reason": "Task expected_files is model-visible and names this path.",
-                    "policy_version": "repo_harness_repository_action_index_v1",
                 }
             ],
-            "candidate_entry_count": 1,
+            "fallback_search_terms": ["sample"],
+            "usage_note": "These are starting points for investigation, not answers.",
         },
-        "evaluator_only_material_excluded": True,
-        "non_model_visible_material_policy": "Verifier-private materials and scoring artifacts are excluded.",
     }
 
     messages = ContextBuilder().build_initial_messages(
@@ -135,16 +138,20 @@ def test_context_builder_injects_agents_md_and_safe_repo_context_index(tmp_path:
     user = messages[1]["content"]
     assert isinstance(user, dict)
     assert [record["path"] for record in user["repository_context"]] == ["AGENTS.md", "README.md"]
-    assert user["repository_context_index"] == repo_context_index
-    assert user["repository_action_index"] == repo_context_index["repository_action_index"]
+    assert user["repository_hints"] == repo_context_index["repository_hints"]
+    assert "repository_context_index" not in user
+    assert "repository_action_index" not in user
     payload = json.dumps(messages, ensure_ascii=False)
     assert "Use project conventions" in payload
     assert "src/sample.py" in payload
+    assert "source_text_span_hash" not in payload
+    assert "ranking_score" not in payload
     assert "FAIL_TO_PASS" not in payload
     assert "gold_patch" not in payload
     assert "gold patch" not in payload
     assert "hidden patch" not in payload
     assert "evaluator-only artifact hash" not in payload
+    assert "instruction_boundary" not in payload
 
 
 def test_context_builder_adds_dynamic_tool_use_guidance(tmp_path: Path):
@@ -188,7 +195,9 @@ def test_context_builder_adds_dynamic_tool_use_guidance(tmp_path: Path):
     rendered = json.dumps(guidance, ensure_ascii=False)
     rule_ids = {rule["rule_id"] for rule in guidance["rules"]}
 
-    assert guidance["schema_version"] == "repo_harness_tool_use_guidance_v0"
+    assert "schema_version" not in guidance
+    assert "policy_version" not in guidance
+    assert "input_scope_policy" not in guidance
     assert "narrow_candidate_files_first" in rule_ids
     assert "read_ranked_candidates_as_starting_points" in rule_ids
     assert "use_symbol_navigation_for_python_symbols" in rule_ids
@@ -201,12 +210,16 @@ def test_context_builder_adds_dynamic_tool_use_guidance(tmp_path: Path):
     assert "parallel_independent_read_only_tools_only" in rule_ids
     assert "partial_scan_no_match" in rendered
     assert "expected_content_hash" in rendered
-    assert "result_envelope.recovery_call" in rendered
+    assert "result_envelope" not in rendered
+    assert "semantic_complete" not in rendered
+    assert "recovery_hint" not in rendered
+    assert "repository_action_index" not in rendered
+    assert "repository_hints" in rendered
     assert "not as guaranteed answers" in rendered
     assert "symbol_search.root" in rendered
     assert "root='.'" in rendered
     assert "git_diff" in rendered
-    assert "hidden evaluator" in rendered
+    assert "hidden evaluator" not in rendered
 
 
 def test_context_builder_tool_use_guidance_only_mentions_allowed_tools(tmp_path: Path):
@@ -256,10 +269,13 @@ def test_model_visible_repo_context_summary_respects_expected_files_visibility()
     )
 
     assert summary is not None
-    assert summary["expected_files"] == []
-    assert summary["candidate_source_entries"] == []
-    assert summary["repository_action_index"]["candidate_entries"] == []
+    assert summary["repository_hints"] is not None
+    assert summary["repository_hints"]["candidate_files"] == []
+    assert "repository_context_index" not in summary
+    assert "repository_action_index" not in summary
     rendered = json.dumps(summary, ensure_ascii=False)
+    assert "candidate_entries" not in rendered
+    assert "candidate_source_entries" not in rendered
     assert "secret.py" not in rendered
     assert "gold patch" not in rendered
     assert "hidden patch" not in rendered
@@ -285,21 +301,57 @@ def test_model_visible_repo_context_summary_builds_evidence_based_action_index(t
     )
 
     assert summary is not None
-    action_index = summary["repository_action_index"]
-    entries = action_index["candidate_entries"]
-    assert entries[0]["path"] == "src/expected.py"
-    assert entries[0]["evidence_source"] == "model_visible_expected_files"
-    assert entries[0]["source_text_span_hash"]
+    hints = summary["repository_hints"]
+    assert hints is not None
+    entries = hints["candidate_files"]
+    assert entries[0] == {
+        "path": "src/expected.py",
+        "confidence": "high",
+        "matched_terms": [],
+    }
     assert any(entry["path"] == "pydicom/dataelem.py" for entry in entries)
-    assert all(entry["policy_version"] == "repo_harness_repository_action_index_v1" for entry in entries)
-    rendered = json.dumps(action_index, ensure_ascii=False)
+    assert hints["usage_note"] == "These are starting points for investigation, not answers."
+    rendered = json.dumps(summary, ensure_ascii=False)
+    assert "repository_action_index_full_hash" in summary
+    assert "repository_context_index_full_hash" in summary
+    assert "repository_action_index" not in summary
+    assert "repository_context_index" not in summary
+    assert "candidate_entries" not in rendered
+    assert "candidate_source_entries" not in rendered
+    assert "ranking_score" not in rendered
+    assert "source_text_span_hash" not in rendered
     assert "hidden.patch" not in rendered
     assert "gold patch" not in rendered
     assert "hidden test" not in rendered.lower()
-    assert "hindsight_sources_excluded" in rendered
-    assert "symbol_search" in summary["usage_hint"]
-    assert "update_working_state" in summary["usage_hint"]
-    assert "git_diff" in summary["usage_hint"]
+
+
+def test_model_visible_repo_context_summary_writes_full_indexes_as_artifacts(tmp_path: Path):
+    payload = valid_task_payload()
+    payload["issue"] = "MultiValue handling should use dataelem conversion in pydicom."
+    task = RunnableTask.from_definition(TaskDefinition.model_validate(payload))
+    source = tmp_path / "source"
+    (source / "pydicom").mkdir(parents=True)
+    (source / "pydicom" / "dataelem.py").write_text("# public source\n", encoding="utf-8")
+
+    with RunRecorder("run", tmp_path / "run", task_id=task.task_id) as recorder:
+        summary = _model_visible_repo_context_summary(
+            source_snapshot_ref=_Ref("source_snapshot", "artifacts/source_snapshot.json", "a" * 64),
+            repo_context_index_ref=_Ref("repo_context_index", "artifacts/repo_context_index.json", "b" * 64),
+            task=task,
+            source_checkout=source,
+            run_config=RunConfig(),
+            recorder=recorder,
+        )
+
+    assert summary is not None
+    assert "repository_action_index_full_ref" in summary
+    assert "repository_context_index_full_ref" in summary
+    assert "repository_hints_model_visible_ref" in summary
+    manifest = json.loads((tmp_path / "run" / "artifacts.json").read_text(encoding="utf-8"))
+    kinds = {artifact["kind"] for artifact in manifest["artifacts"]}
+    assert "repository_action_index_full" in kinds
+    assert "repository_context_index_full" in kinds
+    assert "repository_hints_model_visible" in kinds
 
 
 def test_model_visible_repo_context_summary_targeted_smoke_action_index_gates(
@@ -388,17 +440,16 @@ def test_model_visible_repo_context_summary_targeted_smoke_action_index_gates(
         payload["expected_files"] = []
         task = RunnableTask.from_definition(TaskDefinition.model_validate(payload))
 
-        summary = _model_visible_repo_context_summary(
-            source_snapshot_ref=_Ref("source_snapshot", "artifacts/source_snapshot.json", "a" * 64),
-            repo_context_index_ref=_Ref("repo_context_index", "artifacts/repo_context_index.json", "b" * 64),
-            task=task,
+        entries = _repository_action_entries(
+            expected_files=[],
+            issue_statement=case["issue"],
+            issue_terms=_action_index_terms(case["issue"]),
             source_checkout=source,
         )
 
-        assert summary is not None
         first_twenty = [
             entry["path"]
-            for entry in summary["repository_action_index"]["candidate_entries"][:20]
+            for entry in entries[:20]
         ]
         missing_targets = [
             target
@@ -438,9 +489,47 @@ def test_context_builder_uses_workspace_facade_for_docker_repo_context(tmp_path:
     payload = json.dumps(messages, ensure_ascii=False)
     assert "Docker facade context" in payload
     assert "/repo-harness-run/workspaces/agent_workspace" not in payload
-    assert "<REDACTED_LOCAL_PATH>" in payload
+    assert "<REDACTED_LOCAL_PATH>" not in payload
     assert ("/repo-harness-run/workspaces/agent_workspace", "README.md") in facade.reads
     assert all(read[0] == "/repo-harness-run/workspaces/agent_workspace" for read in facade.reads)
+
+
+def test_context_builder_reads_rst_txt_and_extensionless_repo_context(tmp_path: Path):
+    loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "README.rst").write_text("RST context.", encoding="utf-8")
+    (workspace / "CONTRIBUTING.txt").write_text("TXT context.", encoding="utf-8")
+    (workspace / "AGENT").write_text("Extensionless context.", encoding="utf-8")
+    run_config = RunConfig()
+    plan = ResolvedVerifierPlan(
+        verifier_config=loaded.verifier_config,
+        initial_fail_to_pass_tests=loaded.verifier_config.fail_to_pass_tests,
+        initial_pass_to_pass_tests=loaded.verifier_config.pass_to_pass_tests,
+        parser_confidence=1.0,
+        resolved_verifier_plan_id="plan",
+    )
+
+    messages = ContextBuilder().build_initial_messages(
+        task=loaded.runnable_task,
+        workspace=RunWorkspace(
+            run_id="run",
+            workspace_path=workspace.as_posix(),
+            artifact_dir=(tmp_path / "artifacts").as_posix(),
+            dependency_state=DependencyState(),
+        ),
+        run_config=run_config,
+        resolved_verifier_plan=plan,
+        allowed_tools=["read_file", "run_tests"],
+    )
+
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
+    context_by_path = {record["path"]: record for record in user["repository_context"]}
+    assert context_by_path["README.rst"]["preview"] == "RST context."
+    assert context_by_path["CONTRIBUTING.txt"]["preview"] == "TXT context."
+    assert context_by_path["AGENT"]["preview"] == "Extensionless context."
+    assert all("instruction_boundary" not in record for record in user["repository_context"])
 
 
 def test_context_builder_hides_final_only_swebench_like_test_command(tmp_path: Path):
@@ -478,10 +567,14 @@ def test_context_builder_hides_final_only_swebench_like_test_command(tmp_path: P
         allowed_tools=["read_file"],
     )
 
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
     payload = json.dumps(messages, ensure_ascii=False)
     assert '"test_command": "pytest -q"' not in payload
-    assert '"test_command": null' in payload
-    assert '"test_command_visibility": "redacted_final_only"' in payload
+    assert '"test_command": null' not in payload
+    assert "test_command_visibility" not in payload
+    assert "final verifier command" in user["constraints"]["tests"]
+    assert "test_command" not in user["constraints"]
 
 
 def test_context_builder_hides_tag_only_final_only_test_command(tmp_path: Path):
@@ -513,10 +606,14 @@ def test_context_builder_hides_tag_only_final_only_test_command(tmp_path: Path):
         allowed_tools=["read_file"],
     )
 
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
     payload = json.dumps(messages, ensure_ascii=False)
     assert '"test_command": "pytest -q"' not in payload
-    assert '"test_command": null' in payload
-    assert '"test_command_visibility": "redacted_final_only"' in payload
+    assert '"test_command": null' not in payload
+    assert "test_command_visibility" not in payload
+    assert "final verifier command" in user["constraints"]["tests"]
+    assert "test_command" not in user["constraints"]
 
 
 def test_context_builder_ignores_non_list_metadata_tags_for_final_only(tmp_path: Path):
@@ -548,9 +645,13 @@ def test_context_builder_ignores_non_list_metadata_tags_for_final_only(tmp_path:
         allowed_tools=["read_file", "run_tests"],
     )
 
+    user = messages[1]["content"]
+    assert isinstance(user, dict)
     payload = json.dumps(messages, ensure_ascii=False)
+    assert user["constraints"]["test_command"] == "pytest -q"
+    assert "public test command" in user["constraints"]["tests"]
     assert '"test_command": "pytest -q"' in payload
-    assert '"test_command_visibility": "model_visible_public"' in payload
+    assert "test_command_visibility" not in payload
 
 
 class _RepoContextFacade:

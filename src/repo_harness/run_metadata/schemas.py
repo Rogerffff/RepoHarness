@@ -368,7 +368,7 @@ class RunConfigFacts(StrictBaseModel):
     forbidden_scaffold_ids: list[str] = Field(default_factory=list)
     search_fact_policy_version: str = "repo_harness_search_fact_trust_v1"
     repository_action_index_policy_version: str = "repo_harness_repository_action_index_v1"
-    convergence_nudge_policy_version: str = "repo_harness_convergence_nudge_v2"
+    convergence_nudge_policy_version: str = "repo_harness_convergence_nudge_v3"
     context_warning_policy_version: str = "repo_harness_context_warning_v1"
     context_replacement_runtime_policy_version: str = (
         "deterministic_tool_result_replacement_runtime_v1"
@@ -381,6 +381,19 @@ class RunConfigFacts(StrictBaseModel):
     context_policy_snapshot_version: str = "repo_harness_context_policy_snapshot_v1"
     context_policy_snapshot_hash: str | None = Field(default=None, pattern=SHA256_PATTERN)
     context_policy_snapshot: dict[str, Any] = Field(default_factory=dict)
+    initial_context_policy_version: str = "repo_harness_initial_context_policy_v1_lean_hints"
+    repository_hints_mode: str = "balanced_eval"
+    repository_hints_config: dict[str, Any] = Field(default_factory=dict)
+    repository_hints_resolved_max_candidate_files: int | None = Field(default=None, ge=0)
+    repository_hints_resolved_max_matched_terms_per_file: int | None = Field(
+        default=None, ge=0
+    )
+    repository_hints_resolved_max_fallback_search_terms: int | None = Field(
+        default=None, ge=0
+    )
+    repository_hints_resolved_include_low_confidence_limit: int | None = Field(
+        default=None, ge=0
+    )
     context_budget_policy: str = "model_window_with_optional_cap"
     tool_result_compact_policy: str = "claude_code_fresh_only_v1"
     microcompact_policy: str = "count_based_tool_result_clear_v1"
@@ -490,6 +503,7 @@ class RunMetadata(StrictBaseModel):
     metrics_summary: dict[str, Any] = Field(default_factory=dict)
     tool_call_summary: dict[str, Any] = Field(default_factory=dict)
     model_call_summary: dict[str, Any] = Field(default_factory=dict)
+    initial_context_artifacts: dict[str, Any] = Field(default_factory=dict)
     artifact_manifest_status: Literal["ok", "missing", "invalid"]
     failure_diagnostics: list[FailureDiagnostics] = Field(default_factory=list)
     export_readiness: ExportReadinessFacts

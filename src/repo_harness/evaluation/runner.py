@@ -455,6 +455,14 @@ def run_task(
             setup_timeout_sec=loaded.runnable_task.timeouts.setup_timeout_sec,
             recorder=recorder,
         )
+        model_visible_repo_context = _model_visible_repo_context_summary(
+            source_snapshot_ref=source_snapshot_ref,
+            repo_context_index_ref=repo_context_index_ref,
+            task=loaded.runnable_task,
+            source_checkout=source if pre_verl_runtime_plan is not None else None,
+            run_config=config,
+            recorder=recorder,
+        )
         initial_messages = ContextBuilder().build_initial_messages(
             task=loaded.runnable_task,
             workspace=run_workspace,
@@ -463,12 +471,30 @@ def run_task(
             allowed_tools=allowed_tools,
             scaffold=scaffold,
             workspace_facade=adapter,
-            model_visible_repo_context=_model_visible_repo_context_summary(
-                source_snapshot_ref=source_snapshot_ref,
-                repo_context_index_ref=repo_context_index_ref,
-                task=loaded.runnable_task,
-                source_checkout=source if pre_verl_runtime_plan is not None else None,
-            ),
+            model_visible_repo_context=model_visible_repo_context,
+        )
+        initial_context_profile_ref = _write_initial_context_profile(
+            recorder=recorder,
+            run_id=actual_run_id,
+            task_id=loaded.runnable_task.task_id,
+            initial_messages=initial_messages,
+            model_visible_repo_context=model_visible_repo_context,
+            run_config=config,
+        )
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("initial_context"),
+                timestamp=_timestamp(),
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                event_type="initial_context_profile_written",
+                artifact_refs=[initial_context_profile_ref],
+                data={
+                    "initial_context_profile_ref": initial_context_profile_ref.model_dump(
+                        mode="json"
+                    )
+                },
+            )
         )
         replay_path = config.model.replay_script_path
         if config.model.provider in {"replay", "fake"} and replay_path is None:
@@ -1284,20 +1310,205 @@ def _append_task_timeout_event(
     )
 
 
+def _write_initial_context_profile(
+    *,
+    recorder: RunRecorder,
+    run_id: str,
+    task_id: str,
+    initial_messages: list[dict[str, Any]],
+    model_visible_repo_context: dict[str, Any] | None,
+    run_config: RunConfig,
+):
+    payload = _initial_context_profile_payload(
+        run_id=run_id,
+        task_id=task_id,
+        initial_messages=initial_messages,
+        model_visible_repo_context=model_visible_repo_context,
+        run_config=run_config,
+    )
+    return recorder.write_json_artifact(
+        "initial_context_profile",
+        payload,
+        {
+            "redaction_status": "not_sensitive",
+            "retention_policy": "keep",
+            "budget_policy": "preserve_json",
+        },
+    )
+
+
+def _initial_context_profile_payload(
+    *,
+    run_id: str,
+    task_id: str,
+    initial_messages: list[dict[str, Any]],
+    model_visible_repo_context: dict[str, Any] | None,
+    run_config: RunConfig,
+) -> dict[str, Any]:
+    repo_context = model_visible_repo_context or {}
+    first_user_content = _first_user_content(initial_messages)
+    repository_context = (
+        first_user_content.get("repository_context", [])
+        if isinstance(first_user_content, dict)
+        else []
+    )
+    repository_hints = (
+        first_user_content.get("repository_hints")
+        if isinstance(first_user_content, dict)
+        else None
+    )
+    repository_hints_presence = (
+        "present" if isinstance(repository_hints, dict) else "absent"
+    )
+    repository_hints_absence_reason = _repository_hints_absence_reason(
+        first_user_content=first_user_content,
+        repository_hints=repository_hints,
+        repository_hints_mode=run_config.context_management.repository_hints.mode,
+    )
+    candidate_files = (
+        repository_hints.get("candidate_files", [])
+        if isinstance(repository_hints, dict)
+        else []
+    )
+    repository_hints_model_visible_hash = repo_context.get(
+        "repository_hints_model_visible_hash"
+    )
+    if repository_hints_model_visible_hash is None:
+        repository_hints_model_visible_hash = stable_hash(
+            {
+                "field": "repository_hints",
+                "state": "present" if isinstance(repository_hints, dict) else "absent",
+                "value": repository_hints if isinstance(repository_hints, dict) else None,
+            }
+        )
+    first_user_text = json.dumps(
+        first_user_content,
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    forbidden_fields = [
+        field
+        for field in (
+            "repository_action_index",
+            "repository_action_index_full",
+            "repository_context_index",
+            "source_text_span_hash",
+            "workspace_root",
+            "permission_mode",
+            "execution_mode",
+            "test_command_visibility",
+            "max_context_tokens",
+        )
+        if field in first_user_text
+    ]
+    return {
+        "schema_version": "repo_harness_initial_context_profile_v0",
+        "run_id": run_id,
+        "task_id": task_id,
+        "initial_context_policy_version": (
+            run_config.context_management.initial_context_policy_version
+        ),
+        "repository_hints_mode": run_config.context_management.repository_hints.mode,
+        "repository_hints_config": (
+            run_config.context_management.repository_hints.resolved_facts()
+        ),
+        "repository_hints_presence": repository_hints_presence,
+        "repository_hints_absence_reason": repository_hints_absence_reason,
+        "model_visible_message_count": len(initial_messages),
+        "model_visible_messages_hash": stable_hash(initial_messages),
+        "first_user_content_hash": stable_hash(first_user_content),
+        "first_user_content_char_count": len(first_user_text),
+        "first_user_top_level_keys": (
+            sorted(first_user_content.keys()) if isinstance(first_user_content, dict) else []
+        ),
+        "repository_context_entry_count": (
+            len(repository_context) if isinstance(repository_context, list) else 0
+        ),
+        "repository_context_preview_char_count": _repository_context_preview_chars(
+            repository_context
+        ),
+        "repository_hints_candidate_count": (
+            len(candidate_files) if isinstance(candidate_files, list) else 0
+        ),
+        "repository_hints_model_visible_hash": repository_hints_model_visible_hash,
+        "repository_hints_model_visible_ref": repo_context.get(
+            "repository_hints_model_visible_ref"
+        ),
+        "repository_action_index_full_hash": repo_context.get(
+            "repository_action_index_full_hash"
+        ),
+        "repository_action_index_full_ref": repo_context.get(
+            "repository_action_index_full_ref"
+        ),
+        "repository_context_index_full_hash": repo_context.get(
+            "repository_context_index_full_hash"
+        ),
+        "repository_context_index_full_ref": repo_context.get(
+            "repository_context_index_full_ref"
+        ),
+        "forbidden_model_visible_fields_present": forbidden_fields,
+    }
+
+
+def _repository_hints_absence_reason(
+    *,
+    first_user_content: Any,
+    repository_hints: Any,
+    repository_hints_mode: str,
+) -> str | None:
+    if isinstance(repository_hints, dict):
+        return None
+    if repository_hints_mode == "disabled":
+        return "repository_hints_mode_disabled"
+    task = first_user_content.get("task", {}) if isinstance(first_user_content, dict) else {}
+    expected_files = task.get("expected_files", []) if isinstance(task, dict) else []
+    if not isinstance(expected_files, list):
+        expected_files = []
+    issue_statement = str(task.get("issue_statement") or "") if isinstance(task, dict) else ""
+    issue_terms = _action_index_terms(issue_statement)
+    if not expected_files and not issue_terms:
+        return "no_model_visible_hint_seed"
+    return "unexpected_missing_repository_hints"
+
+
+def _first_user_content(messages: list[dict[str, Any]]) -> Any:
+    for message in messages:
+        if message.get("role") == "user":
+            return message.get("content")
+    return None
+
+
+def _repository_context_preview_chars(repository_context: Any) -> int:
+    if not isinstance(repository_context, list):
+        return 0
+    total = 0
+    for entry in repository_context:
+        if isinstance(entry, dict):
+            total += len(str(entry.get("preview") or ""))
+    return total
+
+
 def _model_visible_repo_context_summary(
     *,
     source_snapshot_ref,
     repo_context_index_ref,
     task: RunnableTask,
     source_checkout: str | Path | None = None,
+    run_config: RunConfig | None = None,
+    recorder: RunRecorder | None = None,
 ) -> dict[str, Any] | None:
-    if source_snapshot_ref is None or repo_context_index_ref is None:
-        return None
     visible_task = task.agent_visible_view()
     raw_expected_files = visible_task.get("expected_files", [])
     expected_files = raw_expected_files if isinstance(raw_expected_files, list) else []
     issue_statement = str(visible_task.get("issue_statement") or "")
     issue_terms = _action_index_terms(issue_statement)
+    if (
+        source_snapshot_ref is None
+        and repo_context_index_ref is None
+        and not expected_files
+        and not issue_terms
+    ):
+        return None
     candidate_source_entries = _repository_action_entries(
         expected_files=expected_files,
         issue_statement=issue_statement,
@@ -1319,11 +1530,9 @@ def _model_visible_repo_context_summary(
         "evaluator_only_material_excluded": True,
         "hindsight_sources_excluded": True,
     }
-    return {
+    repository_context_index_full = {
         "schema_version": "repo_harness_model_visible_repo_context_index_v0",
         "context_selection_policy_version": "repo_harness_initial_context_selection_v0",
-        "source_snapshot_ref": _safe_model_visible_artifact_ref(source_snapshot_ref),
-        "repo_context_index_ref": _safe_model_visible_artifact_ref(repo_context_index_ref),
         "expected_files": expected_files[:40],
         "candidate_source_entries": candidate_source_entries,
         "candidate_source_entry_count": len(candidate_source_entries),
@@ -1343,6 +1552,185 @@ def _model_visible_repo_context_summary(
             "before the final answer."
         ),
     }
+    if source_snapshot_ref is not None:
+        repository_context_index_full["source_snapshot_ref"] = (
+            _safe_model_visible_artifact_ref(source_snapshot_ref)
+        )
+    if repo_context_index_ref is not None:
+        repository_context_index_full["repo_context_index_ref"] = (
+            _safe_model_visible_artifact_ref(repo_context_index_ref)
+        )
+    hints_config = (
+        run_config.context_management.repository_hints
+        if run_config is not None
+        else None
+    )
+    repository_hints = _repository_hints_from_action_index(
+        action_entries=candidate_source_entries,
+        issue_statement=issue_statement,
+        config=hints_config,
+    )
+    action_index_ref = None
+    context_index_ref = None
+    hints_ref = None
+    if recorder is not None:
+        action_index_ref = recorder.write_json_artifact(
+            "repository_action_index_full",
+            repository_action_index,
+            {
+                "redaction_status": "not_sensitive",
+                "retention_policy": "keep",
+                "budget_policy": "preserve_json",
+            },
+        )
+        context_index_ref = recorder.write_json_artifact(
+            "repository_context_index_full",
+            repository_context_index_full,
+            {
+                "redaction_status": "not_sensitive",
+                "retention_policy": "keep",
+                "budget_policy": "preserve_json",
+            },
+        )
+        if repository_hints is not None:
+            hints_ref = recorder.write_json_artifact(
+                "repository_hints_model_visible",
+                repository_hints,
+                {
+                    "redaction_status": "not_sensitive",
+                    "retention_policy": "keep",
+                    "budget_policy": "preserve_json",
+                },
+            )
+    result: dict[str, Any] = {
+        "repository_action_index_full_hash": stable_hash(repository_action_index),
+        "repository_context_index_full_hash": stable_hash(repository_context_index_full),
+        "repository_hints": repository_hints,
+    }
+    if action_index_ref is not None:
+        result["repository_action_index_full_ref"] = _safe_model_visible_artifact_ref(
+            action_index_ref
+        )
+    if context_index_ref is not None:
+        result["repository_context_index_full_ref"] = _safe_model_visible_artifact_ref(
+            context_index_ref
+        )
+    if hints_ref is not None:
+        result["repository_hints_model_visible_ref"] = _safe_model_visible_artifact_ref(
+            hints_ref
+        )
+        result["repository_hints_model_visible_hash"] = hints_ref.sha256
+    return result
+
+
+def _repository_hints_from_action_index(
+    *,
+    action_entries: list[dict[str, Any]],
+    issue_statement: str,
+    config,
+) -> dict[str, Any] | None:
+    if config is not None and config.mode == "disabled":
+        return None
+    max_candidate_files = (
+        config.resolved_max_candidate_files if config is not None else 8
+    )
+    max_matched_terms = (
+        config.resolved_max_matched_terms_per_file if config is not None else 6
+    )
+    max_fallback_terms = (
+        config.resolved_max_fallback_search_terms if config is not None else 8
+    )
+    low_confidence_limit = (
+        config.resolved_include_low_confidence_limit if config is not None else 0
+    )
+    mode = config.mode if config is not None else "balanced_eval"
+    candidate_files: list[dict[str, Any]] = []
+    low_confidence_count = 0
+    for entry in action_entries:
+        confidence = _repository_hint_confidence(entry)
+        if confidence == "low":
+            if low_confidence_count >= low_confidence_limit:
+                continue
+            low_confidence_count += 1
+        candidate_files.append(
+            {
+                "path": entry["path"],
+                "confidence": confidence,
+                "matched_terms": _repository_hint_matched_terms(
+                    entry.get("matched_terms", []),
+                    max_terms=max_matched_terms,
+                ),
+            }
+        )
+        if len(candidate_files) >= max_candidate_files:
+            break
+    fallback_search_terms = _repository_hint_matched_terms(
+        _action_index_terms(issue_statement),
+        max_terms=max_fallback_terms,
+    )
+    return {
+        "mode": mode,
+        "candidate_files": candidate_files,
+        "fallback_search_terms": fallback_search_terms,
+        "usage_note": "These are starting points for investigation, not answers.",
+    }
+
+
+def _repository_hint_confidence(entry: dict[str, Any]) -> str:
+    evidence_source = str(entry.get("evidence_source") or "")
+    matched_terms = entry.get("matched_terms")
+    ranking_signals = entry.get("ranking_signals")
+    signals = ranking_signals if isinstance(ranking_signals, list) else []
+    matched_count = len(matched_terms) if isinstance(matched_terms, list) else 0
+    if evidence_source == "model_visible_expected_files":
+        return "high"
+    if "issue_rule_id_path_match" in evidence_source:
+        return "high"
+    if "issue_rule_id_path_match" in signals or "high_information_path_term_match" in signals:
+        return "high"
+    if "path_term_match" in signals:
+        return "medium"
+    if matched_count >= 2:
+        return "medium"
+    return "low"
+
+
+_LOW_INFORMATION_HINT_TERMS = {
+    "rule",
+    "rules",
+    "use",
+    "instead",
+    "error",
+    "message",
+    "file",
+    "line",
+    "test",
+    "tests",
+    "something",
+    "likely",
+    "might",
+}
+
+
+def _repository_hint_matched_terms(values: list[Any], *, max_terms: int) -> list[str]:
+    if max_terms <= 0:
+        return []
+    terms: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if not isinstance(value, str):
+            continue
+        term = value.strip()
+        if not term or term.lower() in _LOW_INFORMATION_HINT_TERMS:
+            continue
+        key = term.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        terms.append(term)
+        if len(terms) >= max_terms:
+            break
+    return terms
 
 
 def _repository_action_entries(

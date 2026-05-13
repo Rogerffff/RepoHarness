@@ -12,11 +12,13 @@ from typing import Any
 
 from repo_harness.agent_loop.loop import PROVIDER_TIMEOUT_POLICY_VERSION
 from repo_harness.errors import ConfigError, RepoHarnessError
+from repo_harness.inspect_initial_context import inspect_initial_context
 from repo_harness.pre_verl_agentloop import (
     PRE_VERL_RUN_CONFIG_PREFLIGHT_POLICY_VERSION,
     inspect_model_visible_context,
     validate_pre_verl_run_config_entry,
 )
+from repo_harness.schema_base import stable_hash
 
 PRE_VERL_EVIDENCE_LEDGER_SCHEMA_VERSION = "repo_harness_pre_verl_evidence_ledger_v0"
 PRE_VERL_EVIDENCE_LEDGER_HARNESS_POLICY_VERSION = "repo_harness_pre_verl_dev_evidence_policy_v0"
@@ -190,6 +192,7 @@ def _formal_entry(
     compaction_counts = _compaction_counts(events)
     no_progress = _no_progress_signals(events, metadata)
     config_revision = _config_revision(facts, config_path)
+    context_strategy = _context_strategy_facts(facts=facts, metadata=metadata)
     section = issue_sections.get(task_id, "")
     formal_result = _formal_result(metrics, boundary, reward)
     failure_category = _failure_category(boundary, metadata, reward, formal_result)
@@ -215,6 +218,19 @@ def _formal_entry(
         ),
         "context_inspect_status": context_status,
         "context_inspect_error": context_error,
+        "initial_context_policy_version": context_strategy[
+            "initial_context_policy_version"
+        ],
+        "repository_hints_mode": context_strategy["repository_hints_mode"],
+        "repository_hints_config": context_strategy["repository_hints_config"],
+        "repository_hints_model_visible_hash": context_strategy[
+            "repository_hints_model_visible_hash"
+        ],
+        "tool_schema_snapshot_hash": context_strategy["tool_schema_snapshot_hash"],
+        "context_policy_snapshot_hash": context_strategy[
+            "context_policy_snapshot_hash"
+        ],
+        "context_strategy_hash": context_strategy["context_strategy_hash"],
         "export_audit_status": export_summary["status"],
         "export_summary": export_summary,
         "final_verifier_status": _text(boundary.get("final_verifier_status"))
@@ -239,9 +255,55 @@ def _default_context_inspector(run_dir: Path) -> tuple[str, str | None]:
             assert_tool_results_recoverable=True,
             assert_no_over_redaction=True,
         )
+        inspect_initial_context(
+            run_dir,
+            first_model_call=True,
+            assert_pre_verl_lean=True,
+        )
     except RepoHarnessError as exc:
         return "failed", str(exc)
     return "passed", None
+
+
+def _context_strategy_facts(*, facts: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
+    tool_protocol = facts.get("tool_protocol", {})
+    if not isinstance(tool_protocol, dict):
+        tool_protocol = {}
+    initial_context_artifacts = metadata.get("initial_context_artifacts", {})
+    if not isinstance(initial_context_artifacts, dict):
+        initial_context_artifacts = {}
+    initial_context_policy_version = (
+        facts.get("initial_context_policy_version")
+        or initial_context_artifacts.get("initial_context_policy_version")
+    )
+    repository_hints_mode = (
+        facts.get("repository_hints_mode")
+        or initial_context_artifacts.get("repository_hints_mode")
+    )
+    repository_hints_hash = initial_context_artifacts.get(
+        "repository_hints_model_visible_hash"
+    )
+    if repository_hints_hash is None and repository_hints_mode == "disabled":
+        repository_hints_hash = "disabled"
+    repository_hints_config = (
+        facts.get("repository_hints_config")
+        or initial_context_artifacts.get("repository_hints_config")
+        or {}
+    )
+    if not isinstance(repository_hints_config, dict):
+        repository_hints_config = {}
+    strategy = {
+        "initial_context_policy_version": initial_context_policy_version,
+        "repository_hints_mode": repository_hints_mode,
+        "repository_hints_config": repository_hints_config,
+        "tool_schema_snapshot_hash": tool_protocol.get("tool_schema_snapshot_sha256"),
+        "context_policy_snapshot_hash": facts.get("context_policy_snapshot_hash"),
+    }
+    return {
+        **strategy,
+        "repository_hints_model_visible_hash": repository_hints_hash,
+        "context_strategy_hash": stable_hash(strategy),
+    }
 
 
 def _inspect_complete_ledger(
@@ -279,6 +341,9 @@ def _inspect_complete_ledger(
     seen_tasks: set[str] = set()
     recomputed_counts = Counter()
     recomputed_discarded = 0
+    context_strategy_hashes: set[str] = set()
+    context_policy_versions: set[str] = set()
+    repository_hints_modes: set[str] = set()
     for raw in entries:
         if not isinstance(raw, dict):
             failures.append("entry 必须是对象")
@@ -291,6 +356,12 @@ def _inspect_complete_ledger(
             failures.append(f"{task_id}: 每个正式任务只能有一个 formal run")
         seen_tasks.add(task_id)
         _inspect_entry(raw, root, failures)
+        _collect_context_strategy_values(
+            raw,
+            context_strategy_hashes=context_strategy_hashes,
+            context_policy_versions=context_policy_versions,
+            repository_hints_modes=repository_hints_modes,
+        )
         result = raw.get("formal_result")
         if isinstance(result, str):
             recomputed_counts[result] += 1
@@ -303,6 +374,28 @@ def _inspect_complete_ledger(
         failures.append("formal_result_counts 与 entries 聚合结果不一致")
     if payload.get("discarded_attempt_count") != recomputed_discarded:
         failures.append("discarded_attempt_count 与 entries.discarded_attempts 聚合结果不一致")
+    if len(context_strategy_hashes) > 1:
+        failures.append("evidence ledger 混入了不同 context_strategy_hash，不能作为同一个正式可比实验")
+    if len(context_policy_versions) > 1:
+        failures.append("evidence ledger 混入了不同 initial_context_policy_version")
+    if len(repository_hints_modes) > 1:
+        failures.append("evidence ledger 混入了不同 repository_hints_mode")
+
+
+def _collect_context_strategy_values(
+    entry: dict[str, Any],
+    *,
+    context_strategy_hashes: set[str],
+    context_policy_versions: set[str],
+    repository_hints_modes: set[str],
+) -> None:
+    for value, target in (
+        (entry.get("context_strategy_hash"), context_strategy_hashes),
+        (entry.get("initial_context_policy_version"), context_policy_versions),
+        (entry.get("repository_hints_mode"), repository_hints_modes),
+    ):
+        if isinstance(value, str) and value:
+            target.add(value)
 
 
 def _inspect_entry(entry: dict[str, Any], root: Path, failures: list[str]) -> None:
@@ -334,6 +427,7 @@ def _inspect_entry(entry: dict[str, Any], root: Path, failures: list[str]) -> No
         failures.append(f"{task_id}: 缺少 config_revision")
     if entry.get("config_preflight_ref") is None:
         failures.append(f"{task_id}: 缺少 config_preflight_ref")
+        preflight_payload = None
     else:
         _inspect_file_ref(
             entry.get("config_preflight_ref"),
@@ -342,20 +436,32 @@ def _inspect_entry(entry: dict[str, Any], root: Path, failures: list[str]) -> No
             owner=task_id,
             label="config_preflight_ref",
         )
-    _inspect_preflight_consistency(entry, failures)
+        preflight_payload = _read_file_ref_json(
+            entry.get("config_preflight_ref"),
+            root,
+        )
+    _inspect_preflight_consistency(entry, failures, preflight_payload=preflight_payload)
     if entry.get("config_preflight_status") != "passed" and not entry.get(
         "config_preflight_policy_difference_acknowledged"
     ):
         failures.append(f"{task_id}: config preflight 未通过且没有记录策略差异确认")
     if entry.get("context_inspect_status") != "passed":
         failures.append(f"{task_id}: context inspect 未通过")
+    _inspect_context_strategy_entry(entry, failures)
+    if formal_path is not None:
+        _inspect_formal_run_context_strategy(entry, formal_path, failures)
 
     _inspect_export_expectations(entry, formal_path, failures)
     _inspect_discarded_attempts(entry, root, failures)
     _inspect_verifier_consistency(entry, failures)
 
 
-def _inspect_preflight_consistency(entry: dict[str, Any], failures: list[str]) -> None:
+def _inspect_preflight_consistency(
+    entry: dict[str, Any],
+    failures: list[str],
+    *,
+    preflight_payload: dict[str, Any] | None,
+) -> None:
     task_id = str(entry.get("task_id"))
     status = entry.get("config_preflight_status")
     raw_failures = entry.get("config_preflight_failures")
@@ -378,6 +484,95 @@ def _inspect_preflight_consistency(entry: dict[str, Any], failures: list[str]) -
         failures.append(f"{task_id}: config preflight 未通过时必须记录失败项")
     if status not in {"passed", "failed_current_policy", "not_generated"}:
         failures.append(f"{task_id}: config_preflight_status 不合法：{status}")
+    if preflight_payload is None:
+        failures.append(f"{task_id}: config_preflight_ref 必须指向可解析的 JSON 对象")
+        return
+    for key in (
+        "initial_context_policy_version",
+        "repository_hints_mode",
+        "tool_schema_snapshot_hash",
+        "context_policy_snapshot_hash",
+    ):
+        preflight_value = preflight_payload.get(key)
+        entry_value = entry.get(key)
+        if not isinstance(preflight_value, str) or not preflight_value:
+            failures.append(f"{task_id}: config preflight 缺少 {key}")
+        elif preflight_value != entry_value:
+            failures.append(
+                f"{task_id}: config preflight 字段 {key} 与 formal run entry 不一致："
+                f"preflight={preflight_value} entry={entry_value}"
+            )
+
+
+def _inspect_context_strategy_entry(entry: dict[str, Any], failures: list[str]) -> None:
+    task_id = str(entry.get("task_id"))
+    required = [
+        "initial_context_policy_version",
+        "repository_hints_mode",
+        "repository_hints_config",
+        "repository_hints_model_visible_hash",
+        "tool_schema_snapshot_hash",
+        "context_policy_snapshot_hash",
+        "context_strategy_hash",
+    ]
+    missing = [key for key in required if not entry.get(key)]
+    if missing:
+        failures.append(f"{task_id}: 缺少上下文可比性字段：{', '.join(missing)}")
+        return
+    if not isinstance(entry.get("repository_hints_config"), dict):
+        failures.append(f"{task_id}: repository_hints_config 必须是对象")
+        return
+    strategy = {
+        "initial_context_policy_version": entry.get("initial_context_policy_version"),
+        "repository_hints_mode": entry.get("repository_hints_mode"),
+        "repository_hints_config": entry.get("repository_hints_config"),
+        "tool_schema_snapshot_hash": entry.get("tool_schema_snapshot_hash"),
+        "context_policy_snapshot_hash": entry.get("context_policy_snapshot_hash"),
+    }
+    if entry.get("context_strategy_hash") != stable_hash(strategy):
+        failures.append(f"{task_id}: context_strategy_hash 与上下文策略字段不一致")
+
+
+def _inspect_formal_run_context_strategy(
+    entry: dict[str, Any],
+    formal_path: Path,
+    failures: list[str],
+) -> None:
+    task_id = str(entry.get("task_id"))
+    facts_path = formal_path / "run_config_facts.json"
+    if not facts_path.is_file():
+        failures.append(f"{task_id}: formal run 缺少 run_config_facts.json")
+        return
+    facts = _read_json(facts_path)
+    tool_protocol = facts.get("tool_protocol", {})
+    if not isinstance(tool_protocol, dict):
+        failures.append(f"{task_id}: formal run_config_facts.tool_protocol 必须是对象")
+        tool_protocol = {}
+    expected = {
+        "initial_context_policy_version": facts.get("initial_context_policy_version"),
+        "repository_hints_mode": facts.get("repository_hints_mode"),
+        "repository_hints_config": facts.get("repository_hints_config"),
+        "tool_schema_snapshot_hash": tool_protocol.get("tool_schema_snapshot_sha256"),
+        "context_policy_snapshot_hash": facts.get("context_policy_snapshot_hash"),
+    }
+    for key, facts_value in expected.items():
+        if facts_value is None:
+            failures.append(f"{task_id}: formal run_config_facts 缺少 {key}")
+        elif entry.get(key) != facts_value:
+            failures.append(
+                f"{task_id}: formal run_config_facts 字段 {key} 与 ledger entry 不一致："
+                f"facts={facts_value} entry={entry.get(key)}"
+            )
+    snapshot = facts.get("context_policy_snapshot")
+    snapshot_hash = facts.get("context_policy_snapshot_hash")
+    if not isinstance(snapshot, dict) or not snapshot:
+        failures.append(f"{task_id}: formal run_config_facts 缺少 context_policy_snapshot")
+        return
+    actual_hash = stable_hash(snapshot)
+    if snapshot_hash != actual_hash:
+        failures.append(
+            f"{task_id}: context_policy_snapshot_hash 与 context_policy_snapshot 内容不一致"
+        )
 
 
 def _inspect_export_expectations(entry: dict[str, Any], formal_path: Path | None, failures: list[str]) -> None:
@@ -523,6 +718,22 @@ def _inspect_file_ref(
     actual_sha = _sha256(resolved)
     if actual_sha != expected_sha:
         failures.append(f"{owner}: {label}.sha256 不匹配：{path}")
+
+
+def _read_file_ref_json(ref: Any, base: Path) -> dict[str, Any] | None:
+    if not isinstance(ref, dict):
+        return None
+    path = ref.get("path")
+    if not isinstance(path, str) or not path:
+        return None
+    resolved = _resolve_inside_base(base, path)
+    if resolved is None or not resolved.is_file():
+        return None
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _resolve_inside_base(base: Path, relative: str) -> Path | None:

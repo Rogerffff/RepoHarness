@@ -10,7 +10,7 @@ from repo_harness.workspace import DependencyState, RunWorkspace
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_symbol_search_guidance_prefers_action_index_roots(tmp_path: Path):
+def test_symbol_search_guidance_prefers_repository_hint_roots(tmp_path: Path):
     loaded = load_task(ROOT / "tests/fixtures/tasks/task_001.yaml")
     workspace = tmp_path / "workspace"
     workspace.mkdir()
@@ -38,5 +38,8 @@ def test_symbol_search_guidance_prefers_action_index_roots(tmp_path: Path):
     guidance = messages[1]["content"]["tool_use_guidance"]  # type: ignore[index]
     rendered = str(guidance)
     assert "symbol_search.root" in rendered
-    assert "repository_action_index" in rendered
+    assert "repository_hints" in rendered
+    assert "repository_action_index" not in rendered
     assert "root='.'" in rendered
+    assert "result_envelope" not in rendered
+    assert "semantic_complete" not in rendered

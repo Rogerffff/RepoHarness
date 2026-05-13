@@ -32,16 +32,41 @@ def test_pre_verl_cli_dispatches_evidence_ledger_inspect(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    calls: list[tuple[str, bool]] = []
+    calls: list[tuple[str, bool, int | None, dict[str, int] | None]] = []
 
-    def fake_inspect(ledger: str, *, assert_complete: bool) -> str:
-        calls.append((ledger, assert_complete))
+    def fake_inspect(
+        ledger: str,
+        *,
+        assert_complete: bool,
+        expected_formal_denominator: int | None,
+        expected_result_counts: dict[str, int] | None,
+    ) -> str:
+        calls.append(
+            (
+                ledger,
+                assert_complete,
+                expected_formal_denominator,
+                expected_result_counts,
+            )
+        )
         return "ledger ok"
 
     monkeypatch.setattr("repo_harness.cli.main.inspect_pre_verl_evidence_ledger", fake_inspect)
 
-    result = main(["inspect-pre-verl-evidence-ledger", "ledger.json", "--assert-complete"])
+    result = main(
+        [
+            "inspect-pre-verl-evidence-ledger",
+            "ledger.json",
+            "--assert-complete",
+            "--expected-formal-denominator",
+            "3",
+            "--expected-result-counts",
+            '{"success": 1, "failed": 2, "inconclusive": 0}',
+        ]
+    )
 
     assert result == 0
-    assert calls == [("ledger.json", True)]
+    assert calls == [
+        ("ledger.json", True, 3, {"success": 1, "failed": 2, "inconclusive": 0})
+    ]
     assert "ledger ok" in capsys.readouterr().out

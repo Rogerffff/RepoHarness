@@ -217,6 +217,10 @@ class AutoCompactResult(StrictBaseModel):
 
 class ContextPolicySnapshot(StrictBaseModel):
     schema_version: str = "repo_harness_context_policy_snapshot_v1"
+    initial_context_policy_version: str = "repo_harness_initial_context_policy_v0_legacy_full_index"
+    repository_hints: dict[str, Any] = Field(
+        default_factory=lambda: {"mode": "legacy_full_index"}
+    )
     context_budget_policy: str
     model_context_window_tokens: int | Literal["auto"]
     harness_context_cap_tokens: int | None = None

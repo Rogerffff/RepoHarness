@@ -12,6 +12,13 @@ def test_context_management_config_exposes_compact_policy_defaults():
     config = ContextManagementConfig()
 
     assert config.schema_version == "repo_harness_context_management_config_v1"
+    assert config.initial_context_policy_version == (
+        "repo_harness_initial_context_policy_v1_lean_hints"
+    )
+    assert config.repository_hints.mode == "balanced_eval"
+    assert config.repository_hints.resolved_max_candidate_files == 8
+    assert config.repository_hints.resolved_max_matched_terms_per_file == 6
+    assert config.repository_hints.resolved_max_fallback_search_terms == 8
     assert config.max_context_tokens == 120000
     assert config.tool_result_aggregate_budget_chars == 40000
     assert config.context_budget_policy == "model_window_with_optional_cap"
@@ -39,9 +46,83 @@ def test_context_management_config_accepts_legacy_fields_without_new_fields():
     assert config.max_context_tokens == 64000
     assert config.tool_result_aggregate_budget_chars == 12345
     assert config.keep_recent_turns == 4
+    assert config.repository_hints.mode == "balanced_eval"
+    assert config.repository_hints.resolved_max_candidate_files == 8
     assert config.tool_result_compact_policy == "claude_code_fresh_only_v1"
     assert config.microcompact_enabled is True
     assert config.auto_compact_enabled is True
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_limit", "expected_fallback_terms", "expected_low_limit"),
+    [
+        ("disabled", 0, 0, 0),
+        ("strict_eval", 3, 5, 0),
+        ("balanced_eval", 8, 8, 0),
+        ("weak_model_scaffold", 12, 8, 2),
+    ],
+)
+def test_repository_hints_config_resolves_mode_defaults(
+    mode: str,
+    expected_limit: int,
+    expected_fallback_terms: int,
+    expected_low_limit: int,
+):
+    config = ContextManagementConfig.model_validate(
+        {"repository_hints": {"mode": mode}}
+    )
+
+    assert config.repository_hints.resolved_max_candidate_files == expected_limit
+    assert (
+        config.repository_hints.resolved_max_fallback_search_terms
+        == expected_fallback_terms
+    )
+    assert (
+        config.repository_hints.resolved_include_low_confidence_limit
+        == expected_low_limit
+    )
+
+
+def test_repository_hints_config_accepts_custom_limits():
+    config = ContextManagementConfig.model_validate(
+        {
+            "repository_hints": {
+                "mode": "custom",
+                "max_candidate_files": 5,
+                "include_low_confidence_limit": 1,
+                "max_matched_terms_per_file": 4,
+                "max_fallback_search_terms": 3,
+            }
+        }
+    )
+
+    assert config.repository_hints.resolved_max_candidate_files == 5
+    assert config.repository_hints.resolved_max_matched_terms_per_file == 4
+    assert config.repository_hints.resolved_max_fallback_search_terms == 3
+    assert config.repository_hints.resolved_include_low_confidence_limit == 1
+    assert config.repository_hints.max_matched_terms_per_file == 4
+    assert config.repository_hints.max_fallback_search_terms == 3
+
+
+def test_repository_hints_custom_mode_requires_explicit_candidate_limit():
+    with pytest.raises(ValueError, match="max_candidate_files"):
+        ContextManagementConfig.model_validate(
+            {"repository_hints": {"mode": "custom"}}
+        )
+
+
+def test_repository_hints_disabled_mode_rejects_explicit_candidate_limit():
+    with pytest.raises(ValueError, match="disabled"):
+        ContextManagementConfig.model_validate(
+            {"repository_hints": {"mode": "disabled", "max_candidate_files": 5}}
+        )
+
+
+def test_repository_hints_candidate_limit_has_upper_bound():
+    with pytest.raises(ValueError):
+        ContextManagementConfig.model_validate(
+            {"repository_hints": {"mode": "custom", "max_candidate_files": 21}}
+        )
 
 
 def test_tool_result_artifact_record_derives_recoverable_flag(tmp_path: Path):

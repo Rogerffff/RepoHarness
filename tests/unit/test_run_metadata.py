@@ -164,6 +164,38 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
             encoding="utf-8",
         )
         (run_dir / "final.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+        initial_context_profile_ref = recorder.write_json_artifact(
+            "initial_context_profile",
+            {
+                "schema_version": "repo_harness_initial_context_profile_v0",
+                "initial_context_policy_version": (
+                    "repo_harness_initial_context_policy_v1_lean_hints"
+                ),
+                "repository_hints_mode": "balanced_eval",
+                "repository_hints_presence": "present",
+                "repository_hints_absence_reason": None,
+                "repository_hints_model_visible_hash": "1" * 64,
+                "repository_hints_model_visible_ref": {
+                    "kind": "repository_hints_model_visible",
+                    "relative_path": "artifacts/repository_hints.json",
+                    "sha256": "1" * 64,
+                },
+                "repository_action_index_full_hash": "2" * 64,
+                "repository_action_index_full_ref": {
+                    "kind": "repository_action_index_full",
+                    "relative_path": "artifacts/repository_action_index_full.json",
+                    "sha256": "2" * 64,
+                },
+                "repository_context_index_full_hash": "3" * 64,
+                "repository_context_index_full_ref": {
+                    "kind": "repository_context_index_full",
+                    "relative_path": "artifacts/repository_context_index_full.json",
+                    "sha256": "3" * 64,
+                },
+                "forbidden_model_visible_fields_present": [],
+            },
+            {"budget_policy": "preserve_json"},
+        )
         metadata = build_run_metadata(
             run_dir=run_dir,
             run_id="run_001",
@@ -193,7 +225,7 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
     assert facts_payload["repository_action_index_policy_version"] == (
         "repo_harness_repository_action_index_v1"
     )
-    assert facts_payload["convergence_nudge_policy_version"] == "repo_harness_convergence_nudge_v2"
+    assert facts_payload["convergence_nudge_policy_version"] == "repo_harness_convergence_nudge_v3"
     assert facts_payload["context_warning_policy_version"] == "repo_harness_context_warning_v1"
     assert facts_payload["provider_ready_token_estimator_version"] == (
         "provider_body_char4_token_estimator_v1"
@@ -218,6 +250,60 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
     assert facts_payload["context_policy_snapshot"]["tool_result_compact_policy"] == (
         "claude_code_fresh_only_v1"
     )
+    assert facts_payload["initial_context_policy_version"] == (
+        "repo_harness_initial_context_policy_v1_lean_hints"
+    )
+    assert facts_payload["repository_hints_mode"] == "balanced_eval"
+    assert facts_payload["repository_hints_config"]["mode"] == "balanced_eval"
+    assert facts_payload["repository_hints_config"]["resolved_max_candidate_files"] == 8
+    assert (
+        facts_payload["repository_hints_config"][
+            "resolved_max_matched_terms_per_file"
+        ]
+        == 6
+    )
+    assert (
+        facts_payload["repository_hints_config"][
+            "resolved_max_fallback_search_terms"
+        ]
+        == 8
+    )
+    assert (
+        facts_payload["repository_hints_config"][
+            "resolved_include_low_confidence_limit"
+        ]
+        == 0
+    )
+    assert facts_payload["repository_hints_resolved_max_candidate_files"] == 8
+    assert facts_payload["repository_hints_resolved_max_matched_terms_per_file"] == 6
+    assert facts_payload["repository_hints_resolved_max_fallback_search_terms"] == 8
+    assert facts_payload["repository_hints_resolved_include_low_confidence_limit"] == 0
+    assert facts_payload["context_policy_snapshot"]["initial_context_policy_version"] == (
+        "repo_harness_initial_context_policy_v1_lean_hints"
+    )
+    assert facts_payload["context_policy_snapshot"]["repository_hints"]["mode"] == (
+        "balanced_eval"
+    )
+    assert (
+        facts_payload["context_policy_snapshot"]["repository_hints"][
+            "resolved_max_candidate_files"
+        ]
+        == 8
+    )
+    assert (
+        facts_payload["context_policy_snapshot"]["repository_hints"][
+            "resolved_max_fallback_search_terms"
+        ]
+        == 8
+    )
+    legacy_snapshot_payload = dict(facts_payload["context_policy_snapshot"])
+    legacy_snapshot_payload.pop("initial_context_policy_version")
+    legacy_snapshot_payload.pop("repository_hints")
+    legacy_snapshot = ContextPolicySnapshot.model_validate(legacy_snapshot_payload)
+    assert legacy_snapshot.initial_context_policy_version == (
+        "repo_harness_initial_context_policy_v0_legacy_full_index"
+    )
+    assert legacy_snapshot.repository_hints == {"mode": "legacy_full_index"}
     assert facts_payload["context_policy_snapshot"]["max_single_tool_result_chars"] == 50000
     assert facts_payload["context_policy_snapshot"]["max_tool_results_per_turn_chars"] == 200000
     assert facts_payload["context_policy_snapshot"]["microcompact_policy"] == (
@@ -233,7 +319,32 @@ def test_run_config_facts_and_metadata_are_written_as_root_fact_files(tmp_path: 
     assert metadata_payload["run_config_facts_ref"]["sha256"] == facts_ref.sha256
     assert metadata_payload["tool_protocol"]["tool_schema_snapshot_ref"]["artifact_id"]
     assert metadata_payload["export_readiness"]["training_export_ready"] is True
+    assert metadata_payload["initial_context_artifacts"]["initial_context_profile_ref"][
+        "artifact_id"
+    ] == initial_context_profile_ref.artifact_id
+    assert metadata_payload["initial_context_artifacts"][
+        "initial_context_policy_version"
+    ] == "repo_harness_initial_context_policy_v1_lean_hints"
+    assert metadata_payload["initial_context_artifacts"][
+        "repository_hints_model_visible_hash"
+    ] == "1" * 64
+    assert metadata_payload["initial_context_artifacts"][
+        "repository_hints_presence"
+    ] == "present"
+    assert metadata_payload["initial_context_artifacts"][
+        "repository_action_index_full_hash"
+    ] == "2" * 64
+    assert metadata_payload["initial_context_artifacts"][
+        "repository_context_index_full_hash"
+    ] == "3" * 64
+    assert (
+        metadata_payload["initial_context_artifacts"][
+            "forbidden_model_visible_fields_present"
+        ]
+        == []
+    )
     assert any(artifact["kind"] == "tool_schema_snapshot" for artifact in manifest["artifacts"])
+    assert any(artifact["kind"] == "initial_context_profile" for artifact in manifest["artifacts"])
     assert "run_config_facts.json" not in manifest_paths
     assert "run_metadata.json" not in manifest_paths
 

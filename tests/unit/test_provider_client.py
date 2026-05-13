@@ -26,6 +26,7 @@ from repo_harness.model_client.schemas import (
     ProviderCredentialPolicy,
 )
 from repo_harness.run_metadata import RunConfigFactsRef
+from repo_harness.tools import default_tool_registry
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 
 
@@ -76,6 +77,48 @@ def test_deepseek_provider_uses_openai_compatible_tool_calls(tmp_path: Path):
     )
     assert "sk-test-secret-value" not in raw_text
     assert "Authorization: Bearer" not in raw_text
+
+
+def test_provider_tool_body_does_not_reference_repository_action_index(tmp_path: Path):
+    client = _DeepSeekStub(
+        model_id="deepseek-v4-pro",
+        base_url="https://api.deepseek.com",
+        credential=ProviderCredential(value="sk-test-secret-value-1234567890", source="environment"),
+        response_payload={
+            "id": "deepseek-response-1",
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "message": {"role": "assistant", "content": "done"},
+                }
+            ],
+            "usage": {"prompt_tokens": 11, "completion_tokens": 7},
+        },
+    )
+    registry = default_tool_registry()
+    symbol_search = registry.get("symbol_search")
+    request = _request(
+        provider="deepseek",
+        model_id="deepseek-v4-pro",
+    ).model_copy(
+        update={
+            "allowed_tool_definitions": [
+                {
+                    "name": symbol_search.name,
+                    "description": symbol_search.model_visible_description,
+                    "model_visible_prompt": symbol_search.model_visible_prompt,
+                    "input_schema": symbol_search.input_schema,
+                }
+            ]
+        }
+    )
+
+    with RunRecorder("deepseek", tmp_path / "run", task_id="task_001") as recorder:
+        client.generate(request=request, recorder=recorder)
+
+    rendered_tools = json.dumps(client.last_body["tools"], ensure_ascii=False)
+    assert "repository_action_index" not in rendered_tools
+    assert "repository_hints" in rendered_tools
 
 
 def test_deepseek_thinking_enabled_omits_temperature(tmp_path: Path):

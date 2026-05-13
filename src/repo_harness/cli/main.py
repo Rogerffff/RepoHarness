@@ -17,6 +17,7 @@ from repo_harness.evaluation.experiment import (
 )
 from repo_harness.evaluation.experiment import run_experiment as run_experiment_command
 from repo_harness.export import ExportPolicy, export_run_or_runs, inspect_export
+from repo_harness.inspect_initial_context import inspect_initial_context
 from repo_harness.model_client.mock_smoke import inspect_mock_provider_smoke
 from repo_harness.model_client.real_smoke import inspect_real_provider_smoke, run_real_provider_smoke
 from repo_harness.tasks import load_task
@@ -1549,6 +1550,17 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_model_visible_context_parser.add_argument("--assert-tool-results-recoverable", action="store_true")
     inspect_model_visible_context_parser.add_argument("--assert-no-over-redaction", action="store_true")
 
+    inspect_initial_context_parser = subparsers.add_parser(
+        "inspect-initial-context",
+        help="检查首轮模型可见上下文、provider body 和工具 schema 是否符合 lean context 策略。",
+    )
+    inspect_initial_context_parser.add_argument("target", nargs="?", help="run directory。")
+    inspect_initial_context_parser.add_argument("--first-model-call", action="store_true")
+    inspect_initial_context_parser.add_argument("--model-call-id")
+    inspect_initial_context_parser.add_argument("--prepared-messages")
+    inspect_initial_context_parser.add_argument("--raw-provider-request")
+    inspect_initial_context_parser.add_argument("--assert-pre-verl-lean", action="store_true")
+
     build_pre_verl_evidence_ledger_parser = subparsers.add_parser(
         "build-pre-verl-evidence-ledger",
         help="构建 pre-verl 开发集正式 run 和 discarded attempt 的机器可读证据索引。",
@@ -1562,6 +1574,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_pre_verl_evidence_ledger_parser.add_argument("ledger")
     inspect_pre_verl_evidence_ledger_parser.add_argument("--assert-complete", action="store_true")
+    inspect_pre_verl_evidence_ledger_parser.add_argument(
+        "--expected-formal-denominator",
+        type=int,
+        help="覆盖完整检查使用的 formal run 分母；3 题 canary 可传 3，正式 dev23 默认是 23。",
+    )
+    inspect_pre_verl_evidence_ledger_parser.add_argument(
+        "--expected-result-counts",
+        help=(
+            "覆盖完整检查使用的结果分布 JSON，例如 "
+            "'{\"success\": 1, \"failed\": 2, \"inconclusive\": 0}'。"
+        ),
+    )
 
     provider_failure_injection_parser = subparsers.add_parser(
         "run-provider-failure-injection-smoke",
@@ -2957,6 +2981,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"模型可见上下文检查失败：{exc}\n")
         return 0
+    if args.command == "inspect-initial-context":
+        try:
+            print(
+                inspect_initial_context(
+                    args.target,
+                    first_model_call=args.first_model_call,
+                    model_call_id=args.model_call_id,
+                    prepared_messages=args.prepared_messages,
+                    raw_provider_request=args.raw_provider_request,
+                    assert_pre_verl_lean=args.assert_pre_verl_lean,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"首轮模型上下文检查失败：{exc}\n")
+        return 0
     if args.command == "build-pre-verl-evidence-ledger":
         try:
             output_path = build_pre_verl_evidence_ledger(
@@ -2969,12 +3008,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "inspect-pre-verl-evidence-ledger":
         try:
+            expected_result_counts = (
+                json.loads(args.expected_result_counts)
+                if args.expected_result_counts
+                else None
+            )
+            if expected_result_counts is not None and not isinstance(expected_result_counts, dict):
+                raise RepoHarnessError("--expected-result-counts 必须是 JSON object。")
             print(
                 inspect_pre_verl_evidence_ledger(
                     args.ledger,
                     assert_complete=args.assert_complete,
+                    expected_formal_denominator=args.expected_formal_denominator,
+                    expected_result_counts=expected_result_counts,
                 )
             )
+        except json.JSONDecodeError as exc:
+            parser.exit(1, f"pre-verl evidence ledger 检查失败：--expected-result-counts 不是有效 JSON：{exc}\n")
         except RepoHarnessError as exc:
             parser.exit(1, f"pre-verl evidence ledger 检查失败：{exc}\n")
         return 0
