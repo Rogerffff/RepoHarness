@@ -15,12 +15,12 @@ from repo_harness.trajectory import verify_artifact_manifest
 
 OPTIONAL_COMPARE_FIELDS = {
     "source_archive_sha256",
-    "context_policy_snapshot_hash",
     "context_budget_policy",
     "tool_result_compact_policy",
     "microcompact_policy",
     "auto_compact_enabled",
     "reactive_compact_policy",
+    "repository_hints_model_visible_hash",
     "provider_request_timeout",
 }
 
@@ -102,7 +102,14 @@ def _candidate_from_run(run_path: Path, *, export_policy: ExportPolicy) -> PairC
     metrics = _read_json_if_exists(run_path / "metrics.json")
     baseline = _read_json_if_exists(run_path / "baseline.json")
     config = _read_json_if_exists(run_path / "run_config_facts.json")
-    facts = _compare_facts(run_path, config=config, baseline=baseline, export_policy=export_policy)
+    metadata = _read_json_if_exists(run_path / "run_metadata.json")
+    facts = _compare_facts(
+        run_path,
+        config=config,
+        baseline=baseline,
+        metadata=metadata,
+        export_policy=export_policy,
+    )
     return PairCandidate(
         run_id=run_path.name,
         run_dir=run_path,
@@ -135,6 +142,11 @@ def _candidate_from_run(run_path: Path, *, export_policy: ExportPolicy) -> PairC
             "microcompact_policy": facts.get("microcompact_policy"),
             "auto_compact_enabled": facts.get("auto_compact_enabled"),
             "reactive_compact_policy": facts.get("reactive_compact_policy"),
+            "initial_context_policy_version": facts.get("initial_context_policy_version"),
+            "repository_hints_mode": facts.get("repository_hints_mode"),
+            "repository_hints_model_visible_hash": facts.get(
+                "repository_hints_model_visible_hash"
+            ),
             "prompt_template_version": facts.get("prompt_template_version"),
             "model_provider": facts.get("model_provider"),
             "model_id": facts.get("model_id"),
@@ -173,6 +185,7 @@ def _compare_facts(
     *,
     config: dict[str, Any],
     baseline: dict[str, Any],
+    metadata: dict[str, Any],
     export_policy: ExportPolicy,
 ) -> dict[str, Any]:
     environment = config.get("environment_fingerprint", {})
@@ -184,6 +197,26 @@ def _compare_facts(
     backend_name = execution_mode.get("resolved_execution_mode") or workspace_backend.get("backend")
     source_tree_hash = source_checkout.get("source_tree_hash") or config.get("source_tree_hash")
     tool_schema_hash = tool_protocol.get("tool_schema_snapshot_sha256")
+    initial_context_artifacts = metadata.get("initial_context_artifacts", {})
+    if not isinstance(initial_context_artifacts, dict):
+        initial_context_artifacts = {}
+    initial_context_policy_version = (
+        config.get("initial_context_policy_version")
+        or initial_context_artifacts.get("initial_context_policy_version")
+    )
+    repository_hints_mode = (
+        config.get("repository_hints_mode")
+        or initial_context_artifacts.get("repository_hints_mode")
+    )
+    repository_hints_hash = initial_context_artifacts.get(
+        "repository_hints_model_visible_hash"
+    )
+    if repository_hints_hash is None and repository_hints_mode == "disabled":
+        repository_hints_hash = "disabled"
+    repository_hints_presence = initial_context_artifacts.get("repository_hints_presence")
+    repository_hints_absence_reason = initial_context_artifacts.get(
+        "repository_hints_absence_reason"
+    )
     return {
         "task_id": config.get("task_id") or baseline.get("task_id"),
         "task_version": config.get("task_version"),
@@ -211,6 +244,11 @@ def _compare_facts(
         "microcompact_policy": config.get("microcompact_policy"),
         "auto_compact_enabled": config.get("auto_compact_enabled"),
         "reactive_compact_policy": config.get("reactive_compact_policy"),
+        "initial_context_policy_version": initial_context_policy_version,
+        "repository_hints_mode": repository_hints_mode,
+        "repository_hints_model_visible_hash": repository_hints_hash,
+        "repository_hints_presence": repository_hints_presence,
+        "repository_hints_absence_reason": repository_hints_absence_reason,
         "prompt_template_version": config.get("prompt_template_version"),
         "export_policy_version": export_policy.export_policy_version,
         "scaffold_id": config.get("scaffold_id"),
@@ -302,6 +340,28 @@ def _precondition_blockers(candidate: PairCandidate) -> list[str]:
         blocked.append("artifact_manifest_invalid")
     if not candidate.facts.get("tool_schema_snapshot_hash"):
         blocked.append("tool_schema_snapshot_mismatch")
+    if not candidate.facts.get("context_policy_snapshot_hash"):
+        blocked.append("context_policy_mismatch")
+    if not candidate.facts.get("initial_context_policy_version"):
+        blocked.append("initial_context_policy_mismatch")
+    if not candidate.facts.get("repository_hints_mode"):
+        blocked.append("initial_context_policy_mismatch")
+    if not candidate.facts.get("repository_hints_model_visible_hash"):
+        blocked.append("initial_context_policy_mismatch")
+    hints_mode = candidate.facts.get("repository_hints_mode")
+    hints_presence = candidate.facts.get("repository_hints_presence")
+    hints_absence_reason = candidate.facts.get("repository_hints_absence_reason")
+    if hints_mode != "disabled":
+        if hints_presence == "present":
+            if hints_absence_reason not in {None, ""}:
+                blocked.append("initial_context_policy_mismatch")
+        elif (
+            hints_presence == "absent"
+            and hints_absence_reason == "no_model_visible_hint_seed"
+        ):
+            pass
+        else:
+            blocked.append("initial_context_policy_mismatch")
     if _source_run_invalid_for_preference(candidate.run_dir, metrics):
         blocked.append("source_run_invalid_for_training")
     return blocked
@@ -360,8 +420,17 @@ def _field_blocked_reason(field_name: str) -> str:
         "microcompact_policy",
         "auto_compact_enabled",
         "reactive_compact_policy",
+        "initial_context_policy_version",
+        "repository_hints_mode",
+        "repository_hints_model_visible_hash",
         "prompt_template_version",
     }:
+        if field_name in {
+            "initial_context_policy_version",
+            "repository_hints_mode",
+            "repository_hints_model_visible_hash",
+        }:
+            return "initial_context_policy_mismatch"
         return "context_policy_mismatch"
     if field_name in {
         "turn_budget",

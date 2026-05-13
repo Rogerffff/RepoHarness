@@ -33,6 +33,7 @@ from repo_harness.export.pairing import (
     load_pairing_policy,
 )
 from repo_harness.export.schemas import ExportPolicy, ExportRecord, ExportRecordQuality
+from repo_harness.schema_base import stable_hash
 from repo_harness.schema_versions import EXPORT_SCHEMA_VERSION
 from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
 
@@ -504,6 +505,7 @@ def _build_legacy_sft_record(run_path: Path) -> ExportRecord:
     prepared_observations = _prepared_tool_observations(run_path)
     assistant_tool_calls = _assistant_tool_calls_by_turn(run_path)
     messages: list[dict[str, Any]] = []
+    prompt_message_audit_bindings: list[dict[str, Any]] = []
     loss_mask: list[int] = []
     observation_mask: list[int] = []
     trainable_messages: list[int] = []
@@ -518,7 +520,13 @@ def _build_legacy_sft_record(run_path: Path) -> ExportRecord:
         if message is None:
             continue
         message = _sanitize_for_export(message)
-        messages.append(message)
+        provider_message, audit_binding = _provider_visible_message_with_audit_binding(
+            message,
+            message_index=len(messages),
+        )
+        messages.append(provider_message)
+        if audit_binding:
+            prompt_message_audit_bindings.append(audit_binding)
         is_assistant_target = record.get("role") == "assistant" and bool(record.get("trainable"))
         is_tool_observation = record.get("role") == "tool"
         if is_assistant_target:
@@ -537,6 +545,7 @@ def _build_legacy_sft_record(run_path: Path) -> ExportRecord:
         },
         "prepared_message_refs": _prepared_message_artifacts(run_path),
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
+        "prompt_message_audit_bindings": prompt_message_audit_bindings,
         "v3_observation_bindings": _v3_observation_bindings(run_path),
         "excluded_harness_control_message_count": excluded_control_message_count,
         "harness_control_message_export_policy": "exclude_harness_generated_untrainable_control_messages_v1",
@@ -560,7 +569,7 @@ def _build_sft_record_from_model_input_snapshot(
 ) -> ExportRecord:
     prepared_payload = binding["prepared_payload"]
     source_events = _tool_observation_source_events(run_path)
-    prepared_messages = [
+    prepared_audit_messages = [
         _prepared_snapshot_message_for_export(
             message,
             binding=binding,
@@ -569,12 +578,21 @@ def _build_sft_record_from_model_input_snapshot(
         )
         for message in prepared_payload.get("messages", [])
     ]
+    (
+        prompt_messages,
+        prompt_equivalence,
+        prompt_message_audit_bindings,
+    ) = _provider_visible_prompt_messages_for_export(
+        run_path,
+        binding,
+        prepared_audit_messages=prepared_audit_messages,
+    )
     assistant_target = _assistant_target_for_model_call(
         run_path,
         str(binding["snapshot"].get("model_call_id") or ""),
     )
     assistant_message = _sanitize_for_export(assistant_target["message"])
-    messages = [*prepared_messages, assistant_message]
+    messages = [*prompt_messages, assistant_message]
     trainable_target = (
         binding["snapshot"].get("trainable") is True
         and assistant_target.get("trainable") is True
@@ -583,9 +601,9 @@ def _build_sft_record_from_model_input_snapshot(
     payload = {
         "messages": messages,
         "trainable_messages": [len(messages) - 1] if trainable_target else [],
-        "loss_mask": [0 for _ in prepared_messages] + [1 if trainable_target else 0],
+        "loss_mask": [0 for _ in prompt_messages] + [1 if trainable_target else 0],
         "observation_mask": [
-            1 if message.get("role") == "tool" else 0 for message in prepared_messages
+            1 if message.get("role") == "tool" else 0 for message in prompt_messages
         ]
         + [0],
         "target": {
@@ -609,6 +627,8 @@ def _build_sft_record_from_model_input_snapshot(
         "provider_response_artifact_ref": binding["snapshot"].get(
             "provider_response_artifact_ref"
         ),
+        "provider_visible_prompt_equivalence": prompt_equivalence,
+        "prompt_message_audit_bindings": prompt_message_audit_bindings,
         "context_policy_snapshot_ref": binding["snapshot"].get(
             "context_policy_snapshot_ref"
         ),
@@ -723,14 +743,18 @@ def _build_rl_record_from_model_input_snapshot(
     metadata = _safe_metadata(run_path, export_format="rl_jsonl")
     reward = _read_json_if_exists(run_path / "reward.json")
     trainable_snapshot = binding["snapshot"].get("trainable") is True
+    prompt = _prompt_from_model_input_snapshot_binding(run_path, binding)
     payload = {
-        "prompt": _prompt_from_model_input_snapshot_binding(binding),
+        "prompt": prompt,
         "trajectory": _trajectory_from_events(run_path),
         "reward": float(reward.get("final_reward", 0.0)) if reward else 0.0,
         "training_sample_source": "model_input_snapshot",
         "model_call_id": binding["snapshot"].get("model_call_id"),
         "model_input_snapshot_ref": binding["snapshot_ref"],
         "model_input_snapshot": binding["snapshot"],
+        "provider_visible_prompt_equivalence": prompt.get(
+            "provider_visible_prompt_equivalence"
+        ),
         "prepared_message_refs": [binding["prepared_messages_ref"]],
         "model_input_snapshot_refs": [binding["snapshot_ref"]],
         "content_replacement_state_refs": _content_replacement_state_artifacts(run_path),
@@ -914,13 +938,20 @@ def _assistant_tool_calls_by_turn(run_path: Path) -> dict[int, list[dict[str, An
         if not isinstance(turn, int):
             continue
         call = event.get("data", {})
+        tool_name = str(call.get("tool_name") or "")
+        requested_arguments = call.get("arguments", {})
+        arguments = _canonical_tool_arguments_for_provider_visible_export(
+            tool_name,
+            requested_arguments,
+        )
         calls_by_turn.setdefault(turn, []).append(
-            {
-                "tool_call_id": call.get("tool_call_id"),
-                "tool_name": call.get("tool_name"),
-                "arguments": call.get("arguments", {}),
-                "turn": call.get("turn", turn),
-            }
+            _provider_tool_call_for_export(
+                {
+                    "tool_call_id": call.get("tool_call_id"),
+                    "tool_name": tool_name,
+                    "arguments": arguments,
+                }
+            )
         )
     return calls_by_turn
 
@@ -988,12 +1019,34 @@ def _accepted_model_input_snapshot_events(run_path: Path) -> dict[str, dict[str,
     return accepted
 
 
-def _prompt_from_model_input_snapshot_binding(binding: dict[str, Any]) -> dict[str, Any]:
+def _prompt_from_model_input_snapshot_binding(
+    run_path: Path,
+    binding: dict[str, Any],
+) -> dict[str, Any]:
     snapshot = binding["snapshot"]
     prepared_payload = binding["prepared_payload"]
+    source_events = _tool_observation_source_events(run_path)
+    prepared_audit_messages = [
+        _prepared_snapshot_message_for_export(
+            message,
+            binding=binding,
+            prepared_payload=prepared_payload,
+            source_events=source_events,
+        )
+        for message in prepared_payload.get("messages", [])
+    ]
+    (
+        prompt_messages,
+        prompt_equivalence,
+        prompt_message_audit_bindings,
+    ) = _provider_visible_prompt_messages_for_export(
+        run_path,
+        binding,
+        prepared_audit_messages=prepared_audit_messages,
+    )
     return _sanitize_for_export(
         {
-            "messages": prepared_payload.get("messages", []),
+            "messages": prompt_messages,
             "training_sample_source": "model_input_snapshot",
             "model_call_id": snapshot.get("model_call_id"),
             "model_input_snapshot_ref": binding["snapshot_ref"],
@@ -1013,8 +1066,255 @@ def _prompt_from_model_input_snapshot_binding(binding: dict[str, Any]) -> dict[s
                 "provider_response_artifact_ref"
             ),
             "context_policy_snapshot_ref": snapshot.get("context_policy_snapshot_ref"),
+            "provider_visible_prompt_equivalence": prompt_equivalence,
+            "prompt_message_audit_bindings": prompt_message_audit_bindings,
         }
     )
+
+
+def _provider_visible_prompt_messages_for_export(
+    run_path: Path,
+    binding: dict[str, Any],
+    *,
+    prepared_audit_messages: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]]]:
+    prepared_payload = binding["prepared_payload"]
+    prepared_messages = prepared_payload.get("messages", [])
+    if not isinstance(prepared_messages, list):
+        prepared_messages = []
+    raw_request_ref = binding["snapshot"].get("provider_request_artifact_ref")
+    raw_request = _read_artifact_json(run_path, raw_request_ref) if isinstance(raw_request_ref, dict) else {}
+    provider = str(raw_request.get("provider") or "")
+    provider_body_messages = _provider_body_message_projection(raw_request)
+    prepared_projection = _safe_project_prepared_messages(
+        prepared_messages,
+        provider=provider,
+    )
+    prepared_export_projection = _export_training_message_projection(
+        [_sanitize_for_export(message) for message in prepared_projection]
+    )
+    provider_body_export_projection = (
+        _export_training_message_projection(
+            [_sanitize_for_export(message) for message in provider_body_messages]
+        )
+        if provider_body_messages is not None
+        else None
+    )
+    if provider_body_messages is not None:
+        projection = provider_body_export_projection or []
+        projection_source = "raw_provider_request_body"
+    else:
+        projection = prepared_export_projection
+        projection_source = "prepared_messages_provider_projection"
+    prompt_messages = [_sanitize_for_export(message) for message in projection]
+    prompt_message_audit_bindings = _prompt_message_audit_bindings(
+        prepared_audit_messages
+    )
+    export_projection = _export_training_message_projection(prompt_messages)
+    provider_body_available = provider_body_messages is not None
+    prepared_body_equivalent = (
+        raw_request.get("prepared_messages_body_equivalent")
+        if provider_body_available
+        else None
+    )
+    if prepared_body_equivalent is None and provider_body_available:
+        prepared_body_equivalent = prepared_projection == provider_body_messages
+    expected_export_projection = (
+        provider_body_export_projection
+        if provider_body_available
+        else prepared_export_projection
+    )
+    export_body_equivalent = (
+        export_projection == expected_export_projection
+    )
+    return (
+        prompt_messages,
+        {
+            "schema_version": "repo_harness_provider_visible_prompt_equivalence_v0",
+            "source": projection_source,
+            "provider_body_available": provider_body_available,
+            "prepared_messages_ref": binding["prepared_messages_ref"],
+            "raw_provider_request_ref": raw_request_ref,
+            "prepared_messages_projection_hash": stable_hash(prepared_projection),
+            "provider_body_message_projection_hash": (
+                stable_hash(provider_body_messages) if provider_body_available else None
+            ),
+            "provider_body_export_projection_hash": (
+                stable_hash(provider_body_export_projection)
+                if provider_body_available
+                else None
+            ),
+            "prepared_messages_export_projection_hash": stable_hash(
+                prepared_export_projection
+            ),
+            "export_prompt_projection_hash": stable_hash(export_projection),
+            "prepared_messages_body_equivalent": prepared_body_equivalent,
+            "export_prompt_body_equivalent": export_body_equivalent,
+            "prepared_message_count": len(prepared_projection),
+            "provider_body_message_count": (
+                len(provider_body_messages) if provider_body_available else None
+            ),
+            "export_prompt_message_count": len(export_projection),
+        },
+        prompt_message_audit_bindings,
+    )
+
+
+def _provider_body_message_projection(raw_request: dict[str, Any]) -> list[dict[str, Any]] | None:
+    body = raw_request.get("body")
+    if isinstance(body, dict) and isinstance(body.get("messages"), list):
+        return _export_training_message_projection(body.get("messages", []))
+    return None
+
+
+def _safe_project_prepared_messages(
+    prepared_messages: list[Any],
+    *,
+    provider: str,
+) -> list[dict[str, Any]]:
+    del provider
+    projected: list[dict[str, Any]] = []
+    for message in prepared_messages:
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        converted: dict[str, Any] = {"role": role}
+        if role == "assistant":
+            converted["content"] = _content_to_export_string(message.get("content"))
+            tool_calls = message.get("tool_calls") or []
+            if tool_calls:
+                converted["tool_calls"] = _provider_tool_calls_for_export(tool_calls)
+        elif role == "tool":
+            converted["content"] = _content_to_export_string(message.get("content"))
+            converted["tool_call_id"] = str(
+                message.get("tool_call_id") or message.get("tool_result_id") or ""
+            )
+        else:
+            converted["content"] = _content_to_export_string(message.get("content"))
+        projected.append(
+            {key: value for key, value in converted.items() if value is not None}
+        )
+    return projected
+
+
+def _content_to_export_string(content: Any) -> str | None:
+    if content is None:
+        return None
+    if isinstance(content, str):
+        return content
+    return json.dumps(content, ensure_ascii=False, sort_keys=True)
+
+
+def _canonical_tool_arguments_for_provider_visible_export(
+    tool_name: str,
+    arguments: Any,
+) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return {}
+    canonical = dict(arguments)
+    if tool_name == "grep" and "pattern" in canonical:
+        if "query" not in canonical:
+            canonical["query"] = canonical["pattern"]
+        canonical.pop("pattern", None)
+    return canonical
+
+
+def _provider_tool_call_for_export(call: Any) -> dict[str, Any]:
+    if not isinstance(call, dict):
+        call = {}
+    function = call.get("function") if isinstance(call.get("function"), dict) else {}
+    tool_name = str(call.get("tool_name") or call.get("name") or function.get("name") or "")
+    raw_arguments = call.get("arguments")
+    if raw_arguments is None:
+        raw_arguments = function.get("arguments") or {}
+    if isinstance(raw_arguments, str):
+        try:
+            raw_arguments = json.loads(raw_arguments)
+        except json.JSONDecodeError:
+            raw_arguments = {}
+    arguments = _canonical_tool_arguments_for_provider_visible_export(
+        tool_name,
+        raw_arguments,
+    )
+    return {
+        "id": str(call.get("tool_call_id") or call.get("id") or ""),
+        "type": "function",
+        "function": {
+            "name": tool_name,
+            "arguments": json.dumps(
+                arguments,
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+        },
+    }
+
+
+def _prompt_message_audit_bindings(
+    audit_messages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    bindings: list[dict[str, Any]] = []
+    for index, audit in enumerate(audit_messages):
+        if not isinstance(audit, dict):
+            continue
+        _, audit_binding = _provider_visible_message_with_audit_binding(
+            audit,
+            message_index=index,
+        )
+        if audit_binding:
+            bindings.append(audit_binding)
+    return bindings
+
+
+def _provider_visible_message_with_audit_binding(
+    message: dict[str, Any],
+    *,
+    message_index: int,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    provider_message = {
+        key: value
+        for key, value in message.items()
+        if key in {"role", "content", "tool_call_id", "tool_calls"}
+    }
+    audit_only = {
+        key: value
+        for key, value in message.items()
+        if key not in {"role", "content", "tool_call_id", "tool_calls"}
+        and value is not None
+    }
+    if not audit_only:
+        return _sanitize_for_export(provider_message), None
+    return (
+        _sanitize_for_export(provider_message),
+        _sanitize_for_export(
+            {
+                "message_index": message_index,
+                "role": message.get("role"),
+                **audit_only,
+            }
+        ),
+    )
+
+
+def _export_training_message_projection(messages: list[Any]) -> list[dict[str, Any]]:
+    projected: list[dict[str, Any]] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        item = {
+            "role": message.get("role"),
+            "content": message.get("content"),
+            "tool_call_id": message.get("tool_call_id"),
+            "tool_calls": _provider_tool_calls_for_export(message.get("tool_calls")),
+        }
+        projected.append({key: value for key, value in item.items() if value is not None})
+    return projected
+
+
+def _provider_tool_calls_for_export(tool_calls: Any) -> list[dict[str, Any]]:
+    if not isinstance(tool_calls, list):
+        return []
+    return [_provider_tool_call_for_export(call) for call in tool_calls]
 
 
 def _assistant_target_for_model_call(run_path: Path, model_call_id: str) -> dict[str, Any]:
@@ -1032,7 +1332,7 @@ def _assistant_target_for_model_call(run_path: Path, model_call_id: str) -> dict
                 }
                 tool_calls = payload.get("tool_calls") or []
                 if tool_calls:
-                    message["tool_calls"] = tool_calls
+                    message["tool_calls"] = _provider_tool_calls_for_export(tool_calls)
                 return {
                     "message": message,
                     "assistant_message_ref": ref,
@@ -1057,7 +1357,7 @@ def _assistant_target_for_model_call(run_path: Path, model_call_id: str) -> dict
 def _prompt_from_prepared_messages(run_path: Path) -> dict[str, Any]:
     snapshots = _model_input_snapshot_bindings(run_path)
     if snapshots:
-        return _prompt_from_model_input_snapshot_binding(snapshots[0])
+        return _prompt_from_model_input_snapshot_binding(run_path, snapshots[0])
     prepared = _prepared_message_artifacts(run_path)
     if not prepared:
         return {"messages": []}
@@ -1128,7 +1428,10 @@ def _trajectory_from_events(run_path: Path) -> list[dict[str, Any]]:
                         "type": "tool_call",
                         "tool_call_id": call.get("tool_call_id"),
                         "tool_name": call.get("tool_name"),
-                        "arguments": call.get("arguments", {}),
+                        "arguments": _canonical_tool_arguments_for_provider_visible_export(
+                            str(call.get("tool_name") or ""),
+                            call.get("arguments", {}),
+                        ),
                     },
                     "observation": observation,
                 }
@@ -1160,6 +1463,26 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
     workspace_execution = environment.get("workspace_execution", {})
     workspace_backend = workspace_execution.get("workspace_backend", {})
     source_checkout = workspace_execution.get("source_checkout", {})
+    initial_context = run_metadata.get("initial_context_artifacts", {})
+    if not isinstance(initial_context, dict):
+        initial_context = {}
+    repository_hints_mode = (
+        run_config.get("repository_hints_mode")
+        or initial_context.get("repository_hints_mode")
+    )
+    repository_hints_hash = initial_context.get("repository_hints_model_visible_hash")
+    if repository_hints_hash is None and repository_hints_mode == "disabled":
+        repository_hints_hash = "disabled"
+    context_strategy = {
+        "initial_context_policy_version": (
+            run_config.get("initial_context_policy_version")
+            or initial_context.get("initial_context_policy_version")
+        ),
+        "repository_hints_mode": repository_hints_mode,
+        "repository_hints_model_visible_hash": repository_hints_hash,
+        "tool_schema_snapshot_hash": tool_protocol.get("tool_schema_snapshot_sha256"),
+        "context_policy_snapshot_hash": run_config.get("context_policy_snapshot_hash"),
+    }
     return _sanitize_for_export(
         {
             "export_policy_version": ExportPolicy().export_policy_version,
@@ -1198,6 +1521,17 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
             "tool_policy_version": run_config.get("allowed_tools_policy"),
             "tool_schema_snapshot_hash": tool_protocol.get("tool_schema_snapshot_sha256"),
             "context_policy_version": run_config.get("context_policy_version"),
+            "context_policy_snapshot_hash": context_strategy[
+                "context_policy_snapshot_hash"
+            ],
+            "initial_context_policy_version": context_strategy[
+                "initial_context_policy_version"
+            ],
+            "repository_hints_mode": context_strategy["repository_hints_mode"],
+            "repository_hints_model_visible_hash": context_strategy[
+                "repository_hints_model_visible_hash"
+            ],
+            "context_strategy_hash": stable_hash(context_strategy),
             "prompt_template_version": run_config.get("prompt_template_version"),
             "reward_formula_version": run_config.get("reward_formula_version"),
             "final_verifier_mode": run_config.get("final_verifier_mode"),
@@ -1651,8 +1985,16 @@ def _sanitize_text(text: str) -> str:
     )
     text = re.sub(r"\bsk-[A-Za-z0-9][A-Za-z0-9_-]{8,}\b", "<REDACTED_CREDENTIAL>", text)
     text = re.sub(
-        r"(?i)\b(api[_-]?key|token|password|secret)\s*[:=]\s*['\"]?[^'\"\s,}\]]+",
-        lambda match: f"{match.group(1)}=<REDACTED_CREDENTIAL>",
+        (
+            r"(?i)(?P<key>\b(?:api[_-]?key|token|password|secret)\b\s*[:=]\s*)"
+            r"(?P<quote>['\"]?)"
+            r"(?P<value>[A-Za-z0-9_\-./=:+]{6,})"
+            r"(?P=quote)"
+        ),
+        lambda match: (
+            f"{match.group('key')}{match.group('quote')}"
+            f"<REDACTED_CREDENTIAL>{match.group('quote')}"
+        ),
         text,
     )
     text = re.sub(r"/Users/[^\s,'\"})\]]+", "<REDACTED_LOCAL_PATH>", text)

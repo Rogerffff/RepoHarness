@@ -19,6 +19,7 @@ from repo_harness.export.schemas import (
     TrainingEligibility,
 )
 from repo_harness.run_metadata.reader import inspect_run_metadata
+from repo_harness.schema_base import stable_hash
 from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
 
 CRITICAL_AUDIT_ITEMS = {
@@ -37,6 +38,8 @@ CRITICAL_AUDIT_ITEMS = {
     "tool_schema_snapshot_valid",
     "preference_pairing_policy_satisfied",
     "compact_only_calls_not_trainable",
+    "training_prompt_provider_projection_equivalent",
+    "training_prompt_lean_context_fields_absent",
 }
 
 HIDDEN_MARKERS = (
@@ -89,6 +92,27 @@ PREFERENCE_PAIRING_METADATA_KEYS = {
     "compare_scope",
     "blocked_reasons",
     "source_run_ids",
+}
+
+LEAN_CONTEXT_BLOCKED_PROMPT_MARKERS = (
+    "repository_action_index",
+    "repository_action_index_full",
+    "repository_context_index",
+    "source_text_span_hash",
+    "raw_provider_request_ref",
+    "raw_provider_response_ref",
+    "redaction_report",
+    "authorization",
+    "credential_policy",
+    "provider_options",
+    "tool_schema_snapshot_ref",
+)
+
+PROVIDER_VISIBLE_MESSAGE_KEYS = {"role", "content", "tool_call_id", "tool_calls"}
+HARNESS_CONTROL_PROMPT_MARKERS = {
+    "repo_harness_control_message": "harness_control_message",
+    "convergence_nudge": "convergence_nudge",
+    "context_warning": "context_warning",
 }
 
 
@@ -247,6 +271,69 @@ def _audit_record(
         items.append(_item("prepared_observation_source_valid", "failed", "error", prepared_error))
     else:
         items.append(_item("prepared_observation_source_valid", "passed", "info", "observations come from prepared messages"))
+
+    projection_error = _training_prompt_projection_error(record, export_format)
+    if projection_error:
+        items.append(
+            _item(
+                "training_prompt_provider_projection_equivalent",
+                "failed",
+                "error",
+                projection_error,
+            )
+        )
+    else:
+        items.append(
+            _item(
+                "training_prompt_provider_projection_equivalent",
+                "passed",
+                "info",
+                "trainable prompt messages match the provider-visible projection",
+            )
+        )
+
+    lean_prompt_error = _lean_context_prompt_error(record, export_format)
+    if lean_prompt_error:
+        items.append(
+            _item(
+                "training_prompt_lean_context_fields_absent",
+                "failed",
+                "error",
+                lean_prompt_error,
+            )
+        )
+    else:
+        items.append(
+            _item(
+                "training_prompt_lean_context_fields_absent",
+                "passed",
+                "info",
+                "lean-context forbidden fields are absent from trainable prompts",
+            )
+        )
+
+    control_prompt_counts = _harness_control_prompt_context_counts(record, export_format)
+    if control_prompt_counts["total"] > 0:
+        items.append(
+            _item(
+                "training_prompt_harness_control_context_labeled",
+                "warning",
+                "warning",
+                (
+                    "trainable prompt contains harness control context; sample is policy-conditioned "
+                    f"rather than a plain user-only prompt: {control_prompt_counts}"
+                ),
+            )
+        )
+    else:
+        items.append(
+            _item(
+                "training_prompt_harness_control_context_labeled",
+                "passed",
+                "info",
+                "trainable prompt does not contain harness control messages",
+            )
+        )
 
     loss_error = _loss_target_error(record, export_format)
     if loss_error:
@@ -629,21 +716,33 @@ def _prepared_observation_error(
     if binding_error:
         return binding_error
     if export_format == "sft_jsonl":
-        for message in record.payload.get("messages", []):
-            if message.get("role") == "tool" and message.get("observation_source") != "prepared_messages":
+        audit_bindings = record.payload.get("prompt_message_audit_bindings", [])
+        if not isinstance(audit_bindings, list):
+            audit_bindings = []
+        audit_by_index = {
+            binding.get("message_index"): binding
+            for binding in audit_bindings
+            if isinstance(binding, dict)
+        }
+        for index, message in enumerate(record.payload.get("messages", [])):
+            if not isinstance(message, dict) or message.get("role") != "tool":
+                continue
+            binding = audit_by_index.get(index)
+            if not isinstance(binding, dict):
+                return "tool observation is missing prompt_message_audit_bindings entry"
+            if binding.get("observation_source") != "prepared_messages":
                 return "tool observation does not come from prepared_messages"
-            if message.get("role") == "tool":
-                missing = _missing_v3_observation_fields(message)
-                if missing:
-                    return f"tool observation missing V3 binding fields: {', '.join(missing)}"
-                source_error = _prepared_binding_source_error(
-                    message,
-                    run_paths=run_paths,
-                    expected_content=message.get("content"),
-                    tool_call_id=message.get("tool_call_id"),
-                )
-                if source_error:
-                    return source_error
+            missing = _missing_v3_observation_fields(binding)
+            if missing:
+                return f"tool observation missing V3 binding fields: {', '.join(missing)}"
+            source_error = _prepared_binding_source_error(
+                binding,
+                run_paths=run_paths,
+                expected_content=message.get("content"),
+                tool_call_id=message.get("tool_call_id"),
+            )
+            if source_error:
+                return source_error
     if export_format == "rl_jsonl":
         for step in record.payload.get("trajectory", []):
             observation = step.get("observation", {})
@@ -661,6 +760,126 @@ def _prepared_observation_error(
                 )
                 if source_error:
                     return source_error
+    return None
+
+
+def _training_prompt_projection_error(
+    record: ExportRecord,
+    export_format: str,
+) -> str | None:
+    if export_format not in {"sft_jsonl", "rl_jsonl"}:
+        return None
+    prompt_messages = _training_prompt_messages(record, export_format)
+    message_key_error = _provider_visible_message_key_error(prompt_messages)
+    if message_key_error:
+        return message_key_error
+    source = record.payload.get("training_sample_source")
+    if source != "model_input_snapshot":
+        return None
+    equivalence = _prompt_equivalence_report(record, export_format)
+    if not isinstance(equivalence, dict):
+        return "model_input_snapshot export is missing provider_visible_prompt_equivalence"
+    if equivalence.get("export_prompt_body_equivalent") is not True:
+        return "export prompt projection does not match provider-visible message projection"
+    if equivalence.get("prepared_messages_body_equivalent") is False:
+        return "prepared_messages projection does not match provider body messages"
+    expected_count = equivalence.get("export_prompt_message_count")
+    if isinstance(expected_count, int) and len(prompt_messages) != expected_count:
+        return "export prompt message count does not match equivalence report"
+    actual_hash = stable_hash(_training_message_projection(prompt_messages))
+    if actual_hash != equivalence.get("export_prompt_projection_hash"):
+        return "export prompt projection hash does not match payload messages"
+    return None
+
+
+def _lean_context_prompt_error(record: ExportRecord, export_format: str) -> str | None:
+    if export_format not in {"sft_jsonl", "rl_jsonl", "preference_jsonl"}:
+        return None
+    prompt_text = json.dumps(
+        _training_message_projection(_training_prompt_messages(record, export_format)),
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    lowered = prompt_text.lower()
+    for marker in LEAN_CONTEXT_BLOCKED_PROMPT_MARKERS:
+        if marker.lower() in lowered:
+            return f"trainable prompt contains blocked field {marker}"
+    return None
+
+
+def _prompt_equivalence_report(record: ExportRecord, export_format: str) -> Any:
+    if export_format == "sft_jsonl":
+        return record.payload.get("provider_visible_prompt_equivalence")
+    if export_format == "rl_jsonl":
+        prompt = record.payload.get("prompt", {})
+        if isinstance(prompt, dict):
+            return (
+                prompt.get("provider_visible_prompt_equivalence")
+                or record.payload.get("provider_visible_prompt_equivalence")
+            )
+    return None
+
+
+def _training_prompt_messages(record: ExportRecord, export_format: str) -> list[dict[str, Any]]:
+    if export_format == "sft_jsonl":
+        messages = record.payload.get("messages", [])
+        if not isinstance(messages, list):
+            return []
+        loss_mask = record.payload.get("loss_mask", [])
+        if isinstance(loss_mask, list) and len(loss_mask) == len(messages):
+            return [
+                message
+                for message, loss in zip(messages, loss_mask)
+                if isinstance(message, dict) and not loss
+            ]
+        return [message for message in messages if isinstance(message, dict)]
+    if export_format == "rl_jsonl":
+        prompt = record.payload.get("prompt", {})
+        if not isinstance(prompt, dict):
+            return []
+        messages = prompt.get("messages", [])
+        return [message for message in messages if isinstance(message, dict)] if isinstance(messages, list) else []
+    return []
+
+
+def _training_message_projection(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    projected: list[dict[str, Any]] = []
+    for message in messages:
+        item = {
+            "role": message.get("role"),
+            "content": message.get("content"),
+            "tool_call_id": message.get("tool_call_id"),
+            "tool_calls": message.get("tool_calls"),
+        }
+        projected.append({key: value for key, value in item.items() if value is not None})
+    return projected
+
+
+def _harness_control_prompt_context_counts(
+    record: ExportRecord,
+    export_format: str,
+) -> dict[str, int]:
+    counts = {"total": 0, "harness_control_message": 0, "convergence_nudge": 0, "context_warning": 0}
+    for message in _training_prompt_messages(record, export_format):
+        text = json.dumps(message, ensure_ascii=False, sort_keys=True)
+        matched = False
+        for marker, count_key in HARNESS_CONTROL_PROMPT_MARKERS.items():
+            if marker in text:
+                counts[count_key] += 1
+                matched = True
+        if matched:
+            counts["total"] += 1
+    return counts
+
+
+def _provider_visible_message_key_error(messages: list[dict[str, Any]]) -> str | None:
+    for index, message in enumerate(messages):
+        extra = sorted(set(message) - PROVIDER_VISIBLE_MESSAGE_KEYS)
+        if extra:
+            return (
+                "export prompt message contains provider-invisible audit keys "
+                f"at index {index}: {', '.join(extra)}"
+            )
     return None
 
 

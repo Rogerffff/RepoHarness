@@ -5,8 +5,10 @@ from pathlib import Path
 import pytest
 
 from repo_harness.errors import ExportError
-from repo_harness.export import CompareScope, ExportPolicy, inspect_export
+from repo_harness.export import CompareScope, ExportPolicy, ExportRecord, inspect_export
+from repo_harness.export.audit import audit_export_records
 from repo_harness.export.exporter import (
+    _provider_tool_call_for_export,
     export_preference_jsonl,
     export_provider_reasoning_trace_training_export,
     export_rl_jsonl,
@@ -64,6 +66,211 @@ def test_export_sanitizes_provider_credentials():
     assert "hunter2" not in sanitized
     assert "tok_123456789" not in sanitized
     assert sanitized.count("<REDACTED_CREDENTIAL>") >= 3
+
+
+def test_provider_visible_export_canonicalizes_grep_pattern_alias():
+    exported = _provider_tool_call_for_export(
+        {
+            "tool_call_id": "call_grep",
+            "tool_name": "grep",
+            "arguments": {"query": "needle", "pattern": "ignored", "root": "src"},
+        }
+    )
+
+    assert exported["function"]["name"] == "grep"
+    arguments = json.loads(exported["function"]["arguments"])
+    assert arguments == {"query": "needle", "root": "src"}
+
+
+def test_sft_export_does_not_expose_grep_legacy_alias_metadata(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_grep_alias_export",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    (run_dir / "transcript.jsonl").write_text(
+        json.dumps(
+            {
+                "role": "assistant",
+                "turn": 1,
+                "content_preview": "",
+                "model_visible": True,
+                "trainable": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "tool_requested",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": "call_grep",
+                    "tool_name": "grep",
+                    "arguments": {"query": "needle", "pattern": "legacy", "root": "src"},
+                },
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "event_type": "tool_completed",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": "call_grep",
+                    "status": "ok",
+                    "effective_tool_name": "grep",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_sft_jsonl(run_dir)
+    record = _read_jsonl(output)[0]
+    assistant = next(message for message in record["payload"]["messages"] if message["role"] == "assistant")
+    tool_call = assistant["tool_calls"][0]
+    arguments = json.loads(tool_call["function"]["arguments"])
+    payload_text = json.dumps(record["payload"], ensure_ascii=False, sort_keys=True)
+
+    assert arguments == {"query": "needle", "root": "src"}
+    assert "pattern" not in arguments
+    assert "requested_arguments" not in payload_text
+    assert "arguments_canonicalized_for_export" not in payload_text
+
+
+def test_snapshot_sft_export_canonicalizes_assistant_target_tool_calls(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_grep_alias_export",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="visible prompt",
+        assistant_content=None,  # type: ignore[arg-type]
+        assistant_tool_calls=[
+            {
+                "tool_call_id": "call_grep",
+                "tool_name": "grep",
+                "arguments": {"query": "needle", "pattern": "legacy", "root": "src"},
+            }
+        ],
+    )
+
+    output = export_sft_jsonl(run_dir)
+    record = _read_jsonl(output)[0]
+    assistant = record["payload"]["messages"][-1]
+    tool_call = assistant["tool_calls"][0]
+    arguments = json.loads(tool_call["function"]["arguments"])
+    payload_text = json.dumps(record["payload"], ensure_ascii=False, sort_keys=True)
+
+    assert assistant["content"] is None
+    assert tool_call["id"] == "call_grep"
+    assert tool_call["function"]["name"] == "grep"
+    assert arguments == {"query": "needle", "root": "src"}
+    assert "pattern" not in arguments
+    assert "requested_arguments" not in payload_text
+    assert "arguments_canonicalized_for_export" not in payload_text
+
+
+def test_snapshot_sft_export_audit_labels_prompt_side_convergence_nudge(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_prompt_nudge_audit",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content=json.dumps(
+            {
+                "repo_harness_control_message": {
+                    "type": "convergence_nudge",
+                    "policy_version": "repo_harness_convergence_nudge_v3",
+                    "trainable": False,
+                }
+            },
+            sort_keys=True,
+        ),
+        assistant_content="final answer after nudge",
+    )
+
+    export_sft_jsonl(run_dir)
+    audit = json.loads(
+        (_latest_export_dir(run_dir / "exports") / "audit_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    sample = audit["samples"][0]
+    item = next(
+        item
+        for item in sample["audit_items"]
+        if item["name"] == "training_prompt_harness_control_context_labeled"
+    )
+
+    assert sample["training_eligibility"] == "trainable"
+    assert item["status"] == "warning"
+    assert "policy-conditioned" in item["reason"]
+    assert "convergence_nudge" in item["reason"]
+
+
+def test_rl_export_canonicalizes_trajectory_grep_arguments(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_rl_grep_alias_export",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    (run_dir / "events.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "tool_requested",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": "call_grep",
+                    "tool_name": "grep",
+                    "arguments": {"query": "needle", "pattern": "legacy", "root": "src"},
+                },
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "event_type": "tool_completed",
+                "turn": 1,
+                "data": {
+                    "tool_call_id": "call_grep",
+                    "status": "ok",
+                    "effective_tool_name": "grep",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_rl_jsonl(run_dir)
+    record = _read_jsonl(output)[0]
+    action_arguments = record["payload"]["trajectory"][0]["action"]["arguments"]
+    payload_text = json.dumps(record["payload"], ensure_ascii=False, sort_keys=True)
+
+    assert action_arguments == {"query": "needle", "root": "src"}
+    assert "pattern" not in action_arguments
+    assert "\"pattern\"" not in payload_text
+
+
+def test_export_sanitizer_does_not_redact_common_source_variable_assignment():
+    text = "token = cast(MetaSegment, token)\nvalue = token.transform()"
+
+    sanitized = _sanitize_text(text)
+
+    assert sanitized == text
+    assert "<REDACTED_CREDENTIAL>" not in sanitized
 
 
 def test_provider_reasoning_trace_export_requires_explicit_policy(tmp_path: Path):
@@ -360,8 +567,11 @@ def test_sft_export_uses_structured_tool_call_events_not_preview(tmp_path: Path)
     assistant = next(message for message in record["payload"]["messages"] if message["role"] == "assistant")
 
     assert assistant["content"] is None
-    assert assistant["tool_calls"][0]["tool_call_id"] == "call_big"
-    assert assistant["tool_calls"][0]["arguments"]["content"] == long_content
+    assert assistant["tool_calls"][0]["id"] == "call_big"
+    assert assistant["tool_calls"][0]["type"] == "function"
+    assert assistant["tool_calls"][0]["function"]["name"] == "create_file"
+    arguments = json.loads(assistant["tool_calls"][0]["function"]["arguments"])
+    assert arguments["content"] == long_content
 
 
 def test_preference_export_pairs_equal_reward_when_outcome_differs(tmp_path: Path):
@@ -497,6 +707,146 @@ def test_exports_use_one_record_per_model_input_snapshot(tmp_path: Path):
     assert "post compact summary" in sft_text
 
 
+def test_snapshot_export_uses_provider_visible_prompt_projection(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_provider_projection",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    fixture = _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="placeholder",
+        assistant_content="visible answer",
+    )
+    prepared_path = run_dir / fixture["prepared_ref"]["relative_path"]
+    prepared_payload = json.loads(prepared_path.read_text(encoding="utf-8"))
+    prepared_payload["messages"][0]["content"] = {
+        "task": {"issue_statement": "Fix the parser"},
+        "repository_hints": {
+            "candidate_files": [
+                {
+                    "path": "src/parser.py",
+                    "confidence": "high",
+                    "matched_terms": ["parser"],
+                }
+            ],
+            "fallback_search_terms": ["parser"],
+            "usage_note": "These are starting points for investigation, not answers.",
+        },
+    }
+    prepared_path.write_text(
+        json.dumps(prepared_payload, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_manifest_artifact_ref(run_dir, fixture["prepared_ref"])
+    snapshot_path = run_dir / fixture["snapshot_ref"]["relative_path"]
+    snapshot_payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    snapshot_payload["prepared_messages_ref"] = fixture["prepared_ref"]
+    snapshot_path.write_text(
+        json.dumps(snapshot_payload, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_manifest_artifact_ref(run_dir, fixture["snapshot_ref"])
+    events = [
+        json.loads(line)
+        for line in (run_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    for event in events:
+        data = event.get("data", {})
+        if data.get("prepared_messages_ref", {}).get("artifact_id") == fixture[
+            "prepared_ref"
+        ]["artifact_id"]:
+            data["prepared_messages_ref"] = fixture["prepared_ref"]
+    (run_dir / "events.jsonl").write_text(
+        "\n".join(json.dumps(event, sort_keys=True) for event in events) + "\n",
+        encoding="utf-8",
+    )
+
+    output = export_sft_jsonl(run_dir)
+    export_dir = _latest_export_dir(run_dir / "exports")
+    record = _read_jsonl(output)[0]
+    prompt_message = record["payload"]["messages"][0]
+    equivalence = record["payload"]["provider_visible_prompt_equivalence"]
+
+    assert set(prompt_message) <= {"role", "content", "tool_call_id", "tool_calls"}
+    assert isinstance(prompt_message["content"], str)
+    assert '"issue_statement": "Fix the parser"' in prompt_message["content"]
+    assert prompt_message["content"].startswith("{")
+    assert equivalence["source"] == "prepared_messages_provider_projection"
+    assert equivalence["export_prompt_body_equivalent"] is True
+    assert equivalence["export_prompt_message_count"] == 1
+    assert "Inspect export: clean" in inspect_export(export_dir, assert_clean=True)
+
+
+def test_export_audit_rejects_provider_invisible_message_keys(tmp_path: Path):
+    record = ExportRecord(
+        sample_id="sample_001",
+        task_id="task_001",
+        source_run_id="run_001",
+        payload={
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "hello",
+                    "prepared_messages_ref": {"artifact_id": "internal"},
+                }
+            ],
+            "loss_mask": [0],
+            "observation_mask": [0],
+        },
+        metadata={},
+    )
+
+    audited = audit_export_records(
+        [record],
+        run_paths={"run_001": tmp_path},
+        export_format="sft_jsonl",
+        policy=ExportPolicy(),
+    )[0]
+    failed = {
+        item.name: item.reason
+        for item in audited.audit_items
+        if item.status == "failed"
+    }
+
+    assert "training_prompt_provider_projection_equivalent" in failed
+    assert "provider-invisible audit keys" in failed[
+        "training_prompt_provider_projection_equivalent"
+    ]
+
+
+def test_export_audit_blocks_full_repository_index_in_trainable_prompt(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_snapshot_full_index_leak",
+        task_id="task_001",
+        reward=1.0,
+        include_formal_verifier=True,
+    )
+    fixture = _add_model_input_snapshot_fixture(
+        run_dir,
+        index=1,
+        model_visible_content="repository_action_index_full should not be trainable",
+        assistant_content="visible answer",
+    )
+
+    export_sft_jsonl(run_dir)
+    export_dir = _latest_export_dir(run_dir / "exports")
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    failed_items = {
+        item["name"]
+        for sample in audit["samples"]
+        for item in sample["audit_items"]
+        if item["status"] == "failed"
+    }
+
+    assert fixture["prepared_ref"]["kind"] == "prepared_messages"
+    assert audit["status"] == "failed"
+    assert "training_prompt_lean_context_fields_absent" in failed_items
+
+
 def test_default_snapshot_exports_strip_provider_private_metadata(tmp_path: Path):
     run_dir = _minimal_run(
         tmp_path / "run_snapshot_deepseek_state",
@@ -601,11 +951,18 @@ def test_sft_snapshot_tool_observation_uses_current_prepared_ref(tmp_path: Path)
         for message in records[1]["payload"]["messages"]
         if message["role"] == "tool"
     )
+    second_tool_binding = next(
+        binding
+        for binding in records[1]["payload"]["prompt_message_audit_bindings"]
+        if binding["role"] == "tool"
+    )
+    assert set(second_tool_message) <= {"role", "content", "tool_call_id", "tool_calls"}
     assert second_tool_message["content"] == "[Old tool result content cleared]"
-    assert second_tool_message["prepared_messages_ref"]["artifact_id"] == (
+    assert "prepared_messages_ref" not in second_tool_message
+    assert second_tool_binding["prepared_messages_ref"]["artifact_id"] == (
         second["prepared_ref"]["artifact_id"]
     )
-    assert second_tool_message["prepared_messages_ref"]["artifact_id"] != (
+    assert second_tool_binding["prepared_messages_ref"]["artifact_id"] != (
         first["prepared_ref"]["artifact_id"]
     )
 
@@ -1055,6 +1412,13 @@ def test_export_metadata_reads_v2_run_config_facts(tmp_path: Path):
     assert record["metadata"]["model_id"] == "replay-script-v0"
     assert record["metadata"]["scaffold_version"] == "repo_harness_simple_react_v0"
     assert record["metadata"]["tool_schema_snapshot_hash"] == "b" * 64
+    assert record["metadata"]["context_policy_snapshot_hash"] == "c" * 64
+    assert record["metadata"]["initial_context_policy_version"] == (
+        "repo_harness_initial_context_policy_v1_lean_hints"
+    )
+    assert record["metadata"]["repository_hints_mode"] == "balanced_eval"
+    assert record["metadata"]["repository_hints_model_visible_hash"] == "1" * 64
+    assert record["metadata"]["context_strategy_hash"]
 
 
 def test_preference_export_blocks_base_commit_mismatch(tmp_path: Path):
@@ -1108,6 +1472,135 @@ def test_preference_export_blocks_context_policy_snapshot_mismatch(tmp_path: Pat
     skipped = json.loads(output.read_text(encoding="utf-8"))
 
     assert skipped["blocked_reason_distribution"] == {"context_policy_mismatch": 1}
+
+
+def test_preference_export_blocks_missing_context_policy_snapshot_hash(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(runs_dir / "run_a", {"context_policy_snapshot_hash": None})
+    _update_run_config(runs_dir / "run_b", {"context_policy_snapshot_hash": None})
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"context_policy_mismatch": 1}
+
+
+def test_preference_export_blocks_initial_context_policy_mismatch(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _update_run_config(
+        runs_dir / "run_b",
+        {"repository_hints_mode": "weak_model_scaffold"},
+    )
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {
+        "initial_context_policy_mismatch": 1
+    }
+
+
+def test_preference_export_blocks_unexplained_missing_repository_hints(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    for run_dir in (runs_dir / "run_a", runs_dir / "run_b"):
+        metadata_path = run_dir / "run_metadata.json"
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata["initial_context_artifacts"]["repository_hints_presence"] = "absent"
+        metadata["initial_context_artifacts"][
+            "repository_hints_absence_reason"
+        ] = "unexpected_missing_repository_hints"
+        metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {
+        "initial_context_policy_mismatch": 1
+    }
+
+
+def test_preference_export_blocks_present_repository_hints_with_absence_reason(
+    tmp_path: Path,
+):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    for run_dir in (runs_dir / "run_a", runs_dir / "run_b"):
+        metadata_path = run_dir / "run_metadata.json"
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata["initial_context_artifacts"]["repository_hints_presence"] = "present"
+        metadata["initial_context_artifacts"][
+            "repository_hints_absence_reason"
+        ] = "unexpected_reason_with_present_hints"
+        metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {
+        "initial_context_policy_mismatch": 1
+    }
+
+
+def test_compare_scope_rejects_formal_hard_gate_experimental_override(
+    tmp_path: Path,
+) -> None:
+    compare_scope_path = tmp_path / "compare_scope.json"
+    compare_scope_path.write_text(
+        json.dumps(
+            {
+                "experimental_variables": ["repository_hints_mode"],
+                "training_export_allowed": True,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="正式可比性硬门控字段"):
+        export_preference_jsonl(tmp_path, compare_scope_path=compare_scope_path)
+
+    compare_scope_path.write_text(
+        json.dumps(
+            {
+                "experimental_variables": ["tool_schema_snapshot_hash"],
+                "training_export_allowed": True,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="正式可比性硬门控字段"):
+        export_preference_jsonl(tmp_path, compare_scope_path=compare_scope_path)
+
+
+def test_compare_scope_rejects_formal_hard_gate_controlled_override(
+    tmp_path: Path,
+) -> None:
+    compare_scope_path = tmp_path / "compare_scope.json"
+    compare_scope_path.write_text(
+        json.dumps(
+            {
+                "controlled_sampling_variables": ["tool_result_format_version"],
+                "training_export_allowed": True,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="正式可比性硬门控字段"):
+        export_preference_jsonl(tmp_path, compare_scope_path=compare_scope_path)
 
 
 def test_preference_export_blocks_provider_timeout_policy_mismatch(tmp_path: Path):
@@ -1323,6 +1816,7 @@ def _add_model_input_snapshot_fixture(
     index: int,
     model_visible_content: str,
     assistant_content: str,
+    assistant_tool_calls: list[dict] | None = None,
 ) -> dict[str, dict]:
     model_call_id = f"{run_dir.name}_model_call_{index:04d}"
     state_ref = _append_json_artifact(
@@ -1372,7 +1866,7 @@ def _add_model_input_snapshot_fixture(
         payload={
             "schema_version": "repo_harness_assistant_message_transcript_payload_v0",
             "content": assistant_content,
-            "tool_calls": [],
+            "tool_calls": assistant_tool_calls or [],
             "finish_reason": "stop",
             "model_error_type": None,
         },
@@ -1785,6 +2279,9 @@ def _write_minimal_v2_metadata(run_dir: Path) -> None:
         "reward_formula_version": "repo_harness_reward_v0",
         "final_verifier_mode": "strict_patch_replay",
         "context_policy_version": "repo_harness_context_policy_v0",
+        "context_policy_snapshot_hash": "c" * 64,
+        "initial_context_policy_version": "repo_harness_initial_context_policy_v1_lean_hints",
+        "repository_hints_mode": "balanced_eval",
         "prompt_template_version": "repo_harness_prompt_v0",
         "permission_policy_version": "repo_harness_permissions_v0",
         "max_turns": 8,
@@ -1809,6 +2306,15 @@ def _write_minimal_v2_metadata(run_dir: Path) -> None:
                     "sha256": config_sha,
                 },
                 "tool_protocol": tool_protocol,
+                "initial_context_artifacts": {
+                    "initial_context_policy_version": (
+                        "repo_harness_initial_context_policy_v1_lean_hints"
+                    ),
+                    "repository_hints_mode": "balanced_eval",
+                    "repository_hints_presence": "present",
+                    "repository_hints_absence_reason": None,
+                    "repository_hints_model_visible_hash": "1" * 64,
+                },
             },
             sort_keys=True,
         )

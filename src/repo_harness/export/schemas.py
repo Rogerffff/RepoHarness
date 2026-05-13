@@ -25,6 +25,17 @@ ExportFormat = Literal[
 AuditStatus = Literal["passed", "failed", "warning", "skipped"]
 TrainingEligibility = Literal["trainable", "diagnostic_only", "skipped", "invalid"]
 
+HARD_COMPARE_FIELDS = (
+    "tool_schema_snapshot_hash",
+    "tool_order",
+    "tool_parser_version",
+    "tool_result_format_version",
+    "initial_context_policy_version",
+    "repository_hints_mode",
+    "repository_hints_model_visible_hash",
+    "context_policy_snapshot_hash",
+)
+
 STRICT_COMPARE_FIELDS = (
     "task_id",
     "task_version",
@@ -48,6 +59,9 @@ STRICT_COMPARE_FIELDS = (
     "microcompact_policy",
     "auto_compact_enabled",
     "reactive_compact_policy",
+    "initial_context_policy_version",
+    "repository_hints_mode",
+    "repository_hints_model_visible_hash",
     "prompt_template_version",
     "export_policy_version",
     "scaffold_id",
@@ -267,6 +281,18 @@ class CompareScope(StrictBaseModel):
         missing = sorted(set(STRICT_COMPARE_FIELDS) - set(self.canonical_key_fields))
         if missing:
             raise ValueError(f"compare scope 缺少硬门控字段：{', '.join(missing)}")
+        blocked_experimental = sorted(set(HARD_COMPARE_FIELDS) & set(self.experimental_variables))
+        if blocked_experimental:
+            raise ValueError(
+                "compare scope 不能把正式可比性硬门控字段声明为实验变量："
+                + ", ".join(blocked_experimental)
+            )
+        blocked_controlled = sorted(set(HARD_COMPARE_FIELDS) & set(self.controlled_sampling_variables))
+        if blocked_controlled:
+            raise ValueError(
+                "compare scope 不能把正式可比性硬门控字段声明为 controlled sampling 变量："
+                + ", ".join(blocked_controlled)
+            )
         return self
 
 
@@ -285,6 +311,7 @@ class PairingPolicy(StrictBaseModel):
             "source_run_invalid_for_training",
             "tool_schema_snapshot_mismatch",
             "context_policy_mismatch",
+            "initial_context_policy_mismatch",
             "budget_mismatch",
             "experimental_variable_not_training_approved",
         ]

@@ -71,15 +71,22 @@ def test_sft_export_from_success_run_filters_default_oracle_feedback(tmp_path: P
     assert "final_verifier_ref" not in record["payload"]
     assert record["payload"]["prepared_message_refs"]
     assert record["payload"]["content_replacement_state_refs"]
-    assert any(
-        message.get("observation_source") == "prepared_messages"
-        for message in tool_record["payload"]["messages"]
+    tool_message_indexes = [
+        index
+        for index, message in enumerate(tool_record["payload"]["messages"])
         if message.get("role") == "tool"
+    ]
+    audit_bindings_by_index = {
+        binding["message_index"]: binding
+        for binding in tool_record["payload"].get("prompt_message_audit_bindings", [])
+    }
+    assert any(
+        audit_bindings_by_index[index].get("observation_source") == "prepared_messages"
+        for index in tool_message_indexes
     )
     assert all(
-        message.get("observation_source") == "prepared_messages"
-        for message in tool_record["payload"]["messages"]
-        if message.get("role") == "tool"
+        audit_bindings_by_index[index].get("observation_source") == "prepared_messages"
+        for index in tool_message_indexes
     )
     assert "without_followup_context" not in text
     _assert_refs_exist(run_dir, record)
