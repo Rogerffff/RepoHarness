@@ -22,7 +22,7 @@ from .episode import (
     VerifierSummary,
 )
 from .gateway import LLMGateway, LLMGatewayRequest, LLMGatewayResponse
-from .timing import ResourceSummary, TimingSummary
+from .timing import ResourceSummary, TimingSummary, build_timing_summary
 from .training_view import AuditRef, ResponseSpan, RolloutLimits, TrainingView
 from .visibility import PROVIDER_ROUTES, VisibilityContractError, validate_no_absolute_local_path
 
@@ -392,7 +392,19 @@ class RepoHarnessRuntime:
             status_reason = status_reason or invalid_reason
 
         diagnostics.extend(self._diagnostics_for_invalid_reason(request, response, status_reason))
-        budget_consumption = self._budget_consumption(request, response, stop_reason=status_reason)
+        timing_summary = self._timing_summary(
+            elapsed_seconds=elapsed_seconds,
+            model_call_seconds=model_call_seconds,
+            cleanup_seconds=cleanup_seconds,
+            model_call_count=1,
+            response=response,
+        )
+        budget_consumption = self._budget_consumption(
+            request,
+            response,
+            stop_reason=status_reason,
+            timing_summary=timing_summary,
+        )
         reward_score = self._reward_score(status, invalid_for_training, invalid_for_online_rl)
         training_view = self._training_view_from_response(
             request,
@@ -404,12 +416,6 @@ class RepoHarnessRuntime:
             invalid_reason=status_reason,
         )
         generation_records = [response.to_generation_record(turn=0, context_revision=0)]
-        timing_summary = self._timing_summary(
-            elapsed_seconds=elapsed_seconds,
-            model_call_seconds=model_call_seconds,
-            cleanup_seconds=cleanup_seconds,
-            model_call_count=1,
-        )
         return RepoHarnessEpisodeResult(
             episode_id=request.episode_id,
             run_id=request.run_id,
@@ -426,7 +432,7 @@ class RepoHarnessRuntime:
             verifier_summary=self._verifier_summary(status),
             generation_records=generation_records,
             timing_summary=timing_summary,
-            resource_summary=self._resource_summary(cleanup_status=cleanup_status),
+            resource_summary=self._resource_summary(request, cleanup_status=cleanup_status),
         )
 
     def _terminal_result(
@@ -441,6 +447,12 @@ class RepoHarnessRuntime:
         cleanup_seconds: float,
         cleanup_status: str,
     ) -> RepoHarnessEpisodeResult:
+        timing_summary = self._timing_summary(
+            elapsed_seconds=elapsed_seconds,
+            model_call_seconds=model_call_seconds,
+            cleanup_seconds=cleanup_seconds,
+            model_call_count=1 if model_call_seconds > 0 else 0,
+        )
         training_view = TrainingView(
             online_rl_eligible=False,
             prompt_ids=[],
@@ -470,14 +482,14 @@ class RepoHarnessRuntime:
                 max_turns=request.budgets.max_turns,
                 used_turns=0,
                 max_wall_seconds=request.budgets.max_wall_seconds,
-                used_wall_seconds=elapsed_seconds,
+                used_wall_seconds=timing_summary.rollout_wall_seconds,
                 max_model_call_seconds=request.budgets.generation_timeout_seconds
                 or request.budgets.max_model_call_seconds,
-                used_model_call_seconds=0.0,
+                used_model_call_seconds=timing_summary.model_call_seconds,
                 max_tool_calls=request.budgets.max_tool_calls,
                 used_tool_calls=0,
                 max_artifact_bytes=request.budgets.max_artifact_bytes,
-                used_artifact_bytes=0,
+                used_artifact_bytes=timing_summary.artifact_bytes_written,
                 stop_reason=status_reason,
                 rollout_response_length=request.budgets.max_output_tokens,
                 actual_response_length=0,
@@ -485,13 +497,8 @@ class RepoHarnessRuntime:
             training_view=training_view,
             audit_ref=self._audit_ref(request),
             audit_diagnostics=diagnostics,
-            timing_summary=self._timing_summary(
-                elapsed_seconds=elapsed_seconds,
-                model_call_seconds=model_call_seconds,
-                cleanup_seconds=cleanup_seconds,
-                model_call_count=1 if model_call_seconds > 0 else 0,
-            ),
-            resource_summary=self._resource_summary(cleanup_status=cleanup_status),
+            timing_summary=timing_summary,
+            resource_summary=self._resource_summary(request, cleanup_status=cleanup_status),
         )
 
     def _training_view_from_response(
@@ -591,17 +598,20 @@ class RepoHarnessRuntime:
         response: LLMGatewayResponse,
         *,
         stop_reason: str | None,
+        timing_summary: TimingSummary,
     ) -> BudgetConsumption:
         return BudgetConsumption(
             max_turns=request.budgets.max_turns,
             used_turns=1,
             max_wall_seconds=request.budgets.max_wall_seconds,
+            used_wall_seconds=timing_summary.rollout_wall_seconds,
             max_model_call_seconds=request.budgets.generation_timeout_seconds
             or request.budgets.max_model_call_seconds,
+            used_model_call_seconds=timing_summary.model_call_seconds,
             max_tool_calls=request.budgets.max_tool_calls,
             used_tool_calls=0,
             max_artifact_bytes=request.budgets.max_artifact_bytes,
-            used_artifact_bytes=0,
+            used_artifact_bytes=timing_summary.artifact_bytes_written,
             stop_reason=stop_reason,
             rollout_response_length=request.budgets.max_output_tokens,
             actual_response_length=len(response.output_token_ids),
@@ -667,24 +677,28 @@ class RepoHarnessRuntime:
         model_call_seconds: float,
         cleanup_seconds: float,
         model_call_count: int,
+        response: LLMGatewayResponse | None = None,
     ) -> TimingSummary:
         agent_loop_seconds = max(0.0, elapsed_seconds - model_call_seconds - cleanup_seconds)
-        explained_seconds = agent_loop_seconds + model_call_seconds + cleanup_seconds
-        timing_explained_ratio = (
-            1.0 if elapsed_seconds <= 0 else min(1.0, explained_seconds / elapsed_seconds)
+        provider_reported_model_call_seconds = (
+            0.0 if response is None or response.duration_ms is None else response.duration_ms / 1000.0
         )
-        return TimingSummary(
+        return build_timing_summary(
             rollout_wall_seconds=elapsed_seconds,
             agent_loop_seconds=agent_loop_seconds,
             model_call_seconds=model_call_seconds,
+            provider_reported_model_call_seconds=provider_reported_model_call_seconds,
             cleanup_seconds=cleanup_seconds,
-            timing_explained_ratio=timing_explained_ratio,
             model_call_count=model_call_count,
         )
 
-    def _resource_summary(self, *, cleanup_status: str) -> ResourceSummary:
+    def _resource_summary(self, request: RepoHarnessEpisodeRequest, *, cleanup_status: str) -> ResourceSummary:
         return ResourceSummary(
             execution_mode=self.options.execution_mode,
+            workspace_backend=self.options.execution_mode,
+            inference_route=request.llm_gateway_route,
+            inference_backend=request.inference_backend,
+            run_dir=f"runs/{request.run_id}",
             cleanup_status=cleanup_status,
         )
 
@@ -696,6 +710,8 @@ class RepoHarnessRuntime:
             run_dir=f"runs/{request.run_id}",
             important_artifact_refs={
                 "runtime_result": f"rh://audit/{request.episode_id}/runtime-result",
+                "timing_summary": f"rh://audit/{request.episode_id}/timing-summary",
+                "resource_summary": f"rh://audit/{request.episode_id}/resource-summary",
             },
         )
 
@@ -723,6 +739,8 @@ class RepoHarnessRuntime:
             "repo_harness_invalid_for_training": invalid_for_training,
             "repo_harness_invalid_for_online_rl": invalid_for_online_rl,
             "repo_harness_invalid_reason": invalid_reason,
+            "repo_harness_timing_summary_ref": f"rh://audit/{request.episode_id}/timing-summary",
+            "repo_harness_resource_summary_ref": f"rh://audit/{request.episode_id}/resource-summary",
         }
 
 
