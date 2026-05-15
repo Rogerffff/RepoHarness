@@ -16,6 +16,14 @@ from .episode import (
     VerifierSummary,
 )
 from .gateway import FakeLLMGateway, GenerationRecord, LLMGateway, LLMGatewayRequest, LLMGatewayResponse
+from .runtime import (
+    InvalidTaskError,
+    LLMGatewayModelClientAdapter,
+    RepoHarnessRuntime,
+    RepoHarnessRuntimeOptions,
+    RuntimeResolvedInputs,
+    map_episode_status,
+)
 from .timing import ResourceSummary, TimingSummary
 from .training_view import (
     AuditRef,
@@ -57,7 +65,9 @@ __all__ = [
     "GatewayRoute",
     "GenerationRecord",
     "InferenceBackend",
+    "InvalidTaskError",
     "LLMGateway",
+    "LLMGatewayModelClientAdapter",
     "LLMGatewayRequest",
     "LLMGatewayResponse",
     "MixedLogprobBatchRejectionFixture",
@@ -65,9 +75,12 @@ __all__ = [
     "ProviderRoutePolicy",
     "RepoHarnessEpisodeRequest",
     "RepoHarnessEpisodeResult",
+    "RepoHarnessRuntime",
+    "RepoHarnessRuntimeOptions",
     "ResourceSummary",
     "ResponseSpan",
     "RewardSummary",
+    "RuntimeResolvedInputs",
     "RolloutLimits",
     "RunMode",
     "TimingSummary",
@@ -75,6 +88,7 @@ __all__ = [
     "VerifierSummary",
     "VisibilityContractError",
     "default_invalid_for_online_rl",
+    "map_episode_status",
     "validate_batch_extra_fields",
     "validate_formal_online_rl_batch",
     "validate_gateway_extra_fields",

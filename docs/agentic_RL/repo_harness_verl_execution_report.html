@@ -28,13 +28,14 @@
       <span class="rv-eyebrow">Execution Report</span>
       <h1>RepoHarness 接入 verl 的执行结果汇报</h1>
       <p class="rv-lead">
-        这一页只记录已经完成的执行结果，不承载顺序实施计划本身。后续每完成一个阶段，就在这里追加实际生成的文件、验收命令、报告产物、检查结论和遗留提醒。当前执行进度到 Stage 1：训练后端无关 schema 包、最小 <code>LLMGateway</code> contract、fixture roundtrip 和 visibility 拒绝规则已经完成，并通过 sub agent 复查。
+        这一页只记录已经完成的执行结果，不承载顺序实施计划本身。后续每完成一个阶段，就在这里追加实际生成的文件、验收命令、报告产物、检查结论和遗留提醒。当前执行进度到 Stage 2：async episode runtime facade、runtime-only options、最小 fake gateway runtime smoke、临时 <code>LLMGatewayModelClientAdapter</code> 和 Stage 2 单元测试已经完成。
       </p>
       <div class="rv-badges">
         <span class="rv-badge success">Stage 0H 第一版已验收</span>
         <span class="rv-badge success">Stage 1 已验收</span>
+        <span class="rv-badge success">Stage 2 已验收</span>
         <span class="rv-badge info">执行日志独立于计划页</span>
-        <span class="rv-badge info">可以进入 Stage 2</span>
+        <span class="rv-badge info">可以准备 Stage 3</span>
       </div>
       <div class="rv-mini-nav">
         <a href="#status">当前状态</a>
@@ -45,6 +46,8 @@
         <a href="#stage-1-summary">Stage 1 结果</a>
         <a href="#stage-1-subagent">Stage 1 复查</a>
         <a href="#stage-1-verification">Stage 1 验收</a>
+        <a href="#stage-2-summary">Stage 2 结果</a>
+        <a href="#stage-2-verification">Stage 2 验收</a>
         <a href="#next">下一步提醒</a>
       </div>
     </header>
@@ -56,10 +59,10 @@
           Stage 0H 是 Stage 0 和 Stage 1 之间的 contract hardening gate。它交付了一套 fixture、最小测试和验收报告，让 Stage 1 之后的 schema、runtime、adapter 都被同一组训练安全规则约束。Stage 1 已经在这些 fixture 之上新增正式 schema 包和最小 <code>LLMGateway</code> contract，但仍然没有实现完整 runtime、<code>training_fast</code> recorder 或 verl adapter。
         </p>
         <div class="rv-callout success">
-          当前结论：Stage 1 已经通过本地验收命令和 sub agent 复查，可以进入 Stage 2。Stage 2 的下一步边界是抽出 <code>RepoHarnessRuntime.run_episode(...)</code> facade，但仍不应该提前实现完整 verl adapter。
+          当前结论：Stage 2 已经通过本地验收命令。当前实现完成了 async <code>RepoHarnessRuntime.run_episode(...)</code> facade、runtime-only 本地执行配置、状态映射、取消超时清理 contract、最小 <code>TrainingView</code> 构造和临时 <code>LLMGatewayModelClientAdapter</code>。完整 CLI <code>run_task(...)</code> 路径仍保持原状，没有提前实现完整 verl adapter。
         </div>
         <div class="rv-callout warning">
-          提交状态提醒：在编写 Stage 2 执行计划时，当前 worktree 中的 Stage 0H、Stage 1、Stage 2 计划相关文档、fixture、<code>src/repo_harness/rl/</code> schema 包和新增测试仍处于未提交状态。此页记录的是本地执行与复查结果，不表示这些改动已经进入 git 提交历史。
+          提交状态提醒：Stage 0H、Stage 1 和 Stage 2 计划相关产物已经在进入 Stage 2 实施前单独提交为 <code>3c3b1508 feat: add repo harness rl contracts</code>。当前 Stage 2 代码实现和本页更新仍处于本地未提交状态。
         </div>
       </section>
 
@@ -385,13 +388,161 @@ uv run --extra dev python -m pytest -q \
         </p>
       </section>
 
+      <section id="stage-2-summary" class="rv-section">
+        <h2>Stage 2 执行结果</h2>
+        <p class="rv-muted">
+          Stage 2 采用保守实现路线：先新增训练后端无关的 async runtime facade，并用 Stage 1 的 <code>LLMGateway</code> contract 直接构造最小 episode。当前没有改写完整 CLI <code>run_task(...)</code> 路径，也没有接入真实 verl、vLLM、SGLang 或 Ray。
+        </p>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>文件</th>
+                <th>本次完成内容</th>
+                <th>边界说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td>新增 <code>RepoHarnessRuntime</code>、<code>RepoHarnessRuntimeOptions</code>、<code>RuntimeResolvedInputs</code>、<code>map_episode_status(...)</code>、<code>LLMGatewayModelClientAdapter</code> 和最小 <code>run_episode(...)</code> 实现。</td>
+                <td>runtime options 承载本地 <code>config_path</code>、<code>output_dir</code>、resolver 和 cleanup callback，不进入 episode request 或 batch extra fields。</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/__init__.py</code></td>
+                <td>导出 Stage 2 runtime facade、runtime options、临时 adapter、状态映射 helper 和 invalid task error。</td>
+                <td><code>repo_harness.rl</code> 仍不 import <code>verl</code>。</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage2_runtime.py</code></td>
+                <td>新增 16 个测试，覆盖 gateway 调用、路径不泄漏、task path resolver、状态映射、timeout、cancellation、cleanup failure、missing log probability、provider route invalid online RL、response route mismatch、失败样本 batch status、prompt / response overflow 结构化返回、overflow 预算消耗和审计诊断，以及 adapter 调用。</td>
+                <td>测试明确保留 CLI 原路径，没有把完整旧 agent loop 强行搬入 Stage 2。</td>
+              </tr>
+              <tr>
+                <td><code>docs/agentic_RL/repo_harness_verl_stage2_execution_plan.html</code></td>
+                <td>从单纯计划页扩展为 Stage 2 执行计划与结果页，方便直接审查本阶段完成了什么。</td>
+                <td>后续阶段也采用每个阶段单独页面汇报。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="rv-section">
+        <h2>Stage 2 产物详细展开</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>对象或函数</th>
+                <th>实现内容</th>
+                <th>为什么需要</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>RepoHarnessRuntimeOptions</code></td>
+                <td>新增 runtime-only 配置，包含 <code>config_path</code>、<code>output_dir</code>、<code>project_root</code>、<code>task_path_resolver</code>、<code>executor_max_workers</code>、<code>episode_timeout_seconds</code>、<code>cleanup_callback</code> 和最小 verifier reward 设置。</td>
+                <td>把本地路径和执行资源设置留在 runtime 层，避免污染 <code>RepoHarnessEpisodeRequest</code>、<code>TrainingView.extra_fields</code> 或未来 batch。</td>
+              </tr>
+              <tr>
+                <td><code>RepoHarnessRuntime.run_episode(...)</code></td>
+                <td>新增 async episode 入口，负责解析 request、调用 <code>LLMGateway</code>、处理 timeout / cancellation / cleanup、构造 <code>TrainingView</code>、<code>AuditRef</code>、<code>TimingSummary</code>、<code>ResourceSummary</code> 和最终 <code>RepoHarnessEpisodeResult</code>。</td>
+                <td>给后续 CLI、本地批处理、Stage 10 converter 和 Stage 11 verl adapter 一个稳定的 episode runtime 边界。</td>
+              </tr>
+              <tr>
+                <td><code>LLMGatewayModelClientAdapter</code></td>
+                <td>实现旧 <code>ModelClient.generate(...)</code> 到新 <code>LLMGateway.generate_turn(...)</code> 的临时桥接：<code>ModelRequestContext</code> 转 <code>LLMGatewayRequest</code>，<code>LLMGatewayResponse</code> 转 <code>ModelResponse</code>。</td>
+                <td>为后续逐步接入现有 <code>AgentLoop</code> 准备接口接缝，同时避免 Stage 2 直接重写完整 agent loop。</td>
+              </tr>
+              <tr>
+                <td><code>map_episode_status(...)</code></td>
+                <td>把 final verifier、baseline、run outcome、agent stop reason、provider error 和 cancellation 事实映射为 <code>succeeded</code>、<code>failed</code>、<code>no_progress</code>、<code>timeout</code>、<code>invalid_task</code>、<code>infrastructure_error</code> 或 <code>cancelled</code>。</td>
+                <td>避免 Docker、provider、verifier、timeout 和任务定义错误被折叠成普通模型失败样本。</td>
+              </tr>
+              <tr>
+                <td><code>_response_invalid_reason(...)</code></td>
+                <td>集中判断 response route mismatch、inference backend mismatch、empty response、prompt overflow、response overflow、provider route、missing logprob 等不能进入正式 online RL 的原因。</td>
+                <td>把 online RL 样本安全边界放在 runtime 统一入口，而不是散落在测试或后续 adapter 里。</td>
+              </tr>
+              <tr>
+                <td><code>_budget_consumption(...)</code> 和 overflow diagnostics</td>
+                <td>为 response path 记录 turn、wall budget、model call budget、tool budget、artifact budget、stop reason、rollout response length 和 actual response length；prompt / response overflow 写入审计诊断。</td>
+                <td>让 invalid result 不只是一个状态码，而是可以解释为什么被挡在训练之外。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="rv-section">
+        <h2>Stage 2 审查 follow-up 修复</h2>
+        <p class="rv-muted">
+          Stage 2 初版通过目标测试后，额外审查发现 6 个 contract 和审计完整性风险。本次已经补充回归测试并修复，避免将 provider response route 伪装成 rollout policy sample，也避免 batch 可传播状态、结构化 invalid 结果和审计证据不一致。
+        </p>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>审查问题</th>
+                <th>修复方式</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>response route 与 request route 不一致时仍可能 online RL eligible。</td>
+                <td>新增 route / inference backend 一致性校验；provider response route 默认 <code>invalid_for_online_rl=true</code>。</td>
+              </tr>
+              <tr>
+                <td>失败 episode 的 batch status 可能错误写成 <code>succeeded</code>。</td>
+                <td><code>TrainingView.extra_fields.repo_harness_status</code> 改为使用真实 episode status。</td>
+              </tr>
+              <tr>
+                <td>provider timeout、task timeout、tool timeout 映射不完整。</td>
+                <td><code>map_episode_status(...)</code> 现在识别 timeout、timed_out 和 deadline_exceeded 类原因。</td>
+              </tr>
+              <tr>
+                <td>episode request 的 <code>task_ref.task_path</code> 可携带绝对本地路径。</td>
+                <td>request 内 task path 现在拒绝绝对路径；本地路径仍只能通过 runtime-only options 或 resolver 进入运行层。</td>
+              </tr>
+              <tr>
+                <td>prompt overflow 抛出 schema 异常。</td>
+                <td>现在返回结构化 <code>status=invalid</code> 和 <code>status_reason=prompt_length_exceeded</code>。</td>
+              </tr>
+              <tr>
+                <td>prompt / response overflow 缺少 <code>BudgetConsumption</code> 和 <code>AuditDiagnostic</code>。</td>
+                <td>现在写入 <code>BudgetConsumption.stop_reason</code> 和审计诊断；response overflow 还记录 <code>rollout_response_length</code> 与 <code>actual_response_length</code>。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="stage-2-verification" class="rv-section">
+        <h2>Stage 2 验收命令和结果</h2>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m compileall -q src
+
+uv run --extra dev python -m pytest -q tests/unit/test_repo_harness_rl_stage2_runtime.py
+
+uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py \
+  tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py
+
+uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_verl_contract_fixtures.py \
+  tests/unit/test_repo_harness_verl_stage0h_shape_rules.py \
+  tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+        <div class="rv-callout success">
+          最终结果：<code>compileall</code> 通过；Stage 2 新增测试 <code>16 passed</code>；Stage 1 回归测试 <code>35 passed</code>；Stage 0H 回归测试 <code>17 passed</code>。
+        </div>
+      </section>
+
       <section id="next" class="rv-section">
-        <h2>进入 Stage 2 前保留的提醒</h2>
+        <h2>进入 Stage 3 前保留的提醒</h2>
         <div class="rv-checklist">
-          <div class="rv-check">Stage 2 应抽出 <code>RepoHarnessRuntime.run_episode(...)</code> facade，并复用 Stage 1 的 schema 与 <code>LLMGateway</code> contract。</div>
-          <div class="rv-check">Stage 2 仍不应该实现完整 <code>RepoHarnessVerlAgentLoop</code> 或真实 <code>VerlLLMGateway</code>，这些属于 Stage 11。</div>
-          <div class="rv-check">Stage 2 runtime 产生的 result 必须继续满足 Stage 0H 和 Stage 1 已固定的 token shape、visibility、provider route、audit opaque ref 和 batch extra fields 规则。</div>
-          <div class="rv-check">进入 Stage 2 开发前，建议先决定是否提交当前 Stage 0H、Stage 1 和 Stage 2 计划相关改动，避免后续 runtime 实现与已完成 contract 产物混在同一个审查范围里。</div>
+          <div class="rv-check">Stage 3 的边界是实现 <code>run_mode</code> 与 <code>training_fast</code> recorder，不应该提前做 Stage 10 converter 或 Stage 11 verl adapter。</div>
+          <div class="rv-check">Stage 2 当前是最小 runtime facade，不代表完整 CLI <code>run_task(...)</code> 已经迁移到 runtime，也不代表真实 provider route 已经完成 gateway 化。</div>
+          <div class="rv-check">后续 Stage 3 仍必须继续复用 Stage 0H、Stage 1 和 Stage 2 的 token shape、visibility、provider route、audit opaque ref、cleanup diagnostics 和 runtime status 规则。</div>
         </div>
       </section>
     </main>
