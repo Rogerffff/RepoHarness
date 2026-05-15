@@ -112,10 +112,37 @@ class ResourceSummary(StrictBaseModel):
     cleanup_status: str | None = None
 
     def model_post_init(self, __context: Any) -> None:
-        for field_name in ["workspace_path", "run_dir"]:
+        for field_name in [
+            "execution_mode",
+            "workspace_backend",
+            "worker_id",
+            "host_id",
+            "snapshot_key",
+            "snapshot_restore_strategy",
+            "dependency_state_key",
+            "docker_image_ref",
+            "docker_image_id",
+            "docker_image_digest",
+            "inference_route",
+            "inference_backend",
+            "dependency_cache_key",
+            "network_policy",
+            "permission_policy_ref",
+            "workspace_path",
+            "run_dir",
+            "concurrency_group",
+            "lease_id",
+            "verifier_worker_pool_id",
+            "verifier_worker_id",
+            "cleanup_status",
+        ]:
             value = getattr(self, field_name)
-            if value:
+            if isinstance(value, str) and value:
                 validate_no_absolute_local_path(value, field_name=field_name)
+        for index, volume_id in enumerate(self.docker_volume_ids):
+            validate_no_absolute_local_path(volume_id, field_name=f"docker_volume_ids[{index}]")
+        for resource_name in self.queue_wait_seconds_by_resource:
+            validate_no_absolute_local_path(resource_name, field_name="queue_wait_seconds_by_resource")
 
 
 def build_timing_summary(
