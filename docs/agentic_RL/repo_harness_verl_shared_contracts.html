@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness × verl 共享 Contract 完整说明</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html" aria-current="page">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Shared Contracts</span>
+      <h1>所有顺序阶段共同遵守的第一版接口契约</h1>
+      <p class="rv-lead">
+        这一页完整展示共享 contract 的设计内容。它的目的不是描述当前已经实现的代码，而是在分阶段顺序开发之前，固定 episode 输入输出、模型调用、训练视图、审计引用、计时资源和验收门槛，避免后续接口漂移。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">contract_version: repo_harness_verl_shared_contracts_v0</span>
+        <span class="rv-badge warning">status: design_contract_v0</span>
+        <span class="rv-badge warning">scope: planning_only_not_current_implementation</span>
+      </div>
+      <div class="rv-mini-nav">
+        <a href="#episode">Episode Contract</a>
+        <a href="#gateway">LLMGateway</a>
+        <a href="#training-view">Training View / Audit Ref</a>
+        <a href="#timing-resource">Timing / Resource</a>
+        <a href="#acceptance">Acceptance</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+      <section class="rv-section">
+        <h2>总原则</h2>
+        <div class="rv-grid-2">
+          <article class="rv-card">
+            <h3>共享 contract 解决什么问题</h3>
+            <p>
+              verl adapter 阶段需要把 verl dataset sample 转成 RepoHarness episode request，并把结果转回 verl 的 <code>AgentLoopOutput</code>。Harness training_fast 阶段需要更快地产出同一类 episode result。所有阶段如果不共享字段和不变量，最终会在 token、mask、reward、audit、timing 和状态码上出现不兼容。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>共享 contract 不是什么</h3>
+            <p>
+              它不是当前代码已经完成的承诺，也不是要一次写死未来所有字段。它是第一版最小语义边界：哪些字段必须存在，哪些数据不能泄漏，哪些路径必须可追溯，哪些测试必须共同通过。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="episode" class="rv-section">
+        <h2>Contract 01：Episode Request / Episode Result</h2>
+        <p class="rv-muted">
+          <code>RepoHarnessEpisodeRequest</code> 和 <code>RepoHarnessEpisodeResult</code> 是顺序开发路线的中心边界。前置 Harness runtime 和 training_fast 阶段负责接收 request 并产出 result；后续 verl adapter 阶段负责构造 request 并消费 result。
+        </p>
+
+        <div class="rv-callout">
+          第一版不要把当前 CLI 级 <code>run_task(...)</code> 直接暴露给 verl。它现在包含配置加载、任务加载、workspace 创建、baseline、agent loop、final verifier、reward、summary 写入等完整命令行编排，适合作为现有评测入口，但不适合作为 Ray worker 内部的可组合 episode runtime。
+        </div>
+
+        <h3>当前实现依据</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>RepoHarness / verl 事实</th>
+                <th>对应含义</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/agent_loop/loop.py</code></td>
+                <td>当前 <code>AgentLoop.run(...)</code> 是同步 agent loop，负责上下文准备、模型调用、工具调用和停止条件。</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/evaluation/runner.py::run_task(...)</code></td>
+                <td>当前完整 CLI 级 episode 编排，后续应从这里逐步抽出 <code>RepoHarnessRuntime.run_episode(...)</code>。</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/trajectory/recorder.py::RunRecorder</code></td>
+                <td>统一写 transcript、events、artifact manifest、run status 和 summary。</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/reward/schemas.py</code></td>
+                <td>当前 reward 核心字段是 <code>RewardMetadata.final_reward</code> 和 <code>invalid_for_training</code>。</td>
+              </tr>
+              <tr>
+                <td><code>reference/verl/verl/experimental/agent_loop/agent_loop.py</code></td>
+                <td>自定义 verl agent loop 必须继承 <code>AgentLoopBase</code>，实现异步 <code>run(...)</code> 并返回 <code>AgentLoopOutput</code>。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>RepoHarnessEpisodeRequest 字段</h3>
+        <pre class="rv-codeblock"><code>RepoHarnessEpisodeRequest
+  schema_version
+  contract_version
+  episode_id
+  run_id
+  task_ref
+  initial_context
+  agent_policy
+  run_mode
+  llm_gateway_route
+  budgets
+  workspace_policy
+  recorder_policy
+  verifier_policy
+  visibility_policy
+  seed
+  tags
+  extra</code></pre>
+
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>字段组</th>
+                <th>包含内容</th>
+                <th>关键规则</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>标识字段</td>
+                <td><code>schema_version</code>、<code>contract_version</code>、<code>episode_id</code>、<code>run_id</code></td>
+                <td><code>episode_id</code> 是全局唯一 episode 标识；<code>run_id</code> 是 RepoHarness run directory 标识。并发运行时不能让多个 episode 写同一个 run directory。</td>
+              </tr>
+              <tr>
+                <td><code>task_ref</code></td>
+                <td><code>task_id</code>、<code>task_path</code>、dataset name/split/revision、<code>repo_ref</code>、<code>base_commit</code>、<code>environment_id</code>、<code>source_archive_ref</code>、<code>task_freeze_ref</code>、<code>verifier_plan_ref</code></td>
+                <td>只放任务定位和模型可见任务输入需要的引用。禁止放 gold patch、hidden test output、final verifier hidden result、reward scalar、accepted / failed 标签和 baseline evaluator-only 细节。</td>
+              </tr>
+              <tr>
+                <td><code>initial_context</code></td>
+                <td><code>raw_prompt</code>、<code>initial_messages</code>、<code>system_prompt_policy</code>、<code>model_visible_context_refs</code>、<code>context_builder_policy</code></td>
+                <td><code>raw_prompt</code> 或 <code>initial_messages</code> 必须和 verl tokenizer 生成的 <code>prompt_ids</code> 可追溯对应。verl postprocess 会把 <code>raw_prompt</code> 写入 <code>extra_fields</code>，因此它只能包含模型可见 prompt。</td>
+              </tr>
+              <tr>
+                <td><code>agent_policy</code></td>
+                <td><code>scaffold_id</code>、<code>scaffold_version</code>、<code>prompt_template_version</code>、<code>context_policy_version</code>、<code>tool_policy_ref</code>、<code>allowed_tools_ref</code>、<code>permission_policy_ref</code>、<code>feedback_policy</code>、<code>test_feedback_policy</code>、<code>hidden_feedback_visible_to_model</code>、<code>max_test_runs</code></td>
+                <td>固定 agent 语义，防止不同阶段各自使用不同默认 scaffold、工具集合、上下文策略或反馈策略。</td>
+              </tr>
+              <tr>
+                <td><code>run_mode</code></td>
+                <td><code>full_audit</code>、<code>training_fast</code>、<code>training_debug</code></td>
+                <td>只能改变记录粒度、预算和执行策略，不能改变任务语义，不能让 hidden verifier 或 reward metadata 进入模型可见上下文。</td>
+              </tr>
+              <tr>
+                <td><code>budgets</code></td>
+                <td><code>max_turns</code>、<code>max_wall_seconds</code>、<code>max_model_call_seconds</code>、<code>request_timeout_seconds</code>、<code>max_output_tokens</code>、<code>max_context_tokens</code>、<code>max_tool_calls</code>、<code>max_artifact_bytes</code>、<code>no_progress_policy</code></td>
+                <td>训练模式建议更紧，先从 12 到 20 turn 起步；允许 no-progress 策略提前终止长时间只读探索。</td>
+              </tr>
+              <tr>
+                <td><code>workspace_policy</code></td>
+                <td><code>execution_mode</code>、<code>workspace_backend</code>、<code>snapshot_key</code>、<code>dependency_state_ref</code>、<code>copy_on_write</code>、<code>cleanup_policy</code>、<code>docker_resource_limits</code></td>
+                <td>每条 episode 必须使用隔离 workspace。snapshot 或 Docker volume 复用必须从 clean state 派生，不能泄漏上一条 rollout 的文件改动、测试产物或环境残留。</td>
+              </tr>
+              <tr>
+                <td><code>recorder_policy</code></td>
+                <td><code>mode</code>、raw request/response 保存策略、reasoning trace 策略、prepared messages retention、artifact compression、artifact sampling policy</td>
+                <td><code>training_fast</code> 默认关闭明文 reasoning trace，减少 raw provider response 和超大 prepared messages 落盘，但必须保留关键 hash、patch hash、reward metadata reference 和 trajectory reference。</td>
+              </tr>
+              <tr>
+                <td><code>verifier_policy</code></td>
+                <td><code>final_verifier_mode</code>、<code>baseline_policy</code>、<code>final_reward_policy</code>、<code>execution_strategy</code>、<code>verifier_timeout_seconds</code></td>
+                <td>第一版只允许 <code>blocking_in_episode</code> 和 <code>worker_pool_blocking</code>。不做 <code>async_reward_backfill</code>。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>RepoHarnessEpisodeResult 字段</h3>
+        <pre class="rv-codeblock"><code>RepoHarnessEpisodeResult
+  schema_version
+  contract_version
+  episode_id
+  run_id
+  status
+  status_reason
+  training_view
+  audit_ref
+  reward
+  verifier_summary
+  patch_summary
+  timing_summary
+  resource_summary
+  budget_consumption
+  generation_records
+  diagnostics
+  retryable
+  error_summary</code></pre>
+
+        <div class="rv-grid-2">
+          <article class="rv-card">
+            <h3>状态语义</h3>
+            <p>
+              <code>succeeded</code> 表示 episode 完整结束，轨迹和 reward 可消费，不等于任务成功。<code>failed</code> 表示模型完成了 episode，但 final verifier 或任务结果失败。<code>timeout</code>、<code>no_progress</code>、<code>invalid_task</code>、<code>infrastructure_error</code> 和 <code>cancelled</code> 必须和普通模型失败分开。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>Reward 语义</h3>
+            <p>
+              <code>score</code> 第一版对应 <code>RewardMetadata.final_reward</code>。<code>invalid_for_training=true</code> 的样本可以保留 audit，但不应进入有效 online RL batch。<code>training_fast</code> 不能绕过 final verifier 权威边界。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>Verifier Summary</h3>
+            <p>
+              包含 final verifier status、accepted、timeout、error_type、parser_confidence、fail_to_pass、pass_to_pass 和 final_verifier_ref。完整 stdout、stderr、test cases 和 evaluator-only 证据留在 audit artifacts。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>Patch 与 Diagnostics</h3>
+            <p>
+              patch summary 包含 has_patch、changed_files、added_lines、removed_lines、diff_sha256 和 patch_ref。diagnostics 记录 failure category、no-progress、context limit、provider transient、environment failure 和 hidden_details_ref。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="gateway" class="rv-section">
+        <h2>Contract 02：LLMGateway</h2>
+        <p class="rv-muted">
+          <code>LLMGateway</code> 是 RepoHarness 内部模型调用与 OpenAI、DeepSeek、本地 vLLM、SGLang、verl 或未来 slime 后端之间的解耦层。
+        </p>
+
+        <div class="rv-callout">
+          RepoHarness core 只能依赖 <code>LLMGateway</code> 抽象。<code>VerlLLMGateway</code> 只是一个 backend，负责包装 verl 的 <code>LLMServerClient</code>，不能让 RepoHarness core 直接 import verl runtime 对象。
+        </div>
+
+        <h3>LLMGatewayRequest</h3>
+        <pre class="rv-codeblock"><code>LLMGatewayRequest
+  schema_version
+  contract_version
+  route
+  run_id
+  task_id
+  episode_id
+  model_call_id
+  turn
+  context_revision
+  messages
+  tools
+  sampling_params
+  provider_options
+  tokenizer_policy
+  sticky_session_id
+  timeout_seconds
+  budget_state
+  recorder_policy
+  visibility_policy
+  tracing</code></pre>
+
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>字段组</th>
+                <th>规则</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>route</code></td>
+                <td>第一版包括 <code>verl</code>、<code>openai</code>、<code>deepseek</code>、<code>local_vllm</code>、<code>sglang</code>、<code>replay</code>、<code>mock</code>。</td>
+              </tr>
+              <tr>
+                <td><code>messages</code> 和 <code>tools</code></td>
+                <td>messages 必须已经经过 visibility policy；tools 必须来自 scaffold 和 permission policy 解析后的允许工具集合。</td>
+              </tr>
+              <tr>
+                <td><code>sampling_params</code></td>
+                <td>包括 temperature、top_p、top_k、max_tokens 或 max_new_tokens、logprobs、stop、repetition_penalty。route=verl 时还要满足 rollout prompt_length、response_length 和底层 max_model_len 约束。</td>
+              </tr>
+              <tr>
+                <td><code>tokenizer_policy</code></td>
+                <td>route=verl 时，prompt ids 应由 verl tokenizer / processor / chat template 产生。正式训练路径禁止用最终 transcript 重新分词来伪造 token。</td>
+              </tr>
+              <tr>
+                <td><code>sticky_session_id</code></td>
+                <td>建议使用 episode_id 或 run_id，让同一条多轮 rollout 更容易命中推理后端 prefix cache。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>LLMGatewayResponse</h3>
+        <pre class="rv-codeblock"><code>LLMGatewayResponse
+  schema_version
+  contract_version
+  route
+  model_call_id
+  assistant_message
+  tool_calls
+  prompt_ids
+  output_token_ids
+  output_logprobs
+  response_mask
+  stop_reason
+  token_source
+  policy_version
+  routed_experts
+  usage
+  provider_request_id
+  raw_request_ref
+  raw_response_ref
+  model_call_event_ref
+  duration_ms
+  error
+  extra_fields</code></pre>
+
+        <div class="rv-grid-2">
+          <article class="rv-card">
+            <h3>Token 字段</h3>
+            <p>
+              <code>prompt_ids</code> 是本轮模型输入 token ids；<code>output_token_ids</code> 是本轮模型生成 token ids；<code>output_logprobs</code> 与输出 token 对齐；本轮 output token 的 response mask 全部为 1。工具 observation 不由 gateway response 生成，而是在 episode 级 training view 中以 mask 0 拼入。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>Policy Version</h3>
+            <p>
+              fully async 阶段必须记录 <code>global_steps</code>、<code>min_global_steps</code>、<code>max_global_steps</code> 和 checkpoint ref。字段名必须对齐 verl 原始 <code>TokenOutput.extra_fields</code>，不能在 adapter 和 runtime 两边各自发明单复数字段。
+            </p>
+          </article>
+        </div>
+
+        <h3>VerlLLMGateway 约束</h3>
+        <div class="rv-checklist">
+          <div class="rv-check">必须复用 verl 的 <code>LLMServerClient</code>、sticky-session load balancer、vLLM 或 SGLang server、token ids、log probabilities、routed experts 和 extra fields。</div>
+          <div class="rv-check">不能自己启动或停止 verl server，不能管理 Ray worker group，不能同步模型权重，不能绕过 server manager 直接访问底层 vLLM / SGLang 对象。</div>
+          <div class="rv-check">provider backend 可以通过现有 <code>ModelClient</code> adapter 兼容，但如果没有真实 token ids 和 logprobs，必须标记为 debug 或 teacher data generation 路径。</div>
+          <div class="rv-check">正式 verl online RL 路径必须以 <code>VerlLLMGateway</code> 的 token-in-token-out 记录为准。</div>
+        </div>
+      </section>
+
+      <section id="training-view" class="rv-section">
+        <h2>Contract 03：Training View 与 Audit Ref</h2>
+        <p class="rv-muted">
+          RepoHarness 的完整轨迹适合复查和数据治理，但不适合直接塞进 verl batch。训练器需要紧凑张量和 reward，审计系统需要完整证据，因此必须拆成 training view 和 audit ref。
+        </p>
+
+        <h3>TrainingView 字段</h3>
+        <pre class="rv-codeblock"><code>TrainingView
+  schema_version
+  contract_version
+  prompt_ids
+  response_ids
+  response_mask
+  response_logprobs
+  reward_score
+  num_turns
+  verl_metrics
+  repo_harness_metrics_ref
+  extra_fields</code></pre>
+
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>字段</th>
+                <th>完整语义</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>prompt_ids</code></td>
+                <td>episode 初始 prompt token ids。route=verl 时必须来自 verl tokenizer / processor / chat template。不能包含 hidden verifier、gold patch、reward metadata 或 accepted label。</td>
+              </tr>
+              <tr>
+                <td><code>response_ids</code></td>
+                <td>包含模型生成 token，也可以包含工具 observation token。padding 不在未 padding 的 TrainingView 中出现，由 verl worker 后处理。</td>
+              </tr>
+              <tr>
+                <td><code>response_mask</code></td>
+                <td>与 response_ids 等长。assistant 生成 token 为 1；工具 observation、环境 observation 和非训练 token 为 0。</td>
+              </tr>
+              <tr>
+                <td><code>response_logprobs</code></td>
+                <td>如果存在，长度与 response_ids 对齐。模型生成 token 使用 rollout server 返回的 log probability，工具 observation token 可以填 0.0。正式 PPO / GRPO 路径不应长期缺失 log probability。</td>
+              </tr>
+              <tr>
+                <td><code>reward_score</code></td>
+                <td>对应 RepoHarness <code>RewardMetadata.final_reward</code>。基础设施错误样本不能伪装成模型负样本，应通过 invalid_for_training 和 diagnostics 阻断。</td>
+              </tr>
+              <tr>
+                <td><code>verl_metrics</code></td>
+                <td>只承载能转换成 verl <code>AgentLoopMetrics</code> 的字段，例如 generate_sequences、tool_calls、compute_score、num_preempted。</td>
+              </tr>
+              <tr>
+                <td><code>repo_harness_metrics_ref</code></td>
+                <td>指向 RepoHarness 详细 metrics / timing / resource artifact。详细字段不能硬塞进 verl 原生 metrics 后静默丢失。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>extra_fields 规则</h3>
+        <pre class="rv-codeblock"><code>extra_fields:
+  episode_id
+  run_id
+  task_id
+  audit_ref
+  reward_metadata_ref
+  final_verifier_ref
+  patch_ref
+  timing_summary_ref
+  resource_summary_ref
+  repo_harness_metrics_ref
+  policy_version
+  global_steps
+  min_global_steps
+  max_global_steps
+  status
+  invalid_for_training
+  invalid_reason</code></pre>
+
+        <div class="rv-callout warning">
+          verl 当前 postprocess 会无条件执行 <code>output.extra_fields["raw_prompt"] = kwargs["raw_prompt"]</code>。因此 visibility test 不能只检查 RepoHarness 自己构造的 <code>TrainingView.extra_fields</code>，还必须检查经过 verl postprocess 后的最终 <code>AgentLoopOutput.extra_fields</code>。
+        </div>
+
+        <h3>GenerationRecord</h3>
+        <pre class="rv-codeblock"><code>GenerationRecord
+  turn
+  model_call_id
+  context_revision
+  prompt_ids
+  output_token_ids
+  output_logprobs
+  stop_reason
+  model_input_hash
+  provider_request_projection_hash
+  gateway_route
+  policy_version
+  assistant_message_ref
+  raw_response_ref</code></pre>
+        <p>
+          硬性要求：<code>GenerationRecord.prompt_ids</code> 必须等于当轮传给 <code>LLMServerClient.generate(...)</code> 的 <code>prompt_ids</code>；<code>GenerationRecord.output_token_ids</code> 必须等于当轮 <code>TokenOutput.token_ids</code>。这防止实现方在 episode 结束后用最终 transcript 重新分词来构造正式训练 token。
+        </p>
+
+        <h3>AuditRef</h3>
+        <pre class="rv-codeblock"><code>AuditRef
+  schema_version
+  contract_version
+  run_id
+  episode_id
+  task_id
+  run_dir
+  transcript_path
+  events_path
+  artifacts_manifest_path
+  run_status_path
+  run_summary_path
+  run_metadata_path
+  reward_metadata_path
+  final_verifier_path
+  patch_path
+  timing_summary_path
+  trajectory_store_facts_path
+  export_audit_path
+  important_artifact_refs</code></pre>
+
+        <h3>可见性矩阵</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>数据内容</th>
+                <th>TrainingView</th>
+                <th>AuditRef 指向的审计视图</th>
+                <th>原因</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>模型可见初始 prompt</td>
+                <td>是</td>
+                <td>是</td>
+                <td>训练和复查都需要。</td>
+              </tr>
+              <tr>
+                <td>assistant 生成 token</td>
+                <td>是，<code>response_mask=1</code></td>
+                <td>是</td>
+                <td>这是训练目标。</td>
+              </tr>
+              <tr>
+                <td>工具 observation</td>
+                <td>可以进入 <code>response_ids</code>，但 <code>response_mask=0</code></td>
+                <td>是</td>
+                <td>它是环境观察，不是模型生成内容。</td>
+              </tr>
+              <tr>
+                <td>final verifier hidden output</td>
+                <td>否</td>
+                <td>是</td>
+                <td>防止 reward channel 泄漏。</td>
+              </tr>
+              <tr>
+                <td>reward scalar</td>
+                <td>是，作为 <code>reward_score</code></td>
+                <td>是</td>
+                <td>训练需要标量，审计需要来源。</td>
+              </tr>
+              <tr>
+                <td>完整 reward metadata</td>
+                <td>否</td>
+                <td>是</td>
+                <td>训练视图只保留引用。</td>
+              </tr>
+              <tr>
+                <td>gold patch</td>
+                <td>否</td>
+                <td>如数据治理允许，可 evaluator-only 保存</td>
+                <td>不能泄漏给模型。</td>
+              </tr>
+              <tr>
+                <td>明文 reasoning trace</td>
+                <td><code>training_fast</code> 默认否</td>
+                <td><code>full_audit</code> 可按策略保存</td>
+                <td>在线训练不应默认写入巨大 trace。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="timing-resource" class="rv-section">
+        <h2>Contract 04：Timing 与 Resource</h2>
+        <p class="rv-muted">
+          DeepSeek V4 Pro thinking mode 顺序 rollout 的瓶颈主要是模型等待，其次是 Docker setup、baseline 和 final verifier 固定成本。RepoHarness 必须把耗时和资源使用结构化输出，才能知道训练吞吐卡在哪里。
+        </p>
+
+        <h3>TimingSummary</h3>
+        <pre class="rv-codeblock"><code>TimingSummary
+  schema_version
+  contract_version
+  rollout_wall_seconds
+  queue_wait_seconds
+  workspace_materialization_seconds
+  docker_setup_seconds
+  baseline_verifier_seconds
+  agent_loop_seconds
+  model_call_seconds
+  context_prepare_seconds
+  tool_seconds
+  verifier_seconds
+  final_verifier_seconds
+  reward_compute_seconds
+  artifact_write_seconds
+  cleanup_seconds
+  model_call_count
+  tool_call_count
+  verifier_call_count
+  artifact_count
+  artifact_bytes_written</code></pre>
+
+        <div class="rv-callout">
+          第一版实现应该优先汇总已有事实：<code>TrajectoryEvent.duration_ms</code>、<code>ModelCallEvent.duration_ms</code> 和 workspace command result 的命令耗时，而不是只在 episode 外层打一个总 wall clock。
+        </div>
+
+        <h3>ResourceSummary</h3>
+        <pre class="rv-codeblock"><code>ResourceSummary
+  schema_version
+  contract_version
+  execution_mode
+  workspace_backend
+  worker_id
+  host_id
+  snapshot_key
+  dependency_state_key
+  docker_image_id
+  docker_volume_ids
+  docker_resource_limits_effective
+  network_policy
+  permission_policy_ref
+  workspace_path
+  run_dir
+  concurrency_group
+  lease_id
+  verifier_worker_pool_id
+  verifier_worker_id
+  queue_wait_seconds_by_resource
+  cleanup_status</code></pre>
+
+        <div class="rv-grid-2">
+          <article class="rv-card">
+            <h3>并发安全</h3>
+            <p>
+              每条 episode 必须有唯一 <code>episode_id</code> 和 <code>run_id</code>，写独立 run directory，使用隔离 workspace。<code>RunRecorder</code> 锁只能保护单个 run directory，不能证明 workspace、Docker volume 或 snapshot cache 没有污染。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>环境复用</h3>
+            <p>
+              snapshot key 建议由 repo_ref、base_commit、environment_id、setup_command_hash、dependency_lock_hash 和 harness_version 组成。复用必须从只读 clean snapshot 恢复，并为每条 episode 创建 copy-on-write workspace。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>Verifier Worker Pool</h3>
+            <p>
+              第一版允许 <code>worker_pool_blocking</code>：提交 final verifier、等待结果、计算 reward、返回 EpisodeResult。它不是 reward backfill，后者要等 fully async 阶段再设计。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>资源事实</h3>
+            <p>
+              <code>network_policy</code>、<code>permission_policy_ref</code>、<code>docker_resource_limits_effective</code>、<code>lease_id</code> 和 worker pool 信息用于证明训练模式没有绕过 RepoHarness 现有边界。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="acceptance" class="rv-section">
+        <h2>Contract 05：Acceptance 与阶段门槛</h2>
+        <p class="rv-muted">
+          进入端到端 smoke 前，每个阶段都必须经过共享 contract 验收。这里的目标不是只证明代码能跑，而是防止 token、mask、reward、hidden visibility、audit 和 failure 分类悄悄出错。
+        </p>
+
+        <div class="rv-checklist">
+          <div class="rv-check"><strong>Contract schema tests：</strong>EpisodeRequest、EpisodeResult、TrainingView、AuditRef、TimingSummary 可以构造、序列化、反序列化。</div>
+          <div class="rv-check"><strong>Canonical fixture tests：</strong>shared schema JSON fixture 和 sha256 固定；adapter 生成的 request 与 runtime 反序列化对象逐字段一致。</div>
+          <div class="rv-check"><strong>Visibility tests：</strong>hidden verifier、gold patch、reward metadata 不进入模型可见上下文和训练 target。</div>
+          <div class="rv-check"><strong>Postprocess visibility tests：</strong>TrainingView -> AgentLoopOutput -> verl postprocess 后，extra_fields、raw_prompt、mask、reward 和 hidden visibility 仍满足 contract。</div>
+          <div class="rv-check"><strong>Mask tests：</strong>assistant token、tool observation token、padding token 的 mask 语义正确。</div>
+          <div class="rv-check"><strong>Token provenance tests：</strong>route=verl 时 token 来自真实 rollout generation；每个 GenerationRecord.prompt_ids 等于当轮传给 LLMServerClient.generate(...) 的 prompt_ids。</div>
+          <div class="rv-check"><strong>Audit tests：</strong>每条 training sample 可以通过 audit_ref 找到 run directory、transcript、events、artifact manifest、reward metadata 和 final verifier。</div>
+          <div class="rv-check"><strong>Failure tests：</strong>infrastructure_error、timeout、invalid_task 不会被误当成普通模型失败样本。</div>
+          <div class="rv-check"><strong>Outcome distinction tests：</strong>status=succeeded 只表示轨迹和 reward 可消费，不等于任务成功；verifier_summary.accepted=false 时不能统计成 task_success。</div>
+          <div class="rv-check"><strong>Schema evolution tests：</strong>新增字段必须显式标记 required、optional、default，并说明是否需要 contract version bump。</div>
+        </div>
+
+        <div class="rv-callout danger">
+          第一版不变量：没有 reward 或明确 invalid 状态的 episode 不能作为普通 online RL 样本返回；没有 audit_ref 的 episode 不能进入训练样本；没有 timing_summary 的 episode 不能声称支持训练吞吐分析。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

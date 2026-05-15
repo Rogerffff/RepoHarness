@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness × verl 高层 Contract 架构图</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html" aria-current="page">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Contract Architecture</span>
+      <h1>RepoHarness 接入 verl 的高层 Contract 架构图</h1>
+      <p class="rv-lead">
+        这一页只展示高层 contract 边界：哪个模块创建哪个对象、哪个模块消费哪个对象、RepoHarness episode result 如何投影成 verl 可训练的输出。字段细节不在这里展开，字段定义请看共享 Contract 页面。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">组件：实线矩形</span>
+        <span class="rv-badge info">Contract 对象：虚线文档形状</span>
+        <span class="rv-badge warning">设计图，不表示当前代码已经完整实现</span>
+      </div>
+      <div class="rv-mini-nav">
+        <a href="#diagram">高层图</a>
+        <a href="#why-contract-03">Contract 03</a>
+        <a href="#io-summary">输入输出</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+      <section id="diagram" class="rv-section">
+        <h2>高层 Contract 架构图</h2>
+        <p class="rv-muted">
+          这张图不解释单轮 token 如何拼接，也不解释 response mask 的细节。它只回答一个问题：RepoHarness 和 verl 通过哪些 contract 对象衔接。
+        </p>
+
+        <div class="rv-legend" aria-label="图例">
+          <span class="rv-data-pill text">粗灰箭头：控制流 / 调用</span>
+          <span class="rv-data-pill token">青色箭头：contract 数据对象流</span>
+          <span class="rv-data-pill reward">黄色虚线：包含 / 投影关系</span>
+          <span class="rv-data-pill mask">文档形状：contract 对象，不展开字段</span>
+        </div>
+
+        <figure class="rv-visual-diagram-wrap rv-contract-diagram-wrap" aria-label="RepoHarness 接入 verl 的高层 contract 架构图">
+          <svg class="rv-visual-diagram" viewBox="0 0 1700 1040" role="img" aria-labelledby="contractDiagramTitle contractDiagramDesc">
+            <title id="contractDiagramTitle">RepoHarness 接入 verl 的高层 Contract 架构图</title>
+            <desc id="contractDiagramDesc">图中展示 verl adapter、RepoHarness runtime、LLMGateway、EpisodeResult 字段树、AgentLoopOutput 和 DataProto 之间的高层 contract 关系。</desc>
+
+            <defs>
+              <marker id="cmCallArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#a5b1c2"></path>
+              </marker>
+              <marker id="cmDataArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#39c5cf"></path>
+              </marker>
+              <marker id="cmProjArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#d29922"></path>
+              </marker>
+            </defs>
+
+            <rect class="diagram-bg" x="12" y="14" width="1676" height="1012" rx="22"></rect>
+            <text class="cm-title" x="48" y="68">RepoHarness × verl 高层 Contract 架构</text>
+            <text class="cm-subtitle" x="48" y="102">只看模块边界和 contract 对象，不展开字段，也不讲单轮 token 拼接</text>
+
+            <rect class="cm-section" x="48" y="128" width="510" height="770" rx="18"></rect>
+            <text class="cm-section-title" x="74" y="166">1. 调度链：谁调用谁</text>
+
+            <rect class="cm-section" x="594" y="128" width="520" height="770" rx="18"></rect>
+            <text class="cm-section-title" x="620" y="166">2. Episode runtime：contract 如何产生</text>
+
+            <rect class="cm-section" x="1150" y="128" width="500" height="770" rx="18"></rect>
+            <text class="cm-section-title" x="1176" y="166">3. EpisodeResult 字段树和训练消费</text>
+
+            <rect class="cm-section" x="48" y="922" width="1602" height="72" rx="16"></rect>
+            <text class="cm-section-title" x="74" y="966">后续训练：AgentLoopOutput 经过 verl postprocess 进入 DataProto，再进入 Actor Training</text>
+
+            <!-- System components -->
+            <rect class="cm-component" x="100" y="210" width="330" height="70" rx="8"></rect>
+            <text class="cm-label" x="126" y="253">verl PPOTrainer</text>
+
+            <rect class="cm-component" x="100" y="330" width="330" height="70" rx="8"></rect>
+            <text class="cm-label" x="126" y="373">AgentLoopWorker</text>
+
+            <rect class="cm-component cm-adapter" x="100" y="450" width="330" height="70" rx="8"></rect>
+            <text class="cm-label" x="126" y="493">RepoHarnessVerlAgentLoop</text>
+
+            <rect class="cm-component cm-runtime" x="650" y="260" width="350" height="78" rx="8"></rect>
+            <text class="cm-label" x="676" y="300">RepoHarnessRuntime</text>
+            <text class="cm-small" x="676" y="322">run_episode(...)</text>
+
+            <rect class="cm-component cm-runtime" x="650" y="505" width="250" height="66" rx="8"></rect>
+            <text class="cm-label" x="676" y="545">VerlLLMGateway</text>
+
+            <rect class="cm-component" x="920" y="505" width="170" height="66" rx="8"></rect>
+            <text class="cm-label" x="938" y="545">LLMServerClient</text>
+
+            <rect class="cm-component" x="650" y="760" width="190" height="58" rx="8"></rect>
+            <text class="cm-label" x="676" y="796">Tools</text>
+
+            <rect class="cm-component" x="870" y="760" width="190" height="58" rx="8"></rect>
+            <text class="cm-label" x="896" y="796">Verifier</text>
+
+            <rect class="cm-component" x="1450" y="940" width="160" height="40" rx="8"></rect>
+            <text class="cm-label" x="1472" y="966">Actor Training</text>
+
+            <!-- Contract documents -->
+            <g>
+              <rect class="cm-doc" x="140" y="575" width="280" height="86" rx="14"></rect>
+              <path class="cm-doc-fold" d="M 392 575 L 420 603 L 392 603 Z"></path>
+              <text class="cm-label" x="162" y="613">RepoHarnessEpisodeRequest</text>
+              <text class="cm-small" x="162" y="640">adapter 创建，runtime 消费</text>
+            </g>
+
+            <g>
+              <rect class="cm-doc" x="650" y="400" width="280" height="74" rx="14"></rect>
+              <path class="cm-doc-fold" d="M 902 400 L 930 428 L 902 428 Z"></path>
+              <text class="cm-label" x="672" y="444">LLMGatewayRequest</text>
+            </g>
+
+            <g>
+              <rect class="cm-doc" x="650" y="620" width="280" height="74" rx="14"></rect>
+              <path class="cm-doc-fold" d="M 902 620 L 930 648 L 902 648 Z"></path>
+              <text class="cm-label" x="672" y="664">LLMGatewayResponse</text>
+            </g>
+
+            <!-- EpisodeResult field tree -->
+            <rect class="cm-result-box" x="1190" y="210" width="410" height="510" rx="18"></rect>
+            <text class="cm-label" x="1220" y="250">RepoHarnessEpisodeResult</text>
+            <text class="cm-small" x="1220" y="276">runtime 输出的完整 episode 结果</text>
+
+            <rect class="cm-field" x="1220" y="310" width="160" height="58" rx="10"></rect>
+            <text class="cm-label" x="1240" y="347">TrainingView</text>
+
+            <rect class="cm-field audit" x="1410" y="310" width="150" height="58" rx="10"></rect>
+            <text class="cm-label" x="1430" y="347">AuditRef</text>
+
+            <rect class="cm-field" x="1220" y="398" width="160" height="58" rx="10"></rect>
+            <text class="cm-label" x="1240" y="435">Reward</text>
+
+            <rect class="cm-field" x="1410" y="398" width="150" height="58" rx="10"></rect>
+            <text class="cm-label" x="1430" y="435">Verifier</text>
+
+            <rect class="cm-field audit" x="1220" y="486" width="160" height="58" rx="10"></rect>
+            <text class="cm-label" x="1240" y="523">TimingSummary</text>
+
+            <rect class="cm-field audit" x="1410" y="486" width="150" height="58" rx="10"></rect>
+            <text class="cm-label" x="1430" y="523">ResourceSummary</text>
+
+            <rect class="cm-field audit" x="1220" y="574" width="340" height="58" rx="10"></rect>
+            <text class="cm-label" x="1240" y="611">generation_records: list[GenerationRecord]</text>
+
+            <rect class="cm-field audit" x="1220" y="652" width="340" height="42" rx="10"></rect>
+            <text class="cm-small" x="1240" y="679">patch / diagnostics / artifact references</text>
+
+            <g>
+              <rect class="cm-object" x="1190" y="770" width="270" height="64" rx="14"></rect>
+              <path class="cm-doc-fold" d="M 1432 770 L 1460 798 L 1432 798 Z"></path>
+              <text class="cm-label" x="1212" y="810">AgentLoopOutput</text>
+            </g>
+
+            <g>
+              <rect class="cm-object" x="1190" y="940" width="180" height="40" rx="12"></rect>
+              <path class="cm-doc-fold" d="M 1342 940 L 1370 968 L 1342 968 Z"></path>
+              <text class="cm-label" x="1212" y="966">DataProto</text>
+            </g>
+
+            <!-- Arrows: calls -->
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 265 280 L 265 330"></path>
+            <text class="cm-label-call" x="282" y="312">generate_sequences</text>
+
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 265 400 L 265 450"></path>
+            <text class="cm-label-call" x="282" y="432">spawn run(...)</text>
+
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 430 485 C 520 485 560 300 650 300"></path>
+            <text class="cm-label-call" x="470" y="410">calls runtime</text>
+
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 790 474 L 775 505"></path>
+            <text class="cm-label-call" x="804" y="494">generate_turn</text>
+
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 900 538 L 920 538"></path>
+            <text class="cm-label-call" x="902" y="520">generate</text>
+
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 735 338 C 680 500 690 650 745 760"></path>
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 930 338 C 1000 500 1000 650 965 760"></path>
+            <text class="cm-label-call" x="690" y="720">tool / verifier calls</text>
+
+            <!-- Arrows: data contracts -->
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 265 520 L 265 575"></path>
+            <text class="cm-label-data" x="282" y="555">creates</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 420 618 C 520 618 560 338 650 318"></path>
+            <text class="cm-label-data" x="470" y="590">RepoHarnessEpisodeRequest</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 825 338 L 790 400"></path>
+            <text class="cm-label-data" x="835" y="374">per turn</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 1005 571 C 1005 600 890 600 790 620"></path>
+            <text class="cm-label-data" x="924" y="594">model output</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 650 657 C 610 570 610 318 650 300"></path>
+            <text class="cm-label-data" x="612" y="510">consume response</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 930 657 C 1040 650 1110 605 1220 603"></path>
+            <text class="cm-label-data" x="990" y="635">records</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 1000 300 C 1080 300 1110 250 1190 250"></path>
+            <text class="cm-label-data" x="1040" y="278">RepoHarnessEpisodeResult</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 1325 834 C 1325 880 1280 895 1280 940"></path>
+            <text class="cm-label-data" x="1338" y="890">postprocess</text>
+
+            <path class="cm-call" marker-end="url(#cmCallArrow)" d="M 1370 960 L 1450 960"></path>
+
+            <!-- Arrows: projection / containment -->
+            <path class="cm-proj" marker-end="url(#cmProjArrow)" d="M 1300 368 L 1300 770"></path>
+            <text class="cm-label-proj" x="1316" y="747">TrainingView projection</text>
+
+            <path class="cm-proj" marker-end="url(#cmProjArrow)" d="M 1485 368 C 1505 555 1500 715 1460 802"></path>
+            <text class="cm-label-proj" x="1510" y="720">AuditRef in extra_fields</text>
+
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 840 789 C 1000 830 1080 705 1220 675"></path>
+            <path class="cm-data" marker-end="url(#cmDataArrow)" d="M 1060 789 C 1110 789 1145 700 1220 675"></path>
+            <text class="cm-label-data" x="900" y="842">tool / verifier summaries</text>
+          </svg>
+        </figure>
+      </section>
+
+      <section id="why-contract-03" class="rv-section">
+        <h2>Contract 03 为什么必须存在</h2>
+        <div class="rv-grid-3">
+          <article class="rv-card">
+            <h3>TrainingView</h3>
+            <p>
+              它是从完整 <code>RepoHarnessEpisodeResult</code> 中投影出的训练视图。verl adapter 不应该自己绕过 episode result 拼训练字段，而应该消费这个视图并转换成 <code>AgentLoopOutput</code>。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>GenerationRecord</h3>
+            <p>
+              它记录每一轮模型调用的来源证据。route=verl 时，它把 <code>LLMGatewayResponse</code> 和真实 rollout generation 路径绑定起来，避免后续用最终 transcript 重新分词伪造训练 token。
+            </p>
+          </article>
+          <article class="rv-card">
+            <h3>AuditRef</h3>
+            <p>
+              它让训练样本能回到完整审计材料。训练后端拿到的是轻量输出，但需要能够追溯 transcript、events、artifact manifest、reward metadata、final verifier、patch 和 timing/resource 结果。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="io-summary" class="rv-section">
+        <h2>模块输入输出摘要</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>模块</th>
+                <th>输入</th>
+                <th>输出</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>RepoHarnessVerlAgentLoop</code></td>
+                <td>verl sample/config</td>
+                <td><code>RepoHarnessEpisodeRequest</code>；最终向 verl 返回 <code>AgentLoopOutput</code></td>
+              </tr>
+              <tr>
+                <td><code>RepoHarnessRuntime.run_episode(...)</code></td>
+                <td><code>RepoHarnessEpisodeRequest</code></td>
+                <td><code>RepoHarnessEpisodeResult</code></td>
+              </tr>
+              <tr>
+                <td><code>LLMGateway</code></td>
+                <td><code>LLMGatewayRequest</code></td>
+                <td><code>LLMGatewayResponse</code></td>
+              </tr>
+              <tr>
+                <td>runtime generation recorder</td>
+                <td><code>LLMGatewayResponse</code></td>
+                <td><code>GenerationRecord</code></td>
+              </tr>
+              <tr>
+                <td>episode result projection</td>
+                <td><code>RepoHarnessEpisodeResult</code></td>
+                <td><code>TrainingView</code>、<code>AuditRef</code>、<code>TimingSummary</code>、<code>ResourceSummary</code>、reward references</td>
+              </tr>
+              <tr>
+                <td>verl adapter output conversion</td>
+                <td><code>TrainingView</code> 和 <code>AuditRef</code></td>
+                <td><code>AgentLoopOutput</code></td>
+              </tr>
+              <tr>
+                <td>verl postprocess / trainer</td>
+                <td><code>AgentLoopOutput</code></td>
+                <td><code>DataProto</code>；随后进入 actor training batch</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{
+  "schema_version": "repo_harness_verl_visibility_fixture_v0",
+  "contract_version": "repo_harness_verl_shared_contracts_v0",
+  "fixture_kind": "canonical_audit_path_access_denied",
+  "episode_id": "stage0h-episode-visibility",
+  "run_id": "stage0h-run-visibility",
+  "visibility_denylist": [
+    "hidden_verifier",
+    "gold_patch",
+    "accepted_label",
+    "complete_reward_metadata",
+    "provider_secret",
+    "evaluator_only_logs",
+    "absolute_run_directory",
+    "final_verifier_artifact",
+    "reward_metadata_artifact",
+    "hidden_test_selector",
+    "hidden_test_patch"
+  ],
+  "tool_access_attempts": [
+    {
+      "tool_name": "read_file",
+      "target_ref": "rh://audit/stage0h-visibility/run-directory",
+      "target_kind": "run_directory",
+      "expected_status": "denied",
+      "denied_reason": "audit_artifact_outside_model_workspace"
+    },
+    {
+      "tool_name": "grep",
+      "target_ref": "rh://audit/stage0h-visibility/reward-metadata",
+      "target_kind": "reward_metadata_artifact",
+      "expected_status": "denied",
+      "denied_reason": "evaluator_only_artifact"
+    },
+    {
+      "tool_name": "read_tool_result_artifact",
+      "target_ref": "rh://audit/stage0h-visibility/final-verifier",
+      "target_kind": "final_verifier_artifact",
+      "expected_status": "denied",
+      "denied_reason": "hidden_verifier_boundary"
+    },
+    {
+      "tool_name": "read_file",
+      "target_ref": "rh://audit/stage0h-visibility/gold-patch",
+      "target_kind": "gold_patch",
+      "expected_status": "denied",
+      "denied_reason": "gold_patch_forbidden"
+    }
+  ],
+  "allowed_extra_fields": {
+    "repo_harness_episode_id": "stage0h-episode-visibility",
+    "repo_harness_run_id": "stage0h-run-visibility",
+    "repo_harness_audit_manifest_ref": "rh://audit/stage0h-visibility/manifest",
+    "repo_harness_status": "invalid",
+    "repo_harness_invalid_for_training": true,
+    "repo_harness_invalid_for_online_rl": true
+  },
+  "forbidden_extra_fields_examples": [
+    "audit_ref",
+    "run_dir",
+    "reward_metadata_path",
+    "final_verifier_path",
+    "gold_patch_path"
+  ],
+  "raw_prompt_policy": {
+    "raw_prompt_model_visible_only": true,
+    "forbidden_content": ["hidden_verifier", "gold_patch", "accepted_label", "provider_secret", "evaluator_only_logs"]
+  }
+}

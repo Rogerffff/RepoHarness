@@ -1,0 +1,82 @@
+{
+  "schema_version": "repo_harness_verl_training_view_v0",
+  "contract_version": "repo_harness_verl_shared_contracts_v0",
+  "fixture_kind": "canonical_training_view",
+  "online_rl_eligible": true,
+  "rollout_limits": {
+    "prompt_length": 16,
+    "response_length": 12
+  },
+  "prompt_ids": [101, 102, 103, 104],
+  "response_ids": [201, 202, 301, 302, 203],
+  "response_mask": [1, 1, 0, 0, 1],
+  "response_logprobs": [-0.11, -0.12, 0.0, 0.0, -0.13],
+  "response_spans": [
+    {
+      "start": 0,
+      "end": 2,
+      "source_type": "assistant_generation",
+      "model_call_id": "model-call-001",
+      "tool_call_id": null,
+      "artifact_ref": "rh://audit/stage0h-success/model-call-001",
+      "response_mask_value": 1,
+      "logprob_policy": "rollout_server_logprob",
+      "policy_version": {"policy_ref": "policy-stage0h-v1"},
+      "global_steps": 10,
+      "min_global_steps": 10,
+      "max_global_steps": 10
+    },
+    {
+      "start": 2,
+      "end": 4,
+      "source_type": "tool_observation",
+      "model_call_id": null,
+      "tool_call_id": "tool-call-read-file-001",
+      "artifact_ref": "rh://audit/stage0h-success/tool-observation-001",
+      "response_mask_value": 0,
+      "logprob_policy": "environment_token_zero_logprob",
+      "policy_version": {"policy_ref": "policy-stage0h-v1"},
+      "global_steps": 10,
+      "min_global_steps": 10,
+      "max_global_steps": 10
+    },
+    {
+      "start": 4,
+      "end": 5,
+      "source_type": "assistant_generation",
+      "model_call_id": "model-call-002",
+      "tool_call_id": null,
+      "artifact_ref": "rh://audit/stage0h-success/model-call-002",
+      "response_mask_value": 1,
+      "logprob_policy": "rollout_server_logprob",
+      "policy_version": {"policy_ref": "policy-stage0h-v1"},
+      "global_steps": 10,
+      "min_global_steps": 10,
+      "max_global_steps": 10
+    }
+  ],
+  "reward_score": 1.0,
+  "num_turns": 2,
+  "verl_metrics": {
+    "generate_sequences": 2,
+    "tool_calls": 1,
+    "compute_score": 1,
+    "num_preempted": 0
+  },
+  "repo_harness_metrics_ref": "rh://audit/stage0h-success/metrics",
+  "extra_fields": {
+    "repo_harness_episode_id": "stage0h-episode-success",
+    "repo_harness_run_id": "stage0h-run-success",
+    "repo_harness_task_id": "stage0h-task-success",
+    "repo_harness_audit_manifest_ref": "rh://audit/stage0h-success/manifest",
+    "repo_harness_reward_metadata_ref": "rh://audit/stage0h-success/reward-metadata",
+    "repo_harness_final_verifier_ref": "rh://audit/stage0h-success/final-verifier",
+    "repo_harness_patch_ref": "rh://audit/stage0h-success/patch",
+    "repo_harness_timing_summary_ref": "rh://audit/stage0h-success/timing-summary",
+    "repo_harness_resource_summary_ref": "rh://audit/stage0h-success/resource-summary",
+    "repo_harness_status": "succeeded",
+    "repo_harness_invalid_for_training": false,
+    "repo_harness_invalid_reason": null,
+    "repo_harness_invalid_for_online_rl": false
+  }
+}

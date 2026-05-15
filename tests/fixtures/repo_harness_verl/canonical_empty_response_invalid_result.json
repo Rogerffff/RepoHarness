@@ -1,0 +1,49 @@
+{
+  "schema_version": "repo_harness_verl_episode_result_v0",
+  "contract_version": "repo_harness_verl_shared_contracts_v0",
+  "fixture_kind": "canonical_empty_response_invalid_result",
+  "episode_id": "stage0h-episode-empty-response",
+  "run_id": "stage0h-run-empty-response",
+  "task_id": "stage0h-task-empty-response",
+  "status": "invalid",
+  "status_reason": "empty_response_with_reward_blocked",
+  "retryable": false,
+  "invalid_for_training": true,
+  "invalid_for_online_rl": true,
+  "attempted_reward_score": 1.0,
+  "training_view": {
+    "rollout_limits": {
+      "prompt_length": 16,
+      "response_length": 8
+    },
+    "prompt_ids": [101, 102],
+    "response_ids": [],
+    "response_mask": [],
+    "response_logprobs": [],
+    "response_spans": [],
+    "reward_score": null,
+    "extra_fields": {
+      "repo_harness_episode_id": "stage0h-episode-empty-response",
+      "repo_harness_run_id": "stage0h-run-empty-response",
+      "repo_harness_task_id": "stage0h-task-empty-response",
+      "repo_harness_audit_manifest_ref": "rh://audit/stage0h-empty-response/manifest",
+      "repo_harness_status": "invalid",
+      "repo_harness_invalid_for_training": true,
+      "repo_harness_invalid_reason": "empty_response_with_reward_blocked",
+      "repo_harness_invalid_for_online_rl": true
+    }
+  },
+  "audit_ref": {
+    "run_id": "stage0h-run-empty-response",
+    "episode_id": "stage0h-episode-empty-response",
+    "task_id": "stage0h-task-empty-response",
+    "run_dir": "runs/repo-harness-verl-stage0h/example-empty-response",
+    "artifacts_manifest_path": "artifacts/manifest.json"
+  },
+  "audit_diagnostics": [
+    {
+      "code": "empty_response_with_reward_blocked",
+      "message": "Empty response_ids cannot enter verl postprocess with a normal reward_score."
+    }
+  ]
+}

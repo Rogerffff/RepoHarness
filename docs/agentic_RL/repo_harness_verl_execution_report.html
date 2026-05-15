@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl 执行结果汇报</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html" aria-current="page">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Execution Report</span>
+      <h1>RepoHarness 接入 verl 的执行结果汇报</h1>
+      <p class="rv-lead">
+        这一页只记录已经完成的执行结果，不承载顺序实施计划本身。后续每完成一个阶段，就在这里追加实际生成的文件、验收命令、报告产物、检查结论和遗留提醒。当前执行进度到 Stage 1：训练后端无关 schema 包、最小 <code>LLMGateway</code> contract、fixture roundtrip 和 visibility 拒绝规则已经完成，并通过 sub agent 复查。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 0H 第一版已验收</span>
+        <span class="rv-badge success">Stage 1 已验收</span>
+        <span class="rv-badge info">执行日志独立于计划页</span>
+        <span class="rv-badge info">可以进入 Stage 2</span>
+      </div>
+      <div class="rv-mini-nav">
+        <a href="#status">当前状态</a>
+        <a href="#stage-0h-files">生成文件</a>
+        <a href="#stage-0h-fixtures">fixture 示例</a>
+        <a href="#stage-0h-tests">测试结果</a>
+        <a href="#stage-0h-reports">验收报告</a>
+        <a href="#stage-1-summary">Stage 1 结果</a>
+        <a href="#stage-1-subagent">Stage 1 复查</a>
+        <a href="#stage-1-verification">Stage 1 验收</a>
+        <a href="#next">下一步提醒</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+      <section id="status" class="rv-section">
+        <h2>当前状态</h2>
+        <p class="rv-muted">
+          Stage 0H 是 Stage 0 和 Stage 1 之间的 contract hardening gate。它交付了一套 fixture、最小测试和验收报告，让 Stage 1 之后的 schema、runtime、adapter 都被同一组训练安全规则约束。Stage 1 已经在这些 fixture 之上新增正式 schema 包和最小 <code>LLMGateway</code> contract，但仍然没有实现完整 runtime、<code>training_fast</code> recorder 或 verl adapter。
+        </p>
+        <div class="rv-callout success">
+          当前结论：Stage 1 已经通过本地验收命令和 sub agent 复查，可以进入 Stage 2。Stage 2 的下一步边界是抽出 <code>RepoHarnessRuntime.run_episode(...)</code> facade，但仍不应该提前实现完整 verl adapter。
+        </div>
+        <div class="rv-callout warning">
+          提交状态提醒：在编写 Stage 2 执行计划时，当前 worktree 中的 Stage 0H、Stage 1、Stage 2 计划相关文档、fixture、<code>src/repo_harness/rl/</code> schema 包和新增测试仍处于未提交状态。此页记录的是本地执行与复查结果，不表示这些改动已经进入 git 提交历史。
+        </div>
+      </section>
+
+      <section id="stage-0h-files" class="rv-section">
+        <h2>Stage 0H 生成文件</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>产物类别</th>
+                <th>生成位置</th>
+                <th>内容概括</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>canonical fixture</td>
+                <td><code>tests/fixtures/repo_harness_verl/</code></td>
+                <td>共 11 个 canonical JSON fixture 和 1 个 <code>sha256_manifest.json</code>。它们固定 episode request、episode result、training view、audit ref、LLMGateway request / response、多轮工具调用、overflow invalid、empty response invalid、mixed logprob batch rejected 和 audit path access denied 等样例。</td>
+              </tr>
+              <tr>
+                <td>Stage 0H 最小测试</td>
+                <td><code>tests/unit/test_repo_harness_verl_*.py</code></td>
+                <td>新增 3 个测试文件，分别检查 fixture / hash / route / extra_fields，token / mask / log probability / response_spans，以及 visibility / opaque audit refs / tool access denial。</td>
+              </tr>
+              <tr>
+                <td>验收报告</td>
+                <td><code>runs/repo-harness-verl-stage0h-20260513T152905Z/</code></td>
+                <td>生成命令日志、fixture hash 报告、shape rule 报告、visibility matrix 报告、blocked-by-stage 报告和 Stage 0H summary。报告用于证明当前 gate 已执行，也用于提醒后续阶段必须解除哪些 blocked 检查。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="stage-0h-fixtures" class="rv-section">
+        <h2>fixture 内容举例</h2>
+        <div class="rv-grid-2">
+          <div class="rv-card">
+            <h3>合法训练视图样例</h3>
+            <p><code>canonical_training_view.json</code> 展示一条最小可训练样本：包含 <code>prompt_ids</code>、<code>response_ids</code>、<code>response_mask</code>、<code>response_logprobs</code>、<code>reward_score</code>、<code>response_spans</code> 和 <code>repo_harness_*</code> opaque refs。</p>
+            <pre class="rv-codeblock"><code>response_ids:       [201, 202, 301, 302, 203]
+response_mask:      [1,   1,   0,   0,   1]
+response_logprobs:  [-0.11, -0.12, 0.0, 0.0, -0.13]</code></pre>
+            <p>这里的工具观察 token 使用 <code>response_mask=0</code>，对应 <code>response_logprobs=0.0</code>，不会参与 policy loss。</p>
+          </div>
+
+          <div class="rv-card">
+            <h3>多轮工具调用样例</h3>
+            <p><code>canonical_multiturn_tool_episode_result.json</code> 覆盖 assistant 生成工具调用、tool observation、environment observation、下一轮 assistant 最终回答，以及 padding / truncated excluded span。</p>
+            <pre class="rv-codeblock"><code>response_spans:
+  assistant_generation
+  tool_observation
+  environment_observation
+  assistant_generation
+  padding_excluded
+  truncated_excluded</code></pre>
+            <p>每个 span 都带有 <code>model_call_id</code>、<code>tool_call_id</code>、<code>artifact_ref</code>、<code>response_mask_value</code>、<code>logprob_policy</code>、policy version 和 global steps。</p>
+          </div>
+
+          <div class="rv-card">
+            <h3>无效样本样例</h3>
+            <p><code>canonical_response_overflow_invalid_result.json</code> 固定 response overflow 的处理方式：不能静默截断后继续训练，必须写入 <code>status_reason=response_length_exceeded</code>、<code>budget_consumption.stop_reason</code> 和 audit diagnostics。</p>
+            <p><code>canonical_empty_response_invalid_result.json</code> 固定空 response 的处理方式：空 <code>response_ids</code> 即使曾经尝试产生 reward，也不能带着普通有效 <code>reward_score</code> 进入训练。</p>
+          </div>
+
+          <div class="rv-card">
+            <h3>泄漏防护样例</h3>
+            <p><code>canonical_audit_path_access_denied.json</code> 固定模型工具访问审计路径时的拒绝策略。样例覆盖 <code>read_file</code>、<code>grep</code> 和 <code>read_tool_result_artifact</code> 访问 run directory、reward metadata、final verifier artifact 和 gold patch 的场景。</p>
+            <p>这些引用使用 <code>rh://audit/...</code> opaque ref，而不是模型工具可直接读取的本地绝对路径。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="stage-0h-tests" class="rv-section">
+        <h2>测试文件执行结果</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>测试文件</th>
+                <th>检查重点</th>
+                <th>本轮结果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>test_repo_harness_verl_contract_fixtures.py</code></td>
+                <td>fixture 文件集合、JSON 可解析、contract version、sha256 manifest、route 枚举、provider <code>invalid_for_online_rl</code>、无绝对路径、batch extra_fields 扁平 opaque refs。</td>
+                <td><strong>6 passed</strong></td>
+              </tr>
+              <tr>
+                <td><code>test_repo_harness_verl_stage0h_shape_rules.py</code></td>
+                <td>token / mask / log probability 长度对齐、工具观察 token 的 zero logprob、response_spans 覆盖、多轮工具调用、overflow invalid、empty response invalid、mixed logprob batch rejected。</td>
+                <td><strong>5 passed</strong></td>
+              </tr>
+              <tr>
+                <td><code>test_repo_harness_verl_stage0h_visibility.py</code></td>
+                <td>visibility denylist、raw_prompt hidden 内容隔离、audit artifact 工具访问拒绝、training batch extra_fields 不暴露本地路径、结构化 AuditRef 不嵌入训练 extra_fields。</td>
+                <td><strong>6 passed</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>本轮验收命令</h3>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m compileall src
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_verl_contract_fixtures.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_verl_stage0h_shape_rules.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+        <div class="rv-callout success">
+          本轮本地复核结果：<code>compileall</code> 通过，三组 Stage 0H 测试分别为 <code>6 passed</code>、<code>5 passed</code>、<code>6 passed</code>。subagent 复核未发现必须修复项，结论是可以进入 Stage 1。
+        </div>
+      </section>
+
+      <section id="stage-0h-reports" class="rv-section">
+        <h2>验收报告文件</h2>
+        <pre class="rv-codeblock"><code>runs/repo-harness-verl-stage0h-20260513T152905Z/
+  stage0h_command_log.jsonl
+  contract_fixture_sha256_report.json
+  shape_rule_report.json
+  visibility_matrix_report.json
+  blocked_by_stage_report.json
+  stage0h_acceptance_summary.json</code></pre>
+        <p class="rv-muted">
+          <code>blocked_by_stage_report.json</code> 是后续阶段最重要的接力文件。它已经记录 Stage 1 schema roundtrip、Stage 2 cancellation / timeout、Stage 3 <code>training_fast</code> 量化 benchmark、Stage 10 converter、Stage 12 DataProto / TransferQueue / Vast.ai smoke 等后续必须解除的检查。
+        </p>
+      </section>
+
+      <section id="stage-1-summary" class="rv-section">
+        <h2>Stage 1 执行结果</h2>
+        <p class="rv-muted">
+          Stage 1 的实际目标是把 Stage 0H 已冻结的 fixture 和规则接入正式 schema，而不是提前写 runtime 或 verl adapter。本轮已经新增训练后端无关的 <code>src/repo_harness/rl/</code> 包，并把 Stage 0H canonical fixture 接入正式 schema roundtrip、非法字段拒绝测试和 batch 级校验 helper。
+        </p>
+
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>交付类别</th>
+                <th>文件位置</th>
+                <th>实际完成内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Stage 1 执行计划</td>
+                <td><code>docs/agentic_RL/repo_harness_verl_workstreams/04-stage-1-execution-plan.md</code></td>
+                <td>补充了 <code>__init__.py</code>、结构化 <code>AuditRef</code> 归属、<code>StrictBaseModel</code> 风格、required / optional / default 策略、batch 级 mixed logprob helper、provider route 默认无效规则，以及 Stage 0H 回归测试出口。</td>
+              </tr>
+              <tr>
+                <td>HTML 顺序计划同步</td>
+                <td><code>docs/agentic_RL/repo_harness_verl_sequential_plan.html</code></td>
+                <td>在顺序实施计划页面增加 Stage 1 执行计划汇报区，说明 Stage 1 要完成 schema、visibility、gateway contract 和 fake gateway，不提前做 Stage 2、Stage 3、Stage 10 或 Stage 11。</td>
+              </tr>
+              <tr>
+                <td>RL schema 包</td>
+                <td><code>src/repo_harness/rl/</code></td>
+                <td>新增 <code>__init__.py</code>、<code>episode.py</code>、<code>gateway.py</code>、<code>training_view.py</code>、<code>timing.py</code> 和 <code>visibility.py</code>。该包不 import <code>verl</code>，只定义 RepoHarness 与训练后端之间的 schema 和校验 contract。</td>
+              </tr>
+              <tr>
+                <td>Stage 1 单元测试</td>
+                <td><code>tests/unit/test_repo_harness_rl_stage1_*.py</code></td>
+                <td>新增 schema roundtrip 测试和 visibility / gateway 测试。测试直接复用 <code>tests/fixtures/repo_harness_verl/</code>，没有重新发明新的 canonical 样例。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rv-grid-2">
+          <div class="rv-card">
+            <h3>新增的正式 schema</h3>
+            <p><code>episode.py</code> 定义 <code>RepoHarnessEpisodeRequest</code>、<code>RepoHarnessEpisodeResult</code>、episode status、invalid reason、diagnostics、budget consumption、reward summary、verifier summary 和 patch summary。</p>
+            <p><code>training_view.py</code> 定义 <code>TrainingView</code>、<code>ResponseSpan</code>、结构化 <code>AuditRef</code>、<code>validate_training_view_for_online_rl(...)</code> 和 <code>validate_formal_online_rl_batch(...)</code>。</p>
+          </div>
+          <div class="rv-card">
+            <h3>新增的 gateway contract</h3>
+            <p><code>gateway.py</code> 定义 <code>LLMGatewayRequest</code>、<code>LLMGatewayResponse</code>、<code>GenerationRecord</code>、async <code>LLMGateway</code> protocol 和 async <code>FakeLLMGateway</code>。</p>
+            <p><code>LLMGatewayResponse.extra_fields</code> 和未来 <code>AgentLoopOutput.extra_fields</code> 已经明确区分：gateway 侧可以保留 rollout 侧补充信息；batch 可传播字段只能是扁平 <code>repo_harness_*</code> scalar 和 opaque refs。</p>
+          </div>
+          <div class="rv-card">
+            <h3>新增的 visibility 边界</h3>
+            <p><code>visibility.py</code> 固定 route 枚举、provider route 默认 <code>invalid_for_online_rl=true</code>、模型可见字段 denylist、batch extra fields allowlist 和 audit opaque ref 校验。</p>
+            <p>现在会拒绝 hidden verifier、gold patch、accepted label、complete reward metadata、provider secret、evaluator-only logs、本地绝对路径和嵌套 audit ref 进入模型可见字段或 batch 可传播字段。</p>
+          </div>
+          <div class="rv-card">
+            <h3>保留的 Stage 1 边界</h3>
+            <p>本轮没有实现 <code>RepoHarnessRuntime.run_episode(...)</code>，没有实现 <code>training_fast</code> recorder，没有实现 <code>TrainingView -&gt; AgentLoopOutput</code> converter，也没有实现 <code>RepoHarnessVerlAgentLoop</code>、<code>VerlLLMGateway</code> 或真实 vLLM / SGLang / Ray 训练流程。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="stage-1-details" class="rv-section">
+        <h2>Stage 1 关键规则落地情况</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>规则</th>
+                <th>落地方式</th>
+                <th>审查意义</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Stage 0H fixture roundtrip</td>
+                <td><code>test_repo_harness_rl_stage1_schema_roundtrip.py</code> 对 11 个 canonical fixture 做正式 schema 构造、序列化和反序列化。</td>
+                <td>证明 Stage 1 没有绕过 Stage 0H，也没有另起一套样例。</td>
+              </tr>
+              <tr>
+                <td>mixed logprob batch 拒绝</td>
+                <td>单条 <code>TrainingView</code> 只校验自身 token / mask / log probability 对齐；正式 batch 通过 <code>validate_formal_online_rl_batch(...)</code> 拒绝 mixed logprob。</td>
+                <td>避免把 batch 级 PPO / GRPO 规则错误塞进单条样本 schema。</td>
+              </tr>
+              <tr>
+                <td>provider route 默认无效</td>
+                <td><code>ProviderRoutePolicy(route="openai")</code> 或 <code>deepseek</code> 缺省时自动补 <code>invalid_for_online_rl=true</code>，显式 <code>false</code> 会被拒绝。</td>
+                <td>OpenAI / DeepSeek 可以用于评测、teacher data、SFT、preference 和 offline replay，但不能伪装成 online rollout policy sample。</td>
+              </tr>
+              <tr>
+                <td>AuditRef 结构化但不进 batch</td>
+                <td><code>AuditRef</code> 保留在 <code>RepoHarnessEpisodeResult.audit_ref</code>；<code>TrainingView.extra_fields</code> 只允许 <code>repo_harness_*</code> 扁平 scalar 和 opaque refs。</td>
+                <td>保留完整审计证据，同时防止本地路径、reward metadata 或 final verifier 细节泄漏到训练 batch。</td>
+              </tr>
+              <tr>
+                <td>模型可见字段检查 key 和 value</td>
+                <td><code>validate_no_forbidden_model_visible_content(...)</code> 现在同时收集字典 key 和 value，拒绝 <code>hidden_verifier</code>、<code>gold_patch</code> 等 key-based 泄漏。</td>
+                <td>防止隐藏字段通过 JSON key 名绕过可见性检查。</td>
+              </tr>
+              <tr>
+                <td>gateway extra fields 深层检查</td>
+                <td><code>validate_gateway_extra_fields(...)</code> 会递归检查字典和列表中的 key / value，拒绝 <code>["repo_harness_gold_patch"]</code> 这类嵌套列表泄漏。</td>
+                <td>防止 gateway 侧开放扩展字段成为 evaluator-only 信息的透传口。</td>
+              </tr>
+              <tr>
+                <td>async gateway contract</td>
+                <td><code>LLMGateway.generate_turn(...)</code> 和 <code>FakeLLMGateway.generate_turn(...)</code> 已改为 async 接口。</td>
+                <td>与 Stage 2 的 async <code>run_episode(...)</code> facade 和后续 verl <code>AgentLoopBase.run(...)</code> 方向保持一致，避免 Stage 2 刚开始返工接口。</td>
+              </tr>
+              <tr>
+                <td>gateway response mask 边界</td>
+                <td><code>LLMGatewayResponse.response_mask</code> 现在必须全为 <code>1</code>；工具 observation token 只能在 episode 级 <code>TrainingView</code> 中以 <code>response_mask=0</code> 表示。</td>
+                <td>明确 gateway 层只返回模型生成 token，TrainingView 层才负责拼接工具和环境 observation。</td>
+              </tr>
+              <tr>
+                <td>Stage 2 runtime 状态预留</td>
+                <td><code>RepoHarnessEpisodeResult.status</code> 新增 <code>invalid_task</code> 和 <code>infrastructure_error</code>，并要求这些状态必须 <code>invalid_for_training=true</code>、<code>invalid_for_online_rl=true</code>。</td>
+                <td>Stage 2 可以区分任务无效、基础设施失败和普通模型失败，避免把 Docker、workspace、provider 或 verifier 故障当成可训练样本。</td>
+              </tr>
+              <tr>
+                <td>provider allowed uses 放松</td>
+                <td><code>ProviderRoutePolicy.allowed_uses</code> 不再要求声明全部离线用途，只要求非空且每一项属于允许的离线用途集合。</td>
+                <td>保留 provider route 默认不能进入 online RL 的安全边界，同时避免未来只声明 <code>evaluation</code> 或单一离线用途时被 schema 过度拒绝。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="stage-1-subagent" class="rv-section">
+        <h2>Stage 1 sub agent 复查过程</h2>
+        <p class="rv-muted">
+          Stage 1 完成后安排了三轮 sub agent 独立检查。sub agent 只检查和报告，不修改文件。前两轮发现的 blocking findings 已经转成负向测试并修复；第三轮复查确认没有新的阻断问题。
+        </p>
+
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>复查轮次</th>
+                <th>发现的问题</th>
+                <th>处理结果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>第一轮</td>
+                <td>发现 3 个 blocking：batch / gateway <code>extra_fields</code> 可携带 namespaced evaluator-only 字段；<code>raw_prompt</code> / <code>messages</code> 可通过字典 key 泄漏；provider route 缺省没有自动 <code>invalid_for_online_rl=true</code>。</td>
+                <td>补充负向测试并修复：拒绝 <code>repo_harness_hidden_verifier</code>、<code>repo_harness_gold_patch</code>、<code>repo_harness_provider_secret</code>、<code>repo_harness_complete_reward_metadata</code>、<code>repo_harness_run_dir</code> 等字段；模型可见内容同时检查 key 和 value；provider route 缺省补 true，显式 false 拒绝。</td>
+              </tr>
+              <tr>
+                <td>第二轮</td>
+                <td>发现 1 个 blocking：<code>LLMGatewayResponse.extra_fields</code> 中的列表字符串值没有被递归检查，例如 <code>{"safe_container": ["repo_harness_gold_patch"]}</code> 仍可通过。</td>
+                <td>补充嵌套 list 泄漏测试，并修复递归遍历，让列表中的 scalar 字符串值也进入 evaluator-only marker 检查。</td>
+              </tr>
+              <tr>
+                <td>第三轮</td>
+                <td>没有 blocking findings。sub agent 确认前两轮问题已经关闭，<code>src/repo_harness/rl</code> 没有 import <code>verl</code>，也没有 Stage 2 / Stage 3 / Stage 10 / Stage 11 越界实现。</td>
+                <td>结论：Stage 1 可以接受，可以进入 Stage 2。</td>
+              </tr>
+              <tr>
+                <td>后续外部检查</td>
+                <td>另一个 agent 建议进入 Stage 2 前补 3 个小边界：gateway 应为 async；<code>EpisodeStatus</code> 应包含 <code>invalid_task</code> 和 <code>infrastructure_error</code>；<code>LLMGatewayResponse.response_mask</code> 不应允许 <code>0</code>。</td>
+                <td>已补 follow-up patch 和测试；同时顺手放松 provider <code>allowed_uses</code> 为离线用途子集。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rv-callout success">
+          第三轮 sub agent final judgment：Stage 1 可以接受，可以进入 Stage 2。此次复查只做检查和报告，没有修改文件。
+        </div>
+      </section>
+
+      <section id="stage-1-verification" class="rv-section">
+        <h2>Stage 1 验收命令和结果</h2>
+        <h3>必须验收命令</h3>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m compileall -q src
+
+uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py \
+  tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py \
+  tests/unit/test_repo_harness_verl_contract_fixtures.py \
+  tests/unit/test_repo_harness_verl_stage0h_shape_rules.py \
+  tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+        <div class="rv-callout success">
+          最终结果：<code>compileall</code> 通过；Stage 1 新增测试和 Stage 0H 回归测试合计 <code>52 passed</code>。
+        </div>
+
+        <h3>额外完整测试套件观察</h3>
+        <p class="rv-muted">
+          额外运行过完整测试套件 <code>uv run --extra dev python -m pytest -q</code>，结果为 <code>1133 passed, 115 failed</code>。失败集中在当前 worktree 缺少历史 V3 / V4 acceptance evidence 路径，例如 <code>runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json</code> 和若干 <code>runs/v4-...</code> 证据目录；另有少量 pre-verl / clean subprocess 环境类失败。这些失败不来自 Stage 1 新增 schema 测试，也不是 Stage 1 进入 Stage 2 的阻断项。
+        </p>
+      </section>
+
+      <section id="next" class="rv-section">
+        <h2>进入 Stage 2 前保留的提醒</h2>
+        <div class="rv-checklist">
+          <div class="rv-check">Stage 2 应抽出 <code>RepoHarnessRuntime.run_episode(...)</code> facade，并复用 Stage 1 的 schema 与 <code>LLMGateway</code> contract。</div>
+          <div class="rv-check">Stage 2 仍不应该实现完整 <code>RepoHarnessVerlAgentLoop</code> 或真实 <code>VerlLLMGateway</code>，这些属于 Stage 11。</div>
+          <div class="rv-check">Stage 2 runtime 产生的 result 必须继续满足 Stage 0H 和 Stage 1 已固定的 token shape、visibility、provider route、audit opaque ref 和 batch extra fields 规则。</div>
+          <div class="rv-check">进入 Stage 2 开发前，建议先决定是否提交当前 Stage 0H、Stage 1 和 Stage 2 计划相关改动，避免后续 runtime 实现与已完成 contract 产物混在同一个审查范围里。</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

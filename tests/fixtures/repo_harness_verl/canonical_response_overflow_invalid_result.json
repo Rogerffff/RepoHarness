@@ -1,0 +1,68 @@
+{
+  "schema_version": "repo_harness_verl_episode_result_v0",
+  "contract_version": "repo_harness_verl_shared_contracts_v0",
+  "fixture_kind": "canonical_response_overflow_invalid_result",
+  "episode_id": "stage0h-episode-overflow",
+  "run_id": "stage0h-run-overflow",
+  "task_id": "stage0h-task-overflow",
+  "status": "invalid",
+  "status_reason": "response_length_exceeded",
+  "retryable": false,
+  "invalid_for_training": true,
+  "invalid_for_online_rl": true,
+  "budget_consumption": {
+    "stop_reason": "response_length_exceeded",
+    "rollout_response_length": 4,
+    "actual_response_length": 6
+  },
+  "training_view": {
+    "rollout_limits": {
+      "prompt_length": 16,
+      "response_length": 4
+    },
+    "prompt_ids": [101, 102, 103],
+    "response_ids": [201, 202, 203, 204, 205, 206],
+    "response_mask": [1, 1, 1, 1, 1, 1],
+    "response_logprobs": [-0.1, -0.2, -0.3, -0.4, -0.5, -0.6],
+    "response_spans": [
+      {
+        "start": 0,
+        "end": 6,
+        "source_type": "assistant_generation",
+        "model_call_id": "model-call-overflow-001",
+        "tool_call_id": null,
+        "artifact_ref": "rh://audit/stage0h-overflow/model-call-001",
+        "response_mask_value": 1,
+        "logprob_policy": "rollout_server_logprob",
+        "policy_version": {"checkpoint_ref": "policy://stage0h/checkpoint-42"},
+        "global_steps": 42,
+        "min_global_steps": 42,
+        "max_global_steps": 42
+      }
+    ],
+    "reward_score": null,
+    "extra_fields": {
+      "repo_harness_episode_id": "stage0h-episode-overflow",
+      "repo_harness_run_id": "stage0h-run-overflow",
+      "repo_harness_task_id": "stage0h-task-overflow",
+      "repo_harness_audit_manifest_ref": "rh://audit/stage0h-overflow/manifest",
+      "repo_harness_status": "invalid",
+      "repo_harness_invalid_for_training": true,
+      "repo_harness_invalid_reason": "response_length_exceeded",
+      "repo_harness_invalid_for_online_rl": true
+    }
+  },
+  "audit_ref": {
+    "run_id": "stage0h-run-overflow",
+    "episode_id": "stage0h-episode-overflow",
+    "task_id": "stage0h-task-overflow",
+    "run_dir": "runs/repo-harness-verl-stage0h/example-overflow",
+    "artifacts_manifest_path": "artifacts/manifest.json"
+  },
+  "audit_diagnostics": [
+    {
+      "code": "response_length_exceeded",
+      "message": "response_ids length exceeded rollout.response_length; sample must not be silently truncated into training."
+    }
+  ]
+}

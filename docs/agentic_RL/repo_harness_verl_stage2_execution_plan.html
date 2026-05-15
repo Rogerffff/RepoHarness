@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl Stage 2 执行计划</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html" aria-current="page">Stage 2 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 2 Execution Plan</span>
+      <h1>Stage 2：抽出 RepoHarnessRuntime.run_episode(...)</h1>
+      <p class="rv-lead">
+        这一页是 Stage 2 的独立执行计划汇报页。它只说明即将执行的边界、文件、顺序、验收方式和不做事项，不记录已经完成的 Stage 2 代码结果。Stage 2 的目标是抽出可复用 async episode runtime facade，让后续 CLI、本地批处理和 verl adapter 都能调用同一个 RepoHarness episode runtime。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 1 已完成</span>
+        <span class="rv-badge info">Stage 2 待执行</span>
+        <span class="rv-badge warning">不提前实现 verl adapter</span>
+      </div>
+      <div class="rv-mini-nav">
+        <a href="#goal">目标</a>
+        <a href="#entry">第一项工作</a>
+        <a href="#boundaries">执行边界</a>
+        <a href="#files">计划文件</a>
+        <a href="#flow">执行顺序</a>
+        <a href="#contracts">关键 contract</a>
+        <a href="#exit">出口标准</a>
+        <a href="#not-doing">不做事项</a>
+        <a href="#checks">验收命令</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+      <section id="goal" class="rv-section">
+        <h2>目标</h2>
+        <p class="rv-muted">
+          Stage 2 要把当前 CLI / evaluation runner 的任务运行链路抽成可复用的 <code>RepoHarnessRuntime.run_episode(...)</code>。第一版可以复用现有同步 agent loop、workspace、verifier、reward 和 recorder 逻辑，但外层接口必须是 async，和 Stage 1 已落地的 async <code>LLMGateway.generate_turn(...)</code> 对齐。
+        </p>
+        <pre class="rv-codeblock"><code>class RepoHarnessRuntime:
+    async def run_episode(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        *,
+        llm_gateway: LLMGateway,
+    ) -&gt; RepoHarnessEpisodeResult:
+        ...</code></pre>
+        <div class="rv-callout">
+          这一阶段的关键词是 runtime facade。它不是 <code>training_fast</code>，不是 <code>TrainingView -&gt; AgentLoopOutput</code> converter，也不是 <code>RepoHarnessVerlAgentLoop</code>。
+        </div>
+      </section>
+
+      <section id="entry" class="rv-section">
+        <h2>第一项工作</h2>
+        <p class="rv-muted">
+          先做只读梳理，不直接重写 runner。需要确认当前运行链路从 task/config 到 workspace、context、agent loop、final verifier、reward、artifact 和 summary 的数据流。
+        </p>
+        <div class="rv-grid-2">
+          <div class="rv-card">
+            <h3>必须先读</h3>
+            <p><code>src/repo_harness/evaluation/runner.py</code>、<code>src/repo_harness/agent_loop/loop.py</code>、<code>src/repo_harness/model_client/protocol.py</code>、<code>src/repo_harness/workspace/backend_factory.py</code>。</p>
+          </div>
+          <div class="rv-card">
+            <h3>也要对齐</h3>
+            <p><code>src/repo_harness/trajectory/recorder.py</code>、<code>src/repo_harness/reward/schemas.py</code>、<code>src/repo_harness/verifier/schemas.py</code> 和 Stage 1 的 <code>src/repo_harness/rl/</code> schema。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="boundaries" class="rv-section">
+        <h2>实施前必须固定的执行边界</h2>
+        <p class="rv-muted">
+          Stage 2 不能只新增一个 async 函数外壳，然后在内部继续绕回旧 provider client。下面这些边界需要先写清楚，再进入代码实现。
+        </p>
+        <div class="rv-grid-2">
+          <div class="rv-card">
+            <h3><code>LLMGateway</code> 接入现有 <code>AgentLoop</code></h3>
+            <p>
+              当前 <code>AgentLoop</code> 调用的是同步 <code>ModelClient.generate(...)</code>。Stage 2 第一优先选择是新增临时 <code>LLMGatewayModelClientAdapter</code>，把旧 <code>ModelRequestContext</code> 转成 <code>LLMGatewayRequest</code>，再把 <code>LLMGatewayResponse</code> 转回旧 <code>ModelResponse</code>。
+            </p>
+            <p>
+              如果完整 legacy agent loop 桥接风险过大，Stage 2 只能交付明确标记的 fake gateway 最小 runtime path，不能声称完整 agent loop 已经接入 gateway。
+            </p>
+          </div>
+          <div class="rv-card">
+            <h3>request 到本地 runner 输入的映射</h3>
+            <p>
+              现有 <code>run_task(...)</code> 需要 <code>task_path</code>、<code>config_path</code>、<code>output_dir</code> 和 <code>run_id</code>。Stage 2 应新增 <code>RepoHarnessRuntimeOptions</code> 或等价 runtime-only 配置来承载 <code>config_path</code>、<code>output_dir</code>、本地 resolver 和 executor 设置。
+            </p>
+            <p>
+              <code>RepoHarnessEpisodeRequest</code> 继续描述可移植 episode 事实，不能为了复用旧 runner 把绝对路径、run directory 或 evaluator-only path 塞进可传播 schema。
+            </p>
+          </div>
+          <div class="rv-card">
+            <h3>取消、executor 和清理语义</h3>
+            <p>
+              如果用 <code>asyncio.to_thread(...)</code> 或 executor 包同步 runner，外层 coroutine 被取消时，底层线程不会自动停止。Stage 2 必须使用受控、有限并发的 executor，并把 runtime 可控资源放入 <code>try/finally</code> 或等价保护。
+            </p>
+            <p>
+              cancellation smoke 第一版只能验证 fake/minimal path 或 runtime 可控的 cancellation 标记与 cleanup，不能宣称已经能强制中断任意同步 Docker、verifier 或 provider 调用。
+            </p>
+          </div>
+          <div class="rv-card">
+            <h3><code>TrainingView</code> 构造边界</h3>
+            <p>
+              Stage 2 不能通过最终文本重新分词来伪造 online RL token。fake gateway smoke 可以直接使用 <code>LLMGatewayResponse</code> 的 token 事实构造最小 <code>TrainingView</code>。
+            </p>
+            <p>
+              真实旧 provider 或 replay 路径如果没有 token ids 和 log probability，必须标记 <code>invalid_for_online_rl=true</code>，只能作为 diagnostic result、SFT、preference 或 offline replay 的候选证据。
+            </p>
+          </div>
+        </div>
+
+        <h3>状态映射表</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>输入事实或失败类别</th>
+                <th>Stage 2 result status</th>
+                <th>训练语义</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>final verifier accepted</td>
+                <td><code>succeeded</code></td>
+                <td>可以训练，前提是 <code>TrainingView</code> token、mask、log probability 完整且 visibility 合法。</td>
+              </tr>
+              <tr>
+                <td>final verifier rejected</td>
+                <td><code>failed</code></td>
+                <td>可以作为失败样本，前提是 <code>TrainingView</code> 完整且不是 provider diagnostic path。</td>
+              </tr>
+              <tr>
+                <td>agent stop reason 明确为 no progress，且没有被 timeout 或 cancellation 覆盖</td>
+                <td><code>no_progress</code></td>
+                <td>默认不可进入正式 online RL，后续 Stage 8 再加严策略。</td>
+              </tr>
+              <tr>
+                <td>episode、provider、model call、verifier 或 Docker command timeout</td>
+                <td><code>timeout</code></td>
+                <td>默认 <code>invalid_for_training=true</code> 和 <code>invalid_for_online_rl=true</code>。</td>
+              </tr>
+              <tr>
+                <td>baseline invalid、setup invalid、任务定义不合法或任务引用无法解析</td>
+                <td><code>invalid_task</code></td>
+                <td>默认 <code>invalid_for_training=true</code> 和 <code>invalid_for_online_rl=true</code>。</td>
+              </tr>
+              <tr>
+                <td>Docker 初始化失败、workspace materialization 失败、文件系统错误、recorder 写入失败、verifier 基础设施异常或未知基础设施异常</td>
+                <td><code>infrastructure_error</code></td>
+                <td>默认 <code>invalid_for_training=true</code> 和 <code>invalid_for_online_rl=true</code>。</td>
+              </tr>
+              <tr>
+                <td>外层 runtime cancellation</td>
+                <td><code>cancelled</code></td>
+                <td>默认 <code>invalid_for_training=true</code> 和 <code>invalid_for_online_rl=true</code>。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="files" class="rv-section">
+        <h2>计划新增或修改文件</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>文件</th>
+                <th>计划职责</th>
+                <th>边界提醒</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td>新增 <code>RepoHarnessRuntime</code>、runtime options、最小 async <code>run_episode(...)</code> facade、状态映射 helper，以及必要的临时 <code>LLMGatewayModelClientAdapter</code>。</td>
+                <td>只做 runtime facade 和新旧接口接缝，不迁移真实 provider route，不接真实 verl adapter。</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/__init__.py</code></td>
+                <td>导出 <code>RepoHarnessRuntime</code>，方便后续 CLI、本地批处理和 adapter 复用。</td>
+                <td>仍不能 import <code>verl</code>。</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage2_runtime.py</code></td>
+                <td>覆盖 fake gateway 最小 episode、<code>LLMGateway</code> 不被绕过、request 到 runtime options 映射、状态映射、timeout / cancellation / cleanup contract、<code>TrainingView</code> 构造边界。</td>
+                <td>必须继续复用 Stage 1 schema，不重新定义一套 result shape，也不能通过最终文本重新分词伪造训练 token。</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/evaluation/runner.py</code></td>
+                <td>必要时做 CLI 到 runtime facade 的桥接准备。</td>
+                <td>如果桥接风险过大，可以先保留 CLI 原路径，并明确记录保守边界。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="flow" class="rv-section">
+        <h2>执行顺序</h2>
+        <ol class="rv-list">
+          <li>梳理现有 <code>run_task(...)</code> 数据流，明确哪些输入来自 CLI，哪些事实属于 episode request，哪些证据进入 episode result。</li>
+          <li>先定义 <code>RepoHarnessRuntimeOptions</code>，明确 <code>config_path</code>、<code>output_dir</code>、本地 path resolver 和 executor 设置来自 runtime-only 配置。</li>
+          <li>新增 async <code>RepoHarnessRuntime.run_episode(...)</code> facade，内部可以先包同步实现，但必须通过 <code>LLMGateway</code> 或明确标记的 fake/minimal path。</li>
+          <li>新增临时 <code>LLMGatewayModelClientAdapter</code>；如果这一步暂缓，必须明确完整 <code>AgentLoop</code> 尚未接入 gateway。</li>
+          <li>用 Stage 1 async <code>FakeLLMGateway</code> 跑最小 episode smoke，验证能返回结构化 <code>RepoHarnessEpisodeResult</code>，并验证 fake gateway 确实被调用。</li>
+          <li>实现状态映射 helper，覆盖 accepted、rejected、no progress、timeout、invalid task、infrastructure error 和 cancelled。</li>
+          <li>前置 cancellation / timeout / cleanup contract，确保外层 coroutine 取消、episode timeout、provider timeout、verifier timeout、Docker command timeout 和 cleanup 失败有明确归属。</li>
+          <li>确认 cleanup 失败不会覆盖原始 episode 状态，但会写入 diagnostics 和 <code>ResourceSummary.cleanup_status</code>。</li>
+          <li>明确 <code>TrainingView</code> 构造边界：只能使用 gateway token 事实；缺少 token / log probability 的 legacy provider path 必须 <code>invalid_for_online_rl=true</code>。</li>
+          <li>最后再评估是否让 CLI run task 调用 runtime facade；如果风险过大，保留原 CLI 路径并在测试和文档中说明。</li>
+        </ol>
+      </section>
+
+      <section id="contracts" class="rv-section">
+        <h2>关键 contract</h2>
+        <div class="rv-grid-2">
+          <div class="rv-card">
+            <h3><code>LLMGateway</code> 不可绕过</h3>
+            <p>Stage 2 测试必须能证明 runtime 使用了传入的 <code>llm_gateway</code>。如果只交付 fake/minimal path，也必须明确完整 <code>AgentLoop</code> gateway 接入尚未完成。</p>
+          </div>
+          <div class="rv-card">
+            <h3>状态边界</h3>
+            <p><code>invalid_task</code> 和 <code>infrastructure_error</code> 必须默认 <code>invalid_for_training=true</code>、<code>invalid_for_online_rl=true</code>，不能被当成普通模型失败样本。</p>
+          </div>
+          <div class="rv-card">
+            <h3>取消和清理</h3>
+            <p><code>run_episode(...)</code> 必须使用 <code>try/finally</code> 或等价资源保护，确保 workspace、container、artifact writer 和 verifier future 有确定处理。</p>
+          </div>
+          <div class="rv-card">
+            <h3>audit ref</h3>
+            <p>即使发生 timeout、cancelled 或 infrastructure error，也应尽量产出最小 <code>AuditRef</code> 或明确的 infrastructure error artifact，避免只有外层异常没有可审计证据。</p>
+          </div>
+          <div class="rv-card">
+            <h3>fake gateway</h3>
+            <p>Stage 2 只需要 async fake gateway 支持最小 runtime 单元测试，不需要真实 vLLM、SGLang、Ray 或 verl server。</p>
+          </div>
+          <div class="rv-card">
+            <h3>token 事实来源</h3>
+            <p><code>TrainingView</code> 只能从 gateway 返回的 token 事实构造。缺少 token ids 或 log probability 的旧 provider / replay path 不能伪装成正式 online RL 样本。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="exit" class="rv-section">
+        <h2>出口标准</h2>
+        <div class="rv-checklist">
+          <div class="rv-check"><code>RepoHarnessRuntime.run_episode(...)</code> 是 async 接口，并接收 <code>RepoHarnessEpisodeRequest</code> 和 <code>LLMGateway</code>。</div>
+          <div class="rv-check">本地执行路径和资源位置通过 runtime options 或显式 resolver 提供，不能把绝对 <code>config_path</code>、<code>output_dir</code>、<code>run_dir</code> 放入 batch 可传播 schema。</div>
+          <div class="rv-check">Stage 2 测试能证明 runtime 没有绕过 <code>llm_gateway</code>：要么通过临时 adapter 进入现有 agent loop，要么明确只交付 fake/minimal path 且不声称完整 agent loop 已接入。</div>
+          <div class="rv-check">fake gateway 最小 episode 能产出结构化 <code>RepoHarnessEpisodeResult</code>。</div>
+          <div class="rv-check"><code>cancelled</code>、<code>timeout</code>、<code>invalid_task</code>、<code>infrastructure_error</code> 的训练无效语义明确。</div>
+          <div class="rv-check">cancellation smoke 能看到确定的 cleanup diagnostics 或最小 infrastructure error artifact，但不能声称外层 coroutine cancellation 可以强制停止任意同步 <code>run_task(...)</code> 线程。</div>
+          <div class="rv-check"><code>TrainingView</code> 第一版只能从 gateway token 事实构造；缺少 token ids 或 log probability 的 legacy provider / replay path 必须标记 <code>invalid_for_online_rl=true</code>。</div>
+          <div class="rv-check">CLI run task 仍保持原有可用性；如果尚未完全桥接 runtime facade，必须明确记录原因。</div>
+          <div class="rv-check">Stage 0H 与 Stage 1 回归测试继续通过。</div>
+        </div>
+      </section>
+
+      <section id="not-doing" class="rv-section">
+        <h2>Stage 2 明确不做</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>不做内容</th>
+                <th>对应阶段</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>training_fast</code> recorder 和 artifact bytes 降低目标</td><td>Stage 3</td></tr>
+              <tr><td><code>TimingSummary</code> / <code>ResourceSummary</code> 95% wall time 解释率</td><td>Stage 4</td></tr>
+              <tr><td>真实模型后端完整迁移到 gateway route。Stage 2 临时 adapter 只处理接口接缝，不实现 OpenAI、DeepSeek、本地 vLLM 或本地 SGLang 的完整 route。</td><td>Stage 5</td></tr>
+              <tr><td>workspace/container 复用、verifier worker pool、并发租约、no-progress 策略加严</td><td>Stage 6 到 Stage 9</td></tr>
+              <tr><td><code>TrainingView -&gt; AgentLoopOutput</code> converter</td><td>Stage 10</td></tr>
+              <tr><td><code>RepoHarnessVerlAgentLoop</code>、<code>VerlLLMGateway</code>、真实 verl / vLLM / SGLang 接入</td><td>Stage 11</td></tr>
+              <tr><td>通过最终文本重新分词来伪造 <code>prompt_ids</code>、<code>response_ids</code> 或 <code>response_logprobs</code></td><td>任何阶段都不能作为 online RL 正式样本路径</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="checks" class="rv-section">
+        <h2>验收命令</h2>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m compileall -q src
+
+uv run --extra dev python -m pytest -q tests/unit/test_repo_harness_rl_stage2_runtime.py
+
+uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py \
+  tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py
+
+uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_verl_contract_fixtures.py \
+  tests/unit/test_repo_harness_verl_stage0h_shape_rules.py \
+  tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+        <div class="rv-callout">
+          这些是 Stage 2 执行完成后的目标验收命令。当前页面只是计划页，不表示这些 Stage 2 命令已经执行通过。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

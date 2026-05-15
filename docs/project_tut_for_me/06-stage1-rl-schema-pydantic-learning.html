@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stage 1 RL Schema 与 Pydantic 学习讲义</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <style>
+    .study-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+    .study-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0 0;
+    }
+    .study-nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 5px 10px;
+      border: 1px solid var(--hh-line);
+      border-radius: var(--hh-radius-sm);
+      background: var(--hh-surface);
+      color: var(--hh-muted);
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .study-nav a:hover {
+      color: var(--hh-accent);
+      border-color: var(--hh-accent);
+    }
+    .study-hero {
+      margin: 12px 0 28px;
+      padding: 28px;
+      border: 1px solid var(--hh-line);
+      border-radius: var(--hh-radius);
+      background: linear-gradient(180deg, rgba(88, 166, 255, 0.10), rgba(22, 27, 34, 0.80));
+      box-shadow: var(--hh-shadow-soft);
+    }
+    .study-kicker {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(57, 197, 207, 0.42);
+      border-radius: 999px;
+      background: var(--hh-info-soft);
+      color: var(--hh-info);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .study-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .study-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .study-card {
+      padding: 16px;
+      border: 1px solid var(--hh-line);
+      border-radius: var(--hh-radius);
+      background: var(--hh-surface);
+      box-shadow: var(--hh-shadow-soft);
+    }
+    .study-card > :first-child {
+      margin-top: 0;
+    }
+    .study-card > :last-child {
+      margin-bottom: 0;
+    }
+    .study-mini-title {
+      margin: 0 0 8px;
+      color: var(--hh-text);
+      font-size: 1rem;
+      font-weight: 760;
+    }
+    .study-object-map {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.32fr) minmax(0, 0.68fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .study-object-map div {
+      padding: 12px;
+      border: 1px solid var(--hh-line);
+      background: var(--hh-surface-soft);
+    }
+    .study-object-map div:nth-child(odd) {
+      border-radius: var(--hh-radius-sm) 0 0 var(--hh-radius-sm);
+      color: var(--hh-accent);
+      font-family: var(--hh-font-mono);
+      font-weight: 700;
+    }
+    .study-object-map div:nth-child(even) {
+      border-radius: 0 var(--hh-radius-sm) var(--hh-radius-sm) 0;
+    }
+    .token-strip {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr 1.2fr 0.9fr;
+      gap: 8px;
+      margin: 18px 0;
+    }
+    .token-segment {
+      min-height: 104px;
+      padding: 12px;
+      border: 1px solid var(--hh-line);
+      border-radius: var(--hh-radius);
+      background: var(--hh-surface);
+    }
+    .token-segment strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--hh-text);
+    }
+    .token-prompt {
+      border-color: rgba(88, 166, 255, 0.48);
+      background: rgba(88, 166, 255, 0.12);
+    }
+    .token-assistant {
+      border-color: rgba(63, 185, 80, 0.48);
+      background: rgba(46, 160, 67, 0.12);
+    }
+    .token-tool {
+      border-color: rgba(210, 153, 34, 0.48);
+      background: rgba(187, 128, 9, 0.12);
+    }
+    .learning-path {
+      counter-reset: path-step;
+      display: grid;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .learning-step {
+      counter-increment: path-step;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--hh-line);
+      border-radius: var(--hh-radius);
+      background: var(--hh-surface);
+    }
+    .learning-step::before {
+      content: counter(path-step);
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--hh-radius-sm);
+      background: var(--hh-accent);
+      color: #0d1117;
+      font-family: var(--hh-font-mono);
+      font-weight: 800;
+    }
+    .checklist-tight li {
+      margin-bottom: 8px;
+    }
+    @media (max-width: 840px) {
+      .study-grid-2,
+      .study-grid-3,
+      .token-strip,
+      .study-object-map {
+        grid-template-columns: 1fr;
+      }
+      .study-object-map div:nth-child(odd),
+      .study-object-map div:nth-child(even) {
+        border-radius: var(--hh-radius-sm);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="study-shell">
+    <header class="study-hero">
+      <span class="study-kicker">RepoHarness Stage 1 学习资料</span>
+      <h1>RL Schema、Pydantic 校验与 Python 项目规范</h1>
+      <p class="hh-lead">
+        这篇讲义面向 Stage 1 新增的 <code>src/repo_harness/rl/</code> 代码。它的重点不是背诵 Pydantic API，而是理解一个真实 Python 项目如何把文档中的 contract、训练数据边界、可见性规则和测试验收转化成可执行的 schema 类。
+      </p>
+      <div class="hh-toolbar">
+        <span class="hh-badge hh-badge-info">重点：Pydantic v2</span>
+        <span class="hh-badge hh-badge-success">重点：schema 设计</span>
+        <span class="hh-badge hh-badge-warning">重点：visibility 边界</span>
+        <span class="hh-badge hh-badge-purple">重点：负向测试</span>
+      </div>
+      <nav class="study-nav" aria-label="页面内导航">
+        <a href="#summary">学习总览</a>
+        <a href="#stage1-files">代码地图</a>
+        <a href="#pydantic">Pydantic 核心</a>
+        <a href="#validation-levels">校验层次</a>
+        <a href="#token-mask">Token 与 Mask</a>
+        <a href="#visibility">可见性边界</a>
+        <a href="#protocol">Protocol 与 Fake</a>
+        <a href="#tests">测试规范</a>
+        <a href="#python-notes">Python 语法</a>
+        <a href="#study-method">阅读方法</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="summary" class="hh-section">
+        <h2>一、你在 Stage 1 最应该学什么</h2>
+        <div class="hh-callout hh-callout-info">
+          <p>
+            Stage 1 的代码主要是 schema 和测试，所以 Pydantic 的确是主线。但是更重要的能力是：你要学会如何用 schema、validator、类型标注和测试，把“这个系统允许什么、不允许什么”变成代码里稳定执行的边界。
+          </p>
+        </div>
+
+        <div class="study-grid-3">
+          <article class="study-card">
+            <h3 class="study-mini-title">1. Pydantic Schema</h3>
+            <p>
+              学会用类描述数据结构，用字段类型和 <code>Field(...)</code> 描述单字段约束，用 <code>@model_validator</code> 描述跨字段规则。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">2. Contract 编程</h3>
+            <p>
+              Stage 1 不是普通业务功能，而是在把 shared contracts 固化为正式 Python 对象。代码的职责是“明确接受合法输入，明确拒绝非法输入”。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">3. 可见性边界</h3>
+            <p>
+              学会区分模型可见内容、训练 batch 可传播字段、audit-only 证据和 evaluator-only 隐藏内容。这是 agentic RL 项目里非常关键的数据治理能力。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">4. 批量规则</h3>
+            <p>
+              学会区分“一条样本自身是否合法”和“一个 PPO / GRPO batch 是否整体可训练”。这类层级区分是工程设计能力，不只是语法。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">5. Fake Backend</h3>
+            <p>
+              学会先用 <code>FakeLLMGateway</code> 测试 runtime 形状，而不是一开始就依赖真实模型服务、Ray、vLLM 或 SGLang。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">6. 负向测试</h3>
+            <p>
+              学会测试“不应该通过的输入是否真的失败”。对于 schema 边界，负向测试和正常 roundtrip 测试同样重要。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="stage1-files" class="hh-section">
+        <h2>二、Stage 1 新增代码地图</h2>
+        <p>
+          读这部分代码时，不建议从第一行读到最后一行。更好的方式是先看每个文件负责哪一层边界，然后再进入具体类和校验函数。
+        </p>
+
+        <div class="study-object-map">
+          <div><a href="../../src/repo_harness/rl/episode.py">episode.py</a></div>
+          <div>
+            定义 episode 级输入和输出，例如 <code>RepoHarnessEpisodeRequest</code>、<code>RepoHarnessEpisodeResult</code>、<code>EpisodeStatus</code>、<code>BudgetConsumption</code>、reward / verifier / patch summary。它回答“这条 episode 怎么跑，以及跑完以后整体状态是什么”。
+          </div>
+
+          <div><a href="../../src/repo_harness/rl/training_view.py">training_view.py</a></div>
+          <div>
+            定义训练视图和审计引用，例如 <code>TrainingView</code>、<code>ResponseSpan</code>、<code>AuditRef</code>、<code>validate_training_view_for_online_rl(...)</code>、<code>validate_formal_online_rl_batch(...)</code>。它回答“哪些 token 进入训练，哪些 token 只作为观察，以及怎么回查 audit 证据”。
+          </div>
+
+          <div><a href="../../src/repo_harness/rl/gateway.py">gateway.py</a></div>
+          <div>
+            定义模型调用抽象，例如 <code>LLMGatewayRequest</code>、<code>LLMGatewayResponse</code>、<code>GenerationRecord</code>、<code>LLMGateway</code> protocol 和 <code>FakeLLMGateway</code>。它回答“RepoHarness 不直接依赖 verl，如何拿到一轮模型输出和 token 级事实”。
+          </div>
+
+          <div><a href="../../src/repo_harness/rl/visibility.py">visibility.py</a></div>
+          <div>
+            定义 route 枚举、provider route 默认训练无效、模型可见字段检查、batch extra fields allowlist、opaque ref 校验和工具访问审计 fixture。它回答“哪些内容禁止进入 prompt、batch 或模型工具可读路径”。
+          </div>
+
+          <div><a href="../../src/repo_harness/rl/timing.py">timing.py</a></div>
+          <div>
+            定义 <code>TimingSummary</code> 和 <code>ResourceSummary</code>。Stage 1 先提供结构，后续 Stage 4 会加强完整性和解释率要求。
+          </div>
+        </div>
+
+        <div class="hh-callout hh-callout-success">
+          <p>
+            你可以把 Stage 1 理解为“给 Stage 2 到 Stage 12 准备共同语言”。后续 runtime、training_fast、converter、verl adapter 都应该消费这些 schema，而不是各自发明一套字段。
+          </p>
+        </div>
+      </section>
+
+      <section id="pydantic" class="hh-section">
+        <h2>三、Pydantic v2 核心知识</h2>
+
+        <h3>1. Schema 类是什么</h3>
+        <p>
+          在这个项目里，schema 类不是普通“数据袋子”。它有三个作用：
+        </p>
+        <ol>
+          <li>定义对象有哪些字段。</li>
+          <li>定义字段是什么类型。</li>
+          <li>定义对象创建时必须满足哪些规则。</li>
+        </ol>
+
+        <pre><code class="language-python">class EpisodeBudgets(StrictBaseModel):
+    schema_version: str = "repo_harness_verl_episode_budgets_v0"
+    max_turns: int | None = Field(default=None, gt=0)
+    max_tool_calls: int | None = Field(default=None, ge=0)
+    no_progress_policy: dict[str, Any] = Field(default_factory=dict)</code></pre>
+
+        <p>
+          这段代码表达了三个层次：
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>写法</th>
+              <th>含义</th>
+              <th>为什么重要</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>int | None</code></td>
+              <td>字段可以是整数，也可以为空。</td>
+              <td>有些预算可能暂时不设置，但一旦设置就必须是整数。</td>
+            </tr>
+            <tr>
+              <td><code>Field(gt=0)</code></td>
+              <td>字段值如果存在，必须大于 0。</td>
+              <td><code>max_turns=0</code> 这种无意义配置会被拒绝。</td>
+            </tr>
+            <tr>
+              <td><code>default_factory=dict</code></td>
+              <td>每个对象创建自己的空字典。</td>
+              <td>避免多个对象共享同一个可变默认值。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>2. 为什么使用 <code>StrictBaseModel</code></h3>
+        <p>
+          Stage 1 schema 都继承 <code>StrictBaseModel</code>。这个项目里的含义是：schema 默认应该严格，不能悄悄接受未知字段。原因很简单，训练系统里一个多余字段可能不是“无害信息”，而可能是 hidden verifier、gold patch、reward metadata 或绝对路径泄漏。
+        </p>
+        <div class="hh-callout hh-callout-warning">
+          <p>
+            对初学者来说，严格 schema 的价值是：如果调用方传错字段名，程序应该尽早报错，而不是默默忽略或把错误数据继续传到后续训练环节。
+          </p>
+        </div>
+
+        <h3>3. <code>Literal</code> 固定字符串枚举</h3>
+        <pre><code class="language-python">GatewayRoute = Literal[
+    "verl",
+    "openai",
+    "deepseek",
+    "local_vllm",
+    "local_sglang",
+    "replay",
+    "mock",
+]</code></pre>
+        <p>
+          <code>Literal</code> 表示字段只能取这些值之一。它比普通 <code>str</code> 更安全，因为 <code>"sglang"</code>、<code>"verl_llm_server_client"</code> 这类未登记 route 会被拒绝。这样可以防止文档、fixture、adapter 各自使用不同名字。
+        </p>
+
+        <h3>4. <code>@model_validator(mode="after")</code> 做跨字段校验</h3>
+        <p>
+          单个字段的类型正确，不代表整个对象正确。比如 <code>response_ids</code>、<code>response_mask</code> 和 <code>response_logprobs</code> 各自都是列表，但长度必须对齐。
+        </p>
+        <pre><code class="language-python">@model_validator(mode="after")
+def validate_training_view(self) -&gt; "TrainingView":
+    if len(self.response_ids) != len(self.response_mask):
+        raise ValueError("response_ids and response_mask must have equal length")
+    if self.response_logprobs is not None and len(self.response_logprobs) != len(self.response_ids):
+        raise ValueError("response_logprobs must align with response_ids")
+    return self</code></pre>
+        <p>
+          <code>mode="after"</code> 的意思是：Pydantic 已经把字段解析成对象属性之后，再运行这个函数。此时你可以访问 <code>self.response_ids</code>、<code>self.response_mask</code> 等多个字段，检查它们之间的关系。
+        </p>
+
+        <h3>5. <code>model_validate</code> 和 <code>model_dump</code></h3>
+        <p>
+          Stage 1 测试里常见两个动作：
+        </p>
+        <pre><code class="language-python">view = TrainingView.model_validate(payload)
+roundtrip_payload = view.model_dump(mode="json")</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>作用</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>model_validate(...)</code></td>
+              <td>把普通 Python 字典解析成 Pydantic 对象，同时触发字段校验和 model validator。</td>
+            </tr>
+            <tr>
+              <td><code>model_dump(...)</code></td>
+              <td>把 Pydantic 对象转回普通字典，用于 JSON 保存、测试 roundtrip 或传给其他模块。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="validation-levels" class="hh-section">
+        <h2>四、Stage 1 的四层校验模型</h2>
+        <p>
+          这部分代码最值得学习的不是某个 validator 怎么写，而是它把规则分成了不同层级。每一层只负责自己该负责的事情。
+        </p>
+
+        <div class="learning-path">
+          <div class="learning-step">
+            <div>
+              <h3>字段级校验</h3>
+              <p>
+                使用类型标注和 <code>Field(...)</code> 检查单个字段。例如 <code>turn: int = Field(ge=0)</code> 表示轮次不能是负数，<code>prompt_length: int = Field(gt=0)</code> 表示长度必须大于 0。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>对象级校验</h3>
+              <p>
+                使用 <code>@model_validator(mode="after")</code> 检查同一个对象内部多个字段之间的关系。例如 <code>LLMGatewayResponse</code> 要求 <code>output_token_ids</code> 和 <code>response_mask</code> 等长，并且 gateway 层的 <code>response_mask</code> 必须全为 1。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>可见性校验</h3>
+              <p>
+                使用 <code>visibility.py</code> 中的 helper 检查 forbidden marker、绝对路径、非 opaque ref、嵌套 evaluator-only 字段等。它不是某个单独对象的业务逻辑，而是整个训练边界的通用守门员。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>Batch 级校验</h3>
+              <p>
+                使用 <code>validate_formal_online_rl_batch(...)</code> 检查一个正式 online RL batch 是否整体可训练。比如 mixed log probability 不是单条样本自己能判断的问题，必须放到 batch 层检查。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hh-callout hh-callout-success">
+          <p>
+            一个好的 schema 设计不是把所有规则都塞进一个类，而是让每条规则待在它应该待的层级。单样本规则放在单样本 schema，跨样本规则放在 batch helper，通用安全规则放在 visibility helper。
+          </p>
+        </div>
+      </section>
+
+      <section id="token-mask" class="hh-section">
+        <h2>五、Token、Mask 和 Log Probability 的重点</h2>
+        <p>
+          RepoHarness 接入 verl 的训练视图中，最容易出错的地方是把“模型生成的 token”和“工具返回的 observation token”混在一起。Stage 1 的 schema 在提前固定这个边界。
+        </p>
+
+        <div class="token-strip" aria-label="token 流示意图">
+          <div class="token-segment token-prompt">
+            <strong>prompt_ids</strong>
+            初始 system message、user task 和可见上下文。它是模型输入，不是 response loss 的目标。
+          </div>
+          <div class="token-segment token-assistant">
+            <strong>assistant_generation</strong>
+            模型自己生成的 token，例如工具调用 JSON 或最终回答。<code>response_mask=1</code>。
+          </div>
+          <div class="token-segment token-tool">
+            <strong>tool_observation</strong>
+            工具返回内容编码成 token 后进入上下文。它不是模型生成内容，<code>response_mask=0</code>。
+          </div>
+          <div class="token-segment token-assistant">
+            <strong>assistant_generation</strong>
+            后续模型基于工具观察继续生成。仍然是模型生成 token，<code>response_mask=1</code>。
+          </div>
+        </div>
+
+        <pre><code class="language-python">AgentLoopOutput.response_ids
+  = assistant_round_1_token_ids
+  + tool_observation_token_ids
+  + assistant_round_2_token_ids
+
+AgentLoopOutput.response_mask
+  = [1] * len(assistant_round_1_token_ids)
+  + [0] * len(tool_observation_token_ids)
+  + [1] * len(assistant_round_2_token_ids)</code></pre>
+
+        <h3>为什么工具 observation 的 log probability 是 0.0</h3>
+        <p>
+          工具 observation token 不是模型生成的，所以没有真正的 rollout log probability。为了让 <code>response_logprobs</code> 和 <code>response_ids</code> 长度对齐，Stage 1 规定 <code>response_mask=0</code> 的位置可以填 <code>0.0</code>。后续 PPO loss 会乘以 <code>response_mask</code>，这些位置不会贡献 loss。
+        </p>
+
+        <pre><code class="language-python">for mask, logprob in zip(self.response_mask, self.response_logprobs):
+    if mask == 0 and logprob != 0.0:
+        raise ValueError("response_mask=0 tokens must use response_logprobs=0.0")</code></pre>
+
+        <h3><code>ResponseSpan</code> 的作用</h3>
+        <p>
+          <code>response_mask</code> 只能告诉我们某个 token 训不训练，但不能告诉我们这个 token 来自哪里。<code>ResponseSpan</code> 用连续片段解释来源：
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>source_type</th>
+              <th>mask 规则</th>
+              <th>含义</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>assistant_generation</code></td>
+              <td><code>response_mask_value=1</code></td>
+              <td>模型生成 token，参与 policy loss。</td>
+            </tr>
+            <tr>
+              <td><code>tool_observation</code></td>
+              <td><code>response_mask_value=0</code></td>
+              <td>工具返回内容，只作为后续上下文。</td>
+            </tr>
+            <tr>
+              <td><code>environment_observation</code></td>
+              <td><code>response_mask_value=0</code></td>
+              <td>环境观察内容，只作为上下文。</td>
+            </tr>
+            <tr>
+              <td><code>padding_excluded</code> / <code>truncated_excluded</code></td>
+              <td>不设置 mask 值</td>
+              <td>解释为什么某些内容没有进入未 padding 的 response 序列。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="visibility" class="hh-section">
+        <h2>六、可见性边界和 opaque reference</h2>
+        <p>
+          <code>visibility.py</code> 是 Stage 1 最值得认真读的文件之一。它展示了真实项目里如何防止敏感字段、隐藏评测信息和本地路径泄漏到训练路径。
+        </p>
+
+        <h3>1. 什么不能进入模型可见内容</h3>
+        <p>
+          模型可见内容包括 <code>raw_prompt</code>、<code>messages</code>、后续可能进入模型上下文的文本。下面这些内容不能出现：
+        </p>
+        <ul class="checklist-tight">
+          <li><code>hidden_verifier</code>：隐藏验证器结果。</li>
+          <li><code>gold_patch</code>：标准答案 patch。</li>
+          <li><code>accepted_label</code>：最终是否通过的标签。</li>
+          <li><code>complete_reward_metadata</code>：完整 reward 解释文本。</li>
+          <li><code>provider_secret</code>：供应商密钥或凭据。</li>
+          <li><code>evaluator_only_logs</code>：只属于评测器的日志。</li>
+        </ul>
+
+        <pre><code class="language-python">def validate_no_forbidden_model_visible_content(value: Any, *, field_name: str) -&gt; None:
+    visible_text = _collect_text(value)
+    for token in RAW_PROMPT_FORBIDDEN_TOKENS:
+        if token in visible_text:
+            raise VisibilityContractError(...)</code></pre>
+
+        <h3>2. 为什么检查 key，也检查 value</h3>
+        <p>
+          泄漏不一定只出现在 value 里，也可能出现在字段名里。例如：
+        </p>
+        <pre><code class="language-json">{
+  "repo_harness_gold_patch": "some opaque looking value"
+}</code></pre>
+        <p>
+          如果只检查字符串 value，就会漏掉这个问题。Stage 1 的 <code>_collect_text(...)</code> 和 <code>_walk_key_values(...)</code> 会同时递归检查 key 和 value。
+        </p>
+
+        <h3>3. 为什么使用 <code>rh://...</code> opaque reference</h3>
+        <p>
+          训练 batch 里可以携带短引用，但不能携带模型工具能直接读取的本地绝对路径。比如下面这个值就不应该进入 batch：
+        </p>
+        <pre><code class="language-text">/Users/roger/Desktop/claude-code-verl-stage0h/runs/some-run/reward.json</code></pre>
+        <p>
+          正确方向是使用 opaque reference：
+        </p>
+        <pre><code class="language-text">rh://audit/run_001/reward_metadata</code></pre>
+        <p>
+          这个引用可以被离线审计工具解析，但模型通过普通 <code>read_file</code> 或 <code>grep</code> 工具不能直接拿它当本地路径读取。
+        </p>
+
+        <h3>4. Batch extra fields 的设计规范</h3>
+        <p>
+          未来进入 <code>AgentLoopOutput.extra_fields</code> 或 verl <code>DataProto.non_tensor_batch</code> 的字段必须短小、扁平、命名空间明确。
+        </p>
+        <pre><code class="language-python">extra_fields = {
+    "repo_harness_episode_id": "episode_001",
+    "repo_harness_run_id": "run_001",
+    "repo_harness_audit_manifest_ref": "rh://audit/run_001/manifest",
+    "repo_harness_invalid_for_training": False,
+}</code></pre>
+        <p>
+          这里有三个规范：
+        </p>
+        <ol>
+          <li>字段名必须以 <code>repo_harness_</code> 开头。</li>
+          <li>字段值必须是扁平 scalar，也就是字符串、数字、布尔值或空值。</li>
+          <li>如果字段名以 <code>_ref</code> 结尾，字符串值必须是 <code>rh://...</code> opaque reference。</li>
+        </ol>
+      </section>
+
+      <section id="protocol" class="hh-section">
+        <h2>七、Protocol、async 和 FakeLLMGateway</h2>
+        <p>
+          Stage 1 的 <code>LLMGateway</code> 不是具体实现，而是一份接口协议。它告诉 runtime：“你可以调用一个拥有 <code>generate_turn(...)</code> 方法的对象，但不要关心它背后是 fake、provider、verl、vLLM 还是 SGLang。”
+        </p>
+
+        <pre><code class="language-python">@runtime_checkable
+class LLMGateway(Protocol):
+    async def generate_turn(self, request: LLMGatewayRequest) -&gt; LLMGatewayResponse:
+        """生成一轮 assistant 输出，并返回 token 级事实。"""</code></pre>
+
+        <h3>1. <code>Protocol</code> 的意义</h3>
+        <p>
+          <code>Protocol</code> 是 Python 的结构化接口。意思是：一个类不一定要显式继承 <code>LLMGateway</code>，只要它有兼容的 <code>generate_turn(...)</code> 方法，就可以被当作 <code>LLMGateway</code> 使用。
+        </p>
+
+        <h3>2. 为什么是 async 接口</h3>
+        <p>
+          verl 的 <code>AgentLoopBase.run(...)</code> 是异步函数，真实模型服务也通常是异步调用。Stage 1 先把接口设计成 async，可以避免 Stage 2 或 Stage 11 再返工接口形状。
+        </p>
+
+        <h3>3. FakeLLMGateway 学习重点</h3>
+        <p>
+          <code>FakeLLMGateway</code> 是测试用的确定性实现。它不调用真实模型，只返回预设或默认的 <code>LLMGatewayResponse</code>。这让 Stage 2 可以在没有真实 verl server 的情况下测试 runtime 主流程。
+        </p>
+        <pre><code class="language-python">gateway = FakeLLMGateway([
+    {
+        "route": "mock",
+        "model_call_id": "call_001",
+        "assistant_message": {"role": "assistant", "content": "done"},
+        "prompt_ids": [1, 2, 3],
+        "output_token_ids": [10, 11],
+        "output_logprobs": [-0.1, -0.2],
+        "response_mask": [1, 1],
+    }
+])</code></pre>
+        <div class="hh-callout hh-callout-info">
+          <p>
+            学项目时要特别注意 fake 的价值：fake 不是“假代码”，而是为了让核心流程先被稳定测试。真实外部系统越复杂，越应该先有 fake 或 mock 把接口形状测清楚。
+          </p>
+        </div>
+      </section>
+
+      <section id="tests" class="hh-section">
+        <h2>八、测试规范：不仅测能过，还要测会拒绝</h2>
+        <p>
+          Stage 1 对你学习 Python 项目规范最有价值的一点，是它有很多负向测试。schema 代码的正确性不只是“合法样本能创建对象”，还包括“非法样本必须被拒绝”。
+        </p>
+
+        <h3>1. Fixture roundtrip 测试</h3>
+        <p>
+          roundtrip 的典型流程是：
+        </p>
+        <ol>
+          <li>读取 <code>tests/fixtures/repo_harness_verl/*.json</code>。</li>
+          <li>用正式 schema 做 <code>model_validate(...)</code>。</li>
+          <li>用 <code>model_dump(...)</code> 转回普通字典。</li>
+          <li>再次 validate，证明序列化和反序列化稳定。</li>
+        </ol>
+        <p>
+          这能证明 Stage 1 schema 没有绕过 Stage 0H fixture，也没有另起一套新样例。
+        </p>
+
+        <h3>2. 负向测试</h3>
+        <p>
+          负向测试通常使用 <code>pytest.raises(...)</code>：
+        </p>
+        <pre><code class="language-python">with pytest.raises(ValidationError, match="provider routes must default invalid_for_online_rl=true"):
+    ProviderRoutePolicy(
+        route="openai",
+        invalid_for_online_rl=False,
+        allowed_uses=["evaluation"],
+    )</code></pre>
+        <p>
+          这个测试不是在证明 provider route 不能存在，而是在证明 provider route 默认不能伪装成正式 online PPO / GRPO rollout 样本。
+        </p>
+
+        <h3>3. 推荐你读测试时带着这几个问题</h3>
+        <ul class="checklist-tight">
+          <li>这个测试是在证明合法输入能通过，还是非法输入会失败？</li>
+          <li>这个失败是字段类型错误、跨字段关系错误，还是 visibility 泄漏？</li>
+          <li>这个规则属于单条样本，还是属于整个 batch？</li>
+          <li>测试复用了 canonical fixture，还是自己临时构造了一个最小负例？为什么这样选择？</li>
+        </ul>
+      </section>
+
+      <section id="python-notes" class="hh-section">
+        <h2>九、你可以顺手学习的 Python 语法</h2>
+        <div class="study-grid-2">
+          <article class="study-card">
+            <h3 class="study-mini-title"><code>from __future__ import annotations</code></h3>
+            <p>
+              让类型标注延迟求值。这样类方法返回自身类型时可以写 <code>-&gt; "TrainingView"</code>，也能减少一些循环引用和运行时类型解析问题。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title"><code>Any</code> 的使用边界</h3>
+            <p>
+              <code>dict[str, Any]</code> 表示值暂时不限制类型。它应该只出现在确实开放的扩展字段，例如 <code>provider_options</code> 或 <code>extra_fields</code>。越核心的 schema 字段，越不应该滥用 <code>Any</code>。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title"><code>deque</code></h3>
+            <p>
+              <code>FakeLLMGateway</code> 用 <code>collections.deque</code> 保存预设响应。<code>popleft()</code> 可以高效地从队列左侧取出下一条响应，适合模拟多轮模型调用。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">集合运算</h3>
+            <p>
+              <code>unknown_uses = set(self.allowed_uses) - OFFLINE_PROVIDER_ALLOWED_USES</code> 表示找出用户传入但不在允许集合里的用途。这是 Python 中很常见的白名单检查写法。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title">递归遍历嵌套结构</h3>
+            <p>
+              <code>_walk_key_values(...)</code> 会递归遍历字典和列表，检查嵌套 key / value 是否包含 forbidden marker。真实项目里，安全检查通常不能只看第一层。
+            </p>
+          </article>
+          <article class="study-card">
+            <h3 class="study-mini-title"><code>type alias</code></h3>
+            <p>
+              <code>EpisodeStatus = Literal[...]</code>、<code>FlatScalar = str | int | float | bool | None</code> 都是类型别名。它们能让复杂类型有一个清晰名字，也方便多处复用。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="study-method" class="hh-section">
+        <h2>十、建议你的阅读和练习顺序</h2>
+        <p>
+          如果你想真正掌握这部分代码，不建议一开始就读完整文件。可以按下面顺序学习。
+        </p>
+
+        <div class="learning-path">
+          <div class="learning-step">
+            <div>
+              <h3>先读 <code>TrainingView</code></h3>
+              <p>
+                它最直观，直接涉及 <code>prompt_ids</code>、<code>response_ids</code>、<code>response_mask</code>、<code>response_logprobs</code> 和 <code>reward_score</code>。先理解“什么 token 训练，什么 token 不训练”。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>再读 <code>ResponseSpan</code></h3>
+              <p>
+                它补充解释 token 来源。你要确认每个 span 的 mask 规则、区间规则和 global steps 范围规则。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>接着读 <code>visibility.py</code></h3>
+              <p>
+                重点理解 <code>validate_no_forbidden_model_visible_content(...)</code>、<code>validate_batch_extra_fields(...)</code>、<code>validate_gateway_extra_fields(...)</code> 和 <code>validate_opaque_ref(...)</code>。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>然后读 <code>LLMGatewayRequest</code> 和 <code>LLMGatewayResponse</code></h3>
+              <p>
+                这一步理解模型调用边界。尤其要记住：gateway 层只返回模型生成 token，所以它的 <code>response_mask</code> 必须全为 1。
+              </p>
+            </div>
+          </div>
+          <div class="learning-step">
+            <div>
+              <h3>最后读 <code>RepoHarnessEpisodeRequest</code> 和 <code>RepoHarnessEpisodeResult</code></h3>
+              <p>
+                这两个对象更像 episode 总入口和总出口。读它们时要关注状态语义：<code>succeeded</code> 不等于任务成功，<code>invalid_task</code> 和 <code>infrastructure_error</code> 不能被当成模型失败样本训练。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <h3>练习建议</h3>
+        <ol>
+          <li>手写一个最小合法 <code>TrainingView</code> 字典，然后用 <code>TrainingView.model_validate(...)</code> 解析。</li>
+          <li>把其中一个工具 observation 的 log probability 从 <code>0.0</code> 改成 <code>-0.5</code>，观察报错。</li>
+          <li>在 <code>extra_fields</code> 里加入 <code>"audit_ref": {...}</code>，观察为什么会被拒绝。</li>
+          <li>创建两个 <code>FormalOnlineRLSample</code>，一个有 <code>response_logprobs</code>，一个没有，然后调用 <code>validate_formal_online_rl_batch(...)</code>。</li>
+          <li>用 <code>FakeLLMGateway</code> 构造两条响应，连续调用两次 <code>generate_turn(...)</code>，观察请求和响应如何被记录。</li>
+        </ol>
+
+        <div class="hh-callout hh-callout-success">
+          <p>
+            你学完这部分后，应该能做到三件事：看懂 Pydantic schema 类在检查什么；判断一个规则应该放在字段级、对象级还是 batch 级；理解为什么训练系统必须严格区分模型可见内容、工具观察、reward、audit 和 evaluator-only 信息。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

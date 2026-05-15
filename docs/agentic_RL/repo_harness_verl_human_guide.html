@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness × verl 多页面架构设计入口</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html" aria-current="page">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Multi-page Human Guide</span>
+      <h1>RepoHarness 接入 verl 的多页面架构设计说明</h1>
+      <p class="rv-lead">
+        这版 HTML 不再把所有内容塞在一个长页面里。它拆成一个总览入口和六个独立页面：高层 contract 架构图、数据流架构图、共享 contract、顺序实施计划、执行结果汇报、Stage 2 执行计划。设计页面展示字段、边界、阶段和验收标准；执行结果页面只记录已经完成的实际产物和验收结论；单独的 Stage 计划页面用于在进入下一阶段前审查执行边界。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">已拆分为独立页面</span>
+        <span class="rv-badge info">内容来自 workstreams 设计文档</span>
+        <span class="rv-badge warning">仍是设计文档，不表示代码已实现</span>
+      </div>
+    </header>
+
+    <main class="rv-main">
+      <section class="rv-section">
+        <h2>你应该先看哪一页</h2>
+        <div class="rv-grid-4">
+          <article class="rv-card">
+            <h3>1. Contract 架构图</h3>
+            <p>
+              先看这一页。它不展开字段，只展示 <code>RepoHarnessEpisodeRequest</code>、<code>LLMGatewayRequest</code>、<code>LLMGatewayResponse</code>、<code>GenerationRecord</code>、<code>RepoHarnessEpisodeResult</code>、<code>TrainingView</code>、<code>AuditRef</code>、<code>AgentLoopOutput</code> 和 <code>DataProto</code> 如何连接。
+            </p>
+            <p><a class="rv-link-button" href="repo_harness_verl_contract_architecture.html">打开 Contract 架构图</a></p>
+          </article>
+          <article class="rv-card">
+            <h3>2. 数据流架构图</h3>
+            <p>
+              再看这一页。它展示单条 rollout 内部的数据流、token 流、工具 observation、response mask、reward_score、DataProto 和 PPO loss 的流动。
+            </p>
+            <p><a class="rv-link-button" href="repo_harness_verl_dataflow_architecture.html">打开数据流架构图</a></p>
+          </article>
+          <article class="rv-card">
+            <h3>3. 共享 Contract</h3>
+            <p>
+              再看这一页。它定义所有顺序阶段共同遵守的接口：EpisodeRequest、EpisodeResult、LLMGateway、TrainingView、AuditRef、TimingSummary、ResourceSummary 和阶段验收门槛。
+            </p>
+            <p><a class="rv-link-button" href="repo_harness_verl_shared_contracts.html">打开共享 Contract 页面</a></p>
+          </article>
+          <article class="rv-card">
+            <h3>4. 顺序实施计划</h3>
+            <p>
+              再看这一页。它把 Harness runtime、training_fast、环境复用、verifier、LLMGateway、verl adapter、端到端 smoke、fully async 预留和验收门槛放在同一条 Stage 0 到 Stage 13 的执行路线里。
+            </p>
+            <p><a class="rv-link-button" href="repo_harness_verl_sequential_plan.html">打开顺序实施计划页面</a></p>
+          </article>
+          <article class="rv-card">
+            <h3>5. 执行结果汇报</h3>
+            <p>
+              最后看这一页。它不重复计划内容，只记录已经完成的阶段产物、测试结果、验收报告、遗留提醒和是否可以进入下一阶段。
+            </p>
+            <p><a class="rv-link-button" href="repo_harness_verl_execution_report.html">打开执行结果汇报页面</a></p>
+          </article>
+          <article class="rv-card">
+            <h3>6. Stage 2 执行计划</h3>
+            <p>
+              在真正实现 Stage 2 之前看这一页。它单独说明 <code>RepoHarnessRuntime.run_episode(...)</code> facade 的目标、执行顺序、验收命令和不能提前越界实现的内容。
+            </p>
+            <p><a class="rv-link-button" href="repo_harness_verl_stage2_execution_plan.html">打开 Stage 2 执行计划页面</a></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="rv-section">
+        <h2>为什么改成顺序阶段和共享 contract</h2>
+        <p class="rv-muted">
+          RepoHarness 接入 verl 不是一个单点改动。它同时涉及训练后端适配和 Harness 自身训练模式优化。如果直接并行开发但没有共同接口，很容易出现字段不一致、reward 边界不一致、审计引用丢失、token mask 错误和并发污染。因此当前计划改成先固定 contract，再改 Harness runtime 和 training_fast，最后接 verl adapter。
+        </p>
+        <div class="rv-flow" aria-label="顺序开发结构图">
+          <div class="rv-flow-step">
+            <span class="rv-step-label">共同入口</span>
+            <h3>Shared Contracts</h3>
+            <p>先冻结 episode、gateway、training view、audit ref、timing、resource 和 acceptance 的共同协议。</p>
+          </div>
+          <div class="rv-flow-step">
+            <span class="rv-step-label">Stage 1-9</span>
+            <h3>Harness Runtime / Training Fast</h3>
+            <p>先让 RepoHarness 更快、更轻、更稳定地产出训练轨迹、reward、timing 和 audit reference。</p>
+          </div>
+          <div class="rv-flow-step">
+            <span class="rv-step-label">Stage 10-12</span>
+            <h3>verl Adapter</h3>
+            <p>再让 verl 调用稳定的 RepoHarness runtime，并返回 verl 可训练的 <code>AgentLoopOutput</code>。</p>
+          </div>
+          <div class="rv-flow-step">
+            <span class="rv-step-label">阶段门槛</span>
+            <h3>Contract Tests</h3>
+            <p>所有阶段必须运行同一套 canonical fixture、visibility、mask、audit 和 smoke tests。</p>
+          </div>
+          <div class="rv-flow-step">
+            <span class="rv-step-label">第一版目标</span>
+            <h3>普通 Agent Loop</h3>
+            <p>先跑通普通 verl agent loop，确认 token、mask、reward 和 audit 边界，再进入 fully async。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rv-section">
+        <h2>现在的 <code>run_task(...)</code> 和未来 <code>run_episode(...)</code> 的区别</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>维度</th>
+                <th>当前 <code>run_task(...)</code></th>
+                <th>未来 <code>RepoHarnessRuntime.run_episode(...)</code></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>定位</td>
+                <td>命令行评测入口，适合 <code>repo-harness run-task</code> 这种完整本地运行。</td>
+                <td>可复用 episode runtime，既能被 CLI 调用，也能被 verl、slime 或本地 batch runner 调用。</td>
+              </tr>
+              <tr>
+                <td>输入</td>
+                <td><code>task_path</code>、<code>config_path</code>、<code>output_dir</code>、<code>run_id</code>。</td>
+                <td><code>RepoHarnessEpisodeRequest</code>，包含 task、agent policy、workspace policy、budget、run mode、visibility policy。</td>
+              </tr>
+              <tr>
+                <td>模型调用</td>
+                <td>内部直接根据 config 创建 <code>ModelClient</code>。</td>
+                <td>由外部注入 <code>LLMGateway</code>。这让同一条 runtime 可以路由到 OpenAI、DeepSeek、replay、verl、本地 vLLM、SGLang 或未来 slime。</td>
+              </tr>
+              <tr>
+                <td>输出</td>
+                <td>返回 run directory 路径，训练字段需要后处理再读文件。</td>
+                <td>返回 <code>RepoHarnessEpisodeResult</code>，直接包含 <code>training_view</code>、<code>audit_ref</code>、reward、verifier summary、patch summary、timing summary 和 diagnostics。</td>
+              </tr>
+              <tr>
+                <td>训练适配</td>
+                <td>不适合直接作为 verl Ray worker 内的稳定接口。</td>
+                <td>是 verl adapter 调用 RepoHarness 的正式边界。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rv-callout">
+          设计原则是：保留 <code>run_task(...)</code> 作为 CLI 包装层，逐步把它内部的主流程抽到 <code>RepoHarnessRuntime.run_episode(...)</code>。这样不会破坏现有命令行评测，又能给 verl adapter 一个结构化、可测试、可并发调用的 episode 接口。
+        </div>
+      </section>
+
+      <section class="rv-section">
+        <h2>多页面内容地图</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>页面</th>
+                <th>完整展示内容</th>
+                <th>对应 Markdown 来源</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a></td>
+                <td>高层展示 RepoHarness 与 verl 通过哪些 contract 对象衔接，以及 Contract 03 的 TrainingView、GenerationRecord、AuditRef 在整体架构中的位置。</td>
+                <td><code>repo_harness_verl_workstreams/shared_contracts/*.md</code> 与当前架构讨论</td>
+              </tr>
+              <tr>
+                <td><a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a></td>
+                <td>完整展示从 verl dataloader、RepoHarnessVerlAgentLoop、VerlLLMGateway、工具执行、verifier、AgentLoopOutput、DataProto 到 PPO loss 的数据流和 token 流。</td>
+                <td><code>repo_harness_verl_workstreams/*.md</code> 与当前架构讨论</td>
+              </tr>
+              <tr>
+                <td><a href="repo_harness_verl_shared_contracts.html">共享 Contract</a></td>
+                <td>五份 contract 的完整字段、规则、不变量、验收门槛和重点风险。</td>
+                <td><code>repo_harness_verl_workstreams/shared_contracts/*.md</code></td>
+              </tr>
+              <tr>
+                <td><a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a></td>
+                <td>完整展示 Stage 0 到 Stage 13 的执行路线，包括共享 contract 固化、RepoHarness runtime 抽取、training_fast 加速、环境复用、verifier worker pool、LLMGateway、verl adapter、端到端 smoke 和 fully async 预留。</td>
+                <td><code>repo_harness_verl_workstreams/01-sequential-implementation-plan.md</code></td>
+              </tr>
+              <tr>
+                <td><a href="repo_harness_verl_execution_report.html">执行结果汇报</a></td>
+                <td>按阶段记录真实生成的 fixture、测试、验收报告、命令结果、复核结论和下一阶段提醒。</td>
+                <td><code>runs/repo-harness-verl-stage0h-20260513T152905Z/</code> 与 Stage 0H 实际产物</td>
+              </tr>
+              <tr>
+                <td><a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 执行计划</a></td>
+                <td>在进入 Stage 2 代码实现前，单独展示 async runtime facade 的实施边界、只读梳理范围、取消超时清理契约、验收命令和禁止提前实现的后续阶段内容。</td>
+                <td><code>repo_harness_verl_workstreams/05-stage-2-execution-plan.md</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

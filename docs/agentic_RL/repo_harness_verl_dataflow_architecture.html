@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness × verl 数据流架构图</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html" aria-current="page">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Architecture Dataflow</span>
+      <h1>RepoHarness 接入 verl 的完整架构图和 token 数据流</h1>
+      <p class="rv-lead">
+        这一页用一张真正的总览架构图说明 RepoHarness 和 verl 接起来之后，数据从 dataset prompt 到 <code>AgentLoopOutput</code>、再到 <code>DataProto</code> 和 PPO loss 的完整流动过程。顶部图用于一眼看清模块关系和数据方向；下面的文字只作为辅助解释。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">示例：一条 SWE 任务</span>
+        <span class="rv-badge info">两轮模型生成：第一轮工具调用，第二轮结束</span>
+        <span class="rv-badge warning">reward 只进 reward_score，不进 token 流</span>
+        <span class="rv-badge warning">设计图，不表示当前代码已经完整实现</span>
+      </div>
+      <div class="rv-mini-nav">
+        <a href="#architecture">完整架构图</a>
+        <a href="#positive-flow">正例链路</a>
+        <a href="#token-strip">连续 token 流</a>
+        <a href="#tokenize-boundary">关键边界</a>
+        <a href="#module-io">模块输入输出</a>
+        <a href="#training-loss">进入训练</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+      <section id="architecture" class="rv-section">
+        <h2>完整架构图：模块、箭头和数据形态</h2>
+        <p class="rv-muted">
+          这张图的阅读方式是从左到右、再沿着中间的 agent loop 回路看：上半部分是 verl 的 rollout 调度，下半部分是 RepoHarness 的软件工程执行闭环，最右侧是 verl 的 batch 和 PPO 训练。颜色只表达数据类型，不表达优先级。
+        </p>
+
+        <div class="rv-legend" aria-label="数据形态图例">
+          <span class="rv-data-pill text">文本形态：messages / raw_prompt / tool_result_text</span>
+          <span class="rv-data-pill token">token 形态：list[int] / Tensor</span>
+          <span class="rv-data-pill mask">训练 mask：1=模型输出；未 padding 时 0=工具观察，padding 后 0 还包括 padding token</span>
+          <span class="rv-data-pill reward">reward 形态：标量和审计引用</span>
+        </div>
+
+        <div class="rv-callout">
+          这张图只展示跨模块边界上的核心对象：<code>RepoHarnessEpisodeRequest</code>、<code>LLMGatewayRequest</code>、<code>LLMGatewayResponse</code>、<code>RepoHarnessEpisodeResult</code>、<code>AgentLoopOutput</code> 和 <code>DataProto</code>。对象字段定义见共享 Contract 页面。
+        </div>
+
+        <figure class="rv-visual-diagram-wrap" aria-label="RepoHarness 接入 verl 的完整可视化架构图">
+          <svg class="rv-visual-diagram" viewBox="0 0 1700 1000" role="img" aria-labelledby="verlDiagramTitle verlDiagramDesc">
+            <title id="verlDiagramTitle">RepoHarness 接入 verl 的完整架构图</title>
+            <desc id="verlDiagramDesc">图中展示 verl PPOTrainer、AgentLoopWorker、RepoHarnessVerlAgentLoop、RepoHarnessRuntime、VerlLLMGateway、LLMServerClient、RepoHarness 工具、verifier、AgentLoopOutput、DataProto 和 Actor Worker 之间的数据流动。</desc>
+
+            <defs>
+              <marker id="arrowText" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#39c5cf"></path>
+              </marker>
+              <marker id="arrowToken" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"></path>
+              </marker>
+              <marker id="arrowControl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#a5b1c2"></path>
+              </marker>
+              <marker id="arrowReward" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#d29922"></path>
+              </marker>
+            </defs>
+
+            <rect class="diagram-bg" x="12" y="14" width="1676" height="972" rx="22"></rect>
+
+            <text class="diagram-title" x="48" y="68">RepoHarness × verl online RL rollout 架构总图</text>
+            <text class="diagram-subtitle" x="48" y="104">一条 SWE 任务从 prompt 到工具轨迹、reward、DataProto 和 PPO loss 的完整路径</text>
+
+            <g class="diagram-lanes">
+              <rect class="lane lane-verl" x="42" y="138" width="1616" height="205" rx="18"></rect>
+              <text class="lane-title" x="66" y="175">verl 训练控制层</text>
+
+              <rect class="lane lane-harness" x="42" y="377" width="1616" height="365" rx="18"></rect>
+              <text class="lane-title" x="66" y="414">RepoHarness episode runtime 层</text>
+
+              <rect class="lane lane-train" x="42" y="778" width="1616" height="170" rx="18"></rect>
+              <text class="lane-title" x="66" y="815">verl 训练张量层</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-verl" x="90" y="205" width="230" height="86" rx="16"></rect>
+              <text class="node-title" x="112" y="240">PPOTrainer</text>
+              <text class="node-line" x="112" y="268">dataloader 出 SWE 任务</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-verl" x="390" y="205" width="250" height="86" rx="16"></rect>
+              <text class="node-title" x="412" y="240">AgentLoopManager</text>
+              <text class="node-line" x="412" y="268">切 batch，调度 rollout</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-verl" x="710" y="205" width="250" height="86" rx="16"></rect>
+              <text class="node-title" x="732" y="240">AgentLoopWorker</text>
+              <text class="node-line" x="732" y="268">Ray actor，启动协程</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-adapter" x="1040" y="205" width="285" height="86" rx="16"></rect>
+              <text class="node-title" x="1062" y="240">RepoHarnessVerlAgentLoop</text>
+              <text class="node-line" x="1062" y="268">verl sample → RepoHarnessEpisodeRequest</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-core" x="190" y="475" width="270" height="110" rx="16"></rect>
+              <text class="node-title" x="212" y="512">RepoHarnessRuntime</text>
+              <text class="node-line" x="212" y="540">run_episode(...)</text>
+              <text class="node-line" x="212" y="566">agent loop / recorder</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-core" x="560" y="475" width="260" height="110" rx="16"></rect>
+              <text class="node-title" x="582" y="512">VerlLLMGateway</text>
+              <text class="node-line" x="582" y="540">LLMGateway route=verl</text>
+              <text class="node-line" x="582" y="566">token ids in / out</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-server" x="930" y="475" width="260" height="110" rx="16"></rect>
+              <text class="node-title" x="952" y="512">LLMServerClient</text>
+              <text class="node-line" x="952" y="540">vLLM / SGLang server</text>
+              <text class="node-line" x="952" y="566">TokenOutput</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-tool" x="560" y="628" width="260" height="80" rx="16"></rect>
+              <text class="node-title" x="582" y="662">Tool parser</text>
+              <text class="node-line" x="582" y="688">token → tool call JSON</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-tool" x="190" y="628" width="270" height="80" rx="16"></rect>
+              <text class="node-title" x="212" y="662">RepoHarness tools</text>
+              <text class="node-line" x="212" y="688">workspace / read / edit / test</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-reward" x="1300" y="475" width="255" height="110" rx="16"></rect>
+              <text class="node-title" x="1322" y="512">Verifier + Reward</text>
+              <text class="node-line" x="1322" y="540">final verifier</text>
+              <text class="node-line" x="1322" y="566">reward_score / audit_ref</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-output" x="1300" y="628" width="255" height="80" rx="16"></rect>
+              <text class="node-title" x="1322" y="662">AgentLoopOutput</text>
+              <text class="node-line" x="1322" y="688">ids / mask / reward / refs</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-train" x="260" y="845" width="290" height="74" rx="16"></rect>
+              <text class="node-title" x="282" y="875">DataProto</text>
+              <text class="node-line" x="282" y="900">padded tensors + non_tensor_batch</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-train" x="700" y="845" width="300" height="74" rx="16"></rect>
+              <text class="node-title" x="722" y="875">FSDP / Megatron Actor Worker</text>
+              <text class="node-line" x="722" y="900">forward(prompts ⊕ responses)</text>
+            </g>
+
+            <g class="diagram-node">
+              <rect class="node node-train" x="1150" y="845" width="300" height="74" rx="16"></rect>
+              <text class="node-title" x="1172" y="875">PPO loss</text>
+              <text class="node-line" x="1172" y="900">response_mask 过滤工具 token</text>
+            </g>
+
+            <g class="diagram-arrows">
+              <path class="arrow control" d="M 320 248 L 390 248"></path>
+              <text class="arrow-label control-label" x="333" y="232">batch</text>
+
+              <path class="arrow control" d="M 640 248 L 710 248"></path>
+              <text class="arrow-label control-label" x="651" y="232">spawn</text>
+
+              <path class="arrow text" d="M 960 248 L 1040 248"></path>
+              <text class="arrow-label text-label" x="974" y="232">verl sample / sampling_params</text>
+
+              <path class="arrow text" d="M 1182 291 C 1182 350 325 350 325 475"></path>
+              <text class="arrow-label text-label" x="690" y="352">RepoHarnessEpisodeRequest</text>
+
+              <path class="arrow text" d="M 460 530 L 560 530"></path>
+              <text class="arrow-label text-label" x="476" y="514">LLMGatewayRequest</text>
+
+              <path class="arrow token" d="M 820 530 L 930 530"></path>
+              <text class="arrow-label token-label" x="842" y="514">prompt_ids</text>
+
+              <path class="arrow token" d="M 930 565 L 820 565"></path>
+              <text class="arrow-label token-label" x="842" y="596">TokenOutput → LLMGatewayResponse</text>
+
+              <path class="arrow token" d="M 560 668 L 460 668"></path>
+              <text class="arrow-label token-label" x="475" y="650">tool call JSON</text>
+
+              <path class="arrow text" d="M 325 628 L 325 585"></path>
+              <text class="arrow-label text-label" x="338" y="612">tool_result_text</text>
+
+              <path class="arrow text" d="M 325 628 C 325 600 510 598 560 530"></path>
+              <text class="arrow-label text-label" x="380" y="592">tool_result_text 回到 runtime</text>
+
+              <path class="arrow token" d="M 690 585 L 690 628"></path>
+              <text class="arrow-label token-label" x="706" y="615">解析 tool call</text>
+
+              <path class="arrow token loop" d="M 690 475 C 690 430 1060 430 1060 475"></path>
+              <text class="arrow-label token-label" x="755" y="424">tool observation ids 被追加到 token prefix 后发起下一轮 generate</text>
+
+              <path class="arrow reward" d="M 460 530 C 760 380 1210 380 1428 475"></path>
+              <text class="arrow-label reward-label" x="990" y="390">最终 patch / workspace</text>
+
+              <path class="arrow reward" d="M 1428 585 L 1428 628"></path>
+              <text class="arrow-label reward-label" x="1442" y="615">reward_score</text>
+
+              <path class="arrow token" d="M 1380 708 C 1380 800 405 800 405 845"></path>
+              <text class="arrow-label token-label" x="720" y="790">prompt_ids / response_ids / response_mask / logprobs</text>
+
+              <path class="arrow text" d="M 1510 708 C 1510 830 470 830 470 845"></path>
+              <text class="arrow-label text-label" x="835" y="832">non_tensor_batch: extra_fields / audit_ref / raw_prompt</text>
+
+              <path class="arrow token" d="M 550 882 L 700 882"></path>
+              <text class="arrow-label token-label" x="585" y="862">tensors</text>
+
+              <path class="arrow token" d="M 1000 882 L 1150 882"></path>
+              <text class="arrow-label token-label" x="1040" y="862">ratio + advantage</text>
+            </g>
+
+            <g class="diagram-note">
+              <rect class="note-box" x="90" y="118" width="585" height="44" rx="12"></rect>
+              <text class="note-text" x="112" y="146">文本只作为任务输入、工具观察和非张量审计信息传播</text>
+              <rect class="note-box token-note" x="710" y="118" width="470" height="44" rx="12"></rect>
+              <text class="note-text" x="732" y="146">训练主路径使用 token ids / tensors / mask</text>
+              <rect class="note-box reward-note" x="1215" y="118" width="340" height="44" rx="12"></rect>
+              <text class="note-text" x="1237" y="146">reward 不进入模型可见 token 流</text>
+            </g>
+          </svg>
+        </figure>
+
+        <div class="rv-callout">
+          上面这张图是主图。它故意减少了大段文字，把信息压缩成模块框和箭头：青色箭头表示文本或非张量数据，蓝色箭头表示 token ids / tensor，灰色箭头表示控制调度，黄色箭头表示 reward、verifier 和 audit 数据。下面的折叠区域只是文字版阶段说明，平时可以不看。
+        </div>
+
+        <details class="rv-diagram-details">
+          <summary>展开文字版阶段说明</summary>
+        <div class="rv-architecture" aria-label="RepoHarness 接入 verl 的架构数据流图">
+          <div class="rv-arch-row header">
+            <div class="rv-arch-lane">阶段</div>
+            <div class="rv-arch-lane">verl 训练控制层</div>
+            <div class="rv-arch-lane">RepoHarness adapter / runtime 层</div>
+            <div class="rv-arch-lane">verl 训练张量层</div>
+          </div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">1. 样本产生</div>
+            <div class="rv-arch-cell">
+              <h3>PPOTrainer + dataloader</h3>
+              <p>从 SWE 数据集取一条任务，产生模型可见 prompt。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill text">输入：dataset row / task_ref</span>
+                <span class="rv-data-pill text">输出：messages 或 raw_prompt</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell empty">
+              <h3>尚未进入 RepoHarness</h3>
+              <p>这里只是 verl 侧普通样本调度，没有 workspace、tool 或 verifier。</p>
+            </div>
+            <div class="rv-arch-cell empty">
+              <h3>尚未形成训练张量</h3>
+              <p>此时还是文本和 metadata，不是 PPO 使用的 Tensor。</p>
+            </div>
+          </div>
+
+          <div class="rv-arch-arrow">向 AgentLoopManager 切 batch，再由 AgentLoopWorker 启动异步协程</div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">2. adapter 入口</div>
+            <div class="rv-arch-cell">
+              <h3>AgentLoopWorker</h3>
+              <p>Ray actor 内部为每条样本调用自定义 agent loop。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill text">输入：verl sample / sampling_params</span>
+                <span class="rv-data-pill text">输出：run(...) 调用参数</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>RepoHarnessVerlAgentLoop.run(...)</h3>
+              <p>把 verl sample 和 config 映射成 <code>RepoHarnessEpisodeRequest</code>。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill text">输入：verl sample/config</span>
+                <span class="rv-data-pill text">输出：RepoHarnessEpisodeRequest</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell empty">
+              <h3>还没有 DataProto</h3>
+              <p>此时还没有 <code>prompt_ids</code>、<code>response_ids</code> 或 <code>response_mask</code>。</p>
+            </div>
+          </div>
+
+          <div class="rv-arch-arrow">RepoHarnessEpisodeRequest 进入 RepoHarnessRuntime.run_episode(...)；模型生成通过 LLMGateway 抽象注入</div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">3. 第一次生成</div>
+            <div class="rv-arch-cell empty">
+              <h3>verl 只提供 server 能力</h3>
+              <p>adapter 不重建 server，不管理参数同步，只调用既有 server manager。</p>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>RepoHarnessRuntime + VerlLLMGateway</h3>
+              <p>第一次把 messages 通过 chat template 转成 <code>prompt_ids_0</code>，并调用 <code>LLMServerClient.generate(...)</code>。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill text">输入：LLMGatewayRequest</span>
+                <span class="rv-data-pill token">输出：LLMGatewayResponse</span>
+                <span class="rv-data-pill token">底层：TokenOutput(token_ids, log_probs)</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>连续 token 流开始</h3>
+              <p>保存真实 generation 路径上的 prompt ids 和 output token ids。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill token">prompt_ids_initial</span>
+                <span class="rv-data-pill token">LLM round 1 token_ids</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rv-arch-arrow">解析工具调用，执行 RepoHarness 工具，再把工具观察编码成 token ids</div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">4. 工具执行</div>
+            <div class="rv-arch-cell empty">
+              <h3>verl 不执行工具</h3>
+              <p>verl 只负责 rollout 调度和模型服务。软件工程工具由 RepoHarness 管理。</p>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>RepoHarness tools / workspace</h3>
+              <p>根据模型输出解析出的 function name 和 JSON args 执行工具，例如 <code>read_file</code>、<code>edit_file</code>、<code>run_tests</code>。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill text">输入：tool_name + JSON args</span>
+                <span class="rv-data-pill text">工具层输出：tool_result_text</span>
+                <span class="rv-data-pill token">随后由 tokenizer helper 生成：tool_response_ids</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>mask 规则写入</h3>
+              <p>模型输出 token 是训练目标，工具观察 token 是上下文，不是训练目标。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill mask">LLM token: mask=1</span>
+                <span class="rv-data-pill mask">tool observation token: mask=0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rv-arch-arrow">第二轮 generate 的输入不是 messages，而是上一轮拼好的整条 token 流</div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">5. 第二次生成</div>
+            <div class="rv-arch-cell empty">
+              <h3>同一个 request_id</h3>
+              <p>使用同一个 <code>episode_id</code> 作为 sticky session id，便于 prefix cache 和审计追踪。</p>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>LLMServerClient.generate(...)</h3>
+              <p>第二轮直接传入完整 token prefix：初始 prompt + 第一轮 LLM token + 工具观察 token。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill token">输入：prompt_ids=continuous_token_stream</span>
+                <span class="rv-data-pill token">输出：output2.token_ids</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>追加最终回答或 patch</h3>
+              <p>如果这一轮没有工具调用并触发结束，就把最终模型 token 加入 response。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill mask">final LLM token: mask=1</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rv-arch-arrow">终止后跑 verifier 和 reward，但 verifier/reward 结果不进入 token 流</div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">6. 验证与组装</div>
+            <div class="rv-arch-cell empty">
+              <h3>verl 等待结果</h3>
+              <p>第一版是 episode 内 blocking wait，返回时 reward 已经确定。</p>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>Verifier + reward + recorder</h3>
+              <p>对最终 workspace / patch 运行 final verifier，计算 reward，写 transcript、events、artifact manifest 和 audit ref。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill reward">输出：reward_score</span>
+                <span class="rv-data-pill reward">输出：audit_ref / verifier_summary</span>
+              </div>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>AgentLoopOutput</h3>
+              <p>把连续 token 流切成 verl 需要的字段。verl 后处理可以把 <code>reward_score</code> 写到 <code>rm_scores</code> 的最后一个有效 response token 位置，但 reward 不是 token，也不是模型可见文本。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill token">prompt_ids</span>
+                <span class="rv-data-pill token">response_ids</span>
+                <span class="rv-data-pill mask">response_mask</span>
+                <span class="rv-data-pill reward">reward_score + extra_fields.audit_ref</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rv-arch-arrow">AgentLoopWorker 把 batch 内多条 AgentLoopOutput pad 成 DataProto，再交给 actor worker 训练</div>
+
+          <div class="rv-arch-row">
+            <div class="rv-arch-lane">7. PPO 训练</div>
+            <div class="rv-arch-cell">
+              <h3>AgentLoopWorker batch merge</h3>
+              <p>合并 N 条 <code>AgentLoopOutput</code>，补齐长度，形成 verl 训练批次。</p>
+            </div>
+            <div class="rv-arch-cell empty">
+              <h3>RepoHarness 不参与 loss</h3>
+              <p>RepoHarness 只提供轨迹、mask、reward 和审计引用。</p>
+            </div>
+            <div class="rv-arch-cell">
+              <h3>FSDP / Megatron Actor Worker</h3>
+              <p>对 <code>prompts ⊕ responses</code> 前向，计算新的 log probabilities，并用 PPO objective 更新模型。</p>
+              <div class="rv-data-list">
+                <span class="rv-data-pill token">Tensor[B, prompt_len]</span>
+                <span class="rv-data-pill token">Tensor[B, resp_len]</span>
+                <span class="rv-data-pill mask">mask=0 的工具 token 不进 loss</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </details>
+      </section>
+
+      <section id="positive-flow" class="rv-section">
+        <h2>完整正例链路：一条 SWE 任务的两轮模型生成</h2>
+        <p class="rv-muted">
+          下面按一条 SWE 任务讲清楚数据形态。这个例子和你给出的链路一致：第一轮模型输出工具调用，RepoHarness 执行工具并把工具观察放回上下文；第二轮模型输出最终 patch 或 final answer 并终止。如果真实任务有第二次、第三次工具调用，只需要重复“模型 token 段 + 工具观察 token 段”的模式。
+        </p>
+
+        <div class="rv-sequence-list">
+          <div class="rv-sequence-item">
+            <div>
+              <h3>PPOTrainer / dataloader 产出模型可见 prompt</h3>
+              <p>输入是一条 SWE dataset row，例如 repository、base commit、issue 描述和任务 id。输出是 <code>messages</code> 或 <code>raw_prompt</code>，仍然是文本形态。</p>
+              <pre class="rv-codeblock"><code>[
+  {"role": "system", "content": "..."},
+  {"role": "user", "content": "Fix bug in foo.py"}
+]</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>AgentLoopWorker 调用 RepoHarnessVerlAgentLoop.run(...)</h3>
+              <p>传入 verl sample、<code>sampling_params</code> 和 agent loop config。这个阶段仍然没有训练张量，也还没有 workspace 工具执行。</p>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>构造 RepoHarnessEpisodeRequest，并准备第一次模型调用</h3>
+              <p><code>RepoHarnessVerlAgentLoop</code> 负责把 verl sample/config 映射成 <code>RepoHarnessEpisodeRequest</code>。字段细节由共享 Contract 页面定义，这里只关心跨模块对象边界。</p>
+              <pre class="rv-codeblock"><code>prompt_ids_0 = tokenizer.apply_chat_template(
+    messages,
+    tools=tool_schemas,
+    add_generation_prompt=True,
+)
+# 形态：list[int]，例如长度为 312
+# 记录：GenerationRecord.prompt_ids = prompt_ids_0</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>第一轮调用 LLMServerClient.generate(...)</h3>
+              <p>真正传给 verl server 的是 <code>prompt_ids_0</code>，不是 messages。返回是 <code>TokenOutput</code>，里面有模型输出 token、log probabilities 和停止原因。</p>
+              <pre class="rv-codeblock"><code>output1 = await llm_server_client.generate(
+    request_id=episode_id,
+    prompt_ids=prompt_ids_0,
+    sampling_params={...},
+)
+# output1.token_ids: list[int]，例如长度为 87
+# output1.log_probs: list[float]
+# output1.stop_reason: "tool_call_detected"</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>解析工具调用并执行 RepoHarness 工具</h3>
+              <p>工具解析可以为了拿到 function name 和 JSON args 做最小 decode，但正式训练 token ids 不动，也不把整段 transcript 重新 decode 后再 encode。工具执行本身是纯字符串和文件系统操作，不需要 tokenizer。</p>
+              <pre class="rv-codeblock"><code>tool_calls = tool_parser.extract_tool_calls(output1.token_ids, tool_schemas)
+tool_result_text = await harness.run_tool("read_file", {"path": "foo.py"})
+# tool_result_text 是字符串，例如 "def foo():\\n    return None\\n..."</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>把新的工具观察 encode 成 token ids，并拼接连续 token 流</h3>
+              <p>这里的 encode 只针对“新产生的工具观察文本”，不是把旧 transcript 重来一遍。工具观察会成为下一轮模型能看到的上下文，但它不是模型自己生成的训练目标，因此 mask 为 0。</p>
+              <pre class="rv-codeblock"><code>tool_response_ids = tokenizer.apply_chat_template(
+    [{"role": "tool", "content": tool_result_text}],
+    add_generation_prompt=True,
+    remove_system_prompt=True,
+)
+# 形态：list[int]，例如长度为 412
+
+continuous_ids = prompt_ids_0 + output1.token_ids + tool_response_ids
+response_mask = [1] * 87 + [0] * 412
+if output1.log_probs is not None:
+    response_logprobs = output1.log_probs + masked_placeholder_for_tool_tokens
+else:
+    response_logprobs = None
+# 工具 token 的 placeholder 只在 mask=0 时占位；不能伪装成可训练 log probability。</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>第二轮模型调用直接使用连续 token 流</h3>
+              <p>第二轮不再传 messages，而是传入上一轮已经拼好的 <code>continuous_ids</code>。同一个 <code>episode_id</code> 作为 sticky session id，便于 prefix cache 和审计关联。</p>
+              <pre class="rv-codeblock"><code>output2 = await llm_server_client.generate(
+    request_id=episode_id,
+    prompt_ids=continuous_ids,
+    sampling_params={...},
+)
+# 输入长度示例：312 + 87 + 412 = 811
+# output2.token_ids: list[int]，例如长度为 142，包含 patch 或 final answer</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>终止后切片，组装 AgentLoopOutput</h3>
+              <p>初始 prompt 留在 <code>prompt_ids</code>，后面的模型 token 和工具观察 token 放在 <code>response_ids</code>。response mask 长度必须和 response ids 相同。</p>
+              <pre class="rv-codeblock"><code>prompt_ids = continuous_ids[:312]
+response_ids = continuous_ids[312:] + output2.token_ids
+response_mask = [1] * 87 + [0] * 412 + [1] * 142
+if response_logprobs is not None and output2.log_probs is not None:
+    response_logprobs = response_logprobs + output2.log_probs
+else:
+    response_logprobs = None
+# 如果任一模型生成阶段没有可用 log probability，整体按缺失处理并记录原因。</code></pre>
+            </div>
+          </div>
+
+          <div class="rv-sequence-item">
+            <div>
+              <h3>跑 verifier、计算 reward，但不把 reward 放回 token 流</h3>
+              <p>verifier 读取最终 workspace、patch、测试结果和任务验证计划，输出 <code>reward_score</code>、<code>verifier_summary</code> 和 <code>audit_ref</code>。这些是训练 label 和审计引用，不能让模型看到，也不能进入 <code>response_ids</code>。verl 后处理可以把 <code>reward_score</code> 转成 <code>rm_scores</code>，并放在最后一个有效 response token 的位置。</p>
+              <pre class="rv-codeblock"><code>return AgentLoopOutput(
+    prompt_ids=prompt_ids,
+    response_ids=response_ids,
+    response_mask=response_mask,
+    response_logprobs=response_logprobs,
+    reward_score=reward,
+    metrics=AgentLoopMetrics(...),
+    extra_fields={"audit_ref": audit_ref, "episode_id": episode_id},
+)</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="token-strip" class="rv-section">
+        <h2>连续 token 流：哪些 token 训练，哪些 token 只做上下文</h2>
+        <p class="rv-muted">
+          verl 最终训练主路径看到的是 token ids 和 mask。工具观察 token 仍然在上下文里，因为后续模型生成需要读到工具结果；但是工具观察不是模型自己生成的 token，因此不能作为 policy loss 的 target。注意，进入 padded batch 后，padding token 的 mask 也会是 0，所以需要区分“未 padding 的工具观察 mask=0”和“padding 后的补齐 token mask=0”。
+        </p>
+
+        <div class="rv-token-strip" aria-label="连续 token 流切片图">
+          <div class="rv-token-segment prompt">
+            <span class="rv-token-title">prompt_ids</span>
+            <span class="rv-token-meta">初始 system + user prompt，例如 312 token。</span>
+            <span class="rv-token-meta">不属于 response loss。</span>
+          </div>
+          <div class="rv-token-segment llm">
+            <span class="rv-token-title">LLM round 1</span>
+            <span class="rv-token-meta">模型输出工具调用，例如 87 token。</span>
+            <span class="rv-token-meta">response_mask = 1。</span>
+          </div>
+          <div class="rv-token-segment tool">
+            <span class="rv-token-title">tool observation</span>
+            <span class="rv-token-meta">工具返回文本 encode 后，例如 412 token。</span>
+            <span class="rv-token-meta">response_mask = 0。</span>
+          </div>
+          <div class="rv-token-segment llm">
+            <span class="rv-token-title">LLM round 2</span>
+            <span class="rv-token-meta">最终 patch / final answer，例如 142 token。</span>
+            <span class="rv-token-meta">response_mask = 1。</span>
+          </div>
+        </div>
+
+        <pre class="rv-codeblock"><code>AgentLoopOutput.prompt_ids
+  = prompt_ids_0
+
+AgentLoopOutput.response_ids
+  = output1.token_ids
+  + tool_response_ids
+  + output2.token_ids
+
+AgentLoopOutput.response_mask
+  = [1] * len(output1.token_ids)
+  + [0] * len(tool_response_ids)
+  + [1] * len(output2.token_ids)
+
+AgentLoopOutput.response_logprobs
+  = output1.log_probs
+  + masked_placeholder_for_tool_tokens
+  + output2.log_probs</code></pre>
+        <p class="rv-muted">
+          上面这一行只描述 log probabilities 可用时的理想形态。若 provider 或 verl server 没有返回某一轮 log probabilities，<code>response_logprobs</code> 应为 <code>None</code> 或带明确缺失原因，不能为了凑字段而伪造可训练 log probability。
+        </p>
+
+        <div class="rv-callout">
+          如果真实任务有两次工具调用，形态就是：<code>prompt_ids</code> 后面接 <code>LLM1(mask=1)</code>、<code>tool1(mask=0)</code>、<code>LLM2(mask=1)</code>、<code>tool2(mask=0)</code>、<code>LLM3(mask=1)</code>。规则不变：模型生成 token 训练，工具观察 token 只作为上下文。
+        </div>
+      </section>
+
+      <section id="tokenize-boundary" class="rv-section">
+        <h2>关键边界：文本、token、reward 不要混在一起</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead>
+              <tr>
+                <th>位置</th>
+                <th>是否 tokenize</th>
+                <th>输入形态</th>
+                <th>输出形态</th>
+                <th>原因</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>dataloader 产出样本</td>
+                <td>否</td>
+                <td><code>messages</code> 或 <code>raw_prompt</code></td>
+                <td>文本和 metadata</td>
+                <td>这里仍然是任务样本，不是模型服务请求。</td>
+              </tr>
+              <tr>
+                <td>RepoHarnessVerlAgentLoop 构造 request</td>
+                <td>否</td>
+                <td>verl sample/config</td>
+                <td><code>RepoHarnessEpisodeRequest</code></td>
+                <td>adapter 只做语义映射，不应该提前绑定某个 tokenizer 的细节。</td>
+              </tr>
+              <tr>
+                <td>第一次调用 <code>VerlLLMGateway</code></td>
+                <td>是</td>
+                <td><code>LLMGatewayRequest</code></td>
+                <td><code>LLMGatewayResponse</code></td>
+                <td>route=verl 时，gateway 在这里产生真实 prompt ids，并把 token provenance 写入 response / generation record。</td>
+              </tr>
+              <tr>
+                <td>LLM 输出解析 tool call</td>
+                <td>不重新 tokenize</td>
+                <td><code>output.token_ids</code></td>
+                <td>tool name + JSON args</td>
+                <td>可以为了解析函数名和参数做最小 decode，但不能把整段输出重新编码成正式训练 token。</td>
+              </tr>
+              <tr>
+                <td>RepoHarness 工具执行</td>
+                <td>否</td>
+                <td>tool name + JSON args + workspace</td>
+                <td><code>tool_result_text</code></td>
+                <td>工具系统是软件工程执行层，使用字符串、文件、命令和 workspace，不需要 tokenizer。</td>
+              </tr>
+              <tr>
+                <td>工具观察进入下一轮上下文</td>
+                <td>是，只 tokenize 新工具观察</td>
+                <td><code>{"role": "tool", "content": tool_result_text}</code></td>
+                <td><code>tool_response_ids: list[int]</code></td>
+                <td>后续 LLM 需要在 token prefix 中看到工具结果；这不是重新分词旧 transcript。</td>
+              </tr>
+              <tr>
+                <td>第二轮及后续 LLM 调用</td>
+                <td>通常否</td>
+                <td>已经拼好的完整 <code>prompt_ids</code></td>
+                <td>新的 <code>TokenOutput</code></td>
+                <td>直接传连续 token prefix，避免 decode 到 text 再 encode 造成 token 不一致。</td>
+              </tr>
+              <tr>
+                <td>final verifier 和 reward</td>
+                <td>否</td>
+                <td>最终 workspace、patch、测试结果</td>
+                <td><code>reward_score</code> 和审计引用</td>
+                <td>reward 是训练 label，不是模型上下文，不能进入 token 流。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="module-io" class="rv-section">
+        <h2>每个模块的输入和输出</h2>
+        <div class="rv-io-grid" aria-label="模块输入输出表">
+          <div class="rv-io-head">模块</div>
+          <div class="rv-io-head">输入</div>
+          <div class="rv-io-head">输出</div>
+          <div class="rv-io-head">不能包含或不能做的事</div>
+
+          <div class="rv-io-module">verl PPOTrainer / dataloader</div>
+          <div>dataset row、task id、repository metadata、模型可见任务描述。</div>
+          <div><code>messages</code>、<code>raw_prompt</code>、non-tensor metadata、sampling config。</div>
+          <div>不能把 gold patch、hidden verifier output、accepted label 或 reward scalar 放进 prompt。</div>
+
+          <div class="rv-io-module">AgentLoopManager / AgentLoopWorker</div>
+          <div>verl batch sample。</div>
+          <div>每条样本一个 <code>RepoHarnessVerlAgentLoop.run(...)</code> 协程，最终收集 <code>AgentLoopOutput</code>。</div>
+          <div>不执行软件工程工具，不计算 final verifier reward。</div>
+
+          <div class="rv-io-module">RepoHarnessVerlAgentLoop</div>
+          <div>verl sample/config。</div>
+          <div>对 runtime 输出 <code>RepoHarnessEpisodeRequest</code>；对 verl 返回 <code>AgentLoopOutput</code>。</div>
+          <div>不实现 workspace、verifier、recorder 业务细节；不直接泄漏 hidden data。</div>
+
+          <div class="rv-io-module">RepoHarnessRuntime.run_episode(...)</div>
+          <div><code>RepoHarnessEpisodeRequest</code>，以及外部注入的 <code>LLMGateway</code> 实现。</div>
+          <div><code>RepoHarnessEpisodeResult</code>。</div>
+          <div>不依赖 verl 具体类；不把 reward/verifier 结果写入模型上下文。</div>
+
+          <div class="rv-io-module">VerlLLMGateway</div>
+          <div><code>LLMGatewayRequest</code>。</div>
+          <div><code>LLMGatewayResponse</code> 和 <code>GenerationRecord</code>。</div>
+          <div>不启动或重建 verl server；不在 episode 结束后重新分词最终 transcript。</div>
+
+          <div class="rv-io-module">LLMServerClient / vLLM / SGLang</div>
+          <div>底层 generate 请求。</div>
+          <div><code>TokenOutput</code>。</div>
+          <div>不理解 RepoHarness verifier，也不负责工具执行。</div>
+
+          <div class="rv-io-module">RepoHarness tools / workspace</div>
+          <div>模型解析出的 tool name、JSON args、当前 executable workspace。</div>
+          <div><code>tool_result_text</code>、tool event、artifact reference、workspace 变更。</div>
+          <div>不参与 PPO loss；工具输出 token 后续必须 mask=0。</div>
+
+          <div class="rv-io-module">Verifier / reward</div>
+          <div>最终 workspace、patch、任务 verifier plan、测试输出。</div>
+          <div>reward / verifier result。</div>
+          <div>不能进入 prompt、response ids、raw_prompt 或模型可见 extra fields。</div>
+
+          <div class="rv-io-module">TrainingView / AgentLoopOutput</div>
+          <div><code>RepoHarnessEpisodeResult.training_view</code>。</div>
+          <div>verl <code>AgentLoopOutput</code>。</div>
+          <div>不能丢失 token provenance；不能让 mask 长度和 response ids 不一致。</div>
+
+          <div class="rv-io-module">DataProto / Actor Worker</div>
+          <div>batch 内 N 条 <code>AgentLoopOutput</code>。</div>
+          <div>padding 后的 <code>prompts</code>、<code>responses</code>、<code>response_mask</code>、<code>rollout_log_probs</code> Tensor。</div>
+          <div>mask=0 的工具观察 token 不进入 policy loss。</div>
+        </div>
+      </section>
+
+      <section id="training-loss" class="rv-section">
+        <h2>进入 PPO 训练时发生什么</h2>
+        <p class="rv-muted">
+          到训练阶段，参与 actor forward 和 PPO loss 的主路径是 padded Tensor。与此同时，<code>raw_prompt</code>、<code>extra_fields</code>、<code>audit_ref</code> 等非张量字段仍可能随 <code>DataProto.non_tensor_batch</code> 传播，所以它们也必须经过 visibility 检查，不能包含 hidden verifier、gold patch、reward metadata 明文或 accepted label。
+        </p>
+
+        <pre class="rv-codeblock"><code>batch["prompts"]            : Tensor[B, prompt_len]
+batch["responses"]          : Tensor[B, resp_len]
+batch["response_mask"]      : Tensor[B, resp_len]
+batch["rollout_log_probs"]  : Optional[Tensor[B, resp_len]]
+batch.non_tensor_batch      : raw_prompt / extra_fields / audit refs
+
+new_log_probs = actor.forward(prompts concat responses)
+
+if rollout_log_probs is not None:
+  ratio = exp(new_log_probs - rollout_log_probs)
+  loss = -min(ratio * advantage, clip(ratio, 1 - eps, 1 + eps) * advantage)
+  loss = loss * response_mask
+
+# response_mask=0 的工具观察 token 不贡献 policy loss。</code></pre>
+
+        <div class="rv-callout warning">
+          <code>AgentLoopOutput.response_logprobs</code> 是可选字段。只有它存在并且长度与 <code>response_ids</code> 对齐时，才应该进入 <code>DataProto.batch["rollout_log_probs"]</code>。正式在线训练如果依赖 rollout log probabilities，必须显式开启、记录并校验；调试路径可以让它为 <code>None</code>，但不能把缺失的 log probability 伪装成有效训练字段。
+        </div>
+
+        <div class="rv-callout success">
+          一句话总结：RepoHarness 负责产生真实软件工程环境中的轨迹、工具观察、patch、verifier reward 和审计引用；verl 负责把这些轨迹变成 token Tensor，并按照 response mask 只训练模型自己生成的 token。两者通过 <code>RepoHarnessEpisodeRequest</code>、<code>LLMGateway</code>、<code>TrainingView</code> 和 <code>AgentLoopOutput</code> 解耦。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

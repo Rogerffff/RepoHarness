@@ -1,0 +1,51 @@
+{
+  "schema_version": "repo_harness_verl_episode_request_v0",
+  "contract_version": "repo_harness_verl_shared_contracts_v0",
+  "fixture_kind": "canonical_episode_request",
+  "episode_id": "stage0h-episode-success",
+  "run_id": "stage0h-run-success",
+  "task_id": "stage0h-task-success",
+  "llm_gateway_route": "verl",
+  "inference_backend": "sglang",
+  "provider_route_policy_examples": [
+    {
+      "route": "openai",
+      "invalid_for_online_rl": true,
+      "allowed_uses": ["evaluation", "teacher_data_generation", "sft_export", "preference_data", "offline_diagnostic_replay"]
+    },
+    {
+      "route": "deepseek",
+      "invalid_for_online_rl": true,
+      "allowed_uses": ["evaluation", "teacher_data_generation", "sft_export", "preference_data", "offline_diagnostic_replay"]
+    }
+  ],
+  "raw_prompt": [
+    {"role": "system", "content": "You are a software engineering agent."},
+    {"role": "user", "content": "Fix the bug in src/foo.py."}
+  ],
+  "task_ref": {
+    "task_ref": "rh://task/stage0h-task-success",
+    "repo_ref": "repo://example/project",
+    "base_commit": "abcdef1234567890",
+    "model_visible_summary": "Fix a small deterministic bug in src/foo.py."
+  },
+  "agent_policy_ref": "rh://policy/stage0h/simple-react",
+  "budget_ref": "rh://budget/stage0h/training-fast",
+  "run_config_ref": "rh://run-config/stage0h/training-fast",
+  "episode_seed": 7,
+  "visibility_policy": {
+    "model_visible_fields": ["raw_prompt", "task_ref.model_visible_summary"],
+    "trainer_tensor_fields": ["prompt_ids", "response_ids", "response_mask", "response_logprobs", "reward_score"],
+    "trainer_non_tensor_filter_fields": ["repo_harness_status", "repo_harness_invalid_for_training", "repo_harness_invalid_for_online_rl"],
+    "audit_only_fields": ["audit_ref", "reward_metadata", "final_verifier"],
+    "forbidden_fields": ["hidden_verifier", "gold_patch", "accepted_label", "provider_secret", "evaluator_only_logs"]
+  },
+  "budgets": {
+    "max_turns": 12,
+    "max_output_tokens": 256,
+    "max_prompt_tokens": 2048,
+    "generation_timeout_seconds": 60,
+    "max_tool_observation_tokens": 512,
+    "max_verifier_seconds": 120
+  }
+}

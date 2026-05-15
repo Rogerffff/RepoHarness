@@ -1,0 +1,52 @@
+{
+  "schema_version": "repo_harness_verl_llm_gateway_response_v0",
+  "contract_version": "repo_harness_verl_shared_contracts_v0",
+  "fixture_kind": "canonical_llm_gateway_response",
+  "route": "verl",
+  "inference_backend": "sglang",
+  "model_call_id": "model-call-001",
+  "assistant_message": {
+    "role": "assistant",
+    "content": "I will inspect src/foo.py.",
+    "metadata": {
+      "parser_id": "repo_harness_tool_parser_v1",
+      "parser_repair_type": null
+    }
+  },
+  "tool_calls": [
+    {
+      "tool_call_id": "tool-call-read-file-001",
+      "name": "read_file",
+      "arguments": {"path": "src/foo.py", "start_line": 1, "end_line": 80}
+    }
+  ],
+  "prompt_ids": [101, 102, 103, 104],
+  "output_token_ids": [201, 202],
+  "output_logprobs": [-0.11, -0.12],
+  "response_mask": [1, 1],
+  "stop_reason": "tool_call_detected",
+  "token_source": "verl_token_output",
+  "policy_version": {
+    "checkpoint_ref": "policy://stage0h/checkpoint-10"
+  },
+  "global_steps": 10,
+  "min_global_steps": 10,
+  "max_global_steps": 10,
+  "routed_experts": [],
+  "usage": {
+    "prompt_tokens": 4,
+    "completion_tokens": 2,
+    "total_tokens": 6
+  },
+  "provider_request_id": "verl-stage0h-model-call-001",
+  "raw_request_ref": "rh://audit/stage0h-success/model-call-001/raw-request",
+  "raw_response_ref": "rh://audit/stage0h-success/model-call-001/raw-response",
+  "model_call_event_ref": "rh://audit/stage0h-success/events/model-call-001",
+  "duration_ms": 42,
+  "error": null,
+  "extra_fields": {
+    "global_steps": 10,
+    "min_global_steps": 10,
+    "max_global_steps": 10
+  }
+}
