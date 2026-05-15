@@ -229,6 +229,7 @@ class RepoHarnessEpisodeResult(StrictBaseModel):
 
     @model_validator(mode="after")
     def validate_episode_result(self) -> "RepoHarnessEpisodeResult":
+        self._validate_gateway_route_consistency()
         if self.status in {"invalid", "invalid_task", "infrastructure_error"}:
             if not self.invalid_for_training:
                 raise ValueError(f"status={self.status} requires invalid_for_training=true")
@@ -243,5 +244,27 @@ class RepoHarnessEpisodeResult(StrictBaseModel):
             if not self.invalid_for_training or self.status_reason != "response_length_exceeded":
                 raise ValueError("response overflow must be represented as invalid response_length_exceeded")
         if not self.invalid_for_training and not self.invalid_for_online_rl:
-            validate_training_view_for_online_rl(self.training_view)
+            validate_training_view_for_online_rl(self._training_view_for_online_rl_validation())
         return self
+
+    def _training_view_for_online_rl_validation(self) -> TrainingView:
+        if "repo_harness_llm_gateway_route" in self.training_view.extra_fields:
+            return self.training_view
+        if not self.generation_records:
+            return self.training_view
+        return self.training_view.model_copy(
+            update={
+                "extra_fields": {
+                    **self.training_view.extra_fields,
+                    "repo_harness_llm_gateway_route": self.generation_records[0].gateway_route,
+                }
+            }
+        )
+
+    def _validate_gateway_route_consistency(self) -> None:
+        training_route = self.training_view.extra_fields.get("repo_harness_llm_gateway_route")
+        if training_route is None or not self.generation_records:
+            return
+        record_routes = {record.gateway_route for record in self.generation_records}
+        if record_routes != {training_route}:
+            raise ValueError("gateway_route_mismatch_between_training_view_and_generation_records")

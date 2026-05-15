@@ -376,9 +376,15 @@ class RepoHarnessRuntime:
         cleanup_status: str,
     ) -> RepoHarnessEpisodeResult:
         invalid_reason = self._response_invalid_reason(request, response)
+        response_error_reason = _response_error_reason(response)
         if invalid_reason in {"gateway_route_mismatch", "gateway_inference_backend_mismatch"}:
             status = "infrastructure_error"
             status_reason = invalid_reason
+            invalid_for_training = True
+            invalid_for_online_rl = True
+        elif response_error_reason is not None:
+            status = "timeout" if _is_timeout_reason(response_error_reason) else "infrastructure_error"
+            status_reason = response_error_reason
             invalid_for_training = True
             invalid_for_online_rl = True
         elif invalid_reason in {"empty_response", "prompt_length_exceeded", "response_length_exceeded"}:
@@ -552,6 +558,7 @@ class RepoHarnessRuntime:
             num_turns=1,
             extra_fields=self._extra_fields(
                 request,
+                gateway_route=response.route,
                 status=status,
                 invalid_for_training=invalid_for_training,
                 invalid_for_online_rl=invalid_for_online_rl,
@@ -564,6 +571,9 @@ class RepoHarnessRuntime:
             return "gateway_route_mismatch"
         if response.inference_backend != request.inference_backend:
             return "gateway_inference_backend_mismatch"
+        error_reason = _response_error_reason(response)
+        if error_reason is not None:
+            return error_reason
         if not response.output_token_ids:
             return "empty_response"
         if request.budgets.max_prompt_tokens is not None and len(response.prompt_ids) > request.budgets.max_prompt_tokens:
@@ -572,6 +582,8 @@ class RepoHarnessRuntime:
             return "response_length_exceeded"
         if request.llm_gateway_route in PROVIDER_ROUTES or response.route in PROVIDER_ROUTES:
             return "provider_route_invalid_for_online_rl"
+        if request.llm_gateway_route != "verl" or response.route != "verl":
+            return "non_verl_route_invalid_for_online_rl"
         if response.output_logprobs is None:
             return "missing_response_logprobs"
         return None
@@ -641,6 +653,13 @@ class RepoHarnessRuntime:
                         "gateway output_token_ids length "
                         f"{len(response.output_token_ids)} exceeded max_output_tokens {request.budgets.max_output_tokens}"
                     ),
+                )
+            ]
+        if response.error is not None and invalid_reason is not None:
+            return [
+                AuditDiagnostic(
+                    code=invalid_reason,
+                    message=f"LLMGatewayResponse.error reported: {response.error}",
                 )
             ]
         return []
@@ -726,15 +745,18 @@ class RepoHarnessRuntime:
         self,
         request: RepoHarnessEpisodeRequest,
         *,
+        gateway_route: str | None = None,
         status: str,
         invalid_for_training: bool,
         invalid_for_online_rl: bool,
         invalid_reason: str | None,
     ) -> dict[str, str | int | float | bool | None]:
-        return {
+        actual_gateway_route = gateway_route or request.llm_gateway_route
+        fields: dict[str, str | int | float | bool | None] = {
             "repo_harness_episode_id": request.episode_id,
             "repo_harness_run_id": request.run_id,
             "repo_harness_task_id": request.task_id,
+            "repo_harness_llm_gateway_route": actual_gateway_route,
             "repo_harness_status": status,
             "repo_harness_invalid_for_training": invalid_for_training,
             "repo_harness_invalid_for_online_rl": invalid_for_online_rl,
@@ -742,6 +764,9 @@ class RepoHarnessRuntime:
             "repo_harness_timing_summary_ref": f"rh://audit/{request.episode_id}/timing-summary",
             "repo_harness_resource_summary_ref": f"rh://audit/{request.episode_id}/resource-summary",
         }
+        if actual_gateway_route != request.llm_gateway_route:
+            fields["repo_harness_requested_llm_gateway_route"] = request.llm_gateway_route
+        return fields
 
 
 def _status_invalid_for_training(status: EpisodeStatusName) -> bool:
@@ -757,6 +782,21 @@ def _is_timeout_reason(value: str | None) -> bool:
         return False
     normalized = value.lower()
     return any(marker in normalized for marker in TIMEOUT_REASON_MARKERS)
+
+
+def _response_error_reason(response: LLMGatewayResponse) -> str | None:
+    error = response.error
+    if error is None:
+        return None
+    if isinstance(error, str):
+        return error or "gateway_response_error"
+    if isinstance(error, dict):
+        for key in ["model_error_type", "error_type", "type", "code"]:
+            value = error.get(key)
+            if isinstance(value, str) and value:
+                return value
+        return "gateway_response_error"
+    return "gateway_response_error"
 
 
 def _coerce_tool_call(value: dict[str, Any], *, turn: int) -> ToolCall:

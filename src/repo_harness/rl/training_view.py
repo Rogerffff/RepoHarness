@@ -12,7 +12,6 @@ from .visibility import (
     CONTRACT_VERSION,
     FlatScalar,
     GatewayRoute,
-    PROVIDER_ROUTES,
     validate_batch_extra_fields,
     validate_no_absolute_local_path,
     validate_opaque_ref,
@@ -182,7 +181,7 @@ class AuditRef(StrictBaseModel):
 class FormalOnlineRLSample(StrictBaseModel):
     schema_version: str = "repo_harness_verl_formal_online_rl_sample_v0"
     sample_id: str | None = None
-    route: GatewayRoute = "verl"
+    route: GatewayRoute
     invalid_for_training: bool = False
     invalid_reason: str | None = None
     prompt_ids: list[int]
@@ -218,20 +217,25 @@ class MixedLogprobBatchRejectionFixture(StrictBaseModel):
 
 def validate_training_view_for_online_rl(view: TrainingView | dict[str, Any]) -> TrainingView:
     parsed = view if isinstance(view, TrainingView) else TrainingView.model_validate(view)
-    if parsed.online_rl_eligible is False:
-        raise ValueError("training_view_marked_ineligible_for_online_rl")
-    if parsed.extra_fields.get("repo_harness_invalid_for_training") is True:
-        raise ValueError(str(parsed.extra_fields.get("repo_harness_invalid_reason") or "invalid_for_training"))
-    if parsed.extra_fields.get("repo_harness_invalid_for_online_rl") is True:
-        raise ValueError("invalid_for_online_rl")
     if not parsed.response_ids:
         raise ValueError("empty_response_with_reward_blocked")
     if len(parsed.response_ids) > parsed.rollout_limits.response_length:
         raise ValueError("response_length_exceeded")
     if parsed.response_logprobs is None:
         raise ValueError("missing_response_logprobs_in_formal_batch")
+    route = parsed.extra_fields.get("repo_harness_llm_gateway_route")
+    if route is None:
+        raise ValueError("missing_llm_gateway_route_for_online_rl")
+    if route != "verl":
+        raise ValueError("non_verl_route_invalid_for_online_rl")
     if parsed.reward_score is None:
         raise ValueError("missing_reward_score")
+    if parsed.online_rl_eligible is False:
+        raise ValueError("training_view_marked_ineligible_for_online_rl")
+    if parsed.extra_fields.get("repo_harness_invalid_for_training") is True:
+        raise ValueError(str(parsed.extra_fields.get("repo_harness_invalid_reason") or "invalid_for_training"))
+    if parsed.extra_fields.get("repo_harness_invalid_for_online_rl") is True:
+        raise ValueError("invalid_for_online_rl")
     return parsed
 
 
@@ -245,10 +249,13 @@ def validate_formal_online_rl_batch(
         if isinstance(sample, FormalOnlineRLSample):
             parsed.append(sample)
         elif isinstance(sample, TrainingView):
+            route = sample.extra_fields.get("repo_harness_llm_gateway_route")
+            if formal_online_rl_batch and route is None:
+                raise ValueError("missing_llm_gateway_route_for_online_rl")
             parsed.append(
                 FormalOnlineRLSample(
                     sample_id=str(sample.extra_fields.get("repo_harness_episode_id") or index),
-                    route="verl",
+                    route=str(route or "verl"),
                     invalid_for_training=sample.extra_fields.get("repo_harness_invalid_for_training") is True,
                     invalid_reason=sample.extra_fields.get("repo_harness_invalid_reason"),
                     prompt_ids=sample.prompt_ids,
@@ -271,8 +278,8 @@ def validate_formal_online_rl_batch(
             raise ValueError("mixed_response_logprobs_in_formal_batch")
         raise ValueError("missing_response_logprobs_in_formal_batch")
 
-    if any(sample.route in PROVIDER_ROUTES for sample in parsed):
-        raise ValueError("provider_route_invalid_for_online_rl")
+    if any(sample.route != "verl" for sample in parsed):
+        raise ValueError("non_verl_route_invalid_for_online_rl")
     if any(sample.invalid_for_training for sample in parsed):
         raise ValueError("invalid_for_training_sample_in_formal_batch")
     if any(not sample.response_ids for sample in parsed):
