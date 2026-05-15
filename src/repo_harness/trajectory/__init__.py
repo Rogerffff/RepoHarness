@@ -10,6 +10,8 @@ from repo_harness.trajectory.schemas import (
 )
 from repo_harness.trajectory.inspect import inspect_run
 from repo_harness.trajectory.recorder import (
+    RecorderProfile,
+    RecorderRunMode,
     RunRecorder,
     RunRecorderError,
     load_artifact_manifest,
@@ -20,6 +22,8 @@ from repo_harness.trajectory.recorder import (
 __all__ = [
     "ArtifactRef",
     "MetricsRecord",
+    "RecorderProfile",
+    "RecorderRunMode",
     "RunRecorder",
     "RunRecorderError",
     "RunSummary",

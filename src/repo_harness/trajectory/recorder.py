@@ -7,21 +7,130 @@ import os
 import re
 import shutil
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import ValidationError
+from pydantic import Field, ValidationError, model_validator
 
 from repo_harness.errors import RepoHarnessError
+from repo_harness.schema_base import StrictBaseModel
 from repo_harness.schema_versions import SCHEMA_VERSION
 from repo_harness.trajectory.schemas import ArtifactRef, TrajectoryEvent, TranscriptRecord
 
 RunStatus = Literal["RUNNING", "FINALIZED", "INTERRUPTED", "CORRUPT_PARTIAL"]
+RecorderRunMode = Literal["full_audit", "training_fast", "training_debug"]
+RawArtifactRetention = Literal["keep", "projection"]
+PreparedMessagesRetention = Literal["keep", "keep_export_audit_compat"]
+ReasoningTraceRetention = Literal["keep", "hash_only"]
+
+RETENTION_FACTS_SCHEMA_VERSION = "repo_harness_artifact_retention_facts_v0"
+PROFILE_FACT_ARTIFACT_KINDS = {
+    "artifact_retention_facts",
+    "artifact_projection_facts",
+}
+PREPARED_MESSAGES_KIND = "prepared_messages"
 
 
 class RunRecorderError(RepoHarnessError):
     """RunRecorder 读写失败。"""
+
+
+class RecorderProfile(StrictBaseModel):
+    """Artifact retention policy selected by RepoHarness run_mode."""
+
+    schema_version: str = "repo_harness_recorder_profile_v0"
+    mode: RecorderRunMode = "full_audit"
+    save_raw_provider_request: bool = True
+    save_raw_provider_response: bool = True
+    save_reasoning_trace: bool = True
+    save_prepared_messages: bool = True
+    raw_artifact_retention: RawArtifactRetention = "keep"
+    prepared_messages_retention: PreparedMessagesRetention = "keep"
+    reasoning_trace_retention: ReasoningTraceRetention = "keep"
+    artifact_compression: str = "none"
+    artifact_sampling_policy: str = "none"
+    raw_artifact_preview_chars: int = Field(default=0, ge=0)
+    critical_artifact_kinds: list[str] = Field(
+        default_factory=lambda: [
+            "artifact_manifest",
+            "content_replacement_state",
+            "events",
+            "final_verifier",
+            "metrics",
+            "patch",
+            "prepared_messages",
+            "reward_metadata",
+            "run_metadata",
+            "timing_summary",
+            "trajectory_facts",
+            "transcript",
+            "verifier_result",
+        ]
+    )
+
+    @classmethod
+    def for_run_mode(cls, mode: RecorderRunMode | str | None) -> "RecorderProfile":
+        selected = mode or "full_audit"
+        if selected == "full_audit":
+            return cls(mode="full_audit", raw_artifact_preview_chars=0)
+        if selected == "training_fast":
+            return cls(
+                mode="training_fast",
+                save_raw_provider_request=False,
+                save_raw_provider_response=False,
+                save_reasoning_trace=False,
+                save_prepared_messages=True,
+                raw_artifact_retention="projection",
+                prepared_messages_retention="keep_export_audit_compat",
+                reasoning_trace_retention="hash_only",
+                raw_artifact_preview_chars=0,
+            )
+        if selected == "training_debug":
+            return cls(
+                mode="training_debug",
+                save_raw_provider_request=False,
+                save_raw_provider_response=False,
+                save_reasoning_trace=False,
+                save_prepared_messages=True,
+                raw_artifact_retention="projection",
+                prepared_messages_retention="keep",
+                reasoning_trace_retention="hash_only",
+                artifact_sampling_policy="debug_projection",
+                raw_artifact_preview_chars=2048,
+            )
+        raise RunRecorderError(f"unknown recorder run_mode: {selected}")
+
+    @model_validator(mode="after")
+    def validate_run_mode_safety(self) -> "RecorderProfile":
+        if self.mode == "training_fast":
+            if self.save_raw_provider_request or self.save_raw_provider_response:
+                raise ValueError("training_fast recorder profile must not save full raw provider payloads")
+            if self.save_reasoning_trace:
+                raise ValueError("training_fast recorder profile must not save plaintext reasoning trace")
+            if self.raw_artifact_retention != "projection":
+                raise ValueError("training_fast recorder profile must use raw artifact projection")
+            if self.reasoning_trace_retention != "hash_only":
+                raise ValueError("training_fast recorder profile must keep reasoning trace hash-only")
+        if self.mode == "training_debug":
+            if self.save_raw_provider_request or self.save_raw_provider_response:
+                raise ValueError("training_debug recorder profile must not save full raw provider payloads")
+            if self.save_reasoning_trace:
+                raise ValueError("training_debug recorder profile must not save plaintext reasoning trace by default")
+            if self.raw_artifact_retention != "projection":
+                raise ValueError("training_debug recorder profile must use raw artifact projection")
+            if self.reasoning_trace_retention != "hash_only":
+                raise ValueError("training_debug recorder profile must keep reasoning trace hash-only by default")
+        return self
+
+
+@dataclass(frozen=True)
+class _RetentionRewrite:
+    artifact_kind: str
+    data: bytes | str | Path
+    metadata: dict[str, Any]
+    event_data: dict[str, Any]
 
 
 class RunRecorder:
@@ -34,12 +143,14 @@ class RunRecorder:
         *,
         task_id: str | None = None,
         max_artifact_bytes: int | None = None,
+        recorder_profile: RecorderProfile | Mapping[str, Any] | RecorderRunMode | None = None,
     ) -> None:
         self.run_id = run_id
         self.task_id = task_id
         if max_artifact_bytes is not None and max_artifact_bytes <= 0:
             raise RunRecorderError("max_artifact_bytes 必须为正数。")
         self.max_artifact_bytes = max_artifact_bytes
+        self.recorder_profile = _coerce_recorder_profile(recorder_profile)
         self.run_dir = Path(run_dir)
         self.artifact_dir = self.run_dir / "artifacts"
         self.transcript_path = self.run_dir / "transcript.jsonl"
@@ -123,6 +234,16 @@ class RunRecorder:
         metadata = dict(metadata or {})
         explicit_created_by_event_id = metadata.get("created_by_event_id")
         created_by_event_id = explicit_created_by_event_id or self.next_event_id("artifact")
+        artifact_kind = kind
+        retention_rewrite = self._retention_rewrite(kind, data, metadata)
+        retention_event_data: dict[str, Any] | None = None
+        if retention_rewrite is not None:
+            artifact_kind = retention_rewrite.artifact_kind
+            data = retention_rewrite.data
+            metadata = retention_rewrite.metadata
+            retention_event_data = retention_rewrite.event_data
+        else:
+            retention_event_data = self._retention_event_for_complete_artifact(kind, data, metadata)
         self._artifact_counter += 1
         artifact_id = f"{self.run_id}_artifact_{self._artifact_counter:06d}"
         suffix = _artifact_suffix(data, metadata)
@@ -140,14 +261,14 @@ class RunRecorder:
         if truncated:
             if suffix == ".json" and budget_policy == "truncate_json":
                 data = _truncate_json_artifact_data(
-                    kind=kind,
+                    kind=artifact_kind,
                     original_size_bytes=original_size_bytes,
                     max_bytes=self.max_artifact_bytes or 0,
                 )
             else:
                 data = _truncate_artifact_data(data, self.max_artifact_bytes or 0)
             metadata["retention_policy"] = "truncated"
-        filename = f"{artifact_id}_{_safe_filename(kind)}{suffix}"
+        filename = f"{artifact_id}_{_safe_filename(artifact_kind)}{suffix}"
         relative_path = Path("artifacts") / filename
         target_path = self.run_dir / relative_path
         tmp_path = target_path.with_suffix(target_path.suffix + ".tmp")
@@ -166,7 +287,7 @@ class RunRecorder:
         ref = ArtifactRef(
             artifact_id=artifact_id,
             relative_path=relative_path.as_posix(),
-            kind=kind,
+            kind=artifact_kind,
             sha256=digest,
             size_bytes=size_bytes,
             created_by_event_id=created_by_event_id,
@@ -214,6 +335,26 @@ class RunRecorder:
                         "budget_policy": budget_policy,
                         "truncated": truncated,
                         "preserved": preserve_artifact,
+                    },
+                )
+            )
+        if retention_event_data is not None:
+            self.append_event(
+                TrajectoryEvent(
+                    event_id=self.next_event_id("artifact_retention"),
+                    timestamp=_timestamp(),
+                    run_id=self.run_id,
+                    task_id=self.task_id,
+                    event_type="artifact_retention_policy_applied",
+                    severity="info",
+                    artifact_refs=[ref],
+                    data={
+                        **retention_event_data,
+                        "artifact_id": ref.artifact_id,
+                        "kind": ref.kind,
+                        "relative_path": ref.relative_path,
+                        "stored_size_bytes": ref.size_bytes,
+                        "stored_sha256": ref.sha256,
                     },
                 )
             )
@@ -289,6 +430,117 @@ class RunRecorder:
             return "CORRUPT_PARTIAL"
         status = payload.get("status")
         return str(status) if status is not None else None
+
+    def _retention_rewrite(
+        self,
+        kind: str,
+        data: bytes | str | Path,
+        metadata: dict[str, Any],
+    ) -> _RetentionRewrite | None:
+        decision = _retention_decision(kind, self.recorder_profile)
+        if decision is None:
+            return None
+        original_size_bytes = _artifact_size_bytes(data)
+        original_sha256 = _sha256_artifact_data(data)
+        preview_allowed = metadata.get("redaction_status") == "redacted"
+        include_preview = (
+            decision != "reasoning_trace_hash_only"
+            and self.recorder_profile.raw_artifact_preview_chars > 0
+            and preview_allowed
+        )
+        preview = (
+            _artifact_text_preview(data, self.recorder_profile.raw_artifact_preview_chars)
+            if include_preview
+            else ""
+        )
+        retention_policy = (
+            f"{self.recorder_profile.mode}_reasoning_trace_hash_only"
+            if decision == "reasoning_trace_hash_only"
+            else f"{self.recorder_profile.mode}_raw_artifact_projection"
+        )
+        fact_payload = {
+            "schema_version": RETENTION_FACTS_SCHEMA_VERSION,
+            "run_id": self.run_id,
+            "task_id": self.task_id,
+            "target_kind": kind,
+            "run_mode": self.recorder_profile.mode,
+            "retention_policy": retention_policy,
+            "original_size_bytes": original_size_bytes,
+            "original_sha256": original_sha256,
+            "raw_payload_persisted": False,
+            "projection_only": decision != "reasoning_trace_hash_only",
+            "hash_only": decision == "reasoning_trace_hash_only",
+            "preview_chars": len(preview),
+            "preview_size_bytes": len(preview.encode("utf-8")),
+            "preview": preview or None,
+            "preview_omitted_reason": (
+                "source_not_redacted"
+                if (
+                    decision != "reasoning_trace_hash_only"
+                    and self.recorder_profile.raw_artifact_preview_chars > 0
+                    and not preview_allowed
+                )
+                else None
+            ),
+            "reason": _retention_reason(decision),
+            "recorder_profile": self.recorder_profile.model_dump(
+                mode="json",
+                exclude={"critical_artifact_kinds"},
+            ),
+            "source_redaction_status": metadata.get("redaction_status"),
+            "source_retention_policy": metadata.get("retention_policy"),
+        }
+        rewritten_metadata = {
+            **metadata,
+            "suffix": ".json",
+            "budget_policy": "preserve_json",
+            "retention_policy": retention_policy,
+        }
+        event_data = {
+            key: value
+            for key, value in fact_payload.items()
+            if key not in {"preview", "recorder_profile"}
+        }
+        fact_artifact_kind = (
+            "artifact_retention_facts"
+            if decision == "reasoning_trace_hash_only"
+            else "artifact_projection_facts"
+        )
+        event_data["fact_payload_kind"] = fact_artifact_kind
+        return _RetentionRewrite(
+            artifact_kind=fact_artifact_kind,
+            data=json.dumps(fact_payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+            metadata=rewritten_metadata,
+            event_data=event_data,
+        )
+
+    def _retention_event_for_complete_artifact(
+        self,
+        kind: str,
+        data: bytes | str | Path,
+        metadata: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        if self.recorder_profile.mode != "training_fast":
+            return None
+        if kind != PREPARED_MESSAGES_KIND:
+            return None
+        return {
+            "schema_version": RETENTION_FACTS_SCHEMA_VERSION,
+            "run_mode": self.recorder_profile.mode,
+            "target_kind": kind,
+            "retention_policy": "training_fast_keep_export_audit_compat",
+            "original_size_bytes": _artifact_size_bytes(data),
+            "original_sha256": _sha256_artifact_data(data),
+            "raw_payload_persisted": True,
+            "projection_only": False,
+            "hash_only": False,
+            "reason": (
+                "prepared_messages is kept complete in Stage 3 unless export/audit "
+                "projection support is implemented in the same change"
+            ),
+            "source_redaction_status": metadata.get("redaction_status"),
+            "source_retention_policy": metadata.get("retention_policy"),
+        }
 
 
 def load_artifact_manifest(run_dir: str | Path) -> dict[str, Any]:
@@ -380,6 +632,93 @@ def _artifact_size_bytes(data: bytes | str | Path) -> int:
     if isinstance(data, bytes):
         return len(data)
     return len(data.encode("utf-8"))
+
+
+def _coerce_recorder_profile(
+    profile: RecorderProfile | Mapping[str, Any] | RecorderRunMode | None,
+) -> RecorderProfile:
+    if profile is None:
+        return RecorderProfile.for_run_mode("full_audit")
+    if isinstance(profile, RecorderProfile):
+        return profile
+    if isinstance(profile, str):
+        return RecorderProfile.for_run_mode(profile)
+    payload = dict(profile)
+    mode = payload.get("mode")
+    if isinstance(mode, str):
+        default_profile = RecorderProfile.for_run_mode(mode).model_dump(mode="json")
+        return RecorderProfile.model_validate({**default_profile, **payload})
+    return RecorderProfile.model_validate(payload)
+
+
+def _retention_decision(kind: str, profile: RecorderProfile) -> str | None:
+    if profile.mode == "full_audit":
+        return None
+    normalized = kind.lower()
+    if normalized in PROFILE_FACT_ARTIFACT_KINDS:
+        return None
+    if "reasoning_trace" in normalized or "thinking_trace" in normalized:
+        if not profile.save_reasoning_trace or profile.reasoning_trace_retention == "hash_only":
+            return "reasoning_trace_hash_only"
+        return None
+    if _is_raw_request_artifact(normalized):
+        if not profile.save_raw_provider_request or profile.raw_artifact_retention == "projection":
+            return "raw_request_projection"
+    if _is_raw_response_artifact(normalized):
+        if not profile.save_raw_provider_response or profile.raw_artifact_retention == "projection":
+            return "raw_response_projection"
+    return None
+
+
+def _is_raw_request_artifact(kind: str) -> bool:
+    if not kind.startswith("raw_"):
+        return False
+    return (
+        "provider_request" in kind
+        or kind.endswith("_request")
+        or kind.endswith("_provider_request")
+    )
+
+
+def _is_raw_response_artifact(kind: str) -> bool:
+    if not kind.startswith("raw_"):
+        return False
+    return (
+        "provider_response" in kind
+        or kind.endswith("_response")
+        or kind.endswith("_provider_response")
+    )
+
+
+def _retention_reason(decision: str) -> str:
+    if decision == "reasoning_trace_hash_only":
+        return "run_mode forbids plaintext reasoning/thinking trace by default"
+    if decision == "raw_request_projection":
+        return "run_mode stores raw provider request as retention facts instead of full payload"
+    if decision == "raw_response_projection":
+        return "run_mode stores raw provider response as retention facts instead of full payload"
+    return "run_mode artifact retention policy applied"
+
+
+def _sha256_artifact_data(data: bytes | str | Path) -> str:
+    import hashlib
+
+    if isinstance(data, Path):
+        return _sha256_file(data)
+    raw = data if isinstance(data, bytes) else data.encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _artifact_text_preview(data: bytes | str | Path, max_chars: int) -> str:
+    if max_chars <= 0:
+        return ""
+    if isinstance(data, Path):
+        text = data.read_bytes().decode("utf-8", errors="replace")
+    elif isinstance(data, bytes):
+        text = data.decode("utf-8", errors="replace")
+    else:
+        text = data
+    return text[:max_chars]
 
 
 def _truncate_artifact_data(data: bytes | str | Path, max_bytes: int) -> bytes | str:

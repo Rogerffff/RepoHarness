@@ -12,6 +12,7 @@ from typing import Any, Literal
 from repo_harness.model_client.schemas import ModelCallEvent, ModelMessage, ModelRequestContext, ModelResponse
 from repo_harness.schema_base import stable_hash
 from repo_harness.tools.schemas import ToolCall
+from repo_harness.trajectory import RecorderProfile
 
 from .episode import (
     AuditDiagnostic,
@@ -135,11 +136,21 @@ class LLMGatewayModelClientAdapter:
         self.inference_backend = inference_backend
 
     def generate(self, request: ModelRequestContext, recorder: Any) -> ModelResponse:
-        gateway_request = self.to_gateway_request(request)
+        gateway_request = self.to_gateway_request(request, recorder=recorder)
         response = _run_gateway_turn_blocking(self.llm_gateway, gateway_request)
         return self.to_model_response(request, response)
 
-    def to_gateway_request(self, request: ModelRequestContext) -> LLMGatewayRequest:
+    def to_gateway_request(self, request: ModelRequestContext, *, recorder: Any = None) -> LLMGatewayRequest:
+        recorder_policy = {
+            "raw_request_logging_policy": request.raw_request_logging_policy,
+            "retry_policy": request.retry_policy,
+        }
+        recorder_profile = getattr(recorder, "recorder_profile", None)
+        if recorder_profile is not None:
+            recorder_policy = {
+                **RecorderProfile.model_validate(recorder_profile).model_dump(mode="json"),
+                **recorder_policy,
+            }
         return LLMGatewayRequest(
             route=self.route,  # type: ignore[arg-type]
             inference_backend=self.inference_backend,  # type: ignore[arg-type]
@@ -160,10 +171,7 @@ class LLMGatewayModelClientAdapter:
             },
             timeout_seconds=request.request_timeout_seconds,
             budget_state=request.budget_state,
-            recorder_policy={
-                "raw_request_logging_policy": request.raw_request_logging_policy,
-                "retry_policy": request.retry_policy,
-            },
+            recorder_policy=recorder_policy,
             visibility_policy={
                 "provider_message_format": request.provider_message_format,
                 "context_truncation_facts": request.context_truncation_facts,
@@ -237,17 +245,22 @@ class RepoHarnessRuntime:
         status: EpisodeStatusName = "infrastructure_error"
         status_reason: str | None = None
         diagnostics: list[AuditDiagnostic] = []
+        model_call_seconds = 0.0
 
         try:
             self.resolve_runner_inputs(parsed_request)
             timeout_seconds = self._episode_timeout_seconds(parsed_request)
-            if timeout_seconds is None:
-                response = await self._generate_minimal_turn(parsed_request, llm_gateway)
-            else:
-                response = await asyncio.wait_for(
-                    self._generate_minimal_turn(parsed_request, llm_gateway),
-                    timeout=timeout_seconds,
-                )
+            model_call_started = perf_counter()
+            try:
+                if timeout_seconds is None:
+                    response = await self._generate_minimal_turn(parsed_request, llm_gateway)
+                else:
+                    response = await asyncio.wait_for(
+                        self._generate_minimal_turn(parsed_request, llm_gateway),
+                        timeout=timeout_seconds,
+                    )
+            finally:
+                model_call_seconds += perf_counter() - model_call_started
             status = self._status_from_minimal_verifier()
         except asyncio.CancelledError:
             status = "cancelled"
@@ -281,6 +294,7 @@ class RepoHarnessRuntime:
                 status_reason=status_reason,
                 diagnostics=diagnostics,
                 elapsed_seconds=elapsed,
+                model_call_seconds=model_call_seconds,
                 cleanup_seconds=cleanup_seconds,
                 cleanup_status=cleanup_status,
             )
@@ -290,6 +304,7 @@ class RepoHarnessRuntime:
             status_reason=status_reason or status,
             diagnostics=diagnostics,
             elapsed_seconds=elapsed,
+            model_call_seconds=model_call_seconds,
             cleanup_seconds=cleanup_seconds,
             cleanup_status=cleanup_status,
         )
@@ -341,7 +356,7 @@ class RepoHarnessRuntime:
             },
             timeout_seconds=request.budgets.generation_timeout_seconds or request.budgets.request_timeout_seconds,
             budget_state=request.budgets.model_dump(mode="json", exclude_none=True),
-            recorder_policy={"run_mode": request.run_mode or "full_audit"},
+            recorder_policy=RecorderProfile.for_run_mode(request.run_mode).model_dump(mode="json"),
             visibility_policy=request.visibility_policy.model_dump(mode="json"),
             tracing={"runtime_mode": self.options.execution_mode},
         )
@@ -356,6 +371,7 @@ class RepoHarnessRuntime:
         status_reason: str | None,
         diagnostics: list[AuditDiagnostic],
         elapsed_seconds: float,
+        model_call_seconds: float,
         cleanup_seconds: float,
         cleanup_status: str,
     ) -> RepoHarnessEpisodeResult:
@@ -390,8 +406,9 @@ class RepoHarnessRuntime:
         generation_records = [response.to_generation_record(turn=0, context_revision=0)]
         timing_summary = self._timing_summary(
             elapsed_seconds=elapsed_seconds,
+            model_call_seconds=model_call_seconds,
             cleanup_seconds=cleanup_seconds,
-            response=response,
+            model_call_count=1,
         )
         return RepoHarnessEpisodeResult(
             episode_id=request.episode_id,
@@ -420,6 +437,7 @@ class RepoHarnessRuntime:
         status_reason: str,
         diagnostics: list[AuditDiagnostic],
         elapsed_seconds: float,
+        model_call_seconds: float,
         cleanup_seconds: float,
         cleanup_status: str,
     ) -> RepoHarnessEpisodeResult:
@@ -469,8 +487,9 @@ class RepoHarnessRuntime:
             audit_diagnostics=diagnostics,
             timing_summary=self._timing_summary(
                 elapsed_seconds=elapsed_seconds,
+                model_call_seconds=model_call_seconds,
                 cleanup_seconds=cleanup_seconds,
-                response=None,
+                model_call_count=1 if model_call_seconds > 0 else 0,
             ),
             resource_summary=self._resource_summary(cleanup_status=cleanup_status),
         )
@@ -645,15 +664,22 @@ class RepoHarnessRuntime:
         self,
         *,
         elapsed_seconds: float,
+        model_call_seconds: float,
         cleanup_seconds: float,
-        response: LLMGatewayResponse | None,
+        model_call_count: int,
     ) -> TimingSummary:
+        agent_loop_seconds = max(0.0, elapsed_seconds - model_call_seconds - cleanup_seconds)
+        explained_seconds = agent_loop_seconds + model_call_seconds + cleanup_seconds
+        timing_explained_ratio = (
+            1.0 if elapsed_seconds <= 0 else min(1.0, explained_seconds / elapsed_seconds)
+        )
         return TimingSummary(
             rollout_wall_seconds=elapsed_seconds,
-            agent_loop_seconds=elapsed_seconds,
-            model_call_seconds=(response.duration_ms or 0) / 1000 if response is not None else 0.0,
+            agent_loop_seconds=agent_loop_seconds,
+            model_call_seconds=model_call_seconds,
             cleanup_seconds=cleanup_seconds,
-            model_call_count=1 if response is not None else 0,
+            timing_explained_ratio=timing_explained_ratio,
+            model_call_count=model_call_count,
         )
 
     def _resource_summary(self, *, cleanup_status: str) -> ResourceSummary:
