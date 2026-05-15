@@ -8,6 +8,21 @@ from repo_harness.reward.schemas import RewardMetadata
 from repo_harness.schema_versions import REWARD_VERSION
 from repo_harness.verifier.schemas import VerifierResult
 
+INVALID_FOR_TRAINING_VERIFIER_ERRORS = {
+    "low_parser_confidence",
+    "patch_apply_failed",
+    "final_verifier_environment_error",
+    "test_command_error",
+    "dependency_error",
+    "verification_workspace_error",
+    "docker_error",
+    "container_error",
+    "pool_executor_error",
+    "queue_timeout",
+    "execution_timeout",
+    "task_timeout_before_final_verifier",
+}
+
 
 def compute_reward_metadata(
     final_verifier: VerifierResult,
@@ -68,12 +83,7 @@ def compute_reward_metadata(
     diagnostic_reward_before_invalid_clip = max(0.0, min(1.0, raw_reward))
     invalid_for_training = bool(
         final_verifier.timeout
-        or final_verifier.error_type
-        in {
-            "low_parser_confidence",
-            "patch_apply_failed",
-            "final_verifier_environment_error",
-        }
+        or final_verifier.error_type in INVALID_FOR_TRAINING_VERIFIER_ERRORS
         or final_verifier.parser_confidence < 0.5
     )
     invalid_reason = None

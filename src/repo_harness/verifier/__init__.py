@@ -7,6 +7,14 @@ from repo_harness.verifier.parser_policy import (
     evaluate_verifier_output,
 )
 from repo_harness.verifier.pytest_parser import PytestTextParser
+from repo_harness.verifier.pool import (
+    VerifierExecutionError,
+    VerifierJob,
+    VerifierJobResult,
+    VerifierPoolOptions,
+    VerifierWorkerPool,
+    VerifierWorkerPoolClosedError,
+)
 from repo_harness.verifier.runner import PytestVerifier
 from repo_harness.verifier.schemas import (
     SweBenchLikeVerifierPlan,
@@ -22,8 +30,14 @@ __all__ = [
     "SweBenchLikeVerifierPlan",
     "TestCaseResult",
     "VerifierParser",
+    "VerifierExecutionError",
+    "VerifierJob",
+    "VerifierJobResult",
+    "VerifierPoolOptions",
     "VerifierParserPolicy",
     "VerifierResult",
+    "VerifierWorkerPool",
+    "VerifierWorkerPoolClosedError",
     "apply_acceptance_policy",
     "build_error_verifier_result",
     "evaluate_verifier_output",

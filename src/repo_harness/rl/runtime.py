@@ -13,6 +13,7 @@ from repo_harness.model_client.schemas import ModelCallEvent, ModelMessage, Mode
 from repo_harness.schema_base import stable_hash
 from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import RecorderProfile
+from repo_harness.verifier import VerifierJob, VerifierJobResult, VerifierResult, VerifierWorkerPool
 
 from .episode import (
     AuditDiagnostic,
@@ -22,12 +23,14 @@ from .episode import (
     VerifierSummary,
 )
 from .gateway import LLMGateway, LLMGatewayRequest, LLMGatewayResponse
+from .reward_boundary import Stage7RewardBoundaryResult, build_stage7_reward_boundary
 from .timing import ResourceSummary, TimingSummary, build_timing_summary
 from .training_view import AuditRef, ResponseSpan, RolloutLimits, TrainingView
 from .visibility import PROVIDER_ROUTES, VisibilityContractError, validate_no_absolute_local_path
 
 CleanupCallback = Callable[[], None | Awaitable[None]]
 TaskPathResolver = Callable[[RepoHarnessEpisodeRequest], str | Path | None]
+FinalVerifierCallable = Callable[[], VerifierResult]
 EpisodeStatusName = Literal[
     "succeeded",
     "failed",
@@ -67,6 +70,8 @@ class RepoHarnessRuntimeOptions:
     default_success_reward: float = 1.0
     default_failure_reward: float = 0.0
     minimal_final_verifier_status: Literal["accepted", "rejected"] = "accepted"
+    final_verifier_callable: FinalVerifierCallable | None = None
+    verifier_worker_pool: VerifierWorkerPool | None = None
     execution_mode: str = "minimal_gateway"
 
     def __post_init__(self) -> None:
@@ -246,6 +251,7 @@ class RepoHarnessRuntime:
         status_reason: str | None = None
         diagnostics: list[AuditDiagnostic] = []
         model_call_seconds = 0.0
+        reward_boundary: Stage7RewardBoundaryResult | None = None
 
         try:
             self.resolve_runner_inputs(parsed_request)
@@ -261,7 +267,12 @@ class RepoHarnessRuntime:
                     )
             finally:
                 model_call_seconds += perf_counter() - model_call_started
-            status = self._status_from_minimal_verifier()
+            reward_boundary = await self._stage7_reward_boundary(parsed_request)
+            if reward_boundary is None:
+                status = self._status_from_minimal_verifier()
+            else:
+                status = reward_boundary.status
+                status_reason = reward_boundary.status_reason
         except asyncio.CancelledError:
             status = "cancelled"
             status_reason = "runtime_cancelled"
@@ -297,6 +308,7 @@ class RepoHarnessRuntime:
                 model_call_seconds=model_call_seconds,
                 cleanup_seconds=cleanup_seconds,
                 cleanup_status=cleanup_status,
+                reward_boundary=reward_boundary,
             )
         return self._terminal_result(
             parsed_request,
@@ -374,6 +386,7 @@ class RepoHarnessRuntime:
         model_call_seconds: float,
         cleanup_seconds: float,
         cleanup_status: str,
+        reward_boundary: Stage7RewardBoundaryResult | None = None,
     ) -> RepoHarnessEpisodeResult:
         invalid_reason = self._response_invalid_reason(request, response)
         response_error_reason = _response_error_reason(response)
@@ -397,6 +410,12 @@ class RepoHarnessRuntime:
             invalid_for_online_rl = _status_invalid_for_online_rl(status) or invalid_reason is not None
             status_reason = status_reason or invalid_reason
 
+        if reward_boundary is not None and invalid_reason is None and response_error_reason is None:
+            invalid_for_training = reward_boundary.invalid_for_training
+            invalid_for_online_rl = reward_boundary.invalid_for_online_rl or invalid_for_online_rl
+            status = reward_boundary.status
+            status_reason = reward_boundary.status_reason or status_reason
+
         diagnostics.extend(self._diagnostics_for_invalid_reason(request, response, status_reason))
         timing_summary = self._timing_summary(
             elapsed_seconds=elapsed_seconds,
@@ -404,6 +423,12 @@ class RepoHarnessRuntime:
             cleanup_seconds=cleanup_seconds,
             model_call_count=1,
             response=response,
+            verifier_queue_wait_seconds=(
+                0.0 if reward_boundary is None else reward_boundary.verifier_queue_wait_seconds
+            ),
+            final_verifier_seconds=0.0 if reward_boundary is None else reward_boundary.final_verifier_seconds,
+            reward_compute_seconds=0.0 if reward_boundary is None else reward_boundary.reward_compute_seconds,
+            verifier_call_count=0 if reward_boundary is None else 1,
         )
         budget_consumption = self._budget_consumption(
             request,
@@ -411,7 +436,10 @@ class RepoHarnessRuntime:
             stop_reason=status_reason,
             timing_summary=timing_summary,
         )
-        reward_score = self._reward_score(status, invalid_for_training, invalid_for_online_rl)
+        if reward_boundary is not None and not invalid_for_training and not invalid_for_online_rl:
+            reward_score = reward_boundary.reward_score
+        else:
+            reward_score = self._reward_score(status, invalid_for_training, invalid_for_online_rl)
         training_view = self._training_view_from_response(
             request,
             response,
@@ -420,6 +448,7 @@ class RepoHarnessRuntime:
             invalid_for_training=invalid_for_training,
             invalid_for_online_rl=invalid_for_online_rl,
             invalid_reason=status_reason,
+            stage7_extra_fields=None if reward_boundary is None else reward_boundary.extra_fields,
         )
         generation_records = [response.to_generation_record(turn=0, context_revision=0)]
         return RepoHarnessEpisodeResult(
@@ -433,12 +462,19 @@ class RepoHarnessRuntime:
             attempted_reward_score=reward_score,
             budget_consumption=budget_consumption,
             training_view=training_view,
-            audit_ref=self._audit_ref(request),
+            audit_ref=self._audit_ref(request, reward_boundary=reward_boundary),
             audit_diagnostics=diagnostics,
-            verifier_summary=self._verifier_summary(status),
+            reward=None if reward_boundary is None else reward_boundary.reward_summary,
+            verifier_summary=(
+                self._verifier_summary(status) if reward_boundary is None else reward_boundary.verifier_summary
+            ),
             generation_records=generation_records,
             timing_summary=timing_summary,
-            resource_summary=self._resource_summary(request, cleanup_status=cleanup_status),
+            resource_summary=self._resource_summary(
+                request,
+                cleanup_status=cleanup_status,
+                reward_boundary=reward_boundary,
+            ),
         )
 
     def _terminal_result(
@@ -501,10 +537,14 @@ class RepoHarnessRuntime:
                 actual_response_length=0,
             ),
             training_view=training_view,
-            audit_ref=self._audit_ref(request),
+            audit_ref=self._audit_ref(request, reward_boundary=None),
             audit_diagnostics=diagnostics,
             timing_summary=timing_summary,
-            resource_summary=self._resource_summary(request, cleanup_status=cleanup_status),
+            resource_summary=self._resource_summary(
+                request,
+                cleanup_status=cleanup_status,
+                reward_boundary=None,
+            ),
         )
 
     def _training_view_from_response(
@@ -517,6 +557,7 @@ class RepoHarnessRuntime:
         invalid_for_training: bool,
         invalid_for_online_rl: bool,
         invalid_reason: str | None,
+        stage7_extra_fields: dict[str, str | int | float | bool | None] | None = None,
     ) -> TrainingView:
         response_ids = list(response.output_token_ids)
         global_steps = response.global_steps or 0
@@ -563,6 +604,7 @@ class RepoHarnessRuntime:
                 invalid_for_training=invalid_for_training,
                 invalid_for_online_rl=invalid_for_online_rl,
                 invalid_reason=invalid_reason,
+                extra_fields=stage7_extra_fields,
             ),
         )
 
@@ -669,6 +711,119 @@ class RepoHarnessRuntime:
             return "succeeded"
         return "failed"
 
+    async def _stage7_reward_boundary(
+        self,
+        request: RepoHarnessEpisodeRequest,
+    ) -> Stage7RewardBoundaryResult | None:
+        final_verifier_callable = self.options.final_verifier_callable
+        if final_verifier_callable is None:
+            return None
+        job = VerifierJob(
+            job_id=f"{request.episode_id}-final-verifier",
+            run_id=request.run_id,
+            episode_id=request.episode_id,
+            task_id=request.task_id,
+            verifier_stage="final",
+            callable=final_verifier_callable,
+            timeout_seconds=request.budgets.max_verifier_seconds,
+        )
+        pool_result = await self._run_stage7_verifier_job(job)
+        reward_started = perf_counter()
+        boundary = build_stage7_reward_boundary(
+            final_verifier=pool_result.verifier_result,
+            pool_result=pool_result,
+            reward_metadata_ref=f"rh://reward/{request.episode_id}/metadata",
+            final_verifier_ref=f"rh://verifier/{request.episode_id}/final",
+            source_refs={
+                "verifier_pool_id": pool_result.pool_id,
+                "verifier_worker_id": pool_result.worker_id,
+                "verifier_queue_wait_seconds": pool_result.queue_wait_seconds,
+            },
+        )
+        reward_compute_seconds = perf_counter() - reward_started
+        return boundary.model_copy(update={"reward_compute_seconds": reward_compute_seconds})
+
+    async def _run_stage7_verifier_job(self, job: VerifierJob) -> VerifierJobResult:
+        verifier_pool = self.options.verifier_worker_pool
+        if verifier_pool is not None:
+            try:
+                return await verifier_pool.run(job)
+            except Exception as exc:
+                return self._verifier_job_exception_result(job, exc, pool_id="verifier-pool-error")
+        return await self._run_direct_verifier_job(job)
+
+    async def _run_direct_verifier_job(self, job: VerifierJob) -> VerifierJobResult:
+        submitted_at = perf_counter()
+        started_at = submitted_at
+        future = asyncio.create_task(asyncio.to_thread(job.callable))
+        try:
+            if job.timeout_seconds is None:
+                verifier_result = await future
+            else:
+                verifier_result = await asyncio.wait_for(asyncio.shield(future), timeout=job.timeout_seconds)
+            finished_at = perf_counter()
+            return VerifierJobResult(
+                job_id=job.job_id,
+                run_id=job.run_id,
+                episode_id=job.episode_id,
+                task_id=job.task_id,
+                verifier_stage=job.verifier_stage,
+                pool_id="direct-blocking",
+                worker_id="direct",
+                queue_wait_seconds=0.0,
+                execution_seconds=finished_at - started_at,
+                submitted_at_seconds=submitted_at,
+                started_at_seconds=started_at,
+                finished_at_seconds=finished_at,
+                verifier_result=verifier_result,
+            )
+        except TimeoutError:
+            finished_at = perf_counter()
+            return VerifierJobResult(
+                job_id=job.job_id,
+                run_id=job.run_id,
+                episode_id=job.episode_id,
+                task_id=job.task_id,
+                verifier_stage=job.verifier_stage,
+                pool_id="direct-blocking",
+                worker_id="direct",
+                queue_wait_seconds=0.0,
+                execution_seconds=finished_at - started_at,
+                submitted_at_seconds=submitted_at,
+                started_at_seconds=started_at,
+                finished_at_seconds=finished_at,
+                timeout=True,
+                error_type="execution_timeout",
+                error_message="direct final verifier execution timeout elapsed",
+                diagnostics=["direct verifier timeout does not imply a forced thread stop"],
+            )
+        except Exception as exc:
+            return self._verifier_job_exception_result(job, exc, pool_id="direct-blocking")
+
+    def _verifier_job_exception_result(
+        self,
+        job: VerifierJob,
+        exc: Exception,
+        *,
+        pool_id: str,
+    ) -> VerifierJobResult:
+        now = perf_counter()
+        return VerifierJobResult(
+            job_id=job.job_id,
+            run_id=job.run_id,
+            episode_id=job.episode_id,
+            task_id=job.task_id,
+            verifier_stage=job.verifier_stage,
+            pool_id=pool_id,
+            queue_wait_seconds=0.0,
+            execution_seconds=0.0,
+            submitted_at_seconds=now,
+            finished_at_seconds=now,
+            error_type="pool_executor_error",
+            error_message=str(exc),
+            diagnostics=[exc.__class__.__name__],
+        )
+
     def _episode_timeout_seconds(self, request: RepoHarnessEpisodeRequest) -> float | None:
         candidates = [
             value
@@ -697,8 +852,20 @@ class RepoHarnessRuntime:
         cleanup_seconds: float,
         model_call_count: int,
         response: LLMGatewayResponse | None = None,
+        verifier_queue_wait_seconds: float = 0.0,
+        final_verifier_seconds: float = 0.0,
+        reward_compute_seconds: float = 0.0,
+        verifier_call_count: int = 0,
     ) -> TimingSummary:
-        agent_loop_seconds = max(0.0, elapsed_seconds - model_call_seconds - cleanup_seconds)
+        agent_loop_seconds = max(
+            0.0,
+            elapsed_seconds
+            - model_call_seconds
+            - cleanup_seconds
+            - verifier_queue_wait_seconds
+            - final_verifier_seconds
+            - reward_compute_seconds,
+        )
         provider_reported_model_call_seconds = (
             0.0 if response is None or response.duration_ms is None else response.duration_ms / 1000.0
         )
@@ -707,31 +874,58 @@ class RepoHarnessRuntime:
             agent_loop_seconds=agent_loop_seconds,
             model_call_seconds=model_call_seconds,
             provider_reported_model_call_seconds=provider_reported_model_call_seconds,
+            queue_wait_seconds=verifier_queue_wait_seconds,
+            final_verifier_seconds=final_verifier_seconds,
+            verifier_seconds=0.0,
+            reward_compute_seconds=reward_compute_seconds,
             cleanup_seconds=cleanup_seconds,
             model_call_count=model_call_count,
+            verifier_call_count=verifier_call_count,
         )
 
-    def _resource_summary(self, request: RepoHarnessEpisodeRequest, *, cleanup_status: str) -> ResourceSummary:
+    def _resource_summary(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        *,
+        cleanup_status: str,
+        reward_boundary: Stage7RewardBoundaryResult | None = None,
+    ) -> ResourceSummary:
+        queue_wait_seconds_by_resource: dict[str, float] = {}
+        if reward_boundary is not None:
+            queue_wait_seconds_by_resource["verifier_worker"] = reward_boundary.verifier_queue_wait_seconds
         return ResourceSummary(
             execution_mode=self.options.execution_mode,
             workspace_backend=self.options.execution_mode,
             inference_route=request.llm_gateway_route,
             inference_backend=request.inference_backend,
+            verifier_worker_pool_id=None if reward_boundary is None else reward_boundary.verifier_pool_id,
+            verifier_worker_id=None if reward_boundary is None else reward_boundary.verifier_worker_id,
+            queue_wait_seconds_by_resource=queue_wait_seconds_by_resource,
             run_dir=f"runs/{request.run_id}",
             cleanup_status=cleanup_status,
         )
 
-    def _audit_ref(self, request: RepoHarnessEpisodeRequest) -> AuditRef:
+    def _audit_ref(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        *,
+        reward_boundary: Stage7RewardBoundaryResult | None = None,
+    ) -> AuditRef:
+        important_refs = {
+            "runtime_result": f"rh://audit/{request.episode_id}/runtime-result",
+            "timing_summary": f"rh://audit/{request.episode_id}/timing-summary",
+            "resource_summary": f"rh://audit/{request.episode_id}/resource-summary",
+        }
+        if reward_boundary is not None:
+            important_refs["final_verifier"] = f"rh://verifier/{request.episode_id}/final"
+            if reward_boundary.reward_metadata is not None:
+                important_refs["reward_metadata"] = f"rh://reward/{request.episode_id}/metadata"
         return AuditRef(
             run_id=request.run_id,
             episode_id=request.episode_id,
             task_id=request.task_id,
             run_dir=f"runs/{request.run_id}",
-            important_artifact_refs={
-                "runtime_result": f"rh://audit/{request.episode_id}/runtime-result",
-                "timing_summary": f"rh://audit/{request.episode_id}/timing-summary",
-                "resource_summary": f"rh://audit/{request.episode_id}/resource-summary",
-            },
+            important_artifact_refs=important_refs,
         )
 
     def _verifier_summary(self, status: EpisodeStatusName) -> VerifierSummary | None:
@@ -750,6 +944,7 @@ class RepoHarnessRuntime:
         invalid_for_training: bool,
         invalid_for_online_rl: bool,
         invalid_reason: str | None,
+        extra_fields: dict[str, str | int | float | bool | None] | None = None,
     ) -> dict[str, str | int | float | bool | None]:
         actual_gateway_route = gateway_route or request.llm_gateway_route
         fields: dict[str, str | int | float | bool | None] = {
@@ -764,6 +959,8 @@ class RepoHarnessRuntime:
             "repo_harness_timing_summary_ref": f"rh://audit/{request.episode_id}/timing-summary",
             "repo_harness_resource_summary_ref": f"rh://audit/{request.episode_id}/resource-summary",
         }
+        if extra_fields:
+            fields.update(extra_fields)
         if actual_gateway_route != request.llm_gateway_route:
             fields["repo_harness_requested_llm_gateway_route"] = request.llm_gateway_route
         return fields
