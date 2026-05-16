@@ -160,6 +160,39 @@ def test_stage11_token_output_extra_fields_rejects_reserved_training_keys(extra_
         )
 
 
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"ground_truth": "answer"},
+        {"path": "/Users/roger/secret.txt"},
+        {"note": "hidden_verifier"},
+        {"reward_extra_info": {"score": 1}},
+    ],
+)
+def test_stage12a_token_output_tool_calls_are_recursively_checked(arguments: dict[str, Any]) -> None:
+    with pytest.raises(RepoHarnessVerlGatewayError, match="forbidden_repo_harness_tool_calls"):
+        token_output_to_llm_gateway_response(
+            TokenOutputLike(
+                token_ids=[1],
+                log_probs=[-0.1],
+                extra_fields={
+                    "repo_harness_tool_calls": [
+                        {
+                            "tool_call_id": "unsafe-tool-call",
+                            "tool_name": "read_file",
+                            "arguments": arguments,
+                        }
+                    ]
+                },
+            ),
+            request=_request(),
+            prompt_ids=[11],
+            tokenizer=FakeTokenizer(),
+            inference_backend="sglang",
+            duration_ms=0,
+        )
+
+
 def test_stage11_missing_logprobs_stays_invalid_for_formal_online_rl() -> None:
     response = token_output_to_llm_gateway_response(
         TokenOutputLike(token_ids=[1], log_probs=None),

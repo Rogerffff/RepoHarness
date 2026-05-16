@@ -98,6 +98,8 @@ def token_output_to_llm_gateway_response(
     output_token_ids = _coerce_int_list(_get_attr(token_output, "token_ids", []), field_name="token_ids")
     output_logprobs = _coerce_optional_float_list(_get_attr(token_output, "log_probs", None), field_name="log_probs")
     extra_fields = dict(_get_attr(token_output, "extra_fields", {}) or {})
+    tool_calls = _coerce_tool_calls(extra_fields.pop("repo_harness_tool_calls", []))
+    _validate_tool_calls_visibility(tool_calls)
     num_preempted = _get_attr(token_output, "num_preempted", None)
     if num_preempted is not None:
         extra_fields.setdefault("num_preempted", int(num_preempted))
@@ -112,7 +114,7 @@ def token_output_to_llm_gateway_response(
         inference_backend=inference_backend,  # type: ignore[arg-type]
         model_call_id=request.model_call_id,
         assistant_message={"role": "assistant", "content": _decode_output(tokenizer, output_token_ids)},
-        tool_calls=[],
+        tool_calls=tool_calls,
         prompt_ids=list(prompt_ids),
         output_token_ids=output_token_ids,
         output_logprobs=output_logprobs,
@@ -136,6 +138,15 @@ def _validate_token_output_extra_fields(extra_fields: Mapping[str, Any]) -> None
         validate_token_output_extra_fields(dict(extra_fields))
     except VerlVisibilityError as exc:
         raise RepoHarnessVerlGatewayError(f"forbidden_token_output_extra_fields: {exc}") from exc
+
+
+def _validate_tool_calls_visibility(tool_calls: list[dict[str, Any]]) -> None:
+    if not tool_calls:
+        return
+    try:
+        validate_token_output_extra_fields({"repo_harness_tool_calls": tool_calls})
+    except VerlVisibilityError as exc:
+        raise RepoHarnessVerlGatewayError(f"forbidden_repo_harness_tool_calls: {exc}") from exc
 
 
 def _decode_output(tokenizer: Any, token_ids: list[int]) -> str:
@@ -183,6 +194,27 @@ def _coerce_routed_experts(value: Any) -> list[Any]:
     if hasattr(value, "tolist"):
         return value.tolist()
     return [value]
+
+
+def _coerce_tool_calls(value: Any) -> list[dict[str, Any]]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise RepoHarnessVerlGatewayError("repo_harness_tool_calls must be a list")
+    tool_calls: list[dict[str, Any]] = []
+    for item in value:
+        if not isinstance(item, Mapping):
+            raise RepoHarnessVerlGatewayError("repo_harness_tool_calls items must be mappings")
+        tool_call = dict(item)
+        if "tool_call_id" not in tool_call or "tool_name" not in tool_call or "arguments" not in tool_call:
+            raise RepoHarnessVerlGatewayError(
+                "repo_harness_tool_calls items require tool_call_id, tool_name, and arguments"
+            )
+        if not isinstance(tool_call["arguments"], Mapping):
+            raise RepoHarnessVerlGatewayError("repo_harness_tool_calls arguments must be mappings")
+        tool_call["arguments"] = dict(tool_call["arguments"])
+        tool_calls.append(tool_call)
+    return tool_calls
 
 
 def _optional_string(value: Any) -> str | None:

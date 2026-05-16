@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from repo_harness.rl import RepoHarnessRuntime, RepoHarnessRuntimeOptions
@@ -76,10 +77,44 @@ class RepoHarnessVerlAgentLoop(AgentLoopBase):
             raise
 
     async def _build_prompt_ids_for_gateway_request(self, request: Any) -> list[int]:
-        return await self.apply_chat_template(
-            list(request.messages),
-            tools=list(request.tools) if request.tools else None,
+        from verl.utils.chat_template import apply_chat_template
+        from verl.utils.tokenizer import normalize_token_ids
+
+        loop = asyncio.get_running_loop()
+        tools = list(request.tools) if request.tools else None
+        if self.processor is not None:
+            raw_prompt = await loop.run_in_executor(
+                None,
+                lambda: apply_chat_template(
+                    self.processor,
+                    list(request.messages),
+                    tools=tools,
+                    add_generation_prompt=True,
+                    tokenize=False,
+                    **self.apply_chat_template_kwargs,
+                ),
+            )
+            model_inputs = self.processor(
+                text=[raw_prompt],
+                images=None,
+                videos=None,
+                video_metadata=None,
+                return_tensors="pt",
+                do_sample_frames=False,
+            )
+            return list(normalize_token_ids(model_inputs.pop("input_ids")))
+        tokenized_prompt = await loop.run_in_executor(
+            None,
+            lambda: apply_chat_template(
+                self.tokenizer,
+                list(request.messages),
+                tools=tools,
+                add_generation_prompt=True,
+                tokenize=True,
+                **self.apply_chat_template_kwargs,
+            ),
         )
+        return list(normalize_token_ids(tokenized_prompt))
 
 
 def _optional_int_config(config: Any, key: str) -> int | None:
