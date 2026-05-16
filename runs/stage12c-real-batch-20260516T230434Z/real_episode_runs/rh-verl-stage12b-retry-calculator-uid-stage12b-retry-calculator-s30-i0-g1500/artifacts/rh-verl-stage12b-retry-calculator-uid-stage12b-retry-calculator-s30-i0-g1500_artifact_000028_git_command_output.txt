@@ -1,0 +1,17 @@
+$ git diff 0a12f77d23b25e159ef2dad46df85b7376598aa3
+
+[stdout]
+diff --git a/calculator.py b/calculator.py
+index e379e18..18b0150 100644
+--- a/calculator.py
++++ b/calculator.py
+@@ -3,4 +3,6 @@ def add(left: int, right: int) -> int:
+ 
+ 
+ def divide(left: int, right: int) -> float:
++    if right == 0:
++        raise ValueError('division by zero')
+     return left / right
+
+
+[stderr]

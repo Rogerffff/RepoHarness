@@ -1,0 +1,59 @@
+{
+  "command_log": "/workspace/RepoHarness/runs/stage12c-real-batch-20260516T230434Z/stage12c_real_batch_command_log.jsonl",
+  "dataproto_shapes": {
+    "advantages": [
+      3,
+      768
+    ],
+    "prompts": [
+      3,
+      8192
+    ],
+    "response_mask": [
+      3,
+      768
+    ],
+    "responses": [
+      3,
+      768
+    ],
+    "returns": [
+      3,
+      768
+    ],
+    "rm_scores": [
+      3,
+      768
+    ],
+    "rollout_log_probs": [
+      3,
+      768
+    ],
+    "token_level_rewards": [
+      3,
+      768
+    ]
+  },
+  "full_trainer_global_step_executed": false,
+  "invalid_or_failed_episode_count": 1,
+  "loss_path_report": "/workspace/RepoHarness/runs/stage12c-real-batch-20260516T230434Z/stage12c_real_batch_loss_path_report.json",
+  "passed_checks": [
+    "compileall passed",
+    "Stage 10 / Stage 1 shape and visibility prerequisite tests passed",
+    "three successful real Qwen2.5-Coder RepoHarness episodes entered a single DataProto batch",
+    "one failed real episode was filtered before formal batch construction",
+    "formal online RL batch validator accepted the valid real-episode TrainingViews",
+    "DataProto shape and visibility checks passed",
+    "GRPO advantage computation executed",
+    "vanilla policy loss computation executed",
+    "verl PPO data metric helper executed after token_level_scores projection"
+  ],
+  "policy_loss": -1.0,
+  "remaining_followups": [
+    "Execute a true RayPPOTrainer.fit global step if Stage 12-C is interpreted as requiring full trainer orchestration.",
+    "Fix or explicitly waive run_status.json lifecycle finalization before final Stage 12 acceptance."
+  ],
+  "schema_version": "repo_harness_stage12c_real_batch_acceptance_summary_v0",
+  "status": "real_batch_loss_path_smoke_passed_full_trainer_step_pending",
+  "valid_episode_count": 3
+}

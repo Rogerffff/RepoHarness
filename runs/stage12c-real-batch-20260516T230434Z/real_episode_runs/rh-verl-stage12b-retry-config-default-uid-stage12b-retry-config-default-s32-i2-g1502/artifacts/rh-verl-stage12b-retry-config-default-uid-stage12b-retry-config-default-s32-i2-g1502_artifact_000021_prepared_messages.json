@@ -1,0 +1,218 @@
+{
+  "content_replacement_state_ref": {
+    "artifact_id": "rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000020",
+    "created_by_event_id": "rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000036",
+    "kind": "content_replacement_state",
+    "redaction_status": "not_scanned",
+    "relative_path": "artifacts/rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000020_content_replacement_state.json",
+    "retention_policy": "keep",
+    "schema_version": "repo_harness_artifact_v0",
+    "sha256": "53d0fb62caf1e49b04650d879bae79b596bca0cde56f232759cf2bceb5c9562a",
+    "size_bytes": 1785
+  },
+  "context_budget_facts": {
+    "budget_base_window_tokens": 84000,
+    "budget_manager_was_explicit": true,
+    "effective_context_budget_tokens": 32000,
+    "estimator_safety_margin_min_tokens": 20000,
+    "estimator_safety_margin_ratio": 0.03,
+    "estimator_safety_margin_tokens": 20000,
+    "hard_context_limit_ratio": 0.97,
+    "hard_context_limit_tokens": 31040,
+    "harness_context_cap_tokens": null,
+    "legacy_max_context_tokens": 32000,
+    "main_output_reserve_tokens": 32000,
+    "model_context_window_resolution": "unknown_model_uses_legacy_default",
+    "model_context_window_tokens": 84000,
+    "model_id": "repo-harness-llm-gateway",
+    "post_compact_target_max_tokens": 300000,
+    "post_compact_target_ratio": 0.6,
+    "post_compact_target_tokens": 19200,
+    "provider": "verl",
+    "runtime_context_budget_tokens": 32000,
+    "runtime_hard_context_limit_tokens": 31040,
+    "schema_version": "repo_harness_context_budget_facts_v1"
+  },
+  "context_revision": 3,
+  "internal_char_estimate": 6104,
+  "internal_token_estimate": 1526,
+  "messages": [
+    {
+      "content": "You are RepoHarness software engineering agent.\n\nWhen you need a tool, your whole assistant message must be one JSON tool call, either wrapped in <tool_call> tags or as a bare JSON object.\n\nPreferred exact shape:\n<tool_call>\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"config_utils.py\"}}\n</tool_call>\n\nAllowed tools: read_file, grep, edit_file, git_diff.\nDo not output <tool_response>.\nDo not output file contents as your assistant answer.\nDo not output a patch in Markdown.\nAfter a read_file result, if code must change, call edit_file.\nFor edit_file, old_text must exactly match current file text and new_text must be the replacement text.\nAfter editing, give a short final answer without a tool call.\nDo not use absolute paths. Do not mention evaluator-only information.",
+      "role": "system"
+    },
+    {
+      "content": "Fix config_utils.get_timeout so missing service names return 30 instead of raising KeyError. Known service names must keep their configured value. Read config_utils.py first. After reading it, call edit_file to change config_utils.py. Do not output <tool_response>.",
+      "role": "user"
+    },
+    {
+      "content": "",
+      "model_error_type": null,
+      "role": "assistant",
+      "scaffold_phase": "act",
+      "tool_calls": [
+        {
+          "arguments": {
+            "path": "config_utils.py"
+          },
+          "schema_version": "repo_harness_tool_call_v0",
+          "tool_call_id": "repo_harness_verl_tool_call_1_0",
+          "tool_name": "read_file",
+          "turn": 1
+        }
+      ]
+    },
+    {
+      "artifact_refs": [
+        {
+          "artifact_id": "rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000013",
+          "created_by_event_id": "rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000020",
+          "kind": "read_file",
+          "redaction_status": "not_scanned",
+          "relative_path": "artifacts/rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000013_read_file.txt",
+          "retention_policy": "keep",
+          "schema_version": "repo_harness_artifact_v0",
+          "sha256": "f2e26a8639390ac6b22aa5e8be561644e05196b73194cb407d6647e6cec35941",
+          "size_bytes": 107
+        }
+      ],
+      "content": "     1 | TIMEOUTS = {\"search\": 5, \"index\": 10}\n     2 | \n     3 | \n     4 | def get_timeout(service: str) -> int:\n     5 |     return TIMEOUTS[service]",
+      "effective_arguments": {
+        "path": "config_utils.py"
+      },
+      "effective_tool_name": "read_file",
+      "error_type": null,
+      "normalized_arguments": {
+        "path": "config_utils.py"
+      },
+      "normalized_input_hash": "26f863917361bcfac101cadfd86920761ddf8046308c86698ffad64e7d2c56c6",
+      "requested_arguments": {
+        "path": "config_utils.py"
+      },
+      "requested_tool_name": "read_file",
+      "role": "tool",
+      "status": "ok",
+      "tool_call_id": "repo_harness_verl_tool_call_1_0",
+      "tool_name": "read_file",
+      "tool_result_id": "repo_harness_verl_tool_call_1_0_result",
+      "turn": 1,
+      "typed": {
+        "content_hash": "f2e26a8639390ac6b22aa5e8be561644e05196b73194cb407d6647e6cec35941",
+        "content_sha256": "f2e26a8639390ac6b22aa5e8be561644e05196b73194cb407d6647e6cec35941",
+        "duration_ms": 4,
+        "end_line": 5,
+        "execution_duration_ms": 4,
+        "next_start_line": null,
+        "numbered_content_preview": "     1 | TIMEOUTS = {\"search\": 5, \"index\": 10}\n     2 | \n     3 | \n     4 | def get_timeout(service: str) -> int:\n     5 |     return TIMEOUTS[service]",
+        "path": "config_utils.py",
+        "raw_content_preview": "TIMEOUTS = {\"search\": 5, \"index\": 10}\n\n\ndef get_timeout(service: str) -> int:\n    return TIMEOUTS[service]\n",
+        "resolved_max_output_chars": 12000,
+        "result_envelope": {
+          "artifact_backed_full_result": true,
+          "context_effects": [
+            "tool_result_recoverable"
+          ],
+          "duration_ms": 4,
+          "execution_duration_ms": 4,
+          "model_visible_text_truncated": false,
+          "recommended_next_calls": [],
+          "recovery_call": null,
+          "recovery_hint": "Re-read this file with a narrower line range if more context is needed.",
+          "result_kind": "file_window_complete",
+          "result_limit_reached": false,
+          "schema_version": "repo_harness_tool_result_envelope_v1",
+          "semantic_complete": true
+        },
+        "start_line": 1,
+        "status": "ok",
+        "total_lines": 5,
+        "truncated": false
+      }
+    },
+    {
+      "content": "",
+      "model_error_type": null,
+      "role": "assistant",
+      "scaffold_phase": "act",
+      "tool_calls": [
+        {
+          "arguments": {
+            "new_text": "    return TIMEOUTS.get(service, 30)\n",
+            "old_text": "    return TIMEOUTS[service]\n",
+            "path": "config_utils.py"
+          },
+          "schema_version": "repo_harness_tool_call_v0",
+          "tool_call_id": "repo_harness_verl_tool_call_2_0",
+          "tool_name": "edit_file",
+          "turn": 2
+        }
+      ]
+    },
+    {
+      "artifact_refs": [],
+      "content": "Edited config_utils.py.",
+      "effective_arguments": {
+        "new_text": "    return TIMEOUTS.get(service, 30)\n",
+        "old_text": "    return TIMEOUTS[service]\n",
+        "path": "config_utils.py",
+        "replace_all": false
+      },
+      "effective_tool_name": "edit_file",
+      "error_type": null,
+      "normalized_arguments": {
+        "new_text": "    return TIMEOUTS.get(service, 30)\n",
+        "old_text": "    return TIMEOUTS[service]\n",
+        "path": "config_utils.py",
+        "replace_all": false
+      },
+      "normalized_input_hash": "40c37615bbc74d9d109344a08ca9d750fc3d5e85a73a61e56e4c663f0adb2a29",
+      "requested_arguments": {
+        "new_text": "    return TIMEOUTS.get(service, 30)\n",
+        "old_text": "    return TIMEOUTS[service]\n",
+        "path": "config_utils.py"
+      },
+      "requested_tool_name": "edit_file",
+      "role": "tool",
+      "status": "ok",
+      "tool_call_id": "repo_harness_verl_tool_call_2_0",
+      "tool_name": "edit_file",
+      "tool_result_id": "repo_harness_verl_tool_call_2_0_result",
+      "turn": 2,
+      "typed": {
+        "content_hash": "f4ef1fc556ce7f9b65b35ccafc1611ed7f74c094ef18c75d110c15ba4f6d6447",
+        "content_sha256": "f4ef1fc556ce7f9b65b35ccafc1611ed7f74c094ef18c75d110c15ba4f6d6447",
+        "duration_ms": 5,
+        "execution_duration_ms": 5,
+        "path": "config_utils.py",
+        "policy_version": "repo_harness_tool_policy_v0",
+        "replacement_count": 1,
+        "require_read_before_edit": false,
+        "resolved_max_output_chars": 12000,
+        "result_envelope": {
+          "artifact_backed_full_result": false,
+          "context_effects": [
+            "repository_file_state_updated"
+          ],
+          "duration_ms": 5,
+          "execution_duration_ms": 5,
+          "model_visible_text_truncated": false,
+          "recommended_next_calls": [],
+          "recovery_call": null,
+          "recovery_hint": null,
+          "result_kind": "edit_applied",
+          "result_limit_reached": false,
+          "schema_version": "repo_harness_tool_result_envelope_v1",
+          "semantic_complete": true
+        },
+        "status": "ok"
+      }
+    }
+  ],
+  "microcompact_record_ref": null,
+  "model_input_hash": "5f064397508b2aead8a5e81cc6b63275f649a222f89fe2636ed405770b66fe82",
+  "provider_body_char_estimate": 2088,
+  "provider_body_projection_format": "repo_harness_provider_body_projection_v1",
+  "provider_format": "repo_harness_messages_v0",
+  "provider_ready_token_estimate": 522,
+  "threshold_decision_source": "provider_ready_token_estimate"
+}

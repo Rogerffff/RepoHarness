@@ -1,0 +1,14 @@
+$ git diff --binary 9fba66cc91bc0a7230bb9110bf96d36018d37038
+
+[stdout]
+diff --git a/text_utils.py b/text_utils.py
+index 633084a..f436b24 100644
+--- a/text_utils.py
++++ b/text_utils.py
+@@ -1,2 +1,2 @@
+ def slugify(text: str) -> str:
+-    return text.lower()
++    return '-'.join(text.strip().lower().split())
+
+
+[stderr]

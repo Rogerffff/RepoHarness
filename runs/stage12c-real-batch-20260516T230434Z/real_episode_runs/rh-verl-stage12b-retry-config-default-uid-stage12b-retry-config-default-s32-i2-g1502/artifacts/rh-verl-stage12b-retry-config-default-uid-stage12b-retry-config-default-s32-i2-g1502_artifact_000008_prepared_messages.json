@@ -1,0 +1,56 @@
+{
+  "content_replacement_state_ref": {
+    "artifact_id": "rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000007",
+    "created_by_event_id": "rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000007",
+    "kind": "content_replacement_state",
+    "redaction_status": "not_scanned",
+    "relative_path": "artifacts/rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502_artifact_000007_content_replacement_state.json",
+    "retention_policy": "keep",
+    "schema_version": "repo_harness_artifact_v0",
+    "sha256": "44a0f2398b49fcdb99107019902dd752848c0c4f281bfa44927abdc550095e13",
+    "size_bytes": 291
+  },
+  "context_budget_facts": {
+    "budget_base_window_tokens": 84000,
+    "budget_manager_was_explicit": true,
+    "effective_context_budget_tokens": 32000,
+    "estimator_safety_margin_min_tokens": 20000,
+    "estimator_safety_margin_ratio": 0.03,
+    "estimator_safety_margin_tokens": 20000,
+    "hard_context_limit_ratio": 0.97,
+    "hard_context_limit_tokens": 31040,
+    "harness_context_cap_tokens": null,
+    "legacy_max_context_tokens": 32000,
+    "main_output_reserve_tokens": 32000,
+    "model_context_window_resolution": "unknown_model_uses_legacy_default",
+    "model_context_window_tokens": 84000,
+    "model_id": "repo-harness-llm-gateway",
+    "post_compact_target_max_tokens": 300000,
+    "post_compact_target_ratio": 0.6,
+    "post_compact_target_tokens": 19200,
+    "provider": "verl",
+    "runtime_context_budget_tokens": 32000,
+    "runtime_hard_context_limit_tokens": 31040,
+    "schema_version": "repo_harness_context_budget_facts_v1"
+  },
+  "context_revision": 1,
+  "internal_char_estimate": 1123,
+  "internal_token_estimate": 280,
+  "messages": [
+    {
+      "content": "You are RepoHarness software engineering agent.\n\nWhen you need a tool, your whole assistant message must be one JSON tool call, either wrapped in <tool_call> tags or as a bare JSON object.\n\nPreferred exact shape:\n<tool_call>\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"config_utils.py\"}}\n</tool_call>\n\nAllowed tools: read_file, grep, edit_file, git_diff.\nDo not output <tool_response>.\nDo not output file contents as your assistant answer.\nDo not output a patch in Markdown.\nAfter a read_file result, if code must change, call edit_file.\nFor edit_file, old_text must exactly match current file text and new_text must be the replacement text.\nAfter editing, give a short final answer without a tool call.\nDo not use absolute paths. Do not mention evaluator-only information.",
+      "role": "system"
+    },
+    {
+      "content": "Fix config_utils.get_timeout so missing service names return 30 instead of raising KeyError. Known service names must keep their configured value. Read config_utils.py first. After reading it, call edit_file to change config_utils.py. Do not output <tool_response>.",
+      "role": "user"
+    }
+  ],
+  "microcompact_record_ref": null,
+  "model_input_hash": "52aa697175b3d04f7dfa0da362ea76323157a70b70ab3bd118e5fceae30ad969",
+  "provider_body_char_estimate": 1220,
+  "provider_body_projection_format": "repo_harness_provider_body_projection_v1",
+  "provider_format": "repo_harness_messages_v0",
+  "provider_ready_token_estimate": 305,
+  "threshold_decision_source": "provider_ready_token_estimate"
+}

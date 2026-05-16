@@ -1,0 +1,357 @@
+{
+  "advantage_estimator": "GRPO",
+  "command_records": [
+    {
+      "argv": [
+        "/usr/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src"
+      ],
+      "duration_seconds": 0.035347,
+      "ended_at": "2026-05-16T23:04:39.685001+00:00",
+      "exit_code": 0,
+      "name": "compileall_src",
+      "schema_version": "repo_harness_stage12c_real_batch_command_log_entry_v0",
+      "started_at": "2026-05-16T23:04:39.649654+00:00",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "/usr/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/unit/test_repo_harness_verl_stage10_agent_loop_output.py",
+        "tests/unit/test_repo_harness_verl_stage10_dataproto_shapes.py",
+        "tests/unit/test_repo_harness_verl_stage10_postprocess_visibility.py",
+        "tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py"
+      ],
+      "duration_seconds": 0.934907,
+      "ended_at": "2026-05-16T23:04:40.620153+00:00",
+      "exit_code": 0,
+      "name": "stage12c_shape_visibility_prereq_tests",
+      "schema_version": "repo_harness_stage12c_real_batch_command_log_entry_v0",
+      "started_at": "2026-05-16T23:04:39.685246+00:00",
+      "stdout_tail": "....................................................................     [100%]\n68 passed in 0.52s\n"
+    }
+  ],
+  "data_metric_keys": [
+    "critic/advantages/max",
+    "critic/advantages/mean",
+    "critic/advantages/min",
+    "critic/returns/max",
+    "critic/returns/mean",
+    "critic/returns/min",
+    "critic/rewards/max",
+    "critic/rewards/mean",
+    "critic/rewards/min",
+    "critic/score/max",
+    "critic/score/mean",
+    "critic/score/min",
+    "num_turns/max",
+    "num_turns/mean",
+    "num_turns/min",
+    "prompt_length/clip_ratio",
+    "prompt_length/max",
+    "prompt_length/mean",
+    "prompt_length/min",
+    "response/aborted_ratio",
+    "response_length/clip_ratio",
+    "response_length/max",
+    "response_length/mean",
+    "response_length/min",
+    "response_length_non_aborted/clip_ratio",
+    "response_length_non_aborted/max",
+    "response_length_non_aborted/mean",
+    "response_length_non_aborted/min"
+  ],
+  "dataproto_shapes": {
+    "advantages": [
+      3,
+      768
+    ],
+    "prompts": [
+      3,
+      8192
+    ],
+    "response_mask": [
+      3,
+      768
+    ],
+    "responses": [
+      3,
+      768
+    ],
+    "returns": [
+      3,
+      768
+    ],
+    "rm_scores": [
+      3,
+      768
+    ],
+    "rollout_log_probs": [
+      3,
+      768
+    ],
+    "token_level_rewards": [
+      3,
+      768
+    ]
+  },
+  "dataproto_visibility": "passed",
+  "filtered_task_ids": [
+    "stage12b-retry-clamp"
+  ],
+  "formal_batch_validator": "passed",
+  "full_trainer_global_step_executed": false,
+  "image": "verlai/verl:sgl056.latest",
+  "individual_training_view_converter_count": 3,
+  "interpretation": "This smoke uses multiple successful real Qwen2.5-Coder RepoHarness episodes to build one real verl DataProto batch and execute GRPO advantage plus policy loss. It still does not instantiate the full RayPPOTrainer.fit global-step orchestration.",
+  "invalid_or_failed_episode_count": 1,
+  "loss_path": "AgentLoopOutput_list -> AgentLoopWorker._agent_loop_postprocess -> AgentLoopWorker._postprocess -> DataProto -> compute_advantage_GRPO -> compute_policy_loss_vanilla",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "policy_loss": -1.0,
+  "policy_metrics": {
+    "actor/pg_clipfrac": 0.0,
+    "actor/pg_clipfrac_lower": 0.0,
+    "actor/ppo_kl": 0.0
+  },
+  "repo_commit": "ab96238df1e36f7f7f5ef50a9fb05cbbad284df4",
+  "run_root": "/workspace/RepoHarness/runs/stage12c-real-batch-20260516T230434Z",
+  "sample_data_metrics": {
+    "critic/advantages/max": 1.0,
+    "critic/advantages/mean": 1.0,
+    "critic/advantages/min": 1.0,
+    "critic/returns/max": 1.0,
+    "critic/returns/mean": 1.0,
+    "critic/returns/min": 1.0,
+    "critic/rewards/max": 1.0,
+    "critic/rewards/mean": 1.0,
+    "critic/rewards/min": 1.0,
+    "critic/score/max": 1.0,
+    "critic/score/mean": 1.0,
+    "critic/score/min": 1.0,
+    "response_length/clip_ratio": 0.0,
+    "response_length/max": 170.0,
+    "response_length/mean": 164.6666717529297,
+    "response_length/min": 154.0,
+    "response_length_non_aborted/clip_ratio": 0.0,
+    "response_length_non_aborted/max": 170.0,
+    "response_length_non_aborted/mean": 164.6666717529297,
+    "response_length_non_aborted/min": 154.0
+  },
+  "schema_version": "repo_harness_stage12c_real_batch_loss_path_report_v0",
+  "server_call_count": 12,
+  "status": "passed",
+  "task_count": 4,
+  "task_results": [
+    {
+      "invalid_for_online_rl": false,
+      "invalid_for_training": false,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "response_logprob_count": 170,
+      "response_mask_count": 170,
+      "response_token_count": 170,
+      "reward_score": 1.0,
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3791,
+          "request_id": "2fe99efc3a5e4fc9823312dbf8c6a49c",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"calculator.py\"}}\n```",
+          "token_count": 22
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3890,
+          "request_id": "bc17502e6c8f4aeda56ad4f0ea8f01b7",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "{\"name\": \"edit_file\", \"arguments\": {\"path\": \"calculator.py\", \"old_text\": \"    return left / right\", \"new_text\": \"    if right == 0:\\n        raise ValueError('division by zero')\\n    return left / right\"}}",
+          "token_count": 58
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3969,
+          "request_id": "d275d19d493e462fb4b5ecc7cf07e648",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "Division by zero now raises a ValueError with the message \"division by zero\" in the `divide` function.",
+          "token_count": 23
+        }
+      ],
+      "status": "completed",
+      "task_id": "stage12b-retry-calculator"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 run_id=rh-verl-stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3810,
+          "request_id": "7e4982788eea42ff895ca11c10de7a72",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"math_utils.py\"}}\n```",
+          "token_count": 23
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3893,
+          "request_id": "89aaafd40a884bb58638ebf7b41c0ab1",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"edit_file\", \"arguments\": {\"path\": \"math_utils.py\", \"old_text\": \"        return value\\n\", \"new_text\": \"        if value > upper:\\n            return upper\\n        return value\\n\"}}\n```",
+          "token_count": 54
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3987,
+          "request_id": "58b8c8f9655d4d3d8b86d2751141e855",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "\n",
+          "token_count": 3
+        }
+      ],
+      "status": "failed",
+      "task_id": "stage12b-retry-clamp",
+      "traceback_tail": "Traceback (most recent call last):\n  File \"/workspace/RepoHarness/src/repo_harness_verl/conversion.py\", line 170, in training_view_to_agent_loop_output\n    view = validate_training_view_for_online_rl(view, require_explicit_eligibility=True)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/RepoHarness/src/repo_harness/rl/training_view.py\", line 237, in validate_training_view_for_online_rl\n    raise ValueError(\"missing_reward_score\")\nValueError: missing_reward_score\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/workspace/RepoHarness/src/repo_harness_verl/agent_loop.py\", line 62, in run\n    return episode_result_to_agent_loop_output(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/RepoHarness/src/repo_harness_verl/conversion.py\", line 215, in episode_result_to_agent_loop_output\n    return training_view_to_agent_loop_output(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/RepoHarness/src/repo_harness_verl/conversion.py\", line 172, in training_view_to_agent_loop_output\n    raise VerlConversionError(str(exc)) from exc\nrepo_harness_verl.conversion.VerlConversionError: missing_reward_score\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/workspace/RepoHarness/runs/stage12bc-remote-scripts/stage12c_real_batch_loss_smoke.py\", line 149, in _run_one_collect\n    output = await loop.run({\"max_new_tokens\": 256, \"temperature\": 0.0, \"top_p\": 1.0}, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/RepoHarness/src/repo_harness_verl/agent_loop.py\", line 69, in run\n    raise RepoHarnessVerlAdapterError(\nrepo_harness_verl.errors.RepoHarnessVerlAdapterError: episode_result_not_formal_online_rl: episode_id=stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 run_id=rh-verl-stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 status=invalid_task status_reason=test_command_error: missing_reward_score\n"
+    },
+    {
+      "invalid_for_online_rl": false,
+      "invalid_for_training": false,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "response_logprob_count": 170,
+      "response_mask_count": 170,
+      "response_token_count": 170,
+      "reward_score": 1.0,
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3806,
+          "request_id": "6e65861c78094cc89100cf84820c2872",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"config_utils.py\"}}\n```",
+          "token_count": 23
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3897,
+          "request_id": "883db4cfc0874ea5b9fe73355691df83",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\n  \"name\": \"edit_file\",\n  \"arguments\": {\n    \"path\": \"config_utils.py\",\n    \"old_text\": \"    return TIMEOUTS[service]\\n\",\n    \"new_text\": \"    return TIMEOUTS.get(service, 30)\\n\"\n  }\n}\n```",
+          "token_count": 65
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3970,
+          "request_id": "59d4c4dc101f42538f902dd0c10edd58",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "The `get_timeout` function now returns 30 for missing service names instead of raising a KeyError.",
+          "token_count": 22
+        }
+      ],
+      "status": "completed",
+      "task_id": "stage12b-retry-config-default"
+    },
+    {
+      "invalid_for_online_rl": false,
+      "invalid_for_training": false,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "response_logprob_count": 154,
+      "response_mask_count": 154,
+      "response_token_count": 154,
+      "reward_score": 1.0,
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3826,
+          "request_id": "ad98be8f3fd24897b1e8dc82eb99d517",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"text_utils.py\"}}\n```",
+          "token_count": 23
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3885,
+          "request_id": "36b3a20d88054048b4de368c53fc74c3",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"edit_file\", \"arguments\": {\"path\": \"text_utils.py\", \"old_text\": \"def slugify(text: str) -> str:\\n    return text.lower()\", \"new_text\": \"def slugify(text: str) -> str:\\n    return '-'.join(text.strip().lower().split())\"}}\n```",
+          "token_count": 73
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3976,
+          "request_id": "0fae319a39c24474aaefa1fac2d8e663",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "slugify now correctly lowercases text, strips leading and trailing spaces, and collapses one or more whitespace characters between words into a single hyphen.",
+          "token_count": 30
+        }
+      ],
+      "status": "completed",
+      "task_id": "stage12b-retry-slugify"
+    }
+  ],
+  "valid_episode_count": 3,
+  "valid_task_ids": [
+    "stage12b-retry-calculator",
+    "stage12b-retry-config-default",
+    "stage12b-retry-slugify"
+  ]
+}
