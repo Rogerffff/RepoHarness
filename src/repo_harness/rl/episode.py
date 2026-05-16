@@ -236,6 +236,7 @@ class RepoHarnessEpisodeResult(StrictBaseModel):
     @model_validator(mode="after")
     def validate_episode_result(self) -> "RepoHarnessEpisodeResult":
         self._validate_gateway_route_consistency()
+        self._validate_generation_record_token_provenance()
         if self.status in {"invalid", "invalid_task", "infrastructure_error"}:
             if not self.invalid_for_training:
                 raise ValueError(f"status={self.status} requires invalid_for_training=true")
@@ -258,11 +259,14 @@ class RepoHarnessEpisodeResult(StrictBaseModel):
             return self.training_view
         if not self.generation_records:
             return self.training_view
+        record_routes = {record.gateway_route for record in self.generation_records}
+        if record_routes != {"verl"}:
+            raise ValueError("generation_records_invalid_for_online_rl")
         return self.training_view.model_copy(
             update={
                 "extra_fields": {
                     **self.training_view.extra_fields,
-                    "repo_harness_llm_gateway_route": self.generation_records[0].gateway_route,
+                    "repo_harness_llm_gateway_route": "verl",
                 }
             }
         )
@@ -272,5 +276,49 @@ class RepoHarnessEpisodeResult(StrictBaseModel):
         if training_route is None or not self.generation_records:
             return
         record_routes = {record.gateway_route for record in self.generation_records}
+        if training_route == "mixed" and len(record_routes) > 1 and self.invalid_for_online_rl:
+            return
         if record_routes != {training_route}:
             raise ValueError("gateway_route_mismatch_between_training_view_and_generation_records")
+
+    def _validate_generation_record_token_provenance(self) -> None:
+        if not self.generation_records:
+            return
+        record_ids = [record.model_call_id for record in self.generation_records]
+        if len(record_ids) != len(set(record_ids)):
+            raise ValueError("duplicate_generation_record_model_call_id")
+        expected_records = [record for record in self.generation_records if record.output_token_ids]
+        assistant_spans = [
+            span
+            for span in self.training_view.response_spans
+            if span.source_type == "assistant_generation"
+        ]
+        if len(assistant_spans) != len(expected_records):
+            raise ValueError("assistant_generation_span_count_mismatch_generation_records")
+
+        assistant_token_sequence: list[int] = []
+        expected_token_sequence: list[int] = []
+        assistant_logprob_sequence: list[float] = []
+        expected_logprob_sequence: list[float] = []
+        for span, record in zip(assistant_spans, expected_records):
+            if not span.model_call_id:
+                raise ValueError("assistant_generation_span_missing_model_call_id")
+            if span.model_call_id != record.model_call_id:
+                raise ValueError("assistant_generation_span_order_mismatch_generation_records")
+            span_ids = self.training_view.response_ids[span.start : span.end]
+            if span_ids != record.output_token_ids:
+                raise ValueError("assistant_generation_tokens_mismatch_generation_records")
+            assistant_token_sequence.extend(span_ids)
+            expected_token_sequence.extend(record.output_token_ids)
+            if self.training_view.response_logprobs is not None:
+                if record.output_logprobs is None:
+                    raise ValueError("assistant_generation_logprobs_mismatch_generation_records")
+                span_logprobs = self.training_view.response_logprobs[span.start : span.end]
+                if span_logprobs != record.output_logprobs:
+                    raise ValueError("assistant_generation_logprobs_mismatch_generation_records")
+                assistant_logprob_sequence.extend(span_logprobs)
+                expected_logprob_sequence.extend(record.output_logprobs)
+        if assistant_token_sequence != expected_token_sequence:
+            raise ValueError("assistant_generation_token_sequence_mismatch_generation_records")
+        if self.training_view.response_logprobs is not None and assistant_logprob_sequence != expected_logprob_sequence:
+            raise ValueError("assistant_generation_logprob_sequence_mismatch_generation_records")

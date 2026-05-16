@@ -1,5 +1,7 @@
 """训练后端无关的 RepoHarness episode schema 和 LLMGateway contract。"""
 
+from importlib import import_module
+
 from .episode import (
     AuditDiagnostic,
     BudgetConsumption,
@@ -42,14 +44,6 @@ from .provider_gateway import (
     ReplayLLMGateway,
     UnsupportedRouteLLMGateway,
     build_llm_gateway_for_route,
-)
-from .runtime import (
-    InvalidTaskError,
-    LLMGatewayModelClientAdapter,
-    RepoHarnessRuntime,
-    RepoHarnessRuntimeOptions,
-    RuntimeResolvedInputs,
-    map_episode_status,
 )
 from .reward_boundary import (
     INFRASTRUCTURE_VERIFIER_ERRORS,
@@ -122,6 +116,7 @@ __all__ = [
     "FakeLLMGateway",
     "FormalOnlineRLSample",
     "GatewayRoute",
+    "GenerationRecordCollector",
     "GenerationRecord",
     "INFRASTRUCTURE_VERIFIER_ERRORS",
     "InferenceBackend",
@@ -144,6 +139,7 @@ __all__ = [
     "RepoHarnessEpisodeRequest",
     "RepoHarnessEpisodeResult",
     "ReplayLLMGateway",
+    "RealEpisodeContext",
     "RepoHarnessRuntime",
     "RepoHarnessRuntimeOptions",
     "ResourceConcurrencyPolicy",
@@ -193,3 +189,23 @@ __all__ = [
     "validate_gateway_extra_fields",
     "validate_training_view_for_online_rl",
 ]
+
+_RUNTIME_EXPORTS = {
+    "GenerationRecordCollector",
+    "InvalidTaskError",
+    "LLMGatewayModelClientAdapter",
+    "RealEpisodeContext",
+    "RepoHarnessRuntime",
+    "RepoHarnessRuntimeOptions",
+    "RuntimeResolvedInputs",
+    "map_episode_status",
+}
+
+
+def __getattr__(name: str) -> object:
+    if name in _RUNTIME_EXPORTS:
+        runtime_module = import_module("repo_harness.rl.runtime")
+        value = getattr(runtime_module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
