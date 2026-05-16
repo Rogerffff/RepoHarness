@@ -10,6 +10,7 @@ from typing import Any
 from repo_harness.rl import LLMGatewayRequest, LLMGatewayResponse
 
 from .errors import RepoHarnessVerlGatewayError
+from .tool_parser import DEFAULT_STAGE12B_TOOL_NAMES, parse_hermes_tool_calls
 from .visibility import VerlVisibilityError, validate_token_output_extra_fields
 
 PromptIdsBuilder = Callable[[LLMGatewayRequest], Awaitable[list[int]] | list[int]]
@@ -98,7 +99,22 @@ def token_output_to_llm_gateway_response(
     output_token_ids = _coerce_int_list(_get_attr(token_output, "token_ids", []), field_name="token_ids")
     output_logprobs = _coerce_optional_float_list(_get_attr(token_output, "log_probs", None), field_name="log_probs")
     extra_fields = dict(_get_attr(token_output, "extra_fields", {}) or {})
-    tool_calls = _coerce_tool_calls(extra_fields.pop("repo_harness_tool_calls", []))
+    decoded_content = _decode_output(tokenizer, output_token_ids)
+    raw_tool_calls = extra_fields.pop("repo_harness_tool_calls", None)
+    if raw_tool_calls is None:
+        parsed_tool_text = parse_hermes_tool_calls(
+            decoded_content,
+            turn=request.turn,
+            allowed_tool_names=DEFAULT_STAGE12B_TOOL_NAMES,
+        )
+        decoded_content = parsed_tool_text.content
+        tool_calls = parsed_tool_text.tool_calls
+        if parsed_tool_text.diagnostics:
+            extra_fields.setdefault("repo_harness_tool_parse_diagnostics", parsed_tool_text.diagnostics)
+            if not parsed_tool_text.success:
+                extra_fields.setdefault("repo_harness_tool_parse_error_type", "model_format_failure")
+    else:
+        tool_calls = _coerce_tool_calls(raw_tool_calls)
     _validate_tool_calls_visibility(tool_calls)
     num_preempted = _get_attr(token_output, "num_preempted", None)
     if num_preempted is not None:
@@ -113,7 +129,7 @@ def token_output_to_llm_gateway_response(
         route="verl",
         inference_backend=inference_backend,  # type: ignore[arg-type]
         model_call_id=request.model_call_id,
-        assistant_message={"role": "assistant", "content": _decode_output(tokenizer, output_token_ids)},
+        assistant_message={"role": "assistant", "content": decoded_content},
         tool_calls=tool_calls,
         prompt_ids=list(prompt_ids),
         output_token_ids=output_token_ids,
