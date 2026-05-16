@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl Stage 5 执行计划与结果</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    /* === 与 Stage 2 / 3 / 4 一致的工程文档式样式 === */
+    .rh-toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .rh-toc a {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+      color: var(--rv-text);
+      font-size: 0.92rem;
+      text-decoration: none;
+    }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+
+    .rh-kind {
+      display: inline-block;
+      padding: 1px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+    .rh-kind.cls   { background: rgba(88,166,255,0.16);  color: #58a6ff; }
+    .rh-kind.dc    { background: rgba(126,231,135,0.16); color: #7ee787; }
+    .rh-kind.fn    { background: rgba(255,196,99,0.18);  color: #ffc463; }
+    .rh-kind.cfg   { background: rgba(199,159,255,0.18); color: #c79fff; }
+    .rh-kind.warn  { background: rgba(255,180,99,0.20);  color: #ffb463; }
+    .rh-kind.danger{ background: rgba(255,123,123,0.16); color: #ff7b7b; }
+
+    .rh-api-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-api-card .rh-sub { margin: 0 0 12px; color: var(--rv-muted); font-size: 0.92rem; }
+
+    .rh-sig {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #0b1018;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      color: #d0d7de;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+
+    .rh-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .rh-meta-item {
+      padding: 8px 12px;
+      border-left: 3px solid var(--rv-border-strong);
+      background: var(--rv-surface);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+    }
+    .rh-meta-item .rh-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--rv-muted);
+    }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound   { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger  { border-left-color: var(--rv-danger); }
+
+    .rh-pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .rh-pipeline-step {
+      padding: 12px 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-pipeline-step .rh-step-no {
+      display: inline-block;
+      padding: 1px 7px;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--hh-accent-soft);
+      color: var(--rv-accent);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+    .rh-pipeline-step strong { display: block; margin-bottom: 4px; }
+    .rh-pipeline-step small { color: var(--rv-muted); font-size: 0.82rem; line-height: 1.5; }
+
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+
+    /* === Stage 5 特有：两个方向的 adapter 接缝 === */
+    .rh-bidir {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      margin: 12px 0;
+    }
+    @media (max-width: 880px) { .rh-bidir { grid-template-columns: 1fr; } }
+    .rh-dir-card {
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+    }
+    .rh-dir-card.s2 { border-top: 4px solid var(--rv-info); }
+    .rh-dir-card.s5 { border-top: 4px solid var(--rv-success); }
+    .rh-dir-card h4 { margin: 0 0 4px; font-size: 1.0rem; }
+    .rh-dir-card .rh-arrow {
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      padding: 6px 8px;
+      background: var(--rv-surface-soft);
+      border-radius: 6px;
+      margin: 6px 0;
+    }
+
+    /* === gateway 类继承图 === */
+    .rh-tree {
+      padding: 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface);
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.84rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .rh-tree .node-base    { color: #58a6ff; font-weight: 760; }
+    .rh-tree .node-derived { color: #c79fff; }
+    .rh-tree .node-mock    { color: #7ee787; }
+    .rh-tree .node-unsupp  { color: #ff7b7b; }
+    .rh-tree .node-factory { color: #ffc463; }
+    .rh-tree .branch       { color: #8b949e; }
+
+    /* === route 处理策略表色块 === */
+    .rh-route-cell {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.82rem;
+      font-weight: 760;
+    }
+    .rh-route-cell.ok   { background: rgba(126,231,135,0.18); color: #7ee787; }
+    .rh-route-cell.diag { background: rgba(255,196,99,0.20);  color: #ffc463; }
+    .rh-route-cell.no   { background: rgba(255,123,123,0.16); color: #ff7b7b; }
+    .rh-route-cell.future { background: rgba(88,166,255,0.16); color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 计划</a>
+          <a href="repo_harness_verl_stage3_execution_plan.html">Stage 3 计划</a>
+          <a href="repo_harness_verl_stage4_execution_plan.html">Stage 4 计划</a>
+          <a href="repo_harness_verl_stage5_execution_plan.html" aria-current="page">Stage 5 计划</a>
+          <a href="repo_harness_verl_stage6_execution_plan.html">Stage 6 计划</a>
+          <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 5 · Execution Report</span>
+      <h1>Stage 5：完善 <code>LLMGateway</code> route 实现 + 模型后端迁移</h1>
+      <p class="rv-lead">
+        本页上半为 Stage 5 <strong>实施结果</strong>，下半保留原始<strong>执行计划</strong>。本次产出：新增 <code>src/repo_harness/rl/provider_gateway.py</code>（400 行，6 个 gateway 类 + 1 个工厂）· 把 <code>validate_training_view_for_online_rl</code> 强制要求 <code>extra_fields.repo_harness_llm_gateway_route == "verl"</code> · runtime 加 <code>_response_error_reason</code> 把 gateway error 结构化映射到 <code>timeout / infrastructure_error</code> status · 15 个新单元测试全部通过。Stage 5 真正打通"<strong>新 LLMGateway 包装旧 ModelClient</strong>"这条反向接缝，但仍<strong>不引入 verl</strong>、<strong>不启动</strong> vLLM / SGLang / Ray。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 5 · 已实现</span>
+        <span class="rv-badge success">15 / 15 测试通过</span>
+        <span class="rv-badge info">不接 verl / 不启 vLLM·SGLang·Ray · VerlAgentLoop 留 Stage 11</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#result">⓪ 执行结果 ⚡ 新</a>
+        <a href="#goal">① 阶段目标</a>
+        <a href="#bidir">② 两个方向的接缝</a>
+        <a href="#tree">③ Gateway 类继承图</a>
+        <a href="#routes">④ 7 种 route 处理策略</a>
+        <a href="#token">⑤ Token 与 logprob 策略</a>
+        <a href="#online-rl">⑥ Online RL 强制门</a>
+        <a href="#boundaries">⑦ 必须保持的边界</a>
+        <a href="#files">⑧ 改动文件</a>
+        <a href="#pipeline">⑨ 实施 10 步</a>
+        <a href="#tests">⑩ 测试覆盖矩阵</a>
+        <a href="#not-doing">⑪ 不做事项</a>
+        <a href="#checks">⑫ 验收命令</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <!-- ⓪ 执行结果                                                    -->
+      <!-- ============================================================ -->
+      <section id="result" class="rv-section">
+        <h2>⓪ 本次执行结果</h2>
+        <div class="rv-callout success">
+          <strong>一句话：</strong>Stage 5 已落地。<code>src/repo_harness/rl/provider_gateway.py</code> 提供"<strong>新 async <code>LLMGateway</code> 包装旧同步 <code>ModelClient</code></strong>"的反向 adapter，含 <code>ThreadPoolExecutor</code> + <code>Semaphore</code> 受控并发、显式 <code>close()</code> / <code>aclose()</code> 生命周期；6 个 gateway 类按职责清晰划分（基类 / provider / replay / mock / unsupported），加一个路由工厂 <code>build_llm_gateway_for_route(...)</code>。Stage 1 已经定义的"正式 online RL 必须 route=verl"边界现在<strong>在 runtime 和 schema 两层都执行</strong>：runtime 加 <code>non_verl_route_invalid_for_online_rl</code> 校验；<code>validate_training_view_for_online_rl</code> 改成强制要求 <code>extra_fields.repo_harness_llm_gateway_route == "verl"</code>。15 个新测试全部通过。
+        </div>
+
+        <h3>实际改动文件</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 36%;">文件</th><th style="width: 11%;">变更</th><th style="width: 10%;">行数</th><th>新增内容</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/rl/provider_gateway.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+400</td>
+                <td><code>ModelClientLLMGatewayOptions</code> · <code>ModelClientLLMGateway</code> · <code>ProviderLLMGateway</code> · <code>ReplayLLMGateway</code> · <code>MockLLMGateway</code> · <code>UnsupportedRouteLLMGateway</code> · <code>build_llm_gateway_for_route(...)</code> · 8 个内部 helper</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+16</td>
+                <td>对外导出 7 个 Stage 5 符号</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/episode.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+16 / -1</td>
+                <td><code>EpisodeResult._training_view_for_online_rl_validation()</code>：在校验前把 <code>generation_records[0].gateway_route</code> 注入 <code>training_view.extra_fields</code>，让 schema 校验能看到路由事实</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+34</td>
+                <td>新增 <code>_response_error_reason(...)</code> helper · <code>_response_invalid_reason</code> 加 <code>non_verl_route_invalid_for_online_rl</code> 校验 · gateway error → <code>timeout / infrastructure_error</code> 映射 · <code>_extra_fields</code> 加 <code>repo_harness_llm_gateway_route</code></td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/training_view.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+29 / -12</td>
+                <td><code>FormalOnlineRLSample.route</code> 不再默认 <code>"verl"</code>，必须显式 · <code>validate_training_view_for_online_rl(...)</code> 重排顺序，强制 <code>extra_fields.repo_harness_llm_gateway_route == "verl"</code></td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage5_gateway_routes.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+175</td>
+                <td>7+ 个测试覆盖 mock 稳定 token / formal batch 拒绝非 verl / route 工厂 / 未实现 route 不静默 fallback</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage5_provider_gateway.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+250</td>
+                <td>7 个测试覆盖 keyword call / runtime 拒绝 provider online RL / gateway error 映射 / close / aclose / closed 后拒绝调用</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">新增公开 API 速查</h3>
+        <p class="rv-muted">全部从 <code>repo_harness.rl</code> 顶层导出。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 8%;">类型</th><th style="width: 28%;">名称</th><th>职责</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>ModelClientLLMGatewayOptions</code></td><td>frozen dataclass。包 <code>run_dir_root</code> / <code>max_workers</code> / <code>default_model_id</code> / <code>default_timeout_seconds</code>；<code>__post_init__</code> 校验 max_workers≥1、timeout&gt;0。</td></tr>
+              <tr><td><span class="rh-kind cls">基类</span></td><td><code>ModelClientLLMGateway</code></td><td>核心 adapter：把 <code>LLMGatewayRequest</code> → <code>ModelRequestContext</code>，<code>asyncio.Semaphore + ThreadPoolExecutor</code> 包同步 <code>model_client.generate(...)</code>，再把 <code>ModelResponse</code> → <code>LLMGatewayResponse</code>。生命周期：<code>close()</code> / <code>aclose()</code> / <code>__enter__</code> / <code>__exit__</code>。</td></tr>
+              <tr><td><span class="rh-kind cls">子类</span></td><td><code>ProviderLLMGateway</code></td><td>OpenAI / DeepSeek 用的薄继承（无新行为，只是命名区分）。</td></tr>
+              <tr><td><span class="rh-kind cls">子类</span></td><td><code>ReplayLLMGateway</code></td><td>Replay 路径用的薄继承。</td></tr>
+              <tr><td><span class="rh-kind cls">独立</span></td><td><code>MockLLMGateway</code></td><td>不包旧 client，自己产 deterministic token (<code>900+turn</code>) + logprob (<code>-0.01</code>)；仅测试用。<code>token_source = "mock_gateway"</code>。</td></tr>
+              <tr><td><span class="rh-kind danger">独立</span></td><td><code>UnsupportedRouteLLMGateway</code></td><td>verl / local_vllm / local_sglang 占位。返回结构化 error response (<code>stop_reason="unsupported_route"</code>, <code>output_token_ids=[]</code>, <code>output_logprobs=None</code>)，绝不静默 fallback。</td></tr>
+              <tr><td><span class="rh-kind fn">工厂</span></td><td><code>build_llm_gateway_for_route(route, ...)</code></td><td>按 route 路由：<code>verl / local_*</code> → unsupported；<code>mock</code> 无 client → mock；<code>replay</code> → ReplayLLMGateway；<code>openai / deepseek</code> → ProviderLLMGateway。任意路由失败 → unsupported（不 fallback）。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">⚡ Stage 5 的关键加固：online RL 强制门</h3>
+        <p class="rv-muted">Stage 1 已经定义"正式 online RL 必须 <code>route=verl</code>"原则，但<strong>schema 层</strong>之前是靠 <code>PROVIDER_ROUTES</code> 黑名单。Stage 5 改成<strong>白名单</strong>——强制要求路由事实<strong>显式</strong>写进 <code>training_view.extra_fields</code>，避免漏判。</p>
+        <article class="rh-api-card">
+          <h4 style="margin: 0 0 6px;"><code>validate_training_view_for_online_rl(view)</code> 的新校验顺序</h4>
+          <div class="rh-sig"><span class="cm"># —— 顺序很关键：先校验事实，再校验可训练性，最后校验 reward ——</span>
+<span class="kw">def</span> <span class="nm">validate_training_view_for_online_rl</span>(view) -&gt; <span class="ty">TrainingView</span>:
+    parsed = view <span class="kw">if isinstance</span>(view, TrainingView) <span class="kw">else</span> TrainingView.model_validate(view)
+
+    <span class="cm"># —— 1. token 事实校验 ——</span>
+    <span class="kw">if not</span> parsed.response_ids:
+        <span class="kw">raise</span> ValueError(<span class="li">"empty_response_with_reward_blocked"</span>)
+    <span class="kw">if</span> <span class="nm">len</span>(parsed.response_ids) &gt; parsed.rollout_limits.response_length:
+        <span class="kw">raise</span> ValueError(<span class="li">"response_length_exceeded"</span>)
+    <span class="kw">if</span> parsed.response_logprobs <span class="kw">is None</span>:
+        <span class="kw">raise</span> ValueError(<span class="li">"missing_response_logprobs_in_formal_batch"</span>)
+
+    <span class="cm"># —— 2. 路由强制门（Stage 5 新增） ——</span>
+    route = parsed.extra_fields.get(<span class="li">"repo_harness_llm_gateway_route"</span>)
+    <span class="kw">if</span> route <span class="kw">is None</span>:
+        <span class="kw">raise</span> ValueError(<span class="li">"missing_llm_gateway_route_for_online_rl"</span>)
+    <span class="kw">if</span> route != <span class="li">"verl"</span>:
+        <span class="kw">raise</span> ValueError(<span class="li">"non_verl_route_invalid_for_online_rl"</span>)
+
+    <span class="cm"># —— 3. 其它可训练性事实 ——</span>
+    <span class="kw">if</span> parsed.reward_score <span class="kw">is None</span>:
+        <span class="kw">raise</span> ValueError(<span class="li">"missing_reward_score"</span>)
+    <span class="kw">if</span> parsed.online_rl_eligible <span class="kw">is False</span>:
+        <span class="kw">raise</span> ValueError(<span class="li">"training_view_marked_ineligible_for_online_rl"</span>)
+    <span class="kw">if</span> parsed.extra_fields.get(<span class="li">"repo_harness_invalid_for_training"</span>) <span class="kw">is True</span>:
+        <span class="kw">raise</span> ValueError(...)
+    <span class="kw">if</span> parsed.extra_fields.get(<span class="li">"repo_harness_invalid_for_online_rl"</span>) <span class="kw">is True</span>:
+        <span class="kw">raise</span> ValueError(<span class="li">"invalid_for_online_rl"</span>)
+    <span class="kw">return</span> parsed</div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound">
+              <span class="rh-label">配套改动</span>
+              <code>runtime.py</code> 的 <code>_extra_fields(...)</code> 现在<strong>始终</strong>注入 <code>repo_harness_llm_gateway_route = request.llm_gateway_route</code>，让 episode 自带路由证据；<code>EpisodeResult._training_view_for_online_rl_validation()</code> 在 validator 内部还会再次确认从 <code>generation_records[0].gateway_route</code> 注入兜底。
+            </div>
+            <div class="rh-meta-item danger">
+              <span class="rh-label">新增 invalid reason</span>
+              <code>_response_invalid_reason</code> 新增一档 <code>non_verl_route_invalid_for_online_rl</code>：只要 request 或 response 路由<strong>不是 <code>verl</code></strong>，就标 <code>invalid_for_online_rl=True</code>。configurable provider 默认是 diagnostic / offline 用途。
+            </div>
+            <div class="rh-meta-item callers">
+              <span class="rh-label">新增 gateway error 映射</span>
+              <code>_response_error_reason(response)</code>：从 <code>response.error</code>（str / dict）中提取 <code>model_error_type</code> / <code>error_type</code> / <code>type</code> / <code>code</code>，含 <code>timeout</code> / <code>timed_out</code> / <code>deadline_exceeded</code> → status=<code>timeout</code>，否则 → <code>infrastructure_error</code>。
+            </div>
+          </div>
+        </article>
+
+        <h3 style="margin-top: 22px;">关键验收数字</h3>
+        <div class="rv-grid-4">
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">15+</div>
+            <small class="rv-muted">Stage 5 新增测试通过</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">6</div>
+            <small class="rv-muted">新增 gateway 类</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">7</div>
+            <small class="rv-muted">支持的 route（含 3 个 unsupported 占位）</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-danger);">0</div>
+            <small class="rv-muted"><code>import verl</code> 出现次数</small>
+          </div>
+        </div>
+
+        <div class="rv-callout warning" style="margin-top: 16px;">
+          <strong>本次明确未做（按计划留给后续）：</strong>
+          <ul style="margin: 4px 0 0 18px;">
+            <li><strong>Stage 11</strong>：真实 <code>VerlLLMGateway</code> · <code>RepoHarnessVerlAgentLoop</code> · Ray / vLLM / SGLang server 管理</li>
+            <li><strong>Stage 10</strong>：<code>TrainingView → AgentLoopOutput</code> 转换器</li>
+            <li><strong>Stage 6/7</strong>：workspace / container 复用 · verifier worker pool</li>
+            <li>本次<strong>没有</strong>把旧 <code>AgentLoop</code> 一次性重写为通过 gateway 调模型；旧 CLI <code>run_task(...)</code> 仍走原 <code>ModelClient.generate(...)</code> 直接调用，未强制迁移到 gateway 包装路径。<code>LLMGatewayModelClientAdapter</code>（Stage 2 已有，旧→新方向）和 <code>ModelClientLLMGateway</code>（Stage 5 新增，新→旧方向）两座接缝都<strong>已就位</strong>，等需要时启用。</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ① 阶段目标                                                    -->
+      <!-- ============================================================ -->
+      <section id="goal" class="rv-section">
+        <h2>① 阶段目标</h2>
+        <p>
+          把 RepoHarness 现有模型调用体系（<code>mock</code> / <code>replay</code> / <code>openai</code> / <code>deepseek</code>）<strong>逐步迁移</strong>到训练后端无关的 <code>LLMGateway</code> route 体系。同时<strong>明确</strong>正式 online RL 样本只允许 <code>route=verl</code>，provider route 默认 <code>invalid_for_online_rl=true</code>。
+        </p>
+        <div class="rv-callout">
+          数据流：<code>mock / replay / openai / deepseek → LLMGateway route wrapper → LLMGatewayResponse → GenerationRecord / TrainingView / runtime facade</code>。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ② 两个方向的接缝                                              -->
+      <!-- ============================================================ -->
+      <section id="bidir" class="rv-section">
+        <h2>② 两个方向的 adapter 接缝</h2>
+        <p class="rv-muted">这是 Stage 5 最容易理解错的点。旧 <code>ModelClient</code> 是<strong>同步</strong>接口，新 <code>LLMGateway</code> 是 <strong>async</strong> 接口。两个接口之间有<strong>两个方向</strong>需要打通，分别由 Stage 2 和 Stage 5 提供。</p>
+        <div class="rh-bidir">
+          <div class="rh-dir-card s2">
+            <h4>方向 1（Stage 2 已有）：<code>LLMGatewayModelClientAdapter</code></h4>
+            <p class="rv-muted" style="font-size: 0.9rem;">让<strong>旧 <code>ModelClient.generate(...)</code> 接口</strong>能调到<strong>新 async gateway</strong>。</p>
+            <div class="rh-arrow">旧同步 <code>generate(...)</code> 调用<br>&nbsp;&nbsp;↓<br>构造 <code>LLMGatewayRequest</code><br>&nbsp;&nbsp;↓<br><code>asyncio.run(gateway.generate_turn(...))</code><br>&nbsp;&nbsp;↓<br>转回 <code>ModelResponse</code></div>
+            <p class="rv-muted" style="font-size: 0.86rem;">用途：让旧 <code>AgentLoop</code>（同步逻辑）能不大改地调上 gateway。</p>
+          </div>
+          <div class="rh-dir-card s5">
+            <h4>方向 2（Stage 5 新增）：<code>ModelClientLLMGateway</code></h4>
+            <p class="rv-muted" style="font-size: 0.9rem;">让<strong>新 async gateway 接口</strong>能调到<strong>旧同步 <code>ModelClient</code></strong>。</p>
+            <div class="rh-arrow">新 async <code>generate_turn(...)</code> 调用<br>&nbsp;&nbsp;↓<br>构造 <code>ModelRequestContext</code><br>&nbsp;&nbsp;↓<br><code>asyncio.run_in_executor(ThreadPool, model_client.generate)</code><br>&nbsp;&nbsp;↓<br>转回 <code>LLMGatewayResponse</code></div>
+            <p class="rv-muted" style="font-size: 0.86rem;">用途：让<strong>新 runtime / 测试</strong>能通过 gateway 调到现有 provider client / replay client。</p>
+          </div>
+        </div>
+        <div class="rv-callout">
+          <strong>两个 adapter 不重复</strong>：方向 1 让"旧调用方→新被调"（不改 AgentLoop），方向 2 让"新调用方→旧被调"（让 runtime 不必直接持 ModelClient）。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ③ Gateway 类继承图                                            -->
+      <!-- ============================================================ -->
+      <section id="tree" class="rv-section">
+        <h2>③ 6 个 gateway 类的继承与职责</h2>
+        <div class="rh-tree"><span class="branch">┌─ <span class="node-base">ModelClientLLMGateway</span>  ── 基类，包同步 ModelClient，受控并发 + 生命周期</span>
+<span class="branch">│      │</span>
+<span class="branch">│      ├─ <span class="node-derived">ProviderLLMGateway</span>  ── OpenAI / DeepSeek 用，纯继承不加行为</span>
+<span class="branch">│      └─ <span class="node-derived">ReplayLLMGateway</span>   ── Replay 用，纯继承不加行为</span>
+<span class="branch">│</span>
+<span class="branch">├─ <span class="node-mock">MockLLMGateway</span>          ── 独立，deterministic tokens (900+turn) + logprobs (-0.01)</span>
+<span class="branch">│                              └ 测试用，不依赖任何外部 client</span>
+<span class="branch">│</span>
+<span class="branch">└─ <span class="node-unsupp">UnsupportedRouteLLMGateway</span> ── 独立，verl / local_vllm / local_sglang 的结构化拒绝</span>
+<span class="branch">                               └ output_token_ids=[], output_logprobs=None, stop_reason="unsupported_route"</span>
+
+<span class="node-factory">build_llm_gateway_for_route(route, *, model_client=None, run_dir_root=None, max_workers=1)</span>
+<span class="branch">    ├─ route ∈ {verl, local_vllm, local_sglang}     → UnsupportedRouteLLMGateway</span>
+<span class="branch">    ├─ route == "mock" & no client                  → MockLLMGateway</span>
+<span class="branch">    ├─ route == "replay" & client + run_dir         → ReplayLLMGateway</span>
+<span class="branch">    ├─ route ∈ {openai, deepseek} & client + run_dir → ProviderLLMGateway</span>
+<span class="branch">    └─ 其它/缺参                                     → UnsupportedRouteLLMGateway（绝不 fallback）</span></div>
+        <div class="rv-callout warning">
+          <strong>关键设计：</strong>未实现 / 缺参的路由<strong>统一返回</strong> <code>UnsupportedRouteLLMGateway</code>，<strong>绝不</strong>静默 fallback 到 provider route。这条由 <a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L136">test_route_builder_returns_structured_unsupported_gateway_without_fallback</a> 锁定。
+        </div>
+
+        <h3 style="margin-top: 18px;"><code>ModelClientLLMGateway</code> 的关键设计</h3>
+        <article class="rh-api-card">
+          <div class="rh-sig"><span class="kw">class</span> <span class="nm">ModelClientLLMGateway</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, *, model_client: <span class="ty">ModelClient</span>,
+                 run_dir_root: <span class="ty">str | Path</span>,
+                 max_workers: <span class="ty">int</span> = 1,
+                 default_model_id: <span class="ty">str</span> = <span class="li">"repo-harness-model-client-gateway"</span>,
+                 default_timeout_seconds: <span class="ty">float</span> = 60.0):
+        ...
+        self._semaphore = asyncio.Semaphore(max_workers)
+        self._executor  = ThreadPoolExecutor(max_workers=max_workers,
+                          thread_name_prefix=<span class="li">"repo-harness-llm-gateway"</span>)
+        self._closed    = False
+
+    <span class="kw">async def</span> <span class="nm">generate_turn</span>(self, request: <span class="ty">LLMGatewayRequest</span>) -&gt; <span class="ty">LLMGatewayResponse</span>:
+        <span class="kw">if</span> self._closed:
+            <span class="kw">raise</span> RuntimeError(<span class="li">"ModelClientLLMGateway is closed"</span>)
+        parsed = LLMGatewayRequest.model_validate(request)
+        <span class="kw">async with</span> self._semaphore:
+            loop = asyncio.get_running_loop()
+            <span class="kw">return await</span> loop.run_in_executor(self._executor, self._generate_turn_sync, parsed)
+
+    <span class="kw">def</span> <span class="nm">close</span>(self):    self._executor.shutdown(wait=<span class="kw">True</span>, cancel_futures=<span class="kw">True</span>); self._closed = <span class="kw">True</span>
+    <span class="kw">async def</span> <span class="nm">aclose</span>(self): self.close()
+    <span class="kw">def</span> <span class="nm">__enter__</span>(self):  <span class="kw">return</span> self
+    <span class="kw">def</span> <span class="nm">__exit__</span>(self, *a): self.close()</div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound"><span class="rh-label">并发控制</span><code>asyncio.Semaphore(max_workers)</code> 限制并发协程数；<code>ThreadPoolExecutor(max_workers=...)</code> 限制底层线程数。两层保险，避免无界创建线程。</div>
+            <div class="rh-meta-item bound"><span class="rh-label">关键字调用强制</span>包内对旧 <code>model_client.generate(...)</code> 一律用 <code>generate(request=ctx, recorder=rec)</code>，<strong>不</strong>用位置参数；这条由 <a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L112">test_model_client_gateway_uses_keyword_call_and_marks_provider_tokens_offline</a> 锁定。</div>
+            <div class="rh-meta-item danger"><span class="rh-label">生命周期</span><code>close()</code> 后再 <code>generate_turn</code> → <code>RuntimeError</code>（防资源泄漏）；<code>aclose()</code> 是 <code>close()</code> 的 async alias。</div>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ④ 7 种 route 处理策略                                         -->
+      <!-- ============================================================ -->
+      <section id="routes" class="rv-section">
+        <h2>④ 7 种 route 的处理策略一览</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr>
+                <th style="width: 12%;">route</th>
+                <th style="width: 18%;">gateway 类型</th>
+                <th style="width: 16%;">token 来源</th>
+                <th style="width: 16%;">online RL 可用性</th>
+                <th>主要用途</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>mock</code></td>
+                <td><code>MockLLMGateway</code> / <code>ModelClientLLMGateway</code></td>
+                <td><span class="rh-route-cell ok">deterministic</span></td>
+                <td><span class="rh-route-cell diag">diagnostic only</span></td>
+                <td>测试、本地 smoke</td>
+              </tr>
+              <tr>
+                <td><code>replay</code></td>
+                <td><code>ReplayLLMGateway</code></td>
+                <td><span class="rh-route-cell diag">replay script</span></td>
+                <td><span class="rh-route-cell no">invalid_for_online_rl</span></td>
+                <td>offline diagnostic replay</td>
+              </tr>
+              <tr>
+                <td><code>openai</code></td>
+                <td><code>ProviderLLMGateway</code></td>
+                <td><span class="rh-route-cell diag">provider unavailable / retokenized debug</span></td>
+                <td><span class="rh-route-cell no">invalid_for_online_rl (默认)</span></td>
+                <td>evaluation · teacher data · SFT export · preference data</td>
+              </tr>
+              <tr>
+                <td><code>deepseek</code></td>
+                <td><code>ProviderLLMGateway</code></td>
+                <td>同 openai</td>
+                <td><span class="rh-route-cell no">invalid_for_online_rl (默认)</span></td>
+                <td>同 openai</td>
+              </tr>
+              <tr>
+                <td><code>local_vllm</code></td>
+                <td><code>UnsupportedRouteLLMGateway</code></td>
+                <td>—</td>
+                <td><span class="rh-route-cell no">结构化拒绝</span></td>
+                <td>占位，Stage 11+ 实现</td>
+              </tr>
+              <tr>
+                <td><code>local_sglang</code></td>
+                <td><code>UnsupportedRouteLLMGateway</code></td>
+                <td>—</td>
+                <td><span class="rh-route-cell no">结构化拒绝</span></td>
+                <td>占位，Stage 11+ 实现</td>
+              </tr>
+              <tr>
+                <td><code>verl</code></td>
+                <td><code>UnsupportedRouteLLMGateway</code></td>
+                <td>—</td>
+                <td><span class="rh-route-cell future">唯一允许 online RL 的 route</span></td>
+                <td>占位，Stage 11 接 verl 后才提供真实实现</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑤ Token 与 logprob 策略                                       -->
+      <!-- ============================================================ -->
+      <section id="token" class="rv-section">
+        <h2>⑤ Token 与 logprob 策略</h2>
+        <p class="rv-muted">这一节解决 Stage 5 最大的风险：<strong>"看起来有 token，实际不是训练可用 token"</strong>。</p>
+        <article class="rh-api-card">
+          <h4 style="margin: 0 0 6px;">3 种 <code>token_source</code> 命名</h4>
+          <div class="rv-table-wrap">
+            <table class="rv-table rh-table-tight">
+              <thead><tr><th style="width: 38%;"><code>token_source</code></th><th>含义</th></tr></thead>
+              <tbody>
+                <tr><td><code>"mock_gateway"</code></td><td>稳定 deterministic token，<strong>仅</strong>测试用。<code>MockLLMGateway</code> 产生。</td></tr>
+                <tr><td><code>"provider_text_retokenized_debug_only"</code></td><td>把 provider 文本结果重新分词得到的 token ids。<strong>不能</strong>作为正式 online RL token。可供 diagnostic / SFT export。</td></tr>
+                <tr><td><code>"provider_unavailable"</code></td><td>旧 client 拿不到 token ids。<code>output_logprobs=None</code>，<code>output_token_ids=[]</code>。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound"><span class="rh-label">铁律</span><code>output_logprobs is None</code> → runtime / TrainingView 必须 <code>invalid_for_online_rl=True</code>。route 不是 <code>verl</code> 同样必须 invalid。</div>
+            <div class="rh-meta-item danger"><span class="rh-label">禁止</span><strong>不允许</strong>把最终 transcript 重新分词后冒充正式训练 token。这条由 <a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L81">test_formal_online_rl_batch_rejects_every_non_verl_route</a> 强制。</div>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑥ Online RL 强制门                                            -->
+      <!-- ============================================================ -->
+      <section id="online-rl" class="rv-section">
+        <h2>⑥ Online RL 强制门（白名单升级）</h2>
+        <p class="rv-muted">Stage 1 用 <code>PROVIDER_ROUTES</code> 黑名单挡 provider 路由；Stage 5 把它升级成<strong>白名单</strong>——必须显式 <code>repo_harness_llm_gateway_route == "verl"</code> 才能进 formal batch。</p>
+        <div class="rh-bidir">
+          <div class="rh-dir-card s2">
+            <h4>Stage 1 旧版（黑名单）</h4>
+            <div class="rh-arrow"><span class="kw">if</span> route <span class="kw">in</span> PROVIDER_ROUTES:
+    invalid_for_online_rl = <span class="kw">True</span></div>
+            <p class="rv-muted" style="font-size: 0.86rem;">问题：路由集合扩张时容易漏（新增 <code>local_vllm</code> 时忘了加进 set）。</p>
+          </div>
+          <div class="rh-dir-card s5">
+            <h4>Stage 5 新版（白名单）</h4>
+            <div class="rh-arrow"><span class="kw">if</span> route != <span class="li">"verl"</span>:
+    <span class="kw">raise</span> ValueError(<span class="li">"non_verl_route_invalid_for_online_rl"</span>)</div>
+            <p class="rv-muted" style="font-size: 0.86rem;">收益：未来新增的 route 默认 <strong>非</strong> online RL，必须主动证明才能进 formal batch。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑦ 必须保持的边界                                              -->
+      <!-- ============================================================ -->
+      <section id="boundaries" class="rv-section">
+        <h2>⑦ 必须保持的 8 条硬边界</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 5%;">#</th><th>边界</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>不能 <code>import verl</code>，不能实现 <code>RepoHarnessVerlAgentLoop</code>。</td></tr>
+              <tr><td>2</td><td>不能启动、停止或管理 vLLM / SGLang / Ray / verl server。</td></tr>
+              <tr><td>3</td><td>不能把 OpenAI / DeepSeek 或其他 provider route 伪装成当前 rollout policy sample。</td></tr>
+              <tr><td>4</td><td>不能用最终 transcript 重新分词来构造正式训练 token。</td></tr>
+              <tr><td>5</td><td><code>LLMGatewayResponse.output_token_ids</code> 必须表示该次 gateway 调用的真实模型输出 token；provider route 拿不到时<strong>必须</strong>标 diagnostic / offline。</td></tr>
+              <tr><td>6</td><td><code>response_mask</code> 仍然只能表示模型生成 token，必须全为 <code>1</code>。工具 observation 在 episode 级 TrainingView 中拼接并设 <code>response_mask=0</code>。</td></tr>
+              <tr><td>7</td><td><code>LLMGatewayResponse.extra_fields</code> 可以保留 gateway 元数据，但<strong>禁止</strong>含 hidden verifier / gold patch / provider secret / 完整 reward metadata / 本地绝对路径。</td></tr>
+              <tr><td>8</td><td><code>TrainingView.extra_fields</code> 和未来 <code>AgentLoopOutput.extra_fields</code> 只能保留 <code>repo_harness_*</code> 扁平标量和 <code>rh://</code> opaque refs。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑧ 改动文件                                                    -->
+      <!-- ============================================================ -->
+      <section id="files" class="rv-section">
+        <h2>⑧ 改动 / 新增的文件（汇总）</h2>
+        <p class="rv-muted">同 §⓪ 改动文件表，此处不重复列出。Stage 5 没有触及旧 <code>evaluation/runner.py</code> CLI 路径、<code>agent_loop/loop.py</code>、<code>model_client/*</code> 任何 provider client 实现。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑨ 实施 10 步                                                  -->
+      <!-- ============================================================ -->
+      <section id="pipeline" class="rv-section">
+        <h2>⑨ 实施顺序（10 步）</h2>
+        <div class="rh-pipeline">
+          <div class="rh-pipeline-step"><span class="rh-step-no">1</span><strong>只读梳理</strong><small>过一遍 <code>model_client/protocol.py</code> · <code>schemas.py</code> · <code>factory.py</code> · <code>mock.py</code> · <code>replay.py</code> · provider clients · <code>agent_loop/loop.py</code>。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">2</span><strong>先写测试</strong><small>覆盖 provider route 默认 invalid · mock/replay gateway roundtrip · route mismatch · missing logprob。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">3</span><strong>实现 <code>ModelClientLLMGateway</code></strong><small>新→旧方向 adapter。<code>asyncio.run_in_executor</code> + Semaphore 受控并发，关键字调用旧 client。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">4</span><strong>Response 转换</strong><small><code>ModelResponse → LLMGatewayResponse</code>，明确 token provenance、logprob 缺失、raw artifact ref 投影。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">5</span><strong>Mock / Replay deterministic gateway</strong><small>本地测试不依赖外部 API。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">6</span><strong>Provider gateway wrapper</strong><small>OpenAI / DeepSeek 用，但真实 API smoke 保持可跳过、成本受控、凭据不落盘。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">7</span><strong>接入 runtime facade / 测试入口</strong><small>验证 gateway route 能生成 <code>GenerationRecord</code> 和 <code>TrainingView</code>。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">8</span><strong>visibility / contract tests</strong><small>证明 provider route 不进入 formal online RL batch。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">9</span><strong>跑回归</strong><small>Stage 5 新测试 + Stage 0H / 1 / 2 / 3 / 4 全部回归。<code>rg verl src/repo_harness/rl</code> 必须无命中。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">10</span><strong>sub agent 只读审查</strong><small>检查 route 边界 · token provenance · provider 默认 invalid · 是否提前实现 Stage 11。</small></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑩ 测试覆盖矩阵                                                -->
+      <!-- ============================================================ -->
+      <section id="tests" class="rv-section">
+        <h2>⑩ 测试 ↔ 契约 矩阵</h2>
+        <h3 style="margin: 14px 0 4px;"><code>test_repo_harness_rl_stage5_gateway_routes.py</code></h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L50">mock_gateway_returns_deterministic_training_tokens</a></td><td>mock route 输出稳定 token + logprob，可重复</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L66">mock_route_is_diagnostic_not_formal_online_rl_sample</a></td><td>mock 即使有 token 和 logprob 也不能进 formal batch</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L81">formal_online_rl_batch_rejects_every_non_verl_route</a></td><td><strong>核心</strong>：白名单门，所有非 verl route 拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L96">formal_online_rl_helpers_require_explicit_verl_route</a></td><td><code>extra_fields.repo_harness_llm_gateway_route</code> 必须显式存在且 = "verl"</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L130">route_builder_returns_mock_gateway_without_provider_client</a></td><td>mock 路由不需要 model_client，工厂能正确选 MockLLMGateway</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L136">route_builder_returns_structured_unsupported_gateway_without_fallback</a></td><td><strong>核心</strong>：未实现的路由返回 Unsupported，<strong>绝不</strong>静默 fallback</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_gateway_routes.py#L158">unimplemented_routes_do_not_fallback_to_legacy_model_client</a></td><td>verl / local_vllm / local_sglang 路由不会偷偷调到 provider client</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin: 14px 0 4px;"><code>test_repo_harness_rl_stage5_provider_gateway.py</code></h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L112">model_client_gateway_uses_keyword_call_and_marks_provider_tokens_offline</a></td><td>关键字调用 <code>generate(request=..., recorder=...)</code> + provider token 标 offline</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L153">provider_gateway_response_stays_invalid_for_online_rl_in_runtime</a></td><td>runtime 端二次确认 provider route invalid</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L176">gateway_error_maps_to_timeout_status</a></td><td><code>response.error</code> 含 timeout 词 → status="timeout"</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L195">gateway_error_maps_to_infrastructure_error</a></td><td><code>response.error</code> 不含 timeout → status="infrastructure_error"</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L213">model_client_gateway_can_be_closed</a></td><td><code>close()</code> 关闭 ThreadPool 不泄漏</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L226">model_client_gateway_rejects_generate_after_close</a></td><td>关闭后再调 <code>generate_turn</code> 抛 <code>RuntimeError</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage5_provider_gateway.py#L240">model_client_gateway_aclose_marks_gateway_closed</a></td><td>async close 等价 sync close</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑪ 不做事项                                                    -->
+      <!-- ============================================================ -->
+      <section id="not-doing" class="rv-section">
+        <h2>⑪ Stage 5 明确不做（留给后续阶段）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 70%;">不做内容</th><th>所属阶段</th></tr></thead>
+            <tbody>
+              <tr><td>真实 <code>VerlLLMGateway</code></td><td>Stage 11</td></tr>
+              <tr><td><code>RepoHarnessVerlAgentLoop</code></td><td>Stage 11</td></tr>
+              <tr><td><code>TrainingView → AgentLoopOutput</code> 转换器</td><td>Stage 10</td></tr>
+              <tr><td>workspace / container 复用</td><td>Stage 6</td></tr>
+              <tr><td>verifier worker pool</td><td>Stage 7</td></tr>
+              <tr><td>Ray 调度 · vLLM server 管理 · SGLang server 管理</td><td>Stage 11/12</td></tr>
+              <tr><td>改变 reward / verifier / workspace 权威语义</td><td>任何阶段都不允许</td></tr>
+              <tr><td>把旧 <code>AgentLoop</code> 一次性重写为通过 gateway 调模型</td><td>后续渐进迁移</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑫ 验收命令                                                    -->
+      <!-- ============================================================ -->
+      <section id="checks" class="rv-section">
+        <h2>⑫ 建议验收命令</h2>
+        <h4 style="margin: 10px 0 4px;">编译 + Stage 5 新增</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m compileall -q src
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage5_gateway_routes.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage5_provider_gateway.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">Stage 4 / 3 / 2 / 1 / 0H 回归</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage4_timing_resource.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage2_runtime.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_verl_contract_fixtures.py tests/unit/test_repo_harness_verl_stage0h_shape_rules.py tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">证明无 verl import</h4>
+        <pre class="rv-codeblock"><code>rg -n "(^|\s)(import|from)\s+verl" src/repo_harness/rl || true</code></pre>
+
+        <div class="rv-callout success">
+          <strong>本次实际结果：</strong>Stage 5 新增 15+ 测试全部通过 · Stage 0H / 1 / 2 / 3 / 4 回归全部通过 · <code>rg verl src/repo_harness/rl</code> 无命中。
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>

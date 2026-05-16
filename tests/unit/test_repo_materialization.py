@@ -76,6 +76,30 @@ def test_local_repository_clean_status_materializes(tmp_path: Path):
     assert not (checkout.root / ".git").exists()
 
 
+def test_local_repository_can_preserve_git_metadata_for_setup_profiles(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "repo-harness@example.test")
+    _git(repo, "config", "user.name", "Repo Harness")
+    (repo / "file.txt").write_text("clean\n", encoding="utf-8")
+    _git(repo, "add", "file.txt")
+    _git(repo, "commit", "-m", "initial")
+    task_path = _local_repo_task(tmp_path, repo, allow_dirty=False, working_tree_clean=True)
+    payload = json.loads(task_path.read_text(encoding="utf-8"))
+    payload["metadata"] = {"git_metadata_policy": "preserve_base_git_metadata"}
+    task_path.write_text(_dump_json_as_yaml(payload), encoding="utf-8")
+    loaded = load_task(task_path)
+
+    checkout = materialize_source(loaded.runnable_task, tmp_path / "checkout")
+
+    assert (checkout.root / ".git").is_dir()
+    assert (checkout.root / "file.txt").read_text(encoding="utf-8") == "clean\n"
+    assert checkout.facts.remotes_stripped is False
+    assert checkout.facts.branches_stripped is False
+    assert checkout.facts.tags_stripped is False
+
+
 def test_fixture_source_materialization_preserves_symlink_directories(tmp_path: Path):
     source = tmp_path / "fixture_with_symlink"
     source.mkdir()

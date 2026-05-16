@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl Stage 7 执行计划与结果</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    /* === 与 Stage 2 – 6 一致的工程文档式样式 === */
+    .rh-toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .rh-toc a {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+      color: var(--rv-text);
+      font-size: 0.92rem;
+      text-decoration: none;
+    }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+
+    .rh-kind {
+      display: inline-block;
+      padding: 1px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+    .rh-kind.cls   { background: rgba(88,166,255,0.16);  color: #58a6ff; }
+    .rh-kind.dc    { background: rgba(126,231,135,0.16); color: #7ee787; }
+    .rh-kind.fn    { background: rgba(255,196,99,0.18);  color: #ffc463; }
+    .rh-kind.cfg   { background: rgba(199,159,255,0.18); color: #c79fff; }
+    .rh-kind.danger{ background: rgba(255,123,123,0.16); color: #ff7b7b; }
+    .rh-kind.warn  { background: rgba(255,180,99,0.20);  color: #ffb463; }
+
+    .rh-api-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-api-card .rh-sub { margin: 0 0 12px; color: var(--rv-muted); font-size: 0.92rem; }
+
+    .rh-sig {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #0b1018;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      color: #d0d7de;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+
+    .rh-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .rh-meta-item {
+      padding: 8px 12px;
+      border-left: 3px solid var(--rv-border-strong);
+      background: var(--rv-surface);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+    }
+    .rh-meta-item .rh-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--rv-muted);
+    }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound   { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger  { border-left-color: var(--rv-danger); }
+
+    .rh-pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .rh-pipeline-step {
+      padding: 12px 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-pipeline-step .rh-step-no {
+      display: inline-block;
+      padding: 1px 7px;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--hh-accent-soft);
+      color: var(--rv-accent);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+    .rh-pipeline-step strong { display: block; margin-bottom: 4px; }
+    .rh-pipeline-step small { color: var(--rv-muted); font-size: 0.82rem; line-height: 1.5; }
+
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+
+    /* === Stage 7 特有：reward boundary 流程图 === */
+    .rh-boundary {
+      padding: 16px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface);
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.84rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .rh-boundary .b-episode { color: #58a6ff; font-weight: 760; }
+    .rh-boundary .b-pool    { color: #ffc463; font-weight: 760; }
+    .rh-boundary .b-worker  { color: #c79fff; font-weight: 760; }
+    .rh-boundary .b-reward  { color: #7ee787; font-weight: 760; }
+    .rh-boundary .b-result  { color: #d2a8ff; font-weight: 760; }
+    .rh-boundary .branch    { color: #8b949e; }
+    .rh-boundary .arrow     { color: #d0d7de; }
+    .rh-boundary .err       { color: #ff7b7b; font-weight: 760; }
+
+    /* === error_type → status 真值表彩色单元格 === */
+    .rh-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.82rem;
+      font-weight: 760;
+    }
+    .rh-status.succeeded { background: rgba(126,231,135,0.20); color: #7ee787; }
+    .rh-status.failed    { background: rgba(255,196,99,0.20);  color: #ffc463; }
+    .rh-status.invalid_task    { background: rgba(255,180,99,0.20); color: #ffb463; }
+    .rh-status.infrastructure_error { background: rgba(255,123,123,0.18); color: #ff7b7b; }
+    .rh-status.timeout   { background: rgba(199,159,255,0.20); color: #c79fff; }
+    .rh-status.cancelled { background: rgba(139,148,158,0.20); color: #d0d7de; }
+    .rh-status.no_progress { background: rgba(139,148,158,0.20); color: #d0d7de; }
+    .rh-status.invalid   { background: rgba(255,123,123,0.18); color: #ff7b7b; }
+
+    /* === pool 双层 semaphore 设计图 === */
+    .rh-semaphores {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      margin: 12px 0;
+    }
+    @media (max-width: 880px) { .rh-semaphores { grid-template-columns: 1fr; } }
+    .rh-sem-card {
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+    }
+    .rh-sem-card.admission { border-top: 4px solid var(--rv-warning); }
+    .rh-sem-card.worker    { border-top: 4px solid var(--rv-success); }
+    .rh-sem-card h4 { margin: 0 0 6px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.96rem; }
+    .rh-sem-card small { color: var(--rv-muted); font-size: 0.86rem; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2</a>
+          <a href="repo_harness_verl_stage3_execution_plan.html">Stage 3</a>
+          <a href="repo_harness_verl_stage4_execution_plan.html">Stage 4</a>
+          <a href="repo_harness_verl_stage5_execution_plan.html">Stage 5</a>
+          <a href="repo_harness_verl_stage6_execution_plan.html">Stage 6</a>
+          <a href="repo_harness_verl_stage7_execution_plan.html" aria-current="page">Stage 7</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 7 · Execution Report</span>
+      <h1>Stage 7：verifier worker pool + reward 边界</h1>
+      <p class="rv-lead">
+        本页上半为 Stage 7 <strong>实施结果</strong>，下半保留<strong>执行计划</strong>。本次产出：新增 <code>src/repo_harness/verifier/pool.py</code>（330 行，5 个 schema/class + 2 个异常）· 新增 <code>src/repo_harness/rl/reward_boundary.py</code>（212 行，1 个结果 schema + 2 个公共函数 + 3 类 error 常量集 + 12 种错误类型映射）· 修改 <code>reward/calculator.py</code> 把 invalid 集合从 3 种<strong>扩到 12 种</strong>· runtime 加 <code>final_verifier_callable</code> / <code>verifier_worker_pool</code> 两个可选 option · 15 个新单元测试全过。核心不变量被铁律守住：<strong>EpisodeResult 返回前必须已经有 final verifier 结果和 reward</strong>。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 7 · 已实现</span>
+        <span class="rv-badge success">15 / 15 测试通过</span>
+        <span class="rv-badge info">第一版：本地 bounded pool · 不接 verl · 不做 async reward backfill · 不做 warm container</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#result">⓪ 执行结果 ⚡ 新</a>
+        <a href="#goal">① 阶段目标</a>
+        <a href="#coverage">② 第一版覆盖范围 ⚠</a>
+        <a href="#boundaries">③ 9 条硬边界</a>
+        <a href="#pool">④ VerifierWorkerPool 设计</a>
+        <a href="#reward-boundary">⑤ Reward 边界</a>
+        <a href="#status-map">⑥ 错误 → status 真值表</a>
+        <a href="#timing">⑦ TimingSummary / ResourceSummary 接入</a>
+        <a href="#visibility">⑧ Visibility 边界</a>
+        <a href="#files">⑨ 改动文件</a>
+        <a href="#pipeline">⑩ 实施步骤</a>
+        <a href="#tests">⑪ 测试覆盖矩阵</a>
+        <a href="#not-doing">⑫ 不做事项</a>
+        <a href="#checks">⑬ 验收命令</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <!-- ⓿ 执行结果                                                    -->
+      <!-- ============================================================ -->
+      <section id="result" class="rv-section">
+        <h2>⓪ 本次执行结果</h2>
+        <div class="rv-callout success">
+          <strong>一句话：</strong>Stage 7 已落地。<code>VerifierWorkerPool</code> 用<strong>双层 BoundedSemaphore</strong>（admission + worker）严格限流：admission 控制 pending+running 总量、worker 控制真实并发，pending 超额或排队超时 → 结构化 <code>queue_timeout</code>，<strong>绝不</strong>把 job 塞进 ThreadPoolExecutor 的无界内部队列。<code>Stage7RewardBoundaryResult</code> 把 final verifier 结果 + reward metadata + pool facts 整合到一个对象，runtime 在 <code>EpisodeResult</code> 构造前就完成 boundary 计算，确保"返回前必有 reward"。<code>compute_reward_metadata</code> 的 invalid 集合从 3 种扩为 <strong>12 种</strong>，covers <code>test_command_error</code>、<code>dependency_error</code>、<code>verification_workspace_error</code>、<code>docker_error</code>、<code>container_error</code>、<code>pool_executor_error</code>、<code>queue_timeout</code> 等基础设施错误。15 个测试全过。
+        </div>
+
+        <h3>实际改动文件</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 36%;">文件</th><th style="width: 11%;">变更</th><th style="width: 10%;">行数</th><th>新增内容</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/verifier/pool.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+330</td>
+                <td><code>VerifierPoolOptions</code> · <code>VerifierJob</code>（frozen dc, callable 是 runtime-only）· <code>VerifierJobResult</code>（含 6 个时间戳字段 + model_validator 强制终态）· <code>VerifierWorkerPool</code>（双层 BoundedSemaphore + worker id queue + close 语义）· <code>VerifierWorkerPoolClosedError</code> · <code>VerifierExecutionError</code></td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/reward_boundary.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+212</td>
+                <td>3 个 error 集合常量（<code>INVALID_TASK_VERIFIER_ERRORS</code> · <code>INFRASTRUCTURE_VERIFIER_ERRORS</code> · <code>TIMEOUT_VERIFIER_ERRORS</code>）· <code>LOW_CONFIDENCE_THRESHOLD=0.5</code> · <code>Stage7RewardBoundaryResult</code>(15 字段) · <code>build_stage7_reward_boundary(...)</code> · <code>map_stage7_verifier_status(...)</code> + 3 个内部 helper</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/reward/calculator.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+15 / -6</td>
+                <td>新增 <code>INVALID_FOR_TRAINING_VERIFIER_ERRORS</code> 模块常量，<strong>把 3 种扩到 12 种</strong>，覆盖 Stage 7 引入的所有基础设施错误类型</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+213 / -14</td>
+                <td>import pool + reward_boundary · 新增 <code>FinalVerifierCallable</code> type alias · <code>RepoHarnessRuntimeOptions</code> 加 2 个可选字段（<code>final_verifier_callable</code> + <code>verifier_worker_pool</code>）· <code>run_episode</code> 调 <code>_stage7_reward_boundary(...)</code> · <code>_result_from_gateway_response</code> 接 <code>Stage7RewardBoundaryResult</code> 透传 status / reward / verifier_summary</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+14</td>
+                <td>对外导出 7 个 Stage 7 符号</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/verifier/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+14</td>
+                <td>对外导出 pool 模块所有公共符号</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_verifier_worker_pool_stage7.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+213</td>
+                <td>8 个 pool 测试：worker facts / queue 限流 / 异常结构化 / pending timeout / cancellation / close / callable 不写盘</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage7_reward_boundary.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+260</td>
+                <td>7 个 reward boundary 测试：旧 reward 不可信 / trusted rejection / runtime 路径对账 / 4 种 error_type 映射 / queue timeout / visibility 排除</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">⚡ 核心目标流程：reward 必须在 EpisodeResult 返回前完成</h3>
+        <p class="rv-muted">这是 Stage 7 的<strong>铁律</strong>。runtime 不会先返回"看起来 succeeded 但没有 reward"的样本，再由后台补 reward。</p>
+        <div class="rh-boundary"><span class="b-episode">[1] episode 完成 agent loop</span>
+   <span class="arrow">│</span>
+   <span class="arrow">↓</span>
+<span class="b-pool">[2] runtime._stage7_reward_boundary(request)</span>
+   <span class="arrow">│</span>     options.verifier_worker_pool? options.final_verifier_callable?
+   <span class="arrow">│</span>     <span class="branch">├─ 都没 → return None（runtime 走 minimal verifier 老路径）</span>
+   <span class="arrow">│</span>     <span class="branch">├─ 只有 callable，无 pool → 同步 in-process 执行 + 构造 VerifierJobResult</span>
+   <span class="arrow">│</span>     <span class="branch">└─ 有 pool + 有 callable → 提交 VerifierJob，await pool.run(job)</span>
+   <span class="arrow">↓</span>
+<span class="b-pool">[3] pool.run(job)：双层 BoundedSemaphore 限流</span>
+   <span class="arrow">│</span>     <span class="branch">├─</span> 抢 admission_slot（max_workers + max_pending_jobs）
+   <span class="arrow">│</span>     <span class="branch">│</span>     <span class="branch">├─</span> 抢到 → 进入排队
+   <span class="arrow">│</span>     <span class="branch">│</span>     <span class="branch">└─</span> 没抢到 + 超 queue_timeout_seconds → <span class="err">queue_timeout</span> 结构化返回
+   <span class="arrow">│</span>     <span class="branch">├─</span> 抢 worker_slot（max_workers）
+   <span class="arrow">│</span>     <span class="branch">└─</span> 拿到稳定 worker_id（"verifier-worker-0"）
+   <span class="arrow">↓</span>
+<span class="b-worker">[4] worker 执行 verifier callable</span>
+   <span class="arrow">│</span>     <span class="branch">├─</span> 记录 submitted_at / started_at / finished_at
+   <span class="arrow">│</span>     <span class="branch">├─</span> queue_wait_seconds = started − submitted
+   <span class="arrow">│</span>     <span class="branch">├─</span> execution_seconds = finished − started
+   <span class="arrow">│</span>     <span class="branch">└─</span> 异常 → VerifierExecutionError, error_type="pool_executor_error"
+   <span class="arrow">↓</span>
+<span class="b-reward">[5] build_stage7_reward_boundary(...)</span>
+   <span class="arrow">│</span>     <span class="branch">├─</span> map_stage7_verifier_status(...) → (status, status_reason)
+   <span class="arrow">│</span>     <span class="branch">├─</span> compute_reward_metadata(...) → RewardMetadata
+   <span class="arrow">│</span>     <span class="branch">├─</span> <span class="err">invalid_for_training 决策</span>：status invalid → 强制覆盖 reward 为 0.0 + invalid_for_training=True
+   <span class="arrow">│</span>     <span class="branch">└─</span> 注入 4 个 extra_fields（reward_metadata_ref / final_verifier_ref / pool_id / worker_id / queue_wait_seconds）
+   <span class="arrow">↓</span>
+<span class="b-result">[6] runtime 把 reward_boundary 透传到 RepoHarnessEpisodeResult</span>
+   <span class="arrow">│</span>     <span class="branch">├─</span> EpisodeResult.status / status_reason / reward / training_view 都从同一 boundary 读出
+   <span class="arrow">│</span>     <span class="branch">└─</span> <strong>返回前 reward 已确定</strong>，没有"先返回再补"路径</div>
+
+        <h3 style="margin-top: 22px;">⚡ <code>VerifierWorkerPool</code> 的双层 BoundedSemaphore 设计</h3>
+        <p class="rv-muted">这是 Stage 7 计划文档第 136-145 行最强调的安全约束：<code>ThreadPoolExecutor(max_workers=N)</code> <strong>只</strong>限制运行的 worker，<strong>不</strong>限制内部队列长度，这等于没限流。Stage 7 必须用 admission semaphore 在<strong>进入 executor 之前</strong>就阻断超额请求。</p>
+        <div class="rh-semaphores">
+          <div class="rh-sem-card admission">
+            <h4>① _admission_slots: BoundedSemaphore(max_workers + max_pending_jobs)</h4>
+            <small>所有提交的 job 必须先抢这个 slot。这<strong>包括</strong>正在排队的和正在执行的。<br>
+            <strong>抢不到 → <code>queue_timeout</code></strong>，job 永远不会进 executor 队列。<br>
+            cancellation / close 后必须 release，避免永久泄漏 admission 名额。</small>
+          </div>
+          <div class="rh-sem-card worker">
+            <h4>② _worker_slots: BoundedSemaphore(max_workers)</h4>
+            <small>抢到 admission 后再抢 worker。worker_slots 用完时<strong>仍在 admission 内排队</strong>，但不会被 ThreadPoolExecutor 内部队列吞掉。<br>
+            <code>_worker_ids: SimpleQueue</code> 维护稳定 worker id（<code>"verifier-worker-0"</code> / <code>"verifier-worker-1"</code> …），写入 <code>VerifierJobResult</code>。</small>
+          </div>
+        </div>
+        <div class="rv-callout warning">
+          <strong>关键测试：</strong><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L67">queue_timeout_happens_before_unbounded_executor_queue</a> 显式证明超额 job 在<strong>进入 executor 之前</strong>就被拒绝，<strong>不</strong>会被 ThreadPoolExecutor 内部无界队列收下后再"假装超时"。
+        </div>
+
+        <h3 style="margin-top: 22px;">新增公开 API 速查</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 8%;">类型</th><th style="width: 32%;">名称</th><th>职责</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>VerifierPoolOptions</code></td><td><code>pool_id="verifier-pool-local-v1"</code> · <code>max_workers ≥ 1</code> · <code>max_pending_jobs ≥ 0</code> · <code>queue_timeout_seconds &gt; 0</code> · <code>default_execution_timeout_seconds &gt; 0</code> · <code>record_worker_diagnostics</code></td></tr>
+              <tr><td><span class="rh-kind dc">frozen dc</span></td><td><code>VerifierJob</code></td><td>runtime-only：<code>job_id</code> + <code>run_id</code> + <code>episode_id</code> + <code>task_id</code> + <code>verifier_stage</code>（"baseline"|"feedback"|"final"）+ <code>callable</code>（<strong>不</strong>是 pydantic 字段）+ <code>timeout_seconds</code></td></tr>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>VerifierJobResult</code></td><td>含 6 个时间戳字段：<code>submitted_at_seconds</code> / <code>started_at_seconds</code> / <code>finished_at_seconds</code> / <code>queue_wait_seconds</code> / <code>execution_seconds</code> + <code>pool_id</code> + <code>worker_id</code> + <code>timeout</code> + <code>error_type</code> + <code>error_message</code> + <code>diagnostics</code> + <code>verifier_result</code>。model_validator 强制：<strong>必须</strong>要么有 verifier_result 要么有 error_type。</td></tr>
+              <tr><td><span class="rh-kind cls">主类</span></td><td><code>VerifierWorkerPool</code></td><td><code>async run(job)</code>：抢 admission_slot → 抢 worker_slot → 取 worker_id → 执行 callable → 释放。<code>close()</code> / <code>aclose()</code> 释放 ThreadPoolExecutor。</td></tr>
+              <tr><td><span class="rh-kind danger">异常</span></td><td><code>VerifierWorkerPoolClosedError</code></td><td>对已 closed 的 pool 提交 → 抛此异常</td></tr>
+              <tr><td><span class="rh-kind danger">异常</span></td><td><code>VerifierExecutionError</code></td><td>callable 抛出的异常被包成此异常，转换为 <code>error_type="pool_executor_error"</code></td></tr>
+              <tr><td><span class="rh-kind dc">结果</span></td><td><code>Stage7RewardBoundaryResult</code></td><td>15 字段：<code>status</code> + <code>status_reason</code> + <code>invalid_for_training</code> + <code>invalid_for_online_rl</code> + <code>reward_score</code> + <code>reward_metadata</code> + <code>reward_summary</code> + <code>verifier_summary</code> + <code>verifier_pool_id</code> + <code>verifier_worker_id</code> + <code>verifier_queue_wait_seconds</code> + <code>final_verifier_seconds</code> + <code>reward_compute_seconds</code> + <code>extra_fields</code></td></tr>
+              <tr><td><span class="rh-kind fn">函数</span></td><td><code>build_stage7_reward_boundary(...)</code></td><td>核心 boundary helper。接收 final_verifier + pool_result + reward refs，返回 <code>Stage7RewardBoundaryResult</code>。<strong>不</strong>盲信 <code>compute_reward_metadata</code> 的 invalid 判断，会用 status 加严覆盖。</td></tr>
+              <tr><td><span class="rh-kind fn">函数</span></td><td><code>map_stage7_verifier_status(...)</code></td><td>把 final_verifier + pool_result 映射到 <code>(EpisodeStatus, status_reason)</code>。3 个 error 集合驱动决策。</td></tr>
+              <tr><td><span class="rh-kind cfg">3 个常量集</span></td><td><code>INVALID_TASK_VERIFIER_ERRORS</code> · <code>INFRASTRUCTURE_VERIFIER_ERRORS</code> · <code>TIMEOUT_VERIFIER_ERRORS</code></td><td>分类驱动 status 映射，详见 §⑥ 真值表</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">⚡ <code>compute_reward_metadata</code> 的 invalid 集合：3 → 12 种扩展</h3>
+        <p class="rv-muted">Stage 7 之前 reward calculator 只把 3 种 verifier error 当作 invalid_for_training；Stage 7 新增 9 种基础设施错误类别。</p>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">原有 3 种（Stage 7 之前）</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; font-family: 'JetBrains Mono', 'Menlo', monospace;">
+              <li>low_parser_confidence</li>
+              <li>patch_apply_failed</li>
+              <li>final_verifier_environment_error</li>
+            </ul>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">Stage 7 新增 9 种</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; font-family: 'JetBrains Mono', 'Menlo', monospace;">
+              <li>test_command_error</li>
+              <li>dependency_error</li>
+              <li>verification_workspace_error</li>
+              <li>docker_error</li>
+              <li>container_error</li>
+              <li>pool_executor_error</li>
+              <li>queue_timeout</li>
+              <li>execution_timeout</li>
+              <li>task_timeout_before_final_verifier</li>
+            </ul>
+          </div>
+        </div>
+        <div class="rv-callout warning">
+          <strong>双层防护：</strong>即使 <code>compute_reward_metadata</code> 没把某类错误标 invalid，<code>build_stage7_reward_boundary</code> 也会用 <strong>status 映射</strong>第二次覆盖：status ∈ {invalid, invalid_task, infrastructure_error, cancelled, timeout, no_progress} → 强制把 reward_metadata 的 <code>final_reward=0.0</code>、<code>invalid_for_training=True</code>、<code>invalid_reason=status_reason</code>。
+        </div>
+
+        <h3 style="margin-top: 22px;">关键验收数字</h3>
+        <div class="rv-grid-4">
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">15 / 15</div>
+            <small class="rv-muted">Stage 7 新增测试通过</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">12</div>
+            <small class="rv-muted">invalid_for_training 错误类型（3→12）</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">2</div>
+            <small class="rv-muted">BoundedSemaphore 限流层数</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-danger);">0</div>
+            <small class="rv-muted">async reward backfill 路径</small>
+          </div>
+        </div>
+
+        <div class="rv-callout warning" style="margin-top: 16px;">
+          <strong>本次明确未做（按计划留给后续）：</strong>
+          <ul style="margin: 4px 0 0 18px;">
+            <li><strong>async reward backfill</strong>：第一版严格 blocking，<strong>不</strong>返回"没有 reward 的成功样本"。Stage 13 才考虑。</li>
+            <li><strong>multi-process / 跨机 worker pool</strong>：第一版仅本地单进程 bounded executor。Stage 9 才做。</li>
+            <li><strong>warm container pool / 长驻 worker container</strong>：Stage 6 或 Stage 9 后续。</li>
+            <li><strong>baseline verifier cache 真实结果复用</strong>：Stage 7 第一版保留字段占位，不作为训练样本有效性的前提。</li>
+            <li><strong>no-progress 策略细化</strong>：Stage 7 默认 <code>no_progress → invalid_for_training=True</code>，Stage 8 才细化。</li>
+            <li><strong>默认 CLI 行为不变</strong>：<code>RepoHarnessRuntimeOptions</code> 加的 <code>final_verifier_callable</code> / <code>verifier_worker_pool</code> 是<strong>可选注入</strong>，不破坏现有 SWE-Bench / V5 路径。</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ① 阶段目标                                                    -->
+      <!-- ============================================================ -->
+      <section id="goal" class="rv-section">
+        <h2>① 阶段目标</h2>
+        <p>把 final verifier 的执行从<strong>单条 episode 内部直接同步调用</strong>，演进为<strong>可池化、可限流、可计时、可审计</strong>的执行边界。同时保持铁律：</p>
+        <div class="rv-callout">
+          <strong>EpisodeResult 返回前必须已经得到 final verifier 结果和 reward。</strong>
+        </div>
+        <p class="rv-muted">允许优化 verifier 的执行调度方式，<strong>不允许</strong>改变 reward 的语义边界。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ② 第一版覆盖范围                                              -->
+      <!-- ============================================================ -->
+      <section id="coverage" class="rv-section">
+        <h2>② 第一版覆盖范围 ⚠</h2>
+        <div class="rv-grid-3">
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-success);">
+            <h4 style="margin: 0 0 6px;">✓ 必须覆盖</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>有限并发 verifier worker pool</li>
+              <li>job 提交 / 排队 / 执行 / 结果 / 关闭</li>
+              <li>queue wait · worker id · pool id · execution duration · timeout · exception 的结构化记录</li>
+              <li>final verifier → reward metadata 的<strong>同步</strong>边界</li>
+              <li><code>TimingSummary</code> / <code>ResourceSummary</code> verifier 字段填充</li>
+              <li>5 种 status 区分：succeeded / failed / timeout / invalid_task / infrastructure_error</li>
+              <li>reward / hidden 细节 visibility 测试</li>
+            </ul>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-warning);">
+            <h4 style="margin: 0 0 6px;">~ 接口或最小实现</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>baseline verifier cache（保留字段，不作为前提）</li>
+              <li>多进程 / 跨机 worker pool（仅本地）</li>
+              <li>worker 长驻容器（不做）</li>
+            </ul>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-danger);">
+            <h4 style="margin: 0 0 6px;">✗ 绝不做</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>async reward backfill</li>
+              <li>返回无 reward 的 succeeded 样本</li>
+              <li>把 verifier infra 失败当作模型失败</li>
+              <li>把 reward / hidden verifier / accepted label 放进模型可见字段</li>
+              <li>Stage 8 no-progress 优化</li>
+              <li>Stage 9 全局资源租约</li>
+              <li>Stage 11 verl 接入</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ③ 9 条硬边界                                                  -->
+      <!-- ============================================================ -->
+      <section id="boundaries" class="rv-section">
+        <h2>③ 9 条必须保持的硬边界</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 5%;">#</th><th>边界</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><strong>不做 async reward backfill</strong>。不能先返回没有 reward 的成功样本，再由后台补 reward。</td></tr>
+              <tr><td>2</td><td>不允许返回"<code>status=succeeded</code> 但没有 final verifier 或 reward metadata"的 online RL 样本。</td></tr>
+              <tr><td>3</td><td>不改变 final verifier 权威边界。模型可见 public feedback <strong>不能</strong>替代 hidden final verifier。</td></tr>
+              <tr><td>4</td><td>不改变 reward 公式核心含义。verifier 基础设施失败 <strong>不能</strong>当作模型语义失败。</td></tr>
+              <tr><td>5</td><td>不把 reward metadata / hidden verifier / accepted label / fail-to-pass 细节放进 <code>raw_prompt</code> / <code>response_ids</code> / 训练 batch 可传播字段。</td></tr>
+              <tr><td>6</td><td>不实现 Stage 8 no-progress 优化。<code>no_progress</code> 默认 <code>invalid_for_training=true</code>。</td></tr>
+              <tr><td>7</td><td>不实现 Stage 9 全局资源租约。第一版仅本地 bounded executor。</td></tr>
+              <tr><td>8</td><td>不引入 <code>verl</code> import，不实现 Stage 11 adapter。</td></tr>
+              <tr><td>9</td><td>不改变默认 CLI / SWE-Bench 路径行为，除非显式启用 verifier worker pool。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ④ VerifierWorkerPool 设计                                     -->
+      <!-- ============================================================ -->
+      <section id="pool" class="rv-section">
+        <h2>④ <code>VerifierWorkerPool</code> 设计</h2>
+        <p class="rv-muted">见 §⓪ 双层 BoundedSemaphore 图。本节补充时间戳语义和 cancellation 处置。</p>
+
+        <h3>6 个时间戳字段的语义</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 30%;">字段</th><th>定义</th></tr></thead>
+            <tbody>
+              <tr><td><code>submitted_at_seconds</code></td><td>episode 调 <code>pool.run(job)</code> 的瞬间</td></tr>
+              <tr><td><code>started_at_seconds</code></td><td>某 worker 真正开始执行 callable 的瞬间</td></tr>
+              <tr><td><code>finished_at_seconds</code></td><td>callable 返回或抛错的瞬间</td></tr>
+              <tr><td><code>queue_wait_seconds</code></td><td><code>started_at − submitted_at</code></td></tr>
+              <tr><td><code>execution_seconds</code></td><td><code>finished_at − started_at</code></td></tr>
+              <tr><td><code>timeout</code></td><td>bool。<code>queue_timeout</code> / <code>execution_timeout</code> 之一发生时为 True</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">cancellation 处置（实测能力声明）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 40%;">场景</th><th>处置</th></tr></thead>
+            <tbody>
+              <tr><td>job 还在 admission queue 里（未抢到 admission_slot）</td><td>cancellation 直接生效，admission_slot 释放，<strong>job 永远不会执行</strong></td></tr>
+              <tr><td>job 抢到 admission，但还没抢到 worker</td><td>cancellation 生效，admission + 未占用的 worker_slot 释放</td></tr>
+              <tr><td>job 已经在 worker thread 执行</td><td>外层 await 取消，但底层 thread <strong>无法被强制中断</strong>。worker_slot 保持占用直到 thread 自然结束。</td></tr>
+              <tr><td><code>queue_timeout</code> 在抢 admission 阶段就触发</td><td>job <strong>从未</strong>提交给 ThreadPoolExecutor，没有"后台堆积"风险</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rv-callout warning">
+          这是计划文档第 179-185 行最强调的诚实声明：<strong>不假装强制中断了不可中断的同步代码</strong>。底层 <code>PytestVerifier</code> 真正的超时仍依赖 <code>WorkspaceAdapter.run_command(..., timeout_sec=...)</code>。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑤ Reward 边界                                                 -->
+      <!-- ============================================================ -->
+      <section id="reward-boundary" class="rv-section">
+        <h2>⑤ <code>build_stage7_reward_boundary(...)</code></h2>
+        <p class="rv-muted">这个 helper 是 Stage 7 的<strong>语义核心</strong>。把"模型解决了任务"和"基础设施给不出可信结果"区分开。</p>
+        <article class="rh-api-card">
+          <div class="rh-sig"><span class="kw">def</span> <span class="nm">build_stage7_reward_boundary</span>(
+    *,
+    final_verifier: <span class="ty">VerifierResult | None</span>,
+    pool_result: <span class="ty">VerifierJobResult | None</span> = None,
+    reward_metadata_ref: <span class="ty">str</span>,
+    final_verifier_ref: <span class="ty">str</span>,
+    patch_stats: <span class="ty">dict[str, Any] | None</span> = None,
+    event_counts: <span class="ty">dict[str, int] | None</span> = None,
+    source_refs: <span class="ty">dict[str, Any] | None</span> = None,
+    reward_compute_seconds: <span class="ty">float</span> = 0.0,
+) -&gt; <span class="ty">Stage7RewardBoundaryResult</span></div>
+          <h4 style="margin: 10px 0 4px;">5 步决策流程</h4>
+          <ol style="margin: 0 0 0 18px; font-size: 0.92rem; line-height: 1.7;">
+            <li>合并 <code>final_verifier</code> 和 <code>pool_result.verifier_result</code> 来源（pool 模式下后者优先）。</li>
+            <li><code>map_stage7_verifier_status(verifier, pool_result)</code> → <code>(status, status_reason)</code>。</li>
+            <li>计算 <code>invalid_for_training = status ∈ {invalid, invalid_task, infrastructure_error, cancelled, timeout, no_progress}</code>。</li>
+            <li><code>compute_reward_metadata(verifier, ...)</code> → <code>RewardMetadata</code>。<br>
+              <strong>双层防护</strong>：如果 status 已经判 invalid，但 reward_metadata 还显示 valid → 用 <code>model_copy(update={final_reward: 0.0, invalid_for_training: True})</code> 强制覆盖。<br>
+              如果 reward_metadata 自己判 invalid → status 也升级为 invalid。</li>
+            <li>注入 <code>extra_fields</code>：4–5 个 flat scalar / opaque ref（reward_metadata_ref / final_verifier_ref / pool_id / worker_id / queue_wait_seconds）。</li>
+          </ol>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑥ error_type → status 真值表                                  -->
+      <!-- ============================================================ -->
+      <section id="status-map" class="rv-section">
+        <h2>⑥ error_type → EpisodeStatus 真值表</h2>
+        <p class="rv-muted">这是 <code>map_stage7_verifier_status</code> 的核心决策表。3 个 error 集合常量在 <code>reward_boundary.py</code> 中显式定义。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr>
+                <th style="width: 32%;">verifier / pool 输入事实</th>
+                <th style="width: 22%;">EpisodeStatus</th>
+                <th>训练默认</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>final verifier <code>accepted</code> + reward valid</td><td><span class="rh-status succeeded">succeeded</span></td><td>可训练，reward 来自 <code>RewardMetadata.final_reward</code></td></tr>
+              <tr><td>final verifier <code>rejected</code>，verifier 自身可信</td><td><span class="rh-status failed">failed</span></td><td>可作模型失败样本，reward 按 policy</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 <code>INVALID_TASK_VERIFIER_ERRORS</code></td></tr>
+              <tr><td><code>test_command_error</code></td><td><span class="rh-status invalid_task">invalid_task</span></td><td>不可训练</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 <code>INFRASTRUCTURE_VERIFIER_ERRORS</code></td></tr>
+              <tr><td><code>dependency_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>verification_workspace_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>docker_error</code> / <code>container_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>pool_executor_error</code>（callable 抛错被 pool 兜底）</td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>final_verifier_environment_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>low_parser_confidence</code> 或 <code>parser_confidence &lt; 0.5</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>patch_apply_failed</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 <code>TIMEOUT_VERIFIER_ERRORS</code>（含 substring 匹配 "timeout" / "timed_out"）</td></tr>
+              <tr><td><code>queue_timeout</code>（pool 排队超时）</td><td><span class="rh-status timeout">timeout</span></td><td>不可训练</td></tr>
+              <tr><td><code>execution_timeout</code>（pool 执行超时）</td><td><span class="rh-status timeout">timeout</span></td><td>不可训练</td></tr>
+              <tr><td><code>test_timeout</code>（verifier 自己超时）</td><td><span class="rh-status timeout">timeout</span></td><td>不可训练</td></tr>
+              <tr><td><code>task_timeout_before_final_verifier</code></td><td><span class="rh-status timeout">timeout</span></td><td>不可训练</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 其它兜底</td></tr>
+              <tr><td>final verifier <code>None</code>（缺失）</td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td><code>status_reason="missing_final_verifier_result"</code></td></tr>
+              <tr><td>外层 episode cancelled</td><td><span class="rh-status cancelled">cancelled</span></td><td>不可训练</td></tr>
+              <tr><td>agent <code>no_progress</code></td><td><span class="rh-status no_progress">no_progress</span></td><td>Stage 7 默认不可训练（Stage 8 才细化）</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑦ TimingSummary / ResourceSummary 接入                       -->
+      <!-- ============================================================ -->
+      <section id="timing" class="rv-section">
+        <h2>⑦ <code>TimingSummary</code> / <code>ResourceSummary</code> 接入</h2>
+        <p class="rv-muted">复用 Stage 4 已有字段，<strong>不</strong>创造一套并行 summary。</p>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4><code>TimingSummary</code> 新填字段</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; line-height: 1.6;">
+              <li><code>queue_wait_seconds</code>：episode 等 verifier worker 的总排队时间</li>
+              <li><code>verifier_seconds</code>：verifier 相关总耗时（baseline + final 互斥分桶总和）</li>
+              <li><code>final_verifier_seconds</code>：final verifier 实际执行</li>
+              <li><code>reward_compute_seconds</code>：reward metadata 计算</li>
+              <li><code>verifier_call_count</code>：至少包含 final verifier 调用次数</li>
+            </ul>
+            <p class="rv-muted" style="font-size: 0.84rem; margin: 6px 0 0;">
+              <strong>互斥规则：</strong>如果 <code>queue_wait_seconds</code> 包含 verifier 等待，<code>agent_loop_seconds</code> <strong>不能</strong>再次包含同一段时间。
+            </p>
+          </div>
+          <div class="rh-api-card">
+            <h4><code>ResourceSummary</code> 新填字段</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; line-height: 1.6;">
+              <li><code>verifier_worker_pool_id</code></li>
+              <li><code>verifier_worker_id</code></li>
+              <li><code>queue_wait_seconds_by_resource["verifier_worker"]</code></li>
+              <li><code>cleanup_status</code></li>
+            </ul>
+            <p class="rv-muted" style="font-size: 0.84rem; margin: 6px 0 0;">
+              key 用稳定资源名（<code>"verifier_worker"</code>），<strong>不</strong>用 <code>/Users/.../pool.lock</code> 或 thread repr。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑧ Visibility 边界                                             -->
+      <!-- ============================================================ -->
+      <section id="visibility" class="rv-section">
+        <h2>⑧ Visibility 边界：reward / hidden 信息</h2>
+        <div class="rv-grid-2">
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-success);">
+            <h4>✓ 允许进入 <code>TrainingView.extra_fields</code></h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; font-family: 'JetBrains Mono', 'Menlo', monospace; line-height: 1.7;">
+              <li>repo_harness_reward_metadata_ref = "rh://..."</li>
+              <li>repo_harness_final_verifier_ref = "rh://..."</li>
+              <li>repo_harness_verifier_worker_pool_id = "verifier-pool-local-v1"</li>
+              <li>repo_harness_verifier_worker_id = "verifier-worker-0"</li>
+              <li>repo_harness_verifier_queue_wait_seconds = 0.123</li>
+              <li>repo_harness_status = "failed"</li>
+              <li>repo_harness_invalid_for_training = false</li>
+            </ul>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-danger);">
+            <h4>✗ 禁止进入模型可见 / batch 字段</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; line-height: 1.7;">
+              <li>hidden verifier <code>stdout</code> / <code>stderr</code> 全文</li>
+              <li>fail-to-pass / pass-to-pass hidden 测试名称明细</li>
+              <li>accepted label 的原始 evaluator-only 事实</li>
+              <li>完整 reward components 和 reward sources</li>
+              <li>本地绝对 run directory / final verifier artifact 绝对路径</li>
+              <li>gold patch / hidden selector / evaluator-only logs</li>
+            </ul>
+          </div>
+        </div>
+        <div class="rv-callout">
+          <strong>说明：</strong>完整 <code>AuditRef</code> 仍可作为 <code>RepoHarnessEpisodeResult.audit_ref</code> 的结构化对象存在，但<strong>不能</strong>嵌套进 <code>AgentLoopOutput.extra_fields</code>（Stage 10 后）。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑨ 改动文件                                                    -->
+      <!-- ============================================================ -->
+      <section id="files" class="rv-section">
+        <h2>⑨ 改动 / 新增的文件</h2>
+        <p class="rv-muted">同 §⓪ 改动文件表，不重复。Stage 7 没有改动 <code>LocalWorkspaceAdapter</code> / <code>DockerWorkspaceAdapter</code> 默认行为；<code>final_verifier_callable</code> + <code>verifier_worker_pool</code> 是 <code>RepoHarnessRuntimeOptions</code> 上的<strong>可选注入</strong>。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑩ 实施步骤                                                    -->
+      <!-- ============================================================ -->
+      <section id="pipeline" class="rv-section">
+        <h2>⑩ 实施顺序</h2>
+        <div class="rh-pipeline">
+          <div class="rh-pipeline-step"><span class="rh-step-no">1</span><strong>只读梳理</strong><small>verifier/runner · acceptance · reward/calculator · runtime · timing · workspace/reuse</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">2</span><strong>测试草案</strong><small>pool · reward boundary · status 映射 · visibility</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">3</span><strong>实现 pool.py</strong><small>5 个 schema/class + 2 个 exception + 双层 BoundedSemaphore</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">4</span><strong>queue_timeout 必须先于 executor 入队</strong><small>这是核心安全约束，必须有显式测试</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">5</span><strong>实现 reward_boundary.py</strong><small>3 个 error 集合常量 + Stage7RewardBoundaryResult + build_helper</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">6</span><strong>扩展 reward calculator</strong><small>invalid 集合 3 → 12 种</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">7</span><strong>接入 runtime</strong><small><code>_stage7_reward_boundary(...)</code> · 2 个可选 option · 默认行为不变</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">8</span><strong>TimingSummary / ResourceSummary 投影</strong><small>queue_wait / pool_id / worker_id / final_verifier_seconds</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">9</span><strong>visibility 测试</strong><small>hidden 内容不进 extra_fields · ref 短小</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">10</span><strong>跑回归</strong><small>Stage 7 + Stage 6/5/4/3/2/1/0H + <code>rg verl src/repo_harness/{rl,verifier}</code></small></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑪ 测试覆盖矩阵                                                -->
+      <!-- ============================================================ -->
+      <section id="tests" class="rv-section">
+        <h2>⑪ 测试 ↔ 契约 矩阵</h2>
+        <h3 style="margin: 14px 0 4px;"><code>test_verifier_worker_pool_stage7.py</code>（8 个）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L44">worker_pool_records_worker_facts_and_queue_wait</a></td><td>job result 含 pool_id · worker_id · queue_wait · execution</td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L67">queue_timeout_happens_before_unbounded_executor_queue</a></td><td><strong>核心</strong>：admission 满 + 超时 → <code>queue_timeout</code> 在进 executor 前结构化返回</td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L98">worker_pool_callable_exception_is_structured</a></td><td>callable 抛错 → <code>VerifierExecutionError</code> + <code>error_type="pool_executor_error"</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L116">pending_timeout_before_worker_start_never_executes_later</a></td><td>pending 超时被取消后，<strong>绝不</strong>会过一段时间又被执行</td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L147">cancelled_pending_job_releases_admission_slot</a></td><td>cancellation 必须释放 admission_slot</td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L169">cancelled_running_job_keeps_slot_until_thread_finishes</a></td><td>诚实声明：thread 不可中断时，worker_slot 占用到 thread 自然结束</td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L188">close_rejects_later_submission</a></td><td>close 后再 submit → <code>VerifierWorkerPoolClosedError</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_verifier_worker_pool_stage7.py#L198">verifier_job_callable_is_runtime_only_not_schema_dumped</a></td><td><strong>核心</strong>：<code>VerifierJob.callable</code> 是 frozen dc 字段，<strong>不</strong>会出现在 pydantic schema dump / artifact / extra_fields</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin: 14px 0 4px;"><code>test_repo_harness_rl_stage7_reward_boundary.py</code>（7 个）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L79">does_not_trust_old_reward_invalid_coverage</a></td><td><strong>核心</strong>：即使 <code>compute_reward_metadata</code> 没标 invalid，boundary 也会用 status 第二层覆盖</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L108">keeps_trusted_rejection_as_model_failure</a></td><td>final verifier rejected 但 verifier 可信 → <code>failed</code> + 可训练 reward</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L128">runtime_returns_reward_before_episode_result_and_records_pool_facts</a></td><td><strong>铁律</strong>：EpisodeResult 返回前 reward 已确定，pool facts 透传到 ResourceSummary</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L162">maps_test_command_error_to_invalid_task</a></td><td><code>test_command_error</code> → <code>invalid_task</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L181">maps_workspace_and_dependency_errors_to_infrastructure_error</a></td><td><code>verification_workspace_error</code> · <code>dependency_error</code> → <code>infrastructure_error</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L201">queue_timeout_is_structured_and_not_unbounded</a></td><td>runtime + pool 端到端：超时 → <code>timeout</code> status + 不可训练</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage7_reward_boundary.py#L248">visibility_excludes_hidden_reward_and_verifier_details</a></td><td>hidden 内容（stdout / accepted label / 完整 metadata）<strong>不</strong>进 <code>raw_prompt</code> / <code>response_ids</code> / <code>extra_fields</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑫ 不做事项                                                    -->
+      <!-- ============================================================ -->
+      <section id="not-doing" class="rv-section">
+        <h2>⑫ Stage 7 明确不做（留给后续阶段）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 70%;">不做内容</th><th>所属阶段</th></tr></thead>
+            <tbody>
+              <tr><td>训练预算 · no-progress 控制 · context 瘦身 · 更细的 reward policy</td><td>Stage 8</td></tr>
+              <tr><td>跨 episode 并发安全 · 全局资源租约 · 分布式 worker pool 生命周期</td><td>Stage 9</td></tr>
+              <tr><td><code>TrainingView → AgentLoopOutput</code> 正式转换</td><td>Stage 10</td></tr>
+              <tr><td><code>RepoHarnessVerlAgentLoop</code> · <code>VerlLLMGateway</code></td><td>Stage 11</td></tr>
+              <tr><td>真实端到端 verl smoke · DataProto · TransferQueue</td><td>Stage 12</td></tr>
+              <tr><td>fully async reward backfill · 中断恢复 · 异步样本补偿</td><td>Stage 13</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑬ 验收命令                                                    -->
+      <!-- ============================================================ -->
+      <section id="checks" class="rv-section">
+        <h2>⑬ 建议验收命令</h2>
+        <h4 style="margin: 10px 0 4px;">编译 + Stage 7 新增</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m compileall -q src
+PATH=.venv/bin:$PATH python -m pytest -q \
+  tests/unit/test_verifier_worker_pool_stage7.py \
+  tests/unit/test_repo_harness_rl_stage7_reward_boundary.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">Stage 6 / 5 / 4 / 3 / 2 / 1 / 0H 回归</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m pytest -q \
+  tests/unit/test_repo_harness_rl_stage6_resource_summary.py \
+  tests/unit/test_workspace_reuse_stage6.py \
+  tests/unit/test_repo_harness_rl_stage5_gateway_routes.py \
+  tests/unit/test_repo_harness_rl_stage5_provider_gateway.py \
+  tests/unit/test_repo_harness_rl_stage4_timing_resource.py \
+  tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py \
+  tests/unit/test_repo_harness_rl_stage2_runtime.py \
+  tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py \
+  tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py \
+  tests/unit/test_repo_harness_verl_contract_fixtures.py \
+  tests/unit/test_repo_harness_verl_stage0h_shape_rules.py \
+  tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">触及 verifier / reward 时</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_reward.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/integration/test_verifier_micro_repos.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">证明无 verl import</h4>
+        <pre class="rv-codeblock"><code>rg -n "(^|\s)(import|from)\s+verl" src/repo_harness/rl src/repo_harness/verifier</code></pre>
+
+        <div class="rv-callout success">
+          <strong>本次实际结果：</strong>Stage 7 新增 15 测试全过 · Stage 0H 到 Stage 6 回归全过 · <code>rg verl</code> 在 <code>rl/</code> 和 <code>verifier/</code> 无命中。
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>

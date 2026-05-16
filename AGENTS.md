@@ -12,23 +12,7 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 
 它不是 Claude Code、Cursor、OpenHands、SWE-agent 或官方 SWE-Bench harness 的复刻；也不要把它描述成生产级安全沙箱、分布式 rollout 服务、公开榜单系统、完整产品复刻或已经训练出模型的项目。
 
-## 当前实现状态
 
-截至 2026-05-05 本轮复核时，V4 implementation 的阶段提交包括：
-
-- V4 Stage 0：冻结 V4 implementation inputs。
-- V4 Stage 1：增加 V4 schema 和 inspect skeleton。
-- V4 Stage 2：`021dde7 feat: add V4 task freeze integration`
-- V4 Stage 3：`40992d9 feat: add V4 rollout orchestration`
-- V4 Stage 4：`e985b3e feat: add V4 tool lifecycle audit`
-- V4 Stage 5：`89cf86e feat: add V4 agent run integration`
-- V4 Stage 6：`fe96dec feat: add V4 export quality audit`
-- V4 Stage 7：`f15ed67 feat: add V4 cards evidence`
-- V4 Stage 8：`35f76c0 feat: complete V4 final acceptance`
-
-截至 2026-05-05，V4 已完成复核问题修复并重新生成验收证据。最新 V4 closure commit 为 `e0da89c test: refresh V4 acceptance evidence after hardening`，完整测试结果为 `712 passed`，V4 acceptance report 和 acceptance bundle immutable inspect 均已通过。本轮文档同步后，新增 `runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`，用于绑定当前版本的 `docs/v4/final-acceptance.md` 和 `docs/v4/walkthrough.md`。后续 agent 可以把当前 V4 描述为“已通过修复后最终验收”，但仍不能把 RepoHarness 描述成完整 SWE-Bench 复现、公开榜单系统、生产级安全沙箱或已经训练出模型的项目。
-
-上一轮 V4 复核发现的污染 denylist 哈希、final verifier boundary、preference pair 可比较性、structured reward allowlist、独立 regression evidence、implementation log index、final command log 绑定和 reward audit schema 等问题，已经通过后续修复提交和 `runs/v4-final-rerun-20260504T194758Z/` 下的最新 acceptance evidence 收口。引用 V4 最新状态时，以 `194758Z` 目录为准；`runs/v4-final-rerun-20260504T162105Z/` 只作为历史验收目录。
 
 ## 仓库结构速览
 
@@ -76,29 +60,7 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 - `docs/v4/`：V4 task freeze、rollout orchestration、tool lifecycle audit、agent run integration、export quality、cards、implementation review 和 final acceptance。
 - `docs/v5/`：V5 scope 和 review，目标是补齐最终简历和大厂面试所需的结果包。
 
-V4 当前最重要的入口：
 
-- `docs/v4/scope-and-roadmap.md`
-- `docs/v4/implementation-plan.md`
-- `docs/v4/review/implementation-plan-review.md`
-- `docs/v4/final-acceptance.md`
-- `docs/v4/walkthrough.md`
-- `docs/v4/review/implementation/08-final-acceptance-review.md`
-
-注意：`docs/v4/final-acceptance.md` 和 `docs/v4/walkthrough.md` 已同步到修复后的最新 V4 验收路径。若看到 `runs/v4-final-rerun-20260504T162105Z/`，应理解为历史验收目录；当前 V4 closure baseline 是 `runs/v4-final-rerun-20260504T194758Z/`。
-
-## 最新关键运行产物
-
-- V2 acceptance report：`runs/v2-final-acceptance-20260501T223447Z/v2_acceptance_report.json`
-- V3 acceptance report：`runs/v3-final-rerun-20260504T010000Z/acceptance/v3_acceptance_report.json`
-- V3 acceptance bundle：`runs/v3-final-rerun-20260504T010000Z/acceptance/acceptance_bundle_manifest.json`
-- V4 acceptance inputs：`runs/v4-final-rerun-20260504T194758Z/v4_acceptance_inputs.json`
-- V4 acceptance report：`runs/v4-final-rerun-20260504T194758Z/acceptance/v4_acceptance_report.json`
-- V4 acceptance bundle，原始 implementation closure 版本：`runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest.json`
-- V4 acceptance bundle，本轮文档同步后可复核版本：`runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json`
-- V4 final acceptance command log，原始 implementation closure 版本：`runs/v4-final-rerun-20260504T194758Z/acceptance/final_acceptance_command_log.jsonl`
-- V4 final acceptance command log，本轮文档同步版本：`runs/v4-final-rerun-20260504T194758Z/acceptance/final_acceptance_command_log_doc_sync_20260505T075410Z.jsonl`
-- V4 pre-acceptance command log：`runs/v4-pre-acceptance-evidence-20260504T192620Z/pre_acceptance_command_log.jsonl`
 
 常用复核命令：
 
@@ -112,12 +74,3 @@ PATH=.venv/bin:$PATH repo-harness inspect-v4-inputs runs/v4-final-rerun-20260504
 PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance runs/v4-final-rerun-20260504T194758Z/acceptance/v4_acceptance_report.json --assert-complete
 PATH=.venv/bin:$PATH repo-harness inspect-acceptance-bundle runs/v4-final-rerun-20260504T194758Z/acceptance/acceptance_bundle_manifest_doc_sync_20260505T075410Z.json --assert-immutable
 ```
-
-## 工作规则
-
-- 修改前先用 `rg` 或 `rg --files` 定位文件，不要凭记忆改。
-- 工作区可能有和当前任务无关的既有改动；不要删除、回滚或提交不属于当前任务的文件。
-- 所有 inspect 命令都应显式传入输入路径，不要扫描 latest run 或依赖当前目录猜测。
-- 涉及 V4 结论时，要以 `runs/v4-final-rerun-20260504T194758Z/` 下的 acceptance inputs、acceptance report、文档同步后的 acceptance bundle 和对应 final command log 为准。
-- Docker execution mode 只能描述为 Docker-based executable repository environment，不能写成生产级安全沙箱。
-- 参考 Claude Code TypeScript 源码时，只借鉴架构不变量，例如统一 query loop、tool contract、permission boundary、tool result 回流、context compaction 和 transcript diagnostics；不要照搬产品代码或把参考项目当成 RepoHarness 的运行依赖。

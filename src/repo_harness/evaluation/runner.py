@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import time
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
@@ -93,9 +94,7 @@ def run_task(
     config = load_run_config(config_path, output_dir=output_dir)
     task_deadline_monotonic = run_started + config.runtime.task_timeout_sec
     if config.model.provider not in {"replay", "fake", "mock", "deepseek", "openai"}:
-        raise ConfigError("Stage 11 run-task 只支持 model.provider=replay、fake、mock、deepseek；openai 只允许作为 DeepSeek fallback 内部运行。")
-    if config.model.provider == "openai" and not _is_openai_fallback_config(config.model.provider_specific_options):
-        raise ConfigError("model.provider=openai 只允许作为 DeepSeek fallback smoke run，不能作为 primary provider。")
+        raise ConfigError("Stage 11 run-task 只支持 model.provider=replay、fake、mock、deepseek、openai。")
     if config.evaluation.final_verifier_mode != "strict_patch_replay":
         raise ConfigError("RepoHarness 第一版正式评测只支持 final_verifier_mode=strict_patch_replay。")
     loaded = load_task(task_path)
@@ -994,8 +993,21 @@ def _requires_shell_command(command: str | list[str]) -> bool:
     if not isinstance(command, str):
         return False
     stripped = command.strip()
-    return any(marker in stripped for marker in ("&&", "||", ";", "|")) or stripped.startswith(
-        (". ", "source ")
+    if not stripped:
+        return False
+    if any(marker in stripped for marker in ("&&", "||", ";", "|", "\n", "$(", "`")):
+        return True
+    if stripped.startswith((". ", "source ", "export ", "cd ")):
+        return True
+    try:
+        first = shlex.split(stripped)[0]
+    except ValueError:
+        return True
+    if "=" not in first:
+        return False
+    name = first.split("=", 1)[0]
+    return bool(name) and (name[0].isalpha() or name[0] == "_") and all(
+        char.isalnum() or char == "_" for char in name
     )
 
 
@@ -1056,15 +1068,6 @@ def _record_docker_phase_noop(
         timeout_sec=30,
         recorder=recorder,
         command_semantics=command_semantics,
-    )
-
-
-def _is_openai_fallback_config(options: dict[str, Any]) -> bool:
-    return (
-        options.get("requested_provider") == "deepseek"
-        and options.get("actual_provider") == "openai"
-        and bool(options.get("fallback_reason"))
-        and bool(options.get("fallback_policy_version"))
     )
 
 

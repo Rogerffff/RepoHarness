@@ -164,6 +164,29 @@
     .checklist-tight li {
       margin-bottom: 8px;
     }
+    .source-ref {
+      margin: 14px 0 18px;
+      padding: 14px 16px;
+      border: 1px solid rgba(88, 166, 255, 0.34);
+      border-left: 4px solid var(--hh-accent);
+      border-radius: var(--hh-radius);
+      background: rgba(88, 166, 255, 0.10);
+    }
+    .source-ref strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--hh-accent);
+    }
+    .source-ref ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .source-ref li {
+      margin: 5px 0;
+    }
+    .source-ref code {
+      white-space: normal;
+    }
     @media (max-width: 840px) {
       .study-grid-2,
       .study-grid-3,
@@ -196,6 +219,7 @@
         <a href="#summary">学习总览</a>
         <a href="#stage1-files">代码地图</a>
         <a href="#pydantic">Pydantic 核心</a>
+        <a href="#validator-flow">校验执行顺序</a>
         <a href="#validation-levels">校验层次</a>
         <a href="#token-mask">Token 与 Mask</a>
         <a href="#visibility">可见性边界</a>
@@ -209,6 +233,16 @@
     <main>
       <section id="summary" class="hh-section">
         <h2>一、你在 Stage 1 最应该学什么</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li>Stage 1 schema 总入口：<code>src/repo_harness/rl/__init__.py</code>，用于统一导出这些类和 helper。</li>
+            <li>episode 输入输出总边界：<code>src/repo_harness/rl/episode.py:26-247</code>，重点类是 <code>RepoHarnessEpisodeRequest</code> 和 <code>RepoHarnessEpisodeResult</code>。</li>
+            <li>训练视图、token、mask、batch 规则：<code>src/repo_harness/rl/training_view.py:21-282</code>。</li>
+            <li>模型调用抽象和 fake gateway：<code>src/repo_harness/rl/gateway.py:23-183</code>。</li>
+            <li>可见性和 opaque reference 规则：<code>src/repo_harness/rl/visibility.py:12-239</code>。</li>
+          </ul>
+        </div>
         <div class="hh-callout hh-callout-info">
           <p>
             Stage 1 的代码主要是 schema 和测试，所以 Pydantic 的确是主线。但是更重要的能力是：你要学会如何用 schema、validator、类型标注和测试，把“这个系统允许什么、不允许什么”变成代码里稳定执行的边界。
@@ -257,6 +291,16 @@
 
       <section id="stage1-files" class="hh-section">
         <h2>二、Stage 1 新增代码地图</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>src/repo_harness/rl/episode.py:39-59</code>：<code>ProviderRoutePolicy</code>，provider route 默认不能进入正式 online RL。</li>
+            <li><code>src/repo_harness/rl/episode.py:62-138</code>：<code>EpisodeTaskRef</code>、<code>EpisodeBudgets</code>、<code>RepoHarnessEpisodeRequest</code>。</li>
+            <li><code>src/repo_harness/rl/episode.py:141-247</code>：<code>BudgetConsumption</code>、summary 类和 <code>RepoHarnessEpisodeResult</code>。</li>
+            <li><code>src/repo_harness/rl/training_view.py:77-130</code>：<code>TrainingView</code> 和它的 token / mask / span 校验。</li>
+            <li><code>src/repo_harness/rl/gateway.py:147-183</code>：<code>LLMGateway</code> protocol 和 <code>FakeLLMGateway</code>。</li>
+          </ul>
+        </div>
         <p>
           读这部分代码时，不建议从第一行读到最后一行。更好的方式是先看每个文件负责哪一层边界，然后再进入具体类和校验函数。
         </p>
@@ -297,6 +341,15 @@
 
       <section id="pydantic" class="hh-section">
         <h2>三、Pydantic v2 核心知识</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>src/repo_harness/schema_base.py:12-15</code>：<code>StrictBaseModel</code>，统一配置 <code>extra="forbid"</code> 和 <code>validate_assignment=True</code>。</li>
+            <li><code>src/repo_harness/rl/training_view.py:77-92</code>：<code>TrainingView</code> 字段定义，展示 <code>list[int]</code>、<code>Literal[0, 1]</code>、<code>Field(default_factory=...)</code>。</li>
+            <li><code>src/repo_harness/rl/training_view.py:94-113</code>：<code>TrainingView.validate_training_view()</code>，展示 <code>@model_validator(mode="after")</code> 的典型用途。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py:44-51</code>：真实测试里如何调用 <code>model_validate(...)</code> 和 <code>model_dump(...)</code> 做 roundtrip。</li>
+          </ul>
+        </div>
 
         <h3>1. Schema 类是什么</h3>
         <p>
@@ -407,10 +460,128 @@ roundtrip_payload = view.model_dump(mode="json")</code></pre>
             </tr>
           </tbody>
         </table>
+
+        <h3 id="validator-flow">6. 常见问题：<code>model_validate(...)</code>、<code>@model_validator(mode="after")</code> 和 <code>StrictBaseModel</code> 的关系</h3>
+        <p>
+          你可以把这三个概念理解成三个不同层次：<code>StrictBaseModel</code> 是项目统一规定的“严格 schema 基础类”，<code>TrainingView.model_validate(payload)</code> 是一次实际的“解析和校验动作”，而 <code>@model_validator(mode="after")</code> 是挂在 schema 类内部的“对象整体校验规则”。
+        </p>
+
+        <div class="study-grid-3">
+          <article class="study-card">
+            <h4 class="study-mini-title"><code>StrictBaseModel</code></h4>
+            <p>
+              它是所有 Stage 1 schema 的共同父类，继承自 Pydantic 的 <code>BaseModel</code>。项目在这里统一配置：禁止未知字段，并且对象创建后重新赋值也要校验。
+            </p>
+          </article>
+          <article class="study-card">
+            <h4 class="study-mini-title"><code>model_validate(...)</code></h4>
+            <p>
+              它是你主动调用的入口。你给它一个普通 <code>dict</code>，Pydantic 会根据 schema 类解析字段、转换嵌套对象、执行所有 validator，最后返回一个真正的 schema 对象。
+            </p>
+          </article>
+          <article class="study-card">
+            <h4 class="study-mini-title"><code>@model_validator(mode="after")</code></h4>
+            <p>
+              它不是 <code>model_validate(...)</code> 的装饰器，而是写在 schema 类某个方法上的装饰器。它会在对象字段基本解析完成之后自动执行，用来检查多个字段之间的关系。
+            </p>
+          </article>
+        </div>
+
+        <h4>实际执行顺序</h4>
+        <p>
+          以 <code>view = TrainingView.model_validate(payload)</code> 为例，它大致会经历下面这些步骤：
+        </p>
+        <pre><code class="language-text">payload 普通字典
+  -&gt; TrainingView.model_validate(payload)
+  -&gt; 检查是否有未知字段，StrictBaseModel 的 extra="forbid" 在这里生效
+  -&gt; 检查每个字段的类型，例如 list[int]、list[Literal[0, 1]]
+  -&gt; 检查 Field(...) 上的单字段约束，例如 ge=0、gt=0
+  -&gt; 把 response_spans 里的普通 dict 转成 ResponseSpan 对象
+  -&gt; 先执行每个 ResponseSpan 自己的 @model_validator(mode="after")
+  -&gt; 创建出基本的 TrainingView 对象
+  -&gt; 执行 TrainingView.validate_training_view(...)
+  -&gt; 检查 response_ids、response_mask、response_logprobs 长度是否对齐
+  -&gt; 检查 response_mask=0 的位置是否使用 response_logprobs=0.0
+  -&gt; 检查 response_spans 是否解释了每一个 response token
+  -&gt; 全部通过后返回 view</code></pre>
+
+        <h4>为什么说 <code>mode="after"</code> 是对象创建后的检查</h4>
+        <p>
+          在下面这段代码里，<code>self</code> 已经是一个完成字段解析后的 <code>TrainingView</code> 对象，所以可以直接访问 <code>self.response_ids</code>、<code>self.response_mask</code> 和 <code>self.response_logprobs</code>。
+        </p>
+        <pre><code class="language-python">@model_validator(mode="after")
+def validate_training_view(self) -&gt; "TrainingView":
+    if len(self.response_ids) != len(self.response_mask):
+        raise ValueError("response_ids and response_mask must have equal length")
+    if self.response_logprobs is not None and len(self.response_logprobs) != len(self.response_ids):
+        raise ValueError("response_logprobs must align with response_ids")
+    return self</code></pre>
+        <p>
+          这类检查不能只靠单个字段完成，因为它需要同时看多个字段。比如 <code>response_ids</code> 单独看是一个合法整数列表，<code>response_mask</code> 单独看也是一个只包含 0 和 1 的列表，但只有把两者放在一起看，才能知道长度是否对齐。
+        </p>
+
+        <h4><code>StrictBaseModel</code> 在这个项目里的实际定义</h4>
+        <p>
+          项目里的 <code>StrictBaseModel</code> 位于 <code>src/repo_harness/schema_base.py</code>，定义很短，但非常重要：
+        </p>
+        <pre><code class="language-python">class StrictBaseModel(BaseModel):
+    """默认禁止未知字段，避免运行事实被悄悄写错位置。"""
+
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>配置</th>
+              <th>含义</th>
+              <th>在 RepoHarness 里的意义</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>extra="forbid"</code></td>
+              <td>如果输入字典里出现 schema 没声明的字段，直接报错。</td>
+              <td>防止 <code>gold_patch</code>、<code>hidden_verifier</code>、本地绝对路径等字段悄悄混进训练路径。</td>
+            </tr>
+            <tr>
+              <td><code>validate_assignment=True</code></td>
+              <td>对象创建后，如果重新给字段赋值，也会再次校验。</td>
+              <td>防止对象创建时合法，但后续被代码改成非法状态。例如把 <code>response_mask</code> 改成包含 <code>2</code> 的列表。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>一个最小例子</h4>
+        <pre><code class="language-python">payload = {
+    "prompt_ids": [1, 2, 3],
+    "response_ids": [10, 11, 12],
+    "response_mask": [1, 0, 1],
+    "response_logprobs": [-0.1, 0.0, -0.2],
+    "response_spans": [...],
+    "reward_score": 0.8,
+}
+
+view = TrainingView.model_validate(payload)</code></pre>
+        <p>
+          这行代码的含义不是“简单地把字典包装成对象”，而是“用 <code>TrainingView</code> 的全部规则审查这个字典”。如果它返回了 <code>view</code>，说明字段类型、字段关系、span 解释、batch extra fields 基础边界都已经通过了这一级检查。
+        </p>
+        <div class="hh-callout hh-callout-success">
+          <p>
+            简单记忆：<code>StrictBaseModel</code> 定义项目默认严格性；<code>model_validate(...)</code> 触发一次完整解析和校验；<code>@model_validator(mode="after")</code> 是对象创建后的整体规则检查。
+          </p>
+        </div>
       </section>
 
       <section id="validation-levels" class="hh-section">
         <h2>四、Stage 1 的四层校验模型</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li>字段级校验：<code>src/repo_harness/rl/training_view.py:26-29</code> 的 <code>RolloutLimits</code> 和 <code>src/repo_harness/rl/episode.py:88-108</code> 的 <code>EpisodeBudgets</code>。</li>
+            <li>对象级校验：<code>src/repo_harness/rl/training_view.py:94-130</code> 的 <code>validate_training_view()</code> 与 <code>_validate_response_spans()</code>。</li>
+            <li>可见性校验：<code>src/repo_harness/rl/visibility.py:139-194</code> 的模型可见内容、batch extra fields 和 gateway extra fields 检查。</li>
+            <li>Batch 级校验：<code>src/repo_harness/rl/training_view.py:238-282</code> 的 <code>validate_formal_online_rl_batch(...)</code>。</li>
+          </ul>
+        </div>
         <p>
           这部分代码最值得学习的不是某个 validator 怎么写，而是它把规则分成了不同层级。每一层只负责自己该负责的事情。
         </p>
@@ -459,6 +630,16 @@ roundtrip_payload = view.model_dump(mode="json")</code></pre>
 
       <section id="token-mask" class="hh-section">
         <h2>五、Token、Mask 和 Log Probability 的重点</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>src/repo_harness/rl/training_view.py:77-92</code>：<code>TrainingView</code> 字段定义，包含 <code>prompt_ids</code>、<code>response_ids</code>、<code>response_mask</code>、<code>response_logprobs</code>、<code>response_spans</code> 和 <code>reward_score</code>。</li>
+            <li><code>src/repo_harness/rl/training_view.py:94-113</code>：<code>TrainingView.validate_training_view()</code>，检查长度对齐、<code>response_mask=0</code> 时 log probability 必须是 <code>0.0</code>、空 response 不能带普通 reward。</li>
+            <li><code>src/repo_harness/rl/training_view.py:36-74</code>：<code>ResponseSpan</code> 和 <code>validate_span()</code>，解释每段 token 是 assistant 生成、工具观察、环境观察、padding excluded 还是 truncated excluded。</li>
+            <li><code>src/repo_harness/rl/training_view.py:115-130</code>：<code>TrainingView._validate_response_spans()</code>，检查 span 是否覆盖每一个 response token，且 span 记录的 mask 来源和 <code>response_mask</code> 一致。</li>
+            <li><code>tests/unit/test_repo_harness_verl_stage0h_shape_rules.py:33-90</code>：fixture 层面对 token、mask、log probability 和 span 覆盖规则的测试。</li>
+          </ul>
+        </div>
         <p>
           RepoHarness 接入 verl 的训练视图中，最容易出错的地方是把“模型生成的 token”和“工具返回的 observation token”混在一起。Stage 1 的 schema 在提前固定这个边界。
         </p>
@@ -540,9 +721,93 @@ AgentLoopOutput.response_mask
 
       <section id="visibility" class="hh-section">
         <h2>六、可见性边界和 opaque reference</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>src/repo_harness/rl/visibility.py:12-20</code>：contract version、route 枚举和 inference backend 枚举。</li>
+            <li><code>src/repo_harness/rl/visibility.py:28-58</code>：evaluator-only denylist、raw prompt 禁止 token、batch extra field 禁止字段。</li>
+            <li><code>src/repo_harness/rl/visibility.py:89-91</code>：<code>validate_no_absolute_local_path(...)</code>，拒绝本地绝对路径。</li>
+            <li><code>src/repo_harness/rl/visibility.py:94-136</code>：递归收集 key 和 value 的 helper，防止隐藏字段藏在嵌套结构里。</li>
+            <li><code>src/repo_harness/rl/visibility.py:139-158</code>：模型可见内容检查和 <code>rh://</code> opaque ref 检查。</li>
+            <li><code>src/repo_harness/rl/visibility.py:161-194</code>：batch extra fields 和 gateway extra fields 的具体校验。</li>
+            <li><code>src/repo_harness/rl/episode.py:131-138</code>：创建 <code>RepoHarnessEpisodeRequest</code> 时检查 route、backend 和 <code>raw_prompt</code>。</li>
+            <li><code>src/repo_harness/rl/gateway.py:47-51</code>：创建 <code>LLMGatewayRequest</code> 时检查 route、backend 和 <code>messages</code>。</li>
+            <li><code>src/repo_harness/rl/gateway.py:110-127</code>：创建 <code>LLMGatewayResponse</code> 时检查 raw reference、response mask 和 gateway extra fields。</li>
+            <li><code>src/repo_harness/rl/training_view.py:94-113</code>：创建 <code>TrainingView</code> 时检查 token 对齐、batch extra fields 和 metrics reference。</li>
+            <li><code>src/repo_harness/rl/training_view.py:156-179</code>：创建 <code>AuditRef</code> 时检查审计路径不能是本地绝对路径，重要 artifact reference 必须是 <code>rh://...</code>。</li>
+            <li><code>src/repo_harness/rl/runtime.py:235</code>、<code>src/repo_harness/rl/runtime.py:297-313</code>、<code>src/repo_harness/rl/runtime.py:320-348</code>：Stage 2 runtime 入口重新校验 request、解析任务路径，并构造 gateway request。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py:53-117</code>：这些可见性边界的负向测试。</li>
+          </ul>
+        </div>
         <p>
           <code>visibility.py</code> 是 Stage 1 最值得认真读的文件之一。它展示了真实项目里如何防止敏感字段、隐藏评测信息和本地路径泄漏到训练路径。
         </p>
+
+        <h3>0. <code>visibility.py</code> 不是只在单元测试中使用</h3>
+        <p>
+          <code>visibility.py</code> 更像一个“共享规则库”。它自己不负责运行 episode，也不负责调用模型，而是提供一组可以被多个 schema 和 runtime 入口复用的检查函数。只要代码创建这些 Pydantic 对象，相关检查就会自动执行；单元测试只是专门构造错误输入，确认这些规则真的会拦住问题。
+        </p>
+        <pre><code class="language-text">RepoHarnessEpisodeRequest.model_validate(payload)
+  -&gt; episode.py:131-138 validate_episode_request()
+  -&gt; visibility.py:81-86 validate_inference_backend(...)
+  -&gt; visibility.py:139-152 validate_no_forbidden_model_visible_content(raw_prompt, ...)
+
+LLMGatewayRequest.model_validate(payload)
+  -&gt; gateway.py:47-51 validate_gateway_request()
+  -&gt; visibility.py:139-152 validate_no_forbidden_model_visible_content(messages, ...)
+
+LLMGatewayResponse.model_validate(payload)
+  -&gt; gateway.py:110-127 validate_gateway_response()
+  -&gt; visibility.py:155-158 validate_opaque_ref(...)
+  -&gt; visibility.py:184-194 validate_gateway_extra_fields(...)
+
+TrainingView.model_validate(payload)
+  -&gt; training_view.py:94-113 validate_training_view()
+  -&gt; visibility.py:161-181 validate_batch_extra_fields(extra_fields)</code></pre>
+        <p>
+          所以当你在测试里看到 <code>RepoHarnessEpisodeRequest.model_validate(payload)</code> 或 <code>TrainingView.model_validate(payload)</code>，它并不是“测试专属语法”。这是 Pydantic v2 推荐的对象构造和校验入口。未来 runtime、adapter 或 verl 侧把普通 <code>dict</code> 转成 RepoHarness schema 对象时，也会经过同一套校验。
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>触发位置</th>
+              <th>实际检查内容</th>
+              <th>为什么需要这个检查</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>episode.py:131-138</code></td>
+              <td>检查 <code>llm_gateway_route</code>、<code>inference_backend</code> 和 <code>raw_prompt</code>。</td>
+              <td>防止 episode 请求一开始就带着错误 route，或者把 <code>gold_patch</code>、隐藏验证器等评测信息放进模型可见 prompt。</td>
+            </tr>
+            <tr>
+              <td><code>gateway.py:47-51</code></td>
+              <td>检查发给模型网关的 <code>messages</code>。</td>
+              <td>这是模型真正会看到的上下文入口，因此要再次确认里面没有 evaluator-only 内容。</td>
+            </tr>
+            <tr>
+              <td><code>gateway.py:110-127</code></td>
+              <td>检查模型响应的 token 长度、mask、raw reference 和 <code>extra_fields</code>。</td>
+              <td>防止 gateway 返回不可训练的 token 事实，或者通过扩展字段夹带本地路径、隐藏评测信息。</td>
+            </tr>
+            <tr>
+              <td><code>training_view.py:94-113</code></td>
+              <td>检查训练视图中的 token 对齐、log probability 对齐、metrics reference 和 batch extra fields。</td>
+              <td>这些字段将来可能进入 verl 的 batch，因此要保证它们是短小、扁平、可传播、不会泄漏审计细节的训练侧数据。</td>
+            </tr>
+            <tr>
+              <td><code>training_view.py:156-179</code></td>
+              <td>检查 <code>AuditRef</code> 中的路径和重要 artifact reference。</td>
+              <td>审计对象可以记录“去哪里查证”，但不能把本地绝对路径直接塞进可传播的数据结构里。</td>
+            </tr>
+            <tr>
+              <td><code>runtime.py:235</code>、<code>runtime.py:297-313</code>、<code>runtime.py:320-348</code></td>
+              <td>runtime 入口重新校验 request，解析任务路径，并把 <code>raw_prompt</code> 转成 gateway request 的 <code>messages</code>。</td>
+              <td>这说明这些规则已经开始进入运行路径，不只是停留在 Stage 1 单元测试中。</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h3>1. 什么不能进入模型可见内容</h3>
         <p>
@@ -609,6 +874,17 @@ AgentLoopOutput.response_mask
 
       <section id="protocol" class="hh-section">
         <h2>七、Protocol、async 和 FakeLLMGateway</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>src/repo_harness/rl/gateway.py:23-51</code>：<code>LLMGatewayRequest</code> 和 <code>validate_gateway_request()</code>。</li>
+            <li><code>src/repo_harness/rl/gateway.py:54-78</code>：<code>GenerationRecord</code>，记录每轮模型调用的 token 级事实。</li>
+            <li><code>src/repo_harness/rl/gateway.py:81-144</code>：<code>LLMGatewayResponse</code>、<code>validate_gateway_response()</code> 和 <code>to_generation_record()</code>。</li>
+            <li><code>src/repo_harness/rl/gateway.py:147-150</code>：<code>LLMGateway</code> protocol，定义 async <code>generate_turn(...)</code> 接口。</li>
+            <li><code>src/repo_harness/rl/gateway.py:153-183</code>：<code>FakeLLMGateway</code>。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py:148-162</code>：fake gateway 是否实现最小 protocol 的测试。</li>
+          </ul>
+        </div>
         <p>
           Stage 1 的 <code>LLMGateway</code> 不是具体实现，而是一份接口协议。它告诉 runtime：“你可以调用一个拥有 <code>generate_turn(...)</code> 方法的对象，但不要关心它背后是 fake、provider、verl、vLLM 还是 SGLang。”
         </p>
@@ -652,6 +928,18 @@ class LLMGateway(Protocol):
 
       <section id="tests" class="hh-section">
         <h2>八、测试规范：不仅测能过，还要测会拒绝</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py:29-51</code>：canonical fixture 到正式 schema 的 roundtrip 测试。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py:54-67</code>：未知字段和未知 route 的拒绝测试。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py:70-90</code>：overflow、empty response、mixed logprob batch 的拒绝测试。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py:93-112</code>：<code>invalid_task</code> 和 <code>infrastructure_error</code> 不能被当作可训练样本。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py:36-50</code>：provider route 默认 <code>invalid_for_online_rl=true</code> 的测试。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py:53-145</code>：batch extra fields、gateway extra fields、raw prompt 和 messages 可见性负向测试。</li>
+            <li><code>tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py:165-170</code>：<code>src/repo_harness/rl/</code> 不得 import <code>verl</code> 的架构边界测试。</li>
+          </ul>
+        </div>
         <p>
           Stage 1 对你学习 Python 项目规范最有价值的一点，是它有很多负向测试。schema 代码的正确性不只是“合法样本能创建对象”，还包括“非法样本必须被拒绝”。
         </p>
@@ -695,6 +983,17 @@ class LLMGateway(Protocol):
 
       <section id="python-notes" class="hh-section">
         <h2>九、你可以顺手学习的 Python 语法</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li><code>src/repo_harness/rl/training_view.py:3</code>、<code>src/repo_harness/rl/gateway.py:3</code>、<code>src/repo_harness/rl/episode.py:3</code>：<code>from __future__ import annotations</code>。</li>
+            <li><code>src/repo_harness/rl/training_view.py:5</code>、<code>src/repo_harness/rl/gateway.py:6</code>、<code>src/repo_harness/rl/episode.py:5</code>：<code>Any</code>、<code>Literal</code>、<code>Protocol</code> 等类型工具。</li>
+            <li><code>src/repo_harness/rl/gateway.py:5</code> 和 <code>src/repo_harness/rl/gateway.py:156-166</code>：<code>deque</code> 在 fake gateway 中保存预设响应。</li>
+            <li><code>src/repo_harness/rl/episode.py:54</code>：集合差集检查未知 provider allowed uses。</li>
+            <li><code>src/repo_harness/rl/visibility.py:94-136</code>：递归遍历嵌套字典和列表。</li>
+            <li><code>src/repo_harness/rl/visibility.py:14-16</code>、<code>src/repo_harness/rl/episode.py:26-36</code>：类型别名和 <code>Literal</code> 枚举。</li>
+          </ul>
+        </div>
         <div class="study-grid-2">
           <article class="study-card">
             <h3 class="study-mini-title"><code>from __future__ import annotations</code></h3>
@@ -737,6 +1036,17 @@ class LLMGateway(Protocol):
 
       <section id="study-method" class="hh-section">
         <h2>十、建议你的阅读和练习顺序</h2>
+        <div class="source-ref">
+          <strong>源码对应位置</strong>
+          <ul>
+            <li>第一步读 <code>TrainingView</code>：<code>src/repo_harness/rl/training_view.py:77-130</code>。</li>
+            <li>第二步读 <code>ResponseSpan</code>：<code>src/repo_harness/rl/training_view.py:36-74</code>。</li>
+            <li>第三步读可见性 helper：<code>src/repo_harness/rl/visibility.py:139-194</code>。</li>
+            <li>第四步读 gateway：<code>src/repo_harness/rl/gateway.py:23-183</code>。</li>
+            <li>第五步读 episode 总入口和总出口：<code>src/repo_harness/rl/episode.py:111-138</code> 和 <code>src/repo_harness/rl/episode.py:206-247</code>。</li>
+            <li>配套读测试：<code>tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py:44-112</code> 和 <code>tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py:36-170</code>。</li>
+          </ul>
+        </div>
         <p>
           如果你想真正掌握这部分代码，不建议一开始就读完整文件。可以按下面顺序学习。
         </p>

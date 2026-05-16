@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl Stage 3 执行计划</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    /* === 与 Stage 2 页保持一致的"工程文档式"样式 === */
+    .rh-toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .rh-toc a {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+      color: var(--rv-text);
+      font-size: 0.92rem;
+      text-decoration: none;
+    }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+
+    .rh-kind {
+      display: inline-block;
+      padding: 1px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+    .rh-kind.dc    { background: rgba(126,231,135,0.16); color: #7ee787; }
+    .rh-kind.fn    { background: rgba(255,196,99,0.18);  color: #ffc463; }
+    .rh-kind.cfg   { background: rgba(88,166,255,0.16);  color: #58a6ff; }
+    .rh-kind.warn  { background: rgba(255,180,99,0.20);  color: #ffb463; }
+
+    .rh-api-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-api-card .rh-sub { margin: 0 0 12px; color: var(--rv-muted); font-size: 0.92rem; }
+
+    .rh-sig {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #0b1018;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      color: #d0d7de;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+
+    .rh-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .rh-meta-item {
+      padding: 8px 12px;
+      border-left: 3px solid var(--rv-border-strong);
+      background: var(--rv-surface);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+    }
+    .rh-meta-item .rh-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--rv-muted);
+    }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound   { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger  { border-left-color: var(--rv-danger); }
+
+    .rh-pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .rh-pipeline-step {
+      position: relative;
+      padding: 12px 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-pipeline-step .rh-step-no {
+      display: inline-block;
+      padding: 1px 7px;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--hh-accent-soft);
+      color: var(--rv-accent);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+    .rh-pipeline-step strong { display: block; margin-bottom: 4px; }
+    .rh-pipeline-step small { color: var(--rv-muted); font-size: 0.82rem; line-height: 1.5; }
+
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+
+    /* === Stage 3 特有：三种 run_mode 的横向对比 === */
+    .rh-modes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0 6px;
+    }
+    @media (max-width: 880px) { .rh-modes { grid-template-columns: 1fr; } }
+    .rh-mode {
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+    }
+    .rh-mode.full   { border-top: 4px solid var(--rv-info); }
+    .rh-mode.fast   { border-top: 4px solid var(--rv-success); }
+    .rh-mode.debug  { border-top: 4px solid var(--rv-warning); }
+    .rh-mode h4 {
+      margin: 0 0 6px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 1.0rem;
+    }
+    .rh-mode .rh-mode-purpose {
+      margin: 0 0 10px;
+      color: var(--rv-muted);
+      font-size: 0.88rem;
+    }
+    .rh-mode .rh-mode-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-top: 1px dashed var(--rv-border);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .rh-mode .rh-mode-row:first-of-type { border-top: 0; }
+    .rh-mode .rh-mode-row .rh-icon {
+      flex: 0 0 16px;
+      font-weight: 760;
+      text-align: center;
+    }
+    .rh-mode .rh-icon.ok  { color: var(--rv-success); }
+    .rh-mode .rh-icon.no  { color: var(--rv-danger); }
+    .rh-mode .rh-icon.mid { color: var(--rv-warning); }
+    .rh-mode code { font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 计划</a>
+          <a href="repo_harness_verl_stage3_execution_plan.html" aria-current="page">Stage 3 计划</a>
+          <a href="repo_harness_verl_stage4_execution_plan.html">Stage 4 计划</a>
+          <a href="repo_harness_verl_stage5_execution_plan.html">Stage 5 计划</a>
+          <a href="repo_harness_verl_stage6_execution_plan.html">Stage 6 计划</a>
+          <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 3 · Execution Report</span>
+      <h1>Stage 3：实现 <code>run_mode</code> 与 <code>training_fast</code> recorder</h1>
+      <p class="rv-lead">
+        本页上半为 Stage 3 <strong>实施结果</strong>，下半保留原始<strong>执行计划</strong>供对照。本次产出：新增 <code>RecorderProfile</code> + 3 个 Literal 类型 + retention facts artifact + runtime 内 <code>timing_explained_ratio</code>；9 个单元测试覆盖三种 mode 默认值、artifact bytes 下降、reasoning trace 拒绝、prepared_messages 兼容、p95 smoke。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 3 · 已实现</span>
+        <span class="rv-badge success">9 / 9 测试通过</span>
+        <span class="rv-badge info">不接 verl · ResourceSummary 完整体留给 Stage 4</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#result">⓪ 执行结果 ⚡ 新</a>
+        <a href="#goal">① 阶段目标</a>
+        <a href="#modes">② 三种 run_mode 对比</a>
+        <a href="#boundaries">③ 必须保持的边界</a>
+        <a href="#design">④ 设计方案</a>
+        <a href="#files">⑤ 预计修改文件</a>
+        <a href="#pipeline">⑥ 实施 13 步</a>
+        <a href="#exit">⑦ 验收标准</a>
+        <a href="#not-doing">⑧ 不做事项</a>
+        <a href="#checks">⑨ 验收命令</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <!-- ⓪ 本次执行结果                                                -->
+      <!-- ============================================================ -->
+      <section id="result" class="rv-section">
+        <h2>⓪ 本次执行结果</h2>
+        <div class="rv-callout success">
+          <strong>一句话：</strong>Stage 3 已落地。<code>RepoHarnessEpisodeRequest.run_mode</code> 现在能映射到 <code>RecorderProfile</code>，profile 用 pydantic <code>model_validator</code> 强制 <code>training_fast</code> / <code>training_debug</code> 必须满足"不存 raw 明文 + 不存 reasoning 明文 + raw 必须 projection"三条不变量；artifact 写入按 profile 决定 <strong>keep / project / hash_only / preview</strong>，并落盘 <code>artifact_retention_facts</code> / <code>artifact_projection_facts</code> 单独 facts artifact 来保持 <code>ArtifactRef</code> 向后兼容。<code>training_fast</code> artifact bytes 实测 <code>≤ full_audit × 0.5</code>，fake gateway p95 实测 <code>&lt; 180s</code>。
+        </div>
+
+        <h3>实际改动文件</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 32%;">文件</th><th style="width: 11%;">变更</th><th style="width: 12%;">行数</th><th>新增内容</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/trajectory/recorder.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+347</td>
+                <td>新增 <code>RecorderProfile</code> · 3 个 Literal 类型 · <code>_RetentionRewrite</code> · 9 个 retention helpers · retention facts artifact 落盘 · <code>RunRecorder.__init__</code> 接 <code>recorder_profile</code> 参数</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/trajectory/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+4</td>
+                <td>对外导出 <code>RecorderProfile</code>、<code>RecorderRunMode</code></td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+66 / -38</td>
+                <td>import <code>RecorderProfile</code> · <code>_generate_minimal_turn</code> 把 run_mode 映射成完整 profile 写入 <code>recorder_policy</code> · 追加 <code>model_call_seconds</code> 计时 · <code>_timing_summary</code> 计算 <code>timing_explained_ratio</code> · adapter 透传 <code>recorder.recorder_profile</code></td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+412</td>
+                <td>9 个测试覆盖三种 mode 默认值、bytes ≤ 0.5×、profile 校验、debug projection、runtime profile 透传、adapter 透传、p95 smoke</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">新增公开 API 速查</h3>
+        <p class="rv-muted">全部从 <code>repo_harness.trajectory</code> 顶层导出。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 8%;">类型</th><th style="width: 26%;">名称</th><th>职责</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>RecorderProfile</code></td><td>pydantic 强约束 retention 策略容器，附 <code>for_run_mode(...)</code> 工厂和 <code>validate_run_mode_safety</code> 校验器。</td></tr>
+              <tr><td><span class="rh-kind cfg">Literal</span></td><td><code>RecorderRunMode</code></td><td><code>"full_audit" | "training_fast" | "training_debug"</code>。</td></tr>
+              <tr><td><span class="rh-kind cfg">Literal</span></td><td><code>RawArtifactRetention</code></td><td><code>"keep" | "projection"</code>。</td></tr>
+              <tr><td><span class="rh-kind cfg">Literal</span></td><td><code>PreparedMessagesRetention</code></td><td><code>"keep" | "keep_export_audit_compat"</code>（路径 A 完整保留 vs 路径 B exporter 兼容标记）。</td></tr>
+              <tr><td><span class="rh-kind cfg">Literal</span></td><td><code>ReasoningTraceRetention</code></td><td><code>"keep" | "hash_only"</code>。</td></tr>
+              <tr><td><span class="rh-kind cfg">常量</span></td><td><code>RETENTION_FACTS_SCHEMA_VERSION</code></td><td><code>"repo_harness_artifact_retention_facts_v0"</code>，写在 retention facts artifact 内。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;"><code>RecorderProfile</code> 字段实现</h3>
+        <article class="rh-api-card">
+          <div class="rh-sig"><span class="kw">class</span> <span class="nm">RecorderProfile</span>(StrictBaseModel):
+    schema_version: <span class="ty">str</span> = <span class="li">"repo_harness_recorder_profile_v0"</span>
+    mode: <span class="ty">RecorderRunMode</span> = <span class="li">"full_audit"</span>
+    save_raw_provider_request:  <span class="ty">bool</span> = True
+    save_raw_provider_response: <span class="ty">bool</span> = True
+    save_reasoning_trace:       <span class="ty">bool</span> = True
+    save_prepared_messages:     <span class="ty">bool</span> = True
+    raw_artifact_retention:        <span class="ty">RawArtifactRetention</span>        = <span class="li">"keep"</span>
+    prepared_messages_retention:   <span class="ty">PreparedMessagesRetention</span>   = <span class="li">"keep"</span>
+    reasoning_trace_retention:     <span class="ty">ReasoningTraceRetention</span>     = <span class="li">"keep"</span>
+    artifact_compression:       <span class="ty">str</span> = <span class="li">"none"</span>
+    artifact_sampling_policy:   <span class="ty">str</span> = <span class="li">"none"</span>
+    raw_artifact_preview_chars: <span class="ty">int</span> = 0   <span class="cm"># Field(ge=0)</span>
+    critical_artifact_kinds: <span class="ty">list[str]</span> = [<span class="cm"># 13 类必保留</span>
+        <span class="li">"artifact_manifest"</span>, <span class="li">"content_replacement_state"</span>, <span class="li">"events"</span>,
+        <span class="li">"final_verifier"</span>, <span class="li">"metrics"</span>, <span class="li">"patch"</span>,
+        <span class="li">"prepared_messages"</span>, <span class="li">"reward_metadata"</span>, <span class="li">"run_metadata"</span>,
+        <span class="li">"timing_summary"</span>, <span class="li">"trajectory_facts"</span>, <span class="li">"transcript"</span>,
+        <span class="li">"verifier_result"</span>,
+    ]</div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound"><span class="rh-label">不变量（model_validator）</span><strong>training_fast / training_debug</strong> 构造时<strong>强制</strong>：① <code>save_raw_provider_request / response = False</code> ② <code>save_reasoning_trace = False</code> ③ <code>raw_artifact_retention = "projection"</code> ④ <code>reasoning_trace_retention = "hash_only"</code>。任一违反 → pydantic <code>ValueError</code>。</div>
+            <div class="rh-meta-item callers"><span class="rh-label">谁会用</span><code>RunRecorder(recorder_profile=...)</code> 在构造时接收；<code>RepoHarnessRuntime._generate_minimal_turn</code> 通过 <code>RecorderProfile.for_run_mode(request.run_mode).model_dump(...)</code> 写入 <code>LLMGatewayRequest.recorder_policy</code>；<code>LLMGatewayModelClientAdapter.generate</code> 从 <code>recorder.recorder_profile</code> 透传。</div>
+          </div>
+        </article>
+
+        <h3 style="margin-top: 22px;">三种 mode 实际默认值（来自 <code>RecorderProfile.for_run_mode(...)</code>）</h3>
+        <p class="rv-muted">实施落地的 ✅ / ❌ 与 §② 计划完全对齐，<code>prepared_messages_retention</code> 用 <code>"keep_export_audit_compat"</code> 表示 training_fast 选了"路径 A · 完整保留 + 兼容标记"。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr>
+                <th style="width: 26%;">字段</th>
+                <th style="width: 24%;"><code>full_audit</code></th>
+                <th style="width: 25%;"><code>training_fast</code></th>
+                <th><code>training_debug</code></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>save_raw_provider_request</code></td><td><code>True</code></td><td><code>False</code></td><td><code>False</code></td></tr>
+              <tr><td><code>save_raw_provider_response</code></td><td><code>True</code></td><td><code>False</code></td><td><code>False</code></td></tr>
+              <tr><td><code>save_reasoning_trace</code></td><td><code>True</code></td><td><code>False</code></td><td><code>False</code></td></tr>
+              <tr><td><code>save_prepared_messages</code></td><td><code>True</code></td><td><code>True</code></td><td><code>True</code></td></tr>
+              <tr><td><code>raw_artifact_retention</code></td><td><code>"keep"</code></td><td><code>"projection"</code></td><td><code>"projection"</code></td></tr>
+              <tr><td><code>prepared_messages_retention</code></td><td><code>"keep"</code></td><td><code>"keep_export_audit_compat"</code></td><td><code>"keep"</code></td></tr>
+              <tr><td><code>reasoning_trace_retention</code></td><td><code>"keep"</code></td><td><code>"hash_only"</code></td><td><code>"hash_only"</code></td></tr>
+              <tr><td><code>artifact_sampling_policy</code></td><td><code>"none"</code></td><td><code>"none"</code></td><td><code>"debug_projection"</code></td></tr>
+              <tr><td><code>raw_artifact_preview_chars</code></td><td><code>0</code></td><td><code>0</code></td><td><code>2048</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">Artifact retention 决策 + facts artifact 落盘</h3>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;"><code>_retention_decision(kind, profile)</code></h4>
+            <p class="rv-muted" style="font-size: 0.9rem; margin: 0 0 8px;">按 artifact kind 路由出 retention 决定：</p>
+            <ul style="margin: 0 0 0 18px; font-size: 0.9rem;">
+              <li>raw provider request artifact → <code>raw_artifact_retention</code>（fast/debug 强制 <code>"projection"</code>）</li>
+              <li>raw provider response artifact → 同上</li>
+              <li>reasoning trace artifact → <code>reasoning_trace_retention</code>（fast/debug 强制 <code>"hash_only"</code>）</li>
+              <li>命中 <code>critical_artifact_kinds</code> 13 类 → <strong>始终 keep</strong></li>
+              <li>其他 → keep</li>
+            </ul>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">Facts artifact（兼容旧 manifest 校验）</h4>
+            <p class="rv-muted" style="font-size: 0.9rem; margin: 0 0 8px;">retention 事实<strong>不</strong>直接塞 <code>ArtifactRef</code>，而是写到独立 artifact：</p>
+            <ul style="margin: 0 0 0 18px; font-size: 0.9rem;">
+              <li><code>artifact_retention_facts</code> · 单 artifact 的 hash-only / sampled 记录</li>
+              <li><code>artifact_projection_facts</code> · raw projection 的 hash + size + preview + 原因</li>
+              <li><code>schema_version = "repo_harness_artifact_retention_facts_v0"</code></li>
+              <li>记录字段：原始 kind / 原始大小 / 原始 hash / preview 大小 / retention 原因 / run mode / profile name</li>
+              <li>facts artifact <strong>真实落盘</strong>，<code>verify_artifact_manifest(...)</code> 仍然全通过</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 22px;">Runtime 侧改动（<code>rl/runtime.py</code>）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 30%;">改动点</th><th>实施</th></tr></thead>
+            <tbody>
+              <tr><td><code>_generate_minimal_turn</code> 的 <code>recorder_policy</code></td><td>从 <code>{"run_mode": request.run_mode}</code> 改为 <code>RecorderProfile.for_run_mode(request.run_mode).model_dump(mode="json")</code>。下游 gateway 看到的就是完整 profile。</td></tr>
+              <tr><td><code>run_episode</code> 新增 <code>model_call_seconds</code></td><td>用 <code>perf_counter()</code> 包住 <code>asyncio.wait_for / _generate_minimal_turn</code>，无论是否抛异常都计入（<code>try/finally</code>）。</td></tr>
+              <tr><td><code>_timing_summary</code></td><td>计算 <code>agent_loop_seconds = max(0, elapsed - model_call - cleanup)</code>；<code>explained = agent_loop + model_call + cleanup</code>；填写 <code>timing_explained_ratio</code>（minimal path 实测 ≥ 0.95）。</td></tr>
+              <tr><td><code>LLMGatewayModelClientAdapter.generate</code></td><td>给 <code>to_gateway_request</code> 增加 <code>recorder</code> 参数；如果 <code>recorder.recorder_profile</code> 存在，把它 merge 进 <code>recorder_policy</code>（保留原 <code>raw_request_logging_policy / retry_policy</code>）。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">9 个测试 ↔ 契约 矩阵</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 40%;">测试</th><th>锁定的契约</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L75">recorder_profile_defaults_are_stable</a></td><td>三种 mode 默认字段值快照，防 silent drift</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L96">training_fast_projects_raw_artifacts_and_keeps_manifest_valid</a></td><td><strong>核心验收</strong>：<code>fast_bytes ≤ full_bytes × 0.5</code> + manifest 校验仍通过 + projection facts 含 original_size_bytes</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L164">training_fast_mapping_profile_uses_safe_defaults</a></td><td><code>for_run_mode("training_fast")</code> 出来的 profile 各字段值正确</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L183">training_fast_rejects_conflicting_plaintext_profile</a></td><td><code>model_validator</code> 在构造期就阻止 unsafe 组合（pydantic ValueError）</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L192">training_debug_keeps_projection_preview_without_full_raw_payload</a></td><td>debug 模式截断预览 &lt; original_size_bytes</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L211">training_debug_omits_preview_when_source_is_not_redacted</a></td><td>debug 模式安全默认：未 redact 的源不留 preview</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L230">runtime_passes_recorder_profile_and_sets_timing_ratio</a></td><td>Stage 2 runtime facade 端到端：recorder_policy 含 profile + <code>timing_explained_ratio</code> 计算正确</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L254">gateway_model_client_adapter_passes_recorder_profile</a></td><td>legacy 桥接路径也透传 profile</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py#L282">fake_gateway_minimal_episode_smoke_p95_under_default_threshold</a></td><td><strong>p95 &lt; 180s</strong>（默认阈值），8 条 episode smoke</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">关键验收数字</h3>
+        <div class="rv-grid-4">
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">9 / 9</div>
+            <small class="rv-muted">Stage 3 新增测试通过</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">≤ 0.5×</div>
+            <small class="rv-muted"><code>training_fast</code> 实测 artifact bytes / <code>full_audit</code></small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">&lt; 180s</div>
+            <small class="rv-muted">fake gateway 8 条 episode p95（默认阈值）</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">≥ 0.95</div>
+            <small class="rv-muted">runtime <code>timing_explained_ratio</code></small>
+          </div>
+        </div>
+
+        <div class="rv-callout warning" style="margin-top: 16px;">
+          <strong>本次未做（按计划留给后续阶段）：</strong> 完整 <code>ResourceSummary</code>（Stage 4）· workspace / container 复用（Stage 6）· verifier worker pool（Stage 7）· no-progress 加严（Stage 8）· 并发租约（Stage 9）· <code>TrainingView → AgentLoopOutput</code> 转换（Stage 10）· verl 接入（Stage 11）。本阶段也没有把 <code>run_task(...)</code> 改写成 <code>run_episode</code> 的薄包装——和 Stage 2 一样，这两条路径仍然并行。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ① 阶段目标                                                    -->
+      <!-- ============================================================ -->
+      <section id="goal" class="rv-section">
+        <h2>① 阶段目标</h2>
+        <p>
+          Stage 3 只做一件事：把 <code>RepoHarnessEpisodeRequest.run_mode</code>（Stage 1 已经定义的枚举）<strong>真正连接到 recorder 行为</strong>。具体表现为：同一份 episode 输入，不同 <code>run_mode</code> 应该产出<strong>不同体积、不同保留粒度</strong>，但<strong>不能改变任务结果</strong>（verifier 判定、reward 计算、token / logprob 事实必须一致）。
+        </p>
+        <div class="rv-callout">
+          一句话：<strong>"换 run_mode 只换 artifact 保留策略，不换语义。"</strong> training_fast 砍体积时必须砍掉的是<strong>明文冗余</strong>（raw provider request 全文 / reasoning trace 明文 / 大 prepared messages），不能砍掉<strong>关键 evidence</strong>（patch、reward 引用、verifier 引用、artifact manifest、关键 hash、AuditRef）。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ② 三种 run_mode 对比                                          -->
+      <!-- ============================================================ -->
+      <section id="modes" class="rv-section">
+        <h2>② 三种 <code>run_mode</code> 横向对比</h2>
+        <p class="rv-muted">每条 ✅ / ❌ / ➖ 都对应一个具体 recorder 字段或 artifact 类别。这是 Stage 3 验收时最重要的一张表。</p>
+        <div class="rh-modes">
+
+          <div class="rh-mode full">
+            <h4>full_audit</h4>
+            <p class="rh-mode-purpose">用途：评测、复查、人工调试。延续 Stage 0H / 1 / 2 现有行为。</p>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>完整 <code>raw_provider_request</code> 明文</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>完整 <code>raw_provider_response</code> 明文</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>完整 <code>reasoning_trace</code>（如 provider 返回）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>完整 <code>prepared_messages</code></span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>全部 patch / reward / verifier 引用</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span><code>AuditRef</code> + artifact manifest + 关键 hash</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span><code>timing_explained_ratio &ge; 0.95</code></span></div>
+          </div>
+
+          <div class="rh-mode fast">
+            <h4>training_fast</h4>
+            <p class="rh-mode-purpose">用途：在线训练 rollout。默认大幅压缩 artifact 体积，仍保留训练复查必需的引用。</p>
+            <div class="rh-mode-row"><span class="rh-icon no">✗</span><span>raw provider request 明文（只留 <strong>hash + size + 截断预览</strong>）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon no">✗</span><span>raw provider response 明文（同上）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon no">✗</span><span>reasoning trace 明文（<strong>只留 hash + 长度 + bool</strong>）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon mid">~</span><span><code>prepared_messages</code>：要么完整保留，要么提供 projection artifact <strong>同时</strong>更新 exporter / audit（不能静默改）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>patch / reward / verifier 引用<strong>必须保留</strong></span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span><code>AuditRef</code> + artifact manifest + 关键 hash</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>artifact bytes 相比 <code>full_audit</code> <strong>下降 &ge; 50%</strong></span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span><code>timing_explained_ratio &ge; 0.95</code></span></div>
+          </div>
+
+          <div class="rh-mode debug">
+            <h4>training_debug</h4>
+            <p class="rh-mode-purpose">用途：训练过程出问题时的中间排查模式。比 fast 更详细，比 full 更节制。</p>
+            <div class="rh-mode-row"><span class="rh-icon mid">~</span><span>raw provider request：<strong>采样或截断后</strong>保留（manifest 标记 truncated / sampled）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon mid">~</span><span>raw provider response：同上</span></div>
+            <div class="rh-mode-row"><span class="rh-icon no">✗</span><span>reasoning trace 明文（<strong>不得</strong>因 debug 模式而默认放开）</span></div>
+            <div class="rh-mode-row"><span class="rh-icon mid">~</span><span><code>prepared_messages</code>：可保留采样或截断版本</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>所有 sampling / truncation 在 manifest 中<strong>显式标记</strong></span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span>不得隐式回退到 <code>full_audit</code> 或绕过 visibility</span></div>
+            <div class="rh-mode-row"><span class="rh-icon ok">✓</span><span><code>timing_explained_ratio &ge; 0.95</code></span></div>
+          </div>
+
+        </div>
+        <p class="rv-muted" style="font-size: 0.86rem;">
+          图例：<span style="color: var(--rv-success);">✓</span> 默认保留 ·
+          <span style="color: var(--rv-danger);">✗</span> 默认不保留明文（hash / 长度 / bool 等元数据仍保留）·
+          <span style="color: var(--rv-warning);">~</span> 部分保留 / 有条件
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ③ 必须保持的边界                                              -->
+      <!-- ============================================================ -->
+      <section id="boundaries" class="rv-section">
+        <h2>③ 8 条必须保持的硬边界</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr>
+                <th style="width: 6%;">#</th>
+                <th>边界</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><code>run_mode</code> 只能影响<strong>记录粒度</strong>、artifact 保留策略、预算和执行记录方式，<strong>不能</strong>改变任务输入、workspace 语义、verifier 规则或 reward 计算语义。</td></tr>
+              <tr><td>2</td><td><code>training_fast</code> 不能通过删除关键 evidence 来制造体积下降。<strong>必须保留</strong>：patch、reward metadata 引用、final verifier 引用、trajectory 引用、artifact manifest、关键 hash、<code>AuditRef</code>。</td></tr>
+              <tr><td>3</td><td><code>training_fast</code> 默认<strong>不</strong>保存外部 provider 的明文 <code>reasoning_trace</code> / <code>thinking_trace</code>。</td></tr>
+              <tr><td>4</td><td><code>training_fast</code> 默认<strong>不</strong>保存完整 raw provider request / response 明文；需要保存 hash、大小、截断预览或 projection 引用。</td></tr>
+              <tr><td>5</td><td><code>TrainingView.extra_fields</code> 仍然只允许<strong>短小、扁平、<code>repo_harness_*</code> 命名空间</strong>字段和 opaque refs，不能放入嵌套 audit_ref、绝对路径、完整 reward metadata 或隐藏 verifier 材料。</td></tr>
+              <tr><td>6</td><td>本阶段不能 <code>import verl</code>，也不能提前实现 <code>RepoHarnessVerlAgentLoop</code>、<code>AgentLoopOutput</code> 转换器、Ray / vLLM / SGLang 调度或真实训练侧 rollout。</td></tr>
+              <tr><td>7</td><td>不能把缺失 token / logprob 的旧 provider 结果伪装成正式 online RL 样本。缺失正式 token 证据的路径仍然只能作为 <strong>diagnostic result 或 offline data</strong>。</td></tr>
+              <tr><td>8</td><td>Stage 3 新增 / 改造的 runtime facade / recorder smoke 路径必须实现最小 <code>TimingSummary</code>，<code>timing_explained_ratio &ge; 0.95</code>。完整 ResourceSummary 留给 Stage 4。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ④ 设计方案                                                    -->
+      <!-- ============================================================ -->
+      <section id="design" class="rv-section">
+        <h2>④ 设计方案（6 个子方案）</h2>
+
+        <!-- 4.1 Recorder profile -->
+        <article class="rh-api-card">
+          <h3><span class="rh-kind dc">数据类</span>4.1 Recorder profile / policy</h3>
+          <p class="rh-sub">训练后端无关的 recorder profile 结构。具体放在 <code>src/repo_harness/trajectory/recorder.py</code> 或新建 <code>trajectory/retention.py</code>，<strong>不能</strong>放到 verl 命名空间。</p>
+          <div class="rh-sig"><span class="cm"># 建议字段（具体类型按现有代码风格定）</span>
+mode: <span class="ty">Literal["full_audit","training_fast","training_debug"]</span>
+save_raw_provider_request:  <span class="ty">bool</span>
+save_raw_provider_response: <span class="ty">bool</span>
+save_reasoning_trace:       <span class="ty">bool</span>
+save_prepared_messages:     <span class="ty">bool</span>
+prepared_messages_retention:<span class="ty">Literal["complete","projection","hash_only"]</span>
+artifact_compression:       <span class="ty">str | None</span>
+artifact_sampling_policy:   <span class="ty">str | None</span>
+raw_artifact_preview_chars: <span class="ty">int</span>  <span class="cm"># 截断预览长度</span></div>
+          <div class="rh-meta">
+            <div class="rh-meta-item callers"><span class="rh-label">谁会用</span><code>RunRecorder</code> 接受可选 profile 参数（默认 <code>full_audit</code> 保持现有行为）；<code>RepoHarnessRuntime.run_episode</code> 把 <code>request.run_mode</code> 映射到 profile 后传给 recorder。</div>
+            <div class="rh-meta-item bound"><span class="rh-label">边界</span>profile 不能写入 <code>TrainingView.extra_fields</code> 或 <code>RepoHarnessEpisodeRequest</code>。它是 runtime 侧策略。</div>
+          </div>
+        </article>
+
+        <!-- 4.2 Artifact manifest 扩展 -->
+        <article class="rh-api-card">
+          <h3><span class="rh-kind cfg">扩展</span>4.2 Artifact manifest retention 事实</h3>
+          <p class="rh-sub">让 manifest 能表达"这条 artifact 是被压缩 / 截断 / 采样 / 只留 hash 后写下的"，而<strong>不破坏</strong>现有 <code>verify_artifact_manifest(...)</code>。</p>
+          <div class="rh-sig"><span class="cm"># manifest / event 需要能表达的事实</span>
+complete | truncated | sampled | compressed | hash_only | projection_only
+profile · original_size_bytes · preview_size_bytes</div>
+          <h4 style="margin: 10px 0 4px;">实现策略：单独 facts artifact，<strong>不</strong>直接塞 <code>ArtifactRef</code></h4>
+          <ul style="margin: 0 0 0 18px; font-size: 0.92rem;">
+            <li><code>artifacts.json</code> 里每条仍保持现有 <code>ArtifactRef</code> 可校验形态。</li>
+            <li>retention 事实写入新 facts artifact，例如 <code>artifact_retention_facts</code> 或 <code>artifact_projection_facts</code>。</li>
+            <li>facts artifact <strong>必须真实落盘</strong>，不能创建无文件的 manifest entry。</li>
+            <li>记录字段：原始 artifact kind、原始大小、原始 hash、preview 大小、retention 原因、run mode、profile。</li>
+            <li>如果将来确需扩展 <code>ArtifactRef</code> schema，新字段必须可选 + 安全默认 + 同步更新 manifest 校验测试。</li>
+          </ul>
+        </article>
+
+        <!-- 4.3 run_mode 传递链路 -->
+        <article class="rh-api-card">
+          <h3><span class="rh-kind fn">链路</span>4.3 <code>run_mode</code> 从 request 传到 recorder</h3>
+          <div class="rh-sig">RepoHarnessEpisodeRequest.run_mode
+        │
+        ▼
+RepoHarnessRuntime.run_episode(...)
+        │  把 run_mode 映射到 recorder profile
+        ▼
+recorder profile / recorder policy
+        │
+        ▼
+RunRecorder artifact writing behavior</div>
+          <div class="rv-callout warning" style="margin-top: 8px;">
+            <strong>注意陷阱：</strong>Stage 2 runtime facade 当前只做 1-turn fake gateway，<strong>本身不创建 <code>RunRecorder</code>、不写大量 artifact</strong>。所以 Stage 3 的"artifact bytes 下降 50%"验收<strong>不能只跑 runtime facade</strong>，必须额外新增一个 <strong>deterministic recorder test path</strong>：固定大 payload、固定 raw request/response、固定 prepared messages、固定 reasoning trace，分别用 <code>full_audit</code> 和 <code>training_fast</code> 跑同一组写入，再对比 bytes。runtime facade 只负责 run_mode → profile 的映射。
+          </div>
+        </article>
+
+        <!-- 4.4 Raw provider request / response 投影 -->
+        <article class="rh-api-card">
+          <h3><span class="rh-kind fn">策略</span>4.4 Raw provider request / response 投影</h3>
+          <div class="rv-table-wrap">
+            <table class="rv-table rh-table-tight">
+              <thead><tr><th style="width: 22%;">mode</th><th>处理规则</th></tr></thead>
+              <tbody>
+                <tr><td><code>full_audit</code></td><td>保留现有完整记录行为。</td></tr>
+                <tr><td><code>training_fast</code></td><td>默认保存 <strong>hash + 原始大小 + 截断预览 + projection / opaque artifact ref</strong>，<strong>不</strong>保存完整明文。</td></tr>
+                <tr><td><code>training_debug</code></td><td>允许保存截断或采样后的内容，<strong>必须</strong>在 manifest 中标记 sampling / truncation。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h4 style="margin: 10px 0 4px;">特别约束：reasoning trace / thinking trace</h4>
+          <ul style="margin: 0 0 0 18px; font-size: 0.92rem;">
+            <li><code>training_fast</code> 默认<strong>必须拒绝</strong>明文写入。</li>
+            <li>可保留：不可逆 hash、长度、是否存在的 bool。</li>
+            <li>不得放入模型可见字段或 batch 可传播字段。</li>
+            <li><code>model_client/provider_private_state.py</code> 中显式 opt-in 的 reasoning trace training export 路径，<strong>不能</strong>在 <code>training_fast</code> 下被默认打开。只有 <code>full_audit</code> 或明确 diagnostic / export policy 才能保留明文 reasoning trace，且必须保持现有 explicit opt-in 语义。</li>
+          </ul>
+        </article>
+
+        <!-- 4.5 Prepared messages 兼容陷阱 -->
+        <article class="rh-api-card">
+          <h3><span class="rh-kind warn">⚠ 陷阱</span>4.5 Prepared messages 的现有 exporter 强依赖</h3>
+          <p class="rh-sub">这是 Stage 3 最容易踩坑的地方。<strong>不能</strong>无脑把 prepared_messages 改成 hash-only。</p>
+          <div class="rh-meta">
+            <div class="rh-meta-item danger">
+              <span class="rh-label">现状（exporter / audit 的强依赖）</span>
+              exporter 会读取 <code>model_input_snapshot</code> 中的 <code>prepared_messages_ref</code>，并校验 <code>prepared_messages_sha256</code> 和 <code>model_input_hash</code>；audit 会确认对应文件存在、sha 匹配、JSON 可解析并包含期望 tool call / observation。
+            </div>
+          </div>
+          <h4 style="margin: 10px 0 4px;">三选一兼容路径</h4>
+          <ol style="margin: 0 0 0 18px; font-size: 0.92rem;">
+            <li><strong>路径 A · 保完整：</strong>training_fast 仍保留完整 <code>prepared_messages_ref</code>。在 bytes 分类报告中说明"因 exporter 强依赖暂未降级"。</li>
+            <li><strong>路径 B · 加 projection：</strong>新增 <code>prepared_messages_projection</code> 或 <code>prepared_messages_retention_facts</code> artifact，<strong>同一 patch</strong>更新 exporter / audit 让 training_fast 能按 projection policy 校验。</li>
+            <li><strong>禁止：</strong>静默把 <code>prepared_messages_ref</code> 换成无法过旧 audit 的 hash-only artifact。<code>model_input_hash</code> 不能被重新解释成另一个 payload 的 hash。</li>
+          </ol>
+        </article>
+
+        <!-- 4.6 最小 TimingSummary attribution -->
+        <article class="rh-api-card">
+          <h3><span class="rh-kind dc">字段</span>4.6 最小 <code>TimingSummary</code> attribution</h3>
+          <p class="rh-sub">Stage 3 自己覆盖的 runtime facade / recorder smoke 路径必须能解释 ≥ 95% 外层 wall time。完整生产级 TimingSummary / ResourceSummary 留给 Stage 4。</p>
+          <div class="rv-table-wrap">
+            <table class="rv-table rh-table-tight">
+              <thead><tr><th style="width: 30%;">字段</th><th>记录的事实</th></tr></thead>
+              <tbody>
+                <tr><td><code>rollout_wall_seconds</code></td><td>本次 episode 或 recorder smoke 的外层耗时</td></tr>
+                <tr><td><code>model_call_seconds</code></td><td>gateway 调用耗时（fake gateway 也要计入）</td></tr>
+                <tr><td><code>artifact_write_seconds</code></td><td>recorder 写入耗时</td></tr>
+                <tr><td><code>cleanup_seconds</code></td><td>runtime / recorder 自己可控的清理耗时</td></tr>
+                <tr><td><code>timing_explained_ratio</code></td><td>必须 <strong>&ge; 0.95</strong>。未达标 → 写入 diagnostics，且 Stage 3 不应标记完成。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑤ 预计修改文件                                                -->
+      <!-- ============================================================ -->
+      <section id="files" class="rv-section">
+        <h2>⑤ 预计修改 / 新增的文件</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr>
+                <th style="width: 14%;">类别</th>
+                <th style="width: 36%;">文件</th>
+                <th>预计内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td rowspan="3"><span class="rv-badge success">主要修改</span></td>
+                  <td><code>src/repo_harness/trajectory/recorder.py</code></td>
+                  <td>RunRecorder 接受可选 profile 参数；artifact 写入按 profile 决定 retention（complete / truncated / sampled / projection / hash_only）。</td></tr>
+              <tr><td><code>src/repo_harness/trajectory/schemas.py</code></td>
+                  <td>新增或扩展 manifest event metadata 字段，让 retention 事实可表达。</td></tr>
+              <tr><td><code>src/repo_harness/rl/runtime.py</code></td>
+                  <td>把 <code>request.run_mode</code> 映射到 recorder profile，传给 recorder（如果 runtime path 复用 RunRecorder）。</td></tr>
+
+              <tr><td rowspan="6"><span class="rv-badge info">可能修改</span></td>
+                  <td><code>model_client/mock.py</code> · <code>replay.py</code> · <code>providers/common.py</code></td>
+                  <td>raw provider request/response 的写入点要遵守 profile。</td></tr>
+              <tr><td><code>model_client/provider_private_state.py</code></td>
+                  <td>reasoning trace 的 opt-in 路径必须保持现状，<strong>不能</strong>在 training_fast 下被默认打开。</td></tr>
+              <tr><td><code>context/manager.py</code> · <code>agent_loop/loop.py</code></td>
+                  <td>prepared_messages 写入点的 retention 钩子。</td></tr>
+              <tr><td><code>export/exporter.py</code> · <code>export/audit.py</code> · <code>export/schemas.py</code></td>
+                  <td>如果走 prepared_messages 的"路径 B · projection"，必须同一 patch 更新 exporter / audit。</td></tr>
+              <tr><td colspan="2" class="rv-muted">如果实际修改影响以下区域，相关测试也要同步：</td></tr>
+              <tr><td colspan="2"><code>tests/unit/test_run_recorder.py</code> · <code>test_provider_artifact_binding.py</code> · <code>test_export.py</code> · <code>tests/integration/test_export_from_run.py</code> · <code>test_v3_export_audit.py</code></td></tr>
+
+              <tr><td><span class="rv-badge warning">新增测试</span></td>
+                  <td><code>tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py</code></td>
+                  <td>三种 mode 默认值锁定 / artifact bytes 对比（≥ 50% 下降）/ reasoning trace 默认拒绝 / prepared_messages 兼容验证 / 8 条 fake gateway 固定成本 smoke / timing_explained_ratio ≥ 0.95。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑥ 实施 13 步                                                  -->
+      <!-- ============================================================ -->
+      <section id="pipeline" class="rv-section">
+        <h2>⑥ 实施顺序（13 步）</h2>
+        <p class="rv-muted">建议<strong>先补测试草案再写实现</strong>。"砍体积"和"不砍 evidence"的双重约束最容易在没有测试的情况下走偏。</p>
+        <div class="rh-pipeline">
+          <div class="rh-pipeline-step"><span class="rh-step-no">1</span><strong>先写测试草案</strong><small>锁定 <code>full_audit</code> / <code>training_fast</code> / <code>training_debug</code> 三种 mode 的 recorder profile 默认值。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">2</span><strong>实现 recorder profile</strong><small>给 RunRecorder 加可选 profile 参数，默认 <code>full_audit</code> 保持现有行为。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">3</span><strong>artifact retention 行为</strong><small>profile-aware 写入：training_fast 时支持 hash / 大小 / 截断预览 / projection。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">4</span><strong>retention facts artifact</strong><small>每个被压缩 / 采样 / 截断 / hash-only 的 artifact 都有 facts 说明原因和原始大小。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">5</span><strong>run_mode 传到 recorder</strong><small><code>EpisodeRequest.run_mode</code> → runtime facade → recorder profile。不写入 <code>TrainingView.extra_fields</code>。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">6</span><strong>修改写入点遵守 profile</strong><small>raw provider request / response、prepared_messages、provider_private_state、reasoning trace。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">7</span><strong>export / audit 兼容</strong><small>full_audit 缺料仍是审计风险；training_fast 缺完整 raw 不应自动失败，但必须有 hash / 大小 / retention policy / 可追溯引用。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">8</span><strong>prepared_messages 兼容</strong><small>选路径 A（保完整）或路径 B（加 projection + 更新 exporter / audit）。<strong>同一 patch 完成</strong>。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">9</span><strong>artifact bytes 对比测试</strong><small>同一 deterministic recorder write path，training_fast 至少比 full_audit 少 50%；否则在 manifest / 报告中分类解释。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">10</span><strong>8 条 fake gateway smoke</strong><small>非模型固定成本 smoke，默认阈值 180s，报告 p95 / 总 bytes / artifact kind 分类。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">11</span><strong>最小 TimingSummary</strong><small>覆盖路径填充 4 个 timing 字段并断言 <code>timing_explained_ratio &ge; 0.95</code>。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">12</span><strong>新增 fixture 锁默认映射</strong><small>三种 mode 的默认映射和序列化稳定性。<strong>不</strong>改 Stage 0H 已冻结 canonical fixture。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">13</span><strong>跑回归</strong><small>Stage 2 / Stage 1 / Stage 0H 回归测试全部通过，schema / visibility / runtime facade 未破坏。</small></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑦ 验收标准                                                    -->
+      <!-- ============================================================ -->
+      <section id="exit" class="rv-section">
+        <h2>⑦ 出口标准（13 条）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 6%;">#</th><th>验收项</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><code>EpisodeRequest.run_mode = full_audit | training_fast | training_debug</code> 都能被 runtime facade 识别并映射到明确 recorder profile。</td></tr>
+              <tr><td>2</td><td><code>full_audit</code> 默认保持现有完整审计记录行为。</td></tr>
+              <tr><td>3</td><td><code>training_fast</code> 默认<strong>不</strong>保存明文 <code>reasoning_trace</code> / <code>thinking_trace</code>。</td></tr>
+              <tr><td>4</td><td><code>training_fast</code> 默认<strong>不</strong>保存完整 raw provider request / response 明文；保存 hash / 大小 / 截断预览 / projection / opaque ref。</td></tr>
+              <tr><td>5</td><td><code>training_fast</code> 仍保留 patch / reward metadata 引用 / final verifier 引用 / trajectory 引用 / artifact manifest / 关键 hash / <code>AuditRef</code>。</td></tr>
+              <tr><td>6</td><td><code>training_fast</code> artifact bytes 相比 <code>full_audit</code> <strong>下降 ≥ 50%</strong>，或 manifest / 测试报告明确说明各类 artifact 为何无法下降。</td></tr>
+              <tr><td>7</td><td><code>training_fast</code> 对 <code>prepared_messages</code> 的处理不破坏现有 export / audit：完整保留 或 提供已被 exporter 正式支持的 projection policy。</td></tr>
+              <tr><td>8</td><td><code>training_debug</code> 的 sampling / truncation / 保留行为有明确 profile，不会隐式回退到 <code>full_audit</code> 或绕过 visibility。</td></tr>
+              <tr><td>9</td><td>8 条 fake gateway 最小 episode 的非模型固定成本 smoke 通过，默认阈值 180 秒。</td></tr>
+              <tr><td>10</td><td>Stage 3 覆盖路径输出 <code>TimingSummary</code>，<code>timing_explained_ratio &ge; 0.95</code>。</td></tr>
+              <tr><td>11</td><td><code>TrainingView.extra_fields</code> 没有嵌套 <code>audit_ref</code> / 绝对路径 / 完整 reward metadata / hidden verifier / provider secret / evaluator-only log。</td></tr>
+              <tr><td>12</td><td><code>src/repo_harness/rl</code> 和新增 recorder 代码<strong>不 import <code>verl</code></strong>。</td></tr>
+              <tr><td>13</td><td>Stage 0H / Stage 1 / Stage 2 既有回归测试继续通过。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑧ 不做事项                                                    -->
+      <!-- ============================================================ -->
+      <section id="not-doing" class="rv-section">
+        <h2>⑧ Stage 3 明确不做（留给后续阶段）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 70%;">不做内容</th><th>所属阶段</th></tr></thead>
+            <tbody>
+              <tr><td>生产级完整 <code>TimingSummary</code> / <code>ResourceSummary</code> 统计体系（workspace / Docker / tool / verifier / reward / resource 细分）</td><td>Stage 4</td></tr>
+              <tr><td><code>ResourceSummary</code> 完整资源统计</td><td>Stage 4</td></tr>
+              <tr><td>workspace / container 复用</td><td>Stage 6</td></tr>
+              <tr><td>verifier worker pool</td><td>Stage 7</td></tr>
+              <tr><td>训练预算 no-progress 控制加严</td><td>Stage 8</td></tr>
+              <tr><td>并发资源租约</td><td>Stage 9</td></tr>
+              <tr><td><code>TrainingView → AgentLoopOutput</code> 转换器</td><td>Stage 10</td></tr>
+              <tr><td><code>RepoHarnessVerlAgentLoop</code> / <code>VerlLLMGateway</code> / 真实 verl 接入</td><td>Stage 11</td></tr>
+              <tr><td>通过重新分词最终文本伪造正式训练 token / mask / log probability</td><td>任何阶段都不允许</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑨ 验收命令                                                    -->
+      <!-- ============================================================ -->
+      <section id="checks" class="rv-section">
+        <h2>⑨ 建议验收命令</h2>
+        <p class="rv-muted">分三层：Stage 3 新增测试 · Stage 0H / 1 / 2 回归 · 涉及 export / audit / artifact 时的整合测试。</p>
+        <h4 style="margin: 10px 0 4px;">基础：编译 + Stage 3 新增</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m compileall -q src
+uv run --extra dev python -m pytest -q tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">Stage 2 / 1 / 0H 回归</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_rl_stage2_runtime.py \
+  tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py \
+  tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py \
+  tests/unit/test_repo_harness_verl_contract_fixtures.py \
+  tests/unit/test_repo_harness_verl_stage0h_shape_rules.py \
+  tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">如果触及 trajectory / artifact manifest / training export</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m pytest -q \
+  tests/unit/test_run_recorder.py \
+  tests/unit/test_provider_artifact_binding.py \
+  tests/unit/test_export.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">如果触及 export / audit 整合</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m pytest -q \
+  tests/integration/test_export_from_run.py \
+  tests/integration/test_v3_export_audit.py</code></pre>
+
+        <div class="rv-callout">
+          <strong>最终汇报必须列出：</strong>① 实际修改的文件 · ② 每个文件新增 / 修改的函数 / 类 / 测试 · ③ <code>full_audit</code> vs <code>training_fast</code> 的 artifact bytes 对比结果 · ④ fake gateway 固定成本 smoke 的 p95 · ⑤ 哪些 Stage 4 相关验收仍属后续阶段，<strong>不能</strong>在 Stage 3 中误标完成。
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>

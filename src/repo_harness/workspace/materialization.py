@@ -120,7 +120,8 @@ def _materialize_local_repository(
     if not source_path.exists() or not source_path.is_dir():
         raise WorkspaceError(f"local_repository source does not exist: {source_path}")
     if not (source_path / ".git").exists() and source.base_commit:
-        _copy_source_tree(source_path, destination)
+        preserve_git_metadata = _preserve_git_metadata(task) and (source_path / ".git").exists()
+        _copy_source_tree(source_path, destination, preserve_git_metadata=preserve_git_metadata)
         facts = _facts_for_local_tree(
             task=task,
             root=destination,
@@ -136,9 +137,9 @@ def _materialize_local_repository(
             current_commit=None,
             working_tree_clean=source.working_tree_clean,
             dirty_snapshot_allowed=source.allow_dirty_snapshot,
-            remotes_stripped=True,
-            branches_stripped=True,
-            tags_stripped=True,
+            remotes_stripped=not preserve_git_metadata,
+            branches_stripped=not preserve_git_metadata,
+            tags_stripped=not preserve_git_metadata,
             materialization_command_facts=_copy_command_facts(
                 source_type="fixed_local_mirror",
                 input_kind="local_directory",
@@ -147,7 +148,8 @@ def _materialize_local_repository(
         return SourceCheckout(root=destination, facts=facts)
     git_commit = _git_output(source_path, ["rev-parse", "HEAD"])
     if git_commit is None and source.base_commit:
-        _copy_source_tree(source_path, destination)
+        preserve_git_metadata = _preserve_git_metadata(task) and (source_path / ".git").exists()
+        _copy_source_tree(source_path, destination, preserve_git_metadata=preserve_git_metadata)
         facts = _facts_for_local_tree(
             task=task,
             root=destination,
@@ -163,9 +165,9 @@ def _materialize_local_repository(
             current_commit=None,
             working_tree_clean=source.working_tree_clean,
             dirty_snapshot_allowed=source.allow_dirty_snapshot,
-            remotes_stripped=True,
-            branches_stripped=True,
-            tags_stripped=True,
+            remotes_stripped=not preserve_git_metadata,
+            branches_stripped=not preserve_git_metadata,
+            tags_stripped=not preserve_git_metadata,
             materialization_command_facts=_copy_command_facts(
                 source_type="fixed_local_mirror",
                 input_kind="local_directory",
@@ -200,7 +202,8 @@ def _materialize_local_repository(
             "local_repository source has a dirty working tree; set allow_dirty_snapshot=true "
             "only for explicitly controlled task snapshots."
         )
-    _copy_source_tree(source_path, destination)
+    preserve_git_metadata = _preserve_git_metadata(task) and (source_path / ".git").exists()
+    _copy_source_tree(source_path, destination, preserve_git_metadata=preserve_git_metadata)
     facts = _facts_for_local_tree(
         task=task,
         root=destination,
@@ -216,9 +219,9 @@ def _materialize_local_repository(
         current_commit=current_commit,
         working_tree_clean=working_tree_clean,
         dirty_snapshot_allowed=source.allow_dirty_snapshot,
-        remotes_stripped=True,
-        branches_stripped=True,
-        tags_stripped=True,
+        remotes_stripped=not preserve_git_metadata,
+        branches_stripped=not preserve_git_metadata,
+        tags_stripped=not preserve_git_metadata,
         materialization_command_facts=_copy_command_facts(
             source_type="local_repository",
             input_kind="git_worktree_copy",
@@ -372,10 +375,20 @@ def _metadata_sha256(task: RunnableTask, key: str) -> str | None:
     return None
 
 
-def _copy_source_tree(source: Path, destination: Path) -> None:
+def _copy_source_tree(
+    source: Path,
+    destination: Path,
+    *,
+    preserve_git_metadata: bool = False,
+) -> None:
     if not source.exists() or not source.is_dir():
         raise WorkspaceError(f"source directory does not exist: {source}")
-    shutil.copytree(source, destination, ignore=_ignore_source_control, symlinks=True)
+    ignore = None if preserve_git_metadata else _ignore_source_control
+    shutil.copytree(source, destination, ignore=ignore, symlinks=True)
+
+
+def _preserve_git_metadata(task: RunnableTask) -> bool:
+    return task.metadata.get("git_metadata_policy") == "preserve_base_git_metadata"
 
 
 def _ignore_source_control(_directory: str, names: list[str]) -> set[str]:

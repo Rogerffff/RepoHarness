@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl Stage 4 执行计划</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    /* === 与 Stage 2 / Stage 3 一致的工程文档式样式 === */
+    .rh-toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .rh-toc a {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+      color: var(--rv-text);
+      font-size: 0.92rem;
+      text-decoration: none;
+    }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+
+    .rh-kind {
+      display: inline-block;
+      padding: 1px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+    .rh-kind.dc    { background: rgba(126,231,135,0.16); color: #7ee787; }
+    .rh-kind.fn    { background: rgba(255,196,99,0.18);  color: #ffc463; }
+    .rh-kind.cfg   { background: rgba(88,166,255,0.16);  color: #58a6ff; }
+    .rh-kind.warn  { background: rgba(255,180,99,0.20);  color: #ffb463; }
+    .rh-kind.danger{ background: rgba(255,123,123,0.16); color: #ff7b7b; }
+
+    .rh-api-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-api-card .rh-sub { margin: 0 0 12px; color: var(--rv-muted); font-size: 0.92rem; }
+
+    .rh-sig {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #0b1018;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      color: #d0d7de;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+
+    .rh-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .rh-meta-item {
+      padding: 8px 12px;
+      border-left: 3px solid var(--rv-border-strong);
+      background: var(--rv-surface);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+    }
+    .rh-meta-item .rh-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--rv-muted);
+    }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound   { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger  { border-left-color: var(--rv-danger); }
+
+    .rh-pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .rh-pipeline-step {
+      padding: 12px 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-pipeline-step .rh-step-no {
+      display: inline-block;
+      padding: 1px 7px;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--hh-accent-soft);
+      color: var(--rv-accent);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+    .rh-pipeline-step strong { display: block; margin-bottom: 4px; }
+    .rh-pipeline-step small { color: var(--rv-muted); font-size: 0.82rem; line-height: 1.5; }
+
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+
+    /* === Stage 4 特有：时间互斥分桶堆叠条 === */
+    .rh-stack-row {
+      display: flex;
+      height: 36px;
+      border: 1px solid var(--rv-border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 8px 0;
+      background: var(--rv-surface);
+    }
+    .rh-stack-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.8rem;
+      color: #0b1018;
+      font-weight: 760;
+      padding: 0 6px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .rh-stack-cell.model     { background: #58a6ff; }
+    .rh-stack-cell.context   { background: #ffb463; }
+    .rh-stack-cell.tool      { background: #c79fff; }
+    .rh-stack-cell.ws        { background: #7ee787; }
+    .rh-stack-cell.docker    { background: #79c0ff; color: #0b1018; }
+    .rh-stack-cell.verifier  { background: #ffc463; }
+    .rh-stack-cell.artifact  { background: #d2a8ff; }
+    .rh-stack-cell.cleanup   { background: #a5d6ff; }
+    .rh-stack-cell.residual  { background: #6e7681; color: #f0f6fc; }
+    .rh-stack-cell.unattr    { background: #ff7b7b; color: #f0f6fc; }
+    .rh-stack-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 6px 0 12px;
+      font-size: 0.84rem;
+      color: var(--rv-muted);
+    }
+    .rh-stack-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rh-stack-legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    /* === BudgetConsumption ↔ TimingSummary 对账 === */
+    .rh-reconcile {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 80px minmax(0, 1fr);
+      gap: 12px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    @media (max-width: 880px) {
+      .rh-reconcile { grid-template-columns: 1fr; }
+      .rh-reconcile .rh-reconcile-eq { display: none; }
+    }
+    .rh-reconcile-col {
+      padding: 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface);
+    }
+    .rh-reconcile-col.budget { border-top: 4px solid var(--rv-warning); }
+    .rh-reconcile-col.timing { border-top: 4px solid var(--rv-success); }
+    .rh-reconcile-col h4 {
+      margin: 0 0 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.96rem;
+    }
+    .rh-reconcile-col .rh-row {
+      padding: 6px 0;
+      border-top: 1px dashed var(--rv-border);
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.84rem;
+    }
+    .rh-reconcile-col .rh-row:first-of-type { border-top: 0; }
+    .rh-reconcile-eq {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 760;
+      color: var(--rv-success);
+    }
+
+    /* === 第一版覆盖范围分层 === */
+    .rh-coverage {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .rh-coverage-card {
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+    }
+    .rh-coverage-card.must { border-left: 4px solid var(--rv-success); }
+    .rh-coverage-card.may  { border-left: 4px solid var(--rv-warning); }
+    .rh-coverage-card.no   { border-left: 4px solid var(--rv-danger); }
+    .rh-coverage-card h4 {
+      margin: 0 0 6px;
+      font-size: 0.96rem;
+    }
+    .rh-coverage-card ul {
+      margin: 4px 0 0 18px;
+      padding: 0;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 计划</a>
+          <a href="repo_harness_verl_stage3_execution_plan.html">Stage 3 计划</a>
+          <a href="repo_harness_verl_stage4_execution_plan.html" aria-current="page">Stage 4 计划</a>
+          <a href="repo_harness_verl_stage5_execution_plan.html">Stage 5 计划</a>
+          <a href="repo_harness_verl_stage6_execution_plan.html">Stage 6 计划</a>
+          <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 4 · Execution Report</span>
+      <h1>Stage 4：实现 <code>TimingSummary</code> 与 <code>ResourceSummary</code></h1>
+      <p class="rv-lead">
+        本页上半为 Stage 4 <strong>实施结果</strong>，下半保留原始<strong>执行计划</strong>供对照。本次产出：14 个互斥 timing 分桶字段 + 3 个模块常量 + 2 个 helper + 两个 pydantic <code>model_validator</code>（低解释率强制 diagnostics、ResourceSummary 拒绝绝对路径）+ runtime 端 Budget ↔ Timing 对账 + 2 个 batch-safe opaque ref。7 个单元测试覆盖互斥分桶、低解释率强制审计、success / failed / 终端 5 种状态、Budget 对账、绝对路径拒绝、run_dir summarizer。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 4 · 已实现</span>
+        <span class="rv-badge success">7 / 7 测试通过</span>
+        <span class="rv-badge info">覆盖范围：runtime facade 路径 + run_dir summarizer · CLI / legacy runner 未接入</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#result">⓪ 执行结果 ⚡ 新</a>
+        <a href="#goal">① 阶段目标</a>
+        <a href="#coverage">② 第一版覆盖范围 ⚠</a>
+        <a href="#boundaries">③ 10 条硬边界</a>
+        <a href="#timing">④ TimingSummary 设计</a>
+        <a href="#resource">⑤ ResourceSummary 设计</a>
+        <a href="#reconcile">⑥ Budget ↔ Timing 对账</a>
+        <a href="#refs">⑦ Summary artifact 与 ref</a>
+        <a href="#files">⑧ 预计修改文件</a>
+        <a href="#pipeline">⑨ 实施 12 步</a>
+        <a href="#exit">⑩ 验收标准</a>
+        <a href="#not-doing">⑪ 不做事项</a>
+        <a href="#checks">⑫ 验收命令</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <!-- ⓪ 本次执行结果                                                -->
+      <!-- ============================================================ -->
+      <section id="result" class="rv-section">
+        <h2>⓪ 本次执行结果</h2>
+        <div class="rv-callout success">
+          <strong>一句话：</strong>Stage 4 已落地。<code>TimingSummary</code> 现在用 <strong>14 个互斥分桶</strong>解释外层耗时，<code>build_timing_summary(...)</code> 自动计算 <code>timing_explained_ratio</code> / <code>timing_unattributed_seconds</code>，<code>validate_low_explained_ratio_has_audit_context</code> 强制低解释率必须配 <code>timing_unattributed_seconds &gt; 0</code> 和非空 <code>timing_diagnostics</code>。<code>ResourceSummary</code> 扩展为 30+ 字段，<code>model_post_init</code> 拒绝 <code>workspace_path</code> / <code>run_dir</code> 为绝对本地路径。Runtime 把 <code>BudgetConsumption.used_wall_seconds</code> / <code>used_model_call_seconds</code> / <code>used_artifact_bytes</code> 直接<strong>从 TimingSummary 同账本读出</strong>，<code>AuditRef.important_artifact_refs</code> 和 <code>TrainingView.extra_fields</code> 各注入 2 个 opaque ref。<strong>明确覆盖范围：runtime facade + run_dir summarizer，CLI / legacy runner 路径未接入</strong>。
+        </div>
+
+        <h3>实际改动文件</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 32%;">文件</th><th style="width: 11%;">变更</th><th style="width: 12%;">行数</th><th>新增内容</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/rl/timing.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+270</td>
+                <td>3 个模块常量 · 14 个互斥分桶字段 · 5 个统计计数 · 2 个 helper（<code>build_timing_summary</code> / <code>summarize_timing_from_run_dir</code>）· 2 个 pydantic <code>model_validator</code> · 4 个内部 helper（<code>_explained_ratio</code> / <code>_event_timing_buckets</code> / <code>_artifact_manifest_stats</code> / <code>_matches_any</code>）</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+70 / -30</td>
+                <td>import <code>build_timing_summary</code> · <code>_timing_summary</code> 改用 helper 计算 <code>agent_loop_seconds = residual</code> · <code>_budget_consumption(...)</code> 接 <code>TimingSummary</code> 对账 · <code>_resource_summary</code> 接 request 构造扩展字段 · <code>_audit_ref</code> 加 2 个 important_artifact_refs · <code>_extra_fields</code> 加 2 个 <code>repo_harness_*_ref</code></td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+15</td>
+                <td>对外导出 <code>EXCLUSIVE_TIMING_BUCKET_FIELDS</code> · <code>MIN_EXPLAINED_RATIO</code> · <code>TIMING_BUCKET_POLICY</code> · <code>build_timing_summary</code> · <code>summarize_timing_from_run_dir</code></td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage4_timing_resource.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+275</td>
+                <td>7 个测试：互斥分桶不重复计入 provider duration · 低解释率强制 diagnostics · runtime 成功路径对账 + opaque refs · failed 路径对账 · 4 种 terminal status 都有 summary · 绝对路径拒绝 · run_dir summarizer</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">新增公开 API 速查</h3>
+        <p class="rv-muted">全部从 <code>repo_harness.rl</code> 顶层导出。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 8%;">类型</th><th style="width: 30%;">名称</th><th>值 / 职责</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rh-kind cfg">常量</span></td><td><code>TIMING_BUCKET_POLICY</code></td><td><code>"exclusive_runtime_facade_v1"</code>，写入 <code>TimingSummary.timing_bucket_policy</code> 防止未来误把 nested duration 重复计入。</td></tr>
+              <tr><td><span class="rh-kind cfg">常量</span></td><td><code>MIN_EXPLAINED_RATIO</code></td><td><code>0.95</code>，作为 model_validator 的阈值。</td></tr>
+              <tr><td><span class="rh-kind cfg">常量</span></td><td><code>EXCLUSIVE_TIMING_BUCKET_FIELDS</code></td><td>14 元组：<code>(queue_wait, workspace_materialization, docker_setup, dependency_restore, baseline_verifier, agent_loop, model_call, context_prepare, tool, verifier, final_verifier, reward_compute, artifact_write, cleanup)_seconds</code>。</td></tr>
+              <tr><td><span class="rh-kind fn">函数</span></td><td><code>build_timing_summary(...)</code></td><td>关键字参数组装互斥分桶 → 自动算 <code>explained / unattributed / ratio</code> → 必要时往 diagnostics 追加说明。返回构造好的 <code>TimingSummary</code>。</td></tr>
+              <tr><td><span class="rh-kind fn">函数</span></td><td><code>summarize_timing_from_run_dir(run_dir, *, rollout_wall_seconds=None)</code></td><td>从 <code>events.jsonl</code> + <code>artifacts.json</code> 离线汇总 model / tool / verifier / artifact count + bytes。Stage 4 第一版的 run-dir summarizer。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;"><code>TimingSummary</code> 实际 schema（与 Stage 3 比的增量）</h3>
+        <article class="rh-api-card">
+          <p class="rh-sub">Stage 3 的 4 字段版本被扩成 14 个互斥分桶 + 解释率 + 计数 + diagnostics。所有新字段都有 <code>Field(default=0.0, ge=0.0)</code> 安全默认，旧 fixture roundtrip 不被破坏。</p>
+          <div class="rh-sig"><span class="kw">class</span> <span class="nm">TimingSummary</span>(StrictBaseModel):
+    schema_version:   <span class="ty">str</span> = <span class="li">"repo_harness_verl_timing_summary_v0"</span>
+    contract_version: <span class="ty">str</span> = CONTRACT_VERSION
+    rollout_wall_seconds: <span class="ty">float</span> = 0.0
+
+    <span class="cm"># —— 14 个互斥分桶（参与 explained_seconds） ——</span>
+    queue_wait_seconds:                <span class="ty">float</span> = 0.0
+    workspace_materialization_seconds: <span class="ty">float</span> = 0.0
+    docker_setup_seconds:              <span class="ty">float</span> = 0.0
+    dependency_restore_seconds:        <span class="ty">float</span> = 0.0
+    baseline_verifier_seconds:         <span class="ty">float</span> = 0.0
+    agent_loop_seconds:                <span class="ty">float</span> = 0.0  <span class="cm"># residual overhead 而非"总时间"</span>
+    model_call_seconds:                <span class="ty">float</span> = 0.0
+    context_prepare_seconds:           <span class="ty">float</span> = 0.0
+    tool_seconds:                      <span class="ty">float</span> = 0.0
+    verifier_seconds:                  <span class="ty">float</span> = 0.0
+    final_verifier_seconds:            <span class="ty">float</span> = 0.0
+    reward_compute_seconds:            <span class="ty">float</span> = 0.0
+    artifact_write_seconds:            <span class="ty">float</span> = 0.0
+    cleanup_seconds:                   <span class="ty">float</span> = 0.0
+
+    <span class="cm"># —— provider 仅参考，不参与 explained_seconds ——</span>
+    provider_reported_model_call_seconds: <span class="ty">float</span> = 0.0
+
+    <span class="cm"># —— 解释率与诊断 ——</span>
+    timing_explained_ratio:      <span class="ty">float | None</span> = None  <span class="cm"># Field(ge=0.0, le=1.0)</span>
+    timing_unattributed_seconds: <span class="ty">float</span> = 0.0
+    timing_bucket_policy:        <span class="ty">str</span>       = TIMING_BUCKET_POLICY
+    timing_diagnostics:          <span class="ty">list[str]</span> = []
+
+    <span class="cm"># —— 5 个统计计数 ——</span>
+    model_call_count:    <span class="ty">int</span> = 0
+    tool_call_count:     <span class="ty">int</span> = 0
+    verifier_call_count: <span class="ty">int</span> = 0
+    artifact_count:      <span class="ty">int</span> = 0
+    artifact_bytes_written: <span class="ty">int</span> = 0
+
+    <span class="cm">@model_validator(mode="after")</span>
+    <span class="kw">def</span> <span class="nm">validate_low_explained_ratio_has_audit_context</span>(self):
+        <span class="kw">if</span> ratio <span class="kw">is None</span> <span class="kw">or</span> ratio &gt;= 0.95:
+            <span class="kw">return</span> self
+        <span class="kw">if</span> timing_unattributed_seconds &lt;= 0.0:
+            <span class="kw">raise</span> ValueError(<span class="li">"timing_explained_ratio below 0.95 requires positive timing_unattributed_seconds"</span>)
+        <span class="kw">if not</span> timing_diagnostics:
+            <span class="kw">raise</span> ValueError(<span class="li">"timing_explained_ratio below 0.95 requires timing_diagnostics"</span>)</div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound"><span class="rh-label">不变量</span>低解释率（&lt; 0.95）<strong>不会</strong>让 episode 被默默接受——pydantic 在构造期就会 <code>ValueError</code> 除非显式写出 <code>timing_unattributed_seconds &gt; 0</code> + 非空 <code>timing_diagnostics</code>。</div>
+            <div class="rh-meta-item callers"><span class="rh-label">谁会用</span><code>build_timing_summary(...)</code> 在 ratio &lt; 0.95 或 explained &gt; rollout 时自动往 diagnostics 追加说明；runtime 通过该 helper 构造，保证 5 种 status 都过 validator。</div>
+          </div>
+        </article>
+
+        <h3 style="margin-top: 22px;"><code>ResourceSummary</code> 实际 schema（30+ 字段）</h3>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">已扩展的字段分组</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem; line-height: 1.6;">
+              <li><strong>执行模式</strong>：<code>execution_mode</code> · <code>workspace_backend</code> · <code>worker_id</code> · <code>host_id</code></li>
+              <li><strong>snapshot / cache</strong>：<code>snapshot_key</code> · <code>snapshot_cache_hit</code> · <code>snapshot_restore_strategy</code> · <code>dependency_state_key</code> · <code>dependency_cache_hit</code> · <code>baseline_cache_hit</code> · <code>container_reuse_hit</code> · <code>dependency_cache_key</code></li>
+              <li><strong>Docker</strong>：<code>docker_image_ref</code> / <code>image_id</code> / <code>image_digest</code> · <code>docker_volume_ids</code>（list）· <code>docker_resource_limits_effective</code>（dict）· <code>cpu_limit</code> · <code>memory_limit</code> · <code>disk_limit</code></li>
+              <li><strong>inference</strong>：<code>inference_route</code> · <code>inference_backend</code> · <code>inference_concurrency_slot</code></li>
+              <li><strong>策略</strong>：<code>network_policy</code> · <code>permission_policy_ref</code></li>
+              <li><strong>路径（受 validator 保护）</strong>：<code>workspace_path</code> · <code>run_dir</code></li>
+              <li><strong>并发 / 租约</strong>：<code>concurrency_group</code> · <code>lease_id</code> · <code>verifier_worker_pool_id</code> · <code>verifier_worker_id</code></li>
+              <li><strong>queue / cleanup</strong>：<code>queue_wait_seconds_by_resource</code>（dict）· <code>cleanup_status</code></li>
+            </ul>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">绝对路径防护实现</h4>
+            <div class="rh-sig"><span class="kw">def</span> <span class="nm">model_post_init</span>(self, __context):
+    <span class="kw">for</span> field_name <span class="kw">in</span> [<span class="li">"workspace_path"</span>, <span class="li">"run_dir"</span>]:
+        value = <span class="nm">getattr</span>(self, field_name)
+        <span class="kw">if</span> value:
+            validate_no_absolute_local_path(
+                value, field_name=field_name)</div>
+            <p class="rv-muted" style="font-size: 0.86rem; margin: 6px 0 0;">
+              测试 <a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L211">resource_summary_rejects_absolute_runtime_paths</a> 验证 <code>ResourceSummary(run_dir="/Users/roger/private/run")</code> 直接抛 <code>ValidationError</code>。
+            </p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 22px;">Budget ↔ Timing 对账的实际实现</h3>
+        <article class="rh-api-card">
+          <p class="rh-sub">runtime 的 <code>_budget_consumption(...)</code> 现在<strong>必须接</strong>已经构造好的 <code>TimingSummary</code>，三个字段从同一个对象读出，从源头消除两套账本。</p>
+          <div class="rh-sig"><span class="kw">def</span> <span class="nm">_budget_consumption</span>(self, request, response, *, stop_reason, timing_summary: <span class="ty">TimingSummary</span>):
+    <span class="kw">return</span> BudgetConsumption(
+        <span class="cm"># —— 这三行直接读 timing_summary，禁止重新估算 ——</span>
+        used_wall_seconds       = timing_summary.rollout_wall_seconds,
+        used_model_call_seconds = timing_summary.model_call_seconds,
+        used_artifact_bytes     = timing_summary.artifact_bytes_written,
+        <span class="cm"># —— 其它字段照旧 ——</span>
+        max_turns               = request.budgets.max_turns,
+        used_turns              = 1,
+        ...
+    )</div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound"><span class="rh-label">对账保证</span>测试 <a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L135">success path</a> 和 <a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L167">failed path</a> 分别断言 <code>BudgetConsumption.used_wall_seconds == TimingSummary.rollout_wall_seconds</code> 等三组等式成立。</div>
+            <div class="rh-meta-item callers"><span class="rh-label">为什么严格</span>Stage 8 训练预算控制和 no-progress 判断<strong>依赖这条对账</strong>。两套账本就没法做加严策略。</div>
+          </div>
+        </article>
+
+        <h3 style="margin-top: 22px;">opaque ref 的实际注入位置</h3>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;"><code>AuditRef.important_artifact_refs</code></h4>
+            <div class="rh-sig">{
+    <span class="li">"runtime_result"</span>:   <span class="li">"rh://audit/{episode_id}/runtime-result"</span>,
+    <span class="li">"timing_summary"</span>:   <span class="li">"rh://audit/{episode_id}/timing-summary"</span>,
+    <span class="li">"resource_summary"</span>: <span class="li">"rh://audit/{episode_id}/resource-summary"</span>,
+}</div>
+            <p class="rv-muted" style="font-size: 0.86rem; margin: 4px 0 0;">完整 timing/resource 对象只在 <code>EpisodeResult</code> 里。batch / audit 看到的只有 opaque ref。</p>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;"><code>TrainingView.extra_fields</code></h4>
+            <div class="rh-sig">{
+    ...
+    <span class="li">"repo_harness_timing_summary_ref"</span>:   <span class="li">"rh://audit/{episode_id}/timing-summary"</span>,
+    <span class="li">"repo_harness_resource_summary_ref"</span>: <span class="li">"rh://audit/{episode_id}/resource-summary"</span>,
+}</div>
+            <p class="rv-muted" style="font-size: 0.86rem; margin: 4px 0 0;">扁平 · 短小 · <code>repo_harness_*</code> 命名空间 · 不含绝对路径 · 不含完整 JSON。Stage 0H visibility 自动通过。</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 22px;">7 个测试 ↔ 契约 矩阵</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 42%;">测试</th><th>锁定的契约</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L90">timing_summary_uses_exclusive_buckets_without_provider_double_counting</a></td><td>互斥分桶不把 <code>provider_reported_model_call_seconds</code> 计入 explained_sum</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L108">timing_summary_schema_requires_diagnostics_for_low_explained_ratio</a></td><td>低解释率必须配 <code>timing_unattributed_seconds &gt; 0</code> + 非空 <code>timing_diagnostics</code>，否则 <code>ValueError</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L135">runtime_success_writes_budget_consistent_timing_and_opaque_refs</a></td><td><strong>成功路径</strong>：Budget 三字段对齐 + <code>ratio ≥ 0.95</code> + <code>provider_reported = 3.0</code> + 2 个 opaque ref 落位</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L167">runtime_failed_result_keeps_timing_budget_consistency</a></td><td><strong>失败路径</strong>：仍然保持 Budget ↔ Timing 三字段对账</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L181">terminal_statuses_keep_timing_and_resource_summaries</a></td><td>timeout / cancelled / invalid_task / infrastructure_error 4 种 terminal 状态都有 summary 且 <code>ratio ≥ 0.95</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L211">resource_summary_rejects_absolute_runtime_paths</a></td><td><code>workspace_path</code> / <code>run_dir</code> 写 <code>/Users/...</code> → pydantic <code>ValidationError</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage4_timing_resource.py#L219">run_directory_summarizer_reads_events_and_artifact_manifest</a></td><td><code>summarize_timing_from_run_dir(...)</code> 能从 <code>events.jsonl</code> + <code>artifacts.json</code> 离线汇总 count / bytes</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">关键验收数字</h3>
+        <div class="rv-grid-4">
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">7 / 7</div>
+            <small class="rv-muted">Stage 4 新增测试通过</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">14</div>
+            <small class="rv-muted">互斥 timing 分桶字段</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">30+</div>
+            <small class="rv-muted"><code>ResourceSummary</code> 实际字段数</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">≥ 0.95</div>
+            <small class="rv-muted">5 种 status 全部满足解释率</small>
+          </div>
+        </div>
+
+        <div class="rv-callout warning" style="margin-top: 16px;">
+          <strong>本次明确覆盖范围（按计划要求声明）：</strong>
+          <ul style="margin: 4px 0 0 18px;">
+            <li><strong>✓ 已覆盖</strong>：<code>RepoHarnessRuntime.run_episode(...)</code> facade 路径 · 5 种 episode status · <code>summarize_timing_from_run_dir(...)</code> · <code>TimingSummary</code> / <code>ResourceSummary</code> / <code>BudgetConsumption</code> 一致性测试 · opaque ref visibility。</li>
+            <li><strong>✗ 未覆盖（按计划留到后续）</strong>：旧 <code>evaluation/runner.py</code> CLI 完整路径 · <code>agent_loop/loop.py</code> 多轮 tool 调用 timing · 真实 <code>workspace_materialization_seconds</code> / <code>docker_setup_seconds</code> / <code>baseline_verifier_seconds</code> / <code>final_verifier_seconds</code> / <code>reward_compute_seconds</code> 仍由占位 <code>0.0</code> 填充。这些字段的<strong>schema 已经就绪</strong>，等 Stage 5 接 <code>run_task</code> 时直接喂值即可。</li>
+            <li><strong>Stage 6 / 7 / 9 占位字段</strong>：<code>snapshot_cache_hit</code> · <code>container_reuse_hit</code> · <code>verifier_worker_pool_id</code> · <code>concurrency_group</code> · <code>lease_id</code> · <code>queue_wait_seconds_by_resource</code> 全部默认 <code>None</code> / 空，等对应 Stage 接通。</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ① 阶段目标                                                    -->
+      <!-- ============================================================ -->
+      <section id="goal" class="rv-section">
+        <h2>① 阶段目标</h2>
+        <p>
+          让每条 episode <strong>不管成功 / 失败 / timeout / invalid_task / infrastructure_error</strong>，都能产出结构化 <code>TimingSummary</code> 和 <code>ResourceSummary</code>，并通过 opaque ref 让训练 batch 和审计回查都能追溯。Stage 8 训练预算与 no-progress 控制、Stage 6 workspace 复用、Stage 11 verl 接入都<strong>依赖</strong>本阶段交付的观测面。
+        </p>
+        <div class="rv-callout">
+          <strong>一句话：</strong>"<em>这条 episode 慢在哪？慢得在不在预期？慢的时候用了什么资源？</em>"——Stage 4 要让 episode 自己<strong>讲清楚</strong>。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ② 第一版覆盖范围分层                                          -->
+      <!-- ============================================================ -->
+      <section id="coverage" class="rv-section">
+        <h2>② 第一版覆盖范围 ⚠ 最容易过度承诺的地方</h2>
+        <p class="rv-muted">
+          Stage 2 / Stage 3 的 <code>run_episode</code> 还<strong>没有接入</strong>旧 <code>run_task</code>、workspace、verifier、reward 和 recorder 主路径。所以 Stage 4 第一版必须分层声明，<strong>不能</strong>把"runtime facade 已经记录 timing"误读成"完整 evaluation 链路已经记录 timing"。
+        </p>
+        <div class="rh-coverage">
+          <div class="rh-coverage-card must">
+            <h4>✓ 必须覆盖</h4>
+            <ul>
+              <li><code>RepoHarnessRuntime.run_episode(...)</code> runtime facade 路径</li>
+              <li>runtime facade 的 success / failed / timeout / invalid_task / infrastructure_error 5 种结果</li>
+              <li>从最小 run directory / recorder artifact 读取事实的 summarizer</li>
+              <li><code>TimingSummary</code> / <code>ResourceSummary</code> / <code>BudgetConsumption</code> 三者一致性测试</li>
+              <li><code>TrainingView.extra_fields</code> + <code>AuditRef</code> 中的 opaque refs</li>
+            </ul>
+          </div>
+          <div class="rh-coverage-card may">
+            <h4>~ 可以准备接口，但不能声称完整</h4>
+            <ul>
+              <li>旧 <code>evaluation/runner.py</code> CLI 路径</li>
+              <li>完整 <code>agent_loop/loop.py</code> 多轮工具调用路径</li>
+              <li>workspace materialization / Docker setup / baseline verifier / final verifier / reward compute 真实生产路径</li>
+            </ul>
+            <p class="rv-muted" style="font-size: 0.86rem; margin: 8px 0 0;">
+              声称覆盖这些就<strong>必须</strong>实际接入 <code>runner.py</code> / <code>agent_loop/loop.py</code> / <code>workspace/adapter.py</code> / <code>docker_adapter.py</code> / <code>context/manager.py</code> / <code>reward/calculator.py</code>，并补 integration 测试。否则最终汇报必须明确：<em>"Stage 4 已覆盖 runtime facade 和 run directory summarizer；完整 CLI / legacy runner path 仍是后续接入或扩展项。"</em>
+            </p>
+          </div>
+          <div class="rh-coverage-card no">
+            <h4>✗ 本阶段绝不做</h4>
+            <ul>
+              <li>workspace / container 复用 → Stage 6</li>
+              <li>verifier worker pool → Stage 7</li>
+              <li>训练预算 no-progress 控制加严 → Stage 8</li>
+              <li>并发资源租约 → Stage 9</li>
+              <li><code>TrainingView → AgentLoopOutput</code> 转换器 → Stage 10</li>
+              <li><code>VerlAgentLoop</code> / <code>VerlLLMGateway</code> / Ray / vLLM / SGLang 调度 → Stage 11</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ③ 10 条硬边界                                                 -->
+      <!-- ============================================================ -->
+      <section id="boundaries" class="rv-section">
+        <h2>③ 10 条必须保持的硬边界</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 5%;">#</th><th>边界</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Timing / Resource 不能改变任务语义、reward 语义、verifier 权威边界或 <code>TrainingView</code> token 事实。</td></tr>
+              <tr><td>2</td><td>不能把本地<strong>绝对路径</strong>写入 <code>TrainingView.extra_fields</code> / 未来 <code>AgentLoopOutput.extra_fields</code> / batch 可传播字段。</td></tr>
+              <tr><td>3</td><td><code>TrainingView.extra_fields</code> 只能新增<strong>短小、扁平、<code>repo_harness_*</code> 命名空间</strong>字段，例如 <code>repo_harness_timing_summary_ref</code>。</td></tr>
+              <tr><td>4</td><td><code>AuditRef</code> 内可记录 summary 引用，但进入 batch 的只能是 <strong>opaque ref</strong>，不能嵌套完整 audit_ref 对象。</td></tr>
+              <tr><td>5</td><td><code>ResourceSummary.workspace_path</code> / <code>run_dir</code> 必须是<strong>相对路径 / opaque ref / 可安全公开短引用</strong>，不能 <code>/Users/...</code>。</td></tr>
+              <tr><td>6</td><td>Provider 上报的 <code>duration_ms</code> 只能作为 <strong>provider_reported_*</strong> 参考字段保留，<strong>不能</strong>直接当 outer wall time attribution。</td></tr>
+              <tr><td>7</td><td>每条 <code>TimingSummary</code> 必须解释至少 <strong>95%</strong> 的 <code>rollout_wall_seconds</code>。剩余写入 <code>timing_unattributed_seconds</code> + diagnostics。</td></tr>
+              <tr><td>8</td><td><code>TimingSummary</code> 和 <code>BudgetConsumption</code> 使用<strong>同一套实测耗时账本</strong>。三组字段必须对齐（见 §⑥）。</td></tr>
+              <tr><td>9</td><td>用于 explained_seconds 的分桶必须<strong>互斥</strong>。<code>agent_loop_seconds</code> 如果参与计算，只能是<strong>residual</strong>（扣除 model / tool / context 子阶段后的 overhead），<strong>禁止</strong>双重计数。</td></tr>
+              <tr><td>10</td><td>不能 <code>import verl</code>，不能实现 <code>VerlAgentLoop</code> / <code>VerlLLMGateway</code> / <code>AgentLoopOutput</code> 转换 / Ray / vLLM / SGLang 调度。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ④ TimingSummary 设计                                          -->
+      <!-- ============================================================ -->
+      <section id="timing" class="rv-section">
+        <h2>④ <code>TimingSummary</code> 设计</h2>
+
+        <h3>4.1 新增字段（默认值不破坏旧 fixture roundtrip）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 32%;">新增字段</th><th>语义 + 默认值</th></tr></thead>
+            <tbody>
+              <tr><td><code>dependency_restore_seconds</code></td><td>dependency state 恢复 / 依赖缓存加载耗时。Stage 6 做环境复用前可为 <code>0</code>。</td></tr>
+              <tr><td><code>timing_unattributed_seconds</code></td><td>外层 wall time 中暂时无法归因的部分，<code>= max(0, rollout - explained)</code>。</td></tr>
+              <tr><td><code>timing_diagnostics</code></td><td>解释为什么有未归因时间 / 某字段为何只能近似 / 哪些来源缺失。</td></tr>
+              <tr><td><code>provider_reported_model_call_seconds</code></td><td>provider 或 gateway 上报的模型耗时，<strong>仅参考</strong>，<strong>不</strong>参与 outer wall attribution。</td></tr>
+              <tr><td><code>timing_bucket_policy</code></td><td>分桶策略名（例如 <code>"exclusive_runtime_facade_v1"</code>），防止后续误把 nested duration 重复计入。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 18px;">4.2 互斥分桶可视化（关键概念）</h3>
+        <p class="rv-muted">这是 Stage 4 最容易理解错的地方。<code>rollout_wall_seconds</code>（外层总耗时）必须能被<strong>互斥的子项</strong>相加近似得到。<strong>禁止</strong>把"父阶段总耗时"和"子阶段耗时"同时加进 explained_seconds。</p>
+
+        <h4 style="margin: 14px 0 4px;">✗ 错误：把 <code>agent_loop_seconds</code> 当作"包含 model + tool"的总和又重复计入</h4>
+        <div class="rh-stack-row">
+          <div class="rh-stack-cell residual" style="flex: 60;">agent_loop = 60s（含 model+tool）</div>
+          <div class="rh-stack-cell model" style="flex: 40;">model = 40s</div>
+          <div class="rh-stack-cell tool" style="flex: 20;">tool = 20s</div>
+        </div>
+        <p class="rv-muted" style="font-size: 0.86rem; margin: 0 0 12px;">→ 合计 120s &gt; rollout 100s，<code>explained_ratio</code> 假性达到 120%，掩盖真实未归因时间。</p>
+
+        <h4 style="margin: 14px 0 4px;">✓ 正确：互斥分桶 + residual overhead</h4>
+        <div class="rh-stack-row">
+          <div class="rh-stack-cell model" style="flex: 40;">model 40s</div>
+          <div class="rh-stack-cell tool" style="flex: 20;">tool 20s</div>
+          <div class="rh-stack-cell context" style="flex: 8;">ctx 8s</div>
+          <div class="rh-stack-cell verifier" style="flex: 15;">verifier 15s</div>
+          <div class="rh-stack-cell artifact" style="flex: 5;">artifact 5s</div>
+          <div class="rh-stack-cell cleanup" style="flex: 4;">cleanup 4s</div>
+          <div class="rh-stack-cell residual" style="flex: 5;">residual 5s</div>
+          <div class="rh-stack-cell unattr" style="flex: 3;">未归因 3s</div>
+        </div>
+        <div class="rh-stack-legend">
+          <span><i style="background:#58a6ff;"></i>model_call_seconds</span>
+          <span><i style="background:#c79fff;"></i>tool_seconds</span>
+          <span><i style="background:#ffb463;"></i>context_prepare_seconds</span>
+          <span><i style="background:#ffc463;"></i>verifier_seconds</span>
+          <span><i style="background:#d2a8ff;"></i>artifact_write_seconds</span>
+          <span><i style="background:#a5d6ff;"></i>cleanup_seconds</span>
+          <span><i style="background:#6e7681;"></i>agent_loop_seconds（residual overhead）</span>
+          <span><i style="background:#ff7b7b;"></i>timing_unattributed_seconds</span>
+        </div>
+        <p class="rv-muted" style="font-size: 0.86rem; margin: 0;">→ 合计 97s，<code>explained_ratio = 97/100 = 0.97</code> ≥ 0.95 通过。未归因 3s 写入 <code>timing_unattributed_seconds</code> + diagnostics。</p>
+
+        <h3 style="margin-top: 22px;">4.3 解释率公式</h3>
+        <article class="rh-api-card">
+          <div class="rh-sig"><span class="kw">def</span> <span class="nm">compute_timing_explained_ratio</span>(rollout, *,
+        model_call, context_prepare, tool, workspace,
+        docker, baseline_verifier, final_verifier, reward,
+        artifact_write, cleanup, queue_wait,
+        agent_loop_residual,
+) -&gt; <span class="ty">tuple[float, float]</span>:
+    explained = (
+        model_call + context_prepare + tool + workspace
+        + docker + baseline_verifier + final_verifier + reward
+        + artifact_write + cleanup + queue_wait + agent_loop_residual
+    )
+    unattributed = <span class="nm">max</span>(0.0, rollout - explained)
+    ratio = 1.0 <span class="kw">if</span> rollout == 0 <span class="kw">else</span> <span class="nm">min</span>(1.0, explained / rollout)
+    <span class="kw">return</span> ratio, unattributed</div>
+          <div class="rh-meta">
+            <div class="rh-meta-item bound"><span class="rh-label">分桶规则</span>任何字段如果可能含 nested duration（如 provider 报告的 model duration 实际包含 retry），必须标记为 <strong>diagnostic / reference</strong>，<strong>不</strong>参与 explained sum。</div>
+            <div class="rh-meta-item danger"><span class="rh-label">不达标处置</span>如果 <code>ratio &lt; 0.95</code>，必须写入 <code>timing_diagnostics</code>，且 Stage 4 不能把该 episode 标为满足 timing gate。</div>
+          </div>
+        </article>
+
+        <h3 style="margin-top: 22px;">4.4 建议新增的 helper</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 30%;">符号</th><th>位置 / 职责</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rh-kind dc">数据类</span><code>TimingAttribution</code></td><td><code>timing.py</code>：单条 attribution 事实（来源 / 字段名 / 秒数 / nested?）。</td></tr>
+              <tr><td><span class="rh-kind cls">状态机</span><code>TimingAccumulator</code></td><td><code>timing.py</code>：runtime 侧累加器，把 Stage 3 散落的 <code>perf_counter</code> 收编为 helper。</td></tr>
+              <tr><td><span class="rh-kind fn">函数</span><code>compute_timing_explained_ratio(...)</code></td><td><code>timing.py</code>：互斥分桶解释率计算（上一张签名）。</td></tr>
+              <tr><td><span class="rh-kind fn">函数</span><code>build_timing_summary(...)</code></td><td><code>timing.py</code>：从 accumulator + provider reported metadata 构造 <code>TimingSummary</code> 实例。</td></tr>
+              <tr><td><span class="rh-kind fn">函数</span><code>summarize_timing_from_run_dir(run_dir)</code></td><td><code>timing.py</code>：从 <code>events.jsonl</code> / <code>transcript.jsonl</code> / <code>artifacts.json</code> / <code>ModelCallEvent</code> 离线汇总 timing 事实。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑤ ResourceSummary 设计                                        -->
+      <!-- ============================================================ -->
+      <section id="resource" class="rv-section">
+        <h2>⑤ <code>ResourceSummary</code> 设计</h2>
+
+        <h3>5.1 新增字段（全部必须有默认值）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 32%;">新增字段</th><th>记录的事实</th></tr></thead>
+            <tbody>
+              <tr><td><code>docker_image_ref</code></td><td>image id / digest / pinned tag 等可审计引用，<strong>不</strong>放本地 docker socket 路径。</td></tr>
+              <tr><td><code>dependency_cache_key</code></td><td>dependency 缓存命中的 key（若可获得）。</td></tr>
+              <tr><td><code>cpu_limit</code> / <code>memory_limit</code> / <code>disk_limit</code></td><td>容器或 cgroup 上报的资源上限。</td></tr>
+              <tr><td><code>inference_route</code></td><td>来自 <code>EpisodeRequest.llm_gateway_route</code>（例 <code>"verl"</code> / <code>"openai"</code>）。</td></tr>
+              <tr><td><code>inference_backend</code></td><td>来自 <code>EpisodeRequest.inference_backend</code>（例 <code>"vllm"</code> / <code>"sglang"</code>）。</td></tr>
+              <tr><td><code>inference_concurrency_slot</code></td><td>分配到的推理并发槽位（Stage 9 才有实际值，Stage 4 占位）。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="rv-muted" style="font-size: 0.86rem; margin: 6px 0 0;">
+          如果现有 <code>dependency_state_key</code> / <code>docker_resource_limits_effective</code> 已能承载部分事实，<strong>不</strong>重复造矛盾字段。新增字段必须有默认值或可选值，保证 Stage 0H / 1 / 2 / 3 fixture roundtrip 不被破坏。
+        </p>
+
+        <h3 style="margin-top: 22px;">5.2 第一版数据来源映射</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 38%;">来源</th><th>目标字段</th></tr></thead>
+            <tbody>
+              <tr><td><code>RepoHarnessRuntimeOptions.execution_mode</code></td><td><code>execution_mode</code></td></tr>
+              <tr><td><code>RepoHarnessEpisodeRequest.llm_gateway_route</code></td><td><code>inference_route</code></td></tr>
+              <tr><td><code>RepoHarnessEpisodeRequest.inference_backend</code></td><td><code>inference_backend</code></td></tr>
+              <tr><td>runtime-only resolver / options</td><td><strong>仅内部解析</strong>，<strong>不</strong>泄漏到 batch</td></tr>
+              <tr><td>workspace adapter / docker adapter</td><td><code>workspace_backend</code> · <code>docker_image_id</code> · <code>docker_image_digest</code> · <code>docker_volume_ids</code> · <code>docker_resource_limits_effective</code></td></tr>
+              <tr><td>task / environment refs</td><td><code>snapshot_key</code> · <code>dependency_state_key</code> 或 <code>dependency_cache_key</code></td></tr>
+              <tr><td>permission / network policy config</td><td><code>permission_policy_ref</code> · <code>network_policy</code></td></tr>
+              <tr><td>cleanup callback / runner cleanup</td><td><code>cleanup_status</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">5.3 路径投影规则（防本地路径泄漏）</h3>
+        <div class="rh-meta">
+          <div class="rh-meta-item danger">
+            <span class="rh-label">禁止</span>
+            <code>output_dir</code> / <code>workspace_path</code> / <code>project_root</code> 的本地绝对路径<strong>只能</strong>留在 runtime-only options 或本地 artifact，<strong>不</strong>进 batch。
+          </div>
+          <div class="rh-meta-item bound">
+            <span class="rh-label">推荐</span>
+            <code>ResourceSummary.run_dir</code> 用 <code>"runs/&lt;run_id&gt;"</code> 相对路径，或 <code>"rh://audit/&lt;episode_id&gt;/run-dir"</code> opaque ref。
+          </div>
+          <div class="rh-meta-item bound">
+            <span class="rh-label">fallback</span>
+            如果 <code>workspace_path</code> 无法安全相对化 → 留空 + 在 <code>diagnostics</code> 中说明原因。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑥ Budget ↔ Timing 对账                                        -->
+      <!-- ============================================================ -->
+      <section id="reconcile" class="rv-section">
+        <h2>⑥ <code>BudgetConsumption</code> ↔ <code>TimingSummary</code> 对账</h2>
+        <p class="rv-muted">两者必须是同一条 episode 的<strong>两份账本</strong>，不是两套独立估算。runtime facade 第一版必须满足三条等式：</p>
+        <div class="rh-reconcile">
+          <div class="rh-reconcile-col budget">
+            <h4>BudgetConsumption</h4>
+            <div class="rh-row">used_wall_seconds</div>
+            <div class="rh-row">used_model_call_seconds</div>
+            <div class="rh-row">used_artifact_bytes</div>
+          </div>
+          <div class="rh-reconcile-eq">==</div>
+          <div class="rh-reconcile-col timing">
+            <h4>TimingSummary</h4>
+            <div class="rh-row">rollout_wall_seconds</div>
+            <div class="rh-row">model_call_seconds</div>
+            <div class="rh-row">artifact_bytes_written</div>
+          </div>
+        </div>
+        <div class="rv-callout warning">
+          <strong>暂缺字段的处理规则：</strong>
+          <ul style="margin: 4px 0 0 18px;">
+            <li>暂时无法精确统计 → 填 <code>0</code> 或 <code>None</code>，但必须在 <code>diagnostics</code> 中说明来源缺失。</li>
+            <li><strong>禁止</strong>一份 summary 写实测值，另一份留空 / 写另一套估算。</li>
+            <li>timeout / cancelled / invalid_task / infrastructure_error 也<strong>必须</strong>保留已经发生过的 <code>used_wall_seconds</code> 和 <code>used_model_call_seconds</code>。</li>
+          </ul>
+          <p style="margin: 6px 0 0;"><strong>为什么严格：</strong>Stage 8 训练预算控制和 no-progress 控制的判断逻辑依赖这条对账，账本不一致就没法做加严策略。</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑦ Summary artifact 与 opaque ref                              -->
+      <!-- ============================================================ -->
+      <section id="refs" class="rv-section">
+        <h2>⑦ Summary artifact 与 opaque ref 三层</h2>
+        <p class="rv-muted">同一份 timing/resource 事实在三个不同位置以三种<strong>不同粒度</strong>出现，避免完整 JSON 泄漏到 batch。</p>
+        <div class="rv-grid-3">
+          <div class="rv-card">
+            <h4>① 结构化对象（in-memory）</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.9rem;">
+              <li><code>EpisodeResult.timing_summary</code></li>
+              <li><code>EpisodeResult.resource_summary</code></li>
+              <li>始终是完整 pydantic 实例</li>
+            </ul>
+          </div>
+          <div class="rv-card">
+            <h4>② 落盘 artifact（可写时）</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.9rem;">
+              <li><code>timing_summary.json</code></li>
+              <li><code>resource_summary.json</code></li>
+              <li>仅在 recorder / run_dir 存在时写入</li>
+            </ul>
+          </div>
+          <div class="rv-card">
+            <h4>③ batch / audit ref（opaque）</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.9rem;">
+              <li><code>AuditRef.important_artifact_refs</code>：<br><code>timing_summary: rh://audit/&lt;ep&gt;/timing-summary</code><br><code>resource_summary: rh://audit/&lt;ep&gt;/resource-summary</code></li>
+              <li><code>TrainingView.extra_fields</code>：<br><code>repo_harness_timing_summary_ref</code><br><code>repo_harness_resource_summary_ref</code></li>
+            </ul>
+          </div>
+        </div>
+        <div class="rv-callout">
+          <strong>这些 ref 必须通过 Stage 0H visibility：</strong>短小 · 扁平 · namespaced · opaque · 不含绝对路径 · 不含完整 timing / resource JSON。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑧ 预计修改文件                                                -->
+      <!-- ============================================================ -->
+      <section id="files" class="rv-section">
+        <h2>⑧ 预计修改 / 新增的文件</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 14%;">类别</th><th style="width: 36%;">文件</th><th>预计内容</th></tr></thead>
+            <tbody>
+              <tr><td rowspan="4"><span class="rv-badge success">主要修改</span></td>
+                  <td><code>src/repo_harness/rl/timing.py</code></td>
+                  <td>新增字段；新增 <code>TimingAttribution</code> / <code>TimingAccumulator</code> / <code>compute_timing_explained_ratio</code> / <code>build_timing_summary</code> / <code>summarize_timing_from_run_dir</code>。</td></tr>
+              <tr><td><code>src/repo_harness/rl/runtime.py</code></td>
+                  <td>把 Stage 3 散落的 perf_counter 迁移到 <code>TimingAccumulator</code>；用 <code>build_timing_summary</code> 构造 summary；同步填充 <code>BudgetConsumption</code> 三组字段；构造 <code>ResourceSummary</code>。</td></tr>
+              <tr><td><code>src/repo_harness/rl/training_view.py</code></td>
+                  <td><code>extra_fields</code> 增加 <code>repo_harness_timing_summary_ref</code> / <code>repo_harness_resource_summary_ref</code>。</td></tr>
+              <tr><td><code>src/repo_harness/rl/visibility.py</code></td>
+                  <td>放行新增的两个 <code>repo_harness_*_ref</code> 字段；保持其它 namespace 规则。</td></tr>
+              <tr><td rowspan="7"><span class="rv-badge info">可能修改</span></td>
+                  <td><code>trajectory/recorder.py</code></td>
+                  <td>recorder 写入 <code>timing_summary.json</code> / <code>resource_summary.json</code>，发对应 artifact event。</td></tr>
+              <tr><td><code>agent_loop/loop.py</code></td><td>tool / context_prepare event duration 输出；如声称覆盖完整 agent_loop 才需要改。</td></tr>
+              <tr><td><code>context/manager.py</code></td><td>context preparation event duration 输出；同上。</td></tr>
+              <tr><td><code>evaluation/runner.py</code></td><td>声称覆盖 CLI 路径才需要改。</td></tr>
+              <tr><td><code>workspace/adapter.py</code> · <code>docker_adapter.py</code></td><td>暴露 docker image ref / dependency cache key / resource limits 给 ResourceSummary helper。</td></tr>
+              <tr><td><code>export/exporter.py</code> · <code>export/audit.py</code></td><td>如果增加 summary artifact 引用，需同步 exporter / audit 校验。</td></tr>
+              <tr><td><code>model_client/*</code></td><td>仅作 provider_reported_model_call_seconds 来源校验。</td></tr>
+              <tr><td><span class="rv-badge warning">新增测试</span></td>
+                  <td><code>tests/unit/test_repo_harness_rl_stage4_timing_resource.py</code></td>
+                  <td>5 种结果全覆盖；解释率 ≥ 0.95；互斥分桶；Budget ↔ Timing 对账；run_dir summarizer；路径泄漏检测；opaque ref visibility 通过。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑨ 实施 12 步                                                  -->
+      <!-- ============================================================ -->
+      <section id="pipeline" class="rv-section">
+        <h2>⑨ 实施顺序（12 步）</h2>
+        <p class="rv-muted">"先测试再实现"：解释率公式 + 对账规则极易在没有测试约束的情况下走偏。</p>
+        <div class="rh-pipeline">
+          <div class="rh-pipeline-step"><span class="rh-step-no">1</span><strong>测试草案</strong><small>锁定 success / failed / timeout / invalid_task / infrastructure_error 都有 TimingSummary 和 ResourceSummary。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">2</span><strong>扩展 schema</strong><small><code>timing.py</code> 新字段全部带默认值；不破坏 Stage 0H/1/2/3 fixture roundtrip。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">3</span><strong><code>TimingAccumulator</code></strong><small>把 Stage 3 手写的 perf_counter 迁移到 helper，提供 <code>start</code> / <code>stop</code> / <code>record_external</code> API。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">4</span><strong>解释率函数</strong><small><code>compute_timing_explained_ratio</code>：互斥分桶 + 未归因时间 + diagnostics + nested duration 不参与 explained sum。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">5</span><strong>runtime 使用 helper</strong><small>runtime facade 改用 helper 构造 TimingSummary；provider reported duration 不进 outer wall attribution。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">6</span><strong>Budget 同步</strong><small>同时填 <code>used_wall_seconds</code> / <code>used_model_call_seconds</code> / <code>used_artifact_bytes</code>，测试断言对齐。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">7</span><strong>ResourceSummary helper</strong><small>从 request / options / resolved inputs / cleanup status 构造；过滤本地绝对路径。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">8</span><strong>opaque ref 注入</strong><small><code>AuditRef.important_artifact_refs</code> + <code>TrainingView.extra_fields</code> 加 2 个 ref；过 visibility 规则。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">9</span><strong>artifact 落盘</strong><small>如果有 recorder/run_dir，写 <code>timing_summary.json</code> / <code>resource_summary.json</code>；无 → 仍返回结构化对象 + ref。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">10</span><strong>run_dir summarizer</strong><small><code>summarize_timing_from_run_dir</code> 测试：从最小 <code>events.jsonl</code> / <code>artifacts.json</code> 汇总 model/tool/artifact count + bytes。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">11</span><strong>明确汇报范围</strong><small>未接入旧 runner / CLI 路径就<strong>不得</strong>声称完整 CLI 已覆盖。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">12</span><strong>跑回归</strong><small>Stage 3 / 2 / 1 / 0H 回归测试全过；visibility / schema / runtime / recorder 未回退。</small></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑩ 验收标准                                                    -->
+      <!-- ============================================================ -->
+      <section id="exit" class="rv-section">
+        <h2>⑩ 出口标准（12 条）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 6%;">#</th><th>验收项</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>success / failed / timeout / invalid_task / infrastructure_error 都有 <code>TimingSummary</code> 和 <code>ResourceSummary</code>。</td></tr>
+              <tr><td>2</td><td><code>timing_explained_ratio ≥ 0.95</code>；低于该值必须有 <code>timing_unattributed_seconds</code> + <code>timing_diagnostics</code>。</td></tr>
+              <tr><td>3</td><td><code>model_call_seconds</code> 使用 runtime 实测耗时；provider reported duration 只能进 <code>provider_reported_*</code> 参考字段。</td></tr>
+              <tr><td>4</td><td>用于解释率的字段必须互斥；<code>agent_loop_seconds</code> 参与时只能是 residual overhead，禁止双重计数。</td></tr>
+              <tr><td>5</td><td>runtime facade 路径中：<code>BudgetConsumption.used_wall_seconds == TimingSummary.rollout_wall_seconds</code>，<code>used_model_call_seconds == model_call_seconds</code>。</td></tr>
+              <tr><td>6</td><td><code>TimingSummary</code> 至少能区分 model / context_prepare / tool / workspace / docker / baseline_verifier / final_verifier / reward / artifact / cleanup / queue_wait 字段（即使某些为 0）。</td></tr>
+              <tr><td>7</td><td><code>ResourceSummary</code> 至少有 execution_mode / workspace_backend / inference_route / inference_backend / cleanup_status，以及可获得的 Docker / snapshot / dependency / network / permission facts。</td></tr>
+              <tr><td>8</td><td><code>TrainingView.extra_fields</code> 只新增 namespaced flat opaque refs，<strong>不含</strong>完整 JSON / 绝对路径 / 嵌套 audit_ref。</td></tr>
+              <tr><td>9</td><td><code>AuditRef</code> 能回查 timing / resource summary opaque ref。</td></tr>
+              <tr><td>10</td><td><code>ResourceSummary.workspace_path</code> / <code>run_dir</code> 不接受本地绝对路径泄漏。</td></tr>
+              <tr><td>11</td><td><code>src/repo_harness/rl</code> 不 import <code>verl</code>。</td></tr>
+              <tr><td>12</td><td>Stage 0H / 1 / 2 / 3 回归测试继续通过。最终汇报<strong>必须明确覆盖范围</strong>，不得把"runtime facade 已记录 timing"误读为"完整 CLI path 已覆盖"。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑪ 不做事项                                                    -->
+      <!-- ============================================================ -->
+      <section id="not-doing" class="rv-section">
+        <h2>⑪ Stage 4 明确不做</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 70%;">不做内容</th><th>所属阶段</th></tr></thead>
+            <tbody>
+              <tr><td>workspace / container 复用</td><td>Stage 6</td></tr>
+              <tr><td>verifier worker pool</td><td>Stage 7</td></tr>
+              <tr><td>训练预算 no-progress 控制加严</td><td>Stage 8</td></tr>
+              <tr><td>并发资源租约</td><td>Stage 9</td></tr>
+              <tr><td><code>TrainingView → AgentLoopOutput</code> 转换器</td><td>Stage 10</td></tr>
+              <tr><td><code>VerlAgentLoop</code> / <code>VerlLLMGateway</code> / 真实 verl 接入</td><td>Stage 11</td></tr>
+              <tr><td>真实 Ray GPU resource scheduling</td><td>Stage 11+</td></tr>
+              <tr><td>把详细 timing / resource JSON 直接塞进 batch 字段</td><td>任何阶段都不允许</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑫ 验收命令                                                    -->
+      <!-- ============================================================ -->
+      <section id="checks" class="rv-section">
+        <h2>⑫ 建议验收命令</h2>
+        <h4 style="margin: 10px 0 4px;">基础：编译 + Stage 4 新增</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m compileall -q src
+uv run --extra dev python -m pytest -q tests/unit/test_repo_harness_rl_stage4_timing_resource.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">Stage 3 / 2 / 1 / 0H 回归</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m pytest -q \
+  tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py \
+  tests/unit/test_repo_harness_rl_stage2_runtime.py \
+  tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py \
+  tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py \
+  tests/unit/test_repo_harness_verl_contract_fixtures.py \
+  tests/unit/test_repo_harness_verl_stage0h_shape_rules.py \
+  tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">如果触及 recorder / export / runner</h4>
+        <pre class="rv-codeblock"><code>uv run --extra dev python -m pytest -q \
+  tests/unit/test_run_recorder.py \
+  tests/unit/test_provider_artifact_binding.py \
+  tests/unit/test_export.py \
+  tests/integration/test_export_from_run.py \
+  tests/integration/test_v3_export_audit.py</code></pre>
+
+        <div class="rv-callout">
+          <strong>最终汇报必须列出：</strong> ① 实际修改的文件 · ② 新增或修改的 schema 字段 · ③ 解释率计算公式 · ④ Budget ↔ Timing 一致性验证结果 · ⑤ 5 种结果的 summary 覆盖情况 · ⑥ <code>TrainingView.extra_fields</code> 和 <code>AuditRef</code> 中新增的 opaque refs · ⑦ 因 Stage 6 / 7 / 9 未实施而仍占位的字段 · ⑧ <strong>Stage 4 实际覆盖的是 runtime facade / run directory summarizer，还是已包含完整 CLI / legacy runner path</strong>。
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>

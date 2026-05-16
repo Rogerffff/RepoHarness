@@ -453,12 +453,12 @@ class LocalWorkspaceAdapter:
         self._assert_workspace_under_run_dir(workspace)
         if not (workspace / ".git").exists():
             self._run_git_checked(workspace, ["init"], recorder=recorder)
-            self._run_git_checked(
-                workspace, ["config", "user.email", "repo-harness@example.invalid"], recorder=recorder
-            )
-            self._run_git_checked(
-                workspace, ["config", "user.name", "RepoHarness"], recorder=recorder
-            )
+        self._run_git_checked(
+            workspace, ["config", "user.email", "repo-harness@example.invalid"], recorder=recorder
+        )
+        self._run_git_checked(
+            workspace, ["config", "user.name", "RepoHarness"], recorder=recorder
+        )
         exclude_file = workspace / ".git" / "info" / "exclude"
         exclude_file.parent.mkdir(parents=True, exist_ok=True)
         existing = exclude_file.read_text(encoding="utf-8") if exclude_file.exists() else ""
@@ -611,7 +611,7 @@ def _copy_tree(source: Path, destination: Path) -> None:
     shutil.copytree(
         source,
         destination,
-        ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc", ".pytest_cache"),
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache"),
         symlinks=True,
     )
 
@@ -636,8 +636,21 @@ def _requires_shell_command(command: str | list[str]) -> bool:
     if not isinstance(command, str):
         return False
     stripped = command.strip()
-    return any(marker in stripped for marker in ("&&", "||", ";", "|")) or stripped.startswith(
-        (". ", "source ")
+    if not stripped:
+        return False
+    if any(marker in stripped for marker in ("&&", "||", ";", "|", "\n", "$(", "`")):
+        return True
+    if stripped.startswith((". ", "source ", "export ", "cd ")):
+        return True
+    try:
+        first = shlex.split(stripped)[0]
+    except ValueError:
+        return True
+    if "=" not in first:
+        return False
+    name = first.split("=", 1)[0]
+    return bool(name) and (name[0].isalpha() or name[0] == "_") and all(
+        char.isalnum() or char == "_" for char in name
     )
 
 

@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoHarness 接入 verl Stage 6 执行计划与结果</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    /* === 与 Stage 2 / 3 / 4 / 5 一致的工程文档式样式 === */
+    .rh-toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .rh-toc a {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+      color: var(--rv-text);
+      font-size: 0.92rem;
+      text-decoration: none;
+    }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+
+    .rh-kind {
+      display: inline-block;
+      padding: 1px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+    .rh-kind.cls   { background: rgba(88,166,255,0.16);  color: #58a6ff; }
+    .rh-kind.dc    { background: rgba(126,231,135,0.16); color: #7ee787; }
+    .rh-kind.fn    { background: rgba(255,196,99,0.18);  color: #ffc463; }
+    .rh-kind.cfg   { background: rgba(199,159,255,0.18); color: #c79fff; }
+    .rh-kind.danger{ background: rgba(255,123,123,0.16); color: #ff7b7b; }
+    .rh-kind.warn  { background: rgba(255,180,99,0.20);  color: #ffb463; }
+
+    .rh-api-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-api-card .rh-sub { margin: 0 0 12px; color: var(--rv-muted); font-size: 0.92rem; }
+
+    .rh-sig {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #0b1018;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      color: #d0d7de;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+
+    .rh-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .rh-meta-item {
+      padding: 8px 12px;
+      border-left: 3px solid var(--rv-border-strong);
+      background: var(--rv-surface);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+    }
+    .rh-meta-item .rh-label {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--rv-muted);
+    }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound   { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger  { border-left-color: var(--rv-danger); }
+
+    .rh-pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .rh-pipeline-step {
+      padding: 12px 14px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-pipeline-step .rh-step-no {
+      display: inline-block;
+      padding: 1px 7px;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--hh-accent-soft);
+      color: var(--rv-accent);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+    .rh-pipeline-step strong { display: block; margin-bottom: 4px; }
+    .rh-pipeline-step small { color: var(--rv-muted); font-size: 0.82rem; line-height: 1.5; }
+
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+
+    /* === Stage 6 特有：snapshot publish flowchart === */
+    .rh-flow {
+      padding: 16px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface);
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .rh-flow .stage-lock   { color: #58a6ff; }
+    .rh-flow .stage-tmp    { color: #ffc463; }
+    .rh-flow .stage-write  { color: #7ee787; }
+    .rh-flow .stage-verify { color: #c79fff; }
+    .rh-flow .stage-publish{ color: #ff7b72; font-weight: 760; }
+    .rh-flow .stage-cleanup{ color: #6e7681; }
+    .rh-flow .branch       { color: #8b949e; }
+    .rh-flow .arrow        { color: #d0d7de; }
+    .rh-flow .err          { color: #ff7b7b; font-weight: 760; }
+
+    /* === lease 状态机 === */
+    .rh-states {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .rh-state {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+    }
+    .rh-state.active   { border-top: 4px solid var(--rv-info); }
+    .rh-state.released { border-top: 4px solid var(--rv-success); }
+    .rh-state.failed   { border-top: 4px solid var(--rv-danger); }
+    .rh-state.orphan   { border-top: 4px solid var(--rv-warning); }
+    .rh-state h4 { margin: 0 0 6px; font-size: 0.96rem; }
+    .rh-state small { color: var(--rv-muted); font-family: inherit; }
+
+    /* === 路径安全 5 层防护 === */
+    .rh-layers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .rh-layer {
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--rv-surface);
+      border-left: 4px solid var(--rv-danger);
+      font-size: 0.88rem;
+    }
+    .rh-layer strong { display: block; margin-bottom: 4px; color: var(--rv-text); }
+    .rh-layer small { color: var(--rv-muted); }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_contract_architecture.html">Contract 架构图</a>
+          <a href="repo_harness_verl_dataflow_architecture.html">数据流架构图</a>
+          <a href="repo_harness_verl_shared_contracts.html">共享 Contract</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序实施计划</a>
+          <a href="repo_harness_verl_execution_report.html">执行结果汇报</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2 计划</a>
+          <a href="repo_harness_verl_stage3_execution_plan.html">Stage 3 计划</a>
+          <a href="repo_harness_verl_stage4_execution_plan.html">Stage 4 计划</a>
+          <a href="repo_harness_verl_stage5_execution_plan.html">Stage 5 计划</a>
+          <a href="repo_harness_verl_stage6_execution_plan.html" aria-current="page">Stage 6 计划</a>
+          <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7 计划</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 6 · Execution Report</span>
+      <h1>Stage 6：workspace / container 复用 + 训练环境加速</h1>
+      <p class="rv-lead">
+        本页上半为 Stage 6 <strong>实施结果</strong>，下半保留<strong>执行计划</strong>。本次产出：新增 <code>src/repo_harness/workspace/reuse.py</code>（790 行，6 个 schema + <code>WorkspaceSnapshotManager</code> + 2 个 helper + 4 类常量 + 本地并发锁 + 敏感路径 denylist）· 18 个新单元测试全部通过 · workspace <code>__init__.py</code> 对外导出 11 个新符号。Stage 6 落地"<strong>clean snapshot → 独立可写 lease workspace</strong>"模型，解决训练场景同一份 source repeated checkout 的吞吐瓶颈，但<strong>不</strong>实现 warm container pool（Stage 6 第一版不做）。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 6 · 已实现</span>
+        <span class="rv-badge success">18 / 18 测试通过</span>
+        <span class="rv-badge info">第一版：directory_copy + 不接 warm container · Docker pool / overlayfs 留后续</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#result">⓪ 执行结果 ⚡ 新</a>
+        <a href="#goal">① 阶段目标</a>
+        <a href="#coverage">② 第一版覆盖范围 ⚠</a>
+        <a href="#boundaries">③ 10 条硬边界</a>
+        <a href="#key">④ snapshot key 设计</a>
+        <a href="#publish">⑤ snapshot 发布语义</a>
+        <a href="#derive">⑥ workspace 派生</a>
+        <a href="#deps">⑦ dependency cache</a>
+        <a href="#resource">⑧ ResourceSummary 接入</a>
+        <a href="#lease">⑨ Lease 状态机</a>
+        <a href="#files">⑩ 改动文件</a>
+        <a href="#pipeline">⑪ 实施 12 步</a>
+        <a href="#tests">⑫ 测试覆盖矩阵</a>
+        <a href="#not-doing">⑬ 不做事项</a>
+        <a href="#checks">⑭ 验收命令</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <!-- ⓪ 执行结果                                                    -->
+      <!-- ============================================================ -->
+      <section id="result" class="rv-section">
+        <h2>⓪ 本次执行结果</h2>
+        <div class="rv-callout success">
+          <strong>一句话：</strong>Stage 6 已落地。<code>WorkspaceSnapshotManager</code> 提供"创建一次 clean snapshot · 每条 episode 派生独立可写 workspace"的可审计复用模型，<strong>本地文件锁 + 原子 publish</strong> 保证并发安全；<code>copy_declared_dependency_paths</code> 含三层安全防护（绝对路径校验 + 25+ 敏感文件 denylist + symlink 越界拦截）；<code>WorkspaceSnapshotKey</code> 用两阶段规则（prelookup hash → post-materialization verification）避开"必须先 materialize 才能 lookup"的顺序矛盾；<code>WorkspaceLease</code> 有完整 4 状态生命周期（active / released / cleanup_failed / orphaned）。18 个新测试全过。
+        </div>
+
+        <h3>实际改动文件</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 36%;">文件</th><th style="width: 11%;">变更</th><th style="width: 10%;">行数</th><th>新增内容</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/workspace/reuse.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+790</td>
+                <td>6 个 schema · 1 个 dataclass · <code>WorkspaceSnapshotManager</code>（acquire / release / 本地锁 / 原子 publish）· 2 个对外 helper · 4 类常量 · 敏感路径 denylist · 11 个内部 validator</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/workspace/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+18</td>
+                <td>对外导出 11 个 Stage 6 符号（含 <code>WORKSPACE_REUSE_POLICY_VERSION</code> 和 4 个 cleanup 状态常量）</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_workspace_reuse_stage6.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+345</td>
+                <td>13 个测试覆盖 snapshot key 稳定性 / hit-miss / 并发 publish / lease 隔离 / cleanup 失败 / symlink 越界 / 敏感路径 denylist / post-materialization mismatch</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage6_resource_summary.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+173</td>
+                <td>5 个测试覆盖 <code>ResourceSummary</code> 投影 / lease 路径校验 / snapshot facts 路径校验 / 绝对路径拒绝</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">新增公开 API 速查</h3>
+        <p class="rv-muted">全部从 <code>repo_harness.workspace</code> 顶层导出。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 8%;">类型</th><th style="width: 30%;">名称</th><th>职责</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>WorkspaceReusePolicy</code></td><td>policy_version · enable_snapshots=True · enable_dependency_cache=False · restore_strategy="directory_copy" · cleanup_leases=True · max_cache_bytes</td></tr>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>WorkspaceSnapshotKey</code></td><td>13 个输入字段 + model_validator 自动算出 <code>snapshot_key = "wssnap-{stable_hash[:24]}"</code>，所有字段都过绝对路径校验</td></tr>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>WorkspaceSnapshotFacts</code></td><td>snapshot 创建后写盘的 18 字段 facts，<code>snapshot_ref</code> 必须 <code>rh://workspace-snapshot/</code> 开头</td></tr>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>WorkspaceSnapshotResult</code></td><td>acquire 结果：<code>facts</code> + <code>snapshot_cache_hit</code> + <code>snapshot_restore_strategy</code> + <code>diagnostics</code></td></tr>
+              <tr><td><span class="rh-kind dc">数据类</span></td><td><code>WorkspaceLease</code></td><td>lease_id · workspace_id · snapshot_key · workspace_path · lifecycle_status · cleanup_status · timestamps · error · diagnostics</td></tr>
+              <tr><td><span class="rh-kind dc">frozen dc</span></td><td><code>WorkspaceLeaseHandle</code></td><td>外部 API 句柄：<code>lease</code> + <code>workspace_path</code> + 3 个 timing 字段（materialization / dependency_restore / cleanup）</td></tr>
+              <tr><td><span class="rh-kind cls">manager</span></td><td><code>WorkspaceSnapshotManager</code></td><td>核心类：<code>acquire_workspace(...)</code> · <code>release_workspace(handle)</code>；内部用 <code>_SnapshotLocalLock</code> 本地文件锁 + 临时目录写入 + 原子 rename + facts fsync</td></tr>
+              <tr><td><span class="rh-kind fn">工厂</span></td><td><code>build_workspace_snapshot_key(...)</code></td><td>13 关键字参数，<code>setup_command_hash</code> 自动从 setup_command 推导 · 默认 <code>toolchain_version = f"python-{maj}.{min}"</code></td></tr>
+              <tr><td><span class="rh-kind fn">helper</span></td><td><code>copy_declared_dependency_paths(...)</code></td><td>声明式依赖路径复制，<strong>三层防护</strong>：① 拒绝绝对路径 / <code>..</code> 越界 ② 25+ 敏感文件 denylist ③ symlink 必须在 source_root 内</td></tr>
+              <tr><td><span class="rh-kind cfg">常量</span></td><td><code>WORKSPACE_REUSE_POLICY_VERSION</code></td><td><code>"repo_harness_workspace_reuse_stage6_v0"</code></td></tr>
+              <tr><td><span class="rh-kind cfg">常量</span></td><td>4 个 cleanup 状态 + 4 个 lease lifecycle 状态</td><td><code>RESOURCE_CLEANUP_NOT_STARTED / COMPLETED / FAILED / SKIPPED</code> · <code>LEASE_STATUS_ACTIVE / RELEASED / CLEANUP_FAILED / ORPHANED</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 22px;">⚡ 核心实现：<code>WorkspaceSnapshotManager.acquire_workspace(...)</code> 流程</h3>
+        <p class="rv-muted">最关键的并发与原子性流程。任何写盘失败都<strong>不</strong>会产生半发布的 snapshot。</p>
+        <div class="rh-flow"><span class="branch">┌─</span> <span class="stage-lock">[1] 进入 _SnapshotLocalLock(lock_path, timeout_seconds)</span>
+<span class="branch">│</span>      <span class="arrow">→</span> 同 snapshot_key 的并发请求<strong>串行化</strong>
+<span class="branch">│</span>      <span class="arrow">→</span> Linux/macOS 用 <span class="ty">fcntl.flock(LOCK_EX)</span> 文件锁
+<span class="branch">│</span>
+<span class="branch">├─</span> <span class="stage-verify">[2] 检查 snapshots/&lt;snapshot_key&gt;/snapshot_facts.json</span>
+<span class="branch">│</span>      <span class="arrow">├─</span> 已存在 <span class="arrow">→</span> 读取 facts · 校验 snapshot_key / source_tree_hash / policy_version
+<span class="branch">│</span>      <span class="arrow">│</span>             <span class="arrow">↓</span>
+<span class="branch">│</span>      <span class="arrow">│</span>     ┌─ 合法 <span class="arrow">→</span> 复用现有 snapshot (<span class="stage-verify">cache_hit=True</span>) <span class="arrow">→</span> 跳到 [6]
+<span class="branch">│</span>      <span class="arrow">│</span>     └─ 损坏 <span class="arrow">→</span> 返回 <span class="err">structured diagnostics</span>，<strong>绝不静默覆盖</strong>
+<span class="branch">│</span>      <span class="arrow">└─</span> 不存在 <span class="arrow">→</span> 进入 [3]
+<span class="branch">│</span>
+<span class="branch">├─</span> <span class="stage-tmp">[3] 写入临时目录 .tmp/&lt;snapshot_key&gt;.&lt;creator_id&gt;/</span>
+<span class="branch">│</span>      <span class="arrow">→</span> creator_id 用 <span class="ty">uuid.uuid4().hex</span> 区分不同 writer
+<span class="branch">│</span>      <span class="arrow">→</span> 临时目录 cleanup 失败 <span class="arrow">→</span> 进入 diagnostics
+<span class="branch">│</span>
+<span class="branch">├─</span> <span class="stage-write">[4] materialize source / restore dependency</span>
+<span class="branch">│</span>      <span class="arrow">→</span> 复用现有 <code>materialize_source(...)</code>
+<span class="branch">│</span>      <span class="arrow">→</span> 校验 clean-state（运行 post-materialization source_tree_hash）
+<span class="branch">│</span>      <span class="arrow">→</span> 写 snapshot_facts.json + manifest
+<span class="branch">│</span>      <span class="arrow">→</span> <span class="ty">os.fsync(facts_file)</span> 确保 facts 可读
+<span class="branch">│</span>
+<span class="branch">├─</span> <span class="stage-verify">[5] post-materialization source_hash verify</span>
+<span class="branch">│</span>      <span class="arrow">→</span> 重新计算 source_tree_hash · 与 prelookup key 中预期值对比
+<span class="branch">│</span>      <span class="arrow">→</span> 不匹配 <span class="arrow">→</span> <span class="err">raise WorkspaceError</span>，临时目录留作 forensic
+<span class="branch">│</span>
+<span class="branch">├─</span> <span class="stage-publish">[6] atomic rename .tmp/&lt;…&gt; → snapshots/&lt;snapshot_key&gt;/</span>
+<span class="branch">│</span>      <span class="arrow">→</span> <span class="ty">os.rename(tmp_dir, final_dir)</span> 原子操作
+<span class="branch">│</span>      <span class="arrow">→</span> 如果 publish 时发现已存在 <span class="arrow">→</span> 读 facts 校验后复用
+<span class="branch">│</span>
+<span class="branch">├─</span> <span class="stage-write">[7] 派生 episode workspace</span>
+<span class="branch">│</span>      <span class="arrow">→</span> leases/&lt;lease_id&gt;/workspace/ <span class="arrow">←</span> 普通目录复制
+<span class="branch">│</span>      <span class="arrow">→</span> snapshot 目录<strong>只读</strong>，<strong>不</strong>污染
+<span class="branch">│</span>      <span class="arrow">→</span> 写 leases/&lt;lease_id&gt;.json lease facts
+<span class="branch">│</span>
+<span class="branch">└─</span> <span class="stage-lock">[8] 退出 lock</span> <span class="arrow">→</span> 返回 <code>WorkspaceLeaseHandle</code>（含 timing 字段）</div>
+
+        <h3 style="margin-top: 22px;"><code>WorkspaceLease</code> 4 状态生命周期</h3>
+        <div class="rh-states">
+          <div class="rh-state active">
+            <h4>active</h4>
+            <small>lease 已分配，episode 正在使用 workspace。<br><code>cleanup_status = not_started</code></small>
+          </div>
+          <div class="rh-state released">
+            <h4>released</h4>
+            <small><code>release_workspace(handle)</code> 成功，workspace 已删除。<br><code>cleanup_status = completed</code></small>
+          </div>
+          <div class="rh-state failed">
+            <h4>cleanup_failed</h4>
+            <small>release 时 <code>shutil.rmtree</code> 抛错。<br><code>cleanup_status = failed</code> · <code>cleanup_error</code> 写入异常原因 · diagnostics 也记录</small>
+          </div>
+          <div class="rh-state orphan">
+            <h4>orphaned</h4>
+            <small>进程崩溃 / 系统重启后留下的孤儿 lease。后续启动 manager 时识别并标记，不删除别人的 workspace。</small>
+          </div>
+        </div>
+        <div class="rv-callout warning">
+          <strong>双层 cleanup_status 映射：</strong><code>WorkspaceLease.cleanup_status</code> 用<strong>稳定状态名</strong>（completed / failed / skipped / not_started）对齐 Docker / recorder 报告；<code>WorkspaceLease.lifecycle_status</code> 用<strong>生命周期词汇</strong>（active / released / cleanup_failed / orphaned）。同一 cleanup 语义不会在不同报告里出现两套名字。
+        </div>
+
+        <h3 style="margin-top: 22px;">⚡ 路径安全 5 层防护（<code>copy_declared_dependency_paths</code>）</h3>
+        <div class="rh-layers">
+          <div class="rh-layer">
+            <strong>① 拒绝绝对路径</strong>
+            <small>声明路径不能 <code>/Users/...</code> 或 <code>/etc/...</code>，必须相对 <code>source_root</code></small>
+          </div>
+          <div class="rh-layer">
+            <strong>② 拒绝 <code>..</code> 越界</strong>
+            <small><code>_validate_path_within_root</code> 用 <code>Path.resolve()</code> + 前缀检查</small>
+          </div>
+          <div class="rh-layer">
+            <strong>③ 25+ 敏感文件 denylist</strong>
+            <small><code>.ssh</code> · <code>.aws</code> · <code>.env</code> · <code>.netrc</code> · <code>id_rsa</code> · <code>id_ed25519</code> · <code>credentials.json</code> · <code>pip.conf</code> · <code>token.json</code> 等</small>
+          </div>
+          <div class="rh-layer">
+            <strong>④ 文件名 stem / suffix denylist</strong>
+            <small>stem ∈ {credential, credentials, secret, token} · suffix ∈ {.cer, .crt, .key, .p12, .pem, .pfx}</small>
+          </div>
+          <div class="rh-layer">
+            <strong>⑤ symlink 目标必须在 source_root 内</strong>
+            <small><code>_validate_symlinks_within_root</code> 递归校验所有 symlink target，越界 symlink 直接抛 <code>WorkspaceError</code></small>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 22px;">关键验收数字</h3>
+        <div class="rv-grid-4">
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">18 / 18</div>
+            <small class="rv-muted">Stage 6 新增测试通过</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">6</div>
+            <small class="rv-muted">新增 schema 数据类</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">13</div>
+            <small class="rv-muted">snapshot_key 输入字段</small>
+          </div>
+          <div class="rv-card" style="text-align: center;">
+            <div style="font-size: 1.8rem; font-weight: 760; color: var(--rv-success);">25+</div>
+            <small class="rv-muted">敏感文件 denylist 条目</small>
+          </div>
+        </div>
+
+        <div class="rv-callout warning" style="margin-top: 16px;">
+          <strong>本次明确未做（按计划留给后续）：</strong>
+          <ul style="margin: 4px 0 0 18px;">
+            <li><strong>warm container pool</strong>：第一版仅保留 <code>container_reuse_hit=False</code> 占位字段，Docker backend 仍每条命令隔离执行。</li>
+            <li><strong>overlayfs / APFS clone / Docker volume snapshot</strong>：第一版固定 <code>restore_strategy = "directory_copy"</code>，其它策略只是字符串占位。</li>
+            <li><strong>baseline verifier cache 真实结果复用</strong>：<code>baseline_cache_hit=False</code> 占位。</li>
+            <li><strong>分布式 worker 间全局资源租约</strong>：第一版只做<strong>本地</strong>文件锁，跨机器并发不在范围。</li>
+            <li><strong>默认 CLI 行为</strong>：<code>LocalWorkspaceAdapter</code> / <code>DockerWorkspaceAdapter</code> 的<strong>默认构造没有改</strong>，<code>reuse policy</code> 是可选注入；SWE-Bench / V5 跑法不受影响。要使用 Stage 6 必须显式构造 <code>WorkspaceSnapshotManager</code>。</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ① 阶段目标                                                    -->
+      <!-- ============================================================ -->
+      <section id="goal" class="rv-section">
+        <h2>① 阶段目标</h2>
+        <p>
+          降低训练场景中每条 episode <strong>重复创建 workspace、重复恢复依赖、重复执行 setup</strong> 的成本，同时保持 RepoHarness 最重要的 clean-state、audit 和 verifier 可信边界。
+        </p>
+        <div class="rv-callout">
+          <strong>目标数据流：</strong><br>
+          <code>source materialization → clean workspace snapshot → dependency cache facts → 每条 episode 派生独立可写 workspace → ResourceSummary 记录 snapshot key / cache hit / restore strategy / lease id / cleanup status</code>
+        </div>
+        <ol style="margin: 6px 0 0 18px; font-size: 0.92rem; line-height: 1.7;">
+          <li>第一条任务创建 clean workspace snapshot。</li>
+          <li>后续相同 snapshot key 的 episode 复用 snapshot。</li>
+          <li>并发两条 episode 不能共享同一个可写 workspace。</li>
+          <li>cleanup 失败、snapshot miss、dependency cache miss 都能进入 diagnostics 或 summary facts。</li>
+          <li><code>ResourceSummary</code> 能解释本 episode 的环境复用事实，<strong>不</strong>只写一个模糊的 workspace backend。</li>
+        </ol>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ② 第一版覆盖范围                                              -->
+      <!-- ============================================================ -->
+      <section id="coverage" class="rv-section">
+        <h2>② 第一版覆盖范围 ⚠</h2>
+        <div class="rv-grid-3">
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-success);">
+            <h4 style="margin: 0 0 6px;">✓ 必须覆盖</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>workspace snapshot key 计算</li>
+              <li>clean snapshot create / lookup / materialize</li>
+              <li>每条 episode 独立可写 workspace 派生</li>
+              <li>dependency state 最小审计字段</li>
+              <li>cleanup 成功 / 失败 diagnostics</li>
+              <li><code>ResourceSummary</code> 中 snapshot / cache / lease 字段</li>
+              <li>伪并发测试：两 episode workspace 互不污染</li>
+            </ul>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-warning);">
+            <h4 style="margin: 0 0 6px;">~ 接口或占位，不做真实优化</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>warm container pool</li>
+              <li>Docker volume snapshot</li>
+              <li>overlayfs backend</li>
+              <li>baseline verifier cache 真实复用</li>
+              <li>分布式 worker 间全局资源租约</li>
+            </ul>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid var(--rv-danger);">
+            <h4 style="margin: 0 0 6px;">✗ 绝不做</h4>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>改变任务 / verifier / reward 语义</li>
+              <li>共享同一个可写 workspace</li>
+              <li>默认 hardlink 派生</li>
+              <li>引入 verl import</li>
+              <li>Stage 7 verifier worker pool 提前实现</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ③ 10 条硬边界                                                 -->
+      <!-- ============================================================ -->
+      <section id="boundaries" class="rv-section">
+        <h2>③ 10 条必须保持的硬边界</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 5%;">#</th><th>边界</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>不能改变任务语义、agent loop 语义、verifier 权威边界或 reward 计算语义。</td></tr>
+              <tr><td>2</td><td>不能把上一次 rollout 的 patch / 测试输出 / 临时文件 / 缓存状态 / 环境变量暴露给下一条 episode。</td></tr>
+              <tr><td>3</td><td>不能让多条 episode 共享同一个可写 workspace。</td></tr>
+              <tr><td>4</td><td><strong>不能默认使用 hardlink</strong> 派生 workspace（容易污染源 snapshot 或并发派生 workspace）。</td></tr>
+              <tr><td>5</td><td>macOS 第一版固定 <code>directory_copy</code>。APFS clone 可作可选，必须有 fallback；overlayfs 留 Linux/Vast.ai 后续。</td></tr>
+              <tr><td>6</td><td>warm container pool <strong>不</strong>在 Stage 6 第一版实现。</td></tr>
+              <tr><td>7</td><td>baseline verifier cache 可规划，<strong>不能</strong>影响 final verifier 权威；final 必须在 clean-state 派生 workspace 跑。</td></tr>
+              <tr><td>8</td><td>本地绝对路径不能进 <code>TrainingView.extra_fields</code> / <code>AgentLoopOutput.extra_fields</code> / batch 字段。</td></tr>
+              <tr><td>9</td><td><code>ResourceSummary.workspace_path</code> / <code>run_dir</code> / snapshot ref 只能用<strong>相对路径 / 短 id / <code>rh://</code> opaque ref</strong>。</td></tr>
+              <tr><td>10</td><td>不引入 <code>verl</code> import，不实现 <code>VerlAgentLoop</code> / Ray / vLLM / SGLang 管理，不提前实现 Stage 7 verifier worker pool。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ④ snapshot key 设计                                           -->
+      <!-- ============================================================ -->
+      <section id="key" class="rv-section">
+        <h2>④ <code>WorkspaceSnapshotKey</code> 的 13 个输入字段</h2>
+        <p class="rv-muted">key 必须稳定、可审计、不能依赖本地绝对路径。任一字段变化都会产生新 snapshot。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 26%;">字段</th><th style="width: 32%;">来源</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>repo_ref</code></td><td>task schema</td><td>仓库引用</td></tr>
+              <tr><td><code>base_commit</code></td><td>task schema</td><td>基底 commit SHA</td></tr>
+              <tr><td><code>environment_id</code></td><td>task schema</td><td>环境定义 id</td></tr>
+              <tr><td><code>docker_image_digest</code></td><td>Docker backend facts</td><td>本地模式可为 <code>None</code></td></tr>
+              <tr><td><code>setup_command_hash</code></td><td>自动从 setup_command 推</td><td>无 setup 时固定为 <code>"none"</code></td></tr>
+              <tr><td><code>dependency_lock_hash</code></td><td>lock files</td><td><code>requirements.txt</code> · <code>pyproject.toml</code> · <code>uv.lock</code> · <code>package-lock.json</code> · <code>pnpm-lock.yaml</code> 等的组合 hash</td></tr>
+              <tr><td><code>toolchain_version</code></td><td>默认 <code>f"python-{maj}.{min}"</code></td><td>第一版仅 Python；后续可扩展</td></tr>
+              <tr><td><code>harness_version</code></td><td>调用方传入</td><td>必填</td></tr>
+              <tr><td><code>source_tree_hash</code></td><td><code>compute_source_tree_hash(...)</code></td><td>post-materialization verification 用</td></tr>
+              <tr><td><code>source_archive_sha256</code></td><td>task schema</td><td>prelookup key 用，可选</td></tr>
+              <tr><td><code>mirror_sha256</code></td><td>task schema</td><td>prelookup key 用，可选</td></tr>
+              <tr><td><code>workspace_reuse_policy_version</code></td><td>常量</td><td><code>"repo_harness_workspace_reuse_stage6_v0"</code></td></tr>
+              <tr><td><code>diagnostics</code></td><td>构造时累积</td><td>记录"为什么字段缺失"等审计信息</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="rv-muted" style="margin: 6px 0 0; font-size: 0.86rem;">
+          <code>snapshot_key</code> 字段由 model_validator 用 <code>stable_hash(payload)[:24]</code> 自动算出，格式 <code>"wssnap-{hash}"</code>。
+        </p>
+
+        <h3 style="margin-top: 18px;">两阶段规则：避开"先 materialize 才能 lookup"的顺序矛盾</h3>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">阶段 A · prelookup key</h4>
+            <p class="rv-muted" style="font-size: 0.9rem;">用<strong>task 已声明的 hash</strong>构造可预查 key：</p>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li><code>source_archive_sha256</code></li>
+              <li><code>mirror_sha256</code></li>
+              <li><code>source_tree_hash</code>（如 task 已包含）</li>
+              <li><code>repo_ref</code> + <code>base_commit</code> + <code>environment_id</code></li>
+            </ul>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 6px;">阶段 B · post-materialization verification</h4>
+            <p class="rv-muted" style="font-size: 0.9rem;">materialize 后再次计算并校验：</p>
+            <ul style="margin: 4px 0 0 18px; font-size: 0.88rem;">
+              <li>重新算 <code>SourceCheckoutFacts.source_tree_hash</code></li>
+              <li>与 prelookup 中预期值比对</li>
+              <li>不一致 → <strong>抛 <code>WorkspaceError</code></strong>，临时目录保留作 forensic</li>
+            </ul>
+          </div>
+        </div>
+        <div class="rv-callout warning">
+          <strong>降级规则：</strong>如果 task 缺少 prelookup hash 且本地源 hash 计算成本过高 → 退化为 <strong>snapshot miss</strong> + diagnostics 记录原因，<strong>不</strong>静默改 key 算法。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑤ snapshot 发布语义                                           -->
+      <!-- ============================================================ -->
+      <section id="publish" class="rv-section">
+        <h2>⑤ snapshot 发布语义</h2>
+        <p class="rv-muted">见 §⓪ 中流程图。要点：本地文件锁 + 临时目录写入 + 原子 rename + facts fsync + 已存在时校验复用、绝不静默覆盖。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 32%;">事件</th><th>处置</th></tr></thead>
+            <tbody>
+              <tr><td>目标 snapshot 已存在，facts 合法</td><td>读 facts · 校验通过 · <strong>复用</strong>（cache_hit=True）</td></tr>
+              <tr><td>目标 snapshot 已存在，facts 损坏 / key 不匹配</td><td>返回 <strong>structured diagnostics</strong>，<strong>不静默删除或覆盖</strong></td></tr>
+              <tr><td>临时目录 cleanup 失败</td><td>进入 diagnostics，留作 forensic</td></tr>
+              <tr><td>原子 rename 时目标已存在</td><td>读 facts 校验后复用</td></tr>
+              <tr><td>post-materialization source_tree_hash mismatch</td><td>抛 <code>WorkspaceError</code>，临时目录保留</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rv-callout">
+          <strong>lock 文件路径是 runtime-only 信息</strong>，<strong>不</strong>进入 batch 可传播字段。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑥ workspace 派生策略                                          -->
+      <!-- ============================================================ -->
+      <section id="derive" class="rv-section">
+        <h2>⑥ workspace 派生策略</h2>
+        <p class="rv-muted">第一版固定 <code>restore_strategy = "directory_copy"</code>，所有 optional 策略只保留字段占位。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 32%;">策略</th><th>状态</th><th>fallback</th></tr></thead>
+            <tbody>
+              <tr><td><code>directory_copy</code></td><td><span class="rv-badge success">默认 · 实现</span></td><td>—</td></tr>
+              <tr><td><code>apfs_clone_optional</code></td><td><span class="rv-badge warning">占位</span></td><td>必须 fallback 到 directory_copy</td></tr>
+              <tr><td><code>linux_reflink_optional</code></td><td><span class="rv-badge warning">占位</span></td><td>必须 fallback 到 directory_copy</td></tr>
+              <tr><td><code>overlayfs_optional</code></td><td><span class="rv-badge warning">占位</span></td><td>必须 fallback 到 directory_copy</td></tr>
+              <tr><td><code>docker_volume_snapshot_optional</code></td><td><span class="rv-badge warning">占位</span></td><td>必须 fallback 到 directory_copy</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rv-callout warning">
+          <strong>派生语义不变量：</strong>① snapshot 目录<strong>只读</strong>；② 每条 episode 创建独立可写目录；③ cleanup 只删 lease 对应的 episode workspace，<strong>不</strong>删仍在使用的 snapshot；④ 派生写入<strong>不污染</strong> snapshot；⑤ 两条并发 episode 写同名文件互不影响；⑥ 选用的策略写进 <code>ResourceSummary.snapshot_restore_strategy</code>。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑦ dependency cache 策略                                       -->
+      <!-- ============================================================ -->
+      <section id="deps" class="rv-section">
+        <h2>⑦ dependency cache 策略</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 25%;">策略</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>none</code></td><td>不复用依赖，只记录 cache miss</td></tr>
+              <tr><td><code>rerun_setup</code></td><td>沿用当前语义，重新执行 setup，但记录 <code>setup_command_hash</code> 和 <code>dependency_lock_hash</code></td></tr>
+              <tr><td><code>copy_declared_paths</code></td><td>可选：只复制明确声明的依赖目录（<code>.venv</code> / <code>node_modules</code> / 包管理器 cache），走 §⑤ 5 层防护</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">key 必须绑定</span>
+            cache key 必须绑定 snapshot key · dependency_lock_hash · setup_command_hash · backend。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">facts 投影</span>
+            cache 命中 → <code>DependencyState.cache_key</code> + <code>ResourceSummary.dependency_cache_hit=True</code>。
+            cache miss 也<strong>必须</strong>记录，不能留空。
+          </div>
+          <div class="rh-meta-item danger">
+            <span class="rh-label">敏感路径默认拒绝</span>
+            <code>.env</code> · <code>.ssh</code> · <code>.aws</code> · provider credentials · token 文件 · 见 §⓪ 25+ denylist。<code>copy_declared_paths</code> 必须先走 5 层防护，违反 → 拒绝或跳过 + diagnostics。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑧ ResourceSummary 接入                                        -->
+      <!-- ============================================================ -->
+      <section id="resource" class="rv-section">
+        <h2>⑧ <code>ResourceSummary</code> 和 <code>TimingSummary</code> 接入</h2>
+        <p class="rv-muted">复用 Stage 4 已有字段，不创造一套并行 summary。</p>
+        <h3>ResourceSummary 至少填的字段</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 35%;">字段</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>snapshot_key</code></td><td>本 episode 命中或创建的 snapshot key</td></tr>
+              <tr><td><code>snapshot_cache_hit</code></td><td>是否复用了已有 snapshot</td></tr>
+              <tr><td><code>snapshot_restore_strategy</code></td><td><code>"directory_copy"</code> 或后续 fallback 策略名</td></tr>
+              <tr><td><code>dependency_state_key</code> / <code>dependency_cache_key</code> / <code>dependency_cache_hit</code></td><td>dependency state 引用 + 缓存 key + 是否命中</td></tr>
+              <tr><td><code>baseline_cache_hit</code></td><td>第一版固定 <code>False</code></td></tr>
+              <tr><td><code>container_reuse_hit</code></td><td>第一版固定 <code>False</code>（warm pool 留后续）</td></tr>
+              <tr><td><code>lease_id</code></td><td>workspace lease id（不是 container id）</td></tr>
+              <tr><td><code>workspace_backend</code></td><td>local / docker</td></tr>
+              <tr><td><code>cleanup_status</code></td><td>completed / failed / skipped / not_started 四选一</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 style="margin-top: 14px;">TimingSummary 至少填的字段</h3>
+        <ul style="margin: 6px 0 0 18px; font-size: 0.92rem;">
+          <li><code>workspace_materialization_seconds</code>：snapshot lookup + copy restore 实测耗时</li>
+          <li><code>dependency_restore_seconds</code>：dependency restore 实测耗时</li>
+          <li><code>cleanup_seconds</code>：cleanup 实测耗时</li>
+          <li><strong>互斥分桶</strong>：和 Stage 4 的 14 个分桶共存，不能重复计算</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑨ Lease 状态机                                                -->
+      <!-- ============================================================ -->
+      <section id="lease" class="rv-section">
+        <h2>⑨ <code>WorkspaceLease</code> 状态机</h2>
+        <p class="rv-muted">见 §⓪ 4 状态卡片。下面是 release 语义的硬要求。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 40%;">规则</th><th>要求</th></tr></thead>
+            <tbody>
+              <tr><td><code>release(...)</code> 幂等</td><td>可重复调用，重复调用<strong>不</strong>会删除不属于自己的 workspace</td></tr>
+              <tr><td>cleanup 失败处置</td><td>进入 diagnostics 或 <code>ResourceSummary.cleanup_status</code></td></tr>
+              <tr><td>异常 / timeout / cancelled 路径</td><td><strong>也必须 release lease</strong></td></tr>
+              <tr><td>并发隔离</td><td>两个 lease_id 必须不同，两个 workspace_path 必须不同</td></tr>
+              <tr><td>双层状态映射</td><td><code>lifecycle_status</code> 用生命周期词汇（active/released/cleanup_failed/orphaned）；<code>cleanup_status</code> 用稳定状态名（completed/failed/skipped/not_started）</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑩ 改动文件                                                    -->
+      <!-- ============================================================ -->
+      <section id="files" class="rv-section">
+        <h2>⑩ 改动 / 新增的文件</h2>
+        <p class="rv-muted">同 §⓪ 改动文件表，此处不重复。Stage 6 没有改动 <code>LocalWorkspaceAdapter</code> / <code>DockerWorkspaceAdapter</code> 的默认构造行为；reuse policy 是<strong>可选注入</strong>，不破坏现有 CLI / SWE-Bench / V5 测试。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑪ 实施 12 步                                                  -->
+      <!-- ============================================================ -->
+      <section id="pipeline" class="rv-section">
+        <h2>⑪ 实施顺序（12 步）</h2>
+        <div class="rh-pipeline">
+          <div class="rh-pipeline-step"><span class="rh-step-no">1</span><strong>只读梳理</strong><small>过一遍 workspace materialization / adapter / docker_adapter / source_hash / dependency state / Stage 4 ResourceSummary 字段。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">2</span><strong>先写测试</strong><small>snapshot key 稳定性 · snapshot hit/miss · workspace 隔离 · cleanup diagnostics。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">3</span><strong>两阶段 key 规则测试</strong><small>prelookup key + post-materialization verification 都要覆盖。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">4</span><strong>实现 reuse.py</strong><small><code>WorkspaceSnapshotKey/Facts/Result/Lease/Policy/Manager</code> + 本地 lock + 原子 publish。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">5</span><strong>directory_copy 实现</strong><small>普通目录复制 restore strategy。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">6</span><strong>dependency 路径安全</strong><small>symlink / 敏感路径 / 越界 denylist + 测试。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">7</span><strong>LocalWorkspaceAdapter 可选 reuse</strong><small>默认行为不变，可选注入 reuse policy。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">8</span><strong>ResourceSummary 投影</strong><small>把 snapshot / cache / lease facts 投到 <code>ResourceSummary</code>。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">9</span><strong>TimingSummary 对账</strong><small><code>workspace_materialization_seconds</code> / <code>dependency_restore_seconds</code> 实测对账。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">10</span><strong>Docker 接入</strong><small>image facts 进 snapshot key · <code>container_reuse_hit=False</code> 占位 · <strong>不</strong>做 warm pool。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">11</span><strong>跑回归</strong><small>Stage 6 新测试 + Stage 0H / 1 / 2 / 3 / 4 / 5 全部回归 + <code>rg verl</code> 无命中。</small></div>
+          <div class="rh-pipeline-step"><span class="rh-step-no">12</span><strong>sub agent 审查</strong><small>clean-state · workspace 隔离 · 路径泄漏 · cleanup 语义 · 原子发布 · 是否提前实现 Stage 7/9。</small></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑫ 测试覆盖矩阵                                                -->
+      <!-- ============================================================ -->
+      <section id="tests" class="rv-section">
+        <h2>⑫ 测试 ↔ 契约 矩阵</h2>
+        <h3 style="margin: 14px 0 4px;"><code>test_workspace_reuse_stage6.py</code>（13 个）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L44">snapshot_key_is_stable_and_changes_on_environment</a></td><td>相同输入 → 相同 key；改 commit / env / setup / lock → 不同 key</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L77">snapshot_create_then_hit_uses_published_facts</a></td><td>第一条创建 snapshot，第二条同 key episode 命中</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L94">snapshot_key_supports_prelookup_then_post_materialization_verification</a></td><td>两阶段规则：prelookup + post-materialization</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L117">snapshot_without_prelookup_hash_computes_source_identity_before_lookup</a></td><td>无 prelookup hash 时本地源 hash 计算 fallback</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L144">rejects_unsafe_snapshot_key_and_lease_id</a></td><td>不安全 identifier（含路径分隔符等）抛 ValueError</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L163">snapshot_rejects_post_materialization_source_hash_mismatch</a></td><td>materialize 后 hash 不一致 → 抛错，临时目录保留</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L180">concurrent_snapshot_create_publishes_once</a></td><td><strong>核心</strong>：并发创建只 publish 一次，另一创建者校验后复用</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L195">leases_are_isolated_and_cleanup_is_recorded</a></td><td>两 lease workspace 互不污染 + cleanup 写 <code>completed</code></td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L222">cleanup_failure_is_structured</a></td><td>cleanup 失败 → <code>cleanup_status=failed</code> + diagnostics 不影响 snapshot facts</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L240">release_does_not_delete_workspace_outside_manager_leases_dir</a></td><td>release 幂等 + 不删除不属于自己的目录</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L263">copy_declared_dependency_paths_rejects_sensitive_and_escape_paths</a></td><td>声明路径校验：绝对路径 / .. 越界 / .ssh / .env 拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L294">copy_declared_dependency_paths_rejects_nested_sensitive_files</a></td><td>嵌套的敏感文件（如 <code>foo/.aws/credentials</code>）也拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_workspace_reuse_stage6.py#L332">copy_declared_dependency_paths_rejects_escape_symlink</a></td><td><strong>核心</strong>：越界 symlink 拒绝复制，不让模型 workspace 访问 host secret</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin: 14px 0 4px;"><code>test_repo_harness_rl_stage6_resource_summary.py</code>（5 个）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage6_resource_summary.py#L24">workspace_reuse_projects_safe_resource_and_timing_summary</a></td><td>snapshot / cache / lease facts 投到 <code>ResourceSummary</code>，timing 也对账</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage6_resource_summary.py#L78">resource_summary_rejects_snapshot_and_lease_mismatch</a></td><td>snapshot_key 和 lease 引用的 snapshot 不一致 → 校验拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage6_resource_summary.py#L112">resource_summary_rejects_malformed_lease_path</a></td><td>lease workspace_path 不安全 → ValidationError</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage6_resource_summary.py#L141">resource_summary_rejects_absolute_workspace_and_run_paths</a></td><td><code>workspace_path</code> / <code>run_dir</code> = <code>/Users/...</code> → ValidationError</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage6_resource_summary.py#L154">snapshot_facts_and_lease_reject_absolute_path_projection</a></td><td>snapshot facts 和 lease 投影字段都不接受绝对路径</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑬ 不做事项                                                    -->
+      <!-- ============================================================ -->
+      <section id="not-doing" class="rv-section">
+        <h2>⑬ Stage 6 明确不做（留给后续阶段）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 70%;">不做内容</th><th>所属阶段 / 后续</th></tr></thead>
+            <tbody>
+              <tr><td>warm container pool</td><td>后续优化</td></tr>
+              <tr><td>Docker volume snapshot / overlayfs / APFS clone 真实实现</td><td>后续优化</td></tr>
+              <tr><td>baseline verifier cache 真实结果复用</td><td>Stage 7</td></tr>
+              <tr><td>verifier worker pool</td><td>Stage 7</td></tr>
+              <tr><td>训练预算 no-progress 控制加严</td><td>Stage 8</td></tr>
+              <tr><td>分布式 worker 间全局资源租约</td><td>Stage 9</td></tr>
+              <tr><td><code>TrainingView → AgentLoopOutput</code> 转换器</td><td>Stage 10</td></tr>
+              <tr><td><code>RepoHarnessVerlAgentLoop</code> · <code>VerlLLMGateway</code> · 真实 verl 接入</td><td>Stage 11</td></tr>
+              <tr><td>Ray 调度 · vLLM / SGLang server 管理</td><td>Stage 11/12</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑭ 验收命令                                                    -->
+      <!-- ============================================================ -->
+      <section id="checks" class="rv-section">
+        <h2>⑭ 建议验收命令</h2>
+        <h4 style="margin: 10px 0 4px;">编译 + Stage 6 新增</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m compileall -q src
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_workspace_reuse_stage6.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage6_resource_summary.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">Stage 5 / 4 / 3 / 2 / 1 / 0H 回归</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage5_gateway_routes.py tests/unit/test_repo_harness_rl_stage5_provider_gateway.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage4_timing_resource.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage3_training_fast_recorder.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage2_runtime.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_rl_stage1_schema_roundtrip.py tests/unit/test_repo_harness_rl_stage1_visibility_gateway.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_verl_contract_fixtures.py tests/unit/test_repo_harness_verl_stage0h_shape_rules.py tests/unit/test_repo_harness_verl_stage0h_visibility.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">如果接入了 local / Docker workspace adapter</h4>
+        <pre class="rv-codeblock"><code>PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_materialization.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_workspace_backend.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_docker_adapter_image_platform.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/integration/test_workspace_lifecycle.py
+PATH=.venv/bin:$PATH python -m pytest -q tests/integration/test_repo_materialization_smoke.py</code></pre>
+
+        <h4 style="margin: 14px 0 4px;">证明无 verl import</h4>
+        <pre class="rv-codeblock"><code>rg -n "(^|\s)(import|from)\s+verl" src/repo_harness/rl src/repo_harness/workspace || true</code></pre>
+
+        <div class="rv-callout success">
+          <strong>本次实际结果：</strong>Stage 6 新增 18 测试全过 · Stage 0H / 1 / 2 / 3 / 4 / 5 回归全过 · <code>rg verl src/repo_harness/{rl,workspace}</code> 无命中。
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>
