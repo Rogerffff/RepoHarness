@@ -1,0 +1,129 @@
+{
+  "agent_loop_output_class": "AgentLoopOutput",
+  "artifact_kinds": [
+    "assistant_message",
+    "budget_decision_trace",
+    "content_replacement_state",
+    "final_diff",
+    "final_patch",
+    "final_verifier",
+    "git_command_output",
+    "model_input_snapshot",
+    "prepared_messages",
+    "read_file",
+    "reward_metadata"
+  ],
+  "extra_fields": {
+    "repo_harness_episode_id": "stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200",
+    "repo_harness_final_verifier_ref": "rh://verifier/stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200/final",
+    "repo_harness_invalid_for_online_rl": false,
+    "repo_harness_invalid_for_training": false,
+    "repo_harness_invalid_reason": "final_answer",
+    "repo_harness_llm_gateway_route": "verl",
+    "repo_harness_resource_summary_ref": "rh://audit/stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200/resource-summary",
+    "repo_harness_reward_metadata_ref": "rh://reward/stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200/metadata",
+    "repo_harness_run_id": "rh-verl-stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200",
+    "repo_harness_status": "succeeded",
+    "repo_harness_task_id": "stage12b-buggy-calculator-real-model",
+    "repo_harness_timing_summary_ref": "rh://audit/stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200/timing-summary",
+    "repo_harness_verifier_queue_wait_seconds": 0.0,
+    "repo_harness_verifier_worker_id": "direct",
+    "repo_harness_verifier_worker_pool_id": "direct-blocking"
+  },
+  "image": "verlai/verl:sgl056.latest",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "num_turns": 3,
+  "repo_commit": "9c503558c4f64e02764c94df17780d6a0f482ca9",
+  "response_logprob_count": 182,
+  "response_mask_count": 182,
+  "response_token_count": 182,
+  "reward_score": 1.0,
+  "run_dir": "/workspace/RepoHarness/runs/stage12b-real-episode-20260516T215345Z/real_episode_runs/rh-verl-stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200",
+  "run_root": "/workspace/RepoHarness/runs/stage12b-real-episode-20260516T215345Z",
+  "schema_version": "repo_harness_stage12b_real_episode_smoke_summary_v0",
+  "server_call_count": 3,
+  "server_calls": [
+    {
+      "finish_reason": "stop",
+      "prompt_len": 3786,
+      "request_id": "fa982b9ee526410f92617ca97b3921a9",
+      "sampling_params": {
+        "max_new_tokens": 96,
+        "temperature": 0.0,
+        "top_p": 1.0
+      },
+      "text": "{\"name\": \"read_file\", \"arguments\": {\"path\": \"calculator.py\"}}",
+      "token_count": 18
+    },
+    {
+      "finish_reason": "stop",
+      "prompt_len": 3885,
+      "request_id": "5b8f2856e72e48eca1502ec6a2df66a1",
+      "sampling_params": {
+        "max_new_tokens": 96,
+        "temperature": 0.0,
+        "top_p": 1.0
+      },
+      "text": "```json\n{\"name\": \"edit_file\", \"arguments\": {\"path\": \"calculator.py\", \"old_text\": \"    return left / right\", \"new_text\": \"    if right == 0:\\n        raise ValueError('division by zero')\\n    return left / right\"}}\n```",
+      "token_count": 62
+    },
+    {
+      "finish_reason": "stop",
+      "prompt_len": 3964,
+      "request_id": "33becf5a3d77458eac463382f825b8ca",
+      "sampling_params": {
+        "max_new_tokens": 96,
+        "temperature": 0.0,
+        "top_p": 1.0
+      },
+      "text": "Division by zero is now handled in the `divide` function by raising a `ValueError` with the message \"division by zero\". The normal division behavior remains unchanged.",
+      "token_count": 35
+    }
+  ],
+  "stage12c_advantage_estimator": "GRPO",
+  "stage12c_dataproto_shapes": {
+    "advantages": [
+      1,
+      768
+    ],
+    "prompts": [
+      1,
+      8192
+    ],
+    "response_mask": [
+      1,
+      768
+    ],
+    "responses": [
+      1,
+      768
+    ],
+    "returns": [
+      1,
+      768
+    ],
+    "rm_scores": [
+      1,
+      768
+    ],
+    "rollout_log_probs": [
+      1,
+      768
+    ],
+    "token_level_rewards": [
+      1,
+      768
+    ]
+  },
+  "stage12c_dataproto_visibility": "passed",
+  "stage12c_loss_path": "compute_advantage_GRPO + compute_policy_loss_vanilla",
+  "stage12c_policy_loss": -1.0,
+  "stage12c_policy_metrics": {
+    "actor/pg_clipfrac": 0.0,
+    "actor/pg_clipfrac_lower": 0.0,
+    "actor/ppo_kl": 0.0
+  },
+  "stage12c_postprocessed_extra_fields_contains_raw_prompt": true,
+  "status": "completed",
+  "transfer_queue_visibility": "passed"
+}
