@@ -85,6 +85,41 @@ def test_stage12b_parser_accepts_final_answer_without_tool_call() -> None:
     assert parsed.diagnostics == []
 
 
+def test_stage12b_parser_recovers_whole_message_bare_json_tool_call() -> None:
+    parsed = parse_hermes_tool_calls(
+        '{"name": "read_file", "arguments": {"path": "calculator.py"}}',
+        turn=2,
+    )
+
+    assert parsed.success
+    assert parsed.content == ""
+    assert parsed.tool_calls == [
+        {
+            "tool_call_id": "repo_harness_verl_tool_call_2_0",
+            "tool_name": "read_file",
+            "arguments": {"path": "calculator.py"},
+        }
+    ]
+    assert parsed.diagnostics == [
+        {
+            "category": "model_format_recovery",
+            "code": "model_format_recovered_from_bare_json",
+            "severity": "warning",
+        }
+    ]
+
+
+def test_stage12b_parser_recovers_whole_message_fenced_json_tool_call() -> None:
+    parsed = parse_hermes_tool_calls(
+        '```json\n{"name": "grep", "arguments": {"query": "divide", "root": "."}}\n```',
+        turn=0,
+    )
+
+    assert parsed.success
+    assert parsed.tool_calls[0]["tool_name"] == "grep"
+    assert parsed.diagnostics[0]["code"] == "model_format_recovered_from_fenced_json"
+
+
 def test_stage12b_parser_uses_only_first_tool_call_and_records_diagnostic() -> None:
     parsed = parse_hermes_tool_calls(
         """
@@ -118,6 +153,10 @@ def test_stage12b_parser_uses_only_first_tool_call_and_records_diagnostic() -> N
         ('<tool_call>{"name": "read_file", "arguments": {"groundTruth": "answer"}}</tool_call>', "tool_call_arguments_visibility_rejected"),
         (
             '<tool_call>{"name": "read_file", "arguments": {"reward_extra_info": {"score": 1}}}</tool_call>',
+            "tool_call_arguments_visibility_rejected",
+        ),
+        (
+            '{"name": "read_file", "arguments": {"groundTruth": "answer"}}',
             "tool_call_arguments_visibility_rejected",
         ),
     ],
@@ -162,6 +201,27 @@ def test_stage12b_gateway_parses_real_token_text_without_mutating_token_facts() 
     assert response.output_logprobs == [-0.1, -0.2, -0.3]
     assert response.response_mask == [1, 1, 1]
     assert "repo_harness_tool_calls" not in response.extra_fields
+
+
+def test_stage12b_gateway_records_recovered_bare_json_diagnostic() -> None:
+    response = token_output_to_llm_gateway_response(
+        TokenOutputLike(
+            token_ids=[10, 11, 12],
+            log_probs=[-0.1, -0.2, -0.3],
+            extra_fields={},
+        ),
+        request=_request(),
+        prompt_ids=[1, 2],
+        tokenizer=TextTokenizer('{"name": "read_file", "arguments": {"path": "calculator.py"}}'),
+        inference_backend="sglang",
+        duration_ms=5,
+    )
+
+    assert response.tool_calls[0]["tool_name"] == "read_file"
+    assert (
+        response.extra_fields["repo_harness_tool_parse_diagnostics"][0]["code"]
+        == "model_format_recovered_from_bare_json"
+    )
 
 
 def test_stage12b_gateway_keeps_parser_failure_as_model_format_diagnostic() -> None:

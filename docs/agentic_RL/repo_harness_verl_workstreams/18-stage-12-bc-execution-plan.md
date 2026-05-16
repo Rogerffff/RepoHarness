@@ -368,7 +368,7 @@ provider secret
 
 ### 5.3 Parser 规则
 
-第一版采用 Hermes-style 严格文本协议：
+第一版以 Hermes-style 文本协议作为主协议：
 
 ```text
 <tool_call>
@@ -406,11 +406,13 @@ diagnostics: list[dict]
 
 - 每轮最多执行一个工具调用。
 - 如果模型输出多个 `<tool_call>`，只执行第一个，其余记录 `ignored_extra_tool_calls` diagnostics。
+- 如果真实模型整条 assistant message 是一个完整 JSON object，或者是只包含这个 JSON object 的 Markdown JSON 代码块，并且该 JSON object 严格满足同一套工具 schema 和 visibility gate，可以作为有审计标记的格式恢复处理。
+- 格式恢复必须记录 `model_format_recovered_from_bare_json` 或 `model_format_recovered_from_fenced_json` diagnostics。它不是自动 repair，不能触发额外模型调用，也不能放宽工具名、参数类型、路径和 evaluator-only 字段检查。
 - 只允许 `read_file`、`grep`、`edit_file`、`git_diff`。
 - 不允许 `run_tests`。
 - `arguments` 必须是 JSON object。
 - parser 需要拒绝数组参数、字符串参数、非法 JSON、未知工具名、绝对路径、`hidden_verifier`、`ground_truth`、`reward_extra_info`、`provider_secret`。
-- Stage 12-B 第一版不做自动 repair；parser failure 统一归类为 `model_format_failure`，不归类为 `infrastructure_error`。
+- Stage 12-B 第一版不做自动 repair；无法通过主协议或整条消息 JSON 恢复路径解析的 parser failure 统一归类为 `model_format_failure`，不归类为 `infrastructure_error`。
 - 如果后续阶段启用可恢复 repair，repair 模型调用也必须计入 `max_model_calls`、`used_model_calls`、`TimingSummary.model_call_count`、`TimingSummary.model_call_seconds` 和 `BudgetConsumption`，并且必须记录 `repair_attempt_count` 与 `repair_stop_reason`。
 
 ### 5.4 Gateway 接入
