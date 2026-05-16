@@ -32,6 +32,7 @@ Stage 8：实现训练预算、no-progress 控制和上下文瘦身
 Stage 9：实现并发安全和资源租约
 Stage 10：实现 TrainingView 到 AgentLoopOutput 的转换
 Stage 11：实现 RepoHarnessVerlAgentLoop 与 VerlLLMGateway
+Stage 11.5：接通真实 RepoHarness episode runtime bridge
 Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
 Stage 13：为 fully async 演进预留中断、恢复和异步 reward 设计
 ```
@@ -145,8 +146,9 @@ run_config_ref
 budget_ref
 agent_policy_ref
 episode_seed
-明确声明的模型可见 context refs
 ```
+
+Stage 11 / Stage 11.5 第一版不启用模型可见 context refs。后续如果需要启用这类字段，必须先新增明确的 schema 投影字段、visibility 测试和 request mapping 测试，不能只把字段加入 allowlist。
 
 `raw_prompt` 只允许模型可见内容。其他 evaluator-only 字段只能留在 RepoHarness run artifact 中，由 opaque `AuditRef` 间接回查。
 
@@ -666,7 +668,7 @@ async def run(self, sampling_params: dict, **kwargs) -> AgentLoopOutput:
 关键约束：
 
 1. `kwargs["raw_prompt"]` 只能包含模型可见 prompt。
-2. `RepoHarnessVerlAgentLoop` 构造 request 时必须对 `kwargs` 使用 allowlist，只允许 `raw_prompt`、`agent_name`、`task_id`、`run_config_ref`、`budget_ref`、`agent_policy_ref`、`episode_seed` 和明确声明的模型可见 context refs。
+2. `RepoHarnessVerlAgentLoop` 构造 request 时必须对 `kwargs` 使用 allowlist，只允许 Stage 11 明确支持的 request 构造字段和 verl 控制字段。`repo_harness_model_visible_context_refs` 第一版不启用；后续如果要启用，必须先新增 schema 投影字段、visibility 测试和 request mapping 测试。
 3. `agent_name`、`task_id`、`run_config_ref`、`budget_ref`、`agent_policy_ref` 必须稳定映射到 `RepoHarnessEpisodeRequest`。
 4. `VerlLLMGateway` 不启动、不停止、不重建 verl server，只调用 verl 已有 `LLMServerClient`。
 5. route=verl 时，token provenance 必须来自当轮真实 `LLMServerClient.generate(...)` 返回。
@@ -688,7 +690,51 @@ async def run(self, sampling_params: dict, **kwargs) -> AgentLoopOutput:
 - adapter 包第一版放在独立 `src/repo_harness_verl/`，并通过可选 extra 安装。RepoHarness core 不因为普通 CLI 或外部 API 测评而强制安装 verl 全量依赖。
 - Vast.ai 真实训练前验收第一版以 SGLang smoke 为主，因为 verl 的 agentic / multi-turn 示例更偏 SGLang 路线；vLLM 作为第二个 parity smoke 保留。若 Vast.ai 镜像环境已经预装 vLLM 而没有 SGLang，可以临时以 vLLM 作为首个 smoke，但必须在 preflight 记录原因。
 
-## 15. Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
+## 15. Stage 11.5：真实 RepoHarness episode runtime bridge
+
+目标：在进入 Stage 12 端到端验收前，把前序 Stage 3 到 Stage 9 已经实现的 recorder、timing/resource、workspace、tool、verifier、reward、budget 和 resource lease 能力真正接入 `RepoHarnessRuntime.run_episode(...)` 的可执行路径。
+
+新增这一阶段的原因是：Stage 11 完成后，verl adapter 已经可以调用 RepoHarness，但当前 `run_episode(...)` 第一版仍可能只是单轮 `minimal_gateway` facade。这个 facade 可以用于 schema、gateway、conversion 和 DataProto 结构验收，但不能代表真实软件工程 episode。Stage 12 如果要声称“端到端 smoke”，必须先有一条真实路径能完成 workspace materialization、多轮 agent loop、工具调用、final verifier 和 reward 计算。
+
+Stage 11.5 需要固定两种 runtime-only execution mode 的语义。这里的 mode 建议命名为 `runtime_execution_mode` 或 `episode_runtime_mode`，它只属于 `RepoHarnessRuntimeOptions` 或等价 runtime-only 配置，不能和 `RepoHarnessEpisodeRequest.run_mode` 混用。`RepoHarnessEpisodeRequest.run_mode` 已经用于 `full_audit`、`training_fast` 和 `training_debug` 的记录策略。
+
+```text
+runtime_execution_mode=minimal_gateway:
+  用于 contract smoke、adapter smoke、DataProto shape smoke。
+  只允许证明 LLMGateway token / mask / logprob / visibility contract 正确。
+  不能用于声称完整 RepoHarness episode 端到端可用。
+
+runtime_execution_mode=real_episode:
+  用于 Stage 12 前置真实 runtime smoke。
+  必须进入 workspace、tool、agent loop、verifier、reward 和 artifact 路径。
+```
+
+需要接通的能力：
+
+1. workspace runtime bridge：把 Stage 6 的 workspace snapshot、dependency cache、copy-on-write episode workspace 和 lease cleanup 接入 `run_episode(...)`。`RepoHarnessEpisodeRequest` 仍不能承载本地绝对路径；本地 resolver、snapshot manager、cache root 和执行环境配置必须留在 runtime-only options。
+2. agent loop bridge：让真实 RepoHarness agent loop 可以通过 `LLMGatewayModelClientAdapter` 调用 `LLMGateway`，避免旧 provider client 绕过 gateway。多轮工具调用、tool observation、context revision、budget state 和 no-progress stop 必须保持 RepoHarness 原有语义。
+3. tool/workspace bridge：工具读取、写入、搜索、测试命令和 workspace command 必须作用在当前 episode 的独立 writable workspace 上，不能污染 snapshot 或其他 episode。
+4. recorder bridge：`full_audit`、`training_fast` 和 `training_debug` 的 recorder profile 必须用于真实 agent loop 产物，而不只用于最小 fake gateway 路径。
+5. verifier/reward bridge：把真实 final verifier callable 从 task、workspace 和 runtime-only config 中构造出来，并通过 Stage 7 verifier worker pool 或受控 direct path 执行。reward boundary 必须使用真实 `VerifierResult`，不能用 `minimal_final_verifier_status` 占位值伪装成真实 reward。
+6. timing/resource bridge：`TimingSummary` 和 `ResourceSummary` 必须能反映真实 workspace、tool、context prepare、model call、verifier、reward、artifact 和 cleanup 事实。无法获得的字段要有 diagnostics，不能用静态占位值冒充。
+7. cancellation/cleanup bridge：取消、timeout、verifier timeout、workspace cleanup failure 和 run directory lock conflict 仍然遵守 Stage 2、Stage 7、Stage 9 已固定的状态和资源释放语义。
+8. token provenance bridge：`real_episode` 的 `TrainingView` 不能从最终 transcript 重新分词生成。必须由每轮 `LLMGatewayResponse`、`GenerationRecord` 和工具 observation token projection 汇总得到，并保留每段 token 的来源、mask 和 log probability 策略。
+
+阶段出口：
+
+- `runtime_execution_mode=real_episode` 可以在本地用 fake/mock gateway 跑通至少一条极小仓库任务：真实 materialize workspace、真实执行工具、真实产生 patch 或 workspace state、真实运行 verifier、真实生成 reward、真实写入 artifact / timing / resource evidence。
+- `runtime_execution_mode=minimal_gateway` 继续存在，但文档、测试和报告必须明确它只覆盖 contract / adapter / DataProto 结构，不覆盖完整软件工程任务闭环。
+- `ResourceSummary` 能反查 snapshot key、workspace lease、cleanup status 和可公开的 workspace reference；不能泄漏本地绝对路径。
+- `TimingSummary` 至少能区分 model、tool、workspace、verifier、reward、artifact、cleanup 和 queue wait 的主要分桶；如果某个分桶为 0，必须是因为该 episode 确实没有执行对应动作。
+- `TrainingView.response_spans` 能解释多轮 agent loop 中 assistant generation 和 tool observation 的 token 来源；工具 observation token 的 mask / log probability 规则继续遵守 Stage 0H contract。
+
+边界：
+
+- Stage 11.5 不启动真实 Ray、SGLang、vLLM 或 PPO / GRPO trainer；这些仍属于 Stage 12。
+- Stage 11.5 不要求 warm container pool 或分布式资源租约；它先证明真实 episode runtime bridge 的正确性。
+- Stage 11.5 不把 `minimal_gateway` 删除。它仍用于快速结构测试，但不能作为端到端训练可用性的证据。
+
+## 16. Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
 
 目标：确认整条链路可以训练消费，而不是只在局部测试通过。
 
@@ -698,8 +744,12 @@ async def run(self, sampling_params: dict, **kwargs) -> AgentLoopOutput:
 verl dataloader sample
   -> RepoHarnessVerlAgentLoop.run(...)
   -> RepoHarnessRuntime.run_episode(...)
+  -> real_episode runtime bridge
+  -> workspace / tool / RepoHarness agent loop
   -> VerlLLMGateway
-  -> tool/workspace
+  -> LLMServerClient.generate(...)
+  -> TokenOutput
+  -> agent loop continues or stops
   -> final verifier
   -> reward_score
   -> TrainingView
@@ -707,6 +757,8 @@ verl dataloader sample
   -> verl postprocess
   -> DataProto
 ```
+
+这里的 `LLMServerClient.generate(...)` 表示 agent loop 中的一轮或多轮模型调用。真实 episode 可能经历多次模型生成、工具调用和工具 observation，再在 agent loop 结束后执行 final verifier 和 reward boundary；不要把它理解成一次生成后立刻完成整条软件工程任务。
 
 必须验收：
 
@@ -722,6 +774,9 @@ verl dataloader sample
 - `TimingSummary` 可以拆分 model、tool、workspace、verifier、artifact 时间。
 - `ResourceSummary` 可以反查 snapshot key、container lease、workspace id。
 - `training_fast` artifact 体积小于同等 `full_audit`，但审计引用完整。
+- workspace 隔离验收必须覆盖至少两个 episode 复用同一个 snapshot key 并发运行，确认 workspace、patch、artifact manifest、lease cleanup 和 run directory 不互相污染。
+
+Stage 12 的验收必须分层。Mac 本地通过只表示本地真实 runtime bridge 和 adapter contract 正确；GPU / Vast.ai 或同类环境通过，才表示真实训练前链路可用。
 
 性能 smoke 不要求第一版达到大规模训练吞吐，但必须证明后续可以定位瓶颈：
 
@@ -743,30 +798,44 @@ verifier worker pool
 artifact writer
 ```
 
-### Stage 12-A：Mac 本地结构验收
+### Stage 12-A：Mac 本地真实 runtime bridge smoke
 
-Mac 本地开发阶段使用 `verl-lite` 验收，不要求安装 vLLM、SGLang、flash-attn、liger-kernel 或 CUDA 相关依赖。它的目标是证明 RepoHarness 和 verl adapter 的接口、字段和训练视图转换正确。
+Mac 本地开发阶段使用 `verl-lite` 或 reference stubs 验收，不要求安装 vLLM、SGLang、flash-attn、liger-kernel 或 CUDA 相关依赖。它的目标不是验证真实 GPU 推理吞吐，而是证明 Stage 11.5 的 `real_episode` runtime bridge 能跑真实 RepoHarness episode。
 
 Mac 本地必须通过：
 
 ```text
 RepoHarnessRuntime.run_episode(...)
   -> fake/mock LLMGateway
-  -> TrainingView
-  -> AgentLoopOutput
-  -> response_ids / response_mask / response_logprobs 长度检查
+  -> real_episode runtime bridge
+  -> workspace snapshot / lease
+  -> RepoHarness agent loop
+  -> tool execution
+  -> final verifier
+  -> reward boundary
+  -> RepoHarnessEpisodeResult / TrainingView
   -> extra_fields / AuditRef / raw_prompt visibility 检查
 ```
+
+这条 fake/mock LLMGateway 路径只用于 debug / diagnostic runtime smoke。`mock` route 不能进入 formal online RL converter，也不能作为正式 PPO / GRPO 样本可训练性的证据。
 
 以及：
 
 ```text
 RepoHarnessVerlAgentLoop.run(...)
+  -> RepoHarnessRuntime.run_episode(...)
+  -> real_episode runtime bridge
+  -> RepoHarness agent loop
+  -> VerlLLMGateway
   -> fake LLMServerClient.generate(...)
   -> fake TokenOutput
-  -> RepoHarness tool/workspace/verifier/reward
+  -> route=verl 的 token facts / GenerationRecord
+  -> tool / workspace / verifier / reward
   -> AgentLoopOutput
+  -> response_ids / response_mask / response_logprobs 长度检查
 ```
+
+如果要验证 formal online RL converter，必须走 `RepoHarnessVerlAgentLoop + fake LLMServerClient` 这条路径，并由 adapter 产生 `route=verl` 的 token、mask 和 log probability 事实。
 
 Mac 本地验收边界：
 
@@ -775,26 +844,60 @@ Mac 本地验收边界：
 - 不要求跑真实 PPO / GRPO trainer。
 - 不要求验证真实 Ray GPU resource scheduling。
 - 允许使用 fake logprobs 做长度和 mask 对齐测试，但这只能算 debug smoke。
+- 允许使用 fake server、fake `TokenOutput` 或 reference stubs 降低本地依赖成本，但不能伪造 `AgentLoopOutput.as_dict()`、verl postprocess、TransferQueue 或 DataProto visibility 这类核心转换逻辑。
+- 必须真实执行 workspace、tool、verifier 和 reward 路径，不能再只用 `minimal_gateway` facade 冒充端到端。
 
-### Stage 12-B：Vast.ai GPU 训练前验收
+### Stage 12-B：GPU / Vast.ai 真实模型端到端 smoke
 
-Vast.ai 或其他 Linux GPU 实例负责真实训练前验收。它的目标是证明 route=verl 在真实推理服务和真实 trainer 入口下可用。
+Vast.ai 或其他 Linux GPU 实例负责真实训练前验收。它的目标是证明 route=verl 在真实推理服务、真实模型、真实极小仓库任务、verl postprocess 和 DataProto 组装路径下可用。真正进入 PPO / GRPO trainer loss 路径的验收放到 Stage 12-C，避免把真实模型 episode smoke 和 trainer batch smoke 混在一起。
+
+第一轮真实模型建议从较小的代码模型开始，例如 `Qwen2.5-Coder-7B-Instruct` 或同等级别的 instruct code model。这个选择用于调试链路，不代表最终训练模型固定。首批任务建议使用极小仓库任务，而不是直接上 SWE-Bench 或大型真实仓库。现有或可同步的候选目录是：
+
+```text
+/Users/roger/Desktop/claude-code/tests/fixtures/repos
+```
+
+首批任务池可以优先选择：
+
+```text
+buggy_calculator
+import_config_bug
+missing_helper_file
+```
+
+随后再加入边界任务：
+
+```text
+baseline_invalid
+flaky_counter
+security_probe
+```
+
+这些任务用于分别覆盖正常修复、invalid task、flaky verifier 和 evaluator-only / visibility 边界。最终具体任务格式和 fixture freeze 规则由 Stage 12 执行计划单独定义。
+
+如果这些任务来自另一个 worktree，最终验收前必须同步或冻结到当前 RepoHarness 可审计的位置，不能让 Stage 12 依赖另一个工作区中的可变路径。
 
 Vast.ai 训练前必须通过：
 
 ```text
-verl server manager
-  -> vLLM / SGLang AsyncLLMServer
-  -> real LLMServerClient.generate(...)
-  -> real TokenOutput.token_ids
-  -> real TokenOutput.log_probs
+verl dataloader sample
   -> RepoHarnessVerlAgentLoop.run(...)
   -> RepoHarnessRuntime.run_episode(...)
+  -> real_episode runtime bridge
+  -> RepoHarness agent loop
+  -> VerlLLMGateway
+  -> verl server manager
+  -> vLLM / SGLang AsyncLLMServer
+  -> real LLMServerClient.generate(...)
+  -> real TokenOutput.token_ids / log_probs
+  -> agent loop continues or stops
+  -> final verifier
+  -> reward boundary
   -> TrainingView
   -> AgentLoopOutput
   -> verl postprocess
   -> DataProto
-  -> PPO / GRPO batch smoke
+  -> DataProto shape / visibility / logprob provenance smoke
 ```
 
 Vast.ai 真实验收必须检查：
@@ -804,7 +907,6 @@ Vast.ai 真实验收必须检查：
 - `response_logprobs` 非空，并与 `response_ids`、`response_mask` 长度对齐。
 - `rollout_log_probs` 出现在 DataProto tensor batch 中，形状等于 `[batch_size, rollout.response_length]`。
 - `rm_scores` 存在，或者样本被明确过滤；invalid 样本不能悄悄参与 policy loss。
-- PPO / GRPO smoke 必须记录 `actor_rollout_ref.rollout.calculate_log_probs=True` 或当前 verl 版本等价配置。
 - sticky session / prefix cache 的 `request_id` 语义正确。
 - Ray actor、server manager、LLM server、RepoHarness workspace worker 可以在同一台或多台 GPU 实例上并发运行。
 - workspace snapshot backend 在 Linux 文件系统上通过 preflight；支持 `cp --reflink=auto`、overlayfs、Docker volume snapshot 或安全回退到目录复制。
@@ -813,9 +915,26 @@ Vast.ai 真实验收必须检查：
 - `ResourceSummary` 能看到 inference route、container lease、snapshot key、cache hit 和 verifier worker pool。
 - SGLang 真实 smoke 和 vLLM contract smoke 同阶段完成，允许一个作为主验收、另一个作为 parity smoke；如果 Vast.ai 镜像条件只支持其中一个，必须在 preflight 中记录原因和补齐计划。
 
-因此，Mac 本地验收通过只表示“接口正确”；Vast.ai 验收通过才表示“真实训练前可用”。
+Stage 12-B 的结果判定必须把“基础设施链路是否跑通”和“模型是否成功修复任务”分开。极小任务中应至少包含一个极易成功的正例任务，但模型单次没有修复任务时应记为模型失败样本或 rejected episode，不能误判为基础设施失败。
 
-## 16. Stage 13：fully async 演进预留
+如果 Stage 12-B 使用从其他 worktree 同步来的极小仓库任务，正式验收必须生成 fixture manifest 和 sha256 report，确保真实 smoke 使用的任务输入可复查、可复现。
+
+### Stage 12-C：小 batch trainer smoke
+
+Stage 12-B 证明单条或少量真实模型 episode 可用后，Stage 12-C 再验证小 batch 可以进入 PPO / GRPO trainer 的关键路径。这个 smoke 不要求模型收敛，不要求产出有统计意义的训练结果，只要求 batch 语义正确、invalid 样本处理明确、loss 输入形状和 log probability 来源正确。
+
+需要确认：
+
+- `DataProto.batch` 中 `prompts`、`responses`、`response_mask`、`rollout_log_probs` 和 `rm_scores` 的形状符合当前 verl trainer 要求。
+- `DataProto.non_tensor_batch` 和 `meta_info` 通过 visibility 检查。
+- PPO / GRPO smoke 必须记录 `actor_rollout_ref.rollout.calculate_log_probs=True` 或当前 verl 版本等价配置。
+- 进入 trainer 前必须显式运行 formal batch validator：所有 valid 样本必须 `route=verl`、`response_logprobs` 非空、`generation_records` 全部来自 `verl` route；invalid 样本过滤、重采样或置零 loss weight 的策略必须可审计。
+- invalid、timeout、infrastructure error、no-progress 和缺失 log probability 的样本不会悄悄进入有效 policy loss。
+- 若采用丢弃样本、重采样或置零 loss weight，必须在 metrics 和 audit evidence 中可见。
+
+因此，Mac 本地验收通过只表示“本地真实 runtime bridge 和 adapter contract 正确”；GPU / Vast.ai 真实模型与小 batch trainer smoke 通过后，才表示“真实训练前可用”。
+
+## 17. Stage 13：fully async 演进预留
 
 目标：第一版先跑通同步 reward 的 agent loop，后续再演进 fully async。
 
@@ -841,7 +960,7 @@ fully async 需要新增或加强：
 - `AuditRef` 能指向恢复所需状态 artifact。
 - async reward backfill 第一版不做，但未来实现时不能把无 reward 样本伪装成普通成功样本。
 
-## 17. 已采纳的第一版默认决策
+## 18. 已采纳的第一版默认决策
 
 这些决策已经按当前讨论固定为第一版默认选择。后续 agent 应按下面的选择实施；如果需要改变，必须先更新本文档和对应 shared contracts。
 
@@ -855,25 +974,33 @@ fully async 需要新增或加强：
 8. macOS 本地 snapshot 第一版使用目录复制作为正确性基线，可选 APFS clone；Linux / Vast.ai 通过 preflight 选择 `cp --reflink=auto`、overlayfs、Docker volume snapshot 或安全回退。
 9. no-progress 默认标记 `invalid_for_training=True`；只有显式 reward policy 才能把部分 no-progress 当作 negative sample。
 10. adapter 包第一版放在独立 `src/repo_harness_verl/`，通过可选 extra 安装。
-11. Vast.ai 真实训练前验收第一版以 SGLang smoke 为主，同时保留 vLLM contract parity smoke；若镜像条件相反，可以先跑 vLLM，但必须记录 preflight 原因。
-12. 正式 PPO / GRPO smoke 不允许 `response_logprobs=None`；fake logprobs 只允许用于 Mac 本地 debug smoke。
-13. `AuditRef` 内部保持结构化对象；进入 `AgentLoopOutput.extra_fields` 时采用 namespaced flat scalar 字段，例如 `repo_harness_episode_id`、`repo_harness_run_id`、`repo_harness_audit_manifest_ref`、`repo_harness_timing_summary_ref` 和 `repo_harness_resource_summary_ref`。不要把绝对 `run_dir` 直接放入 verl batch。
-14. 正式 online PPO / GRPO 路径只允许 route=verl；provider route 默认 `invalid_for_online_rl=true`，主要用于 SFT export、preference data、teacher data generation 和 offline diagnostic replay。
-15. Vast.ai preflight 必须记录 verl commit、Python、Ray、vLLM、SGLang、transformers、torch、tokenizer / chat template 来源和镜像信息。
+11. Stage 11.5 是 Stage 12 的前置阶段。只有 `real_episode` runtime bridge 跑通真实 workspace、tool、verifier、reward 和 artifact 路径后，Stage 12 才能声称端到端 smoke。
+12. `runtime_execution_mode=minimal_gateway` 继续用于 contract、adapter 和 DataProto 结构测试，但不能作为完整软件工程任务闭环的验收依据。
+13. GPU / Vast.ai 真实训练前验收第一版以 SGLang smoke 为主，同时保留 vLLM contract parity smoke；若镜像条件相反，可以先跑 vLLM，但必须记录 preflight 原因。
+14. Stage 12-B 第一轮真实模型 smoke 建议从 `Qwen2.5-Coder-7B-Instruct` 或同等级别小型 code instruct model 开始，并使用极小仓库任务调试链路。
+15. 正式 PPO / GRPO smoke 不允许 `response_logprobs=None`；fake logprobs 只允许用于 Mac 本地 debug smoke。
+16. `AuditRef` 内部保持结构化对象；进入 `AgentLoopOutput.extra_fields` 时采用 namespaced flat scalar 字段，例如 `repo_harness_episode_id`、`repo_harness_run_id`、`repo_harness_audit_manifest_ref`、`repo_harness_timing_summary_ref` 和 `repo_harness_resource_summary_ref`。不要把绝对 `run_dir` 直接放入 verl batch。
+17. 正式 online PPO / GRPO 路径只允许 route=verl；provider route 默认 `invalid_for_online_rl=true`，主要用于 SFT export、preference data、teacher data generation 和 offline diagnostic replay。
+18. Vast.ai preflight 必须记录 verl commit、Python、Ray、vLLM、SGLang、transformers、torch、tokenizer / chat template 来源和镜像信息。
 
-## 18. 最小成功定义
+## 19. 最小成功定义
 
 第一版成功不是“训练出模型”，而是完成下面闭环：
 
 ```text
 一条软件工程任务
   -> RepoHarnessRuntime.run_episode(...)
+  -> real_episode runtime bridge
+  -> isolated workspace / tools / multi-turn agent loop
+  -> real final verifier
+  -> reward boundary
   -> training_fast artifact
   -> reward_score
   -> TrainingView
   -> AgentLoopOutput
   -> verl postprocess
   -> DataProto
+  -> visibility gate / invalid sample filtering
   -> 可进入 PPO/GRPO trainer 的 batch
   -> 可以通过 opaque audit refs 和结构化 AuditRef 回查完整轨迹证据
 ```

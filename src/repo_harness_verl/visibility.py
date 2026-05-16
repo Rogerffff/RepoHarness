@@ -237,6 +237,27 @@ def validate_transfer_queue_field_visibility(field: Mapping[str, Any]) -> None:
             _validate_visible_value(value, field_name=key)
 
 
+def validate_token_output_extra_fields(extra_fields: Mapping[str, Any]) -> None:
+    """校验 TokenOutput.extra_fields，不能使用 TransferQueue tensor 字段绕过递归检查。"""
+
+    def visit(value: Any, *, field_name: str) -> None:
+        if isinstance(value, Mapping):
+            for key, item in value.items():
+                key_text = str(key)
+                if key_text in TRANSFER_QUEUE_RESERVED_KWARGS:
+                    raise VerlVisibilityError(f"token_output_extra_fields_reserved_key: {key_text}")
+                _validate_transfer_queue_field_name(key_text)
+                visit(item, field_name=f"{field_name}.{key_text}")
+            return
+        if isinstance(value, (list, tuple, set)):
+            for index, item in enumerate(value):
+                visit(item, field_name=f"{field_name}[{index}]")
+            return
+        _validate_visible_value(value, field_name=field_name)
+
+    visit(dict(extra_fields), field_name="token_output.extra_fields")
+
+
 def validate_dataproto_shapes(
     data_proto: Any,
     *,
