@@ -141,6 +141,9 @@ class VerifierWorkerPool:
             if timeout_seconds is None:
                 return await asyncio.shield(future)
             return await asyncio.wait_for(asyncio.shield(future), timeout=timeout_seconds)
+        except asyncio.CancelledError:
+            await _wait_for_cancelled_executor_future(future)
+            raise
         except TimeoutError:
             return self._execution_timeout_result(job, submitted_at)
 
@@ -328,3 +331,18 @@ class VerifierWorkerPool:
     def _release_running_job_slots(self) -> None:
         self._worker_slots.release()
         self._admission_slots.release()
+
+
+async def _wait_for_cancelled_executor_future(future: asyncio.Future[VerifierJobResult]) -> None:
+    while not future.done():
+        try:
+            await asyncio.shield(future)
+        except asyncio.CancelledError:
+            continue
+        except Exception:
+            break
+    if future.done():
+        try:
+            future.result()
+        except Exception:
+            pass

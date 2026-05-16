@@ -177,6 +177,56 @@ def test_stage6_snapshot_rejects_post_materialization_source_hash_mismatch(tmp_p
         manager.create_or_get_snapshot(key, source_path=source)
 
 
+def test_stage6_snapshot_rejects_source_tree_symlink_escape(tmp_path: Path) -> None:
+    source = _write_source(tmp_path)
+    host_secret = tmp_path / "host-secret.txt"
+    host_secret.write_text("secret outside source tree", encoding="utf-8")
+    (source / "pkg" / "external-secret-link").symlink_to(host_secret)
+    manager = WorkspaceSnapshotManager(tmp_path / "cache")
+
+    with pytest.raises(WorkspaceError, match="workspace snapshot source symlink"):
+        manager.create_or_get_snapshot(_snapshot_key(source), source_path=source)
+
+
+def test_stage6_snapshot_cache_hit_rejects_published_symlink_escape(tmp_path: Path) -> None:
+    source = _write_source(tmp_path)
+    manager = WorkspaceSnapshotManager(tmp_path / "cache")
+    key = _snapshot_key(source)
+    snapshot = manager.create_or_get_snapshot(key, source_path=source)
+    host_secret = tmp_path / "host-secret.txt"
+    host_secret.write_text("secret outside source tree", encoding="utf-8")
+    snapshot_workspace = (
+        tmp_path
+        / "cache"
+        / "snapshots"
+        / snapshot.facts.snapshot_key
+        / "workspace"
+    )
+    (snapshot_workspace / "pkg" / "external-secret-link").symlink_to(host_secret)
+
+    with pytest.raises(WorkspaceError, match="published workspace snapshot symlink"):
+        manager.create_or_get_snapshot(key, source_path=source)
+
+
+def test_stage6_workspace_lease_rejects_published_snapshot_symlink_escape(tmp_path: Path) -> None:
+    source = _write_source(tmp_path)
+    manager = WorkspaceSnapshotManager(tmp_path / "cache")
+    snapshot = manager.create_or_get_snapshot(_snapshot_key(source), source_path=source)
+    host_secret = tmp_path / "host-secret.txt"
+    host_secret.write_text("secret outside source tree", encoding="utf-8")
+    snapshot_workspace = (
+        tmp_path
+        / "cache"
+        / "snapshots"
+        / snapshot.facts.snapshot_key
+        / "workspace"
+    )
+    (snapshot_workspace / "pkg" / "external-secret-link").symlink_to(host_secret)
+
+    with pytest.raises(WorkspaceError, match="published workspace snapshot symlink"):
+        manager.acquire_workspace(snapshot, lease_id="symlink-escape")
+
+
 def test_stage6_concurrent_snapshot_create_publishes_once(tmp_path: Path) -> None:
     source = _write_source(tmp_path)
     manager = WorkspaceSnapshotManager(tmp_path / "cache")

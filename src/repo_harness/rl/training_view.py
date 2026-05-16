@@ -183,6 +183,7 @@ class FormalOnlineRLSample(StrictBaseModel):
     sample_id: str | None = None
     route: GatewayRoute
     invalid_for_training: bool = False
+    invalid_for_online_rl: bool = False
     invalid_reason: str | None = None
     prompt_ids: list[int]
     response_ids: list[int]
@@ -215,7 +216,11 @@ class MixedLogprobBatchRejectionFixture(StrictBaseModel):
     samples: list[FormalOnlineRLSample]
 
 
-def validate_training_view_for_online_rl(view: TrainingView | dict[str, Any]) -> TrainingView:
+def validate_training_view_for_online_rl(
+    view: TrainingView | dict[str, Any],
+    *,
+    require_explicit_eligibility: bool = False,
+) -> TrainingView:
     parsed = view if isinstance(view, TrainingView) else TrainingView.model_validate(view)
     if not parsed.response_ids:
         raise ValueError("empty_response_with_reward_blocked")
@@ -232,6 +237,8 @@ def validate_training_view_for_online_rl(view: TrainingView | dict[str, Any]) ->
         raise ValueError("missing_reward_score")
     if parsed.online_rl_eligible is False:
         raise ValueError("training_view_marked_ineligible_for_online_rl")
+    if require_explicit_eligibility and parsed.online_rl_eligible is not True:
+        raise ValueError("training_view_missing_online_rl_eligibility")
     if parsed.extra_fields.get("repo_harness_invalid_for_training") is True:
         raise ValueError(str(parsed.extra_fields.get("repo_harness_invalid_reason") or "invalid_for_training"))
     if parsed.extra_fields.get("repo_harness_invalid_for_online_rl") is True:
@@ -249,6 +256,8 @@ def validate_formal_online_rl_batch(
         if isinstance(sample, FormalOnlineRLSample):
             parsed.append(sample)
         elif isinstance(sample, TrainingView):
+            if formal_online_rl_batch:
+                validate_training_view_for_online_rl(sample, require_explicit_eligibility=True)
             route = sample.extra_fields.get("repo_harness_llm_gateway_route")
             if formal_online_rl_batch and route is None:
                 raise ValueError("missing_llm_gateway_route_for_online_rl")
@@ -257,6 +266,7 @@ def validate_formal_online_rl_batch(
                     sample_id=str(sample.extra_fields.get("repo_harness_episode_id") or index),
                     route=str(route or "verl"),
                     invalid_for_training=sample.extra_fields.get("repo_harness_invalid_for_training") is True,
+                    invalid_for_online_rl=sample.extra_fields.get("repo_harness_invalid_for_online_rl") is True,
                     invalid_reason=sample.extra_fields.get("repo_harness_invalid_reason"),
                     prompt_ids=sample.prompt_ids,
                     response_ids=sample.response_ids,
@@ -266,6 +276,26 @@ def validate_formal_online_rl_batch(
                 )
             )
         else:
+            if isinstance(sample, dict) and ("online_rl_eligible" in sample or "extra_fields" in sample):
+                view = TrainingView.model_validate(sample)
+                if formal_online_rl_batch:
+                    validate_training_view_for_online_rl(view, require_explicit_eligibility=True)
+                route = view.extra_fields.get("repo_harness_llm_gateway_route")
+                parsed.append(
+                    FormalOnlineRLSample(
+                        sample_id=str(view.extra_fields.get("repo_harness_episode_id") or index),
+                        route=str(route or "verl"),
+                        invalid_for_training=view.extra_fields.get("repo_harness_invalid_for_training") is True,
+                        invalid_for_online_rl=view.extra_fields.get("repo_harness_invalid_for_online_rl") is True,
+                        invalid_reason=view.extra_fields.get("repo_harness_invalid_reason"),
+                        prompt_ids=view.prompt_ids,
+                        response_ids=view.response_ids,
+                        response_mask=view.response_mask,
+                        response_logprobs=view.response_logprobs,
+                        reward_score=view.reward_score,
+                    )
+                )
+                continue
             parsed.append(FormalOnlineRLSample.model_validate(sample))
 
     if not formal_online_rl_batch:
@@ -282,6 +312,8 @@ def validate_formal_online_rl_batch(
         raise ValueError("non_verl_route_invalid_for_online_rl")
     if any(sample.invalid_for_training for sample in parsed):
         raise ValueError("invalid_for_training_sample_in_formal_batch")
+    if any(sample.invalid_for_online_rl for sample in parsed):
+        raise ValueError("invalid_for_online_rl_sample_in_formal_batch")
     if any(not sample.response_ids for sample in parsed):
         raise ValueError("empty_response_with_reward_blocked")
     if any(sample.reward_score is None for sample in parsed):

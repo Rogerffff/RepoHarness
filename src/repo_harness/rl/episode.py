@@ -21,6 +21,7 @@ from .visibility import (
     validate_inference_backend,
     validate_no_forbidden_model_visible_content,
     validate_opaque_ref,
+    validate_safe_identifier,
 )
 
 EpisodeStatus = Literal[
@@ -130,6 +131,9 @@ class RepoHarnessEpisodeRequest(StrictBaseModel):
 
     @model_validator(mode="after")
     def validate_episode_request(self) -> "RepoHarnessEpisodeRequest":
+        validate_safe_identifier(self.episode_id, field_name="episode_id")
+        validate_safe_identifier(self.run_id, field_name="run_id")
+        validate_safe_identifier(self.task_id, field_name="task_id")
         validate_inference_backend(self.llm_gateway_route, self.inference_backend)
         validate_no_forbidden_model_visible_content(self.raw_prompt, field_name="raw_prompt")
         for policy in self.provider_route_policy_examples:

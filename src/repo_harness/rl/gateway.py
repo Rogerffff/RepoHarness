@@ -16,6 +16,7 @@ from .visibility import (
     validate_gateway_extra_fields,
     validate_inference_backend,
     validate_no_forbidden_model_visible_content,
+    validate_safe_identifier,
     validate_opaque_ref,
 )
 
@@ -46,8 +47,13 @@ class LLMGatewayRequest(StrictBaseModel):
 
     @model_validator(mode="after")
     def validate_gateway_request(self) -> "LLMGatewayRequest":
+        validate_safe_identifier(self.run_id, field_name="run_id")
+        validate_safe_identifier(self.task_id, field_name="task_id")
+        validate_safe_identifier(self.episode_id, field_name="episode_id")
+        validate_safe_identifier(self.model_call_id, field_name="model_call_id")
         validate_inference_backend(self.route, self.inference_backend)
         validate_no_forbidden_model_visible_content(self.messages, field_name="messages")
+        validate_no_forbidden_model_visible_content(self.tools, field_name="tools")
         return self
 
 

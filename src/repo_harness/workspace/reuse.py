@@ -287,7 +287,17 @@ class WorkspaceSnapshotManager:
             tmp_snapshot_dir = self.tmp_dir / f"{snapshot_key}.{uuid.uuid4().hex}"
             try:
                 workspace_tmp = tmp_snapshot_dir / SNAPSHOT_WORKSPACE_DIRNAME
+                _validate_tree_symlinks_within_root(
+                    source_root,
+                    source_root,
+                    context="workspace snapshot source",
+                )
                 shutil.copytree(source_root, workspace_tmp, symlinks=True)
+                _validate_tree_symlinks_within_root(
+                    workspace_tmp,
+                    workspace_tmp,
+                    context="workspace snapshot",
+                )
                 source_tree_hash = compute_source_tree_hash(workspace_tmp)
                 if key.source_tree_hash is not None and key.source_tree_hash != source_tree_hash:
                     raise WorkspaceError(
@@ -332,7 +342,17 @@ class WorkspaceSnapshotManager:
         snapshot_workspace = self._snapshot_dir(facts.snapshot_key) / SNAPSHOT_WORKSPACE_DIRNAME
         if not snapshot_workspace.exists():
             raise WorkspaceError(f"snapshot workspace is missing for key: {facts.snapshot_key}")
+        _validate_tree_symlinks_within_root(
+            snapshot_workspace,
+            snapshot_workspace,
+            context="published workspace snapshot",
+        )
         shutil.copytree(snapshot_workspace, workspace_path, symlinks=True)
+        _validate_tree_symlinks_within_root(
+            workspace_path,
+            workspace_path,
+            context="workspace lease",
+        )
         materialization_seconds = time.perf_counter() - start
         lease = WorkspaceLease(
             lease_id=lease_id,
@@ -529,6 +549,11 @@ class WorkspaceSnapshotManager:
             raise WorkspaceError("published workspace snapshot policy version does not match requested key")
         if key.source_tree_hash is not None and facts.source_tree_hash != key.source_tree_hash:
             raise WorkspaceError("published workspace snapshot source_tree_hash does not match requested key")
+        _validate_tree_symlinks_within_root(
+            workspace_path,
+            workspace_path,
+            context="published workspace snapshot",
+        )
         return facts
 
     def _assert_lease_handle_belongs_to_manager(self, handle: WorkspaceLeaseHandle) -> None:
@@ -720,6 +745,10 @@ def _validate_path_within_root(path: Path, root: Path, *, field_name: str) -> No
 
 
 def _validate_symlinks_within_root(path: Path, root: Path) -> None:
+    _validate_tree_symlinks_within_root(path, root, context="declared dependency")
+
+
+def _validate_tree_symlinks_within_root(path: Path, root: Path, *, context: str) -> None:
     resolved_root = root.resolve()
     candidates = [path]
     if path.is_dir() and not path.is_symlink():
@@ -729,14 +758,14 @@ def _validate_symlinks_within_root(path: Path, root: Path) -> None:
             continue
         if candidate.readlink().is_absolute():
             raise WorkspaceError(
-                f"declared dependency symlink uses an absolute target: {candidate}"
+                f"{context} symlink uses an absolute target: {candidate}"
             )
         target = candidate.resolve(strict=False)
         try:
             target.relative_to(resolved_root)
         except ValueError as exc:
             raise WorkspaceError(
-                f"declared dependency symlink escapes allowed root: {candidate}"
+                f"{context} symlink escapes allowed root: {candidate}"
             ) from exc
 
 

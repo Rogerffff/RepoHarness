@@ -36,6 +36,10 @@ def _load_json(name: str) -> dict[str, Any]:
 def test_stage1_provider_routes_default_invalid_for_online_rl() -> None:
     assert default_invalid_for_online_rl("openai") is True
     assert default_invalid_for_online_rl("deepseek") is True
+    assert default_invalid_for_online_rl("mock") is True
+    assert default_invalid_for_online_rl("replay") is True
+    assert default_invalid_for_online_rl("local_vllm") is True
+    assert default_invalid_for_online_rl("local_sglang") is True
     assert default_invalid_for_online_rl("verl") is False
 
     ProviderRoutePolicy(route="openai", invalid_for_online_rl=True, allowed_uses=OFFLINE_ALLOWED_USES)
@@ -129,6 +133,36 @@ def test_stage1_gateway_response_mask_must_be_all_model_generated_tokens() -> No
             "canonical_llm_gateway_request.json",
             "messages",
             [{"role": "user", "gold_patch": "diff contents"}],
+        ),
+        (
+            "canonical_llm_gateway_request.json",
+            "tools",
+            [{"type": "function", "function": {"name": "hidden_verifier", "description": "secret"}}],
+        ),
+        (
+            "canonical_llm_gateway_request.json",
+            "tools",
+            [{"type": "function", "function": {"name": "hiddenVerifier", "description": "secret"}}],
+        ),
+        (
+            "canonical_llm_gateway_request.json",
+            "tools",
+            [{"type": "function", "function": {"name": "goldPatch", "description": "secret"}}],
+        ),
+        (
+            "canonical_llm_gateway_request.json",
+            "tools",
+            [{"type": "function", "function": {"name": "providerSecret", "description": "secret"}}],
+        ),
+        (
+            "canonical_llm_gateway_request.json",
+            "tools",
+            [{"type": "function", "function": {"name": "acceptedLabel", "description": "secret"}}],
+        ),
+        (
+            "canonical_llm_gateway_request.json",
+            "tools",
+            [{"type": "function", "function": {"name": "completeRewardMetadata", "description": "secret"}}],
         ),
     ],
 )

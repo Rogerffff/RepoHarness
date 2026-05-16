@@ -173,16 +173,17 @@ def test_stage7_worker_pool_cancelled_running_job_keeps_slot_until_thread_finish
             running = asyncio.create_task(pool.run(_job("running", lambda: (time.sleep(0.08), _verifier_result())[1])))
             await asyncio.sleep(0.02)
             running.cancel()
+            await asyncio.sleep(0.01)
+            task_done_while_thread_runs = running.done()
+            value_while_thread_runs = pool._worker_slots._value
             with pytest.raises(asyncio.CancelledError):
                 await running
-            value_while_thread_runs = pool._worker_slots._value
-            await asyncio.sleep(0.1)
             value_after_thread_finishes = pool._worker_slots._value
-            return value_while_thread_runs, value_after_thread_finishes
+            return task_done_while_thread_runs, value_while_thread_runs, value_after_thread_finishes
         finally:
             pool.close()
 
-    assert asyncio.run(scenario()) == (0, 1)
+    assert asyncio.run(scenario()) == (False, 0, 1)
 
 
 def test_stage7_worker_pool_close_rejects_later_submission() -> None:

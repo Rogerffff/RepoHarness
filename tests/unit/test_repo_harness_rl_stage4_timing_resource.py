@@ -205,7 +205,7 @@ def test_stage4_terminal_statuses_keep_timing_and_resource_summaries() -> None:
         assert result.timing_summary.timing_explained_ratio is not None
         assert result.timing_summary.timing_explained_ratio >= 0.95
         assert result.resource_summary is not None
-        assert result.resource_summary.cleanup_status in {"not_required", "ok", "failed"}
+        assert result.resource_summary.cleanup_status in {"skipped", "completed", "failed"}
 
 
 def test_stage4_resource_summary_rejects_absolute_runtime_paths() -> None:

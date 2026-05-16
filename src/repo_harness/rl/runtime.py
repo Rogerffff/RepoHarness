@@ -7,7 +7,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from repo_harness.model_client.schemas import ModelCallEvent, ModelMessage, ModelRequestContext, ModelResponse
 from repo_harness.schema_base import stable_hash
@@ -25,6 +25,13 @@ from .episode import (
 from .budget import CONTEXT_BUDGET_STOP_REASONS, NO_PROGRESS_STOP_REASONS
 from .gateway import LLMGateway, LLMGatewayRequest, LLMGatewayResponse
 from .reward_boundary import Stage7RewardBoundaryResult, build_stage7_reward_boundary
+from .resources import (
+    ResourceConcurrencyPolicy,
+    ResourceLeaseError,
+    ResourceLeaseHandle,
+    ResourceLeaseManager,
+    combine_cleanup_status,
+)
 from .timing import ResourceSummary, TimingSummary, build_timing_summary
 from .training_view import AuditRef, ResponseSpan, RolloutLimits, TrainingView
 from .visibility import PROVIDER_ROUTES, VisibilityContractError, validate_no_absolute_local_path
@@ -32,6 +39,7 @@ from .visibility import PROVIDER_ROUTES, VisibilityContractError, validate_no_ab
 CleanupCallback = Callable[[], None | Awaitable[None]]
 TaskPathResolver = Callable[[RepoHarnessEpisodeRequest], str | Path | None]
 FinalVerifierCallable = Callable[[], VerifierResult]
+T = TypeVar("T")
 EpisodeStatusName = Literal[
     "succeeded",
     "failed",
@@ -73,6 +81,8 @@ class RepoHarnessRuntimeOptions:
     minimal_final_verifier_status: Literal["accepted", "rejected"] = "accepted"
     final_verifier_callable: FinalVerifierCallable | None = None
     verifier_worker_pool: VerifierWorkerPool | None = None
+    resource_concurrency_policy: ResourceConcurrencyPolicy | None = None
+    resource_lease_manager: ResourceLeaseManager | None = None
     execution_mode: str = "minimal_gateway"
 
     def __post_init__(self) -> None:
@@ -87,6 +97,12 @@ class RuntimeResolvedInputs:
     task_path: str | None
     config_path: str | None
     output_dir: str | None
+
+
+@dataclass
+class GatewayCallAccounting:
+    request_submitted: bool = False
+    model_call_seconds: float = 0.0
 
 
 def map_episode_status(
@@ -242,6 +258,9 @@ class RepoHarnessRuntime:
 
     def __init__(self, options: RepoHarnessRuntimeOptions | None = None) -> None:
         self.options = options or RepoHarnessRuntimeOptions()
+        self.resource_lease_manager = self.options.resource_lease_manager
+        if self.resource_lease_manager is None and self.options.resource_concurrency_policy is not None:
+            self.resource_lease_manager = ResourceLeaseManager(self.options.resource_concurrency_policy)
 
     async def run_episode(
         self,
@@ -255,23 +274,31 @@ class RepoHarnessRuntime:
         status: EpisodeStatusName = "infrastructure_error"
         status_reason: str | None = None
         diagnostics: list[AuditDiagnostic] = []
-        model_call_seconds = 0.0
+        gateway_accounting = GatewayCallAccounting()
         reward_boundary: Stage7RewardBoundaryResult | None = None
+        resource_handle: ResourceLeaseHandle | None = None
 
         try:
             self.resolve_runner_inputs(parsed_request)
+            resource_handle = await self._acquire_episode_resources(parsed_request)
             timeout_seconds = self._episode_timeout_seconds(parsed_request)
-            model_call_started = perf_counter()
-            try:
-                if timeout_seconds is None:
-                    response = await self._generate_minimal_turn(parsed_request, llm_gateway)
-                else:
-                    response = await asyncio.wait_for(
-                        self._generate_minimal_turn(parsed_request, llm_gateway),
-                        timeout=timeout_seconds,
-                    )
-            finally:
-                model_call_seconds += perf_counter() - model_call_started
+            if timeout_seconds is None:
+                response = await self._generate_minimal_turn(
+                    parsed_request,
+                    llm_gateway,
+                    resource_handle=resource_handle,
+                    gateway_accounting=gateway_accounting,
+                )
+            else:
+                response = await asyncio.wait_for(
+                    self._generate_minimal_turn(
+                        parsed_request,
+                        llm_gateway,
+                        resource_handle=resource_handle,
+                        gateway_accounting=gateway_accounting,
+                    ),
+                    timeout=timeout_seconds,
+                )
             reward_boundary = await self._stage7_reward_boundary(parsed_request)
             if reward_boundary is None:
                 status = self._status_from_minimal_verifier()
@@ -290,16 +317,37 @@ class RepoHarnessRuntime:
             status = "invalid_task"
             status_reason = "invalid_task"
             diagnostics.append(AuditDiagnostic(code="invalid_task", message=str(exc)))
+        except ResourceLeaseError as exc:
+            status = exc.episode_status
+            status_reason = exc.status_reason
+            if (
+                resource_handle is not None
+                and exc.status_reason == "gateway_route_queue_timeout"
+                and exc.queue_wait_seconds is not None
+            ):
+                resource_handle.lease.queue_wait_seconds_by_resource["gateway_route"] = (
+                    resource_handle.lease.queue_wait_seconds_by_resource.get("gateway_route", 0.0)
+                    + exc.queue_wait_seconds
+                )
+            diagnostics.append(AuditDiagnostic(code=exc.status_reason, message=str(exc)))
         except Exception as exc:  # pragma: no cover - exercised by tests through concrete failures.
             status = "infrastructure_error"
             status_reason = "infrastructure_error"
             diagnostics.append(AuditDiagnostic(code=exc.__class__.__name__, message=str(exc)))
 
         cleanup_started = perf_counter()
-        cleanup_status, cleanup_diagnostic = await self._cleanup()
+        cleanup_status, cleanup_diagnostic = await self._cleanup_protected()
+        if cleanup_diagnostic is not None and cleanup_diagnostic.code == "cleanup_cancelled":
+            status = "cancelled"
+            status_reason = "runtime_cancelled"
+        resource_cleanup_status, resource_cleanup_diagnostics = await self._release_episode_resources_protected(
+            resource_handle
+        )
+        cleanup_status = combine_cleanup_status(cleanup_status, resource_cleanup_status)
         cleanup_seconds = perf_counter() - cleanup_started
         if cleanup_diagnostic is not None:
             diagnostics.append(cleanup_diagnostic)
+        diagnostics.extend(resource_cleanup_diagnostics)
 
         elapsed = perf_counter() - started
         if response is not None:
@@ -310,10 +358,11 @@ class RepoHarnessRuntime:
                 status_reason=status_reason,
                 diagnostics=diagnostics,
                 elapsed_seconds=elapsed,
-                model_call_seconds=model_call_seconds,
+                model_call_seconds=gateway_accounting.model_call_seconds,
                 cleanup_seconds=cleanup_seconds,
                 cleanup_status=cleanup_status,
                 reward_boundary=reward_boundary,
+                resource_handle=resource_handle,
             )
         return self._terminal_result(
             parsed_request,
@@ -321,9 +370,11 @@ class RepoHarnessRuntime:
             status_reason=status_reason or status,
             diagnostics=diagnostics,
             elapsed_seconds=elapsed,
-            model_call_seconds=model_call_seconds,
+            model_call_seconds=gateway_accounting.model_call_seconds,
+            gateway_request_submitted=gateway_accounting.request_submitted,
             cleanup_seconds=cleanup_seconds,
             cleanup_status=cleanup_status,
+            resource_handle=resource_handle,
         )
 
     def resolve_runner_inputs(self, request: RepoHarnessEpisodeRequest) -> RuntimeResolvedInputs:
@@ -348,6 +399,9 @@ class RepoHarnessRuntime:
         self,
         request: RepoHarnessEpisodeRequest,
         llm_gateway: LLMGateway,
+        *,
+        resource_handle: ResourceLeaseHandle | None = None,
+        gateway_accounting: GatewayCallAccounting,
     ) -> LLMGatewayResponse:
         gateway_request = LLMGatewayRequest(
             route=request.llm_gateway_route,
@@ -377,7 +431,23 @@ class RepoHarnessRuntime:
             visibility_policy=request.visibility_policy.model_dump(mode="json"),
             tracing={"runtime_mode": self.options.execution_mode},
         )
-        return await llm_gateway.generate_turn(gateway_request)
+        if self.resource_lease_manager is None or resource_handle is None:
+            call_started = perf_counter()
+            gateway_accounting.request_submitted = True
+            try:
+                return await llm_gateway.generate_turn(gateway_request)
+            finally:
+                gateway_accounting.model_call_seconds += perf_counter() - call_started
+        async with self.resource_lease_manager.route_call(
+            handle=resource_handle,
+            route=request.llm_gateway_route,
+        ):
+            call_started = perf_counter()
+            gateway_accounting.request_submitted = True
+            try:
+                return await llm_gateway.generate_turn(gateway_request)
+            finally:
+                gateway_accounting.model_call_seconds += perf_counter() - call_started
 
     def _result_from_gateway_response(
         self,
@@ -392,6 +462,7 @@ class RepoHarnessRuntime:
         cleanup_seconds: float,
         cleanup_status: str,
         reward_boundary: Stage7RewardBoundaryResult | None = None,
+        resource_handle: ResourceLeaseHandle | None = None,
     ) -> RepoHarnessEpisodeResult:
         invalid_reason = self._response_invalid_reason(request, response)
         response_error_reason = _response_error_reason(response)
@@ -434,6 +505,7 @@ class RepoHarnessRuntime:
             final_verifier_seconds=0.0 if reward_boundary is None else reward_boundary.final_verifier_seconds,
             reward_compute_seconds=0.0 if reward_boundary is None else reward_boundary.reward_compute_seconds,
             verifier_call_count=0 if reward_boundary is None else 1,
+            resource_handle=resource_handle,
         )
         budget_consumption = self._budget_consumption(
             request,
@@ -479,6 +551,7 @@ class RepoHarnessRuntime:
                 request,
                 cleanup_status=cleanup_status,
                 reward_boundary=reward_boundary,
+                resource_handle=resource_handle,
             ),
         )
 
@@ -493,12 +566,15 @@ class RepoHarnessRuntime:
         model_call_seconds: float,
         cleanup_seconds: float,
         cleanup_status: str,
+        gateway_request_submitted: bool = False,
+        resource_handle: ResourceLeaseHandle | None = None,
     ) -> RepoHarnessEpisodeResult:
         timing_summary = self._timing_summary(
             elapsed_seconds=elapsed_seconds,
             model_call_seconds=model_call_seconds,
             cleanup_seconds=cleanup_seconds,
-            model_call_count=1 if model_call_seconds > 0 else 0,
+            model_call_count=1 if gateway_request_submitted else 0,
+            resource_handle=resource_handle,
         )
         training_view = TrainingView(
             online_rl_eligible=False,
@@ -531,7 +607,7 @@ class RepoHarnessRuntime:
                 max_wall_seconds=request.budgets.max_wall_seconds,
                 used_wall_seconds=timing_summary.rollout_wall_seconds,
                 max_model_calls=request.budgets.max_model_calls,
-                used_model_calls=1 if model_call_seconds > 0 else 0,
+                used_model_calls=1 if gateway_request_submitted else 0,
                 max_model_call_seconds=request.budgets.generation_timeout_seconds
                 or request.budgets.max_model_call_seconds,
                 used_model_call_seconds=timing_summary.model_call_seconds,
@@ -551,6 +627,7 @@ class RepoHarnessRuntime:
                 request,
                 cleanup_status=cleanup_status,
                 reward_boundary=None,
+                resource_handle=resource_handle,
             ),
         )
 
@@ -806,6 +883,9 @@ class RepoHarnessRuntime:
                 error_message="direct final verifier execution timeout elapsed",
                 diagnostics=["direct verifier timeout does not imply a forced thread stop"],
             )
+        except asyncio.CancelledError:
+            await _wait_for_cancelled_asyncio_future(future)
+            raise
         except Exception as exc:
             return self._verifier_job_exception_result(job, exc, pool_id="direct-blocking")
 
@@ -844,14 +924,121 @@ class RepoHarnessRuntime:
     async def _cleanup(self) -> tuple[str, AuditDiagnostic | None]:
         callback = self.options.cleanup_callback
         if callback is None:
-            return "not_required", None
+            return "skipped", None
         try:
             result = callback()
             if isinstance(result, Awaitable):
                 await asyncio.shield(result)
-            return "ok", None
+            return "completed", None
         except Exception as exc:
             return "failed", AuditDiagnostic(code="cleanup_failed", message=str(exc))
+
+    async def _cleanup_protected(self) -> tuple[str, AuditDiagnostic | None]:
+        cleanup_task = asyncio.create_task(self._cleanup())
+        cancellation_seen = False
+        while True:
+            try:
+                cleanup_status, cleanup_diagnostic = await asyncio.shield(cleanup_task)
+                if cancellation_seen:
+                    return (
+                        cleanup_status,
+                        AuditDiagnostic(
+                            code="cleanup_cancelled",
+                            message=(
+                                "episode coroutine was cancelled while cleanup callback was still running; "
+                                "resource leases were held until cleanup finished"
+                            ),
+                        ),
+                    )
+                return cleanup_status, cleanup_diagnostic
+            except asyncio.CancelledError:
+                if cleanup_task.done():
+                    try:
+                        cleanup_status, _cleanup_diagnostic = cleanup_task.result()
+                    except asyncio.CancelledError:
+                        if cancellation_seen:
+                            return (
+                                "failed",
+                                AuditDiagnostic(
+                                    code="cleanup_cancelled",
+                                    message=(
+                                        "episode coroutine was cancelled while cleanup callback was still running; "
+                                        "cleanup callback ended with cancellation"
+                                    ),
+                                ),
+                            )
+                        return (
+                            "failed",
+                            AuditDiagnostic(
+                                code="cleanup_callback_cancelled",
+                                message="cleanup callback raised asyncio.CancelledError",
+                            ),
+                        )
+                    except Exception as exc:
+                        return "failed", AuditDiagnostic(code="cleanup_failed", message=str(exc))
+                    return (
+                        cleanup_status,
+                        AuditDiagnostic(
+                            code="cleanup_cancelled",
+                            message=(
+                                "episode coroutine was cancelled while cleanup callback was still running; "
+                                "resource leases were held until cleanup finished"
+                            ),
+                        ),
+                    )
+                cancellation_seen = True
+
+    async def _acquire_episode_resources(
+        self,
+        request: RepoHarnessEpisodeRequest,
+    ) -> ResourceLeaseHandle | None:
+        if self.resource_lease_manager is None:
+            return None
+        return await self.resource_lease_manager.acquire_episode(
+            episode_id=request.episode_id,
+            run_id=request.run_id,
+            task_id=request.task_id,
+        )
+
+    async def _release_episode_resources(
+        self,
+        resource_handle: ResourceLeaseHandle | None,
+    ) -> tuple[str | None, list[AuditDiagnostic]]:
+        if self.resource_lease_manager is None or resource_handle is None:
+            return None, []
+        released = await self.resource_lease_manager.release_episode(resource_handle)
+        diagnostics = [
+            AuditDiagnostic(code=diagnostic.code, message=diagnostic.message)
+            for diagnostic in released.diagnostics
+        ]
+        return released.cleanup_status, diagnostics
+
+    async def _release_episode_resources_protected(
+        self,
+        resource_handle: ResourceLeaseHandle | None,
+    ) -> tuple[str | None, list[AuditDiagnostic]]:
+        if self.resource_lease_manager is None or resource_handle is None:
+            return None, []
+        release_task = asyncio.create_task(self._release_episode_resources(resource_handle))
+        try:
+            return await asyncio.shield(release_task)
+        except asyncio.CancelledError:
+            try:
+                return await release_task
+            except Exception as exc:
+                return "failed", [
+                    AuditDiagnostic(
+                        code="resource_release_failed",
+                        message=str(exc),
+                    )
+                ]
+        except Exception as exc:
+            return "failed", [
+                AuditDiagnostic(
+                    code="resource_release_failed",
+                    message=str(exc),
+                )
+            ]
 
     def _timing_summary(
         self,
@@ -865,13 +1052,20 @@ class RepoHarnessRuntime:
         final_verifier_seconds: float = 0.0,
         reward_compute_seconds: float = 0.0,
         verifier_call_count: int = 0,
+        resource_handle: ResourceLeaseHandle | None = None,
     ) -> TimingSummary:
+        resource_queue_wait_seconds = 0.0
+        if resource_handle is not None:
+            resource_queue_wait_seconds = sum(
+                resource_handle.lease.queue_wait_seconds_by_resource.values()
+            )
+        total_queue_wait_seconds = verifier_queue_wait_seconds + resource_queue_wait_seconds
         agent_loop_seconds = max(
             0.0,
             elapsed_seconds
             - model_call_seconds
             - cleanup_seconds
-            - verifier_queue_wait_seconds
+            - total_queue_wait_seconds
             - final_verifier_seconds
             - reward_compute_seconds,
         )
@@ -883,7 +1077,7 @@ class RepoHarnessRuntime:
             agent_loop_seconds=agent_loop_seconds,
             model_call_seconds=model_call_seconds,
             provider_reported_model_call_seconds=provider_reported_model_call_seconds,
-            queue_wait_seconds=verifier_queue_wait_seconds,
+            queue_wait_seconds=total_queue_wait_seconds,
             final_verifier_seconds=final_verifier_seconds,
             verifier_seconds=0.0,
             reward_compute_seconds=reward_compute_seconds,
@@ -898,15 +1092,32 @@ class RepoHarnessRuntime:
         *,
         cleanup_status: str,
         reward_boundary: Stage7RewardBoundaryResult | None = None,
+        resource_handle: ResourceLeaseHandle | None = None,
     ) -> ResourceSummary:
         queue_wait_seconds_by_resource: dict[str, float] = {}
+        worker_id = None
+        concurrency_group = None
+        lease_id = None
+        inference_concurrency_slot = None
+        if resource_handle is not None:
+            queue_wait_seconds_by_resource.update(
+                resource_handle.lease.queue_wait_seconds_by_resource
+            )
+            worker_id = resource_handle.lease.worker_id
+            concurrency_group = resource_handle.lease.concurrency_group
+            lease_id = resource_handle.lease.lease_id
+            inference_concurrency_slot = resource_handle.lease.gateway_route_slot_id
         if reward_boundary is not None:
             queue_wait_seconds_by_resource["verifier_worker"] = reward_boundary.verifier_queue_wait_seconds
         return ResourceSummary(
             execution_mode=self.options.execution_mode,
             workspace_backend=self.options.execution_mode,
+            worker_id=worker_id,
+            concurrency_group=concurrency_group,
+            lease_id=lease_id,
             inference_route=request.llm_gateway_route,
             inference_backend=request.inference_backend,
+            inference_concurrency_slot=inference_concurrency_slot,
             verifier_worker_pool_id=None if reward_boundary is None else reward_boundary.verifier_pool_id,
             verifier_worker_id=None if reward_boundary is None else reward_boundary.verifier_worker_id,
             queue_wait_seconds_by_resource=queue_wait_seconds_by_resource,
@@ -964,7 +1175,7 @@ class RepoHarnessRuntime:
             "repo_harness_status": status,
             "repo_harness_invalid_for_training": invalid_for_training,
             "repo_harness_invalid_for_online_rl": invalid_for_online_rl,
-            "repo_harness_invalid_reason": invalid_reason,
+            "repo_harness_invalid_reason": _batch_safe_invalid_reason(invalid_reason),
             "repo_harness_timing_summary_ref": f"rh://audit/{request.episode_id}/timing-summary",
             "repo_harness_resource_summary_ref": f"rh://audit/{request.episode_id}/resource-summary",
         }
@@ -1003,6 +1214,29 @@ def _response_error_reason(response: LLMGatewayResponse) -> str | None:
                 return value
         return "gateway_response_error"
     return "gateway_response_error"
+
+
+def _batch_safe_invalid_reason(value: str | None) -> str | None:
+    if value == "run_directory_lock_conflict":
+        return "run_lock_conflict"
+    if value == "run_directory_already_finalized":
+        return "run_already_finalized"
+    return value
+
+
+async def _wait_for_cancelled_asyncio_future(future: asyncio.Future[T]) -> None:
+    while not future.done():
+        try:
+            await asyncio.shield(future)
+        except asyncio.CancelledError:
+            continue
+        except Exception:
+            break
+    if future.done():
+        try:
+            future.result()
+        except Exception:
+            pass
 
 
 def _coerce_tool_call(value: dict[str, Any], *, turn: int) -> ToolCall:

@@ -14,7 +14,8 @@ from repo_harness.rl import (
     map_stage7_verifier_status,
     validate_training_view_for_online_rl,
 )
-from repo_harness.reward import compute_reward_metadata
+from repo_harness.reward import RewardMetadata, compute_reward_metadata
+import repo_harness.rl.reward_boundary as reward_boundary_module
 from repo_harness.verifier import VerifierJob, VerifierPoolOptions, VerifierResult, VerifierWorkerPool
 
 
@@ -123,6 +124,41 @@ def test_stage7_reward_boundary_keeps_trusted_rejection_as_model_failure() -> No
     assert boundary.invalid_for_training is False
     assert boundary.reward_score is not None
     assert boundary.verifier_summary.status == "rejected"
+
+
+def test_stage7_reward_boundary_owns_invalid_classification(monkeypatch) -> None:
+    def legacy_invalid_reward(*args: Any, **kwargs: Any) -> RewardMetadata:
+        return RewardMetadata(
+            final_reward=0.0,
+            formula="legacy invalid diagnostic",
+            components={"diagnostic_reward_before_invalid_clip": 0.4},
+            sources={},
+            invalid_for_training=True,
+            invalid_reason="legacy_invalid_reason",
+        )
+
+    monkeypatch.setattr(reward_boundary_module, "compute_reward_metadata", legacy_invalid_reward)
+    verifier = _verifier_result(
+        accepted=False,
+        fail_to_pass={"passed": 0, "total": 1},
+        pass_to_pass={"passed": 1, "total": 1},
+        error_type="assertion_failure",
+    )
+
+    boundary = reward_boundary_module.build_stage7_reward_boundary(
+        final_verifier=verifier,
+        reward_metadata_ref="rh://reward/stage7/metadata",
+        final_verifier_ref="rh://verifier/stage7/final",
+    )
+
+    assert boundary.status == "failed"
+    assert boundary.status_reason == "assertion_failure"
+    assert boundary.invalid_for_training is False
+    assert boundary.reward_score == 0.4
+    assert boundary.reward_metadata is not None
+    assert boundary.reward_metadata.invalid_for_training is False
+    assert boundary.reward_metadata.invalid_reason is None
+    assert boundary.reward_metadata.sources["legacy_reward_invalid_reason"] == "legacy_invalid_reason"
 
 
 def test_stage7_runtime_returns_reward_before_episode_result_and_records_pool_facts() -> None:

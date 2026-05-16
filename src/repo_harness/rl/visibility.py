@@ -62,14 +62,18 @@ class VisibilityContractError(ValueError):
     """表示字段越过了模型可见或 batch 可传播边界。"""
 
 
+SAFE_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
+
+
 def is_provider_route(route: str) -> bool:
     return route in PROVIDER_ROUTES
 
 
 def default_invalid_for_online_rl(route: str) -> bool:
-    """provider route 默认不能作为正式 online PPO / GRPO rollout 样本。"""
+    """Only route=verl is eligible for formal online PPO / GRPO by default."""
 
-    return is_provider_route(route)
+    validate_route_name(route)
+    return route != "verl"
 
 
 def validate_route_name(route: str) -> str:
@@ -89,6 +93,17 @@ def validate_inference_backend(route: str, inference_backend: str | None) -> Non
 def validate_no_absolute_local_path(value: str, *, field_name: str) -> None:
     if value.startswith("/") or "/Users/" in value or "\\" in value and len(value) > 2 and value[1:3] == ":\\":
         raise VisibilityContractError(f"{field_name} must not contain an absolute local path")
+
+
+def validate_safe_identifier(value: str, *, field_name: str) -> str:
+    validate_no_absolute_local_path(value, field_name=field_name)
+    if value in {".", ".."} or "/" in value or "\\" in value:
+        raise VisibilityContractError(f"{field_name} must be a safe identifier without path separators")
+    if ".." in value:
+        raise VisibilityContractError(f"{field_name} must not contain parent directory traversal")
+    if not SAFE_IDENTIFIER_PATTERN.fullmatch(value):
+        raise VisibilityContractError(f"{field_name} must be a safe identifier")
+    return value
 
 
 def _walk_key_values(value: Any):
@@ -113,11 +128,16 @@ def _strip_repo_harness_namespace(key: str) -> str:
 def _find_forbidden_marker(value: str) -> str | None:
     normalized = _normalize_visibility_marker(value)
     normalized_without_namespace = _strip_repo_harness_namespace(normalized)
+    compact = normalized.replace("_", "")
+    compact_without_namespace = normalized_without_namespace.replace("_", "")
     for marker in FORBIDDEN_FIELD_MARKERS:
         normalized_marker = _normalize_visibility_marker(marker)
+        compact_marker = normalized_marker.replace("_", "")
         if normalized_marker in {normalized, normalized_without_namespace}:
             return marker
         if normalized_marker and normalized_marker in normalized_without_namespace:
+            return marker
+        if compact_marker and compact_marker in compact_without_namespace:
             return marker
     return None
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from pydantic import Field, model_validator
 
@@ -109,7 +109,7 @@ class ResourceSummary(StrictBaseModel):
     verifier_worker_pool_id: str | None = None
     verifier_worker_id: str | None = None
     queue_wait_seconds_by_resource: dict[str, float] = Field(default_factory=dict)
-    cleanup_status: str | None = None
+    cleanup_status: Literal["not_started", "completed", "failed", "skipped", "not_applicable"] | None = None
 
     def model_post_init(self, __context: Any) -> None:
         for field_name in [

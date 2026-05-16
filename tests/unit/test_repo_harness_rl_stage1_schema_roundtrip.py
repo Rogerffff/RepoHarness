@@ -77,6 +77,33 @@ def test_stage1_training_view_online_rl_helper_rejects_invalid_fixture_shapes() 
         validate_training_view_for_online_rl(empty)
 
 
+@pytest.mark.parametrize(
+    ("updates", "expected_reason"),
+    [
+        ({"online_rl_eligible": False}, "training_view_marked_ineligible_for_online_rl"),
+        (
+            {"extra_fields": {"repo_harness_invalid_for_online_rl": True}},
+            "invalid_for_online_rl",
+        ),
+        ({"online_rl_eligible": None}, "training_view_missing_online_rl_eligibility"),
+    ],
+)
+def test_stage1_formal_online_rl_batch_rejects_training_view_invalid_flags(
+    updates: dict[str, Any],
+    expected_reason: str,
+) -> None:
+    payload = _load_json("canonical_training_view.json")
+    payload["extra_fields"] = {**payload["extra_fields"], "repo_harness_llm_gateway_route": "verl"}
+    if "extra_fields" in updates:
+        payload["extra_fields"] = {**payload["extra_fields"], **updates["extra_fields"]}
+    if "online_rl_eligible" in updates:
+        payload["online_rl_eligible"] = updates["online_rl_eligible"]
+    view = TrainingView.model_validate(payload)
+
+    with pytest.raises(ValueError, match=expected_reason):
+        validate_formal_online_rl_batch([view], formal_online_rl_batch=True)
+
+
 def test_stage1_mixed_logprob_is_batch_level_rejection() -> None:
     fixture = MixedLogprobBatchRejectionFixture.model_validate(_load_json("canonical_mixed_logprob_batch_rejected.json"))
 

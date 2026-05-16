@@ -183,7 +183,7 @@ def test_stage2_runtime_timeout_returns_invalid_result_and_runs_cleanup() -> Non
     assert result.invalid_for_training is True
     assert result.invalid_for_online_rl is True
     assert result.resource_summary is not None
-    assert result.resource_summary.cleanup_status == "ok"
+    assert result.resource_summary.cleanup_status == "completed"
     assert cleanup_calls == ["cleanup"]
 
 
@@ -206,7 +206,7 @@ def test_stage2_runtime_cancellation_returns_cancelled_result_and_runs_cleanup()
     assert result.invalid_for_training is True
     assert result.invalid_for_online_rl is True
     assert result.resource_summary is not None
-    assert result.resource_summary.cleanup_status == "ok"
+    assert result.resource_summary.cleanup_status == "completed"
     assert cleanup_calls == ["cleanup"]
 
 
