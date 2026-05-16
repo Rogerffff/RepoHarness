@@ -20,6 +20,7 @@ class BudgetManager(StrictBaseModel):
     max_tool_output_chars: int = Field(gt=0)
     max_context_tokens: int = Field(gt=0)
     max_output_tokens: int = Field(gt=0)
+    max_model_calls: int | None = Field(default=None, gt=0)
     max_cost: float | None = Field(default=None, ge=0.0)
     max_artifact_bytes: int | None = Field(default=None, gt=0)
     max_concurrent_tasks: int = Field(default=1, gt=0)
@@ -51,6 +52,7 @@ class BudgetState(StrictBaseModel):
     started_at: str
     turn_count: int = Field(default=0, ge=0)
     tool_call_count: int = Field(default=0, ge=0)
+    model_call_count: int = Field(default=0, ge=0)
     test_run_count: int = Field(default=0, ge=0)
     output_tokens: int = Field(default=0, ge=0)
     input_tokens: int = Field(default=0, ge=0)

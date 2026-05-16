@@ -17,6 +17,7 @@ AgentStopReason = Literal[
     "max_tool_calls",
     "max_test_runs",
     "max_cost",
+    "max_model_calls_exceeded",
     "timeout",
     "permission_denied",
     "tool_error",

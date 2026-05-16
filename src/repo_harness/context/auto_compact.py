@@ -223,6 +223,10 @@ class AutoCompactRunner:
             context_budget_facts=context_budget.model_dump(mode="json"),
         )
         response = model_client.generate(request=compact_request, recorder=recorder)
+        compact_model_attempt_count = int(getattr(response, "attempt_count", 1) or 1)
+        compact_model_retry_count = int(
+            getattr(response, "retry_count", max(0, compact_model_attempt_count - 1)) or 0
+        )
         compact_model_call_ref = recorder.write_json_artifact(
             "auto_compact_model_call",
             {
@@ -246,6 +250,8 @@ class AutoCompactRunner:
                 ),
                 "model_error_type": response.model_error_type,
                 "finish_reason": response.finish_reason,
+                "attempt_count": compact_model_attempt_count,
+                "retry_count": compact_model_retry_count,
                 "request_timeout_seconds": (
                     response.model_call_event.request_timeout_seconds
                     if response.model_call_event
@@ -284,6 +290,8 @@ class AutoCompactRunner:
                     "trainable": False,
                     "model_error_type": response.model_error_type,
                     "finish_reason": response.finish_reason,
+                    "attempt_count": compact_model_attempt_count,
+                    "retry_count": compact_model_retry_count,
                     "request_timeout_seconds": (
                         response.model_call_event.request_timeout_seconds
                         if response.model_call_event
@@ -325,6 +333,8 @@ class AutoCompactRunner:
                 compact_model_call_ref=compact_model_call_ref,
                 compact_model_request_ref=response.raw_provider_request_ref,
                 compact_model_response_ref=response.raw_provider_response_ref,
+                compact_model_attempt_count=compact_model_attempt_count,
+                compact_model_retry_count=compact_model_retry_count,
                 tokens_before=tokens_before,
                 effective_context_budget_tokens=(
                     context_budget.effective_context_budget_tokens
@@ -356,6 +366,8 @@ class AutoCompactRunner:
                 compact_model_call_ref=compact_model_call_ref,
                 compact_model_request_ref=response.raw_provider_request_ref,
                 compact_model_response_ref=response.raw_provider_response_ref,
+                compact_model_attempt_count=compact_model_attempt_count,
+                compact_model_retry_count=compact_model_retry_count,
                 tokens_before=tokens_before,
                 effective_context_budget_tokens=(
                     context_budget.effective_context_budget_tokens
@@ -493,6 +505,8 @@ class AutoCompactRunner:
             ),
             compact_model_request_ref=response.raw_provider_request_ref,
             compact_model_response_ref=response.raw_provider_response_ref,
+            compact_model_attempt_count=compact_model_attempt_count,
+            compact_model_retry_count=compact_model_retry_count,
             summary_artifact_ref=summary_ref,
             rebuilt_messages_ref=rebuilt_ref,
             record_ref=record_ref,
@@ -966,6 +980,8 @@ def _failed_result(
     compact_model_call_ref: ArtifactRef | None = None,
     compact_model_request_ref: ArtifactRef | None = None,
     compact_model_response_ref: ArtifactRef | None = None,
+    compact_model_attempt_count: int = 0,
+    compact_model_retry_count: int = 0,
 ) -> AutoCompactResult:
     record_ref = _write_auto_compact_record(
         compact_id=compact_id,
@@ -1022,6 +1038,8 @@ def _failed_result(
                     else None
                 ),
                 "compact_source_projection_hash": compact_source_projection_hash,
+                "compact_model_attempt_count": compact_model_attempt_count,
+                "compact_model_retry_count": compact_model_retry_count,
                 "tokens_before": tokens_before,
                 "effective_context_budget_tokens": effective_context_budget_tokens,
                 "post_compact_target_tokens": post_compact_target_tokens,
@@ -1042,6 +1060,8 @@ def _failed_result(
         compact_source_projection_hash=compact_source_projection_hash,
         compact_model_request_ref=compact_model_request_ref,
         compact_model_response_ref=compact_model_response_ref,
+        compact_model_attempt_count=compact_model_attempt_count,
+        compact_model_retry_count=compact_model_retry_count,
         record_ref=record_ref,
         tokens_before=tokens_before,
         tokens_after=tokens_before,

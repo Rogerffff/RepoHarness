@@ -22,6 +22,7 @@ from .episode import (
     RepoHarnessEpisodeResult,
     VerifierSummary,
 )
+from .budget import CONTEXT_BUDGET_STOP_REASONS, NO_PROGRESS_STOP_REASONS
 from .gateway import LLMGateway, LLMGatewayRequest, LLMGatewayResponse
 from .reward_boundary import Stage7RewardBoundaryResult, build_stage7_reward_boundary
 from .timing import ResourceSummary, TimingSummary, build_timing_summary
@@ -111,12 +112,16 @@ def map_episode_status(
         or _is_timeout_reason(agent_stop_reason)
     ):
         return "timeout"
+    if agent_stop_reason in CONTEXT_BUDGET_STOP_REASONS or provider_error_type in CONTEXT_BUDGET_STOP_REASONS:
+        return "invalid"
     if invalid_task or run_outcome in {"invalid_task", "flaky_task"} or baseline_status in {"invalid", "flaky"}:
         return "invalid_task"
     if infrastructure_error or final_verifier_status == "error" or provider_error_type:
         return "infrastructure_error"
-    if agent_stop_reason in {"no_progress", "stalled", "max_no_progress"}:
+    if agent_stop_reason in NO_PROGRESS_STOP_REASONS or agent_stop_reason in {"no_progress", "stalled", "max_no_progress"}:
         return "no_progress"
+    if agent_stop_reason in {"generation_timeout_loop", "max_turns", "max_model_calls_exceeded", "max_tool_calls", "max_test_runs"}:
+        return "timeout"
     if final_verifier_status == "accepted" or run_outcome == "success":
         return "succeeded"
     if final_verifier_status in {"rejected", "failed"} or run_outcome == "failed":
@@ -525,6 +530,8 @@ class RepoHarnessRuntime:
                 used_turns=0,
                 max_wall_seconds=request.budgets.max_wall_seconds,
                 used_wall_seconds=timing_summary.rollout_wall_seconds,
+                max_model_calls=request.budgets.max_model_calls,
+                used_model_calls=1 if model_call_seconds > 0 else 0,
                 max_model_call_seconds=request.budgets.generation_timeout_seconds
                 or request.budgets.max_model_call_seconds,
                 used_model_call_seconds=timing_summary.model_call_seconds,
@@ -659,6 +666,8 @@ class RepoHarnessRuntime:
             used_turns=1,
             max_wall_seconds=request.budgets.max_wall_seconds,
             used_wall_seconds=timing_summary.rollout_wall_seconds,
+            max_model_calls=request.budgets.max_model_calls,
+            used_model_calls=1,
             max_model_call_seconds=request.budgets.generation_timeout_seconds
             or request.budgets.max_model_call_seconds,
             used_model_call_seconds=timing_summary.model_call_seconds,

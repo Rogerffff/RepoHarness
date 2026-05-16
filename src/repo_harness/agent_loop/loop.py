@@ -33,6 +33,15 @@ from repo_harness.model_client.provider_private_state import (
     provider_private_state_store,
     sanitize_provider_private_metadata_for_messages,
 )
+from repo_harness.rl.budget import (
+    NoProgressDecision,
+    NoProgressPolicy,
+    TrainingBudgetPolicy,
+    budget_manager_from_training_policy,
+    context_config_from_training_policy,
+    decide_no_progress_hard_stop,
+    recorder_event_type_for_stop_reason,
+)
 from repo_harness.run_metadata import RunConfigFactsRef
 from repo_harness.schema_base import stable_hash
 from repo_harness.scaffolds.patch_action import PatchActionParseResult, parse_patch_action
@@ -148,10 +157,20 @@ class AgentLoop:
         provider_timeout_policy: str = PROVIDER_TIMEOUT_POLICY_VERSION,
         raw_request_logging_policy: str = "redact_secrets",
         retry_policy: str = "none",
+        training_budget_policy: TrainingBudgetPolicy | None = None,
     ) -> AgentLoopState:
         context_config_resolved = context_config or ContextManagementConfig()
-        budget_manager_was_provided = budget_manager is not None
+        budget_manager_was_provided = budget_manager is not None or training_budget_policy is not None
         budget_manager = budget_manager or _default_budget_manager(max_turns)
+        if training_budget_policy is not None:
+            budget_manager = budget_manager_from_training_policy(
+                training_budget_policy,
+                base_manager=budget_manager,
+            )
+            context_config_resolved = context_config_from_training_policy(
+                training_budget_policy,
+                base_config=context_config_resolved,
+            )
         if (
             tool_context is not None
             and tool_context.tool_result_artifact_index is None
@@ -461,6 +480,17 @@ class AgentLoop:
                         call_site="proactive_auto_compact",
                     )
                     break
+                if not _reserve_model_call_budget(
+                    budget_manager=budget_manager,
+                    state=state,
+                    recorder=recorder,
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    call_site="proactive_auto_compact",
+                    model_call_id=f"{run_id}_auto_compact_{turn:04d}",
+                ):
+                    break
                 auto_compact_result = self.auto_compact_runner.run(
                     mode="proactive",
                     trigger_reason="projection_above_auto_compact_trigger",
@@ -487,6 +517,29 @@ class AgentLoop:
                     retry_policy=retry_policy,
                     scaffold_id=self.scaffold.scaffold_id,
                 )
+                _reconcile_reserved_compact_model_calls(
+                    state=state,
+                    result=auto_compact_result,
+                )
+                compact_overrun_details = _model_call_budget_overrun_after_response_details(
+                    budget_manager=budget_manager,
+                    state=state,
+                    model_call_id=f"{run_id}_auto_compact_{turn:04d}",
+                    call_site="proactive_auto_compact",
+                    attempt_count=auto_compact_result.compact_model_attempt_count,
+                    retry_count=auto_compact_result.compact_model_retry_count,
+                )
+                if compact_overrun_details is not None:
+                    _record_budget_exhausted(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        reason="max_model_calls_exceeded",
+                        state=state,
+                        recorder=recorder,
+                        details=compact_overrun_details,
+                    )
+                    break
                 state.last_auto_compact_record_ref = (
                     auto_compact_result.record_ref.model_dump(mode="json")
                     if auto_compact_result.record_ref is not None
@@ -727,6 +780,17 @@ class AgentLoop:
                     call_site="main_model_call",
                 )
                 break
+            if not _reserve_model_call_budget(
+                budget_manager=budget_manager,
+                state=state,
+                recorder=recorder,
+                run_id=run_id,
+                task_id=task_id,
+                turn=turn,
+                call_site="main_model_call",
+                model_call_id=f"{run_id}_model_call_{turn:04d}",
+            ):
+                break
             recorder.append_event(
                 TrajectoryEvent(
                     event_id=recorder.next_event_id("model"),
@@ -935,6 +999,15 @@ class AgentLoop:
             retry_policy_ref = getattr(response, "retry_policy_ref", None)
             attempt_count = int(getattr(response, "attempt_count", max(1, len(provider_attempt_refs))) or 1)
             retry_count = int(getattr(response, "retry_count", max(0, attempt_count - 1)) or 0)
+            state.budget_state.model_call_count += max(0, attempt_count - 1)
+            model_call_budget_overrun_details = _model_call_budget_overrun_after_response_details(
+                budget_manager=budget_manager,
+                state=state,
+                model_call_id=model_request.model_call_id,
+                call_site="main_model_call",
+                attempt_count=attempt_count,
+                retry_count=retry_count,
+            )
             terminal_error_type = getattr(response, "terminal_error_type", response.model_error_type)
             budget_decision_trace_ref = None
             budget_decision_trace_ref = _write_budget_decision_trace_artifact(
@@ -1158,6 +1231,17 @@ class AgentLoop:
                         call_site="emergency_auto_compact",
                     )
                     break
+                if not _reserve_model_call_budget(
+                    budget_manager=budget_manager,
+                    state=state,
+                    recorder=recorder,
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    call_site="emergency_auto_compact",
+                    model_call_id=f"{run_id}_emergency_auto_compact_{turn:04d}",
+                ):
+                    break
                 emergency_result = self.auto_compact_runner.run(
                     mode="emergency",
                     trigger_reason="provider_context_limit_retry",
@@ -1184,6 +1268,29 @@ class AgentLoop:
                     retry_policy=retry_policy,
                     scaffold_id=self.scaffold.scaffold_id,
                 )
+                _reconcile_reserved_compact_model_calls(
+                    state=state,
+                    result=emergency_result,
+                )
+                compact_overrun_details = _model_call_budget_overrun_after_response_details(
+                    budget_manager=budget_manager,
+                    state=state,
+                    model_call_id=f"{run_id}_emergency_auto_compact_{turn:04d}",
+                    call_site="emergency_auto_compact",
+                    attempt_count=emergency_result.compact_model_attempt_count,
+                    retry_count=emergency_result.compact_model_retry_count,
+                )
+                if compact_overrun_details is not None:
+                    _record_budget_exhausted(
+                        run_id=run_id,
+                        task_id=task_id,
+                        turn=turn,
+                        reason="max_model_calls_exceeded",
+                        state=state,
+                        recorder=recorder,
+                        details=compact_overrun_details,
+                    )
+                    break
                 if emergency_result.status == "applied":
                     state.auto_compact_count += 1
                     state.reactive_compact_count += 1
@@ -1415,6 +1522,11 @@ class AgentLoop:
                 task_deadline_monotonic=task_deadline_monotonic,
             )
             if budget_stop is not None:
+                budget_details = (
+                    model_call_budget_overrun_details
+                    if budget_stop == "max_model_calls_exceeded"
+                    else None
+                )
                 _record_budget_exhausted(
                     run_id=run_id,
                     task_id=task_id,
@@ -1422,6 +1534,7 @@ class AgentLoop:
                     reason=budget_stop,
                     state=state,
                     recorder=recorder,
+                    details=budget_details,
                 )
                 _record_interrupted_tool_calls(
                     tool_result_artifact_index=tool_context.tool_result_artifact_index if tool_context else None,
@@ -2004,6 +2117,19 @@ class AgentLoop:
                 messages=messages,
                 state=state,
                 budget_manager=budget_manager,
+                no_progress_policy=(
+                    training_budget_policy.no_progress_policy
+                    if training_budget_policy is not None
+                    else None
+                ),
+            )
+            no_progress_decision = (
+                decide_no_progress_hard_stop(
+                    loop_progress_summary,
+                    training_budget_policy.no_progress_policy,
+                )
+                if training_budget_policy is not None
+                else NoProgressDecision()
             )
             nudge_dedupe_scope, _, new_signal_keys = _loop_progress_signal_dedupe(
                 summary=loop_progress_summary,
@@ -2029,6 +2155,10 @@ class AgentLoop:
                 dedupe_scope=nudge_dedupe_scope,
                 emitted_nudge_scopes=emitted_convergence_nudge_scopes,
             )
+            if no_progress_decision.hard_stop:
+                should_inject_nudge = False
+            elif not no_progress_decision.allow_model_visible_nudge:
+                should_inject_nudge = False
             diagnostic = _record_loop_progress_diagnostic(
                 run_id=run_id,
                 task_id=task_id,
@@ -2042,7 +2172,20 @@ class AgentLoop:
                 dedupe_scope=nudge_dedupe_scope,
                 new_signal_keys=new_signal_keys,
                 model_visible_message_injected=should_inject_nudge,
+                no_progress_decision=no_progress_decision,
             )
+            if no_progress_decision.hard_stop:
+                _record_no_progress_hard_stop(
+                    run_id=run_id,
+                    task_id=task_id,
+                    turn=turn,
+                    state=state,
+                    recorder=recorder,
+                    summary=loop_progress_summary,
+                    decision=no_progress_decision,
+                    diagnostic=diagnostic,
+                )
+                stop_after_tools = True
             if stop_after_tools:
                 break
             if should_inject_nudge and diagnostic is not None:
@@ -2088,6 +2231,11 @@ class AgentLoop:
             messages=messages,
             state=state,
             budget_manager=budget_manager,
+            no_progress_policy=(
+                training_budget_policy.no_progress_policy
+                if training_budget_policy is not None
+                else None
+            ),
         )
         state.messages = messages
         return state
@@ -3014,6 +3162,11 @@ def _write_budget_decision_trace_artifact(
         "estimated_cost": None,
         "max_cost_enforcement": max_cost_enforcement,
         "remaining_turn_budget": max(0, budget_manager.max_turns - turn),
+        "remaining_model_call_budget": (
+            None
+            if budget_manager.max_model_calls is None
+            else max(0, budget_manager.max_model_calls - state.budget_state.model_call_count)
+        ),
         "remaining_tool_call_budget": max(0, budget_manager.max_tool_calls - state.tool_call_count),
         "remaining_test_run_budget": max(0, budget_manager.max_test_runs - state.budget_state.test_run_count),
         "decision": "continue_or_terminal_by_agent_loop",
@@ -3231,6 +3384,7 @@ def _record_loop_progress_diagnostic(
     dedupe_scope: str | None = None,
     new_signal_keys: list[str] | None = None,
     model_visible_message_injected: bool = False,
+    no_progress_decision: NoProgressDecision | None = None,
 ) -> dict[str, Any] | None:
     summary = summary or _build_loop_progress_summary(
         messages=messages,
@@ -3248,10 +3402,19 @@ def _record_loop_progress_diagnostic(
     emitted_signal_keys.update(signal_dedupe_keys[signal_key] for signal_key in new_signal_keys)
     diagnostic = {
         **summary,
+        "hard_stop_enabled": bool(no_progress_decision and no_progress_decision.hard_stop),
+        "hard_stop_reason": (
+            no_progress_decision.stop_reason
+            if no_progress_decision and no_progress_decision.hard_stop
+            else None
+        ),
+        "hard_stop_policy_version": (
+            no_progress_decision.policy_version if no_progress_decision else None
+        ),
         "diagnostic_dedupe_scope": dedupe_scope,
         "new_signal_keys": new_signal_keys,
         "agent_stop_reason_before_event": state.agent_stop_reason,
-        "agent_stop_reason_changed": False,
+        "agent_stop_reason_changed": bool(no_progress_decision and no_progress_decision.hard_stop),
         "model_visible_message_injected": model_visible_message_injected,
     }
     state.loop_diagnostics.append(diagnostic)
@@ -3269,6 +3432,59 @@ def _record_loop_progress_diagnostic(
         )
     )
     return diagnostic
+
+
+def _record_no_progress_hard_stop(
+    *,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    summary: dict[str, Any],
+    decision: NoProgressDecision,
+    diagnostic: dict[str, Any] | None,
+) -> None:
+    stop_reason = decision.stop_reason or "no_progress_read_only_loop"
+    state.agent_stop_reason = "no_progress"
+    state.budget_state.stop_reason = stop_reason
+    state.loop_diagnostics_summary = {
+        **state.loop_diagnostics_summary,
+        "hard_stop_enabled": True,
+        "hard_stop_reason": stop_reason,
+        "hard_stop_policy_version": decision.policy_version,
+    }
+    recorder.append_event(
+        TrajectoryEvent(
+            event_id=recorder.next_event_id("no_progress"),
+            timestamp=_timestamp(),
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            event_type=decision.recorder_event_type or "no_progress_hard_stop",
+            severity="warning",
+            error_type=stop_reason,
+            data={
+                "schema_version": "repo_harness_no_progress_hard_stop_event_v0",
+                "policy_version": decision.policy_version,
+                "stop_reason": stop_reason,
+                "signals": [
+                    signal
+                    for signal in summary.get("signals", [])
+                    if isinstance(signal, dict)
+                ],
+                "signal_keys": decision.signal_keys,
+                "thresholds": decision.thresholds,
+                "diagnostic_dedupe_scope": (
+                    None if diagnostic is None else diagnostic.get("diagnostic_dedupe_scope")
+                ),
+                "trainable": False,
+                "invalid_for_training": True,
+                "invalid_for_online_rl": True,
+                "model_visible_message_injected": False,
+            },
+        )
+    )
 
 
 def _loop_progress_signal_dedupe(
@@ -3572,6 +3788,7 @@ def _build_loop_progress_summary(
     messages: list[dict[str, object]],
     state: AgentLoopState,
     budget_manager: BudgetManager,
+    no_progress_policy: NoProgressPolicy | None = None,
 ) -> dict[str, Any]:
     tool_messages = [message for message in messages if message.get("role") == "tool"]
     analysis_tool_messages, last_patch_message = _tool_messages_after_last_patch_progress(tool_messages)
@@ -3586,7 +3803,27 @@ def _build_loop_progress_summary(
     consecutive_empty_search_count = _consecutive_empty_search_tool_calls(analysis_tool_messages)
     repeated_input = _repeated_tool_input_summary(analysis_tool_messages)
     remaining_turns = max(0, budget_manager.max_turns - state.turn_count)
-    near_turn_budget_threshold = _near_turn_budget_threshold(budget_manager.max_turns)
+    read_only_streak_threshold = (
+        no_progress_policy.read_only_streak_threshold
+        if no_progress_policy is not None
+        else NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD
+    )
+    repeated_input_threshold = (
+        no_progress_policy.repeated_input_threshold
+        if no_progress_policy is not None
+        else NO_PROGRESS_REPEATED_INPUT_THRESHOLD
+    )
+    empty_search_threshold = (
+        no_progress_policy.empty_search_threshold
+        if no_progress_policy is not None
+        else NO_PROGRESS_EMPTY_SEARCH_THRESHOLD
+    )
+    near_turn_budget_threshold = (
+        no_progress_policy.near_budget_without_patch_threshold
+        if no_progress_policy is not None
+        and no_progress_policy.near_budget_without_patch_threshold is not None
+        else _near_turn_budget_threshold(budget_manager.max_turns)
+    )
     has_patch = patch_tool_call_count > 0
     first_patch_progress_turn = (
         min(int(message.get("turn") or 0) for message in patch_progress_messages)
@@ -3603,29 +3840,29 @@ def _build_loop_progress_summary(
     terminal_final_answer = state.agent_stop_reason == "final_answer"
     signals: list[dict[str, Any]] = []
 
-    if consecutive_read_only_tool_calls >= NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD:
+    if consecutive_read_only_tool_calls >= read_only_streak_threshold:
         signals.append(
             {
                 "signal_key": "long_read_only_streak",
                 "severity": "warning",
                 "value": consecutive_read_only_tool_calls,
-                "threshold": NO_PROGRESS_READ_ONLY_STREAK_THRESHOLD,
+                "threshold": read_only_streak_threshold,
                 "meaning": "模型已经连续多次使用只读工具，但没有产生补丁修改。",
             }
         )
-    if repeated_input["max_repeated_input_count"] >= NO_PROGRESS_REPEATED_INPUT_THRESHOLD:
+    if repeated_input["max_repeated_input_count"] >= repeated_input_threshold:
         signals.append(
             {
                 "signal_key": "repeated_tool_input",
                 "severity": "warning",
                 "value": repeated_input["max_repeated_input_count"],
-                "threshold": NO_PROGRESS_REPEATED_INPUT_THRESHOLD,
+                "threshold": repeated_input_threshold,
                 "meaning": "模型重复调用了等价的工具输入，探索可能已经进入循环。",
             }
         )
     if (
-        empty_search_count >= NO_PROGRESS_EMPTY_SEARCH_THRESHOLD
-        or consecutive_empty_search_count >= max(2, NO_PROGRESS_EMPTY_SEARCH_THRESHOLD - 1)
+        empty_search_count >= empty_search_threshold
+        or consecutive_empty_search_count >= max(1, empty_search_threshold - 1)
     ):
         signals.append(
             {
@@ -3633,7 +3870,7 @@ def _build_loop_progress_summary(
                 "severity": "warning",
                 "value": empty_search_count,
                 "consecutive_value": consecutive_empty_search_count,
-                "threshold": NO_PROGRESS_EMPTY_SEARCH_THRESHOLD,
+                "threshold": empty_search_threshold,
                 "meaning": "模型多次搜索没有得到匹配结果，需要重新选择定位假设或改用更具体的路径。",
             }
         )
@@ -3679,6 +3916,8 @@ def _build_loop_progress_summary(
         "remaining_turns": remaining_turns,
         "near_turn_budget_threshold": near_turn_budget_threshold,
         "tool_call_count": state.tool_call_count,
+        "model_call_count": state.budget_state.model_call_count,
+        "max_model_calls": budget_manager.max_model_calls,
         "patch_tool_call_count": patch_tool_call_count,
         "has_patch": has_patch,
         "read_only_tool_call_count": read_only_tool_call_count,
@@ -4026,9 +4265,84 @@ def _budget_stop_reason(
     )
     if time.monotonic() >= deadline:
         return "timeout"
+    if (
+        budget_manager.max_model_calls is not None
+        and state.budget_state.model_call_count >= budget_manager.max_model_calls
+    ):
+        return "max_model_calls_exceeded"
     if budget_manager.max_cost is not None and state.budget_state.cost >= budget_manager.max_cost:
         return "max_cost"
     return None
+
+
+def _reserve_model_call_budget(
+    *,
+    budget_manager: BudgetManager,
+    state: AgentLoopState,
+    recorder: RunRecorder,
+    run_id: str,
+    task_id: str,
+    turn: int,
+    call_site: str,
+    model_call_id: str,
+) -> bool:
+    if (
+        budget_manager.max_model_calls is not None
+        and state.budget_state.model_call_count >= budget_manager.max_model_calls
+    ):
+        _record_budget_exhausted(
+            run_id=run_id,
+            task_id=task_id,
+            turn=turn,
+            reason="max_model_calls_exceeded",
+            state=state,
+            recorder=recorder,
+            details={
+                "call_site": call_site,
+                "attempted_model_call_id": model_call_id,
+                "max_model_calls": budget_manager.max_model_calls,
+                "used_model_calls": state.budget_state.model_call_count,
+                "provider_request_submitted": False,
+                "trainable": False,
+            },
+        )
+        return False
+    state.budget_state.model_call_count += 1
+    return True
+
+
+def _reconcile_reserved_compact_model_calls(*, state: AgentLoopState, result: Any) -> None:
+    attempt_count = int(getattr(result, "compact_model_attempt_count", 1) or 0)
+    state.budget_state.model_call_count = max(
+        0,
+        state.budget_state.model_call_count + attempt_count - 1,
+    )
+
+
+def _model_call_budget_overrun_after_response_details(
+    *,
+    budget_manager: BudgetManager,
+    state: AgentLoopState,
+    model_call_id: str,
+    call_site: str,
+    attempt_count: int,
+    retry_count: int,
+) -> dict[str, Any] | None:
+    if budget_manager.max_model_calls is None:
+        return None
+    if state.budget_state.model_call_count <= budget_manager.max_model_calls:
+        return None
+    return {
+        "provider_request_submitted": True,
+        "over_budget_after_response": True,
+        "model_call_id": model_call_id,
+        "call_site": call_site,
+        "attempt_count": attempt_count,
+        "retry_count": retry_count,
+        "max_model_calls": budget_manager.max_model_calls,
+        "used_model_calls": state.budget_state.model_call_count,
+        "trainable": False,
+    }
 
 
 def _resolve_provider_call_timeout(
@@ -4137,6 +4451,10 @@ def _record_budget_exhausted(
 ) -> None:
     state.agent_stop_reason = reason  # type: ignore[assignment]
     state.budget_state.stop_reason = reason
+    event_details = dict(details or {})
+    if reason == "max_model_calls_exceeded":
+        event_details.setdefault("provider_request_submitted", False)
+        event_details.setdefault("used_model_calls", state.budget_state.model_call_count)
     recorder.append_event(
         TrajectoryEvent(
             event_id=recorder.next_event_id("budget"),
@@ -4149,7 +4467,9 @@ def _record_budget_exhausted(
             error_type=reason,
             data={
                 "reason": reason,
-                **(details or {}),
+                "stop_reason": reason,
+                "recorder_event_type": recorder_event_type_for_stop_reason(reason),
+                **event_details,
                 "budget_state": state.budget_state.model_dump(mode="json"),
             },
         )
@@ -4167,6 +4487,7 @@ def _default_budget_manager(max_turns: int) -> BudgetManager:
         max_tool_output_chars=12000,
         max_context_tokens=120000,
         max_output_tokens=4096,
+        max_model_calls=None,
     )
 
 

@@ -90,3 +90,4 @@ def test_budget_manager_from_run_config_uses_effective_context_budget():
     budget = BudgetManager.from_run_config(config)
 
     assert budget.max_context_tokens == 938000
+    assert budget.max_model_calls is None

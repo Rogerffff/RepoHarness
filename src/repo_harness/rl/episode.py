@@ -144,6 +144,8 @@ class BudgetConsumption(StrictBaseModel):
     used_turns: int | None = Field(default=None, ge=0)
     max_wall_seconds: float | None = Field(default=None, ge=0)
     used_wall_seconds: float | None = Field(default=None, ge=0)
+    max_model_calls: int | None = Field(default=None, ge=0)
+    used_model_calls: int | None = Field(default=None, ge=0)
     max_model_call_seconds: float | None = Field(default=None, ge=0)
     used_model_call_seconds: float | None = Field(default=None, ge=0)
     max_tool_calls: int | None = Field(default=None, ge=0)
