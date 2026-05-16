@@ -72,7 +72,7 @@ def _request() -> LLMGatewayRequest:
         turn=0,
         context_revision=0,
         messages=[{"role": "user", "content": "fix tests"}],
-        sampling_params={"temperature": 0.2, "max_tokens": 4},
+        sampling_params={"temperature": 0.2, "max_output_tokens": 4},
         sticky_session_id="sticky-episode-1",
     )
 
@@ -101,7 +101,7 @@ def test_stage11_verl_gateway_calls_llm_server_with_sticky_request_id() -> None:
         {
             "request_id": "sticky-episode-1",
             "prompt_ids": [11, 12, 13],
-            "sampling_params": {"top_p": 0.9, "temperature": 0.2, "max_tokens": 4},
+            "sampling_params": {"top_p": 0.9, "temperature": 0.2, "max_new_tokens": 4},
             "image_data": None,
             "video_data": None,
             "kwargs": {},

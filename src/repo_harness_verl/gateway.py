@@ -82,6 +82,9 @@ class VerlLLMGateway:
     def _merged_sampling_params(self, request: LLMGatewayRequest) -> dict[str, Any]:
         merged = {key: value for key, value in self.sampling_params.items() if value is not None}
         merged.update({key: value for key, value in request.sampling_params.items() if value is not None})
+        max_output_tokens = merged.pop("max_output_tokens", None)
+        if "max_new_tokens" not in merged and max_output_tokens is not None:
+            merged["max_new_tokens"] = max_output_tokens
         return merged
 
 

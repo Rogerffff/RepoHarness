@@ -1,0 +1,20 @@
+diff --git a/verl/workers/rollout/sglang_rollout/sglang_rollout.py b/verl/workers/rollout/sglang_rollout/sglang_rollout.py
+index b6b959f4..ba5a6c8e 100644
+--- a/verl/workers/rollout/sglang_rollout/sglang_rollout.py
++++ b/verl/workers/rollout/sglang_rollout/sglang_rollout.py
+@@ -235,6 +235,7 @@ class ServerAdapter(BaseRollout):
+             f"server={host}:{server_port}, actor={actor_name}"
+         )
+ 
++        engine_kwargs = dict(self.config.get("engine_kwargs", {}).get("sglang", {}) or {})
+         self._engine = AsyncHttpServerAdapter(
+             model_path=self.model_config.local_path,
+             host=host,
+@@ -242,6 +243,7 @@ class ServerAdapter(BaseRollout):
+             launch_server=False,
+             trust_remote_code=self.model_config.trust_remote_code,
+             **timeout_kwargs,
++            **engine_kwargs,
+         )
+ 
+     def _is_server_tp_leader(self) -> bool:

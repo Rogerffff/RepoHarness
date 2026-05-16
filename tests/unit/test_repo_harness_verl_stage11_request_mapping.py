@@ -19,6 +19,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _safe_kwargs() -> dict:
     return {
         "raw_prompt": [{"role": "user", "content": "fix the failing unit test"}],
+        "prompt": [{"role": "user", "content": "fix the failing unit test"}],
+        "data_source": "repo_harness_stage11_smoke",
+        "tools_kwargs": {},
+        "extra_info": {"index": 3},
         "agent_name": "repo_harness",
         "task_id": "task-1",
         "repo_harness_task_ref": {"task_ref": "rh://task/task-1", "task_path": "tasks/task-1.json"},
@@ -61,6 +65,10 @@ def test_stage11_kwargs_accepts_request_and_verl_control_fields() -> None:
     assert validated["uid"] == "uid-abc"
     assert validated["session_id"] == 2
     assert validated["global_steps"] == 11
+    assert validated["prompt"][0]["role"] == "user"
+    assert validated["data_source"] == "repo_harness_stage11_smoke"
+    assert validated["tools_kwargs"] == {}
+    assert validated["extra_info"] == {"index": 3}
 
 
 @pytest.mark.parametrize(
@@ -168,6 +176,20 @@ def test_stage11_model_visible_context_refs_are_not_enabled_yet() -> None:
     payload["repo_harness_model_visible_context_refs"] = ["rh://context/model-visible"]
 
     with pytest.raises(RepoHarnessVerlRequestMappingError, match="not_allowlisted"):
+        validate_repo_harness_verl_kwargs(payload)
+
+
+def test_stage11_runtime_only_extra_info_rejects_hidden_payloads() -> None:
+    payload = _safe_kwargs()
+    payload["extra_info"] = {"reward_model": {"ground_truth": "answer"}}
+
+    with pytest.raises(RepoHarnessVerlRequestMappingError, match="ground_truth"):
+        validate_repo_harness_verl_kwargs(payload)
+
+    payload = _safe_kwargs()
+    payload["tools_kwargs"] = {"read_file": {"path": "/Users/roger/secret.txt"}}
+
+    with pytest.raises(RepoHarnessVerlRequestMappingError, match="absolute local path"):
         validate_repo_harness_verl_kwargs(payload)
 
 

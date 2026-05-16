@@ -17,7 +17,12 @@ from repo_harness.rl.visibility import (
 )
 
 from .errors import RepoHarnessVerlRequestMappingError
-from .visibility import TRANSFER_QUEUE_RESERVED_KWARGS, VerlVisibilityError, validate_transfer_queue_kwargs
+from .visibility import (
+    TRANSFER_QUEUE_RESERVED_KWARGS,
+    VerlVisibilityError,
+    validate_transfer_queue_field_visibility,
+    validate_transfer_queue_kwargs,
+)
 
 REQUEST_CONSTRUCTION_KWARGS = frozenset(
     {
@@ -37,8 +42,11 @@ REQUEST_CONSTRUCTION_KWARGS = frozenset(
     }
 )
 
-VERL_CONTROL_KWARGS = frozenset({"index", "uid", "session_id", "global_steps"})
+VERL_CONTROL_KWARGS = frozenset(
+    {"prompt", "data_source", "tools_kwargs", "extra_info", "index", "uid", "session_id", "global_steps"}
+)
 REPO_HARNESS_VERL_ALLOWED_KWARGS = REQUEST_CONSTRUCTION_KWARGS | VERL_CONTROL_KWARGS
+RUNTIME_ONLY_SAFE_MAPPING_KWARGS = frozenset({"tools_kwargs", "extra_info"})
 RUN_MODES = {"full_audit", "training_fast", "training_debug"}
 _SAFE_IDENTIFIER_REPLACEMENTS = re.compile(r"[^A-Za-z0-9_.:-]+")
 
@@ -57,7 +65,16 @@ def validate_repo_harness_verl_kwargs(kwargs: Mapping[str, Any]) -> dict[str, An
     """
 
     try:
-        validate_transfer_queue_kwargs(dict(kwargs), allowed_keys=set(REPO_HARNESS_VERL_ALLOWED_KWARGS))
+        transfer_queue_like_kwargs = {
+            key: value for key, value in kwargs.items() if key not in RUNTIME_ONLY_SAFE_MAPPING_KWARGS
+        }
+        validate_transfer_queue_kwargs(
+            transfer_queue_like_kwargs,
+            allowed_keys=set(REPO_HARNESS_VERL_ALLOWED_KWARGS - RUNTIME_ONLY_SAFE_MAPPING_KWARGS),
+        )
+        for key in RUNTIME_ONLY_SAFE_MAPPING_KWARGS:
+            if key in kwargs:
+                validate_transfer_queue_field_visibility({"runtime_kwargs": kwargs[key]})
     except VerlVisibilityError as exc:
         raise RepoHarnessVerlRequestMappingError(str(exc)) from exc
 

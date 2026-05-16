@@ -1,0 +1,1 @@
+MESSAGE = "safe workspace file"
