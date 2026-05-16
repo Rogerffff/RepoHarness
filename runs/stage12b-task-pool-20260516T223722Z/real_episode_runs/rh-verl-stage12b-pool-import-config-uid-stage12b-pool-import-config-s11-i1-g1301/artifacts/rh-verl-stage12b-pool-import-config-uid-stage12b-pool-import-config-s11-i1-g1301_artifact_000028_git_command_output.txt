@@ -1,0 +1,16 @@
+$ git diff 60d75379b0ae8a38f219e1064423785953a18e91
+
+[stdout]
+diff --git a/app/settings.py b/app/settings.py
+index 02ba1ee..cf9ba87 100644
+--- a/app/settings.py
++++ b/app/settings.py
+@@ -2,4 +2,4 @@ DEFAULT_FLAGS = {"search": True}
+ 
+ 
+ def get_feature_flag(name: str) -> bool:
+-    return DEFAULT_FLAGS[name]
++    return DEFAULT_FLAGS.get(name, False)
+
+
+[stderr]

@@ -1,0 +1,38 @@
+{
+  "cases": [
+    {
+      "case": "real_episode_extra_fields_batch_visibility",
+      "status": "passed"
+    },
+    {
+      "case": "safe_transfer_queue_payload",
+      "status": "passed"
+    },
+    {
+      "case": "nested_ground_truth_rejected",
+      "error_message": "forbidden_transfer_queue_field_name: ground_truth",
+      "error_type": "VerlVisibilityError",
+      "status": "rejected"
+    },
+    {
+      "case": "nested_reward_extra_info_rejected",
+      "error_message": "forbidden_transfer_queue_field_name: reward_extra_info",
+      "error_type": "VerlVisibilityError",
+      "status": "rejected"
+    },
+    {
+      "case": "tool_call_hidden_verifier_rejected",
+      "error_message": "token_output.extra_fields.repo_harness_tool_calls[0].arguments.note contains evaluator-only content: hidden_verifier",
+      "error_type": "VerlVisibilityError",
+      "status": "rejected"
+    },
+    {
+      "case": "tool_call_absolute_path_rejected",
+      "error_message": "token_output.extra_fields.repo_harness_tool_calls[0].arguments.path must not contain an absolute local path",
+      "error_type": "VerlVisibilityError",
+      "status": "rejected"
+    }
+  ],
+  "schema_version": "repo_harness_stage12b_visibility_matrix_report_v0",
+  "status": "passed"
+}

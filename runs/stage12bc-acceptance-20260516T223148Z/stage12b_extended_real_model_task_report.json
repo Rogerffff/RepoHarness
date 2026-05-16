@@ -1,0 +1,282 @@
+{
+  "attempted_episode_count": 15,
+  "created_at": "2026-05-16T22:48:54.098683+00:00",
+  "failed_episode_count": 5,
+  "failed_task_ids": [
+    "stage12b-pool-buggy-calculator",
+    "stage12b-extra-clamp-bounds",
+    "stage12b-extra-slugify-spaces",
+    "stage12b-extra-config-default",
+    "stage12b-retry-clamp"
+  ],
+  "failure_classification": {
+    "model_format_or_protocol_drift": [
+      {
+        "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-pool-buggy-calculator-uid-stage12b-pool-buggy-calculator-s10-i0-g1300 run_id=rh-verl-stage12b-pool-buggy-calculator-uid-stage12b-pool-buggy-calculator-s10-i0-g1300 status=invalid_task status_reason=test_command_error: missing_reward_score",
+        "failure_type": "RepoHarnessVerlAdapterError",
+        "num_turns": null,
+        "repo_harness_status": null,
+        "reward_score": null,
+        "run_dir": null,
+        "server_call_count": 2,
+        "status": "failed",
+        "suite": "fixture_pool",
+        "task_id": "stage12b-pool-buggy-calculator"
+      },
+      {
+        "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-extra-clamp-bounds-uid-stage12b-extra-clamp-bounds-s20-i0-g1400 run_id=rh-verl-stage12b-extra-clamp-bounds-uid-stage12b-extra-clamp-bounds-s20-i0-g1400 status=invalid_task status_reason=test_command_error: missing_reward_score",
+        "failure_type": "RepoHarnessVerlAdapterError",
+        "num_turns": null,
+        "repo_harness_status": null,
+        "reward_score": null,
+        "run_dir": null,
+        "server_call_count": 2,
+        "status": "failed",
+        "suite": "extra_tasks",
+        "task_id": "stage12b-extra-clamp-bounds"
+      },
+      {
+        "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-extra-slugify-spaces-uid-stage12b-extra-slugify-spaces-s21-i1-g1401 run_id=rh-verl-stage12b-extra-slugify-spaces-uid-stage12b-extra-slugify-spaces-s21-i1-g1401 status=invalid_task status_reason=test_command_error: missing_reward_score",
+        "failure_type": "RepoHarnessVerlAdapterError",
+        "num_turns": null,
+        "repo_harness_status": null,
+        "reward_score": null,
+        "run_dir": null,
+        "server_call_count": 3,
+        "status": "failed",
+        "suite": "extra_tasks",
+        "task_id": "stage12b-extra-slugify-spaces"
+      },
+      {
+        "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-extra-config-default-uid-stage12b-extra-config-default-s22-i2-g1402 run_id=rh-verl-stage12b-extra-config-default-uid-stage12b-extra-config-default-s22-i2-g1402 status=invalid_task status_reason=test_command_error: missing_reward_score",
+        "failure_type": "RepoHarnessVerlAdapterError",
+        "num_turns": null,
+        "repo_harness_status": null,
+        "reward_score": null,
+        "run_dir": null,
+        "server_call_count": 2,
+        "status": "failed",
+        "suite": "extra_tasks",
+        "task_id": "stage12b-extra-config-default"
+      },
+      {
+        "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 run_id=rh-verl-stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 status=invalid_task status_reason=test_command_error: missing_reward_score",
+        "failure_type": "RepoHarnessVerlAdapterError",
+        "num_turns": null,
+        "repo_harness_status": null,
+        "reward_score": null,
+        "run_dir": null,
+        "server_call_count": 3,
+        "status": "failed",
+        "suite": "failed_task_retries",
+        "task_id": "stage12b-retry-clamp"
+      }
+    ],
+    "other_failures": []
+  },
+  "image": "verlai/verl:sgl056.latest",
+  "interpretation": "Across the single smoke, fixture pool, extra micro-repo tasks, and targeted retries, 10 of 15 real model episodes reached succeeded status with reward_score=1.0. Remaining failures are useful model behavior evidence, mostly tool protocol drift or incorrect model edits, not GPU/backend startup failures.",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "results": [
+    {
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-real-episode-20260516T215345Z/real_episode_runs/rh-verl-stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "single_real_episode",
+      "task_id": "stage12b-buggy-calculator-real-model"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-pool-buggy-calculator-uid-stage12b-pool-buggy-calculator-s10-i0-g1300 run_id=rh-verl-stage12b-pool-buggy-calculator-uid-stage12b-pool-buggy-calculator-s10-i0-g1300 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "num_turns": null,
+      "repo_harness_status": null,
+      "reward_score": null,
+      "run_dir": null,
+      "server_call_count": 2,
+      "status": "failed",
+      "suite": "fixture_pool",
+      "task_id": "stage12b-pool-buggy-calculator"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-task-pool-20260516T223722Z/real_episode_runs/rh-verl-stage12b-pool-import-config-uid-stage12b-pool-import-config-s11-i1-g1301",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "fixture_pool",
+      "task_id": "stage12b-pool-import-config"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 2,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-task-pool-20260516T223722Z/real_episode_runs/rh-verl-stage12b-pool-security-probe-uid-stage12b-pool-security-probe-s12-i2-g1302",
+      "server_call_count": 2,
+      "status": "completed",
+      "suite": "fixture_pool",
+      "task_id": "stage12b-pool-security-probe"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 2,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-task-pool-20260516T223722Z/real_episode_runs/rh-verl-stage12b-pool-flaky-counter-uid-stage12b-pool-flaky-counter-s13-i3-g1303",
+      "server_call_count": 2,
+      "status": "completed",
+      "suite": "fixture_pool",
+      "task_id": "stage12b-pool-flaky-counter"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-extra-clamp-bounds-uid-stage12b-extra-clamp-bounds-s20-i0-g1400 run_id=rh-verl-stage12b-extra-clamp-bounds-uid-stage12b-extra-clamp-bounds-s20-i0-g1400 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "num_turns": null,
+      "repo_harness_status": null,
+      "reward_score": null,
+      "run_dir": null,
+      "server_call_count": 2,
+      "status": "failed",
+      "suite": "extra_tasks",
+      "task_id": "stage12b-extra-clamp-bounds"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-extra-slugify-spaces-uid-stage12b-extra-slugify-spaces-s21-i1-g1401 run_id=rh-verl-stage12b-extra-slugify-spaces-uid-stage12b-extra-slugify-spaces-s21-i1-g1401 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "num_turns": null,
+      "repo_harness_status": null,
+      "reward_score": null,
+      "run_dir": null,
+      "server_call_count": 3,
+      "status": "failed",
+      "suite": "extra_tasks",
+      "task_id": "stage12b-extra-slugify-spaces"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-extra-config-default-uid-stage12b-extra-config-default-s22-i2-g1402 run_id=rh-verl-stage12b-extra-config-default-uid-stage12b-extra-config-default-s22-i2-g1402 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "num_turns": null,
+      "repo_harness_status": null,
+      "reward_score": null,
+      "run_dir": null,
+      "server_call_count": 2,
+      "status": "failed",
+      "suite": "extra_tasks",
+      "task_id": "stage12b-extra-config-default"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-extra-real-tasks-20260516T224445Z/real_episode_runs/rh-verl-stage12b-extra-average-empty-uid-stage12b-extra-average-empty-s23-i3-g1403",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "extra_tasks",
+      "task_id": "stage12b-extra-average-empty"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-extra-real-tasks-20260516T224445Z/real_episode_runs/rh-verl-stage12b-extra-initials-uid-stage12b-extra-initials-s24-i4-g1404",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "extra_tasks",
+      "task_id": "stage12b-extra-initials"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 2,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-extra-real-tasks-20260516T224445Z/real_episode_runs/rh-verl-stage12b-extra-read-only-uid-stage12b-extra-read-only-s25-i5-g1405",
+      "server_call_count": 2,
+      "status": "completed",
+      "suite": "extra_tasks",
+      "task_id": "stage12b-extra-read-only"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/real_episode_runs/rh-verl-stage12b-retry-calculator-uid-stage12b-retry-calculator-s30-i0-g1500",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "failed_task_retries",
+      "task_id": "stage12b-retry-calculator"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 run_id=rh-verl-stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "num_turns": null,
+      "repo_harness_status": null,
+      "reward_score": null,
+      "run_dir": null,
+      "server_call_count": 3,
+      "status": "failed",
+      "suite": "failed_task_retries",
+      "task_id": "stage12b-retry-clamp"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/real_episode_runs/rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "failed_task_retries",
+      "task_id": "stage12b-retry-config-default"
+    },
+    {
+      "failure_message": null,
+      "failure_type": null,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/real_episode_runs/rh-verl-stage12b-retry-slugify-uid-stage12b-retry-slugify-s33-i3-g1503",
+      "server_call_count": 3,
+      "status": "completed",
+      "suite": "failed_task_retries",
+      "task_id": "stage12b-retry-slugify"
+    }
+  ],
+  "schema_version": "repo_harness_stage12b_extended_real_model_task_report_v0",
+  "status": "extended_real_model_task_pool_partial_passed",
+  "succeeded_episode_count": 10,
+  "success_rate": 0.6666666666666666,
+  "successful_task_ids": [
+    "stage12b-buggy-calculator-real-model",
+    "stage12b-pool-import-config",
+    "stage12b-pool-security-probe",
+    "stage12b-pool-flaky-counter",
+    "stage12b-extra-average-empty",
+    "stage12b-extra-initials",
+    "stage12b-extra-read-only",
+    "stage12b-retry-calculator",
+    "stage12b-retry-config-default",
+    "stage12b-retry-slugify"
+  ],
+  "suite_summaries": {
+    "extra_tasks": "runs/stage12b-extra-real-tasks-20260516T224445Z/stage12b_extra_real_tasks_summary.json",
+    "failed_task_retries": "runs/stage12b-failed-task-retries-20260516T224725Z/stage12b_failed_task_retries_summary.json",
+    "fixture_pool": "runs/stage12b-task-pool-20260516T223722Z/stage12b_task_pool_summary.json",
+    "single_real_episode": "runs/stage12b-real-episode-20260516T215345Z/real_episode_smoke_summary.json"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "command_log": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/stage12b_command_log.jsonl",
+  "extended_real_model_task_report": "runs/stage12bc-acceptance-20260516T223148Z/stage12b_extended_real_model_task_report.json",
+  "failure_taxonomy_report": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/stage12b_failure_taxonomy_report.json",
+  "fixture_manifest": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/fixture_manifest.json",
+  "fixture_sha256_report": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/fixture_sha256_report.json",
+  "image": "verlai/verl:sgl056.latest",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "passed_checks": [
+    "tool_format_probe reached 10/10 parse success with read_file, grep, edit_file, and final coverage",
+    "single real-model real_episode completed through read_file, edit_file, final answer, final verifier, reward metadata, AgentLoopOutput, and DataProto visibility",
+    "response_ids, response_mask, and response_logprobs counts aligned in smoke summary",
+    "fixture manifest and sha256 report generated",
+    "visibility negative cases rejected",
+    "failure taxonomy report generated",
+    "real model task pool executed: 3 of 4 tasks completed with succeeded status and reward_score=1.0",
+    "extended real-model task testing executed: 15 attempted episodes, 10 succeeded with reward_score=1.0"
+  ],
+  "real_episode_summary": "/workspace/RepoHarness/runs/stage12b-real-episode-20260516T215345Z/real_episode_smoke_summary.json",
+  "real_model_task_pool_report": "runs/stage12bc-acceptance-20260516T223148Z/stage12b_real_model_task_pool_report.json",
+  "remaining_followups": [
+    "Harden model/tool protocol behavior for failures where the model emitted tool_response-like text or empty final responses instead of valid edit_file/final-answer turns.",
+    "Investigate model task failures where the edit was syntactically valid but semantically incorrect, such as slugify regex misuse in the first attempt.",
+    "Finalize or fix run_status.json lifecycle so completed runs do not remain marked RUNNING.",
+    "Optionally execute vLLM parity and a full trainer global step after the current loss-path smoke."
+  ],
+  "repo_commit": "ab96238df1e36f7f7f5ef50a9fb05cbbad284df4",
+  "run_status_reconciliation_report": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/stage12b_run_status_reconciliation_report.json",
+  "schema_version": "repo_harness_stage12b_acceptance_summary_v0",
+  "stage12b_commands_passed": true,
+  "status": "extended_real_model_task_pool_partial_passed_full_acceptance_pending",
+  "task_pool_report": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/stage12b_task_pool_report.json",
+  "timing_resource_report": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/stage12b_timing_resource_report.json",
+  "tool_probe_summary": "/workspace/RepoHarness/runs/stage12b-20260516T213210Z/tool_format_probe/tool_format_probe_summary.json",
+  "visibility_matrix_report": "/workspace/RepoHarness/runs/stage12bc-acceptance-20260516T223148Z/stage12b_visibility_matrix_report.json"
+}

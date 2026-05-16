@@ -1,0 +1,16 @@
+$ git diff 4bf161e22fe30e621a609b03b2a9d6af04a21301
+
+[stdout]
+diff --git a/config_utils.py b/config_utils.py
+index 66c03fe..3b049de 100644
+--- a/config_utils.py
++++ b/config_utils.py
+@@ -2,4 +2,4 @@ TIMEOUTS = {"search": 5, "index": 10}
+ 
+ 
+ def get_timeout(service: str) -> int:
+-    return TIMEOUTS[service]
++    return TIMEOUTS.get(service, 30)
+
+
+[stderr]

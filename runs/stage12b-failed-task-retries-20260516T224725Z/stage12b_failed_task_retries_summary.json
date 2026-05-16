@@ -1,0 +1,223 @@
+{
+  "completed_count": 3,
+  "image": "verlai/verl:sgl056.latest",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "repo_commit": "ab96238df1e36f7f7f5ef50a9fb05cbbad284df4",
+  "results": [
+    {
+      "invalid_for_online_rl": false,
+      "invalid_for_training": false,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "response_logprob_count": 170,
+      "response_mask_count": 170,
+      "response_token_count": 170,
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/real_episode_runs/rh-verl-stage12b-retry-calculator-uid-stage12b-retry-calculator-s30-i0-g1500",
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3791,
+          "request_id": "f76755e361dc49a3b0de7945ae2cd5b2",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"calculator.py\"}}\n```",
+          "token_count": 22
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3890,
+          "request_id": "0e5d8ae2b2484aaca4b49fc664b5cf27",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "{\"name\": \"edit_file\", \"arguments\": {\"path\": \"calculator.py\", \"old_text\": \"    return left / right\", \"new_text\": \"    if right == 0:\\n        raise ValueError('division by zero')\\n    return left / right\"}}",
+          "token_count": 58
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3969,
+          "request_id": "5b8821ee77ad48b286b95b7b08d231db",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "Division by zero now raises a ValueError with the message \"division by zero\" in the `divide` function.",
+          "token_count": 23
+        }
+      ],
+      "source_repo": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/source_repos/calculator_retry",
+      "status": "completed",
+      "task_id": "stage12b-retry-calculator",
+      "transfer_queue_visibility": "passed"
+    },
+    {
+      "failure_message": "episode_result_not_formal_online_rl: episode_id=stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 run_id=rh-verl-stage12b-retry-clamp-uid-stage12b-retry-clamp-s31-i1-g1501 status=invalid_task status_reason=test_command_error: missing_reward_score",
+      "failure_type": "RepoHarnessVerlAdapterError",
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3810,
+          "request_id": "8043c243929c4798adc9b0e8a00a7794",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"math_utils.py\"}}\n```",
+          "token_count": 23
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3893,
+          "request_id": "047212dc906d4522b50233490fc6c534",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"edit_file\", \"arguments\": {\"path\": \"math_utils.py\", \"old_text\": \"        return value\\n\", \"new_text\": \"        if value > upper:\\n            return upper\\n        return value\\n\"}}\n```",
+          "token_count": 54
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3987,
+          "request_id": "3b7aa3e64298451786c07aeec4502ef6",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "\n",
+          "token_count": 3
+        }
+      ],
+      "source_repo": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/source_repos/clamp_retry",
+      "status": "failed",
+      "task_id": "stage12b-retry-clamp"
+    },
+    {
+      "invalid_for_online_rl": false,
+      "invalid_for_training": false,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "response_logprob_count": 170,
+      "response_mask_count": 170,
+      "response_token_count": 170,
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/real_episode_runs/rh-verl-stage12b-retry-config-default-uid-stage12b-retry-config-default-s32-i2-g1502",
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3806,
+          "request_id": "a5c9d43f9d3d4182b9de680f5ca00589",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"config_utils.py\"}}\n```",
+          "token_count": 23
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3897,
+          "request_id": "a4d30fb52e944c5886901d6650e75a1b",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\n  \"name\": \"edit_file\",\n  \"arguments\": {\n    \"path\": \"config_utils.py\",\n    \"old_text\": \"    return TIMEOUTS[service]\\n\",\n    \"new_text\": \"    return TIMEOUTS.get(service, 30)\\n\"\n  }\n}\n```",
+          "token_count": 65
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3970,
+          "request_id": "e3c35fc3528d406f84edca9702e2a603",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "The `get_timeout` function now returns 30 for missing service names instead of raising a KeyError.",
+          "token_count": 22
+        }
+      ],
+      "source_repo": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/source_repos/config_retry",
+      "status": "completed",
+      "task_id": "stage12b-retry-config-default",
+      "transfer_queue_visibility": "passed"
+    },
+    {
+      "invalid_for_online_rl": false,
+      "invalid_for_training": false,
+      "num_turns": 3,
+      "repo_harness_status": "succeeded",
+      "response_logprob_count": 154,
+      "response_mask_count": 154,
+      "response_token_count": 154,
+      "reward_score": 1.0,
+      "run_dir": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/real_episode_runs/rh-verl-stage12b-retry-slugify-uid-stage12b-retry-slugify-s33-i3-g1503",
+      "server_call_count": 3,
+      "server_calls": [
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3826,
+          "request_id": "3ea767ba0e344f3dba61a2d69da4d6f5",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"read_file\", \"arguments\": {\"path\": \"text_utils.py\"}}\n```",
+          "token_count": 23
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3885,
+          "request_id": "4fb7387c2f7d4335b89216cf2893de88",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "```json\n{\"name\": \"edit_file\", \"arguments\": {\"path\": \"text_utils.py\", \"old_text\": \"def slugify(text: str) -> str:\\n    return text.lower()\", \"new_text\": \"def slugify(text: str) -> str:\\n    return '-'.join(text.strip().lower().split())\"}}\n```",
+          "token_count": 73
+        },
+        {
+          "finish_reason": "stop",
+          "prompt_len": 3976,
+          "request_id": "5bb620455c1d4fc7b7bed409e2c43eef",
+          "sampling_params": {
+            "max_new_tokens": 96,
+            "temperature": 0.0,
+            "top_p": 1.0
+          },
+          "text": "slugify now correctly lowercases text, strips leading and trailing spaces, and collapses one or more whitespace characters between words into a single hyphen.",
+          "token_count": 30
+        }
+      ],
+      "source_repo": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/source_repos/slugify_retry",
+      "status": "completed",
+      "task_id": "stage12b-retry-slugify",
+      "transfer_queue_visibility": "passed"
+    }
+  ],
+  "run_root": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z",
+  "schema_version": "repo_harness_stage12b_failed_task_retries_summary_v0",
+  "server_call_count": 12,
+  "source_root": "/workspace/RepoHarness/runs/stage12b-failed-task-retries-20260516T224725Z/source_repos",
+  "status": "completed",
+  "succeeded_count": 3,
+  "task_count": 4
+}

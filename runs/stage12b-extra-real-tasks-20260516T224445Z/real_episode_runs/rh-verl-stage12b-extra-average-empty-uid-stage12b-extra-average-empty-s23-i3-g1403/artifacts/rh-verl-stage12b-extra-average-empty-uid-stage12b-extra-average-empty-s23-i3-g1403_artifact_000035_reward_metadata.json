@@ -1,0 +1,33 @@
+{
+  "acceptance_policy_version": "repo_harness_acceptance_policy_v0",
+  "components": {
+    "accepted_bonus": 1.0,
+    "cost_penalty": 0.0,
+    "diagnostic_reward_before_invalid_clip": 0.9999999999999999,
+    "fail_to_pass_score": 1.0,
+    "pass_to_pass_score": 1.0,
+    "patch_size_penalty": 0.0,
+    "regression_penalty": 0.0,
+    "timeout_penalty": 0.0
+  },
+  "final_reward": 1.0,
+  "formula": "0.7 * fail_to_pass_score + 0.2 * pass_to_pass_score + 0.1 * accepted_bonus - cost_penalty - patch_size_penalty - regression_penalty - timeout_penalty",
+  "invalid_for_training": false,
+  "invalid_reason": null,
+  "reward_clip_range": [
+    0.0,
+    1.0
+  ],
+  "reward_version": "repo_harness_reward_v0",
+  "schema_version": "repo_harness_reward_metadata_v0",
+  "sources": {
+    "patch_added_lines": 0,
+    "patch_removed_lines": 0,
+    "test_run_count": 0,
+    "tool_call_count": 0,
+    "turn_count": 0,
+    "verifier_pool_id": "direct-blocking",
+    "verifier_queue_wait_seconds": 0.0,
+    "verifier_worker_id": "direct"
+  }
+}

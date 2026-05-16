@@ -1,0 +1,14 @@
+$ git diff --binary 226cf4777a0eb5a0902e0a98571bc435eeb7c17a
+
+[stdout]
+diff --git a/names.py b/names.py
+index 2f3e062..aa8c83d 100644
+--- a/names.py
++++ b/names.py
+@@ -1,2 +1,2 @@
+ def initials(name: str) -> str:
+-    return name[:1].upper()
++    return ''.join(word[0].upper() for word in name.split())
+
+
+[stderr]

@@ -1,0 +1,15 @@
+$ git diff e3ceeba999aa59886c5bc5d2c732afb03efd503c
+
+[stdout]
+diff --git a/stats_utils.py b/stats_utils.py
+index 99a7e11..f65e8fb 100644
+--- a/stats_utils.py
++++ b/stats_utils.py
+@@ -1,2 +1,4 @@
+ def average(values: list[float]) -> float:
++    if len(values) == 0:
++        return 0.0
+     return sum(values) / len(values)
+
+
+[stderr]

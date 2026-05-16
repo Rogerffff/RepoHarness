@@ -1,0 +1,65 @@
+{
+  "artifact_kinds": [
+    "assistant_message",
+    "budget_decision_trace",
+    "content_replacement_state",
+    "final_diff",
+    "final_patch",
+    "final_verifier",
+    "git_command_output",
+    "model_input_snapshot",
+    "prepared_messages",
+    "read_file",
+    "reward_metadata"
+  ],
+  "final_verifier_artifact_count": 1,
+  "image": "verlai/verl:sgl056.latest",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "note": "TimingSummary and ResourceSummary are referenced through opaque refs in AgentLoopOutput extra_fields; this report summarizes the concrete smoke evidence persisted in the run directory.",
+  "response_logprob_count": 182,
+  "response_mask_count": 182,
+  "response_token_count": 182,
+  "reward_metadata_artifact_count": 1,
+  "run_dir": "/workspace/RepoHarness/runs/stage12b-real-episode-20260516T215345Z/real_episode_runs/rh-verl-stage12b-buggy-calculator-real-model-uid-stage12b-real-model-s1-i0-g1200",
+  "schema_version": "repo_harness_stage12b_timing_resource_report_v0",
+  "server_call_count": 3,
+  "server_calls": [
+    {
+      "finish_reason": "stop",
+      "prompt_len": 3786,
+      "request_id": "fa982b9ee526410f92617ca97b3921a9",
+      "sampling_params": {
+        "max_new_tokens": 96,
+        "temperature": 0.0,
+        "top_p": 1.0
+      },
+      "text": "{\"name\": \"read_file\", \"arguments\": {\"path\": \"calculator.py\"}}",
+      "token_count": 18
+    },
+    {
+      "finish_reason": "stop",
+      "prompt_len": 3885,
+      "request_id": "5b8f2856e72e48eca1502ec6a2df66a1",
+      "sampling_params": {
+        "max_new_tokens": 96,
+        "temperature": 0.0,
+        "top_p": 1.0
+      },
+      "text": "```json\n{\"name\": \"edit_file\", \"arguments\": {\"path\": \"calculator.py\", \"old_text\": \"    return left / right\", \"new_text\": \"    if right == 0:\\n        raise ValueError('division by zero')\\n    return left / right\"}}\n```",
+      "token_count": 62
+    },
+    {
+      "finish_reason": "stop",
+      "prompt_len": 3964,
+      "request_id": "33becf5a3d77458eac463382f825b8ca",
+      "sampling_params": {
+        "max_new_tokens": 96,
+        "temperature": 0.0,
+        "top_p": 1.0
+      },
+      "text": "Division by zero is now handled in the `divide` function by raising a `ValueError` with the message \"division by zero\". The normal division behavior remains unchanged.",
+      "token_count": 35
+    }
+  ],
+  "status": "completed"
+}
