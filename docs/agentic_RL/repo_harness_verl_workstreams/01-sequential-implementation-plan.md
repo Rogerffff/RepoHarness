@@ -34,6 +34,7 @@ Stage 10：实现 TrainingView 到 AgentLoopOutput 的转换
 Stage 11：实现 RepoHarnessVerlAgentLoop 与 VerlLLMGateway
 Stage 11.5：接通真实 RepoHarness episode runtime bridge
 Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
+Stage 12.5：同步高吞吐基线加固，补齐依赖环境缓存、共享 workspace cache、verifier / recorder 热路径和吞吐 profile
 Stage 13：为 fully async 演进预留中断、恢复和异步 reward 设计
 ```
 
@@ -55,6 +56,20 @@ RepoHarness 现在面向评测和审计的运行方式可以完成真实任务�
 | 指标缺失 | 没有结构化 timing/resource summary 时很难判断瓶颈 | 每条 episode 输出 timing summary 和 resource summary |
 
 这些改造都必须进入第一版实施计划。否则即使 verl adapter 能跑通，训练吞吐仍然会被 Harness 固定成本卡住。
+
+Stage 12 已经用于证明真实链路可以跑通，但它不是最终吞吐形态。进入 Stage 13 fully async 之前，必须增加 Stage 12.5，先处理已经暴露出来的训练吞吐问题：
+
+- `real_episode` 目前主要复用源码 snapshot 和 workspace lease，没有真正复用已经安装好的依赖环境。
+- 如果没有显式传入共享 `WorkspaceSnapshotManager` 或共享 cache root，默认 snapshot cache 仍可能落在每条 run directory 下，不适合训练时跨 episode 复用。
+- workspace lease 当前仍以整棵目录复制和整棵目录删除作为正确性基线，大仓库、构建产物或前端依赖目录会放大文件系统开销。
+- final verifier 虽然已经有 worker pool 能力，但真实训练脚本必须默认接入有界 verifier pool，否则 pytest 等验证命令会成为 CPU 阻塞点。
+- `training_fast` 已经降低 raw provider artifact 风险，但命令输出、artifact manifest 和 run evidence 仍可能在热路径上产生大量小文件写入。
+- Stage 12 的 trainer 配置是正确性 smoke，不是吞吐 profile；小 batch、单 agent worker、低推理并发和较大的固定 padding 都会让 GPU 和 Ray worker 吃不满。
+- 推理服务侧的 queue wait、prefill、decode、prefix cache、KV cache eviction、preemption 和 GPU 利用率必须单独观测，否则容易把推理服务吞吐问题误判成 RepoHarness runtime 问题。
+- tokenizer、chat template 和 prompt build 是多轮 agent 的 CPU 热点。每轮都重新构造增长中的 messages、套 chat template、tokenize，会在高并发 rollout 时明显占用 CPU。
+- Ray worker、AgentLoopWorker、RepoHarness runtime、默认线程池和 verifier pool 的共享边界必须清楚，否则 `agent.num_workers` 提高后可能只是把阻塞从 GPU 端转移到本地线程池、文件系统或 verifier 队列。
+- DataProto 固定 padding、有效 token 比例和 loss mask 利用率必须进入 profile，否则 batch 看似变大，实际有效训练 token 可能很少。
+- `TimingSummary` / `ResourceSummary` 必须进一步解释 setup、source hash、snapshot materialization、dependency restore、tool、verifier、artifact write 和 valid sample filtering，否则无法判断 Stage 13 的异步化是否真的解决了瓶颈。
 
 ## 3. Stage 0：冻结 shared contracts 和 canonical fixture
 
@@ -934,7 +949,280 @@ Stage 12-B 证明单条或少量真实模型 episode 可用后，Stage 12-C 再�
 
 因此，Mac 本地验收通过只表示“本地真实 runtime bridge 和 adapter contract 正确”；GPU / Vast.ai 真实模型与小 batch trainer smoke 通过后，才表示“真实训练前可用”。
 
-## 17. Stage 13：fully async 演进预留
+## 17. Stage 12.5：同步高吞吐基线加固
+
+目标：在 Stage 12 已经证明真实 episode、真实模型和小 batch trainer smoke 可用之后，先补齐训练吞吐所需的缓存、并发、热路径和 profile 能力，再进入 Stage 13 的 fully async 设计。
+
+新增这一阶段的原因是：Stage 12 的验收重点是“链路能跑通、训练 batch 语义正确、visibility 安全”，不是“训练吞吐已经适合更大规模 rollout”。如果直接进入 Stage 13，会把依赖安装、workspace 物化、artifact 写入、verifier 执行和 trainer 配置这些同步瓶颈带进 fully async 设计里，后续很难区分是异步架构问题，还是底层训练热路径本身没有加速。
+
+Stage 12.5 必须保持下面边界：
+
+- 不重写完整 async AgentLoop；episode interrupt、resume、async reward backfill 和跨参数版本 trajectory 处理仍属于 Stage 13。
+- 不放松 Stage 0H 到 Stage 11.5 固定的正式训练安全约束。正式 PPO / GRPO 样本仍然必须来自 `route=verl`，必须有 `response_logprobs`，并通过 visibility gate。
+- 不把依赖环境真实路径、workspace 真实路径、run directory、setup log、secret、reward metadata 明文放进 `TrainingView.extra_fields`、`AgentLoopOutput.extra_fields`、DataProto non-tensor batch 或 meta_info。
+- 不把共享 dependency environment 当作 episode 可写目录。episode 可以通过 `PATH`、`VIRTUAL_ENV`、`PYTHONPATH` 使用共享环境，但不能在共享环境里执行会污染后续样本的安装命令。
+- 不把大型 SWE-Bench 正式训练作为本阶段目标。本阶段使用极小仓库任务、小任务池和远端吞吐 profile 证明机制有效。
+
+### Stage 12.5-A：依赖环境缓存
+
+当前 `real_episode` 路径已经有源码 snapshot 和 workspace lease，但没有真正的 dependency environment cache。Stage 12.5 必须新增训练可复用的依赖环境层，建议命名为 `DependencyEnvironmentManager` 或等价 runtime-only manager。
+
+推荐分层：
+
+```text
+source snapshot
+  只保存干净源码树和 source facts
+
+dependency environment cache
+  保存已经准备好的第三方依赖环境，例如 Python virtualenv、uv environment 或容器 layer
+
+episode workspace lease
+  每条 episode 从 source snapshot 派生可写 workspace，通过环境变量使用 dependency environment
+```
+
+dependency environment key 第一版必须拆成三类，避免源码小改动导致纯第三方依赖环境不必要失效：
+
+```text
+base_environment_key
+  描述纯第三方依赖环境
+
+overlay_environment_key
+  描述仓库相关 setup overlay
+
+source_snapshot_key
+  描述源码快照身份
+```
+
+`base_environment_key` 至少应该包含：
+
+- Python 版本、平台和 CPU 架构。
+- 操作系统发行版、glibc 或 musl 版本。
+- CUDA、torch、compiler ABI 或 Docker image digest。
+- 本地执行模式，例如 `local_process`、`docker` 或 `remote_worker`。Docker 模式下必须包含 image digest。
+- pip、uv、npm、pnpm 等包管理器版本。
+- dependency lock hash，例如 `uv.lock`、`requirements.txt`、`pyproject.toml`、`package-lock.json`、`pnpm-lock.yaml` 或任务显式声明的依赖锁。
+- package index URL 的非 secret 摘要。不得把 token、账号、私有 registry secret 写入 key 或 facts。
+- 影响依赖解析的 environment allowlist 摘要，例如 `PIP_INDEX_URL` 是否存在、`UV_INDEX_URL` 是否存在、Node / Python 版本选择，但只记录去敏摘要。
+- RepoHarness dependency environment schema version。
+
+`overlay_environment_key` 至少应该包含：
+
+- setup command hash。
+- overlay strategy，例如 none、PYTHONPATH-only、copy-declared-paths 或后续 overlay venv。
+- 与仓库相关但不应该进入 base environment 的 setup facts。
+
+setup command 的归属必须按实际语义拆分：如果 setup command 只是安装第三方依赖，可以进入 `base_environment_key`；如果 setup command 绑定当前源码路径、执行 editable install、生成仓库本地构建产物，或者写入 episode workspace 相关路径，则必须进入 `overlay_environment_key` 或 `source_snapshot_key` 的 facts，不能污染 base environment。
+
+`source_snapshot_key` 至少应该包含：
+
+- source tree hash 或 source archive sha256。
+- base commit、dataset task revision 或等价 source identity。
+
+实现要求：
+
+- 使用本地 lock、临时目录写入、facts 文件校验后原子发布。
+- cache hit 时必须读取并校验 facts，不能覆盖已有环境。
+- 环境发布后默认只读；如果平台无法可靠只读，必须记录 diagnostics，并禁止 episode 在共享环境中执行安装命令。
+- 命令执行层必须禁止 episode 对共享 environment 执行安装、卸载或写入操作。如果只靠文件权限无法可靠保护，必须通过 command policy、wrapper 或等价机制拦截 `pip install`、`uv pip install`、`npm install`、`pnpm install` 等会写入共享 environment 的命令。
+- 不允许默认在共享环境中执行 `pip install -e <episode_workspace>`，因为 editable install 会把某条 episode 的 workspace 路径写入共享环境。当前仓库源码优先通过 `PYTHONPATH=<episode_workspace>` 暴露给工具和 verifier。
+- 如果确实需要 editable install，只能作为后续 overlay environment 方案，不能混入 Stage 12.5 第一版默认路径。
+- 建议把依赖环境拆成“纯第三方依赖 base environment”和“仓库相关 setup overlay”。第一版可以只实现 base environment，但计划和 facts schema 必须预留 overlay 字段，避免把某个 episode workspace 的路径写入全局共享环境。
+- `LocalWorkspaceAdapter`、Docker workspace 或 runtime command environment 必须能注入 `VIRTUAL_ENV`、`PATH=<env>/bin:$PATH`、`PYTHONNOUSERSITE=1` 和 `PYTHONPATH=<episode_workspace>`。
+- `TimingSummary` 必须记录 environment prepare / dependency restore 时间。
+- `ResourceSummary` 只能记录 opaque ref，例如 `repo_harness_environment_ref=rh://environment/<env_key>`、`dependency_cache_hit` 和 `dependency_cache_key`，不能记录本机绝对路径。
+
+### Stage 12.5-B：共享 workspace cache 和快速物化
+
+当前 Stage 12 证明了 workspace snapshot / lease 的正确性，但训练吞吐需要跨 episode 共享 cache，并减少每条 episode 的目录复制成本。
+
+需要完成：
+
+- 训练入口必须支持显式传入共享 `WorkspaceSnapshotManager` 或共享 cache root。默认训练 helper 不应让每条 episode 在自己的 run directory 下创建独立 snapshot cache。
+- `RepoHarnessVerlAgentLoop` 或 Stage 12.5 runtime helper 必须把共享 cache root 作为 runtime-only 配置传入，不能让它进入 request schema 或 batch 字段。
+- snapshot key 必须绑定 source identity、dependency lock facts、setup command facts 和 environment identity；不能只写固定 `environment_id="local_process"`。
+- `WorkspaceSnapshotManager.acquire_workspace(...)` 保留安全的 directory copy 基线，同时增加可配置快速物化策略，例如 hardlink copy、reflink、`rsync --link-dest`、Git worktree 或 overlay workspace。
+- hardlink copy 只能作为显式 opt-in 策略，必须有只读 snapshot、写前断链或等价保护，不能让 episode 写入通过硬链接污染 snapshot 或其他 lease。
+- 快速物化策略必须保留 Stage 6 已固定的 symlink 越界检查、敏感路径拒绝、lease cleanup、snapshot / lease 一致性检查和路径不可见性检查。
+- 写隔离验收必须覆盖：episode 修改 hardlink 文件后 snapshot 内容不变，另一个 lease 中同一路径内容不变，symlink 越界仍被拒绝，敏感文件仍被拒绝，cleanup 失败会产生 orphan diagnostics。
+- 如果实现 Git worktree 策略，必须证明 `.git` metadata、共享分支状态、index lock 和未提交修改不会在不同 episode 之间串扰。
+- 冷缓存和热缓存都必须输出 resource facts：`snapshot_cache_hit`、`source_tree_hash`、`workspace_lease_id`、`workspace_materialization_seconds` 和 cleanup status。
+
+### Stage 12.5-C：verifier、recorder 和工具热路径
+
+Stage 12.5 不要求重写工具系统，但必须降低最明显的同步固定成本。
+
+verifier 要求：
+
+- 真实训练 runtime helper 默认使用有界 `VerifierWorkerPool`，不能让每条 episode 无控制地直接同步跑 final verifier。
+- verifier pool 必须记录 `pool_id`、`worker_id`、queue wait、execution seconds、timeout、error type 和 release status。
+- pytest 类 verifier 应优先避免重复执行“完整测试命令 + 每个声明测试再单独执行”的固定模式。第一版可以保留安全回退，但必须记录是否发生补跑。
+- verifier timeout 后底层同步线程不可强杀的风险必须继续体现在 diagnostics 中，不能把超时样本伪装成普通 rejected sample。
+
+recorder 和 artifact 要求：
+
+- 在 `training_fast` 基础上新增 `training_hot` recorder 子配置，或者把 training path 下的 artifact manifest 写入改成批量 flush / finalize 机制，避免每个 artifact 都完整读写 manifest。`training_hot` 不是新的 `RepoHarnessEpisodeRequest.run_mode`，第一版 `run_mode` 仍只使用 `full_audit`、`training_fast` 和 `training_debug`。`training_hot` 只能是 `RecorderProfile` 或 runtime-only recorder variant，不能进入 request schema，也不能成为 `TrainingView`、`AgentLoopOutput` 或 DataProto batch 字段。
+- 命令输出 artifact 在 hot path 下默认保存投影、截断或合并输出；完整 stdout / stderr 可通过 debug profile 或抽样审计保留。
+- 必须保留 final patch、final verifier、reward boundary、timing summary、resource summary、training view 和 opaque audit refs。
+- 不能因为减少 artifact 就破坏 Stage 0H visibility 和 audit ref 规则。
+- recorder hot path 必须记录 manifest 写放大指标：`manifest_rewrite_count_per_episode`、`manifest_bytes_written_per_episode`、`artifact_write_seconds_p50`、`artifact_write_seconds_p95`、`artifact_count_per_episode` 和 `artifact_bytes_per_episode`。
+
+工具路径要求：
+
+- Stage 12.5 第一版可以不做同一轮 tool call 并行执行，但必须记录 tool execution seconds，避免工具耗时继续全部混入 `agent_loop_seconds`。
+- tool timing 必须从 `events.jsonl`、tool execution facts 或等价结构化事件汇总，不能继续用固定 `0.0` 占位。
+- 对高频只读工具和 `git_diff` 等多命令工具，应记录命令数量和 artifact 数量，为后续优化提供依据。
+
+### Stage 12.5-D：训练侧吞吐 profile 和有效样本补齐
+
+Stage 12 的 trainer smoke 可以使用保守配置证明正确性；Stage 12.5 必须新增吞吐 profile，证明系统知道如何把资源用起来，并能定位瓶颈。
+
+吞吐 profile 至少包含：
+
+- correctness smoke：保持小 batch、低并发，验证语义和 visibility。
+- cold cache profile：第一次准备 dependency environment 和 source snapshot。
+- warm cache profile：复用 dependency environment 和 source snapshot，验证 setup 不再每条 episode 重做。
+- concurrent episode profile：至少 2 到 4 条真实极小仓库 episode 并发运行，验证 workspace lease、run directory、artifact manifest、route limiter、verifier pool 和 cleanup 不互相污染。
+- trainer profile：提高 `agent.num_workers`、`train_batch_size`、`max_num_seqs`、`max_num_batched_tokens` 和 `gpu_memory_utilization` 到适合小模型 smoke 的值，并记录 Ray、SGLang / vLLM、RepoHarness runtime 和 GPU 侧指标。
+
+吞吐 profile 至少固定下面这些指标名称，便于不同远端运行之间比较：
+
+- `valid_samples_per_minute`
+- `rollout_tokens_per_second`
+- `model_call_seconds_p50` / `model_call_seconds_p95`
+- `workspace_materialization_seconds_p50` / `workspace_materialization_seconds_p95`
+- `dependency_restore_seconds_p50` / `dependency_restore_seconds_p95`
+- `verifier_queue_wait_seconds_p50` / `verifier_queue_wait_seconds_p95`
+- `artifact_bytes_per_episode`
+- `artifact_count_per_episode`
+- `warm_cache_hit_rate`
+- `manifest_rewrite_count_per_episode`
+- `manifest_bytes_written_per_episode`
+- `prompt_build_seconds_p50` / `prompt_build_seconds_p95`
+- `chat_template_seconds_p50` / `chat_template_seconds_p95`
+- `tokenize_seconds_p50` / `tokenize_seconds_p95`
+- `padded_token_ratio`
+- `loss_mask_token_ratio`
+
+有效样本补齐要求：
+
+- 训练侧必须区分 infrastructure failure、invalid task、model format failure、verifier rejected 和 valid trainable sample。
+- refill / resample 第一版默认由 RepoHarness batch collector 或 Stage 12.5 trainer helper 负责，verl sampler 只消费已经通过 formal batch validator 的样本。如果后续改由 verl sampler 负责，必须先另写 request / response contract。
+- refill policy 必须明确目标 valid sample 数、最大 attempt 数、最大 wall time、任务采样去重规则、是否允许同一 task 多次重采样，以及 insufficient valid batch 时的结构化失败字段。
+- 如果正式 batch 需要固定数量 valid samples，必须有可审计的 refill / resample 策略：继续收集直到达到 valid sample 数量，或达到 attempt / time budget 后结构化失败。
+- invalid 样本可以进入 audit evidence 和诊断统计，但不能悄悄进入有效 policy loss。
+- valid sample rate、invalid reason distribution、refill attempts 和 insufficient valid batch reason 必须进入 Stage 12.5 汇总报告。
+
+log probability 和 batch padding 要求：
+
+- Stage 12.5 不能为了吞吐关闭正式 online RL 所需的 rollout log probability provenance。
+- 如果尝试使用 verl 的 rollout correction bypass、actor old logprob 复用或等价配置，必须先写清 contract 影响，并确认不会破坏 `response_ids`、`response_mask`、`response_logprobs` 的 Stage 0H 不变量。
+- Stage 12.5 可以先缩短极小任务 smoke 的 `prompt_length` 和 `response_length`，并记录真实 token 长度分布；更深的 padding-free batch 改造不作为本阶段默认目标。
+- DataProto padding profile 必须记录 `actual_prompt_tokens_p50`、`actual_prompt_tokens_p95`、`actual_response_tokens_p50`、`actual_response_tokens_p95`、`padded_token_ratio`、`loss_mask_token_ratio`、`response_mask_zero_ratio` 和 `length_overflow_filtered_sample_count`。
+- 如果启用 `use_remove_padding` 或当前 verl 版本等价配置，必须重新验证 Stage 0H 的 token、mask、log probability 长度不变量和 visibility 检查。
+
+### Stage 12.5-E：推理服务、tokenization、Ray worker 和系统资源 profile
+
+Stage 12.5 必须把同步高吞吐基线观测补齐，不能只看 RepoHarness 自己的 workspace 和 verifier。这个小节专门覆盖真实训练时常见的非模型代码瓶颈、推理服务瓶颈和系统资源瓶颈。
+
+推理服务 profile 必须记录：
+
+- `inference_server_queue_wait_seconds_p50` / `inference_server_queue_wait_seconds_p95`
+- `prefill_seconds_p50` / `prefill_seconds_p95`
+- `decode_seconds_p50` / `decode_seconds_p95`
+- `prefix_cache_hit_rate`
+- `kv_cache_eviction_count`
+- `num_preempted`
+- `tokens_per_second`
+- `gpu_utilization_p50` / `gpu_utilization_p95`
+- `batched_token_count_p50` / `batched_token_count_p95`
+
+SGLang / vLLM 指标映射要求：
+
+- Stage 12.5 详细执行计划必须列出当前 SGLang 和 vLLM 版本中这些指标的来源字段、日志字段或 API 字段。
+- 如果某个后端版本无法提供某项指标，不能静默填 `0`；必须写入 unsupported diagnostics，例如 `prefix_cache_hit_rate_unavailable`、`kv_cache_eviction_metric_unavailable` 或 `num_preempted_metric_unavailable`。
+- 不同后端的指标口径必须在 `inference_server_profile.json` 中记录，避免把 SGLang 和 vLLM 的不同统计口径直接混算。
+
+sticky session / prefix cache 要求：
+
+- 必须验证 `sticky_session_id=episode_id` 或当前 adapter 等价字段是否真的传到 SGLang / vLLM 请求路径。
+- 多轮 agent episode 必须记录 prefix cache 命中率或后端无法提供该指标的 diagnostics。
+- 如果 prefix cache 没有命中，必须能区分是后端不支持、request id 不稳定、chat template 变化、prompt prefix 不稳定，还是 cache 被 eviction。
+
+tokenizer 和 chat template 要求：
+
+- 必须记录 prompt build、chat template、tokenize 的 p50 / p95 时间。
+- 必须记录 prompt token length distribution。
+- 必须评估 system prompt、tool schema、task prompt 等稳定前缀 token 的缓存可能性；第一版可以只做 profile，不要求实现 prefix token cache。
+- 如果后续实现 prefix token cache，必须证明不会改变模型可见 prompt 内容，也不会绕过 `raw_prompt` visibility 检查。
+
+Ray worker 和本地线程池要求：
+
+- Stage 12.5 详细执行计划必须明确每个 Ray worker 内 `RepoHarnessRuntime` 是单例复用，还是每条 episode 新建。
+- 必须明确 `WorkspaceSnapshotManager`、`DependencyEnvironmentManager`、`VerifierWorkerPool`、`ResourceLeaseManager` 和 route limiter 在 Ray worker 内如何共享，以及跨 worker 是否共享。
+- 必须记录 `active_agent_loop_threads`、`agent_loop_worker_queue_wait_seconds_p50`、`agent_loop_worker_queue_wait_seconds_p95`、Ray actor CPU 使用率和本地线程池队列等待。
+- `RepoHarnessRuntimeOptions.executor_max_workers` 如果继续存在，必须真正约束 `real_episode` worker thread pool；如果不能约束默认 executor，必须在 Stage 12.5 修正命名或实现，避免给训练调参造成假信号。
+
+系统资源 profile 必须记录：
+
+- 文件描述符数量。
+- 磁盘读写字节数。
+- run directory 文件数量。
+- cleanup orphan 数量和 orphan diagnostics。
+- workspace cleanup seconds。
+- verifier subprocess count。
+
+### Stage 12.5-F：验收标准
+
+Stage 12.5 完成时必须有本地和远端两类 evidence。
+
+本地必须通过：
+
+- dependency environment key、facts、atomic publish、cache hit / miss、只读语义和路径不可见性测试。
+- command environment 注入测试，证明工具和 verifier 使用 dependency environment，而不是隐式使用当前进程 Python。
+- workspace shared cache root、snapshot hit、lease fast materialization、安全回退、symlink 越界和 cleanup 测试。
+- verifier worker pool 默认接入测试。
+- recorder hot path 的 artifact 数量、artifact bytes 或 manifest 写入次数下降测试。
+- tool timing 从结构化事件汇总的测试。
+- DataProto padding profile 和 `use_remove_padding` 等价配置下的不变量回归测试。
+- Ray worker / runtime manager 共享边界测试，至少证明单 worker 内 snapshot manager、dependency manager 和 verifier pool 可以复用。
+- Stage 0H 到 Stage 12 的关键回归，尤其是 visibility、formal batch validator、real_episode runtime bridge、Stage 12-A 本地 smoke。
+- Stage 12.5 详细执行计划必须同步更新 shared acceptance contract 或新增 Stage 12.5 专用 acceptance contract，避免阶段 gate 仍停留在 Stage 12 直接进入 Stage 13 的旧表述。
+
+远端必须生成：
+
+```text
+runs/stage12_5-throughput-<timestamp>/
+  environment_cache_report.json
+  workspace_cache_report.json
+  concurrent_episode_report.json
+  trainer_throughput_profile.json
+  verifier_recorder_tool_hot_path_report.json
+  batch_refill_resample_report.json
+  dataproto_padding_profile.json
+  inference_server_profile.json
+  tokenization_profile.json
+  ray_worker_resource_profile.json
+  system_resource_profile.json
+  visibility_and_batch_validation_report.json
+  stage12_5_acceptance_summary.json
+```
+
+远端验收至少证明：
+
+- cold cache 会创建 dependency environment，warm cache 会命中同一个 environment key。
+- warm run 中每条 episode 不再重复执行完整 dependency setup。
+- 多条并发 real episode 复用 snapshot / environment，但 workspace、patch、artifact manifest、run directory 和 cleanup 相互隔离。
+- `TrainingView`、`AgentLoopOutput`、DataProto non-tensor batch 和 meta_info 中没有本机绝对 environment path 或 workspace path。
+- full trainer 小步 profile 至少完成一个 global step，并记录有效样本数量、invalid 样本过滤、GPU / Ray / SGLang 或 vLLM 指标。
+- 推理服务 profile 能区分 queue wait、prefill、decode、prefix cache、KV cache eviction、preemption 和 tokens per second。
+- tokenizer profile 能解释 prompt build、chat template 和 tokenize 的 CPU 耗时。
+- Ray worker profile 能解释 runtime manager 复用、agent loop thread 数、queue wait 和 CPU 占用。
+- DataProto profile 能解释 actual token length、padding ratio、loss mask ratio 和 overflow filtered sample count。
+- `TimingSummary` 能解释 setup、snapshot、dependency restore、model、tool、verifier、artifact 和 cleanup 的主要耗时。
+
+只有 Stage 12.5 完成后，才进入 Stage 13 fully async。否则 Stage 13 必须先声明它只是异步接口预研，不能声称已经建立高吞吐 agentic RL infra。
+
+## 18. Stage 13：fully async 演进预留
 
 目标：第一版先跑通同步 reward 的 agent loop，后续再演进 fully async。
 
@@ -960,7 +1248,7 @@ fully async 需要新增或加强：
 - `AuditRef` 能指向恢复所需状态 artifact。
 - async reward backfill 第一版不做，但未来实现时不能把无 reward 样本伪装成普通成功样本。
 
-## 18. 已采纳的第一版默认决策
+## 19. 已采纳的第一版默认决策
 
 这些决策已经按当前讨论固定为第一版默认选择。后续 agent 应按下面的选择实施；如果需要改变，必须先更新本文档和对应 shared contracts。
 
@@ -982,8 +1270,9 @@ fully async 需要新增或加强：
 16. `AuditRef` 内部保持结构化对象；进入 `AgentLoopOutput.extra_fields` 时采用 namespaced flat scalar 字段，例如 `repo_harness_episode_id`、`repo_harness_run_id`、`repo_harness_audit_manifest_ref`、`repo_harness_timing_summary_ref` 和 `repo_harness_resource_summary_ref`。不要把绝对 `run_dir` 直接放入 verl batch。
 17. 正式 online PPO / GRPO 路径只允许 route=verl；provider route 默认 `invalid_for_online_rl=true`，主要用于 SFT export、preference data、teacher data generation 和 offline diagnostic replay。
 18. Vast.ai preflight 必须记录 verl commit、Python、Ray、vLLM、SGLang、transformers、torch、tokenizer / chat template 来源和镜像信息。
+19. Stage 12.5 是 Stage 13 的前置阶段。只有依赖环境缓存、共享 workspace cache、verifier pool 默认接入、recorder hot path 和吞吐 profile 建立后，Stage 13 才能把 fully async 作为吞吐演进，而不是用异步包装未加速的同步瓶颈。
 
-## 19. 最小成功定义
+## 20. 最小成功定义
 
 第一版成功不是“训练出模型”，而是完成下面闭环：
 
