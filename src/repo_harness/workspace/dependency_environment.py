@@ -1240,9 +1240,10 @@ def _publish_overlay_launcher(link_path: Path, target: Path) -> None:
     if link_path.exists() or link_path.is_symlink():
         return
     link_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(target, link_path, follow_symlinks=True)
     if link_path.name in {"python", "python3"}:
-        _copy_python_runtime_libraries(link_path.parent.parent, source_executable=target)
+        _write_python_launcher(link_path, target)
+        return
+    shutil.copy2(target, link_path, follow_symlinks=True)
 
 
 def _write_python_launcher(path: Path, python_executable: Path) -> None:

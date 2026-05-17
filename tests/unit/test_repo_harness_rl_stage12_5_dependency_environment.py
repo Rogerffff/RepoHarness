@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -299,3 +300,39 @@ def test_stage12_5_default_overlay_python_entry_is_executable_without_shared_pat
     assert str(handle.environment_path) not in env["VIRTUAL_ENV"]
     assert env["VIRTUAL_ENV"].startswith("rh://environment/")
     assert "_REPO_HARNESS_SHARED_ENV_BIN" not in env
+
+
+def test_stage12_5_overlay_python_preserves_shared_venv_site_packages(tmp_path: Path) -> None:
+    def initializer(path: Path, _spec: DependencyEnvironmentSpec) -> None:
+        subprocess.run([sys.executable, "-m", "venv", str(path)], check=True)
+        site_packages = subprocess.check_output(
+            [
+                str(path / "bin" / "python"),
+                "-c",
+                "import site; print(site.getsitepackages()[0])",
+            ],
+            text=True,
+        ).strip()
+        Path(site_packages, "shared_dep_marker.py").write_text(
+            'VALUE = "shared-venv-site-packages-ok"\n',
+            encoding="utf-8",
+        )
+
+    manager = DependencyEnvironmentManager(tmp_path / "dep-cache")
+    handle = manager.prepare_environment(_spec(), initializer=initializer)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    env = build_command_environment(handle, workspace_path=workspace, base_env={"PATH": "/usr/bin:/bin"})
+    output = subprocess.check_output(
+        ["python", "-c", "import shared_dep_marker; print(shared_dep_marker.VALUE)"],
+        env=env,
+        text=True,
+    )
+    overlay_python = Path(env["PATH"].split(os.pathsep)[0]) / "python"
+
+    assert output.strip() == "shared-venv-site-packages-ok"
+    assert overlay_python.exists()
+    assert not overlay_python.is_symlink()
+    assert overlay_python.stat().st_ino != (handle.environment_path / "bin" / "python").stat().st_ino
+    assert str(handle.environment_path) not in env["PATH"]
