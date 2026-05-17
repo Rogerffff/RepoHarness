@@ -1202,6 +1202,45 @@ def test_source_inspection_tools_skip_symlink_to_hidden_target(tmp_path: Path):
     assert read_result.typed["visibility_reason"] == "symlink_target_hidden_path"
 
 
+@pytest.mark.parametrize("hidden_dir", [".repo_harness_env_overlay", ".repo_harness_runtime"])
+def test_source_inspection_tools_hide_repo_harness_runtime_directories(tmp_path: Path, hidden_dir: str):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    overlay = workspace / hidden_dir
+    overlay.mkdir()
+    (overlay / "pyvenv.cfg").write_text("base_environment_ref = rh://environment/test\n", encoding="utf-8")
+    (workspace / "visible.py").write_text("VALUE = 1\n", encoding="utf-8")
+
+    list_result = ToolExecutor().execute(
+        ToolCall(tool_call_id="call_list_overlay", tool_name="list_files", arguments={"path": "."}, turn=1),
+        context,
+    )
+    grep_result = ToolExecutor().execute(
+        ToolCall(tool_call_id="call_grep_overlay", tool_name="grep", arguments={"query": "base_environment_ref"}, turn=1),
+        context,
+    )
+    read_result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id="call_read_overlay",
+            tool_name="read_file",
+            arguments={"path": ".repo_harness_env_overlay/pyvenv.cfg"},
+            turn=1,
+        ),
+        context,
+    )
+
+    assert list_result.status == "ok"
+    assert "visible.py" in list_result.content_preview
+    assert hidden_dir not in list_result.content_preview
+    assert "base_environment_ref" not in list_result.content_preview
+    assert grep_result.status == "ok"
+    assert grep_result.typed["match_count"] == 0
+    assert hidden_dir not in grep_result.content_preview
+    assert "base_environment_ref" not in grep_result.content_preview
+    assert read_result.status == "error"
+    assert read_result.error_type == "model_hidden_path"
+
+
 def test_read_file_long_line_reports_truncation_recovery(tmp_path: Path):
     context = _tool_context(tmp_path)
     context.output_limits = context.output_limits.__class__(max_tool_output_chars=120)
@@ -1295,6 +1334,40 @@ def test_edit_file_accepts_expected_content_sha256_alias(tmp_path: Path):
     assert result.status == "ok"
     assert (workspace / "notes.txt").read_text(encoding="utf-8") == "two\n"
     assert result.typed["content_sha256"] == hashlib.sha256("two\n".encode()).hexdigest()
+
+
+@pytest.mark.parametrize("hidden_dir", [".repo_harness_env_overlay", ".repo_harness_runtime"])
+@pytest.mark.parametrize("tool_name", ["edit_file", "create_file"])
+def test_stage12_5_write_tools_reject_model_hidden_runtime_paths(
+    tmp_path: Path,
+    tool_name: str,
+    hidden_dir: str,
+):
+    context = _tool_context(tmp_path)
+    workspace = Path(context.run_workspace.workspace_path)
+    hidden_file = workspace / hidden_dir / "pyvenv.cfg"
+    hidden_file.parent.mkdir(parents=True)
+    hidden_file.write_text("secret runtime environment facts\n", encoding="utf-8")
+    arguments = (
+        {"path": f"{hidden_dir}/pyvenv.cfg", "old_text": "secret", "new_text": "public"}
+        if tool_name == "edit_file"
+        else {"path": f"{hidden_dir}/new.txt", "content": "should not be written"}
+    )
+
+    result = ToolExecutor().execute(
+        ToolCall(
+            tool_call_id=f"call_{tool_name}_hidden",
+            tool_name=tool_name,
+            arguments=arguments,
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "error"
+    assert result.error_type == "model_hidden_path"
+    assert "runtime environment facts" in hidden_file.read_text(encoding="utf-8")
+    assert not (workspace / hidden_dir / "new.txt").exists()
 
 
 def test_edit_file_requires_read_when_policy_enabled(tmp_path: Path):

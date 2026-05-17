@@ -12,6 +12,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from collections.abc import Callable, Mapping
 
 from repo_harness.errors import WorkspaceError
 from repo_harness.tasks import RunnableTask
@@ -19,6 +20,12 @@ from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.workspace.materialization import SourceCheckout, materialize_source
 from repo_harness.workspace.protocol import WorkspaceBackend
 from repo_harness.workspace.schemas import DependencyState, ExecutionResult, RunWorkspace
+from repo_harness.workspace.dependency_environment import (
+    assert_command_allowed_for_shared_environment,
+    assert_command_does_not_probe_runtime_environment,
+    assert_command_avoids_runtime_overlay_path,
+    assert_no_shell_wrapper_for_shared_environment,
+)
 
 DEFAULT_EXCLUDED_DIFF_PATHS = [
     ".pytest_cache/",
@@ -27,6 +34,8 @@ DEFAULT_EXCLUDED_DIFF_PATHS = [
     "dist/",
     "build/",
     "node_modules/",
+    ".repo_harness_env_overlay/",
+    ".repo_harness_runtime/",
     ".mypy_cache/",
     "__pycache__/",
     "*.pyc",
@@ -87,7 +96,7 @@ SENSITIVE_NAMES = {
     "id_ed25519",
 }
 
-SENSITIVE_DIRS = {".aws", ".ssh", ".gnupg"}
+SENSITIVE_DIRS = {".aws", ".ssh", ".gnupg", ".repo_harness_env_overlay", ".repo_harness_runtime"}
 
 SENSITIVE_SUFFIXES = {".pem", ".key", ".p12", ".pfx", ".crt", ".cer"}
 
@@ -125,12 +134,20 @@ class LocalWorkspaceAdapter:
         run_dir: str | Path,
         default_command_timeout_sec: float = 120,
         keep_workspace: bool = True,
+        command_env_provider: Callable[[Path], Mapping[str, str]] | None = None,
+        allowed_workspace_roots: list[str | Path] | None = None,
+        block_shared_environment_writes: bool = False,
     ) -> None:
         self.run_id = run_id
         self.run_dir = Path(run_dir)
         self.workspaces_dir = self.run_dir / "workspaces"
         self.default_command_timeout_sec = default_command_timeout_sec
         self.keep_workspace = keep_workspace
+        self.command_env_provider = command_env_provider
+        self.allowed_workspace_roots = [
+            Path(root).resolve(strict=False) for root in (allowed_workspace_roots or [])
+        ]
+        self.block_shared_environment_writes = block_shared_environment_writes
         self.last_source_checkout: SourceCheckout | None = None
         self.workspaces_dir.mkdir(parents=True, exist_ok=True)
 
@@ -387,14 +404,26 @@ class LocalWorkspaceAdapter:
         self._assert_workspace_under_run_dir(workspace)
         if recorder is None:
             raise WorkspaceError("run_command 必须提供 RunRecorder 以保存 stdout/stderr artifact。")
+        if self.block_shared_environment_writes:
+            if allow_shell:
+                raise WorkspaceError("shared_environment_shell_wrapper:allow_shell")
+            assert_no_shell_wrapper_for_shared_environment(command)
+            assert_command_allowed_for_shared_environment(command)
+            assert_command_avoids_runtime_overlay_path(command)
+            assert_command_does_not_probe_runtime_environment(command)
         command_args, command_display, use_shell = _prepare_command(command, allow_shell=allow_shell)
         started = time.monotonic()
         timeout = timeout_sec if timeout_sec is not None else self.default_command_timeout_sec
+        command_env = (
+            dict(self.command_env_provider(workspace))
+            if self.command_env_provider is not None
+            else _command_env()
+        )
         process = subprocess.Popen(
             command_args,
             cwd=workspace,
             shell=use_shell,
-            env=_command_env(),
+            env=command_env,
             start_new_session=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -412,6 +441,25 @@ class LocalWorkspaceAdapter:
                 os.killpg(process.pid, signal.SIGKILL)
                 stdout, stderr = process.communicate()
         duration_ms = int((time.monotonic() - started) * 1000)
+        if self.block_shared_environment_writes:
+            stdout = _redact_shared_environment_output(
+                stdout,
+                command_env=command_env,
+                run_dir=self.run_dir,
+                workspace=workspace,
+            )
+            stderr = _redact_shared_environment_output(
+                stderr,
+                command_env=command_env,
+                run_dir=self.run_dir,
+                workspace=workspace,
+            )
+            command_display = _redact_shared_environment_output(
+                command_display,
+                command_env=command_env,
+                run_dir=self.run_dir,
+                workspace=workspace,
+            )
         output_metadata = {"retention_policy": "keep", **(artifact_metadata or {})}
         stdout_ref = recorder.write_artifact(
             "command_stdout",
@@ -481,8 +529,16 @@ class LocalWorkspaceAdapter:
         resolved_workspace = workspace.resolve()
         try:
             resolved_workspace.relative_to(self.workspaces_dir.resolve())
-        except ValueError as exc:
-            raise WorkspaceError(f"工作目录不在 run directory 的 workspaces 下：{workspace}") from exc
+            return
+        except ValueError:
+            pass
+        for root in self.allowed_workspace_roots:
+            try:
+                resolved_workspace.relative_to(root)
+                return
+            except ValueError:
+                continue
+        raise WorkspaceError(f"工作目录不在 run_dir/workspaces 或允许的 workspace roots 下：{workspace}")
 
     def _run_git(
         self,
@@ -725,6 +781,65 @@ def _preview(text: str, limit: int = 4000) -> str:
     if len(text) <= limit:
         return text
     return text[:limit] + "\n[truncated]"
+
+
+def _redact_shared_environment_output(
+    text: str,
+    *,
+    command_env: Mapping[str, str],
+    run_dir: Path,
+    workspace: Path,
+) -> str:
+    if not text:
+        return text
+    replacements: dict[str, str] = {
+        ".repo_harness_env_overlay": "[repo_harness_hidden_runtime_path]",
+        ".repo_harness_runtime": "[repo_harness_hidden_runtime_path]",
+    }
+    _add_runtime_output_marker(replacements, Path(sys.executable), "[repo_harness_hidden_python_executable]")
+    _add_runtime_output_marker(replacements, Path(sys.executable).parent, "[repo_harness_hidden_python_bin]")
+    _add_runtime_output_marker(replacements, Path(sys.prefix), "[repo_harness_hidden_python_prefix]")
+    _add_runtime_output_marker(replacements, Path(sys.base_prefix), "[repo_harness_hidden_python_base_prefix]")
+    _add_runtime_output_marker(replacements, workspace, "[repo_harness_workspace]")
+    _add_runtime_output_marker(replacements, run_dir / "workspaces", "[repo_harness_workspaces_dir]")
+    _add_runtime_output_marker(replacements, run_dir, "[repo_harness_run_dir]")
+
+    for key in (
+        "PATH",
+        "PYTHONPATH",
+        "VIRTUAL_ENV",
+        "HOME",
+        "XDG_CACHE_HOME",
+        "PIP_CACHE_DIR",
+        "UV_CACHE_DIR",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "PYTHONPYCACHEPREFIX",
+    ):
+        for value in str(command_env.get(key, "")).split(os.pathsep):
+            if not value or value.startswith("rh://"):
+                continue
+            path_value = Path(value)
+            if not path_value.is_absolute():
+                continue
+            if ".repo_harness_env_overlay" in value or ".repo_harness_runtime" in value:
+                _add_runtime_output_marker(replacements, path_value, "[repo_harness_hidden_runtime_path]")
+                _add_runtime_output_marker(replacements, path_value.parent, "[repo_harness_hidden_runtime_path]")
+            elif value.startswith(("/Users/", "/home/", "/private/", "/var/folders/", "/tmp/")):
+                _add_runtime_output_marker(replacements, path_value, f"[repo_harness_hidden_{key.lower()}_path]")
+
+    redacted = text
+    for marker, replacement in sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True):
+        if marker:
+            redacted = redacted.replace(marker, replacement)
+    return redacted
+
+
+def _add_runtime_output_marker(replacements: dict[str, str], path: Path, replacement: str) -> None:
+    marker = str(path)
+    if marker and marker != ".":
+        replacements[marker] = replacement
 
 
 def _command_env() -> dict[str, str]:

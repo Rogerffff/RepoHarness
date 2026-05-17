@@ -32,6 +32,17 @@ def _formal_training_view() -> TrainingView:
     return TrainingView.model_validate(payload)
 
 
+def _canonical_generation_records() -> list[dict[str, Any]]:
+    return _load_json("canonical_episode_result.json")["generation_records"]
+
+
+def _formal_agent_loop_output() -> Any:
+    return training_view_to_agent_loop_output(
+        _formal_training_view(),
+        generation_records=_canonical_generation_records(),
+    )
+
+
 def _build_worker(monkeypatch, *, prompt_length: int = 16, response_length: int = 12):
     install_reference_verl_stubs(monkeypatch)
     from verl.experimental.agent_loop.agent_loop import AgentLoopWorker
@@ -53,7 +64,7 @@ async def _noop_async(*args, **kwargs) -> None:
 
 def test_stage10_converter_extra_fields_do_not_include_raw_prompt(monkeypatch) -> None:
     install_reference_verl_stubs(monkeypatch)
-    output = training_view_to_agent_loop_output(_formal_training_view())
+    output = _formal_agent_loop_output()
 
     validate_agent_loop_output_extra_fields(output.extra_fields)
     assert "raw_prompt" not in output.extra_fields
@@ -61,7 +72,7 @@ def test_stage10_converter_extra_fields_do_not_include_raw_prompt(monkeypatch) -
 
 def test_stage10_agent_loop_postprocess_raw_prompt_visibility(monkeypatch) -> None:
     worker = _build_worker(monkeypatch)
-    output = training_view_to_agent_loop_output(_formal_training_view())
+    output = _formal_agent_loop_output()
 
     internal = asyncio.run(
         worker._agent_loop_postprocess(
@@ -81,7 +92,7 @@ def test_stage10_agent_loop_postprocess_raw_prompt_visibility(monkeypatch) -> No
 
 def test_stage10_postprocessed_extra_fields_reject_hidden_raw_prompt(monkeypatch) -> None:
     worker = _build_worker(monkeypatch)
-    output = training_view_to_agent_loop_output(_formal_training_view())
+    output = _formal_agent_loop_output()
 
     internal = asyncio.run(
         worker._agent_loop_postprocess(
@@ -132,7 +143,7 @@ def test_stage10_transfer_queue_kwargs_reject_forbidden_field_names_even_if_allo
 
 def test_stage10_transfer_queue_field_checks_top_level_raw_prompt_and_extra_fields(monkeypatch) -> None:
     install_reference_verl_stubs(monkeypatch)
-    output = training_view_to_agent_loop_output(_formal_training_view())
+    output = _formal_agent_loop_output()
     field = output.as_dict()
     field.update({"raw_prompt": [{"role": "user", "content": "visible"}]})
 
@@ -171,7 +182,7 @@ def test_stage10_transfer_queue_field_rejects_forbidden_top_level_field_names(
     field_name: str,
 ) -> None:
     install_reference_verl_stubs(monkeypatch)
-    output = training_view_to_agent_loop_output(_formal_training_view())
+    output = _formal_agent_loop_output()
     field = output.as_dict()
     field[field_name] = "safe_value"
 

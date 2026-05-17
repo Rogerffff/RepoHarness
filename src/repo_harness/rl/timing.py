@@ -86,6 +86,7 @@ class ResourceSummary(StrictBaseModel):
     snapshot_restore_strategy: str | None = None
     dependency_state_key: str | None = None
     dependency_cache_hit: bool | None = None
+    repo_harness_environment_ref: str | None = None
     baseline_cache_hit: bool | None = None
     container_reuse_hit: bool | None = None
     docker_image_ref: str | None = None
@@ -120,6 +121,7 @@ class ResourceSummary(StrictBaseModel):
             "snapshot_key",
             "snapshot_restore_strategy",
             "dependency_state_key",
+            "repo_harness_environment_ref",
             "docker_image_ref",
             "docker_image_id",
             "docker_image_digest",

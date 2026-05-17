@@ -10,6 +10,23 @@ from repo_harness.workspace.backend_status import (
     load_workspace_backend_status,
     write_workspace_backend_status,
 )
+from repo_harness.workspace.dependency_environment import (
+    DEPENDENCY_ENVIRONMENT_POLICY_VERSION,
+    CommandEnvironmentDecision,
+    DependencyEnvironmentFacts,
+    DependencyEnvironmentHandle,
+    DependencyEnvironmentKey,
+    DependencyEnvironmentLockfile,
+    DependencyEnvironmentManager,
+    DependencyEnvironmentReport,
+    DependencyEnvironmentSpec,
+    DependencySetupCommandGroups,
+    assert_command_allowed_for_shared_environment,
+    build_command_environment,
+    build_dependency_environment_key,
+    classify_shared_environment_write_command,
+    dependency_environment_resource_fields,
+)
 from repo_harness.workspace.docker_adapter import DockerWorkspaceAdapter, inspect_docker_environment
 from repo_harness.workspace.materialization import SourceCheckout, materialize_source
 from repo_harness.workspace.protocol import (
@@ -45,7 +62,17 @@ from repo_harness.workspace.schemas import (
 
 __all__ = [
     "ContainerExecutionFacts",
+    "CommandEnvironmentDecision",
+    "DEPENDENCY_ENVIRONMENT_POLICY_VERSION",
     "DependencyState",
+    "DependencyEnvironmentFacts",
+    "DependencyEnvironmentHandle",
+    "DependencyEnvironmentKey",
+    "DependencyEnvironmentLockfile",
+    "DependencyEnvironmentManager",
+    "DependencyEnvironmentReport",
+    "DependencyEnvironmentSpec",
+    "DependencySetupCommandGroups",
     "DockerBackendFacts",
     "DockerWorkspaceAdapter",
     "ExecutionResult",
@@ -72,10 +99,15 @@ __all__ = [
     "WorkspaceSnapshotKey",
     "WorkspaceSnapshotManager",
     "WorkspaceSnapshotResult",
+    "assert_command_allowed_for_shared_environment",
+    "build_command_environment",
+    "build_dependency_environment_key",
     "build_workspace_backend_status",
     "build_workspace_snapshot_key",
+    "classify_shared_environment_write_command",
     "copy_declared_dependency_paths",
     "create_workspace_adapter",
+    "dependency_environment_resource_fields",
     "inspect_docker_environment",
     "inspect_workspace_backend_status",
     "load_workspace_backend_status",

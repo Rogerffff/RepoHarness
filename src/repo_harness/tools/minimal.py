@@ -66,6 +66,8 @@ MODEL_HIDDEN_TOOL_PATH_PARTS = frozenset(
         ".netrc",
         ".npmrc",
         ".pypirc",
+        ".repo_harness_env_overlay",
+        ".repo_harness_runtime",
         ".ssh",
         "__pycache__",
         "build",
@@ -1910,6 +1912,8 @@ class ToolExecutor:
         context: ToolExecutionContext,
     ) -> ToolResult:
         path = str(normalized.normalized_arguments["path"])
+        if _is_model_hidden_tool_path(path):
+            return _model_hidden_path_tool_result(tool_call, normalized, path)
         old_text = str(normalized.normalized_arguments["old_text"])
         new_text = str(normalized.normalized_arguments["new_text"])
         replace_all = bool(normalized.normalized_arguments.get("replace_all", False))
@@ -2074,6 +2078,8 @@ class ToolExecutor:
         context: ToolExecutionContext,
     ) -> ToolResult:
         path = str(normalized.normalized_arguments["path"])
+        if _is_model_hidden_tool_path(path):
+            return _model_hidden_path_tool_result(tool_call, normalized, path)
         target = context.workspace_adapter.resolve_workspace_path(
             context.run_workspace.workspace_path,
             path,
@@ -3203,6 +3209,32 @@ def _is_model_hidden_tool_path(path: str) -> bool:
     ):
         return True
     return normalized.suffix.lower() in MODEL_HIDDEN_TOOL_PATH_SUFFIXES
+
+
+def _model_hidden_path_tool_result(
+    tool_call: ToolCall,
+    normalized: NormalizedToolRequest,
+    path: str,
+) -> ToolResult:
+    return _tool_result(
+        tool_call,
+        normalized=normalized,
+        status="error",
+        content=(
+            "Path is outside the model-visible repository source area. "
+            "Choose a model-visible source or test file inside the repository checkout."
+        ),
+        error_type="model_hidden_path",
+        typed={
+            "path": path,
+            "visibility_reason": "hidden_path",
+            "result_envelope": _result_envelope(
+                result_kind="model_hidden_path",
+                semantic_complete=True,
+                recovery_hint="Choose a model-visible source or test file inside the repository checkout.",
+            ),
+        },
+    )
 
 
 def _model_visible_path_status(

@@ -61,6 +61,9 @@ def test_stage1_batch_extra_fields_reject_nested_audit_and_paths() -> None:
     with pytest.raises(ValueError, match="absolute local path"):
         validate_batch_extra_fields({"repo_harness_reward_metadata_ref": "/Users/roger/secret/reward.json"})
 
+    with pytest.raises(ValueError, match="absolute local path"):
+        validate_batch_extra_fields({"repo_harness_reward_metadata_ref": "rh://audit/ref /tmp/secret.json"})
+
     with pytest.raises(ValueError, match="forbidden batch extra field"):
         validate_batch_extra_fields({"repo_harness_audit_ref": "rh://audit/run/full-object"})
 

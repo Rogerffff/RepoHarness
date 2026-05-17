@@ -36,6 +36,17 @@ def _formal_training_view_payload(episode_suffix: str) -> dict[str, Any]:
     return payload
 
 
+def _canonical_generation_records() -> list[dict[str, Any]]:
+    return _load_json("canonical_episode_result.json")["generation_records"]
+
+
+def _formal_agent_loop_output(episode_suffix: str) -> Any:
+    return training_view_to_agent_loop_output(
+        TrainingView.model_validate(_formal_training_view_payload(episode_suffix)),
+        generation_records=_canonical_generation_records(),
+    )
+
+
 async def _noop_async(*args, **kwargs) -> None:
     return None
 
@@ -57,10 +68,7 @@ def _build_worker(monkeypatch):
 
 def test_stage10_postprocess_builds_dataproto_shapes_and_visibility(monkeypatch) -> None:
     worker = _build_worker(monkeypatch)
-    outputs = [
-        training_view_to_agent_loop_output(TrainingView.model_validate(_formal_training_view_payload("a"))),
-        training_view_to_agent_loop_output(TrainingView.model_validate(_formal_training_view_payload("b"))),
-    ]
+    outputs = [_formal_agent_loop_output("a"), _formal_agent_loop_output("b")]
 
     internals = [
         asyncio.run(
@@ -85,7 +93,7 @@ def test_stage10_postprocess_builds_dataproto_shapes_and_visibility(monkeypatch)
 
 def test_stage10_dataproto_visibility_rejects_hidden_non_tensor_value(monkeypatch) -> None:
     worker = _build_worker(monkeypatch)
-    output = training_view_to_agent_loop_output(TrainingView.model_validate(_formal_training_view_payload("hidden")))
+    output = _formal_agent_loop_output("hidden")
     internal = asyncio.run(
         worker._agent_loop_postprocess(
             output,

@@ -36,6 +36,24 @@ def test_workspace_path_resolution_rejects_outside_and_sensitive_paths(tmp_path:
         adapter.resolve_workspace_path(workspace, "credentials.json")
     with pytest.raises(WorkspaceError, match="敏感路径"):
         adapter.resolve_workspace_path(workspace, "token")
+    for hidden_dir in (".repo_harness_env_overlay", ".repo_harness_runtime"):
+        with pytest.raises(WorkspaceError, match="敏感路径"):
+            adapter.resolve_workspace_path(workspace, f"{hidden_dir}/pyvenv.cfg")
+
+
+@pytest.mark.parametrize("hidden_dir", [".repo_harness_env_overlay", ".repo_harness_runtime"])
+def test_workspace_listing_hides_repo_harness_runtime_directories(tmp_path: Path, hidden_dir: str):
+    adapter = LocalWorkspaceAdapter(run_id="run_paths", run_dir=tmp_path / "run")
+    workspace = adapter.workspaces_dir / "workspace"
+    workspace.mkdir(parents=True)
+    (workspace / "visible.py").write_text("print('safe')\n", encoding="utf-8")
+    (workspace / hidden_dir).mkdir()
+    (workspace / hidden_dir / "pyvenv.cfg").write_text("runtime facts\n", encoding="utf-8")
+
+    assert adapter.list_files(workspace) == ["visible.py"]
+    assert adapter.list_files(workspace, pattern="**/*") == ["visible.py"]
+    with pytest.raises(WorkspaceError, match="敏感路径"):
+        adapter.list_files(workspace, root=hidden_dir)
 
 
 def test_workspace_path_resolution_rejects_symlink_to_outside(tmp_path: Path):

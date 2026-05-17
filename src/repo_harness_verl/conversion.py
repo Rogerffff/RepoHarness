@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any, Iterable, Mapping
 
 from repo_harness.rl import AuditRef, GenerationRecord, RepoHarnessEpisodeResult, TrainingView
-from repo_harness.rl.training_view import validate_training_view_for_online_rl
+from repo_harness.rl.training_view import (
+    formal_online_rl_sample_from_training_view,
+    validate_formal_online_rl_batch,
+    validate_training_view_for_online_rl,
+)
 from repo_harness.rl.visibility import FlatScalar, validate_batch_extra_fields
 
 from .visibility import validate_agent_loop_output_extra_fields
@@ -158,6 +162,7 @@ def training_view_to_agent_loop_output(
     training_view: TrainingView | Mapping[str, Any],
     *,
     audit_ref: AuditRef | None = None,
+    generation_records: Iterable[GenerationRecord | Mapping[str, Any]] | None = None,
     formal_online_rl: bool = True,
     rollout_prompt_length: int | None = None,
     rollout_response_length: int | None = None,
@@ -168,6 +173,14 @@ def training_view_to_agent_loop_output(
     if formal_online_rl:
         try:
             view = validate_training_view_for_online_rl(view, require_explicit_eligibility=True)
+            validate_formal_online_rl_batch(
+                [
+                    formal_online_rl_sample_from_training_view(
+                        view,
+                        generation_records=list(generation_records or []),
+                    )
+                ]
+            )
         except ValueError as exc:
             raise VerlConversionError(str(exc)) from exc
     _validate_rollout_lengths(
@@ -208,13 +221,35 @@ def episode_result_to_agent_loop_output(
         else RepoHarnessEpisodeResult.model_validate(episode_result)
     )
     view = result.training_view
-    if "repo_harness_llm_gateway_route" not in view.extra_fields:
-        view = training_view_with_projected_route(view, result.generation_records)
-    elif result.generation_records:
-        project_generation_records_route(result.generation_records)
+    if formal_online_rl:
+        if "repo_harness_llm_gateway_route" not in view.extra_fields:
+            view = training_view_with_projected_route(view, result.generation_records)
+        elif result.generation_records:
+            project_generation_records_route(result.generation_records)
+        try:
+            validate_formal_online_rl_batch(
+                [
+                    formal_online_rl_sample_from_training_view(
+                        view,
+                        generation_records=result.generation_records,
+                        sample_id=result.episode_id,
+                        invalid_for_training=result.invalid_for_training,
+                        invalid_for_online_rl=result.invalid_for_online_rl,
+                        invalid_reason=result.status_reason,
+                    )
+                ]
+            )
+        except ValueError as exc:
+            raise VerlConversionError(str(exc)) from exc
+    elif "repo_harness_llm_gateway_route" not in view.extra_fields and result.generation_records:
+        try:
+            view = training_view_with_projected_route(view, result.generation_records)
+        except VerlConversionError:
+            pass
     return training_view_to_agent_loop_output(
         view,
         audit_ref=result.audit_ref,
+        generation_records=result.generation_records,
         formal_online_rl=formal_online_rl,
         rollout_prompt_length=rollout_prompt_length,
         rollout_response_length=rollout_response_length,

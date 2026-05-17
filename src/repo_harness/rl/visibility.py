@@ -91,7 +91,12 @@ def validate_inference_backend(route: str, inference_backend: str | None) -> Non
 
 
 def validate_no_absolute_local_path(value: str, *, field_name: str) -> None:
-    if value.startswith("/") or "/Users/" in value or "\\" in value and len(value) > 2 and value[1:3] == ":\\":
+    local_path_markers = ("/Users/", "/home/", "/private/", "/tmp/", "/var/folders/")
+    if (
+        value.startswith("/")
+        or any(marker in value for marker in local_path_markers)
+        or (len(value) > 2 and value[1:3] == ":\\")
+    ):
         raise VisibilityContractError(f"{field_name} must not contain an absolute local path")
 
 

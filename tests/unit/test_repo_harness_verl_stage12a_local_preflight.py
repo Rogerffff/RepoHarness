@@ -121,6 +121,7 @@ def test_stage12a_real_agent_loop_output_as_dict_uses_cpu_tensors() -> None:
     payload["extra_fields"] = {**payload["extra_fields"], "repo_harness_llm_gateway_route": "verl"}
     output = training_view_to_agent_loop_output(
         TrainingView.model_validate(payload),
+        generation_records=_load_json("canonical_episode_result.json")["generation_records"],
         rollout_prompt_length=16,
         rollout_response_length=12,
     )

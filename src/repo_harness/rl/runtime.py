@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Awaitable, Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
+from functools import partial
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Literal, TypeVar
@@ -22,12 +25,16 @@ from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import RecorderProfile, RunRecorder, load_artifact_manifest
 from repo_harness.verifier import VerifierJob, VerifierJobResult, VerifierResult, VerifierWorkerPool
 from repo_harness.workspace import (
+    DependencyEnvironmentHandle,
+    DependencyEnvironmentManager,
+    DependencyEnvironmentSpec,
     DependencyState,
     LocalWorkspaceAdapter,
     RunWorkspace,
     WorkspaceLeaseHandle,
     WorkspaceSnapshotManager,
     WorkspaceSnapshotResult,
+    build_command_environment,
     build_workspace_snapshot_key,
 )
 
@@ -63,6 +70,10 @@ TaskPathResolver = Callable[[RepoHarnessEpisodeRequest], str | Path | None]
 FinalVerifierCallable = Callable[[], VerifierResult]
 RuntimeExecutionMode = Literal["minimal_gateway", "real_episode"]
 RealEpisodeSourceResolver = Callable[[RepoHarnessEpisodeRequest], str | Path | None]
+DependencyEnvironmentSpecResolver = Callable[
+    [RepoHarnessEpisodeRequest, Path],
+    DependencyEnvironmentSpec | None,
+]
 ToolObservationTokenProjector = Callable[[str], list[int]]
 T = TypeVar("T")
 EpisodeStatusName = Literal[
@@ -133,6 +144,8 @@ class RepoHarnessRuntimeOptions:
     real_episode_source_resolver: RealEpisodeSourceResolver | None = None
     real_episode_final_verifier_factory: RealEpisodeFinalVerifierFactory | None = None
     workspace_snapshot_manager: WorkspaceSnapshotManager | None = None
+    dependency_environment_manager: DependencyEnvironmentManager | None = None
+    dependency_environment_spec_resolver: DependencyEnvironmentSpecResolver | None = None
     tool_observation_token_projector: ToolObservationTokenProjector | None = None
 
     def __post_init__(self) -> None:
@@ -195,6 +208,7 @@ class RealEpisodeWorkspace:
     snapshot_manager: WorkspaceSnapshotManager
     snapshot: WorkspaceSnapshotResult
     lease_handle: WorkspaceLeaseHandle
+    dependency_environment: DependencyEnvironmentHandle | None = None
 
 
 @dataclass(frozen=True)
@@ -389,8 +403,19 @@ class RepoHarnessRuntime:
     def __init__(self, options: RepoHarnessRuntimeOptions | None = None) -> None:
         self.options = options or RepoHarnessRuntimeOptions()
         self.resource_lease_manager = self.options.resource_lease_manager
+        self._real_episode_executor: ThreadPoolExecutor | None = None
         if self.resource_lease_manager is None and self.options.resource_concurrency_policy is not None:
             self.resource_lease_manager = ResourceLeaseManager(self.options.resource_concurrency_policy)
+
+    def close(self) -> None:
+        """Release runtime-owned worker resources."""
+
+        if self._real_episode_executor is not None:
+            self._real_episode_executor.shutdown(wait=False, cancel_futures=True)
+            self._real_episode_executor = None
+
+    async def aclose(self) -> None:
+        self.close()
 
     async def run_episode(
         self,
@@ -549,18 +574,21 @@ class RepoHarnessRuntime:
         real_run: RealEpisodeRun | None = None
         reward_boundary: Stage7RewardBoundaryResult | None = None
         runtime_loop = asyncio.get_running_loop()
+        executor = self._get_real_episode_executor()
 
         try:
             resolved_inputs = self.resolve_runner_inputs(request)
             resource_handle = await self._acquire_episode_resources(request)
-            real_workspace = await asyncio.to_thread(
+            real_workspace = await self._run_in_real_episode_executor(
+                executor,
                 self._prepare_real_episode_workspace,
                 request,
                 resolved_inputs,
             )
             timeout_seconds = self._episode_timeout_seconds(request)
             real_episode_task = asyncio.create_task(
-                asyncio.to_thread(
+                self._run_in_real_episode_executor(
+                    executor,
                     self._run_real_episode_sync,
                     request,
                     llm_gateway,
@@ -619,7 +647,8 @@ class RepoHarnessRuntime:
             status = "cancelled"
             status_reason = "runtime_cancelled"
         workspace_cleanup_status, workspace_cleanup_diagnostics = await self._release_real_workspace_protected(
-            real_workspace
+            real_workspace,
+            executor=executor,
         )
         resource_cleanup_status, resource_cleanup_diagnostics = await self._release_episode_resources_protected(
             resource_handle
@@ -660,6 +689,14 @@ class RepoHarnessRuntime:
             resource_handle=resource_handle,
         )
 
+    def _get_real_episode_executor(self) -> ThreadPoolExecutor:
+        if self._real_episode_executor is None:
+            self._real_episode_executor = ThreadPoolExecutor(
+                max_workers=self.options.executor_max_workers,
+                thread_name_prefix="repo-harness-real-episode",
+            )
+        return self._real_episode_executor
+
     def resolve_runner_inputs(self, request: RepoHarnessEpisodeRequest) -> RuntimeResolvedInputs:
         task_path: str | None = request.task_ref.task_path
         if task_path:
@@ -687,26 +724,71 @@ class RepoHarnessRuntime:
         if source_path is None:
             raise InvalidTaskError("real_episode requires a resolved source workspace path")
         run_dir = self._run_dir_for_request(request)
-        adapter = LocalWorkspaceAdapter(run_id=request.run_id, run_dir=run_dir)
+        dependency_environment = self._prepare_dependency_environment(request, source_path)
         snapshot_manager = self.options.workspace_snapshot_manager or WorkspaceSnapshotManager(
             run_dir / "workspaces" / "snapshot_cache",
             creator_id=f"repo-harness-{request.run_id}",
         )
         snapshot_key = build_workspace_snapshot_key(
             repo_ref=request.task_id,
-            environment_id="local_process",
+            environment_id=(
+                dependency_environment.dependency_cache_key
+                if dependency_environment is not None
+                else "local_process"
+            ),
+            dependency_lock_hash=(
+                dependency_environment.dependency_cache_key
+                if dependency_environment is not None
+                else None
+            ),
             harness_version="repo_harness_stage11_5_v0",
             diagnostics=["stage11_5_real_episode_runtime_bridge"],
         )
         snapshot = snapshot_manager.create_or_get_snapshot(snapshot_key, source_path=source_path)
-        lease = snapshot_manager.acquire_workspace(snapshot, lease_id=request.episode_id)
+        lease = snapshot_manager.acquire_workspace(
+            snapshot,
+            lease_id=request.episode_id,
+            dependency_restore_seconds=(
+                0.0 if dependency_environment is None else dependency_environment.dependency_restore_seconds
+            ),
+        )
+        adapter = LocalWorkspaceAdapter(
+            run_id=request.run_id,
+            run_dir=run_dir,
+            allowed_workspace_roots=[snapshot_manager.leases_dir],
+            command_env_provider=(
+                None
+                if dependency_environment is None
+                else lambda workspace_path: build_command_environment(
+                    dependency_environment,
+                    workspace_path=workspace_path,
+                )
+            ),
+            block_shared_environment_writes=dependency_environment is not None,
+        )
         return RealEpisodeWorkspace(
             run_dir=run_dir,
             adapter=adapter,
             snapshot_manager=snapshot_manager,
             snapshot=snapshot,
             lease_handle=lease,
+            dependency_environment=dependency_environment,
         )
+
+    def _prepare_dependency_environment(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        source_path: Path,
+    ) -> DependencyEnvironmentHandle | None:
+        if (
+            self.options.dependency_environment_manager is None
+            or self.options.dependency_environment_spec_resolver is None
+        ):
+            return None
+        spec = self.options.dependency_environment_spec_resolver(request, source_path)
+        if spec is None:
+            return None
+        return self.options.dependency_environment_manager.prepare_environment(spec)
 
     def _real_episode_source_path(
         self,
@@ -869,14 +951,23 @@ class RepoHarnessRuntime:
     async def _release_real_workspace_protected(
         self,
         workspace: RealEpisodeWorkspace | None,
+        *,
+        executor: ThreadPoolExecutor | None = None,
     ) -> tuple[str | None, list[AuditDiagnostic]]:
         if workspace is None:
             return None, []
         try:
-            released = await asyncio.to_thread(
-                workspace.snapshot_manager.release_workspace,
-                workspace.lease_handle,
-            )
+            if executor is None:
+                released = await asyncio.to_thread(
+                    workspace.snapshot_manager.release_workspace,
+                    workspace.lease_handle,
+                )
+            else:
+                released = await self._run_in_real_episode_executor(
+                    executor,
+                    workspace.snapshot_manager.release_workspace,
+                    workspace.lease_handle,
+                )
         except Exception as exc:
             return "failed", [AuditDiagnostic(code="workspace_lease_release_failed", message=str(exc))]
         diagnostics = [
@@ -884,6 +975,15 @@ class RepoHarnessRuntime:
             for diagnostic in released.lease.diagnostics
         ]
         return released.lease.cleanup_status, diagnostics
+
+    async def _run_in_real_episode_executor(
+        self,
+        executor: ThreadPoolExecutor,
+        func: Callable[..., T],
+        *args: object,
+    ) -> T:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(executor, partial(func, *args))
 
     async def _generate_minimal_turn(
         self,
@@ -1660,7 +1760,7 @@ class RepoHarnessRuntime:
             )
         verifier_queue_wait_seconds = 0.0 if reward_boundary is None else reward_boundary.verifier_queue_wait_seconds
         total_queue_wait_seconds = resource_queue_wait_seconds + verifier_queue_wait_seconds
-        tool_seconds = _tool_seconds_from_agent_state(real_run.agent_state)
+        tool_seconds = _tool_seconds_from_run_dir(real_run.run_dir, real_run.agent_state)
         final_verifier_seconds = 0.0 if reward_boundary is None else reward_boundary.final_verifier_seconds
         reward_compute_seconds = 0.0 if reward_boundary is None else reward_boundary.reward_compute_seconds
         workspace_seconds = real_run.workspace.lease_handle.workspace_materialization_seconds
@@ -1733,7 +1833,16 @@ class RepoHarnessRuntime:
             snapshot=real_run.workspace.snapshot,
             lease=real_run.workspace.lease_handle.lease,
             workspace_backend="local_process",
-            dependency_cache_key=real_run.run_workspace.dependency_state.cache_key,
+            dependency_cache_key=(
+                real_run.workspace.dependency_environment.dependency_cache_key
+                if real_run.workspace.dependency_environment is not None
+                else real_run.run_workspace.dependency_state.cache_key
+            ),
+            dependency_cache_hit=(
+                None
+                if real_run.workspace.dependency_environment is None
+                else real_run.workspace.dependency_environment.cache_hit
+            ),
             run_dir=f"runs/{request.run_id}",
         )
         return base.model_copy(
@@ -1743,6 +1852,11 @@ class RepoHarnessRuntime:
                 "workspace_backend": "local_process",
                 "inference_route": request.llm_gateway_route,
                 "inference_backend": request.inference_backend,
+                "repo_harness_environment_ref": (
+                    None
+                    if real_run.workspace.dependency_environment is None
+                    else real_run.workspace.dependency_environment.environment_ref
+                ),
                 "cleanup_status": cleanup_status,
             }
         )
@@ -2285,6 +2399,29 @@ def _tool_seconds_from_agent_state(state: AgentLoopState) -> float:
     if state.tool_call_count <= 0:
         return 0.0
     return 0.0
+
+
+def _tool_seconds_from_run_dir(run_dir: Path, state: AgentLoopState) -> float:
+    event_path = run_dir / "events.jsonl"
+    if not event_path.exists():
+        return _tool_seconds_from_agent_state(state)
+    total = 0.0
+    for line in event_path.read_text(encoding="utf-8").splitlines():
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        event_type = str(payload.get("event_type", ""))
+        if not any(marker in event_type for marker in ("tool_call", "tool_execution", "workspace_command")):
+            continue
+        duration_ms = payload.get("duration_ms")
+        if isinstance(duration_ms, int | float):
+            total += max(0.0, float(duration_ms) / 1000.0)
+    if total > 0.0:
+        return total
+    return _tool_seconds_from_agent_state(state)
 
 
 def _real_episode_run_summary(

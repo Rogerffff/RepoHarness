@@ -10,7 +10,13 @@ from repo_harness.schema_base import StrictBaseModel
 
 from .gateway import GenerationRecord
 from .timing import ResourceSummary, TimingSummary
-from .training_view import AuditRef, TrainingView, validate_training_view_for_online_rl
+from .training_view import (
+    AuditRef,
+    TrainingView,
+    formal_online_rl_sample_from_training_view,
+    validate_formal_online_rl_batch,
+    validate_training_view_for_online_rl,
+)
 from .visibility import (
     CONTRACT_VERSION,
     GatewayRoute,
@@ -251,7 +257,20 @@ class RepoHarnessEpisodeResult(StrictBaseModel):
             if not self.invalid_for_training or self.status_reason != "response_length_exceeded":
                 raise ValueError("response overflow must be represented as invalid response_length_exceeded")
         if not self.invalid_for_training and not self.invalid_for_online_rl:
-            validate_training_view_for_online_rl(self._training_view_for_online_rl_validation())
+            training_view = self._training_view_for_online_rl_validation()
+            validate_training_view_for_online_rl(training_view)
+            validate_formal_online_rl_batch(
+                [
+                    formal_online_rl_sample_from_training_view(
+                        training_view,
+                        generation_records=self.generation_records,
+                        sample_id=self.episode_id,
+                        invalid_for_training=self.invalid_for_training,
+                        invalid_for_online_rl=self.invalid_for_online_rl,
+                        invalid_reason=self.status_reason,
+                    )
+                ]
+            )
         return self
 
     def _training_view_for_online_rl_validation(self) -> TrainingView:
