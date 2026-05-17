@@ -35,6 +35,7 @@ Stage 11：实现 RepoHarnessVerlAgentLoop 与 VerlLLMGateway
 Stage 11.5：接通真实 RepoHarness episode runtime bridge
 Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
 Stage 12.5：同步高吞吐基线加固，补齐依赖环境缓存、共享 workspace cache、verifier / recorder 热路径和吞吐 profile
+Stage 12.6：Stage 12.5 修改后远端 RL 链路回归 smoke
 Stage 13：为 fully async 演进预留中断、恢复和异步 reward 设计
 ```
 
@@ -57,7 +58,7 @@ RepoHarness 现在面向评测和审计的运行方式可以完成真实任务�
 
 这些改造都必须进入第一版实施计划。否则即使 verl adapter 能跑通，训练吞吐仍然会被 Harness 固定成本卡住。
 
-Stage 12 已经用于证明真实链路可以跑通，但它不是最终吞吐形态。进入 Stage 13 fully async 之前，必须增加 Stage 12.5，先处理已经暴露出来的训练吞吐问题：
+Stage 12 已经用于证明真实链路可以跑通，但它不是最终吞吐形态。进入 Stage 13 fully async 之前，必须增加 Stage 12.5，先处理已经暴露出来的训练吞吐问题；Stage 12.5 提交后还必须通过 Stage 12.6 的远端回归 smoke，确认这些吞吐和安全改造在真实 GPU 训练链路中仍然可用：
 
 - `real_episode` 目前主要复用源码 snapshot 和 workspace lease，没有真正复用已经安装好的依赖环境。
 - 如果没有显式传入共享 `WorkspaceSnapshotManager` 或共享 cache root，默认 snapshot cache 仍可能落在每条 run directory 下，不适合训练时跨 episode 复用。
@@ -70,6 +71,8 @@ Stage 12 已经用于证明真实链路可以跑通，但它不是最终吞吐�
 - Ray worker、AgentLoopWorker、RepoHarness runtime、默认线程池和 verifier pool 的共享边界必须清楚，否则 `agent.num_workers` 提高后可能只是把阻塞从 GPU 端转移到本地线程池、文件系统或 verifier 队列。
 - DataProto 固定 padding、有效 token 比例和 loss mask 利用率必须进入 profile，否则 batch 看似变大，实际有效训练 token 可能很少。
 - `TimingSummary` / `ResourceSummary` 必须进一步解释 setup、source hash、snapshot materialization、dependency restore、tool、verifier、artifact write 和 valid sample filtering，否则无法判断 Stage 13 的异步化是否真的解决了瓶颈。
+
+Stage 12.5 触碰了共享依赖环境、模型命令策略、隐藏 runtime 目录、formal batch validator、batch refill 和训练侧 profile helper。这些改动本地单元测试可以覆盖规则，但不能完全证明远端真实推理服务、真实模型、Ray worker、DataProto 组 batch 和 trainer 小步路径仍然保持闭环。因此 Stage 12.5 提交后、Stage 13 之前，必须新增 Stage 12.6 远端回归 smoke，优先复用此前 `2 * RTX PRO 6000` 或等价 GPU 环境，重新验证当前提交哈希下的完整 RL 链路。
 
 ## 3. Stage 0：冻结 shared contracts 和 canonical fixture
 
@@ -1173,7 +1176,7 @@ Ray worker 和本地线程池要求：
 
 ### Stage 12.5-F：验收标准
 
-Stage 12.5 完成时必须有本地和远端两类 evidence。
+Stage 12.5 本地实现完成时必须有本地 evidence。远端 GPU evidence 由 Stage 12.6 作为单独的提交后回归 gate 生成；本小节中的远端清单保留为 Stage 12.6 具体执行计划必须覆盖的 evidence envelope，避免 Stage 12.5 本地实现和远端真实训练 smoke 混在同一次提交里。
 
 本地必须通过：
 
@@ -1188,29 +1191,41 @@ Stage 12.5 完成时必须有本地和远端两类 evidence。
 - Stage 0H 到 Stage 12 的关键回归，尤其是 visibility、formal batch validator、real_episode runtime bridge、Stage 12-A 本地 smoke。
 - Stage 12.5 详细执行计划必须同步更新 shared acceptance contract 或新增 Stage 12.5 专用 acceptance contract，避免阶段 gate 仍停留在 Stage 12 直接进入 Stage 13 的旧表述。
 
-远端必须生成：
+Stage 12.6 远端回归 smoke 至少生成或等价覆盖：
 
 ```text
-runs/stage12_5-throughput-<timestamp>/
+runs/stage12_6-remote-<timestamp>/
+  stage12_6_preflight.json
+  stage12_6_command_log.sanitized.jsonl
+  runtime_private/stage12_6_command_log.raw.jsonl
+  git_state_before_after.json
   environment_cache_report.json
   workspace_cache_report.json
   concurrent_episode_report.json
+  command_policy_and_runtime_visibility_report.json
   trainer_throughput_profile.json
   verifier_recorder_tool_hot_path_report.json
   batch_refill_resample_report.json
   dataproto_padding_profile.json
+  evidence_path_leak_scan_report.json
+  real_episode_task_pool_report.json
+  formal_batch_and_refill_report.json
+  dataproto_and_trainer_smoke_report.json
   inference_server_profile.json
   tokenization_profile.json
   ray_worker_resource_profile.json
   system_resource_profile.json
   visibility_and_batch_validation_report.json
-  stage12_5_acceptance_summary.json
+  stage12_6_acceptance_summary.json
 ```
 
-远端验收至少证明：
+Stage 12.6 具体执行计划可以把同类报告合并成更少文件，但必须在 `stage12_6_acceptance_summary.json` 中列出“canonical evidence item -> 实际文件路径”的映射。不能因为文件名合并而丢失 `concurrent_episode_report`、`trainer_throughput_profile`、`verifier_recorder_tool_hot_path_report`、`batch_refill_resample_report`、`dataproto_padding_profile`、`tokenization_profile` 或 `visibility_and_batch_validation_report` 对应内容。
+
+Stage 12.6 远端验收至少证明：
 
 - cold cache 会创建 dependency environment，warm cache 会命中同一个 environment key。
 - warm run 中每条 episode 不再重复执行完整 dependency setup。
+- 远端任务池至少包含三类极小真实仓库任务：无外部依赖的基线任务、带第三方 Python 依赖的任务、需要从当前 episode workspace 源码 import 的任务。这样才能同时验证 dependency environment cache、workspace source import 和共享环境不被 episode 污染。
 - 多条并发 real episode 复用 snapshot / environment，但 workspace、patch、artifact manifest、run directory 和 cleanup 相互隔离。
 - `TrainingView`、`AgentLoopOutput`、DataProto non-tensor batch 和 meta_info 中没有本机绝对 environment path 或 workspace path。
 - full trainer 小步 profile 至少完成一个 global step，并记录有效样本数量、invalid 样本过滤、GPU / Ray / SGLang 或 vLLM 指标。
@@ -1220,9 +1235,92 @@ runs/stage12_5-throughput-<timestamp>/
 - DataProto profile 能解释 actual token length、padding ratio、loss mask ratio 和 overflow filtered sample count。
 - `TimingSummary` 能解释 setup、snapshot、dependency restore、model、tool、verifier、artifact 和 cleanup 的主要耗时。
 
-只有 Stage 12.5 完成后，才进入 Stage 13 fully async。否则 Stage 13 必须先声明它只是异步接口预研，不能声称已经建立高吞吐 agentic RL infra。
+Stage 12.5 本地实现和本地回归完成后，还不能直接进入 Stage 13 fully async。必须先完成 Stage 12.6 的远端 RL 链路回归 smoke；否则 Stage 13 必须先声明它只是异步接口预研，不能声称已经建立高吞吐 agentic RL infra。
 
-## 18. Stage 13：fully async 演进预留
+## 18. Stage 12.6：Stage 12.5 修改后远端 RL 链路回归 smoke
+
+目标：在 Stage 12.5 提交后，使用远端 GPU 环境重新验证当前代码提交下的完整 RepoHarness + verl 训练链路。这个阶段不是新增大规模训练，也不是提前进入 fully async；它是 Stage 13 前的远端回归 gate，用来证明 Stage 12.5 对共享依赖环境、命令策略、隐藏 runtime 目录、formal batch validator 和 batch refill 的修改没有破坏真实在线强化学习路径。
+
+新增这一阶段的原因：
+
+- Stage 12.5 修改了 `real_episode` 的 workspace / dependency environment 准备方式，本地测试可以证明路径不可见性和缓存语义，但不能证明远端训练脚本、Ray worker、推理服务和真实任务命令都能顺利使用这些环境。
+- Stage 12.5 收紧了共享环境下的模型命令策略，例如拦截安装命令、环境探测命令、Python 脚本执行和高风险 `python -c` 诊断。本地测试能覆盖规则，但远端 smoke 必须确认真实模型任务不会因为策略过严而变成基础设施失败；如果模型被拦截，应明确分类为 command policy blocked 或 model behavior failure，而不是 verifier / trainer infrastructure failure。
+- Stage 12.5 强化了 formal batch validator 和 batch refill，必须在真实 `RepoHarnessVerlAgentLoop -> RepoHarnessRuntime(real_episode) -> VerlLLMGateway -> LLMServerClient -> TrainingView -> AgentLoopOutput -> DataProto -> trainer` 路径中再次验证。
+- Stage 12.5 增加隐藏 runtime 目录和输出脱敏，必须确认 `TrainingView.extra_fields`、`AgentLoopOutput.extra_fields`、DataProto non-tensor batch、meta_info、模型可见 tool 输出和命令 artifact 中都没有本机绝对 environment path、workspace path、run directory 或 `.repo_harness_runtime` / `.repo_harness_env_overlay` 明文泄漏。
+
+环境建议：
+
+- 使用新租用的 `2 * RTX PRO 6000` Vast.ai 实例，并参考此前已经验证过的硬件和配置。不能假设 Stage 12-B/C 旧实例上的模型缓存、Ray 状态、workspace、环境变量或进程仍然存在。
+- 如果新实例不是 `2 * RTX PRO 6000`，也可以使用等价 GPU 环境，但必须在 preflight 中记录 GPU 型号、驱动、CUDA、Python、torch、Ray、verl、SGLang / vLLM、transformers、tokenizer / chat template 来源、Docker / container image id 或 digest、RepoHarness commit 和 reference/verl commit。
+- 第一版仍建议使用 `Qwen2.5-Coder-7B-Instruct` 或同等级别小型 code instruct model，避免把大模型吞吐调参和 Stage 12.5 回归验证混在一起。
+
+实施边界：
+
+- 不要求模型收敛，不要求训练出有统计意义的 checkpoint。
+- 不扩大到大型 SWE-Bench 正式训练。
+- 不关闭 log probability、formal batch validator、visibility gate、verifier、reward boundary 或 artifact evidence 来制造通过结果。
+- 不因为模型没有修复任务就判定基础设施失败。模型格式错误、工具调用错误、verifier rejected 和真实 infrastructure error 必须分开统计。
+- 不在远端 smoke 中顺手修改 contract 或绕过 Stage 12.5 的保守命令策略。如果发现策略过严，应记录为 follow-up 设计问题，除非它阻断所有真实任务 smoke。
+
+远端 smoke 至少覆盖：
+
+- cold cache run：创建 dependency environment、source snapshot 和 workspace lease，记录 environment key、snapshot key、cache miss、dependency restore seconds 和 workspace materialization seconds。
+- warm cache run：复用同一个 dependency environment key 和 source snapshot key，证明每条 episode 不再重复完整 setup。
+- 真实任务池必须至少包含三类任务：无外部依赖基线任务、带第三方 Python 依赖的极小任务、需要从当前 episode workspace 源码 import 的任务。任务输入必须固定到 fixture 或 run artifact，并生成 manifest / sha256 报告。
+- 并发 episode run：至少 2 到 4 条极小真实仓库任务并发运行，验证 workspace、patch、artifact manifest、run directory、dependency runtime 目录、verifier worker 和 cleanup 不互相污染。
+- 命令策略 smoke：真实任务中如果触发共享环境命令拦截，必须记录被拦截命令、拦截原因和可见输出；命令输出中不能出现真实 dependency environment 路径、workspace 路径、run directory、`.repo_harness_runtime` 或 `.repo_harness_env_overlay`。
+- 命令策略受控负例：具体执行计划必须包含不进入 trainer batch 的 diagnostic task 或脚本化 episode，显式触发 `env`、`which python`、`python -c "import sys; print(sys.executable)"`、`python -m pip install ...` 等命令，证明它们被结构化归类为 `command_policy_blocked` 或等价安全拒绝原因，并且可见输出和 command artifact 不泄漏真实路径。
+- formal batch smoke：所有 valid 样本必须 `route=verl`，必须有 `response_logprobs`，必须有 `generation_records` 和 `response_spans`，并通过 formal batch validator。缺失 log probability、mixed route、overflow、invalid_for_online_rl 或路径 visibility 失败的样本必须被结构化拒绝。
+- batch refill / resample smoke：如果有效样本不足，必须记录 refill attempts、invalid reason distribution、最终 valid sample 数量和 insufficient valid batch reason，不能把 invalid 样本悄悄放进有效 policy loss。
+- trainer smoke：至少完成一个小步 trainer global step，记录 DataProto shape、loss mask、padding ratio、有效样本数、invalid 样本过滤、GPU / Ray / SGLang 或 vLLM 指标。这里的 trainer smoke 不能降级成只调用 `compute_advantage`、`compute_policy_loss` 或等价低层 loss 函数；必须证明真实 `DataProto -> trainer -> global step` 路径跑过。
+
+建议 evidence 目录：
+
+```text
+runs/stage12_6-remote-<timestamp>/
+  stage12_6_preflight.json
+  stage12_6_command_log.sanitized.jsonl
+  runtime_private/stage12_6_command_log.raw.jsonl
+  git_state_before_after.json
+  environment_cache_report.json
+  workspace_cache_report.json
+  concurrent_episode_report.json
+  command_policy_and_runtime_visibility_report.json
+  trainer_throughput_profile.json
+  verifier_recorder_tool_hot_path_report.json
+  batch_refill_resample_report.json
+  dataproto_padding_profile.json
+  evidence_path_leak_scan_report.json
+  real_episode_task_pool_report.json
+  formal_batch_and_refill_report.json
+  dataproto_and_trainer_smoke_report.json
+  inference_server_profile.json
+  tokenization_profile.json
+  ray_worker_resource_profile.json
+  system_resource_profile.json
+  visibility_and_batch_validation_report.json
+  stage12_6_acceptance_summary.json
+```
+
+如果具体执行计划为了减少文件数量而合并报告，必须在 `stage12_6_acceptance_summary.json` 中给出 canonical evidence item 到实际文件的映射，并说明哪些字段被合并到 `formal_batch_and_refill_report.json`、`dataproto_and_trainer_smoke_report.json`、`system_resource_profile.json` 或其他报告中。验收时以 canonical evidence item 是否完整覆盖为准，而不是只看文件名是否逐字匹配。
+
+通过标准：
+
+- 远端仓库代码基于明确 commit，执行前后工作区状态可审计。
+- 远端执行前后必须记录 `git rev-parse HEAD` 和 `git status --short`。正式通过原则上要求远端工作区干净；如果远端必须带未提交 patch，必须把 patch 文件纳入 evidence，并明确标记为非正式通过或带条件通过。
+- 至少一轮 cold cache 和一轮 warm cache 完成，并能看到 dependency environment / workspace snapshot 的 cache hit / miss 事实。
+- 至少一组并发 real episode 完成，且没有 workspace、run directory、artifact manifest、hidden runtime directory 或 cleanup 串扰。
+- 至少产生一个通过 formal batch validator 的 valid online RL sample，并完成一个 trainer global step。
+- 该 valid online RL sample 必须来自真实 `route=verl`、真实 `response_logprobs`、真实 formal batch validator 和真实 trainer 输入路径，不能来自 mock server、fake log probability、debug fixture 或手工构造的 DataProto。
+- 所有进入有效 policy loss 的样本都满足 Stage 0H 到 Stage 12.5 的 token、mask、log probability、route、generation record、response span 和 visibility 不变量。
+- invalid、timeout、infrastructure error、model format failure、verifier rejected 和 command policy blocked 的分类可审计。
+- `TrainingView`、`AgentLoopOutput`、DataProto non-tensor batch、meta_info 和模型可见 tool 输出中没有本机绝对 dependency environment path、workspace path、run directory、`.repo_harness_runtime` 或 `.repo_harness_env_overlay`。
+- `stage12_6_command_log.sanitized.jsonl`、command artifact、profile JSON、acceptance summary 和其他可传播 evidence JSON 本身也必须经过路径泄漏扫描，不能暴露真实 dependency environment path、workspace path、run directory、`.repo_harness_runtime` 或 `.repo_harness_env_overlay`。
+- 路径泄漏扫描必须分层报告：用户可传播或可上传的 summary evidence 必须脱敏；runtime-private raw evidence 如果为了远端调试保留真实路径，必须明确标记为本地私有，不进入 batch、不进入公开报告、不进入 Stage 12.6 acceptance summary 的可传播字段。
+
+只有 Stage 12.6 通过后，才进入 Stage 13 fully async。否则 Stage 13 必须先记录远端 smoke 的阻断原因，并把 fully async 降级为接口预研或问题修复前置工作。
+
+## 19. Stage 13：fully async 演进预留
 
 目标：第一版先跑通同步 reward 的 agent loop，后续再演进 fully async。
 
@@ -1248,7 +1346,7 @@ fully async 需要新增或加强：
 - `AuditRef` 能指向恢复所需状态 artifact。
 - async reward backfill 第一版不做，但未来实现时不能把无 reward 样本伪装成普通成功样本。
 
-## 19. 已采纳的第一版默认决策
+## 20. 已采纳的第一版默认决策
 
 这些决策已经按当前讨论固定为第一版默认选择。后续 agent 应按下面的选择实施；如果需要改变，必须先更新本文档和对应 shared contracts。
 
@@ -1270,9 +1368,10 @@ fully async 需要新增或加强：
 16. `AuditRef` 内部保持结构化对象；进入 `AgentLoopOutput.extra_fields` 时采用 namespaced flat scalar 字段，例如 `repo_harness_episode_id`、`repo_harness_run_id`、`repo_harness_audit_manifest_ref`、`repo_harness_timing_summary_ref` 和 `repo_harness_resource_summary_ref`。不要把绝对 `run_dir` 直接放入 verl batch。
 17. 正式 online PPO / GRPO 路径只允许 route=verl；provider route 默认 `invalid_for_online_rl=true`，主要用于 SFT export、preference data、teacher data generation 和 offline diagnostic replay。
 18. Vast.ai preflight 必须记录 verl commit、Python、Ray、vLLM、SGLang、transformers、torch、tokenizer / chat template 来源和镜像信息。
-19. Stage 12.5 是 Stage 13 的前置阶段。只有依赖环境缓存、共享 workspace cache、verifier pool 默认接入、recorder hot path 和吞吐 profile 建立后，Stage 13 才能把 fully async 作为吞吐演进，而不是用异步包装未加速的同步瓶颈。
+19. Stage 12.5 是 Stage 13 的本地实现和同步高吞吐基线前置阶段。只有依赖环境缓存、共享 workspace cache、verifier pool 默认接入、recorder hot path 和吞吐 profile 建立后，Stage 13 才能把 fully async 作为吞吐演进，而不是用异步包装未加速的同步瓶颈。
+20. Stage 12.6 是 Stage 13 的远端回归前置阶段。Stage 12.5 提交后必须在远端 GPU 环境重新跑真实 RL 链路 smoke，确认共享依赖环境、隐藏 runtime 目录、命令策略、formal batch validator、batch refill、DataProto 和 trainer 小步路径仍然完整可用。
 
-## 20. 最小成功定义
+## 21. 最小成功定义
 
 第一版成功不是“训练出模型”，而是完成下面闭环：
 
