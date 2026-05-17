@@ -185,6 +185,13 @@ def test_stage11_5_real_episode_runs_agent_loop_and_builds_training_view_from_co
     artifact_kinds = {artifact["kind"] for artifact in artifact_manifest["artifacts"]}
     assert "final_verifier" in artifact_kinds
     assert "reward_metadata" in artifact_kinds
+    run_status = json.loads(
+        (tmp_path / "runs_verl" / request.run_id / "run_status.json").read_text(encoding="utf-8")
+    )
+    assert run_status["status"] == "FINALIZED"
+    summary = (tmp_path / "runs_verl" / request.run_id / "summary.md").read_text(encoding="utf-8")
+    assert "runtime_execution_mode: real_episode" in summary
+    assert "status: succeeded" in summary
 
 
 def test_stage11_5_real_episode_success_with_mock_route_is_diagnostic_only(tmp_path: Path) -> None:
@@ -207,6 +214,35 @@ def test_stage11_5_real_episode_success_with_mock_route_is_diagnostic_only(tmp_p
     assert result.training_view.reward_score is not None
     with pytest.raises(ValueError, match="non_verl_route_invalid_for_online_rl"):
         validate_training_view_for_online_rl(result.training_view, require_explicit_eligibility=True)
+
+
+def test_stage11_5_real_episode_rejected_verifier_finalizes_run_status(tmp_path: Path) -> None:
+    source = _source_repo(tmp_path)
+
+    def verifier_factory(_context):
+        def verify() -> VerifierResult:
+            return _verifier_result(accepted=False)
+
+        return verify
+
+    request = _episode_request()
+    gateway = FakeLLMGateway([_final_response()])
+    runtime = RepoHarnessRuntime(
+        _runtime_options(
+            tmp_path,
+            source,
+            real_episode_final_verifier_factory=verifier_factory,
+        )
+    )
+
+    result = asyncio.run(runtime.run_episode(request, llm_gateway=gateway))
+
+    assert result.status == "failed"
+    run_dir = tmp_path / "runs_verl" / request.run_id
+    run_status = json.loads((run_dir / "run_status.json").read_text(encoding="utf-8"))
+    assert run_status["status"] == "FINALIZED"
+    summary = (run_dir / "summary.md").read_text(encoding="utf-8")
+    assert "status: failed" in summary
 
 
 def test_stage11_5_real_episode_missing_logprobs_is_rejected_by_formal_gate(tmp_path: Path) -> None:
@@ -460,6 +496,13 @@ def test_stage11_5_real_episode_timeout_holds_leases_until_agent_thread_finishes
         diagnostic.code == "real_episode_thread_wait_after_timeout"
         for diagnostic in first_result.audit_diagnostics
     )
+    run_status = json.loads(
+        (tmp_path / "runs_verl" / request.run_id / "run_status.json").read_text(encoding="utf-8")
+    )
+    assert run_status["status"] == "FINALIZED"
+    summary = (tmp_path / "runs_verl" / request.run_id / "summary.md").read_text(encoding="utf-8")
+    assert "status: timeout" in summary
+    assert "status_reason: episode_timeout" in summary
 
 
 def test_stage11_5_real_episode_cancellation_holds_leases_until_agent_thread_finishes(tmp_path: Path) -> None:
@@ -494,6 +537,13 @@ def test_stage11_5_real_episode_cancellation_holds_leases_until_agent_thread_fin
         diagnostic.code == "real_episode_thread_wait_after_cancelled"
         for diagnostic in first_result.audit_diagnostics
     )
+    run_status = json.loads(
+        (tmp_path / "runs_verl" / request.run_id / "run_status.json").read_text(encoding="utf-8")
+    )
+    assert run_status["status"] == "FINALIZED"
+    summary = (tmp_path / "runs_verl" / request.run_id / "summary.md").read_text(encoding="utf-8")
+    assert "status: cancelled" in summary
+    assert "status_reason: runtime_cancelled" in summary
 
 
 def test_stage11_5_final_verifier_timeout_holds_leases_until_verifier_thread_finishes(tmp_path: Path) -> None:
@@ -542,6 +592,13 @@ def test_stage11_5_final_verifier_timeout_holds_leases_until_verifier_thread_fin
     assert first_result.status_reason == "execution_timeout"
     assert first_result.verifier_summary is not None
     assert first_result.verifier_summary.status == "execution_timeout"
+    run_status = json.loads(
+        (tmp_path / "runs_verl" / request.run_id / "run_status.json").read_text(encoding="utf-8")
+    )
+    assert run_status["status"] == "FINALIZED"
+    summary = (tmp_path / "runs_verl" / request.run_id / "summary.md").read_text(encoding="utf-8")
+    assert "status: timeout" in summary
+    assert "status_reason: execution_timeout" in summary
 
 
 def test_stage11_5_route_limiter_runs_on_runtime_event_loop_from_worker_thread(tmp_path: Path) -> None:

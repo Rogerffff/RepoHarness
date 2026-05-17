@@ -1112,6 +1112,15 @@ class RepoHarnessRuntime:
                 status_reason = reward_boundary.status_reason or status_reason
 
         diagnostics.extend(self._write_real_episode_audit_evidence(request, real_run, reward_boundary))
+        diagnostics.extend(
+            self._finalize_real_episode_audit(
+                request,
+                real_run,
+                status=status,
+                status_reason=status_reason,
+                reward_boundary=reward_boundary,
+            )
+        )
         real_run = self._refresh_real_episode_artifact_stats(real_run)
         diagnostics.extend(self._real_episode_diagnostics_for_invalid_reason(invalid_reason))
         timing_summary = self._real_episode_timing_summary(
@@ -1584,6 +1593,42 @@ class RepoHarnessRuntime:
             return [
                 AuditDiagnostic(
                     code="real_episode_audit_evidence_write_failed",
+                    message=str(exc),
+                )
+            ]
+        return []
+
+    def _finalize_real_episode_audit(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        real_run: RealEpisodeRun,
+        *,
+        status: EpisodeStatusName,
+        status_reason: str | None,
+        reward_boundary: Stage7RewardBoundaryResult | None,
+    ) -> list[AuditDiagnostic]:
+        try:
+            recorder_profile = RecorderProfile.for_run_mode(request.run_mode)
+            with RunRecorder(
+                request.run_id,
+                real_run.run_dir,
+                task_id=request.task_id,
+                max_artifact_bytes=request.budgets.max_artifact_bytes,
+                recorder_profile=recorder_profile,
+            ) as recorder:
+                recorder.finalize_run(
+                    _real_episode_run_summary(
+                        request,
+                        real_run,
+                        status=status,
+                        status_reason=status_reason,
+                        reward_boundary=reward_boundary,
+                    )
+                )
+        except Exception as exc:
+            return [
+                AuditDiagnostic(
+                    code="real_episode_audit_finalize_failed",
                     message=str(exc),
                 )
             ]
@@ -2240,6 +2285,34 @@ def _tool_seconds_from_agent_state(state: AgentLoopState) -> float:
     if state.tool_call_count <= 0:
         return 0.0
     return 0.0
+
+
+def _real_episode_run_summary(
+    request: RepoHarnessEpisodeRequest,
+    real_run: RealEpisodeRun,
+    *,
+    status: EpisodeStatusName,
+    status_reason: str | None,
+    reward_boundary: Stage7RewardBoundaryResult | None,
+) -> str:
+    verifier_status = None if reward_boundary is None else reward_boundary.verifier_summary.status
+    reward_score = None if reward_boundary is None else reward_boundary.reward_score
+    return (
+        "# RepoHarness real episode summary\n\n"
+        f"- episode_id: {request.episode_id}\n"
+        f"- run_id: {request.run_id}\n"
+        f"- task_id: {request.task_id}\n"
+        f"- runtime_execution_mode: real_episode\n"
+        f"- status: {status}\n"
+        f"- status_reason: {status_reason or status}\n"
+        f"- agent_stop_reason: {real_run.agent_state.agent_stop_reason}\n"
+        f"- turn_count: {real_run.agent_state.turn_count}\n"
+        f"- model_call_count: {real_run.agent_state.budget_state.model_call_count}\n"
+        f"- tool_call_count: {real_run.agent_state.tool_call_count}\n"
+        f"- generation_record_count: {len(real_run.collector.records)}\n"
+        f"- final_verifier_status: {verifier_status}\n"
+        f"- reward_score: {reward_score}\n"
+    )
 
 
 async def _wait_for_real_episode_task_after_stop(
