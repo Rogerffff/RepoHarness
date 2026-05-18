@@ -310,3 +310,71 @@ def validate_dataproto_visibility(data_proto: Any) -> None:
             continue
         _validate_visible_value(key, field_name=f"meta_info.{key}")
         _validate_visible_value(value, field_name=f"meta_info.{key}")
+
+
+def _first_array_value(value: Any) -> Any:
+    for item in _iter_array_values(value):
+        return _as_python_scalar(item)
+    return None
+
+
+def _extract_repo_harness_fact_from_rollout_sample(sample: Any, key: str) -> Any:
+    rollout_status = getattr(sample, "rollout_status", None)
+    if isinstance(rollout_status, Mapping) and key in rollout_status:
+        return _as_python_scalar(rollout_status[key])
+    full_batch = getattr(sample, "full_batch", None)
+    if full_batch is None:
+        return None
+    non_tensor_batch = getattr(full_batch, "non_tensor_batch", {})
+    if isinstance(non_tensor_batch, Mapping) and key in non_tensor_batch:
+        return _first_array_value(non_tensor_batch[key])
+    meta_info = getattr(full_batch, "meta_info", {})
+    if isinstance(meta_info, Mapping) and key in meta_info:
+        return _as_python_scalar(meta_info[key])
+    return None
+
+
+def validate_pre_serialization_rollout_sample_visibility(sample: Any) -> None:
+    """校验真实 fully async RolloutSample 在 Ray cloudpickle 序列化前已经完成 visibility scan。"""
+
+    if sample is None:
+        return
+    if isinstance(sample, (bytes, bytearray, memoryview)):
+        raise VerlVisibilityError("serialized_rollout_sample_cannot_be_visibility_scanned")
+    status = _extract_repo_harness_fact_from_rollout_sample(sample, "repo_harness_visibility_scan_status")
+    if status != "passed":
+        raise VerlVisibilityError("missing_repo_harness_visibility_scan_status")
+    digest = _extract_repo_harness_fact_from_rollout_sample(sample, "repo_harness_visibility_scan_digest")
+    if digest is not None:
+        _validate_visible_value(str(digest), field_name="repo_harness_visibility_scan_digest")
+
+    full_batch = getattr(sample, "full_batch", None)
+    if full_batch is not None:
+        validate_dataproto_visibility(full_batch)
+    rollout_status = getattr(sample, "rollout_status", None)
+    if rollout_status is not None:
+        _validate_visible_value(rollout_status, field_name="rollout_status")
+
+
+def validate_fully_async_queue_payload_visibility(
+    payload: Any,
+    *,
+    visibility_scan_status: str | None = None,
+    visibility_scan_digest: str | None = None,
+) -> None:
+    """校验准备进入 fully async MessageQueue 的 payload 可见性。
+
+    如果 payload 已经是 Ray/cloudpickle 序列化后的 opaque bytes，只能依赖外层可信 scan facts；
+    否则必须在序列化前检查 RolloutSample 本身。
+    """
+
+    if payload is None:
+        return
+    if isinstance(payload, (bytes, bytearray, memoryview)):
+        if visibility_scan_status != "passed":
+            raise VerlVisibilityError("serialized_queue_payload_missing_visibility_scan_status")
+        if not visibility_scan_digest:
+            raise VerlVisibilityError("serialized_queue_payload_missing_visibility_scan_digest")
+        _validate_visible_value(str(visibility_scan_digest), field_name="visibility_scan_digest")
+        return
+    validate_pre_serialization_rollout_sample_visibility(payload)

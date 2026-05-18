@@ -36,7 +36,7 @@ Stage 11.5：接通真实 RepoHarness episode runtime bridge
 Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
 Stage 12.5：同步高吞吐基线加固，补齐依赖环境缓存、共享 workspace cache、verifier / recorder 热路径和吞吐 profile
 Stage 12.6：Stage 12.5 修改后远端 RL 链路回归 smoke
-Stage 13：为 fully async 演进预留中断、恢复和异步 reward 设计
+Stage 13：fully async 分阶段演进，先固定异步生命周期 contract，再接入 verl fully async 训练路径
 ```
 
 这条路线的核心思想是：先让 RepoHarness 自己成为稳定、可复用、可审计、可加速的 episode runtime，再让 verl adapter 调用它。不要让 verl adapter 成为第二套 Harness。
@@ -1320,31 +1320,121 @@ runs/stage12_6-remote-<timestamp>/
 
 只有 Stage 12.6 通过后，才进入 Stage 13 fully async。否则 Stage 13 必须先记录远端 smoke 的阻断原因，并把 fully async 降级为接口预研或问题修复前置工作。
 
-## 19. Stage 13：fully async 演进预留
+## 19. Stage 13：fully async 分阶段演进
 
-目标：第一版先跑通同步 reward 的 agent loop，后续再演进 fully async。
+目标：在 Stage 12.6 已经证明同步真实链路可用之后，把 RepoHarness 接入 verl fully async 训练路径。Stage 13 不能一次性把现有同步 `real_episode` 直接改成完整 fully async；必须先固定异步 episode 生命周期、reward finality、样本身份、资源租约和 evidence gate，再逐步接入 verl 的 Rollouter、MessageQueue、Trainer 和 parameter synchronization。
 
-fully async 需要新增或加强：
+Stage 13 延续前面阶段的执行节奏：每一个子阶段都必须先由执行 agent 编写独立实施计划文档，审查通过后再实现；实现完成并通过本地或远端验收后，才进入下一个子阶段。建议后续文档命名为：
 
-- episode interrupt / resume contract。
-- partial `AgentLoopOutput` 或等价 checkpoint。
-- rollout pending queue / processor worker / trainer message queue 的状态边界。
-- policy version、`global_steps`、`min_global_steps`、`max_global_steps` 和 staleness 统计。
-- async verifier reward backfill。
-- cancelled / resumed / stale trajectory 的训练过滤策略。
-- workspace lease 在中断、恢复和取消时的生命周期。
-- `actor_rollout_ref.actor.use_rollout_log_probs=True` 或当前 verl 版本等价配置的记录。
-- `algorithm.rollout_correction.bypass_mode` 的选择记录。
-- stale trajectory 的过滤、丢弃或权重策略记录。
-- 如果一条 trajectory 跨多个参数版本，必须能按 token span 或 model call span 追踪版本范围。
+```text
+21-stage-13-0-execution-plan.md
+22-stage-13-1-execution-plan.md
+23-stage-13-2-execution-plan.md
+24-stage-13-3-execution-plan.md
+```
 
-第一版只需要不阻断这些演进：
+Stage 13 的总边界：
 
-- `GenerationRecord` 保留 policy version、`global_steps`、`min_global_steps`、`max_global_steps` 字段。
-- `LLMGatewayResponse.extra_fields` 保留 verl `TokenOutput.extra_fields` 中的版本信息。
-- `RepoHarnessEpisodeResult.status` 能表达 `cancelled` 和 `timeout`。
-- `AuditRef` 能指向恢复所需状态 artifact。
-- async reward backfill 第一版不做，但未来实现时不能把无 reward 样本伪装成普通成功样本。
+- 不因为追求异步吞吐而放松 Stage 0H 到 Stage 12.6 固定的 token、mask、log probability、route、generation record、response span 和 visibility 不变量。
+- 不把 `reward_score=None`、pending verifier、provisional reward、stale reward 或无法绑定 final verifier evidence 的样本放进有效 policy loss。
+- 不把 `actor_rollout_ref.rollout.mode=async` 误写成 RepoHarness fully async 已完成。前者只是 verl / SGLang 或 vLLM rollout 服务配置；RepoHarness fully async 还必须覆盖 workspace、tool、verifier、reward、recorder 和 audit 生命周期。
+- 不把同步 `AgentLoop.run()`、同步工具执行、本地命令、workspace 物化、依赖环境准备、同步 verifier 或 recorder 写入直接塞进事件循环。它们在被分阶段异步化之前，必须继续通过 executor、worker pool、Ray actor 或单写入者队列隔离。
+- 不在 Stage 13.0 到 Stage 13.2 中要求模型收敛或大规模 SWE-Bench 训练。第一版仍使用极小真实仓库任务和短步数 smoke 验证 contract。
+
+### Stage 13.0：fully async 前置 contract hardening
+
+目标：先补齐 fully async 会依赖的安全 contract 和 hardening，不启动真实 fully async trainer。
+
+必须固定的 contract：
+
+- `AsyncEpisodeHandle` 或等价对象，至少表达 `episode_id`、`run_id`、`sample_attempt_id`、`status`、`wait_result`、`cancel`、`resume`、`snapshot`、resource lease 状态和 audit refs。
+- `resume` 第一版可以先是可表达但不一定可执行的能力。例如允许返回 `resume_supported=false`、`resume_status=unsupported_in_stage13_1` 或等价结构化状态，避免 Stage 13.0 / Stage 13.1 被迫提前实现完整轨迹恢复。
+- reward finality contract，明确区分 `pending_verifier`、`final_verifier_completed`、`invalid_reward`、`cancelled`、`timeout` 等状态。
+- formal online RL batch 只允许 `final_verifier_completed` 的样本；即使 `reward_score` 是非空数值，也必须有可信 `final_verifier_ref`、`reward_metadata_ref`、`reward_job_id` 和 `reward_score_source=trusted_final_verifier` 或等价事实。
+- `sample_id -> episode_id / run_id / sample_attempt_id` 的稳定映射。重采样、重复 task、迟到 reward、恢复运行都不能因为只看 `episode_id` 而绑定错样本。
+- final verifier 超时后的 workspace 生命周期。同步 verifier callable 如果还在运行，workspace lease 和相关资源不能提前删除；如果需要快速释放，必须使用可强制终止的进程 worker 并在终止确认后释放。
+- real episode 最终审计写入和 `finalize_run` 必须仍在 run directory single writer 保护内。不能先释放 `run_id` 资源锁，再写 final verifier、reward metadata 或 summary。
+- cleanup deadline、recorder lock timeout、orphan diagnostics 和 hidden runtime directory cleanup 需要进入 schema 或 diagnostics，避免 fully async 并发放大后资源无界积累。
+- 当前 verl fully async interface inventory 必须成为 Stage 13.0 验收项。实施计划需要记录 `verl.experimental.fully_async_policy.fully_async_main`、`FullyAsyncRollouter`、`MessageQueue`、`RolloutSample`、`FullyAsyncTrainer._fit_generate(...)`、`actor_rollout_ref.actor.use_rollout_log_probs`、`algorithm.rollout_correction.bypass_mode`、`data.gen_batch_size`、`data.train_batch_size`、`async_training.require_batches`、`async_training.staleness_threshold` 和 `async_training.partial_rollout` 的当前字段、默认值和调用形状。
+
+建议新增测试：
+
+- pending reward 样本被 formal batch validator 拒绝。
+- 有数值 `reward_score` 但没有 final verifier / reward metadata 绑定时被拒绝。
+- 迟到 reward 的 `reward_job_id`、`sample_attempt_id` 或 `trajectory_digest` 不匹配时被拒绝。
+- 同一个 `episode_id` 多次 attempt 时，reward 只能绑定对应 attempt。
+- final verifier 超时后，workspace lease 不会在底层 verifier 仍可能访问 workspace 时提前释放。
+- final audit 写入完成前，同一个 `run_id` 不能被新 episode 复用。
+- async reward queue、result queue、backfill ledger 和 DataProto 路径继续拒绝 hidden verifier、完整 reward metadata、ground truth 和本机绝对路径。
+
+Stage 13.0 通过后，只表示 fully async 的安全 contract 已经稳定；还不能宣称 RepoHarness 已经接入 verl fully async trainer。
+
+### Stage 13.1：RepoHarness async episode facade 原型
+
+目标：在 RepoHarness 内部提供最小异步 episode facade，让 episode 可以被启动、查询、取消、等待和审计，但仍然允许底层真实 AgentLoop 暂时运行在线程池或 worker pool 中。
+
+第一版需要做到：
+
+- 新增 `RepoHarnessRuntime.start_episode(...)` 或等价入口，返回 `AsyncEpisodeHandle`，而不是直接等待终态 `RepoHarnessEpisodeResult`。
+- 支持 `handle.status()`、`handle.wait_result()`、`handle.cancel()`、`handle.snapshot()` 和审计引用查询。
+- 取消语义必须保守：如果底层同步 AgentLoop、工具、verifier 或 recorder 不能立刻停止，资源 lease 必须保持到安全结束或强制终止确认后再释放。
+- 同步组件继续留在受控 executor、worker pool 或进程 worker 中，不能阻塞主事件循环。
+- final verifier、reward boundary、artifact 写入和 cleanup 的生命周期必须可审计。
+- `TrainingView` 只能在终态 reward finality 满足后进入 formal online RL batch；pending episode 只能进入诊断或 observability，不进入 policy loss。
+
+Stage 13.1 的本地 smoke 可以使用 fake gateway、小仓库任务和短 verifier，不需要启动 Ray、SGLang、vLLM 或 fully async trainer。
+
+### Stage 13.2：接入 verl fully async Rollouter / MessageQueue 路径
+
+目标：把 RepoHarness 的异步 episode facade 接到 verl `fully_async_policy` 的 Rollouter、MessageQueue 和 Trainer 样本流中，先完成结构性 smoke，不追求吞吐。
+
+需要明确的边界：
+
+- 使用 verl fully async 入口 `python -m verl.experimental.fully_async_policy.fully_async_main`，而不是普通 `main_ppo` 加 `actor_rollout_ref.rollout.mode=async` 的旧路径。
+- Rollouter 生成的 `sample_id` 必须在进入 `RepoHarnessVerlAgentLoop.run(...)` 前映射到 `sample_attempt_id`、`episode_id` 和 `run_id`。
+- MessageQueue 中只能传播 batch-safe 字段、opaque audit refs 和必要的版本事实；不能传播完整 `AuditRef`、本机路径、hidden verifier、完整 reward metadata 或 evaluator-only 信息。
+- `RolloutSample` 或等价对象必须能关联 `generation_record_digest`、`trajectory_digest`、`reward_state`、`reward_job_id`、`min_global_steps`、`max_global_steps`、staleness facts 和 visibility scan status。当前 `reference/verl` 的 `RolloutSample` 主要包含 `full_batch`、`sample_id`、`epoch` 和 `rollout_status`，因此第一版优先通过 `rollout_status` 或 `DataProto.non_tensor_batch` 中的 `repo_harness_*` namespaced 字段承载这些事实；不要直接大改 verl dataclass，除非对应子阶段实施计划明确说明需要 patch verl 并补充兼容测试。
+- `actor_rollout_ref.actor.use_rollout_log_probs=True` 或当前 verl 版本等价配置必须显式记录；不能为了 fully async 关闭 rollout log probability provenance。
+- `algorithm.rollout_correction.bypass_mode` 的选择必须记录，并说明是否改变 old log probability 来源。
+- stale trajectory、cancelled trajectory、partial trajectory、pending reward trajectory 的过滤、丢弃、延迟或权重策略必须可审计。
+- refill / resample 只统计 `final_verifier_completed` 且通过 formal validator 的样本；pending、timeout、missing logprobs、non-verl、visibility rejected、stale reward 样本不能进入 valid sample count。
+
+Stage 13.2 的 smoke 可以使用本地或单机 Ray 结构测试，重点是 MessageQueue、DataProto、visibility 和 sample identity，不要求远端长时间训练。
+
+### Stage 13.3：远端最小 fully async smoke
+
+目标：在远端 GPU 环境中运行最小 fully async smoke，证明 RepoHarness 的异步 episode facade 可以和 verl fully async Rollouter、MessageQueue、Trainer、parameter synchronization 共同工作。
+
+远端 smoke 建议沿用 Stage 12.6 的保守硬件和模型选择：
+
+- 小模型，例如 `Qwen2.5-Coder-7B-Instruct` 或同等级 code instruct model。
+- 极小真实仓库任务池。
+- 短上下文、短 response、极小 batch。
+- 只运行少量 fully async trainer step，不要求收敛。
+
+必须生成或等价覆盖的 evidence：
+
+- `stage13_3_preflight.json`
+- `fully_async_rollouter_profile.json`
+- `fully_async_message_queue_report.json`
+- `async_episode_lifecycle_report.json`
+- `reward_backfill_ledger_report.json`
+- `stale_and_partial_trajectory_report.json`
+- `formal_batch_and_visibility_report.json`
+- `trainer_global_step_report.json`
+- `resource_cleanup_and_orphan_report.json`
+- `stage13_3_acceptance_summary.json`
+
+Stage 13.3 通过标准：
+
+- 至少一个真实 `route=verl` 样本完成 `AsyncEpisodeHandle -> final_verifier_completed -> TrainingView -> AgentLoopOutput -> MessageQueue -> DataProto -> trainer global step`。
+- pending reward、stale reward、取消样本、超时样本和 visibility rejected 样本都被正确分类，不进入有效 policy loss。
+- 第一版远端 happy path 可以只依赖少量真实模型样本。pending reward、stale reward、cancelled、timeout、visibility rejected 等负例可以通过受控构造样本、短路径注入或 diagnostic episode 验证，不要求全部由真实模型自然触发。
+- MessageQueue、DataProto non-tensor batch、meta_info 和可传播 evidence 均通过 visibility 检查。
+- 资源租约、workspace、hidden runtime directory、run directory、recorder 和 verifier worker 没有并发串扰或 orphan 泄漏。
+- 如果 fully async 失败，必须归类为 adapter incompatibility、reward backfill mismatch、message queue shape failure、parameter sync failure、trainer failure、resource lifecycle failure 或模型行为失败，不能只写笼统 infrastructure error。
+
+只有 Stage 13.3 通过后，才能说 RepoHarness 已经完成第一版 verl fully async agentic RL 链路 smoke。Stage 13.0 到 Stage 13.2 通过只能说明异步 contract 和本地结构已经准备好。
 
 ## 20. 已采纳的第一版默认决策
 
@@ -1370,6 +1460,7 @@ fully async 需要新增或加强：
 18. Vast.ai preflight 必须记录 verl commit、Python、Ray、vLLM、SGLang、transformers、torch、tokenizer / chat template 来源和镜像信息。
 19. Stage 12.5 是 Stage 13 的本地实现和同步高吞吐基线前置阶段。只有依赖环境缓存、共享 workspace cache、verifier pool 默认接入、recorder hot path 和吞吐 profile 建立后，Stage 13 才能把 fully async 作为吞吐演进，而不是用异步包装未加速的同步瓶颈。
 20. Stage 12.6 是 Stage 13 的远端回归前置阶段。Stage 12.5 提交后必须在远端 GPU 环境重新跑真实 RL 链路 smoke，确认共享依赖环境、隐藏 runtime 目录、命令策略、formal batch validator、batch refill、DataProto 和 trainer 小步路径仍然完整可用。
+21. Stage 13 必须按 `13.0 -> 13.1 -> 13.2 -> 13.3` 顺序推进。每个子阶段都要先编写独立实施计划文档，审查通过后再实现；实现完成并通过对应本地或远端验收后，才能进入下一个子阶段。不能把 contract hardening、RepoHarness async episode facade、verl fully async Rollouter / MessageQueue 接入和远端 fully async smoke 合并成一次大改。
 
 ## 21. 最小成功定义
 
@@ -1393,4 +1484,4 @@ fully async 需要新增或加强：
   -> 可以通过 opaque audit refs 和结构化 AuditRef 回查完整轨迹证据
 ```
 
-如果这个闭环跑通，并且 timing/resource summary 能说明主要瓶颈，才进入更大规模 rollout 和 fully async 设计。
+如果这个闭环跑通，并且 timing/resource summary 能说明主要瓶颈，才进入 Stage 13.0 的 fully async contract hardening。只有 Stage 13.3 远端最小 fully async smoke 通过后，才能把 RepoHarness 接入 verl fully async agentic RL 链路视为第一版成立。

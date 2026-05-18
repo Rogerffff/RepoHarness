@@ -29,6 +29,7 @@ from .errors import (
     RepoHarnessVerlGatewayError,
     RepoHarnessVerlRequestMappingError,
 )
+from .fully_async_inventory import FullyAsyncInterfaceInventory, build_fully_async_interface_inventory
 from .inference_profile import (
     InferenceMetricSourceInventory,
     InferenceServerProfile,
@@ -58,7 +59,9 @@ from .visibility import (
     validate_agent_loop_output_extra_fields,
     validate_dataproto_shapes,
     validate_dataproto_visibility,
+    validate_fully_async_queue_payload_visibility,
     validate_postprocessed_extra_fields,
+    validate_pre_serialization_rollout_sample_visibility,
     validate_token_output_extra_fields,
     validate_transfer_queue_field_visibility,
     validate_transfer_queue_kwargs,
@@ -77,6 +80,7 @@ __all__ = [
     "RepoHarnessVerlIdentifiers",
     "RepoHarnessVerlRequestMappingError",
     "DataProtoPaddingProfile",
+    "FullyAsyncInterfaceInventory",
     "InferenceMetricSourceInventory",
     "InferenceServerProfile",
     "RayWorkerResourceProfile",
@@ -90,6 +94,7 @@ __all__ = [
     "build_agent_loop_metrics",
     "build_dataproto_padding_profile",
     "build_episode_request_from_verl_kwargs",
+    "build_fully_async_interface_inventory",
     "build_inference_metric_source_inventory",
     "build_inference_server_profile",
     "build_ray_worker_resource_profile",
@@ -109,7 +114,9 @@ __all__ = [
     "validate_agent_loop_output_extra_fields",
     "validate_dataproto_shapes",
     "validate_dataproto_visibility",
+    "validate_fully_async_queue_payload_visibility",
     "validate_postprocessed_extra_fields",
+    "validate_pre_serialization_rollout_sample_visibility",
     "validate_token_output_extra_fields",
     "validate_transfer_queue_field_visibility",
     "validate_transfer_queue_kwargs",
