@@ -58,6 +58,7 @@ from .async_contracts import (
     validate_reward_finality_for_policy_loss,
     validate_sample_identity_binding,
 )
+from .async_runtime import AsyncEpisodeHandle, AsyncEpisodeStartError, AsyncEpisodeState
 from .gateway import FakeLLMGateway, GenerationRecord, LLMGateway, LLMGatewayRequest, LLMGatewayResponse
 from .provider_gateway import (
     MockLLMGateway,
@@ -142,10 +143,13 @@ __all__ = [
     "AuditRef",
     "AsyncResourceLimiter",
     "AsyncBatchEligibilityFacts",
+    "AsyncEpisodeHandle",
     "AsyncEpisodeHandleRef",
     "AsyncEpisodeLifecycleFacts",
     "AsyncEpisodeSnapshot",
+    "AsyncEpisodeStartError",
     "AsyncEpisodeStatus",
+    "AsyncEpisodeState",
     "BudgetConsumption",
     "BudgetStopDecision",
     "CONTEXT_BUDGET_STOP_REASONS",

@@ -52,6 +52,8 @@ from .budget import (
     build_training_budget_policy,
     context_config_from_training_policy,
 )
+from .async_contracts import AsyncEpisodeHandleRef
+from .async_runtime import AsyncEpisodeHandle, AsyncEpisodeStartError, AsyncEpisodeState
 from .gateway import GenerationRecord, LLMGateway, LLMGatewayRequest, LLMGatewayResponse
 from .reward_boundary import Stage7RewardBoundaryResult, build_stage7_reward_boundary
 from .resources import (
@@ -404,18 +406,108 @@ class RepoHarnessRuntime:
         self.options = options or RepoHarnessRuntimeOptions()
         self.resource_lease_manager = self.options.resource_lease_manager
         self._real_episode_executor: ThreadPoolExecutor | None = None
+        self._async_episode_counter_by_episode_id: dict[str, int] = {}
+        self._async_handles_by_ref: dict[str, AsyncEpisodeHandle] = {}
+        self._async_handles_by_run_id: dict[str, AsyncEpisodeHandle] = {}
+        self._async_registry_lock = asyncio.Lock()
+        self._close_requested = False
         if self.resource_lease_manager is None and self.options.resource_concurrency_policy is not None:
             self.resource_lease_manager = ResourceLeaseManager(self.options.resource_concurrency_policy)
 
     def close(self) -> None:
         """Release runtime-owned worker resources."""
 
+        self._close_requested = True
+        for handle in list(self._async_handles_by_ref.values()):
+            state = handle._state
+            task = state.task
+            if task is not None and not task.done():
+                state.mark_cancel_requested("runtime_closed")
+                if state.started:
+                    task.cancel()
+        if not self._has_active_async_episode_handles():
+            self._shutdown_real_episode_executor()
+
+    async def aclose(self) -> None:
+        self.close()
+
+    def _has_active_async_episode_handles(self) -> bool:
+        return any(not handle._state.is_terminal() for handle in self._async_handles_by_ref.values())
+
+    def _shutdown_real_episode_executor(self) -> None:
         if self._real_episode_executor is not None:
             self._real_episode_executor.shutdown(wait=False, cancel_futures=True)
             self._real_episode_executor = None
 
-    async def aclose(self) -> None:
-        self.close()
+    async def start_episode(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        *,
+        llm_gateway: LLMGateway,
+    ) -> AsyncEpisodeHandle:
+        """Start an episode in the background and return a runtime-only handle."""
+
+        started = perf_counter()
+        parsed_request = RepoHarnessEpisodeRequest.model_validate(request)
+        async with self._async_registry_lock:
+            existing = self._async_handles_by_run_id.get(parsed_request.run_id)
+            if existing is not None and not existing._state.is_terminal():
+                raise AsyncEpisodeStartError(f"run_id already has an active async episode: {parsed_request.run_id}")
+            attempt_index = self._async_episode_counter_by_episode_id.get(parsed_request.episode_id, 0)
+            self._async_episode_counter_by_episode_id[parsed_request.episode_id] = attempt_index + 1
+            sample_attempt_id = f"{parsed_request.episode_id}:attempt-{attempt_index}"
+            handle_ref = AsyncEpisodeHandleRef(
+                episode_id=parsed_request.episode_id,
+                run_id=parsed_request.run_id,
+                sample_attempt_id=sample_attempt_id,
+                handle_ref=f"rh://async/{parsed_request.episode_id}/{sample_attempt_id}",
+            )
+
+            def cancel_result_factory() -> RepoHarnessEpisodeResult:
+                return self._terminal_result(
+                    parsed_request,
+                    status="cancelled",
+                    status_reason="runtime_cancelled",
+                    diagnostics=[
+                        AuditDiagnostic(
+                            code="runtime_cancelled",
+                            message="async episode was cancelled before the runner started",
+                        )
+                    ],
+                    elapsed_seconds=perf_counter() - started,
+                    model_call_seconds=0.0,
+                    cleanup_seconds=0.0,
+                    cleanup_status="skipped",
+                )
+
+            state = AsyncEpisodeState(
+                request=parsed_request,
+                sample_attempt_id=sample_attempt_id,
+                handle_ref=handle_ref,
+                runtime_mode=self._runtime_execution_mode(),
+                cancel_result_factory=cancel_result_factory,
+            )
+            handle = AsyncEpisodeHandle(state, unregister=self._unregister_async_episode_handle)
+            self._async_handles_by_ref[handle_ref.handle_ref] = handle
+            self._async_handles_by_run_id[parsed_request.run_id] = handle
+
+        async def runner() -> RepoHarnessEpisodeResult:
+            return await self.run_episode(parsed_request, llm_gateway=llm_gateway)
+
+        task = asyncio.create_task(
+            handle._run_and_record(runner),
+            name=f"repo-harness-async-episode:{parsed_request.episode_id}:{sample_attempt_id}",
+        )
+        handle.attach_task(task)
+        return handle
+
+    async def _unregister_async_episode_handle(self, handle: AsyncEpisodeHandle) -> None:
+        async with self._async_registry_lock:
+            self._async_handles_by_ref.pop(handle.handle_ref.handle_ref, None)
+            if self._async_handles_by_run_id.get(handle.handle_ref.run_id) is handle:
+                self._async_handles_by_run_id.pop(handle.handle_ref.run_id, None)
+            if self._close_requested and not self._has_active_async_episode_handles():
+                self._shutdown_real_episode_executor()
 
     async def run_episode(
         self,
