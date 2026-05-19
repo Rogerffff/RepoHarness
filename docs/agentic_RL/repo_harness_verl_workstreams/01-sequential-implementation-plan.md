@@ -37,6 +37,7 @@ Stage 12：端到端 smoke、性能 smoke 和 visibility 验收
 Stage 12.5：同步高吞吐基线加固，补齐依赖环境缓存、共享 workspace cache、verifier / recorder 热路径和吞吐 profile
 Stage 12.6：Stage 12.5 修改后远端 RL 链路回归 smoke
 Stage 13：fully async 分阶段演进，先固定异步生命周期 contract，再接入 verl fully async 训练路径
+Stage 14：fully async 可复现验收与 partial rollout / resume 前置能力
 ```
 
 这条路线的核心思想是：先让 RepoHarness 自己成为稳定、可复用、可审计、可加速的 episode runtime，再让 verl adapter 调用它。不要让 verl adapter 成为第二套 Harness。
@@ -1528,7 +1529,253 @@ Stage 13.3-B 通过标准：
 
 只有 Stage 13.3-B 通过后，才能说 RepoHarness 已经完成第一版 verl fully async agentic RL 链路 smoke。Stage 13.0 到 Stage 13.2 通过只能说明异步 contract 和本地结构已经准备好；Stage 13.3-A 通过只能说明 runtime adapter 和本地 producer / filtering 路径已经准备好。
 
-## 20. 已采纳的第一版默认决策
+## 20. Stage 14：fully async 可复现验收与 partial rollout / resume 前置能力
+
+目标：在 Stage 13.3-B 已经证明“真实 fully async trainer 多步和参数同步可以跑通”之后，把这条链路从一次远端 smoke 升级成可复现、可检查、可多任务扩展的小规模训练验收层，并为后续 partial rollout / resume 做安全前置。Stage 14 不是直接追求模型收敛，也不是直接打开 `partial_rollout=True` 后让 partial trajectory 进入 policy loss。
+
+Stage 14 的核心判断是：
+
+```text
+Stage 13.3-B:
+  证明真实 fully async 链路能跑通一次
+
+Stage 14:
+  证明这条链路可以被脚本化复现、机器检查、多任务扩展，并且开始具备安全 checkpoint / resume 设计
+
+Stage 15:
+  在 checkpoint / resume contract 稳定后，再正式接入真实 verl partial_rollout=True 的远端 smoke
+
+Stage 16 或独立路线:
+  再规划旧 CLI / offline export 与 RepoHarnessRuntime.run_episode(...) 的统一
+```
+
+新增这一阶段的原因是：Stage 13.3-B 的远端证据已经足以说明第一版链路成立，但它仍然是短步数 smoke。当前证据中只有少量真实 episode，远端运行脚本、SGLang / LoRA merge 参数、环境 preflight、evidence manifest、日志扫描和实例生命周期仍需要进一步产品化。如果跳过这些加固直接做 partial rollout，后续很容易把恢复状态、reward finality、token provenance、workspace 生命周期和 trainer queue 过滤问题混在一起调试。
+
+Stage 14 延续前面阶段的执行节奏：每个子阶段都必须先由执行 agent 编写独立实施计划文档，审查通过后再实现；实现完成并通过本地或远端验收后，才进入下一个子阶段。建议后续文档命名为：
+
+```text
+26-stage-14-0-execution-plan.md
+27-stage-14-1-execution-plan.md
+28-stage-14-2-execution-plan.md
+29-stage-14-3-execution-plan.md
+```
+
+Stage 14 的总边界：
+
+- 不把 Stage 13.3-B 的一次通过误写成稳定小规模训练系统已经完成。
+- 不在 checkpoint / resume contract 稳定前打开真实 `partial_rollout=True` 并允许 partial trajectory 进入 policy loss。
+- 不把 Stage 13.3-B 已跑通的 `2 * 96GB GPU + SGLang + LoRA training + merged weight sync` 误写成正式训练唯一配置。它只是 Stage 14.0 用来产品化脚本、验收器和 evidence schema 的开发 smoke baseline；未来 `8 * 96GB GPU`、7B 全参 RL、不同 rollout 后端或不同参数同步策略必须通过独立 profile evidence 决定。
+- 不允许 pending reward、pending verifier、timeout、cancelled、visibility rejected、missing logprob、non-verl route 或 stale reward 样本补位成 valid sample。
+- 不允许 policy loss 入口只依赖 payload 自己声明的 `repo_harness_valid_for_policy_loss=true`。Stage 14 必须明确实现不可绕过的 policy-loss gate：要么在 `MessageQueueClient.put_sample(...)` 之前完成 source gate，只把 valid 样本写入真实 policy-loss queue；要么显式修改或包装 trainer 取样路径，让它验证外部 visibility ledger 和 queue facts，并持续取样直到凑够 required valid samples。只做事后 inspect 不算通过。
+- rejected / diagnostic 样本必须走物理隔离的 side channel，例如独立 report、独立 artifact 或独立 queue actor。不能先把坏样本放入真实 policy-loss MessageQueue，再指望 `FullyAsyncTrainer` 自动理解 RepoHarness 字段并过滤。
+- MessageQueue 满队列导致的 drop 必须可审计。Stage 14 默认要求 `message_queue_dropped_sample_count=0`；如果执行计划允许受控 drop，必须有逐样本 produced / consumed / dropped ledger，并且 dropped 样本不能被计入 valid、post-sync 或 trainer step 统计。
+- 不把 hidden verifier、gold patch、完整 reward metadata、本机绝对路径、dependency environment 路径、workspace 路径、run directory 或 provider secret 放入模型可见字段、MessageQueue、DataProto、meta_info 或可传播 evidence。
+- 不要求模型收敛，不做大规模 SWE-Bench 训练，不把多节点或 4 卡扩展作为第一目标。
+- 不把传统 `repo-harness run-task`、`run-batch`、`run-experiment` 和离线 export 的全面迁移混进 Stage 14。旧 CLI / export 与 `RepoHarnessRuntime.run_episode(...)` 的统一应单独规划，避免同时改动训练主线和评测主线。
+
+### Stage 14.0：fully async 远端链路验收器和脚本化
+
+目标：把 Stage 13.3-B 的远端成功经验从一次性 run artifact，沉淀为仓库内可复用、可复查、可机器验收的远端 fully async smoke 流程。
+
+需要完成或明确固定：
+
+- 远端 preflight、训练启动、日志采集、evidence 打包、实例暂停或停止的脚本化入口。脚本必须记录代码 commit、镜像、Python、Ray、torch、transformers、SGLang、verl 来源、模型、tokenizer / chat template、GPU、驱动、CUDA、`PYTHONPATH` 和关键环境变量。
+- Stage 14.0 的默认远端配置固定为开发 smoke baseline，建议 profile 名称为 `dev_smoke_2x96gb_lora_merged_sync`。这个 profile 复用 Stage 13.3-B 已经跑通的 `2 * 96GB GPU`、SGLang、`Qwen2.5-Coder-7B-Instruct`、LoRA training 和 merged weight sync 路径，用来稳定脚本、验收器、evidence schema 和 fully async 链路回归。
+- 固化 `dev_smoke_2x96gb_lora_merged_sync` 的第一版成功路径，包括 `flashinfer`、`model.lora.merge=True`、`multi_turn.enable=True`、`calculate_log_probs=True`、`actor.use_rollout_log_probs=True`、`repo_harness` agent loop 注册和参数同步配置。
+- 远端运行脚本不能把具体 GPU 数量、训练策略、rollout 后端或参数同步方式散落写死。必须引入训练 profile 或等价配置层，至少能表达 `dev_smoke_2x96gb_lora_merged_sync`，并为后续 `future_8x96gb_full_param_candidate`、`future_8x96gb_lora_or_adapter_candidate` 或其他正式训练候选 profile 预留字段。
+- `future_8x96gb_full_param_candidate` 只是后续正式训练候选，不是 Stage 14.0 通过条件。若后续准备在 `8 * 96GB GPU` 上对 7B 模型做全参 RL，必须另跑 profile preflight 和吞吐 / 参数同步证据，不能直接沿用双卡 LoRA smoke 的结论。
+- Stage 14.0 必须实现最小可执行的正式 inspect 命令或等价验收脚本，规范名称建议为 `inspect-stage14-fully-async-acceptance`。`inspect-stage13-3b-acceptance` 可以作为兼容别名，但 Stage 14 的正式验收入口应使用 Stage 14 命名。只写设计文档或只规划命令不算通过。它必须机器检查 trainer step、parameter synchronization、MessageQueue、valid sample count、formal validator rejected count、diagnostic sample count、visibility、日志负例、evidence hash、resource cleanup 和 canonical evidence mapping。
+- 把 Stage 13.3-B 中运行产物里的 runtime helper、agent loop config、run script 和 source map 生成逻辑收口到仓库内正式脚本或 builder，不能长期依赖手工复制远端脚本。
+- 远端 evidence 必须区分可传播 summary evidence 和 runtime-private raw evidence。可传播 evidence 不能泄漏真实 workspace、dependency environment、run directory 或 provider secret；runtime-private raw evidence 若保留真实路径，必须明确标记为本地私有，不进入训练 batch 或公开报告。
+- 验收器必须扫描完整 evidence tarball、summary JSON、日志、脚本、source map、profile、sanitized command log 和公开报告。环境变量只能按 allowlist 投影；真实路径只能以 hash、相对 ref 或 `rh://` opaque ref 出现。验收器不能在本地反序列化不可信的 `cloudpickle` payload，只能检查外层 ledger、digest、manifest 和安全摘要。
+- 远端运行必须固定 `RepoHarness` commit、`reference/verl` commit 或实际安装包版本、远端补丁 manifest、补丁 sha256、模型 revision、tokenizer / chat template revision、fixture manifest 和任务 manifest。远端临时补丁如果没有进入 manifest，验收必须失败，避免用 dirty remote patch 产生不可复现通过结果。
+- Stage 14.0 就必须检查 stale trajectory，而不是等到 partial checkpoint 阶段。验收器需要读取 staleness threshold、每条样本的 `min_global_steps` / `max_global_steps` / `trajectory_param_versions` / `current_param_version`，并统计 stale、filtered stale 和最大 observed staleness。
+- Stage 14.0 也必须检查真实 trainer batch 中 policy loss 使用的 token / log probability provenance。至少要在 `_update_actor` 前或等价 hook 处记录 batch digest，证明 rollout log probability tensor 或 old log probability tensor，与 response ids、response mask、response spans、generation records、tokenizer、chat template、sampling params 和 policy version digest 对齐。如果需要修改 `reference/verl`、monkey patch trainer hook 或注入远端 helper，必须把 patch 文件、sha256、启用方式和回退方式写入 `remote_patch_manifest`；没有登记的远端 trainer hook patch 不能通过验收。
+
+Stage 14.0 acceptance summary 至少需要包含：
+
+```text
+acceptance_passed
+repo_harness_commit
+verl_commit_or_package_version
+remote_patch_manifest_sha256
+training_profile_name
+gpu_count
+gpu_memory_gb_per_device
+inference_backend
+training_strategy
+weight_sync_strategy
+model_revision
+fixture_manifest_sha256
+completed_trainer_step_count
+parameter_sync_count
+current_param_version
+valid_sample_count
+final_verifier_rejected_trainable_count
+formal_validator_rejected_count
+diagnostic_sample_count
+policy_loss_queue_invalid_sample_count
+message_queue_dropped_sample_count
+post_sync_valid_sample_count
+staleness_threshold
+stale_sample_count
+filtered_stale_sample_count
+max_observed_staleness
+trainer_batch_logprob_provenance_passed
+trainer_batch_digest
+visibility_scan_passed
+evidence_tarball_sha256
+```
+
+通过标准：
+
+- 可以在一台新的远端实例上按脚本从 preflight 到 evidence collect 完成短步数 fully async smoke。
+- 机器验收命令能够在本地下载后的 evidence 目录上独立判断通过或失败，而不是依赖人工阅读日志。
+- 验收器能拒绝缺失 parameter synchronization、缺失 valid sample count、缺失 formal validator rejected count、缺失 diagnostic sample count、缺失 visibility report、日志出现关键错误、evidence hash 不匹配、dirty patch 未登记、MessageQueue drop 未解释或 summary 与底层报告不一致的证据包。
+- `policy_loss_queue_invalid_sample_count` 必须等于 0；默认 `message_queue_dropped_sample_count` 必须等于 0；`trainer_batch_logprob_provenance_passed` 必须为 true；超过 staleness threshold 的样本必须进入 filtered stale 统计，不能进入 policy loss。
+
+### Stage 14.1：多任务 real episode 扩展和远端负例 side channel
+
+目标：把 Stage 13.3-B 的“少量样本链路跑通”扩展到多个唯一真实 episode、多种任务形态和受控负例，证明 fully async 训练链路不仅能跑一次，而且能在小任务池上稳定分类和过滤样本。
+
+任务池至少需要覆盖：
+
+- 无外部依赖的基线任务。
+- 有轻量第三方 Python 依赖的任务。
+- `src/` layout 或等价 workspace import 任务。
+- final verifier accepted 的成功任务。
+- final verifier rejected 的可信模型失败任务。只有模型行为导致的可信任务失败，且 final verifier 已完成、`verifier_summary.status="rejected"`、reward finality 完成、route / logprob / generation record / response span / visibility 全部通过时，才可以作为 trainable negative sample 候选。
+- 可信 final verifier rejected 样本可以是 valid training sample，但 reward / outcome 是负向。报告必须区分 `trainable_negative_eligible_count` 和 `trainable_negative_consumed_count`，不能把“可作为负样本候选”和“已经被本次 policy loss batch 消费”混在一起。
+- 模型格式失败、timeout、missing logprob、non-verl route、visibility rejected、partial、cancelled 或 stale 的受控负例。负例可以走 diagnostic side channel，不要求自然由真实模型触发。
+- timeout、cancelled、format failure、no-progress、infrastructure error、visibility rejected、pending reward、pending verifier、missing logprob、non-verl route、partial 和 stale trajectory 一律不能作为 trainable negative sample，只能进入 diagnostic side channel 或 formal validator rejected 统计。
+
+必须记录：
+
+```text
+unique_real_episode_count
+unique_task_id_count
+trajectory_digest_count
+valid_sample_count
+final_verifier_rejected_trainable_count
+trainable_negative_eligible_count
+trainable_negative_consumed_count
+formal_validator_rejected_count
+diagnostic_sample_count
+accepted_count
+invalid_reason_distribution
+post_sync_valid_sample_count
+post_sync_final_verifier_rejected_trainable_count
+policy_loss_queue_valid_sample_count
+policy_loss_queue_invalid_sample_count
+message_queue_produced_sample_count
+message_queue_consumed_sample_count
+message_queue_dropped_sample_count
+side_channel_sample_count
+```
+
+通过标准：
+
+- 远端 evidence 至少包含 `unique_real_episode_count >= 3` 且 `unique_task_id_count >= 3` 的真实 run directory，不能只复用一条成功轨迹证明多步 trainer。
+- 至少包含 1 个 final verifier accepted 样本、1 个可信 final verifier rejected trainable negative 候选、1 个受控 diagnostic 或 formal validator rejected side-channel 样本，以及至少 2 个 parameter synchronization 之后产生的 valid 样本。
+- 每个进入 policy loss 的样本都能回查到 `route=verl`、非空 response、可信 `response_logprobs`、generation records、response spans、final verifier / reward finality 和 visibility scan digest。
+- rejected / diagnostic side channel 可以包含坏样本，但真实 policy-loss MessageQueue 不能接收这些坏样本。`policy_loss_queue_invalid_sample_count` 必须为 0。
+- `message_queue_dropped_sample_count` 默认必须为 0。若执行计划为了测试 overflow 特意制造 drop，必须把该用例放入 diagnostic side channel，并证明 dropped 样本没有影响 valid sample count、trainer step count 或 post-sync 统计。
+- 参数同步后仍有新的 RepoHarness 样本进入 MessageQueue，并且报告中能区分同步前和同步后的样本。
+- 如果 Stage 14.1 采用 trainer-side filter 而不是 source gate，filter 不能只读取 `required_samples` 条原始 queue entry 就停止；它必须继续读取，直到选中的 valid sample count 达到 `required_samples`，或者遇到 termination signal、max dequeue limit 或 timeout。
+- Stage 14.1 多任务池仍优先保持短步数 smoke，默认继续使用 `dev_smoke_2x96gb_lora_merged_sync`。只有吞吐、显存或 parameter synchronization profile 报告证明必要时，才升级到更多 GPU 或其他训练 profile。
+
+### Stage 14.2：partial checkpoint contract
+
+目标：先定义和验证 RepoHarness 自己的 partial episode checkpoint，不急着接入 verl `partial_rollout=True`。这一阶段解决“中途状态能否安全落盘、校验、恢复前置审计和拒绝篡改”的问题。
+
+Stage 14.2 必须新增 shared contract 文档或 Stage 14 专用 canonical fixture。它需要覆盖 partial checkpoint roundtrip、visibility、tamper rejection、digest binding、durable writer lease、reward finality 和不可训练状态，延续 Stage 0H 以来先固定 contract 再实现 runtime 行为的做法。
+
+第一版 `PartialEpisodeCheckpoint` 或等价 schema 至少需要表达：
+
+- `episode_id`、`run_id`、`sample_attempt_id`、`task_id`、dataset identity、policy version、global step 和参数版本窗口。
+- 当前 turn、context revision、budget state、no-progress state、tool state summary 和 recorder cursor。
+- durable writer lease facts，包括 lease token、owner、epoch、heartbeat、acquired_at、last_heartbeat_at 和 atomic release 状态。单进程内存集合不能作为远端 Ray / 多进程 / resume 的唯一 writer 保护。
+- recorder cursor digest、artifact manifest digest、transcript digest、events digest 和 finalization state。
+- 已提交的 transcript 记录、模型可见 messages 摘要、tool result refs、workspace snapshot / lease refs。
+- workspace snapshot digest、source snapshot digest、dependency environment opaque ref 和 workspace lease digest。
+- pending tool call / tool result 配对状态。未闭合的 tool call、重复 tool result、缺失 observation token projection 或 tool result visibility 失败都必须让 checkpoint 不可训练。
+- 已完成模型回合的 `GenerationRecord`、response token ids、response mask、response logprobs、response spans 和 trajectory digest。
+- token / logprob digest、generation record digest、response span digest、prompt digest、sampling params digest、tokenizer / chat template digest 和 policy version digest。
+- workspace 状态引用和 patch 基准引用。不能把本机绝对 workspace 路径、dependency environment 路径或 run directory 作为可传播字段。
+- checkpoint visibility scan digest、checkpoint content digest、generation record digest、trajectory digest 和篡改检测结果。
+- reward finality 状态。partial checkpoint 默认没有 final reward，不能伪装成可训练终态样本。
+- parameter clock，包括 `min_global_steps`、`max_global_steps`、`trajectory_param_versions`、`current_param_version_at_checkpoint` 和 resume 时需要重新计算的 staleness facts。
+- resume attempt id。新的 resume attempt 只能表示一次恢复尝试，不能把旧 prefix 伪装成新的 fresh trajectory。
+
+必须固定的安全规则：
+
+- checkpoint 只能保存模型可见内容、batch-safe opaque refs 和 runtime-only 私有引用的受控投影。
+- checkpoint 不能包含 hidden verifier、gold patch、完整 reward metadata、accepted label 细节、provider secret、evaluator-only logs 或真实本机路径。
+- checkpoint 不能绕过 run directory single writer。只要底层 worker、tool、verifier、recorder 或 cleanup 仍可能写入，checkpoint 必须表达 writer 仍 active 或 checkpoint 不可恢复。远端或多进程实现必须使用 durable lease token、文件锁或等价机制，不能只依赖当前进程内的 `ResourceLeaseManager` 内存状态。
+- checkpoint 与当前 run directory、artifact manifest、transcript、generation records 和 workspace facts 的 digest 必须绑定。`model_copy(...)`、字段删除、token 重排、logprob 伪造和 span 伪造都必须被拒绝。
+- resume 前和 resume 后进入 queue 前，必须重新计算 `current_param_version - max_global_steps` 或等价 staleness 指标。超过阈值的 checkpoint / resumed sample 必须进入 diagnostic / rejected side channel，不能通过新的 `sample_attempt_id` 伪装成 fresh sample。
+- token / logprob provenance 必须最终绑定到真实 policy loss batch 使用的 tensor。Stage 14 的 inspector 需要验证进入 `_update_actor` 前的真实 batch 中 rollout log probability tensor 或 old log probability tensor，与 response ids、response mask、response spans、generation records、tokenizer、chat template、sampling params 和 policy version digest 对齐。
+
+通过标准：
+
+- 本地构造 partial checkpoint 可以 roundtrip、hash、visibility scan 和 tamper reject。
+- 缺少 token provenance、缺少 recorder cursor、缺少 workspace facts、缺少 run writer 状态、缺少 visibility digest 或 reward finality 伪造的 checkpoint 会被拒绝。
+- partial checkpoint 只能进入 diagnostic / resume preparation，不进入 policy loss。
+- 负例测试必须覆盖 forged valid flag、missing external visibility ledger、absolute path leak、MessageQueue drop、stale disguised as fresh、partial disguised as complete、logprob reorder、token reorder、reward_job_id mismatch 和 durable lease token mismatch。
+
+### Stage 14.3：RepoHarness pause / resume facade 原型
+
+目标：在 checkpoint contract 稳定后，为 RepoHarness runtime 增加最小 pause / resume facade。第一版只支持 turn boundary pause，不支持正在运行的 shell、pytest、Docker command、verifier 或模型请求的热迁移。
+
+第一版允许的 pause 点：
+
+```text
+模型回合已经完成
+工具调用已经完成或本轮没有工具调用
+recorder 已经 flush 到一致状态
+generation records 已经收集
+workspace lease 仍由 runtime 持有或 checkpoint 明确绑定
+run directory single writer 未释放或已安全转移
+```
+
+不允许的 pause 点：
+
+```text
+LLMGateway.generate_turn(...) 正在执行
+tool command 正在执行
+final verifier 正在执行
+reward metadata 正在写入
+artifact manifest 正在写入
+cleanup 正在执行
+```
+
+第一版 resume 语义：
+
+- `AsyncEpisodeHandle.snapshot()` 可以返回可恢复 checkpoint facts，但 `resume()` 只有在 checkpoint 验证、workspace facts、recorder cursor、generation record digest 和 visibility scan 全部通过后才能启动。
+- resume 后的轨迹必须保留同一个 logical trajectory identity，并记录新的 `sample_attempt_id` 或 resume attempt id。
+- resume 前后的 token、mask、logprob、generation records、response spans 和参数版本窗口必须重新绑定到最终 trajectory digest。
+- resume 后写入 queue 前必须重新计算 staleness、parameter version window、reward finality、visibility scan digest 和 formal validator 结果；旧 checkpoint 的 fresh 状态不能沿用。
+- resume 完成前，样本仍是 partial / diagnostic；只有 final verifier 完成、reward finality 完成、formal validator 通过后，才可以成为 valid online RL sample。
+
+通过标准：
+
+- 本地 fake gateway 或小仓库任务可以在 turn boundary 生成 checkpoint，停止，再从 checkpoint 恢复并完成 episode。
+- resume 后的完整 episode 可以生成合法 `RepoHarnessEpisodeResult`、`TrainingView` 和 generation records。
+- 恢复前的 partial checkpoint 不能进入 policy loss；恢复后的终态样本只有在 formal validator 通过后才能进入 valid sample count。
+- 取消、超时、checkpoint 篡改、workspace lease 丢失、recorder cursor 不匹配和 generation record digest 不匹配都有结构化失败结果。
+- Stage 14.3 通过只表示 RepoHarness 具备第一版 turn-boundary pause / resume 原型，不表示生产级 resume 已完成，也不表示真实 verl `partial_rollout=True` 样本已经可以进入 policy loss。真实 partial rollout 远端 smoke 应放到 Stage 15。
+
+Stage 14 不应该做：
+
+- 不支持工具执行中、verifier 执行中、cleanup 执行中或模型请求执行中的热迁移。
+- 不承诺 KV cache resume。
+- 不做大规模远端训练或模型收敛验收。
+- 不把动态 SGLang LoRA adapter loading 修复作为主目标。当前第一版成功路径是 LoRA training + merged weight sync；动态 adapter loading 可以作为后续独立阶段。
+- 不把旧 CLI / offline export 全面迁移到 `run_episode(...)`。这条路线应单独规划，例如 Stage 16 或独立路线，不能和 Stage 15 的真实 partial rollout 远端 smoke 混在一起。
+
+只有 Stage 14.0 和 Stage 14.1 通过后，才能说 fully async 远端链路从一次 smoke 升级为可复现、多任务、可机器验收的小规模训练路径。只有 Stage 14.2 和 Stage 14.3 通过后，才能进入真实 verl `partial_rollout=True` 的远端训练 smoke。
+
+## 21. 已采纳的第一版默认决策
 
 这些决策已经按当前讨论固定为第一版默认选择。后续 agent 应按下面的选择实施；如果需要改变，必须先更新本文档和对应 shared contracts。
 
@@ -1553,8 +1800,11 @@ Stage 13.3-B 通过标准：
 19. Stage 12.5 是 Stage 13 的本地实现和同步高吞吐基线前置阶段。只有依赖环境缓存、共享 workspace cache、verifier pool 默认接入、recorder hot path 和吞吐 profile 建立后，Stage 13 才能把 fully async 作为吞吐演进，而不是用异步包装未加速的同步瓶颈。
 20. Stage 12.6 是 Stage 13 的远端回归前置阶段。Stage 12.5 提交后必须在远端 GPU 环境重新跑真实 RL 链路 smoke，确认共享依赖环境、隐藏 runtime 目录、命令策略、formal batch validator、batch refill、DataProto 和 trainer 小步路径仍然完整可用。
 21. Stage 13 必须按 `13.0 -> 13.1 -> 13.2 -> 13.3-A -> 13.3-B` 顺序推进。每个子阶段都要先编写独立实施计划文档，审查通过后再实现；实现完成并通过对应本地或远端验收后，才能进入下一个子阶段。不能把 contract hardening、RepoHarness async episode facade、verl fully async Rollouter / MessageQueue 结构桥接、fully async runtime adapter 本地实现和远端多步 fully async smoke 合并成一次大改。
+22. Stage 14 必须按 `14.0 -> 14.1 -> 14.2 -> 14.3` 顺序推进。先做 fully async 远端链路可复现验收和多任务扩展，再做 partial checkpoint contract 和 pause / resume facade；不能在 checkpoint / resume contract 稳定前把 `partial_rollout=True` 样本放进 policy loss。
+23. Stage 15 的自然主线是：在 Stage 14 的 checkpoint / resume contract 和 pause / resume facade 通过后，进入真实 verl `partial_rollout=True` 的远端 smoke。Stage 15 不能被旧 CLI / offline export 迁移任务占用。
+24. 传统 `repo-harness run-task`、`run-batch`、`run-experiment` 和离线 export 目前仍可继续沿用旧 `evaluation.runner.run_task(...)` 与 run directory 契约。它们和 `RepoHarnessRuntime.run_episode(...)` 的统一属于 Stage 16 或独立路线，不能在 Stage 14 或 Stage 15 中顺手替换。
 
-## 21. 最小成功定义
+## 22. 最小成功定义
 
 第一版成功不是“训练出模型”，而是完成下面闭环：
 
@@ -1576,4 +1826,4 @@ Stage 13.3-B 通过标准：
   -> 可以通过 opaque audit refs 和结构化 AuditRef 回查完整轨迹证据
 ```
 
-如果这个闭环跑通，并且 timing/resource summary 能说明主要瓶颈，才进入 Stage 13.0 的 fully async contract hardening。只有 Stage 13.3-B 远端 GPU 多步 fully async smoke 通过后，才能把 RepoHarness 接入 verl fully async agentic RL 链路视为第一版成立。
+如果这个闭环跑通，并且 timing/resource summary 能说明主要瓶颈，才进入 Stage 13.0 的 fully async contract hardening。只有 Stage 13.3-B 远端 GPU 多步 fully async smoke 通过后，才能把 RepoHarness 接入 verl fully async agentic RL 链路视为第一版成立。Stage 14 的成功定义是在这个第一版成立的基础上，进一步证明链路可以脚本化复现、机器验收、多任务扩展，并为 partial checkpoint / resume 提供安全前置。
