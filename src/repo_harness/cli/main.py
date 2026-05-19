@@ -217,6 +217,8 @@ from repo_harness.pre_verl_failure_injection import (
     DEFAULT_PROVIDER_FAILURE_INJECTION_SCENARIOS,
     run_provider_failure_injection_smoke,
 )
+from repo_harness_verl.stage14_acceptance import inspect_stage14_fully_async_acceptance
+from repo_harness_verl.stage14_remote_smoke import write_stage14_remote_smoke_kit
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
 
@@ -1709,6 +1711,19 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_pre_verl_readiness_parser = subparsers.add_parser("inspect-pre-verl-readiness")
     inspect_pre_verl_readiness_parser.add_argument("report")
     inspect_pre_verl_readiness_parser.add_argument("--assert-verl-ready", action="store_true")
+
+    inspect_stage14_parser = subparsers.add_parser(
+        "inspect-stage14-fully-async-acceptance",
+        help="检查 Stage 14 fully async 远端 smoke evidence 是否满足验收条件。",
+    )
+    inspect_stage14_parser.add_argument("evidence", help="Stage 14 evidence 目录或 tarball。")
+    inspect_stage14_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
+    build_stage14_smoke_kit_parser = subparsers.add_parser(
+        "build-stage14-remote-smoke-kit",
+        help="生成 Stage 14 远端 fully async smoke 配置骨架。",
+    )
+    build_stage14_smoke_kit_parser.add_argument("--output-dir", required=True)
 
     return parser
 
@@ -3235,6 +3250,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(inspect_pre_verl_readiness(args.report, assert_verl_ready=args.assert_verl_ready))
         except RepoHarnessError as exc:
             parser.exit(1, f"pre-verl readiness 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage14-fully-async-acceptance":
+        try:
+            print(
+                inspect_stage14_fully_async_acceptance(
+                    args.evidence,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 14 fully async acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "build-stage14-remote-smoke-kit":
+        try:
+            result = write_stage14_remote_smoke_kit(args.output_dir)
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 14 remote smoke kit 构建失败：{exc}\n")
+        print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
         return 0
     if args.command == "run-task":
         try:
