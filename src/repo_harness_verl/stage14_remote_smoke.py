@@ -13,13 +13,13 @@ from repo_harness.schema_base import StrictBaseModel
 
 class Stage14RemoteSmokeProfile(StrictBaseModel):
     schema_version: str = "repo_harness_verl_stage14_remote_smoke_profile_v0"
-    profile_name: str = "dev_smoke_2x96gb_lora_merged_sync"
+    profile_name: str = "dev_smoke_2x96gb_small_full_sync"
     gpu_count: int = Field(default=2, ge=1)
     gpu_memory_gb_per_device: int = Field(default=96, ge=1)
-    model_id: str = "Qwen/Qwen2.5-Coder-7B-Instruct"
+    model_id: str = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
     inference_backend: str = "sglang"
-    training_strategy: str = "lora"
-    weight_sync_strategy: str = "merged_weight_sync"
+    training_strategy: str = "full"
+    weight_sync_strategy: str = "nixl_cuda"
     required_samples: int = Field(default=1, ge=1)
     total_rollout_steps: int = Field(default=8, ge=1)
     trigger_parameter_sync_step: int = Field(default=2, ge=1)
@@ -27,7 +27,8 @@ class Stage14RemoteSmokeProfile(StrictBaseModel):
     staleness_threshold: int = Field(default=1, ge=0)
     partial_rollout: bool = False
     rollout_mode: str = "async"
-    checkpoint_engine_backend: str = "nccl"
+    checkpoint_engine_backend: str = "nixl"
+    checkpoint_engine_device: str | None = "cuda"
     gpu_memory_utilization: float = Field(default=0.25, gt=0.0, le=1.0)
     max_model_len: int = Field(default=4608, ge=1)
     max_num_seqs: int = Field(default=2, ge=1)
@@ -35,10 +36,10 @@ class Stage14RemoteSmokeProfile(StrictBaseModel):
     log_prob_micro_batch_size_per_gpu: int = Field(default=1, ge=1)
     agent_default_agent_loop: str = "repo_harness"
     agent_num_workers: int = Field(default=1, ge=1)
-    lora_rank: int = Field(default=8, ge=1)
+    lora_rank: int = Field(default=0, ge=0)
     lora_alpha: int = Field(default=16, ge=1)
-    lora_target_modules: list[str] = Field(default_factory=lambda: ["q_proj", "v_proj"])
-    lora_merge: bool = True
+    lora_target_modules: list[str] = Field(default_factory=list)
+    lora_merge: bool = False
     trust_remote_code: bool = True
     use_remove_padding: bool = True
     enable_gradient_checkpointing: bool = True
@@ -103,6 +104,14 @@ def build_stage14_hydra_overrides(
         f"actor_rollout_ref.rollout.name={profile.inference_backend}",
         f"actor_rollout_ref.rollout.mode={profile.rollout_mode}",
         f"actor_rollout_ref.rollout.checkpoint_engine.backend={profile.checkpoint_engine_backend}",
+        *(
+            [
+                "actor_rollout_ref.rollout.checkpoint_engine.engine_kwargs.nixl.device="
+                f"{profile.checkpoint_engine_device}"
+            ]
+            if profile.checkpoint_engine_backend == "nixl" and profile.checkpoint_engine_device
+            else []
+        ),
         f"actor_rollout_ref.rollout.gpu_memory_utilization={profile.gpu_memory_utilization}",
         f"actor_rollout_ref.rollout.max_model_len={profile.max_model_len}",
         f"actor_rollout_ref.rollout.max_num_seqs={profile.max_num_seqs}",
@@ -117,10 +126,16 @@ def build_stage14_hydra_overrides(
         f"actor_rollout_ref.rollout.agent.agent_loop_config_path={agent_loop_config_path}",
         f"actor_rollout_ref.rollout.multi_turn.enable={bool_value[profile.multi_turn_enabled]}",
         f"actor_rollout_ref.model.lora_rank={profile.lora_rank}",
-        f"actor_rollout_ref.model.lora_alpha={profile.lora_alpha}",
-        "actor_rollout_ref.model.target_modules="
-        + json.dumps(profile.lora_target_modules, separators=(",", ":")),
-        f"actor_rollout_ref.model.lora.merge={bool_value[profile.lora_merge]}",
+        *(
+            [
+                f"actor_rollout_ref.model.lora_alpha={profile.lora_alpha}",
+                "actor_rollout_ref.model.target_modules="
+                + json.dumps(profile.lora_target_modules, separators=(",", ":")),
+                f"actor_rollout_ref.model.lora.merge={bool_value[profile.lora_merge]}",
+            ]
+            if profile.lora_rank > 0
+            else []
+        ),
         f"actor_rollout_ref.model.trust_remote_code={bool_value[profile.trust_remote_code]}",
         f"actor_rollout_ref.model.use_remove_padding={bool_value[profile.use_remove_padding]}",
         f"actor_rollout_ref.model.enable_gradient_checkpointing={bool_value[profile.enable_gradient_checkpointing]}",

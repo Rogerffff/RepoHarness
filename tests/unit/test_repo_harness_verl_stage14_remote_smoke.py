@@ -15,12 +15,16 @@ from repo_harness_verl.stage14_remote_smoke import (
 def test_stage14_remote_smoke_profile_encodes_known_working_2x96gb_baseline() -> None:
     profile = stage14_default_remote_smoke_profile()
 
-    assert profile.profile_name == "dev_smoke_2x96gb_lora_merged_sync"
+    assert profile.profile_name == "dev_smoke_2x96gb_small_full_sync"
     assert profile.gpu_count == 2
     assert profile.gpu_memory_gb_per_device == 96
+    assert profile.model_id == "Qwen/Qwen2.5-Coder-1.5B-Instruct"
     assert profile.inference_backend == "sglang"
-    assert profile.training_strategy == "lora"
-    assert profile.weight_sync_strategy == "merged_weight_sync"
+    assert profile.training_strategy == "full"
+    assert profile.weight_sync_strategy == "nixl_cuda"
+    assert profile.checkpoint_engine_backend == "nixl"
+    assert profile.checkpoint_engine_device == "cuda"
+    assert profile.lora_rank == 0
     assert profile.calculate_log_probs is True
     assert profile.hybrid_engine is False
     assert profile.multi_turn_enabled is True
@@ -31,16 +35,18 @@ def test_stage14_hydra_overrides_include_fully_async_repo_harness_requirements()
 
     assert "actor_rollout_ref.hybrid_engine=False" in overrides
     assert "actor_rollout_ref.rollout.mode=async" in overrides
-    assert "actor_rollout_ref.rollout.checkpoint_engine.backend=nccl" in overrides
+    assert "actor_rollout_ref.rollout.checkpoint_engine.backend=nixl" in overrides
+    assert "actor_rollout_ref.rollout.checkpoint_engine.engine_kwargs.nixl.device=cuda" in overrides
     assert "actor_rollout_ref.rollout.agent.agent_loop_config_path=repo_harness_agent_loop_config.yaml" in overrides
     assert "actor_rollout_ref.rollout.agent.default_agent_loop=repo_harness" in overrides
     assert "actor_rollout_ref.rollout.agent.num_workers=1" in overrides
     assert "actor_rollout_ref.rollout.multi_turn.enable=True" in overrides
     assert "actor_rollout_ref.rollout.calculate_log_probs=True" in overrides
     assert "actor_rollout_ref.actor.use_rollout_log_probs=True" in overrides
-    assert "actor_rollout_ref.model.lora_rank=8" in overrides
-    assert "actor_rollout_ref.model.lora_alpha=16" in overrides
-    assert "actor_rollout_ref.model.lora.merge=True" in overrides
+    assert "actor_rollout_ref.model.path=Qwen/Qwen2.5-Coder-1.5B-Instruct" in overrides
+    assert "actor_rollout_ref.model.lora_rank=0" in overrides
+    assert not any(value.startswith("actor_rollout_ref.model.lora_alpha=") for value in overrides)
+    assert not any(value.startswith("actor_rollout_ref.model.lora.merge=") for value in overrides)
     assert "actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1" in overrides
     assert "actor_rollout_ref.actor.fsdp_config.param_offload=True" in overrides
     assert "actor_rollout_ref.actor.fsdp_config.optimizer_offload=True" in overrides
@@ -82,7 +88,7 @@ def test_stage14_remote_environment_keeps_local_package_importable() -> None:
 def test_stage14_remote_smoke_kit_writes_auditable_files(tmp_path: Path) -> None:
     result = write_stage14_remote_smoke_kit(tmp_path)
 
-    assert result["profile"]["profile_name"] == "dev_smoke_2x96gb_lora_merged_sync"
+    assert result["profile"]["profile_name"] == "dev_smoke_2x96gb_small_full_sync"
     assert (tmp_path / "stage14_training_profile.json").exists()
     assert (tmp_path / "repo_harness_agent_loop_config.yaml").exists()
     assert (tmp_path / "stage14_hydra_overrides.json").exists()

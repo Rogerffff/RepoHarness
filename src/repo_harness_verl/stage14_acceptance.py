@@ -51,11 +51,17 @@ PUBLIC_SCAN_SUFFIXES = (
     ".json",
     ".jsonl",
     ".log",
+    ".py",
     ".yaml",
     ".yml",
     ".sh",
     ".txt",
     ".parquet",
+)
+
+PUBLIC_RUNTIME_HELPER_PREFIXES = (
+    "scripts/",
+    "vllm_stub/",
 )
 
 PATH_LEAK_PATTERNS: tuple[re.Pattern[str], ...] = (
@@ -149,6 +155,11 @@ class _EvidenceView:
             if path.suffix in PUBLIC_SCAN_SUFFIXES:
                 yield relative, path
 
+    def iter_files(self) -> Iterable[tuple[str, Path]]:
+        for path in self.root.rglob("*"):
+            if path.is_file():
+                yield path.relative_to(self.root).as_posix(), path
+
 
 def inspect_stage14_fully_async_acceptance(
     evidence_path: str | Path,
@@ -189,10 +200,14 @@ def inspect_stage14_fully_async_acceptance_report(
         failures.extend(_validate_canonical_evidence_map(view, summary, canonical_items))
         failures.extend(_validate_canonical_evidence_content(view, summary))
         failures.extend(_validate_summary(summary))
+        failures.extend(_validate_profile_and_override_consistency(view, summary))
+        failures.extend(_validate_environment_matrix_consistency(view, summary))
         failures.extend(_validate_trainer_steps_report(view, summary))
         failures.extend(_validate_remote_patch_manifest(view, summary))
+        failures.extend(_validate_public_runtime_helpers(view))
         failures.extend(_validate_policy_loss_gate_report(view, summary))
         failures.extend(_validate_staleness_report(view, summary))
+        failures.extend(_validate_batch_provenance_report(view, summary))
         failures.extend(_validate_sha256_refs(view, summary))
         failures.extend(_scan_public_evidence_for_leaks(view))
         failures.extend(_validate_runtime_private_manifest(view, summary))
@@ -483,6 +498,144 @@ def _validate_summary(summary: Mapping[str, Any]) -> list[str]:
     return failures
 
 
+def _validate_profile_and_override_consistency(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not summary:
+        return []
+    failures: list[str] = []
+    profile: dict[str, Any] = {}
+    if not view.exists("stage14_training_profile.json"):
+        failures.append("missing_stage14_training_profile")
+    else:
+        try:
+            profile = _load_json(view, "stage14_training_profile.json")
+        except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+            failures.append(f"invalid_stage14_training_profile:{exc}")
+
+    if profile:
+        _expect_equal(
+            failures,
+            "training_profile_name",
+            summary.get("training_profile_name"),
+            profile.get("profile_name"),
+            "summary_profile",
+        )
+        for field in [
+            "model_id",
+            "gpu_count",
+            "inference_backend",
+            "weight_sync_strategy",
+            "required_samples",
+            "staleness_threshold",
+        ]:
+            _expect_equal(failures, field, summary.get(field), profile.get(field), "summary_profile")
+        _validate_summary_profile_training_strategy_mode(
+            failures,
+            summary.get("training_strategy"),
+            profile.get("training_strategy"),
+            profile.get("lora_rank"),
+        )
+        _validate_training_strategy_lora_rank(
+            failures,
+            profile.get("training_strategy"),
+            profile.get("lora_rank"),
+            "stage14_training_profile",
+        )
+        _validate_checkpoint_strategy(
+            failures,
+            summary.get("weight_sync_strategy"),
+            profile.get("checkpoint_engine_backend"),
+            profile.get("checkpoint_engine_device"),
+            "stage14_training_profile",
+        )
+
+    if view.exists("stage14_hydra_overrides.json"):
+        try:
+            overrides_payload = json.loads(view.read_text("stage14_hydra_overrides.json"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            failures.append(f"invalid_stage14_hydra_overrides:{exc}")
+            overrides_payload = None
+        if not isinstance(overrides_payload, list):
+            failures.append("stage14_hydra_overrides_not_list")
+        else:
+            overrides = _parse_hydra_overrides(overrides_payload, failures)
+            _expect_equal(
+                failures,
+                "model_id",
+                summary.get("model_id"),
+                overrides.get("actor_rollout_ref.model.path"),
+                "summary_hydra",
+            )
+            _expect_equal(
+                failures,
+                "inference_backend",
+                summary.get("inference_backend"),
+                overrides.get("actor_rollout_ref.rollout.name"),
+                "summary_hydra",
+            )
+            _expect_equal(
+                failures,
+                "required_samples",
+                summary.get("required_samples"),
+                overrides.get("async_training.require_batches"),
+                "summary_hydra",
+            )
+            _validate_training_strategy_lora_rank(
+                failures,
+                summary.get("training_strategy"),
+                overrides.get("actor_rollout_ref.model.lora_rank"),
+                "stage14_hydra_overrides",
+            )
+            _validate_checkpoint_strategy(
+                failures,
+                summary.get("weight_sync_strategy"),
+                overrides.get("actor_rollout_ref.rollout.checkpoint_engine.backend"),
+                overrides.get("actor_rollout_ref.rollout.checkpoint_engine.engine_kwargs.nixl.device"),
+                "stage14_hydra_overrides",
+            )
+    return failures
+
+
+def _validate_environment_matrix_consistency(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not summary:
+        return []
+    if not view.exists("stage14_environment_matrix.json"):
+        return ["missing_stage14_environment_matrix"]
+    failures: list[str] = []
+    try:
+        environment_matrix = _load_json(view, "stage14_environment_matrix.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_environment_matrix:{exc}"]
+    profile: dict[str, Any] = {}
+    if view.exists("stage14_training_profile.json"):
+        try:
+            profile = _load_json(view, "stage14_training_profile.json")
+        except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError):
+            profile = {}
+    _expect_equal(
+        failures,
+        "training_profile_name",
+        summary.get("training_profile_name"),
+        environment_matrix.get("execution_profile"),
+        "summary_environment_matrix",
+    )
+    for field in ["gpu_count", "image", "inference_backend"]:
+        _expect_equal(failures, field, summary.get(field), environment_matrix.get(field), "summary_environment_matrix")
+    expected_checkpoint_backend = profile.get("checkpoint_engine_backend")
+    if expected_checkpoint_backend is None:
+        strategy = str(summary.get("weight_sync_strategy") or "").lower()
+        if "nixl" in strategy:
+            expected_checkpoint_backend = "nixl"
+    if expected_checkpoint_backend is not None:
+        _expect_equal(
+            failures,
+            "checkpoint_engine_backend",
+            expected_checkpoint_backend,
+            environment_matrix.get("checkpoint_engine_backend"),
+            "profile_environment_matrix",
+        )
+    return failures
+
+
 def _validate_remote_patch_manifest(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
     failures: list[str] = []
     if not view.exists("stage14_remote_patch_manifest.json"):
@@ -523,6 +676,40 @@ def _validate_remote_patch_manifest(view: _EvidenceView, summary: Mapping[str, A
                     failures.append(f"dirty_worktree_file_missing_from_patch_manifest:{status_entry['path']}")
                 elif manifest_status != status_entry["git_status_code"]:
                     failures.append(f"dirty_worktree_git_status_code_mismatch:{status_entry['path']}")
+    return failures
+
+
+def _validate_public_runtime_helpers(view: _EvidenceView) -> list[str]:
+    failures: list[str] = []
+    manifest_files: dict[str, Mapping[str, Any]] = {}
+    if view.exists("stage14_remote_patch_manifest.json"):
+        try:
+            manifest = _load_json(view, "stage14_remote_patch_manifest.json")
+        except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError):
+            manifest = {}
+        files = manifest.get("files") if isinstance(manifest, Mapping) else None
+        if isinstance(files, list):
+            for item in files:
+                if isinstance(item, Mapping) and isinstance(item.get("path"), str):
+                    manifest_files[str(item["path"])] = item
+    for relative, path in view.iter_files():
+        if relative.startswith("runtime_private/"):
+            continue
+        if "__pycache__/" in relative or relative.endswith(".pyc"):
+            failures.append(f"public_evidence_pycache_not_allowed:{relative}")
+            continue
+        if not relative.startswith(PUBLIC_RUNTIME_HELPER_PREFIXES):
+            continue
+        entry = manifest_files.get(relative)
+        if entry is None:
+            failures.append(f"public_runtime_helper_missing_from_patch_manifest:{relative}")
+            continue
+        for field in REMOTE_PATCH_REQUIRED_FIELDS:
+            if not entry.get(field):
+                failures.append(f"public_runtime_helper_manifest_missing_{field}:{relative}")
+        sha = entry.get("sha256")
+        if isinstance(sha, str) and not _sha256_matches(sha, _sha256_bytes(path.read_bytes())):
+            failures.append(f"public_runtime_helper_sha256_mismatch:{relative}")
     return failures
 
 
@@ -604,6 +791,7 @@ def _validate_policy_loss_gate_report(view: _EvidenceView, summary: Mapping[str,
         consumed_step_indexes: set[int] = set()
         consumed_count_by_step: dict[int, int] = {}
         consumed_accepted_count = 0
+        trainer_step_indexes = _trainer_step_indexes(view)
         for index, row in enumerate(ledger):
             if not isinstance(row, Mapping):
                 failures.append(f"policy_loss_gate_sample_ledger[{index}]_not_object")
@@ -616,12 +804,13 @@ def _validate_policy_loss_gate_report(view: _EvidenceView, summary: Mapping[str,
             if row.get("consumed_by_policy_loss") and row.get("gate_decision") == "accepted":
                 step_index = row.get("trainer_step_index")
                 if isinstance(step_index, int) and not isinstance(step_index, bool):
+                    if trainer_step_indexes and step_index not in trainer_step_indexes:
+                        failures.append(f"policy_loss_gate_consumed_step_not_completed:{step_index}")
                     consumed_step_indexes.add(step_index)
                     consumed_count_by_step[step_index] = consumed_count_by_step.get(step_index, 0) + 1
                     consumed_accepted_count += 1
         expected_zero_based = set(range(completed_steps))
         expected_one_based = set(range(1, completed_steps + 1))
-        trainer_step_indexes = _trainer_step_indexes(view)
         if trainer_step_indexes:
             expected_steps = sorted(trainer_step_indexes)
         elif expected_zero_based <= consumed_step_indexes:
@@ -677,6 +866,61 @@ def _validate_staleness_report(view: _EvidenceView, summary: Mapping[str, Any]) 
         [_float(row.get("staleness")) for row in ledger if isinstance(row, Mapping)] or [0.0]
     ):
         failures.append("staleness_report_max_observed_staleness_mismatch")
+    return failures
+
+
+def _validate_batch_provenance_report(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_batch_provenance_report.json"):
+        return ["missing_stage14_batch_provenance_report"]
+    failures: list[str] = []
+    try:
+        report = _load_json(view, "stage14_batch_provenance_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_batch_provenance_report:{exc}"]
+    if report.get("trainer_batch_logprob_provenance_passed") is not True:
+        failures.append("batch_provenance_report_not_passed")
+    _expect_equal(
+        failures,
+        "trainer_batch_digest",
+        summary.get("trainer_batch_digest"),
+        report.get("trainer_batch_digest"),
+        "summary_batch_provenance",
+    )
+    for field in [
+        "response_ids_digest",
+        "response_mask_digest",
+        "rollout_log_probs_digest",
+        "response_ids_shape",
+        "response_mask_shape",
+        "rollout_log_probs_shape",
+    ]:
+        if field not in report:
+            failures.append(f"batch_provenance_missing_field:{field}")
+    shape_fields = [
+        "response_ids_shape",
+        "response_mask_shape",
+        "rollout_log_probs_shape",
+    ]
+    shapes: list[tuple[str, tuple[int, ...]]] = []
+    for field in shape_fields:
+        shape = report.get(field)
+        if not isinstance(shape, list) or not shape or any(not isinstance(item, int) or isinstance(item, bool) or item < 0 for item in shape):
+            failures.append(f"batch_provenance_invalid_shape:{field}")
+            continue
+        shapes.append((field, tuple(shape)))
+    if len(shapes) == len(shape_fields):
+        first_shape = shapes[0][1]
+        for field, shape in shapes[1:]:
+            if shape != first_shape:
+                failures.append(f"batch_provenance_shape_mismatch:{shapes[0][0]}:{field}")
+    for field in [
+        "response_ids_digest",
+        "response_mask_digest",
+        "rollout_log_probs_digest",
+    ]:
+        value = report.get(field)
+        if not isinstance(value, str) or not value.startswith("sha256:"):
+            failures.append(f"batch_provenance_invalid_digest:{field}")
     return failures
 
 
@@ -745,6 +989,92 @@ def _assert_complete_failures(summary: Mapping[str, Any]) -> list[str]:
     if summary.get("instance_final_status") not in {"exited", "stopped", "paused"}:
         failures.append("assert_complete_instance_not_paused")
     return failures
+
+
+def _parse_hydra_overrides(overrides: list[Any], failures: list[str]) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    for index, item in enumerate(overrides):
+        if not isinstance(item, str) or "=" not in item:
+            failures.append(f"stage14_hydra_overrides[{index}]_not_key_value")
+            continue
+        key, value = item.split("=", 1)
+        parsed[key.lstrip("+")] = value
+    return parsed
+
+
+def _expect_equal(
+    failures: list[str],
+    field: str,
+    left: Any,
+    right: Any,
+    scope: str,
+) -> None:
+    if left is None or right is None:
+        failures.append(f"{scope}_missing_field:{field}")
+        return
+    if str(left) != str(right):
+        failures.append(f"{scope}_mismatch:{field}")
+
+
+def _validate_training_strategy_lora_rank(
+    failures: list[str],
+    training_strategy: Any,
+    lora_rank: Any,
+    scope: str,
+) -> None:
+    strategy = str(training_strategy or "").lower()
+    try:
+        rank = int(lora_rank)
+    except (TypeError, ValueError):
+        failures.append(f"{scope}_lora_rank_must_be_int")
+        return
+    if "lora" in strategy and rank <= 0:
+        failures.append(f"{scope}_lora_strategy_requires_positive_lora_rank")
+    if "lora" not in strategy and rank != 0:
+        failures.append(f"{scope}_non_lora_strategy_requires_zero_lora_rank")
+
+
+def _validate_summary_profile_training_strategy_mode(
+    failures: list[str],
+    summary_training_strategy: Any,
+    profile_training_strategy: Any,
+    profile_lora_rank: Any,
+) -> None:
+    summary_strategy = str(summary_training_strategy or "").lower()
+    profile_strategy = str(profile_training_strategy or "").lower()
+    try:
+        profile_rank = int(profile_lora_rank)
+    except (TypeError, ValueError):
+        return
+    summary_expects_lora = "lora" in summary_strategy
+    profile_uses_lora = "lora" in profile_strategy or profile_rank > 0
+    summary_expects_full = "full" in summary_strategy and "lora" not in summary_strategy
+    profile_uses_full = "lora" not in profile_strategy and profile_rank == 0
+    if summary_expects_lora != profile_uses_lora:
+        failures.append("summary_profile_training_strategy_lora_mode_mismatch")
+    if summary_expects_full and not profile_uses_full:
+        failures.append("summary_profile_training_strategy_full_mode_mismatch")
+
+
+def _validate_checkpoint_strategy(
+    failures: list[str],
+    weight_sync_strategy: Any,
+    checkpoint_backend: Any,
+    checkpoint_device: Any,
+    scope: str,
+) -> None:
+    strategy = str(weight_sync_strategy or "").lower()
+    backend = str(checkpoint_backend or "").lower()
+    device = str(checkpoint_device or "").lower()
+    if "nixl" in strategy:
+        if backend != "nixl":
+            failures.append(f"{scope}_nixl_weight_sync_requires_nixl_backend")
+        if "cuda" in strategy and device != "cuda":
+            failures.append(f"{scope}_nixl_cuda_weight_sync_requires_cuda_device")
+    if backend == "nixl" and "nixl" not in strategy:
+        failures.append(f"{scope}_nixl_backend_requires_nixl_weight_sync")
+    if backend == "nccl" and "nixl" in strategy:
+        failures.append(f"{scope}_nccl_backend_conflicts_with_nixl_weight_sync")
 
 
 def _int_field(payload: Mapping[str, Any], field: str, failures: list[str]) -> int:

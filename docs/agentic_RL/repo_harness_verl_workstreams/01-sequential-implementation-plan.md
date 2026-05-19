@@ -1564,7 +1564,7 @@ Stage 14 的总边界：
 
 - 不把 Stage 13.3-B 的一次通过误写成稳定小规模训练系统已经完成。
 - 不在 checkpoint / resume contract 稳定前打开真实 `partial_rollout=True` 并允许 partial trajectory 进入 policy loss。
-- 不把 Stage 13.3-B 已跑通的 `2 * 96GB GPU + SGLang + LoRA training + merged weight sync` 误写成正式训练唯一配置。它只是 Stage 14.0 用来产品化脚本、验收器和 evidence schema 的开发 smoke baseline；未来 `8 * 96GB GPU`、7B 全参 RL、不同 rollout 后端或不同参数同步策略必须通过独立 profile evidence 决定。
+- 不把 Stage 14.0 已跑通的 `2 * 96GB GPU + SGLang + Qwen2.5-Coder-1.5B-Instruct + full training + lora_rank=0 + NIXL CUDA weight sync` 误写成正式训练唯一配置。它只是 Stage 14.0 用来产品化脚本、验收器和 evidence schema 的开发 smoke baseline。`7B LoRA + merged weight sync` 是历史尝试或后续候选 profile；未来 `8 * 96GB GPU`、7B 全参 RL、不同 rollout 后端或不同参数同步策略必须通过独立 profile evidence 决定。
 - 不允许 pending reward、pending verifier、timeout、cancelled、visibility rejected、missing logprob、non-verl route 或 stale reward 样本补位成 valid sample。
 - 不允许 policy loss 入口只依赖 payload 自己声明的 `repo_harness_valid_for_policy_loss=true`。Stage 14 必须明确实现不可绕过的 policy-loss gate：要么在 `MessageQueueClient.put_sample(...)` 之前完成 source gate，只把 valid 样本写入真实 policy-loss queue；要么显式修改或包装 trainer 取样路径，让它验证外部 visibility ledger 和 queue facts，并持续取样直到凑够 required valid samples。只做事后 inspect 不算通过。
 - rejected / diagnostic 样本必须走物理隔离的 side channel，例如独立 report、独立 artifact 或独立 queue actor。不能先把坏样本放入真实 policy-loss MessageQueue，再指望 `FullyAsyncTrainer` 自动理解 RepoHarness 字段并过滤。
@@ -1580,9 +1580,9 @@ Stage 14 的总边界：
 需要完成或明确固定：
 
 - 远端 preflight、训练启动、日志采集、evidence 打包、实例暂停或停止的脚本化入口。脚本必须记录代码 commit、镜像、Python、Ray、torch、transformers、SGLang、verl 来源、模型、tokenizer / chat template、GPU、驱动、CUDA、`PYTHONPATH` 和关键环境变量。
-- Stage 14.0 的默认远端配置固定为开发 smoke baseline，建议 profile 名称为 `dev_smoke_2x96gb_lora_merged_sync`。这个 profile 复用 Stage 13.3-B 已经跑通的 `2 * 96GB GPU`、SGLang、`Qwen2.5-Coder-7B-Instruct`、LoRA training 和 merged weight sync 路径，用来稳定脚本、验收器、evidence schema 和 fully async 链路回归。
-- 固化 `dev_smoke_2x96gb_lora_merged_sync` 的第一版成功路径，包括 `flashinfer`、`model.lora.merge=True`、`multi_turn.enable=True`、`calculate_log_probs=True`、`actor.use_rollout_log_probs=True`、`repo_harness` agent loop 注册和参数同步配置。
-- 远端运行脚本不能把具体 GPU 数量、训练策略、rollout 后端或参数同步方式散落写死。必须引入训练 profile 或等价配置层，至少能表达 `dev_smoke_2x96gb_lora_merged_sync`，并为后续 `future_8x96gb_full_param_candidate`、`future_8x96gb_lora_or_adapter_candidate` 或其他正式训练候选 profile 预留字段。
+- Stage 14.0 的默认远端配置固定为开发 smoke baseline，建议 profile 名称为 `dev_smoke_2x96gb_small_full_sync`。这个 profile 复用 Stage 14.0 远端最终跑通的 `2 * 96GB GPU`、SGLang、`Qwen2.5-Coder-1.5B-Instruct`、`lora_rank=0` full training 和 NIXL CUDA weight sync 路径，用来稳定脚本、验收器、evidence schema 和 fully async 链路回归。
+- 固化 `dev_smoke_2x96gb_small_full_sync` 的第一版成功路径，包括 `flashinfer`、`checkpoint_engine.backend=nixl`、`checkpoint_engine.engine_kwargs.nixl.device=cuda`、`multi_turn.enable=True`、`calculate_log_probs=True`、`actor.use_rollout_log_probs=True`、`repo_harness` agent loop 注册和参数同步配置。
+- 远端运行脚本不能把具体 GPU 数量、训练策略、rollout 后端或参数同步方式散落写死。必须引入训练 profile 或等价配置层，至少能表达 `dev_smoke_2x96gb_small_full_sync`，并为后续 `future_8x96gb_full_param_candidate`、`future_8x96gb_lora_or_adapter_candidate` 或其他正式训练候选 profile 预留字段。
 - `future_8x96gb_full_param_candidate` 只是后续正式训练候选，不是 Stage 14.0 通过条件。若后续准备在 `8 * 96GB GPU` 上对 7B 模型做全参 RL，必须另跑 profile preflight 和吞吐 / 参数同步证据，不能直接沿用双卡 LoRA smoke 的结论。
 - Stage 14.0 必须实现最小可执行的正式 inspect 命令或等价验收脚本，规范名称建议为 `inspect-stage14-fully-async-acceptance`。`inspect-stage13-3b-acceptance` 可以作为兼容别名，但 Stage 14 的正式验收入口应使用 Stage 14 命名。只写设计文档或只规划命令不算通过。它必须机器检查 trainer step、parameter synchronization、MessageQueue、valid sample count、formal validator rejected count、diagnostic sample count、visibility、日志负例、evidence hash、resource cleanup 和 canonical evidence mapping。
 - 把 Stage 13.3-B 中运行产物里的 runtime helper、agent loop config、run script 和 source map 生成逻辑收口到仓库内正式脚本或 builder，不能长期依赖手工复制远端脚本。
@@ -1682,7 +1682,7 @@ side_channel_sample_count
 - `message_queue_dropped_sample_count` 默认必须为 0。若执行计划为了测试 overflow 特意制造 drop，必须把该用例放入 diagnostic side channel，并证明 dropped 样本没有影响 valid sample count、trainer step count 或 post-sync 统计。
 - 参数同步后仍有新的 RepoHarness 样本进入 MessageQueue，并且报告中能区分同步前和同步后的样本。
 - 如果 Stage 14.1 采用 trainer-side filter 而不是 source gate，filter 不能只读取 `required_samples` 条原始 queue entry 就停止；它必须继续读取，直到选中的 valid sample count 达到 `required_samples`，或者遇到 termination signal、max dequeue limit 或 timeout。
-- Stage 14.1 多任务池仍优先保持短步数 smoke，默认继续使用 `dev_smoke_2x96gb_lora_merged_sync`。只有吞吐、显存或 parameter synchronization profile 报告证明必要时，才升级到更多 GPU 或其他训练 profile。
+- Stage 14.1 多任务池仍优先保持短步数 smoke，默认继续使用 `dev_smoke_2x96gb_small_full_sync`。只有吞吐、显存或 parameter synchronization profile 报告证明必要时，才升级到更多 GPU 或其他训练 profile。
 
 ### Stage 14.2：partial checkpoint contract
 
@@ -1770,7 +1770,7 @@ Stage 14 不应该做：
 - 不支持工具执行中、verifier 执行中、cleanup 执行中或模型请求执行中的热迁移。
 - 不承诺 KV cache resume。
 - 不做大规模远端训练或模型收敛验收。
-- 不把动态 SGLang LoRA adapter loading 修复作为主目标。当前第一版成功路径是 LoRA training + merged weight sync；动态 adapter loading 可以作为后续独立阶段。
+- 不把动态 SGLang LoRA adapter loading 修复作为主目标。当前 Stage 14.0 默认成功路径是小模型 full training + `lora_rank=0` + NIXL CUDA weight sync；`7B LoRA + merged weight sync` 可以作为历史尝试或后续独立候选 profile。
 - 不把旧 CLI / offline export 全面迁移到 `run_episode(...)`。这条路线应单独规划，例如 Stage 16 或独立路线，不能和 Stage 15 的真实 partial rollout 远端 smoke 混在一起。
 
 只有 Stage 14.0 和 Stage 14.1 通过后，才能说 fully async 远端链路从一次 smoke 升级为可复现、多任务、可机器验收的小规模训练路径。只有 Stage 14.2 和 Stage 14.3 通过后，才能进入真实 verl `partial_rollout=True` 的远端训练 smoke。

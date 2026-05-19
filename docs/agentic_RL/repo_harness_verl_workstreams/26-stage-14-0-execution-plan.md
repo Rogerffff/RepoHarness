@@ -13,14 +13,14 @@ Stage 14.0 的目标不是继续扩大训练规模，也不是实现 partial rol
 ```text
 GPU：2 * RTX PRO 6000，单卡约 96GB 显存
 镜像：verlai/verl:sgl056.latest
-模型：Qwen/Qwen2.5-Coder-7B-Instruct
-训练策略：LoRA training
-权重同步策略：merged weight sync to SGLang
+模型：Qwen/Qwen2.5-Coder-1.5B-Instruct
+训练策略：full training，`lora_rank=0`
+权重同步策略：NIXL CUDA weight sync
 rollout 后端：SGLang
 ```
 
 这套配置只是 Stage 14.0 的开发 smoke baseline，建议命名为
-`dev_smoke_2x96gb_lora_merged_sync`。它不能被描述成正式训练唯一配置，也不能被外推为
+`dev_smoke_2x96gb_small_full_sync`。它不能被描述成正式训练唯一配置，也不能被外推为
 4 卡、8 卡、全参数强化学习或其他模型后端已经可用。
 
 ## 1. 阶段目标和非目标
@@ -64,8 +64,8 @@ Stage 14.0 不做：
 - 不把 4 卡、8 卡、多节点或者全参数 7B RL 作为通过条件。
 - 不把旧 `repo-harness run-task`、`run-batch`、`run-experiment` 和离线 export 迁移到
   `RepoHarnessRuntime.run_episode(...)`。
-- 不把动态 SGLang LoRA adapter loading 修复作为主目标。当前通过路径仍然是
-  LoRA training + merged weight sync。
+- 不把动态 SGLang LoRA adapter loading 修复作为主目标。当前通过路径是
+  `lora_rank=0` full training + NIXL CUDA weight sync。
 
 如果执行中发现必须修改 `reference/verl`、monkey patch trainer hook 或注入远端 helper，
 必须把 patch 文件、sha256、启用方式、回退方式写入 `remote_patch_manifest`。没有登记的
@@ -111,7 +111,7 @@ src/repo_harness_verl/stage14_acceptance.py
 src/repo_harness_verl/stage14_remote_smoke.py
 src/repo_harness/cli/main.py
 tests/unit/test_repo_harness_verl_stage14_acceptance.py
-tests/unit/test_repo_harness_verl_stage14_remote_smoke_builder.py
+tests/unit/test_repo_harness_verl_stage14_remote_smoke.py
 docs/agentic_RL/repo_harness_verl_workstreams/26-stage-14-0-execution-plan.md
 ```
 
@@ -129,7 +129,7 @@ stage14_acceptance.py:
 
 stage14_remote_smoke.py:
   training profile dataclass / pydantic schema
-  dev_smoke_2x96gb_lora_merged_sync profile
+  dev_smoke_2x96gb_small_full_sync profile
   remote run directory skeleton builder
   sanitized command log helper
   remote patch manifest helper
@@ -375,7 +375,7 @@ message_queue_consumed_sample_count >= completed_trainer_step_count * required_s
 默认 profile 名称：
 
 ```text
-dev_smoke_2x96gb_lora_merged_sync
+dev_smoke_2x96gb_small_full_sync
 ```
 
 必填字段：
@@ -409,14 +409,14 @@ expected_parameter_sync_count_min
 默认值建议：
 
 ```text
-profile_name=dev_smoke_2x96gb_lora_merged_sync
+profile_name=dev_smoke_2x96gb_small_full_sync
 gpu_count=2
 gpu_memory_gb_per_device=96
 image=verlai/verl:sgl056.latest
-model_id=Qwen/Qwen2.5-Coder-7B-Instruct
+model_id=Qwen/Qwen2.5-Coder-1.5B-Instruct
 inference_backend=sglang
-training_strategy=lora
-weight_sync_strategy=merged_weight_sync
+training_strategy=full
+weight_sync_strategy=nixl_cuda
 rollout_total_steps=8
 trigger_parameter_sync_step=2
 required_samples=1
@@ -441,7 +441,8 @@ expected_parameter_sync_count_min=1
 actor_rollout_ref.hybrid_engine=False
 actor_rollout_ref.rollout.name=sglang
 actor_rollout_ref.rollout.mode=async
-actor_rollout_ref.rollout.checkpoint_engine.backend=nccl
+actor_rollout_ref.rollout.checkpoint_engine.backend=nixl
++actor_rollout_ref.rollout.checkpoint_engine.engine_kwargs.nixl.device=cuda
 actor_rollout_ref.rollout.calculate_log_probs=True
 actor_rollout_ref.rollout.multi_turn.enable=True
 actor_rollout_ref.rollout.agent.default_agent_loop=repo_harness
@@ -453,10 +454,7 @@ actor_rollout_ref.rollout.max_num_seqs=2
 actor_rollout_ref.rollout.max_num_batched_tokens=6144
 actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1
 
-actor_rollout_ref.model.lora_rank=8
-actor_rollout_ref.model.lora_alpha=16
-actor_rollout_ref.model.target_modules='["q_proj","v_proj"]'
-actor_rollout_ref.model.lora.merge=True
+actor_rollout_ref.model.lora_rank=0
 actor_rollout_ref.model.trust_remote_code=True
 actor_rollout_ref.model.use_remove_padding=True
 actor_rollout_ref.model.enable_gradient_checkpointing=True
@@ -550,7 +548,6 @@ transformers version
 SGLang version
 verl source path or package version
 reference/verl commit if using repository reference
-cupy-cuda12x availability
 flashinfer availability
 repo_harness import
 repo_harness_verl import
@@ -558,13 +555,9 @@ fully_async_main import
 RepoHarnessVerlAgentLoop target import
 ```
 
-如果 `checkpoint_engine.backend=nccl` 缺少 `cupy-cuda12x`，脚本可以安装或提示安装：
-
-```bash
-pip install cupy-cuda12x==13.6.0
-```
-
-安装动作必须进入命令日志和 preflight report。
+默认 `dev_smoke_2x96gb_small_full_sync` 使用 NIXL CUDA weight sync，不再依赖
+`checkpoint_engine.backend=nccl` 和 `cupy-cuda12x` 作为主路径。如果后续新增 NCCL profile，
+相关安装动作仍然必须进入命令日志和 preflight report。
 
 ## 6. 真实 trainer batch log probability provenance
 
@@ -739,12 +732,12 @@ tests/unit/test_repo_harness_verl_stage14_acceptance.py
 新增：
 
 ```text
-tests/unit/test_repo_harness_verl_stage14_remote_smoke_builder.py
+tests/unit/test_repo_harness_verl_stage14_remote_smoke.py
 ```
 
 覆盖：
 
-- `dev_smoke_2x96gb_lora_merged_sync` profile 生成的 Hydra args 包含所有关键配置。
+- `dev_smoke_2x96gb_small_full_sync` profile 生成的 Hydra args 包含所有关键配置。
 - profile 固定 `gpu_memory_utilization=0.25`、`max_model_len=4608`、`max_num_seqs=2`、
   `max_num_batched_tokens=6144`，并且这些值来自 profile schema，而不是散落在字符串模板中。
 - `use_remove_padding`、`enable_gradient_checkpointing`、`enable_activation_offload` 生成在
@@ -767,7 +760,7 @@ PYTHONPATH=src uv run --extra dev python -m compileall -q src
 
 PYTHONPATH=src uv run --extra dev python -m pytest -q \
   tests/unit/test_repo_harness_verl_stage14_acceptance.py \
-  tests/unit/test_repo_harness_verl_stage14_remote_smoke_builder.py \
+  tests/unit/test_repo_harness_verl_stage14_remote_smoke.py \
   tests/unit/test_repo_harness_rl_stage13_0_async_contracts.py \
   tests/unit/test_repo_harness_rl_stage13_0_async_batch_gate.py \
   tests/unit/test_repo_harness_rl_stage13_0_reward_finality.py \
@@ -793,7 +786,7 @@ PYTHONPATH=src uv run --extra dev python -m pytest -q \
 1. 本地确认 Stage 14.0 代码提交已经推送。
 2. 远端拉取该提交。
 3. 运行 Stage 14.0 preflight。
-4. 运行 `dev_smoke_2x96gb_lora_merged_sync` 短步数 fully async smoke。
+4. 运行 `dev_smoke_2x96gb_small_full_sync` 短步数 fully async smoke。
 5. 生成并打包 evidence。
 6. 下载 evidence 到本地。
 7. 本地运行：

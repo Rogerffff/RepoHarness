@@ -178,6 +178,121 @@ def test_stage14_acceptance_inspector_rejects_patch_manifest_sha_mismatch(tmp_pa
     assert "remote_patch_manifest_sha256_mismatch" in report.failures
 
 
+def test_stage14_acceptance_inspector_rejects_training_profile_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    profile_path = evidence / "stage14_training_profile.json"
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    profile["model_id"] = "Qwen/Qwen2.5-Coder-7B-Instruct"
+    profile["training_strategy"] = "lora"
+    profile["lora_rank"] = 8
+    profile_path.write_text(json.dumps(profile, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "summary_profile_mismatch:model_id" in report.failures
+    assert "summary_profile_training_strategy_full_mode_mismatch" in report.failures
+
+
+def test_stage14_acceptance_inspector_rejects_hydra_override_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    (evidence / "stage14_hydra_overrides.json").write_text(
+        json.dumps(
+            [
+                "actor_rollout_ref.model.path=Qwen/Qwen2.5-Coder-7B-Instruct",
+                "actor_rollout_ref.rollout.name=sglang",
+                "async_training.require_batches=1",
+                "actor_rollout_ref.model.lora_rank=0",
+                "actor_rollout_ref.rollout.checkpoint_engine.backend=nccl",
+            ],
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "summary_hydra_mismatch:model_id" in report.failures
+    assert "stage14_hydra_overrides_nixl_weight_sync_requires_nixl_backend" in report.failures
+
+
+def test_stage14_acceptance_inspector_rejects_environment_matrix_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    environment_path = evidence / "stage14_environment_matrix.json"
+    environment = json.loads(environment_path.read_text(encoding="utf-8"))
+    environment["checkpoint_engine_backend"] = "nccl"
+    environment_path.write_text(json.dumps(environment, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "profile_environment_matrix_mismatch:checkpoint_engine_backend" in report.failures
+
+
+def test_stage14_acceptance_inspector_rejects_policy_loss_consumed_step_without_completed_step(
+    tmp_path: Path,
+) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    report_path = evidence / "stage14_policy_loss_gate_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sample_ledger"].append(
+        {
+            "sample_id": "sample-extra",
+            "trajectory_digest": "sha256:trajectory-extra",
+            "status": "succeeded",
+            "reward_state": "final",
+            "route": "verl",
+            "generation_record_digest": "sha256:generation-extra",
+            "visibility_scan_digest": "sha256:visibility-extra",
+            "staleness": 0,
+            "gate_decision": "accepted",
+            "gate_rejection_reason": None,
+            "side_channel_ref": None,
+            "trainer_step_index": 99,
+            "consumed_by_policy_loss": True,
+        }
+    )
+    payload["consumed_sample_count"] += 1
+    payload["accepted_for_policy_loss_count"] += 1
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "policy_loss_gate_consumed_step_not_completed:99" in report.failures
+
+
+def test_stage14_acceptance_inspector_rejects_thin_batch_provenance_report(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    report_path = evidence / "stage14_batch_provenance_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload.pop("response_ids_digest")
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "batch_provenance_missing_field:response_ids_digest" in report.failures
+
+
+def test_stage14_acceptance_inspector_rejects_unregistered_public_helper(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    helper = evidence / "scripts" / "stage14_runtime.py"
+    helper.parent.mkdir(parents=True)
+    helper.write_text("print('runtime helper')\n", encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "public_runtime_helper_missing_from_patch_manifest:scripts/stage14_runtime.py" in report.failures
+
+
+def test_stage14_acceptance_inspector_rejects_public_pycache(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    pycache = evidence / "scripts" / "__pycache__" / "stage14_runtime.cpython-312.pyc"
+    pycache.parent.mkdir(parents=True)
+    pycache.write_bytes(b"pyc")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "public_evidence_pycache_not_allowed:scripts/__pycache__/stage14_runtime.cpython-312.pyc" in report.failures
+
+
 def test_stage14_acceptance_inspector_rejects_policy_loss_ledger_missing_step(tmp_path: Path) -> None:
     evidence = _write_stage14_evidence(tmp_path)
     report_path = evidence / "stage14_policy_loss_gate_report.json"
@@ -420,15 +535,15 @@ def _write_stage14_evidence(
         "required_samples": 1,
         "verl_commit_or_package_version": "reference-verl",
         "remote_patch_manifest_sha256": _sha256_file(patch_manifest),
-        "training_profile_name": "dev_smoke_2x96gb_lora_merged_sync",
+        "training_profile_name": "dev_smoke_2x96gb_small_full_sync",
         "image": "verlai/verl:sgl056.latest",
         "instance_id": "stage14-local-fixture",
         "gpu_count": 2,
         "gpu_memory_gb_per_device": 96,
         "inference_backend": "sglang",
-        "training_strategy": "lora",
-        "weight_sync_strategy": "merged_weight_sync",
-        "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+        "training_strategy": "full",
+        "weight_sync_strategy": "nixl_cuda",
+        "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
         "model_revision": "main",
         "tokenizer_revision": "main",
         "chat_template_digest": "sha256:chat-template",
@@ -509,8 +624,47 @@ def _write_stage14_evidence(
 
     special_payloads = {
         "stage14_acceptance_summary.json": summary,
+        "stage14_environment_matrix.json": {
+            "schema_version": "repo_harness_stage14_environment_matrix_v0",
+            "execution_profile": "dev_smoke_2x96gb_small_full_sync",
+            "gpu_count": 2,
+            "gpu_memory_gb_per_device": 96,
+            "image": "verlai/verl:sgl056.latest",
+            "instance_id": "stage14-local-fixture",
+            "inference_backend": "sglang",
+            "checkpoint_engine_backend": "nixl",
+            "python": "3.12.3",
+        },
+        "stage14_training_profile.json": {
+            "schema_version": "repo_harness_verl_stage14_remote_smoke_profile_v0",
+            "profile_name": "dev_smoke_2x96gb_small_full_sync",
+            "gpu_count": 2,
+            "gpu_memory_gb_per_device": 96,
+            "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+            "inference_backend": "sglang",
+            "training_strategy": "full",
+            "weight_sync_strategy": "nixl_cuda",
+            "required_samples": 1,
+            "staleness_threshold": 1,
+            "checkpoint_engine_backend": "nixl",
+            "checkpoint_engine_device": "cuda",
+            "lora_rank": 0,
+            "lora_target_modules": [],
+            "lora_merge": False,
+        },
         "stage14_policy_loss_gate_report.json": policy_report,
         "stage14_staleness_report.json": staleness_report,
+        "stage14_batch_provenance_report.json": {
+            "schema_version": "repo_harness_verl_stage14_batch_provenance_report_v0",
+            "trainer_batch_logprob_provenance_passed": True,
+            "trainer_batch_digest": "sha256:trainer-batch",
+            "response_ids_digest": "sha256:response-ids",
+            "response_mask_digest": "sha256:response-mask",
+            "rollout_log_probs_digest": "sha256:rollout-log-probs",
+            "response_ids_shape": [3, 8],
+            "response_mask_shape": [3, 8],
+            "rollout_log_probs_shape": [3, 8],
+        },
         "stage14_trainer_steps_report.json": {
             "completed_trainer_step_count": 3,
             "steps": [
