@@ -200,6 +200,7 @@ def inspect_stage14_fully_async_acceptance_report(
         failures.extend(_validate_canonical_evidence_map(view, summary, canonical_items))
         failures.extend(_validate_canonical_evidence_content(view, summary))
         failures.extend(_validate_summary(summary))
+        failures.extend(_validate_stage14_1_evidence(view, summary))
         failures.extend(_validate_profile_and_override_consistency(view, summary))
         failures.extend(_validate_environment_matrix_consistency(view, summary))
         failures.extend(_validate_trainer_steps_report(view, summary))
@@ -496,6 +497,301 @@ def _validate_summary(summary: Mapping[str, Any]) -> list[str]:
     if summary.get("instance_final_status") not in {"exited", "stopped", "paused"}:
         failures.append("instance_final_status_not_paused_or_exited")
     return failures
+
+
+def _validate_stage14_1_evidence(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not _is_stage14_1(summary):
+        return []
+    failures: list[str] = []
+    required_fields = [
+        "unique_real_episode_count",
+        "unique_task_id_count",
+        "policy_loss_consumed_unique_episode_count",
+        "policy_loss_consumed_unique_task_id_count",
+        "trainable_negative_eligible_count",
+        "trainable_negative_consumed_count",
+        "side_channel_sample_count",
+        "post_sync_policy_loss_consumed_sample_count",
+        "post_sync_policy_loss_consumed_unique_episode_count",
+        "trajectory_param_versions",
+        "min_global_steps",
+        "max_global_steps",
+        "fresh_trainer_batch_tensor_provenance_passed",
+        "batch_provenance_source",
+    ]
+    for field in required_fields:
+        if field not in summary:
+            failures.append(f"stage14_1_summary_missing_field:{field}")
+    completed_steps = _int_field(summary, "completed_trainer_step_count", failures)
+    required_samples = _int_field(summary, "required_samples", failures)
+    if _int_field(summary, "unique_real_episode_count", failures) < 3:
+        failures.append("stage14_1_unique_real_episode_count_below_minimum")
+    if _int_field(summary, "unique_task_id_count", failures) < 3:
+        failures.append("stage14_1_unique_task_id_count_below_minimum")
+    if _int_field(summary, "policy_loss_consumed_unique_episode_count", failures) < 3:
+        failures.append("stage14_1_policy_loss_consumed_unique_episode_count_below_minimum")
+    if _int_field(summary, "policy_loss_consumed_unique_task_id_count", failures) < 3:
+        failures.append("stage14_1_policy_loss_consumed_unique_task_id_count_below_minimum")
+    if _int_field(summary, "trainable_negative_eligible_count", failures) < 1:
+        failures.append("stage14_1_trainable_negative_eligible_count_below_minimum")
+    if _int_field(summary, "diagnostic_sample_count", failures) < 1 and _int_field(
+        summary, "formal_validator_rejected_count", failures
+    ) < 1:
+        failures.append("stage14_1_diagnostic_or_formal_rejection_missing")
+    if _int_field(summary, "post_sync_policy_loss_consumed_sample_count", failures) < 2:
+        failures.append("stage14_1_post_sync_policy_loss_consumed_sample_count_below_minimum")
+    if _int_field(summary, "post_sync_policy_loss_consumed_unique_episode_count", failures) < 2:
+        failures.append("stage14_1_post_sync_policy_loss_consumed_unique_episode_count_below_minimum")
+    if _int_field(summary, "valid_sample_count", failures) < completed_steps * required_samples:
+        failures.append("stage14_1_valid_sample_count_below_required_steps")
+    if summary.get("fresh_trainer_batch_tensor_provenance_passed") is not True:
+        failures.append("stage14_1_fresh_trainer_batch_tensor_provenance_not_true")
+    if summary.get("batch_provenance_source") not in {"trainer_hook", "remote_helper_hook"}:
+        failures.append("stage14_1_batch_provenance_source_not_fresh_hook")
+    for field in ["trajectory_param_versions", "min_global_steps", "max_global_steps"]:
+        value = summary.get(field)
+        if not isinstance(value, list) or not value:
+            failures.append(f"stage14_1_{field}_missing_or_empty")
+    failures.extend(_validate_stage14_1_task_pool_report(view, summary))
+    failures.extend(_validate_stage14_1_trainable_negative_report(view, summary))
+    failures.extend(_validate_stage14_1_side_channel_report(view, summary))
+    failures.extend(_validate_stage14_1_policy_loss_sample_ledger(view, summary))
+    failures.extend(_validate_stage14_1_batch_provenance_bindings(view, summary))
+    return failures
+
+
+def _validate_stage14_1_task_pool_report(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_1_task_pool_report.json"):
+        return ["missing_stage14_1_task_pool_report"]
+    failures: list[str] = []
+    try:
+        report = _load_json(view, "stage14_1_task_pool_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_1_task_pool_report:{exc}"]
+    if _int_field(report, "unique_task_id_count", failures) != _int_field(summary, "unique_task_id_count", failures):
+        failures.append("stage14_1_task_pool_unique_task_id_count_mismatch")
+    entries = report.get("entries")
+    if not isinstance(entries, list) or not entries:
+        return failures + ["stage14_1_task_pool_entries_missing"]
+    categories = {str(entry.get("task_category")) for entry in entries if isinstance(entry, Mapping)}
+    for required in ["accepted_baseline", "accepted_dependency", "trainable_negative_control", "diagnostic_control"]:
+        if required not in categories:
+            failures.append(f"stage14_1_task_pool_missing_category:{required}")
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, Mapping):
+            failures.append(f"stage14_1_task_pool_entries[{index}]_not_object")
+            continue
+        for field in ["task_id", "task_category", "repo_fixture_ref", "task_ref", "expected_outcome_class"]:
+            if not entry.get(field):
+                failures.append(f"stage14_1_task_pool_entries[{index}]_missing_{field}")
+        for field in ["repo_fixture_ref", "task_ref"]:
+            value = entry.get(field)
+            if isinstance(value, str) and (value.startswith("/") or ".." in PurePosixPath(value).parts):
+                failures.append(f"stage14_1_task_pool_entries[{index}]_unsafe_{field}")
+        if entry.get("task_category") == "accepted_dependency":
+            packages = entry.get("dependency_packages")
+            if not isinstance(packages, list) or not packages:
+                failures.append("stage14_1_dependency_entry_missing_dependency_packages")
+            else:
+                package = packages[0]
+                if not isinstance(package, Mapping) or package.get("name") != "tomli" or package.get("version") != "2.0.1":
+                    failures.append("stage14_1_dependency_entry_not_pinned_to_tomli_2_0_1")
+                if not isinstance(package, Mapping) or not str(package.get("sha256") or ""):
+                    failures.append("stage14_1_dependency_entry_missing_package_sha256")
+    return failures
+
+
+def _validate_stage14_1_trainable_negative_report(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_1_trainable_negative_report.json"):
+        return ["missing_stage14_1_trainable_negative_report"]
+    failures: list[str] = []
+    try:
+        report = _load_json(view, "stage14_1_trainable_negative_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_1_trainable_negative_report:{exc}"]
+    eligible_count = _int_field(report, "trainable_negative_eligible_count", failures)
+    consumed_count = _int_field(report, "trainable_negative_consumed_count", failures)
+    if eligible_count != _int_field(summary, "trainable_negative_eligible_count", failures):
+        failures.append("stage14_1_trainable_negative_eligible_count_mismatch")
+    if consumed_count != _int_field(summary, "trainable_negative_consumed_count", failures):
+        failures.append("stage14_1_trainable_negative_consumed_count_mismatch")
+    if consumed_count > eligible_count:
+        failures.append("stage14_1_trainable_negative_consumed_exceeds_eligible")
+    samples = report.get("eligible_samples")
+    if not isinstance(samples, list) or not samples:
+        return failures + ["stage14_1_trainable_negative_eligible_samples_missing"]
+    required_fields = [
+        "sample_id",
+        "attempt_id",
+        "prompt_digest",
+        "task_id",
+        "episode_id",
+        "run_id",
+        "trajectory_digest",
+        "generation_record_digest",
+        "visibility_scan_digest",
+        "final_verifier_status",
+        "reward_state",
+        "reward_score",
+        "route",
+        "response_token_count",
+        "response_logprob_count",
+        "policy_loss_consumed",
+    ]
+    for index, sample in enumerate(samples):
+        if not isinstance(sample, Mapping):
+            failures.append(f"stage14_1_trainable_negative_eligible_samples[{index}]_not_object")
+            continue
+        for field in required_fields:
+            value = sample.get(field)
+            if field not in sample or value is None or value == "":
+                failures.append(f"stage14_1_trainable_negative_eligible_samples[{index}]_missing_{field}")
+        if sample.get("final_verifier_status") != "rejected":
+            failures.append(f"stage14_1_trainable_negative_not_verifier_rejected:{sample.get('sample_id', index)}")
+        if sample.get("route") != "verl":
+            failures.append(f"stage14_1_trainable_negative_non_verl_route:{sample.get('sample_id', index)}")
+        if _int_field(sample, "response_token_count", failures) != _int_field(sample, "response_logprob_count", failures):
+            failures.append(f"stage14_1_trainable_negative_token_logprob_count_mismatch:{sample.get('sample_id', index)}")
+    attempts = report.get("attempts")
+    if isinstance(attempts, list):
+        for index, attempt in enumerate(attempts):
+            if not isinstance(attempt, Mapping):
+                failures.append(f"stage14_1_trainable_negative_attempts[{index}]_not_object")
+                continue
+            for field in ["run_id", "sample_id", "attempt_id", "prompt_digest"]:
+                if not attempt.get(field):
+                    failures.append(f"stage14_1_trainable_negative_attempts[{index}]_missing_{field}")
+    return failures
+
+
+def _validate_stage14_1_side_channel_report(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_1_side_channel_report.json"):
+        return ["missing_stage14_1_side_channel_report"]
+    failures: list[str] = []
+    try:
+        report = _load_json(view, "stage14_1_side_channel_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_1_side_channel_report:{exc}"]
+    if _int_field(report, "side_channel_sample_count", failures) != _int_field(summary, "side_channel_sample_count", failures):
+        failures.append("stage14_1_side_channel_sample_count_mismatch")
+    samples = report.get("samples")
+    if not isinstance(samples, list) or not samples:
+        return failures + ["stage14_1_side_channel_samples_missing"]
+    for index, sample in enumerate(samples):
+        if not isinstance(sample, Mapping):
+            failures.append(f"stage14_1_side_channel_samples[{index}]_not_object")
+            continue
+        for field in ["sample_id", "reason", "source", "policy_loss_queue_inserted", "policy_loss_consumed"]:
+            if field not in sample:
+                failures.append(f"stage14_1_side_channel_samples[{index}]_missing_{field}")
+        if sample.get("policy_loss_queue_inserted") is not False:
+            failures.append(f"stage14_1_side_channel_sample_inserted_into_policy_loss_queue:{sample.get('sample_id', index)}")
+        if sample.get("policy_loss_consumed") is not False:
+            failures.append(f"stage14_1_side_channel_sample_consumed_by_policy_loss:{sample.get('sample_id', index)}")
+        if sample.get("policy_loss_sample_ledger_ref") not in {None, ""}:
+            failures.append(f"stage14_1_side_channel_sample_has_policy_loss_ledger_ref:{sample.get('sample_id', index)}")
+    return failures
+
+
+def _validate_stage14_1_policy_loss_sample_ledger(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_1_policy_loss_sample_ledger.json"):
+        return ["missing_stage14_1_policy_loss_sample_ledger"]
+    failures: list[str] = []
+    try:
+        report = _load_json(view, "stage14_1_policy_loss_sample_ledger.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_1_policy_loss_sample_ledger:{exc}"]
+    side_channel_sample_ids = _stage14_1_side_channel_sample_ids(view)
+    samples = report.get("samples")
+    if not isinstance(samples, list) or not samples:
+        return failures + ["stage14_1_policy_loss_sample_ledger_samples_missing"]
+    consumed = [sample for sample in samples if isinstance(sample, Mapping) and sample.get("consumed_by_policy_loss") is True]
+    unique_episodes = {str(sample.get("episode_id")) for sample in consumed if sample.get("episode_id")}
+    unique_tasks = {str(sample.get("task_id")) for sample in consumed if sample.get("task_id")}
+    if len(unique_episodes) != _int_field(summary, "policy_loss_consumed_unique_episode_count", failures):
+        failures.append("stage14_1_policy_loss_consumed_unique_episode_count_mismatch")
+    if len(unique_tasks) != _int_field(summary, "policy_loss_consumed_unique_task_id_count", failures):
+        failures.append("stage14_1_policy_loss_consumed_unique_task_id_count_mismatch")
+    post_sync_consumed = [
+        sample
+        for sample in consumed
+        if _int_field(sample, "trainer_step_index", failures) >= 1 or _int_field(sample, "global_steps", failures) >= 1
+    ]
+    post_sync_unique_episodes = {str(sample.get("episode_id")) for sample in post_sync_consumed if sample.get("episode_id")}
+    if len(post_sync_consumed) != _int_field(summary, "post_sync_policy_loss_consumed_sample_count", failures):
+        failures.append("stage14_1_post_sync_policy_loss_consumed_sample_count_mismatch")
+    if len(post_sync_unique_episodes) != _int_field(summary, "post_sync_policy_loss_consumed_unique_episode_count", failures):
+        failures.append("stage14_1_post_sync_policy_loss_consumed_unique_episode_count_mismatch")
+    for index, sample in enumerate(consumed):
+        for field in ["sample_id", "episode_id", "task_id", "trajectory_digest", "trainer_step_index"]:
+            if not sample.get(field) and sample.get(field) != 0:
+                failures.append(f"stage14_1_policy_loss_sample_ledger[{index}]_missing_{field}")
+        if sample.get("side_channel_ref") not in {None, ""}:
+            failures.append(f"stage14_1_policy_loss_sample_has_side_channel_ref:{sample.get('sample_id', index)}")
+        if sample.get("sample_id") in side_channel_sample_ids:
+            failures.append(f"stage14_1_side_channel_sample_consumed_in_policy_loss_ledger:{sample.get('sample_id', index)}")
+    return failures
+
+
+def _validate_stage14_1_batch_provenance_bindings(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_1_batch_provenance_report.json"):
+        return ["missing_stage14_1_batch_provenance_report"]
+    if not view.exists("stage14_1_policy_loss_sample_ledger.json"):
+        return []
+    failures: list[str] = []
+    try:
+        provenance = _load_json(view, "stage14_1_batch_provenance_report.json")
+        ledger = _load_json(view, "stage14_1_policy_loss_sample_ledger.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_1_batch_provenance_or_ledger:{exc}"]
+    if provenance.get("fresh_trainer_batch_tensor_provenance_passed") is not True:
+        failures.append("stage14_1_batch_provenance_report_not_passed")
+    if provenance.get("batch_provenance_source") not in {"trainer_hook", "remote_helper_hook"}:
+        failures.append("stage14_1_batch_provenance_report_source_not_fresh_hook")
+    rows = provenance.get("sample_provenance")
+    if not isinstance(rows, list) or not rows:
+        return failures + ["stage14_1_batch_provenance_sample_provenance_missing"]
+    by_sample_id = {row.get("sample_id"): row for row in rows if isinstance(row, Mapping)}
+    ledger_samples = ledger.get("samples")
+    if not isinstance(ledger_samples, list):
+        return failures + ["stage14_1_policy_loss_sample_ledger_samples_missing_for_provenance"]
+    for sample in ledger_samples:
+        if not isinstance(sample, Mapping) or sample.get("consumed_by_policy_loss") is not True:
+            continue
+        sample_id = sample.get("sample_id")
+        row = by_sample_id.get(sample_id)
+        if not isinstance(row, Mapping):
+            failures.append(f"stage14_1_batch_provenance_missing_consumed_sample:{sample_id}")
+            continue
+        for field in ["sample_id", "trainer_step_index", "trajectory_digest"]:
+            if str(row.get(field)) != str(sample.get(field)):
+                failures.append(f"stage14_1_batch_provenance_{field}_mismatch:{sample_id}")
+        for field in ["response_ids_digest", "response_mask_digest", "rollout_log_probs_digest"]:
+            value = row.get(field)
+            if not isinstance(value, str) or not value.startswith("sha256:"):
+                failures.append(f"stage14_1_batch_provenance_invalid_{field}:{sample_id}")
+        for field in ["response_ids_shape", "response_mask_shape", "rollout_log_probs_shape"]:
+            shape = row.get(field)
+            if not isinstance(shape, list) or not shape:
+                failures.append(f"stage14_1_batch_provenance_invalid_{field}:{sample_id}")
+    return failures
+
+
+def _is_stage14_1(summary: Mapping[str, Any]) -> bool:
+    return str(summary.get("stage") or "").strip() == "14.1"
+
+
+def _stage14_1_side_channel_sample_ids(view: _EvidenceView) -> set[Any]:
+    if not view.exists("stage14_1_side_channel_report.json"):
+        return set()
+    try:
+        report = _load_json(view, "stage14_1_side_channel_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError):
+        return set()
+    samples = report.get("samples")
+    if not isinstance(samples, list):
+        return set()
+    return {sample.get("sample_id") for sample in samples if isinstance(sample, Mapping)}
 
 
 def _validate_profile_and_override_consistency(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:

@@ -92,6 +92,10 @@ def test_stage14_remote_smoke_kit_writes_auditable_files(tmp_path: Path) -> None
     assert (tmp_path / "stage14_training_profile.json").exists()
     assert (tmp_path / "repo_harness_agent_loop_config.yaml").exists()
     assert (tmp_path / "stage14_hydra_overrides.json").exists()
+    assert (tmp_path / "stage14_task_pool_manifest.json").exists()
+    assert (tmp_path / "stage14_fixture_manifest.json").exists()
+    assert (tmp_path / "stage14_fixture_sha256_report.json").exists()
+    assert (tmp_path / "stage14_source_map.json").exists()
     agent_loop_config_path = next(
         value.split("=", 1)[1]
         for value in result["hydra_overrides"]
@@ -100,3 +104,10 @@ def test_stage14_remote_smoke_kit_writes_auditable_files(tmp_path: Path) -> None
     assert agent_loop_config_path == "repo_harness_agent_loop_config.yaml"
     overrides = json.loads((tmp_path / "stage14_hydra_overrides.json").read_text(encoding="utf-8"))
     assert "actor_rollout_ref.hybrid_engine=False" in overrides
+    task_pool = json.loads((tmp_path / "stage14_task_pool_manifest.json").read_text(encoding="utf-8"))
+    assert task_pool["unique_task_id_count"] >= 3
+    categories = {entry["task_category"] for entry in task_pool["entries"]}
+    assert "accepted_dependency" in categories
+    assert "diagnostic_control" in categories
+    diagnostic = next(entry for entry in task_pool["entries"] if entry["task_category"] == "diagnostic_control")
+    assert diagnostic["policy_loss_queue_eligible"] is False

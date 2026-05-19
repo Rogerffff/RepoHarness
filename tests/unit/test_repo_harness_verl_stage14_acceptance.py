@@ -443,6 +443,53 @@ def test_stage14_acceptance_inspector_requires_max_observed_staleness(tmp_path: 
     assert "max_observed_staleness_must_be_number" in report.failures
 
 
+def test_stage14_1_acceptance_inspector_accepts_multitask_evidence(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert report.passed is True
+    assert report.failures == []
+
+
+def test_stage14_1_acceptance_inspector_rejects_side_channel_in_policy_loss_ledger(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["samples"].append(
+        {
+            "sample_id": "diagnostic-1",
+            "episode_id": "episode-diagnostic",
+            "task_id": "stage14_1_diagnostic_side_channel",
+            "trajectory_digest": "sha256:diagnostic-trajectory",
+            "trainer_step_index": 3,
+            "global_steps": 3,
+            "consumed_by_policy_loss": True,
+            "side_channel_ref": None,
+        }
+    )
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_side_channel_sample_consumed_in_policy_loss_ledger:diagnostic-1" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_unbound_batch_provenance(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    provenance_path = evidence / "stage14_1_batch_provenance_report.json"
+    payload = json.loads(provenance_path.read_text(encoding="utf-8"))
+    payload["sample_provenance"][0]["trajectory_digest"] = "sha256:wrong"
+    provenance_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_batch_provenance_trajectory_digest_mismatch:sample-0" in report.failures
+
+
 def test_stage14_acceptance_inspector_accepts_safe_tarball(tmp_path: Path) -> None:
     evidence = _write_stage14_evidence(tmp_path / "source")
     tar_path = tmp_path / "stage14_evidence.tar.gz"
@@ -709,6 +756,221 @@ def _write_stage14_evidence(
         encoding="utf-8",
     )
     return evidence
+
+
+def _upgrade_evidence_to_stage14_1(evidence: Path) -> None:
+    summary_path = evidence / "stage14_acceptance_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary.update(
+        {
+            "stage": "14.1",
+            "unique_real_episode_count": 3,
+            "unique_task_id_count": 3,
+            "policy_loss_consumed_unique_episode_count": 3,
+            "policy_loss_consumed_unique_task_id_count": 3,
+            "trainable_negative_eligible_count": 1,
+            "trainable_negative_consumed_count": 1,
+            "side_channel_sample_count": 1,
+            "post_sync_valid_sample_count": 2,
+            "post_sync_policy_loss_consumed_sample_count": 2,
+            "post_sync_policy_loss_consumed_unique_episode_count": 2,
+            "post_sync_final_verifier_rejected_trainable_count": 1,
+            "trajectory_param_versions": [0, 1, 2],
+            "min_global_steps": [0, 1, 2],
+            "max_global_steps": [0, 1, 2],
+            "fresh_trainer_batch_tensor_provenance_passed": True,
+            "batch_provenance_source": "trainer_hook",
+        }
+    )
+    summary_path.write_text(json.dumps(summary, sort_keys=True) + "\n", encoding="utf-8")
+
+    samples = [
+        {
+            "sample_id": "sample-0",
+            "episode_id": "episode-security",
+            "task_id": "task_security_probe",
+            "trajectory_digest": "sha256:trajectory-0",
+            "trainer_step_index": 0,
+            "global_steps": 0,
+            "consumed_by_policy_loss": True,
+            "side_channel_ref": None,
+        },
+        {
+            "sample_id": "sample-1",
+            "episode_id": "episode-config",
+            "task_id": "task_002",
+            "trajectory_digest": "sha256:trajectory-1",
+            "trainer_step_index": 1,
+            "global_steps": 1,
+            "consumed_by_policy_loss": True,
+            "side_channel_ref": None,
+        },
+        {
+            "sample_id": "sample-2",
+            "episode_id": "episode-negative",
+            "task_id": "task_001",
+            "trajectory_digest": "sha256:trajectory-2",
+            "trainer_step_index": 2,
+            "global_steps": 2,
+            "consumed_by_policy_loss": True,
+            "side_channel_ref": None,
+        },
+    ]
+    (evidence / "stage14_1_policy_loss_sample_ledger.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_1_policy_loss_sample_ledger_v0",
+                "samples": samples,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (evidence / "stage14_1_task_pool_report.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_1_task_pool_report_v0",
+                "task_pool_name": "stage14_1_default_multitask_pool",
+                "task_count": 4,
+                "unique_task_id_count": 3,
+                "entries": [
+                    {
+                        "task_id": "task_security_probe",
+                        "task_category": "accepted_baseline",
+                        "repo_fixture_ref": "tests/fixtures/repos/security_probe",
+                        "task_ref": "tests/fixtures/tasks/task_security_probe.yaml",
+                        "expected_outcome_class": "accepted",
+                    },
+                    {
+                        "task_id": "task_dependency_packaging_smoke",
+                        "task_category": "accepted_dependency",
+                        "repo_fixture_ref": "tests/fixtures/repos/dependency_packaging_smoke",
+                        "task_ref": "tests/fixtures/tasks/task_dependency_packaging_smoke.yaml",
+                        "expected_outcome_class": "accepted",
+                        "dependency_packages": [
+                            {
+                                "name": "tomli",
+                                "version": "2.0.1",
+                                "artifact": "tomli-2.0.1-py3-none-any.whl",
+                                "sha256": "939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+                            }
+                        ],
+                    },
+                    {
+                        "task_id": "task_001",
+                        "task_category": "trainable_negative_control",
+                        "repo_fixture_ref": "tests/fixtures/repos/buggy_calculator",
+                        "task_ref": "tests/fixtures/tasks/task_001.yaml",
+                        "expected_outcome_class": "final_verifier_rejected_trainable",
+                    },
+                    {
+                        "task_id": "stage14_1_diagnostic_side_channel",
+                        "task_category": "diagnostic_control",
+                        "repo_fixture_ref": "side-channel-only",
+                        "task_ref": "side-channel-only",
+                        "expected_outcome_class": "diagnostic_rejected",
+                    },
+                ],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (evidence / "stage14_1_trainable_negative_report.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_1_trainable_negative_report_v0",
+                "trainable_negative_eligible_count": 1,
+                "trainable_negative_consumed_count": 1,
+                "eligible_samples": [
+                    {
+                        "sample_id": "sample-2",
+                        "attempt_id": "attempt-1",
+                        "prompt_digest": "sha256:prompt-negative",
+                        "task_id": "task_001",
+                        "episode_id": "episode-negative",
+                        "run_id": "run-negative",
+                        "trajectory_digest": "sha256:trajectory-2",
+                        "generation_record_digest": "sha256:generation-2",
+                        "visibility_scan_digest": "sha256:visibility-2",
+                        "final_verifier_status": "rejected",
+                        "reward_state": "final",
+                        "reward_score": 0.0,
+                        "route": "verl",
+                        "response_token_count": 8,
+                        "response_logprob_count": 8,
+                        "policy_loss_consumed": True,
+                        "trainer_step_index": 2,
+                    }
+                ],
+                "rejected_non_trainable_failure_samples": [],
+                "attempts": [
+                    {
+                        "run_id": "run-negative",
+                        "sample_id": "sample-2",
+                        "attempt_id": "attempt-1",
+                        "prompt_digest": "sha256:prompt-negative",
+                    }
+                ],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (evidence / "stage14_1_side_channel_report.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_1_side_channel_report_v0",
+                "side_channel_sample_count": 1,
+                "by_reason": {"missing_logprobs": 1},
+                "samples": [
+                    {
+                        "sample_id": "diagnostic-1",
+                        "reason": "missing_logprobs",
+                        "source": "postprocess",
+                        "route": "verl",
+                        "would_have_been_policy_loss_valid": False,
+                        "policy_loss_queue_inserted": False,
+                        "policy_loss_consumed": False,
+                        "policy_loss_sample_ledger_ref": None,
+                        "diagnostic_ref": "rh://stage14/diagnostic-1",
+                    }
+                ],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (evidence / "stage14_1_batch_provenance_report.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_1_batch_provenance_report_v0",
+                "fresh_trainer_batch_tensor_provenance_passed": True,
+                "batch_provenance_source": "trainer_hook",
+                "sample_provenance": [
+                    {
+                        "sample_id": sample["sample_id"],
+                        "trainer_step_index": sample["trainer_step_index"],
+                        "trajectory_digest": sample["trajectory_digest"],
+                        "response_ids_digest": f"sha256:response-ids-{sample['sample_id']}",
+                        "response_mask_digest": f"sha256:response-mask-{sample['sample_id']}",
+                        "rollout_log_probs_digest": f"sha256:rollout-log-probs-{sample['sample_id']}",
+                        "response_ids_shape": [1, 8],
+                        "response_mask_shape": [1, 8],
+                        "rollout_log_probs_shape": [1, 8],
+                    }
+                    for sample in samples
+                ],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def _sha256_file(path: Path) -> str:

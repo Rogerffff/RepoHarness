@@ -9,6 +9,11 @@ from typing import Any
 from pydantic import Field
 
 from repo_harness.schema_base import StrictBaseModel
+from repo_harness_verl.stage14_task_pool import (
+    build_stage14_fixture_sha256_report,
+    default_stage14_1_task_pool,
+    validate_stage14_task_pool_paths,
+)
 
 
 class Stage14RemoteSmokeProfile(StrictBaseModel):
@@ -190,6 +195,12 @@ def write_stage14_remote_smoke_kit(output_dir: str | Path) -> dict[str, Any]:
     agent_loop_config = build_stage14_agent_loop_config()
     hydra_overrides = build_stage14_hydra_overrides(profile)
     environment = build_stage14_remote_environment()
+    task_pool = default_stage14_1_task_pool()
+    task_pool_failures = validate_stage14_task_pool_paths(task_pool)
+    if task_pool_failures:
+        raise ValueError("Stage 14.1 task pool 路径无效：" + "; ".join(task_pool_failures))
+    task_pool_manifest = task_pool.manifest()
+    fixture_sha256_report = build_stage14_fixture_sha256_report(task_pool)
     (root / "stage14_training_profile.json").write_text(
         profile.model_dump_json(indent=2) + "\n",
         encoding="utf-8",
@@ -206,9 +217,45 @@ def write_stage14_remote_smoke_kit(output_dir: str | Path) -> dict[str, Any]:
         json.dumps(environment, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    (root / "stage14_task_pool_manifest.json").write_text(
+        json.dumps(task_pool_manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "stage14_fixture_manifest.json").write_text(
+        json.dumps(task_pool_manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "stage14_fixture_sha256_report.json").write_text(
+        json.dumps(fixture_sha256_report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "stage14_source_map.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_source_map_v0",
+                "task_pool_digest": task_pool.task_pool_digest,
+                "entries": [
+                    {
+                        "name": entry.name,
+                        "task_id": entry.task_id,
+                        "task_ref": entry.task_ref,
+                        "repo_fixture_ref": entry.repo_fixture_ref,
+                        "policy_loss_queue_eligible": entry.policy_loss_queue_eligible,
+                    }
+                    for entry in task_pool.entries
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     return {
         "profile": profile.model_dump(mode="json"),
         "agent_loop_config": agent_loop_config,
         "hydra_overrides": hydra_overrides,
         "environment": environment,
+        "task_pool": task_pool_manifest,
+        "fixture_sha256_report": fixture_sha256_report,
     }
