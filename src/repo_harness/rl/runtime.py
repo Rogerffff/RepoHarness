@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import traceback
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
@@ -731,7 +732,12 @@ class RepoHarnessRuntime:
         except Exception as exc:  # pragma: no cover - exercised through concrete failures.
             status = "infrastructure_error"
             status_reason = "infrastructure_error"
-            diagnostics.append(AuditDiagnostic(code=exc.__class__.__name__, message=str(exc)))
+            diagnostics.append(
+                AuditDiagnostic(
+                    code=exc.__class__.__name__,
+                    message="".join(traceback.format_exception(exc)).strip() or str(exc),
+                )
+            )
 
         cleanup_started = perf_counter()
         cleanup_status, cleanup_diagnostic = await self._cleanup_protected()

@@ -66,12 +66,17 @@ class RepoHarnessVerlAgentLoop(AgentLoopBase):
                     rollout_response_length=_optional_int_config(self.rollout_config, "response_length"),
                 )
             except VerlConversionError as exc:
+                diagnostics = [
+                    f"{diagnostic.code}: {diagnostic.message}"
+                    for diagnostic in result.audit_diagnostics[:5]
+                ]
                 raise RepoHarnessVerlAdapterError(
                     "episode_result_not_formal_online_rl: "
                     f"episode_id={result.episode_id} "
                     f"run_id={result.run_id} "
                     f"status={result.status} "
-                    f"status_reason={result.status_reason}: {exc}"
+                    f"status_reason={result.status_reason} "
+                    f"diagnostics={diagnostics}: {exc}"
                 ) from exc
         except RepoHarnessVerlRequestMappingError:
             raise

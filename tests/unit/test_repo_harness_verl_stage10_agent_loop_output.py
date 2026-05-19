@@ -60,6 +60,8 @@ def test_stage10_training_view_converts_to_real_reference_agent_loop_output(monk
     assert output.reward_score == view.reward_score
     assert output.metrics.generate_sequences == 2
     assert output.metrics.tool_calls == 1
+    assert output.extra_fields["min_global_steps"] == 10
+    assert output.extra_fields["max_global_steps"] == 10
     assert "raw_prompt" not in output.extra_fields
 
     as_dict = output.as_dict()
@@ -69,6 +71,8 @@ def test_stage10_training_view_converts_to_real_reference_agent_loop_output(monk
     assert as_dict["rollout_log_probs"].shape == (5,)
     assert as_dict["rm_scores"].tolist()[-1] == view.reward_score
     assert as_dict["extra_fields"]["repo_harness_llm_gateway_route"] == "verl"
+    assert as_dict["extra_fields"]["min_global_steps"] == 10
+    assert as_dict["extra_fields"]["max_global_steps"] == 10
 
 
 def test_stage12_5_training_view_converter_requires_formal_generation_records(monkeypatch) -> None:
@@ -165,3 +169,26 @@ def test_stage10_converter_rejects_forbidden_agent_loop_extra_field(monkeypatch)
 
     with pytest.raises(VerlConversionError, match="unsupported_agent_loop_extra_fields"):
         training_view_to_agent_loop_output(view, generation_records=_canonical_generation_records())
+
+
+def test_stage13_3b_converter_projects_verl_runtime_param_version_fields(monkeypatch) -> None:
+    install_reference_verl_stubs(monkeypatch)
+    payload = _load_json("canonical_episode_result.json")
+    payload["training_view"]["online_rl_eligible"] = True
+    payload["generation_records"][0]["global_steps"] = 2
+    payload["generation_records"][0]["min_global_steps"] = 2
+    payload["generation_records"][0]["max_global_steps"] = 2
+    payload["generation_records"][1]["global_steps"] = 3
+    payload["generation_records"][1]["min_global_steps"] = 3
+    payload["generation_records"][1]["max_global_steps"] = 3
+    for span in payload["training_view"]["response_spans"]:
+        if span["source_type"] == "assistant_generation":
+            span["global_steps"] = 2
+            span["min_global_steps"] = 2
+            span["max_global_steps"] = 3
+    result = RepoHarnessEpisodeResult.model_validate(payload)
+
+    output = episode_result_to_agent_loop_output(result)
+
+    assert output.extra_fields["min_global_steps"] == 2
+    assert output.extra_fields["max_global_steps"] == 3

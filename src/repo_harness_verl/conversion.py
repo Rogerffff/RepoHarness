@@ -51,6 +51,14 @@ REPO_HARNESS_AGENT_LOOP_EXTRA_FIELDS = frozenset(
     }
 )
 
+VERL_AGENT_LOOP_RUNTIME_EXTRA_FIELDS = frozenset(
+    {
+        "global_steps",
+        "min_global_steps",
+        "max_global_steps",
+    }
+)
+
 _AUDIT_REF_EXTRA_FIELD_MAP = {
     "manifest": "repo_harness_audit_manifest_ref",
     "artifacts_manifest": "repo_harness_audit_manifest_ref",
@@ -153,9 +161,65 @@ def _validate_rollout_lengths(
 
 
 def _validate_extra_field_allowlist(extra_fields: Mapping[str, Any]) -> None:
-    unknown = sorted(set(extra_fields) - REPO_HARNESS_AGENT_LOOP_EXTRA_FIELDS)
+    unknown = sorted(
+        set(extra_fields)
+        - REPO_HARNESS_AGENT_LOOP_EXTRA_FIELDS
+        - VERL_AGENT_LOOP_RUNTIME_EXTRA_FIELDS
+    )
     if unknown:
         raise VerlConversionError(f"unsupported_agent_loop_extra_fields: {unknown}")
+
+
+def _validate_verl_runtime_extra_fields(extra_fields: Mapping[str, Any]) -> dict[str, int]:
+    validated: dict[str, int] = {}
+    for key, value in extra_fields.items():
+        if key not in VERL_AGENT_LOOP_RUNTIME_EXTRA_FIELDS:
+            raise VerlConversionError(f"unsupported_verl_runtime_extra_field: {key}")
+        if isinstance(value, bool) or value is None:
+            raise VerlConversionError(f"verl_runtime_extra_field_must_be_int: {key}")
+        try:
+            coerced = int(value)
+        except (TypeError, ValueError) as exc:
+            raise VerlConversionError(f"verl_runtime_extra_field_must_be_int: {key}") from exc
+        if coerced < 0:
+            raise VerlConversionError(f"verl_runtime_extra_field_must_be_non_negative: {key}")
+        validated[key] = coerced
+    if {"global_steps", "min_global_steps", "max_global_steps"} <= set(validated):
+        if not (validated["min_global_steps"] <= validated["global_steps"] <= validated["max_global_steps"]):
+            raise VerlConversionError("global_steps_must_be_within_min_max_bounds")
+    if {"min_global_steps", "max_global_steps"} <= set(validated):
+        if validated["min_global_steps"] > validated["max_global_steps"]:
+            raise VerlConversionError("min_global_steps_must_not_exceed_max_global_steps")
+    return validated
+
+
+def _project_verl_runtime_extra_fields_from_generation_records(
+    generation_records: Iterable[GenerationRecord | Mapping[str, Any]],
+) -> dict[str, int]:
+    records = [
+        record if isinstance(record, GenerationRecord) else GenerationRecord.model_validate(record)
+        for record in generation_records
+    ]
+    min_steps: list[int] = []
+    max_steps: list[int] = []
+    global_steps: list[int] = []
+    for record in records:
+        if record.global_steps is not None:
+            global_steps.append(record.global_steps)
+        if record.min_global_steps is not None:
+            min_steps.append(record.min_global_steps)
+        elif record.global_steps is not None:
+            min_steps.append(record.global_steps)
+        if record.max_global_steps is not None:
+            max_steps.append(record.max_global_steps)
+        elif record.global_steps is not None:
+            max_steps.append(record.global_steps)
+
+    projected = {
+        "min_global_steps": min(min_steps) if min_steps else 0,
+        "max_global_steps": max(max_steps) if max_steps else (max(global_steps) if global_steps else 0),
+    }
+    return _validate_verl_runtime_extra_fields(projected)
 
 
 def training_view_to_agent_loop_output(
@@ -163,6 +227,7 @@ def training_view_to_agent_loop_output(
     *,
     audit_ref: AuditRef | None = None,
     generation_records: Iterable[GenerationRecord | Mapping[str, Any]] | None = None,
+    verl_runtime_extra_fields: Mapping[str, Any] | None = None,
     formal_online_rl: bool = True,
     rollout_prompt_length: int | None = None,
     rollout_response_length: int | None = None,
@@ -170,6 +235,7 @@ def training_view_to_agent_loop_output(
     """把 RepoHarness TrainingView 转换成真实 verl AgentLoopOutput。"""
 
     view = training_view if isinstance(training_view, TrainingView) else TrainingView.model_validate(training_view)
+    generation_records_list = list(generation_records or [])
     if formal_online_rl:
         try:
             view = validate_training_view_for_online_rl(view, require_explicit_eligibility=True)
@@ -177,7 +243,7 @@ def training_view_to_agent_loop_output(
                 [
                     formal_online_rl_sample_from_training_view(
                         view,
-                        generation_records=list(generation_records or []),
+                        generation_records=generation_records_list,
                     )
                 ]
             )
@@ -189,9 +255,19 @@ def training_view_to_agent_loop_output(
         rollout_response_length=rollout_response_length,
     )
 
+    runtime_extra_fields = _validate_verl_runtime_extra_fields(
+        verl_runtime_extra_fields
+        if verl_runtime_extra_fields is not None
+        else (
+            _project_verl_runtime_extra_fields_from_generation_records(generation_records_list)
+            if generation_records_list
+            else {}
+        )
+    )
     extra_fields = project_audit_refs_for_extra_fields(audit_ref, base_extra_fields=view.extra_fields)
     _validate_extra_field_allowlist(extra_fields)
     validate_batch_extra_fields(extra_fields)
+    extra_fields.update(runtime_extra_fields)
 
     agent_loop_output_cls, _ = _load_verl_agent_loop_types()
     return agent_loop_output_cls(
@@ -246,10 +322,16 @@ def episode_result_to_agent_loop_output(
             view = training_view_with_projected_route(view, result.generation_records)
         except VerlConversionError:
             pass
+    runtime_extra_fields = (
+        _project_verl_runtime_extra_fields_from_generation_records(result.generation_records)
+        if result.generation_records
+        else {}
+    )
     return training_view_to_agent_loop_output(
         view,
         audit_ref=result.audit_ref,
         generation_records=result.generation_records,
+        verl_runtime_extra_fields=runtime_extra_fields,
         formal_online_rl=formal_online_rl,
         rollout_prompt_length=rollout_prompt_length,
         rollout_response_length=rollout_response_length,

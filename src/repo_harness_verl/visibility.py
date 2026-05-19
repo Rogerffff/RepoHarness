@@ -50,6 +50,13 @@ _FORBIDDEN_TRANSFER_QUEUE_FIELD_NAMES = frozenset(
         "ground_truth",
     }
 )
+_ALLOWED_VERL_AGENT_LOOP_RUNTIME_EXTRA_FIELDS = frozenset(
+    {
+        "global_steps",
+        "min_global_steps",
+        "max_global_steps",
+    }
+)
 
 
 def _as_python_scalar(value: Any) -> Any:
@@ -170,10 +177,33 @@ def validate_agent_loop_output_extra_fields(extra_fields: Mapping[str, Any]) -> 
 
     if "raw_prompt" in extra_fields:
         raise VerlVisibilityError("raw_prompt_must_be_added_by_verl_postprocess")
+    repo_harness_fields: dict[str, Any] = {}
+    validated_runtime_fields: dict[str, FlatScalar] = {}
+    for key, value in extra_fields.items():
+        if key in _ALLOWED_VERL_AGENT_LOOP_RUNTIME_EXTRA_FIELDS:
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise VerlVisibilityError(f"verl_runtime_extra_field_must_be_int: {key}")
+            if value < 0:
+                raise VerlVisibilityError(f"verl_runtime_extra_field_must_be_non_negative: {key}")
+            validated_runtime_fields[key] = value
+            continue
+        repo_harness_fields[key] = value
+    if {"global_steps", "min_global_steps", "max_global_steps"} <= set(validated_runtime_fields):
+        if not (
+            validated_runtime_fields["min_global_steps"]
+            <= validated_runtime_fields["global_steps"]
+            <= validated_runtime_fields["max_global_steps"]
+        ):
+            raise VerlVisibilityError("global_steps_must_be_within_min_max_bounds")
+    if {"min_global_steps", "max_global_steps"} <= set(validated_runtime_fields):
+        if validated_runtime_fields["min_global_steps"] > validated_runtime_fields["max_global_steps"]:
+            raise VerlVisibilityError("min_global_steps_must_not_exceed_max_global_steps")
     try:
-        return validate_batch_extra_fields(extra_fields)
+        validated = validate_batch_extra_fields(repo_harness_fields)
     except VisibilityContractError as exc:
         _raise_visibility_error(exc)
+    validated.update(validated_runtime_fields)
+    return validated
 
 
 def validate_postprocessed_extra_fields(extra_fields: Mapping[str, Any]) -> None:
