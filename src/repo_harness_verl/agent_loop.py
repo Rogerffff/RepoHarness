@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import subprocess
 from collections.abc import Mapping
 from pathlib import Path
 from time import time
@@ -16,6 +17,8 @@ from repo_harness.rl.partial_checkpoint import (
     validate_partial_checkpoint_not_trainable,
     validate_partial_checkpoint_roundtrip,
 )
+from repo_harness.verifier import VerifierResult
+import yaml
 
 from .conversion import VerlConversionError, episode_result_to_agent_loop_output
 from .errors import RepoHarnessVerlAdapterError, RepoHarnessVerlRequestMappingError
@@ -329,6 +332,11 @@ def _runtime_options_from_environment() -> RepoHarnessRuntimeOptions | None:
     return RepoHarnessRuntimeOptions(
         runtime_execution_mode=runtime_execution_mode or None,  # type: ignore[arg-type]
         output_dir=output_dir or None,
+        real_episode_final_verifier_factory=(
+            _task_yaml_final_verifier_factory
+            if os.environ.get("REPO_HARNESS_REAL_EPISODE_TASK_VERIFIER") == "1"
+            else None
+        ),
     )
 
 
@@ -420,3 +428,39 @@ def _emit_stage15_partial_event(event_type: str, payload: Mapping[str, Any]) -> 
     }
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+
+
+def _task_yaml_final_verifier_factory(context: Any):
+    task_path = context.request.task_ref.task_path
+    if not task_path:
+        raise RepoHarnessVerlAdapterError("task_yaml_final_verifier_requires_task_ref_task_path")
+    payload = yaml.safe_load(Path(task_path).read_text(encoding="utf-8")) or {}
+    command = payload.get("test_command")
+    if not command:
+        raise RepoHarnessVerlAdapterError("task_yaml_final_verifier_requires_test_command")
+    timeout_sec = float((payload.get("timeouts") or {}).get("timeout_sec") or 60)
+
+    def verify() -> VerifierResult:
+        completed = subprocess.run(
+            str(command),
+            cwd=context.workspace_path,
+            shell=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout_sec,
+            check=False,
+        )
+        accepted = completed.returncode == 0
+        return VerifierResult(
+            verifier_stage="final",
+            parser_confidence=1.0,
+            command=str(command),
+            accepted=accepted,
+            pass_ratio=1.0 if accepted else 0.0,
+            fail_to_pass={"passed": 1 if accepted else 0, "total": 1},
+            pass_to_pass={"passed": 1 if accepted else 0, "total": 1},
+            exit_code=completed.returncode,
+        )
+
+    return verify
