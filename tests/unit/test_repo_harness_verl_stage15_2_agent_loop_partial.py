@@ -186,3 +186,39 @@ def test_stage15_2_agent_loop_runs_controlled_partial_resume(monkeypatch, tmp_pa
     assert "resumed_terminal_result" in event_types
     checkpoint_event = next(event for event in events if event["event_type"] == "partial_checkpoint_generated")
     assert checkpoint_event["policy_loss_consumed"] is False
+
+
+def test_stage15_2_environment_runtime_options_resolve_task_yaml_repo(monkeypatch, tmp_path: Path) -> None:
+    install_reference_verl_stubs(monkeypatch)
+    monkeypatch.delitem(sys.modules, "repo_harness_verl.agent_loop", raising=False)
+    source = tmp_path / "repos" / "tiny_repo"
+    source.mkdir(parents=True)
+    task_dir = tmp_path / "tasks"
+    task_dir.mkdir()
+    task_path = task_dir / "task.yaml"
+    task_path.write_text(
+        "\n".join(
+            [
+                "id: tiny_task",
+                "repo: ../repos/tiny_repo",
+                "test_command: pytest -q",
+                "timeouts:",
+                "  timeout_sec: 3",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("REPO_HARNESS_RUNTIME_EXECUTION_MODE", "real_episode")
+    monkeypatch.setenv("REPO_HARNESS_OUTPUT_DIR", (tmp_path / "runs").as_posix())
+    monkeypatch.setenv("REPO_HARNESS_REAL_EPISODE_TASK_VERIFIER", "1")
+
+    from repo_harness_verl.agent_loop import _runtime_options_from_environment
+
+    options = _runtime_options_from_environment()
+    assert options is not None
+    assert options.real_episode_source_resolver is not None
+    assert options.real_episode_final_verifier_factory is not None
+
+    request = SimpleNamespace(task_ref=SimpleNamespace(task_path="tasks/task.yaml"))
+    assert options.real_episode_source_resolver(request).resolve() == source.resolve()

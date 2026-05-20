@@ -416,10 +416,29 @@ def _validate_profile_hydra_environment(view: _EvidenceView, summary: Mapping[st
         if isinstance(profile, Mapping) and field in summary and field in profile and summary.get(field) != profile.get(field):
             failures.append(f"summary_profile_mismatch:{field}")
     if isinstance(environment, Mapping):
-        if environment.get("checkpoint_engine_backend") not in {"nixl", "nixl_cuda"}:
-            failures.append("stage15_environment_matrix_checkpoint_engine_not_nixl")
+        if environment.get("checkpoint_engine_backend") not in {"nixl", "nixl_cuda", "nccl"}:
+            failures.append("stage15_environment_matrix_checkpoint_engine_not_supported")
         if environment.get("rollout_backend") not in {"sglang", "SGLang"}:
             failures.append("stage15_environment_matrix_rollout_backend_not_sglang")
+    profile_backend = profile.get("checkpoint_engine_backend") if isinstance(profile, Mapping) else None
+    environment_backend = environment.get("checkpoint_engine_backend") if isinstance(environment, Mapping) else None
+    if profile_backend and environment_backend and profile_backend != environment_backend:
+        failures.append("stage15_checkpoint_engine_backend_profile_environment_mismatch")
+    backend_override = next(
+        (
+            item
+            for item in overrides
+            if item.startswith("actor_rollout_ref.rollout.checkpoint_engine.backend=")
+        ),
+        None,
+    )
+    expected_backend_override = (
+        f"actor_rollout_ref.rollout.checkpoint_engine.backend={environment_backend}"
+        if isinstance(environment_backend, str) and environment_backend
+        else None
+    )
+    if expected_backend_override and backend_override != expected_backend_override:
+        failures.append("stage15_checkpoint_engine_backend_hydra_mismatch")
     required_overrides = {
         "actor_rollout_ref.hybrid_engine=False",
         "actor_rollout_ref.rollout.mode=async",
@@ -427,7 +446,6 @@ def _validate_profile_hydra_environment(view: _EvidenceView, summary: Mapping[st
         "actor_rollout_ref.rollout.agent.default_agent_loop=repo_harness",
         "actor_rollout_ref.rollout.calculate_log_probs=True",
         "actor_rollout_ref.actor.use_rollout_log_probs=True",
-        "actor_rollout_ref.rollout.checkpoint_engine.backend=nixl",
         "async_training.partial_rollout=True",
         "async_training.require_batches=1",
         "critic.enable=False",

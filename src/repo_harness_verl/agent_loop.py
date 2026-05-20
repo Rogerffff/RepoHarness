@@ -327,14 +327,20 @@ def _optional_int_config(config: Any, key: str) -> int | None:
 def _runtime_options_from_environment() -> RepoHarnessRuntimeOptions | None:
     runtime_execution_mode = os.environ.get("REPO_HARNESS_RUNTIME_EXECUTION_MODE")
     output_dir = os.environ.get("REPO_HARNESS_OUTPUT_DIR")
+    use_task_yaml_runtime = os.environ.get("REPO_HARNESS_REAL_EPISODE_TASK_VERIFIER") == "1"
     if not runtime_execution_mode and not output_dir:
         return None
     return RepoHarnessRuntimeOptions(
         runtime_execution_mode=runtime_execution_mode or None,  # type: ignore[arg-type]
         output_dir=output_dir or None,
+        real_episode_source_resolver=(
+            _task_yaml_source_resolver
+            if use_task_yaml_runtime
+            else None
+        ),
         real_episode_final_verifier_factory=(
             _task_yaml_final_verifier_factory
-            if os.environ.get("REPO_HARNESS_REAL_EPISODE_TASK_VERIFIER") == "1"
+            if use_task_yaml_runtime
             else None
         ),
     )
@@ -428,6 +434,21 @@ def _emit_stage15_partial_event(event_type: str, payload: Mapping[str, Any]) -> 
     }
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+
+
+def _task_yaml_source_resolver(request: Any) -> Path:
+    task_path_value = request.task_ref.task_path
+    if not task_path_value:
+        raise RepoHarnessVerlAdapterError("task_yaml_source_resolver_requires_task_ref_task_path")
+    task_path = Path(str(task_path_value))
+    payload = yaml.safe_load(task_path.read_text(encoding="utf-8")) or {}
+    repo_value = payload.get("repo")
+    if not repo_value:
+        raise RepoHarnessVerlAdapterError("task_yaml_source_resolver_requires_repo")
+    repo_path = Path(str(repo_value))
+    if not repo_path.is_absolute():
+        repo_path = task_path.parent / repo_path
+    return repo_path
 
 
 def _task_yaml_final_verifier_factory(context: Any):

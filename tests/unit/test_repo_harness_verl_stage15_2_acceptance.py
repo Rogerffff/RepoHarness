@@ -95,6 +95,49 @@ def test_stage15_acceptance_inspector_rejects_profile_or_hydra_mismatch(tmp_path
     assert "stage15_hydra_overrides_missing:async_training.partial_rollout=True" in report.failures
 
 
+def test_stage15_acceptance_inspector_accepts_explicit_nccl_fallback(tmp_path: Path) -> None:
+    evidence = _write_stage15_evidence(tmp_path)
+    _update_json(
+        evidence / "stage15_acceptance_summary.json",
+        weight_sync_strategy="nccl_cuda",
+    )
+    _update_json(
+        evidence / "stage15_training_profile.json",
+        checkpoint_engine_backend="nccl",
+        weight_sync_strategy="nccl_cuda",
+    )
+    _update_json(
+        evidence / "stage15_environment_matrix.json",
+        checkpoint_engine_backend="nccl",
+        weight_sync_strategy="nccl_cuda",
+    )
+    overrides = json.loads((evidence / "stage15_hydra_overrides.json").read_text(encoding="utf-8"))
+    overrides = [
+        "actor_rollout_ref.rollout.checkpoint_engine.backend=nccl"
+        if item == "actor_rollout_ref.rollout.checkpoint_engine.backend=nixl"
+        else item
+        for item in overrides
+    ]
+    (evidence / "stage15_hydra_overrides.json").write_text(json.dumps(overrides, sort_keys=True), encoding="utf-8")
+    _refresh_stage15_summary_hashes(evidence)
+
+    report = inspect_stage15_partial_rollout_acceptance_report(evidence, assert_complete=True)
+
+    assert report.passed is True
+    assert report.failures == []
+
+
+def test_stage15_acceptance_inspector_rejects_checkpoint_backend_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage15_evidence(tmp_path)
+    _update_json(evidence / "stage15_environment_matrix.json", checkpoint_engine_backend="nccl")
+    _refresh_stage15_summary_hashes(evidence)
+
+    report = inspect_stage15_partial_rollout_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage15_checkpoint_engine_backend_profile_environment_mismatch" in report.failures
+    assert "stage15_checkpoint_engine_backend_hydra_mismatch" in report.failures
+
+
 def test_stage15_acceptance_inspector_rejects_public_path_leak(tmp_path: Path) -> None:
     evidence = _write_stage15_evidence(tmp_path)
     (evidence / "stage15_command_log.sanitized.jsonl").write_text(
@@ -182,6 +225,7 @@ def _write_stage15_evidence(tmp_path: Path) -> Path:
         "profile_name": summary["training_profile_name"],
         "model_id": summary["model_id"],
         "inference_backend": summary["inference_backend"],
+        "checkpoint_engine_backend": "nixl",
         "training_strategy": summary["training_strategy"],
         "weight_sync_strategy": summary["weight_sync_strategy"],
     }
@@ -377,6 +421,15 @@ def _update_json(path: Path, **updates: Any) -> None:
     payload = _load_json(path)
     payload.update(updates)
     _write_json(path, payload)
+
+
+def _refresh_stage15_summary_hashes(evidence: Path) -> None:
+    summary = _load_json(evidence / "stage15_acceptance_summary.json")
+    summary["training_profile_sha256"] = _sha256_file(evidence / "stage15_training_profile.json")
+    summary["hydra_overrides_sha256"] = _sha256_file(evidence / "stage15_hydra_overrides.json")
+    summary["fixture_manifest_sha256"] = _sha256_file(evidence / "stage15_fixture_manifest.json")
+    summary["remote_patch_manifest_sha256"] = _sha256_file(evidence / "stage15_remote_patch_manifest.json")
+    _write_json(evidence / "stage15_acceptance_summary.json", summary)
 
 
 def _sha256_file(path: Path) -> str:
