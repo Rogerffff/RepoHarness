@@ -1,0 +1,77 @@
+{
+  "risks": [
+    {
+      "acceptance_gate": "llm_server_stop_reason_inventory.abort_visible_to_repo_harness_agent_loop=false 时必须有 patch plan。",
+      "detection": "inventory 检查 FullyLLMServerClient.generate(...) 的 stop reason 循环。",
+      "failure_mode": "abort / aborted 被 FullyLLMServerClient 内部续生成消费，RepoHarness 看不到安全 checkpoint boundary。",
+      "mitigation": "Stage 15.1 使用受控 turn-boundary pause trigger，或登记 stop reason probe wrapper。",
+      "owner_stage": "15.0",
+      "risk_id": "stage15_risk_invisible_abort",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "native_partial_rollout_trigger_chain 必须存在并解释 repo_harness_checkpoint_implication。",
+      "detection": "inventory 检查 update_weights -> abort_all_requests -> resume_generation 链路。",
+      "failure_mode": "CheckpointEngineManager.update_weights(...) 中断推理服务请求，但不是 RepoHarness 安全 turn boundary。",
+      "mitigation": "Stage 15.1 不把 server abort 直接当作 PartialEpisodeCheckpoint；只在 RepoHarness turn boundary 保存 checkpoint。",
+      "owner_stage": "15.0",
+      "risk_id": "stage15_risk_checkpoint_engine_abort_not_repo_boundary",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "patch plan 必须指定 source gate 或 trainer wrapper。",
+      "detection": "inventory 检查 _get_samples_from_queue(...) 是否存在 RepoHarness-aware filter。",
+      "failure_mode": "partial / diagnostic / stale 样本被 FullyAsyncTrainer 计入 required_samples。",
+      "mitigation": "policy-loss MessageQueue 源头只放 valid completed sample，或增加 trainer-side wrapper。",
+      "owner_stage": "15.1",
+      "risk_id": "stage15_risk_trainer_required_samples_polluted",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "checkpoint_without_live_handle_goes_to_diagnostic_side_channel=true。",
+      "detection": "resume scheduler ownership inventory 和 ResumeStateStore 绑定测试。",
+      "failure_mode": "合法 checkpoint 被另一个进程或 Ray actor 接管，丢失 live handle / writer lease。",
+      "mitigation": "第一版只允许同一 AgentLoopWorker / runtime active handle registry 内 resume。",
+      "owner_stage": "15.1",
+      "risk_id": "stage15_risk_cross_actor_resume",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "inspect-stage15-partial-rollout-acceptance unique id checks。",
+      "detection": "检查 source_partial_checkpoint_id、resume_attempt_id、policy_loss_consumed_sample_id 唯一性。",
+      "failure_mode": "同一个 checkpoint 被重复 resume，多个 policy-loss sample 重复计数。",
+      "mitigation": "Stage 15.2 inspector 要求 consumed sample id、source checkpoint id 和 resume attempt id 绑定唯一。",
+      "owner_stage": "15.2",
+      "risk_id": "stage15_risk_duplicate_resume_consumption",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "post_sync_resumed_valid_sample_count 与 stale rejection report 同时存在。",
+      "detection": "检查 trajectory_param_versions、min_global_steps、max_global_steps 和 current_param_version。",
+      "failure_mode": "resume 后参数版本过旧的样本进入 policy loss。",
+      "mitigation": "resume 后重新计算 staleness，超过阈值时进入 diagnostic side channel。",
+      "owner_stage": "15.1",
+      "risk_id": "stage15_risk_stale_resumed_sample",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "public_path_leak_scan_passed=true。",
+      "detection": "公开 evidence path leak scan 和 visibility gate。",
+      "failure_mode": "partial checkpoint、side channel 或 patch evidence 泄漏路径、hidden verifier 或 reward metadata。",
+      "mitigation": "公开 evidence 只保留 opaque ref、digest 和 batch-safe scalar；runtime-private raw evidence 单独登记。",
+      "owner_stage": "15.2",
+      "risk_id": "stage15_risk_visibility_or_path_leak",
+      "severity": "P1"
+    },
+    {
+      "acceptance_gate": "reference_verl_commit and patch manifest required for remote acceptance。",
+      "detection": "记录 reference_verl_commit、dirty status 和 patch manifest sha256。",
+      "failure_mode": "reference/verl 源码漂移导致 wrapper hook 失效。",
+      "mitigation": "Stage 15.0 inventory 和 Stage 15.2 acceptance 都绑定 reference/verl commit。",
+      "owner_stage": "15.0",
+      "risk_id": "stage15_risk_reference_verl_patch_drift",
+      "severity": "P2"
+    }
+  ],
+  "schema_version": "repo_harness_verl_stage15_0_partial_rollout_risk_matrix_v0"
+}

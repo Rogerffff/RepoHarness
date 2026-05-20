@@ -1,0 +1,460 @@
+{
+  "backend_abort_resume_inventory": [
+    {
+      "abort_all_requests_present": true,
+      "backend": "vllm",
+      "not_implemented": false,
+      "resume_generation_present": true,
+      "risk": null,
+      "source_path": "reference/verl/verl/workers/rollout/vllm_rollout/vllm_async_server.py"
+    },
+    {
+      "abort_all_requests_present": true,
+      "backend": "sglang",
+      "not_implemented": false,
+      "resume_generation_present": true,
+      "risk": null,
+      "source_path": "reference/verl/verl/workers/rollout/sglang_rollout/async_sglang_server.py"
+    },
+    {
+      "abort_all_requests_present": true,
+      "backend": "trtllm",
+      "not_implemented": true,
+      "resume_generation_present": true,
+      "risk": "trtllm_abort_resume_not_implemented",
+      "source_path": "reference/verl/verl/workers/rollout/trtllm_rollout/trtllm_async_server.py"
+    }
+  ],
+  "config_inventory": {
+    "actor_rollout_ref.actor.use_rollout_log_probs": {
+      "current_stage14_override": true,
+      "default_value": true,
+      "notes": "trainer 侧使用 rollout logprobs。",
+      "source_evidence": "use_rollout_log_probs: True",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": true
+    },
+    "actor_rollout_ref.hybrid_engine": {
+      "current_stage14_override": false,
+      "default_value": null,
+      "notes": "FullyAsyncRollouter 要求 hybrid_engine=False。",
+      "source_evidence": "assert not self.hybrid_engine",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py",
+      "stage15_required_override": false
+    },
+    "actor_rollout_ref.rollout.agent.agent_loop_config_path": {
+      "current_stage14_override": "repo_harness_agent_loop_config.yaml",
+      "default_value": null,
+      "notes": "RepoHarnessVerlAgentLoop 需要 agent loop config path 指向 repo_harness entry。",
+      "source_evidence": "actor_rollout_ref.rollout.agent.agent_loop_config_path=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": "repo_harness_agent_loop_config.yaml"
+    },
+    "actor_rollout_ref.rollout.calculate_log_probs": {
+      "current_stage14_override": true,
+      "default_value": true,
+      "notes": "policy loss 必须绑定 rollout log probability。",
+      "source_evidence": "must rollout calculate log_probs",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py",
+      "stage15_required_override": true
+    },
+    "actor_rollout_ref.rollout.multi_turn.enable": {
+      "current_stage14_override": true,
+      "default_value": null,
+      "notes": "必须开启 multi-turn，避免被 single_turn_agent 覆盖。",
+      "source_evidence": "actor_rollout_ref.rollout.multi_turn.enable=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": true
+    },
+    "actor_rollout_ref.rollout.name": {
+      "current_stage14_override": "sglang",
+      "default_value": null,
+      "notes": "Stage 14/15 开发 smoke 默认沿用 SGLang。",
+      "source_evidence": "actor_rollout_ref.rollout.name=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": "sglang"
+    },
+    "async_training.partial_rollout": {
+      "current_stage14_override": false,
+      "default_value": true,
+      "notes": "Stage 15 需要开启真实 verl partial rollout，但不能把 server-level abort 直接当成 RepoHarness checkpoint。",
+      "source_evidence": "partial_rollout: True",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": true
+    },
+    "async_training.require_batches": {
+      "current_stage14_override": 1,
+      "default_value": 1,
+      "notes": "required_samples = ppo_mini_batch_size * require_batches。",
+      "source_evidence": "require_batches:",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": 1
+    },
+    "async_training.staleness_threshold": {
+      "current_stage14_override": 1,
+      "default_value": 0.1,
+      "notes": "resume 后必须重新计算 staleness。",
+      "source_evidence": "staleness_threshold:",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": 1
+    },
+    "async_training.trigger_parameter_sync_step": {
+      "current_stage14_override": 2,
+      "default_value": 4,
+      "notes": "短 smoke 使用较小同步间隔，便于观察 post-sync resumed sample。",
+      "source_evidence": "trigger_parameter_sync_step:",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": 2
+    },
+    "checkpoint_engine.backend": {
+      "current_stage14_override": "nixl",
+      "default_value": "nccl",
+      "notes": "Stage 14 已验证 NIXL CUDA 小模型全量训练基线。",
+      "source_evidence": "actor_rollout_ref.rollout.checkpoint_engine.backend=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": "nixl"
+    },
+    "data.gen_batch_size": {
+      "current_stage14_override": 1,
+      "default_value": 1,
+      "notes": "fully async streaming 生成路径当前只支持 1。",
+      "source_evidence": "gen_batch_size: 1",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": 1
+    },
+    "data.train_batch_size": {
+      "current_stage14_override": 0,
+      "default_value": null,
+      "notes": "fully async rollouter 要求 train_batch_size=0。",
+      "source_evidence": "train_batch_size must be zero",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py",
+      "stage15_required_override": 0
+    },
+    "rollout.n_gpus_per_node": {
+      "current_stage14_override": 1,
+      "default_value": 8,
+      "notes": "双卡 smoke 中 rollout 侧 GPU 数。",
+      "source_evidence": "rollout.n_gpus_per_node=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": 1
+    },
+    "rollout.nnodes": {
+      "current_stage14_override": 1,
+      "default_value": 1,
+      "notes": "双卡 smoke 中 rollout 侧节点数。",
+      "source_evidence": "rollout.nnodes=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": 1
+    },
+    "rollout.total_rollout_steps": {
+      "current_stage14_override": 8,
+      "default_value": 100,
+      "notes": "远端短步数 smoke 的 rollout 样本总量入口。",
+      "source_evidence": "total_rollout_steps:",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+      "stage15_required_override": 16
+    },
+    "trainer.n_gpus_per_node": {
+      "current_stage14_override": 1,
+      "default_value": 8,
+      "notes": "双卡 smoke 中 trainer 侧 GPU 数。",
+      "source_evidence": "trainer.n_gpus_per_node=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": 1
+    },
+    "trainer.nnodes": {
+      "current_stage14_override": 1,
+      "default_value": 1,
+      "notes": "双卡 smoke 中 trainer 与 rollout 资源池拆分时需要显式配置。",
+      "source_evidence": "trainer.nnodes=",
+      "source_path": "src/repo_harness_verl/stage14_remote_smoke.py",
+      "stage15_required_override": 1
+    }
+  },
+  "diagnostics": [],
+  "fully_async_rollouter_inventory": {
+    "asserts_hybrid_engine_false": true,
+    "class_present": true,
+    "computes_max_required_samples": true,
+    "computes_required_samples": true,
+    "evidence": [
+      {
+        "line": 205,
+        "line_hint": "self.pending_queue",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+      },
+      {
+        "line": 206,
+        "line_hint": "self.active_tasks",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+      },
+      {
+        "line": 218,
+        "line_hint": "self._resume_event",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+      },
+      {
+        "line": 180,
+        "line_hint": "self.required_samples",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+      }
+    ],
+    "has_active_tasks": true,
+    "has_pending_queue": true,
+    "has_reset_staleness": true,
+    "has_resume_event": true,
+    "message_queue_put_sample_present": true,
+    "requires_gen_batch_size_one": true,
+    "requires_train_batch_size_zero": true
+  },
+  "heavy_import_required": false,
+  "llm_server_stop_reason_inventory": {
+    "abort_auto_continues_inside_fully_llm_server_client": true,
+    "abort_visible_to_repo_harness_agent_loop": false,
+    "backend_specific_stop_reason_mapping_checked": true,
+    "base_client_class": "LLMServerClient",
+    "completed_stop_reason_mapping_checked": true,
+    "continue_loop_gated_by_partial_rollout": true,
+    "default_stage14_backend": "sglang",
+    "evidence": [
+      {
+        "line": 160,
+        "line_hint": "class FullyLLMServerClient",
+        "source_path": "reference/verl/verl/workers/rollout/llm_server.py"
+      },
+      {
+        "line": 245,
+        "line_hint": "output.stop_reason not in (\"aborted\", \"abort\")",
+        "source_path": "reference/verl/verl/workers/rollout/llm_server.py"
+      },
+      {
+        "line": 375,
+        "line_hint": "return FullyLLMServerClient",
+        "source_path": "reference/verl/verl/workers/rollout/llm_server.py"
+      },
+      {
+        "line": 543,
+        "line_hint": "stop_reason = \"completed\"",
+        "source_path": "reference/verl/verl/workers/rollout/vllm_rollout/vllm_async_server.py"
+      },
+      {
+        "line": 642,
+        "line_hint": "stop_reason=finish_reason,",
+        "source_path": "reference/verl/verl/workers/rollout/sglang_rollout/async_sglang_server.py"
+      }
+    ],
+    "fully_async_client_class": "FullyLLMServerClient",
+    "fully_async_client_selected_by_get_client": true,
+    "normal_completion_stop_reason_by_backend": {
+      "sglang": {
+        "normal_completion_values_after_adapter": [
+          "stop",
+          "length"
+        ],
+        "notes": "当前 Stage 14/15 默认 rollout.name=sglang；SGLang 后端返回原始 finish_reason，不能把 vLLM 的 completed 归一化语义直接套到 SGLang。",
+        "returns_raw_finish_reason": true,
+        "source_evidence": "stop_reason=finish_reason,",
+        "source_path": "reference/verl/verl/workers/rollout/sglang_rollout/async_sglang_server.py"
+      },
+      "vllm": {
+        "normal_completion_values_after_adapter": [
+          "completed"
+        ],
+        "normalizes_stop_and_length_to_completed": true,
+        "source_evidence": "elif finish_reason in (\"stop\", \"length\"):",
+        "source_path": "reference/verl/verl/workers/rollout/vllm_rollout/vllm_async_server.py"
+      }
+    },
+    "stop_reasons_to_inventory": [
+      "abort",
+      "aborted",
+      "length",
+      "stop",
+      "completed"
+    ],
+    "token_output_fields_to_track": [
+      "token_ids",
+      "log_probs",
+      "num_preempted",
+      "global_steps",
+      "min_global_steps",
+      "max_global_steps"
+    ]
+  },
+  "message_queue_trainer_inventory": {
+    "diagnostic_samples_require_side_channel": true,
+    "evidence": [
+      {
+        "line": 55,
+        "line_hint": "async def put_sample",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/message_queue.py"
+      },
+      {
+        "line": 85,
+        "line_hint": "async def get_sample",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/message_queue.py"
+      },
+      {
+        "line": 257,
+        "line_hint": "while len(queue_samples) < self.required_samples",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_trainer.py"
+      },
+      {
+        "line": 289,
+        "line_hint": "ray.cloudpickle.loads",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_trainer.py"
+      }
+    ],
+    "message_queue_client_get_sample_async": true,
+    "message_queue_client_put_sample_async": true,
+    "message_queue_put_sample_async": true,
+    "recommended_source_gate": "policy_loss_message_queue_only_accepts_valid_completed_sample",
+    "trainer_cloudpickle_loads_queue_entries": true,
+    "trainer_collects_raw_required_samples": true,
+    "trainer_side_repo_harness_filter_present": false
+  },
+  "native_partial_rollout_trigger_chain": {
+    "abort_stop_reason_visible_to_agent_loop": false,
+    "checkpoint_manager_abort_gated_by_partial_rollout": false,
+    "checkpoint_manager_aborts_inflight_requests": true,
+    "evidence": [
+      {
+        "line": 538,
+        "line_hint": "await self.checkpoint_manager.update_weights",
+        "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_trainer.py"
+      },
+      {
+        "line": 433,
+        "line_hint": "abort_all_requests",
+        "source_path": "reference/verl/verl/checkpoint_engine/base.py"
+      },
+      {
+        "line": 461,
+        "line_hint": "resume_generation",
+        "source_path": "reference/verl/verl/checkpoint_engine/base.py"
+      },
+      {
+        "line": 270,
+        "line_hint": "async def abort_all_requests",
+        "source_path": "reference/verl/verl/workers/rollout/replica.py"
+      },
+      {
+        "line": 274,
+        "line_hint": "async def resume_generation",
+        "source_path": "reference/verl/verl/workers/rollout/replica.py"
+      }
+    ],
+    "fully_llm_client_continue_gated_by_partial_rollout": true,
+    "partial_rollout_config_gate_location": "reference/verl/verl/experimental/fully_async_policy/config/fully_async_ppo_trainer.yaml",
+    "repo_harness_checkpoint_implication": "参数同步中断发生在 checkpoint engine / rollout server 层，并且 abort / aborted 会被 FullyLLMServerClient 内部续生成消费；RepoHarness 不能把该底层中断直接当作 PartialEpisodeCheckpoint。",
+    "server_resume_generation_after_weight_sync": true,
+    "weight_sync_calls_checkpoint_manager_update_weights": true
+  },
+  "reference_verl_commit": "ba8cfb6d585b2f0a13f7cc84aac761955d9cc3e1",
+  "reference_verl_dirty_status": "",
+  "reference_verl_root": "reference/verl",
+  "repo_harness_agent_loop_lifecycle_inventory": {
+    "async_episode_handle_source": "src/repo_harness/rl/async_runtime.py",
+    "checkpoint_without_live_handle_goes_to_diagnostic_side_channel": true,
+    "cross_process_resume_supported": false,
+    "repo_harness_verl_agent_loop_source": "src/repo_harness_verl/agent_loop.py",
+    "resume_state_store_source": "src/repo_harness/rl/pause_resume.py",
+    "run_method_terminal_output_only_until_stage15_patch": true,
+    "same_agent_loop_worker_ray_actor_required": true,
+    "same_runtime_ownership_scope_required": true
+  },
+  "schema_version": "repo_harness_verl_stage15_0_partial_rollout_interface_inventory_v0",
+  "source_evidence": [
+    {
+      "line": 538,
+      "line_hint": "await self.checkpoint_manager.update_weights",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_trainer.py"
+    },
+    {
+      "line": 433,
+      "line_hint": "abort_all_requests",
+      "source_path": "reference/verl/verl/checkpoint_engine/base.py"
+    },
+    {
+      "line": 461,
+      "line_hint": "resume_generation",
+      "source_path": "reference/verl/verl/checkpoint_engine/base.py"
+    },
+    {
+      "line": 270,
+      "line_hint": "async def abort_all_requests",
+      "source_path": "reference/verl/verl/workers/rollout/replica.py"
+    },
+    {
+      "line": 274,
+      "line_hint": "async def resume_generation",
+      "source_path": "reference/verl/verl/workers/rollout/replica.py"
+    },
+    {
+      "line": 160,
+      "line_hint": "class FullyLLMServerClient",
+      "source_path": "reference/verl/verl/workers/rollout/llm_server.py"
+    },
+    {
+      "line": 245,
+      "line_hint": "output.stop_reason not in (\"aborted\", \"abort\")",
+      "source_path": "reference/verl/verl/workers/rollout/llm_server.py"
+    },
+    {
+      "line": 375,
+      "line_hint": "return FullyLLMServerClient",
+      "source_path": "reference/verl/verl/workers/rollout/llm_server.py"
+    },
+    {
+      "line": 543,
+      "line_hint": "stop_reason = \"completed\"",
+      "source_path": "reference/verl/verl/workers/rollout/vllm_rollout/vllm_async_server.py"
+    },
+    {
+      "line": 642,
+      "line_hint": "stop_reason=finish_reason,",
+      "source_path": "reference/verl/verl/workers/rollout/sglang_rollout/async_sglang_server.py"
+    },
+    {
+      "line": 205,
+      "line_hint": "self.pending_queue",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+    },
+    {
+      "line": 206,
+      "line_hint": "self.active_tasks",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+    },
+    {
+      "line": 218,
+      "line_hint": "self._resume_event",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+    },
+    {
+      "line": 180,
+      "line_hint": "self.required_samples",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py"
+    },
+    {
+      "line": 55,
+      "line_hint": "async def put_sample",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/message_queue.py"
+    },
+    {
+      "line": 85,
+      "line_hint": "async def get_sample",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/message_queue.py"
+    },
+    {
+      "line": 257,
+      "line_hint": "while len(queue_samples) < self.required_samples",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_trainer.py"
+    },
+    {
+      "line": 289,
+      "line_hint": "ray.cloudpickle.loads",
+      "source_path": "reference/verl/verl/experimental/fully_async_policy/fully_async_trainer.py"
+    }
+  ],
+  "static_scan_only": true
+}

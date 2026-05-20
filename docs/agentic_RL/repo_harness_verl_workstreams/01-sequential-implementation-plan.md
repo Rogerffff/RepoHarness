@@ -38,6 +38,7 @@ Stage 12.5：同步高吞吐基线加固，补齐依赖环境缓存、共享 wor
 Stage 12.6：Stage 12.5 修改后远端 RL 链路回归 smoke
 Stage 13：fully async 分阶段演进，先固定异步生命周期 contract，再接入 verl fully async 训练路径
 Stage 14：fully async 可复现验收与 partial rollout / resume 前置能力
+Stage 15：真实 verl partial_rollout=True 接入，完成 partial checkpoint -> resume -> valid completed sample -> policy loss 的闭环
 ```
 
 这条路线的核心思想是：先让 RepoHarness 自己成为稳定、可复用、可审计、可加速的 episode runtime，再让 verl adapter 调用它。不要让 verl adapter 成为第二套 Harness。
@@ -1775,7 +1776,261 @@ Stage 14 不应该做：
 
 只有 Stage 14.0 和 Stage 14.1 通过后，才能说 fully async 远端链路从一次 smoke 升级为可复现、多任务、可机器验收的小规模训练路径。只有 Stage 14.2 和 Stage 14.3 通过后，才能进入真实 verl `partial_rollout=True` 的远端训练 smoke。
 
-## 21. 已采纳的第一版默认决策
+## 21. Stage 15：真实 verl partial rollout / resume 接入
+
+目标：在 Stage 14 已经完成可复现远端 fully async 验收、多任务负例 side channel、partial checkpoint contract 和同进程 turn-boundary pause / resume 原型之后，正式把 RepoHarness 的 partial checkpoint / resume 能力接入 verl 的 `partial_rollout=True` fully async 训练路径。
+
+Stage 15 的核心判断不是“partial trajectory 可以直接训练”，而是：
+
+```text
+partial rollout 触发
+-> RepoHarness 在安全 turn boundary 生成 PartialEpisodeCheckpoint
+-> partial checkpoint 进入 resume queue / side channel / diagnostic queue
+-> resume scheduler 恢复该 episode
+-> episode 跑到 final verifier / reward finality 完成
+-> 终态样本通过 formal online RL / formal async validator
+-> valid completed sample 才进入 policy-loss MessageQueue
+```
+
+Stage 15 必须先明确区分两种容易混淆的“partial”：
+
+```text
+verl 原生 partial_rollout=True:
+  可能是推理服务或 LLMServerClient 层面的 abort / aborted 后自动续生成。
+  这种机制不一定让 RepoHarnessVerlAgentLoop 感知到中断，也不一定自然产生 RepoHarness PartialEpisodeCheckpoint。
+
+RepoHarness PartialEpisodeCheckpoint:
+  是 RepoHarness 在安全 turn boundary 主动保存的 episode 中间状态。
+  它绑定 workspace、recorder cursor、generation records、tool observation projection、durable writer lease 和 visibility digest。
+```
+
+因此 Stage 15.0 必须先盘点真实 `reference/verl` 的 `partial_rollout=True` 语义，再决定是否需要 patch、wrapper 或 adapter，把参数同步中断、rollout abort 或受控 pause 信号显式传递给 `RepoHarnessVerlAgentLoop` / `RepoHarnessRuntime`。远端验收不能把 LLMServerClient 的底层自动续生成误算成 RepoHarness 的 `PartialEpisodeCheckpoint`。
+
+也就是说，Stage 15 必须坚持下面的训练边界：
+
+```text
+partial checkpoint:
+  是未完成 episode 的恢复存档，不能进入 policy loss
+
+resumed completed episode:
+  只有在 route、logprob、generation records、response spans、reward finality、visibility 和 staleness 全部通过后，才能进入 policy loss
+```
+
+Stage 15 延续前面阶段的执行节奏：每个子阶段都必须先由执行 agent 编写独立实施计划文档，审查通过后再实现；实现完成并通过本地或远端验收后，才进入下一个子阶段。建议后续文档命名为：
+
+```text
+31-stage-15-0-execution-plan.md
+32-stage-15-1-execution-plan.md
+33-stage-15-2-execution-plan.md
+```
+
+Stage 15 的已确认默认决策：
+
+- 第一版只支持 turn-boundary pause / resume。模型请求执行中、工具命令执行中、final verifier 执行中、reward 写入中和 cleanup 执行中的热迁移仍然不做。
+- 第一版优先支持同一 rollouter worker、同一 Ray actor 或同一进程内的恢复。跨机器、跨进程、worker 崩溃后的 durable resume 暂时不作为 Stage 15 通过条件。
+- 第一版 resume queue 必须绑定同一 rollouter worker、同一 Ray actor 或同一 runtime active handle registry。queue item 必须携带同进程可解析的 opaque `handle_ref`、resume token 或等价 runtime-only 引用。没有 live handle / `ResumeStateStore` entry 的 checkpoint，即使 schema 合法，也只能进入 diagnostic side channel，不能尝试跨进程恢复。
+- Stage 15 第一版 resume scheduler 必须和 active `AsyncEpisodeHandle` 处于同一 runtime ownership scope。如果 `RepoHarnessVerlAgentLoop.run(...)` 已经返回，或者 active handle 已经不在当前 worker registry 中，checkpoint 只能进入 diagnostic side channel，不能被另一个进程或另一个 Ray actor 重新接管。
+- partial checkpoint 不进入真实 policy-loss MessageQueue。它只能进入 resume queue、diagnostic queue、side channel 或等价旁路。真实 `FullyAsyncTrainer` 消费的 policy-loss queue 仍然只能接收 valid completed sample。
+- 远端 smoke 默认继续使用 Stage 14 已经跑通的开发 profile：`2 * 96GB GPU`、`Qwen/Qwen2.5-Coder-1.5B-Instruct`、full training、`lora_rank=0`、SGLang、NIXL CUDA 和短步数 fully async 训练。这个 profile 只是开发和验收配置，不代表未来正式 `8 * 96GB GPU` 或 7B 全参 RL 配置。
+- partial 触发第一版使用受控触发，例如第一个工具回合后请求 pause，确保远端 smoke 稳定产生 partial checkpoint。自然长任务触发可以作为后续增强。
+- staleness 必须重新计算。resume 后如果 `current_param_version - max_global_steps` 或等价指标超过阈值，episode 可以完成，但样本必须被过滤出 policy loss，并进入 stale / diagnostic 统计。
+- trainable negative 可以作为 Stage 15 的增强覆盖，但不是第一阻断目标。第一阻断目标是 partial -> resume -> final verifier -> reward finality -> valid completed sample -> trainer step。
+- Stage 15 允许修改 `reference/verl` 或对其 fully async 路径做显式 patch，不再把“禁止修改 reference/verl”作为默认限制。但任何 patch 都必须写入远端 patch manifest，包含文件路径、sha256、启用方式、回退方式、影响范围和兼容性测试。没有登记的 `reference/verl` patch 不能通过远端验收。
+
+Stage 15 不应该做：
+
+- 不把 partial checkpoint 本身当作 reward-ready 或 policy-loss-ready 样本。
+- 不支持 KV cache resume。
+- 不支持工具执行中、verifier 执行中、cleanup 执行中或模型请求执行中的热迁移。
+- 不把 7B LoRA adapter loading、8 卡全参 RL、长时间训练、模型收敛或大规模 SWE-Bench 训练作为第一版通过条件。
+- 不迁移传统 `repo-harness run-task`、`run-batch`、`run-experiment` 或离线 export。
+- 不放松 Stage 0H 到 Stage 14 已固定的 route、logprob、generation record、response span、visibility、reward finality、audit ref 和 path leak 边界。
+
+### Stage 15.0：verl partial rollout 接口盘点和集成计划
+
+目标：在写代码前，先把当前 `reference/verl` 的 `partial_rollout=True` fully async 调用形状、队列路径、样本状态和参数同步交互盘点清楚，并设计 RepoHarness adapter 的最小接入点。
+
+Stage 15.0 必须检查和记录：
+
+- `verl.experimental.fully_async_policy.fully_async_main` 中 `async_training.partial_rollout` 的实际配置入口、默认值和调用路径。
+- `FullyAsyncRollouter` 在 partial rollout 开启时如何产生 partial sample、termination signal、rollout status 或 resume-required 状态。
+- `LLMServerClient`、`TokenOutput.stop_reason` 和 rollout server 在 `abort`、`aborted`、`length`、`stop` 等停止原因下的传播规则。尤其要确认这些原因在 `partial_rollout=True` 时是否能到达 `RepoHarnessVerlAgentLoop`；如果不能到达，必须记录需要 patch 或 wrapper 的位置。
+- verl 原生 server-level partial rollout 是否只是底层推理续跑。如果它对 AgentLoop 不可见，Stage 15 不能把它当作 RepoHarness partial checkpoint 触发证据。
+- `MessageQueue`、`MessageQueueClient.put_sample(...)`、`MessageQueueClient.get_sample(...)` 和 `FullyAsyncTrainer` 取样路径是否会把 partial sample 计入 `required_samples`。
+- `RolloutSample`、`rollout_status`、`DataProto.non_tensor_batch`、`meta_info` 和 `addition_process(...)` 对 partial / complete / rejected / diagnostic 样本的真实字段承载方式。
+- `RepoHarnessVerlAgentLoop` 实例、`AsyncEpisodeHandle`、`ResumeStateStore` 和 Ray actor 的生命周期关系。尤其要确认 partial checkpoint 产生时，负责 resume 的 scheduler 是否仍然能够访问原始 live handle。
+- 参数同步后，rollouter 如何观察 `current_param_version`、如何记录 `trajectory_param_versions`、以及 partial checkpoint resume 时是否需要显式刷新 policy version facts。
+- 如果必须修改 `reference/verl`，具体 patch 应落在哪个文件、哪个函数、哪个配置项，并补充兼容性测试与 patch manifest 规则。
+
+Stage 15.0 的输出不应只是口头分析。它至少需要形成：
+
+```text
+fully_async_partial_rollout_interface_inventory.json
+stage15_partial_rollout_patch_plan.json
+stage15_partial_rollout_risk_matrix.json
+```
+
+通过标准：
+
+- 能明确说明 partial rollout 开启后，RepoHarness partial checkpoint 在真实 verl 路径中应该被放入哪个队列或 side channel。
+- 能明确说明 verl 原生 `partial_rollout=True` 的 abort / aborted 自动续生成机制，是否与 RepoHarness checkpoint 触发无关；如果有关，必须说明信号如何传到 RepoHarness。
+- 能明确说明哪个路径负责把 resumed completed sample 转换为 valid policy-loss sample。
+- 能明确说明 `FullyAsyncTrainer` 是否需要 patch 或 wrapper，避免 partial / diagnostic / stale 样本被计入 `required_samples`。
+- 任何 `reference/verl` patch 都有文件级归属、sha256 计划、启用方式、回退方式和测试计划。
+
+### Stage 15.1：本地 partial rollout adapter 和 resume scheduler
+
+目标：在本地 fake queue / fake trainer 环境中实现第一版 partial rollout adapter。它必须能从受控 partial checkpoint 出发，走 resume scheduler 恢复 episode，并只把恢复后的终态 valid sample 交给 policy-loss path。
+
+需要实现或验证：
+
+- `RepoHarnessPartialRolloutProducer` 或等价 producer helper：能够在受控 turn boundary 请求 pause，并把 `PartialEpisodeCheckpoint` 写入 resume queue 或 side channel。
+- `RepoHarnessResumeScheduler` 或等价 scheduler：能够读取 partial checkpoint，校验 `ResumeStateStore`、durable writer lease、recorder cursor、workspace facts、generation record digest 和 visibility ledger，然后调用 `AsyncEpisodeHandle.resume(...)` 或等价路径继续执行。
+- completed sample source gate：只有 resume 后终态 episode 通过 formal online RL、formal async validator、reward finality、visibility scan 和 staleness 校验后，才可以写入 policy-loss queue。
+- partial / pending / stale / cancelled / timeout / visibility rejected / missing logprob / non-verl route 样本必须进入 diagnostic side channel，不能进入 policy-loss queue。
+- trainer-side selection helper 如果存在，不能只读取 `required_samples` 条原始 queue entry 就停止；它必须继续读取直到凑够 required valid completed samples，或者遇到 termination signal、max dequeue limit 或 timeout。
+- resume 后的 trajectory digest 必须重新绑定恢复前后的 token、mask、logprob、generation records、response spans、sample identity、reward job id 和参数版本窗口。
+- resume 后如果参数版本已经 stale，样本必须被过滤，并记录 stale rejection reason。
+
+本地测试至少应覆盖：
+
+- 受控 pause 后生成 partial checkpoint，但该 checkpoint 被 policy-loss gate 拒绝。
+- partial checkpoint 成功 resume 到 terminal result 后，终态样本通过 formal online RL 和 formal async validator。
+- 队列中同时存在 valid completed、partial、stale、visibility rejected、timeout 和 diagnostic 样本时，只选择 valid completed 样本。
+- `required_samples=2` 时，selector 会跳过坏样本继续取样，直到拿到 2 个 valid completed samples 或结构化失败。
+- checkpoint 篡改、`ResumeStateStore` 缺失、durable lease token mismatch、recorder cursor mismatch、generation record digest mismatch、workspace facts mismatch 都会结构化拒绝。
+- patch 或 wrapper 后的 reference interface compatibility test 必须覆盖真实 `MessageQueue` 入口形状。
+
+通过标准：
+
+- 本地 fake partial rollout flow 可以稳定产生至少 2 个 partial checkpoint，并把至少 2 个 checkpoint resume 成终态 valid samples。
+- partial checkpoint、pending reward、stale、diagnostic 和 rejected 样本没有进入 policy-loss selected set。
+- 本地 evidence 能解释 produced / resumed / completed / rejected / filtered / selected 的逐样本 ledger。
+
+### Stage 15.2：远端 GPU partial_rollout=True 多步 smoke
+
+目标：在真实远端 GPU、真实 verl fully async 入口、真实 SGLang rollout 服务和真实 `partial_rollout=True` 配置下，证明 partial rollout / resume 已经接入训练链路。
+
+默认远端 profile：
+
+```text
+profile_name = dev_smoke_2x96gb_small_full_sync_partial_rollout
+gpu = 2 * 96GB
+model = Qwen/Qwen2.5-Coder-1.5B-Instruct
+training_strategy = full
+lora_rank = 0
+inference_backend = sglang
+weight_sync_strategy = nixl_cuda
+partial_rollout = true
+partial_trigger = controlled_turn_boundary
+```
+
+远端 smoke 必须证明：
+
+- 真实入口使用 `python -m verl.experimental.fully_async_policy.fully_async_main` 或当前 `reference/verl` 的等价 fully async 入口。
+- `async_training.partial_rollout=True` 或等价配置真实生效，不能只在 RepoHarness 本地 fake producer 中模拟。
+- 至少生成 2 个 partial checkpoints。
+- 至少 2 个 partial checkpoints 被 resume 到 terminal episode。
+- 至少 2 个 resumed completed samples 进入 policy loss。
+- 进入 policy loss 的 resumed samples 必须来自至少 2 个唯一 `source_partial_checkpoint_id`，至少 2 个唯一 `resume_attempt_id`，且 `policy_loss_consumed_sample_id` 必须唯一，不能用同一个恢复样本重复计数。
+- partial checkpoint、pending reward、diagnostic、timeout、cancelled、visibility rejected、missing logprob、non-verl route 和 stale 样本没有进入 policy loss。
+- trainer 至少完成 3 到 4 个 progress step。
+- 至少发生 1 次 parameter synchronization。
+- 参数同步后仍有新的 RepoHarness 样本产生或被消费。
+- `trajectory_param_versions`、`min_global_steps`、`max_global_steps`、`current_param_version`、`staleness` 和 `filtered_stale_sample_count` 可解释。
+- 必须实现 `inspect-stage15-partial-rollout-acceptance` 或等价机器验收命令。该命令需要检查 evidence manifest、profile / Hydra 一致性、patch manifest、public / private evidence 分层、路径泄漏、policy-loss 样本唯一性、partial checkpoint 不进入 policy loss、resumed completed sample 进入 policy loss、batch logprob provenance 和实例最终状态。
+
+远端 evidence 至少需要包含：
+
+```text
+stage15_acceptance_summary.json
+stage15_partial_checkpoint_report.json
+stage15_resume_scheduler_report.json
+stage15_policy_loss_gate_report.json
+stage15_trainer_steps_report.json
+stage15_parameter_sync_report.json
+stage15_staleness_report.json
+stage15_message_queue_report.json
+stage15_side_channel_report.json
+stage15_visibility_report.json
+stage15_batch_provenance_report.json
+stage15_remote_patch_manifest.json
+stage15_resource_lifecycle_report.json
+stage15_path_leak_scan_report.json
+stage15_command_log.sanitized.jsonl
+runtime_private/stage15_command_log.raw.jsonl
+stage15_training_profile.json
+stage15_hydra_overrides.json
+stage15_environment_matrix.json
+stage15_fixture_manifest.json
+stage15_fixture_sha256_report.json
+stage15_canonical_evidence_map.json
+```
+
+`stage15_acceptance_summary.json` 至少需要包含：
+
+```text
+acceptance_passed
+training_profile_name
+partial_rollout_enabled
+partial_checkpoint_count
+resume_attempt_count
+resumed_terminal_episode_count
+resumed_valid_sample_count
+resumed_policy_loss_consumed_sample_count
+resumed_policy_loss_consumed_unique_checkpoint_count
+resumed_policy_loss_consumed_unique_resume_attempt_count
+partial_policy_loss_consumed_sample_count
+pending_reward_policy_loss_consumed_sample_count
+stale_policy_loss_consumed_sample_count
+diagnostic_policy_loss_consumed_sample_count
+completed_trainer_step_count
+parameter_sync_count
+current_param_version
+post_sync_resumed_valid_sample_count
+message_queue_produced_sample_count
+message_queue_consumed_sample_count
+message_queue_dropped_sample_count
+side_channel_sample_count
+policy_loss_queue_invalid_sample_count
+trainer_batch_logprob_provenance_passed
+visibility_scan_passed
+path_leak_scan_passed
+resource_cleanup_passed
+instance_final_status
+training_profile_sha256
+hydra_overrides_sha256
+fixture_manifest_sha256
+public_path_leak_scan_passed
+runtime_private_evidence_present
+remote_patch_manifest_sha256
+evidence_tarball_sha256
+```
+
+通过标准：
+
+- `partial_rollout_enabled=true`。
+- `partial_checkpoint_count >= 2`。
+- `resumed_terminal_episode_count >= 2`。
+- `resumed_policy_loss_consumed_sample_count >= 2`。
+- `resumed_policy_loss_consumed_unique_checkpoint_count >= 2`。
+- `resumed_policy_loss_consumed_unique_resume_attempt_count >= 2`。
+- `partial_policy_loss_consumed_sample_count = 0`。
+- `pending_reward_policy_loss_consumed_sample_count = 0`。
+- `stale_policy_loss_consumed_sample_count = 0`。
+- `diagnostic_policy_loss_consumed_sample_count = 0`。
+- `policy_loss_queue_invalid_sample_count = 0`。
+- `completed_trainer_step_count >= 3`。
+- `parameter_sync_count >= 1`。
+- `post_sync_resumed_valid_sample_count >= 1`。
+- `trainer_batch_logprob_provenance_passed=true`。
+- `visibility_scan_passed=true`。
+- `path_leak_scan_passed=true`。
+- 远端实例最终状态必须是 `exited` 或等价可解释停止状态。
+
+Stage 15 完成后，才能说 RepoHarness 不仅支持完整 episode 的 verl fully async 在线训练，也具备第一版真实 partial rollout / resume 训练链路。Stage 15 仍不代表跨机器 durable resume、KV cache resume、长任务自然 partial 触发或大规模正式训练已经完成。
+
+## 22. 已采纳的第一版默认决策
 
 这些决策已经按当前讨论固定为第一版默认选择。后续 agent 应按下面的选择实施；如果需要改变，必须先更新本文档和对应 shared contracts。
 
@@ -1801,10 +2056,10 @@ Stage 14 不应该做：
 20. Stage 12.6 是 Stage 13 的远端回归前置阶段。Stage 12.5 提交后必须在远端 GPU 环境重新跑真实 RL 链路 smoke，确认共享依赖环境、隐藏 runtime 目录、命令策略、formal batch validator、batch refill、DataProto 和 trainer 小步路径仍然完整可用。
 21. Stage 13 必须按 `13.0 -> 13.1 -> 13.2 -> 13.3-A -> 13.3-B` 顺序推进。每个子阶段都要先编写独立实施计划文档，审查通过后再实现；实现完成并通过对应本地或远端验收后，才能进入下一个子阶段。不能把 contract hardening、RepoHarness async episode facade、verl fully async Rollouter / MessageQueue 结构桥接、fully async runtime adapter 本地实现和远端多步 fully async smoke 合并成一次大改。
 22. Stage 14 必须按 `14.0 -> 14.1 -> 14.2 -> 14.3` 顺序推进。先做 fully async 远端链路可复现验收和多任务扩展，再做 partial checkpoint contract 和 pause / resume facade；不能在 checkpoint / resume contract 稳定前把 `partial_rollout=True` 样本放进 policy loss。
-23. Stage 15 的自然主线是：在 Stage 14 的 checkpoint / resume contract 和 pause / resume facade 通过后，进入真实 verl `partial_rollout=True` 的远端 smoke。Stage 15 不能被旧 CLI / offline export 迁移任务占用。
+23. Stage 15 必须按 `15.0 -> 15.1 -> 15.2` 顺序推进。先盘点真实 verl partial rollout 接口和必要 patch，再实现本地 partial rollout adapter / resume scheduler，最后进入远端 GPU `partial_rollout=True` 多步 smoke。Stage 15 不能被旧 CLI / offline export 迁移任务占用。
 24. 传统 `repo-harness run-task`、`run-batch`、`run-experiment` 和离线 export 目前仍可继续沿用旧 `evaluation.runner.run_task(...)` 与 run directory 契约。它们和 `RepoHarnessRuntime.run_episode(...)` 的统一属于 Stage 16 或独立路线，不能在 Stage 14 或 Stage 15 中顺手替换。
 
-## 22. 最小成功定义
+## 23. 最小成功定义
 
 第一版成功不是“训练出模型”，而是完成下面闭环：
 

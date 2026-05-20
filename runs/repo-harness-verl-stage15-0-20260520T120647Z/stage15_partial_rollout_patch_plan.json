@@ -1,0 +1,103 @@
+{
+  "candidates": [
+    {
+      "compatibility_tests": [
+        "stage15_checkpoint_engine_abort_inventory_test",
+        "stage15_abort_not_repo_harness_turn_boundary_test"
+      ],
+      "enables": [
+        "checkpoint_engine_abort_rationale",
+        "backend_specific_partial_rollout_risk_documentation"
+      ],
+      "kind": "no_patch_required",
+      "patch_id": "stage15_no_checkpoint_engine_abort_boundary_wrapper",
+      "patch_manifest_required": false,
+      "purpose": "明确不把 checkpoint engine / rollout server abort-resume 链路当作 RepoHarness checkpoint boundary。",
+      "risks": [
+        "future_engine_patch_may_need_revisit",
+        "server_level_abort_not_a_safe_repo_harness_turn_boundary"
+      ],
+      "rollback_plan": "如果后续决定支持 server-level abort checkpoint，必须新写 Stage 15.x 设计并扩展 PartialEpisodeCheckpoint contract。",
+      "target": "reference/verl/verl/checkpoint_engine/base.py + reference/verl/verl/workers/rollout/replica.py",
+      "why_needed": "参数同步中断发生在推理服务层，不能证明工具回合、recorder cursor、workspace writer lease 已处于安全状态。"
+    },
+    {
+      "compatibility_tests": [
+        "stage15_same_agent_loop_worker_handle_registry_test",
+        "stage15_partial_checkpoint_not_in_policy_loss_queue_test"
+      ],
+      "enables": [
+        "partial_checkpoint_side_channel",
+        "same_runtime_resume_scheduler",
+        "completed_sample_after_resume"
+      ],
+      "kind": "adapter_only",
+      "patch_id": "stage15_agent_loop_owned_partial_side_channel",
+      "patch_manifest_required": false,
+      "purpose": "在同一 AgentLoopWorker / runtime ownership scope 内触发 turn-boundary pause，并把 PartialEpisodeCheckpoint 放入 resume side channel。",
+      "risks": [
+        "run_returns_before_resume_handle_lost",
+        "partial_checkpoint_disguised_as_terminal_output"
+      ],
+      "rollback_plan": "禁用 Stage 15 partial trigger，退回 Stage 14.3 同进程 pause/resume facade。",
+      "target": "src/repo_harness_verl/agent_loop.py + src/repo_harness/rl/async_runtime.py",
+      "why_needed": "RepoHarness checkpoint 必须绑定 live AsyncEpisodeHandle 和 ResumeStateStore，不能在 run(...) 返回后跨 actor 接管。"
+    },
+    {
+      "compatibility_tests": [
+        "stage15_rollouter_message_queue_shape_test",
+        "stage15_required_samples_skip_diagnostic_test"
+      ],
+      "enables": [
+        "valid_completed_sample_queue",
+        "diagnostic_side_channel",
+        "policy_loss_required_samples_not_polluted"
+      ],
+      "kind": "wrapper",
+      "patch_id": "stage15_fully_async_rollouter_source_gate_wrapper",
+      "patch_manifest_required": true,
+      "purpose": "在 RolloutSample 进入真实 MessageQueue 前，只允许 valid completed sample 进入 policy-loss queue，其余样本进入 diagnostic side channel。",
+      "risks": [
+        "reference_verl_patch_drift",
+        "message_queue_backpressure_when_many_diagnostic_samples"
+      ],
+      "rollback_plan": "移除 wrapper 后，Stage 15 remote smoke 只能作为 debug run，不能作为 acceptance。",
+      "target": "reference/verl/verl/experimental/fully_async_policy/fully_async_rollouter.py",
+      "why_needed": "FullyAsyncTrainer._get_samples_from_queue(...) 会按 required_samples 读取 raw queue entry，不能让 partial / diagnostic 样本污染 required_samples。"
+    },
+    {
+      "compatibility_tests": [
+        "stage15_fully_llm_client_abort_probe_test",
+        "stage15_completed_stop_reason_mapping_test"
+      ],
+      "enables": [
+        "abort_visibility_probe",
+        "backend_specific_partial_rollout_diagnostics"
+      ],
+      "kind": "wrapper",
+      "patch_id": "stage15_fully_llm_client_stop_reason_probe",
+      "patch_manifest_required": true,
+      "purpose": "如果 Stage 15.1 需要直接观察 abort / aborted，则在 FullyLLMServerClient 自动续生成前写入 runtime-private probe 或 side-channel 事件。",
+      "risks": [
+        "server_level_abort_not_a_safe_repo_harness_turn_boundary",
+        "backend_specific_stop_reason_drift"
+      ],
+      "rollback_plan": "不启用 stop reason probe；只支持受控 turn-boundary pause trigger。",
+      "target": "reference/verl/verl/workers/rollout/llm_server.py",
+      "why_needed": "当前 FullyLLMServerClient 会在 partial_rollout=True 时消费 abort / aborted，并继续生成，AgentLoop 默认不可见。"
+    }
+  ],
+  "no_patch_rejection_reasons": [
+    "abort_aborted_not_visible_to_repo_harness_agent_loop",
+    "fully_async_trainer_does_not_filter_repo_harness_diagnostic_samples"
+  ],
+  "no_patch_required_claim_allowed": false,
+  "recommended_patch_id": "stage15_agent_loop_owned_partial_side_channel",
+  "recommended_patch_ids": [
+    "stage15_no_checkpoint_engine_abort_boundary_wrapper",
+    "stage15_agent_loop_owned_partial_side_channel",
+    "stage15_fully_async_rollouter_source_gate_wrapper"
+  ],
+  "reference_verl_patch_or_wrapper_required": true,
+  "schema_version": "repo_harness_verl_stage15_0_partial_rollout_patch_plan_v0"
+}
