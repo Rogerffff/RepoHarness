@@ -39,6 +39,9 @@ REQUEST_CONSTRUCTION_KWARGS = frozenset(
         "repo_harness_dataset_name",
         "repo_harness_dataset_split",
         "repo_harness_dataset_revision",
+        "repo_harness_runtime_execution_mode",
+        "repo_harness_partial_rollout_control",
+        "repo_harness_expected_route",
     }
 )
 
@@ -97,6 +100,17 @@ def validate_repo_harness_verl_kwargs(kwargs: Mapping[str, Any]) -> dict[str, An
     _coerce_optional_int(kwargs.get("global_steps"), field_name="global_steps", minimum=0)
     if "uid" in kwargs and kwargs["uid"] is not None:
         _normalize_safe_identifier(kwargs["uid"], field_name="uid")
+    runtime_execution_mode = kwargs.get("repo_harness_runtime_execution_mode")
+    if runtime_execution_mode is not None and str(runtime_execution_mode) not in {
+        "minimal_gateway",
+        "real_episode",
+    }:
+        raise RepoHarnessVerlRequestMappingError(
+            f"unsupported_repo_harness_runtime_execution_mode: {runtime_execution_mode}"
+        )
+    expected_route = kwargs.get("repo_harness_expected_route")
+    if expected_route is not None and str(expected_route) != "verl":
+        raise RepoHarnessVerlRequestMappingError("repo_harness_expected_route must be verl")
     return dict(kwargs)
 
 

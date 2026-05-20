@@ -48,6 +48,12 @@ REPO_HARNESS_AGENT_LOOP_EXTRA_FIELDS = frozenset(
         "repo_harness_invalid_reason",
         "repo_harness_invalid_for_online_rl",
         "repo_harness_llm_gateway_route",
+        "repo_harness_partial_rollout_supported",
+        "repo_harness_partial_rollout_status",
+        "repo_harness_resume_attempt_id",
+        "repo_harness_stage15_controlled_turn_boundary_trigger_used",
+        "repo_harness_stage15_native_partial_rollout_enabled",
+        "repo_harness_stage15_native_abort_signal_visible_to_repo_harness",
     }
 )
 
