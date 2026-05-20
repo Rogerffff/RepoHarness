@@ -6,7 +6,7 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from threading import RLock
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, Mapping
 
 from .async_contracts import (
     AsyncEpisodeHandleRef,
@@ -15,6 +15,8 @@ from .async_contracts import (
     ResumeCapability,
 )
 from .episode import RepoHarnessEpisodeRequest, RepoHarnessEpisodeResult
+from .partial_checkpoint import PartialEpisodeCheckpoint
+from .pause_resume import PauseOutcome, ResumeOutcome, TurnBoundaryPauseController
 
 
 TERMINAL_ASYNC_EPISODE_STATUSES = frozenset({"cancelled", "timeout", "failed", "completed", "orphaned"})
@@ -41,6 +43,7 @@ class AsyncEpisodeState:
     task: asyncio.Task[RepoHarnessEpisodeResult] | None = None
     started: bool = False
     cancel_result_factory: Callable[[], RepoHarnessEpisodeResult] | None = None
+    pause_controller: TurnBoundaryPauseController | None = None
     _lock: RLock = field(default_factory=RLock)
 
     def set_task(self, task: asyncio.Task[RepoHarnessEpisodeResult]) -> None:
@@ -65,6 +68,17 @@ class AsyncEpisodeState:
             if self.result is None and self.status not in TERMINAL_ASYNC_EPISODE_STATUSES:
                 self.status = "cancelling"
             self.diagnostics.append(reason)
+            self.updated_at = datetime.now(timezone.utc)
+
+    def update_pause_status(self, status: str, diagnostic: str | None = None) -> None:
+        if status not in {"paused", "running", "cancelling"}:
+            return
+        with self._lock:
+            if self.result is not None or self.status in TERMINAL_ASYNC_EPISODE_STATUSES:
+                return
+            self.status = status  # type: ignore[assignment]
+            if diagnostic:
+                self.diagnostics.append(diagnostic)
             self.updated_at = datetime.now(timezone.utc)
 
     def mark_started(self) -> None:
@@ -136,6 +150,7 @@ class AsyncEpisodeHandle:
             cancel_requested = self._state.cancel_requested
             created_at = self._state.created_at
             updated_at = self._state.updated_at
+            pause_controller = self._state.pause_controller
 
         if result is not None:
             audit_refs = {"result": f"rh://async/{self.handle_ref.episode_id}/{self.sample_attempt_id}/result"}
@@ -177,6 +192,18 @@ class AsyncEpisodeHandle:
             "queued",
             "orphaned",
         }
+        resume = ResumeCapability()
+        audit_refs = {"handle": self.handle_ref.handle_ref}
+        if pause_controller is not None and pause_controller.is_paused:
+            checkpoint = pause_controller.current_checkpoint
+            if checkpoint is not None:
+                checkpoint_ref = f"rh://partial-checkpoints/{checkpoint.checkpoint_id}"
+                resume = ResumeCapability(
+                    resume_supported=True,
+                    resume_status="paused_same_process_stage14_3",
+                    resume_ref=checkpoint_ref,
+                )
+                audit_refs["partial_checkpoint"] = checkpoint_ref
         return AsyncEpisodeSnapshot(
             episode_id=self.handle_ref.episode_id,
             run_id=self.handle_ref.run_id,
@@ -185,10 +212,10 @@ class AsyncEpisodeHandle:
             async_status=status,
             episode_status=None,
             resource_lease_refs={},
-            audit_refs={"handle": self.handle_ref.handle_ref},
+            audit_refs=audit_refs,
             created_at=created_at,
             updated_at=updated_at,
-            resume=ResumeCapability(),
+            resume=resume,
             cancel_requested=cancel_requested,
             cleanup_status=cleanup_status,
             orphan_diagnostics=orphan_diagnostics,
@@ -208,6 +235,8 @@ class AsyncEpisodeHandle:
 
     async def cancel(self, reason: str = "cancel_requested") -> AsyncEpisodeSnapshot:
         self._state.mark_cancel_requested(reason)
+        if self._state.pause_controller is not None:
+            self._state.pause_controller.cancel_paused_episode(reason=reason)
         task = self._state.task
         started = self._state.started
         if task is not None and not task.done() and started:
@@ -216,6 +245,45 @@ class AsyncEpisodeHandle:
         elif task is not None and not task.done():
             await asyncio.sleep(0)
         return self.snapshot()
+
+    async def request_pause_at_next_turn_boundary(
+        self,
+        *,
+        reason: str = "pause_requested",
+        timeout: float | None = None,
+    ) -> PauseOutcome:
+        if self._state.pause_controller is None:
+            return PauseOutcome(
+                status="pause_not_supported",
+                message="pause is only supported for real_episode async handles in Stage 14.3",
+            )
+        return await asyncio.to_thread(
+            self._state.pause_controller.request_pause_at_next_turn_boundary,
+            reason=reason,
+            timeout=timeout,
+        )
+
+    async def cancel_pause_request(self, reason: str = "pause_request_cancelled") -> PauseOutcome:
+        if self._state.pause_controller is None:
+            return PauseOutcome(status="pause_not_supported")
+        return await asyncio.to_thread(
+            self._state.pause_controller.cancel_pause_request,
+            reason=reason,
+        )
+
+    async def resume(
+        self,
+        checkpoint: PartialEpisodeCheckpoint | Mapping[str, object],
+        *,
+        llm_gateway: object | None = None,
+    ) -> ResumeOutcome:
+        del llm_gateway
+        if self._state.pause_controller is None:
+            return ResumeOutcome(
+                status="unsupported_cross_process_resume_in_stage14_3",
+                message="this async handle has no same-process resume state",
+            )
+        return await asyncio.to_thread(self._state.pause_controller.resume, checkpoint)
 
     async def _run_and_record(
         self,

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import traceback
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
+from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
 from time import perf_counter
@@ -53,9 +55,21 @@ from .budget import (
     build_training_budget_policy,
     context_config_from_training_policy,
 )
-from .async_contracts import AsyncEpisodeHandleRef
+from .async_contracts import AsyncEpisodeHandleRef, compute_generation_record_digest
 from .async_runtime import AsyncEpisodeHandle, AsyncEpisodeStartError, AsyncEpisodeState
 from .gateway import GenerationRecord, LLMGateway, LLMGatewayRequest, LLMGatewayResponse
+from .partial_checkpoint import (
+    PartialEpisodeCheckpoint,
+    compute_durable_writer_lease_digest,
+    compute_partial_checkpoint_content_digest,
+    compute_partial_checkpoint_trajectory_digest,
+    compute_response_ids_digest,
+    compute_response_logprobs_digest,
+    compute_response_mask_digest,
+    compute_response_span_digest,
+    compute_reward_finality_digest,
+)
+from .pause_resume import EpisodePauseCancelled, TurnBoundaryPauseController
 from .reward_boundary import Stage7RewardBoundaryResult, build_stage7_reward_boundary
 from .resources import (
     ResourceConcurrencyPolicy,
@@ -424,6 +438,8 @@ class RepoHarnessRuntime:
             task = state.task
             if task is not None and not task.done():
                 state.mark_cancel_requested("runtime_closed")
+                if state.pause_controller is not None:
+                    state.pause_controller.cancel_paused_episode(reason="runtime_closed")
                 if state.started:
                     task.cancel()
         if not self._has_active_async_episode_handles():
@@ -481,19 +497,30 @@ class RepoHarnessRuntime:
                     cleanup_status="skipped",
                 )
 
+            pause_controller = None
+            if self._runtime_execution_mode() == "real_episode":
+                pause_controller = TurnBoundaryPauseController()
             state = AsyncEpisodeState(
                 request=parsed_request,
                 sample_attempt_id=sample_attempt_id,
                 handle_ref=handle_ref,
                 runtime_mode=self._runtime_execution_mode(),
                 cancel_result_factory=cancel_result_factory,
+                pause_controller=pause_controller,
             )
+            if pause_controller is not None:
+                pause_controller.set_status_callback(state.update_pause_status)
             handle = AsyncEpisodeHandle(state, unregister=self._unregister_async_episode_handle)
             self._async_handles_by_ref[handle_ref.handle_ref] = handle
             self._async_handles_by_run_id[parsed_request.run_id] = handle
 
         async def runner() -> RepoHarnessEpisodeResult:
-            return await self.run_episode(parsed_request, llm_gateway=llm_gateway)
+            return await self.run_episode(
+                parsed_request,
+                llm_gateway=llm_gateway,
+                pause_controller=state.pause_controller,
+                sample_attempt_id=sample_attempt_id,
+            )
 
         task = asyncio.create_task(
             handle._run_and_record(runner),
@@ -515,6 +542,8 @@ class RepoHarnessRuntime:
         request: RepoHarnessEpisodeRequest,
         *,
         llm_gateway: LLMGateway,
+        pause_controller: TurnBoundaryPauseController | None = None,
+        sample_attempt_id: str | None = None,
     ) -> RepoHarnessEpisodeResult:
         started = perf_counter()
         parsed_request = RepoHarnessEpisodeRequest.model_validate(request)
@@ -524,6 +553,8 @@ class RepoHarnessRuntime:
                 parsed_request,
                 llm_gateway=llm_gateway,
                 started=started,
+                pause_controller=pause_controller,
+                sample_attempt_id=sample_attempt_id,
             )
         if runtime_mode != "minimal_gateway":
             return self._terminal_result(
@@ -657,6 +688,8 @@ class RepoHarnessRuntime:
         *,
         llm_gateway: LLMGateway,
         started: float,
+        pause_controller: TurnBoundaryPauseController | None = None,
+        sample_attempt_id: str | None = None,
     ) -> RepoHarnessEpisodeResult:
         status: EpisodeStatusName = "infrastructure_error"
         status_reason: str | None = None
@@ -689,6 +722,8 @@ class RepoHarnessRuntime:
                     gateway_accounting,
                     resource_handle,
                     runtime_loop,
+                    pause_controller,
+                    sample_attempt_id,
                 )
             )
             if timeout_seconds is None:
@@ -761,6 +796,15 @@ class RepoHarnessRuntime:
 
         elapsed = perf_counter() - started
         if real_run is None:
+            if real_workspace is not None:
+                diagnostics.extend(
+                    self._finalize_interrupted_real_episode_audit(
+                        request,
+                        run_dir=real_workspace.run_dir,
+                        status=status,
+                        status_reason=status_reason or status,
+                    )
+                )
             return self._terminal_result(
                 request,
                 status=status,
@@ -912,6 +956,8 @@ class RepoHarnessRuntime:
         gateway_accounting: GatewayCallAccounting,
         resource_handle: ResourceLeaseHandle | None,
         runtime_loop: asyncio.AbstractEventLoop,
+        pause_controller: TurnBoundaryPauseController | None = None,
+        sample_attempt_id: str | None = None,
     ) -> RealEpisodeRun:
         collector = GenerationRecordCollector()
         recorder_profile = RecorderProfile.for_run_mode(request.run_mode)
@@ -972,6 +1018,30 @@ class RepoHarnessRuntime:
                 budget_policy,
                 base_config=ContextManagementConfig(),
             )
+
+            def turn_boundary_callback(
+                boundary_kind: str,
+                boundary_state: AgentLoopState,
+                boundary_messages: list[dict[str, object]],
+                turn_index: int,
+            ) -> None:
+                if pause_controller is None:
+                    return
+                pause_controller.maybe_pause_at_turn_boundary(
+                    checkpoint_builder=lambda: self._build_real_episode_partial_checkpoint(
+                        request,
+                        workspace=workspace,
+                        run_workspace=run_workspace,
+                        recorder=recorder,
+                        collector=collector,
+                        agent_state=boundary_state,
+                        messages=boundary_messages,
+                        boundary_kind=boundary_kind,
+                        turn_index=turn_index,
+                        sample_attempt_id=sample_attempt_id or f"{request.episode_id}:attempt-0",
+                    )
+                )
+
             agent_loop_started = perf_counter()
             agent_state = AgentLoop(
                 model_client=adapter,
@@ -1000,6 +1070,7 @@ class RepoHarnessRuntime:
                     or request.budgets.request_timeout_seconds
                     or 60.0
                 ),
+                turn_boundary_callback=turn_boundary_callback,
             )
             agent_loop_seconds = perf_counter() - agent_loop_started
             workspace.adapter.capture_final_patch(run_workspace, recorder=recorder)
@@ -1022,6 +1093,362 @@ class RepoHarnessRuntime:
                 artifact_count=len(artifacts),
                 artifact_bytes_written=sum(int(artifact.get("size_bytes", 0)) for artifact in artifacts),
             )
+
+    def _build_real_episode_partial_checkpoint(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        *,
+        workspace: RealEpisodeWorkspace,
+        run_workspace: RunWorkspace,
+        recorder: RunRecorder,
+        collector: GenerationRecordCollector,
+        agent_state: AgentLoopState,
+        messages: list[dict[str, object]],
+        boundary_kind: str,
+        turn_index: int,
+        sample_attempt_id: str,
+    ) -> PartialEpisodeCheckpoint:
+        generation_records = collector.generation_records
+        response_ids: list[int] = []
+        response_mask: list[int] = []
+        response_logprobs: list[float] | None = [] if generation_records else None
+        response_spans: list[ResponseSpan] = []
+        cursor = 0
+        global_steps_values = [
+            record.global_steps
+            for record in generation_records
+            if record.global_steps is not None
+        ]
+        current_global_steps = global_steps_values[-1] if global_steps_values else 0
+        min_global_steps = min(global_steps_values) if global_steps_values else current_global_steps
+        max_global_steps = max(global_steps_values) if global_steps_values else current_global_steps
+        trajectory_param_versions = sorted(set(global_steps_values or [current_global_steps]))
+        for record in generation_records:
+            length = len(record.output_token_ids)
+            response_ids.extend(record.output_token_ids)
+            response_mask.extend([1] * length)
+            if response_logprobs is not None:
+                if record.output_logprobs is None:
+                    response_logprobs = None
+                else:
+                    response_logprobs.extend(record.output_logprobs)
+            if length:
+                record_global_steps = record.global_steps if record.global_steps is not None else current_global_steps
+                record_min_steps = (
+                    record.min_global_steps if record.min_global_steps is not None else min_global_steps
+                )
+                record_max_steps = (
+                    record.max_global_steps if record.max_global_steps is not None else max_global_steps
+                )
+                response_spans.append(
+                    ResponseSpan(
+                        start=cursor,
+                        end=cursor + length,
+                        source_type="assistant_generation",
+                        model_call_id=record.model_call_id,
+                        artifact_ref=f"rh://model-calls/{record.model_call_id}",
+                        response_mask_value=1,
+                        logprob_policy="from_llm_gateway_response",
+                        policy_version=record.policy_version,
+                        global_steps=record_global_steps,
+                        min_global_steps=record_min_steps,
+                        max_global_steps=record_max_steps,
+                    )
+                )
+            cursor += length
+        completed_tool_call_ids = list(agent_state.tool_pairing_state.completed_tool_call_ids)
+        pending_tool_call_ids = list(agent_state.tool_pairing_state.pending_tool_call_ids)
+        tool_messages_by_call_id: dict[str, dict[str, Any]] = {}
+        for message in messages:
+            if message.get("role") != "tool":
+                continue
+            tool_call_id = message.get("tool_call_id")
+            if tool_call_id:
+                tool_messages_by_call_id[str(tool_call_id)] = dict(message)
+        tool_result_refs: dict[str, str] = {}
+        observation_projection_payload: list[dict[str, Any]] = []
+        for tool_call_id in completed_tool_call_ids:
+            tool_result_id = agent_state.tool_pairing_state.tool_result_ids.get(tool_call_id)
+            if tool_result_id is None:
+                tool_message = tool_messages_by_call_id.get(tool_call_id)
+                tool_result_id = None if tool_message is None else str(tool_message.get("tool_result_id") or "")
+            tool_result_ref = f"rh://tool-results/{request.run_id}/{tool_result_id or tool_call_id}"
+            tool_result_refs[tool_call_id] = tool_result_ref
+            tool_message = tool_messages_by_call_id.get(tool_call_id)
+            tool_content = "" if tool_message is None else str(tool_message.get("content", ""))
+            tool_tokens = self._project_tool_observation_tokens(tool_content)
+            observation_projection_payload.append(
+                {
+                    "tool_call_id": tool_call_id,
+                    "tool_result_ref": tool_result_ref,
+                    "token_count": len(tool_tokens),
+                    "content_digest": _runtime_sha256_digest({"content": tool_content}),
+                }
+            )
+            if not tool_tokens:
+                continue
+            tool_start = cursor
+            response_ids.extend(tool_tokens)
+            response_mask.extend([0] * len(tool_tokens))
+            if response_logprobs is not None:
+                response_logprobs.extend([0.0] * len(tool_tokens))
+            cursor += len(tool_tokens)
+            response_spans.append(
+                ResponseSpan(
+                    start=tool_start,
+                    end=cursor,
+                    source_type="tool_observation",
+                    tool_call_id=tool_call_id,
+                    artifact_ref=tool_result_ref,
+                    response_mask_value=0,
+                    logprob_policy="tool_observation_zero_logprob",
+                    policy_version={},
+                    global_steps=current_global_steps,
+                    min_global_steps=min_global_steps,
+                    max_global_steps=max_global_steps,
+                )
+            )
+        tool_result_visibility_digest = (
+            _runtime_sha256_digest({"tool_result_refs": tool_result_refs})
+            if tool_result_refs
+            else None
+        )
+        observation_token_projection_digest = (
+            _runtime_sha256_digest(
+                {
+                    "projection_policy": "runtime_tool_observation_token_projector",
+                    "observations": observation_projection_payload,
+                }
+            )
+            if tool_result_refs
+            else None
+        )
+        tool_pairing_status = "pending" if pending_tool_call_ids else "closed"
+
+        checkpoint_seed = {
+            "episode_id": request.episode_id,
+            "run_id": request.run_id,
+            "sample_attempt_id": sample_attempt_id,
+            "turn_index": turn_index,
+            "boundary_kind": boundary_kind,
+            "generation_record_digest": compute_generation_record_digest(generation_records),
+        }
+        checkpoint_id = f"ckpt-{stable_hash(checkpoint_seed)[:24]}"
+        now = datetime.now(timezone.utc)
+        policy_version = generation_records[-1].policy_version if generation_records else {}
+        policy_version_digest = _runtime_sha256_digest(policy_version)
+        reward_payload = {
+            "schema_version": "repo_harness_partial_checkpoint_reward_finality_v0",
+            "reward_state": "not_started",
+            "reward_score": None,
+            "reward_job_id": None,
+            "final_verifier_status": "unknown",
+        }
+        reward_finality_digest = compute_reward_finality_digest(reward_payload)
+        lease_payload = {
+            "schema_version": "repo_harness_partial_checkpoint_durable_writer_lease_v0",
+            "lease_token": workspace.lease_handle.lease.lease_id,
+            "owner_id": f"runtime-{stable_hash({'run_id': request.run_id})[:16]}",
+            "owner_kind": "runtime",
+            "epoch": 0,
+            "heartbeat_interval_seconds": 30.0,
+            "acquired_at": now,
+            "last_heartbeat_at": now,
+            "release_state": "active",
+            "release_at": None,
+        }
+        lease_digest_payload = {
+            **lease_payload,
+            "acquired_at": _jsonable_checkpoint_payload(now),
+            "last_heartbeat_at": _jsonable_checkpoint_payload(now),
+        }
+        durable_writer_lease = {
+            **lease_payload,
+            "lease_digest": compute_durable_writer_lease_digest(lease_digest_payload),
+        }
+        manifest = load_artifact_manifest(recorder.run_dir)
+        artifact_count = len(manifest.get("artifacts", []))
+        transcript_count = _jsonl_line_count(recorder.transcript_path)
+        event_count = _jsonl_line_count(recorder.events_path)
+        recorder_cursor_payload = {
+            "checkpoint_id": checkpoint_id,
+            "artifact_manifest_digest": _file_sha256_digest(recorder.manifest_path),
+            "transcript_digest": _file_sha256_digest(recorder.transcript_path),
+            "events_digest": _file_sha256_digest(recorder.events_path),
+            "last_event_seq": event_count,
+            "last_artifact_seq": artifact_count,
+        }
+        recorder_cursor_digest = _runtime_sha256_digest(recorder_cursor_payload)
+        workspace_lease_payload = workspace.lease_handle.lease.model_dump(mode="json")
+        dependency_ref = (
+            None
+            if workspace.dependency_environment is None
+            else workspace.dependency_environment.environment_ref
+        )
+        dependency_digest = (
+            None
+            if workspace.dependency_environment is None
+            else _runtime_sha256_digest(
+                {
+                    "dependency_cache_key": workspace.dependency_environment.dependency_cache_key,
+                    "cache_hit": workspace.dependency_environment.cache_hit,
+                }
+            )
+        )
+        token_payload = {
+            "schema_version": "repo_harness_partial_checkpoint_token_provenance_v0",
+            "prompt_digest": _runtime_sha256_digest({"messages": messages}),
+            "raw_prompt_digest": _runtime_sha256_digest({"raw_prompt": request.raw_prompt}),
+            "tokenizer_digest": _runtime_sha256_digest({"tokenizer": "llm_gateway_token_ids"}),
+            "chat_template_digest": _runtime_sha256_digest({"chat_template": "repo_harness_runtime_messages"}),
+            "sampling_params_digest": _runtime_sha256_digest(
+                {
+                    "max_output_tokens": request.budgets.max_output_tokens,
+                    "reasoning_effort": request.budgets.reasoning_effort,
+                    "thinking_mode": request.budgets.thinking_mode,
+                }
+            ),
+            "policy_version_digest": policy_version_digest,
+            "response_ids": response_ids,
+            "response_mask": response_mask,
+            "response_logprobs": response_logprobs,
+            "completed_response_spans": [span.model_dump(mode="json") for span in response_spans],
+            "completed_generation_records": [record.model_dump(mode="json") for record in generation_records],
+            "response_ids_digest": compute_response_ids_digest(response_ids),
+            "response_mask_digest": compute_response_mask_digest(response_mask),
+            "response_logprobs_digest": compute_response_logprobs_digest(response_logprobs),
+            "response_span_digest": compute_response_span_digest(response_spans),
+            "generation_record_digest": compute_generation_record_digest(generation_records),
+            "trajectory_digest": "sha256:" + ("0" * 64),
+        }
+        checkpoint_payload: dict[str, Any] = {
+            "schema_version": "repo_harness_partial_episode_checkpoint_v0",
+            "checkpoint_id": checkpoint_id,
+            "checkpoint_kind": "turn_boundary",
+            "checkpoint_status": "partial",
+            "episode_id": request.episode_id,
+            "run_id": request.run_id,
+            "sample_attempt_id": sample_attempt_id,
+            "resume_attempt_id": None,
+            "task_id": request.task_id,
+            "dataset_uid": None,
+            "dataset_index": 0,
+            "rollout_uid": request.episode_id,
+            "uid": None,
+            "policy_version": policy_version,
+            "global_steps": current_global_steps,
+            "min_global_steps": min_global_steps,
+            "max_global_steps": max_global_steps,
+            "trajectory_param_versions": trajectory_param_versions,
+            "current_param_version_at_checkpoint": current_global_steps,
+            "staleness_threshold": None,
+            "staleness_status": "fresh",
+            "created_at": now,
+            "turn_index": turn_index,
+            "context_revision": generation_records[-1].context_revision if generation_records else turn_index,
+            "online_rl_eligible": False,
+            "invalid_for_training": True,
+            "invalid_for_online_rl": True,
+            "visibility_scan_status": "passed",
+            "visibility_scan_digest": _runtime_sha256_digest(
+                {
+                    "checkpoint_id": checkpoint_id,
+                    "boundary_kind": boundary_kind,
+                    "batch_safe_projection": "stage14_3_partial_checkpoint",
+                }
+            ),
+            "external_visibility_ledger_ref": f"rh://visibility-ledger/{checkpoint_id}",
+            "message_queue_drop_status": "not_submitted",
+            "writer_state": {
+                "schema_version": "repo_harness_partial_checkpoint_writer_state_v0",
+                "run_directory_writer_active": True,
+                "worker_may_still_write": True,
+                "tool_may_still_write": False,
+                "verifier_may_still_write": False,
+                "recorder_may_still_write": True,
+                "cleanup_may_still_write": False,
+                "final_audit_write_completed": False,
+            },
+            "durable_writer_lease": durable_writer_lease,
+            "recorder_cursor": {
+                "schema_version": "repo_harness_partial_checkpoint_recorder_cursor_v0",
+                "recorder_cursor_ref": f"rh://recorder-cursors/{checkpoint_id}",
+                "recorder_cursor_digest": recorder_cursor_digest,
+                "artifact_manifest_ref": f"rh://runs/{request.run_id}/artifact-manifest",
+                "artifact_manifest_digest": recorder_cursor_payload["artifact_manifest_digest"],
+                "transcript_ref": f"rh://runs/{request.run_id}/transcript",
+                "transcript_digest": recorder_cursor_payload["transcript_digest"],
+                "events_ref": f"rh://runs/{request.run_id}/events",
+                "events_digest": recorder_cursor_payload["events_digest"],
+                "finalization_state": "flushed",
+                "last_event_seq": event_count,
+                "last_artifact_seq": artifact_count,
+            },
+            "workspace": {
+                "schema_version": "repo_harness_partial_checkpoint_workspace_v0",
+                "workspace_snapshot_ref": workspace.snapshot.facts.snapshot_ref,
+                "workspace_snapshot_digest": _runtime_sha256_digest(
+                    workspace.snapshot.facts.model_dump(mode="json")
+                ),
+                "source_snapshot_ref": f"rh://source-snapshots/{workspace.snapshot.facts.snapshot_key}",
+                "source_snapshot_digest": _runtime_sha256_digest(
+                    {
+                        "snapshot_key": workspace.snapshot.facts.snapshot_key,
+                        "source_tree_hash": workspace.snapshot.facts.source_tree_hash,
+                    }
+                ),
+                "workspace_lease_ref": f"rh://workspace-leases/{workspace.lease_handle.lease.lease_id}",
+                "workspace_lease_digest": _runtime_sha256_digest(workspace_lease_payload),
+                "dependency_environment_ref": dependency_ref,
+                "dependency_environment_digest": dependency_digest,
+                "workspace_state_ref": f"rh://workspace-state/{checkpoint_id}",
+                "workspace_state_digest": _runtime_sha256_digest(
+                    {
+                        "run_id": request.run_id,
+                        "turn_index": turn_index,
+                        "agent_stop_reason": agent_state.agent_stop_reason,
+                        "repo_base_commit": run_workspace.repo_base_commit,
+                    }
+                ),
+                "patch_base_ref": f"rh://patch-base/{request.run_id}/agent-start",
+                "patch_base_digest": _runtime_sha256_digest(
+                    {"repo_base_commit": run_workspace.repo_base_commit}
+                ),
+            },
+            "tool_pairing": {
+                "schema_version": "repo_harness_partial_checkpoint_tool_pairing_v0",
+                "pending_tool_call_ids": pending_tool_call_ids,
+                "completed_tool_call_ids": completed_tool_call_ids,
+                "tool_result_refs": tool_result_refs,
+                "tool_result_visibility_digest": tool_result_visibility_digest,
+                "observation_token_projection_digest": observation_token_projection_digest,
+                "tool_pairing_status": tool_pairing_status,
+            },
+            "token_provenance": token_payload,
+            "reward_finality": {
+                **reward_payload,
+                "reward_finality_digest": reward_finality_digest,
+            },
+            "batch_safe_projection": {
+                "repo_harness_checkpoint_id": checkpoint_id,
+                "repo_harness_checkpoint_status": "partial",
+                "repo_harness_partial_rollout_supported": False,
+                "repo_harness_partial_rollout_status": "paused_same_process_stage14_3",
+                "repo_harness_pause_boundary_kind": boundary_kind,
+            },
+            "runtime_private_refs": {
+                "pause_state": f"rh://runtime-private/pause-state/{checkpoint_id}",
+                "workspace_lease": f"rh://runtime-private/workspace-lease/{workspace.lease_handle.lease.lease_id}",
+            },
+            "content_digest": "sha256:" + ("0" * 64),
+        }
+        checkpoint_payload["token_provenance"]["trajectory_digest"] = (
+            compute_partial_checkpoint_trajectory_digest(checkpoint_payload)
+        )
+        checkpoint_payload["content_digest"] = compute_partial_checkpoint_content_digest(
+            _jsonable_checkpoint_payload(checkpoint_payload)
+        )
+        return PartialEpisodeCheckpoint.model_validate(checkpoint_payload)
 
     def _real_episode_final_verifier_callable(
         self,
@@ -1796,6 +2223,46 @@ class RepoHarnessRuntime:
             ]
         return []
 
+    def _finalize_interrupted_real_episode_audit(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        *,
+        run_dir: Path,
+        status: EpisodeStatusName,
+        status_reason: str,
+    ) -> list[AuditDiagnostic]:
+        try:
+            recorder_profile = RecorderProfile.for_run_mode(request.run_mode)
+            with RunRecorder(
+                request.run_id,
+                run_dir,
+                task_id=request.task_id,
+                max_artifact_bytes=request.budgets.max_artifact_bytes,
+                recorder_profile=recorder_profile,
+            ) as recorder:
+                recorder.finalize_run(
+                    "\n".join(
+                        [
+                            "# RepoHarness real episode interrupted",
+                            "",
+                            f"- runtime_execution_mode: {self.options.runtime_execution_mode}",
+                            f"- status: {status}",
+                            f"- status_reason: {status_reason}",
+                            "- final_verifier_status: not_started",
+                            "- reward_state: not_started",
+                            "",
+                        ]
+                    )
+                )
+        except Exception as exc:
+            return [
+                AuditDiagnostic(
+                    code="real_episode_interrupted_finalize_failed",
+                    message=str(exc),
+                )
+            ]
+        return []
+
     def _finalize_real_episode_audit(
         self,
         request: RepoHarnessEpisodeRequest,
@@ -2548,6 +3015,38 @@ def _real_episode_run_summary(
         f"- final_verifier_status: {verifier_status}\n"
         f"- reward_score: {reward_score}\n"
     )
+
+
+def _runtime_sha256_digest(value: Any) -> str:
+    return "sha256:" + stable_hash(value)
+
+
+def _file_sha256_digest(path: Path) -> str:
+    if not path.exists():
+        return "sha256:" + hashlib.sha256(b"").hexdigest()
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return "sha256:" + digest.hexdigest()
+
+
+def _jsonl_line_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    with path.open("r", encoding="utf-8") as handle:
+        return sum(1 for line in handle if line.strip())
+
+
+def _jsonable_checkpoint_payload(value: Any) -> Any:
+    if isinstance(value, datetime):
+        serialized = value.isoformat()
+        return serialized.removesuffix("+00:00") + "Z" if serialized.endswith("+00:00") else serialized
+    if isinstance(value, dict):
+        return {str(key): _jsonable_checkpoint_payload(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_jsonable_checkpoint_payload(item) for item in value]
+    return value
 
 
 async def _wait_for_real_episode_task_after_stop(

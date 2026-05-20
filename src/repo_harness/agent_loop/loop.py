@@ -158,6 +158,7 @@ class AgentLoop:
         raw_request_logging_policy: str = "redact_secrets",
         retry_policy: str = "none",
         training_budget_policy: TrainingBudgetPolicy | None = None,
+        turn_boundary_callback: Callable[[str, AgentLoopState, list[dict[str, object]], int], None] | None = None,
     ) -> AgentLoopState:
         context_config_resolved = context_config or ContextManagementConfig()
         budget_manager_was_provided = budget_manager is not None or training_budget_policy is not None
@@ -1655,6 +1656,8 @@ class AgentLoop:
                     state.agent_stop_reason = "model_error"
                     state.last_model_error = "invalid_final_answer"
                 state.budget_state.stop_reason = state.agent_stop_reason
+                if turn_boundary_callback is not None:
+                    turn_boundary_callback("final_answer_before_verifier", state, messages, turn)
                 break
             if self.scaffold.scaffold_id == "single_shot_patch":
                 for tool_call in response.tool_calls:
@@ -2224,6 +2227,8 @@ class AgentLoop:
                         state=state,
                         recorder=recorder,
                     )
+            if turn_boundary_callback is not None:
+                turn_boundary_callback("tool_observation_closed", state, messages, turn)
         else:
             state.agent_stop_reason = "max_turns"
             state.budget_state.stop_reason = "max_turns"

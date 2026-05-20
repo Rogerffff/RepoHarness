@@ -31,6 +31,7 @@ AsyncEpisodeStatus = Literal[
     "created",
     "queued",
     "running",
+    "paused",
     "cancelling",
     "cancelled",
     "timeout",

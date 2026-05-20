@@ -87,6 +87,13 @@ from .partial_checkpoint import (
     validate_partial_checkpoint_not_trainable,
     validate_partial_checkpoint_roundtrip,
 )
+from .pause_resume import (
+    EpisodePauseCancelled,
+    PauseOutcome,
+    ResumeOutcome,
+    ResumeStateStore,
+    TurnBoundaryPauseController,
+)
 from .reward_boundary import (
     INFRASTRUCTURE_VERIFIER_ERRORS,
     INVALID_TASK_VERIFIER_ERRORS,
@@ -179,6 +186,7 @@ __all__ = [
     "EpisodeStatus",
     "EpisodeTaskRef",
     "EpisodeVisibilityPolicy",
+    "EpisodePauseCancelled",
     "FakeLLMGateway",
     "FinalVerifierStatus",
     "FormalAsyncOnlineRLSample",
@@ -202,6 +210,7 @@ __all__ = [
     "NoProgressDecision",
     "NoProgressPolicy",
     "PatchSummary",
+    "PauseOutcome",
     "PartialCheckpointQueueFacts",
     "PartialEpisodeCheckpoint",
     "ProviderLLMGateway",
@@ -211,6 +220,8 @@ __all__ = [
     "ReplayLLMGateway",
     "RecorderCursorFacts",
     "ResumeCapability",
+    "ResumeOutcome",
+    "ResumeStateStore",
     "RealEpisodeContext",
     "RepoHarnessRuntime",
     "RepoHarnessRuntimeOptions",
@@ -242,6 +253,7 @@ __all__ = [
     "TIMEOUT_VERIFIER_ERRORS",
     "TimingSummary",
     "ToolPairingState",
+    "TurnBoundaryPauseController",
     "TrainingBudgetPolicy",
     "TrainingBudgetProjection",
     "TrainingView",
