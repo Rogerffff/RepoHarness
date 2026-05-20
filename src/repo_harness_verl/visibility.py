@@ -50,6 +50,25 @@ _FORBIDDEN_TRANSFER_QUEUE_FIELD_NAMES = frozenset(
         "ground_truth",
     }
 )
+_FORBIDDEN_REPO_HARNESS_RUNTIME_FIELD_MARKERS = frozenset(
+    {
+        "partial_checkpoint",
+        "handle_ref",
+        "resume_token",
+        "recorder_cursor",
+        "workspace_lease",
+        "lease_token",
+    }
+)
+_FORBIDDEN_REPO_HARNESS_RUNTIME_REF_PREFIXES = (
+    "rh://async/",
+    "rh://partial-checkpoints/",
+    "rh://runtime-private/",
+    "rh://runtime_private/",
+    "rh://workspace-leases/",
+    "rh://recorder-cursors/",
+    "rh://resource/lease/",
+)
 _ALLOWED_VERL_AGENT_LOOP_RUNTIME_EXTRA_FIELDS = frozenset(
     {
         "global_steps",
@@ -157,6 +176,7 @@ def _validate_visible_value(value: Any, *, field_name: str) -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             _validate_transfer_queue_field_name(str(key))
+            _validate_repo_harness_batch_field_for_verl_boundary(str(key), item)
             _validate_visible_value(item, field_name=f"{field_name}.{key}")
         return
     if isinstance(value, (list, tuple, set)):
@@ -168,8 +188,18 @@ def _validate_visible_value(value: Any, *, field_name: str) -> None:
         if isinstance(value, str):
             validate_no_absolute_local_path(value, field_name=field_name)
             _validate_transfer_queue_visible_string(value, field_name=field_name)
+            _validate_repo_harness_batch_field_for_verl_boundary(field_name, value)
     except VisibilityContractError as exc:
-        _raise_visibility_error(exc)
+            _raise_visibility_error(exc)
+
+
+def _validate_repo_harness_batch_field_for_verl_boundary(key: str, value: Any) -> None:
+    normalized = _normalize_field_name(key)
+    for marker in _FORBIDDEN_REPO_HARNESS_RUNTIME_FIELD_MARKERS:
+        if normalized == marker or marker in normalized:
+            raise VerlVisibilityError(f"forbidden_repo_harness_runtime_private_field: {key}")
+    if isinstance(value, str) and any(value.startswith(prefix) for prefix in _FORBIDDEN_REPO_HARNESS_RUNTIME_REF_PREFIXES):
+        raise VerlVisibilityError(f"forbidden_repo_harness_runtime_private_value: {key}")
 
 
 def validate_agent_loop_output_extra_fields(extra_fields: Mapping[str, Any]) -> dict[str, FlatScalar]:
@@ -188,6 +218,7 @@ def validate_agent_loop_output_extra_fields(extra_fields: Mapping[str, Any]) -> 
             validated_runtime_fields[key] = value
             continue
         repo_harness_fields[key] = value
+        _validate_repo_harness_batch_field_for_verl_boundary(key, value)
     if {"global_steps", "min_global_steps", "max_global_steps"} <= set(validated_runtime_fields):
         if not (
             validated_runtime_fields["min_global_steps"]
@@ -257,6 +288,7 @@ def validate_transfer_queue_field_visibility(field: Mapping[str, Any]) -> None:
         }:
             continue
         if key.startswith("repo_harness_"):
+            _validate_repo_harness_batch_field_for_verl_boundary(key, _as_python_scalar(value))
             try:
                 validate_batch_extra_fields({key: _as_python_scalar(value)})
             except VisibilityContractError as exc:
@@ -322,6 +354,7 @@ def validate_dataproto_visibility(data_proto: Any) -> None:
     for key, array_value in getattr(data_proto, "non_tensor_batch", {}).items():
         if key.startswith("repo_harness_"):
             for item in _iter_array_values(array_value):
+                _validate_repo_harness_batch_field_for_verl_boundary(key, _as_python_scalar(item))
                 try:
                     validate_batch_extra_fields({key: _as_python_scalar(item)})
                 except VisibilityContractError as exc:

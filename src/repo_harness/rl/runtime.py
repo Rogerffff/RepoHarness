@@ -451,6 +451,15 @@ class RepoHarnessRuntime:
     def _has_active_async_episode_handles(self) -> bool:
         return any(not handle._state.is_terminal() for handle in self._async_handles_by_ref.values())
 
+    async def owns_async_episode_handle(self, handle: AsyncEpisodeHandle) -> bool:
+        """Return whether ``handle`` is still registered in this runtime instance."""
+
+        async with self._async_registry_lock:
+            return (
+                self._async_handles_by_ref.get(handle.handle_ref.handle_ref) is handle
+                and self._async_handles_by_run_id.get(handle.handle_ref.run_id) is handle
+            )
+
     def _shutdown_real_episode_executor(self) -> None:
         if self._real_episode_executor is not None:
             self._real_episode_executor.shutdown(wait=False, cancel_futures=True)

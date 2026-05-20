@@ -564,8 +564,12 @@ def _pre_formal_rejection_reason(
 ) -> str | None:
     if visibility_scan_status != "passed":
         return "visibility_scan_not_passed"
-    if partial_rollout_status not in {"not_requested", "complete"} and not partial_rollout_supported:
-        return "partial_rollout_unsupported_in_stage13_2"
+    if partial_rollout_status not in {"not_requested", "complete"}:
+        if not partial_rollout_supported:
+            return "partial_rollout_unsupported_in_stage13_2"
+        return "partial_rollout_not_complete"
+    if partial_rollout_status == "complete" and not partial_rollout_supported:
+        return "partial_rollout_complete_requires_supported"
     if result.invalid_for_training or result.invalid_for_online_rl:
         return result.status_reason or "episode_marked_invalid_for_training_or_online_rl"
     if result.status in {"invalid", "invalid_task", "infrastructure_error", "cancelled", "timeout", "no_progress"}:
