@@ -218,6 +218,7 @@ from repo_harness.pre_verl_failure_injection import (
     run_provider_failure_injection_smoke,
 )
 from repo_harness_verl.stage14_acceptance import inspect_stage14_fully_async_acceptance
+from repo_harness_verl.stage15_acceptance import inspect_stage15_partial_rollout_acceptance
 from repo_harness_verl.stage14_remote_smoke import write_stage14_remote_smoke_kit
 from repo_harness.workspace import inspect_workspace_backend_status, write_workspace_backend_status
 
@@ -1718,6 +1719,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_stage14_parser.add_argument("evidence", help="Stage 14 evidence 目录或 tarball。")
     inspect_stage14_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
+    inspect_stage15_parser = subparsers.add_parser(
+        "inspect-stage15-partial-rollout-acceptance",
+        help="检查 Stage 15 partial rollout 远端 smoke evidence 是否满足验收条件。",
+    )
+    inspect_stage15_parser.add_argument("evidence", help="Stage 15 evidence 目录或 tarball。")
+    inspect_stage15_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
 
     build_stage14_smoke_kit_parser = subparsers.add_parser(
         "build-stage14-remote-smoke-kit",
@@ -3261,6 +3269,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 14 fully async acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage15-partial-rollout-acceptance":
+        try:
+            print(
+                inspect_stage15_partial_rollout_acceptance(
+                    args.evidence,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 15 partial rollout acceptance 检查失败：{exc}\n")
         return 0
     if args.command == "build-stage14-remote-smoke-kit":
         try:
