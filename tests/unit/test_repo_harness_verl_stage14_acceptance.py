@@ -490,6 +490,300 @@ def test_stage14_1_acceptance_inspector_rejects_unbound_batch_provenance(tmp_pat
     assert "stage14_1_batch_provenance_trajectory_digest_mismatch:sample-0" in report.failures
 
 
+def test_stage14_1_acceptance_inspector_requires_real_side_channel_sample(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    summary_path = evidence / "stage14_acceptance_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["side_channel_sample_count"] = 0
+    summary["formal_validator_rejected_count"] = 1
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+    side_report = json.loads((evidence / "stage14_1_side_channel_report.json").read_text(encoding="utf-8"))
+    side_report["side_channel_sample_count"] = 0
+    side_report["samples"] = []
+    (evidence / "stage14_1_side_channel_report.json").write_text(
+        json.dumps(side_report, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_side_channel_sample_count_below_minimum" in report.failures
+    assert "stage14_1_side_channel_samples_missing" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_running_or_paused_instance_summary(tmp_path: Path) -> None:
+    for status in ("running", "paused"):
+        evidence = _write_stage14_evidence(tmp_path / status)
+        _upgrade_evidence_to_stage14_1(evidence)
+        summary_path = evidence / "stage14_acceptance_summary.json"
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary["instance_final_status"] = status
+        summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+
+        report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+        assert "instance_final_status_not_stopped_or_exited" in report.failures
+        assert "assert_complete_instance_not_stopped_or_exited" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_negative_status_rewritten_to_succeeded(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    report_path = evidence / "stage14_1_trainable_negative_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["eligible_samples"][0]["status"] = "succeeded"
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_trainable_negative_status_not_failed:sample-2" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_negative_report_identity_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    report_path = evidence / "stage14_1_trainable_negative_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["eligible_samples"][0]["task_id"] = "wrong-task"
+    payload["eligible_samples"][0]["run_id"] = "wrong-run"
+    payload["eligible_samples"][0]["episode_id"] = "wrong-episode"
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_trainable_negative_task_id_mismatch:sample-2" in report.failures
+    assert "stage14_1_trainable_negative_run_id_mismatch:sample-2" in report.failures
+    assert "stage14_1_trainable_negative_episode_id_mismatch:sample-2" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_negative_consumed_flag_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    report_path = evidence / "stage14_1_trainable_negative_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["eligible_samples"][0]["policy_loss_consumed"] = False
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_trainable_negative_policy_loss_consumed_flag_mismatch:sample-2" in report.failures
+    assert "stage14_1_trainable_negative_consumed_flag_count_mismatch" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_requires_consumed_trainable_negative(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    summary_path = evidence / "stage14_acceptance_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["trainable_negative_consumed_count"] = 0
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+    report_path = evidence / "stage14_1_trainable_negative_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["trainable_negative_consumed_count"] = 0
+    payload["eligible_samples"][0]["policy_loss_consumed"] = False
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_trainable_negative_consumed_count_below_minimum" in report.failures
+    assert "stage14_1_trainable_negative_policy_loss_consumed_flag_mismatch:sample-2" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_policy_loss_bad_gate_semantics(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["samples"][0]["route"] = "mock"
+    payload["samples"][0]["reward_state"] = "pending"
+    payload["samples"][0]["gate_decision"] = "rejected"
+    payload["samples"][0]["gate_rejection_reason"] = "visibility_rejected"
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_policy_loss_sample_ledger_non_verl_route:sample-0" in report.failures
+    assert "stage14_1_policy_loss_sample_ledger_reward_not_final:sample-0" in report.failures
+    assert "stage14_1_policy_loss_sample_ledger_gate_not_accepted:sample-0" in report.failures
+    assert "stage14_1_policy_loss_sample_ledger_has_rejection_reason:sample-0" in report.failures
+    assert "stage14_1_policy_loss_sample_ledger_gate_route_mismatch:sample-0" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_policy_loss_gate_identity_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    gate_path = evidence / "stage14_policy_loss_gate_report.json"
+    payload = json.loads(gate_path.read_text(encoding="utf-8"))
+    payload["sample_ledger"][0]["task_id"] = "wrong-task"
+    payload["sample_ledger"][0]["episode_id"] = "wrong-episode"
+    payload["sample_ledger"][0]["run_id"] = "wrong-run"
+    gate_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_policy_loss_sample_ledger_gate_task_id_mismatch:sample-0" in report.failures
+    assert "stage14_1_policy_loss_sample_ledger_gate_episode_id_mismatch:sample-0" in report.failures
+    assert "stage14_1_policy_loss_sample_ledger_gate_run_id_mismatch:sample-0" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_unconsumed_policy_loss_ledger_row(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["samples"].append(
+        {
+            "sample_id": "sample-rejected",
+            "episode_id": "episode-rejected",
+            "run_id": "run-rejected",
+            "task_id": "task-rejected",
+            "trajectory_digest": "sha256:trajectory-rejected",
+            "generation_record_digest": "sha256:generation-rejected",
+            "visibility_scan_digest": "sha256:visibility-rejected",
+            "status": "timeout",
+            "reward_state": "pending",
+            "route": "mock",
+            "staleness": 0,
+            "gate_decision": "rejected",
+            "gate_rejection_reason": "visibility_rejected",
+            "trainer_step_index": 0,
+            "global_steps": 0,
+            "parameter_version": 0,
+            "min_global_steps": 0,
+            "max_global_steps": 0,
+            "artifact_ref": "rh://stage14/episode-rejected",
+            "consumed_by_policy_loss": False,
+            "side_channel_ref": "rh://stage14/diagnostic-rejected",
+        }
+    )
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_policy_loss_sample_ledger_unconsumed_row:sample-rejected" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_policy_loss_ledger_missing_artifact_ref(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["samples"][0].pop("artifact_ref")
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_policy_loss_sample_ledger[0]_missing_artifact_ref" in report.failures
+    assert "stage14_1_episode_artifact_ref_artifact_ref_mismatch:sample-0" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_duplicate_consumed_sample_id(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["samples"][1]["sample_id"] = "sample-0"
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_policy_loss_sample_ledger_duplicate_consumed_sample_id" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_extra_episode_artifact_ref_sample(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    report_path = evidence / "stage14_1_episode_artifact_ref_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["samples"].append(
+        {
+            "sample_id": "sample-extra",
+            "episode_id": "episode-extra",
+            "run_id": "run-extra",
+            "task_id": "task-extra",
+            "trajectory_digest": "sha256:trajectory-extra",
+            "artifact_ref": "rh://stage14/episode-extra",
+        }
+    )
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_episode_artifact_ref_extra_sample:sample-extra" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_duplicate_episode_artifact_ref(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["samples"][1]["artifact_ref"] = "rh://stage14/episode-security"
+    ledger_path.write_text(json.dumps(ledger, sort_keys=True), encoding="utf-8")
+    report_path = evidence / "stage14_1_episode_artifact_ref_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["samples"][1]["artifact_ref"] = "rh://stage14/episode-security"
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_episode_artifact_ref_duplicate:rh://stage14/episode-security" in report.failures
+    assert "stage14_1_episode_artifact_ref_not_resolvable:sample-1" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_missing_episode_artifact_ref_target(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    ledger_path = evidence / "stage14_1_policy_loss_sample_ledger.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["samples"][0]["artifact_ref"] = "rh://stage14/definitely-missing-run-artifact"
+    ledger_path.write_text(json.dumps(ledger, sort_keys=True), encoding="utf-8")
+    report_path = evidence / "stage14_1_episode_artifact_ref_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["samples"][0]["artifact_ref"] = "rh://stage14/definitely-missing-run-artifact"
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_episode_artifact_ref_not_resolvable:sample-0" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_episode_artifact_ref_run_mismatch(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    report_path = evidence / "stage14_1_episode_artifact_ref_report.json"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["samples"][0]["run_id"] = "wrong-run"
+    report_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "stage14_1_episode_artifact_ref_run_id_mismatch:sample-0" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_missing_episode_artifact_ref_report(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    _upgrade_evidence_to_stage14_1(evidence)
+    (evidence / "stage14_1_episode_artifact_ref_report.json").unlink()
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "missing_stage14_1_episode_artifact_ref_report" in report.failures
+
+
+def test_stage14_1_acceptance_inspector_rejects_unapproved_runtime_private_summary_note(tmp_path: Path) -> None:
+    evidence = _write_stage14_evidence(tmp_path)
+    summary_path = evidence / "stage14_acceptance_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["debug_note"] = "see runtime_private/stage14_command_log.raw.jsonl"
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+
+    report = inspect_stage14_fully_async_acceptance_report(evidence, assert_complete=True)
+
+    assert "acceptance_summary_references_unapproved_runtime_private_path" in report.failures
+    assert "public_evidence_references_runtime_private_path:stage14_acceptance_summary.json" in report.failures
+
+
 def test_stage14_acceptance_inspector_accepts_safe_tarball(tmp_path: Path) -> None:
     evidence = _write_stage14_evidence(tmp_path / "source")
     tar_path = tmp_path / "stage14_evidence.tar.gz"
@@ -639,8 +933,11 @@ def _write_stage14_evidence(
         "sample_ledger": [
             {
                 "sample_id": f"sample-{index}",
+                "task_id": ["task_security_probe", "task_002", "task_stage14_negative_boundary"][index],
+                "episode_id": ["episode-security", "episode-config", "episode-negative"][index],
+                "run_id": ["run-security", "run-config", "run-negative"][index],
                 "trajectory_digest": f"sha256:trajectory-{index}",
-                "status": "succeeded",
+                "status": "failed" if index == 2 else "succeeded",
                 "reward_state": "final",
                 "route": "verl",
                 "generation_record_digest": f"sha256:generation-{index}",
@@ -671,6 +968,7 @@ def _write_stage14_evidence(
 
     special_payloads = {
         "stage14_acceptance_summary.json": summary,
+        "runtime_private/stage14_command_log.raw.jsonl": {"raw": True},
         "stage14_environment_matrix.json": {
             "schema_version": "repo_harness_stage14_environment_matrix_v0",
             "execution_profile": "dev_smoke_2x96gb_small_full_sync",
@@ -724,7 +1022,12 @@ def _write_stage14_evidence(
                 for index in range(3)
             ],
         },
-        "runtime_private_manifest.json": {"private_files": ["runtime_private/stage14_stdout.raw.log"]},
+        "runtime_private_manifest.json": {
+            "private_files": [
+                "runtime_private/stage14_stdout.raw.log",
+                "runtime_private/stage14_command_log.raw.jsonl",
+            ]
+        },
         "stage14_remote_patch_manifest.json": {"files": []},
     }
     for item in STAGE14_CANONICAL_EVIDENCE_ITEMS:
@@ -788,34 +1091,79 @@ def _upgrade_evidence_to_stage14_1(evidence: Path) -> None:
         {
             "sample_id": "sample-0",
             "episode_id": "episode-security",
+            "run_id": "run-security",
             "task_id": "task_security_probe",
             "trajectory_digest": "sha256:trajectory-0",
+            "generation_record_digest": "sha256:generation-0",
+            "visibility_scan_digest": "sha256:visibility-0",
+            "status": "succeeded",
+            "reward_state": "final",
+            "route": "verl",
+            "staleness": 0,
+            "gate_decision": "accepted",
+            "gate_rejection_reason": None,
             "trainer_step_index": 0,
             "global_steps": 0,
+            "parameter_version": 0,
+            "min_global_steps": 0,
+            "max_global_steps": 0,
+            "artifact_ref": "rh://stage14/episode-security",
             "consumed_by_policy_loss": True,
             "side_channel_ref": None,
         },
         {
             "sample_id": "sample-1",
             "episode_id": "episode-config",
+            "run_id": "run-config",
             "task_id": "task_002",
             "trajectory_digest": "sha256:trajectory-1",
+            "generation_record_digest": "sha256:generation-1",
+            "visibility_scan_digest": "sha256:visibility-1",
+            "status": "succeeded",
+            "reward_state": "final",
+            "route": "verl",
+            "staleness": 0,
+            "gate_decision": "accepted",
+            "gate_rejection_reason": None,
             "trainer_step_index": 1,
             "global_steps": 1,
+            "parameter_version": 1,
+            "min_global_steps": 1,
+            "max_global_steps": 1,
+            "artifact_ref": "rh://stage14/episode-config",
             "consumed_by_policy_loss": True,
             "side_channel_ref": None,
         },
         {
             "sample_id": "sample-2",
             "episode_id": "episode-negative",
-            "task_id": "task_001",
+            "run_id": "run-negative",
+            "task_id": "task_stage14_negative_boundary",
             "trajectory_digest": "sha256:trajectory-2",
+            "generation_record_digest": "sha256:generation-2",
+            "visibility_scan_digest": "sha256:visibility-2",
+            "status": "failed",
+            "reward_state": "final",
+            "route": "verl",
+            "staleness": 0,
+            "gate_decision": "accepted",
+            "gate_rejection_reason": None,
             "trainer_step_index": 2,
             "global_steps": 2,
+            "parameter_version": 2,
+            "min_global_steps": 2,
+            "max_global_steps": 2,
+            "artifact_ref": "rh://stage14/episode-negative",
             "consumed_by_policy_loss": True,
             "side_channel_ref": None,
         },
     ]
+    policy_report_path = evidence / "stage14_policy_loss_gate_report.json"
+    policy_report = json.loads(policy_report_path.read_text(encoding="utf-8"))
+    for row in policy_report.get("sample_ledger", []):
+        if row.get("sample_id") == "sample-2":
+            row["status"] = "failed"
+    policy_report_path.write_text(json.dumps(policy_report, sort_keys=True) + "\n", encoding="utf-8")
     (evidence / "stage14_1_policy_loss_sample_ledger.json").write_text(
         json.dumps(
             {
@@ -858,10 +1206,10 @@ def _upgrade_evidence_to_stage14_1(evidence: Path) -> None:
                         ],
                     },
                     {
-                        "task_id": "task_001",
+                        "task_id": "task_stage14_negative_boundary",
                         "task_category": "trainable_negative_control",
-                        "repo_fixture_ref": "tests/fixtures/repos/buggy_calculator",
-                        "task_ref": "tests/fixtures/tasks/task_001.yaml",
+                        "repo_fixture_ref": "tests/fixtures/repos/stage14_negative_boundary",
+                        "task_ref": "tests/fixtures/tasks/task_stage14_negative_boundary.yaml",
                         "expected_outcome_class": "final_verifier_rejected_trainable",
                     },
                     {
@@ -889,7 +1237,7 @@ def _upgrade_evidence_to_stage14_1(evidence: Path) -> None:
                         "sample_id": "sample-2",
                         "attempt_id": "attempt-1",
                         "prompt_digest": "sha256:prompt-negative",
-                        "task_id": "task_001",
+                        "task_id": "task_stage14_negative_boundary",
                         "episode_id": "episode-negative",
                         "run_id": "run-negative",
                         "trajectory_digest": "sha256:trajectory-2",
@@ -899,6 +1247,9 @@ def _upgrade_evidence_to_stage14_1(evidence: Path) -> None:
                         "reward_state": "final",
                         "reward_score": 0.0,
                         "route": "verl",
+                        "status": "failed",
+                        "invalid_for_training": False,
+                        "invalid_for_online_rl": False,
                         "response_token_count": 8,
                         "response_logprob_count": 8,
                         "policy_loss_consumed": True,
@@ -938,6 +1289,27 @@ def _upgrade_evidence_to_stage14_1(evidence: Path) -> None:
                         "policy_loss_sample_ledger_ref": None,
                         "diagnostic_ref": "rh://stage14/diagnostic-1",
                     }
+                ],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (evidence / "stage14_1_episode_artifact_ref_report.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "repo_harness_verl_stage14_1_episode_artifact_ref_report_v0",
+                "samples": [
+                    {
+                        "sample_id": sample["sample_id"],
+                        "episode_id": sample["episode_id"],
+                        "run_id": sample["run_id"],
+                        "task_id": sample["task_id"],
+                        "trajectory_digest": sample["trajectory_digest"],
+                        "artifact_ref": sample["artifact_ref"],
+                    }
+                    for sample in samples
                 ],
             },
             sort_keys=True,

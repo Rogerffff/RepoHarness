@@ -11,6 +11,14 @@ from pydantic import Field, model_validator
 
 from repo_harness.schema_base import StrictBaseModel
 
+_PUBLIC_FIELD_FORBIDDEN_MARKERS = (
+    "hidden_verifier",
+    "gold_patch",
+    "runtime_private",
+    "/workspace/",
+    "/Users/",
+)
+
 
 class Stage14TaskPoolEntry(StrictBaseModel):
     """One auditable task-pool entry for Stage 14.1 remote smoke."""
@@ -38,6 +46,10 @@ class Stage14TaskPoolEntry(StrictBaseModel):
             raise ValueError("negative_control entries must use final_verifier_rejected_trainable expected outcome")
         if self.dependency_profile != "none" and not self.dependency_packages:
             raise ValueError("dependency entries must declare dependency_packages")
+        public_payload = json.dumps(self.model_dump(mode="json"), ensure_ascii=False, sort_keys=True)
+        for marker in _PUBLIC_FIELD_FORBIDDEN_MARKERS:
+            if marker.lower() in public_payload.lower():
+                raise ValueError(f"task-pool public fields contain forbidden marker: {marker}")
         return self
 
 
@@ -130,10 +142,10 @@ def default_stage14_1_task_pool() -> Stage14TaskPoolSpec:
             ),
             Stage14TaskPoolEntry(
                 name="trainable_negative_control",
-                task_id="task_001",
+                task_id="task_stage14_negative_boundary",
                 task_category="trainable_negative_control",
-                repo_fixture_ref="tests/fixtures/repos/buggy_calculator",
-                task_ref="tests/fixtures/tasks/task_001.yaml",
+                repo_fixture_ref="tests/fixtures/repos/stage14_negative_boundary",
+                task_ref="tests/fixtures/tasks/task_stage14_negative_boundary.yaml",
                 expected_outcome_class="final_verifier_rejected_trainable",
                 source_layout="flat",
                 negative_control=True,
@@ -215,6 +227,8 @@ def _entry_file_refs(entry: Stage14TaskPoolEntry, root: Path) -> list[str]:
     repo = root / entry.repo_fixture_ref
     if repo.exists() and repo.is_dir():
         for path in sorted(repo.rglob("*")):
+            if "__pycache__" in path.parts or ".pytest_cache" in path.parts or path.suffix == ".pyc":
+                continue
             if path.is_file():
                 refs.append(path.relative_to(root).as_posix())
     return refs

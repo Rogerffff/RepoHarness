@@ -1,0 +1,50 @@
+id: task_stage14_negative_boundary
+task_version: task_stage14_negative_boundary_v0
+dataset_name: repo_harness_micro
+source_kind: micro_repo_fixture
+dataset_split: dev
+created_at: "2026-05-20"
+repo: ../repos/stage14_negative_boundary
+base_commit: fixture
+issue: "Make RangeSpec.contains honor the bracket notation parsed by RangeSpec.parse. Square brackets include an endpoint, parentheses exclude an endpoint."
+setup_command: null
+test_command: "pytest -q"
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 30
+  agent_timeout_sec: 120
+  final_verifier_timeout_sec: 60
+environment:
+  execution_image: "python:3.12-slim"
+  python_version: "3.12"
+  node_version: null
+  package_manager: pip
+  lockfile_hashes: []
+  setup_cache_key_inputs:
+    - pyproject.toml
+  required_system_packages: []
+  setup_network_policy: deny
+expected_files:
+  - range_spec.py
+fail_to_pass_tests:
+  - tests/test_range_spec.py::test_open_upper_range_excludes_upper_edge
+  - tests/test_range_spec.py::test_open_lower_range_excludes_lower_edge
+  - tests/test_range_spec.py::test_open_range_excludes_both_edges
+pass_to_pass_tests:
+  - tests/test_range_spec.py::test_closed_range_includes_both_edges
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+decontamination:
+  status: manual_checked
+  known_public_solution: false
+  source_url: null
+  overlap_check_notes: "hand-written Stage 14.1 boundary fixture"
+declared_setup_mutations: []
+generated_files: []
+tags:
+  - python
+  - stage14
+  - boundary

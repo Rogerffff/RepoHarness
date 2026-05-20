@@ -109,5 +109,8 @@ def test_stage14_remote_smoke_kit_writes_auditable_files(tmp_path: Path) -> None
     categories = {entry["task_category"] for entry in task_pool["entries"]}
     assert "accepted_dependency" in categories
     assert "diagnostic_control" in categories
+    negative = next(entry for entry in task_pool["entries"] if entry["task_category"] == "trainable_negative_control")
+    assert negative["task_ref"] == "tests/fixtures/tasks/task_stage14_negative_boundary.yaml"
+    assert negative["repo_fixture_ref"] == "tests/fixtures/repos/stage14_negative_boundary"
     diagnostic = next(entry for entry in task_pool["entries"] if entry["task_category"] == "diagnostic_control")
     assert diagnostic["policy_loss_queue_eligible"] is False

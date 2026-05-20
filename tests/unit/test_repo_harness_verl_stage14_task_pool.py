@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -42,7 +45,43 @@ def test_stage14_1_dependency_entry_is_pinned_and_hashable() -> None:
     paths = {item["path"] for item in report["files"]}
     assert "tests/fixtures/tasks/task_dependency_packaging_smoke.yaml" in paths
     assert "tests/fixtures/repos/dependency_packaging_smoke/app/config_reader.py" in paths
+    assert not any("__pycache__" in path or ".pytest_cache" in path or path.endswith(".pyc") for path in paths)
     assert all(not Path(path).is_absolute() for path in paths)
+
+
+def test_stage14_1_negative_control_uses_committed_public_safe_fixture() -> None:
+    spec = default_stage14_1_task_pool()
+    negative = next(entry for entry in spec.entries if entry.task_category == "trainable_negative_control")
+
+    assert negative.task_id == "task_stage14_negative_boundary"
+    assert negative.task_ref == "tests/fixtures/tasks/task_stage14_negative_boundary.yaml"
+    assert negative.repo_fixture_ref == "tests/fixtures/repos/stage14_negative_boundary"
+    task_text = Path(negative.task_ref).read_text(encoding="utf-8")
+    lowered = task_text.lower()
+    assert "hidden_verifier" not in lowered
+    assert "gold_patch" not in lowered
+    assert "runtime_private" not in lowered
+
+
+def test_stage14_1_negative_control_baseline_fails_on_boundary_semantics() -> None:
+    fixture = Path("tests/fixtures/repos/stage14_negative_boundary")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+        cwd=fixture,
+        check=False,
+        capture_output=True,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        text=True,
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 1
+    assert "ModuleNotFoundError" not in output
+    assert "test_closed_range_includes_both_edges" not in output
+    assert "test_open_upper_range_excludes_upper_edge" in output
+    assert "test_open_lower_range_excludes_lower_edge" in output
+    assert "test_open_range_excludes_both_edges" in output
 
 
 def test_stage14_1_task_pool_rejects_diagnostic_policy_loss_entry() -> None:
@@ -56,6 +95,19 @@ def test_stage14_1_task_pool_rejects_diagnostic_policy_loss_entry() -> None:
             expected_outcome_class="diagnostic_rejected",
             diagnostic_control=True,
             policy_loss_queue_eligible=True,
+        )
+
+
+def test_stage14_1_task_pool_rejects_forbidden_public_markers() -> None:
+    with pytest.raises(ValueError, match="forbidden marker"):
+        Stage14TaskPoolEntry(
+            name="bad",
+            task_id="bad",
+            task_category="accepted_baseline",
+            repo_fixture_ref="tests/fixtures/repos/security_probe",
+            task_ref="tests/fixtures/tasks/task_security_probe.yaml",
+            expected_outcome_class="accepted",
+            prompt_variant="hidden_verifier_leak",
         )
 
 

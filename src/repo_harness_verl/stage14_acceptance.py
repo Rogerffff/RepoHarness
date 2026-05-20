@@ -38,6 +38,7 @@ STAGE14_CANONICAL_EVIDENCE_ITEMS: tuple[str, ...] = (
     "stage14_resource_cleanup_report.json",
     "stage14_path_leak_scan_report.json",
     "stage14_stdout.sanitized.log",
+    "runtime_private/stage14_command_log.raw.jsonl",
     "run_stage14_fully_async_smoke.sh",
     "repo_harness_agent_loop_config.yaml",
     "stage14_train.parquet",
@@ -45,6 +46,11 @@ STAGE14_CANONICAL_EVIDENCE_ITEMS: tuple[str, ...] = (
     "stage14_task_pool_manifest.json",
     "stage14_source_map.json",
     "runtime_private_manifest.json",
+)
+
+STAGE14_1_ARTIFACT_REF_SCHEMES: tuple[str, ...] = (
+    "rh://stage14/",
+    "rh://stage14/real_episode_runs/",
 )
 
 PUBLIC_SCAN_SUFFIXES = (
@@ -79,6 +85,10 @@ PATH_LEAK_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"gold_patch", re.IGNORECASE),
     re.compile(r"provider_secret", re.IGNORECASE),
 )
+
+ALLOWED_PRIVATE_CANONICAL_REFS: dict[str, str] = {
+    "runtime_private/stage14_command_log.raw.jsonl": "runtime_private/stage14_command_log.raw.jsonl",
+}
 
 STDOUT_FATAL_PATTERNS: tuple[str, ...] = (
     "RepoHarnessVerlAdapterError",
@@ -349,7 +359,7 @@ def _validate_canonical_evidence_map(
         except RepoHarnessError as exc:
             failures.append(f"canonical_evidence_map_invalid_path:{item}:{exc}")
             continue
-        if normalized.startswith("runtime_private/") and item != "runtime_private_manifest.json":
+        if normalized.startswith("runtime_private/") and not _canonical_private_item_allowed(item, normalized):
             failures.append(f"canonical_public_item_points_to_runtime_private:{item}")
         if not view.exists(normalized):
             failures.append(f"canonical_evidence_file_missing:{item}->{normalized}")
@@ -409,6 +419,28 @@ def _validate_parquet_magic(view: _EvidenceView, mapping: Mapping[str, Any], ite
     if len(payload) < 8 or not (payload.startswith(b"PAR1") and payload.endswith(b"PAR1")):
         return [f"{item}_missing_parquet_magic"]
     return []
+
+
+def _canonical_private_item_allowed(item: str, normalized: str) -> bool:
+    return ALLOWED_PRIVATE_CANONICAL_REFS.get(item) == normalized
+
+
+def _strip_allowed_private_canonical_refs(text: str) -> str:
+    stripped = text
+    for private_ref in ALLOWED_PRIVATE_CANONICAL_REFS.values():
+        stripped = stripped.replace(private_ref, "")
+    return stripped
+
+
+def _summary_text_without_allowed_private_canonical_refs(summary: Mapping[str, Any]) -> str:
+    payload = json.loads(json.dumps(summary, sort_keys=True, ensure_ascii=False))
+    if isinstance(payload, dict):
+        canonical_map = payload.get("canonical_evidence_map")
+        if isinstance(canonical_map, dict):
+            for item, private_ref in ALLOWED_PRIVATE_CANONICAL_REFS.items():
+                if canonical_map.get(item) == private_ref:
+                    canonical_map.pop(item, None)
+    return json.dumps(payload, sort_keys=True, ensure_ascii=False)
 
 
 def _validate_summary(summary: Mapping[str, Any]) -> list[str]:
@@ -494,8 +526,8 @@ def _validate_summary(summary: Mapping[str, Any]) -> list[str]:
         failures.append("parameter_sync_count_below_minimum")
     if summary.get("remote_command_exit_code") != 0:
         failures.append("remote_command_exit_code_not_zero")
-    if summary.get("instance_final_status") not in {"exited", "stopped", "paused"}:
-        failures.append("instance_final_status_not_paused_or_exited")
+    if summary.get("instance_final_status") not in {"exited", "stopped"}:
+        failures.append("instance_final_status_not_stopped_or_exited")
     return failures
 
 
@@ -534,10 +566,10 @@ def _validate_stage14_1_evidence(view: _EvidenceView, summary: Mapping[str, Any]
         failures.append("stage14_1_policy_loss_consumed_unique_task_id_count_below_minimum")
     if _int_field(summary, "trainable_negative_eligible_count", failures) < 1:
         failures.append("stage14_1_trainable_negative_eligible_count_below_minimum")
-    if _int_field(summary, "diagnostic_sample_count", failures) < 1 and _int_field(
-        summary, "formal_validator_rejected_count", failures
-    ) < 1:
-        failures.append("stage14_1_diagnostic_or_formal_rejection_missing")
+    if _int_field(summary, "trainable_negative_consumed_count", failures) < 1:
+        failures.append("stage14_1_trainable_negative_consumed_count_below_minimum")
+    if _int_field(summary, "side_channel_sample_count", failures) < 1:
+        failures.append("stage14_1_side_channel_sample_count_below_minimum")
     if _int_field(summary, "post_sync_policy_loss_consumed_sample_count", failures) < 2:
         failures.append("stage14_1_post_sync_policy_loss_consumed_sample_count_below_minimum")
     if _int_field(summary, "post_sync_policy_loss_consumed_unique_episode_count", failures) < 2:
@@ -556,6 +588,7 @@ def _validate_stage14_1_evidence(view: _EvidenceView, summary: Mapping[str, Any]
     failures.extend(_validate_stage14_1_trainable_negative_report(view, summary))
     failures.extend(_validate_stage14_1_side_channel_report(view, summary))
     failures.extend(_validate_stage14_1_policy_loss_sample_ledger(view, summary))
+    failures.extend(_validate_stage14_1_episode_artifact_ref_report(view, summary))
     failures.extend(_validate_stage14_1_batch_provenance_bindings(view, summary))
     return failures
 
@@ -620,6 +653,11 @@ def _validate_stage14_1_trainable_negative_report(view: _EvidenceView, summary: 
     samples = report.get("eligible_samples")
     if not isinstance(samples, list) or not samples:
         return failures + ["stage14_1_trainable_negative_eligible_samples_missing"]
+    ledger_by_sample_id, ledger_failures = _stage14_1_consumed_policy_loss_samples_by_id(view)
+    failures.extend(ledger_failures)
+    artifact_rows_by_sample_id, artifact_failures = _stage14_1_episode_artifact_rows_by_id(view)
+    failures.extend(artifact_failures)
+    consumed_flag_count = 0
     required_fields = [
         "sample_id",
         "attempt_id",
@@ -637,6 +675,9 @@ def _validate_stage14_1_trainable_negative_report(view: _EvidenceView, summary: 
         "response_token_count",
         "response_logprob_count",
         "policy_loss_consumed",
+        "status",
+        "invalid_for_training",
+        "invalid_for_online_rl",
     ]
     for index, sample in enumerate(samples):
         if not isinstance(sample, Mapping):
@@ -648,10 +689,47 @@ def _validate_stage14_1_trainable_negative_report(view: _EvidenceView, summary: 
                 failures.append(f"stage14_1_trainable_negative_eligible_samples[{index}]_missing_{field}")
         if sample.get("final_verifier_status") != "rejected":
             failures.append(f"stage14_1_trainable_negative_not_verifier_rejected:{sample.get('sample_id', index)}")
+        if sample.get("status") != "failed":
+            failures.append(f"stage14_1_trainable_negative_status_not_failed:{sample.get('sample_id', index)}")
+        if sample.get("invalid_for_training") is not False:
+            failures.append(f"stage14_1_trainable_negative_invalid_for_training:{sample.get('sample_id', index)}")
+        if sample.get("invalid_for_online_rl") is not False:
+            failures.append(f"stage14_1_trainable_negative_invalid_for_online_rl:{sample.get('sample_id', index)}")
         if sample.get("route") != "verl":
             failures.append(f"stage14_1_trainable_negative_non_verl_route:{sample.get('sample_id', index)}")
         if _int_field(sample, "response_token_count", failures) != _int_field(sample, "response_logprob_count", failures):
             failures.append(f"stage14_1_trainable_negative_token_logprob_count_mismatch:{sample.get('sample_id', index)}")
+        sample_id = str(sample.get("sample_id") or "")
+        if sample.get("policy_loss_consumed") is True:
+            consumed_flag_count += 1
+            ledger_row = ledger_by_sample_id.get(sample_id)
+            if not isinstance(ledger_row, Mapping):
+                failures.append(f"stage14_1_trainable_negative_missing_policy_loss_ledger_row:{sample_id or index}")
+            else:
+                for field in [
+                    "task_id",
+                    "episode_id",
+                    "run_id",
+                    "trajectory_digest",
+                    "generation_record_digest",
+                    "visibility_scan_digest",
+                    "status",
+                    "reward_state",
+                    "route",
+                ]:
+                    if str(sample.get(field)) != str(ledger_row.get(field)):
+                        failures.append(f"stage14_1_trainable_negative_{field}_mismatch:{sample_id or index}")
+            artifact_row = artifact_rows_by_sample_id.get(sample_id)
+            if not isinstance(artifact_row, Mapping):
+                failures.append(f"stage14_1_trainable_negative_missing_episode_artifact_ref:{sample_id or index}")
+            else:
+                for field in ["task_id", "episode_id", "run_id", "trajectory_digest"]:
+                    if str(sample.get(field)) != str(artifact_row.get(field)):
+                        failures.append(f"stage14_1_trainable_negative_artifact_{field}_mismatch:{sample_id or index}")
+        elif sample_id in ledger_by_sample_id:
+            failures.append(f"stage14_1_trainable_negative_policy_loss_consumed_flag_mismatch:{sample_id}")
+    if consumed_flag_count != consumed_count:
+        failures.append("stage14_1_trainable_negative_consumed_flag_count_mismatch")
     attempts = report.get("attempts")
     if isinstance(attempts, list):
         for index, attempt in enumerate(attempts):
@@ -705,7 +783,18 @@ def _validate_stage14_1_policy_loss_sample_ledger(view: _EvidenceView, summary: 
     samples = report.get("samples")
     if not isinstance(samples, list) or not samples:
         return failures + ["stage14_1_policy_loss_sample_ledger_samples_missing"]
+    for index, sample in enumerate(samples):
+        if not isinstance(sample, Mapping):
+            failures.append(f"stage14_1_policy_loss_sample_ledger[{index}]_not_object")
+            continue
+        if sample.get("consumed_by_policy_loss") is not True:
+            failures.append(f"stage14_1_policy_loss_sample_ledger_unconsumed_row:{sample.get('sample_id', index)}")
     consumed = [sample for sample in samples if isinstance(sample, Mapping) and sample.get("consumed_by_policy_loss") is True]
+    consumed_sample_ids = [sample.get("sample_id") for sample in consumed]
+    if len(consumed_sample_ids) != len(set(consumed_sample_ids)):
+        failures.append("stage14_1_policy_loss_sample_ledger_duplicate_consumed_sample_id")
+    if len(consumed) != _int_field(summary, "message_queue_consumed_sample_count", failures):
+        failures.append("stage14_1_policy_loss_consumed_count_mismatch_summary")
     unique_episodes = {str(sample.get("episode_id")) for sample in consumed if sample.get("episode_id")}
     unique_tasks = {str(sample.get("task_id")) for sample in consumed if sample.get("task_id")}
     if len(unique_episodes) != _int_field(summary, "policy_loss_consumed_unique_episode_count", failures):
@@ -722,15 +811,202 @@ def _validate_stage14_1_policy_loss_sample_ledger(view: _EvidenceView, summary: 
         failures.append("stage14_1_post_sync_policy_loss_consumed_sample_count_mismatch")
     if len(post_sync_unique_episodes) != _int_field(summary, "post_sync_policy_loss_consumed_unique_episode_count", failures):
         failures.append("stage14_1_post_sync_policy_loss_consumed_unique_episode_count_mismatch")
+    gate_ledger_by_sample_id = _stage14_policy_loss_gate_sample_ledger_by_id(view)
     for index, sample in enumerate(consumed):
-        for field in ["sample_id", "episode_id", "task_id", "trajectory_digest", "trainer_step_index"]:
+        for field in [
+            "sample_id",
+            "episode_id",
+            "run_id",
+            "task_id",
+            "trajectory_digest",
+            "generation_record_digest",
+            "visibility_scan_digest",
+            "status",
+            "reward_state",
+            "route",
+            "staleness",
+            "gate_decision",
+            "gate_rejection_reason",
+            "trainer_step_index",
+            "parameter_version",
+            "min_global_steps",
+            "max_global_steps",
+            "artifact_ref",
+            "consumed_by_policy_loss",
+        ]:
+            if field == "gate_rejection_reason":
+                if field not in sample:
+                    failures.append(f"stage14_1_policy_loss_sample_ledger[{index}]_missing_{field}")
+                continue
             if not sample.get(field) and sample.get(field) != 0:
                 failures.append(f"stage14_1_policy_loss_sample_ledger[{index}]_missing_{field}")
+        if not sample.get("global_steps") and not sample.get("global_step") and sample.get("global_steps") != 0 and sample.get("global_step") != 0:
+            failures.append(f"stage14_1_policy_loss_sample_ledger[{index}]_missing_global_step")
+        artifact_ref = sample.get("artifact_ref")
+        if isinstance(artifact_ref, str):
+            if artifact_ref.startswith("/") or artifact_ref.startswith("runtime_private/") or "/workspace/" in artifact_ref:
+                failures.append(f"stage14_1_policy_loss_sample_ledger_unsafe_artifact_ref:{sample.get('sample_id', index)}")
+        if sample.get("route") != "verl":
+            failures.append(f"stage14_1_policy_loss_sample_ledger_non_verl_route:{sample.get('sample_id', index)}")
+        if sample.get("reward_state") != "final":
+            failures.append(f"stage14_1_policy_loss_sample_ledger_reward_not_final:{sample.get('sample_id', index)}")
+        if sample.get("gate_decision") != "accepted":
+            failures.append(f"stage14_1_policy_loss_sample_ledger_gate_not_accepted:{sample.get('sample_id', index)}")
+        if sample.get("gate_rejection_reason") not in {None, ""}:
+            failures.append(f"stage14_1_policy_loss_sample_ledger_has_rejection_reason:{sample.get('sample_id', index)}")
+        if sample.get("status") not in {"succeeded", "failed"}:
+            failures.append(f"stage14_1_policy_loss_sample_ledger_bad_status:{sample.get('sample_id', index)}")
+        global_step = sample.get("global_steps", sample.get("global_step"))
+        if all(isinstance(value, int) and not isinstance(value, bool) for value in [sample.get("min_global_steps"), global_step, sample.get("max_global_steps")]):
+            if not int(sample["min_global_steps"]) <= int(global_step) <= int(sample["max_global_steps"]):
+                failures.append(f"stage14_1_policy_loss_sample_ledger_global_step_outside_window:{sample.get('sample_id', index)}")
+        gate_row = gate_ledger_by_sample_id.get(str(sample.get("sample_id") or ""))
+        if isinstance(gate_row, Mapping):
+            for field in [
+                "task_id",
+                "episode_id",
+                "run_id",
+                "trajectory_digest",
+                "status",
+                "reward_state",
+                "route",
+                "generation_record_digest",
+                "visibility_scan_digest",
+                "staleness",
+                "gate_decision",
+                "gate_rejection_reason",
+                "trainer_step_index",
+                "consumed_by_policy_loss",
+            ]:
+                if str(sample.get(field)) != str(gate_row.get(field)):
+                    failures.append(f"stage14_1_policy_loss_sample_ledger_gate_{field}_mismatch:{sample.get('sample_id', index)}")
+        else:
+            failures.append(f"stage14_1_policy_loss_sample_missing_stage14_gate_ledger:{sample.get('sample_id', index)}")
         if sample.get("side_channel_ref") not in {None, ""}:
             failures.append(f"stage14_1_policy_loss_sample_has_side_channel_ref:{sample.get('sample_id', index)}")
         if sample.get("sample_id") in side_channel_sample_ids:
             failures.append(f"stage14_1_side_channel_sample_consumed_in_policy_loss_ledger:{sample.get('sample_id', index)}")
     return failures
+
+
+def _validate_stage14_1_episode_artifact_ref_report(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
+    if not view.exists("stage14_1_episode_artifact_ref_report.json"):
+        return ["missing_stage14_1_episode_artifact_ref_report"]
+    if not view.exists("stage14_1_policy_loss_sample_ledger.json"):
+        return []
+    failures: list[str] = []
+    try:
+        artifact_report = _load_json(view, "stage14_1_episode_artifact_ref_report.json")
+        ledger = _load_json(view, "stage14_1_policy_loss_sample_ledger.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return [f"invalid_stage14_1_episode_artifact_ref_or_ledger:{exc}"]
+    rows = artifact_report.get("samples")
+    if not isinstance(rows, list) or not rows:
+        return failures + ["stage14_1_episode_artifact_ref_report_samples_missing"]
+    by_sample_id = {row.get("sample_id"): row for row in rows if isinstance(row, Mapping)}
+    ledger_samples = ledger.get("samples")
+    if not isinstance(ledger_samples, list):
+        return failures + ["stage14_1_policy_loss_sample_ledger_samples_missing_for_artifact_refs"]
+    consumed_sample_ids = {
+        str(sample.get("sample_id"))
+        for sample in ledger_samples
+        if isinstance(sample, Mapping) and sample.get("consumed_by_policy_loss") is True and sample.get("sample_id")
+    }
+    artifact_sample_ids = {str(sample_id) for sample_id in by_sample_id if sample_id}
+    for extra_sample_id in sorted(artifact_sample_ids - consumed_sample_ids):
+        failures.append(f"stage14_1_episode_artifact_ref_extra_sample:{extra_sample_id}")
+    artifact_ref_to_sample_ids: dict[str, list[str]] = {}
+    for row in rows:
+        if isinstance(row, Mapping) and isinstance(row.get("artifact_ref"), str) and row.get("sample_id"):
+            artifact_ref_to_sample_ids.setdefault(str(row["artifact_ref"]), []).append(str(row["sample_id"]))
+    for artifact_ref, sample_ids in artifact_ref_to_sample_ids.items():
+        if len(sample_ids) > 1:
+            failures.append(f"stage14_1_episode_artifact_ref_duplicate:{artifact_ref}")
+    for sample in ledger_samples:
+        if not isinstance(sample, Mapping) or sample.get("consumed_by_policy_loss") is not True:
+            continue
+        sample_id = sample.get("sample_id")
+        row = by_sample_id.get(sample_id)
+        if not isinstance(row, Mapping):
+            failures.append(f"stage14_1_episode_artifact_ref_missing_consumed_sample:{sample_id}")
+            continue
+        for field in ["sample_id", "episode_id", "run_id", "task_id", "trajectory_digest", "artifact_ref"]:
+            if not row.get(field) and row.get(field) != 0:
+                failures.append(f"stage14_1_episode_artifact_ref_report_missing_{field}:{sample_id}")
+        for field in ["episode_id", "run_id", "task_id", "trajectory_digest", "artifact_ref"]:
+            if str(row.get(field)) != str(sample.get(field)):
+                failures.append(f"stage14_1_episode_artifact_ref_{field}_mismatch:{sample_id}")
+        artifact_ref = row.get("artifact_ref")
+        if isinstance(artifact_ref, str):
+            if artifact_ref.startswith("/") or artifact_ref.startswith("runtime_private/") or "/workspace/" in artifact_ref:
+                failures.append(f"stage14_1_episode_artifact_ref_unsafe:{sample_id}")
+            if not _stage14_1_artifact_ref_looks_resolvable(row):
+                failures.append(f"stage14_1_episode_artifact_ref_not_resolvable:{sample_id}")
+    return failures
+
+
+def _stage14_1_artifact_ref_looks_resolvable(row: Mapping[str, Any]) -> bool:
+    artifact_ref = row.get("artifact_ref")
+    sample_id = str(row.get("sample_id") or "")
+    episode_id = str(row.get("episode_id") or "")
+    run_id = str(row.get("run_id") or "")
+    if not isinstance(artifact_ref, str):
+        return False
+    if not artifact_ref.startswith(STAGE14_1_ARTIFACT_REF_SCHEMES):
+        return False
+    tail = artifact_ref.removeprefix("rh://stage14/")
+    if tail in {sample_id, episode_id, run_id}:
+        return True
+    if tail.startswith("real_episode_runs/"):
+        parts = [part for part in tail.split("/") if part]
+        return any(part in {sample_id, episode_id, run_id} for part in parts[1:])
+    return False
+
+
+def _stage14_1_consumed_policy_loss_samples_by_id(view: _EvidenceView) -> tuple[dict[str, Mapping[str, Any]], list[str]]:
+    if not view.exists("stage14_1_policy_loss_sample_ledger.json"):
+        return {}, ["missing_stage14_1_policy_loss_sample_ledger"]
+    try:
+        ledger = _load_json(view, "stage14_1_policy_loss_sample_ledger.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return {}, [f"invalid_stage14_1_policy_loss_sample_ledger:{exc}"]
+    samples = ledger.get("samples")
+    if not isinstance(samples, list):
+        return {}, ["stage14_1_policy_loss_sample_ledger_samples_missing"]
+    by_sample_id: dict[str, Mapping[str, Any]] = {}
+    for sample in samples:
+        if not isinstance(sample, Mapping) or sample.get("consumed_by_policy_loss") is not True:
+            continue
+        sample_id = sample.get("sample_id")
+        if sample_id:
+            by_sample_id[str(sample_id)] = sample
+    return by_sample_id, []
+
+
+def _stage14_1_episode_artifact_rows_by_id(view: _EvidenceView) -> tuple[dict[str, Mapping[str, Any]], list[str]]:
+    if not view.exists("stage14_1_episode_artifact_ref_report.json"):
+        return {}, ["missing_stage14_1_episode_artifact_ref_report"]
+    try:
+        artifact_report = _load_json(view, "stage14_1_episode_artifact_ref_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError) as exc:
+        return {}, [f"invalid_stage14_1_episode_artifact_ref_report:{exc}"]
+    rows = artifact_report.get("samples")
+    if not isinstance(rows, list):
+        return {}, ["stage14_1_episode_artifact_ref_report_samples_missing"]
+    return {str(row.get("sample_id")): row for row in rows if isinstance(row, Mapping) and row.get("sample_id")}, []
+
+
+def _stage14_policy_loss_gate_sample_ledger_by_id(view: _EvidenceView) -> dict[str, Mapping[str, Any]]:
+    if not view.exists("stage14_policy_loss_gate_report.json"):
+        return {}
+    try:
+        report = _load_json(view, "stage14_policy_loss_gate_report.json")
+    except (json.JSONDecodeError, UnicodeDecodeError, RepoHarnessError):
+        return {}
+    ledger = report.get("sample_ledger")
+    if not isinstance(ledger, list):
+        return {}
+    return {str(row.get("sample_id")): row for row in ledger if isinstance(row, Mapping) and row.get("sample_id")}
 
 
 def _validate_stage14_1_batch_provenance_bindings(view: _EvidenceView, summary: Mapping[str, Any]) -> list[str]:
@@ -1246,13 +1522,22 @@ def _validate_runtime_private_manifest(view: _EvidenceView, summary: Mapping[str
     private_files = manifest.get("private_files", [])
     if not isinstance(private_files, list):
         failures.append("runtime_private_manifest_private_files_not_list")
-    public_refs = json.dumps(summary, sort_keys=True, ensure_ascii=False)
+    public_refs = _summary_text_without_allowed_private_canonical_refs(summary)
     if "runtime_private/stage14_stdout.raw.log" in public_refs:
         failures.append("acceptance_summary_references_raw_stdout_private_file")
+    if "runtime_private/" in public_refs:
+        failures.append("acceptance_summary_references_unapproved_runtime_private_path")
     for relative, path in view.iter_public_files():
         if relative == "runtime_private_manifest.json":
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
+        if relative == "stage14_acceptance_summary.json":
+            try:
+                summary_payload = json.loads(text)
+            except json.JSONDecodeError:
+                summary_payload = {}
+            if isinstance(summary_payload, Mapping):
+                text = _summary_text_without_allowed_private_canonical_refs(summary_payload)
         if "runtime_private/" in text:
             failures.append(f"public_evidence_references_runtime_private_path:{relative}")
     return failures
@@ -1282,8 +1567,8 @@ def _assert_complete_failures(summary: Mapping[str, Any]) -> list[str]:
     failures: list[str] = []
     if summary.get("acceptance_passed") is not True:
         failures.append("assert_complete_acceptance_passed_false")
-    if summary.get("instance_final_status") not in {"exited", "stopped", "paused"}:
-        failures.append("assert_complete_instance_not_paused")
+    if summary.get("instance_final_status") not in {"exited", "stopped"}:
+        failures.append("assert_complete_instance_not_stopped_or_exited")
     return failures
 
 
