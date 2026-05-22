@@ -281,6 +281,9 @@ def evaluate_model_execute_bash_command(
     issue = _execute_bash_dynamic_shell_expansion_issue(stripped)
     if issue is not None:
         return _deny_execute_bash(command, "execute_bash_dynamic_shell_expansion", issue)
+    issue = _execute_bash_pipe_execution_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_pipe_to_interpreter", issue)
     shell_inner_command, shell_wrapper_issue = _execute_bash_shell_wrapper_inner_command(stripped)
     if shell_wrapper_issue is not None:
         return _deny_execute_bash(command, "execute_bash_shell_wrapper_unauditable", shell_wrapper_issue)
@@ -564,6 +567,15 @@ def _execute_bash_dynamic_shell_expansion_issue(command: str) -> str | None:
     return None
 
 
+def _execute_bash_pipe_execution_issue(command: str) -> str | None:
+    if re.search(
+        r"(?<!\\)\|\s*(?:env\s+|command\s+|exec\s+)*(?:[A-Za-z0-9_./-]*/)?(?:bash|sh|zsh|xargs)\b",
+        command,
+    ):
+        return "execute_bash command pipes data into a shell or secondary command executor."
+    return None
+
+
 def _execute_bash_indirect_execution_issue(command: str) -> str | None:
     try:
         parts = shlex.split(command)
@@ -587,7 +599,7 @@ def _execute_bash_indirect_execution_issue(command: str) -> str | None:
         return "execute_bash cannot run workspace shell scripts until script content provenance is audited."
     if _path_invokes_workspace_script(parts[0]):
         return "execute_bash cannot execute workspace scripts directly until script content provenance is audited."
-    if command_name in {"python", "python3"} and _python_command_invokes_workspace_script(parts[1:]):
+    if _is_python_interpreter_token(parts[0]) and _python_command_invokes_workspace_script(parts[1:]):
         return "execute_bash cannot run workspace Python scripts until script content provenance is audited."
     return None
 
@@ -621,6 +633,9 @@ def _python_command_invokes_workspace_script(args: list[str]) -> bool:
         if token in {"-u", "-B", "-S", "-E", "-I", "-O", "-OO"}:
             idx += 1
             continue
+        if token in {"-W", "-X"}:
+            idx += 2
+            continue
         if token.startswith("-W") or token.startswith("-X"):
             idx += 1
             continue
@@ -633,6 +648,10 @@ def _python_command_invokes_workspace_script(args: list[str]) -> bool:
 
 def _command_token_name(value: str) -> str:
     return value if value == "." else Path(value).name
+
+
+def _is_python_interpreter_token(value: str) -> bool:
+    return bool(re.fullmatch(r"python(?:\d+(?:\.\d+)*)?", Path(value).name))
 
 
 def _has_unquoted_shell_variable_expansion(command: str) -> bool:
@@ -668,29 +687,29 @@ def _has_unquoted_shell_variable_expansion(command: str) -> bool:
 
 def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
     lowered = command.lower()
+    normalized = re.sub(r"[^a-z0-9]+", "", lowered)
     public_search = _is_public_marker_search_command(command)
-    forbidden_literals = [
-        "/repo-harness-run",
-        "repo_harness_run",
-        "hidden verifier",
-        "hidden_verifier",
-        "gold patch",
-        "gold_patch",
-        "official verifier",
-        "official_verifier",
-        "swebench_official",
+    forbidden_markers = [
+        "hiddenverifier",
+        "goldpatch",
+        "officialverifier",
+        "repoharnessrun",
+        "swebenchofficial",
+        "acceptedlabel",
+        "rewardmetadata",
+        "finalverifier",
     ]
-    for marker in forbidden_literals:
-        if marker in lowered:
+    for marker in forbidden_markers:
+        if marker in normalized:
             return (
                 "execute_bash command references evaluator-only, hidden verifier, "
                 "gold patch, or RepoHarness run artifact material."
             )
-    evaluator_selector_markers = ["fail_to_pass", "pass_to_pass"]
+    evaluator_selector_markers = ["failtopass", "passtopass"]
     for marker in evaluator_selector_markers:
-        if marker in lowered and not public_search:
+        if marker in normalized and not public_search:
             return "execute_bash command references evaluator-only verifier selector material."
-    if re.search(r"(?<![a-z0-9])test_patch(?![a-z0-9])", lowered):
+    if re.search(r"(?<![a-z0-9])test[-_\s]?patch(?![a-z0-9])", lowered):
         if not public_search:
             return "execute_bash command references evaluator-only test_patch material."
     return None
@@ -699,6 +718,11 @@ def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
 def _execute_bash_workspace_path_issue(command: str) -> str | None:
     if re.search(r"(^|[\s'\"])\.\.(?:[/\s'\"]|$)", command):
         return "execute_bash command references a parent-directory path outside the current workspace scope."
+    if (
+        re.search(r"(^|[\s'\"])(?:~|~[A-Za-z_][A-Za-z0-9_-]*)(?:/|$|[\s'\"])", command)
+        and not _is_public_marker_search_command(command)
+    ):
+        return "execute_bash command references a shell-expanded home-directory path instead of a workspace-relative path."
     absolute_path_pattern = re.compile(
         r"(?<![A-Za-z0-9_.:-])/"
         r"(?:Users|Volumes|private|tmp|var|home|workspace|repo-harness-run|envs|opt|usr|etc|root|mnt)"
@@ -714,31 +738,6 @@ def _execute_bash_git_history_issue(command: str) -> str | None:
     lowered = command.lower()
     if ".git" in lowered:
         return "execute_bash command references Git metadata directly."
-    blocked_git_subcommands = {
-        "archive",
-        "bisect",
-        "blame",
-        "branch",
-        "bundle",
-        "cat-file",
-        "checkout",
-        "cherry-pick",
-        "clone",
-        "fetch",
-        "format-patch",
-        "log",
-        "merge-base",
-        "pull",
-        "push",
-        "reflog",
-        "remote",
-        "reset",
-        "rev-list",
-        "show",
-        "submodule",
-        "switch",
-        "tag",
-    }
     try:
         parts = shlex.split(command)
     except ValueError:
@@ -747,11 +746,13 @@ def _execute_bash_git_history_issue(command: str) -> str | None:
         if Path(part).name != "git":
             continue
         subcommand = _git_subcommand_after_global_options(parts[idx + 1 :])
-        if subcommand in blocked_git_subcommands:
-            return "execute_bash command attempts to inspect or manipulate Git history."
+        git_issue = _git_subcommand_policy_issue(subcommand, parts[idx + 1 :])
+        if git_issue is not None:
+            return git_issue
     for sequence in _python_literal_git_sequences(command):
         subcommand = _git_subcommand_after_global_options(sequence[1:])
-        if subcommand in blocked_git_subcommands:
+        git_issue = _git_subcommand_policy_issue(subcommand, sequence[1:])
+        if git_issue is not None:
             return "execute_bash inline code attempts to inspect or manipulate Git history."
     return None
 
@@ -794,6 +795,113 @@ def _is_public_marker_search_command(command: str) -> bool:
     return False
 
 
+def _git_subcommand_policy_issue(subcommand: str | None, args: list[str]) -> str | None:
+    if subcommand is None:
+        return "execute_bash git invocation is incomplete and cannot be audited safely."
+    if subcommand == "status":
+        return None
+    if subcommand == "ls-files":
+        return None
+    if subcommand == "grep":
+        if not _git_grep_args_are_workspace_only(_args_after_git_subcommand(args)):
+            return "execute_bash git grep command includes a revision or unsafe pathspec."
+        return None
+    if subcommand == "diff":
+        if not _git_diff_args_are_workspace_only(_args_after_git_subcommand(args)):
+            return "execute_bash git diff command includes a revision, ref, or unsafe pathspec."
+        return None
+    return "execute_bash git command is outside the Stage 16A model-visible allowlist."
+
+
+def _args_after_git_subcommand(args: list[str]) -> list[str]:
+    subcommand = _git_subcommand_after_global_options(args)
+    if subcommand is None:
+        return []
+    for idx, token in enumerate(args):
+        if token == subcommand:
+            return args[idx + 1 :]
+    return []
+
+
+def _git_grep_args_are_workspace_only(args: list[str]) -> bool:
+    seen_query = False
+    after_double_dash = False
+    skip_next = False
+    skip_next_as_query = False
+    for arg in args:
+        if skip_next_as_query:
+            seen_query = True
+            skip_next_as_query = False
+            continue
+        if skip_next:
+            skip_next = False
+            continue
+        if arg == "--":
+            after_double_dash = True
+            continue
+        if arg == "-e":
+            skip_next_as_query = True
+            continue
+        if arg in {"-f", "-C", "-A", "-B", "-m"}:
+            if arg == "-f":
+                return False
+            skip_next = True
+            continue
+        if arg.startswith("-"):
+            continue
+        if not seen_query:
+            seen_query = True
+            continue
+        if _is_git_ref_like_token(arg):
+            return False
+        if not _looks_like_workspace_path_argument(arg):
+            return False
+        if Path(arg).is_absolute() or ".." in PurePosixPath(arg.replace("\\", "/")).parts:
+            return False
+        if not after_double_dash and not _looks_like_workspace_path_argument(arg):
+            return False
+    return True
+
+
+def _git_diff_args_are_workspace_only(args: list[str]) -> bool:
+    after_double_dash = False
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg == "--":
+            after_double_dash = True
+            continue
+        if arg in {"--output", "--ext-diff"}:
+            return False
+        if arg in {"-U", "--unified", "--inter-hunk-context"}:
+            skip_next = True
+            continue
+        if arg.startswith("-"):
+            continue
+        if _is_git_ref_like_token(arg):
+            return False
+        if Path(arg).is_absolute() or ".." in PurePosixPath(arg.replace("\\", "/")).parts:
+            return False
+        if not after_double_dash and not _looks_like_workspace_path_argument(arg):
+            return False
+    return True
+
+
+def _is_git_ref_like_token(value: str) -> bool:
+    lowered = value.lower()
+    if lowered in {"head", "fetch_head", "orig_head", "main", "master", "develop"}:
+        return True
+    if lowered.startswith(("head~", "head^", "origin/", "refs/", "tags/", "remotes/")):
+        return True
+    if re.fullmatch(r"[0-9a-f]{7,40}", lowered):
+        return True
+    if any(marker in value for marker in ("..", "^", "~", "@{")):
+        return True
+    return False
+
+
 def _search_command_paths_are_workspace_relative(parts: list[str]) -> bool:
     after_double_dash = False
     skip_next = False
@@ -830,14 +938,37 @@ def _inline_python_code(command: str) -> str | None:
     except ValueError:
         return None
     for idx, part in enumerate(parts):
-        if Path(part).name not in {"python", "python3"}:
+        if not _is_python_interpreter_token(part):
             continue
-        if idx + 1 < len(parts) and parts[idx + 1] == "-c":
-            return parts[idx + 2] if idx + 2 < len(parts) else ""
-        if idx + 1 < len(parts) and parts[idx + 1] == "-":
-            return command
-    if re.search(r"\bpython3?\s+-\s*<<", command):
+        inline = _python_inline_code_from_args(parts[idx + 1 :], original_command=command)
+        if inline is not None:
+            return inline
+    if re.search(r"\bpython(?:\d+(?:\.\d+)*)?\s+-\s*<<", command):
         return command
+    return None
+
+
+def _python_inline_code_from_args(args: list[str], *, original_command: str) -> str | None:
+    idx = 0
+    while idx < len(args):
+        token = args[idx]
+        if token == "-c":
+            return args[idx + 1] if idx + 1 < len(args) else ""
+        if token == "-":
+            return original_command
+        if token in {"-u", "-B", "-S", "-E", "-I", "-O", "-OO"}:
+            idx += 1
+            continue
+        if token in {"-W", "-X"}:
+            idx += 2
+            continue
+        if token.startswith("-W") or token.startswith("-X"):
+            idx += 1
+            continue
+        if token.startswith("-"):
+            idx += 1
+            continue
+        return None
     return None
 
 
@@ -847,21 +978,7 @@ def _execute_bash_shared_dependency_issue(
     shared_dependency_environment_expected: bool,
     shared_dependency_environment_roots: list[str] | None,
 ) -> tuple[str, str] | None:
-    lowered = command.lower()
-    write_patterns = [
-        "pip install",
-        "pip uninstall",
-        "python -m pip install",
-        "python -m pip uninstall",
-        "uv pip install",
-        "uv pip uninstall",
-        "npm install",
-        "npm ci",
-        "pnpm install",
-        "yarn add",
-        "yarn install",
-    ]
-    if any(pattern in lowered for pattern in write_patterns):
+    if _command_mutates_dependency_environment(command):
         return (
             "execute_bash_shared_dependency_write_guard",
             "execute_bash command attempts to install or mutate dependencies from a model-visible shell.",
@@ -882,6 +999,66 @@ def _execute_bash_shared_dependency_issue(
                 "execute_bash command references a runtime-only shared dependency environment path.",
             )
     return None
+
+
+def _command_mutates_dependency_environment(command: str) -> bool:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    parts, _ = _strip_execute_bash_prefix_tokens(parts)
+    if not parts:
+        return False
+    command_name = Path(parts[0]).name
+    lowered_name = command_name.lower()
+    args = parts[1:]
+    if re.fullmatch(r"pip(?:\d+(?:\.\d+)*)?", lowered_name):
+        return any(arg in {"install", "uninstall"} for arg in args)
+    if _is_python_interpreter_token(parts[0]):
+        return _python_m_pip_mutates_environment(args)
+    if lowered_name == "uv":
+        if args and args[0] in {"add", "sync"}:
+            return True
+        if args[:2] == ["pip", "install"] or args[:2] == ["pip", "uninstall"]:
+            return True
+        if args and args[0] == "run" and "--with" in args:
+            return True
+    if lowered_name == "poetry":
+        return bool(args and args[0] in {"add", "install"})
+    if lowered_name == "pipenv":
+        return bool(args and args[0] == "install")
+    if lowered_name == "npm":
+        return bool(args and args[0] in {"i", "install", "ci"})
+    if lowered_name == "pnpm":
+        return bool(args and args[0] in {"add", "install"})
+    if lowered_name == "yarn":
+        return bool(args and args[0] in {"add", "install"})
+    return False
+
+
+def _python_m_pip_mutates_environment(args: list[str]) -> bool:
+    idx = 0
+    while idx < len(args):
+        token = args[idx]
+        if token == "-m":
+            module = args[idx + 1] if idx + 1 < len(args) else ""
+            if module != "pip":
+                return False
+            return any(arg in {"install", "uninstall"} for arg in args[idx + 2 :])
+        if token in {"-u", "-B", "-S", "-E", "-I", "-O", "-OO"}:
+            idx += 1
+            continue
+        if token in {"-W", "-X"}:
+            idx += 2
+            continue
+        if token.startswith("-W") or token.startswith("-X"):
+            idx += 1
+            continue
+        if token.startswith("-"):
+            idx += 1
+            continue
+        return False
+    return False
 
 
 def _git_subcommand_after_global_options(parts: list[str]) -> str | None:
