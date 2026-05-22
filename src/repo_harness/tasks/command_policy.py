@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import shlex
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import ClassVar, Literal
 
 from pydantic import Field
@@ -438,6 +438,7 @@ def _deny_execute_bash(command: str, reason_code: str, reason: str) -> CommandPo
 
 def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
     lowered = command.lower()
+    public_search = _is_public_marker_search_command(command)
     forbidden_literals = [
         "/repo-harness-run",
         "repo_harness_run",
@@ -447,8 +448,6 @@ def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
         "gold_patch",
         "official verifier",
         "official_verifier",
-        "fail_to_pass",
-        "pass_to_pass",
         "swebench_official",
     ]
     for marker in forbidden_literals:
@@ -457,8 +456,13 @@ def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
                 "execute_bash command references evaluator-only, hidden verifier, "
                 "gold patch, or RepoHarness run artifact material."
             )
+    evaluator_selector_markers = ["fail_to_pass", "pass_to_pass"]
+    for marker in evaluator_selector_markers:
+        if marker in lowered and not public_search:
+            return "execute_bash command references evaluator-only verifier selector material."
     if re.search(r"(?<![a-z0-9])test_patch(?![a-z0-9])", lowered):
-        return "execute_bash command references evaluator-only test_patch material."
+        if not public_search:
+            return "execute_bash command references evaluator-only test_patch material."
     return None
 
 
@@ -523,6 +527,10 @@ def _execute_bash_git_history_issue(command: str) -> str | None:
 
 
 def _execute_bash_inline_process_escape_issue(command: str) -> str | None:
+    inline_code = _inline_python_code(command)
+    if inline_code is None:
+        return None
+    command = inline_code
     lowered = command.lower()
     risky_markers = [
         "subprocess",
@@ -539,6 +547,67 @@ def _execute_bash_inline_process_escape_issue(command: str) -> str | None:
         )
     if re.search(r"['\"]g['\"]\s*\+\s*['\"]it['\"]", command, flags=re.IGNORECASE):
         return "execute_bash inline Python dynamically constructs a git command."
+    return None
+
+
+def _is_public_marker_search_command(command: str) -> bool:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    if not parts:
+        return False
+    if Path(parts[0]).name in {"rg", "grep"}:
+        return _search_command_paths_are_workspace_relative(parts[1:])
+    if len(parts) >= 2 and Path(parts[0]).name == "git" and parts[1] == "grep":
+        return _search_command_paths_are_workspace_relative(parts[2:])
+    return False
+
+
+def _search_command_paths_are_workspace_relative(parts: list[str]) -> bool:
+    after_double_dash = False
+    skip_next = False
+    for idx, part in enumerate(parts):
+        if skip_next:
+            skip_next = False
+            continue
+        if part == "--":
+            after_double_dash = True
+            continue
+        if part in {"-e", "-f", "-g", "--glob", "--path-separator", "-C", "-A", "-B", "-m"}:
+            skip_next = True
+            continue
+        if part.startswith("-"):
+            continue
+        if idx == 0 and not after_double_dash:
+            continue
+        if _looks_like_workspace_path_argument(part):
+            if Path(part).is_absolute() or ".." in PurePosixPath(part.replace("\\", "/")).parts:
+                return False
+    return True
+
+
+def _looks_like_workspace_path_argument(value: str) -> bool:
+    if "/" in value or value in {".", ".."}:
+        return True
+    suffixes = (".py", ".txt", ".md", ".rst", ".toml", ".yaml", ".yml", ".json")
+    return value.endswith(suffixes)
+
+
+def _inline_python_code(command: str) -> str | None:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return None
+    for idx, part in enumerate(parts):
+        if Path(part).name not in {"python", "python3"}:
+            continue
+        if idx + 1 < len(parts) and parts[idx + 1] == "-c":
+            return parts[idx + 2] if idx + 2 < len(parts) else ""
+        if idx + 1 < len(parts) and parts[idx + 1] == "-":
+            return command
+    if re.search(r"\bpython3?\s+-\s*<<", command):
+        return command
     return None
 
 
