@@ -278,7 +278,9 @@ def evaluate_model_execute_bash_command(
     stripped = command.strip()
     if not stripped:
         return _deny_execute_bash(command, "execute_bash_empty_command", "Command must not be empty.")
-    shell_inner_command = _execute_bash_shell_wrapper_inner_command(stripped)
+    shell_inner_command, shell_wrapper_issue = _execute_bash_shell_wrapper_inner_command(stripped)
+    if shell_wrapper_issue is not None:
+        return _deny_execute_bash(command, "execute_bash_shell_wrapper_unauditable", shell_wrapper_issue)
     if shell_inner_command is not None:
         if _shell_wrapper_depth >= 3:
             return _deny_execute_bash(
@@ -466,20 +468,80 @@ def _deny_execute_bash(command: str, reason_code: str, reason: str) -> CommandPo
     )
 
 
-def _execute_bash_shell_wrapper_inner_command(command: str) -> str | None:
+def _execute_bash_shell_wrapper_inner_command(command: str) -> tuple[str | None, str | None]:
     try:
         parts = shlex.split(command)
     except ValueError:
-        return None
+        return None, None
+    parts, prefix_issue = _strip_execute_bash_prefix_tokens(parts)
+    if prefix_issue is not None:
+        return None, prefix_issue
+    if parts and parts[0].startswith("$"):
+        return None, "execute_bash command starts with shell variable or ANSI-C expansion that cannot be audited safely."
+    if parts and Path(parts[0]).name == "eval":
+        return None, "execute_bash eval command cannot be audited safely in Stage 16A."
     if not parts or Path(parts[0]).name not in {"bash", "sh", "zsh"}:
-        return None
+        return None, None
     idx = 1
     while idx < len(parts):
         token = parts[idx]
         if token == "-c" or (token.startswith("-") and not token.startswith("--") and "c" in token[1:]):
-            return parts[idx + 1] if idx + 1 < len(parts) else ""
+            inner = parts[idx + 1] if idx + 1 < len(parts) else ""
+            if inner.strip().startswith("$"):
+                return None, (
+                    "execute_bash shell wrapper uses shell variable or ANSI-C quoting for the inner command; "
+                    "Stage 16A requires a statically auditable command string."
+                )
+            return inner, None
         idx += 1
-    return None
+    return None, None
+
+
+def _strip_execute_bash_prefix_tokens(parts: list[str]) -> tuple[list[str], str | None]:
+    remaining = list(parts)
+    while remaining:
+        command_name = Path(remaining[0]).name
+        if command_name == "env":
+            remaining = remaining[1:]
+            if not remaining:
+                return [], "execute_bash env wrapper does not contain a command to audit."
+            while remaining and remaining[0].startswith("-"):
+                return [], "execute_bash env wrapper options are not allowed in Stage 16A."
+            while remaining and _looks_like_environment_assignment(remaining[0]):
+                return [], "execute_bash env wrapper assignments are not allowed in Stage 16A."
+            continue
+        if command_name in {"command", "exec"}:
+            remaining = remaining[1:]
+            if not remaining:
+                return [], f"execute_bash {command_name} wrapper does not contain a command to audit."
+            continue
+        if command_name == "time":
+            remaining = remaining[1:]
+            while remaining and remaining[0].startswith("-"):
+                remaining = remaining[1:]
+            if not remaining:
+                return [], "execute_bash time wrapper does not contain a command to audit."
+            continue
+        if command_name == "nice":
+            remaining = remaining[1:]
+            if remaining and remaining[0] == "-n":
+                remaining = remaining[2:]
+            elif remaining and re.fullmatch(r"-\d+", remaining[0]):
+                remaining = remaining[1:]
+            while remaining and remaining[0].startswith("--"):
+                return [], "execute_bash nice wrapper long options are not allowed in Stage 16A."
+            if not remaining:
+                return [], "execute_bash nice wrapper does not contain a command to audit."
+            continue
+        break
+    return remaining, None
+
+
+def _looks_like_environment_assignment(value: str) -> bool:
+    if "=" not in value:
+        return False
+    name, _ = value.split("=", 1)
+    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
 
 
 def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
