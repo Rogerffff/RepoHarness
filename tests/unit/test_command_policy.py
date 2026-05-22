@@ -114,12 +114,15 @@ def test_execute_bash_policy_allows_current_worktree_diagnostics_without_false_p
         "git diff -- src/pkg.py",
         "git grep InvalidURL",
         "git ls-files",
+        "bash -lc 'git status --short'",
+        "bash -lc 'git diff -- src/pkg.py'",
         "rg subprocess src",
         "pytest tests/test_subprocess.py -q",
         "rg 'exec(' src",
         "rg 'eval(' src",
         "rg 'test_patch' docs/public_note.txt",
         "git grep 'FAIL_TO_PASS' -- docs/public_readme.md",
+        "bash -lc \"git grep 'FAIL_TO_PASS' -- docs/public_readme.md\"",
     ]
 
     for command in commands:
@@ -141,6 +144,13 @@ def test_execute_bash_policy_allows_current_worktree_diagnostics_without_false_p
         ("python -c \"import subprocess; subprocess.run(['g'+'it', 'log'])\"", "execute_bash_inline_process_escape"),
         ("python -c \"exec('print(1)')\"", "execute_bash_inline_process_escape"),
         ("python -c \"eval('1 + 1')\"", "execute_bash_inline_process_escape"),
+        ("bash -lc 'git log --oneline --all'", "execute_bash_git_history_or_metadata"),
+        ("sh -c 'git show HEAD'", "execute_bash_git_history_or_metadata"),
+        ("bash -c 'git cat-file -p HEAD'", "execute_bash_git_history_or_metadata"),
+        (
+            "bash -lc 'python -c \"import subprocess; subprocess.run([\\\"git\\\", \\\"log\\\"])\"'",
+            "execute_bash_inline_process_escape",
+        ),
         ("python -m pip install requests", "execute_bash_shared_dependency_write_guard"),
         ("python -c \"from pathlib import Path; Path('/envs/repoA').write_text('x')\"", "execute_bash_shared_dependency_root_access"),
         ("cat /etc/passwd", "execute_bash_workspace_boundary"),

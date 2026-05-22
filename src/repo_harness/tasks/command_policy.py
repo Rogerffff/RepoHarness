@@ -273,10 +273,40 @@ def evaluate_model_execute_bash_command(
     *,
     shared_dependency_environment_expected: bool = False,
     shared_dependency_environment_roots: list[str] | None = None,
+    _shell_wrapper_depth: int = 0,
 ) -> CommandPolicyDecision:
     stripped = command.strip()
     if not stripped:
         return _deny_execute_bash(command, "execute_bash_empty_command", "Command must not be empty.")
+    shell_inner_command = _execute_bash_shell_wrapper_inner_command(stripped)
+    if shell_inner_command is not None:
+        if _shell_wrapper_depth >= 3:
+            return _deny_execute_bash(
+                command,
+                "execute_bash_shell_wrapper_depth_exceeded",
+                "execute_bash shell wrapper nesting is too deep to audit safely.",
+            )
+        inner_decision = evaluate_model_execute_bash_command(
+            shell_inner_command,
+            shared_dependency_environment_expected=shared_dependency_environment_expected,
+            shared_dependency_environment_roots=shared_dependency_environment_roots,
+            _shell_wrapper_depth=_shell_wrapper_depth + 1,
+        )
+        if inner_decision.decision == "deny":
+            return _deny_execute_bash(
+                command,
+                inner_decision.reason_code or inner_decision.matched_rule,
+                f"execute_bash shell wrapper contains a denied command: {inner_decision.reason}",
+            )
+        return CommandPolicyDecision(
+            command=command,
+            command_category="diagnostic",
+            decision="allow",
+            reason="execute_bash shell wrapper inner command passed Stage 16A policy guards.",
+            matched_rule="execute_bash_shell_wrapper_inner_policy_allow",
+            reason_code="execute_bash_shell_wrapper_inner_policy_allow",
+            recovery_hint="Keep shell wrappers focused on a single model-visible workspace diagnostic command.",
+        )
     issue = _execute_bash_forbidden_marker_issue(stripped)
     if issue is not None:
         return _deny_execute_bash(command, "execute_bash_evaluator_only_marker", issue)
@@ -434,6 +464,22 @@ def _deny_execute_bash(command: str, reason_code: str, reason: str) -> CommandPo
             "Use read_file, grep, run_tests, and git_diff for safer structured operations when possible."
         ),
     )
+
+
+def _execute_bash_shell_wrapper_inner_command(command: str) -> str | None:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return None
+    if not parts or Path(parts[0]).name not in {"bash", "sh", "zsh"}:
+        return None
+    idx = 1
+    while idx < len(parts):
+        token = parts[idx]
+        if token == "-c" or (token.startswith("-") and not token.startswith("--") and "c" in token[1:]):
+            return parts[idx + 1] if idx + 1 < len(parts) else ""
+        idx += 1
+    return None
 
 
 def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
