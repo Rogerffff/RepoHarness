@@ -21,7 +21,10 @@ def test_stage16a_execute_bash_runs_shell_command_and_records_visibility_split(t
         ToolCall(
             tool_call_id="call_execute_bash",
             tool_name="execute_bash",
-            arguments={"command": "printf 'hello'; printf ' err' >&2", "timeout_sec": 5},
+            arguments={
+                "command": "python -c \"import sys; print('hello'); print(' err', file=sys.stderr)\"",
+                "timeout_sec": 5,
+            },
             turn=1,
         ),
         context,
@@ -84,7 +87,7 @@ def test_stage16a_execute_bash_denies_default_local_process_backend(tmp_path: Pa
     call = ToolCall(
         tool_call_id="call_local_denied",
         tool_name="execute_bash",
-        arguments={"command": "printf ok"},
+        arguments={"command": "python -c \"print('ok')\""},
         turn=1,
     )
     executor = _executor()
@@ -146,7 +149,7 @@ def test_stage16a_execute_bash_blocks_absolute_and_parent_paths(tmp_path: Path) 
         ToolCall(
             tool_call_id="call_parent_read",
             tool_name="execute_bash",
-            arguments={"command": "cat ../artifacts/secret.txt"},
+            arguments={"command": "cat ../artifacts/public.txt"},
             turn=1,
         ),
         context,
@@ -167,8 +170,7 @@ def test_stage16a_execute_bash_redacts_paths_from_model_visible_output(tmp_path:
             tool_name="execute_bash",
             arguments={
                 "command": (
-                    "pwd; "
-                    "python -c \"import sys; print(sys.executable)\""
+                    "python -c \"import os, sys; print(os.getcwd()); print(sys.executable)\""
                 )
             },
             turn=1,
@@ -220,7 +222,7 @@ def test_stage16a_execute_bash_blocks_inline_python_environment_probe_in_shared_
     )
 
     assert result.status == "denied"
-    assert result.error_type == "execute_bash_shared_environment_requires_controlled_launcher"
+    assert result.error_type == "execute_bash_inline_python_visibility"
 
 
 def test_stage16a_execute_bash_schema_and_permission_metadata(tmp_path: Path) -> None:

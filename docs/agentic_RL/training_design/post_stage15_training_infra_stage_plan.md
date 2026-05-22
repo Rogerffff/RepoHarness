@@ -267,6 +267,70 @@ DAPO group filtering 应该：
 
 因此，另一个 worktree 的改造应被视为后续训练扩大前的基础设施前置条件，而不是旁支评测优化。
 
+### 3.3 Claude Code 工具系统对 Stage 16 的启发
+
+对照 `reference/claude-code-typescript-src` 可以看到，Claude Code 的工具面不是“只给模型一个完整 Bash，然后让模型用 Bash 完成所有事情”。它采用的是分层工具系统：
+
+```text
+Read / Grep / Glob / Edit / Write：
+  承担读文件、搜索、文件发现、编辑和写文件等高频动作。
+
+Bash：
+  承担测试、构建、项目命令、Git / GitHub 命令、复杂诊断和后台任务。
+```
+
+这个分层在参考源码中有明确提示。例如 `BashTool` 的提示词要求：
+
+```text
+Read files: Use Read (NOT cat/head/tail)
+Edit files: Use Edit (NOT sed/awk)
+Write files: Use Write (NOT echo >/cat <<EOF)
+```
+
+`GrepTool` 也明确要求搜索任务使用 `Grep`，不要通过 Bash 调 `grep` 或 `rg`。这说明产品态 Claude Code 虽然有强大的 Bash 工具，但仍然把读、搜、改、写这些高频动作放在结构化工具中，让权限、审计和用户审查更清楚。
+
+RepoHarness 的训练环境比产品态 Claude Code 更严格，原因是：
+
+1. 训练时没有真人逐条确认权限。
+2. SWE-Bench-like 任务有 evaluator-only artifact、gold patch、test patch、official selector 和 run directory 泄漏风险。
+3. online reinforcement learning 会把工具失败、权限误拦截、隐藏信息泄漏和环境污染都写进训练分布。
+4. 共享依赖环境、workspace snapshot、runtime-private 目录和 verifier artifact 都必须保持模型不可见。
+
+因此，Stage 16 不能把 Claude Code 的 Bash 行为简单复刻成一个无边界的 `execute_bash`。更合理的设计是：
+
+```text
+结构化工具作为正式训练主路径：
+  read_file / grep / list_files 或 glob_files / edit_file / git_diff
+
+execute_bash 作为安全最小 shell 面：
+  允许少量可审计、可脱敏、不会污染共享环境的诊断命令。
+
+persistent diagnostic shell 作为后续高权限能力：
+  在 Stage 16B 之后，通过 Docker persistent session 或 local filesystem-persistent session 单独验收。
+
+项目测试和复现能力通过受控入口补齐：
+  run_public_tests / run_project_test / python_probe 或 scratch_python / task-declared project command。
+```
+
+这里的核心不是增加大量模型可见工具，而是让每个能力有清晰所有权：
+
+```text
+读文件不要靠 cat/head/tail，而靠 read_file。
+搜索不要靠裸 grep/rg，而靠 safe grep 工具。
+编辑不要靠 sed/awk/python 脚本，而靠 edit_file。
+测试不要靠模型写 source conda activate && pytest，而靠 harness-owned test routing。
+临时 Python 复现不要靠 cat > /tmp/x.py && python /tmp/x.py，而靠受控 python_probe。
+复杂 shell 诊断放到 persistent diagnostic session，而不是 Stage 16A 默认正式工具面。
+```
+
+注意：本文中提到的结构化 `grep` 或 safe grep，指的是 RepoHarness 自己拥有的搜索工具，
+不是 `execute_bash` 里直接执行的裸 `grep` 命令。Stage 16A 可以保留一个极窄的裸
+`rg` / `grep` 允许子集，用来做过渡期 smoke 和公开文本搜索，但后续正式训练主路径应逐步回到
+harness-owned 搜索工具。这样可以把路径可见性、隐藏文件过滤、runtime-private 过滤和输出脱敏
+放在工具实现里统一处理，而不是让模型通过 shell 参数自己组合。
+
+这种设计既接近 Claude Code 的真实工具系统，又符合训练和测评场景的防泄漏要求。
+
 ## 4. 建议后续 Stage 顺序
 
 下面的 Stage 编号是建议路线。它可以作为后续更新 `01-sequential-implementation-plan.md` 的基础，但本文件先作为实验设计导向的独立路线草案。
@@ -281,13 +345,15 @@ DAPO group filtering 应该：
 
 主要改造：
 
-1. 把 `diagnostic_shell` 能力整理成训练主线可用的受控 `execute_bash` 语义。
-2. 加入 Git 历史防泄漏、evaluator-only 防泄漏、词元级权限匹配，避免误伤 `test_patches.py` 这类公开文件名。
-3. 允许真实 shell 常见用法：多行脚本、`cd && ...`、inline Python、公开测试命令、`git diff`、`pytest`。
-4. inline Python 是 SWE 任务中必要的诊断能力，但必须与 Stage 12.5 的共享依赖环境保护策略对齐。普通 workspace shell 可以运行合理的 inline Python；共享依赖环境保护模式下，`python -c "import ..."`、`__import__`、`importlib`、`sys.executable`、`os.environ`、`subprocess` 等路径探测或写共享环境行为必须经过受控 launcher、输出脱敏和 command policy 测试。
-5. 禁止 `.git` 历史、run directory、hidden verifier、gold patch、test patch、官方 selector、共享依赖环境写入和越界路径访问。
-6. 工具可见注册表和实际执行注册表必须一致。
-7. 公开 evidence 无路径泄漏、无 hidden verifier 泄漏。
+1. 固定正式训练主线里的模型可见 shell 工具名和 schema，第一版使用 `execute_bash`。
+2. 明确 `execute_bash` 第一版不是完整产品态 Bash，而是安全最小 shell 面。它只允许经过 command policy 证明可审计、可脱敏、不会污染共享依赖环境的命令。
+3. 把 Claude Code 的结构化工具优先原则写入正式 scaffold：读文件用 `read_file`，搜索用 `grep` 或 `list_files` / `glob_files`，编辑用 `edit_file`，查看补丁用 `git_diff`，不要让模型通过 `cat`、`sed`、`find`、`grep -R`、`python open(...)` 来替代这些工具。
+4. 加入 Git 历史防泄漏、evaluator-only 防泄漏、词元级权限匹配，避免误伤 `test_patches.py` 这类公开文件名。
+5. 禁止 `.git` 历史、run directory、hidden verifier、gold patch、test patch、官方 selector、共享依赖环境写入、越界路径、隐藏路径和 runtime-private 路径访问。
+6. 收紧 `rg` / `grep` / inline Python 的默认 shell 能力，避免 `--hidden`、`--no-ignore`、`--unrestricted`、递归 grep、文件读取、路径枚举和环境枚举绕过结构化工具。
+7. 工具可见注册表、provider / verl tool schema 和实际执行注册表必须一致。
+8. 公开 evidence 无路径泄漏、无 hidden verifier 泄漏。
+9. Stage 16A 只建立 `execute_bash` 的协议、最小 allowlist、拒绝语义、输出脱敏和注册表一致性；不承诺完整 persistent shell、项目命令 routing 或受控 Python 复现工具已经完成。
 
 #### Stage 16B：persistent diagnostic session 生命周期
 
@@ -384,6 +450,7 @@ noop_healthcheck_fail_rate
 official_environment_unhealthy_count
 permission_false_positive_count
 diagnostic_shell_session_reuse_rate
+would_require_diagnostic_shell_count
 non_empty_patch_rate
 public_test_run_rate
 final_patch_hygiene_pass_rate
@@ -1085,31 +1152,36 @@ process reward 单 chunk 小幅度；
 
 已确认口径：
 
-1. 正式训练主线必须提供具备完整 shell 语义的 `execute_bash`。
-2. `execute_bash` 是模型看到的工具名；完整 shell 是这个工具背后的执行语义。
-3. 旧版受限 `bash` 或 `safe_argv` 诊断命令执行器不足以支撑正式 SWE agent 训练。
-4. 模型应该能像真实软件工程工具一样执行普通 shell 命令、多行脚本、`cd && ...`、inline Python、公开测试命令、`git diff`、`pytest` 等。
-5. 这不是无限制 root shell。它必须带 workspace sandbox、timeout、输出截断、资源限制和 RepoHarness 防作弊 guard。
-6. shell-only scaffold 可以作为对照实验，但第一版正式训练主线仍建议同时保留结构化 `search`、`file_editor`、`run_public_tests`、`git_diff` / `git_status` 和 `finish` / `submit`。
+1. 正式训练主线必须有模型可见的 shell 类工具名，第一版固定为 `execute_bash`。
+2. `execute_bash` 在 Stage 16A 中只代表安全最小 shell 面，不代表已经开放完整 persistent shell。
+3. 完整 shell 语义仍然是正式 SWE agent 训练最终需要的能力，但它必须放在 Stage 16B 及之后，通过 persistent diagnostic session、路径脱敏、共享依赖只读、runtime-private 隔离和证据验收后再逐步启用。
+4. 旧版受限 `bash` 或 `safe_argv` 诊断命令执行器不足以支撑正式 SWE agent 训练；但是直接把所有真实 shell 命令加入 `execute_bash` allowlist 也不安全。
+5. Stage 16A 的模型默认应该学习 Claude Code 式工具分工：读、搜、改、写走结构化工具；测试、构建和复杂诊断才逐步走 shell 或受控 test routing。
+6. shell-only scaffold 可以作为对照实验，但第一版正式训练主线仍建议同时保留结构化 `read_file`、`grep`、`list_files` / `glob_files`、`edit_file`、`git_diff`、`run_public_tests` 和 `finish` / `submit`。
 
 建议：
 
 ```text
 主线工具集使用：
-file_editor
-search
-execute_bash，也就是具备完整 shell 语义的 persistent shell
-run_public_tests，可选但强烈建议
-git_diff / git_status
+read_file
+grep
+list_files / glob_files
+edit_file
+git_diff
+execute_bash，也就是 Stage 16A 的安全最小 shell 面
+run_public_tests，Stage 16C 之前至少需要设计清楚，正式训练前应进入主线
 finish / submit
 
 shell-only scaffold 作为对照，不作为第一版正式训练主线。
 
-完整 shell 必须禁止：
+Stage 16A 的 execute_bash 必须禁止：
   Git 历史访问
   hidden verifier / run directory / gold patch / test patch / official selector 访问
   共享依赖环境写入
   越界路径访问
+  隐藏路径、runtime-private 路径、环境路径枚举
+
+Stage 16B 之后的 persistent shell 仍然必须继承这些禁止项，并额外证明同题复用、跨题隔离、timeout invalidation 和 cleanup。
 ```
 
 ### 5.6 官方 verifier 与 proxy verifier 的成本取舍
@@ -1227,10 +1299,12 @@ Stage 16A 的执行计划应该明确：
 
 1. 从另一个 worktree 合入哪些文件或等价能力。
 2. 哪些改造只用于诊断，哪些进入正式 RL 主线。
-3. 具备完整 shell 语义的 `execute_bash` 如何适配 `real_episode`。
-4. 完整 shell 的 visibility、path leak、Git history、防 evaluator-only 泄漏测试。
-5. 工具可见注册表和实际执行注册表如何保持一致。
-6. 哪些旧 `run_task` 路径先不动，避免影响现有 SWE-bench 测试。
+3. Stage 16A 的 `execute_bash` 只完成安全最小 shell 面，而不是完整 persistent shell。
+4. 结构化工具优先原则如何写入正式 scaffold，避免模型继续用 `cat`、`sed`、`find`、裸 `grep`、裸 Python 文件读取替代已有工具。
+5. `execute_bash` 的 visibility、path leak、Git history、防 evaluator-only 泄漏测试。
+6. 工具可见注册表和实际执行注册表如何保持一致。
+7. 哪些旧 `run_task` 路径先不动，避免影响现有 SWE-bench 测试。
+8. `run_public_tests`、`python_probe`、task-declared project command 是 Stage 16A 后续需要补的能力，不应通过无限扩大 `execute_bash` allowlist 变相实现。
 
 Stage 16A 通过后，再依次进入 Stage 16B、Stage 16C、Stage 16D、Stage 16E 和 Stage 16.5。Stage 16.5 代表性诊断通过前，不建议扩大正式 RL 训练。因为如果工具动作空间和验证环境还不稳定，后续算法实验会把 harness 噪声误当成算法信号。
 

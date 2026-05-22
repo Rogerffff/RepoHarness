@@ -6,10 +6,11 @@ Stage 16A 的高层路线，并建立在 Stage 15.2 已经跑通
 `partial_rollout=True` 远端 smoke 的基础上。
 
 Stage 16A 的目标不是扩大训练规模，也不是一次性修完所有 SWE-Bench 评测差距。
-它的目标是把真实 SWE agent 解题所需的 shell 动作空间，以可审计、可过滤、
-可进入 `real_episode` 和 verl 训练链路的方式纳入 RepoHarness，同时把
-Git 历史、hidden verifier、run directory、共享依赖环境和越界路径等泄漏边界
-先封住。
+它的目标是把正式训练主线中模型可见的 shell 类工具协议先固定下来，并建立
+一个安全最小 `execute_bash` 工具面。这个工具面要能进入 `real_episode` 和 verl
+训练链路，但不能把完整产品态 Bash、persistent shell、任意项目命令或任意 Python
+复现脚本一次性放开。Stage 16A 的核心是先封住 Git 历史、hidden verifier、run
+directory、共享依赖环境、隐藏路径、runtime-private 路径和越界路径等泄漏边界。
 
 Stage 16A 通过后，后续 Stage 16B 才继续处理 persistent diagnostic session
 生命周期；Stage 16C 处理公开环境提示；Stage 16D 处理 official verifier
@@ -25,28 +26,40 @@ Stage 16A 必须完成下面几件事：
    第一版默认使用 `execute_bash` 作为正式训练工具名。另一个 worktree 中的
    `diagnostic_shell` 可以作为实现参考或兼容别名，但不能继续以
    “score gap diagnostic” 的语义直接进入正式训练主线。
-2. 让 `execute_bash` 支持真实 SWE 任务常见 shell 用法：
+2. 明确 `execute_bash` 第一版是安全最小 shell 面，而不是完整 persistent shell。
+   它只允许经过 command policy 证明可审计、可脱敏、不会污染共享依赖环境的命令。
+3. 把 Claude Code 式工具分工写入正式训练 scaffold：
 
    ```text
-   多行脚本
-   cd && ...
-   inline Python
-   公开测试命令
+   读文件 -> read_file
+   搜索 -> grep 或 list_files / glob_files
+   编辑 -> edit_file
+   查看补丁 -> git_diff
+   测试和复杂诊断 -> execute_bash 的安全最小子集，后续再接 run_public_tests / persistent shell
+   ```
+
+   因此，Stage 16A 不应为了追平 `diagnostic_shell` 轨迹而直接允许 `cat`、`sed`、
+   `find`、`grep -R`、`cat > /tmp/*.py`、`bash -lc source conda ...`、`pip install`
+   或任意项目命令。
+4. 建立统一 command policy，允许 Stage 16A 内可证明安全的少量命令，例如：
+
+   ```text
+   受限 rg / grep
    git diff
    git status
    git grep
    git ls-files
-   pytest / unittest / 项目公开测试入口
+   pytest / python -m pytest / python -m unittest
+   受限 python -c / 强引用 Python heredoc
    ```
 
-3. 建立统一 command policy，允许当前 worktree 诊断命令，拒绝历史、隐藏、
-   越界和共享环境污染行为。
-4. 确保模型可见工具注册表、provider / verl tool schema、AgentLoop 实际执行注册表
+   同时拒绝历史、隐藏、越界、runtime-private、共享环境污染、环境路径枚举和二次执行行为。
+5. 确保模型可见工具注册表、provider / verl tool schema、AgentLoop 实际执行注册表
    三者一致。
-5. 为 shell 工具输出建立 visibility 和 path leak 检查。模型可以看到公开 stdout /
+6. 为 shell 工具输出建立 visibility 和 path leak 检查。模型可以看到公开 stdout /
    stderr，但不能看到 runtime-private path、run directory、hidden verifier 或
    evaluator-only 字段。
-6. 保留旧 `bash` / `diagnostic_shell` 相关路径的兼容解释，避免破坏另一个 worktree
+7. 保留旧 `bash` / `diagnostic_shell` 相关路径的兼容解释，避免破坏另一个 worktree
    正在进行的 SWE-Bench 测评。
 
 ### 1.2 本阶段不做
@@ -59,6 +72,9 @@ Stage 16A 不做下面这些事情：
 - 不实现 patch hygiene 的最终过滤策略。这个属于 Stage 16E。
 - 不迁移旧 `repo-harness run-task`、`run-batch` 或离线 export 主实现。这个属于 Stage 19.5。
 - 不改变 Stage 15.2 的 fully async / partial rollout 训练语义。
+- 不把 `execute_bash` 扩成完整产品态 Bash。多行脚本、`cd && ...`、任意 `cat` / `sed`、
+  任意 `find`、任意临时脚本、依赖安装、项目构建命令和完整 persistent shell 都必须在
+  Stage 16B 或后续受控工具阶段单独验收。
 - 不把 shell 开成无限制 root shell。它仍然必须受 workspace、timeout、资源限制、
   command policy、visibility scan 和 artifact audit 约束。
 
@@ -76,8 +92,9 @@ docs/agentic_RL/repo_harness_verl_workstreams/19-stage-12-5-execution-plan.md
 docs/agentic_RL/repo_harness_verl_workstreams/33-stage-15-2-execution-plan.md
 ```
 
-其中 Stage 12.5 的共享依赖环境保护边界仍然有效。Stage 16A 允许 inline Python，
-但不能因此重新打开 runtime-private path 泄漏或共享依赖环境写入。
+其中 Stage 12.5 的共享依赖环境保护边界仍然有效。Stage 16A 只允许受限 inline
+Python，用于轻量诊断；文件读取、路径枚举、环境枚举、共享依赖环境探测或运行时私有路径探测，
+必须通过结构化工具或后续受控 launcher 处理，不能通过裸 `python -c` 放开。
 
 ### 2.2 需要参考的另一个 worktree
 
@@ -139,7 +156,8 @@ Stage 16A 负责：
 泄漏防护
 输出脱敏
 可见注册表 / 执行注册表一致性
-最小 shell 执行事实
+安全最小 shell 执行事实
+结构化工具优先原则
 ```
 
 Stage 16B 负责：
@@ -155,24 +173,58 @@ session cleanup
 因此，Stage 16A 可以为 `execute_bash` 记录 session 相关字段，但不能把完整
 persistent session 生命周期作为本阶段通过条件。
 
-### 3.3 inline Python 的安全口径
+### 3.3 与 Claude Code 工具系统的对齐口径
 
-Stage 16A 必须允许合理 inline Python，例如：
+对照 `reference/claude-code-typescript-src`，Claude Code 的工具系统不是只给模型一个
+万能 Bash。它同时暴露 `Read`、`Grep`、`Glob`、`Edit`、`Write` 和 `Bash` 等工具，并在
+`BashTool` 提示词中明确要求：
+
+```text
+Read files: Use Read (NOT cat/head/tail)
+Edit files: Use Edit (NOT sed/awk)
+Write files: Use Write (NOT echo >/cat <<EOF)
+```
+
+`GrepTool` 也明确要求搜索任务使用 `Grep`，不要通过 Bash 调 `grep` 或 `rg`。因此
+RepoHarness 的正式训练工具面也应采用同样分层：
+
+```text
+read_file / grep / list_files 或 glob_files / edit_file / git_diff 是高频动作主路径。
+execute_bash 是少量 shell 诊断和测试入口的安全最小子集。
+persistent diagnostic shell、run_public_tests、python_probe 和 project command routing 是后续阶段。
+```
+
+这里的 `grep` 指的是 harness-owned 结构化搜索工具或 safe grep 工具，不是
+`execute_bash` 中裸露的系统 `grep` 命令。Stage 16A 中允许的裸 `rg` / `grep`
+只是极窄的过渡子集，只能用于公开 workspace-relative 搜索；它不能替代后续主路径里的
+结构化搜索工具，也不能通过 shell 参数自行放开隐藏文件、ignore bypass、递归目录搜索、
+pattern file 或 runtime-private 路径。
+
+这不是为了增加模型学习负担，而是为了减少模型在 shell 语法、权限绕过、路径泄漏和工具误用上的
+训练噪声。执行 agent 在 Stage 16A 中不应通过无限追加 denylist 的方式，把完整 shell
+能力塞进 `execute_bash`。
+
+### 3.4 inline Python 的安全口径
+
+Stage 16A 可以允许轻量 inline Python，例如：
 
 ```bash
+python -c "print('ok')"
+python -c "import os; print(os.getcwd())"
 python - <<'PY'
-from pathlib import Path
-print(Path("src").exists())
+print('$literal')
 PY
 ```
 
-但在共享依赖环境保护模式或 runtime-private path 保护模式下，下列行为必须受控：
+但下列行为不能通过 Stage 16A 的裸 inline Python 放开：
 
 ```text
-打印 sys.executable
 枚举 os.environ
+枚举 sys.path / site.getsitepackages() / sysconfig.get_paths()
 通过 importlib / __import__ 探测环境
 通过 subprocess 间接调用 git history 命令
+读取 open(...) / pathlib.Path(...).read_text()
+枚举 os.listdir / os.walk / Path.rglob
 pip / uv / npm / pnpm / yarn 写共享环境
 读取 .repo_harness_env_overlay
 读取 .repo_harness_runtime
@@ -181,10 +233,45 @@ pip / uv / npm / pnpm / yarn 写共享环境
 
 第一版可以采用保守策略：
 
-1. 普通 workspace shell 中允许 inline Python，但输出必须经过 path redaction。
-2. 共享依赖环境保护模式下，环境探测类 Python 命令必须经过 command policy 或
-   受控 launcher。
+1. 普通 workspace shell 中只允许轻量 inline Python，输出必须经过 path redaction。
+2. 文件读取、路径枚举、环境探测类 Python 命令必须改用结构化工具或后续受控 launcher。
 3. 任何 shell stdout / stderr artifact 都必须统一脱敏。
+
+### 3.5 Stage 16 子阶段边界
+
+当前 Stage 16 被拆成多个可单独验收的阶段。Stage 16A 的实现和测试只能覆盖第一行的范围，
+不能把后续阶段的能力提前伪装成已经完成。
+
+```text
+Stage 16A：
+  固定 execute_bash schema、工具注册表一致性、安全最小 shell allowlist、拒绝语义、
+  stdout / stderr 脱敏、Git history / evaluator-only / runtime-private / shared environment 防泄漏。
+
+Stage 16B：
+  persistent diagnostic session 生命周期，包括 Docker persistent session、
+  local filesystem-persistent session、同题复用、跨题隔离、timeout invalidation 和 cleanup。
+
+Stage 16C：
+  public environment context builder、公开测试入口提示、run_public_tests / run_project_test
+  或 task-declared project command 的受控 routing。
+
+Stage 16D：
+  official verifier、gold patch healthcheck、no-op / empty patch healthcheck、
+  proxy verifier 与 official verifier 差异治理。
+
+Stage 16E：
+  patch hygiene，过滤 patch.txt、*.orig、临时备份、仓库内依赖目录和诊断脚本产物，
+  防止它们进入 final.patch、SFT target、preference pair 或 reward evidence。
+
+Stage 16.5：
+  20 到 30 题代表性 harness 诊断扩展，用真实任务统计权限误拦截、验证环境问题、
+  patch hygiene 问题和 proxy / official verifier disagreement。
+```
+
+因此，Stage 16A 的通过条件是“安全最小 `execute_bash` 可以进入
+`real_episode` 和 verl tool schema，并且防泄漏边界可机器验收”。Stage 16A 通过
+不代表完整 shell、持久 shell、项目公开测试 routing、受控 Python 复现工具或 official verifier
+健康检查已经完成。
 
 ## 4. 实施步骤
 
@@ -303,21 +390,21 @@ overlay_environment_ref
 `shared_dependency_environment_roots`，必须禁用共享依赖环境复用，退回每个 episode
 私有环境或结构化拒绝，不能静默放开写入。
 
-第一版允许：
+第一版允许的是安全最小 shell 面，而不是完整产品态 Bash：
 
 ```text
-git diff
-git status
-git grep
-git ls-files
-pytest / unittest / 项目公开测试命令
-python 脚本和合理 inline Python
-rg / grep / sed / awk / cat / ls / find 在 workspace 内的普通使用
+git diff / git status / git grep / git ls-files 的安全子集
+pytest / python -m pytest / python -m unittest 的 workspace-relative 公开目标
+受限 rg / grep 搜索，不允许隐藏文件、ignore bypass、follow symlink 或递归 grep
+轻量 python -c / 强引用 Python heredoc，只允许 print、字面量、os.getcwd() 等安全诊断
 ```
 
 第一版拒绝：
 
 ```text
+任意 cat / sed / awk / ls / find / shell script / Python script 执行
+多行 shell、未引用命令组合符、动态 shell 展开、管道二次解释器、输入重定向执行
+项目构建脚本、项目 package script、task-declared command 的裸执行
 git log
 git show
 git cat-file
@@ -339,6 +426,7 @@ git tag
 写共享依赖环境
 写 runtime-private overlay
 网络下载或 curl/wget 访问外网，除非任务环境显式允许
+读取或枚举环境变量、sys.path、site package 路径、runtime-private 路径、共享依赖环境路径
 ```
 
 必须包含 false-positive 回归：
@@ -441,9 +529,9 @@ Stage 16A 的 smoke 不要求 20 到 30 题代表性诊断。它只证明链路�
 建议准备 3 到 5 个极小任务：
 
 ```text
-shell_reads_repo_and_runs_pytest
-shell_inline_python_reproduction
-shell_git_diff_after_edit
+execute_bash_runs_safe_pytest
+execute_bash_runs_lightweight_python_diagnostic
+execute_bash_reports_git_diff_after_edit
 shell_blocks_git_history
 shell_blocks_hidden_marker
 ```
@@ -456,7 +544,8 @@ shell_blocks_hidden_marker
 RepoHarnessVerlAgentLoop
 -> real_episode
 -> execute_bash
--> edit / public test / git diff
+-> edit_file 或受控代码修改
+-> pytest / python -m pytest / git diff 等 Stage 16A allowlist 内命令
 -> final verifier 或最小 verifier
 -> TrainingView / AgentLoopOutput
 ```
@@ -489,13 +578,14 @@ visibility、工具执行和 AgentLoop smoke；`test_command_policy.py` 固定�
 ### 5.2 必须覆盖的正例
 
 ```text
-execute_bash 允许多行脚本
-execute_bash 允许 cd && pytest
-execute_bash 允许 inline Python 读取公开 workspace 文件
+execute_bash 允许 python -m pytest / pytest 的 workspace-relative 公开测试目标
+execute_bash 允许轻量 inline Python 诊断，例如 print、os.getcwd、字面量输出
+execute_bash 允许强引用 Python heredoc 中的轻量字面量诊断
 execute_bash 允许 git diff
 execute_bash 允许 git status
 execute_bash 允许 git grep
 execute_bash 允许 git ls-files
+execute_bash 允许受限 rg / grep 搜索公开 workspace-relative 路径
 execute_bash stdout / stderr artifact 进入 recorder 并被脱敏
 provider / verl tool schema 中出现 execute_bash
 ToolRegistry 和 ToolExecutor 都能执行 execute_bash
@@ -515,6 +605,10 @@ git cat-file 被拒绝
 写共享依赖环境被拒绝
 写 .repo_harness_env_overlay 被拒绝
 python subprocess 间接调用 git log 被拒绝或被结构化标记
+rg --hidden / --no-ignore / --unrestricted / -uu / --follow 被拒绝
+rg -g.env / rg --glob .env / grep -R / grep -d recurse 被拒绝
+python open / pathlib read_text / os.listdir / os.walk / Path.rglob 被拒绝
+python sys.path / site.getsitepackages / sysconfig.get_paths 等环境路径枚举被拒绝
 命令输出中的 runtime-private path 被脱敏
 ```
 
@@ -522,7 +616,7 @@ inline Python 负例必须显式覆盖：
 
 ```bash
 python -c "import os; print(os.environ)"
-python -c "import sys; print(sys.executable)"
+python -c "import sys; print(sys.path)"
 python -c "__import__('subprocess').run(['git','log'])"
 python - <<'PY'
 from pathlib import Path
