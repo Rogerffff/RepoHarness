@@ -278,6 +278,9 @@ def evaluate_model_execute_bash_command(
     stripped = command.strip()
     if not stripped:
         return _deny_execute_bash(command, "execute_bash_empty_command", "Command must not be empty.")
+    issue = _execute_bash_dynamic_shell_expansion_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_dynamic_shell_expansion", issue)
     shell_inner_command, shell_wrapper_issue = _execute_bash_shell_wrapper_inner_command(stripped)
     if shell_wrapper_issue is not None:
         return _deny_execute_bash(command, "execute_bash_shell_wrapper_unauditable", shell_wrapper_issue)
@@ -309,9 +312,6 @@ def evaluate_model_execute_bash_command(
             reason_code="execute_bash_shell_wrapper_inner_policy_allow",
             recovery_hint="Keep shell wrappers focused on a single model-visible workspace diagnostic command.",
         )
-    issue = _execute_bash_dynamic_shell_expansion_issue(stripped)
-    if issue is not None:
-        return _deny_execute_bash(command, "execute_bash_dynamic_shell_expansion", issue)
     issue = _execute_bash_forbidden_marker_issue(stripped)
     if issue is not None:
         return _deny_execute_bash(command, "execute_bash_evaluator_only_marker", issue)
