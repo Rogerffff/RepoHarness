@@ -312,6 +312,9 @@ def evaluate_model_execute_bash_command(
             reason_code="execute_bash_shell_wrapper_inner_policy_allow",
             recovery_hint="Keep shell wrappers focused on a single model-visible workspace diagnostic command.",
         )
+    issue = _execute_bash_indirect_execution_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_indirect_script_execution", issue)
     issue = _execute_bash_forbidden_marker_issue(stripped)
     if issue is not None:
         return _deny_execute_bash(command, "execute_bash_evaluator_only_marker", issue)
@@ -559,6 +562,77 @@ def _execute_bash_dynamic_shell_expansion_issue(command: str) -> str | None:
     if _has_unquoted_shell_variable_expansion(command):
         return "execute_bash command uses shell variable expansion, which cannot be audited safely in Stage 16A."
     return None
+
+
+def _execute_bash_indirect_execution_issue(command: str) -> str | None:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return "execute_bash command cannot be parsed well enough to audit indirect execution safely."
+    parts, prefix_issue = _strip_execute_bash_prefix_tokens(parts)
+    if prefix_issue is not None:
+        return prefix_issue
+    if not parts:
+        return "execute_bash command is empty after shell prefix normalization."
+    command_name = _command_token_name(parts[0])
+    if command_name in {"source", "."}:
+        return "execute_bash source and dot-script execution are not auditable in Stage 16A."
+    if command_name == "alias" or re.search(r"(^|[;&]\s*)alias\s+", command):
+        return "execute_bash alias definitions can hide forbidden commands and are not allowed in Stage 16A."
+    if command_name == "function" or re.search(r"(^|[;&]\s*)function\s+", command):
+        return "execute_bash shell function definitions are not allowed in Stage 16A."
+    if re.search(r"(^|[;&]\s*)[A-Za-z_][A-Za-z0-9_]*\s*\(\s*\)\s*\{", command):
+        return "execute_bash shell function definitions are not allowed in Stage 16A."
+    if command_name in {"bash", "sh", "zsh"} and _shell_command_invokes_script(parts[1:]):
+        return "execute_bash cannot run workspace shell scripts until script content provenance is audited."
+    if _path_invokes_workspace_script(parts[0]):
+        return "execute_bash cannot execute workspace scripts directly until script content provenance is audited."
+    if command_name in {"python", "python3"} and _python_command_invokes_workspace_script(parts[1:]):
+        return "execute_bash cannot run workspace Python scripts until script content provenance is audited."
+    return None
+
+
+def _shell_command_invokes_script(args: list[str]) -> bool:
+    for arg in args:
+        if arg == "--":
+            continue
+        if arg.startswith("-"):
+            continue
+        return _path_invokes_workspace_script(arg)
+    return False
+
+
+def _path_invokes_workspace_script(value: str) -> bool:
+    normalized = value.replace("\\", "/")
+    if normalized.startswith(("./", "../")):
+        return True
+    return normalized.endswith((".sh", ".bash", ".zsh", ".py"))
+
+
+def _python_command_invokes_workspace_script(args: list[str]) -> bool:
+    idx = 0
+    while idx < len(args):
+        token = args[idx]
+        if token in {"-c", "-"}:
+            return False
+        if token == "-m":
+            module = args[idx + 1] if idx + 1 < len(args) else ""
+            return module not in {"pytest", "unittest", "pip"}
+        if token in {"-u", "-B", "-S", "-E", "-I", "-O", "-OO"}:
+            idx += 1
+            continue
+        if token.startswith("-W") or token.startswith("-X"):
+            idx += 1
+            continue
+        if token.startswith("-"):
+            idx += 1
+            continue
+        return token.endswith(".py") or "/" in token or token.startswith(("./", "../"))
+    return False
+
+
+def _command_token_name(value: str) -> str:
+    return value if value == "." else Path(value).name
 
 
 def _has_unquoted_shell_variable_expansion(command: str) -> bool:
