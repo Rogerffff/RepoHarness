@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shlex
+import re
 from pathlib import Path
 from typing import ClassVar, Literal
 
@@ -94,6 +95,19 @@ class CommandPolicy(StrictBaseModel):
             configured_test_command=configured_test_command,
             test_feedback_policy=test_feedback_policy,
             policy=self.test,
+        )
+
+    def evaluate_model_execute_bash(
+        self,
+        command: str,
+        *,
+        shared_dependency_environment_expected: bool = False,
+        shared_dependency_environment_roots: list[str] | None = None,
+    ) -> CommandPolicyDecision:
+        return evaluate_model_execute_bash_command(
+            command,
+            shared_dependency_environment_expected=shared_dependency_environment_expected,
+            shared_dependency_environment_roots=shared_dependency_environment_roots,
         )
 
 
@@ -254,6 +268,45 @@ def evaluate_model_bash_command(
     )
 
 
+def evaluate_model_execute_bash_command(
+    command: str,
+    *,
+    shared_dependency_environment_expected: bool = False,
+    shared_dependency_environment_roots: list[str] | None = None,
+) -> CommandPolicyDecision:
+    stripped = command.strip()
+    if not stripped:
+        return _deny_execute_bash(command, "execute_bash_empty_command", "Command must not be empty.")
+    issue = _execute_bash_forbidden_marker_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_evaluator_only_marker", issue)
+    issue = _execute_bash_shared_dependency_issue(
+        stripped,
+        shared_dependency_environment_expected=shared_dependency_environment_expected,
+        shared_dependency_environment_roots=shared_dependency_environment_roots,
+    )
+    if issue is not None:
+        return _deny_execute_bash(command, issue[0], issue[1])
+    issue = _execute_bash_workspace_path_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_workspace_boundary", issue)
+    issue = _execute_bash_git_history_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_git_history_or_metadata", issue)
+    issue = _execute_bash_inline_process_escape_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_inline_process_escape", issue)
+    return CommandPolicyDecision(
+        command=command,
+        command_category="diagnostic",
+        decision="allow",
+        reason="execute_bash command passed Stage 16A leakage and dependency-write guards.",
+        matched_rule="execute_bash_stage16a_policy_allow",
+        reason_code="execute_bash_stage16a_policy_allow",
+        recovery_hint="Keep commands focused on model-visible workspace diagnostics and public task reproduction.",
+    )
+
+
 def classify_bash_command(
     command: str,
     *,
@@ -366,3 +419,206 @@ def _safe_split_or_none(command: str) -> list[str] | None:
         return shlex.split(command)
     except ValueError:
         return None
+
+
+def _deny_execute_bash(command: str, reason_code: str, reason: str) -> CommandPolicyDecision:
+    return CommandPolicyDecision(
+        command=command,
+        command_category="invalid",
+        decision="deny",
+        reason=reason,
+        matched_rule=reason_code,
+        reason_code=reason_code,
+        recovery_hint=(
+            "Use execute_bash only for model-visible repository diagnostics. "
+            "Use read_file, grep, run_tests, and git_diff for safer structured operations when possible."
+        ),
+    )
+
+
+def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
+    lowered = command.lower()
+    forbidden_literals = [
+        "/repo-harness-run",
+        "repo_harness_run",
+        "hidden verifier",
+        "hidden_verifier",
+        "gold patch",
+        "gold_patch",
+        "official verifier",
+        "official_verifier",
+        "fail_to_pass",
+        "pass_to_pass",
+        "swebench_official",
+    ]
+    for marker in forbidden_literals:
+        if marker in lowered:
+            return (
+                "execute_bash command references evaluator-only, hidden verifier, "
+                "gold patch, or RepoHarness run artifact material."
+            )
+    if re.search(r"(?<![a-z0-9])test_patch(?![a-z0-9])", lowered):
+        return "execute_bash command references evaluator-only test_patch material."
+    return None
+
+
+def _execute_bash_workspace_path_issue(command: str) -> str | None:
+    if re.search(r"(^|[\s'\"])\.\.(?:[/\s'\"]|$)", command):
+        return "execute_bash command references a parent-directory path outside the current workspace scope."
+    absolute_path_pattern = re.compile(
+        r"(?<![A-Za-z0-9_.:-])/"
+        r"(?:Users|Volumes|private|tmp|var|home|workspace|repo-harness-run|envs|opt|usr|etc|root|mnt)"
+        r"(?:/|\b)",
+        flags=re.IGNORECASE,
+    )
+    if absolute_path_pattern.search(command):
+        return "execute_bash command references an absolute local path instead of a workspace-relative path."
+    return None
+
+
+def _execute_bash_git_history_issue(command: str) -> str | None:
+    lowered = command.lower()
+    if ".git" in lowered:
+        return "execute_bash command references Git metadata directly."
+    blocked_git_subcommands = {
+        "archive",
+        "bisect",
+        "blame",
+        "branch",
+        "bundle",
+        "cat-file",
+        "checkout",
+        "cherry-pick",
+        "clone",
+        "fetch",
+        "format-patch",
+        "log",
+        "merge-base",
+        "pull",
+        "push",
+        "reflog",
+        "remote",
+        "reset",
+        "rev-list",
+        "show",
+        "submodule",
+        "switch",
+        "tag",
+    }
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        parts = []
+    for idx, part in enumerate(parts):
+        if Path(part).name != "git":
+            continue
+        subcommand = _git_subcommand_after_global_options(parts[idx + 1 :])
+        if subcommand in blocked_git_subcommands:
+            return "execute_bash command attempts to inspect or manipulate Git history."
+    for sequence in _python_literal_git_sequences(command):
+        subcommand = _git_subcommand_after_global_options(sequence[1:])
+        if subcommand in blocked_git_subcommands:
+            return "execute_bash inline code attempts to inspect or manipulate Git history."
+    return None
+
+
+def _execute_bash_inline_process_escape_issue(command: str) -> str | None:
+    lowered = command.lower()
+    risky_markers = [
+        "subprocess",
+        "os.system",
+        ".popen",
+        "popen(",
+        "exec(",
+        "eval(",
+    ]
+    if any(marker in lowered for marker in risky_markers):
+        return (
+            "execute_bash inline Python attempts to spawn subprocesses or execute dynamically "
+            "constructed code; Stage 16A requires a controlled launcher before allowing that."
+        )
+    if re.search(r"['\"]g['\"]\s*\+\s*['\"]it['\"]", command, flags=re.IGNORECASE):
+        return "execute_bash inline Python dynamically constructs a git command."
+    return None
+
+
+def _execute_bash_shared_dependency_issue(
+    command: str,
+    *,
+    shared_dependency_environment_expected: bool,
+    shared_dependency_environment_roots: list[str] | None,
+) -> tuple[str, str] | None:
+    lowered = command.lower()
+    write_patterns = [
+        "pip install",
+        "pip uninstall",
+        "python -m pip install",
+        "python -m pip uninstall",
+        "uv pip install",
+        "uv pip uninstall",
+        "npm install",
+        "npm ci",
+        "pnpm install",
+        "yarn add",
+        "yarn install",
+    ]
+    if any(pattern in lowered for pattern in write_patterns):
+        return (
+            "execute_bash_shared_dependency_write_guard",
+            "execute_bash command attempts to install or mutate dependencies from a model-visible shell.",
+        )
+    if shared_dependency_environment_expected and not shared_dependency_environment_roots:
+        return (
+            "execute_bash_shared_dependency_roots_missing",
+            (
+                "execute_bash is disabled for shared dependency environment episodes unless "
+                "runtime-only shared_dependency_environment_roots are available."
+            ),
+        )
+    for root in shared_dependency_environment_roots or []:
+        normalized_root = root.strip()
+        if normalized_root and normalized_root in command:
+            return (
+                "execute_bash_shared_dependency_root_access",
+                "execute_bash command references a runtime-only shared dependency environment path.",
+            )
+    return None
+
+
+def _git_subcommand_after_global_options(parts: list[str]) -> str | None:
+    option_with_value = {
+        "-C",
+        "-c",
+        "--config-env",
+        "--exec-path",
+        "--git-dir",
+        "--namespace",
+        "--work-tree",
+    }
+    idx = 0
+    while idx < len(parts):
+        token = parts[idx]
+        if token == "--":
+            idx += 1
+            continue
+        if token in option_with_value:
+            idx += 2
+            continue
+        if any(token.startswith(prefix + "=") for prefix in option_with_value if prefix.startswith("--")):
+            idx += 1
+            continue
+        if token.startswith("-"):
+            idx += 1
+            continue
+        return token
+    return None
+
+
+def _python_literal_git_sequences(command: str) -> list[list[str]]:
+    matches = re.findall(r"\[([^\]]*['\"]git['\"][^\]]*)\]", command, flags=re.IGNORECASE | re.DOTALL)
+    sequences: list[list[str]] = []
+    for match in matches:
+        literals = re.findall(r"['\"]([^'\"]+)['\"]", match)
+        if literals and Path(literals[0]).name == "git":
+            sequences.append(literals)
+    return sequences

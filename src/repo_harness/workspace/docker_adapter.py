@@ -74,6 +74,7 @@ SEMANTICS_TO_PHASE = {
     "agent_tool_search": "agent_tool",
     "agent_tool_file_discovery": "agent_tool",
     "bash_diagnostic": "agent_tool",
+    "execute_bash": "agent_tool",
     "git_diff": "agent_tool",
     "run_tests": "run_tests",
     "verifier_feedback": "run_tests",

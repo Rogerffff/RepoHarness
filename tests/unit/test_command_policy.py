@@ -7,6 +7,7 @@ from repo_harness.tasks.command_policy import (
     CommandPolicy,
     TestCommandPolicy,
     evaluate_model_bash_command,
+    evaluate_model_execute_bash_command,
     is_recognized_test_command,
     validate_setup_command,
     validate_test_command,
@@ -104,3 +105,56 @@ def test_unittest_is_recognized_as_test_command_for_policy_gate():
     assert decision.command_category == "public_test"
     assert decision.reason_code == "denied_by_final_only_feedback_policy"
     assert decision.safe_argv == ["python", "-m", "unittest", "tests.test_example"]
+
+
+def test_execute_bash_policy_allows_current_worktree_diagnostics_without_false_positive():
+    commands = [
+        "bash -lc 'python -m pytest -q lib/matplotlib/tests/test_patches.py'",
+        "git status --short",
+        "git diff -- src/pkg.py",
+        "git grep InvalidURL",
+        "git ls-files",
+    ]
+
+    for command in commands:
+        decision = evaluate_model_execute_bash_command(command)
+        assert decision.decision == "allow", command
+
+
+@pytest.mark.parametrize(
+    ("command", "reason_code"),
+    [
+        ("cat /repo-harness-run/task.yaml", "execute_bash_evaluator_only_marker"),
+        ("cat gold_patch.diff", "execute_bash_evaluator_only_marker"),
+        ("git log --oneline --all", "execute_bash_git_history_or_metadata"),
+        ("git -C . log --oneline --all", "execute_bash_git_history_or_metadata"),
+        ("git --no-pager log --oneline --all", "execute_bash_git_history_or_metadata"),
+        ("python -c \"import subprocess; subprocess.run(['git', 'log'])\"", "execute_bash_git_history_or_metadata"),
+        ("python -c \"import subprocess; subprocess.run(['git', '-C', '.', 'log'])\"", "execute_bash_git_history_or_metadata"),
+        ("python -c \"import subprocess; subprocess.run(('git', 'log'))\"", "execute_bash_inline_process_escape"),
+        ("python -c \"import subprocess; subprocess.run(['g'+'it', 'log'])\"", "execute_bash_inline_process_escape"),
+        ("python -m pip install requests", "execute_bash_shared_dependency_write_guard"),
+        ("python -c \"from pathlib import Path; Path('/envs/repoA').write_text('x')\"", "execute_bash_shared_dependency_root_access"),
+        ("cat /etc/passwd", "execute_bash_workspace_boundary"),
+        ("cd .. && pytest -q", "execute_bash_workspace_boundary"),
+    ],
+)
+def test_execute_bash_policy_rejects_hidden_history_and_dependency_writes(command: str, reason_code: str):
+    decision = evaluate_model_execute_bash_command(
+        command,
+        shared_dependency_environment_roots=["/envs/repoA"],
+    )
+
+    assert decision.decision == "deny"
+    assert decision.reason_code == reason_code
+
+
+def test_execute_bash_policy_fails_closed_when_shared_environment_roots_missing():
+    decision = evaluate_model_execute_bash_command(
+        "python -c \"print('ok')\"",
+        shared_dependency_environment_expected=True,
+        shared_dependency_environment_roots=None,
+    )
+
+    assert decision.decision == "deny"
+    assert decision.reason_code == "execute_bash_shared_dependency_roots_missing"

@@ -17,6 +17,19 @@ PATCH_FOCUSED_REACT_TOOL_ORDER = [
     "run_tests",
     "git_diff",
 ]
+PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER = [
+    "list_files",
+    "glob_files",
+    "read_file",
+    "read_tool_result_artifact",
+    "grep",
+    "symbol_search",
+    "update_working_state",
+    "edit_file",
+    "execute_bash",
+    "run_tests",
+    "git_diff",
+]
 
 
 class PatchFocusedReactScaffold(ScaffoldDefinition):
@@ -53,5 +66,30 @@ def build_patch_focused_react_scaffold() -> PatchFocusedReactScaffold:
         allows_final_answer_without_tool=True,
         allows_feedback_verifier_repair=True,
         allowed_tools=list(PATCH_FOCUSED_REACT_TOOL_ORDER),
+        initial_phase="patch",
+    )
+
+
+def build_patch_focused_react_execute_bash_scaffold() -> PatchFocusedReactScaffold:
+    return PatchFocusedReactScaffold(
+        scaffold_id="patch_focused_react_execute_bash",
+        scaffold_version="repo_harness_patch_focused_react_execute_bash_stage16a_v0",
+        prompt_fragment=(
+            build_patch_focused_react_scaffold().prompt_fragment
+            + " This variant exposes execute_bash for model-visible repository diagnostics "
+            "that need shell semantics, such as public reproduction commands or short inline "
+            "Python probes. Use execute_bash only inside the workspace, keep observations "
+            "focused, and never inspect hidden verifier material, gold patches, Git history, "
+            "RepoHarness run artifacts, dependency environment internals, credentials, or "
+            "runtime-private paths."
+        ),
+        allowed_tools_policy="repo_harness_patch_focused_react_execute_bash_allowed_tools_stage16a_v0",
+        phase_transition_policy="repo_harness_patch_focused_react_single_phase_v0",
+        default_stop_policy="repo_harness_patch_focused_react_stop_policy_v0",
+        default_test_feedback_policy=TestFeedbackPolicy.structured_public_feedback,
+        default_feedback_tests_passed_policy=FeedbackTestsPassedPolicy.require_model_final,
+        allows_final_answer_without_tool=True,
+        allows_feedback_verifier_repair=True,
+        allowed_tools=list(PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER),
         initial_phase="patch",
     )

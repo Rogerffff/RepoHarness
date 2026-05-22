@@ -133,6 +133,59 @@ class PermissionSystem:
                     timeout_sec=_timeout_from_args(normalized_arguments),
                 )
 
+        if effective_tool_name == "execute_bash":
+            policy_decision = str(normalized_arguments.get("policy_decision") or "")
+            if policy_decision == "deny":
+                return self._decision(
+                    tool_call_id=tool_call_id,
+                    requested_tool_name=requested_tool_name,
+                    effective_tool_name=effective_tool_name,
+                    permission_context=permission_context,
+                    requested_arguments=requested_arguments,
+                    normalized_arguments=normalized_arguments,
+                    decision="deny",
+                    reason=str(normalized_arguments.get("recovery_hint") or "execute_bash command denied."),
+                    matched_rule=str(normalized_arguments.get("reason_code") or "execute_bash_denied"),
+                    resolved_paths=resolved_paths,
+                    command_category=str(normalized_arguments.get("command_category") or "diagnostic"),
+                    requested_cwd=str(requested_cwd) if requested_cwd is not None else None,
+                    effective_cwd=effective_cwd,
+                    policy_decision=policy_decision,
+                    reason_code=str(normalized_arguments.get("reason_code") or "execute_bash_denied"),
+                    recovery_hint=str(normalized_arguments.get("recovery_hint") or ""),
+                    timeout_sec=_timeout_from_args(normalized_arguments),
+                    shell_execution=True,
+                )
+            backend = str(getattr(workspace_facade, "backend", ""))
+            if not (
+                normalized_arguments.get("execute_bash_workspace_isolation_verified") is True
+                or normalized_arguments.get("allow_unisolated_local_execute_bash_for_tests") is True
+            ):
+                return self._decision(
+                    tool_call_id=tool_call_id,
+                    requested_tool_name=requested_tool_name,
+                    effective_tool_name=effective_tool_name,
+                    permission_context=permission_context,
+                    requested_arguments=requested_arguments,
+                    normalized_arguments=normalized_arguments,
+                    decision="deny",
+                    reason=(
+                        "execute_bash requires a workspace-only isolated execution backend in Stage 16A; "
+                        "ordinary local_process and Docker run-directory mounts are not safe for "
+                        "model-visible shell commands."
+                    ),
+                    matched_rule="execute_bash_requires_workspace_only_execution_backend",
+                    resolved_paths=resolved_paths,
+                    command_category=str(normalized_arguments.get("command_category") or "diagnostic"),
+                    requested_cwd=str(requested_cwd) if requested_cwd is not None else None,
+                    effective_cwd=effective_cwd,
+                    policy_decision="deny",
+                    reason_code="execute_bash_requires_workspace_only_execution_backend",
+                    recovery_hint=str(normalized_arguments.get("recovery_hint") or ""),
+                    timeout_sec=_timeout_from_args(normalized_arguments),
+                    shell_execution=True,
+                )
+
         read_only = bool(getattr(tool_definition, "is_read_only", False))
         if permission_context.mode == "plan" and not read_only:
             return self._decision(
@@ -198,12 +251,14 @@ class PermissionSystem:
             effective_cwd=effective_cwd,
             policy_decision=(
                 str(normalized_arguments.get("policy_decision"))
-                if effective_tool_name == "bash" and normalized_arguments.get("policy_decision") is not None
+                if effective_tool_name in {"bash", "execute_bash"}
+                and normalized_arguments.get("policy_decision") is not None
                 else None
             ),
             reason_code=(
                 str(normalized_arguments.get("reason_code"))
-                if effective_tool_name == "bash" and normalized_arguments.get("reason_code") is not None
+                if effective_tool_name in {"bash", "execute_bash"}
+                and normalized_arguments.get("reason_code") is not None
                 else None
             ),
             safe_argv=(
@@ -213,14 +268,16 @@ class PermissionSystem:
             ),
             recovery_hint=(
                 str(normalized_arguments.get("recovery_hint"))
-                if effective_tool_name == "bash" and normalized_arguments.get("recovery_hint") is not None
+                if effective_tool_name in {"bash", "execute_bash"}
+                and normalized_arguments.get("recovery_hint") is not None
                 else None
             ),
             timeout_sec=(
                 _timeout_from_args(normalized_arguments)
-                if effective_tool_name == "bash"
+                if effective_tool_name in {"bash", "execute_bash"}
                 else None
             ),
+            shell_execution=effective_tool_name == "execute_bash",
         )
 
     def _decision(
@@ -244,6 +301,7 @@ class PermissionSystem:
         safe_argv: list[str] | None = None,
         recovery_hint: str | None = None,
         timeout_sec: int | None = None,
+        shell_execution: bool = False,
         requires_user_input: bool = False,
         non_interactive_resolution: str | None = None,
     ) -> PermissionDecision:
@@ -268,7 +326,7 @@ class PermissionSystem:
             safe_argv=safe_argv,
             recovery_hint=recovery_hint,
             timeout_sec=timeout_sec,
-            shell_execution=False,
+            shell_execution=shell_execution,
             requires_user_input=requires_user_input,
             non_interactive_resolution=non_interactive_resolution,
         )
@@ -284,6 +342,7 @@ def _path_fields(tool_name: str) -> list[str]:
         "edit_file": ["path"],
         "create_file": ["path"],
         "bash": ["cwd"],
+        "execute_bash": ["cwd"],
     }
     return fields.get(tool_name, [])
 
@@ -617,7 +676,7 @@ def _validate_ls_command(
 
 
 def _command_category(tool_name: str) -> str | None:
-    if tool_name == "bash":
+    if tool_name in {"bash", "execute_bash"}:
         return "diagnostic"
     if tool_name == "run_tests":
         return "test"

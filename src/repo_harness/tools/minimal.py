@@ -7,6 +7,7 @@ import hashlib
 import difflib
 import re
 import shlex
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
@@ -21,7 +22,7 @@ from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.errors import WorkspaceError
 from repo_harness.permissions import PermissionContext, PermissionDecision, PermissionSystem
 from repo_harness.schema_base import stable_hash
-from repo_harness.tasks.command_policy import evaluate_model_bash_command
+from repo_harness.tasks.command_policy import evaluate_model_bash_command, evaluate_model_execute_bash_command
 from repo_harness.tools.symbol_index import (
     SUPPORTED_SYMBOL_KINDS,
     SYMBOL_INDEX_POLICY_VERSION,
@@ -378,6 +379,8 @@ class ToolExecutor:
                 return self._create_file(tool_call, normalized, context)
             if normalized.effective_tool_name == "bash":
                 return self._bash(tool_call, normalized, context)
+            if normalized.effective_tool_name == "execute_bash":
+                return self._execute_bash(tool_call, normalized, context)
             if normalized.effective_tool_name == "run_tests":
                 return self._run_tests(tool_call, normalized, context)
             if normalized.effective_tool_name == "git_diff":
@@ -546,6 +549,48 @@ class ToolExecutor:
             else:
                 effective_args = dict(normalized_args)
                 effective_args["effective_cwd"] = effective_cwd
+        elif requested == "execute_bash":
+            command = str(args["command"]).strip()
+            cwd = str(args.get("cwd", "."))
+            requested_timeout = int(args.get("timeout_sec", 120))
+            timeout = _clamp_command_timeout(requested_timeout, context)
+            shared_dependency_environment_expected = bool(
+                getattr(context.workspace_adapter, "block_shared_environment_writes", False)
+            )
+            shared_dependency_environment_roots = _shared_dependency_environment_roots(context)
+            command_policy_decision = evaluate_model_execute_bash_command(
+                command,
+                shared_dependency_environment_expected=shared_dependency_environment_expected,
+                shared_dependency_environment_roots=shared_dependency_environment_roots,
+            )
+            requested_cwd = cwd
+            normalized_args = {
+                "command": command,
+                "cwd": cwd,
+                "timeout_sec": timeout,
+                "command_policy_decision": command_policy_decision.model_dump(mode="json"),
+                "policy_decision": command_policy_decision.decision,
+                "command_category": command_policy_decision.command_category,
+                "reason_code": command_policy_decision.reason_code or command_policy_decision.matched_rule,
+                "recovery_hint": command_policy_decision.recovery_hint,
+                "shell_execution": True,
+                "shared_dependency_environment_expected": shared_dependency_environment_expected,
+                "shared_dependency_environment_roots_present": bool(shared_dependency_environment_roots),
+                "allow_unisolated_local_execute_bash_for_tests": bool(
+                    (getattr(context.run_workspace.dependency_state, "metadata", {}) or {}).get(
+                        "allow_unisolated_local_execute_bash_for_tests"
+                    )
+                ),
+                "execute_bash_workspace_isolation_verified": bool(
+                    (getattr(context.run_workspace.dependency_state, "metadata", {}) or {}).get(
+                        "execute_bash_workspace_isolation_verified"
+                    )
+                ),
+            }
+            if timeout != requested_timeout:
+                normalized_args["requested_timeout_sec"] = requested_timeout
+                normalized_args["timeout_clamped_to_sec"] = timeout
+            effective_args = dict(normalized_args)
         elif requested == "git_diff":
             normalized_args = {}
             if "path" in args:
@@ -2176,6 +2221,119 @@ class ToolExecutor:
             },
         )
 
+    def _execute_bash(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        command = str(normalized.normalized_arguments["command"])
+        cwd_request = str(normalized.normalized_arguments["cwd"])
+        policy_decision = normalized.normalized_arguments.get("policy_decision")
+        if policy_decision == "deny":
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=str(normalized.normalized_arguments.get("recovery_hint") or "execute_bash command denied."),
+                error_type=str(normalized.normalized_arguments.get("reason_code") or "execute_bash_denied"),
+                typed={
+                    "policy_decision": policy_decision,
+                    "command_category": normalized.normalized_arguments.get("command_category"),
+                    "reason_code": normalized.normalized_arguments.get("reason_code"),
+                    "recovery_hint": normalized.normalized_arguments.get("recovery_hint"),
+                    "shell_execution": True,
+                    "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                },
+            )
+        if bool(normalized.normalized_arguments.get("shared_dependency_environment_expected")):
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=(
+                    "execute_bash is disabled for shared dependency environment episodes until "
+                    "a controlled shell launcher can enforce read-only shared dependencies."
+                ),
+                error_type="execute_bash_shared_environment_requires_controlled_launcher",
+                typed={
+                    "policy_decision": "deny",
+                    "command_category": "diagnostic",
+                    "reason_code": "execute_bash_shared_environment_requires_controlled_launcher",
+                    "shell_execution": True,
+                    "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                    "shared_dependency_environment_expected": True,
+                },
+            )
+        local_denial = _execute_bash_local_isolation_denial(context)
+        if local_denial is not None:
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=local_denial["message"],
+                error_type=local_denial["error_type"],
+                typed={
+                    "policy_decision": "deny",
+                    "command_category": "diagnostic",
+                    "reason_code": local_denial["error_type"],
+                    "shell_execution": True,
+                    "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                    "workspace_backend": str(getattr(context.workspace_adapter, "backend", "unknown")),
+                    "execution_mode": context.run_workspace.execution_mode,
+                },
+            )
+        cwd = _resolve_execute_bash_cwd(context, cwd_request)
+        result = context.workspace_adapter.run_command(
+            cwd,
+            command,
+            timeout_sec=float(normalized.normalized_arguments["timeout_sec"]),
+            recorder=context.recorder,
+            command_semantics="execute_bash",
+            allow_shell=True,
+            artifact_metadata={
+                "policy_decision": policy_decision,
+                "command_category": normalized.normalized_arguments.get("command_category"),
+                "reason_code": normalized.normalized_arguments.get("reason_code"),
+                "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                "shell_execution": True,
+                "model_visible_observation": "redacted_truncated",
+                "raw_command_artifact_visibility": "runtime_private_or_restricted_audit",
+                "run_dir_mount_enabled": False,
+            },
+        )
+        status = "timeout" if result.timeout else "ok"
+        sanitized_stdout = _sanitize_execute_bash_output(result.stdout_preview, context)
+        sanitized_stderr = _sanitize_execute_bash_output(result.stderr_preview, context)
+        command_preview = _preview(
+            _command_preview(sanitized_stdout, sanitized_stderr),
+            context.output_limits.max_tool_output_chars,
+        )
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status=status,
+            content=command_preview,
+            error_type="command_timeout" if result.timeout else None,
+            artifact_refs=[],
+            typed={
+                "stdout_preview": sanitized_stdout,
+                "stderr_preview": sanitized_stderr,
+                "exit_code": result.exit_code,
+                "command_semantics": result.command_semantics,
+                "exit_code_interpretation": result.exit_code_interpretation,
+                "policy_decision": policy_decision,
+                "command_category": normalized.normalized_arguments.get("command_category"),
+                "reason_code": normalized.normalized_arguments.get("reason_code"),
+                "recovery_hint": normalized.normalized_arguments.get("recovery_hint"),
+                "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                "shell_execution": True,
+                "model_visible_observation": "redacted_truncated",
+                "raw_command_artifact_visibility": "runtime_private_or_restricted_audit",
+                "raw_command_artifact_returned_to_model": False,
+                "run_dir_mount_enabled": False,
+            },
+        )
     def _run_tests(
         self,
         tool_call: ToolCall,
@@ -2733,6 +2891,46 @@ def build_tool(name: str) -> ToolDefinition:
             output_schema={"type": "object", "properties": {"stdout_preview": {"type": "string"}}},
             max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
         ),
+        "execute_bash": ToolDefinition(
+            name="execute_bash",
+            tool_version="repo_harness_execute_bash_stage16a_v0",
+            model_visible_description=(
+                "Run a bounded model-visible shell command inside the repository workspace. "
+                "This is a broader diagnostic tool than bash: shell composition, inline Python, "
+                "and public repository test commands are allowed when they stay inside the "
+                "workspace and do not reference hidden verifier, gold patch, Git history, "
+                "RepoHarness run artifacts, or shared dependency environment paths. cwd must "
+                "be workspace-relative."
+            ),
+            model_visible_prompt=(
+                "Use execute_bash for repository diagnostics that need shell semantics, such as "
+                "multi-step public reproduction commands or short inline Python probes. Keep output "
+                "focused and avoid environment inspection, hidden verifier material, Git history, "
+                "dependency installation, network access, and runtime-private paths. Prefer read_file, "
+                "grep, run_tests, and git_diff when those structured tools are enough."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["command"],
+                "properties": {
+                    "command": {"type": "string", "description": "Shell command executed in the workspace."},
+                    "cwd": {"type": "string", "description": "Optional workspace-relative working directory."},
+                    "timeout_sec": {"type": "integer", "description": "Optional command timeout in seconds."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "stdout_preview": {"type": "string"},
+                    "stderr_preview": {"type": "string"},
+                    "exit_code": {"type": "integer"},
+                    "model_visible_observation": {"type": "string"},
+                    "raw_command_artifact_visibility": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+        ),
         "run_tests": ToolDefinition(
             name="run_tests",
             tool_version="repo_harness_run_tests_v0",
@@ -2831,6 +3029,9 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "bash.command": (str, True),
         "bash.cwd": (str, False),
         "bash.timeout_sec": (int, False),
+        "execute_bash.command": (str, True),
+        "execute_bash.cwd": (str, False),
+        "execute_bash.timeout_sec": (int, False),
         "git_diff.path": (str, False),
     }
     if tool_name == "run_tests" and args:
@@ -3117,7 +3318,7 @@ def _tool_result(
 
 
 def _is_permission_workspace_error(message: str) -> bool:
-    return "拒绝" in message or "边界" in message or "敏感路径" in message
+    return "拒绝" in message or "边界" in message or "敏感路径" in message or "execute_bash cwd" in message
 
 
 def _clamp_command_timeout(requested_timeout: int, context: ToolExecutionContext) -> int:
@@ -3133,6 +3334,70 @@ def _resolve_cwd(context: ToolExecutionContext, cwd: str) -> str:
         cwd,
         must_exist=True,
     ).as_posix()
+
+
+def _resolve_execute_bash_cwd(context: ToolExecutionContext, cwd: str) -> str:
+    raw = PurePosixPath(cwd.replace("\\", "/"))
+    if Path(cwd).is_absolute() or ".." in raw.parts:
+        raise WorkspaceError("execute_bash cwd must be a workspace-relative path without '..'.")
+    if _is_model_hidden_tool_path(cwd):
+        raise WorkspaceError("execute_bash cwd points at a model-hidden runtime or sensitive path.")
+    resolved = context.workspace_adapter.resolve_workspace_path(
+        context.run_workspace.workspace_path,
+        cwd,
+        must_exist=True,
+    )
+    if not resolved.is_dir():
+        raise WorkspaceError("execute_bash cwd must resolve to a directory inside the workspace.")
+    return resolved.as_posix()
+
+
+def _shared_dependency_environment_roots(context: ToolExecutionContext) -> list[str] | None:
+    metadata = getattr(context.run_workspace.dependency_state, "metadata", {}) or {}
+    candidates = (
+        metadata.get("shared_dependency_environment_roots")
+        or metadata.get("shared_dependency_paths")
+        or metadata.get("shared_environment_roots")
+    )
+    if isinstance(candidates, list) and all(isinstance(item, str) for item in candidates):
+        return list(candidates)
+    return None
+
+
+def _execute_bash_local_isolation_denial(context: ToolExecutionContext) -> dict[str, str] | None:
+    metadata = getattr(context.run_workspace.dependency_state, "metadata", {}) or {}
+    if metadata.get("execute_bash_workspace_isolation_verified") is True:
+        return None
+    if metadata.get("allow_unisolated_local_execute_bash_for_tests") is True:
+        return None
+    return {
+        "error_type": "execute_bash_requires_workspace_only_execution_backend",
+        "message": (
+            "execute_bash requires a workspace-only isolated execution backend in Stage 16A. "
+            "Ordinary local_process and Docker run-directory mounts are denied because shell code "
+            "can otherwise read run-directory, verifier, or host files outside the episode workspace."
+        ),
+    }
+
+
+def _sanitize_execute_bash_output(text: str, context: ToolExecutionContext) -> str:
+    if not text:
+        return ""
+    redacted = text
+    replacements = {
+        str(Path(context.run_workspace.workspace_path).resolve()): "[repo_harness_workspace_path]",
+        str(Path(context.recorder.run_dir).resolve()): "[repo_harness_run_dir]",
+        str(Path.home()): "[repo_harness_home]",
+        str(Path(sys.executable).resolve()): "[repo_harness_python_executable]",
+        "/repo-harness-run": "[repo_harness_run_mount]",
+    }
+    for source, replacement in sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True):
+        if source:
+            redacted = redacted.replace(source, replacement)
+    redacted = re.sub(r"/[^\s:'\"]*\.repo_harness_env_overlay[^\s:'\"]*", "[repo_harness_hidden_runtime_path]", redacted)
+    redacted = re.sub(r"/[^\s:'\"]*\.repo_harness_runtime[^\s:'\"]*", "[repo_harness_hidden_runtime_path]", redacted)
+    redacted = re.sub(r"/[^\s:'\"]*/\.venv/[^\s:'\"]*", "[repo_harness_python_environment_path]", redacted)
+    return redacted
 
 
 def _slice_text(content: str, start_line: Any, end_line: Any) -> str:

@@ -7,8 +7,10 @@ from repo_harness.scaffolds.policies import (
     tool_registry_for_allowed_tools,
 )
 from repo_harness.scaffolds.patch_focused_react import (
+    PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER,
     PATCH_FOCUSED_REACT_TOOL_ORDER,
     PatchFocusedReactScaffold,
+    build_patch_focused_react_execute_bash_scaffold,
     build_patch_focused_react_scaffold,
 )
 from repo_harness.scaffolds.planner_coder_verifier import (
@@ -27,11 +29,13 @@ __all__ = [
     "ScaffoldDefinition",
     "ScaffoldRegistry",
     "PATCH_FOCUSED_REACT_TOOL_ORDER",
+    "PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER",
     "PatchFocusedReactScaffold",
     "PlannerCoderVerifierScaffold",
     "SingleShotPatchScaffold",
     "SimpleReactScaffold",
     "build_patch_focused_react_scaffold",
+    "build_patch_focused_react_execute_bash_scaffold",
     "build_planner_coder_verifier_scaffold",
     "build_scaffold",
     "build_single_shot_patch_scaffold",

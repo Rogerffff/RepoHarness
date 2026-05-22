@@ -8,6 +8,7 @@ from repo_harness.config import RunConfig
 from repo_harness.model_client import FakeModelClient
 from repo_harness.run_metadata.tool_snapshot import build_tool_schema_snapshot
 from repo_harness.scaffolds import (
+    PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER,
     PATCH_FOCUSED_REACT_TOOL_ORDER,
     build_scaffold,
     resolve_allowed_tools,
@@ -115,6 +116,20 @@ def test_patch_focused_react_tool_schema_snapshot_excludes_shell_and_file_create
     assert [tool.name for tool in snapshot.tools] == PATCH_FOCUSED_REACT_TOOL_ORDER
     assert "bash" not in snapshot.tool_order
     assert "create_file" not in snapshot.tool_order
+
+
+def test_patch_focused_react_execute_bash_scaffold_declares_stage16a_tool_surface():
+    scaffold = build_scaffold("patch_focused_react_execute_bash")
+
+    assert scaffold.scaffold_id == "patch_focused_react_execute_bash"
+    assert scaffold.allowed_tools == PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER
+    assert "execute_bash" in scaffold.allowed_tools
+    assert "bash" not in scaffold.allowed_tools
+    assert "create_file" not in scaffold.allowed_tools
+    assert "hidden verifier" in scaffold.prompt_fragment
+    registry = tool_registry_for_allowed_tools(PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER)
+    snapshot = build_tool_schema_snapshot(registry)
+    assert "execute_bash" in snapshot.tool_order
 
 
 def test_patch_focused_react_agent_loop_blocks_shell_and_create_file(tmp_path: Path):

@@ -524,7 +524,7 @@ def run_task(
         )
         loop_state = AgentLoop(
             model_client=model,
-            tool_executor=ToolExecutor(),
+            tool_executor=ToolExecutor(registry=allowed_tool_registry),
             scaffold=scaffold,
             allowed_tool_names=allowed_tools,
             test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
