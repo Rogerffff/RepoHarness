@@ -309,6 +309,9 @@ def evaluate_model_execute_bash_command(
             reason_code="execute_bash_shell_wrapper_inner_policy_allow",
             recovery_hint="Keep shell wrappers focused on a single model-visible workspace diagnostic command.",
         )
+    issue = _execute_bash_dynamic_shell_expansion_issue(stripped)
+    if issue is not None:
+        return _deny_execute_bash(command, "execute_bash_dynamic_shell_expansion", issue)
     issue = _execute_bash_forbidden_marker_issue(stripped)
     if issue is not None:
         return _deny_execute_bash(command, "execute_bash_evaluator_only_marker", issue)
@@ -542,6 +545,51 @@ def _looks_like_environment_assignment(value: str) -> bool:
         return False
     name, _ = value.split("=", 1)
     return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
+
+
+def _execute_bash_dynamic_shell_expansion_issue(command: str) -> str | None:
+    if "`" in command:
+        return "execute_bash command uses backtick command substitution, which cannot be audited safely."
+    if "$(" in command:
+        return "execute_bash command uses shell command substitution, which cannot be audited safely."
+    if "${" in command:
+        return "execute_bash command uses shell parameter expansion, which cannot be audited safely."
+    if "$'" in command:
+        return "execute_bash command uses ANSI-C shell quoting, which cannot be audited safely."
+    if _has_unquoted_shell_variable_expansion(command):
+        return "execute_bash command uses shell variable expansion, which cannot be audited safely in Stage 16A."
+    return None
+
+
+def _has_unquoted_shell_variable_expansion(command: str) -> bool:
+    in_single_quote = False
+    in_double_quote = False
+    escaped = False
+    idx = 0
+    while idx < len(command):
+        char = command[idx]
+        if escaped:
+            escaped = False
+            idx += 1
+            continue
+        if char == "\\":
+            escaped = True
+            idx += 1
+            continue
+        if char == "'" and not in_double_quote:
+            in_single_quote = not in_single_quote
+            idx += 1
+            continue
+        if char == '"' and not in_single_quote:
+            in_double_quote = not in_double_quote
+            idx += 1
+            continue
+        if char == "$" and not in_single_quote:
+            next_char = command[idx + 1] if idx + 1 < len(command) else ""
+            if next_char and re.match(r"[A-Za-z_0-9@*#?$!-]", next_char):
+                return True
+        idx += 1
+    return False
 
 
 def _execute_bash_forbidden_marker_issue(command: str) -> str | None:
