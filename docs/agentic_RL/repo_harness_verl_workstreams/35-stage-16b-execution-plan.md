@@ -933,9 +933,9 @@ Stage 16B 实现完成后，子代理必须重点检查：
 15. 使用 diagnostic_shell 的 real_episode 样本是否仍然通过 visibility、reward boundary 和 formal online RL gate。
 ```
 
-## 10. 进入 Stage 16C 的条件
+## 10. 进入 Stage 16B.5 的条件
 
-只有满足下面条件，才进入 Stage 16C：
+Stage 16B 完成后不应直接进入 Stage 16C。原因是正式远端训练还需要确认训练实例可以使用 Docker 作为执行隔离后端。普通 local filesystem-persistent session 只保留为开发和诊断 fallback，不能承担正式训练主隔离边界。只有满足下面条件，才进入 Stage 16B.5；Stage 16B.5 将专门验收低成本单卡远端 GPU 实例上的 Docker-capable training backend。
 
 ```text
 Local filesystem-persistent session 生命周期通过。
@@ -951,4 +951,17 @@ diagnostic_shell 模型可见 workspace 不暴露 runtime_private、.repo_harnes
 cleanup failed、timeout invalidated、projection sync failed 或 background process uncertain 的样本不能进入 policy loss。
 至少一个 real_episode smoke 使用 diagnostic_shell 完成 final verifier accepted。
 Stage 16A execute_bash 安全最小工具面没有被放宽。
+```
+
+Stage 16B.5 的执行计划必须额外覆盖：
+
+```text
+remote_docker_capable_training_backend profile。
+低成本单卡远端 GPU 实例上的 root 权限、Docker daemon、NVIDIA Container Toolkit、docker run --gpus all 和容器内 nvidia-smi 预检。
+RepoHarness Docker workspace backend 和 Docker diagnostic_shell 远端 smoke。
+Docker container 的 HOME / TMP / cache / workspace mount / run directory 隔离。
+真实路径脱敏，包括 shared virtualenv、远端 workspace、run directory、container mount path 和 runtime_private。
+并发 episode 的容器、workspace、HOME、TMP、cache、artifact manifest 和 final patch 隔离。
+timeout、取消、cleanup 后 container removal 和 background process cleanup。
+至少一个 Docker diagnostic_shell terminal 样本通过 formal online RL gate。
 ```

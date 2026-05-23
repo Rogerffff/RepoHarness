@@ -306,7 +306,8 @@ execute_bash 作为安全最小 shell 面：
   允许少量可审计、可脱敏、不会污染共享环境的诊断命令。
 
 persistent diagnostic shell 作为后续高权限能力：
-  在 Stage 16B 之后，通过 Docker persistent session 或 local filesystem-persistent session 单独验收。
+  在 Stage 16B 先完成协议和基础生命周期；
+  在 Stage 16B.5 再证明远端训练机器可以正常运行 Docker backend。
 
 项目测试和复现能力通过受控入口补齐：
   run_public_tests / run_project_test / python_probe 或 scratch_python / task-declared project command。
@@ -360,11 +361,67 @@ harness-owned 搜索工具。这样可以把路径可见性、隐藏文件过滤
 主要改造：
 
 1. 合入 persistent diagnostic session 的协议和 Docker 实现。
-2. 合入 local filesystem-persistent diagnostic session，用于 Vast.ai 或无法 Docker-in-Docker 的训练路径。
+2. 合入 local filesystem-persistent diagnostic session 的本机开发和测试形态，但默认仍然不能把普通 `local_process` 样本作为正式训练候选。
 3. Docker persistent shell 必须证明同题复用、跨题隔离、timeout 后强制销毁 session、`keep_workspace=True` 时也不能保留活动容器。
 4. local filesystem-persistent shell 必须明确不是完整常驻 shell 进程，只保证同题 `HOME`、`TMPDIR`、cache 和文件系统状态持久。
-5. 远端训练默认可以使用 local filesystem-persistent shell；如果无法证明共享依赖环境只读边界，禁用共享依赖环境复用，而不是禁用 local shell。
+5. Stage 16B 不直接把远端训练环境中的 local filesystem-persistent shell 放入正式训练主线；它只作为开发和诊断 fallback。正式训练主线优先使用可正常运行 Docker 的远端 VM、裸机或完整机器。
 6. `run_dir_mount_enabled=false`、session id、session backend、session cleanup status 必须进入结构化事实。
+
+#### Stage 16B.5：远端 Docker-capable 训练执行后端验证
+
+背景：
+
+前一版计划考虑过在无法 Docker-in-Docker 的远端训练实例上继续加固 remote-local filesystem-persistent profile。经过重新评估，这条路线会把文件系统隔离、进程清理、`HOME` / `TMP` / cache 隔离、并发 episode 隔离、资源限制和网络限制都压到 RepoHarness 自己实现，开发和维护成本过高。正式 SWE agent 训练不应该长期依赖这个方案。
+
+Stage 16B.5 的新目标是：在更适合训练的 GPU 服务商上，优先租用具备完整 root 权限、可以正常运行 Docker 和 NVIDIA Container Toolkit 的 VM、裸机或完整机器，用 Docker 后端承担底层执行隔离。`local_process` 和 local filesystem-persistent session 只保留为开发、诊断和紧急 fallback，默认不能作为正式训练隔离后端。
+
+Stage 16B.5 不需要租用昂贵的多卡训练机器。第一版只需要一台低成本单卡 GPU 机器，验证远端执行后端能力即可。多卡 A100、H100 或 RTX PRO 6000 这类资源应保留给后续 fully async 训练吞吐验证和正式实验。
+
+建议 profile 名称：
+
+```text
+remote_docker_capable_training_backend
+```
+
+Stage 16B.5-A：远端 Docker 能力预检
+
+1. 验证远端实例具有真实 root 权限，可以安装或启动 Docker。
+2. 验证 Docker daemon、NVIDIA Container Toolkit、`docker run --gpus all` 和容器内 `nvidia-smi` 可用。
+3. 验证容器可以设置 `HOME`、`TMPDIR`、cache、workspace mount、资源限制和网络策略。
+4. 验证容器退出、timeout、取消和 cleanup 后没有残留容器、残留进程或跨 episode 可见状态。
+5. 记录 `remote_docker_backend_preflight_passed=true`、GPU 型号、驱动版本、CUDA 版本、Docker 版本、NVIDIA Container Toolkit 版本和镜像 digest。
+
+Stage 16B.5-B：RepoHarness Docker diagnostic session smoke
+
+1. 在远端 Docker-capable 机器上跑通 `RepoHarnessVerlAgentLoop -> real_episode -> Docker workspace backend -> diagnostic_shell -> final verifier -> TrainingView -> AgentLoopOutput`。
+2. 验证 Docker diagnostic session 不挂载真实 run directory，不暴露 hidden verifier、gold patch、runtime-private artifact、共享依赖环境真实路径或宿主敏感路径。
+3. 验证模型在容器内看到的是 workspace-relative 路径；命令输出和工具 typed metadata 继续通过路径脱敏和 visibility gate。
+4. 验证 public source 修改可以被 final verifier、final patch capture、TrainingView 和审计证据看到；临时脚本、`HOME`、`TMP`、cache 和诊断私有文件不会进入 final patch。
+5. 验证至少两个 episode 并发运行时，workspace、container、HOME、TMP、cache、artifact manifest、final patch 和 run directory 不互相污染。
+6. 验证 cleanup、container removal、background process cleanup、projection sync、hidden path guard、shared dependency guard、visibility、token provenance、reward boundary 和 formal online RL gate 全部通过后，样本才可以成为正式训练候选。
+7. 远端 evidence 明确记录 `remote_docker_diagnostic_profile_verified=true`。
+
+本阶段不做：
+
+```text
+不实现 Stage 16C 的公开测试入口。
+不实现官方 verifier healthcheck。
+不实现 fully async 多卡训练吞吐测试。
+不要求租用多卡 A100、H100 或 RTX PRO 6000。
+不继续投入完整 remote local filesystem-persistent training profile。
+不允许把普通 local_process 后端直接标记为训练安全。
+不把 shared dependency environment 变成可写环境。
+```
+
+出口验收：
+
+1. 低成本单卡远端 GPU 实例上通过 Docker 能力预检。
+2. `docker run --gpus all` 和容器内 `nvidia-smi` 成功，且 evidence 记录驱动、CUDA、Docker、NVIDIA Container Toolkit 和镜像 digest。
+3. RepoHarness Docker diagnostic session smoke 跑通至少一个 terminal sample，并通过 formal online RL gate。
+4. 至少两个 episode 并发运行的 Docker 后端隔离测试通过。
+5. 公开 evidence 通过路径泄漏扫描；runtime-private raw log 可以保留真实路径，但不能进入模型可见输出、TrainingView、AgentLoopOutput、DataProto 或公开 summary。
+6. timeout、取消、cleanup failed、container removal failed、projection sync failed、background process uncertain、hidden path guard failed 的样本全部 `invalid_for_training=true`。
+7. 如果远端 Docker 能力预检失败，Stage 16B.5 不能标记完成；可以把该机器作为 local diagnostic fallback，但不能把它作为正式训练执行后端。
 
 #### Stage 16C：公开环境入口和模型行为提示
 
@@ -1235,20 +1292,20 @@ no-op healthcheck unexpectedly resolved
 
 已确认口径：
 
-1. 远端训练由于暂时无法稳定使用 Docker-in-Docker，必须支持 local filesystem-persistent shell。
-2. Docker persistent shell 仍优先用于本机和可 Docker 化评测。
-3. local filesystem-persistent shell 负责同一个 episode 内的可写持久状态，例如 workspace、`HOME`、`TMPDIR`、cache、overlay environment。
+1. 正式远端训练优先租用可以正常运行 Docker 的 VM、裸机或完整机器。
+2. local filesystem-persistent shell 只保留为开发、诊断和紧急 fallback，默认不能作为正式训练执行后端。
+3. Docker persistent shell 负责正式训练中高权限 diagnostic session 的底层隔离。
 4. 跨 episode 复用的共享依赖环境仍然是正确设计方向，但必须只读。
-5. 如果无法证明共享依赖环境只读边界，不应该拒绝 local shell；应该拒绝“共享依赖环境复用模式”，退回每个 episode 私有环境或更保守的运行模式。
+5. 如果无法证明共享依赖环境只读边界，不应该拒绝 Docker backend；应该拒绝“共享依赖环境复用模式”，退回每个 episode 私有环境或更保守的运行模式。
 
 建议：
 
 ```text
-Docker persistent shell 优先用于本机和可 Docker 化评测；
-远端训练默认使用 local filesystem-persistent shell；
+Docker persistent shell 优先用于本机、可 Docker 化评测和正式远端训练；
+Stage 16B.5 验证远端 Docker-capable backend，而不是继续深挖 local_process 隔离；
 共享依赖环境负责快，episode 私有 overlay 负责真实交互和可写持久化；
 模型不能把临时安装、卸载或文件写入跨 episode 共享环境；
-不能证明共享环境只读时，禁用共享环境复用，而不是禁用 local shell。
+不能证明共享环境只读时，禁用共享环境复用，而不是禁用 Docker backend。
 ```
 
 ### 5.9 是否现在冻结 dev / final split
@@ -1306,7 +1363,7 @@ Stage 16A 的执行计划应该明确：
 7. 哪些旧 `run_task` 路径先不动，避免影响现有 SWE-bench 测试。
 8. `run_public_tests`、`python_probe`、task-declared project command 是 Stage 16A 后续需要补的能力，不应通过无限扩大 `execute_bash` allowlist 变相实现。
 
-Stage 16A 通过后，再依次进入 Stage 16B、Stage 16C、Stage 16D、Stage 16E 和 Stage 16.5。Stage 16.5 代表性诊断通过前，不建议扩大正式 RL 训练。因为如果工具动作空间和验证环境还不稳定，后续算法实验会把 harness 噪声误当成算法信号。
+Stage 16A 通过后，再依次进入 Stage 16B、Stage 16B.5、Stage 16C、Stage 16D、Stage 16E 和 Stage 16.5。Stage 16B.5 通过前，不建议扩大正式远端训练；Stage 16.5 代表性诊断通过前，不建议扩大正式 RL 训练。因为如果工具动作空间、远端 Docker 执行后端和验证环境还不稳定，后续算法实验会把 harness 噪声误当成算法信号。
 
 ## 7. 综合复核意见摘要
 
