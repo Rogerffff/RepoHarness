@@ -217,6 +217,7 @@ from repo_harness.pre_verl_failure_injection import (
     DEFAULT_PROVIDER_FAILURE_INJECTION_SCENARIOS,
     run_provider_failure_injection_smoke,
 )
+from repo_harness.evaluation.stage16d_healthcheck import inspect_stage16d_healthcheck
 from repo_harness_verl.stage14_acceptance import inspect_stage14_fully_async_acceptance
 from repo_harness_verl.stage15_acceptance import inspect_stage15_partial_rollout_acceptance
 from repo_harness_verl.stage16b5_acceptance import inspect_stage16b5_docker_backend_acceptance
@@ -1734,6 +1735,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_stage16b5_parser.add_argument("evidence", help="Stage 16B.5 evidence 目录或 tarball。")
     inspect_stage16b5_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
+    inspect_stage16d_parser = subparsers.add_parser(
+        "inspect-stage16d-healthcheck",
+        help="检查 Stage 16D official verifier healthcheck evidence 是否满足本地契约或正式验收条件。",
+    )
+    inspect_stage16d_parser.add_argument("evidence", help="Stage 16D evidence 目录。")
+    inspect_stage16d_parser.add_argument(
+        "--assert-contract-complete",
+        action="store_true",
+        help="要求本地契约、schema、分类和公开泄漏扫描完整通过。",
+    )
+    inspect_stage16d_parser.add_argument(
+        "--assert-official-healthcheck-complete",
+        action="store_true",
+        help="要求真实 official harness gold/no-op healthcheck 完整通过。",
+    )
 
     build_stage14_smoke_kit_parser = subparsers.add_parser(
         "build-stage14-remote-smoke-kit",
@@ -3299,6 +3316,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 16B.5 Docker backend acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage16d-healthcheck":
+        try:
+            print(
+                inspect_stage16d_healthcheck(
+                    args.evidence,
+                    assert_contract_complete=args.assert_contract_complete,
+                    assert_official_healthcheck_complete=args.assert_official_healthcheck_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 16D healthcheck acceptance 检查失败：{exc}\n")
         return 0
     if args.command == "build-stage14-remote-smoke-kit":
         try:
