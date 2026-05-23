@@ -1,0 +1,556 @@
+{
+  "schema_version": "repo_harness_stage16d_0_required_cherrypicks_v0",
+  "created_at": "2026-05-23T15:48:16Z",
+  "source_worktree_label": "evaluation_worktree",
+  "source_worktree_commit": "70547d7b3582876d2814cc065e5a501effcd83fd",
+  "target_worktree_label": "training_worktree",
+  "target_worktree_commit_before": "4711573cf40ff50fabfebe6cdb79518a906b1625",
+  "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+  "source_dirty_status": "dirty",
+  "source_dirty_file_count": 1,
+  "source_dirty_files_sha256": "06ba22a7b570379f5058a19fbe0e49b7f4370e29006ecebeb4d27ad0c06be1d0",
+  "source_dirty_participates_in_claims": false,
+  "decisions": [
+    {
+      "source_commit": "a0cd2fa3a33f7dfd02f075697cb5f99c72057969",
+      "topic": "persistent_diagnostic_sessions",
+      "sync_decision": "already_equivalent",
+      "sync_method": "no_action",
+      "target_files": [
+        "src/repo_harness/workspace/diagnostic_session.py",
+        "src/repo_harness/workspace/docker_adapter.py",
+        "src/repo_harness/tools/minimal.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py",
+        "tests/integration/test_repo_harness_stage16b_docker_diagnostic_session.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/tools/minimal.py",
+        "src/repo_harness/workspace/adapter.py",
+        "src/repo_harness/workspace/docker_adapter.py",
+        "src/repo_harness/workspace/protocol.py",
+        "src/repo_harness/workspace/schemas.py"
+      ],
+      "claimed_fix": "Adds persistent diagnostic shell session lifecycle and tool routing.",
+      "actual_code_evidence": "Training worktree has Stage 16B diagnostic_shell, projection workspace, cleanup facts, and training candidate gating.",
+      "actual_test_evidence": "Stage 16B unit and Docker integration tests cover diagnostic shell lifecycle.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "covered_by_existing_stage16a_16b_16c_or_16b5_contracts",
+      "risk_if_skipped": "skipping a direct port is acceptable because the target worktree already has an equivalent or stricter implementation; the remaining risk is documentation drift.",
+      "risk_if_synced": "re-syncing this item could accidentally replace stricter current behavior with an older evaluation-worktree variant."
+    },
+    {
+      "source_commit": "13437b12d7fff6858cf0f95d8507c205b0e14ece",
+      "topic": "diagnostic_dependency_environment_read_only",
+      "sync_decision": "already_equivalent",
+      "sync_method": "no_action",
+      "target_files": [
+        "src/repo_harness/workspace/diagnostic_session.py",
+        "src/repo_harness/tasks/command_policy.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py",
+        "tests/unit/test_command_policy.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/docker_adapter.py",
+        "src/repo_harness/tools/minimal.py",
+        "src/repo_harness/context/builder.py"
+      ],
+      "claimed_fix": "Keeps diagnostic dependency environment read-only and visible as a protected fact.",
+      "actual_code_evidence": "Training worktree rejects dependency mutation commands in execute_bash and diagnostic_shell; shared environment mutation is diagnostic-only.",
+      "actual_test_evidence": "Stage 16A command policy tests and Stage 16B diagnostic shell tests cover dependency mutation rejection.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "covered_by_existing_stage16a_16b_16c_or_16b5_contracts",
+      "risk_if_skipped": "skipping a direct port is acceptable because the target worktree already has an equivalent or stricter implementation; the remaining risk is documentation drift.",
+      "risk_if_synced": "re-syncing this item could accidentally replace stricter current behavior with an older evaluation-worktree variant."
+    },
+    {
+      "source_commit": "368ad041ae2d32a13f00cd3003ceb77bc6fee50d",
+      "topic": "diagnostic_timeout_and_user_site",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/workspace/docker_adapter.py",
+        "src/repo_harness/workspace/adapter.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/docker_adapter.py",
+        "src/repo_harness/context/builder.py"
+      ],
+      "claimed_fix": "Surfaces diagnostic timeout and disables user-site leakage in diagnostic execution.",
+      "actual_code_evidence": "Training worktree has structured timeout invalidation; user-site isolation remains sync_recommended for later remote profile hardening.",
+      "actual_test_evidence": "Stage 16B timeout tests cover invalidation and diagnostic-only sample destination.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "48a66da37adecbb8703ed2cafc98bce5239ae508",
+      "topic": "diagnostic_dependency_mutation_guard",
+      "sync_decision": "already_equivalent",
+      "sync_method": "no_action",
+      "target_files": [
+        "src/repo_harness/workspace/diagnostic_session.py",
+        "src/repo_harness/tasks/command_policy.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/tools/minimal.py",
+        "src/repo_harness/permissions/system.py"
+      ],
+      "claimed_fix": "Blocks package manager and dependency mutation commands in diagnostic shell.",
+      "actual_code_evidence": "Training worktree rejects package manager mutations through command policy and diagnostic_command_policy_issue.",
+      "actual_test_evidence": "Stage 16A command policy tests and Stage 16B dependency mutation tests cover the guard.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "covered_by_existing_stage16a_16b_16c_or_16b5_contracts",
+      "risk_if_skipped": "skipping a direct port is acceptable because the target worktree already has an equivalent or stricter implementation; the remaining risk is documentation drift.",
+      "risk_if_synced": "re-syncing this item could accidentally replace stricter current behavior with an older evaluation-worktree variant."
+    },
+    {
+      "source_commit": "f6ead6f54b1291428f36d7ed419a3a6558d17955",
+      "topic": "diagnostic_dependency_image_preparation",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/workspace/docker_adapter.py"
+      ],
+      "required_regression_tests": [
+        "tests/integration/test_repo_harness_stage16b_docker_diagnostic_session.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/docker_adapter.py"
+      ],
+      "claimed_fix": "Prepares a task-local dependency image before persistent diagnostic shell use.",
+      "actual_code_evidence": "Training worktree validates Docker-capable backend but does not yet implement the same dependency image preparation strategy.",
+      "actual_test_evidence": "Docker diagnostic integration tests cover container lifecycle, not full dependency image preparation.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "6c7757b98f30de38e44f5207c319a91a93713a37",
+      "topic": "diagnostic_shell_bash_entrypoint",
+      "sync_decision": "already_equivalent",
+      "sync_method": "no_action",
+      "target_files": [
+        "src/repo_harness/workspace/docker_adapter.py",
+        "src/repo_harness/workspace/adapter.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/adapter.py",
+        "src/repo_harness/workspace/docker_adapter.py"
+      ],
+      "claimed_fix": "Runs diagnostic shell through Bash semantics instead of a narrower shell.",
+      "actual_code_evidence": "Training worktree Stage 16B uses Bash semantics for diagnostic shell command execution.",
+      "actual_test_evidence": "Stage 16B diagnostic shell tests cover command semantics and guard behavior.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "covered_by_existing_stage16a_16b_16c_or_16b5_contracts",
+      "risk_if_skipped": "skipping a direct port is acceptable because the target worktree already has an equivalent or stricter implementation; the remaining risk is documentation drift.",
+      "risk_if_synced": "re-syncing this item could accidentally replace stricter current behavior with an older evaluation-worktree variant."
+    },
+    {
+      "source_commit": "aaec663958d6692d6b07a6c35974d2e916b1298e",
+      "topic": "diagnostic_dependency_preparation_isolation",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/workspace/docker_adapter.py"
+      ],
+      "required_regression_tests": [
+        "tests/integration/test_repo_harness_stage16b_docker_diagnostic_session.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/docker_adapter.py"
+      ],
+      "claimed_fix": "Isolates dependency preparation from the model-editable workspace.",
+      "actual_code_evidence": "Training worktree keeps dependency mutation unsupported in Stage 16B and marks unsupported paths diagnostic-only.",
+      "actual_test_evidence": "Stage 16B tests cover dependency mutation rejection; preparation isolation remains sync_recommended.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "c0cc1b405282ccc002f18dd23e4e8946cc543659",
+      "topic": "repo_specific_public_test_hints",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/tasks/public_environment.py",
+        "src/repo_harness/context/builder.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16c_public_environment_context.py",
+        "tests/unit/test_repo_harness_stage16c_visibility.py"
+      ],
+      "source_evidence_ref": "docs/resume/swebench-verified-score-gap-investigation-progress.md",
+      "source_files_changed": [
+        "src/repo_harness/context/builder.py",
+        "scripts/pre_verl/swebench_verified_gate50_configs.py"
+      ],
+      "claimed_fix": "Exposes repository-specific public test hints without hidden selectors.",
+      "actual_code_evidence": "Training worktree has Stage 16C public environment context, but repository-profile hint derivation remains sync_recommended.",
+      "actual_test_evidence": "Stage 16C public environment tests cover generic safe public test entry semantics.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "cfbbe4b508a47f6da3e33643291c3aa5efad5fa5",
+      "topic": "score_gap_public_test_hint_derivation",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/tasks/public_environment.py",
+        "src/repo_harness/context/builder.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16c_public_test_entry.py"
+      ],
+      "source_evidence_ref": "docs/resume/swebench-verified-score-gap-investigation-progress.md",
+      "source_files_changed": [
+        "src/repo_harness/context/builder.py",
+        "scripts/pre_verl/swebench_verified_gate50_configs.py"
+      ],
+      "claimed_fix": "Derives public test hints for score-gap probes.",
+      "actual_code_evidence": "Training worktree must reimplement this through Stage 16C visibility gate rather than copying concrete old prompts.",
+      "actual_test_evidence": "Stage 16C visibility tests reject unsafe command text, absolute paths, and hidden selectors.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "dd3a6ec14f104be93fc9896f1355df16de34c81c",
+      "topic": "targeted_public_test_guidance",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/scaffolds/patch_focused_react.py",
+        "src/repo_harness/tasks/public_environment.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16c_scaffold_prompt.py"
+      ],
+      "source_evidence_ref": "docs/resume/swebench-verified-score-gap-investigation-progress.md",
+      "source_files_changed": [
+        "src/repo_harness/scaffolds/patch_focused_react.py",
+        "src/repo_harness/context/builder.py"
+      ],
+      "claimed_fix": "Guides models toward targeted public tests instead of broad repeated full-suite loops.",
+      "actual_code_evidence": "Training worktree scaffold has public environment guidance; repository-specific targeted guidance remains sync_recommended.",
+      "actual_test_evidence": "Stage 16C scaffold prompt tests cover safe public environment insertion.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "d2fc8e7ddbd7370be81cfceca453cf6b360f59ab",
+      "topic": "diagnostic_shell_audit_guards",
+      "sync_decision": "conclusion_only",
+      "sync_method": "document_only",
+      "target_files": [
+        "src/repo_harness/workspace/diagnostic_session.py",
+        "src/repo_harness/tasks/command_policy.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_command_policy.py",
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/tools/minimal.py",
+        "src/repo_harness/permissions/system.py",
+        "src/repo_harness/scaffolds/patch_focused_react.py"
+      ],
+      "claimed_fix": "Hardens diagnostic shell audit guards for hidden material, shell policy, and environment guidance.",
+      "actual_code_evidence": "Training worktree Stage 16A and Stage 16B are stricter; this is retained as conclusion-only evidence.",
+      "actual_test_evidence": "Stage 16A command policy and Stage 16B diagnostic shell tests cover stricter current guards.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "documented_as_context_without_code_sync",
+      "risk_if_skipped": "skipping code sync is acceptable because the item is a conclusion or observation; the remaining risk is losing the rationale in later planning.",
+      "risk_if_synced": "turning this observation into code without a separate execution plan could create unsupported behavior or unclear ownership."
+    },
+    {
+      "source_commit": "9c9daf4a76e6467d49b3881fc454032930b21936",
+      "topic": "official_prediction_temporary_artifact_hygiene",
+      "sync_decision": "sync_required",
+      "sync_method": "manual_port",
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Strips diagnostic temporary artifacts from official prediction patches.",
+      "actual_code_evidence": "Training worktree now has an official input builder with temporary artifact stripping and content leak blocking.",
+      "actual_test_evidence": "tests/unit/test_pre_verl_swebench_official_inputs.py covers stripping and content leak blocking.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "manual_port_completed_or_recorded_in_stage16d_0",
+      "risk_if_skipped": "skipping this item can leave a known verifier, visibility, export, or official-input hygiene gap unsynchronized between the evaluation worktree and this worktree.",
+      "risk_if_synced": "syncing this item directly without Stage 16D.0 review could widen model-visible information or weaken existing stricter boundaries; the current artifact records the reviewed porting path."
+    },
+    {
+      "source_commit": "7cb8c25ec90edf53aae0f2803646c705b2287239",
+      "topic": "diagnostic_patch_cleanliness",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/workspace/adapter.py",
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/adapter.py",
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Keeps diagnostic shell patches clean by excluding diagnostic-only leftovers.",
+      "actual_code_evidence": "Official prediction export now strips common leftovers; final training target cleanliness remains Stage 16E work.",
+      "actual_test_evidence": "Official input builder unit tests cover prediction export hygiene; Stage 16E should add final label tests.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "8e3e916a65620dfc2505ec5e9b5d57bf0ce50607",
+      "topic": "diagnostic_test_file_false_positive",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/tasks/command_policy.py",
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_command_policy.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/permissions/system.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Avoids confusing public test file names with hidden evaluator material.",
+      "actual_code_evidence": "Training worktree command policy uses stricter safe shell surface; official builder strips test file changes by default.",
+      "actual_test_evidence": "Command policy and official input builder tests cover the relevant boundary.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "c8867f55cb82b11e0cbf10c09883d9d478c9d3e3",
+      "topic": "diagnostic_backup_files",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "src/repo_harness/workspace/adapter.py",
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Excludes backup and reject leftovers from exported patches.",
+      "actual_code_evidence": "Official builder strips .orig and .rej file changes.",
+      "actual_test_evidence": "Official input builder unit tests cover .orig and .rej detection.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    },
+    {
+      "source_commit": "32309442beb9c9a5e5dedb19fdb845cc5b8b20df",
+      "topic": "diagnostic_reject_artifacts",
+      "sync_decision": "sync_required",
+      "sync_method": "manual_port",
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "src/repo_harness/workspace/adapter.py"
+      ],
+      "claimed_fix": "Strips diagnostic reject artifacts from official predictions.",
+      "actual_code_evidence": "Official builder strips reject leftovers in exported predictions.",
+      "actual_test_evidence": "Official input builder unit tests cover reject leftovers.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "manual_port_completed_or_recorded_in_stage16d_0",
+      "risk_if_skipped": "skipping this item can leave a known verifier, visibility, export, or official-input hygiene gap unsynchronized between the evaluation worktree and this worktree.",
+      "risk_if_synced": "syncing this item directly without Stage 16D.0 review could widen model-visible information or weaken existing stricter boundaries; the current artifact records the reviewed porting path."
+    },
+    {
+      "source_commit": "5f3a88f07bbca3472879e30e52b210bc5e1704e8",
+      "topic": "quoted_diagnostic_leftovers",
+      "sync_decision": "sync_required",
+      "sync_method": "manual_port",
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Strips malformed quoted diagnostic leftover paths from official predictions.",
+      "actual_code_evidence": "Official builder rejects unsafe diff target paths and quoted multiline probe leftovers.",
+      "actual_test_evidence": "Official input builder unit tests cover quoted multiline leftovers.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "manual_port_completed_or_recorded_in_stage16d_0",
+      "risk_if_skipped": "skipping this item can leave a known verifier, visibility, export, or official-input hygiene gap unsynchronized between the evaluation worktree and this worktree.",
+      "risk_if_synced": "syncing this item directly without Stage 16D.0 review could widen model-visible information or weaken existing stricter boundaries; the current artifact records the reviewed porting path."
+    },
+    {
+      "source_commit": "2cffe78b0606bb11e349b7d583c72779e9d9d8e9",
+      "topic": "tmp_diagnostic_leftovers",
+      "sync_decision": "sync_required",
+      "sync_method": "manual_port",
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Strips top-level tmp diagnostic leftovers from official predictions.",
+      "actual_code_evidence": "Official builder strips tmp directory file changes from exported predictions.",
+      "actual_test_evidence": "Official input builder unit tests cover top-level tmp probe blocks.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "manual_port_completed_or_recorded_in_stage16d_0",
+      "risk_if_skipped": "skipping this item can leave a known verifier, visibility, export, or official-input hygiene gap unsynchronized between the evaluation worktree and this worktree.",
+      "risk_if_synced": "syncing this item directly without Stage 16D.0 review could widen model-visible information or weaken existing stricter boundaries; the current artifact records the reviewed porting path."
+    },
+    {
+      "source_commit": "71b1ae5b95d865aad9b1ddee0836898ca0e7383e",
+      "topic": "diagnostic_artifacts_in_official_predictions",
+      "sync_decision": "sync_required",
+      "sync_method": "manual_port",
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "source_evidence_ref": "docs/resume/cross-worktree-verifier-harness-sync-20260523.md",
+      "source_files_changed": [
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "claimed_fix": "Strips broader diagnostic artifacts from official predictions.",
+      "actual_code_evidence": "Official builder strips root diagnostic probe files and selected binary-style diagnostic artifacts.",
+      "actual_test_evidence": "Official input builder unit tests cover root diagnostic artifact detection.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "manual_port_completed_or_recorded_in_stage16d_0",
+      "risk_if_skipped": "skipping this item can leave a known verifier, visibility, export, or official-input hygiene gap unsynchronized between the evaluation worktree and this worktree.",
+      "risk_if_synced": "syncing this item directly without Stage 16D.0 review could widen model-visible information or weaken existing stricter boundaries; the current artifact records the reviewed porting path."
+    },
+    {
+      "source_commit": "07f8c90f4ba21eca5b81994215a2388a6b31373c",
+      "topic": "diagnostic_environment_guidance",
+      "sync_decision": "sync_recommended",
+      "sync_method": "new_stage_specific_implementation",
+      "target_files": [
+        "src/repo_harness/tasks/public_environment.py",
+        "src/repo_harness/scaffolds/patch_focused_react.py"
+      ],
+      "required_regression_tests": [
+        "tests/unit/test_repo_harness_stage16c_scaffold_prompt.py"
+      ],
+      "source_evidence_ref": "docs/resume/swebench-verified-score-gap-investigation-progress.md",
+      "source_files_changed": [
+        "src/repo_harness/context/builder.py",
+        "src/repo_harness/scaffolds/patch_focused_react.py"
+      ],
+      "claimed_fix": "Hardens model-facing diagnostic shell and environment guidance.",
+      "actual_code_evidence": "Training worktree has Stage 16C public environment guidance; repository-specific diagnostic guidance remains sync_recommended.",
+      "actual_test_evidence": "Stage 16C scaffold prompt tests cover safe diagnostic shell wording.",
+      "source_worktree_label": "evaluation_worktree",
+      "source_doc_sha256": "92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "current_verl_worktree_status": "recorded_for_follow_up_or_stage_specific_port",
+      "risk_if_skipped": "skipping this item can leave useful diagnostic or robustness behavior undocumented for later training-infrastructure stages.",
+      "risk_if_synced": "syncing this item prematurely could mix evaluation-only diagnostics into the training path; defer implementation to the named later stage unless the evidence is made training-safe."
+    }
+  ],
+  "document_only_commits": [
+    "7084385373332d5acf1457ee2f52ca98d073106e",
+    "eb8a867698c533ac3d2cedf188b3d242825fc061",
+    "e25f56ce26efc51d4c0969051dcce59a83502cd5",
+    "910b66958bcb69bcadf1f6909b9b6707ea911106",
+    "118e518c926b740d0a89312092f47ceafe12d0cc",
+    "a514409ac121cf96aaa0ffa91b032ef4afee879c",
+    "531625acefb41b7e308e7198837e4859f2db67ab"
+  ],
+  "summary": {
+    "already_equivalent_count": 4,
+    "sync_required_count": 5,
+    "sync_recommended_count": 10,
+    "conclusion_only_count": 8,
+    "manual_port_count": 5,
+    "new_stage_specific_implementation_count": 10,
+    "cherry_pick_clean_count": 0
+  }
+}

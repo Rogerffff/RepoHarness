@@ -1,0 +1,174 @@
+{
+  "schema_version": "repo_harness_stage16d_0_sync_regression_report_v0",
+  "created_at": "2026-05-23T15:48:16Z",
+  "source_worktree_label": "evaluation_worktree",
+  "source_worktree_commit": "70547d7b3582876d2814cc065e5a501effcd83fd",
+  "source_dirty_status": "dirty",
+  "source_dirty_file_count": 1,
+  "source_dirty_files_sha256": "06ba22a7b570379f5058a19fbe0e49b7f4370e29006ecebeb4d27ad0c06be1d0",
+  "source_dirty_participates_in_claims": false,
+  "target_worktree_commit_before": "4711573cf40ff50fabfebe6cdb79518a906b1625",
+  "target_worktree_commit_after": "commit_containing_this_report",
+  "synced_commit_count": 5,
+  "manual_port_count": 5,
+  "already_equivalent_count": 4,
+  "deferred_count": 0,
+  "rejected_count": 0,
+  "regression_commands": [
+    {
+      "name": "stage16d0_official_input_builder_unit",
+      "command": "PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_pre_verl_swebench_official_inputs.py",
+      "status": "passed",
+      "summary": "8 passed in 0.03s"
+    },
+    {
+      "name": "stage16_tools_public_environment_and_official_builder",
+      "command": "PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_command_policy.py tests/unit/test_repo_harness_stage16a_execute_bash.py tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py tests/integration/test_repo_harness_stage16b_docker_diagnostic_session.py tests/unit/test_repo_harness_verl_stage16b5_acceptance.py tests/unit/test_repo_harness_stage16c_public_environment_context.py tests/unit/test_repo_harness_stage16c_public_test_entry.py tests/unit/test_repo_harness_stage16c_scaffold_prompt.py tests/unit/test_repo_harness_stage16c_visibility.py tests/unit/test_pre_verl_swebench_official_inputs.py",
+      "status": "passed",
+      "summary": "565 passed in 11.83s"
+    },
+    {
+      "name": "verifier_feedback_visibility_regression",
+      "command": "PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_test_feedback_policy.py tests/unit/test_feedback_tests_passed_policy.py tests/integration/test_tool_execution.py tests/unit/test_context_builder.py tests/unit/test_v3_visibility_policy.py tests/unit/test_v4_task_freeze.py tests/unit/test_v4_export_quality.py tests/unit/test_v4_stage1_skeleton.py tests/integration/test_repo_harness_verl_stage12a_visibility_dataproto.py",
+      "status": "historical_evidence_missing",
+      "summary": "102 passed, 3 skipped, 27 failed because historical V4 evidence directories referenced by tests are absent in the current checkout.",
+      "missing_historical_evidence": [
+        "runs/v4-pr-issue-task-source-feasibility-20260504T063745Z",
+        "runs/v4-swe-task-feasibility-20260504T044301Z"
+      ],
+      "stage16d_0_interpretation": "Not caused by Stage 16D.0 code changes. This is recorded as historical_evidence_missing according to the execution plan."
+    },
+    {
+      "name": "verl_async_partial_rollout_regression",
+      "command": "PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_verl_stage13_3a_async_producer.py tests/unit/test_repo_harness_verl_stage13_3a_message_queue_filter.py tests/unit/test_repo_harness_verl_stage13_3a_parameter_versions.py tests/unit/test_repo_harness_verl_stage13_3a_resource_lifecycle.py tests/unit/test_repo_harness_verl_stage15_1_partial_rollout_resume.py tests/unit/test_repo_harness_verl_stage15_0_acceptance.py",
+      "status": "passed",
+      "summary": "40 passed in 9.05s"
+    },
+    {
+      "name": "compileall",
+      "command": "PATH=.venv/bin:$PATH python -m compileall -q src scripts/pre_verl/build_swebench_official_inputs.py",
+      "status": "passed",
+      "summary": "passed"
+    },
+    {
+      "name": "core_verl_import_scan",
+      "command": "if rg -n '(^|[^A-Za-z_])(import verl|from verl)' src/repo_harness src/repo_harness/workspace src/repo_harness/tasks; then exit 1; fi",
+      "status": "passed",
+      "summary": "no_core_verl_imports"
+    },
+    {
+      "name": "scoped_diff_check",
+      "command": "git diff --check -- scripts/pre_verl/build_swebench_official_inputs.py tests/unit/test_pre_verl_swebench_official_inputs.py docs/agentic_RL/repo_harness_verl_workstreams/38-stage-16d-0-execution-plan.md docs/agentic_RL/repo_harness_verl_workstreams/stage16d_0",
+      "status": "passed",
+      "summary": "passed"
+    }
+  ],
+  "public_evidence_scan": {
+    "status": "passed_with_allowlisted_contexts",
+    "scanned_paths": [
+      "docs/agentic_RL/repo_harness_verl_workstreams/stage16d_0"
+    ],
+    "local_absolute_path_leak_found": false,
+    "hidden_selector_leak_found": false,
+    "oracle_content_leak_found": false,
+    "allowlisted_contexts": [
+      {
+        "marker": "gold_patch",
+        "reason": "Allowed only in Stage 16D.0 field names, file names, and seed role names. No patch content is present."
+      },
+      {
+        "marker": "/workspace",
+        "reason": "Only appears inside repository-relative source file paths such as src/repo_harness/workspace. It is not a root path."
+      },
+      {
+        "marker": "noop_oracle_risk",
+        "reason": "Allowed as a seed role enum describing oracle-health risk; no oracle contents are present."
+      },
+      {
+        "marker": "candidate_oracle_noop_resolved",
+        "reason": "Allowed as a risk enum for future healthcheck; no hidden selector or patch content is present."
+      }
+    ]
+  },
+  "blocking_failures": [],
+  "remaining_risks": [
+    "Repository-profile-specific public test hints are not yet implemented in training_worktree and remain sync_recommended.",
+    "Dependency image preparation is not fully ported; Stage 16B.5 validates Docker capability but does not replace a per-task dependency image strategy.",
+    "V4 historical evidence tests cannot be fully rerun in this checkout without restoring their referenced historical run directories."
+  ],
+  "manual_ports": [
+    {
+      "source_commits": [
+        "9c9daf4a76e6467d49b3881fc454032930b21936",
+        "32309442beb9c9a5e5dedb19fdb845cc5b8b20df",
+        "5f3a88f07bbca3472879e30e52b210bc5e1704e8",
+        "2cffe78b0606bb11e349b7d583c72779e9d9d8e9",
+        "71b1ae5b95d865aad9b1ddee0836898ca0e7383e"
+      ],
+      "target_files": [
+        "scripts/pre_verl/build_swebench_official_inputs.py",
+        "tests/unit/test_pre_verl_swebench_official_inputs.py"
+      ],
+      "reason": "training_worktree did not have an official SWE-bench prediction input builder. The port avoids hard-coded local paths in committed code."
+    }
+  ],
+  "decision_summary": {
+    "already_equivalent_count": 4,
+    "sync_recommended_count": 10,
+    "sync_required_count": 5,
+    "conclusion_only_count": 8,
+    "manual_port_count": 5,
+    "new_stage_specific_implementation_count": 10,
+    "document_only_commit_count": 7
+  },
+  "target_worktree_commit_after_status": "resolved_after_stage16d_0_commit",
+  "regression_results": [
+    {
+      "name": "stage16d0_official_input_builder_unit",
+      "status": "passed",
+      "summary": "8 passed in 0.03s"
+    },
+    {
+      "name": "stage16_tools_public_environment_and_official_builder",
+      "status": "passed",
+      "summary": "565 passed in 11.83s"
+    },
+    {
+      "name": "verifier_feedback_visibility_regression",
+      "status": "historical_evidence_missing",
+      "summary": "102 passed, 3 skipped, 27 failed because historical V4 evidence directories referenced by tests are absent in the current checkout."
+    },
+    {
+      "name": "verl_async_partial_rollout_regression",
+      "status": "passed",
+      "summary": "40 passed in 9.05s"
+    },
+    {
+      "name": "compileall",
+      "status": "passed",
+      "summary": "passed"
+    },
+    {
+      "name": "core_verl_import_scan",
+      "status": "passed",
+      "summary": "no_core_verl_imports"
+    },
+    {
+      "name": "scoped_diff_check",
+      "status": "passed",
+      "summary": "passed"
+    }
+  ],
+  "historical_evidence_missing_details": {
+    "failure_category": "historical_v4_evidence_directories_absent_from_current_checkout",
+    "affected_test_files": [
+      "tests/unit/test_v4_task_freeze.py",
+      "tests/unit/test_v4_stage1_skeleton.py"
+    ],
+    "missing_evidence_roots": [
+      "runs/v4-pr-issue-task-source-feasibility-20260504T063745Z",
+      "runs/v4-swe-task-feasibility-20260504T044301Z"
+    ],
+    "representative_error": "ConfigError reporting missing V4 feasibility run path and bound manifest refs"
+  }
+}
