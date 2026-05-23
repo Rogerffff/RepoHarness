@@ -57,6 +57,16 @@ def test_stage16d_builder_accepts_complete_official_healthcheck_evidence(tmp_pat
     assert summary["official_healthcheck_complete"] is True
     assert summary["official_harness_execution_status"] == "executed"
     assert summary["training_eligible_after_healthcheck_count"] == 1
+    assert summary["positive_path_gold_healthcheck_pass_count"] == 1
+    assert summary["positive_path_noop_expected_unresolved_count"] == 1
+    assert summary["stage16d1_positive_path_healthcheck_passed"] is True
+    runner = _read_json(evidence / "stage16d_1_official_runner_report.json")
+    assert runner["selected_dataset_rows_sha256"] == "3" * 64
+    assert runner["gold_predictions_sha256"] == "4" * 64
+    assert runner["noop_predictions_sha256"] == "5" * 64
+    assert runner["execution_image_digest_by_instance"]["task-1"] == "sha256:" + "7" * 64
+    scope = _read_json(evidence / "stage16d_1_smoke_scope_report.json")
+    assert scope["full_stage16d0_seed_coverage_claimed"] is False
     payload = json.loads(
         inspect_stage16d_healthcheck(
             evidence,
@@ -128,6 +138,20 @@ def test_stage16d_builder_public_leak_scan_rejects_public_artifact_leak(tmp_path
     report = inspect_stage16d_healthcheck_report(evidence, assert_contract_complete=True)
 
     assert any(failure.startswith("public_evidence_leak:local_absolute_path") for failure in report.failures)
+
+
+def test_stage16d_builder_public_leak_scan_rejects_test_patch_marker(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    evidence = tmp_path / "evidence"
+    build_stage16d_healthcheck_artifacts(seed_manifest_path=seed_manifest, output_dir=evidence)
+    (evidence / "stage16d_command_log.sanitized.jsonl").write_text(
+        '{"note": "test_patch"}\n',
+        encoding="utf-8",
+    )
+
+    report = inspect_stage16d_healthcheck_report(evidence, assert_contract_complete=True)
+
+    assert any(failure.startswith("public_evidence_leak:test_patch_marker") for failure in report.failures)
 
 
 def test_stage16d_builder_rejects_missing_official_result_artifact_for_official_complete(tmp_path: Path) -> None:
@@ -231,6 +255,212 @@ def test_stage16d_builder_rejects_result_ref_digest_mismatch(tmp_path: Path) -> 
         raise AssertionError("official result ref digest mismatch should be rejected")
 
 
+def test_stage16d_builder_rejects_missing_stage16d1_input_binding(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    gold_results = tmp_path / "gold.jsonl"
+    noop_results = tmp_path / "noop.jsonl"
+    gold = _official_result("task-1", "gold_patch", True)
+    noop = _official_result("task-1", "noop_patch", False)
+    gold.pop("selected_dataset_rows_ref")
+    gold.pop("selected_dataset_rows_sha256")
+    _write_jsonl(gold_results, [gold])
+    _write_jsonl(noop_results, [noop])
+
+    with pytest.raises(ValueError, match="selected_dataset_rows"):
+        build_stage16d_healthcheck_artifacts(
+            seed_manifest_path=seed_manifest,
+            output_dir=tmp_path / "evidence",
+            gold_results_path=gold_results,
+            noop_results_path=noop_results,
+        )
+
+
+def test_stage16d_builder_rejects_stage16d1_input_ref_digest_mismatch(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    gold_results = tmp_path / "gold.jsonl"
+    noop_results = tmp_path / "noop.jsonl"
+    gold = _official_result("task-1", "gold_patch", True)
+    noop = _official_result("task-1", "noop_patch", False)
+    noop["official_command_sha256"] = "9" * 64
+    _write_jsonl(gold_results, [gold])
+    _write_jsonl(noop_results, [noop])
+
+    with pytest.raises(ValueError, match="official_command"):
+        build_stage16d_healthcheck_artifacts(
+            seed_manifest_path=seed_manifest,
+            output_dir=tmp_path / "evidence",
+            gold_results_path=gold_results,
+            noop_results_path=noop_results,
+        )
+
+
+def test_stage16d_builder_rejects_stage16d1_input_ref_kind_mismatch(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    gold_results = tmp_path / "gold.jsonl"
+    noop_results = tmp_path / "noop.jsonl"
+    gold = _official_result("task-1", "gold_patch", True)
+    noop = _official_result("task-1", "noop_patch", False)
+    gold["selected_dataset_rows_ref"] = "runtime-private:official-result:" + "3" * 64
+    _write_jsonl(gold_results, [gold])
+    _write_jsonl(noop_results, [noop])
+
+    with pytest.raises(ValueError, match="selected_dataset_rows ref kind"):
+        build_stage16d_healthcheck_artifacts(
+            seed_manifest_path=seed_manifest,
+            output_dir=tmp_path / "evidence",
+            gold_results_path=gold_results,
+            noop_results_path=noop_results,
+        )
+
+
+def test_stage16d_builder_rejects_official_result_ref_kind_mismatch(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    gold_results = tmp_path / "gold.jsonl"
+    noop_results = tmp_path / "noop.jsonl"
+    gold = _official_result("task-1", "gold_patch", True)
+    noop = _official_result("task-1", "noop_patch", False)
+    gold["official_result_ref"] = "runtime-private:gold-predictions:" + "2" * 64
+    _write_jsonl(gold_results, [gold])
+    _write_jsonl(noop_results, [noop])
+
+    with pytest.raises(ValueError, match="official_result_ref kind must be official-result"):
+        build_stage16d_healthcheck_artifacts(
+            seed_manifest_path=seed_manifest,
+            output_dir=tmp_path / "evidence",
+            gold_results_path=gold_results,
+            noop_results_path=noop_results,
+        )
+
+
+def test_stage16d_builder_rejects_missing_execution_image_digest(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    gold_results = tmp_path / "gold.jsonl"
+    noop_results = tmp_path / "noop.jsonl"
+    gold = _official_result("task-1", "gold_patch", True)
+    noop = _official_result("task-1", "noop_patch", False)
+    gold["execution_image_digest_by_instance"] = {}
+    noop["execution_image_digest_by_instance"] = {}
+    _write_jsonl(gold_results, [gold])
+    _write_jsonl(noop_results, [noop])
+
+    with pytest.raises(ValueError, match="execution image digest"):
+        build_stage16d_healthcheck_artifacts(
+            seed_manifest_path=seed_manifest,
+            output_dir=tmp_path / "evidence",
+            gold_results_path=gold_results,
+            noop_results_path=noop_results,
+        )
+
+
+def test_stage16d_inspector_rejects_missing_stage16d1_reports_for_official_complete(tmp_path: Path) -> None:
+    evidence = _write_complete_evidence(tmp_path)
+    (evidence / "stage16d_1_official_runner_report.json").unlink()
+
+    report = inspect_stage16d_healthcheck_report(evidence, assert_official_healthcheck_complete=True)
+
+    assert "missing_stage16d_public_artifact:stage16d_1_official_runner_report.json" in report.failures
+
+
+def test_stage16d_inspector_rejects_tampered_stage16d1_runner_digest(tmp_path: Path) -> None:
+    evidence = _write_complete_evidence(tmp_path)
+    runner = _read_json(evidence / "stage16d_1_official_runner_report.json")
+    runner["execution_image_digest_by_instance"] = {}
+    _write_json(evidence / "stage16d_1_official_runner_report.json", runner)
+
+    report = inspect_stage16d_healthcheck_report(evidence, assert_official_healthcheck_complete=True)
+
+    assert "stage16d1_runner_report_missing:execution_image_digest_by_instance" in report.failures
+
+
+def test_stage16d_inspector_rejects_stage16d1_runner_report_field_tamper(tmp_path: Path) -> None:
+    evidence = _write_complete_evidence(tmp_path)
+    runner = _read_json(evidence / "stage16d_1_official_runner_report.json")
+    runner["runner_digest"] = "sha256:" + "a" * 64
+    runner["selected_dataset_rows_sha256"] = "b" * 64
+    _write_json(evidence / "stage16d_1_official_runner_report.json", runner)
+
+    report = inspect_stage16d_healthcheck_report(evidence, assert_official_healthcheck_complete=True)
+
+    assert "stage16d1_runner_report_field_mismatch:runner_digest" in report.failures
+    assert "stage16d1_runner_report_field_mismatch:selected_dataset_rows_sha256" in report.failures
+
+
+def test_stage16d_inspector_rejects_stage16d1_ref_kind_tamper(tmp_path: Path) -> None:
+    evidence = _write_complete_evidence(tmp_path)
+    manifest = _read_json(evidence / "stage16d_healthcheck_manifest.json")
+    concrete = next(record for record in manifest["records"] if record["instance_id"] == "task-1")
+    concrete["selected_dataset_rows_ref"] = "runtime-private:official-result:" + "3" * 64
+    _write_json(evidence / "stage16d_healthcheck_manifest.json", manifest)
+    runner = _read_json(evidence / "stage16d_1_official_runner_report.json")
+    runner["selected_dataset_rows_ref"] = "runtime-private:official-result:" + "3" * 64
+    _write_json(evidence / "stage16d_1_official_runner_report.json", runner)
+
+    report = inspect_stage16d_healthcheck_report(evidence, assert_official_healthcheck_complete=True)
+
+    assert any("selected_dataset_rows ref kind must be selected-dataset-rows" in failure for failure in report.failures)
+
+
+def test_stage16d_inspector_rejects_official_result_ref_kind_tamper(tmp_path: Path) -> None:
+    evidence = _write_complete_evidence(tmp_path)
+    manifest = _read_json(evidence / "stage16d_healthcheck_manifest.json")
+    concrete = next(record for record in manifest["records"] if record["instance_id"] == "task-1")
+    concrete["gold_official_result_ref"] = "runtime-private:gold-predictions:" + "2" * 64
+    concrete["noop_official_result_ref"] = "runtime-private:noop-predictions:" + "2" * 64
+    _write_json(evidence / "stage16d_healthcheck_manifest.json", manifest)
+
+    gold_report = _read_json(evidence / "stage16d_gold_healthcheck_report.json")
+    gold_report["records"][0]["gold_official_result_ref"] = "runtime-private:gold-predictions:" + "2" * 64
+    _write_json(evidence / "stage16d_gold_healthcheck_report.json", gold_report)
+    noop_report = _read_json(evidence / "stage16d_noop_healthcheck_report.json")
+    noop_report["records"][0]["noop_official_result_ref"] = "runtime-private:noop-predictions:" + "2" * 64
+    _write_json(evidence / "stage16d_noop_healthcheck_report.json", noop_report)
+
+    report = inspect_stage16d_healthcheck_report(evidence, assert_official_healthcheck_complete=True)
+
+    assert any("gold_official_result ref kind must be official-result" in failure for failure in report.failures)
+
+
+def test_stage16d_inspector_rejects_stage16d1_positive_path_gold_failure(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    gold_results = tmp_path / "gold.jsonl"
+    noop_results = tmp_path / "noop.jsonl"
+    _write_jsonl(gold_results, [_official_result("task-1", "gold_patch", False)])
+    _write_jsonl(noop_results, [_official_result("task-1", "noop_patch", False)])
+    evidence = tmp_path / "evidence"
+
+    build_stage16d_healthcheck_artifacts(
+        seed_manifest_path=seed_manifest,
+        output_dir=evidence,
+        gold_results_path=gold_results,
+        noop_results_path=noop_results,
+    )
+
+    summary = _read_json(evidence / "stage16d_acceptance_summary.json")
+    assert summary["official_healthcheck_complete"] is True
+    assert summary["stage16d1_positive_path_healthcheck_passed"] is False
+    report = inspect_stage16d_healthcheck_report(evidence, assert_official_healthcheck_complete=True)
+    assert "stage16d1_positive_path_healthcheck_not_passed" in report.failures
+
+
+def test_stage16d_builder_preserves_stage16d1_scope_fields(tmp_path: Path) -> None:
+    seed_manifest = _write_seed_manifest(tmp_path)
+    payload = _read_json(seed_manifest)
+    payload["source_manifest_ref"] = "docs/example/source_manifest.json"
+    payload["selection_policy"] = "small_real_official_healthcheck_smoke"
+    payload["scope_limit"] = "smoke only"
+    payload["remaining_stage16d0_seed_count_not_healthchecked"] = 7
+    _write_json(seed_manifest, payload)
+    evidence = tmp_path / "evidence"
+
+    build_stage16d_healthcheck_artifacts(seed_manifest_path=seed_manifest, output_dir=evidence)
+
+    scope = _read_json(evidence / "stage16d_1_smoke_scope_report.json")
+    assert scope["source_manifest_ref"] == "docs/example/source_manifest.json"
+    assert scope["selection_policy"] == "small_real_official_healthcheck_smoke"
+    assert scope["scope_limit"] == "smoke only"
+    assert scope["remaining_stage16d0_seed_count_not_healthchecked"] == 7
+
+
 def test_stage16d_inspector_rejects_tampered_summary_derived_fields(tmp_path: Path) -> None:
     seed_manifest = _write_seed_manifest(tmp_path)
     evidence = tmp_path / "evidence"
@@ -306,6 +536,20 @@ def _official_result(
         "official_image_source": "swebench:latest",
         "official_image_digest": "sha256:" + "1" * 64,
         "official_image_digest_locked": digest_locked,
+        "selected_dataset_rows_ref": "runtime-private:selected-dataset-rows:" + "3" * 64,
+        "selected_dataset_rows_sha256": "3" * 64,
+        "selected_instance_row_sha256": "8" * 64,
+        "gold_predictions_ref": "runtime-private:gold-predictions:" + "4" * 64,
+        "gold_predictions_sha256": "4" * 64,
+        "noop_predictions_ref": "runtime-private:noop-predictions:" + "5" * 64,
+        "noop_predictions_sha256": "5" * 64,
+        "official_command_ref": "runtime-private:official-command:" + "6" * 64,
+        "official_command_sha256": "6" * 64,
+        "runner_digest": "sha256:" + "9" * 64,
+        "runner_digest_method": "test_runner_digest",
+        "execution_image_digest_by_instance": {instance_id: "sha256:" + "7" * 64},
+        "execution_image_source_by_instance": {instance_id: "testbed:latest"},
+        "official_environment_digest_lock_method": "runner_and_execution_image_digest",
         "official_result_ref": "runtime-private:official-result:" + "2" * 64,
         "official_result_sha256": "2" * 64,
     }

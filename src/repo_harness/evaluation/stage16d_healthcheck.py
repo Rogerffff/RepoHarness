@@ -27,6 +27,9 @@ STAGE16D_PUBLIC_ARTIFACTS: tuple[str, ...] = (
     "stage16d_public_leak_scan_report.json",
     "stage16d_command_log.sanitized.jsonl",
     "stage16d_canonical_evidence_map.json",
+    "stage16d_1_smoke_scope_report.json",
+    "stage16d_1_official_runner_report.json",
+    "stage16d_1_repo_harness_owned_verifier_report.json",
 )
 
 STAGE16D_RUNTIME_PRIVATE_ARTIFACTS: tuple[str, ...] = (
@@ -85,6 +88,7 @@ PUBLIC_LEAK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("repo_harness_run_path", re.compile(r"(?:^|[^A-Za-z0-9_.-])repo-harness-run(?:/|$)")),
     ("hidden_selector_marker", re.compile(r"\b(?:FAIL_TO_PASS|PASS_TO_PASS)\b")),
     ("hidden_verifier_marker", re.compile(r"hidden[_-]?verifier", re.IGNORECASE)),
+    ("test_patch_marker", re.compile(r"\btest[_-]?patch\b", re.IGNORECASE)),
     ("diff_header", re.compile(r"diff --git ")),
     ("diff_hunk", re.compile(r"@@ ")),
 )
@@ -116,6 +120,20 @@ class Stage16DHealthcheckInputResult(StrictBaseModel):
     official_image_source: str | None = None
     official_image_digest: str | None = None
     official_image_digest_locked: bool = False
+    selected_dataset_rows_ref: str | None = None
+    selected_dataset_rows_sha256: str | None = None
+    selected_instance_row_sha256: str | None = None
+    gold_predictions_ref: str | None = None
+    gold_predictions_sha256: str | None = None
+    noop_predictions_ref: str | None = None
+    noop_predictions_sha256: str | None = None
+    official_command_ref: str | None = None
+    official_command_sha256: str | None = None
+    runner_digest: str | None = None
+    runner_digest_method: str | None = None
+    execution_image_digest_by_instance: dict[str, str] = Field(default_factory=dict)
+    execution_image_source_by_instance: dict[str, str] = Field(default_factory=dict)
+    official_environment_digest_lock_method: str | None = None
     official_result_ref: str | None = None
     official_result_sha256: str | None = None
     failure_reason: str | None = None
@@ -133,8 +151,48 @@ class Stage16DHealthcheckInputResult(StrictBaseModel):
                 raise ValueError("executed healthcheck result requires sha256 official_image_digest")
             if _runtime_private_ref_digest(self.official_result_ref) != self.official_result_sha256:
                 raise ValueError("official_result_ref digest must match official_result_sha256")
+            _validate_runtime_private_ref_digest_pair(
+                self.selected_dataset_rows_ref,
+                self.selected_dataset_rows_sha256,
+                "selected_dataset_rows",
+                expected_kind="selected-dataset-rows",
+            )
+            _validate_runtime_private_ref_digest_pair(
+                self.gold_predictions_ref,
+                self.gold_predictions_sha256,
+                "gold_predictions",
+                expected_kind="gold-predictions",
+            )
+            _validate_runtime_private_ref_digest_pair(
+                self.noop_predictions_ref,
+                self.noop_predictions_sha256,
+                "noop_predictions",
+                expected_kind="noop-predictions",
+            )
+            _validate_runtime_private_ref_digest_pair(
+                self.official_command_ref,
+                self.official_command_sha256,
+                "official_command",
+                expected_kind="official-command",
+            )
+            if not self.selected_instance_row_sha256 or not SHA256_HEX_RE.fullmatch(self.selected_instance_row_sha256):
+                raise ValueError("executed healthcheck result requires selected_instance_row_sha256")
+            if not self.runner_digest or not IMAGE_DIGEST_RE.fullmatch(self.runner_digest):
+                raise ValueError("executed healthcheck result requires sha256 runner_digest")
+            if not self.runner_digest_method:
+                raise ValueError("executed healthcheck result requires runner_digest_method")
+            if not self.official_environment_digest_lock_method:
+                raise ValueError("executed healthcheck result requires official_environment_digest_lock_method")
+            if not _execution_environment_locked_for_instance(
+                self.instance_id,
+                self.execution_image_digest_by_instance,
+                self.official_environment_digest_lock_method,
+            ):
+                raise ValueError("executed healthcheck result requires per-instance execution image digest")
         if self.official_result_ref is not None and not is_opaque_runtime_private_ref(self.official_result_ref):
             raise ValueError("official_result_ref must use runtime-private:<kind>:<sha256>")
+        if self.official_result_ref is not None and _runtime_private_ref_kind(self.official_result_ref) != "official-result":
+            raise ValueError("official_result_ref kind must be official-result")
         return self
 
 
@@ -172,6 +230,9 @@ class Stage16DSeedRecord(StrictBaseModel):
     candidate_instance_status: str | None = None
     gold_patch_source: str | None = None
     noop_patch_source: str | None = None
+    source_evidence_ref: str | None = None
+    source_doc_sha256: str | None = None
+    stage16d_execution_precondition: str | None = None
     official_validation_backend: str = "swebench_official_harness"
 
 
@@ -187,6 +248,22 @@ class Stage16DHealthcheckRecord(StrictBaseModel):
     official_image_source: str | None = None
     official_image_digest: str | None = None
     official_image_digest_locked: bool = False
+    selected_dataset_rows_ref: str | None = None
+    selected_dataset_rows_sha256: str | None = None
+    selected_instance_row_sha256: str | None = None
+    runner_digest: str | None = None
+    runner_digest_method: str | None = None
+    execution_image_digest_by_instance: dict[str, str] = Field(default_factory=dict)
+    execution_image_source_by_instance: dict[str, str] = Field(default_factory=dict)
+    official_environment_digest_lock_method: str | None = None
+    gold_predictions_ref: str | None = None
+    gold_predictions_sha256: str | None = None
+    noop_predictions_ref: str | None = None
+    noop_predictions_sha256: str | None = None
+    gold_official_command_ref: str | None = None
+    gold_official_command_sha256: str | None = None
+    noop_official_command_ref: str | None = None
+    noop_official_command_sha256: str | None = None
     gold_official_result_ref: str | None = None
     gold_official_result_sha256: str | None = None
     gold_patch_ref: str | None = None
@@ -233,10 +310,21 @@ class Stage16DHealthcheckRecord(StrictBaseModel):
                 raise ValueError("trainable Stage 16D record requires executed official harness status")
             if not self.official_image_digest or not IMAGE_DIGEST_RE.fullmatch(self.official_image_digest):
                 raise ValueError("trainable Stage 16D record requires sha256 official image digest")
+            if not self.runner_digest or not IMAGE_DIGEST_RE.fullmatch(self.runner_digest):
+                raise ValueError("trainable Stage 16D record requires sha256 runner digest")
+            if not _execution_environment_locked_for_instance(
+                self.instance_id,
+                self.execution_image_digest_by_instance,
+                self.official_environment_digest_lock_method,
+            ):
+                raise ValueError("trainable Stage 16D record requires per-instance execution image digest")
             if not (self.gold_official_result_ref and self.gold_official_result_sha256):
                 raise ValueError("trainable Stage 16D record requires gold official result ref and sha256")
             if not (self.noop_official_result_ref and self.noop_official_result_sha256):
                 raise ValueError("trainable Stage 16D record requires no-op official result ref and sha256")
+            for label, _kind, ref, digest in _stage16d1_required_ref_digest_pairs(self):
+                if not (ref and digest):
+                    raise ValueError(f"trainable Stage 16D record requires {label} ref and sha256")
             if self.proxy_official_disagreement:
                 raise ValueError("trainable Stage 16D record cannot have proxy/official disagreement")
             if self.invalid_for_training or self.invalid_for_online_rl:
@@ -250,14 +338,33 @@ class Stage16DHealthcheckRecord(StrictBaseModel):
             self.gold_official_result_ref,
             self.noop_official_result_ref,
             self.final_verifier_boundary_ref,
+            self.selected_dataset_rows_ref,
+            self.gold_predictions_ref,
+            self.noop_predictions_ref,
+            self.gold_official_command_ref,
+            self.noop_official_command_ref,
         ):
             if ref is not None and not is_opaque_runtime_private_ref(ref):
                 raise ValueError("runtime private refs must use runtime-private:<kind>:<sha256>")
-        for digest in (self.gold_official_result_sha256, self.noop_official_result_sha256):
+        for digest in (
+            self.gold_official_result_sha256,
+            self.noop_official_result_sha256,
+            self.selected_dataset_rows_sha256,
+            self.selected_instance_row_sha256,
+            self.gold_predictions_sha256,
+            self.noop_predictions_sha256,
+            self.gold_official_command_sha256,
+            self.noop_official_command_sha256,
+        ):
             if digest is not None and not SHA256_HEX_RE.fullmatch(digest):
-                raise ValueError("official result sha256 must be 64 lowercase hex characters")
+                raise ValueError("Stage 16D sha256 fields must be 64 lowercase hex characters")
         if self.official_image_digest is not None and not IMAGE_DIGEST_RE.fullmatch(self.official_image_digest):
             raise ValueError("official image digest must use sha256:<64 lowercase hex>")
+        if self.runner_digest is not None and not IMAGE_DIGEST_RE.fullmatch(self.runner_digest):
+            raise ValueError("runner digest must use sha256:<64 lowercase hex>")
+        for digest in self.execution_image_digest_by_instance.values():
+            if not IMAGE_DIGEST_RE.fullmatch(digest):
+                raise ValueError("execution image digest must use sha256:<64 lowercase hex>")
         if (
             self.gold_official_result_ref is not None
             and self.gold_official_result_sha256 is not None
@@ -270,6 +377,11 @@ class Stage16DHealthcheckRecord(StrictBaseModel):
             and _runtime_private_ref_digest(self.noop_official_result_ref) != self.noop_official_result_sha256
         ):
             raise ValueError("no-op official result ref digest must match no-op official result sha256")
+        for label, kind, ref, digest in _stage16d1_required_ref_digest_pairs(self):
+            if ref is not None and _runtime_private_ref_kind(ref) != kind:
+                raise ValueError(f"{label} ref kind must be {kind}")
+            if ref is not None and digest is not None and _runtime_private_ref_digest(ref) != digest:
+                raise ValueError(f"{label} ref digest must match sha256")
         return self
 
 
@@ -327,6 +439,26 @@ def classify_stage16d_seed(
         noop_result.official_image_digest if noop_result else None,
     )
     official_image_digest_locked = _official_image_digest_pair_locked(gold_result, noop_result)
+    selected_dataset_rows_ref = _matching_field(gold_result, noop_result, "selected_dataset_rows_ref")
+    selected_dataset_rows_sha256 = _matching_field(gold_result, noop_result, "selected_dataset_rows_sha256")
+    selected_instance_row_sha256 = _matching_field(gold_result, noop_result, "selected_instance_row_sha256")
+    runner_digest = _matching_field(gold_result, noop_result, "runner_digest")
+    runner_digest_method = _matching_field(gold_result, noop_result, "runner_digest_method")
+    execution_image_digest_by_instance = _matching_mapping(
+        gold_result,
+        noop_result,
+        "execution_image_digest_by_instance",
+    )
+    execution_image_source_by_instance = _matching_mapping(
+        gold_result,
+        noop_result,
+        "execution_image_source_by_instance",
+    )
+    official_environment_digest_lock_method = _matching_field(
+        gold_result,
+        noop_result,
+        "official_environment_digest_lock_method",
+    )
 
     gold_patch_ref = _gold_patch_ref(seed)
     gold_patch_ref_status = "available" if gold_patch_ref else "unavailable"
@@ -362,6 +494,22 @@ def classify_stage16d_seed(
         official_image_source=official_image_source,
         official_image_digest=official_image_digest,
         official_image_digest_locked=official_image_digest_locked,
+        selected_dataset_rows_ref=selected_dataset_rows_ref,
+        selected_dataset_rows_sha256=selected_dataset_rows_sha256,
+        selected_instance_row_sha256=selected_instance_row_sha256,
+        runner_digest=runner_digest,
+        runner_digest_method=runner_digest_method,
+        execution_image_digest_by_instance=execution_image_digest_by_instance,
+        execution_image_source_by_instance=execution_image_source_by_instance,
+        official_environment_digest_lock_method=official_environment_digest_lock_method,
+        gold_predictions_ref=gold_result.gold_predictions_ref if gold_result else None,
+        gold_predictions_sha256=gold_result.gold_predictions_sha256 if gold_result else None,
+        noop_predictions_ref=noop_result.noop_predictions_ref if noop_result else None,
+        noop_predictions_sha256=noop_result.noop_predictions_sha256 if noop_result else None,
+        gold_official_command_ref=gold_result.official_command_ref if gold_result else None,
+        gold_official_command_sha256=gold_result.official_command_sha256 if gold_result else None,
+        noop_official_command_ref=noop_result.official_command_ref if noop_result else None,
+        noop_official_command_sha256=noop_result.official_command_sha256 if noop_result else None,
         gold_patch_ref=gold_patch_ref,
         gold_patch_ref_status=gold_patch_ref_status,
         gold_healthcheck_status=gold_status,
@@ -506,6 +654,18 @@ def build_stage16d_healthcheck_artifacts(
                     "gold_official_resolved": record.gold_official_resolved,
                     "gold_official_result_ref": record.gold_official_result_ref,
                     "gold_official_result_sha256": record.gold_official_result_sha256,
+                    "selected_dataset_rows_ref": record.selected_dataset_rows_ref,
+                    "selected_dataset_rows_sha256": record.selected_dataset_rows_sha256,
+                    "selected_instance_row_sha256": record.selected_instance_row_sha256,
+                    "runner_digest": record.runner_digest,
+                    "runner_digest_method": record.runner_digest_method,
+                    "execution_image_digest_by_instance": record.execution_image_digest_by_instance,
+                    "execution_image_source_by_instance": record.execution_image_source_by_instance,
+                    "official_environment_digest_lock_method": record.official_environment_digest_lock_method,
+                    "gold_predictions_ref": record.gold_predictions_ref,
+                    "gold_predictions_sha256": record.gold_predictions_sha256,
+                    "gold_official_command_ref": record.gold_official_command_ref,
+                    "gold_official_command_sha256": record.gold_official_command_sha256,
                     "healthcheck_training_disposition": record.healthcheck_training_disposition,
                 }
                 for record in records
@@ -526,6 +686,18 @@ def build_stage16d_healthcheck_artifacts(
                     "noop_official_resolved": record.noop_official_resolved,
                     "noop_official_result_ref": record.noop_official_result_ref,
                     "noop_official_result_sha256": record.noop_official_result_sha256,
+                    "selected_dataset_rows_ref": record.selected_dataset_rows_ref,
+                    "selected_dataset_rows_sha256": record.selected_dataset_rows_sha256,
+                    "selected_instance_row_sha256": record.selected_instance_row_sha256,
+                    "runner_digest": record.runner_digest,
+                    "runner_digest_method": record.runner_digest_method,
+                    "execution_image_digest_by_instance": record.execution_image_digest_by_instance,
+                    "execution_image_source_by_instance": record.execution_image_source_by_instance,
+                    "official_environment_digest_lock_method": record.official_environment_digest_lock_method,
+                    "noop_predictions_ref": record.noop_predictions_ref,
+                    "noop_predictions_sha256": record.noop_predictions_sha256,
+                    "noop_official_command_ref": record.noop_official_command_ref,
+                    "noop_official_command_sha256": record.noop_official_command_sha256,
                     "healthcheck_training_disposition": record.healthcheck_training_disposition,
                 }
                 for record in records
@@ -564,6 +736,21 @@ def build_stage16d_healthcheck_artifacts(
                 }
                 for record in records
             ],
+        },
+    )
+    _write_stage16d1_scope_report(
+        out / "stage16d_1_smoke_scope_report.json",
+        seed_manifest_path=Path(seed_manifest_path),
+        seed_manifest_sha256=seed_manifest_sha256,
+        seeds=seeds,
+    )
+    _write_stage16d1_official_runner_report(out / "stage16d_1_official_runner_report.json", records)
+    _write_json(
+        out / "stage16d_1_repo_harness_owned_verifier_report.json",
+        {
+            "schema_version": "repo_harness_stage16d_1_repo_harness_owned_verifier_report_v0",
+            "status": "not_run_in_stage16d_1",
+            "reason": "optional_supplement_not_required_for_official_smoke",
         },
     )
     _write_json(
@@ -671,11 +858,27 @@ def inspect_stage16d_healthcheck_report(
     summary = _load_optional_json(root / "stage16d_acceptance_summary.json", failures)
     manifest = _load_optional_json(root / "stage16d_healthcheck_manifest.json", failures)
     input_seed_manifest = _load_optional_json(root / "stage16d_input_seed_manifest.json", failures)
+    canonical_evidence_map = _load_optional_json(root / "stage16d_canonical_evidence_map.json", failures)
+    stage16d1_scope_report = _load_optional_json(root / "stage16d_1_smoke_scope_report.json", failures)
+    stage16d1_runner_report = _load_optional_json(root / "stage16d_1_official_runner_report.json", failures)
+    stage16d1_repo_owned_report = _load_optional_json(
+        root / "stage16d_1_repo_harness_owned_verifier_report.json",
+        failures,
+    )
     seed_records = _seeds_from_input_manifest(input_seed_manifest, failures)
     records = _records_from_manifest(manifest, failures)
     failures.extend(_validate_stage16d_records(records))
     failures.extend(_validate_seed_manifest_binding(seed_records, records))
     failures.extend(_validate_stage16d_report_instance_sets(root, seed_records))
+    failures.extend(_validate_stage16d1_reports(
+        canonical_evidence_map=canonical_evidence_map,
+        scope_report=stage16d1_scope_report,
+        runner_report=stage16d1_runner_report,
+        repo_owned_report=stage16d1_repo_owned_report,
+        seed_records=seed_records,
+        records=records,
+        assert_official_healthcheck_complete=assert_official_healthcheck_complete,
+    ))
     failures.extend(scan_stage16d_public_evidence(root))
 
     if summary:
@@ -729,6 +932,290 @@ def _public_leak_scan_report_payload(leak_failures: list[str]) -> dict[str, Any]
             "candidate_oracle_noop_resolved risk enum",
         ],
     }
+
+
+def _write_stage16d1_scope_report(
+    path: Path,
+    *,
+    seed_manifest_path: Path,
+    seed_manifest_sha256: str,
+    seeds: list[Stage16DSeedRecord],
+) -> None:
+    concrete = [seed for seed in seeds if _seed_resolution_status(seed) == CONCRETE_SEED_STATUS]
+    positive = [seed for seed in concrete if seed.seed_role == "positive_path_official_resolved"]
+    risk = [seed for seed in concrete if "risk" in seed.seed_role]
+    try:
+        source_payload = _read_json(seed_manifest_path)
+    except (json.JSONDecodeError, UnicodeDecodeError, FileNotFoundError):
+        source_payload = {}
+    source_ref = source_payload.get("source_manifest_ref")
+    if not isinstance(source_ref, str) or not source_ref:
+        source_ref = _public_safe_path_ref(seed_manifest_path)
+    full_coverage = bool(source_payload.get("full_stage16d0_seed_coverage_claimed", False))
+    remaining_count = source_payload.get("remaining_stage16d0_seed_count_not_healthchecked")
+    if not isinstance(remaining_count, int):
+        remaining_count = 0 if full_coverage else None
+    _write_json(
+        path,
+        {
+            "schema_version": "repo_harness_stage16d_1_smoke_scope_report_v0",
+            "source_manifest_ref": source_ref,
+            "source_manifest_sha256": seed_manifest_sha256,
+            "selection_policy": source_payload.get("selection_policy", "stage16d_healthcheck_contract"),
+            "scope_limit": source_payload.get("scope_limit", "Stage 16D healthcheck evidence scope."),
+            "selected_instance_ids": [seed.instance_id for seed in seeds],
+            "selected_seed_count": len(seeds),
+            "selected_concrete_seed_count": len(concrete),
+            "selected_positive_path_seed_count": len(positive),
+            "selected_risk_seed_count": len(risk),
+            "full_stage16d0_seed_coverage_claimed": full_coverage,
+            "remaining_stage16d0_seed_count_not_healthchecked": remaining_count,
+        },
+    )
+
+
+def _write_stage16d1_official_runner_report(path: Path, records: list[Stage16DHealthcheckRecord]) -> None:
+    executed_records = [record for record in records if record.official_harness_execution_status == "executed"]
+    first = executed_records[0] if executed_records else None
+    _write_json(
+        path,
+        {
+            "schema_version": "repo_harness_stage16d_1_official_runner_report_v0",
+            "status": "executed" if executed_records else "not_run_in_local_schema_phase",
+            "runner_kind": "swebench_official_harness" if executed_records else None,
+            "runner_version": "unknown" if executed_records else None,
+            "official_image_source": first.official_image_source if first else None,
+            "official_image_digest": first.official_image_digest if first else None,
+            "official_image_digest_locked": first.official_image_digest_locked if first else False,
+            "runner_digest": first.runner_digest if first else None,
+            "runner_digest_method": first.runner_digest_method if first else None,
+            "execution_image_digest_by_instance": _merged_execution_image_digests(records),
+            "execution_image_source_by_instance": _merged_execution_image_sources(records),
+            "official_environment_digest_lock_method": first.official_environment_digest_lock_method if first else None,
+            "selected_dataset_rows_ref": first.selected_dataset_rows_ref if first else None,
+            "selected_dataset_rows_sha256": first.selected_dataset_rows_sha256 if first else None,
+            "selected_instance_row_sha256_by_instance": {
+                record.instance_id: record.selected_instance_row_sha256
+                for record in records
+                if record.selected_instance_row_sha256
+            },
+            "gold_predictions_ref": first.gold_predictions_ref if first else None,
+            "gold_predictions_sha256": first.gold_predictions_sha256 if first else None,
+            "noop_predictions_ref": first.noop_predictions_ref if first else None,
+            "noop_predictions_sha256": first.noop_predictions_sha256 if first else None,
+            "gold_official_command_ref": first.gold_official_command_ref if first else None,
+            "gold_official_command_sha256": first.gold_official_command_sha256 if first else None,
+            "noop_official_command_ref": first.noop_official_command_ref if first else None,
+            "noop_official_command_sha256": first.noop_official_command_sha256 if first else None,
+            "docker_available": None,
+            "docker_version": None,
+            "max_workers": 1 if executed_records else None,
+            "timeout_seconds": None,
+            "selected_instance_ids": [record.instance_id for record in records],
+            "gold_run_status": _run_status_from_records(records, check_kind="gold_patch"),
+            "noop_run_status": _run_status_from_records(records, check_kind="noop_patch"),
+            "raw_report_ref": None,
+            "raw_report_sha256": None,
+            "sanitized_command_log_ref": None,
+        },
+    )
+
+
+def _validate_stage16d1_reports(
+    *,
+    canonical_evidence_map: Mapping[str, Any],
+    scope_report: Mapping[str, Any],
+    runner_report: Mapping[str, Any],
+    repo_owned_report: Mapping[str, Any],
+    seed_records: list[Stage16DSeedRecord],
+    records: list[Stage16DHealthcheckRecord],
+    assert_official_healthcheck_complete: bool,
+) -> list[str]:
+    failures: list[str] = []
+    public_items = canonical_evidence_map.get("public_items")
+    if not isinstance(public_items, Mapping):
+        failures.append("stage16d_canonical_evidence_map_missing_public_items")
+    else:
+        for artifact in (
+            "stage16d_1_smoke_scope_report.json",
+            "stage16d_1_official_runner_report.json",
+            "stage16d_1_repo_harness_owned_verifier_report.json",
+        ):
+            if artifact not in public_items:
+                failures.append(f"stage16d1_artifact_missing_from_canonical_map:{artifact}")
+    expected_ids = [seed.instance_id for seed in seed_records]
+    if scope_report:
+        if scope_report.get("selected_instance_ids") != expected_ids:
+            failures.append("stage16d1_scope_report_selected_instance_ids_mismatch")
+        if scope_report.get("selected_seed_count") != len(seed_records):
+            failures.append("stage16d1_scope_report_seed_count_mismatch")
+        if scope_report.get("full_stage16d0_seed_coverage_claimed") is not False:
+            failures.append("stage16d1_scope_report_full_coverage_must_be_false")
+        if not isinstance(scope_report.get("source_manifest_sha256"), str) or not SHA256_HEX_RE.fullmatch(
+            scope_report.get("source_manifest_sha256", "")
+        ):
+            failures.append("stage16d1_scope_report_missing_source_manifest_sha256")
+    if repo_owned_report and repo_owned_report.get("status") not in {"not_run_in_stage16d_1", "executed"}:
+        failures.append("stage16d1_repo_owned_report_invalid_status")
+    if runner_report:
+        if runner_report.get("selected_instance_ids") != [record.instance_id for record in records]:
+            failures.append("stage16d1_runner_report_selected_instance_ids_mismatch")
+    if assert_official_healthcheck_complete:
+        failures.extend(_assert_stage16d1_runner_report_complete(runner_report, records))
+    return failures
+
+
+def _assert_stage16d1_runner_report_complete(
+    runner_report: Mapping[str, Any],
+    records: list[Stage16DHealthcheckRecord],
+) -> list[str]:
+    failures: list[str] = []
+    if runner_report.get("status") != "executed":
+        failures.append("stage16d1_runner_report_not_executed")
+    required = (
+        "selected_dataset_rows_sha256",
+        "gold_predictions_sha256",
+        "noop_predictions_sha256",
+        "gold_official_command_sha256",
+        "noop_official_command_sha256",
+        "runner_digest",
+        "execution_image_digest_by_instance",
+    )
+    for field in required:
+        if not runner_report.get(field):
+            failures.append(f"stage16d1_runner_report_missing:{field}")
+    failures.extend(_stage16d1_runner_report_record_mismatches(runner_report, records))
+    for record in records:
+        if record.seed_resolution_status != CONCRETE_SEED_STATUS:
+            continue
+        failures.extend(_official_complete_stage16d1_binding_failures(record))
+    return failures
+
+
+def _stage16d1_runner_report_record_mismatches(
+    runner_report: Mapping[str, Any],
+    records: list[Stage16DHealthcheckRecord],
+) -> list[str]:
+    failures: list[str] = []
+    concrete_records = [record for record in records if record.seed_resolution_status == CONCRETE_SEED_STATUS]
+    if not concrete_records:
+        return failures
+
+    uniform_fields = (
+        "official_image_source",
+        "official_image_digest",
+        "official_image_digest_locked",
+        "runner_digest",
+        "runner_digest_method",
+        "official_environment_digest_lock_method",
+        "selected_dataset_rows_ref",
+        "selected_dataset_rows_sha256",
+        "gold_predictions_ref",
+        "gold_predictions_sha256",
+        "noop_predictions_ref",
+        "noop_predictions_sha256",
+        "gold_official_command_ref",
+        "gold_official_command_sha256",
+        "noop_official_command_ref",
+        "noop_official_command_sha256",
+    )
+    for field in uniform_fields:
+        expected = _uniform_record_field(concrete_records, field)
+        if expected is _NON_UNIFORM_FIELD:
+            failures.append(f"stage16d1_runner_report_non_uniform_record_field:{field}")
+        elif runner_report.get(field) != expected:
+            failures.append(f"stage16d1_runner_report_field_mismatch:{field}")
+
+    expected_selected_rows = {
+        record.instance_id: record.selected_instance_row_sha256
+        for record in concrete_records
+        if record.selected_instance_row_sha256
+    }
+    if runner_report.get("selected_instance_row_sha256_by_instance") != expected_selected_rows:
+        failures.append("stage16d1_runner_report_selected_instance_row_sha256_mismatch")
+
+    expected_execution_digests = _merged_execution_image_digests(concrete_records)
+    if runner_report.get("execution_image_digest_by_instance") != expected_execution_digests:
+        failures.append("stage16d1_runner_report_execution_image_digest_mismatch")
+
+    expected_execution_sources = _merged_execution_image_sources(concrete_records)
+    if runner_report.get("execution_image_source_by_instance") != expected_execution_sources:
+        failures.append("stage16d1_runner_report_execution_image_source_mismatch")
+
+    if runner_report.get("gold_run_status") != _run_status_from_records(records, check_kind="gold_patch"):
+        failures.append("stage16d1_runner_report_gold_run_status_mismatch")
+    if runner_report.get("noop_run_status") != _run_status_from_records(records, check_kind="noop_patch"):
+        failures.append("stage16d1_runner_report_noop_run_status_mismatch")
+
+    return failures
+
+
+_NON_UNIFORM_FIELD = object()
+
+
+def _uniform_record_field(records: list[Stage16DHealthcheckRecord], field: str) -> Any:
+    values = [getattr(record, field) for record in records]
+    if not values:
+        return None
+    first = values[0]
+    return first if all(value == first for value in values) else _NON_UNIFORM_FIELD
+
+
+def _record_has_stage16d1_binding(record: Stage16DHealthcheckRecord) -> bool:
+    return not _official_complete_stage16d1_binding_failures(record)
+
+
+def _official_complete_stage16d1_binding_failures(record: Stage16DHealthcheckRecord) -> list[str]:
+    failures: list[str] = []
+    for label, kind, ref, digest in _stage16d1_required_ref_digest_pairs(record):
+        if not ref or not digest:
+            failures.append(f"official_complete_missing_{label}:{record.instance_id}")
+        elif not is_opaque_runtime_private_ref(ref) or _runtime_private_ref_kind(ref) != kind:
+            failures.append(f"official_complete_{label}_kind_mismatch:{record.instance_id}")
+        elif _runtime_private_ref_digest(ref) != digest:
+            failures.append(f"official_complete_{label}_digest_mismatch:{record.instance_id}")
+    if not record.selected_instance_row_sha256:
+        failures.append(f"official_complete_missing_selected_instance_row_sha256:{record.instance_id}")
+    if not record.runner_digest:
+        failures.append(f"official_complete_missing_runner_digest:{record.instance_id}")
+    if not _execution_environment_locked_for_instance(
+        record.instance_id,
+        record.execution_image_digest_by_instance,
+        record.official_environment_digest_lock_method,
+    ):
+        failures.append(f"official_complete_missing_execution_image_digest:{record.instance_id}")
+    return failures
+
+
+def _merged_execution_image_digests(records: list[Stage16DHealthcheckRecord]) -> dict[str, str]:
+    merged: dict[str, str] = {}
+    for record in records:
+        merged.update(record.execution_image_digest_by_instance)
+    return merged
+
+
+def _merged_execution_image_sources(records: list[Stage16DHealthcheckRecord]) -> dict[str, str]:
+    merged: dict[str, str] = {}
+    for record in records:
+        merged.update(record.execution_image_source_by_instance)
+    return merged
+
+
+def _run_status_from_records(records: list[Stage16DHealthcheckRecord], *, check_kind: Stage16DCheckKind) -> str:
+    statuses = []
+    for record in records:
+        if check_kind == "gold_patch":
+            statuses.append(record.gold_healthcheck_status)
+        else:
+            statuses.append(record.noop_healthcheck_status)
+    return "executed" if all(not status.startswith("not_run") for status in statuses) else "not_run_or_incomplete"
+
+
+def _public_safe_path_ref(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _seed_resolution_status(seed: Stage16DSeedRecord) -> Stage16DSeedResolutionStatus:
@@ -900,6 +1387,22 @@ def _derived_summary_from_records(
 ) -> dict[str, Any]:
     concrete = [record for record in records if record.seed_resolution_status == CONCRETE_SEED_STATUS]
     trainable = [record for record in records if record.healthcheck_training_disposition == DISPOSITION_TRAINABLE]
+    positive_path = [record for record in concrete if record.seed_role == "positive_path_official_resolved"]
+    risk_seeds = [record for record in concrete if "risk" in record.seed_role]
+    positive_gold_pass = sum(1 for record in positive_path if record.gold_healthcheck_status == GOLD_PASSED)
+    positive_noop_unresolved = sum(
+        1 for record in positive_path if record.noop_healthcheck_status == NOOP_EXPECTED_UNRESOLVED
+    )
+    positive_trainable = sum(
+        1 for record in positive_path if record.healthcheck_training_disposition == DISPOSITION_TRAINABLE
+    )
+    risk_classified = all(
+        record.official_harness_execution_status == "executed"
+        and record.gold_healthcheck_status in {GOLD_PASSED, GOLD_FAILED}
+        and record.noop_healthcheck_status in {NOOP_EXPECTED_UNRESOLVED, NOOP_UNEXPECTEDLY_RESOLVED}
+        and _record_has_stage16d1_binding(record)
+        for record in risk_seeds
+    )
     normalized_leak_failures = leak_failures if isinstance(leak_failures, list) else []
     official_executed = any(record.official_harness_execution_status != "not_run_in_local_schema_phase" for record in records)
     official_complete = bool(concrete) and all(
@@ -910,6 +1413,7 @@ def _derived_summary_from_records(
         and bool(record.official_image_digest and IMAGE_DIGEST_RE.fullmatch(record.official_image_digest))
         and bool(record.gold_official_result_ref and record.gold_official_result_sha256)
         and bool(record.noop_official_result_ref and record.noop_official_result_sha256)
+        and _record_has_stage16d1_binding(record)
         for record in concrete
     )
     return {
@@ -936,6 +1440,16 @@ def _derived_summary_from_records(
         ),
         "proxy_official_disagreement_count": sum(1 for record in records if record.proxy_official_disagreement),
         "training_eligible_after_healthcheck_count": len(trainable),
+        "stage16d1_selected_positive_path_seed_count": len(positive_path),
+        "stage16d1_selected_risk_seed_count": len(risk_seeds),
+        "positive_path_gold_healthcheck_pass_count": positive_gold_pass,
+        "positive_path_noop_expected_unresolved_count": positive_noop_unresolved,
+        "positive_path_trainable_candidate_count": positive_trainable,
+        "stage16d1_positive_path_healthcheck_passed": bool(positive_path)
+        and positive_gold_pass == len(positive_path)
+        and positive_noop_unresolved == len(positive_path)
+        and positive_trainable == len(positive_path),
+        "stage16d1_risk_seed_classification_complete": risk_classified,
         "public_path_leak_scan_passed": not normalized_leak_failures,
         "hidden_selector_leak_scan_passed": not normalized_leak_failures,
         "patch_content_public_leak_scan_passed": not normalized_leak_failures,
@@ -1172,6 +1686,18 @@ def _assert_official_complete(
         failures.append("stage16d_official_healthcheck_complete_not_true")
     if summary.get("official_healthcheck_assert_complete_passed") is not True:
         failures.append("stage16d_official_healthcheck_assert_complete_passed_not_true")
+    if summary.get("stage16d1_positive_path_healthcheck_passed") is not True:
+        failures.append("stage16d1_positive_path_healthcheck_not_passed")
+    if summary.get("stage16d1_selected_positive_path_seed_count", 0) < 1:
+        failures.append("stage16d1_missing_positive_path_seed")
+    if summary.get("positive_path_gold_healthcheck_pass_count", 0) < summary.get(
+        "stage16d1_selected_positive_path_seed_count", 0
+    ):
+        failures.append("stage16d1_positive_path_gold_pass_count_insufficient")
+    if summary.get("positive_path_noop_expected_unresolved_count", 0) < summary.get(
+        "stage16d1_selected_positive_path_seed_count", 0
+    ):
+        failures.append("stage16d1_positive_path_noop_unresolved_count_insufficient")
     for record in records:
         if record.seed_resolution_status != CONCRETE_SEED_STATUS:
             continue
@@ -1187,6 +1713,7 @@ def _assert_official_complete(
             failures.append(f"official_complete_missing_gold_result_artifact:{record.instance_id}")
         if not (record.noop_official_result_ref and record.noop_official_result_sha256):
             failures.append(f"official_complete_missing_noop_result_artifact:{record.instance_id}")
+        failures.extend(_official_complete_stage16d1_binding_failures(record))
         if record.gold_healthcheck_status not in {GOLD_PASSED, GOLD_FAILED}:
             failures.append(f"official_complete_missing_gold_result:{record.instance_id}")
         if record.noop_healthcheck_status not in {NOOP_EXPECTED_UNRESOLVED, NOOP_UNEXPECTEDLY_RESOLVED}:
@@ -1286,6 +1813,86 @@ def _first_non_empty(*values: str | None) -> str | None:
     return None
 
 
+def _validate_runtime_private_ref_digest_pair(
+    ref: str | None,
+    digest: str | None,
+    label: str,
+    *,
+    expected_kind: str,
+) -> None:
+    if not ref or not is_opaque_runtime_private_ref(ref):
+        raise ValueError(f"executed healthcheck result requires runtime-private {label}_ref")
+    if _runtime_private_ref_kind(ref) != expected_kind:
+        raise ValueError(f"{label} ref kind must be {expected_kind}")
+    if not digest or not SHA256_HEX_RE.fullmatch(digest):
+        raise ValueError(f"executed healthcheck result requires {label}_sha256")
+    if _runtime_private_ref_digest(ref) != digest:
+        raise ValueError(f"{label} ref digest must match sha256")
+
+
+def _execution_environment_locked_for_instance(
+    instance_id: str,
+    execution_image_digest_by_instance: Mapping[str, str],
+    lock_method: str | None,
+) -> bool:
+    if instance_id in execution_image_digest_by_instance:
+        return bool(IMAGE_DIGEST_RE.fullmatch(execution_image_digest_by_instance[instance_id]))
+    return lock_method == "single_layer_environment_digest"
+
+
+def _stage16d1_required_ref_digest_pairs(
+    record: Stage16DHealthcheckRecord,
+) -> tuple[tuple[str, str, str | None, str | None], ...]:
+    return (
+        (
+            "gold_official_result",
+            "official-result",
+            record.gold_official_result_ref,
+            record.gold_official_result_sha256,
+        ),
+        (
+            "noop_official_result",
+            "official-result",
+            record.noop_official_result_ref,
+            record.noop_official_result_sha256,
+        ),
+        (
+            "selected_dataset_rows",
+            "selected-dataset-rows",
+            record.selected_dataset_rows_ref,
+            record.selected_dataset_rows_sha256,
+        ),
+        ("gold_predictions", "gold-predictions", record.gold_predictions_ref, record.gold_predictions_sha256),
+        ("noop_predictions", "noop-predictions", record.noop_predictions_ref, record.noop_predictions_sha256),
+        ("gold_official_command", "official-command", record.gold_official_command_ref, record.gold_official_command_sha256),
+        ("noop_official_command", "official-command", record.noop_official_command_ref, record.noop_official_command_sha256),
+    )
+
+
+def _matching_field(
+    gold_result: Stage16DHealthcheckInputResult | None,
+    noop_result: Stage16DHealthcheckInputResult | None,
+    field: str,
+) -> str | None:
+    values = [getattr(result, field) for result in (gold_result, noop_result) if result is not None]
+    present = [value for value in values if value]
+    if not present:
+        return None
+    return present[0] if all(value == present[0] for value in present) else None
+
+
+def _matching_mapping(
+    gold_result: Stage16DHealthcheckInputResult | None,
+    noop_result: Stage16DHealthcheckInputResult | None,
+    field: str,
+) -> dict[str, str]:
+    values = [getattr(result, field) for result in (gold_result, noop_result) if result is not None]
+    present = [value for value in values if value]
+    if not present:
+        return {}
+    return dict(present[0]) if all(value == present[0] for value in present) else {}
+
+
 def _official_image_digest_pair_locked(*results: Stage16DHealthcheckInputResult | None) -> bool:
     present = [result for result in results if result is not None]
     if not present:
@@ -1293,7 +1900,30 @@ def _official_image_digest_pair_locked(*results: Stage16DHealthcheckInputResult 
     digests = {result.official_image_digest for result in present if result.official_image_digest}
     if len(digests) != 1:
         return False
-    return all(result.official_image_digest_locked for result in present)
+    if not all(result.official_image_digest_locked for result in present):
+        return False
+    shared_fields = (
+        "selected_dataset_rows_ref",
+        "selected_dataset_rows_sha256",
+        "selected_instance_row_sha256",
+        "runner_digest",
+        "runner_digest_method",
+        "official_environment_digest_lock_method",
+    )
+    for field in shared_fields:
+        values = [getattr(result, field) for result in present]
+        if not all(values) or len(set(values)) != 1:
+            return False
+    if len({json.dumps(result.execution_image_digest_by_instance, sort_keys=True) for result in present}) != 1:
+        return False
+    return all(
+        _execution_environment_locked_for_instance(
+            result.instance_id,
+            result.execution_image_digest_by_instance,
+            result.official_environment_digest_lock_method,
+        )
+        for result in present
+    )
 
 
 def _stage16d_seed_public_subset(seed: Any) -> dict[str, Any]:
@@ -1306,6 +1936,9 @@ def _stage16d_seed_public_subset(seed: Any) -> dict[str, Any]:
         "candidate_instance_status",
         "gold_patch_source",
         "noop_patch_source",
+        "source_evidence_ref",
+        "source_doc_sha256",
+        "stage16d_execution_precondition",
         "official_validation_backend",
     )
     return {field: seed.get(field) for field in fields if field in seed}
@@ -1319,6 +1952,11 @@ def _runtime_private_artifact_ref(path: Path) -> str:
 
 def _runtime_private_ref_digest(ref: str) -> str:
     return ref.rsplit(":", 1)[-1]
+
+
+def _runtime_private_ref_kind(ref: str) -> str:
+    parts = ref.split(":")
+    return parts[1] if len(parts) == 3 else ""
 
 
 __all__ = [
