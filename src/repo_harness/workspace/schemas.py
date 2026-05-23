@@ -31,6 +31,8 @@ class ExecutionResult(StrictBaseModel):
     execution_backend: Literal["local_process", "docker"] = "local_process"
     execution_id: str | None = None
     container_execution_facts_ref: str | None = None
+    diagnostic_session_facts: dict[str, Any] | None = None
+    diagnostic_session_facts_ref: ArtifactRef | None = None
 
 
 class DependencyState(StrictBaseModel):

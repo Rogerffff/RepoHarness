@@ -30,6 +30,19 @@ PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER = [
     "run_tests",
     "git_diff",
 ]
+PATCH_FOCUSED_REACT_DIAGNOSTIC_SHELL_TOOL_ORDER = [
+    "list_files",
+    "glob_files",
+    "read_file",
+    "read_tool_result_artifact",
+    "grep",
+    "symbol_search",
+    "update_working_state",
+    "edit_file",
+    "diagnostic_shell",
+    "run_tests",
+    "git_diff",
+]
 
 
 class PatchFocusedReactScaffold(ScaffoldDefinition):
@@ -91,5 +104,29 @@ def build_patch_focused_react_execute_bash_scaffold() -> PatchFocusedReactScaffo
         allows_final_answer_without_tool=True,
         allows_feedback_verifier_repair=True,
         allowed_tools=list(PATCH_FOCUSED_REACT_EXECUTE_BASH_TOOL_ORDER),
+        initial_phase="patch",
+    )
+
+
+def build_patch_focused_react_diagnostic_shell_scaffold() -> PatchFocusedReactScaffold:
+    return PatchFocusedReactScaffold(
+        scaffold_id="patch_focused_react_diagnostic_shell",
+        scaffold_version="repo_harness_patch_focused_react_diagnostic_shell_stage16b_v0",
+        prompt_fragment=(
+            build_patch_focused_react_scaffold().prompt_fragment
+            + " This diagnostic variant exposes diagnostic_shell for persistent, task-local "
+            "software engineering diagnosis. The tool runs in a diagnostic-visible workspace "
+            "projection that hides git metadata, runtime-private files, and evaluator-only "
+            "artifacts. Keep final fixes in public repository source files; do not depend on "
+            "diagnostic-only HOME, TMP, cache, or scratch files."
+        ),
+        allowed_tools_policy="repo_harness_patch_focused_react_diagnostic_shell_allowed_tools_stage16b_v0",
+        phase_transition_policy="repo_harness_patch_focused_react_single_phase_v0",
+        default_stop_policy="repo_harness_patch_focused_react_stop_policy_v0",
+        default_test_feedback_policy=TestFeedbackPolicy.structured_public_feedback,
+        default_feedback_tests_passed_policy=FeedbackTestsPassedPolicy.require_model_final,
+        allows_final_answer_without_tool=True,
+        allows_feedback_verifier_repair=True,
+        allowed_tools=list(PATCH_FOCUSED_REACT_DIAGNOSTIC_SHELL_TOOL_ORDER),
         initial_phase="patch",
     )

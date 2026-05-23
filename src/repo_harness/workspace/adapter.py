@@ -26,6 +26,18 @@ from repo_harness.workspace.dependency_environment import (
     assert_command_avoids_runtime_overlay_path,
     assert_no_shell_wrapper_for_shared_environment,
 )
+from repo_harness.workspace.diagnostic_session import (
+    DiagnosticSessionFacts,
+    diagnostic_command_environment,
+    diagnostic_command_policy_issue,
+    diagnostic_session_paths,
+    default_local_diagnostic_session_root,
+    ensure_diagnostic_session_dirs,
+    prepare_diagnostic_projection,
+    redact_diagnostic_output,
+    resolve_projection_cwd,
+    sync_projection_to_workspace,
+)
 
 DEFAULT_EXCLUDED_DIFF_PATHS = [
     ".pytest_cache/",
@@ -137,6 +149,7 @@ class LocalWorkspaceAdapter:
         command_env_provider: Callable[[Path], Mapping[str, str]] | None = None,
         allowed_workspace_roots: list[str | Path] | None = None,
         block_shared_environment_writes: bool = False,
+        diagnostic_shell_local_isolation_verified: bool = False,
     ) -> None:
         self.run_id = run_id
         self.run_dir = Path(run_dir)
@@ -148,7 +161,10 @@ class LocalWorkspaceAdapter:
             Path(root).resolve(strict=False) for root in (allowed_workspace_roots or [])
         ]
         self.block_shared_environment_writes = block_shared_environment_writes
+        self.diagnostic_shell_local_isolation_verified = diagnostic_shell_local_isolation_verified
         self.last_source_checkout: SourceCheckout | None = None
+        self._diagnostic_invalidated_sessions: set[str] = set()
+        self._diagnostic_session_root = default_local_diagnostic_session_root(run_id)
         self.workspaces_dir.mkdir(parents=True, exist_ok=True)
 
     def create_source_checkout(self, task: RunnableTask) -> Path:
@@ -489,7 +505,129 @@ class LocalWorkspaceAdapter:
             exit_code_interpretation="timeout" if timed_out else "process_exit_code",
         )
 
+    def run_diagnostic_shell(
+        self,
+        workspace_path: str | Path,
+        command: str,
+        *,
+        cwd: str = ".",
+        timeout_sec: float | None = None,
+        recorder: RunRecorder,
+        session_id: str | None = None,
+        artifact_metadata: dict[str, Any] | None = None,
+        local_backend_filesystem_isolation_verified: bool | None = None,
+    ) -> ExecutionResult:
+        """Run a Stage 16B local filesystem-persistent diagnostic command."""
+
+        workspace = Path(workspace_path).resolve()
+        self._assert_workspace_under_run_dir(workspace)
+        issue = diagnostic_command_policy_issue(command)
+        if issue is not None:
+            raise WorkspaceError(issue)
+        raw_session_id = session_id or f"{self.run_id}-{workspace.name}-diagnostic"
+        paths = diagnostic_session_paths(
+            self.run_dir,
+            raw_session_id,
+            external_root=self._diagnostic_session_root,
+        )
+        safe_session_id = paths.session_id
+        if safe_session_id in self._diagnostic_invalidated_sessions:
+            raise WorkspaceError("diagnostic_session_invalidated")
+        session_reused = paths.session_root.exists()
+        prepare_diagnostic_projection(workspace, paths.projection_workspace)
+        ensure_diagnostic_session_dirs(paths)
+        projection_cwd = resolve_projection_cwd(paths, cwd)
+        timeout = timeout_sec if timeout_sec is not None else self.default_command_timeout_sec
+        command_env = (
+            dict(self.command_env_provider(paths.projection_workspace))
+            if self.command_env_provider is not None
+            else _command_env()
+        )
+        command_env = diagnostic_command_environment(command_env, paths)
+        started = time.monotonic()
+        process = subprocess.Popen(
+            command,
+            cwd=projection_cwd,
+            shell=True,
+            env=command_env,
+            start_new_session=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        timed_out = False
+        facts = DiagnosticSessionFacts(
+            diagnostic_session_backend="local_filesystem_persistent",
+            diagnostic_session_cleanup_status="completed",
+            local_backend_filesystem_isolation_verified=(
+                False
+            ),
+            reused=session_reused,
+        )
+        facts.background_process_cleanup_status = "not_verified_local_process"
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            facts.session_invalidated = True
+            facts.diagnostic_session_cleanup_status = "invalidated"
+            facts.invalidation_reason = "command_timeout"
+            self._diagnostic_invalidated_sessions.add(safe_session_id)
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                stdout, stderr = process.communicate(timeout=2)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                stdout, stderr = process.communicate()
+        sync_facts = sync_projection_to_workspace(paths.projection_workspace, workspace)
+        facts.workspace_projection_sync_status = sync_facts.workspace_projection_sync_status
+        facts.workspace_projection_sync_passed = sync_facts.workspace_projection_sync_passed
+        facts.symlink_escape_blocked = sync_facts.symlink_escape_blocked
+        facts.diagnostics.extend(sync_facts.diagnostics)
+        if timed_out:
+            shutil.rmtree(paths.session_root, ignore_errors=True)
+        duration_ms = int((time.monotonic() - started) * 1000)
+        stdout = redact_diagnostic_output(stdout, run_dir=self.run_dir, workspace=workspace, paths=paths)
+        stderr = redact_diagnostic_output(stderr, run_dir=self.run_dir, workspace=workspace, paths=paths)
+        command_display = redact_diagnostic_output(command, run_dir=self.run_dir, workspace=workspace, paths=paths)
+        output_metadata = {
+            "retention_policy": "keep",
+            "command_semantics": "diagnostic_shell",
+            "model_visible_observation": "redacted_truncated",
+            "raw_command_artifact_visibility": "runtime_private_or_restricted_audit",
+            **(artifact_metadata or {}),
+        }
+        stdout_ref = recorder.write_artifact("diagnostic_shell_stdout", stdout, output_metadata)
+        stderr_ref = recorder.write_artifact("diagnostic_shell_stderr", stderr, output_metadata)
+        artifact_ref = recorder.write_artifact(
+            "diagnostic_shell_output",
+            f"$ {command_display}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
+            output_metadata,
+        )
+        facts_ref = recorder.write_json_artifact("diagnostic_shell_facts", facts.to_json())
+        return ExecutionResult(
+            exit_code=process.returncode,
+            stdout_preview=_preview(stdout),
+            stderr_preview=_preview(stderr),
+            output_artifact_ref=artifact_ref,
+            stdout_ref=stdout_ref,
+            stderr_ref=stderr_ref,
+            duration_ms=duration_ms,
+            timeout=timed_out,
+            command_semantics="diagnostic_shell",
+            exit_code_interpretation="timeout" if timed_out else "process_exit_code",
+            execution_backend="local_process",
+            execution_id=paths.session_id,
+            diagnostic_session_facts=facts.to_json(),
+            diagnostic_session_facts_ref=facts_ref,
+        )
+
     def cleanup_workspaces(self) -> None:
+        diagnostic_root = self.run_dir / "diagnostic_sessions"
+        if diagnostic_root.exists():
+            shutil.rmtree(diagnostic_root, ignore_errors=True)
+        if self._diagnostic_session_root.exists():
+            shutil.rmtree(self._diagnostic_session_root, ignore_errors=True)
         if self.keep_workspace:
             return
         if self.workspaces_dir.exists():

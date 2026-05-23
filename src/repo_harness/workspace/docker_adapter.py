@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 import os
 import re
@@ -31,6 +32,16 @@ from repo_harness.workspace.adapter import (
     _symlink_files_from_summary,
 )
 from repo_harness.workspace.backend_status import build_workspace_backend_status
+from repo_harness.workspace.diagnostic_session import (
+    DiagnosticSessionFacts,
+    diagnostic_command_policy_issue,
+    diagnostic_session_paths,
+    ensure_diagnostic_session_dirs,
+    prepare_diagnostic_projection,
+    redact_diagnostic_output,
+    resolve_projection_cwd,
+    sync_projection_to_workspace,
+)
 from repo_harness.workspace.materialization import SourceCheckout, materialize_source
 from repo_harness.workspace.protocol import WorkspaceBackend
 from repo_harness.workspace.schemas import (
@@ -75,6 +86,7 @@ SEMANTICS_TO_PHASE = {
     "agent_tool_file_discovery": "agent_tool",
     "bash_diagnostic": "agent_tool",
     "execute_bash": "agent_tool",
+    "diagnostic_shell": "agent_tool",
     "git_diff": "agent_tool",
     "run_tests": "run_tests",
     "verifier_feedback": "run_tests",
@@ -239,6 +251,8 @@ class DockerWorkspaceAdapter:
         self.facts_dir = self.run_dir / "container_execution_facts"
         self.last_source_checkout: SourceCheckout | None = None
         self._command_counter = 0
+        self._diagnostic_containers: dict[str, str] = {}
+        self._diagnostic_invalidated_sessions: set[str] = set()
         self.workspaces_dir.mkdir(parents=True, exist_ok=True)
         self.facts_dir.mkdir(parents=True, exist_ok=True)
         self.environment = inspect_docker_environment()
@@ -861,7 +875,137 @@ class DockerWorkspaceAdapter:
             container_execution_facts_ref=output.facts_ref,
         )
 
+    def run_diagnostic_shell(
+        self,
+        workspace_path: str | Path,
+        command: str,
+        *,
+        cwd: str = ".",
+        timeout_sec: float | None = None,
+        recorder: RunRecorder,
+        session_id: str | None = None,
+        artifact_metadata: dict[str, Any] | None = None,
+        local_backend_filesystem_isolation_verified: bool | None = None,
+    ) -> ExecutionResult:
+        """Run a Stage 16B Docker persistent diagnostic command.
+
+        The persistent container mounts only the diagnostic-visible projection.
+        The RepoHarness run directory is deliberately not mounted.
+        """
+
+        workspace = self._host_path(workspace_path)
+        issue = diagnostic_command_policy_issue(command)
+        if issue is not None:
+            raise WorkspaceError(issue)
+        raw_session_id = session_id or f"{self.run_id}-{workspace.name}-diagnostic"
+        paths = diagnostic_session_paths(self.run_dir, raw_session_id)
+        safe_session_id = paths.session_id
+        if safe_session_id in self._diagnostic_invalidated_sessions:
+            raise WorkspaceError("diagnostic_session_invalidated")
+        prepare_diagnostic_projection(workspace, paths.projection_workspace)
+        ensure_diagnostic_session_dirs(paths)
+        projection_cwd = resolve_projection_cwd(paths, cwd)
+        rel_cwd = projection_cwd.relative_to(paths.projection_workspace.resolve()).as_posix()
+        container_workdir = "/workspace" if rel_cwd == "." else f"/workspace/{rel_cwd}"
+        container_labels = self._diagnostic_container_labels(
+            paths,
+            workspace=workspace,
+            artifact_metadata=artifact_metadata,
+        )
+        container_name = self._ensure_diagnostic_container(paths, labels=container_labels)
+        timeout = timeout_sec if timeout_sec is not None else self.default_command_timeout_sec
+        started = time.monotonic()
+        docker_command = [
+            self.environment.docker_path,
+            "exec",
+            "-w",
+            container_workdir,
+            container_name,
+            "sh",
+            "-lc",
+            command,
+        ]
+        timed_out = False
+        facts = DiagnosticSessionFacts(
+            diagnostic_session_backend="docker_persistent_container",
+            diagnostic_session_cleanup_status="completed",
+            local_backend_filesystem_isolation_verified=True,
+            reused=paths.session_id in self._diagnostic_containers,
+        )
+        try:
+            process = subprocess.run(
+                docker_command,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+                check=False,
+            )
+            stdout = process.stdout
+            stderr = process.stderr
+            exit_code: int | None = process.returncode
+        except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+            stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+            exit_code = None
+            facts.session_invalidated = True
+            facts.diagnostic_session_cleanup_status = "invalidated"
+            facts.invalidation_reason = "command_timeout"
+            self._diagnostic_invalidated_sessions.add(safe_session_id)
+            self._remove_diagnostic_container(safe_session_id)
+        if not timed_out:
+            background_status, background_diagnostics = self._diagnostic_background_process_status(container_name)
+            facts.background_process_cleanup_status = background_status
+            facts.diagnostics.extend(background_diagnostics)
+        sync_facts = sync_projection_to_workspace(paths.projection_workspace, workspace)
+        facts.workspace_projection_sync_status = sync_facts.workspace_projection_sync_status
+        facts.workspace_projection_sync_passed = sync_facts.workspace_projection_sync_passed
+        facts.symlink_escape_blocked = sync_facts.symlink_escape_blocked
+        facts.diagnostics.extend(sync_facts.diagnostics)
+        duration_ms = int((time.monotonic() - started) * 1000)
+        stdout = redact_diagnostic_output(stdout, run_dir=self.run_dir, workspace=workspace, paths=paths)
+        stderr = redact_diagnostic_output(stderr, run_dir=self.run_dir, workspace=workspace, paths=paths)
+        command_display = redact_diagnostic_output(command, run_dir=self.run_dir, workspace=workspace, paths=paths)
+        output_metadata = {
+            "retention_policy": "keep",
+            "command_semantics": "diagnostic_shell",
+            "model_visible_observation": "redacted_truncated",
+            "raw_command_artifact_visibility": "runtime_private_or_restricted_audit",
+            "run_dir_mount_enabled": False,
+            **(artifact_metadata or {}),
+        }
+        stdout_ref = recorder.write_artifact("diagnostic_shell_stdout", stdout, output_metadata)
+        stderr_ref = recorder.write_artifact("diagnostic_shell_stderr", stderr, output_metadata)
+        output_ref = recorder.write_artifact(
+            "diagnostic_shell_output",
+            f"$ {command_display}\n\n[stdout]\n{stdout}\n\n[stderr]\n{stderr}",
+            output_metadata,
+        )
+        facts_ref = recorder.write_json_artifact("diagnostic_shell_facts", facts.to_json())
+        return ExecutionResult(
+            exit_code=exit_code,
+            stdout_preview=_preview(stdout),
+            stderr_preview=_preview(stderr),
+            output_artifact_ref=output_ref,
+            stdout_ref=stdout_ref,
+            stderr_ref=stderr_ref,
+            duration_ms=duration_ms,
+            timeout=timed_out,
+            command_semantics="diagnostic_shell",
+            exit_code_interpretation="timeout" if timed_out else "process_exit_code",
+            execution_backend="docker",
+            execution_id=container_name,
+            diagnostic_session_facts=facts.to_json(),
+            diagnostic_session_facts_ref=facts_ref,
+        )
+
     def cleanup_workspaces(self) -> None:
+        for session_id in list(self._diagnostic_containers):
+            self._remove_diagnostic_container(session_id)
+        diagnostic_root = self.run_dir / "diagnostic_sessions"
+        if diagnostic_root.exists():
+            shutil.rmtree(diagnostic_root, ignore_errors=True)
         if self.keep_workspace:
             return
         if self.workspaces_dir.exists():
@@ -1194,6 +1338,193 @@ class DockerWorkspaceAdapter:
             "-v",
             f"{host_workspace.as_posix()}:{self._container_path(host_workspace).as_posix()}:rw",
         ]
+
+    def _ensure_diagnostic_container(self, paths: Any, *, labels: dict[str, str]) -> str:
+        existing = self._diagnostic_containers.get(paths.session_id)
+        if existing:
+            inspect = subprocess.run(
+                [self.environment.docker_path, "inspect", "-f", "{{.State.Running}}", existing],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                timeout=10,
+            )
+            if inspect.returncode == 0 and inspect.stdout.strip() == "true":
+                return existing
+            self._diagnostic_containers.pop(paths.session_id, None)
+        container_name = _safe_container_name(f"{self.run_id}-diagnostic-{paths.session_id}")
+        self._cleanup_stale_diagnostic_containers(labels)
+        subprocess.run(
+            [
+                self.environment.docker_path,
+                "rm",
+                "-f",
+                container_name,
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=15,
+        )
+        label_args = [
+            item
+            for key, value in sorted(labels.items())
+            for item in ("--label", f"{key}={value}")
+        ]
+        command = [
+            self.environment.docker_path,
+            "run",
+            "-d",
+            "--name",
+            container_name,
+            "--platform",
+            self.requested_container_platform,
+            "--network",
+            _docker_network_mode(self.network_policy),
+            *label_args,
+            "-e",
+            "PYTHONDONTWRITEBYTECODE=1",
+            "-e",
+            "HOME=/tmp/repo_harness_home",
+            "-e",
+            "TMPDIR=/tmp/repo_harness_tmp",
+            "-v",
+            f"{paths.projection_workspace.as_posix()}:/workspace:rw",
+            "-w",
+            "/workspace",
+            self.image_ref,
+            "sh",
+            "-lc",
+            "mkdir -p /tmp/repo_harness_home /tmp/repo_harness_tmp && sleep infinity",
+        ]
+        started = subprocess.run(
+            command,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=30,
+        )
+        if started.returncode != 0:
+            raise WorkspaceError(started.stderr.strip() or started.stdout.strip() or "diagnostic container failed to start")
+        self._diagnostic_containers[paths.session_id] = container_name
+        return container_name
+
+    def _diagnostic_container_labels(
+        self,
+        paths: Any,
+        *,
+        workspace: Path,
+        artifact_metadata: dict[str, Any] | None,
+    ) -> dict[str, str]:
+        task_id = str((artifact_metadata or {}).get("task_id") or "unknown")
+        workspace_digest = _diagnostic_workspace_digest(paths.projection_workspace)
+        return {
+            "repo-harness.session_kind": "diagnostic_shell",
+            "repo-harness.run_id": _safe_container_name(self.run_id),
+            "repo-harness.task_id": _safe_container_name(task_id),
+            "repo-harness.session_id": _safe_container_name(paths.session_id),
+            "repo-harness.workspace_digest": workspace_digest,
+            "repo-harness.workspace_path_hash": hashlib.sha256(
+                workspace.resolve().as_posix().encode("utf-8")
+            ).hexdigest(),
+        }
+
+    def _cleanup_stale_diagnostic_containers(self, labels: dict[str, str]) -> None:
+        filters = [
+            "label=repo-harness.session_kind=diagnostic_shell",
+            f"label=repo-harness.run_id={labels['repo-harness.run_id']}",
+            f"label=repo-harness.task_id={labels['repo-harness.task_id']}",
+            f"label=repo-harness.session_id={labels['repo-harness.session_id']}",
+            f"label=repo-harness.workspace_digest={labels['repo-harness.workspace_digest']}",
+            f"label=repo-harness.workspace_path_hash={labels['repo-harness.workspace_path_hash']}",
+        ]
+        command = [self.environment.docker_path, "ps", "-aq"]
+        for item in filters:
+            command.extend(["--filter", item])
+        listed = subprocess.run(
+            command,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=15,
+        )
+        if listed.returncode != 0:
+            return
+        container_ids = [line.strip() for line in listed.stdout.splitlines() if line.strip()]
+        if not container_ids:
+            return
+        subprocess.run(
+            [self.environment.docker_path, "rm", "-f", *container_ids],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=30,
+        )
+
+    def _remove_diagnostic_container(self, session_id: str) -> None:
+        container_name = self._diagnostic_containers.pop(session_id, None)
+        if not container_name:
+            return
+        subprocess.run(
+            [self.environment.docker_path, "rm", "-f", container_name],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=15,
+        )
+
+    def _diagnostic_background_process_status(self, container_name: str) -> tuple[str, list[str]]:
+        probe = subprocess.run(
+            [
+                self.environment.docker_path,
+                "exec",
+                container_name,
+                "sh",
+                "-lc",
+                "probe_pid=$$; "
+                "for p in /proc/[0-9]*; do "
+                "pid=${p##*/}; "
+                "ppid=$(awk '/^PPid:/ {print $2}' \"$p/status\" 2>/dev/null || true); "
+                "cmd=$(tr '\\000' ' ' < \"$p/cmdline\" 2>/dev/null || true); "
+                "if [ -n \"$cmd\" ]; then printf '%s %s %s %s\\n' \"$pid\" \"$ppid\" \"$probe_pid\" \"$cmd\"; fi; "
+                "done",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=10,
+        )
+        if probe.returncode != 0:
+            return "not_verified", ["diagnostic_background_process_probe_failed"]
+        unexpected: list[str] = []
+        keepalive_sleep_seen = False
+        for line in probe.stdout.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            parts = stripped.split(maxsplit=3)
+            pid = parts[0] if parts else ""
+            ppid = parts[1] if len(parts) >= 2 else ""
+            probe_pid = parts[2] if len(parts) >= 3 else ""
+            args = parts[3] if len(parts) >= 4 else stripped
+            if pid == probe_pid or ppid == probe_pid:
+                continue
+            if pid == "1" and "sleep infinity" in args:
+                continue
+            if args.strip() == "sleep infinity" and ppid == "1" and not keepalive_sleep_seen:
+                keepalive_sleep_seen = True
+                continue
+            unexpected.append(stripped)
+        if unexpected:
+            return "failed", [f"diagnostic_background_process_left_running:{len(unexpected)}"]
+        return "completed", []
 
     def _ensure_git_baseline(
         self, workspace: Path, excluded_diff_paths: list[str], recorder: RunRecorder | None = None
@@ -1714,6 +2045,30 @@ def _rg_resource_limited(stderr: str, stdout: str) -> bool:
 def _safe_container_name(value: str) -> str:
     safe = re.sub(r"[^a-zA-Z0-9_.-]", "-", value)
     return safe[:120].strip("-") or "repo-harness-container"
+
+
+def _diagnostic_workspace_digest(workspace: Path) -> str:
+    digest = hashlib.sha256()
+    root = workspace.resolve(strict=False)
+    if not root.exists():
+        digest.update(b"missing")
+        return digest.hexdigest()
+    for path in sorted(root.rglob("*")):
+        rel = path.relative_to(root).as_posix()
+        digest.update(rel.encode("utf-8"))
+        if path.is_file() and not path.is_symlink():
+            digest.update(b"\0file\0")
+            with path.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+        elif path.is_symlink():
+            digest.update(b"\0symlink\0")
+            digest.update(os.readlink(path).encode("utf-8", errors="replace"))
+        elif path.is_dir():
+            digest.update(b"\0dir\0")
+        else:
+            digest.update(b"\0special\0")
+    return digest.hexdigest()
 
 
 def _requires_shell_command(command: str | list[str]) -> bool:

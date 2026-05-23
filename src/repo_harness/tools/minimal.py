@@ -33,6 +33,7 @@ from repo_harness.tools.schemas import ToolCall, ToolResult
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.verifier import PytestVerifier
 from repo_harness.workspace import RunWorkspace, WorkspaceAdapter
+from repo_harness.workspace.diagnostic_session import diagnostic_command_policy_issue
 
 DEFAULT_TOOL_ORDER = [
     "list_files",
@@ -381,6 +382,8 @@ class ToolExecutor:
                 return self._bash(tool_call, normalized, context)
             if normalized.effective_tool_name == "execute_bash":
                 return self._execute_bash(tool_call, normalized, context)
+            if normalized.effective_tool_name == "diagnostic_shell":
+                return self._diagnostic_shell(tool_call, normalized, context)
             if normalized.effective_tool_name == "run_tests":
                 return self._run_tests(tool_call, normalized, context)
             if normalized.effective_tool_name == "git_diff":
@@ -590,6 +593,33 @@ class ToolExecutor:
             if timeout != requested_timeout:
                 normalized_args["requested_timeout_sec"] = requested_timeout
                 normalized_args["timeout_clamped_to_sec"] = timeout
+            effective_args = dict(normalized_args)
+        elif requested == "diagnostic_shell":
+            command = str(args["command"]).strip()
+            cwd = str(args.get("cwd", "."))
+            requested_timeout = int(args.get("timeout_sec", 120))
+            timeout = _clamp_command_timeout(requested_timeout, context)
+            metadata = getattr(context.run_workspace.dependency_state, "metadata", {}) or {}
+            hidden_guard_reason = _diagnostic_shell_hidden_evaluator_guard_reason(metadata)
+            normalized_args = {
+                "command": command,
+                "cwd": cwd,
+                "timeout_sec": timeout,
+                "diagnostic_shell_enabled": bool(metadata.get("diagnostic_shell_enabled")),
+                "diagnostic_session_backend": str(metadata.get("diagnostic_session_backend") or ""),
+                "diagnostic_shell_hidden_evaluator_guard_passed": hidden_guard_reason is None,
+                "diagnostic_shell_hidden_evaluator_guard_reason": hidden_guard_reason,
+                "allow_unisolated_local_diagnostic_shell_for_tests": bool(
+                    metadata.get("allow_unisolated_local_diagnostic_shell_for_tests")
+                ),
+                "shared_dependency_environment_expected": bool(
+                    getattr(context.workspace_adapter, "block_shared_environment_writes", False)
+                ),
+            }
+            if timeout != requested_timeout:
+                normalized_args["requested_timeout_sec"] = requested_timeout
+                normalized_args["timeout_clamped_to_sec"] = timeout
+            requested_cwd = cwd
             effective_args = dict(normalized_args)
         elif requested == "git_diff":
             normalized_args = {}
@@ -2334,6 +2364,208 @@ class ToolExecutor:
                 "run_dir_mount_enabled": False,
             },
         )
+
+    def _diagnostic_shell(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        command = str(normalized.normalized_arguments["command"])
+        cwd_request = str(normalized.normalized_arguments["cwd"])
+        if not bool(normalized.normalized_arguments.get("diagnostic_shell_enabled")):
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=(
+                    "diagnostic_shell is disabled for this episode. It must be enabled by an "
+                    "explicit persistent diagnostic session profile."
+                ),
+                error_type="diagnostic_shell_disabled",
+                typed={
+                    "policy_decision": "deny",
+                    "reason_code": "diagnostic_shell_disabled",
+                    "tool_surface_profile": "persistent_diagnostic_session",
+                    "sample_destination": "diagnostic_side_channel",
+                },
+            )
+        backend_value = getattr(context.workspace_adapter, "backend", "unknown")
+        workspace_backend = str(getattr(backend_value, "value", backend_value))
+        if (
+            workspace_backend == "local_process"
+            and not bool(normalized.normalized_arguments.get("allow_unisolated_local_diagnostic_shell_for_tests"))
+        ):
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=(
+                    "diagnostic_shell local_process backend is not a filesystem sandbox. "
+                    "Use the Docker diagnostic backend, or enable only for explicit local tests."
+                ),
+                error_type="diagnostic_shell_local_backend_requires_explicit_test_override",
+                typed={
+                    "policy_decision": "deny",
+                    "reason_code": "diagnostic_shell_local_backend_requires_explicit_test_override",
+                    "tool_surface_profile": "persistent_diagnostic_session",
+                    "workspace_backend": workspace_backend,
+                    "sample_destination": "diagnostic_side_channel",
+                    "invalid_for_training": True,
+                    "invalid_for_online_rl": True,
+                },
+            )
+        if bool(normalized.normalized_arguments.get("shared_dependency_environment_expected")):
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=(
+                    "diagnostic_shell is disabled for shared dependency environment episodes "
+                    "until Stage 16B private dependency mutation routing is configured."
+                ),
+                error_type="dependency_mutation_unsupported_in_stage16b",
+                typed={
+                    "policy_decision": "deny",
+                    "reason_code": "dependency_mutation_unsupported_in_stage16b",
+                    "tool_surface_profile": "persistent_diagnostic_session",
+                    "shared_dependency_environment_expected": True,
+                    "sample_destination": "diagnostic_side_channel",
+                    "invalid_for_training": True,
+                    "invalid_for_online_rl": True,
+                },
+            )
+        if not bool(normalized.normalized_arguments.get("diagnostic_shell_hidden_evaluator_guard_passed")):
+            reason = str(
+                normalized.normalized_arguments.get("diagnostic_shell_hidden_evaluator_guard_reason")
+                or "diagnostic_shell_hidden_evaluator_guard_failed"
+            )
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=(
+                    "diagnostic_shell is disabled for this task because hidden evaluator, "
+                    "final-only, or official selector facts are present."
+                ),
+                error_type=reason,
+                typed={
+                    "policy_decision": "deny",
+                    "reason_code": reason,
+                    "tool_surface_profile": "persistent_diagnostic_session",
+                    "hidden_evaluator_guard_passed": False,
+                    "sample_destination": "diagnostic_side_channel",
+                    "invalid_for_training": True,
+                    "invalid_for_online_rl": True,
+                },
+            )
+        command_policy_issue = diagnostic_command_policy_issue(command)
+        if command_policy_issue is not None:
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=f"diagnostic_shell command is denied by Stage 16B policy: {command_policy_issue}",
+                error_type=command_policy_issue,
+                typed={
+                    "policy_decision": "deny",
+                    "reason_code": command_policy_issue,
+                    "tool_surface_profile": "persistent_diagnostic_session",
+                    "sample_destination": "diagnostic_side_channel",
+                    "invalid_for_training": True,
+                    "invalid_for_online_rl": True,
+                },
+            )
+        run_diagnostic_shell = getattr(context.workspace_adapter, "run_diagnostic_shell", None)
+        if run_diagnostic_shell is None:
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="error",
+                content="The active workspace backend does not implement diagnostic_shell.",
+                error_type="diagnostic_shell_backend_unavailable",
+                typed={
+                    "tool_surface_profile": "persistent_diagnostic_session",
+                    "sample_destination": "diagnostic_side_channel",
+                },
+            )
+        result = run_diagnostic_shell(
+            context.run_workspace.workspace_path,
+            command,
+            cwd=cwd_request,
+            timeout_sec=float(normalized.normalized_arguments["timeout_sec"]),
+            recorder=context.recorder,
+            session_id=f"{context.run_id}-{context.task_id}-diagnostic-shell",
+            artifact_metadata={
+                "tool_surface_profile": "persistent_diagnostic_session",
+                "raw_command_artifact_visibility": "runtime_private_or_restricted_audit",
+                "model_visible_observation": "redacted_truncated",
+                "run_id": context.run_id,
+                "task_id": context.task_id,
+            },
+        )
+        status = "timeout" if result.timeout else "ok"
+        sanitized_stdout = _sanitize_execute_bash_output(result.stdout_preview, context)
+        sanitized_stderr = _sanitize_execute_bash_output(result.stderr_preview, context)
+        command_preview = _preview(
+            _command_preview(sanitized_stdout, sanitized_stderr),
+            context.output_limits.max_tool_output_chars,
+        )
+        facts = dict(result.diagnostic_session_facts or {})
+        facts["hidden_evaluator_guard_passed"] = bool(
+            normalized.normalized_arguments.get("diagnostic_shell_hidden_evaluator_guard_passed")
+        )
+        facts["hidden_evaluator_guard_reason"] = normalized.normalized_arguments.get(
+            "diagnostic_shell_hidden_evaluator_guard_reason"
+        )
+        invalid_for_training = not (
+            facts.get("diagnostic_session_cleanup_status") == "completed"
+            and facts.get("session_invalidated") is False
+            and facts.get("background_process_cleanup_status") == "completed"
+            and facts.get("workspace_projection_sync_status") == "completed"
+            and facts.get("workspace_projection_sync_passed") is True
+            and facts.get("run_dir_mount_enabled") is False
+            and facts.get("symlink_escape_blocked") is False
+            and facts.get("shared_dependency_environment_written") is False
+            and facts.get("hidden_evaluator_guard_passed") is not False
+            and (
+                facts.get("diagnostic_session_backend") == "docker_persistent_container"
+                or facts.get("local_backend_filesystem_isolation_verified") is True
+            )
+        )
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status=status,
+            content=command_preview,
+            error_type="command_timeout" if result.timeout else None,
+            artifact_refs=[],
+            typed={
+                "stdout_preview": sanitized_stdout,
+                "stderr_preview": sanitized_stderr,
+                "exit_code": result.exit_code,
+                "command_semantics": result.command_semantics,
+                "exit_code_interpretation": result.exit_code_interpretation,
+                "timeout_sec": normalized.normalized_arguments["timeout_sec"],
+                "shell_execution": True,
+                "model_visible_observation": "redacted_truncated",
+                "raw_command_artifact_visibility": "runtime_private_or_restricted_audit",
+                "raw_command_artifact_returned_to_model": False,
+                "run_dir_mount_enabled": False,
+                "tool_surface_profile": "persistent_diagnostic_session",
+                "diagnostic_session_facts": facts,
+                "diagnostic_session_facts_ref": (
+                    result.diagnostic_session_facts_ref.model_dump(mode="json")
+                    if result.diagnostic_session_facts_ref
+                    else None
+                ),
+                "invalid_for_training": invalid_for_training,
+                "invalid_for_online_rl": invalid_for_training,
+                "sample_destination": (
+                    "diagnostic_side_channel" if invalid_for_training else "formal_online_rl_candidate"
+                ),
+            },
+        )
     def _run_tests(
         self,
         tool_call: ToolCall,
@@ -2931,6 +3163,45 @@ def build_tool(name: str) -> ToolDefinition:
             },
             max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
         ),
+        "diagnostic_shell": ToolDefinition(
+            name="diagnostic_shell",
+            tool_version="repo_harness_diagnostic_shell_stage16b_v0",
+            model_visible_description=(
+                "Run a high-permission persistent diagnostic shell command in a diagnostic-visible "
+                "workspace projection. This tool is separate from execute_bash and is available "
+                "only when a persistent diagnostic profile explicitly enables it. The projection "
+                "hides .git, runtime-private files, evaluator-only files, and RepoHarness run "
+                "artifacts; public source edits are synchronized back to the episode workspace."
+            ),
+            model_visible_prompt=(
+                "Use diagnostic_shell only for task-local reproduction and debugging that needs "
+                "persistent HOME, TMP, cache, or Docker container state. Keep final source changes "
+                "in repository files. Do not rely on diagnostic-only temporary scripts, HOME files, "
+                "cache files, hidden paths, git history, or run artifacts for the final answer."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["command"],
+                "properties": {
+                    "command": {"type": "string", "description": "Shell command executed in the diagnostic session."},
+                    "cwd": {"type": "string", "description": "Optional workspace-relative diagnostic projection directory."},
+                    "timeout_sec": {"type": "integer", "description": "Optional command timeout in seconds."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "stdout_preview": {"type": "string"},
+                    "stderr_preview": {"type": "string"},
+                    "exit_code": {"type": "integer"},
+                    "diagnostic_session_facts": {"type": "object"},
+                    "model_visible_observation": {"type": "string"},
+                    "raw_command_artifact_visibility": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+        ),
         "run_tests": ToolDefinition(
             name="run_tests",
             tool_version="repo_harness_run_tests_v0",
@@ -3032,6 +3303,9 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "execute_bash.command": (str, True),
         "execute_bash.cwd": (str, False),
         "execute_bash.timeout_sec": (int, False),
+        "diagnostic_shell.command": (str, True),
+        "diagnostic_shell.cwd": (str, False),
+        "diagnostic_shell.timeout_sec": (int, False),
         "git_diff.path": (str, False),
     }
     if tool_name == "run_tests" and args:
@@ -3318,7 +3592,14 @@ def _tool_result(
 
 
 def _is_permission_workspace_error(message: str) -> bool:
-    return "拒绝" in message or "边界" in message or "敏感路径" in message or "execute_bash cwd" in message
+    return (
+        "拒绝" in message
+        or "边界" in message
+        or "敏感路径" in message
+        or "execute_bash cwd" in message
+        or "diagnostic_shell" in message
+        or "diagnostic_session" in message
+    )
 
 
 def _clamp_command_timeout(requested_timeout: int, context: ToolExecutionContext) -> int:
@@ -3378,6 +3659,71 @@ def _execute_bash_local_isolation_denial(context: ToolExecutionContext) -> dict[
             "can otherwise read run-directory, verifier, or host files outside the episode workspace."
         ),
     }
+
+
+def _diagnostic_shell_hidden_evaluator_guard_reason(metadata: dict[str, Any]) -> str | None:
+    bool_flags = {
+        "swe_bench_like_final_only": "diagnostic_shell_swe_bench_like_final_only_denied",
+        "final_only": "diagnostic_shell_final_only_denied",
+        "hidden_evaluator": "diagnostic_shell_hidden_evaluator_denied",
+        "hidden_evaluator_refs_present": "diagnostic_shell_hidden_evaluator_denied",
+    }
+    for key, reason in bool_flags.items():
+        if metadata.get(key) is True:
+            return reason
+    non_empty_flags = {
+        "hidden_evaluator_refs": "diagnostic_shell_hidden_evaluator_denied",
+        "official_selector_refs": "diagnostic_shell_official_selector_denied",
+        "official_verifier_refs": "diagnostic_shell_official_verifier_denied",
+        "evaluator_only_artifact_refs": "diagnostic_shell_evaluator_only_artifact_denied",
+    }
+    for key, reason in non_empty_flags.items():
+        value = metadata.get(key)
+        if isinstance(value, (list, tuple, set, dict)) and value:
+            return reason
+        if isinstance(value, str) and value.strip():
+            return reason
+    visibility_policy = metadata.get("visibility_policy")
+    if isinstance(visibility_policy, dict):
+        if visibility_policy.get("has_evaluator_only_artifacts") is True:
+            return "diagnostic_shell_evaluator_only_artifact_denied"
+        if _contains_hidden_visibility_marker(visibility_policy):
+            return "diagnostic_shell_evaluator_only_artifact_denied"
+    return None
+
+
+def _contains_hidden_visibility_marker(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            _contains_hidden_visibility_marker(item)
+            for pair in value.items()
+            for item in pair
+        )
+    if isinstance(value, (list, tuple, set)):
+        return any(_contains_hidden_visibility_marker(item) for item in value)
+    if isinstance(value, str):
+        compact = value.lower().replace("-", "").replace("_", "").replace(" ", "")
+        return compact in {
+            "acceptedlabel",
+            "evaluatoronly",
+            "finalonly",
+            "finalverifier",
+            "hiddenevaluator",
+            "hiddenverifier",
+            "groundtruth",
+            "officialselector",
+            "officialverifier",
+            "providersecret",
+            "goldpatch",
+            "rewardextrainfo",
+            "rewardextrakeys",
+            "rewardmetadata",
+            "swebenchlikefinalonly",
+            "testpatch",
+            "failtopass",
+            "passtopass",
+        }
+    return False
 
 
 def _sanitize_execute_bash_output(text: str, context: ToolExecutionContext) -> str:

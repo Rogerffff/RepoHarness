@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from repo_harness.errors import ConfigError
 from repo_harness.scaffolds.patch_focused_react import (
+    build_patch_focused_react_diagnostic_shell_scaffold,
     build_patch_focused_react_execute_bash_scaffold,
     build_patch_focused_react_scaffold,
 )
@@ -20,6 +21,7 @@ class ScaffoldRegistry:
             build_simple_react_scaffold(),
             build_patch_focused_react_scaffold(),
             build_patch_focused_react_execute_bash_scaffold(),
+            build_patch_focused_react_diagnostic_shell_scaffold(),
             build_single_shot_patch_scaffold(),
             build_planner_coder_verifier_scaffold(),
         ]:

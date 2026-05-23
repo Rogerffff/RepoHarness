@@ -251,13 +251,13 @@ class PermissionSystem:
             effective_cwd=effective_cwd,
             policy_decision=(
                 str(normalized_arguments.get("policy_decision"))
-                if effective_tool_name in {"bash", "execute_bash"}
+                if effective_tool_name in {"bash", "execute_bash", "diagnostic_shell"}
                 and normalized_arguments.get("policy_decision") is not None
                 else None
             ),
             reason_code=(
                 str(normalized_arguments.get("reason_code"))
-                if effective_tool_name in {"bash", "execute_bash"}
+                if effective_tool_name in {"bash", "execute_bash", "diagnostic_shell"}
                 and normalized_arguments.get("reason_code") is not None
                 else None
             ),
@@ -268,16 +268,16 @@ class PermissionSystem:
             ),
             recovery_hint=(
                 str(normalized_arguments.get("recovery_hint"))
-                if effective_tool_name in {"bash", "execute_bash"}
+                if effective_tool_name in {"bash", "execute_bash", "diagnostic_shell"}
                 and normalized_arguments.get("recovery_hint") is not None
                 else None
             ),
             timeout_sec=(
                 _timeout_from_args(normalized_arguments)
-                if effective_tool_name in {"bash", "execute_bash"}
+                if effective_tool_name in {"bash", "execute_bash", "diagnostic_shell"}
                 else None
             ),
-            shell_execution=effective_tool_name == "execute_bash",
+            shell_execution=effective_tool_name in {"execute_bash", "diagnostic_shell"},
         )
 
     def _decision(
@@ -343,6 +343,7 @@ def _path_fields(tool_name: str) -> list[str]:
         "create_file": ["path"],
         "bash": ["cwd"],
         "execute_bash": ["cwd"],
+        "diagnostic_shell": ["cwd"],
     }
     return fields.get(tool_name, [])
 
@@ -676,7 +677,7 @@ def _validate_ls_command(
 
 
 def _command_category(tool_name: str) -> str | None:
-    if tool_name in {"bash", "execute_bash"}:
+    if tool_name in {"bash", "execute_bash", "diagnostic_shell"}:
         return "diagnostic"
     if tool_name == "run_tests":
         return "test"
