@@ -2574,37 +2574,33 @@ class ToolExecutor:
     ) -> ToolResult:
         if context.test_feedback_policy == "disabled":
             return self.disabled_test_feedback_result(tool_call, normalized)
-        hidden_feedback_ran = context.test_feedback_policy == "oracle_hidden_feedback"
-        if hidden_feedback_ran:
-            result = context.verifier.run_feedback(
-                context.run_workspace.workspace_path,
-                context.resolved_verifier_plan,
-                context.recorder,
+        if context.test_feedback_policy == "oracle_hidden_feedback":
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=(
+                    "No public test feedback is available for this run. "
+                    "Continue with source inspection and submit the final answer when ready."
+                ),
+                error_type="public_test_feedback_unavailable",
+                typed={
+                    "feedback_policy": "non_public_feedback_configured",
+                    "public_feedback_available": False,
+                    "final_verifier_runs_after_agent_stop": True,
+                },
             )
-        else:
-            result = context.verifier.run_feedback_public(
-                context.run_workspace.workspace_path,
-                context.resolved_verifier_plan,
-                context.recorder,
-            )
+        result = context.verifier.run_feedback_public(
+            context.run_workspace.workspace_path,
+            context.resolved_verifier_plan,
+            context.recorder,
+        )
         ref = context.recorder.write_json_artifact(
             "feedback_verifier_result",
             result.model_dump(mode="json"),
         )
         timed_out = bool(result.timeout)
-        if hidden_feedback_ran:
-            content = (
-                f"run_tests accepted={result.accepted} pass_ratio={result.pass_ratio:.2f} "
-                f"fail_to_pass={result.fail_to_pass} pass_to_pass={result.pass_to_pass}"
-            )
-            preview = {
-                "accepted": result.accepted,
-                "pass_ratio": result.pass_ratio,
-                "error_type": result.error_type,
-                "fail_to_pass": result.fail_to_pass,
-                "pass_to_pass": result.pass_to_pass,
-            }
-        elif context.test_feedback_policy == "structured_public_feedback":
+        if context.test_feedback_policy == "structured_public_feedback":
             content = (
                 "run_tests public_feedback="
                 + json.dumps(
@@ -2644,8 +2640,8 @@ class ToolExecutor:
                 "verifier_result_ref": ref.model_dump(mode="json"),
                 "test_feedback_policy": context.test_feedback_policy,
                 "feedback_tests_passed_policy": context.feedback_tests_passed_policy,
-                "public_tests_ran": not hidden_feedback_ran,
-                "hidden_feedback_ran": hidden_feedback_ran,
+                "public_tests_ran": True,
+                "hidden_feedback_ran": False,
             },
         )
 
@@ -3127,19 +3123,19 @@ def build_tool(name: str) -> ToolDefinition:
             name="execute_bash",
             tool_version="repo_harness_execute_bash_stage16a_v0",
             model_visible_description=(
-                "Run a bounded model-visible shell command inside the repository workspace. "
-                "This is a broader diagnostic tool than bash: shell composition, inline Python, "
-                "and public repository test commands are allowed when they stay inside the "
-                "workspace and do not reference hidden verifier, gold patch, Git history, "
-                "RepoHarness run artifacts, or shared dependency environment paths. cwd must "
-                "be workspace-relative."
+                "Run one Stage 16A allowlisted diagnostic command inside the repository workspace. "
+                "This is not a general shell: command composition, redirects, pipes, dynamic "
+                "expansion, package installation, network downloads, project scripts, Git history, "
+                "hidden evaluation material, RepoHarness run artifacts, and runtime-private paths "
+                "are denied. cwd must be workspace-relative."
             ),
             model_visible_prompt=(
-                "Use execute_bash for repository diagnostics that need shell semantics, such as "
-                "multi-step public reproduction commands or short inline Python probes. Keep output "
-                "focused and avoid environment inspection, hidden verifier material, Git history, "
-                "dependency installation, network access, and runtime-private paths. Prefer read_file, "
-                "grep, run_tests, and git_diff when those structured tools are enough."
+                "Use execute_bash only for the small Stage 16A allowlist, such as safe pytest, "
+                "safe grep/rg, safe git status/diff/grep/ls-files, and very light literal Python "
+                "diagnostics. Keep output focused and avoid environment inspection, non-public "
+                "evaluation material, Git history, dependency installation, network access, "
+                "shell composition, and runtime-private paths. Prefer read_file, grep, run_tests, "
+                "and git_diff when those structured tools are enough."
             ),
             input_schema={
                 "type": "object",
@@ -3206,11 +3202,12 @@ def build_tool(name: str) -> ToolDefinition:
             name="run_tests",
             tool_version="repo_harness_run_tests_v0",
             model_visible_description=(
-                "Run the current task's configured intermediate feedback path. "
-                "Do not pass a command; this tool takes no arguments."
+                "Run the current task's configured public test feedback path when available. "
+                "Do not pass a command; this tool takes no arguments and is not the final verifier."
             ),
             model_visible_prompt=(
-                "Use run_tests without arguments. It does not run arbitrary shell commands."
+                "Use run_tests without arguments for configured public feedback. "
+                "It does not run arbitrary shell commands and does not reveal final scoring evidence."
             ),
             input_schema={"type": "object", "additionalProperties": False},
             output_schema={"type": "object", "properties": {"accepted": {"type": "boolean"}}},

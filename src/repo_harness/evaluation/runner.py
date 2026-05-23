@@ -32,7 +32,12 @@ from repo_harness.run_metadata.writer import (
     write_run_config_facts,
     write_run_metadata,
 )
-from repo_harness.tasks import RunnableTask, load_task
+from repo_harness.tasks import (
+    RunnableTask,
+    build_public_environment_context,
+    load_task,
+    write_public_environment_context_artifacts,
+)
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits, ToolPolicy
 from repo_harness.trajectory import MetricsRecord, RunRecorder, TrajectoryEvent
 from repo_harness.v3_agent_runtime import (
@@ -462,6 +467,33 @@ def run_task(
             run_config=config,
             recorder=recorder,
         )
+        public_environment_context = build_public_environment_context(
+            task=loaded.runnable_task,
+            resolved_verifier_plan=resolved_plan,
+            test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+            allowed_tools=allowed_tools,
+        )
+        public_environment_context_ref, public_environment_prompt_ref = (
+            write_public_environment_context_artifacts(
+                recorder=recorder,
+                context=public_environment_context,
+            )
+        )
+        recorder.append_event(
+            TrajectoryEvent(
+                event_id=recorder.next_event_id("public_environment_context"),
+                timestamp=_timestamp(),
+                run_id=actual_run_id,
+                task_id=loaded.runnable_task.task_id,
+                event_type="public_environment_context_written",
+                artifact_refs=[public_environment_context_ref, public_environment_prompt_ref],
+                data={
+                    "public_environment_context_digest": public_environment_context.context_digest,
+                    "public_environment_context_ref": public_environment_context_ref.model_dump(mode="json"),
+                    "public_environment_prompt_ref": public_environment_prompt_ref.model_dump(mode="json"),
+                },
+            )
+        )
         initial_messages = ContextBuilder().build_initial_messages(
             task=loaded.runnable_task,
             workspace=run_workspace,
@@ -471,6 +503,7 @@ def run_task(
             scaffold=scaffold,
             workspace_facade=adapter,
             model_visible_repo_context=model_visible_repo_context,
+            public_environment_context=public_environment_context,
         )
         initial_context_profile_ref = _write_initial_context_profile(
             recorder=recorder,
@@ -1389,6 +1422,16 @@ def _initial_context_profile_payload(
         ensure_ascii=False,
         sort_keys=True,
     )
+    public_environment = (
+        first_user_content.get("public_environment")
+        if isinstance(first_user_content, dict)
+        else None
+    )
+    public_environment_digest = (
+        public_environment.get("context_digest")
+        if isinstance(public_environment, dict)
+        else None
+    )
     forbidden_fields = [
         field
         for field in (
@@ -1437,6 +1480,8 @@ def _initial_context_profile_payload(
         "repository_hints_model_visible_ref": repo_context.get(
             "repository_hints_model_visible_ref"
         ),
+        "public_environment_context_digest": public_environment_digest,
+        "public_environment_context_present": isinstance(public_environment, dict),
         "repository_action_index_full_hash": repo_context.get(
             "repository_action_index_full_hash"
         ),

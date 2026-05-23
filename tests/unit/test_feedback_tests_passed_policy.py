@@ -8,9 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_feedback_tests_passed_stop_immediately_preserves_replay_default(tmp_path: Path):
+    config_path = _write_config(
+        tmp_path,
+        feedback_tests_passed_policy="stop_immediately",
+    )
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_001.yaml",
-        config_path=ROOT / "tests/fixtures/run_configs/replay_success_minimal.yaml",
+        config_path=config_path,
         output_dir=tmp_path / "runs",
         run_id="policy-stop",
     )
@@ -21,11 +25,12 @@ def test_feedback_tests_passed_stop_immediately_preserves_replay_default(tmp_pat
     assert metrics["interaction_efficiency"]["agent_stop_reason"] == "feedback_tests_passed"
     assert metrics["interaction_efficiency"]["feedback_tests_passed_policy"] == "stop_immediately"
     assert metrics["interaction_efficiency"]["feedback_verifier_accepted"] is True
-    assert facts["test_feedback_policy"] == "oracle_hidden_feedback"
+    assert facts["test_feedback_policy"] == "structured_public_feedback"
+    assert facts["hidden_feedback_visible_to_model"] is False
     assert facts["feedback_tests_passed_policy"] == "stop_immediately"
     assert metadata["scaffold_id"] == "simple_react"
     assert metadata["scaffold_version"] == "repo_harness_simple_react_v1"
-    assert metadata["test_feedback_policy"] == "oracle_hidden_feedback"
+    assert metadata["test_feedback_policy"] == "structured_public_feedback"
     assert metadata["feedback_tests_passed_policy"] == "stop_immediately"
     assert metadata["feedback_policy_resolution"]["resolved_feedback_tests_passed_policy"] == "stop_immediately"
     assert (
@@ -136,7 +141,7 @@ runtime:
   scaffold_id: simple_react
   execution_mode: local_process
   permission_mode: auto
-  test_feedback_policy: oracle_hidden_feedback
+  test_feedback_policy: structured_public_feedback
   feedback_tests_passed_policy: {feedback_tests_passed_policy}
   max_turns: 8
   max_tool_calls: 20

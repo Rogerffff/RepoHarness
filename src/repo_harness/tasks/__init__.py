@@ -10,6 +10,15 @@ from repo_harness.tasks.command_policy import (
     is_recognized_test_command,
 )
 from repo_harness.tasks.environment import compute_environment_spec_hash
+from repo_harness.tasks.public_environment import (
+    PublicEnvironmentContext,
+    PublicEnvironmentVisibilityError,
+    PublicTestEntry,
+    build_public_environment_context,
+    project_public_environment_for_batch,
+    validate_public_environment_model_visible_payload,
+    write_public_environment_context_artifacts,
+)
 from repo_harness.tasks.schemas import (
     DecontaminationMetadata,
     EnvironmentSpec,
@@ -44,6 +53,9 @@ __all__ = [
     "LocalRepositorySource",
     "MutationRule",
     "PublicSnapshotSource",
+    "PublicEnvironmentContext",
+    "PublicEnvironmentVisibilityError",
+    "PublicTestEntry",
     "RealRepositorySourceFacts",
     "RepoSource",
     "RepoMaterializationResult",
@@ -61,5 +73,9 @@ __all__ = [
     "compute_environment_spec_hash",
     "evaluate_model_bash_command",
     "is_recognized_test_command",
+    "build_public_environment_context",
     "load_task",
+    "project_public_environment_for_batch",
+    "validate_public_environment_model_visible_payload",
+    "write_public_environment_context_artifacts",
 ]

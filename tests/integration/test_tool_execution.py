@@ -28,9 +28,14 @@ def test_create_file_replay_succeeds(tmp_path):
 
 
 def test_bash_pytest_routes_to_run_tests(tmp_path):
+    config_path = _write_replay_config(
+        tmp_path,
+        ROOT / "tests/fixtures/replays/task_001_bash_pytest.yaml",
+        run_id="stage08-bash-pytest",
+    )
     run_dir = run_task(
         ROOT / "tests/fixtures/tasks/task_001.yaml",
-        config_path=ROOT / "tests/fixtures/run_configs/replay_bash_pytest.yaml",
+        config_path=config_path,
         output_dir=tmp_path / "runs",
         run_id="stage08-bash-pytest",
     )
@@ -481,6 +486,7 @@ runtime:
   scaffold_id: simple_react
   execution_mode: local_process
   permission_mode: auto
+  test_feedback_policy: structured_public_feedback
   max_turns: 4
   max_tool_calls: 8
   max_test_runs: 2
@@ -507,6 +513,7 @@ runtime:
   scaffold_id: simple_react
   execution_mode: local_process
   permission_mode: auto
+  test_feedback_policy: structured_public_feedback
   max_turns: 4
   max_tool_calls: 8
   max_test_runs: 2

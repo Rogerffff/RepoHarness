@@ -54,7 +54,7 @@ steps:
     assert facts["test_feedback_policy"] == "disabled"
     assert facts["feedback_tests_passed_policy"] == "not_applicable"
     assert "run_tests" not in facts["tool_protocol"]["tool_order"]
-    assert any(event["event_type"] == "tool_not_allowed" for event in events)
+    assert any(event["event_type"] in {"tool_not_allowed", "invalid_tool"} for event in events)
     assert not any(event["event_type"] == "verifier_final" and event["data"]["accepted"] for event in events)
 
 
@@ -95,6 +95,39 @@ def test_test_feedback_disabled_blocks_bash_pytest_bypass(tmp_path: Path):
     )
     assert metrics["interaction_efficiency"]["agent_stop_reason"] == "final_answer"
     assert metrics["interaction_efficiency"]["hidden_feedback_ran"] is False
+
+
+def test_oracle_hidden_feedback_run_tests_returns_no_public_feedback(tmp_path: Path):
+    config_path = _write_config(tmp_path, test_feedback_policy="oracle_hidden_feedback")
+
+    run_dir = run_task(
+        ROOT / "tests/fixtures/tasks/task_001.yaml",
+        config_path=config_path,
+        output_dir=tmp_path / "runs",
+        run_id="feedback-oracle-hidden-not-public",
+    )
+
+    events = _read_jsonl(run_dir / "events.jsonl")
+    metrics = _read_json(run_dir / "metrics.json")
+    transcript_text = (run_dir / "transcript.jsonl").read_text(encoding="utf-8")
+    run_tests_events = [
+        event
+        for event in events
+        if event["event_type"] == "tool_denied"
+        and event["data"].get("effective_tool_name") == "run_tests"
+    ]
+    assert run_tests_events
+    typed = run_tests_events[0]["data"]["typed"]
+    assert typed["status"] == "denied"
+    assert typed["error_type"] == "public_test_feedback_unavailable"
+    assert typed["feedback_policy"] == "non_public_feedback_configured"
+    assert typed["public_feedback_available"] is False
+    assert metrics["interaction_efficiency"]["hidden_feedback_ran"] is False
+    assert metrics["interaction_efficiency"]["public_tests_ran"] is False
+    assert "fail_to_pass" not in transcript_text
+    assert "pass_to_pass" not in transcript_text
+    assert "FAIL_TO_PASS" not in transcript_text
+    assert "PASS_TO_PASS" not in transcript_text
 
 
 def test_public_only_test_feedback_sanitizes_model_visible_result(tmp_path: Path):

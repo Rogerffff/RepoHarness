@@ -51,6 +51,7 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
     assert isinstance(user, dict)
     assert set(user) == {
         "context_metadata",
+        "public_environment",
         "task",
         "language",
         "constraints",
@@ -59,7 +60,14 @@ def test_context_builder_injects_visible_runtime_context_without_hidden_metadata
         "budget",
         "repository_context",
     }
-    assert set(user["context_metadata"]) == {"scaffold_prompt_fragment", "current_date"}
+    assert set(user["context_metadata"]) == {
+        "scaffold_prompt_fragment",
+        "current_date",
+        "public_environment_context_digest",
+    }
+    assert user["public_environment"]["public_test_entry"]["status"] == "unavailable"
+    assert user["public_environment"]["public_test_entry"]["tool_name"] is None
+    assert "model_visible_prompt_block" in user["public_environment"]
     assert set(user["task"]) == {"task_id", "issue_statement", "expected_files"}
     assert set(user["budget"]) == {"max_turns", "max_tool_calls", "max_test_runs"}
     assert user["constraints"]["test_command"] == "pytest -q"

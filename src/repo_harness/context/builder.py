@@ -9,8 +9,14 @@ from typing import Any
 from repo_harness.config import RunConfig
 from repo_harness.evaluation.schemas import ResolvedVerifierPlan
 from repo_harness.schema_versions import CONTEXT_BUILDER_VERSION, PROMPT_TEMPLATE_VERSION
-from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold
+from repo_harness.scaffolds import ScaffoldDefinition, build_scaffold, resolve_feedback_policy
 from repo_harness.tasks import RunnableTask
+from repo_harness.tasks.public_environment import (
+    PublicEnvironmentContext,
+    PublicEnvironmentVisibilityError,
+    build_public_environment_context,
+    validate_public_environment_model_visible_payload,
+)
 from repo_harness.workspace import (
     RunWorkspace,
     WorkspaceAdapter,
@@ -49,6 +55,7 @@ class ContextBuilder:
         scaffold: ScaffoldDefinition | None = None,
         workspace_facade: WorkspaceAdapter | None = None,
         model_visible_repo_context: dict[str, Any] | None = None,
+        public_environment_context: PublicEnvironmentContext | None = None,
     ) -> list[dict[str, object]]:
         visible_task = task.agent_visible_view()
         repo_context = _read_repo_context(
@@ -57,6 +64,18 @@ class ContextBuilder:
             execution_mode=workspace.execution_mode,
         )
         scaffold = scaffold or build_scaffold(run_config.runtime.scaffold_id)
+        if public_environment_context is None:
+            feedback_policy = resolve_feedback_policy(
+                run_config=run_config,
+                scaffold=scaffold,
+                task=task,
+            )
+            public_environment_context = build_public_environment_context(
+                task=task,
+                resolved_verifier_plan=resolved_verifier_plan,
+                test_feedback_policy=feedback_policy.resolved_test_feedback_policy.value,
+                allowed_tools=allowed_tools,
+            )
         system = (
             "You are RepoHarness software engineering agent. Use only the allowed tools and "
             "follow the configured scaffold guidance. "
@@ -74,7 +93,9 @@ class ContextBuilder:
             "context_metadata": {
                 "scaffold_prompt_fragment": scaffold.prompt_fragment,
                 "current_date": date.today().isoformat(),
+                "public_environment_context_digest": public_environment_context.context_digest,
             },
+            "public_environment": public_environment_context.model_visible_payload(),
             "task": {
                 "task_id": visible_task["task_id"],
                 "issue_statement": visible_task["issue_statement"],
@@ -252,6 +273,13 @@ def _model_visible_test_command(
             "This run does not expose the final verifier command to the model. You may read existing tests to infer expected behavior, but do not run hidden or final-only tests.",
         )
     test_command = resolved_verifier_plan.verifier_config.test_command
+    try:
+        validate_public_environment_model_visible_payload({"test_command": test_command})
+    except PublicEnvironmentVisibilityError:
+        return (
+            None,
+            "The configured test command is not shown because it contains non-public or runtime-private details. Use run_tests when public feedback is available.",
+        )
     return (
         test_command,
         f"You may run the public test command `{test_command}` when useful.",
