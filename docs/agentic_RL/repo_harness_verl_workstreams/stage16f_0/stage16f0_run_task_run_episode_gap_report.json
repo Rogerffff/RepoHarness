@@ -1,0 +1,60 @@
+{
+  "gaps": [
+    {
+      "blocks_stage17": true,
+      "component": "initial_prompt",
+      "gap_id": "raw_prompt_source",
+      "required_stage": "16F.2",
+      "risk": "Evaluation and training prompts can diverge.",
+      "run_episode_behavior": "RepoHarnessEpisodeRequest.raw_prompt is consumed directly.",
+      "run_task_behavior": "ContextBuilder builds initial messages from task, scaffold, public environment, and verifier plan."
+    },
+    {
+      "blocks_stage17": true,
+      "component": "ContextBuilder",
+      "gap_id": "context_builder_participation",
+      "required_stage": "16F.2",
+      "risk": "Stage 16C public environment may not reach training episodes.",
+      "run_episode_behavior": "ContextBuilder is not the canonical source unless caller prebuilds raw_prompt.",
+      "run_task_behavior": "ContextBuilder participates directly."
+    },
+    {
+      "blocks_stage17": true,
+      "component": "ToolExecutor",
+      "gap_id": "tool_executor_registry",
+      "required_stage": "16F.2",
+      "risk": "Visible tool schema and actual executable tools can diverge.",
+      "run_episode_behavior": "real_episode path currently constructs default ToolExecutor().",
+      "run_task_behavior": "ToolExecutor receives allowed_tool_registry from run config and scaffold."
+    },
+    {
+      "blocks_stage17": true,
+      "component": "verifier_plan",
+      "gap_id": "resolved_verifier_plan",
+      "required_stage": "16F.2",
+      "risk": "Public test and final verifier semantics can diverge.",
+      "run_episode_behavior": "resolved_verifier_plan can be None in tool context.",
+      "run_task_behavior": "resolved_verifier_plan is generated and written to run evidence."
+    },
+    {
+      "blocks_stage17": true,
+      "component": "feedback_policy",
+      "gap_id": "test_feedback_policy",
+      "required_stage": "16F.2",
+      "risk": "run_tests feedback semantics can differ between evaluation and training.",
+      "run_episode_behavior": "real_episode path currently sets test_feedback_policy to disabled in known code path.",
+      "run_task_behavior": "Resolved from run config, task, scaffold, and public environment policy."
+    },
+    {
+      "blocks_stage17": true,
+      "component": "patch_hygiene",
+      "gap_id": "patch_hygiene_facts",
+      "required_stage": "16F.4",
+      "risk": "Training and evaluation may disagree about trainable final patch.",
+      "run_episode_behavior": "real_episode consumes patch hygiene facts after Stage 16E but parity is not yet audited against run_task.",
+      "run_task_behavior": "Stage 16E capture/export/official builder use cleaned patch facts."
+    }
+  ],
+  "schema_version": 1,
+  "stage": "16F.0"
+}

@@ -1,0 +1,109 @@
+{
+  "items": [
+    {
+      "blocks_stage16f1_completion": true,
+      "blocks_stage16f1_entry": false,
+      "must_be_addressed_in_stage16f1": true,
+      "priority": "P1",
+      "recommended_action": "manual-port",
+      "required_tests": [
+        "diagnostic_shell source command",
+        "conda activate smoke",
+        "set -o pipefail failure propagation"
+      ],
+      "risk_if_not_synced": "conda activate, source, pipefail, and bash-only diagnostic commands can behave differently between evaluation and training.",
+      "source": "manual-inspection",
+      "source_ref": "runtime-private:source-doc:dcfc24ab2be81418fa26bc1b33dd0ab7a8167a7dc0811acc3a3be7b05f7bca50",
+      "summary": "Align diagnostic_shell execution semantics to explicit bash -lc and audit shell facts.",
+      "sync_item_id": "p1_diagnostic_shell_bash_lc_semantics",
+      "target_modules": [
+        "diagnostic_session",
+        "workspace_adapter",
+        "docker_adapter"
+      ]
+    },
+    {
+      "blocks_stage16f1_completion": true,
+      "blocks_stage16f1_entry": false,
+      "must_be_addressed_in_stage16f1": true,
+      "priority": "P1",
+      "recommended_action": "manual-port",
+      "required_tests": [
+        "diagnostic_shell cannot access run directory",
+        "public path leak scan"
+      ],
+      "risk_if_not_synced": "Model may learn from private harness evidence rather than repository state.",
+      "source": "documented-finding",
+      "source_ref": "runtime-private:source-doc:92c3ce78a55e710c0a3c1cd6e161cfd4354298e4f0c2e0ef57711de0664f68dc",
+      "summary": "Ensure model-visible diagnostic shell cannot mount or inspect RepoHarness run directory.",
+      "sync_item_id": "p1_run_directory_not_model_visible",
+      "target_modules": [
+        "diagnostic_session",
+        "workspace_adapter",
+        "docker_adapter"
+      ]
+    },
+    {
+      "blocks_stage16f1_completion": true,
+      "blocks_stage16f1_entry": false,
+      "must_be_addressed_in_stage16f1": true,
+      "priority": "P1",
+      "recommended_action": "manual-port",
+      "required_tests": [
+        "stage16e patch hygiene tests",
+        "official input builder tests"
+      ],
+      "risk_if_not_synced": "Final patches or official predictions may include diagnostic artifacts or leaked test files.",
+      "source": "current-target-stage16e",
+      "source_ref": "commit:7160bb6070c8324bdad1f3cb1936894d32575251",
+      "summary": "Use Stage 16E cleaned patch facts as baseline and compare with evaluation worktree fixes.",
+      "sync_item_id": "p1_patch_and_official_prediction_hygiene",
+      "target_modules": [
+        "patch_hygiene",
+        "official_input_builder"
+      ]
+    },
+    {
+      "blocks_stage16f1_completion": false,
+      "blocks_stage16f1_entry": false,
+      "must_be_addressed_in_stage16f1": false,
+      "priority": "P2",
+      "recommended_action": "manual-port",
+      "required_tests": [
+        "provider failure accounting unit tests"
+      ],
+      "risk_if_not_synced": "Evaluation score-gap diagnosis may misclassify infrastructure failures as model failures.",
+      "source": "documented-finding",
+      "source_ref": "runtime-private:source-doc:dcfc24ab2be81418fa26bc1b33dd0ab7a8167a7dc0811acc3a3be7b05f7bca50",
+      "summary": "Synchronize provider timeout, empty response, retry-only rerun, and denominator accounting rules.",
+      "sync_item_id": "p2_provider_failure_accounting",
+      "target_modules": [
+        "provider_failure_accounting",
+        "evaluation_runner"
+      ]
+    },
+    {
+      "blocks_stage16f1_completion": false,
+      "blocks_stage16f1_entry": false,
+      "must_be_addressed_in_stage16f1": false,
+      "priority": "P2",
+      "recommended_action": "write-new-implementation",
+      "required_tests": [
+        "run_task/run_episode parity audit"
+      ],
+      "risk_if_not_synced": "Stage 17 data generation can continue to split across two harness entrypoints.",
+      "source": "manual-inspection",
+      "source_ref": "stage16f0_run_task_run_episode_gap_report.json",
+      "summary": "Prepare Stage 16F.2 EpisodeExecutionSpecBuilder by freezing run_task/run_episode gap facts.",
+      "sync_item_id": "p2_episode_spec_builder_prerequisite",
+      "target_modules": [
+        "evaluation_runner",
+        "rl_runtime",
+        "context_builder",
+        "tool_registry"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "stage": "16F.0"
+}

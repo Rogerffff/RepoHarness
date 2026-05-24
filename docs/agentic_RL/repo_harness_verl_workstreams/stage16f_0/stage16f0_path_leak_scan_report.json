@@ -1,0 +1,27 @@
+{
+  "allowlisted_contexts_used": [
+    {
+      "allowed_categories": [
+        "risk_category_explanation",
+        "scanner_example"
+      ],
+      "path": "docs/agentic_RL/repo_harness_verl_workstreams/42-stage-16f-0-execution-plan.md",
+      "reason": "The execution plan may describe risk categories and scanner implementation rules, but must not contain real host paths or raw private artifact paths."
+    },
+    {
+      "allowed_categories": [
+        "risk_category_explanation"
+      ],
+      "path": "docs/agentic_RL/training_design/worktree_sync_run_episode_unification_plan.md",
+      "reason": "The high-level design may describe risk categories, but must not contain real host paths or raw private artifact paths."
+    }
+  ],
+  "finding_count": 0,
+  "findings": [],
+  "note": "Repository-relative paths such as src/repo_harness/workspace are not treated as host absolute paths.",
+  "passed": true,
+  "policy_ref": "stage16f0_public_evidence_policy.json",
+  "scanner": "policy-aware",
+  "schema_version": 1,
+  "stage": "16F.0"
+}

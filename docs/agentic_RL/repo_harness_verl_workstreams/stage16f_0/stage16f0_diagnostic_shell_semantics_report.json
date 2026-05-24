@@ -1,0 +1,64 @@
+{
+  "conda_activate_supported": {
+    "source": "expected_supported_with_bash_lc",
+    "target": "at_risk_with_sh_lc_or_shell_true"
+  },
+  "diagnostic_path_uses_sh_lc": {
+    "source": false,
+    "target": true
+  },
+  "docker_backend_shell": {
+    "source": "bash -lc",
+    "target": "sh -lc"
+  },
+  "local_backend_shell": {
+    "source": "bash -lc",
+    "target": "shell_true"
+  },
+  "p1_sync_required": true,
+  "pipefail_supported": {
+    "source": "expected_supported_with_bash_lc",
+    "target": "unsupported_or_unverified_with_sh_lc"
+  },
+  "reason": "Evaluation worktree diagnostic shell path uses explicit bash -lc. Training worktree diagnostic shell path still uses sh -lc for Docker and shell=True for local. The source repository still contains other non-diagnostic sh -lc paths, recorded separately.",
+  "repository_contains_other_sh_lc": {
+    "source": true,
+    "target": true
+  },
+  "schema_version": 1,
+  "source_command_policy_sha256": "8bb67d0d4c9d94de0cd90bd51699e11e054a5fceaf2093aab6111d8bea32b254",
+  "source_diagnostic_shell_exec_semantics": {
+    "command_policy_sha256": "8bb67d0d4c9d94de0cd90bd51699e11e054a5fceaf2093aab6111d8bea32b254",
+    "diagnostic_path_uses_sh_lc": false,
+    "docker_backend_shell": "bash -lc",
+    "local_backend_shell": "bash -lc",
+    "repository_contains_other_sh_lc": true,
+    "uses_bash_lc": true,
+    "uses_sh_lc": false,
+    "uses_shell_true": false
+  },
+  "stage": "16F.0",
+  "target_command_policy_sha256": "4ced17f93081b2ffec4044cd29fc9415b2c44e9ad1be4d41b790f58d86313c70",
+  "target_diagnostic_shell_exec_semantics": {
+    "command_policy_sha256": "4ced17f93081b2ffec4044cd29fc9415b2c44e9ad1be4d41b790f58d86313c70",
+    "diagnostic_path_uses_sh_lc": true,
+    "docker_backend_shell": "sh -lc",
+    "local_backend_shell": "shell_true",
+    "repository_contains_other_sh_lc": true,
+    "uses_bash_lc": false,
+    "uses_sh_lc": true,
+    "uses_shell_true": true
+  },
+  "uses_bash_lc": {
+    "source": true,
+    "target": false
+  },
+  "uses_sh_lc": {
+    "source": false,
+    "target": true
+  },
+  "uses_shell_true": {
+    "source": false,
+    "target": true
+  }
+}
