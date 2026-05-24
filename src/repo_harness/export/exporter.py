@@ -36,6 +36,7 @@ from repo_harness.export.schemas import ExportPolicy, ExportRecord, ExportRecord
 from repo_harness.schema_base import stable_hash
 from repo_harness.schema_versions import EXPORT_SCHEMA_VERSION
 from repo_harness.trajectory import read_jsonl, verify_artifact_manifest
+from repo_harness.workspace.patch_hygiene import patch_hygiene_invalid_reason
 
 ExportFormat = Literal[
     "sft_jsonl",
@@ -1473,6 +1474,8 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
     repository_hints_hash = initial_context.get("repository_hints_model_visible_hash")
     if repository_hints_hash is None and repository_hints_mode == "disabled":
         repository_hints_hash = "disabled"
+    patch_hygiene_report = _read_json_if_exists(run_path / "final_patch_hygiene_report.json")
+    patch_hygiene_summary = _patch_hygiene_export_summary(patch_hygiene_report)
     context_strategy = {
         "initial_context_policy_version": (
             run_config.get("initial_context_policy_version")
@@ -1531,6 +1534,7 @@ def _safe_metadata(run_path: Path, *, export_format: str) -> dict[str, Any]:
             "repository_hints_model_visible_hash": context_strategy[
                 "repository_hints_model_visible_hash"
             ],
+            "patch_hygiene": patch_hygiene_summary,
             "context_strategy_hash": stable_hash(context_strategy),
             "prompt_template_version": run_config.get("prompt_template_version"),
             "reward_formula_version": run_config.get("reward_formula_version"),
@@ -1567,8 +1571,12 @@ def _safe_verifier_summary(run_path: Path) -> dict[str, Any]:
 def _invalid_for_training(run_path: Path) -> bool:
     metrics = _read_json_if_exists(run_path / "metrics.json")
     reward = _read_json_if_exists(run_path / "reward.json")
+    patch_hygiene_reason = patch_hygiene_invalid_reason(
+        _read_json_if_exists(run_path / "final_patch_hygiene_report.json")
+    )
     return bool(
         reward.get("invalid_for_training")
+        or patch_hygiene_reason is not None
         or _formal_final_verifier_invalid_reason(run_path) is not None
         or metrics.get("run_outcome") in {
             "failed",
@@ -1643,13 +1651,39 @@ def _invalid_reason(run_path: Path) -> str | None:
         return None
     metrics = _read_json_if_exists(run_path / "metrics.json")
     reward = _read_json_if_exists(run_path / "reward.json")
+    patch_hygiene_reason = patch_hygiene_invalid_reason(
+        _read_json_if_exists(run_path / "final_patch_hygiene_report.json")
+    )
     return (
-        reward.get("invalid_reason")
+        patch_hygiene_reason
+        or reward.get("invalid_reason")
         or _formal_final_verifier_invalid_reason(run_path)
         or _model_error_invalid_reason(run_path)
         or _agent_stop_invalid_reason(run_path)
         or metrics.get("run_outcome")
         or "filtered_by_export_policy"
+    )
+
+
+def _patch_hygiene_export_summary(report: dict[str, Any]) -> dict[str, Any]:
+    if not report:
+        return {
+            "status": "missing",
+            "patch_hygiene_policy_version": None,
+        }
+    return _sanitize_for_export(
+        {
+            "schema_version": report.get("schema_version"),
+            "patch_hygiene_policy_version": report.get("patch_hygiene_policy_version"),
+            "status": report.get("status"),
+            "filtered_file_count": report.get("filtered_file_count"),
+            "flagged_file_count": report.get("flagged_file_count"),
+            "only_filtered_changes": report.get("only_filtered_changes"),
+            "cleaned_patch_sha256": report.get("cleaned_patch_sha256"),
+            "raw_patch_sha256": report.get("raw_patch_sha256"),
+            "filtered_files": report.get("filtered_files", []),
+            "flagged_files": report.get("flagged_files", []),
+        }
     )
 
 

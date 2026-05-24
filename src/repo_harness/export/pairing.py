@@ -12,6 +12,7 @@ from repo_harness.export.schemas import CompareScope, ExportPolicy, PairingPolic
 from repo_harness.schema_base import stable_hash
 from repo_harness.trajectory import read_jsonl
 from repo_harness.trajectory import verify_artifact_manifest
+from repo_harness.workspace.patch_hygiene import patch_hygiene_invalid_reason
 
 OPTIONAL_COMPARE_FIELDS = {
     "source_archive_sha256",
@@ -373,6 +374,10 @@ def _source_run_invalid_for_preference(run_dir: Path, metrics: dict[str, Any]) -
     agent_stop_reason = interaction.get("agent_stop_reason")
     return bool(
         reward.get("invalid_for_training")
+        or patch_hygiene_invalid_reason(
+            _read_json_if_exists(run_dir / "final_patch_hygiene_report.json")
+        )
+        is not None
         or agent_stop_reason in {"model_error", "timeout", "task_timeout"}
         or metrics.get("final_verifier_status") in {"timeout", "error"}
     )

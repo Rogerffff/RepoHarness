@@ -89,22 +89,30 @@ def build_stage7_reward_boundary(
                 }
             )
         elif not invalid_for_training and reward_metadata.invalid_for_training:
-            diagnostic_reward = reward_metadata.components.get(
-                "diagnostic_reward_before_invalid_clip",
-                reward_metadata.final_reward,
-            )
-            reward_metadata = reward_metadata.model_copy(
-                update={
-                    "final_reward": max(0.0, min(1.0, diagnostic_reward)),
-                    "invalid_for_training": False,
-                    "invalid_reason": None,
-                    "sources": {
-                        **reward_metadata.sources,
-                        "stage7_invalid_authority": "reward_boundary",
-                        "legacy_reward_invalid_reason": reward_metadata.invalid_reason,
-                    },
-                }
-            )
+            if reward_metadata.invalid_reason in {
+                "patch_hygiene_failed",
+                "patch_hygiene_only_filtered_changes",
+            }:
+                invalid_for_training = True
+                status = "invalid"
+                status_reason = reward_metadata.invalid_reason
+            else:
+                diagnostic_reward = reward_metadata.components.get(
+                    "diagnostic_reward_before_invalid_clip",
+                    reward_metadata.final_reward,
+                )
+                reward_metadata = reward_metadata.model_copy(
+                    update={
+                        "final_reward": max(0.0, min(1.0, diagnostic_reward)),
+                        "invalid_for_training": False,
+                        "invalid_reason": None,
+                        "sources": {
+                            **reward_metadata.sources,
+                            "stage7_invalid_authority": "reward_boundary",
+                            "legacy_reward_invalid_reason": reward_metadata.invalid_reason,
+                        },
+                    }
+                )
 
     reward_score = None
     if reward_metadata is not None and not invalid_for_training:

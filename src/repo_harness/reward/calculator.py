@@ -7,6 +7,7 @@ from typing import Any
 from repo_harness.reward.schemas import RewardMetadata
 from repo_harness.schema_versions import REWARD_VERSION
 from repo_harness.verifier.schemas import VerifierResult
+from repo_harness.workspace.patch_hygiene import patch_hygiene_invalid_reason
 
 INVALID_FOR_TRAINING_VERIFIER_ERRORS = {
     "low_parser_confidence",
@@ -81,14 +82,23 @@ def compute_reward_metadata(
             - timeout_penalty
         )
     diagnostic_reward_before_invalid_clip = max(0.0, min(1.0, raw_reward))
+    patch_hygiene = patch_stats.get("patch_hygiene")
+    patch_hygiene_reason = patch_hygiene_invalid_reason(
+        patch_hygiene if isinstance(patch_hygiene, dict) else None
+    )
     invalid_for_training = bool(
         final_verifier.timeout
         or final_verifier.error_type in INVALID_FOR_TRAINING_VERIFIER_ERRORS
         or final_verifier.parser_confidence < 0.5
+        or patch_hygiene_reason is not None
     )
     invalid_reason = None
     if invalid_for_training:
-        invalid_reason = final_verifier.error_type or "inconclusive_final_verifier"
+        invalid_reason = (
+            patch_hygiene_reason
+            or final_verifier.error_type
+            or "inconclusive_final_verifier"
+        )
     final_reward = 0.0 if invalid_for_training else diagnostic_reward_before_invalid_clip
 
     return RewardMetadata(

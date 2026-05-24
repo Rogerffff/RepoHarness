@@ -1785,6 +1785,65 @@ def test_preference_export_blocks_non_formal_verifier_source(tmp_path: Path):
     assert skipped["blocked_reason_distribution"] == {"non_formal_reward_source": 1}
 
 
+def test_sft_export_marks_only_filtered_patch_invalid_for_training(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_only_filtered_patch",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    _write_patch_hygiene_report(run_dir, only_filtered_changes=True)
+
+    output = export_sft_jsonl(run_dir)
+    assert _read_jsonl(output) == []
+    export_dir = _latest_export_dir(run_dir / "exports")
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    record = audit["samples"][0]
+
+    assert record["invalid_for_training"] is True
+    assert record["invalid_reason"] == "patch_hygiene_only_filtered_changes"
+
+
+def test_patch_hygiene_invalid_reason_overrides_reward_invalid_reason(tmp_path: Path):
+    run_dir = _minimal_run(
+        tmp_path / "run_patch_hygiene_reason_priority",
+        task_id="task_001",
+        include_formal_verifier=True,
+    )
+    (run_dir / "reward.json").write_text(
+        json.dumps(
+            {
+                "final_reward": 0.0,
+                "reward_version": "repo_harness_reward_v0",
+                "invalid_for_training": True,
+                "invalid_reason": "test_timeout",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _write_patch_hygiene_report(run_dir, only_filtered_changes=True)
+
+    output = export_sft_jsonl(run_dir)
+    export_dir = _latest_export_dir(run_dir / "exports")
+    audit = json.loads((export_dir / "audit_report.json").read_text(encoding="utf-8"))
+    record = audit["samples"][0]
+
+    assert _read_jsonl(output) == []
+    assert record["invalid_reason"] == "patch_hygiene_only_filtered_changes"
+
+
+def test_preference_export_blocks_only_filtered_patch_source_run(tmp_path: Path):
+    runs_dir = tmp_path / "runs"
+    _minimal_run(runs_dir / "run_a", task_id="task_001", reward=1.0, include_formal_verifier=True)
+    _minimal_run(runs_dir / "run_b", task_id="task_001", reward=0.0, include_formal_verifier=True)
+    _write_patch_hygiene_report(runs_dir / "run_b", only_filtered_changes=True)
+
+    output = export_preference_jsonl(runs_dir)
+    skipped = json.loads(output.read_text(encoding="utf-8"))
+
+    assert skipped["blocked_reason_distribution"] == {"source_run_invalid_for_training": 1}
+
+
 def _minimal_run(
     run_dir: Path,
     *,
@@ -1826,6 +1885,34 @@ def _minimal_run(
     if include_run_metadata:
         _write_minimal_v2_metadata(run_dir)
     return run_dir
+
+
+def _write_patch_hygiene_report(run_dir: Path, *, only_filtered_changes: bool = False) -> None:
+    report = {
+        "schema_version": "repo_harness_stage16e_patch_hygiene_report_v0",
+        "patch_hygiene_policy_version": "repo_harness_stage16e_patch_hygiene_policy_v0",
+        "status": "filtered_changes" if only_filtered_changes else "passed",
+        "filtered_file_count": 1 if only_filtered_changes else 0,
+        "flagged_file_count": 0,
+        "only_filtered_changes": only_filtered_changes,
+        "cleaned_patch_sha256": hashlib.sha256((run_dir / "final.patch").read_bytes()).hexdigest(),
+        "raw_patch_sha256": hashlib.sha256(b"raw").hexdigest(),
+        "filtered_files": [
+            {
+                "action": "exclude",
+                "reason": "root_diagnostic_script",
+                "path_category": "repository_relative_path",
+                "path": "debug_probe.py",
+            }
+        ]
+        if only_filtered_changes
+        else [],
+        "flagged_files": [],
+    }
+    (run_dir / "final_patch_hygiene_report.json").write_text(
+        json.dumps(report, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _add_reasoning_trace_artifact(run_dir: Path, reasoning_content: str) -> None:

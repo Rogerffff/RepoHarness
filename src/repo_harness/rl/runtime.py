@@ -40,6 +40,7 @@ from repo_harness.workspace import (
     build_command_environment,
     build_workspace_snapshot_key,
 )
+from repo_harness.workspace.patch_hygiene import patch_hygiene_invalid_reason
 
 from .episode import (
     AuditDiagnostic,
@@ -1745,6 +1746,30 @@ class RepoHarnessRuntime:
                 status = reward_boundary.status
                 status_reason = reward_boundary.status_reason or status_reason
 
+        patch_hygiene_report = _load_patch_hygiene_report(real_run.run_dir)
+        patch_hygiene_reason = patch_hygiene_invalid_reason(patch_hygiene_report)
+        reward_summary = None if reward_boundary is None else reward_boundary.reward_summary
+        if patch_hygiene_reason is not None:
+            status = "invalid"
+            status_reason = patch_hygiene_reason
+            invalid_for_training = True
+            invalid_for_online_rl = True
+            if reward_summary is not None:
+                reward_summary = reward_summary.model_copy(
+                    update={
+                        "score": None,
+                        "invalid_for_training": True,
+                        "invalid_reason": patch_hygiene_reason,
+                    }
+                )
+            diagnostics.append(
+                AuditDiagnostic(
+                    code=patch_hygiene_reason,
+                    message="final.patch was filtered by Stage 16E patch hygiene and is not trainable",
+                )
+            )
+        patch_hygiene_extra_fields = _patch_hygiene_batch_extra_fields(patch_hygiene_report)
+
         diagnostics.extend(self._write_real_episode_audit_evidence(request, real_run, reward_boundary))
         diagnostics.extend(
             self._finalize_real_episode_audit(
@@ -1783,7 +1808,10 @@ class RepoHarnessRuntime:
             invalid_for_online_rl=invalid_for_online_rl,
             invalid_reason=status_reason,
             gateway_route=_generation_route_projection(generation_records),
-            stage7_extra_fields=None if reward_boundary is None else reward_boundary.extra_fields,
+            stage7_extra_fields={
+                **({} if reward_boundary is None else reward_boundary.extra_fields),
+                **patch_hygiene_extra_fields,
+            },
         )
         return RepoHarnessEpisodeResult(
             episode_id=request.episode_id,
@@ -1798,7 +1826,7 @@ class RepoHarnessRuntime:
             training_view=training_view,
             audit_ref=self._audit_ref(request, reward_boundary=reward_boundary),
             audit_diagnostics=diagnostics,
-            reward=None if reward_boundary is None else reward_boundary.reward_summary,
+            reward=reward_summary,
             verifier_summary=(
                 self._verifier_summary(status) if reward_boundary is None else reward_boundary.verifier_summary
             ),
@@ -3124,6 +3152,43 @@ def _coerce_tool_call(value: dict[str, Any], *, turn: int) -> ToolCall:
     payload = dict(value)
     payload.setdefault("turn", turn)
     return ToolCall.model_validate(payload)
+
+
+def _load_patch_hygiene_report(run_dir: Path) -> dict[str, Any] | None:
+    path = run_dir / "final_patch_hygiene_report.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"status": "failed", "only_filtered_changes": False}
+    return payload if isinstance(payload, dict) else {"status": "failed", "only_filtered_changes": False}
+
+
+def _patch_hygiene_batch_extra_fields(report: dict[str, Any] | None) -> dict[str, str | int | bool | None]:
+    if not isinstance(report, dict):
+        return {}
+    fields: dict[str, str | int | bool | None] = {
+        "repo_harness_patch_hygiene_status": (
+            str(report.get("status")) if report.get("status") is not None else None
+        ),
+        "repo_harness_patch_hygiene_policy_version": (
+            str(report.get("patch_hygiene_policy_version"))
+            if report.get("patch_hygiene_policy_version") is not None
+            else None
+        ),
+        "repo_harness_patch_hygiene_filtered_file_count": int(
+            report.get("filtered_file_count", 0) or 0
+        ),
+        "repo_harness_patch_hygiene_flagged_file_count": int(
+            report.get("flagged_file_count", 0) or 0
+        ),
+        "repo_harness_patch_hygiene_only_filtered_changes": report.get("only_filtered_changes") is True,
+    }
+    cleaned_sha = report.get("cleaned_patch_sha256")
+    if isinstance(cleaned_sha, str):
+        fields["repo_harness_cleaned_patch_sha256"] = cleaned_sha
+    return fields
 
 
 async def _generate_gateway_turn(

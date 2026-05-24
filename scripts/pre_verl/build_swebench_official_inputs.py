@@ -12,6 +12,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from repo_harness.workspace.patch_hygiene import (
+    PATCH_HYGIENE_POLICY_VERSION,
+    classify_patch_path,
+    patch_hygiene_invalid_reason,
+)
+
 
 _PATCH_CONTENT_LEAK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("hidden_selector_marker", re.compile(r"\b(?:FAIL_TO_PASS|PASS_TO_PASS)\b")),
@@ -74,6 +80,47 @@ def main() -> int:
     for record in run_records:
         patch_path = Path(record["run_dir"]) / "final.patch"
         patch = patch_path.read_text(encoding="utf-8") if patch_path.exists() else ""
+        hygiene_report_path = Path(record["run_dir"]) / "final_patch_hygiene_report.json"
+        hygiene_report = _read_json_if_exists(hygiene_report_path)
+        hygiene_report_status = "missing_legacy_fallback"
+        hygiene_report_reason: str | None = "final_patch_hygiene_report_missing"
+        hygiene_filtered_files: list[dict[str, Any]] = []
+        if hygiene_report:
+            hygiene_report_status = "present"
+            hygiene_report_reason = None
+            expected_sha = hygiene_report.get("cleaned_patch_sha256")
+            actual_sha = hashlib.sha256(patch.encode("utf-8")).hexdigest()
+            if expected_sha != actual_sha:
+                hygiene_report_status = "mismatch"
+                hygiene_report_reason = "final_patch_hygiene_report_cleaned_patch_sha256_mismatch"
+            else:
+                hygiene_report_reason = patch_hygiene_invalid_reason(hygiene_report)
+            raw_filtered = hygiene_report.get("filtered_files")
+            if isinstance(raw_filtered, list):
+                hygiene_filtered_files = _public_safe_hygiene_filtered_files(raw_filtered)
+        if hygiene_report_reason:
+            patch_sha256 = hashlib.sha256(patch_path.read_bytes()).hexdigest() if patch_path.exists() else None
+            excluded_predictions.append(
+                {
+                    "index": int(record["index"]),
+                    "instance_id": record["instance_id"],
+                    "run_id": record["run_id"],
+                    "exclusion_reason": hygiene_report_reason,
+                    "patch_path": patch_path.as_posix(),
+                    "patch_sha256": patch_sha256,
+                    "final_patch_hygiene_report_status": hygiene_report_status,
+                    "final_patch_hygiene_report_sha256": (
+                        hashlib.sha256(hygiene_report_path.read_bytes()).hexdigest()
+                        if hygiene_report_path.exists()
+                        else None
+                    ),
+                    "recommended_handling": (
+                        "exclude this sample from official predictions until the final patch hygiene report "
+                        "and cleaned final.patch are consistent and training-eligible"
+                    ),
+                }
+            )
+            continue
         modified_files = _patch_modified_files(patch)
         test_files = _test_like_paths(modified_files)
         temporary_artifact_files = _temporary_artifact_paths(modified_files)
@@ -142,6 +189,26 @@ def main() -> int:
                 "temporary_artifact_changes_stripped": bool(temporary_artifact_files),
                 "stripped_test_like_modified_files": test_files if not args.keep_test_file_changes else [],
                 "stripped_temporary_artifact_modified_files": temporary_artifact_files,
+                "patch_hygiene_policy_version": (
+                    hygiene_report.get("patch_hygiene_policy_version")
+                    if hygiene_report
+                    else PATCH_HYGIENE_POLICY_VERSION
+                ),
+                "final_patch_hygiene_report_status": hygiene_report_status,
+                "final_patch_hygiene_report_sha256": (
+                    hashlib.sha256(hygiene_report_path.read_bytes()).hexdigest()
+                    if hygiene_report_path.exists()
+                    else None
+                ),
+                "cleaned_patch_sha256": (
+                    hygiene_report.get("cleaned_patch_sha256") if hygiene_report else patch_sha256
+                ),
+                "raw_patch_sha256": (
+                    hygiene_report.get("raw_patch_sha256") if hygiene_report else patch_sha256
+                ),
+                "hygiene_filtered_file_count": len(hygiene_filtered_files),
+                "hygiene_filtered_files": hygiene_filtered_files,
+                "official_prediction_uses_cleaned_patch": True,
             }
         )
         if test_files:
@@ -253,6 +320,13 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else {}
+
+
 def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -275,6 +349,29 @@ def _patch_content_leak_findings(patch: str) -> list[dict[str, Any]]:
                 )
     findings.extend(line_findings.values())
     return findings
+
+
+def _public_safe_hygiene_filtered_files(raw_filtered: list[Any]) -> list[dict[str, Any]]:
+    public_items: list[dict[str, Any]] = []
+    for item in raw_filtered:
+        if not isinstance(item, dict):
+            continue
+        path = item.get("path")
+        if isinstance(path, str):
+            decision = classify_patch_path(path)
+            public = decision.public_dict()
+            public["action"] = str(item.get("action") or decision.action)
+            public["reason"] = str(item.get("reason") or decision.reason)
+            public_items.append(public)
+            continue
+        public_items.append(
+            {
+                key: value
+                for key, value in item.items()
+                if key in {"action", "reason", "path_category", "path_sha256", "basename_redacted"}
+            }
+        )
+    return public_items
 
 
 def _patch_modified_files(patch: str) -> list[str]:
@@ -316,8 +413,10 @@ def _temporary_artifact_paths(paths: list[str]) -> list[str]:
     temporary_paths = []
     for path in paths:
         name = path.split("/")[-1] if path else path
+        hygiene_decision = classify_patch_path(path)
         if (
-            path == "patch.txt"
+            hygiene_decision.action == "exclude"
+            or path == "patch.txt"
             or path.startswith("tmp/")
             or path.startswith(".repo_harness_tmp/")
             or name.endswith(".orig")

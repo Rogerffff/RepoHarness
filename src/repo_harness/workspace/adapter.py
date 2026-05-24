@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import fnmatch
+import json
 import shlex
 import shutil
 import signal
@@ -18,6 +19,13 @@ from repo_harness.errors import WorkspaceError
 from repo_harness.tasks import RunnableTask
 from repo_harness.trajectory import ArtifactRef, RunRecorder
 from repo_harness.workspace.materialization import SourceCheckout, materialize_source
+from repo_harness.workspace.patch_hygiene import (
+    PatchHygieneError,
+    apply_hygiene_to_patch_stats,
+    build_patch_hygiene_report,
+    filter_patch_text,
+    parse_name_status_z,
+)
 from repo_harness.workspace.protocol import WorkspaceBackend
 from repo_harness.workspace.schemas import DependencyState, ExecutionResult, RunWorkspace
 from repo_harness.workspace.dependency_environment import (
@@ -132,6 +140,12 @@ class PatchCapture:
     added_lines: int
     removed_lines: int
     patch_stats: dict[str, object]
+    hygiene_report_path: Path | None = None
+    hygiene_report_ref: ArtifactRef | None = None
+    raw_patch_path: Path | None = None
+    raw_diff_path: Path | None = None
+    raw_patch_artifact_ref: ArtifactRef | None = None
+    raw_diff_artifact_ref: ArtifactRef | None = None
 
 
 class LocalWorkspaceAdapter:
@@ -298,16 +312,87 @@ class LocalWorkspaceAdapter:
         if not base:
             raise WorkspaceError("RunWorkspace 缺少 agent_start_snapshot，无法冻结 final.patch。")
         self._refresh_intent_to_add(workspace, recorder)
-        patch_text = self._run_git_checked(workspace, ["diff", "--binary", base], recorder=recorder)
-        diff_text = self._run_git_checked(workspace, ["diff", base], recorder=recorder)
+        raw_patch_text = self._run_git_checked(workspace, ["diff", "--binary", base], recorder=recorder)
+        raw_diff_text = self._run_git_checked(workspace, ["diff", base], recorder=recorder)
+        status_z = self._run_git_checked(workspace, ["diff", "--name-status", "-z", base], recorder=recorder)
+        structured_diff_facts = parse_name_status_z(status_z)
+        try:
+            patch_filter = filter_patch_text(
+                raw_patch_text,
+                structured_diff_facts=structured_diff_facts,
+            )
+            diff_filter = filter_patch_text(
+                raw_diff_text,
+                structured_diff_facts=structured_diff_facts,
+            )
+        except PatchHygieneError as exc:
+            raise WorkspaceError(f"final.patch hygiene 失败：{exc}") from exc
+        patch_text = patch_filter.cleaned_patch_text
+        diff_text = diff_filter.cleaned_patch_text
         patch_path = self.run_dir / "final.patch"
         diff_path = self.run_dir / "final.diff"
+        runtime_private_dir = self.run_dir / "runtime_private"
+        runtime_private_dir.mkdir(parents=True, exist_ok=True)
+        raw_patch_path = runtime_private_dir / "raw_final.patch"
+        raw_diff_path = runtime_private_dir / "raw_final.diff"
+        raw_patch_path.write_text(raw_patch_text, encoding="utf-8")
+        raw_diff_path.write_text(raw_diff_text, encoding="utf-8")
         patch_path.write_text(patch_text, encoding="utf-8")
         diff_path.write_text(diff_text, encoding="utf-8")
         patch_ref = recorder.write_artifact("final_patch", patch_text, {"suffix": ".patch"})
         diff_ref = recorder.write_artifact("final_diff", diff_text, {"suffix": ".diff"})
+        raw_patch_ref = recorder.write_artifact(
+            "raw_final_patch",
+            raw_patch_text,
+            {
+                "suffix": ".patch",
+                "redaction_status": "runtime_private",
+                "retention_policy": "audit_only",
+                "model_visible": False,
+                "training_export_allowed": False,
+            },
+        )
+        raw_diff_ref = recorder.write_artifact(
+            "raw_final_diff",
+            raw_diff_text,
+            {
+                "suffix": ".diff",
+                "redaction_status": "runtime_private",
+                "retention_policy": "audit_only",
+                "model_visible": False,
+                "training_export_allowed": False,
+            },
+        )
+        hygiene_report = build_patch_hygiene_report(
+            patch_result=patch_filter,
+            diff_result=diff_filter,
+            raw_diff_text=raw_diff_text,
+            cleaned_diff_text=diff_text,
+            raw_patch_ref=raw_patch_ref.model_dump(mode="json"),
+            raw_diff_ref=raw_diff_ref.model_dump(mode="json"),
+            final_patch_ref=patch_ref.model_dump(mode="json"),
+            final_diff_ref=diff_ref.model_dump(mode="json"),
+        )
+        hygiene_report_path = self.run_dir / "final_patch_hygiene_report.json"
+        hygiene_report_path.write_text(
+            json.dumps(hygiene_report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        hygiene_report_ref = recorder.write_json_artifact(
+            "final_patch_hygiene_report",
+            hygiene_report,
+            {"redaction_status": "redacted", "budget_policy": "preserve_json"},
+        )
         added, removed = _count_diff_lines(diff_text)
-        patch_stats = self._collect_patch_stats(workspace, base, added, removed, recorder)
+        raw_added, raw_removed = _count_diff_lines(raw_diff_text)
+        raw_patch_stats = self._collect_patch_stats(workspace, base, raw_added, raw_removed, recorder)
+        patch_stats = apply_hygiene_to_patch_stats(
+            raw_patch_stats,
+            patch_result=patch_filter,
+            cleaned_added_lines=added,
+            cleaned_removed_lines=removed,
+            hygiene_report=hygiene_report,
+        )
         return PatchCapture(
             patch_path=patch_path,
             diff_path=diff_path,
@@ -318,6 +403,12 @@ class LocalWorkspaceAdapter:
             added_lines=added,
             removed_lines=removed,
             patch_stats=patch_stats,
+            hygiene_report_path=hygiene_report_path,
+            hygiene_report_ref=hygiene_report_ref,
+            raw_patch_path=raw_patch_path,
+            raw_diff_path=raw_diff_path,
+            raw_patch_artifact_ref=raw_patch_ref,
+            raw_diff_artifact_ref=raw_diff_ref,
         )
 
     def apply_patch(

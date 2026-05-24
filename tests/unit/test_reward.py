@@ -1,4 +1,5 @@
 from repo_harness.evaluation import build_metrics_record
+from repo_harness.rl.reward_boundary import build_stage7_reward_boundary
 from repo_harness.reward import compute_reward_metadata
 from repo_harness.verifier import VerifierResult
 
@@ -30,6 +31,44 @@ def test_reward_metadata_uses_final_verifier_and_patch_stats():
     assert 0.0 <= reward.final_reward <= 1.0
     assert reward.invalid_for_training is False
     assert reward.sources["patch_added_lines"] == 5
+
+
+def test_patch_hygiene_only_filtered_patch_is_invalid_for_training():
+    reward = compute_reward_metadata(
+        verifier_result(),
+        patch_stats={
+            "added_lines": 0,
+            "removed_lines": 0,
+            "patch_hygiene": {
+                "status": "filtered_changes",
+                "only_filtered_changes": True,
+            },
+        },
+    )
+
+    assert reward.invalid_for_training is True
+    assert reward.invalid_reason == "patch_hygiene_only_filtered_changes"
+    assert reward.final_reward == 0.0
+
+
+def test_stage7_boundary_preserves_patch_hygiene_invalid_authority():
+    boundary = build_stage7_reward_boundary(
+        final_verifier=verifier_result(),
+        reward_metadata_ref="rh://reward/unit",
+        final_verifier_ref="rh://verifier/unit",
+        patch_stats={
+            "added_lines": 0,
+            "removed_lines": 0,
+            "patch_hygiene": {
+                "status": "filtered_changes",
+                "only_filtered_changes": True,
+            },
+        },
+    )
+
+    assert boundary.invalid_for_training is True
+    assert boundary.status == "invalid"
+    assert boundary.status_reason == "patch_hygiene_only_filtered_changes"
 
 
 def test_reward_does_not_treat_missing_fail_to_pass_as_full_score():
