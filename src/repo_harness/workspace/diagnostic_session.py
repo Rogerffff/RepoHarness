@@ -13,6 +13,8 @@ import os
 import re
 import shutil
 import tempfile
+import hashlib
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -147,6 +149,15 @@ class DiagnosticSessionFacts:
     invalidation_reason: str | None = None
     reused: bool = False
     session_state_root_ref: str = "runtime_private_diagnostic_session"
+    diagnostic_session_execution_shell: str = "bash"
+    diagnostic_session_execution_argv_digest: str | None = None
+    diagnostic_session_shell_semantics_version: str = "stage16f1_bash_lc_v0"
+    diagnostic_session_shell_login_mode: str = "login"
+    diagnostic_session_shell_interactive_mode: str = "non_interactive"
+    diagnostic_session_shell_startup_policy: str = "recorded"
+    diagnostic_session_shell_home_policy: str = "session_home"
+    diagnostic_session_shell_bash_env_policy: str = "cleared"
+    diagnostic_session_shell_env_policy: str = "cleared"
     diagnostics: list[str] = field(default_factory=list)
 
     def to_json(self) -> dict[str, Any]:
@@ -173,8 +184,22 @@ class DiagnosticSessionFacts:
             "invalidation_reason": self.invalidation_reason,
             "reused": self.reused,
             "session_state_root_ref": self.session_state_root_ref,
+            "diagnostic_session_execution_shell": self.diagnostic_session_execution_shell,
+            "diagnostic_session_execution_argv_digest": self.diagnostic_session_execution_argv_digest,
+            "diagnostic_session_shell_semantics_version": self.diagnostic_session_shell_semantics_version,
+            "diagnostic_session_shell_login_mode": self.diagnostic_session_shell_login_mode,
+            "diagnostic_session_shell_interactive_mode": self.diagnostic_session_shell_interactive_mode,
+            "diagnostic_session_shell_startup_policy": self.diagnostic_session_shell_startup_policy,
+            "diagnostic_session_shell_home_policy": self.diagnostic_session_shell_home_policy,
+            "diagnostic_session_shell_bash_env_policy": self.diagnostic_session_shell_bash_env_policy,
+            "diagnostic_session_shell_env_policy": self.diagnostic_session_shell_env_policy,
             "diagnostics": list(self.diagnostics),
         }
+
+
+def diagnostic_shell_argv_digest(argv: list[str]) -> str:
+    payload = json.dumps(argv, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def safe_diagnostic_session_id(value: str) -> str:
@@ -394,6 +419,8 @@ def diagnostic_command_environment(
             "PIP_CACHE_DIR": paths.pip_cache_dir.as_posix(),
             "UV_CACHE_DIR": paths.uv_cache_dir.as_posix(),
             "PYTHONPYCACHEPREFIX": (paths.tmp_dir / "pycache").as_posix(),
+            "BASH_ENV": "",
+            "ENV": "",
         }
     )
     return env

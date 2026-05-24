@@ -1,0 +1,50 @@
+{
+  "items": [
+    {
+      "action": "manual-port-and-tighten",
+      "notes": [
+        "Local diagnostic shell now invokes explicit bash -lc instead of shell=True.",
+        "Docker diagnostic command execution now invokes bash -lc instead of sh -lc.",
+        "Shell facts record login, non-interactive bash semantics and startup policy."
+      ],
+      "source_evidence_ref": "stage16f0_diagnostic_shell_semantics_report.json",
+      "sync_item_id": "p1_diagnostic_shell_bash_lc_semantics",
+      "target_files": [
+        "src/repo_harness/workspace/diagnostic_session.py",
+        "src/repo_harness/workspace/adapter.py",
+        "src/repo_harness/workspace/docker_adapter.py"
+      ]
+    },
+    {
+      "action": "already-covered-with-regression",
+      "notes": [
+        "Docker diagnostic session still does not mount RepoHarness run directory.",
+        "Diagnostic output redaction and local diagnostic side-channel policy remain intact."
+      ],
+      "source_evidence_ref": "stage16f0_required_sync_items.json",
+      "sync_item_id": "p1_run_directory_not_model_visible",
+      "target_files": [
+        "tests/integration/test_repo_harness_stage16b_docker_diagnostic_session.py",
+        "tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py"
+      ]
+    },
+    {
+      "action": "already-covered-by-stage16e-baseline",
+      "notes": [
+        "Evaluation worktree has no shared patch_hygiene module in the inventory.",
+        "Training worktree Stage 16E implementation is the stricter baseline for cleaned patch and official prediction eligibility."
+      ],
+      "source_evidence_ref": "stage16f0_module_diff_matrix.json",
+      "sync_item_id": "p1_patch_and_official_prediction_hygiene",
+      "target_files": [
+        "src/repo_harness/workspace/patch_hygiene.py",
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ]
+    }
+  ],
+  "porting_strategy": "manual-port-small-scope",
+  "schema_version": 1,
+  "source_worktree_label": "evaluation-worktree",
+  "stage": "16F.1",
+  "target_worktree_label": "training-worktree"
+}

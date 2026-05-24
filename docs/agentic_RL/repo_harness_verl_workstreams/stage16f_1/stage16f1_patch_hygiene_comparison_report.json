@@ -1,0 +1,45 @@
+{
+  "compared_modules": [
+    {
+      "decision": "keep_target_stage16e_baseline",
+      "module": "patch_hygiene",
+      "source_status": "missing_shared_module_in_stage16f0_inventory",
+      "target_sha256": "a3f07cb295a751208dd67761694ec99babaccada3b6793388cbcda7d4e8abee6",
+      "target_status": "present_stage16e_baseline"
+    },
+    {
+      "decision": "keep_target_stage16e_baseline",
+      "module": "official_input_builder",
+      "source_status": "present_legacy_builder",
+      "target_sha256": "9f54aaed11d6edd8235a9b48a78564f539ced05b00b1cbcb9fcc47940351e5e2",
+      "target_status": "present_stage16e_hygiene_aware_builder"
+    }
+  ],
+  "false_negative_risk": [],
+  "false_positive_risk": [
+    "Stage 16E excludes dependency and cache directories aggressively; dataset-specific exceptions belong in Stage 17 policy."
+  ],
+  "required_tests_added": [],
+  "rules_deferred": [
+    {
+      "deferred_to_stage": "17",
+      "reason": "This is a dataset policy decision, not a Stage 16F.1 generic hygiene fix.",
+      "rule": "dataset-specific test-like file policy tuning"
+    }
+  ],
+  "rules_ported": [],
+  "schema_version": 1,
+  "source_only_rules": [
+    "legacy strip test-like file changes in official predictions",
+    "legacy temporary artifact filtering in official predictions"
+  ],
+  "stage": "16F.1",
+  "target_only_rules": [
+    "central patch_hygiene policy module",
+    "cleaned final patch sha256 binding",
+    "raw patch kept runtime-private or audit-only",
+    "only-filtered patch blocks training eligibility",
+    "official prediction builder requires final patch hygiene report consistency",
+    "public-safe filtered path projection"
+  ]
+}

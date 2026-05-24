@@ -38,7 +38,9 @@ def test_stage16b_docker_diagnostic_session_persists_without_run_dir_mount(tmp_p
         first = adapter.run_diagnostic_shell(
             workspace,
             "printf 'value = 2\\n' > pkg.py; mkdir -p \"$HOME\"; printf keep > \"$HOME/persist\"; "
-            "ls /; ls -a /workspace",
+            "set -o pipefail; false | true; echo pipe_status=$?; "
+            "if shopt -q login_shell; then echo login_shell=login; else echo login_shell=non_login; fi; "
+            "echo bash_version=${BASH_VERSION:+present}; ls /; ls -a /workspace",
             recorder=recorder,
             session_id="docker-session",
             timeout_sec=30,
@@ -56,12 +58,19 @@ def test_stage16b_docker_diagnostic_session_persists_without_run_dir_mount(tmp_p
     assert first.exit_code == 0
     assert "repo-harness-run" not in first.stdout_preview
     assert ".git" not in first.stdout_preview
+    assert "pipe_status=1" in first.stdout_preview
+    assert "login_shell=login" in first.stdout_preview
+    assert "bash_version=present" in first.stdout_preview
     assert second.exit_code == 0
     assert "home_persist=0" in second.stdout_preview
     assert (workspace / "pkg.py").read_text(encoding="utf-8") == "value = 2\n"
     assert first.diagnostic_session_facts is not None
     assert first.diagnostic_session_facts["run_dir_mount_enabled"] is False
     assert first.diagnostic_session_facts["workspace_projection_sync_status"] == "completed"
+    assert first.diagnostic_session_facts["diagnostic_session_execution_shell"] == "bash"
+    assert first.diagnostic_session_facts["diagnostic_session_shell_login_mode"] == "login"
+    assert first.diagnostic_session_facts["diagnostic_session_shell_interactive_mode"] == "non_interactive"
+    assert len(first.diagnostic_session_facts["diagnostic_session_execution_argv_digest"]) == 64
     assert labels["repo-harness.session_kind"] == "diagnostic_shell"
     assert labels["repo-harness.run_id"] == "stage16b-docker-diagnostic"
     assert labels["repo-harness.session_id"] == "docker-session"
@@ -92,7 +101,7 @@ def test_stage16b_docker_diagnostic_session_detects_background_process(tmp_path:
     with RunRecorder("stage16b-docker-background", run_dir, task_id="task") as recorder:
         result = adapter.run_diagnostic_shell(
             workspace,
-            "sh -c 'sleep infinity &'",
+            "sh -c 'sleep 12345 &'",
             recorder=recorder,
             session_id="docker-background-session",
             timeout_sec=30,

@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "command": "PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_repo_harness_stage16a_execute_bash.py tests/unit/test_command_policy.py tests/unit/test_repo_harness_stage16b_diagnostic_shell_tool.py tests/integration/test_repo_harness_stage16b_docker_diagnostic_session.py tests/unit/test_repo_harness_stage16e_patch_hygiene_policy.py tests/unit/test_pre_verl_swebench_official_inputs.py",
+      "name": "stage16f1_minimum_local_tests",
+      "passed_count": 574,
+      "status": "passed"
+    },
+    {
+      "command": "PATH=.venv/bin:$PATH python -m pytest -q tests/unit/test_export.py tests/unit/test_reward.py",
+      "name": "export_reward_regression",
+      "passed_count": 71,
+      "status": "passed"
+    },
+    {
+      "command": "PATH=.venv/bin:$PATH python -m compileall -q src scripts/pre_verl",
+      "name": "compileall",
+      "status": "passed"
+    },
+    {
+      "command": "PYTHONPATH=src PATH=.venv/bin:$PATH python - <<PY ...",
+      "name": "ordinary_import",
+      "result": "ordinary_import_ok",
+      "status": "passed"
+    },
+    {
+      "command": "rg -n from/import repo_harness_verl or verl in core paths",
+      "matches": 0,
+      "name": "core_verl_import_scan",
+      "status": "passed"
+    },
+    {
+      "command": "git diff --check -- Stage 16F.1 files",
+      "name": "scoped_diff_check",
+      "status": "passed"
+    }
+  ],
+  "schema_version": 1,
+  "stage": "16F.1"
+}

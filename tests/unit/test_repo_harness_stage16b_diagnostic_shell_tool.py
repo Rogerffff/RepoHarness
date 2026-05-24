@@ -105,6 +105,47 @@ def test_stage16b_local_diagnostic_shell_persists_session_and_syncs_public_sourc
     assert first.typed["sample_destination"] == "diagnostic_side_channel"
 
 
+def test_stage16f1_local_diagnostic_shell_uses_explicit_bash_lc_semantics(
+    tmp_path: Path,
+) -> None:
+    context = _tool_context(tmp_path)
+
+    result = _executor().execute(
+        ToolCall(
+            tool_call_id="call_bash_semantics",
+            tool_name="diagnostic_shell",
+            arguments={
+                "command": (
+                    "printf 'export RH_STAGE16F1_SOURCE=from_source\\n' > setup.bash; "
+                    "source setup.bash; "
+                    "set -o pipefail; false | true; pipe_status=$?; "
+                    "if shopt -q login_shell; then login_status=login; else login_status=non_login; fi; "
+                    "printf 'source=%s pipe=%s login=%s bash=%s\\n' "
+                    "\"$RH_STAGE16F1_SOURCE\" \"$pipe_status\" \"$login_status\" "
+                    "\"${BASH_VERSION:+present}\""
+                )
+            },
+            turn=1,
+        ),
+        context,
+    )
+
+    assert result.status == "ok"
+    assert "source=from_source" in result.content_preview
+    assert "pipe=1" in result.content_preview
+    assert "login=login" in result.content_preview
+    assert "bash=present" in result.content_preview
+    facts = result.typed["diagnostic_session_facts"]
+    assert facts["diagnostic_session_execution_shell"] == "bash"
+    assert facts["diagnostic_session_shell_login_mode"] == "login"
+    assert facts["diagnostic_session_shell_interactive_mode"] == "non_interactive"
+    assert facts["diagnostic_session_shell_startup_policy"] == "recorded"
+    assert facts["diagnostic_session_shell_home_policy"] == "session_home"
+    assert facts["diagnostic_session_shell_bash_env_policy"] == "cleared"
+    assert facts["diagnostic_session_shell_env_policy"] == "cleared"
+    assert len(facts["diagnostic_session_execution_argv_digest"]) == 64
+
+
 def test_stage16b_projection_refreshes_after_structured_file_edits(tmp_path: Path) -> None:
     context = _tool_context(tmp_path)
     workspace = Path(context.run_workspace.workspace_path)

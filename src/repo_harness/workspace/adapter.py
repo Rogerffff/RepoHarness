@@ -38,6 +38,7 @@ from repo_harness.workspace.diagnostic_session import (
     DiagnosticSessionFacts,
     diagnostic_command_environment,
     diagnostic_command_policy_issue,
+    diagnostic_shell_argv_digest,
     diagnostic_session_paths,
     default_local_diagnostic_session_root,
     ensure_diagnostic_session_dirs,
@@ -635,11 +636,14 @@ class LocalWorkspaceAdapter:
             else _command_env()
         )
         command_env = diagnostic_command_environment(command_env, paths)
+        bash_path = shutil.which("bash", path=command_env.get("PATH"))
+        if bash_path is None:
+            raise WorkspaceError("diagnostic_shell_bash_unavailable")
+        execution_argv = [bash_path, "-lc", command]
         started = time.monotonic()
         process = subprocess.Popen(
-            command,
+            execution_argv,
             cwd=projection_cwd,
-            shell=True,
             env=command_env,
             start_new_session=True,
             stdout=subprocess.PIPE,
@@ -654,6 +658,9 @@ class LocalWorkspaceAdapter:
                 False
             ),
             reused=session_reused,
+            diagnostic_session_execution_argv_digest=diagnostic_shell_argv_digest(
+                ["bash", "-lc", command]
+            ),
         )
         facts.background_process_cleanup_status = "not_verified_local_process"
         try:

@@ -35,6 +35,7 @@ from repo_harness.workspace.backend_status import build_workspace_backend_status
 from repo_harness.workspace.diagnostic_session import (
     DiagnosticSessionFacts,
     diagnostic_command_policy_issue,
+    diagnostic_shell_argv_digest,
     diagnostic_session_paths,
     ensure_diagnostic_session_dirs,
     prepare_diagnostic_projection,
@@ -1010,7 +1011,7 @@ class DockerWorkspaceAdapter:
             "-w",
             container_workdir,
             container_name,
-            "sh",
+            "bash",
             "-lc",
             command,
         ]
@@ -1020,6 +1021,9 @@ class DockerWorkspaceAdapter:
             diagnostic_session_cleanup_status="completed",
             local_backend_filesystem_isolation_verified=True,
             reused=paths.session_id in self._diagnostic_containers,
+            diagnostic_session_execution_argv_digest=diagnostic_shell_argv_digest(
+                ["bash", "-lc", command]
+            ),
         )
         try:
             process = subprocess.run(
@@ -1479,12 +1483,16 @@ class DockerWorkspaceAdapter:
             "HOME=/tmp/repo_harness_home",
             "-e",
             "TMPDIR=/tmp/repo_harness_tmp",
+            "-e",
+            "BASH_ENV=",
+            "-e",
+            "ENV=",
             "-v",
             f"{paths.projection_workspace.as_posix()}:/workspace:rw",
             "-w",
             "/workspace",
             self.image_ref,
-            "sh",
+            "bash",
             "-lc",
             "mkdir -p /tmp/repo_harness_home /tmp/repo_harness_tmp && sleep infinity",
         ]
