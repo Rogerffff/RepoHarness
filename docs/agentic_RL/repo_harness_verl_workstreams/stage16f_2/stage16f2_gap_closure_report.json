@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "stage": "16F.2",
+  "report_kind": "gap_closure_report",
+  "gaps": [
+    {
+      "gap_id": "raw_prompt_source",
+      "previous_run_task_behavior": "run_task built initial messages through ContextBuilder.",
+      "previous_run_episode_behavior": "real_episode consumed caller-provided raw_prompt directly.",
+      "stage16f2_action": "EpisodeExecutionSpec stores initial_messages_digest and raw_prompt_digest; real_episode can consume spec.initial_messages.",
+      "status": "closed",
+      "remaining_work": null,
+      "deferred_to_stage": null,
+      "tests": [
+        "tests/unit/test_repo_harness_stage16f2_episode_execution_spec.py",
+        "tests/unit/test_repo_harness_stage16f2_real_episode_spec_consumption.py"
+      ]
+    },
+    {
+      "gap_id": "context_builder_participation",
+      "previous_run_task_behavior": "ContextBuilder participated in initial prompt construction.",
+      "previous_run_episode_behavior": "ContextBuilder did not participate in real_episode by default.",
+      "stage16f2_action": "EpisodeExecutionSpecBuilder uses ContextBuilder and records digest parity.",
+      "status": "closed",
+      "remaining_work": null,
+      "deferred_to_stage": null,
+      "tests": [
+        "tests/unit/test_repo_harness_stage16f2_episode_execution_spec.py"
+      ]
+    },
+    {
+      "gap_id": "tool_executor_registry",
+      "previous_run_task_behavior": "run_task used scaffold-resolved allowed tools and registry.",
+      "previous_run_episode_behavior": "real_episode used default ToolExecutor.",
+      "stage16f2_action": "real_episode builds ToolExecutor from spec.allowed_tool_names when spec is provided.",
+      "status": "closed",
+      "remaining_work": null,
+      "deferred_to_stage": null,
+      "tests": [
+        "tests/unit/test_repo_harness_stage16f2_real_episode_spec_consumption.py"
+      ]
+    },
+    {
+      "gap_id": "resolved_verifier_plan",
+      "previous_run_task_behavior": "run_task supplied resolved verifier plan to ToolExecutionContext.",
+      "previous_run_episode_behavior": "real_episode supplied None.",
+      "stage16f2_action": "real_episode consumes runtime_resolved_verifier_plan from spec; public spec stores only digest.",
+      "status": "closed",
+      "remaining_work": null,
+      "deferred_to_stage": null,
+      "tests": [
+        "tests/unit/test_repo_harness_stage16f2_real_episode_spec_consumption.py"
+      ]
+    },
+    {
+      "gap_id": "test_feedback_policy",
+      "previous_run_task_behavior": "run_task used resolved scaffold and run config feedback policy.",
+      "previous_run_episode_behavior": "real_episode fixed feedback policy to disabled.",
+      "stage16f2_action": "real_episode consumes test_feedback_policy and feedback_tests_passed_policy from spec.",
+      "status": "closed",
+      "remaining_work": null,
+      "deferred_to_stage": null,
+      "tests": [
+        "tests/unit/test_repo_harness_stage16f2_real_episode_spec_consumption.py"
+      ]
+    },
+    {
+      "gap_id": "patch_hygiene_facts",
+      "previous_run_task_behavior": "run_task now has Stage 16E patch hygiene facts.",
+      "previous_run_episode_behavior": "real_episode has Stage 16E training gate and patch hygiene baseline but no parity projection yet.",
+      "stage16f2_action": "No migration in this stage; parity audit remains separate.",
+      "status": "deferred",
+      "remaining_work": "Bind patch hygiene facts into run_episode projection when CLI migration starts.",
+      "deferred_to_stage": "16F.4",
+      "tests": []
+    }
+  ],
+  "complete": true
+}

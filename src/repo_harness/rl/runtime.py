@@ -19,14 +19,20 @@ from repo_harness.agent_loop import AgentLoop
 from repo_harness.agent_loop.schemas import AgentLoopState
 from repo_harness.config import ContextManagementConfig
 from repo_harness.context import ToolResultArtifactIndex
+from repo_harness.execution import (
+    EpisodeExecutionSpec,
+    validate_episode_execution_spec_runtime_binding,
+    validate_request_execution_spec_binding,
+)
 from repo_harness.model_client.schemas import ModelProviderOptions
 from repo_harness.model_client.schemas import ModelCallEvent, ModelMessage, ModelRequestContext, ModelResponse
 from repo_harness.permissions import PermissionContext
 from repo_harness.schema_base import stable_hash
+from repo_harness.scaffolds import build_scaffold, tool_registry_for_allowed_tools
 from repo_harness.tools import ToolExecutionContext, ToolExecutor, ToolOutputLimits, ToolPolicy
 from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import RecorderProfile, RunRecorder, load_artifact_manifest
-from repo_harness.verifier import VerifierJob, VerifierJobResult, VerifierResult, VerifierWorkerPool
+from repo_harness.verifier import PytestVerifier, VerifierJob, VerifierJobResult, VerifierResult, VerifierWorkerPool
 from repo_harness.workspace import (
     DependencyEnvironmentHandle,
     DependencyEnvironmentManager,
@@ -471,6 +477,7 @@ class RepoHarnessRuntime:
         request: RepoHarnessEpisodeRequest,
         *,
         llm_gateway: LLMGateway,
+        execution_spec: EpisodeExecutionSpec | None = None,
     ) -> AsyncEpisodeHandle:
         """Start an episode in the background and return a runtime-only handle."""
 
@@ -528,6 +535,7 @@ class RepoHarnessRuntime:
             return await self.run_episode(
                 parsed_request,
                 llm_gateway=llm_gateway,
+                execution_spec=execution_spec,
                 pause_controller=state.pause_controller,
                 sample_attempt_id=sample_attempt_id,
             )
@@ -552,16 +560,45 @@ class RepoHarnessRuntime:
         request: RepoHarnessEpisodeRequest,
         *,
         llm_gateway: LLMGateway,
+        execution_spec: EpisodeExecutionSpec | None = None,
         pause_controller: TurnBoundaryPauseController | None = None,
         sample_attempt_id: str | None = None,
     ) -> RepoHarnessEpisodeResult:
         started = perf_counter()
         parsed_request = RepoHarnessEpisodeRequest.model_validate(request)
+        spec: EpisodeExecutionSpec | None = None
+        spec_binding_error: str | None = None
+        if execution_spec is not None:
+            try:
+                spec = validate_episode_execution_spec_runtime_binding(
+                    EpisodeExecutionSpec.model_validate(execution_spec)
+                )
+            except ValueError as exc:
+                spec_binding_error = str(exc)
+        if spec_binding_error is None:
+            spec_binding_error = self._validate_episode_execution_spec(parsed_request, spec)
+        if spec_binding_error is not None:
+            return self._terminal_result(
+                parsed_request,
+                status="invalid_task",
+                status_reason="episode_execution_spec_mismatch",
+                diagnostics=[
+                    AuditDiagnostic(
+                        code="episode_execution_spec_mismatch",
+                        message=spec_binding_error,
+                    )
+                ],
+                elapsed_seconds=perf_counter() - started,
+                model_call_seconds=0.0,
+                cleanup_seconds=0.0,
+                cleanup_status="skipped",
+            )
         runtime_mode = self._runtime_execution_mode()
         if runtime_mode == "real_episode":
             return await self._run_real_episode_entry(
                 parsed_request,
                 llm_gateway=llm_gateway,
+                execution_spec=spec,
                 started=started,
                 pause_controller=pause_controller,
                 sample_attempt_id=sample_attempt_id,
@@ -692,11 +729,31 @@ class RepoHarnessRuntime:
     def _runtime_execution_mode(self) -> str:
         return self.options.runtime_execution_mode or self.options.execution_mode
 
+    def _validate_episode_execution_spec(
+        self,
+        request: RepoHarnessEpisodeRequest,
+        execution_spec: EpisodeExecutionSpec | None,
+    ) -> str | None:
+        if execution_spec is None:
+            if request.raw_prompt_source == "episode_execution_spec":
+                return "raw_prompt_source=episode_execution_spec requires execution_spec"
+            return None
+        try:
+            validate_request_execution_spec_binding(request, execution_spec)
+        except ValueError as exc:
+            return str(exc)
+        if request.raw_prompt_source == "external" and not request.raw_prompt:
+            return "external raw_prompt_source requires request.raw_prompt"
+        if execution_spec.runtime_resolved_verifier_plan is None:
+            return "execution_spec missing runtime_resolved_verifier_plan"
+        return None
+
     async def _run_real_episode_entry(
         self,
         request: RepoHarnessEpisodeRequest,
         *,
         llm_gateway: LLMGateway,
+        execution_spec: EpisodeExecutionSpec | None,
         started: float,
         pause_controller: TurnBoundaryPauseController | None = None,
         sample_attempt_id: str | None = None,
@@ -732,6 +789,7 @@ class RepoHarnessRuntime:
                     gateway_accounting,
                     resource_handle,
                     runtime_loop,
+                    execution_spec,
                     pause_controller,
                     sample_attempt_id,
                 )
@@ -966,6 +1024,7 @@ class RepoHarnessRuntime:
         gateway_accounting: GatewayCallAccounting,
         resource_handle: ResourceLeaseHandle | None,
         runtime_loop: asyncio.AbstractEventLoop,
+        execution_spec: EpisodeExecutionSpec | None = None,
         pause_controller: TurnBoundaryPauseController | None = None,
         sample_attempt_id: str | None = None,
     ) -> RealEpisodeRun:
@@ -994,21 +1053,79 @@ class RepoHarnessRuntime:
                 agent_start_snapshot=agent_start_snapshot,
                 agent_diff_base=agent_start_snapshot,
             )
+            resolved_verifier_plan = (
+                execution_spec.runtime_resolved_verifier_plan
+                if execution_spec is not None
+                else None
+            )
+            test_feedback_policy = (
+                execution_spec.feedback_facts.test_feedback_policy
+                if execution_spec is not None
+                else "disabled"
+            )
+            feedback_tests_passed_policy = (
+                execution_spec.feedback_facts.feedback_tests_passed_policy
+                if execution_spec is not None
+                else "not_applicable"
+            )
+            permission_context = PermissionContext(
+                mode=(
+                    execution_spec.run_config_facts.permission_mode
+                    if execution_spec is not None
+                    else "auto"
+                ),
+                network_policy=(
+                    execution_spec.run_config_facts.network_policy
+                    if execution_spec is not None
+                    else None
+                ),
+                test_command=(
+                    resolved_verifier_plan.verifier_config.test_command
+                    if resolved_verifier_plan is not None
+                    else None
+                ),
+                test_feedback_policy=test_feedback_policy,
+            )
+            allowed_tool_names = (
+                execution_spec.allowed_tool_names
+                if execution_spec is not None
+                else None
+            )
+            scaffold = (
+                build_scaffold(execution_spec.run_config_facts.scaffold_id)
+                if execution_spec is not None
+                else None
+            )
+            tool_registry = (
+                tool_registry_for_allowed_tools(allowed_tool_names)
+                if allowed_tool_names is not None
+                else None
+            )
+            initial_messages = (
+                [dict(message) for message in execution_spec.initial_messages]
+                if execution_spec is not None
+                else [dict(message) for message in request.raw_prompt]
+            )
+            verifier_feedback_facade = (
+                PytestVerifier(workspace.adapter)
+                if resolved_verifier_plan is not None
+                else None
+            )
             tool_context = ToolExecutionContext(
                 run_id=request.run_id,
                 task_id=request.task_id,
                 workspace_facade=workspace.adapter,
                 run_workspace=run_workspace,
                 artifact_writer=recorder,
-                permission_context=PermissionContext(mode="auto"),
-                verifier_feedback_facade=None,  # type: ignore[arg-type]
-                resolved_verifier_plan=None,  # type: ignore[arg-type]
+                permission_context=permission_context,
+                verifier_feedback_facade=verifier_feedback_facade,  # type: ignore[arg-type]
+                resolved_verifier_plan=resolved_verifier_plan,  # type: ignore[arg-type]
                 output_limits=ToolOutputLimits(
                     max_tool_output_chars=request.budgets.max_tool_observation_tokens or 12000
                 ),
                 tool_policy=ToolPolicy(),
-                test_feedback_policy="disabled",
-                feedback_tests_passed_policy="not_applicable",
+                test_feedback_policy=test_feedback_policy,
+                feedback_tests_passed_policy=feedback_tests_passed_policy,
                 tool_result_artifact_index=ToolResultArtifactIndex(run_dir=workspace.run_dir),
             )
             adapter = LLMGatewayModelClientAdapter(
@@ -1055,11 +1172,15 @@ class RepoHarnessRuntime:
             agent_loop_started = perf_counter()
             agent_state = AgentLoop(
                 model_client=adapter,
-                tool_executor=ToolExecutor(),
+                tool_executor=ToolExecutor(registry=tool_registry) if tool_registry is not None else ToolExecutor(),
+                scaffold=scaffold,
+                allowed_tool_names=allowed_tool_names,
+                test_feedback_policy=test_feedback_policy,
+                feedback_tests_passed_policy=feedback_tests_passed_policy,
             ).run(
                 run_id=request.run_id,
                 task_id=request.task_id,
-                initial_messages=[dict(message) for message in request.raw_prompt],
+                initial_messages=initial_messages,
                 tool_context=tool_context,
                 recorder=recorder,
                 max_turns=budget_manager.max_turns,

@@ -168,6 +168,7 @@ class PublicEnvironmentContext(StrictBaseModel):
 
     def model_visible_payload(self) -> dict[str, Any]:
         payload = self.model_dump(mode="json")
+        payload.pop("schema_version", None)
         payload["public_test_entry"] = self.public_test_entry.model_visible_payload()
         return payload
 

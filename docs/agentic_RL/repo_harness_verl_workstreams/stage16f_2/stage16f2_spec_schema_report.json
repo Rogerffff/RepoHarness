@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "stage": "16F.2",
+  "report_kind": "spec_schema_report",
+  "episode_execution_spec_schema_added": true,
+  "schema_module": "src/repo_harness/execution/spec.py",
+  "builder_module": "src/repo_harness/execution/builder.py",
+  "public_safe_digest_field": "spec_payload_sha256",
+  "public_safe_digest_policy": "spec_payload_sha256 excludes itself and excludes runtime_resolved_verifier_plan",
+  "runtime_only_fields": [
+    "runtime_resolved_verifier_plan"
+  ],
+  "public_safe_fields_include": [
+    "task_facts",
+    "run_config_facts",
+    "tool_facts",
+    "context_facts",
+    "verifier_facts",
+    "feedback_facts",
+    "budget_facts",
+    "initial_messages"
+  ],
+  "complete": true
+}

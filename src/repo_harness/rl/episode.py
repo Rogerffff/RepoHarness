@@ -106,6 +106,7 @@ class EpisodeBudgets(StrictBaseModel):
     generation_timeout_seconds: float | None = Field(default=None, gt=0)
     max_tool_observation_tokens: int | None = Field(default=None, ge=0)
     max_tool_calls: int | None = Field(default=None, ge=0)
+    max_test_runs: int | None = Field(default=None, ge=0)
     max_verifier_seconds: float | None = Field(default=None, gt=0)
     max_workspace_materialization_seconds: float | None = Field(default=None, gt=0)
     provider_retry_budget: int | None = Field(default=None, ge=0)
@@ -126,7 +127,20 @@ class RepoHarnessEpisodeRequest(StrictBaseModel):
     inference_backend: InferenceBackend | None = None
     provider_route_policy_examples: list[ProviderRoutePolicy] = Field(default_factory=list)
     raw_prompt: list[dict[str, Any]] = Field(default_factory=list)
+    raw_prompt_source: Literal["external", "episode_execution_spec"] = "external"
     task_ref: EpisodeTaskRef
+    episode_execution_spec_ref: str | None = None
+    episode_execution_spec_sha256: str | None = None
+    task_definition_sha256: str | None = None
+    run_config_sha256: str | None = None
+    permission_mode: str | None = None
+    network_policy: str | None = None
+    run_mode_hint: str | None = None
+    allowed_tool_names: list[str] = Field(default_factory=list)
+    tool_registry_digest: str | None = None
+    resolved_verifier_plan_digest: str | None = None
+    test_feedback_policy: str | None = None
+    feedback_tests_passed_policy: str | None = None
     agent_policy_ref: str | None = None
     budget_ref: str | None = None
     run_config_ref: str | None = None
@@ -142,6 +156,8 @@ class RepoHarnessEpisodeRequest(StrictBaseModel):
         validate_safe_identifier(self.task_id, field_name="task_id")
         validate_inference_backend(self.llm_gateway_route, self.inference_backend)
         validate_no_forbidden_model_visible_content(self.raw_prompt, field_name="raw_prompt")
+        if self.episode_execution_spec_ref:
+            validate_opaque_ref(self.episode_execution_spec_ref, field_name="episode_execution_spec_ref")
         for policy in self.provider_route_policy_examples:
             if policy.route in PROVIDER_ROUTES and policy.invalid_for_online_rl is not True:
                 raise ValueError("provider route examples must be invalid_for_online_rl")
