@@ -36,6 +36,7 @@ from repo_harness.tasks import LoadedTask, RunnableTask, load_task
 from repo_harness.verifier import VerifierResult
 from repo_harness.workspace import DependencyState, RunWorkspace, create_workspace_adapter
 
+from .entrypoint_policy import write_canonical_entrypoint_report
 from .episode_projection import ProjectionWriteResult, write_run_episode_compat_projection
 
 
@@ -131,6 +132,19 @@ def run_episode_task(
     )
     if assert_projection_complete and not projection.validation_report.get("projection_complete"):
         raise ConfigError("run_episode projection did not pass validation")
+    route_qualification = _read_json_if_exists(
+        run_dir / "compat_projection" / "provider_route_qualification.json",
+    )
+    write_canonical_entrypoint_report(
+        run_dir,
+        run_id=request.run_id,
+        task_id=request.task_id,
+        episode_execution_spec_sha256=spec.spec_payload_sha256,
+        compat_projection_complete=bool(projection.validation_report.get("projection_complete")),
+        provider_route=route_qualification.get("provider_route") if route_qualification else route,
+        formal_online_rl_eligible=bool(route_qualification.get("formal_online_rl_eligible")),
+        policy_loss_candidate=bool(route_qualification.get("policy_loss_candidate")),
+    )
     _write_runner_summary(
         run_dir=run_dir,
         request=request,
@@ -413,3 +427,13 @@ def _write_runner_summary(
         json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+
+
+def _read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}

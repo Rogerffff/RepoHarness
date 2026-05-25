@@ -19,6 +19,7 @@ from repo_harness.evaluation.metrics import (
     build_metrics_record,
     derive_final_verifier_status,
 )
+from repo_harness.evaluation.entrypoint_policy import write_legacy_entrypoint_report
 from repo_harness.evaluation.outcome_policy import OUTCOME_POLICY_VERSION, derive_run_outcome
 from repo_harness.evaluation.schemas import BaselineResult, ResolvedVerifierPlan
 from repo_harness.model_client import create_model_client, provider_options_from_model_config
@@ -136,6 +137,12 @@ def run_task(
                 event_type="run_started",
                 data={"task_path": str(task_path)},
             )
+        )
+        write_legacy_entrypoint_report(
+            run_dir,
+            run_id=actual_run_id,
+            task_id=loaded.runnable_task.task_id,
+            caller="run_task",
         )
         _write_json(run_dir / "task.yaml", loaded.definition.model_dump(mode="json"))
         _write_json(run_dir / "run_config_preflight_report.json", preflight_report)

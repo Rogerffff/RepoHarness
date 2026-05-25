@@ -13,6 +13,7 @@ from repo_harness.errors import RepoHarnessError
 from repo_harness.evaluation.runner import run_batch as run_batch_command
 from repo_harness.evaluation.runner import run_task as run_task_command
 from repo_harness.evaluation.episode_runner import run_episode_task as run_episode_task_command
+from repo_harness.evaluation.entrypoint_policy import inspect_stage16f5_entrypoint_policy
 from repo_harness.evaluation.episode_parity import inspect_stage16f4_parity
 from repo_harness.evaluation.experiment import (
     inspect_experiment as inspect_experiment_command,
@@ -1781,6 +1782,13 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_stage16f4_parser.add_argument("evidence", help="Stage 16F.4 evidence 目录。")
     inspect_stage16f4_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
 
+    inspect_stage16f5_parser = subparsers.add_parser(
+        "inspect-stage16f5-entrypoint-policy",
+        help="检查 Stage 16F.5 旧入口降级和新入口默认策略 evidence 是否满足验收条件。",
+    )
+    inspect_stage16f5_parser.add_argument("evidence", help="Stage 16F.5 evidence 目录或 runs 根目录。")
+    inspect_stage16f5_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
     build_stage14_smoke_kit_parser = subparsers.add_parser(
         "build-stage14-remote-smoke-kit",
         help="生成 Stage 14 远端 fully async smoke 配置骨架。",
@@ -3368,6 +3376,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 16F.4 parity acceptance 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage16f5-entrypoint-policy":
+        try:
+            print(
+                inspect_stage16f5_entrypoint_policy(
+                    args.evidence,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 16F.5 entrypoint policy 检查失败：{exc}\n")
         return 0
     if args.command == "build-stage14-remote-smoke-kit":
         try:
