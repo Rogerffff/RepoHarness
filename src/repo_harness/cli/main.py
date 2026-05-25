@@ -18,6 +18,7 @@ from repo_harness.evaluation.episode_parity import inspect_stage16f4_parity
 from repo_harness.evaluation.experiment import (
     inspect_experiment as inspect_experiment_command,
 )
+from repo_harness.evaluation.stage16f6_smoke import inspect_stage16f6_real_model_smoke
 from repo_harness.evaluation.experiment import run_experiment as run_experiment_command
 from repo_harness.export import ExportPolicy, export_run_or_runs, inspect_export
 from repo_harness.inspect_initial_context import inspect_initial_context
@@ -1789,6 +1790,13 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_stage16f5_parser.add_argument("evidence", help="Stage 16F.5 evidence 目录或 runs 根目录。")
     inspect_stage16f5_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
 
+    inspect_stage16f6_parser = subparsers.add_parser(
+        "inspect-stage16f6-real-model-smoke",
+        help="检查 Stage 16F.6 小规模真实模型 run-episode-task smoke evidence 是否满足验收条件。",
+    )
+    inspect_stage16f6_parser.add_argument("evidence", help="Stage 16F.6 evidence 目录。")
+    inspect_stage16f6_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
     build_stage14_smoke_kit_parser = subparsers.add_parser(
         "build-stage14-remote-smoke-kit",
         help="生成 Stage 14 远端 fully async smoke 配置骨架。",
@@ -3387,6 +3395,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 16F.5 entrypoint policy 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage16f6-real-model-smoke":
+        try:
+            print(
+                inspect_stage16f6_real_model_smoke(
+                    args.evidence,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 16F.6 real model smoke 检查失败：{exc}\n")
         return 0
     if args.command == "build-stage14-remote-smoke-kit":
         try:

@@ -262,6 +262,32 @@ def test_stage11_5_real_episode_missing_logprobs_is_rejected_by_formal_gate(tmp_
         validate_training_view_for_online_rl(result.training_view, require_explicit_eligibility=True)
 
 
+def test_stage11_5_real_episode_diagnostic_route_can_exceed_rollout_length_without_crash(
+    tmp_path: Path,
+) -> None:
+    source = _source_repo(tmp_path)
+    request = _episode_request(
+        llm_gateway_route="mock",
+        inference_backend=None,
+        budgets={**_episode_request().budgets.model_dump(mode="json"), "max_output_tokens": 2},
+    )
+    long_response = _final_response(
+        route="mock",
+        inference_backend=None,
+        output_logprobs=None,
+    ).model_copy(update={"output_token_ids": [92_001, 92_002, 92_003]})
+    gateway = FakeLLMGateway([long_response])
+    runtime = RepoHarnessRuntime(_runtime_options(tmp_path, source, route="mock"))
+
+    result = asyncio.run(runtime.run_episode(request, llm_gateway=gateway))
+
+    assert result.status in {"failed", "succeeded"}
+    assert result.invalid_for_training is False
+    assert result.invalid_for_online_rl is True
+    assert len(result.training_view.response_ids) > 2
+    assert result.training_view.rollout_limits.response_length == len(result.training_view.response_ids)
+
+
 def test_stage11_5_real_episode_response_route_mismatch_is_structured_invalid_result(tmp_path: Path) -> None:
     source = _source_repo(tmp_path)
     request = _episode_request()

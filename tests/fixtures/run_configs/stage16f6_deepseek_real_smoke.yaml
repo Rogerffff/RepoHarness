@@ -1,0 +1,32 @@
+run_id_prefix: stage16f6_deepseek
+tasks:
+  - tests/fixtures/tasks/task_stage16f3_passing.yaml
+model:
+  provider: deepseek
+  model_id: deepseek-v4-pro
+  temperature: 0.0
+  max_output_tokens: 4096
+  retry_policy: none
+  credential_policy: env_only
+  provider_request_logging: redact_secrets
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  test_feedback_policy: public_only
+  feedback_tests_passed_policy: require_model_final
+  max_turns: 3
+  max_tool_calls: 8
+  max_test_runs: 2
+  task_timeout_sec: 240
+  provider_request_timeout_sec: 90
+workspace:
+  output_dir: runs/stage16f6-real-model-smoke
+  keep_workspace: true
+  default_command_timeout_sec: 60
+  max_tool_output_chars: 8000
+  network_policy: deny_agent_run
+evaluation:
+  concurrency: 1
+  rerun_final_verifier: true
+  final_verifier_mode: strict_patch_replay

@@ -2231,11 +2231,14 @@ class RepoHarnessRuntime:
                 )
             )
         prompt_ids = real_run.collector.records[0].generation_record.prompt_ids if real_run.collector.records else []
+        response_length_limit = request.budgets.max_output_tokens or max(len(response_ids), 1)
+        if invalid_reason != "response_length_exceeded" and invalid_for_online_rl:
+            response_length_limit = max(response_length_limit, len(response_ids), 1)
         return TrainingView(
             online_rl_eligible=not invalid_for_training and not invalid_for_online_rl,
             rollout_limits=RolloutLimits(
                 prompt_length=max(request.budgets.max_prompt_tokens or 10**9, len(prompt_ids)),
-                response_length=request.budgets.max_output_tokens or max(len(response_ids), 1),
+                response_length=response_length_limit,
             ),
             prompt_ids=list(prompt_ids),
             response_ids=response_ids,
