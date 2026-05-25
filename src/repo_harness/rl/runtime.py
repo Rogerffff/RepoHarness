@@ -39,6 +39,7 @@ from repo_harness.workspace import (
     DependencyEnvironmentSpec,
     DependencyState,
     LocalWorkspaceAdapter,
+    PatchCapture,
     RunWorkspace,
     WorkspaceLeaseHandle,
     WorkspaceSnapshotManager,
@@ -243,6 +244,7 @@ class RealEpisodeRun:
     run_workspace: RunWorkspace
     workspace: RealEpisodeWorkspace
     final_verifier_callable: FinalVerifierCallable
+    patch_capture: PatchCapture
     agent_loop_seconds: float
     artifact_count: int
     artifact_bytes_written: int
@@ -801,6 +803,17 @@ class RepoHarnessRuntime:
             reward_boundary = await self._stage7_reward_boundary_for_callable(
                 request,
                 real_run.final_verifier_callable,
+                patch_stats=real_run.patch_capture.patch_stats,
+                event_counts=_real_episode_reward_event_counts(real_run.agent_state),
+                source_refs={
+                    "final_patch_ref": real_run.patch_capture.patch_artifact_ref.model_dump(mode="json"),
+                    "final_diff_ref": real_run.patch_capture.diff_artifact_ref.model_dump(mode="json"),
+                    "events_ref": {
+                        "kind": "events",
+                        "relative_path": "events.jsonl",
+                        "exists": (real_run.run_dir / "events.jsonl").exists(),
+                    },
+                },
             )
             status = reward_boundary.status
             status_reason = reward_boundary.status_reason
@@ -1204,7 +1217,7 @@ class RepoHarnessRuntime:
                 turn_boundary_callback=turn_boundary_callback,
             )
             agent_loop_seconds = perf_counter() - agent_loop_started
-            workspace.adapter.capture_final_patch(run_workspace, recorder=recorder)
+            patch_capture = workspace.adapter.capture_final_patch(run_workspace, recorder=recorder)
             manifest = load_artifact_manifest(workspace.run_dir)
             artifacts = list(manifest.get("artifacts", []))
             final_verifier_callable = self._real_episode_final_verifier_callable(
@@ -1220,6 +1233,7 @@ class RepoHarnessRuntime:
                 run_workspace=run_workspace,
                 workspace=workspace,
                 final_verifier_callable=final_verifier_callable,
+                patch_capture=patch_capture,
                 agent_loop_seconds=agent_loop_seconds,
                 artifact_count=len(artifacts),
                 artifact_bytes_written=sum(int(artifact.get("size_bytes", 0)) for artifact in artifacts),
@@ -2680,6 +2694,10 @@ class RepoHarnessRuntime:
         self,
         request: RepoHarnessEpisodeRequest,
         final_verifier_callable: FinalVerifierCallable,
+        *,
+        patch_stats: dict[str, Any] | None = None,
+        event_counts: dict[str, int] | None = None,
+        source_refs: dict[str, Any] | None = None,
     ) -> Stage7RewardBoundaryResult:
         job = VerifierJob(
             job_id=f"{request.episode_id}-final-verifier",
@@ -2697,7 +2715,10 @@ class RepoHarnessRuntime:
             pool_result=pool_result,
             reward_metadata_ref=f"rh://reward/{request.episode_id}/metadata",
             final_verifier_ref=f"rh://verifier/{request.episode_id}/final",
+            patch_stats=patch_stats,
+            event_counts=event_counts,
             source_refs={
+                **(source_refs or {}),
                 "verifier_pool_id": pool_result.pool_id,
                 "verifier_worker_id": pool_result.worker_id,
                 "verifier_queue_wait_seconds": pool_result.queue_wait_seconds,
@@ -3273,6 +3294,14 @@ def _coerce_tool_call(value: dict[str, Any], *, turn: int) -> ToolCall:
     payload = dict(value)
     payload.setdefault("turn", turn)
     return ToolCall.model_validate(payload)
+
+
+def _real_episode_reward_event_counts(agent_state: AgentLoopState) -> dict[str, int]:
+    return {
+        "turn_count": agent_state.turn_count,
+        "tool_call_count": agent_state.tool_call_count,
+        "test_run_count": agent_state.budget_state.test_run_count,
+    }
 
 
 def _load_patch_hygiene_report(run_dir: Path) -> dict[str, Any] | None:

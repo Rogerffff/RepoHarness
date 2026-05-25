@@ -150,6 +150,60 @@ def test_stage5_model_client_gateway_uses_keyword_call_and_marks_provider_tokens
     assert "provider text only response" not in json.dumps(projection_payloads)
 
 
+def test_stage5_model_client_gateway_replaces_runtime_placeholder_model_id(
+    tmp_path: Path,
+) -> None:
+    client = KeywordOnlySpyModelClient()
+    gateway = ModelClientLLMGateway(
+        model_client=client,
+        run_dir_root=tmp_path,
+        max_workers=1,
+        default_model_id="stage5-default-model",
+    )
+    request = _gateway_request()
+    request = request.model_copy(
+        update={
+            "provider_options": {
+                "provider": "openai",
+                "model_id": "repo-harness-llm-gateway",
+            }
+        }
+    )
+
+    asyncio.run(gateway.generate_turn(request))
+
+    assert client.requests[0].provider_options.model_id == "stage5-default-model"
+
+
+def test_stage5_model_client_gateway_merges_default_provider_specific_options(
+    tmp_path: Path,
+) -> None:
+    client = KeywordOnlySpyModelClient()
+    gateway = ModelClientLLMGateway(
+        model_client=client,
+        run_dir_root=tmp_path,
+        max_workers=1,
+        default_provider_specific_options={"mock_scenario": "public_feedback"},
+    )
+    request = _gateway_request()
+    request = request.model_copy(
+        update={
+            "provider_options": {
+                "provider": "openai",
+                "model_id": "stage5-provider-model",
+                "provider_specific_options": {"temperature_probe": "kept"},
+            }
+        }
+    )
+
+    asyncio.run(gateway.generate_turn(request))
+
+    assert client.requests[0].provider_options.provider_specific_options == {
+        "mock_scenario": "public_feedback",
+        "temperature_probe": "kept",
+    }
+
+
 def test_stage5_provider_gateway_response_stays_invalid_for_online_rl_in_runtime(
     tmp_path: Path,
 ) -> None:

@@ -37,6 +37,7 @@ class ModelClientLLMGatewayOptions:
     max_workers: int = 1
     default_model_id: str = "repo-harness-model-client-gateway"
     default_timeout_seconds: float = DEFAULT_MODEL_CLIENT_TIMEOUT_SECONDS
+    default_provider_specific_options: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.max_workers < 1:
@@ -56,6 +57,7 @@ class ModelClientLLMGateway:
         max_workers: int = 1,
         default_model_id: str = "repo-harness-model-client-gateway",
         default_timeout_seconds: float = DEFAULT_MODEL_CLIENT_TIMEOUT_SECONDS,
+        default_provider_specific_options: dict[str, Any] | None = None,
     ) -> None:
         self.model_client = model_client
         self.options = ModelClientLLMGatewayOptions(
@@ -63,6 +65,11 @@ class ModelClientLLMGateway:
             max_workers=max_workers,
             default_model_id=default_model_id,
             default_timeout_seconds=default_timeout_seconds,
+            default_provider_specific_options=(
+                dict(default_provider_specific_options)
+                if default_provider_specific_options is not None
+                else None
+            ),
         )
         self._semaphore = asyncio.Semaphore(max_workers)
         self._executor = ThreadPoolExecutor(
@@ -127,7 +134,7 @@ class ModelClientLLMGateway:
             {"redaction_status": "not_needed", "retention_policy": "keep"},
         )
         provider_options = _provider_options_from_request(
-            request,
+            self._request_with_default_provider_options(request),
             default_model_id=self.options.default_model_id,
         )
         request_timeout_seconds = request.timeout_seconds or self.options.default_timeout_seconds
@@ -185,6 +192,24 @@ class ModelClientLLMGateway:
             ),
             context_budget_facts=dict(request.tokenizer_policy.get("context_budget_facts", {})),
         )
+
+    def _request_with_default_provider_options(self, request: LLMGatewayRequest) -> LLMGatewayRequest:
+        defaults = self.options.default_provider_specific_options
+        provider_options = dict(request.provider_options)
+        if defaults:
+            existing_specific = provider_options.get("provider_specific_options")
+            if not isinstance(existing_specific, dict):
+                existing_specific = {}
+            provider_options["provider_specific_options"] = {
+                **defaults,
+                **existing_specific,
+            }
+        current_model_id = provider_options.get("model_id")
+        if not current_model_id or current_model_id == "repo-harness-llm-gateway":
+            provider_options["model_id"] = self.options.default_model_id
+        if provider_options == request.provider_options:
+            return request
+        return request.model_copy(update={"provider_options": provider_options})
 
     def to_gateway_response(
         self,
@@ -313,6 +338,8 @@ def build_llm_gateway_for_route(
     model_client: ModelClient | None = None,
     run_dir_root: str | Path | None = None,
     max_workers: int = 1,
+    default_model_id: str = "repo-harness-model-client-gateway",
+    default_provider_specific_options: dict[str, Any] | None = None,
 ) -> MockLLMGateway | ModelClientLLMGateway | UnsupportedRouteLLMGateway:
     validate_route_name(route)
     if route in {"verl", "local_vllm", "local_sglang"}:
@@ -322,10 +349,28 @@ def build_llm_gateway_for_route(
     if model_client is None or run_dir_root is None:
         return UnsupportedRouteLLMGateway(route)
     if route == "replay":
-        return ReplayLLMGateway(model_client=model_client, run_dir_root=run_dir_root, max_workers=max_workers)
+        return ReplayLLMGateway(
+            model_client=model_client,
+            run_dir_root=run_dir_root,
+            max_workers=max_workers,
+            default_model_id=default_model_id,
+            default_provider_specific_options=default_provider_specific_options,
+        )
     if route in {"openai", "deepseek"}:
-        return ProviderLLMGateway(model_client=model_client, run_dir_root=run_dir_root, max_workers=max_workers)
-    return ModelClientLLMGateway(model_client=model_client, run_dir_root=run_dir_root, max_workers=max_workers)
+        return ProviderLLMGateway(
+            model_client=model_client,
+            run_dir_root=run_dir_root,
+            max_workers=max_workers,
+            default_model_id=default_model_id,
+            default_provider_specific_options=default_provider_specific_options,
+        )
+    return ModelClientLLMGateway(
+        model_client=model_client,
+        run_dir_root=run_dir_root,
+        max_workers=max_workers,
+        default_model_id=default_model_id,
+        default_provider_specific_options=default_provider_specific_options,
+    )
 
 
 def _provider_options_from_request(
@@ -368,7 +413,13 @@ def _recorder_profile_from_policy(policy: dict[str, Any]) -> RecorderProfile:
         return RecorderProfile.for_run_mode("training_fast")
     if "mode" in policy:
         base = RecorderProfile.for_run_mode(str(policy["mode"])).model_dump(mode="json")
-        return RecorderProfile.model_validate({**base, **policy})
+        allowed_fields = set(RecorderProfile.model_fields)
+        recorder_policy = {
+            key: value
+            for key, value in policy.items()
+            if key in allowed_fields
+        }
+        return RecorderProfile.model_validate({**base, **recorder_policy})
     return RecorderProfile.for_run_mode("training_fast")
 
 

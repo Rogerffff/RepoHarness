@@ -230,6 +230,16 @@ def _episode_request_from_spec(
 
 def _build_gateway(config: RunConfig, *, route: str, run_dir: Path):
     if route == "mock":
+        if config.model.provider_specific_options.get("mock_gateway_kind") == "model_client":
+            model_client = create_model_client(config.model)
+            return build_llm_gateway_for_route(
+                "mock",
+                model_client=model_client,
+                run_dir_root=run_dir / "llm_gateway",
+                max_workers=1,
+                default_model_id=config.model.model_id,
+                default_provider_specific_options=config.model.provider_specific_options,
+            )
         return build_llm_gateway_for_route("mock")
     model_client = create_model_client(config.model)
     return build_llm_gateway_for_route(
@@ -237,6 +247,8 @@ def _build_gateway(config: RunConfig, *, route: str, run_dir: Path):
         model_client=model_client,
         run_dir_root=run_dir / "llm_gateway",
         max_workers=1,
+        default_model_id=config.model.model_id,
+        default_provider_specific_options=config.model.provider_specific_options,
     )
 
 
@@ -282,20 +294,26 @@ def _run_final_verifier_command(
             check=False,
         )
         accepted = completed.returncode == 0
+        fail_to_pass = _run_declared_pytest_tests(
+            workspace_path,
+            resolved_verifier_plan.initial_fail_to_pass_tests,
+            timeout_seconds=config.final_verifier_timeout_sec,
+        )
+        pass_to_pass = _run_declared_pytest_tests(
+            workspace_path,
+            resolved_verifier_plan.initial_pass_to_pass_tests,
+            timeout_seconds=config.final_verifier_timeout_sec,
+        )
+        declared_total = fail_to_pass["total"] + pass_to_pass["total"]
+        declared_passed = fail_to_pass["passed"] + pass_to_pass["passed"]
         return VerifierResult(
             verifier_stage="final",
             parser_confidence=1.0,
             command=config.test_command,
             accepted=accepted,
-            pass_ratio=1.0 if accepted else 0.0,
-            fail_to_pass={
-                "passed": len(resolved_verifier_plan.initial_fail_to_pass_tests) if accepted else 0,
-                "total": len(resolved_verifier_plan.initial_fail_to_pass_tests),
-            },
-            pass_to_pass={
-                "passed": len(resolved_verifier_plan.initial_pass_to_pass_tests) if accepted else 0,
-                "total": len(resolved_verifier_plan.initial_pass_to_pass_tests),
-            },
+            pass_ratio=(declared_passed / declared_total if declared_total else (1.0 if accepted else 0.0)),
+            fail_to_pass=fail_to_pass,
+            pass_to_pass=pass_to_pass,
             exit_code=completed.returncode,
             error_type=None if accepted else "pytest_failed",
         )
@@ -312,6 +330,35 @@ def _run_final_verifier_command(
             timeout=True,
             error_type="timeout",
         )
+
+
+def _run_declared_pytest_tests(
+    workspace_path: Path,
+    test_ids: list[str],
+    *,
+    timeout_seconds: int,
+) -> dict[str, int]:
+    passed = 0
+    seen: set[str] = set()
+    for test_id in test_ids:
+        if test_id in seen:
+            continue
+        seen.add(test_id)
+        try:
+            completed = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", test_id],
+                cwd=workspace_path,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout_seconds,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            continue
+        if completed.returncode == 0:
+            passed += 1
+    return {"passed": passed, "total": len(seen)}
 
 
 def _pytest_command_argv(command: str) -> list[str]:
