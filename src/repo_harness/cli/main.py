@@ -280,6 +280,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="覆盖 RunConfig.model.provider 映射出的 LLMGateway route；fake provider 会映射为 mock。",
     )
     run_episode_task.add_argument(
+        "--run-mode",
+        default="training_fast",
+        choices=["training_fast", "training_debug", "full_audit"],
+        help=(
+            "选择 run_episode 的审计模式。默认 training_fast 保持训练路径不变；"
+            "Stage 16.5 深度诊断可以显式使用 full_audit。"
+        ),
+    )
+    run_episode_task.add_argument(
         "--assert-projection-complete",
         action="store_true",
         help="要求兼容投影通过绑定、摘要、路径泄漏和训练资格校验。",
@@ -3422,6 +3431,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output_dir=args.output_dir,
                 run_id=args.run_id,
                 gateway_route=args.gateway_route,
+                run_mode=args.run_mode,
                 assert_projection_complete=args.assert_projection_complete,
             )
         except RepoHarnessError as exc:
