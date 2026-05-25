@@ -1,0 +1,48 @@
+id: task_stage16f3_passing
+task_version: task_stage16f3_passing_v0
+dataset_name: repo_harness_micro
+source_kind: micro_repo_fixture
+dataset_split: dev
+created_at: "2026-05-24"
+repo: ../repos/stage16f3_passing
+base_commit: fixture
+issue: "Confirm the repository is already in a passing state and provide a final answer."
+setup_command: null
+test_command: "pytest -q"
+timeouts:
+  setup_timeout_sec: 60
+  test_timeout_sec: 30
+  agent_timeout_sec: 120
+  final_verifier_timeout_sec: 60
+environment:
+  execution_image: "python:3.12-slim"
+  python_version: "3.12"
+  node_version: null
+  package_manager: pip
+  lockfile_hashes: []
+  setup_cache_key_inputs:
+    - pyproject.toml
+  required_system_packages: []
+  setup_network_policy: deny
+expected_files:
+  - pkg.py
+fail_to_pass_tests:
+  - tests/test_public.py::test_answer
+pass_to_pass_tests: []
+visibility:
+  issue: model_visible
+  expected_files: model_visible
+  fail_to_pass_tests: verifier_only
+  pass_to_pass_tests: verifier_only
+  gold_patch: hidden_reference
+decontamination:
+  status: manual_checked
+  known_public_solution: false
+  source_url: null
+  overlap_check_notes: "hand-written Stage 16F.3 fixture"
+  notes: null
+declared_setup_mutations: []
+generated_files: []
+tags:
+  - python
+  - stage16f3

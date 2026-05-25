@@ -1,0 +1,21 @@
+run_id_prefix: stage16f3
+tasks:
+  - tests/fixtures/tasks/task_001.yaml
+model:
+  provider: mock
+  model_id: mock-stage16f3
+runtime:
+  scaffold_id: simple_react
+  execution_mode: local_process
+  permission_mode: auto
+  test_feedback_policy: public_only
+  feedback_tests_passed_policy: require_model_final
+  max_turns: 3
+  max_tool_calls: 5
+  max_test_runs: 2
+workspace:
+  output_dir: runs/stage16f3
+  keep_workspace: true
+  default_command_timeout_sec: 60
+  max_tool_output_chars: 8000
+  network_policy: deny_agent_run

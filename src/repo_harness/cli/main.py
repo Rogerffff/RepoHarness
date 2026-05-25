@@ -12,6 +12,7 @@ from repo_harness.config import load_run_config
 from repo_harness.errors import RepoHarnessError
 from repo_harness.evaluation.runner import run_batch as run_batch_command
 from repo_harness.evaluation.runner import run_task as run_task_command
+from repo_harness.evaluation.episode_runner import run_episode_task as run_episode_task_command
 from repo_harness.evaluation.experiment import (
     inspect_experiment as inspect_experiment_command,
 )
@@ -259,6 +260,26 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["baseline", "agent_loop", "final_verifier"],
         default=None,
         help="V3 resume 测试专用：在固定 phase 后结构化中断 run。",
+    )
+
+    run_episode_task = subparsers.add_parser(
+        "run-episode-task",
+        help="实验性入口：把单个任务通过 run_episode(real_episode) 路径运行，并写出安全兼容投影。",
+    )
+    run_episode_task.add_argument("task_path", help="任务 YAML 文件路径。")
+    run_episode_task.add_argument("--config", required=True, help="RunConfig YAML 文件路径。")
+    run_episode_task.add_argument("--output-dir", default=None, help="运行产物根目录。")
+    run_episode_task.add_argument("--run-id", default=None, help="显式指定本次 run id。")
+    run_episode_task.add_argument(
+        "--gateway-route",
+        default=None,
+        choices=["mock", "replay", "openai", "deepseek"],
+        help="覆盖 RunConfig.model.provider 映射出的 LLMGateway route；fake provider 会映射为 mock。",
+    )
+    run_episode_task.add_argument(
+        "--assert-projection-complete",
+        action="store_true",
+        help="要求兼容投影通过绑定、摘要、路径泄漏和训练资格校验。",
     )
 
     run_batch = subparsers.add_parser(
@@ -3335,6 +3356,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 14 remote smoke kit 构建失败：{exc}\n")
         print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+        return 0
+    if args.command == "run-episode-task":
+        try:
+            run_dir = run_episode_task_command(
+                args.task_path,
+                config_path=args.config,
+                output_dir=args.output_dir,
+                run_id=args.run_id,
+                gateway_route=args.gateway_route,
+                assert_projection_complete=args.assert_projection_complete,
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"run_episode 任务运行失败：{exc}\n")
+        print(f"run_episode 任务运行完成：{run_dir}")
         return 0
     if args.command == "run-task":
         try:
