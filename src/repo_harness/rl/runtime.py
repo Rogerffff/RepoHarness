@@ -390,9 +390,7 @@ class LLMGatewayModelClientAdapter:
         usage = dict(response.usage)
         input_tokens = int(usage.get("input_tokens", len(response.prompt_ids)))
         output_tokens = int(usage.get("output_tokens", len(response.output_token_ids)))
-        terminal_error_type = None
-        if response.error:
-            terminal_error_type = "llm_gateway_error"
+        terminal_error_type = _response_error_reason(response)
         event = ModelCallEvent(
             model_call_id=request.model_call_id,
             provider=response.route,
@@ -418,6 +416,7 @@ class LLMGatewayModelClientAdapter:
             token_usage={"input_tokens": input_tokens, "output_tokens": output_tokens},
             finish_reason=response.stop_reason,
             model_error_type=terminal_error_type,
+            terminal_error_type=terminal_error_type,
             provider_request_id=response.provider_request_id,
             model_call_event=event,
         )

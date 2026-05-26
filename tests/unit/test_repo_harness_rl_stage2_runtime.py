@@ -347,6 +347,90 @@ def test_stage2_gateway_model_client_adapter_calls_gateway() -> None:
     assert response.token_usage == {"input_tokens": 2, "output_tokens": 2}
 
 
+def test_stage2_gateway_model_client_adapter_preserves_structured_error_type() -> None:
+    gateway = FakeLLMGateway(
+        [
+            _gateway_response(
+                route="mock",
+                inference_backend=None,
+                model_call_id="model-call-adapter",
+            ).model_copy(
+                update={
+                    "assistant_message": {
+                        "role": "assistant",
+                        "content": "deepseek provider returned structured error: tool_call_parse_failure",
+                    },
+                    "error": {"model_error_type": "tool_call_parse_failure"},
+                }
+            )
+        ]
+    )
+    adapter = LLMGatewayModelClientAdapter(
+        llm_gateway=gateway,
+        episode_id="episode-adapter",
+        route="mock",
+    )
+    request = _model_request_context()
+
+    response = adapter.generate(request, recorder=None)
+
+    assert response.model_error_type == "tool_call_parse_failure"
+    assert response.terminal_error_type == "tool_call_parse_failure"
+    assert response.model_call_event is not None
+    assert response.model_call_event.model_error_type == "tool_call_parse_failure"
+    assert response.model_call_event.terminal_error_type == "tool_call_parse_failure"
+
+
+def test_stage2_gateway_model_client_adapter_preserves_provider_timeout_error() -> None:
+    gateway = FakeLLMGateway(
+        [
+            _gateway_response(
+                route="mock",
+                inference_backend=None,
+                model_call_id="model-call-adapter",
+            ).model_copy(update={"error": {"model_error_type": "provider_timeout"}})
+        ]
+    )
+    adapter = LLMGatewayModelClientAdapter(
+        llm_gateway=gateway,
+        episode_id="episode-adapter",
+        route="mock",
+    )
+
+    response = adapter.generate(_model_request_context(), recorder=None)
+
+    assert response.model_error_type == "provider_timeout"
+    assert response.terminal_error_type == "provider_timeout"
+    assert response.model_call_event is not None
+    assert response.model_call_event.model_error_type == "provider_timeout"
+    assert response.model_call_event.terminal_error_type == "provider_timeout"
+
+
+def test_stage2_gateway_model_client_adapter_falls_back_for_unknown_gateway_error() -> None:
+    gateway = FakeLLMGateway(
+        [
+            _gateway_response(
+                route="mock",
+                inference_backend=None,
+                model_call_id="model-call-adapter",
+            ).model_copy(update={"error": {"message": "unknown gateway failure"}})
+        ]
+    )
+    adapter = LLMGatewayModelClientAdapter(
+        llm_gateway=gateway,
+        episode_id="episode-adapter",
+        route="mock",
+    )
+
+    response = adapter.generate(_model_request_context(), recorder=None)
+
+    assert response.model_error_type == "gateway_response_error"
+    assert response.terminal_error_type == "gateway_response_error"
+    assert response.model_call_event is not None
+    assert response.model_call_event.model_error_type == "gateway_response_error"
+    assert response.model_call_event.terminal_error_type == "gateway_response_error"
+
+
 def _artifact_ref(relative_path: str) -> ArtifactRef:
     return ArtifactRef(
         artifact_id=relative_path.replace("/", "-"),
