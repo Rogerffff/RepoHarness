@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.0 执行计划导读与审查</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --p0:#f06d6d; --p1:#d9a93b;
+    --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{display:flex;max-width:1280px;margin:0 auto}
+  /* 侧边导航 */
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:248px;flex:0 0 248px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:27px;margin:0 0 6px;line-height:1.3}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 8px}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:28px}
+  h2.sec{font-size:21px;margin:46px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:26px 0 10px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:13px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    overflow-x:auto;font-size:12.8px;line-height:1.55}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;
+    border-radius:14px;padding:20px 22px;margin:8px 0 12px}
+  .tldr b{color:var(--accent2)}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.3px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.center,th.center{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  /* 标签 */
+  .tag{display:inline-block;font-size:11.5px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  /* 卡片 */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .card.attn{border-left:4px solid var(--warn)}
+  .card.risk{border-left:4px solid var(--bad)}
+  .card.ok{border-left:4px solid var(--good)}
+  .card h4{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .card .num{background:var(--accent);color:#06122b;font-weight:700;border-radius:8px;
+    width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 26px}
+  .kv{margin:8px 0}
+  .kv .k{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+  .myrec{background:#11261c;border:1px solid #2f6b3a;border-radius:8px;padding:10px 13px;margin-top:10px;font-size:13.6px}
+  .myrec b{color:#6fdc84}
+  .callout{border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13.8px}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.bad{background:#26161a;border:1px solid #6b3434}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}
+  li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:10px 0}
+  .gate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.gate-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#tldr">一句话总结</a>
+  <a href="#why">1 · 为什么有这个阶段</a>
+  <a href="#what">2 · 它到底是什么</a>
+  <a href="#deliverables">3 · 要产出什么</a>
+  <a href="#reality">4 · 假设 vs 代码实证</a>
+  <a href="#decisions">5 · 你要检查的决策</a>
+  <a href="#d1" class="sub">D1 只盘点不改码</a>
+  <a href="#d2" class="sub">D2 工具面四档 profile</a>
+  <a href="#d3" class="sub">D3 公开命令路线岔口</a>
+  <a href="#d4" class="sub">D4 Stage17 放行闸门</a>
+  <a href="#d5" class="sub">D5 失败样本保留</a>
+  <a href="#d6" class="sub">D6 哪个 scaffold 是默认</a>
+  <a href="#shell">★ 持久 shell 专题</a>
+  <a href="#risks">6 · 我发现的风险/张力</a>
+  <a href="#roadmap">7 · 后续路线图</a>
+  <a href="#mynext">8 · 我接下来怎么帮你</a>
+</nav>
+
+<main>
+  <h1>Stage 16G.0 执行计划导读与审查</h1>
+  <p class="lede">把 RepoHarness 的工具能力，和 Claude Code 这类真实软件工程智能体做差距盘点 —— 这一阶段值不值得做、有哪些决策需要你拍板。</p>
+  <p class="meta">审查对象：<code>docs/agentic_RL/repo_harness_verl_workstreams/49-stage-16g-0-execution-plan.md</code>（<b>988 行版本，2026-05-26 23:39</b>）　·　训练 worktree commit <code>103b76ab</code>　·　本文是给你的导读，不是计划本身</p>
+
+  <div class="callout info" style="margin-bottom:6px">
+    <b>本文已对齐最新版计划。</b>计划在我首次阅读后被另一个 agent 改过（807 → 988 行），新版有 4 处实质改进：①不再是纯纸面盘点，新增<b>只读可执行 probe</b>（4.7 节）；②新增<b>工具动作→训练目标 linkage 分析</b>（4.10 + 5.10.1），追问改动到底有没有进 final.patch / reward / export；③产物 18 → 20 份；④后续路线从 3 段细化为 <b>16G.1–16G.6</b>（见第 7 节）。
+    <br><br>
+    <b>你已拍板的两个决策（已并入下文）：</b>D4 = <b>接受训练延迟</b>（先把工具面和诊断做扎实）；D2/shell = <b>训练环境尽量贴近部署，靠确定性边界防 reward hacking</b> —— 我的细化建议是「core 先用无状态 <code>run_public_command</code> 拿干净信号，持久 shell 放 extended」，正好对应新路线图 16G.3 先于 16G.4 的排序。详见新增的<a href="#shell">「持久 shell 专题」</a>。
+  </div>
+
+  <div class="tldr" id="tldr">
+    <p style="margin-top:0"><b>一句话：</b>Stage 16G.0 是一个<b>纯调研阶段</b> —— 它不写一行会改变模型行为的代码，只产出 18 份 JSON 报告，回答一个问题：「现在这个 harness 的工具能力，够不够训练出真正的 Claude Code 风格能力，还是只会训练出一个在贫弱 toy 环境里刷题的模型？」</p>
+    <p><b>我的总体判断：</b>方向<span class="tag t-good">正确</span>。在花真金白银做 RL 之前先确认训练环境没选错，这个投入是值得的。但计划里有 <b>3 个前提与当前代码不符</b>（见第 4 节），以及 <b>2 份输入文档结论互相打架</b>（见第 6 节），需要你知情并让实施 agent 处理，否则盘点会建立在错误前提上。</p>
+    <p style="margin-bottom:0"><b>需要你拍板的关键决策有 6 个</b>（第 5 节），其中最重要的是 <b>D4：这个阶段会主动「卡住」真实训练的启动</b> —— 你要确认接受这个延迟。</p>
+  </div>
+
+  <!-- ============ 1 ============ -->
+  <h2 class="sec" id="why">1 · 为什么会有这个阶段</h2>
+  <p>你的核心担忧（已写进 <code>AGENTS.md</code> 第 96–131 行）是这条因果链：</p>
+  <pre><code>工具面太窄（为了防作弊把动作空间压死）
+  → 模型在 harness 里没法形成「定位→复现→改→验证」的真实闭环
+  → RL 奖励会强化「少运行命令、少复现、靠静态阅读猜 patch」的行为
+  → 训练出来的模型在当前 harness 看着干净，一迁移到真实环境就断层</code></pre>
+  <p>说得更直白：<b>如果这个 harness 连一个「只给 Bash」的 mini-SWE-agent 都不如，那在里面做强化学习就没有意义。</b>这个项目最终要训练的是「在接近 Claude Code 的真实工具环境里替用户解决问题」的能力。</p>
+  <p>三份背景材料对这件事的看法<b>并不完全一致</b>，这点很关键，我放到第 6 节专门讲。</p>
+
+  <!-- ============ 2 ============ -->
+  <h2 class="sec" id="what">2 · Stage 16G.0 到底是什么</h2>
+  <p>它被定位成 Stage 17A（数据 registry）<b>之前</b>的一个 P0 分析任务。它是「盘点 / 差距分析 / 验收」阶段，<b>本身不做任何能力改造</b>。改造留给后面的 16G.1 / 16G.2。</p>
+
+  <div class="card ok">
+    <h4><span class="tag t-good">做</span> 这一阶段会做的</h4>
+    <ul>
+      <li>盘点 Claude Code 参考源码里到底有哪些工具（Read / Grep / Glob / Edit / Write / Bash 的分层）</li>
+      <li>盘点 RepoHarness 当前真实有哪些工具、哪些默认可见、哪些只在诊断侧通道</li>
+      <li>逐个 scaffold 列出模型真正能看到的工具，并核对「声明的工具」和「真正注册的 executor」是否一致</li>
+      <li>产出能力差距矩阵、风险报告、Stage 17 放行/阻断结论，以及后续 16G.1+ 的改造建议</li>
+    </ul>
+  </div>
+
+  <div class="card risk">
+    <h4><span class="tag t-bad">不做</span> 这一阶段明确不碰的（计划第 17–28 行）</h4>
+    <ul>
+      <li>不新增或修改任何模型可见工具</li>
+      <li>不放宽 <code>execute_bash</code> 或 <code>diagnostic_shell</code> 策略</li>
+      <li>不改 <code>run_episode(...)</code> / <code>run-episode-task</code> / <code>AgentLoop</code> / <code>EpisodeExecutionSpec</code> 的行为</li>
+      <li>不启动远端 GPU、不做真实 RL 训练</li>
+      <li>不冻结 Stage 17 的真实训练数据 split</li>
+      <li>不把 Claude Code 的实现直接抄进 RepoHarness</li>
+    </ul>
+  </div>
+  <p class="small">换句话说：这一阶段结束时，代码行为应该和现在<b>一模一样</b>。如果实施 agent 改动了 <code>src/repo_harness/tools/</code>、<code>command_policy.py</code> 或 runtime 行为，那就是越界了 —— 这是你 review diff 时第一个要确认的点。</p>
+
+  <!-- ============ 3 ============ -->
+  <h2 class="sec" id="deliverables">3 · 它要产出什么（20 份 JSON）</h2>
+  <p>所有产物落在 <code>docs/agentic_RL/repo_harness_verl_workstreams/stage16g_0/</code>。新版从 18 增到 <b>20 份</b>，但你不需要全看。下面按重要度分级，<b>带 ★ 的是你真正该关注的</b>：</p>
+  <table>
+    <tr><th style="width:42%">产物</th><th>它回答什么</th><th class="center" style="width:80px">重要度</th></tr>
+    <tr><td><code>stage16g0_capability_gap_matrix.json</code></td><td>★ <b>全阶段最核心的文件。</b>逐条列出「Claude Code 有、RepoHarness 没有或只有一半」的能力，每条带证据、训练风险、建议改造阶段</td><td class="center"><span class="tag t-bad">必看</span></td></tr>
+    <tr><td><code>stage16g0_stage17_readiness_gate_report.json</code></td><td>★ 给出 Stage 17A / 17B / 20 / 21 的<b>放行或阻断结论</b>。直接决定项目能不能往训练走</td><td class="center"><span class="tag t-bad">必看</span></td></tr>
+    <tr><td><code>stage16g0_training_deployment_mismatch_risk_report.json</code></td><td>★ 判断「当前默认训练工具面」和「目标部署工具面（Claude Code 风格）」差多远，列出 P0 风险</td><td class="center"><span class="tag t-bad">必看</span></td></tr>
+    <tr><td><code>stage16g0_capability_probe_report.json</code> <span class="tag t-info">新增</span></td><td>★ <b>新版核心。</b>少量只读 probe 的实测结果：默认 scaffold 到底能不能跑通闭环 / 建文件 / 跑单测。把静态盘点变成代码实证</td><td class="center"><span class="tag t-warn">建议看</span></td></tr>
+    <tr><td><code>..._patch_capture_verifier_reward_linkage_report.json</code> <span class="tag t-info">新增</span></td><td>★ 工具改动「到底有没有进」final.patch / official prediction / reward / export。把「工具存在」和「训练事实可消费」分开 —— 这是评测 worktree 最在意的可审计性</td><td class="center"><span class="tag t-warn">建议看</span></td></tr>
+    <tr><td><code>stage16g0_scaffold_capability_matrix.json</code></td><td>★ 每个 scaffold 模型真正可见的工具 + 三层 registry 一致性。你最该核对的事实</td><td class="center"><span class="tag t-warn">建议看</span></td></tr>
+    <tr><td><code>stage16g0_training_tool_surface_profile_recommendations.json</code></td><td>★ 后续工具面 profile 设计建议（safe / core / extended / redteam 四档）—— 这是 D2 决策的载体</td><td class="center"><span class="tag t-warn">建议看</span></td></tr>
+    <tr><td><code>stage16g0_acceptance_summary.json</code></td><td>顶层验收摘要，用 sha256 绑定其余所有报告，并重新汇总各类 gap 计数</td><td class="center"><span class="tag t-neutral">抽查</span></td></tr>
+    <tr><td><code>..._reward_hacking_and_monitoring_gap_report.json</code></td><td>区分「确定性硬失败 / 隔离 / 辅助奖励 / 无效工具调用」四类（D5 决策载体）</td><td class="center"><span class="tag t-neutral">抽查</span></td></tr>
+    <tr><td colspan="2"><span class="small">其余 11 份（source_inventory、claude_code_tool_inventory、repoharness_tool_inventory、external_swe_harness_reference、permission_and_shell_semantics、test_feedback_and_project_command、edit_write_file_operation、task_management_and_subagent、required_next_stage_items、public_evidence_policy、path_leak_scan）是支撑性盘点和合规扫描</span></td><td class="center"><span class="tag t-neutral">抽查</span></td></tr>
+  </table>
+  <div class="callout info">
+    <b>为什么用 18 份 JSON 而不是一份报告？</b> 计划要求每条结论都能用 sha256 回查到具体文件，且公开产物里<b>不能出现你本机的真实绝对路径</b>（只能用 <code>source_doc_sha256</code>、<code>opaque_ref</code> 这类脱敏引用）。这是因为另一个 worktree（评测侧）的文档涉及 hidden verifier / gold patch 边界，不能泄漏。代价是：这些 JSON 对人很难读 —— <b>这正是你要我出 HTML 导读的原因</b>，我会在它们生成后继续帮你翻译成人话。
+  </div>
+
+  <!-- ============ 4 ============ -->
+  <h2 class="sec" id="reality">4 · 计划假设 vs 代码实证（我替你核对过了）</h2>
+  <p>计划的核心前提是「当前工具面过于保守、过窄」。我让一个子 agent 去代码里逐条核实，结论是：<b>这个前提只对了一半，而且计划点名的几样东西和代码对不上。</b>实施 agent 如果照搬计划的措辞，盘点就会失真。</p>
+  <table>
+    <tr><th style="width:30%">计划的说法 / 假设</th><th>代码里的实情（已核实）</th><th class="center" style="width:96px">结论</th></tr>
+    <tr>
+      <td>工具面「过窄」，像 toy</td>
+      <td>默认 scaffold <code>simple_react</code> 其实有 12 个工具：list_files / glob_files / read_file / read_tool_result_artifact / grep / symbol_search / update_working_state / edit_file / <b>create_file</b> / bash / run_tests / git_diff。结构化工具相当丰富，比「只给 Bash」的 mini-SWE-agent 在导航/搜索维度<b>更强</b></td>
+      <td class="center"><span class="tag t-warn">部分成立</span></td>
+    </tr>
+    <tr>
+      <td><code>execute_bash</code> 是「极窄安全子集」</td>
+      <td>是多层黑名单，<b>禁</b>管道/重定向/<code>$(...)</code>/任意命令，但<b>允许</b> <code>rg</code>/<code>grep</code>/<code>git status·diff·ls-files·grep</code>/<code>pytest</code>/<code>python -m pytest</code>/受限 heredoc。说「窄」对，说「极窄到没法工作」夸张了</td>
+      <td class="center"><span class="tag t-warn">夸张了</span></td>
+    </tr>
+    <tr>
+      <td>盘点 <code>patch_focused_react_mini_shell</code> scaffold</td>
+      <td><b>这个 scaffold 不存在。</b>真实存在的是 simple_react / patch_focused_react / patch_focused_react_execute_bash / patch_focused_react_diagnostic_shell / single_shot_patch / planner_coder_verifier</td>
+      <td class="center"><span class="tag t-bad">假设错误</span></td>
+    </tr>
+    <tr>
+      <td>权限拒绝可能只给一句纯文本，模型学不到恢复路径（计划 4.8 节的担忧）</td>
+      <td><b>已经是结构化的。</b><code>command_policy.py</code> 返回 <code>reason_code</code> / <code>recovery_hint</code> / <code>safe_argv</code> / <code>policy_version</code> 等字段。计划该「确认并复用」而不是当成缺失从零设计</td>
+      <td class="center"><span class="tag t-bad">已部分实现</span></td>
+    </tr>
+    <tr>
+      <td><code>diagnostic_shell</code> 只是诊断侧通道，不进正式训练轨迹</td>
+      <td>属实。它不在默认工具表里，<code>tool_surface_profile="persistent_diagnostic_session"</code>，明确和 Stage 16A 的 execute_bash 分离</td>
+      <td class="center"><span class="tag t-good">属实</span></td>
+    </tr>
+    <tr>
+      <td>缺 <code>write_file</code> / <code>apply_patch</code> / <code>run_public_command</code> / <code>todo_write</code></td>
+      <td>属实，这四个确实不存在。但 <code>create_file</code> <b>是存在的</b>（在默认表里）—— 别把它也算成缺失</td>
+      <td class="center"><span class="tag t-good">属实</span></td>
+    </tr>
+  </table>
+  <div class="callout bad">
+    <b>这意味着什么？</b> 真正的差距不是「工具太少」那么简单，而是更微妙的两点：①<b>哪个 scaffold 是训练默认</b>很关键 —— <code>patch_focused_react</code> 相比 <code>simple_react</code> <b>砍掉了 bash 和 create_file</b>。如果训练默认用的是 patch-focused 这一系，那模型确实失去了「建文件」和「自由跑命令」的能力，这才是 gpt_advice 说「把 create_file 加回默认 scaffold」的由来。② 缺的是<b>参数化公开测试 / 公开命令 / 多文件 patch</b>这类「动态验证」能力，不是基础导航能力。<b>请要求实施 agent 在盘点里如实写清这两点，不要用「工具太窄」一笔带过。</b>
+  </div>
+
+  <!-- ============ 5 ============ -->
+  <h2 class="sec" id="decisions">5 · 你需要重点检查 / 拍板的决策</h2>
+  <p class="legend">
+    <span><span class="tag t-good">绿</span> 我认为合理，知情即可</span>
+    <span><span class="tag t-warn">黄</span> 需要你确认方向</span>
+    <span><span class="tag t-bad">红</span> 影响重大，强烈建议你明确表态</span>
+  </p>
+
+  <div class="card ok" id="d1">
+    <h4><span class="num">D1</span> 盘点为主 + 只读 probe，不改代码行为 <span class="tag t-good">知情即可</span></h4>
+    <div class="kv"><span class="k">决策</span> 花一整个阶段做分析，期间不改任何工具行为。</div>
+    <p class="small" style="color:#e6c068"><b>最新版变化：</b>新版（988 行）已不再是「纯纸面盘点」 —— 4.7 节要求跑<b>少量只读可执行 probe</b>（用现有 fixture 实测默认 scaffold 能否跑通「读→搜→改→patch→reward」、能否建文件、能否跑单个公开测试），但明确「不改 harness 行为、不放宽策略、不写真实训练数据」。这是个<b>好改进</b>：结论从此有代码实证撑腰，而不是主观判断。</p>
+    <p><b>支持：</b>风险极不对称 —— 如果训练环境选错，后面几个 stage 的 RL（Stage 21–25）全白做，那是几百到上千 GPU 小时。先花几天分析便宜得多。</p>
+    <p><b>风险：</b>分析瘫痪。20 份 JSON 报告很容易膨胀成「为了写报告而写报告」，拖延几周还没结论。</p>
+    <div class="myrec"><b>我的建议：</b>接受这个阶段，但给它设一个<b>时间盒</b>（比如「2–3 天内出第一版 capability_gap_matrix + capability_probe + readiness_gate，其余报告可以后补」）。验收标准应盯「gap 矩阵、probe 实证和放行结论是否清晰可执行」，而不是「20 份 JSON 是否齐全」。<br><b>你 review diff 的第一红线没变：</b><code>src/repo_harness/tools/</code>、<code>command_policy.py</code>、runtime 行为都不该被改动，probe 只能读不能改。</div>
+  </div>
+
+  <div class="card attn" id="d2">
+    <h4><span class="num">D2</span> 工具面四档 profile，<code>swe_public_core</code> 作主默认 <span class="tag t-warn">确认方向</span></h4>
+    <div class="kv"><span class="k">决策</span> 计划预设了四档工具面，并暗示 <code>swe_public_core</code> 是未来主 RL 默认工具面：</div>
+    <table style="margin-top:8px">
+      <tr><th>profile</th><th>定位</th></tr>
+      <tr><td><code>safe_structured_only</code></td><td>当前的安全结构化基线，可保留，但<b>不应</b>再当主 RL 工具面</td></tr>
+      <tr><td><code>swe_public_core</code> <span class="tag t-info">候选主线</span></td><td>读/搜/编辑/<b>建文件</b>/<b>apply_patch</b>/<b>公开命令</b>/diff/任务状态/artifact 回读</td></tr>
+      <tr><td><code>swe_public_extended</code></td><td>更接近 Claude Code/Cursor：持久 shell、LSP、后台任务、子代理、MCP</td></tr>
+      <tr><td><code>redteam_restricted</code></td><td>专门用来压力测试 reward hacking / 越权 / 泄漏</td></tr>
+    </table>
+    <p>这其实是<b>整个 16G 方向最关键的前瞻性设计</b>，虽然 16G.0 名义上「不实现」，但它在这里就把目标钉死了。</p>
+    <div class="myrec"><b>✅ 你已表态：训练环境尽量贴近真实部署，靠确定性边界（而非削能力）防 reward hacking。</b>这个北极星是对的，和 gpt_advice 里 Cursor Composer 的「训练≈评测≈部署」原则一致。<br><b>我的细化建议（已和新路线图吻合）：</b>北极星不变，但<b>分步走</b> —— core 先用<b>无状态 <code>run_public_command</code></b> 拿干净、可复现、可审计的 reward 信号；<b>持久 shell 放 <code>swe_public_extended</code></b>，等 Stage 18 轨迹 schema 和监控能 hold 住持久状态再升训练资格。理由是持久 shell 除了安全，还有「可复现性」和「轨迹 schema 复杂度」两个代价。完整辨析见<a href="#shell">「持久 shell 专题」</a>。</div>
+  </div>
+
+  <div class="card risk" id="d3">
+    <h4><span class="num">D3</span> 公开命令的路线岔口：<code>run_public_command</code> vs 升级 <code>diagnostic_shell</code> <span class="tag t-bad">影响重大</span></h4>
+    <div class="kv"><span class="k">决策</span> 让模型能跑「单个 pytest case / Django test label / import smoke / 项目脚本」这类<b>定向公开测试</b>，有两条路：</div>
+    <ul>
+      <li><b>路 A：</b>新建一个结构化的 <code>run_public_command(...)</code> 工具（gpt_advice 力推这条）—— 返回值结构化、命令受 AST 校验、明确区分 public 命令和 hidden verifier</li>
+      <li><b>路 B：</b>把现有的 <code>diagnostic_shell</code> 从「诊断侧通道」升级成「正式训练工具」</li>
+    </ul>
+    <p>计划把<b>具体选哪条</b>显式标成 open question 留给 16G.1，但「要解决这个能力缺口」这个框架在 16G.0 就定了。当前的事实是：<code>run_tests</code> 不接受参数（只能跑配好的全套），所以模型<b>无法表达「只跑这一个失败的测试」</b> —— 这是 gpt_advice 和 gap 分析都认同的真实痛点。</p>
+    <p class="small" style="color:#e6c068"><b>最新版变化：</b>新路线图其实<b>把两条路排成了先后两步</b>，不再是 either/or —— <b>16G.3</b> 做无状态结构化命令（<code>run_public_command</code> / <code>run_project_test</code> / <code>scratch_python</code>），<b>16G.4</b> 才做 controlled 持久 diagnostic shell。这正好是我推荐的排序。</p>
+    <div class="myrec"><b>我的倾向（和你的 shell 决策连起来）：</b>路 A（<code>run_public_command</code>）先行做主 RL 默认 —— 它把「public 可见 / hidden verifier 不可见」做成<b>确定性规则</b>，且无状态，reward 信号干净。持久 shell（路 B 的升级版）留到 16G.4 + extended profile。<b>16G.0 阶段你只需确认：这个排序被如实记录，没有 agent 把持久 shell 提前塞进 core 默认。</b></div>
+  </div>
+
+  <div class="card risk" id="d4">
+    <h4><span class="num">D4</span> 这个阶段会主动「卡住」真实训练 <span class="tag t-bad">必须表态</span></h4>
+    <div class="kv"><span class="k">决策</span> 计划预设的放行闸门（<code>stage17_readiness_gate</code>）默认值是：</div>
+    <div class="gate-grid">
+      <div class="card" style="margin:0;padding:12px 14px"><span class="tag t-good">允许</span> &nbsp;Stage 17A：schema-only 工作（<code>=true</code>）</div>
+      <div class="card" style="margin:0;padding:12px 14px"><span class="tag t-bad">阻断</span> &nbsp;Stage 17B：真实数据冻结（<code>=false</code>）</div>
+      <div class="card" style="margin:0;padding:12px 14px"><span class="tag t-bad">阻断</span> &nbsp;Stage 20：warm-start 数据生产（<code>=false</code>）</div>
+      <div class="card" style="margin:0;padding:12px 14px"><span class="tag t-bad">阻断</span> &nbsp;Stage 21：正式 RL 训练（<code>=false</code>）</div>
+    </div>
+    <p>解锁条件是：16G.1 工具面设计完成 + 16G.2 实现并验证 + 16.5 代表性诊断（20–30 题）通过。<b>翻译成大白话：你点头做 16G.0，就等于接受真实训练被推迟到工具面改造 + 诊断都做完之后。</b></p>
+    <div class="myrec"><b>✅ 你已拍板：接受延迟（选项①）。</b>先把工具面改造 + 16.5 代表性诊断做扎实，再进真实数据冻结 / warm-start / RL。这符合 AGENTS.md「未通过代表性诊断前不冻结数据、不启动 RL」的原则。<br><b>对实施 agent 的含义：</b>16G.0 的 readiness_gate 默认值（17B/20/21 = false）保持不变，<b>不允许</b>某个 agent 在没有 probe + gap 矩阵硬证据的情况下擅自把 17B 改成 true。</div>
+  </div>
+
+  <div class="card attn" id="d5">
+    <h4><span class="num">D5</span> 失败样本要保留为训练负样本，不能默认过滤 <span class="tag t-warn">确认原则</span></h4>
+    <div class="kv"><span class="k">决策</span> 权限拒绝、无效工具调用、patch 应用失败、坏命令、未知路径 —— 这些<b>不能</b>统统当噪声丢掉，要区分「模型行为 / 权限拒绝 / 基础设施失败 / harness 崩溃」，前者作为可学习的负样本/局部反馈保留。</div>
+    <p>同时划清两条边界：<b>确定性硬失败</b>（读 hidden verifier、读 gold patch、逃逸宿主文件系统、篡改测试、污染依赖、利用 git history）vs <b>LLM-as-judge 监控</b>（可疑 reward hacking、异常大 diff、假验证）。原则：<b>LLM judge 只能当监控/审查/隔离/辅助奖励，绝不能当唯一安全边界</b> —— 真正的边界靠确定性 policy + sandbox + 路径隔离。</p>
+    <div class="myrec"><b>这是个好原则，我赞同。</b>提醒一点：第 4 节已经发现 <code>command_policy</code> <b>已经</b>返回结构化拒绝信息（reason_code / recovery_hint / safe_argv）。所以这块不是「从零造」，而是「盘点已有的、补齐缺的（比如 retryable 标志、negative-sample 落库）」。请让 agent 别把已有能力写成空白。</div>
+  </div>
+
+  <div class="card attn" id="d6">
+    <h4><span class="num">D6</span> 必须先确定「哪个 scaffold 是 canonical 训练默认」 <span class="tag t-warn">事实前提</span></h4>
+    <div class="kv"><span class="k">决策</span> 整个差距分析的结论强依赖一个事实：<b>统一入口 <code>run-episode-task</code> 默认用的是哪个 scaffold？</b></div>
+    <p>因为 <code>simple_react</code>（有 bash + create_file）和 <code>patch_focused_react</code>（砍掉 bash + create_file）的能力差很多。如果默认是后者，那「模型能不能建新文件 / 跑命令」的答案完全不同。这是我这次核对时<b>唯一没能从代码 100% 确认的关键事实</b>，需要 16G.0 第一步就钉死。</p>
+    <div class="myrec"><b>给实施 agent 的硬要求：</b><code>scaffold_capability_matrix.json</code> 必须明确标出「哪个 scaffold 绑定为 run-episode-task / run_episode 默认」，并核对它声明的工具 == 构造出的 executor registry == 运行时注入的 registry（三层一致）。三层不一致是真实 bug 源（模型以为能调某工具，实际调不到）。</div>
+  </div>
+
+  <!-- ============ 持久 shell 专题 ============ -->
+  <h2 class="sec" id="shell">★ 持久 shell 专题（回应你的提问）</h2>
+  <p>你问到「<code>run_public_command</code> 和持久 shell 的区别」「是不是已经实现了持久 shell」「训练贴近部署 + 靠其他手段防作弊是否合理」。我去代码里核实过了，下面是结论。</p>
+
+  <h3>① 两者的本质区别：状态跨调用保不保留</h3>
+  <table>
+    <tr><th style="width:22%">维度</th><th><code>run_public_command</code>（目前不存在，16G.3 候选）</th><th>持久 shell（persistent shell）</th></tr>
+    <tr><td>状态模型</td><td><b>无状态、单发</b>：每次调用 = 跑一条命令，独立进程</td><td><b>会话累积</b>：cwd / env / 后台进程跨调用保留</td></tr>
+    <tr><td>典型能力</td><td>「给我这条公开命令的结构化结果」</td><td>「调用1 <code>cd src && export X=1</code>，调用2 仍在 src、X 还在」</td></tr>
+    <tr><td>能否「装依赖→下一步用它」</td><td><span class="tag t-bad">不能</span>（每次新进程）</td><td><span class="tag t-good">能</span></td></tr>
+    <tr><td>reward 信号可复现性</td><td><span class="tag t-good">高</span>（无累积状态）</td><td><span class="tag t-warn">偏低</span>（网络/时序/后台竞态）</td></tr>
+    <tr><td>可审计 / 轨迹 schema 难度</td><td><span class="tag t-good">低</span></td><td><span class="tag t-warn">高</span>（中断点 resume 难做）</td></tr>
+  </table>
+
+  <h3>② 你记得「已实现持久 shell」—— 对，但有关键 nuance</h3>
+  <p>当前 <code>diagnostic_shell</code> 确实是「持久」的，backend 是 <code>docker_persistent_container</code>（生产）/ <code>local_filesystem_persistent</code>（测试），同题内多次调用复用同一容器。<b>但它持久的是「工作区文件系统 + 容器」，不是「shell 会话状态」：</b></p>
+  <ul>
+    <li>✅ 调用1写的文件，调用2能看到（文件系统持久）</li>
+    <li>❌ 调用1 <code>cd subdir</code>，调用2 <b>回到根目录</b>（cwd 每次重解析，<code>adapter.py:631</code>）</li>
+    <li>❌ 调用1 <code>export X=1</code>，调用2 <b>X 没了</b>（每次新起 <code>bash -lc</code>，env 重置，<code>docker_adapter.py:1481</code>）</li>
+  </ul>
+  <p>而且它被标成 <code>invalid_for_training=True</code>（除非 docker backend + 一长串 hygiene 全过 <code>minimal.py:2521</code>），所以现在是<b>诊断侧通道</b>，不进训练轨迹。<code>execute_bash</code>/<code>bash</code> 则<b>完全无状态</b>，连单次调用内的 <code>cd x && pytest</code> 都禁（<code>&&</code>/<code>;</code>/<code>|</code> 被拦，<code>command_policy.py:824</code>）。</p>
+  <div class="callout warn">
+    <b>准确现状：</b>有「<b>半持久</b>」诊断 shell（文件持久、会话状态不持久、且不进训练），<b>没有「真持久会话 shell」</b>，正式训练工具几乎无状态。所以你担心的「跨调用持久化状态的命令会受限」是真实存在的，而且比直觉还紧一点。
+  </div>
+
+  <h3>③ 你的哲学「训练≈部署 + 用其他手段防 reward hacking」是否合理？</h3>
+  <p><b>合理，是对的北极星。</b>这正是 gpt_advice 里 Cursor Composer 的核心原则。把工具能力压窄来防作弊，本质是在优化一个错误环境。</p>
+  <p>但诚实地讲，持久 shell 除了「安全」之外还有<b>两个代价</b>（这不是反对你，是说明为什么我建议分步而非 core 直接上）：</p>
+  <ol>
+    <li><b>可复现性代价：</b>持久 shell（能装依赖、开后台进程）让同一条轨迹<b>不可确定性复现</b> —— 装依赖有网络/时序，后台进程有竞态。RL 的 reward 需要干净可复现，否则信用分配被噪声污染。</li>
+    <li><b>轨迹 schema 复杂度代价：</b>评测 worktree 差距分析 G12 已点出「任意中断点 durable resume 不完整」。持久跨调用状态会让 Stage 18 的 chunk / resume schema 明显更难做对。</li>
+  </ol>
+  <div class="myrec">
+    <b>我的结论（你已采纳的方向 + 细化）：</b>北极星不变（extended profile 上持久 shell 对齐真实部署），但<b>分步走</b> ——
+    <br>• 主 RL 默认（<b>core</b>）先用<b>无状态 <code>run_public_command</code></b>，拿干净、可复现、可审计的 reward 信号；
+    <br>• <b>持久 shell 放 <code>swe_public_extended</code></b>，等 Stage 18 轨迹 schema + 监控能 hold 住持久状态再升训练资格。
+    <br>这正是新路线图 <b>16G.3（无状态结构化命令）先于 16G.4（controlled 持久 shell）</b> 的排序 —— 不是「能力妥协」，是「先拿干净信号、再提保真度」。防作弊靠 4.9 节的确定性边界（沙箱 / 路径隔离 / 无网络 / 共享依赖只读 / 题间 session 重置 / 每次调用仍过 AST 扫描 / artifact hygiene），<b>LLM-as-judge 只做监控，不当唯一边界</b>。
+  </div>
+
+  <!-- ============ 6 ============ -->
+  <h2 class="sec" id="risks">6 · 我发现的风险与张力（计划没充分点明的）</h2>
+
+  <div class="callout bad">
+    <b>R1 · 两份输入文档结论互相打架（最该注意）。</b>
+    评测 worktree 的 <code>repo_harness_vs_claude_code_capability_gap_analysis</code> 列了 24 个差距（G1–G24），但其重心是 <b>provider 韧性和可审计性</b>（重试退避、输出截断恢复、malformed tool call 修复、预算决策审计），它的结论其实是「<b>工具够用，缺的是韧性</b>」，并把 symbol search / MCP / 子代理（G18–G20）这些纯工具能力评为 <b>P3 不阻塞</b>。
+    而 <code>gpt_advice.md</code> + 本计划的框架是「<b>工具太窄像 toy</b>」。
+    <b>这两种诊断会导向完全不同的改造优先级</b> —— 一个先修韧性，一个先扩工具面。计划把两者都列为输入，却预设了「工具太窄」这一边。<b>请要求 16G.0 显式调和这两个视角</b>，给出「到底是工具不够、还是韧性不够、还是两者都有」的明确判断，而不是默认采信其中一方。
+  </div>
+
+  <div class="callout warn">
+    <b>R2 · Stage 编号和主计划文档不同步。</b>
+    高层 infra 主计划（<code>post_stage15_training_infra_stage_plan.md</code>）里<b>根本没有 16F 和 16G</b> —— 它只到 16A–16E、16.5，然后直接跳 Stage 17。说明 16F / 16G 是后来插入的，主计划文档已经过时。这本身不致命，但提示<b>阶段规划在边走边改</b>。建议你让 agent 在 16G.0 里顺手把主计划文档的 stage 序列更新一致，否则未来谁来接手都会被 16E→17 和 16E→16F→16G→17 两套叙事搞混。
+  </div>
+
+  <div class="callout warn">
+    <b>R3 · 「不如 mini-SWE-agent」这个对比必须给诚实答案。</b>
+    mini-SWE-agent 给的是<b>完整 bash</b>；RepoHarness 给的是<b>窄 execute_bash + 丰富结构化工具（read/grep/glob/symbol_search/edit/create_file）</b>。诚实的结论是：<b>在自由 shell 维度 RepoHarness 更受限，但在结构化导航/编辑维度更强</b>，不是简单的「更差」。计划第 4.6 节问「是否弱于只给稳定 shell 的 mini-SWE-agent」时，<b>不能给 yes/no 这种简单答案</b>，否则会误导后续决策。真正的命题是：「缺少自由 shell + 参数化测试」会不会让模型学不到关键的动态验证闭环。
+  </div>
+
+  <div class="callout info">
+    <b>R4 · 18 份 JSON 对你是审阅负担。</b>这正是你让我做 HTML 的初衷。我的应对：每当实施 agent 产出一批 JSON，我会出一份像本文这样的 HTML，把「他们盘点出了什么、做了哪些判断、哪些结论你需要复核」翻译成人话，并标出和代码实证对不上的地方。你不用读原始 JSON。
+  </div>
+
+  <!-- ============ 7 ============ -->
+  <h2 class="sec" id="roadmap">7 · 这阶段之后的路线图</h2>
+  <p>16G.0 通过<b>不等于</b>能立刻训练。它只回答「下一步怎么把 harness 往真实工具环境靠」。计划预期的后续拆分：</p>
+  <p class="small" style="color:#e6c068">新版把后续路线从粗略 3 段细化为 16G.1–16G.6（这本身是个改进，避免「设计完直接跳实现」）：</p>
+  <table>
+    <tr><th>阶段</th><th>内容</th><th class="center">前置</th></tr>
+    <tr><td><b>16G.0</b> <span class="tag t-info">当前</span></td><td>工具能力差距盘点 + 只读 probe</td><td class="center">—</td></tr>
+    <tr><td>16G.1</td><td>工具 registry 与能力矩阵设计，固定 profile taxonomy + 训练资格门禁</td><td class="center">16G.0</td></tr>
+    <tr><td>16G.2</td><td>结构化 read / grep / glob / edit / write / <b>apply_patch</b> 能力补齐</td><td class="center">16G.1</td></tr>
+    <tr><td>16G.3 <span class="tag t-info">core</span></td><td><b><code>run_public_command</code></b> / run_project_test / scratch_python（无状态结构化命令）</td><td class="center">16G.2</td></tr>
+    <tr><td>16G.4 <span class="tag t-neutral">extended</span></td><td><b>controlled 持久 diagnostic shell</b>、dependency setup、private overlay、项目命令 routing</td><td class="center">16G.3</td></tr>
+    <tr><td>16G.5</td><td>Claude Code parity probes + <b>mini-SWE-agent 对照诊断</b></td><td class="center">16G.4</td></tr>
+    <tr><td>16G.6 / 16.5</td><td>training eligibility gates、export / reward / policy-loss 接入验收 + 代表性诊断</td><td class="center">16G.5</td></tr>
+    <tr><td>17A</td><td>数据 registry / manifest / split schema（<b>16G.0 后即可做，schema-only</b>）</td><td class="center">16G.0</td></tr>
+    <tr><td>17B → 20 → 21</td><td>真实数据冻结 → warm-start 数据生产 → 正式 RL（<b>被 D4 闸门卡住，你已接受延迟</b>）</td><td class="center">16G.6 通过</td></tr>
+  </table>
+
+  <!-- ============ 8 ============ -->
+  <h2 class="sec" id="mynext">8 · 我接下来会怎么帮你</h2>
+  <p>按你给我的角色定位（在实施 agent 干活时，用 HTML 帮你监督方向、不让你淹没在 MD 和几千行代码里），我接下来会：</p>
+  <ul>
+    <li>等实施 agent 开始做 16G.0 时，盯它的 diff <b>有没有越界改工具/runtime 行为</b>（第 2 节的红线）。</li>
+    <li>每产出一批盘点 JSON，出一份 HTML 摘要：他们判断了什么、和代码实证是否一致、哪些结论你要复核。</li>
+    <li>特别盯 <b>D2（core 工具清单）、D3（命令路线岔口）、D4（放行闸门取值）</b> 这三个会左右大方向的决策有没有被 agent 偷偷替你定了。</li>
+    <li>把第 6 节的两文档张力（R1）跟踪到底，确保 16G.0 给出调和后的明确判断。</li>
+  </ul>
+  <div class="callout info" style="margin-top:18px">
+    <b>D4 和 D2 你已拍板</b>（接受延迟 / 训练贴近部署 + 分步走持久 shell），已并入上文。剩下我建议你心里有数、但不必现在回的：<b>D1 时间盒</b>、<b>D6 哪个 scaffold 是训练默认</b>（这个由 16G.0 第一步实测确定，probe 出来我会告诉你答案）。<br><br>如果你认可这个方向，我下一步可以：①让实施 agent 按最新版（988 行）启动 16G.0；②由我盯 diff 红线 + 每批 JSON 出 HTML 摘要。你也可以先让我把第 6 节的「两文档张力 R1」整理成一条给实施 agent 的明确指令，确保盘点不预设立场。
+  </div>
+
+  <div class="footer">
+    本文为人工导读，基于 Stage 16G.0 执行计划、Claude Code TypeScript 参考、评测 worktree 差距分析、gpt_advice.md、post_stage15 主计划，以及对当前 <code>src/repo_harness/</code> 代码的实证核对生成。所有「代码实情」均来自对 <code>tools/minimal.py</code>、<code>tasks/command_policy.py</code>、<code>scaffolds/</code>、<code>workspace/diagnostic_session.py</code> 的只读检查。
+  </div>
+</main>
+</div>
+</body>
+</html>

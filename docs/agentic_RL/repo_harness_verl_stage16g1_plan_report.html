@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.1 计划汇报 + 训练投影/artifact 讲解</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;font-size:15px}
+  .wrap{display:flex;max-width:1180px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:240px;flex:0 0 240px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:36px 46px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:22px}
+  h2.sec{font-size:20px;margin:46px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.4px;line-height:1.55}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;border-radius:14px;padding:18px 20px;margin:8px 0}
+  .tldr b{color:var(--accent2)}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:6px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .aud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+  .acard{border-radius:11px;padding:13px 15px;border:1px solid}
+  .acard.m{background:#10231d;border-color:#2f6b5a}
+  .acard.r{background:#231410;border-color:#6b3a2f}
+  .acard.e{background:#101a2b;border-color:#34507a}
+  .acard h4{margin:0 0 6px;font-size:13.5px}
+  .acard.m h4{color:#7ee0c0}.acard.r h4{color:#e0a07e}.acard.e h4{color:#9cc4ff}
+  .acard p{font-size:12.6px;margin:5px 0;color:#cdd6e6}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.aud{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#what">1 · 16G.1 这阶段干什么</a>
+  <a href="#record">2 · 一条 registry 记录长啥样</a>
+  <a href="#fielddict" class="sub">字段词典（暂定版）</a>
+  <a href="#projection">3 · "训练投影"是什么意思 ★</a>
+  <a href="#artifact">4 · "artifact 语义"是什么意思 ★</a>
+  <a href="#denial">5 · 拒绝反馈语义</a>
+  <a href="#inspector">6 · 机器验收器查什么</a>
+  <a href="#gate">7 · 完成后解锁什么 + 提醒</a>
+</nav>
+<main>
+  <h1>Stage 16G.1 计划汇报 + "训练投影/artifact"讲解</h1>
+  <p class="meta">汇报对象：<code>52-stage-16g-1-execution-plan.md</code>　·　前半段简明汇报这阶段干什么，后半段用计划里的真实字段把"训练投影/artifact 语义"配例子讲清楚　·　上游：<a href="repo_harness_verl_stage16g1_to_6_plan_explainer.html">16G.1–16G.6 总讲解</a></p>
+
+  <div class="tldr">
+    <p style="margin-top:0"><b>一句话：</b>16G.1 是"画蓝图"——它<b>不实现任何工具、不放宽 shell</b>，只把 16G.0 查清的 27 条能力固化成一份<b>机器可检查的工具 registry + 四档 profile + 训练资格门禁</b>，并写一个 CLI 验收器去自动检查。完成后解锁 16G.2 开始动手实现，但<b>不</b>解锁真实训练。</p>
+    <p style="margin-bottom:0"><b>你问的"训练投影/artifact 语义"</b>正是这阶段要为每个工具写死的两组规则：① 这个工具的数据<b>流进哪个训练管道</b>(或不进)；② 这个工具的输出<b>谁能看到、什么进导出</b>。下面第 3、4 节细讲。</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="what">1 · 16G.1 这阶段具体干什么（简明汇报）</h2>
+  <table>
+    <tr><th style="width:30%">维度</th><th>内容</th></tr>
+    <tr><td><b>类型</b></td><td>纯设计 + 机器验收，<b>零工具行为改动</b>（只加 builder / validator / inspector / 测试）</td></tr>
+    <tr><td><b>核心产出</b></td><td><code>tool_registry_contract</code>(27 条能力记录)、<code>profile_taxonomy</code>(4 档 profile)、<code>training_eligibility_gate_spec</code>(训练资格门禁)，共 10 份产物</td></tr>
+    <tr><td><b>机器验收器</b></td><td>新增 CLI <code>repo-harness inspect-stage16g1-tool-profile ... --assert-complete</code>，自动检查约 19 项，失败返回非零退出码</td></tr>
+    <tr><td><b>重新钉死的代码事实</b></td><td>默认 scaffold 是 simple_react、simple_react 有 create_file、mini_shell 不存在、execute_bash 窄但非空、diagnostic_shell 不属于 core —— 都让机器去核，不只继承文字结论</td></tr>
+    <tr><td><b>run_episode smoke</b></td><td>一个极小验证：profile id / registry version 能通过统一入口 <code>run_episode</code> 带进 projection。做不到就出 blocked report，<b>不许静默跳过</b></td></tr>
+    <tr><td><b>不做</b></td><td>不实现 apply_patch / run_public_command 等、不放宽 shell、不把持久 shell 放进 core、不碰 reward 数值、不冻结数据</td></tr>
+    <tr><td><b>完成后解锁</b></td><td><code>stage16g2_allowed_to_start=true</code>；但 17B/20/21 仍 <code>false</code></td></tr>
+  </table>
+  <div class="callout info">
+    <b>这阶段最大的价值是防"静默退化"：</b>它用机器强制要求——每个工具不光要有名字，还必须同时声明"模型能不能看到它、拒绝时给什么提示、它的数据怎么进训练"。<b>只有名字、没有这些规则的工具，会被判为不完整。</b>这就是为什么"训练投影/artifact 语义"必须在这阶段定清楚。
+  </div>
+
+  <!-- 2 -->
+  <h2 class="sec" id="record">2 · 先看一条 registry 记录长什么样</h2>
+  <p>每个能力一条记录。以计划里的 <code>apply_patch</code>(还没实现的工具)为例，我把关键字段标注出来——后面第 3、4、5 节就是讲这三组加框的字段：</p>
+  <pre><code>{
+  "capability_id": "apply_patch_or_multi_file_edit",
+  "owner_stage": "16G.2",          <span class="cm">// 归谁实现</span>
+  "blocking_for_main_swe_rl": true,
+  "repo_harness_status": "proposed_tool_required",   <span class="cm">// 还没实现</span>
+  "tool_ids": ["apply_patch"],
+  "profiles": { "swe_public_core": "planned", ... },  <span class="cm">// 属哪档 profile</span>
+
+  <span class="cm">┌─ 第 4 节：artifact 语义（谁能看到这个工具的输出）</span>
+  "allowed_artifact_visibility": {
+    "model_visible":     "summary_or_public_result",     <span class="cm">// 模型只看脱敏摘要</span>
+    "raw_artifact":      "private_by_default",            <span class="cm">// 原始输出私有</span>
+    "export_projection": "public_safe_projection_only"    <span class="cm">// 导出只放安全摘要</span>
+  },
+  <span class="cm">┌─ 第 5 节：拒绝反馈语义（被拒时怎么告诉模型）</span>
+  "denial_feedback_policy": {
+    "requires_reason_code": true, "requires_retryable": true,
+    "requires_safe_alternative_tool": true, "requires_safe_rewrite_example": true
+  },
+  <span class="cm">┌─ 第 3 节：训练投影语义（数据进哪个训练管道）</span>
+  "training_projection_policy": {
+    "allowed_in_policy_loss_trajectory": false,
+    "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_tool_implemented",
+    "sft_eligible": false, "preference_eligible": false,
+    "negative_sample_eligible": true, "quarantine_eligible": true,
+    "diagnostic_only": false,
+    "eligibility_reason": "工具尚未实现，16G.2 完成前不能进入主训练。"
+  }
+}</code></pre>
+
+  <h3 id="fielddict">2.1 · 字段词典（暂定版，待 16G.1 实现后校对）</h3>
+  <div class="callout good">
+    <b>已更新：16G.1 已实现，本表已用实际生成的 <code>tool_registry_contract.json</code> 回填真实枚举。</b>原先标 🟡 待定的取值现在大多已落定（见下表"已落定"标记）。另外实际 schema 比计划最小集<b>多了 2 个字段</b>：<code>required_stage_from_stage16g0</code>（记下 16G.0 原始阶段供 inspector 交叉核对）和 <code>persistent_session_boundary_policy</code>（绑定持久 shell 安全边界）—— 计划本就允许"可扩展，不可省略"。
+  </div>
+
+  <p class="small"><b>A 组 · 能力映射与归属</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>capability_id</code></td><td>能力标识，27 条之一</td><td>27 个固定 id（如 <code>apply_patch_or_multi_file_edit</code>）</td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>baseline_gap_type</code></td><td>该能力相对基线的差距类型</td><td>present_and_sufficient / partial / missing / present_but_weaker_than_claude_code / present_but_weaker_than_mini_swe_agent / present_non_default / present_diagnostic_only / blocked_by_policy / blocked_by_backend / blocked_by_training_eligibility / deferred_schema_only / not_required_for_main_swe_rl / unknown</td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>blocking_for_main_swe_rl</code></td><td>是否阻塞主 RL</td><td><code>true</code> / <code>false</code></td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>owner_stage</code></td><td>谁负责实现（须与 16G.0 的 required_stage 一致）</td><td>16G.1 / 16G.2 / 16G.3 / 16G.4 / 16G.5 / post_16G_optional / not_required</td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>priority</code></td><td>优先级</td><td>P0 / P1 / P2 / P3</td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>repo_harness_status</code></td><td>该能力当前在 RH 的实现状态</td><td><b>实测枚举</b>：present / partial / proposed_tool_required / diagnostic_only_current / schema_reserved</td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+    <tr><td><code>tool_ids</code></td><td>对应的实际工具名列表</td><td>结构确定；值取决于实现（如 <code>["apply_patch"]</code>）</td><td class="c"><span class="tag t-good">结构已定</span></td></tr>
+    <tr><td><code>confidence</code></td><td>该记录置信度</td><td>high / medium / low</td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>source_capability_refs</code></td><td>证据来源（指向 16G.0 产物）</td><td>引用字符串列表</td><td class="c"><span class="tag t-good">结构已定</span></td></tr>
+  </table>
+
+  <p class="small"><b>B 组 · profile 映射</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>profiles</code></td><td>该能力在四档 profile 各自的状态（对象：profile→状态）</td><td><b>key（四档固定）</b>：safe_structured_only / swe_public_core / swe_public_extended / redteam_restricted <span class="tag t-good">已定</span><br><b>value 实测枚举</b>：implemented / planned / forbidden / schema_reserved / allowed_for_negative_or_safety_probe / allowed_for_safety_probe / allowed_for_schema_probe</td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+  </table>
+
+  <p class="small"><b>C 组 · 可见性 / 暴露状态（一组 <code>*_status</code>）</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>model_visible_schema_status</code><br><code>model_visible_prompt_status</code><br><code>scaffold_exposure_status</code><br><code>public_environment_hint_status</code><br><code>executor_binding_status</code><br><code>run_episode_visibility_status</code></td><td>该工具在「模型可见 schema / 模型可见说明 / scaffold 暴露 / 公开环境提示 / 执行器绑定 / run_episode 可见」各环节的状态</td><td><b>实测枚举</b>：implemented / partial / planned / schema_reserved（<code>executor_binding_status</code> 另有 not_implemented；<code>run_episode_visibility_status</code> 另有 partial_or_planned）<br><span class="small">硬规则：标 implemented 必须能在源码 registry 解析，否则只能标 planned/not_implemented</span></td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+  </table>
+
+  <p class="small"><b>D 组 · <code>allowed_artifact_visibility</code>（见第 4 节）</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>.model_visible</code></td><td>模型能看到的版本</td><td><b>实测</b>：<code>summary_or_public_result</code></td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+    <tr><td><code>.raw_artifact</code></td><td>原始产出的可见性</td><td><b>实测</b>：<code>private_by_default</code></td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+    <tr><td><code>.export_projection</code></td><td>进导出/训练数据的版本</td><td><b>实测</b>：<code>public_safe_projection_only</code></td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+  </table>
+
+  <p class="small"><b>E 组 · <code>denial_feedback_policy</code>（见第 5 节）</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>.requires_reason_code</code><br><code>.requires_retryable</code><br><code>.requires_safe_alternative_tool</code><br><code>.requires_safe_rewrite_example</code></td><td>拒绝结果是否必须包含这些可学习字段</td><td>每个均 <code>true</code> / <code>false</code></td><td class="c"><span class="tag t-good">结构已定</span></td></tr>
+  </table>
+
+  <p class="small"><b>F 组 · <code>training_projection_policy</code>（见第 3 节）</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>.allowed_in_policy_loss_trajectory</code></td><td>该工具事件能否出现在用于 RL 的轨迹里</td><td><code>true</code> / <code>false</code></td><td class="c"><span class="tag t-good">已定</span></td></tr>
+    <tr><td><code>.sample_policy_loss_candidate_effect</code></td><td>该事件出现后对「整条样本能否进 policy loss」的影响</td><td><b>实测 3 个枚举</b>：preserves_sample_candidate_if_all_trajectory_gates_pass（正常，保持资格）/ makes_sample_ineligible_until_owner_stage_complete（工具未实现，失格到对应阶段完成）/ makes_sample_diagnostic_only_or_schema_reserved（降为仅诊断/预留）</td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+    <tr><td><code>.tool_event_policy_loss_unit</code></td><td>说明单个工具事件不是独立 policy loss 样本</td><td><b>实测</b>：<code>not_an_individual_policy_loss_sample</code></td><td class="c"><span class="tag t-good">已落定</span></td></tr>
+    <tr><td><code>.sft_eligible</code> / <code>.preference_eligible</code><br><code>.negative_sample_eligible</code> / <code>.quarantine_eligible</code> / <code>.diagnostic_only</code></td><td>能否进 SFT / 偏好 / 负样本 / 隔离 / 仅诊断 各管道</td><td>每个均 <code>true</code> / <code>false</code></td><td class="c"><span class="tag t-good">结构已定</span></td></tr>
+    <tr><td><code>.eligibility_reason</code></td><td>资格判定的文字说明</td><td>自由文本</td><td class="c"><span class="tag t-good">已定</span></td></tr>
+  </table>
+
+  <p class="small"><b>G 组 · <code>safety_boundaries</code>（硬边界，列表）</b></p>
+  <table>
+    <tr><th style="width:24%">字段</th><th>含义</th><th style="width:34%">候选值（枚举字符串列表）</th><th class="c" style="width:60px">确定度</th></tr>
+    <tr><td><code>safety_boundaries</code></td><td>该能力必须遵守的确定性硬边界</td><td>hidden_verifier_forbidden / gold_patch_forbidden / test_patch_forbidden / runtime_private_forbidden / host_filesystem_escape / git_history_exploit / dependency_tampering / test_tampering …</td><td class="c"><span class="tag t-good">较确定</span></td></tr>
+  </table>
+
+  <div class="callout info">
+    <b>一句话：</b>字段<b>骨架</b>(A–G 这些字段名)在计划里已经定了，机器验收器会强制它们存在；但若干字段的<b>取值枚举</b>(尤其 C/D 组的状态值、F 组的 <code>sample_policy_loss_candidate_effect</code>)还是"计划示例"，要等 16G.1A 固定 schema 才正式封闭。<b>我会在 16G.1 实现完成、拿到真实 <code>tool_registry_contract.json</code> 后，把本表的 🟡 待定项替换成实际枚举。</b>
+  </div>
+
+  <!-- 3 -->
+  <h2 class="sec" id="projection">3 · "训练投影语义"是什么意思 ★</h2>
+  <p>先建立背景：模型解一道题时，每一步都会<b>调用工具</b>(读文件、改代码、跑测试…)。这些"工具调用 + 返回结果"会被记录下来，组成一条 <b>trajectory(轨迹)</b>。<b>"训练投影"就是规定：这条轨迹里的数据，最终流进哪个训练管道、或者根本不进。</b></p>
+
+  <h3>① 数据可能流进的几个"目的地"</h3>
+  <table>
+    <tr><th style="width:170px">投影目的地</th><th>是什么</th><th>例子</th></tr>
+    <tr><td><b>policy loss</b>（RL 主训练）</td><td>用"整条轨迹 + reward"来强化/抑制模型的行为，这是强化学习的主信号</td><td>模型成功修好 bug → 这条轨迹被正向强化</td></tr>
+    <tr><td><b>SFT</b>（监督微调）</td><td>当"好例子"让模型照着模仿</td><td>一条高质量成功轨迹拿来当模仿样本</td></tr>
+    <tr><td><b>preference</b>（偏好）</td><td>组成"A 比 B 好"的对比对训练</td><td>两条轨迹比较，好的被偏好</td></tr>
+    <tr><td><b>negative sample</b>（负样本）</td><td>当"别这么做"的反例</td><td>模型乱删文件 / patch 失败 → 当反面教材</td></tr>
+    <tr><td><b>quarantine</b>（隔离）</td><td>可疑，先扣下来人工 / judge 审查，<b>不直接用</b></td><td>疑似作弊的轨迹</td></tr>
+    <tr><td><b>diagnostic-only</b>（仅诊断）</td><td>只留着调试分析，<b>永不进训练</b></td><td>诊断侧通道 shell 的输出</td></tr>
+  </table>
+
+  <h3>② 关键陷阱：单个工具事件 ≠ 一个训练样本</h3>
+  <div class="callout warn">
+    计划反复强调一个易错点：<b>policy loss 的训练单位是"一整条轨迹"，不是"单个工具调用"。</b>所以不能把"一次 read_file"当成一个独立训练样本。registry 因此要分开回答<b>两个</b>问题：
+    <br>• <code>allowed_in_policy_loss_trajectory</code>：这个工具事件<b>能不能出现在</b>一条用于 RL 的轨迹里？
+    <br>• <code>sample_policy_loss_candidate_effect</code>：这个工具事件一旦出现，<b>会怎样影响整条轨迹</b>能否用于 RL？
+  </div>
+
+  <h3>③ 用一条轨迹把它讲透</h3>
+  <p>假设模型解"修 parse_config"那道题，轨迹是：</p>
+  <pre><code>read_file → grep → apply_patch → run_project_test → 提交</code></pre>
+  <table>
+    <tr><th style="width:160px">工具事件</th><th>它的投影规则</th><th>对整条轨迹的影响</th></tr>
+    <tr><td><code>read_file</code>（已实现）</td><td><code>allowed_in_policy_loss_trajectory=true</code></td><td>正常，不影响轨迹资格</td></tr>
+    <tr><td><code>apply_patch</code>（<b>16G.1 时还没实现</b>）</td><td><code>allowed_in_policy_loss_trajectory=false</code></td><td><b>让整条轨迹失格</b> —— 因为里面有个"还不存在的工具调用"，这条轨迹现在不能进 RL（可留作负样本）</td></tr>
+    <tr><td>若模型试图读 <code>gold_patch</code>（偷答案）</td><td>deterministic hard fail</td><td><b>整条轨迹失格 + 进 quarantine</b></td></tr>
+  </table>
+  <div class="callout good">
+    <b>所以 apply_patch 那条记录写 <code>makes_sample_ineligible_until_tool_implemented</code> 的意思就是：</b>"现在谁的轨迹里出现 apply_patch，那条轨迹就先别进主训练，等 16G.2 把这个工具真正实现了再说。" 等 16G.2 实现后，它的 <code>allowed_in_policy_loss_trajectory</code> 才会改成 true，含它的轨迹才可能进 RL。<b>这就是"训练投影语义"——给每个工具事件规定它对训练数据资格的影响。</b>
+  </div>
+  <p class="small">还有一条硬规则(计划 §7 第 17 点)：凡是 <code>executor_binding_status=not_implemented</code> 或 schema 还是 planned 的能力，<b>禁止</b> <code>allowed_in_policy_loss_trajectory=true</code> —— 防止"工具还没实现就被误标成可进训练"。机器验收器会卡这一条。</p>
+
+  <!-- 4 -->
+  <h2 class="sec" id="artifact">4 · "artifact 语义"是什么意思 ★</h2>
+  <p><b>artifact = 工具运行后产出的东西</b>(stdout、stderr、traceback、生成的文件…)。同一份产出，对<b>三种不同的"观众"</b>要给不同的版本——这就是 <code>allowed_artifact_visibility</code> 那三个字段。</p>
+  <div class="aud">
+    <div class="acard m">
+      <h4>① model_visible 模型看到的</h4>
+      <p><b>截断 + 脱敏</b>的版本。够模型 debug，但不含敏感路径、不含完整长输出。</p>
+    </div>
+    <div class="acard r">
+      <h4>② raw_artifact 原始产出</h4>
+      <p>完整原始输出，存到 <b>runtime-private</b> 文件，带 sha256。只给 harness 审计用，<b>模型看不到、不提交</b>。</p>
+    </div>
+    <div class="acard e">
+      <h4>③ export_projection 导出投影</h4>
+      <p>进训练数据 / 公开 evidence 的版本，<b>只放 public-safe 摘要 + sha256</b>，无 secret、无本机路径。</p>
+    </div>
+  </div>
+  <h3>用一个例子讲透</h3>
+  <p>模型用 <code>run_project_test</code> 跑测试，失败了，traceback 很长，而且里面<b>恰好</b>出现了 <code>&lt;local-user-home&gt;/.../runtime_private/secret_verifier.py</code> 这种私有路径：</p>
+  <pre><code><span class="cm"># ① 模型看到的（截断 + 脱敏）—— 够它判断哪里错</span>
+AssertionError at config_parser.py:42: expected 60, got KeyError
+... (截断，路径已脱敏 [redacted])
+
+<span class="cm"># ② 原始 artifact（完整，私有，只给审计）</span>
+存到 runtime-private/run_xxx/tool_artifact_007.log
+sha256 = a1b2c3...      <span class="cm">// 模型看不到，不进任何导出</span>
+
+<span class="cm"># ③ 导出投影（进训练数据的，只有安全摘要）</span>
+{ "tool": "run_project_test", "exit_code": 1, "result": "test_failed",
+  "raw_artifact_sha256": "a1b2c3..." }   <span class="cm">// 无路径、无 secret</span></code></pre>
+  <div class="callout good">
+    <b>这套三分法同时满足三个目标：</b>模型拿到<b>有用的失败反馈</b>(能 debug)、私有路径/隐藏材料<b>不泄漏</b>给模型也不进导出、harness 仍保留<b>完整可审计</b>的原始记录。16G.1 要为每个工具写死这套规则，16G.3/16G.4 真正实现工具时必须照办。
+  </div>
+
+  <!-- 5 -->
+  <h2 class="sec" id="denial">5 · 顺带：拒绝反馈语义（denial feedback）</h2>
+  <p>这是和上面并列的第三组规则。当一个工具调用<b>被拒绝</b>时，返回的不能只是一句"权限不足"，而要<b>结构化、可学习</b>，让模型知道怎么改：</p>
+  <table>
+    <tr><th style="width:200px">字段</th><th>意思 + 例子</th></tr>
+    <tr><td><code>reason_code</code></td><td>为什么被拒（机器可识别的码）。例：<code>execute_bash_git_history_or_metadata</code></td></tr>
+    <tr><td><code>retryable</code></td><td>能不能重试。例：网络抖动→可重试；读 gold patch→不可重试</td></tr>
+    <tr><td><code>safe_alternative_tool</code></td><td>该换哪个安全工具。例："别用裸命令翻历史，用 git_diff"</td></tr>
+    <tr><td><code>safe_rewrite_example</code></td><td>给一个改对的写法示例</td></tr>
+  </table>
+  <p class="small">目的：让模型从拒绝里<b>学会"换个安全方式再试"</b>，而不是被吓得"少用工具、直接猜答案"。这也是为什么权限拒绝不能默认丢弃，要能进负样本/偏好/诊断信号。</p>
+
+  <!-- 6 -->
+  <h2 class="sec" id="inspector">6 · 机器验收器会查什么（防退化）</h2>
+  <p>16G.1 不靠人读 JSON，而是让 CLI 自动检查。挑几条最关键的：</p>
+  <ul>
+    <li><b>计数对得上：</b>27 条能力全进 registry、17 条阻塞项都有 owner stage、4 条 post-16G optional 都标了 schema reserved + revisit stage，且计数从 16G.0 重新推导(不许硬编码)。</li>
+    <li><b>每个工具三组规则齐全：</b>artifact visibility + denial feedback + training projection，缺一个就判不完整。</li>
+    <li><b>owner stage 不许偷改：</b>每条记录的 owner_stage 必须和 16G.0 对照表里同一能力的 required_stage 一致；要改必须写 <code>stage_override_reason</code> 且同步更新源，否则验收失败。</li>
+    <li><b>持久 shell 不许混进 core：</b>硬检查 <code>swe_public_core</code> 不含 persistent shell。</li>
+    <li><b>声明"已实现"必须真能解析：</b>标 implemented 的工具必须在当前源码工具 registry 里找得到；找不到只能标 planned / not_implemented。</li>
+    <li><b>没实现的工具不许标可进训练：</b>not_implemented 却写 allowed_in_policy_loss_trajectory=true → 失败。</li>
+    <li><b>代码事实核对：</b>默认 scaffold simple_react、create_file 可见、mini_shell 不存在、execute_bash 窄但非空、diagnostic_shell 不属 core。</li>
+  </ul>
+
+  <!-- 7 -->
+  <h2 class="sec" id="gate">7 · 完成后解锁什么 + 我的提醒</h2>
+  <p>完成态(<code>status=passed</code>)解锁 <code>stage16g2_allowed_to_start=true</code> —— 可以进 16G.2 动手实现文件工具了；但 17B/20/21 仍 false。完成态的准确含义是："<b>工具能力还没补，但后续改造已经有了可机器验收、可追溯到 baseline 的契约。</b>"</p>
+  <div class="callout warn">
+    <b>我的两点提醒（你/我 review 时盯这个）：</b>
+    <br>① <b>别让它退化成"只产 JSON、没有可执行验收"。</b>计划已经要求 CLI inspector + 失败用例测试，review 时确认那些"失败用例测试"是真的会让 inspector 失败（比如故意把 persistent shell 塞进 core，inspector 必须报错），而不是摆设。
+    <br>② <b>run_episode smoke 别走过场。</b>计划明确：只读 JSON / 只跑 builder / 只查文件存在<b>不算</b>通过——smoke 必须真的让 profile id 经过 EpisodeExecutionSpec 或 projection 这条真实路径。如果做不到只能出 blocked report，不能假装通过。
+  </div>
+  <div class="callout good">
+    <b>小结：</b>16G.1 是把"该有哪些工具、各属哪档、各自怎么进训练/怎么脱敏/怎么给拒绝反馈"写成机器能查的契约。它本身不增强模型能力，但它是后面 16G.2–16G.4 所有实现的"图纸 + 验收标准"。你不细看计划没问题——盯住"机器验收器真生效"和"run_episode smoke 不走过场"这两点即可。
+  </div>
+
+  <div class="footer">
+    本文为 <code>52-stage-16g-1-execution-plan.md</code> 的汇报 + 概念讲解版。"训练投影 / artifact / 拒绝反馈"三组语义的字段和示例取自该计划 §6.2 的 registry 记录模板，例子(parse_config 轨迹、traceback 脱敏)用于帮助理解。
+  </div>
+</main>
+</div>
+</body>
+</html>

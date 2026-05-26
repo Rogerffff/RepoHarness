@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.0 完成态审查（能不能信 · 能不能提交）</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{display:flex;max-width:1240px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:230px;flex:0 0 230px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:26px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:13px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:12.6px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.2px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11.5px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 4px}
+  .vcard{border-radius:14px;padding:18px 20px;border:1px solid}
+  .vcard.green{background:linear-gradient(135deg,#13311f,#161a23);border-color:#2f6b3a}
+  .vcard.amber{background:linear-gradient(135deg,#2b2412,#161a23);border-color:#6b5a2f}
+  .vcard .lab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .vcard .big{font-size:21px;font-weight:700;margin-bottom:6px}
+  .vcard.green .big{color:#6fdc84}
+  .vcard.amber .big{color:#e6c068}
+  .vcard p{font-size:13px;margin:6px 0 0;color:#cdd6e6}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .todo{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .todo h4{margin:0 0 6px;font-size:15.5px;display:flex;align-items:center;gap:10px}
+  .todo .num{background:var(--warn);color:#1a1407;font-weight:700;border-radius:7px;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+  .opt{background:#11261c;border:1px solid #2f6b3a;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13.4px}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  .chk{color:#6fdc84;font-weight:700}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.verdict{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#verdict">裁决</a>
+  <a href="#verify">1 · 我独立核查了什么</a>
+  <a href="#feedback">2 · 我的反馈是否被采纳</a>
+  <a href="#todo">3 · 提交前待办（2 项）</a>
+  <a href="#findings">4 · 16G.0 查出了什么</a>
+  <a href="#limit">5 · 本轮已知局限</a>
+  <a href="#next">6 · 下一步</a>
+</nav>
+<main>
+  <h1>Stage 16G.0 完成态审查</h1>
+  <p class="meta">核查对象：执行 agent 提交的 20 份 evidence + 脚本 + 测试 + AGENTS.md　·　我做了<b>独立核查</b>（开文件、重算 sha256、重推计数、重跑测试、自己扫泄漏），下面的结论由我背书,不是转述 agent 的话　·　训练 worktree HEAD <code>103b76ab</code></p>
+
+  <!-- ===== 裁决 ===== -->
+  <h2 class="sec" id="verdict">裁决：能不能信 · 能不能提交</h2>
+  <div class="verdict">
+    <div class="vcard green">
+      <div class="lab">能不能信</div>
+      <div class="big">可信度 高 ✓</div>
+      <p>只读红线守住（行为代码零改动）；所有完整性校验我都独立复核通过；我启动前给的反馈逐条落实。这是一份诚实、有代码实证、结论可复核的盘点。</p>
+    </div>
+    <div class="vcard amber">
+      <div class="lab">能不能提交</div>
+      <div class="big">可以，但先处理 2 项</div>
+      <p>① <code>gpt_advice.md</code> 引用问题（否则提交后 evidence 指向目标分支不存在的文件）；② 提交范围要收窄，别把另外十几个无关未跟踪文件一起 add 进去。详见第 3 节。</p>
+    </div>
+  </div>
+  <div class="callout good">
+    <b>一句话：</b>这一轮 agent 干得扎实 —— 没有越界改代码，没有为了「让阶段 passed」而粉饰，连我没要求但应该诚实交代的「哪些 probe 没真跑」都如实标注了。<b>我建议你接受 16G.0 完成态，处理完 2 个提交前小事项即可提交。</b>
+  </div>
+
+  <!-- ===== 1 核查 ===== -->
+  <h2 class="sec" id="verify">1 · 我独立核查了什么（信任的依据）</h2>
+  <p>我没有只看 agent 的自我报告，而是自己动手验证了下面这些。这是「可信度 高」的全部依据：</p>
+  <table>
+    <tr><th style="width:26%">核查项</th><th>我的方法</th><th class="c" style="width:90px">结果</th></tr>
+    <tr>
+      <td><b>只读红线</b></td>
+      <td><code>git status</code> 检查 <code>src/repo_harness/tools/</code>、<code>command_policy.py</code>、<code>runtime.py</code>、<code>scaffolds/</code>、<code>workspace/</code> 是否被动过</td>
+      <td class="c"><span class="tag t-good">零改动</span></td>
+    </tr>
+    <tr>
+      <td><b>变更范围</b></td>
+      <td>唯一的<b>已跟踪</b>改动是 <code>AGENTS.md</code>（+100 行项目背景）；其余全是新增未跟踪文件（20 份 evidence + 脚本 + 测试）</td>
+      <td class="c"><span class="tag t-good">符合预期</span></td>
+    </tr>
+    <tr>
+      <td><b>sha256 绑定真实性</b></td>
+      <td>我重新计算 6 份关键报告的 sha256，和 <code>acceptance_summary</code> 里绑定的值逐一比对</td>
+      <td class="c"><span class="tag t-good">6/6 全对</span></td>
+    </tr>
+    <tr>
+      <td><b>计数可复核</b><br><span class="small">（计划硬性要求）</span></td>
+      <td>不信 summary 自报的计数，自己从 <code>capability_gap_matrix</code> 重新推导：total / P0 / 阻塞17B / 阻塞20</td>
+      <td class="c"><span class="tag t-good">16·4·9·12<br>完全一致</span></td>
+    </tr>
+    <tr>
+      <td><b>JSON 合法性</b></td>
+      <td>解析全部 20 份 JSON</td>
+      <td class="c"><span class="tag t-good">20/20 通过</span></td>
+    </tr>
+    <tr>
+      <td><b>泄漏扫描</b></td>
+      <td>我自己 grep 整个 evidence 目录里的 <code>&lt;local-user-home&gt;/</code>、<code>&lt;generic-home&gt;/</code>、绝对家目录路径（不信 agent 的扫描器）</td>
+      <td class="c"><span class="tag t-good">0 泄漏</span></td>
+    </tr>
+    <tr>
+      <td><b>测试</b></td>
+      <td>本机重跑 <code>tests/unit/test_repo_harness_stage16g0_capability_gap_inventory.py</code></td>
+      <td class="c"><span class="tag t-good">6 passed</span></td>
+    </tr>
+    <tr>
+      <td><b>probe 真实性</b></td>
+      <td>读 probe 报告，确认「读→搜→改→建文件→diff→pytest→patch→reward」闭环是<b>真跑</b>的（reward=0.994、patch 净 +2/−1 行、hygiene 通过）</td>
+      <td class="c"><span class="tag t-good">真执行</span></td>
+    </tr>
+  </table>
+  <p class="small">补充：泄漏 grep 唯一命中的本机家目录模式出现在<b>泄漏检测器自身</b>（测试的断言行和脚本的正则）——那是「用来抓泄漏的代码」，不是泄漏内容。evidence 文件本身 0 命中。</p>
+
+  <!-- ===== 2 反馈采纳 ===== -->
+  <h2 class="sec" id="feedback">2 · 我启动前给的反馈，是否被采纳</h2>
+  <p>你启动前把我那几条反馈发给了 agent。我逐条核对了它们有没有真正落到 evidence 里（这是判断 agent 是否「听进去」的关键）：</p>
+  <table>
+    <tr><th style="width:36%">我的反馈</th><th>evidence 里的落实</th><th class="c" style="width:60px">采纳</th></tr>
+    <tr>
+      <td><b>① 别预设「工具太窄」，调和两份输入文档</b></td>
+      <td>summary 和 mismatch 报告都给了 <code>balanced_conclusion</code>：「不是单纯工具太少…主要缺口是 public diagnostic / project command / scratch Python 的<b>正式训练资格、韧性和可审计 linkage</b>」——这正是评测 worktree「缺韧性」和 gpt_advice「缺能力」两个视角的合流</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>② 修正与代码不符的假设</b></td>
+      <td><code>create_file</code> 记为「默认存在」；权限拒绝记为「已结构化（reason_code/recovery_hint/safe_argv），不是从零缺失」；<code>execute_bash</code> 记为「窄而可审计，不是 toy」并附 rg 允许 / cat 拒绝的真实策略判定</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>③ 先钉死哪个 scaffold 是训练默认</b></td>
+      <td>第一条 probe 就实测：默认是 <code>simple_react</code>（含 bash + create_file），并单列一条 P1 gap 警告「别把 patch_focused_react 误当默认」</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>④ 守只读红线</b></td>
+      <td>已独立确认（见第 1 节）</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>⑤ probe 失败 = 如实记差距，不许粉饰</b></td>
+      <td>9 个 probe 有 4 个标 <code>structured_gap</code> / <code>static_policy_probe_only</code>，failed_count=4 如实写入 summary；连「scratch python 执行没真跑」都标了 <code>not_run_in_stage16g0</code></td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>⑥ mini-SWE-agent 对比要 nuanced</b></td>
+      <td><code>symbol_search</code>/MCP/子代理评为 P3 不阻塞（与评测 worktree 一致）；结论是「窄在自由 shell、强在结构化工具」，没给 yes/no</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+  </table>
+
+  <!-- ===== 3 提交前待办 ===== -->
+  <h2 class="sec" id="todo">3 · 提交前待办（只有 2 项，都不难）</h2>
+
+  <div class="todo">
+    <h4><span class="num">1</span> <code>gpt_advice.md</code> 引用问题</h4>
+    <p><code>stage16g0_source_inventory.json</code> 用 <code>repo_relative_path_and_sha256</code> 引用了 <code>docs/harness_improve/gpt_advice.md</code>。但 <code>docs/harness_improve/</code> 整个目录目前是<b>未跟踪</b>状态。如果你提交 16G.0 evidence 却不带上这个文件，evidence 就会指向目标分支里不存在的文件，sha256 也无法回查。</p>
+    <p><b>两个修法,二选一：</b></p>
+    <div class="opt"><b>选项 A（推荐，如果 gpt_advice.md 本来就该入库）：</b>把 <code>docs/harness_improve/gpt_advice.md</code> 一并纳入提交。它是这次盘点的正式输入，入库后引用就成立。</div>
+    <div class="opt"><b>选项 B（如果你不想公开这份文件）：</b>把它的引用改成 <code>source_doc_sha256_only</code>、<code>relative_path: null</code> —— 和评测 worktree 那份差距分析文档现在的处理方式一致（只留 sha256，不留路径）。</div>
+    <p class="small">注：这个问题是执行 agent <b>主动如实上报</b>的,不是我额外揪出来的——又一个它诚实的证据。</p>
+  </div>
+
+  <div class="todo">
+    <h4><span class="num">2</span> 提交范围要收窄</h4>
+    <p>当前 worktree 里有十几个<b>和 16G.0 无关的历史未跟踪文件</b>（各种 pipeline HTML、training_design 文档、<code>vastai_cli.md</code>、<code>pyrightconfig.json</code> 等）。提交时<b>不要</b> <code>git add -A</code> 把它们一起扫进去。</p>
+    <p><b>16G.0 真正在范围内的：</b></p>
+    <pre><code>AGENTS.md                                              （已修改）
+scripts/pre_verl/build_stage16g0_capability_gap_inventory.py   （新增）
+tests/unit/test_repo_harness_stage16g0_capability_gap_inventory.py （新增）
+docs/agentic_RL/repo_harness_verl_workstreams/49-stage-16g-0-execution-plan.md
+docs/agentic_RL/repo_harness_verl_workstreams/stage16g_0/      （20 份 evidence）
+# 若选 待办1-选项A，再加：
+docs/harness_improve/gpt_advice.md</code></pre>
+    <p class="small">我给你写的两份 HTML（<code>...stage16g0_plan_review.html</code>、本文 <code>...completion_review.html</code>）是给你看的导读，要不要入库由你决定，它们不是 agent 的 16G.0 交付物。</p>
+  </div>
+
+  <!-- ===== 4 findings ===== -->
+  <h2 class="sec" id="findings">4 · 16G.0 到底查出了什么</h2>
+  <p class="small">→ 完整展开（16 条差距详解 + Claude Code 并排对照表 + 后续 16G 路线状态）见 <a href="repo_harness_verl_stage16g0_findings_detail.html">发现详解</a>。这里只放摘要。</p>
+  <p>核心结论(<code>balanced_conclusion</code>)：<b>不是工具太少,而是「公开诊断 / 项目命令 / scratch Python」缺少正式训练资格、韧性和可审计 linkage。</b>这正面回答了你最初的担忧 —— RepoHarness 不是连 mini-SWE-agent 都不如的 toy,但它确实缺了真实 SWE 闭环里「动态验证」这一环。</p>
+
+  <div class="verdict" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+    <div class="vcard" style="background:#1a1320;border-color:#5a2f6b;text-align:center;padding:14px"><div class="big" style="color:#c99cff">16</div><div class="small">能力差距总数</div></div>
+    <div class="vcard" style="background:#26161a;border-color:#6b3434;text-align:center;padding:14px"><div class="big" style="color:#f29292">4</div><div class="small">P0（最高优先）</div></div>
+    <div class="vcard" style="background:#241f12;border-color:#6b5a2f;text-align:center;padding:14px"><div class="big" style="color:#e6c068">9</div><div class="small">阻塞 17B 数据冻结</div></div>
+    <div class="vcard" style="background:#241f12;border-color:#6b5a2f;text-align:center;padding:14px"><div class="big" style="color:#e6c068">12</div><div class="small">阻塞 20 warm-start</div></div>
+  </div>
+
+  <h3>4 个 P0 差距（全都指向「动态验证 / 公开命令」这一类）</h3>
+  <table>
+    <tr><th style="width:30%">差距</th><th>问题</th><th class="c" style="width:70px">建议阶段</th></tr>
+    <tr><td><code>parameterized_public_test_command</code></td><td><code>run_tests</code> 无参数,模型表达不了「只跑这一个失败的 pytest case / Django label」</td><td class="c">16G.3</td></tr>
+    <tr><td><code>scratch_python_or_reproduction_script</code></td><td>没有正式 scratch python 工具,模型缺安全的复现脚本路径</td><td class="c">16G.3</td></tr>
+    <tr><td><code>project_command_routing</code></td><td>没有统一的项目命令 router（tox/nox/sphinx/repo script + selector 参数）</td><td class="c">16G.3</td></tr>
+    <tr><td><code>dependency_setup_or_private_overlay</code></td><td>依赖安装被保守拒绝,缺 per-episode 私有 overlay,真实任务常需装依赖</td><td class="c">16G.4</td></tr>
+  </table>
+  <p class="small">其余 12 条里值得一提：<code>apply_patch</code>/<code>write·delete·move·mkdir</code>（P1，16G.2 补结构化文件操作）、<code>diagnostic_shell 正式训练资格</code>（P1，16G.4 决定升不升）、<code>final-only 与 public diagnostic 解耦</code>（P1，状态记为 <code>unknown</code> 待 16G.3 查清）、<code>patch→verifier→reward linkage</code>（P1，16G.6 给每类工具动作定义入训练目标的 gate）。<code>permission_denial_recovery</code> 和 <code>artifact_replay</code> 被诚实地评为「已存在,P2,只需后续验证」。</p>
+
+  <h3>放行闸门（和你接受的 D4 一致）</h3>
+  <table>
+    <tr><th>阶段</th><th class="c">结论</th><th>含义</th></tr>
+    <tr><td>Stage 17A（schema-only）</td><td class="c"><span class="tag t-good">放行</span></td><td>可以做数据 registry 的纯 schema 工作</td></tr>
+    <tr><td>Stage 17B（真实数据冻结）</td><td class="c"><span class="tag t-bad">阻断</span></td><td>等工具面改造 + 代表性诊断</td></tr>
+    <tr><td>Stage 20（warm-start 生产）</td><td class="c"><span class="tag t-bad">阻断</span></td><td>同上</td></tr>
+    <tr><td>Stage 21（正式 RL）</td><td class="c"><span class="tag t-bad">阻断</span></td><td>同上</td></tr>
+  </table>
+
+  <!-- ===== 5 limit ===== -->
+  <h2 class="sec" id="limit">5 · 本轮一个已知局限（不阻塞,但你该知道）</h2>
+  <div class="callout warn">
+    有 <b>2 个 probe 是「静态策略推断」而非「真实执行」</b>：<code>scratch_python</code> 的执行没真跑（标 <code>not_run_in_stage16g0</code>），「临时脚本不进 final patch」也只是策略推断、未用执行证明（标 <code>not_proven_by_stage16g0_static_policy_probe</code>）。<b>agent 如实标注了,没假装跑过</b> —— 这是诚实,不是缺陷。但它意味着这两条结论的把握度略低,等 16G.3/16G.4 真正实现这些工具时需要用执行 probe 补证。我不认为这阻塞 16G.0 完成。
+  </div>
+
+  <!-- ===== 6 next ===== -->
+  <h2 class="sec" id="next">6 · 下一步</h2>
+  <ul>
+    <li><b>立即：</b>处理第 3 节 2 个提交前待办,然后提交 16G.0（建议提交信息点明「只读盘点 + probe,无行为改动」）。</li>
+    <li><b>然后：</b>16G.0 已经把后续拆成 16G.1–16G.6,并给每条差距标了建议阶段。下一步该进 <b>16G.1（profile taxonomy + 训练资格门禁设计）</b>。届时你之前定的方向就要落地了 —— core 用无状态 <code>run_public_command</code>（16G.3）、持久 shell 留 extended（16G.4）。</li>
+    <li><b>我的角色：</b>按这次的模式继续 —— 每当实施 agent 交付一阶段,我独立核查 + 出这样一份「能不能信 / 能不能提交」的 HTML。如果你想,我也可以现在就帮你起草「16G.1 执行计划」的审查要点,或先看看 AGENTS.md 那 100 行新增背景写得对不对。</li>
+  </ul>
+
+  <div class="footer">
+    本审查由我（Claude）独立完成：检查 git 变更范围、重算 sha256 绑定、从 capability_gap_matrix 重新推导计数、解析全部 20 份 JSON、自行 grep 泄漏、本机重跑 6 个测试、阅读 probe 报告确认闭环真执行。所有「结果」列的结论可由你用相同命令复核。
+  </div>
+</main>
+</div>
+</body>
+</html>

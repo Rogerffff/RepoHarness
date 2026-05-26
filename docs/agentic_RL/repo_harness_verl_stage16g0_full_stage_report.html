@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.0 完整阶段报告</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{display:flex;max-width:1320px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:240px;flex:0 0 240px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:26px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:22px}
+  h2.sec{font-size:20px;margin:46px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:12.9px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .t-purple{background:rgba(160,120,220,.16);color:#c99cff;border:1px solid #5a3f7a}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;border-radius:14px;padding:20px 22px;margin:8px 0 12px}
+  .tldr b{color:var(--accent2)}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .stat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .scard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center}
+  .scard .v{font-size:22px;font-weight:700;color:var(--accent2)}
+  .scard .l{font-size:12px;color:var(--muted)}
+  .bars{margin:10px 0}
+  .bar{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:12.6px}
+  .bar .lab{width:220px;flex:0 0 220px;color:#cdd6e6}
+  .bar .track{flex:1;background:#13161e;border-radius:5px;height:17px;border:1px solid var(--line)}
+  .bar .fill{height:100%;border-radius:4px}
+  .bar .n{width:26px;text-align:right;color:var(--muted)}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:6px 0}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.stat{grid-template-columns:repeat(2,1fr)}.bar .lab{width:150px;flex-basis:150px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#overview">1 · 阶段概览</a>
+  <a href="#artifacts">2 · 完整产出清单</a>
+  <a href="#current">3 · 当前 harness 真实能力</a>
+  <a href="#tools" class="sub">13 个工具</a>
+  <a href="#scaffolds" class="sub">7 个 scaffold</a>
+  <a href="#compare">4 · 三方对照（CC/mini-SWE/RH）</a>
+  <a href="#conclusion">5 · 整合结论</a>
+  <a href="#next">6 · 后续建议</a>
+  <a href="#decisions">7 · 需要你决定的</a>
+</nav>
+<main>
+  <h1>Stage 16G.0 完整阶段报告</h1>
+  <p class="meta">覆盖两轮：原始盘点轮 + Follow-up 基线契约轮　·　本文是「16G.0 收集到了什么 + 当前能力 + 三方对照 + 下一步」的总报告，用于决定下一阶段　·　配套细览：<a href="repo_harness_verl_stage16g0_findings_detail.html">发现详解</a>、<a href="repo_harness_verl_stage16g0_completion_review.html">原始轮审查</a>、<a href="repo_harness_verl_stage16g0_followup_completion_review.html">follow-up 审查</a></p>
+
+  <div class="tldr">
+    <p style="margin-top:0"><b>16G.0 在回答一个问题：</b>RepoHarness 当前给模型的工具，距离 Claude Code / mini-SWE-agent 这类真实 SWE agent 还差什么，会不会把模型训歪？</p>
+    <p><b>结论(有代码实证支撑)：</b>RepoHarness <b>不是 toy</b> —— 在「读 / 搜 / 编辑 / 沙箱隔离 / artifact 回读」上和 Claude Code 基本可比，结构化导航甚至强于只给 Bash 的 mini-SWE-agent。<b>真正的缺口集中在「动态验证闭环」</b>：跑定向公开测试、项目命令、写复现脚本、装依赖，以及多文件 patch、任务管理、把新工具动作接进训练目标(linkage)。</p>
+    <p style="margin-bottom:0"><b>放行结论：</b>Stage 17A(纯 schema)可做；Stage 17B 数据冻结 / 20 warm-start / 21 RL <b>全部阻断</b>，要等 16G.1–16G.4 把工具面改造完 + 16G.5 实证诊断通过。<b>下一步应进 16G.1（工具 profile 与训练资格门禁设计）。</b></p>
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="overview">1 · 阶段概览：16G.0 做了两轮</h2>
+  <table>
+    <tr><th style="width:130px">轮次</th><th>干了什么</th><th>核心产出</th></tr>
+    <tr>
+      <td><b>原始盘点轮</b><br><span class="small">(49 号计划)</span></td>
+      <td>盘点 RepoHarness 当前工具/scaffold、跑只读 probe、出能力差距矩阵、判 Stage 17 放行</td>
+      <td>16 条能力差距、9 个 probe、Stage 17 readiness gate</td>
+    </tr>
+    <tr>
+      <td><b>Follow-up 基线契约轮</b><br><span class="small">(50 号计划)</span></td>
+      <td>把 Claude Code 和 mini-SWE-agent 分别写成逐能力基线契约(引真实源码/真实运行日志)，再三方逐能力对照，转成 16G.1–16G.5 实现要求</td>
+      <td>CC 契约 23 条、mini-SWE 契约 10 条、27 条三方对照、5 条实现要求</td>
+    </tr>
+  </table>
+  <p class="small">两轮都<b>零行为改动</b>(没碰 <code>tools/</code>、<code>command_policy.py</code>、<code>runtime.py</code>、scaffold)，都通过了我的独立核查(sha256 绑定、计数复核、测试、泄漏扫描)。Follow-up 的存在是因为我们发现：第一次和 CC/mini-SWE 的认真对照不能拖到 16G.5，否则 16G.1–16G.4 改完可能返工。</p>
+
+  <!-- 2 -->
+  <h2 class="sec" id="artifacts">2 · 完整产出清单</h2>
+  <div class="stat">
+    <div class="scard"><div class="v">25</div><div class="l">JSON evidence</div></div>
+    <div class="scard"><div class="v">2</div><div class="l">builder 脚本</div></div>
+    <div class="scard"><div class="v">2</div><div class="l">单元测试(11 用例)</div></div>
+    <div class="scard"><div class="v">1</div><div class="l">implementation-notes</div></div>
+  </div>
+  <p>全部落在 <code>docs/agentic_RL/repo_harness_verl_workstreams/stage16g_0/</code>。按用途分组：</p>
+  <table>
+    <tr><th style="width:22%">分组</th><th>文件</th></tr>
+    <tr><td><b>顶层验收</b></td><td><code>acceptance_summary</code>(原轮)、<code>followup_acceptance_summary</code>(follow-up，第一轮保持 immutable)</td></tr>
+    <tr><td><b>能力盘点</b></td><td><code>repoharness_tool_inventory</code>(13 工具)、<code>scaffold_capability_matrix</code>(7 scaffold)、<code>claude_code_tool_inventory</code>(19 项导航级)</td></tr>
+    <tr><td><b>差距/对照</b><span class="tag t-bad" style="margin-left:6px">核心</span></td><td><code>capability_gap_matrix</code>(16 差距)、<code>per_capability_baseline_comparison</code>(27 三方对照)</td></tr>
+    <tr><td><b>基线契约</b></td><td><code>claude_code_baseline_contract</code>(23 条，引真实源码)、<code>mini_swe_agent_baseline_contract</code>(10 条，引评测 worktree 真实配置/日志)</td></tr>
+    <tr><td><b>实证 probe</b></td><td><code>capability_probe_report</code>(9 个只读 probe，含真跑的 读→搜→改→建文件→diff→pytest→patch→reward 闭环)</td></tr>
+    <tr><td><b>专项差距报告</b></td><td>permission_and_shell / test_feedback_and_project_command / edit_write_file_operation / patch_capture_verifier_reward_linkage / task_management_and_subagent / reward_hacking_and_monitoring</td></tr>
+    <tr><td><b>风险/外部经验</b></td><td><code>training_deployment_mismatch_risk</code>(10 风险，4 P0)、<code>external_swe_harness_reference_inventory</code>(Cursor/Codex/OpenHands 等经验)</td></tr>
+    <tr><td><b>下一步</b></td><td><code>required_next_stage_items</code>(原轮)、<code>stage16g_implementation_requirements</code>(follow-up，5 条映射 16G.1–16G.5)、<code>stage17_readiness_gate</code></td></tr>
+    <tr><td><b>合规/来源</b></td><td><code>source_inventory</code>、<code>public_evidence_policy</code>、<code>path_leak_scan</code>(0 泄漏)、<code>training_tool_surface_profile_recommendations</code>(四档 profile)</td></tr>
+  </table>
+
+  <!-- 3 -->
+  <h2 class="sec" id="current">3 · 当前 harness 真实能力（权威快照）</h2>
+  <p>这是从代码盘点出的<b>事实</b>，不是计划假设。</p>
+
+  <h3 id="tools">3.1 · 13 个工具：可见性 + 训练资格</h3>
+  <p class="legend"><span><b>默认可见</b>=训练默认 scaffold (simple_react) 里模型能看到</span><span><b>训练资格</b>=轨迹能否进 policy loss</span></p>
+  <table>
+    <tr><th style="width:150px">工具</th><th>职责</th><th class="c" style="width:74px">默认可见</th><th class="c" style="width:90px">训练资格</th><th>备注</th></tr>
+    <tr><td><code>read_file</code></td><td>读文本文件(行范围)</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>纯文本，无多模态</td></tr>
+    <tr><td><code>grep</code> / <code>glob_files</code> / <code>list_files</code></td><td>内容搜索 / 文件发现 / 列目录</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>只读、并发安全</td></tr>
+    <tr><td><code>symbol_search</code></td><td>Python 符号搜索</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>轻量 AST，非完整 LSP</td></tr>
+    <tr><td><code>read_tool_result_artifact</code></td><td>长输出/大结果分页回读</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>artifact replay</td></tr>
+    <tr><td><code>edit_file</code></td><td>精确替换编辑已有文件</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>exact replace，缺多文件 patch</td></tr>
+    <tr><td><code>create_file</code></td><td>新建文件</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td><b>simple_react 有，patch_focused 无</b></td></tr>
+    <tr><td><code>git_diff</code></td><td>看工作区 diff</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>只读</td></tr>
+    <tr><td><code>update_working_state</code></td><td>记假设/候选/已完成步骤</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-good">可</span></td><td>弱于 Claude Code TodoWrite</td></tr>
+    <tr><td><code>run_tests</code></td><td>跑配置好的公开测试反馈</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-warn">conditional</span></td><td><b>无参数</b>，不能指定单个 case</td></tr>
+    <tr><td><code>bash</code></td><td>legacy 受限诊断命令</td><td class="c"><span class="tag t-good">是</span></td><td class="c"><span class="tag t-warn">conditional</span></td><td>side-channel 风险，非 Claude Code Bash</td></tr>
+    <tr><td><code>execute_bash</code></td><td>窄 allowlist shell(rg/grep/安全 git/pytest/受限 python)</td><td class="c"><span class="tag t-bad">否</span></td><td class="c"><span class="tag t-bad">不可</span></td><td>仅 patch_focused_react_execute_bash</td></tr>
+    <tr><td><code>diagnostic_shell</code></td><td>持久诊断 shell(文件持久，cwd/env 每次重置)</td><td class="c"><span class="tag t-bad">否</span></td><td class="c"><span class="tag t-bad">不可</span></td><td>诊断侧通道，仅 diagnostic profile</td></tr>
+  </table>
+  <p class="small"><b>读出来：</b>10 个结构化工具默认可见且可进训练；两个最像「真 shell」的(<code>execute_bash</code> / <code>diagnostic_shell</code>)<b>既不默认、也不进训练</b>；<code>run_tests</code> 和 legacy <code>bash</code> 是 conditional。所以模型默认拿到的是「丰富结构化工具 + 一个 legacy 窄 bash」，而不是真实可参数化的公开命令能力。</p>
+
+  <h3 id="scaffolds">3.2 · 7 个 scaffold：训练默认是 simple_react</h3>
+  <table>
+    <tr><th style="width:200px">scaffold</th><th class="c">shell</th><th class="c">create_file</th><th class="c">参数化测试</th><th class="c">apply_patch</th><th>说明</th></tr>
+    <tr><td><code>simple_react</code> <span class="tag t-info">训练默认</span></td><td class="c"><span class="tag t-good">bash</span></td><td class="c">✓</td><td class="c">✗</td><td class="c">✗</td><td>12 工具全给，单 act 阶段</td></tr>
+    <tr><td><code>patch_focused_react</code></td><td class="c">✗</td><td class="c">✗</td><td class="c">✗</td><td class="c">✗</td><td>砍了 shell + create_file</td></tr>
+    <tr><td><code>patch_focused_react_execute_bash</code></td><td class="c"><span class="tag t-warn">execute_bash</span></td><td class="c">✗</td><td class="c">✗</td><td class="c">✗</td><td>窄 shell 变体</td></tr>
+    <tr><td><code>patch_focused_react_diagnostic_shell</code></td><td class="c"><span class="tag t-warn">diagnostic</span></td><td class="c">✗</td><td class="c">✗</td><td class="c">✗</td><td>诊断 shell 变体</td></tr>
+    <tr><td><code>planner_coder_verifier</code></td><td class="c"><span class="tag t-good">bash</span></td><td class="c">✓</td><td class="c">✗</td><td class="c">✗</td><td>5 阶段多角色，分阶段工具</td></tr>
+    <tr><td><code>single_shot_patch</code></td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td>无工具，单发补丁</td></tr>
+    <tr><td><code>patch_focused_react_mini_shell</code></td><td class="c" colspan="5"><span class="tag t-neutral">不存在(计划点名过，实际无此 scaffold)</span></td></tr>
+  </table>
+  <p class="small">7 个 scaffold 全部 <b>三层 registry 一致</b>(声明工具 = 构造 registry = 运行时注入)、全部绑定 Stage 16E patch hygiene。关键事实：<b>训练默认是 simple_react，它有 create_file + bash</b>(所以「模型不能建文件/跑命令」这种说法对默认面不成立)，但它缺参数化测试、apply_patch、正式公开命令。</p>
+
+  <!-- 4 -->
+  <h2 class="sec" id="compare">4 · 三方对照：Claude Code vs mini-SWE-agent vs RepoHarness</h2>
+  <p class="small">→ 不熟悉命令行 / shell / 这些工具？看<a href="repo_harness_verl_stage16g0_harness_comparison_basics.html"><b>扫盲版对比</b></a>：从"什么是 shell"讲起，每件事配一个小例子，并解释"为什么 RepoHarness 故意锁住 shell"。下面是浓缩表格版。</p>
+  <p>这是 follow-up 的核心。27 条逐能力对照里，挑出最影响决策的能力(完整 27 条见 <code>per_capability_baseline_comparison.json</code>)。证据：CC 引真实源码(toolExecution.ts/BashTool/permissions 等)，mini-SWE 引评测 worktree 真实配置/运行日志。</p>
+  <table>
+    <tr><th style="width:140px">能力</th><th style="width:24%">Claude Code</th><th style="width:22%">mini-SWE-agent</th><th style="width:24%">RepoHarness 现状</th><th class="c" style="width:96px">判定</th></tr>
+    <tr><td>文件读取</td><td>Read(文本/图片/PDF/notebook)</td><td>shell cat</td><td>read_file(纯文本)</td><td class="c"><span class="tag t-good">够用</span></td></tr>
+    <tr><td>搜索/发现</td><td>Grep/Glob 独立工具</td><td>shell grep/find</td><td>grep/glob_files</td><td class="c"><span class="tag t-good">够用</span></td></tr>
+    <tr><td>沙箱/边界</td><td>workspace+sandbox+权限</td><td>容器</td><td>hidden verifier/runtime-private/git history 明确防护</td><td class="c"><span class="tag t-good">够用</span></td></tr>
+    <tr><td>artifact 回读</td><td>大输出落盘+Read</td><td>shell 输出</td><td>read_tool_result_artifact</td><td class="c"><span class="tag t-good">够用</span></td></tr>
+    <tr><td>精确编辑</td><td>Edit</td><td>shell 编辑</td><td>edit_file (exact replace)</td><td class="c"><span class="tag t-warn">partial</span></td></tr>
+    <tr><td>新建文件</td><td>Write</td><td>shell 重定向</td><td>create_file(默认有，patch-focused 无)</td><td class="c"><span class="tag t-warn">partial</span></td></tr>
+    <tr><td>多文件 patch</td><td>Edit/Write 组合</td><td>patch/diff 工作流</td><td><b>无</b> apply_patch</td><td class="c"><span class="tag t-bad">missing</span></td></tr>
+    <tr><td>文件操作(删/移/建目录)</td><td>Write+Bash</td><td>shell rm/mv/mkdir</td><td><b>无</b>结构化工具</td><td class="c"><span class="tag t-bad">missing</span></td></tr>
+    <tr><td>通用 shell / 公开命令</td><td>Bash(完整，权限约束)</td><td>稳定 Bash 闭环</td><td>execute_bash 窄且非默认</td><td class="c"><span class="tag t-info">弱于 mini-SWE<br><span class="small">(有意，结构化替代)</span></span></td></tr>
+    <tr><td>参数化公开测试</td><td>bash 跑任意测试</td><td>shell 跑测试</td><td>run_tests <b>无参数</b></td><td class="c"><span class="tag t-warn">partial</span></td></tr>
+    <tr><td>项目命令(tox/nox/sphinx)</td><td>bash</td><td>shell</td><td><b>无</b>统一 router</td><td class="c"><span class="tag t-bad">missing</span></td></tr>
+    <tr><td>scratch 复现脚本</td><td>Write+Bash</td><td>shell 脚本</td><td><b>无</b>正式 scratch_python</td><td class="c"><span class="tag t-warn">partial</span></td></tr>
+    <tr><td>依赖安装</td><td>bash+sandbox</td><td>SWE-Bench 容器</td><td>保守拒绝，无私有 overlay</td><td class="c"><span class="tag t-warn">partial</span></td></tr>
+    <tr><td>持久会话</td><td>后台任务</td><td>容器连续状态</td><td>diagnostic_shell 半持久且非默认</td><td class="c"><span class="tag t-purple">diagnostic-only</span></td></tr>
+    <tr><td>任务管理</td><td>TodoWrite</td><td>THOUGHT 循环</td><td>update_working_state</td><td class="c"><span class="tag t-warn">partial</span></td></tr>
+    <tr><td>符号/LSP</td><td>LSP 诊断</td><td>无</td><td>轻量 AST symbol_search</td><td class="c"><span class="tag t-info">弱于 CC</span></td></tr>
+    <tr><td>子代理/MCP</td><td>Agent/MCP/插件</td><td>无(单 agent)</td><td>无</td><td class="c"><span class="tag t-neutral">schema 预留</span></td></tr>
+  </table>
+  <div class="callout info">
+    <b>对照的关键洞察：</b>① 和 <b>mini-SWE-agent</b> 比，RepoHarness 在结构化导航/编辑上<b>更强</b>，唯一明显弱的是「自由 shell」——而这是<b>有意设计</b>(core 走结构化公开命令，持久 shell 留 extended)。② 和 <b>Claude Code</b> 比，差距集中在「动态验证 + 多文件编辑 + 任务管理 + 扩展能力」，而非基础读写。③ 两个基线<b>分开看</b>很重要：mini-SWE 是「能力下限」(必须覆盖它的动态诊断闭环)，Claude Code 是「分层工具上限」(core 不必全复刻，但主能力不能缺)。
+  </div>
+
+  <!-- 5 -->
+  <h2 class="sec" id="conclusion">5 · 整合结论</h2>
+  <h3>27 条对照的整体分布</h3>
+  <div class="bars">
+    <div class="bar"><span class="lab">够用(present_and_sufficient)</span><div class="track"><div class="fill" style="width:26%;background:#3fb950"></div></div><span class="n">7</span></div>
+    <div class="bar"><span class="lab">有一半(partial)</span><div class="track"><div class="fill" style="width:41%;background:#d9a93b"></div></div><span class="n">11</span></div>
+    <div class="bar"><span class="lab">缺(missing)</span><div class="track"><div class="fill" style="width:11%;background:#f06d6d"></div></div><span class="n">3</span></div>
+    <div class="bar"><span class="lab">弱于 CC / mini-SWE</span><div class="track"><div class="fill" style="width:11%;background:#9cc4ff"></div></div><span class="n">3</span></div>
+    <div class="bar"><span class="lab">诊断侧通道 / 仅 schema 预留</span><div class="track"><div class="fill" style="width:11%;background:#9aa4b6"></div></div><span class="n">3</span></div>
+  </div>
+  <div class="callout good">
+    <b>一句话定性：</b>RepoHarness 是一个「<b>结构化能力扎实、动态验证与收口能力欠缺</b>」的 harness。它<b>不是</b>「连 mini-SWE-agent 都不如的 toy」(你最初的担忧得到澄清)，但<b>也还不能</b>直接拿来做真实 SWE 强化学习 —— 因为模型缺少「跑定向测试、写复现、跑项目命令、装依赖」这套动态验证闭环，容易被训成「静态猜 patch」。
+  </div>
+  <table>
+    <tr><th>Stage</th><th class="c" style="width:90px">放行?</th><th>原因</th></tr>
+    <tr><td>17A schema-only</td><td class="c"><span class="tag t-good">放行</span></td><td>纯 schema 工作不依赖工具面</td></tr>
+    <tr><td>17B 真实数据冻结</td><td class="c"><span class="tag t-bad">阻断</span></td><td rowspan="3">17 条阻塞项要等 16G.1–16G.4 工具面改造 + 16G.5 实证诊断</td></tr>
+    <tr><td>20 warm-start 数据生产</td><td class="c"><span class="tag t-bad">阻断</span></td></tr>
+    <tr><td>21 正式 RL</td><td class="c"><span class="tag t-bad">阻断</span></td></tr>
+  </table>
+
+  <!-- 6 -->
+  <h2 class="sec" id="next">6 · 后续建议：下一阶段做什么</h2>
+  <p>16G.0 已经把缺口转成了 5 条带追溯的实现要求。<b>下一步应进 16G.1</b>，然后顺序推进。每阶段背的阻塞项数量(来自 27 条对照)：</p>
+  <table>
+    <tr><th class="c" style="width:64px">阶段</th><th>做什么</th><th class="c" style="width:64px">阻塞数</th><th class="c" style="width:50px">优先</th></tr>
+    <tr><td class="c"><b>16G.1</b><br><span class="tag t-info">下一步</span></td><td>固定 tool registry + profile taxonomy(safe / core / extended / redteam 四档) + 训练资格门禁。<b>这一步定方向，不写工具实现。</b></td><td class="c">—</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.2</td><td>结构化文件能力：apply_patch、write/create、delete/move/mkdir，绑定 patch hygiene</td><td class="c">4</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.3</td><td>run_public_command / run_project_test / scratch_python(无状态结构化公开命令)</td><td class="c">4</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.4 <span class="tag t-warn">最重</span></td><td>controlled 持久 shell、依赖 setup、private overlay、权限恢复、沙箱、hooks 审计、训练资格、reward hacking 监控、verifier/reward/export linkage</td><td class="c"><b>9</b></td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.5</td><td>改造后的 Claude Code / mini-SWE 实证 parity probe(不再是第一次对照)</td><td class="c">—</td><td class="c"><span class="tag t-warn">P1</span></td></tr>
+  </table>
+  <div class="callout warn">
+    <b>我对 16G.1 的两点提醒(进之前你心里有数)：</b>
+    <br>① <b>16G.4 背了 9 条阻塞</b>，几乎是安全/依赖/持久 shell/训练资格/监控的总收口。它很可能太重，16G.1 设计时就该考虑要不要把它再拆(比如 16G.4a 工具能力 / 16G.4b 安全与训练资格门禁)。
+    <br>② <b>这轮的「安全够用」是静态扫描结论，不是攻击验证。</b>16G.3/16G.4 一旦加了新命令能力，沙箱/防泄漏边界必须用对抗性 probe 重新验证(redteam_restricted profile 就是干这个的)。
+  </div>
+
+  <!-- 7 -->
+  <h2 class="sec" id="decisions">7 · 需要你决定的</h2>
+  <table>
+    <tr><th style="width:30%">决策</th><th>选项 / 我的建议</th></tr>
+    <tr>
+      <td><b>D1 · 现在提交 16G.0 吗</b></td>
+      <td>两轮文件全是未跟踪，且第一轮 2 个待办(gpt_advice.md 引用、范围收窄)还没处理。<b>建议：先做一次干净提交</b>(我可以帮你列清单+处理 gpt_advice 引用)，再进 16G.1，避免文件越堆越乱。</td>
+    </tr>
+    <tr>
+      <td><b>D2 · 下一阶段是不是 16G.1</b></td>
+      <td>证据强烈指向 16G.1(profile taxonomy)。<b>建议：是。</b>除非你想先调整整体优先级。</td>
+    </tr>
+    <tr>
+      <td><b>D3 · 16G.4 要不要预先拆分</b></td>
+      <td>它背 9 条阻塞，可能过重。<b>建议：在 16G.1 设计时就决定拆/不拆</b>，别等做到 16G.4 才发现塞不下。</td>
+    </tr>
+    <tr>
+      <td><b>D4 · profile 四档怎么定</b></td>
+      <td>core 已定「结构化公开命令优先、持久 shell 归 extended」。16G.1 要把四档(safe_structured_only / swe_public_core / swe_public_extended / redteam_restricted)各自的工具集和训练资格写死。这是 16G.1 的主要产出，到时我会重点帮你审。</td>
+    </tr>
+  </table>
+
+  <div class="callout info">
+    <b>我的总建议：</b>接受 16G.0 完整阶段成果 → 先做一次干净提交 → 进 16G.1，并在 16G.1 设计时同时解决 D3(16G.4 拆分)和 D4(四档 profile)。需要我现在帮你做哪一件，告诉我即可：① 列提交清单并处理 gpt_advice 引用；② 起草 16G.1 执行计划的审查要点。
+  </div>
+
+  <div class="footer">
+    本报告整合两轮 16G.0 全部 evidence：repoharness_tool_inventory(13 工具)、scaffold_capability_matrix(7 scaffold)、capability_gap_matrix(16 差距)、per_capability_baseline_comparison(27 对照)、claude_code/mini_swe baseline contracts、capability_probe_report(9 probe)、stage16g_implementation_requirements(5 要求)、stage17_readiness_gate。当前能力一节均来自对 RepoHarness 源码的盘点事实，非计划假设。
+  </div>
+</main>
+</div>
+</body>
+</html>

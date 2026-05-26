@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.1–16G.6 执行计划讲解</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:238px;flex:0 0 238px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:36px 46px 120px}
+  h1{font-size:25px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:22px}
+  h2.sec{font-size:20px;margin:46px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.7px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.6px;line-height:1.6}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;border-radius:14px;padding:20px 22px;margin:8px 0}
+  .tldr b{color:var(--accent2)}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:6px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  /* 阶段卡 */
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin:18px 0;border-left:5px solid var(--accent)}
+  .stage.impl{border-left-color:#5b9cff}
+  .stage.probe{border-left-color:#d9a93b}
+  .stage.gate{border-left-color:#3fb950}
+  .stage h3{margin:0 0 4px;font-size:18px;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .stage .role{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+  .stage .blk{margin:11px 0}
+  .stage .blk .h{font-size:12.5px;color:var(--accent2);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .ex{background:#0d1620;border:1px solid #243449;border-radius:9px;padding:11px 14px;margin:9px 0;font-size:13.3px}
+  .ex .lab{color:#7eb6e0;font-weight:600;font-size:12px}
+  .pipe{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:14px 0;font-size:12.6px}
+  .pipe .node{background:#1a2030;border:1px solid var(--line);border-radius:8px;padding:7px 11px}
+  .pipe .node b{color:#9cc4ff}
+  .pipe .arr{color:var(--muted)}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#goal">1 · 最终要实现什么</a>
+  <a href="#pipe">2 · 6 阶段全景流水线</a>
+  <a href="#example">3 · 一个贯穿全程的例子</a>
+  <a href="#stages">4 · 逐阶段详解</a>
+  <a href="#s1" class="sub">16G.1 画蓝图</a>
+  <a href="#s2" class="sub">16G.2 改代码能力</a>
+  <a href="#s3" class="sub">16G.3 验证能力</a>
+  <a href="#s4" class="sub">16G.4 复杂环境+收口</a>
+  <a href="#s5" class="sub">16G.5 实证验收</a>
+  <a href="#s6" class="sub">16G.6 冻结放行</a>
+  <a href="#profiles">5 · 四档 profile 是什么</a>
+  <a href="#order">6 · 为什么是这个顺序</a>
+  <a href="#mynotes">7 · 我的几点观察</a>
+</nav>
+<main>
+  <h1>Stage 16G.1 → 16G.6 执行计划讲解</h1>
+  <p class="meta">审查/讲解对象：<code>51-stage-16g-1-to-16g-6-execution-plan.md</code>　·　目标是让你看懂"6 个阶段各干什么、怎么分工、最终实现什么"，用一个贯穿例子串起来　·　上游依据：<a href="repo_harness_verl_stage16g0_full_stage_report.html">16G.0 完整报告</a>、<a href="repo_harness_verl_stage16g0_harness_comparison_basics.html">扫盲版对比</a></p>
+
+  <div class="tldr">
+    <p style="margin-top:0"><b>一句话：</b>16G.1–16G.6 是把 RepoHarness 的工具面，从"看/搜/改很强、但不会动手验证"改造成"<b>接近 Claude Code 的真实 SWE 工具环境</b>，同时保持可审计、可训练、不能作弊"，最后<b>冻结成一套 profile</b> 并决定能不能进真实训练。</p>
+    <p style="margin-bottom:0"><b>分工一句话记住：</b><b>16G.1 画蓝图</b> → <b>16G.2 给"改代码"的手</b> → <b>16G.3 给"动手验证"的眼睛</b> → <b>16G.4 给"复杂环境 + 接进训练"的底座</b> → <b>16G.5 真跑一遍验收</b> → <b>16G.6 盖章放行</b>。前 4 个是实现，第 5 个是验收，第 6 个是门禁。</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="goal">1 · 整条线最终要实现什么</h2>
+  <p>16G.0 已经查清：RepoHarness 不是 toy，但缺"动手验证闭环"(跑定向测试、写复现、跑项目命令、装依赖)和完整的文件操作，而且这些能力还没接进训练目标。16G.1–16G.6 就是把这些缺口逐一补上，并确保<b>每一项新能力都满足三件事</b>：</p>
+  <table>
+    <tr><th style="width:33%">要满足</th><th>意思</th></tr>
+    <tr><td><b>① 能力到位</b></td><td>模型真能跑定向测试、写复现、改多文件、(受控)装依赖 —— 达到 mini-SWE-agent 的动态诊断下限、接近 Claude Code 的分层工具</td></tr>
+    <tr><td><b>② 不能作弊</b></td><td>靠确定性边界(沙箱/路径隔离/无网络/共享依赖只读/题间重置/AST 扫描)堵死偷答案、改测试、污染环境等口子 —— 不是靠削弱能力</td></tr>
+    <tr><td><b>③ 进得了训练</b></td><td>每个工具动作都能投影进 trajectory / TrainingView / final.patch / reward / export —— "工具能跑通"不算完成，"模型能从中学到正确用法"才算</td></tr>
+  </table>
+  <p>最终交付物 = 四档<b>工具 profile</b>(冻结) + 一个<b>放行门禁</b>(决定能不能进 Stage 17B 真实数据冻结 / Stage 20 warm-start / Stage 21 正式 RL)。</p>
+
+  <!-- 2 -->
+  <h2 class="sec" id="pipe">2 · 6 阶段全景流水线</h2>
+  <div class="pipe">
+    <span class="node"><b>16G.1</b> 画蓝图<br><span class="small">registry+profile+门禁</span></span>
+    <span class="arr">→</span>
+    <span class="node"><b>16G.2</b> 改代码的手<br><span class="small">文件/补丁工具</span></span>
+    <span class="arr">→</span>
+    <span class="node"><b>16G.3</b> 验证的眼睛<br><span class="small">公开命令/测试/复现</span></span>
+    <span class="arr">→</span>
+    <span class="node"><b>16G.4</b> 环境+收口<br><span class="small">依赖/持久shell/linkage</span></span>
+    <span class="arr">→</span>
+    <span class="node"><b>16G.5</b> 真跑验收<br><span class="small">parity probe</span></span>
+    <span class="arr">→</span>
+    <span class="node"><b>16G.6</b> 盖章放行<br><span class="small">冻结+gate</span></span>
+  </div>
+  <table>
+    <tr><th class="c" style="width:80px">阶段</th><th class="c" style="width:70px">类型</th><th>一句话职责</th></tr>
+    <tr><td class="c"><b>16G.1</b></td><td class="c"><span class="tag t-info">设计</span></td><td>先把"有哪些工具、各属哪档 profile、各自的输入输出/拒绝/训练投影规则"写成可执行 registry —— 不实现工具</td></tr>
+    <tr><td class="c"><b>16G.2</b></td><td class="c"><span class="tag t-info">实现</span></td><td>补结构化文件/补丁工具(apply_patch / write / delete / move / mkdir)，让改动干净进 final.patch</td></tr>
+    <tr><td class="c"><b>16G.3</b></td><td class="c"><span class="tag t-info">实现</span></td><td>补公开命令(run_public_command) / 项目测试(run_project_test) / 复现脚本(scratch_python) —— 让模型能动手验证</td></tr>
+    <tr><td class="c"><b>16G.4</b></td><td class="c"><span class="tag t-info">实现</span></td><td>补依赖安装/受控持久 shell/权限恢复/把所有动作接进 reward 和 export</td></tr>
+    <tr><td class="c"><b>16G.5</b></td><td class="c"><span class="tag t-warn">验收</span></td><td>拿真任务跑一遍，证明新工具面真能完成"定位→改→验证→收口"且不泄漏</td></tr>
+    <tr><td class="c"><b>16G.6</b></td><td class="c"><span class="tag t-good">门禁</span></td><td>冻结四档 profile，输出"能不能进真实训练"的放行结论</td></tr>
+  </table>
+
+  <!-- 3 -->
+  <h2 class="sec" id="example">3 · 先立一个贯穿全程的例子</h2>
+  <div class="callout info">
+    <b>例子任务：</b>某项目的 <code>parse_config()</code> 函数，在配置缺少 <code>timeout</code> 字段时会直接 <code>KeyError</code> 崩溃。要求：改成"缺字段时用默认值"。这个修复需要：改 <code>config_parser.py</code>（主逻辑）+ <code>defaults.py</code>（加默认常量）<b>两个文件</b>，再<b>新建</b>一个测试 <code>tests/test_config_parser.py</code>，而且项目要先 <code>pip install -e .</code> 才能跑测试。
+  </div>
+  <p>下面每个阶段，我都会说"这一阶段让模型在这个例子里多了什么能力"。把 6 段连起来，你就能看到整个修复闭环是怎样被一步步补全的。</p>
+
+  <!-- 4 -->
+  <h2 class="sec" id="stages">4 · 逐阶段详解</h2>
+
+  <!-- 16G.1 -->
+  <div class="stage gate" id="s1">
+    <h3>16G.1 · 画蓝图 <span class="tag t-info">设计，不实现</span></h3>
+    <div class="role">建立一个"工具能力 registry"——把后面所有工具的规则先定死，避免实现时散落在各处、各写一套。</div>
+    <div class="blk"><div class="h">做什么</div>回答 5 个问题：每个工具属于哪档 profile？对应哪个 capability_id？它的输入/输出/拒绝/artifact/权限/训练投影语义是什么？哪些调用能进 policy loss？哪些只能当诊断/负样本/quarantine。并定下四档 profile(见第 5 节)。</div>
+    <div class="ex"><span class="lab">用例子说</span> 这一步还没给模型任何新能力。它是在"图纸"上写死：「<code>run_public_command</code> 属于 swe_public_core、能进训练；<code>persistent shell</code> 只属于 extended、core 默认不给」。后面 16G.2–16G.4 实现工具时，必须照这张图纸来，不能临时发挥。</div>
+    <div class="blk"><div class="h">产出</div><code>tool_registry_contract.json</code> / <code>profile_taxonomy.json</code> / <code>training_eligibility_gate_spec.json</code> + 一个机器验收器(能检查"27 条能力是否全映射、17 条阻塞项是否都有归属阶段、每个工具是否都有训练投影规则")。</div>
+    <div class="blk"><div class="h">承上启下</div>承接 16G.0 的 27 条对照；为 16G.2–16G.4 提供"必须照着实现"的契约。<b>关键验收：防止"工具存在但没有训练投影"这种静默退化。</b></div>
+  </div>
+
+  <!-- 16G.2 -->
+  <div class="stage impl" id="s2">
+    <h3>16G.2 · 给模型"改代码的手" <span class="tag t-info">实现 · P0</span></h3>
+    <div class="role">补齐结构化文件和补丁操作，让模型能高效、可审计地改多文件、建/删/移文件。</div>
+    <div class="blk"><div class="h">做什么</div>新增 <code>apply_patch</code>(多文件编辑)/<code>write_file</code>(覆盖写)/<code>delete_file</code>/<code>move_file</code>/<code>mkdir</code>，并保证这些改动都进 final.patch、official prediction、TrainingView 投影。拆 4 个子阶段：2A schema → 2B 行为实现 → 2C patch 投影 → 2D 任务状态(非阻塞)。</div>
+    <div class="ex"><span class="lab">用例子说</span> 现在模型能：用 <code>apply_patch</code> <b>一次</b>改 <code>config_parser.py</code> + <code>defaults.py</code> 两个文件，再用 <code>create_file</code> 新建 <code>tests/test_config_parser.py</code>。改完这三处都会干净地出现在 final.patch 里（临时文件/备份不会混进去）。<b>在此之前只有 exact-replace 的 edit_file，多文件改起来很笨。</b></div>
+    <div class="blk"><div class="h">产出</div>可执行 probe 证明：多文件 patch 进 final.patch、建/删/移进 git diff、patch 失败给可学习的 reason_code、临时目录不被误纳入、hidden verifier/gold patch 仍读不到。</div>
+    <div class="blk"><div class="h">承上启下</div>它是后面的基础 —— 16G.3 的"写复现脚本"也要先能写文件。注意：完整的"测试声明 ↔ 真实事件"交叉校验留到 16G.4D，这里只负责把动作投影成结构化事实。</div>
+  </div>
+
+  <!-- 16G.3 -->
+  <div class="stage impl" id="s3">
+    <h3>16G.3 · 给模型"动手验证的眼睛" <span class="tag t-info">实现 · P0 · 最关键</span></h3>
+    <div class="role">让 RepoHarness 不再弱于 mini-SWE-agent 的动态诊断能力 —— 但用受控公开命令，不开裸 shell。</div>
+    <div class="blk"><div class="h">做什么</div>新增三个工具，<b>共用同一套执行底座</b>(cwd/超时/输出脱敏/artifact/拒绝语义)：<code>run_public_command</code>(安全公开命令)、<code>run_project_test</code>(项目测试路由，支持定向测试)、<code>scratch_python</code>(临时复现脚本)。拆 4 子阶段，<b>底座(3A)必须先做</b>，否则不准扩命令集。</div>
+    <div class="ex"><span class="lab">用例子说</span> 模型改完代码想验证：① 用 <code>run_project_test("tests/test_config_parser.py::test_missing_timeout")</code> <b>只跑这一个</b>新测试（不是全跑）；② 改之前先用 <code>scratch_python</code> 写 3 行 <code>parse_config({})</code> 复现崩溃、确认 bug 真存在。这正是真实程序员"先复现→再改→再针对性验证"的循环。<b>在此之前 run_tests 没参数，模型只能全跑或不跑。</b></div>
+    <div class="blk"><div class="h">产出</div>probe 证明：能跑定向测试拿到 stdout/stderr/exit code、scratch 产物不污染 final.patch、被拒命令给可学习恢复路径、碰 hidden verifier/gold patch/.git 作弊路径会 deterministic hard fail、至少一个 mini-SWE 风格闭环能用结构化工具走通。</div>
+    <div class="blk"><div class="h">承上启下</div>这阶段只用"依赖已预置好"的环境；真正的"装依赖"留到 16G.4A。三个工具共用一套语义，避免各写一套不兼容规则。</div>
+  </div>
+
+  <!-- 16G.4 -->
+  <div class="stage impl" id="s4">
+    <h3>16G.4 · 复杂环境 + 把一切接进训练 <span class="tag t-info">实现 · P0 · 最重</span></h3>
+    <div class="role">收口最复杂、阻塞最多(9 条)的能力。因为重，拆成 4 个子阶段执行。</div>
+    <div class="blk"><div class="h">做什么</div><b>4A</b> 依赖安装 + 共享依赖只读 + 每题私有 overlay；<b>4B</b> 受控持久诊断 shell 进 extended profile(题间 reset)；<b>4C</b> 权限拒绝恢复 + hooks + 工具生命周期审计 + quarantine；<b>4D</b> 把工具动作接进 final answer / verifier / reward metadata / TrainingView / export。</div>
+    <div class="ex"><span class="lab">用例子说</span> 例子里项目要先 <code>pip install -e .</code> 才能跑测试 —— <b>4A</b> 给受控依赖安装(装进这道题的私有 overlay，不污染别题)。如果模型敲了被拒的命令，<b>4C</b> 给它"换 run_project_test 试试"这种可学习提示。模型最后说"我跑了测试、通过了"，<b>4D</b> 确保这句话能和真实 tool event 对上(不能空口白话)，并把"测试通过"接进 reward。</div>
+    <div class="blk"><div class="h">产出</div>probe 证明：core 不暴露持久 shell、extended 的持久 shell 题间 reset 且可审计、共享依赖不被写污染、各种拒绝/超时/截断/quarantine 都进 audit、final answer 测试声明能和真实事件对齐、各处工具投影一致。</div>
+    <div class="blk"><div class="h">承上启下</div><b>边界很重要：</b>16G.4 只产出"结构化 facts + 接进 reward metadata"，<b>具体的 reward 数值/权重设计留给后续 Stage 19</b>，不在这里展开。这是个好的职责切分。</div>
+  </div>
+
+  <!-- 16G.5 -->
+  <div class="stage probe" id="s5">
+    <h3>16G.5 · 真跑一遍验收 <span class="tag t-warn">验收，不实现</span></h3>
+    <div class="role">实证验证：前面四个阶段改完后，RepoHarness 是否真的接近目标工具环境。不再是"第一次对比"(那是 16G.0 干的)。</div>
+    <div class="blk"><div class="h">做什么</div>拿一批小任务真跑，从 4 个维度 probe：① Claude Code 分层工具能力；② mini-SWE 动态诊断闭环；③ 安全边界(碰不到答案/隐藏测试/历史/宿主路径)；④ 训练投影(动作进没进 TrainingView/reward/export)。</div>
+    <div class="ex"><span class="lab">用例子说</span> 拿"修 parse_config"这类真任务跑：确认模型能完整走通 <b>复现(scratch)→定位(grep/read)→改(apply_patch)→装依赖(4A)→跑定向测试(run_project_test)→看 diff→收口</b>，并且全程读不到标准答案、隐藏测试。<b>验收看的是"模型真能解题"，不是"工具存在"。</b></div>
+    <div class="blk"><div class="h">产出</div>5 份 probe 报告(parity summary / CC 能力 / mini-SWE 能力 / 训练投影 / 安全边界)。<b>硬规则：任意一个 P0 阻塞能力没过 → 整体 status=failed，且 16G.6 必须把训练放行全部置 false。</b></div>
+  </div>
+
+  <!-- 16G.6 -->
+  <div class="stage gate" id="s6">
+    <h3>16G.6 · 盖章放行 <span class="tag t-good">门禁，不实现</span></h3>
+    <div class="role">纯冻结 + 证据汇总。不新增能力、不改语义。把通过验收的工具面"冻"成正式 profile，并决定能不能进真实训练。</div>
+    <div class="blk"><div class="h">做什么</div>冻结四档 profile 的最终字段和工具集；定下主训练默认 profile(预计 swe_public_core)；定下每个工具的训练投影策略和所有 hard-fail 安全边界；用 sha256 绑定 16G.1/16G.4/16G.5/16G.0 的证据。</div>
+    <div class="ex"><span class="lab">用例子说</span> 它判定：「用 swe_public_core 这套工具产生的'修 parse_config'轨迹，算合格的训练数据」，然后输出一个放行门禁 ↓</div>
+    <pre><code>{
+  "stage17a_schema_only_allowed": true,        // 纯 schema 设计：放行
+  "stage17b_real_data_freeze_allowed": &lt;真/假&gt;,  // 真实数据冻结
+  "stage20_warm_start_data_generation_allowed": &lt;真/假&gt;,
+  "stage21_formal_rl_allowed": &lt;真/假&gt;
+}</code></pre>
+    <div class="blk"><div class="h">承上启下</div>如果发现缺口，只能把 gate 置为"不放行"并退回对应 owner 阶段 —— 它自己不修。这是<b>整个 16G 通往真实训练(Stage 17B/20/21)的最后一道闸门</b>。</div>
+  </div>
+
+  <!-- 5 -->
+  <h2 class="sec" id="profiles">5 · 贯穿全程的"四档 profile"是什么</h2>
+  <p>profile = "一套工具组合"。同一个 harness 可以按任务/用途切换不同 profile。这是 16G.1 定、16G.6 冻结的核心概念：</p>
+  <table>
+    <tr><th style="width:170px">profile</th><th>包含什么</th><th>用途</th></tr>
+    <tr><td><code>safe_structured_only</code></td><td>只读/搜/编辑 + final patch（最低风险）</td><td>低风险基线，最保守</td></tr>
+    <tr><td><code>swe_public_core</code> <span class="tag t-info">主训练默认</span></td><td>结构化文件工具 + <code>run_public_command</code> + <code>run_project_test</code> + <code>scratch_python</code>（<b>无状态、无持久 shell</b>）</td><td>主 SWE 强化学习默认用它</td></tr>
+    <tr><td><code>swe_public_extended</code></td><td>core + 受控<b>持久诊断 shell</b> + 长会话 + 复杂环境</td><td>特定任务 / replay / 偏好数据 / 诊断增强</td></tr>
+    <tr><td><code>redteam_restricted</code></td><td>受限组合，专门压力测试</td><td>泄漏/越权/拒绝恢复的安全验证，<b>不做主训练默认</b></td></tr>
+  </table>
+  <div class="callout info">
+    为什么分档：主训练(core)要<b>干净可复现</b>，所以用无状态结构化命令、不放持久 shell；真需要持久会话的复杂任务走 extended；安全压力测试单独用 redteam。这样"能力"和"可控/可复现"两头都能兼顾 —— 这正是你之前定的方向。
+  </div>
+
+  <!-- 6 -->
+  <h2 class="sec" id="order">6 · 为什么是这个顺序 + 为什么拆子阶段</h2>
+  <h3>顺序的逻辑</h3>
+  <ul>
+    <li><b>先画蓝图(16G.1)再实现</b> —— 避免回到"凭感觉补工具"，每个工具实现都能追溯到契约。</li>
+    <li><b>先给手(16G.2)再给眼睛(16G.3)</b> —— 写复现脚本/建测试都要先能写文件，文件能力是基础。</li>
+    <li><b>最后做最重的环境+收口(16G.4)</b> —— 依赖/持久 shell/训练 linkage 最复杂、依赖前面所有，放最后。</li>
+    <li><b>先实现(1–4)→再验收(5)→再放行(6)</b> —— 不验收不放行，不放行不进真实训练。</li>
+  </ul>
+  <h3>"底座先行"的拆分纪律（防止阶段过重）</h3>
+  <p>16G.3 和 16G.4 阻塞能力多、容易做成一个不可复核的大改，所以拆成 A/B/C/D，并立了两条硬规则：</p>
+  <ul>
+    <li><b>16G.3A 共享执行底座</b>(拒绝语义/输出脱敏/私有路径隔离)没做好，<b>不准</b>进 3B–3D 扩命令集。</li>
+    <li><b>16G.4A 依赖环境隔离</b>没做好，<b>不准</b>进 4B 的持久 shell；<b>16G.4D 训练投影</b>没做好，<b>不准</b>进 16G.5 验收。</li>
+  </ul>
+  <div class="callout warn">
+    这条拆分正好回应了我之前的提醒：16G.4 一个阶段背 9 条阻塞太重。这版计划把它拆成 4A/4B/4C/4D，并用"底座先行"挡住"地基没打好就往上盖"。<b>这是个好设计。</b>
+  </div>
+
+  <!-- 7 -->
+  <h2 class="sec" id="mynotes">7 · 我的几点观察（计划看着扎实，几处提醒）</h2>
+  <ul>
+    <li><b>方向完全对齐我们之前的讨论：</b>结构化优先、持久 shell 归 extended、依赖用每题私有 overlay、reward 数值设计留给 Stage 19、16G.4 拆子阶段。这版计划把这些都吸收了。</li>
+    <li><b>16G.3 是"能不能成"的关键，16G.4 是"最重"的。</b>真正动手时，这两阶段最需要你/我盯：16G.3 看 run_public_command 的安全白名单和拒绝恢复是否到位；16G.4 看持久 shell 的题间 reset 和依赖 overlay 隔离是否真的确定性。</li>
+    <li><b>一个值得盯的点：</b>计划说"安全边界够用"很多处依赖确定性策略，但 16G.3/16G.4 一旦真加了能跑命令的新工具，<b>必须用对抗性 probe(redteam_restricted)真去试越权/泄漏</b>，而不是只靠静态扫描声明安全。16G.5 的"安全边界 probe"应承担这个。</li>
+    <li><b>16G.6 是最后闸门：</b>它只盖章不修复，发现问题就退回。所以前面每一阶段的 probe 质量决定了 16G.6 能不能放行 —— 别让任何一阶段"看起来过了"但 probe 是走过场。</li>
+  </ul>
+  <div class="callout good">
+    <b>总结：</b>这是一份分工清晰、顺序合理、把"重阶段"拆开、把"安全/可复现/可训练"都钉进验收的计划。它最终交付的是<b>一套冻结的工具 profile + 一个放行门禁</b>，让 RepoHarness 从"能看会改但不会验证"变成"接近 Claude Code 的、可审计可训练的真实 SWE 工具环境"。下一步就是按这个计划进 16G.1，从画蓝图开始。
+  </div>
+
+  <div class="footer">
+    本文为 <code>51-stage-16g-1-to-16g-6-execution-plan.md</code> 的讲解版，用一个"修 parse_config bug"的贯穿例子说明各阶段分工。例子中的命令为帮助理解，实际工具形态以各阶段实现为准。
+  </div>
+</main>
+</div>
+</body>
+</html>

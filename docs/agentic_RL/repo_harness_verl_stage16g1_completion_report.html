@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.1 完成报告（核心产出）</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:232px;flex:0 0 232px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 46px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.5px;line-height:1.55}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .vcard{border-radius:14px;padding:17px 19px;border:1px solid}
+  .vcard.green{background:linear-gradient(135deg,#13311f,#161a23);border-color:#2f6b3a}
+  .vcard.amber{background:linear-gradient(135deg,#2b2412,#161a23);border-color:#6b5a2f}
+  .vcard .lab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .vcard .big{font-size:19px;font-weight:700;margin-bottom:6px}
+  .vcard.green .big{color:#6fdc84}.vcard.amber .big{color:#e6c068}
+  .vcard p{font-size:12.8px;margin:6px 0 0;color:#cdd6e6}
+  .prod{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin:13px 0;border-left:4px solid var(--accent)}
+  .prod h3{margin:0 0 6px;font-size:15.5px;color:#fff}
+  .prod .file{font-size:12px;color:#9cc4ff;font-family:"SFMono-Regular",Menlo,monospace}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .chk{color:#6fdc84;font-weight:700}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.verdict{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#verdict">裁决</a>
+  <a href="#products">1 · 核心产出的产物 ★</a>
+  <a href="#taxonomy">2 · 四档 profile 细看</a>
+  <a href="#verify">3 · 我独立核查了什么</a>
+  <a href="#notable">4 · 几个值得注意的实现点</a>
+  <a href="#next">5 · 完成态 + 下一步</a>
+</nav>
+<main>
+  <h1>Stage 16G.1 完成报告（核心产出）</h1>
+  <p class="meta">核查 + 汇报对象：16G.1 实施产物　·　我做了<b>独立核查</b>（红线、sha 绑定、计数重推、测试、泄漏扫描、并实际跑了 inspector 的正/负用例）　·　配套：<a href="repo_harness_verl_stage16g1_plan_report.html">16G.1 计划+概念讲解</a>（含字段词典，已回填真实枚举）</p>
+
+  <h2 class="sec" id="verdict" style="border:none;margin-top:0;padding-top:0">裁决</h2>
+  <div class="verdict">
+    <div class="vcard green">
+      <div class="lab">能不能信</div>
+      <div class="big">可信度 高 ✓</div>
+      <p>只读红线守住（工具行为代码零改动）；27/17/4 计数重推一致；<b>我亲自跑了 inspector 的正用例(过)和两个负用例(都按预期失败)</b>，确认它是真验收不是橡皮图章；run_episode smoke 是真实调用、不是 JSON 声明。</p>
+    </div>
+    <div class="vcard amber">
+      <div class="lab">能不能提交</div>
+      <div class="big">完成态成立，提交仍待统一</div>
+      <p>这是目前几轮里实现质量很高的一轮，可作为 16G.1 完成态、解锁 16G.2。但 16G 系列文件仍全部未跟踪，加上之前累积的待办，建议尽快做一次干净提交。</p>
+    </div>
+  </div>
+  <div class="callout good">
+    <b>一句话：</b>16G.1 没动任何工具行为，只新增了一个共享 registry 模块 + 一个 CLI 验收器 + 9 份证据 JSON，把"27 条能力 → 四档 profile → 训练资格"固化成<b>机器可强制检查</b>的契约。最关键的硬规则（<code>swe_public_core</code> 不含持久 shell）我实测确认 inspector 真会拦。<b>建议接受完成态，进 16G.2。</b>
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="products">1 · 核心产出的产物（重点）</h2>
+  <p>共 9 份证据 JSON + 1 份人类可读 md + 1 个共享代码模块 + 1 个 CLI 命令 + 测试。核心是下面 4 样：</p>
+
+  <div class="prod">
+    <h3>① 工具 registry 契约（全阶段的"图纸"）</h3>
+    <div class="file">stage16g1_tool_registry_contract.json</div>
+    <p>把 16G.0 的 <b>27 条能力</b>逐条写成机器记录，每条都同时声明：归属 profile、owner stage、artifact 可见性、拒绝反馈 policy、训练投影 policy、安全边界。<b>这是 16G.2–16G.4 必须照着实现的契约。</b></p>
+    <p class="small">实测：27 条全到位，其中 17 条标 <code>blocking_for_main_swe_rl</code>、4 条 <code>post_16G_optional</code>，计数与 summary 完全一致。每条都带 <code>required_stage_from_stage16g0</code> 字段做交叉核对（防 owner stage 被偷改）。</p>
+  </div>
+
+  <div class="prod">
+    <h3>② 四档 profile 分类（主训练默认 = swe_public_core）</h3>
+    <div class="file">stage16g1_profile_taxonomy.json</div>
+    <p>定义 4 档工具面：<code>safe_structured_only</code> / <code>swe_public_core</code>（<b>primary_training_default=true</b>）/ <code>swe_public_extended</code> / <code>redteam_restricted</code>。详见第 2 节。<b>硬规则已落实：core 明确排除持久 shell。</b></p>
+  </div>
+
+  <div class="prod">
+    <h3>③ 训练资格门禁规范（数据怎么进训练）</h3>
+    <div class="file">stage16g1_training_eligibility_gate_spec.json</div>
+    <p>定义工具事件/轨迹/profile 的训练资格规则。关键是把"<b>单个工具事件</b>"和"<b>整条样本</b>"分层：<code>allowed_in_policy_loss_trajectory</code>(事件能否出现在 RL 轨迹) vs <code>sample_policy_loss_candidate_effect</code>(对整条样本资格的影响)。<b>这阶段只定"哪些能进哪个管道"，不碰 reward 数值</b>（留给 Stage 19）。</p>
+  </div>
+
+  <div class="prod">
+    <h3>④ 机器验收器 + 共享模块 + run_episode smoke</h3>
+    <div class="file">src/repo_harness/stage16g_tool_profile.py · CLI: inspect-stage16g1-tool-profile · stage16g1_run_episode_profile_smoke_report.json</div>
+    <p>新增共享模块(builder/inspector/测试共用一套逻辑)+ CLI 验收命令 + 一个<b>真实</b>的统一入口 smoke。smoke 真的走了 <code>run_episode_task → EpisodeExecutionSpecBuilder → RepoHarnessRuntime.run_episode → compat_projection</code>，并把 <code>swe_public_core</code> 这个 profile id 和 registry 摘要带进了公开投影 —— 不是只读 JSON 的假 smoke。</p>
+  </div>
+
+  <!-- 2 -->
+  <h2 class="sec" id="taxonomy">2 · 四档 profile 细看（实际内容）</h2>
+  <table>
+    <tr><th style="width:170px">profile</th><th>包含的能力</th><th>关键边界</th></tr>
+    <tr>
+      <td><code>safe_structured_only</code></td>
+      <td>只读/搜/编辑/建文件/patch 审计类（17 条 allowed）<br><b>禁</b>：bash 公开命令、持久 shell、参数化测试、scratch、项目命令、依赖（6 条 forbidden）</td>
+      <td>最保守的低风险基线</td>
+    </tr>
+    <tr>
+      <td><code>swe_public_core</code> <span class="tag t-info">主训练默认</span></td>
+      <td>在 safe 基础上 + bash 公开命令/参数化测试/scratch/项目命令/依赖（大多标 <code>planned</code>，留给 16G.2–16G.4 实现）</td>
+      <td><b>forbidden + must_not_include 都含 persistent_diagnostic_session</b> —— 持久 shell 进不来</td>
+    </tr>
+    <tr>
+      <td><code>swe_public_extended</code></td>
+      <td>core + <code>persistent_diagnostic_session</code>（无 forbidden）</td>
+      <td>required_safety_boundaries 额外要求：<code>session_reset</code> / <code>artifact_hygiene</code> / <code>path_redaction</code> / <code>public_safe_projection</code></td>
+    </tr>
+    <tr>
+      <td><code>redteam_restricted</code></td>
+      <td>allowed 为空（专用于压力测试）</td>
+      <td><code>primary_training_default=false</code>、<code>run_episode_required=false</code> —— 不做主训练默认</td>
+    </tr>
+  </table>
+  <div class="callout info">
+    注意 core 里大量能力现在是 <code>planned</code> 而非 <code>implemented</code> —— 这是<b>诚实的</b>：16G.1 只画图纸、不实现工具，所以 apply_patch / run_public_command 等都还是"计划态"，等 16G.2/16G.3 真正实现后才会从 planned 变成 implemented。这也是为什么这些能力现在 <code>allowed_in_policy_loss_trajectory=false</code>。
+  </div>
+
+  <!-- 3 -->
+  <h2 class="sec" id="verify">3 · 我独立核查了什么</h2>
+  <table>
+    <tr><th style="width:28%">核查项</th><th>方法</th><th class="c" style="width:110px">结果</th></tr>
+    <tr><td>只读红线</td><td><code>git status</code> 查 tools/command_policy/runtime/scaffolds/workspace</td><td class="c"><span class="tag t-good">行为代码零改动</span></td></tr>
+    <tr><td>变更范围</td><td>仅 main.py(CLI 接线) 改动 + 3 个新文件(registry 模块/builder/测试)，均在计划范围</td><td class="c"><span class="tag t-good">符合</span></td></tr>
+    <tr><td>sha 绑定</td><td>重算各产物 sha256 比对 summary</td><td class="c"><span class="tag t-good">全对</span></td></tr>
+    <tr><td>计数可复核</td><td>从 registry 重新推导 27/17/4 + profile=4</td><td class="c"><span class="tag t-good">完全一致</span></td></tr>
+    <tr><td>测试</td><td>重跑 16G.1 单测</td><td class="c"><span class="tag t-good">10 passed</span></td></tr>
+    <tr><td>泄漏</td><td>自行 grep 证据目录绝对家目录路径</td><td class="c"><span class="tag t-good">0 命中</span></td></tr>
+    <tr><td><b>inspector 真实性</b><br><span class="small">（最关键）</span></td><td><b>正用例</b>：跑真实证据 → exit 0；<b>负用例1</b>：篡改一个被绑定文件 → exit 1(sha 不符)；<b>负用例2</b>：把持久 shell 塞进 core 并刷新 sha 绕过 sha 检查 → exit 1，报告 <code>swe_public_core_excludes_persistent_shell:false</code>、failure_count=8</td><td class="c"><span class="tag t-good">真验收<br>非橡皮图章</span></td></tr>
+    <tr><td>run_episode smoke</td><td>读报告确认 <code>actual_run_episode_task_invoked=true</code>、exercised_code_paths 含真实四条路径、profile id 带进投影</td><td class="c"><span class="tag t-good">真实路径</span></td></tr>
+  </table>
+  <div class="callout good">
+    <b>负用例2 是这次最值得说的：</b>我故意把 <code>persistent_diagnostic_session</code> 注入 <code>swe_public_core</code>，<b>并把 taxonomy 的 sha 刷新</b>好让它先骗过 sha 校验、抵达语义检查 —— inspector 仍然报错 <code>swe_public_core_excludes_persistent_shell:false</code> 并 exit 1。这证明它不只查 sha，<b>语义硬规则是真在跑的</b>，正好回应了我上轮"别让验收器变摆设"的提醒。
+  </div>
+
+  <!-- 4 -->
+  <h2 class="sec" id="notable">4 · 几个值得注意的实现点</h2>
+  <ul>
+    <li><b>schema 比计划最小集多了 2 个字段（合理扩展）：</b><code>required_stage_from_stage16g0</code>(每条能力记下 16G.0 的原始阶段，供 inspector 交叉核对 owner stage 没被偷改) 和 <code>persistent_session_boundary_policy</code>(绑定持久 shell 的安全边界)。这两个都是好补充。</li>
+    <li><b>枚举值现在落定了</b>(上轮字段词典里的 🟡 待定项)：<code>repo_harness_status</code> = present / partial / proposed_tool_required / diagnostic_only_current / schema_reserved；<code>sample_policy_loss_candidate_effect</code> = preserves_sample_candidate_if_all_trajectory_gates_pass / makes_sample_ineligible_until_owner_stage_complete / makes_sample_diagnostic_only_or_schema_reserved。我已把这些<b>真实枚举回填进上一篇 HTML 的字段词典</b>。</li>
+    <li><b>smoke 被子代理复核修正过：</b>初版只验证 EpisodeExecutionSpec 事实(偏静态)，复核后改成真实调用 run_episode_task。implementation-notes 如实记录了这次修正(符合 CLAUDE.md 第 2 条)。</li>
+    <li><b>诚实标注未实现：</b>apply_patch / run_public_command / run_project_test / scratch_python 全部只进 registry 的 planned 态，没假装已实现。open question 也留了一个给 16G.2(write_file 独立工具 vs 扩展 create_file 覆盖语义)。</li>
+  </ul>
+
+  <!-- 5 -->
+  <h2 class="sec" id="next">5 · 完成态 + 下一步</h2>
+  <p>完成态成立：<code>status=passed</code>、<code>machine_inspector_passed=true</code>、<code>stage16g2_allowed_to_start=true</code>；17B/20/21 仍 <code>false</code>。准确含义：<b>工具能力还没补，但后续改造已有了机器可强制、可追溯到 baseline 的契约 + 真验收器。</b></p>
+  <div class="callout warn">
+    <b>提醒（提交相关）：</b>16G 系列文件(从第一轮 16G.0 到现在的 16G.1)全部仍未跟踪，加上之前的 2 个待办（<code>gpt_advice.md</code> 引用、范围收窄）一直没处理，文件越堆越多。<b>强烈建议在进 16G.2 之前先做一次干净提交</b>，把 16G.0 + follow-up + 16G.1 一起入库，否则后面 review diff 会越来越乱。
+  </div>
+  <div class="callout good">
+    <b>建议：</b>① 接受 16G.1 完成态；②（推荐先做）让我帮你列一份干净提交清单，把 16G.0 / follow-up / 16G.1 三批一起处理掉；③ 然后进 16G.2（结构化文件/补丁工具）——那是第一个真正"动手实现工具"的阶段，我会照例在 agent 动手前帮你出审查要点(重点：write_file vs create_file 那个 open question、apply_patch 用结构化格式而非行号 diff、改动必须进 final.patch)。
+  </div>
+
+  <div class="footer">
+    本报告基于独立核查：git 变更范围、重算 sha 绑定、从 registry 重推 27/17/4、本机重跑 10 个测试、自行 grep 泄漏、实跑 inspector 正用例 + 两个负用例(篡改字节 / 注入持久 shell 并刷新 sha)、读 run_episode smoke 报告确认真实调用路径、通读 implementation-notes。所有结果可用相同命令复核。
+  </div>
+</main>
+</div>
+</body>
+</html>

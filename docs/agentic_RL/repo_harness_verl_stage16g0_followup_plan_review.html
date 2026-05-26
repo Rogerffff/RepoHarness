@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>16G.0 Follow-up（基线契约）计划审查</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{display:flex;max-width:1260px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:240px;flex:0 0 240px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:25px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.8px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.5px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.1px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;border-radius:14px;padding:20px 22px;margin:8px 0 12px}
+  .tldr b{color:var(--accent2)}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.bad{background:#26161a;border:1px solid #6b3434}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .risk{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 18px;margin:13px 0}
+  .risk.r-hi{border-left:4px solid var(--bad)}
+  .risk.r-md{border-left:4px solid var(--warn)}
+  .risk.r-lo{border-left:4px solid var(--accent)}
+  .risk h4{margin:0 0 6px;font-size:15.5px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .myrec{background:#11261c;border:1px solid #2f6b3a;border-radius:8px;padding:9px 13px;margin-top:9px;font-size:13.3px}
+  .myrec b{color:#6fdc84}
+  .dcard{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:11px;padding:15px 18px;margin:13px 0}
+  .dcard h4{margin:0 0 6px;font-size:15.5px;display:flex;gap:9px;align-items:center}
+  .dcard .num{background:var(--accent);color:#06122b;font-weight:700;border-radius:7px;width:30px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#tldr">一句话总结</a>
+  <a href="#what">1 · 这版补充计划做什么</a>
+  <a href="#why">2 · 为什么它是对的修正</a>
+  <a href="#verify">3 · 我核实的前提</a>
+  <a href="#risks">4 · 设计问题 / 风险</a>
+  <a href="#r1" class="sub">R1 mini-SWE 源</a>
+  <a href="#r2" class="sub">R2 战略立场留空</a>
+  <a href="#r3" class="sub">R3 sha 绑定缺口</a>
+  <a href="#r4" class="sub">R4 16G.5 角色/文档</a>
+  <a href="#r5" class="sub">R5 基线成为权威</a>
+  <a href="#decisions">5 · 你需要的决策</a>
+  <a href="#verdict">6 · 裁决 + 下一步</a>
+</nav>
+<main>
+  <h1>Stage 16G.0 Follow-up（基线契约）计划审查</h1>
+  <p class="meta">审查对象：<code>50-stage-16g-0-follow-up-baseline-contract-execution-plan.md</code>（计划已写，<b>尚未执行</b>）　·　配套：<a href="repo_harness_verl_stage16g0_findings_detail.html">16G.0 发现详解</a>、<a href="repo_harness_verl_stage16g0_completion_review.html">完成态审查</a></p>
+
+  <div class="tldr" id="tldr">
+    <p style="margin-top:0"><b>一句话：</b>这版补充计划<b>正确地修正了我们一起发现的排序问题</b> —— 把「第一次认真对照 Claude Code / mini-SWE-agent」从 16G.5 提前到 16G.1 之前，避免 16G.1–16G.4 改完才发现对错了目标、返工。它还顺手修掉了我上次指出的两个弱点（Claude Code 那侧只引用导航文件、差距矩阵用模板话）。<b>方向我赞成。</b></p>
+    <p style="margin-bottom:0"><b>但有一个真实的不对称需要你拍板：</b>Claude Code 的源码<b>本地全在</b>（可做一手契约），而 mini-SWE-agent <b>没有官方仓库源码</b>，只有评测 worktree 里的<b>配置 + 运行日志</b>（二手 public-safe 摘录）。计划没指明这些文件在哪，agent 很可能退回到更弱的 gpt_advice 总结。这是第 4、5 节的核心。</p>
+  </div>
+
+  <!-- ===== 1 ===== -->
+  <h2 class="sec" id="what">1 · 这版补充计划要做什么</h2>
+  <p>它是 16G.0 的<b>补充验收阶段</b>（不是重做）。同样<b>零行为改动</b>、不碰工具/策略/runtime。它新增 4 份 JSON 产物，把「目标工具环境」逐能力写成可审计的契约：</p>
+  <table>
+    <tr><th style="width:42%">新增产物</th><th>作用</th></tr>
+    <tr><td><code>stage16g0_claude_code_baseline_contract.json</code></td><td>Claude Code 逐能力契约：每条能力的「模型怎么看见 / 怎么执行 / 权限怎么约束 / 结果怎么回流」，<b>每条至少引用一个真实源码文件</b>（不许全指向 AGENTS.md）</td></tr>
+    <tr><td><code>stage16g0_mini_swe_agent_baseline_contract.json</code></td><td>mini-SWE-agent 的 Bash-first 基线，<b>和 Claude Code 分开写</b>，不混成笼统「真实 SWE agent」</td></tr>
+    <tr><td><code>stage16g0_per_capability_baseline_comparison.json</code> <span class="tag t-bad">最核心</span></td><td>27 项能力逐条三方对齐：Claude Code 基线 / mini-SWE 基线 / RepoHarness 现状 / gap_type / required_stage / 是否阻塞主 RL</td></tr>
+    <tr><td><code>stage16g0_stage16g_implementation_requirements.json</code></td><td>把差距转成 16G.1–16G.5 的执行要求，<b>明令不许推给 Stage 17</b></td></tr>
+  </table>
+  <p class="small">builder 还要加 3 个新检查：① 禁止 Claude Code 能力的证据全指向 AGENTS.md；② 禁止 5 条以上记录用完全相同的基线话术；③ 所有「阻塞主 RL」的项必须映射到 16G.1–16G.4，不能只挂到 16G.5 或 Stage 17。这三个检查正好把我上次担心的「模板化、推迟对照」用机器卡死。</p>
+
+  <!-- ===== 2 ===== -->
+  <h2 class="sec" id="why">2 · 为什么这是对的修正（你这次的判断很关键）</h2>
+  <div class="callout good">
+    原来的排序里，16G.5 才第一次认真对照 Claude Code / mini-SWE-agent。问题是 <b>16G.1（定 taxonomy）→16G.4（实现工具）都在 16G.5 之前</b>。如果到 16G.5 才发现「我们补的 run_public_command 和 Claude Code 的 Bash 在权限/输出/恢复语义上对不齐」，前面四步就要返工。<b>把基线契约提到 16G.1 之前，等于先定好「对齐标准」再动手</b> —— 这是标准的「先写验收标准、再实现」工程纪律。
+  </div>
+  <p>而且它把对照拆成<b>两个独立基线</b>（Claude Code 的分层结构化工具环境 vs mini-SWE-agent 的稳定 Bash 闭环），这点很重要：你最担心的「连只给 Bash 的 mini-SWE-agent 都不如」是和 mini-SWE 比，「是否真实 Claude Code 风格能力」是和 Claude Code 比 —— 两个问题不能用一个笼统基线回答。计划把它们分开了。</p>
+
+  <!-- ===== 3 ===== -->
+  <h2 class="sec" id="verify">3 · 我核实的前提（计划能不能落地）</h2>
+  <table>
+    <tr><th style="width:26%">前提</th><th>核实结果</th><th class="c" style="width:90px">结论</th></tr>
+    <tr>
+      <td><b>Claude Code 源码可引用</b></td>
+      <td>计划 §3.1 列的 21 个路径（Tool.ts、tools.ts、services/tools/toolExecution·orchestration·StreamingToolExecutor、FileReadTool/FileEditTool/BashTool/AgentTool/ToolSearchTool、utils/permissions、services/lsp、hooks、plugins、skills）<b>全部存在</b></td>
+      <td class="c"><span class="tag t-good">完全可行</span></td>
+    </tr>
+    <tr>
+      <td><b>mini-SWE-agent 源码可引用</b></td>
+      <td>本地<b>没有</b>官方仓库源码；但评测 worktree 的 <code>runs/pre-verl-...-20260521.../</code> 下有真实<b>配置 + 运行日志</b>：<code>mini_swe_agent_deepseek_v4_pro_high.yaml</code>、<code>public_source_mini_swe_agent_swebench_config_excerpt.txt</code>、多份 smoke/official 运行 stdout/stderr</td>
+      <td class="c"><span class="tag t-warn">仅二手<br>（tier-2）</span></td>
+    </tr>
+    <tr>
+      <td><b>跨 worktree 读取</b></td>
+      <td>之前的子 agent 已成功从评测 worktree 读过文档，跨 worktree 读取可行（产出需脱敏成 sha256/opaque_ref）</td>
+      <td class="c"><span class="tag t-good">可行</span></td>
+    </tr>
+  </table>
+  <div class="callout info">
+    <b>关键解读：</b>两侧基线的证据强度<b>不对称</b>。Claude Code 是 tier-1（真实源码，可写高置信契约）；mini-SWE-agent 最多 tier-2（配置 + 运行日志，能可靠说清「它用单一 Bash 闭环、stdout/stderr/exit code 反馈、无结构化工具」这类<b>对外行为</b>，但框架内部实现细节仍需官方仓库验证）。<b>这个 yaml 配置其实够用</b>来支撑 mini-SWE 基线契约的大部分关键结论 —— 前提是 agent 知道去读它，而不是退回 gpt_advice。
+  </div>
+
+  <!-- ===== 4 ===== -->
+  <h2 class="sec" id="risks">4 · 我识别出的设计问题 / 风险</h2>
+
+  <div class="risk r-hi" id="r1">
+    <h4><span class="tag t-bad">高</span> R1 · mini-SWE-agent 源指向不明确，agent 可能退回最弱证据</h4>
+    <p>计划 §3.2 只笼统说「评测 worktree 已保存的 public-safe excerpt」，<b>没点名具体文件</b>。如果执行 agent 不知道那份 yaml 配置和 config excerpt 存在，会直接掉到优先级 3 的 gpt_advice 二手总结，然后把整个 mini-SWE 基线标成低置信。那样这次「和 mini-SWE 对照」就名存实亡。</p>
+    <div class="myrec"><b>建议（启动前必须告诉 agent）：</b>明确指向评测 worktree <code>runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/</code> 下的 <code>mini_swe_agent_*.yaml</code> 和 <code>public_source_mini_swe_agent_swebench_config_excerpt.txt</code> 作为 tier-2 主证据；框架内部细节标 <code>primary_source_verification_required=true</code>。这样 mini-SWE 基线能到中高置信，而不是低置信。</div>
+  </div>
+
+  <div class="risk r-md" id="r2">
+    <h4><span class="tag t-warn">中</span> R2 · RepoHarness 的战略立场被留成开放问题</h4>
+    <p>§5.2 说 RepoHarness「可以选结构化工具优先，<b>也可以</b>把 Bash 拆成 run_public_command / scratch_python / controlled diagnostic shell」。但<b>你其实已经定了</b>：core 用无状态结构化公开命令、持久 shell 留 extended。如果不把这个决定写进基线对照和实现要求，对照表只会记录「RepoHarness 在自由 shell 上弱于 mini-SWE」，却不说明<b>这是有意为之还是缺陷</b>，16G.1 又得重新纠结一次。</p>
+    <div class="myrec"><b>建议：</b>把你的立场作为<b>显式设计假设</b>写进 implementation_requirements 顶部 —— 「主 RL core 采用结构化公开命令优先，持久 shell 归 extended，靠确定性边界而非削能力防 reward hacking」。这样 mini-SWE 的 Bash-first 基线就被解读为「能力覆盖目标」而不是「实现形态目标」。</div>
+  </div>
+
+  <div class="risk r-md" id="r3">
+    <h4><span class="tag t-warn">中</span> R3 · 4 份新产物不会被现有 acceptance_summary 的 sha256 绑定</h4>
+    <p>第一轮的 <code>stage16g0_acceptance_summary.json</code> 用 sha256 绑定了 18 份报告，但它不知道这 4 份新文件。计划没说要更新它。结果：新证据<b>游离在顶层验收之外</b>，无法像第一轮那样「计数可复核、sha 可回查」。</p>
+    <div class="myrec"><b>建议：</b>新增一份 <code>stage16g0_followup_acceptance_summary.json</code>，绑定这 4 份的 sha256，并保持第一轮 summary 不变（immutable）。或者在计划验收标准里加一条「更新或新建 acceptance summary 绑定 follow-up 产物」。</div>
+  </div>
+
+  <div class="risk r-md" id="r4">
+    <h4><span class="tag t-warn">中</span> R4 · 16G.5 角色变了，但旧文档还把它写成「第一次对照」</h4>
+    <p>这版计划 §9.3 明确 16G.5 此后<b>只做改造后的实证 parity probe</b>。但原 <code>49-...</code> 计划 §9 和我之前给你的发现详解 HTML 里，16G.5 还写着「Claude Code / mini-SWE-agent 对照诊断」，读起来像第一次对照。<b>叙事不一致，接手的人会混淆。</b></p>
+    <div class="myrec"><b>建议：</b>执行这版 follow-up 时，顺手把原 49 计划 §9 的 16G.5 描述改成「改造后实证 parity probe」，并在我那份发现详解里同步（我可以帮你改）。</div>
+  </div>
+
+  <div class="risk r-lo" id="r5">
+    <h4><span class="tag t-info">低·知情</span> R5 · 基线契约从此成为 16G.1–16G.4 的「权威」</h4>
+    <p>§9.1/§9.2 规定 16G.1–16G.4 的每个实现项都必须能追溯到一个 baseline comparison 的 capability_id。这是<b>好纪律</b>，但代价是：<b>基线契约一旦写错或写薄，整条 16G 链都继承错误</b>。所以这份 <code>per_capability_baseline_comparison.json</code> 是高风险高价值产物 —— 它产出后值得你（和我）认真复核一遍，而不是和其它 JSON 一样抽查。3 个 builder 检查能挡住机械错误，但挡不住「方向性判断错误」。</p>
+  </div>
+
+  <!-- ===== 5 ===== -->
+  <h2 class="sec" id="decisions">5 · 你需要做的决策</h2>
+
+  <div class="dcard">
+    <h4><span class="num">D-A</span> mini-SWE-agent 的证据等级</h4>
+    <p>本地拿不到官方仓库源码。你接受用评测 worktree 的<b>配置 + 运行日志（tier-2）</b>作为 mini-SWE 基线主证据、框架细节标注待官方源验证；还是要求<b>先去 fetch 官方 mini-SWE-agent 仓库</b>（需要网络/vendoring）再做？</p>
+    <p class="small"><b>我的倾向：</b>接受 tier-2 —— 那份 yaml 配置足以支撑基线契约最关键的结论（单一 Bash 闭环、stdout/stderr 反馈、无结构化工具）。官方源验证可作为 16G.5 的待办，不必现在卡住。但<b>务必把 R1 的具体文件指给 agent</b>。</p>
+  </div>
+
+  <div class="dcard">
+    <h4><span class="num">D-B</span> 是否把「结构化优先 / 持久 shell 归 extended」写成显式设计假设</h4>
+    <p>把你已经定的战略立场写进 implementation_requirements 顶部（推荐），让对照表的「弱于 mini-SWE 的自由 shell」被正确解读为「能力覆盖目标，不是实现形态目标」；还是继续留作 16G.1 再定？</p>
+  </div>
+
+  <div class="dcard">
+    <h4><span class="num">D-C</span> 4 份新产物怎么纳入顶层验收</h4>
+    <p>新建 <code>stage16g0_followup_acceptance_summary.json</code> 绑定它们的 sha256（推荐，保持第一轮不可变）；还是更新原 summary？</p>
+  </div>
+
+  <div class="dcard">
+    <h4><span class="num">D-D</span> 提交节奏</h4>
+    <p>先把第一轮 16G.0 连同那 2 个待办（<code>gpt_advice.md</code> 引用、提交范围收窄）提交，再叠这版 follow-up；还是两轮做完一起提交？注意 <code>gpt_advice.md</code> 在这版里仍是 tier-3 证据来源，两个决定有关联。</p>
+  </div>
+
+  <!-- ===== 6 ===== -->
+  <h2 class="sec" id="verdict">6 · 裁决 + 下一步</h2>
+  <div class="callout good">
+    <b>计划本身：通过，方向正确。</b>它修对了排序问题，机器化卡死了我上次担心的模板化和推迟对照，安全边界保持显式。我没有发现会让方向走偏的硬伤。<b>建议你启动它</b>，但启动前先把 <b>D-A 的具体文件指引（R1）</b>和 <b>D-B 的战略假设</b>交代给执行 agent —— 这两点不交代，产出质量会明显打折。
+  </div>
+  <p>我接下来可以：</p>
+  <ul>
+    <li><b>（推荐先做）</b>帮你写一段<b>启动前要发给执行 agent 的补充约束</b>，把 R1（指明 mini-SWE 具体文件）、R2/D-B（战略假设）、R3（新建 followup acceptance summary）打包成可直接粘贴的指令；</li>
+    <li>等 agent 执行完，我按老规矩独立核查 4 份产物 + 出「能不能信」HTML，并<b>重点复核 per-capability 对照表的方向性判断</b>（R5）；</li>
+    <li>顺手把 R4 的文档不一致（原 49 计划 + 我的发现详解里 16G.5 的描述）改一致。</li>
+  </ul>
+
+  <div class="footer">
+    本审查基于对 <code>50-...follow-up...md</code> 全文的阅读，并实测：Claude Code 21 个源码路径是否存在、mini-SWE-agent 源在本地/评测 worktree 的可得性、跨 worktree 读取可行性。计划尚未执行，本文是执行前的设计审查。
+  </div>
+</main>
+</div>
+</body>
+</html>

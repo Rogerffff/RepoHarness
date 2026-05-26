@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>16G.0 Follow-up 完成态审查（能不能信 · 产出了什么）</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{display:flex;max-width:1280px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:234px;flex:0 0 234px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:25px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.7px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.4px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .chk{color:#6fdc84;font-weight:700}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .vcard{border-radius:14px;padding:18px 20px;border:1px solid}
+  .vcard.green{background:linear-gradient(135deg,#13311f,#161a23);border-color:#2f6b3a}
+  .vcard.amber{background:linear-gradient(135deg,#2b2412,#161a23);border-color:#6b5a2f}
+  .vcard .lab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .vcard .big{font-size:20px;font-weight:700;margin-bottom:6px}
+  .vcard.green .big{color:#6fdc84}.vcard.amber .big{color:#e6c068}
+  .vcard p{font-size:13px;margin:6px 0 0;color:#cdd6e6}
+  .callout{border-radius:10px;padding:13px 16px;margin:13px 0;font-size:13.6px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .bars{margin:10px 0}
+  .bar{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:13px}
+  .bar .lab{width:230px;flex:0 0 230px;color:#cdd6e6}
+  .bar .track{flex:1;background:#13161e;border-radius:5px;height:18px;position:relative;border:1px solid var(--line)}
+  .bar .fill{height:100%;border-radius:4px}
+  .bar .n{width:30px;text-align:right;color:var(--muted)}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.verdict{grid-template-columns:1fr}.bar .lab{width:150px;flex-basis:150px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#verdict">裁决</a>
+  <a href="#verify">1 · 我独立核查了什么</a>
+  <a href="#flags">2 · 我那 5 条反馈是否落实</a>
+  <a href="#content">3 · 这轮具体产出了什么</a>
+  <a href="#notes">4 · implementation-notes 亮点</a>
+  <a href="#obs">5 · 我的补充观察</a>
+  <a href="#next">6 · 下一步</a>
+</nav>
+<main>
+  <h1>16G.0 Follow-up 完成态审查</h1>
+  <p class="meta">核查对象：5 份新 evidence + builder + 测试 + implementation-notes　·　我做了<b>独立核查</b>（开文件、重算 sha256、重推计数、重跑测试、自己扫泄漏、跨核 R1–R5 是否落实）　·　配套：<a href="repo_harness_verl_stage16g0_followup_plan_review.html">本阶段计划审查</a>、<a href="repo_harness_verl_stage16g0_findings_detail.html">发现详解</a></p>
+
+  <h2 class="sec" id="verdict" style="border:none;margin-top:0;padding-top:0">裁决</h2>
+  <div class="verdict">
+    <div class="vcard green">
+      <div class="lab">能不能信</div>
+      <div class="big">可信度 高 ✓（这轮做得很扎实）</div>
+      <p>只读红线守住；完整性校验全过；<b>我启动前给的 5 条反馈逐条落实</b>；implementation-notes 完全符合 CLAUDE.md 第 2 条，透明记录了 3 处偏离。这是目前几轮里质量最高的一次。</p>
+    </div>
+    <div class="vcard amber">
+      <div class="lab">能不能提交</div>
+      <div class="big">内容可提交，但提交范围待你定</div>
+      <p>所有 16G 文件仍是未跟踪状态，且第一轮那 2 个待办（<code>gpt_advice.md</code> 引用、范围收窄）还没处理。文件越堆越多，建议尽快定提交策略。</p>
+    </div>
+  </div>
+  <div class="callout good">
+    <b>一句话：</b>这版 follow-up 把 Claude Code（23 条，引真实源码）和 mini-SWE-agent（10 条，引评测 worktree 真实配置/日志）写成了两份独立基线契约，再逐能力三方对照成 27 条记录，并把 17 条阻塞项全部映射进 16G.2–16G.4。<b>它真正补上了我们担心的「第一次对照被拖到 16G.5」的缺口，16G.1 现在有了可追溯的设计依据。建议接受完成态。</b>
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="verify">1 · 我独立核查了什么</h2>
+  <table>
+    <tr><th style="width:30%">核查项</th><th>方法</th><th class="c" style="width:88px">结果</th></tr>
+    <tr><td>只读红线</td><td><code>git status -- src/</code></td><td class="c"><span class="tag t-good">零改动</span></td></tr>
+    <tr><td>sha256 绑定</td><td>重算 4 份契约 sha256，比对 followup summary 的绑定值</td><td class="c"><span class="tag t-good">4/4 全对</span></td></tr>
+    <tr><td>计数可复核</td><td>从 comparison 重新数：27 条记录、17 条阻塞</td><td class="c"><span class="tag t-good">一致</span></td></tr>
+    <tr><td>阻塞映射纪律</td><td>检查所有 blocking 项的 required_stage</td><td class="c"><span class="tag t-good">全在 16G.2/3/4<br>无逃逸到 16G.5/17</span></td></tr>
+    <tr><td>builder 检查 a（防 AGENTS.md 偷懒）</td><td>统计 23 条 CC 契约里「证据只指向 AGENTS.md」的条数</td><td class="c"><span class="tag t-good">0 条</span></td></tr>
+    <tr><td>builder 检查 b（防模板话）</td><td>统计同一句基线被重复的最大次数</td><td class="c"><span class="tag t-good">最多 1 次</span></td></tr>
+    <tr><td>测试</td><td>重跑 follow-up 测试</td><td class="c"><span class="tag t-good">5 passed</span></td></tr>
+    <tr><td>JSON / 泄漏</td><td>解析全部 25 份 JSON；grep 绝对家目录路径</td><td class="c"><span class="tag t-good">25/25 · 0 泄漏</span></td></tr>
+  </table>
+  <p class="small">CC 契约的证据真的落到了具体源码：<code>services/tools/toolExecution.ts</code>（8 次）、<code>BashTool/BashTool.tsx</code>（5 次）、<code>FileWriteTool.ts</code>、<code>FileReadTool/imageProcessor.ts</code>、<code>utils/permissions/permissions.ts</code> 等 —— 不再是上一轮那种「全指向 AGENTS.md 导航文件」。</p>
+
+  <!-- 2 -->
+  <h2 class="sec" id="flags">2 · 我启动前那 5 条反馈，是否落实</h2>
+  <table>
+    <tr><th style="width:20%">反馈</th><th>落实情况（我核对过的）</th><th class="c" style="width:56px">状态</th></tr>
+    <tr>
+      <td><b>R1</b> mini-SWE 用评测 worktree 真实文件,别退回 gpt_advice</td>
+      <td>mini-SWE 契约的 source_inventory 引了 <b>6 份真实文件</b>（yaml 配置 + public 配置摘录 + 4 份运行日志），全部带 sha256、tier2 标记、<code>evaluation_worktree:</code> opaque_ref。外部可观察行为给中高置信，内部机制标 <code>primary_source_verification_required=true</code>，并有 global caveat 说明本地无官方源码。<b>完全没退回 gpt_advice。</b></td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>R2</b> 把战略立场写成显式假设 + 标记「能力覆盖非形态」</td>
+      <td>implementation_requirements 顶部有 <code>design_assumptions</code> 两条（结构化优先 + mini-SWE 是能力下限非形态）；<b>而且</b>在 comparison 里相关记录加了 <code>capability_shape_note</code> 内联说明（如 shell 记录写「能力覆盖目标，不是实现形态目标」）。<span class="small">注：用的字段名是 capability_shape_note,不是我建议的 design_intent,但内容完全到位。</span></td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>R3</b> 新建 followup acceptance summary 绑定新产物</td>
+      <td><code>stage16g0_followup_acceptance_summary.json</code> 绑定 4 份契约 sha256，并有 <code>first_stage16g0_acceptance_summary_left_immutable</code> 标记,第一轮 summary 没被原地改。</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>R4</b> 修 49-plan §9 的 16G.5 描述</td>
+      <td>已改成「改造完成后的 parity probe；它只验证 16G.1–16G.4 的实现效果，不承担第一次 baseline 对照」。并在 notes 偏离里记录了这次改动。</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+    <tr>
+      <td><b>R5</b> 对照记录方向性判断要有证据、标置信度</td>
+      <td>27 条每条都有 <code>confidence</code> + 三方 <code>source_evidence</code>（CC 契约 ref + mini-SWE 契约 ref + RepoHarness 真实源码 static_source_scan）。builder 三检查真实生效。</td>
+      <td class="c"><span class="chk">✓</span></td>
+    </tr>
+  </table>
+
+  <!-- 3 -->
+  <h2 class="sec" id="content">3 · 这一轮具体产出了什么</h2>
+  <p>四份契约产物 + 一份验收摘要,核心是 27 条逐能力对照。</p>
+
+  <h3>① 两份独立基线契约</h3>
+  <ul>
+    <li><b>Claude Code 契约 23 条</b> —— 每条写明「模型怎么看见 / 执行语义 / 权限语义 / 结果回流」,引真实源码（Tool.ts、toolExecution.ts、BashTool、FileWriteTool、permissions 等）。</li>
+    <li><b>mini-SWE-agent 契约 10 条</b> —— Bash-first 基线,基于评测 worktree 的真实 yaml 配置 + smoke/official 运行日志。明确「这是能力下限,不是 RepoHarness 要复制的实现形态」。</li>
+  </ul>
+
+  <h3>② 27 条逐能力对照 —— 按 gap_type 分布</h3>
+  <div class="bars">
+    <div class="bar"><span class="lab">present_and_sufficient（够用）</span><div class="track"><div class="fill" style="width:26%;background:#3fb950"></div></div><span class="n">7</span></div>
+    <div class="bar"><span class="lab">partial（有一半）</span><div class="track"><div class="fill" style="width:41%;background:#d9a93b"></div></div><span class="n">11</span></div>
+    <div class="bar"><span class="lab">missing（缺）</span><div class="track"><div class="fill" style="width:11%;background:#f06d6d"></div></div><span class="n">3</span></div>
+    <div class="bar"><span class="lab">weaker_than_claude_code</span><div class="track"><div class="fill" style="width:7.5%;background:#9cc4ff"></div></div><span class="n">2</span></div>
+    <div class="bar"><span class="lab">weaker_than_mini_swe_agent</span><div class="track"><div class="fill" style="width:4%;background:#9cc4ff"></div></div><span class="n">1</span></div>
+    <div class="bar"><span class="lab">present_diagnostic_only</span><div class="track"><div class="fill" style="width:4%;background:#c99cff"></div></div><span class="n">1</span></div>
+    <div class="bar"><span class="lab">deferred_schema_only（暂只预留）</span><div class="track"><div class="fill" style="width:7.5%;background:#9aa4b6"></div></div><span class="n">2</span></div>
+  </div>
+  <p class="small">读出来：RepoHarness 在<b>读/搜/diff/沙箱/artifact 私有化</b>这 7 项「够用」,印证「不是 toy」；缺口集中在 <b>partial(11)+missing(3)</b>,主要是编辑/patch、公开命令、项目命令、依赖、训练 linkage 这些动态验证与收口能力。唯一「弱于 mini-SWE」的是自由 shell,且已标注「这是有意的形态选择」。</p>
+
+  <h3>③ 17 条阻塞项映射到哪个阶段（16G.4 是大头）</h3>
+  <div class="bars">
+    <div class="bar"><span class="lab">16G.2 结构化文件/patch</span><div class="track"><div class="fill" style="width:44%;background:#5b9cff"></div></div><span class="n">4</span></div>
+    <div class="bar"><span class="lab">16G.3 公开命令/项目测试/scratch</span><div class="track"><div class="fill" style="width:44%;background:#5b9cff"></div></div><span class="n">4</span></div>
+    <div class="bar"><span class="lab">16G.4 持久shell/依赖/安全/linkage</span><div class="track"><div class="fill" style="width:100%;background:#5b9cff"></div></div><span class="n">9</span></div>
+  </div>
+  <p class="small"><b>16G.4 一个阶段扛了 9 条阻塞</b>（持久 shell、依赖 setup、权限恢复、沙箱边界、artifact 私有化、hooks 审计、训练资格、reward hacking 监控、verifier/reward linkage）—— 它是整条链里最重、最该提前细化的一步。你之后审 16G.4 计划时要特别留意它是不是被塞太满。</p>
+
+  <h3>④ 5 条实现要求（16G.1–16G.5,其中 4 条 P0）</h3>
+  <table>
+    <tr><th class="c" style="width:64px">阶段</th><th>实现目标</th><th class="c" style="width:50px">优先</th></tr>
+    <tr><td class="c">16G.1</td><td>基于对照固定 tool registry、profile taxonomy（safe/core/extended/redteam）、训练资格门禁</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.2</td><td>结构化文件能力补齐：edit/write/create/apply_patch/delete/move/mkdir,绑定 patch hygiene</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.3</td><td>run_public_command / run_project_test / scratch_python（结构化公开命令,无状态）</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.4</td><td>controlled 持久 shell、依赖 setup、private overlay、权限恢复、verifier/reward/export linkage、quarantine</td><td class="c"><span class="tag t-bad">P0</span></td></tr>
+    <tr><td class="c">16G.5</td><td>改造后的 Claude Code / mini-SWE 实证 parity probe（不再是第一次对照）</td><td class="c"><span class="tag t-warn">P1</span></td></tr>
+  </table>
+
+  <!-- 4 -->
+  <h2 class="sec" id="notes">4 · implementation-notes.md 亮点（CLAUDE.md 第 2 条的效果）</h2>
+  <p>这是你加 CLAUDE.md 第 2 条想要的效果 —— agent 主动把「偏离原计划的地方」写清楚,我不用猜。它记了 3 处偏离:</p>
+  <ul>
+    <li><b>偏离 1:</b>原计划只要 4 份产物,它按我的 R3 多加了第 5 份 followup summary。</li>
+    <li><b>偏离 2:</b>原计划把 mini-SWE 官方源码列为第一来源,它按本地事实改成「评测 worktree 真实配置/日志优先,官方源码验证留到 16G.5」。</li>
+    <li><b>偏离 3:</b>改了 16G.5 的描述(R4)。</li>
+  </ul>
+  <p>还留了 3 个<b>开放问题</b>给你:是否纳入更多 mini-SWE 日志、是否在 16G.5 前升级到官方源码、<code>run_public_command</code> 等工具的最终 schema 留到 16G.1 定。这些都是合理的待决项,不是遗漏。</p>
+
+  <!-- 5 -->
+  <h2 class="sec" id="obs">5 · 我的补充观察（都不阻塞,供你心里有数）</h2>
+  <div class="callout warn">
+    <b>① 「安全够用」是静态扫描得出的,不是攻击验证。</b><code>sandbox_workspace_and_runtime_private_boundary</code> 等几条标 present_and_sufficient、confidence high,但依据是<b>静态读 command_policy / diagnostic_session 源码</b>,不是真的去尝试越权逃逸。这对「写基线契约」阶段没问题,但 16G.3/16G.4 一旦<b>加了新命令能力</b>,这些边界必须用<b>对抗性 probe</b> 重新验证(对照表已把 reward_hacking_monitoring 列为 16G.4 阻塞,方向对)。提醒你:别把这轮的「安全够用」当成新工具加完后也安全。
+  </div>
+  <div class="callout info">
+    <b>② mini-SWE 证据的 sha256 指向评测 worktree 之外的文件。</b>它们用 <code>evaluation_worktree:runs/...</code> opaque_ref 绑定,不在本训练 worktree 里、也不会随本仓库提交。要复核这些 sha256 需要访问评测 worktree —— 这是跨 worktree 引用的固有特性,不是缺陷,但你知道就好。
+  </div>
+  <div class="callout warn">
+    <b>③ 提交范围在累积。</b>第一轮 16G.0 的 2 个待办(<code>gpt_advice.md</code> 引用、范围收窄)还没处理,这轮又加了 5 份 evidence + builder + 测试 + notes,全是未跟踪。而且 <code>gpt_advice.md</code> 在这轮仍被间接关联。<b>建议尽快定一次提交,把两轮 16G.0 一起干净入库</b>,免得越拖越乱。
+  </div>
+
+  <!-- 6 -->
+  <h2 class="sec" id="next">6 · 下一步</h2>
+  <ul>
+    <li><b>建议接受 follow-up 完成态。</b>我没发现会让方向走偏的问题,5 条反馈全落实。</li>
+    <li><b>定提交策略（观察③）:</b>要我帮你列一个干净的提交清单(哪些进、哪些是历史噪声不进、<code>gpt_advice.md</code> 引用怎么处理)吗?这个建议先做,否则文件会越堆越多。</li>
+    <li><b>然后进 16G.1。</b>它现在有了可追溯依据(per-capability comparison + implementation requirements)。我可以照老规矩,在 agent 动手前帮你写 16G.1 的审查要点 —— 特别盯 profile taxonomy（safe/core/extended/redteam 四档怎么分),以及确认 16G.4 那 9 条阻塞别被一股脑塞进一个阶段。</li>
+  </ul>
+
+  <div class="footer">
+    本审查由我独立完成:检查 git 变更范围、重算 4 份契约 sha256 绑定、从 comparison 重新推导 27/17 计数与阻塞阶段映射、统计 CC 契约证据多样性、检查基线话术重复度、解析 25 份 JSON、自行 grep 泄漏、本机重跑 5 个测试、逐条核对 R1–R5 落实、通读 implementation-notes。所有「结果」列可用相同命令复核。
+  </div>
+</main>
+</div>
+</body>
+</html>

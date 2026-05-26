@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三个 Harness 工具对比（扫盲版）</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+    --cc:#7ee0c0; --mini:#e0b87e; --rh:#9cc4ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;font-size:15px}
+  .wrap{display:flex;max-width:1180px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:236px;flex:0 0 236px;padding:24px 14px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:36px 46px 120px}
+  h1{font-size:25px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:22px}
+  h2.sec{font-size:20px;margin:46px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:26px 0 9px;color:#cdd6e6}
+  p{margin:10px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.8px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.7px;line-height:1.6}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13.8px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.bad{background:#26161a;border:1px solid #6b3434}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:8px 0;padding-left:22px}li{margin:6px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  /* 三家对比卡 */
+  .task{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:16px 0}
+  .task .q{font-size:14.5px;font-weight:600;color:#fff;margin-bottom:10px}
+  .task .q .ic{color:var(--accent2)}
+  .row{display:grid;grid-template-columns:128px 1fr;gap:0;border-top:1px solid var(--line);padding:9px 0}
+  .row:first-of-type{border-top:none}
+  .row .who{font-weight:600;font-size:12.7px}
+  .row.cc .who{color:var(--cc)}.row.mini .who{color:var(--mini)}.row.rh .who{color:var(--rh)}
+  .row .what{font-size:13.4px}
+  .verdict{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:13px}
+  .analogy{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+  .acard{border-radius:12px;padding:14px 16px;border:1px solid}
+  .acard.cc{background:#10231d;border-color:#2f6b5a}
+  .acard.mini{background:#231d10;border-color:#6b5a2f}
+  .acard.rh{background:#101a2b;border-color:#34507a}
+  .acard h4{margin:0 0 6px;font-size:14.5px}
+  .acard.cc h4{color:var(--cc)}.acard.mini h4{color:var(--mini)}.acard.rh h4{color:var(--rh)}
+  .acard p{font-size:12.8px;margin:5px 0;color:#cdd6e6}
+  .footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:#6b7484;font-size:12.5px}
+  @media(max-width:900px){nav{display:none}main{padding:24px 18px}.analogy{grid-template-columns:1fr}.row{grid-template-columns:90px 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#zero">0 · 先扫盲三个概念</a>
+  <a href="#shell" class="sub">什么是 shell / bash</a>
+  <a href="#tool" class="sub">什么是 agent 的"工具"</a>
+  <a href="#three" class="sub">三个 harness 的根本区别</a>
+  <a href="#bycase">1 · 逐件事对比（带小例子）</a>
+  <a href="#whylock">2 · 为什么 RH 故意锁住 shell</a>
+  <a href="#summary">3 · 差距一览</a>
+  <a href="#supplement">4 · 补充：之前没汇报的点</a>
+  <a href="#docker">5 · 进阶：Docker 怎么撑起"装依赖"</a>
+  <a href="#docker-base" class="sub">Docker 基础三件套</a>
+  <a href="#overlay" class="sub">每题私有 overlay</a>
+  <a href="#l2" class="sub">L2 重放环境上下文</a>
+  <a href="#reuse" class="sub">run_public_command 复用持久容器</a>
+</nav>
+<main>
+  <h1>三个 Harness 工具对比（扫盲版）</h1>
+  <p class="meta">这是 <a href="repo_harness_verl_stage16g0_full_stage_report.html">完整阶段报告</a> 第 4 节的展开版　·　面向「不熟悉命令行 / shell / bash，也不熟悉这三个 harness 工具」的读者，从最基础讲起，每条配小例子</p>
+
+  <div class="callout info">
+    <b>读这篇你会搞清楚三件事：</b>① 命令行 / shell / bash 到底是什么；② 这三个系统（Claude Code、mini-SWE-agent、RepoHarness）给 AI 的"工具"长什么样、有什么根本不同；③ 我们这个 RepoHarness 到底差在哪、为什么有些地方是"故意"差的。
+  </div>
+
+  <!-- 0 -->
+  <h2 class="sec" id="zero">0 · 先扫盲三个概念</h2>
+
+  <h3 id="shell">① 什么是"命令行 / shell / bash"？</h3>
+  <p>平时我们用电脑是<b>鼠标点图标</b>。程序员还有另一种方式：<b>敲文字命令</b>让电脑干活。这个"敲命令的文字界面"就叫<b>命令行</b>，背后负责解释命令的程序叫 <b>shell</b>，<b>bash</b> 是最常见的一种 shell。</p>
+  <p>举几个最基础的命令，看一眼就懂：</p>
+  <pre><code>ls                    # 列出当前文件夹里有哪些文件
+cat login.py          # 把 login.py 的内容整个打印到屏幕
+grep "password" *.py  # 在所有 .py 文件里找含 "password" 的行
+python -m pytest      # 运行测试
+pip install requests  # 安装一个第三方库</code></pre>
+  <p>bash 的特点是 <b>"什么命令都能敲、能自由组合"</b> —— 非常强大，也非常自由。对人来说很方便；但如果把这种"什么都能敲"的能力交给一个<b>正在被训练的 AI</b>，自由就可能变成"作弊的口子"（第 2 节细讲）。</p>
+
+  <h3 id="tool">② 什么是 agent 的"工具"？</h3>
+  <p>AI agent 不是直接坐在键盘前敲字。它每一步只能做一件事：<b>调用一个"工具"</b>（本质是一个预先定义好的函数），填好参数，系统执行后把结果（文字）返回给它，它再决定下一步。</p>
+  <p>同样是"读文件"，两种风格：</p>
+  <pre><code># 风格 A：给 AI 一个万能终端（bash），它自己敲命令
+AI: cat login.py
+系统: (打印整个文件文本)
+
+# 风格 B：给 AI 一个专用工具，参数固定、结果结构化
+AI: read_file(path="login.py", start_line=1, end_line=50)
+系统: { 行号化的内容, 是否还有更多, ... }</code></pre>
+  <p>风格 A 自由但难管控；风格 B 受控、可审计、好截断好脱敏。<b>这正是三个 harness 的分水岭。</b></p>
+
+  <h3 id="three">③ 三个 harness 的根本区别（一个类比）</h3>
+  <div class="analogy">
+    <div class="acard mini">
+      <h4>mini-SWE-agent</h4>
+      <p><b>= 一把瑞士军刀</b></p>
+      <p>AI 只有<b>一个工具：bash</b>。看文件、搜代码、改文件、跑测试，全靠敲命令。像一个程序员坐在裸终端前。</p>
+      <p>简单直接，但全靠这一把刀，安全和审计要靠外面套一层容器。</p>
+    </div>
+    <div class="acard cc">
+      <h4>Claude Code</h4>
+      <p><b>= 一整套专用工具箱</b></p>
+      <p>每件事一个专用工具：<code>Read</code> 读、<code>Grep</code> 搜、<code>Edit</code> 改、<code>Write</code> 建、<code>Bash</code> 跑命令…… Bash 只是工具箱里的<b>其中一把</b>，而且按它要过<b>安全检查</b>。</p>
+      <p>这是真实产品形态：强能力 + 分层 + 权限。</p>
+    </div>
+    <div class="acard rh">
+      <h4>RepoHarness（我们的）</h4>
+      <p><b>= 工具箱，但终端那把被锁起来了</b></p>
+      <p>读/搜/改的专用工具很齐全（接近 Claude Code）；但"自由敲命令"那把（bash/execute_bash）<b>被做得很窄、默认不放出来</b>。</p>
+      <p>因为这是<b>训练 AI 的环境</b>，怕 AI 用终端作弊或偷看答案（第 2 节）。</p>
+    </div>
+  </div>
+  <p class="small">你这次说的「mini-SWE 基本就是纯 bash」完全对 —— 它就是"一把瑞士军刀"。所以下面对比时，<b>mini-SWE 那一列基本都是"敲某条 bash 命令"</b>；重点看的是 Claude Code（产品标杆）和 RepoHarness（我们）之间的差距。</p>
+
+  <!-- 1 -->
+  <h2 class="sec" id="bycase">1 · 逐件事对比（每件事配一个小例子）</h2>
+  <p>下面每张卡片是"假设要做某件事，三个 harness 分别怎么做"，最后给一个差距判定。</p>
+
+  <div class="task">
+    <div class="q"><span class="ic">①</span> 我想看 <code>login.py</code> 写了什么</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what">敲 <code>cat login.py</code> → 屏幕打印整个文件</div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what">按 <code>Read("login.py")</code> → 返回带行号内容，文件太大自动分页、告诉它"还有更多"</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what"><code>read_file("login.py")</code> → 和 Claude Code 几乎一样</div></div>
+    <div class="verdict"><span class="tag t-good">够用 ✓</span> 读文件三家都行，RH 是结构化方式，比裸 <code>cat</code> 更好控制。</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">②</span> 整个项目里，哪儿定义了 <code>login</code> 这个函数？</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what"><code>grep -rn "def login" .</code>（grep=找文字，-r=递归翻子目录，-n=显示行号）</div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what"><code>Grep("def login")</code></div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what"><code>grep("def login")</code> + 还有 <code>glob_files</code>（按文件名找）、<code>symbol_search</code>（按函数/类名找）</div></div>
+    <div class="verdict"><span class="tag t-good">够用 ✓</span> 搜索三家都行，RH 甚至多给了 symbol_search。</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">③</span> 把 <code>timeout = 30</code> 改成 <code>timeout = 60</code></div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what">敲 <code>sed -i 's/timeout = 30/timeout = 60/' config.py</code>（sed 是文本替换命令，语法晦涩、容易改错），或干脆重写整个文件</div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what"><code>Edit(config.py, old="timeout = 30", new="timeout = 60")</code> —— 精确找到那段、替换</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what"><code>edit_file(...)</code> 和 Claude Code 一模一样</div></div>
+    <div class="verdict"><span class="tag t-good">够用 ✓</span> 改单处三家都行，RH/CC 的方式比 mini-SWE 的 sed 更安全。</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">④</span> 把一个函数改名，涉及 3 个文件、8 处</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what">写脚本批量替换，或生成一个补丁文件再 <code>git apply</code></div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what">连续按 8 次 <code>Edit</code>（Claude Code <b>也没有</b>"一次改多文件"的按钮）</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what">连续 8 次 <code>edit_file</code> —— 能做，只是没有更省事的批量 / apply_patch 工具</div></div>
+    <div class="verdict"><span class="tag t-warn">差一点 ⚠️</span> 是"效率"差距不是"能不能"。注意连 Claude Code 都靠多次 Edit，所以这不是硬伤（前面单独聊过 apply_patch 不是必需）。</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">⑤</span> 新建一个文件 / 删文件 / 建文件夹</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what">建：<code>echo "..." &gt; new.py</code>（<code>&gt;</code>=把输出写进文件）；删：<code>rm old.py</code>；建夹：<code>mkdir tests</code></div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what">建/覆盖：<code>Write("new.py", 内容)</code>；删/移/建夹靠 Bash</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what"><code>create_file</code> 能建（默认 scaffold 有）；但<b>没有</b>覆盖写 / 删文件 / 移动 / 建文件夹的工具</div></div>
+    <div class="verdict"><span class="tag t-warn">差一点 ⚠️</span> 能建新文件，但删/移/建目录这套文件操作还缺（16G.2 要补）。</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">⑥</span> 我改完了，只想跑那个原本失败的测试看好没好 <span class="tag t-bad" style="margin-left:6px">核心差距</span></div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what"><code>python -m pytest tests/test_login.py::test_bad_password -x</code> —— 想跑哪个跑哪个（<code>::</code> 后面是具体那一个测试名）</div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what">用 Bash 跑同样的命令，一样能精确指定单个测试</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what">只有 <code>run_tests()</code>，<b>不能填参数</b> —— 它只会跑"预先配好的那一整套"，你没法说"只跑这一个"</div></div>
+    <div class="verdict"><span class="tag t-bad">明显差距 ❌</span> 这是最关键的缺口之一。AI 学不会"针对性验证"，只能要么全跑、要么不跑 → 容易被训成"懒得跑测试、靠静态阅读猜答案"。（16G.3 P0）</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">⑦</span> 我怀疑某函数对空字符串有 bug，想写 3 行脚本试一下</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what"><code>echo "import mod; print(mod.f(''))" &gt; t.py &amp;&amp; python t.py</code></div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what"><code>Write</code> 一个临时脚本 + <code>Bash</code> 跑它</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what"><b>没有</b>正式的"写临时脚本并运行"工具；只能用很受限的内联 python，或诊断侧通道（且不进训练）</div></div>
+    <div class="verdict"><span class="tag t-bad">明显差距 ❌</span> 写复现脚本是真实调试的常见动作（"先复现 bug 再修"），RH 还没有正式的 <code>scratch_python</code>。（16G.3 P0）</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">⑧</span> 这个项目要先装依赖、或跑项目自带的命令才能测</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what">直接敲 <code>pip install -e .</code>、<code>tox</code>、<code>make test</code> 等</div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what">用 Bash 跑，危险命令可能要批准</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what">装依赖类命令大多被<b>拒绝</b>；没有统一的"项目命令"入口（tox/nox/sphinx 等）</div></div>
+    <div class="verdict"><span class="tag t-bad">明显差距 ❌</span> 影响"需要先搭好环境才能跑"的真实任务。（依赖 16G.4 / 项目命令 16G.3）</div>
+  </div>
+
+  <div class="task">
+    <div class="q"><span class="ic">⑨</span> 通用"跑任意命令"（shell 本身的能力）</div>
+    <div class="row mini"><div class="who">mini-SWE</div><div class="what">这就是它的<b>全部</b> —— 一个 bash，爱跑啥跑啥</div></div>
+    <div class="row cc"><div class="who">Claude Code</div><div class="what">有 <code>Bash</code> 工具，但危险命令要过权限/批准</div></div>
+    <div class="row rh"><div class="who">RepoHarness</div><div class="what"><code>execute_bash</code> 只允许白名单（rg/grep/安全 git/pytest/受限 python），而且<b>默认不开</b></div></div>
+    <div class="verdict"><span class="tag t-info">明显差距，但故意为之</span> 这是 RH 和 mini-SWE 唯一明显弱的点。<b>为什么故意 → 看下一节。</b></div>
+  </div>
+
+  <!-- 2 -->
+  <h2 class="sec" id="whylock">2 · 为什么 RepoHarness 故意把 shell 锁起来？</h2>
+  <p>关键背景：<b>这是用来训练 AI 的环境，不是给人用的工具。</b>训练时我们会用"测试通过没通过"给 AI 打分（reward）。如果给 AI 一个完整 bash，它可能学会<b>"作弊刷分"</b>而不是"真的解决问题"。几个具体的作弊口子：</p>
+  <table>
+    <tr><th style="width:30%">如果给完整 bash，AI 可能…</th><th>具体例子（大白话）</th></tr>
+    <tr><td>偷标准答案</td><td>敲 <code>cat .../gold_patch.diff</code> 把"标准修复补丁"直接抄过来</td></tr>
+    <tr><td>偷看隐藏测试</td><td>敲 <code>cat .../hidden_test.py</code> 看判分用的测试，然后专门糊弄这些测试，而不是真改对</td></tr>
+    <tr><td>翻历史找答案</td><td>敲 <code>git log</code> / <code>git show</code> 看仓库后来那个"修复 commit"长什么样</td></tr>
+    <tr><td>篡改测试</td><td>把测试文件改成"永远通过"，分数就上去了，但 bug 根本没修</td></tr>
+    <tr><td>污染环境</td><td>乱装东西、改公共依赖，让后面的题结果都变了，训练数据不可复现</td></tr>
+    <tr><td>外联偷东西</td><td>敲 <code>curl 某网址</code> 把信息传出去或下载答案</td></tr>
+  </table>
+  <div class="callout bad">
+    这些统称 <b>reward hacking（刷分作弊）</b>。一旦 AI 在训练里学会了走这些捷径，它就<b>学不到真本事</b>，而且换到真实环境立刻露馅。所以 RepoHarness 不敢直接给完整 bash。
+  </div>
+  <div class="callout good">
+    <b>但"锁住 shell"不等于"让 AI 变弱"。</b>正确目标是：<b>在堵死作弊口子的前提下，让 AI 仍拥有真实的诊断能力</b>。这就是 16G.3 要做的 <code>run_public_command</code> —— 你可以把它想成一个<b>"只能跑安全公开命令的受限终端"</b>：能跑测试、能跑复现脚本、能看失败输出，但碰不到标准答案、隐藏测试、历史记录，也改不了公共环境。<br><br>
+    一句话：mini-SWE 是"给一把没有保险的刀"，RepoHarness 想要的是"给一把<b>带安全锁</b>的刀"——同样能干活，但砍不到不该砍的地方。
+  </div>
+
+  <!-- 3 -->
+  <h2 class="sec" id="summary">3 · 差距一览（一眼看清强在哪、弱在哪）</h2>
+  <table>
+    <tr><th style="width:34%">能力</th><th class="c" style="width:120px">和 Claude Code 比</th><th>说明</th></tr>
+    <tr><td>看文件 / 搜代码 / 找文件</td><td class="c"><span class="tag t-good">够用</span></td><td>结构化工具齐全，甚至多了 symbol_search</td></tr>
+    <tr><td>读长输出 / 回看大结果</td><td class="c"><span class="tag t-good">够用</span></td><td>有 artifact 回读</td></tr>
+    <tr><td>沙箱隔离 / 防偷答案</td><td class="c"><span class="tag t-good">够用（更强）</span></td><td>RH 在防泄漏、防作弊上比 mini-SWE 强得多</td></tr>
+    <tr><td>改单处代码</td><td class="c"><span class="tag t-good">够用</span></td><td>edit_file 精确替换</td></tr>
+    <tr><td>新建文件</td><td class="c"><span class="tag t-warn">差一点</span></td><td>能建，但缺覆盖写</td></tr>
+    <tr><td>多文件 patch / 删 / 移 / 建目录</td><td class="c"><span class="tag t-warn">差一点</span></td><td>能凑合做，效率低（16G.2 补）</td></tr>
+    <tr><td>跑定向测试（只跑一个）</td><td class="c"><span class="tag t-bad">明显差距</span></td><td>run_tests 无参数（16G.3 P0）</td></tr>
+    <tr><td>写复现脚本（scratch）</td><td class="c"><span class="tag t-bad">明显差距</span></td><td>没有正式 scratch_python（16G.3 P0）</td></tr>
+    <tr><td>跑项目命令 / 装依赖</td><td class="c"><span class="tag t-bad">明显差距</span></td><td>没统一入口、依赖多被拒（16G.3 / 16G.4）</td></tr>
+    <tr><td>自由跑任意命令</td><td class="c"><span class="tag t-info">故意受限</span></td><td>用受控 run_public_command 替代裸 shell</td></tr>
+    <tr><td>任务清单（TodoWrite）</td><td class="c"><span class="tag t-warn">差一点</span></td><td>有 update_working_state，较弱</td></tr>
+    <tr><td>符号跳转 / LSP / 子代理 / 插件</td><td class="c"><span class="tag t-info">可后置</span></td><td>不阻塞主线，以后再说</td></tr>
+  </table>
+  <div class="callout info">
+    <b>一句话总结：</b>RepoHarness 在"<b>看 / 搜 / 改 / 防作弊</b>"上已经够用甚至更强；真正的差距集中在"<b>让 AI 动手验证</b>"这一块 —— 跑定向测试、写复现脚本、跑项目命令、装依赖。这正是真实程序员"改一点→跑一下→看结果→再改"的核心循环，也是 16G.2–16G.4 要补的重点。
+  </div>
+
+  <!-- 4 -->
+  <h2 class="sec" id="supplement">4 · 补充：人类可读分析文档里、之前 HTML 没汇报到的几点</h2>
+
+  <h3>① 明确的"现在不应该做什么"（3 条红线）</h3>
+  <table>
+    <tr><th style="width:36%">不要做</th><th>为什么</th></tr>
+    <tr><td>不要直接进 Stage 17B / Stage 20（冻结数据 / 生产训练轨迹）</td><td>主工具面还没定型，现在冻结会把 AI 训练到一个"不稳定、和目标环境不一致"的工具面上，等于在错误地基上盖楼</td></tr>
+    <tr><td>不要把"直接给完整 shell"当成快速解法</td><td>见第 2 节那一串作弊风险；快是快，但训出来的能力是假的</td></tr>
+    <tr><td>不要把 16G.5 当成"第一次认真对比"</td><td>这就是上次 follow-up 修正的事：对比要在动手前（16G.0）做完，否则 16G.1–16G.4 改完才发现方向错了要返工。16G.5 只做"改完后验收"</td></tr>
+  </table>
+
+  <h3>② 和 OpenHands / SWE-Gym / DeepSWE 的关系（关于"装依赖、搭环境"）</h3>
+  <p>除了 Claude Code 和 mini-SWE，业界还有一类系统（OpenHands、SWE-Gym、DeepSWE）特别强调"<b>可执行环境</b>"——也就是能真实地装依赖、搭构建、跑完整项目。文档指出：如果 RepoHarness 不补"依赖安装 / 每题私有环境 / 项目命令路由"这块，在那些"必须先把环境搭好才能跑"的真实任务上，会明显弱于这类系统。这条对应 16G.4 的依赖环境收口。</p>
+
+  <h3>③ 正式 scratch_python 不只是"能跑脚本"，要回答一串问题</h3>
+  <p>文档强调，做 scratch_python 时，"能跑"只是第一步，真正要定清楚的是：</p>
+  <pre><code>临时脚本写在哪里？是否允许 import 项目代码？
+能否读写 workspace 文件、能否访问依赖环境？
+输出怎么截断和脱敏？
+脚本本身会不会混进 final.patch（最终提交的补丁）？
+脚本跑出来的结果，算不算进训练信号（reward / 导出）？
+失败时，是模型的错、环境的错、还是 harness 的错？</code></pre>
+  <p class="small">这也是为什么 16G.0 没有假装"已经能跑 scratch"——它诚实地把这块标成了"只做了静态策略检查、没真跑"。</p>
+
+  <h3>④ 权限拒绝："不是没有字段，而是字段怎么帮 AI 学会改进"</h3>
+  <p>一个容易误会的点：RepoHarness 的拒绝信息<b>已经</b>有结构化字段（<code>reason_code</code> 拒绝原因、<code>recovery_hint</code> 恢复建议、<code>safe_argv</code> 安全写法）。所以后续不是"从零造字段"，而是要验证：AI 看到拒绝后，<b>是否真的学会"换个安全工具再试"</b>，而不是被吓得"干脆少用工具、少验证、直接猜答案"。这是行为层面的事，不是字段层面的事。</p>
+
+  <div class="callout good">
+    <b>整体不变的结论：</b>RepoHarness 是"<b>看/搜/改/防作弊很强、动手验证能力欠缺</b>"的 harness——不是 toy，但还不能直接做 RL。下一步进 16G.1 定工具 profile，然后 16G.2（文件操作）、16G.3（公开命令/测试/复现）、16G.4（依赖/持久 shell/训练 linkage）依次补齐，最后 16G.5 实证验收。
+  </div>
+
+  <!-- 5 -->
+  <h2 class="sec" id="docker">5 · 进阶扫盲：Docker 后端怎么撑起"装依赖→多 turn 用"</h2>
+  <p>前面聊到"装依赖跨 turn 用"其实不需要真正的持久 shell，只需要三样东西：<b>每题私有 overlay</b> + <b>L2 每次重放环境上下文</b> + <b>让 run_public_command 复用每题持久容器</b>。这三个名词背后是 Docker 和 Python 环境的基础概念，这一节从头讲。</p>
+
+  <h3 id="docker-base">5.0 · 先补 Docker 基础三件套（理解后面全靠它）</h3>
+  <table>
+    <tr><th style="width:120px">名词</th><th>大白话</th></tr>
+    <tr><td><b>镜像 image</b></td><td>一个打包好的"系统快照"，里面有操作系统、Python、预装的依赖。它是<b>只读模板</b>，像一张刻好的光盘。</td></tr>
+    <tr><td><b>容器 container</b></td><td>用镜像<b>启动起来的运行实例</b>。像把光盘装进电脑跑起来。可以同时跑很多个容器，互相隔离。</td></tr>
+    <tr><td><b>可写层 / 分层文件系统</b></td><td>镜像是<b>只读</b>的；启动容器时，会在镜像最上面盖一个<b>可写层</b>。你在容器里写文件、<code>pip install</code> 装包，全写进这个可写层，<b>动不到底下的只读镜像</b>。</td></tr>
+  </table>
+  <pre><code>      ┌─────────────────────────┐  ← 可写层（容器自己的，你的改动都在这）
+      │  pip 装的包、改的代码…    │
+      ├─────────────────────────┤
+      │  只读镜像 image          │  ← 只读，多个容器可共享同一个镜像
+      │  (OS + Python + 通用依赖) │
+      └─────────────────────────┘</code></pre>
+  <p>记住这张图，下面的"overlay"和"持久容器"都是它的变体。</p>
+
+  <h3 id="overlay">5.1 · 每题私有 overlay 是什么</h3>
+  <p><b>要解决的问题：</b>训练要跑成百上千道题，它们共用一个很大的基础环境（OS + 通用依赖）。但每道题可能要装<b>自己额外的依赖</b>。如果所有题都往<b>同一个</b>环境里装：</p>
+  <ul>
+    <li>题 A 装 <code>numpy==1.20</code>、题 B 要 <code>numpy==1.26</code> → 互相冲突、污染；</li>
+    <li>题 A 装的东西改变了题 B 的结果 → 训练<b>不可复现</b>（同一道题重跑结果都不一样，reward 信号就脏了）。</li>
+  </ul>
+  <p><b>解法 = 每题私有 overlay：</b>每道题在<b>共享只读基础</b>之上，叠一个<b>只属于自己的可写层（overlay）</b>。"overlay"就是"覆盖层"的意思 —— 一个可写层盖在只读基础上面。</p>
+  <pre><code>      只读共享基础（base，所有题共用，省时间省空间）
+        Python 3.11 + 项目通用依赖
+              │
+   ┌──────────┼──────────┐
+   ▼          ▼          ▼
+ 题A 私有层   题B 私有层   题C 私有层      ← 每题一个可写 overlay
+ numpy1.20   numpy1.26   ...
+
+ 题A 看到的 = base + A层；题B 看到的 = base + B层；互不影响
+ 题做完 → 丢弃该私有层（base 始终干净、只读）</code></pre>
+  <p><b>三个好处（正好对应训练需求）：</b></p>
+  <table>
+    <tr><td style="width:90px"><b>隔离</b></td><td>A 题装的不影响 B 题 → 可复现</td></tr>
+    <tr><td><b>安全</b></td><td>私有层可写、共享 base 只读 → 模型<b>改不了公共环境</b>（堵住第 2 节"污染环境"那个作弊口子）</td></tr>
+    <tr><td><b>效率</b></td><td>不用每题从零搭一套完整环境，大头共享，只 overlay 各自的小差异</td></tr>
+  </table>
+  <div class="callout info">
+    <b>它和"每题持久容器"是什么关系？</b>其实<b>每题起一个容器</b>就天然是一种 overlay —— 容器自带的那个可写层（5.0 那张图最上层），就是这道题的私有 overlay。所以最简单的实现就是"<b>每题一个容器</b>"：题内复用、题间销毁，可写层天然隔离。更精细的做法是用 Linux 的 OverlayFS 显式挂载（共享更大的只读 base、只 overlay 依赖目录），但概念是同一个。
+  </div>
+
+  <h3 id="l2">5.2 · L2「每次重放环境上下文」是什么</h3>
+  <p><b>先补三个基础概念：</b></p>
+  <table>
+    <tr><td style="width:130px"><b>cwd 当前工作目录</b></td><td>命令"在哪个文件夹里跑"。在 <code>/repo</code> 里跑 <code>pytest tests/</code> 和在 <code>/</code> 里跑，结果不同。</td></tr>
+    <tr><td><b>环境变量</b></td><td>一些"全局设定"，命令运行时能读到。例：<code>PATH</code>（去哪找可执行程序）、<code>PYTHONPATH</code>（Python 去哪找模块）。</td></tr>
+    <tr><td><b>venv 虚拟环境</b></td><td>Python 的"独立依赖小屋"。<code>python -m venv .venv</code> 建一个，<code>source .venv/bin/activate</code> 激活后，<code>pip install</code> 装进这个小屋、<code>python</code> 用这个小屋的包。"激活"本质就是改了几个环境变量（让 PATH 指向 <code>.venv/bin</code>）。</td></tr>
+  </table>
+  <p><b>问题：</b>每次 <code>docker exec</code> 都是一个<b>全新的 shell</b> —— cwd 回到默认、环境变量清空、venv 没激活。所以 turn 1 做的 <code>cd /repo && source .venv/bin/activate</code>，到 turn 3 那个全新 exec <b>一概不记得</b>。</p>
+  <p><b>L2 解法：</b>让 <b>harness 自己记住</b>这道题的"环境上下文"（工作目录 + 该设的环境变量 + venv 路径），<b>每次执行命令前自动重新套上</b>。模型只管说要跑什么，harness 在底层补全：</p>
+  <pre><code>模型只说：   run_public_command("python -m pytest tests/test_x.py::test_y")
+
+harness 实际执行：
+  docker exec &lt;这道题的持久容器&gt; bash -lc \
+    "cd /repo && source .venv/bin/activate && python -m pytest tests/test_x.py::test_y"
+       ▲              ▲                              ▲
+    回到工作目录    激活venv(上一turn装的包在这)        模型真正要跑的命令</code></pre>
+  <p>模型看起来像"一直在同一个会话里连续操作"，但底层每次都是<b>独立、确定</b>的 exec。harness 就是那个"每次帮你站回正确位置、系好围裙"的人。</p>
+  <div class="callout good">
+    <b>为什么这比"真持久 shell"更适合训练？</b>因为<b>确定性</b>。每条命令的运行环境是 harness 明确构造、可记录、可复现的 —— 不依赖"上一条命令碰巧把环境改成了什么"。装的依赖在文件系统（私有 overlay）里持久，所以 <code>source .venv/bin/activate</code> 后照样用得到上一 turn 装的包；而 cwd/env 不需要真持久，因为 harness 每次重放。
+  </div>
+
+  <h3 id="reuse">5.3 · 让 run_public_command 跑在"每题持久容器"上，大概怎么做</h3>
+  <p>好消息：<b>"每题持久容器"这套基础设施，现在的 <code>diagnostic_session</code> 已经实现并验证过了</b>。要做的不是从零造，而是"复用基础设施 + 换一套语义"。</p>
+  <pre><code>diagnostic_session 已经做好的【基础设施】—— 直接复用：
+   session_id = run_id + task_id
+   → 找/建一个【这道题专属的持久容器】
+   → 同一题多次调用复用它（文件、装的依赖都还在 ← 就是"持久"）
+   → 题结束 / 超时 → 销毁容器（跨题隔离）
+
+run_public_command 要换掉的【语义】—— 重做：
+   ✗ 不用 diagnostic_shell 那种宽权限
+   ✓ 改用 public-only 命令策略（白名单 + AST 校验，只允许公开测试/项目命令/受控复现）
+   ✓ 碰不到 hidden verifier / gold patch / runtime-private / git history / 共享依赖写
+   ✓ 结果可进训练轨迹（training-eligible）、脱敏、带 reason_code / recovery_hint</code></pre>
+  <p><b>拆开看就是两件事：</b></p>
+  <ul>
+    <li><b>① 持久容器基础设施</b>（容器复用、文件持久、跨题销毁）—— diagnostic_session 已有，<b>直接复用</b>；它天然提供了 5.1 的"每题私有 overlay"。</li>
+    <li><b>② 高权限诊断语义</b>（宽命令、能进侧通道）—— <b>不复用</b>，换成 public-only 策略 + 训练资格门禁。</li>
+  </ul>
+  <p>每次执行 = 在那个持久容器里 <code>docker exec</code>，前面套上 5.2 的环境上下文（<code>cd</code> + <code>venv</code> + env），命令先过 public 策略校验，结果标成可进训练。</p>
+  <div class="callout info">
+    <b>一个类比：</b>diagnostic_session 已经修好了"一间<b>每题专用、用完就拆</b>的实验室"（持久容器）。我们要做的不是再盖一间实验室，而是给它配一套"<b>只能做公开安全实验的操作规程</b>"（public 命令策略），并让实验产出能正式记进训练数据。<br><br>
+    <b>所以回答你的问题：</b>用 Docker 后端、不上外部 sandbox 服务，<b>不难</b> —— 因为最难的"每题持久容器 + 跨题销毁"已经用 Docker 跑通了；run_public_command 复用同一套 Docker 机制，只换策略和训练资格。真正费工的是"真交互式持久 shell / 后台常驻进程"（L3），而那个我们本来就为了可复现性主动延后到 extended。
+  </div>
+
+  <div class="callout good">
+    <b>把三者串起来（一句话）：</b><b>每题持久容器</b>给你"装的东西不丢"（= 每题私有 overlay，隔离又安全）；<b>L2 每次重放环境上下文</b>给你"模型感觉像连续操作"（但底层确定可复现）；<b>run_public_command 复用这套基础设施 + 换 public 策略</b>给你"能跑测试/复现、又不会作弊、还能进训练"。三件事合起来，就实现了"装依赖→多 turn 用"，全程不需要真正的持久 shell，也不需要外部 sandbox。
+  </div>
+
+  <div class="footer">
+    本文为 <a href="repo_harness_verl_stage16g0_full_stage_report.html">完整阶段报告</a> 第 4 节的扫盲展开版，并补入 <code>stage16g0_human_readable_capability_gap_analysis.md</code> 中此前未在 HTML 汇报的内容（3 条红线、OpenHands 对比、scratch_python 设计问题、权限拒绝的行为层解读），以及 Docker 后端如何支撑"装依赖→多 turn 用"的进阶扫盲（第 5 节）。命令示例为通用 shell / Docker 常识，用于帮助理解，不代表 RepoHarness 实际放开这些命令。
+  </div>
+</main>
+</div>
+</body>
+</html>
