@@ -83,6 +83,27 @@ swe_public_extended：包含 persistent diagnostic shell、长会话诊断和更
 redteam_restricted：用于安全验证、泄漏测试和拒绝恢复训练，不作为主训练默认 profile。
 ```
 
+### 3.5 所有新能力必须绑定 run_episode 统一入口
+
+Stage 16F 已经把新评测和训练入口收敛到 `run-episode-task` / `RepoHarnessRuntime.run_episode(real_episode)`。Stage 16G 后续新增的工具、profile、scaffold 暴露、public environment 提示和训练投影，都必须通过这个统一入口可用并可验收。
+
+旧 `run_task(...)` 只能作为 legacy compatibility 路径存在，不能成为 Stage 16G 新工具能力、训练轨迹或 acceptance evidence 的主事实来源。
+
+### 3.6 工具存在不等于模型可学会使用
+
+每个新增或改造的工具能力都必须同时验证下面几层是否一致：
+
+```text
+tool schema
+模型可见工具说明
+public environment 提示
+scaffold / profile 暴露
+权限拒绝和恢复提示
+tool event / TrainingView / export projection
+```
+
+如果工具已经实现，但默认目标 profile 不暴露、提示语没有说明、拒绝结果不可学习，或者轨迹投影缺失，该能力不能视为完成。
+
 ## 4. 总体阶段拆分
 
 推荐阶段顺序如下：
@@ -134,10 +155,19 @@ sandbox_workspace_and_runtime_private_boundary
 docs/agentic_RL/repo_harness_verl_workstreams/stage16g_1/stage16g1_tool_registry_contract.json
 docs/agentic_RL/repo_harness_verl_workstreams/stage16g_1/stage16g1_profile_taxonomy.json
 docs/agentic_RL/repo_harness_verl_workstreams/stage16g_1/stage16g1_training_eligibility_gate_spec.json
+docs/agentic_RL/repo_harness_verl_workstreams/stage16g_1/stage16g1_profile_registry_inspection_report.json
 docs/agentic_RL/repo_harness_verl_workstreams/stage16g_1/stage16g1_acceptance_summary.json
 ```
 
 如果实现中新增代码，应优先落在 registry、schema、profile 配置和 tests，而不是直接先改 `execute_bash` 或 `diagnostic_shell`。
+
+Stage 16G.1 必须新增或复用一个机器验收入口，例如：
+
+```text
+repo-harness inspect-stage16g1-tool-profile <stage16g1_acceptance_summary.json> --assert-complete
+```
+
+具体命令名可在实现时调整，但必须满足同等机器验收能力，不能只依赖人工阅读 JSON。
 
 ### 5.4 验收条件
 
@@ -150,6 +180,9 @@ Stage 16G.1 完成时必须满足：
 5. 每个工具都有 `allowed_artifact_visibility`、`training_projection_policy` 和 `denial_feedback_policy`。
 6. 新增 registry 检查必须能阻止“工具存在但没有训练投影”的静默退化。
 7. `post_16G_optional` 能力也必须显式进入 registry，并写清 `schema_reserved`、`not_main_swe_rl_blocking_reason` 和 `revisit_stage`，避免后续被误读成遗漏。
+8. 机器验收器能校验 27 条 capability 是否全部映射、17 条 blocking capability 是否都有 owner stage、每个工具是否都有 artifact visibility、training projection 和 denial policy。
+9. 机器验收器能校验每个候选 profile 的模型可见 schema、scaffold 暴露、public environment 提示和拒绝恢复提示是否存在一致性声明。
+10. 至少一个 `run-episode-task` / `run_episode(real_episode)` smoke 证明 registry 和 profile 能通过统一入口被加载或投影。
 
 ### 5.5 非目标
 
@@ -165,22 +198,29 @@ Stage 16G.2 补齐 Claude Code 风格结构化文件操作和 mini-SWE-agent 通
 
 ### 6.2 子阶段建议
 
-为了避免 Stage 16G.2 过重，建议拆成三个子阶段：
+为了避免 Stage 16G.2 过重，建议拆成四个子阶段：
 
 ```text
 16G.2A  结构化文件工具 schema 和 profile 暴露
 16G.2B  apply_patch / write_file / delete_file / move_file / mkdir 行为实现
 16G.2C  patch hygiene、final.patch、official prediction 和 TrainingView 投影
-16G.2D  task state / Todo-like tool projection 和 update_working_state 对齐
+16G.2D  task state / Todo-like tool projection 和 update_working_state 对齐，P2 non-blocking
 ```
 
 ### 6.3 必须覆盖的能力
+
+P0 文件和补丁能力：
 
 ```text
 structured_edit_existing_file
 structured_write_or_create_file
 apply_patch_or_multi_file_edit
 delete_move_mkdir_file_operations
+```
+
+配套但不阻塞 Stage 16G.2 P0 文件工具主线的能力：
+
+```text
 git_diff_status_and_patch_capture
 task_management_todo
 ```
@@ -195,6 +235,8 @@ task_management_todo
 6. 新增工具必须保留 read-before-edit 或等价审计要求，避免模型盲目覆盖未知文件。
 7. `update_working_state` 必须被明确评估：是保留为轻量任务状态工具，还是升级为 Claude Code `TodoWrite` 等价能力。无论选择哪种形态，都要进入 trajectory、TrainingView 和训练投影策略，而不是只作为提示层装饰。
 8. Stage 16G.2 只负责把文件、补丁和任务状态动作投影到后续 verifier / reward 所需的结构化事实中；完整 `final_answer_verifier_reward_linkage` 仍归 Stage 16G.4D 收口。
+9. `task_management_todo` 和 `git_diff_status_and_patch_capture` 不能阻塞 `apply_patch`、`write_file`、`delete_file`、`move_file`、`mkdir` 这些 P0 文件工具完成；它们应作为 16G.2D 或 Stage 16G.5 parity 的补充验收项处理。
+10. 新增文件工具必须通过 `run_episode(real_episode)` 统一入口可见，不能只在旧 `run_task(...)` 或局部工具单测中可用。
 
 ### 6.5 验收条件
 
@@ -207,6 +249,7 @@ Stage 16G.2 完成时必须有可执行 probe 覆盖：
 5. hidden verifier、gold patch、test patch 和 runtime-private 路径仍不可读写。
 6. 结构化文件工具的 tool event 能进入 TrainingView 和后续 reward metadata 候选。
 7. task state / Todo-like 工具的模型可见语义、轨迹投影和训练投影策略已经明确。
+8. 目标 scaffold / profile 中的模型可见工具说明、public environment 提示和实际 executor registry 对齐。
 
 ## 7. Stage 16G.3：公开命令、项目测试命令路由和 scratch Python
 
@@ -221,13 +264,13 @@ Stage 16G.0 follow-up 已经明确：`execute_bash` 当前是窄但非空的安�
 Stage 16G.3 风险较高，建议拆成四个子阶段：
 
 ```text
-16G.3A  public command policy schema、拒绝语义和审计事件
-16G.3B  run_project_test：项目测试命令路由和参数化公开测试
-16G.3C  scratch_python：临时复现脚本和公开诊断 artifact
-16G.3D  run_public_command：受控公开命令闭环和 mini-SWE-agent 能力覆盖 probe
+16G.3A  shared public command execution substrate：cwd、timeout、输出脱敏、artifact、拒绝语义和审计事件
+16G.3B  run_public_command：受控公开命令工具和通用 public command policy
+16G.3C  run_project_test：基于共享底座的项目测试命令路由和参数化公开测试
+16G.3D  scratch_python：基于共享底座的临时复现脚本、公开诊断 artifact 和 mini-SWE-agent 能力覆盖 probe
 ```
 
-如果 Stage 16G.3A 不能先给出可靠拒绝语义和私有路径隔离，Stage 16G.3B 到 Stage 16G.3D 不应继续扩大命令集合。
+如果 Stage 16G.3A 不能先给出可靠的共享执行底座、拒绝语义、输出脱敏、artifact 规则和私有路径隔离，Stage 16G.3B 到 Stage 16G.3D 不应继续扩大命令集合。
 
 ### 7.3 必须覆盖的能力
 
@@ -250,6 +293,8 @@ permission_approval_denial_recovery
 6. 所有拒绝都必须包含结构化字段，例如 `reason_code`、`policy_version`、`retryable`、`safe_alternative_tool` 或 `safe_rewrite_example`。
 7. stdout、stderr、exit code、截断信息和 raw artifact 指针必须分层：模型可见内容公开，原始 artifact 私有，export 只包含 public-safe projection。
 8. Stage 16G.3 的 probe 只使用依赖已经预置的公开环境。依赖安装、共享缓存、private overlay 和复杂环境 setup 到 Stage 16G.4A 才放行。
+9. `run_public_command`、`run_project_test` 和 `scratch_python` 必须复用同一套 cwd、timeout、输出脱敏、artifact visibility、权限拒绝和 audit 语义，不能各自实现一套不兼容的执行规则。
+10. 三个工具都必须通过 `run_episode(real_episode)` 统一入口可见，并且 profile / scaffold 暴露和模型可见说明一致。
 
 ### 7.5 验收条件
 
@@ -262,6 +307,7 @@ Stage 16G.3 完成时必须有 probe 证明：
 5. 访问 hidden verifier、gold patch、test patch、`.git` 作弊路径、宿主绝对路径或共享依赖写入会 deterministic hard fail。
 6. 至少一个 mini-SWE-agent 风格动态诊断闭环可以用结构化 public tools 完成。
 7. Stage 16G.3 probe 明确标注其依赖前置条件；如果某个项目命令失败是因为 Stage 16G.4A 尚未实现 dependency setup，不能误判为 public command 工具本身通过或失败。
+8. `run_public_command`、`run_project_test` 和 `scratch_python` 的 tool result 结构、截断策略、raw artifact 私有化和拒绝恢复字段一致。
 
 ## 8. Stage 16G.4：受控诊断 shell、依赖环境和权限恢复
 
@@ -305,7 +351,8 @@ reward_hacking_monitoring_and_quarantine
 5. 权限拒绝不应只作为异常处理，也要成为模型可学习的恢复信号。
 6. hooks 和 tool lifecycle audit 必须能记录 tool start、tool finish、拒绝、超时、截断、artifact 生成和 quarantine 原因。
 7. final answer 中的测试声明必须能和 tool events 或 verifier summary 交叉校验。
-8. reward builder 不能只看最终 verifier 结果，也要能看到公开诊断质量、假验证、过宽修改和拒绝后恢复质量。
+8. Stage 16G.4 只负责产出公开安全的诊断质量、权限拒绝恢复、假验证、过宽修改、quarantine 等结构化 facts，并接入 reward metadata / quarantine。具体数值型 process reward、权重和训练目标设计留给后续 reward builder 阶段，不能在 Stage 16G.4 提前展开成 Stage 19 级别的奖励设计。
+9. Stage 16G.4 新增或收口的工具投影必须通过 `run_episode(real_episode)` 统一入口验证，旧 `run_task(...)` 只能作为兼容路径检查。
 
 ### 8.5 验收条件
 
@@ -318,6 +365,7 @@ Stage 16G.4 完成时必须有 probe 证明：
 5. permission denial、timeout、truncation、artifact readback、quarantine 都能进入 audit。
 6. final answer 测试声明能和真实工具事件或 verifier metadata 对齐。
 7. TrainingView、trajectory export、reward metadata 和 official prediction 中的工具投影一致。
+8. 模型可见提示、scaffold / profile 暴露、public environment 描述和实际 runtime 工具集合一致。
 
 ## 9. Stage 16G.5：改造后的 Claude Code / mini-SWE-agent parity probe
 

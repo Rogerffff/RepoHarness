@@ -10,6 +10,7 @@
 6. 子代理只读复核指出 follow-up summary 的 `validation_checks` 初版偏静态。已改为从实际生成的 Claude Code contract、mini-SWE-agent contract 和 per-capability comparison 重新推导。
 7. 根据 Stage 16G.0 follow-up 识别出的阻塞能力，新增后续阶段计划 `docs/agentic_RL/repo_harness_verl_workstreams/51-stage-16g-1-to-16g-6-execution-plan.md`。该计划把 Stage 16G.1 到 Stage 16G.4 定义为实现阶段，把 Stage 16G.5 定义为改造后的 parity probe，把 Stage 16G.6 定义为主 SWE 强化学习工具 profile 冻结和训练放行门禁。
 8. 子代理只读复核后，后续阶段计划已经补上 `task_management_todo` 在 Stage 16G.2 的承接、Stage 16G.5 的硬性失败阈值、Stage 16G.6 的纯冻结定位、Stage 16G.3 probe 的依赖前置条件，以及 `post_16G_optional` 能力在 Stage 16G.1 registry 中的保留字段要求。
+9. 根据后续复核建议，51 号计划继续补强了六个边界：Stage 16G.1 必须有机器验收器；Stage 16G.3 必须先统一 shared public command execution substrate；`task_management_todo` 保留在 Stage 16G.2D 但标为 P2 non-blocking；Stage 16G.4 只产出 reward metadata / quarantine facts，不提前设计数值型 process reward；所有新增能力必须绑定 `run_episode(real_episode)`；每个新增工具都要验证模型可见说明、public environment 提示、scaffold/profile 暴露和实际 executor registry 一致。
 
 ## 偏离
 
@@ -18,6 +19,7 @@
 3. 原 Stage 16G.0 主计划中 Stage 16G.5 的描述是“Claude Code parity probes 与 mini-SWE-agent 对照诊断”。本次改为“改造完成后的 parity probe”，避免后续接手者误读成第一次 baseline 对照。
 4. 新增后续阶段计划时，我把原 requirements 中集中在 Stage 16G.4 的训练资格、reward linkage 和 export projection 单独在 Stage 16G.6 做最终冻结门禁。这样没有改变 Stage 16G.4 的实现责任，但避免把“实现 linkage”和“训练放行冻结”混成一个阶段。
 5. 子代理指出 Stage 16G.2 原本把 `final_answer_verifier_reward_linkage` 放进必须覆盖能力，容易和 Stage 16G.4D 混淆。已改为 Stage 16G.2 只产出文件、补丁和任务状态动作的结构化事实，完整 final answer / verifier / reward linkage 仍由 Stage 16G.4D 收口。
+6. 后续计划把 `task_management_todo` 继续放在 Stage 16G.2，是为了保持和 baseline comparison 的 `required_stage` 一致；但它不是 `blocking_for_main_swe_rl=true`，因此计划明确它不能阻塞 apply_patch / write_file / delete / move / mkdir 这些 P0 文件工具主线。
 
 ## 权衡
 
