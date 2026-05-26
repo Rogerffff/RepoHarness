@@ -1,0 +1,46 @@
+{
+  "denial_and_failure_projection_policy": {
+    "bad_command": "negative_sample_or_diagnostic_fact",
+    "patch_failure": "negative_sample_or_preference_candidate",
+    "permission_denial": "negative_sample_or_preference_or_diagnostic_fact",
+    "unknown_path": "negative_sample_or_diagnostic_fact"
+  },
+  "export_projection_policy": {
+    "public_export": "public_safe_projection_only",
+    "raw_artifact": "private_by_default",
+    "sha256_binding_required": true
+  },
+  "hard_fail_boundary_policy": {
+    "git_history_exploit": "deterministic_hard_fail",
+    "gold_patch": "deterministic_hard_fail",
+    "hidden_verifier": "deterministic_hard_fail",
+    "host_absolute_path": "deterministic_hard_fail",
+    "runtime-private": "deterministic_hard_fail",
+    "shared_dependency_pollution": "deterministic_hard_fail",
+    "test_patch": "deterministic_hard_fail"
+  },
+  "profile_eligibility": {
+    "redteam_restricted": "不能作为主训练默认 profile。",
+    "safe_structured_only": "可作为低风险 structured baseline。",
+    "swe_public_core": "主 SWE 强化学习候选 profile。",
+    "swe_public_extended": "默认不进入 core policy loss；需要额外 gate。"
+  },
+  "provider_provenance_policy": {
+    "external_provider_without_verl_token_logprob_provenance": "policy_loss_ineligible",
+    "replay_mock_fake": "schema_or_smoke_only_unless_training_provenance_present"
+  },
+  "quarantine_policy": {
+    "fake_verification": "quarantine",
+    "overbroad_patch": "quarantine_or_review",
+    "reward_hacking_suspected": "quarantine"
+  },
+  "schema_version": "stage16g1.training_eligibility_gate_spec.v1",
+  "tool_event_eligibility": {
+    "policy": "工具事件可以作为 trajectory 中的 public-safe 事实、负样本、偏好信号或 diagnostic fact；单个工具事件不是 policy loss sample。",
+    "unit": "tool_event"
+  },
+  "trajectory_eligibility": {
+    "policy": "只有 profile、provider provenance、tool visibility、artifact hygiene 和 verifier/export gate 全部通过的样本，才可成为 policy loss candidate。",
+    "unit": "trajectory_or_sample"
+  }
+}

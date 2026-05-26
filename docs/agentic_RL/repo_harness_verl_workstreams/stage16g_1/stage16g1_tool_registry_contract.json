@@ -1,0 +1,1609 @@
+{
+  "profile_ids": [
+    "safe_structured_only",
+    "swe_public_core",
+    "swe_public_extended",
+    "redteam_restricted"
+  ],
+  "record_count": 27,
+  "records": [
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "structured_file_read",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "implemented",
+      "model_visible_prompt_status": "implemented",
+      "model_visible_schema_status": "implemented",
+      "owner_stage": "not_required",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "implemented",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "not_required",
+      "run_episode_visibility_status": "implemented",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "implemented",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "read_file"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": true,
+        "diagnostic_only": false,
+        "eligibility_reason": "当前能力可出现在合格 trajectory 中，但单个工具事件本身不是 policy loss sample。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "preserves_sample_candidate_if_all_trajectory_gates_pass",
+        "sft_eligible": true,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_but_weaker_than_claude_code",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "non_text_file_read",
+      "confidence": "medium",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "schema_reserved",
+      "model_visible_schema_status": "schema_reserved",
+      "owner_stage": "post_16G_optional",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_schema_probe",
+        "safe_structured_only": "schema_reserved",
+        "swe_public_core": "schema_reserved",
+        "swe_public_extended": "schema_reserved"
+      },
+      "public_environment_hint_status": "schema_reserved",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "post_16G_optional",
+      "run_episode_visibility_status": "schema_reserved",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "schema_reserved",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "read_file"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": true,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_diagnostic_only_or_schema_reserved",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "large_file_paging_or_artifact_replay",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "implemented",
+      "model_visible_prompt_status": "implemented",
+      "model_visible_schema_status": "implemented",
+      "owner_stage": "16G.5",
+      "persistent_session_boundary_policy": null,
+      "priority": "P1",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "implemented",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "16G.5",
+      "run_episode_visibility_status": "implemented",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "implemented",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "read_tool_result_artifact"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": true,
+        "diagnostic_only": false,
+        "eligibility_reason": "当前能力可出现在合格 trajectory 中，但单个工具事件本身不是 policy loss sample。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "preserves_sample_candidate_if_all_trajectory_gates_pass",
+        "sft_eligible": true,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "glob_file_discovery",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "implemented",
+      "model_visible_prompt_status": "implemented",
+      "model_visible_schema_status": "implemented",
+      "owner_stage": "not_required",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "implemented",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "not_required",
+      "run_episode_visibility_status": "implemented",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "implemented",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "glob_files"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": true,
+        "diagnostic_only": false,
+        "eligibility_reason": "当前能力可出现在合格 trajectory 中，但单个工具事件本身不是 policy loss sample。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "preserves_sample_candidate_if_all_trajectory_gates_pass",
+        "sft_eligible": true,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "grep_content_search",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "implemented",
+      "model_visible_prompt_status": "implemented",
+      "model_visible_schema_status": "implemented",
+      "owner_stage": "not_required",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "implemented",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "not_required",
+      "run_episode_visibility_status": "implemented",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "implemented",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "grep"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": true,
+        "diagnostic_only": false,
+        "eligibility_reason": "当前能力可出现在合格 trajectory 中，但单个工具事件本身不是 policy loss sample。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "preserves_sample_candidate_if_all_trajectory_gates_pass",
+        "sft_eligible": true,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_but_weaker_than_claude_code",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "symbol_search_or_lsp_diagnostics",
+      "confidence": "medium",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "schema_reserved",
+      "model_visible_schema_status": "schema_reserved",
+      "owner_stage": "post_16G_optional",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_schema_probe",
+        "safe_structured_only": "schema_reserved",
+        "swe_public_core": "schema_reserved",
+        "swe_public_extended": "schema_reserved"
+      },
+      "public_environment_hint_status": "schema_reserved",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "post_16G_optional",
+      "run_episode_visibility_status": "schema_reserved",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "schema_reserved",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "symbol_search"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": true,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_diagnostic_only_or_schema_reserved",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "structured_edit_existing_file",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "partial",
+      "model_visible_prompt_status": "partial",
+      "model_visible_schema_status": "partial",
+      "owner_stage": "16G.2",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "partial_or_planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.2",
+      "run_episode_visibility_status": "partial_or_planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "partial",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "edit_file"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "structured_write_or_create_file",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "partial",
+      "model_visible_prompt_status": "partial",
+      "model_visible_schema_status": "partial",
+      "owner_stage": "16G.2",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "partial_or_planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.2",
+      "run_episode_visibility_status": "partial_or_planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "partial",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "create_file",
+        "write_file"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "missing",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "apply_patch_or_multi_file_edit",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.2",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "proposed_tool_required",
+      "required_stage_from_stage16g0": "16G.2",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "apply_patch"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "missing",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "delete_move_mkdir_file_operations",
+      "confidence": "medium",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.2",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "proposed_tool_required",
+      "required_stage_from_stage16g0": "16G.2",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "delete_file",
+        "move_file",
+        "mkdir"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_but_weaker_than_mini_swe_agent",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "bash_or_public_command_execution",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "partial",
+      "model_visible_prompt_status": "partial",
+      "model_visible_schema_status": "partial",
+      "owner_stage": "16G.3",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "forbidden",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "partial_or_planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.3",
+      "run_episode_visibility_status": "partial_or_planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default",
+        "host_absolute_path_forbidden",
+        "network_denied_by_default",
+        "shared_dependency_write_forbidden"
+      ],
+      "scaffold_exposure_status": "partial",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "execute_bash",
+        "run_public_command"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_diagnostic_only",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "persistent_diagnostic_session",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "partial",
+      "model_visible_prompt_status": "partial",
+      "model_visible_schema_status": "partial",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": {
+        "artifact_hygiene_required": true,
+        "main_training_core_default_allowed": false,
+        "path_redaction_required": true,
+        "public_safe_projection_required": true,
+        "session_reset_required": true
+      },
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_safety_probe",
+        "safe_structured_only": "forbidden",
+        "swe_public_core": "forbidden",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "partial_or_planned",
+      "repo_harness_status": "diagnostic_only_current",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "partial_or_planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default",
+        "host_absolute_path_forbidden",
+        "network_denied_by_default",
+        "shared_dependency_write_forbidden"
+      ],
+      "scaffold_exposure_status": "partial",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "diagnostic_shell"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": true,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_diagnostic_only_or_schema_reserved",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "parameterized_public_test_command",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "partial",
+      "model_visible_prompt_status": "partial",
+      "model_visible_schema_status": "partial",
+      "owner_stage": "16G.3",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "forbidden",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "partial_or_planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.3",
+      "run_episode_visibility_status": "partial_or_planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default",
+        "host_absolute_path_forbidden",
+        "network_denied_by_default",
+        "shared_dependency_write_forbidden"
+      ],
+      "scaffold_exposure_status": "partial",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "run_tests",
+        "run_project_test"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "scratch_python_or_reproduction_script",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.3",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "forbidden",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.3",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default",
+        "host_absolute_path_forbidden",
+        "network_denied_by_default",
+        "shared_dependency_write_forbidden"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "scratch_python"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "missing",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "project_command_routing",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.3",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "forbidden",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "proposed_tool_required",
+      "required_stage_from_stage16g0": "16G.3",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default",
+        "host_absolute_path_forbidden",
+        "network_denied_by_default",
+        "shared_dependency_write_forbidden"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "run_project_test",
+        "run_public_command"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "dependency_setup_and_environment_policy",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "forbidden",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default",
+        "host_absolute_path_forbidden",
+        "network_denied_by_default",
+        "shared_dependency_write_forbidden"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "dependency_setup_policy"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "git_diff_status_and_patch_capture",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "implemented",
+      "model_visible_prompt_status": "implemented",
+      "model_visible_schema_status": "implemented",
+      "owner_stage": "16G.5",
+      "persistent_session_boundary_policy": null,
+      "priority": "P1",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "implemented",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "16G.5",
+      "run_episode_visibility_status": "implemented",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "implemented",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "git_diff"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": true,
+        "diagnostic_only": false,
+        "eligibility_reason": "当前能力可出现在合格 trajectory 中，但单个工具事件本身不是 policy loss sample。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "preserves_sample_candidate_if_all_trajectory_gates_pass",
+        "sft_eligible": true,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "final_answer_verifier_reward_linkage",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "final_answer_linkage"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "permission_approval_denial_recovery",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "permission_policy_gate"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "sandbox_workspace_and_runtime_private_boundary",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "sandbox_boundary_gate"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "present_and_sufficient",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "tool_result_truncation_raw_artifact_privacy",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "implemented",
+      "model_visible_prompt_status": "implemented",
+      "model_visible_schema_status": "implemented",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "implemented",
+        "swe_public_core": "implemented",
+        "swe_public_extended": "implemented"
+      },
+      "public_environment_hint_status": "implemented",
+      "repo_harness_status": "present",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "implemented",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "implemented",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "read_tool_result_artifact"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "task_management_todo",
+      "confidence": "medium",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "partial",
+      "model_visible_prompt_status": "partial",
+      "model_visible_schema_status": "partial",
+      "owner_stage": "16G.2",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "partial_or_planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.2",
+      "run_episode_visibility_status": "partial_or_planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "partial",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "update_working_state"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "deferred_schema_only",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "subagent_background_task",
+      "confidence": "medium",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "schema_reserved",
+      "model_visible_schema_status": "schema_reserved",
+      "owner_stage": "post_16G_optional",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_schema_probe",
+        "safe_structured_only": "schema_reserved",
+        "swe_public_core": "schema_reserved",
+        "swe_public_extended": "schema_reserved"
+      },
+      "public_environment_hint_status": "schema_reserved",
+      "repo_harness_status": "schema_reserved",
+      "required_stage_from_stage16g0": "post_16G_optional",
+      "run_episode_visibility_status": "schema_reserved",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "schema_reserved",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "agent_task_schema_reserved"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": true,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_diagnostic_only_or_schema_reserved",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "deferred_schema_only",
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "external_tools_mcp_plugin_skill",
+      "confidence": "medium",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "schema_reserved",
+      "model_visible_schema_status": "schema_reserved",
+      "owner_stage": "post_16G_optional",
+      "persistent_session_boundary_policy": null,
+      "priority": "P2",
+      "profiles": {
+        "redteam_restricted": "allowed_for_schema_probe",
+        "safe_structured_only": "schema_reserved",
+        "swe_public_core": "schema_reserved",
+        "swe_public_extended": "schema_reserved"
+      },
+      "public_environment_hint_status": "schema_reserved",
+      "repo_harness_status": "schema_reserved",
+      "required_stage_from_stage16g0": "post_16G_optional",
+      "run_episode_visibility_status": "schema_reserved",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "schema_reserved",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "external_tool_schema_reserved"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": true,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": false,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_diagnostic_only_or_schema_reserved",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "hooks_tool_lifecycle_audit",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "tool_lifecycle_audit"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "training_eligibility_and_export_projection",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "training_eligibility_gate"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    },
+    {
+      "allowed_artifact_visibility": {
+        "export_projection": "public_safe_projection_only",
+        "model_visible": "summary_or_public_result",
+        "raw_artifact": "private_by_default"
+      },
+      "baseline_gap_type": "partial",
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "reward_hacking_monitoring_and_quarantine",
+      "confidence": "high",
+      "denial_feedback_policy": {
+        "requires_reason_code": true,
+        "requires_retryable": true,
+        "requires_safe_alternative_tool": true,
+        "requires_safe_rewrite_example": true
+      },
+      "executor_binding_status": "not_implemented",
+      "model_visible_prompt_status": "planned",
+      "model_visible_schema_status": "planned",
+      "owner_stage": "16G.4",
+      "persistent_session_boundary_policy": null,
+      "priority": "P0",
+      "profiles": {
+        "redteam_restricted": "allowed_for_negative_or_safety_probe",
+        "safe_structured_only": "planned",
+        "swe_public_core": "planned",
+        "swe_public_extended": "planned"
+      },
+      "public_environment_hint_status": "planned",
+      "repo_harness_status": "partial",
+      "required_stage_from_stage16g0": "16G.4",
+      "run_episode_visibility_status": "planned",
+      "safety_boundaries": [
+        "hidden_verifier_forbidden",
+        "gold_patch_forbidden",
+        "test_patch_forbidden",
+        "runtime-private-forbidden",
+        "raw_artifact_private_by_default"
+      ],
+      "scaffold_exposure_status": "planned",
+      "source_capability_refs": [
+        "stage16g0_per_capability_baseline_comparison"
+      ],
+      "tool_ids": [
+        "reward_hacking_monitor"
+      ],
+      "training_projection_policy": {
+        "allowed_in_policy_loss_trajectory": false,
+        "diagnostic_only": false,
+        "eligibility_reason": "Stage 16G owner stage 完成并通过 gate 前，不能让样本进入主 policy loss。",
+        "negative_sample_eligible": true,
+        "preference_eligible": true,
+        "quarantine_eligible": true,
+        "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_owner_stage_complete",
+        "sft_eligible": false,
+        "tool_event_policy_loss_unit": "not_an_individual_policy_loss_sample"
+      }
+    }
+  ],
+  "registry_label": "stage16g1_baseline_derived_tool_registry",
+  "schema_version": "stage16g1.tool_registry_contract.v1"
+}

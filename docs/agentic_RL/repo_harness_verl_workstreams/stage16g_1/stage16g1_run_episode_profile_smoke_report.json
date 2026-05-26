@@ -1,0 +1,111 @@
+{
+  "actual_run_episode_task_invoked": true,
+  "actual_run_id_label": "stage16g1_smoke",
+  "blocked": false,
+  "blocked_reason": null,
+  "derived_profile_id_for_current_default_scaffold": "swe_public_core",
+  "entrypoint_contract": "run-episode-task builds EpisodeExecutionSpec and calls RepoHarnessRuntime.run_episode(real_episode)",
+  "episode_execution_spec_report_facts": {
+    "allowed_tool_names": [
+      "list_files",
+      "glob_files",
+      "read_file",
+      "read_tool_result_artifact",
+      "grep",
+      "symbol_search",
+      "update_working_state",
+      "edit_file",
+      "create_file",
+      "bash",
+      "run_tests",
+      "git_diff"
+    ],
+    "episode_execution_spec_ref": "rh://episode-execution-spec/c596ad72fcfb95664ebce905810eac9362a77e4b6f0bc9ddc4067961d296b6c2",
+    "raw_prompt_source": "episode_execution_spec",
+    "schema_version": "repo_harness_stage16f3_episode_execution_spec_report_v0",
+    "tool_registry_digest": "83c80d34761c38284bc9185e8908090fd580e6f9113f54a82109e25dbb2f16e1",
+    "tool_schema_snapshot_digest": "e241c5905e2c84f3e6940347104eaa84329d927c22157655283e4645d2893de6"
+  },
+  "exercised_code_paths": [
+    "repo_harness.evaluation.episode_runner.run_episode_task",
+    "repo_harness.execution.builder.EpisodeExecutionSpecBuilder.build_spec_from_loaded_task",
+    "repo_harness.rl.runtime.RepoHarnessRuntime.run_episode",
+    "repo_harness.evaluation.episode_projection.write_run_episode_compat_projection"
+  ],
+  "fixture_refs": [
+    {
+      "repo_relative_path": "tests/fixtures/tasks/task_stage16f3_passing.yaml",
+      "sha256": "7efcb518ff88102bb82fa00fbcfb61876b89a1720558fb054202107e3ec164ec"
+    },
+    {
+      "repo_relative_path": "tests/fixtures/run_configs/stage16f3_run_episode_task_mock.yaml",
+      "sha256": "531ee43d36bb61148ee69e0af356e98824de6346386a235b52b1c5745eb0bbc1"
+    }
+  ],
+  "not_json_only": true,
+  "profile_or_registry_version_carried_to_public_projection": true,
+  "projection_manifest_facts": {
+    "allowed_tool_names_digest": "20abe3cf25161eb789a706a8c8328447e961936f8e499fc94b70e62afa6a80b7",
+    "episode_execution_spec_sha256": "c596ad72fcfb95664ebce905810eac9362a77e4b6f0bc9ddc4067961d296b6c2",
+    "formal_online_rl_eligible": false,
+    "llm_gateway_route": "mock",
+    "network_policy": "deny_agent_run",
+    "permission_mode": "auto",
+    "policy_loss_candidate": false,
+    "projection_created_from_run_episode": true,
+    "projection_file_digests": {
+      "episode_execution_spec_report.json": "869073cdfd229e08e2c912bbe6851e2a92b4b6b2659e18c7f59925a0610f277d",
+      "provider_route_qualification.json": "c6bd9336a39ad3954d3e0d7f7e0cd395fb6b6daf176762f65f738899f1f08006",
+      "training_view_projection.json": "0a57193f0840a0963bfbd2ecec60b439c1410259cbe23d26fdaad1cbdfd1304a"
+    },
+    "projection_source_training_view_digest": "9e44d1f8349ac51b6a8ebc296f450d6ef5eb39a558b393ff0d19cbee28be78ce",
+    "provider_route": "mock",
+    "run_mode": "training_fast",
+    "schema_version": "repo_harness_stage16f3_compat_projection_v0",
+    "test_feedback_policy": "public_only",
+    "tool_registry_digest": "83c80d34761c38284bc9185e8908090fd580e6f9113f54a82109e25dbb2f16e1",
+    "tool_schema_snapshot_digest": "e241c5905e2c84f3e6940347104eaa84329d927c22157655283e4645d2893de6"
+  },
+  "projection_validation_facts": {
+    "error_count": 0,
+    "projection_complete": true
+  },
+  "provider_route_qualification_facts": {
+    "formal_online_rl_eligible": false,
+    "llm_gateway_route": "mock",
+    "policy_loss_candidate": false,
+    "provider_route": "mock",
+    "qualification_reason": "non_verl_or_diagnostic_route_not_policy_loss_candidate"
+  },
+  "run_config_projection_facts": {
+    "network_policy": "deny_agent_run",
+    "permission_mode": "auto",
+    "request_run_mode": "training_fast",
+    "scaffold_id": "simple_react",
+    "schema_version": "repo_harness_stage16f3_run_config_projection_v0"
+  },
+  "run_summary_facts": {
+    "episode_execution_spec_sha256": "c596ad72fcfb95664ebce905810eac9362a77e4b6f0bc9ddc4067961d296b6c2",
+    "llm_gateway_route": "mock",
+    "projection_complete": true,
+    "result_status": "succeeded",
+    "run_id": "stage16g1_smoke",
+    "run_mode": "training_fast",
+    "schema_version": "repo_harness_stage16f3_run_episode_task_summary_v0",
+    "task_id": "task_stage16f3_passing"
+  },
+  "schema_version": "stage16g1.run_episode_profile_smoke_report.v1",
+  "smoke_route": "run_episode_task_real_episode_mock_projection",
+  "stage16g1_registry_contract_sha256": "801719fedc2597c873c36bdf396246e4a425644e977e80c41c3ec0d595a88d64",
+  "status": "passed",
+  "training_view_projection_facts": {
+    "invalid_for_online_rl": true,
+    "invalid_for_training": false,
+    "online_rl_eligible": false,
+    "response_mask_count": 2,
+    "response_span_count": 1,
+    "response_token_count": 2,
+    "route": "mock",
+    "schema_version": "repo_harness_stage16f3_training_view_projection_v0"
+  }
+}

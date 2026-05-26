@@ -222,6 +222,7 @@ from repo_harness.pre_verl_failure_injection import (
     run_provider_failure_injection_smoke,
 )
 from repo_harness.evaluation.stage16d_healthcheck import inspect_stage16d_healthcheck
+from repo_harness.stage16g_tool_profile import inspect_stage16g1_tool_profile
 from repo_harness_verl.stage14_acceptance import inspect_stage14_fully_async_acceptance
 from repo_harness_verl.stage15_acceptance import inspect_stage15_partial_rollout_acceptance
 from repo_harness_verl.stage16b5_acceptance import inspect_stage16b5_docker_backend_acceptance
@@ -1805,6 +1806,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_stage16f6_parser.add_argument("evidence", help="Stage 16F.6 evidence 目录。")
     inspect_stage16f6_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
+    inspect_stage16g1_parser = subparsers.add_parser(
+        "inspect-stage16g1-tool-profile",
+        help="检查 Stage 16G.1 tool registry、profile taxonomy 和训练资格门禁 evidence。",
+    )
+    inspect_stage16g1_parser.add_argument("summary", help="Stage 16G.1 acceptance summary JSON。")
+    inspect_stage16g1_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
 
     build_stage14_smoke_kit_parser = subparsers.add_parser(
         "build-stage14-remote-smoke-kit",
@@ -3415,6 +3423,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 16F.6 real model smoke 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage16g1-tool-profile":
+        try:
+            print(
+                inspect_stage16g1_tool_profile(
+                    args.summary,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 16G.1 tool profile 检查失败：{exc}\n")
         return 0
     if args.command == "build-stage14-remote-smoke-kit":
         try:
