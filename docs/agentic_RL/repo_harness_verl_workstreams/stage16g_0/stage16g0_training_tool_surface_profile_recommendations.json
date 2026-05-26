@@ -1,0 +1,64 @@
+{
+  "recommended_profiles": [
+    {
+      "intended_use": "safe baseline and red-team comparison",
+      "limitations": [
+        "Too little public command/scratch reproduction ability for main SWE RL."
+      ],
+      "must_include": [
+        "read_file",
+        "grep",
+        "glob_files",
+        "edit_file",
+        "git_diff",
+        "run_tests"
+      ],
+      "profile_name": "safe_structured_only",
+      "suitable_as_main_swe_rl_surface": false
+    },
+    {
+      "intended_use": "candidate main training surface",
+      "must_exclude": [
+        "hidden verifier",
+        "gold patch",
+        "test patch",
+        "runtime-private path",
+        "shared dependency write"
+      ],
+      "must_include": [
+        "read_file",
+        "grep",
+        "glob_files",
+        "edit_file",
+        "create_file",
+        "apply_patch_or_equivalent",
+        "run_public_command_or_run_project_test",
+        "scratch_python",
+        "git_diff",
+        "todo_or_working_state",
+        "read_tool_result_artifact"
+      ],
+      "profile_name": "swe_public_core",
+      "suitable_as_main_swe_rl_surface": true
+    },
+    {
+      "intended_use": "future closer-to-Claude-Code surface",
+      "may_include": [
+        "controlled diagnostic shell",
+        "LSP",
+        "subagent",
+        "MCP",
+        "skills",
+        "background task monitor"
+      ],
+      "profile_name": "swe_public_extended",
+      "suitable_as_main_swe_rl_surface": "future"
+    },
+    {
+      "intended_use": "reward hacking and leakage pressure tests",
+      "profile_name": "redteam_restricted",
+      "suitable_as_main_swe_rl_surface": false
+    }
+  ],
+  "schema_version": "stage16g0.training_tool_surface_profile_recommendations.v1"
+}

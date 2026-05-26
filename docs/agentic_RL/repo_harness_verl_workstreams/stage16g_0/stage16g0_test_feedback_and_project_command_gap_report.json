@@ -1,0 +1,26 @@
+{
+  "dependency_setup_boundary": {
+    "private_overlay": "not_formalized_for_default_training",
+    "setup_command_policy": "limited repo script policy exists for task setup, but model-visible command routing is separate",
+    "shared_dependency_environment_write": "denied_or_requires_controlled_launcher"
+  },
+  "gaps": [
+    "No formal run_project_test tool with task-declared command templates.",
+    "No first-class selector field for Django labels, Sphinx tests, tox/nox envs, or single failing tests.",
+    "Dependency setup and public command routing are not unified with private overlay facts."
+  ],
+  "recognized_public_test_commands_in_command_policy": [
+    "pytest",
+    "python -m pytest",
+    "python -m unittest",
+    "tox",
+    "nox"
+  ],
+  "recommendation": "Design run_public_command/run_project_test with declared command templates, selector args, public observation projection, and dependency setup facts.",
+  "run_tests": {
+    "arbitrary_public_command_supported": false,
+    "configured_public_feedback_only": true,
+    "takes_arguments": false
+  },
+  "schema_version": "stage16g0.test_feedback_project_command_gap.v1"
+}

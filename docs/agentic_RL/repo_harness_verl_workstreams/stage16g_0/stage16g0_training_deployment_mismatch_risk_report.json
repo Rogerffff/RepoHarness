@@ -1,0 +1,99 @@
+{
+  "balanced_conclusion": "RepoHarness has useful structured tools and recovery facts; the main risk is insufficient formal public diagnostic/project command/scratch capability for Claude-Code-like SWE RL, not total tool absence.",
+  "current_default_training_profile": "simple_react",
+  "mismatch_risks": [
+    {
+      "description": "如果 review 把 patch_focused_react 当默认，会误判 create_file / bash 能力缺失。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:default_training_scaffold_identity"
+      ],
+      "recommended_stage": "16G.1",
+      "risk_id": "default_training_scaffold_identity",
+      "risk_level": "P1"
+    },
+    {
+      "description": "模型难以稳定表达单个 pytest case、Django label、Sphinx/tox/nox 等公开诊断。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:parameterized_public_test_command"
+      ],
+      "recommended_stage": "16G.3",
+      "risk_id": "parameterized_public_test_command",
+      "risk_level": "P0"
+    },
+    {
+      "description": "模型可能缺少安全的复现脚本路径，或把临时脚本误混进 final patch。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:scratch_python_or_reproduction_script"
+      ],
+      "recommended_stage": "16G.3",
+      "risk_id": "scratch_python_or_reproduction_script",
+      "risk_level": "P0"
+    },
+    {
+      "description": "Django、Sphinx、tox、nox、repo script 和 selector 参数需要外部策略支持。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:project_command_routing"
+      ],
+      "recommended_stage": "16G.3",
+      "risk_id": "project_command_routing",
+      "risk_level": "P0"
+    },
+    {
+      "description": "真实 SWE 任务常需要安装项目依赖或构建临时环境。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:dependency_setup_or_private_overlay"
+      ],
+      "recommended_stage": "16G.4",
+      "risk_id": "dependency_setup_or_private_overlay",
+      "risk_level": "P0"
+    },
+    {
+      "description": "复杂多文件修改、rename、delete、large patch 操作效率低。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:apply_patch_or_unified_diff_tool"
+      ],
+      "recommended_stage": "16G.2",
+      "risk_id": "apply_patch_or_unified_diff_tool",
+      "risk_level": "P1"
+    },
+    {
+      "description": "新增文件夹、重命名、删除旧文件和复杂项目结构修改受限。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:write_delete_move_mkdir_operations"
+      ],
+      "recommended_stage": "16G.2",
+      "risk_id": "write_delete_move_mkdir_operations",
+      "risk_level": "P1"
+    },
+    {
+      "description": "高价值调试行为可能被 diagnostic-only 分类，不能直接进入 policy loss。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:diagnostic_shell_formal_training_status"
+      ],
+      "recommended_stage": "16G.4",
+      "risk_id": "diagnostic_shell_formal_training_status",
+      "risk_level": "P1"
+    },
+    {
+      "description": "隐藏 verifier 不可见是硬边界；公开诊断命令是否可见是训练工具面设计问题。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:final_only_public_diagnostic_decoupling"
+      ],
+      "recommended_stage": "16G.3",
+      "risk_id": "final_only_public_diagnostic_decoupling",
+      "risk_level": "P1"
+    },
+    {
+      "description": "新增 file/patch/scratch 工具若不接入 linkage，会形成无效训练目标。",
+      "evidence_refs": [
+        "stage16g0_capability_gap_matrix:patch_capture_verifier_reward_linkage"
+      ],
+      "recommended_stage": "16G.6",
+      "risk_id": "patch_capture_verifier_reward_linkage",
+      "risk_level": "P1"
+    }
+  ],
+  "schema_version": "stage16g0.training_deployment_mismatch.v1",
+  "stage17_data_freeze_risk": "blocked_until_tool_profile_decision",
+  "target_deployment_style": "claude_code_like_swe_agent"
+}

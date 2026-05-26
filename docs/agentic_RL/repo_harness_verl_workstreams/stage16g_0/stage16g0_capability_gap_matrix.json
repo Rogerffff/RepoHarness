@@ -1,0 +1,281 @@
+{
+  "blocking_for_stage17_data_freeze_count": 9,
+  "blocking_for_stage20_warm_start_count": 12,
+  "capability_gap_count": 16,
+  "gap_records": [
+    {
+      "ability_impact": "如果 review 把 patch_focused_react 当默认，会误判 create_file / bash 能力缺失。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "default_training_scaffold_identity",
+      "category": "scaffold",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P1",
+      "recommended_action": "确认 profile taxonomy，后续报告必须区分 simple_react、patch_focused_react 和 diagnostic variants。",
+      "recommended_stage": "16G.1",
+      "repo_harness_evidence": [
+        "当前代码默认训练 scaffold 是 simple_react，而不是 patch_focused_react。"
+      ],
+      "repo_harness_status": "present_default",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "如果 review 把 patch_focused_react 当默认，会误判 create_file / bash 能力缺失。"
+    },
+    {
+      "ability_impact": "模型难以稳定表达单个 pytest case、Django label、Sphinx/tox/nox 等公开诊断。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "parameterized_public_test_command",
+      "category": "test_feedback",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P0",
+      "recommended_action": "设计 run_public_command 或 run_project_test，绑定 public selector、dependency setup 和 verifier facts。",
+      "recommended_stage": "16G.3",
+      "repo_harness_evidence": [
+        "run_tests 无参数；execute_bash 变体可运行安全 pytest，但不是所有 scaffold 默认暴露。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "模型难以稳定表达单个 pytest case、Django label、Sphinx/tox/nox 等公开诊断。"
+    },
+    {
+      "ability_impact": "模型可能缺少安全的复现脚本路径，或把临时脚本误混进 final patch。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "scratch_python_or_reproduction_script",
+      "category": "diagnosis",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P0",
+      "recommended_action": "新增 scratch_python 或 run_public_command scratch workspace，并保证临时 artifact 不进入 final.patch。",
+      "recommended_stage": "16G.3",
+      "repo_harness_evidence": [
+        "execute_bash 允许轻量 literal python；diagnostic_shell 可做复现但 diagnostic-only；没有正式 scratch_python 工具。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "模型可能缺少安全的复现脚本路径，或把临时脚本误混进 final patch。"
+    },
+    {
+      "ability_impact": "Django、Sphinx、tox、nox、repo script 和 selector 参数需要外部策略支持。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "project_command_routing",
+      "category": "test_feedback",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P0",
+      "recommended_action": "设计 project command routing，区分 public commands、setup commands 和 hidden verifier。",
+      "recommended_stage": "16G.3",
+      "repo_harness_evidence": [
+        "现有 run_tests 只跑配置反馈路径；没有统一项目命令 router。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "Django、Sphinx、tox、nox、repo script 和 selector 参数需要外部策略支持。"
+    },
+    {
+      "ability_impact": "真实 SWE 任务常需要安装项目依赖或构建临时环境。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "dependency_setup_or_private_overlay",
+      "category": "environment",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P0",
+      "recommended_action": "设计 dependency setup policy、private overlay 和共享依赖只读证明。",
+      "recommended_stage": "16G.4",
+      "repo_harness_evidence": [
+        "Stage 16B 对依赖变更默认保守拒绝；私有 per-episode overlay 仍不是正式训练能力。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "真实 SWE 任务常需要安装项目依赖或构建临时环境。"
+    },
+    {
+      "ability_impact": "复杂多文件修改、rename、delete、large patch 操作效率低。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "apply_patch_or_unified_diff_tool",
+      "category": "editing",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P1",
+      "recommended_action": "在 Stage 16E patch hygiene 基础上设计 apply_patch 或 structured patch tool。",
+      "recommended_stage": "16G.2",
+      "repo_harness_evidence": [
+        "edit_file 和 create_file 存在，但没有 Claude Code 风格 apply_patch / multi-file patch 工具。"
+      ],
+      "repo_harness_status": "missing",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "复杂多文件修改、rename、delete、large patch 操作效率低。"
+    },
+    {
+      "ability_impact": "新增文件夹、重命名、删除旧文件和复杂项目结构修改受限。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "write_delete_move_mkdir_operations",
+      "category": "editing",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P1",
+      "recommended_action": "补齐结构化 file operation 工具，并绑定 patch hygiene。",
+      "recommended_stage": "16G.2",
+      "repo_harness_evidence": [
+        "create_file 存在；delete/move/mkdir/write_file 等操作未形成完整结构化工具面。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "新增文件夹、重命名、删除旧文件和复杂项目结构修改受限。"
+    },
+    {
+      "ability_impact": "不是从零缺失；后续应验证模型是否学会使用恢复建议。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": false,
+      "capability_id": "permission_denial_recovery",
+      "category": "permission",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P2",
+      "recommended_action": "把 denial recovery 作为 probe 和 reward/auxiliary signal 候选，而不是重新设计基础字段。",
+      "recommended_stage": "16G.6",
+      "repo_harness_evidence": [
+        "CommandPolicyDecision 和 ToolResult 已有 reason_code、recovery_hint、safe_argv 等结构化恢复字段。"
+      ],
+      "repo_harness_status": "present_default",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "不是从零缺失；后续应验证模型是否学会使用恢复建议。"
+    },
+    {
+      "ability_impact": "需要继续证明不同工具的 raw artifact 不泄漏 runtime-private 内容。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": false,
+      "capability_id": "tool_result_artifact_replay",
+      "category": "context",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P2",
+      "recommended_action": "把 artifact replay 纳入 profile matrix 和 parity probe。",
+      "recommended_stage": "16G.1",
+      "repo_harness_evidence": [
+        "read_tool_result_artifact 存在；长输出分页和 artifact 回读是当前工具面的一部分。"
+      ],
+      "repo_harness_status": "present_default",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "需要继续证明不同工具的 raw artifact 不泄漏 runtime-private 内容。"
+    },
+    {
+      "ability_impact": "高价值调试行为可能被 diagnostic-only 分类，不能直接进入 policy loss。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "diagnostic_shell_formal_training_status",
+      "category": "shell",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P1",
+      "recommended_action": "决定是否升级为 formal public diagnostic profile，或新增 run_public_command。",
+      "recommended_stage": "16G.4",
+      "repo_harness_evidence": [
+        "diagnostic_shell 是 Stage 16B profile 工具，不是默认 formal training 工具；文件 projection 持久，cwd/env 每次命令受策略控制。"
+      ],
+      "repo_harness_status": "present_diagnostic_only",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "高价值调试行为可能被 diagnostic-only 分类，不能直接进入 policy loss。"
+    },
+    {
+      "ability_impact": "它不是完整 Bash，也不是空工具；应评价为窄而可审计，不是 toy。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "execute_bash_narrow_but_not_toy",
+      "category": "shell",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P2",
+      "recommended_action": "作为 safe_structured_only profile 保留；不要把它误当主 SWE 工具面终点。",
+      "recommended_stage": "16G.1",
+      "repo_harness_evidence": [
+        "execute_bash 是安全最小 allowlist，但允许 rg/grep、安全 git 子集、pytest、受限 Python heredoc等。"
+      ],
+      "repo_harness_status": "present_non_default",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "它不是完整 Bash，也不是空工具；应评价为窄而可审计，不是 toy。"
+    },
+    {
+      "ability_impact": "隐藏 verifier 不可见是硬边界；公开诊断命令是否可见是训练工具面设计问题。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "final_only_public_diagnostic_decoupling",
+      "category": "test_feedback",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P1",
+      "recommended_action": "Stage 16G.3 需要明确 public diagnostic 和 hidden final verifier 解耦。",
+      "recommended_stage": "16G.3",
+      "repo_harness_evidence": [
+        "final-only / hidden evaluator 当前会禁用 run_tests 或 diagnostic_shell，安全上合理，但可能同时挡住 public diagnostic。"
+      ],
+      "repo_harness_status": "unknown",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "隐藏 verifier 不可见是硬边界；公开诊断命令是否可见是训练工具面设计问题。"
+    },
+    {
+      "ability_impact": "长任务规划、回溯和状态跟踪可能弱于目标部署环境。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "todo_or_task_management",
+      "category": "planning",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P2",
+      "recommended_action": "决定是否新增 todo_write 或增强 update_working_state。",
+      "recommended_stage": "16G.2",
+      "repo_harness_evidence": [
+        "update_working_state 存在，但没有 Claude Code 风格 todo_write / task list。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "长任务规划、回溯和状态跟踪可能弱于目标部署环境。"
+    },
+    {
+      "ability_impact": "不是 Stage 17B/20 的直接阻断，但应在 trajectory schema 预留能力位。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": false,
+      "capability_id": "subagent_mcp_plugin_skill",
+      "category": "extension",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P3",
+      "recommended_action": "Stage 16G.1 只做 schema/profile 预留，暂不实现完整系统。",
+      "recommended_stage": "16G.1",
+      "repo_harness_evidence": [
+        "完整 MCP、插件、技能和子代理不在当前工具面中。"
+      ],
+      "repo_harness_status": "missing",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "不是 Stage 17B/20 的直接阻断，但应在 trajectory schema 预留能力位。"
+    },
+    {
+      "ability_impact": "对 Python 之外项目或深层语义导航帮助有限。",
+      "blocking_for_stage17_data_freeze": false,
+      "blocking_for_stage20_warm_start": false,
+      "capability_id": "symbol_search_lsp_depth",
+      "category": "navigation",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P3",
+      "recommended_action": "作为 P3 后续增强；不阻塞 Stage 17A schema-only。",
+      "recommended_stage": "16G.5",
+      "repo_harness_evidence": [
+        "symbol_search 是轻量 Python AST 搜索，不是完整 LSP。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "对 Python 之外项目或深层语义导航帮助有限。"
+    },
+    {
+      "ability_impact": "新增 file/patch/scratch 工具若不接入 linkage，会形成无效训练目标。",
+      "blocking_for_stage17_data_freeze": true,
+      "blocking_for_stage20_warm_start": true,
+      "capability_id": "patch_capture_verifier_reward_linkage",
+      "category": "training_target",
+      "claude_code_baseline": "目标是 Claude Code 类真实 SWE agent 工具面；具体实现不能直接照搬。",
+      "priority": "P1",
+      "recommended_action": "为每类工具动作定义 final patch / verifier / reward / export linkage gate。",
+      "recommended_stage": "16G.6",
+      "repo_harness_evidence": [
+        "Stage 16E/16F 已绑定 final.patch、hygiene、projection、reward/export，但新工具操作还未全部映射。"
+      ],
+      "repo_harness_status": "partial",
+      "security_reason_if_blocked": "需要同时保护 hidden verifier、gold/test patch、runtime-private、本机路径、Git history 和共享依赖环境。",
+      "training_risk": "新增 file/patch/scratch 工具若不接入 linkage，会形成无效训练目标。"
+    }
+  ],
+  "p0_gap_count": 4,
+  "schema_version": "stage16g0.capability_gap_matrix.v1"
+}

@@ -1,0 +1,651 @@
+{
+  "baseline_label": "claude_code_like_swe_agent",
+  "baseline_scope": "reference_source_contract_not_product_replication",
+  "capability_contracts": [
+    {
+      "baseline_statement": "模型可以使用结构化 Read 类工具读取仓库文件，并通过行范围、结果大小限制和工具结果回流控制上下文成本。",
+      "capability_category": "file_navigation",
+      "capability_id": "structured_file_read",
+      "confidence": "high",
+      "execution_semantics": "读取工作区内文件；受路径保护、文件类型和输出预算约束。",
+      "model_visible_mechanism": "Read / FileReadTool",
+      "permission_semantics": "只读工具仍进入统一权限、路径保护和工具生命周期审计。",
+      "repo_harness_design_implication": "RepoHarness 的 read_file 和 artifact 回读必须保持结构化，不应要求模型通过 shell cat/head/tail 读取源码。",
+      "result_semantics": "工具结果回到下一轮模型上下文，长内容需要截断或分页。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/FileReadTool.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Claude Code 参考工具面把图片、PDF、notebook 等非纯文本输入作为文件读取能力的一部分处理。",
+      "capability_category": "file_navigation",
+      "capability_id": "non_text_file_read",
+      "confidence": "medium",
+      "execution_semantics": "根据文件类型走文本、图片或其他专门处理路径。",
+      "model_visible_mechanism": "FileReadTool with media processors",
+      "permission_semantics": "非文本读取同样受路径、大小和可见性策略约束。",
+      "repo_harness_design_implication": "RepoHarness 主 SWE core 可以先保持文本优先，但必须把非文本读取标为目标部署差距。",
+      "result_semantics": "结果可以是文本摘要、媒体附件或受控 preview。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/FileReadTool.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/imageProcessor.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "长文件和大工具输出不会无限塞回上下文，而是通过大小限制、截断、分页或 artifact 回读保持可控。",
+      "capability_category": "context",
+      "capability_id": "large_file_paging_or_artifact_replay",
+      "confidence": "high",
+      "execution_semantics": "大输出需要 preview、保存和后续按需读取。",
+      "model_visible_mechanism": "FileRead limits and tool result handling",
+      "permission_semantics": "raw output 与模型可见 preview 分离，降低泄漏和上下文污染风险。",
+      "repo_harness_design_implication": "RepoHarness 需要保持 read_tool_result_artifact 和 raw artifact 私有化的组合能力。",
+      "result_semantics": "模型看到可消费的片段，并能通过合法路径继续读取。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/limits.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "模型可以使用结构化 Glob 类工具按路径模式发现文件，而不是依赖 shell find。",
+      "capability_category": "search",
+      "capability_id": "glob_file_discovery",
+      "confidence": "high",
+      "execution_semantics": "文件发现由工具实现统一过滤和排序。",
+      "model_visible_mechanism": "GlobTool",
+      "permission_semantics": "路径可见性、隐藏文件和敏感目录过滤由工具侧控制。",
+      "repo_harness_design_implication": "RepoHarness 的 glob_files 应作为 core 能力保留，并纳入 parity 对照。",
+      "result_semantics": "返回候选文件列表，帮助后续 read/grep/edit。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/GlobTool/GlobTool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "模型可以使用结构化 Grep 类工具做内容搜索，而不是通过 Bash 组合 grep 或 rg 绕过可见性策略。",
+      "capability_category": "search",
+      "capability_id": "grep_content_search",
+      "confidence": "high",
+      "execution_semantics": "内容搜索由工具统一控制目录范围、输出大小和匹配格式。",
+      "model_visible_mechanism": "GrepTool",
+      "permission_semantics": "搜索工具承担敏感路径过滤和输出预算约束。",
+      "repo_harness_design_implication": "RepoHarness 的 grep 应继续优先于 shell grep，并支持足够真实的代码定位。",
+      "result_semantics": "搜索结果回流为可引用的文件和行上下文。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/GrepTool/GrepTool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "模型可以使用结构化 Edit 类工具修改已有文件，编辑动作进入工具生命周期、权限和审计。",
+      "capability_category": "editing",
+      "capability_id": "structured_edit_existing_file",
+      "confidence": "high",
+      "execution_semantics": "编辑通过结构化参数表达，通常要求精确上下文或文件读取状态。",
+      "model_visible_mechanism": "Edit / FileEditTool",
+      "permission_semantics": "写操作需要权限检查、敏感文件保护和可恢复错误。",
+      "repo_harness_design_implication": "RepoHarness 的 edit_file 是正确方向，但需要评估复杂编辑和失败恢复。",
+      "result_semantics": "成功编辑更新文件状态，并可通过 diff 或后续读取验证。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileEditTool/FileEditTool.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "模型可以使用结构化 Write 类工具创建或覆盖文件，而不是通过 shell 重定向写文件。",
+      "capability_category": "editing",
+      "capability_id": "structured_write_or_create_file",
+      "confidence": "high",
+      "execution_semantics": "文件写入由工具承担路径检查、覆盖语义和权限。",
+      "model_visible_mechanism": "Write / FileWriteTool",
+      "permission_semantics": "写操作高风险，需要显式审计和权限语义。",
+      "repo_harness_design_implication": "RepoHarness 需要确认 create_file/write_file 是否在主训练 profile 中可见并进入 final patch。",
+      "result_semantics": "结果进入后续 diff、verifier 和 final answer 依据。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileWriteTool/FileWriteTool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Claude Code 产品态支持多文件真实开发工作流，即使具体实现不是单个 apply_patch 工具，也需要高效处理跨文件修改。",
+      "capability_category": "editing",
+      "capability_id": "patch_or_multi_file_edit_equivalent",
+      "confidence": "medium",
+      "execution_semantics": "跨文件修改可以由多个结构化编辑、写入和 diff 审查组成。",
+      "model_visible_mechanism": "Edit / Write / Bash / diff review combination",
+      "permission_semantics": "每个写动作仍受工具权限和审计约束。",
+      "repo_harness_design_implication": "RepoHarness 应补 apply_patch 或等价多文件编辑能力，不能只依赖 fragile exact replace。",
+      "result_semantics": "最终变化通过 diff、summary 和工具事件闭环。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileEditTool/FileEditTool.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileWriteTool/FileWriteTool.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/BashTool.tsx"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash 是一等能力，用于测试、构建、项目命令、复杂诊断和部分 Git 工作流，但仍由权限、sandbox 和审计约束。",
+      "capability_category": "execution",
+      "capability_id": "bash_project_command_execution",
+      "confidence": "high",
+      "execution_semantics": "执行非交互命令，支持 cwd、超时、stdout/stderr 和 exit code。",
+      "model_visible_mechanism": "BashTool",
+      "permission_semantics": "命令会经过安全分类、权限判断、sandbox 和高风险命令拦截。",
+      "repo_harness_design_implication": "RepoHarness 不能把主训练能力长期停在过窄 execute_bash；需要等价 public command 能力。",
+      "result_semantics": "命令输出以 preview 或 artifact 方式回流。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/BashTool.tsx"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/bashPermissions.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/bashSecurity.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/shouldUseSandbox.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "真实工具环境需要处理长运行命令、后台任务或可监控命令输出，而不是只支持短同步调用。",
+      "capability_category": "execution",
+      "capability_id": "persistent_or_background_command_monitoring",
+      "confidence": "medium",
+      "execution_semantics": "后台或长命令有生命周期、输出读取和清理语义。",
+      "model_visible_mechanism": "Bash and task monitoring",
+      "permission_semantics": "后台执行需要更强权限边界和资源清理。",
+      "repo_harness_design_implication": "RepoHarness core 可以不默认启用后台任务，但 extended profile 需要预留。",
+      "result_semantics": "模型可基于后续输出继续判断。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/BashTool.tsx"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/StreamingToolExecutor.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "模型可以通过 Bash 或项目命令路径运行定向公开测试，并把输出作为下一步修复依据。",
+      "capability_category": "execution",
+      "capability_id": "public_test_or_project_command_execution",
+      "confidence": "high",
+      "execution_semantics": "测试命令和项目命令作为普通开发动作执行。",
+      "model_visible_mechanism": "BashTool / project commands",
+      "permission_semantics": "隐藏 verifier 仍不可见，高风险命令受权限和 sandbox 管理。",
+      "repo_harness_design_implication": "RepoHarness 需要 run_project_test 或 run_public_command，而不是只有无参数 run_tests。",
+      "result_semantics": "stdout、stderr、exit code 和摘要回流给模型。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/BashTool.tsx"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "模型可以通过工具环境创建或运行临时复现逻辑，用于验证假设和定位 bug。",
+      "capability_category": "diagnosis",
+      "capability_id": "scratch_reproduction_script",
+      "confidence": "medium",
+      "execution_semantics": "复现脚本可以在工作区或临时区域运行，但最终补丁应保持干净。",
+      "model_visible_mechanism": "Bash / Write / Edit combination",
+      "permission_semantics": "临时文件需要和正式源码修改区分。",
+      "repo_harness_design_implication": "RepoHarness 应提供 scratch_python 或 scratch workspace，并用 patch hygiene 排除临时产物。",
+      "result_semantics": "复现输出用于下一轮推理，不应直接污染 final patch。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/BashTool.tsx"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/FileWriteTool/FileWriteTool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "强工具能力不是无限制开放，而是通过权限判断、用户确认、拒绝原因和恢复路径约束。",
+      "capability_category": "permission",
+      "capability_id": "permission_approval_and_denial_recovery",
+      "confidence": "high",
+      "execution_semantics": "工具调用前后进入权限和 hook 流程。",
+      "model_visible_mechanism": "Permission system and tool checks",
+      "permission_semantics": "deny/ask/allow 决策携带结构化上下文。",
+      "repo_harness_design_implication": "RepoHarness 需要让 denial 成为可学习信号，而不是鼓励模型少用工具。",
+      "result_semantics": "拒绝结果应帮助模型选择安全替代路径。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/utils/permissions/permissions.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash 和写工具能力应运行在 workspace boundary 和 sandbox/permission 策略内，而不是宿主无边界环境。",
+      "capability_category": "safety",
+      "capability_id": "sandbox_and_workspace_boundary",
+      "confidence": "high",
+      "execution_semantics": "工作区路径、网络和写权限有边界。",
+      "model_visible_mechanism": "Sandbox-aware tool execution",
+      "permission_semantics": "越界、敏感路径和破坏性命令被拦截或请求权限。",
+      "repo_harness_design_implication": "RepoHarness 后续增强动态能力时仍必须坚持 hidden/runtime-private/shared dependency 边界。",
+      "result_semantics": "工具结果不会暴露不该进入模型上下文的宿主状态。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/BashTool/shouldUseSandbox.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/utils/permissions/permissions.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "工具结果需要模型可见 preview、raw artifact 私有化和大输出处理，避免泄漏和上下文爆炸。",
+      "capability_category": "context",
+      "capability_id": "tool_result_truncation_and_raw_artifact_privacy",
+      "confidence": "high",
+      "execution_semantics": "工具执行后映射为模型可见 tool_result 与内部 artifact。",
+      "model_visible_mechanism": "Tool result mapping",
+      "permission_semantics": "raw data 可以保存在审计侧，但不默认进入模型上下文。",
+      "repo_harness_design_implication": "RepoHarness 必须继续区分 model_visible_observation 和 runtime-private raw artifact。",
+      "result_semantics": "模型只看到安全裁剪后的观察。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/Tool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Claude Code 参考工具面包含 TodoWrite 类任务管理能力，帮助模型跟踪长程修复步骤。",
+      "capability_category": "planning",
+      "capability_id": "task_management_todo",
+      "confidence": "high",
+      "execution_semantics": "任务列表作为结构化状态更新。",
+      "model_visible_mechanism": "TodoWriteTool",
+      "permission_semantics": "状态工具本身低风险，但会影响轨迹质量和可审计性。",
+      "repo_harness_design_implication": "RepoHarness 的 update_working_state 需要评估是否足够，或补 todo_write。",
+      "result_semantics": "任务状态回流给模型并影响后续行动。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/TodoWriteTool/TodoWriteTool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Claude Code 参考体系包含 AgentTool / task tool，用于把复杂工作拆给子代理或后台任务。",
+      "capability_category": "delegation",
+      "capability_id": "subagent_or_task_tool",
+      "confidence": "medium",
+      "execution_semantics": "子代理拥有独立提示、工具池和 sidechain transcript。",
+      "model_visible_mechanism": "AgentTool",
+      "permission_semantics": "权限、隔离和工具池需要单独审计。",
+      "repo_harness_design_implication": "RepoHarness 短期可先 schema 预留，不应阻塞 core SWE tool profile。",
+      "result_semantics": "主代理通过子任务结果继续推理。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/AgentTool/AgentTool.tsx"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/AgentTool/runAgent.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "真实产品态允许 MCP、插件和技能扩展工具面。",
+      "capability_category": "extension",
+      "capability_id": "external_tool_mcp_plugin_skill",
+      "confidence": "medium",
+      "execution_semantics": "外部能力通过统一工具包装进入模型可见工具池。",
+      "model_visible_mechanism": "MCPTool / plugins / skills",
+      "permission_semantics": "外部工具需要额外鉴权、权限和审计。",
+      "repo_harness_design_implication": "RepoHarness Stage 16G core 不需要完整实现，但轨迹 schema 应预留。",
+      "result_semantics": "工具结果仍按统一生命周期回流。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/MCPTool/MCPTool.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/plugins/builtinPlugins.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/skills/bundledSkills.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "工具搜索和延迟工具发现允许模型在需要时暴露更多工具，而不是固定小工具面。",
+      "capability_category": "extension",
+      "capability_id": "tool_search_or_deferred_tool_discovery",
+      "confidence": "medium",
+      "execution_semantics": "可搜索 deferred tools 或 MCP tools。",
+      "model_visible_mechanism": "ToolSearchTool",
+      "permission_semantics": "发现工具仍受权限和工具池规则约束。",
+      "repo_harness_design_implication": "RepoHarness 后续可把 profile 与 registry 设计成可扩展，而不是硬编码单一工具集。",
+      "result_semantics": "模型获得新工具描述后继续任务。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/tools/ToolSearchTool/ToolSearchTool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "工具执行前后有 hook、权限检查、结果映射和失败处理，形成完整生命周期审计。",
+      "capability_category": "audit",
+      "capability_id": "hooks_and_tool_lifecycle_audit",
+      "confidence": "high",
+      "execution_semantics": "每次工具调用经过 schema、validate、permission、call、map result 和 hooks。",
+      "model_visible_mechanism": "Tool execution and hooks",
+      "permission_semantics": "hook 可以拦截或记录高风险行为。",
+      "repo_harness_design_implication": "RepoHarness builder 和 training export 应保留 invalid call、denial 和 failure 事件。",
+      "result_semantics": "结果和失败都进入可审计事件。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolOrchestration.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "语言服务器诊断和被动反馈能帮助真实开发代理定位类型、语法和引用问题。",
+      "capability_category": "diagnostics",
+      "capability_id": "language_diagnostics_or_lsp_feedback",
+      "confidence": "medium",
+      "execution_semantics": "诊断来自语言服务而不是简单文本搜索。",
+      "model_visible_mechanism": "LSP services",
+      "permission_semantics": "诊断结果需要避免泄漏非工作区路径。",
+      "repo_harness_design_implication": "RepoHarness 当前 symbol_search 不是完整 LSP；可作为 extended gap。",
+      "result_semantics": "反馈作为上下文或工具结果影响修复。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/lsp/LSPDiagnosticRegistry.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "真实产品态包含会话恢复、上下文压缩和长期状态管理。",
+      "capability_category": "context",
+      "capability_id": "session_context_resume_compaction",
+      "confidence": "medium",
+      "execution_semantics": "历史工具结果、压缩摘要和恢复状态共同决定模型看到什么。",
+      "model_visible_mechanism": "Session / context services",
+      "permission_semantics": "压缩和恢复不能破坏 tool_use/tool_result 配对或权限事实。",
+      "repo_harness_design_implication": "RepoHarness 训练 schema 需要明确哪些摘要不进 policy loss。",
+      "result_semantics": "压缩后的信息继续指导后续工具调用。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/Tool.ts"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "最终回答应总结实际修改和验证结果，并能和工具事件、diff、测试输出交叉验证。",
+      "capability_category": "finalization",
+      "capability_id": "final_answer_and_change_summary",
+      "confidence": "medium",
+      "execution_semantics": "final answer 基于前序工具事件和文件 diff。",
+      "model_visible_mechanism": "Assistant final response with tool transcript",
+      "permission_semantics": "虚假验证声明应被审计或惩罚。",
+      "repo_harness_design_implication": "RepoHarness 需要 final answer、verifier、reward 和 export linkage。",
+      "result_semantics": "用户看到简洁总结，训练侧保留结构化证据。",
+      "source_evidence": [
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts"
+        }
+      ]
+    }
+  ],
+  "schema_version": "stage16g0.claude_code_baseline_contract.v1",
+  "source_inventory": [
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/Tool.ts",
+      "sha256": "29d555ab8e50de9fb005264b5334aba870f1da472198e14d0b3ab0bf86d7c49c",
+      "source_label": "tool_contract"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools.ts",
+      "sha256": "4307f3f7dec2916299cc2fa5c45df8b95fd9a1945be7ac918ccd3d47a42f18cb",
+      "source_label": "tool_registry"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/services/tools/toolExecution.ts",
+      "sha256": "77aae23a5b8b68aa1ee32b99eb25c6360071d7a4c4c46e6d2c95d584fb6e25e0",
+      "source_label": "tool_execution"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/services/tools/toolOrchestration.ts",
+      "sha256": "6958bcd46006785e241f7226b4f28aeaaec2206ccc93772d4e473aa6dbdd4293",
+      "source_label": "tool_orchestration"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/services/tools/StreamingToolExecutor.ts",
+      "sha256": "ee17dce704af73787c9ed76dbbc638167521e5c1f68c9436149378bb3358601c",
+      "source_label": "streaming_tool_executor"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/FileReadTool.ts",
+      "sha256": "09d6bc8554732ce7f1abbb7edda07dfb6cb97b0413ade26d78f37f1499098e36",
+      "source_label": "file_read"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/limits.ts",
+      "sha256": "c8a145d1e376add2083010a908aef417869a89533c7de54115fcbe524c3690a9",
+      "source_label": "file_read_limits"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/FileReadTool/imageProcessor.ts",
+      "sha256": "6bd5bfb3cb1bfcee281024eee85947c39c3b3d98ee279dae10da260ea122cbc7",
+      "source_label": "image_processor"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/FileEditTool/FileEditTool.ts",
+      "sha256": "a9fa2ac618273f5b1d48b20ae54e6a3b06d4be2c731daa78dfae654c1ca6652e",
+      "source_label": "file_edit"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/FileWriteTool/FileWriteTool.ts",
+      "sha256": "996a5284e0376c8686bdd2f8d2e66f740c5e1d8cebf3ca95a79f92876d91fe80",
+      "source_label": "file_write"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/GlobTool/GlobTool.ts",
+      "sha256": "cae4084494e514c2dbe95f62e25287c90abd13dcebf9ebdd85ed6652aed7f95e",
+      "source_label": "glob"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/GrepTool/GrepTool.ts",
+      "sha256": "80300c3119836315b802de705a5732c8377f36b05dee31ddcbb38a9abf0bfc07",
+      "source_label": "grep"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/BashTool/BashTool.tsx",
+      "sha256": "8a4c50056686e97c1887b7eb510673346889621bcd36eb341145471f9ee18392",
+      "source_label": "bash"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/BashTool/bashPermissions.ts",
+      "sha256": "8656e6b59b6923cd730451f29dccac140e9622dd64c0a5ae6c1d52a5ca1b987b",
+      "source_label": "bash_permissions"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/BashTool/bashSecurity.ts",
+      "sha256": "38309be3f92d997316422114fe43badc8cf6278534a14a51c7ceeb05c99608c7",
+      "source_label": "bash_security"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/BashTool/shouldUseSandbox.ts",
+      "sha256": "9a4d97cd647a3753e8504c2f68ace0e80d56934e604e33c95a11c01d01805b4b",
+      "source_label": "bash_sandbox"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/TodoWriteTool/TodoWriteTool.ts",
+      "sha256": "4024d9c8cae7245b50e884127b5b9cb671e42d273221738a059c34e603269739",
+      "source_label": "todo"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/AgentTool/AgentTool.tsx",
+      "sha256": "322e8d097352d61d42bc2aa30b7e2509c3a9782d8d77434f960f7f650143401a",
+      "source_label": "agent"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/AgentTool/runAgent.ts",
+      "sha256": "7a99609b319cb1d1d1f593fdc4ac281a7512e99f29c4c31ea3e52cb681f9c622",
+      "source_label": "agent_runner"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/MCPTool/MCPTool.ts",
+      "sha256": "e8c8695f9109ed02790d3ab66c247736a9fc5fe6b8f6b6ebf35385a55fe52228",
+      "source_label": "mcp"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/tools/ToolSearchTool/ToolSearchTool.ts",
+      "sha256": "dcd195830410cb105edd0a6545377597ef1af6b25d08d85620f55ed27f523884",
+      "source_label": "tool_search"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/services/lsp/LSPDiagnosticRegistry.ts",
+      "sha256": "485a846d7b2b286d8bd376c5615e93e2dc22a2f5feb1288a5b219b3c00d8ffa9",
+      "source_label": "lsp"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/utils/permissions/permissions.ts",
+      "sha256": "3a28acc854014fe49751aeaf7ca2648239cb309811fd948db3bcc91b46baed05",
+      "source_label": "permissions"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/plugins/builtinPlugins.ts",
+      "sha256": "80ab9558ba03766b2fbd0478da00e7dadd1685904b4559c7bb3c5de51f44fbec",
+      "source_label": "plugins"
+    },
+    {
+      "exists": true,
+      "public_reference_kind": "repo_relative_path_and_sha256",
+      "relative_path": "reference/claude-code-typescript-src/skills/bundledSkills.ts",
+      "sha256": "f38f5225689d6d587d61fcc3ca4568603d6363114ace71d5cae30dc82cc1e525",
+      "source_label": "skills"
+    }
+  ]
+}

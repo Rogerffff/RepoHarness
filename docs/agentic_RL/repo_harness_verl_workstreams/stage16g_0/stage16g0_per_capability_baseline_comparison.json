@@ -1,0 +1,808 @@
+{
+  "comparison_records": [
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "structured_file_read",
+      "claude_code_baseline": "Claude Code 使用 Read/FileReadTool 作为源码阅读主路径，支持路径保护、输出预算和工具结果回流。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent 主要通过 shell 命令查看文件；这是能力下限，不是 RepoHarness 要复制的实现形态。",
+      "repoharness_current_status": "RepoHarness 有 read_file，默认 simple_react 可见；结构化读取方向充分。",
+      "required_stage": "not_required",
+      "source_evidence": [
+        {
+          "evidence_ref": "file_read",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "repository_navigation_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "non_text_file_read",
+      "claude_code_baseline": "Claude Code 参考工具面包含图片、PDF、notebook 等非文本读取处理。",
+      "confidence": "medium",
+      "gap_type": "present_but_weaker_than_claude_code",
+      "mini_swe_agent_baseline": "mini-SWE-agent shell-first baseline 对非文本读取没有结构化工具保障，通常依赖 shell 或项目命令。",
+      "repoharness_current_status": "RepoHarness 当前 core SWE 工具面主要面向文本源码；非文本读取不是 Stage 16G 主 RL 阻塞项。",
+      "required_stage": "post_16G_optional",
+      "source_evidence": [
+        {
+          "evidence_ref": "non_text_file_read",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "repository_navigation_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "large_file_paging_or_artifact_replay",
+      "claude_code_baseline": "Claude Code 对长输出和大文件有截断、分页或 artifact 回读机制。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通过 shell 输出观察长内容，具体截断和日志策略依赖 harness。",
+      "repoharness_current_status": "RepoHarness 有 read_tool_result_artifact 和工具输出预算；需要在 follow-up 后续 parity 中继续验证 raw artifact 私有化。",
+      "required_stage": "16G.5",
+      "source_evidence": [
+        {
+          "evidence_ref": "large_file_paging_or_artifact_replay",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stdout_stderr_exit_code_feedback",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "glob_file_discovery",
+      "claude_code_baseline": "Claude Code 使用 GlobTool 做结构化文件发现。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通过 shell ls/find 等命令完成文件发现。",
+      "repoharness_current_status": "RepoHarness 有 glob_files，默认可见；能力覆盖足够。",
+      "required_stage": "not_required",
+      "source_evidence": [
+        {
+          "evidence_ref": "glob_file_discovery",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "repository_navigation_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "grep_content_search",
+      "claude_code_baseline": "Claude Code 使用 GrepTool 做内容搜索，避免通过 Bash 绕过搜索策略。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通过 shell grep/rg 等命令搜索代码。",
+      "repoharness_current_status": "RepoHarness 有 grep；execute_bash 还允许部分安全 rg/grep，但 core 应保持结构化搜索优先。",
+      "required_stage": "not_required",
+      "source_evidence": [
+        {
+          "evidence_ref": "grep_content_search",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "file_view_search_edit_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "symbol_search_or_lsp_diagnostics",
+      "claude_code_baseline": "Claude Code 目标环境包含 LSP 诊断或语言反馈能力。",
+      "confidence": "medium",
+      "gap_type": "present_but_weaker_than_claude_code",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通常没有结构化 LSP，主要通过 shell 和测试反馈定位。",
+      "repoharness_current_status": "RepoHarness 有轻量 symbol_search，但不是完整 LSP；这影响 extended profile，不阻塞 core 主 RL。",
+      "required_stage": "post_16G_optional",
+      "source_evidence": [
+        {
+          "evidence_ref": "language_diagnostics_or_lsp_feedback",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "repository_navigation_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "structured_edit_existing_file",
+      "claude_code_baseline": "Claude Code 使用 Edit/FileEditTool 做结构化已有文件编辑。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通过 shell 编辑命令或脚本改文件。",
+      "repoharness_current_status": "RepoHarness 有 edit_file exact replace，默认可见；复杂编辑效率仍需 apply_patch 补齐。",
+      "required_stage": "16G.2",
+      "source_evidence": [
+        {
+          "evidence_ref": "structured_edit_existing_file",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "file_view_search_edit_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "structured_write_or_create_file",
+      "claude_code_baseline": "Claude Code 使用 Write/FileWriteTool 创建或覆盖文件。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通过 shell 重定向、脚本或编辑器命令创建文件。",
+      "repoharness_current_status": "RepoHarness 有 create_file，默认 simple_react 可见；但 patch_focused_react 不暴露，write/overwrite 语义不足。",
+      "required_stage": "16G.2",
+      "source_evidence": [
+        {
+          "evidence_ref": "structured_write_or_create_file",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "file_view_search_edit_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/scaffolds/patch_focused_react.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/scaffolds/simple_react.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "apply_patch_or_multi_file_edit",
+      "claude_code_baseline": "Claude Code 风格真实开发需要跨文件修改能力，即使由多个 Edit/Write 组合完成，也要高效审计。",
+      "confidence": "high",
+      "gap_type": "missing",
+      "mini_swe_agent_baseline": "mini-SWE-agent 可以用 shell 和 patch/diff 工作流完成多文件修改。",
+      "repoharness_current_status": "RepoHarness 缺少 apply_patch 或等价多文件编辑工具；exact replace 对复杂 patch 不够稳。",
+      "required_stage": "16G.2",
+      "source_evidence": [
+        {
+          "evidence_ref": "patch_or_multi_file_edit_equivalent",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "patch_generation_and_final_diff",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/patch_hygiene.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "delete_move_mkdir_file_operations",
+      "claude_code_baseline": "Claude Code 写工具和 Bash 组合可以完成真实文件组织变更，但仍需权限和审计。",
+      "confidence": "medium",
+      "gap_type": "missing",
+      "mini_swe_agent_baseline": "mini-SWE-agent 通过 shell rm/mv/mkdir 等完成文件操作。",
+      "repoharness_current_status": "RepoHarness 当前没有完整 delete/move/mkdir 结构化工具面；后续应设计受控文件操作。",
+      "required_stage": "16G.2",
+      "source_evidence": [
+        {
+          "evidence_ref": "structured_write_or_create_file",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "file_view_search_edit_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "bash_or_public_command_execution",
+      "capability_shape_note": "能力覆盖目标，不是实现形态目标；RepoHarness 应用结构化公开命令覆盖动态诊断能力。",
+      "claude_code_baseline": "Claude Code Bash 是测试、构建、项目命令和复杂诊断的一等能力，受权限和 sandbox 约束。",
+      "confidence": "high",
+      "gap_type": "present_but_weaker_than_mini_swe_agent",
+      "mini_swe_agent_baseline": "mini-SWE-agent 的核心就是稳定 shell 闭环，提供动态诊断能力下限。",
+      "repoharness_current_status": "RepoHarness execute_bash 窄但非空；主 core 应补结构化 run_public_command，而不是开放裸 shell。",
+      "required_stage": "16G.3",
+      "source_evidence": [
+        {
+          "evidence_ref": "bash_project_command_execution",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stable_shell_loop",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "persistent_diagnostic_session",
+      "capability_shape_note": "core 默认不要求裸 persistent shell；extended profile 承担更接近 mini-SWE-agent 的持续诊断。",
+      "claude_code_baseline": "Claude Code 目标环境能处理长命令、后台任务或更持续的命令状态。",
+      "confidence": "high",
+      "gap_type": "present_diagnostic_only",
+      "mini_swe_agent_baseline": "mini-SWE-agent 每个任务运行在容器/工作目录状态中，形成足够连续的 shell 工作流。",
+      "repoharness_current_status": "RepoHarness diagnostic_shell 是 diagnostic profile，文件 projection 持久，但不是默认正式训练工具。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "persistent_or_background_command_monitoring",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "task_local_state_or_session_continuity",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/diagnostic_session.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/docker_adapter.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "parameterized_public_test_command",
+      "claude_code_baseline": "Claude Code 可以通过 Bash 或项目命令机制运行定向公开测试，并由权限、sandbox 和工具生命周期审计。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 至少可以通过稳定 shell 运行公开测试或项目测试命令，并读取 stdout、stderr 和 exit code。",
+      "repoharness_current_status": "RepoHarness run_tests 无参数；execute_bash 支持部分安全 pytest；final-only 会禁用 run_tests。",
+      "required_stage": "16G.3",
+      "source_evidence": [
+        {
+          "evidence_ref": "public_test_or_project_command_execution",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "public_test_and_project_command_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/scaffolds/policies.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/public_environment.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "scratch_python_or_reproduction_script",
+      "capability_shape_note": "目标是复现能力和临时产物隔离，不是允许 shell 任意写脚本。",
+      "claude_code_baseline": "Claude Code 可以通过 Bash/Write/Edit 组合创建或运行临时复现逻辑。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent prompt 明确推荐创建复现脚本再验证修复。",
+      "repoharness_current_status": "RepoHarness 只有受限 inline Python 和 diagnostic_shell；没有正式 scratch_python 工具。",
+      "required_stage": "16G.3",
+      "source_evidence": [
+        {
+          "evidence_ref": "scratch_reproduction_script",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "scratch_script_and_reproduction_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/diagnostic_session.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/patch_hygiene.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "project_command_routing",
+      "claude_code_baseline": "Claude Code Bash 能表达项目命令、测试命令和构建命令，并通过权限处理风险。",
+      "confidence": "high",
+      "gap_type": "missing",
+      "mini_swe_agent_baseline": "mini-SWE-agent shell-first baseline 自然支持项目命令执行。",
+      "repoharness_current_status": "RepoHarness 缺少统一 project command router；当前依赖 run_tests 或窄 execute_bash。",
+      "required_stage": "16G.3",
+      "source_evidence": [
+        {
+          "evidence_ref": "bash_project_command_execution",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "public_test_and_project_command_via_shell",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/public_environment.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "dependency_setup_and_environment_policy",
+      "claude_code_baseline": "Claude Code 类环境用 sandbox/approval 管理依赖安装和环境命令风险。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 使用 SWE-Bench 容器环境，运行日志显示 Docker-backed /testbed 执行。",
+      "repoharness_current_status": "RepoHarness 有依赖守卫和 Docker work，但 shared dependency write、private overlay、setup routing 仍未成为 core 能力。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "sandbox_and_workspace_boundary",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "dependency_setup_or_environment_use",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/diagnostic_session.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/docker_adapter.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "git_diff_status_and_patch_capture",
+      "claude_code_baseline": "Claude Code 工作流依赖 diff 审查和最终变更总结。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent 最终通过工作目录 patch 和 official evaluator 检查结果。",
+      "repoharness_current_status": "RepoHarness 有 git_diff、patch hygiene、episode projection；需要在 follow-up requirements 中继续绑定 reward/export。",
+      "required_stage": "16G.5",
+      "source_evidence": [
+        {
+          "evidence_ref": "final_answer_and_change_summary",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "patch_generation_and_final_diff",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/patch_hygiene.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/evaluation/episode_projection.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "final_answer_verifier_reward_linkage",
+      "claude_code_baseline": "Claude Code final answer 应和工具事件、测试输出、diff 交叉验证。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 保存 trajectory 并由 official/eval 日志给出最终结果。",
+      "repoharness_current_status": "RepoHarness 已有 Stage 16G.0 linkage report，但后续新工具必须接入 final patch、verifier、reward、TrainingView 和 export。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "final_answer_and_change_summary",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "patch_generation_and_final_diff",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/rl/runtime.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/evaluation/episode_projection.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/patch_hygiene.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "permission_approval_denial_recovery",
+      "claude_code_baseline": "Claude Code 强工具能力通过权限、拒绝原因和恢复路径管理。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 的完整内部拒绝机制本地未确认；shell 输出仍给模型反馈。",
+      "repoharness_current_status": "RepoHarness 有 reason_code/recovery_hint 等字段，但要验证拒绝是否可学习且不诱导少用工具。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "permission_approval_and_denial_recovery",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stdout_stderr_exit_code_feedback",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "sandbox_workspace_and_runtime_private_boundary",
+      "claude_code_baseline": "Claude Code 通过 workspace boundary、sandbox 和权限区分可见/不可见资源。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent 运行日志证明容器和 /testbed；完整 hidden material 隔离需官方源码验证。",
+      "repoharness_current_status": "RepoHarness 对 hidden verifier、runtime-private、Git history、shared dependency 有明确防护，后续扩能力不能破坏。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "sandbox_and_workspace_boundary",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "safety_boundary_and_hidden_material_exclusion",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/diagnostic_session.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/docker_adapter.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "tool_result_truncation_raw_artifact_privacy",
+      "claude_code_baseline": "Claude Code 区分模型可见结果和 raw artifact，处理大输出和审计私有化。",
+      "confidence": "high",
+      "gap_type": "present_and_sufficient",
+      "mini_swe_agent_baseline": "mini-SWE-agent shell 输出和日志提供反馈；安全过滤细节需要官方源码确认。",
+      "repoharness_current_status": "RepoHarness execute_bash/diagnostic_shell 已有 redacted_truncated 和 raw runtime-private 语义；后续新 public command 必须复用。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "tool_result_truncation_and_raw_artifact_privacy",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stdout_stderr_exit_code_feedback",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "task_management_todo",
+      "claude_code_baseline": "Claude Code 有 TodoWrite 类结构化任务管理。",
+      "confidence": "medium",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent prompt 要求 THOUGHT 和命令循环，但不是结构化 todo 工具。",
+      "repoharness_current_status": "RepoHarness 有 update_working_state，仍弱于 TodoWrite；这影响轨迹质量但不是 public command core 阻塞。",
+      "required_stage": "16G.2",
+      "source_evidence": [
+        {
+          "evidence_ref": "task_management_todo",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stable_shell_loop",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "subagent_background_task",
+      "claude_code_baseline": "Claude Code 支持 AgentTool 或任务工具，复杂工作可由子代理/后台任务处理。",
+      "confidence": "medium",
+      "gap_type": "deferred_schema_only",
+      "mini_swe_agent_baseline": "mini-SWE-agent baseline 不依赖子代理，是单 agent shell-first 下限。",
+      "repoharness_current_status": "RepoHarness 当前主训练无需子代理；schema 预留即可。",
+      "required_stage": "post_16G_optional",
+      "source_evidence": [
+        {
+          "evidence_ref": "subagent_or_task_tool",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stable_shell_loop",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/rl/runtime.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "external_tools_mcp_plugin_skill",
+      "claude_code_baseline": "Claude Code 产品态可以通过 MCP、插件和技能扩展工具面。",
+      "confidence": "medium",
+      "gap_type": "deferred_schema_only",
+      "mini_swe_agent_baseline": "mini-SWE-agent baseline 不要求外部工具扩展。",
+      "repoharness_current_status": "RepoHarness Stage 16G core 不实现完整外部工具系统，但后续轨迹 schema 应保留能力位。",
+      "required_stage": "post_16G_optional",
+      "source_evidence": [
+        {
+          "evidence_ref": "external_tool_mcp_plugin_skill",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stable_shell_loop",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/rl/runtime.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "hooks_tool_lifecycle_audit",
+      "claude_code_baseline": "Claude Code 工具调用进入 schema、validate、permission、call、result mapping、hooks 和 failure handling。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 运行日志能证明 trajectory/log 存在，内部 hook 机制需官方源码确认。",
+      "repoharness_current_status": "RepoHarness 有工具事件和 audit，但新工具必须保留 invalid call、denial、failure 和 checker 输出。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "hooks_and_tool_lifecycle_audit",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "stable_shell_loop",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tools/minimal.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/rl/runtime.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "training_eligibility_and_export_projection",
+      "claude_code_baseline": "Claude Code 产品态 transcript 不是训练资格本身；训练 harness 必须额外定义 visibility、loss mask 和 export projection。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 运行日志和 trajectory 可被外部 evaluator 消费，但不等价于 RepoHarness policy-loss eligibility。",
+      "repoharness_current_status": "RepoHarness 已有 formal online RL gate；新 diagnostic/public command 行为必须明确能否进入 policy loss、SFT、preference 和 side channel。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "tool_result_truncation_and_raw_artifact_privacy",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "patch_generation_and_final_diff",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/rl/runtime.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/evaluation/episode_projection.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/execution/spec.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    },
+    {
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "reward_hacking_monitoring_and_quarantine",
+      "claude_code_baseline": "Claude Code 类强工具环境需要 deterministic boundary 加监控，而不是只靠削减工具能力。",
+      "confidence": "high",
+      "gap_type": "partial",
+      "mini_swe_agent_baseline": "mini-SWE-agent 的完整 reward hacking 防护无法由本地日志确认；容器和 official eval 只覆盖一部分边界。",
+      "repoharness_current_status": "RepoHarness 已有 hard fail/quarantine 设计；后续扩工具必须把 suspicious behavior、test tampering、dependency write 等纳入门禁。",
+      "required_stage": "16G.4",
+      "source_evidence": [
+        {
+          "evidence_ref": "sandbox_and_workspace_boundary",
+          "source_label": "claude_code_baseline_contract"
+        },
+        {
+          "evidence_ref": "safety_boundary_and_hidden_material_exclusion",
+          "source_label": "mini_swe_agent_baseline_contract"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/tasks/command_policy.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/diagnostic_session.py",
+          "source_label": "repoharness_source"
+        },
+        {
+          "evidence_kind": "static_source_scan",
+          "relative_path": "src/repo_harness/workspace/patch_hygiene.py",
+          "source_label": "repoharness_source"
+        }
+      ]
+    }
+  ],
+  "schema_version": "stage16g0.per_capability_baseline_comparison.v1"
+}

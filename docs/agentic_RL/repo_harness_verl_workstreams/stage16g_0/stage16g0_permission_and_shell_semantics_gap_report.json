@@ -1,0 +1,43 @@
+{
+  "diagnostic_shell": {
+    "hidden_evaluator_guard": true,
+    "known_gap": "high-value diagnostics may be side-channel only unless Stage 16G formalizes public diagnostic eligibility",
+    "persistence": "filesystem projection persists; each command supplies cwd/env through policy-controlled session environment",
+    "shell_semantics": "bash -lc",
+    "status": "present_diagnostic_only",
+    "training_default_visible": false
+  },
+  "execute_bash": {
+    "denied_categories": [
+      "Git history",
+      "runtime-private paths",
+      "hidden evaluator markers",
+      "package managers",
+      "network downloads",
+      "dynamic shell expansion",
+      "scripts and secondary executors"
+    ],
+    "not_toy_evidence": [
+      "Allows safe rg/grep searches.",
+      "Allows safe pytest / python -m pytest commands.",
+      "Allows safe git status/diff/grep/ls-files subsets.",
+      "Allows very light literal python diagnostics."
+    ],
+    "status": "safe_minimal_allowlist"
+  },
+  "legacy_bash": {
+    "semantics": "restricted diagnostic command path, routes public tests to run_tests when policy allows",
+    "status": "present_default_in_simple_react"
+  },
+  "permission_denial_recovery_fields_present": [
+    "reason_code",
+    "recovery_hint",
+    "safe_argv"
+  ],
+  "public_vs_hidden_diagnostic_decoupling": {
+    "hidden_final_verifier_invisible": true,
+    "public_diagnostic_command_should_be_separate_design_axis": true,
+    "risk": "final-only safety can accidentally remove public diagnostic learning signal if not separately modeled"
+  },
+  "schema_version": "stage16g0.permission_and_shell_semantics_gap.v1"
+}

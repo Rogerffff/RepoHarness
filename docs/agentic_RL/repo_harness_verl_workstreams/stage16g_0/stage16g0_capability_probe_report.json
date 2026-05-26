@@ -1,0 +1,169 @@
+{
+  "failed_or_gap_probe_count": 4,
+  "probe_count": 9,
+  "probes": [
+    {
+      "actual_status": "passed",
+      "capability_under_test": "which_scaffold_is_default_training_surface",
+      "default_has_bash": true,
+      "default_has_create_file": true,
+      "notes": "代码事实：RuntimeConfig.runtime.scaffold_id 默认 simple_react。",
+      "observed_default_scaffold": "simple_react",
+      "probe_id": "training_default_scaffold_identity"
+    },
+    {
+      "actual_status": "structured_gap",
+      "capability_under_test": "conservative_patch_scaffold_tool_surface",
+      "gap_ids": [
+        "profile_dependent_file_create_and_shell"
+      ],
+      "has_create_file": false,
+      "has_shell": false,
+      "probe_id": "patch_focused_react_tool_surface",
+      "scaffold": "patch_focused_react"
+    },
+    {
+      "actual_status": "structured_gap",
+      "capability_under_test": "planned_scaffold_presence",
+      "exists": false,
+      "gap_ids": [
+        "scaffold_not_present"
+      ],
+      "probe_id": "patch_focused_react_mini_shell_absent",
+      "scaffold": "patch_focused_react_mini_shell"
+    },
+    {
+      "actual_status": "passed",
+      "capability_under_test": "allowed_tools_match_executor_registry",
+      "probe_id": "scaffold_registry_consistency",
+      "registry_consistent": true
+    },
+    {
+      "actual_status": "passed",
+      "capability_under_test": "execute_bash_allow_and_deny_examples",
+      "decisions": {
+        "git_history_denied": {
+          "command": "git log --oneline",
+          "command_category": "invalid",
+          "decision": "deny",
+          "matched_rule": "execute_bash_git_history_or_metadata",
+          "policy_version": "repo_harness_command_policy_v0",
+          "reason": "execute_bash git command is outside the Stage 16A model-visible allowlist.",
+          "reason_code": "execute_bash_git_history_or_metadata",
+          "recovery_hint": "Use execute_bash only for model-visible repository diagnostics. Use read_file, grep, run_tests, and git_diff for safer structured operations when possible.",
+          "safe_argv": null,
+          "schema_version": "repo_harness_command_policy_decision_v0"
+        },
+        "pytest_allowed": {
+          "command": "python -m pytest -q tests/test_example.py",
+          "command_category": "diagnostic",
+          "decision": "allow",
+          "matched_rule": "execute_bash_stage16a_policy_allow",
+          "policy_version": "repo_harness_command_policy_v0",
+          "reason": "execute_bash command passed Stage 16A leakage and dependency-write guards.",
+          "reason_code": "execute_bash_stage16a_policy_allow",
+          "recovery_hint": "Keep commands focused on model-visible workspace diagnostics and public task reproduction.",
+          "safe_argv": null,
+          "schema_version": "repo_harness_command_policy_decision_v0"
+        },
+        "rg_literal_search_allowed": {
+          "command": "rg '$foo' src",
+          "command_category": "diagnostic",
+          "decision": "allow",
+          "matched_rule": "execute_bash_stage16a_policy_allow",
+          "policy_version": "repo_harness_command_policy_v0",
+          "reason": "execute_bash command passed Stage 16A leakage and dependency-write guards.",
+          "reason_code": "execute_bash_stage16a_policy_allow",
+          "recovery_hint": "Keep commands focused on model-visible workspace diagnostics and public task reproduction.",
+          "safe_argv": null,
+          "schema_version": "repo_harness_command_policy_decision_v0"
+        },
+        "unallowlisted_cat_denied": {
+          "command": "cat README.md",
+          "command_category": "invalid",
+          "decision": "deny",
+          "matched_rule": "execute_bash_unallowlisted_command",
+          "policy_version": "repo_harness_command_policy_v0",
+          "reason": "execute_bash command is outside the Stage 16A model-visible allowlist.",
+          "reason_code": "execute_bash_unallowlisted_command",
+          "recovery_hint": "Use execute_bash only for model-visible repository diagnostics. Use read_file, grep, run_tests, and git_diff for safer structured operations when possible.",
+          "safe_argv": null,
+          "schema_version": "repo_harness_command_policy_decision_v0"
+        }
+      },
+      "interpretation": "允许安全搜索和 pytest，拒绝 cat/git history；窄但不是空工具面。",
+      "probe_id": "execute_bash_narrow_not_toy"
+    },
+    {
+      "actual_status": "structured_gap",
+      "capability_under_test": "parameterized_public_test_command",
+      "gap_ids": [
+        "run_tests_no_arguments"
+      ],
+      "probe_id": "run_tests_no_parameterized_command",
+      "run_tests_schema": {
+        "additionalProperties": false,
+        "type": "object"
+      }
+    },
+    {
+      "actual_status": "static_policy_probe_only",
+      "capability_under_test": "scratch_python_or_reproduction_script",
+      "diagnostic_shell_scratch_execution_probe": "not_run_in_stage16g0",
+      "execute_bash_light_python_supported": true,
+      "formal_scratch_python_tool_exists": false,
+      "gap_ids": [
+        "no_formal_scratch_python_tool"
+      ],
+      "probe_id": "scratch_python_reproduction_script",
+      "temporary_artifact_excluded_from_final_patch": "not_proven_by_stage16g0_static_policy_probe"
+    },
+    {
+      "actual_status": "passed",
+      "capability_under_test": "minimal_executable_tool_loop_from_default_scaffold_to_patch_and_reward",
+      "cleaned_patch_sha256": "26ae3aeb5d6a801245dcd4f79b9ca3e47d27e5874cf00fbc62e47b86662065ee",
+      "final_patch_generated": true,
+      "patch_added_lines": 2,
+      "patch_hygiene_status": "passed",
+      "patch_removed_lines": 1,
+      "probe_id": "default_scaffold_read_search_edit_patch_reward_loop",
+      "public_safety": "only statuses and sha256 are exported; temporary workspace paths and raw patch text are not exported",
+      "public_test_exit_code": 0,
+      "public_test_passed": true,
+      "reward_final": 0.994,
+      "reward_invalid_for_training": false,
+      "reward_metadata_computed": true,
+      "tool_loop_executed": true,
+      "tool_result_statuses": {
+        "create_file": "ok",
+        "edit_file": "ok",
+        "git_diff": "ok",
+        "grep": "ok",
+        "read_file": "ok"
+      },
+      "tools_executed": [
+        "read_file",
+        "grep",
+        "edit_file",
+        "create_file",
+        "git_diff"
+      ]
+    },
+    {
+      "actual_status": "passed",
+      "capability_under_test": "tool_action_to_final_patch_verifier_reward_export_static_modules",
+      "evidence_modules": [
+        "workspace.patch_hygiene",
+        "workspace.adapter.capture_final_patch",
+        "workspace.docker_adapter.capture_final_patch",
+        "evaluation.episode_projection",
+        "reward.calculator",
+        "export.exporter",
+        "scripts/pre_verl/build_swebench_official_inputs.py"
+      ],
+      "probe_id": "patch_capture_verifier_reward_linkage_modules",
+      "remaining_gap": "new future tools must explicitly bind into these same paths."
+    }
+  ],
+  "schema_version": "stage16g0.capability_probe.v1"
+}

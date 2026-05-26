@@ -1,0 +1,107 @@
+{
+  "design_assumptions": [
+    {
+      "assumption_id": "structured_public_command_first_core_profile",
+      "safety_boundary": "防 reward hacking 依赖确定性边界，包括 sandbox、路径隔离、默认无网络、共享依赖只读、题间 session 重置、每次调用静态或 AST 扫描、artifact hygiene 和 verifier 隔离，而不是通过继续削减真实 SWE 动态诊断能力来获得安全感。",
+      "statement": "主 SWE 强化学习 core 工具面采用结构化公开命令优先：用无状态、可审计的 run_public_command、run_project_test 和 scratch_python 覆盖动态验证能力；persistent shell 归入 swe_public_extended profile，不进入 core 默认。"
+    },
+    {
+      "assumption_id": "mini_swe_agent_dynamic_capability_not_shell_shape",
+      "statement": "当 RepoHarness 在自由 shell 形态上弱于 mini-SWE-agent 时，后续阶段追求的是覆盖 mini-SWE-agent 的动态诊断能力，而不是复制裸 shell 实现形态。"
+    }
+  ],
+  "requirements": [
+    {
+      "acceptance_requirements": [
+        "所有 P0/P1 工具能力都能追溯到 comparison capability_id。",
+        "core profile 明确采用结构化公开命令优先，而不是裸 shell 优先。",
+        "profile 设计区分 safe_structured_only、swe_public_core、swe_public_extended 和 redteam_restricted。"
+      ],
+      "blocking_for_main_swe_rl": true,
+      "implementation_goal": "基于 baseline comparison 固定 tool registry、profile taxonomy、core / extended / redteam profile 和训练资格门禁。",
+      "priority": "P0",
+      "required_stage": "16G.1",
+      "requirement_id": "stage16g1_baseline_derived_tool_registry",
+      "source_capability_ids": [
+        "bash_or_public_command_execution",
+        "training_eligibility_and_export_projection"
+      ]
+    },
+    {
+      "acceptance_requirements": [
+        "apply_patch 或等价多文件编辑工具进入候选 profile。",
+        "新增、删除、移动和目录创建动作进入 patch hygiene、final.patch 和 export projection。",
+        "编辑失败返回可学习的结构化恢复信息。"
+      ],
+      "blocking_for_main_swe_rl": true,
+      "implementation_goal": "补齐结构化文件能力，使多文件修改、新建、移动、删除和 patch 审计不依赖无约束 shell。",
+      "priority": "P0",
+      "required_stage": "16G.2",
+      "requirement_id": "stage16g2_structured_file_and_patch_surface",
+      "source_capability_ids": [
+        "structured_edit_existing_file",
+        "structured_write_or_create_file",
+        "apply_patch_or_multi_file_edit",
+        "delete_move_mkdir_file_operations"
+      ]
+    },
+    {
+      "acceptance_requirements": [
+        "模型可见 schema 能表达单个公开测试、项目命令和受控 scratch Python 复现。",
+        "拒绝结果包含可学习的 reason_code、retryable、safe_alternative_tool 或 safe_rewrite_example。",
+        "成功或拒绝的工具事件都能进入 public-safe audit，并能参与训练资格判断。"
+      ],
+      "blocking_for_main_swe_rl": true,
+      "implementation_goal": "设计并实现正式 public diagnostic/action command 能力，支持公开测试、项目命令和受控复现脚本，同时不暴露 hidden verifier、gold patch、test patch、runtime-private 路径或共享依赖写权限。",
+      "priority": "P0",
+      "required_stage": "16G.3",
+      "requirement_id": "stage16g3_public_command_project_test_and_scratch_python",
+      "source_capability_ids": [
+        "bash_or_public_command_execution",
+        "parameterized_public_test_command",
+        "scratch_python_or_reproduction_script",
+        "project_command_routing"
+      ]
+    },
+    {
+      "acceptance_requirements": [
+        "persistent shell 仅进入 swe_public_extended，不进入 core 默认。",
+        "共享依赖只读、题间 session reset、artifact hygiene 和 verifier 隔离有确定性证据。",
+        "final answer 的测试声明能和工具事件或 verifier summary 交叉校验。"
+      ],
+      "blocking_for_main_swe_rl": true,
+      "implementation_goal": "收口 controlled diagnostic shell、dependency setup、private overlay、permission recovery、verifier/reward/export linkage 和 quarantine 规则。",
+      "priority": "P0",
+      "required_stage": "16G.4",
+      "requirement_id": "stage16g4_diagnostic_shell_dependency_and_training_linkage",
+      "source_capability_ids": [
+        "persistent_diagnostic_session",
+        "dependency_setup_and_environment_policy",
+        "final_answer_verifier_reward_linkage",
+        "permission_approval_denial_recovery",
+        "hooks_tool_lifecycle_audit",
+        "training_eligibility_and_export_projection",
+        "reward_hacking_monitoring_and_quarantine"
+      ]
+    },
+    {
+      "acceptance_requirements": [
+        "probe 覆盖 Claude Code 分层工具能力和 mini-SWE-agent 动态诊断能力。",
+        "新发现差距必须回写 comparison 与 requirements。",
+        "probe 失败不能被解释为 Stage 17 可继续放行。"
+      ],
+      "blocking_for_main_swe_rl": false,
+      "implementation_goal": "在 Stage 16G.1 到 Stage 16G.4 完成后运行 Claude Code / mini-SWE-agent parity probe，验证实现效果，不再承担第一次 baseline 对照。",
+      "priority": "P1",
+      "required_stage": "16G.5",
+      "requirement_id": "stage16g5_post_implementation_parity_probe",
+      "source_capability_ids": [
+        "large_file_paging_or_artifact_replay",
+        "git_diff_status_and_patch_capture",
+        "sandbox_workspace_and_runtime_private_boundary",
+        "tool_result_truncation_raw_artifact_privacy"
+      ]
+    }
+  ],
+  "schema_version": "stage16g0.stage16g_implementation_requirements.v1"
+}

@@ -1,0 +1,62 @@
+{
+  "references": [
+    {
+      "claim_summary": "Cursor / Composer 经验强调训练、评测和部署 harness 尽量一致，同时允许训练期更严格参数检查。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "cursor_composer_training_deployment_consistency",
+      "repo_harness_design_implication": "RepoHarness 不能把主训练工具面收成只会静态猜 patch；需要代表真实 SWE 闭环的 public core profile。",
+      "source_document_label": "gpt_advice"
+    },
+    {
+      "claim_summary": "Codex 类环境把 workspace 写入、常规命令执行、sandbox 和 approval 分层处理。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "codex_workspace_sandbox_approval",
+      "repo_harness_design_implication": "RepoHarness 应保留明确权限、恢复提示和审计事实；不能把所有高风险动作都误归结为工具缺失。",
+      "source_document_label": "gpt_advice"
+    },
+    {
+      "claim_summary": "稳定可执行 shell 有助于形成定位、复现、修改、验证闭环。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "mini_swe_agent_stable_shell",
+      "repo_harness_design_implication": "RepoHarness 不应长期只依赖过窄 execute_bash；应设计 public diagnostic command 或 run_project_test。",
+      "source_document_label": "gpt_advice"
+    },
+    {
+      "claim_summary": "真实产品不是只给 Bash，而是 Read / Grep / Glob / Edit / Write / Bash 分层。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "claude_code_layered_tools",
+      "repo_harness_design_implication": "Stage 16G 应优先补结构化工具与受控 public command，而不是简单开放完整 shell。",
+      "source_document_label": "gpt_advice"
+    },
+    {
+      "claim_summary": "训练工具面和目标部署工具面不一致会让 RL 优化错误行为。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "deployment_training_consistency",
+      "repo_harness_design_implication": "Stage 17B / Stage 20 前必须固定 SWE public profile，并用 probes 验证。",
+      "source_document_label": "gpt_advice"
+    },
+    {
+      "claim_summary": "OpenHands、SWE-Gym 和 DeepSWE 都强调可执行环境、代码导航、命令行 build/test 和迭代验证。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "openhands_swegym_deepswe_executable_environment",
+      "repo_harness_design_implication": "project command routing、依赖 setup、private overlay 和 verifier healthcheck 是硬前置。",
+      "source_document_label": "gpt_advice"
+    },
+    {
+      "claim_summary": "agentic RL 需要 deterministic safety boundary 加 monitor / quarantine。",
+      "confidence": "medium",
+      "needs_primary_source_verification_before_public_claim": true,
+      "reference_id": "reward_hacking_monitoring",
+      "repo_harness_design_implication": "LLM-as-judge 只能做辅助监控，不能替代路径隔离、artifact hygiene 和 verifier 隔离。",
+      "source_document_label": "gpt_advice"
+    }
+  ],
+  "schema_version": "stage16g0.external_swe_harness_reference_inventory.v1",
+  "source_document_label": "gpt_advice"
+}

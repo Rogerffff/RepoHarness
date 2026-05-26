@@ -1,0 +1,54 @@
+{
+  "final_answer_claim_cross_check": {
+    "test_claim_requires_tool_event": true,
+    "unsupported_claim_status": "diagnostic_or_negative_signal"
+  },
+  "operations": [
+    {
+      "enters_final_patch": true,
+      "enters_official_prediction": true,
+      "enters_training_view": true,
+      "export_visible": true,
+      "known_gaps": [],
+      "operation_id": "edit_existing_source_file",
+      "reward_builder_can_reference_public_facts": true,
+      "tool_or_profile": "edit_file"
+    },
+    {
+      "enters_final_patch": true,
+      "enters_official_prediction": true,
+      "enters_training_view": true,
+      "export_visible": true,
+      "known_gaps": [
+        "not exposed by patch_focused_react"
+      ],
+      "operation_id": "create_new_file",
+      "reward_builder_can_reference_public_facts": true,
+      "tool_or_profile": "create_file"
+    },
+    {
+      "diagnostic_facts_public_safe": "partial",
+      "enters_final_patch": false,
+      "enters_official_prediction": false,
+      "known_gaps": [
+        "no formal scratch_python tool"
+      ],
+      "operation_id": "scratch_python_reproduction_script",
+      "tool_or_profile": "diagnostic_shell_or_future_scratch_python"
+    },
+    {
+      "enters_final_patch": "must_be_bound_before_training",
+      "known_gaps": [
+        "apply_patch tool missing"
+      ],
+      "operation_id": "future_apply_patch",
+      "tool_or_profile": "not_present"
+    }
+  ],
+  "patch_hygiene_projection": {
+    "exporter_reads_patch_hygiene": true,
+    "official_prediction_builder_reads_hygiene_report": true,
+    "reward_builder_reads_patch_hygiene": true
+  },
+  "schema_version": "stage16g0.patch_capture_verifier_reward_linkage.v1"
+}

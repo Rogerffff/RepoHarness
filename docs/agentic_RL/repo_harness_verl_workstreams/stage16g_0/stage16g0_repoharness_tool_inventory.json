@@ -1,0 +1,459 @@
+{
+  "default_tool_order": [
+    "list_files",
+    "glob_files",
+    "read_file",
+    "read_tool_result_artifact",
+    "grep",
+    "symbol_search",
+    "update_working_state",
+    "edit_file",
+    "create_file",
+    "bash",
+    "run_tests",
+    "git_diff"
+  ],
+  "important_code_facts": [
+    "create_file exists in DEFAULT_TOOL_ORDER and is visible in simple_react.",
+    "patch_focused_react intentionally omits create_file and shell tools.",
+    "execute_bash is narrow but not empty: safe rg/grep/git status/diff/grep/ls-files, pytest, and light literal Python diagnostics are allowed by policy.",
+    "diagnostic_shell is a Stage 16B persistent diagnostic profile tool, not default formal training surface."
+  ],
+  "schema_version": "stage16g0.repoharness_tool_inventory.v1",
+  "tools": [
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": false,
+      "is_read_only": false,
+      "known_limitations": [
+        "legacy restricted diagnostic command path；不等价于 Claude Code Bash。"
+      ],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [
+        "command_policy.evaluate_model_bash_command",
+        "minimal._bash"
+      ],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": true,
+      "tool_name": "bash",
+      "tool_version": "repo_harness_bash_v0",
+      "training_eligible_default": "conditional",
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": false,
+      "is_read_only": false,
+      "known_limitations": [
+        "存在于默认 simple_react，但 patch_focused_react 不暴露。"
+      ],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "create_file",
+      "tool_version": "repo_harness_create_file_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": false,
+      "diagnostic_side_channel_only": true,
+      "is_concurrency_safe": false,
+      "is_read_only": false,
+      "known_limitations": [
+        "不是默认训练工具；需要显式 diagnostic profile。",
+        "文件系统 projection 持久；命令 cwd/env 通过每次工具调用和 session HOME 策略控制，不应当成完整交互 shell。"
+      ],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": false,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": true,
+      "permission_policy_refs": [
+        "diagnostic_session.diagnostic_command_policy_issue",
+        "minimal._diagnostic_shell"
+      ],
+      "raw_artifact_runtime_private": true,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": true,
+      "tool_name": "diagnostic_shell",
+      "tool_version": "repo_harness_diagnostic_shell_stage16b_v0",
+      "training_eligible_default": false,
+      "training_view_projection_allowed": false,
+      "visible_in_scaffolds": [
+        "patch_focused_react_diagnostic_shell"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": false,
+      "is_read_only": false,
+      "known_limitations": [
+        "exact replace 协议；复杂多文件 patch 仍缺少 apply_patch 类工具。"
+      ],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "edit_file",
+      "tool_version": "repo_harness_edit_file_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": false,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": false,
+      "is_read_only": false,
+      "known_limitations": [
+        "安全最小 allowlist，不是完整 shell。",
+        "拒绝动态 shell、未审计脚本、包管理器、网络下载、runtime-private 路径和 Git history。"
+      ],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": false,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": true,
+      "permission_policy_refs": [
+        "command_policy.evaluate_model_execute_bash_command",
+        "minimal._execute_bash"
+      ],
+      "raw_artifact_runtime_private": true,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": true,
+      "tool_name": "execute_bash",
+      "tool_version": "repo_harness_execute_bash_stage16a_v0",
+      "training_eligible_default": false,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react_execute_bash"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "git_diff",
+      "tool_version": "repo_harness_git_diff_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": true,
+      "permission_policy_refs": [
+        "workspace visibility filters",
+        "tool result pagination"
+      ],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "glob_files",
+      "tool_version": "repo_harness_glob_files_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": true,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": true,
+      "permission_policy_refs": [
+        "workspace visibility filters",
+        "tool result pagination"
+      ],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "grep",
+      "tool_version": "repo_harness_grep_v1",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": true,
+      "permission_policy_refs": [
+        "workspace visibility filters",
+        "tool result pagination"
+      ],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "list_files",
+      "tool_version": "repo_harness_list_files_v1",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": true,
+      "permission_policy_refs": [
+        "workspace visibility filters",
+        "tool result pagination"
+      ],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "read_file",
+      "tool_version": "repo_harness_read_file_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": true,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "read_tool_result_artifact",
+      "tool_version": "repo_harness_read_tool_result_artifact_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": false,
+      "is_read_only": false,
+      "known_limitations": [
+        "不接受任意命令参数；只运行配置好的 public feedback path。"
+      ],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "run_tests",
+      "tool_version": "repo_harness_run_tests_v0",
+      "training_eligible_default": "conditional",
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": true,
+      "is_read_only": true,
+      "known_limitations": [
+        "轻量 Python AST symbol search，不是完整 LSP。"
+      ],
+      "mentions_recovery_or_recommended_next_call": true,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [
+        "workspace visibility filters",
+        "tool result pagination"
+      ],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "symbol_search",
+      "tool_version": "repo_harness_symbol_search_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    },
+    {
+      "artifact_replay_tool_available": false,
+      "build_tool_available": true,
+      "default_registry_available": true,
+      "diagnostic_side_channel_only": false,
+      "is_concurrency_safe": false,
+      "is_read_only": true,
+      "known_limitations": [],
+      "mentions_recovery_or_recommended_next_call": false,
+      "model_visible_default": true,
+      "model_visible_output_truncated": true,
+      "path_redaction_applied": false,
+      "permission_policy_refs": [],
+      "raw_artifact_runtime_private": false,
+      "runtime_registry_bound": true,
+      "scaffold_registry_available": true,
+      "side_channel_risk": false,
+      "tool_name": "update_working_state",
+      "tool_version": "repo_harness_update_working_state_v0",
+      "training_eligible_default": true,
+      "training_view_projection_allowed": true,
+      "visible_in_scaffolds": [
+        "patch_focused_react",
+        "patch_focused_react_diagnostic_shell",
+        "patch_focused_react_execute_bash",
+        "planner_coder_verifier",
+        "simple_react"
+      ]
+    }
+  ],
+  "training_default_scaffold_id": "simple_react",
+  "training_default_scaffold_source": "RunConfig.runtime.scaffold_id default"
+}

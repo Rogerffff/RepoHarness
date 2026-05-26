@@ -1,0 +1,253 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "read_file",
+      "category": "file_read",
+      "claude_code_capability": "Read 类文件查看能力，是 Claude Code 风格基本工具面的一部分。",
+      "confidence": "high",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "non_text_file_read",
+      "category": "file_read",
+      "claude_code_capability": "图片、PDF、二进制或多模态读取能力需要单独盘点；Stage 16G.0 不实现。",
+      "confidence": "low",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "grep_search",
+      "category": "search",
+      "claude_code_capability": "Grep 类搜索能力，用于定位符号、报错文本和相关文件。",
+      "confidence": "high",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "glob_search",
+      "category": "search",
+      "claude_code_capability": "Glob 类文件发现能力，用于按路径模式收窄工作区。",
+      "confidence": "high",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "symbol_or_language_diagnostics",
+      "category": "navigation",
+      "claude_code_capability": "语言服务、诊断和符号级导航比轻量文本搜索更强；当前只作为后续差距记录。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "edit_file",
+      "category": "edit",
+      "claude_code_capability": "Edit 类精确修改已有文件能力。",
+      "confidence": "high",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "write_file",
+      "category": "edit",
+      "claude_code_capability": "Write / create file 能力，用于新增脚本、测试或源码文件。",
+      "confidence": "high",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "patch_multi_file_edit",
+      "category": "edit",
+      "claude_code_capability": "多文件 patch、rename、delete、large edit 需要结构化 patch 工具或等价能力。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "bash_full_shell",
+      "category": "shell",
+      "claude_code_capability": "Bash 能力由权限系统和 sandbox 控制，不等价于 RepoHarness 当前 execute_bash allowlist。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "testing_and_project_command",
+      "category": "execution",
+      "claude_code_capability": "真实 SWE agent 需要公开测试、项目命令和 setup command routing，而不只是固定 run_tests。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "background_command_monitor",
+      "category": "execution",
+      "claude_code_capability": "长时间运行命令、后台任务和进度监控需要单独生命周期管理。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "task_management",
+      "category": "planning",
+      "claude_code_capability": "Todo / task list 类能力帮助长任务保持状态。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "subagent_or_task_tool",
+      "category": "delegation",
+      "claude_code_capability": "Claude Code 参考体系包含任务拆分、子任务或延迟工具发现能力。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "deferred_tool_discovery",
+      "category": "extension",
+      "claude_code_capability": "工具搜索、插件或技能发现属于可扩展工具面，需要 profile 和训练资格单独建模。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "slash_commands",
+      "category": "interaction",
+      "claude_code_capability": "斜杠菜单、快捷命令和用户工作流入口不等价于模型训练工具，但会影响目标产品能力。",
+      "confidence": "low",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "mcp_or_external_tools",
+      "category": "extension",
+      "claude_code_capability": "MCP / 插件 / 技能属于可扩展工具面，Stage 16G.0 只盘点不实现。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "hooks_permissions",
+      "category": "permission",
+      "claude_code_capability": "权限、hooks 和用户确认构成高风险动作边界。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "session_context_management",
+      "category": "context",
+      "claude_code_capability": "会话压缩、长期上下文、artifact replay 和恢复决定模型实际可用信息。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    },
+    {
+      "capability_id": "long_output_artifact_replay",
+      "category": "context",
+      "claude_code_capability": "长输出需要截断、分页、artifact 回读和上下文管理。",
+      "confidence": "medium",
+      "source_evidence": [
+        {
+          "evidence_kind": "reference_navigation",
+          "relative_path": "AGENTS.md",
+          "source_label": "claude_code_typescript_reference"
+        }
+      ]
+    }
+  ],
+  "schema_version": "stage16g0.claude_code_tool_inventory.v1",
+  "source_scope": "reference/claude-code-typescript-src/AGENTS.md plus Stage 16G.0 reference navigation"
+}

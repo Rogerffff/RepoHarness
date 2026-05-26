@@ -1,0 +1,300 @@
+{
+  "baseline_label": "mini_swe_agent_like_bash_first_agent",
+  "baseline_scope": "minimal_shell_first_swe_agent_comparison_baseline",
+  "capability_contracts": [
+    {
+      "baseline_statement": "模型至少拥有一个稳定 Bash 操作闭环，可以在任务内持续运行诊断命令、测试命令和复现脚本。",
+      "capability_category": "shell",
+      "capability_id": "stable_shell_loop",
+      "confidence": "high",
+      "execution_semantics": "真实运行日志显示 mini-SWE-agent 启动 SWE-Bench 容器并在 /testbed 工作目录中运行任务。",
+      "model_visible_mechanism": "Bash / shell command channel",
+      "permission_semantics": "外部证据可确认容器化运行；完整内部安全机制需要官方源码复核。",
+      "primary_source_verification_required": false,
+      "repo_harness_design_implication": "RepoHarness core 不必复制裸 shell，但必须覆盖动态诊断闭环。",
+      "result_semantics": "stdout、stderr、exit status 和 trajectory/log 文件构成迭代反馈。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+          "source_label": "smoke_stdout_stderr"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5/minisweagent.log",
+          "source_label": "smoke_internal_log"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash-first agent 通过 shell 命令完成仓库导航、文件查看和目录定位。",
+      "capability_category": "navigation",
+      "capability_id": "repository_navigation_via_shell",
+      "confidence": "medium",
+      "execution_semantics": "配置摘录要求模型每轮提交命令并观察结果。",
+      "model_visible_mechanism": "Shell command responses",
+      "permission_semantics": "路径边界来自容器工作目录和任务说明；内部过滤机制未由本地源码确认。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness 的结构化 read/glob/grep 至少要覆盖这些 shell 导航能力。",
+      "result_semantics": "命令输出回到下一轮推理。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash-first baseline 主要通过 shell 组合完成文件查看、搜索、编辑和新建文件。",
+      "capability_category": "editing",
+      "capability_id": "file_view_search_edit_via_shell",
+      "confidence": "medium",
+      "execution_semantics": "任务说明要求修改 non-test source files，且每轮至少执行一个命令。",
+      "model_visible_mechanism": "Shell command channel",
+      "permission_semantics": "禁止修改测试和配置文件属于任务 prompt 层边界；完整执行拦截需要官方源码复核。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness 可以用结构化工具替代 shell 形态，但能力覆盖不能弱于 shell 基本动作。",
+      "result_semantics": "文件编辑结果通过后续命令和最终 patch 体现。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash-first agent 可以通过 shell 运行公开测试或项目命令，并读取 stdout、stderr 和 exit code。",
+      "capability_category": "testing",
+      "capability_id": "public_test_and_project_command_via_shell",
+      "confidence": "high",
+      "execution_semantics": "配置摘录推荐创建复现脚本并验证修复；运行日志证明任务在 SWE-Bench 容器中执行。",
+      "model_visible_mechanism": "Shell command channel",
+      "permission_semantics": "hidden official scoring 不应进入模型可见命令；完整防泄漏机制需官方源码复核。",
+      "primary_source_verification_required": false,
+      "repo_harness_design_implication": "RepoHarness 必须补 run_public_command 或 run_project_test，不能只有无参数 run_tests。",
+      "result_semantics": "测试输出成为下一轮修复依据。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+          "source_label": "smoke_stdout_stderr"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash-first prompt 明确推荐创建脚本复现问题，再运行脚本验证修复。",
+      "capability_category": "diagnosis",
+      "capability_id": "scratch_script_and_reproduction_via_shell",
+      "confidence": "medium",
+      "execution_semantics": "复现脚本由模型通过 shell 创建和执行。",
+      "model_visible_mechanism": "Shell command channel",
+      "permission_semantics": "临时文件是否进入最终 patch 依赖 agent/harness 清理；本地证据不足以确认全部机制。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness 应提供 scratch_python 或受控 scratch workspace，并由 patch hygiene 排除临时产物。",
+      "result_semantics": "脚本输出反馈给模型。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "mini-SWE-agent 在 SWE-Bench 容器或官方镜像内运行，依赖环境由容器提供。",
+      "capability_category": "environment",
+      "capability_id": "dependency_setup_or_environment_use",
+      "confidence": "high",
+      "execution_semantics": "运行日志显示 docker run 使用 SWE-Bench eval image，并设置工作目录。",
+      "model_visible_mechanism": "Docker-backed task environment",
+      "permission_semantics": "容器边界存在；依赖写入、网络和跨题污染细节需官方源码复核。",
+      "primary_source_verification_required": false,
+      "repo_harness_design_implication": "RepoHarness 需要 Docker/private overlay/shared dependency read-only policy 来达到同等可执行性。",
+      "result_semantics": "环境命令输出进入日志或 trajectory。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+          "source_label": "smoke_stdout_stderr"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5/minisweagent.log",
+          "source_label": "smoke_internal_log"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash-first baseline 的最终目标是修改工作目录中的源码并提交最终结果，由外部 evaluator 检查 patch。",
+      "capability_category": "finalization",
+      "capability_id": "patch_generation_and_final_diff",
+      "confidence": "medium",
+      "execution_semantics": "运行日志显示每个实例保存 trajectory，并有 official 评测日志。",
+      "model_visible_mechanism": "Shell edits plus final submission",
+      "permission_semantics": "官方评测和隐藏测试不应进入模型上下文。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness 必须把 patch capture、official prediction、verifier 和 reward linkage 做成硬门槛。",
+      "result_semantics": "最终提交与日志、trajectory 和 official 结果分离。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+          "source_label": "smoke_stdout_stderr"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5_official_all5.stdout_stderr.log",
+          "source_label": "official_all5_stdout_stderr"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5_official_completed4.stdout_stderr.log",
+          "source_label": "official_completed4_stdout_stderr"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "shell-first agent 的基本观测是命令输出、错误输出和退出状态。",
+      "capability_category": "feedback",
+      "capability_id": "stdout_stderr_exit_code_feedback",
+      "confidence": "medium",
+      "execution_semantics": "命令结果作为下一轮推理依据。",
+      "model_visible_mechanism": "Shell observation",
+      "permission_semantics": "输出可能包含路径或环境细节，安全边界需要外部过滤或容器隔离。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness public command 工具必须返回足够具体但脱敏的 stdout/stderr/exit code。",
+      "result_semantics": "stdout/stderr/exit code 是动态验证信号。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+          "source_label": "smoke_stdout_stderr"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "Bash-first workflow 需要任务内工作目录、容器和文件系统状态保持足够连续，才能迭代调试。",
+      "capability_category": "session",
+      "capability_id": "task_local_state_or_session_continuity",
+      "confidence": "medium",
+      "execution_semantics": "运行日志显示每个实例启动容器并保存 trajectory。",
+      "model_visible_mechanism": "Task-local shell/container state",
+      "permission_semantics": "跨题隔离和 cleanup 细节需要官方源码或更多日志复核。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness 可以用无状态命令加持久 workspace 实现，不一定需要交互式 persistent shell。",
+      "result_semantics": "后续命令建立在前序文件修改和环境状态上。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5/minisweagent.log",
+          "source_label": "smoke_internal_log"
+        }
+      ]
+    },
+    {
+      "baseline_statement": "mini-SWE-agent baseline 的安全边界至少包含容器化任务环境和 prompt 层禁止修改测试/配置，但完整机制需要官方源码验证。",
+      "capability_category": "safety",
+      "capability_id": "safety_boundary_and_hidden_material_exclusion",
+      "confidence": "medium",
+      "execution_semantics": "公开日志能证明 Docker 容器和 /testbed 工作目录；不能证明全部 hidden material 防护机制。",
+      "model_visible_mechanism": "Container plus task prompt",
+      "permission_semantics": "需要后续 primary source verification。",
+      "primary_source_verification_required": true,
+      "repo_harness_design_implication": "RepoHarness 不能用 mini-SWE-agent 作无约束 shell 依据，必须保留确定性防泄漏边界。",
+      "result_semantics": "可观察输出不应包含 hidden evaluator 细节。",
+      "source_evidence": [
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+          "source_label": "smoke_stdout_stderr"
+        },
+        {
+          "evidence_kind": "public_safe_real_run_evidence",
+          "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+          "source_label": "public_config_excerpt"
+        }
+      ]
+    }
+  ],
+  "global_source_caveat": "本地没有 mini-SWE-agent 官方仓库源码；本 baseline 使用 evaluation worktree 的真实配置、public-safe 配置摘录和运行日志。外部可观察行为可以中高置信，内部安全实现细节需要后续官方源码验证。",
+  "schema_version": "stage16g0.mini_swe_agent_baseline_contract.v1",
+  "source_inventory": [
+    {
+      "exists": true,
+      "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_deepseek_v4_pro_high.yaml",
+      "primary_source_verified": false,
+      "public_reference_kind": "evaluation_worktree_relative_path_and_sha256",
+      "sha256": "40c8ceed5ea8b95b5ad28cec530ce82ee984f33d90902e4efaddd3c2e106cddb",
+      "source_label": "actual_config",
+      "source_worktree_label": "evaluation_worktree",
+      "tier": "tier2_real_config_or_run_log"
+    },
+    {
+      "exists": true,
+      "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/public_source_mini_swe_agent_swebench_config_excerpt.txt",
+      "primary_source_verified": false,
+      "public_reference_kind": "evaluation_worktree_relative_path_and_sha256",
+      "sha256": "e1125e6ca6dc76e389e15f749123c679ea6aff2c29e2d9ac5a873dd3558f7d39",
+      "source_label": "public_config_excerpt",
+      "source_worktree_label": "evaluation_worktree",
+      "tier": "tier2_real_config_or_run_log"
+    },
+    {
+      "exists": true,
+      "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5.stdout_stderr.log",
+      "primary_source_verified": false,
+      "public_reference_kind": "evaluation_worktree_relative_path_and_sha256",
+      "sha256": "41f92f5fd145fc55b378fe07f6f0ebaa33c0ad8d9b3ba167a866bb22ac140457",
+      "source_label": "smoke_stdout_stderr",
+      "source_worktree_label": "evaluation_worktree",
+      "tier": "tier2_real_config_or_run_log"
+    },
+    {
+      "exists": true,
+      "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5/minisweagent.log",
+      "primary_source_verified": false,
+      "public_reference_kind": "evaluation_worktree_relative_path_and_sha256",
+      "sha256": "5c0d73e4b640c4563dda7b84654513a4020901ee5851f79bf938f67509274fec",
+      "source_label": "smoke_internal_log",
+      "source_worktree_label": "evaluation_worktree",
+      "tier": "tier2_real_config_or_run_log"
+    },
+    {
+      "exists": true,
+      "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5_official_all5.stdout_stderr.log",
+      "primary_source_verified": false,
+      "public_reference_kind": "evaluation_worktree_relative_path_and_sha256",
+      "sha256": "081b92a46082fb155e2286d3b881d3eafa07e4c1c3764e8e13e2b57c90c0bc25",
+      "source_label": "official_all5_stdout_stderr",
+      "source_worktree_label": "evaluation_worktree",
+      "tier": "tier2_real_config_or_run_log"
+    },
+    {
+      "exists": true,
+      "opaque_ref": "evaluation_worktree:runs/pre-verl-swebench-verified-score-gap-investigation-20260521T000000Z/mini_swe_agent_b0_smoke5_official_completed4.stdout_stderr.log",
+      "primary_source_verified": false,
+      "public_reference_kind": "evaluation_worktree_relative_path_and_sha256",
+      "sha256": "27758169993118ec373d5c749d1af244dcbdd247e4fde1bef70d44db89a6a5c5",
+      "source_label": "official_completed4_stdout_stderr",
+      "source_worktree_label": "evaluation_worktree",
+      "tier": "tier2_real_config_or_run_log"
+    }
+  ]
+}

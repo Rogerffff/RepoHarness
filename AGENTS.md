@@ -30,6 +30,106 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 - `reference/claude-code-docs/`：Claude Code 架构分析资料。
 - `reference/claude-code-typescript-src/`：Claude Code TypeScript 参考源码。该目录只作为设计参考，不是 RepoHarness 主实现的一部分；其中 `AGENTS.md` 是参考源码导航。
 
+## 当前 agentic RL / verl 工作流背景
+
+本工作树现在不只是早期 V1-V5 harness 原型，还包含一条更长的 agentic RL 训练链路：
+
+```text
+RepoHarness task
+-> run_episode(real_episode)
+-> RepoHarnessEpisodeResult
+-> TrainingView / GenerationRecord / formal online RL gate
+-> repo_harness_verl bridge
+-> verl fully async rollout / MessageQueue / trainer smoke
+```
+
+重要阶段状态：
+
+- Stage 13 到 Stage 15：已经打通 RepoHarness 到 verl fully async 的本地桥接、远端 smoke、partial checkpoint / 同进程 resume 原型和 partial rollout 远端 smoke。
+- Stage 16A 到 Stage 16E：围绕正式训练工具面、diagnostic shell、公开环境提示、official verifier healthcheck 和 patch hygiene 做了多轮加固。
+- Stage 16F：把测评入口从旧 `run_task(...)` 收敛到新的 `run-episode-task` / `run_episode(real_episode)` 统一入口，并把旧入口标记为 legacy compatibility。
+- Stage 16F.6 / 16F.7：已经用真实外部 provider 做过小规模 `run-episode-task` smoke，并补了 provider attempt / error accounting。外部 provider 轨迹默认不能进入 policy loss，因为缺少 verl 训练路径需要的 token / logprob provenance。
+
+当前训练 worktree 的关键事实来源：
+
+- `src/repo_harness/rl/runtime.py`：`RepoHarnessRuntime.run_episode(...)`、`start_episode(...)`、`LLMGatewayModelClientAdapter`、formal result 构造和 real episode runtime。
+- `src/repo_harness/execution/spec.py`、`src/repo_harness/execution/builder.py`：`EpisodeExecutionSpec` 和任务 / verifier / tool / budget / feedback 策略绑定。
+- `src/repo_harness/evaluation/episode_runner.py`：`run-episode-task` 的执行入口、provider diagnostics、projection 输入。
+- `src/repo_harness/evaluation/episode_projection.py`：新入口到旧评测 / export 可读 projection 的绑定。
+- `src/repo_harness/evaluation/entrypoint_policy.py`：旧 `run_task(...)` 与新 `run-episode-task` 的训练资格策略。
+- `src/repo_harness/evaluation/episode_parity.py`：旧入口和新入口的小规模 parity audit。
+- `src/repo_harness/workspace/patch_hygiene.py`：`final.patch` / `final.diff` 清洁投影、过滤目录、runtime-private 路径和 public-safe hygiene report。
+- `src/repo_harness/workspace/diagnostic_session.py`、`src/repo_harness/workspace/docker_adapter.py`、`src/repo_harness/workspace/adapter.py`：Stage 16B diagnostic shell、Docker / local backend session 和 projection writeback。
+- `src/repo_harness/tasks/command_policy.py`：Stage 16A 的安全最小 `execute_bash` 策略。它是正式训练 shell 的保守 baseline，不应被误读成完整 Claude Code Bash 能力。
+- `src/repo_harness/tools/minimal.py`：模型可见工具 registry、`execute_bash`、`diagnostic_shell`、`run_tests` 等工具实现入口。
+
+## 两个 worktree 的并行协作
+
+现在有两个长期并行工作树：
+
+```text
+training_worktree:
+  当前仓库，public label 为 training_worktree
+  负责 verl / RL 训练链路、formal gates、数据 schema、reward、export、远端训练 smoke。
+
+evaluation_worktree:
+  相邻评测仓库，public label 为 evaluation_worktree
+  负责 SWE-Bench / 强模型真实任务测评、harness 能力诊断、score gap 排查和评测驱动修复。
+```
+
+协作原则：
+
+1. 两个 worktree 不能长期分叉出不同 harness 语义。评测 worktree 发现的共享链路 bugfix，应及时同步回 training worktree。
+2. 训练 worktree 当前以 `run-episode-task` / `run_episode(real_episode)` 为 canonical 新入口；旧 `run_task(...)` 只保留 legacy compatibility，不应作为新训练数据默认事实来源。
+3. evaluation worktree 仍会继续发现工具能力、public test、diagnostic shell、provider accounting、patch hygiene 等问题。若修复影响共享 harness 行为，不应只留在 evaluation worktree。
+4. 未通过代表性 Stage 16.5 harness 诊断前，不应贸然冻结真实 Stage 17 数据 split、生产 Stage 20 warm-start 数据或启动 Stage 21 RL 训练。
+
+常见同步背景文档：
+
+- `docs/agentic_RL/training_design/worktree_sync_run_episode_unification_plan.md`
+- `docs/agentic_RL/training_design/stage16f_unified_baseline_handoff_to_evaluation_agent.md`
+- evaluation worktree 中的 `docs/resume/stage16_5_execution_plan.md`
+- evaluation worktree 中的 `docs/resume/repo_harness_vs_claude_code_capability_gap_analysis.md`
+
+公开文档不要写入真实本机绝对路径。需要引用另一个 worktree 时，使用 `source_worktree_label`、`source_commit`、`source_doc_sha256`、`opaque_ref` 这类 public-safe 字段；真实路径只应留在不提交的 runtime-private 报告里。
+
+## 当前紧急任务：Stage 16G.0
+
+当前不要直接进入 Stage 17A 数据 registry。紧急任务是 Stage 16G.0：盘点 RepoHarness 与 Claude Code / mini-SWE-agent / 其他真实 SWE harness 的工具能力差距。
+
+核心问题：
+
+```text
+如果 RepoHarness 的工具能力弱到连只给 Bash 的 mini-SWE-agent 都不如，
+那么在这个 harness 里做强化学习可能会训练出错误能力。
+
+目标不是简单放开完整 shell，
+而是判断正式训练工具面是否足够接近 Claude Code 类真实软件工程 agent 的工作方式。
+```
+
+Stage 16G.0 是 inventory / gap analysis 阶段，原则上不改模型可见工具、不放宽 `execute_bash`、不修改 `run_episode(...)` 行为、不启动训练。它应该产出能力矩阵、风险报告和后续 Stage 16G.1+ 的改造建议。
+
+新接手 agent 必读：
+
+- `docs/agentic_RL/repo_harness_verl_workstreams/49-stage-16g-0-execution-plan.md`
+- `reference/claude-code-typescript-src/AGENTS.md`
+- `docs/harness_improve/gpt_advice.md`
+- evaluation worktree 的 `docs/resume/repo_harness_vs_claude_code_capability_gap_analysis.md`
+- `docs/agentic_RL/training_design/post_stage15_training_infra_stage_plan.md`
+- `docs/agentic_RL/training_design/stage16f_unified_baseline_handoff_to_evaluation_agent.md`
+
+审查 Stage 16G.0 时，请重点检查这些能力是否被覆盖：
+
+- Claude Code 风格的 `Read` / `Grep` / `Glob` / `Edit` / `Write` / `Bash` 分层，而不是只看一个 Bash。
+- RepoHarness 的 scaffold 工具集合与实际 executor registry 是否一致。
+- `execute_bash`、`diagnostic_shell`、未来可能的 `run_public_command(...)` 的边界和训练资格。
+- public test routing、scratch Python / reproduction script、project command routing、dependency setup。
+- 文件查看分页、大文件处理、symbol search、artifact 回读、任务管理、子代理 / plugin / skill 的 schema 预留。
+- 权限拒绝是否给模型可学习的恢复路径，而不是只让模型少用工具。
+- hidden verifier、gold patch、test patch、Git history、runtime-private、共享依赖环境和本机路径的防泄漏边界。
+
+Stage 16G.0 通过后，也不等于可以立刻大规模训练。它只应回答：下一步应该怎样把 harness 能力向 Claude Code 类真实工具环境靠拢，同时仍保持训练数据和 verifier 边界安全。
+
 ## 核心设计文档索引
 
 建议先读：
