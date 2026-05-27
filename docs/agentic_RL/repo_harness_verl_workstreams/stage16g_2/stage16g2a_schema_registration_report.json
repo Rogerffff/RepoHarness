@@ -1,8 +1,13 @@
 {
+  "all_core_new_tools_in_default_tool_order": true,
   "all_new_tools_buildable": true,
   "all_new_tools_have_input_limits": true,
-  "all_new_tools_in_default_tool_order": true,
+  "apply_patch_operations_support_reason": true,
   "apply_patch_unified_diff_exposed": false,
+  "core_visible_new_tools": [
+    "write_file",
+    "apply_patch"
+  ],
   "core_write_file_upsert_exposed": false,
   "default_tool_order": [
     "list_files",
@@ -16,9 +21,6 @@
     "create_file",
     "write_file",
     "apply_patch",
-    "delete_file",
-    "move_file",
-    "mkdir",
     "bash",
     "run_tests",
     "git_diff"
@@ -42,14 +44,18 @@
     "create_file",
     "write_file",
     "apply_patch",
-    "delete_file",
-    "move_file",
-    "mkdir",
     "bash",
     "run_tests",
     "git_diff"
   ],
   "schema_version": "stage16g2a.schema_registration_report.v1",
+  "standalone_delete_move_require_reason": true,
+  "standalone_operation_tool_names": [
+    "delete_file",
+    "move_file",
+    "mkdir"
+  ],
+  "standalone_operation_tools_not_in_default_tool_order": true,
   "tool_records": [
     {
       "additional_properties_allowed": false,
@@ -74,10 +80,13 @@
         "create",
         "overwrite"
       ],
+      "operation_property_names": [],
+      "operation_reason_property_present": false,
       "operations_max_items": null,
       "path_limit_fields": [
         "path"
       ],
+      "reason_required": false,
       "required_fields": [
         "path",
         "content",
@@ -85,6 +94,7 @@
       ],
       "tool_name": "write_file",
       "tool_version": "repo_harness_write_file_stage16g2a_schema_v0",
+      "top_level_reason_property_present": false,
       "unified_diff_property_present": false,
       "upsert_exposed_in_core_schema": false
     },
@@ -103,13 +113,29 @@
       "is_destructive": true,
       "is_read_only": false,
       "mode_enum": null,
+      "operation_property_names": [
+        "content",
+        "expected_content_hash",
+        "expected_source_hash",
+        "mode",
+        "new_text",
+        "old_text",
+        "op",
+        "path",
+        "reason",
+        "source_path",
+        "target_path"
+      ],
+      "operation_reason_property_present": true,
       "operations_max_items": 50,
       "path_limit_fields": [],
+      "reason_required": false,
       "required_fields": [
         "operations"
       ],
       "tool_name": "apply_patch",
-      "tool_version": "repo_harness_apply_patch_stage16g2a_schema_v0",
+      "tool_version": "repo_harness_apply_patch_stage16g2a_schema_v1",
+      "top_level_reason_property_present": false,
       "unified_diff_property_present": false,
       "upsert_exposed_in_core_schema": false
     },
@@ -117,28 +143,36 @@
       "additional_properties_allowed": false,
       "behavior_stage": "16G.2B",
       "buildable": true,
-      "content_limit_fields": [],
+      "content_limit_fields": [
+        "reason"
+      ],
       "executor_binding_status": "schema_only_denial_until_16G2B",
-      "in_default_tool_order": true,
-      "in_default_tool_registry": true,
+      "in_default_tool_order": false,
+      "in_default_tool_registry": false,
       "input_limits_declared": true,
       "input_property_names": [
         "expected_content_hash",
-        "path"
+        "path",
+        "reason"
       ],
       "is_destructive": true,
       "is_read_only": false,
       "mode_enum": null,
+      "operation_property_names": [],
+      "operation_reason_property_present": false,
       "operations_max_items": null,
       "path_limit_fields": [
         "path"
       ],
+      "reason_required": true,
       "required_fields": [
         "path",
-        "expected_content_hash"
+        "expected_content_hash",
+        "reason"
       ],
       "tool_name": "delete_file",
-      "tool_version": "repo_harness_delete_file_stage16g2a_schema_v0",
+      "tool_version": "repo_harness_delete_file_stage16g2a_schema_v1",
+      "top_level_reason_property_present": true,
       "unified_diff_property_present": false,
       "upsert_exposed_in_core_schema": false
     },
@@ -146,31 +180,39 @@
       "additional_properties_allowed": false,
       "behavior_stage": "16G.2B",
       "buildable": true,
-      "content_limit_fields": [],
+      "content_limit_fields": [
+        "reason"
+      ],
       "executor_binding_status": "schema_only_denial_until_16G2B",
-      "in_default_tool_order": true,
-      "in_default_tool_registry": true,
+      "in_default_tool_order": false,
+      "in_default_tool_registry": false,
       "input_limits_declared": true,
       "input_property_names": [
         "expected_source_hash",
+        "reason",
         "source_path",
         "target_path"
       ],
       "is_destructive": true,
       "is_read_only": false,
       "mode_enum": null,
+      "operation_property_names": [],
+      "operation_reason_property_present": false,
       "operations_max_items": null,
       "path_limit_fields": [
         "source_path",
         "target_path"
       ],
+      "reason_required": true,
       "required_fields": [
         "source_path",
         "target_path",
-        "expected_source_hash"
+        "expected_source_hash",
+        "reason"
       ],
       "tool_name": "move_file",
-      "tool_version": "repo_harness_move_file_stage16g2a_schema_v0",
+      "tool_version": "repo_harness_move_file_stage16g2a_schema_v1",
+      "top_level_reason_property_present": true,
       "unified_diff_property_present": false,
       "upsert_exposed_in_core_schema": false
     },
@@ -180,8 +222,8 @@
       "buildable": true,
       "content_limit_fields": [],
       "executor_binding_status": "schema_only_denial_until_16G2B",
-      "in_default_tool_order": true,
-      "in_default_tool_registry": true,
+      "in_default_tool_order": false,
+      "in_default_tool_registry": false,
       "input_limits_declared": true,
       "input_property_names": [
         "path"
@@ -189,15 +231,19 @@
       "is_destructive": true,
       "is_read_only": false,
       "mode_enum": null,
+      "operation_property_names": [],
+      "operation_reason_property_present": false,
       "operations_max_items": null,
       "path_limit_fields": [
         "path"
       ],
+      "reason_required": false,
       "required_fields": [
         "path"
       ],
       "tool_name": "mkdir",
       "tool_version": "repo_harness_mkdir_stage16g2a_schema_v0",
+      "top_level_reason_property_present": false,
       "unified_diff_property_present": false,
       "upsert_exposed_in_core_schema": false
     }

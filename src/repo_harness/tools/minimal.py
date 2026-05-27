@@ -47,9 +47,6 @@ DEFAULT_TOOL_ORDER = [
     "create_file",
     "write_file",
     "apply_patch",
-    "delete_file",
-    "move_file",
-    "mkdir",
     "bash",
     "run_tests",
     "git_diff",
@@ -106,6 +103,7 @@ LIST_FILES_DEFAULT_MAX_ENTRIES = 200
 GIT_DIFF_CHANGED_FILE_LIMIT = 200
 STAGE16G2_PATH_MAX_CHARS = 1024
 STAGE16G2_CONTENT_MAX_BYTES = 1024 * 1024
+STAGE16G2_REASON_MAX_CHARS = 2000
 STAGE16G2_APPLY_PATCH_MAX_OPERATIONS = 50
 SEARCH_FACT_POLICY_VERSION = "repo_harness_search_fact_trust_v1"
 TOOL_RESULT_ENVELOPE_VERSION = "repo_harness_tool_result_envelope_v1"
@@ -3205,7 +3203,7 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "apply_patch": ToolDefinition(
             name="apply_patch",
-            tool_version="repo_harness_apply_patch_stage16g2a_schema_v0",
+            tool_version="repo_harness_apply_patch_stage16g2a_schema_v1",
             model_visible_description=(
                 "Structured multi-operation file mutation schema for exact text replacement, "
                 "write, delete, move, and mkdir operations. This is not a shell patch, git apply, "
@@ -3215,7 +3213,9 @@ def build_tool(name: str) -> ToolDefinition:
             model_visible_prompt=(
                 "Use apply_patch only when enabled in the current run. Pass operations as structured "
                 "objects with op fields such as replace_text, write_file, delete_file, move_file, "
-                "or mkdir. Do not pass shell commands, git apply input, or free-form unified diff text."
+                "or mkdir. For delete_file and move_file operations, include a short reason explaining "
+                "why the deletion or move is correct for the task. Do not pass shell commands, git apply "
+                "input, or free-form unified diff text."
             ),
             input_schema={
                 "type": "object",
@@ -3240,6 +3240,11 @@ def build_tool(name: str) -> ToolDefinition:
                                 "mode": {"type": "string", "enum": ["create", "overwrite"]},
                                 "expected_content_hash": {"type": "string"},
                                 "expected_source_hash": {"type": "string"},
+                                "reason": {
+                                    "type": "string",
+                                    "maxLength": STAGE16G2_REASON_MAX_CHARS,
+                                    "description": "Model-provided justification required for delete_file and move_file operations.",
+                                },
                             },
                             "additionalProperties": False,
                         },
@@ -3262,21 +3267,27 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "delete_file": ToolDefinition(
             name="delete_file",
-            tool_version="repo_harness_delete_file_stage16g2a_schema_v0",
+            tool_version="repo_harness_delete_file_stage16g2a_schema_v1",
             model_visible_description=(
                 "Structured schema for deleting one UTF-8 file with explicit expected_content_hash. "
                 "Stage 16G.2A exposes the schema; deletion behavior is enabled in Stage 16G.2B."
             ),
             model_visible_prompt=(
                 "Use delete_file only when enabled in the current run. Pass a workspace-relative path "
-                "and expected_content_hash from read_file. This tool deletes files only, not directories."
+                "and expected_content_hash from read_file. Also pass reason explaining why this deletion "
+                "is correct for the task. This tool deletes files only, not directories."
             ),
             input_schema={
                 "type": "object",
-                "required": ["path", "expected_content_hash"],
+                "required": ["path", "expected_content_hash", "reason"],
                 "properties": {
                     "path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative UTF-8 file path."},
                     "expected_content_hash": {"type": "string", "description": "sha256 from read_file."},
+                    "reason": {
+                        "type": "string",
+                        "maxLength": STAGE16G2_REASON_MAX_CHARS,
+                        "description": "Model-provided justification for deleting this file.",
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -3286,22 +3297,28 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "move_file": ToolDefinition(
             name="move_file",
-            tool_version="repo_harness_move_file_stage16g2a_schema_v0",
+            tool_version="repo_harness_move_file_stage16g2a_schema_v1",
             model_visible_description=(
                 "Structured schema for moving or renaming one UTF-8 file with explicit source hash. "
                 "Stage 16G.2A exposes the schema; move behavior is enabled in Stage 16G.2B."
             ),
             model_visible_prompt=(
                 "Use move_file only when enabled in the current run. Pass source_path, target_path, "
-                "and expected_source_hash from read_file. The core profile does not allow silent overwrite."
+                "expected_source_hash from read_file, and reason explaining why this move or rename is correct. "
+                "The core profile does not allow silent overwrite."
             ),
             input_schema={
                 "type": "object",
-                "required": ["source_path", "target_path", "expected_source_hash"],
+                "required": ["source_path", "target_path", "expected_source_hash", "reason"],
                 "properties": {
                     "source_path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative source file path."},
                     "target_path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative target file path."},
                     "expected_source_hash": {"type": "string", "description": "sha256 from read_file for the source file."},
+                    "reason": {
+                        "type": "string",
+                        "maxLength": STAGE16G2_REASON_MAX_CHARS,
+                        "description": "Model-provided justification for moving or renaming this file.",
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -3551,9 +3568,11 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "apply_patch.operations": (list, True),
         "delete_file.path": (str, True),
         "delete_file.expected_content_hash": (str, True),
+        "delete_file.reason": (str, True),
         "move_file.source_path": (str, True),
         "move_file.target_path": (str, True),
         "move_file.expected_source_hash": (str, True),
+        "move_file.reason": (str, True),
         "mkdir.path": (str, True),
         "bash.command": (str, True),
         "bash.cwd": (str, False),
@@ -3639,15 +3658,15 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
 _STAGE16G2_APPLY_PATCH_REQUIRED_FIELDS: dict[str, set[str]] = {
     "replace_text": {"op", "path", "old_text", "new_text", "expected_content_hash"},
     "write_file": {"op", "path", "content", "mode"},
-    "delete_file": {"op", "path", "expected_content_hash"},
-    "move_file": {"op", "source_path", "target_path", "expected_source_hash"},
+    "delete_file": {"op", "path", "expected_content_hash", "reason"},
+    "move_file": {"op", "source_path", "target_path", "expected_source_hash", "reason"},
     "mkdir": {"op", "path"},
 }
 _STAGE16G2_APPLY_PATCH_ALLOWED_FIELDS: dict[str, set[str]] = {
     "replace_text": {"op", "path", "old_text", "new_text", "expected_content_hash"},
     "write_file": {"op", "path", "content", "mode", "expected_content_hash"},
-    "delete_file": {"op", "path", "expected_content_hash"},
-    "move_file": {"op", "source_path", "target_path", "expected_source_hash"},
+    "delete_file": {"op", "path", "expected_content_hash", "reason"},
+    "move_file": {"op", "source_path", "target_path", "expected_source_hash", "reason"},
     "mkdir": {"op", "path"},
 }
 _STAGE16G2_APPLY_PATCH_STRING_FIELDS = {
@@ -3661,6 +3680,7 @@ _STAGE16G2_APPLY_PATCH_STRING_FIELDS = {
     "mode",
     "expected_content_hash",
     "expected_source_hash",
+    "reason",
 }
 
 
@@ -3677,6 +3697,8 @@ def _stage16g2_top_level_limit_issue(tool_name: str, args: dict[str, Any]) -> di
             return issue
     if tool_name == "write_file":
         return _stage16g2_content_limit_issue("content", args.get("content"))
+    if tool_name in {"delete_file", "move_file"}:
+        return _stage16g2_reason_limit_issue("reason", args.get("reason"))
     return None
 
 
@@ -3711,6 +3733,10 @@ def _stage16g2_apply_patch_operations_issue(operations: list[Any]) -> dict[str, 
                 issue = _stage16g2_content_limit_issue(f"operations[{index}].{field_name}", operation[field_name])
                 if issue is not None:
                     return issue
+        if "reason" in operation:
+            issue = _stage16g2_reason_limit_issue(f"operations[{index}].reason", operation["reason"])
+            if issue is not None:
+                return issue
     return None
 
 
@@ -3723,6 +3749,12 @@ def _stage16g2_path_limit_issue(field_name: str, value: Any) -> dict[str, Any] |
 def _stage16g2_content_limit_issue(field_name: str, value: Any) -> dict[str, Any] | None:
     if isinstance(value, str) and len(value.encode("utf-8")) > STAGE16G2_CONTENT_MAX_BYTES:
         return _issue(field_name, f"utf-8 byte length <= {STAGE16G2_CONTENT_MAX_BYTES}", value, retryable=True)
+    return None
+
+
+def _stage16g2_reason_limit_issue(field_name: str, value: Any) -> dict[str, Any] | None:
+    if isinstance(value, str) and len(value) > STAGE16G2_REASON_MAX_CHARS:
+        return _issue(field_name, f"string length <= {STAGE16G2_REASON_MAX_CHARS}", value, retryable=True)
     return None
 
 

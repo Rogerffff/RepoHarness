@@ -7,14 +7,16 @@ import pytest
 from repo_harness.permissions import PermissionContext
 from repo_harness.scaffolds import build_planner_coder_verifier_scaffold, build_simple_react_scaffold
 from repo_harness.stage16g2_file_surface import (
+    STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES,
     STAGE16G2A_NEW_TOOL_NAMES,
+    STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES,
     _scan_public_files,
     build_profile_delta_report,
     build_schema_registration_report,
     inspect_stage16g2a_tool_surface,
     write_stage16g2a_reports,
 )
-from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolExecutionContext, ToolExecutor, build_tool
+from repo_harness.tools import DEFAULT_TOOL_ORDER, ToolExecutionContext, ToolExecutor, ToolRegistry, build_tool
 from repo_harness.tools.schemas import ToolCall
 from repo_harness.trajectory import RunRecorder
 from repo_harness.workspace import DependencyState, LocalWorkspaceAdapter, RunWorkspace
@@ -41,15 +43,21 @@ def test_stage16g2a_new_tools_are_registered_schema_only() -> None:
     records = {record["tool_name"]: record for record in report["tool_records"]}
 
     assert report["all_new_tools_buildable"] is True
-    assert report["all_new_tools_in_default_tool_order"] is True
+    assert report["all_core_new_tools_in_default_tool_order"] is True
+    assert report["standalone_operation_tools_not_in_default_tool_order"] is True
     assert report["core_write_file_upsert_exposed"] is False
     assert report["apply_patch_unified_diff_exposed"] is False
+    assert report["apply_patch_operations_support_reason"] is True
+    assert report["standalone_delete_move_require_reason"] is True
 
     for tool_name in STAGE16G2A_NEW_TOOL_NAMES:
-        assert tool_name in DEFAULT_TOOL_ORDER
         tool = build_tool(tool_name)
         assert tool.is_destructive is True
         assert records[tool_name]["executor_binding_status"] == "schema_only_denial_until_16G2B"
+    for tool_name in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES:
+        assert tool_name in DEFAULT_TOOL_ORDER
+    for tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES:
+        assert tool_name not in DEFAULT_TOOL_ORDER
 
     write_file = build_tool("write_file")
     assert write_file.input_schema["properties"]["mode"]["enum"] == ["create", "overwrite"]
@@ -57,17 +65,23 @@ def test_stage16g2a_new_tools_are_registered_schema_only() -> None:
     apply_patch = build_tool("apply_patch")
     assert "unified_diff" not in apply_patch.input_schema["properties"]
     assert apply_patch.input_schema["properties"]["operations"]["maxItems"] == 50
+    assert "reason" in apply_patch.input_schema["properties"]["operations"]["items"]["properties"]
+    assert "reason" in build_tool("delete_file").input_schema["required"]
+    assert "reason" in build_tool("move_file").input_schema["required"]
 
 
 def test_stage16g2a_scaffolds_expose_new_tools_only_to_write_phases() -> None:
     simple = build_simple_react_scaffold()
     planner = build_planner_coder_verifier_scaffold()
 
-    assert all(tool in simple.allowed_tools for tool in STAGE16G2A_NEW_TOOL_NAMES)
+    assert all(tool in simple.allowed_tools for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES)
+    assert not any(tool in simple.allowed_tools for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES)
     assert not any(tool in planner.allowed_tools_for_phase("planner") for tool in STAGE16G2A_NEW_TOOL_NAMES)
     assert not any(tool in planner.allowed_tools_for_phase("verifier") for tool in STAGE16G2A_NEW_TOOL_NAMES)
-    assert all(tool in planner.allowed_tools_for_phase("coder") for tool in STAGE16G2A_NEW_TOOL_NAMES)
-    assert all(tool in planner.allowed_tools_for_phase("repair") for tool in STAGE16G2A_NEW_TOOL_NAMES)
+    assert all(tool in planner.allowed_tools_for_phase("coder") for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES)
+    assert all(tool in planner.allowed_tools_for_phase("repair") for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES)
+    assert not any(tool in planner.allowed_tools_for_phase("coder") for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES)
+    assert not any(tool in planner.allowed_tools_for_phase("repair") for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES)
 
 
 @pytest.mark.parametrize(
@@ -96,13 +110,21 @@ def test_stage16g2a_scaffolds_expose_new_tools_only_to_write_phases() -> None:
                 ],
             },
         ),
-        ("delete_file", {"path": "notes.txt", "expected_content_hash": "not-used-in-16g2a"}),
+        (
+            "delete_file",
+            {
+                "path": "notes.txt",
+                "expected_content_hash": "not-used-in-16g2a",
+                "reason": "Remove obsolete implementation after migration.",
+            },
+        ),
         (
             "move_file",
             {
                 "source_path": "notes.txt",
                 "target_path": "renamed.txt",
                 "expected_source_hash": "not-used-in-16g2a",
+                "reason": "Rename file to match the new module name.",
             },
         ),
         ("mkdir", {"path": "new_dir"}),
@@ -116,7 +138,8 @@ def test_stage16g2a_executor_returns_safe_schema_only_denial(
     context = _tool_context(tmp_path)
     workspace = Path(context.run_workspace.workspace_path)
     (workspace / "notes.txt").write_text("original\n", encoding="utf-8")
-    executor = ToolExecutor()
+    registry = ToolRegistry([build_tool(tool_name)]) if tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES else None
+    executor = ToolExecutor(registry=registry) if registry is not None else ToolExecutor()
     before_files = sorted(path.relative_to(workspace).as_posix() for path in workspace.rglob("*"))
 
     result = executor.execute(
@@ -209,6 +232,21 @@ def test_stage16g2a_schema_validation_rejects_upsert_and_empty_patch(tmp_path: P
             "string required for overwrite",
         ),
         (
+            {"op": "delete_file", "path": "notes.txt", "expected_content_hash": "h"},
+            "operations[0].reason",
+            "required field",
+        ),
+        (
+            {
+                "op": "move_file",
+                "source_path": "notes.txt",
+                "target_path": "renamed.txt",
+                "expected_source_hash": "h",
+            },
+            "operations[0].reason",
+            "required field",
+        ),
+        (
             {"op": "replace_text", "path": "notes.txt", "old_text": "a", "new_text": "b"},
             "operations[0].expected_content_hash",
             "required field",
@@ -266,14 +304,51 @@ def test_stage16g2a_apply_patch_nested_schema_rejects_limits(tmp_path: Path) -> 
     assert too_long.typed["expected_type"] == "string length <= 1024"
 
 
+def test_stage16g2a_permission_checks_apply_patch_nested_paths(tmp_path: Path) -> None:
+    context = _tool_context(tmp_path)
+    executor = ToolExecutor()
+    decision = executor.check_permission(
+        ToolCall(
+            tool_call_id="call_apply_patch_escape",
+            tool_name="apply_patch",
+            arguments={
+                "operations": [
+                    {
+                        "op": "delete_file",
+                        "path": "../outside.txt",
+                        "expected_content_hash": "h",
+                        "reason": "Probe should be denied before any mutation behavior is enabled.",
+                    }
+                ]
+            },
+            turn=1,
+        ),
+        context,
+    )
+
+    assert decision.decision == "deny"
+    assert decision.matched_rule == "workspace_boundary_or_sensitive_path"
+
+
 def test_stage16g2a_profile_delta_keeps_new_tools_out_of_policy_loss() -> None:
     report = build_profile_delta_report()
     profiles = {profile["profile_id"]: profile for profile in report["profiles"]}
 
     assert report["swe_public_core_excludes_persistent_shell"] is True
-    assert report["swe_public_core_contains_all_new_tools"] is True
+    assert report["swe_public_core_contains_core_new_tools"] is True
+    assert report["swe_public_core_excludes_standalone_operation_tools"] is True
+    assert report["swe_public_extended_contains_standalone_operation_tools"] is True
     assert "diagnostic_shell" not in profiles["swe_public_core"]["stage16g2a_tool_names"]
     assert "execute_bash" not in profiles["swe_public_core"]["stage16g2a_tool_names"]
+    assert all(tool in profiles["swe_public_core"]["stage16g2a_tool_names"] for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES)
+    assert not any(
+        tool in profiles["swe_public_core"]["stage16g2a_tool_names"]
+        for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+    )
+    assert all(
+        tool in profiles["swe_public_extended"]["stage16g2a_tool_names"]
+        for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+    )
 
     for profile in profiles.values():
         for state in profile["training_projection_state_for_new_tools"].values():
@@ -355,7 +430,7 @@ def test_stage16g2a_inspector_rebuilds_scaffold_report_instead_of_trusting_flags
     scaffold = json.loads(scaffold_path.read_text())
     scaffold["simple_react_allowed_tools"].remove("write_file")
     scaffold["planner_coder_verifier_phase_allowed_tools"]["planner"].append("write_file")
-    assert scaffold["simple_react_exposes_all_new_tools"] is True
+    assert scaffold["simple_react_exposes_core_new_tools"] is True
     assert scaffold["planner_exposes_write_tools"] is False
     _write_json(scaffold_path, scaffold)
     summary_path = _refresh_summary_digest(
@@ -396,7 +471,7 @@ def test_stage16g2a_inspector_rebuilds_profile_report_instead_of_trusting_flags(
     profile = json.loads(profile_path.read_text())
     profiles = {record["profile_id"]: record for record in profile["profiles"]}
     profiles["swe_public_core"]["stage16g2a_tool_names"].remove("write_file")
-    assert profile["swe_public_core_contains_all_new_tools"] is True
+    assert profile["swe_public_core_contains_core_new_tools"] is True
     _write_json(profile_path, profile)
     summary_path = _refresh_summary_digest(
         tmp_path,

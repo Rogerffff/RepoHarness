@@ -23,7 +23,13 @@ from repo_harness.tools import DEFAULT_TOOL_ORDER, build_tool, default_tool_regi
 
 DEFAULT_STAGE16G2_DIR = Path("docs/agentic_RL/repo_harness_verl_workstreams/stage16g_2")
 DEFAULT_STAGE16G2_PLAN = Path("docs/agentic_RL/repo_harness_verl_workstreams/53-stage-16g-2-execution-plan.md")
+DEFAULT_STAGE16G2B_PREFLIGHT_CORRECTION = Path(
+    "docs/agentic_RL/repo_harness_verl_workstreams/54-stage-16g-2b-preflight-design-correction.md"
+)
 STAGE16G2A_NEW_TOOL_NAMES = ["write_file", "apply_patch", "delete_file", "move_file", "mkdir"]
+STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES = ["write_file", "apply_patch"]
+STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES = ["delete_file", "move_file", "mkdir"]
+STAGE16G2A_DEFAULT_FILE_MUTATION_TOOLS = ["edit_file", "create_file", "write_file", "apply_patch"]
 STAGE16G2A_P0_CAPABILITY_IDS = [
     "structured_edit_existing_file",
     "structured_write_or_create_file",
@@ -34,8 +40,15 @@ STAGE16G2A_CAPABILITY_TOOL_IDS = {
     "structured_edit_existing_file": ["edit_file", "apply_patch"],
     "structured_write_or_create_file": ["create_file", "write_file"],
     "apply_patch_or_multi_file_edit": ["apply_patch"],
-    "delete_move_mkdir_file_operations": ["delete_file", "move_file", "mkdir"],
+    "delete_move_mkdir_file_operations": ["apply_patch"],
     "task_management_todo": ["update_working_state"],
+}
+STAGE16G2A_CAPABILITY_OPERATION_IDS = {
+    "delete_move_mkdir_file_operations": [
+        "apply_patch.operations.delete_file",
+        "apply_patch.operations.move_file",
+        "apply_patch.operations.mkdir",
+    ],
 }
 SAFE_STRUCTURED_ONLY_TOOLS = [
     "list_files",
@@ -49,9 +62,6 @@ SAFE_STRUCTURED_ONLY_TOOLS = [
     "create_file",
     "write_file",
     "apply_patch",
-    "delete_file",
-    "move_file",
-    "mkdir",
     "git_diff",
 ]
 
@@ -175,6 +185,7 @@ def build_source_inventory(
     *,
     stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR,
     plan_path: Path = DEFAULT_STAGE16G2_PLAN,
+    preflight_correction_path: Path = DEFAULT_STAGE16G2B_PREFLIGHT_CORRECTION,
 ) -> dict[str, Any]:
     input_files = [
         stage16g1_dir / "stage16g1_tool_registry_contract.json",
@@ -182,6 +193,7 @@ def build_source_inventory(
         stage16g1_dir / "stage16g1_training_eligibility_gate_spec.json",
         stage16g1_dir / "stage16g1_acceptance_summary.json",
         plan_path,
+        preflight_correction_path,
     ]
     return {
         "schema_version": "stage16g2a.source_inventory.v1",
@@ -205,9 +217,13 @@ def build_schema_registration_report() -> dict[str, Any]:
         content_limit_fields = [
             field_name
             for field_name, schema in properties.items()
-            if field_name in {"content", "old_text", "new_text"} and isinstance(schema, dict) and schema.get("maxLength")
+            if field_name in {"content", "old_text", "new_text", "reason"} and isinstance(schema, dict) and schema.get("maxLength")
         ]
         operations_schema = properties.get("operations", {})
+        operation_item_schema = {}
+        if isinstance(operations_schema, dict):
+            operation_item_schema = operations_schema.get("items", {}) if isinstance(operations_schema.get("items"), dict) else {}
+        operation_properties = operation_item_schema.get("properties", {}) if isinstance(operation_item_schema, dict) else {}
         tool_records.append(
             {
                 "tool_name": tool_name,
@@ -224,10 +240,14 @@ def build_schema_registration_report() -> dict[str, Any]:
                 "additional_properties_allowed": tool.input_schema.get("additionalProperties", True),
                 "mode_enum": properties.get("mode", {}).get("enum"),
                 "operations_max_items": operations_schema.get("maxItems") if isinstance(operations_schema, dict) else None,
+                "operation_property_names": sorted(operation_properties) if isinstance(operation_properties, dict) else [],
                 "path_limit_fields": path_limit_fields,
                 "content_limit_fields": content_limit_fields,
                 "input_limits_declared": bool(path_limit_fields or content_limit_fields or operations_schema.get("maxItems")),
                 "unified_diff_property_present": "unified_diff" in properties,
+                "operation_reason_property_present": "reason" in operation_properties,
+                "top_level_reason_property_present": "reason" in properties,
+                "reason_required": "reason" in set(tool.input_schema.get("required", [])),
                 "upsert_exposed_in_core_schema": "upsert" in set(properties.get("mode", {}).get("enum", [])),
             }
         )
@@ -238,8 +258,28 @@ def build_schema_registration_report() -> dict[str, Any]:
         "registry_names": registry_names,
         "tool_records": tool_records,
         "all_new_tools_buildable": all(record["buildable"] for record in tool_records),
-        "all_new_tools_in_default_tool_order": all(record["in_default_tool_order"] for record in tool_records),
+        "core_visible_new_tools": list(STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES),
+        "standalone_operation_tool_names": list(STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES),
+        "all_core_new_tools_in_default_tool_order": all(
+            record["in_default_tool_order"]
+            for record in tool_records
+            if record["tool_name"] in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES
+        ),
+        "standalone_operation_tools_not_in_default_tool_order": all(
+            not record["in_default_tool_order"]
+            for record in tool_records
+            if record["tool_name"] in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+        ),
         "all_new_tools_have_input_limits": all(record["input_limits_declared"] for record in tool_records),
+        "apply_patch_operations_support_reason": any(
+            record["tool_name"] == "apply_patch" and record["operation_reason_property_present"]
+            for record in tool_records
+        ),
+        "standalone_delete_move_require_reason": all(
+            record["reason_required"]
+            for record in tool_records
+            if record["tool_name"] in {"delete_file", "move_file"}
+        ),
         "core_write_file_upsert_exposed": any(record["upsert_exposed_in_core_schema"] for record in tool_records),
         "apply_patch_unified_diff_exposed": any(record["unified_diff_property_present"] for record in tool_records),
     }
@@ -263,13 +303,34 @@ def build_scaffold_exposure_report() -> dict[str, Any]:
     return {
         "schema_version": "stage16g2a.scaffold_exposure_report.v1",
         "new_tool_names": list(STAGE16G2A_NEW_TOOL_NAMES),
+        "core_visible_new_tool_names": list(STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES),
+        "standalone_operation_tool_names": list(STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES),
+        "default_file_mutation_tools": list(STAGE16G2A_DEFAULT_FILE_MUTATION_TOOLS),
         "simple_react_allowed_tools": list(simple.allowed_tools),
-        "simple_react_exposes_all_new_tools": all(tool in simple.allowed_tools for tool in STAGE16G2A_NEW_TOOL_NAMES),
+        "simple_react_default_file_mutation_tools": [
+            tool for tool in STAGE16G2A_DEFAULT_FILE_MUTATION_TOOLS if tool in simple.allowed_tools
+        ],
+        "simple_react_exposes_core_new_tools": all(
+            tool in simple.allowed_tools for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES
+        ),
+        "simple_react_exposes_standalone_operation_tools": any(
+            tool in simple.allowed_tools for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+        ),
         "planner_coder_verifier_phase_allowed_tools": phase_tools,
         "planner_exposes_write_tools": any(tool in phase_tools["planner"] for tool in STAGE16G2A_NEW_TOOL_NAMES),
-        "coder_exposes_all_new_tools": all(tool in phase_tools["coder"] for tool in STAGE16G2A_NEW_TOOL_NAMES),
+        "coder_exposes_core_new_tools": all(
+            tool in phase_tools["coder"] for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES
+        ),
+        "coder_exposes_standalone_operation_tools": any(
+            tool in phase_tools["coder"] for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+        ),
         "verifier_exposes_write_tools": any(tool in phase_tools["verifier"] for tool in STAGE16G2A_NEW_TOOL_NAMES),
-        "repair_exposes_all_new_tools": all(tool in phase_tools["repair"] for tool in STAGE16G2A_NEW_TOOL_NAMES),
+        "repair_exposes_core_new_tools": all(
+            tool in phase_tools["repair"] for tool in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES
+        ),
+        "repair_exposes_standalone_operation_tools": any(
+            tool in phase_tools["repair"] for tool in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+        ),
         "patch_focused_scaffolds_unchanged_for_stage16g2a": True,
         "patch_focused_new_tool_exposure": patch_focused,
     }
@@ -284,6 +345,12 @@ def build_tool_surface_delta(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> dic
         capability_id = record["capability_id"]
         current_tool_ids = STAGE16G2A_CAPABILITY_TOOL_IDS.get(capability_id, record["tool_ids"])
         tool_build_status = {tool_id: _try_build_tool(tool_id) for tool_id in current_tool_ids}
+        standalone_tool_ids = (
+            list(STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES)
+            if capability_id == "delete_move_mkdir_file_operations"
+            else []
+        )
+        standalone_tool_build_status = {tool_id: _try_build_tool(tool_id) for tool_id in standalone_tool_ids}
         is_p0 = capability_id in STAGE16G2A_P0_CAPABILITY_IDS
         records.append(
             {
@@ -292,11 +359,18 @@ def build_tool_surface_delta(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> dic
                 "blocking_for_main_swe_rl": bool(record["blocking_for_main_swe_rl"]),
                 "stage16g1_tool_ids": record["tool_ids"],
                 "stage16g2a_tool_ids": current_tool_ids,
+                "stage16g2a_internal_operation_ids": STAGE16G2A_CAPABILITY_OPERATION_IDS.get(capability_id, []),
+                "stage16g2a_standalone_tool_ids": standalone_tool_ids,
                 "tool_build_status": tool_build_status,
+                "standalone_tool_build_status": standalone_tool_build_status,
                 "stage16g1_model_visible_schema_status": record["model_visible_schema_status"],
                 "stage16g2a_model_visible_schema_status": "implemented" if all(tool_build_status.values()) else "blocked",
                 "stage16g1_scaffold_exposure_status": record["scaffold_exposure_status"],
-                "stage16g2a_scaffold_exposure_status": "implemented" if is_p0 else "nonblocking_still_partial",
+                "stage16g2a_scaffold_exposure_status": (
+                    "implemented_via_apply_patch_operations"
+                    if capability_id == "delete_move_mkdir_file_operations"
+                    else ("implemented" if is_p0 else "nonblocking_still_partial")
+                ),
                 "stage16g1_executor_binding_status": record["executor_binding_status"],
                 "stage16g2a_executor_binding_status": (
                     "schema_only_denial_until_16G2B" if is_p0 else "nonblocking_no_change"
@@ -319,7 +393,10 @@ def build_tool_surface_delta(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> dic
         "records": records,
         "p0_schema_and_scaffold_exposure_complete": all(
             record["stage16g2a_model_visible_schema_status"] == "implemented"
-            and record["stage16g2a_scaffold_exposure_status"] == "implemented"
+            and record["stage16g2a_scaffold_exposure_status"] in {
+                "implemented",
+                "implemented_via_apply_patch_operations",
+            }
             for record in records
             if record["capability_id"] in STAGE16G2A_P0_CAPABILITY_IDS
         ),
@@ -332,7 +409,11 @@ def build_profile_delta_report(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> d
     profile_tool_sets = {
         "safe_structured_only": list(SAFE_STRUCTURED_ONLY_TOOLS),
         "swe_public_core": list(DEFAULT_TOOL_ORDER),
-        "swe_public_extended": list(DEFAULT_TOOL_ORDER) + ["execute_bash", "diagnostic_shell"],
+        "swe_public_extended": (
+            list(DEFAULT_TOOL_ORDER)
+            + list(STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES)
+            + ["execute_bash", "diagnostic_shell"]
+        ),
         "redteam_restricted": [],
     }
     profiles = []
@@ -346,14 +427,31 @@ def build_profile_delta_report(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> d
                 "stage16g2a_new_tool_names": [
                     tool_name for tool_name in STAGE16G2A_NEW_TOOL_NAMES if tool_name in tool_names
                 ],
+                "stage16g2a_core_visible_new_tool_names": [
+                    tool_name for tool_name in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES if tool_name in tool_names
+                ],
+                "stage16g2a_standalone_operation_tool_names": [
+                    tool_name for tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES if tool_name in tool_names
+                ],
                 "persistent_diagnostic_shell_in_profile": "diagnostic_shell" in tool_names,
                 "execute_bash_in_profile": "execute_bash" in tool_names,
                 "primary_training_default": profile_id == "swe_public_core",
                 "training_projection_state_for_new_tools": {
                     tool_name: {
-                        "model_visible_schema_status": "implemented",
+                        "model_visible_schema_status": (
+                            "implemented"
+                            if tool_name in tool_names
+                            else "internal_operation_via_apply_patch"
+                        ),
                         "scaffold_exposure_status": (
-                            "implemented" if profile_id in {"safe_structured_only", "swe_public_core", "swe_public_extended"} else "not_default"
+                            "implemented"
+                            if tool_name in tool_names
+                            else (
+                                "covered_by_apply_patch_operations"
+                                if tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+                                and "apply_patch" in tool_names
+                                else "not_default"
+                            )
                         ),
                         "executor_binding_status": "schema_only_denial_until_16G2B",
                         "allowed_in_policy_loss_trajectory": False,
@@ -371,8 +469,16 @@ def build_profile_delta_report(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> d
         "derived_from_current_tool_registry": True,
         "swe_public_core_excludes_persistent_shell": "diagnostic_shell" not in profile_tool_sets["swe_public_core"],
         "swe_public_core_excludes_execute_bash": "execute_bash" not in profile_tool_sets["swe_public_core"],
-        "swe_public_core_contains_all_new_tools": all(
-            tool_name in profile_tool_sets["swe_public_core"] for tool_name in STAGE16G2A_NEW_TOOL_NAMES
+        "swe_public_core_contains_core_new_tools": all(
+            tool_name in profile_tool_sets["swe_public_core"] for tool_name in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES
+        ),
+        "swe_public_core_excludes_standalone_operation_tools": all(
+            tool_name not in profile_tool_sets["swe_public_core"]
+            for tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
+        ),
+        "swe_public_extended_contains_standalone_operation_tools": all(
+            tool_name in profile_tool_sets["swe_public_extended"]
+            for tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES
         ),
         "redteam_restricted_primary_training_default": False,
     }
@@ -410,6 +516,7 @@ def _source_inventory_failures(source_inventory: dict[str, Any]) -> list[str]:
         "stage16g1_training_eligibility_gate_spec.json",
         "stage16g1_acceptance_summary.json",
         DEFAULT_STAGE16G2_PLAN.name,
+        DEFAULT_STAGE16G2B_PREFLIGHT_CORRECTION.name,
     }
     input_entries = source_inventory.get("source_inputs")
     if not isinstance(input_entries, list):
@@ -530,24 +637,36 @@ def build_stage16g2a_validation(reports: dict[str, Any]) -> dict[str, Any]:
         failures.append("stage16g1_preflight_failed")
     if not schema.get("all_new_tools_buildable"):
         failures.append("new_tools_not_all_buildable")
-    if not schema.get("all_new_tools_in_default_tool_order"):
-        failures.append("new_tools_not_all_in_default_tool_order")
+    if not schema.get("all_core_new_tools_in_default_tool_order"):
+        failures.append("core_new_tools_not_all_in_default_tool_order")
+    if not schema.get("standalone_operation_tools_not_in_default_tool_order"):
+        failures.append("standalone_operation_tools_exposed_in_default_tool_order")
     if not schema.get("all_new_tools_have_input_limits"):
         failures.append("new_tools_missing_input_limits")
+    if not schema.get("apply_patch_operations_support_reason"):
+        failures.append("apply_patch_operations_missing_model_reason_field")
+    if not schema.get("standalone_delete_move_require_reason"):
+        failures.append("standalone_delete_move_missing_model_reason_requirement")
     if schema.get("core_write_file_upsert_exposed"):
         failures.append("write_file_upsert_exposed_in_core_schema")
     if schema.get("apply_patch_unified_diff_exposed"):
         failures.append("apply_patch_unified_diff_exposed")
-    if not scaffold.get("simple_react_exposes_all_new_tools"):
-        failures.append("simple_react_missing_new_tools")
+    if not scaffold.get("simple_react_exposes_core_new_tools"):
+        failures.append("simple_react_missing_core_new_tools")
+    if scaffold.get("simple_react_exposes_standalone_operation_tools"):
+        failures.append("simple_react_exposes_standalone_operation_tools")
     if scaffold.get("planner_exposes_write_tools"):
         failures.append("planner_phase_exposes_write_tools")
     if scaffold.get("verifier_exposes_write_tools"):
         failures.append("verifier_phase_exposes_write_tools")
-    if not scaffold.get("coder_exposes_all_new_tools"):
-        failures.append("coder_phase_missing_new_tools")
-    if not scaffold.get("repair_exposes_all_new_tools"):
-        failures.append("repair_phase_missing_new_tools")
+    if not scaffold.get("coder_exposes_core_new_tools"):
+        failures.append("coder_phase_missing_core_new_tools")
+    if scaffold.get("coder_exposes_standalone_operation_tools"):
+        failures.append("coder_phase_exposes_standalone_operation_tools")
+    if not scaffold.get("repair_exposes_core_new_tools"):
+        failures.append("repair_phase_missing_core_new_tools")
+    if scaffold.get("repair_exposes_standalone_operation_tools"):
+        failures.append("repair_phase_exposes_standalone_operation_tools")
     if not scaffold.get("patch_focused_scaffolds_unchanged_for_stage16g2a"):
         failures.append("patch_focused_scaffolds_changed")
     if surface.get("record_count") != 5:
@@ -558,8 +677,12 @@ def build_stage16g2a_validation(reports: dict[str, Any]) -> dict[str, Any]:
         failures.append("profile_ids_mismatch")
     if not profile.get("swe_public_core_excludes_persistent_shell"):
         failures.append("swe_public_core_contains_persistent_shell")
-    if not profile.get("swe_public_core_contains_all_new_tools"):
-        failures.append("swe_public_core_missing_new_tools")
+    if not profile.get("swe_public_core_contains_core_new_tools"):
+        failures.append("swe_public_core_missing_core_new_tools")
+    if not profile.get("swe_public_core_excludes_standalone_operation_tools"):
+        failures.append("swe_public_core_contains_standalone_operation_tools")
+    if not profile.get("swe_public_extended_contains_standalone_operation_tools"):
+        failures.append("swe_public_extended_missing_standalone_operation_tools")
     if profile.get("redteam_restricted_primary_training_default"):
         failures.append("redteam_restricted_marked_primary_training_default")
     for profile_record in profile.get("profiles", []):
@@ -579,20 +702,38 @@ def build_stage16g2a_validation(reports: dict[str, Any]) -> dict[str, Any]:
             "stage16g1_preflight_passed": preflight.get("status") == "passed",
             "source_inventory_semantically_valid": not source_inventory_failures,
             "all_new_tools_buildable": bool(schema.get("all_new_tools_buildable")),
-            "all_new_tools_in_default_tool_order": bool(schema.get("all_new_tools_in_default_tool_order")),
+            "all_core_new_tools_in_default_tool_order": bool(schema.get("all_core_new_tools_in_default_tool_order")),
+            "standalone_operation_tools_not_in_default_tool_order": bool(
+                schema.get("standalone_operation_tools_not_in_default_tool_order")
+            ),
             "core_write_file_upsert_hidden": not bool(schema.get("core_write_file_upsert_exposed")),
             "all_new_tools_have_input_limits": bool(schema.get("all_new_tools_have_input_limits")),
+            "apply_patch_operations_support_reason": bool(schema.get("apply_patch_operations_support_reason")),
+            "standalone_delete_move_require_reason": bool(schema.get("standalone_delete_move_require_reason")),
             "apply_patch_unified_diff_not_exposed": not bool(schema.get("apply_patch_unified_diff_exposed")),
-            "simple_react_exposes_all_new_tools": bool(scaffold.get("simple_react_exposes_all_new_tools")),
+            "simple_react_exposes_core_new_tools": bool(scaffold.get("simple_react_exposes_core_new_tools")),
+            "simple_react_excludes_standalone_operation_tools": not bool(
+                scaffold.get("simple_react_exposes_standalone_operation_tools")
+            ),
             "planner_and_verifier_do_not_expose_write_tools": (
                 not scaffold.get("planner_exposes_write_tools") and not scaffold.get("verifier_exposes_write_tools")
             ),
-            "coder_and_repair_expose_all_new_tools": (
-                bool(scaffold.get("coder_exposes_all_new_tools")) and bool(scaffold.get("repair_exposes_all_new_tools"))
+            "coder_and_repair_expose_core_new_tools": (
+                bool(scaffold.get("coder_exposes_core_new_tools")) and bool(scaffold.get("repair_exposes_core_new_tools"))
+            ),
+            "coder_and_repair_exclude_standalone_operation_tools": (
+                not scaffold.get("coder_exposes_standalone_operation_tools")
+                and not scaffold.get("repair_exposes_standalone_operation_tools")
             ),
             "p0_schema_and_scaffold_exposure_complete": bool(surface.get("p0_schema_and_scaffold_exposure_complete")),
             "swe_public_core_excludes_persistent_shell": bool(profile.get("swe_public_core_excludes_persistent_shell")),
-            "swe_public_core_contains_all_new_tools": bool(profile.get("swe_public_core_contains_all_new_tools")),
+            "swe_public_core_contains_core_new_tools": bool(profile.get("swe_public_core_contains_core_new_tools")),
+            "swe_public_core_excludes_standalone_operation_tools": bool(
+                profile.get("swe_public_core_excludes_standalone_operation_tools")
+            ),
+            "swe_public_extended_contains_standalone_operation_tools": bool(
+                profile.get("swe_public_extended_contains_standalone_operation_tools")
+            ),
             "new_tools_policy_loss_ineligible_until_16g2b_2c": not any(
                 tool_state.get("allowed_in_policy_loss_trajectory")
                 for profile_record in profile.get("profiles", [])
@@ -624,9 +765,19 @@ def build_acceptance_summary(
         "p0_capability_ids": list(STAGE16G2A_P0_CAPABILITY_IDS),
         "stage16g1_preflight_inspection_passed": reports["stage16g2a_stage16g1_preflight_report.json"]["status"] == "passed",
         "schema_registration_passed": validation["checks"]["all_new_tools_buildable"],
-        "profile_delta_passed": validation["checks"]["swe_public_core_contains_all_new_tools"],
+        "profile_delta_passed": (
+            validation["checks"]["swe_public_core_contains_core_new_tools"]
+            and validation["checks"]["swe_public_core_excludes_standalone_operation_tools"]
+        ),
         "input_limit_schema_passed": validation["checks"]["all_new_tools_have_input_limits"],
-        "scaffold_exposure_passed": validation["checks"]["simple_react_exposes_all_new_tools"],
+        "scaffold_exposure_passed": (
+            validation["checks"]["simple_react_exposes_core_new_tools"]
+            and validation["checks"]["simple_react_excludes_standalone_operation_tools"]
+        ),
+        "reason_schema_passed": (
+            validation["checks"]["apply_patch_operations_support_reason"]
+            and validation["checks"]["standalone_delete_move_require_reason"]
+        ),
         "public_path_leak_scan_passed": validation["checks"]["public_path_leak_scan_passed"],
         "machine_inspector_passed": validation["status"] == "passed",
         "failure_count": validation["failure_count"],
@@ -664,6 +815,7 @@ def _default_implementation_notes() -> str:
         "- Stage 16G.2A 只启用 schema、profile 和 scaffold 暴露，不启用真实文件写入行为。\n"
         "- 新工具 executor 返回结构化拒绝，真实行为留给 Stage 16G.2B。\n"
         "- `write_file` core schema 不暴露 upsert。\n"
+        "- `delete_file`、`move_file`、`mkdir` 不进入主训练默认工具面；默认通过 `apply_patch.operations` 表达。\n"
     )
 
 

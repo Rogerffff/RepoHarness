@@ -63,7 +63,7 @@ Stage 16G.2 的第一优先级能力来自 Stage 16G.0 follow-up 和 Stage 16G.1
 | `structured_edit_existing_file` | `edit_file` 已有，但 exact replace 对复杂修改不够稳 | 保留 `edit_file`，并通过 batch patch 补齐复杂已有文件修改 |
 | `structured_write_or_create_file` | `create_file` 已有，但只新建，覆盖写入语义不足 | 新增 `write_file`，明确新建、覆盖和哈希保护语义 |
 | `apply_patch_or_multi_file_edit` | 缺少模型可见多文件 patch 工具 | 新增 `apply_patch` 或等价结构化批量文件操作工具 |
-| `delete_move_mkdir_file_operations` | 缺少结构化删除、移动、目录创建工具面 | 新增 `delete_file`、`move_file`、`mkdir`，并接入 patch/export |
+| `delete_move_mkdir_file_operations` | 缺少结构化删除、移动、目录创建工具面 | 默认通过 `apply_patch.operations` 表达删除、移动和目录创建；独立 `delete_file`、`move_file`、`mkdir` 保留为 extended / 后续实验能力 |
 
 第二优先级配套能力：
 
@@ -215,7 +215,7 @@ src/repo_harness/tools/file_mutation.py
 5. 新建、覆盖、删除、移动、目录创建的预检和执行。
 6. 统一输入规模上限、`reason_code`、`retryable`、`safe_alternative_tool`、`safe_rewrite_example` 和 `result_envelope`。
 
-这样 `edit_file`、`create_file`、`write_file`、`delete_file`、`move_file`、`mkdir` 和 `apply_patch` 不会各自实现一套路径检查和拒绝语义。
+这样 `edit_file`、`create_file`、`write_file`、`apply_patch` 以及内部 delete / move / mkdir operation 不会各自实现一套路径检查和拒绝语义。
 
 ### 5.5 文件操作必须进入 final patch，而不是只改工作区
 
@@ -240,7 +240,23 @@ Stage 16G.2 的成功条件不是“工具调用返回 ok”，而是：
 1. 保持 `update_working_state` 轻量语义，但明确它不是 repository mutation 工具，并补齐 projection 和训练资格说明。
 2. 新增更接近 TodoWrite 的结构化任务状态工具。
 
-无论选择哪条路，它都不能阻塞 `apply_patch`、`write_file`、`delete_file`、`move_file`、`mkdir` 的第一优先级主线。
+无论选择哪条路，它都不能阻塞 `apply_patch`、`write_file` 以及 `apply_patch.operations` 中删除、移动、创建目录语义的第一优先级主线。
+
+### 5.7 Stage 16G.2B preflight 设计修正
+
+Stage 16G.2B 行为实现前，默认模型可见工具面先收敛：
+
+1. `apply_patch` 是主训练默认的批量文件操作入口。
+2. `write_file` 是主训练默认的整文件新建和覆盖写入入口。
+3. 独立 `delete_file`、`move_file`、`mkdir` 保留 ToolDefinition 和内部 executor 能力，但不进入 `swe_public_core` 默认 scaffold。
+4. 删除、移动、目录创建默认通过 `apply_patch.operations` 表达。
+5. Stage 16G.5 parity probe 再决定是否把独立 `delete_file`、`move_file`、`mkdir` 提升为默认可见工具。
+
+Stage 16G.2B 必须验证 `apply_patch` 可以干净表达一元删除和一元移动。如果单个删除或移动只能通过很笨重、很脆弱的批量 patch 表达，Stage 16G.5 可以重新建议独立暴露 `delete_file` 或 `move_file`。
+
+删除和移动 operation 必须带模型提供的 `reason` 字段。这个字段不同于 harness 拒绝时返回的 `reason_code`：`reason_code` 说明为什么拒绝，`reason` 说明模型为什么认为删除或移动是正确修改。这个理由会成为后续审计、reward attribution 和 reward hacking 诊断的重要事实。
+
+多 harness 适配作为后续方向保留：RepoHarness 可以先使用结构化、可审计的主训练工具面，但 Stage 16G.5+ / Stage 17+ 应设计 Claude Code-like、mini-SWE-agent-like、patch-only 等 profile mixing、tool dropout、schema randomization 和 cross-harness SFT / OPD 路线，避免模型只适配 RepoHarness 私有 schema。
 
 ## 6. 建议实现范围
 
@@ -263,7 +279,7 @@ tests/unit/test_repo_harness_stage16g2_structured_file_surface.py
 
 说明：
 
-1. `simple_react` 通过 `DEFAULT_TOOL_ORDER` 暴露默认工具，Stage 16G.2 新工具如果进入 `DEFAULT_TOOL_ORDER`，会进入当前默认训练 scaffold。
+1. `simple_react` 通过 `DEFAULT_TOOL_ORDER` 暴露默认工具。Stage 16G.2 修正后，只有 `write_file` 和 `apply_patch` 进入 `DEFAULT_TOOL_ORDER`；独立 `delete_file`、`move_file`、`mkdir` 不进入主训练默认 scaffold。
 2. `planner_coder_verifier` 有手写 phase tool list，必须显式更新 coder / repair phase；planner 不应获得写工具。
 3. `patch_focused_react` 系列是显式受限 scaffold。Stage 16G.2 不应静默改变它们的历史语义；如果决定让它们获得新文件工具，必须版本号升级、测试更新，并在 implementation notes 中说明理由。
 4. `stage16g1_*` evidence 不应原地改写；Stage 16G.2 用自己的 evidence 表示 delta。
@@ -278,7 +294,7 @@ tests/unit/test_repo_harness_stage16g2_structured_file_surface.py
 1. 新增 `write_file`、`apply_patch`、`delete_file`、`move_file`、`mkdir` 的 ToolDefinition。
 2. 更新参数 normalization 规则。
 3. 更新 `DEFAULT_TOOL_ORDER` 和 `simple_react` 模型可见提示。
-4. 更新 `planner_coder_verifier` 的 coder / repair phase 工具列表。
+4. 更新 `planner_coder_verifier` 的 coder / repair phase 工具列表，但默认只暴露 `write_file` 和 `apply_patch`；独立 `delete_file`、`move_file`、`mkdir` 不进入 core 默认 phase。
 5. 生成 tool surface delta evidence，说明 Stage 16G.1 registry 中哪些 `owner_stage=16G.2` 能力从 planned / partial 变成 implemented 或 still_partial。
 6. 生成 profile delta evidence，重新推导 `safe_structured_only`、`swe_public_core`、`swe_public_extended` 和 `redteam_restricted` 的工具集合、训练投影状态和 policy-loss 相关门禁。
 
@@ -296,9 +312,9 @@ tests/unit/test_repo_harness_stage16g2_structured_file_surface.py
 目标：
 
 1. `write_file` 支持安全新建和覆盖写入。
-2. `delete_file` 支持删除 UTF-8 文本文件，Stage 16G.2 第一版必须显式要求 `expected_content_hash`。
-3. `move_file` 支持 workspace 内移动或重命名，默认不覆盖目标，并且 Stage 16G.2 第一版必须显式要求 `expected_source_hash`。
-4. `mkdir` 支持创建 workspace 内目录，但拒绝 runtime-private、版本控制、依赖环境和宿主路径。
+2. `apply_patch.operations.delete_file` 支持删除 UTF-8 文本文件，Stage 16G.2 第一版必须显式要求 `expected_content_hash` 和模型提供的 `reason`。
+3. `apply_patch.operations.move_file` 支持 workspace 内移动或重命名，默认不覆盖目标，并且 Stage 16G.2 第一版必须显式要求 `expected_source_hash` 和模型提供的 `reason`。
+4. `apply_patch.operations.mkdir` 支持创建 workspace 内目录，但拒绝 runtime-private、版本控制、依赖环境和宿主路径。
 5. `apply_patch` 支持批量执行 `replace_text`、`write_file`、`delete_file`、`move_file`、`mkdir`。
 
 验收：
@@ -309,7 +325,7 @@ tests/unit/test_repo_harness_stage16g2_structured_file_surface.py
 4. 二进制文件、非 UTF-8 文件、symlink 越界、`.git`、`.repo_harness_runtime`、`.repo_harness_env_overlay`、`runtime_private`、绝对路径和 `..` 越界路径均被拒绝。
 5. `apply_patch` 的事务语义必须通过真实文件系统 probe 验证：任意 operation 预检失败时，工作区文件内容、文件列表和 git diff 均保持不变。
 6. 写入阶段异常必须返回 rollback / partial failure 状态，并进入安全验收报告。
-7. 覆盖、删除、移动和 `apply_patch.replace_text` 的主路径必须显式绑定 expected hash；隐式 prior read cache 如被实现，必须有 observation 绑定事实和 stale cache 测试。
+7. 覆盖、删除、移动和 `apply_patch.replace_text` 的主路径必须显式绑定 expected hash；删除和移动还必须记录模型提供的 `reason`；隐式 prior read cache 如被实现，必须有 observation 绑定事实和 stale cache 测试。
 8. 内容大小、operation 数量和路径长度超过上限时必须在预检阶段拒绝，并证明工作区无变化。
 
 ### 7.3 Stage 16G.2C：patch hygiene、final patch 和训练投影绑定
@@ -437,7 +453,7 @@ repo-harness inspect-stage16g2-structured-file-tools \
 14. `apply_patch` 第一版采用全部预检通过后再写入的事务语义。
 15. core profile 下的 `write_file` schema 不暴露 upsert，或者 executor 会基于 profile / execution spec 拒绝 upsert。
 16. Stage 16G.1 preflight inspector 在当前代码和当前 public evidence 上通过。
-17. `write_file`、`delete_file`、`move_file` 和 `apply_patch.replace_text` 的主路径显式要求 expected hash。
+17. `write_file`、`apply_patch.operations.delete_file`、`apply_patch.operations.move_file` 和 `apply_patch.operations.replace_text` 的主路径显式要求 expected hash；delete / move operation 还必须包含模型提供的 `reason`。
 18. 写入工具 schema、executor 和测试都包含有限输入规模上限。
 19. partial failure 或 rollback 未干净完成的 episode 被标记为 `invalid_for_training=true`，不能进入 policy-loss candidate、official prediction 或训练导出。
 
@@ -447,9 +463,9 @@ repo-harness inspect-stage16g2-structured-file-tools \
 
 1. `write_file(mode="create")` 新建文件成功。
 2. `write_file(mode="overwrite", expected_content_hash=...)` 覆盖已读文件成功。
-3. `delete_file(expected_content_hash=...)` 删除文件成功。
-4. `move_file(source_path, target_path, expected_source_hash=...)` 移动文件成功，并在 operation facts 中保留 source path、target path 和 move 语义。
-5. `mkdir(path)` 创建目录成功，并在 tool event、operation audit 和 TrainingView projection 中可见。
+3. `apply_patch(operations=[{"op":"delete_file", ...}])` 一元删除文件成功，并记录 expected hash 和模型提供的 reason。
+4. `apply_patch(operations=[{"op":"move_file", ...}])` 一元移动文件成功，并在 operation facts 中保留 source path、target path、source hash、move 语义和模型提供的 reason。
+5. `apply_patch(operations=[{"op":"mkdir", ...}])` 创建目录成功，并在 tool event、operation audit 和 TrainingView projection 中可见。
 6. `apply_patch` 单次调用完成至少 3 个文件变更，包括修改已有文件和新增文件。
 7. `apply_patch` 单次调用覆盖删除、移动和目录创建。
 8. 成功调用后 `git_diff` 能看到所有变更。
@@ -467,8 +483,8 @@ repo-harness inspect-stage16g2-structured-file-tools \
 7. `apply_patch` 某个 operation 预检失败，整个批量 patch 不产生半应用变更。
 8. 目标文件是二进制或非 UTF-8 文本，拒绝。
 9. symlink 指向 workspace 外部，拒绝。
-10. `move_file` 目标已存在且没有显式安全覆盖语义，拒绝。
-11. `delete_file` 删除目录，拒绝；目录删除不是 Stage 16G.2 目标。
+10. `apply_patch.operations.move_file` 目标已存在且没有显式安全覆盖语义，拒绝。
+11. `apply_patch.operations.delete_file` 删除目录，拒绝；目录删除不是 Stage 16G.2 目标。
 12. `create_file` 写入已存在路径继续失败，并返回 create-only 语义的结构化拒绝原因。
 13. `write_file(mode="upsert")` 如果被实现，默认不能出现在 `swe_public_core`，并必须在 profile delta report 中标明 gated profile。
 14. `apply_patch` 预检通过后发生运行时写入失败时，工具结果必须包含 `partial_failure`、`rollback_attempted`、`rollback_status`、`applied_operation_ids` 和 `failed_operation_id` 等可审计字段。

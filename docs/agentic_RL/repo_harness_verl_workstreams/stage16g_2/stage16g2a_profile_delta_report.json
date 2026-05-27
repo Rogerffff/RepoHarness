@@ -27,13 +27,15 @@
         "training_eligibility_and_export_projection",
         "reward_hacking_monitoring_and_quarantine"
       ],
+      "stage16g2a_core_visible_new_tool_names": [
+        "write_file",
+        "apply_patch"
+      ],
       "stage16g2a_new_tool_names": [
         "write_file",
-        "apply_patch",
-        "delete_file",
-        "move_file",
-        "mkdir"
+        "apply_patch"
       ],
+      "stage16g2a_standalone_operation_tool_names": [],
       "stage16g2a_tool_names": [
         "list_files",
         "glob_files",
@@ -46,9 +48,6 @@
         "create_file",
         "write_file",
         "apply_patch",
-        "delete_file",
-        "move_file",
-        "mkdir",
         "git_diff"
       ],
       "training_projection_state_for_new_tools": {
@@ -62,23 +61,23 @@
         "delete_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
-          "scaffold_exposure_status": "implemented"
+          "scaffold_exposure_status": "covered_by_apply_patch_operations"
         },
         "mkdir": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
-          "scaffold_exposure_status": "implemented"
+          "scaffold_exposure_status": "covered_by_apply_patch_operations"
         },
         "move_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
-          "scaffold_exposure_status": "implemented"
+          "scaffold_exposure_status": "covered_by_apply_patch_operations"
         },
         "write_file": {
           "allowed_in_policy_loss_trajectory": false,
@@ -118,13 +117,15 @@
         "training_eligibility_and_export_projection",
         "reward_hacking_monitoring_and_quarantine"
       ],
+      "stage16g2a_core_visible_new_tool_names": [
+        "write_file",
+        "apply_patch"
+      ],
       "stage16g2a_new_tool_names": [
         "write_file",
-        "apply_patch",
-        "delete_file",
-        "move_file",
-        "mkdir"
+        "apply_patch"
       ],
+      "stage16g2a_standalone_operation_tool_names": [],
       "stage16g2a_tool_names": [
         "list_files",
         "glob_files",
@@ -137,9 +138,6 @@
         "create_file",
         "write_file",
         "apply_patch",
-        "delete_file",
-        "move_file",
-        "mkdir",
         "bash",
         "run_tests",
         "git_diff"
@@ -155,23 +153,23 @@
         "delete_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
-          "scaffold_exposure_status": "implemented"
+          "scaffold_exposure_status": "covered_by_apply_patch_operations"
         },
         "mkdir": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
-          "scaffold_exposure_status": "implemented"
+          "scaffold_exposure_status": "covered_by_apply_patch_operations"
         },
         "move_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
-          "scaffold_exposure_status": "implemented"
+          "scaffold_exposure_status": "covered_by_apply_patch_operations"
         },
         "write_file": {
           "allowed_in_policy_loss_trajectory": false,
@@ -212,9 +210,18 @@
         "training_eligibility_and_export_projection",
         "reward_hacking_monitoring_and_quarantine"
       ],
+      "stage16g2a_core_visible_new_tool_names": [
+        "write_file",
+        "apply_patch"
+      ],
       "stage16g2a_new_tool_names": [
         "write_file",
         "apply_patch",
+        "delete_file",
+        "move_file",
+        "mkdir"
+      ],
+      "stage16g2a_standalone_operation_tool_names": [
         "delete_file",
         "move_file",
         "mkdir"
@@ -231,12 +238,12 @@
         "create_file",
         "write_file",
         "apply_patch",
-        "delete_file",
-        "move_file",
-        "mkdir",
         "bash",
         "run_tests",
         "git_diff",
+        "delete_file",
+        "move_file",
+        "mkdir",
         "execute_bash",
         "diagnostic_shell"
       ],
@@ -284,41 +291,43 @@
       "primary_training_default": false,
       "profile_id": "redteam_restricted",
       "stage16g1_allowed_capability_ids": [],
+      "stage16g2a_core_visible_new_tool_names": [],
       "stage16g2a_new_tool_names": [],
+      "stage16g2a_standalone_operation_tool_names": [],
       "stage16g2a_tool_names": [],
       "training_projection_state_for_new_tools": {
         "apply_patch": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
           "scaffold_exposure_status": "not_default"
         },
         "delete_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
           "scaffold_exposure_status": "not_default"
         },
         "mkdir": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
           "scaffold_exposure_status": "not_default"
         },
         "move_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
           "scaffold_exposure_status": "not_default"
         },
         "write_file": {
           "allowed_in_policy_loss_trajectory": false,
           "executor_binding_status": "schema_only_denial_until_16G2B",
-          "model_visible_schema_status": "implemented",
+          "model_visible_schema_status": "internal_operation_via_apply_patch",
           "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
           "scaffold_exposure_status": "not_default"
         }
@@ -327,7 +336,9 @@
   ],
   "redteam_restricted_primary_training_default": false,
   "schema_version": "stage16g2a.profile_delta_report.v1",
-  "swe_public_core_contains_all_new_tools": true,
+  "swe_public_core_contains_core_new_tools": true,
   "swe_public_core_excludes_execute_bash": true,
-  "swe_public_core_excludes_persistent_shell": true
+  "swe_public_core_excludes_persistent_shell": true,
+  "swe_public_core_excludes_standalone_operation_tools": true,
+  "swe_public_extended_contains_standalone_operation_tools": true
 }

@@ -83,7 +83,7 @@
     <div class="vcard green">
       <div class="lab">能不能信</div>
       <div class="big">可信度 高 ✓</div>
-      <p>红线确认干净（5 个新工具只返回 <code>behavior_not_enabled</code>、不写工作区）；scaffold 暴露<b>和计划完全一致</b>（planner/verifier 无写工具、patch_focused 未改）；inspector / 16G.1 回归 / 测试 / 泄漏我都独立重跑通过。</p>
+      <p>红线确认干净（默认新增入口只返回 <code>behavior_not_enabled</code>、不写工作区）；scaffold 暴露<b>已按 preflight 修正收敛</b>（planner/verifier 无写工具、patch_focused 未改）；inspector / 16G.1 回归 / 测试 / 泄漏我都独立重跑通过。</p>
     </div>
     <div class="vcard amber">
       <div class="lab">能不能提交</div>
@@ -92,7 +92,7 @@
     </div>
   </div>
   <div class="callout good">
-    <b>一句话：</b>2A 把 <code>write_file</code>/<code>apply_patch</code>/<code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 的<b>schema 和暴露</b>做好了，但<b>故意不开真实写入</b> —— 模型现在能在工具列表里看到它们，但调用会被结构化拒绝并提示"用 edit_file 替代"。这是教科书式的分步上线。建议接受 2A 完成态，进 2B 实现真实行为。
+    <b>一句话：</b>2A 现在收敛为：<code>write_file</code> 和 <code>apply_patch</code> 进入默认训练工具面；<code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 保留 schema 和 extended profile 能力，但不再默认暴露。删除、移动、创建目录默认通过 <code>apply_patch.operations</code> 表达；真实写入行为仍留给 2B。
   </div>
 
   <!-- 1 -->
@@ -101,12 +101,12 @@
     <tr><th style="width:26%">核查项</th><th>方法 + 结果</th><th class="c" style="width:88px">结论</th></tr>
     <tr>
       <td><b>红线：行为未提前开启</b></td>
-      <td>读 <code>minimal.py</code>：5 个新工具的 executor（line 389→2240）只返回 <code>stage16g2a_behavior_not_enabled</code> + reason_code + safe_alternative_tool，<b>不写工作区</b>。<code>stage16g2_file_surface.py</code> 里的 write_text/mkdir 经核是 <b>evidence builder</b> 写报告（<code>_write_json</code>/<code>write_stage16g2a_reports</code>），不是工具执行</td>
+      <td>读 <code>minimal.py</code>：默认可见的 <code>write_file</code>/<code>apply_patch</code> 以及 extended 可构造的独立文件组织工具都只返回 <code>stage16g2a_behavior_not_enabled</code>，<b>不写工作区</b>。<code>stage16g2_file_surface.py</code> 里的 write_text/mkdir 是 <b>evidence builder</b> 写报告，不是工具执行</td>
       <td class="c"><span class="tag t-good">行为确实未开</span></td>
     </tr>
     <tr>
       <td><b>scaffold 暴露</b></td>
-      <td>读 <code>scaffold_exposure_report</code>：simple_react 有 5 个新工具；planner_coder_verifier 的 <b>coder/repair 有、planner/verifier 无写工具</b>；patch_focused 系列 <code>unchanged=true</code></td>
+      <td>读 <code>scaffold_exposure_report</code>：simple_react 默认只暴露 <code>edit_file</code>/<code>create_file</code>/<code>write_file</code>/<code>apply_patch</code> 四个文件修改入口；planner_coder_verifier 的 <b>coder/repair 有 write/apply_patch，planner/verifier 无写工具</b>；patch_focused 系列 <code>unchanged=true</code></td>
       <td class="c"><span class="tag t-good">与计划完全一致</span></td>
     </tr>
     <tr>
@@ -121,7 +121,7 @@
     </tr>
     <tr>
       <td><b>测试</b></td>
-      <td>本机重跑 <code>test_repo_harness_stage16g2a_tool_surface.py</code> → 23 passed（agent 报 103 selected）</td>
+      <td>本机重跑 <code>test_repo_harness_stage16g2a_tool_surface.py</code> → 26 passed（新增默认工具面收敛、reason 字段和 apply_patch 嵌套路径权限检查）</td>
       <td class="c"><span class="tag t-good">passed</span></td>
     </tr>
     <tr>
@@ -138,24 +138,24 @@
 
   <!-- 2 -->
   <h2 class="sec" id="products">2 · 具体产出详解</h2>
-  <h3>① 5 个新工具的 schema + 注册</h3>
-  <p>在 <code>minimal.py</code> 注册了 5 个新 ToolDefinition（版本号如 <code>repo_harness_write_file_stage16g2a_schema_v0</code>），并进入 <code>DEFAULT_TOOL_ORDER</code>。其中 <code>apply_patch</code> 的 schema 已含结构化 operations（enum: replace_text / write_file / delete_file / move_file / mkdir），<b>不是行号 diff</b> —— 和计划一致。</p>
+  <h3>① 5 个 ToolDefinition，默认只暴露 2 个新增入口</h3>
+  <p>在 <code>minimal.py</code> 保留 5 个 ToolDefinition，但 <code>DEFAULT_TOOL_ORDER</code> 只包含 <code>write_file</code> 和 <code>apply_patch</code>。其中 <code>apply_patch</code> 的 schema 已含结构化 operations（enum: replace_text / write_file / delete_file / move_file / mkdir），<b>不是行号 diff</b>。删除和移动 operation 需要模型提供 <code>reason</code>，用于审计和后续 reward attribution。</p>
   <h3>② scaffold 暴露</h3>
   <table>
-    <tr><th>scaffold / phase</th><th class="c">5 个写工具</th><th>说明</th></tr>
-    <tr><td><code>simple_react</code>（训练默认）</td><td class="c"><span class="tag t-good">全有</span></td><td>默认训练面现在能看到这 5 个工具</td></tr>
-    <tr><td>planner_coder_verifier · <b>coder</b></td><td class="c"><span class="tag t-good">全有</span></td><td>写代码阶段</td></tr>
-    <tr><td>planner_coder_verifier · <b>repair</b></td><td class="c"><span class="tag t-good">全有</span></td><td>修复阶段</td></tr>
+    <tr><th>scaffold / phase</th><th class="c">默认新增入口</th><th>说明</th></tr>
+    <tr><td><code>simple_react</code>（训练默认）</td><td class="c"><span class="tag t-good">write + apply_patch</span></td><td>默认训练面只看到 <code>write_file</code> 和 <code>apply_patch</code>；删除/移动/建目录通过 apply_patch operation 表达</td></tr>
+    <tr><td>planner_coder_verifier · <b>coder</b></td><td class="c"><span class="tag t-good">write + apply_patch</span></td><td>写代码阶段</td></tr>
+    <tr><td>planner_coder_verifier · <b>repair</b></td><td class="c"><span class="tag t-good">write + apply_patch</span></td><td>修复阶段</td></tr>
     <tr><td>planner_coder_verifier · planner</td><td class="c"><span class="tag t-bad">无</span></td><td>规划阶段不给写工具 ✓</td></tr>
     <tr><td>planner_coder_verifier · verifier</td><td class="c"><span class="tag t-bad">无</span></td><td>验证阶段不给写工具 ✓</td></tr>
     <tr><td>patch_focused_react 系列</td><td class="c"><span class="tag t-neutral">未改</span></td><td>受限 scaffold 历史语义保持不变 ✓</td></tr>
   </table>
   <h3>③ behavior_not_enabled 占位（关键设计）</h3>
-  <pre><code>模型调用 write_file / apply_patch / delete_file / move_file / mkdir
+  <pre><code>模型调用 write_file / apply_patch
   → executor 返回：
      error_type   = "stage16g2a_behavior_not_enabled"
      reason_code  = "behavior_not_enabled_until_stage16g2b"
-     safe_alternative_tool = "edit_file"（write/apply_patch）或 "git_diff"
+     safe_alternative_tool = "edit_file"
      并声明：没有修改工作区</code></pre>
   <p>这样模型不是"拿到一个会乱写的工具"，而是"看到工具但被明确告知现在用不了、该用谁替代" —— 干净的分步上线。真实行为留给 <b>16G.2B</b>。</p>
   <h3>④ 输入规模上限已进 schema + profile delta + 8 份 evidence</h3>
@@ -174,8 +174,8 @@
   </div>
 
   <div class="risk">
-    <h4><span class="tag t-warn">知情</span> O2 · 2A→2B 之间，默认 scaffold "展示但一调用就失败"的 5 个工具</h4>
-    <p>simple_react 现在工具列表里有这 5 个，但调用即被拒。<b>现在无害</b>（没有真实训练在跑，17B/20/21 全 false）。但要记得：<b>在 2B 补上真实行为之前，不要拿 simple_react 跑任何真实/warm-start 轨迹</b>，否则模型可能浪费回合调用必然失败的工具。2B 应尽快闭合这个过渡态。</p>
+    <h4><span class="tag t-warn">知情</span> O2 · 2A→2B 之间，默认 scaffold 仍有 schema-only 工具</h4>
+    <p>simple_react 现在工具列表里有 <code>write_file</code> 和 <code>apply_patch</code>，但调用即被拒。<b>现在无害</b>（没有真实训练在跑，17B/20/21 全 false）。但要记得：<b>在 2B 补上真实行为之前，不要拿 simple_react 跑任何真实/warm-start 轨迹</b>，否则模型可能浪费回合调用必然失败的工具。独立 <code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 已经不在默认 scaffold 中。</p>
     <div class="myrec"><b>我的看法：</b>这是分步上线的固有过渡态，可接受。盯住"2A 和 2B 之间不开真实训练"即可——目前的 gate（16G.3/17B/20/21 全 false）已经天然挡住了。</div>
   </div>
 
@@ -195,7 +195,7 @@
   </div>
 
   <div class="footer">
-    本报告基于独立核查：git 变更范围、读 minimal.py 确认新工具 executor 只返回 behavior_not_enabled 不写工作区、读 scaffold_exposure_report 确认暴露精确、重跑 inspect-stage16g2a-tool-surface（exit=0/9 文件）+ 16G.1 回归（exit=0）+ 单元测试（23 passed）、自行 grep 泄漏（0）、读 acceptance_summary 确认 gate 粒度。结论可用相同命令复核。
+    本报告基于独立核查：git 变更范围、读 minimal.py 确认新工具 executor 只返回 behavior_not_enabled 不写工作区、读 scaffold_exposure_report 确认暴露精确、重跑 inspect-stage16g2a-tool-surface（exit=0/9 文件）+ 16G.1 回归（exit=0）+ 单元测试（26 passed）、自行 grep 泄漏（0）、读 acceptance_summary 确认 gate 粒度。结论可用相同命令复核。
   </div>
 </main>
 </div>

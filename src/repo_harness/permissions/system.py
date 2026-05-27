@@ -40,21 +40,12 @@ class PermissionSystem:
         resolved_paths: list[str] = []
         requested_cwd = normalized_arguments.get("cwd")
         effective_cwd = None
-        for field_name in _path_fields(effective_tool_name):
-            if field_name not in normalized_arguments:
-                continue
-            requested_path = str(normalized_arguments[field_name])
+        for field_name, requested_path, must_exist in _path_arguments(effective_tool_name, normalized_arguments):
             try:
                 resolved = workspace_facade.resolve_workspace_path(
                     workspace_path,
                     requested_path,
-                    must_exist=field_name in {"path", "root"} and effective_tool_name in {
-                        "read_file",
-                        "grep",
-                        "list_files",
-                        "glob_files",
-                        "symbol_search",
-                    },
+                    must_exist=must_exist,
                 )
             except WorkspaceError as exc:
                 return self._decision(
@@ -350,6 +341,47 @@ def _path_fields(tool_name: str) -> list[str]:
         "diagnostic_shell": ["cwd"],
     }
     return fields.get(tool_name, [])
+
+
+def _path_arguments(tool_name: str, normalized_arguments: dict[str, Any]) -> list[tuple[str, str, bool]]:
+    arguments: list[tuple[str, str, bool]] = []
+    must_exist_read_fields = tool_name in {
+        "read_file",
+        "grep",
+        "list_files",
+        "glob_files",
+        "symbol_search",
+    }
+    for field_name in _path_fields(tool_name):
+        if field_name not in normalized_arguments:
+            continue
+        must_exist = field_name in {"path", "root"} and must_exist_read_fields
+        arguments.append((field_name, str(normalized_arguments[field_name]), must_exist))
+    if tool_name != "apply_patch":
+        return arguments
+    operations = normalized_arguments.get("operations", [])
+    if not isinstance(operations, list):
+        return arguments
+    for index, operation in enumerate(operations):
+        if not isinstance(operation, dict):
+            continue
+        op_name = operation.get("op")
+        if op_name in {"replace_text", "delete_file"} and "path" in operation:
+            arguments.append((f"operations[{index}].path", str(operation["path"]), True))
+        elif op_name == "write_file" and "path" in operation:
+            arguments.append((
+                f"operations[{index}].path",
+                str(operation["path"]),
+                operation.get("mode") == "overwrite",
+            ))
+        elif op_name == "move_file":
+            if "source_path" in operation:
+                arguments.append((f"operations[{index}].source_path", str(operation["source_path"]), True))
+            if "target_path" in operation:
+                arguments.append((f"operations[{index}].target_path", str(operation["target_path"]), False))
+        elif op_name == "mkdir" and "path" in operation:
+            arguments.append((f"operations[{index}].path", str(operation["path"]), False))
+    return arguments
 
 
 def _deny_reason_for_bash(

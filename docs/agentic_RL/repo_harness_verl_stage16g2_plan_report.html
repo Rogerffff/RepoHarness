@@ -88,7 +88,7 @@
   <p class="meta">汇报对象：<code>53-stage-16g-2-execution-plan.md</code>（计划已写、<b>尚未执行</b>）　·　按你选的三块汇报：概览+设计决策(配例子) / 子阶段+验收 / 我的审查观察　·　上游：<a href="repo_harness_verl_stage16g1_to_6_plan_explainer.html">16G.1–16G.6 总讲解</a>、<a href="repo_harness_verl_harness_capability_acceptance_map.html">能力总表</a></p>
 
   <div class="tldr">
-    <p style="margin-top:0"><b>一句话：</b>16G.2 是 16G 系列<b>第一个真正"动手实现工具"</b>的阶段——给模型补齐"改代码的手"：在已有 <code>edit_file</code>/<code>create_file</code> 之上，新增 <code>write_file</code>（覆盖写）、<code>apply_patch</code>（多文件批量）、<code>delete_file</code>/<code>move_file</code>/<code>mkdir</code>，并保证这些改动稳定进入 <code>final.patch</code> → patch hygiene → 训练投影。</p>
+    <p style="margin-top:0"><b>一句话：</b>16G.2 是 16G 系列<b>第一个真正"动手实现工具"</b>的阶段——给模型补齐"改代码的手"：在已有 <code>edit_file</code>/<code>create_file</code> 之上，默认新增 <code>write_file</code>（覆盖写）和 <code>apply_patch</code>（多文件批量）。删除、移动、创建目录默认通过 <code>apply_patch.operations</code> 表达，独立 <code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 先保留为 extended / 实验能力。</p>
     <p style="margin-bottom:0"><b>整体判断：</b>计划<b>扎实、保守、和我们之前的讨论一致</b>（apply_patch 用结构化批量而非 unified diff、create_file 保留原语义另加 write_file、持久 shell 仍不进 core、reward 数值留给 Stage 19）。有 3 点值得你知情/拍板，见第 5 节——其中最重要的是：<b>从这阶段起，模型默认训练 scaffold 看到的工具面真的开始变了</b>。</p>
   </div>
 
@@ -96,7 +96,7 @@
   <h2 class="sec" id="overview">1 · 计划概览</h2>
   <table>
     <tr><th style="width:22%">维度</th><th>内容</th></tr>
-    <tr><td><b>这阶段做什么</b></td><td>实现 4 个 P0 文件能力：① <code>structured_edit_existing_file</code>（保留 edit_file + 批量补强）② <code>structured_write_or_create_file</code>（新增 write_file 覆盖写）③ <code>apply_patch_or_multi_file_edit</code>（新增多文件批量）④ <code>delete_move_mkdir_file_operations</code>（新增删/移/建目录）</td></tr>
+    <tr><td><b>这阶段做什么</b></td><td>实现 4 个 P0 文件能力：① <code>structured_edit_existing_file</code>（保留 edit_file + 批量补强）② <code>structured_write_or_create_file</code>（新增 write_file 覆盖写）③ <code>apply_patch_or_multi_file_edit</code>（新增多文件批量）④ <code>delete_move_mkdir_file_operations</code>（通过 apply_patch operation 表达删/移/建目录）</td></tr>
     <tr><td><b>第一次行为改动</b></td><td>16G.0/16G.1 都没碰工具行为；<b>16G.2 是第一个真正改工具、改默认 scaffold 可见工具面的阶段</b></td></tr>
     <tr><td><b>不做</b></td><td>不做 run_public_command/run_project_test/scratch_python（16G.3）；不碰持久 shell/execute_bash；不做依赖安装/项目命令路由；不碰 reward 数值；不冻结数据</td></tr>
     <tr><td><b>开工前置</b></td><td>必须先重跑 16G.1 inspector 确认仍通过（registry/profile/gate 是已提交基线），不在不可靠 evidence 上往下做</td></tr>
@@ -118,7 +118,7 @@
     <h4>② apply_patch 用"结构化批量操作"，不是 unified diff / git apply</h4>
     <p>apply_patch 不等于 <code>patch -p1</code> / <code>git apply</code> / 任意 shell。它接收一组<b>结构化 operation</b>（replace_text / write_file / delete_file / move_file / mkdir），每个带路径 + 内容哈希，<b>不靠行号定位</b>。</p>
     <p>关键是<b>"全预检通过后再写"的原子语义</b>：先把所有 operation 都检查一遍（路径合法、hash 匹配、不越界），<b>全过了才真正落盘；预检中任一失败 → 一个文件都不动</b>。</p>
-    <div class="ex"><span class="lab">例子</span> 函数改名涉及 3 文件 → <code>apply_patch([replace_text×2, move_file, write_file])</code>，要么全部成功，要么工作区完全不变。<br><b>partial_failure</b>（预检过了、但落盘时极少数运行时失败）→ 必须报 <code>rollback_status</code>，且整条 episode 标 <code>invalid_for_training</code>（只能当诊断，不进训练）。</div>
+    <div class="ex"><span class="lab">例子</span> 函数改名涉及 3 文件 → <code>apply_patch([replace_text×2, move_file, write_file])</code>，要么全部成功，要么工作区完全不变。删除和移动 operation 需要模型提供 <code>reason</code>，说明为什么这次删除或移动是正确修改。<br><b>partial_failure</b>（预检过了、但落盘时极少数运行时失败）→ 必须报 <code>rollback_status</code>，且整条 episode 标 <code>invalid_for_training</code>（只能当诊断，不进训练）。</div>
   </div>
 
   <div class="dec" id="d3">
@@ -158,8 +158,8 @@
   <h2 class="sec" id="stages">3 · 子阶段 2A–2D（拆分顺序）</h2>
   <table>
     <tr><th class="c" style="width:80px">子阶段</th><th>做什么</th><th>验收要点</th></tr>
-    <tr><td class="c"><b>2A</b><br>schema/暴露</td><td>给 5 个新工具写 ToolDefinition；更新 DEFAULT_TOOL_ORDER + simple_react 提示；更新 planner_coder_verifier 的 coder/repair phase（planner 不给写工具）；出 tool/profile delta evidence</td><td>build_tool 能造；run_episode spec 看得见；core 仍不含持久 shell；delta 是从 registry 重算<b>不是手写</b></td></tr>
-    <tr><td class="c"><b>2B</b><br>行为实现</td><td>write/delete/move/mkdir/apply_patch 真正能改文件；含拒绝路径、全预检原子、rollback/partial_failure 上报</td><td>成功真改文件；失败不产生半应用；越界/二进制/symlink/.git/runtime-private 全拒；事务语义用真实文件系统 probe 验证</td></tr>
+    <tr><td class="c"><b>2A</b><br>schema/暴露</td><td>保留 5 个 ToolDefinition；默认只把 write_file + apply_patch 放进 DEFAULT_TOOL_ORDER + simple_react；planner_coder_verifier 的 coder/repair phase 同样只暴露 write/apply_patch；出 tool/profile delta evidence</td><td>build_tool 能造；run_episode spec 看得见核心入口；core 仍不含持久 shell和独立 delete/move/mkdir；delta 是从 registry 重算<b>不是手写</b></td></tr>
+    <tr><td class="c"><b>2B</b><br>行为实现</td><td>write_file/apply_patch 真正能改文件；删除/移动/建目录通过 apply_patch operations 实现；含拒绝路径、全预检原子、rollback/partial_failure 上报</td><td>成功真改文件；失败不产生半应用；越界/二进制/symlink/.git/runtime-private 全拒；事务语义用真实文件系统 probe 验证；一元 delete/move 必须可用</td></tr>
     <tr><td class="c"><b>2C</b><br>final patch/投影</td><td>用真实 run_episode smoke 让模型做多文件变更，验证进 final.patch + hygiene + compat projection + 不误标 policy loss</td><td>projection_created_from_run_episode=true；新增/修改/删除/移动在 changed file facts 可见；工具输出 response_mask=0 不计入 policy loss</td></tr>
     <tr><td class="c"><b>2D</b><br>Todo（非阻塞）</td><td>明确 update_working_state 是否升级 TodoWrite 等价；无论哪种都要 projection + 不改仓库文件</td><td>task state 工具不动仓库、不影响 final.patch；<b>失败不阻塞 2A–2C 主线</b>，但要在 summary 如实标注</td></tr>
   </table>
@@ -171,7 +171,7 @@
     <tr><th style="width:24%">类别</th><th>关键检查（防什么退化）</th></tr>
     <tr><td><b>能力覆盖</b></td><td>4 个 P0 全标 implemented 或带明确失败原因（无失败原因不能 passed）；owner=16G.2 的能力全进 delta；训练投影状态从 planned→implemented/still_partial/blocked 要有证据，不能只改 prompt</td></tr>
     <tr><td><b>工具可建可见</b></td><td>build_tool 能造所有新工具；simple_react + run_episode spec 看得见；planner_coder_verifier 的 coder/repair 看得见、<b>planner 看不见写工具</b></td></tr>
-    <tr><td><b>语义硬规则</b></td><td>create_file 仍 create-only；<b>upsert 不进 core</b>；apply_patch 全预检原子；move facts 保留 move 语义；mkdir 空目录不强求进 final.patch；覆盖/删/移强制 expected_hash；输入上限生效；<b>partial_failure → invalid_for_training</b></td></tr>
+    <tr><td><b>语义硬规则</b></td><td>create_file 仍 create-only；<b>upsert 不进 core</b>；apply_patch 全预检原子；move facts 保留 move 语义；mkdir 空目录不强求进 final.patch；覆盖/删/移强制 expected_hash；删除和移动强制模型提供 reason；输入上限生效；<b>partial_failure → invalid_for_training</b></td></tr>
     <tr><td><b>防退化/防泄漏</b></td><td>patch_focused_react 系列没被静默改（改了必须版本号+测试）；public evidence 无本机路径/secret/raw patch；计数/sha/放行字段可重推；16G.1 preflight 仍过；<b>17B/20/21 仍 false</b></td></tr>
   </table>
 
@@ -183,8 +183,8 @@
   </div>
 
   <div class="risk">
-    <h4><span class="tag t-warn">知情</span> R1 · 这是第一个改变"默认训练 scaffold 可见工具"的阶段</h4>
-    <p>16G.0/16G.1 都没动工具。<b>16G.2 起，simple_react（当前训练默认 scaffold）会拿到 write_file/apply_patch/delete/move/mkdir</b>。也就是说从这阶段起，模型默认看到的动作空间真的变宽了。这是好事（补齐改代码能力），但你要心里有数：<b>之后的轨迹和之前的不再同质</b>，能力总表里这几条会从 planned→implemented。</p>
+    <h4><span class="tag t-warn">知情</span> R1 · 默认训练 scaffold 的工具面要变宽，但不能过宽</h4>
+    <p>16G.0/16G.1 都没动工具。<b>16G.2 起，simple_react（当前训练默认 scaffold）会拿到 write_file 和 apply_patch</b>。删除、移动、建目录先通过 apply_patch operation 表达，独立 delete/move/mkdir 不默认暴露。这样既补齐真实文件组织能力，又降低强化学习阶段的工具选择负担。</p>
     <div class="myrec"><b>我的看法：</b>合理且必要。建议盯一点——新工具进 DEFAULT_TOOL_ORDER 后，<b>模型提示语别鼓励它用 shell 重定向/裸 patch</b>（计划 2A 验收已要求这条），否则白补了结构化工具。</div>
   </div>
 
@@ -217,7 +217,7 @@
   <p>这是理解 R3 的基础。<b>结论先说</b>：现在<b>最终决定模型能看到/调用哪些工具的是 scaffold（的 allowed_tools）；profile 目前只是文档声明，"怎么在运行时强制 gate 工具"还没做，留到 16G.6。</b></p>
   <table>
     <tr><th style="width:24%">概念</th><th>是什么</th><th>角色</th></tr>
-    <tr><td><code>DEFAULT_TOOL_ORDER</code></td><td><code>tools/minimal.py</code> 里的列表：决定①默认注册哪些工具 ②按什么顺序放进模型上下文。它是放进模型上下文的"<b>可用工具清单</b>"（每个工具的 schema：名字+说明+参数），整个 episode 每一轮都在（不只首轮）</td><td>默认<b>菜单</b></td></tr>
+    <tr><td><code>DEFAULT_TOOL_ORDER</code></td><td><code>tools/minimal.py</code> 里的列表：决定默认按什么顺序放进模型上下文。它是默认放进模型上下文的"<b>可用工具清单</b>"（每个工具的 schema：名字+说明+参数），整个 episode 每一轮都在（不只首轮）。非默认工具仍可通过显式 profile / scaffold 用 <code>build_tool</code> 构造。</td><td>默认<b>菜单</b></td></tr>
     <tr><td><b>scaffold</b></td><td>agent loop 模板，定义"几个阶段、每阶段模型看哪些工具(<code>allowed_tools</code>)"。simple_react≈DEFAULT_TOOL_ORDER 全部；patch_focused_react 更窄</td><td><b>真正在跑、真正决定可见工具</b></td></tr>
     <tr><td><b>profile</b>（16G.1 概念）</td><td>命名的工具面策略(safe/core/extended/redteam)，taxonomy 写"core 含哪些、禁哪些、训练资格如何"</td><td>目前只是<b>契约/文档</b></td></tr>
   </table>
@@ -251,14 +251,14 @@
 
   <div class="dec">
     <h4>Q3 · delete/move/mkdir 都要新增工具吗？还是像 CC 用 Write+Bash？</h4>
-    <p>计划定的是<b>都新增结构化工具</b>（<code>delete_file</code> / <code>move_file</code> / <code>mkdir</code>），<b>不走 Bash</b>。每个都接入 patch/export、带越界拒绝，delete/move 强制 expected_hash。</p>
-    <div class="myrec"><b>为什么不学 CC 用 Bash：</b>这正是我们之前定的"<b>结构化优先</b>"。CC 用 Write+Bash 做文件组织变更，但 RH 主训练 core <b>故意不给裸 bash</b>（防 reward-hacking/泄漏，见安全红线）。所以用显式结构化工具替代 CC 的"Bash 做文件操作"——能力覆盖到，但形态更可控可审计。</div>
+    <p>修正后的设计是：<b>不走 Bash，也不默认暴露三个独立工具</b>。删除、移动、建目录先作为 <code>apply_patch.operations</code>，独立 <code>delete_file</code> / <code>move_file</code> / <code>mkdir</code> 保留为 extended / 实验 profile 能力。delete/move 强制 expected_hash 和模型提供的 reason。</p>
+    <div class="myrec"><b>为什么不学 CC 用 Bash：</b>这正是我们之前定的"<b>结构化优先</b>"。CC 用 Write+Bash 做文件组织变更，但 RH 主训练 core <b>故意不给裸 bash</b>（防 reward-hacking/泄漏，见安全红线）。所以用结构化 operation 替代 CC 的"Bash 做文件操作"——能力覆盖到，但形态更可控可审计。</div>
   </div>
 
   <div class="dec">
     <h4>Q4 · task_management_todo 在 16G.2 要实现吗？计划里包含吗？</h4>
     <p><b>在计划里（作为子阶段 16G.2D），但是非阻塞、不强制做完整 TodoWrite。</b>16G.2D 可二选一：①保持 <code>update_working_state</code> 轻量语义（补 projection 和训练资格说明），或 ②新增更接近 Claude Code <code>TodoWrite</code> 的结构化任务状态工具。</p>
-    <p>无论哪条，它都<b>不能阻塞</b> apply_patch/write_file/delete/move/mkdir 这条 P0 主线。即使没做完，只要：P0 文件工具全完成 + task_management_todo 明确标 non-blocking + acceptance summary 记 <code>remaining_followup</code> + 16G.5 parity probe 会重新检查它，就允许作为非阻塞 follow-up 记录。</p>
+    <p>无论哪条，它都<b>不能阻塞</b> write_file / apply_patch 以及 apply_patch operation 中 delete / move / mkdir 语义这条 P0 主线。即使没做完，只要：P0 文件工具全完成 + task_management_todo 明确标 non-blocking + acceptance summary 记 <code>remaining_followup</code> + 16G.5 parity probe 会重新检查它，就允许作为非阻塞 follow-up 记录。</p>
     <div class="myrec"><b>我的看法：</b>合理。todo 是轨迹质量项不是改代码主线，放非阻塞、留到能和真实任务一起评估，是对的取舍。</div>
   </div>
 
