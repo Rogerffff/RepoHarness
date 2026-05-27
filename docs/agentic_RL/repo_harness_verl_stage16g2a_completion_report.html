@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.2A 完成报告</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1180px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:230px;flex:0 0 230px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 11px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.3px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.5px;line-height:1.55}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .vcard{border-radius:14px;padding:17px 19px;border:1px solid}
+  .vcard.green{background:linear-gradient(135deg,#13311f,#161a23);border-color:#2f6b3a}
+  .vcard.amber{background:linear-gradient(135deg,#2b2412,#161a23);border-color:#6b5a2f}
+  .vcard .lab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .vcard .big{font-size:19px;font-weight:700;margin-bottom:6px}
+  .vcard.green .big{color:#6fdc84}.vcard.amber .big{color:#e6c068}
+  .vcard p{font-size:12.8px;margin:6px 0 0;color:#cdd6e6}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .risk{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:11px;padding:13px 16px;margin:11px 0}
+  .risk.ok{border-left-color:var(--good)}
+  .risk h4{margin:0 0 5px;font-size:14.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .myrec{background:#11261c;border:1px solid #2f6b3a;border-radius:7px;padding:8px 12px;margin-top:8px;font-size:13px}
+  .myrec b{color:#6fdc84}
+  .footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);color:#6b7484;font-size:12.3px}
+  @media(max-width:900px){nav{display:none}main{padding:22px 16px}.verdict{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#verdict">裁决</a>
+  <a href="#verify">1 · 我独立核查了什么</a>
+  <a href="#products">2 · 具体产出详解</a>
+  <a href="#review">3 · 我的审查观察 / 提醒</a>
+</nav>
+<main>
+  <h1>Stage 16G.2A 完成报告</h1>
+  <p class="meta">16G.2 的第一个子阶段：<b>只做 schema / 注册 / scaffold 暴露 / profile delta / evidence / inspector，不开真实写入行为</b>　·　我做了<b>独立核查</b>（红线、scaffold 暴露、inspector、回归、测试、泄漏）　·　上游：<a href="repo_harness_verl_stage16g2_plan_report.html">16G.2 计划汇报</a>、<a href="repo_harness_verl_harness_capability_acceptance_map.html">能力总表</a></p>
+
+  <h2 class="sec" id="verdict" style="border:none;margin-top:0;padding-top:0">裁决</h2>
+  <div class="verdict">
+    <div class="vcard green">
+      <div class="lab">能不能信</div>
+      <div class="big">可信度 高 ✓</div>
+      <p>红线确认干净（5 个新工具只返回 <code>behavior_not_enabled</code>、不写工作区）；scaffold 暴露<b>和计划完全一致</b>（planner/verifier 无写工具、patch_focused 未改）；inspector / 16G.1 回归 / 测试 / 泄漏我都独立重跑通过。</p>
+    </div>
+    <div class="vcard amber">
+      <div class="lab">能不能提交</div>
+      <div class="big">可作为 2A 完成态提交</div>
+      <p>2A 是个干净、克制的子阶段。提交债仍在累积（16G.0/follow-up/16G.1/16G.2A 都未跟踪），建议尽快做一次干净提交。</p>
+    </div>
+  </div>
+  <div class="callout good">
+    <b>一句话：</b>2A 把 <code>write_file</code>/<code>apply_patch</code>/<code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 的<b>schema 和暴露</b>做好了，但<b>故意不开真实写入</b> —— 模型现在能在工具列表里看到它们，但调用会被结构化拒绝并提示"用 edit_file 替代"。这是教科书式的分步上线。建议接受 2A 完成态，进 2B 实现真实行为。
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="verify">1 · 我独立核查了什么</h2>
+  <table>
+    <tr><th style="width:26%">核查项</th><th>方法 + 结果</th><th class="c" style="width:88px">结论</th></tr>
+    <tr>
+      <td><b>红线：行为未提前开启</b></td>
+      <td>读 <code>minimal.py</code>：5 个新工具的 executor（line 389→2240）只返回 <code>stage16g2a_behavior_not_enabled</code> + reason_code + safe_alternative_tool，<b>不写工作区</b>。<code>stage16g2_file_surface.py</code> 里的 write_text/mkdir 经核是 <b>evidence builder</b> 写报告（<code>_write_json</code>/<code>write_stage16g2a_reports</code>），不是工具执行</td>
+      <td class="c"><span class="tag t-good">行为确实未开</span></td>
+    </tr>
+    <tr>
+      <td><b>scaffold 暴露</b></td>
+      <td>读 <code>scaffold_exposure_report</code>：simple_react 有 5 个新工具；planner_coder_verifier 的 <b>coder/repair 有、planner/verifier 无写工具</b>；patch_focused 系列 <code>unchanged=true</code></td>
+      <td class="c"><span class="tag t-good">与计划完全一致</span></td>
+    </tr>
+    <tr>
+      <td><b>16G.2A inspector</b></td>
+      <td>重跑 <code>inspect-stage16g2a-tool-surface --assert-complete</code> → exit=0，validated_file_count=9</td>
+      <td class="c"><span class="tag t-good">passed</span></td>
+    </tr>
+    <tr>
+      <td><b>16G.1 回归</b></td>
+      <td>重跑 16G.1 inspector → exit=0（前置基线没被破坏）</td>
+      <td class="c"><span class="tag t-good">passed</span></td>
+    </tr>
+    <tr>
+      <td><b>测试</b></td>
+      <td>本机重跑 <code>test_repo_harness_stage16g2a_tool_surface.py</code> → 23 passed（agent 报 103 selected）</td>
+      <td class="c"><span class="tag t-good">passed</span></td>
+    </tr>
+    <tr>
+      <td><b>泄漏</b></td>
+      <td>自行 grep 8 份 evidence 的绝对家目录路径</td>
+      <td class="c"><span class="tag t-good">0 命中</span></td>
+    </tr>
+    <tr>
+      <td><b>放行 gate 粒度</b></td>
+      <td>summary：<code>stage16g2b_allowed_to_start=true</code>，但 <code>stage16g3_allowed_to_start=false</code>，17B/20/21 全 false</td>
+      <td class="c"><span class="tag t-good">粒度正确</span></td>
+    </tr>
+  </table>
+
+  <!-- 2 -->
+  <h2 class="sec" id="products">2 · 具体产出详解</h2>
+  <h3>① 5 个新工具的 schema + 注册</h3>
+  <p>在 <code>minimal.py</code> 注册了 5 个新 ToolDefinition（版本号如 <code>repo_harness_write_file_stage16g2a_schema_v0</code>），并进入 <code>DEFAULT_TOOL_ORDER</code>。其中 <code>apply_patch</code> 的 schema 已含结构化 operations（enum: replace_text / write_file / delete_file / move_file / mkdir），<b>不是行号 diff</b> —— 和计划一致。</p>
+  <h3>② scaffold 暴露</h3>
+  <table>
+    <tr><th>scaffold / phase</th><th class="c">5 个写工具</th><th>说明</th></tr>
+    <tr><td><code>simple_react</code>（训练默认）</td><td class="c"><span class="tag t-good">全有</span></td><td>默认训练面现在能看到这 5 个工具</td></tr>
+    <tr><td>planner_coder_verifier · <b>coder</b></td><td class="c"><span class="tag t-good">全有</span></td><td>写代码阶段</td></tr>
+    <tr><td>planner_coder_verifier · <b>repair</b></td><td class="c"><span class="tag t-good">全有</span></td><td>修复阶段</td></tr>
+    <tr><td>planner_coder_verifier · planner</td><td class="c"><span class="tag t-bad">无</span></td><td>规划阶段不给写工具 ✓</td></tr>
+    <tr><td>planner_coder_verifier · verifier</td><td class="c"><span class="tag t-bad">无</span></td><td>验证阶段不给写工具 ✓</td></tr>
+    <tr><td>patch_focused_react 系列</td><td class="c"><span class="tag t-neutral">未改</span></td><td>受限 scaffold 历史语义保持不变 ✓</td></tr>
+  </table>
+  <h3>③ behavior_not_enabled 占位（关键设计）</h3>
+  <pre><code>模型调用 write_file / apply_patch / delete_file / move_file / mkdir
+  → executor 返回：
+     error_type   = "stage16g2a_behavior_not_enabled"
+     reason_code  = "behavior_not_enabled_until_stage16g2b"
+     safe_alternative_tool = "edit_file"（write/apply_patch）或 "git_diff"
+     并声明：没有修改工作区</code></pre>
+  <p>这样模型不是"拿到一个会乱写的工具"，而是"看到工具但被明确告知现在用不了、该用谁替代" —— 干净的分步上线。真实行为留给 <b>16G.2B</b>。</p>
+  <h3>④ 输入规模上限已进 schema + profile delta + 8 份 evidence</h3>
+  <ul>
+    <li><code>input_limit_schema_passed=true</code> —— 路径/内容/operation 数量等上限已经写进 schema（计划 D4 在 schema 层落地）。</li>
+    <li><code>profile_delta_passed=true</code> —— 四档 profile 的工具集/投影状态从 16G.1 registry + 当前注册状态重新推导（不是手写）。</li>
+    <li>8 份 evidence：source_inventory / schema_registration / scaffold_exposure / tool_surface_delta / profile_delta / stage16g1_preflight / path_leak_scan / acceptance_summary，全被 summary 用 sha256 绑定。</li>
+  </ul>
+
+  <!-- 3 -->
+  <h2 class="sec" id="review">3 · 我的审查观察 / 提醒</h2>
+
+  <div class="risk ok">
+    <h4><span class="tag t-good">做得好</span> O1 · behavior_not_enabled 是教科书式分步上线</h4>
+    <p>"先暴露 schema、调用返回结构化拒绝 + safe_alternative" 比"一步到位放开写入"安全得多：schema 先稳定下来供 inspector/profile 核对，真实行为在 2B 单独验收。模型不会被静默塞一个会乱写的工具。</p>
+  </div>
+
+  <div class="risk">
+    <h4><span class="tag t-warn">知情</span> O2 · 2A→2B 之间，默认 scaffold "展示但一调用就失败"的 5 个工具</h4>
+    <p>simple_react 现在工具列表里有这 5 个，但调用即被拒。<b>现在无害</b>（没有真实训练在跑，17B/20/21 全 false）。但要记得：<b>在 2B 补上真实行为之前，不要拿 simple_react 跑任何真实/warm-start 轨迹</b>，否则模型可能浪费回合调用必然失败的工具。2B 应尽快闭合这个过渡态。</p>
+    <div class="myrec"><b>我的看法：</b>这是分步上线的固有过渡态，可接受。盯住"2A 和 2B 之间不开真实训练"即可——目前的 gate（16G.3/17B/20/21 全 false）已经天然挡住了。</div>
+  </div>
+
+  <div class="risk">
+    <h4><span class="tag t-warn">知情</span> O3 · 命名用了 stage16g2a_*（而非计划的 stage16g2_*）</h4>
+    <p>evidence 文件、CLI（<code>inspect-stage16g2a-tool-surface</code>）、模块（<code>stage16g2_file_surface.py</code>）都带 2A 标识。这是<b>合理的</b>——2A 有自己的子阶段 evidence，2B/2C/2D 会有各自的。只是提醒你：以后找文件/命令是 <code>stage16g2a_*</code> 这套名字，不是计划文档里写的通用 <code>stage16g2_*</code>。</p>
+  </div>
+
+  <div class="risk ok">
+    <h4><span class="tag t-good">一致性</span> O4 · 与计划 2A 验收标准完全吻合</h4>
+    <p>schema-only 不开行为（✓ 红线）、apply_patch 用结构化 operations 非行号 diff（✓）、scaffold 暴露精确（planner/verifier 无写工具、patch_focused 未改）（✓）、输入上限进 schema（✓）、profile delta 从 registry 重算（✓）、gate 只放行 2B（✓）。没有越界、没有粉饰。</p>
+  </div>
+
+  <div class="callout info">
+    <b>关于能力总表：</b>按你这次的选择，我<b>没有</b>更新能力总表卡片 —— 因为 2A 只做了 schema/暴露，还不是完整实现，现在把卡片标 implemented 会误导。等 <b>16G.2B 真实行为落地</b>后，我再把 edit/write/apply_patch/delete_move_mkdir 这几张卡片从 planned 推进，并填上"模型可见/用法"。<br><br>
+    <b>下一步：</b>建议接受 2A 完成态 → 进 16G.2B（实现真实文件写入行为 + 拒绝/预检原子/rollback）。我会照例在 2B 做完后独立核查（重点：apply_patch 事务原子性、expected_hash 强制、partial_failure→invalid_for_training、真实文件改动）。<b>提交债</b>（多轮未跟踪文件）也还在待办，你想清的话我随时帮你列清单。
+  </div>
+
+  <div class="footer">
+    本报告基于独立核查：git 变更范围、读 minimal.py 确认新工具 executor 只返回 behavior_not_enabled 不写工作区、读 scaffold_exposure_report 确认暴露精确、重跑 inspect-stage16g2a-tool-surface（exit=0/9 文件）+ 16G.1 回归（exit=0）+ 单元测试（23 passed）、自行 grep 泄漏（0）、读 acceptance_summary 确认 gate 粒度。结论可用相同命令复核。
+  </div>
+</main>
+</div>
+</body>
+</html>

@@ -45,6 +45,11 @@ DEFAULT_TOOL_ORDER = [
     "update_working_state",
     "edit_file",
     "create_file",
+    "write_file",
+    "apply_patch",
+    "delete_file",
+    "move_file",
+    "mkdir",
     "bash",
     "run_tests",
     "git_diff",
@@ -99,6 +104,9 @@ GREP_MAX_MATCHES = 200
 DEFAULT_RESOLVED_MAX_OUTPUT_CHARS = 12000
 LIST_FILES_DEFAULT_MAX_ENTRIES = 200
 GIT_DIFF_CHANGED_FILE_LIMIT = 200
+STAGE16G2_PATH_MAX_CHARS = 1024
+STAGE16G2_CONTENT_MAX_BYTES = 1024 * 1024
+STAGE16G2_APPLY_PATCH_MAX_OPERATIONS = 50
 SEARCH_FACT_POLICY_VERSION = "repo_harness_search_fact_trust_v1"
 TOOL_RESULT_ENVELOPE_VERSION = "repo_harness_tool_result_envelope_v1"
 TOOL_RESULT_CONTEXT_EFFECTS = frozenset(
@@ -378,6 +386,8 @@ class ToolExecutor:
                 return self._edit_file(tool_call, normalized, context)
             if normalized.effective_tool_name == "create_file":
                 return self._create_file(tool_call, normalized, context)
+            if normalized.effective_tool_name in {"write_file", "apply_patch", "delete_file", "move_file", "mkdir"}:
+                return self._stage16g2a_schema_only_tool(tool_call, normalized, context)
             if normalized.effective_tool_name == "bash":
                 return self._bash(tool_call, normalized, context)
             if normalized.effective_tool_name == "execute_bash":
@@ -516,6 +526,34 @@ class ToolExecutor:
             effective_args = dict(normalized_args)
         elif requested == "create_file":
             normalized_args = {"path": args["path"], "content": args["content"]}
+            effective_args = dict(normalized_args)
+        elif requested == "write_file":
+            normalized_args = {
+                "path": args["path"],
+                "content": args["content"],
+                "mode": args["mode"],
+            }
+            if "expected_content_hash" in args:
+                normalized_args["expected_content_hash"] = args["expected_content_hash"]
+            effective_args = dict(normalized_args)
+        elif requested == "apply_patch":
+            normalized_args = {"operations": list(args["operations"])}
+            effective_args = dict(normalized_args)
+        elif requested == "delete_file":
+            normalized_args = {
+                "path": args["path"],
+                "expected_content_hash": args["expected_content_hash"],
+            }
+            effective_args = dict(normalized_args)
+        elif requested == "move_file":
+            normalized_args = {
+                "source_path": args["source_path"],
+                "target_path": args["target_path"],
+                "expected_source_hash": args["expected_source_hash"],
+            }
+            effective_args = dict(normalized_args)
+        elif requested == "mkdir":
+            normalized_args = {"path": args["path"]}
             effective_args = dict(normalized_args)
         elif requested == "bash":
             command = str(args["command"]).strip()
@@ -2184,6 +2222,44 @@ class ToolExecutor:
             },
         )
 
+    def _stage16g2a_schema_only_tool(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        tool_name = normalized.effective_tool_name
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status="denied",
+            content=(
+                f"{tool_name} is registered for Stage 16G.2A schema/profile exposure only. "
+                "The workspace mutation behavior is not enabled until Stage 16G.2B."
+            ),
+            error_type="stage16g2a_behavior_not_enabled",
+            typed={
+                "schema_version": "stage16g2a.schema_only_tool_denial.v1",
+                "tool_name": tool_name,
+                "reason_code": "behavior_not_enabled_until_stage16g2b",
+                "retryable": False,
+                "safe_alternative_tool": "edit_file" if tool_name in {"write_file", "apply_patch"} else "git_diff",
+                "safe_rewrite_example": (
+                    "Use existing edit_file/create_file where sufficient, then inspect git_diff. "
+                    "Wait for Stage 16G.2B before relying on this structured mutation tool."
+                ),
+                "stage16g2_substage": "16G.2A",
+                "next_required_stage": "16G.2B",
+                "repository_mutation_performed": False,
+                "result_envelope": _result_envelope(
+                    result_kind="stage16g2a_schema_only_denial",
+                    semantic_complete=True,
+                    recovery_hint="This tool is visible for schema/profile wiring only until Stage 16G.2B.",
+                    context_effects=["tool_result_recoverable"],
+                ),
+            },
+        )
+
     def _bash(
         self,
         tool_call: ToolCall,
@@ -3090,6 +3166,180 @@ def build_tool(name: str) -> ToolDefinition:
             output_schema={"type": "object", "properties": {"path": {"type": "string"}}},
             max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
         ),
+        "write_file": ToolDefinition(
+            name="write_file",
+            tool_version="repo_harness_write_file_stage16g2a_schema_v0",
+            model_visible_description=(
+                "Structured schema for creating or overwriting a UTF-8 file with explicit hash "
+                "protection. Stage 16G.2A exposes this schema and profile wiring; the executor "
+                "returns a structured denial until Stage 16G.2B enables mutation behavior."
+            ),
+            model_visible_prompt=(
+                "Use write_file only when it is enabled in the current run. Pass path, content, "
+                "and mode='create' or mode='overwrite'. For overwrite, include expected_content_hash "
+                "from a recent read_file observation. mode='upsert' is not available in the core profile."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["path", "content", "mode"],
+                "properties": {
+                    "path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative UTF-8 file path."},
+                    "content": {"type": "string", "maxLength": STAGE16G2_CONTENT_MAX_BYTES, "description": "Complete UTF-8 file content to write."},
+                    "mode": {"type": "string", "enum": ["create", "overwrite"], "description": "Core profile excludes upsert."},
+                    "expected_content_hash": {"type": "string", "description": "Required for overwrite; sha256 from read_file."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "content_hash": {"type": "string"},
+                    "previous_content_hash": {"type": ["string", "null"]},
+                    "result_kind": {"type": "string"},
+                    "reason_code": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_destructive=True,
+        ),
+        "apply_patch": ToolDefinition(
+            name="apply_patch",
+            tool_version="repo_harness_apply_patch_stage16g2a_schema_v0",
+            model_visible_description=(
+                "Structured multi-operation file mutation schema for exact text replacement, "
+                "write, delete, move, and mkdir operations. This is not a shell patch, git apply, "
+                "or arbitrary unified diff interface. Stage 16G.2A exposes schema/profile wiring; "
+                "actual mutation behavior is enabled in Stage 16G.2B."
+            ),
+            model_visible_prompt=(
+                "Use apply_patch only when enabled in the current run. Pass operations as structured "
+                "objects with op fields such as replace_text, write_file, delete_file, move_file, "
+                "or mkdir. Do not pass shell commands, git apply input, or free-form unified diff text."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["operations"],
+                "properties": {
+                    "operations": {
+                        "type": "array",
+                        "maxItems": STAGE16G2_APPLY_PATCH_MAX_OPERATIONS,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "op": {
+                                    "type": "string",
+                                    "enum": ["replace_text", "write_file", "delete_file", "move_file", "mkdir"],
+                                },
+                                "path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS},
+                                "source_path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS},
+                                "target_path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS},
+                                "old_text": {"type": "string", "maxLength": STAGE16G2_CONTENT_MAX_BYTES},
+                                "new_text": {"type": "string", "maxLength": STAGE16G2_CONTENT_MAX_BYTES},
+                                "content": {"type": "string", "maxLength": STAGE16G2_CONTENT_MAX_BYTES},
+                                "mode": {"type": "string", "enum": ["create", "overwrite"]},
+                                "expected_content_hash": {"type": "string"},
+                                "expected_source_hash": {"type": "string"},
+                            },
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "operation_facts": {"type": "array"},
+                    "partial_failure": {"type": "boolean"},
+                    "rollback_attempted": {"type": "boolean"},
+                    "rollback_status": {"type": "string"},
+                    "result_kind": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_destructive=True,
+        ),
+        "delete_file": ToolDefinition(
+            name="delete_file",
+            tool_version="repo_harness_delete_file_stage16g2a_schema_v0",
+            model_visible_description=(
+                "Structured schema for deleting one UTF-8 file with explicit expected_content_hash. "
+                "Stage 16G.2A exposes the schema; deletion behavior is enabled in Stage 16G.2B."
+            ),
+            model_visible_prompt=(
+                "Use delete_file only when enabled in the current run. Pass a workspace-relative path "
+                "and expected_content_hash from read_file. This tool deletes files only, not directories."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["path", "expected_content_hash"],
+                "properties": {
+                    "path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative UTF-8 file path."},
+                    "expected_content_hash": {"type": "string", "description": "sha256 from read_file."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={"type": "object", "properties": {"path": {"type": "string"}, "result_kind": {"type": "string"}}},
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_destructive=True,
+        ),
+        "move_file": ToolDefinition(
+            name="move_file",
+            tool_version="repo_harness_move_file_stage16g2a_schema_v0",
+            model_visible_description=(
+                "Structured schema for moving or renaming one UTF-8 file with explicit source hash. "
+                "Stage 16G.2A exposes the schema; move behavior is enabled in Stage 16G.2B."
+            ),
+            model_visible_prompt=(
+                "Use move_file only when enabled in the current run. Pass source_path, target_path, "
+                "and expected_source_hash from read_file. The core profile does not allow silent overwrite."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["source_path", "target_path", "expected_source_hash"],
+                "properties": {
+                    "source_path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative source file path."},
+                    "target_path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative target file path."},
+                    "expected_source_hash": {"type": "string", "description": "sha256 from read_file for the source file."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "source_path": {"type": "string"},
+                    "target_path": {"type": "string"},
+                    "result_kind": {"type": "string"},
+                },
+            },
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_destructive=True,
+        ),
+        "mkdir": ToolDefinition(
+            name="mkdir",
+            tool_version="repo_harness_mkdir_stage16g2a_schema_v0",
+            model_visible_description=(
+                "Structured schema for creating a workspace-relative directory. Empty directories "
+                "are operation audit facts, not final.patch facts. Stage 16G.2A exposes the schema; "
+                "mkdir behavior is enabled in Stage 16G.2B."
+            ),
+            model_visible_prompt=(
+                "Use mkdir only when enabled in the current run. Pass a workspace-relative path. "
+                "Remember that an empty directory will not appear in git diff unless a tracked file is created inside it."
+            ),
+            input_schema={
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string", "maxLength": STAGE16G2_PATH_MAX_CHARS, "description": "Workspace-relative directory path."},
+                },
+                "additionalProperties": False,
+            },
+            output_schema={"type": "object", "properties": {"path": {"type": "string"}, "result_kind": {"type": "string"}}},
+            max_result_size=DEFAULT_RESOLVED_MAX_OUTPUT_CHARS,
+            is_destructive=True,
+        ),
         "bash": ToolDefinition(
             name="bash",
             tool_version="repo_harness_bash_v0",
@@ -3294,6 +3544,17 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
         "edit_file.expected_content_sha256": (str, False),
         "create_file.path": (str, True),
         "create_file.content": (str, True),
+        "write_file.path": (str, True),
+        "write_file.content": (str, True),
+        "write_file.mode": (str, True),
+        "write_file.expected_content_hash": (str, False),
+        "apply_patch.operations": (list, True),
+        "delete_file.path": (str, True),
+        "delete_file.expected_content_hash": (str, True),
+        "move_file.source_path": (str, True),
+        "move_file.target_path": (str, True),
+        "move_file.expected_source_hash": (str, True),
+        "mkdir.path": (str, True),
         "bash.command": (str, True),
         "bash.cwd": (str, False),
         "bash.timeout_sec": (int, False),
@@ -3351,9 +3612,117 @@ def _schema_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None
             return _issue(field_name, "class|function|method|any", args[field_name], retryable=True)
         if tool_name == "list_files" and field_name == "kind" and field_name in args and args[field_name] not in {"file"}:
             return _issue(field_name, "file", args[field_name], retryable=True)
+        if tool_name == "write_file" and field_name == "mode" and field_name in args and args[field_name] not in {"create", "overwrite"}:
+            return _issue(field_name, "create|overwrite", args[field_name], retryable=True)
+        if tool_name == "apply_patch" and field_name == "operations" and field_name in args and not args[field_name]:
+            return _issue(field_name, "non-empty array", args[field_name], retryable=True)
     for field_name in args:
         if field_name not in tool_rules:
             return _issue(field_name, "known field", args[field_name], retryable=True)
+    if tool_name in {"write_file", "delete_file", "move_file", "mkdir"}:
+        issue = _stage16g2_top_level_limit_issue(tool_name, args)
+        if issue is not None:
+            return issue
+    if tool_name == "write_file" and args.get("mode") == "overwrite" and "expected_content_hash" not in args:
+        return _issue("expected_content_hash", "string required for overwrite", None, retryable=True)
+    if tool_name == "apply_patch":
+        operations = args.get("operations", [])
+        if isinstance(operations, list):
+            if len(operations) > STAGE16G2_APPLY_PATCH_MAX_OPERATIONS:
+                return _issue("operations", f"array length <= {STAGE16G2_APPLY_PATCH_MAX_OPERATIONS}", operations, retryable=True)
+            issue = _stage16g2_apply_patch_operations_issue(operations)
+            if issue is not None:
+                return issue
+    return None
+
+
+_STAGE16G2_APPLY_PATCH_REQUIRED_FIELDS: dict[str, set[str]] = {
+    "replace_text": {"op", "path", "old_text", "new_text", "expected_content_hash"},
+    "write_file": {"op", "path", "content", "mode"},
+    "delete_file": {"op", "path", "expected_content_hash"},
+    "move_file": {"op", "source_path", "target_path", "expected_source_hash"},
+    "mkdir": {"op", "path"},
+}
+_STAGE16G2_APPLY_PATCH_ALLOWED_FIELDS: dict[str, set[str]] = {
+    "replace_text": {"op", "path", "old_text", "new_text", "expected_content_hash"},
+    "write_file": {"op", "path", "content", "mode", "expected_content_hash"},
+    "delete_file": {"op", "path", "expected_content_hash"},
+    "move_file": {"op", "source_path", "target_path", "expected_source_hash"},
+    "mkdir": {"op", "path"},
+}
+_STAGE16G2_APPLY_PATCH_STRING_FIELDS = {
+    "op",
+    "path",
+    "source_path",
+    "target_path",
+    "old_text",
+    "new_text",
+    "content",
+    "mode",
+    "expected_content_hash",
+    "expected_source_hash",
+}
+
+
+def _stage16g2_top_level_limit_issue(tool_name: str, args: dict[str, Any]) -> dict[str, Any] | None:
+    path_fields = {
+        "write_file": ("path",),
+        "delete_file": ("path",),
+        "move_file": ("source_path", "target_path"),
+        "mkdir": ("path",),
+    }[tool_name]
+    for field_name in path_fields:
+        issue = _stage16g2_path_limit_issue(field_name, args.get(field_name))
+        if issue is not None:
+            return issue
+    if tool_name == "write_file":
+        return _stage16g2_content_limit_issue("content", args.get("content"))
+    return None
+
+
+def _stage16g2_apply_patch_operations_issue(operations: list[Any]) -> dict[str, Any] | None:
+    for index, operation in enumerate(operations):
+        if not isinstance(operation, dict):
+            return _issue(f"operations[{index}]", "object", operation, retryable=True)
+        op_name = operation.get("op")
+        if op_name not in _STAGE16G2_APPLY_PATCH_REQUIRED_FIELDS:
+            return _issue(f"operations[{index}].op", "replace_text|write_file|delete_file|move_file|mkdir", op_name, retryable=True)
+        allowed_fields = _STAGE16G2_APPLY_PATCH_ALLOWED_FIELDS[str(op_name)]
+        for field_name in operation:
+            if field_name not in allowed_fields:
+                return _issue(f"operations[{index}].{field_name}", "known field", operation[field_name], retryable=True)
+        for field_name in sorted(_STAGE16G2_APPLY_PATCH_REQUIRED_FIELDS[str(op_name)]):
+            if field_name not in operation:
+                return _issue(f"operations[{index}].{field_name}", "required field", None, retryable=True)
+        for field_name in sorted(_STAGE16G2_APPLY_PATCH_STRING_FIELDS & set(operation)):
+            if not isinstance(operation[field_name], str):
+                return _issue(f"operations[{index}].{field_name}", "string", operation[field_name], retryable=True)
+        if operation.get("mode") not in {None, "create", "overwrite"}:
+            return _issue(f"operations[{index}].mode", "create|overwrite", operation.get("mode"), retryable=True)
+        if operation.get("op") == "write_file" and operation.get("mode") == "overwrite" and "expected_content_hash" not in operation:
+            return _issue(f"operations[{index}].expected_content_hash", "string required for overwrite", None, retryable=True)
+        for field_name in ("path", "source_path", "target_path"):
+            if field_name in operation:
+                issue = _stage16g2_path_limit_issue(f"operations[{index}].{field_name}", operation[field_name])
+                if issue is not None:
+                    return issue
+        for field_name in ("old_text", "new_text", "content"):
+            if field_name in operation:
+                issue = _stage16g2_content_limit_issue(f"operations[{index}].{field_name}", operation[field_name])
+                if issue is not None:
+                    return issue
+    return None
+
+
+def _stage16g2_path_limit_issue(field_name: str, value: Any) -> dict[str, Any] | None:
+    if isinstance(value, str) and len(value) > STAGE16G2_PATH_MAX_CHARS:
+        return _issue(field_name, f"string length <= {STAGE16G2_PATH_MAX_CHARS}", value, retryable=True)
+    return None
+
+
+def _stage16g2_content_limit_issue(field_name: str, value: Any) -> dict[str, Any] | None:
+    if isinstance(value, str) and len(value.encode("utf-8")) > STAGE16G2_CONTENT_MAX_BYTES:
+        return _issue(field_name, f"utf-8 byte length <= {STAGE16G2_CONTENT_MAX_BYTES}", value, retryable=True)
     return None
 
 

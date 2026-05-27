@@ -1,0 +1,141 @@
+{
+  "owner_stage": "16G.2",
+  "p0_capability_ids": [
+    "structured_edit_existing_file",
+    "structured_write_or_create_file",
+    "apply_patch_or_multi_file_edit",
+    "delete_move_mkdir_file_operations"
+  ],
+  "p0_schema_and_scaffold_exposure_complete": true,
+  "record_count": 5,
+  "records": [
+    {
+      "allowed_in_policy_loss_trajectory": false,
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "structured_edit_existing_file",
+      "priority": "P0",
+      "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
+      "stage16g1_executor_binding_status": "partial",
+      "stage16g1_model_visible_schema_status": "partial",
+      "stage16g1_scaffold_exposure_status": "partial",
+      "stage16g1_tool_ids": [
+        "edit_file"
+      ],
+      "stage16g2a_delta_status": "schema_profile_and_scaffold_exposure_complete_behavior_pending_16G2B",
+      "stage16g2a_executor_binding_status": "schema_only_denial_until_16G2B",
+      "stage16g2a_model_visible_schema_status": "implemented",
+      "stage16g2a_scaffold_exposure_status": "implemented",
+      "stage16g2a_tool_ids": [
+        "edit_file",
+        "apply_patch"
+      ],
+      "tool_build_status": {
+        "apply_patch": true,
+        "edit_file": true
+      }
+    },
+    {
+      "allowed_in_policy_loss_trajectory": false,
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "structured_write_or_create_file",
+      "priority": "P0",
+      "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
+      "stage16g1_executor_binding_status": "partial",
+      "stage16g1_model_visible_schema_status": "partial",
+      "stage16g1_scaffold_exposure_status": "partial",
+      "stage16g1_tool_ids": [
+        "create_file",
+        "write_file"
+      ],
+      "stage16g2a_delta_status": "schema_profile_and_scaffold_exposure_complete_behavior_pending_16G2B",
+      "stage16g2a_executor_binding_status": "schema_only_denial_until_16G2B",
+      "stage16g2a_model_visible_schema_status": "implemented",
+      "stage16g2a_scaffold_exposure_status": "implemented",
+      "stage16g2a_tool_ids": [
+        "create_file",
+        "write_file"
+      ],
+      "tool_build_status": {
+        "create_file": true,
+        "write_file": true
+      }
+    },
+    {
+      "allowed_in_policy_loss_trajectory": false,
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "apply_patch_or_multi_file_edit",
+      "priority": "P0",
+      "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
+      "stage16g1_executor_binding_status": "not_implemented",
+      "stage16g1_model_visible_schema_status": "planned",
+      "stage16g1_scaffold_exposure_status": "planned",
+      "stage16g1_tool_ids": [
+        "apply_patch"
+      ],
+      "stage16g2a_delta_status": "schema_profile_and_scaffold_exposure_complete_behavior_pending_16G2B",
+      "stage16g2a_executor_binding_status": "schema_only_denial_until_16G2B",
+      "stage16g2a_model_visible_schema_status": "implemented",
+      "stage16g2a_scaffold_exposure_status": "implemented",
+      "stage16g2a_tool_ids": [
+        "apply_patch"
+      ],
+      "tool_build_status": {
+        "apply_patch": true
+      }
+    },
+    {
+      "allowed_in_policy_loss_trajectory": false,
+      "blocking_for_main_swe_rl": true,
+      "capability_id": "delete_move_mkdir_file_operations",
+      "priority": "P0",
+      "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
+      "stage16g1_executor_binding_status": "not_implemented",
+      "stage16g1_model_visible_schema_status": "planned",
+      "stage16g1_scaffold_exposure_status": "planned",
+      "stage16g1_tool_ids": [
+        "delete_file",
+        "move_file",
+        "mkdir"
+      ],
+      "stage16g2a_delta_status": "schema_profile_and_scaffold_exposure_complete_behavior_pending_16G2B",
+      "stage16g2a_executor_binding_status": "schema_only_denial_until_16G2B",
+      "stage16g2a_model_visible_schema_status": "implemented",
+      "stage16g2a_scaffold_exposure_status": "implemented",
+      "stage16g2a_tool_ids": [
+        "delete_file",
+        "move_file",
+        "mkdir"
+      ],
+      "tool_build_status": {
+        "delete_file": true,
+        "mkdir": true,
+        "move_file": true
+      }
+    },
+    {
+      "allowed_in_policy_loss_trajectory": false,
+      "blocking_for_main_swe_rl": false,
+      "capability_id": "task_management_todo",
+      "priority": "P2",
+      "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
+      "stage16g1_executor_binding_status": "partial",
+      "stage16g1_model_visible_schema_status": "partial",
+      "stage16g1_scaffold_exposure_status": "partial",
+      "stage16g1_tool_ids": [
+        "update_working_state"
+      ],
+      "stage16g2a_delta_status": "nonblocking_followup_not_required_for_16G2A",
+      "stage16g2a_executor_binding_status": "nonblocking_no_change",
+      "stage16g2a_model_visible_schema_status": "implemented",
+      "stage16g2a_scaffold_exposure_status": "nonblocking_still_partial",
+      "stage16g2a_tool_ids": [
+        "update_working_state"
+      ],
+      "tool_build_status": {
+        "update_working_state": true
+      }
+    }
+  ],
+  "schema_version": "stage16g2a.tool_surface_delta.v1",
+  "source_registry": "stage16g1_tool_registry_contract"
+}

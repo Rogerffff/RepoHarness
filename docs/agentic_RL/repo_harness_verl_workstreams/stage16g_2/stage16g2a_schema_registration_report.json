@@ -1,0 +1,205 @@
+{
+  "all_new_tools_buildable": true,
+  "all_new_tools_have_input_limits": true,
+  "all_new_tools_in_default_tool_order": true,
+  "apply_patch_unified_diff_exposed": false,
+  "core_write_file_upsert_exposed": false,
+  "default_tool_order": [
+    "list_files",
+    "glob_files",
+    "read_file",
+    "read_tool_result_artifact",
+    "grep",
+    "symbol_search",
+    "update_working_state",
+    "edit_file",
+    "create_file",
+    "write_file",
+    "apply_patch",
+    "delete_file",
+    "move_file",
+    "mkdir",
+    "bash",
+    "run_tests",
+    "git_diff"
+  ],
+  "new_tool_names": [
+    "write_file",
+    "apply_patch",
+    "delete_file",
+    "move_file",
+    "mkdir"
+  ],
+  "registry_names": [
+    "list_files",
+    "glob_files",
+    "read_file",
+    "read_tool_result_artifact",
+    "grep",
+    "symbol_search",
+    "update_working_state",
+    "edit_file",
+    "create_file",
+    "write_file",
+    "apply_patch",
+    "delete_file",
+    "move_file",
+    "mkdir",
+    "bash",
+    "run_tests",
+    "git_diff"
+  ],
+  "schema_version": "stage16g2a.schema_registration_report.v1",
+  "tool_records": [
+    {
+      "additional_properties_allowed": false,
+      "behavior_stage": "16G.2B",
+      "buildable": true,
+      "content_limit_fields": [
+        "content"
+      ],
+      "executor_binding_status": "schema_only_denial_until_16G2B",
+      "in_default_tool_order": true,
+      "in_default_tool_registry": true,
+      "input_limits_declared": true,
+      "input_property_names": [
+        "content",
+        "expected_content_hash",
+        "mode",
+        "path"
+      ],
+      "is_destructive": true,
+      "is_read_only": false,
+      "mode_enum": [
+        "create",
+        "overwrite"
+      ],
+      "operations_max_items": null,
+      "path_limit_fields": [
+        "path"
+      ],
+      "required_fields": [
+        "path",
+        "content",
+        "mode"
+      ],
+      "tool_name": "write_file",
+      "tool_version": "repo_harness_write_file_stage16g2a_schema_v0",
+      "unified_diff_property_present": false,
+      "upsert_exposed_in_core_schema": false
+    },
+    {
+      "additional_properties_allowed": false,
+      "behavior_stage": "16G.2B",
+      "buildable": true,
+      "content_limit_fields": [],
+      "executor_binding_status": "schema_only_denial_until_16G2B",
+      "in_default_tool_order": true,
+      "in_default_tool_registry": true,
+      "input_limits_declared": true,
+      "input_property_names": [
+        "operations"
+      ],
+      "is_destructive": true,
+      "is_read_only": false,
+      "mode_enum": null,
+      "operations_max_items": 50,
+      "path_limit_fields": [],
+      "required_fields": [
+        "operations"
+      ],
+      "tool_name": "apply_patch",
+      "tool_version": "repo_harness_apply_patch_stage16g2a_schema_v0",
+      "unified_diff_property_present": false,
+      "upsert_exposed_in_core_schema": false
+    },
+    {
+      "additional_properties_allowed": false,
+      "behavior_stage": "16G.2B",
+      "buildable": true,
+      "content_limit_fields": [],
+      "executor_binding_status": "schema_only_denial_until_16G2B",
+      "in_default_tool_order": true,
+      "in_default_tool_registry": true,
+      "input_limits_declared": true,
+      "input_property_names": [
+        "expected_content_hash",
+        "path"
+      ],
+      "is_destructive": true,
+      "is_read_only": false,
+      "mode_enum": null,
+      "operations_max_items": null,
+      "path_limit_fields": [
+        "path"
+      ],
+      "required_fields": [
+        "path",
+        "expected_content_hash"
+      ],
+      "tool_name": "delete_file",
+      "tool_version": "repo_harness_delete_file_stage16g2a_schema_v0",
+      "unified_diff_property_present": false,
+      "upsert_exposed_in_core_schema": false
+    },
+    {
+      "additional_properties_allowed": false,
+      "behavior_stage": "16G.2B",
+      "buildable": true,
+      "content_limit_fields": [],
+      "executor_binding_status": "schema_only_denial_until_16G2B",
+      "in_default_tool_order": true,
+      "in_default_tool_registry": true,
+      "input_limits_declared": true,
+      "input_property_names": [
+        "expected_source_hash",
+        "source_path",
+        "target_path"
+      ],
+      "is_destructive": true,
+      "is_read_only": false,
+      "mode_enum": null,
+      "operations_max_items": null,
+      "path_limit_fields": [
+        "source_path",
+        "target_path"
+      ],
+      "required_fields": [
+        "source_path",
+        "target_path",
+        "expected_source_hash"
+      ],
+      "tool_name": "move_file",
+      "tool_version": "repo_harness_move_file_stage16g2a_schema_v0",
+      "unified_diff_property_present": false,
+      "upsert_exposed_in_core_schema": false
+    },
+    {
+      "additional_properties_allowed": false,
+      "behavior_stage": "16G.2B",
+      "buildable": true,
+      "content_limit_fields": [],
+      "executor_binding_status": "schema_only_denial_until_16G2B",
+      "in_default_tool_order": true,
+      "in_default_tool_registry": true,
+      "input_limits_declared": true,
+      "input_property_names": [
+        "path"
+      ],
+      "is_destructive": true,
+      "is_read_only": false,
+      "mode_enum": null,
+      "operations_max_items": null,
+      "path_limit_fields": [
+        "path"
+      ],
+      "required_fields": [
+        "path"
+      ],
+      "tool_name": "mkdir",
+      "tool_version": "repo_harness_mkdir_stage16g2a_schema_v0",
+      "unified_diff_property_present": false,
+      "upsert_exposed_in_core_schema": false
+    }
+  ]
+}
