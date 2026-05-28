@@ -223,7 +223,11 @@ from repo_harness.pre_verl_failure_injection import (
 )
 from repo_harness.evaluation.stage16d_healthcheck import inspect_stage16d_healthcheck
 from repo_harness.stage16g_tool_profile import inspect_stage16g1_tool_profile
-from repo_harness.stage16g2_file_surface import inspect_stage16g2a_tool_surface
+from repo_harness.stage16g2_file_surface import (
+    inspect_stage16g2a_tool_surface,
+    inspect_stage16g2b_file_mutation,
+    inspect_stage16g2c_projection_linkage,
+)
 from repo_harness_verl.stage14_acceptance import inspect_stage14_fully_async_acceptance
 from repo_harness_verl.stage15_acceptance import inspect_stage15_partial_rollout_acceptance
 from repo_harness_verl.stage16b5_acceptance import inspect_stage16b5_docker_backend_acceptance
@@ -1821,6 +1825,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_stage16g2a_parser.add_argument("summary", help="Stage 16G.2A acceptance summary JSON。")
     inspect_stage16g2a_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
+    inspect_stage16g2b_parser = subparsers.add_parser(
+        "inspect-stage16g2b-file-mutation",
+        help="检查 Stage 16G.2B structured file mutation 行为和安全拒绝 evidence。",
+    )
+    inspect_stage16g2b_parser.add_argument("summary", help="Stage 16G.2B acceptance summary JSON。")
+    inspect_stage16g2b_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
+
+    inspect_stage16g2c_parser = subparsers.add_parser(
+        "inspect-stage16g2c-projection-linkage",
+        help="检查 Stage 16G.2C run_episode 投影、patch hygiene 和训练投影 linkage evidence。",
+    )
+    inspect_stage16g2c_parser.add_argument("summary", help="Stage 16G.2C acceptance summary JSON。")
+    inspect_stage16g2c_parser.add_argument("--assert-complete", action="store_true", help="要求 evidence 完整通过。")
 
     build_stage14_smoke_kit_parser = subparsers.add_parser(
         "build-stage14-remote-smoke-kit",
@@ -3453,6 +3471,28 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except RepoHarnessError as exc:
             parser.exit(1, f"Stage 16G.2A tool surface 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage16g2b-file-mutation":
+        try:
+            print(
+                inspect_stage16g2b_file_mutation(
+                    args.summary,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 16G.2B file mutation 检查失败：{exc}\n")
+        return 0
+    if args.command == "inspect-stage16g2c-projection-linkage":
+        try:
+            print(
+                inspect_stage16g2c_projection_linkage(
+                    args.summary,
+                    assert_complete=args.assert_complete,
+                )
+            )
+        except RepoHarnessError as exc:
+            parser.exit(1, f"Stage 16G.2C projection linkage 检查失败：{exc}\n")
         return 0
     if args.command == "build-stage14-remote-smoke-kit":
         try:

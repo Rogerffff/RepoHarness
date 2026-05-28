@@ -38,7 +38,7 @@ def _refresh_summary_digest(output_dir: Path, filename: str, digest_field: str) 
     return summary_path
 
 
-def test_stage16g2a_new_tools_are_registered_schema_only() -> None:
+def test_stage16g2a_new_tools_are_registered_with_stage16g2b_behavior_binding() -> None:
     report = build_schema_registration_report()
     records = {record["tool_name"]: record for record in report["tool_records"]}
 
@@ -53,7 +53,7 @@ def test_stage16g2a_new_tools_are_registered_schema_only() -> None:
     for tool_name in STAGE16G2A_NEW_TOOL_NAMES:
         tool = build_tool(tool_name)
         assert tool.is_destructive is True
-        assert records[tool_name]["executor_binding_status"] == "schema_only_denial_until_16G2B"
+        assert records[tool_name]["executor_binding_status"] == "stage16g2b_behavior_enabled"
     for tool_name in STAGE16G2A_CORE_VISIBLE_NEW_TOOL_NAMES:
         assert tool_name in DEFAULT_TOOL_ORDER
     for tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES:
@@ -130,7 +130,7 @@ def test_stage16g2a_scaffolds_expose_new_tools_only_to_write_phases() -> None:
         ("mkdir", {"path": "new_dir"}),
     ],
 )
-def test_stage16g2a_executor_returns_safe_schema_only_denial(
+def test_stage16g2b_executor_applies_registered_file_mutation_tools(
     tmp_path: Path,
     tool_name: str,
     arguments: dict[str, object],
@@ -138,13 +138,14 @@ def test_stage16g2a_executor_returns_safe_schema_only_denial(
     context = _tool_context(tmp_path)
     workspace = Path(context.run_workspace.workspace_path)
     (workspace / "notes.txt").write_text("original\n", encoding="utf-8")
+    content_hash = hashlib.sha256("original\n".encode("utf-8")).hexdigest()
+    arguments = json.loads(json.dumps(arguments).replace("not-used-in-16g2a", content_hash))
     registry = ToolRegistry([build_tool(tool_name)]) if tool_name in STAGE16G2A_STANDALONE_OPERATION_TOOL_NAMES else None
     executor = ToolExecutor(registry=registry) if registry is not None else ToolExecutor()
-    before_files = sorted(path.relative_to(workspace).as_posix() for path in workspace.rglob("*"))
 
     result = executor.execute(
         ToolCall(
-            tool_call_id=f"call_{tool_name}_schema_only",
+            tool_call_id=f"call_{tool_name}_mutation",
             tool_name=tool_name,
             arguments=arguments,
             turn=1,
@@ -152,13 +153,11 @@ def test_stage16g2a_executor_returns_safe_schema_only_denial(
         context,
     )
 
-    assert result.status == "denied"
-    assert result.error_type == "stage16g2a_behavior_not_enabled"
-    assert result.typed["repository_mutation_performed"] is False
-    assert result.typed["next_required_stage"] == "16G.2B"
-    assert (workspace / "notes.txt").read_text(encoding="utf-8") == "original\n"
-    after_files = sorted(path.relative_to(workspace).as_posix() for path in workspace.rglob("*"))
-    assert after_files == before_files
+    assert result.status == "ok"
+    assert result.error_type != "stage16g2a_behavior_not_enabled"
+    assert result.typed["repository_mutation_performed"] is True
+    assert result.typed["policy_loss_candidate"] is False
+    assert result.typed["sample_policy_loss_candidate_effect"] == "requires_stage16g2c_patch_projection_linkage"
 
 
 def test_stage16g2a_schema_validation_rejects_upsert_and_empty_patch(tmp_path: Path) -> None:
@@ -352,7 +351,7 @@ def test_stage16g2a_profile_delta_keeps_new_tools_out_of_policy_loss() -> None:
 
     for profile in profiles.values():
         for state in profile["training_projection_state_for_new_tools"].values():
-            assert state["executor_binding_status"] == "schema_only_denial_until_16G2B"
+            assert state["executor_binding_status"] == "stage16g2b_behavior_enabled"
             assert state["allowed_in_policy_loss_trajectory"] is False
 
 

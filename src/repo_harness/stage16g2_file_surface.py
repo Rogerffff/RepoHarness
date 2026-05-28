@@ -1,4 +1,4 @@
-"""Stage 16G.2A structured file tool surface evidence and inspector."""
+"""Stage 16G.2 structured file tool surface evidence and inspectors."""
 
 from __future__ import annotations
 
@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from repo_harness.errors import RepoHarnessError
+from repo_harness.evaluation.episode_projection import (
+    _FORBIDDEN_PUBLIC_MARKERS as PROJECTION_FORBIDDEN_PUBLIC_MARKERS,
+    _RUNTIME_PRIVATE_REF_PATTERN,
+)
 from repo_harness.scaffolds import (
     build_planner_coder_verifier_scaffold,
     build_simple_react_scaffold,
@@ -77,6 +81,52 @@ REQUIRED_OUTPUT_FILES = [
     "stage16g2a_acceptance_summary.json",
 ]
 
+STAGE16G2B_REQUIRED_OUTPUT_FILES = [
+    "stage16g2b_file_mutation_probe_report.json",
+    "stage16g2b_safety_denial_probe_report.json",
+    "stage16g2b_path_leak_scan_report.json",
+    "stage16g2b_acceptance_summary.json",
+]
+
+STAGE16G2B_SUMMARY_DIGEST_FIELDS = {
+    "stage16g2b_file_mutation_probe_report.json": "file_mutation_probe_report_sha256",
+    "stage16g2b_safety_denial_probe_report.json": "safety_denial_probe_report_sha256",
+    "stage16g2b_path_leak_scan_report.json": "path_leak_scan_report_sha256",
+}
+
+STAGE16G2B_SOURCE_DIGEST_FILES = [
+    "src/repo_harness/tools/file_mutation.py",
+    "src/repo_harness/tools/minimal.py",
+    "src/repo_harness/stage16g2_file_surface.py",
+    "src/repo_harness/cli/main.py",
+    "scripts/pre_verl/build_stage16g2b_file_mutation.py",
+    "tests/unit/test_repo_harness_stage16g2b_file_mutation.py",
+]
+
+STAGE16G2C_REQUIRED_OUTPUT_FILES = [
+    "stage16g2c_run_episode_projection_probe_report.json",
+    "stage16g2c_projection_linkage_report.json",
+    "stage16g2c_path_leak_scan_report.json",
+    "stage16g2c_acceptance_summary.json",
+]
+
+STAGE16G2C_SUMMARY_DIGEST_FIELDS = {
+    "stage16g2c_run_episode_projection_probe_report.json": "run_episode_projection_probe_report_sha256",
+    "stage16g2c_projection_linkage_report.json": "projection_linkage_report_sha256",
+    "stage16g2c_path_leak_scan_report.json": "path_leak_scan_report_sha256",
+}
+
+STAGE16G2C_SOURCE_DIGEST_FILES = [
+    "src/repo_harness/tools/file_mutation.py",
+    "src/repo_harness/tools/minimal.py",
+    "src/repo_harness/evaluation/episode_projection.py",
+    "src/repo_harness/rl/runtime.py",
+    "src/repo_harness/stage16g2_file_surface.py",
+    "src/repo_harness/cli/main.py",
+    "scripts/pre_verl/build_stage16g2c_projection_linkage.py",
+    "tests/unit/test_repo_harness_stage16g2c_projection_linkage.py",
+]
+
 SUMMARY_DIGEST_FIELDS = {
     "implementation-notes.md": "implementation_notes_sha256",
     "stage16g2a_source_inventory.json": "source_inventory_sha256",
@@ -90,13 +140,16 @@ SUMMARY_DIGEST_FIELDS = {
 
 SOURCE_FILES = [
     "src/repo_harness/tools/minimal.py",
+    "src/repo_harness/tools/file_mutation.py",
     "src/repo_harness/permissions/system.py",
     "src/repo_harness/scaffolds/simple_react.py",
     "src/repo_harness/scaffolds/planner_coder_verifier.py",
     "src/repo_harness/stage16g2_file_surface.py",
     "src/repo_harness/cli/main.py",
     "scripts/pre_verl/build_stage16g2a_tool_surface.py",
+    "scripts/pre_verl/build_stage16g2b_file_mutation.py",
     "tests/unit/test_repo_harness_stage16g2a_tool_surface.py",
+    "tests/unit/test_repo_harness_stage16g2b_file_mutation.py",
 ]
 
 SENSITIVE_PATTERNS = [
@@ -113,6 +166,88 @@ SENSITIVE_PATTERNS = [
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 ]
+STAGE16G2_PUBLIC_MARKERS = tuple(PROJECTION_FORBIDDEN_PUBLIC_MARKERS)
+
+STAGE16G2C_PROBE_KEYS = {
+    "schema_version",
+    "status",
+    "run_episode_invocation",
+    "projection_writer",
+    "projection_created_from_run_episode",
+    "projection_complete",
+    "result_status",
+    "result_status_reason",
+    "final_verifier_accepted",
+    "tool_names_observed",
+    "tool_result_statuses",
+    "operation_kinds_observed",
+    "final_patch_sha256",
+    "final_diff_sha256",
+    "final_patch_changed_file_facts",
+    "training_projection",
+    "provider_route_qualification",
+    "forbidden_model_visible_marker_scan_passed",
+    "forbidden_model_visible_marker_findings",
+    "public_safe_digest_only",
+}
+STAGE16G2C_PATCH_FACT_KEYS = {
+    "entry_count",
+    "added_count",
+    "modified_count",
+    "deleted_count",
+    "renamed_count",
+    "changed_paths",
+    "entries",
+}
+STAGE16G2C_PATCH_ENTRY_KEYS = {"old_path", "new_path", "status"}
+STAGE16G2C_TRAINING_PROJECTION_KEYS = {
+    "training_view_projection_schema_version",
+    "response_token_count",
+    "response_mask_count",
+    "response_span_count",
+    "generation_record_count",
+    "tool_observation_span_count",
+    "tool_observation_spans_response_mask_zero",
+    "tool_output_response_mask_zero_count",
+    "assistant_response_mask_one_count",
+    "online_rl_eligible",
+    "invalid_for_training",
+    "invalid_for_online_rl",
+}
+STAGE16G2C_PROVIDER_ROUTE_KEYS = {
+    "provider_route",
+    "llm_gateway_route",
+    "formal_online_rl_eligible",
+    "policy_loss_candidate",
+    "qualification_reason",
+}
+STAGE16G2C_LINKAGE_KEYS = {
+    "schema_version",
+    "status",
+    "compat_projection_file_count",
+    "compat_projection_validation_error_count",
+    "manifest_final_patch_sha256_matches_projection",
+    "manifest_final_diff_sha256_matches_projection",
+    "hygiene_cleaned_patch_sha256_matches_manifest",
+    "hygiene_cleaned_diff_sha256_matches_manifest",
+    "source_and_compat_final_patch_match",
+    "source_and_compat_final_diff_match",
+    "public_hygiene_report_contains_raw_fields",
+    "patch_hygiene_status",
+    "patch_hygiene_filtered_file_count",
+    "patch_hygiene_flagged_file_count",
+    "compat_projection_public_safe",
+    "projection_source_result_digest_present",
+    "projection_source_training_view_digest_present",
+    "raw_artifact_private_by_omission",
+}
+STAGE16G2C_PATH_SCAN_KEYS = {
+    "schema_version",
+    "public_path_leak_scan_passed",
+    "finding_count",
+    "findings",
+    "scanned_suffixes",
+}
 
 
 def _json_dumps(payload: Any) -> str:
@@ -125,6 +260,18 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _public_text_findings(relative_path: str, text: str) -> list[dict[str, str]]:
+    normalized_text = _RUNTIME_PRIVATE_REF_PATTERN.sub("runtime-private:<kind>:<sha256>", text)
+    findings: list[dict[str, str]] = []
+    for pattern in SENSITIVE_PATTERNS:
+        if pattern.search(normalized_text):
+            findings.append({"relative_path": relative_path, "pattern": pattern.pattern})
+    for marker in STAGE16G2_PUBLIC_MARKERS:
+        if marker in normalized_text:
+            findings.append({"relative_path": relative_path, "marker": marker})
+    return findings
 
 
 def _load_json(path: Path) -> Any:
@@ -234,7 +381,7 @@ def build_schema_registration_report() -> dict[str, Any]:
                 "is_destructive": tool.is_destructive,
                 "is_read_only": tool.is_read_only,
                 "behavior_stage": "16G.2B",
-                "executor_binding_status": "schema_only_denial_until_16G2B",
+                "executor_binding_status": "stage16g2b_behavior_enabled",
                 "required_fields": list(tool.input_schema.get("required", [])),
                 "input_property_names": sorted(properties),
                 "additional_properties_allowed": tool.input_schema.get("additionalProperties", True),
@@ -373,10 +520,10 @@ def build_tool_surface_delta(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> dic
                 ),
                 "stage16g1_executor_binding_status": record["executor_binding_status"],
                 "stage16g2a_executor_binding_status": (
-                    "schema_only_denial_until_16G2B" if is_p0 else "nonblocking_no_change"
+                    "stage16g2b_behavior_enabled" if is_p0 else "nonblocking_no_change"
                 ),
                 "stage16g2a_delta_status": (
-                    "schema_profile_and_scaffold_exposure_complete_behavior_pending_16G2B"
+                    "schema_profile_scaffold_and_stage16g2b_behavior_enabled"
                     if is_p0
                     else "nonblocking_followup_not_required_for_16G2A"
                 ),
@@ -453,7 +600,7 @@ def build_profile_delta_report(stage16g1_dir: Path = DEFAULT_STAGE16G1_DIR) -> d
                                 else "not_default"
                             )
                         ),
-                        "executor_binding_status": "schema_only_denial_until_16G2B",
+                        "executor_binding_status": "stage16g2b_behavior_enabled",
                         "allowed_in_policy_loss_trajectory": False,
                         "sample_policy_loss_candidate_effect": "makes_sample_ineligible_until_stage16g2b_2c_complete",
                     }
@@ -494,15 +641,49 @@ def _scan_public_files(output_dir: Path) -> dict[str, Any]:
         if path.suffix not in {".json", ".md"}:
             continue
         text = path.read_text()
-        for pattern in SENSITIVE_PATTERNS:
-            if pattern.search(text):
-                findings.append({"relative_path": path.name, "pattern": pattern.pattern})
+        findings.extend(_public_text_findings(path.name, text))
     return {
         "schema_version": "stage16g2a.path_leak_scan_report.v1",
         "public_path_leak_scan_passed": not findings,
         "finding_count": len(findings),
         "findings": findings,
         "scanned_suffixes": [".json", ".md"],
+    }
+
+
+def scan_stage16g2b_public_files(output_dir: Path) -> dict[str, Any]:
+    findings = []
+    for path in sorted(output_dir.glob("stage16g2b_*")):
+        if not path.exists() or path.name == "stage16g2b_path_leak_scan_report.json":
+            continue
+        if path.suffix != ".json":
+            continue
+        text = path.read_text()
+        findings.extend(_public_text_findings(path.name, text))
+    return {
+        "schema_version": "stage16g2b.path_leak_scan_report.v1",
+        "public_path_leak_scan_passed": not findings,
+        "finding_count": len(findings),
+        "findings": findings,
+        "scanned_suffixes": [".json"],
+    }
+
+
+def scan_stage16g2c_public_files(output_dir: Path) -> dict[str, Any]:
+    findings = []
+    for path in sorted(output_dir.glob("stage16g2c_*")):
+        if not path.exists() or path.name == "stage16g2c_path_leak_scan_report.json":
+            continue
+        if path.suffix != ".json":
+            continue
+        text = path.read_text()
+        findings.extend(_public_text_findings(path.name, text))
+    return {
+        "schema_version": "stage16g2c.path_leak_scan_report.v1",
+        "public_path_leak_scan_passed": not findings,
+        "finding_count": len(findings),
+        "findings": findings,
+        "scanned_suffixes": [".json"],
     }
 
 
@@ -917,6 +1098,505 @@ def inspect_stage16g2a_tool_surface(summary_path: str | Path, *, assert_complete
         "failures": failures,
         "validated_file_count": len(REQUIRED_OUTPUT_FILES),
         "derived_checks": validation["checks"],
+    }
+    if assert_complete and failures:
+        raise RepoHarnessError(_json_dumps(report))
+    return _json_dumps(report)
+
+
+def _load_stage16g2b_dir(summary_path: Path) -> dict[str, Any]:
+    base = summary_path.parent
+    payloads: dict[str, Any] = {}
+    for filename in STAGE16G2B_REQUIRED_OUTPUT_FILES:
+        path = base / filename
+        if path.exists():
+            payloads[filename] = _load_json(path)
+    return payloads
+
+
+def _stage16g2b_validation_failures(payloads: dict[str, Any], *, base: Path) -> tuple[list[str], dict[str, Any]]:
+    failures: list[str] = []
+    summary = payloads["stage16g2b_acceptance_summary.json"]
+    mutation = payloads["stage16g2b_file_mutation_probe_report.json"]
+    safety = payloads["stage16g2b_safety_denial_probe_report.json"]
+    path_scan = payloads["stage16g2b_path_leak_scan_report.json"]
+
+    if summary.get("schema_version") != "stage16g2b.acceptance_summary.v1":
+        failures.append("summary_schema_version_mismatch")
+    if mutation.get("schema_version") != "stage16g2b.file_mutation_probe_report.v1":
+        failures.append("mutation_probe_schema_version_mismatch")
+    if safety.get("schema_version") != "stage16g2b.safety_denial_probe_report.v1":
+        failures.append("safety_probe_schema_version_mismatch")
+    if path_scan.get("schema_version") != "stage16g2b.path_leak_scan_report.v1":
+        failures.append("path_scan_schema_version_mismatch")
+
+    if summary.get("status") != "passed" or summary.get("stage16g2b_complete") is not True:
+        failures.append("stage16g2b_summary_not_passed")
+    if summary.get("stage16g2c_allowed_to_start") is not True:
+        failures.append("stage16g2c_not_allowed_after_16g2b")
+    if summary.get("stage16g3_allowed_to_start") is not False:
+        failures.append("stage16g3_allowed_too_early")
+    if summary.get("stage17b_real_data_freeze_allowed") is not False:
+        failures.append("stage17b_allowed_too_early")
+    if summary.get("default_behavior_enabled_tools") != ["write_file", "apply_patch"]:
+        failures.append("default_behavior_enabled_tools_mismatch")
+    if summary.get("standalone_tools_default_visible") is not False:
+        failures.append("standalone_tools_marked_default_visible")
+    if summary.get("standalone_tools_extended_executable") is not True:
+        failures.append("standalone_tools_not_marked_extended_executable")
+    if summary.get("policy_loss_candidate_for_new_tools") is not False:
+        failures.append("new_tools_policy_loss_enabled_too_early")
+    if summary.get("next_required_stage_for_policy_loss") != "16G.2C":
+        failures.append("next_policy_loss_stage_mismatch")
+    if summary.get("unary_delete_supported_by_apply_patch") is not True:
+        failures.append("unary_delete_not_supported_by_apply_patch")
+    if summary.get("unary_move_supported_by_apply_patch") is not True:
+        failures.append("unary_move_not_supported_by_apply_patch")
+    if summary.get("atomic_preflight_passed") is not True:
+        failures.append("atomic_preflight_not_passed")
+
+    for filename, field_name in STAGE16G2B_SUMMARY_DIGEST_FIELDS.items():
+        if summary.get(field_name) != _file_sha256(base / filename):
+            failures.append(f"stage16g2b_sha256_mismatch:{filename}")
+
+    source_digests = summary.get("source_digests")
+    if not isinstance(source_digests, dict):
+        failures.append("source_digests_missing")
+    else:
+        for relative_path in STAGE16G2B_SOURCE_DIGEST_FILES:
+            source_path = Path(relative_path)
+            if not source_path.exists():
+                failures.append(f"source_digest_file_missing:{relative_path}")
+                continue
+            if source_digests.get(relative_path) != _file_sha256(source_path):
+                failures.append(f"source_digest_mismatch:{relative_path}")
+        for relative_path in sorted(set(source_digests) - set(STAGE16G2B_SOURCE_DIGEST_FILES)):
+            failures.append(f"source_digest_unexpected_file:{relative_path}")
+
+    current_path_scan = scan_stage16g2b_public_files(base)
+    if current_path_scan != path_scan:
+        failures.append("stage16g2b_path_leak_scan_report_stale_or_mismatched")
+    if not current_path_scan.get("public_path_leak_scan_passed"):
+        failures.append("stage16g2b_public_path_leak_scan_failed")
+
+    core_results = mutation.get("core_default_tool_behavior", [])
+    extended_results = mutation.get("extended_tool_behavior", [])
+    if not isinstance(core_results, list) or not isinstance(extended_results, list):
+        failures.append("mutation_probe_result_lists_missing")
+        core_results = []
+        extended_results = []
+    core_by_label = {record.get("label"): record for record in core_results if isinstance(record, dict)}
+    extended_by_label = {record.get("label"): record for record in extended_results if isinstance(record, dict)}
+    for label in [
+        "write_file_create",
+        "write_file_overwrite",
+        "apply_patch_batch",
+        "apply_patch_unary_delete",
+        "apply_patch_unary_move",
+    ]:
+        record = core_by_label.get(label)
+        if not isinstance(record, dict) or record.get("status") != "ok":
+            failures.append(f"core_mutation_probe_missing_or_failed:{label}")
+            continue
+        if record.get("repository_mutation_performed") is not True:
+            failures.append(f"core_mutation_probe_not_marked_mutating:{label}")
+        if not isinstance(record.get("changed_path_count"), int) or record.get("changed_path_count") <= 0:
+            failures.append(f"core_mutation_probe_changed_path_count_missing:{label}")
+        if record.get("partial_failure") is not False:
+            failures.append(f"core_mutation_probe_partial_failure:{label}")
+        if record.get("allowed_in_policy_loss_trajectory") is not False:
+            failures.append(f"core_mutation_probe_policy_loss_trajectory_enabled:{label}")
+        if record.get("policy_loss_candidate") is not False:
+            failures.append(f"core_mutation_probe_policy_loss_enabled:{label}")
+        if record.get("official_prediction_eligible") is not False:
+            failures.append(f"core_mutation_probe_official_prediction_enabled:{label}")
+        if record.get("training_export_eligible") is not False:
+            failures.append(f"core_mutation_probe_training_export_enabled:{label}")
+        if record.get("sample_policy_loss_candidate_effect") != "requires_stage16g2c_patch_projection_linkage":
+            failures.append(f"core_mutation_probe_policy_loss_effect_mismatch:{label}")
+    batch_kinds = set(core_by_label.get("apply_patch_batch", {}).get("operation_kinds", []))
+    if batch_kinds != {"replace_text", "write_file", "delete_file", "move_file", "mkdir"}:
+        failures.append("apply_patch_batch_operation_kinds_mismatch")
+    if core_by_label.get("apply_patch_unary_delete", {}).get("operation_kinds") != ["delete_file"]:
+        failures.append("apply_patch_unary_delete_operation_kind_mismatch")
+    if core_by_label.get("apply_patch_unary_move", {}).get("operation_kinds") != ["move_file"]:
+        failures.append("apply_patch_unary_move_operation_kind_mismatch")
+    for label in ["standalone_delete_file", "standalone_move_file", "standalone_mkdir"]:
+        record = extended_by_label.get(label)
+        if not isinstance(record, dict) or record.get("status") != "ok":
+            failures.append(f"extended_mutation_probe_missing_or_failed:{label}")
+            continue
+        if record.get("repository_mutation_performed") is not True:
+            failures.append(f"extended_mutation_probe_not_marked_mutating:{label}")
+        if not isinstance(record.get("changed_path_count"), int) or record.get("changed_path_count") <= 0:
+            failures.append(f"extended_mutation_probe_changed_path_count_missing:{label}")
+        if record.get("partial_failure") is not False:
+            failures.append(f"extended_mutation_probe_partial_failure:{label}")
+        if record.get("allowed_in_policy_loss_trajectory") is not False:
+            failures.append(f"extended_mutation_probe_policy_loss_trajectory_enabled:{label}")
+        if record.get("policy_loss_candidate") is not False:
+            failures.append(f"extended_mutation_probe_policy_loss_enabled:{label}")
+        if record.get("official_prediction_eligible") is not False:
+            failures.append(f"extended_mutation_probe_official_prediction_enabled:{label}")
+        if record.get("training_export_eligible") is not False:
+            failures.append(f"extended_mutation_probe_training_export_enabled:{label}")
+    if mutation.get("standalone_tools_remain_extended") is not True:
+        failures.append("standalone_tools_not_marked_extended")
+    if mutation.get("raw_temporary_paths_recorded") is not False:
+        failures.append("mutation_probe_records_raw_temporary_paths")
+
+    safety_denials = safety.get("denials", [])
+    if not isinstance(safety_denials, list):
+        failures.append("safety_denial_list_missing")
+        safety_denials = []
+    safety_by_label = {record.get("label"): record for record in safety_denials if isinstance(record, dict)}
+    expected_denials = {
+        "atomic_preflight_stale_hash": "stale_file_state",
+        "hidden_path_denial": "model_hidden_path_denied",
+        "binary_file_denial": "binary_file_denied",
+        "non_utf8_file_denial": "non_utf8_file_denied",
+        "symlink_denial": "symlink_not_mutable",
+        "duplicate_path_denial": "duplicate_mutation_path",
+        "sensitive_marker_variant_denial": "model_hidden_path_denied",
+    }
+    for label, reason_code in expected_denials.items():
+        record = safety_by_label.get(label)
+        if not isinstance(record, dict):
+            failures.append(f"safety_denial_missing:{label}")
+            continue
+        if record.get("status") != "denied" or record.get("reason_code") != reason_code:
+            failures.append(f"safety_denial_reason_mismatch:{label}")
+        if record.get("repository_mutation_performed") is not False:
+            failures.append(f"safety_denial_mutated_repository:{label}")
+        if record.get("changed_path_count") not in {0, None}:
+            failures.append(f"safety_denial_changed_path_count_nonzero:{label}")
+        if record.get("partial_failure") is not False:
+            failures.append(f"safety_denial_partial_failure:{label}")
+        if record.get("allowed_in_policy_loss_trajectory") is not False:
+            failures.append(f"safety_denial_policy_loss_trajectory_enabled:{label}")
+        if record.get("policy_loss_candidate") is not False:
+            failures.append(f"safety_denial_policy_loss_enabled:{label}")
+        if record.get("official_prediction_eligible") is not False:
+            failures.append(f"safety_denial_official_prediction_enabled:{label}")
+        if record.get("training_export_eligible") is not False:
+            failures.append(f"safety_denial_training_export_enabled:{label}")
+        if record.get("sample_policy_loss_candidate_effect") != (
+            "denial_not_policy_loss_candidate_requires_stage16g2c_patch_projection_linkage"
+        ):
+            failures.append(f"safety_denial_policy_loss_effect_mismatch:{label}")
+    required_reason_codes = set(safety.get("required_reason_codes", []))
+    if required_reason_codes != set(expected_denials.values()):
+        failures.append("safety_required_reason_codes_mismatch")
+    if safety.get("atomic_preflight_preserved_first_file") is not True:
+        failures.append("atomic_preflight_first_file_not_preserved")
+    if safety.get("atomic_preflight_preserved_second_file") is not True:
+        failures.append("atomic_preflight_second_file_not_preserved")
+    if safety.get("duplicate_path_preserved_file") is not True:
+        failures.append("duplicate_path_file_not_preserved")
+    if safety.get("symlink_target_preserved") is not True:
+        failures.append("symlink_target_not_preserved")
+    if safety.get("sensitive_marker_variant_path_absent") is not True:
+        failures.append("sensitive_marker_variant_path_not_absent")
+    if safety.get("raw_temporary_paths_recorded") is not False:
+        failures.append("safety_probe_records_raw_temporary_paths")
+
+    checks = {
+        "summary_passed": summary.get("status") == "passed",
+        "default_behavior_enabled_tools": summary.get("default_behavior_enabled_tools"),
+        "standalone_tools_default_visible": summary.get("standalone_tools_default_visible"),
+        "unary_delete_supported_by_apply_patch": summary.get("unary_delete_supported_by_apply_patch"),
+        "unary_move_supported_by_apply_patch": summary.get("unary_move_supported_by_apply_patch"),
+        "atomic_preflight_passed": summary.get("atomic_preflight_passed"),
+        "policy_loss_candidate_for_new_tools": summary.get("policy_loss_candidate_for_new_tools"),
+        "public_path_leak_scan_passed": current_path_scan.get("public_path_leak_scan_passed"),
+        "safety_denial_reason_codes": sorted(required_reason_codes),
+    }
+    return failures, checks
+
+
+def inspect_stage16g2b_file_mutation(summary_path: str | Path, *, assert_complete: bool = False) -> str:
+    summary = Path(summary_path)
+    if not summary.exists():
+        raise RepoHarnessError(f"Stage 16G.2B acceptance summary not found: {summary}")
+    base = summary.parent
+    payloads = _load_stage16g2b_dir(summary)
+    failures: list[str] = []
+    missing = [filename for filename in STAGE16G2B_REQUIRED_OUTPUT_FILES if filename not in payloads]
+    failures.extend(f"missing_required_file:{filename}" for filename in missing)
+    checks: dict[str, Any] = {}
+    if not missing:
+        validation_failures, checks = _stage16g2b_validation_failures(payloads, base=base)
+        failures.extend(validation_failures)
+    report = {
+        "schema_version": "stage16g2b.cli_inspection_result.v1",
+        "status": "passed" if not failures else "failed",
+        "summary_path": summary.name,
+        "failure_count": len(failures),
+        "failures": failures,
+        "validated_file_count": len(STAGE16G2B_REQUIRED_OUTPUT_FILES),
+        "derived_checks": checks,
+    }
+    if assert_complete and failures:
+        raise RepoHarnessError(_json_dumps(report))
+    return _json_dumps(report)
+
+
+def build_stage16g2c_acceptance_summary(
+    *,
+    reports: dict[str, Any],
+    digests: dict[str, str],
+) -> dict[str, Any]:
+    failures, checks = _stage16g2c_validation_failures(reports, base=None)
+    status = "passed" if not failures else "failed"
+    return {
+        "schema_version": "stage16g2c.acceptance_summary.v1",
+        "status": status,
+        "stage16g2c_complete": status == "passed",
+        "stage16g3_allowed_to_start": status == "passed",
+        "stage17b_real_data_freeze_allowed": False,
+        "stage20_warm_start_data_generation_allowed": False,
+        "stage21_formal_rl_allowed": False,
+        "run_episode_projection_linkage_passed": bool(checks.get("projection_complete")),
+        "structured_file_tools_projected": bool(checks.get("structured_file_tools_projected")),
+        "patch_hygiene_linkage_passed": bool(checks.get("patch_hygiene_linkage_passed")),
+        "tool_observation_mask_zero_passed": bool(checks.get("tool_observation_mask_zero_passed")),
+        "non_verl_route_policy_loss_blocked": bool(checks.get("non_verl_route_policy_loss_blocked")),
+        "public_path_leak_scan_passed": bool(checks.get("public_path_leak_scan_passed")),
+        "failure_count": len(failures),
+        "failure_ids": failures,
+        **{field: digests[filename] for filename, field in STAGE16G2C_SUMMARY_DIGEST_FIELDS.items()},
+        "source_digests": {
+            relative_path: _file_sha256(Path(relative_path))
+            for relative_path in STAGE16G2C_SOURCE_DIGEST_FILES
+            if Path(relative_path).exists()
+        },
+    }
+
+
+def _load_stage16g2c_dir(summary_path: Path) -> dict[str, Any]:
+    base = summary_path.parent
+    payloads: dict[str, Any] = {}
+    for filename in STAGE16G2C_REQUIRED_OUTPUT_FILES:
+        path = base / filename
+        if path.exists():
+            payloads[filename] = _load_json(path)
+    return payloads
+
+
+def _stage16g2c_validation_failures(
+    payloads: dict[str, Any],
+    *,
+    base: Path | None,
+) -> tuple[list[str], dict[str, Any]]:
+    failures: list[str] = []
+    probe = payloads["stage16g2c_run_episode_projection_probe_report.json"]
+    linkage = payloads["stage16g2c_projection_linkage_report.json"]
+    path_scan = payloads["stage16g2c_path_leak_scan_report.json"]
+    summary = payloads.get("stage16g2c_acceptance_summary.json")
+
+    for key in sorted(set(probe) - STAGE16G2C_PROBE_KEYS):
+        failures.append(f"stage16g2c_probe_unexpected_field:{key}")
+    for key in sorted(set(linkage) - STAGE16G2C_LINKAGE_KEYS):
+        failures.append(f"stage16g2c_linkage_unexpected_field:{key}")
+    for key in sorted(set(path_scan) - STAGE16G2C_PATH_SCAN_KEYS):
+        failures.append(f"stage16g2c_path_scan_unexpected_field:{key}")
+
+    if probe.get("schema_version") != "stage16g2c.run_episode_projection_probe_report.v1":
+        failures.append("probe_schema_version_mismatch")
+    if linkage.get("schema_version") != "stage16g2c.projection_linkage_report.v1":
+        failures.append("linkage_schema_version_mismatch")
+    if path_scan.get("schema_version") != "stage16g2c.path_leak_scan_report.v1":
+        failures.append("path_scan_schema_version_mismatch")
+
+    if probe.get("status") != "passed":
+        failures.append("probe_status_not_passed")
+    if probe.get("run_episode_invocation") != "RepoHarnessRuntime.run_episode(real_episode)":
+        failures.append("probe_not_created_by_run_episode")
+    if probe.get("projection_writer") != "write_run_episode_compat_projection":
+        failures.append("projection_writer_mismatch")
+    if probe.get("projection_created_from_run_episode") is not True:
+        failures.append("projection_created_from_run_episode_not_true")
+    if probe.get("projection_complete") is not True:
+        failures.append("projection_not_complete")
+    if probe.get("result_status") != "succeeded":
+        failures.append("result_status_not_succeeded")
+    if probe.get("final_verifier_accepted") is not True:
+        failures.append("final_verifier_not_accepted")
+    if probe.get("forbidden_model_visible_marker_scan_passed") is not True:
+        failures.append("model_visible_forbidden_marker_scan_failed")
+
+    observed_tools = set(probe.get("tool_names_observed", []))
+    if observed_tools != {"write_file", "apply_patch"}:
+        failures.append("structured_tool_names_observed_mismatch")
+    operation_kinds = set(probe.get("operation_kinds_observed", []))
+    if operation_kinds != {"replace_text", "write_file", "delete_file", "move_file", "mkdir"}:
+        failures.append("operation_kinds_observed_mismatch")
+
+    patch_facts = probe.get("final_patch_changed_file_facts", {})
+    if isinstance(patch_facts, dict):
+        for key in sorted(set(patch_facts) - STAGE16G2C_PATCH_FACT_KEYS):
+            failures.append(f"stage16g2c_patch_facts_unexpected_field:{key}")
+        patch_entries = patch_facts.get("entries", [])
+        if isinstance(patch_entries, list):
+            for index, entry in enumerate(patch_entries):
+                if not isinstance(entry, dict):
+                    failures.append(f"stage16g2c_patch_entry_not_object:{index}")
+                    continue
+                for key in sorted(set(entry) - STAGE16G2C_PATCH_ENTRY_KEYS):
+                    failures.append(f"stage16g2c_patch_entry_unexpected_field:{index}:{key}")
+    if patch_facts.get("added_count", 0) < 2:
+        failures.append("final_patch_missing_added_file_fact")
+    if patch_facts.get("modified_count", 0) < 1:
+        failures.append("final_patch_missing_modified_file_fact")
+    if patch_facts.get("deleted_count", 0) < 1:
+        failures.append("final_patch_missing_deleted_file_fact")
+    if patch_facts.get("renamed_count", 0) < 1:
+        failures.append("final_patch_missing_renamed_file_fact")
+    expected_patch_paths = {"docs/generated/notes.md", "legacy.py", "pkg/calc.py", "pkg/helpers.py", "old_name.py", "pkg/renamed.py"}
+    observed_patch_paths = set(patch_facts.get("changed_paths", []))
+    if not expected_patch_paths.issubset(observed_patch_paths):
+        failures.append("final_patch_changed_paths_incomplete")
+
+    training_projection = probe.get("training_projection", {})
+    if isinstance(training_projection, dict):
+        for key in sorted(set(training_projection) - STAGE16G2C_TRAINING_PROJECTION_KEYS):
+            failures.append(f"stage16g2c_training_projection_unexpected_field:{key}")
+    if training_projection.get("tool_observation_span_count", 0) < 2:
+        failures.append("tool_observation_span_count_too_low")
+    if training_projection.get("tool_observation_spans_response_mask_zero") is not True:
+        failures.append("tool_observation_spans_not_mask_zero")
+    if training_projection.get("tool_output_response_mask_zero_count", 0) <= 0:
+        failures.append("tool_output_response_mask_zero_count_missing")
+    if training_projection.get("assistant_response_mask_one_count", 0) <= 0:
+        failures.append("assistant_response_mask_one_count_missing")
+    if training_projection.get("generation_record_count", 0) < 2:
+        failures.append("generation_record_count_too_low")
+
+    route = probe.get("provider_route_qualification", {})
+    if isinstance(route, dict):
+        for key in sorted(set(route) - STAGE16G2C_PROVIDER_ROUTE_KEYS):
+            failures.append(f"stage16g2c_provider_route_unexpected_field:{key}")
+    if route.get("provider_route") != "mock" or route.get("llm_gateway_route") != "mock":
+        failures.append("provider_route_qualification_route_mismatch")
+    if route.get("formal_online_rl_eligible") is not False:
+        failures.append("non_verl_route_formal_online_rl_enabled")
+    if route.get("policy_loss_candidate") is not False:
+        failures.append("non_verl_route_policy_loss_enabled")
+
+    if linkage.get("status") != "passed":
+        failures.append("linkage_status_not_passed")
+    if linkage.get("manifest_final_patch_sha256_matches_projection") is not True:
+        failures.append("manifest_final_patch_sha256_mismatch")
+    if linkage.get("manifest_final_diff_sha256_matches_projection") is not True:
+        failures.append("manifest_final_diff_sha256_mismatch")
+    if linkage.get("hygiene_cleaned_patch_sha256_matches_manifest") is not True:
+        failures.append("hygiene_cleaned_patch_sha256_mismatch")
+    if linkage.get("hygiene_cleaned_diff_sha256_matches_manifest") is not True:
+        failures.append("hygiene_cleaned_diff_sha256_mismatch")
+    if linkage.get("source_and_compat_final_patch_match") is not True:
+        failures.append("source_and_compat_final_patch_mismatch")
+    if linkage.get("source_and_compat_final_diff_match") is not True:
+        failures.append("source_and_compat_final_diff_mismatch")
+    if linkage.get("public_hygiene_report_contains_raw_fields") is not False:
+        failures.append("public_hygiene_report_contains_raw_fields")
+    if linkage.get("compat_projection_public_safe") is not True:
+        failures.append("compat_projection_not_public_safe")
+
+    current_path_scan = scan_stage16g2c_public_files(base) if base is not None else path_scan
+    if current_path_scan != path_scan:
+        failures.append("stage16g2c_path_leak_scan_report_stale_or_mismatched")
+    if not current_path_scan.get("public_path_leak_scan_passed"):
+        failures.append("stage16g2c_public_path_leak_scan_failed")
+
+    if summary is not None:
+        if summary.get("schema_version") != "stage16g2c.acceptance_summary.v1":
+            failures.append("summary_schema_version_mismatch")
+        if summary.get("status") != "passed" or summary.get("stage16g2c_complete") is not True:
+            failures.append("stage16g2c_summary_not_passed")
+        if summary.get("stage16g3_allowed_to_start") is not True:
+            failures.append("stage16g3_not_allowed_after_16g2c")
+        if summary.get("stage17b_real_data_freeze_allowed") is not False:
+            failures.append("stage17b_allowed_too_early")
+        if summary.get("stage20_warm_start_data_generation_allowed") is not False:
+            failures.append("stage20_allowed_too_early")
+        if summary.get("stage21_formal_rl_allowed") is not False:
+            failures.append("stage21_allowed_too_early")
+
+    if summary is not None and base is not None:
+        for filename, field_name in STAGE16G2C_SUMMARY_DIGEST_FIELDS.items():
+            if summary.get(field_name) != _file_sha256(base / filename):
+                failures.append(f"stage16g2c_sha256_mismatch:{filename}")
+        source_digests = summary.get("source_digests")
+        if not isinstance(source_digests, dict):
+            failures.append("source_digests_missing")
+        else:
+            for relative_path in STAGE16G2C_SOURCE_DIGEST_FILES:
+                source_path = Path(relative_path)
+                if not source_path.exists():
+                    failures.append(f"source_digest_file_missing:{relative_path}")
+                    continue
+                if source_digests.get(relative_path) != _file_sha256(source_path):
+                    failures.append(f"source_digest_mismatch:{relative_path}")
+            for relative_path in sorted(set(source_digests) - set(STAGE16G2C_SOURCE_DIGEST_FILES)):
+                failures.append(f"source_digest_unexpected_file:{relative_path}")
+
+    checks = {
+        "projection_complete": probe.get("projection_complete") is True,
+        "structured_file_tools_projected": observed_tools == {"write_file", "apply_patch"},
+        "patch_hygiene_linkage_passed": (
+            linkage.get("hygiene_cleaned_patch_sha256_matches_manifest") is True
+            and linkage.get("public_hygiene_report_contains_raw_fields") is False
+        ),
+        "tool_observation_mask_zero_passed": (
+            training_projection.get("tool_observation_spans_response_mask_zero") is True
+            and training_projection.get("tool_output_response_mask_zero_count", 0) > 0
+        ),
+        "non_verl_route_policy_loss_blocked": route.get("policy_loss_candidate") is False,
+        "public_path_leak_scan_passed": current_path_scan.get("public_path_leak_scan_passed") is True,
+    }
+    return failures, checks
+
+
+def inspect_stage16g2c_projection_linkage(summary_path: str | Path, *, assert_complete: bool = False) -> str:
+    summary = Path(summary_path)
+    if not summary.exists():
+        raise RepoHarnessError(f"Stage 16G.2C acceptance summary not found: {summary}")
+    base = summary.parent
+    payloads = _load_stage16g2c_dir(summary)
+    failures: list[str] = []
+    missing = [filename for filename in STAGE16G2C_REQUIRED_OUTPUT_FILES if filename not in payloads]
+    failures.extend(f"missing_required_file:{filename}" for filename in missing)
+    checks: dict[str, Any] = {}
+    if not missing:
+        validation_failures, checks = _stage16g2c_validation_failures(payloads, base=base)
+        failures.extend(validation_failures)
+        actual_digests = {
+            filename: _file_sha256(base / filename)
+            for filename in STAGE16G2C_REQUIRED_OUTPUT_FILES
+        }
+        expected_summary = build_stage16g2c_acceptance_summary(
+            reports={
+                key: value
+                for key, value in payloads.items()
+                if key != "stage16g2c_acceptance_summary.json"
+            },
+            digests=actual_digests,
+        )
+        summary_payload = payloads["stage16g2c_acceptance_summary.json"]
+        for field_name, expected_value in expected_summary.items():
+            if summary_payload.get(field_name) != expected_value:
+                failures.append(f"acceptance_summary_field_mismatch:{field_name}")
+        for field_name in sorted(set(summary_payload) - set(expected_summary)):
+            failures.append(f"acceptance_summary_unexpected_field:{field_name}")
+
+    report = {
+        "schema_version": "stage16g2c.cli_inspection_result.v1",
+        "status": "passed" if not failures else "failed",
+        "summary_path": summary.name,
+        "failure_count": len(failures),
+        "failures": failures,
+        "validated_file_count": len(STAGE16G2C_REQUIRED_OUTPUT_FILES),
+        "derived_checks": checks,
     }
     if assert_complete and failures:
         raise RepoHarnessError(_json_dumps(report))

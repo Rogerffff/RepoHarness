@@ -23,6 +23,10 @@ from repo_harness.errors import WorkspaceError
 from repo_harness.permissions import PermissionContext, PermissionDecision, PermissionSystem
 from repo_harness.schema_base import stable_hash
 from repo_harness.tasks.command_policy import evaluate_model_bash_command, evaluate_model_execute_bash_command
+from repo_harness.tools.file_mutation import (
+    FileMutationDenial,
+    execute_structured_file_mutation,
+)
 from repo_harness.tools.symbol_index import (
     SUPPORTED_SYMBOL_KINDS,
     SYMBOL_INDEX_POLICY_VERSION,
@@ -385,7 +389,7 @@ class ToolExecutor:
             if normalized.effective_tool_name == "create_file":
                 return self._create_file(tool_call, normalized, context)
             if normalized.effective_tool_name in {"write_file", "apply_patch", "delete_file", "move_file", "mkdir"}:
-                return self._stage16g2a_schema_only_tool(tool_call, normalized, context)
+                return self._stage16g2b_file_mutation_tool(tool_call, normalized, context)
             if normalized.effective_tool_name == "bash":
                 return self._bash(tool_call, normalized, context)
             if normalized.effective_tool_name == "execute_bash":
@@ -541,6 +545,7 @@ class ToolExecutor:
             normalized_args = {
                 "path": args["path"],
                 "expected_content_hash": args["expected_content_hash"],
+                "reason": args["reason"],
             }
             effective_args = dict(normalized_args)
         elif requested == "move_file":
@@ -548,6 +553,7 @@ class ToolExecutor:
                 "source_path": args["source_path"],
                 "target_path": args["target_path"],
                 "expected_source_hash": args["expected_source_hash"],
+                "reason": args["reason"],
             }
             effective_args = dict(normalized_args)
         elif requested == "mkdir":
@@ -2220,6 +2226,114 @@ class ToolExecutor:
             },
         )
 
+    def _stage16g2b_file_mutation_tool(
+        self,
+        tool_call: ToolCall,
+        normalized: NormalizedToolRequest,
+        context: ToolExecutionContext,
+    ) -> ToolResult:
+        tool_name = normalized.effective_tool_name
+        try:
+            outcome = execute_structured_file_mutation(
+                tool_name=tool_name,
+                arguments=normalized.effective_arguments,
+                context=context,
+            )
+        except FileMutationDenial as exc:
+            denial_payload = {
+                "schema_version": "stage16g2b.file_mutation_denial.v1",
+                "policy_version": "repo_harness_stage16g2b_file_mutation_v0",
+                "tool_name": tool_name,
+                "reason_code": exc.reason_code,
+                "operation_id": exc.operation_id,
+                "path": exc.path,
+                "retryable": exc.retryable,
+                "safe_alternative_tool": exc.safe_alternative_tool,
+                "safe_rewrite_example": exc.safe_rewrite_example,
+                "repository_mutation_performed": False,
+                "partial_failure": False,
+                "invalid_for_training": False,
+                "allowed_in_policy_loss_trajectory": False,
+                "policy_loss_candidate": False,
+                "sample_policy_loss_candidate_effect": "denial_not_policy_loss_candidate_requires_stage16g2c_patch_projection_linkage",
+                "official_prediction_eligible": False,
+                "training_export_eligible": False,
+            }
+            ref = context.recorder.write_json_artifact(
+                "stage16g2b_file_mutation_denial",
+                denial_payload,
+                {"budget_policy": "preserve_json"},
+            )
+            return _tool_result(
+                tool_call,
+                normalized=normalized,
+                status="denied",
+                content=exc.message,
+                error_type="stage16g2b_file_mutation_denied",
+                artifact_refs=[ref],
+                typed={
+                    **denial_payload,
+                    "denial_ref": ref.model_dump(mode="json"),
+                    "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                    "result_envelope": _result_envelope(
+                        result_kind=exc.reason_code,
+                        semantic_complete=True,
+                        artifact_backed_full_result=True,
+                        recovery_call=_stage16g2b_recovery_call(tool_name, normalized.effective_arguments, exc),
+                        recovery_hint=exc.safe_rewrite_example or "Retry with corrected structured file mutation arguments.",
+                        context_effects=["tool_result_recoverable"],
+                    ),
+                },
+            )
+
+        for path in outcome.cache_removals:
+            context.file_state_cache.pop(path, None)
+        context.file_state_cache.update(outcome.cache_updates)
+        ref = context.recorder.write_json_artifact(
+            "stage16g2b_file_mutation_audit",
+            outcome.audit_payload(),
+            {"budget_policy": "preserve_json"},
+        )
+        status = "error" if outcome.partial_failure else "ok"
+        content = _preview(
+            json.dumps(
+                {
+                    "result_kind": outcome.result_kind,
+                    "operation_count": len(outcome.operation_facts),
+                    "changed_paths": outcome.changed_paths,
+                    "partial_failure": outcome.partial_failure,
+                    "rollback_status": outcome.rollback_status,
+                    "audit_artifact_id": ref.artifact_id,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+            context.output_limits.max_tool_output_chars,
+        )
+        return _tool_result(
+            tool_call,
+            normalized=normalized,
+            status=status,
+            content=content,
+            error_type="stage16g2b_file_mutation_partial_failure" if outcome.partial_failure else None,
+            artifact_refs=[ref],
+            typed={
+                **outcome.audit_payload(),
+                "audit_artifact": ref.model_dump(mode="json"),
+                "allowed_in_policy_loss_trajectory": False,
+                "sample_policy_loss_candidate_effect": "requires_stage16g2c_patch_projection_linkage",
+                "resolved_max_output_chars": context.output_limits.max_tool_output_chars,
+                "result_envelope": _result_envelope(
+                    result_kind=outcome.result_kind,
+                    semantic_complete=True,
+                    artifact_backed_full_result=True,
+                    context_effects=["repository_file_state_updated"]
+                    if outcome.repository_mutation_performed
+                    else [],
+                ),
+            },
+        )
+
     def _stage16g2a_schema_only_tool(
         self,
         tool_call: ToolCall,
@@ -3166,15 +3280,14 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "write_file": ToolDefinition(
             name="write_file",
-            tool_version="repo_harness_write_file_stage16g2a_schema_v0",
+            tool_version="repo_harness_write_file_stage16g2b_behavior_v0",
             model_visible_description=(
                 "Structured schema for creating or overwriting a UTF-8 file with explicit hash "
-                "protection. Stage 16G.2A exposes this schema and profile wiring; the executor "
-                "returns a structured denial until Stage 16G.2B enables mutation behavior."
+                "protection. Stage 16G.2B enables audited mutation behavior."
             ),
             model_visible_prompt=(
-                "Use write_file only when it is enabled in the current run. Pass path, content, "
-                "and mode='create' or mode='overwrite'. For overwrite, include expected_content_hash "
+                "Use write_file to write a complete UTF-8 file. Pass path, content, and mode='create' "
+                "or mode='overwrite'. For overwrite, include expected_content_hash "
                 "from a recent read_file observation. mode='upsert' is not available in the core profile."
             ),
             input_schema={
@@ -3203,15 +3316,15 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "apply_patch": ToolDefinition(
             name="apply_patch",
-            tool_version="repo_harness_apply_patch_stage16g2a_schema_v1",
+            tool_version="repo_harness_apply_patch_stage16g2b_behavior_v0",
             model_visible_description=(
                 "Structured multi-operation file mutation schema for exact text replacement, "
                 "write, delete, move, and mkdir operations. This is not a shell patch, git apply, "
-                "or arbitrary unified diff interface. Stage 16G.2A exposes schema/profile wiring; "
-                "actual mutation behavior is enabled in Stage 16G.2B."
+                "or arbitrary unified diff interface. Stage 16G.2B applies all operations only after "
+                "preflight succeeds."
             ),
             model_visible_prompt=(
-                "Use apply_patch only when enabled in the current run. Pass operations as structured "
+                "Use apply_patch for structured batch file mutation. Pass operations as structured "
                 "objects with op fields such as replace_text, write_file, delete_file, move_file, "
                 "or mkdir. For delete_file and move_file operations, include a short reason explaining "
                 "why the deletion or move is correct for the task. Do not pass shell commands, git apply "
@@ -3267,10 +3380,11 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "delete_file": ToolDefinition(
             name="delete_file",
-            tool_version="repo_harness_delete_file_stage16g2a_schema_v1",
+            tool_version="repo_harness_delete_file_stage16g2b_extended_v0",
             model_visible_description=(
                 "Structured schema for deleting one UTF-8 file with explicit expected_content_hash. "
-                "Stage 16G.2A exposes the schema; deletion behavior is enabled in Stage 16G.2B."
+                "This standalone tool is reserved for extended profiles; swe_public_core uses "
+                "apply_patch.operations.delete_file by default."
             ),
             model_visible_prompt=(
                 "Use delete_file only when enabled in the current run. Pass a workspace-relative path "
@@ -3297,10 +3411,11 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "move_file": ToolDefinition(
             name="move_file",
-            tool_version="repo_harness_move_file_stage16g2a_schema_v1",
+            tool_version="repo_harness_move_file_stage16g2b_extended_v0",
             model_visible_description=(
                 "Structured schema for moving or renaming one UTF-8 file with explicit source hash. "
-                "Stage 16G.2A exposes the schema; move behavior is enabled in Stage 16G.2B."
+                "This standalone tool is reserved for extended profiles; swe_public_core uses "
+                "apply_patch.operations.move_file by default."
             ),
             model_visible_prompt=(
                 "Use move_file only when enabled in the current run. Pass source_path, target_path, "
@@ -3335,11 +3450,11 @@ def build_tool(name: str) -> ToolDefinition:
         ),
         "mkdir": ToolDefinition(
             name="mkdir",
-            tool_version="repo_harness_mkdir_stage16g2a_schema_v0",
+            tool_version="repo_harness_mkdir_stage16g2b_extended_v0",
             model_visible_description=(
                 "Structured schema for creating a workspace-relative directory. Empty directories "
-                "are operation audit facts, not final.patch facts. Stage 16G.2A exposes the schema; "
-                "mkdir behavior is enabled in Stage 16G.2B."
+                "are operation audit facts, not final.patch facts. This standalone tool is reserved "
+                "for extended profiles; swe_public_core uses apply_patch.operations.mkdir by default."
             ),
             model_visible_prompt=(
                 "Use mkdir only when enabled in the current run. Pass a workspace-relative path. "
@@ -3944,6 +4059,25 @@ def _tool_recovery_call(
     if path:
         return f"{tool_name}(path={str(path)!r}, ...)", "Retry the tool after refreshing the relevant file context."
     return f"{tool_name}(...)", "Retry the tool with corrected arguments."
+
+
+def _stage16g2b_recovery_call(
+    tool_name: str,
+    arguments: dict[str, Any],
+    denial: FileMutationDenial,
+) -> str | None:
+    if denial.safe_alternative_tool is not None:
+        if denial.safe_alternative_tool == "read_file" and denial.path:
+            return f"read_file(path={denial.path!r})"
+        if denial.safe_alternative_tool == "glob_files":
+            return "glob_files(pattern='**/*')"
+        if denial.safe_alternative_tool == "list_files":
+            return "list_files()"
+        return f"{denial.safe_alternative_tool}(...)"
+    path = denial.path or arguments.get("path") or arguments.get("source_path")
+    if path:
+        return f"{tool_name}(path={str(path)!r}, ...)"
+    return f"{tool_name}(...)"
 
 
 def _tool_result(
