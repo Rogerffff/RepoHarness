@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.3A 共享公开命令执行底座 · 执行计划</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout.bad{background:#2a1a1a;border:1px solid #6b3434}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .req{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px 10px 46px;margin:8px 0;font-size:13.2px;position:relative}
+  .req .n{position:absolute;left:11px;top:10px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:1px 0;border-radius:9px;font-size:11.6px;min-width:26px;text-align:center}
+  .req.key{border-color:#6b5a2f;background:linear-gradient(135deg,#241f12,#161a23)}
+  .req.key .n{background:#6b5a2f}
+  .req b{color:#cdd6e6}
+  .state{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-family:"SFMono-Regular",Menlo,monospace;font-size:12.3px;line-height:1.55;white-space:pre;overflow-x:auto;margin:11px 0}
+  .state .ok{color:#6fdc84}.state .e{color:#f29292}.state .h{color:#e6c068}.state .l{color:#9aa4b6}.state .t{color:#9cc4ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本子阶段</h2>
+  <a href="#intro">介绍</a>
+  <a href="#why">1 · 为什么必须先做 3A</a>
+  <a href="#scope">2 · 范围 + 文件</a>
+  <a href="#req">3 · 22 条设计要求</a>
+  <a href="#gate">4 · 完成态二选一 + 状态图</a>
+  <a href="#family">5 · 第一版 command family</a>
+  <a href="#schema">6 · PublicCommandProfile schema</a>
+  <a href="#testbound">7 · public test source boundary</a>
+  <a href="#evidence">8 · evidence + inspector</a>
+  <h2>跨子阶段</h2>
+  <a href="repo_harness_verl_stage16g3_plan_overview.html">← 总览</a>
+  <a href="repo_harness_verl_stage16g3b_plan.html">→ 16G.3B run_public_command</a>
+  <a href="repo_harness_verl_stage16g3c_plan.html">→ 16G.3C run_project_test</a>
+  <a href="repo_harness_verl_stage16g3d_plan.html">→ 16G.3D scratch + probe</a>
+</nav>
+<main>
+  <h1>Stage 16G.3A · 共享公开命令执行底座 — 执行计划</h1>
+  <p class="meta">来源：执行计划 §6.1 + §7 + §8 · <b>必须先于 3B/3C/3D 完成</b>的"地基"工程 · 核心交付：<code>src/repo_harness/tools/public_command.py</code> + 22 条设计要求 + Profile schema + Docker isolation gate</p>
+
+  <h2 class="sec" id="intro" style="border:none;margin-top:0;padding-top:0">介绍</h2>
+  <p>这是 Stage 16G.3 的<b>地基子阶段</b>。它不直接给模型新增任何可调用工具，但<b>规定</b>了后续 3B/3C/3D 三个新工具必须共享的底层执行机制、隔离边界、artifact 可见性、拒绝语义和投影规则。地基如果不稳，后面三个工具会出现三套互不一致的实现，整个 16G.3 会变成"看上去能跑、随机出问题"的不可审计状态。</p>
+
+  <h2 class="sec" id="why">1 · 为什么必须先做 3A</h2>
+  <p>计划 §6.1 论证：三个新工具<b>都</b>需要 12 项相同的底层能力。如果各自实现，会得到 3 套不一致策略。</p>
+  <pre><code>cwd 解析                  | 路径黑名单                | 输出截断
+workspace-only 路径边界    | timeout                  | raw artifact 私有化
+public-safe projection    | 拒绝 reason_code         | safe_alternative_tool
+safe_rewrite_example      | TrainingView mask        | run_episode 投影</code></pre>
+  <p>3A 的职责：把上面 12 项做成<b>一个独立模块</b>（建议 <code>src/repo_harness/tools/public_command.py</code>），3B/3C/3D 在底座之上各自<b>选择不同 command family</b>和 schema。</p>
+
+  <h2 class="sec" id="scope">2 · 范围 + 建议新增文件（计划 §7.4）</h2>
+  <p>3A 本身不开放新工具给模型，只输出 schema / profile / classifier / 底座 + machine evidence。建议产物：</p>
+  <pre><code>src/repo_harness/tools/public_command.py                       # 共享底座
+scripts/pre_verl/build_stage16g3a_public_command_substrate.py   # evidence 构造
+tests/unit/test_repo_harness_stage16g3a_public_command_substrate.py
+
+docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/
+├── implementation-notes.md
+├── stage16g3a_public_command_profile_schema_report.json
+├── stage16g3a_public_test_profile_schema_report.json
+├── stage16g3a_public_command_substrate_report.json
+├── stage16g3a_command_artifact_visibility_report.json
+├── stage16g3a_safety_denial_report.json
+├── stage16g3a_path_leak_scan_report.json
+└── stage16g3a_acceptance_summary.json</code></pre>
+  <p>新增 inspector：<code>repo-harness inspect-stage16g3a-public-command-substrate &lt;summary&gt; --assert-complete</code></p>
+
+  <h2 class="sec" id="req">3 · 22 条设计要求（计划 §7.2）</h2>
+  <p>下面是 22 条的<b>完整列表</b>，按重要性分组。标 <span class="tag t-warn">🔑</span> 的是<b>本子阶段最容易在实施时被简化或绕过的</b>关键约束（约 7 条），其他为常规要求。</p>
+
+  <h3>3.1 执行模型与 backend 选择（9 条）</h3>
+  <div class="req"><span class="n">1</span><b>默认 stateless</b>：一次工具调用只跑一个命令或脚本，<b>不</b>保留 shell session。</div>
+  <div class="req"><span class="n">2</span><b>默认不使用 shell</b>：底层 adapter 若只能接字符串，必须由 harness 先解析成安全 argv，<b>禁止任意 shell 语法</b>。</div>
+  <div class="req key"><span class="n">3</span>🔑 <b>必须 workspace-only isolated backend</b>：使用<b>已验证</b>的 workspace-only isolated backend / public projection / 临时复制工作区 / Docker sandbox。普通未隔离 <code>local_process</code>、可见 run-directory mount、无法证明隔离的 backend<b>必须确定性拒绝</b>，不能靠 command classifier 和 cwd 检查替代运行时隔离。</div>
+  <div class="req key"><span class="n">4</span>🔑 <b>必须在 disposable public execution snapshot 中跑</b>：快照必须含模型当前 candidate source patch；命令产生的 <code>__pycache__</code> / <code>.pytest_cache</code> / 构建目录 / 临时日志 / scratch 文件<b>默认不得写回</b>真实 episode workspace。</div>
+  <div class="req key"><span class="n">5</span>🔑 <b>必须新增 public-command 专用执行接口</b>：<b>不能</b>直接复用现有 <code>workspace_adapter.run_command(...)</code>。可内部复用底层进程能力，但必须先创建 public execution snapshot 并证明：无 run directory mount + 无宿主路径暴露 + 无 raw runtime artifact 可见。</div>
+  <div class="req"><span class="n">6</span><b>每次执行生成 snapshot digest</b>：<code>public_execution_snapshot_digest</code> 或等价快照标识，记录 <code>candidate_patch_included</code> / <code>execution_side_effects_discarded</code> / <code>post_run_workspace_digest_matches_pre_run</code> / <code>workspace_mutation_detected</code> / <code>result_valid_for_training</code> / <code>final_patch_pollution=false</code>。</div>
+  <div class="req"><span class="n">7</span><b>workspace 污染处理</b>：若公开命令执行后真实 episode workspace 被改，必须 <code>workspace_mutation_detected=true</code> + <code>result_valid_for_training=false</code>，除非该变化发生在<b>明确可丢弃且已丢弃</b>的 snapshot side effect 中。</div>
+  <div class="req key"><span class="n">8</span>🔑 <b>完成最低条件 — 二选一</b>：<br>(A) Docker 或等价隔离后端可用，机器证据证明：<code>network_policy=deny</code>/<code>none</code> + 无 run directory mount + 无宿主路径暴露 + snapshot side effects 已丢弃<br>(B) 只完成 schema / profile / classifier / <code>planned_not_enabled</code> evidence，<b>不</b>暴露 <code>run_public_command</code> / <code>run_project_test</code> / <code>scratch_python</code> 进 <code>swe_public_core</code></div>
+  <div class="req key"><span class="n">9</span>🔑 <b>fallback 必须明示</b>：若实现退回普通本机子进程执行，必须写入 <code>network_isolation_proven=false</code> + <code>core_profile_exposure_allowed=false</code>，<b>不能</b>把 fallback 当 3A 完成态。</div>
+
+  <h3>3.2 网络隔离 / fail-closed（1 条）</h3>
+  <div class="req key"><span class="n">10</span>🔑 <b>必须提供无网络 evidence</b>：不能只靠拒绝 <code>curl</code>/<code>wget</code> 命令名 — 网络也可能来自 Python socket / 测试插件 / 项目脚本 / 二级解释器。Docker backend 的网络策略<b>必须 fail closed</b>：未知策略 / 默认 bridge / 未记录策略 / 非 deny 策略<b>都让 inspector 失败</b>。</div>
+
+  <h3>3.3 路径 / cwd / 命令分类（3 条）</h3>
+  <div class="req"><span class="n">11</span><b>cwd 必须 workspace-relative</b>：不能是绝对路径，不能含 <code>..</code>，不能指向 hidden / runtime-private / 依赖缓存写入区 / evaluator-only 路径。</div>
+  <div class="req"><span class="n">12</span><b>命令必须先进 classifier</b>：得到 <code>command_family</code> + <code>public_command_capability</code> + <code>risk_level</code> + <code>policy_decision</code> + <code>safe_argv</code> + <code>reason_code</code>。</div>
+  <div class="req"><span class="n">13</span><b>受控环境变量白名单</b>：env 必须来自 PublicCommandProfile 的 <code>env_profile</code> / <code>public_env_overrides</code>，<b>ingestion-time</b> 白名单校验。模型<b>不能</b>通过 shell 前缀 / <code>env</code> 包装 / 工具参数自由设置环境变量。第一版建议只允许 <code>PYTHONPATH</code> / <code>DJANGO_SETTINGS_MODULE</code> / <code>CI</code> / <code>NODE_ENV</code>。<span class="tag t-warn">注：见总览 O3 — 这个白名单可能不够</span></div>
+
+  <h3>3.4 输出结构 + artifact 可见性（5 条）</h3>
+  <div class="req"><span class="n">14</span><b>工具结果字段</b>：<code>stdout_preview</code> / <code>stderr_preview</code> / <code>exit_code</code> / <code>timed_out</code> / <code>duration_ms</code> / <code>truncated</code> / <code>stdout_artifact_ref</code> / <code>stderr_artifact_ref</code> 或等价私有 artifact 指针。</div>
+  <div class="req"><span class="n">15</span><b>模型可见 preview</b>：必须路径脱敏 + 长度受限 + 禁 hidden marker + 禁本机绝对路径 + 禁 raw run directory + 禁 runtime-private ref。</div>
+  <div class="req key"><span class="n">16</span>🔑 <b>截断输出必须双层 artifact</b>：①<b>模型可分页读取的 public-safe sanitized artifact</b>；② <b>不可直接给模型的 raw stdout/stderr 私有 artifact</b>。<code>read_tool_result_artifact</code> 只能读 sanitized，inspector 必须验证两层没有混用。</div>
+  <div class="req"><span class="n">17</span><b>新增 command output artifact schema</b>：至少含 <code>sanitized_model_readable</code> / <code>raw_restricted_audit</code> / <code>artifact_visibility</code> / <code>artifact_kind</code> / <code>source_tool_call_id</code> / <code>truncation_policy</code> / <code>sha256</code>。现有通用 tool result artifact 如果没有 visibility / raw-sanitized 类型字段，必须扩展或包一层 16G.3 专用 manifest。</div>
+  <div class="req"><span class="n">18</span><b>raw stdout/stderr artifact 默认私有</b>：<code>runtime_private_or_restricted_audit</code>，不能进 public evidence / 模型可见 transcript / <code>read_tool_result_artifact</code>。必须有 raw-ref 读取拒绝测试。</div>
+
+  <h3>3.5 拒绝语义 + timeout + 训练投影（4 条）</h3>
+  <div class="req"><span class="n">19</span><b>统一 denial envelope</b>：所有拒绝必须用 <code>status="denied"</code> + <code>reason_code</code> + <code>policy_version</code> + <code>retryable</code> + <code>safe_alternative_tool</code> + <code>safe_rewrite_example</code> + <code>public_command_capability</code>。</div>
+  <div class="req"><span class="n">20</span><b>timeout 必须区分两类</b>：① 命令真实超时；② 工具预算超时。timeout 结果<b>不能</b>进成功验证声明。</div>
+  <div class="req"><span class="n">21</span><b>tool observation token 在 TrainingView 中 mask=0</b>。模型的 tool call token 是否进 policy loss 仍由 16G.6 统一决定。</div>
+  <div class="req"><span class="n">22</span><b>新工具必须登记到 permission system 的路径字段白名单</b>或等价审计机制，至少覆盖 <code>cwd</code> / profile 派生路径 / scratch 目录 / sanitized artifact 读取路径。<b>不能</b>只在 registry 和 executor 中加新工具。</div>
+
+  <h2 class="sec" id="gate">4 · 完成态二选一 + 决策状态图</h2>
+  <p>把要求 #8 / #9 / #10 串起来看，3A 完成态只能落在<b>3 类合法终态</b>之一，<b>其他都是 inspector 失败</b>：</p>
+
+  <div class="state"><span class="t">backend × 网络策略 × profile 暴露</span> 三轴决策图
+
+   backend = Docker / equivalent isolated
+       │
+       ├── network_policy = deny / none
+       │       │
+       │       ├── snapshot side effects 已丢弃 ────────► <span class="ok">合法终态 A</span>
+       │       │                                       <span class="ok">core profile 可暴露</span>
+       │       │                                       <span class="ok">stage16g3a_complete=true</span>
+       │       │
+       │       └── snapshot side effects 未丢弃 ────────► <span class="e">inspector 失败</span>
+       │
+       ├── network_policy = 默认 bridge / 未记录 / 非 deny
+       │       │
+       │       └─────────────────────────────────────► <span class="e">inspector 失败（fail closed）</span>
+       │
+       └── network_policy unknown ─────────────────────► <span class="e">inspector 失败（fail closed）</span>
+
+   backend = 本机子进程 / unisolated
+       │
+       ├── network_isolation_proven=false &amp;
+       │   core_profile_exposure_allowed=false
+       │   <span class="h">三个新工具都不进 swe_public_core</span>
+       │   只完成 schema/profile/classifier 和
+       │   <span class="h">planned_not_enabled evidence</span>
+       │       │
+       │       └────────────────────────────────────► <span class="ok">合法终态 B</span>
+       │                                              <span class="ok">stage16g3a_complete=true</span>
+       │                                              <span class="ok">但 3B/3C/3D 行为不放进 core</span>
+       │
+       └── 试图既用本机子进程 又暴露进 core ─────────► <span class="e">inspector 失败</span></div>
+
+  <p class="small"><b>合法终态 C</b> = 只完成 schema / profile / classifier / <code>planned_not_enabled</code> evidence，连本机子进程都不实现 — 这是"最保守"的完成态，可以让 3A 通过验收但 3B/3C/3D 直接退回到只 schema-only。</p>
+
+  <h2 class="sec" id="family">5 · 第一版 command family（计划 §7.3）</h2>
+  <table>
+    <thead><tr><th>command_family</th><th>例子</th><th>处理</th></tr></thead>
+    <tbody>
+      <tr><td><code>public_test</code></td><td><code>python -m pytest -q tests/test_x.py::test_y</code></td><td>路由到 <code>run_project_test</code></td></tr>
+      <tr><td><code>python_module_smoke</code></td><td><code>python -m compileall src</code></td><td>有限集合，必须无网络、无写依赖</td></tr>
+      <tr><td><code>repo_inspection</code></td><td><code>git status --short</code> / <code>git diff --name-only</code> / <code>git grep</code> / <code>rg</code></td><td>由 <code>run_public_command</code> 承载，但鼓励结构化 <code>grep</code>/<code>git_diff</code></td></tr>
+      <tr><td><code>project_declared_command</code></td><td>任务 public environment 声明的 smoke / lint / docs</td><td><b>必须由</b> command routing 生成，<b>不</b>由模型自由猜测</td></tr>
+      <tr><td><code>manifest_derived_command</code></td><td>从 <code>pyproject.toml</code> / <code>tox.ini</code> / <code>noxfile.py</code> / <code>package.json</code> / <code>Makefile</code> 派生</td><td>第一版可标 <code>planned_not_enabled</code>，schema 必须预留来源/校验/profile 状态</td></tr>
+      <tr><td><code>scratch_python</code></td><td>临时 Python 脚本</td><td><b>只</b>由 <code>scratch_python</code> 承载，不通过任意 <code>python -c</code> 放开</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.1 第一版必须拒绝的命令（计划 §7.3 末段）</h3>
+  <pre><code>curl / wget / 网络命令
+pip install / npm install / cargo fetch 等依赖安装
+rm / mv / cp / chmod / chown / git checkout / git reset 等破坏性或状态回滚
+git log / git show / reflog / blame 等 Git history 作弊路径
+cat / sed / awk 大范围文件读取（已有 read_file/grep/glob 替代）
+任何 shell 管道 / 重定向 / 命令拼接 / 命令替换 / 变量展开 / 后台运行
+任何访问 hidden verifier / 参考补丁 / 测试补丁 / runtime-private / run directory / 本机绝对路径</code></pre>
+
+  <h2 class="sec" id="schema">6 · PublicCommandProfile / PublicTestProfile schema（计划 §7.5）</h2>
+  <p>3A 必须先设计数据契约再实现工具。建议两个 profile 类型，字段至少包含：</p>
+  <table>
+    <thead><tr><th>字段</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>profile 标识</td></tr>
+      <tr><td><code>profile_kind</code></td><td>command / test</td></tr>
+      <tr><td><code>runner</code></td><td>pytest / unittest / compileall / git-status / …</td></tr>
+      <tr><td><code>base_argv</code></td><td><b>结构化 argv</b>，不是 shell 字符串</td></tr>
+      <tr><td><code>allowed_args_schema</code></td><td>JSON schema 描述模型可传参数形状，禁止任意字符串拼接</td></tr>
+      <tr><td><code>selector_schema</code></td><td>测试 selector 的字段约束</td></tr>
+      <tr><td><code>env_profile</code></td><td>仅来自 ingestion-time 校验后的 public environment</td></tr>
+      <tr><td><code>timeout_sec</code></td><td>该 profile 的默认 / 最大 timeout</td></tr>
+      <tr><td><code>working_directory_policy</code></td><td>workspace-relative 校验规则</td></tr>
+      <tr><td><code>network_policy</code></td><td>deny / none（fail closed）</td></tr>
+      <tr><td><code>source</code></td><td><b>必须区分</b>：<code>task_declared</code> / <code>manifest_derived</code> / <code>harness_builtin</code> / <code>planned_not_enabled</code></td></tr>
+      <tr><td><code>source_sha256</code></td><td>绑定 task public environment / 公开清单 / profile 定义，避免静默漂移</td></tr>
+      <tr><td><code>visibility</code></td><td>public-safe；hidden verifier / official selector / 参考补丁 / 测试补丁 / evaluator-only 来源<b>都不能</b>进 public profile</td></tr>
+      <tr><td><code>enabled_state</code></td><td><b>必须区分</b>：<code>enabled</code> / <code>planned_not_enabled</code> / <code>diagnostic_only</code> / <code>rejected</code>，避免 Python/pytest 第一版被误读成多语言 parity</td></tr>
+      <tr><td><code>public_safe_description</code></td><td>模型可见的工具说明片段</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec" id="testbound">7 · Public test source boundary（计划 §8）</h2>
+  <p>原本属于 16G.4D，<b>提前</b>到 16G.3 必须落地。理由：可训练公开测试工具一旦放进 core，"模型先改公开 test 再让 test 通过"是最直接的 reward hacking 路径，不能等到 16G.4D 才堵。</p>
+
+  <h3>7.1 触发位置</h3>
+  <p><code>run_project_test</code> 执行前必须判断 public test 文件是否被模型当前 candidate patch 修改。第一版二选一：</p>
+  <table>
+    <thead><tr><th>策略</th><th>行为</th><th>返回字段</th></tr></thead>
+    <tbody>
+      <tr><td><b>策略 A</b>（推荐第一版）</td><td>拒绝运行</td><td><code>public_test_source_clean=false</code> + <code>result_valid_for_training=false</code> + <code>safe_rewrite_example</code></td></tr>
+      <tr><td><b>策略 B</b>（实现复杂）</td><td>在干净 public test 快照上运行</td><td><code>public_test_source_clean=false</code> + <code>ran_on_clean_public_test_snapshot=true</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.2 两条策略共同的硬约束</h3>
+  <ol>
+    <li><b>不能</b>让"模型先修改 public tests，再运行 public tests 通过"的轨迹进主 policy-loss candidate</li>
+    <li>tool result 必须含 <code>public_test_source_clean</code> / <code>public_test_snapshot_digest</code> / <code>candidate_patch_included</code> / <code>result_valid_for_training</code> / <code>official_prediction_eligible</code> 等事实</li>
+    <li>若 public test 被改但命令仍运行，必须明确<b>运行的是干净测试快照</b>而非被改的文件</li>
+    <li>必须有 probe：先改 public test，再调 <code>run_project_test</code>，验收器看到拒绝 OR clean snapshot facts</li>
+  </ol>
+
+  <div class="callout warn"><b>建议：</b>总览 O2 提到策略 B 实现难度高，建议第一版强制策略 A。这个二选一应在 3A 启动前定。</div>
+
+  <h2 class="sec" id="evidence">8 · evidence + inspector（计划 §15）</h2>
+  <h3>8.1 8 份 evidence + 1 总 summary</h3>
+  <p>见 §2 文件清单。每份都按"<b>白名单字段 + sha256 绑定源代码</b>"原则，避免后续 stage 静默漂移。</p>
+
+  <h3>8.2 Inspector 必须校验 22 项（计划 §15）</h3>
+  <p>挑核心几项强调：</p>
+  <ol>
+    <li>重新扫 public evidence，<b>不信任</b>旧 path leak report</li>
+    <li>绑定 source inventory sha256</li>
+    <li>校验三个新工具出现在 registry / profile / scaffold / executor / run_episode projection 中</li>
+    <li>校验三个工具共用同一套底座 policy version</li>
+    <li>校验每个 reason_code 都有 safe alternative 或明确不可恢复说明</li>
+    <li>校验截断输出存在<b>可继续读取</b>的 public-safe sanitized artifact，且 raw artifact 没有返给模型，也不能被 <code>read_tool_result_artifact</code> 读</li>
+    <li>校验 public execution snapshot 隔离事实（无 mount / 无宿主路径 / 无 raw runtime artifact）</li>
+    <li>校验 <code>workspace_mutation_detected</code> / <code>post_run_workspace_digest_matches_pre_run</code> / <code>final_patch_pollution</code> / <code>result_valid_for_training</code> 组合语义</li>
+    <li>校验 Docker / 等价 backend 网络策略 fail closed</li>
+    <li>校验 <code>run_public_command</code> 不支持自由裸 argv（<code>raw_freeform_argv_supported=false</code> 等）</li>
+    <li>校验 public test source boundary</li>
+    <li>校验 PublicCommandProfile/PublicTestProfile 字段完整、digest 绑定、enabled_state 不夸大多语言能力</li>
+    <li>校验 mock / non-verl route 不被误标为 policy loss candidate</li>
+    <li>校验 stage17b/20/21 仍不放行</li>
+    <li>对关键 report 使用字段白名单</li>
+  </ol>
+
+  <h3>8.3 CLI 命令</h3>
+  <pre><code>repo-harness inspect-stage16g3a-public-command-substrate \
+    docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/stage16g3a_acceptance_summary.json \
+    --assert-complete</code></pre>
+
+  <div class="callout info"><b>3A 启动前建议先收口的 3 个开放问题：</b>① O1 状态图（已画，可作设计基线）；② O2 public test source boundary 策略二选一（建议强制 A）；③ O3 环境变量白名单是否够（建议先扫 SWE-bench 任务实际 env 集合）。其他 22 项要求 + Profile schema + command family + inspector 校验项已被计划本身覆盖完整，不需再补。</div>
+
+</main>
+</div>
+</body>
+</html>

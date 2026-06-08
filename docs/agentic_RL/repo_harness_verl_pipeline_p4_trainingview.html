@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 4 · TrainingView + Conversion + DataProto</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    .rh-toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+    .rh-toc a { display: block; padding: 8px 12px; border: 1px solid var(--rv-border); border-radius: 8px; background: var(--rv-surface-soft); color: var(--rv-text); font-size: 0.92rem; text-decoration: none; }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+    .rh-flow { padding: 16px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.84rem; line-height: 1.8; overflow-x: auto; white-space: pre; }
+    .rh-flow .step { color: #58a6ff; font-weight: 760; }
+    .rh-flow .ok { color: #7ee787; }
+    .rh-flow .new { color: #ffc463; font-weight: 760; }
+    .rh-flow .arrow { color: #d0d7de; }
+    .rh-flow .comment { color: #8b949e; font-style: italic; }
+    .rh-flow .obj { color: #d2a8ff; }
+    .rh-flow .a { color: #58a6ff; }
+    .rh-flow .t { color: #ffc463; }
+    .rh-sig { margin: 0 0 12px; padding: 12px 14px; background: #0b1018; border: 1px solid var(--rv-border); border-radius: 8px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.86rem; color: #d0d7de; white-space: pre-wrap; overflow-x: auto; }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+    .rh-sig .ln { color: #6e7681; user-select: none; padding-right: 12px; }
+    .rh-api-card { padding: 16px 18px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface-soft); }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+    .rh-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
+    .rh-meta-item { padding: 8px 12px; border-left: 3px solid var(--rv-border-strong); background: var(--rv-surface); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
+    .rh-meta-item .rh-label { display: block; margin-bottom: 2px; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rv-muted); }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger { border-left-color: var(--rv-danger); }
+    .rh-stack { display: flex; height: 56px; border: 1px solid var(--rv-border); border-radius: 6px; overflow: hidden; margin: 12px 0; }
+    .rh-stack-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.78rem; color: #0b1018; font-weight: 760; padding: 0 6px; overflow: hidden; }
+    .rh-stack-cell.a { background: #58a6ff; color: #f0f6fc; }
+    .rh-stack-cell.t { background: #ffc463; }
+    .rh-stack-cell .small { font-size: 0.68rem; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl · Pipeline Reading Guide</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_complete_pipeline_index.html">⓪ 索引</a>
+          <a href="repo_harness_verl_pipeline_p1_workspace.html">① Workspace</a>
+          <a href="repo_harness_verl_pipeline_p2_runtime.html">② Runtime</a>
+          <a href="repo_harness_verl_pipeline_p3_gateway.html">③ Gateway+Tool</a>
+          <a href="repo_harness_verl_pipeline_p4_trainingview.html" aria-current="page">④ TrainingView</a>
+          <a href="repo_harness_verl_pipeline_p5_stage125.html">⑤ Stage 12.5</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Page 4 · TrainingView Assembly + Conversion + DataProto</span>
+      <h1>episode 跑完之后：怎么变成训练样本</h1>
+      <p class="rv-lead">
+        本页讲 episode 跑完后<strong>从离散的多轮事件 → 一份训练 batch 可消费的样本</strong>的全过程。①<code>_training_view_from_real_episode</code> 怎么把 <code>GenerationRecordCollector.records</code> 跨多轮拼成单个 <code>TrainingView</code>（含 assistant generation 段 + tool observation 段）；② Stage 11.5 加的 <strong>6 条 token provenance 严格校验</strong>怎么防伪造；③ <code>episode_result_to_agent_loop_output</code> 怎么把它转换成真实 verl <code>AgentLoopOutput</code>；④ <code>AuditRef</code> 怎么投影成 batch-safe opaque refs；⑤ formal_online_rl 强制门怎么挡住非 verl 样本；⑥ verl 自己怎么 postprocess 成 <code>DataProto</code>。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">对应索引图步骤 [11]–[15]</span>
+        <span class="rv-badge success">Stage 10 + Stage 11.5</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#multi-turn">① 多轮拼接图示</a>
+        <a href="#training-view">② _training_view_from_real_episode</a>
+        <a href="#provenance">③ 6 条 token provenance 校验</a>
+        <a href="#conversion">④ episode_result → AgentLoopOutput</a>
+        <a href="#audit-ref">⑤ AuditRef → opaque refs</a>
+        <a href="#formal-gate">⑥ formal_online_rl 强制门</a>
+        <a href="#dataproto">⑦ verl postprocess → DataProto</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <section id="multi-turn" class="rv-section">
+        <h2>① 多轮 token 拼接图示（最直观的图）</h2>
+        <p class="rv-muted">假设 episode 跑了 3 turn：模型生成 → 工具调用 → 工具观测 → 下一轮 prompt → ... 直到第 3 轮 final_answer。每轮的<strong>assistant 输出 token</strong>和<strong>工具观测 token</strong>都要拼到同一个 <code>response_ids</code> 列表，但 <code>response_mask</code> 必须把工具观测 token 标为 <strong>0</strong>（不参与训练梯度）。</p>
+
+        <h3>3 轮 episode 的拼接示意</h3>
+        <div class="rh-flow"><span class="comment">prompt_ids = collector.records[0].generation_record.prompt_ids  </span><span class="comment"># 只取第 0 轮的 prompt（含 system + user）</span>
+
+<span class="step">Turn 0:</span> 模型生成 → 调 read_file → 工具返回文件内容
+   <span class="arrow">↓</span>
+   <span class="comment"># collector.records[0]:</span>
+   <span class="arrow">├</span> <span class="a">assistant_tokens_0</span> = record.output_token_ids       <span class="comment"># 比如 50 tokens</span>
+   <span class="arrow">└</span> <span class="t">tool_obs_tokens_0</span> = _project_tool_observation_tokens(tool_message.content)   <span class="comment"># 比如 200 tokens</span>
+
+<span class="step">Turn 1:</span> 模型生成 → 调 edit_file → 工具返回 diff
+   <span class="arrow">↓</span>
+   <span class="comment"># collector.records[1]:</span>
+   <span class="arrow">├</span> <span class="a">assistant_tokens_1</span> = ...   <span class="comment"># 比如 80 tokens</span>
+   <span class="arrow">└</span> <span class="t">tool_obs_tokens_1</span> = ...    <span class="comment"># 比如 30 tokens</span>
+
+<span class="step">Turn 2:</span> 模型生成 final_answer（无 tool_call）
+   <span class="arrow">↓</span>
+   <span class="comment"># collector.records[2]:</span>
+   <span class="arrow">└</span> <span class="a">assistant_tokens_2</span> = ...   <span class="comment"># 比如 40 tokens</span>
+
+<span class="comment">================================================================</span>
+拼接结果：
+
+response_ids = <span class="a">[a0_0...a0_49]</span> + <span class="t">[t0_0...t0_199]</span> + <span class="a">[a1_0...a1_79]</span> + <span class="t">[t1_0...t1_29]</span> + <span class="a">[a2_0...a2_39]</span>
+                <span class="comment">↑ 50 tokens</span>      <span class="comment">↑ 200 tokens</span>      <span class="comment">↑ 80</span>            <span class="comment">↑ 30</span>          <span class="comment">↑ 40</span>      → 总共 400
+
+response_mask = <span class="a">[1, 1, ..., 1]</span> + <span class="t">[0, 0, ..., 0]</span> + <span class="a">[1, ..., 1]</span> + <span class="t">[0, ..., 0]</span> + <span class="a">[1, ..., 1]</span>
+                <span class="comment">↑ assistant 学</span> <span class="comment">↑ tool obs 不学</span> <span class="comment">↑ 学</span>          <span class="comment">↑ 不学</span>      <span class="comment">↑ 学</span>
+
+response_logprobs = <span class="a">[real_logprob × 50]</span> + <span class="t">[0.0 × 200]</span> + <span class="a">[real × 80]</span> + <span class="t">[0.0 × 30]</span> + <span class="a">[real × 40]</span>
+                    <span class="comment">↑ 真实 vLLM 返回</span> <span class="comment">↑ 占位 0</span>          <span class="comment">↑ 真实</span>       <span class="comment">↑ 占位</span>     <span class="comment">↑ 真实</span>
+
+response_spans = [
+    ResponseSpan(start=0,   end=50,  source_type=<span class="li">"assistant_generation"</span>, model_call_id=<span class="li">"t0-id"</span>, mask=1, logprob_policy=<span class="li">"gateway_output_logprobs"</span>),
+    ResponseSpan(start=50,  end=250, source_type=<span class="li">"tool_observation"</span>,     tool_call_id=<span class="li">"tc-0"</span>,       mask=0, logprob_policy=<span class="li">"tool_observation_zero_logprob"</span>),
+    ResponseSpan(start=250, end=330, source_type=<span class="li">"assistant_generation"</span>, model_call_id=<span class="li">"t1-id"</span>, mask=1, logprob_policy=<span class="li">"gateway_output_logprobs"</span>),
+    ResponseSpan(start=330, end=360, source_type=<span class="li">"tool_observation"</span>,     tool_call_id=<span class="li">"tc-1"</span>,       mask=0, logprob_policy=<span class="li">"tool_observation_zero_logprob"</span>),
+    ResponseSpan(start=360, end=400, source_type=<span class="li">"assistant_generation"</span>, model_call_id=<span class="li">"t2-id"</span>, mask=1, logprob_policy=<span class="li">"gateway_output_logprobs"</span>),
+]</div>
+
+        <h3 style="margin-top: 14px;">视觉化堆叠条</h3>
+        <div class="rh-stack">
+          <div class="rh-stack-cell a" style="flex: 50;">assist 0<br><span class="small">mask=1</span></div>
+          <div class="rh-stack-cell t" style="flex: 200;">tool obs 0<br><span class="small">mask=0</span></div>
+          <div class="rh-stack-cell a" style="flex: 80;">assist 1<br><span class="small">mask=1</span></div>
+          <div class="rh-stack-cell t" style="flex: 30;">tool 1<br><span class="small">mask=0</span></div>
+          <div class="rh-stack-cell a" style="flex: 40;">assist 2<br><span class="small">mask=1</span></div>
+        </div>
+        <p class="rv-muted" style="font-size: 0.86rem;">蓝色 = assistant 生成（参与 policy loss）/ 橙色 = tool observation（不参与）。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="training-view" class="rv-section">
+        <h2>② <code>_training_view_from_real_episode</code> 真实代码</h2>
+        <p class="rv-muted"><a href="../../src/repo_harness/rl/runtime.py">runtime.py:1420-1559</a>，约 140 行。下面分 5 段展示，每段配中文注释。</p>
+
+        <h3>段 1 · 初始化 + 提取 tool messages</h3>
+        <div class="rh-sig"><span class="ln">1420│</span><span class="kw">def</span> <span class="nm">_training_view_from_real_episode</span>(self, request, real_run, *, status, reward_score,
+<span class="ln">1426│</span>                                          invalid_for_training, invalid_for_online_rl,
+<span class="ln">1428│</span>                                          invalid_reason, gateway_route=None, stage7_extra_fields=None):
+<span class="ln">1433│</span>    response_ids: <span class="ty">list[int]</span> = []
+<span class="ln">1434│</span>    response_mask: <span class="ty">list[Literal[0, 1]]</span> = []
+<span class="ln">1435│</span>    response_logprobs: <span class="ty">list[float]</span> = []
+<span class="ln">1436│</span>    missing_logprobs = <span class="kw">False</span>
+<span class="ln">1437│</span>    spans: <span class="ty">list[ResponseSpan]</span> = []
+<span class="ln">1438│</span>
+<span class="ln">1438│</span>    <span class="cm"># 先从 agent_state.messages 抽出所有 role=tool 消息，按 tool_call_id 索引</span>
+<span class="ln">1438│</span>    tool_messages_by_call_id: <span class="ty">dict[str, dict]</span> = {}
+<span class="ln">1439│</span>    <span class="kw">for</span> message <span class="kw">in</span> real_run.agent_state.messages:
+<span class="ln">1440│</span>        <span class="kw">if</span> message.get(<span class="li">"role"</span>) != <span class="li">"tool"</span>:
+<span class="ln">1441│</span>            <span class="kw">continue</span>
+<span class="ln">1442│</span>        tool_call_id = message.get(<span class="li">"tool_call_id"</span>)
+<span class="ln">1443│</span>        <span class="kw">if</span> tool_call_id:
+<span class="ln">1444│</span>            tool_messages_by_call_id[<span class="kw">str</span>(tool_call_id)] = <span class="kw">dict</span>(message)</div>
+
+        <h3 style="margin-top: 14px;">段 2 · 遍历 collector：每轮拼 assistant_generation span</h3>
+        <div class="rh-sig"><span class="ln">1446│</span>    consumed_tool_call_ids: <span class="ty">set[str]</span> = <span class="kw">set</span>()
+<span class="ln">1447│</span>    <span class="kw">for</span> collected <span class="kw">in</span> real_run.collector.records:           <span class="cm"># 跨多轮 token 收集器</span>
+<span class="ln">1448│</span>        record = collected.generation_record                  <span class="cm"># 本轮 GenerationRecord</span>
+<span class="ln">1449│</span>        start = <span class="kw">len</span>(response_ids)
+<span class="ln">1450│</span>        response_ids.extend(record.output_token_ids)           <span class="cm"># 把本轮 assistant 输出拼到尾</span>
+<span class="ln">1451│</span>        response_mask.extend([<span class="li">1</span>] * <span class="kw">len</span>(record.output_token_ids))   <span class="cm"># mask 全 1</span>
+<span class="ln">1452│</span>        <span class="kw">if</span> record.output_logprobs <span class="kw">is None</span>:
+<span class="ln">1453│</span>            missing_logprobs = <span class="kw">True</span>                          <span class="cm"># 任一轮缺 logprob → 整批 invalid</span>
+<span class="ln">1454│</span>        <span class="kw">else</span>:
+<span class="ln">1455│</span>            response_logprobs.extend(record.output_logprobs)
+<span class="ln">1456│</span>        end = <span class="kw">len</span>(response_ids)
+<span class="ln">1457│</span>        <span class="kw">if</span> end > start:
+<span class="ln">1458│</span>            spans.append(
+<span class="ln">1459│</span>                ResponseSpan(
+<span class="ln">1460│</span>                    start=start, end=end,
+<span class="ln">1462│</span>                    source_type=<span class="li">"assistant_generation"</span>,
+<span class="ln">1463│</span>                    model_call_id=record.model_call_id,
+<span class="ln">1464│</span>                    artifact_ref=<span class="li">f"rh://model-call/{record.model_call_id}/assistant-output"</span>,
+<span class="ln">1465│</span>                    response_mask_value=<span class="li">1</span>,
+<span class="ln">1466│</span>                    logprob_policy=(
+<span class="ln">1467│</span>                        <span class="li">"gateway_output_logprobs"</span> <span class="kw">if</span> record.output_logprobs <span class="kw">is not</span> <span class="kw">None</span>
+<span class="ln">1468│</span>                        <span class="kw">else</span> <span class="li">"missing_logprobs_invalid_for_online_rl"</span>
+<span class="ln">1469│</span>                    ),
+<span class="ln">1470│</span>                    policy_version=record.policy_version,
+<span class="ln">1471│</span>                    global_steps=record.global_steps <span class="kw">or</span> <span class="li">0</span>, ...,
+<span class="ln">1475│</span>                )
+<span class="ln">1476│</span>            )</div>
+
+        <h3 style="margin-top: 14px;">段 3 · 每轮的 tool_calls 找对应 tool_observation 拼接（mask=0, logprob=0.0）</h3>
+        <div class="rh-sig"><span class="ln">1477│</span>        <span class="kw">for</span> tool_call <span class="kw">in</span> collected.response.tool_calls:
+<span class="ln">1478│</span>            tool_call_id = <span class="kw">str</span>(tool_call.get(<span class="li">"tool_call_id"</span>) <span class="kw">or</span> <span class="li">""</span>)
+<span class="ln">1479│</span>            <span class="kw">if not</span> tool_call_id:
+<span class="ln">1480│</span>                <span class="kw">continue</span>
+<span class="ln">1481│</span>            tool_message = tool_messages_by_call_id.get(tool_call_id)
+<span class="ln">1482│</span>            <span class="kw">if</span> tool_message <span class="kw">is None</span>:
+<span class="ln">1483│</span>                <span class="kw">continue</span>
+<span class="ln">1484│</span>            consumed_tool_call_ids.add(tool_call_id)
+<span class="ln">1485│</span>            <span class="cm"># 把 tool observation 文本投影成 token id（默认 diagnostic-only projector）</span>
+<span class="ln">1485│</span>            tool_tokens = self._project_tool_observation_tokens(<span class="kw">str</span>(tool_message.get(<span class="li">"content"</span>, <span class="li">""</span>)))
+<span class="ln">1486│</span>            <span class="kw">if not</span> tool_tokens:
+<span class="ln">1487│</span>                <span class="kw">continue</span>
+<span class="ln">1488│</span>            tool_start = <span class="kw">len</span>(response_ids)
+<span class="ln">1489│</span>            response_ids.extend(tool_tokens)                       <span class="cm"># 加入 response 序列</span>
+<span class="ln">1490│</span>            response_mask.extend([<span class="li">0</span>] * <span class="kw">len</span>(tool_tokens))           <span class="cm"># ★ mask=0：不参与梯度</span>
+<span class="ln">1491│</span>            <span class="kw">if not</span> missing_logprobs:
+<span class="ln">1492│</span>                response_logprobs.extend([<span class="li">0.0</span>] * <span class="kw">len</span>(tool_tokens))   <span class="cm"># ★ logprob=0.0：占位</span>
+<span class="ln">1493│</span>            tool_end = <span class="kw">len</span>(response_ids)
+<span class="ln">1494│</span>            spans.append(
+<span class="ln">1495│</span>                ResponseSpan(
+<span class="ln">1496│</span>                    start=tool_start, end=tool_end,
+<span class="ln">1498│</span>                    source_type=<span class="li">"tool_observation"</span>,
+<span class="ln">1499│</span>                    tool_call_id=<span class="kw">str</span>(tool_message.get(<span class="li">"tool_call_id"</span>) <span class="kw">or</span> <span class="li">"unknown_tool_call"</span>),
+<span class="ln">1500│</span>                    artifact_ref=<span class="li">f"rh://tool-observation/{tool_message.get('tool_result_id') or tool_start}"</span>,
+<span class="ln">1501│</span>                    response_mask_value=<span class="li">0</span>,
+<span class="ln">1502│</span>                    logprob_policy=<span class="li">"tool_observation_zero_logprob"</span>,
+<span class="ln">1507│</span>                )
+<span class="ln">1508│</span>            )</div>
+
+        <h3 style="margin-top: 14px;">段 4 · 兜底：未被 record 引用的 tool messages 也补上</h3>
+        <div class="rh-sig"><span class="ln">1509│</span>    <span class="cm"># 防御：极少数 tool_message 没有对应 tool_call（异常路径），也拼到尾部</span>
+<span class="ln">1509│</span>    <span class="kw">for</span> tool_call_id, tool_message <span class="kw">in</span> tool_messages_by_call_id.items():
+<span class="ln">1510│</span>        <span class="kw">if</span> tool_call_id <span class="kw">in</span> consumed_tool_call_ids:
+<span class="ln">1511│</span>            <span class="kw">continue</span>
+<span class="ln">1512│</span>        tool_tokens = self._project_tool_observation_tokens(<span class="kw">str</span>(tool_message.get(<span class="li">"content"</span>, <span class="li">""</span>)))
+<span class="ln">1513│</span>        <span class="kw">if not</span> tool_tokens: <span class="kw">continue</span>
+<span class="ln">1515│</span>        tool_start = <span class="kw">len</span>(response_ids)
+<span class="ln">1516│</span>        response_ids.extend(tool_tokens)
+<span class="ln">1517│</span>        response_mask.extend([<span class="li">0</span>] * <span class="kw">len</span>(tool_tokens))
+<span class="ln">1518│</span>        <span class="kw">if not</span> missing_logprobs:
+<span class="ln">1519│</span>            response_logprobs.extend([<span class="li">0.0</span>] * <span class="kw">len</span>(tool_tokens))
+<span class="ln">1521│</span>        spans.append(ResponseSpan(..., source_type=<span class="li">"tool_observation"</span>, ...))</div>
+
+        <h3 style="margin-top: 14px;">段 5 · 构造 TrainingView</h3>
+        <div class="rh-sig"><span class="ln">1536│</span>    <span class="cm"># prompt_ids 取第 0 轮的 prompt_ids（含 system + 第一轮 user 输入）</span>
+<span class="ln">1536│</span>    prompt_ids = real_run.collector.records[<span class="li">0</span>].generation_record.prompt_ids \
+<span class="ln">    │</span>                 <span class="kw">if</span> real_run.collector.records <span class="kw">else</span> []
+<span class="ln">1537│</span>    <span class="kw">return</span> TrainingView(
+<span class="ln">1538│</span>        online_rl_eligible=<span class="kw">not</span> invalid_for_training <span class="kw">and not</span> invalid_for_online_rl,
+<span class="ln">1539│</span>        rollout_limits=RolloutLimits(
+<span class="ln">1540│</span>            prompt_length=<span class="kw">max</span>(request.budgets.max_prompt_tokens <span class="kw">or</span> <span class="li">10**9</span>, <span class="kw">len</span>(prompt_ids)),
+<span class="ln">1541│</span>            response_length=request.budgets.max_output_tokens <span class="kw">or</span> <span class="kw">max</span>(<span class="kw">len</span>(response_ids), <span class="li">1</span>),
+<span class="ln">1542│</span>        ),
+<span class="ln">1543│</span>        prompt_ids=<span class="kw">list</span>(prompt_ids),
+<span class="ln">1544│</span>        response_ids=response_ids,                       <span class="cm"># Page 4 § ① 大表的拼接结果</span>
+<span class="ln">1545│</span>        response_mask=response_mask,
+<span class="ln">1546│</span>        response_logprobs=<span class="kw">None</span> <span class="kw">if</span> missing_logprobs <span class="kw">else</span> response_logprobs,
+<span class="ln">1547│</span>        response_spans=spans,                           <span class="cm"># 含 N × assistant + M × tool_obs spans</span>
+<span class="ln">1548│</span>        reward_score=reward_score,                      <span class="cm"># 来自 Stage 7 reward boundary</span>
+<span class="ln">1549│</span>        num_turns=real_run.agent_state.turn_count,
+<span class="ln">1550│</span>        extra_fields=self._extra_fields(request, gateway_route, status, ..., stage7_extra_fields),
+<span class="ln">1558│</span>    )</div>
+
+        <h3 style="margin-top: 14px;"><code>ResponseSpan</code> schema 字段表</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 24%;">字段</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>start</code> / <code>end</code></td><td>本 span 在 <code>response_ids</code> 中的位置区间</td></tr>
+              <tr><td><code>source_type</code></td><td><code>"assistant_generation"</code>（模型生成）或 <code>"tool_observation"</code>（工具返回）</td></tr>
+              <tr><td><code>model_call_id</code></td><td>对应 GenerationRecord（assistant 段必填）</td></tr>
+              <tr><td><code>tool_call_id</code></td><td>对应 tool_call 的 id（tool_observation 段必填）</td></tr>
+              <tr><td><code>artifact_ref</code></td><td>追溯到原始 model call 或 tool result 的 opaque ref</td></tr>
+              <tr><td><code>response_mask_value</code></td><td>该 span 内 mask 的统一值（assistant=1 / tool_obs=0）</td></tr>
+              <tr><td><code>logprob_policy</code></td><td><code>gateway_output_logprobs</code>（真实 vLLM/SGLang logprob） / <code>tool_observation_zero_logprob</code>（占位 0.0）</td></tr>
+              <tr><td><code>policy_version</code> / <code>global_steps</code></td><td>后续异步改造预留</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="provenance" class="rv-section">
+        <h2>③ 6 条 token provenance 严格校验（Stage 11.5 红线）</h2>
+        <p class="rv-muted">Stage 11.5 在 <code>episode.py</code> 加的 <code>model_validator</code>。每个 <code>RepoHarnessEpisodeResult</code> 构造时跑，<strong>不可绕过</strong>。防止"从最终 transcript 重新分词伪造可训练 token"。</p>
+
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 6%;">#</th><th style="width: 36%;">断言</th><th>违反时抛 ValueError</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>所有 <code>generation_records</code> 的 <code>model_call_id</code> 必须<strong>唯一</strong></td><td><code>duplicate_generation_record_model_call_id</code></td></tr>
+              <tr><td>2</td><td><code>assistant_generation</code> span 数 == <code>generation_records</code>（去除空 token 的）数</td><td><code>assistant_generation_span_count_mismatch_generation_records</code></td></tr>
+              <tr><td>3</td><td>每个 assistant span 的 <code>model_call_id</code> 等于对应 <code>GenerationRecord.model_call_id</code>，<strong>顺序一致</strong></td><td><code>assistant_generation_span_order_mismatch_generation_records</code></td></tr>
+              <tr><td>4</td><td>每个 assistant span 内 <code>response_ids[span.start:span.end]</code> <strong>逐 token 等于</strong> 对应 <code>record.output_token_ids</code></td><td><code>assistant_generation_tokens_mismatch_generation_records</code></td></tr>
+              <tr><td>5</td><td><code>response_logprobs</code> 非空时，每个 assistant span 内 logprob <strong>逐元素等于</strong>对应 <code>record.output_logprobs</code></td><td><code>assistant_generation_logprobs_mismatch_generation_records</code></td></tr>
+              <tr><td>6</td><td>所有 assistant span 拼接后的 token / logprob 总序列 == 所有 records 拼接的序列</td><td><code>assistant_generation_(token|logprob)_sequence_mismatch_generation_records</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rv-callout danger">
+          <strong>意义</strong>：即使有人在 11.5 之后改了 <code>_assemble_training_view_from_collector</code>，校验层仍守底线。<strong>任何企图从 transcript 重新分词或跨轮拼接错乱来伪造可训练 token 的代码路径</strong>，在 EpisodeResult 构造时就会被 pydantic 直接拒绝。
+        </div>
+
+        <p style="margin-top: 10px;">详见 <a href="repo_harness_verl_stage11_5_completion_report.html">Stage 11.5 完成报告</a> §⑦。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="conversion" class="rv-section">
+        <h2>④ <code>episode_result_to_agent_loop_output</code></h2>
+        <p class="rv-muted">把 RepoHarness 的 <code>RepoHarnessEpisodeResult</code> 转成真实 verl <code>AgentLoopOutput</code>。<a href="../../src/repo_harness_verl/conversion.py">conversion.py:209-249</a>。</p>
+
+        <h3>完整代码</h3>
+        <div class="rh-sig"><span class="ln">209│</span><span class="kw">def</span> <span class="nm">episode_result_to_agent_loop_output</span>(episode_result, *, formal_online_rl=<span class="kw">True</span>,
+<span class="ln">213│</span>                                          rollout_prompt_length=<span class="kw">None</span>, rollout_response_length=<span class="kw">None</span>) -&gt; <span class="ty">Any</span>:
+<span class="ln">216│</span>    <span class="cm">"""把 RepoHarnessEpisodeResult.training_view 转换成真实 verl AgentLoopOutput。"""</span>
+<span class="ln">217│</span>
+<span class="ln">217│</span>    <span class="cm"># ① 校验 + 解析 EpisodeResult（包含 §③ 6 条 token provenance 检查）</span>
+<span class="ln">217│</span>    result = (episode_result <span class="kw">if</span> <span class="kw">isinstance</span>(episode_result, RepoHarnessEpisodeResult)
+<span class="ln">218│</span>              <span class="kw">else</span> RepoHarnessEpisodeResult.model_validate(episode_result))
+<span class="ln">222│</span>    view = result.training_view
+<span class="ln">223│</span>
+<span class="ln">223│</span>    <span class="kw">if</span> formal_online_rl:
+<span class="ln">224│</span>        <span class="cm"># ② 路由强制：所有 generation_records 必须 route=verl，否则抛 VerlConversionError</span>
+<span class="ln">224│</span>        <span class="kw">if</span> <span class="li">"repo_harness_llm_gateway_route"</span> <span class="kw">not in</span> view.extra_fields:
+<span class="ln">225│</span>            view = training_view_with_projected_route(view, result.generation_records)
+<span class="ln">226│</span>        <span class="kw">elif</span> result.generation_records:
+<span class="ln">227│</span>            project_generation_records_route(result.generation_records)   <span class="cm"># 检查一致性</span>
+<span class="ln">228│</span>        <span class="cm"># ③ formal online RL batch 强制校验（详见 §⑥）</span>
+<span class="ln">228│</span>        <span class="kw">try</span>:
+<span class="ln">229│</span>            validate_formal_online_rl_batch([
+<span class="ln">230│</span>                formal_online_rl_sample_from_training_view(
+<span class="ln">231│</span>                    view, generation_records=result.generation_records,
+<span class="ln">234│</span>                    sample_id=result.episode_id,
+<span class="ln">235│</span>                    invalid_for_training=result.invalid_for_training,
+<span class="ln">236│</span>                    invalid_for_online_rl=result.invalid_for_online_rl,
+<span class="ln">237│</span>                    invalid_reason=result.status_reason,
+<span class="ln">238│</span>                )
+<span class="ln">239│</span>            ])
+<span class="ln">240│</span>        <span class="kw">except</span> ValueError <span class="kw">as</span> exc:
+<span class="ln">241│</span>            <span class="kw">raise</span> VerlConversionError(<span class="kw">str</span>(exc)) <span class="kw">from</span> exc
+<span class="ln">248│</span>
+<span class="ln">248│</span>    <span class="cm"># ④ 调 training_view_to_agent_loop_output 做实际转换</span>
+<span class="ln">248│</span>    <span class="kw">return</span> training_view_to_agent_loop_output(
+<span class="ln">249│</span>        view, audit_ref=result.audit_ref, generation_records=result.generation_records,
+<span class="ln">249│</span>        formal_online_rl=formal_online_rl,
+<span class="ln">249│</span>        rollout_prompt_length=rollout_prompt_length, rollout_response_length=rollout_response_length,
+<span class="ln">249│</span>    )</div>
+
+        <h3 style="margin-top: 14px;"><code>training_view_to_agent_loop_output</code> 实际产出 verl AgentLoopOutput</h3>
+        <div class="rh-sig"><span class="ln">196│</span>    agent_loop_output_cls, _ = _load_verl_agent_loop_types()       <span class="cm"># 动态 import verl</span>
+<span class="ln">197│</span>    <span class="kw">return</span> agent_loop_output_cls(
+<span class="ln">198│</span>        prompt_ids=<span class="kw">list</span>(view.prompt_ids),
+<span class="ln">199│</span>        response_ids=<span class="kw">list</span>(view.response_ids),
+<span class="ln">200│</span>        response_mask=<span class="kw">list</span>(view.response_mask),
+<span class="ln">201│</span>        response_logprobs=<span class="kw">list</span>(view.response_logprobs) <span class="kw">if</span> view.response_logprobs <span class="kw">is not</span> <span class="kw">None</span> <span class="kw">else</span> <span class="kw">None</span>,
+<span class="ln">202│</span>        reward_score=view.reward_score,
+<span class="ln">203│</span>        num_turns=view.num_turns <span class="kw">or</span> <span class="li">0</span>,
+<span class="ln">204│</span>        metrics=build_agent_loop_metrics(view.verl_metrics),
+<span class="ln">205│</span>        extra_fields=extra_fields,                                  <span class="cm"># 含 audit_ref 投影后的 opaque refs</span>
+<span class="ln">206│</span>    )</div>
+
+        <h3 style="margin-top: 14px;">TrainingView → AgentLoopOutput 字段映射</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 32%;">RepoHarness TrainingView</th><th style="width: 32%;">verl AgentLoopOutput</th><th>处理</th></tr></thead>
+            <tbody>
+              <tr><td><code>prompt_ids</code></td><td><code>prompt_ids</code></td><td>直接 list 转</td></tr>
+              <tr><td><code>response_ids</code></td><td><code>response_ids</code></td><td>含 assistant + tool_obs 拼接</td></tr>
+              <tr><td><code>response_mask</code></td><td><code>response_mask</code></td><td>含 1/0 区分</td></tr>
+              <tr><td><code>response_logprobs</code></td><td><code>response_logprobs</code></td><td>None → 标 invalid_for_online_rl</td></tr>
+              <tr><td><code>reward_score</code></td><td><code>reward_score</code></td><td>Stage 7 真实计算</td></tr>
+              <tr><td><code>num_turns</code></td><td><code>num_turns</code></td><td>来自 <code>agent_state.turn_count</code></td></tr>
+              <tr><td><code>verl_metrics</code></td><td><code>metrics</code></td><td>转 <code>AgentLoopMetrics</code></td></tr>
+              <tr><td><code>extra_fields</code> + <code>AuditRef</code></td><td><code>extra_fields</code></td><td>见 §⑤ AuditRef 投影</td></tr>
+              <tr><td><code>response_spans</code></td><td>—</td><td>不进 AgentLoopOutput（仅 RepoHarness 内部审计）</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="audit-ref" class="rv-section">
+        <h2>⑤ <code>AuditRef → opaque refs</code> 投影</h2>
+        <p class="rv-muted">AuditRef 是结构化对象（含 run_dir / episode_id / important_artifact_refs 等），<strong>不能</strong>嵌套进 AgentLoopOutput.extra_fields。Stage 10 的 <code>project_audit_refs_for_extra_fields</code> 把它<strong>扁平化</strong>成 <code>repo_harness_*_ref</code> 字段。<a href="../../src/repo_harness_verl/conversion.py">conversion.py:54-109</a>。</p>
+
+        <h3>7 个映射</h3>
+        <div class="rh-sig"><span class="ln">54│</span>_AUDIT_REF_EXTRA_FIELD_MAP = {
+<span class="ln">55│</span>    <span class="li">"manifest"</span>:          <span class="li">"repo_harness_audit_manifest_ref"</span>,
+<span class="ln">56│</span>    <span class="li">"artifacts_manifest"</span>: <span class="li">"repo_harness_audit_manifest_ref"</span>,
+<span class="ln">57│</span>    <span class="li">"audit_manifest"</span>:    <span class="li">"repo_harness_audit_manifest_ref"</span>,
+<span class="ln">58│</span>    <span class="li">"reward_metadata"</span>:   <span class="li">"repo_harness_reward_metadata_ref"</span>,
+<span class="ln">59│</span>    <span class="li">"final_verifier"</span>:    <span class="li">"repo_harness_final_verifier_ref"</span>,
+<span class="ln">60│</span>    <span class="li">"patch"</span>:             <span class="li">"repo_harness_patch_ref"</span>,
+<span class="ln">61│</span>    <span class="li">"timing_summary"</span>:    <span class="li">"repo_harness_timing_summary_ref"</span>,
+<span class="ln">62│</span>    <span class="li">"resource_summary"</span>:  <span class="li">"repo_harness_resource_summary_ref"</span>,
+<span class="ln">63│</span>    <span class="li">"metrics"</span>:           <span class="li">"repo_harness_metrics_ref"</span>,
+<span class="ln">64│</span>}</div>
+
+        <h3 style="margin-top: 14px;"><code>project_audit_refs_for_extra_fields</code> 完整逻辑</h3>
+        <div class="rh-sig"><span class="ln">90│</span><span class="kw">def</span> <span class="nm">project_audit_refs_for_extra_fields</span>(audit_ref, *, base_extra_fields=<span class="kw">None</span>) -&gt; <span class="ty">dict[str, FlatScalar]</span>:
+<span class="ln">95│</span>    <span class="cm">"""把结构化 AuditRef 投影成 batch 可传播的 opaque refs。"""</span>
+<span class="ln">96│</span>
+<span class="ln">97│</span>    extra_fields: <span class="ty">dict[str, FlatScalar]</span> = <span class="kw">dict</span>(base_extra_fields <span class="kw">or</span> {})
+<span class="ln">98│</span>    <span class="kw">if</span> audit_ref <span class="kw">is None</span>:
+<span class="ln">99│</span>        <span class="kw">return</span> validate_agent_loop_output_extra_fields(extra_fields)
+<span class="ln">100│</span>
+<span class="ln">101│</span>    <span class="cm"># 直接铺 3 个核心 id（保证模型 / trainer 能根据 ref 反查 run）</span>
+<span class="ln">101│</span>    extra_fields.setdefault(<span class="li">"repo_harness_episode_id"</span>, audit_ref.episode_id)
+<span class="ln">102│</span>    extra_fields.setdefault(<span class="li">"repo_harness_run_id"</span>, audit_ref.run_id)
+<span class="ln">103│</span>    extra_fields.setdefault(<span class="li">"repo_harness_task_id"</span>, audit_ref.task_id)
+<span class="ln">104│</span>    <span class="cm"># 7 个 important_artifact_refs 按映射展开</span>
+<span class="ln">104│</span>    <span class="kw">for</span> audit_key, extra_key <span class="kw">in</span> _AUDIT_REF_EXTRA_FIELD_MAP.items():
+<span class="ln">105│</span>        ref = audit_ref.important_artifact_refs.get(audit_key)
+<span class="ln">106│</span>        <span class="kw">if</span> ref <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">107│</span>            extra_fields.setdefault(extra_key, ref)
+<span class="ln">108│</span>    <span class="kw">return</span> validate_agent_loop_output_extra_fields(extra_fields)</div>
+
+        <h3 style="margin-top: 14px;">最终 extra_fields 形态</h3>
+        <div class="rh-sig">{
+  <span class="cm"># 来自 AuditRef.episode_id / run_id / task_id</span>
+  <span class="li">"repo_harness_episode_id"</span>: <span class="li">"ep-001"</span>,
+  <span class="li">"repo_harness_run_id"</span>:     <span class="li">"run-2026-05-18-001"</span>,
+  <span class="li">"repo_harness_task_id"</span>:    <span class="li">"task_001"</span>,
+
+  <span class="cm"># 来自 AuditRef.important_artifact_refs 映射</span>
+  <span class="li">"repo_harness_audit_manifest_ref"</span>:   <span class="li">"rh://audit/ep-001/manifest"</span>,
+  <span class="li">"repo_harness_reward_metadata_ref"</span>:  <span class="li">"rh://audit/ep-001/reward-metadata"</span>,
+  <span class="li">"repo_harness_final_verifier_ref"</span>:   <span class="li">"rh://audit/ep-001/final-verifier"</span>,
+  <span class="li">"repo_harness_patch_ref"</span>:            <span class="li">"rh://audit/ep-001/patch"</span>,
+  <span class="li">"repo_harness_timing_summary_ref"</span>:   <span class="li">"rh://audit/ep-001/timing-summary"</span>,
+  <span class="li">"repo_harness_resource_summary_ref"</span>: <span class="li">"rh://audit/ep-001/resource-summary"</span>,
+  <span class="li">"repo_harness_metrics_ref"</span>:          <span class="li">"rh://audit/ep-001/metrics"</span>,
+
+  <span class="cm"># 来自 TrainingView.extra_fields（route 强制门、status 等）</span>
+  <span class="li">"repo_harness_llm_gateway_route"</span>:     <span class="li">"verl"</span>,
+  <span class="li">"repo_harness_status"</span>:                <span class="li">"succeeded"</span>,
+  <span class="li">"repo_harness_invalid_for_training"</span>:  <span class="kw">False</span>,
+  <span class="li">"repo_harness_verifier_worker_pool_id"</span>: <span class="li">"verifier-pool-local-v1"</span>,
+  <span class="li">"repo_harness_verifier_worker_id"</span>:      <span class="li">"verifier-worker-0"</span>,
+}</div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">visibility 边界</span>
+            所有字段都是 <strong>FlatScalar</strong>（str / int / float / bool / None）。绝不允许嵌套 dict / list / 绝对路径。<code>validate_agent_loop_output_extra_fields</code> 在出口校验。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="formal-gate" class="rv-section">
+        <h2>⑥ <code>formal_online_rl</code> 强制门</h2>
+        <p class="rv-muted">最后一道安全闸门：mock / replay / openai / deepseek / local_vllm / local_sglang 等非 verl route 的样本<strong>绝不</strong>能伪装成正式 online RL 训练样本。</p>
+
+        <h3>4 条强制规则</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 5%;">#</th><th>规则</th><th>违反结果</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>所有 <code>generation_records</code> 的 <code>gateway_route</code> 必须 == <code>"verl"</code></td><td><code>VerlConversionError("generation_records_route_must_all_be_verl")</code></td></tr>
+              <tr><td>2</td><td><code>training_view.extra_fields["repo_harness_llm_gateway_route"]</code> 必须 == <code>"verl"</code>（若已存在）</td><td><code>VerlConversionError("training_view_route_mismatch_generation_records")</code></td></tr>
+              <tr><td>3</td><td><code>response_logprobs</code> 非空（每个 token 有真实 logprob）</td><td><code>VerlConversionError</code> 含 missing logprobs</td></tr>
+              <tr><td>4</td><td>prompt_ids / response_ids 长度不超 rollout limits（防止 padding 时溢出）</td><td><code>VerlConversionError("prompt_length_exceeded" / "response_length_exceeded")</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="rv-muted">详见 <a href="repo_harness_verl_stage5_execution_plan.html">Stage 5 执行计划</a>（路由白名单 / formal_online_rl_batch 验证器）。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="dataproto" class="rv-section">
+        <h2>⑦ verl postprocess → DataProto</h2>
+        <p class="rv-muted">RepoHarness 调用 <code>episode_result_to_agent_loop_output</code> 返回 <code>AgentLoopOutput</code> 之后，<strong>剩下的工作都在 verl 内部</strong>。RepoHarness 不直接控制 DataProto 组装，但需要保证 AgentLoopOutput 形状对、字段 visibility 通过。</p>
+
+        <h3>verl 内部流程（黑盒概述）</h3>
+        <div class="rh-flow"><span class="step">[verl AgentLoopWorker 收到 AgentLoopOutput]</span>
+   <span class="arrow">↓</span>
+<span class="step">_agent_loop_postprocess(output)</span>
+   <span class="arrow">├</span> 注入 extra_fields.raw_prompt        <span class="comment"># trainer side reconstruct prompt 用</span>
+   <span class="arrow">├</span> attach kwargs 中允许字段           <span class="comment"># 通过 RepoHarness allowlist 的字段</span>
+   <span class="arrow">└</span> 校验 prompt_ids / response_ids 长度
+   <span class="arrow">↓</span>
+<span class="step">_postprocess(output) → DataProto</span>
+   <span class="arrow">├</span> tensor batch:
+   <span class="arrow">│</span>    ├─ prompts:           [batch_size, prompt_length]  (left-padded)
+   <span class="arrow">│</span>    ├─ responses:         [batch_size, response_length] (right-padded)
+   <span class="arrow">│</span>    ├─ attention_mask:    [batch_size, total_length]
+   <span class="arrow">│</span>    ├─ response_mask:     [batch_size, response_length]  (0=tool_obs / 1=assistant)
+   <span class="arrow">│</span>    ├─ rollout_log_probs: [batch_size, response_length]  (assistant 段真实 / tool_obs 段 0.0)
+   <span class="arrow">│</span>    └─ rm_scores:         [batch_size]                   (reward_score 标量)
+   <span class="arrow">├</span> non_tensor_batch:
+   <span class="arrow">│</span>    └─ extra_fields:      含 repo_harness_*_ref 等 opaque refs（NOT 绝对路径）
+   <span class="arrow">└</span> meta_info:               trainer / rollout 元信息
+   <span class="arrow">↓</span>
+<span class="step">DataProto 进入 PPO / GRPO trainer loss 路径</span>
+   <span class="arrow">├</span> calculate_log_probs（如果 use_rollout_log_probs=True）
+   <span class="arrow">├</span> compute_advantages（GAE / GRPO）
+   <span class="arrow">├</span> policy loss update
+   <span class="arrow">└</span> reference model KL penalty</div>
+
+        <h3 style="margin-top: 14px;">RepoHarness 与 verl 的边界</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 28%;">边界位置</th><th>RepoHarness 负责</th><th>verl 负责</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>AgentLoopOutput</code> 之前</td>
+                <td>workspace、工具执行、agent loop、verifier、reward、artifact、audit ref、token provenance 校验。</td>
+                <td>提供 rollout worker、推理服务管理器、tokenizer、sampling 参数。</td>
+              </tr>
+              <tr>
+                <td><code>AgentLoopOutput</code> 返回时</td>
+                <td>保证 <code>prompt_ids</code>、<code>response_ids</code>、<code>response_mask</code>、<code>response_logprobs</code>、<code>reward_score</code> 和 allowlist extra fields 形状正确。</td>
+                <td>接收每条 episode 输出，并在 worker 侧做 postprocess。</td>
+              </tr>
+              <tr>
+                <td><code>DataProto</code> 之后</td>
+                <td>不直接组 batch，不直接计算 PPO/GRPO loss，只提供可审计的样本和诊断证据。</td>
+                <td>padding、batch tensor、advantage、policy loss、reference model KL、optimizer step。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">两条 postprocess 路径都通过 visibility</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 28%;">路径</th><th>RepoHarness 关心的可见性约束</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>普通 <code>AgentLoopWorker._agent_loop_postprocess</code></td>
+                <td>通过 <code>kwargs["raw_prompt"]</code> 注入 <code>extra_fields.raw_prompt</code>。RepoHarness 在 conversion 出口校验所有 extra_fields 都在 <code>REPO_HARNESS_AGENT_LOOP_EXTRA_FIELDS</code> allowlist 中。</td>
+              </tr>
+              <tr>
+                <td><code>main_ppo_sync.py</code> / TransferQueue 路径</td>
+                <td>verl 通过 <code>field.update(kwargs)</code> 把 raw_prompt 合并成顶层 field（不是 extra_fields）。Stage 10 双路径都覆盖 visibility 测试。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">路径可见性分层</h3>
+        <div class="rh-flow"><span class="step">runtime-only 层</span>
+   <span class="arrow">├─</span> 真实 workspace 绝对路径、dependency env 绝对路径、run_dir、setup log
+   <span class="arrow">└─</span> 只能被 runtime、tool executor、verifier、artifact writer 使用
+   <span class="arrow">↓</span>
+<span class="step">audit ref 层</span>
+   <span class="arrow">├─</span> <span class="obj">rh://workspace-snapshot/&lt;key&gt;</span>、<span class="obj">rh://environment/&lt;key&gt;</span>、artifact ref
+   <span class="arrow">└─</span> 可进入 <span class="obj">RepoHarnessEpisodeResult</span> 和 <span class="obj">extra_fields</span>
+   <span class="arrow">↓</span>
+<span class="step">DataProto 层</span>
+   <span class="arrow">├─</span> tensor batch 只放 token、mask、logprob、reward
+   <span class="arrow">└─</span> non_tensor_batch 只放 allowlist 字段和 opaque refs，不放本机绝对路径</div>
+
+        <h3 style="margin-top: 14px;">Stage 12.5 在 DataProto 之后能观察什么</h3>
+        <p class="rv-muted">DataProto 组装完后，Stage 12.5 提供 5 类 profile / evidence helper（dataproto_padding / inference_server / ray_worker / tokenization / batch_refill），用于验收和瓶颈诊断。它们<strong>不属于</strong>RepoHarness 到 verl 的训练样本主契约，也不要理解成已经固定插入 trainer loss 主链路的自动落盘逻辑。<strong>下一页详解</strong>。</p>
+      </section>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 32px; padding: 14px 0; border-top: 1px solid var(--rv-border);">
+        <a href="repo_harness_verl_pipeline_p3_gateway.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">← Page 3 · Gateway+Tool</a>
+        <a href="repo_harness_verl_complete_pipeline_index.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">索引</a>
+        <a href="repo_harness_verl_pipeline_p5_stage125.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--hh-accent-soft); color: var(--rv-accent); font-weight: 760;">下一页 → Page 5 · Stage 12.5</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

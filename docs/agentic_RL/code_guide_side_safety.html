@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Side-A · 安全边界 · 代码导览</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.active{background:#2b2412;color:#e6c068}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  h4{font-size:14.4px;margin:16px 0 6px;color:#9cc4ff}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5;margin:9px 0}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}.kw{color:#c594ff}.str{color:#a3e3a8}.fn{color:#9cc4ff}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .lineref{font-family:"SFMono-Regular",Menlo,monospace;color:#bfe3ff;font-size:12.5px}
+  .layers{background:#0a0c12;border:1px solid var(--line);border-radius:11px;padding:16px 20px;margin:13px 0;font-family:"SFMono-Regular",Menlo,monospace;font-size:12px;line-height:1.55;color:#c9d4e6;overflow-x:auto;white-space:pre}
+  .layers .L{color:#e6c068;font-weight:600}
+  .layers .t{color:#9cc4ff}
+  .layers .l{color:#9aa4b6}
+  .layers .ok{color:#6fdc84}
+  .layers .e{color:#f29292}
+  .where{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 16px;margin:11px 0}
+  .where .ttl{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .where .tno{font-family:"SFMono-Regular",Menlo,monospace;background:#34507a;color:#fff;padding:1px 9px;border-radius:13px;font-size:12px;font-weight:700}
+  .where .lay{font-size:14.5px;font-weight:700;color:#fff}
+  .where .meta-l{font-size:12.5px;color:var(--muted)}
+  .where .rules{font-size:12.8px;color:#cdd6e6}
+  .where .rules code{font-size:12.3px}
+  .navbar{display:flex;justify-content:space-between;margin:24px 0 8px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .navbar a{color:#9cc4ff;text-decoration:none}
+  /* 阅读路径 — 章节顶部，调用链 + 自包含讲解 */
+  .readpath{background:#0e2030;border:1px solid #34507a;border-radius:11px;padding:14px 18px 10px;margin:13px 0}
+  .readpath .rpttl{font-size:14.4px;color:#9cc4ff;font-weight:600;margin-bottom:10px}
+  .readpath > ol{margin:0;padding:0;list-style:none;counter-reset:rp}
+  .readpath > ol > li{padding:11px 13px 12px 50px;margin:9px 0;background:#0a0c12;border:1px solid #1e3454;border-radius:9px;position:relative}
+  .readpath > ol > li::before{counter-increment:rp;content:counter(rp);position:absolute;left:11px;top:11px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:2px 0;border-radius:9px;font-size:12px;min-width:30px;text-align:center}
+  .readpath .rplp{font-family:"SFMono-Regular",Menlo,monospace;color:#bfe3ff;font-size:11.9px;margin-bottom:2px;word-break:break-all}
+  .readpath .rpfn{font-family:"SFMono-Regular",Menlo,monospace;color:#e6c068;font-size:13.4px;font-weight:600;margin-bottom:8px;word-break:break-word}
+  .readpath .rpbody{display:grid;grid-template-columns:max-content 1fr;column-gap:11px;row-gap:5px;font-size:12.8px;line-height:1.65}
+  .readpath .rpbody > .lbl{color:#9cc4ff;font-weight:600;white-space:nowrap;padding-top:1px}
+  .readpath .rpbody > .val{color:#cdd6e6}
+  .readpath .rpbody > .val code{font-size:12.2px}
+  .readpath .rpbody > .val .step{background:#34507a;color:#fff;padding:0 7px;border-radius:9px;font-family:"SFMono-Regular",Menlo,monospace;font-size:11.6px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本侧栏</h2>
+  <a href="#readpath">📖 代码阅读路径（5 层 × 2 件）</a>
+  <a href="#overview">5 道防线总览</a>
+  <a href="#L1">L1 · 工具 schema 校验</a>
+  <a href="#L2">L2 · 路径黑名单</a>
+  <a href="#L3">L3 · 敏感 marker 路径变体</a>
+  <a href="#L4">L4 · model-visible 出站扫描</a>
+  <a href="#L5">L5 · 公开投影最终扫描</a>
+  <a href="#audit-case">案例：16G.2C audit_ref 被拦</a>
+  <a href="#table">5 道防线对照表</a>
+
+  <h2>主线</h2>
+  <a href="code_guide_index.html">← 总览索引</a>
+  <a href="code_guide_t4_dispatch.html">T4 · 分派（待写）</a>
+  <a href="code_guide_t5_execute.html">T5 · 工具执行 ✓</a>
+  <a href="code_guide_t8_projection.html">T8 · 投影 ✓</a>
+
+  <h2>侧栏</h2>
+  <a class="active" href="code_guide_side_safety.html">A · 安全边界（本页）</a>
+  <a href="code_guide_side_mask.html">B · TrainingView mask（待写）</a>
+  <a href="code_guide_side_audit.html">C · Audit/artifact（待写）</a>
+  <a href="code_guide_side_evidence.html">D · evidence 防伪（待写）</a>
+</nav>
+<main>
+  <h1>Side-A · 安全边界 — 5 道防线（横向贯穿 T4 → T8）</h1>
+  <p class="meta">代码导览 · 横向主题 · 主要文件：<code>rl/visibility.py</code> · <code>tools/file_mutation.py</code> · <code>tools/minimal.py</code> · <code>evaluation/episode_projection.py</code></p>
+
+  <div class="callout info"><b>本侧栏定位：</b>RepoHarness 不是单层"白名单"安全设计，而是<b>分层防御</b>——每层只拦自己那一层的越界。5 道防线<b>都必须存在且独立工作</b>，任何一层被绕过另几层兜底。本页把它们按"模型角度看到的顺序"摆一遍。</div>
+
+  <h2 class="sec" id="readpath" style="margin-top:24px;border-top:none">📖 代码阅读路径 — 5 层各 2 件套（数据集合 + 执行函数）</h2>
+  <p class="small" style="margin-top:0">下面 10 步按 L1→L5 的"模型角度看到顺序"排列，每步给出 <code>file:line</code> + 模块/函数名 + 这一层拦什么 + 什么时候触发 + 失败时返回什么。<b>只读这一段（不打开源码）应该就能搞清"5 道防线各拦什么、哪一层负责哪一类越界"</b>。后面的 §L1 ~ §L5 是对每层的展开。</p>
+  <div class="readpath">
+    <div class="rpttl">L1 schema （T4）→ L2 路径黑名单（T5）→ L3 marker 变体（T5）→ L4 model 出站（T6）→ L5 公开投影（T8）</div>
+    <ol>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:3029-3110</div>
+        <div class="rpfn">L1 数据 · read_file ToolDefinition（简单 schema 范例）</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">语法上明显非法的 tool_call 输入：未声明字段、类型不对、缺必填、字符串超长、枚举不在允许列表</span>
+          <span class="lbl">代表数据</span><span class="val"><code>ToolDefinition.input_schema</code> 是 JSON schema dict，含 <code>type:"object"</code> / <code>properties:{...}</code> / <code>required:[...]</code> / <code>additionalProperties:false</code>（<b>关键</b>：硬禁未声明字段）</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">2</span> 更复杂的 nested schema 例子（apply_patch）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:3318-3420</div>
+        <div class="rpfn">L1 数据 · apply_patch ToolDefinition + operations nested schema</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">复合工具的<b>nested 字段非法</b>。看 apply_patch 怎么禁掉 <code>unified_diff</code> / <code>command</code> / <code>shell</code> 这种自由文本字段——只允许 <code>operations: [{op, path, ...}, ...]</code>，且每个 op 字典也是 <code>additionalProperties:false</code></span>
+          <span class="lbl">为什么重要</span><span class="val">如果允许 unified diff 文本，模型可以写任意 patch 文本绕过结构化字段；Codex 就用 Lark 文本 grammar，RH 故意走 JSON typed ops 路线</span>
+          <span class="lbl">L1 触发点</span><span class="val">在 T4（ToolExecutor.execute → normalize → schema 校验）。任一字段不合规 → <code>status="error"</code>，error_type 含 schema 错误，模型可以重试</span>
+          <span class="lbl">→ 继续看</span><span class="val">schema 通过后进 T5，开始第 L2 层</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:61-100</div>
+        <div class="rpfn">L2 数据 · MODEL_HIDDEN_TOOL_PATH_PARTS（frozenset of ~30 路径名）</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">所有访问<b>明显隐藏目录 / 敏感文件</b>的路径。是字面量黑名单（不做归一化）</span>
+          <span class="lbl">含什么</span><span class="val"><code>.git</code> / <code>.hg</code> / <code>.ssh</code> / <code>.env</code> / <code>.aws</code> / <code>.gnupg</code> / <code>.netrc</code> / <code>.npmrc</code> / <code>.pypirc</code> / <code>.venv</code> / <code>.mypy_cache</code> / <code>.pytest_cache</code> / <code>.ruff_cache</code> / <code>.repo_harness_runtime</code> / <code>.repo_harness_env_overlay</code> / <code>__pycache__</code> / <code>build</code> / <code>dist</code> / <code>node_modules</code> / <code>credentials</code> / <code>credentials.json</code> / <code>secret</code> / <code>secret.txt</code> / <code>secrets.json</code> / <code>token</code> / <code>id_rsa</code> / <code>id_ed25519</code> / <code>pip.conf</code> 等</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">4</span> L2 执行点（path normalize 函数）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:579-620</div>
+        <div class="rpfn">L2 执行 · def _normalize_relative_path(value) → 校验后的 posix str</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">L2 路径校验<b>执行</b>点。在 T5 写盘前被 <code>_prepare_operation</code> 调用，验路径合法。</span>
+          <span class="lbl">校验维度</span><span class="val">① 类型必须 str → 否则 <code>path_not_string</code><br>② 非空 → 否则 <code>path_empty</code><br>③ 长度 ≤ <code>STAGE16G2_PATH_MAX_CHARS</code> → 否则 <code>path_too_long</code><br>④ 不含 <code>\</code> 反斜杠（必须 posix） → 否则 <code>path_separator_not_allowed</code><br>⑤ 不含 <code>..</code> 父目录引用<br>⑥ 不是绝对路径（必须 workspace 相对）<br>⑦ 路径段都不在 <code>MODEL_HIDDEN_TOOL_PATH_PARTS</code> → 否则 <code>model_hidden_path_denied</code></span>
+          <span class="lbl">失败时</span><span class="val"><code>raise FileMutationDenial(reason_code, message, retryable, safe_alternative_tool, safe_rewrite_example)</code> → 一路冒泡到 handler → 翻成 status="denied" ToolResult，模型可见 reason_code + 改写建议</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">5</span> L3 数据（敏感 marker 变体集合）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:56-82</div>
+        <div class="rpfn">L3 数据 · _SENSITIVE_PATH_MARKERS + _RUNTIME_PRIVATE_PATH_MARKERS（两个 frozenset）</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">模型故意改写法绕开 L2 的"敏感 marker"。L2 是字面量黑名单（拦 <code>.hidden_verifier</code>），L3 是<b>归一化后</b>的语义黑名单（拦 <code>"Hidden-Verifier"</code> / <code>"hidden.verifier"</code> / <code>"hidden_verifier"</code> 等所有变体）</span>
+          <span class="lbl">含什么 · _SENSITIVE_PATH_MARKERS</span><span class="val"><code>failtopass</code> / <code>finalverifier</code> / <code>goldpatch</code> / <code>groundtruth</code> / <code>hiddenfeedback</code> / <code>hiddentestpatch</code> / <code>hiddentestselector</code> / <code>hiddenverifier</code> / <code>officialverifier</code> / <code>passtopass</code> / <code>providersecret</code> / <code>rewardextrainfo</code> / <code>rewardmetadata</code> / <code>testpatch</code></span>
+          <span class="lbl">含什么 · _RUNTIME_PRIVATE_PATH_MARKERS</span><span class="val"><code>repoharnessenvoverlay</code> / <code>repoharnessrun</code> / <code>repoharnessruntime</code> / <code>repoharnesstmp</code> / <code>runtimeprivate</code></span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">6</span> L3 触发点</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:595-615</div>
+        <div class="rpfn">L3 执行 · path 归一化 + frozenset 比对（在 _normalize_relative_path 末段）</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">L3 校验<b>执行</b>。把每个路径段做归一化 → 与 <code>_SENSITIVE_PATH_MARKERS</code> + <code>_RUNTIME_PRIVATE_PATH_MARKERS</code> 比对</span>
+          <span class="lbl">归一化方法</span><span class="val">① 每段 <code>.lower()</code> 小写化<br>② 去掉所有 <code>-</code> / <code>_</code> / <code>.</code> 分隔符<br>③ 在 line 603 用 <code>any(marker in normalized_marker for marker in _SENSITIVE_PATH_MARKERS)</code> 子串匹配</span>
+          <span class="lbl">失败时</span><span class="val"><code>raise FileMutationDenial(reason_code="sensitive_marker_path_denied")</code>，handler 翻成 status="denied"</span>
+          <span class="lbl">→ 继续看</span><span class="val">写盘成功，构造 ToolResult。后面进 T6，开始 L4</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/rl/visibility.py:28-58</div>
+        <div class="rpfn">L4 数据 · FORBIDDEN_FIELD_MARKERS（三个 frozenset 合并）</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">tool result <b>出站给模型 turn N+1</b> 时的 forbidden 字段。<b>16G.2C "audit_ref 改名" 事故的"被拦"集合就在这里</b>。</span>
+          <span class="lbl">三个子集合</span><span class="val">① <code>EVALUATOR_ONLY_DENYLIST</code>（11 项）：<code>hidden_verifier</code> / <code>gold_patch</code> / <code>accepted_label</code> / <code>complete_reward_metadata</code> / <code>provider_secret</code> / <code>evaluator_only_logs</code> / <code>absolute_run_directory</code> / <code>final_verifier_artifact</code> / <code>reward_metadata_artifact</code> / <code>hidden_test_selector</code> / <code>hidden_test_patch</code><br>② <code>FORBIDDEN_BATCH_EXTRA_FIELD_KEYS</code>（5 项）：<code>audit_ref</code> ⚠️ / <code>run_dir</code> / <code>reward_metadata_path</code> / <code>final_verifier_path</code> / <code>gold_patch_path</code><br>③ <code>FORBIDDEN_BATCH_EXTRA_FIELD_ALIASES</code>（1 项）：<code>run_directory</code><br>合并成 <code>FORBIDDEN_FIELD_MARKERS</code>，统一用作子串匹配的命中集</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">8</span> L4 执行点（_find_forbidden_marker + 三个 validate_*）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/rl/visibility.py:133-220</div>
+        <div class="rpfn">L4 执行 · _find_forbidden_marker + validate_batch_extra_fields + validate_gateway_extra_fields</div>
+        <div class="rpbody">
+          <span class="lbl">这一层做什么</span><span class="val">在 tool result / batch extra fields / gateway extra fields <b>出站给模型或下游训练通道</b>前扫描。同时扫 dict 的 key 和 value 字符串（递归）。</span>
+          <span class="lbl">关键函数</span><span class="val"><code>_find_forbidden_marker(value: str) → str | None</code>（line 133）：在 value 里搜 FORBIDDEN_FIELD_MARKERS 任一项 → 命中返回 marker 名，未命中返回 None<br><code>validate_batch_extra_fields(extra_fields: Mapping)</code>（line 186-206）：扫 batch.extra_fields 的所有 key + value<br><code>validate_gateway_extra_fields(extra_fields: Mapping)</code>（line 209-219）：扫 gateway 侧扩展字段</span>
+          <span class="lbl">失败时</span><span class="val"><code>raise VisibilityContractError</code>。命中即 raise，tool result 不会发给模型 turn N+1，episode 会被该 error 中断或降级</span>
+          <span class="lbl">案例 · 16G.2C audit_ref</span><span class="val">16G.2B 一度在 tool result <code>typed</code> dict 里写 <code>"audit_ref": ref.model_dump(...)</code>。出站时 L4 命中 <code>audit_ref</code>（属 FORBIDDEN_BATCH_EXTRA_FIELD_KEYS）→ raise → tool result 被拒。16G.2C 修复：改名为 <code>"audit_artifact_id"</code>（不在 forbidden 集合）+ <code>"audit_artifact"</code></span>
+          <span class="lbl">→ 继续看</span><span class="val">多 turn 跑完后进 T8，开始 L5</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:46-73</div>
+        <div class="rpfn">L5 数据 · _FORBIDDEN_PUBLIC_MARKERS（tuple） + _RUNTIME_PRIVATE_REF_PATTERN（regex）</div>
+        <div class="rpbody">
+          <span class="lbl">这一层拦什么</span><span class="val">T8 投影完毕<b>所有 14 个公开文件</b>里的 forbidden 子串。<b>比 L4 更宽</b>：除了 evaluator-only 字段名，还含<b>本机绝对路径前缀</b>（防止训练数据被泄漏到生产时含 dev 本机绝对路径）</span>
+          <span class="lbl">含什么 · _FORBIDDEN_PUBLIC_MARKERS</span><span class="val">绝对路径前缀：<code>/Users/</code> · <code>/private/</code> · <code>/workspace/</code> · <code>/testbed/</code> · <code>/root/</code> · <code>/home/</code> · <code>/tmp/</code> · <code>\Users\</code><br>runtime private：<code>runtime_private/</code> · <code>.repo_harness_runtime</code> · <code>.repo_harness_env_overlay</code><br>evaluator-only：<code>hidden_verifier</code> · <code>hiddenVerifier</code> · <code>hidden_test_selector</code> · <code>hidden_test_patch</code> · <code>gold_patch</code> · <code>test_patch</code> · <code>accepted_label</code> · <code>reward_metadata</code> · <code>complete_reward_metadata</code> · <code>provider_secret</code> · <code>FAIL_TO_PASS</code> · <code>PASS_TO_PASS</code></span>
+          <span class="lbl">合法 ref 占位</span><span class="val"><code>_RUNTIME_PRIVATE_REF_PATTERN = re.compile(r"runtime-private:[a-z0-9_.:-]+:[0-9a-f]{64}")</code>。扫描前先把所有合法的 opaque ref 替换成占位符（避免误伤）</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">10</span> L5 执行点（_scan_public_projection_for_leaks）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:638-650</div>
+        <div class="rpfn">L5 执行 · def _scan_public_projection_for_leaks(projection_dir) → list[str] findings</div>
+        <div class="rpbody">
+          <span class="lbl">这一层做什么</span><span class="val">T8 主入口在 validate 通过后调用本函数扫整个 <code>compat_projection/</code> 目录。<b>整个 RepoHarness 的最后一道墙</b>。命中即写进 validation_report，T9 inspector 后续也会发现。</span>
+          <span class="lbl">扫描逻辑</span><span class="val">① <code>for path in sorted(projection_dir.rglob("*"))</code> 遍历所有公开文件<br>② 跳过非文本后缀（只扫 <code>.json</code> / <code>.jsonl</code> / <code>.md</code> / <code>.txt</code> / <code>.log</code> / <code>.yaml</code> / <code>.yml</code> / <code>.patch</code> / <code>.diff</code>）<br>③ <code>text = path.read_text(encoding="utf-8", errors="ignore")</code><br>④ 用 <code>_RUNTIME_PRIVATE_REF_PATTERN.sub("runtime-private:&lt;kind&gt;:&lt;sha256&gt;", text)</code> 把合法 ref 替换成占位符<br>⑤ <code>for marker in _FORBIDDEN_PUBLIC_MARKERS: if marker in normalized_text: findings.append(f"{path.rel}:{marker}")</code></span>
+          <span class="lbl">失败时</span><span class="val">findings 非空 → 写进 validation_report 的 errors 字段；本 episode 的公开投影<b>仍然落盘</b>，但 T9 inspector 会发现并拒收</span>
+        </div>
+      </li>
+
+    </ol>
+  </div>
+
+  <h2 class="sec" id="overview">5 道防线总览</h2>
+  <div class="layers">
+<span class="L">模型在 turn N 发出 tool call</span>
+       <span class="l">│</span>
+       <span class="l">▼</span>
+┌──────────────────────────────────────────────────────────────────┐
+<span class="L">L1 · 工具 schema 校验</span>  <span class="l">(T4 dispatch 前)</span>
+  <span class="t">tools/minimal.py 各 ToolDefinition · additionalProperties:false</span>
+  <span class="l">- 必填字段 / 类型 / 枚举 / 字符串长度</span>
+  <span class="l">- apply_patch.operations 嵌套字段 schema</span>
+  <span class="l">- 拒绝时 status=invalid，附 schema 错误</span>
+└──────────────────────────────────────────────────────────────────┘
+       <span class="l">│</span> schema ok
+       <span class="l">▼</span>
+┌──────────────────────────────────────────────────────────────────┐
+<span class="L">L2 · 路径黑名单 + posix 校验</span>  <span class="l">(T5 准备阶段)</span>
+  <span class="t">tools/minimal.py:61 MODEL_HIDDEN_TOOL_PATH_PARTS</span>
+  <span class="l">- .git / .ssh / .env / .venv / node_modules / secret* / token*</span>
+  <span class="l">- 拒绝 windows 反斜杠、绝对路径、.. 父目录</span>
+  <span class="l">- 拒绝时 reason_code=model_hidden_path_denied 等</span>
+└──────────────────────────────────────────────────────────────────┘
+       <span class="l">│</span> path ok
+       <span class="l">▼</span>
+┌──────────────────────────────────────────────────────────────────┐
+<span class="L">L3 · 敏感 marker 路径变体归一化</span>  <span class="l">(T5 写盘前)</span>
+  <span class="t">tools/file_mutation.py:56 _SENSITIVE_PATH_MARKERS</span>
+  <span class="l">- finalverifier / goldpatch / hiddenverifier / hiddentestpatch ...</span>
+  <span class="l">- 小写 + 去 -_. → 与黑名单 frozenset 比对</span>
+  <span class="l">- 拒绝 "Hidden-Verifier" / "hidden.verifier" / "hidden_verifier" 等变体</span>
+└──────────────────────────────────────────────────────────────────┘
+       <span class="l">│</span> not sensitive
+       <span class="l">▼</span>
+   <span class="ok">写盘成功，构造 ToolResult</span>
+       <span class="l">│</span>
+       <span class="l">▼</span>
+┌──────────────────────────────────────────────────────────────────┐
+<span class="L">L4 · model-visible 出站扫描</span>  <span class="l">(T6 model-visible 渲染前)</span>
+  <span class="t">rl/visibility.py:56 FORBIDDEN_FIELD_MARKERS</span>
+  <span class="l">- EVALUATOR_ONLY_DENYLIST（11 个）∪ FORBIDDEN_BATCH_EXTRA_FIELD_KEYS（5 个）</span>
+  <span class="l">- 同时扫 typed dict key 与 value 字符串</span>
+  <span class="l">- 命中即 raise VisibilityContractError（模型看不到 tool result）</span>
+  <span class="l">⚠ 这层是 16G.2C 改名 audit_ref → audit_artifact_id 的原因</span>
+└──────────────────────────────────────────────────────────────────┘
+       <span class="l">│</span> visible ok
+       <span class="l">▼</span>
+   <span class="ok">模型 turn N+1 看到 tool result，继续生成</span>
+       <span class="l">│</span>
+       <span class="l">▼</span>
+       ... 多轮过后，T8 投影 ...
+       <span class="l">│</span>
+       <span class="l">▼</span>
+┌──────────────────────────────────────────────────────────────────┐
+<span class="L">L5 · 公开投影最终扫描</span>  <span class="l">(T8 fail closed)</span>
+  <span class="t">evaluation/episode_projection.py:46 _FORBIDDEN_PUBLIC_MARKERS</span>
+  <span class="l">- 包含子串 /Users/ /private/ /home/ /tmp/ runtime_private/ ...</span>
+  <span class="l">- 也含 hidden_verifier / gold_patch / accepted_label / FAIL_TO_PASS ...</span>
+  <span class="l">- 扫 14 个公开文件全部 .json .patch .diff</span>
+  <span class="l">- 命中即 finding 入报告，validation fail closed</span>
+└──────────────────────────────────────────────────────────────────┘</div>
+
+  <h2 class="sec" id="L1">L1 · 工具 schema 校验</h2>
+  <div class="where">
+    <div class="ttl"><span class="tno">L1</span><span class="lay">Schema</span><span class="meta-l">触发点：T4 分派之前 · 位置：每个工具 ToolDefinition</span></div>
+    <div class="rules">
+      <p><b>原理</b>：每个工具的 ToolDefinition 用 JSON schema 描述 input 参数，<code>additionalProperties: false</code> 硬禁未声明字段。apply_patch 的 <code>operations</code> 数组里每一项也是 nested schema，含 op 枚举、必填字段、字符串长度上限等。</p>
+      <p><b>关键代码</b>：<span class="lineref">tools/minimal.py:3282</span>（write_file ToolDefinition） · <span class="lineref">tools/minimal.py:3318</span>（apply_patch ToolDefinition + operations nested schema） · <span class="lineref">tools/minimal.py:3263+</span>（独立 delete_file / move_file，含 reason 必填）</p>
+      <p><b>典型拒绝</b>：<code>{"tool":"apply_patch","input":{"unified_diff":"…"}}</code> → schema 错误（apply_patch 没有 unified_diff 字段）；<code>{"tool":"delete_file","input":{"path":"x.py"}}</code>（缺 reason）→ schema 错误。</p>
+      <p><b>为什么独立成一层</b>：在调用 handler 之前就把"语法上明显非法"的请求拒掉，handler 里就可以认输入字段合法，<b>不必</b>每个 handler 都做参数 sanity 检查。</p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="L2">L2 · 路径黑名单 + posix 校验</h2>
+  <div class="where">
+    <div class="ttl"><span class="tno">L2</span><span class="lay">Path guard</span><span class="meta-l">触发点：T5 写盘 / 读盘<b>之前</b> · 位置：<code>tools/minimal.py:61</code> + <code>tools/file_mutation.py:_normalize_relative_path</code></span></div>
+    <div class="rules">
+      <p><b>静态黑名单</b>：<code>MODEL_HIDDEN_TOOL_PATH_PARTS</code>（<span class="lineref">tools/minimal.py:61</span>）含 30+ 项，比如：</p>
+      <pre><code>.git / .hg / .mypy_cache / .pre_verl_venv / .pytest_cache / .ruff_cache /
+.tox / .venv / .aws / .env / .gnupg / .netrc / .npmrc / .pypirc /
+.repo_harness_env_overlay / .repo_harness_runtime / .ssh /
+__pycache__ / build / credentials / credentials.json / dist /
+id_dsa / id_ecdsa / id_ed25519 / id_rsa / node_modules /
+pip.conf / pip.ini / secret / secret.json / secret.txt /
+secrets.json / token / token.json / token.txt / venv</code></pre>
+      <p><b>动态校验</b>：<span class="lineref">tools/file_mutation.py:579</span> <code>_normalize_relative_path</code>：</p>
+      <ul>
+        <li>不能是 <code>str</code> 之外的类型</li>
+        <li>不能为空字符串</li>
+        <li>不能超过 <code>STAGE16G2_PATH_MAX_CHARS</code></li>
+        <li>不能含 <code>\</code> 反斜杠（必须 posix 风格 <code>/</code>）</li>
+        <li>不能含 <code>..</code> 父目录引用</li>
+        <li>必须 workspace 相对路径（不能 <code>/abs</code>）</li>
+      </ul>
+      <p><b>典型拒绝 reason_code</b>：<code>model_hidden_path_denied</code> / <code>path_separator_not_allowed</code> / <code>path_too_long</code> / <code>path_empty</code> / <code>path_not_string</code></p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="L3">L3 · 敏感 marker 路径变体归一化</h2>
+  <div class="where">
+    <div class="ttl"><span class="tno">L3</span><span class="lay">Sensitive marker normalization</span><span class="meta-l">触发点：T5 路径校验之后、写盘<b>之前</b> · 位置：<code>tools/file_mutation.py:56</code></span></div>
+    <div class="rules">
+      <p><b>问题场景</b>：模型可能想绕过 L2 黑名单——比如不用 <code>.hidden_verifier</code> 而用 <code>hidden-verifier</code>、<code>HiddenVerifier.py</code>、<code>hidden.verifier</code>，但这些<b>本质都是想读/写 evaluator-only 资源</b>。L2 黑名单是逐字符串匹配，覆盖不到这些变体。</p>
+      <p><b>L3 做法</b>：把路径每段小写 + 去 <code>-</code>/<code>_</code>/<code>.</code> 分隔符，归一成无分隔小写，再和 <code>_SENSITIVE_PATH_MARKERS</code> frozenset 比对：</p>
+      <pre><code>_SENSITIVE_PATH_MARKERS = frozenset({
+    <span class="str">"failtopass"</span>, <span class="str">"finalverifier"</span>, <span class="str">"goldpatch"</span>, <span class="str">"groundtruth"</span>,
+    <span class="str">"hiddenfeedback"</span>, <span class="str">"hiddentestpatch"</span>, <span class="str">"hiddentestselector"</span>,
+    <span class="str">"hiddenverifier"</span>, <span class="str">"officialverifier"</span>, <span class="str">"passtopass"</span>,
+    <span class="str">"providersecret"</span>, <span class="str">"rewardextrainfo"</span>, <span class="str">"rewardmetadata"</span>,
+    <span class="str">"testpatch"</span>,
+})</code></pre>
+      <p>另一个 frozenset <code>_RUNTIME_PRIVATE_PATH_MARKERS</code> 含 <code>repoharnessenvoverlay / repoharnessrun / repoharnessruntime / repoharnesstmp / runtimeprivate</code>。</p>
+      <p><b>触发位置</b>：<span class="lineref">tools/file_mutation.py:603</span>，<code>any(marker in normalized_marker for marker in _SENSITIVE_PATH_MARKERS)</code></p>
+      <p><b>典型拒绝</b>：<code>"Hidden-Verifier/result.json"</code> → 归一为 <code>hiddenverifier</code> → 命中 → reason_code=<code>sensitive_marker_path_denied</code></p>
+      <p><b>为什么和 L2 分两层</b>：L2 拦"明显的隐藏文件夹"；L3 拦"故意改写法绕开 L2"。两层逻辑互补。</p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="L4">L4 · model-visible 出站扫描（forbidden marker）</h2>
+  <div class="where">
+    <div class="ttl"><span class="tno">L4</span><span class="lay">Visibility filter</span><span class="meta-l">触发点：T6 tool result 出站给模型<b>之前</b> · 位置：<code>rl/visibility.py:48-58</code> + <code>_find_forbidden_marker</code></span></div>
+    <div class="rules">
+      <p><b>三层 frozenset 合一</b>：</p>
+      <pre><code><span class="cm"># rl/visibility.py:28-58</span>
+EVALUATOR_ONLY_DENYLIST = {
+    <span class="str">"hidden_verifier"</span>, <span class="str">"gold_patch"</span>, <span class="str">"accepted_label"</span>,
+    <span class="str">"complete_reward_metadata"</span>, <span class="str">"provider_secret"</span>,
+    <span class="str">"evaluator_only_logs"</span>, <span class="str">"absolute_run_directory"</span>,
+    <span class="str">"final_verifier_artifact"</span>, <span class="str">"reward_metadata_artifact"</span>,
+    <span class="str">"hidden_test_selector"</span>, <span class="str">"hidden_test_patch"</span>,
+}
+FORBIDDEN_BATCH_EXTRA_FIELD_KEYS = {
+    <span class="str">"audit_ref"</span>,                            <span class="cm"># ⚠ 16G.2C 踩雷处</span>
+    <span class="str">"run_dir"</span>, <span class="str">"reward_metadata_path"</span>,
+    <span class="str">"final_verifier_path"</span>, <span class="str">"gold_patch_path"</span>,
+}
+FORBIDDEN_BATCH_EXTRA_FIELD_ALIASES = {<span class="str">"run_directory"</span>}
+FORBIDDEN_FIELD_MARKERS = (
+    EVALUATOR_ONLY_DENYLIST
+    | FORBIDDEN_BATCH_EXTRA_FIELD_KEYS
+    | FORBIDDEN_BATCH_EXTRA_FIELD_ALIASES
+)</code></pre>
+      <p><b>扫描方式</b>：<code>_find_forbidden_marker</code>（line 133）做<b>子串匹配</b>。即 typed dict 的某个 key 是 <code>"audit_ref"</code>，或者某个 value 字符串里出现 <code>"hidden_verifier"</code>，都会被命中。批量传播扫的是 key + value 两层（line 193 + 201 + 213 + 217）。</p>
+      <p><b>典型拒绝</b>：<code>VisibilityContractError</code>。模型不会看到原始 tool result，只会收到 gateway forbidden 形式的回执。</p>
+      <p><b>为什么不能简单去掉 audit_ref</b>：因为内部 <code>rl/episode.py:249</code> 的 <code>AuditRef</code> 模型、<code>rl/runtime.py</code> 的 <code>_audit_ref</code> 方法<b>合法地</b>用这个名字。两个独立可见域，名字相同会冲突——所以 16G.2C 决定<b>把 model-visible 那边改名</b>到 <code>audit_artifact_id</code> / <code>audit_artifact</code>，内部数据层不动。</p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="L5">L5 · 公开投影最终扫描</h2>
+  <div class="where">
+    <div class="ttl"><span class="tno">L5</span><span class="lay">Public projection scan</span><span class="meta-l">触发点：T8 写完 14 个文件 + manifest <b>之后</b> · 位置：<code>evaluation/episode_projection.py:46</code> + <code>_scan_public_projection_for_leaks</code>（line 638）</span></div>
+    <div class="rules">
+      <p><b>更宽的黑名单</b>：</p>
+      <pre><code>_FORBIDDEN_PUBLIC_MARKERS = (
+    <span class="str">"/Users/"</span>, <span class="str">"/private/"</span>, <span class="str">"/workspace/"</span>, <span class="str">"/testbed/"</span>,
+    <span class="str">"/root/"</span>, <span class="str">"/home/"</span>, <span class="str">"/tmp/"</span>, <span class="str">"\\Users\\"</span>,
+    <span class="str">"runtime_private/"</span>, <span class="str">"runtime_private\\"</span>,
+    <span class="str">".repo_harness_runtime"</span>, <span class="str">".repo-harness-runtime"</span>,
+    <span class="str">".repo_harness_env_overlay"</span>,
+    <span class="str">"hidden_verifier"</span>, <span class="str">"hiddenVerifier"</span>,
+    <span class="str">"hidden_test_selector"</span>, <span class="str">"hidden_test_patch"</span>,
+    <span class="str">"gold_patch"</span>, <span class="str">"test_patch"</span>,
+    <span class="str">"accepted_label"</span>, <span class="str">"reward_metadata"</span>,
+    <span class="str">"complete_reward_metadata"</span>, <span class="str">"provider_secret"</span>,
+    <span class="str">"FAIL_TO_PASS"</span>, <span class="str">"PASS_TO_PASS"</span>,
+)</code></pre>
+      <p><b>合法 ref 的占位替换</b>：扫描前先用 regex <code>runtime-private:&lt;kind&gt;:&lt;sha256&gt;</code> 把所有<b>合法的 opaque ref</b>替换成占位符，避免误伤。这是 <code>_RUNTIME_PRIVATE_REF_PATTERN</code>（line 73）。</p>
+      <p><b>扫描范围</b>：14 个公开文件全部 <code>.json / .jsonl / .md / .txt / .log / .yaml / .yml / .patch / .diff</code>。</p>
+      <p><b>典型结果</b>：在 16G.2C 我们看到 <code>finding_count=0</code>，说明 L5 在 16G.2 阶段已经稳定通过。</p>
+      <p><b>L4 vs L5 区别</b>：L4 拦的是<b>tool result → 模型 turn N+1 看到</b>这条链路；L5 拦的是<b>整个 episode 跑完 → 公开训练数据消费</b>这条链路。两层服务于不同消费者。</p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="audit-case">案例：16G.2C 实际踩雷 — audit_ref 被 L4 拦</h2>
+  <p>这是本系列里第一次有 stage 因 L4 被拦而修改字段名。把整个调试线索按时间复盘：</p>
+  <ol>
+    <li><b>16G.2B 写完</b>：tool result 成功路径在 typed dict 里写 <code>"audit_ref": ref.model_dump(mode="json")</code>。</li>
+    <li><b>16G.2C 跑 run_episode probe</b>：probe 报告 <code>forbidden_model_visible_marker_findings</code> 不为空，发现 typed dict 的 <code>audit_ref</code> 命中 <code>FORBIDDEN_BATCH_EXTRA_FIELD_KEYS</code>。</li>
+    <li><b>分析</b>：内部 <code>rl/episode.py:249</code> 的 <code>AuditRef</code> 字段（合法 evaluator-only 字段）和 tool result 的 <code>audit_ref</code> 字段（不应该 evaluator-only）名字冲突。L4 的子串匹配不区分这两个上下文。</li>
+    <li><b>修复（16G.2C 完成）</b>：在 tool result 改名 → <code>audit_artifact_id</code>（JSON content） + <code>audit_artifact</code>（typed dict）；保留内部 <code>AuditRef</code> 类不变。<br>—— 见 <span class="lineref">tools/minimal.py:2306</span> + <span class="lineref">:2322</span></li>
+    <li><b>16G.2C inspector 加固</b>：probe 报告新增 <code>forbidden_model_visible_marker_scan_passed</code> 字段，inspector 强制要求该字段为 true（见 T9 evidence 章节）。</li>
+  </ol>
+  <p class="small">教训：<b>给 tool result typed dict 新加字段时，必须先查 <code>visibility.py:48-58</code> 的 forbidden 集合</b>。16G.2C 完成报告 § R5 把这个"加 lint pass"列为 16G.3 启动前的小动作建议。</p>
+
+  <h2 class="sec" id="table">5 道防线对照表（速查）</h2>
+  <table>
+    <thead><tr><th>层</th><th>主题</th><th>主要文件</th><th>触发 T 点</th><th>关键 frozenset / 常量</th><th>失败时</th></tr></thead>
+    <tbody>
+      <tr><td><b>L1</b></td><td>工具 schema</td><td>tools/minimal.py</td><td>T4</td><td>每工具 ToolDefinition.input_schema</td><td>status=invalid（schema 错误）</td></tr>
+      <tr><td><b>L2</b></td><td>路径黑名单</td><td>tools/minimal.py:61 + tools/file_mutation.py:579</td><td>T5 写盘前</td><td>MODEL_HIDDEN_TOOL_PATH_PARTS + posix 校验</td><td>FileMutationDenial(reason_code=model_hidden_path_denied/path_*)</td></tr>
+      <tr><td><b>L3</b></td><td>敏感 marker 变体</td><td>tools/file_mutation.py:56</td><td>T5 写盘前</td><td>_SENSITIVE_PATH_MARKERS + _RUNTIME_PRIVATE_PATH_MARKERS</td><td>FileMutationDenial(reason_code=sensitive_marker_path_denied)</td></tr>
+      <tr><td><b>L4</b></td><td>model-visible 出站</td><td>rl/visibility.py:56</td><td>T6 出站前</td><td>FORBIDDEN_FIELD_MARKERS（3 子集合并）</td><td>VisibilityContractError（模型看不到 result）</td></tr>
+      <tr><td><b>L5</b></td><td>公开投影扫描</td><td>evaluation/episode_projection.py:46 + 638</td><td>T8 写完后</td><td>_FORBIDDEN_PUBLIC_MARKERS + _RUNTIME_PRIVATE_REF_PATTERN</td><td>findings 非空 → validation 报告 fail closed</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn"><b>给 16G.3 / 16G.4 改动的人：</b>新加工具或新加字段时，<b>对照表逐层检查</b>，每层都过：<br>
+  ① schema 是否 additionalProperties:false<br>
+  ② 路径相关参数是否走 L2 / L3 校验<br>
+  ③ 输出字段名是否撞 L4 forbidden（最容易踩）<br>
+  ④ 输出值字符串是否可能含 L5 forbidden 子串（比如错误信息里把 absolute path 抛出来了）<br>
+  漏一层就可能在下一次 stage probe 时被发现，得返工。</div>
+
+  <div class="navbar">
+    <a href="code_guide_t5_execute.html">↗ T5 工具执行</a>
+    <a href="code_guide_index.html">↑ 总览索引</a>
+    <a href="code_guide_t8_projection.html">↗ T8 投影</a>
+  </div>
+
+</main>
+</div>
+</body>
+</html>

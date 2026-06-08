@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四方工具能力详细对比 · Codex / Claude Code / mini-SWE / RepoHarness</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+    --cx:#e0a07e; --cc:#7ee0c0; --mini:#e0c08e; --rh:#9cc4ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1300px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:248px;flex:0 0 248px;padding:22px 12px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 10px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:5px 9px;border-radius:6px;font-size:12.7px;margin-bottom:1px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.grp{color:#cdd6e6;font-weight:600;margin-top:10px;font-size:12.4px}
+  nav a.sub{padding-left:22px;font-size:12.2px}
+  main{flex:1;min-width:0;padding:34px 40px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.4px;margin-bottom:18px}
+  h2.sec{font-size:20px;margin:42px 0 12px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.5px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:12.3px;line-height:1.55}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:12.7px}
+  th,td{border:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .ov a{color:#9cc4ff;text-decoration:none}.ov a:hover{text-decoration:underline}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;border-radius:14px;padding:17px 19px;margin:8px 0}
+  .tldr b{color:var(--accent2)}
+  .callout{border-radius:10px;padding:11px 14px;margin:11px 0;font-size:13.4px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:6px 0;padding-left:20px}li{margin:4px 0}
+  .small{font-size:12.3px;color:var(--muted)}
+  /* 四 harness intro 卡片 */
+  .four{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:11px 0}
+  .icard{border-radius:11px;padding:12px 14px;border:1px solid}
+  .icard.cx{background:#231d10;border-color:#6b5a2f}
+  .icard.cc{background:#10231d;border-color:#2f6b5a}
+  .icard.mini{background:#231410;border-color:#6b3a2f}
+  .icard.rh{background:#101a2b;border-color:#34507a}
+  .icard h4{margin:0 0 5px;font-size:14px}
+  .icard.cx h4{color:var(--cx)}.icard.cc h4{color:var(--cc)}.icard.mini h4{color:var(--mini)}.icard.rh h4{color:var(--rh)}
+  .icard p{font-size:12.5px;margin:4px 0;color:#cdd6e6}
+  /* 工具深度卡片 */
+  .cap{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 15px;margin:11px 0}
+  .cap .hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+  .cap .nm{font-size:14.5px;font-weight:700;color:#fff}
+  .cap .desc{font-size:12.7px;color:#cdd6e6;margin-bottom:7px}
+  .cap .ex{background:#0d1620;border:1px solid #243449;border-radius:7px;padding:7px 11px;font-size:12.6px;margin:6px 0}
+  .cap .ex .lab{color:#7eb6e0;font-weight:600;font-size:11.5px}
+  .four-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin:7px 0}
+  .four-row .col{padding:7px 9px;border-radius:6px;font-size:12.4px;border:1px solid}
+  .four-row .col.cx{background:#1f1a0e;border-color:#5a4a26}
+  .four-row .col.cc{background:#0f1f1a;border-color:#26594b}
+  .four-row .col.mini{background:#1f1410;border-color:#5a3327}
+  .four-row .col.rh{background:#0f1726;border-color:#28456b}
+  .four-row .col .who{font-weight:700;font-size:11.3px;margin-bottom:3px}
+  .four-row .col.cx .who{color:var(--cx)}.four-row .col.cc .who{color:var(--cc)}.four-row .col.mini .who{color:var(--mini)}.four-row .col.rh .who{color:var(--rh)}
+  .takeaway{background:#11261c;border:1px solid #2f6b3a;border-radius:7px;padding:7px 11px;margin-top:7px;font-size:12.6px}
+  .takeaway b{color:#6fdc84}
+  /* 任务场景表 */
+  .scenario{margin:14px 0}
+  .scenario table th:first-child{width:14%}
+  .footer{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:#6b7484;font-size:12.3px}
+  @media(max-width:980px){nav{display:none}main{padding:22px 16px}.four-row{grid-template-columns:1fr 1fr}.four{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#tldr">总览 + 怎么用</a>
+  <a href="#intros">1 · 四方简介</a>
+  <a href="#overview">★ 2 · 顶部总览对比表</a>
+  <a href="#scenario">3 · 任务场景叙事(修 parse_config)</a>
+  <a href="#cards" class="grp">4 · 详细卡片</a>
+  <a href="#cap-read" class="sub">① 看文件</a>
+  <a href="#cap-search" class="sub">② 搜索 / 文件发现</a>
+  <a href="#cap-symbol" class="sub">③ 符号导航 / LSP</a>
+  <a href="#cap-edit" class="sub">④ 改一处代码</a>
+  <a href="#cap-write" class="sub">⑤ 新建 / 覆盖文件</a>
+  <a href="#cap-patch" class="sub">⑥ 多文件 patch / 批量</a>
+  <a href="#cap-fileops" class="sub">⑦ 删 / 移 / 建目录</a>
+  <a href="#cap-shell" class="sub">⑧ 跑命令 / shell</a>
+  <a href="#cap-test" class="sub">⑨ 跑定向测试</a>
+  <a href="#cap-scratch" class="sub">⑩ 写复现脚本</a>
+  <a href="#cap-persist" class="sub">⑪ 持久 shell / 长会话</a>
+  <a href="#cap-dep" class="sub">⑫ 依赖 / 环境</a>
+  <a href="#cap-todo" class="sub">⑬ 任务管理</a>
+  <a href="#cap-perm" class="sub">⑭ 权限拒绝恢复</a>
+  <a href="#cap-multi" class="sub">⑮ 子代理 / 多代理</a>
+  <a href="#cap-mcp" class="sub">⑯ 外部工具 MCP/插件</a>
+  <a href="#takeaways">5 · 关键差异 + 给 RH 的启示</a>
+</nav>
+<main>
+  <h1>四方工具能力详细对比 · Codex / Claude Code / mini-SWE / RepoHarness</h1>
+  <p class="meta">面向 RepoHarness 16G 后续设计的<b>详细对照</b>　·　Codex 数据源:<code>reference/codex/</code> commit <code>61cbf357</code>(已核实 exec_command 字段、apply_patch.lark 语法、workspace permission profile)　·　Claude Code 数据源:<code>reference/claude-code-typescript-src/</code>　·　mini-SWE 数据源:评测 worktree 真实配置/日志　·　RepoHarness 数据源:本仓库 Stage 16G.0–16G.2 公开 evidence　·　配套:<a href="repo_harness_verl_harness_capability_acceptance_map.html">RepoHarness 能力总表(中心)</a>、<a href="repo_harness_verl_stage16g_codex_harness_overview.html">Codex 专题</a>、<a href="repo_harness_verl_stage16g0_harness_comparison_basics.html">扫盲版三方对比</a></p>
+
+  <div class="tldr" id="tldr">
+    <p style="margin-top:0"><b>这页是什么:</b>把<b>同一件软件工程动作</b>(看文件/搜代码/改 patch/跑测试/写复现/装依赖/...)在<b>四个 harness</b> 里分别怎么做、字段叫什么、有什么细节,放在一页对照清楚。让你<b>不必再回去看源码或几份长文档</b>。</p>
+    <p style="margin:7px 0"><b>结构:</b>① 四个 harness 一段话各自简介 → ② 顶部总览对比表(一眼看全貌,点跳到详细) → ③ 拿一个真实修 bug 任务,从定位到收口走完整闭环,4 个 harness 并排对照 → ④ 16 个工具能力的<b>深度卡片</b>(每个:介绍 + 具体例子 + 4 列 harness 做法 + 给 RH 启示) → ⑤ 关键差异和给 RH 的启示总结。</p>
+    <p style="margin-bottom:0"><b>一句话结论:</b>Codex 和 Claude Code 都把"模型多轮调工具+真命令+受控修改"做成核心闭环,只是<b>风格不同</b>(Codex shell+apply_patch 中心 / Claude Code 结构化分层)。mini-SWE 是"只给 Bash"的能力下限参照。RepoHarness 16G 路线既不是抄一家,也不是回到极窄工具面 —— 而是 <b>Claude Code 的结构化文件导航 + Codex 的 apply_patch + 自研受控公开命令 + 自研训练数据治理</b>。</p>
+    <p style="margin-bottom:0"><b>读法提醒:</b>这页是能力语义对照,不是安全模型照搬。Codex / Claude Code 是产品态,可以用真人 approval、用户授权和本机沙箱兜底；RepoHarness 是训练态,不能让 RL 样本依赖真人审批,必须把同等语义落到确定性 profile、公开/隐藏环境隔离、quarantine、artifact 脱敏和训练资格门禁上。</p>
+  </div>
+
+  <!-- ===== 1 ===== -->
+  <h2 class="sec" id="intros">1 · 四方简介(一句话各自定位)</h2>
+  <div class="four">
+    <div class="icard cx">
+      <h4>🟠 Codex (OpenAI)</h4>
+      <p><b>产品态本地开发代理运行时。</b>多入口(TUI/exec/app-server/SDK)同一 <code>codex-core</code>,Rust 实现。模型可见工具偏 <b>shell+patch 中心</b>:<code>shell_command</code> / <code>exec_command</code>+<code>write_stdin</code>(统一执行)、<code>apply_patch</code>(Lark grammar 验证)、<code>update_plan</code>/<code>goal</code>、MCP、code mode、multi-agent。安全靠 <b>PermissionProfile</b>(workspace 写但保护 <code>.git</code>/<code>.codex</code>/<code>.agents</code>)+ 跨平台 sandbox(Seatbelt/bubblewrap)+ <b>Guardian</b> 自动审查 + Hooks 生命周期 + <code>rollout-trace</code> 分层审计。</p>
+    </div>
+    <div class="icard cc">
+      <h4>🟢 Claude Code (Anthropic)</h4>
+      <p><b>产品态开发代理,显式结构化分层。</b>TypeScript 实现。模型工具明确拆分:<code>Read</code>(文本/图片/PDF/notebook)、<code>Grep</code>/<code>Glob</code>(独立搜索)、<code>Edit</code>(exact replace)、<code>Write</code>(新建/覆盖)、<code>Bash</code>(完整 shell + 权限)、<code>TodoWrite</code>、<code>AgentTool</code>(子代理)、<code>MCPTool</code>、<code>ToolSearchTool</code>(延迟工具发现)、<code>LSPTool</code>(符号/诊断)。权限 3 档(allow/ask/deny)+ deny 优先 + suggestions 恢复路径 + Hooks(PreToolUse/PostToolUse)。</p>
+    </div>
+    <div class="icard mini">
+      <h4>🟡 mini-SWE-agent</h4>
+      <p><b>能力下限参照:只给一个 Bash。</b>模型每轮发一条 shell 命令,通过 stdout/stderr/exit code 反馈迭代。看文件 <code>cat</code>、搜 <code>grep</code>、改用 <code>sed</code>/<code>tee</code>、跑测试 <code>python -m pytest ...</code>、装依赖 <code>pip install</code>。安全主要靠外层容器(SWE-Bench Docker /testbed)。没有结构化工具、没有显式权限/审计层、没有 todo / MCP。<b>象征意义:即使只给 Bash,也能形成"定位→复现→改→验证"闭环</b>(动态诊断能力下限)。</p>
+    </div>
+    <div class="icard rh">
+      <h4>🔵 RepoHarness(我们)</h4>
+      <p><b>训练 harness,不是产品。</b>Python。当前默认 core:<code>read_file</code>/<code>grep</code>/<code>glob_files</code>/<code>symbol_search</code>(轻量 AST)/<code>edit_file</code>/<code>create_file</code> + <code>write_file</code>(带 expected_hash)+ <code>apply_patch</code>(结构化批量,Codex 同款方向);<code>delete/move/mkdir</code> 经 apply_patch 表达、独立工具仅 extended。<b>16G.2B 已开启真实写入行为,16G.2C 已接通 final.patch / TrainingView / export projection 链路</b>,但训练资格(policy_loss)仍关着,等 16G.6 freeze + 17B 真实数据闸门。<b>16G.3</b> 待补:<code>run_public_command</code>/<code>run_project_test</code>/<code>scratch_python</code>。<b>16G.4</b> 收口持久 shell(进 extended) + 依赖 + 权限恢复 + 训练 linkage。安全靠确定性 path policy + 训练资格门禁,不靠真人审批。</p>
+    </div>
+  </div>
+
+  <!-- ===== 2 ===== -->
+  <h2 class="sec" id="overview">★ 2 · 顶部总览对比表</h2>
+  <p class="small">列标记: <span class="tag t-good">✓</span> 有/原生 · <span class="tag t-warn">~</span> 部分/形态变 · <span class="tag t-bad">✗</span> 无 · <span class="tag t-info">代→</span> 经其他工具表达。点行首跳详细卡片。</p>
+  <table class="ov">
+    <tr><th style="width:24%">工具能力</th><th class="c">Codex</th><th class="c">Claude Code</th><th class="c">mini-SWE</th><th class="c">RepoHarness(16G 后)</th></tr>
+    <tr><td><a href="#cap-read">① 看文件</a></td><td class="c">代→<code>exec_command</code>(<code>cat</code>)</td><td class="c"><span class="tag t-good">✓</span> <code>Read</code>(文/图/PDF)</td><td class="c"><code>cat</code></td><td class="c"><span class="tag t-good">✓</span> <code>read_file</code>(纯文本)</td></tr>
+    <tr><td><a href="#cap-search">② 搜索 / 文件发现</a></td><td class="c">代→ shell <code>rg</code>/<code>grep</code>/<code>find</code></td><td class="c"><span class="tag t-good">✓</span> <code>Grep</code>+<code>Glob</code></td><td class="c"><code>grep -rn</code> / <code>find</code></td><td class="c"><span class="tag t-good">✓</span> <code>grep</code>+<code>glob_files</code></td></tr>
+    <tr><td><a href="#cap-symbol">③ 符号 / LSP</a></td><td class="c"><span class="tag t-bad">✗</span></td><td class="c"><span class="tag t-good">✓</span> <code>LSPTool</code></td><td class="c"><span class="tag t-bad">✗</span></td><td class="c"><span class="tag t-warn">~</span> 轻量 AST</td></tr>
+    <tr><td><a href="#cap-edit">④ 改一处代码</a></td><td class="c">代→ <code>apply_patch</code></td><td class="c"><span class="tag t-good">✓</span> <code>Edit</code>(exact)</td><td class="c"><code>sed -i</code> / 重写</td><td class="c"><span class="tag t-good">✓</span> <code>edit_file</code>(exact)</td></tr>
+    <tr><td><a href="#cap-write">⑤ 新建 / 覆盖文件</a></td><td class="c">代→ <code>apply_patch</code>(Add)</td><td class="c"><span class="tag t-good">✓</span> <code>Write</code></td><td class="c"><code>echo &gt;</code> / heredoc</td><td class="c"><span class="tag t-good">✓</span> <code>create_file</code>+<code>write_file</code>(带 hash)</td></tr>
+    <tr><td><a href="#cap-patch">⑥ 多文件 patch</a></td><td class="c"><span class="tag t-good">✓★</span> <code>apply_patch</code>(Lark)</td><td class="c">多次 <code>Edit</code></td><td class="c"><code>git apply</code> / 多 sed</td><td class="c"><span class="tag t-good">✓</span> <code>apply_patch</code>(结构化 ops + reason)</td></tr>
+    <tr><td><a href="#cap-fileops">⑦ 删/移/建目录</a></td><td class="c">apply_patch 含 Delete/Move</td><td class="c">Write+Bash 组合</td><td class="c"><code>rm</code>/<code>mv</code>/<code>mkdir</code></td><td class="c">经 apply_patch ops(独立工具仅 extended)</td></tr>
+    <tr><td><a href="#cap-shell">⑧ 跑命令 / shell</a></td><td class="c"><span class="tag t-good">✓★</span> <code>exec_command</code> 约 11 字段</td><td class="c"><span class="tag t-good">✓</span> <code>Bash</code>(完整)</td><td class="c"><span class="tag t-good">✓</span> 仅此一物</td><td class="c"><span class="tag t-warn">受控待 16G.3</span> <code>run_public_command</code></td></tr>
+    <tr><td><a href="#cap-test">⑨ 跑定向测试</a></td><td class="c">代→ exec_command 跑 pytest</td><td class="c">代→ Bash 跑 pytest</td><td class="c">shell pytest case</td><td class="c"><span class="tag t-warn">~</span> 现 <code>run_tests</code> 无参数 →16G.3 <code>run_project_test</code></td></tr>
+    <tr><td><a href="#cap-scratch">⑩ 写复现脚本</a></td><td class="c">代→ apply_patch+exec_command</td><td class="c">代→ Write+Bash</td><td class="c">heredoc / <code>echo &gt; t.py</code></td><td class="c"><span class="tag t-bad">✗</span> 待 16G.3 <code>scratch_python</code></td></tr>
+    <tr><td><a href="#cap-persist">⑪ 持久 shell</a></td><td class="c"><span class="tag t-good">✓★</span> <code>exec_command</code>+<code>write_stdin</code>(PTY)</td><td class="c"><span class="tag t-good">✓</span> 后台 Bash/Task</td><td class="c"><span class="tag t-warn">~</span> 容器存活</td><td class="c"><span class="tag t-warn">仅诊断</span> <code>diagnostic_shell</code> 半持久, extended 待 16G.4</td></tr>
+    <tr><td><a href="#cap-dep">⑫ 依赖 / 环境</a></td><td class="c">workspace_write+approval</td><td class="c">Bash+权限</td><td class="c">容器 + <code>pip install</code></td><td class="c"><span class="tag t-bad">✗</span> 现拒绝 → 16G.4 私有 overlay</td></tr>
+    <tr><td><a href="#cap-todo">⑬ 任务管理</a></td><td class="c"><span class="tag t-good">✓</span> <code>update_plan</code>+<code>goal</code></td><td class="c"><span class="tag t-good">✓</span> <code>TodoWrite</code></td><td class="c"><span class="tag t-bad">✗</span></td><td class="c"><span class="tag t-warn">~</span> <code>update_working_state</code>(较弱)</td></tr>
+    <tr><td><a href="#cap-perm">⑭ 权限拒绝恢复</a></td><td class="c"><span class="tag t-good">✓★</span> approval + guardian event</td><td class="c"><span class="tag t-good">✓</span> deny+suggestions</td><td class="c">shell 错误字符串</td><td class="c"><span class="tag t-good">✓</span> reason_code/recovery_hint/safe_argv</td></tr>
+    <tr><td><a href="#cap-multi">⑮ 子代理</a></td><td class="c"><span class="tag t-good">✓</span> multi-agent v1/v2</td><td class="c"><span class="tag t-good">✓</span> <code>AgentTool</code></td><td class="c"><span class="tag t-bad">✗</span></td><td class="c"><span class="tag t-bad">✗</span> post-16G 预留</td></tr>
+    <tr><td><a href="#cap-mcp">⑯ 外部工具 MCP/插件</a></td><td class="c"><span class="tag t-good">✓</span> MCP + plugin + connector + skill</td><td class="c"><span class="tag t-good">✓</span> MCPTool+插件+技能</td><td class="c"><span class="tag t-bad">✗</span></td><td class="c"><span class="tag t-bad">✗</span> post-16G 预留</td></tr>
+  </table>
+
+  <!-- ===== 3 ===== -->
+  <h2 class="sec" id="scenario">3 · 任务场景叙事 —— 「修 parse_config」完整闭环</h2>
+  <div class="callout info">
+    <b>任务:</b><code>parse_config()</code> 缺 timeout 字段时 <code>KeyError</code> 崩溃。要改成"缺字段返回默认值"。涉及 <b>config_parser.py</b>(主修复) + <b>defaults.py</b>(加 <code>DEFAULT_TIMEOUT</code> 常量),新建 <b>tests/test_config_parser.py</b>。项目需 <code>pip install -e .</code> 才能跑测试。下面看四个 harness 各自怎么走完整闭环 ↓
+  </div>
+
+  <div class="scenario">
+  <table>
+    <tr><th>步骤</th><th>🟠 Codex</th><th>🟢 Claude Code</th><th>🟡 mini-SWE</th><th>🔵 RepoHarness(16G 完成后)</th></tr>
+    <tr><td><b>① 定位 bug</b></td><td><code>exec_command{cmd:"rg 'def parse_config' -n"}</code></td><td><code>Grep("def parse_config")</code></td><td><code>grep -rn "def parse_config" .</code></td><td><code>grep("def parse_config")</code></td></tr>
+    <tr><td><b>② 看源码</b></td><td><code>exec_command{cmd:"cat -n config_parser.py"}</code></td><td><code>Read("config_parser.py")</code>(带行号 + 分页)</td><td><code>cat config_parser.py</code></td><td><code>read_file("config_parser.py", 1, 100)</code></td></tr>
+    <tr><td><b>③ 写复现验证</b></td><td>apply_patch 建 <code>repro.py</code> → <code>exec_command{cmd:"python repro.py"}</code></td><td><code>Write("repro.py", ...)</code> → <code>Bash("python repro.py")</code></td><td><code>echo "..." &gt; repro.py &amp;&amp; python repro.py</code></td><td><code>scratch_python(code)</code>(16G.3 待补,临时空间)</td></tr>
+    <tr><td><b>④ 改两个文件</b></td><td>一次 <code>apply_patch</code> 含 2 个 Update File(config_parser.py + defaults.py)+ Add File(test)</td><td>2 次 <code>Edit</code> + 1 次 <code>Write</code></td><td>2 次 <code>sed -i</code> + <code>cat &gt; test...</code></td><td>一次 <code>apply_patch{operations:[replace_text×2, write_file×1, reason]}</code></td></tr>
+    <tr><td><b>⑤ 装依赖</b></td><td><code>exec_command{cmd:"pip install -e .",justification:"...",sandbox_permissions:"with_additional_permissions"}</code> → 可能 approval/guardian 拦</td><td><code>Bash("pip install -e .")</code>(可能 ask)</td><td><code>pip install -e .</code>(容器内自由)</td><td>16G.4 受控 <code>dependency_setup_policy</code> / setup profile,装到<b>每题私有 overlay</b>,不污染共享</td></tr>
+    <tr><td><b>⑥ 跑定向测试</b></td><td><code>exec_command{cmd:"python -m pytest tests/test_config_parser.py::test_missing_timeout -q"}</code></td><td><code>Bash("python -m pytest tests/test_config_parser.py::test_missing_timeout")</code></td><td><code>python -m pytest tests/test_config_parser.py::test_missing_timeout -x</code></td><td>16G.3 <code>run_project_test(test_profile_id:"pytest_default", selector:"tests/test_config_parser.py::test_missing_timeout")</code></td></tr>
+    <tr><td><b>⑦ 看 diff</b></td><td><code>exec_command{cmd:"git diff"}</code></td><td><code>Bash("git diff")</code></td><td><code>git diff</code></td><td><code>git_diff()</code>(已有)</td></tr>
+    <tr><td><b>⑧ 收口</b></td><td>结束 turn,所有 patch 自动进 file change event</td><td>final answer,改动靠 Git 抓</td><td>shell session 结束,容器 patch 抓</td><td>harness 抓 git diff → final.patch → hygiene → projection / TrainingView(16G.2C 接通);reward 数值和最终训练资格仍属后续阶段</td></tr>
+  </table>
+  </div>
+  <div class="callout good">
+    <b>读这张表读出什么:</b><br>
+    ① <b>Codex 的"apply_patch 一次改多文件"是它的特色</b> —— 一次工具调用解决 4 步可能其他 harness 要 3-4 次。但同时它什么都靠 exec_command,模型每个动作都套一层 shell command。<br>
+    ② <b>Claude Code 工具最分化</b> —— 每一步用一个专门工具(Read/Edit/Write/Bash),模型 action attribution 最清楚,但工具数最多。<br>
+    ③ <b>mini-SWE 最直接</b> —— 一个 bash 走天下,简单但安全/审计全靠外层容器。<br>
+    ④ <b>RepoHarness(16G 完成后)</b> = "Claude Code 的结构化文件导航 + Codex 的 apply_patch + 自研受控公开命令 + 自研训练数据治理"。这是<b>故意混合的设计</b>,不是任一家的复刻。
+  </div>
+
+  <!-- ===== 4 ===== -->
+  <h2 class="sec" id="cards">4 · 详细卡片 —— 16 个工具能力逐个展开</h2>
+
+  <div class="cap" id="cap-read">
+    <div class="hd"><span class="nm">① 看文件 (read)</span></div>
+    <div class="desc">读仓库内的文件内容,带行号便于引用。</div>
+    <div class="ex"><span class="lab">例子</span> 想看 <code>config_parser.py</code> 第 30-60 行写了什么</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b>普通模型工具面没有 Claude Code 那种专门 Read。</b>靠 <code>exec_command{cmd:"cat -n config_parser.py"}</code> 或 <code>head -n 60 config_parser.py</code>。app-server / 客户端 API 里有文件读写接口,但那不是这页讨论的普通模型可见 SWE 工具。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>Read</code>(FileReadTool):</b>支持 <b>文本 + 图片 + PDF + notebook</b>;行范围、token 预算、大文件分页;有专门的输出协议防"递归 Read"。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>cat config_parser.py</code> 或 <code>sed -n '30,60p' config_parser.py</code>。一次给全部,大文件可能被 truncation 截断。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b><code>read_file(path, start_line, end_line)</code></b>:纯文本 + 行范围 + 工作区路径校验 + 隐藏路径过滤(.git/runtime_private/hiddenverifier 拒绝)。无多模态(post-16G optional)。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>结构化 read 是 Claude Code/RH 路线的优势(更可审计、更易做截断/脱敏)。Codex 用 shell 读文件靠的是 exec_command 的输出截断 + 沙箱;RH 不必学这点,保留结构化 read_file。多模态读取(图片/PDF)留 post-16G,不阻塞主线。</div>
+  </div>
+
+  <div class="cap" id="cap-search">
+    <div class="hd"><span class="nm">② 搜索 / 文件发现 (grep / glob)</span></div>
+    <div class="desc">在仓库内容里搜文字/正则,或按文件名 pattern 找文件。</div>
+    <div class="ex"><span class="lab">例子</span> 找所有定义 <code>parse_config</code> 的位置 + 找所有 <code>test_*.py</code></div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div>shell:<code>exec_command{cmd:"rg 'def parse_config' -n"}</code>;文件发现:<code>find . -name 'test_*.py'</code>。没有专门 Grep/Glob 工具。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b>独立工具</b>:<code>Grep(pattern)</code> + <code>Glob(pattern)</code>。结果可在 UI 折叠展示(权限独立,不需 Bash 权限)。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>grep -rn "def parse_config" .</code>(<code>-r</code> 递归 + <code>-n</code> 行号);文件:<code>find . -name 'test_*.py'</code>。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><code>grep(query)</code> + <code>glob_files(pattern)</code> + <code>list_files</code>。和 Claude Code 一对一对齐。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>独立 Grep/Glob 是更好的设计 —— Codex 走 shell 是因为它整体 shell 中心。RH 保留独立的搜索工具是对的(更易做输出截断+权限隔离)。</div>
+  </div>
+
+  <div class="cap" id="cap-symbol">
+    <div class="hd"><span class="nm">③ 符号导航 / LSP</span></div>
+    <div class="desc">跳到定义、找引用、类型诊断 —— 比文本搜索更精确的代码理解。</div>
+    <div class="ex"><span class="lab">例子</span> 找 <code>parse_config</code> 的所有调用处 / 看类型签名</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b>没有原生 LSP 工具</b>。靠 shell + grep 模糊定位。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>LSPTool</code></b>:LSP server 集成 —— goto definition、find references、hover info、诊断。懒加载。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div>无。靠 grep。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b><code>symbol_search</code></b>:轻量 Python AST 搜索(类/函数/方法),不是完整 LSP。post-16G optional。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>这一块不是主 RL 阻塞项(post-16G optional)。Claude Code 强 LSP 主要因为它是产品态,需要 IDE-like 体验。RH 训练阶段轻量 AST 够用,深 LSP 留后续。</div>
+  </div>
+
+  <div class="cap" id="cap-edit">
+    <div class="hd"><span class="nm">④ 改一处代码 (exact edit)</span></div>
+    <div class="desc">把已有文件里的一段文本精确替换成新文本。</div>
+    <div class="ex"><span class="lab">例子</span> 把 <code>raise KeyError(...)</code> 改成 <code>return DEFAULT_TIMEOUT</code></div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b>没有专门 Edit。</b>用 <code>apply_patch</code> 的 <code>*** Update File:</code> hunk(@@ 上下文 + +/- 行)。一处改也走 apply_patch。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>Edit(file, old, new)</code></b>:exact replace,要求 old 在文件中唯一匹配。简单可靠。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>sed -i 's/raise KeyError.../return DEFAULT_TIMEOUT/' config_parser.py</code> 或重写整个文件。sed 语法易错。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b><code>edit_file(path, old, new)</code></b>:和 Claude Code 一对一。Stage 16G.2 完成后,复杂多文件改用 <code>apply_patch</code> 表达。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>edit_file 不残缺,和 CC Edit 同级。Codex 没专门 Edit 是它的设计选择,不代表 RH 必须跟进。"单处改用 edit_file,多处/跨文件用 apply_patch"是清晰的能力分工。</div>
+  </div>
+
+  <div class="cap" id="cap-write">
+    <div class="hd"><span class="nm">⑤ 新建 / 覆盖文件 (write)</span></div>
+    <div class="desc">建一个新文件,或覆盖一个已有文件。</div>
+    <div class="ex"><span class="lab">例子</span> 新建 <code>tests/test_config_parser.py</code>;覆盖 <code>defaults.py</code> 加常量</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div>走 <code>apply_patch</code> 的 <code>*** Add File:</code>(新建)或 Update File(覆盖)。没有独立 Write。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>Write(file, content)</code></b>:新建/覆盖统一。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>cat &gt; new.py &lt;&lt;'EOF' ... EOF</code> 或 <code>echo "..." &gt; new.py</code>(重定向覆盖)。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div>分开两个:<b><code>create_file</code></b>(只新建,已存在拒)+ <b><code>write_file(mode, expected_content_hash)</code></b>(覆盖必须带 hash,防 stale 覆盖)。<b>这是和 CC/Codex 都不同的安全细节</b>。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>"create-only vs overwrite-with-hash" 拆开是 RH 比 CC/Codex 更严的训练态选择 —— RL 数据要干净,模型不能盲目覆盖文件。Codex 通过 apply_patch 的 <code>@@</code> 上下文做类似保护;CC Edit 要求 old 唯一匹配作隐式保护;RH 把这个变成<b>显式 expected_hash</b>。</div>
+  </div>
+
+  <div class="cap" id="cap-patch">
+    <div class="hd"><span class="nm">⑥ 多文件 patch / 结构化批量 ★</span></div>
+    <div class="desc">一次表达"跨文件多处改动 + 新增 + 删除 + 移动"的批量操作。</div>
+    <div class="ex"><span class="lab">例子</span> 函数改名涉及 3 文件 8 处,要一次原子完成</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b><code>apply_patch</code>(核心特色)</b>:Lark grammar 定义的 freeform tool。结构:<code>*** Begin Patch / hunks / *** End Patch</code>,hunks 含 <code>Add File / Delete File / Update File(可含 Move to)</code> + <code>@@ 上下文 / +/- 行</code>。执行前 <b>验证</b> patch+路径,进 sandbox+approval+file change event,streamed argument diff(UI 看进度)。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b>没有专门 apply_patch</b>。多文件靠多次 Edit + Write 组合,模型自己规划顺序。简单但调用次数多。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div>生成一个 patch 文件,<code>git apply file.patch</code>。或多次 sed/cat。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b><code>apply_patch(operations=[{op, path, old_text/new_text, expected_content_hash/expected_source_hash, reason}])</code></b>:结构化 typed operations(<b>非</b>行号 unified diff,additionalProperties:false 硬禁自由 diff)。<b>全预检 → 快照 → apply → 失败 rollback + partial_failure → invalid_for_training</b>。delete/move op 强制 model 提供 <code>reason</code>。和 Codex 同方向,RH 加了 hash + reason + 训练资格分层。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>apply_patch 是 Codex/RH 同方向选择,Claude Code 不必照搬。<b>但 RH 用 JSON 结构化 operations 比 Codex 的 Lark grammar 文本更易解析、less LLM-prone-to-malformed</b>;hash + reason 字段是 RH 训练态独有(产品态 Codex 不需要)。Codex 给我们的最大启示:apply_patch 必须进事件流和 file change lifecycle(对 RH 即 16G.2C 的 final.patch / TrainingView linkage)。</div>
+  </div>
+
+  <div class="cap" id="cap-fileops">
+    <div class="hd"><span class="nm">⑦ 删 / 移 / 建目录</span></div>
+    <div class="desc">删除文件、改名/移动、建目录(常含批量重构)。</div>
+    <div class="ex"><span class="lab">例子</span> 删除过时模块、把 helper 移到新 package、建 tests/ 目录</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div>都走 <code>apply_patch</code>:Delete File hunk(删)、Update File + <code>*** Move to:</code>(移动 + 可同时改内容)、隐式靠 Add File 自动建父目录。无独立 mkdir。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div>Write + Bash 组合:<code>Bash("rm old.py")</code>、<code>Bash("mv a.py b.py")</code>、<code>Bash("mkdir -p tests/")</code>。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>rm old.py</code>、<code>mv a.py b.py</code>、<code>mkdir tests</code>。直白。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b>core 默认走 apply_patch 的 ops</b>(delete_file/move_file/mkdir,带 hash + reason)。独立 <code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 保留 schema、<b>仅 swe_public_extended 暴露</b>;16G.5 parity probe 再决定是否提升为 core 默认。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>这正是 16G.2B preflight 修正后的决策。<b>Codex 的"全经 apply_patch"</b>给了正面证据(用一个结构化批量入口覆盖文件组织变更);<b>CC 的"用 Bash"</b> RH 不能学(训练态没真人审批,Bash 是 reward-hacking 风险口);<b>独立工具 vs apply_patch ops</b> 留 16G.5 用真实任务证据来决定。</div>
+  </div>
+
+  <div class="cap" id="cap-shell">
+    <div class="hd"><span class="nm">⑧ 跑命令 / shell ★</span></div>
+    <div class="desc">让模型执行任意/受控命令获得环境反馈。</div>
+    <div class="ex"><span class="lab">例子</span> 跑 import smoke、pytest case、tox -e py311、查工作目录</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b><code>exec_command</code> + <code>write_stdin</code>(核心特色)</b>。当前源码里的 <code>ExecCommandArgs</code> 约 11 个字段:<code>cmd / workdir / shell / login / tty / yield_time_ms / max_output_tokens / sandbox_permissions / additional_permissions / justification / prefix_rule</code>；其中 <code>additional_permissions</code> 只有在 exec permission approvals 启用时进入 schema。支持 PTY、长会话、stdin 续写。命令受 sandbox + execpolicy + approval 三重控制。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>Bash</code></b>:完整 shell + 权限系统 + sandbox + 后台任务管理。危险命令需 ask。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><b>就一个 Bash,爱跑啥跑啥。</b>动态诊断下限。安全靠外层容器。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div>当前:<code>execute_bash</code> 窄 allowlist(rg/grep/安全 git/pytest/受限 python)+ 默认不开;<code>bash</code> legacy 极窄。<b>16G.3 待补 <code>run_public_command</code></b>:受控公开命令工具,schema 借鉴 Codex 的字段精神(cwd/timeout/输出截断/sandbox/justification/拒绝结构化恢复),但不照搬真人 approval 和自由扩权。<b>故意不给裸 Bash</b>(防 reward-hacking)。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b><b>Codex 的 exec_command schema 是 run_public_command 的重要设计模板,但不是可直接复制的训练工具。</b>字段层面应吸收 cwd/timeout/output budget/sandbox profile/justification；权限层面要改成 deterministic profile 和拒绝恢复,不能把 <code>additional_permissions</code> / <code>require_escalated</code> 这类真人审批语义直接暴露给 RL。<b>不需要给 PTY/write_stdin(那是持久 shell,留 16G.4 extended)</b>。同时 16G.3 必须保证命令在当前候选 patch 的公开投影或一次性临时副本里执行,不能让模型读到 runtime-private/run_dir/gold/test_patch；Docker network policy 对未知值应 fail closed；模型可读 artifact 必须是 sanitized,raw artifact 只能审计可见。</div>
+  </div>
+
+  <div class="cap" id="cap-test">
+    <div class="hd"><span class="nm">⑨ 跑定向测试</span></div>
+    <div class="desc">不是全跑,而是<b>只跑那一个</b>失败的测试 case。</div>
+    <div class="ex"><span class="lab">例子</span> 只跑 <code>tests/test_config_parser.py::test_missing_timeout</code></div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><code>exec_command{cmd:"python -m pytest tests/test_config_parser.py::test_missing_timeout -q"}</code>。没有专门"项目测试工具",靠 exec_command 跑。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><code>Bash("python -m pytest tests/test_config_parser.py::test_missing_timeout")</code>。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>python -m pytest tests/test_config_parser.py::test_missing_timeout -x</code>(<code>-x</code> 首失败停)。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div>当前:<code>run_tests()</code> <b>无参数</b>,只跑配好的固定反馈 —— <b>不能定向</b>(P0 阻塞)。<b>16G.3 待补 <code>run_project_test(test_profile_id, selector, args)</code></b>:支持 pytest case / Django label / tox env / nox session / 项目自定义 smoke,但必须绑定到 task-declared 或 manifest-derived public test profile,不能接受任意 <code>name</code> 字符串。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b><b>这是核心缺口</b>。Codex/CC/mini-SWE 都能"只跑一个" —— RH 不能,会让模型学不会针对性验证。run_project_test 是 16G.3 P0,且应和 run_public_command 共享 substrate(同一套 cwd/timeout/输出截断/拒绝语义)。selector 设计要支持多种测试框架(pytest/unittest/Django/tox/nox)。还必须有 public test 防篡改边界:如果模型改了公开测试文件、测试配置或路由,应拒绝或从 clean public test snapshot 执行,并用 <code>public_test_source_clean=false</code> / <code>result_valid_for_training=false</code> 阻止“改测试后通过”进入训练。</div>
+  </div>
+
+  <div class="cap" id="cap-scratch">
+    <div class="hd"><span class="nm">⑩ 写复现脚本 (scratch)</span></div>
+    <div class="desc">写一段一次性脚本验证假设/复现 bug,产物不进 final patch。</div>
+    <div class="ex"><span class="lab">例子</span> 写 3 行 <code>parse_config({})</code> 复现 KeyError</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><code>apply_patch</code> 建 <code>repro.py</code> → <code>exec_command{cmd:"python repro.py"}</code>。问题:repro.py 会进 git diff,需要后续手动删或靠 hygiene。Codex 还有 <b>code mode</b>(嵌套代码单元运行,需 feature flag)是更接近的"scratch"形态。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><code>Write("scratch.py", ...)</code> → <code>Bash("python scratch.py")</code>。同样,需要小心 scratch.py 是否进 final 提交。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><code>echo "..." &gt; t.py &amp;&amp; python t.py</code> 或 heredoc。容器内随便折腾。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div>当前:无正式工具。<code>execute_bash</code> 允许极受限 inline python;<code>diagnostic_shell</code> 能做但仅诊断侧通道、不进训练。<b>16G.3 待补 <code>scratch_python(code)</code></b>:在<b>临时空间</b>执行,产物<b>默认不进 final.patch</b>(patch hygiene 过滤),可读公开源码但禁 hidden,输出脱敏,且必须看到模型当前候选 patch。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b><b>scratch 是 16G.3 P0,且 RH 设计可以比 Codex/CC 更干净</b> —— 通过"专用 scratch 空间 + 默认排除 final patch + hidden 隔离"避免 Codex/CC 那种"scratch 文件可能误进 patch"的问题。这是训练态的优势。第一版若只支持 Python,文档和 schema 都应明确为 Python 专用复现工具,不能宣称已经覆盖所有语言的 scratch 能力。</div>
+  </div>
+
+  <div class="cap" id="cap-persist">
+    <div class="hd"><span class="nm">⑪ 持久 shell / 长会话</span></div>
+    <div class="desc">跨调用保持 cwd / env / 后台进程。</div>
+    <div class="ex"><span class="lab">例子</span> 调用1 起 dev server (后台),调用2 对它发请求测试</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b><code>exec_command</code>+<code>write_stdin</code> 持久 session</b>:支持 PTY、ongoing process、stdin 续写 + yield_time_ms 让出后再轮询输出。这是 Codex 最复杂的工具之一。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div>后台 Bash + <code>Task*</code> 工具族(进度追踪、kill、通知)。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div>容器存活就有持久,但 mini-SWE 通常每条命令独立。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div>当前:<code>diagnostic_shell</code> = <b>半持久</b>(容器 + 文件持久,但 cwd/env 每次重置)且<b>诊断侧通道不进训练</b>。<b>16G.4 计划把它升 swe_public_extended profile</b>(满足 session_reset / artifact_hygiene / path_redaction / public_safe_projection 四条边界后可进 extended)。<b>core 默认仍不给持久 shell</b>(可复现性优先)。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>持久 shell 是真实需要(起服务、跨调用装依赖再用),但<b>RL 训练对可复现性敏感</b>(持久状态难复现/审计)。Codex 的方案是"真持久 + 强 sandbox + 事件审计";RH 的方案是"core 用'每次重放环境上下文'(无状态结构化命令 + harness 自动 cd/venv) + extended 给真持久 shell"。两条路都行,RH 选 core 无状态 + extended 持久是为了训练干净度。</div>
+  </div>
+
+  <div class="cap" id="cap-dep">
+    <div class="hd"><span class="nm">⑫ 依赖 / 环境</span></div>
+    <div class="desc">装项目依赖、构建环境,后续多步使用。</div>
+    <div class="ex"><span class="lab">例子</span> <code>pip install -e .</code> 后跑测试用到这个包</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><code>exec_command{cmd:"pip install -e ."}</code>。workspace_write profile 允许工作区写入,但 <code>.git</code>/<code>.codex</code>/<code>.agents</code> 受保护;<b>网络默认受限</b> —— 装公网包需要 approval / network policy amendment。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><code>Bash("pip install -e .")</code>,可能 ask。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div>SWE-Bench 容器 + <code>pip install -e .</code>。容器内自由,跨题靠重置。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div>当前:依赖安装<b>大多被拒</b>(保守)。<b>16G.4 待补:dependency setup policy + setup profile + 每题私有 overlay + 共享依赖只读</b> —— 安装动作来自受控 task/manifest profile,装到这道题的私有 overlay,不污染共享、不污染别题。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>"workspace_write + protected metadata + 网络受限"是 Codex 的成熟模板,RH 可借鉴。但<b>RH 必须做的额外事</b>:每题私有 overlay(跨题隔离 + 可复现)+ hidden verifier/gold patch 隔离(产品态 Codex 没这需求)。依赖安装不应变成模型可随意运行 <code>pip install</code> / <code>npm install</code> 的后门;模型可见 observation 只应描述公开环境状态和失败原因,不暴露宿主路径、共享缓存真实路径或 hidden verifier 命令。这是 16G.4 的关键设计任务。</div>
+  </div>
+
+  <div class="cap" id="cap-todo">
+    <div class="hd"><span class="nm">⑬ 任务管理 (todo / plan / goal)</span></div>
+    <div class="desc">记录长任务的假设、候选、已完成步骤,跨多轮维护状态。</div>
+    <div class="ex"><span class="lab">例子</span> 记"已定位 bug 在 42 行,待加默认值,再跑 test_missing_timeout"</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b><code>update_plan</code> + <code>goal</code> 工具</b>:计划是多阶段、目标是带状态的子任务。比简单 todo 更结构化。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>TodoWrite</code></b>:结构化任务列表,UI 可视化。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><b>无</b>。靠 system prompt 的 THOUGHT 块写思考。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b><code>update_working_state</code></b>(已有,较弱):记假设/候选/已完成。<b>16G.2D(非阻塞)</b>:决定是保留轻量语义还是升级为 TodoWrite 等价。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>不阻塞主线但影响轨迹质量。Codex 的"plan + goal"双层比单一 todo 更适合长任务,值得在 16G.2D 或后续考虑。短期保留 update_working_state 也行,只要进 trajectory/TrainingView。</div>
+  </div>
+
+  <div class="cap" id="cap-perm">
+    <div class="hd"><span class="nm">⑭ 权限拒绝 + 恢复 ★</span></div>
+    <div class="desc">命令被拒时,给模型可学习的恢复路径,不是死字符串。</div>
+    <div class="ex"><span class="lab">例子</span> 模型尝试 <code>cat ../runtime_private/gold.patch</code> 偷答案 → 拒绝 + 提示"用 read_file,且限工作区内"</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b>多层结构</b>:<code>ExecApprovalRequestEvent</code>(请求审批)/ <code>ApplyPatchApprovalRequestEvent</code> / <code>GuardianAssessmentEvent</code>(自动审查) / network policy amendment / execpolicy amendment。模型可调 <code>request_permissions</code> 主动请求扩权。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div>三档:<b>allow / ask / deny</b>(deny 优先级最高,bypass 模式也不绕过 deny)。ask 决策可返 <code>suggestions: PermissionUpdate[]</code> 让 agent 学规则更新。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><b>就一句 shell 错误字符串</b>。模型学到的可能只是"少用 shell"。</div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b>已结构化</b>:<code>{reason_code, policy_version, retryable, safe_alternative_tool, safe_rewrite_example}</code>。比 mini-SWE 强得多,接近 Codex/CC 设计。<b>16G.4 待验证</b>:模型是否真学会换工具/换写法,而不是"少用工具"。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>RH 的结构化拒绝字段设计已经到位(比 mini-SWE 强、和 CC/Codex 同档次)。<b>关键不在字段而在 RL 训练时模型是否真学会用</b> —— 16G.4 / 16G.5 要专门 probe"拒绝→恢复"行为质量,可能作为 auxiliary reward 候选(参考 Codex guardian event 的设计)。</div>
+  </div>
+
+  <div class="cap" id="cap-multi">
+    <div class="hd"><span class="nm">⑮ 子代理 / 多代理</span></div>
+    <div class="desc">主代理派子代理做某件事,子代理有独立上下文/工具池/权限。</div>
+    <div class="ex"><span class="lab">例子</span> 主代理派一个子代理去大检索/独立测试,主线继续</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b>multi-agent v1 + v2</b>:spawn / send / wait / close / list agents。带 sidechain transcript。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>AgentTool</code></b>:fork 子代理,可独立权限模式("auto" 等),sidechain transcript 写到独立流。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><b>无,单代理。</b></div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b>无,只在轨迹 schema 预留能力位</b>(post-16G optional)。主训练不要求子代理。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>不阻塞主线。但<b>轨迹 schema 要预留</b>(subagent_thread_id / sidechain_transcript_ref 等字段),否则后续从单代理迁到多代理会断层。Codex 的 v1/v2 演进史值得学:别一开始就上完整 multi-agent,先 schema 预留。</div>
+  </div>
+
+  <div class="cap" id="cap-mcp">
+    <div class="hd"><span class="nm">⑯ 外部工具 (MCP / 插件 / 技能)</span></div>
+    <div class="desc">通过协议接外部工具/资源/服务,扩展能力。</div>
+    <div class="ex"><span class="lab">例子</span> 接 MCP server 提供 Jira/Slack/数据库查询能力</div>
+    <div class="four-row">
+      <div class="col cx"><div class="who">🟠 Codex</div><b>非常完整</b>:MCP client/server、connection manager、tool_search 延迟工具发现、dynamic tools、extension tools、plugin、connector、skill、hosted web search/image gen。</div>
+      <div class="col cc"><div class="who">🟢 Claude Code</div><b><code>MCPTool</code> + 插件 + 技能 + <code>ToolSearchTool</code></b>(延迟工具发现,等同 Codex 的 tool_search)。</div>
+      <div class="col mini"><div class="who">🟡 mini-SWE</div><b>无。</b></div>
+      <div class="col rh"><div class="who">🔵 RepoHarness</div><b>无,只在 schema 预留</b>(post-16G optional)。主训练不要求。</div>
+    </div>
+    <div class="takeaway"><b>给 RH 的启示:</b>不阻塞主线。但轨迹 schema 应预留 tool_source / tool_namespace / tool_exposure / authorization_outcome / sidechain_transcript_ref 等字段(Codex AGENTS.md 明确建议)。Codex 的 tool_search 是个好设计:工具池可以延迟加载,模型按需查找,这对未来扩展工具数量有帮助。</div>
+  </div>
+
+  <!-- ===== 5 ===== -->
+  <h2 class="sec" id="takeaways">5 · 关键差异 + 给 RepoHarness 的启示总结</h2>
+
+  <h3>① 风格差异速记</h3>
+  <table>
+    <tr><th>维度</th><th>🟠 Codex</th><th>🟢 Claude Code</th><th>🟡 mini-SWE</th><th>🔵 RepoHarness</th></tr>
+    <tr><td>核心风格</td><td>shell + apply_patch 中心</td><td>结构化分层(Read/Edit/Write/Bash)</td><td>只有 Bash</td><td>结构化导航 + apply_patch + 受控公开命令</td></tr>
+    <tr><td>看/搜文件</td><td>都靠 shell</td><td>专用 Read/Grep/Glob</td><td>shell <code>cat</code>/<code>grep</code></td><td>专用 read_file/grep/glob(同 CC)</td></tr>
+    <tr><td>改代码</td><td>都靠 apply_patch</td><td>Edit + Write(分开)</td><td>sed / 重写</td><td>edit_file(单处) + apply_patch(批量)</td></tr>
+    <tr><td>跑命令</td><td>exec_command 约 11 字段</td><td>Bash 完整</td><td>Bash 就是它的全部</td><td>16G.3 受控 run_public_command</td></tr>
+    <tr><td>安全主防线</td><td>PermissionProfile + Sandbox + Guardian + Hooks</td><td>三档权限 + sandbox + hooks</td><td>外层容器</td><td>确定性 path policy + 训练资格门禁(无真人审批)</td></tr>
+    <tr><td>训练数据治理</td><td><b>没有</b>(产品)</td><td><b>没有</b>(产品)</td><td>外部 evaluator</td><td><b>核心职责</b>(hidden verifier/reward/policy loss/TrainingView)</td></tr>
+  </table>
+
+  <h3>② RepoHarness 的设计哲学(在四方对照下变得清晰)</h3>
+  <div class="callout good">
+    <b>RH 不是 Codex/CC 的复刻,而是一个有意混合 + 训练态特有的设计:</b><br>
+    <b>① 从 Claude Code 拿:</b>结构化文件导航(Read/Grep/Glob/Edit/Write/symbol_search 的清晰分工)→ 让 RL 训练 action attribution 更可解释。<br>
+    <b>② 从 Codex 拿:</b>apply_patch 作为结构化批量入口(grammar 验证 + file change event 思路)→ 用一个工具覆盖 delete/move/mkdir,减工具数量;exec_command 的字段精神 → 喂 run_public_command 设计。<br>
+    <b>③ 不学的:</b>Codex 的"什么都靠 shell"(RH 保留专用读/搜/编辑)、CC 的"用 Bash 做文件组织"(RH 故意不给裸 bash,防 reward-hacking)、mini-SWE 的"只给 Bash"(下限参照,不是目标)。<br>
+    <b>④ 训练态独有(三家都没有):</b>hidden verifier 隔离、gold patch 防泄漏、expected_hash 防 stale 覆盖、apply_patch ops 的 model-provided <code>reason</code>(reward attribution)、policy_loss 训练资格门禁、"全预检+rollback+partial_failure→invalid_for_training"的数据干净度防线、每题私有 overlay(跨题隔离)。
+  </div>
+
+  <h3>③ 给 16G 后续的具体启示</h3>
+  <ul>
+    <li><b>16G.3 run_public_command schema</b>:借鉴 Codex exec_command 的字段精神(尤其 <code>justification</code> 模型提供"为什么跑"),但把真人 approval / 动态扩权改写为 deterministic profile、结构化拒绝和 quarantine。三个新工具(public_command / project_test / scratch_python)共享 substrate。</li>
+    <li><b>16G.3 run_project_test</b>:必须支持 selector(pytest case / Django label / tox env / nox session / 项目 smoke);看 Codex/CC/mini-SWE 都能定向、唯独 RH 当前 run_tests 无参,这是 P0 缺口。入口要绑定 <code>PublicTestProfile</code>,避免 <code>name+args</code> 变成任意命令通道,并且要阻断 public test tampering。</li>
+    <li><b>16G.3 scratch_python</b>:RH 设计可以比 Codex/CC 更干净 —— 专用 scratch 空间 + 默认排除 final patch + hidden 隔离 + 使用当前候选 patch。</li>
+    <li><b>16G.4 持久 shell</b>:走 extended profile + 四条边界(session_reset / artifact_hygiene / path_redaction / public_safe_projection)。core 保持无状态结构化命令 + harness 自动重放环境上下文(<code>cd</code>/<code>venv</code>),不必给真持久 shell。</li>
+    <li><b>16G.4 依赖</b>:Codex workspace_write 模板 + RH 每题私有 overlay + 共享依赖只读 + 受控 setup profile。</li>
+    <li><b>16G.4 权限恢复</b>:已有结构化字段,关键是 16G.5 probe 模型是否真学会换工具,可作 auxiliary reward。</li>
+    <li><b>16G.2C TrainingView 分层</b>:学 Codex rollout-trace 的"先观察后解释"——模型可见 / runtime 证据 / verifier-only / reward-only 严格分层,不混进一个 transcript。</li>
+    <li><b>post-16G schema 预留</b>:subagent_thread_id / sidechain_transcript_ref / tool_source / tool_namespace / authorization_outcome 等字段,Codex 的 v1/v2 演进表明早预留比晚改 schema 便宜。</li>
+  </ul>
+
+  <div class="callout good">
+    <b>一句话总结:</b>这页讲清的不是"哪家工具更好",而是"<b>同一件事各家怎么做、字段叫什么、为什么不同</b>"。结合 Codex 的成熟现实证据(产品态多年迭代)、CC 的结构化分层模型(action 可解释)、mini-SWE 的能力下限参照(动态诊断闭环最低标准),RH 16G 的设计在四方对照下站得住 —— 既不抄一家,也不退回 toy,目标是<b>结构化清晰 + 真实能力 + 训练态独有的安全/审计/数据治理</b>。
+  </div>
+
+  <div class="footer">
+    数据源:<code>reference/codex/</code>(commit <code>61cbf357</code>,已源码核实 exec_command 参数字段 / apply_patch.lark grammar / workspace_write permission profile / shell_command vs exec_command 两套工具)、<code>reference/claude-code-typescript-src/</code>(已读 Tool.ts / tools.ts / 权限 / hooks 等)、评测 worktree mini-SWE 真实运行配置 + 日志、本仓库 Stage 16G.0–16G.2 公开 evidence。任务场景例子("修 parse_config")用于帮助理解,实际工具 schema 以各 harness 实现为准。
+  </div>
+</main>
+</div>
+</body>
+</html>

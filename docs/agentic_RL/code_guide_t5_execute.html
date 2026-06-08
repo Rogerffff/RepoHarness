@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T5 · 工具执行 · 代码导览</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.active{background:#1c2c1f;color:#6fdc84}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  h4{font-size:14.4px;margin:16px 0 6px;color:#9cc4ff}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5;margin:9px 0}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  .kw{color:#c594ff}
+  .str{color:#a3e3a8}
+  .fn{color:#9cc4ff}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  /* 章节模板专用块 */
+  .timeline{background:#0e2030;border:1px solid #34507a;border-radius:11px;padding:13px 18px;margin:13px 0;font-size:13.3px;display:grid;grid-template-columns:max-content 1fr;column-gap:14px;row-gap:5px}
+  .timeline b{color:#9cc4ff}
+  .contract{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 16px;margin:11px 0}
+  .contract h4{margin-top:0;color:#e6c068}
+  .contract .row{display:grid;grid-template-columns:max-content 1fr;column-gap:13px;row-gap:5px;font-size:13px}
+  .contract b{color:#cdd6e6}
+  .inv{background:#1b2510;border:1px solid #475a2f;border-radius:10px;padding:11px 15px;margin:10px 0;font-size:13.3px}
+  .inv h4{margin-top:0;color:#9fdc84}
+  .invlist{margin:5px 0;padding-left:21px;font-size:13.1px}
+  .invlist li{margin:5px 0}
+  .invlist .id{display:inline-block;background:#2f6b3a;color:#fff;padding:0px 7px;border-radius:9px;font-size:11px;font-weight:700;margin-right:6px;font-family:"SFMono-Regular",Menlo,monospace}
+  .flow{background:#0a0c12;border:1px solid var(--line);border-radius:11px;padding:14px 18px;margin:12px 0;font-family:"SFMono-Regular",Menlo,monospace;font-size:12px;line-height:1.55;color:#c9d4e6;overflow-x:auto;white-space:pre}
+  .flow .l{color:#9aa4b6}
+  .flow .t{color:#9cc4ff;font-weight:600}
+  .flow .s{color:#e6c068}
+  .flow .e{color:#f29292}
+  .flow .ok{color:#6fdc84}
+  .sidelink{background:#241f12;border-left:4px solid #6b5a2f;border-radius:8px;padding:9px 14px;margin:9px 0;font-size:13px}
+  .sidelink b{color:#e6c068}
+  .sidelink a{color:#e6c068}
+  .navbar{display:flex;justify-content:space-between;margin:24px 0 8px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .navbar a{color:#9cc4ff;text-decoration:none}
+  .lineref{font-family:"SFMono-Regular",Menlo,monospace;color:#bfe3ff;font-size:12.5px}
+  /* 阅读路径 — 章节顶部，调用链 + 自包含讲解 */
+  .readpath{background:#0e2030;border:1px solid #34507a;border-radius:11px;padding:14px 18px 10px;margin:13px 0}
+  .readpath .rpttl{font-size:14.4px;color:#9cc4ff;font-weight:600;margin-bottom:10px}
+  .readpath > ol{margin:0;padding:0;list-style:none;counter-reset:rp}
+  .readpath > ol > li{padding:11px 13px 12px 50px;margin:9px 0;background:#0a0c12;border:1px solid #1e3454;border-radius:9px;position:relative}
+  .readpath > ol > li::before{counter-increment:rp;content:counter(rp);position:absolute;left:11px;top:11px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:2px 0;border-radius:9px;font-size:12px;min-width:30px;text-align:center}
+  .readpath .rplp{font-family:"SFMono-Regular",Menlo,monospace;color:#bfe3ff;font-size:11.9px;margin-bottom:2px;word-break:break-all}
+  .readpath .rpfn{font-family:"SFMono-Regular",Menlo,monospace;color:#e6c068;font-size:13.4px;font-weight:600;margin-bottom:8px;word-break:break-word}
+  .readpath .rpbody{display:grid;grid-template-columns:max-content 1fr;column-gap:11px;row-gap:5px;font-size:12.8px;line-height:1.65}
+  .readpath .rpbody > .lbl{color:#9cc4ff;font-weight:600;white-space:nowrap;padding-top:1px}
+  .readpath .rpbody > .val{color:#cdd6e6}
+  .readpath .rpbody > .val code{font-size:12.2px}
+  .readpath .rpbody > .val .step{background:#34507a;color:#fff;padding:0 7px;border-radius:9px;font-family:"SFMono-Regular",Menlo,monospace;font-size:11.6px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本章节</h2>
+  <a href="#readpath">📖 代码阅读路径（10 步调用链）</a>
+  <a href="#timeline">⏱ 时间点</a>
+  <a href="#role">① 角色 + Contract</a>
+  <a href="#excerpt-dispatch">② 分派表 + execute / normalize</a>
+  <a href="#excerpt-handler">③ 主处理器 _stage16g2b_file_mutation_tool</a>
+  <a href="#excerpt-core">④ 共享核心 execute_structured_file_mutation</a>
+  <a href="#excerpt-normop">⑤ _normalize_operations</a>
+  <a href="#excerpt-prep">⑥ _prepare_operations 预检</a>
+  <a href="#excerpt-apply">⑦ 真实文件操作 _apply_prepared_operation</a>
+  <a href="#excerpt-tail">⑧ handler 收尾 + ToolResult 构造</a>
+  <a href="#flow">⑨ 状态机数据流</a>
+  <a href="#inv">⑩ 关键不变量（I-1 ~ I-7）</a>
+  <a href="#side">⑪ 关联侧栏</a>
+  <a href="#read-tools">⑫ 只读族（read/grep）快速对照</a>
+  <a href="#next">→ 下一步 T6</a>
+
+  <h2>导航</h2>
+  <a href="code_guide_index.html">← 总览索引</a>
+  <a href="code_guide_t4_dispatch.html">← T4 分派（待写）</a>
+  <a href="code_guide_t6_state.html">→ T6 状态+audit（待写）</a>
+  <a class="active" href="code_guide_t5_execute.html">T5 工具执行（本页）</a>
+
+  <h2>侧栏</h2>
+  <a href="code_guide_side_safety.html">A · 安全边界</a>
+  <a href="code_guide_side_mask.html">B · TrainingView mask（待写）</a>
+  <a href="code_guide_side_audit.html">C · Audit/artifact（待写）</a>
+
+  <h2>关联</h2>
+  <a href="repo_harness_verl_stage16g2c_completion_report.html">16G.2C 完成报告</a>
+  <a href="repo_harness_verl_harness_capability_acceptance_map.html#cap-applypatch">能力地图 · apply_patch</a>
+</nav>
+<main>
+  <h1>T5 · 工具执行 — 重点：file_mutation 共享路径</h1>
+  <p class="meta">代码导览 · 主线时间点 5 / 9 · 主要文件：<code>tools/minimal.py</code> · <code>tools/file_mutation.py</code> · 本章节作为本系列样板</p>
+
+  <h2 class="sec" id="readpath" style="margin-top:24px;border-top:none">📖 本章节代码阅读路径 — 一条完整调用链</h2>
+  <p class="small" style="margin-top:0">下面 10 步按调用顺序排列，每步给出准确 <code>file:line</code> + 函数/类名 + 这个位置做什么 + 谁调用它 + 它再调用谁。<b>只读这一段（不打开源码）应该就能搞清"模型发出 tool_call 之后 T5 内部到底走了什么路径"</b>。后面的 §② ~ §⑤ 给关键步骤贴上真实代码 excerpt 做佐证。</p>
+  <div class="readpath">
+    <div class="rpttl">T4 model 输出 ToolCall → ToolExecutor 调度 → 5 件套合一 handler → file_mutation 共享核心 → 真实写盘 → 回 handler 构造 ToolResult → T6</div>
+    <ol>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:234-246</div>
+        <div class="rpfn">class ToolExecutor</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">工具执行引擎入口类。在 T2 AgentLoop 创建 episode 工作区时由 RepoHarnessRuntime 实例化一次，整个 episode 期间复用。</span>
+          <span class="lbl">持有状态</span><span class="val"><code>self.registry</code>（<code>ToolRegistry</code>，含每个工具的 <code>ToolDefinition</code>+input schema，line 241）· <code>self.permission_system</code>（PermissionSystem，line 242）· <code>self._symbol_index_cache</code>（symbol_search 加速）</span>
+          <span class="lbl">调用源</span><span class="val">T2 AgentLoop 在每个 assistant turn 解析出 <code>ToolCall</code> 后调用本类的 <code>execute(tool_call, context)</code> 方法</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">2</span> 调度入口 <code>execute</code>（line 368）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:368-422</div>
+        <div class="rpfn">def execute(self, tool_call: ToolCall, context: ToolExecutionContext) → ToolResult</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">18 个 handler 的总调度。先验工具名是否已注册，再做 schema 校验 + 参数归一化（<code>self.normalize</code>，line 371 → 跳到 line 431 实现），最后按 <code>normalized.effective_tool_name</code> 用 if/elif 链路由到具体 handler。本方法是 <b>T4 → T5 的总开关</b>。</span>
+          <span class="lbl">输入 · ToolCall</span><span class="val"><code>tool_call.tool_name</code>（字符串，比如 <code>"apply_patch"</code>）· <code>tool_call.arguments</code>（dict，模型给的原始 JSON）· <code>tool_call.tool_call_id</code>（字符串，由 AgentLoop 给本次调用分配的 ID，用于 result 配对）</span>
+          <span class="lbl">输入 · context</span><span class="val"><code>ToolExecutionContext</code>（line 189，由 RepoHarnessRuntime 创建并 thread 到本 turn）含：<code>file_state_cache: dict[str,str]</code>（read_file/edit_file/write_file 共享的"路径→当前内容"缓存）· <code>artifact_writer</code>（暴露为 <code>recorder</code> @property，line 213，写私有 audit artifact）· <code>output_limits</code>（每工具输出预算）· <code>permission_context</code> · <code>workspace_facade</code>（仓库文件访问）· <code>tool_policy</code> 等</span>
+          <span class="lbl">输出</span><span class="val"><code>ToolResult</code>，含 <code>status</code> ∈ {ok / error / denied / invalid} + <code>content</code>（模型可见文本预览）+ <code>typed</code> dict（结构化字段）+ <code>artifact_refs</code> 列表（私有 rh:// ref）</span>
+          <span class="lbl">关键内部步骤</span><span class="val">① 检查 <code>self.is_known(tool_name)</code>，未知 → 返回 <code>invalid_tool_result</code>（line 369-370）<br>② <code>normalized = self.normalize(tool_call, context)</code>（line 371 调用 line 431 的实现，详见步骤 <span class="step">3</span>）<br>③ try 块包裹一长串 <code>if normalized.effective_tool_name == "…"</code> 分派（line 372-422，详见步骤 <span class="step">4</span>）<br>④ except 兜底翻成 <code>_tool_call_failed</code></span>
+          <span class="lbl">调用源</span><span class="val">T2 AgentLoop 的 turn 处理函数</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">3</span> 参数归一化 <code>normalize</code>（line 431）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:431+ (实现 ~400 行)</div>
+        <div class="rpfn">def normalize(self, tool_call, context) → NormalizedToolRequest</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">把模型原始 <code>arguments</code>（可能含别名字段 / 缺省字段 / 风格不一致字段）按工具 schema 校验并归一成稳定形态。本身不调底层 handler，仅做参数转换 + 验合法性。</span>
+          <span class="lbl">为什么需要</span><span class="val">同一个能力模型可能用不同字段名（<code>path</code> vs <code>root</code>）、不同类型（<code>"5"</code> vs <code>5</code>）、缺省字段（<code>offset</code>=None）。归一后下游 handler 只看 <code>effective_arguments</code> 一种形态，简化逻辑。</span>
+          <span class="lbl">输入</span><span class="val">同步骤 <span class="step">2</span>：<code>tool_call</code>（含原始 tool_name + arguments + tool_call_id）+ <code>context</code></span>
+          <span class="lbl">输出</span><span class="val"><code>NormalizedToolRequest</code>（frozen dataclass，line 221-231），含 <code>requested_tool_name</code> / <code>effective_tool_name</code> / <code>requested_arguments</code> / <code>normalized_arguments</code> / <code>effective_arguments</code> / <code>normalized_input_hash</code> / 可选 <code>route_reason</code> 等</span>
+          <span class="lbl">调用源</span><span class="val">步骤 <span class="step">2</span> <code>execute</code> 在 line 371 调用本方法</span>
+          <span class="lbl">→ 继续看</span><span class="val">本方法返回后控制回到步骤 <span class="step">2</span> 的 try 块（line 372），继续 if/elif 分派 → 步骤 <span class="step">4</span></span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:391</div>
+        <div class="rpfn">5 件套合一分派分支（在 execute 的 if/elif 链中）</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">把 <code>write_file</code> / <code>apply_patch</code> / <code>delete_file</code> / <code>move_file</code> / <code>mkdir</code> 这 5 个文件变更工具都路由到同一个 handler。<b>这是 16G.2A → 2B 的关键架构决策</b>：原子语义、preflight、敏感 marker 拒绝、audit artifact、forbidden marker 防御等只需写一遍。</span>
+          <span class="lbl">代码</span><span class="val"><code>if normalized.effective_tool_name in {"write_file", "apply_patch", "delete_file", "move_file", "mkdir"}: return self._stage16g2b_file_mutation_tool(tool_call, normalized, context)</code></span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">5</span> handler <code>_stage16g2b_file_mutation_tool</code>（line 2229）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/minimal.py:2229-2335</div>
+        <div class="rpfn">def _stage16g2b_file_mutation_tool(self, tool_call, normalized, context) → ToolResult</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">文件变更 5 件套的共享 handler。把工作交给 <code>execute_structured_file_mutation</code>，然后根据 outcome 构造对应 <code>ToolResult</code>。三态架构：成功 / 预检拒绝 / 运行时部分失败。</span>
+          <span class="lbl">三态处理</span><span class="val"><b>① 成功（ok）</b>：更新 <code>context.file_state_cache</code>（让 turn N+1 的 read_file 看到新状态）→ 写 <code>stage16g2b_file_mutation_audit</code> artifact（line 2292）→ 构造 <code>status="ok"</code> 的 ToolResult，model 可见 JSON 含 <code>audit_artifact_id</code>（line 2306）<br><b>② 预检拒绝（denied）</b>：捕获 <code>FileMutationDenial</code> 异常（line 2242）→ 写 <code>stage16g2b_file_mutation_denial</code> artifact → 构造 <code>status="denied"</code>，含 <code>reason_code</code> + <code>safe_alternative_tool</code> + <code>safe_rewrite_example</code>，让模型知道怎么改<br><b>③ 部分失败（error）</b>：<code>outcome.partial_failure=True</code> → <code>status="error"</code>，<code>invalid_for_training=True</code>，整段 episode 不进训练</span>
+          <span class="lbl">关键调用</span><span class="val"><code>outcome = execute_structured_file_mutation(tool_name=normalized.effective_tool_name, arguments=normalized.effective_arguments, context=context)</code>（line 2237）</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">6</span> 共享核心 <code>execute_structured_file_mutation</code>（file_mutation.py:177）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:177-235</div>
+        <div class="rpfn">def execute_structured_file_mutation(*, tool_name, arguments, context) → FileMutationOutcome</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">原子语义核心。一句话："全部 preflight 通过才动文件，任一失败 rollback 全部"。本函数本身是 5 步串联，每步都委托给独立辅助函数。</span>
+          <span class="lbl">5 步流程</span><span class="val"><b>① 归一</b> <code>operations = _normalize_operations(tool_name, arguments)</code>（line 183，详见步骤 <span class="step">7</span>）<br><b>② 预检</b> <code>prepared = _prepare_operations(operations, context)</code>（line 184，详见步骤 <span class="step">8</span>）<br><b>③ 快照</b> <code>snapshot_paths = _snapshot_paths(prepared, context)</code>（line 185）+ <code>snapshots = {p: _snapshot_path(p) for p in snapshot_paths}</code>（line 186） — 为 rollback 留底<br><b>④ 应用</b> <code>for mutation in prepared: _apply_prepared_operation(mutation)</code>（line 189-191，详见步骤 <span class="step">9</span>）<br><b>⑤ 异常 rollback</b> <code>except Exception: _rollback_snapshots(snapshots)</code>（line 193），返回 <code>partial_failure</code> 的 outcome（line 202-218）</span>
+          <span class="lbl">输出</span><span class="val"><code>FileMutationOutcome</code> dataclass（line 139+），含 <code>result_kind</code> / <code>operation_facts</code>（每 op 的事实）/ <code>changed_paths</code> / <code>cache_updates</code> / <code>cache_removals</code> / <code>partial_failure</code> / <code>rollback_status</code> / <code>policy_loss_candidate=False</code>（<b>硬编码</b>不可配置）/ <code>invalid_for_training</code>（仅 partial_failure 时 True）</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">7</span> <code>_normalize_operations</code>（line 238）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:238-276</div>
+        <div class="rpfn">def _normalize_operations(tool_name, arguments) → list[dict]</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">5 件套 → 统一 ops 列表。把不同工具的不同形态 arguments 都展开成同一种数据形态 <code>list[{"op":..., "path":..., ...}]</code>，后续步骤只需要处理一种数据。本函数是<b>纯转换</b>，不读盘、不调外部依赖。</span>
+          <span class="lbl">输入</span><span class="val"><code>tool_name</code>（5 件套之一字符串）+ <code>arguments</code>（已经过 schema 校验的归一化字典）</span>
+          <span class="lbl">输出</span><span class="val"><code>list[dict]</code>，每项含 <code>"op"</code> 字符串 + 对应 op 字段。例如 write_file 出 1 项，apply_patch 可能出 5 项</span>
+          <span class="lbl">5 个分支</span><span class="val">· <code>apply_patch</code> → 直接复制 <code>arguments["operations"]</code>（已是 list[dict] 形态）<br>· <code>write_file</code> → <code>[{"op":"write_file","path":...,"content":...,"mode":...}]</code>（单 op）<br>· <code>delete_file</code> → <code>[{"op":"delete_file","path":...,"expected_content_hash":...,"reason":...}]</code><br>· <code>move_file</code> → <code>[{"op":"move_file","source_path":...,"target_path":...,"expected_source_hash":...,"reason":...}]</code><br>· <code>mkdir</code> → <code>[{"op":"mkdir","path":...}]</code><br>· 其他 → <code>raise FileMutationDenial(reason_code="unsupported_file_mutation_tool")</code></span>
+          <span class="lbl">调用源</span><span class="val">步骤 <span class="step">6</span> <code>execute_structured_file_mutation</code> 在 line 183 调用本函数</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">8</span> <code>_prepare_operations</code>（line 279）继续接住返回的 ops list</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:279+ 实现 ~250 行</div>
+        <div class="rpfn">def _prepare_operations(operations, context) → list[PreparedFileMutation]</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">预检 entry。<b>遍历完所有 op 才动文件</b>。逐 op 调内部 <code>_prepare_operation</code>（单数）做以下校验，任一失败立刻 <code>raise FileMutationDenial</code>，<b>本次调用不会留下任何文件变更</b>。</span>
+          <span class="lbl">校验维度</span><span class="val">① 路径黑名单（侧栏 A · L2）：<code>MODEL_HIDDEN_TOOL_PATH_PARTS</code>，<code>.git</code> / <code>.ssh</code> / <code>.env</code> / <code>secret*</code> 等<br>② 敏感 marker 路径变体（侧栏 A · L3）：<code>_SENSITIVE_PATH_MARKERS</code> 归一比对（"hidden-verifier" / "HiddenVerifier" 都拦）<br>③ posix 路径，无 <code>..</code>，UTF-8 编码，no binary，no symlink<br>④ <code>expected_content_hash</code> 与磁盘实际 sha256 比对，不等 → <code>stale_file_state</code>（防止模型脏读 + 脏写）<br>⑤ 总写入字节 ≤ <code>STAGE16G2_APPLY_PATCH_TOTAL_WRITE_MAX_BYTES</code> → 防 <code>patch_too_large</code><br>⑥ 同次调用<b>不允许</b>多 op 触碰同一 path → <code>duplicate_mutation_path</code></span>
+          <span class="lbl">输出</span><span class="val"><code>list[PreparedFileMutation]</code>（PreparedFileMutation 见 line 97），每项含 <code>operation_id</code> / <code>resolved_path</code>（已校验绝对 Path）/ <code>content</code>（write op 才有）/ <code>cache_updates</code> / <code>cache_removals</code> / <code>repository_mutation_performed</code> 等</span>
+          <span class="lbl">任一失败</span><span class="val"><code>raise FileMutationDenial(reason_code, message, retryable, operation_id, safe_alternative_tool, safe_rewrite_example)</code> → 一路冒泡到步骤 <span class="step">5</span> handler 的 except → 翻成 status=denied ToolResult</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">9</span> <code>_apply_prepared_operation</code>（line 555）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:555-576</div>
+        <div class="rpfn">def _apply_prepared_operation(mutation: PreparedFileMutation) → None</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val"><b>真正动文件</b>的函数。整条工具链最末端的写盘点。<b>所有真实文件写盘只能走这里</b>——其他文件不能直接调 <code>Path.write_text</code> / <code>unlink</code> / <code>rename</code> / <code>mkdir</code> 修改工作区（这是 T5 不变量 I-2）。</span>
+          <span class="lbl">4 个分支</span><span class="val"><code>op ∈ {"replace_text","write_file"}</code>：<code>resolved_path.parent.mkdir(parents=True, exist_ok=True)</code> + <code>resolved_path.write_text(content, encoding="utf-8")</code> — 自动建父目录<br><code>op == "delete_file"</code>：<code>resolved_path.unlink()</code><br><code>op == "move_file"</code>：<code>resolved_target_path.parent.mkdir(parents=True, exist_ok=True)</code> + <code>resolved_source_path.rename(resolved_target_path)</code><br><code>op == "mkdir"</code>：<code>resolved_path.mkdir(parents=True, exist_ok=True)</code><br><code>else</code>：<code>raise RuntimeError("unhandled file mutation op")</code></span>
+          <span class="lbl">被谁调用</span><span class="val">步骤 <span class="step">6</span> 的 for 循环（line 189-191），每个 prepared mutation 调用一次</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">10</span> 构造 outcome → 回 handler → ToolResult</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/tools/file_mutation.py:219-235 + src/repo_harness/tools/minimal.py:2289-2335</div>
+        <div class="rpfn">构造 FileMutationOutcome → 回 handler 构造 ToolResult</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">收尾。<code>execute_structured_file_mutation</code> 把每个 mutation 的 <code>.fact()</code> + 累积的 cache_updates / cache_removals 拼成 <code>FileMutationOutcome</code> 返回给 handler；handler 拿到 outcome 后写 cache、写 audit artifact、构造 <code>ToolResult</code>。</span>
+          <span class="lbl">handler 收尾 4 步</span><span class="val">① <code>for path in outcome.cache_removals: context.file_state_cache.pop(path, None)</code>（line 2289-2290）<br>② <code>context.file_state_cache.update(outcome.cache_updates)</code>（line 2291）—— 让下一个 turn 的 <code>read_file</code> 看到新状态<br>③ <code>ref = context.recorder.write_json_artifact("stage16g2b_file_mutation_audit", outcome.audit_payload(), {"budget_policy":"preserve_json"})</code>（line 2292-2296）—— 私有审计落盘，返回 rh:// 形式 <code>ArtifactRef</code><br>④ 构造 model-visible JSON content（含 <code>result_kind</code> / <code>operation_count</code> / <code>changed_paths</code> / <code>partial_failure</code> / <code>rollback_status</code> / <code>audit_artifact_id</code>，line 2298-2310）+ gateway-visible <code>typed</code> dict（含 <code>allowed_in_policy_loss_trajectory=False</code> + <code>audit_artifact</code> 完整 ref，line 2320-2334）—— 字段名禁用 forbidden marker（详见 <a href="#inv">I-7</a> + <a href="code_guide_side_safety.html#L4">side-A · L4</a>）</span>
+          <span class="lbl">audit_artifact_id 哪来</span><span class="val">·  <code>recorder.write_json_artifact</code> 返回 <code>ArtifactRef</code> 对象<br>·  <code>ref.artifact_id</code> 由 RunRecorder 按 <code>{kind}/{sha256}</code> 形态生成（内容寻址，私有 rh:// 通道）<br>·  叫 <code>audit_artifact_id</code> <b>不</b>叫 <code>audit_ref</code>：<code>"audit_ref"</code> 在 <code>visibility.py:48</code> 的 forbidden 集合里 → 出站 L4 会拦（16G.2C 实际踩过的雷）<br>·  <code>audit_artifact_id</code> 不在 forbidden 集合，gateway visibility filter 放行</span>
+          <span class="lbl">返回去哪</span><span class="val"><code>ToolResult</code> 回到 <code>ToolExecutor.execute</code> 的 return → 回到 T2 AgentLoop → 写入对话历史（侧栏 B：tool observation span，response_mask=0）+ artifact_refs 落 episode 私有审计（侧栏 C）→ 进入 <b>T6 状态+audit</b></span>
+        </div>
+      </li>
+
+    </ol>
+  </div>
+
+  <h2 class="sec" id="timeline">⏱ 时间点（在整条管线里的位置）</h2>
+  <div class="timeline">
+    <b>T4 完成时</b><span>模型说出 <code>{"tool":"apply_patch","input":{"operations":[…]}}</code>，<code>ToolExecutor.execute_tool</code> 已把它 normalize 成 <code>NormalizedToolRequest</code>，并经过分派表查出该走哪个 handler</span>
+    <b>T5 入口</b><span>handler 函数被调用，传入 <code>(tool_call, normalized, context)</code>。共有 18 个 handler，本章节聚焦"文件变更 5 件套"共享的那个 handler</span>
+    <b>T5 内部</b><span>预检 → 快照 → 真实写盘 → audit 落盘 → 构造 <code>ToolResult</code>（或 denial / partial_failure）</span>
+    <b>T5 出口</b><span><code>ToolResult</code> 回到 ToolExecutor，由调用方继续走 T6 状态更新（<code>file_state_cache</code> + 历史窗 + observation token 化）</span>
+    <b>T+1 是什么</b><span>T6 状态+audit：模型可见 payload 落进对话历史；artifact_refs 落进 episode 私有审计</span>
+  </div>
+
+  <h2 class="sec" id="role">① 角色 + Contract</h2>
+
+  <div class="contract">
+    <h4>ToolCall（T4 → T5 的对象契约）</h4>
+    <div class="row">
+      <b>是什么</b><span>从 model assistant turn 输出里解析得到的工具调用对象。由 AgentLoop 在 T2 → T3 阶段构造，由 T4 → T5 阶段消费。</span>
+      <b>字段</b><span><code>tool_call.tool_name</code>: str（工具名字面量，比如 <code>"apply_patch"</code>）　·　<code>tool_call.arguments</code>: dict（模型给的原始 JSON，可能含别名 / 多余 / 类型不一致字段）　·　<code>tool_call.tool_call_id</code>: str（AgentLoop 给本次调用分配的 ID，用于将 turn N+1 收到的 ToolResult 对回 turn N 的请求）</span>
+      <b>归一后变成</b><span><code>NormalizedToolRequest</code>（line 221-231），<code>execute</code> 调 <code>normalize</code> 后得到，含 <code>effective_tool_name</code> / <code>effective_arguments</code> / <code>normalized_input_hash</code> 等稳定字段</span>
+      <b>失败模式</b><span>未知 <code>tool_name</code> → <code>invalid_tool_result</code>；schema 不合规 → <code>tool_schema_validation_failed</code>，写 artifact + 模型可见错误说明</span>
+    </div>
+  </div>
+
+  <div class="contract">
+    <h4>分派器（dispatch）</h4>
+    <div class="row">
+      <b>是什么</b><span><code>ToolExecutor.execute_tool</code> 内部的一长串 if/elif 函数表，按 <code>normalized.effective_tool_name</code> 找 handler。文件 <span class="lineref">tools/minimal.py:373-422</span></span>
+      <b>输入</b><span><code>tool_call</code>: 原始模型工具调用 · <code>normalized</code>: 归一后的 <code>NormalizedToolRequest</code> · <code>context</code>: 含 file_state_cache / recorder / output_limits 的 <code>ToolExecutionContext</code></span>
+      <b>输出</b><span>命中 → 对应 handler 返回的 <code>ToolResult</code>　未命中 → <code>self.invalid_tool_result(tool_call)</code></span>
+      <b>不变量</b><span>分派表里出现的 tool_name 必须 ∈ 已注册 ToolDefinition；新增工具<b>必须</b>同时改 DEFAULT_TOOL_ORDER + tool def + 分派表三处</span>
+      <b>失败模式</b><span>未知 tool_name → invalid_tool；异常被 except 接住 → 走 catch-all 的 <code>_tool_call_failed</code></span>
+    </div>
+  </div>
+
+  <div class="contract">
+    <h4>共享文件变更 handler（5 件套）</h4>
+    <div class="row">
+      <b>是什么</b><span><code>_stage16g2b_file_mutation_tool</code>（<span class="lineref">tools/minimal.py:2229</span>）是 <code>write_file / apply_patch / delete_file / move_file / mkdir</code> 五个工具的共享 handler</span>
+      <b>核心调用</b><span>把工作交给 <code>execute_structured_file_mutation</code>（<span class="lineref">tools/file_mutation.py:177</span>），自己只负责把 outcome 翻成 <code>ToolResult</code>（含 typed dict + artifact_refs）</span>
+      <b>输入</b><span><code>tool_call</code>, <code>normalized</code>, <code>context</code>（同上）</span>
+      <b>输出三态</b><span><code>ToolResult(status="ok")</code> 全部 op 成功　/　<code>status="error"</code> + <code>partial_failure=true</code> 预检通过后写盘失败（rollback 已尝试）　/　<code>status="denied"</code> 预检拒绝（不动文件）</span>
+      <b>不变量</b><span>三态都会写 audit artifact + 用 <code>audit_artifact_id</code>（不是 <code>audit_ref</code>）作为 model-visible 字段名（详见侧栏 C）</span>
+      <b>失败模式</b><span>预检失败 → <code>FileMutationDenial</code> 异常 → handler 翻成 status=denied；运行时失败 → rollback + <code>partial_failure=true</code> + <code>invalid_for_training=true</code></span>
+    </div>
+  </div>
+
+  <div class="contract">
+    <h4>共享核心 execute_structured_file_mutation</h4>
+    <div class="row">
+      <b>是什么</b><span><span class="lineref">tools/file_mutation.py:177</span> 的纯函数，做<b>原子语义</b>的执行编排</span>
+      <b>步骤</b><span>① normalize → ② preflight 所有 op → ③ 给 affected paths 拍快照 → ④ 顺序应用 → ⑤ 任一失败 rollback 全部并标 <code>partial_failure</code></span>
+      <b>输入</b><span><code>tool_name</code>（5 件套之一） · <code>arguments</code>（已 schema 校验） · <code>context</code>（同 handler）</span>
+      <b>输出</b><span><code>FileMutationOutcome</code>（dataclass），含 <code>result_kind</code> / <code>operation_facts</code> / <code>changed_paths</code> / <code>partial_failure</code> / <code>rollback_status</code> / <code>invalid_for_training</code> / <code>policy_loss_candidate</code> / <code>diagnostic_side_channel_only</code></span>
+      <b>关键不变量</b><span>见 §⑦ 的 I-1 ~ I-7</span>
+    </div>
+  </div>
+
+  <h2 class="sec" id="excerpt-dispatch">② 调度入口 execute · normalize · 分派表（<span class="lineref">minimal.py:368-422 + 431</span>）</h2>
+  <p>覆盖阅读路径步骤 <b>2 / 3 / 4</b>。先看调度入口 <code>execute</code>（旧名 <code>execute_tool</code>，实际函数名是 <code>execute</code>）：</p>
+<pre><code><span class="kw">def</span> <span class="fn">execute</span>(self, tool_call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+    <span class="kw">if not</span> self.is_known(tool_call.tool_name):                  <span class="cm"># 未知 tool → invalid</span>
+        <span class="kw">return</span> self.invalid_tool_result(tool_call)
+    normalized = self.<span class="fn">normalize</span>(tool_call, context)              <span class="cm"># ③ 参数归一</span>
+    <span class="kw">try</span>:
+        <span class="kw">if</span> normalized.effective_tool_name == <span class="str">"list_files"</span>:        <span class="cm"># ↓ 18 个 handler 的 if/elif 分派</span>
+            <span class="kw">return</span> self._list_files(tool_call, normalized, context)
+        <span class="kw">if</span> normalized.effective_tool_name == <span class="str">"read_file"</span>:
+            <span class="kw">return</span> self._read_file(tool_call, normalized, context)
+        <span class="cm"># ...</span>
+        <span class="kw">if</span> normalized.effective_tool_name <span class="kw">in</span> {<span class="str">"write_file"</span>, <span class="str">"apply_patch"</span>,
+                                               <span class="str">"delete_file"</span>, <span class="str">"move_file"</span>, <span class="str">"mkdir"</span>}:
+            <span class="kw">return</span> self._stage16g2b_file_mutation_tool(tool_call, normalized, context)
+        <span class="cm"># ...</span>
+    <span class="kw">except</span> Exception <span class="kw">as</span> exc:
+        <span class="kw">return</span> self._tool_call_failed(tool_call, normalized, context, exc)</code></pre>
+  <p class="small">读懂这段：<code>execute</code> 是 <b>T4 → T5 的总开关</b>。先 <code>self.normalize</code>（步骤 3）算出 <code>effective_tool_name</code>，再用 if/elif 路由到 18 个 handler 之一。所有 handler 都接同一组参数 <code>(tool_call, normalized, context)</code>，方便共享。</p>
+
+  <h3>②.1 5 件套共用一个 handler（line 391）</h3>
+<pre><code><span class="kw">if</span> normalized.effective_tool_name <span class="kw">in</span> {<span class="str">"write_file"</span>, <span class="str">"apply_patch"</span>,
+                                       <span class="str">"delete_file"</span>, <span class="str">"move_file"</span>, <span class="str">"mkdir"</span>}:
+    <span class="kw">return</span> self._stage16g2b_file_mutation_tool(tool_call, normalized, context)</code></pre>
+  <p class="small">这是 16G.2A → 16G.2B 的关键架构决策。Codex 用 Lark 解析 apply_patch 文本；RH 是 JSON typed operations 直接进 handler — 风格差见 <a href="repo_harness_verl_stage16g_4way_tool_comparison.html#cap-patch">四方对比 · 多文件补丁</a>。</p>
+
+  <h3>②.2 参数归一 normalize（line 431+，实现约 400 行长）</h3>
+  <p>每个工具一个 normalize 分支。例如 <code>list_files</code>：</p>
+<pre><code><span class="kw">def</span> <span class="fn">normalize</span>(self, tool_call: ToolCall, context: ToolExecutionContext) -> NormalizedToolRequest:
+    args = dict(tool_call.arguments)
+    requested = tool_call.tool_name
+    effective = requested
+    <span class="cm"># ...</span>
+    <span class="kw">if</span> requested == <span class="str">"list_files"</span>:
+        normalized_args = {
+            <span class="str">"root"</span>: args.get(<span class="str">"path"</span>, args.get(<span class="str">"root"</span>, <span class="str">"."</span>)),  <span class="cm"># path 与 root 是别名 → 统一为 root</span>
+            <span class="str">"offset"</span>: int(args.get(<span class="str">"offset"</span>, 0)),                <span class="cm"># 字符串型整数也接受</span>
+            <span class="str">"max_entries"</span>: int(args.get(<span class="str">"max_entries"</span>, LIST_FILES_DEFAULT_MAX_ENTRIES)),
+            <span class="str">"kind"</span>: args.get(<span class="str">"kind"</span>, <span class="str">"file"</span>),
+        }
+        <span class="kw">if</span> <span class="str">"glob"</span> <span class="kw">in</span> args: normalized_args[<span class="str">"glob"</span>] = args[<span class="str">"glob"</span>]
+        <span class="kw">elif</span> <span class="str">"pattern"</span> <span class="kw">in</span> args: normalized_args[<span class="str">"glob"</span>] = args[<span class="str">"pattern"</span>]  <span class="cm"># pattern 别名</span>
+    <span class="cm"># ... 各工具各自的 normalize 分支 ...</span>
+    <span class="kw">return</span> NormalizedToolRequest(
+        requested_tool_name=requested,
+        effective_tool_name=effective,
+        requested_arguments=tool_call.arguments,
+        normalized_arguments=normalized_args,
+        effective_arguments=effective_args,
+        normalized_input_hash=stable_hash(effective_args),
+        <span class="cm"># ...</span>
+    )</code></pre>
+  <p class="small">读懂这段：normalize 不仅做<b>类型强转</b>（<code>int("5")</code> → 5）和<b>字段别名归一</b>（<code>path</code> 或 <code>root</code> → <code>root</code>），还可能<b>改 effective_tool_name</b>（比如某些 alias 路由到统一 handler）。<code>normalized_input_hash</code> 用作幂等性 key。后续 handler 只看 <code>normalized.effective_arguments</code>，不直接看 <code>tool_call.arguments</code>。</p>
+
+  <h2 class="sec" id="excerpt-handler">③ 主处理器 _stage16g2b_file_mutation_tool（<span class="lineref">minimal.py:2229</span>）</h2>
+  <p>简化版骨架（去掉 typed dict 重复）：</p>
+<pre><code><span class="kw">def</span> <span class="fn">_stage16g2b_file_mutation_tool</span>(self, tool_call, normalized, context):
+    tool_name = normalized.effective_tool_name
+    <span class="kw">try</span>:
+        outcome = <span class="fn">execute_structured_file_mutation</span>(            <span class="cm"># ④ 共享核心</span>
+            tool_name=tool_name,
+            arguments=normalized.effective_arguments,
+            context=context,
+        )
+    <span class="kw">except</span> FileMutationDenial <span class="kw">as</span> exc:                       <span class="cm"># 预检拒绝路径</span>
+        denial_payload = {<span class="cm">... reason_code / policy_loss=False ...</span>}
+        ref = context.recorder.write_json_artifact(             <span class="cm"># 拒绝也落 audit</span>
+            <span class="str">"stage16g2b_file_mutation_denial"</span>, denial_payload, ...)
+        <span class="kw">return</span> _tool_result(..., status=<span class="str">"denied"</span>, typed={..., <span class="str">"denial_ref"</span>: ref...})
+
+    <span class="cm"># 成功 / partial_failure 路径</span>
+    <span class="kw">for</span> path <span class="kw">in</span> outcome.cache_removals: context.file_state_cache.pop(path, None)
+    context.file_state_cache.update(outcome.cache_updates)         <span class="cm"># 更新读缓存</span>
+    ref = context.recorder.write_json_artifact(                    <span class="cm"># 落 audit</span>
+        <span class="str">"stage16g2b_file_mutation_audit"</span>, outcome.audit_payload(), ...)
+    status = <span class="str">"error"</span> <span class="kw">if</span> outcome.partial_failure <span class="kw">else</span> <span class="str">"ok"</span>
+    <span class="kw">return</span> _tool_result(
+        ..., status=status,
+        content=_preview(json.dumps({                              <span class="cm"># 模型可见 JSON 预览</span>
+            <span class="str">"result_kind"</span>: outcome.result_kind,
+            <span class="str">"operation_count"</span>: len(outcome.operation_facts),
+            <span class="str">"changed_paths"</span>: outcome.changed_paths,
+            <span class="str">"partial_failure"</span>: outcome.partial_failure,
+            <span class="str">"rollback_status"</span>: outcome.rollback_status,
+            <span class="str">"audit_artifact_id"</span>: ref.artifact_id,                <span class="cm"># ⚠ 16G.2C 改名</span>
+        })),
+        artifact_refs=[ref],
+        typed={**outcome.audit_payload(), <span class="str">"audit_artifact"</span>: ref...,
+               <span class="str">"allowed_in_policy_loss_trajectory"</span>: <span class="kw">False</span>, ...},
+    )</code></pre>
+  <p class="small">字段名注意：<code>audit_artifact_id</code> / <code>audit_artifact</code> 这两个名字是 16G.2C 改的；之前曾用 <code>audit_ref</code>，会被 gateway forbidden marker（<code>visibility.py:48</code>）拦截。详情见 <a href="code_guide_side_audit.html">side-C Audit</a>。</p>
+
+  <h2 class="sec" id="excerpt-core">④ 共享核心 execute_structured_file_mutation（<span class="lineref">file_mutation.py:177</span>）</h2>
+  <p>这是<b>原子语义</b>的关键代码段。30 行内说清"预检通过才动文件"和"任一失败 rollback 全部"：</p>
+<pre><code><span class="kw">def</span> <span class="fn">execute_structured_file_mutation</span>(*, tool_name, arguments, context) -> FileMutationOutcome:
+    operations = _normalize_operations(tool_name, arguments)        <span class="cm"># ① 5 件套统一形态</span>
+    prepared   = _prepare_operations(operations, context)           <span class="cm"># ② 预检全部 op</span>
+    snapshot_paths = _snapshot_paths(prepared, context)             <span class="cm"># ③ 算出 affected 路径集</span>
+    snapshots = {path: _snapshot_path(path) <span class="kw">for</span> path <span class="kw">in</span> snapshot_paths}
+    applied_ids = []
+    <span class="kw">try</span>:
+        <span class="kw">for</span> mutation <span class="kw">in</span> prepared:
+            _apply_prepared_operation(mutation)                     <span class="cm"># ④ 真正动文件</span>
+            applied_ids.append(mutation.operation_id)
+    <span class="kw">except</span> Exception <span class="kw">as</span> exc:                                  <span class="cm"># ⑤ rollback 全部</span>
+        rollback_status = _rollback_snapshots(snapshots)
+        operation_facts = [m.fact() <span class="kw">for</span> m <span class="kw">in</span> prepared]
+        operation_facts.append({<span class="str">"result_kind"</span>: <span class="str">"runtime_apply_failed"</span>,
+                                 <span class="str">"applied_operation_ids"</span>: applied_ids,
+                                 <span class="str">"failed_error_type"</span>: type(exc).__name__})
+        <span class="kw">return</span> FileMutationOutcome(
+            tool_name=tool_name,
+            result_kind=<span class="str">"partial_failure"</span>,
+            operation_facts=operation_facts,
+            ...
+            partial_failure=<span class="kw">True</span>,
+            rollback_attempted=<span class="kw">True</span>,
+            rollback_status=rollback_status,
+            invalid_for_training=<span class="kw">True</span>,                          <span class="cm"># ⚠ 训练阻断</span>
+            policy_loss_candidate=<span class="kw">False</span>,
+            diagnostic_side_channel_only=<span class="kw">True</span>,
+        )
+    <span class="cm"># 成功路径：更新 cache，构造 outcome</span>
+    <span class="kw">return</span> FileMutationOutcome(
+        tool_name=tool_name, result_kind=<span class="str">"file_mutation_applied"</span>,
+        operation_facts=[m.fact() <span class="kw">for</span> m <span class="kw">in</span> prepared],
+        changed_paths=sorted(_relative_touched_paths(prepared)),
+        ...
+        policy_loss_candidate=<span class="kw">False</span>,                              <span class="cm"># ⚠ 永远是 False</span>
+        official_prediction_eligible=<span class="kw">False</span>,
+        training_export_eligible=<span class="kw">False</span>,
+    )</code></pre>
+
+  <h2 class="sec" id="excerpt-normop">⑤ _normalize_operations — 5 件套 → 统一 ops list（<span class="lineref">file_mutation.py:238-276</span>）</h2>
+  <p>覆盖阅读路径步骤 <b>7</b>。<b>纯转换函数</b>，不读盘、不调外部依赖。把 5 种 tool_name × 5 种 arguments 形态都展开成同一种数据形态 <code>list[dict{op, path, ...}]</code>，让 step 8 之后的代码只需要处理一种 ops 列表。</p>
+<pre><code><span class="kw">def</span> <span class="fn">_normalize_operations</span>(tool_name: str, arguments: dict[str, Any]) -> list[dict[str, Any]]:
+    <span class="kw">if</span> tool_name == <span class="str">"apply_patch"</span>:
+        <span class="kw">return</span> [dict(operation) <span class="kw">for</span> operation <span class="kw">in</span> arguments[<span class="str">"operations"</span>]]    <span class="cm"># 已是 list[dict]，直接复制</span>
+    <span class="kw">if</span> tool_name == <span class="str">"write_file"</span>:
+        <span class="kw">return</span> [
+            {
+                <span class="str">"op"</span>: <span class="str">"write_file"</span>,
+                <span class="str">"path"</span>: arguments[<span class="str">"path"</span>],
+                <span class="str">"content"</span>: arguments[<span class="str">"content"</span>],
+                <span class="str">"mode"</span>: arguments[<span class="str">"mode"</span>],
+                **({<span class="str">"expected_content_hash"</span>: arguments[<span class="str">"expected_content_hash"</span>]}
+                   <span class="kw">if</span> <span class="str">"expected_content_hash"</span> <span class="kw">in</span> arguments <span class="kw">else</span> {}),
+            }
+        ]
+    <span class="kw">if</span> tool_name == <span class="str">"delete_file"</span>:
+        <span class="kw">return</span> [{<span class="str">"op"</span>: <span class="str">"delete_file"</span>, <span class="str">"path"</span>: arguments[<span class="str">"path"</span>],
+                 <span class="str">"expected_content_hash"</span>: arguments[<span class="str">"expected_content_hash"</span>],
+                 <span class="str">"reason"</span>: arguments[<span class="str">"reason"</span>]}]
+    <span class="kw">if</span> tool_name == <span class="str">"move_file"</span>:
+        <span class="kw">return</span> [{<span class="str">"op"</span>: <span class="str">"move_file"</span>,
+                 <span class="str">"source_path"</span>: arguments[<span class="str">"source_path"</span>],
+                 <span class="str">"target_path"</span>: arguments[<span class="str">"target_path"</span>],
+                 <span class="str">"expected_source_hash"</span>: arguments[<span class="str">"expected_source_hash"</span>],
+                 <span class="str">"reason"</span>: arguments[<span class="str">"reason"</span>]}]
+    <span class="kw">if</span> tool_name == <span class="str">"mkdir"</span>:
+        <span class="kw">return</span> [{<span class="str">"op"</span>: <span class="str">"mkdir"</span>, <span class="str">"path"</span>: arguments[<span class="str">"path"</span>]}]
+    <span class="kw">raise</span> FileMutationDenial(
+        reason_code=<span class="str">"unsupported_file_mutation_tool"</span>,
+        message=<span class="str">f"{tool_name} is not a Stage 16G.2B file mutation tool."</span>,
+        retryable=<span class="kw">False</span>,
+    )</code></pre>
+  <p class="small">读懂这段：<b>apply_patch 是天然多 op 形态</b>，本函数原样透传；其他 4 个单 op 工具被人工包成 1 元 list 让形态统一。如果 schema 校验放过了某个未知 tool_name（不应该发生），最后兜底 raise <code>unsupported_file_mutation_tool</code>。<b>delete/move 强制带 reason</b> 字段（schema 必填）让这里直接 <code>arguments["reason"]</code> 不报 KeyError。</p>
+
+  <h2 class="sec" id="excerpt-prep">⑥ _prepare_operations 预检 — 写盘前的安全闸门（<span class="lineref">file_mutation.py:279-309</span> + <span class="lineref">312-332</span>）</h2>
+  <p>覆盖阅读路径步骤 <b>8</b>。<b>原子语义的核心保证</b>：所有 op 的预检都走完，没有任何一个 raise，才进入步骤 9 真正写盘。任一失败 → <code>raise FileMutationDenial</code> 一路冒泡到 handler → 翻成 status="denied" ToolResult，<b>磁盘文件一字不改</b>。</p>
+
+  <h3>⑥.1 主循环：限总写入量 + 拒绝重复路径</h3>
+<pre><code><span class="kw">def</span> <span class="fn">_prepare_operations</span>(operations: list[dict[str, Any]], context: Any) -> list[PreparedFileMutation]:
+    total_write_bytes = 0
+    prepared: list[PreparedFileMutation] = []
+    touched: set[Path] = set()
+    <span class="kw">for</span> index, operation <span class="kw">in</span> enumerate(operations):
+        op_name = str(operation[<span class="str">"op"</span>])
+        operation_id = <span class="str">f"op_{index:03d}"</span>                                  <span class="cm"># op_000 / op_001 ...</span>
+        mutation = <span class="fn">_prepare_operation</span>(operation_id, op_name, operation, context)  <span class="cm"># 单 op 预检</span>
+        total_write_bytes += _operation_write_bytes(mutation)
+        <span class="kw">if</span> total_write_bytes &gt; STAGE16G2_APPLY_PATCH_TOTAL_WRITE_MAX_BYTES:
+            <span class="kw">raise</span> FileMutationDenial(reason_code=<span class="str">"patch_too_large"</span>, retryable=<span class="kw">True</span>,
+                operation_id=operation_id,
+                safe_rewrite_example=<span class="str">"Split the change into smaller structured apply_patch calls."</span>)
+        <span class="kw">for</span> path <span class="kw">in</span> mutation.touched_paths:
+            <span class="kw">if</span> path <span class="kw">in</span> touched:                                          <span class="cm"># 同次调用重复触碰</span>
+                <span class="kw">raise</span> FileMutationDenial(reason_code=<span class="str">"duplicate_mutation_path"</span>,
+                    operation_id=operation_id,
+                    safe_alternative_tool=<span class="str">"write_file"</span>,
+                    safe_rewrite_example=<span class="str">"Use one write_file overwrite for a large same-file rewrite."</span>)
+            touched.add(path)
+        prepared.append(mutation)
+    <span class="kw">return</span> prepared</code></pre>
+
+  <h3>⑥.2 单 op 预检分派 _prepare_operation</h3>
+<pre><code><span class="kw">def</span> <span class="fn">_prepare_operation</span>(operation_id, op_name, operation, context) -> PreparedFileMutation:
+    <span class="kw">if</span> op_name == <span class="str">"replace_text"</span>:  <span class="kw">return</span> _prepare_replace_text(operation_id, operation, context)
+    <span class="kw">if</span> op_name == <span class="str">"write_file"</span>:    <span class="kw">return</span> _prepare_write_file(operation_id, operation, context)
+    <span class="kw">if</span> op_name == <span class="str">"delete_file"</span>:   <span class="kw">return</span> _prepare_delete_file(operation_id, operation, context)
+    <span class="kw">if</span> op_name == <span class="str">"move_file"</span>:     <span class="kw">return</span> _prepare_move_file(operation_id, operation, context)
+    <span class="kw">if</span> op_name == <span class="str">"mkdir"</span>:         <span class="kw">return</span> _prepare_mkdir(operation_id, operation, context)
+    <span class="kw">raise</span> FileMutationDenial(reason_code=<span class="str">"unsupported_apply_patch_operation"</span>,
+        message=<span class="str">f"Unsupported apply_patch operation: {op_name}"</span>,
+        operation_id=operation_id)</code></pre>
+
+  <h3>⑥.3 例：_prepare_replace_text 的多重防御（<span class="lineref">file_mutation.py:335-380</span>）</h3>
+<pre><code><span class="kw">def</span> <span class="fn">_prepare_replace_text</span>(operation_id, operation, context) -> PreparedFileMutation:
+    path = _normalize_relative_path(operation[<span class="str">"path"</span>])              <span class="cm"># L2 + L3 路径校验</span>
+    resolved = _resolve_workspace_path(context, path, must_exist=<span class="kw">True</span>)  <span class="cm"># 拒绝符号链接 + 必须已存在</span>
+    content = _read_existing_utf8_file(resolved, path, operation_id=operation_id)  <span class="cm"># UTF-8 拒绝 binary</span>
+    current_hash = _sha256_text(content)
+    expected_hash = operation[<span class="str">"expected_content_hash"</span>]
+    <span class="kw">if</span> expected_hash != current_hash:                              <span class="cm"># 检测脏读</span>
+        <span class="kw">raise</span> FileMutationDenial(reason_code=<span class="str">"stale_file_state"</span>, path=path, ...
+            safe_rewrite_example=<span class="str">f"Call read_file(path={path!r}) and retry with the returned content_hash."</span>)
+    old_text = operation[<span class="str">"old_text"</span>]
+    <span class="kw">if</span> _looks_like_numbered_read_file_snippet(old_text):            <span class="cm"># 拒绝带 read_file 行号前缀</span>
+        <span class="kw">raise</span> FileMutationDenial(reason_code=<span class="str">"line_number_prefix_in_old_text"</span>, ...
+            safe_rewrite_example=<span class="str">"Copy old_text from raw_content_preview, not numbered_content_preview."</span>)
+    count = content.count(old_text)
+    <span class="kw">if</span> count != 1:                                                  <span class="cm"># old_text 必须唯一</span>
+        <span class="kw">raise</span> FileMutationDenial(reason_code=<span class="str">"old_text_not_unique"</span>, ...)
+    <span class="cm"># 通过所有校验，构造 PreparedFileMutation 并返回</span></code></pre>
+  <p class="small">读懂这段：这是<b>"模型脏读 + 改 / 把行号前缀也复制进来 / 同一段文字在文件里出现多次"</b>这三个最常见模型错误的拦截点。每个 reason_code 都附 <code>safe_rewrite_example</code>，handler 把它带进 model-visible 错误返回，模型 turn N+1 可以直接看懂怎么改。其他 4 个 <code>_prepare_*</code>（write_file / delete_file / move_file / mkdir）结构类似，本节略。</p>
+
+  <h2 class="sec" id="excerpt-apply">⑦ 真实文件操作 _apply_prepared_operation（<span class="lineref">file_mutation.py:555</span>）</h2>
+  <p>所有"真的写盘 / 删文件 / 重命名 / 建目录"都在这里。其他地方<b>不能</b>直接调 <code>Path.unlink</code>。</p>
+<pre><code><span class="kw">def</span> <span class="fn">_apply_prepared_operation</span>(mutation: PreparedFileMutation) -> <span class="kw">None</span>:
+    <span class="kw">if</span> mutation.op <span class="kw">in</span> {<span class="str">"replace_text"</span>, <span class="str">"write_file"</span>}:
+        mutation.resolved_path.parent.mkdir(parents=<span class="kw">True</span>, exist_ok=<span class="kw">True</span>)  <span class="cm"># 自动建父目录</span>
+        mutation.resolved_path.write_text(mutation.content, encoding=<span class="str">"utf-8"</span>)
+        <span class="kw">return</span>
+    <span class="kw">if</span> mutation.op == <span class="str">"delete_file"</span>:
+        mutation.resolved_path.unlink()
+        <span class="kw">return</span>
+    <span class="kw">if</span> mutation.op == <span class="str">"move_file"</span>:
+        mutation.resolved_target_path.parent.mkdir(parents=<span class="kw">True</span>, exist_ok=<span class="kw">True</span>)
+        mutation.resolved_source_path.rename(mutation.resolved_target_path)
+        <span class="kw">return</span>
+    <span class="kw">if</span> mutation.op == <span class="str">"mkdir"</span>:
+        mutation.resolved_path.mkdir(parents=<span class="kw">True</span>, exist_ok=<span class="kw">True</span>)
+        <span class="kw">return</span>
+    <span class="kw">raise</span> RuntimeError(<span class="str">f"unhandled file mutation op: {mutation.op}"</span>)</code></pre>
+  <p class="small">注意：<code>parents=True, exist_ok=True</code> 在 write_file / move_file 中自动建父目录 — 这是<b>故意的</b>，让模型不必为一次写入手工 mkdir。详见能力地图 <a href="repo_harness_verl_harness_capability_acceptance_map.html#cap-delmove">delete_move_mkdir 卡</a>。</p>
+
+  <h2 class="sec" id="excerpt-tail">⑧ handler 收尾 + FileMutationOutcome + ToolResult 构造（<span class="lineref">file_mutation.py:219-235</span> + <span class="lineref">minimal.py:2289-2335</span>）</h2>
+  <p>覆盖阅读路径步骤 <b>10</b>。这是 T5 的<b>出口</b>：写盘完成后，怎么把 outcome 翻成模型可见的对话历史 + 私有审计 artifact。</p>
+
+  <h3>⑧.1 execute_structured_file_mutation 收尾 — 构造 FileMutationOutcome</h3>
+<pre><code><span class="cm"># 在 execute_structured_file_mutation 的 try 块成功完成后（file_mutation.py:219-235）</span>
+cache_updates: dict[str, str] = {}
+cache_removals: list[str] = []
+<span class="kw">for</span> mutation <span class="kw">in</span> prepared:
+    cache_updates.update(mutation.cache_updates)        <span class="cm"># write/replace op：新内容</span>
+    cache_removals.extend(mutation.cache_removals)      <span class="cm"># delete/move op：旧路径</span>
+<span class="kw">return</span> FileMutationOutcome(
+    tool_name=tool_name,
+    result_kind=<span class="str">"file_mutation_applied"</span>,
+    operation_facts=[m.fact() <span class="kw">for</span> m <span class="kw">in</span> prepared],   <span class="cm"># 每 op 的事实（op_id / op / path / kind）</span>
+    changed_paths=sorted(_relative_touched_paths(prepared)),
+    cache_updates=cache_updates,
+    cache_removals=sorted(set(cache_removals)),
+    repository_mutation_performed=any(m.repository_mutation_performed <span class="kw">for</span> m <span class="kw">in</span> prepared),
+    policy_loss_candidate=<span class="kw">False</span>,                       <span class="cm"># ⚠ 硬编码，不可配置</span>
+    official_prediction_eligible=<span class="kw">False</span>,
+    training_export_eligible=<span class="kw">False</span>,
+)</code></pre>
+  <p class="small">读懂这段：成功路径的 outcome <b>不带 invalid_for_training</b>（默认 False），但 <code>policy_loss_candidate</code> 硬编码 False —— 即使整段 episode 在 verl route 跑，本工具的<b>这一步</b>本身也不会被视为 policy_loss 候选；最终判决在 T8 的 <code>_provider_route_qualification</code> 收口。partial_failure 分支（line 202-218）则<b>同时</b>翻 <code>invalid_for_training=True</code> + <code>diagnostic_side_channel_only=True</code>，更严。</p>
+
+  <h3>⑧.2 handler 拿到 outcome 后的 4 步收尾</h3>
+<pre><code><span class="cm"># minimal.py:2289-2334 简化版</span>
+<span class="kw">for</span> path <span class="kw">in</span> outcome.cache_removals:                            <span class="cm"># ① 清除 stale cache</span>
+    context.file_state_cache.pop(path, <span class="kw">None</span>)
+context.file_state_cache.update(outcome.cache_updates)        <span class="cm"># ② 写入新 cache</span>
+ref = context.recorder.write_json_artifact(                   <span class="cm"># ③ 私有审计落盘</span>
+    <span class="str">"stage16g2b_file_mutation_audit"</span>,
+    outcome.audit_payload(),
+    {<span class="str">"budget_policy"</span>: <span class="str">"preserve_json"</span>},
+)
+status = <span class="str">"error"</span> <span class="kw">if</span> outcome.partial_failure <span class="kw">else</span> <span class="str">"ok"</span>
+content = _preview(                                            <span class="cm"># ④ 构造 model-visible JSON</span>
+    json.dumps({
+        <span class="str">"result_kind"</span>: outcome.result_kind,
+        <span class="str">"operation_count"</span>: len(outcome.operation_facts),
+        <span class="str">"changed_paths"</span>: outcome.changed_paths,
+        <span class="str">"partial_failure"</span>: outcome.partial_failure,
+        <span class="str">"rollback_status"</span>: outcome.rollback_status,
+        <span class="str">"audit_artifact_id"</span>: ref.artifact_id,                <span class="cm">⚠ 16G.2C 改名（原 audit_ref 被 L4 拦）</span>
+    }, ensure_ascii=<span class="kw">False</span>, sort_keys=<span class="kw">True</span>),
+    context.output_limits.max_tool_output_chars,
+)
+<span class="kw">return</span> _tool_result(
+    tool_call,
+    normalized=normalized,
+    status=status,
+    content=content,
+    error_type=<span class="str">"stage16g2b_file_mutation_partial_failure"</span> <span class="kw">if</span> outcome.partial_failure <span class="kw">else</span> <span class="kw">None</span>,
+    artifact_refs=[ref],                                       <span class="cm"># 私有 rh:// ref（侧栏 C）</span>
+    typed={                                                    <span class="cm"># gateway 可见结构化字段</span>
+        **outcome.audit_payload(),
+        <span class="str">"audit_artifact"</span>: ref.model_dump(mode=<span class="str">"json"</span>),       <span class="cm">⚠ 不叫 audit_ref</span>
+        <span class="str">"allowed_in_policy_loss_trajectory"</span>: <span class="kw">False</span>,        <span class="cm"># 出站再次声明不进 loss</span>
+        <span class="str">"sample_policy_loss_candidate_effect"</span>: <span class="str">"requires_stage16g2c_patch_projection_linkage"</span>,
+        <span class="str">"resolved_max_output_chars"</span>: context.output_limits.max_tool_output_chars,
+        <span class="str">"result_envelope"</span>: _result_envelope(
+            result_kind=outcome.result_kind,
+            semantic_complete=<span class="kw">True</span>,
+            artifact_backed_full_result=<span class="kw">True</span>,
+            context_effects=[<span class="str">"repository_file_state_updated"</span>] <span class="kw">if</span> outcome.repository_mutation_performed <span class="kw">else</span> [],
+        ),
+    },
+)</code></pre>
+  <p class="small">读懂这段：<b>cache_updates 在 ② 之后立刻生效</b>，所以同一个 turn 内后续如果还有 <code>read_file</code> 会命中新内容（不需要等 turn N+1）。<b>recorder.write_json_artifact 返回 ArtifactRef</b>，<code>ref.artifact_id</code> 是 <code>{kind}/{sha256}</code> 形态的内容寻址 ID；<code>ref.model_dump(mode="json")</code> 序列化的完整 ref 含 opaque rh:// 形态。content 与 typed 是<b>两条不同的可见通道</b>：content 进对话历史给模型 turn N+1 看；typed 给 gateway 做结构化提取（不进 model token 流）。两条通道都<b>不</b>带 <code>audit_ref</code>（被 L4 拦），改用 <code>audit_artifact_id</code> / <code>audit_artifact</code>。</p>
+
+  <h3>⑧.3 denial 路径的对称结构（拒绝也落审计）</h3>
+  <p>预检失败（<code>FileMutationDenial</code>）走 except 分支（minimal.py:2242-2287），结构与成功路径对称：</p>
+  <pre><code><span class="kw">except</span> FileMutationDenial <span class="kw">as</span> exc:
+    denial_payload = {
+        <span class="str">"schema_version"</span>: <span class="str">"stage16g2b.file_mutation_denial.v1"</span>,
+        <span class="str">"tool_name"</span>: tool_name,
+        <span class="str">"reason_code"</span>: exc.reason_code,                       <span class="cm"># model_hidden_path_denied / stale_file_state ...</span>
+        <span class="str">"operation_id"</span>: exc.operation_id,
+        <span class="str">"path"</span>: exc.path,
+        <span class="str">"retryable"</span>: exc.retryable,
+        <span class="str">"safe_alternative_tool"</span>: exc.safe_alternative_tool,
+        <span class="str">"safe_rewrite_example"</span>: exc.safe_rewrite_example,    <span class="cm"># 让 model 知道怎么改</span>
+        <span class="str">"repository_mutation_performed"</span>: <span class="kw">False</span>,             <span class="cm"># ⚠ 一字未改</span>
+        <span class="str">"partial_failure"</span>: <span class="kw">False</span>,
+        <span class="str">"invalid_for_training"</span>: <span class="kw">False</span>,                      <span class="cm"># ⚠ 拒绝不阻断训练</span>
+        <span class="str">"allowed_in_policy_loss_trajectory"</span>: <span class="kw">False</span>,
+        <span class="str">"policy_loss_candidate"</span>: <span class="kw">False</span>,
+        ...
+    }
+    ref = context.recorder.write_json_artifact(<span class="str">"stage16g2b_file_mutation_denial"</span>, denial_payload, ...)
+    <span class="kw">return</span> _tool_result(tool_call, normalized=normalized,
+        status=<span class="str">"denied"</span>, content=exc.message, error_type=<span class="str">"stage16g2b_file_mutation_denied"</span>,
+        artifact_refs=[ref], typed={..., <span class="str">"denial_ref"</span>: ref.model_dump(mode=<span class="str">"json"</span>)})</code></pre>
+  <p class="small">读懂这段：denial 路径有两个关键不同——① <code>invalid_for_training=False</code>（拒绝不阻断整段 episode，模型可以重试）；② 字段名是 <code>denial_ref</code>（在 typed 内）—— "<code>_ref</code>" 后缀<b>不</b>在 forbidden marker 集合里，所以这里仍然用 "_ref"；只有以 "<code>audit_ref</code>" 字面量做 key 的 16G.2B 旧写法才会被拦。</p>
+
+  <h2 class="sec" id="flow">⑨ 状态机数据流</h2>
+  <div class="flow">
+<span class="l">                  arguments 已经过 schema 校验（T4 完成的）</span>
+                            <span class="l">│</span>
+                            <span class="l">▼</span>
+              <span class="t">① _normalize_operations</span>  <span class="l">— 5 件套展开成统一 ops list</span>
+                            <span class="l">│</span>
+                            <span class="l">▼</span>
+              <span class="t">② _prepare_operations</span>  <span class="l">— 预检逐 op：</span>
+                              <span class="l">- path normalize / posix-only / 黑名单</span>
+                              <span class="l">- expected hash 比对</span>
+                              <span class="l">- UTF-8 / binary / symlink 拒绝</span>
+                              <span class="l">- 重复触碰同路径拒绝</span>
+                            <span class="l">│</span>
+                  ┌─────────┴─────────┐
+                  <span class="l">▼</span>                   <span class="l">▼</span>
+       <span class="s">FileMutationDenial</span>        <span class="ok">prepared list</span>
+                  <span class="l">│</span>                   <span class="l">│</span>
+        <span class="l">handler 翻成 status=denied</span>     <span class="l">▼</span>
+        <span class="l">denial_payload 落 artifact</span>   <span class="t">③ _snapshot_paths</span>
+        <span class="l">policy_loss=False</span>           <span class="l">+ _snapshot_path（拍快照）</span>
+                                      <span class="l">│</span>
+                                      <span class="l">▼</span>
+                                <span class="t">④ for mutation in prepared:</span>
+                                  <span class="l">_apply_prepared_operation</span>
+                                  <span class="l">（真的动文件）</span>
+                                      <span class="l">│</span>
+                          ┌───────────┴───────────┐
+                          <span class="l">▼</span>                       <span class="l">▼</span>
+                  <span class="ok">all applied</span>            <span class="e">某一 op raise</span>
+                          <span class="l">│</span>                       <span class="l">│</span>
+                  <span class="t">file_mutation_applied</span>     <span class="t">⑤ _rollback_snapshots</span>
+                  <span class="l">result_kind = ok</span>          <span class="l">回退所有 affected paths</span>
+                  <span class="l">policy_loss=False</span>         <span class="l">│</span>
+                                              <span class="l">▼</span>
+                                        <span class="s">partial_failure=True</span>
+                                        <span class="s">invalid_for_training=True</span>
+                                        <span class="s">policy_loss_candidate=False</span>
+                                        <span class="s">diagnostic_side_channel_only=True</span></div>
+
+  <h2 class="sec" id="inv">⑩ 关键不变量（I-1 ~ I-7）</h2>
+  <p>这是 T5 必须维持的契约，<b>16G.3 / 16G.4 改动文件工具时不能破坏</b>：</p>
+  <div class="inv">
+    <ul class="invlist">
+      <li><span class="id">I-1</span><b>原子预检</b> · <code>_prepare_operations</code> 必须遍历完所有 op 才能开始动文件；任何一个失败都<b>不能</b>留下半成品文件状态。<br><span class="small">违例风险：模型混入一个会失败的 op 来污染仓库。校验位置：<code>execute_structured_file_mutation</code> 的 try 块结构本身。</span></li>
+      <li><span class="id">I-2</span><b>统一写盘入口</b> · 所有真实写盘只能走 <code>_apply_prepared_operation</code>。其他地方<b>不可</b>调 <code>Path.write_text/unlink/rename/mkdir</code> 修改工作区。<br><span class="small">违例风险：绕过 audit + cache invalidation。检测：grep <code>write_text\|\.unlink\(\)\|\.rename\(\)</code> 限制在 file_mutation.py 内。</span></li>
+      <li><span class="id">I-3</span><b>5 件套共享 handler</b> · <code>minimal.py:391</code> 的 if 必须把 5 个 tool_name 路由到同一个 <code>_stage16g2b_file_mutation_tool</code>。新增文件工具<b>必须</b>加入这个 set 或显式说明为什么不加入。<br><span class="small">违例风险：新工具绕过 atomic preflight。</span></li>
+      <li><span class="id">I-4</span><b>policy_loss_candidate 永远 False（mock route）</b> · 在 outcome 构造时硬编码 <code>policy_loss_candidate=False</code>。即使 partial_failure 走分支也是 False。verl route 的 policy_loss 资格由<b>下游 T8</b> 决定（<code>_provider_route_qualification</code>），不在 T5 上调。<br><span class="small">违例风险：mock 轨迹被错误算进 PPO/GRPO 梯度。</span></li>
+      <li><span class="id">I-5</span><b>partial_failure → invalid_for_training=True</b> · runtime apply 失败必须同时翻三个 flag：<code>partial_failure=True</code>、<code>invalid_for_training=True</code>、<code>diagnostic_side_channel_only=True</code>。<br><span class="small">违例风险：失败轨迹混进训练数据。</span></li>
+      <li><span class="id">I-6</span><b>denial 也要落 artifact</b> · 即使预检拒绝，也通过 <code>recorder.write_json_artifact("stage16g2b_file_mutation_denial", …)</code> 落审计 artifact。模型可见的字段含 <code>reason_code</code> + 可恢复提示，不含本地路径。<br><span class="small">违例风险：拒绝轨迹的诊断丢失；模型重复犯同样错误。</span></li>
+      <li><span class="id">I-7</span><b>model-visible 字段名禁用 forbidden marker</b> · <code>audit_artifact_id</code> / <code>audit_artifact</code> 是允许的；<code>audit_ref</code> / <code>run_directory</code> / <code>final_verifier_artifact</code> 等是禁用的。新增字段必须先查 <code>rl/visibility.py:48-58</code> 的 forbidden 集合。<br><span class="small">违例风险：tool result 被 gateway 拒绝（16G.2C 实际踩过的雷）。详见 side-C。</span></li>
+    </ul>
+  </div>
+
+  <h2 class="sec" id="side">⑪ 关联侧栏</h2>
+
+  <div class="sidelink">
+    <b>side-A · 安全边界</b> — T5 是路径黑名单 / hash 校验 / 敏感 marker 路径变体归一化的主战场。<a href="code_guide_side_safety.html">→ 进入 side-A</a>
+  </div>
+  <div class="sidelink">
+    <b>side-B · TrainingView mask</b> — T5 产生的 tool result 内容到 T7 成为 tool observation span，<code>response_mask=0</code>（不进 loss）。<a href="code_guide_side_mask.html">→ 进入 side-B（待写）</a>
+  </div>
+  <div class="sidelink">
+    <b>side-C · Audit/artifact</b> — T5 落两种 artifact：<code>stage16g2b_file_mutation_audit</code>（成功）/ <code>stage16g2b_file_mutation_denial</code>（拒绝）；model-visible 仅返回 <code>audit_artifact_id</code>。<a href="code_guide_side_audit.html">→ 进入 side-C（待写）</a>
+  </div>
+
+  <h2 class="sec" id="read-tools">⑫ 只读族（read / grep / list / glob / symbol_search）快速对照</h2>
+  <p>这 5 个工具不走文件变更共享路径，但同样在 T5 时间点执行。它们的 contract 简单很多：</p>
+  <table>
+    <thead><tr><th>工具</th><th>handler</th><th>关键约束</th><th>policy_loss / mask</th></tr></thead>
+    <tbody>
+      <tr><td><code>list_files</code></td><td><span class="lineref">minimal.py:689</span> <code>_list_files</code></td><td>路径黑名单过滤；超长 truncate</td><td>response_mask=0 · policy_loss=False</td></tr>
+      <tr><td><code>glob_files</code></td><td>同 <code>_list_files</code></td><td>pattern 校验；超长 truncate</td><td>同上</td></tr>
+      <tr><td><code>read_file</code></td><td><span class="lineref">minimal.py:913</span> <code>_read_file</code></td><td>path 黑名单；UTF-8；超长走 artifact + read_tool_result_artifact 翻页。<b>读端先查 <code>context.file_state_cache</code></b>（写端在本章节步骤 10 更新该 cache），miss 才读盘 — 详细 cache 命中策略见 T6</td><td>同上</td></tr>
+      <tr><td><code>grep</code></td><td><span class="lineref">minimal.py:1119</span> <code>_grep</code></td><td>正则校验；超长走 artifact</td><td>同上</td></tr>
+      <tr><td><code>symbol_search</code></td><td><span class="lineref">minimal.py:1484</span> <code>_symbol_search</code></td><td>大仓库 fallback grep；阈值 120 文件 / 5000ms</td><td>同上</td></tr>
+    </tbody>
+  </table>
+  <p>这 5 个工具的细节都已写进<b>能力地图</b>四象限卡（<a href="repo_harness_verl_harness_capability_acceptance_map.html#cap-read">cap-read</a> / <a href="repo_harness_verl_harness_capability_acceptance_map.html#cap-grep">cap-grep</a> / <a href="repo_harness_verl_harness_capability_acceptance_map.html#cap-symbol">cap-symbol</a> 等），本指南不再重复 schema / 调用例 / profile 矩阵。</p>
+
+  <div class="callout info"><b>本章节没写什么：</b>① schema 校验细节（属于 T4） · ② file_state_cache 怎么被读端用（属于 T6） · ③ 投影到 final.patch 的过程（属于 T8） · ④ 每个工具的 schema + JSON 例子（属于能力地图四象限卡）。这是有意分层；不要在 T5 重复。</div>
+
+  <h2 class="sec" id="next">→ 下一步</h2>
+  <div class="navbar">
+    <a href="code_guide_t4_dispatch.html">← T4 分派（待写）</a>
+    <a href="code_guide_index.html">↑ 总览索引</a>
+    <a href="code_guide_t6_state.html">→ T6 状态+audit（待写）</a>
+  </div>
+  <p>T6 章节会展开：handler 拿到 outcome 之后，<b>哪些字段落 model-visible 对话历史、哪些落 artifact_refs 当 evidence、cache_updates 怎么影响 read_file 的命中</b>。</p>
+
+</main>
+</div>
+</body>
+</html>

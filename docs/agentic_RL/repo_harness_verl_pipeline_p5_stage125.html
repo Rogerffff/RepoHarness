@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 5 · Stage 12.5 五个 Profile 模块</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    .rh-toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+    .rh-toc a { display: block; padding: 8px 12px; border: 1px solid var(--rv-border); border-radius: 8px; background: var(--rv-surface-soft); color: var(--rv-text); font-size: 0.92rem; text-decoration: none; }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+    .rh-flow { padding: 16px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.84rem; line-height: 1.8; overflow-x: auto; white-space: pre; }
+    .rh-flow .step { color: #58a6ff; font-weight: 760; }
+    .rh-flow .ok { color: #7ee787; }
+    .rh-flow .new { color: #ffc463; font-weight: 760; }
+    .rh-flow .arrow { color: #d0d7de; }
+    .rh-flow .comment { color: #8b949e; font-style: italic; }
+    .rh-flow .obj { color: #d2a8ff; }
+    .rh-sig { margin: 0 0 12px; padding: 12px 14px; background: #0b1018; border: 1px solid var(--rv-border); border-radius: 8px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.86rem; color: #d0d7de; white-space: pre-wrap; overflow-x: auto; }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+    .rh-sig .ln { color: #6e7681; user-select: none; padding-right: 12px; }
+    .rh-api-card { padding: 16px 18px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface-soft); }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+    .rh-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
+    .rh-meta-item { padding: 8px 12px; border-left: 3px solid var(--rv-border-strong); background: var(--rv-surface); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
+    .rh-meta-item .rh-label { display: block; margin-bottom: 2px; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rv-muted); }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger { border-left-color: var(--rv-danger); }
+    .rh-profile-card { padding: 16px; border-radius: 10px; border: 1px solid var(--rv-border); background: var(--rv-surface); margin: 12px 0; }
+    .rh-profile-card.p1 { border-top: 4px solid #58a6ff; }
+    .rh-profile-card.p2 { border-top: 4px solid #7ee787; }
+    .rh-profile-card.p3 { border-top: 4px solid #ffc463; }
+    .rh-profile-card.p4 { border-top: 4px solid #c79fff; }
+    .rh-profile-card.p5 { border-top: 4px solid #ff7b7b; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl · Pipeline Reading Guide</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_complete_pipeline_index.html">⓪ 索引</a>
+          <a href="repo_harness_verl_pipeline_p1_workspace.html">① Workspace</a>
+          <a href="repo_harness_verl_pipeline_p2_runtime.html">② Runtime</a>
+          <a href="repo_harness_verl_pipeline_p3_gateway.html">③ Gateway+Tool</a>
+          <a href="repo_harness_verl_pipeline_p4_trainingview.html">④ TrainingView</a>
+          <a href="repo_harness_verl_pipeline_p5_stage125.html" aria-current="page">⑤ Stage 12.5</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Page 5 · Stage 12.5 Throughput Profiles</span>
+      <h1>Stage 12.5：同步高吞吐基线五个 Profile 模块</h1>
+      <p class="rv-lead">
+        Stage 12 已经证明端到端能跑：远端 Stage 12.6 evidence 显示真实 trainer 完成 2 个 global step，Stage 12C real batch evidence 显示 3 条真实 Qwen2.5-Coder RepoHarness episode 进入同一个 DataProto batch。Stage 12.5 的目标<strong>不是</strong>"再次证明能跑通"，而是建立<strong>进入后续异步改造前必须有的同步高吞吐基线</strong>：可观测的依赖环境复用、可观测的 workspace 物化、5 个 profile 模块测量瓶颈、batch refill 处理 invalid 样本、evidence bundle 验收。本页详解 <code>repo_harness_verl/</code> 下 5 个 Stage 12.5 profile 模块（DataProto padding / inference server / Ray worker / tokenization / batch refill）+ <code>rl/throughput.py</code> baseline。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">对应索引图步骤 [16]</span>
+        <span class="rv-badge success">Stage 12.5 同步高吞吐基线</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#goal">① 阶段目标 + Acceptance</a>
+        <a href="#profile-1">② DataProtoPaddingProfile</a>
+        <a href="#profile-2">③ InferenceServerProfile</a>
+        <a href="#profile-3">④ RayWorkerResourceProfile</a>
+        <a href="#profile-4">⑤ TokenizationProfile</a>
+        <a href="#profile-5">⑥ BatchRefill</a>
+        <a href="#throughput">⑦ throughput.py baseline</a>
+        <a href="#integration">⑧ 集成时序</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <section id="goal" class="rv-section">
+        <h2>① Stage 12.5 阶段目标 + Acceptance Bundle</h2>
+
+        <h3>核心闭环</h3>
+        <div class="rh-flow"><span class="comment"># Stage 12.5 闭环（从 plan §1.目标）</span>
+依赖环境可复用                    <span class="comment">← Stage 12.5 新增 dependency_environment.py</span>
+   <span class="arrow">↓</span>
+workspace 快速安全物化            <span class="comment">← Stage 6 + 12.5 directory_copy 加固</span>
+   <span class="arrow">↓</span>
+verifier / recorder / tool 热路径可观测并降本     <span class="comment">← throughput.py</span>
+   <span class="arrow">↓</span>
+推理服务、tokenizer、Ray worker、系统资源可 profile  <span class="comment">← 5 个 profile 模块</span>
+   <span class="arrow">↓</span>
+batch 有效样本补齐 + DataProto padding 可审计    <span class="comment">← batch_refill.py + dataproto_profile.py</span>
+   <span class="arrow">↓</span>
+本地 + 远端 evidence bundle                       <span class="comment">← Stage125AcceptanceSummary</span></div>
+
+        <h3 style="margin-top: 14px;">硬边界（plan §1）</h3>
+        <ul style="margin: 6px 0 0 18px;">
+          <li><strong>不</strong>实现异步版 AgentLoop（后续异步改造另行讲解）</li>
+          <li><strong>不</strong>放松 Stage 0H – 12 的训练安全规则。正式 PPO/GRPO 仍必须 <code>route=verl</code> + <code>response_logprobs</code> 非空 + formal batch validator</li>
+          <li><strong>不</strong>把依赖环境路径 / workspace 真实路径 / run directory / setup log / secret 放进 batch 字段</li>
+          <li><strong>不</strong>通过"关闭 log probability / verifier / artifact / visibility check"制造吞吐提升</li>
+        </ul>
+
+        <h3 style="margin-top: 14px;">Evidence Bundle（6 本地 + 14 远端）</h3>
+        <div class="rh-flow"><span class="comment"># 本地 evidence（plan §2.2）</span>
+runs/stage12_5-local-&lt;timestamp&gt;/
+  ├─ environment_cache_report.json
+  ├─ workspace_cache_report.json
+  ├─ verifier_recorder_tool_hot_path_report.json
+  ├─ dataproto_padding_profile.json
+  ├─ visibility_and_batch_validation_report.json
+  └─ stage12_5_local_acceptance_summary.json
+
+<span class="comment"># 远端 GPU evidence（plan §2.3）</span>
+runs/stage12_5-throughput-&lt;timestamp&gt;/
+  ├─ environment_cache_report.json
+  ├─ workspace_cache_report.json
+  ├─ concurrent_episode_report.json              <span class="new">← 远端独有：并发 episode 报告</span>
+  ├─ trainer_throughput_profile.json             <span class="new">← 远端独有：trainer 吞吐</span>
+  ├─ verifier_recorder_tool_hot_path_report.json
+  ├─ batch_refill_resample_report.json           <span class="new">← 远端独有：batch refill</span>
+  ├─ dataproto_padding_profile.json
+  ├─ inference_metric_source_inventory.json      <span class="new">← 远端独有：metric 源清单</span>
+  ├─ inference_server_profile.json               <span class="new">← 远端独有：vLLM/SGLang profile</span>
+  ├─ tokenization_profile.json                   <span class="new">← 远端独有：tokenizer profile</span>
+  ├─ ray_worker_resource_profile.json            <span class="new">← 远端独有：Ray worker profile</span>
+  ├─ system_resource_profile.json                <span class="new">← 远端独有：system level</span>
+  ├─ visibility_and_batch_validation_report.json
+  └─ stage12_5_acceptance_summary.json</div>
+
+        <div class="rv-callout warning" style="margin-top: 12px;">
+          <strong>验收状态读法</strong>：本地 <code>stage12_5_local_acceptance_summary.json</code> 可以证明 evidence 文件齐全和各类校验跑过，但历史本地结果里曾出现 <code>acceptance_ready=false</code>，原因是工作区 dirty 或存在 untracked 文件。远端 Stage 12.6 summary 的 <code>status=passed</code> 和 <code>acceptance_ready=true</code> 才是“真实 trainer 链路已通过”的更强证据。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="profile-1" class="rv-section">
+        <h2>② Profile 1 · <code>DataProtoPaddingProfile</code></h2>
+        <article class="rh-profile-card p1">
+          <h3>测量什么</h3>
+          <p>DataProto 的 batch 里有多少 token 是<strong>真实输出</strong>、多少是 padding。指导我们怎么调 <code>prompt_length</code> / <code>response_length</code>，避免大量算力浪费在 padding 上。</p>
+
+          <h3 style="margin-top: 10px;">完整 schema · <a href="../../src/repo_harness_verl/dataproto_profile.py">dataproto_profile.py:12</a></h3>
+          <div class="rh-sig"><span class="ln">12│</span><span class="kw">class</span> <span class="nm">DataProtoPaddingProfile</span>(StrictBaseModel):
+<span class="ln">13│</span>    schema_version: <span class="ty">str</span> = <span class="li">"repo_harness_verl_stage12_5_dataproto_padding_profile_v0"</span>
+<span class="ln">14│</span>    batch_size: <span class="ty">int</span>                                <span class="cm"># batch 实际 size</span>
+<span class="ln">15│</span>    prompt_length: <span class="ty">int</span>                             <span class="cm"># 被 pad 到的 prompt 上限</span>
+<span class="ln">16│</span>    response_length: <span class="ty">int</span>                           <span class="cm"># 被 pad 到的 response 上限</span>
+<span class="ln">17│</span>    actual_prompt_tokens_p50: <span class="ty">float</span>                 <span class="cm"># 实际 prompt token 50 分位</span>
+<span class="ln">18│</span>    actual_prompt_tokens_p95: <span class="ty">float</span>                 <span class="cm"># 实际 prompt token 95 分位</span>
+<span class="ln">19│</span>    actual_response_tokens_p50: <span class="ty">float</span>
+<span class="ln">20│</span>    actual_response_tokens_p95: <span class="ty">float</span>
+<span class="ln">21│</span>    padded_token_ratio: <span class="ty">float</span>                       <span class="cm"># 0-1：padding 占总 slots 比例 ★ 核心指标</span>
+<span class="ln">22│</span>    loss_mask_token_ratio: <span class="ty">float | None</span>             <span class="cm"># loss_mask 中非零比例</span>
+<span class="ln">23│</span>    response_mask_zero_ratio: <span class="ty">float</span>                 <span class="cm"># response_mask 中 0 的比例（tool obs 占比）</span>
+<span class="ln">24│</span>    length_overflow_filtered_sample_count: <span class="ty">int</span>       <span class="cm"># 因长度超限被过滤的样本数</span>
+<span class="ln">25│</span>    diagnostics: <span class="ty">list[str]</span></div>
+
+          <h3 style="margin-top: 10px;">核心算法</h3>
+          <div class="rh-sig"><span class="ln">28│</span><span class="kw">def</span> <span class="nm">build_dataproto_padding_profile</span>(data_proto, *, length_overflow_filtered_sample_count=<span class="li">0</span>):
+<span class="ln">33│</span>    batch = getattr(data_proto, <span class="li">"batch"</span>, {})
+<span class="ln">34│</span>    prompts = batch.get(<span class="li">"prompts"</span>, [])
+<span class="ln">35│</span>    responses = batch.get(<span class="li">"responses"</span>, [])
+<span class="ln">36│</span>    response_mask = batch.get(<span class="li">"response_mask"</span>, [])
+<span class="ln">37│</span>    attention_mask = batch.get(<span class="li">"attention_mask"</span>)
+<span class="ln">38│</span>    loss_mask = batch.get(<span class="li">"loss_mask"</span>)
+<span class="ln">45│</span>
+<span class="ln">45│</span>    <span class="cm"># 用 attention_mask 算实际 prompt token 数（每行 sum）</span>
+<span class="ln">45│</span>    prompt_counts = _prompt_token_counts(attention_mask, batch_size=batch_size, prompt_length=prompt_length)
+<span class="ln">46│</span>    response_counts = _row_sums(response_mask)
+<span class="ln">47│</span>    total_slots = batch_size * (prompt_length + response_length)
+<span class="ln">48│</span>    actual_tokens = <span class="kw">sum</span>(prompt_counts) + <span class="kw">sum</span>(response_counts)
+<span class="ln">49│</span>    <span class="cm"># ★ 核心公式：padding 占总 slot 比例</span>
+<span class="ln">49│</span>    padded_ratio = <span class="li">0.0</span> <span class="kw">if</span> total_slots &lt;= <span class="li">0</span> <span class="kw">else</span> <span class="kw">max</span>(<span class="li">0.0</span>, <span class="kw">min</span>(<span class="li">1.0</span>, <span class="li">1.0</span> - actual_tokens / total_slots))</div>
+
+          <h3 style="margin-top: 10px;">用法</h3>
+          <p class="rv-muted">每个 batch 出 1 份 profile。若 <code>padded_token_ratio &gt; 0.5</code> 说明 prompt/response 上限设置可能过大，可调小；若 <code>actual_response_tokens_p95</code> 接近 <code>response_length</code>，只能说明高分位样本已经接近长度上限，存在截断风险，不能推出 99% 的样本都被截断。</p>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="profile-2" class="rv-section">
+        <h2>③ Profile 2 · <code>InferenceServerProfile</code></h2>
+        <article class="rh-profile-card p2">
+          <h3>测量什么</h3>
+          <p>vLLM / SGLang 推理服务的<strong>性能指标</strong>：prefill 阶段耗时、decode 阶段耗时、queue wait、tokens-per-second 吞吐、prefix cache 命中率、KV cache 抢占数、GPU 利用率。Stage 12.5 同时<strong>记录 metric 来源</strong>（Prometheus 抓取 / client-side 估算），避免读到错的指标。</p>
+
+          <h3 style="margin-top: 10px;">9 个 canonical metrics · <a href="../../src/repo_harness_verl/inference_profile.py">inference_profile.py:13</a></h3>
+          <div class="rh-sig"><span class="ln">13│</span>CANONICAL_INFERENCE_METRICS = (
+<span class="ln">14│</span>    <span class="li">"inference_server_queue_wait_seconds"</span>,    <span class="cm"># Server 内部排队（在调度器之前等待）</span>
+<span class="ln">15│</span>    <span class="li">"prefill_seconds"</span>,                         <span class="cm"># Time-to-first-token：prompt 前向耗时</span>
+<span class="ln">16│</span>    <span class="li">"decode_seconds"</span>,                          <span class="cm"># 每个 output token 的 decode 耗时</span>
+<span class="ln">17│</span>    <span class="li">"prefix_cache_hit_rate"</span>,                   <span class="cm"># 粘性 session 的 prefix 缓存命中率</span>
+<span class="ln">18│</span>    <span class="li">"kv_cache_eviction_count"</span>,                 <span class="cm"># KV 缓存被驱逐次数（内存压力）</span>
+<span class="ln">19│</span>    <span class="li">"num_preempted"</span>,                           <span class="cm"># vLLM 抢占的 request 数</span>
+<span class="ln">20│</span>    <span class="li">"tokens_per_second"</span>,                       <span class="cm"># 吞吐总速率</span>
+<span class="ln">21│</span>    <span class="li">"gpu_utilization"</span>,                         <span class="cm"># GPU 利用率（每个 GPU）</span>
+<span class="ln">22│</span>    <span class="li">"batched_token_count"</span>,                     <span class="cm"># 同 step 内批量处理的 token 数</span>
+<span class="ln">23│</span>)</div>
+
+          <h3 style="margin-top: 10px;"><code>InferenceServerProfile</code> 完整字段</h3>
+          <div class="rh-sig"><span class="ln">37│</span><span class="kw">class</span> <span class="nm">InferenceServerProfile</span>(StrictBaseModel):
+<span class="ln">39│</span>    backend_name: <span class="ty">str</span>                                 <span class="cm"># "vllm" 或 "sglang"</span>
+<span class="ln">40│</span>    backend_version: <span class="ty">str | None</span>
+<span class="ln">41│</span>    metric_source: <span class="ty">str</span>                               <span class="cm"># "prometheus" / "client_side_estimate"</span>
+<span class="ln">42│</span>    inference_server_queue_wait_seconds_p50: <span class="ty">float | None</span>     <span class="cm"># server 内部 queue p50</span>
+<span class="ln">43│</span>    inference_server_queue_wait_seconds_p95: <span class="ty">float | None</span>
+<span class="ln">44│</span>    prefill_seconds_p50: <span class="ty">float | None</span>                       <span class="cm"># TTFT</span>
+<span class="ln">45│</span>    prefill_seconds_p95: <span class="ty">float | None</span>
+<span class="ln">46│</span>    decode_seconds_p50: <span class="ty">float | None</span>                        <span class="cm"># 单 token decode</span>
+<span class="ln">47│</span>    decode_seconds_p95: <span class="ty">float | None</span>
+<span class="ln">48│</span>    prefix_cache_hit_rate: <span class="ty">float | None</span>                     <span class="cm"># 0-1</span>
+<span class="ln">49│</span>    kv_cache_eviction_count: <span class="ty">float | None</span>
+<span class="ln">50│</span>    num_preempted: <span class="ty">float | None</span>
+<span class="ln">51│</span>    tokens_per_second: <span class="ty">float | None</span>
+<span class="ln">52│</span>    gpu_utilization_p50: <span class="ty">float | None</span>
+<span class="ln">53│</span>    gpu_utilization_p95: <span class="ty">float | None</span>
+<span class="ln">54│</span>    batched_token_count_p50: <span class="ty">float | None</span>
+<span class="ln">55│</span>    batched_token_count_p95: <span class="ty">float | None</span>
+<span class="ln">56│</span>    unsupported_diagnostics: <span class="ty">list[str]</span>                      <span class="cm"># 哪些 metric 拿不到</span>
+<span class="ln">57│</span>    metric_name_mapping: <span class="ty">dict[str, str | None]</span>              <span class="cm"># canonical → 真实 Prometheus metric 名</span></div>
+
+          <h3 style="margin-top: 10px;">两种 metric 来源</h3>
+          <div class="rv-table-wrap">
+            <table class="rv-table rh-table-tight">
+              <thead><tr><th style="width: 22%;">metric_source</th><th>含义</th></tr></thead>
+              <tbody>
+                <tr><td><code>prometheus</code></td><td>从 vLLM / SGLang 的 Prometheus <code>/metrics</code> 端点抓取真实指标</td></tr>
+                <tr><td><code>client_side_estimate</code></td><td>backend 不暴露 metric 时（或没装 server）从 client 侧 records 推算：<code>tokens_per_second = sum(output_tokens) / sum(duration_ms/1000)</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="profile-3" class="rv-section">
+        <h2>④ Profile 3 · <code>RayWorkerResourceProfile</code></h2>
+        <article class="rh-profile-card p3">
+          <h3>测量什么</h3>
+          <p>Ray actor / worker 的<strong>资源使用</strong>和<strong>manager sharing 模式</strong>。Stage 12.5 引入"manager 跨 worker 共享"机制（snapshot manager / dep env manager 可以多个 worker 共享同一 cache_root），这个 profile 验证共享模式是否生效。</p>
+
+          <h3 style="margin-top: 10px;">关键字段 · <a href="../../src/repo_harness_verl/ray_worker_profile.py">ray_worker_profile.py</a></h3>
+          <div class="rh-sig"><span class="kw">class</span> <span class="nm">RayWorkerResourceProfile</span>(StrictBaseModel):
+    ray_worker_id: <span class="ty">str | None</span>
+
+    <span class="cm"># 6 个 manager sharing mode 字段</span>
+    runtime_manager_mode: <span class="ty">ManagerSharingMode</span>                   <span class="cm"># per_episode / per_ray_worker / cross_ray_worker_shared_cache</span>
+    workspace_snapshot_manager_mode: <span class="ty">ManagerSharingMode</span>
+    dependency_environment_manager_mode: <span class="ty">ManagerSharingMode</span>
+    verifier_pool_mode: <span class="ty">ManagerSharingMode</span>
+    resource_lease_manager_mode: <span class="ty">ManagerSharingMode</span>
+    route_limiter_mode: <span class="ty">ManagerSharingMode</span>
+
+    active_agent_loop_threads: <span class="ty">int</span>                              <span class="cm"># 当前活跃 agent loop thread 数</span>
+    agent_loop_worker_queue_wait_seconds_p50: <span class="ty">float | None</span>      <span class="cm"># worker 调度延迟</span>
+    agent_loop_worker_queue_wait_seconds_p95: <span class="ty">float | None</span>
+    ray_actor_cpu_percent: <span class="ty">float | None</span>                        <span class="cm"># Ray actor CPU 占用</span>
+    diagnostics: <span class="ty">list[str]</span></div>
+
+          <h3 style="margin-top: 10px;">3 种 ManagerSharingMode</h3>
+          <div class="rv-table-wrap">
+            <table class="rv-table rh-table-tight">
+              <thead><tr><th style="width: 38%;">mode</th><th>含义</th></tr></thead>
+              <tbody>
+                <tr><td><code>per_episode</code></td><td>每条 episode 新建一份 manager（最差的复用粒度）</td></tr>
+                <tr><td><code>per_ray_worker</code></td><td>每个 Ray actor 进程一份 manager（同 worker 内多 episode 共享）</td></tr>
+                <tr><td><code>cross_ray_worker_shared_cache</code></td><td>所有 Ray actor 共享同一 cache_root（最佳复用粒度，靠文件锁串行）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="profile-4" class="rv-section">
+        <h2>⑤ Profile 4 · <code>TokenizationProfile</code></h2>
+        <article class="rh-profile-card p4">
+          <h3>测量什么</h3>
+          <p>Stage 12 跑下来发现 tokenization 是<strong>意外的瓶颈</strong>（每条 episode 的 chat template 应用 + tokenize 加起来可能上百 ms）。这个 profile 测量 3 个阶段耗时 + 稳定 prefix cache 候选数。</p>
+
+          <h3 style="margin-top: 10px;">完整 schema · <a href="../../src/repo_harness_verl/tokenization_profile.py">tokenization_profile.py</a></h3>
+          <div class="rh-sig"><span class="kw">class</span> <span class="nm">TokenizationProfile</span>(StrictBaseModel):
+    schema_version: <span class="ty">str</span> = <span class="li">"repo_harness_verl_stage12_5_tokenization_profile_v0"</span>
+    sample_count: <span class="ty">int</span>                              <span class="cm"># 本 profile 涵盖的样本数</span>
+
+    <span class="cm"># 3 个阶段 timing（毫秒输入 / 秒输出）</span>
+    prompt_build_seconds_p50: <span class="ty">float | None</span>          <span class="cm"># prompt 字符串构建（拼接 system + history）</span>
+    prompt_build_seconds_p95: <span class="ty">float | None</span>
+    chat_template_seconds_p50: <span class="ty">float | None</span>         <span class="cm"># tokenizer.apply_chat_template 耗时</span>
+    chat_template_seconds_p95: <span class="ty">float | None</span>
+    tokenize_seconds_p50: <span class="ty">float | None</span>              <span class="cm"># 实际 tokenize 编码耗时</span>
+    tokenize_seconds_p95: <span class="ty">float | None</span>
+
+    <span class="cm"># Token 计数</span>
+    prompt_tokens_p50: <span class="ty">float | None</span>
+    prompt_tokens_p95: <span class="ty">float | None</span>
+
+    <span class="cm"># Prefix cache 候选：同 prefix_hash 出现次数 - 1</span>
+    stable_prefix_cache_candidate_count: <span class="ty">int</span>
+    diagnostics: <span class="ty">list[str]</span></div>
+
+          <h3 style="margin-top: 10px;">输入 records 字段</h3>
+          <p class="rv-muted">每条样本提供：</p>
+          <ul style="margin: 4px 0 0 18px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.86rem;">
+            <li><code>prompt_build_ms</code>: float（毫秒）</li>
+            <li><code>chat_template_ms</code>: float</li>
+            <li><code>tokenize_ms</code>: float</li>
+            <li><code>prompt_token_count</code>: int</li>
+            <li><code>prompt_prefix_hash</code>: str（前 N token 的 hash，统计 prefix cache 候选）</li>
+          </ul>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="profile-5" class="rv-section">
+        <h2>⑥ Profile 5 · <code>Stage125BatchRefillReport</code></h2>
+        <article class="rh-profile-card p5">
+          <h3>测量什么</h3>
+          <p>batch 中可能有<strong>大量无效样本</strong>（缺 logprob / timeout / infrastructure error / 长度超限）。Stage 12.5 提供 batch refill 机制：分类每条样本，剔除无效的，可选重采样补齐。最终生成<strong>可审计的 SampleClass 分类报告</strong>。</p>
+
+          <h3 style="margin-top: 10px;">11 种 SampleClass · <a href="../../src/repo_harness_verl/batch_refill.py">batch_refill.py:21</a></h3>
+          <div class="rh-sig"><span class="ln">21│</span>SampleClass = <span class="ty">Literal</span>[
+<span class="ln">22│</span>    <span class="li">"valid_trainable_sample"</span>,                       <span class="cm"># ★ 通过 formal online RL → 训练用</span>
+<span class="ln">23│</span>    <span class="li">"valid_verifier_rejected_negative_sample"</span>,      <span class="cm"># 被可信 verifier reject → 负样本</span>
+<span class="ln">24│</span>    <span class="li">"infrastructure_failure"</span>,                       <span class="cm"># docker / workspace / pool 错误 → 丢弃</span>
+<span class="ln">25│</span>    <span class="li">"invalid_task"</span>,                                 <span class="cm"># test_command_error → 丢弃</span>
+<span class="ln">26│</span>    <span class="li">"model_format_failure"</span>,                         <span class="cm"># tool_call 格式错 → 丢弃</span>
+<span class="ln">27│</span>    <span class="li">"verifier_rejected"</span>,                            <span class="cm"># 不可信 verifier reject → 丢弃</span>
+<span class="ln">28│</span>    <span class="li">"timeout"</span>,                                       <span class="cm"># queue / execution / test timeout → 丢弃</span>
+<span class="ln">29│</span>    <span class="li">"context_or_length_invalid"</span>,                    <span class="cm"># 长度超限 → 丢弃，重采样</span>
+<span class="ln">30│</span>    <span class="li">"missing_logprobs"</span>,                             <span class="cm"># 缺 logprob → 丢弃</span>
+<span class="ln">31│</span>    <span class="li">"mixed_route"</span>,                                  <span class="cm"># 路由混杂 → 丢弃</span>
+<span class="ln">32│</span>    <span class="li">"visibility_rejected"</span>,                          <span class="cm"># 隐藏字段违规 → 丢弃</span>
+<span class="ln">33│</span>]</div>
+
+          <h3 style="margin-top: 10px;"><code>Stage125RefillPolicy</code></h3>
+          <div class="rh-sig"><span class="ln">36│</span><span class="kw">class</span> <span class="nm">Stage125RefillPolicy</span>(StrictBaseModel):
+<span class="ln">38│</span>    target_valid_sample_count: <span class="ty">int</span>        <span class="cm"># 目标有效样本数（如 32）</span>
+<span class="ln">39│</span>    max_attempts: <span class="ty">int</span>                     <span class="cm"># 最多尝试次数（避免无限循环）</span>
+<span class="ln">40│</span>    max_wall_seconds: <span class="ty">float | None</span>       <span class="cm"># 时间预算</span>
+<span class="ln">41│</span>    allow_same_task_retry: <span class="ty">bool</span> = True    <span class="cm"># 同 task_id 是否允许重采样</span>
+<span class="ln">42│</span>    deduplicate_task_ids: <span class="ty">bool</span> = False    <span class="cm"># 是否去重 task_id</span></div>
+
+          <h3 style="margin-top: 10px;"><code>Stage125BatchRefillReport</code> · 完整 schema</h3>
+          <div class="rh-sig"><span class="ln">55│</span><span class="kw">class</span> <span class="nm">Stage125BatchRefillReport</span>(StrictBaseModel):
+<span class="ln">57│</span>    target_valid_sample_count: <span class="ty">int</span>
+<span class="ln">58│</span>    attempts_used: <span class="ty">int</span>                            <span class="cm"># 实际尝试次数</span>
+<span class="ln">59│</span>    valid_sample_count: <span class="ty">int</span>                       <span class="cm"># 有效样本数</span>
+<span class="ln">60│</span>    invalid_sample_count: <span class="ty">int</span>                     <span class="cm"># 无效样本数</span>
+<span class="ln">61│</span>    insufficient_valid_batch: <span class="ty">bool</span>                 <span class="cm"># valid &lt; target？</span>
+<span class="ln">62│</span>    insufficient_reason: <span class="ty">str | None</span>               <span class="cm"># 3 种：candidate_pool_exhausted / max_attempts_exhausted / max_wall_seconds_exhausted</span>
+<span class="ln">63│</span>    classifications: <span class="ty">list[Stage125SampleClassification]</span>   <span class="cm"># 每条样本一份分类</span>
+<span class="ln">64│</span>    valid_sample_ids: <span class="ty">list[str]</span>
+<span class="ln">65│</span>    elapsed_seconds: <span class="ty">float</span></div>
+
+          <h3 style="margin-top: 10px;">3 种 insufficient_reason 决策</h3>
+          <div class="rv-table-wrap">
+            <table class="rv-table rh-table-tight">
+              <thead><tr><th style="width: 38%;">reason</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td><code>candidate_pool_exhausted</code></td><td>任务池里没有更多候选样本可重采样</td></tr>
+                <tr><td><code>max_attempts_exhausted</code></td><td>尝试次数 ≥ <code>max_attempts</code>，停止</td></tr>
+                <tr><td><code>max_wall_seconds_exhausted</code></td><td>累计时间 ≥ <code>max_wall_seconds</code>，停止</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top: 10px;">关键决策树</h3>
+          <div class="rh-flow"><span class="comment"># classify_episode_result_for_refill(result):</span>
+<span class="kw">if</span> result.invalid_for_training <span class="kw">or</span> result.invalid_for_online_rl:
+   <span class="arrow">└─</span> 按 status_reason 分类（context_or_length_invalid / missing_logprobs / ...）
+
+<span class="kw">elif</span> result.status == <span class="li">"infrastructure_error"</span>:  → infrastructure_failure
+<span class="kw">elif</span> result.status == <span class="li">"invalid_task"</span>:           → invalid_task
+<span class="kw">elif</span> result.status == <span class="li">"timeout"</span>:                → timeout
+<span class="kw">elif</span> result.status == <span class="li">"failed"</span>:
+   <span class="kw">if</span> verifier 可信 → valid_verifier_rejected_negative_sample  <span class="comment">（可作负样本）</span>
+   <span class="kw">else</span>            → verifier_rejected                          <span class="comment">（丢弃）</span>
+<span class="kw">elif</span> result.status == <span class="li">"succeeded"</span> <span class="kw">and</span> formal_online_rl 通过:
+   <span class="arrow">└─</span> valid_trainable_sample
+<span class="kw">else</span>:
+   <span class="arrow">└─</span> model_format_failure / mixed_route / visibility_rejected（其它）</div>
+        </article>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="throughput" class="rv-section">
+        <h2>⑦ <code>rl/throughput.py</code> baseline + acceptance summary</h2>
+        <p class="rv-muted">RepoHarness 侧的 runtime 吞吐基线工具。<a href="../../src/repo_harness/rl/throughput.py">throughput.py 356 行</a>。</p>
+
+        <h3>关键 schema</h3>
+        <div class="rh-sig"><span class="kw">class</span> <span class="nm">Stage125BaselineProfile</span>(StrictBaseModel):
+    <span class="cm">"""每条 episode 的 baseline timing p50/p95 分桶。"""</span>
+    schema_version: <span class="ty">str</span>
+    dependency_setup_seconds_p50: <span class="ty">float | None</span>          <span class="cm"># 依赖环境建立</span>
+    workspace_materialization_seconds_p50: <span class="ty">float | None</span>  <span class="cm"># snapshot/lease 物化</span>
+    verifier_queue_seconds_p50: <span class="ty">float | None</span>             <span class="cm"># Stage 7 verifier 排队</span>
+    verifier_execution_seconds_p50: <span class="ty">float | None</span>         <span class="cm"># 真实 pytest 执行</span>
+    model_call_seconds_p50: <span class="ty">float | None</span>                  <span class="cm"># gateway 调用</span>
+    tokenizer_seconds_p50: <span class="ty">float | None</span>
+    prompt_build_seconds_p50: <span class="ty">float | None</span>
+    ... (各项 p95 对应字段)
+
+
+<span class="kw">class</span> <span class="nm">Stage125HotPathReport</span>(StrictBaseModel):
+    <span class="cm">"""recorder/tool 热路径报告。每条 episode 多少次 manifest rewrite、artifact write、tool 调用。"""</span>
+    per_episode_manifest_rewrites_p50: <span class="ty">float | None</span>
+    per_episode_artifact_writes_p50: <span class="ty">float | None</span>
+    per_episode_tool_invocations_p50: <span class="ty">float | None</span>
+    artifact_write_seconds_p50: <span class="ty">float | None</span>
+    ...
+
+
+<span class="kw">class</span> <span class="nm">Stage125AcceptanceSummary</span>(StrictBaseModel):
+    <span class="cm">"""最终验收门：evidence bundle 完整性 + formal batch validator + visibility 检查。"""</span>
+    scope: <span class="ty">Literal["local", "remote"]</span>           <span class="cm"># 决定查 6 文件还是 14 文件</span>
+    code_commit: <span class="ty">str | None</span>
+    evidence_complete: <span class="ty">bool</span>
+    evidence_bundle_check: <span class="ty">Stage125EvidenceBundleCheck</span>
+    formal_batch_validator_passed: <span class="ty">bool</span>
+    visibility_gate_passed: <span class="ty">bool</span>
+    dependency_cache_validated: <span class="ty">bool</span>
+    workspace_cache_validated: <span class="ty">bool</span>
+    valid_sample_refill_validated: <span class="ty">bool</span>
+    trainer_global_step_completed: <span class="ty">bool | None</span>  <span class="cm"># remote scope 必须为 True</span>
+    working_tree_clean: <span class="ty">bool | None</span>
+    acceptance_ready: <span class="ty">bool</span>                  <span class="cm"># 没有 blocking_reasons 时为 True</span>
+    blocking_reasons: <span class="ty">list[str]</span></div>
+
+        <h3 style="margin-top: 10px;">两个公开 API</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 38%;">API</th><th>职责</th></tr></thead>
+            <tbody>
+              <tr><td><code>check_stage12_5_evidence_bundle(bundle_dir, scope)</code></td><td>检查目录下是否齐 6 个本地或 14 个远端 evidence 文件，返回 <code>Stage125EvidenceBundleCheck</code>，其中包含 required / present / missing / complete。</td></tr>
+              <tr><td><code>build_stage12_5_acceptance_summary(...)</code></td><td>把所有检查项合并成 <code>Stage125AcceptanceSummary</code>，<code>acceptance_ready</code> 是最终门；如果任何前置检查失败，会在 <code>blocking_reasons</code> 中留下原因。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="integration" class="rv-section">
+        <h2>⑧ Stage 12.5 集成时序</h2>
+        <p class="rv-muted">这里讲的是 Stage 12.5 profile helper 和 evidence 验收如何围绕真实训练链路工作。它们用于诊断和验收，不是 RepoHarness 与 verl 之间的训练样本主契约，也不要理解成每条 episode 返回时必然同步写出 5 个文件。</p>
+
+        <div class="rh-flow"><span class="step">[episode 跑完 EpisodeResult 返回 verl AgentLoopOutput]</span>
+   <span class="arrow">↓</span>
+<span class="step">[verl postprocess → DataProto]</span>
+   <span class="arrow">↓</span>
+<span class="step">[Stage 12.5 profile / evidence helper]</span>
+   <span class="arrow">├─</span> <span class="obj">build_dataproto_padding_profile(data_proto)</span> → dataproto_padding_profile.json
+   <span class="arrow">├─</span> <span class="obj">build_inference_server_profile(prom_text or client_records)</span> → inference_server_profile.json
+   <span class="arrow">├─</span> <span class="obj">build_ray_worker_resource_profile(...)</span> → ray_worker_resource_profile.json
+   <span class="arrow">├─</span> <span class="obj">build_tokenization_profile(records)</span> → tokenization_profile.json
+   <span class="arrow">└─</span> <span class="obj">build_refill_report(classifications, policy)</span> → batch_refill_resample_report.json
+   <span class="arrow">↓</span>
+<span class="step">[trainer step 完成]</span>
+   <span class="arrow">↓</span>
+<span class="step">[Stage 12.5 verifier/recorder/tool hot path 报告]</span>
+   <span class="arrow">└─</span> verifier_recorder_tool_hot_path_report.json
+   <span class="arrow">↓</span>
+<span class="step">[visibility + batch validation]</span>
+   <span class="arrow">└─</span> visibility_and_batch_validation_report.json
+   <span class="arrow">↓</span>
+<span class="step">[Stage 12.5 final acceptance]</span>
+   <span class="arrow">├─</span> <span class="obj">check_stage12_5_evidence_bundle(bundle_dir, scope="remote")</span>  <span class="comment"># 应该收齐 14 文件</span>
+   <span class="arrow">├─</span> 跑 formal batch validator（每条 valid 样本 route=verl）
+   <span class="arrow">├─</span> 跑 visibility check（extra_fields 全 allowlist）
+   <span class="arrow">├─</span> 跑 cache validation（snapshot / dependency env cache_hit 命中验证）
+   <span class="arrow">└─</span> <span class="obj">build_stage12_5_acceptance_summary(...)</span>  <span class="comment"># acceptance_ready = True ?</span>
+   <span class="arrow">↓</span>
+<span class="step">[acceptance_ready = True → 同步基线通过，可进入后续异步改造]</span></div>
+
+        <h3 style="margin-top: 14px;">Stage 12.5 完成后的能力</h3>
+        <div class="rh-meta">
+          <div class="rh-meta-item callers">
+            <span class="rh-label">依赖环境复用</span>
+            在共享 cache_root、相同依赖规格、相同 dependency cache key 的前提下，1000 条 episode 跑同一 task 时，<code>pip install</code> 理论上只需要跑 1 次（参考 Page 1 时间账）。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">瓶颈定位</span>
+            5 个 profile 报告能精确指出训练 wall time 的去处：模型 / tokenizer / verifier / workspace / artifact 各占多少。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">batch 完整性</span>
+            invalid 样本不再悄悄进 trainer，refill report 显示分类统计。
+          </div>
+          <div class="rh-meta-item bound">
+            <span class="rh-label">不放松安全</span>
+            所有 Stage 0H–12 的训练安全规则保持。无 trick，吞吐提升来自<strong>真实复用</strong>而非"关 verifier"。
+          </div>
+        </div>
+
+        <h3 style="margin-top: 14px;">后续异步改造边界</h3>
+        <p class="rv-muted">本页只解释 Stage 13 之前的同步训练链路和吞吐 evidence。后续异步链路会在完成后单独讲解；这里仅需要记住：Stage 12.5 提供的是后续异步改造前的同步基线和验收证据。</p>
+      </section>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 32px; padding: 14px 0; border-top: 1px solid var(--rv-border);">
+        <a href="repo_harness_verl_pipeline_p4_trainingview.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">← Page 4 · TrainingView</a>
+        <a href="repo_harness_verl_complete_pipeline_index.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--hh-accent-soft); color: var(--rv-accent); font-weight: 760;">↑ 回到索引</a>
+        <span></span>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.2B 完成报告</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1180px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:230px;flex:0 0 230px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 11px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.3px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.4px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .vcard{border-radius:14px;padding:17px 19px;border:1px solid}
+  .vcard.green{background:linear-gradient(135deg,#13311f,#161a23);border-color:#2f6b3a}
+  .vcard.amber{background:linear-gradient(135deg,#2b2412,#161a23);border-color:#6b5a2f}
+  .vcard .lab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .vcard .big{font-size:19px;font-weight:700;margin-bottom:6px}
+  .vcard.green .big{color:#6fdc84}.vcard.amber .big{color:#e6c068}
+  .vcard p{font-size:12.8px;margin:6px 0 0;color:#cdd6e6}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .risk{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:11px;padding:13px 16px;margin:11px 0}
+  .risk.ok{border-left-color:var(--good)}
+  .risk h4{margin:0 0 5px;font-size:14.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .myrec{background:#11261c;border:1px solid #2f6b3a;border-radius:7px;padding:8px 12px;margin-top:8px;font-size:13px}
+  .myrec b{color:#6fdc84}
+  .footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);color:#6b7484;font-size:12.3px}
+  @media(max-width:900px){nav{display:none}main{padding:22px 16px}.verdict{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#verdict">裁决</a>
+  <a href="#verify">1 · 我独立核查了什么</a>
+  <a href="#products">2 · 具体产出详解</a>
+  <a href="#review">3 · 我的审查观察 / 提醒</a>
+</nav>
+<main>
+  <h1>Stage 16G.2B 完成报告</h1>
+  <p class="meta">16G.2 第二个子阶段：<b>真正开启文件写入行为</b>（write_file / apply_patch 从"schema 拒绝"切换为真实可审计的文件变更）　·　我做了<b>独立核查</b>（真写入是否发生、事务原子性、expected_hash/reason、安全边界、训练资格是否仍收紧）　·　上游：<a href="repo_harness_verl_stage16g2_plan_report.html">16G.2 计划</a>、<a href="repo_harness_verl_harness_capability_acceptance_map.html">能力总表</a></p>
+
+  <h2 class="sec" id="verdict" style="border:none;margin-top:0;padding-top:0">裁决</h2>
+  <div class="verdict">
+    <div class="vcard green">
+      <div class="lab">能不能信</div>
+      <div class="big">可信度 高 ✓</div>
+      <p>真实写入确认（file_mutation.py 真改文件 + 路径守卫）；<b>事务原子性代码级确认</b>（全预检→快照→apply→失败 rollback + partial_failure→invalid_for_training）；<b>训练资格仍收紧</b>（成功写入也暂不进 policy loss，等 2C）；独立工具仍不进 core；inspector/回归/测试/泄漏我都独立重跑通过。</p>
+    </div>
+    <div class="vcard amber">
+      <div class="lab">能不能提交</div>
+      <div class="big">可作为 2B 完成态提交</div>
+      <p>2B 未提交（2A 那次修正已提交）。这是行为质量很高的一轮，可提交。一个很小的清理项见第 3 节 O3（不阻塞）。</p>
+    </div>
+  </div>
+  <div class="callout good">
+    <b>一句话：</b>2B 把 <code>write_file</code> 和 <code>apply_patch</code> 从"看得到但调用即拒"变成<b>真能改文件</b>，并且把"安全/可复现/可审计"焊进了行为里——失败必回滚、回滚不干净就把整条 episode 踢出训练，成功写入也<b>暂不进 policy loss</b>（等 2C 接 linkage）。这是数据干净度优先的正确做法。建议接受完成态，进 16G.2C。
+  </div>
+
+  <!-- 1 -->
+  <h2 class="sec" id="verify">1 · 我独立核查了什么</h2>
+  <table>
+    <tr><th style="width:26%">核查项</th><th>方法 + 结果</th><th class="c" style="width:90px">结论</th></tr>
+    <tr>
+      <td><b>真实写入是否发生</b></td>
+      <td>读 <code>file_mutation.py</code>：真的 <code>write_text</code>/<code>unlink</code>/<code>rename</code>/<code>mkdir</code>(560–574)；acceptance <code>default_behavior_enabled_tools=[write_file, apply_patch]</code>。2A 的 behavior_not_enabled 已切换</td>
+      <td class="c"><span class="tag t-good">真行为已开</span></td>
+    </tr>
+    <tr>
+      <td><b>事务原子性 + rollback</b></td>
+      <td>读 <code>execute_structured_file_mutation</code>：先 <code>_prepare_operations</code> 全预检 → <code>_snapshot_paths</code> 快照 → apply 循环；异常时 <code>_rollback_snapshots</code> + 返回 <code>partial_failure=True / rollback_attempted=True</code></td>
+      <td class="c"><span class="tag t-good">符合计划</span></td>
+    </tr>
+    <tr>
+      <td><b>partial_failure → 踢出训练</b></td>
+      <td>失败路径返回 <code>invalid_for_training=True</code> / <code>policy_loss_candidate=False</code> / official_prediction & training_export 均 False / diagnostic_side_channel_only=True</td>
+      <td class="c"><span class="tag t-good">数据干净防线在</span></td>
+    </tr>
+    <tr>
+      <td><b>训练资格仍收紧</b></td>
+      <td>acceptance <code>policy_loss_candidate_for_new_tools=false</code>、<code>next_required_stage_for_policy_loss=16G.2C</code>；FileMutationOutcome <b>成功路径也</b> policy_loss_candidate=False</td>
+      <td class="c"><span class="tag t-good">未提前放进训练</span></td>
+    </tr>
+    <tr>
+      <td><b>默认面 + 独立工具</b></td>
+      <td>DEFAULT_TOOL_ORDER 仍是 edit/create/write/apply_patch（apply_patch 在内、delete/move/mkdir 不在）；<code>standalone_tools_default_visible=false</code>、<code>standalone_tools_extended_executable=true</code></td>
+      <td class="c"><span class="tag t-good">收敛保持</span></td>
+    </tr>
+    <tr>
+      <td><b>一元 delete/move + reason</b></td>
+      <td>acceptance <code>unary_delete_supported_by_apply_patch=true</code>、<code>unary_move_supported_by_apply_patch=true</code>；delete/move 强制 reason（schema 已确认）</td>
+      <td class="c"><span class="tag t-good">达标</span></td>
+    </tr>
+    <tr>
+      <td><b>安全边界</b></td>
+      <td>路径守卫(.git/runtime_private/hiddenverifier 等)；acceptance：symlink_target_preserved、sensitive_marker_variant_path_absent、atomic_preflight_passed、safety_denial_reason_codes_complete 均 true</td>
+      <td class="c"><span class="tag t-good">守住</span></td>
+    </tr>
+    <tr>
+      <td><b>inspector / 回归 / 测试 / 泄漏</b></td>
+      <td>重跑 <code>inspect-stage16g2b-file-mutation</code>(exit=0) + 2A inspector(exit=0)；<code>test_..._stage16g2b_file_mutation.py</code> 31 passed；自行 grep 泄漏 0</td>
+      <td class="c"><span class="tag t-good">全过</span></td>
+    </tr>
+    <tr>
+      <td><b>gate 粒度</b></td>
+      <td><code>stage16g2c_allowed_to_start=true</code>；<code>stage16g3_allowed_to_start=false</code>；17B/20/21 全 false</td>
+      <td class="c"><span class="tag t-good">粒度正确</span></td>
+    </tr>
+  </table>
+
+  <!-- 2 -->
+  <h2 class="sec" id="products">2 · 具体产出详解</h2>
+  <h3>① file_mutation.py —— 共享文件变更服务</h3>
+  <p>新增一个底层模块,被 <code>write_file</code>、<code>apply_patch</code> 以及 extended 的 <code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 共用(避免各写一套路径检查)。它负责:workspace 路径解析、forbidden path 拒绝(.git / runtime_private / hiddenverifier / hiddentestpatch 等)、UTF-8 检查、expected hash 校验、预检+执行、统一 reason_code/result。</p>
+  <h3>② 真实行为 + 事务原子语义</h3>
+  <pre><code><span class="cm"># execute_structured_file_mutation 的骨架（已核）</span>
+prepared  = _prepare_operations(...)   <span class="cm"># 全部 operation 先预检</span>
+snapshots = 快照受影响文件的旧内容       <span class="cm"># 为 rollback 准备</span>
+try:
+    for op in prepared: _apply_prepared_operation(op)   <span class="cm"># 全过才逐个真正写</span>
+except:
+    _rollback_snapshots(snapshots)      <span class="cm"># 失败 → 回滚</span>
+    return partial_failure=True, rollback_attempted=True,
+           invalid_for_training=True, policy_loss_candidate=False   <span class="cm"># 整条 episode 踢出训练</span></code></pre>
+  <p>真正的写入是 <code>write_text</code>(覆盖/新建)、<code>unlink</code>(删)、<code>rename</code>(移)、<code>mkdir</code>(建目录)。</p>
+  <h3>③ apply_patch 一元 delete/move + reason</h3>
+  <p>验证了 apply_patch 能干净表达<b>单个</b>删除/移动(不只批量),且 delete/move operation <b>强制带模型 reason</b>(审计/reward attribution)。这正是 16G.2B preflight 设计修正要求的——core 不给独立 delete/move/mkdir,统一经 apply_patch。</p>
+  <h3>④ 独立工具仅 extended + 新 inspector</h3>
+  <p>独立 <code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 默认不可见,但在 swe_public_extended 中<b>可真实执行</b>(行为也已实现,只是不进 core 默认)。新增 CLI <code>inspect-stage16g2b-file-mutation</code> + safety_denial / file_mutation_probe evidence。acceptance 用 <code>source_digests</code> 绑定 6 个源码文件 sha256(不只 evidence)。</p>
+  <h3>⑤ 训练资格仍等 2C</h3>
+  <p>新文件工具的成功/拒绝事件<b>都不进 policy loss</b>,acceptance 明确 <code>next_required_stage_for_policy_loss=16G.2C</code> —— 行为先做对,训练 linkage(进 final.patch/export、翻开 policy-loss 资格)留给 2C。</p>
+
+  <!-- 3 -->
+  <h2 class="sec" id="review">3 · 我的审查观察 / 提醒</h2>
+
+  <div class="risk ok">
+    <h4><span class="tag t-good">做得好</span> O1 · 事务原子性 + "失败就丢整条 episode" 是数据干净度的正确做法</h4>
+    <p>全预检→快照→apply→失败 rollback,而且 partial_failure / 回滚不干净 → 整条 episode <code>invalid_for_training</code>。更关键:<b>连成功的新工具写入也暂不进 policy loss</b>。这意味着"行为正确性"和"训练资格"被干净地分成两步——先在 2B 把行为做对,再在 2C 谨慎接训练。这正是我一直强调的 RL 数据干净优先。</p>
+  </div>
+
+  <div class="risk">
+    <h4><span class="tag t-warn">知情·重要</span> O2 · 这是模型第一次能在默认 scaffold 真改文件</h4>
+    <p>从 2B 起,跑 simple_react 时模型调 write_file/apply_patch <b>会真的改工作区</b>。但因为训练资格仍关着(policy_loss=false 直到 2C),这些改动<b>暂不喂训练</b>——所以现在适合用于评测/probe,数据还不进 RL。gate(16G.3/17B/20/21 全 false)也天然挡住。<b>结论:可以放心用它做诊断/probe,但 2C 接通 policy-loss 资格前,别把这些轨迹当训练数据。</b></p>
+  </div>
+
+  <div class="risk">
+    <h4><span class="tag t-warn">小清理项·不阻塞</span> O3 · behavior_not_enabled 的 "until_stage16g2b" 文案已过期</h4>
+    <p><code>minimal.py</code> 还留着 2 处 <code>behavior_not_enabled</code>(reason_code 文本 <code>behavior_not_enabled_until_stage16g2b</code>,而 2B 已完成)。acceptance 确认 write_file/apply_patch 已是真实行为,所以这应是个"未启用上下文"的<b>防御性 fallback 分支</b>,不影响已启用工具;但<b>文案已过期</b>。</p>
+    <div class="myrec"><b>建议:</b>后续子阶段顺手清理或确认这条分支的可达性(是否还有合法触发场景)。不阻塞 2B。</div>
+  </div>
+
+  <div class="risk ok">
+    <h4><span class="tag t-good">一致性</span> O4 · 与 16G.2B preflight 设计修正完全吻合</h4>
+    <p>core = write_file + apply_patch(真行为);delete/move/mkdir 经 apply_patch、独立工具仅 extended;一元 delete/move 可表达;delete/move 强制 reason;输入上限/路径守卫在。和我们一致敲定的收敛方案一字不差。</p>
+  </div>
+
+  <div class="risk">
+    <h4><span class="tag t-info">下一步要盯</span> O5 · 2C / 16G.5 还要验证什么</h4>
+    <ul>
+      <li><b>2C(下一步):</b>把这些真实改动接进 final.patch / patch hygiene / compat projection,并<b>谨慎翻开 policy-loss 资格</b>(成功且干净的轨迹才进训练;partial_failure 仍踢出)。这是"行为"到"训练数据"的关键一跳。</li>
+      <li><b>16G.5:</b>用 parity probe 决定独立 delete/move/mkdir 是否提升进 core 默认(看模型用 apply_patch 表达一元 delete/move 是否别扭),以及对抗 probe 验证安全边界。</li>
+    </ul>
+  </div>
+
+  <div class="callout info">
+    <b>关于能力总表：</b>按你这次的选择我<b>没有</b>更新能力总表卡片。不过因为 2B 行为已真实落地,下次(尤其 2C 把训练 linkage 接通后)是更新卡片的自然节点——届时我会把 write_file/apply_patch 从"待建"推进到"行为已实现/训练 linkage 已接/验收③ 待 16G.5",delete/move/mkdir 标"extended 行为已实现、core 经 apply_patch"。你需要的话我现在也可以顺手更新。<br><br>
+    <b>下一步:</b>建议接受 2B 完成态 → 进 16G.2C(final.patch/export linkage + policy-loss 资格)。提交方面:2B 未提交,2A 修正已提交;要清提交债的话我可随时帮你列 2B 的干净提交清单。
+  </div>
+
+  <div class="footer">
+    本报告基于独立核查：读 file_mutation.py 确认真实写入+路径守卫+全预检/快照/rollback 结构、读 stage16g2b acceptance 确认训练资格仍收紧与 gate 粒度、确认 apply_patch 仍在 DEFAULT_TOOL_ORDER、重跑 inspect-stage16g2b-file-mutation(exit=0)+2A inspector+单元测试(31 passed)、自行 grep 泄漏(0)。结论可用相同命令复核。
+  </div>
+</main>
+</div>
+</body>
+</html>

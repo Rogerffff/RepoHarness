@@ -20,6 +20,7 @@
   nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 8px}
   nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.5px;margin-bottom:2px}
   nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.5px}
   main{flex:1;min-width:0;padding:36px 46px 120px}
   h1{font-size:24px;margin:0 0 6px;line-height:1.3}
   .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
@@ -70,6 +71,7 @@
   <h2>目录</h2>
   <a href="#verdict">裁决</a>
   <a href="#products">1 · 核心产出的产物 ★</a>
+  <a href="#registry-map" class="sub">↳ registry 全表（27 条详细地图）</a>
   <a href="#taxonomy">2 · 四档 profile 细看</a>
   <a href="#verify">3 · 我独立核查了什么</a>
   <a href="#notable">4 · 几个值得注意的实现点</a>
@@ -105,6 +107,7 @@
     <div class="file">stage16g1_tool_registry_contract.json</div>
     <p>把 16G.0 的 <b>27 条能力</b>逐条写成机器记录，每条都同时声明：归属 profile、owner stage、artifact 可见性、拒绝反馈 policy、训练投影 policy、安全边界。<b>这是 16G.2–16G.4 必须照着实现的契约。</b></p>
     <p class="small">实测：27 条全到位，其中 17 条标 <code>blocking_for_main_swe_rl</code>、4 条 <code>post_16G_optional</code>，计数与 summary 完全一致。每条都带 <code>required_stage_from_stage16g0</code> 字段做交叉核对（防 owner stage 被偷改）。</p>
+    <p class="small">→ <b>全部 27 条逐条详细地图见下方<a href="#registry-map">第 1.5 节</a></b>（可当字典用，不必回看 JSON 原文）。</p>
   </div>
 
   <div class="prod">
@@ -124,6 +127,77 @@
     <div class="file">src/repo_harness/stage16g_tool_profile.py · CLI: inspect-stage16g1-tool-profile · stage16g1_run_episode_profile_smoke_report.json</div>
     <p>新增共享模块(builder/inspector/测试共用一套逻辑)+ CLI 验收命令 + 一个<b>真实</b>的统一入口 smoke。smoke 真的走了 <code>run_episode_task → EpisodeExecutionSpecBuilder → RepoHarnessRuntime.run_episode → compat_projection</code>，并把 <code>swe_public_core</code> 这个 profile id 和 registry 摘要带进了公开投影 —— 不是只读 JSON 的假 smoke。</p>
   </div>
+
+  <!-- 1.5 registry map -->
+  <h2 class="sec" id="registry-map">1.5 · 工具 registry 全表（27 条详细地图）</h2>
+  <p>这一节把 <code>stage16g1_tool_registry_contract.json</code> 全部展开，<b>当字典用即可，不必回看 JSON</b>。先把"所有记录都一样"的恒定字段说清楚（这样下面大表不用重复 27 次），再给逐条全表，最后单独讲两个特殊记录。</p>
+
+  <h3>① 全局恒定字段（27 条全都一样，下表不再重复）</h3>
+  <table>
+    <tr><th style="width:30%">字段</th><th>所有 27 条的统一取值 + 含义</th></tr>
+    <tr><td><code>allowed_artifact_visibility</code></td><td><code>model_visible=summary_or_public_result</code>（模型只看脱敏摘要）/ <code>raw_artifact=private_by_default</code>（原始输出私有）/ <code>export_projection=public_safe_projection_only</code>（导出只放安全投影）—— 三个去向全表一致</td></tr>
+    <tr><td><code>denial_feedback_policy</code></td><td>4 个字段全部 <code>true</code>：拒绝时必须带 <code>reason_code</code> / <code>retryable</code> / <code>safe_alternative_tool</code> / <code>safe_rewrite_example</code></td></tr>
+    <tr><td><code>tool_event_policy_loss_unit</code></td><td>全部 <code>not_an_individual_policy_loss_sample</code>（单个工具事件不是独立 policy loss 样本，样本单位是整条轨迹）</td></tr>
+    <tr><td><code>safety_boundaries</code>（基础）</td><td>全部含这 5 条硬边界：<code>hidden_verifier</code> / <code>gold_patch</code> / <code>test_patch</code> / <code>runtime-private</code> forbidden + <code>raw_artifact_private_by_default</code></td></tr>
+    <tr><td><code>safety_boundaries</code>（命令类额外）</td><td><b>能跑命令的 6 条能力额外再加 3 条</b>：<code>host_absolute_path_forbidden</code> / <code>network_denied_by_default</code> / <code>shared_dependency_write_forbidden</code>（适用于 bash 公开命令、持久 shell、参数化测试、scratch、项目命令、依赖）</td></tr>
+    <tr><td><code>source_capability_refs</code></td><td>全部指向 <code>stage16g0_per_capability_baseline_comparison</code>（即每条都能追溯回 16G.0 对照）</td></tr>
+    <tr><td><code>persistent_session_boundary_policy</code></td><td>全部为 <code>null</code>，<b>仅 persistent_diagnostic_session 一条例外</b>（见第 ③ 节）</td></tr>
+  </table>
+
+  <h3>② 27 条能力全表（按 owner stage 分组）</h3>
+  <p class="small">列说明：<b>gap</b>=相对基线差距；<b>阻塞</b>=blocking_for_main_swe_rl；<b>当前态</b>=repo_harness_status；<b>core</b>=在 swe_public_core 的状态；<b>进RL轨迹</b>=allowed_in_policy_loss_trajectory + 对整条样本的影响（保持资格 / 待阶段=失格到 owner 阶段完成 / 降诊断=降为仅诊断或预留）。</p>
+  <table style="font-size:12px">
+    <tr><th>能力 capability_id</th><th>对应工具 tool_ids</th><th>gap</th><th class="c">优先</th><th class="c">阻塞</th><th>当前态</th><th class="c">core</th><th>进RL轨迹</th></tr>
+
+    <tr><td colspan="8" style="background:#10231d;color:#6fdc84;font-weight:600">✅ not_required —— 已够用、工具已实现（3 条）</td></tr>
+    <tr><td><code>structured_file_read</code></td><td>read_file</td><td><span class="tag t-good">充分</span></td><td class="c">P2</td><td class="c">否</td><td>present</td><td class="c">implemented</td><td>✓ 保持资格</td></tr>
+    <tr><td><code>glob_file_discovery</code></td><td>glob_files</td><td><span class="tag t-good">充分</span></td><td class="c">P2</td><td class="c">否</td><td>present</td><td class="c">implemented</td><td>✓ 保持资格</td></tr>
+    <tr><td><code>grep_content_search</code></td><td>grep</td><td><span class="tag t-good">充分</span></td><td class="c">P2</td><td class="c">否</td><td>present</td><td class="c">implemented</td><td>✓ 保持资格</td></tr>
+
+    <tr><td colspan="8" style="background:#10231d;color:#6fdc84;font-weight:600">✅ 16G.5 owner —— 已实现，归 parity probe 验收（2 条）</td></tr>
+    <tr><td><code>large_file_paging_or_artifact_replay</code></td><td>read_tool_result_artifact</td><td><span class="tag t-good">充分</span></td><td class="c">P1</td><td class="c">否</td><td>present</td><td class="c">implemented</td><td>✓ 保持资格</td></tr>
+    <tr><td><code>git_diff_status_and_patch_capture</code></td><td>git_diff</td><td><span class="tag t-good">充分</span></td><td class="c">P1</td><td class="c">否</td><td>present</td><td class="c">implemented</td><td>✓ 保持资格</td></tr>
+
+    <tr><td colspan="8" style="background:#1a1620;color:#9cc4ff;font-weight:600">🔧 16G.2 owner —— 结构化文件/补丁（5 条，4 个 P0 阻塞）</td></tr>
+    <tr><td><code>structured_edit_existing_file</code></td><td>edit_file</td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>structured_write_or_create_file</code></td><td>create_file, <b>write_file</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>apply_patch_or_multi_file_edit</code></td><td><b>apply_patch</b></td><td><span class="tag t-bad">missing</span></td><td class="c">P0</td><td class="c">是</td><td>proposed_tool_required</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>delete_move_mkdir_file_operations</code></td><td><b>delete_file, move_file, mkdir</b></td><td><span class="tag t-bad">missing</span></td><td class="c">P0</td><td class="c">是</td><td>proposed_tool_required</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>task_management_todo</code></td><td>update_working_state</td><td><span class="tag t-warn">partial</span></td><td class="c">P2</td><td class="c">否</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+
+    <tr><td colspan="8" style="background:#1a1620;color:#9cc4ff;font-weight:600">🔧 16G.3 owner —— 公开命令/项目测试/scratch（4 条，全 P0 阻塞）</td></tr>
+    <tr><td><code>bash_or_public_command_execution</code> ★</td><td>execute_bash, <b>run_public_command</b></td><td><span class="tag t-info">弱于mini-SWE</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned<br><span class="small">(safe=forbidden)</span></td><td>✗ 待阶段</td></tr>
+    <tr><td><code>parameterized_public_test_command</code></td><td>run_tests, <b>run_project_test</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>scratch_python_or_reproduction_script</code></td><td><b>scratch_python</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>project_command_routing</code></td><td><b>run_project_test, run_public_command</b></td><td><span class="tag t-bad">missing</span></td><td class="c">P0</td><td class="c">是</td><td>proposed_tool_required</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+
+    <tr><td colspan="8" style="background:#1a1620;color:#9cc4ff;font-weight:600">🔧 16G.4 owner —— 环境/持久shell/安全/linkage（9 条，全 P0 阻塞，最重）</td></tr>
+    <tr><td><code>persistent_diagnostic_session</code> ★</td><td>diagnostic_shell</td><td><span class="tag t-neutral">仅诊断</span></td><td class="c">P0</td><td class="c">是</td><td>diagnostic_only_current</td><td class="c"><b>forbidden</b><br><span class="small">(extended=planned)</span></td><td>✗ 降诊断</td></tr>
+    <tr><td><code>dependency_setup_and_environment_policy</code></td><td><b>dependency_setup_policy</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>final_answer_verifier_reward_linkage</code></td><td><b>final_answer_linkage</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>permission_approval_denial_recovery</code></td><td><b>permission_policy_gate</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>sandbox_workspace_and_runtime_private_boundary</code></td><td>sandbox_boundary_gate</td><td><span class="tag t-good">充分</span></td><td class="c">P0</td><td class="c">是</td><td>present</td><td class="c">implemented</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>tool_result_truncation_raw_artifact_privacy</code></td><td>read_tool_result_artifact</td><td><span class="tag t-good">充分</span></td><td class="c">P0</td><td class="c">是</td><td>present</td><td class="c">implemented</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>hooks_tool_lifecycle_audit</code></td><td><b>tool_lifecycle_audit</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>training_eligibility_and_export_projection</code></td><td><b>training_eligibility_gate</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+    <tr><td><code>reward_hacking_monitoring_and_quarantine</code></td><td><b>reward_hacking_monitor</b></td><td><span class="tag t-warn">partial</span></td><td class="c">P0</td><td class="c">是</td><td>partial</td><td class="c">planned</td><td>✗ 待阶段</td></tr>
+
+    <tr><td colspan="8" style="background:#161922;color:#9aa4b6;font-weight:600">⏸ post_16G_optional —— 暂缓，只 schema 预留（4 条，均不阻塞）</td></tr>
+    <tr><td><code>non_text_file_read</code></td><td>read_file</td><td><span class="tag t-info">弱于CC</span></td><td class="c">P2</td><td class="c">否</td><td>partial</td><td class="c">schema_reserved</td><td>✗ 降诊断</td></tr>
+    <tr><td><code>symbol_search_or_lsp_diagnostics</code></td><td>symbol_search</td><td><span class="tag t-info">弱于CC</span></td><td class="c">P2</td><td class="c">否</td><td>partial</td><td class="c">schema_reserved</td><td>✗ 降诊断</td></tr>
+    <tr><td><code>subagent_background_task</code></td><td>agent_task_schema_reserved</td><td><span class="tag t-neutral">仅预留</span></td><td class="c">P2</td><td class="c">否</td><td>schema_reserved</td><td class="c">schema_reserved</td><td>✗ 降诊断</td></tr>
+    <tr><td><code>external_tools_mcp_plugin_skill</code></td><td>external_tool_schema_reserved</td><td><span class="tag t-neutral">仅预留</span></td><td class="c">P2</td><td class="c">否</td><td>schema_reserved</td><td class="c">schema_reserved</td><td>✗ 降诊断</td></tr>
+  </table>
+  <p class="small">合计 27 条：not_required 3 + 16G.5 owner 2 + 16G.2 owner 5 + 16G.3 owner 4 + 16G.4 owner 9 + post_16G_optional 4。阻塞主 RL 的 17 条 = 16G.2 的 4 + 16G.3 的 4 + 16G.4 的 9。<b>注意</b>：sandbox / tool_result_truncation 虽然"当前态=present"（底层能力已实现），但 owner 仍是 16G.4 且"进RL轨迹=✗ 待阶段"—— 因为它们要等 16G.4 把训练 linkage 接好，样本才算 policy-loss 合格。</p>
+
+  <h3>③ 两个特殊记录（值得单独看）</h3>
+  <div class="callout warn">
+    <b>persistent_diagnostic_session（唯一带边界策略的记录）：</b>它是 27 条里<b>唯一</b> <code>persistent_session_boundary_policy</code> 不为 null 的，内含 5 条约束：<code>session_reset_required</code> / <code>artifact_hygiene_required</code> / <code>path_redaction_required</code> / <code>public_safe_projection_required</code> / <code>main_training_core_default_allowed=false</code>。profile 上 <code>swe_public_core=forbidden</code>、只 <code>swe_public_extended=planned</code> —— 这就是"持久 shell 不进主训练默认、只进 extended 且必须满足这 5 条"在 registry 里的落地。
+  </div>
+  <div class="callout info">
+    <b>bash_or_public_command_execution（唯一"弱于 mini-SWE"的记录）：</b>它是 27 条里<b>唯一</b> gap_type 为 <code>present_but_weaker_than_mini_swe_agent</code> 的能力 —— 正对应"自由 shell 上不如 mini-SWE，但有意用结构化 run_public_command 替代"。profile 上 <code>safe_structured_only=forbidden</code>（保守档不给命令）、<code>swe_public_core=planned</code>（主档计划给受控公开命令）。它和上面那条都带命令类的额外 3 条安全边界。
+  </div>
+  <p class="small">字段含义的完整词典（每个字段的候选枚举）见 <a href="repo_harness_verl_stage16g1_plan_report.html#fielddict">16G.1 计划+讲解 的 2.1 节</a>，已用本次实际产物回填真实枚举。</p>
 
   <!-- 2 -->
   <h2 class="sec" id="taxonomy">2 · 四档 profile 细看（实际内容）</h2>

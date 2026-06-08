@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 3 · Gateway + Tool 解析 + Final Verifier</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    .rh-toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+    .rh-toc a { display: block; padding: 8px 12px; border: 1px solid var(--rv-border); border-radius: 8px; background: var(--rv-surface-soft); color: var(--rv-text); font-size: 0.92rem; text-decoration: none; }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+    .rh-flow { padding: 16px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.84rem; line-height: 1.8; overflow-x: auto; white-space: pre; }
+    .rh-flow .step { color: #58a6ff; font-weight: 760; }
+    .rh-flow .ok { color: #7ee787; }
+    .rh-flow .new { color: #ffc463; font-weight: 760; }
+    .rh-flow .arrow { color: #d0d7de; }
+    .rh-flow .comment { color: #8b949e; font-style: italic; }
+    .rh-flow .obj { color: #d2a8ff; }
+    .rh-sig { margin: 0 0 12px; padding: 12px 14px; background: #0b1018; border: 1px solid var(--rv-border); border-radius: 8px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.86rem; color: #d0d7de; white-space: pre-wrap; overflow-x: auto; }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+    .rh-sig .ln { color: #6e7681; user-select: none; padding-right: 12px; }
+    .rh-api-card { padding: 16px 18px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface-soft); }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+    .rh-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
+    .rh-meta-item { padding: 8px 12px; border-left: 3px solid var(--rv-border-strong); background: var(--rv-surface); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
+    .rh-meta-item .rh-label { display: block; margin-bottom: 2px; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rv-muted); }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger { border-left-color: var(--rv-danger); }
+    .rh-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.78rem; font-weight: 760; }
+    .rh-status.succeeded { background: rgba(126,231,135,0.20); color: #7ee787; }
+    .rh-status.failed { background: rgba(255,196,99,0.20); color: #ffc463; }
+    .rh-status.invalid_task { background: rgba(255,180,99,0.20); color: #ffb463; }
+    .rh-status.infrastructure_error { background: rgba(255,123,123,0.18); color: #ff7b7b; }
+    .rh-status.timeout { background: rgba(199,159,255,0.20); color: #c79fff; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl · Pipeline Reading Guide</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_complete_pipeline_index.html">⓪ 索引</a>
+          <a href="repo_harness_verl_pipeline_p1_workspace.html">① Workspace</a>
+          <a href="repo_harness_verl_pipeline_p2_runtime.html">② Runtime</a>
+          <a href="repo_harness_verl_pipeline_p3_gateway.html" aria-current="page">③ Gateway+Tool</a>
+          <a href="repo_harness_verl_pipeline_p4_trainingview.html">④ TrainingView</a>
+          <a href="repo_harness_verl_pipeline_p5_stage125.html">⑤ Stage 12.5</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Page 3 · Gateway + Tool Parsing + Final Verifier</span>
+      <h1>单轮内部：Gateway 推理 · Tool 解析 · Final Verifier</h1>
+      <p class="rv-lead">
+        本页详解<strong>每一轮内部</strong>发生的事——AgentLoop 调一次 <code>adapter.generate</code> 之后，单轮内部如何完成：①<code>VerlLLMGateway</code> 怎么把 <code>LLMGatewayRequest</code> 转成 verl <code>LLMServerClient</code> 调用（真实 vLLM / SGLang 推理）；② <code>TokenOutput</code> 怎么转回 <code>LLMGatewayResponse</code> 含 <code>parse_hermes_tool_calls</code> 解析模型输出的 <code>&lt;tool_call&gt;...&lt;/tool_call&gt;</code> 块；③ 工具实际怎么在 lease workspace 内执行；④ episode 结束时 <code>final_verifier_factory</code> 怎么构造真实 <code>PytestVerifier</code> callable，通过 <code>VerifierWorkerPool</code> 跑出 <code>VerifierResult</code>，再用 <code>build_stage7_reward_boundary</code> 算出真实 <code>reward_score</code>。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">对应索引图步骤 [7]–[10]</span>
+        <span class="rv-badge success">Stage 5 / 7 / 11 / 12-B</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#gateway">① VerlLLMGateway</a>
+        <a href="#token-out">② TokenOutput → LLMGatewayResponse</a>
+        <a href="#tool-parser">③ Tool 解析（Hermes）</a>
+        <a href="#tool-exec">④ Tool 执行环境</a>
+        <a href="#verifier">⑤ Final Verifier 调用</a>
+        <a href="#reward">⑥ Reward Boundary</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <section id="gateway" class="rv-section">
+        <h2>① <code>VerlLLMGateway.generate_turn</code></h2>
+        <p class="rv-muted">这是 Page 2 §⑦ adapter 跨线程调到 <code>runtime_loop</code> 上执行的 async 方法。<a href="../../src/repo_harness_verl/gateway.py">gateway.py:39-64</a>。</p>
+
+        <h3>完整 generate_turn 代码</h3>
+        <div class="rh-sig"><span class="ln">38│</span>    <span class="kw">async def</span> <span class="nm">generate_turn</span>(self, request: <span class="ty">LLMGatewayRequest</span>) -&gt; <span class="ty">LLMGatewayResponse</span>:
+<span class="ln">39│</span>        parsed_request = LLMGatewayRequest.model_validate(request)
+<span class="ln">40│</span>        <span class="cm"># ① route 必须是 verl（adapter 已经设过，这里 double-check）</span>
+<span class="ln">40│</span>        <span class="kw">if</span> parsed_request.route != <span class="li">"verl"</span>:
+<span class="ln">41│</span>            <span class="kw">raise</span> RepoHarnessVerlGatewayError(<span class="li">"VerlLLMGateway only accepts route=verl requests"</span>)
+<span class="ln">42│</span>        <span class="kw">if</span> parsed_request.inference_backend != self.inference_backend:
+<span class="ln">43│</span>            <span class="kw">raise</span> RepoHarnessVerlGatewayError(<span class="li">"gateway inference_backend does not match request"</span>)
+<span class="ln">44│</span>
+<span class="ln">45│</span>        <span class="cm"># ② 构造 prompt_ids（两种路径：builder callback 或 tokenizer.apply_chat_template）</span>
+<span class="ln">45│</span>        prompt_ids = <span class="kw">await</span> self._build_prompt_ids(parsed_request)
+<span class="ln">46│</span>        <span class="cm"># ③ 合并 sampling_params（gateway default + request override）</span>
+<span class="ln">46│</span>        sampling_params = self._merged_sampling_params(parsed_request)
+<span class="ln">47│</span>        started = perf_counter()
+<span class="ln">48│</span>        <span class="cm"># ④ 关键：调用 verl 的 server_manager.generate → 真实 vLLM/SGLang 推理</span>
+<span class="ln">48│</span>        token_output = <span class="kw">await</span> self.server_manager.generate(
+<span class="ln">49│</span>            parsed_request.sticky_session_id <span class="kw">or</span> parsed_request.episode_id,   <span class="cm"># 粘性 session</span>
+<span class="ln">50│</span>            prompt_ids=prompt_ids,
+<span class="ln">51│</span>            sampling_params=sampling_params,
+<span class="ln">52│</span>            image_data=<span class="kw">None</span>,
+<span class="ln">53│</span>            video_data=<span class="kw">None</span>,
+<span class="ln">54│</span>        )
+<span class="ln">55│</span>        duration_ms = <span class="kw">int</span>((perf_counter() - started) * <span class="li">1000</span>)
+<span class="ln">56│</span>        <span class="cm"># ⑤ 把 verl TokenOutput 转回 LLMGatewayResponse（含 tool 解析）</span>
+<span class="ln">56│</span>        <span class="kw">return</span> token_output_to_llm_gateway_response(
+<span class="ln">57│</span>            token_output,
+<span class="ln">58│</span>            request=parsed_request,
+<span class="ln">59│</span>            prompt_ids=prompt_ids,
+<span class="ln">60│</span>            tokenizer=self.tokenizer,
+<span class="ln">61│</span>            inference_backend=self.inference_backend,
+<span class="ln">62│</span>            duration_ms=duration_ms,
+<span class="ln">63│</span>        )</div>
+
+        <h3 style="margin-top: 14px;"><code>_build_prompt_ids</code> · 两种 prompt 构造路径</h3>
+        <div class="rh-sig"><span class="ln">65│</span>    <span class="kw">async def</span> <span class="nm">_build_prompt_ids</span>(self, request) -&gt; <span class="ty">list[int]</span>:
+<span class="ln">66│</span>        <span class="cm"># 路径 ①：通过外部 builder（agent_loop.py 里给的 _build_prompt_ids_for_gateway_request）</span>
+<span class="ln">66│</span>        <span class="kw">if</span> self.prompt_ids_builder <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">67│</span>            maybe_prompt_ids = self.prompt_ids_builder(request)
+<span class="ln">68│</span>            prompt_ids = <span class="kw">await</span> maybe_prompt_ids <span class="kw">if</span> inspect.isawaitable(maybe_prompt_ids) <span class="kw">else</span> maybe_prompt_ids
+<span class="ln">69│</span>            <span class="kw">return</span> _coerce_int_list(prompt_ids, field_name=<span class="li">"prompt_ids"</span>)
+<span class="ln">70│</span>
+<span class="ln">71│</span>        <span class="cm"># 路径 ②：fallback 用 tokenizer.apply_chat_template（需要 add_generation_prompt=True）</span>
+<span class="ln">71│</span>        <span class="kw">if</span> hasattr(self.tokenizer, <span class="li">"apply_chat_template"</span>):
+<span class="ln">72│</span>            tokenized = self.tokenizer.apply_chat_template(
+<span class="ln">73│</span>                request.messages,
+<span class="ln">74│</span>                tools=request.tools <span class="kw">or</span> <span class="kw">None</span>,
+<span class="ln">75│</span>                add_generation_prompt=<span class="kw">True</span>,
+<span class="ln">76│</span>                tokenize=<span class="kw">True</span>,
+<span class="ln">77│</span>            )
+<span class="ln">78│</span>            <span class="kw">return</span> _coerce_int_list(tokenized, field_name=<span class="li">"prompt_ids"</span>)
+<span class="ln">79│</span>        <span class="kw">raise</span> RepoHarnessVerlGatewayError(<span class="li">"missing_prompt_ids_builder"</span>)</div>
+
+        <h3 style="margin-top: 14px;">server_manager.generate 调用参数表</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 26%;">参数</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>request_id</code>（第一参数）</td><td>粘性 session id = <code>sticky_session_id or episode_id</code>。让 verl server 把同一 episode 的多轮放进同一前缀缓存槽位。</td></tr>
+              <tr><td><code>prompt_ids</code></td><td>本轮完整 prompt token id 列表（含 system + 多轮历史 + 当前用户/tool obs）</td></tr>
+              <tr><td><code>sampling_params</code></td><td>合并后的采样参数：<code>temperature</code> / <code>top_p</code> / <code>max_new_tokens</code> / <code>logprobs</code> / <code>stop</code> 等</td></tr>
+              <tr><td><code>image_data</code> / <code>video_data</code></td><td>多模态接口，目前固定 None（纯代码任务）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">返回 <code>TokenOutput</code>（verl 类型）</h3>
+        <p class="rv-muted">含字段：<code>token_ids: list[int]</code> · <code>log_probs: list[float] | None</code> · <code>stop_reason: str</code> · <code>extra_fields: dict</code>（可能含 <code>num_preempted</code> / <code>global_steps</code> / <code>repo_harness_tool_calls</code> 等）。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="token-out" class="rv-section">
+        <h2>② <code>TokenOutput → LLMGatewayResponse</code> 字段映射</h2>
+        <p class="rv-muted">verl 的 <code>TokenOutput</code> 字段集合跟 RepoHarness 的 <code>LLMGatewayResponse</code> 不一样，需要明确映射。<a href="../../src/repo_harness_verl/gateway.py">gateway.py:91-152</a>。</p>
+
+        <h3>完整转换代码（带中文注释）</h3>
+        <div class="rh-sig"><span class="ln">91│</span><span class="kw">def</span> <span class="nm">token_output_to_llm_gateway_response</span>(token_output, *, request, prompt_ids, tokenizer, inference_backend, duration_ms):
+<span class="ln">100│</span>    <span class="cm">"""把 verl TokenOutput 映射为 RepoHarness LLMGatewayResponse。"""</span>
+<span class="ln">101│</span>
+<span class="ln">102│</span>    <span class="cm"># ① 提取 token + logprobs（vLLM/SGLang 真实输出）</span>
+<span class="ln">102│</span>    output_token_ids = _coerce_int_list(_get_attr(token_output, <span class="li">"token_ids"</span>, []), ...)
+<span class="ln">103│</span>    output_logprobs = _coerce_optional_float_list(_get_attr(token_output, <span class="li">"log_probs"</span>, <span class="kw">None</span>), ...)
+<span class="ln">104│</span>    extra_fields = <span class="kw">dict</span>(_get_attr(token_output, <span class="li">"extra_fields"</span>, {}) <span class="kw">or</span> {})
+<span class="ln">105│</span>
+<span class="ln">105│</span>    <span class="cm"># ② 解码 token → 文本（用 tokenizer，避免 detokenize 误差）</span>
+<span class="ln">105│</span>    decoded_content = _decode_output(tokenizer, output_token_ids)
+<span class="ln">106│</span>
+<span class="ln">106│</span>    <span class="cm"># ③ tool_calls 两种来源：</span>
+<span class="ln">106│</span>    <span class="cm">#    a. verl server 已经预解析 → extra_fields["repo_harness_tool_calls"]</span>
+<span class="ln">106│</span>    <span class="cm">#    b. 没预解析 → 跑 Hermes parser（&lt;tool_call&gt;{json}&lt;/tool_call&gt;）</span>
+<span class="ln">106│</span>    raw_tool_calls = extra_fields.pop(<span class="li">"repo_harness_tool_calls"</span>, <span class="kw">None</span>)
+<span class="ln">107│</span>    <span class="kw">if</span> raw_tool_calls <span class="kw">is None</span>:
+<span class="ln">108│</span>        parsed_tool_text = parse_hermes_tool_calls(
+<span class="ln">109│</span>            decoded_content,
+<span class="ln">110│</span>            turn=request.turn,
+<span class="ln">111│</span>            allowed_tool_names=DEFAULT_STAGE12B_TOOL_NAMES,
+<span class="ln">112│</span>        )
+<span class="ln">113│</span>        decoded_content = parsed_tool_text.content                      <span class="cm"># 去除 tool_call 块后的纯文本</span>
+<span class="ln">114│</span>        tool_calls = parsed_tool_text.tool_calls
+<span class="ln">115│</span>        <span class="kw">if</span> parsed_tool_text.diagnostics:
+<span class="ln">116│</span>            extra_fields.setdefault(<span class="li">"repo_harness_tool_parse_diagnostics"</span>, parsed_tool_text.diagnostics)
+<span class="ln">117│</span>            <span class="kw">if not</span> parsed_tool_text.success:
+<span class="ln">118│</span>                extra_fields.setdefault(<span class="li">"repo_harness_tool_parse_error_type"</span>, <span class="li">"model_format_failure"</span>)
+<span class="ln">119│</span>    <span class="kw">else</span>:
+<span class="ln">120│</span>        tool_calls = _coerce_tool_calls(raw_tool_calls)
+<span class="ln">121│</span>    _validate_tool_calls_visibility(tool_calls)                        <span class="cm"># 拒绝 hidden 字段</span>
+<span class="ln">122│</span>
+<span class="ln">122│</span>    <span class="cm"># ④ Stage 12.5：vLLM 的 num_preempted 也带进 extra_fields</span>
+<span class="ln">122│</span>    num_preempted = _get_attr(token_output, <span class="li">"num_preempted"</span>, <span class="kw">None</span>)
+<span class="ln">123│</span>    <span class="kw">if</span> num_preempted <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">124│</span>        extra_fields.setdefault(<span class="li">"num_preempted"</span>, <span class="kw">int</span>(num_preempted))
+<span class="ln">125│</span>    _validate_token_output_extra_fields(extra_fields)
+<span class="ln">126│</span>
+<span class="ln">126│</span>    <span class="cm"># ⑤ Stage 13 预留：policy_version / global_steps</span>
+<span class="ln">126│</span>    global_steps = _coerce_optional_int(extra_fields.get(<span class="li">"global_steps"</span>), ...)
+<span class="ln">127│</span>    min_global_steps = _coerce_optional_int(extra_fields.get(<span class="li">"min_global_steps"</span>), ...)
+<span class="ln">128│</span>    max_global_steps = _coerce_optional_int(extra_fields.get(<span class="li">"max_global_steps"</span>), ...)
+<span class="ln">131│</span>
+<span class="ln">131│</span>    <span class="kw">return</span> LLMGatewayResponse(
+<span class="ln">132│</span>        route=<span class="li">"verl"</span>,
+<span class="ln">133│</span>        inference_backend=inference_backend,
+<span class="ln">134│</span>        model_call_id=request.model_call_id,
+<span class="ln">135│</span>        assistant_message={<span class="li">"role"</span>: <span class="li">"assistant"</span>, <span class="li">"content"</span>: decoded_content},
+<span class="ln">136│</span>        tool_calls=tool_calls,
+<span class="ln">137│</span>        prompt_ids=<span class="kw">list</span>(prompt_ids),                              <span class="cm"># 第一轮的 prompt 进 TrainingView.prompt_ids</span>
+<span class="ln">138│</span>        output_token_ids=output_token_ids,                          <span class="cm"># Page 4 拼 assistant span</span>
+<span class="ln">139│</span>        output_logprobs=output_logprobs,                            <span class="cm"># Page 4 拼 response_logprobs</span>
+<span class="ln">140│</span>        response_mask=[<span class="li">1</span>] * <span class="kw">len</span>(output_token_ids),                  <span class="cm"># 全 1（assistant 生成的 token 都要学）</span>
+<span class="ln">141│</span>        stop_reason=...,
+<span class="ln">142│</span>        token_source=<span class="li">"verl_llm_server_client"</span>,                     <span class="cm"># 来源标记：来自真实推理</span>
+<span class="ln">143│</span>        policy_version={<span class="li">"token_source"</span>: <span class="li">"verl_llm_server_client"</span>},
+<span class="ln">144│</span>        global_steps=global_steps, min_global_steps=..., max_global_steps=...,
+<span class="ln">148│</span>        usage={<span class="li">"input_tokens"</span>: <span class="kw">len</span>(prompt_ids), <span class="li">"output_tokens"</span>: <span class="kw">len</span>(output_token_ids)},
+<span class="ln">149│</span>        duration_ms=duration_ms,
+<span class="ln">150│</span>        <span class="cm"># ⑥ 缺 logprob 时显式标记 error，让 Stage 11.5 校验拒绝</span>
+<span class="ln">150│</span>        error=<span class="kw">None</span> <span class="kw">if</span> output_logprobs <span class="kw">is not</span> <span class="kw">None</span> <span class="kw">else</span> {<span class="li">"type"</span>: <span class="li">"missing_response_logprobs"</span>},
+<span class="ln">151│</span>        extra_fields=extra_fields,
+<span class="ln">152│</span>    )</div>
+
+        <h3 style="margin-top: 14px;">字段映射表</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 30%;"><code>TokenOutput</code></th><th style="width: 30%;"><code>LLMGatewayResponse</code></th><th>处理</th></tr></thead>
+            <tbody>
+              <tr><td><code>token_ids: list[int]</code></td><td><code>output_token_ids</code></td><td>直接转 list</td></tr>
+              <tr><td><code>log_probs: list[float] | None</code></td><td><code>output_logprobs</code></td><td>None → error 字段标 missing_response_logprobs</td></tr>
+              <tr><td>(decode token_ids)</td><td><code>assistant_message.content</code></td><td>tokenizer.decode 后再去除 tool_call 块</td></tr>
+              <tr><td><code>extra_fields["repo_harness_tool_calls"]</code></td><td><code>tool_calls</code></td><td>优先用预解析；否则跑 Hermes parser</td></tr>
+              <tr><td><code>stop_reason: str</code></td><td><code>stop_reason</code></td><td>透传</td></tr>
+              <tr><td><code>num_preempted</code></td><td><code>extra_fields.num_preempted</code></td><td>Stage 12.5 inference profile 用</td></tr>
+              <tr><td><code>global_steps</code></td><td><code>global_steps</code></td><td>Stage 13 预留字段</td></tr>
+              <tr><td>—</td><td><code>route = "verl"</code></td><td>硬编码（gateway 已校验 route）</td></tr>
+              <tr><td>—</td><td><code>response_mask = [1]*len(tokens)</code></td><td>assistant 生成都要学，Page 4 拼接 tool obs 时才出现 0</td></tr>
+              <tr><td>—</td><td><code>token_source = "verl_llm_server_client"</code></td><td>来源标签：证明 token 来自真实推理</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="tool-parser" class="rv-section">
+        <h2>③ Tool 解析（Hermes 协议 · Stage 12-B）</h2>
+        <p class="rv-muted">Qwen Coder 等真实 instruct 模型按 Hermes 风格输出工具调用。RepoHarness 用 <code>parse_hermes_tool_calls</code> 解析为内部 <code>tool_call</code> 字典。<a href="../../src/repo_harness_verl/tool_parser.py">tool_parser.py:31-84</a>。</p>
+
+        <h3>支持的两种格式</h3>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h4>① 主格式：<code>&lt;tool_call&gt;{JSON}&lt;/tool_call&gt;</code> 块</h4>
+            <div class="rh-sig" style="font-size: 0.82rem;"><span class="cm"># 模型输出</span>
+我来读一下 calculator.py 这个文件。
+&lt;tool_call&gt;
+{"name": "read_file", "arguments": {"path": "src/calculator.py"}}
+&lt;/tool_call&gt;</div>
+          </div>
+          <div class="rh-api-card">
+            <h4>② Recovery：整消息 JSON / Markdown fence</h4>
+            <div class="rh-sig" style="font-size: 0.82rem;"><span class="cm"># 没有 &lt;tool_call&gt; 但整段是 JSON</span>
+{"name": "read_file", "arguments": {"path": "src/calculator.py"}}
+<span class="cm"># 或 markdown fence</span>
+```json
+{"name": "read_file", "arguments": {...}}
+```</div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 14px;">完整 parse_hermes_tool_calls 主流程</h3>
+        <div class="rh-sig"><span class="ln">31│</span><span class="kw">def</span> <span class="nm">parse_hermes_tool_calls</span>(assistant_text, *, turn, allowed_tool_names=DEFAULT_STAGE12B_TOOL_NAMES):
+<span class="ln">47│</span>    text = <span class="kw">str</span>(assistant_text <span class="kw">or</span> <span class="li">""</span>)
+<span class="ln">48│</span>    <span class="cm"># 寻找所有 &lt;tool_call&gt;...&lt;/tool_call&gt; 块</span>
+<span class="ln">48│</span>    blocks = <span class="kw">list</span>(TOOL_CALL_BLOCK_RE.finditer(text))
+<span class="ln">49│</span>
+<span class="ln">49│</span>    <span class="kw">if not</span> blocks:
+<span class="ln">50│</span>        <span class="cm"># ① 残块（有半边标签）→ model_format_failure 诊断</span>
+<span class="ln">50│</span>        <span class="kw">if</span> <span class="li">"&lt;tool_call"</span> <span class="kw">in</span> text <span class="kw">or</span> <span class="li">"&lt;/tool_call&gt;"</span> <span class="kw">in</span> text:
+<span class="ln">51│</span>            <span class="kw">return</span> ParsedToolText(
+<span class="ln">52│</span>                content=_strip_unclosed_tool_call(text),
+<span class="ln">53│</span>                diagnostics=[_diagnostic(<span class="li">"model_format_failure"</span>, <span class="li">"malformed_tool_call_block"</span>, severity=<span class="li">"error"</span>)],
+<span class="ln">54│</span>            )
+<span class="ln">55│</span>        <span class="cm"># ② 尝试 recovery：整消息 JSON 或 markdown fence</span>
+<span class="ln">55│</span>        recovered = _recover_whole_message_json_tool_call(text, turn=turn, allowed_tool_names=allowed_tool_names)
+<span class="ln">60│</span>        <span class="kw">if</span> recovered <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">61│</span>            <span class="kw">return</span> recovered
+<span class="ln">62│</span>        <span class="cm"># ③ 没有 tool_call → 普通 assistant 消息</span>
+<span class="ln">62│</span>        <span class="kw">return</span> ParsedToolText(content=text.strip(), tool_calls=[], diagnostics=[])
+<span class="ln">64│</span>
+<span class="ln">64│</span>    <span class="cm"># 有 tool_call 块：第一个生效，多余的发 warning</span>
+<span class="ln">64│</span>    diagnostics: <span class="ty">list[dict[str, Any]]</span> = []
+<span class="ln">65│</span>    <span class="kw">if</span> <span class="kw">len</span>(blocks) &gt; <span class="li">1</span>:
+<span class="ln">66│</span>        diagnostics.append(_diagnostic(<span class="li">"ignored_extra_tool_calls"</span>, <span class="li">"multiple_tool_call_blocks"</span>, severity=<span class="li">"warning"</span>, ignored_count=<span class="kw">len</span>(blocks)-<span class="li">1</span>))
+<span class="ln">75│</span>
+<span class="ln">75│</span>    <span class="cm"># 去除所有 tool_call 块后剩下的就是模型的"思考"文本</span>
+<span class="ln">75│</span>    content = TOOL_CALL_BLOCK_RE.sub(<span class="li">""</span>, text).strip()
+<span class="ln">76│</span>    parsed = _parse_one_tool_call_payload(blocks[<span class="li">0</span>].group(<span class="li">1</span>), turn=turn, index=<span class="li">0</span>, allowed_tool_names=allowed_tool_names)
+<span class="ln">82│</span>    diagnostics.extend(parsed.diagnostics)
+<span class="ln">83│</span>    <span class="kw">return</span> ParsedToolText(content=content, tool_calls=parsed.tool_calls, diagnostics=diagnostics)</div>
+
+        <h3 style="margin-top: 14px;"><code>ParsedToolText</code> 数据结构</h3>
+        <div class="rh-sig"><span class="ln">18│</span><span class="cm">@dataclass</span>
+<span class="ln">19│</span><span class="kw">class</span> <span class="nm">ParsedToolText</span>:
+<span class="ln">20│</span>    content: <span class="ty">str</span> = <span class="li">""</span>                          <span class="cm"># 去除 tool_call 块后的纯文本</span>
+<span class="ln">21│</span>    tool_calls: <span class="ty">list[dict[str, Any]]</span> = []     <span class="cm"># 解析出的 tool calls</span>
+<span class="ln">22│</span>    diagnostics: <span class="ty">list[dict[str, Any]]</span> = []    <span class="cm"># 解析诊断（warning / error / recovery 路径）</span>
+<span class="ln">23│</span>
+<span class="ln">24│</span>    <span class="kw">@property</span>
+<span class="ln">25│</span>    <span class="kw">def</span> <span class="nm">success</span>(self) -&gt; <span class="ty">bool</span>:
+<span class="ln">26│</span>        <span class="kw">return</span> <span class="kw">not</span> any(d.get(<span class="li">"severity"</span>) == <span class="li">"error"</span> <span class="kw">for</span> d <span class="kw">in</span> self.diagnostics)</div>
+
+        <h3 style="margin-top: 14px;">4 个默认允许工具（<code>DEFAULT_STAGE12B_TOOL_NAMES</code>）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 22%;">工具名</th><th>参数（JSON）</th><th>语义</th></tr></thead>
+            <tbody>
+              <tr><td><code>read_file</code></td><td><code>{"path": "src/calc.py"}</code></td><td>在 lease workspace 内读取文件内容</td></tr>
+              <tr><td><code>grep</code></td><td><code>{"pattern": "def add", "path": "src/"}</code></td><td>搜索代码</td></tr>
+              <tr><td><code>edit_file</code></td><td><code>{"path": "...", "old": "...", "new": "..."}</code></td><td>修改文件（lease 内）</td></tr>
+              <tr><td><code>git_diff</code></td><td><code>{}</code></td><td>显示 agent_start_snapshot 之后的修改 diff</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">tool name 校验</span>
+            未在 <code>allowed_tool_names</code> 内 → 诊断 <code>tool_name_not_allowed</code>，<strong>不</strong> raise；当作 model_format_failure 处理（不污染 episode status）。
+          </div>
+          <div class="rh-meta-item danger">
+            <span class="rh-label">隐私防护</span>
+            <code>_validate_tool_calls_visibility</code> 拦截 tool_call 参数中含敏感字段（hidden_* / secret 等）。这条由 <a href="../../tests/unit/test_repo_harness_verl_stage11_gateway.py#L126">test_token_output_extra_fields_are_recursively_checked</a> 守护。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="tool-exec" class="rv-section">
+        <h2>④ Tool 执行环境</h2>
+        <p class="rv-muted">Page 2 §⑤ 段 3 已经构造了 <code>ToolExecutionContext</code>。本节展开它的字段，回顾工具命令的实际执行环境（继承自 Page 1 的 dependency env 注入）。</p>
+
+        <h3><code>ToolExecutionContext</code> 关键字段</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 30%;">字段</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>workspace_facade</code></td><td>Page 1 构造的 <code>LocalWorkspaceAdapter</code>，含 <code>command_env_provider</code> 注入 dep env</td></tr>
+              <tr><td><code>run_workspace</code></td><td>含 <code>workspace_path</code>（lease 路径） + <code>agent_start_snapshot</code>（diff 基底）</td></tr>
+              <tr><td><code>artifact_writer</code></td><td><code>RunRecorder</code>，所有工具输出 artifact 经此（profile 决定保留策略）</td></tr>
+              <tr><td><code>output_limits.max_tool_output_chars</code></td><td>每个工具输出截断上限（默认 12000，Stage 8 budget 调整）</td></tr>
+              <tr><td><code>tool_policy</code></td><td>denylist / capability check（拦截访问 run_dir / acceptance bundle 等 evaluator-only 路径）</td></tr>
+              <tr><td><code>test_feedback_policy</code></td><td><code>"disabled"</code> — 训练模式不给模型 hidden 测试结果反馈</td></tr>
+              <tr><td><code>tool_result_artifact_index</code></td><td>artifact 索引（让模型可以 read_tool_result_artifact 但不能访问 evaluator-only）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">单次工具执行的完整流程</h3>
+        <div class="rh-flow"><span class="step">[模型输出 tool_call]</span> → AgentLoop 提取 tool_calls 列表
+   <span class="arrow">↓</span>
+ToolExecutor.execute(tool_call, tool_context)
+   <span class="arrow">├─</span> 1. 校验 tool_name <span class="kw">in</span> tool_context.tool_policy.allowed_tools
+   <span class="arrow">├─</span> 2. 校验参数：路径是否在 lease workspace 内 / 是否访问 evaluator-only 路径
+   <span class="arrow">├─</span> 3. 实际执行（如 <span class="obj">read_file</span> → 读 leases/&lt;key&gt;/&lt;lease_id&gt;/workspace/src/calc.py）
+   <span class="arrow">│</span>      <span class="comment"># 如果是 shell 命令（git_diff），workspace_facade.run_command(...)</span>
+   <span class="arrow">│</span>      <span class="comment"># 内部会调 command_env_provider(workspace_path) → 注入 VIRTUAL_ENV / PATH / PYTHONPATH</span>
+   <span class="arrow">├─</span> 4. 截断输出（按 ToolOutputLimits.max_tool_output_chars）
+   <span class="arrow">├─</span> 5. 写 artifact（按 RecorderProfile）
+   <span class="arrow">└─</span> 6. 返回 tool_observation message → 加入下一轮 prompt</div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="verifier" class="rv-section">
+        <h2>⑤ Final Verifier 调用（Stage 7 verifier worker pool）</h2>
+        <p class="rv-muted">AgentLoop 结束后，runtime 用 <code>real_episode_final_verifier_factory(context)</code> 构造真实 <code>PytestVerifier</code> callable，通过 Stage 7 的 <code>VerifierWorkerPool</code> 跑测试。详见 <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7 执行计划</a>。</p>
+
+        <h3>factory 构造时机</h3>
+        <p class="rv-muted">Page 2 §⑤ 段 7：</p>
+        <div class="rh-sig"><span class="ln">910│</span>final_verifier_callable = self._real_episode_final_verifier_callable(
+<span class="ln">911│</span>    request,
+<span class="ln">912│</span>    workspace=workspace,       <span class="cm"># Page 1 派生的 lease workspace</span>
+<span class="ln">913│</span>    run_workspace=run_workspace,
+<span class="ln">914│</span>    agent_state=agent_state,   <span class="cm"># 含 agent 修改后的 messages</span>
+<span class="ln">915│</span>)</div>
+
+        <h3 style="margin-top: 14px;">factory 内部</h3>
+        <div class="rh-sig"><span class="kw">def</span> <span class="nm">_real_episode_final_verifier_callable</span>(self, request, *, workspace, run_workspace, agent_state):
+    <span class="cm"># 构造 RealEpisodeContext 传给 factory</span>
+    context = RealEpisodeContext(
+        request=request,
+        run_dir=workspace.run_dir,
+        workspace_path=workspace.lease_handle.workspace_path,
+        run_workspace=run_workspace,
+        snapshot=workspace.snapshot,
+        workspace_lease=workspace.lease_handle,
+        agent_state=agent_state,
+    )
+    <span class="cm"># 调用方提供的 factory，返回 () -&gt; VerifierResult 的同步 callable</span>
+    <span class="kw">return</span> self.options.real_episode_final_verifier_factory(context)</div>
+
+        <h3 style="margin-top: 14px;">一个真实 factory 的样例（调用方写）</h3>
+        <div class="rh-sig"><span class="kw">def</span> <span class="nm">build_real_pytest_factory</span>(...) -&gt; <span class="ty">RealEpisodeFinalVerifierFactory</span>:
+    <span class="kw">def</span> <span class="nm">factory</span>(context: <span class="ty">RealEpisodeContext</span>) -&gt; <span class="ty">FinalVerifierCallable</span>:
+        <span class="kw">def</span> <span class="nm">callable</span>() -&gt; <span class="ty">VerifierResult</span>:
+            <span class="cm"># 在 lease workspace 内跑 pytest（带 dep env 命令环境）</span>
+            verifier = PytestVerifier(workspace_facade=context.run_workspace, ...)
+            <span class="kw">return</span> verifier.run_final(task=context.request.task_id)
+        <span class="kw">return</span> callable
+    <span class="kw">return</span> factory</div>
+
+        <h3 style="margin-top: 14px;">Stage 7 worker pool 执行</h3>
+        <p class="rv-muted">Page 2 §④ 中 <code>_run_real_episode_entry</code> 第 605 行：</p>
+        <div class="rh-sig"><span class="ln">605│</span>reward_boundary = <span class="kw">await</span> self._stage7_reward_boundary_for_callable(request, real_run.final_verifier_callable)
+<span class="ln">    │</span>
+<span class="ln">    │</span>  <span class="cm"># _stage7_reward_boundary_for_callable 内部：</span>
+<span class="ln">    │</span>  job = VerifierJob(
+<span class="ln">    │</span>      job_id=<span class="li">f"final-{request.episode_id}"</span>,
+<span class="ln">    │</span>      run_id=request.run_id,
+<span class="ln">    │</span>      episode_id=request.episode_id,
+<span class="ln">    │</span>      task_id=request.task_id,
+<span class="ln">    │</span>      verifier_stage=<span class="li">"final"</span>,
+<span class="ln">    │</span>      callable=callable,                 <span class="cm"># 真实 PytestVerifier</span>
+<span class="ln">    │</span>  )
+<span class="ln">    │</span>  pool_result = <span class="kw">await</span> verifier_worker_pool.run(job)
+<span class="ln">    │</span>  <span class="cm"># pool_result.verifier_result 或 pool_result.error_type</span>
+<span class="ln">    │</span>  <span class="kw">return</span> build_stage7_reward_boundary(verifier_result=..., pool_result=pool_result, ...)</div>
+
+        <h3 style="margin-top: 14px;">双层 BoundedSemaphore 限流（参考 Stage 7 详细页）</h3>
+        <p class="rv-muted">见 <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7 执行计划页面</a>。简要复述：admission_slot（max_workers + max_pending_jobs）+ worker_slot（max_workers），超额请求<strong>立即结构化 <code>queue_timeout</code></strong>，不进 executor 内部无界队列。</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="reward" class="rv-section">
+        <h2>⑥ Reward Boundary（Stage 7）</h2>
+        <p class="rv-muted">verifier 跑完后，<code>build_stage7_reward_boundary</code> 整合 verifier 结果 + pool facts → 计算真实 <code>reward_score</code> 并决定 episode status。<a href="../../src/repo_harness/rl/reward_boundary.py">reward_boundary.py:54-140</a>。</p>
+
+        <h3>5 步决策流程</h3>
+        <ol style="margin: 6px 0 0 18px; line-height: 1.7;">
+          <li>合并 <code>final_verifier</code> 和 <code>pool_result.verifier_result</code>（pool 模式下后者优先）</li>
+          <li><code>map_stage7_verifier_status(verifier, pool_result)</code> → <code>(status, status_reason)</code>，按 3 个 error 集合分类（INVALID_TASK / INFRASTRUCTURE / TIMEOUT）</li>
+          <li>计算 <code>invalid_for_training = status ∈ {invalid, invalid_task, infrastructure_error, cancelled, timeout, no_progress}</code></li>
+          <li>调 <code>compute_reward_metadata(verifier, ...)</code> → <code>RewardMetadata</code>；用 status 第二层覆盖防止漏判（不可信 verifier reject 不算模型失败）</li>
+          <li>注入 4-5 个 <code>extra_fields</code>（<code>reward_metadata_ref</code> / <code>final_verifier_ref</code> / <code>pool_id</code> / <code>worker_id</code> / <code>queue_wait_seconds</code>）</li>
+        </ol>
+
+        <h3 style="margin-top: 14px;">完整 error_type → EpisodeStatus 真值表</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 36%;">verifier / pool 输入</th><th style="width: 22%;">EpisodeStatus</th><th>训练默认</th></tr></thead>
+            <tbody>
+              <tr><td>final verifier <code>accepted</code> + reward valid</td><td><span class="rh-status succeeded">succeeded</span></td><td>可训练，reward 来自 <code>RewardMetadata.final_reward</code></td></tr>
+              <tr><td>final verifier <code>rejected</code>（verifier 可信）</td><td><span class="rh-status failed">failed</span></td><td>可作模型失败样本</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 <code>INVALID_TASK_VERIFIER_ERRORS</code></td></tr>
+              <tr><td><code>test_command_error</code></td><td><span class="rh-status invalid_task">invalid_task</span></td><td>不可训练</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 <code>INFRASTRUCTURE_VERIFIER_ERRORS</code></td></tr>
+              <tr><td><code>dependency_error</code> / <code>verification_workspace_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>docker_error</code> / <code>container_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>pool_executor_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>low_parser_confidence</code>（&lt; 0.5）</td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td><code>patch_apply_failed</code> / <code>final_verifier_environment_error</code></td><td><span class="rh-status infrastructure_error">infrastructure_error</span></td><td>不可训练</td></tr>
+              <tr><td colspan="3" style="background: var(--rv-surface-alt); font-weight: 760;">📁 <code>TIMEOUT_VERIFIER_ERRORS</code></td></tr>
+              <tr><td><code>queue_timeout</code> / <code>execution_timeout</code> / <code>test_timeout</code></td><td><span class="rh-status timeout">timeout</span></td><td>不可训练</td></tr>
+              <tr><td><code>task_timeout_before_final_verifier</code></td><td><span class="rh-status timeout">timeout</span></td><td>不可训练</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">Stage7RewardBoundaryResult 输出</h3>
+        <div class="rh-sig"><span class="kw">class</span> <span class="nm">Stage7RewardBoundaryResult</span>(StrictBaseModel):
+    status: <span class="ty">EpisodeStatus</span>                          <span class="cm"># 上表 8 种之一</span>
+    status_reason: <span class="ty">str | None</span>
+    invalid_for_training: <span class="ty">bool</span>
+    invalid_for_online_rl: <span class="ty">bool</span>
+    reward_score: <span class="ty">float | None</span>                     <span class="cm"># 真实 reward，invalid 时强制 None</span>
+    reward_metadata: <span class="ty">RewardMetadata | None</span>          <span class="cm"># 完整 reward 元数据（artifact）</span>
+    reward_summary: <span class="ty">RewardSummary</span>
+    verifier_summary: <span class="ty">VerifierSummary</span>                <span class="cm"># Page 4 进 EpisodeResult</span>
+    verifier_pool_id: <span class="ty">str | None</span>                    <span class="cm"># 进 ResourceSummary</span>
+    verifier_worker_id: <span class="ty">str | None</span>                  <span class="cm"># 进 ResourceSummary</span>
+    verifier_queue_wait_seconds: <span class="ty">float</span>                <span class="cm"># 进 TimingSummary</span>
+    final_verifier_seconds: <span class="ty">float</span>                    <span class="cm"># 进 TimingSummary</span>
+    reward_compute_seconds: <span class="ty">float</span>                    <span class="cm"># 进 TimingSummary</span>
+    extra_fields: <span class="ty">dict[str, FlatScalar]</span>             <span class="cm"># Page 4 进 TrainingView.extra_fields</span></div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">下一页衔接</span>
+            Stage7RewardBoundaryResult 跟 RealEpisodeRun 一起，喂进 <code>_training_view_from_real_episode</code> 拼装最终 TrainingView。Page 4 详解。
+          </div>
+        </div>
+      </section>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 32px; padding: 14px 0; border-top: 1px solid var(--rv-border);">
+        <a href="repo_harness_verl_pipeline_p2_runtime.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">← Page 2 · Runtime</a>
+        <a href="repo_harness_verl_complete_pipeline_index.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">索引</a>
+        <a href="repo_harness_verl_pipeline_p4_trainingview.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--hh-accent-soft); color: var(--rv-accent); font-weight: 760;">下一页 → Page 4 · TrainingView</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenAI Codex Harness 总览 + 对 RepoHarness 16G 的启发</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:236px;flex:0 0 236px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 11px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.3px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.sub{padding-left:22px;font-size:12.4px}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:22px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:24px 0 9px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.5px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.4px;line-height:1.55}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .tldr{background:linear-gradient(135deg,#16203a,#161a23);border:1px solid #2c3a55;border-radius:14px;padding:18px 20px;margin:8px 0}
+  .tldr b{color:var(--accent2)}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px}
+  .col h4{margin:0 0 6px;font-size:14px;color:#cdd6e6}
+  .obs{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:11px;padding:13px 16px;margin:11px 0}
+  .obs.ok{border-left-color:var(--good)}
+  .obs h4{margin:0 0 5px;font-size:14.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .myrec{background:#11261c;border:1px solid #2f6b3a;border-radius:7px;padding:8px 12px;margin-top:8px;font-size:13px}
+  .myrec b{color:#6fdc84}
+  .footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);color:#6b7484;font-size:12.3px}
+  @media(max-width:900px){nav{display:none}main{padding:22px 16px}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#tldr">一句话 + 为什么读 Codex</a>
+  <a href="#what">1 · Codex 是什么</a>
+  <a href="#loop" class="sub">agent loop (run_turn)</a>
+  <a href="#entries" class="sub">多入口同一 core</a>
+  <a href="#tools">2 · 工具系统全景</a>
+  <a href="#tarch" class="sub">三层架构</a>
+  <a href="#tools-list" class="sub">模型可见核心工具</a>
+  <a href="#applypatch" class="sub">apply_patch 设计</a>
+  <a href="#cc-vs-codex" class="sub">vs Claude Code 风格</a>
+  <a href="#perm">3 · 权限/沙箱/审批/Guardian/Hooks</a>
+  <a href="#perm-layers" class="sub">三层结构</a>
+  <a href="#sandbox" class="sub">跨平台 sandbox</a>
+  <a href="#guardian" class="sub">Guardian + Hooks</a>
+  <a href="#trace">4 · rollout-trace + 同入口</a>
+  <a href="#trace-layers" class="sub">先观察后解释</a>
+  <a href="#client-api" class="sub">客户端 API ≠ 模型工具</a>
+  <a href="#repoharness">5 · 对 RepoHarness 16G 的启发 + 我的观察</a>
+</nav>
+<main>
+  <h1>OpenAI Codex Harness 总览 + 对 RepoHarness 16G 的启发</h1>
+  <p class="meta">数据源：本仓库 <code>reference/codex/</code>（commit <code>61cbf357</code>）+ <a href="../harness_improve/codex_vs_claude_code_harness_design_analysis.md">codex_vs_claude_code 分析文档</a> + <a href="../../reference/codex/AGENTS.md">codex AGENTS.md 源码导航</a>　·　四块内容：Codex 工具系统全景 / 权限沙箱 / rollout-trace+app-server / 对 RepoHarness 16G 启发+我的观察　·　独立专题文(不并入扫盲版三方对比)</p>
+
+  <div class="tldr" id="tldr">
+    <p style="margin-top:0"><b>一句话：</b>Codex 不是"模型输出 patch 的简单壳",而是一个<b>本地运行的开发代理运行时</b> —— 多入口(TUI/exec/app-server/SDK)共享同一个 core,模型在 <b>run_turn</b> 循环里通过工具(shell_command / exec_command+write_stdin / apply_patch / plan / goal / MCP / code mode / multi-agent)和环境(权限 profile / 沙箱 / approval / guardian / hooks)交互,所有动作进事件流和可选 rollout-trace。它和 Claude Code 在核心架构上高度一致,只是<b>风格更 shell+patch 中心</b>(Claude Code 更结构化分层)。</p>
+    <p style="margin-bottom:0"><b>为什么读它对我们重要：</b>① 它和 Claude Code 共同证明"真实 SWE agent 不能只输出 patch、必须能跑命令验证";② 它的 PermissionProfile / Sandbox / Guardian / rollout-trace 是"强能力+强边界+可审计"的成熟样板,正好回答你担心的"放开能力会不会作弊";③ 它<b>不是 SWE-Bench harness</b>(没有 hidden verifier/reward builder),所以指导的是"运行时/工具环境"而不是"训练数据治理"。这些都直接喂进 16G.2/16G.3/16G.4 的设计。</p>
+  </div>
+
+  <!-- ===== 1 ===== -->
+  <h2 class="sec" id="what">1 · Codex 是什么</h2>
+
+  <h3 id="loop">① agent loop —— <code>run_turn</code> 是核心</h3>
+  <p>核心循环在 <code>codex-rs/core/src/session/turn.rs</code> 的 <code>run_turn(...)</code>。和 Claude Code <code>query.ts</code> / RepoHarness <code>run_episode</code> 同一个心智模型:</p>
+  <pre><code>构建模型输入
+  → 调模型流式响应
+  → 收集 assistant message + tool calls
+  → 工具调用进 ToolCallRuntime
+  → 工具结果变成 ResponseInputItem
+  → 写回历史
+  → 必要时下一轮模型请求</code></pre>
+  <p>关键认识:<b>模型不是只生成最终答案,而是在多轮工具调用和结果反馈中完成任务</b>。这是 Codex / Claude Code / RepoHarness 都遵循的范式。</p>
+
+  <h3 id="entries">② 多入口共享同一个 core</h3>
+  <table>
+    <tr><th style="width:24%">入口</th><th>形态</th><th>用途</th></tr>
+    <tr><td><code>codex</code> TUI</td><td>交互式终端</td><td>用户日常使用,带审批 UI / diff / 计划</td></tr>
+    <tr><td><code>codex exec</code></td><td>非交互 CLI(JSONL 输出)</td><td>自动化,最接近 RepoHarness 的评测 runner</td></tr>
+    <tr><td><code>codex app-server</code></td><td>JSON-RPC 服务(stdio/ws/unix)</td><td>IDE/桌面端/SDK 客户端 API</td></tr>
+    <tr><td>TypeScript / Python SDK</td><td>语言级封装</td><td>第三方集成</td></tr>
+  </table>
+  <p>所有入口最终都进同一个 <code>codex-core</code> 的 Session/Thread/Turn 状态机。<b>这对 RepoHarness 的直接启发:</b><code>run_episode(real_episode)</code> 应当成为评测/训练/导出/smoke 的统一入口(Stage 16F 已经做了从旧 <code>run_task(...)</code> 收敛,16G 新工具必须继续绑定这个统一入口)。</p>
+
+  <!-- ===== 2 ===== -->
+  <h2 class="sec" id="tools">2 · 工具系统全景</h2>
+
+  <h3 id="tarch">① 三层架构</h3>
+  <table>
+    <tr><th style="width:30%">层</th><th>职责</th><th>文件</th></tr>
+    <tr><td><b>spec_plan</b></td><td>本轮哪些工具模型可见、哪些只注册执行、哪些延迟加载</td><td><code>tools/spec_plan.rs</code></td></tr>
+    <tr><td><b>router</b></td><td>把模型返回的 <code>ResponseItem</code> 转成内部 <code>ToolCall</code></td><td><code>tools/router.rs</code></td></tr>
+    <tr><td><b>registry + orchestrator</b></td><td>执行:hook→approval→sandbox→denied 重试→telemetry→结果包装</td><td><code>tools/registry.rs</code>、<code>tools/orchestrator.rs</code></td></tr>
+  </table>
+  <p>关键纪律:<b>"源码里存在的工具定义"、"当前 profile 暴露给模型的工具 schema"、"executor registry 实际能执行的工具"是三件不同的事。</b>分析工具面时必须区分。Codex 会根据模型能力/feature flag/MCP/code mode 选择性暴露工具 —— 这正是 RepoHarness 16G.1 profile registry 要解决的同一类问题。</p>
+
+  <h3 id="tools-list">② 模型可见核心工具(和 Claude Code 不完全一样)</h3>
+  <table>
+    <tr><th style="width:32%">工具</th><th>是什么</th></tr>
+    <tr><td><code>shell_command</code></td><td>传统 shell command(旧路径)</td></tr>
+    <tr><td><code>exec_command</code> + <code>write_stdin</code> ★</td><td><b>统一执行工具</b> —— 支持 PTY、yield、长会话、stdin 续写。这才是 Codex 真实产品态命令工具的主力</td></tr>
+    <tr><td><code>apply_patch</code> ★</td><td>结构化文件修改(下面单讲)</td></tr>
+    <tr><td><code>update_plan</code></td><td>任务计划(类似 Claude Code TodoWrite 但更强调阶段)</td></tr>
+    <tr><td><code>goal tools</code></td><td>目标分解和状态</td></tr>
+    <tr><td><code>request_permissions</code></td><td>主动请求扩大权限(模型可见的"请求审批"工具)</td></tr>
+    <tr><td><code>request_user_input</code></td><td>主动询问用户</td></tr>
+    <tr><td>MCP tools / <code>tool_search</code></td><td>外部工具(连接 MCP server)+ 延迟工具发现</td></tr>
+    <tr><td>dynamic / extension tools</td><td>动态加载工具、扩展适配器</td></tr>
+    <tr><td>code mode <code>execute</code>/<code>wait</code></td><td>嵌套代码单元执行运行时(scratch notebook 风格,需 feature 开启)</td></tr>
+    <tr><td>multi-agent v1/v2</td><td>spawn / send / wait / close 子代理</td></tr>
+    <tr><td>hosted web search / image gen</td><td>托管能力</td></tr>
+  </table>
+  <p><code>exec_command</code> 的 schema 字段尤其值得看:</p>
+  <pre><code>cmd, workdir, shell, tty, yield_time_ms, max_output_tokens,
+sandbox_permissions, additional_permissions, justification, prefix_rule</code></pre>
+  <p>这套字段直接告诉我们:真实产品态需要 <b>cwd / 超时 / 输出截断 / 沙箱权限 / 额外权限 / 模型给出 justification(为什么要跑) / 命令前缀策略</b>。这恰恰是 RepoHarness 16G.3 <code>run_public_command</code> 要补的东西。</p>
+
+  <h3 id="applypatch">③ apply_patch —— RepoHarness 直接对标</h3>
+  <p>Codex 的 <code>apply_patch</code> 是 freeform tool,带 <b>Lark grammar</b> 约束(<code>apply_patch.lark</code>)。关键点:</p>
+  <ul>
+    <li>模型可见的<b>专用 patch 工具</b>,不要求模型通过 shell 重定向或 Python 脚本改源码。</li>
+    <li>支持 <b>新增 / 删除 / 更新 / 移动</b> 文件。</li>
+    <li>执行前 <b>验证 patch 和路径</b>(<code>safety.rs::assess_patch_safety</code>)。</li>
+    <li>进入 approval / sandbox / event lifecycle。</li>
+    <li>产出 <b>file change event</b> 和 patch status。</li>
+    <li>支持 <b>streamed argument diff</b> —— 模型边输出 patch,UI 边显示生成进度。</li>
+  </ul>
+  <p><b>RepoHarness 16G.2 的方向和这里高度一致</b>(write_file + apply_patch 主路径 + delete/move/mkdir 经 apply_patch 表达 + expected_hash + reason 字段)。Codex 是这条路线的现实证据,不是我们独有的工程选择。</p>
+
+  <h3 id="cc-vs-codex">④ 与 Claude Code 风格的关键差异</h3>
+  <div class="row">
+    <div class="col">
+      <h4 style="color:#7ee0c0">Claude Code 风格</h4>
+      <p style="font-size:13px">显式结构化分层:</p>
+      <pre><code>Read / Grep / Glob   <span class="cm"># 读/搜</span>
+Edit / Write          <span class="cm"># 改/建</span>
+Bash                  <span class="cm"># 跑命令</span>
+TodoWrite / AgentTool / MCPTool</code></pre>
+      <p style="font-size:13px">模型被引导"读文件用 Read、搜索用 Grep、改用 Edit、跑命令才用 Bash"。</p>
+    </div>
+    <div class="col">
+      <h4 style="color:#e0b87e">Codex 风格</h4>
+      <p style="font-size:13px">shell + patch 中心:</p>
+      <pre><code>shell_command / exec_command + write_stdin
+apply_patch
+plan / goal / request_permissions
+MCP / tool_search / dynamic / extension
+multi-agent / code mode / hosted tools</code></pre>
+      <p style="font-size:13px"><b>没有</b>专门的 Read/Grep/Glob —— 读文件、搜代码、跑测试很多都靠 shell + apply_patch 做修改。</p>
+    </div>
+  </div>
+  <div class="callout info">
+    <b>这条对 RepoHarness 很关键:</b>不需要在"结构化分层"和"shell 中心"中二选一。结合现有路线 —— <b>保留结构化 read_file/grep/glob/symbol_search/edit_file/create_file/write_file(Claude Code 路线),叠加受控 run_public_command + apply_patch(Codex 路线)</b>。两边的优点都拿,既有清晰 action space 也有真实命令能力。
+  </div>
+
+  <!-- ===== 3 ===== -->
+  <h2 class="sec" id="perm">3 · 权限 / 沙箱 / 审批 / Guardian / Hooks</h2>
+
+  <h3 id="perm-layers">① 三层结构(技术沙箱 ≠ 审批策略)</h3>
+  <table>
+    <tr><th style="width:24%">层</th><th>职责</th><th>文件</th></tr>
+    <tr><td><code>PermissionProfile</code></td><td><b>文件系统 + 网络能力边界</b>(技术沙箱)</td><td><code>protocol/permissions.rs</code>、<code>config/permissions.rs</code></td></tr>
+    <tr><td><code>AskForApproval</code></td><td><b>什么时候要审批</b>(策略)</td><td><code>protocol/approvals.rs</code></td></tr>
+    <tr><td><code>ToolOrchestrator</code></td><td>编排:<code>approval → sandbox attempt → sandbox denied → optional retry approval → retry without sandbox</code></td><td><code>tools/orchestrator.rs</code></td></tr>
+  </table>
+  <p>Codex 把"技术边界"(sandbox)和"审批策略"(approval)分开 —— 这是个值得借鉴的纪律。默认 <code>workspace</code> profile:</p>
+  <ul>
+    <li>允许工作区写入 ✓</li>
+    <li>但<b>保护 <code>.git</code> / <code>.codex</code> / <code>.agents</code></b> 等元数据目录</li>
+    <li>网络默认受限</li>
+    <li>还有 <code>read-only</code> 和 <code>danger-full-access</code> profile,但都是<b>明确配置</b>,不混在模糊 shell allowlist 里</li>
+  </ul>
+
+  <h3 id="sandbox">② 跨平台 sandbox(真的是技术边界,不是装饰)</h3>
+  <table>
+    <tr><th>平台</th><th>后端</th><th>位置</th></tr>
+    <tr><td>macOS</td><td>Seatbelt(<code>/usr/bin/sandbox-exec</code> + <code>.sbpl</code> 策略)</td><td><code>sandboxing/src/seatbelt*.rs</code></td></tr>
+    <tr><td>Linux</td><td>bubblewrap 或 Landlock(缺 user namespace 时失败关闭)</td><td><code>linux-sandbox/</code>、<code>bwrap/</code></td></tr>
+    <tr><td>Windows</td><td>restricted token 或 elevated backend</td><td><code>windows-sandbox-rs/</code></td></tr>
+  </table>
+  <p>关键:<b>安全设计依赖确定性运行时边界 + 可审计审批,不依赖"把工具能力压缩到无法完成真实工程闭环"。</b>这正面回答"开放命令能力会不会作弊" —— 答案是:<b>用 sandbox+权限边界把作弊路径焊死,不靠削能力</b>。</p>
+
+  <h3 id="guardian">③ Guardian + Hooks(辅助审查 + 生命周期事件)</h3>
+  <p><b>Guardian</b>(<code>codex-rs/core/src/guardian/</code>)是 Codex 的<b>自动审批审查器</b>:审查高风险命令、补丁、网络或 MCP 调用,产生 <code>GuardianAssessmentEvent</code>。它<b>不是底层 sandbox</b>(那是 PermissionProfile 干的),也<b>不是 reward judge</b>(产品没有 reward)—— 它是"审查 reviewer"角色。</p>
+  <p><b>Hooks</b>(<code>codex-rs/hooks/</code>)把工具调用和 session 生命周期暴露成可配置事件:<code>pre_tool_use</code> / <code>permission_request</code> / <code>post_tool_use</code> / <code>compact</code> / <code>session_start</code> / <code>user_prompt_submit</code> / <code>subagent_start_stop</code> / <code>stop</code>。Hook 可以参与决策、注入额外上下文,不只是日志。</p>
+  <div class="callout info">
+    <b>这对 RepoHarness LLM-as-judge 的定位有直接指引:</b>Guardian 的角色等价于"reviewer / monitor / quarantine",<b>不是唯一安全边界</b>。RepoHarness 如果引入 LLM judge,应放在"审批审查辅助 / reward hacking monitor / 拒绝恢复评分 / final answer 一致性"这些位置,确定性边界仍由 path policy / network policy / runtime-private isolation / patch hygiene / verifier boundary 承担。
+  </div>
+
+  <!-- ===== 4 ===== -->
+  <h2 class="sec" id="trace">4 · rollout-trace + 同入口 + 客户端 API ≠ 模型工具</h2>
+
+  <h3 id="trace-layers">① rollout-trace 的"先观察后解释"原则</h3>
+  <p>Codex 的 <code>rollout-trace</code> 是值得 RepoHarness 直接借鉴的设计。它<b>明确分层</b>记录,而不是把一切塞进一个 transcript:</p>
+  <pre><code>模型可见 conversation        <span class="cm"># 模型实际看到的</span>
+runtime tool dispatch        <span class="cm"># 工具实际被调度的运行时事件</span>
+terminal operation           <span class="cm"># 终端命令/输出原始记录</span>
+code-mode runtime            <span class="cm"># 嵌套代码单元运行</span>
+MCP call                     <span class="cm"># 外部工具调用</span>
+multi-agent edge             <span class="cm"># 子代理边</span>
+raw payload reference        <span class="cm"># 原始证据(私有引用)</span>
+offline reduced semantic graph  <span class="cm"># 离线 reducer 输出的语义图</span></code></pre>
+  <p>核心原则:<b>"先观察,后解释"</b> —— 先把原始事实记下来,语义解释由 offline reducer 做。</p>
+  <div class="callout warn">
+    <b>对 RepoHarness 轨迹的直接含义:</b>不能把模型可见 observation / 工具原始输入 / 规范化输入 / 权限决策 / 运行时 stdout-stderr / 模型可见截断摘要 / final.patch / patch hygiene 过滤事实 / hidden verifier 私有结果 / reward-only metadata / TrainingView 可训练 token vs 不可训练 token —— <b>这些全混进一个 transcript</b>。否则后续 reward builder、policy loss、SFT、偏好数据都会混淆"模型学到了什么"和"评测系统知道什么"。<b>这是 16G.2C 接 TrainingView 投影时要严格分层的关键。</b>
+  </div>
+
+  <h3 id="client-api">② 客户端 API ≠ 模型工具(关键区分)</h3>
+  <p>Codex 的 app-server 提供 <code>fs/readFile</code>、<code>fs/writeFile</code>、<code>command/exec</code>、<code>process/spawn</code>、<code>thread/shellCommand</code> 等 API。<b>这些是客户端控制 API,不是普通模型可见工具。</b>不能直接映射成模型动作空间。</p>
+  <table>
+    <tr><th>app-server API</th><th>安全语义</th><th>对 RepoHarness 的含义</th></tr>
+    <tr><td><code>command/exec</code></td><td>客户端请求 server sandbox 下执行单个命令,<b>不启动模型 turn</b></td><td>可参考结构和流式输出,但<b>不能等同于模型动作</b></td></tr>
+    <tr><td><code>thread/shellCommand</code></td><td>用户发起的 <code>!</code> shell,文档明确<b>不继承 thread sandbox policy</b></td><td>只能作产品控制面参考,<b>不能作训练工具面默认语义</b></td></tr>
+    <tr><td><code>process/spawn</code></td><td>实验性宿主进程能力,<b>不经过 Codex sandbox</b></td><td>对 RepoHarness 训练面<b>风险过高</b>,只能作"不要误用"的边界案例</td></tr>
+    <tr><td><code>fs/readFile</code> / <code>fs/writeFile</code></td><td>操作<b>宿主绝对路径</b>的客户端 API</td><td><b>不能</b>映射成模型可见文件工具;RH 必须用工作区相对路径 + 隐藏路径隔离</td></tr>
+  </table>
+  <p><b>纪律:</b>分析能力对齐时必须区分四类 —— ①模型动作空间 ②客户端控制面 ③评测 harness 内部能力 ④verifier/reward-only 能力。Stage 16G 的所有工具面结论都应以①+②(实际是①)和可训练轨迹为准。</p>
+
+  <!-- ===== 5 ===== -->
+  <h2 class="sec" id="repoharness">5 · 对 RepoHarness 16G 的具体启发 + 我的审查观察</h2>
+
+  <h3>① Stage 对应启发</h3>
+  <table>
+    <tr><th style="width:90px">stage</th><th>Codex 给的启发</th></tr>
+    <tr><td><b>16G.1</b><br>profile</td><td>Codex 的 PermissionProfile(workspace / read-only / danger-full-access)和我们的四档 profile(safe / core / extended / redteam)异曲同工 —— 都是"明确配置的几档,不是模糊 allowlist"。继续按这个方向。</td></tr>
+    <tr><td><b>16G.2</b><br>文件/补丁</td><td><b>方向正确</b>:Codex 的 <code>apply_patch</code>(Lark grammar + 验证 + sandbox + file change event + streamed diff)正是我们 16G.2 在做的事(write_file + apply_patch + reason + expected_hash)。<b>但 16G.2B 不是终点</b> —— 必须 16G.2C 把改动接进 patch hygiene / final.patch / TrainingView / policy-loss linkage,Codex 也是把 patch 接进事件流和 file change lifecycle 才算完整。</td></tr>
+    <tr><td><b>16G.3</b><br>公开命令</td><td><b>这是关键阶段。</b>Codex <code>exec_command</code> 的字段(cmd/workdir/timeout/max_tokens/sandbox_permissions/additional_permissions/justification/prefix_rule)是 RH <code>run_public_command</code> 设计的现成清单。三个新工具(run_public_command / run_project_test / scratch_python)应<b>共享同一个 substrate</b>:cwd / timeout / 输出截断 / artifact visibility / 路径脱敏 / hidden access detector / 拒绝 envelope / TrainingView 投影。</td></tr>
+    <tr><td><b>16G.4</b><br>扩展+收口</td><td>diagnostic_shell 应从"诊断侧通道"升为 <code>swe_public_extended</code> profile 能力(对应 Codex 的 long-running exec_command + write_stdin 持久 session)。权限拒绝结构化(reason_code/policy_version/retryable/safe_alternative_tool/safe_rewrite_example)对应 Codex 的 approval/guardian event。</td></tr>
+  </table>
+
+  <h3>② 路线一致性核对(到目前为止做的事 vs Codex 启发)</h3>
+  <table>
+    <tr><th>RH 当前做的</th><th>Codex 启发一致性</th></tr>
+    <tr><td>多入口 → <code>run_episode(real_episode)</code> 统一</td><td>✅ 完全一致(Codex 同 core 服务 TUI/exec/app-server/SDK)</td></tr>
+    <tr><td>apply_patch 结构化批量(非 unified diff 文本)+ reason + expected_hash</td><td>✅ Codex apply_patch 思路一致(grammar 验证 + safety check)</td></tr>
+    <tr><td>四档 profile 明确配置</td><td>✅ 同 Codex PermissionProfile 设计哲学</td></tr>
+    <tr><td>16G.2B 真行为但 policy_loss=false 等 2C</td><td>✅ 行为/训练资格分两步,符合"先观察后解释"</td></tr>
+    <tr><td>结构化文件导航(read_file / grep / glob / symbol_search) + 即将补 run_public_command</td><td>✅ 取 Claude Code 显式分层 + Codex shell/command 能力两边的优点</td></tr>
+    <tr><td>持久 shell 不进 core 默认</td><td>✅ Codex 的高风险能力也是"明确进 extended"</td></tr>
+  </table>
+
+  <h3>③ 我的审查观察</h3>
+
+  <div class="obs ok">
+    <h4><span class="tag t-good">关键澄清</span> O1 · Codex 不是 SWE-Bench training harness</h4>
+    <p>Codex 是<b>产品态运行时</b>,<b>没有</b> task dataset / hidden verifier / gold patch 隔离 / official prediction / reward builder / policy loss eligibility / verl async queue / TrainingView。所以它给的是"<b>运行时和工具环境</b>"设计指引,<b>不能替代</b> RepoHarness 的训练数据治理和 verifier 边界。Stage 17+ 的数据 / verifier / reward 部分还得 RepoHarness 自己做。</p>
+  </div>
+
+  <div class="obs">
+    <h4><span class="tag t-warn">设计转换</span> O2 · approval 从"人参与"转成"deterministic policy"</h4>
+    <p>Codex 可以让真人审批,也可以让 Guardian 自动审查。<b>但 RepoHarness RL rollout 通常没有真人逐条确认</b>。所以 Codex 的 approval 思想要转换:</p>
+    <ul>
+      <li>公开安全动作 → 自动允许</li>
+      <li>明确越界动作 → 确定性拒绝</li>
+      <li>可恢复拒绝 → 返回结构化替代建议(reason_code / safe_alternative_tool / safe_rewrite_example)</li>
+      <li>可疑动作 → quarantine</li>
+      <li>LLM-judge → 仅辅助 monitor,不作唯一安全边界</li>
+    </ul>
+  </div>
+
+  <div class="obs">
+    <h4><span class="tag t-warn">设计选择</span> O3 · 不必照抄 Codex 的 shell-first</h4>
+    <p>Codex 偏 shell + patch 中心(没有专门 Read/Grep/Glob);Claude Code 偏结构化分层。<b>RepoHarness 取两家之长:</b>保留结构化文件导航(read_file/grep/glob/symbol_search/edit_file/create_file/write_file)+ 引入受控公开命令(run_public_command/run_project_test/scratch_python)+ apply_patch 作为结构化批量入口。这样既有清晰的 action attribution(更适合 RL 训练),又有真实 SWE 闭环。</p>
+  </div>
+
+  <div class="obs">
+    <h4><span class="tag t-info">下一步重点</span> O4 · rollout-trace 的分层启发要在 16G.2C 之后落到 TrainingView</h4>
+    <p>RH 当前的 TrainingView / trajectory / GenerationRecord 已经有基础,但<b>没有像 Codex rollout-trace 那样严格分层</b>(模型可见 observation / 工具原始输入 / 规范化输入 / 权限决策 / runtime raw artifact / 模型可见截断摘要 / final.patch / patch hygiene / hidden verifier / reward-only / training-eligibility)。<b>16G.2C 把文件改动接进 final.patch 和 TrainingView 时,正是把这套分层落地的好时机</b> —— 不分层就训不出"模型基于什么信息采取了动作"这个关键能力。</p>
+  </div>
+
+  <div class="obs ok">
+    <h4><span class="tag t-good">总体判断</span> O5 · 现行 16G 路线和 Codex 现实样板高度一致</h4>
+    <p>同一 core / 多入口 / apply_patch grammar / PermissionProfile / sandbox 多平台 / guardian reviewer 角色 / hook 生命周期 / 客户端 API ≠ 模型工具 —— 这些 Codex 给的设计约束,<b>都和我们 16G.0–16G.2 已经做的或 16G.3–16G.4 计划要做的对得上</b>。Codex 没有提示我们"要换路线",反而是<b>给了现实证据证明这条路是对的</b>。</p>
+    <div class="myrec"><b>所以最重要的不是新增工作,而是:</b>继续按 16G.3(公开命令 + scratch + 项目测试,共享 substrate)→ 16G.4(extended profile 含持久 shell + linkage 收口)→ 16G.5(parity probe + 对抗 redteam)→ 16G.6(冻结)推进。这就够了。</div>
+  </div>
+
+  <div class="callout good">
+    <b>一句话总结：</b>Codex 不是替代品,也不是要复制的源码模板,而是"<b>真实产品态 SWE agent 长什么样、用什么约束</b>"的成熟参考。它和 Claude Code 共同把"主训练 harness 必须能让模型完成定位/复现/修改/验证/收口、安全边界靠 sandbox+权限+审计而非削能力、轨迹必须分层、客户端 API 不能误当模型工具"这套设计原则讲清楚了。<b>RepoHarness 16G 的现行路线和这些原则一致,继续按计划做就好。</b>
+  </div>
+
+  <div class="footer">
+    本文基于:<code>reference/codex/AGENTS.md</code>(commit 61cbf357 源码导航)、<code>docs/harness_improve/codex_vs_claude_code_harness_design_analysis.md</code>(设计对照分析)、以及 Stage 16G.0–16G.2 公开 evidence。所有路径为仓库相对,无本机绝对路径。Codex 是产品态运行时,本文截取的设计约束适用于训练 harness 工具环境/运行时层面,不替代 RepoHarness 自有的训练数据治理和 verifier 边界。
+  </div>
+</main>
+</div>
+</body>
+</html>

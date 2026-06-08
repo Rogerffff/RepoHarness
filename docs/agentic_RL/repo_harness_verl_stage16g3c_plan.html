@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.3C · run_project_test 执行计划</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout.bad{background:#2a1a1a;border:1px solid #6b3434}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .probe{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px 10px 42px;margin:8px 0;font-size:13.2px;position:relative}
+  .probe .n{position:absolute;left:11px;top:10px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:1px 0;border-radius:9px;font-size:11.6px;min-width:24px;text-align:center}
+  .probe b{color:#cdd6e6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本子阶段</h2>
+  <a href="#intro">介绍</a>
+  <a href="#contract">1 · 工具契约</a>
+  <a href="#route">2 · 4 类来源路由</a>
+  <a href="#selector">3 · selector 安全规则</a>
+  <a href="#vs-runtests">4 · 与旧 run_tests 关系</a>
+  <a href="#multi">5 · 多语言覆盖策略</a>
+  <a href="#bound">6 · 公开 test source boundary</a>
+  <a href="#probe">7 · 8 项 probe 验收</a>
+  <a href="#deps">8 · 依赖与前置</a>
+  <h2>跨子阶段</h2>
+  <a href="repo_harness_verl_stage16g3_plan_overview.html">← 总览</a>
+  <a href="repo_harness_verl_stage16g3a_plan.html">← 16G.3A</a>
+  <a href="repo_harness_verl_stage16g3b_plan.html">← 16G.3B</a>
+  <a href="repo_harness_verl_stage16g3d_plan.html">→ 16G.3D</a>
+</nav>
+<main>
+  <h1>Stage 16G.3C · run_project_test — 执行计划</h1>
+  <p class="meta">来源：执行计划 §8 + §10 · 前置：3A 共享底座 + 3B 已建立路由约定 · 核心交付：参数化公开测试工具 <code>run_project_test</code></p>
+
+  <h2 class="sec" id="intro" style="border:none;margin-top:0;padding-top:0">介绍</h2>
+  <p>3C 是 16G.3 给模型新增的<b>第二个</b>可调用工具。它解决<b>当前 <code>run_tests</code> 无参数</b>的问题——让模型能跑单个 pytest 文件 / 单个测试函数 / 任务声明的 public smoke command，而不是只能"全跑或不跑"。它也是 16G.3 中<b>最敏感</b>的工具，因为公开测试通过是 SWE 任务最直接的成功信号，<b>必须</b>有 public test source boundary 防 reward hacking。</p>
+
+  <h2 class="sec" id="contract">1 · 工具契约（计划 §10.1）</h2>
+  <pre><code>run_project_test(
+    selector=None,
+    test_file=None,
+    test_name=None,
+    command_profile=None,
+    timeout_sec=None,
+)</code></pre>
+  <p>具体 schema 可在实现时选择，但必须解决当前 <code>run_tests</code> 无参的问题。模型必须能：</p>
+  <ul>
+    <li>运行<b>单个测试文件</b>（<code>test_file="tests/test_x.py"</code>）</li>
+    <li>运行<b>单个测试函数</b>（<code>test_name="test_x.py::test_y"</code> 或拆字段）</li>
+    <li>运行<b>少量公开 selector</b>（最多 20 条，见 §3）</li>
+    <li>运行<b>任务声明的 public smoke command</b>（通过 <code>command_profile</code>）</li>
+  </ul>
+
+  <h2 class="sec" id="route">2 · 4 类来源路由（计划 §10.2）</h2>
+  <p><code>run_project_test</code> <b>不能</b>让模型自由提交任意 shell 命令。它从下面来源生成真实命令：</p>
+  <table>
+    <thead><tr><th>来源</th><th>触发条件</th><th>命令生成</th></tr></thead>
+    <tbody>
+      <tr><td><b>① 任务 public_test_command</b></td><td>任务 public environment 中显式声明的命令</td><td>直接使用 + ingestion-time 校验</td></tr>
+      <tr><td><b>② 任务 public_test_profiles</b></td><td>声明的 profile（pytest / unittest / django_test / sphinx_build_smoke / npm_test / go_test / cargo_test）</td><td>按 profile 模板 + 模型传 selector</td></tr>
+      <tr><td><b>③ 兜底（任务无配置）</b></td><td>任务没声明任何 public test</td><td><b>结构化拒绝</b>，建议改用 <code>run_public_command</code> 的公开 smoke 或源码检查</td></tr>
+      <tr><td><b>④ 禁止行为</b></td><td>试图猜测 hidden verifier / official selector</td><td>不能偷偷运行</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn"><b>关键：</b>任务声明的公开命令<b>本身也必须经过</b> ingestion-time validation / profile whitelist / 字段白名单 / sha256 绑定。<b>不能</b>因为某个命令写在 task public environment 中，就绕过 3A 的 command policy / runtime isolation / 网络隔离 / 路径边界。</div>
+
+  <h2 class="sec" id="selector">3 · selector 安全规则（计划 §10.3）</h2>
+  <p>第一版 pytest selector 必须满足：</p>
+  <ol>
+    <li><b>路径 workspace-relative</b></li>
+    <li>路径不能含 <code>..</code> / 绝对路径 / hidden path / runtime-private / 参考补丁 / 测试补丁 / evaluator-only marker</li>
+    <li>selector 数量<b>有上限</b>，第一版最多 <b>20 个</b></li>
+    <li><code>-k</code> 表达式（如支持）必须有<b>长度上限和字符白名单</b></li>
+    <li>不允许通过 selector 注入 shell 语法</li>
+    <li><b>不允许修改 public tests 后</b>把测试通过作为成功依据 — 见 §6 public test source boundary</li>
+  </ol>
+
+  <h2 class="sec" id="vs-runtests">4 · 与旧 run_tests 的关系（计划 §10.4）</h2>
+  <p><b>不</b>立即删除 <code>run_tests</code>。推荐路线：</p>
+  <table>
+    <thead><tr><th>工具</th><th>16G.3C 后角色</th></tr></thead>
+    <tbody>
+      <tr><td><code>run_tests</code>（旧，无参）</td><td>legacy compatibility / full configured public feedback；保留兼容，<b>不</b>在 core 主路径推荐</td></tr>
+      <tr><td><code>run_project_test</code>（新）</td><td>新主路径，支持参数化公开测试和 public command routing</td></tr>
+    </tbody>
+  </table>
+  <p>后续 <b>16G.5 parity probe</b> 再决定是否把 <code>run_tests</code> 降级为兼容工具或内部 verifier facade。</p>
+
+  <h2 class="sec" id="multi">5 · 多语言覆盖策略（计划 §10.5）</h2>
+  <p>3C 第一版<b>只</b>实现 Python / pytest。但 acceptance summary 必须<b>明确列出</b>所有 profile 的状态：</p>
+  <table>
+    <thead><tr><th>profile</th><th>第一版状态建议</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>pytest</code></td><td><span class="tag t-good">enabled</span></td><td>第一版实施重点</td></tr>
+      <tr><td><code>unittest</code></td><td><span class="tag t-warn">planned_not_enabled</span></td><td>schema 预留，第一版 schema-only</td></tr>
+      <tr><td><code>django_test</code></td><td><span class="tag t-warn">planned_not_enabled</span></td><td>SWE-bench Django 任务待 16G.4/5 接入</td></tr>
+      <tr><td><code>sphinx_build_smoke</code></td><td><span class="tag t-warn">planned_not_enabled</span></td><td>少量任务需要</td></tr>
+      <tr><td><code>tox</code></td><td><span class="tag t-warn">planned_not_enabled</span></td><td></td></tr>
+      <tr><td><code>nox</code></td><td><span class="tag t-warn">planned_not_enabled</span></td><td></td></tr>
+      <tr><td><code>npm_test</code></td><td><span class="tag t-neutral">post_16G_optional</span></td><td>JS 任务不在当前数据集</td></tr>
+      <tr><td><code>go_test</code></td><td><span class="tag t-neutral">post_16G_optional</span></td><td></td></tr>
+      <tr><td><code>cargo_test</code></td><td><span class="tag t-neutral">post_16G_optional</span></td><td></td></tr>
+      <tr><td><code>make_test</code></td><td><span class="tag t-neutral">post_16G_optional</span></td><td></td></tr>
+    </tbody>
+  </table>
+  <p>非 pytest profile 如果尚未实现，<b>必须标记为</b> <code>planned_not_enabled</code> 或 <code>post_16G_optional_for_current_dataset</code>。<b>不能</b>让 16G.3 完成态被误读成已经完成 Claude Code / Codex 多语言动态诊断 parity。</p>
+
+  <div class="callout warn"><b>建议（来自总览 O5）：</b>16G.3C 完成报告里应<b>明确量化</b>"当前数据集中能被 3C 覆盖的任务百分比"。SWE-bench Verified / Lite 约 70% 是 pytest 项目，剩 30% 含 Django 等其他 framework — 不阻塞但要写清楚。</div>
+
+  <h2 class="sec" id="bound">6 · Public test source boundary（计划 §8 + §10.3.6）</h2>
+  <p>这是 16G.3C 最关键的安全机制。<b>不能</b>让"模型先改 public test 再让 public test 通过"成为成功依据。</p>
+  <p>详细策略二选一已在 <a href="repo_harness_verl_stage16g3a_plan.html#testbound">3A · §7</a> 中展开（共享底座层面）。3C 这里的责任：</p>
+  <ol>
+    <li>在 <code>run_project_test</code> 入口检查 public test 文件状态（hash 与 candidate patch 前对比）</li>
+    <li>选择策略 A（拒绝）或策略 B（clean snapshot）— 建议第一版强制策略 A</li>
+    <li>tool result 含 <code>public_test_source_clean</code> / <code>public_test_snapshot_digest</code> / <code>candidate_patch_included</code> / <code>result_valid_for_training</code> / <code>official_prediction_eligible</code></li>
+    <li>必须有 probe（见 §7 第 7 条）</li>
+  </ol>
+
+  <h2 class="sec" id="probe">7 · 8 项 probe 验收（计划 §10.6）</h2>
+  <div class="probe"><span class="n">1</span><b>单 pytest 文件</b>：运行单个 pytest 文件并返回 stdout / stderr / exit code / parsed summary</div>
+  <div class="probe"><span class="n">2</span><b>单 pytest node id</b>：运行单个 node id（<code>tests/test_x.py::test_y</code>）</div>
+  <div class="probe"><span class="n">3</span><b>任务默认 public test</b>：运行任务声明的默认 public test command</div>
+  <div class="probe"><span class="n">4</span><b>失败有可学习信息</b>：public test 失败时返回 stdout / stderr / exit code / parsed test summary / retry hint</div>
+  <div class="probe"><span class="n">5</span><b>timeout fact</b>：public test timeout 时返回 timeout fact，<b>不允许</b>模型把它声明为测试通过</div>
+  <div class="probe"><span class="n">6</span><b>无 public route 时拒绝</b>：final-only 或 hidden verifier 存在时，<b>只</b>有 public environment 明确声明的公开测试或公开命令可以运行；没有 public route 时<b>必须结构化拒绝</b>，<b>不能</b>自动推断 hidden verifier / official selector / evaluator-only command</div>
+  <div class="probe"><span class="n">7</span><b>修改 public test 边界</b>：public test 被模型修改后的拒绝（策略 A）或 clean snapshot 运行（策略 B）策略</div>
+  <div class="probe"><span class="n">8</span><b>run_episode 投影</b>：projection 中能看到工具事件 / public test facts / TrainingView mask / sample eligibility facts</div>
+
+  <h3>7.1 验收 CLI</h3>
+  <pre><code>repo-harness inspect-stage16g3c-run-project-test \
+    docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/stage16g3c_acceptance_summary.json \
+    --assert-complete</code></pre>
+
+  <h2 class="sec" id="deps">8 · 依赖与前置</h2>
+  <h3>8.1 前置（必须先 ✓）</h3>
+  <ul>
+    <li>16G.3A 完成（共享底座 + Profile schema + Docker isolation gate）</li>
+    <li><b>3A 必须落在终态 A（Docker + deny）</b>，否则 <code>run_project_test</code> 实际跑不起来公开测试。如果是终态 B/C，3C 只能 schema-only 注册</li>
+    <li>16G.3B 已建立 pytest 命令路由约定（避免模型在 <code>run_public_command</code> 和 <code>run_project_test</code> 之间不知道用哪个）</li>
+  </ul>
+
+  <h3>8.2 建议产物</h3>
+  <pre><code>scripts/pre_verl/build_stage16g3c_run_project_test.py
+tests/unit/test_repo_harness_stage16g3c_run_project_test.py
+docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/
+├── stage16g3c_capability_delta_report.json
+├── stage16g3c_tool_schema_report.json
+├── stage16g3c_scaffold_exposure_report.json
+├── stage16g3c_public_test_profile_report.json
+├── stage16g3c_public_test_source_boundary_report.json     # ⚠ 新增 boundary 专用证据
+├── stage16g3c_safety_denial_report.json
+├── stage16g3c_path_leak_scan_report.json
+└── stage16g3c_acceptance_summary.json</code></pre>
+
+  <div class="callout info"><b>3C 启动前建议：</b>① 确认 §6 二选一策略（推 A）；② 多语言 profile 覆盖率量化要先做一次 SWE-bench 任务采样；③ <code>run_project_test</code> 在 <code>simple_react</code> / <code>coder</code> / <code>repair</code> 三个 scaffold 的可见性要明确（建议 coder 和 repair 都可见，simple_react 是否可见取决于该 scaffold 是否走多轮）。</div>
+
+</main>
+</div>
+</body>
+</html>

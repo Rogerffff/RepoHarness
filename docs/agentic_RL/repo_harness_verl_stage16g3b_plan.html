@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.3B · run_public_command 执行计划</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout.bad{background:#2a1a1a;border:1px solid #6b3434}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .probe{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px 10px 42px;margin:8px 0;font-size:13.2px;position:relative}
+  .probe .n{position:absolute;left:11px;top:10px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:1px 0;border-radius:9px;font-size:11.6px;min-width:24px;text-align:center}
+  .probe b{color:#cdd6e6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本子阶段</h2>
+  <a href="#intro">介绍</a>
+  <a href="#contract">1 · 工具契约</a>
+  <a href="#argv">2 · 自由裸 argv 不放</a>
+  <a href="#scope">3 · 第一版聚焦命令</a>
+  <a href="#vs-bash">4 · 与 execute_bash 关系</a>
+  <a href="#prompt">5 · 模型可见说明</a>
+  <a href="#probe">6 · 8 项 probe 验收</a>
+  <a href="#deps">7 · 依赖与前置</a>
+  <h2>跨子阶段</h2>
+  <a href="repo_harness_verl_stage16g3_plan_overview.html">← 总览</a>
+  <a href="repo_harness_verl_stage16g3a_plan.html">← 16G.3A 共享底座</a>
+  <a href="repo_harness_verl_stage16g3c_plan.html">→ 16G.3C run_project_test</a>
+  <a href="repo_harness_verl_stage16g3d_plan.html">→ 16G.3D scratch + probe</a>
+</nav>
+<main>
+  <h1>Stage 16G.3B · run_public_command — 执行计划</h1>
+  <p class="meta">来源：执行计划 §9 · 前置：3A 共享底座必须完成 · 核心交付：主训练默认 profile 中的公开命令工具 <code>run_public_command</code></p>
+
+  <h2 class="sec" id="intro" style="border:none;margin-top:0;padding-top:0">介绍</h2>
+  <p>3B 是 16G.3 给模型新增的<b>第一个</b>可调用工具。它专门用来跑"非测试"类公开命令：公开仓库检查（<code>git status</code> 等）、公开内容搜索（受限 <code>rg</code>）、公开 Python smoke（<code>python -m compileall</code>）、任务声明的公开命令。<b>不</b>承担定向测试主路径（那是 3C 的事），<b>不</b>承担临时脚本（那是 3D 的事）。</p>
+
+  <h2 class="sec" id="contract">1 · 工具契约（计划 §9.1）</h2>
+  <pre><code>run_public_command(
+    command_profile_id,
+    args=None,
+    cwd=".",
+    timeout_sec=60,
+    purpose=None,
+)</code></pre>
+  <p>字段名可在实现时微调，但必须表达：</p>
+  <ol>
+    <li>模型请求的公开命令 profile（<code>command_profile_id</code>，必填）</li>
+    <li>workspace-relative <code>cwd</code></li>
+    <li><code>timeout_sec</code></li>
+    <li>可选 <code>purpose</code>：模型说明这次命令的公开诊断目的（写入审计，不影响执行）</li>
+  </ol>
+
+  <h2 class="sec" id="argv">2 · 自由裸 argv 不放 — 必须强制 profile 路由</h2>
+  <p>这是 3B 最容易被实施时简化的地方。计划 §9.1 明确：</p>
+  <div class="callout warn"><b>核心约束：</b>必须以 <code>command_profile_id + structured args</code> 为主路径。<b>裸 argv 不能作为自由命令入口</b>；只有当 argv 能<b>规范化匹配到某个已启用 PublicCommandProfile</b>，并且参数满足该 profile 的 <code>allowed_args_schema</code> 时才允许执行。字符串 <code>command</code> 只能作为兼容层或模型提示中的自然语言示例，<b>不能</b>成为 executor 内部安全事实来源。</div>
+
+  <h3>2.1 验收 summary 必须显式写入</h3>
+  <pre><code>raw_freeform_argv_supported=false
+argv_must_resolve_to_enabled_profile=true
+unknown_argv_rejected=true</code></pre>
+
+  <h3>2.2 必须包含的 4 个负例</h3>
+  <table>
+    <thead><tr><th>argv</th><th>预期处理</th><th>路由提示</th></tr></thead>
+    <tbody>
+      <tr><td><code>["bash","-lc","..."]</code></td><td>denied</td><td>不要用 shell 包装；用 profile 调用对应工具</td></tr>
+      <tr><td><code>["python","-c","..."]</code></td><td>denied 或路由建议</td><td><code>safe_alternative_tool="scratch_python"</code></td></tr>
+      <tr><td><code>["pytest", ...]</code></td><td>denied</td><td><code>safe_alternative_tool="run_project_test"</code></td></tr>
+      <tr><td><code>["git","log"]</code></td><td>denied</td><td>Git history 作弊路径，无替代</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec" id="scope">3 · 第一版聚焦命令（计划 §9.2）</h2>
+  <table>
+    <thead><tr><th>类别</th><th>具体命令</th><th>profile_id 建议</th></tr></thead>
+    <tbody>
+      <tr><td>公开仓库检查</td><td><code>git status --short</code></td><td><code>git.status.short</code></td></tr>
+      <tr><td>公开仓库检查</td><td><code>git diff --name-only</code></td><td><code>git.diff.name_only</code></td></tr>
+      <tr><td>公开仓库检查</td><td><code>git diff --stat</code></td><td><code>git.diff.stat</code></td></tr>
+      <tr><td>公开仓库检查</td><td><code>git grep PATTERN</code></td><td><code>git.grep</code></td></tr>
+      <tr><td>公开内容搜索</td><td>受限 <code>rg</code>（不替代结构化 <code>grep</code>）</td><td><code>ripgrep.search</code></td></tr>
+      <tr><td>公开 Python smoke</td><td><code>python -m compileall &lt;公开路径&gt;</code></td><td><code>python.compileall</code></td></tr>
+      <tr><td>任务声明命令</td><td>只通过 public command router 显式声明</td><td><code>task.&lt;name&gt;</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.1 模型把 pytest 命令传进来时的路由</h3>
+  <p>这种情况非常常见。<code>run_public_command</code> 不<b>沉默</b>拒绝，而是返回结构化路由：</p>
+  <pre><code>{
+  "status": "denied",
+  "reason_code": "route_public_test_to_run_project_test",
+  "safe_alternative_tool": "run_project_test",
+  "safe_rewrite_example": "run_project_test(selector=\"tests/test_x.py::test_y\")"
+}</code></pre>
+
+  <h2 class="sec" id="vs-bash">4 · 与 execute_bash 关系（计划 §9.1 末段）</h2>
+  <p><code>run_public_command</code> 是<b>正式 <code>swe_public_core</code> 工具</b>，<b>不</b>是 <code>execute_bash</code> 的别名。</p>
+  <ul>
+    <li><b><code>run_public_command</code></b> — 新主路径，进 core profile（前提：3A 完成且 backend 可隔离）</li>
+    <li><b><code>execute_bash</code></b> — legacy / extended / diagnostic，不应重新进入主训练默认 scaffold</li>
+  </ul>
+  <p>这意味着 16G.3B 不是"把 <code>execute_bash</code> 重命名"或"扩展 <code>execute_bash</code> 接口"，而是另起一个独立 handler，<b>共享 3A 底座</b>。<code>execute_bash</code> 留作 16G.4 / 兼容用途。</p>
+
+  <h2 class="sec" id="prompt">5 · 模型可见说明（计划 §9.3）</h2>
+  <p>工具 description / public_safe_description 必须写清：</p>
+  <ol>
+    <li><code>run_public_command</code> 用于<b>公开诊断</b>，<b>不</b>用于文件修改</li>
+    <li>文件修改使用 <code>apply_patch</code> / <code>write_file</code></li>
+    <li>文件读取优先使用 <code>read_file</code> / <code>grep</code> / <code>glob_files</code> / <code>symbol_search</code></li>
+    <li>测试优先使用 <code>run_project_test</code></li>
+    <li><b>不能</b>用它访问 hidden evaluator / Git history / runtime-private / 宿主路径 / 网络</li>
+  </ol>
+
+  <h2 class="sec" id="probe">6 · 8 项 probe 验收（计划 §9.4）</h2>
+  <div class="probe"><span class="n">1</span><b>允许公开仓库检查</b>：一个允许的公开仓库检查命令返回 stdout / stderr / exit code</div>
+  <div class="probe"><span class="n">2</span><b>允许公开 compile / smoke</b>：一个允许的 compile / smoke 命令返回 exit code</div>
+  <div class="probe"><span class="n">3</span><b>pytest 路由到 run_project_test</b>：一个 pytest 命令被路由到 <code>run_project_test</code> 或返回可学习替代建议（含 <code>safe_rewrite_example</code>）</div>
+  <div class="probe"><span class="n">4</span><b>破坏性文件命令拒绝</b>：一个破坏性文件命令（<code>rm</code> / <code>chmod</code> / <code>git reset --hard</code>）被拒绝，并说明应使用结构化文件工具</div>
+  <div class="probe"><span class="n">5</span><b>Git history 拒绝</b>：一个 Git history 命令（<code>git log</code> / <code>git show</code> / <code>reflog</code>）被拒绝</div>
+  <div class="probe"><span class="n">6</span><b>网络命令拒绝</b>：一个网络命令（<code>curl</code> / <code>wget</code> / <code>pip install</code>）被拒绝</div>
+  <div class="probe"><span class="n">7</span><b>路径越界拒绝</b>：一个尝试访问 hidden marker / runtime-private / 本机绝对路径的命令被拒绝</div>
+  <div class="probe"><span class="n">8</span><b>artifact 可见性</b>：tool result 公开摘要无路径泄漏，raw artifact 不返回给模型</div>
+
+  <h3>6.1 验收 CLI</h3>
+  <pre><code>repo-harness inspect-stage16g3b-run-public-command \
+    docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/stage16g3b_acceptance_summary.json \
+    --assert-complete</code></pre>
+
+  <h2 class="sec" id="deps">7 · 依赖与前置</h2>
+  <h3>7.1 前置（必须先 ✓）</h3>
+  <ul>
+    <li>16G.2C inspector 通过</li>
+    <li><b>16G.3A 完成</b>，且 <code>stage16g3a_complete=true</code></li>
+    <li>3A 选择了合法终态 A（Docker + deny）或终态 B/C（不暴露 core）</li>
+  </ul>
+
+  <h3>7.2 16G.3B 完成意味着什么</h3>
+  <p>取决于 3A 落在哪个终态：</p>
+  <table>
+    <thead><tr><th>3A 终态</th><th>3B 完成后 run_public_command 行为</th></tr></thead>
+    <tbody>
+      <tr><td><b>终态 A</b>（Docker + deny）</td><td>真实执行公开命令，进 <code>swe_public_core</code>，模型 turn 可调用</td></tr>
+      <tr><td><b>终态 B/C</b>（本机或纯 schema）</td><td>schema 注册 + scaffold 暴露，但 executor 返回 <code>behavior_not_enabled_until_docker_backend_ready</code>，不进 core profile（类似 16G.2A 的 schema-only 模式）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.3 建议产物</h3>
+  <pre><code>scripts/pre_verl/build_stage16g3b_run_public_command.py
+tests/unit/test_repo_harness_stage16g3b_run_public_command.py
+docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/
+├── stage16g3b_capability_delta_report.json
+├── stage16g3b_tool_schema_report.json
+├── stage16g3b_scaffold_exposure_report.json
+├── stage16g3b_public_command_profile_report.json
+├── stage16g3b_command_artifact_visibility_report.json
+├── stage16g3b_safety_denial_report.json
+├── stage16g3b_path_leak_scan_report.json
+└── stage16g3b_acceptance_summary.json</code></pre>
+
+  <div class="callout info"><b>3B 启动前建议：</b>① 确认 3A 终态；② <code>run_public_command</code> 的 prompt 文案在 simple_react / coder / repair 三个 scaffold 中保持一致，避免 model 在不同 scaffold 下学到不同用法；③ 与 <code>run_project_test</code> 的路由提示要互相一致（3B 把 pytest 推给 3C，3C 把非 pytest 命令推给 3B）。</div>
+
+</main>
+</div>
+</body>
+</html>

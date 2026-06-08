@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepoHarness 能力总表 / 16G 验收表</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{display:flex;max-width:1280px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:248px;flex:0 0 248px;padding:22px 12px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 10px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:5px 9px;border-radius:6px;font-size:12.8px;margin-bottom:1px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.grp{color:#cdd6e6;font-weight:600;margin-top:9px;font-size:12.5px}
+  main{flex:1;min-width:0;padding:34px 40px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:18px}
+  h2.sec{font-size:19px;margin:40px 0 12px;padding-top:10px;border-top:1px solid var(--line)}
+  h3.grp{font-size:16px;margin:30px 0 10px;padding:7px 12px;border-radius:8px;background:#141926}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:12.4px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:12.6px}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .ov a{color:#9cc4ff;text-decoration:none}
+  .ov a:hover{text-decoration:underline}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .t-diag{background:rgba(160,120,220,.16);color:#c99cff;border:1px solid #5a3f7a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.4px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:20px}li{margin:4px 0}
+  .small{font-size:12.3px;color:var(--muted)}
+  /* 能力卡片 */
+  .cap{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 16px;margin:11px 0}
+  .cap .hd{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:3px}
+  .cap .nm{font-size:14.5px;font-weight:700;color:#fff;font-family:"SFMono-Regular",Menlo,monospace}
+  .cap .tools{font-size:12px;color:#9cc4ff;margin-bottom:7px}
+  .cap .tools b{color:#bfe3ff}
+  .cap .row{font-size:13px;margin:5px 0}
+  .cap .k{color:var(--accent2);font-weight:600}
+  .cap .cmp{background:#0d1620;border:1px solid #243449;border-radius:7px;padding:7px 11px;font-size:12.6px;margin:6px 0}
+  .cap .reg{font-size:12.2px;color:#aeb8c8;background:#12151d;border-radius:6px;padding:6px 10px;margin:6px 0}
+  .todo{border:1px dashed #5a4a2a;background:#1b1709;border-radius:7px;padding:8px 11px;margin-top:7px;font-size:12.5px}
+  .todo .lab{color:#e6c068;font-weight:600}
+  .wait{color:#d9a93b}
+  .done{color:#6fdc84}
+  /* 四象限卡片：① 模型视角 ② 实现位置 ③ 训练投影 ④ 阶段+profile */
+  .q4{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:8px 0 4px}
+  @media (max-width:920px){.q4{grid-template-columns:1fr}}
+  .q{background:#13161e;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12.6px}
+  .qh{font-size:12.4px;color:#cdd6e6;font-weight:600;margin-bottom:5px;border-bottom:1px solid #2a3140;padding-bottom:4px}
+  .q1 .qh{color:#9cc4ff}.q2 .qh{color:#e6c068}.q3 .qh{color:#6fdc84}.q4q .qh{color:#7ee0c0}
+  .q pre{background:#0a0c12;border:1px solid #2a3140;border-radius:6px;padding:6px 9px;margin:5px 0;font-size:11.7px;line-height:1.45;overflow-x:auto}
+  .q pre code{color:#c9d4e6}
+  .q ul{padding-left:17px;margin:4px 0}
+  .q li{margin:3px 0;font-size:12.4px}
+  .q .field{color:#9aa4b6;font-weight:600;display:inline-block;min-width:70px;margin-right:5px}
+  .q .stage{color:#9cc4ff;font-family:"SFMono-Regular",Menlo,monospace;font-size:11.5px}
+  .q .ok{color:#6fdc84}.q .no{color:#f29292}.q .qmark{color:#d9a93b}
+  .pmx{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+  .pmx .pchip{font-size:10.8px;padding:1px 6px;border-radius:9px;border:1px solid #2a3140;background:#0d1018;color:#aeb8c8}
+  .pmx .pchip.on{background:#1c2c1f;color:#6fdc84;border-color:#2f6b3a}
+  .pmx .pchip.off{background:#2a1a1a;color:#f29292;border-color:#6b3434}
+  .pmx .pchip.ext{background:#1f2236;color:#9cc4ff;border-color:#34507a}
+  .snap16g2c{background:linear-gradient(135deg,#13311f,#161a23);border:1px solid #2f6b3a;border-radius:11px;padding:12px 15px;margin:12px 0}
+  .snap16g2c h4{margin:0 0 6px;font-size:14.5px;color:#6fdc84}
+  .snap16g2c .kv{display:grid;grid-template-columns:max-content 1fr;column-gap:12px;row-gap:4px;font-size:12.6px;margin-top:6px}
+  .snap16g2c .kv b{color:#cdd6e6}
+  .footer{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:#6b7484;font-size:12.3px}
+  @media(max-width:900px){nav{display:none}main{padding:22px 16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#how">怎么用这张表</a>
+  <a href="#overview">★ 27 条速览表</a>
+  <a href="#cards" class="grp">详细卡片 ↓</a>
+  <a href="#g-have" class="grp">✅ 已够用（5）</a>
+  <a href="#g-2" class="grp">🔧 16G.2 文件/补丁（5）</a>
+  <a href="#g-3" class="grp">🔧 16G.3 公开命令（4）</a>
+  <a href="#g-4" class="grp">🔧 16G.4 环境/安全（9）</a>
+  <a href="#g-opt" class="grp">⏸ post-16G 暂缓（4）</a>
+  <a href="#profiles" class="grp">四档 Profile</a>
+  <a href="#prof-matrix">· 能力×profile 矩阵</a>
+  <a href="#prof-cards">· 四档详细卡片</a>
+</nav>
+<main>
+  <h1>RepoHarness 能力总表 / 16G 验收表</h1>
+  <p class="meta">27 条能力的完整地图 · 三合一：①harness 当前有什么能力（长期回顾）②每条怎么实施（实施指南）③整个 16G 阶段的验收追踪　·　数据源：<a href="repo_harness_verl_stage16g1_completion_report.html#registry-map">16G.1 registry 契约</a> + <a href="repo_harness_verl_stage16g0_full_stage_report.html">16G.0 三方对照</a>　·　随各阶段实施<b>持续更新「待填」字段</b></p>
+
+  <!-- how -->
+  <h2 class="sec" id="how">怎么用这张表</h2>
+  <p>能力卡片有两种结构：</p>
+
+  <h3>结构 A · 四象限入手手册（已被某个 stage 推动落地或重点对照的卡片）</h3>
+  <p>16G.2C 完成后，16G.2 直接落地的结构化文件工具，以及与该阶段强相关的对照工具（read / glob / grep / symbol_search / edit / write / apply_patch / delete-move-mkdir / bash / run_tests）已重写为四象限结构。这里的 <code>bash</code> 和 <code>run_tests</code> 主要作为后续 16G.3 的能力差距对照，不表示它们已经达到 Claude Code / Codex / mini-SWE-agent 风格的公开命令能力。每张卡含：</p>
+  <table>
+    <tr><th style="width:18%">象限</th><th>内容</th><th class="c" style="width:140px">读它能回答什么</th></tr>
+    <tr><td><b>① 模型视角</b></td><td>schema · 一个或多个<b>完整调用 JSON 例子</b> · 成功 obs 字段 · 失败 obs error_type 枚举</td><td class="c">模型怎么用</td></tr>
+    <tr><td><b>② 实现位置</b></td><td>入口函数 / dispatch / tool def 在哪个文件第几行；底层共享路径；单元测试位置</td><td class="c">代码住在哪</td></tr>
+    <tr><td><b>③ 训练投影</b></td><td>是否进 trajectory · response mask · policy_loss 候选状态 · final.patch 贡献 · audit pointer · forbidden marker 防御</td><td class="c">RL 看见什么 / 受什么约束</td></tr>
+    <tr><td><b>④ 阶段 + profile</b></td><td>stage 推进时间线 · 当前状态 · 4 档 profile 暴露矩阵 · 未决问题</td><td class="c">现在到哪、profile 在哪可见</td></tr>
+  </table>
+
+  <h3>结构 B · 旧"registry 句型"（未推动的占位卡）</h3>
+  <p>剩下还没推动的卡片保留 <code>registry: gap=… / core=… / 进RL轨迹=…</code> 这种紧凑句型 + 占位框，后续 stage（16G.3 / 16G.4 / 16G.5 / 16G.6 / post）完成后再增量改成四象限结构。两种结构混用是有意的：<b>已落地的展示得详细，未落地的不假装它存在</b>。</p>
+
+  <p class="small">状态徽章：<span class="tag t-good">✅已有</span>=已实现完整 · <span class="tag t-good">✅行为已实现</span>=本 stage 完成行为 · <span class="tag t-good">✅行为+投影已通</span>=run_episode → final.patch 端到端通 · <span class="tag t-warn">🟡当前 partial</span>=有但形态不完整 · <span class="tag t-bad">🔧待建</span>=尚未实现 · <span class="tag t-diag">🩺仅诊断</span>=只在诊断旁路 · <span class="tag t-neutral">⏸预留</span>=只 schema。<br>
+  "进RL轨迹"：✓=出现在 trajectory · ~ mock=mock route 通了但非 policy_loss · ✗=完全不进。<br>
+  Profile chip 颜色：<span class="pchip on" style="display:inline-block">绿=暴露</span> · <span class="pchip ext" style="display:inline-block">蓝=条件暴露/extended</span> · <span class="pchip off" style="display:inline-block">红=禁</span>。</p>
+
+  <div class="callout info"><b>📘 想看代码实现：</b>本表的四象限卡片只到"模型视角 + 实现位置 file:line"为止。完整代码读法 / 关键不变量 / 5 道安全防线写在<b>独立的</b> <a href="code_guide_index.html">RepoHarness 代码导览系列</a> 里（执行时间线 T0–T9 + 4 个侧栏）。能力地图按"工具维度"组织、代码导览按"时间线维度"组织——正交互补。</div>
+
+  <!-- overview -->
+  <h2 class="sec" id="overview">★ 27 条速览表（点能力名跳到卡片）</h2>
+  <table class="ov">
+    <tr><th style="width:30%">能力</th><th>对应工具</th><th class="c">owner</th><th class="c">当前态</th><th class="c">gap</th><th class="c">进RL轨迹</th><th class="c">验收③</th></tr>
+    <tr><td><a href="#cap-read">structured_file_read</a></td><td>read_file</td><td class="c">已有</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">充分</td><td class="c">✓</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-glob">glob_file_discovery</a></td><td>glob_files</td><td class="c">已有</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">充分</td><td class="c">✓</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-grep">grep_content_search</a></td><td>grep</td><td class="c">已有</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">充分</td><td class="c">✓</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-artifact">large_file_paging_or_artifact_replay</a></td><td>read_tool_result_artifact</td><td class="c">16G.5</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">充分</td><td class="c">✓</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-gitdiff">git_diff_status_and_patch_capture</a></td><td>git_diff</td><td class="c">16G.5</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">充分</td><td class="c">✓</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-edit">structured_edit_existing_file</a></td><td>edit_file</td><td class="c">16G.2</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">行为已实现</td><td class="c">~ mock</td><td class="c"><span class="wait">⏳17B+</span></td></tr>
+    <tr><td><a href="#cap-write">structured_write_or_create_file</a></td><td>create_file, write_file</td><td class="c">16G.2C</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">行为+投影已通</td><td class="c">~ mock</td><td class="c"><span class="wait">⏳17B+</span></td></tr>
+    <tr><td><a href="#cap-applypatch">apply_patch_or_multi_file_edit</a></td><td>apply_patch</td><td class="c">16G.2C</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">行为+投影已通</td><td class="c">~ mock</td><td class="c"><span class="wait">⏳17B+</span></td></tr>
+    <tr><td><a href="#cap-delmove">delete_move_mkdir_file_operations</a></td><td>core 经 apply_patch；独立工具 extended</td><td class="c">16G.2C</td><td class="c"><span class="tag t-good">✅</span></td><td class="c">core 已通</td><td class="c">~ mock</td><td class="c"><span class="wait">⏳17B+ / 16G.5</span></td></tr>
+    <tr><td><a href="#cap-todo">task_management_todo</a></td><td>update_working_state</td><td class="c">16G.2</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-bash">bash_or_public_command_execution</a></td><td>execute_bash, run_public_command</td><td class="c">16G.3</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">弱于mini</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-ptest">parameterized_public_test_command</a></td><td>run_tests, run_project_test</td><td class="c">16G.3</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-scratch">scratch_python_or_reproduction_script</a></td><td>scratch_python</td><td class="c">16G.3</td><td class="c"><span class="tag t-bad">🔧</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-projcmd">project_command_routing</a></td><td>run_project_test, run_public_command</td><td class="c">16G.3</td><td class="c"><span class="tag t-bad">🔧</span></td><td class="c">missing</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-persist">persistent_diagnostic_session</a></td><td>diagnostic_shell</td><td class="c">16G.4</td><td class="c"><span class="tag t-diag">🩺</span></td><td class="c">仅诊断</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-dep">dependency_setup_and_environment_policy</a></td><td>dependency_setup_policy</td><td class="c">16G.4</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-linkage">final_answer_verifier_reward_linkage</a></td><td>final_answer_linkage</td><td class="c">16G.4</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-perm">permission_approval_denial_recovery</a></td><td>permission_policy_gate</td><td class="c">16G.4</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-sandbox">sandbox_workspace_and_runtime_private_boundary</a></td><td>sandbox_boundary_gate</td><td class="c">16G.4</td><td class="c"><span class="tag t-good">✅底层</span></td><td class="c">充分</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-trunc">tool_result_truncation_raw_artifact_privacy</a></td><td>read_tool_result_artifact</td><td class="c">16G.4</td><td class="c"><span class="tag t-good">✅底层</span></td><td class="c">充分</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-hooks">hooks_tool_lifecycle_audit</a></td><td>tool_lifecycle_audit</td><td class="c">16G.4</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-elig">training_eligibility_and_export_projection</a></td><td>training_eligibility_gate</td><td class="c">16G.4</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-rhack">reward_hacking_monitoring_and_quarantine</a></td><td>reward_hacking_monitor</td><td class="c">16G.4</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">partial</td><td class="c">✗</td><td class="c"><span class="wait">⏳</span></td></tr>
+    <tr><td><a href="#cap-nontext">non_text_file_read</a></td><td>read_file</td><td class="c">post</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c">弱于CC</td><td class="c">✗</td><td class="c"><span class="tag t-neutral">不阻塞</span></td></tr>
+    <tr><td><a href="#cap-symbol">symbol_search_or_lsp_diagnostics</a></td><td>symbol_search</td><td class="c">post</td><td class="c"><span class="tag t-warn">🟡</span></td><td class="c">弱于CC</td><td class="c">✓工具 / ⏸LSP</td><td class="c"><span class="tag t-neutral">不阻塞</span></td></tr>
+    <tr><td><a href="#cap-subagent">subagent_background_task</a></td><td>(schema 预留)</td><td class="c">post</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c">预留</td><td class="c">✗</td><td class="c"><span class="tag t-neutral">不阻塞</span></td></tr>
+    <tr><td><a href="#cap-mcp">external_tools_mcp_plugin_skill</a></td><td>(schema 预留)</td><td class="c">post</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c">预留</td><td class="c">✗</td><td class="c"><span class="tag t-neutral">不阻塞</span></td></tr>
+  </table>
+  <p class="small">合计 27 条。原始阻塞主 RL 的 17 条集中在 16G.2(4)/16G.3(4)/16G.4(9)。截至 16G.2C，16G.2 的 4 条已经完成行为和 run_episode 投影贯通，但仍不等于可以进入 policy loss；16G.3 / 16G.4 仍是主要能力和安全边界阻塞。<b>验收③ 全为 ⏳</b>，因为 16G.5 parity probe 还没跑——这一列就是整个 16G 的验收追踪，等模型真跑后逐条填 ✅/❌。</p>
+
+  <!-- ============ cards ============ -->
+  <h2 class="sec" id="cards">详细卡片</h2>
+
+  <div class="snap16g2c">
+    <h4>📸 16G.2C 完成时间点快照（2026-05-28，commit 1e783f41）</h4>
+    <p>本轮 16G.2C 完成后，结构化文件工具相关的卡片，以及为后续公开命令阶段保留的关键对照卡片（read / glob / grep / symbol_search / edit / write / apply_patch / delete / move / mkdir / bash / run_tests）已重写为<b>四象限入手手册</b>结构：① 模型视角 ② 实现位置 ③ 训练投影 ④ 阶段历史 + profile 矩阵。这里的重写重点是让人能看懂当前能力边界；<code>bash</code> / <code>run_tests</code> 仍是 partial，不应误读为 16G.3 已完成。其余 stage（16G.3 / 16G.4 / 16G.5 / 16G.6 / post）未推进过的卡片仍保留原 <code>registry: gap=…</code> 句型 + 占位框，等对应 stage 完成后再增量改写。</p>
+    <div class="kv">
+      <b>本轮新落地的能力</b><span>write_file / apply_patch 的 <b>真实文件变更行为</b>已在 16G.2B 落地；它们经过 run_episode 投影到 final.patch / final.diff / TrainingView 的链路已在 16G.2C <b>端到端贯通</b>（mock route）</span>
+      <b>状态仍未变</b><span>所有结构化文件工具的 <b>policy_loss 资格仍为 false</b>，等 16G.6 freeze + 17B 真实数据闸门</span>
+      <b>本轮新发现</b><span>16G.2C probe 暴露了一个 <code>audit_ref</code> 字段命名冲突 — model-visible payload 的字段名不能与 <code>visibility.py</code> 的 forbidden marker 冲突。已修正为 <code>audit_artifact_id</code> / <code>audit_artifact</code></span>
+    </div>
+  </div>
+
+  <h3 class="grp" id="g-have">✅ 已够用 —— 工具已实现（5 条）</h3>
+
+  <div class="cap" id="cap-read">
+    <div class="hd"><span class="nm">structured_file_read</span><span class="tag t-good">✅已有</span><span class="tag t-neutral">owner: 已有</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>read_file</b>　vs CC <code>Read</code> · vs mini <code>cat</code></div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span><code>{path, offset?, limit?}</code><br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"read_file",
+ "input":{"path":"src/config_parser.py",
+          "offset":1,"limit":50}}</code></pre>
+        <span class="field">成功 obs</span> 文本预览（带行号），超长部分以 artifact 形式回填，模型可用 <code>read_tool_result_artifact</code> 翻页<br>
+        <span class="field">失败 obs</span> <code>error_type=path_outside_workspace</code> / <code>binary_file</code> / <code>file_not_found</code> / <code>non_utf8_file</code>
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:913</code> <code>_read_file</code></li>
+          <li><span class="field">dispatch</span><code>minimal.py:378-381</code></li>
+          <li><span class="field">tool def</span><code>minimal.py:3029</code> <code>name="read_file"</code></li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[2]</code></li>
+          <li><span class="field">安全 path 校验</span><code>MODEL_HIDDEN_TOOL_PATH_PARTS</code>（minimal.py:61）拒绝 <code>.git/.ssh/.env/.venv/secret*/token*</code> 等</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓ 作为 tool observation</span></li>
+          <li><span class="field">response mask</span> 0（不进 loss）</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗</span>（仅工具回执，不可学习目标）</li>
+          <li><span class="field">audit</span> 不需要 — 只读不写</li>
+          <li><span class="field">forbidden marker</span> 输出经 visibility filter；命中即截断为 <code>&lt;EVIDENCE_REDACTED&gt;</code></li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2 维持</span><br>
+        <span class="field">当前状态</span> 行为完整，归"已够用"<br>
+        <div class="pmx">
+          <span class="pchip on">safe_structured_only ✓</span>
+          <span class="pchip on">swe_public_core ✓</span>
+          <span class="pchip on">swe_public_extended ✓</span>
+          <span class="pchip on">redteam_restricted ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-glob">
+    <div class="hd"><span class="nm">glob_file_discovery</span><span class="tag t-good">✅已有</span><span class="tag t-neutral">owner: 已有</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>glob_files</b> + <b>list_files</b>　vs CC <code>Glob</code>/<code>LS</code> · vs mini <code>ls</code>/<code>find</code></div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span><code>glob_files(pattern, ...)</code> / <code>list_files(path, recursive?)</code><br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"glob_files","input":{"pattern":"**/test_*.py"}}
+{"tool":"list_files","input":{"path":"src/","recursive":true}}</code></pre>
+        <span class="field">成功 obs</span> 匹配的相对路径列表（按字典序），超过预算时截断为前 N 条 + 总数<br>
+        <span class="field">失败 obs</span> <code>pattern_invalid</code> / <code>path_outside_workspace</code>
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:689</code> <code>_list_files</code>；glob_files 共享同一底层迭代器</li>
+          <li><span class="field">dispatch</span><code>minimal.py</code> 工具分派表</li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[0..1]</code>（list_files / glob_files）</li>
+          <li><span class="field">隐藏过滤</span> 过滤 <code>MODEL_HIDDEN_TOOL_PATH_PARTS</code> 命中的目录，<code>.git / .venv / node_modules</code> 等不出现在列表里</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓ 作为 tool observation</span></li>
+          <li><span class="field">response mask</span> 0</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗</span>（只读）</li>
+          <li><span class="field">audit</span> 路径列表自身就是审计；不留私有 artifact</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2 维持</span><br>
+        <span class="field">当前状态</span> 行为完整，归"已够用"<br>
+        <div class="pmx">
+          <span class="pchip on">safe_structured_only ✓</span>
+          <span class="pchip on">swe_public_core ✓</span>
+          <span class="pchip on">swe_public_extended ✓</span>
+          <span class="pchip on">redteam_restricted ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-grep">
+    <div class="hd"><span class="nm">grep_content_search</span><span class="tag t-good">✅已有</span><span class="tag t-neutral">owner: 已有</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>grep</b>　vs CC <code>Grep</code> · vs mini shell <code>grep</code>/<code>rg</code></div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span><code>{query, path?, glob?, regex?, output_mode?, ...}</code><br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"grep",
+ "input":{"query":"def parse_config",
+          "glob":"*.py",
+          "output_mode":"files_with_matches"}}</code></pre>
+        <span class="field">成功 obs</span> 命中行 / 文件列表 / 计数（依 output_mode）；超长走 artifact<br>
+        <span class="field">失败 obs</span> <code>regex_invalid</code> / <code>no_matches</code>
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:1119</code> <code>_grep</code></li>
+          <li><span class="field">工具调用记录</span><code>minimal.py:1397</code> <code>tool_name="grep"</code></li>
+          <li><span class="field">tool def</span><code>minimal.py:3111</code></li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[4]</code></li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓ tool observation</span></li>
+          <li><span class="field">response mask</span> 0</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗</span></li>
+          <li><span class="field">大输出</span> 自动落 artifact，模型靠 <code>read_tool_result_artifact</code> 翻页（防止单次回执塞爆 ctx）</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2 维持</span><br>
+        <span class="field">当前状态</span> 行为完整，归"已够用"<br>
+        <div class="pmx">
+          <span class="pchip on">safe_structured_only ✓</span>
+          <span class="pchip on">swe_public_core ✓</span>
+          <span class="pchip on">swe_public_extended ✓</span>
+          <span class="pchip on">redteam_restricted ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-artifact">
+    <div class="hd"><span class="nm">large_file_paging_or_artifact_replay</span><span class="tag t-good">✅已有</span><span class="tag t-neutral">owner: 16G.5</span><span class="tag t-neutral">P1</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>read_tool_result_artifact</b></div>
+    <div class="row"><span class="k">介绍</span> 长输出/大结果被截断后翻页回看。<b>例</b>：上一步 grep 命中 2000 行被截断 → <code>read_tool_result_artifact(artifact_id, page=2)</code> 看后面。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 大输出落盘再 Read 回读，等价。　<b>vs mini-SWE</b>：mini 靠 shell 输出，截断策略依赖外层 harness。</div>
+    <div class="reg">registry：gap=<b>present_and_sufficient</b> · 当前态=present · core=implemented · 进RL轨迹=<b>✓ 保持资格</b> · owner=16G.5（已实现，归 parity 验收）</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="done">已实现</span>　<span class="lab">② 模型可见/用法</span> <span class="done">read_tool_result_artifact(artifact_id)，默认可见</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-gitdiff">
+    <div class="hd"><span class="nm">git_diff_status_and_patch_capture</span><span class="tag t-good">✅已有</span><span class="tag t-neutral">owner: 16G.5</span><span class="tag t-neutral">P1</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>git_diff</b></div>
+    <div class="row"><span class="k">介绍</span> 看当前工作区改动 + 收口前确认。<b>例</b>：改完 parse_config 后 → <code>git_diff()</code> 确认只改了该改的两行。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 工作流依赖 diff 审查 + 变更总结，等价。　<b>vs mini-SWE</b>：mini 最终靠工作区 patch + official evaluator。</div>
+    <div class="reg">registry：gap=<b>present_and_sufficient</b> · 当前态=present · core=implemented · 进RL轨迹=<b>✓ 保持资格</b> · 配套 patch hygiene / episode projection 已接</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="done">已实现</span>　<span class="lab">② 模型可见/用法</span> <span class="done">git_diff()，默认可见，只读</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <h3 class="grp" id="g-2">🔧 16G.2 —— 结构化文件 / 补丁工具（5 条，4 个 P0 阻塞）</h3>
+  <div class="callout info">
+    <b>16G.2B preflight 设计修正（commit <code>c75a31d2</code>，已落地）：</b>默认 core 文件工具收敛为 <code>edit_file / create_file / write_file / apply_patch</code> 四个；<b>delete / move / mkdir 默认经 <code>apply_patch.operations</code> 表达，独立工具保留 schema、仅 <code>swe_public_extended</code> 暴露</b>，是否提升为 core 默认待 16G.5 parity probe 决定。<code>apply_patch</code> 的 delete / move operation 以及独立 <code>delete_file</code>/<code>move_file</code> 都<b>强制带模型 <code>reason</code> 字段</b>（用于审计 / reward attribution）。下面三张卡片已反映该收敛；矩阵里 delete_move_mkdir 的 core 列指"经 apply_patch 表达"。
+  </div>
+
+  <div class="cap" id="cap-edit">
+    <div class="hd"><span class="nm">structured_edit_existing_file</span><span class="tag t-good">✅已实现</span><span class="tag t-info">owner: 16G.2</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>edit_file</b>　vs CC <code>Edit</code>（exact replace）· vs mini <code>sed</code></div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span><code>{path, old_string, new_string, replace_all?, expected_content_hash?}</code><br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"edit_file",
+ "input":{"path":"src/parse_config.py",
+          "old_string":"raise KeyError(name)",
+          "new_string":"return DEFAULT_TIMEOUT"}}</code></pre>
+        <span class="field">成功 obs</span> <code>{"status":"ok","changed_path":"…","diff_excerpt":"…"}</code><br>
+        <span class="field">失败 obs</span> <code>old_string_not_found</code> / <code>multiple_matches_require_replace_all</code> / <code>stale_file_state</code>（未先 read 即编辑）
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:2025</code> <code>_edit_file</code></li>
+          <li><span class="field">read-before-edit</span> 启发要求：edit_file 之前必须 <code>read_file</code> 过对应 path，否则 <code>stale_file_state</code></li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[7]</code></li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓</span></li>
+          <li><span class="field">response mask</span> 0（observation 部分）</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗ mock route</span> / <span class="qmark">verl route 待 17B+</span></li>
+          <li><span class="field">final.patch</span> 经 run_episode → episode_projection 计入</li>
+          <li><span class="field">forbidden marker</span> diff_excerpt 经 visibility filter</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2A schema ✓</span> → <span class="stage">16G.2B 行为 ✓</span> → <span class="stage">16G.2C 投影 ✓</span><br>
+        <span class="field">当前状态</span> 行为完整 + run_episode 投影 linkage 已贯通<br>
+        <div class="pmx">
+          <span class="pchip off">safe_structured_only ✗</span>
+          <span class="pchip on">swe_public_core ✓</span>
+          <span class="pchip on">swe_public_extended ✓</span>
+          <span class="pchip ext">redteam_restricted 待 16G.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-write">
+    <div class="hd"><span class="nm">structured_write_or_create_file</span><span class="tag t-good">✅行为已实现</span><span class="tag t-info">owner: 16G.2</span><span class="tag t-bad">P0</span><span class="tag t-good">投影已贯通</span></div>
+    <div class="tools">对应工具：<b>write_file</b>（独立工具，core 默认）+ <b>create_file</b>（旧"只新建"工具）　vs CC <code>Write</code> · vs mini <code>echo &gt; file</code></div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span><code>write_file: {path, content, mode:"create"|"overwrite", expected_content_hash?}</code>（mode=upsert 不暴露）<br>
+        <span class="field">调用例（新增）</span>
+        <pre><code>{"tool":"write_file",
+ "input":{"path":"pkg/helpers.py",
+          "content":"def shared():\n    return 1\n",
+          "mode":"create"}}</code></pre>
+        <span class="field">调用例（覆盖）</span>
+        <pre><code>{"tool":"write_file",
+ "input":{"path":"src/defaults.py",
+          "content":"TIMEOUT = 30\n",
+          "mode":"overwrite",
+          "expected_content_hash":"sha256:abc…"}}</code></pre>
+        <span class="field">成功 obs</span> JSON 含 <code>result_kind / operation_count=1 / changed_paths / audit_artifact_id</code><br>
+        <span class="field">失败 obs</span> <code>stale_file_state</code>（hash 不匹配）/ <code>model_hidden_path_denied</code> / <code>binary_file_denied</code> / <code>non_utf8_file_denied</code> / <code>symlink_not_mutable</code>
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">dispatch</span><code>minimal.py:391</code> → <code>_stage16g2b_file_mutation_tool</code>（同时收 write_file/apply_patch/delete_file/move_file/mkdir）</li>
+          <li><span class="field">主处理器</span><code>minimal.py:2229</code> <code>_stage16g2b_file_mutation_tool</code>（含 result 字段构造）</li>
+          <li><span class="field">真实变更</span><code>tools/file_mutation.py:177</code> <code>execute_structured_file_mutation</code> = preflight → snapshot → apply → rollback</li>
+          <li><span class="field">写入原子</span><code>file_mutation.py:555-574</code> 真正调用 <code>Path.write_text/unlink/rename/mkdir</code></li>
+          <li><span class="field">tool def</span><code>minimal.py:3282</code> <code>name="write_file"</code></li>
+          <li><span class="field">create_file（独立）</span><code>minimal.py:2191</code> 旧工具，only mode=create，没接 16G.2B 共享路径</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓ tool observation</span></li>
+          <li><span class="field">response mask</span> 0（tool result）</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗ mock route</span> · 由 episode_projection.py:610 <code>_provider_route_qualification</code> 强制（需要 route=verl 且 not invalid_for_training/online_rl）</li>
+          <li><span class="field">final.patch 贡献</span><span class="ok">✓</span> — write_file 在 16G.2C run_episode probe 中作为 added/overwrite-modified 落入 final.patch</li>
+          <li><span class="field">audit pointer</span> typed 字段含 <code>audit_artifact_id</code> + <code>audit_artifact</code>（取代 16G.2B 一度误用的 <code>audit_ref</code>）</li>
+          <li><span class="field">forbidden marker</span><code>visibility.py:48-58</code> 扫 model-visible content 和 typed key，命中即拒绝</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2A schema ✓</span> → <span class="stage">16G.2B 行为 ✓</span> → <span class="stage">16G.2C 投影 linkage ✓</span><br>
+        <span class="field">当前状态</span> 行为完整 + run_episode 端到端贯通（mock route）<br>
+        <span class="field">仍待</span> verl route policy_loss 资格在 16G.6 freeze + 17B 数据闸门之后<br>
+        <div class="pmx">
+          <span class="pchip off">safe_structured_only ✗</span>
+          <span class="pchip on">swe_public_core ✓</span>
+          <span class="pchip on">swe_public_extended ✓</span>
+          <span class="pchip ext">redteam_restricted 待 16G.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-applypatch">
+    <div class="hd"><span class="nm">apply_patch_or_multi_file_edit</span><span class="tag t-good">✅行为+投影已通</span><span class="tag t-info">owner: 16G.2</span><span class="tag t-bad">P0</span><span class="tag t-good">投影已贯通</span></div>
+    <div class="tools">对应工具：<b>apply_patch</b>（core 默认批量入口；同时是 delete/move/mkdir 的 core 表达方式）　vs CC 没有专门工具（靠多次 Edit）· vs mini shell patch · vs Codex Lark 文本语法（RH 用 JSON 结构化）</div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span> <code>{operations:[{op, path, …}, …]}</code><br>
+        op 枚举：<code>replace_text / write_file / delete_file / move_file / mkdir</code><br>
+        <b>没有</b> <code>unified_diff / command</code> 字段（<code>additionalProperties:false</code> 硬禁自由 diff）<br>
+        <span class="field">调用例（多 op 原子）</span>
+        <pre><code>{"tool":"apply_patch","input":{
+ "operations":[
+   {"op":"replace_text","path":"pkg/calc.py",
+    "old_text":"return x*2","new_text":"return x*3",
+    "expected_content_hash":"sha256:…"},
+   {"op":"delete_file","path":"legacy.py",
+    "expected_content_hash":"sha256:…",
+    "reason":"removed unused legacy module"},
+   {"op":"move_file","source_path":"old_name.py",
+    "target_path":"pkg/renamed.py",
+    "expected_source_hash":"sha256:…",
+    "reason":"package reorg"},
+   {"op":"mkdir","path":"docs/generated"},
+   {"op":"write_file","path":"docs/generated/notes.md",
+    "content":"# autogen\n","mode":"create"}
+ ]}}</code></pre>
+        <span class="field">成功 obs</span> JSON 含 <code>operation_count=5 / changed_paths / audit_artifact_id</code><br>
+        <span class="field">失败 obs</span><code>partial_failure=true</code> + <code>rollback_status</code>（罕见，预检会先挡掉）；预检拒绝：<code>duplicate_mutation_path / stale_file_state / model_hidden_path_denied / binary_file_denied / non_utf8_file_denied / symlink_not_mutable</code>
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">dispatch</span><code>minimal.py:391</code> → <code>_stage16g2b_file_mutation_tool</code></li>
+          <li><span class="field">核心</span><code>file_mutation.py:177</code> <code>execute_structured_file_mutation</code>：① 预检全部 op（<code>_prepare_operations</code> @ 279）→ ② 快照 affected paths（<code>_snapshot_paths</code> @ 731）→ ③ 顺序应用 → ④ 任一失败 rollback + <code>partial_failure=true</code></li>
+          <li><span class="field">原子性</span> 预检通过后才动文件；同次调用<b>拒绝</b>多 op 触碰同一路径（<code>duplicate_mutation_path</code>），大同文件改写必须用 write_file(mode=overwrite)</li>
+          <li><span class="field">tool def</span><code>minimal.py:3318</code> <code>name="apply_patch"</code></li>
+          <li><span class="field">单元测试</span><code>tests/unit/test_repo_harness_stage16g2b_file_mutation.py</code>（test_apply_patch_rejects_*）</li>
+          <li><span class="field">侧重 vs Codex</span> Codex 用 Lark 文本 grammar（Add File / Delete / Update / Move 块）；RH 用 JSON typed ops + expected_hash + reason，更易 schema 校验、更难绕过</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓</span></li>
+          <li><span class="field">response mask</span> 0（tool result）</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗ mock route</span> · 同 write_file，待 verl route + 17B</li>
+          <li><span class="field">partial_failure 阻断</span> status=error + <code>allowed_in_policy_loss_trajectory=False</code> + <code>invalid_for_training=true</code></li>
+          <li><span class="field">final.patch 贡献</span><span class="ok">✓</span> — 16G.2C probe 已验证 5 种 op 都能正确反映为 final.patch 的 added/modified/deleted/renamed</li>
+          <li><span class="field">reason 字段</span> delete/move op 必填；当前用作审计 + reward hacking 诊断；<b>不</b>进 trajectory token、<b>不</b>进 reward shaping（待 16G.5 决定下游归属）</li>
+          <li><span class="field">audit pointer</span><code>audit_artifact_id</code> / <code>audit_artifact</code>（artifact_refs 同步带出）</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2A schema + reason 字段 ✓</span> → <span class="stage">16G.2B 行为 + 预检原子 ✓</span> → <span class="stage">16G.2C run_episode 投影贯通 ✓</span><br>
+        <span class="field">当前状态</span> 核心入口完整 + 5 种 op 全在 final.patch 端到端可见<br>
+        <span class="field">设计要点</span> 全程 typed JSON、严禁 unified diff 文本路径；core 默认表达 delete/move/mkdir<br>
+        <div class="pmx">
+          <span class="pchip off">safe_structured_only ✗</span>
+          <span class="pchip on">swe_public_core ✓</span>
+          <span class="pchip on">swe_public_extended ✓</span>
+          <span class="pchip ext">redteam_restricted 待 16G.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-delmove">
+    <div class="hd"><span class="nm">delete_move_mkdir_file_operations</span><span class="tag t-good">✅核心已通</span><span class="tag t-info">owner: 16G.2</span><span class="tag t-bad">P0</span><span class="tag t-good">投影已贯通</span></div>
+    <div class="tools">core 经 <b>apply_patch.operations</b> 表达（op=delete_file/move_file/mkdir）；独立 <code>delete_file</code>/<code>move_file</code>/<code>mkdir</code> 工具保留 schema + 行为，仅 <code>swe_public_extended</code> 暴露　vs CC <code>Write + Bash</code> 组合 · vs mini <code>rm/mv/mkdir</code> · vs Codex apply_patch 内 <code>Delete File / Move to</code></div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">核心路径（推荐）</span>
+        <pre><code>{"tool":"apply_patch","input":{"operations":[
+  {"op":"delete_file","path":"legacy.py",
+   "expected_content_hash":"sha256:…",
+   "reason":"unused; replaced by pkg/new.py"}
+]}}</code></pre>
+        <pre><code>{"tool":"apply_patch","input":{"operations":[
+  {"op":"move_file","source_path":"old.py",
+   "target_path":"pkg/new.py",
+   "expected_source_hash":"sha256:…",
+   "reason":"namespace migration"}
+]}}</code></pre>
+        <pre><code>{"tool":"apply_patch","input":{"operations":[
+  {"op":"mkdir","path":"docs/generated"}
+]}}</code></pre>
+        <span class="field">独立工具（仅 extended）</span><code>delete_file{path, expected_content_hash, reason}</code> · <code>move_file{source_path, target_path, expected_source_hash, reason}</code> · <code>mkdir{path}</code><br>
+        <span class="field">关键</span> delete/move op <b>必须</b>带 <code>reason</code>（无论 core 还是 standalone）；mkdir 不需要 reason
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">共享路径</span><code>file_mutation.py:execute_structured_file_mutation</code>，apply_patch 和 standalone 用同一个底层处理器</li>
+          <li><span class="field">独立工具 schema</span><code>minimal.py:3263+</code>（<code>delete_file</code> required=["path","expected_content_hash","reason"]；<code>move_file</code> required=["source_path","target_path","expected_source_hash","reason"]）</li>
+          <li><span class="field">scaffold 暴露</span> 独立工具<b>不进</b> <code>DEFAULT_TOOL_ORDER</code> / <code>simple_react</code>；只在 <code>swe_public_extended</code> profile 暴露</li>
+          <li><span class="field">真实操作</span><code>file_mutation.py:555-574</code>：<code>Path.unlink / Path.rename / Path.mkdir</code></li>
+          <li><span class="field">单元验证</span><code>test_standalone_delete_move_mkdir_remain_extended_but_executable</code>（已 passed）</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓</span></li>
+          <li><span class="field">response mask</span> 0</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗ mock route</span> · 待 verl + 17B</li>
+          <li><span class="field">final.patch 贡献</span><span class="ok">✓</span> — 16G.2C probe 已确认：delete_file → final.patch deleted；move_file → renamed；mkdir 单独不进 patch（空目录不算 diff），<b>mkdir+write_file 组合</b>才落 patch（已实证 docs/generated/notes.md 案例）</li>
+          <li><span class="field">reason 用途</span> 审计 + reward hacking 诊断；不进 trajectory token；待 16G.5 决定 reward 归属</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.1 ✓</span> → <span class="stage">16G.2A schema + reason ✓</span> → <span class="stage">16G.2A 修正：standalone 退到 extended ✓</span> → <span class="stage">16G.2B 行为 ✓</span> → <span class="stage">16G.2C 投影 ✓</span><br>
+        <span class="field">当前状态</span> 核心 apply_patch 路径已通；standalone 工具行为已可执行（extended only）<br>
+        <span class="field">未决</span> 16G.5 parity probe 决定 standalone 是否提升为 core；当前 RL 默认只用 apply_patch 形式<br>
+        <div class="pmx">
+          <span class="pchip off">safe_structured_only ✗</span>
+          <span class="pchip ext">swe_public_core 仅经 apply_patch</span>
+          <span class="pchip on">swe_public_extended ✓ standalone</span>
+          <span class="pchip ext">redteam_restricted 待 16G.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-todo">
+    <div class="hd"><span class="nm">task_management_todo</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.2</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>update_working_state</b>（或升级为 TodoWrite 等价）</div>
+    <div class="row"><span class="k">介绍</span> 记录长任务的假设/候选/已完成步骤。<b>例</b>：记"已定位 bug 在 42 行 KeyError，待加默认值，再跑 test_missing_timeout"。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 有 <code>TodoWrite</code> 结构化任务列表，RH 的 update_working_state 较弱。　<b>vs mini-SWE</b>：mini 靠 THOUGHT+命令循环，无结构化 todo。</div>
+    <div class="reg">registry：gap=<b>partial</b> · 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段 · <b>开放问题</b>：保留轻量 working_state 还是升级 TodoWrite 等价</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.2（决定形态，进 trajectory/TrainingView）</span>　<span class="lab">② 模型可见/用法</span> <span class="done">update_working_state(...) 已有</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <h3 class="grp" id="g-3">🔧 16G.3 —— 公开命令 / 项目测试 / 复现脚本（4 条，全 P0 阻塞）</h3>
+  <div class="callout warn">
+    <b>16G.3 设计审查硬条件：</b>这里的目标不是把旧 <code>bash</code> 换个名字，也不是让模型拿到任意 shell。后续 <code>run_public_command</code>、<code>run_project_test</code>、<code>scratch_python</code> 必须共用一套可审计执行底座：工作目录受控、超时受控、默认断网、输出脱敏、artifact 可分页、拒绝结果可恢复、原始输出只进 runtime-private。尤其要避免三类错误：① 公开命令直接复用普通 <code>run_command</code>，导致可读 run_dir 或宿主路径；② public test 被模型修改后仍被当成有效通过；③ 任意字符串命令绕过 profile / manifest / task 声明。只要这三类边界没有实装，16G.3 不能被视为训练可用。
+  </div>
+
+  <div class="cap" id="cap-bash">
+    <div class="hd"><span class="nm">bash_or_public_command_execution</span><span class="tag t-warn">🟡当前 partial</span><span class="tag t-info">owner: 16G.3</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">现有：<b>bash</b>（DEFAULT_TOOL_ORDER[11]，最窄）· <b>execute_bash</b>（容器/CI）· <b>diagnostic_shell</b>（仅诊断、不进 RL 轨迹）　目标：<b>run_public_command</b>（16G.3 待建）　vs CC <code>Bash</code> 是一等 · vs mini shell 闭环</div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角（当前）</div>
+        <span class="field">schema</span><code>bash: {command, timeout?}</code> — 受限命令集合；16G.3 目标应优先采用 <code>argv</code> 或 <code>command_profile + args</code>，自由字符串只适合作兼容入口<br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"bash",
+ "input":{"command":"python -c 'import pkg'"}}</code></pre>
+        <span class="field">成功 obs</span> 结构化 <code>{stdout, stderr, exit_code, truncated}</code><br>
+        <span class="field">失败 obs</span> <code>command_not_allowed</code> / <code>network_disabled</code> / <code>timeout</code><br>
+        <span class="field">capability_shape_note</span> 当前覆盖 = 部分目标形态；最终用 <code>run_public_command</code> 取代裸 shell
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:2375</code> <code>_bash</code></li>
+          <li><span class="field">execute_bash</span><code>minimal.py:395-396</code></li>
+          <li><span class="field">diagnostic_shell</span><code>minimal.py:397-398</code>（仅诊断旁路）</li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[11]</code></li>
+          <li><span class="field">沙箱</span> 走系统层（待 16G.4 接 Seatbelt/bubblewrap 类隔离）</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓ tool observation</span>（bash 行为）</li>
+          <li><span class="field">response mask</span> 0</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗</span>（同所有工具，待 verl route）</li>
+          <li><span class="field">最大安全风险</span> 27 能力中唯一标 <b>present_but_weaker_than_mini-SWE</b>；额外边界：禁宿主路径 / 默认断网 / 禁写共享依赖</li>
+          <li><span class="field">执行底座硬条件</span><code>run_public_command</code> 不能直接复用普通 workspace <code>run_command</code> 语义；必须在当前候选 patch 的公开投影或一次性临时副本中执行，不能让模型可见 runtime-private/run_dir/gold/test_patch，Docker network policy 对未知值应 fail closed</li>
+          <li><span class="field">未来归口</span> 16G.3 之后 <code>run_public_command</code> 替代裸 bash；<code>diagnostic_shell</code> 持续保留仅诊断</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2 维持 partial</span> → <span class="stage">16G.3 重做（待）</span><br>
+        <span class="field">当前状态</span> partial 形态（裸 bash 受限白名单）；16G.3 会替换<br>
+        <div class="pmx">
+          <span class="pchip off">safe_structured_only ✗ forbidden</span>
+          <span class="pchip ext">swe_public_core 待 16G.3</span>
+          <span class="pchip ext">swe_public_extended 待 16G.3</span>
+          <span class="pchip ext">redteam_restricted 待 16G.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-ptest">
+    <div class="hd"><span class="nm">parameterized_public_test_command</span><span class="tag t-warn">🟡当前 partial</span><span class="tag t-info">owner: 16G.3</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">现有：<b>run_tests</b>（无参，DEFAULT_TOOL_ORDER[12]）　目标：<b>run_project_test</b>（16G.3 待建，支持定向）　vs CC bash 跑任意 test · vs mini shell stdout/exit</div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角（当前）</div>
+        <span class="field">schema（现）</span><code>run_tests: {}</code> 无参数<br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"run_tests","input":{}}</code></pre>
+        <span class="field">成功 obs</span> <code>{passed, failed, error_lines, exit_code, truncated}</code><br>
+        <span class="field">失败 obs</span> <code>tests_disabled_in_final_only_mode</code><br>
+        <span class="field">缺口</span> 不能指定单个 case；做大轮测试浪费预算。16G.3 还必须补上 public test profile，不只是 selector 字段
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:2757</code> <code>_run_tests</code></li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[12]</code></li>
+          <li><span class="field">final-only 控制</span> 在 final answer phase 禁用</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓</span></li>
+          <li><span class="field">response mask</span> 0</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗</span></li>
+          <li><span class="field">大输出</span> truncate + artifact 翻页</li>
+          <li><span class="field">final.patch 影响</span> 只读，不直接贡献 patch；但失败时反馈给模型驱动下一轮 edit</li>
+          <li><span class="field">public test 防篡改</span> 如果模型改了公开测试文件、测试配置或测试路由，<code>run_project_test</code> 必须能拒绝，或从 clean public test snapshot 执行；否则应标记 <code>public_test_source_clean=false</code>、<code>result_valid_for_training=false</code>，不能把“改测试后通过”当成可训练成功样本</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2 维持</span> → <span class="stage">16G.3 加 selector / project test routing（待）</span><br>
+        <span class="field">当前状态</span> 无参 partial；16G.3 引入 <code>run_project_test(test_profile_id=…, selector=…)</code> 或等价 profile 化 schema，selector 只能作用在公开测试 profile 允许的范围内<br>
+        <div class="pmx">
+          <span class="pchip off">safe_structured_only ✗</span>
+          <span class="pchip ext">swe_public_core 现 partial</span>
+          <span class="pchip ext">swe_public_extended 现 partial</span>
+          <span class="pchip ext">redteam_restricted 待 16G.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-scratch">
+    <div class="hd"><span class="nm">scratch_python_or_reproduction_script</span><span class="tag t-bad">🔧待建</span><span class="tag t-info">owner: 16G.3</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>scratch_python</b>（待建）</div>
+    <div class="row"><span class="k">介绍</span> 写一段临时复现脚本并运行，产物不进 final.patch。<b>例</b>：先复现 bug → <code>scratch_python("import pkg; print(pkg.parse_config({}))")</code> 确认会崩。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 用 Write 临时脚本 + Bash 跑。　<b>vs mini-SWE</b>：mini 的 prompt 明确推荐"先建脚本复现再验证修复"。</div>
+    <div class="reg">registry：gap=<b>partial</b>（现只有受限 inline python + diagnostic_shell）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段 · <b>shape_note</b>：目标是复现能力 + 临时产物隔离，不是放开 shell 任意写脚本</div>
+    <div class="row"><span class="k">验收重点</span> scratch 必须看到模型当前候选 patch，否则它只能复现旧代码；同时 scratch 产生的 <code>.py</code>、缓存、日志、数据库等临时产物必须位于隔离目录或一次性副本中，不能污染 final.patch，也不能被后续 <code>git_diff</code> 当成模型最终修改。第一版若只支持 Python，应明确写成 Python 专用复现工具，不能宣称已经覆盖 JavaScript、Rust、Go 等项目通用 scratch 能力。</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.3（临时空间执行 + 产物排除 final.patch + 读公开源码但禁 hidden + 使用当前候选 patch）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-projcmd">
+    <div class="hd"><span class="nm">project_command_routing</span><span class="tag t-bad">🔧待建</span><span class="tag t-info">owner: 16G.3</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>run_project_test / run_public_command</b>（统一项目命令 router）</div>
+    <div class="row"><span class="k">介绍</span> 统一入口跑项目自带命令（tox/nox/sphinx/脚本），但入口应绑定到已验证的公开命令 profile，而不是任意 <code>name</code> 字符串。<b>例</b>：<code>run_project_test(test_profile_id="tox_py311", selector="tests/test_parser.py::test_timeout")</code>；若需要额外参数，只允许 profile 声明的安全参数位。它必须清楚区分 public 命令 / setup 命令 / hidden verifier。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 用 Bash 表达项目/测试/构建命令。　<b>vs mini-SWE</b>：mini shell-first 天然支持。</div>
+    <div class="reg">registry：gap=<b>missing</b> · 当前态=proposed_tool_required · core=planned · 进RL轨迹=✗ 待阶段 · 额外命令安全边界</div>
+    <div class="row"><span class="k">验收重点</span> 目前 <code>TaskDefinition</code> 只有 <code>setup_command</code> / <code>test_command</code> 等旧字段，还没有完整的 <code>PublicCommandProfile</code> / <code>PublicTestProfile</code> 契约。16G.3 若要让人类可靠验收，需要把 task-declared profile、manifest-derived profile（如 <code>pyproject.toml</code>、<code>tox.ini</code>、<code>noxfile.py</code>、<code>package.json</code>、<code>Makefile</code> 中可安全识别的公开命令）和 hidden verifier route 明确分开，并记录 profile 来源、规范化 argv、cwd、环境变量、超时和 sha256 审计信息。</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.3（task/manifest 声明公开命令 profile + selector schema + hidden verifier 隔离）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <h3 class="grp" id="g-4">🔧 16G.4 —— 依赖环境 / 持久shell / 安全 / 训练 linkage（9 条，全 P0 阻塞，最重）</h3>
+
+  <div class="cap" id="cap-persist">
+    <div class="hd"><span class="nm">persistent_diagnostic_session</span><span class="tag t-diag">🩺仅诊断</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>diagnostic_shell</b></div>
+    <div class="row"><span class="k">介绍</span> 跨调用保持容器状态的持久诊断 shell。<b>例</b>：先 pip install 再多 turn 跑测试（文件/容器持久）。<b>注</b>：现在文件 projection 持久但 cwd/env 不持久，且只在诊断侧通道、不进训练。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 能处理长命令/后台任务/持续状态。　<b>vs mini-SWE</b>：mini 每题容器/工作目录连续 shell 工作流。</div>
+    <div class="reg">registry：gap=<b>present_diagnostic_only</b> · 当前态=diagnostic_only_current · core=<b>forbidden</b>（只 swe_public_extended=planned）· 进RL轨迹=✗ 降诊断 · <b>★唯一带 persistent_session_boundary_policy</b>：session_reset / artifact_hygiene / path_redaction / public_safe_projection 必需，core 默认禁</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（进 extended profile，满足那 4 条边界 + 题间 reset）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳（仅 extended 任务）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-dep">
+    <div class="hd"><span class="nm">dependency_setup_and_environment_policy</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>dependency_setup_policy</b>（待建）</div>
+    <div class="row"><span class="k">介绍</span> 受控安装依赖 + 每题私有 overlay + 共享依赖只读。<b>例</b>：项目要先 <code>pip install -e .</code> 才能测 → 装到这道题的私有 overlay，不污染别题。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 用 sandbox/approval 管依赖安装风险。　<b>vs mini-SWE</b>：mini 用 SWE-Bench 容器（Docker /testbed）。</div>
+    <div class="reg">registry：gap=<b>partial</b>（有依赖守卫 + Docker，但 shared write / private overlay / setup routing 未成 core）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段 · 额外命令安全边界</div>
+    <div class="row"><span class="k">验收重点</span> 依赖安装不应变成模型可随意运行 <code>pip install</code> / <code>npm install</code> 的后门。更安全的形态是：setup 命令来自 task 或 manifest 的受控 profile；共享依赖缓存只读；每题可写区域是私有 overlay；模型可见 observation 只说明公开环境状态和失败原因，不暴露宿主路径、缓存真实路径或 hidden verifier 命令。</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（受控依赖 setup profile / 只读共享缓存 / 私有 overlay / 禁写区分清）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-linkage">
+    <div class="hd"><span class="nm">final_answer_verifier_reward_linkage</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>final_answer_linkage</b>（门禁/投影，非模型直接调用）</div>
+    <div class="row"><span class="k">介绍</span> 把工具动作接进 final patch/verifier/reward，并交叉校验 final answer。<b>例</b>：模型说"我跑了测试、通过了"，必须能和真实 tool event 对上，不能空口白话。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC final answer 应和工具事件/测试/diff 交叉验证。　<b>vs mini-SWE</b>：mini 保存 trajectory 由 official/eval 给结果。</div>
+    <div class="reg">registry：gap=<b>partial</b>（有 16G.0 linkage report，新工具必须接入）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（每类新工具动作定义 final patch/verifier/reward/export linkage gate）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳（内部投影，非模型调用）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-perm">
+    <div class="hd"><span class="nm">permission_approval_denial_recovery</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应工具：<b>permission_policy_gate</b></div>
+    <div class="row"><span class="k">介绍</span> 拒绝时给可学习的结构化恢复信息。<b>例</b>：模型敲了被拒命令 → 返回 reason_code + "改用 run_project_test" + 安全写法示例，而非只一句"权限不足"。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 有权限/拒绝原因/恢复路径（suggestions）。　<b>vs mini-SWE</b>：mini 内部拒绝机制本地未确认，shell 输出仍给反馈。</div>
+    <div class="reg">registry：gap=<b>partial</b>（已有 reason_code/recovery_hint/safe_argv，要验证"可学习且不诱导少用工具"）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段</div>
+    <div class="row"><span class="k">验收重点</span> 拒绝结果至少要稳定包含 <code>reason_code</code>、是否可重试、建议替代工具、可安全改写的示例，以及这次拒绝是否让整条 trajectory 进入 quarantine。对模型来说，拒绝不应只是惩罚信号；它应该教会模型从 <code>run_public_command</code> 转向 <code>run_project_test</code>、从任意 shell 转向结构化文件工具，或者缩小 selector / cwd / args。</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（拒绝成为可学习恢复信号，进负样本/偏好）</span>　<span class="lab">② 模型可见/用法</span> <span class="done">拒绝结果已带 reason_code/recovery_hint/safe_argv，仍需覆盖新工具</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5（看模型是否学会换工具）</span></div>
+  </div>
+
+  <div class="cap" id="cap-sandbox">
+    <div class="hd"><span class="nm">sandbox_workspace_and_runtime_private_boundary</span><span class="tag t-good">✅底层已有</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应能力：<b>sandbox_boundary_gate</b>（内部门禁，非模型调用）</div>
+    <div class="row"><span class="k">介绍</span> 工作区沙箱 + 公开/私有路径隔离。<b>例</b>：模型试图 <code>read_file("../runtime_private/gold.patch")</code> 偷答案 → 确定性拒绝。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 用 workspace boundary/sandbox/权限区分可见资源。　<b>vs mini-SWE</b>：mini 靠容器/testbed，完整 hidden 隔离需源码验证。</div>
+    <div class="reg">registry：gap=<b>present_and_sufficient</b>（底层已实现）· 当前态=present · core=implemented · 进RL轨迹=<b>✗ 待阶段</b>（底层在，但要等 16G.4 把训练 linkage 接好样本才合格）</div>
+    <div class="row"><span class="k">验收重点</span> “底层已有”只表示现有读写工具和 diagnostic shell 有边界，不自动证明 16G.3 新命令工具安全。新增执行底座必须重新证明：工作目录只能是公开 workspace 或临时公开投影；run_dir、runtime-private、gold patch、test patch、hidden verifier 和本机绝对路径都不可读；网络策略未知值必须按拒绝处理；原始命令输出不能被 <code>read_tool_result_artifact</code> 直接读到。</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="done">现有底层防护已有，新工具仍需逐项接入</span>　<span class="lab">② 模型可见/用法</span> <span class="done">内部门禁（模型不直接调用，越界即拒）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5（用 redteam 对抗 probe 验证新工具加入后仍不可越界）</span></div>
+  </div>
+
+  <div class="cap" id="cap-trunc">
+    <div class="hd"><span class="nm">tool_result_truncation_raw_artifact_privacy</span><span class="tag t-good">✅底层已有</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应能力：<b>read_tool_result_artifact</b> + 工具输出脱敏/私有化语义</div>
+    <div class="row"><span class="k">介绍</span> 工具输出三分：模型看脱敏摘要 / 原始私有 / 导出只放安全投影。<b>例</b>：traceback 里有私有路径 → 模型看脱敏版，完整版存 runtime-private，导出只放 sha256。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 区分模型可见结果和 raw artifact。　<b>vs mini-SWE</b>：mini 靠 shell 输出+日志，安全过滤需源码。</div>
+    <div class="reg">registry：gap=<b>present_and_sufficient</b> · 当前态=present · core=implemented · 进RL轨迹=✗ 待阶段 · 后续新 public command 必须复用这套</div>
+    <div class="row"><span class="k">验收重点</span> 对 16G.3 来说，不能只说“已有 artifact”。需要明确两套引用：模型可读的 sanitized artifact（分页、脱敏、可导出）和仅审计可见的 raw artifact（runtime-private、导出只给摘要或 sha256）。<code>read_tool_result_artifact</code> 只能读取 sanitized artifact；若工具返回 raw artifact id 给模型，或导出中出现未脱敏 traceback / 宿主路径 / hidden selector，即为阻塞问题。</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="done">execute_bash/diagnostic_shell 已有 redacted_truncated + raw runtime-private 语义；新 command artifact 契约仍需 16G.3/16G.4 固化</span>　<span class="lab">② 模型可见/用法</span> <span class="done">内部机制（read_tool_result_artifact 只应供 sanitized 回读）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-hooks">
+    <div class="hd"><span class="nm">hooks_tool_lifecycle_audit</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应能力：<b>tool_lifecycle_audit</b>（内部审计）</div>
+    <div class="row"><span class="k">介绍</span> 记录每个工具的 start/finish/拒绝/超时/截断/artifact/quarantine。<b>例</b>：审计日志能区分"是 hook 注入的行为"还是"工具本身行为"。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 工具调用进入 schema→validate→permission→call→result→hooks→failure 全链。　<b>vs mini-SWE</b>：mini 运行日志能证明 trajectory，内部 hook 需源码。</div>
+    <div class="reg">registry：gap=<b>partial</b>（有工具事件和 audit，新工具必须保留 invalid call/denial/failure/checker 输出）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（统一 lifecycle audit，覆盖所有新工具）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳（内部审计，非模型调用）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-elig">
+    <div class="hd"><span class="nm">training_eligibility_and_export_projection</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应能力：<b>training_eligibility_gate</b>（训练资格门禁）</div>
+    <div class="row"><span class="k">介绍</span> 判定每条工具事件/轨迹能否进 policy loss / SFT / preference / 负样本 / quarantine / 仅诊断。<b>例</b>：mock provider 轨迹缺 token provenance → policy_loss_candidate=false。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 产品态 transcript 本身不是训练资格，训练 harness 须额外定义 visibility/loss mask/export。　<b>vs mini-SWE</b>：mini 的 trajectory 可被 external evaluator 消费，但不等价 policy-loss eligibility。</div>
+    <div class="reg">registry：gap=<b>partial</b>（已有 formal online RL gate，新行为必须明确去向）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（新工具事件接入资格门禁；不碰 reward 数值，那是 Stage 19）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳（内部门禁）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap" id="cap-rhack">
+    <div class="hd"><span class="nm">reward_hacking_monitoring_and_quarantine</span><span class="tag t-warn">🟡部分</span><span class="tag t-info">owner: 16G.4</span><span class="tag t-bad">P0</span><span class="tag t-bad">阻塞</span></div>
+    <div class="tools">对应能力：<b>reward_hacking_monitor</b>（监控/隔离）</div>
+    <div class="row"><span class="k">介绍</span> 检测可疑作弊行为并隔离。<b>例</b>：假验证 / 过宽 diff / 可疑改测试 → 进 quarantine 人工或 judge 复核，不直接进训练。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 类强工具环境靠 deterministic boundary + 监控，而非削减工具。　<b>vs mini-SWE</b>：mini 完整 reward hacking 防护本地无法确认。</div>
+    <div class="reg">registry：gap=<b>partial</b>（有 hard fail/quarantine 设计，扩工具必须把 suspicious/test tampering/dependency write 纳入）· 当前态=partial · core=planned · 进RL轨迹=✗ 待阶段</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ 16G.4（产出结构化 facts 接 quarantine；LLM-judge 仅监控非唯一边界）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳（内部监控）</span>　<span class="lab">③ 测试中是否调用</span> <span class="wait">⏳ 16G.5（redteam 对抗 probe）</span></div>
+  </div>
+
+  <h3 class="grp" id="g-opt">⏸ post-16G —— 暂缓，只 schema 预留（4 条，均不阻塞主 RL）</h3>
+
+  <div class="cap" id="cap-nontext">
+    <div class="hd"><span class="nm">non_text_file_read</span><span class="tag t-neutral">⏸预留</span><span class="tag t-neutral">owner: post-16G</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：read_file（扩展非文本）</div>
+    <div class="row"><span class="k">介绍</span> 读图片/PDF/notebook 等非纯文本。<b>例</b>：读一张报错截图或一份 PDF 设计文档。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC <code>Read</code> 支持图片/PDF/notebook，RH 暂只文本。　<b>vs mini-SWE</b>：mini 无结构化非文本保障。</div>
+    <div class="reg">registry：gap=<b>present_but_weaker_than_claude_code</b> · 当前态=partial · core=schema_reserved · 进RL轨迹=✗ 降诊断 · <b>不阻塞主 RL</b></div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ post-16G（可后置）</span>　<span class="lab">② 模型可见/用法</span> <span class="wait">⏳</span>　<span class="lab">③ 测试中是否调用</span> <span class="tag t-neutral">不阻塞，按需</span></div>
+  </div>
+
+  <div class="cap" id="cap-symbol">
+    <div class="hd"><span class="nm">symbol_search_or_lsp_diagnostics</span><span class="tag t-warn">🟡当前轻量已有</span><span class="tag t-neutral">owner: post-16G</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：<b>symbol_search</b>（轻量 AST，已在 <code>DEFAULT_TOOL_ORDER[5]</code>，非完整 LSP）　vs CC LSP 诊断 · vs mini 无 LSP（靠 grep + 测试）</div>
+    <div class="callout info">
+      <b>注意这里有两层含义：</b>现有 <code>symbol_search</code> 工具已经在默认工具面里，可被模型调用，工具 observation 也会进入 trajectory；但 registry 里这条能力名是 <code>symbol_search_or_lsp_diagnostics</code>，指向 Claude Code / Codex 更接近真实产品态的 LSP 级诊断、引用反查和类型错误定位。后者目前只是 post-16G schema reserved，所以速览表写成“✓工具 / ⏸LSP”。
+    </div>
+    <div class="q4">
+      <div class="q q1"><div class="qh">① 模型视角</div>
+        <span class="field">schema</span><code>{name, kind?, scope?}</code>（kind = function/class/method 等）<br>
+        <span class="field">调用例</span>
+        <pre><code>{"tool":"symbol_search",
+ "input":{"name":"parse_config","kind":"function"}}</code></pre>
+        <span class="field">成功 obs</span> <code>[{file_path, line, kind, snippet}, …]</code><br>
+        <span class="field">失败 obs</span> <code>symbol_not_found</code> · 大仓库 fallback：<code>too_many_candidates_fallback_to_grep</code>
+      </div>
+      <div class="q q2"><div class="qh">② 实现位置</div>
+        <ul>
+          <li><span class="field">入口</span><code>minimal.py:1484</code> <code>_symbol_search</code></li>
+          <li><span class="field">tool def</span><code>minimal.py:3164</code> <code>name="symbol_search"</code></li>
+          <li><span class="field">默认顺序</span><code>DEFAULT_TOOL_ORDER[5]</code></li>
+          <li><span class="field">阈值</span><code>SYMBOL_SEARCH_WIDE_ROOT_CANDIDATE_FILE_THRESHOLD=120</code> · <code>SYMBOL_SEARCH_SLOW_SCAN_THRESHOLD_MS=5000</code></li>
+          <li><span class="field">范围</span> 主要 Python AST；非 Python 退化为 grep</li>
+        </ul>
+      </div>
+      <div class="q q3"><div class="qh">③ 训练投影</div>
+        <ul>
+          <li><span class="field">进 trajectory</span><span class="ok">✓</span>（仅指现有 <code>symbol_search</code> 工具 observation；完整 LSP 诊断能力仍为 schema reserved）</li>
+          <li><span class="field">response mask</span> 0</li>
+          <li><span class="field">policy_loss 候选</span><span class="no">✗</span></li>
+          <li><span class="field">弱于 CC</span> 没有 LSP 错误诊断、类型推断、引用反查全集；判定<b>降诊断 / schema reserved</b>，不阻塞主 RL（grep 和轻量 symbol_search 兜底）</li>
+        </ul>
+      </div>
+      <div class="q q4q"><div class="qh">④ 阶段 + profile</div>
+        <span class="field">stage 进度</span><br>
+        <span class="stage">16G.0 baseline ✓</span> → <span class="stage">16G.1 registry ✓</span> → <span class="stage">16G.2 维持</span> → <span class="stage">post-16G 升级到 LSP-grade 待评估</span><br>
+        <span class="field">当前状态</span> 轻量 AST 已可用<br>
+        <div class="pmx">
+          <span class="pchip on">safe/core/extended: symbol_search 工具可用</span>
+          <span class="pchip ext">LSP-grade 能力 schema_reserved</span>
+          <span class="pchip ext">redteam 仅 schema probe</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap-subagent">
+    <div class="hd"><span class="nm">subagent_background_task</span><span class="tag t-neutral">⏸预留</span><span class="tag t-neutral">owner: post-16G</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：(schema 预留，agent_task_schema_reserved)</div>
+    <div class="row"><span class="k">介绍</span> 模型派子代理 / 后台任务。<b>例</b>：派子代理去跑一个大检索，主线继续。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 有 <code>AgentTool</code> / 任务工具。　<b>vs mini-SWE</b>：mini 不依赖子代理（单 agent 下限）。</div>
+    <div class="reg">registry：gap=<b>deferred_schema_only</b> · 当前态=schema_reserved · core=schema_reserved · 进RL轨迹=✗ 降诊断 · <b>主训练无需，只在轨迹 schema 预留能力位</b></div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ post-16G（只 schema 预留，暂不实现）</span>　<span class="lab">② 模型可见/用法</span> <span class="tag t-neutral">暂无</span>　<span class="lab">③ 测试中是否调用</span> <span class="tag t-neutral">不阻塞</span></div>
+  </div>
+
+  <div class="cap" id="cap-mcp">
+    <div class="hd"><span class="nm">external_tools_mcp_plugin_skill</span><span class="tag t-neutral">⏸预留</span><span class="tag t-neutral">owner: post-16G</span><span class="tag t-neutral">P2</span><span class="tag t-neutral">不阻塞</span></div>
+    <div class="tools">对应工具：(schema 预留，external_tool_schema_reserved)</div>
+    <div class="row"><span class="k">介绍</span> MCP / 插件 / 技能等外部工具扩展。<b>例</b>：通过 MCP 接一个外部 API 工具。</div>
+    <div class="cmp"><b>vs Claude Code</b>：CC 产品态可通过 MCP/插件/技能扩展。　<b>vs mini-SWE</b>：mini 不要求外部工具。</div>
+    <div class="reg">registry：gap=<b>deferred_schema_only</b> · 当前态=schema_reserved · core=schema_reserved · 进RL轨迹=✗ 降诊断 · core 不实现完整外部工具系统，预留能力位</div>
+    <div class="todo"><span class="lab">① 实施结果</span> <span class="wait">⏳ post-16G（只 schema 预留）</span>　<span class="lab">② 模型可见/用法</span> <span class="tag t-neutral">暂无</span>　<span class="lab">③ 测试中是否调用</span> <span class="tag t-neutral">不阻塞</span></div>
+  </div>
+
+  <!-- ============ profiles ============ -->
+  <h2 class="sec" id="profiles">四档 Profile 详细（同样未完全落地，随 16G 填实 / 16G.6 冻结）</h2>
+  <p>profile = "一套工具组合"。同一个 harness 按任务/用途切换不同 profile。<b>当前状态和工具一样</b>：16G.1 已把四档写成机器可检查的 <code>profile_taxonomy.json</code> 契约（用途、各档能力归属、安全边界都定了），但因底层工具大多 <code>planned</code>，profile 作为"能选用、能 gate 工具"的运行态<b>还没完全落地</b> —— 随 16G.2–16G.4 填实，<b>16G.6 冻结</b>为正式 profile。</p>
+
+  <h3 class="grp" id="prof-matrix">① 4 档 × 27 能力 对比矩阵</h3>
+  <p class="small">单元格：<span class="tag t-good">✅impl</span> 已实现 · <span class="tag t-info">🔧plan</span> 计划（owner 阶段实现）· <span class="tag t-bad">⛔禁</span> forbidden · <span class="tag t-neutral">⏸预留</span> schema_reserved · <span class="tag t-diag">🔬probe</span> 仅用于压力测试。<b>看点</b>：safe→core 只在 5 条命令类能力上从 ⛔ 变 🔧；core→extended 只多 persistent_diagnostic_session 一条；redteam 整列都是 probe 用途。</p>
+  <table>
+    <tr><th style="width:40%">能力</th><th class="c">safe</th><th class="c">core ★主默认</th><th class="c">extended</th><th class="c">redteam</th></tr>
+    <tr><td>structured_file_read</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>large_file_paging_or_artifact_replay</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>glob_file_discovery</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>grep_content_search</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>git_diff_status_and_patch_capture</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>sandbox_workspace_and_runtime_private_boundary</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>tool_result_truncation_raw_artifact_privacy</td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-good">✅</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>structured_edit_existing_file</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>structured_write_or_create_file</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>apply_patch_or_multi_file_edit</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>delete_move_mkdir_file_operations</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>task_management_todo</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>final_answer_verifier_reward_linkage</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>permission_approval_denial_recovery</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>hooks_tool_lifecycle_audit</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>training_eligibility_and_export_projection</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>reward_hacking_monitoring_and_quarantine</td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td><b>bash_or_public_command_execution</b></td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td><b>parameterized_public_test_command</b></td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td><b>scratch_python_or_reproduction_script</b></td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td><b>project_command_routing</b></td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td><b>dependency_setup_and_environment_policy</b></td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td><b>persistent_diagnostic_session</b> ★</td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-bad">⛔</span></td><td class="c"><span class="tag t-info">🔧</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>non_text_file_read</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>symbol_search_or_lsp_diagnostics</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>subagent_background_task</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+    <tr><td>external_tools_mcp_plugin_skill</td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-neutral">⏸</span></td><td class="c"><span class="tag t-diag">🔬</span></td></tr>
+  </table>
+  <p class="small">★ <b>persistent_diagnostic_session 是 core 和 extended 的唯一分界</b>：core 把它 ⛔ 掉、只 extended 给它 🔧。这就是"持久 shell 不进主训练默认、只进 extended"在矩阵上的样子。redteam 列的 🔬 实际细分为 <code>allowed_for_negative_or_safety_probe</code>（多数）/ <code>allowed_for_safety_probe</code>（持久 shell）/ <code>allowed_for_schema_probe</code>（预留类）。另：矩阵里的 <code>symbol_search_or_lsp_diagnostics</code> 行指完整 LSP 级诊断能力，所以显示 ⏸；现有轻量 <code>symbol_search</code> 工具仍在默认工具面里。</p>
+
+  <h3 class="grp" id="prof-cards">② 四档详细卡片</h3>
+
+  <div class="cap">
+    <div class="hd"><span class="nm">safe_structured_only</span><span class="tag t-good">低风险基线</span><span class="tag t-neutral">非主默认</span></div>
+    <div class="row"><span class="k">定位</span> 低风险结构化读/写/搜 + patch 审计基线，最保守。</div>
+    <div class="row"><span class="k">能力归属</span> 含 17 条结构化/审计类（读·搜·编辑·patch·git_diff·sandbox·artifact·任务·hooks·eligibility·reward监控）；<b>禁 6 条命令类</b>（bash公开命令/持久shell/参数化测试/scratch/项目命令/依赖）；4 条扩展能力=预留。其中 7 条已 implemented、10 条 planned。</div>
+    <div class="reg"><span class="k">安全边界</span> 基础 5 条（hidden_verifier/gold_patch/test_patch/runtime-private forbidden + raw_artifact_private）。<span class="k">训练资格</span> primary_training_default=<b>false</b> · run_episode_required=true · legacy_run_task_primary=false · 工具事件非独立 policy-loss 样本。</div>
+    <div class="row"><span class="k">什么时候用 + 例子</span> 低风险任务或保守对照组，不做主训练默认。例：一道只需"读+改+看 diff"的简单 bug，可用 safe（连命令都不给它）。</div>
+    <div class="todo"><span class="lab">验收</span> 定义已有（16G.1）；随 16G.2 把那 10 条 planned 能力填实；<b>16G.6 冻结字段</b>。③ 是否在测试中真被加载/选用 <span class="wait">⏳ 16G.5/16G.6</span></div>
+  </div>
+
+  <div class="cap">
+    <div class="hd"><span class="nm">swe_public_core</span><span class="tag t-info">★ 主训练默认</span><span class="tag t-bad">primary_training_default=true</span></div>
+    <div class="row"><span class="k">定位</span> 主 SWE 强化学习默认工具面（结构化公开命令优先、无持久 shell）。</div>
+    <div class="row"><span class="k">能力归属</span> 在 safe 基础上<b>放开 5 条命令类</b>（bash公开命令/参数化测试/scratch/项目命令/依赖，均 planned）；<b>唯独 persistent_diagnostic_session 仍 ⛔ forbidden（must_not_include）</b>；4 条扩展=预留。即 22 条 allowed（多为 planned）。</div>
+    <div class="reg"><span class="k">安全边界</span> 基础 5 条（命令类能力各自再带额外 3 条命令边界：禁宿主路径/默认断网/禁写共享依赖）。<span class="k">训练资格</span> primary_training_default=<b>true</b> · run_episode_required=true · legacy=false。</div>
+    <div class="row"><span class="k">什么时候用 + 例子</span> 真实 SWE 任务的默认档。例：修 parse_config 用 core —— 能 read/grep/edit/create/apply_patch/run_project_test/scratch_python，并使用受控依赖环境；依赖 setup 由 16G.4 policy 管理，<b>但不能用持久 shell</b>。</div>
+    <div class="todo"><span class="lab">验收</span> 16G.2–16G.4 把 planned 能力逐步填实；<b>16G.6 冻结为正式主默认 profile</b>。③ 是否在测试/训练中作为默认被正确加载 <span class="wait">⏳ 16G.5/16G.6</span></div>
+  </div>
+
+  <div class="cap">
+    <div class="hd"><span class="nm">swe_public_extended</span><span class="tag t-info">扩展诊断</span><span class="tag t-neutral">非主默认</span></div>
+    <div class="row"><span class="k">定位</span> 含 persistent diagnostic shell 的扩展档，给需要持久会话的复杂任务。</div>
+    <div class="row"><span class="k">能力归属</span> core 全部 + <b>persistent_diagnostic_session（planned）</b>；forbidden 为空。4 条扩展仍预留。</div>
+    <div class="reg"><span class="k">安全边界</span> 基础 5 条 <b>+ 额外 4 条</b>：<code>session_reset_required</code> / <code>artifact_hygiene_required</code> / <code>path_redaction_required</code> / <code>public_safe_projection_required</code>（这就是持久 shell 进训练前必须满足的硬条件）。<span class="k">训练资格</span> primary_training_default=false · run_episode_required=true · 用于特定任务/replay/偏好/诊断增强。</div>
+    <div class="row"><span class="k">什么时候用 + 例子</span> 需要跨调用持久状态的任务（如起本地服务再连它测、长会话连续诊断）才走 extended。例：一道"起 dev server → 对它发请求验证"的任务。</div>
+    <div class="todo"><span class="lab">验收</span> 16G.4 把 persistent shell 接进 extended 并满足那 4 条边界 + 题间 reset；16G.6 定其进训练的条件（哪些任务/replay/偏好可用）。③ <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="cap">
+    <div class="hd"><span class="nm">redteam_restricted</span><span class="tag t-diag">压力测试专用</span><span class="tag t-neutral">非主默认</span></div>
+    <div class="row"><span class="k">定位</span> 安全验证 / 拒绝恢复 / 负样本 / 泄漏测试专用，<b>不作为主训练默认</b>。</div>
+    <div class="row"><span class="k">能力归属</span> allowed_capability_ids 为空（不当正常工具面）；各能力以 <code>allowed_for_*_probe</code> 形式开放，专门用来对抗性试探。</div>
+    <div class="reg"><span class="k">安全边界</span> 基础 5 条。<span class="k">训练资格</span> primary_training_default=false · <b>run_episode_required=false</b>（不走正常 episode 路径）。</div>
+    <div class="row"><span class="k">什么时候用 + 例子</span> 专门用来对抗性测试"模型会不会越权/偷答案/作弊"。例：故意诱导模型读 <code>gold_patch</code>，验证确定性边界拦得住。</div>
+    <div class="todo"><span class="lab">验收</span> 16G.4/16G.5 用它做对抗 probe，证明加了新工具后仍守得住硬边界。③ 对抗 probe 是否通过 <span class="wait">⏳ 16G.5</span></div>
+  </div>
+
+  <div class="callout info">
+    <b>怎么维护这张表（工具 + profile 通用）：</b>每完成一个阶段（如 16G.2），就把该阶段相关<b>工具卡片</b>的「① 实施结果」「② 模型可见/用法」、以及受影响 <b>profile 卡片</b>里那些能力从 planned→implemented 的变化，从 ⏳ 改成实际内容；等 16G.5 parity probe 跑完，把所有「③ 测试中是否调用 / profile 是否被正确加载」从 ⏳ 填成 ✅/❌（含调用次数/成功率）；16G.6 冻结后标注四档 profile 的最终字段。这样这张表既是 harness 能力总册，也是 16G 整阶段（工具 + profile）的验收记录。<b>我会在每轮实施完成后帮你更新对应卡片。</b>
+  </div>
+
+  <div class="footer">
+    本表数据源：<code>stage16g1_tool_registry_contract.json</code>（27 条 registry 记录的 owner/gap/profile/训练投影/安全边界）+ <code>stage16g0_per_capability_baseline_comparison.json</code>（Claude Code / mini-SWE-agent 三方对照）。介绍中的代码示例为帮助理解，实际工具 schema 以各阶段实现为准。「③ 测试中是否被调用」需等 16G.5 parity probe 或实际训练跑动后填写。
+  </div>
+</main>
+</div>
+</body>
+</html>

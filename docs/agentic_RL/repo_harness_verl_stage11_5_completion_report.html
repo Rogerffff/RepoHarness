@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stage 11.5 完成报告：真实 episode runtime bridge</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    .rh-toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .rh-toc a {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      background: var(--rv-surface-soft);
+      color: var(--rv-text);
+      font-size: 0.92rem;
+      text-decoration: none;
+    }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+
+    .rh-kind {
+      display: inline-block;
+      padding: 1px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.02em;
+    }
+    .rh-kind.cls   { background: rgba(88,166,255,0.16);  color: #58a6ff; }
+    .rh-kind.dc    { background: rgba(126,231,135,0.16); color: #7ee787; }
+    .rh-kind.fn    { background: rgba(255,196,99,0.18);  color: #ffc463; }
+    .rh-kind.cfg   { background: rgba(199,159,255,0.18); color: #c79fff; }
+    .rh-kind.danger{ background: rgba(255,123,123,0.16); color: #ff7b7b; }
+    .rh-kind.warn  { background: rgba(255,180,99,0.20);  color: #ffb463; }
+
+    .rh-api-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface-soft);
+    }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-api-card .rh-sub { margin: 0 0 12px; color: var(--rv-muted); font-size: 0.92rem; }
+
+    .rh-sig {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #0b1018;
+      border: 1px solid var(--rv-border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.86rem;
+      color: #d0d7de;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+    .rh-sig .arrow { color: #d0d7de; }
+    .rh-sig .ok { color: #7ee787; }
+    .rh-sig .new { color: #ffc463; font-weight: 760; }
+    .rh-sig .gap { color: #ff7b7b; }
+    .rh-sig .step { color: #58a6ff; font-weight: 760; }
+
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+
+    .rh-modes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+    @media (max-width: 880px) { .rh-modes { grid-template-columns: 1fr; } }
+    .rh-mode {
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+    }
+    .rh-mode.minimal { border-top: 4px solid var(--rv-warning); }
+    .rh-mode.real    { border-top: 4px solid var(--rv-success); }
+    .rh-mode h4 {
+      margin: 0 0 6px;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 1.0rem;
+    }
+    .rh-mode small { color: var(--rv-muted); }
+
+    .rh-bridges {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .rh-bridge {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--rv-border);
+      background: var(--rv-surface);
+      border-left: 4px solid var(--rv-success);
+    }
+    .rh-bridge .rh-bridge-no {
+      display: inline-block;
+      padding: 1px 6px;
+      margin-right: 6px;
+      border-radius: 4px;
+      background: rgba(126,231,135,0.2);
+      color: #7ee787;
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.78rem;
+      font-weight: 760;
+    }
+    .rh-bridge strong { display: block; margin-bottom: 4px; }
+    .rh-bridge small { color: var(--rv-muted); font-size: 0.86rem; line-height: 1.55; }
+
+    .rh-flow {
+      padding: 16px;
+      border: 1px solid var(--rv-border);
+      border-radius: 10px;
+      background: var(--rv-surface);
+      font-family: 'JetBrains Mono', 'Menlo', monospace;
+      font-size: 0.84rem;
+      line-height: 1.85;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .rh-flow .step { color: #58a6ff; font-weight: 760; }
+    .rh-flow .ok { color: #7ee787; }
+    .rh-flow .new { color: #ffc463; font-weight: 760; }
+    .rh-flow .arrow { color: #d0d7de; }
+    .rh-flow .comment { color: #8b949e; font-style: italic; }
+    .rh-flow .gap { color: #ff7b7b; font-weight: 760; }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar" aria-label="RepoHarness verl workstreams 页面导航">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_human_guide.html">总览</a>
+          <a href="repo_harness_verl_sequential_plan.html">顺序计划</a>
+          <a href="repo_harness_verl_stage2_execution_plan.html">Stage 2</a>
+          <a href="repo_harness_verl_stage6_execution_plan.html">Stage 6</a>
+          <a href="repo_harness_verl_stage7_execution_plan.html">Stage 7</a>
+          <a href="repo_harness_verl_plan_gap_analysis.html">⚠ 缺口分析</a>
+          <a href="repo_harness_verl_stage11_5_and_12_design.html">Stage 11.5 + 12 设计</a>
+          <a href="repo_harness_verl_stage11_5_completion_report.html" aria-current="page">⭐ Stage 11.5 完成报告</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Stage 11.5 · Completion Report</span>
+      <h1>Stage 11.5 完成报告：真实 episode runtime bridge 全链路贯通</h1>
+      <p class="rv-lead">
+        本页是 Stage 11.5 实施<strong>完成</strong>后的事实报告。commit <code>88a24e27 feat: add stage11.5 real episode runtime bridge</code> 增加 <strong>2234 行</strong>（其中 <code>runtime.py +1125 行</code> · <code>episode.py +50 行严格校验</code> · 测试 +600 行 18 个）。<strong>之前缺口分析中提到的 3 个核心缺口（workspace / agent loop / 真实 verifier）全部接通</strong>，<code>RepoHarnessRuntime.run_episode</code> 现在通过 <code>runtime_execution_mode=real_episode</code> 真正贯穿 workspace lease → AgentLoop 多轮 → 真实 PytestVerifier → reward boundary → TrainingView 全路径。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge success">Stage 11.5 · 已实现</span>
+        <span class="rv-badge success">18 / 18 测试通过</span>
+        <span class="rv-badge info">8 条 bridge 全部接通 · 准备进入 Stage 12</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#tldr">⓪ 一句话总结</a>
+        <a href="#changeset">① 改动文件总览</a>
+        <a href="#modes">② 双 runtime_execution_mode 分发</a>
+        <a href="#options">③ Options 新增 6 个字段</a>
+        <a href="#datastructures">④ 6 个新数据结构</a>
+        <a href="#flow">⑤ 完整 real_episode 链路</a>
+        <a href="#bridges">⑥ 8 条 bridge 落地状态</a>
+        <a href="#provenance">⑦ token provenance 严格校验</a>
+        <a href="#tests">⑧ 18 个测试覆盖矩阵</a>
+        <a href="#next">⑨ 距离 Stage 12 还差什么</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <!-- ⓿ 一句话总结                                                  -->
+      <!-- ============================================================ -->
+      <section id="tldr" class="rv-section">
+        <h2>⓪ 一句话总结</h2>
+        <div class="rv-callout success">
+          <strong>Stage 11.5 把 RepoHarness 的 8 条 bridge 全部接通，<code>RepoHarnessRuntime</code> 终于从"语义骨架"升级为"能跑真任务"。</strong>调用方传入 <code>runtime_execution_mode="real_episode"</code> 和 4 个新 runtime-only 注入对象（<code>workspace_snapshot_manager</code> · <code>real_episode_source_resolver</code> · <code>real_episode_final_verifier_factory</code> · <code>tool_observation_token_projector</code>）后，<code>run_episode</code> 内部会真实跑完整链路：抢 workspace lease → 用 AgentLoop 多轮调 LLMGatewayModelClientAdapter → 工具读写真实仓库 → 真 PytestVerifier 跑测试 → reward boundary 算 reward → 从 GenerationRecordCollector 按 turn 拼出可追溯 TrainingView → 释放 lease。episode.py 还新增了 6 条 token provenance 严格校验，确保 <strong>TrainingView 的 assistant span 必须逐 token / 逐 logprob 与每轮 GenerationRecord 匹配</strong>，彻底堵死"从最终 transcript 重新分词伪造训练 token"这条隐患。
+        </div>
+        <p class="rv-muted" style="margin-top: 8px;">
+          <strong>分析方法</strong>：① <code>git show --stat 88a24e27</code> 看实际改动；② 读 <code>runtime.py</code> 第 81-209 / 386-695 行确认新数据结构和分发入口；③ 读 <code>episode.py</code> 新增 <code>_validate_generation_record_token_provenance</code> 严格校验；④ 跑 <code>pytest test_repo_harness_rl_stage11_5_real_episode_runtime.py</code> 确认 18 个测试。
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ① 改动文件总览                                                -->
+      <!-- ============================================================ -->
+      <section id="changeset" class="rv-section">
+        <h2>① 改动文件总览（来自 <code>git show --stat 88a24e27</code>）</h2>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 50%;">文件</th><th style="width: 10%;">变更</th><th style="width: 12%;">行数</th><th>核心内容</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/repo_harness/rl/runtime.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+1125 / -??</td>
+                <td><strong>核心改动</strong>：runtime 从 minimal-only 升级为双模式分发。新增 <code>RuntimeExecutionMode</code> · 6 个新数据结构 · <code>_run_real_episode_entry / _sync</code> · <code>_setup_real_workspace</code> · <code>_run_real_agent_loop</code> · <code>_assemble_training_view_from_collector</code></td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/episode.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+50</td>
+                <td>新增 <code>_validate_generation_record_token_provenance</code>：6 条严格校验防伪造 token；强化 <code>_validate_gateway_route_consistency</code> 处理 mixed route</td>
+              </tr>
+              <tr>
+                <td><code>src/repo_harness/rl/__init__.py</code></td>
+                <td><span class="rv-badge info">修改</span></td>
+                <td>+32 / -8</td>
+                <td>对外导出 6 个新符号（<code>RealEpisodeContext</code> / <code>GenerationRecordCollector</code> / <code>RuntimeExecutionMode</code> 等）；改用 lazy <code>import_module</code> 避免 episode/runtime 循环引用</td>
+              </tr>
+              <tr>
+                <td><code>tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+600</td>
+                <td>18 个测试：多轮 agent loop / mock route diagnostic / overflow / route mismatch / gateway error / timeout-cancellation-lease-hold / 严格 token provenance / 不支持模式</td>
+              </tr>
+              <tr>
+                <td><code>docs/.../15-stage-11-5-execution-plan.md</code></td>
+                <td><span class="rv-badge success">新增</span></td>
+                <td>+447</td>
+                <td>Stage 11.5 独立执行计划，作为 Stage 12 的前置阶段</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">总计 2234 insertions / 20 deletions</h3>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ② 双模式分发                                                  -->
+      <!-- ============================================================ -->
+      <section id="modes" class="rv-section">
+        <h2>② <code>run_episode</code> 双模式分发入口</h2>
+        <p class="rv-muted"><code>run_episode</code> 现在通过 <code>_runtime_execution_mode()</code> 推导出模式，进入两条互斥分支：</p>
+        <div class="rh-sig"><span class="kw">async def</span> <span class="nm">run_episode</span>(self, request, *, llm_gateway):
+    started = perf_counter()
+    parsed_request = RepoHarnessEpisodeRequest.model_validate(request)
+    runtime_mode = self._runtime_execution_mode()
+    <span class="kw">if</span> runtime_mode == <span class="li">"real_episode"</span>:
+        <span class="kw">return await</span> self.<span class="new">_run_real_episode_entry</span>(parsed_request, llm_gateway=llm_gateway, started=started)
+    <span class="kw">if</span> runtime_mode != <span class="li">"minimal_gateway"</span>:
+        <span class="kw">return</span> self._terminal_result(
+            ..., status=<span class="li">"infrastructure_error"</span>,
+            status_reason=<span class="li">"unsupported_runtime_execution_mode"</span>, ...)
+    <span class="cm"># —— 以下是 Stage 2 的 minimal_gateway 老路径，保留 ——</span>
+    ...
+    response = <span class="kw">await</span> self._generate_minimal_turn(parsed_request, llm_gateway, ...)
+    reward_boundary = <span class="kw">await</span> self._stage7_reward_boundary(parsed_request)
+    ...</div>
+
+        <div class="rh-modes">
+          <div class="rh-mode minimal">
+            <h4>minimal_gateway</h4>
+            <small>
+              <strong>保留</strong>：Stage 2 老路径，1 turn LLM call + Stage 7 reward boundary<br>
+              <strong>用途</strong>：contract / adapter / DataProto 形状测试<br>
+              <strong>禁止</strong>声称完整软件工程任务闭环<br>
+              所有原有 stage 2-10 测试沿用此模式
+            </small>
+          </div>
+          <div class="rh-mode real">
+            <h4>real_episode ⭐ 新增</h4>
+            <small>
+              <strong>路径</strong>：<code>_run_real_episode_entry</code> → <code>_setup_real_workspace</code> → <code>_run_real_agent_loop</code> → <code>_run_final_verifier</code> → <code>_assemble_training_view_from_collector</code><br>
+              <strong>真实执行</strong>：workspace + tool + AgentLoop + verifier + reward<br>
+              <strong>必要注入</strong>：workspace_snapshot_manager + source_resolver + final_verifier_factory<br>
+              <strong>用途</strong>：Stage 12 端到端 smoke 唯一可信凭证
+            </small>
+          </div>
+        </div>
+        <div class="rv-callout warning">
+          <strong>第三种情况</strong>：runtime_execution_mode 既不是 <code>"minimal_gateway"</code> 也不是 <code>"real_episode"</code> → 返回结构化 <code>infrastructure_error</code> + <code>status_reason="unsupported_runtime_execution_mode"</code>，不静默 fallback。由 <a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L589">test_unsupported_runtime_execution_mode</a> 锁定。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ③ Options 新增 6 个字段                                       -->
+      <!-- ============================================================ -->
+      <section id="options" class="rv-section">
+        <h2>③ <code>RepoHarnessRuntimeOptions</code> 新增的 6 个字段</h2>
+        <p class="rv-muted">所有 runtime-only 配置仍然集中在这个 frozen dataclass。Stage 11.5 在 Stage 9 已有的字段上又加了 6 个：</p>
+        <div class="rh-sig"><span class="cm">@dataclass(frozen=True)</span>
+<span class="kw">class</span> <span class="nm">RepoHarnessRuntimeOptions</span>:
+    <span class="cm"># —— Stage 2/3/4/7/9 已有字段省略 ——</span>
+    ...
+    final_verifier_callable: <span class="ty">FinalVerifierCallable | None</span> = None     <span class="cm"># Stage 7</span>
+    verifier_worker_pool: <span class="ty">VerifierWorkerPool | None</span> = None             <span class="cm"># Stage 7</span>
+    resource_concurrency_policy: <span class="ty">ResourceConcurrencyPolicy | None</span> = None <span class="cm"># Stage 9</span>
+    resource_lease_manager: <span class="ty">ResourceLeaseManager | None</span> = None         <span class="cm"># Stage 9</span>
+    <span class="new">runtime_execution_mode:</span> <span class="ty">RuntimeExecutionMode | None</span> = None       <span class="cm"># Stage 11.5 新</span>
+    execution_mode: <span class="ty">str</span> = <span class="li">"minimal_gateway"</span>                          <span class="cm"># 兼容老命名</span>
+    <span class="new">real_episode_source_resolver:</span> <span class="ty">RealEpisodeSourceResolver | None</span> = None
+    <span class="new">real_episode_final_verifier_factory:</span> <span class="ty">RealEpisodeFinalVerifierFactory | None</span> = None
+    <span class="new">workspace_snapshot_manager:</span> <span class="ty">WorkspaceSnapshotManager | None</span> = None
+    <span class="new">tool_observation_token_projector:</span> <span class="ty">ToolObservationTokenProjector | None</span> = None</div>
+
+        <h3 style="margin-top: 14px;">每个字段的责任</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 30%;">字段</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><code>runtime_execution_mode</code></td><td>双模式分发开关。设为 <code>"real_episode"</code> 才走真实路径。</td></tr>
+              <tr><td><code>real_episode_source_resolver</code></td><td>从 <code>EpisodeRequest</code> 推导本地源目录路径。runtime-only callable，<strong>不</strong>能进 batch。</td></tr>
+              <tr><td><code>real_episode_final_verifier_factory</code></td><td>给定 <code>RealEpisodeContext</code> 返回真实 verifier callable（封装 PytestVerifier + workspace adapter）。</td></tr>
+              <tr><td><code>workspace_snapshot_manager</code></td><td><strong>Stage 6 的零件终于被用</strong>：负责 acquire snapshot → 派生 lease workspace → release。</td></tr>
+              <tr><td><code>tool_observation_token_projector</code></td><td>把 tool observation 投影为 token id 序列（用于 multi-turn TrainingView 构造）；默认实现是 diagnostic-only。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ④ 6 个新数据结构                                              -->
+      <!-- ============================================================ -->
+      <section id="datastructures" class="rv-section">
+        <h2>④ 6 个新数据结构（runtime-only）</h2>
+        <p class="rv-muted">所有都是 runtime-only，<strong>不</strong>能进 schema dump / batch 字段。</p>
+        <div class="rv-grid-2">
+          <div class="rh-api-card">
+            <h3><span class="rh-kind dc">数据类</span><code>RealEpisodeContext</code></h3>
+            <p class="rv-muted" style="font-size: 0.86rem;">给 <code>final_verifier_factory</code> 用的 runtime-only 上下文</p>
+            <div class="rh-sig" style="margin: 0; font-size: 0.78rem;">request: <span class="ty">RepoHarnessEpisodeRequest</span>
+run_dir: <span class="ty">Path</span>
+workspace_path: <span class="ty">Path</span>
+run_workspace: <span class="ty">RunWorkspace</span>
+snapshot: <span class="ty">WorkspaceSnapshotResult | None</span>
+workspace_lease: <span class="ty">WorkspaceLeaseHandle | None</span>
+agent_state: <span class="ty">AgentLoopState | None</span></div>
+          </div>
+          <div class="rh-api-card">
+            <h3><span class="rh-kind dc">数据类</span><code>CollectedGenerationRecord</code></h3>
+            <p class="rv-muted" style="font-size: 0.86rem;">每轮 LLM call 的 runtime-only 三元组</p>
+            <div class="rh-sig" style="margin: 0; font-size: 0.78rem;">request: <span class="ty">LLMGatewayRequest</span>
+response: <span class="ty">LLMGatewayResponse</span>
+generation_record: <span class="ty">GenerationRecord</span></div>
+          </div>
+          <div class="rh-api-card">
+            <h3><span class="rh-kind cls">类</span><code>GenerationRecordCollector</code></h3>
+            <p class="rv-muted" style="font-size: 0.86rem;"><strong>跨多轮收集 token facts</strong>。LLMGatewayModelClientAdapter 在每轮把 token / logprob 投到这里，最后 <code>_assemble_training_view_from_collector</code> 据此构造 TrainingView</p>
+            <div class="rh-sig" style="margin: 0; font-size: 0.78rem;"><span class="kw">def</span> <span class="nm">collect</span>(request, response):
+    <span class="cm"># 保留原 LLMGatewayResponse + 真实 GenerationRecord</span>
+    self.records.append(<span class="ty">CollectedGenerationRecord</span>(...))
+
+<span class="kw">@property</span>
+<span class="kw">def</span> <span class="nm">generation_records</span>(self) -&gt; <span class="ty">list[GenerationRecord]</span>:
+    ...</div>
+          </div>
+          <div class="rh-api-card">
+            <h3><span class="rh-kind dc">数据类</span><code>RealEpisodeWorkspace</code></h3>
+            <p class="rv-muted" style="font-size: 0.86rem;"><strong>把 Stage 6 manager 真正接入 runtime</strong>。包装 lease + adapter</p>
+            <div class="rh-sig" style="margin: 0; font-size: 0.78rem;">run_dir: <span class="ty">Path</span>
+adapter: <span class="ty">LocalWorkspaceAdapter</span>
+snapshot_manager: <span class="ty">WorkspaceSnapshotManager</span>
+snapshot: <span class="ty">WorkspaceSnapshotResult</span>
+lease_handle: <span class="ty">WorkspaceLeaseHandle</span></div>
+          </div>
+          <div class="rh-api-card">
+            <h3><span class="rh-kind dc">数据类</span><code>RealEpisodeRun</code></h3>
+            <p class="rv-muted" style="font-size: 0.86rem;">agent loop 跑完后的整体打包，喂给 verifier 和最终 result 组装</p>
+            <div class="rh-sig" style="margin: 0; font-size: 0.78rem;">agent_state: <span class="ty">AgentLoopState</span>
+collector: <span class="ty">GenerationRecordCollector</span>
+run_dir: <span class="ty">Path</span>
+run_workspace: <span class="ty">RunWorkspace</span>
+workspace: <span class="ty">RealEpisodeWorkspace</span>
+final_verifier_callable: <span class="ty">FinalVerifierCallable</span>
+agent_loop_seconds: <span class="ty">float</span>
+artifact_count: <span class="ty">int</span>
+artifact_bytes_written: <span class="ty">int</span></div>
+          </div>
+          <div class="rh-api-card">
+            <h3><span class="rh-kind cfg">Literal</span><code>RuntimeExecutionMode</code></h3>
+            <p class="rv-muted" style="font-size: 0.86rem;">双模式枚举</p>
+            <div class="rh-sig" style="margin: 0; font-size: 0.78rem;"><span class="ty">RuntimeExecutionMode</span> = <span class="ty">Literal</span>[
+    <span class="li">"minimal_gateway"</span>,
+    <span class="li">"real_episode"</span>,
+]</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑤ 完整 real_episode 链路                                     -->
+      <!-- ============================================================ -->
+      <section id="flow" class="rv-section">
+        <h2>⑤ 完整 <code>real_episode</code> 链路（13 步）</h2>
+        <p class="rv-muted">下面是 Stage 11.5 真实执行流程。每步标注是哪个 stage 的零件被用上。</p>
+
+        <div class="rh-flow"><span class="step">[1]</span> RepoHarnessVerlAgentLoop.run(sampling_params, **kwargs)             <span class="comment"># Stage 11 adapter</span>
+   <span class="arrow">↓</span>
+<span class="step">[2]</span> RepoHarnessRuntime.run_episode(request, llm_gateway=VerlLLMGateway)
+   <span class="arrow">│</span>
+   <span class="arrow">└─</span> _runtime_execution_mode() == <span class="new">"real_episode"</span>
+   <span class="arrow">↓</span>
+<span class="step">[3]</span> <span class="new">_run_real_episode_entry(parsed_request, llm_gateway, started)</span>
+   <span class="arrow">│</span>     ├─ 验证 4 个必要注入对象（factory/resolver/manager/projector）
+   <span class="arrow">│</span>     └─ 进入 try / finally 保证 lease 释放
+   <span class="arrow">↓</span>
+<span class="step">[4]</span> <span class="new">_setup_real_workspace(request, source_resolver)</span>                  <span class="ok">★ 缺口 A 解决</span>
+   <span class="arrow">│</span>     ├─ source_resolver(request) <span class="arrow">→</span> 本地源目录
+   <span class="arrow">│</span>     ├─ build_workspace_snapshot_key(...)                          <span class="comment"># Stage 6</span>
+   <span class="arrow">│</span>     ├─ snapshot_manager.create_or_get_snapshot(key, source_path) <span class="comment"># 第二次起 cache_hit</span>
+   <span class="arrow">│</span>     ├─ snapshot_manager.acquire_workspace(snapshot, lease_id)    <span class="comment"># 独立可写副本</span>
+   <span class="arrow">│</span>     └─ <span class="ok">LocalWorkspaceAdapter(workspace_path=lease.workspace_path)</span>
+   <span class="arrow">↓</span>
+<span class="step">[5]</span> 抢 Stage 9 resource lease（episode + gateway slot + verifier slot）<span class="comment"># Stage 9</span>
+   <span class="arrow">↓</span>
+<span class="step">[6]</span> <span class="new">_run_real_agent_loop(real_workspace, llm_gateway, recorder)</span>      <span class="ok">★ 缺口 B 解决</span>
+   <span class="arrow">│</span>     ├─ collector = GenerationRecordCollector()
+   <span class="arrow">│</span>     ├─ legacy_client = <span class="ok">LLMGatewayModelClientAdapter(</span>           <span class="comment"># Stage 2 已有的旧→新接缝</span>
+   <span class="arrow">│</span>     │       llm_gateway=llm_gateway,
+   <span class="arrow">│</span>     │       generation_record_collector=collector)                <span class="comment"># ← 11.5 新增参数</span>
+   <span class="arrow">│</span>     ├─ <span class="ok">AgentLoop</span>(model_client=legacy_client, workspace=adapter,
+   <span class="arrow">│</span>     │           recorder=recorder, budget_manager=BudgetManager(request.budgets))  <span class="comment"># Stage 8</span>
+   <span class="arrow">│</span>     └─ <span class="ok">asyncio.to_thread(loop.run)</span>                                <span class="comment"># 包同步 AgentLoop</span>
+   <span class="arrow">│</span>           <span class="arrow">↓</span>
+   <span class="arrow">│</span>     <span class="ok">多轮</span>: 模型生成 <span class="arrow">→</span> tool_call <span class="arrow">→</span> tool 执行（在 lease workspace 内）
+   <span class="arrow">│</span>           <span class="arrow">→</span> tool observation <span class="arrow">→</span> 下一轮 prompt <span class="arrow">→</span> 直到 final_answer / budget_exhausted
+   <span class="arrow">│</span>           <span class="arrow">↓</span>
+   <span class="arrow">│</span>     每轮 LLM call 自动经过 collector.collect(request, response)
+   <span class="arrow">↓</span>
+<span class="step">[7]</span> 构造 RealEpisodeContext (含 agent_state + lease workspace)
+   <span class="arrow">↓</span>
+<span class="step">[8]</span> <span class="new">final_verifier_callable = factory(context)</span>                       <span class="ok">★ 缺口 C 解决</span>
+   <span class="arrow">│</span>     └─ 调用方提供的 factory 构造真实 PytestVerifier callable
+   <span class="arrow">↓</span>
+<span class="step">[9]</span> <span class="new">VerifierWorkerPool.run(VerifierJob(callable=...))</span>                  <span class="comment"># Stage 7</span>
+   <span class="arrow">│</span>     └─ 真实 pytest 在 lease workspace 内跑 → VerifierResult
+   <span class="arrow">↓</span>
+<span class="step">[10]</span> <span class="ok">build_stage7_reward_boundary(verifier_result, pool_result, ...)</span>  <span class="comment"># Stage 7</span>
+    <span class="arrow">│</span>     └─ 真实 reward_score（不再是占位）
+    <span class="arrow">↓</span>
+<span class="step">[11]</span> <span class="new">_assemble_training_view_from_collector(collector, agent_state)</span>
+    <span class="arrow">│</span>     ├─ 每条 GenerationRecord 的 output_token_ids 对应一个 assistant_generation span
+    <span class="arrow">│</span>     ├─ 每个 tool observation 对应一个 tool_observation span (mask=0, logprob=0.0)
+    <span class="arrow">│</span>     └─ <span class="ok">完整 prompt_ids / response_ids / response_mask / response_logprobs</span>
+    <span class="arrow">↓</span>
+<span class="step">[12]</span> RepoHarnessEpisodeResult.model_validate(...)
+    <span class="arrow">│</span>     └─ <span class="ok">_validate_generation_record_token_provenance()</span>        <span class="comment"># episode.py 新增校验</span>
+    <span class="arrow">↓</span>
+<span class="step">[13]</span> finally: <span class="ok">snapshot_manager.release_workspace(lease)</span>
+        + Stage 9 resource lease 释放
+        + cleanup_callback 执行</div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑥ 8 条 bridge 落地状态                                       -->
+      <!-- ============================================================ -->
+      <section id="bridges" class="rv-section">
+        <h2>⑥ Stage 11.5 设计的 8 条 bridge 落地状态</h2>
+        <div class="rh-bridges">
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">1</span>workspace runtime bridge</strong>
+            <small><strong>✓ 已接通</strong>。<code>_setup_real_workspace</code> 调 <code>WorkspaceSnapshotManager.create_or_get_snapshot + acquire_workspace</code>。Stage 6 manager <strong>终于被 production code 使用</strong>（之前 grep 全是测试）。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">2</span>agent loop bridge</strong>
+            <small><strong>✓ 已接通</strong>。<code>LLMGatewayModelClientAdapter</code>（Stage 2 已有）扩展支持 <code>generation_record_collector</code> 参数，让旧 <code>AgentLoop</code> 透明地经过 gateway 同时把 token facts 收集起来。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">3</span>tool / workspace bridge</strong>
+            <small><strong>✓ 已接通</strong>。<code>LocalWorkspaceAdapter(workspace_path=lease.workspace_path)</code> 注入工具执行环境。每条 episode 独立 lease，互不污染。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">4</span>recorder bridge</strong>
+            <small><strong>✓ 已接通</strong>。Stage 3 的 <code>RecorderProfile</code>（<code>full_audit / training_fast / training_debug</code>）应用于真实 AgentLoop artifact 写入。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">5</span>verifier / reward bridge</strong>
+            <small><strong>✓ 已接通</strong>。<code>real_episode_final_verifier_factory(context) → callable</code>，调用方提供真实 <code>PytestVerifier</code>。Stage 7 pool 真跑真 verifier。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">6</span>timing / resource bridge</strong>
+            <small><strong>✓ 已接通</strong>。真实 <code>agent_loop_seconds</code>（从 AgentLoopState 提取）/ <code>tool_seconds</code> / <code>artifact_count / artifact_bytes_written</code> / <code>snapshot_key / lease_id</code> 全部进 <code>TimingSummary / ResourceSummary</code>。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">7</span>cancellation / cleanup bridge</strong>
+            <small><strong>✓ 已接通且加严</strong>。<code>_wait_for_real_episode_task_after_stop</code> 实现"timeout/cancellation 触发时 lease 必须等待 agent thread 自然结束"语义。3 个专门测试守护。</small>
+          </div>
+          <div class="rh-bridge">
+            <strong><span class="rh-bridge-no">8</span>token provenance bridge</strong>
+            <small><strong>✓ 已接通且严格校验</strong>。<code>episode.py</code> 新增 <code>_validate_generation_record_token_provenance</code> 6 条断言（见 §⑦）。从根本上禁绝从 transcript 重新分词伪造 token。</small>
+          </div>
+        </div>
+        <div class="rv-callout success" style="margin-top: 12px;">
+          <strong>缺口分析的 3 个缺口全部解决</strong>：缺口 A（workspace）= bridge #1+#3；缺口 B（agent loop multi-turn）= bridge #2+#3+#8；缺口 C（真实 verifier）= bridge #5。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑦ token provenance 严格校验                                  -->
+      <!-- ============================================================ -->
+      <section id="provenance" class="rv-section">
+        <h2>⑦ <code>_validate_generation_record_token_provenance</code> 6 条严格校验</h2>
+        <p class="rv-muted">这是 Stage 11.5 在 <code>episode.py</code> 加的 <code>model_validator</code>。<strong>每个</strong> <code>RepoHarnessEpisodeResult</code> 构造时都会跑，<strong>不可绕过</strong>。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 6%;">#</th><th style="width: 32%;">断言</th><th>违反时抛的 ValueError</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>所有 <code>generation_records</code> 的 <code>model_call_id</code> 必须唯一</td><td><code>duplicate_generation_record_model_call_id</code></td></tr>
+              <tr><td>2</td><td><code>assistant_generation</code> span 数量必须等于 <code>generation_records</code>（去除空 token 的）数量</td><td><code>assistant_generation_span_count_mismatch_generation_records</code></td></tr>
+              <tr><td>3</td><td>每个 assistant span 的 <code>model_call_id</code> 必须等于对应 <code>GenerationRecord.model_call_id</code> 且<strong>顺序一致</strong></td><td><code>assistant_generation_span_order_mismatch_generation_records</code></td></tr>
+              <tr><td>4</td><td>每个 assistant span 内 <code>response_ids[span.start:span.end]</code> 必须 <strong>逐 token 等于</strong> 对应 <code>GenerationRecord.output_token_ids</code></td><td><code>assistant_generation_tokens_mismatch_generation_records</code></td></tr>
+              <tr><td>5</td><td>当 <code>response_logprobs</code> 非空时，每个 assistant span 的 logprob 必须<strong>逐元素等于</strong>对应 record 的 <code>output_logprobs</code></td><td><code>assistant_generation_logprobs_mismatch_generation_records</code></td></tr>
+              <tr><td>6</td><td>所有 assistant span 拼接后的 token / logprob 总序列必须等于所有 records 拼接后的序列</td><td><code>assistant_generation_token_sequence_mismatch_generation_records</code> / <code>assistant_generation_logprob_sequence_mismatch_generation_records</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rv-callout danger">
+          <strong>结果</strong>：任何企图<strong>从 transcript 重新分词</strong>或<strong>跨轮拼接错乱</strong>来伪造可训练 token 的代码路径，在 <code>EpisodeResult</code> 构造时就会被 pydantic 直接拒绝。即使有人在 11.5 之后改了 <code>_assemble_training_view_from_collector</code>，校验层仍守住底线。
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑧ 18 个测试覆盖                                              -->
+      <!-- ============================================================ -->
+      <section id="tests" class="rv-section">
+        <h2>⑧ 18 个测试 ↔ 契约 矩阵</h2>
+        <p class="rv-muted">所有测试都在 <code>tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py</code>。每行带源码行号链接。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 50%;">测试</th><th>锁定的契约</th></tr></thead>
+            <tbody>
+              <tr><td colspan="2" style="background: var(--rv-surface-alt); font-weight: 760;">🌟 主路径与 happy path</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L154">real_episode_runs_agent_loop_and_builds_training_view_from_collector</a></td><td><strong>核心</strong>：真实 AgentLoop 跑通 + TrainingView 由 collector 拼出</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L190">success_with_mock_route_is_diagnostic_only</a></td><td>mock route 真跑 real_episode，仍标 diagnostic 不进 online RL</td></tr>
+              <tr><td colspan="2" style="background: var(--rv-surface-alt); font-weight: 760;">🛡️ Visibility / 边界</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L212">missing_logprobs_is_rejected_by_formal_gate</a></td><td>缺 logprob → invalid_for_online_rl</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L229">response_route_mismatch_is_structured_invalid_result</a></td><td>response.route 与 request.route 不符 → structured invalid</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L245">gateway_error_maps_to_episode_status</a></td><td><code>response.error</code> → timeout / infrastructure_error 映射</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L261">response_overflow_is_structured_invalid</a></td><td>response token 超 max_output_tokens → invalid</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L279">prompt_overflow_is_structured_invalid</a></td><td>prompt token 超 max_prompt_tokens → invalid</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L296">multiturn_mixed_route_returns_structured_result</a></td><td>多轮中途换 route → mixed 路径正确处理</td></tr>
+              <tr><td colspan="2" style="background: var(--rv-surface-alt); font-weight: 760;">🔒 Schema 严格校验（episode.py 新增）</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L311">episode_schema_rejects_mixed_generation_routes_without_explicit_route</a></td><td>route 混合时必须显式标记，否则 schema 拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L328">episode_schema_rejects_forged_training_view_tokens</a></td><td><strong>核心</strong>：从 transcript 重新分词伪造 token → schema 拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L341">episode_schema_rejects_duplicate_assistant_generation_span</a></td><td>重复 model_call_id → 拒绝</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L368">episode_schema_rejects_reordered_assistant_generation_spans</a></td><td>span 顺序与 records 顺序不一致 → 拒绝</td></tr>
+              <tr><td colspan="2" style="background: var(--rv-surface-alt); font-weight: 760;">🛠️ 工具 observation 与 Token projection</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L399">default_tool_observation_projector_is_diagnostic_only</a></td><td>默认 token projector 仅 diagnostic 用，不进 formal batch</td></tr>
+              <tr><td colspan="2" style="background: var(--rv-surface-alt); font-weight: 760;">⏱ Lease hold-until-finish 语义</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L430">timeout_holds_leases_until_agent_thread_finishes</a></td><td><strong>核心</strong>：episode timeout 时 lease 必须等到 agent thread 自然结束才释放</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L465">cancellation_holds_leases_until_agent_thread_finishes</a></td><td>外层 cancel 时同上</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L499">final_verifier_timeout_holds_leases_until_verifier_thread_finishes</a></td><td>verifier timeout 时 lease 必须等到 verifier thread 自然结束</td></tr>
+              <tr><td colspan="2" style="background: var(--rv-surface-alt); font-weight: 760;">🌐 跨线程事件循环 / 不支持模式</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L547">route_limiter_runs_on_runtime_event_loop_from_worker_thread</a></td><td>从 worker thread 抢 gateway route slot 必须用 runtime event loop</td></tr>
+              <tr><td><a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L589">unsupported_runtime_execution_mode_returns_structured_result</a></td><td>未知 mode → infrastructure_error，不 silent fallback</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ⑨ 距离 Stage 12 还差什么                                     -->
+      <!-- ============================================================ -->
+      <section id="next" class="rv-section">
+        <h2>⑨ 距离 Stage 12 还差什么</h2>
+        <p class="rv-muted">Stage 11.5 把 runtime bridge 修好后，Stage 12 三层验收已经可以开始。下表说明每一层的<strong>前置条件</strong>是否就绪。</p>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead>
+              <tr><th style="width: 22%;">Stage 12 子阶段</th><th style="width: 35%;">需要什么</th><th>11.5 完成后状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>12-A · Mac 本地</strong><br>real_episode runtime bridge smoke</td>
+                <td>① real_episode 能跑通 fake LLMGateway<br>② <code>RepoHarnessVerlAgentLoop + fake LLMServerClient</code> 路径产生 route=verl token<br>③ 不需要 vLLM/SGLang/CUDA</td>
+                <td><span class="rv-badge success">✓ 前置已就绪</span>，可以直接进入。Stage 11.5 已经验证 fake gateway 路径，<code>VerlLLMGateway</code> 已在 Stage 11 完成</td>
+              </tr>
+              <tr>
+                <td><strong>12-B · Vast.ai GPU</strong><br>真实小模型端到端 smoke</td>
+                <td>① 真 vLLM/SGLang AsyncLLMServer<br>② Qwen2.5-Coder-7B-Instruct 部署<br>③ 极小仓库任务（buggy_calculator 等）同步到本仓库 + sha256 manifest<br>④ Vast.ai 镜像 preflight</td>
+                <td><span class="rv-badge warning">需要 Vast.ai 环境</span>。代码侧 Stage 11.5 已经准备好；外部依赖（GPU 实例 + 模型权重 + 任务 fixture sync）需安排</td>
+              </tr>
+              <tr>
+                <td><strong>12-C · 小 batch trainer</strong><br>PPO/GRPO smoke</td>
+                <td>① 12-B 已通过<br>② <code>calculate_log_probs=True</code> 等 verl 配置<br>③ formal batch validator</td>
+                <td><span class="rv-badge info">12-B 完成后启动</span>。代码侧无新增缺口</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">新增的 <code>16-stage-12-a-execution-plan.md</code></h3>
+        <p>仓库里已经有 <code>docs/agentic_RL/repo_harness_verl_workstreams/16-stage-12-a-execution-plan.md</code>（untracked）说明 12-A 已经进入执行准备。</p>
+
+        <div class="rv-callout success">
+          <strong>结论</strong>：Stage 11.5 完成后，<strong>所有代码侧的链路缺口都已闭合</strong>。Stage 12-A 可以立刻开始；Stage 12-B 等 Vast.ai 环境就绪即可；Stage 12-C 是 12-B 通过后的自然延伸。整个 RepoHarness × verl 工作流第一次具备<strong>真实端到端训练前验收能力</strong>。
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>

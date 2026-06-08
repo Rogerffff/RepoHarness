@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.2C 完成报告</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1180px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:230px;flex:0 0 230px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 11px 8px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13.3px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.4px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .vcard{border-radius:14px;padding:17px 19px;border:1px solid}
+  .vcard.green{background:linear-gradient(135deg,#13311f,#161a23);border-color:#2f6b3a}
+  .vcard.amber{background:linear-gradient(135deg,#2b2412,#161a23);border-color:#6b5a2f}
+  .vcard .lab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .vcard .big{font-size:19px;font-weight:700;margin-bottom:6px}
+  .vcard.green .big{color:#6fdc84}.vcard.amber .big{color:#e6c068}
+  .vcard p{font-size:12.8px;margin:6px 0 0;color:#cdd6e6}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .risk{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:11px;padding:13px 16px;margin:11px 0}
+  .risk h4{margin:0 0 4px;color:#e6c068;font-size:14.2px}
+  .risk p{margin:5px 0 0;font-size:13.3px}
+  .gate{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
+  .gate .row{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px;font-size:13.2px}
+  .gate b{display:block;color:#cdd6e6;font-size:12.6px;margin-bottom:3px}
+  .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+  .pillrow .tag{font-size:11.5px}
+  .kv{display:grid;grid-template-columns:max-content 1fr;column-gap:14px;row-gap:6px;margin:9px 0;font-size:13.2px}
+  .kv b{color:#cdd6e6}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}
+  details summary{cursor:pointer;color:#cdd6e6;font-weight:600;font-size:13.6px}
+  details[open] summary{margin-bottom:7px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#verdict">独立裁决</a>
+  <a href="#verify">1 · 我独立核查了什么</a>
+  <a href="#products">2 · 本阶段产出详解</a>
+  <a href="#linkage">3 · run_episode 投影 linkage</a>
+  <a href="#audit-rename">4 · audit_ref 改名核查</a>
+  <a href="#policy-loss">5 · policy_loss 阻断核查</a>
+  <a href="#inspector">6 · inspector 字段白名单</a>
+  <a href="#regression">7 · 测试与回归</a>
+  <a href="#gates">8 · 闸门状态</a>
+  <a href="#risks">9 · 我观察到的风险</a>
+  <a href="#map">10 · 能力地图同步</a>
+</nav>
+<main>
+  <h1>Stage 16G.2C 完成报告 — run_episode 投影 linkage 已贯通</h1>
+  <p class="meta">分支 <code>codex/repo-harness-verl-stage0h</code> · 提交 <code>1e783f41</code>（feat: complete stage 16g2 file mutation linkage） · 独立核查者：claude-code/opus 4.7 · 报告生成日期 2026-05-28</p>
+
+  <div class="callout info"><b>📘 想深入看代码：</b>新建了 <a href="code_guide_index.html"><b>RepoHarness 代码导览总览</b></a>（独立系列），以执行时间线 T0–T9 + 4 个侧栏组织。本阶段最相关的章节：<a href="code_guide_t5_execute.html">T5 工具执行</a>（file_mutation 共享路径）· <a href="code_guide_t8_projection.html">T8 投影</a>（write_run_episode_compat_projection + policy_loss 守门员）· <a href="code_guide_side_safety.html">side-A 安全边界</a>（5 道防线，含本阶段踩雷的 L4 forbidden marker）。</div>
+
+  <h2 class="sec" id="verdict" style="border:none;margin-top:0;padding-top:0">独立裁决</h2>
+  <div class="verdict">
+    <div class="vcard green">
+      <div class="lab">verdict</div>
+      <div class="big">✓ stage16g2c_complete=true 经过独立核查确认</div>
+      <p>3 个 inspector（2A / 2B / 2C）全部 <code>--assert-complete</code> 通过；7 个 16G.2C 焦点测试 + 191 个 stage16f/16g 回归 + compileall + git diff --check 全部通过；8 个 <code>source_digests</code> sha256 我亲自重算全部匹配；run_episode 投影 probe 公开 evidence 中没有 <code>audit_ref</code> / 真实 home 路径 / forbidden marker 泄漏。</p>
+    </div>
+    <div class="vcard amber">
+      <div class="lab">scope</div>
+      <div class="big">仅证明 mock route 下投影 plumbing 贯通</div>
+      <p>本阶段证明的是结构化文件工具 → run_episode → final.patch / final.diff / TrainingView → 兼容投影 这条管道在 mock route 下端到端能跑、可校验。<b>它并没有把任何轨迹放进 policy loss</b> — 真实 policy_loss 仍然需要 route=verl，由 16G.4–16G.6 之后才能放行。</p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="verify">1 · 我独立核查了什么</h2>
+  <p>本节列出我亲自跑过的检查，不依赖执行 agent 的自报。每一项都给出命令、结果、判断。</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:34%">核查项</th><th style="width:22%">命令 / 方式</th><th style="width:14%">结果</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>16G.2C inspector</td>
+        <td><code>inspect-stage16g2c-projection-linkage … --assert-complete</code></td>
+        <td><span class="tag t-good">passed</span></td>
+        <td><code>failure_count=0</code>，<code>validated_file_count=4</code>，6 项 derived_check 全部 true（包含 <code>non_verl_route_policy_loss_blocked</code>、<code>tool_observation_mask_zero_passed</code>、<code>structured_file_tools_projected</code>）</td>
+      </tr>
+      <tr>
+        <td>16G.2A / 2B 回归 inspector</td>
+        <td>分别 <code>inspect-stage16g2a-tool-surface</code> / <code>inspect-stage16g2b-file-mutation</code></td>
+        <td><span class="tag t-good">passed</span></td>
+        <td>2A 在 27 项 derived_check 上全部 true（含 <code>standalone_delete_move_require_reason</code>、<code>apply_patch_unified_diff_not_exposed</code>）；2B 在 10 项 derived_check 上全部 true</td>
+      </tr>
+      <tr>
+        <td>16G.2C 焦点测试</td>
+        <td><code>pytest tests/unit/test_repo_harness_stage16g2c_projection_linkage.py -v</code></td>
+        <td><span class="tag t-good">7 passed</span></td>
+        <td>包含 inspector 公开 evidence 鉴别、forbidden marker 拒绝、digest 同步但语义被篡改时拒绝、未知字段拒绝</td>
+      </tr>
+      <tr>
+        <td>16G.2A + 2B 焦点回归</td>
+        <td><code>pytest tests/unit/test_repo_harness_stage16g2a_tool_surface.py tests/unit/test_repo_harness_stage16g2b_file_mutation.py</code></td>
+        <td><span class="tag t-good">57 passed</span></td>
+        <td>包括 5 个工具的 executor 应用 / 安全 marker 拒绝 / apply_patch 嵌套 schema 拒绝 / standalone delete-move 要求 reason 等</td>
+      </tr>
+      <tr>
+        <td>更宽 stage16f + 16g 回归</td>
+        <td><code>pytest tests/unit/test_repo_harness_stage16f* tests/unit/test_repo_harness_stage16g*</code></td>
+        <td><span class="tag t-good">191 passed</span></td>
+        <td>包含 stage16f run_episode 主路径 + stage16g 全部阶段；耗时 152s；agent 自报 151 passed，我跑出来更宽是 191，证明回归没漏</td>
+      </tr>
+      <tr>
+        <td>compileall</td>
+        <td><code>python -m compileall -q src/repo_harness scripts/pre_verl</code></td>
+        <td><span class="tag t-good">passed</span></td>
+        <td>无语法错误</td>
+      </tr>
+      <tr>
+        <td>git diff --check</td>
+        <td><code>git diff --check HEAD</code></td>
+        <td><span class="tag t-good">passed</span></td>
+        <td>无空白错误 / 冲突标记</td>
+      </tr>
+      <tr>
+        <td>source_digests sha256 重算</td>
+        <td>对 acceptance summary 列出的 8 个源文件分别 <code>hashlib.sha256(open(p,'rb').read())</code></td>
+        <td><span class="tag t-good">8/8 match</span></td>
+        <td>没有任何"摘要写对但实际文件改了"的可能</td>
+      </tr>
+      <tr>
+        <td>audit_ref 泄漏扫描</td>
+        <td><code>grep -rn audit_ref src/repo_harness/tools/ src/repo_harness/stage16g2_file_surface.py src/repo_harness/evaluation/episode_projection.py</code></td>
+        <td><span class="tag t-good">0 hits</span></td>
+        <td>三个本阶段相关目录全部清干净；其余文件残留的 <code>audit_ref</code> 都在 internal data layer，受 <code>visibility.py</code> 的 forbidden marker 拦截，不会进入模型可见 payload</td>
+      </tr>
+      <tr>
+        <td>公开 evidence audit_ref 扫描</td>
+        <td><code>grep -rln audit_ref docs/agentic_RL/repo_harness_verl_workstreams/stage16g_2/</code></td>
+        <td><span class="tag t-good">仅 impl-notes</span></td>
+        <td>只在 <code>implementation-notes.md</code> 出现，用于记录"曾用过现在已改"；4 份 JSON evidence + acceptance summary 都为 0 命中</td>
+      </tr>
+      <tr>
+        <td>provider_route 实际投影</td>
+        <td>读 <code>stage16g2c_run_episode_projection_probe_report.json</code></td>
+        <td><span class="tag t-good">mock</span></td>
+        <td><code>provider_route=mock</code>、<code>llm_gateway_route=mock</code>、<code>policy_loss_candidate=false</code>、<code>formal_online_rl_eligible=false</code>、<code>qualification_reason="non_verl_or_diagnostic_route_not_policy_loss_candidate"</code></td>
+      </tr>
+      <tr>
+        <td>final.patch 字段事实</td>
+        <td>读 probe report 的 <code>final_patch_changed_file_facts</code></td>
+        <td><span class="tag t-good">5 entries</span></td>
+        <td><code>added=2 / modified=1 / deleted=1 / renamed=1</code>，覆盖 <code>docs/generated/notes.md</code>、<code>legacy.py</code>（删）、<code>pkg/calc.py</code>（改）、<code>pkg/helpers.py</code>（新）、<code>old_name.py→pkg/renamed.py</code>（重命名）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout good"><b>结论：</b>agent 自报与公开 evidence、源代码、独立测试运行三者完全一致，没有发现可能的"对账造假"或者"摘要刷分但语义没改"的迹象。</div>
+
+  <h2 class="sec" id="products">2 · 本阶段产出详解</h2>
+
+  <h3>2.1 新增 / 改动的文件</h3>
+  <table>
+    <thead><tr><th style="width:42%">文件</th><th style="width:14%">类型</th><th>角色</th></tr></thead>
+    <tbody>
+      <tr><td><code>scripts/pre_verl/build_stage16g2c_projection_linkage.py</code></td><td><span class="tag t-info">新增</span></td><td>本阶段 evidence 构造脚本：调用 <code>RepoHarnessRuntime.run_episode(real_episode)</code> → <code>write_run_episode_compat_projection</code> → 写出 probe / linkage / path scan / acceptance summary 4 份公开 JSON + 私有 artifact</td></tr>
+      <tr><td><code>src/repo_harness/stage16g2_file_surface.py</code></td><td><span class="tag t-warn">扩展</span></td><td>新增 <code>inspect_stage16g2c_projection_linkage</code>，以及 <code>STAGE16G2C_PROBE_KEYS / LINKAGE_KEYS / PATH_SCAN_KEYS / PATCH_FACT_KEYS / PATCH_ENTRY_KEYS / TRAINING_PROJECTION_KEYS / PROVIDER_ROUTE_KEYS</code> 字段白名单常量</td></tr>
+      <tr><td><code>src/repo_harness/cli/main.py</code></td><td><span class="tag t-warn">扩展</span></td><td>注册 <code>inspect-stage16g2c-projection-linkage</code> CLI 子命令</td></tr>
+      <tr><td><code>src/repo_harness/tools/minimal.py</code></td><td><span class="tag t-warn">行为修复</span></td><td>把 16G.2B 文件变更工具成功结果的模型可见字段从 <code>audit_ref</code> 改为 <code>audit_artifact_id</code>（JSON content 内）+ <code>audit_artifact</code>（typed dict 内）</td></tr>
+      <tr><td><code>src/repo_harness/evaluation/episode_projection.py</code> · <code>src/repo_harness/rl/runtime.py</code></td><td><span class="tag t-info">已存在</span></td><td>本阶段没有修改，但 acceptance summary 把它们的 sha256 也绑定进 source_digests，作为"投影管道的契约表面"</td></tr>
+      <tr><td><code>tests/unit/test_repo_harness_stage16g2c_projection_linkage.py</code></td><td><span class="tag t-info">新增</span></td><td>7 个测试：writer + inspector 配对、tool result 模型可见安全、digest 同步但语义篡改时拒绝、forbidden marker 拒绝、未知字段拒绝（probe / linkage / patch entry）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.2 4 份公开 evidence 文件</h3>
+  <ul>
+    <li><code>stage16g2c_acceptance_summary.json</code> — 18 个字段，含 4 个 source_digests 关键摘要、5 个 _allowed_to_start 闸门、4 个核心 passed 标志</li>
+    <li><code>stage16g2c_run_episode_projection_probe_report.json</code> — 20 个字段，记录 <code>run_episode_invocation="RepoHarnessRuntime.run_episode(real_episode)"</code>、<code>projection_writer="write_run_episode_compat_projection"</code>、<code>tool_names_observed=[apply_patch, write_file]</code>、<code>operation_kinds_observed=[delete_file, mkdir, move_file, replace_text, write_file]</code>、<code>final_patch_changed_file_facts</code>、<code>training_projection</code>、<code>provider_route_qualification</code></li>
+    <li><code>stage16g2c_projection_linkage_report.json</code> — 17 个字段，验证源 episode 结果 vs 兼容投影写出来的 final.patch / final.diff sha256 双向匹配、patch hygiene cleaned 摘要与 manifest 匹配、public hygiene report 不含 raw 字段</li>
+    <li><code>stage16g2c_path_leak_scan_report.json</code> — 公开扫描结果，<code>finding_count=0</code>，扫 .json 后缀文件，覆盖兼容投影里所有公开文件</li>
+  </ul>
+
+  <h2 class="sec" id="linkage">3 · run_episode 投影 linkage 真实贯通的证据</h2>
+
+  <p>这是本阶段最关键的设计点。我把整条链路画出来，然后逐段说明独立核查到的事实。</p>
+
+  <pre><code><span class="cm"># 模型 / 测试驱动                                            （由 build_stage16g2c_projection_linkage.py 启动）</span>
+      ▼
+RepoHarnessRuntime.run_episode(real_episode)         <span class="cm">— rl/runtime.py 真实入口</span>
+      ▼  调用 ToolExecutor 分派
+write_file  + apply_patch                            <span class="cm">— minimal.py:391 → _stage16g2b_file_mutation_tool</span>
+      ▼  共享路径
+file_mutation.execute_structured_file_mutation       <span class="cm">— tools/file_mutation.py:preflight → snapshot → apply → rollback</span>
+      ▼  真实操作
+write_text / unlink / rename / mkdir + audit_payload <span class="cm">— file_mutation.py:555-574</span>
+      ▼  结果回到 runtime
+RealEpisodeRun（轨迹 + 工具调用 + 文件变更）
+      ▼
+write_run_episode_compat_projection                  <span class="cm">— evaluation/episode_projection.py</span>
+      ▼  生成 14 个公开文件
+final.patch · final.diff · manifest.json · training_view.json · provider_route_qualification.json …</code></pre>
+
+  <h3>3.1 inspector 是怎么把"真实 run_episode 调用"和"只用 builder 拼"的伪造区分开的</h3>
+  <p>关键在 <code>stage16g2_file_surface.py:1411-1418</code> 的硬断言：</p>
+  <pre><code>if probe.get("run_episode_invocation") != "RepoHarnessRuntime.run_episode(real_episode)":
+    failures.append("probe_not_created_by_run_episode")
+if probe.get("projection_writer") != "write_run_episode_compat_projection":
+    failures.append("projection_writer_mismatch")
+if probe.get("projection_created_from_run_episode") is not True:
+    failures.append("projection_created_from_run_episode_not_true")</code></pre>
+  <p>这三个字段都是"运行时实际 invocation 路径的字面量"，构造脚本只有真的走了那条路径才会写出来。inspector 不仅核对它们的值，还把 <code>STAGE16G2C_PROBE_KEYS</code> 之外的字段都视为非法（见第 6 节），就算后续有人想"加一个字段绕过断言"也会被字段白名单挡住。</p>
+
+  <h3>3.2 final.patch 真的覆盖了五种 operation kind</h3>
+  <p>inspector 强约束 <code>operation_kinds_observed</code> 必须等于 <code>{replace_text, write_file, delete_file, move_file, mkdir}</code>（stage16g2_file_surface.py:1431-1433），并且 <code>final_patch_changed_file_facts</code> 至少要含 <code>added≥2 / modified≥1 / deleted≥1 / renamed≥1</code>，且 <code>changed_paths</code> 必须包含指定的 6 个文件路径（line 1455）。我读 probe report 实际值：</p>
+  <table>
+    <thead><tr><th>operation kind</th><th>对应文件路径</th><th>final.patch 中的状态</th></tr></thead>
+    <tbody>
+      <tr><td><code>write_file</code></td><td><code>pkg/helpers.py</code></td><td><span class="tag t-good">added</span></td></tr>
+      <tr><td><code>mkdir</code> + <code>write_file</code></td><td><code>docs/generated/notes.md</code></td><td><span class="tag t-good">added</span></td></tr>
+      <tr><td><code>replace_text</code></td><td><code>pkg/calc.py</code></td><td><span class="tag t-good">modified</span></td></tr>
+      <tr><td><code>delete_file</code></td><td><code>legacy.py</code></td><td><span class="tag t-good">deleted</span></td></tr>
+      <tr><td><code>move_file</code></td><td><code>old_name.py → pkg/renamed.py</code></td><td><span class="tag t-good">renamed</span></td></tr>
+    </tbody>
+  </table>
+  <p>这是结构化文件工具 → final.patch 的<b>最小完备样本</b>：5 种 operation 都有，且 final patch 形态正确。</p>
+
+  <h3>3.3 training_view 上的 response mask 行为</h3>
+  <div class="kv">
+    <b>tool_observation_span_count</b><span>= 2（每个工具调用 1 个 observation 段）</span>
+    <b>tool_observation_spans_response_mask_zero</b><span>= true（工具回执整段不参与 loss）</span>
+    <b>tool_output_response_mask_zero_count</b><span>= 16（共 16 个 token 来自 tool observation，全部 mask=0）</span>
+    <b>assistant_response_mask_one_count</b><span>= 5（共 5 个 token 来自助手生成，mask=1）</span>
+    <b>response_token_count</b><span>= 21（= 16 + 5，与上面相加）</span>
+    <b>generation_record_count</b><span>= 2（两轮 assistant 生成）</span>
+  </div>
+  <p>这一段的意义：<b>哪怕模型在轨迹里"看见"了 write_file / apply_patch 的成功结果，那段 token 也不会被算进 policy loss</b>。这是 verl 异步 PPO 的关键契约 — 工具回执不能成为模型学习目标，否则会反复"复读"工具输出而不学习生成正确的工具调用。inspector 在 stage16g2_file_surface.py:1464-1473 强制要求 <code>tool_observation_spans_response_mask_zero is True</code>。</p>
+
+  <h2 class="sec" id="audit-rename">4 · audit_ref → audit_artifact_id 改名是否彻底</h2>
+
+  <h3>4.1 为什么必须改名</h3>
+  <p><code>visibility.py:48-58</code> 把 <code>audit_ref</code> 列在 <code>FORBIDDEN_BATCH_EXTRA_FIELD_KEYS</code> 里，并且通过 <code>_find_forbidden_marker</code> 在多个层面（batch extra fields、gateway extra fields、模型可见 visible text）做<b>子串匹配</b>。这意味着：</p>
+  <ul>
+    <li>任何 model-visible payload（包括 tool result content + typed dict）只要出现"audit_ref"这 9 个字符，都会被 gateway 视为 evaluator-only 泄漏并拒绝传给模型。</li>
+    <li>但 RepoHarness 内部数据层（<code>rl/episode.py</code> 的 <code>AuditRef</code> 类、<code>rl/training_view.py</code>、<code>rl/runtime.py</code> 的 <code>_audit_ref</code> 私有方法）<b>合法地</b>使用 audit_ref 这个名字 — 它们不进 model-visible 通道。</li>
+  </ul>
+  <p>原 16G.2B tool result 错误地用 <code>audit_ref</code> 作为 model-visible 字段名，会被 forbidden marker 拒绝，<b>tool 调用看起来"成功"但模型实际收到的是 gateway forbidden 错误</b>。如果不在 2C 修，16G.2C run_episode probe 会失败。</p>
+
+  <h3>4.2 改名是否彻底</h3>
+  <p>我跑了精确范围的 grep：</p>
+  <pre><code>$ grep -rn audit_ref src/repo_harness/tools/ \
+    src/repo_harness/stage16g2_file_surface.py \
+    src/repo_harness/evaluation/episode_projection.py
+<span class="cm"># 0 hits — 三个本阶段表面区域全部清干净</span>
+
+$ grep -n audit_artifact src/repo_harness/tools/minimal.py
+src/repo_harness/tools/minimal.py:2306:    "audit_artifact_id": ref.artifact_id,   <span class="cm"># JSON content 字段（模型可见）</span>
+src/repo_harness/tools/minimal.py:2322:    "audit_artifact": ref.model_dump(...),  <span class="cm"># typed dict 字段（gateway extra）</span></code></pre>
+
+  <h3>4.3 残留在哪里、为什么不必动</h3>
+  <table>
+    <thead><tr><th>残留位置</th><th>类别</th><th>是否进 model-visible</th></tr></thead>
+    <tbody>
+      <tr><td><code>rl/visibility.py:49</code></td><td>forbidden marker 黑名单字面量</td><td><span class="tag t-good">否（防御）</span></td></tr>
+      <tr><td><code>rl/episode.py:249</code> · <code>rl/training_view.py:134/157</code></td><td>内部 AuditRef pydantic 模型</td><td><span class="tag t-good">否（内部）</span></td></tr>
+      <tr><td><code>rl/runtime.py:1801/1961/2043/3033</code></td><td>RepoHarnessEpisodeResult 上的 <code>audit_ref</code> 字段</td><td><span class="tag t-good">否（已 evaluator-only）</span></td></tr>
+      <tr><td><code>rl/async_runtime.py</code></td><td>异步 handle 上的 <code>audit_refs</code></td><td><span class="tag t-good">否</span></td></tr>
+      <tr><td><code>v4_implementation_inputs.py</code> · <code>v5_*.py</code></td><td>evaluator-only export pack 字段</td><td><span class="tag t-good">否（v4/v5 离线轨道）</span></td></tr>
+    </tbody>
+  </table>
+  <p>这些位置都在内部数据层，<code>visibility.py</code> 的 forbidden marker 反而要靠它们做防御。本阶段的改名是<b>把"模型可见 / 内部数据"两条通道分清楚</b>，而不是大批量重命名。</p>
+
+  <h2 class="sec" id="policy-loss">5 · policy_loss 阻断核查（最关键的训练边界）</h2>
+
+  <h3>5.1 阻断逻辑核心</h3>
+  <p>在 <code>evaluation/episode_projection.py:610-635</code> 的 <code>_provider_route_qualification</code> 里：</p>
+  <pre><code>formal_online_rl_eligible = (
+    provider_route == "verl"
+    and request.llm_gateway_route == "verl"
+    and not result.invalid_for_training
+    and not result.invalid_for_online_rl
+)
+return {
+    ...
+    "policy_loss_candidate": formal_online_rl_eligible,
+    "qualification_reason": (
+        "route_verl_formal_online_rl_candidate" if formal_online_rl_eligible
+        else "non_verl_or_diagnostic_route_not_policy_loss_candidate"
+    ),
+}</code></pre>
+  <p>四个必要条件——任何一个不满足都会让 <code>policy_loss_candidate=false</code>。本阶段 probe 全部跑的是 <code>provider_route=mock / llm_gateway_route=mock</code>，所以第一个条件就被卡掉。</p>
+
+  <h3>5.2 防御性 cross-check</h3>
+  <p>同一文件 <code>episode_projection.py:380-417</code> 还有一组兜底 — 即使有人篡改 manifest 强行写入 <code>policy_loss_candidate=true</code>，validator 会再检查：</p>
+  <ul>
+    <li>provider_route_qualification.json 中 <code>policy_loss_candidate</code> 与 manifest 不一致 → <code>policy_loss_mismatch</code></li>
+    <li>非 verl route 但 manifest 标为 policy_loss → <code>non_verl_route_marked_policy_loss_candidate</code></li>
+    <li>非 verl route 但 route_report 标为 policy_loss → <code>non_verl_route_report_marked_policy_loss_candidate</code></li>
+    <li>非 verl route 但 status_report 标为 policy_loss → <code>non_verl_status_marked_policy_loss_candidate</code></li>
+    <li><code>policy_loss</code> 为 true 但 <code>formal_online_rl</code> 为 false → <code>policy_loss_candidate_without_formal_online_rl_eligible</code></li>
+  </ul>
+  <p>这是"五层校验冗余" — 任何一层意外被绕过，其他层都会发出 mismatch。</p>
+
+  <h3>5.3 partial_failure 路径</h3>
+  <p>在 <code>tools/minimal.py:2278-2334</code> 的 <code>_stage16g2b_file_mutation_tool</code> 成功分支里，<code>typed</code> dict 中始终硬编码 <code>"allowed_in_policy_loss_trajectory": False</code> 和 <code>"sample_policy_loss_candidate_effect": "requires_stage16g2c_patch_projection_linkage"</code>。当 <code>outcome.partial_failure</code> 时 status 直接置为 <code>"error"</code> 并打 <code>error_type="stage16g2b_file_mutation_partial_failure"</code>。也就是说，partial_failure 不仅不进 policy loss，工具回执本身就是 error 形式。</p>
+
+  <h3>5.4 我直接读到的最终事实</h3>
+  <div class="kv">
+    <b>probe 报告里</b><span><code>policy_loss_candidate=false</code> · <code>formal_online_rl_eligible=false</code> · <code>invalid_for_online_rl=true</code> · <code>invalid_for_training=false</code></span>
+    <b>training_view 投影</b><span><code>online_rl_eligible=false</code></span>
+    <b>result_status_reason</b><span><code>"non_verl_route_invalid_for_online_rl"</code></span>
+  </div>
+  <p><code>invalid_for_training=false</code> 但 <code>invalid_for_online_rl=true</code> 的组合很重要：mock 轨迹<b>可以</b>用于 SFT / warm-start 训练数据生成（如果 16G.5/17B/20 阶段允许的话），<b>不可以</b>进入 verl 异步 PPO / GRPO 的 policy loss 直接梯度。本阶段没有放开这个组合 — Stage 20 闸门仍然为 false。</p>
+
+  <h2 class="sec" id="inspector">6 · inspector 字段白名单是否过严</h2>
+
+  <p>子代理建议加严 inspector，本阶段实施。我评估这个加严的副作用。</p>
+
+  <h3>6.1 白名单常量一览</h3>
+  <table>
+    <thead><tr><th>常量</th><th>位置</th><th>枚举值</th></tr></thead>
+    <tbody>
+      <tr><td><code>STAGE16G2C_PROBE_KEYS</code></td><td>file_surface.py:171</td><td>20 个：schema_version / status / run_episode_invocation / projection_writer / projection_created_from_run_episode / projection_complete / result_status / result_status_reason / final_verifier_accepted / tool_names_observed / tool_result_statuses / operation_kinds_observed / final_patch_sha256 / final_diff_sha256 / final_patch_changed_file_facts / training_projection / provider_route_qualification / forbidden_model_visible_marker_scan_passed / forbidden_model_visible_marker_findings / public_safe_digest_only</td></tr>
+      <tr><td><code>STAGE16G2C_PATCH_FACT_KEYS</code></td><td>file_surface.py:193</td><td>7 个：entry_count / added_count / modified_count / deleted_count / renamed_count / changed_paths / entries</td></tr>
+      <tr><td><code>STAGE16G2C_PATCH_ENTRY_KEYS</code></td><td>file_surface.py:202</td><td>3 个：old_path / new_path / status</td></tr>
+      <tr><td><code>STAGE16G2C_TRAINING_PROJECTION_KEYS</code></td><td>file_surface.py:203</td><td>12 个：training_view_projection_schema_version / response_token_count / response_mask_count / response_span_count / generation_record_count / tool_observation_span_count / tool_observation_spans_response_mask_zero / tool_output_response_mask_zero_count / assistant_response_mask_one_count / online_rl_eligible / invalid_for_training / invalid_for_online_rl</td></tr>
+      <tr><td><code>STAGE16G2C_PROVIDER_ROUTE_KEYS</code></td><td>file_surface.py:217</td><td>5 个：provider_route / llm_gateway_route / formal_online_rl_eligible / policy_loss_candidate / qualification_reason</td></tr>
+      <tr><td><code>STAGE16G2C_LINKAGE_KEYS</code></td><td>file_surface.py:224</td><td>17 个 manifest / hygiene / projection 校验字段</td></tr>
+      <tr><td><code>STAGE16G2C_PATH_SCAN_KEYS</code></td><td>file_surface.py:244</td><td>5 个：schema_version / public_path_leak_scan_passed / finding_count / findings / scanned_suffixes</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 这是过严还是恰好？</h3>
+  <p>我的判断：<b>对当前阶段是恰好的</b>。理由：</p>
+  <ul>
+    <li>每个白名单字段都是<b>语义性约束</b> — 让 inspector 知道"该有的字段就是这些，不该有的不会偷偷被加进来"。这是把 acceptance summary 当作契约表面来用，符合 RL evidence 防伪造的"白名单优先"原则。</li>
+    <li>未来 stage 如果要扩字段（比如 16G.4 引入 parity probe 字段、16G.5 引入 reward attribution 字段），需要<b>同步</b>更新 inspector 白名单 — 这是设计意图，不是 bug。</li>
+    <li>缺点：未来 stage 的开发节奏需要"代码 + inspector 同时改"，<b>偶尔会让简单的字段扩展变得多一道手续</b>。但相比"摘要刷分但字段被偷偷塞料"的风险，这点摩擦可接受。</li>
+  </ul>
+
+  <h3>6.3 一个相关风险（仍可接受）</h3>
+  <p><code>operation_kinds_observed</code> 在 inspector 里被硬约束为<b>恰好</b> <code>{replace_text, write_file, delete_file, move_file, mkdir}</code>（<code>!=</code> 即 fail）。如果未来要加 <code>chmod / link / append</code> 等 operation 种类，<b>必须</b>同步更新这条断言，否则 inspector 会拒绝新 operation。这是预期行为。</p>
+
+  <h2 class="sec" id="regression">7 · 测试与回归</h2>
+
+  <table>
+    <thead><tr><th>测试集</th><th>测试数</th><th>耗时</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>test_repo_harness_stage16g2c_projection_linkage.py</code></td><td>7</td><td>5.4s</td><td>本阶段焦点</td></tr>
+      <tr><td><code>test_repo_harness_stage16g2a_tool_surface.py</code> · <code>...g2b_file_mutation.py</code></td><td>57</td><td>0.8s</td><td>2A + 2B 焦点回归</td></tr>
+      <tr><td>stage16g* + stage16f3_run_episode*</td><td>99</td><td>19.8s</td><td>覆盖 run_episode 主路径 + 整个 16G 系列</td></tr>
+      <tr><td>stage16f* + stage16g* 全集</td><td>191</td><td>152.4s</td><td>包含异步 runtime / training view / gateway / tool surface 完整回归 — 比 agent 自报的 151 passed 更宽 40 个</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.1 本阶段 7 个焦点测试都验证什么</h3>
+  <details>
+  <summary>展开</summary>
+  <ol>
+    <li><code>test_stage16g2c_writer_outputs_public_safe_evidence_and_inspector</code> — 构造脚本写出来的 4 份 evidence + inspector 联跑必须 passed</li>
+    <li><code>test_stage16g2c_file_mutation_tool_result_is_gateway_model_visible_safe</code> — tool result 经过 gateway visible filter 后不能出现 forbidden marker（验证了 audit_ref 改名的实际效果）</li>
+    <li><code>test_stage16g2c_inspector_rejects_projection_semantic_tamper_even_if_digest_updated</code> — 即使把 sha256 摘要同步更新，只要 final.patch 或 manifest 的语义被改，inspector 仍要拒绝</li>
+    <li><code>test_stage16g2c_inspector_rescans_public_evidence</code> — inspector 不能只信 acceptance summary 里的状态字段，必须重新扫公开 evidence</li>
+    <li><code>test_stage16g2c_inspector_rejects_projection_forbidden_public_markers</code> — 公开扫描必须能在任何 public evidence 文件里发现 forbidden marker 后拒绝</li>
+    <li><code>test_stage16g2c_inspector_rejects_unexpected_probe_and_linkage_fields</code> — probe / linkage 报告中出现白名单之外的字段时拒绝</li>
+    <li><code>test_stage16g2c_inspector_rejects_unexpected_patch_entry_fields</code> — patch entry 里出现 old_path / new_path / status 之外的字段时拒绝</li>
+  </ol>
+  </details>
+
+  <h2 class="sec" id="gates">8 · 闸门状态（实陈述）</h2>
+  <p>以下为 <code>stage16g2c_acceptance_summary.json</code> 中的实际字段值，我没有做任何添加/解释外延。</p>
+  <div class="gate">
+    <div class="row"><b>stage16g2c_complete</b><code>true</code></div>
+    <div class="row"><b>stage16g3_allowed_to_start</b><code>true</code> <span class="tag t-good">新放开</span></div>
+    <div class="row"><b>stage17b_real_data_freeze_allowed</b><code>false</code></div>
+    <div class="row"><b>stage20_warm_start_data_generation_allowed</b><code>false</code></div>
+    <div class="row"><b>stage21_formal_rl_allowed</b><code>false</code></div>
+    <div class="row"><b>run_episode_projection_linkage_passed</b><code>true</code></div>
+    <div class="row"><b>patch_hygiene_linkage_passed</b><code>true</code></div>
+    <div class="row"><b>non_verl_route_policy_loss_blocked</b><code>true</code></div>
+    <div class="row"><b>tool_observation_mask_zero_passed</b><code>true</code></div>
+    <div class="row"><b>structured_file_tools_projected</b><code>true</code></div>
+    <div class="row"><b>public_path_leak_scan_passed</b><code>true</code></div>
+    <div class="row"><b>failure_count</b><code>0</code></div>
+  </div>
+
+  <h3>8.1 为什么 16G.3 可以开，但 17B / 20 / 21 还不行？</h3>
+  <ul>
+    <li><b>16G.3 = 状态机/会话边界</b> — 它要的前置是"结构化文件工具的 projection linkage"已经贯通（也就是本阶段刚完成的事），不需要 verl route 真实跑。</li>
+    <li><b>17B = 真实数据冻结</b> — 它要求所有工具不仅 schema/projection 通，还要在真实 SWE 任务（不是手造 mini repo）上 parity 通过、reward boundary 稳定。要 16G.4 parity probe + 16G.5 reward policy + 16G.6 freeze。</li>
+    <li><b>20 = warm-start 数据生成</b> — 要求 17B 冻结后的可用数据 + 数据合规标准。</li>
+    <li><b>21 = 正式 RL</b> — 要求 20 出的 warm-start checkpoint + verl 真实 route 跑通。</li>
+  </ul>
+  <p>简单说：本阶段把<b>"结构化文件工具 →（run_episode）→ 兼容投影"</b>这条管子接通了；但<b>"轨迹被算进 PPO/GRPO 梯度"</b>的开关仍然有 5 层闸门没开。</p>
+
+  <h2 class="sec" id="risks">9 · 我观察到的风险与未解问题</h2>
+
+  <p>这一节是<b>我自己的看法</b>，不是 acceptance summary 里的字段。供你决定哪些需要在 16G.3 / 16G.4 之前先收口。</p>
+
+  <div class="risk">
+    <h4>R1 · 死代码：<code>_stage16g2a_schema_only_tool</code> 已不再被调用</h4>
+    <p><code>minimal.py:391</code> 现在直接把 5 个文件工具全部路由到 <code>_stage16g2b_file_mutation_tool</code>。<code>_stage16g2a_schema_only_tool</code>（定义在 line 2337）的 reason_code 还写着 <code>behavior_not_enabled_until_stage16g2b</code> — 这段函数<b>已经没有调用点</b>，里面的字符串属于过期描述。<br>
+    建议：16G.3 起手 PR 里清理掉这个函数和它引用的 <code>safe_rewrite_example</code> 分支（line 2356-2370），避免后续读代码的人误以为这是当前行为。</p>
+  </div>
+
+  <div class="risk">
+    <h4>R2 · partial_failure 路径没有<b>在 16G.2C 中</b>被 run_episode 端到端 probe 一次</h4>
+    <p>16G.2B 测试覆盖了 partial_failure 的拒绝语义（unit test 直接调 file_mutation 模块），但 16G.2C 的 run_episode probe 跑的都是"全部 operation 都成功"的快乐路径。代码层面 <code>typed["allowed_in_policy_loss_trajectory"]=False</code> 和 status="error" 是硬编码（minimal.py:2317），原子预检也几乎可以保证不会运行时部分失败。但<b>从 evidence 角度，缺一个"在 run_episode 路径里故意制造 partial_failure，然后 invalid_for_training / policy_loss_candidate 双重拒绝"的 probe 样本</b>。<br>
+    建议：在 16G.4 parity probe 里加一个"故意触发 disk full / permission denied"的负样本场景，作为对抗性 probe；现阶段不阻塞。</p>
+  </div>
+
+  <div class="risk">
+    <h4>R3 · <code>reason</code> 字段（delete/move 操作）还没接入任何下游信号</h4>
+    <p>16G.2A 设计修正引入的"模型必须提供 reason"字段目前只在 audit_payload 里留底。它<b>不进 trajectory token</b>（避免被模型在生成时学到对应的 reward 模式），也<b>不进 reward attribution</b>（16G.5 才接入）。当前价值：审计 + 事后 reward hacking 诊断。<br>
+    建议：在 16G.4 / 16G.5 设计 reward boundary 时，<b>明确</b> reason 字段的下游归属 — 是 reward shaping 的副输入？还是只用作离线分析？现在让它"挂在那"对训练没影响，但概念上需要早一点收口。</p>
+  </div>
+
+  <div class="risk">
+    <h4>R4 · inspector 字段白名单的"演进成本"在 16G.4+ 会显现</h4>
+    <p>本阶段 inspector 共 7 个字段白名单常量。16G.3 加状态机字段、16G.4 加 parity 字段、16G.5 加 reward boundary 字段，<b>每次都要同步改 inspector</b>。如果未来希望加一个"忽略未知字段但记录 warning"的宽松模式，应该等到 17B 冻结之前再考虑 — 在那之前严格模式更安全。<br>
+    建议：当前不动。在 16G.6 freeze 时再统一评估是否给某些演进性字段一个"warn-only"白名单层。</p>
+  </div>
+
+  <div class="risk">
+    <h4>R5 · 模型可见 typed dict 字段名容易再次踩雷</h4>
+    <p>这次的"audit_ref → audit_artifact_id"是被 gateway forbidden marker 抓到才发现的。问题根本：<b>没有显式约束 tool result 写入 typed dict 时跑一遍 visibility filter</b>。如果未来某个工具开发者再写一个 <code>"gold_patch_path"</code> 字段，目前要等 run_episode probe 才会发现。<br>
+    建议：在 16G.3 期间给 <code>_tool_result</code> 内部函数加一个 lint pass — 构造期就跑 <code>_find_forbidden_marker</code> 扫 typed dict 的所有 key，发现就 raise。这样在单元测试就能拦下，不必等 integration probe。</p>
+  </div>
+
+  <div class="risk">
+    <h4>R6 · 16G.3 闸门 _allowed_to_start=true 不代表已经设计好</h4>
+    <p>本阶段 acceptance summary 把 <code>stage16g3_allowed_to_start=true</code> 翻成 true，但这<b>仅意味着前置依赖（projection linkage）已满足</b>，不代表 16G.3 的执行计划已经写好或者审过。<br>
+    建议：16G.3 启动前还是按"plan HTML → 审 → 实施 agent → 我独立核查"的同样节奏走，不要被这个 true 字段带偏。</p>
+  </div>
+
+  <h2 class="sec" id="map">10 · 能力地图同步</h2>
+  <p>按你确认的方案，我会另外重写 <code>repo_harness_verl_harness_capability_acceptance_map.html</code>，把 16G.2 涉及的工具卡片改成"四象限入手手册"结构（① 模型视角 ② 实现位置 ③ 训练投影 ④ 阶段历史 + profile），其余未推进过的卡片保留原"registry: gap=… 句型"格式，给后续 stage 填。具体动作清单：</p>
+  <ul>
+    <li><code>read_file</code> · <code>grep</code> · <code>list_files</code> · <code>glob_files</code> · <code>symbol_search</code> · <code>edit_file</code> · <code>create_file</code> — 已实现已被 16G.2A 收录进 default surface，按四象限重写</li>
+    <li><code>write_file</code> · <code>apply_patch</code> — 行为已实现（16G.2B），训练投影 linkage 已贯通（16G.2C），按四象限重写并把状态从 <span class="tag t-warn">schema/待建</span> 改成 <span class="tag t-good">已贯通 mock route 投影</span> <span class="tag t-warn">policy_loss 仍待 17B+</span></li>
+    <li><code>delete_file</code> · <code>move_file</code> · <code>mkdir</code> — 核心入口已通过 <code>apply_patch.operations</code>，独立 standalone 工具行为已可执行（extended profile），按四象限重写，标注"是否独立 promoted 进 core 待 16G.5 决定"</li>
+    <li><code>bash</code> · <code>run_tests</code> — 16G.2 没改它们的状态，本轮卡片不重写</li>
+    <li>顶部总览矩阵：相应几行的"训练投影"列从 ✗ 变为 ~（mock route 通），policy_loss 列仍为 ✗</li>
+    <li>新增一行说明："16G.2C 完成时间点"的快照，方便对照后续 stage 增量</li>
+  </ul>
+  <p>该重写会作为下一份独立文档落盘。本份完成报告到此结束。</p>
+
+  <div class="callout info"><b>下一步建议：</b>16G.3 启动前我建议先把 R1 死代码清理 + R5 lint pass 这两个小动作收掉（成本低、收益是后续 stage 不容易踩同样的雷）；R2 / R3 / R4 留给对应 stage 设计阶段处理；R6 是个工作流提醒，不需要技术动作。</div>
+
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T8 · 投影 · 代码导览</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.active{background:#1c2c1f;color:#6fdc84}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  h4{font-size:14.4px;margin:16px 0 6px;color:#9cc4ff}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5;margin:9px 0}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  .cm{color:#6b7484}.kw{color:#c594ff}.str{color:#a3e3a8}.fn{color:#9cc4ff}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .timeline{background:#0e2030;border:1px solid #34507a;border-radius:11px;padding:13px 18px;margin:13px 0;font-size:13.3px;display:grid;grid-template-columns:max-content 1fr;column-gap:14px;row-gap:5px}
+  .timeline b{color:#9cc4ff}
+  .contract{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 16px;margin:11px 0}
+  .contract h4{margin-top:0;color:#e6c068}
+  .contract .row{display:grid;grid-template-columns:max-content 1fr;column-gap:13px;row-gap:5px;font-size:13px}
+  .contract b{color:#cdd6e6}
+  .inv{background:#1b2510;border:1px solid #475a2f;border-radius:10px;padding:11px 15px;margin:10px 0;font-size:13.3px}
+  .inv h4{margin-top:0;color:#9fdc84}
+  .invlist{margin:5px 0;padding-left:21px;font-size:13.1px}
+  .invlist li{margin:5px 0}
+  .invlist .id{display:inline-block;background:#2f6b3a;color:#fff;padding:0px 7px;border-radius:9px;font-size:11px;font-weight:700;margin-right:6px;font-family:"SFMono-Regular",Menlo,monospace}
+  .flow{background:#0a0c12;border:1px solid var(--line);border-radius:11px;padding:14px 18px;margin:12px 0;font-family:"SFMono-Regular",Menlo,monospace;font-size:12px;line-height:1.55;color:#c9d4e6;overflow-x:auto;white-space:pre}
+  .flow .l{color:#9aa4b6}.flow .t{color:#9cc4ff;font-weight:600}.flow .s{color:#e6c068}.flow .e{color:#f29292}.flow .ok{color:#6fdc84}
+  .sidelink{background:#241f12;border-left:4px solid #6b5a2f;border-radius:8px;padding:9px 14px;margin:9px 0;font-size:13px}
+  .sidelink b{color:#e6c068}.sidelink a{color:#e6c068}
+  .navbar{display:flex;justify-content:space-between;margin:24px 0 8px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .navbar a{color:#9cc4ff;text-decoration:none}
+  .lineref{font-family:"SFMono-Regular",Menlo,monospace;color:#bfe3ff;font-size:12.5px}
+  .filebox{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px;margin:6px 0;font-size:12.7px}
+  .filebox b{color:#9cc4ff;font-family:"SFMono-Regular",Menlo,monospace}
+  /* 阅读路径 — 章节顶部，调用链 + 自包含讲解 */
+  .readpath{background:#0e2030;border:1px solid #34507a;border-radius:11px;padding:14px 18px 10px;margin:13px 0}
+  .readpath .rpttl{font-size:14.4px;color:#9cc4ff;font-weight:600;margin-bottom:10px}
+  .readpath > ol{margin:0;padding:0;list-style:none;counter-reset:rp}
+  .readpath > ol > li{padding:11px 13px 12px 50px;margin:9px 0;background:#0a0c12;border:1px solid #1e3454;border-radius:9px;position:relative}
+  .readpath > ol > li::before{counter-increment:rp;content:counter(rp);position:absolute;left:11px;top:11px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:2px 0;border-radius:9px;font-size:12px;min-width:30px;text-align:center}
+  .readpath .rplp{font-family:"SFMono-Regular",Menlo,monospace;color:#bfe3ff;font-size:11.9px;margin-bottom:2px;word-break:break-all}
+  .readpath .rpfn{font-family:"SFMono-Regular",Menlo,monospace;color:#e6c068;font-size:13.4px;font-weight:600;margin-bottom:8px;word-break:break-word}
+  .readpath .rpbody{display:grid;grid-template-columns:max-content 1fr;column-gap:11px;row-gap:5px;font-size:12.8px;line-height:1.65}
+  .readpath .rpbody > .lbl{color:#9cc4ff;font-weight:600;white-space:nowrap;padding-top:1px}
+  .readpath .rpbody > .val{color:#cdd6e6}
+  .readpath .rpbody > .val code{font-size:12.2px}
+  .readpath .rpbody > .val .step{background:#34507a;color:#fff;padding:0 7px;border-radius:9px;font-family:"SFMono-Regular",Menlo,monospace;font-size:11.6px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本章节</h2>
+  <a href="#readpath">📖 代码阅读路径（10 步调用链）</a>
+  <a href="#timeline">⏱ 时间点</a>
+  <a href="#role">① 角色 + Contract</a>
+  <a href="#excerpt-write">② 写入主流程（line 118）</a>
+  <a href="#excerpt-route">③ provider route 资格判决（line 610）</a>
+  <a href="#excerpt-validate">④ 公开扫描兜底（line 638）</a>
+  <a href="#files">⑤ 14 个公开文件</a>
+  <a href="#flow">⑥ 数据流</a>
+  <a href="#inv">⑦ 关键不变量</a>
+  <a href="#side">⑧ 关联侧栏</a>
+  <a href="#next">→ T9</a>
+
+  <h2>导航</h2>
+  <a href="code_guide_index.html">← 总览索引</a>
+  <a href="code_guide_t7_result.html">← T7 EpisodeResult（待写）</a>
+  <a href="code_guide_t9_evidence.html">→ T9 evidence（待写）</a>
+  <a class="active" href="code_guide_t8_projection.html">T8 投影（本页）</a>
+
+  <h2>侧栏</h2>
+  <a href="code_guide_side_safety.html">A · 安全边界</a>
+  <a href="code_guide_side_mask.html">B · TrainingView mask（待写）</a>
+  <a href="code_guide_side_audit.html">C · Audit/artifact（待写）</a>
+  <a href="code_guide_side_evidence.html">D · evidence 防伪（待写）</a>
+
+  <h2>关联</h2>
+  <a href="repo_harness_verl_stage16g2c_completion_report.html">16G.2C 完成报告</a>
+</nav>
+<main>
+  <h1>T8 · 投影 — 把 RealEpisodeRun 翻译成训练样本可消费的 14 个公开文件</h1>
+  <p class="meta">代码导览 · 主线时间点 8 / 9 · 主要文件：<code>evaluation/episode_projection.py</code>（1500+ 行）· <b>本章节是本系列样板之一</b></p>
+
+  <h2 class="sec" id="readpath" style="margin-top:24px;border-top:none">📖 本章节代码阅读路径 — 一条完整调用链</h2>
+  <p class="small" style="margin-top:0">下面 10 步按调用顺序排列，每步给出准确 <code>file:line</code> + 函数名 + 这个位置做什么 + 输入输出 + 调用源/它再调用谁。<b>只读这一段（不打开源码）应该就能搞清"T7 跑完之后 T8 内部如何把私有 RepoHarnessEpisodeResult 翻译成公开的 14 个文件 + policy_loss 守门员是怎么决出的"</b>。后面的 §② ~ §⑤ 给关键步骤贴上真实代码 excerpt。</p>
+  <div class="readpath">
+    <div class="rpttl">私有 EpisodeResult → 资格判决 → 字段白名单提取 → 14 文件写盘 → manifest 绑摘要 → validate 五处 mismatch → 公开扫描 → ProjectionWriteResult</div>
+    <ol>
+
+      <li>
+        <div class="rplp">src/repo_harness/rl/episode.py:234</div>
+        <div class="rpfn">class RepoHarnessEpisodeResult（输入数据类）</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">T8 的<b>输入</b>。T7 跑完 episode 后构造的私有结果，含<b>所有原始数据</b>（包括 raw token、raw reward metadata、私有 audit_ref 等），下面要把它<b>过滤 + 投影</b>成公开形态。</span>
+          <span class="lbl">关键字段</span><span class="val">· <code>training_view</code>（含 response_ids / response_mask / response_spans / extra_fields）<br>· <code>generation_records</code>（每轮 model_call_id / output_token_ids / output_logprobs / gateway_route）<br>· <code>reward</code>（reward.score / invalid_for_training / invalid_reason / reward_metadata_ref）<br>· <code>verifier_summary</code>（hidden verifier 输出）<br>· <code>invalid_for_training: bool</code> + <code>invalid_for_online_rl: bool</code> + <code>status</code> + <code>status_reason</code>　<br>· <code>audit_ref</code>（私有，evaluator-only，不进公开）</span>
+          <span class="lbl">谁产出</span><span class="val">T7 的 reward boundary + AgentLoop 跑完 turn 后由 RepoHarnessRuntime 拼装</span>
+          <span class="lbl">→ 谁消费</span><span class="val"><span class="step">2</span> 的 <code>write_run_episode_compat_projection</code> 接住它做投影</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:118-127</div>
+        <div class="rpfn">def write_run_episode_compat_projection(*, run_dir, task, request, execution_spec, result, provider_route) → ProjectionWriteResult</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">T8 的<b>主入口</b>。串联 6 步：① 算 provider_route_qualification → ② 字段白名单提取 14 个公开 dict → ③ 一次性写盘 → ④ 写 manifest → ⑤ validate（assert_complete=True，fail closed）→ ⑥ 公开扫描 forbidden marker。本身是流水线，每一步委托给一个辅助函数。</span>
+          <span class="lbl">输入</span><span class="val"><code>run_dir</code>（已有 <code>final.patch</code> / <code>final.diff</code> / <code>final_patch_hygiene_report.json</code> 的磁盘目录）· <code>task</code>（<code>RunnableTask</code>）· <code>request</code>（<code>RepoHarnessEpisodeRequest</code>，含 <code>llm_gateway_route</code>）· <code>execution_spec</code>（<code>EpisodeExecutionSpec</code>，含 scaffold_id / permission_mode / context_facts 等）· <code>result</code>（步骤 <span class="step">1</span> 的私有 EpisodeResult）· <code>provider_route</code>（字符串，比如 <code>"mock"</code> / <code>"verl"</code>）</span>
+          <span class="lbl">输出</span><span class="val"><code>ProjectionWriteResult</code> dataclass（line 111-115）含 <code>projection_dir</code>（磁盘绝对 Path） · <code>manifest_path</code>（compat_projection_manifest.json 的 Path） · <code>validation_report</code>（dict）</span>
+          <span class="lbl">磁盘副作用</span><span class="val"><code>run_dir / "compat_projection/"</code> 下产出 14 个 .json 或 .patch / .diff 文件 + 1 manifest + 1 validation report</span>
+          <span class="lbl">调用源</span><span class="val">T7 完成后 RepoHarnessRuntime 在每个 episode 收尾时调用</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">3</span> 资格判决（line 133-137 调 <code>_provider_route_qualification</code>）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:610-635</div>
+        <div class="rpfn">def _provider_route_qualification(*, provider_route, request, result) → dict</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val"><b>policy_loss 守门员</b>。RepoHarness 决定"这条轨迹能不能进 PPO/GRPO 梯度"的唯一函数。其他地方<b>不能</b>直接构造 <code>policy_loss_candidate=True</code>（T8 不变量 I-1）。</span>
+          <span class="lbl">4 条件 AND</span><span class="val">① <code>provider_route == "verl"</code>（实际推理走的真是 verl）<br>② <code>request.llm_gateway_route == "verl"</code>（请求侧也声明是 verl）<br>③ <code>not result.invalid_for_training</code>（没有 training-level 阻断）<br>④ <code>not result.invalid_for_online_rl</code>（没有 online-RL 阻断）<br>四者全 True → <code>formal_online_rl_eligible = True</code>；任一为 False → 永远 False</span>
+          <span class="lbl">输出</span><span class="val">dict，含 <code>schema_version</code> / <code>provider_route</code> / <code>llm_gateway_route</code> / <code>result_invalid_for_training</code> / <code>result_invalid_for_online_rl</code> / <code>formal_online_rl_eligible</code> / <code>policy_loss_candidate</code>（与 formal_online_rl_eligible <b>恒相等</b>）/ <code>qualification_reason</code></span>
+          <span class="lbl">调用源</span><span class="val">步骤 <span class="step">2</span> 主入口在 line 133-137 调用</span>
+          <span class="lbl">→ 继续看</span><span class="val">结果对象 <code>route_qualification</code> 传给步骤 <span class="step">4</span> 的字段白名单提取 + 进 status dict</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:138-189</div>
+        <div class="rpfn">字段白名单提取：14 个公开 dict 的构造</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">回到主入口（步骤 <span class="step">2</span>）函数体。手动构造 14 个公开 dict，<b>每个 dict 只允许预定义的字段</b>，私有原始数据（raw token、raw logprobs、raw verifier artifacts、audit_ref 等）被显式剥离。</span>
+          <span class="lbl">关键 dict</span><span class="val">· <code>task_projection</code>（line 138 调 <code>_task_projection</code>，line 554+）<br>· <code>spec_report</code>（line 139 调 <code>_execution_spec_report</code>，line 568+）<br>· <code>generation_records_projection</code>（line 147-157，<b>只投影计数和 has_output_logprobs flag</b>，<b>不</b>投 raw token 或 logprobs）<br>· <code>training_view_projection</code>（line 158-169，<b>只投影 token 计数和 mask 计数</b>，<b>不</b>投 raw response_ids）<br>· <code>status</code>（line 170-181，含 <code>formal_online_rl_eligible</code> 和 <code>policy_loss_candidate</code>，从步骤 <span class="step">3</span> 的 route_qualification <b>双绑</b>抄过来 —— T8 不变量 I-2 的同步点）<br>· <code>metrics</code>（line 182-189）</span>
+          <span class="lbl">字段剥离原则</span><span class="val">raw 数据全部留在私有 audit_refs 链路（rh:// opaque ref），公开投影<b>只</b>放摘要 + flag + 计数</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">5</span> 把这些 dict 写盘</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:190-230</div>
+        <div class="rpfn">files dict + 14 项 + 一次性写盘（line 229-230 调用 _write_projection_file）</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">构造 <code>files: dict[str, payload]</code>（line 196-228），key 是公开文件名，value 是步骤 <span class="step">4</span> 算好的 dict 或读出来的文本。然后 <code>for filename, payload in files.items(): _write_projection_file(projection_dir / filename, payload)</code>（line 229-230）一次性全部写盘。</span>
+          <span class="lbl">14 个文件</span><span class="val">task_projection / run_config_projection / episode_execution_spec_report / public_environment_context_report / <b>provider_route_qualification</b> / <b>training_view_projection</b> / generation_records_projection / verifier_summary / reward_summary / metrics / <b>compat_projection_status</b> / <b>final.patch</b> / <b>final.diff</b> / final_patch_hygiene_report（详见 §⑤）</span>
+          <span class="lbl">特殊处理</span><span class="val">· <code>final.patch</code> 和 <code>final.diff</code> 用 <code>_read_required_text(run_dir / "...")</code>（line 190-191）从磁盘读已经存在的文件（不是这里现算）<br>· <code>final_patch_hygiene_report</code> 走 <code>_public_patch_hygiene_report</code>（line 544+）字段剥离（不变量 I-5）</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">6</span> 写 manifest 绑摘要</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:232-243</div>
+        <div class="rpfn">_manifest_payload + 写 compat_projection_manifest.json</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">把 14 个文件的 sha256 摘要 + 步骤 <span class="step">3</span> 的资格判决 + 步骤 <span class="step">1</span> result 的关键 flag 一起绑成单个 manifest dict（_manifest_payload，line 484+），写到 <code>compat_projection_manifest.json</code>。这是<b>整个 T8 的根证据</b>，T9 evidence 阶段会反复 cross-check。</span>
+          <span class="lbl">manifest 关键字段</span><span class="val">· 所有公开文件的 sha256（<code>final_patch_sha256</code> / <code>final_diff_sha256</code> / 其余 *_digest）<br>· <code>policy_loss_candidate</code>（与 status dict + route_qualification dict <b>必须三处相等</b>，I-2）<br>· <code>formal_online_rl_eligible</code>（同上）<br>· <code>episode_execution_spec_sha256</code> / <code>task_definition_sha256</code> / <code>run_config_sha256</code> / <code>tool_registry_digest</code> 等指纹</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">7</span> validate（assert_complete=True）</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:244-249</div>
+        <div class="rpfn">validate_run_episode_compat_projection(projection_dir, ..., assert_complete=True)</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">主入口（步骤 <span class="step">2</span>）的<b>fail-closed</b> 节点。调用 validation 函数检查 manifest 与 14 个公开文件之间的所有交叉一致性；<code>assert_complete=True</code> 表示任何错误立即 <code>raise ProjectionValidationError</code>，<b>不</b>留下半成品 manifest（不变量 I-4）。</span>
+          <span class="lbl">关键点</span><span class="val">本函数<b>不</b>跑业务逻辑，只跑校验。它的实现见步骤 <span class="step">8</span></span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">8</span> validation 实现 + 五处 mismatch 兜底</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:258-417</div>
+        <div class="rpfn">def validate_run_episode_compat_projection(projection_dir, *, execution_spec=None, result=None, assert_complete=False) → dict</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">独立校验函数（也可被 T9 evidence 阶段单独调，read-only）。读 manifest + provider_route_qualification + compat_projection_status + training_view_projection，做五处 cross-check 防止有人篡改任一处。</span>
+          <span class="lbl">五处 mismatch</span><span class="val">（line 380-417）<br>① <code>provider_route_qualification_provider_route_mismatch</code><br>② <code>provider_route_qualification_llm_gateway_route_mismatch</code><br>③ <code>provider_route_qualification_formal_online_rl_mismatch</code><br>④ <code>provider_route_qualification_policy_loss_mismatch</code>（route_report.policy_loss_candidate ≠ manifest）<br>⑤ <code>non_verl_route_marked_policy_loss_candidate</code>（route 不是 verl 但 manifest 标了 True）<br>额外：status_report 的 policy_loss / formal flag 也要与 manifest 等价；training_view_report 的 online_rl_eligible 与 route 状态一致</span>
+          <span class="lbl">输出</span><span class="val">validation_report dict，含 <code>errors: list[str]</code>。errors 非空且 <code>assert_complete=True</code> → raise <code>ProjectionValidationError("; ".join(errors))</code></span>
+          <span class="lbl">→ 继续看</span><span class="val">校验通过后，主入口继续 step <span class="step">9</span></span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:250-255 (主入口) + line 638-650 (扫描函数)</div>
+        <div class="rpfn">def _scan_public_projection_for_leaks(projection_dir) → list[str]</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val"><b>最后一道墙</b>（侧栏 A · L5）。validation 通过后，主入口写 validation_report 落盘，然后扫描整个 <code>compat_projection/</code> 目录里所有 <code>.json / .jsonl / .md / .txt / .log / .yaml / .yml / .patch / .diff</code> 文件，看是否有 forbidden marker 残留。</span>
+          <span class="lbl">扫描逻辑</span><span class="val">① 先用 regex <code>_RUNTIME_PRIVATE_REF_PATTERN</code>（line 73）把合法的 <code>runtime-private:&lt;kind&gt;:&lt;sha256&gt;</code> opaque ref 替换成占位符，避免误伤<br>② 然后逐字符串比对 <code>_FORBIDDEN_PUBLIC_MARKERS</code>（line 46，含 <code>/Users/</code> / <code>/home/</code> / <code>hidden_verifier</code> / <code>gold_patch</code> / <code>provider_secret</code> / <code>FAIL_TO_PASS</code> 等）<br>③ 命中即把 <code>{path}:{marker}</code> 加入 findings 列表</span>
+          <span class="lbl">输出</span><span class="val"><code>list[str]</code> findings。空 → 通过；非空 → 写进 validation_report，T9 inspector 重跑时也会发现</span>
+          <span class="lbl">→ 继续看</span><span class="val"><span class="step">10</span> 构造 ProjectionWriteResult 返回</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="rplp">src/repo_harness/evaluation/episode_projection.py:251-255</div>
+        <div class="rpfn">return ProjectionWriteResult(projection_dir=..., manifest_path=..., validation_report=...)</div>
+        <div class="rpbody">
+          <span class="lbl">做什么</span><span class="val">主入口收尾。构造 <code>ProjectionWriteResult</code> 数据类（line 111-115）返回给调用方。</span>
+          <span class="lbl">返回去哪</span><span class="val">RepoHarnessRuntime 的 episode 收尾流程 → 进入 <b>T9 evidence</b>：本 stage 的 <code>build_*.py</code> 脚本会读 <code>projection_dir</code> 下 14 个文件 + manifest，构造 acceptance summary（含 <code>source_digests</code> sha256 binding 源代码）+ 调 inspector 校验</span>
+          <span class="lbl">如果 T8 失败</span><span class="val">磁盘下虽然有 14 个文件，但没 <code>compat_projection_manifest.json</code>。下游 evidence 阶段读不到 manifest 就视为本 episode 不可用，不会被 T9 错误地接收（不变量 I-4 fail closed）</span>
+        </div>
+      </li>
+
+    </ol>
+  </div>
+
+  <h2 class="sec" id="timeline">⏱ 时间点</h2>
+  <div class="timeline">
+    <b>T7 完成时</b><span>有了完整的 <code>RepoHarnessEpisodeResult</code>（含 reward_summary / training_view / generation_records / invalid_for_training / invalid_for_online_rl / verifier_summary / audit_ref 等）；磁盘 <code>run_dir</code> 下已有 <code>final.patch</code> / <code>final.diff</code> / <code>final_patch_hygiene_report.json</code></span>
+    <b>T8 入口</b><span><code>write_run_episode_compat_projection(run_dir, task, request, execution_spec, result, provider_route)</code></span>
+    <b>T8 内部</b><span>① 算 provider_route_qualification → ② 构造 14 个 dict payload → ③ 一次性写盘 → ④ 写 manifest → ⑤ validate（assert_complete=True）→ ⑥ 公开扫描 forbidden marker</span>
+    <b>T8 出口</b><span><code>ProjectionWriteResult(projection_dir, manifest_path, validation_report)</code>；磁盘 <code>compat_projection/</code> 下 14 个文件 + 1 manifest + 1 validation report</span>
+    <b>T+1 是什么</b><span>T9 evidence：本 stage（如 16G.2C）的 build_*.py 脚本会读这些公开文件，构造 acceptance summary + 调 inspector 校验</span>
+  </div>
+
+  <h2 class="sec" id="role">① 角色 + Contract</h2>
+
+  <div class="contract">
+    <h4>角色定位</h4>
+    <p>T8 是 <b>RepoHarness 公开 / 私有边界</b> 的关键节点：</p>
+    <ul>
+      <li>之前所有数据（episode_result、generation_records、tool_observation token 流、reward metadata）<b>都是私有的</b>，可以含敏感字段（audit_ref、绝对路径、hidden_test_patch 等）</li>
+      <li>T8 之后的 <code>compat_projection/</code> 目录是<b>公开 / 训练数据消费侧可见</b>；每个文件都经过<b>白名单字段提取</b>、绝对路径剥离、forbidden marker 扫描</li>
+      <li><b>策略损失资格</b>（policy_loss_candidate）也在 T8 决出，并且会与 manifest / status / training_view 三处<b>交叉校验</b>，任何不一致都 fail closed</li>
+    </ul>
+  </div>
+
+  <div class="contract">
+    <h4>函数 contract</h4>
+    <div class="row">
+      <b>函数</b><span><code>write_run_episode_compat_projection</code> · <span class="lineref">episode_projection.py:118</span></span>
+      <b>必填输入</b><span><code>run_dir</code>（已有 final.patch 等的磁盘目录） · <code>task</code> · <code>request</code> · <code>execution_spec</code> · <code>result</code>（T7 产物） · <code>provider_route</code>（mock / verl 等）</span>
+      <b>输出</b><span><code>ProjectionWriteResult</code> 数据类，含 <code>projection_dir</code> / <code>manifest_path</code> / <code>validation_report</code></span>
+      <b>磁盘副作用</b><span>在 <code>run_dir / "compat_projection/"</code> 下写出 14 个 .json 或 .patch / .diff 文件 + 1 manifest + 1 validation report</span>
+      <b>失败模式</b><span><code>validate(assert_complete=True)</code> 内部 raise <code>ProjectionValidationError</code> 表示某项交叉校验失败（<b>fail closed</b>）；不会留下半成品 manifest</span>
+      <b>关键不变量</b><span>见 §⑦</span>
+    </div>
+  </div>
+
+  <h2 class="sec" id="excerpt-write">② 写入主流程 excerpt（<span class="lineref">episode_projection.py:118</span>）</h2>
+  <p>简化版骨架（去掉重复的字段拼装）：</p>
+<pre><code><span class="kw">def</span> <span class="fn">write_run_episode_compat_projection</span>(*, run_dir, task, request, execution_spec, result,
+                                          provider_route) -> ProjectionWriteResult:
+    projection_dir = Path(run_dir) / PROJECTION_DIR_NAME
+    projection_dir.mkdir(parents=<span class="kw">True</span>, exist_ok=<span class="kw">True</span>)
+
+    <span class="cm"># ① 决出 policy_loss 资格（4 条件 AND）</span>
+    route_qualification = <span class="fn">_provider_route_qualification</span>(
+        provider_route=provider_route, request=request, result=result)
+
+    <span class="cm"># ② 构造每个公开文件的 payload（白名单字段提取）</span>
+    training_view_projection = {
+        <span class="str">"schema_version"</span>: <span class="str">"repo_harness_stage16f3_training_view_projection_v0"</span>,
+        <span class="str">"response_token_count"</span>: len(result.training_view.response_ids),
+        <span class="str">"response_mask_count"</span>: len(result.training_view.response_mask),
+        <span class="str">"online_rl_eligible"</span>: result.training_view.online_rl_eligible,
+        <span class="str">"invalid_for_training"</span>: result.invalid_for_training,
+        <span class="str">"invalid_for_online_rl"</span>: result.invalid_for_online_rl,
+        <span class="cm"># ⚠ 注意：raw response_ids 不进公开投影，只放 token 计数</span>
+        ...
+    }
+    status = {
+        <span class="str">"policy_loss_candidate"</span>: route_qualification[<span class="str">"policy_loss_candidate"</span>],  <span class="cm"># 双绑</span>
+        <span class="str">"formal_online_rl_eligible"</span>: route_qualification[<span class="str">"formal_online_rl_eligible"</span>],
+        ...
+    }
+
+    <span class="cm"># ③ 一次性写盘（14 个文件）</span>
+    files = {
+        <span class="str">"task_projection.json"</span>: task_projection,
+        <span class="str">"provider_route_qualification.json"</span>: route_qualification,
+        <span class="str">"training_view_projection.json"</span>: training_view_projection,
+        <span class="str">"compat_projection_status.json"</span>: status,
+        <span class="str">"final.patch"</span>: <span class="fn">_read_required_text</span>(run_dir / <span class="str">"final.patch"</span>),
+        <span class="str">"final.diff"</span>:  <span class="fn">_read_required_text</span>(run_dir / <span class="str">"final.diff"</span>),
+        <span class="str">"final_patch_hygiene_report.json"</span>: <span class="fn">_public_patch_hygiene_report</span>(...),
+        ...
+    }
+    <span class="kw">for</span> filename, payload <span class="kw">in</span> files.items():
+        <span class="fn">_write_projection_file</span>(projection_dir / filename, payload)
+
+    <span class="cm"># ④ manifest 把所有文件 sha256 + qualification 一起绑</span>
+    manifest = <span class="fn">_manifest_payload</span>(execution_spec=..., result=..., route_qualification=...,
+                                  files=files, final_patch_text=..., ...)
+    <span class="fn">_write_json</span>(projection_dir / <span class="str">"compat_projection_manifest.json"</span>, manifest)
+
+    <span class="cm"># ⑤ 校验：assert_complete=True 表示任何不一致都 raise</span>
+    validation_report = <span class="fn">validate_run_episode_compat_projection</span>(
+        projection_dir, execution_spec=..., result=..., assert_complete=<span class="kw">True</span>)
+    <span class="fn">_write_json</span>(projection_dir / <span class="str">"projection_validation_report.json"</span>, validation_report)
+
+    <span class="kw">return</span> ProjectionWriteResult(projection_dir=..., manifest_path=..., validation_report=...)</code></pre>
+
+  <h2 class="sec" id="excerpt-route">③ provider route 资格判决 _provider_route_qualification（<span class="lineref">episode_projection.py:610</span>）</h2>
+  <p>这是<b>整个 RepoHarness 决定"这条轨迹能不能进 PPO/GRPO 梯度"的最终守门员</b>。本系列里你会看到它被多处引用。</p>
+<pre><code><span class="kw">def</span> <span class="fn">_provider_route_qualification</span>(*, provider_route, request, result) -> dict:
+    formal_online_rl_eligible = (
+        provider_route == <span class="str">"verl"</span>                        <span class="cm"># ① 实际推理走的是 verl</span>
+        <span class="kw">and</span> request.llm_gateway_route == <span class="str">"verl"</span>          <span class="cm"># ② 请求侧也声明是 verl</span>
+        <span class="kw">and not</span> result.invalid_for_training            <span class="cm"># ③ 没有 training-level 阻断</span>
+        <span class="kw">and not</span> result.invalid_for_online_rl           <span class="cm"># ④ 没有 online-RL 阻断</span>
+    )
+    <span class="kw">return</span> {
+        <span class="str">"schema_version"</span>: <span class="str">"repo_harness_stage16f3_provider_route_qualification_v0"</span>,
+        <span class="str">"provider_route"</span>: provider_route,
+        <span class="str">"llm_gateway_route"</span>: request.llm_gateway_route,
+        <span class="str">"result_invalid_for_training"</span>: result.invalid_for_training,
+        <span class="str">"result_invalid_for_online_rl"</span>: result.invalid_for_online_rl,
+        <span class="str">"formal_online_rl_eligible"</span>: formal_online_rl_eligible,
+        <span class="str">"policy_loss_candidate"</span>: formal_online_rl_eligible,         <span class="cm"># ⚠ 等价</span>
+        <span class="str">"qualification_reason"</span>: (<span class="str">"route_verl_formal_online_rl_candidate"</span>
+            <span class="kw">if</span> formal_online_rl_eligible
+            <span class="kw">else</span> <span class="str">"non_verl_or_diagnostic_route_not_policy_loss_candidate"</span>),
+    }</code></pre>
+  <p class="small"><b>读懂这一段</b>：<code>policy_loss_candidate</code> 与 <code>formal_online_rl_eligible</code> 在 T8 是<b>等价的</b>（同一个布尔值），两者并存只是为了让下游消费者按习惯名读它。任何"我想绕过 verl route 让 mock 轨迹进梯度"的尝试都会在这一个布尔表达式上被卡掉。</p>
+
+  <h2 class="sec" id="excerpt-validate">④ 公开扫描兜底 _scan_public_projection_for_leaks（<span class="lineref">episode_projection.py:638</span>）</h2>
+  <p>所有写出来的公开文件再被扫一遍 forbidden marker。这是<b>最后一层防御</b>：</p>
+<pre><code><span class="kw">def</span> <span class="fn">_scan_public_projection_for_leaks</span>(projection_dir: Path) -> list[str]:
+    findings = []
+    <span class="kw">for</span> path <span class="kw">in</span> sorted(projection_dir.rglob(<span class="str">"*"</span>)):
+        <span class="kw">if not</span> path.is_file(): <span class="kw">continue</span>
+        <span class="kw">if</span> path.suffix <span class="kw">not in</span> {<span class="str">".json"</span>, <span class="str">".jsonl"</span>, <span class="str">".md"</span>, <span class="str">".txt"</span>,
+                                  <span class="str">".log"</span>, <span class="str">".yaml"</span>, <span class="str">".yml"</span>,
+                                  <span class="str">".patch"</span>, <span class="str">".diff"</span>}: <span class="kw">continue</span>
+        text = path.read_text(encoding=<span class="str">"utf-8"</span>, errors=<span class="str">"ignore"</span>)
+        normalized_text = _RUNTIME_PRIVATE_REF_PATTERN.sub(<span class="str">"runtime-private:&lt;kind&gt;:&lt;sha256&gt;"</span>, text)
+        <span class="kw">for</span> marker <span class="kw">in</span> _FORBIDDEN_PUBLIC_MARKERS:
+            <span class="kw">if</span> marker <span class="kw">in</span> normalized_text:
+                findings.append(<span class="str">f"{path.relative_to(projection_dir)}:{marker}"</span>)
+    <span class="kw">return</span> findings</code></pre>
+  <p class="small">这里的 <code>_FORBIDDEN_PUBLIC_MARKERS</code> 是个静态集合，含 hidden_verifier / gold_patch / accepted_label / provider_secret / evaluator_only_logs / absolute_run_directory 等典型敏感词。详见 <a href="code_guide_side_safety.html">side-A 安全边界</a>。</p>
+
+  <h2 class="sec" id="files">⑤ 14 个公开文件 ＋ 1 manifest ＋ 1 validation report</h2>
+  <p>记住这 14 个公开文件，是后续 16G.3 / 16G.4 在 evidence 阶段需要审的全部对象：</p>
+  <table>
+    <thead><tr><th>文件</th><th>内容</th><th>是否含 raw token</th><th>关键字段</th></tr></thead>
+    <tbody>
+      <tr><td><code>task_projection.json</code></td><td>task 元信息（不含 hidden_test_patch）</td><td>否</td><td>task_id / task_definition_sha256</td></tr>
+      <tr><td><code>run_config_projection.json</code></td><td>scaffold / permission / network policy</td><td>否</td><td>scaffold_id / permission_mode</td></tr>
+      <tr><td><code>episode_execution_spec_report.json</code></td><td>execution spec 摘要</td><td>否</td><td>episode_execution_spec_sha256</td></tr>
+      <tr><td><code>public_environment_context_report.json</code></td><td>environment 上下文摘要</td><td>否</td><td>public_environment_context_digest（content_status="digest_only"）</td></tr>
+      <tr><td><b><code>provider_route_qualification.json</code></b></td><td>policy_loss 守门员判决</td><td>否</td><td><b>policy_loss_candidate / formal_online_rl_eligible / qualification_reason</b></td></tr>
+      <tr><td><b><code>training_view_projection.json</code></b></td><td>TrainingView 公开版（无 raw token）</td><td><b>否</b></td><td>response_token_count / online_rl_eligible / invalid_for_*</td></tr>
+      <tr><td><code>generation_records_projection.json</code></td><td>每轮 generation 元信息（无 raw logprobs）</td><td>否</td><td>output_token_count / has_output_logprobs</td></tr>
+      <tr><td><code>verifier_summary.json</code></td><td>verifier 结果</td><td>否</td><td>verifier_summary（已脱敏）</td></tr>
+      <tr><td><code>reward_summary.json</code></td><td>reward 信号</td><td>否</td><td>score / invalid_reason / audit_metadata_ref_present</td></tr>
+      <tr><td><code>metrics.json</code></td><td>metrics 摘要</td><td>否</td><td>run_outcome / attempted_reward_score</td></tr>
+      <tr><td><code>compat_projection_status.json</code></td><td>整体 status（双绑 policy_loss）</td><td>否</td><td>status / policy_loss_candidate / formal_online_rl_eligible</td></tr>
+      <tr><td><b><code>final.patch</code></b></td><td>整 episode 的最终 patch 文本</td><td>否</td><td>文件级 diff</td></tr>
+      <tr><td><b><code>final.diff</code></b></td><td>整 episode 的最终 diff 文本</td><td>否</td><td>同 final.patch 来源</td></tr>
+      <tr><td><code>final_patch_hygiene_report.json</code></td><td>patch 卫生（公开版，去掉 raw 字段）</td><td>否</td><td>filtered_file_count / flagged_file_count / status</td></tr>
+      <tr><td><code>compat_projection_manifest.json</code></td><td>把上面 14 个文件 sha256 + qualification 全部绑一起</td><td>否</td><td>所有 *_digest / final_patch_sha256 / policy_loss_candidate</td></tr>
+      <tr><td><code>projection_validation_report.json</code></td><td>本次写入时跑的 validate 结果</td><td>否</td><td>errors 列表</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn"><b>raw_artifact 的去向：</b>raw <code>training_view.response_ids</code>、raw <code>generation_records[*].output_logprobs</code>、raw <code>reward_metadata</code>、raw <code>verifier_artifacts</code> 都<b>不</b>进 compat_projection（公开），它们留在私有 artifact_refs 链路里（rh:// opaque ref），由 T6 落盘。这是 <code>raw_artifact_private_by_omission</code> 不变量。</div>
+
+  <h2 class="sec" id="flow">⑥ 数据流</h2>
+  <div class="flow">
+T7 完成 → <span class="t">RepoHarnessEpisodeResult</span>（私有）
+                                    <span class="l">│</span>
+                                    <span class="l">▼</span>
+              <span class="t">_provider_route_qualification</span>  <span class="l">— 4 条件 AND → policy_loss_candidate</span>
+                                    <span class="l">│</span>
+                                    <span class="l">▼</span>
+              <span class="t">字段白名单提取</span>  <span class="l">— 每个公开 dict 只允许预定义的字段</span>
+                                    <span class="l">│</span>
+                                    <span class="l">▼</span>
+              <span class="t">_write_projection_file × 14</span>  <span class="l">— 写盘</span>
+                                    <span class="l">│</span>
+                                    <span class="l">▼</span>
+              <span class="t">_manifest_payload</span>  <span class="l">— 把 14 个文件 sha256 + qualification 全部绑</span>
+                                    <span class="l">│</span>
+                                    <span class="l">▼</span>
+              <span class="t">validate(assert_complete=True)</span>
+                                    <span class="l">│</span>
+                  ┌─────────────────┴─────────────────┐
+                  <span class="l">▼</span>                                     <span class="l">▼</span>
+            <span class="ok">validation_report</span>                     <span class="e">ProjectionValidationError</span>
+            <span class="l">  errors=[]</span>                              <span class="l">raise</span>
+                  <span class="l">│</span>                                     <span class="l">│</span>
+                  <span class="l">▼</span>                                     <span class="l">▼</span>
+            <span class="t">_scan_public_projection_for_leaks</span>      <span class="s">本次投影失败</span>
+                  <span class="l">│</span>                                     <span class="l">磁盘有 14 文件，但没 manifest</span>
+            <span class="l">findings=[]</span>                              <span class="l">下游 evidence 阶段读不到</span>
+                  <span class="l">│</span>
+                  <span class="l">▼</span>
+            <span class="t">return ProjectionWriteResult</span>
+                                    <span class="l">│</span>
+                                    <span class="l">▼</span>
+                            <span class="l">T9 evidence 起手</span></div>
+
+  <h2 class="sec" id="inv">⑦ 关键不变量</h2>
+  <div class="inv">
+    <ul class="invlist">
+      <li><span class="id">I-1</span><b>policy_loss 守门员唯一</b> · <code>_provider_route_qualification</code> 是<b>唯一</b>能算 policy_loss_candidate 的函数。其他地方<b>不可</b>直接构造这个布尔。<br><span class="small">违例风险：绕过 4 条件门。检测：grep <code>policy_loss_candidate\s*=\s*True</code> 应只出现在该函数内部。</span></li>
+      <li><span class="id">I-2</span><b>manifest 与 status 双绑</b> · <code>compat_projection_manifest.json</code> 和 <code>compat_projection_status.json</code> 都含 <code>policy_loss_candidate</code> 字段，<b>必须相等</b>。<br><span class="small">违例风险：篡改一个绕过另一个。检测：validation 函数（line 388-403）有 5 处 mismatch 错误码兜底。</span></li>
+      <li><span class="id">I-3</span><b>raw_artifact 私有 by omission</b> · raw token_ids / raw logprobs / raw reward metadata / raw verifier artifacts <b>都不</b>出现在 14 个公开文件里。<br><span class="small">违例风险：训练数据泄漏 evaluator-only 信号。检测：<code>training_view_projection</code> 字段集只含计数 + flag，无 ids；后续 stage 加字段时<b>必须</b>白名单审。</span></li>
+      <li><span class="id">I-4</span><b>fail closed</b> · validate 失败 raise <code>ProjectionValidationError</code>。<b>不</b>写半成品 manifest。下游 evidence 阶段读不到 manifest 就视为本 episode 不可用。<br><span class="small">违例风险：缺字段被静默通过、模型/训练拿到不完整数据。</span></li>
+      <li><span class="id">I-5</span><b>forbidden marker 出站扫描</b> · 公开 patch_hygiene_report 不能含 raw 字段（<code>_public_patch_hygiene_report</code> 内做字段剥离）；compat_projection 整体扫一遍 <code>_FORBIDDEN_PUBLIC_MARKERS</code>。<br><span class="small">违例风险：hygiene_report 把 raw 字段写出去；某个 .json 含 "hidden_verifier" / "gold_patch" 字面量。</span></li>
+      <li><span class="id">I-6</span><b>final.patch 与 manifest sha256 一致</b> · manifest 中的 <code>final_patch_sha256</code> 必须等于 <code>final.patch</code> 文件实际内容的 sha256。<br><span class="small">违例风险：篡改 patch 但忘改 sha；或反过来。validation 函数硬约束。</span></li>
+      <li><span class="id">I-7</span><b>schema_version 显式</b> · 每个 dict 都有 <code>schema_version</code> 字段，名字遵循 <code>repo_harness_stage&lt;N&gt;_&lt;kind&gt;_projection_v&lt;v&gt;</code>。<br><span class="small">违例风险：消费侧无法识别哪种数据。后续 stage 改字段集时<b>必须</b>升 schema_version。</span></li>
+    </ul>
+  </div>
+
+  <h2 class="sec" id="side">⑧ 关联侧栏</h2>
+  <div class="sidelink">
+    <b>side-A · 安全边界</b> — T8 的 <code>_scan_public_projection_for_leaks</code> 是最后一道墙；<code>_FORBIDDEN_PUBLIC_MARKERS</code> 集合定义见 <a href="code_guide_side_safety.html#forbidden">side-A § forbidden markers</a>。
+  </div>
+  <div class="sidelink">
+    <b>side-B · TrainingView mask</b> — T8 不动 mask，只投影 mask 的<b>计数</b>和 <code>online_rl_eligible</code> flag。raw mask 留在 T7 私有 result。<a href="code_guide_side_mask.html">→ side-B（待写）</a>
+  </div>
+  <div class="sidelink">
+    <b>side-C · Audit/artifact</b> — T8 把内部 <code>audit_ref</code> 字段转换成<b>不暴露</b>的形态（仅在 reward_summary 中放 <code>audit_metadata_ref_present</code> 布尔，不放 ref 本身）。<a href="code_guide_side_audit.html">→ side-C（待写）</a>
+  </div>
+  <div class="sidelink">
+    <b>side-D · evidence 防伪</b> — T8 的 manifest 是 T9 evidence 防伪的<b>根证据</b>：T9 inspector 重算 manifest 字段，发现 mismatch 即拒。<a href="code_guide_side_evidence.html">→ side-D（待写）</a>
+  </div>
+
+  <h2 class="sec" id="next">→ 下一步</h2>
+  <div class="navbar">
+    <a href="code_guide_t7_result.html">← T7 EpisodeResult（待写）</a>
+    <a href="code_guide_index.html">↑ 总览索引</a>
+    <a href="code_guide_t9_evidence.html">→ T9 evidence（待写）</a>
+  </div>
+  <p>T9 会展开：每个 stage 的 <code>build_*.py</code> 怎么读 T8 写出来的 14 个文件 + manifest，构造 acceptance summary，把<b>源代码 sha256</b> 也一起 bind；inspector 怎么<b>不信</b>summary 状态字段，要从源代码 + T8 公开文件<b>重算</b>。</p>
+
+</main>
+</div>
+</body>
+</html>

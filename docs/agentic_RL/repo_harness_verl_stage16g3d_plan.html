@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 16G.3D · scratch_python + 闭环 probe 执行计划</title>
+<style>
+  :root{--bg:#0f1117;--panel:#161a23;--panel2:#1d222e;--line:#2a3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#5b9cff;--accent2:#7ee0c0;--good:#3fb950;--warn:#d9a93b;--bad:#f06d6d;--chip:#222836}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.3px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout.bad{background:#2a1a1a;border:1px solid #6b3434}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  .loop{background:#0a0c12;border:1px solid var(--line);border-radius:11px;padding:16px 20px;font-family:"SFMono-Regular",Menlo,monospace;font-size:12.4px;line-height:1.55;white-space:pre;overflow-x:auto;color:#c9d4e6;margin:11px 0}
+  .loop .t{color:#9cc4ff;font-weight:600}.loop .h{color:#e6c068}.loop .ok{color:#6fdc84}.loop .l{color:#9aa4b6}
+  .bound{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px 10px 42px;margin:7px 0;font-size:13px;position:relative}
+  .bound .n{position:absolute;left:11px;top:10px;background:#34507a;color:#fff;font-family:"SFMono-Regular",Menlo,monospace;font-weight:700;padding:1px 0;border-radius:9px;font-size:11.6px;min-width:24px;text-align:center}
+  .bound b{color:#cdd6e6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>本子阶段</h2>
+  <a href="#intro">介绍</a>
+  <a href="#contract">1 · 工具契约</a>
+  <a href="#boundary">2 · 9 条执行边界</a>
+  <a href="#output">3 · 输出 + artifact</a>
+  <a href="#loop">4 · 闭环 probe（必备）</a>
+  <a href="#scope">5 · 非目标</a>
+  <a href="#deps">6 · 依赖与前置</a>
+  <h2>跨子阶段</h2>
+  <a href="repo_harness_verl_stage16g3_plan_overview.html">← 总览</a>
+  <a href="repo_harness_verl_stage16g3a_plan.html">← 16G.3A</a>
+  <a href="repo_harness_verl_stage16g3b_plan.html">← 16G.3B</a>
+  <a href="repo_harness_verl_stage16g3c_plan.html">← 16G.3C</a>
+</nav>
+<main>
+  <h1>Stage 16G.3D · scratch_python + 动态诊断闭环 probe — 执行计划</h1>
+  <p class="meta">来源：执行计划 §11 · 前置：3A 共享底座 + 3B/3C 已可用（或 schema-only） · 核心交付：临时 Python 复现工具 <code>scratch_python</code> + mini-SWE-agent 风格闭环 probe</p>
+
+  <h2 class="sec" id="intro" style="border:none;margin-top:0;padding-top:0">介绍</h2>
+  <p>3D 是 16G.3 的<b>闭环收口子阶段</b>。它新增第三个公开诊断工具 <code>scratch_python</code>，并通过一个跨工具的闭环 probe 证明"<b>读 → 跑 → 复现 → 改 → 验证 → diff</b>"动态诊断链路已用结构化工具实现，覆盖 mini-SWE-agent 的下限能力。</p>
+  <p><code>scratch_python</code> 用于让模型写<b>最小复现 / 导入 smoke / 数据结构实验 / 快速验证假设</b>。它<b>不是</b>文件修改工具，<b>不应</b>把临时代码写进仓库最终补丁。</p>
+
+  <h2 class="sec" id="contract">1 · 工具契约（计划 §11.1）</h2>
+  <pre><code>scratch_python(
+    code,
+    cwd=".",
+    timeout_sec=30,
+    purpose=None,
+)</code></pre>
+  <ul>
+    <li><code>code</code>：脚本字符串内容（第一版上限 <b>64 KiB</b>）</li>
+    <li><code>cwd</code>：workspace-relative 工作目录</li>
+    <li><code>timeout_sec</code>：默认 30 秒，<b>最大 120 秒</b></li>
+    <li><code>purpose</code>：可选诊断目的（写入审计）</li>
+  </ul>
+
+  <div class="callout warn"><b>明确边界：</b><code>scratch_python</code> 是 <b>Python-first 的受控复现工具</b>，<b>不</b>等价于 mini-SWE-agent 的任意 shell 复现能力。语言通用 scratch reproduction、Node / Ruby / Go / Rust 等临时脚本能力<b>不在</b> 16G.3 第一版完成范围内，必须在 evidence 中标记为未覆盖或后续扩展。</div>
+
+  <h2 class="sec" id="boundary">2 · 9 条执行边界（计划 §11.2）</h2>
+  <p>这 9 条把 <code>scratch_python</code> 和 3A 底座的隔离要求绑紧。</p>
+
+  <div class="bound"><span class="n">1</span><b>脚本字节上限</b>：第一版 64 KiB。超过 → schema 校验拒绝</div>
+  <div class="bound"><span class="n">2</span><b>timeout 上限</b>：第一版默认 30 秒，最大 120 秒。超过 → 工具预算 timeout（不是命令真实 timeout）</div>
+  <div class="bound"><span class="n">3</span><b>必须在隔离环境</b>：public projection / 临时复制工作区 / Docker sandbox。<b>不能</b>直接在真实 episode 工作区中跑任意 Python</div>
+  <div class="bound"><span class="n">4</span><b>无网络 + 无宿主路径 + 无 run directory mount + 无 runtime-private mount</b>。隔离事实必须进 evidence</div>
+  <div class="bound"><span class="n">5</span><b>源码只读或写入复制区</b>：源码对脚本应只读，或者写入发生在<b>可丢弃的复制工作区</b>中。脚本产生的缓存 / 临时文件 / 输出<b>默认不进 final patch</b></div>
+  <div class="bound"><span class="n">6</span><b>可读公开依赖</b>：脚本可以读取公开源码和公开依赖，但<b>不能写共享依赖环境</b></div>
+  <div class="bound"><span class="n">7</span><b>禁止访问</b>：hidden verifier / 参考补丁 / 测试补丁 / runtime-private / run directory / 宿主绝对路径 / 网络 / 环境密钥 / 共享依赖写入区</div>
+  <div class="bound"><span class="n">8</span><b>禁止修改 episode 源码</b>：如需修改源码，模型必须使用 <code>apply_patch</code> 或 <code>write_file</code></div>
+  <div class="bound"><span class="n">9</span><b>fallback 处理</b>：若实现无法证明上面隔离条件，<code>scratch_python</code> <b>不得进入</b> <code>swe_public_core</code>，只能作为 rejected / planned / diagnostic-only evidence</div>
+
+  <h2 class="sec" id="output">3 · 输出 + artifact（计划 §11.3）</h2>
+  <p><code>scratch_python</code> 结果必须和 public command 底座一致：</p>
+  <pre><code>{
+  "status": "ok",
+  "exit_code": 0,
+  "stdout_preview": "...",                              # 模型可见预览，路径脱敏
+  "stderr_preview": "...",                              # 同上
+  "timed_out": false,
+  "truncated": false,
+  "script_artifact_visibility": "runtime_private_or_restricted_audit",
+  "model_visible_observation": "redacted_truncated",
+  "repository_mutation_performed": false,               # 必须为 false
+  "final_patch_pollution": false                        # 必须为 false
+}</code></pre>
+  <p>raw stdout/stderr 落私有 artifact，对应字段 <code>stdout_artifact_ref</code> / <code>stderr_artifact_ref</code> 不返给模型。<code>read_tool_result_artifact</code> 只能读 sanitized artifact，不能读 raw。</p>
+
+  <h2 class="sec" id="loop">4 · 动态诊断闭环 probe（计划 §11.4，<b>必备</b>）</h2>
+  <p>16G.3D 必须提供一个小型真实闭环 probe，证明 RH 已覆盖 mini-SWE-agent 的动态诊断下限，但<b>用结构化工具实现</b>。这个 probe 是 16G.3 整体完成的<b>"看是不是真能跑起来"</b>样本。</p>
+
+  <div class="loop">           <span class="t">▼ 这个 probe 必须通过 run_episode(real_episode) 跑，不能只调工具函数</span>
+
+           <span class="h">📂 read_file / grep</span>          <span class="l">观察当前代码结构</span>
+                  <span class="l">↓</span>
+   <span class="h">▶ run_project_test 或 run_public_command</span>   <span class="l">看到失败的公开测试</span>
+                  <span class="l">↓</span>
+           <span class="h">✏ scratch_python</span>             <span class="l">写最小复现，验证 bug 是这一段</span>
+                  <span class="l">↓</span>
+           <span class="h">🛠 apply_patch</span>                <span class="l">修改源码</span>
+                  <span class="l">↓</span>
+        <span class="h">▶ run_project_test</span>             <span class="l">验证公开测试现在通过</span>
+                  <span class="l">↓</span>
+        <span class="h">📋 git_diff / final patch</span>       <span class="l">最终 patch 投影到 final.patch</span>
+                  <span class="l">↓</span>
+              <span class="ok">闭环完成</span>
+            <span class="l">run_episode projection 中能看到完整 tool event 序列</span></div>
+
+  <h3>4.1 公开 evidence 约束</h3>
+  <p>这个 probe 写出的公开 evidence 只保留：<b>状态 / 计数 / sha256 / 相对路径 / public-safe 摘要</b>。<b>不</b>保留：临时目录 / 本机路径 / 原始完整 stdout / stderr / 隐藏 selector。</p>
+
+  <h3>4.2 probe 必须证明的事实</h3>
+  <ul>
+    <li>所有 7 个步骤都<b>真实跑过</b>（不是 mock 出来的）</li>
+    <li><code>scratch_python</code> 的输出<b>没有</b>污染 final.patch</li>
+    <li><code>apply_patch</code> 修改后，<code>run_project_test</code> 的 pass 状态<b>真的</b>从 fail → pass</li>
+    <li><code>git_diff</code> 出来的 final.patch <b>不含</b> scratch script 内容</li>
+    <li>TrainingView 中所有 tool observation span 都 mask=0</li>
+    <li>provider_route_qualification 仍为 <code>policy_loss_candidate=false</code>（mock route）</li>
+  </ul>
+
+  <h2 class="sec" id="scope">5 · 非目标（边界澄清）</h2>
+  <ul>
+    <li><b>不是 mini-SWE-agent 的任意 shell</b> — Python-first，其他语言留给未来</li>
+    <li><b>不是文件修改工具</b> — 仓库改动必须走 <code>apply_patch</code> / <code>write_file</code></li>
+    <li><b>不是 REPL 或 persistent shell</b> — stateless，不保留 state across calls（persistent shell 留给 16G.4B）</li>
+    <li><b>不是依赖安装工具</b> — 不能 <code>pip install</code> / <code>poetry install</code>（属于 16G.4A）</li>
+    <li><b>不是网络 client</b> — 无网络</li>
+    <li><b>不是任意脚本执行器</b> — 通过 3A 底座的 disposable snapshot 隔离</li>
+  </ul>
+
+  <h2 class="sec" id="deps">6 · 依赖与前置</h2>
+  <h3>6.1 前置（必须先 ✓）</h3>
+  <ul>
+    <li>16G.3A 完成（共享底座 + isolated execution）</li>
+    <li>16G.3B 完成或 schema-only 注册</li>
+    <li>16G.3C 完成（闭环 probe 需要 <code>run_project_test</code>）</li>
+    <li>3A 落在<b>终态 A（Docker + deny）</b>，否则闭环 probe 无法在 disposable snapshot 中跑 Python</li>
+  </ul>
+
+  <h3>6.2 验收 CLI</h3>
+  <pre><code>repo-harness inspect-stage16g3d-scratch-python \
+    docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/stage16g3d_acceptance_summary.json \
+    --assert-complete
+
+repo-harness inspect-stage16g3-public-diagnostics \
+    docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/stage16g3_acceptance_summary.json \
+    --assert-complete</code></pre>
+
+  <h3>6.3 建议产物</h3>
+  <pre><code>scripts/pre_verl/build_stage16g3d_scratch_python_probe.py
+tests/unit/test_repo_harness_stage16g3d_scratch_python.py
+docs/agentic_RL/repo_harness_verl_workstreams/stage16g_3/
+├── stage16g3d_capability_delta_report.json
+├── stage16g3d_tool_schema_report.json
+├── stage16g3d_scaffold_exposure_report.json
+├── stage16g3d_public_execution_snapshot_report.json
+├── stage16g3d_dynamic_diagnostics_loop_probe_report.json   # ⚠ 闭环 probe 专用证据
+├── stage16g3d_command_artifact_visibility_report.json
+├── stage16g3d_safety_denial_report.json
+├── stage16g3d_path_leak_scan_report.json
+└── stage16g3d_acceptance_summary.json
+
+# 16G.3 总 summary
+stage16g3_acceptance_summary.json</code></pre>
+
+  <div class="callout info"><b>3D 完成 = 16G.3 完成。</b>闭环 probe 是整个 16G.3 是否真正"动起来"的<b>最终样本</b>。建议 probe 不只测一个 toy bug，而是在 SWE-bench 数据集里选一个<b>真实小任务</b>跑一遍（即使是手造的简化版），看 7 步链路是否全程能产出合理 evidence。</div>
+
+  <div class="callout warn"><b>16G.3 完成后 acceptance summary 必须保持：</b><br>
+  <code>stage16g3_complete=true</code> · <code>stage16g4_allowed_to_start=true</code> · <code>stage17b_real_data_freeze_allowed=false</code> · <code>stage20_warm_start_data_generation_allowed=false</code> · <code>stage21_formal_rl_allowed=false</code><br>
+  即：16G.4 可启动，但<b>数据冻结、warm-start、正式 RL 仍不放</b>。</div>
+
+</main>
+</div>
+</body>
+</html>

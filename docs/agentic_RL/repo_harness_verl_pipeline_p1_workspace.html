@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 1 · Workspace + Dependency Environment</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    .rh-toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+    .rh-toc a { display: block; padding: 8px 12px; border: 1px solid var(--rv-border); border-radius: 8px; background: var(--rv-surface-soft); color: var(--rv-text); font-size: 0.92rem; text-decoration: none; }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+    .rh-flow { padding: 16px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.84rem; line-height: 1.8; overflow-x: auto; white-space: pre; }
+    .rh-flow .step { color: #58a6ff; font-weight: 760; }
+    .rh-flow .ok   { color: #7ee787; }
+    .rh-flow .new  { color: #ffc463; font-weight: 760; }
+    .rh-flow .arrow { color: #d0d7de; }
+    .rh-flow .comment { color: #8b949e; font-style: italic; }
+    .rh-flow .obj { color: #d2a8ff; }
+    .rh-flow .branch { color: #8b949e; }
+    .rh-sig { margin: 0 0 12px; padding: 12px 14px; background: #0b1018; border: 1px solid var(--rv-border); border-radius: 8px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.86rem; color: #d0d7de; white-space: pre-wrap; overflow-x: auto; }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+    .rh-sig .ln { color: #6e7681; user-select: none; padding-right: 12px; }
+    .rh-api-card { padding: 16px 18px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface-soft); }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+    .rh-tree { padding: 14px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.84rem; line-height: 1.65; overflow-x: auto; white-space: pre; }
+    .rh-tree .dir { color: #58a6ff; font-weight: 760; }
+    .rh-tree .file { color: #d0d7de; }
+    .rh-tree .new { color: #ffc463; font-weight: 760; }
+    .rh-tree .comment { color: #8b949e; font-style: italic; }
+    .rh-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
+    .rh-meta-item { padding: 8px 12px; border-left: 3px solid var(--rv-border-strong); background: var(--rv-surface); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
+    .rh-meta-item .rh-label { display: block; margin-bottom: 2px; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rv-muted); }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound   { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger  { border-left-color: var(--rv-danger); }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl · Pipeline Reading Guide</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_complete_pipeline_index.html">⓪ 索引</a>
+          <a href="repo_harness_verl_pipeline_p1_workspace.html" aria-current="page">① Workspace</a>
+          <a href="repo_harness_verl_pipeline_p2_runtime.html">② Runtime</a>
+          <a href="repo_harness_verl_pipeline_p3_gateway.html">③ Gateway+Tool</a>
+          <a href="repo_harness_verl_pipeline_p4_trainingview.html">④ TrainingView</a>
+          <a href="repo_harness_verl_pipeline_p5_stage125.html">⑤ Stage 12.5</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Page 1 · Workspace + Dependency Environment Lifecycle</span>
+      <h1>准备阶段：snapshot 创建 → lease 派生 → dependency env 注入</h1>
+      <p class="rv-lead">
+        本页详解 RepoHarness 的<strong>训练前准备阶段</strong>：trainer 进程怎么创建一份 clean 的 source snapshot、每条 episode 怎么从 snapshot 派生独立可写的 lease workspace、Stage 12.5 新增的 <code>DependencyEnvironment</code>（1506 行）怎么在 snapshot 之外独立维护虚拟环境缓存避免重复 <code>pip install</code>、最终这两层缓存怎么注入到 <code>LocalWorkspaceAdapter</code> 让模型工具命令在正确的目录 + 正确的环境变量下跑。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">对应索引图步骤 [准备] + [4]</span>
+        <span class="rv-badge success">Stage 6 + Stage 12.5</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#orientation">① 训练前在准备什么</a>
+        <a href="#snapshot">② Snapshot 创建（Stage 6）</a>
+        <a href="#lease">③ Lease 派生</a>
+        <a href="#dep-env">④ Dependency Environment（Stage 12.5）</a>
+        <a href="#integration">⑤ Runtime 整合</a>
+        <a href="#layout">⑥ 共享 cache_root 完整布局</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <section id="orientation" class="rv-section">
+        <h2>① 训练开始前在准备什么</h2>
+        <p>RepoHarness 在 verl 训练前需要为<strong>每条 episode</strong>准备 3 件东西：</p>
+        <div class="rv-grid-3">
+          <div class="rh-api-card" style="border-left: 4px solid #58a6ff;">
+            <h3>① 干净的源代码副本</h3>
+            <p class="rv-muted">每条 episode 不能共享同一个可写目录（不然模型 patch 互相覆盖）。但每次重新 git clone 又太慢。<strong>Stage 6 的 Snapshot</strong> 解决这件事：源代码<strong>复制一次</strong>到 snapshot 目录（只读），后续每条 episode 从 snapshot 复制到 lease（独立可写）。</p>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid #ffc463;">
+            <h3>② 安装好依赖的虚拟环境</h3>
+            <p class="rv-muted">每次 episode 跑 <code>pip install -r requirements.txt</code> 大几十秒。<strong>Stage 12.5 的 DependencyEnvironment</strong> 解决：虚拟环境<strong>初始化一次</strong>到 <code>environments/&lt;env_key&gt;</code>（<code>chmod 555</code> 只读保护），后续 episode 通过环境变量复用同一份 venv。</p>
+          </div>
+          <div class="rh-api-card" style="border-left: 4px solid #7ee787;">
+            <h3>③ 路径 + 环境变量注入 AgentLoop</h3>
+            <p class="rv-muted">snapshot lease 路径和 dependency env 路径都是<strong>本地绝对路径</strong>，绝对<strong>不能</strong>进训练 batch。它们通过 <code>LocalWorkspaceAdapter</code> 注入到工具执行环境，对模型只暴露 opaque ref（<code>rh://workspace-snapshot/&lt;key&gt;</code> / <code>rh://environment/&lt;key&gt;</code>）。</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 18px;">完整调用链路（对应索引图 [准备] + [4]）</h3>
+        <div class="rh-flow"><span class="step">[trainer 进程启动]</span>
+   <span class="arrow">├─</span> <span class="obj">snapshot_manager = WorkspaceSnapshotManager(cache_root)</span>            <span class="comment"># trainer 注入共享实例时跨 episode 复用</span>
+   <span class="arrow">└─</span> <span class="obj">dep_env_manager = DependencyEnvironmentManager(cache_root)</span>          <span class="comment"># 共享 cache_root + 相同 spec 才能命中</span>
+
+<span class="step">[每条 episode 进入 runtime.run_episode]</span>
+   <span class="arrow">↓</span>
+<span class="step">_run_real_episode_entry</span>
+   <span class="arrow">└─</span> await <span class="new">_prepare_real_episode_workspace(request, resolved_inputs)</span>     <span class="comment"># runtime.py:799</span>
+       <span class="arrow">↓</span>
+       <span class="arrow">├─</span> <span class="new">_prepare_dependency_environment(request, source_path)</span>           <span class="comment"># Stage 12.5</span>
+       <span class="arrow">│</span>   <span class="arrow">├─</span> 调 <span class="obj">options.dependency_environment_spec_resolver(req, src)</span>     <span class="comment"># → spec</span>
+       <span class="arrow">│</span>   <span class="arrow">└─</span> <span class="obj">manager.prepare_environment(spec)</span> → <span class="obj">DependencyEnvironmentHandle</span>
+       <span class="arrow">│</span>           ├─ cache_hit=True  → 复用 environments/&lt;key&gt;（chmod 555）
+       <span class="arrow">│</span>           └─ cache_hit=False → tmp 目录 init + 原子 rename
+       <span class="arrow">│</span>
+       <span class="arrow">├─</span> build <span class="obj">WorkspaceSnapshotKey</span>（13 字段 + dependency_lock_hash 绑定 env_key）
+       <span class="arrow">│</span>
+       <span class="arrow">├─</span> <span class="obj">snapshot_manager.create_or_get_snapshot(key, source_path)</span>
+       <span class="arrow">│</span>           ├─ cache_hit=True  → 复用 snapshots/&lt;key&gt;/workspace
+       <span class="arrow">│</span>           └─ cache_hit=False → tmp + clean_state + atomic rename
+       <span class="arrow">│</span>
+       <span class="arrow">├</span>─ <span class="obj">snapshot_manager.acquire_workspace(snapshot, lease_id=episode_id)</span>
+       <span class="arrow">│</span>           └─ shutil.copytree(snapshot/workspace, leases/&lt;key&gt;/&lt;lease_id&gt;)
+       <span class="arrow">│</span>
+       <span class="arrow">└</span>─ 构造 <span class="obj">LocalWorkspaceAdapter(command_env_provider=build_command_environment)</span>
+                  <span class="comment"># 工具执行时自动注入 VIRTUAL_ENV / PATH / PYTHONPATH</span>
+       <span class="arrow">↓</span>
+   <span class="obj">RealEpisodeWorkspace(run_dir, adapter, snapshot, lease_handle, dependency_environment)</span>
+
+<span class="step">[episode 结束 finally]</span>
+   <span class="arrow">└─</span> <span class="obj">snapshot_manager.release_workspace(lease)</span>      <span class="comment"># shutil.rmtree lease workspace</span>
+   <span class="comment"># dependency env 不释放，跨 episode 持久</span></div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="snapshot" class="rv-section">
+        <h2>② Snapshot 创建（Stage 6 · <code>workspace/reuse.py</code>）</h2>
+
+        <h3><code>WorkspaceSnapshotKey</code> · 13 字段 schema</h3>
+        <p class="rv-muted">Snapshot 的"指纹"。任一字段变化都会得到不同的 <code>snapshot_key</code>，自动隔离开 cache。</p>
+        <div class="rh-sig"><span class="ln">74│</span><span class="kw">class</span> <span class="nm">WorkspaceSnapshotKey</span>(StrictBaseModel):
+<span class="ln">75│</span>    schema_version: <span class="ty">str</span> = <span class="li">"repo_harness_workspace_snapshot_key_stage6_v0"</span>
+<span class="ln">76│</span>    snapshot_key: <span class="ty">str | None</span> = None       <span class="cm"># model_validator 自动填 "wssnap-{hash24}"</span>
+<span class="ln">77│</span>    repo_ref: <span class="ty">str | None</span> = None             <span class="cm"># 仓库标识（如 "swe-bench/sample"）</span>
+<span class="ln">78│</span>    base_commit: <span class="ty">str | None</span> = None          <span class="cm"># 基底 commit SHA</span>
+<span class="ln">79│</span>    environment_id: <span class="ty">str | None</span> = None       <span class="cm"># Stage 12.5 后这里填 dependency_cache_key</span>
+<span class="ln">80│</span>    docker_image_digest: <span class="ty">str | None</span> = None  <span class="cm"># 本地模式可 None</span>
+<span class="ln">81│</span>    setup_command_hash: <span class="ty">str</span> = <span class="li">"none"</span>
+<span class="ln">82│</span>    dependency_lock_hash: <span class="ty">str</span> = <span class="li">"none"</span>     <span class="cm"># Stage 12.5 后 = env_key 保证源↔依赖绑定</span>
+<span class="ln">83│</span>    toolchain_version: <span class="ty">str</span>                  <span class="cm"># 默认 "python-3.11"</span>
+<span class="ln">84│</span>    harness_version: <span class="ty">str</span>                    <span class="cm"># 调用方必填，例如 "repo_harness_stage11_5_v0"</span>
+<span class="ln">85│</span>    source_tree_hash: <span class="ty">str | None</span> = None      <span class="cm"># post-materialization 校验用</span>
+<span class="ln">86│</span>    source_archive_sha256: <span class="ty">str | None</span> = None <span class="cm"># prelookup 用（task 预声明）</span>
+<span class="ln">87│</span>    mirror_sha256: <span class="ty">str | None</span> = None         <span class="cm"># 镜像下载的 prelookup hash</span>
+<span class="ln">88│</span>    workspace_reuse_policy_version: <span class="ty">str</span> = WORKSPACE_REUSE_POLICY_VERSION</div>
+
+        <h3 style="margin-top: 14px;"><code>create_or_get_snapshot</code> · 本地锁 + 原子 publish 实现</h3>
+        <p class="rv-muted">完整流程（<a href="../../src/repo_harness/workspace/reuse.py">reuse.py:264-324</a>）。<strong>本地文件锁</strong>串行化同 key 的并发请求；<strong>临时目录写入 + 原子 rename</strong> 保证发布瞬时性，永远不会让其它 worker 看到半成品 snapshot。</p>
+        <div class="rh-sig"><span class="ln">264│</span><span class="kw">def</span> <span class="nm">create_or_get_snapshot</span>(self, key, *, source_path) -&gt; <span class="ty">WorkspaceSnapshotResult</span>:
+<span class="ln">265│</span>    source_root = Path(source_path).resolve()
+<span class="ln">266│</span>    <span class="cm"># prelookup 后用真实 source 补 source_tree_hash（两阶段规则的阶段 B）</span>
+<span class="ln">273│</span>    key = self._key_with_source_identity(key, source_root)
+<span class="ln">274│</span>    snapshot_key = _require_snapshot_key(key)
+<span class="ln">275│</span>
+<span class="ln">275│</span>    <span class="cm"># —— 本地文件锁：同 key 的并发请求串行 ——</span>
+<span class="ln">276│</span>    <span class="kw">with</span> _SnapshotLocalLock(self.locks_dir / <span class="li">f"{snapshot_key}.lock"</span>, ...):
+<span class="ln">280│</span>        <span class="kw">if</span> snapshot_dir.exists():
+<span class="ln">281│</span>            <span class="cm"># —— 命中：读 facts 校验后复用 ——</span>
+<span class="ln">282│</span>            facts = self._load_and_validate_snapshot(snapshot_dir, key)
+<span class="ln">283│</span>            <span class="kw">return</span> WorkspaceSnapshotResult(facts=facts, snapshot_cache_hit=<span class="kw">True</span>, ...)
+<span class="ln">287│</span>
+<span class="ln">287│</span>        <span class="cm"># —— 未命中：临时目录写入 ——</span>
+<span class="ln">287│</span>        tmp_snapshot_dir = self.tmp_dir / <span class="li">f"{snapshot_key}.{uuid.uuid4().hex}"</span>
+<span class="ln">288│</span>        workspace_tmp = tmp_snapshot_dir / SNAPSHOT_WORKSPACE_DIRNAME    <span class="cm"># "workspace"</span>
+<span class="ln">290│</span>        shutil.copytree(source_root, workspace_tmp, symlinks=<span class="kw">True</span>)
+<span class="ln">291│</span>
+<span class="ln">291│</span>        <span class="cm"># —— 物化后校验 source_tree_hash（两阶段规则的阶段 B 验证）——</span>
+<span class="ln">291│</span>        source_tree_hash = compute_source_tree_hash(workspace_tmp)
+<span class="ln">292│</span>        <span class="kw">if</span> key.source_tree_hash <span class="kw">is not</span> <span class="kw">None</span> <span class="kw">and</span> key.source_tree_hash != source_tree_hash:
+<span class="ln">293│</span>            <span class="kw">raise</span> WorkspaceError(<span class="li">"source_tree_hash mismatch while creating workspace snapshot"</span>)
+<span class="ln">296│</span>
+<span class="ln">296│</span>        facts = self._snapshot_facts(key, source_tree_hash=source_tree_hash)
+<span class="ln">297│</span>        _write_json(tmp_snapshot_dir / SNAPSHOT_FACTS_FILENAME, facts.model_dump())
+<span class="ln">298│</span>
+<span class="ln">298│</span>        <span class="cm"># —— 原子 rename publish：要么完全成功，要么完全失败 ——</span>
+<span class="ln">306│</span>        tmp_snapshot_dir.rename(snapshot_dir)
+<span class="ln">307│</span>        <span class="kw">return</span> WorkspaceSnapshotResult(facts=facts, snapshot_cache_hit=<span class="kw">False</span>, ...)</div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">两阶段 key 规则</span>
+            <strong>阶段 A</strong>：用 task 已声明的 <code>source_archive_sha256</code> / <code>mirror_sha256</code> 构造 prelookup key，不需要物化源码。<strong>阶段 B</strong>：materialize 后重新算 <code>source_tree_hash</code>，与 prelookup 中预期值比对，不一致抛错。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">谁调用</span>
+            <code>_prepare_real_episode_workspace</code>（runtime.py:799）。当 trainer 显式注入共享的 <code>WorkspaceSnapshotManager</code> 或共享 <code>cache_root</code> 时，1000 条 episode 如果命中同一个 <code>snapshot_key</code>，源代码 snapshot 只需要创建 1 次；如果每个 runtime 使用自己的默认 run directory，则不会天然跨 run 复用。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="lease" class="rv-section">
+        <h2>③ Lease 派生</h2>
+
+        <h3><code>WorkspaceLease</code> + <code>WorkspaceLeaseHandle</code> 签名</h3>
+        <div class="rh-sig"><span class="ln">196│</span><span class="kw">class</span> <span class="nm">WorkspaceLease</span>(StrictBaseModel):
+<span class="ln">197│</span>    lease_id: <span class="ty">str</span>                                  <span class="cm"># "lease-{uuid}" 或 episode_id</span>
+<span class="ln">198│</span>    workspace_id: <span class="ty">str</span>                              <span class="cm"># f"workspace-{lease_id}"</span>
+<span class="ln">199│</span>    snapshot_key: <span class="ty">str</span>
+<span class="ln">200│</span>    workspace_path: <span class="ty">str</span>                            <span class="cm"># "leases/&lt;key&gt;/&lt;lease_id&gt;"（相对）</span>
+<span class="ln">201│</span>    lifecycle_status: <span class="ty">LeaseLifecycleStatus</span>          <span class="cm"># active/released/cleanup_failed/orphaned</span>
+<span class="ln">202│</span>    cleanup_status: <span class="ty">CleanupStatus</span>                   <span class="cm"># not_started/completed/failed/skipped</span>
+<span class="ln">203│</span>    created_at_unix: <span class="ty">float</span>
+<span class="ln">204│</span>    released_at_unix: <span class="ty">float | None</span> = None
+
+<span class="ln">225│</span><span class="cm">@dataclass(frozen=True)</span>
+<span class="ln">226│</span><span class="kw">class</span> <span class="nm">WorkspaceLeaseHandle</span>:
+<span class="ln">227│</span>    lease: <span class="ty">WorkspaceLease</span>
+<span class="ln">228│</span>    workspace_path: <span class="ty">Path</span>                            <span class="cm"># 绝对路径，runtime-only</span>
+<span class="ln">229│</span>    workspace_materialization_seconds: <span class="ty">float</span> = 0.0
+<span class="ln">230│</span>    dependency_restore_seconds: <span class="ty">float</span> = 0.0
+<span class="ln">231│</span>    cleanup_seconds: <span class="ty">float</span> = 0.0</div>
+
+        <h3 style="margin-top: 14px;"><code>acquire_workspace</code> · 一行 shutil.copytree</h3>
+        <div class="rh-sig"><span class="ln">316│</span><span class="kw">def</span> <span class="nm">acquire_workspace</span>(self, snapshot, *, lease_id=None, dependency_restore_seconds=0.0):
+<span class="ln">325│</span>    lease_id = lease_id <span class="kw">or</span> <span class="li">f"lease-{uuid.uuid4().hex}"</span>
+<span class="ln">328│</span>    workspace_relative_path = PurePosixPath(<span class="li">"leases"</span>) / facts.snapshot_key / lease_id
+<span class="ln">329│</span>    workspace_path = self.cache_root / workspace_relative_path
+<span class="ln">332│</span>    snapshot_workspace = self._snapshot_dir(facts.snapshot_key) / SNAPSHOT_WORKSPACE_DIRNAME
+<span class="ln">335│</span>    <span class="cm"># —— 关键的一行：从只读 snapshot 复制出独立可写副本 ——</span>
+<span class="ln">335│</span>    shutil.copytree(snapshot_workspace, workspace_path, symlinks=<span class="kw">True</span>)
+<span class="ln">337│</span>    lease = WorkspaceLease(
+<span class="ln">338│</span>        lease_id=lease_id,
+<span class="ln">339│</span>        workspace_id=<span class="li">f"workspace-{lease_id}"</span>,
+<span class="ln">340│</span>        snapshot_key=facts.snapshot_key,
+<span class="ln">341│</span>        workspace_path=workspace_relative_path.as_posix(),
+<span class="ln">342│</span>        lifecycle_status=LEASE_STATUS_ACTIVE,
+<span class="ln">343│</span>        cleanup_status=RESOURCE_CLEANUP_NOT_STARTED,
+<span class="ln">344│</span>        created_at_unix=time.time(),
+<span class="ln">345│</span>    )
+<span class="ln">346│</span>    handle = WorkspaceLeaseHandle(
+<span class="ln">347│</span>        lease=lease, workspace_path=workspace_path,
+<span class="ln">349│</span>        workspace_materialization_seconds=materialization_seconds,
+<span class="ln">350│</span>        dependency_restore_seconds=dependency_restore_seconds,
+<span class="ln">351│</span>    )</div>
+
+        <h3 style="margin-top: 14px;">Lease 4 状态生命周期</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 22%;">lifecycle_status</th><th style="width: 22%;">cleanup_status</th><th>触发场景</th></tr></thead>
+            <tbody>
+              <tr><td><code>active</code></td><td><code>not_started</code></td><td>acquire_workspace 后立刻进入，episode 正在执行</td></tr>
+              <tr><td><code>released</code></td><td><code>completed</code></td><td>正常 release_workspace → shutil.rmtree 成功</td></tr>
+              <tr><td><code>cleanup_failed</code></td><td><code>failed</code></td><td>rmtree 失败 / 路径所有权校验失败 → 写 <code>cleanup_error</code></td></tr>
+              <tr><td><code>orphaned</code></td><td>(保持原值)</td><td>进程崩溃留下的孤儿，next manager 启动时识别</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="dep-env" class="rv-section">
+        <h2>④ DependencyEnvironment（Stage 12.5 · <code>workspace/dependency_environment.py</code> · 1506 行）</h2>
+        <p class="rv-muted">Stage 12.5 最大的新增模块。snapshot 解决"源代码不重复复制"，dependency env 解决"虚拟环境不重复安装"。两者在<strong>同一个 cache_root</strong>下平行存在；复用的前提是共享 manager 或共享 cache_root，并且 <code>DependencyEnvironmentSpec</code> 推导出的 cache key 一致。</p>
+
+        <h3>三层 key 设计</h3>
+        <div class="rv-grid-3">
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 4px;">① <code>base_environment_key</code></h4>
+            <p style="font-size: 0.88rem;">Python 版本 / 平台 / package manager 版本 / lockfile sha256。<strong>底层依赖指纹</strong>。</p>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 4px;">② <code>overlay_environment_key</code></h4>
+            <p style="font-size: 0.88rem;">setup command 列表 / overlay 策略。<strong>项目特定的安装步骤</strong>。</p>
+          </div>
+          <div class="rh-api-card">
+            <h4 style="margin: 0 0 4px;">③ <code>source_snapshot_key</code></h4>
+            <p style="font-size: 0.88rem;">source_tree_hash / base_commit。<strong>源代码版本</strong>。</p>
+          </div>
+        </div>
+        <p class="rv-muted">完整环境 key = <code>f"rhenv-{hash24}"</code>，由 3 个分量哈希出来。</p>
+
+        <h3 style="margin-top: 18px;"><code>DependencyEnvironmentSpec</code> · 23 字段 schema（runtime-only 源数据）</h3>
+        <div class="rh-sig"><span class="ln">199│</span><span class="kw">class</span> <span class="nm">DependencyEnvironmentSpec</span>(StrictBaseModel):
+<span class="ln">200│</span>    <span class="cm">"""Runtime-only source of dependency environment facts."""</span>
+<span class="ln">207│</span>    schema_version: <span class="ty">str</span> = <span class="li">"repo_harness_dependency_environment_spec_stage12_5_v0"</span>
+<span class="ln">208│</span>    python_version: <span class="ty">str</span>                     <span class="cm"># 默认 sys.version_info "3.11"</span>
+<span class="ln">209│</span>    platform: <span class="ty">str</span>                            <span class="cm"># sys.platform</span>
+<span class="ln">210│</span>    cpu_arch: <span class="ty">str</span>                            <span class="cm"># platform.machine()</span>
+<span class="ln">211│</span>    os_release: <span class="ty">str</span>                          <span class="cm"># 如 "ubuntu-22.04"</span>
+<span class="ln">212│</span>    libc: <span class="ty">str | None</span>                        <span class="cm"># 如 "glibc-2.35"</span>
+<span class="ln">213│</span>    cuda_abi: <span class="ty">str | None</span> = None
+<span class="ln">214│</span>    torch_abi: <span class="ty">str | None</span> = None
+<span class="ln">215│</span>    compiler_abi: <span class="ty">str | None</span> = None
+<span class="ln">216│</span>    execution_mode: <span class="ty">ExecutionMode</span> = <span class="li">"local_process"</span>  <span class="cm"># local_process/docker/remote_worker</span>
+<span class="ln">217│</span>    docker_image_digest: <span class="ty">str | None</span> = None
+<span class="ln">218│</span>    package_manager_versions: <span class="ty">dict[str, str]</span>  <span class="cm"># {"pip": "24.0", "uv": "0.5.0"}</span>
+<span class="ln">219│</span>    dependency_lockfiles: <span class="ty">list[DependencyEnvironmentLockfile]</span>  <span class="cm"># 每个 lock 文件 + sha256</span>
+<span class="ln">220│</span>    setup_commands: <span class="ty">DependencySetupCommandGroups</span>     <span class="cm"># 4 类命令分组</span>
+<span class="ln">221│</span>    pythonpath_entries: <span class="ty">list[str]</span> = [<span class="li">"."</span>]
+<span class="ln">222│</span>    environment_allowlist_digest: <span class="ty">str</span> = <span class="li">"none"</span>
+<span class="ln">223│</span>    package_index_digest: <span class="ty">str</span> = <span class="li">"none"</span>
+<span class="ln">224│</span>    cache_policy: <span class="ty">CachePolicy</span> = <span class="li">"create_if_missing"</span>  <span class="cm"># read_only_hit/create_if_missing/disable_cache</span>
+<span class="ln">225│</span>    node_dependency_policy: <span class="ty">NodeDependencyPolicy</span> = <span class="li">"unsupported_diagnostics"</span>
+<span class="ln">226│</span>    source_tree_hash: <span class="ty">str | None</span> = None
+<span class="ln">228│</span>    base_commit: <span class="ty">str | None</span> = None
+<span class="ln">230│</span>    diagnostics: <span class="ty">list[str]</span> = []</div>
+
+        <h3 style="margin-top: 14px;">setup 命令分 4 组</h3>
+        <div class="rh-sig"><span class="ln">183│</span><span class="kw">class</span> <span class="nm">DependencySetupCommandGroups</span>(StrictBaseModel):
+<span class="ln">185│</span>    third_party_install: <span class="ty">list[str]</span> = []   <span class="cm"># 例：pip install -r requirements.txt</span>
+<span class="ln">186│</span>    source_bound:        <span class="ty">list[str]</span> = []   <span class="cm"># 例：pip install -e .</span>
+<span class="ln">187│</span>    workspace_write:     <span class="ty">list[str]</span> = []   <span class="cm"># 生成本地文件的命令（要在 workspace 内执行）</span>
+<span class="ln">188│</span>    unsupported:         <span class="ty">list[str]</span> = []   <span class="cm"># 禁止执行的命令</span></div>
+
+        <h3 style="margin-top: 14px;"><code>DependencyEnvironmentManager.prepare_environment</code> · 命中/创建</h3>
+        <div class="rh-sig"><span class="ln">410│</span><span class="kw">def</span> <span class="nm">prepare_environment</span>(self, spec, *, initializer=None) -&gt; <span class="ty">DependencyEnvironmentHandle</span>:
+<span class="ln">416│</span>    start = time.perf_counter()
+<span class="ln">417│</span>    key = build_dependency_environment_key(spec)
+<span class="ln">418│</span>    environment_key = _require_environment_key(key)
+<span class="ln">419│</span>
+<span class="ln">419│</span>    <span class="cm"># —— 三种 cache_policy 分支 ——</span>
+<span class="ln">419│</span>    <span class="kw">if</span> spec.cache_policy == <span class="li">"disable_cache"</span>:
+<span class="ln">420│</span>        env_path = self.tmp_dir / <span class="li">f"{environment_key}.{uuid.uuid4().hex}.disabled"</span>
+<span class="ln">421│</span>        env_path.mkdir(parents=<span class="kw">True</span>)
+<span class="ln">422│</span>        _initialize_environment_dir(env_path, spec, initializer)
+<span class="ln">423│</span>        facts = _facts_from_spec(spec, key, created_by=self.creator_id)
+<span class="ln">424│</span>        <span class="kw">return</span> DependencyEnvironmentHandle(..., cache_hit=<span class="kw">False</span>, diagnostics=(<span class="li">"dependency_cache_disabled"</span>,))
+<span class="ln">432│</span>
+<span class="ln">432│</span>    <span class="cm"># —— os.open(O_CREAT | O_EXCL) 本地文件锁 ——</span>
+<span class="ln">432│</span>    lock_path = self.locks_dir / <span class="li">f"{environment_key}.lock"</span>
+<span class="ln">433│</span>    <span class="kw">with</span> _DependencyEnvironmentLocalLock(lock_path, timeout_seconds=self.lock_timeout_seconds):
+<span class="ln">434│</span>        env_path = self.environments_dir / environment_key
+<span class="ln">435│</span>        facts_path = env_path / DEPENDENCY_ENVIRONMENT_FACTS_FILENAME
+<span class="ln">436│</span>        <span class="kw">if</span> facts_path.exists():
+<span class="ln">437│</span>            <span class="cm"># —— 命中：读 facts 校验 key，并 chmod 555 修复（防意外可写）——</span>
+<span class="ln">437│</span>            facts = DependencyEnvironmentFacts.model_validate_json(facts_path.read_text(...))
+<span class="ln">438│</span>            _assert_facts_match_key(facts, key)
+<span class="ln">439│</span>            read_only_diagnostics = _ensure_environment_tree_read_only(env_path)
+<span class="ln">440│</span>            <span class="kw">return</span> DependencyEnvironmentHandle(facts=facts, environment_path=env_path,
+<span class="ln">442│</span>                                                  cache_hit=<span class="kw">True</span>, ...)
+<span class="ln">450│</span>        <span class="cm"># —— 未命中：tmp 目录初始化 + facts 落盘 + 原子 rename + chmod 555 ——</span>
+<span class="ln">450│</span>        tmp_path = self.tmp_dir / <span class="li">f"{environment_key}.{uuid.uuid4().hex}"</span>
+<span class="ln">451│</span>        tmp_path.mkdir(parents=<span class="kw">True</span>)
+<span class="ln">452│</span>        _initialize_environment_dir(tmp_path, spec, initializer)
+<span class="ln">453│</span>        facts = _facts_from_spec(spec, key, created_by=self.creator_id)
+<span class="ln">454│</span>        _write_json(tmp_path / DEPENDENCY_ENVIRONMENT_FACTS_FILENAME, facts.model_dump())
+<span class="ln">455│</span>        tmp_path.rename(env_path)                       <span class="cm"># 原子 publish</span>
+<span class="ln">456│</span>        _make_environment_tree_read_only(env_path)      <span class="cm"># 整树 chmod 555</span></div>
+
+        <h3 style="margin-top: 14px;"><code>chmod 555</code> 只读保护实现</h3>
+        <p class="rv-muted">已 publish 的 dependency environment <strong>必须只读</strong>，任何 episode 都不能污染。</p>
+        <div class="rh-sig"><span class="ln">1087│</span><span class="kw">def</span> <span class="nm">_make_environment_tree_read_only</span>(root: <span class="ty">Path</span>) -&gt; <span class="ty">None</span>:
+<span class="ln">1088│</span>    <span class="cm"># 深度优先：先改子节点，最后改根目录</span>
+<span class="ln">1089│</span>    <span class="kw">for</span> path <span class="kw">in</span> sorted(root.rglob(<span class="li">"*"</span>), key=<span class="kw">lambda</span> x: len(x.parts), reverse=<span class="kw">True</span>):
+<span class="ln">1090│</span>        <span class="kw">if</span> path.is_symlink():
+<span class="ln">1091│</span>            <span class="kw">continue</span>
+<span class="ln">1092│</span>        <span class="kw">if</span> path.is_dir():
+<span class="ln">1093│</span>            path.chmod(<span class="li">0o555</span>)                       <span class="cm"># r-x r-x r-x</span>
+<span class="ln">1094│</span>        <span class="kw">elif</span> path.is_file():
+<span class="ln">1095│</span>            executable = bool(path.stat().st_mode & <span class="li">0o111</span>)
+<span class="ln">1096│</span>            path.chmod(<span class="li">0o555</span> <span class="kw">if</span> executable <span class="kw">else</span> <span class="li">0o444</span>)    <span class="cm"># 可执行 r-x 或 r--</span>
+<span class="ln">1097│</span>    root.chmod(<span class="li">0o555</span>)</div>
+
+        <h3 style="margin-top: 14px;"><code>build_command_environment</code> · 注入工具命令的环境变量</h3>
+        <p class="rv-muted">每次工具命令调用前会调这个函数，返回新的 env 字典。默认会"隐藏"真实的 dependency env 路径（在 workspace 兄弟目录创建 overlay）。</p>
+        <div class="rh-sig"><span class="ln">473│</span><span class="kw">def</span> <span class="nm">build_command_environment</span>(handle, *, workspace_path, expose_shared_environment_path=<span class="kw">False</span>):
+<span class="ln">478│</span>    env = dict(_minimal_command_environment())
+<span class="ln">485│</span>    <span class="kw">if</span> expose_shared_environment_path:
+<span class="ln">486│</span>        virtual_env = handle.environment_path
+<span class="ln">487│</span>        bin_dir = handle.environment_path / <span class="li">"bin"</span>
+<span class="ln">488│</span>    <span class="kw">else</span>:
+<span class="ln">489│</span>        <span class="cm"># —— 默认隐藏路径：workspace 兄弟目录创建 .repo_harness_env_overlay ——</span>
+<span class="ln">489│</span>        virtual_env = workspace_root.parent / <span class="li">".repo_harness_env_overlay"</span> / workspace_root.name
+<span class="ln">490│</span>        bin_dir = virtual_env / <span class="li">"bin"</span>
+<span class="ln">491│</span>        _populate_overlay_bin(bin_dir, handle.environment_path / <span class="li">"bin"</span>)
+<span class="ln">494│</span>    env[<span class="li">"VIRTUAL_ENV"</span>] = str(virtual_env) <span class="kw">if</span> expose_shared_environment_path <span class="kw">else</span> handle.environment_ref
+<span class="ln">495│</span>    env[<span class="li">"PATH"</span>] = <span class="li">f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"</span>
+<span class="ln">496│</span>    env[<span class="li">"PYTHONNOUSERSITE"</span>] = <span class="li">"1"</span>
+<span class="ln">497│</span>    env[<span class="li">"PYTHONDONTWRITEBYTECODE"</span>] = <span class="li">"1"</span>
+<span class="ln">498│</span>    env[<span class="li">"PYTHONPATH"</span>] = os.pathsep.join(...)
+<span class="ln">501│</span>    env[<span class="li">"REPO_HARNESS_ENVIRONMENT_REF"</span>] = handle.environment_ref
+<span class="ln">502│</span>    env[<span class="li">"REPO_HARNESS_ENVIRONMENT_MODE"</span>] = <span class="li">"shared_environment_path"</span> <span class="kw">if</span> expose <span class="kw">else</span> <span class="li">"workspace_overlay"</span>
+<span class="ln">503│</span>    <span class="kw">return</span> env</div>
+
+        <h3 style="margin-top: 14px;"><code>classify_shared_environment_write_command</code> · 拦截危险命令</h3>
+        <p class="rv-muted">模型在 lease workspace 内允许写文件，但<strong>不允许</strong>对共享 environment 跑 <code>pip install</code> / <code>npm install</code> 等（会污染缓存）。</p>
+        <div class="rh-sig"><span class="ln">506│</span><span class="kw">def</span> <span class="nm">classify_shared_environment_write_command</span>(command) -&gt; <span class="ty">CommandEnvironmentDecision</span>:
+<span class="ln">507│</span>    <span class="cm"># 拦截这些模式：</span>
+<span class="ln">507│</span>    <span class="cm">#   pip install / pip uninstall</span>
+<span class="ln">507│</span>    <span class="cm">#   uv pip install / uv pip uninstall / uv add / uv sync</span>
+<span class="ln">507│</span>    <span class="cm">#   npm install / npm ci / npm add</span>
+<span class="ln">507│</span>    <span class="cm">#   pnpm install / pnpm add</span>
+<span class="ln">507│</span>    <span class="cm">#   yarn / yarn install</span>
+<span class="ln">507│</span>    <span class="cm">#   python -m pip install / uninstall</span>
+<span class="ln">507│</span>    <span class="kw">return</span> CommandEnvironmentDecision(
+<span class="ln">508│</span>        allowed=<span class="kw">True/False</span>,                <span class="cm"># 是否允许执行</span>
+<span class="ln">509│</span>        reason=<span class="kw">None</span> <span class="kw">or</span> <span class="li">"shared_environment_install_blocked"</span>,
+<span class="ln">510│</span>        normalized_command=[...],         <span class="cm"># 规范化后的命令字符串列表</span>
+<span class="ln">511│</span>    )</div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">3 种 cache_policy</span>
+            <code>read_only_hit</code>（必须命中，未命中报错） / <code>create_if_missing</code>（默认，未命中创建） / <code>disable_cache</code>（每次新建临时 env，不复用）。
+          </div>
+          <div class="rh-meta-item danger">
+            <span class="rh-label">物理隔离</span>
+            shared environment 永远 <code>chmod 555</code>。每条 episode 的"修改"通过 <code>.repo_harness_env_overlay</code> 兄弟目录隔离，绝不污染 cache。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">怎么注入</span>
+            <code>LocalWorkspaceAdapter(command_env_provider=lambda ws: build_command_environment(handle, workspace_path=ws))</code>，每次工具调用前自动 build。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="integration" class="rv-section">
+        <h2>⑤ Runtime 整合：<code>_prepare_real_episode_workspace</code></h2>
+        <p class="rv-muted">runtime 把 snapshot manager + dep env manager 两层 cache 编排起来。完整代码 <a href="../../src/repo_harness/rl/runtime.py">runtime.py:799-857</a>。</p>
+
+        <div class="rh-sig"><span class="ln">799│</span><span class="kw">def</span> <span class="nm">_prepare_real_episode_workspace</span>(self, request, resolved_inputs) -&gt; <span class="ty">RealEpisodeWorkspace</span>:
+<span class="ln">804│</span>    source_path = self._real_episode_source_path(request, resolved_inputs)
+<span class="ln">807│</span>    run_dir = self._run_dir_for_request(request)
+<span class="ln">808│</span>
+<span class="ln">808│</span>    <span class="cm"># ① 准备 dependency environment（Stage 12.5 新增）</span>
+<span class="ln">808│</span>    dependency_environment = self._prepare_dependency_environment(request, source_path)
+<span class="ln">809│</span>
+<span class="ln">809│</span>    <span class="cm"># ② 准备 snapshot manager（每个 runtime 实例可共享 trainer 提供的）</span>
+<span class="ln">809│</span>    snapshot_manager = self.options.workspace_snapshot_manager <span class="kw">or</span> \
+<span class="ln">810│</span>        WorkspaceSnapshotManager(run_dir / <span class="li">"workspaces"</span> / <span class="li">"snapshot_cache"</span>, ...)
+<span class="ln">813│</span>
+<span class="ln">813│</span>    <span class="cm"># ③ 构造 snapshot key——含 dependency_cache_key 绑定，保证源↔依赖一致</span>
+<span class="ln">813│</span>    snapshot_key = build_workspace_snapshot_key(
+<span class="ln">814│</span>        repo_ref=request.task_id,
+<span class="ln">815│</span>        environment_id=(
+<span class="ln">816│</span>            dependency_environment.dependency_cache_key
+<span class="ln">817│</span>            <span class="kw">if</span> dependency_environment <span class="kw">is not</span> <span class="kw">None</span> <span class="kw">else</span> <span class="li">"local_process"</span>
+<span class="ln">819│</span>        ),
+<span class="ln">820│</span>        dependency_lock_hash=(
+<span class="ln">821│</span>            dependency_environment.dependency_cache_key
+<span class="ln">822│</span>            <span class="kw">if</span> dependency_environment <span class="kw">is not</span> <span class="kw">None</span> <span class="kw">else</span> <span class="kw">None</span>
+<span class="ln">824│</span>        ),
+<span class="ln">825│</span>        harness_version=<span class="li">"repo_harness_stage11_5_v0"</span>,
+<span class="ln">827│</span>    )
+<span class="ln">828│</span>
+<span class="ln">828│</span>    <span class="cm"># ④ 命中或创建 snapshot</span>
+<span class="ln">828│</span>    snapshot = snapshot_manager.create_or_get_snapshot(snapshot_key, source_path=source_path)
+<span class="ln">829│</span>
+<span class="ln">829│</span>    <span class="cm"># ⑤ 派生本 episode 独立可写 lease workspace（lease_id = episode_id）</span>
+<span class="ln">829│</span>    lease = snapshot_manager.acquire_workspace(
+<span class="ln">830│</span>        snapshot, lease_id=request.episode_id,
+<span class="ln">832│</span>        dependency_restore_seconds=(
+<span class="ln">833│</span>            <span class="li">0.0</span> <span class="kw">if</span> dependency_environment <span class="kw">is None</span>
+<span class="ln">833│</span>            <span class="kw">else</span> dependency_environment.dependency_restore_seconds
+<span class="ln">834│</span>        ),
+<span class="ln">835│</span>    )
+<span class="ln">836│</span>
+<span class="ln">836│</span>    <span class="cm"># ⑥ 构造 LocalWorkspaceAdapter，注入 command_env_provider</span>
+<span class="ln">836│</span>    adapter = LocalWorkspaceAdapter(
+<span class="ln">837│</span>        run_id=request.run_id,
+<span class="ln">838│</span>        run_dir=run_dir,
+<span class="ln">839│</span>        allowed_workspace_roots=[snapshot_manager.leases_dir],
+<span class="ln">840│</span>        command_env_provider=(
+<span class="ln">841│</span>            <span class="kw">None</span> <span class="kw">if</span> dependency_environment <span class="kw">is None</span>
+<span class="ln">843│</span>            <span class="kw">else</span> <span class="kw">lambda</span> workspace_path: build_command_environment(
+<span class="ln">844│</span>                dependency_environment, workspace_path=workspace_path,
+<span class="ln">846│</span>            )
+<span class="ln">847│</span>        ),
+<span class="ln">848│</span>        block_shared_environment_writes=dependency_environment <span class="kw">is not</span> <span class="kw">None</span>,
+<span class="ln">849│</span>    )
+<span class="ln">850│</span>
+<span class="ln">850│</span>    <span class="kw">return</span> RealEpisodeWorkspace(
+<span class="ln">851│</span>        run_dir=run_dir, adapter=adapter, snapshot_manager=snapshot_manager,
+<span class="ln">854│</span>        snapshot=snapshot, lease_handle=lease, dependency_environment=dependency_environment,
+<span class="ln">857│</span>    )</div>
+
+        <h3 style="margin-top: 14px;"><code>_prepare_dependency_environment</code> · 简洁的 12 行</h3>
+        <div class="rh-sig"><span class="ln">859│</span><span class="kw">def</span> <span class="nm">_prepare_dependency_environment</span>(self, request, source_path) -&gt; <span class="ty">DependencyEnvironmentHandle | None</span>:
+<span class="ln">864│</span>    <span class="cm"># 没注入 manager 或 resolver → 跳过依赖环境（仍可工作，每次跑 setup）</span>
+<span class="ln">864│</span>    <span class="kw">if</span> (self.options.dependency_environment_manager <span class="kw">is None</span> <span class="kw">or</span>
+<span class="ln">866│</span>        self.options.dependency_environment_spec_resolver <span class="kw">is None</span>):
+<span class="ln">868│</span>        <span class="kw">return</span> <span class="kw">None</span>
+<span class="ln">869│</span>
+<span class="ln">869│</span>    <span class="cm"># trainer 提供的 spec resolver 推导出 DependencyEnvironmentSpec</span>
+<span class="ln">869│</span>    spec = self.options.dependency_environment_spec_resolver(request, source_path)
+<span class="ln">870│</span>    <span class="kw">if</span> spec <span class="kw">is None</span>:
+<span class="ln">871│</span>        <span class="kw">return</span> <span class="kw">None</span>
+<span class="ln">872│</span>
+<span class="ln">872│</span>    <span class="cm"># 命中或创建 environment（lock + atomic publish + chmod 555）</span>
+<span class="ln">872│</span>    <span class="kw">return</span> self.options.dependency_environment_manager.prepare_environment(spec)</div>
+
+        <h3 style="margin-top: 14px;"><code>RealEpisodeWorkspace</code> 数据类</h3>
+        <div class="rh-sig"><span class="ln">206│</span><span class="cm">@dataclass(frozen=True)</span>
+<span class="ln">207│</span><span class="kw">class</span> <span class="nm">RealEpisodeWorkspace</span>:
+<span class="ln">208│</span>    run_dir: <span class="ty">Path</span>
+<span class="ln">209│</span>    adapter: <span class="ty">LocalWorkspaceAdapter</span>                       <span class="cm"># 工具命令通过它执行</span>
+<span class="ln">210│</span>    snapshot_manager: <span class="ty">WorkspaceSnapshotManager</span>
+<span class="ln">211│</span>    snapshot: <span class="ty">WorkspaceSnapshotResult</span>                     <span class="cm"># 含 cache_hit 信息</span>
+<span class="ln">212│</span>    lease_handle: <span class="ty">WorkspaceLeaseHandle</span>                  <span class="cm"># 含本 episode 独立可写路径</span>
+<span class="ln">213│</span>    dependency_environment: <span class="ty">DependencyEnvironmentHandle | None</span> = None</div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="layout" class="rv-section">
+        <h2>⑥ 共享 cache_root 完整物理布局</h2>
+        <p class="rv-muted">trainer 创建一份 cache_root，所有 Ray worker / episode 共享。snapshots/ + leases/ + environments/ 三大区独立但<strong>通过 snapshot_key 中 <code>environment_id = env_key</code> 绑定一致性</strong>。</p>
+
+        <div class="rh-tree">shared_cache_root/                                <span class="comment"># 由 trainer 创建（如 /tmp/repo_harness_cache）</span>
+<span class="dir">├── snapshots/</span>                                   <span class="comment"># 「干净源代码模板」区</span>
+<span class="dir">│   └── wssnap-&lt;source_hash24&gt;/</span>
+<span class="dir">│       ├── </span><span class="file">snapshot_facts.json</span>                     <span class="comment"># 18 字段元数据</span>
+<span class="dir">│       └── workspace/</span>                              <span class="comment"># clean 源码（只读使用）</span>
+<span class="dir">│           ├── src/...</span>
+<span class="dir">│           └── tests/...</span>
+<span class="dir">├── leases/</span>                                      <span class="comment"># 「每条 episode 独立可写副本」区</span>
+<span class="dir">│   └── wssnap-&lt;source_hash24&gt;/</span>
+<span class="dir">│       ├── &lt;episode_id_1&gt;/workspace/</span>              <span class="comment"># 来自 snapshot 的 shutil.copytree</span>
+<span class="dir">│       ├── &lt;episode_id_2&gt;/workspace/</span>              <span class="comment"># episode 之间互不污染</span>
+<span class="dir">│       └── ...</span>
+<span class="dir">│       └── &lt;episode_id&gt;/</span>
+<span class="dir">│           └── </span><span class="new">.repo_harness_env_overlay/</span>             <span class="comment"># Stage 12.5：隐藏真实 env 路径的 overlay</span>
+<span class="dir">│               └── workspace/bin/...</span>               <span class="comment"># 软链接到 environments/&lt;env_key&gt;/bin/</span>
+<span class="new">├── environments/</span>                                <span class="comment"># Stage 12.5：「虚拟环境共享」区（chmod 555）</span>
+<span class="new">│   ├── rhenv-&lt;base24&gt;-&lt;overlay24&gt;-&lt;source24&gt;/</span>
+<span class="new">│   │   ├── </span><span class="file">environment_facts.json</span>
+<span class="new">│   │   ├── bin/</span>                                  <span class="comment"># python / pip / uv / pytest 可执行</span>
+<span class="new">│   │   ├── lib/</span>                                  <span class="comment"># site-packages</span>
+<span class="new">│   │   └── pyvenv.cfg</span>
+<span class="new">│   └── rhenv-&lt;other_keys&gt;/</span>
+<span class="dir">├── lease_facts/</span>                                 <span class="comment"># 每个 lease 的 JSON facts</span>
+<span class="dir">│   ├── </span><span class="file">&lt;episode_id_1&gt;.json</span>
+<span class="dir">│   └── </span><span class="file">&lt;episode_id_2&gt;.json</span>
+<span class="dir">├── .tmp/</span>                                        <span class="comment"># 临时目录（写完后原子 rename 到正式位置）</span>
+<span class="dir">│   ├── wssnap-&lt;key&gt;.&lt;uuid&gt;/</span>
+<span class="dir">│   └── rhenv-&lt;key&gt;.&lt;uuid&gt;/</span>
+<span class="dir">└── .locks/</span>                                      <span class="comment"># 本地文件锁</span>
+<span class="dir">    ├── wssnap-&lt;key&gt;.lock</span>                          <span class="comment"># Stage 6 mkdir 锁</span>
+<span class="dir">    └── rhenv-&lt;key&gt;.lock</span>                           <span class="comment"># Stage 12.5 os.O_CREAT|O_EXCL 锁</span></div>
+
+        <h3 style="margin-top: 14px;">时间账：1000 条 episode 跑同一 task 的开销对比</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th>步骤</th><th>没缓存（naive）</th><th>Stage 6 only（snapshot 缓存）</th><th>Stage 6 + 12.5（snapshot + env 缓存）</th></tr></thead>
+            <tbody>
+              <tr><td>源码 materialize（每条 episode）</td><td>5s × 1000 = 83 min</td><td>5s（首次）+ 0.3s × 999 ≈ 5 min</td><td>5s + 0.3s × 999 ≈ 5 min</td></tr>
+              <tr><td>setup_command 执行（pip install 等）</td><td>30s × 1000 = 8.3 hr</td><td>30s × 1000 = 8.3 hr <strong>（这一步没省）</strong></td><td>30s（首次） + ~0s × 999 ≈ 30s</td></tr>
+              <tr><td>合计准备开销</td><td><strong>≈ 9.7 hr</strong></td><td><strong>≈ 8.4 hr</strong></td><td><strong>≈ 5.5 min</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="rv-muted">Stage 6 单独使用只省了源码 IO；只有 Stage 12.5 接通后才省 setup_command 这一<strong>更耗时的步骤</strong>。</p>
+        <div class="rv-callout warning" style="margin-top: 12px;">
+          <strong>复用成立的前提</strong>：上面的时间账是“同一任务、同一依赖规格、共享 cache_root”的理想账本。真实训练中，snapshot 复用需要 <code>WorkspaceSnapshotKey</code> 一致，dependency env 复用需要 <code>DependencyEnvironmentSpec</code> 推导出的 cache key 一致；如果 Ray worker 各自使用不同 cache_root，或者依赖 lockfile、Python 版本、安装命令发生变化，就会创建新的 snapshot 或新的 environment。
+        </div>
+      </section>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 32px; padding: 14px 0; border-top: 1px solid var(--rv-border);">
+        <a href="repo_harness_verl_complete_pipeline_index.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">← 索引</a>
+        <a href="repo_harness_verl_pipeline_p2_runtime.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--hh-accent-soft); color: var(--rv-accent); font-weight: 760;">下一页 → Page 2 · Runtime + AgentLoop</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

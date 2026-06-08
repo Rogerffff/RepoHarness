@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 2 · Runtime + AgentLoop 多轮调度</title>
+  <link rel="stylesheet" href="../assets/human-html-base.css">
+  <link rel="stylesheet" href="repo_harness_verl_workstreams_human.css">
+  <style>
+    .rh-toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+    .rh-toc a { display: block; padding: 8px 12px; border: 1px solid var(--rv-border); border-radius: 8px; background: var(--rv-surface-soft); color: var(--rv-text); font-size: 0.92rem; text-decoration: none; }
+    .rh-toc a:hover { border-color: var(--rv-accent); color: var(--rv-accent); }
+    .rh-flow { padding: 16px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.84rem; line-height: 1.8; overflow-x: auto; white-space: pre; }
+    .rh-flow .step { color: #58a6ff; font-weight: 760; }
+    .rh-flow .ok   { color: #7ee787; }
+    .rh-flow .new  { color: #ffc463; font-weight: 760; }
+    .rh-flow .arrow { color: #d0d7de; }
+    .rh-flow .comment { color: #8b949e; font-style: italic; }
+    .rh-flow .obj { color: #d2a8ff; }
+    .rh-flow .branch { color: #8b949e; }
+    .rh-sig { margin: 0 0 12px; padding: 12px 14px; background: #0b1018; border: 1px solid var(--rv-border); border-radius: 8px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.86rem; color: #d0d7de; white-space: pre-wrap; overflow-x: auto; }
+    .rh-sig .kw { color: #ff7b72; }
+    .rh-sig .nm { color: #d2a8ff; }
+    .rh-sig .ty { color: #79c0ff; }
+    .rh-sig .li { color: #a5d6ff; }
+    .rh-sig .cm { color: #8b949e; font-style: italic; }
+    .rh-sig .ln { color: #6e7681; user-select: none; padding-right: 12px; }
+    .rh-api-card { padding: 16px 18px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface-soft); }
+    .rh-api-card + .rh-api-card { margin-top: 14px; }
+    .rh-api-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .rh-table-tight th, .rh-table-tight td { padding: 8px 12px; }
+    .rh-table-tight { min-width: 0; }
+    .rh-seq { padding: 16px; border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-surface); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.82rem; line-height: 1.7; overflow-x: auto; white-space: pre; }
+    .rh-seq .actor { color: #58a6ff; font-weight: 760; }
+    .rh-seq .msg { color: #ffc463; }
+    .rh-seq .ret { color: #7ee787; }
+    .rh-seq .arrow { color: #d0d7de; }
+    .rh-seq .comment { color: #8b949e; font-style: italic; }
+    .rh-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+    @media (max-width: 880px) { .rh-modes { grid-template-columns: 1fr; } }
+    .rh-mode { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--rv-border); background: var(--rv-surface); }
+    .rh-mode.min { border-top: 4px solid var(--rv-warning); }
+    .rh-mode.real { border-top: 4px solid var(--rv-success); }
+    .rh-mode h4 { margin: 0 0 6px; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 1.0rem; }
+    .rh-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
+    .rh-meta-item { padding: 8px 12px; border-left: 3px solid var(--rv-border-strong); background: var(--rv-surface); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
+    .rh-meta-item .rh-label { display: block; margin-bottom: 2px; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rv-muted); }
+    .rh-meta-item.callers { border-left-color: var(--rv-info); }
+    .rh-meta-item.bound { border-left-color: var(--rv-warning); }
+    .rh-meta-item.danger { border-left-color: var(--rv-danger); }
+  </style>
+</head>
+<body>
+  <div class="rv-shell">
+    <nav class="rv-topbar">
+      <div class="rv-topbar-inner">
+        <span class="rv-brand">RepoHarness × verl · Pipeline Reading Guide</span>
+        <div class="rv-nav">
+          <a href="repo_harness_verl_complete_pipeline_index.html">⓪ 索引</a>
+          <a href="repo_harness_verl_pipeline_p1_workspace.html">① Workspace</a>
+          <a href="repo_harness_verl_pipeline_p2_runtime.html" aria-current="page">② Runtime</a>
+          <a href="repo_harness_verl_pipeline_p3_gateway.html">③ Gateway+Tool</a>
+          <a href="repo_harness_verl_pipeline_p4_trainingview.html">④ TrainingView</a>
+          <a href="repo_harness_verl_pipeline_p5_stage125.html">⑤ Stage 12.5</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="rv-hero">
+      <span class="rv-eyebrow">Page 2 · Runtime Entry + AgentLoop Multi-Turn</span>
+      <h1>Runtime 入口 + AgentLoop 多轮调度</h1>
+      <p class="rv-lead">
+        本页详解一条 episode 进入 RepoHarness 后的完整执行：verl <code>AgentLoopWorker</code> 怎么调到 <code>RepoHarnessVerlAgentLoop</code>，kwargs 怎么校验和构造 <code>RepoHarnessEpisodeRequest</code>，runtime 怎么<strong>分发</strong>到 <code>minimal_gateway</code> 还是 <code>real_episode</code>，<code>real_episode</code> 内部怎么用<strong>受控 executor</strong>把 AgentLoop 同步循环包起来，<code>LLMGatewayModelClientAdapter</code> 怎么作为<strong>跨线程桥</strong>让同步 AgentLoop 调到 async LLMGateway，<code>GenerationRecordCollector</code> 怎么<strong>跨多轮</strong>把每一次模型生成的 token 事实保存下来。
+      </p>
+      <div class="rv-badges">
+        <span class="rv-badge info">对应索引图步骤 [1]–[8]</span>
+        <span class="rv-badge success">Stage 2 + Stage 11.5</span>
+      </div>
+      <div class="rh-toc">
+        <a href="#entry">① verl 入口</a>
+        <a href="#kwargs">② kwargs 校验与 request 构造</a>
+        <a href="#dispatch">③ runtime 双模式分发</a>
+        <a href="#real-entry">④ _run_real_episode_entry 编排</a>
+        <a href="#real-sync">⑤ _run_real_episode_sync 内部</a>
+        <a href="#agentloop">⑥ AgentLoop 多轮调度</a>
+        <a href="#adapter">⑦ LLMGatewayModelClientAdapter</a>
+        <a href="#collector">⑧ GenerationRecordCollector</a>
+      </div>
+    </header>
+
+    <main class="rv-main">
+
+      <!-- ============================================================ -->
+      <section id="entry" class="rv-section">
+        <h2>① verl 入口 → <code>RepoHarnessVerlAgentLoop.run</code></h2>
+        <p class="rv-muted">verl 的 <code>AgentLoopWorker</code> 通过 <code>@register("repo_harness")</code> 找到 RepoHarness adapter。本页使用真实代码 <a href="../../src/repo_harness_verl/agent_loop.py">repo_harness_verl/agent_loop.py:39-67</a>。</p>
+
+        <div class="rh-sig"><span class="ln">23│</span><span class="cm">@register("repo_harness")</span>
+<span class="ln">24│</span><span class="kw">class</span> <span class="nm">RepoHarnessVerlAgentLoop</span>(AgentLoopBase):
+<span class="ln">25│</span>    <span class="cm">"""通过 verl AgentLoopBase 调用 RepoHarnessRuntime.run_episode(...)"""</span>
+<span class="ln">26│</span>
+<span class="ln">27│</span>    <span class="kw">def</span> <span class="nm">__init__</span>(self, *args, runtime=None, runtime_options=None, inference_backend=None, **kwargs):
+<span class="ln">35│</span>        super().__init__(*args, **kwargs)
+<span class="ln">36│</span>        self.runtime = runtime <span class="kw">or</span> RepoHarnessRuntime(options=runtime_options)
+<span class="ln">37│</span>        self.repo_harness_inference_backend = inference_backend
+<span class="ln">38│</span>
+<span class="ln">39│</span>    <span class="kw">async def</span> <span class="nm">run</span>(self, sampling_params: <span class="ty">dict</span>, **kwargs) -&gt; <span class="ty">Any</span>:
+<span class="ln">40│</span>        <span class="cm">"""从 verl 样本字段构造 RepoHarness episode，并返回真实 AgentLoopOutput。"""</span>
+<span class="ln">42│</span>        <span class="kw">try</span>:
+<span class="ln">43│</span>            <span class="cm"># ① kwargs allowlist + 隐藏字段拒绝</span>
+<span class="ln">43│</span>            validated_kwargs = validate_repo_harness_verl_kwargs(kwargs)
+<span class="ln">44│</span>            <span class="cm"># ② 构造 RepoHarnessEpisodeRequest（安全 id + backend 推断 + budgets 提取）</span>
+<span class="ln">44│</span>            request = build_episode_request_from_verl_kwargs(
+<span class="ln">45│</span>                validated_kwargs,
+<span class="ln">46│</span>                sampling_params=sampling_params,
+<span class="ln">47│</span>                trainer_config=self.config,
+<span class="ln">48│</span>                rollout_config=self.rollout_config,
+<span class="ln">49│</span>                inference_backend=self.repo_harness_inference_backend,
+<span class="ln">50│</span>            )
+<span class="ln">51│</span>            <span class="cm"># ③ 构造 VerlLLMGateway 包装 verl 已经管理的 LLMServerClient</span>
+<span class="ln">51│</span>            gateway = VerlLLMGateway(
+<span class="ln">52│</span>                server_manager=self.server_manager,
+<span class="ln">53│</span>                tokenizer=self.tokenizer,
+<span class="ln">54│</span>                processor=self.processor,
+<span class="ln">55│</span>                inference_backend=request.inference_backend,
+<span class="ln">56│</span>                sampling_params=sampling_params,
+<span class="ln">57│</span>                prompt_ids_builder=self._build_prompt_ids_for_gateway_request,
+<span class="ln">58│</span>            )
+<span class="ln">59│</span>            <span class="cm"># ④ 调真实 RepoHarness runtime 跑完整 episode</span>
+<span class="ln">59│</span>            result = <span class="kw">await</span> self.runtime.run_episode(request, llm_gateway=gateway)
+<span class="ln">60│</span>            <span class="cm"># ⑤ 转换 RepoHarnessEpisodeResult → 真实 verl AgentLoopOutput（Page 4 详解）</span>
+<span class="ln">60│</span>            <span class="kw">return</span> episode_result_to_agent_loop_output(
+<span class="ln">61│</span>                result, formal_online_rl=<span class="kw">True</span>,
+<span class="ln">63│</span>                rollout_prompt_length=_optional_int_config(self.rollout_config, <span class="li">"prompt_length"</span>),
+<span class="ln">64│</span>                rollout_response_length=_optional_int_config(self.rollout_config, <span class="li">"response_length"</span>),
+<span class="ln">65│</span>            )
+<span class="ln">66│</span>        <span class="kw">except</span> RepoHarnessVerlRequestMappingError:
+<span class="ln">67│</span>            <span class="kw">raise</span>
+<span class="ln">68│</span>        <span class="kw">except</span> VerlConversionError <span class="kw">as</span> exc:
+<span class="ln">69│</span>            <span class="kw">raise</span> RepoHarnessVerlAdapterError(<span class="li">f"episode_result_not_formal_online_rl: {exc}"</span>) <span class="kw">from</span> exc</div>
+
+        <h3 style="margin-top: 14px;">入口调用序列图</h3>
+        <div class="rh-seq"><span class="actor">verl AgentLoopWorker</span>     <span class="actor">RepoHarnessVerlAgentLoop</span>     <span class="actor">request_mapping</span>     <span class="actor">VerlLLMGateway</span>     <span class="actor">RepoHarnessRuntime</span>     <span class="actor">conversion</span>
+       <span class="arrow">│</span>                          <span class="arrow">│</span>                         <span class="arrow">│</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">├</span> .run(spp, **kwargs)<span class="arrow"> ───────►│</span>                         <span class="arrow">│</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">├</span> validate_kwargs<span class="arrow"> ────────►│</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">│◄</span> validated_kwargs <span class="ret">────────┤</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">├</span> build_episode_req<span class="arrow"> ──────►│</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">│◄</span> EpisodeRequest <span class="ret">──────────┤</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">├</span> VerlLLMGateway(server_manager, tokenizer, ...) <span class="arrow">─►│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">├</span> await runtime.run_episode(req, llm_gateway)<span class="arrow"> ──────────────►│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">│</span>                         <span class="arrow">│</span>                <span class="arrow">│</span>     <span class="comment">↓ 见 §③–⑧</span>      <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">│◄</span> RepoHarnessEpisodeResult <span class="ret">─────────────────────────────────┤</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">├</span> episode_result_to_agent_loop_output<span class="arrow"> ────────────────────────────────►│</span>
+       <span class="arrow">│</span>                          <span class="arrow">│◄</span> AgentLoopOutput <span class="ret">─────────────────────────────────────────────────────┤</span>
+       <span class="arrow">│◄</span> AgentLoopOutput <span class="ret">──────────┤</span>                         <span class="arrow">│</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+       <span class="arrow">│</span>                          <span class="arrow">│</span>                         <span class="arrow">│</span>                <span class="arrow">│</span>                  <span class="arrow">│</span>                   <span class="arrow">│</span>
+   verl postprocess → DataProto → trainer</div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="kwargs" class="rv-section">
+        <h2>② kwargs 校验 + 安全 id 构造</h2>
+        <p class="rv-muted">verl 传入的 kwargs 可能含<strong>不可信字段</strong>（恶意 / hidden / 绝对路径），<code>request_mapping.py</code> 用 allowlist + 正则替换确保只有安全字段进 <code>RepoHarnessEpisodeRequest</code>。</p>
+
+        <h3><code>validate_repo_harness_verl_kwargs</code> · allowlist</h3>
+        <p class="rv-muted">仅允许 ~20 个明确字段（task_id / repo_ref / base_commit / prompt / budgets / inference_backend 等）。其它字段（特别是 <code>raw_prompt</code> / <code>kwargs</code> 中残留的 verl 内部控制字段）会被静默丢弃或显式拒绝。详见 <a href="../../src/repo_harness_verl/request_mapping.py">request_mapping.py:27-86</a>。</p>
+
+        <h3 style="margin-top: 14px;"><code>build_safe_episode_identifiers</code> · 正则替换非法字符</h3>
+        <p class="rv-muted">verl 传入的 <code>task_id</code> / <code>episode_id</code> 可能含 <code>/</code>、空格、unicode 字符。这些 id 会被用作<strong>文件路径片段</strong>（如 <code>leases/&lt;key&gt;/&lt;episode_id&gt;</code>），必须规范化。</p>
+        <div class="rh-sig"><span class="ln">87│</span><span class="kw">def</span> <span class="nm">build_safe_episode_identifiers</span>(kwargs) -&gt; <span class="ty">RepoHarnessVerlIdentifiers</span>:
+<span class="ln">88│</span>    <span class="cm"># 把 task_id / episode_id / run_id 中的非 [A-Za-z0-9._-] 替换为 _</span>
+<span class="ln">89│</span>    <span class="cm"># 确保后续用作目录 / 文件名 / lease_id 都安全</span>
+<span class="ln">90│</span>    task_id = _normalize_safe_identifier(kwargs.get(<span class="li">"task_id"</span>), field_name=<span class="li">"task_id"</span>)
+<span class="ln">91│</span>    episode_id = _normalize_safe_identifier(kwargs.get(<span class="li">"episode_id"</span>), field_name=<span class="li">"episode_id"</span>)
+<span class="ln">92│</span>    run_id = _normalize_safe_identifier(kwargs.get(<span class="li">"run_id"</span>), field_name=<span class="li">"run_id"</span>)
+<span class="ln">93│</span>    <span class="kw">return</span> RepoHarnessVerlIdentifiers(task_id=task_id, episode_id=episode_id, run_id=run_id)</div>
+
+        <h3 style="margin-top: 14px;"><code>build_episode_request_from_verl_kwargs</code> 主流程</h3>
+        <div class="rh-sig"><span class="ln">108│</span><span class="kw">def</span> <span class="nm">build_episode_request_from_verl_kwargs</span>(kwargs, *, sampling_params, trainer_config, rollout_config, inference_backend):
+<span class="ln">115│</span>    <span class="cm">"""把 verl AgentLoop kwargs 映射为 RepoHarnessEpisodeRequest。"""</span>
+<span class="ln">116│</span>    ids = build_safe_episode_identifiers(kwargs)
+<span class="ln">117│</span>    task_ref = _build_task_ref(kwargs, task_id=ids.task_id)           <span class="cm"># 拒绝绝对路径</span>
+<span class="ln">118│</span>    backend = inference_backend <span class="kw">or</span> _infer_backend(rollout_config)   <span class="cm"># vllm / sglang</span>
+<span class="ln">119│</span>    budgets = _build_budgets(kwargs, sampling_params, rollout_config)  <span class="cm"># max_turns / max_output_tokens</span>
+<span class="ln">120│</span>    raw_prompt = _coerce_raw_prompt(kwargs.get(<span class="li">"raw_prompt"</span>))
+<span class="ln">121│</span>    <span class="kw">return</span> RepoHarnessEpisodeRequest(
+<span class="ln">122│</span>        task_id=ids.task_id,
+<span class="ln">123│</span>        episode_id=ids.episode_id,
+<span class="ln">124│</span>        run_id=ids.run_id,
+<span class="ln">125│</span>        task_ref=task_ref,
+<span class="ln">126│</span>        llm_gateway_route=<span class="li">"verl"</span>,
+<span class="ln">127│</span>        inference_backend=backend,
+<span class="ln">128│</span>        budgets=budgets,
+<span class="ln">129│</span>        raw_prompt=raw_prompt,
+<span class="ln">130│</span>        ...
+<span class="ln">131│</span>    )</div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">硬边界</span>
+            <code>task_ref.task_path</code> <strong>必须</strong>是相对路径（如 <code>tests/fixtures/tasks/task_001.yaml</code>）。绝对路径直接抛 <code>RepoHarnessVerlRequestMappingError</code>。
+          </div>
+          <div class="rh-meta-item danger">
+            <span class="rh-label">隐藏字段拒绝</span>
+            kwargs 中如有 <code>hidden_*</code> / 直接含 secret 的字段，allowlist 拒绝。这条由 <a href="../../tests/unit/test_repo_harness_verl_stage11_request_mapping.py#L76">test_kwargs_rejects_hidden_and_reserved_fields</a> 测试守。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="dispatch" class="rv-section">
+        <h2>③ runtime 双模式分发</h2>
+        <p class="rv-muted"><code>RepoHarnessRuntime.run_episode</code>（<a href="../../src/repo_harness/rl/runtime.py">runtime.py:420</a>）入口立即读 <code>runtime_execution_mode</code>，决定分发到 minimal_gateway 还是 real_episode。</p>
+
+        <div class="rh-sig"><span class="ln">395│</span><span class="kw">async def</span> <span class="nm">run_episode</span>(self, request, *, llm_gateway: LLMGateway) -&gt; <span class="ty">RepoHarnessEpisodeResult</span>:
+<span class="ln">401│</span>    started = perf_counter()
+<span class="ln">402│</span>    parsed_request = RepoHarnessEpisodeRequest.model_validate(request)
+<span class="ln">403│</span>    runtime_mode = self._runtime_execution_mode()             <span class="cm"># minimal_gateway 或 real_episode</span>
+<span class="ln">404│</span>    <span class="kw">if</span> runtime_mode == <span class="li">"real_episode"</span>:
+<span class="ln">405│</span>        <span class="kw">return await</span> self._run_real_episode_entry(parsed_request, llm_gateway=llm_gateway, started=started)
+<span class="ln">410│</span>    <span class="kw">if</span> runtime_mode != <span class="li">"minimal_gateway"</span>:
+<span class="ln">411│</span>        <span class="cm"># 未知 mode → 结构化 infrastructure_error，绝不 silent fallback</span>
+<span class="ln">411│</span>        <span class="kw">return</span> self._terminal_result(
+<span class="ln">412│</span>            parsed_request,
+<span class="ln">413│</span>            status=<span class="li">"infrastructure_error"</span>,
+<span class="ln">414│</span>            status_reason=<span class="li">"unsupported_runtime_execution_mode"</span>, ...
+<span class="ln">425│</span>        )
+<span class="ln">426│</span>    <span class="cm"># —— 以下是 minimal_gateway 老路径，1 turn LLM call + Stage 7 reward boundary ——</span>
+<span class="ln">426│</span>    ...
+<span class="ln">439│</span>    response = <span class="kw">await</span> self._generate_minimal_turn(parsed_request, llm_gateway, ...)
+<span class="ln">455│</span>    reward_boundary = <span class="kw">await</span> self._stage7_reward_boundary(parsed_request)</div>
+
+        <div class="rh-modes">
+          <div class="rh-mode min">
+            <h4>minimal_gateway</h4>
+            <p style="font-size: 0.88rem;">1 turn LLM call + Stage 7 reward boundary，<strong>不</strong>跑真实 workspace / agent loop / verifier。</p>
+            <p style="font-size: 0.84rem; color: var(--rv-muted);"><strong>用途</strong>：contract / adapter / DataProto shape smoke。<strong>禁止</strong>声称完整软件工程任务闭环。</p>
+            <p style="font-size: 0.84rem; color: var(--rv-muted);"><strong>Stage 2-10 单元测试</strong>都用这条路径。</p>
+          </div>
+          <div class="rh-mode real">
+            <h4>real_episode ⭐</h4>
+            <p style="font-size: 0.88rem;">Stage 11.5 引入，真实跑 workspace + AgentLoop + tool + verifier + reward。</p>
+            <p style="font-size: 0.84rem; color: var(--rv-muted);"><strong>用途</strong>：Stage 12 端到端 smoke 唯一可信凭证。</p>
+            <p style="font-size: 0.84rem; color: var(--rv-muted);"><strong>必要注入</strong>：source_resolver + snapshot_manager + final_verifier_factory（来自 options）。</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 14px;"><code>_runtime_execution_mode()</code> · 兼容老命名</h3>
+        <div class="rh-sig"><span class="ln">533│</span><span class="kw">def</span> <span class="nm">_runtime_execution_mode</span>(self) -&gt; <span class="ty">str</span>:
+<span class="ln">534│</span>    <span class="cm"># 先看新字段 runtime_execution_mode，回退到老字段 execution_mode</span>
+<span class="ln">534│</span>    <span class="kw">return</span> self.options.runtime_execution_mode <span class="kw">or</span> self.options.execution_mode</div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="real-entry" class="rv-section">
+        <h2>④ <code>_run_real_episode_entry</code> 编排</h2>
+        <p class="rv-muted"><a href="../../src/repo_harness/rl/runtime.py">runtime.py:561-659</a>。这个方法是 real_episode 的<strong>编排骨架</strong>：先抢资源租约 + 准备 workspace，再用 <code>asyncio.create_task</code> 在受控 executor 里跑 sync 逻辑，最后用 <code>asyncio.shield</code> 保护 cleanup。</p>
+
+        <div class="rh-sig"><span class="ln">561│</span><span class="kw">async def</span> <span class="nm">_run_real_episode_entry</span>(self, request, *, llm_gateway, started):
+<span class="ln">567│</span>    <span class="cm"># 跟踪整段 episode 的状态、诊断、计时</span>
+<span class="ln">568│</span>    status: <span class="ty">EpisodeStatusName</span> = <span class="li">"infrastructure_error"</span>
+<span class="ln">570│</span>    diagnostics: <span class="ty">list[AuditDiagnostic]</span> = []
+<span class="ln">576│</span>    runtime_loop = asyncio.get_running_loop()                  <span class="cm"># 关键：后面 adapter 跨线程要用</span>
+<span class="ln">577│</span>    executor = self._get_real_episode_executor()               <span class="cm"># 受控 ThreadPoolExecutor</span>
+<span class="ln">579│</span>
+<span class="ln">579│</span>    <span class="kw">try</span>:
+<span class="ln">580│</span>        resolved_inputs = self.resolve_runner_inputs(request)
+<span class="ln">581│</span>        <span class="cm"># Stage 9 资源租约（gateway slot + verifier slot + episode slot）</span>
+<span class="ln">581│</span>        resource_handle = <span class="kw">await</span> self._acquire_episode_resources(request)
+<span class="ln">582│</span>        <span class="cm"># Page 1 详解过的 workspace + dep env 准备（snapshot + lease + adapter）</span>
+<span class="ln">582│</span>        real_workspace = <span class="kw">await</span> self._run_in_real_episode_executor(
+<span class="ln">583│</span>            executor, self._prepare_real_episode_workspace, request, resolved_inputs,
+<span class="ln">587│</span>        )
+<span class="ln">588│</span>        timeout_seconds = self._episode_timeout_seconds(request)
+<span class="ln">589│</span>        <span class="cm"># —— 关键：在 executor 里跑同步 AgentLoop，外层 await 这个 task ——</span>
+<span class="ln">589│</span>        real_episode_task = asyncio.create_task(
+<span class="ln">590│</span>            self._run_in_real_episode_executor(
+<span class="ln">591│</span>                executor, self._run_real_episode_sync,
+<span class="ln">593│</span>                request, llm_gateway, real_workspace,
+<span class="ln">596│</span>                gateway_accounting, resource_handle, runtime_loop,
+<span class="ln">600│</span>            )
+<span class="ln">600│</span>        )
+<span class="ln">601│</span>        <span class="kw">if</span> timeout_seconds <span class="kw">is None</span>:
+<span class="ln">602│</span>            real_run = <span class="kw">await</span> asyncio.shield(real_episode_task)
+<span class="ln">603│</span>        <span class="kw">else</span>:
+<span class="ln">604│</span>            real_run = <span class="kw">await</span> asyncio.wait_for(asyncio.shield(real_episode_task), timeout=timeout_seconds)
+<span class="ln">605│</span>        <span class="cm"># real_run 跑完后：用真实 verifier callable 算 reward boundary</span>
+<span class="ln">605│</span>        reward_boundary = <span class="kw">await</span> self._stage7_reward_boundary_for_callable(
+<span class="ln">606│</span>            request, real_run.final_verifier_callable,
+<span class="ln">608│</span>        )
+<span class="ln">609│</span>        status = reward_boundary.status
+<span class="ln">610│</span>        status_reason = reward_boundary.status_reason
+<span class="ln">611│</span>    <span class="kw">except</span> asyncio.CancelledError:
+<span class="ln">612│</span>        status = <span class="li">"cancelled"</span>
+<span class="ln">615│</span>        <span class="cm"># Stage 11.5：lease 必须等 agent thread 自然结束才释放，避免悬挂资源</span>
+<span class="ln">615│</span>        <span class="kw">if</span> <span class="li">"real_episode_task"</span> <span class="kw">in</span> locals():
+<span class="ln">616│</span>            real_run, wait_diagnostics = <span class="kw">await</span> _wait_for_real_episode_task_after_stop(
+<span class="ln">617│</span>                real_episode_task, stop_kind=<span class="li">"cancelled"</span>,
+<span class="ln">619│</span>            )
+<span class="ln">621│</span>    <span class="kw">except</span> TimeoutError:
+<span class="ln">622│</span>        status = <span class="li">"timeout"</span>
+<span class="ln">625│</span>        <span class="cm"># 同上：lease 等待 agent thread 自然结束</span>
+<span class="ln">626│</span>        ...
+<span class="ln">643│</span>
+<span class="ln">643│</span>    <span class="cm"># finally 等价物：清理 + 释放所有资源</span>
+<span class="ln">643│</span>    cleanup_started = perf_counter()
+<span class="ln">644│</span>    cleanup_status, cleanup_diagnostic = <span class="kw">await</span> self._cleanup_protected()
+<span class="ln">649│</span>    workspace_cleanup_status, ... = <span class="kw">await</span> self._release_real_workspace_protected(real_workspace, executor=executor)
+<span class="ln">653│</span>    resource_cleanup_status, ... = <span class="kw">await</span> self._release_episode_resources_protected(resource_handle)</div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">受控 executor</span>
+            real_episode 通过 <code>self._get_real_episode_executor()</code> 拿一个有限并发的 <code>ThreadPoolExecutor</code>。<code>options.executor_max_workers</code> 控制并发上限，防止 1000 条 episode 同时启 1000 个线程。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">为什么用 shield</span>
+            <code>asyncio.shield(real_episode_task)</code>：外层 cancel 时 shield 内的 task 仍能<strong>继续运行</strong>到自然结束。底层 thread 不可中断，强制 cancel 会留下半开资源 → 改用 shield + 显式 wait_for_task_after_stop 做有序退出。
+          </div>
+          <div class="rh-meta-item danger">
+            <span class="rh-label">lease 等待规则</span>
+            cancel / timeout 触发后<strong>必须</strong>等 agent thread 跑完才能 release lease，否则 cleanup 时 thread 还在读 workspace 文件会出错。这条由 <a href="../../tests/unit/test_repo_harness_rl_stage11_5_real_episode_runtime.py#L430">timeout_holds_leases_until_agent_thread_finishes</a> 测试。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="real-sync" class="rv-section">
+        <h2>⑤ <code>_run_real_episode_sync</code> 内部（最复杂的一段）</h2>
+        <p class="rv-muted">在 worker thread 内同步执行的主体。<a href="../../src/repo_harness/rl/runtime.py">runtime.py:809-926</a>。下面分 8 段展示。</p>
+
+        <h3>段 1 · 初始化 collector + 打开 RunRecorder</h3>
+        <div class="rh-sig"><span class="ln">809│</span><span class="kw">def</span> <span class="nm">_run_real_episode_sync</span>(self, request, llm_gateway, workspace, gateway_accounting, resource_handle, runtime_loop):
+<span class="ln">818│</span>    <span class="cm"># Stage 11.5：跨多轮收集 token facts（assistant_generation token + logprob）</span>
+<span class="ln">818│</span>    collector = GenerationRecordCollector()
+<span class="ln">819│</span>    <span class="cm"># Stage 3：根据 run_mode（full_audit / training_fast / training_debug）选 recorder profile</span>
+<span class="ln">819│</span>    recorder_profile = RecorderProfile.for_run_mode(request.run_mode)
+<span class="ln">820│</span>    <span class="kw">with</span> RunRecorder(request.run_id, workspace.run_dir,
+<span class="ln">823│</span>                     task_id=request.task_id,
+<span class="ln">824│</span>                     max_artifact_bytes=request.budgets.max_artifact_bytes,
+<span class="ln">825│</span>                     recorder_profile=recorder_profile) <span class="kw">as</span> recorder:</div>
+
+        <h3>段 2 · 构造 RunWorkspace（episode 内部状态对象）</h3>
+        <div class="rh-sig"><span class="ln">827│</span>        dependency_state = DependencyState()
+<span class="ln">828│</span>        <span class="cm"># 记录 agent 开始时的 workspace 快照（用于事后算 diff）</span>
+<span class="ln">828│</span>        agent_start_snapshot = workspace.adapter.create_agent_start_snapshot(
+<span class="ln">829│</span>            workspace.lease_handle.workspace_path,    <span class="cm"># Page 1 派生的 lease 路径</span>
+<span class="ln">830│</span>            dependency_state.excluded_diff_paths,
+<span class="ln">831│</span>            recorder,
+<span class="ln">832│</span>        )
+<span class="ln">833│</span>        run_workspace = RunWorkspace(
+<span class="ln">834│</span>            run_id=request.run_id,
+<span class="ln">835│</span>            workspace_path=workspace.lease_handle.workspace_path.as_posix(),
+<span class="ln">836│</span>            repo_base_commit=workspace.snapshot.facts.base_commit,
+<span class="ln">837│</span>            execution_mode=<span class="li">"local_process"</span>,
+<span class="ln">838│</span>            artifact_dir=(workspace.run_dir / <span class="li">"artifacts"</span>).as_posix(),
+<span class="ln">839│</span>            dependency_state=dependency_state,
+<span class="ln">840│</span>            agent_start_snapshot=agent_start_snapshot,
+<span class="ln">841│</span>            agent_diff_base=agent_start_snapshot,
+<span class="ln">842│</span>        )</div>
+
+        <h3>段 3 · 构造 ToolExecutionContext（工具执行环境）</h3>
+        <div class="rh-sig"><span class="ln">843│</span>        tool_context = ToolExecutionContext(
+<span class="ln">844│</span>            run_id=request.run_id,
+<span class="ln">845│</span>            task_id=request.task_id,
+<span class="ln">846│</span>            workspace_facade=workspace.adapter,        <span class="cm"># Page 1 注入了 dep env command_env_provider</span>
+<span class="ln">847│</span>            run_workspace=run_workspace,
+<span class="ln">848│</span>            artifact_writer=recorder,                  <span class="cm"># 所有工具输出 artifact 经此</span>
+<span class="ln">849│</span>            permission_context=PermissionContext(mode=<span class="li">"auto"</span>),
+<span class="ln">852│</span>            output_limits=ToolOutputLimits(
+<span class="ln">853│</span>                max_tool_output_chars=request.budgets.max_tool_observation_tokens <span class="kw">or</span> <span class="li">12000</span>
+<span class="ln">854│</span>            ),
+<span class="ln">855│</span>            tool_policy=ToolPolicy(),
+<span class="ln">858│</span>            tool_result_artifact_index=ToolResultArtifactIndex(run_dir=workspace.run_dir),
+<span class="ln">859│</span>        )</div>
+
+        <h3>段 4 · 构造 LLMGatewayModelClientAdapter（关键跨层桥）</h3>
+        <div class="rh-sig"><span class="ln">860│</span>        adapter = LLMGatewayModelClientAdapter(
+<span class="ln">861│</span>            llm_gateway=llm_gateway,                           <span class="cm"># 外层传入的 VerlLLMGateway</span>
+<span class="ln">862│</span>            episode_id=request.episode_id,
+<span class="ln">863│</span>            route=request.llm_gateway_route,                   <span class="cm"># "verl"</span>
+<span class="ln">864│</span>            inference_backend=request.inference_backend,       <span class="cm"># "vllm" / "sglang"</span>
+<span class="ln">865│</span>            generation_record_collector=collector,             <span class="cm"># 关键：让每轮自动 collect</span>
+<span class="ln">866│</span>            gateway_accounting=gateway_accounting,             <span class="cm"># 统计 model_call_seconds</span>
+<span class="ln">867│</span>            resource_lease_manager=self.resource_lease_manager,
+<span class="ln">868│</span>            resource_handle=resource_handle,
+<span class="ln">869│</span>            runtime_loop=runtime_loop,                         <span class="cm"># 关键：worker thread 调 async 用</span>
+<span class="ln">870│</span>        )</div>
+
+        <h3>段 5 · 构造 budget manager + context config（Stage 8 训练预算）</h3>
+        <div class="rh-sig"><span class="ln">871│</span>        budget_policy = build_training_budget_policy(request.budgets, run_mode=request.run_mode)
+<span class="ln">872│</span>        budget_manager = budget_manager_from_training_policy(budget_policy)
+<span class="ln">873│</span>        <span class="cm"># Stage 8：训练模式下更激进的上下文瘦身 + no_progress hard stop</span>
+<span class="ln">873│</span>        context_config = context_config_from_training_policy(
+<span class="ln">874│</span>            budget_policy,
+<span class="ln">875│</span>            base_config=ContextManagementConfig(),
+<span class="ln">876│</span>        )</div>
+
+        <h3>段 6 · 启动 AgentLoop 同步多轮（最关键的一行）</h3>
+        <div class="rh-sig"><span class="ln">877│</span>        agent_loop_started = perf_counter()
+<span class="ln">878│</span>        agent_state = AgentLoop(
+<span class="ln">879│</span>            model_client=adapter,                              <span class="cm"># ← 看起来是同步的 ModelClient，实际转给 LLMGateway</span>
+<span class="ln">880│</span>            tool_executor=ToolExecutor(),
+<span class="ln">881│</span>        ).run(
+<span class="ln">882│</span>            run_id=request.run_id,
+<span class="ln">883│</span>            task_id=request.task_id,
+<span class="ln">884│</span>            initial_messages=[<span class="kw">dict</span>(message) <span class="kw">for</span> message <span class="kw">in</span> request.raw_prompt],
+<span class="ln">885│</span>            tool_context=tool_context,
+<span class="ln">886│</span>            recorder=recorder,
+<span class="ln">887│</span>            max_turns=budget_manager.max_turns,
+<span class="ln">888│</span>            context_config=context_config,
+<span class="ln">889│</span>            budget_manager=budget_manager,
+<span class="ln">890│</span>            training_budget_policy=budget_policy,
+<span class="ln">891│</span>            provider_options=ModelProviderOptions(provider=request.llm_gateway_route, model_id=<span class="li">"repo-harness-llm-gateway"</span>),
+<span class="ln">895│</span>            generation_config={
+<span class="ln">896│</span>                <span class="li">"max_output_tokens"</span>: request.budgets.max_output_tokens,
+<span class="ln">897│</span>                <span class="li">"reasoning_effort"</span>: request.budgets.reasoning_effort,
+<span class="ln">898│</span>                <span class="li">"thinking_mode"</span>: request.budgets.thinking_mode,
+<span class="ln">899│</span>            },
+<span class="ln">900│</span>            request_timeout_seconds=(...),
+<span class="ln">905│</span>        )
+<span class="ln">906│</span>        agent_loop_seconds = perf_counter() - agent_loop_started</div>
+
+        <h3>段 7 · 收尾：捕获最终 patch + 构造 verifier callable</h3>
+        <div class="rh-sig"><span class="ln">907│</span>        <span class="cm"># 把 agent 修改的文件相对 agent_start_snapshot 算出 unified diff，落盘为 final.patch</span>
+<span class="ln">907│</span>        workspace.adapter.capture_final_patch(run_workspace, recorder=recorder)
+<span class="ln">908│</span>        manifest = load_artifact_manifest(workspace.run_dir)
+<span class="ln">909│</span>        artifacts = <span class="kw">list</span>(manifest.get(<span class="li">"artifacts"</span>, []))
+<span class="ln">910│</span>        <span class="cm"># 把"真实 PytestVerifier 在 lease workspace 内跑"封装成 callable，留给外层 entry</span>
+<span class="ln">910│</span>        final_verifier_callable = self._real_episode_final_verifier_callable(
+<span class="ln">911│</span>            request, workspace=workspace, run_workspace=run_workspace, agent_state=agent_state,
+<span class="ln">915│</span>        )</div>
+
+        <h3>段 8 · 打包返回 RealEpisodeRun</h3>
+        <div class="rh-sig"><span class="ln">916│</span>        <span class="kw">return</span> RealEpisodeRun(
+<span class="ln">917│</span>            agent_state=agent_state,                        <span class="cm"># 含 messages / turn_count / agent_stop_reason</span>
+<span class="ln">918│</span>            collector=collector,                            <span class="cm"># 含跨多轮 GenerationRecord</span>
+<span class="ln">919│</span>            run_dir=workspace.run_dir,
+<span class="ln">920│</span>            run_workspace=run_workspace,
+<span class="ln">921│</span>            workspace=workspace,
+<span class="ln">922│</span>            final_verifier_callable=final_verifier_callable,  <span class="cm"># Page 3 详解</span>
+<span class="ln">923│</span>            agent_loop_seconds=agent_loop_seconds,
+<span class="ln">924│</span>            artifact_count=<span class="kw">len</span>(artifacts),
+<span class="ln">925│</span>            artifact_bytes_written=<span class="kw">sum</span>(...),
+<span class="ln">926│</span>        )</div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="agentloop" class="rv-section">
+        <h2>⑥ AgentLoop 多轮调度（worker thread 内部）</h2>
+        <p class="rv-muted"><code>AgentLoop.run(...)</code> 是 RepoHarness <strong>原有</strong>的同步多轮调度器（Stage 0 时代就有）。Stage 11.5 没改它的内部，只通过 <code>adapter</code> 让它能调到 async LLMGateway。</p>
+
+        <h3>单轮 ASCII 序列图（每个 turn 都重复一次）</h3>
+        <div class="rh-seq"><span class="actor">AgentLoop</span>     <span class="actor">adapter</span>     <span class="actor">runtime_loop</span>     <span class="actor">VerlLLMGateway</span>     <span class="actor">vLLM/SGLang</span>     <span class="actor">ToolExecutor</span>     <span class="actor">collector</span>
+   <span class="arrow">│</span>             <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>                 <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="comment"># —————————— turn N 开始 ——————————</span>
+   <span class="arrow">├</span> build prompt（含 prior tool obs）
+   <span class="arrow">├</span> model_client.generate(ctx)<span class="arrow"> ────►│</span>                <span class="arrow">│</span>                 <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">├</span> to_gateway_request(ctx)
+   <span class="arrow">│</span>             <span class="arrow">├</span> run_coroutine_threadsafe<span class="arrow"> ──►│</span>                 <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">│</span>              <span class="arrow">├</span> await gateway.generate_turn<span class="arrow"> ──►│</span>                 <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">├</span> await server_manager.generate<span class="arrow"> ►│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>                 <span class="arrow">│</span> ← TokenOutput  <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">├</span> tool_calls (Hermes 解析)<span class="arrow"> ──►│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">│</span>              <span class="arrow">│◄</span> LLMGatewayResponse <span class="ret">─────────┤</span>                 <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>             <span class="arrow">├</span> collector.collect(req, resp)<span class="arrow"> ──────────────────────────────────────────────────────►│</span>
+   <span class="arrow">│</span>             <span class="arrow">├</span> to_model_response(resp)
+   <span class="arrow">│◄</span> ModelResponse <span class="ret">─┤</span>              <span class="arrow">│</span>                <span class="arrow">│</span>                 <span class="arrow">│</span>              <span class="arrow">│</span>                <span class="arrow">│</span>
+   <span class="arrow">├</span> 遍历 tool_calls：
+   <span class="arrow">│</span>   <span class="arrow">├</span> tool_executor.execute<span class="arrow"> ──────────────────────────────────────────────►│</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>   <span class="arrow">│</span>     <span class="comment"># 工具命令真实执行在 lease workspace 内，含 dep env 命令环境</span>
+   <span class="arrow">│</span>   <span class="arrow">│◄</span> tool_observation <span class="ret">───────────────────────────────────────────────┤</span>                <span class="arrow">│</span>
+   <span class="arrow">│</span>   <span class="arrow">└</span> append tool message 到 history
+   <span class="arrow">├</span> 检查 budget_manager.exhausted? / agent_stop_reason
+   <span class="arrow">└</span> 若否，进入 turn N+1</div>
+
+        <h3 style="margin-top: 14px;">关键终止条件</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 32%;">agent_stop_reason</th><th>触发场景</th></tr></thead>
+            <tbody>
+              <tr><td><code>final_answer</code></td><td>模型给出 final 答案（无 tool_call）</td></tr>
+              <tr><td><code>max_turns</code></td><td>达到 budget_manager.max_turns 上限</td></tr>
+              <tr><td><code>max_model_calls_exceeded</code></td><td>Stage 8 训练预算 hard stop</td></tr>
+              <tr><td><code>no_progress</code> / <code>stalled</code></td><td>多轮无进展 → Stage 8 默认标 invalid_for_training</td></tr>
+              <tr><td><code>generation_timeout_loop</code></td><td>LLM call 反复超时</td></tr>
+              <tr><td><code>max_tool_calls</code> / <code>max_test_runs</code></td><td>工具调用或测试运行次数超限</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="adapter" class="rv-section">
+        <h2>⑦ <code>LLMGatewayModelClientAdapter</code>（Stage 2 + Stage 11.5 关键增强）</h2>
+        <p class="rv-muted">这是<strong>跨同步/异步层</strong>的核心桥。同步 AgentLoop 看见的是 <code>model_client.generate(...)</code> 接口；adapter 内部用 <code>run_coroutine_threadsafe</code> 调到 async <code>LLMGateway.generate_turn</code>，再把结果转回同步对象。Stage 11.5 加了 <code>generation_record_collector</code> 参数让<strong>每次跨线程调用都自动 collect</strong>。</p>
+
+        <h3>构造器（<a href="../../src/repo_harness/rl/runtime.py">runtime.py:267-291</a>）</h3>
+        <div class="rh-sig"><span class="ln">267│</span><span class="kw">class</span> <span class="nm">LLMGatewayModelClientAdapter</span>:
+<span class="ln">268│</span>    <span class="cm">"""Bridge the legacy synchronous ModelClient protocol to LLMGateway."""</span>
+<span class="ln">269│</span>
+<span class="ln">270│</span>    <span class="kw">def</span> <span class="nm">__init__</span>(self, *,
+<span class="ln">273│</span>                 llm_gateway: <span class="ty">LLMGateway</span>,
+<span class="ln">274│</span>                 episode_id: <span class="ty">str</span>,
+<span class="ln">275│</span>                 route: <span class="ty">str</span>,
+<span class="ln">276│</span>                 inference_backend: <span class="ty">str | None</span> = None,
+<span class="ln">277│</span>                 generation_record_collector: <span class="ty">GenerationRecordCollector | None</span> = None,  <span class="cm"># Stage 11.5 新增</span>
+<span class="ln">278│</span>                 gateway_accounting: <span class="ty">GatewayCallAccounting | None</span> = None,
+<span class="ln">279│</span>                 resource_lease_manager: <span class="ty">ResourceLeaseManager | None</span> = None,
+<span class="ln">280│</span>                 resource_handle: <span class="ty">ResourceLeaseHandle | None</span> = None,
+<span class="ln">281│</span>                 runtime_loop: <span class="ty">asyncio.AbstractEventLoop | None</span> = None) -&gt; <span class="ty">None</span>:</div>
+
+        <h3 style="margin-top: 14px;"><code>generate</code> · 同步接口的实际实现</h3>
+        <div class="rh-sig"><span class="ln">293│</span>    <span class="kw">def</span> <span class="nm">generate</span>(self, request: <span class="ty">ModelRequestContext</span>, recorder: <span class="ty">Any</span>) -&gt; <span class="ty">ModelResponse</span>:
+<span class="ln">294│</span>        <span class="cm"># ① 把旧 ModelRequestContext 转成新 LLMGatewayRequest（recorder profile 也带上）</span>
+<span class="ln">294│</span>        gateway_request = self.to_gateway_request(request, recorder=recorder)
+<span class="ln">295│</span>        call_started = perf_counter()
+<span class="ln">296│</span>        <span class="kw">if</span> self.gateway_accounting <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">297│</span>            self.gateway_accounting.request_submitted = <span class="kw">True</span>
+<span class="ln">298│</span>        <span class="kw">try</span>:
+<span class="ln">299│</span>            <span class="cm"># ② 关键：在 worker thread 内调 async gateway → run_coroutine_threadsafe</span>
+<span class="ln">299│</span>            response = _run_gateway_turn_blocking(
+<span class="ln">300│</span>                self.llm_gateway,
+<span class="ln">301│</span>                gateway_request,
+<span class="ln">302│</span>                resource_lease_manager=self.resource_lease_manager,  <span class="cm"># Stage 9 抢 gateway slot</span>
+<span class="ln">303│</span>                resource_handle=self.resource_handle,
+<span class="ln">304│</span>                runtime_loop=self.runtime_loop,                       <span class="cm"># ← 外层 runtime 的 event loop</span>
+<span class="ln">305│</span>            )
+<span class="ln">306│</span>        <span class="kw">finally</span>:
+<span class="ln">307│</span>            <span class="kw">if</span> self.gateway_accounting <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">308│</span>                self.gateway_accounting.model_call_seconds += perf_counter() - call_started
+<span class="ln">309│</span>        <span class="cm"># ③ Stage 11.5 关键：每次调用都自动 collect，跨多轮都覆盖</span>
+<span class="ln">309│</span>        <span class="kw">if</span> self.generation_record_collector <span class="kw">is not</span> <span class="kw">None</span>:
+<span class="ln">310│</span>            self.generation_record_collector.collect(gateway_request, response)
+<span class="ln">311│</span>        <span class="cm"># ④ 转回旧 ModelResponse 给同步 AgentLoop 消费</span>
+<span class="ln">311│</span>        <span class="kw">return</span> self.to_model_response(request, response)</div>
+
+        <h3 style="margin-top: 14px;"><code>_run_gateway_turn_blocking</code> · 跨线程调 async</h3>
+        <div class="rh-sig"><span class="kw">def</span> <span class="nm">_run_gateway_turn_blocking</span>(gateway, request, *, resource_lease_manager, resource_handle, runtime_loop):
+    <span class="cm"># 关键：在 worker thread 里要调 async，必须用 run_coroutine_threadsafe</span>
+    <span class="cm">#       不能用 asyncio.run（会创建新 loop，导致 server_manager 找不到原 loop 的资源）</span>
+    coro = _generate_gateway_turn(gateway, request, resource_lease_manager=..., resource_handle=...)
+    future = asyncio.run_coroutine_threadsafe(coro, runtime_loop)
+    <span class="kw">return</span> future.result()    <span class="cm"># 阻塞 worker thread 直到 runtime_loop 跑完 coro</span></div>
+
+        <div class="rh-meta">
+          <div class="rh-meta-item bound">
+            <span class="rh-label">为什么需要 runtime_loop</span>
+            verl <code>server_manager</code> 内部维护异步连接，必须在<strong>原 event loop</strong> 上跑。worker thread 用 <code>asyncio.run</code> 会创建新 loop → server_manager 找不到 transport → fails。
+          </div>
+          <div class="rh-meta-item callers">
+            <span class="rh-label">每轮触发一次</span>
+            AgentLoop 多轮中<strong>每一轮</strong>都调一次 <code>adapter.generate</code> → 自动产生一条 <code>CollectedGenerationRecord</code>。最终 collector 里有 <code>turn_count</code> 条记录。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section id="collector" class="rv-section">
+        <h2>⑧ <code>GenerationRecordCollector</code>（Stage 11.5 新增）</h2>
+        <p class="rv-muted">跨多轮的<strong>token 事实收集器</strong>。每轮 adapter.generate 自动调 <code>collect(request, response)</code>，把原始 <code>LLMGatewayRequest</code> + <code>LLMGatewayResponse</code> + 派生的 <code>GenerationRecord</code> 三元组保存下来。最终用于 Page 4 拼装 TrainingView。</p>
+
+        <h3>完整签名（<a href="../../src/repo_harness/rl/runtime.py">runtime.py:158-202</a>）</h3>
+        <div class="rh-sig"><span class="ln">158│</span><span class="cm">@dataclass(frozen=True)</span>
+<span class="ln">159│</span><span class="kw">class</span> <span class="nm">CollectedGenerationRecord</span>:
+<span class="ln">160│</span>    request: <span class="ty">LLMGatewayRequest</span>             <span class="cm"># 该轮 gateway 入参（含 turn / messages / tools / sampling）</span>
+<span class="ln">161│</span>    response: <span class="ty">LLMGatewayResponse</span>           <span class="cm"># 该轮 gateway 出参（含 output_token_ids / logprobs / tool_calls）</span>
+<span class="ln">162│</span>    generation_record: <span class="ty">GenerationRecord</span>   <span class="cm"># 派生的 GenerationRecord（route / model_call_id / token facts）</span>
+<span class="ln">163│</span>
+<span class="ln">165│</span><span class="cm">@dataclass</span>
+<span class="ln">166│</span><span class="kw">class</span> <span class="nm">GenerationRecordCollector</span>:
+<span class="ln">167│</span>    <span class="cm">"""Runtime-only collector for token facts lost by legacy ModelResponse."""</span>
+<span class="ln">168│</span>    records: <span class="ty">list[CollectedGenerationRecord]</span>
+<span class="ln">169│</span>
+<span class="ln">170│</span>    <span class="kw">def</span> <span class="nm">__init__</span>(self) -&gt; <span class="ty">None</span>:
+<span class="ln">171│</span>        self.records = []
+<span class="ln">172│</span>
+<span class="ln">173│</span>    <span class="kw">def</span> <span class="nm">collect</span>(self, request: <span class="ty">LLMGatewayRequest</span>, response: <span class="ty">LLMGatewayResponse</span>) -&gt; <span class="ty">None</span>:
+<span class="ln">174│</span>        self.records.append(
+<span class="ln">175│</span>            CollectedGenerationRecord(
+<span class="ln">176│</span>                request=request,
+<span class="ln">177│</span>                response=response,
+<span class="ln">178│</span>                generation_record=response.to_generation_record(   <span class="cm"># 用 response 自身方法转换</span>
+<span class="ln">179│</span>                    turn=request.turn,
+<span class="ln">180│</span>                    context_revision=request.context_revision,
+<span class="ln">181│</span>                ),
+<span class="ln">182│</span>            )
+<span class="ln">183│</span>        )
+<span class="ln">184│</span>
+<span class="ln">186│</span>    <span class="kw">@property</span>
+<span class="ln">187│</span>    <span class="kw">def</span> <span class="nm">generation_records</span>(self) -&gt; <span class="ty">list[GenerationRecord]</span>:
+<span class="ln">188│</span>        <span class="kw">return</span> [record.generation_record <span class="kw">for</span> record <span class="kw">in</span> self.records]</div>
+
+        <h3 style="margin-top: 14px;">收集到的关键字段（<code>GenerationRecord</code>）</h3>
+        <div class="rv-table-wrap">
+          <table class="rv-table rh-table-tight">
+            <thead><tr><th style="width: 28%;">字段</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>turn</code></td><td>本轮 turn 号（0, 1, 2, ...）</td></tr>
+              <tr><td><code>context_revision</code></td><td>本轮 context 版本（context 瘦身后会增加）</td></tr>
+              <tr><td><code>gateway_route</code></td><td><strong>"verl"</strong>（route 强制白名单已经在 LLMGatewayResponse 层校验过）</td></tr>
+              <tr><td><code>model_call_id</code></td><td>本次 LLM call 的唯一 id（Stage 11.5 严格校验跨轮唯一性）</td></tr>
+              <tr><td><code>prompt_ids</code></td><td>第 0 轮的 prompt_ids（用于 Page 4 TrainingView 的 prompt_ids 字段）</td></tr>
+              <tr><td><code>output_token_ids</code></td><td>本轮 assistant 生成的 token id 序列</td></tr>
+              <tr><td><code>output_logprobs</code></td><td>对应每个 token 的 logprob（vLLM/SGLang 返回的真实值）</td></tr>
+              <tr><td><code>stop_reason</code></td><td>本轮终止原因（stop / length / tool_call）</td></tr>
+              <tr><td><code>policy_version</code> / <code>global_steps</code></td><td>训练侧版本元信息（为后续异步改造的 staleness 统计预留，目前同步路径用不到）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 14px;">Page 4 衔接</h3>
+        <p>本页结束后 <code>RealEpisodeRun.collector</code> 里已经有 N 条 <code>CollectedGenerationRecord</code>。Page 4 详解：<code>_training_view_from_real_episode</code> 怎么遍历 collector，把每轮的 token 拼成完整 <code>TrainingView.response_ids</code>，怎么把工具 observation 投影成 tool_observation span（response_mask=0），最后 Stage 11.5 的 6 条 token provenance 严格校验会逐 token / 逐 logprob 比对。</p>
+      </section>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 32px; padding: 14px 0; border-top: 1px solid var(--rv-border);">
+        <a href="repo_harness_verl_pipeline_p1_workspace.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">← Page 1 · Workspace</a>
+        <a href="repo_harness_verl_complete_pipeline_index.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--rv-surface-soft); color: var(--rv-text);">索引</a>
+        <a href="repo_harness_verl_pipeline_p3_gateway.html" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: var(--hh-accent-soft); color: var(--rv-accent); font-weight: 760;">下一页 → Page 3 · Gateway+Tool</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

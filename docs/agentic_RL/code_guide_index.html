@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepoHarness 代码导览 · 总览索引</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d222e; --line:#2a3140;
+    --text:#e6e9ef; --muted:#9aa4b6; --accent:#5b9cff; --accent2:#7ee0c0;
+    --good:#3fb950; --warn:#d9a93b; --bad:#f06d6d; --chip:#222836;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:240px;flex:0 0 240px;padding:24px 13px;border-right:1px solid var(--line);background:#0c0e14}
+  nav h2{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px 8px}
+  nav h2:first-child{margin-top:0}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.t{color:#9cc4ff}
+  nav a.side{color:#e6c068}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.3}
+  .meta{color:#6b7484;font-size:12.5px;margin-bottom:20px}
+  h2.sec{font-size:20px;margin:44px 0 13px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e6}
+  p{margin:9px 0}
+  code{background:var(--chip);padding:1.5px 6px;border-radius:5px;font-size:12.6px;
+    font-family:"SFMono-Regular",Menlo,Consolas,monospace;color:#bfe3ff}
+  pre{background:#0a0c12;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.4px;line-height:1.5}
+  pre code{background:none;color:#c9d4e6;padding:0}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cdd6e6;font-weight:600}
+  td.c,th.c{text-align:center}
+  tr:nth-child(even) td{background:#13161e}
+  .tag{display:inline-block;font-size:11px;padding:1.5px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-good{background:rgba(63,185,80,.16);color:#6fdc84;border:1px solid #2f6b3a}
+  .t-warn{background:rgba(217,169,59,.16);color:#e6c068;border:1px solid #6b5a2f}
+  .t-bad{background:rgba(240,109,109,.16);color:#f29292;border:1px solid #6b3434}
+  .t-info{background:rgba(91,156,255,.16);color:#9cc4ff;border:1px solid #34507a}
+  .t-neutral{background:#262c3a;color:#9aa4b6;border:1px solid #333b4d}
+  .callout{border-radius:10px;padding:12px 15px;margin:12px 0;font-size:13.5px}
+  .callout.good{background:#11261c;border:1px solid #2f6b3a}
+  .callout.warn{background:#241f12;border:1px solid #6b5a2f}
+  .callout.info{background:#121d2e;border:1px solid #34507a}
+  .callout b{color:#fff}
+  ul{margin:7px 0;padding-left:21px}li{margin:5px 0}
+  .small{font-size:12.4px;color:var(--muted)}
+  /* T-cards */
+  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 16px;margin:10px 0}
+  .tcard .hd{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:4px}
+  .tcard .tno{font-family:"SFMono-Regular",Menlo,monospace;background:#34507a;color:#fff;padding:1px 9px;border-radius:14px;font-size:12px;font-weight:700}
+  .tcard .title{font-size:14.5px;font-weight:700;color:#fff}
+  .tcard .role{font-size:12.6px;color:var(--muted)}
+  .tcard .files{font-size:12.4px;color:#9cc4ff;margin:4px 0}
+  .tcard .files code{font-size:12px}
+  .tcard.side .tno{background:#6b5a2f}
+  .tcard.side .title{color:#e6c068}
+  .arch{background:#0a0c12;border:1px solid var(--line);border-radius:11px;padding:18px 20px;margin:14px 0;font-family:"SFMono-Regular",Menlo,monospace;font-size:12px;line-height:1.55;color:#c9d4e6;overflow-x:auto;white-space:pre}
+  .arch .lab{color:#9aa4b6}
+  .arch .t{color:#9cc4ff;font-weight:600}
+  .arch .s{color:#e6c068}
+  .arch .arrow{color:#6b7484}
+  .legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
+  .legend .li{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px;font-size:12.8px}
+  .legend .li b{display:block;color:#cdd6e6;font-size:12.5px;margin-bottom:3px}
+  .status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;margin:10px 0}
+  .sg{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:12.6px}
+  .sg b{color:#cdd6e6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>总览</h2>
+  <a href="#intro">这套指南是什么</a>
+  <a href="#arch">架构地图</a>
+  <a href="#howto">怎么读</a>
+  <a href="#convention">章节约定（重要）</a>
+
+  <h2>主线时间轴</h2>
+  <a class="t" href="#t-list">T0 – T9 概览</a>
+  <a class="t" href="code_guide_t0_entry.html">T0 · 入口（待写）</a>
+  <a class="t" href="code_guide_t1_workspace.html">T1 · workspace（待写）</a>
+  <a class="t" href="code_guide_t2_loop.html">T2 · AgentLoop（待写）</a>
+  <a class="t" href="code_guide_t3_gateway.html">T3 · Gateway（待写）</a>
+  <a class="t" href="code_guide_t4_dispatch.html">T4 · 分派（待写）</a>
+  <a class="t" href="code_guide_t5_execute.html">T5 · 工具执行 ✓</a>
+  <a class="t" href="code_guide_t6_state.html">T6 · 状态+audit（待写）</a>
+  <a class="t" href="code_guide_t7_result.html">T7 · EpisodeResult（待写）</a>
+  <a class="t" href="code_guide_t8_projection.html">T8 · 投影 ✓</a>
+  <a class="t" href="code_guide_t9_evidence.html">T9 · evidence（待写）</a>
+
+  <h2>侧栏（贯穿主线）</h2>
+  <a class="side" href="code_guide_side_safety.html">A · 安全边界 ✓</a>
+  <a class="side" href="code_guide_side_mask.html">B · TrainingView mask（待写）</a>
+  <a class="side" href="code_guide_side_audit.html">C · Audit/artifact（待写）</a>
+  <a class="side" href="code_guide_side_evidence.html">D · evidence 防伪（待写）</a>
+
+  <h2>外部参考</h2>
+  <a href="repo_harness_verl_complete_pipeline_index.html">P1–P5 总览（早期文档）</a>
+  <a href="repo_harness_verl_harness_capability_acceptance_map.html">能力地图</a>
+  <a href="repo_harness_verl_stage16g2c_completion_report.html">16G.2C 完成报告</a>
+</nav>
+<main>
+  <h1>RepoHarness 代码导览 · 总览索引</h1>
+  <p class="meta">面向后续 16G.3 / 16G.4 阶段的代码审查与设计跟踪 · 主轴：执行时间线 · 粒度：contract + 关键 excerpt + 不变量 · 拆分：1 索引 + N 章节</p>
+
+  <h2 class="sec" id="intro">这套指南是什么</h2>
+  <p>这是一套<b>独立于 P1–P5</b> 的代码导览系列，专为"以审查代码设计的视角追踪 RepoHarness 主链路"使用：</p>
+  <ul>
+    <li><b>主轴</b>：按一次 episode 从请求到训练样本的<b>执行时间线</b>切成 T0–T9 共 10 个时间点。每个 T 是<b>一个独立 HTML 章节</b>，作为"在这一刻发生了什么"的代码 reading guide。</li>
+    <li><b>侧栏</b>：跨多个 T 点贯穿的横向主题（安全边界、TrainingView mask、Audit/artifact、evidence 防伪）独立成 4 个侧栏 HTML，主线章节里只点引而不展开。</li>
+    <li><b>粒度</b>：每个 T 章节按 contract + 关键函数 5–20 行 excerpt + 不变量收，不贴大段完整函数。这样未来 stage 改动几行不会让章节立刻过时。</li>
+    <li><b>与 P1–P5 的关系</b>：P1–P5 是 Stage 12 期间编写、之后经历过同步 AgentLoop → 异步框架的多轮改动，<b>部分内容可能已过时</b>。本系列<b>不</b>替换它们；引用时显式标 <span class="tag t-warn">⚠️ 引用前需审 P? 是否过时</span>。</li>
+  </ul>
+
+  <div class="callout info"><b>读者画像：</b>你正在或将要审查 16G.3 / 16G.4 阶段的实施改动。你不熟悉 RepoHarness 全部代码细节，但需要快速定位"这次改动落在哪个 T 点 / 影响哪些侧栏 / 边界 contract 怎么定义的"。这套指南为此而生。</div>
+
+  <h2 class="sec" id="arch">架构地图（一张图把全栈摆清）</h2>
+  <div class="arch">
+<span class="lab">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="lab">verl 异步训练框架（外部）—— 主 RL 容器，本系列不展开</span>
+<span class="lab">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+            <span class="arrow">│</span>
+            <span class="arrow">▼</span> AgentLoopOutput / DataProto
+<span class="lab">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="lab">│</span> <span class="t">T0 · 入口</span>     RepoHarnessRuntime.run_episode(request)         <span class="lab">│</span>
+<span class="lab">│                   rl/runtime.py:559 · async                    │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T1 · workspace</span>  snapshot lease → workspace overlay            <span class="lab">│</span>
+<span class="lab">│                   _prepare_real_episode_workspace                </span>
+<span class="lab">│                   workspace/{reuse,dependency_environment}.py   │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T2 · AgentLoop</span>  _run_real_episode_entry → _run_real_episode_sync<span class="lab">│</span>
+<span class="lab">│                   多轮 assistant turn / generation record       │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T3 · Gateway</span>    provider gateway 路由 + LLM 推理               <span class="lab">│</span>
+<span class="lab">│                   rl/gateway.py · rl/provider_gateway.py         │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T4 · 分派</span>     ToolExecutor.execute_tool → 函数表 dispatch       <span class="lab">│</span>
+<span class="lab">│                   tools/minimal.py:373-422                      │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T5 · 工具执行</span>  _read_file/_grep/.../_stage16g2b_file_mutation… <span class="lab">│</span>
+<span class="lab">│                   tools/minimal.py · tools/file_mutation.py      │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T6 · 状态+audit</span> file_state_cache · recorder.write_json_artifact<span class="lab">│</span>
+<span class="lab">│                   tool result 的 typed dict + artifact_refs     │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T7 · EpisodeResult</span>  RepoHarnessEpisodeResult                    <span class="lab">│</span>
+<span class="lab">│                   reward boundary · invalid_for_training/online_rl</span><span class="lab">│</span>
+<span class="lab">│                   rl/episode.py:234                              │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T8 · 投影</span>     write_run_episode_compat_projection             <span class="lab">│</span>
+<span class="lab">│                   evaluation/episode_projection.py:118           │</span>
+<span class="lab">│                   → final.patch / final.diff / training_view /   │</span>
+<span class="lab">│                     manifest / provider_route_qualification …    │</span>
+<span class="lab">├─────────────────────────────────────────────────────────────────┤</span>
+<span class="lab">│</span> <span class="t">T9 · evidence</span>  acceptance summary · source_digests · inspector <span class="lab">│</span>
+<span class="lab">│                   docs/agentic_RL/repo_harness_verl_workstreams/  │</span>
+<span class="lab">└─────────────────────────────────────────────────────────────────┘</span>
+
+<span class="lab">侧栏（在多个 T 点都会出现）：</span>
+   <span class="s">A · 安全边界</span>     T4-T5 path guard / T5-T6 forbidden marker / T8 hygiene
+   <span class="s">B · TrainingView mask</span> T5 tool result span / T7 response_mask=0 / T8 公开
+   <span class="s">C · Audit/artifact</span>  T5-T6 audit_artifact_id / T8 audit_refs / opaque rh://
+   <span class="s">D · evidence 防伪</span>  T9 sha256 binding · semantic re-derive · 字段白名单</div>
+
+  <h2 class="sec" id="t-list">T0 – T9 主线时间点</h2>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T0</span><span class="title">入口 · Episode 请求接入</span><span class="role">为什么这是 T0：所有路径都从 <code>run_episode</code> 起跳</span></div>
+    <div class="files">入口：<code>rl/runtime.py:559</code> <code>async def run_episode</code>　契约：<code>rl/episode.py:119</code> <code>RepoHarnessEpisodeRequest</code></div>
+    <p>校验 EpisodeExecutionSpec 绑定、决定 <code>runtime_execution_mode</code>（real_episode 还是 minimal_gateway）、构造 sample_attempt_id。失败路径直接返回 <code>_terminal_result(status="invalid_task")</code>，不走后续 T 点。</p>
+    <p><a href="code_guide_t0_entry.html">→ 进入 T0 章节</a> <span class="tag t-warn">⏳ 待写</span></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T1</span><span class="title">Workspace 准备 · snapshot lease + dependency overlay</span></div>
+    <div class="files">入口：<code>_prepare_real_episode_workspace</code>　目录：<code>workspace/reuse.py</code> + <code>workspace/dependency_environment.py</code></div>
+    <p>把 snapshot lease 派生成 episode 可写工作区；依赖环境通过 overlay 注入；runtime-private 目录与公开仓库分隔。<b>注意</b>：P1 详细写过这一段，但<b>同步→异步迁移之后 lease 调度可能已变</b>，引用前需审。</p>
+    <p><a href="code_guide_t1_workspace.html">→ 进入 T1 章节</a> <span class="tag t-warn">⏳ 待写</span> · 参考：<a href="repo_harness_verl_pipeline_p1_workspace.html">P1（需审查）</a></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T2</span><span class="title">AgentLoop · 多轮 assistant turn 调度</span></div>
+    <div class="files">入口：<code>_run_real_episode_entry</code>（async） → <code>_run_real_episode_sync</code>（worker thread）</div>
+    <p>异步框架接管之后，AgentLoop 的具体形态可能与 P2 描述的不一致。本章节会用<b>现役代码</b>重画 turn 调度的状态机：assistant 生成 → tool call 解析 → tool dispatch → tool result 回灌 → 下一轮。</p>
+    <p><a href="code_guide_t2_loop.html">→ 进入 T2 章节</a> <span class="tag t-warn">⏳ 待写</span> · 参考：<a href="repo_harness_verl_pipeline_p2_runtime.html">P2（同步→异步迁移后已变，需审查）</a></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T3</span><span class="title">Gateway · provider 路由 + LLM 推理</span></div>
+    <div class="files"><code>rl/gateway.py</code> · <code>rl/provider_gateway.py</code></div>
+    <p>这一层决定 <code>provider_route ∈ {mock, verl, …}</code>，结合 <code>llm_gateway_route</code> 影响后续 <code>policy_loss_candidate</code> 判决（T8 才汇总）。包含 forbidden marker 出站扫描（侧栏 A）和 inference_backend 校验。</p>
+    <p><a href="code_guide_t3_gateway.html">→ 进入 T3 章节</a> <span class="tag t-warn">⏳ 待写</span> · 参考：<a href="repo_harness_verl_pipeline_p3_gateway.html">P3（需审查）</a></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T4</span><span class="title">Tool 分派 · ToolExecutor.execute_tool</span></div>
+    <div class="files"><code>tools/minimal.py:234</code> <code>class ToolExecutor</code> · 分派表 <code>tools/minimal.py:373-422</code></div>
+    <p>把模型说出的 <code>{"tool":"…","input":{…}}</code> 映射到具体 handler。本章节展示 normalize → tool_name 表 → 5 大族分派（read 族 / file mutation 族 / 命令族 / 状态族 / 诊断族）。</p>
+    <p><a href="code_guide_t4_dispatch.html">→ 进入 T4 章节</a> <span class="tag t-warn">⏳ 待写</span></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T5</span><span class="title">工具执行 · 重点 file_mutation 共享路径</span><span class="tag t-good">✓ 已写</span></div>
+    <div class="files"><code>tools/minimal.py:2229</code> <code>_stage16g2b_file_mutation_tool</code> + <code>tools/file_mutation.py:177</code> <code>execute_structured_file_mutation</code></div>
+    <p>T5 是 16G.2 的主战场。<b>本章节是本系列的样板</b>，展示了 contract + excerpt + 不变量 的写法。覆盖 5 个文件工具（write_file/apply_patch/delete_file/move_file/mkdir）走同一共享路径 + preflight/snapshot/apply/rollback 原子语义。</p>
+    <p><a href="code_guide_t5_execute.html">→ 进入 T5 章节</a> <span class="tag t-good">✓ 已写</span></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T6</span><span class="title">状态更新 + Audit</span></div>
+    <div class="files">tool result typed dict · file_state_cache · recorder.write_json_artifact</div>
+    <p>工具调用完成后，<b>哪些回到 model-visible payload、哪些落 artifact_refs 当审计</b>。16G.2C 修正的 <code>audit_ref → audit_artifact_id</code> 字段命名冲突就发生在这里。</p>
+    <p><a href="code_guide_t6_state.html">→ 进入 T6 章节</a> <span class="tag t-warn">⏳ 待写</span> · 关联：<a href="code_guide_side_audit.html">side-C Audit</a></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T7</span><span class="title">EpisodeResult · reward boundary + invalid_for_*</span></div>
+    <div class="files"><code>rl/episode.py:234</code> <code>RepoHarnessEpisodeResult</code> · reward boundary 校验</div>
+    <p>所有轮次跑完之后，构造 <code>RepoHarnessEpisodeResult</code>。决定 <code>invalid_for_training</code> / <code>invalid_for_online_rl</code> 两个关键 flag，决定 reward score 是否可用。这里出错会让后续 T8 投影的 <code>policy_loss_candidate</code> 永远是 false。</p>
+    <p><a href="code_guide_t7_result.html">→ 进入 T7 章节</a> <span class="tag t-warn">⏳ 待写</span></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T8</span><span class="title">投影 · write_run_episode_compat_projection</span><span class="tag t-good">✓ 已写</span></div>
+    <div class="files"><code>evaluation/episode_projection.py:118</code> 写出 final.patch / final.diff / training_view / manifest / provider_route_qualification</div>
+    <p>把 RealEpisodeRun 翻译成 14 个公开文件 + 私有 raw artifact。<code>_provider_route_qualification</code>（line 610）做 policy_loss 资格判决；公开扫描兜底防止 forbidden marker 泄漏。</p>
+    <p><a href="code_guide_t8_projection.html">→ 进入 T8 章节</a> <span class="tag t-good">✓ 已写</span></p>
+  </div>
+
+  <div class="tcard">
+    <div class="hd"><span class="tno">T9</span><span class="title">Evidence · acceptance summary + inspector</span></div>
+    <div class="files">每个 stage 的 build_*.py 脚本 + <code>stage16g2_file_surface.py</code> inspector + sha256 binding</div>
+    <p>给"实施 agent 自报"做强证。本章节讲：acceptance summary 字段白名单 / source_digests 怎么 bind 源文件 / inspector 怎么 reject 摘要刷分但语义篡改 / public path leak scan。</p>
+    <p><a href="code_guide_t9_evidence.html">→ 进入 T9 章节</a> <span class="tag t-warn">⏳ 待写</span> · 关联：<a href="code_guide_side_evidence.html">side-D evidence 防伪</a></p>
+  </div>
+
+  <h2 class="sec" id="side-list">侧栏（贯穿主线的横向主题）</h2>
+
+  <div class="tcard side">
+    <div class="hd"><span class="tno">A</span><span class="title">安全边界 · forbidden markers + path guards + profile gates</span><span class="tag t-good">✓ 已写</span></div>
+    <p>跨 T4（dispatch 前的 path normalize）、T5（路径黑名单 + binary/UTF-8 检查）、T6（tool result 出站时的 visibility filter）、T8（公开 evidence path leak scan）。本侧栏把 4 个 T 点上的安全检查统一讲一遍，方便定位"模型为什么被拒"。</p>
+    <p><a href="code_guide_side_safety.html">→ 进入 side-A</a> <span class="tag t-good">✓ 已写</span></p>
+  </div>
+
+  <div class="tcard side">
+    <div class="hd"><span class="tno">B</span><span class="title">TrainingView mask · response_mask / tool observation span</span></div>
+    <p>跨 T5（每个 tool result 都会成为一个 observation span）、T7（response_mask 计算）、T8（training_view 公开版投影）。讲为什么 tool result 的 response_mask 强制为 0、为什么 mock route 下 <code>online_rl_eligible=false</code>。</p>
+    <p><a href="code_guide_side_mask.html">→ 进入 side-B</a> <span class="tag t-warn">⏳ 待写</span></p>
+  </div>
+
+  <div class="tcard side">
+    <div class="hd"><span class="tno">C</span><span class="title">Audit / artifact · 三种 ref 怎么取舍</span></div>
+    <p>跨 T5-T6（tool result 的 <code>audit_artifact_id</code>）、T7（EpisodeResult 上的 <code>audit_ref</code> 内部字段）、T8（公开投影里的 <code>opaque rh://</code> ref）。讲 16G.2C 那次"audit_ref 被 forbidden marker 拦"的根本设计原因 + 三层 ref 各自的可见域。</p>
+    <p><a href="code_guide_side_audit.html">→ 进入 side-C</a> <span class="tag t-warn">⏳ 待写</span></p>
+  </div>
+
+  <div class="tcard side">
+    <div class="hd"><span class="tno">D</span><span class="title">Evidence 防伪 · sha256 binding + 语义重算 + 字段白名单</span></div>
+    <p>跨 T9 全部。讲三种防伪手段：① <code>source_digests</code> 把源代码 sha256 写进 acceptance summary；② inspector 不能信 summary 状态字段，要从源代码<b>重算</b>；③ 字段白名单严格枚举可出现的字段，未知字段一律拒。</p>
+    <p><a href="code_guide_side_evidence.html">→ 进入 side-D</a> <span class="tag t-warn">⏳ 待写</span></p>
+  </div>
+
+  <h2 class="sec" id="howto">怎么读这套指南</h2>
+
+  <h3>场景 1 · 我要审查一个 16G.x 实施 PR</h3>
+  <ol>
+    <li>读 PR 描述确定<b>主要落在哪个 T 点</b>（通常 T4 / T5 / T8 / T9 是 16G 的高发地带）</li>
+    <li>读对应 T 章节的 contract + 不变量，知道改动应该<b>不能破坏什么</b></li>
+    <li>读关联侧栏（PR 是否触及 A 安全 / B mask / C audit / D evidence）</li>
+    <li>回到完成报告里的"我观察到的风险"部分，对照是否覆盖</li>
+  </ol>
+
+  <h3>场景 2 · 我想知道"一个 episode 实际怎么跑完的"</h3>
+  <p>从 T0 顺着读到 T9，跳过侧栏。每个 T 章节末尾有 <b>→ 下一步 T+1</b> 链接。</p>
+
+  <h3>场景 3 · 我想搞清楚某个具体 contract（比如 ToolResult / EpisodeResult）</h3>
+  <p>用 nav 直接跳到产生 / 消费它的 T 点，contract 块在每章开头。</p>
+
+  <h2 class="sec" id="convention">章节约定（重要 · 给后续 stage 加章节用）</h2>
+
+  <h3>文件命名</h3>
+  <pre><code>code_guide_index.html               # 总览（本页）
+code_guide_t&lt;N&gt;_&lt;keyword&gt;.html        # 主线 T 点，N=0..9
+code_guide_side_&lt;keyword&gt;.html        # 侧栏主题</code></pre>
+  <p>未来如果某个 T 点要拆出多页，用 <code>code_guide_t5_execute_file_mutation.html</code> / <code>code_guide_t5_execute_read.html</code> 这种<b>带主题后缀</b>的写法；不要硬加 T 数字。</p>
+
+  <h3>每个 T 章节模板</h3>
+  <table>
+    <thead><tr><th style="width:18%">块</th><th>内容</th><th class="c" style="width:12%">必填</th></tr></thead>
+    <tbody>
+      <tr><td><b>📖 代码阅读路径</b></td><td><b>章节顶部</b>第一块。按 IDE 跳转顺序编号 6–10 步，每步 = <code>file:line</code> + 一句话"在这里看什么"。读完它就能在 IDE 里独立把这一段代码走一遍</td><td class="c">✓</td></tr>
+      <tr><td><b>时间点</b></td><td>"在 T-1 完成 ___ 之后，T+1 之前要发生 ___"</td><td class="c">✓</td></tr>
+      <tr><td><b>角色 + Contract</b></td><td>输入 / 输出 / 关键不变量 / 失败模式</td><td class="c">✓</td></tr>
+      <tr><td><b>核心 excerpt</b></td><td>1–3 段 5–20 行代码 + 注释，<b>每段配 file:line</b></td><td class="c">✓</td></tr>
+      <tr><td><b>数据流 / 状态机</b></td><td>本 T 点内部的小流程图（ASCII / 表格）</td><td class="c">✓</td></tr>
+      <tr><td><b>关联侧栏</b></td><td>显式点出本 T 点触发侧栏 A/B/C/D 中的哪些</td><td class="c">✓</td></tr>
+      <tr><td><b>不变量 + 防御点</b></td><td>本 T 点必须维持的不变量；引用前/后 T 点的 contract</td><td class="c">✓</td></tr>
+      <tr><td><b>下一步</b></td><td>→ 链接到 T+1（如果 T+1 已写）</td><td class="c">✓</td></tr>
+      <tr><td><b>过时风险标记</b></td><td>本章节引用了 P1–P5 的哪些段落、是否已审过</td><td class="c">条件</td></tr>
+    </tbody>
+  </table>
+
+  <h3>📖 代码阅读路径块的写法（重要）</h3>
+  <p>每个 T / side 章节都<b>必须以"代码阅读路径"开头</b>。它是用户从"完全不熟悉代码库"走到"能独立在 IDE 里跟着读这一段"的最短路径。<b>只读阅读路径块（不打开任何源码）就应该完整理解整条调用链</b>。每步用<b>分块结构</b>展示 6 类信息：</p>
+  <pre><code>&lt;div class="readpath"&gt;
+  &lt;div class="rpttl"&gt;一句话概括整条链路&lt;/div&gt;
+  &lt;ol&gt;
+    &lt;li&gt;
+      &lt;div class="rplp"&gt;src/repo_harness/tools/minimal.py:368-422&lt;/div&gt;
+      &lt;div class="rpfn"&gt;def execute(self, tool_call, context) → ToolResult&lt;/div&gt;
+      &lt;div class="rpbody"&gt;
+        &lt;span class="lbl"&gt;做什么&lt;/span&gt;&lt;span class="val"&gt;...&lt;/span&gt;
+        &lt;span class="lbl"&gt;输入&lt;/span&gt;&lt;span class="val"&gt;...&lt;/span&gt;
+        &lt;span class="lbl"&gt;输出&lt;/span&gt;&lt;span class="val"&gt;...&lt;/span&gt;
+        &lt;span class="lbl"&gt;关键内部步骤&lt;/span&gt;&lt;span class="val"&gt;... 引用 &lt;span class="step"&gt;3&lt;/span&gt; ...&lt;/span&gt;
+        &lt;span class="lbl"&gt;调用源&lt;/span&gt;&lt;span class="val"&gt;...&lt;/span&gt;
+        &lt;span class="lbl"&gt;→ 继续看&lt;/span&gt;&lt;span class="val"&gt;&lt;span class="step"&gt;3&lt;/span&gt; 下一步&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</code></pre>
+  <p class="small"><b>给后续 stage 写新章节的人 — 6 条硬约束：</b><br>
+  ① <b>步数 6–12 步</b>，太少不成链，太多读者读不完。<br>
+  ② <b>file:line 必须能在 IDE 直接 cmd+click 跳转</b>（写完整路径 <code>src/repo_harness/...</code>，行号准确）。<br>
+  ③ <b>每步至少 4 类信息</b>：做什么 + 输入/输出 + 调用源 + → 继续看。复杂步骤补 "关键内部步骤" / "关键调用" / "失败时" 等附加标签。<br>
+  ④ <b>用 <code>&lt;span class="step"&gt;N&lt;/span&gt;</code> 标记跨步骤引用</b>（如 "继续看 <span class="tag t-info">3</span>"），形成可点击的调用图。<br>
+  ⑤ <b>"只读路径块不打开源码也能搞清调用链"</b>——这是验收标准。写完用一个 sub-agent 在不读源码的情况下审一遍，看是否能回答"请求从哪来 / 数据怎么传 / 失败怎么处理"。<br>
+  ⑥ CSS 类 <code>.readpath / .rplp / .rpfn / .rpbody / .lbl / .val / .step</code> 已在 T5 / T8 / side-A 里定义，新章节直接复制 style 块即可。</p>
+
+  <h3>引用其他文档的写法（避免冲突）</h3>
+  <ul>
+    <li>引用<b>当前代码</b>：直接 <code>file_path:line</code>，markdown 链接。</li>
+    <li>引用<b>本系列其他章节</b>：<code>code_guide_t&lt;N&gt;_*.html#anchor</code>。</li>
+    <li>引用<b>P1–P5</b>：必须前置 <span class="tag t-warn">⚠️ 需审查</span> 标签 + 一句话说"这里引用的事实最后一次确认是 stage X，之后未复核"。</li>
+    <li>引用<b>完成报告 / 能力地图</b>：直接链接；它们随 stage 增量更新。</li>
+  </ul>
+
+  <h3>哪些不写（避免重叠）</h3>
+  <ul>
+    <li><b>每条能力的"模型怎么用 + profile 矩阵"</b> → 见<a href="repo_harness_verl_harness_capability_acceptance_map.html">能力地图四象限卡</a>，本系列只点引。</li>
+    <li><b>每个 stage 的实施细节叙事</b> → 见对应 stage 的 <code>completion_report.html</code>，本系列只点引。</li>
+    <li><b>verl 外部框架细节</b> → 不展开。本系列止于 <code>AgentLoopOutput / DataProto</code>。</li>
+  </ul>
+
+  <h2 class="sec" id="status">当前进度</h2>
+  <div class="status-grid">
+    <div class="sg"><b>主线 T0–T9</b>　已写 2 / 10　（T5 工具执行 · T8 投影）</div>
+    <div class="sg"><b>侧栏 A–D</b>　已写 1 / 4　（A 安全边界）</div>
+    <div class="sg"><b>索引</b>　已写</div>
+    <div class="sg"><b>P1–P5</b>　保留，引用时需审查（不属于本系列）</div>
+  </div>
+
+  <div class="callout warn"><b>下一步计划：</b>用户确认本批 3 篇（T5 / T8 / side-A）的形式 OK 后，再按节奏铺 T0 / T1 / T2 / T3 / T4 / T6 / T7 / T9 + side-B / side-C / side-D。如果形式需调整，先在 T5 上改完模板再批量铺。</div>
+
+</main>
+</div>
+</body>
+</html>
