@@ -9,8 +9,24 @@
 - [S0-0, 2026-07-07] AGENTS.md 采用"新内容置顶 + 旧章节原地保留标【legacy】"而非删除旧章节。理由：旧章节是理解被继承契约（五道防线、inspector 范式、原子语义）出处的最短路径，且删除会破坏旧 evidence 的上下文；代价是文件更长，已用标题前缀让新旧一眼可辨。
 - [S0-0, 2026-07-07] 旧必读清单 B~G 未删除，段落标题全部改名（C 段显式标"已废弃"），置于"【legacy】旧架构选读清单"声明之下；段内条目的 ★ 标记在独立复核后二次清理（见 Deviations 第 1 条）。
 - [S0-0, 2026-07-07] AGENTS.md"接手前最关键判断"从 3 条改为 4 条：新增第 4 条凭据安全（`deepseek_api.md` 只引路径不引内容），因为 rh2 阶段开始有真实 key 进入工作流。
+- [S0-2, 2026-07-07] 上游 smoke 用装到 scratchpad 的 standalone uv 0.11.26 跑：`reference/verifiers` 的 pyproject 有 `[tool.uv] required-version = ">=0.11.1"`，与本机全局 uv 0.10.11 冲突。没有升级全局 uv（避免影响其他项目）、没有改 reference/ 下任何文件。GPU 机注意：跑 rh2 契约测试用 0.10.11 即可；若要在 GPU 机重复上游 smoke 需 uv>=0.11.1。
+- [S0-2, 2026-07-07] TrainClient 契约测试的 renderer 选择：用确定性 FakeRenderer 覆写 `TrainClient._renderer_pool` 私有钩子，而不是下载 Qwen3-0.6B tokenizer。理由：真实 renderer pool 初始化会按模型名下载 HF tokenizer，违反"测试离线可重复"门槛；代价是依赖私有方法名——有意保留为升级哨兵（钩子改名/改签名测试立刻红），已记入 `contract_baseline.md` 发现 4。真实 renderer/tokenizer 的验证归 S0-4/S0-5。
+- [S0-2, 2026-07-07] EnvServer 契约测试的 taskset 用 `rh2/tests/fixtures/` 下平面模块 + sys.path 注入提供（verifiers loaders 的本地插件协议：模块名即 taskset.id、`__all__` 导出恰好一个 Taskset 子类），不装任何环境包；health/info 往返在 in-proc ZMQ（127.0.0.1 临时端口）上完成。
+- [S0-2, 2026-07-07] 执行计划把生命周期简写为 "setup → harness → finalize → score"；真实调用序在 taskset.setup 之后还有独立的 `harness.setup` 阶段，且 score 是 taskset.score 与 harness.score 两路并发 gather。契约测试按真实顺序断言（不算偏离计划，事实记录在 `contract_baseline.md` 发现 3；另核实 reference/verifiers 工作树的本地修改全部是注释/docstring，AST 与 pin 5885ab9c 逐节点一致，smoke 结果对 pin 有效）。
 - [S0-4, 2026-07-07] 计划预留的 `uv add --group dev transformers huggingface_hub` 实际未执行：两包已由 verifiers 传递依赖带入 uv.lock（transformers 5.13.0 / huggingface_hub 1.22.0），rh2 的 pyproject/uv.lock 零改动；renderers 库经 `sys.path` 从 `reference/renderers`（HEAD 5904fa2）只读引用。
 - [S0-4, 2026-07-07] 实验脚本落位 `rh2/experiments/s0_renderer/`（计划产出只要求报告文件）。理由：scratchpad 属会话级易失目录，而该脚本是 24 项断言的可重跑回归（renderers/transformers 任一升级后 `cd rh2 && uv run python experiments/s0_renderer/v2_renderer_experiment.py` 一分钟内复验）；目录命名沿用计划里 S0-5 的 `rh2/experiments/` 惯例。
+- [S0-3, 2026-07-07] 玩具闭环矩阵用**进程内 mock OpenAI 兼容端点**完成结构层验收，而非真实 deepseek（原因见 Deviations：`deepseek_api.md` 的 deepseek key 为空）。mock 脚本化回放 bash/edit 工具调用，让 default 两题走"工具调用→结果→收尾"两轮、null 一轮结束，正好压出工具归属边界。V1 使用层"通过"的判定对象是 taskset×harness×runtime 组装 + `Environment.episode` 入口 + Trace 产出 + docker 生命周期，与模型提供方无关，故 mock 不影响该判定；真实 deepseek 连通性作为独立发现待补 key 复跑（`--endpoint deepseek`）。
+- [S0-3, 2026-07-07] runner 落位 `rh2/experiments/s0_toy_loop.py`，taskset fixture 落位 `rh2/tests/fixtures/toy_taskset.py`（verifiers 本地插件 id=`toy-taskset`）。刻意**不进 `env.serving()`**：本 taskset 无 shared tools / user sim，走 per-rollout InterceptionServer，也让 macOS docker 网络 shim 只需覆盖 `reachable_url` 一个点。`@reward` 把"文件读失败"吞掉记 0 分（不抛错）：null harness 下文件必然不存在是预期得 0，不应污染 `trace.errors`。
+
+## Deviations（S0-3 追加）
+
+- [S0-3, 2026-07-07] **C5 假定不成立：`deepseek_api.md` 里 deepseek key 为空**。该文件 `DEEPSEEK_API_KEY:` 行没有值，只有 OPENAI/CLAUDE key 有值。→ 玩具闭环无法用真实 deepseek 跑模型对话，改用 mock 端点完成结构层验收（见上）。属"key 问题"非"verifiers 组装问题"。**待用户补 `DEEPSEEK_API_KEY: <值>` 后复跑 `--endpoint deepseek` 复核。**
+- [S0-3, 2026-07-07] **[安全] key 解析器换行跨行 bug 已修复**：runner 首版用 `\s*`（含换行）取冒号后的值，遇到空的 deepseek 行会跨行吃到下一行的 OPENAI key，把 OpenAI 凭据发到了 deepseek 端点（deepseek 401 回显了以 `r-sA` 结尾的 OpenAI key 尾）。已改为同行匹配 `[ \t]*`，缺 key 时正确判 `missing`、端点只收到 `EMPTY`，确认不再发送任何真实 key。全程 key 未落盘/未打印/未进 argv。教训：读凭据文件取值只能吃水平空白，绝不用 `\s`。
+- [S0-3, 2026-07-07] **macOS Docker `--network host` 不通宿主 loopback**：verifiers `DockerRuntime.is_local=True` 假定容器可用 `127.0.0.1` 直连宿主（Linux 成立）；本机 Docker Desktop（aarch64）实测 `127.0.0.1` 连不到宿主 loopback 端口，需 `host.docker.internal`。runner 仅在 macOS 下实验层 monkeypatch `verifiers.v1.rollout.reachable_url` 绕过（**未改 `reference/` 与 site-packages**）；Linux GPU 机不触发该 shim，走原生 127.0.0.1。
+
+## New-Unknowns（S0-3 追加）
+
+- [S0-3, 2026-07-07] docker 分支用 mock 端点验证了 V1 使用层与 runtime 生命周期；**真实模型经 EvalClient 在 docker 容器内到宿主 interception server 的往返**尚未用真实 deepseek 跑过（因缺 key）。补 key 后应复跑 `--harness default --runtime docker --endpoint deepseek` 消除此未知。
 
 ## Deviations（偏离计划的地方及原因）
 
