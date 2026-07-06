@@ -40,3 +40,4 @@
 - U-E 静态部分已在 S0-4 消除（thinking 剥离 = 模板窗口语义，bridge 在 query 边界 fail-closed，量化见 `s0/v2_renderer_report.md` 第 3 节）；动态部分（真实 vLLM 采样的 `<|im_end|>` 尾 token、TrainClient 回退行为、截断路径 logprobs 对位）留 S0-5 观察。
 - [检查点2, 2026-07-07] 汇总复核（checkpoint2_review.md）判定"有条件通过"：条件一 OPENAI key 轮换（见下）；条件二 deepseek 实跑已由 ef726836 先行关闭。承认一处工作流偏离：S0-3 的 notes 条目被误并入 s0-2 commit a18fc381（本应随 810d0f0c），按 commit 逐个 diff 的对应关系在该处失真，不改写历史、以本条为准据更正；低severity 3 条留 S0-5 准备期处理。
 - [安全, 2026-07-07] **用户行动项：轮换 OPENAI key**。S0-3 首版解析 bug 曾把完整 OPENAI key 外发到 api.deepseek.com 一次（bug 已修，key 本体未入 git，但 4 字符尾指纹随事件记录进了 git 历史）——按"已传输给第三方服务器即视为泄漏"原则应立即轮换。
+- [S0-5 前, 2026-07-08] GPU 租用降配定案：8 卡缺货，S0-5/6/7 改用单卡 RTX PRO 6000（96GB）——同构 Blackwell 提前去风险 sm_120 软件栈（U-C 软件侧），96GB 可原生 bf16 跑 30B-A3B（无需量化混淆 V4 结论）；磁盘 200GB 是软肋，优先申请挂 volume，否则按 S0-5/6→清理→S0-7 顺序跑；8×整机推迟到 S4 前训练侧专项预实验（计划 U-C 原有安排）。
