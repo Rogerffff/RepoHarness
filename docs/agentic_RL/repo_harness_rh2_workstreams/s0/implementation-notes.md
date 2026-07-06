@@ -64,3 +64,11 @@
 - [S0-6, 2026-07-07] **SGLang routing 的最小必要开关仍需更精确复核**：保守实现应同时开启服务端 `--enable-return-routed-experts` 与请求侧 `return_routed_experts=true`。本轮保存的 30B 证据都包含 `routed_experts`，但没有完整保留 request body，不能从证据文件里严格区分“只开 server flag 是否足够”。后续 shim 测试应把 request body 一并落盘。
 - [S0-7, 2026-07-07] **SWE-Bench Verified 官方镜像拉取速度、磁盘占用、评分解析仍未消除**：本轮只使用 `python:3.12-slim` toy Docker 镜像，没有拉取官方 SWE-Bench x86_64 镜像，也没有跑官方 eval 脚本。因此 U-D 仍然存在，必须在 `SweSmokeTaskset` 实现后用真实题单关闭。
 - [S0-5/6, 2026-07-07] **单卡 RTX PRO 6000 只能证明推理侧可行，不能证明 S4 训练侧可行**：本轮没有测试多卡通信、权重同步、actor-rollout 切换、训练显存、PCIe 无 NVLink 带来的同步开销。8 卡整机风险仍保留到 S4 前专项预实验。
+
+## S0-5/S0-6 收口（第二轮补齐，2026-07-07）
+
+- [S0-6, 2026-07-07] **top-p 动态探针已补（关闭上文"top-p tape 尚未动态验证"）**：stock SGLang 0.5.9 + Qwen3-30B-A3B，`top_p=0.95` + slime 风格 `custom_params={"return_top_p_token_ids": true}`（`slime/rollout/sglang_rollout.py:108` 的真实形状），实测 `meta_info` 无任何 `top_p` 相关 key，请求被静默忽略（200，与不带 custom_params 的对照组逐 key 一致）；routing tape 与 logprobs 在 top_p=0.95 下不受影响（`[30,48,8]`、16/16 对齐）。证据：`remote_s0_5_7_evidence/sglang_qwen3_30b_topp_probe.json`。
+- [S0-6, 2026-07-07] **U-B 最终判定**：routing 半边**不需要** slime patch（`enable_return_routed_experts` 为 stock SGLang 0.5.9 原生 flag，`server_args.py:629`）；top-p 半边**需要** slime 的 `docker/patch/latest/sglang-top_p.patch`（929 行、17 个文件）或直接用 slime docker 镜像。附带核查：vLLM 0.24.0 安装树、verifiers wire（`ResponseTokens`）、prime-rl 三处均无 top-p tape 等价物——形态 A 若需 top-p replay 是三端缺口。
+- [S0-5, 2026-07-07] **V3 最终判定：通过**。vLLM 0.24.0（Blackwell 保守参数）+ TrainClient + Qwen3Renderer 全链 token-in/token-out、logprobs 逐位对齐、Trace token identity 成立（4B 与 30B-A3B）；routing wire 为 base64 `.npy`，与 verifiers `RoutedExpertsPayload{data,shape,start}` 的差异已由薄 shim 证明可弥合（commit 后 `[21,48,8]`、identity 保持）。报告：`s0/v3_protocol_report.md`。
+- [S0-6, 2026-07-07] **V4 最终判定：通过，推荐形态 B 为 MoE RL 训练主形态**（形态 A 保留为协议基线与 dense/eval 路径）。四维对比与理由见 `s0/topology_ab_report.md`：token 保真 wire 层两条等价；MoE 张量上 top-p tape 是分水岭（B=拉现成 slime 镜像，A=改三个仓库）；B 的环境固化与 top-p patch 共享"固定 slime 镜像"一个解；治理契约经中立 `TrajectoryProjection` 收敛，切换形态不改治理层。硬性要求：pin 镜像版本 + 启动后 top_p<1.0 探针断言 + tape 解码校验只在 projection 层实现一次。
+- [S0-6, 2026-07-07] **U-H（新未知）**：slime patch 版 SGLang（镜像形态）在 Blackwell sm_120 上的实际可用性未验证——本轮只验证了 stock 0.5.9 的行为与 patch 的静态存在性；patch 兼容的 sglang 版本与镜像行为留 S1 接入时用同一探针关闭。

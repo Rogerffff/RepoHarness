@@ -32,6 +32,29 @@
 - `sglang_qwen3_30b_moe_generate_probe.json`
 - `sglang_qwen3_30b_moe_generate_probe_with_routing.stdout.json`
 
+## S0-6 补充：top-p 动态探针（2026-07-07 第二轮）
+
+目的：关闭 implementation-notes 里"top-p tape 尚未动态验证"的 New-Unknown，并按执行计划 S0-6 第 3 条要求**显式设 `top_p=0.95`**（第一轮探针全部用 `temperature=0.0, top_p=1.0`，正是计划警告的假阴性条件——top_p=1.0 不产生截断候选集，看不到 tape 不代表没有 tape）。
+
+方法（复用既有环境，未重装任何组件）：
+
+- 服务端：stock SGLang 0.5.9（PyPI 安装，`/workspace/s0_inference_envs/sglang`）+ Qwen3-30B-A3B，启动参数与第一轮相同（`--enable-return-routed-experts --sampling-backend pytorch --moe-runner-backend triton --attention-backend triton --disable-cuda-graph`，CUDA 13 toolkit 路径借用 vLLM 环境）。
+- 请求按 slime 的真实形状发（`slime/rollout/sglang_rollout.py:108`：`rollout_top_p != 1.0` 时 `sampling_params["custom_params"] = {"return_top_p_token_ids": True}`），`temperature=1.0, top_p=0.95, max_new_tokens=16`，同时开 `return_logprob` 与 `return_routed_experts`；另发一条不带 `custom_params` 的对照请求。
+- 远程脚本与产物在 `/workspace/s0_topp_probe/`（独立新目录，未动既有文件）。
+
+结果：
+
+- **top-p tape 在 stock SGLang 0.5.9 上不存在。**两条请求的 `meta_info` 都是同样 13 个 key（`cached_tokens/cached_tokens_details/completion_tokens/e2e_latency/finish_reason/id/input_token_logprobs/output_token_logprobs/prompt_tokens/response_sent_to_client_ts/routed_experts/total_retractions/weight_version`），不含任何名字带 `top_p` 的 key；slime `slime/utils/types.py:9-10` 期望的 `top_p_token_ids / top_p_kept_token_ids / top_p_token_offsets / top_p_kept_token_offsets` 四个 key 全部缺失。
+- **静默失败模式**：带 `custom_params={"return_top_p_token_ids": True}` 的请求返回 200，与对照组响应结构完全一致——stock server 不报错、只是忽略。也就是说 slime 风格客户端打到 stock SGLang 不会当场失败，而是到训练侧才炸（`slime/backends/megatron_utils/loss.py:47` 在 `rollout_top_p != 1.0` 时强制要求这两个字段）。
+- **U-B 判定（top-p 半边）确认：需要 slime 的 sglang patch/镜像。**静态佐证：远程安装树 `grep -r "top_p_token_ids"` 零命中；slime 仓库 `docker/patch/latest/sglang-top_p.patch`（929 行、改 17 个文件：sampler、logits_processor、logprob utils、tokenizer_manager、scheduler、disaggregation、eagle 等）就是该 tape 的来源，patch 后由 `meta_info["top_p_token_ids"] / meta_info["top_p_token_offsets"]`（pybase64 int32）返回。
+- **U-B 判定（routing 半边）反向确认：不需要 patch。**`enable_return_routed_experts` 是 stock 0.5.9 自带 flag（`sglang/srt/server_args.py:629`）。
+- **routed_experts 在 top_p=0.95 下仍正常返回**：base64 int32 tape 解析为 `[30, 48, 8]`（prompt 15 + 生成 16；行数 = prompt−1+生成 的规律与第一轮 `[20,48,8]`＝13−1+8 一致），expert id 范围 0..127（Qwen3-30B-A3B 共 128 专家）。`output_token_logprobs` 16 条与 `completion_tokens=16` 逐 token 对齐且全部有限值。
+- 附带核查（形态 A 侧对照）：远程 vLLM 0.24.0 安装树、本地 `reference/verifiers`、`reference/prime-rl` 三处 `grep "top_p_token_ids|top_p_kept|return_top_p"` 全部零命中——**形态 A 若需要 top-p replay，是"引擎不生成 + wire 契约无字段 + 消费端无解析"的三端缺口**。
+
+关键证据：
+
+- `sglang_qwen3_30b_topp_probe.json`（含两条请求的完整 sampling_params、meta_info key 清单、tape 解码摘要、server_info）
+
 ## S0-7：SWE smoke taskset
 
 结论：未达到原计划完整验收，只完成远程 Docker 前置验证。

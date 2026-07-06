@@ -1,0 +1,408 @@
+{
+  "probe": "s0-6 top-p dynamic probe (slime-style request against stock SGLang)",
+  "date": "2026-07-06 20:26:44 UTC",
+  "model": "Qwen/Qwen3-30B-A3B",
+  "sglang_package": "stock PyPI sglang (see pip_show in this file)",
+  "server_launch_flags": [
+    "--enable-return-routed-experts",
+    "--sampling-backend pytorch",
+    "--moe-runner-backend triton",
+    "--attention-backend triton",
+    "--disable-cuda-graph"
+  ],
+  "server_info": {
+    "version": "0.5.9",
+    "model_path": "Qwen/Qwen3-30B-A3B",
+    "enable_return_routed_experts": true,
+    "sampling_backend": "pytorch",
+    "attention_backend": "triton"
+  },
+  "prompt_len": 15,
+  "cases": [
+    {
+      "name": "slime_style_with_custom_params_top_p_0.95",
+      "request_sampling_params": {
+        "max_new_tokens": 16,
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "custom_params": {
+          "return_top_p_token_ids": true
+        }
+      },
+      "ok": true,
+      "status_code": 200,
+      "elapsed_seconds": 0.864,
+      "completion_text_preview": "<think>\nOkay, the user asked to name three colors, comma separated. Let",
+      "meta_info_keys": [
+        "cached_tokens",
+        "cached_tokens_details",
+        "completion_tokens",
+        "e2e_latency",
+        "finish_reason",
+        "id",
+        "input_token_logprobs",
+        "output_token_logprobs",
+        "prompt_tokens",
+        "response_sent_to_client_ts",
+        "routed_experts",
+        "total_retractions",
+        "weight_version"
+      ],
+      "top_p_related_keys": {
+        "id_keys_found": [],
+        "offset_keys_found": [],
+        "any_key_containing_top_p": []
+      },
+      "output_token_logprobs_summary": {
+        "present": true,
+        "num_entries": 16,
+        "entry_shape_example": {
+          "type": "list",
+          "len": 3,
+          "first": {
+            "type": "float",
+            "repr": "-1.7881409348774469e-06"
+          }
+        },
+        "completion_tokens_in_meta": 16,
+        "logprob_values_finite": true
+      },
+      "generated_token_ids": [
+        151667,
+        198,
+        32313,
+        11,
+        279,
+        1196,
+        4588,
+        311,
+        829,
+        2326,
+        7987,
+        11,
+        31683,
+        18663,
+        13,
+        6771
+      ],
+      "routed_experts": {
+        "present": true,
+        "type": "str",
+        "base64_len": 61440,
+        "raw_bytes": 46080,
+        "flat_int32_count": 11520,
+        "inferred_shape_if_48x8": [
+          30,
+          48,
+          8
+        ],
+        "expert_id_min": 0,
+        "expert_id_max": 127,
+        "preview_first_token_first_layer": [
+          49,
+          58,
+          19,
+          29,
+          16,
+          70,
+          116,
+          53
+        ]
+      },
+      "meta_info_summary": {
+        "type": "dict",
+        "keys": [
+          "cached_tokens",
+          "cached_tokens_details",
+          "completion_tokens",
+          "e2e_latency",
+          "finish_reason",
+          "id",
+          "input_token_logprobs",
+          "output_token_logprobs",
+          "prompt_tokens",
+          "response_sent_to_client_ts",
+          "routed_experts",
+          "total_retractions",
+          "weight_version"
+        ],
+        "items": {
+          "id": {
+            "type": "str",
+            "len": 32,
+            "preview": "2c80340b188a404c8a04889e665d9cb4"
+          },
+          "finish_reason": {
+            "type": "dict",
+            "keys": [
+              "length",
+              "type"
+            ],
+            "items": {
+              "type": {
+                "type": "str",
+                "len": 6,
+                "preview": "length"
+              },
+              "length": {
+                "type": "int",
+                "repr": "16"
+              }
+            }
+          },
+          "prompt_tokens": {
+            "type": "int",
+            "repr": "15"
+          },
+          "weight_version": {
+            "type": "str",
+            "len": 7,
+            "preview": "default"
+          },
+          "total_retractions": {
+            "type": "int",
+            "repr": "0"
+          },
+          "input_token_logprobs": {
+            "type": "list",
+            "len": 0,
+            "first": null
+          },
+          "output_token_logprobs": {
+            "type": "list",
+            "len": 16,
+            "first": {
+              "type": "list",
+              "len": 3,
+              "first": {
+                "type": "float",
+                "repr": "-1.7881409348774469e-06"
+              }
+            }
+          },
+          "completion_tokens": {
+            "type": "int",
+            "repr": "16"
+          },
+          "cached_tokens": {
+            "type": "int",
+            "repr": "0"
+          },
+          "cached_tokens_details": {
+            "type": "NoneType",
+            "repr": "None"
+          },
+          "routed_experts": {
+            "type": "str",
+            "len": 61440,
+            "preview": "MQAAADoAAAATAAAAHQAAABAAAABGAAAAdAAAADUAAABEAAAANwAAAHIAAAAJAAAAWgAAAAAAAABtAAAAIAAAAFwAAABNAAAAZgAAAHMAAAAyAAAAPAAAAGQA"
+          },
+          "e2e_latency": {
+            "type": "float",
+            "repr": "0.8606791496276855"
+          },
+          "response_sent_to_client_ts": {
+            "type": "float",
+            "repr": "1783369604.9823136"
+          }
+        }
+      },
+      "routing_rows_vs_generated_tokens": {
+        "routing_rows": 30,
+        "generated_tokens": 16,
+        "aligned_or_off_by_one": false
+      }
+    },
+    {
+      "name": "control_no_custom_params_top_p_0.95",
+      "request_sampling_params": {
+        "max_new_tokens": 16,
+        "temperature": 1.0,
+        "top_p": 0.95
+      },
+      "ok": true,
+      "status_code": 200,
+      "elapsed_seconds": 0.777,
+      "completion_text_preview": "<think>\nOkay, the user asked me to name three colors, separated by commas",
+      "meta_info_keys": [
+        "cached_tokens",
+        "cached_tokens_details",
+        "completion_tokens",
+        "e2e_latency",
+        "finish_reason",
+        "id",
+        "input_token_logprobs",
+        "output_token_logprobs",
+        "prompt_tokens",
+        "response_sent_to_client_ts",
+        "routed_experts",
+        "total_retractions",
+        "weight_version"
+      ],
+      "top_p_related_keys": {
+        "id_keys_found": [],
+        "offset_keys_found": [],
+        "any_key_containing_top_p": []
+      },
+      "output_token_logprobs_summary": {
+        "present": true,
+        "num_entries": 16,
+        "entry_shape_example": {
+          "type": "list",
+          "len": 3,
+          "first": {
+            "type": "float",
+            "repr": "-1.1920935776288388e-06"
+          }
+        },
+        "completion_tokens_in_meta": 16,
+        "logprob_values_finite": true
+      },
+      "generated_token_ids": [
+        151667,
+        198,
+        32313,
+        11,
+        279,
+        1196,
+        4588,
+        752,
+        311,
+        829,
+        2326,
+        7987,
+        11,
+        18663,
+        553,
+        76602
+      ],
+      "routed_experts": {
+        "present": true,
+        "type": "str",
+        "base64_len": 61440,
+        "raw_bytes": 46080,
+        "flat_int32_count": 11520,
+        "inferred_shape_if_48x8": [
+          30,
+          48,
+          8
+        ],
+        "expert_id_min": 0,
+        "expert_id_max": 127,
+        "preview_first_token_first_layer": [
+          49,
+          58,
+          19,
+          29,
+          16,
+          70,
+          116,
+          53
+        ]
+      },
+      "meta_info_summary": {
+        "type": "dict",
+        "keys": [
+          "cached_tokens",
+          "cached_tokens_details",
+          "completion_tokens",
+          "e2e_latency",
+          "finish_reason",
+          "id",
+          "input_token_logprobs",
+          "output_token_logprobs",
+          "prompt_tokens",
+          "response_sent_to_client_ts",
+          "routed_experts",
+          "total_retractions",
+          "weight_version"
+        ],
+        "items": {
+          "id": {
+            "type": "str",
+            "len": 32,
+            "preview": "38450e9ddf214678bc3dd37cd4576e1a"
+          },
+          "finish_reason": {
+            "type": "dict",
+            "keys": [
+              "length",
+              "type"
+            ],
+            "items": {
+              "type": {
+                "type": "str",
+                "len": 6,
+                "preview": "length"
+              },
+              "length": {
+                "type": "int",
+                "repr": "16"
+              }
+            }
+          },
+          "prompt_tokens": {
+            "type": "int",
+            "repr": "15"
+          },
+          "weight_version": {
+            "type": "str",
+            "len": 7,
+            "preview": "default"
+          },
+          "total_retractions": {
+            "type": "int",
+            "repr": "0"
+          },
+          "input_token_logprobs": {
+            "type": "list",
+            "len": 0,
+            "first": null
+          },
+          "output_token_logprobs": {
+            "type": "list",
+            "len": 16,
+            "first": {
+              "type": "list",
+              "len": 3,
+              "first": {
+                "type": "float",
+                "repr": "-1.1920935776288388e-06"
+              }
+            }
+          },
+          "completion_tokens": {
+            "type": "int",
+            "repr": "16"
+          },
+          "cached_tokens": {
+            "type": "int",
+            "repr": "14"
+          },
+          "cached_tokens_details": {
+            "type": "NoneType",
+            "repr": "None"
+          },
+          "routed_experts": {
+            "type": "str",
+            "len": 61440,
+            "preview": "MQAAADoAAAATAAAAHQAAABAAAABGAAAAdAAAADUAAABEAAAANwAAAHIAAAAJAAAAWgAAAAAAAABtAAAAIAAAAFwAAABNAAAAZgAAAHMAAAAyAAAAPAAAAGQA"
+          },
+          "e2e_latency": {
+            "type": "float",
+            "repr": "0.7729799747467041"
+          },
+          "response_sent_to_client_ts": {
+            "type": "float",
+            "repr": "1783369605.760428"
+          }
+        }
+      },
+      "routing_rows_vs_generated_tokens": {
+        "routing_rows": 30,
+        "generated_tokens": 16,
+        "aligned_or_off_by_one": false
+      }
+    }
+  ]
+}
