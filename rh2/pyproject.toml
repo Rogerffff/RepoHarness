@@ -1,0 +1,27 @@
+[project]
+name = "repoharness2"
+version = "0.1.0"
+description = "RepoHarness rh2: SWE agent RL safety & training-governance layer on top of verifiers v1"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "verifiers",
+    "pydantic>=2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+# verifiers pin: commit 5885ab9c54152e707af2a11797aa52c3eb1752da (2026-07, see
+# docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md E3/C1)
+[tool.uv.sources]
+verifiers = { git = "https://github.com/PrimeIntellect-ai/verifiers", rev = "5885ab9c54152e707af2a11797aa52c3eb1752da" }
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
