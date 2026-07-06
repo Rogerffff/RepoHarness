@@ -1,0 +1,163 @@
+{
+ "meta": {
+  "stage": "rh2-s0-3-toy-loop",
+  "verifiers_pin": "5885ab9c54152e707af2a11797aa52c3eb1752da",
+  "harness": "default",
+  "runtime": "subprocess",
+  "docker_image": null,
+  "endpoint_mode": "deepseek",
+  "endpoint_base_url": "https://api.deepseek.com",
+  "model": "deepseek-chat",
+  "max_turns": 6,
+  "deepseek_key_status": "missing",
+  "mac_docker_shim_applied": false,
+  "usage_note": "endpoint_mode=mock 时 usage 数字为合成值，仅验证字段通路；token_ids/mask/logprobs 为空是 EvalClient 文本中继模式的预期行为。",
+  "created_at": "2026-07-07T04:39:13+1000",
+  "summaries": [
+   {
+    "task_idx": 0,
+    "task_kind": "bash_create_file",
+    "reward": 0,
+    "rewards": {},
+    "num_turns": 0,
+    "num_branches": 0,
+    "stop_condition": "error",
+    "error_type": "ProviderError",
+    "error_message_head": "upstream 401: {\"error\":{\"message\":\"Authentication Fails, Your api key: ****MPTY is invalid\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+    "num_input_tokens": 0,
+    "num_output_tokens": 0
+   },
+   {
+    "task_idx": 1,
+    "task_kind": "edit_rename_function",
+    "reward": 0,
+    "rewards": {},
+    "num_turns": 0,
+    "num_branches": 0,
+    "stop_condition": "error",
+    "error_type": "ProviderError",
+    "error_message_head": "upstream 401: {\"error\":{\"message\":\"Authentication Fails, Your api key: ****MPTY is invalid\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+    "num_input_tokens": 0,
+    "num_output_tokens": 0
+   }
+  ]
+ },
+ "traces": [
+  {
+   "id": "9f658b8ed3cb4e6eb8e44831512c8adf",
+   "task": {
+    "idx": 0,
+    "name": "bash-create-hello-txt",
+    "description": null,
+    "prompt": "In your current working directory, create a file named `hello.txt` whose content is exactly `hello rh2`. After creating it, verify the file content and then reply that you are done.",
+    "system_prompt": null,
+    "image": null,
+    "workdir": null,
+    "timeout": {
+     "setup": null,
+     "harness": null,
+     "finalize": null,
+     "scoring": null
+    },
+    "resources": {
+     "cpu": null,
+     "memory": null,
+     "gpu": null,
+     "disk": null
+    },
+    "kind": "bash_create_file"
+   },
+   "nodes": [],
+   "rewards": {},
+   "metrics": {},
+   "info": {},
+   "extra_usage": [],
+   "is_completed": true,
+   "stop_condition": "error",
+   "errors": [
+    {
+     "type": "ProviderError",
+     "message": "upstream 401: {\"error\":{\"message\":\"Authentication Fails, Your api key: ****MPTY is invalid\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+     "traceback": null
+    }
+   ],
+   "timing": {
+    "start": 1783363148.5393221,
+    "setup": {
+     "start": 1783363148.539399,
+     "end": 1783363152.60929
+    },
+    "generation": {
+     "start": 1783363152.60929,
+     "end": 1783363153.219261
+    },
+    "finalize": {
+     "start": 0.0,
+     "end": 0.0
+    },
+    "scoring": {
+     "start": 0.0,
+     "end": 0.0
+    }
+   }
+  },
+  {
+   "id": "0d211a1e81654f7296d8683f536669f4",
+   "task": {
+    "idx": 1,
+    "name": "edit-rename-foo-to-bar",
+    "description": null,
+    "prompt": "In your current working directory there is a file `a.py` that defines a function named `foo`. Rename this function to `bar` (keep its behavior unchanged). Do not create new files. When the rename is complete, reply that you are done.",
+    "system_prompt": null,
+    "image": null,
+    "workdir": null,
+    "timeout": {
+     "setup": null,
+     "harness": null,
+     "finalize": null,
+     "scoring": null
+    },
+    "resources": {
+     "cpu": null,
+     "memory": null,
+     "gpu": null,
+     "disk": null
+    },
+    "kind": "edit_rename_function"
+   },
+   "nodes": [],
+   "rewards": {},
+   "metrics": {},
+   "info": {},
+   "extra_usage": [],
+   "is_completed": true,
+   "stop_condition": "error",
+   "errors": [
+    {
+     "type": "ProviderError",
+     "message": "upstream 401: {\"error\":{\"message\":\"Authentication Fails, Your api key: ****MPTY is invalid\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+     "traceback": null
+    }
+   ],
+   "timing": {
+    "start": 1783363153.2198741,
+    "setup": {
+     "start": 1783363153.219926,
+     "end": 1783363153.220756
+    },
+    "generation": {
+     "start": 1783363153.220756,
+     "end": 1783363153.776194
+    },
+    "finalize": {
+     "start": 0.0,
+     "end": 0.0
+    },
+    "scoring": {
+     "start": 0.0,
+     "end": 0.0
+    }
+   }
+  }
+ ]
+}
