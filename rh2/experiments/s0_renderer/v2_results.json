@@ -1,0 +1,185 @@
+{
+  "parity_cases": [
+    {
+      "case": "basic_system_user_assistant",
+      "ok": true,
+      "n_tokens_renderer": 27,
+      "n_tokens_hf": 27,
+      "first_diff": -1
+    },
+    {
+      "case": "swe_full_7msgs_reasoning_field",
+      "ok": true,
+      "n_tokens_renderer": 390,
+      "n_tokens_hf": 390,
+      "first_diff": -1
+    },
+    {
+      "case": "swe_full_7msgs_inline_think",
+      "ok": true,
+      "n_tokens_renderer": 390,
+      "n_tokens_hf": 390,
+      "first_diff": -1
+    },
+    {
+      "case": "gen_prompt_enable_thinking_true",
+      "ok": true,
+      "n_tokens_renderer": 244,
+      "n_tokens_hf": 244,
+      "first_diff": -1
+    },
+    {
+      "case": "gen_prompt_enable_thinking_false",
+      "ok": true,
+      "n_tokens_renderer": 248,
+      "n_tokens_hf": 248,
+      "first_diff": -1
+    },
+    {
+      "case": "full_render_enable_thinking_false",
+      "ok": true,
+      "n_tokens_renderer": 390,
+      "n_tokens_hf": 390,
+      "first_diff": -1
+    },
+    {
+      "case": "mid_rollout_prompt_4msgs",
+      "ok": true,
+      "n_tokens_renderer": 309,
+      "n_tokens_hf": 309,
+      "first_diff": -1
+    },
+    {
+      "case": "mid_rollout_prompt_6msgs",
+      "ok": true,
+      "n_tokens_renderer": 368,
+      "n_tokens_hf": 368,
+      "first_diff": -1
+    },
+    {
+      "case": "second_user_query_strips_history_think",
+      "ok": true,
+      "n_tokens_renderer": 395,
+      "n_tokens_hf": 395,
+      "first_diff": -1
+    },
+    {
+      "case": "second_user_query_prompt",
+      "ok": true,
+      "n_tokens_renderer": 359,
+      "n_tokens_hf": 359,
+      "first_diff": -1
+    },
+    {
+      "case": "parallel_tool_calls_consecutive_tool_msgs",
+      "ok": true,
+      "n_tokens_renderer": 313,
+      "n_tokens_hf": 313,
+      "first_diff": -1
+    },
+    {
+      "case": "tool_output_with_special_lookalikes",
+      "ok": true,
+      "n_tokens_renderer": 324,
+      "n_tokens_hf": 324,
+      "first_diff": -1
+    }
+  ],
+  "bridge_cases": [
+    {
+      "case": "turn1_returns_non_none",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "case": "turn1_prefix_preserved",
+      "ok": true,
+      "detail": "prefix 292 tokens, bridged total 309"
+    },
+    {
+      "case": "turn1_bridge_equals_full_rerender",
+      "ok": true,
+      "detail": "bridge=309 rerender=309 first_diff=-1"
+    },
+    {
+      "case": "turn2_chained_prefix_preserved",
+      "ok": true,
+      "detail": "prefix 353 tokens, bridged total 368"
+    },
+    {
+      "case": "turn2_still_prefixed_by_turn1_tape",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "case": "turn2_bridge_equals_full_rerender",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "case": "completion_parse_roundtrip",
+      "ok": true,
+      "detail": "tool=bash reasoning='I need to create the file first, then read it back to verify.'"
+    },
+    {
+      "case": "new_user_query_forces_rerender_none",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "case": "assistant_in_extension_rejected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "case": "truncated_completion_synthesizes_close",
+      "ok": true,
+      "detail": "synthesized token id 151645 (<|im_end|>) right after truncated tape"
+    },
+    {
+      "case": "parallel_tool_msgs_bridge_equals_rerender",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "case": "nothink_config_retention_is_all",
+      "ok": true,
+      "detail": "retention=all"
+    }
+  ],
+  "static": {
+    "map_entries": {
+      "Qwen/Qwen3-30B-A3B": "qwen3",
+      "Qwen/Qwen3-30B-A3B-Instruct-2507": "qwen3",
+      "Qwen/Qwen3-30B-A3B-Thinking-2507": "qwen3",
+      "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16": "nemotron-3"
+    },
+    "renderer_class": "Qwen3Renderer",
+    "thinking_retention": "tool_cycle",
+    "stop_ids": [
+      151645,
+      151643
+    ],
+    "vocab_size": 151669,
+    "tokenizer_class": "Qwen2Tokenizer"
+  },
+  "moe_vs_dense": {
+    "chat_template_sha256_16_a3b": "a55ee1b1660128b7",
+    "chat_template_sha256_16_8b": "a55ee1b1660128b7",
+    "chat_template_identical": true,
+    "vocab_identical": true,
+    "same_fixture_renders_identically": true
+  },
+  "u_e": {
+    "tape_after_turn3": 389,
+    "rerendered_next_prompt": 359,
+    "common_prefix_len": 244,
+    "tape_tokens_discarded_from_prefix": 145,
+    "hf_parity_on_rerendered_prompt": true
+  },
+  "env": {
+    "transformers": "5.13.0",
+    "huggingface_hub": "1.22.0",
+    "python": "3.12.13"
+  }
+}

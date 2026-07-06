@@ -9,6 +9,8 @@
 - [S0-0, 2026-07-07] AGENTS.md 采用"新内容置顶 + 旧章节原地保留标【legacy】"而非删除旧章节。理由：旧章节是理解被继承契约（五道防线、inspector 范式、原子语义）出处的最短路径，且删除会破坏旧 evidence 的上下文；代价是文件更长，已用标题前缀让新旧一眼可辨。
 - [S0-0, 2026-07-07] 旧必读清单 B~G 未删除，段落标题全部改名（C 段显式标"已废弃"），置于"【legacy】旧架构选读清单"声明之下；段内条目的 ★ 标记在独立复核后二次清理（见 Deviations 第 1 条）。
 - [S0-0, 2026-07-07] AGENTS.md"接手前最关键判断"从 3 条改为 4 条：新增第 4 条凭据安全（`deepseek_api.md` 只引路径不引内容），因为 rh2 阶段开始有真实 key 进入工作流。
+- [S0-4, 2026-07-07] 计划预留的 `uv add --group dev transformers huggingface_hub` 实际未执行：两包已由 verifiers 传递依赖带入 uv.lock（transformers 5.13.0 / huggingface_hub 1.22.0），rh2 的 pyproject/uv.lock 零改动；renderers 库经 `sys.path` 从 `reference/renderers`（HEAD 5904fa2）只读引用。
+- [S0-4, 2026-07-07] 实验脚本落位 `rh2/experiments/s0_renderer/`（计划产出只要求报告文件）。理由：scratchpad 属会话级易失目录，而该脚本是 24 项断言的可重跑回归（renderers/transformers 任一升级后 `cd rh2 && uv run python experiments/s0_renderer/v2_renderer_experiment.py` 一分钟内复验）；目录命名沿用计划里 S0-5 的 `rh2/experiments/` 惯例。
 
 ## Deviations（偏离计划的地方及原因）
 
@@ -17,4 +19,6 @@
 
 ## New-Unknowns（执行中新发现的未知，待消除）
 
-- 暂无（S0-0 纯文档任务，未触发新未知）。
+- [S0-4, 2026-07-07] **U-G：本地路径加载 tokenizer 会静默降级 DefaultRenderer。**renderers 的 auto 解析用 `tokenizer.name_or_path` 精确匹配 `MODEL_RENDERER_MAP`（base.py:1478）；GPU 机上用本地权重目录（如 `/models/Qwen3-30B-A3B`）加载时不命中 → 回落 DefaultRenderer 且只打 INFO 日志，bridge 恒 None、`sampled_mask/is_content` 为空，token 保真链路整体失效。规避已写进 `s0/v2_renderer_report.md` 第 4 节：用 HF id 或显式 `Qwen3RendererConfig()`，启动时断言 renderer 类名。归 S0-5 落地为守门检查。
+- [S0-4, 2026-07-07] transformers 版本敏感性：parity 在 rh2 锁定的 5.13.0 实测通过（renderers 官方下限 4.50）；GPU 机若因 vLLM 0.24.x 约束改变 transformers 版本，需随 S0-5 重跑 `rh2/experiments/s0_renderer/v2_renderer_experiment.py` 复验。
+- U-E 静态部分已在 S0-4 消除（thinking 剥离 = 模板窗口语义，bridge 在 query 边界 fail-closed，量化见 `s0/v2_renderer_report.md` 第 3 节）；动态部分（真实 vLLM 采样的 `<|im_end|>` 尾 token、TrainClient 回退行为、截断路径 logprobs 对位）留 S0-5 观察。
