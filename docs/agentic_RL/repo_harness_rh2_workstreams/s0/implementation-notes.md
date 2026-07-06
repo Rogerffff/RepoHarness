@@ -41,3 +41,26 @@
 - [检查点2, 2026-07-07] 汇总复核（checkpoint2_review.md）判定"有条件通过"：条件一 OPENAI key 轮换（见下）；条件二 deepseek 实跑已由 ef726836 先行关闭。承认一处工作流偏离：S0-3 的 notes 条目被误并入 s0-2 commit a18fc381（本应随 810d0f0c），按 commit 逐个 diff 的对应关系在该处失真，不改写历史、以本条为准据更正；低severity 3 条留 S0-5 准备期处理。
 - [安全, 2026-07-07] **用户行动项：轮换 OPENAI key**。S0-3 首版解析 bug 曾把完整 OPENAI key 外发到 api.deepseek.com 一次（bug 已修，key 本体未入 git，但 4 字符尾指纹随事件记录进了 git 历史）——按"已传输给第三方服务器即视为泄漏"原则应立即轮换。
 - [S0-5 前, 2026-07-08] GPU 租用降配定案：8 卡缺货，S0-5/6/7 改用单卡 RTX PRO 6000（96GB）——同构 Blackwell 提前去风险 sm_120 软件栈（U-C 软件侧），96GB 可原生 bf16 跑 30B-A3B（无需量化混淆 V4 结论）；磁盘 200GB 是软肋，优先申请挂 volume，否则按 S0-5/6→清理→S0-7 顺序跑；8×整机推迟到 S4 前训练侧专项预实验（计划 U-C 原有安排）。
+
+## Decisions（S0-5/6/7 远程 GPU 追加）
+
+- [S0-5, 2026-07-07] **远程 GPU 机的基础栈可以作为后续 S0/S1 远程复验基线**：单卡 RTX PRO 6000 Blackwell 96GB、驱动 580.95.05、Docker 28.1.1、`nvidia-container-toolkit` 1.19.1、uv 0.11.26、Python 3.12.13。容器内 `nvidia-smi` 已通过，宿主 GPU 在停止推理服务后回到 0 MiB 使用量。后续正式远程 GPU 流程可以复用这一安装顺序，但应把命令固化到 runbook，避免靠临场修补。
+- [S0-5, 2026-07-07] **vLLM 0.24.0 可以作为形态 A 的首个动态验证端点，但启动参数必须保守固定**：Qwen3-4B 与 Qwen3-30B-A3B 均需要 `--tokens-only`；Blackwell 上为避开 CUDA graph / FlashInfer sampler / MoE 后端问题，实测稳定组合为 `--enforce-eager`、`VLLM_USE_FLASHINFER_SAMPLER=0`、Qwen3-30B-A3B 额外 `--moe-backend triton`，并显式设置 CUDA 13 toolkit 路径。默认参数会在 CUDA graph 捕获或 FlashInfer/CUTLASS MoE 编译处失败，不能作为后续 runbook 的默认。
+- [S0-5, 2026-07-07] **vLLM token/logprob 链路已动态通过**：Qwen3-4B 通过 verifiers `TrainClient` 直连 `/inference/v1/generate`，`prompt_token_count=13`、`completion_token_count=8`、completion logprob 数量对齐、Trace token identity 通过、renderer guard 通过。证据保存在 `remote_s0_5_7_evidence/trainclient_qwen3_4b_probe.json`。
+- [S0-5/6, 2026-07-07] **vLLM MoE routing 不是零 shim 可用**：vLLM 0.24.0 的 `routed_experts` wire 形态是 base64 编码的 `.npy` 字符串，动态解码得到 `[20, 48, 8]`；而 verifiers 当前 `Trace.commit()` 期望的是 `{data, shape, start}` 字典。验证脚本已证明薄 shim 可以把 base64 `.npy` 转成 verifiers 期望形态，并保持 token identity，commit 后 `branch_routed_experts_shape=[21,48,8]`。决策：S1 的 `TrajectoryProjection` 或协议 shim 必须拥有该转换，不允许把这个转换散落在训练后端 adapter 中。
+- [S0-6, 2026-07-07] **SGLang 路线可作为形态 B 的动态基线，但建议后续使用固定容器镜像**：SGLang 0.5.9 在这台机器上可跑 Qwen3-4B 与 Qwen3-30B-A3B，能返回 output token ids 与 output token logprobs；Qwen3-30B-A3B 返回的 routing tape 可解析为 `[20,48,8]`。但安装过程对 CUDA developer toolkit 路径非常敏感，临时方案依赖 vLLM 环境里的 CUDA 13 toolkit 路径与 `lib64/libcudart.so` 软链接。正式复验应改用预构建 SGLang/slime 容器或标准 CUDA 开发栈。
+- [S0-6, 2026-07-07] **MoE 形态判断调整为“两条都可行，形态 B 更接近训练后端原生路径”**：形态 A（verifiers 中心 + vLLM 兼容端点）已经证明 token/logprob 与 routing 可透传，但需要 routing wire shim；形态 B（SGLang/slime 原生 generate）已经证明 token/logprob 与 routing 都能从服务端响应拿到，更贴近 slime `custom_generate` 的后端形态。后续设计不应押单一路径，治理层继续以中立 `TrajectoryProjection` 为输入。
+- [S0-7, 2026-07-07] **本轮只关闭远程 Docker 前置验证，没有关闭 SWE-Bench smoke taskset**：远程 DockerRuntime toy loop 已通过，`default` harness 在 Docker 中两题 `reward=1.0`，`null` harness 两题 `reward=0.0`。这证明 Linux 远程 Docker runtime、容器生命周期、toy 工具循环与 trace dump 可用；但它不是 SWE-Bench Verified 题单验证。证据保存在 `remote_s0_5_7_evidence/remote_default_docker_s0_7.json`、`remote_s0_5_7_evidence/remote_null_docker_s0_7.json` 与 `remote_s0_5_7_evidence/s0_7/`。
+
+## Deviations（S0-5/6/7 远程 GPU 追加）
+
+- [S0-5, 2026-07-07] **vLLM 默认启动路径不可用**：Qwen3-4B 默认启动曾卡在 CUDA graph 捕获，改 `--enforce-eager` 后又遇到 FlashInfer sampler / CUDA header 不匹配；Qwen3-30B-A3B 默认 MoE 后端走 FlashInfer CUTLASS 编译失败。已用保守参数绕过，但这说明 Blackwell 软件栈不能只靠框架默认值验收。
+- [S0-6, 2026-07-07] **SGLang 安装不是一次性开箱即用**：`deep_gemm`/JIT 路径需要可用 CUDA compiler 与 runtime library，远程机器默认没有完整 CUDA developer toolkit；最终借用 vLLM 环境里的 CUDA 13 toolkit 才跑通。这是环境工程风险，不是 SGLang 协议风险。后续若要节省 GPU 时间，应提前准备镜像。
+- [S0-7, 2026-07-07] **原计划 S0-7 未执行到位**：执行计划要求“冻结 5 到 10 个 SWE-Bench Verified smoke 题单 + 实现 `SweSmokeTaskset` + 每题一次成功 rollout 与评分记录”。当前仓库尚无 `SweSmokeTaskset`，也没有冻结题单。本轮没有临时实现新 taskset，避免把一个边跑边写的未审实现伪装成计划验收。因此 S0-7 状态应写为“Docker 前置验证通过，SWE smoke taskset 未完成”。
+
+## New-Unknowns（S0-5/6/7 远程 GPU 追加）
+
+- [S0-5/6, 2026-07-07] **top-p tape 尚未动态验证**：本轮动态验证了 token ids、logprobs 与 MoE routing tape；没有验证 top-p ids / top-p probabilities 的后端返回与投影契约。若训练设计需要 OPD / MOPD 类张量，S1 前需要单独补一个最小探针。
+- [S0-6, 2026-07-07] **SGLang routing 的最小必要开关仍需更精确复核**：保守实现应同时开启服务端 `--enable-return-routed-experts` 与请求侧 `return_routed_experts=true`。本轮保存的 30B 证据都包含 `routed_experts`，但没有完整保留 request body，不能从证据文件里严格区分“只开 server flag 是否足够”。后续 shim 测试应把 request body 一并落盘。
+- [S0-7, 2026-07-07] **SWE-Bench Verified 官方镜像拉取速度、磁盘占用、评分解析仍未消除**：本轮只使用 `python:3.12-slim` toy Docker 镜像，没有拉取官方 SWE-Bench x86_64 镜像，也没有跑官方 eval 脚本。因此 U-D 仍然存在，必须在 `SweSmokeTaskset` 实现后用真实题单关闭。
+- [S0-5/6, 2026-07-07] **单卡 RTX PRO 6000 只能证明推理侧可行，不能证明 S4 训练侧可行**：本轮没有测试多卡通信、权重同步、actor-rollout 切换、训练显存、PCIe 无 NVLink 带来的同步开销。8 卡整机风险仍保留到 S4 前专项预实验。
