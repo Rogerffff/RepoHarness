@@ -8,16 +8,13 @@ task -> executable workspace -> tools -> agent loop -> trajectory -> verifier ->
 
 这个项目不是 Claude Code、Cursor、OpenHands、SWE-agent、Codex 或官方 SWE-Bench harness 的复刻，也不把公开榜单复现、生产级安全沙箱、分布式训练系统或已经训练出模型作为当前交付目标。RepoHarness 更关注训练数据生产链路本身：任务冻结、工具调用协议、执行边界、轨迹记录、最终验证器、reward metadata、训练导出和验收证据能不能被机器复核。
 
-> ## 📍 最新进度（2026-06-04）
+> ## 📍 最新进度（2026-07：项目已转入 rh2 新架构）
 >
-> README 下面的"当前定位 / 已实现的主要功能 / 推荐阅读"主要反映 **V4 时点（2026-05-05）** 的状态。从那以后项目又推进了 Stage 13 ~ Stage 16G.2C 共十余个阶段，**完整的最新进度、当前阶段、关键代码架构、必读文档、复核命令**都在以下两份文件里：
+> **2026-07 重大转折**：项目重新定位为"**verifiers v1 基座之上的 SWE agent RL 安全与训练治理层 + 环境生产线**"，绿地重写（rh2），旧白盒单体（`src/repo_harness/`，Stage 13 ~ 16G.2C 的成果）冻结为 legacy；16G.3 ~ 16G.6 不再执行，旧 17B/20/21 闸门作废。README 下方的"当前定位 / 已实现的主要功能"反映的是**冻结前旧架构**的状态，仅作历史快照。
 >
-> - **[AGENTS.md](AGENTS.md)** — 接手前必读的导航文件（最新阶段进度、5 道安全防线、4 档 profile、关键代码架构、必读文档清单、文档同步原则）
-> - **[docs/agentic_RL/](docs/agentic_RL/)** — agentic RL / verl 工作流主战场（执行计划、阶段证据、HTML 报告、代码导览）
+> **当前位置与完整导航都在 [AGENTS.md](AGENTS.md)**（进度章节 + rh2 必读清单）。当前任务：**rh2 S0 可行性验证**，执行计划见 [docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md](docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md)。
 >
-> **简要进度**：Stage 13/14/15（verl 异步桥接、partial rollout）→ Stage 16A-E（execute_bash 收口、diagnostic shell、patch hygiene）→ Stage 16F.0-7（统一 `run_episode(real_episode)` 入口、真实 provider smoke）→ **Stage 16G.0/0-followup/16G.1/16G.2A/2B/2C 已完成**（27 条能力盘点 + 4 档 profile taxonomy + 结构化文件变更 `write_file/apply_patch/delete/move/mkdir` + run_episode 投影 linkage）→ **当前任务：Stage 16G.3 设计阶段**（公开命令 / 项目测试路由 / scratch Python；正在讨论是否参照微软 MAI-Thinking-1（2026-06-02）走 bash + SEE-equivalent 路线）。
->
-> **闸门状态**：Stage 17B 数据冻结 / Stage 20 warm-start / Stage 21 正式 RL **闸门全部仍为 false**，必须经过 16G.3 ~ 16G.6 才能开。
+> 三份定案文档：[设计文档 2](docs/harness_improve/repo_harness_design_doc2_verifiers_based.md)（架构）· [实施前最终检查](docs/harness_improve/repo_harness_final_review_before_implementation.md)（范围与决策）· [实施计划总纲](docs/harness_improve/repo_harness_implementation_plan_v1.md)（S0~S5）。
 
 ## 当前定位（V4 时点快照，已被 16G 系列扩展）
 
@@ -160,7 +157,7 @@ PYTHONPATH=src PATH=.venv/bin:$PATH python -m repo_harness.cli.main \
 
 ## 推荐阅读
 
-> **如果你是新接手的 agent 或开发者，请先读 [AGENTS.md](AGENTS.md)**。它有完整的最新阶段进度、必读文档清单（按 7 个优先级组）、5 道安全防线、4 档 profile + 27 条能力、关键代码架构（含 file:line 索引）、不要犯的 3 个错误。
+> **如果你是新接手的 agent 或开发者，请先读 [AGENTS.md](AGENTS.md)**。它有 rh2 最新进度与闸门、rh2 必读清单、接手前不要犯的 4 个判断，以及标注【legacy】的旧架构导览（5 道安全防线、4 档 profile、关键代码架构）。本节以下的"推荐阅读"条目均属冻结前旧架构快照。
 
 V1 ~ V4 历史设计文档（仍准确，看模块前先看）：
 
@@ -176,7 +173,7 @@ V1 ~ V4 历史设计文档（仍准确，看模块前先看）：
 agentic RL / verl 训练桥接（V5 之后的主战场）：
 
 - `docs/agentic_RL/`：阶段计划、阶段证据、HTML 报告、代码导览（[code_guide_index.html](docs/agentic_RL/code_guide_index.html)）、能力地图（[repo_harness_verl_harness_capability_acceptance_map.html](docs/agentic_RL/repo_harness_verl_harness_capability_acceptance_map.html)）、4-way 工具对比（[repo_harness_verl_stage16g_4way_tool_comparison.html](docs/agentic_RL/repo_harness_verl_stage16g_4way_tool_comparison.html)）等
-- `docs/agentic_RL/repo_harness_verl_workstreams/`：按编号 01 ~ 56 的执行计划 + shared_contracts/，最新的是 16G.3 执行计划与设计决策审议
+- `docs/agentic_RL/repo_harness_verl_workstreams/`：旧 verl 线按编号 01 ~ 56 的执行计划 + shared_contracts/（已冻结；其中 16G.3 相关计划已废弃不再执行。rh2 执行计划在 `repo_harness_rh2_workstreams/`）
 - `docs/agentic_RL/training_design/`：RL 算法设计、实验设计、worktree 同步契约、长链路 SWE Agent RL 落地研究
 - `docs/harness_improve/`：外部 harness 设计参考（Codex / Claude Code / mini-SWE-agent / 微软 MAI-Thinking-1）和 gpt advice
 

@@ -2,69 +2,87 @@
 
 所有编写的文档或者注释，除了必要的专业词汇、命令名称、文件名、字段名和代码标识符之外，都使用清晰、详细、通俗易懂的中文。如果解释一个容易混淆的概念，尽量搭配具体数值、文件路径、命令或者实现例子。
 
-## 项目一句话定位
+## 项目一句话定位（2026-07 起，rh2 新架构）
 
-RepoHarness 是一个面向软件工程智能体训练和评测的 Harness，目标是让真实或半真实仓库任务产生可执行、可审计、可导出的训练轨迹。核心闭环是：
+RepoHarness 是**建立在 PrimeIntellect verifiers v1 基座之上的、面向 SWE agent RL 的安全与训练治理层 + 环境生产线**：
 
 ```text
-task -> executable workspace -> tools -> agent loop -> trajectory -> verifier -> reward/eval/export
+RepoHarness =
+    verifiers v1 基座（环境组合 / Trace / interception / EnvServer，直接采用）
+  + SWE-Safety 扩展层（安全沙箱 / 评分隔离 / 反作弊 / 权限）
+  + 训练治理层（训练资格分级 / artifact 可见性 / fail-closed inspector）
+  + 训练后端 adapter 层（slime / verl / 离线导出，经中立投影契约解耦）
+  + 环境生产线（SWE taskset / 质量验证门槛）
 ```
 
-它不是 Claude Code、Cursor、OpenHands、SWE-agent、Codex 或官方 SWE-Bench harness 的复刻；也不要把它描述成生产级安全沙箱、分布式 rollout 服务、公开榜单系统、完整产品复刻或已经训练出模型的项目。
+它**不再造** rollout 捕获、token 保真轨迹、训练内核、推理服务（verifiers / slime / vLLM / SGLang 已分别商品化）；它专注工业训练后端普遍缺失的部分：环境生产质量门槛、评分隔离语义、anti-cheat 纵深、可审计的训练资格治理、多后端解耦。也不要把它描述成生产级产品、公开榜单系统或已经训练出模型的项目。
+
+旧定位（"白盒 SWE harness + verl 桥接"，实现于 `src/repo_harness/`）已于 2026-07 冻结为 legacy，见下文进度章节。
 
 ---
 
 ## 当前进度（接手前必读）
 
-**重要：AGENTS.md 这一节经常需要随阶段推进同步更新。如果你接手时发现与最新 commit 不一致，请先以 `git log --oneline` 和 `docs/agentic_RL/repo_harness_verl_workstreams/` 下最新阶段执行计划 / 完成报告为准。**
+**重要：AGENTS.md 这一节随阶段推进同步更新。如果你接手时发现与最新 commit 不一致，以 `git log --oneline` 和 `docs/agentic_RL/repo_harness_rh2_workstreams/` 下最新执行计划 / evidence 为准。**
 
-截至本次更新（基于 commit `1e783f41 feat: complete stage 16g2 file mutation linkage` 之后）：
+**2026-07 重大转折：项目已转入 rh2 新架构，旧阶段线（16G.x）终止。**
 
 ```text
-Stage 13 / 14 / 15           已完成  RepoHarness ↔ verl fully async 桥接、partial rollout 远端 smoke
-Stage 16A ~ 16E              已完成  execute_bash 收口 / diagnostic shell / 公开环境 prompt / verifier
-                                    healthcheck / patch hygiene
-Stage 16F.0 ~ 16F.7          已完成  统一新入口 run-episode-task / run_episode(real_episode)；旧
-                                    run_task(...) 仅 legacy compatibility；真实 provider 小 smoke 完成
-Stage 16G.0                  已完成  RepoHarness vs Claude Code / Codex / mini-SWE-agent 能力差距盘点
-Stage 16G.0 follow-up        已完成  收紧 baseline 契约，加严 evaluator-only 边界
-Stage 16G.1                  已完成  4 档 profile taxonomy + 工具 registry 契约（27 条能力）
-Stage 16G.2A                 已完成  apply_patch / write_file / delete_file / move_file / mkdir
-                                    结构化 schema 注册 + scaffold 暴露 + profile delta
-Stage 16G.2A 修正            已完成  独立 delete/move/mkdir 退回 swe_public_extended，core 经
-                                    apply_patch 表达
-Stage 16G.2B                 已完成  共享 file_mutation 行为：preflight → snapshot → apply → rollback
-                                    原子语义；audit artifact；FileMutationDenial 拒绝路径
-Stage 16G.2C                 已完成  run_episode → write_run_episode_compat_projection 投影 linkage
-                                    打通；14 个公开文件 + manifest + policy_loss 守门员
-                                    audit_ref → audit_artifact_id 改名修复 L4 forbidden marker 冲突
-Stage 16G.3                  设计阶段，未实施
-                                    计划：公开命令 / 项目测试路由 / scratch Python 三件套
-                                    当前重大讨论：是否参照微软 MAI-Thinking-1（2026-06-02）走
-                                    bash(command:string) + SEE-equivalent 路线，详见
-                                    docs/harness_improve/bash_tool_advice.md 和
-                                    docs/agentic_RL/repo_harness_verl_workstreams/56-stage-16g-3-preplan-design-decisions.md
-Stage 16G.4 ~ 16G.6          未开始
-Stage 17B / 20 / 21          闸门仍 false，不允许进入数据冻结 / warm-start / 正式 RL
+【已终止】Stage 13 ~ 16G.2C     旧白盒单体架构的成果，全部完成并冻结为 legacy。
+                              代码在 src/repo_harness/（不再新增功能），evidence 在
+                              docs/agentic_RL/repo_harness_verl_workstreams/stage16g_*/
+                              （不可修改，旧 inspector 仍可复核历史）。
+【不再执行】Stage 16G.3 ~ 16G.6  由 rh2 新架构取代（工具面问题被 verifiers 内置
+                              default harness 直接覆盖）。任何旧文档说"当前任务是
+                              16G.3"均已过时。
+【作废】Stage 17B / 20 / 21 闸门  由 rh2 新闸门体系取代（Stage 20 warm-start 语义
+                              由 rh2 离线导出 adapter 承接）。
+【进行中】rh2 S0 可行性验证      当前任务。执行计划：
+                              docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md
 ```
 
-闸门字段当前真实值（来自 `stage16g2c_acceptance_summary.json`）：
+rh2 新闸门字段当前真实值：
 
 ```text
-stage16g2c_complete = true
-stage16g3_allowed_to_start = true
-stage17b_real_data_freeze_allowed = false
-stage20_warm_start_data_generation_allowed = false
-stage21_formal_rl_allowed = false
+rh2_s0_complete              = false   （S0 进行中：S0-0 已完成）
+rh2_s1_closed_loop           = false
+rh2_s2_signal_trusted        = false
+rh2_formal_training_allowed  = false   （≈ 旧 stage21 语义；为 false 时禁止正式训练）
+```
+
+rh2 阶段一览（细节见实施计划总纲）：
+
+```text
+S0 可行性验证（进行中）   verifiers pin 契约测试、玩具闭环、renderer/协议/MoE 张量
+                        验证、SWE smoke 题、实验设计收口；S0-0~4 本机，S0-5 起租 GPU
+S1 端到端最小闭环        SWE taskset 冻结（20~50 题）、SWEGradingManager、
+                        EligibilityReport + Gate、离线导出 adapter、slime adapter
+S2 SWE-Safety 加固       安全 Runtime、anti-cheat（在线拦截）、红队环境包
+S3 训练治理完备          三档资格全量、环境验证四门收尾
+S4 正式训练实验          before/after 实验（简历叙事收尾）
+S5 第二后端 + 服务化     verl adapter、EnvServer 服务化（按需）
 ```
 
 ---
 
 ## 仓库结构速览
 
-### Python 主实现 `src/repo_harness/`
+新架构（rh2，进行中）：
 
-旧 V1 ~ V5 模块（仍在维护，作为版本闭环留作 acceptance）：
+```text
+rh2/                                     rh2 新包独立子项目（S0-1 创建：pyproject + src/repoharness2 + tests）
+docs/agentic_RL/repo_harness_rh2_workstreams/
+                                         rh2 执行计划 + 阶段 evidence（01-s0-execution-plan.md、s0/）
+docs/harness_improve/                    rh2 设计文档区（设计文档 2 / final review / 实施计划总纲）
+reference/                               外部参考库（verifiers / slime / verl / prime-rl / ROCK 等，
+                                         各有 CLAUDE.md 导览；只读，不属于主实现）
+```
+
+### 【legacy】Python 旧主实现 `src/repo_harness/`
+
+**以下描述 2026-07 冻结的旧架构代码。不再新增功能；契约与不变量已由 rh2 设计文档继承（"迁契约不迁代码"）。**
+
+旧 V1 ~ V5 模块（冻结，作为版本闭环留作 acceptance）：
 
 ```text
 v2_acceptance.py
@@ -74,7 +92,7 @@ v5_*.py               V5 evidence / export pack / provider gate / run matrix / d
 pre_verl_*.py         pre_verl agent loop / evaluation / evidence ledger / failure injection / run facts
 ```
 
-agentic RL / verl 桥接相关模块（**当前训练链路主路径**）：
+agentic RL / verl 桥接相关模块（旧训练链路主路径，已随整个 legacy 实现冻结）：
 
 ```text
 rl/                   verl 训练桥接的核心
@@ -148,7 +166,7 @@ tasks/
   public_environment.py
                       公开环境上下文 prompt 拼装（Stage 16C 落地）
   environment.py      任务执行环境抽象
-  其他               public_command_profiles 等待 16G.3 引入
+  其他               public_command_profiles（原计划 16G.3 引入，已随 16G.3 废弃而搁置）
 
 cli/
   main.py             repo-harness CLI 入口；143 个 inspector 子命令
@@ -192,7 +210,7 @@ docs/review/ docs/implementation-log/    审查记录 / 实现日志
 docs/assets/                             图片素材
 ```
 
-agentic RL / verl 工作流文档（**当前主战场**）：
+agentic RL / verl 工作流文档（legacy，旧线历史主战场；rh2 工作流见 `repo_harness_rh2_workstreams/`）：
 
 ```text
 docs/agentic_RL/
@@ -217,7 +235,7 @@ docs/agentic_RL/
   training_design/                       训练设计：RL_algorithm_design / 实验设计 /
                                          post_stage15_training_infra_stage_plan 等
 
-docs/harness_improve/                    外部 harness 设计参考与建议
+docs/harness_improve/                    外部 harness 设计参考与建议（现同时是 rh2 三份定案文档所在处，见上文"新架构"段）
   codex_vs_claude_code_harness_design_analysis.md
   gpt_advice*.md / harness_design_advice.md / bash_tool_advice.md / env_design.md /
   harness_env_design.md / 16G-3_advice.md / 16G-3_plan_V1.md
@@ -253,7 +271,9 @@ verl/                                    verl 异步训练框架
 
 ---
 
-## 关键代码架构（5 个值得新接手 agent 先理解的子系统）
+## 【legacy】关键代码架构（旧 src/repo_harness 的 5 个子系统）
+
+**本章描述冻结的旧实现。新架构见 rh2 设计文档；这里保留是因为旧五道防线 / inspector 范式 / 原子语义的契约被 rh2 继承，读旧实现有助于理解契约出处。**
 
 ### 1. 模型可见工具表面（tools/minimal.py）
 
@@ -349,9 +369,11 @@ profiles:
 
 ---
 
-## 当前 agentic RL / verl 工作流背景
+## 【legacy】旧 agentic RL / verl 工作流背景
 
-主链路：
+**本章描述旧白盒单体的训练链路，已冻结。rh2 的训练链路是 verifiers rollout → TrajectoryProjection（中立契约）→ EligibilityGate → slime / 离线导出 adapter。**
+
+旧主链路：
 
 ```text
 RepoHarness task
@@ -368,7 +390,9 @@ RepoHarness task
 
 ---
 
-## 两个 worktree 的并行协作
+## 【已搁置】两个 worktree 的并行协作
+
+**2026-07 定案（设计文档 2 §1.5）：evaluation worktree 的迁移显式搁置，本章协作协议暂停生效。** 长期方向一句话：新架构下"评测 = 同一 Environment + EvalClient，训练 = 同一 Environment + TrainClient"，两个 worktree 不再需要各自维护 harness 语义；细化设计在 rh2 S1 跑通后单独一轮进行。以下为搁置前的协议存档。
 
 ```text
 training_worktree:     当前仓库，public label 为 training_worktree
@@ -397,39 +421,59 @@ evaluation worktree 的 docs/resume/repo_harness_vs_claude_code_capability_gap_a
 
 ---
 
-## 新接手 agent 必读清单
+## 新接手 agent 必读清单（rh2，2026-07 起）
 
-按优先级排列。<b>★ 标记为强制必读</b>，其余按当前任务方向选读。
-
-### A. 项目定位 + 当前进度（★ 全部必读）
+按优先级排列。<b>★ 标记为强制必读</b>。
 
 ```text
-★ AGENTS.md                                                  本文件
-★ docs/agentic_RL/repo_harness_verl_workstreams/49-stage-16g-0-execution-plan.md
-                                                             16G.0 起点：盘点能力差距，理解项目当前为什么"暂不进 17A 数据冻结"
-★ docs/agentic_RL/repo_harness_verl_stage16g2c_completion_report.html
-                                                             最新已完成阶段的独立核验报告
-★ docs/agentic_RL/repo_harness_verl_harness_capability_acceptance_map.html
-                                                             27 条能力的四象限地图，含每个工具的"模型视角 / 实现位置 / 训练投影 / 阶段历史"
+★ AGENTS.md                                                  本文件（先读进度章节确认当前位置）
+★ docs/harness_improve/repo_harness_design_doc2_verifiers_based.md
+                                                             主设计文档：verifiers 基座架构 + 全部设计定案
+★ docs/harness_improve/repo_harness_final_review_before_implementation.md
+                                                             实施前最终检查：范围 P0/P1/P2/backlog、D1~D7 定案、
+                                                             R3~R12 技术报告核对台账、简历叙事
+★ docs/harness_improve/repo_harness_implementation_plan_v1.md
+                                                             实施计划总纲：S0~S5、包结构、E 系列决策
+★ docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md
+                                                             当前执行计划：S0 任务清单、C 系列定案、残余未知 U-x
+  docs/agentic_RL/repo_harness_rh2_workstreams/s0/implementation-notes.md
+                                                             S0 执行中的决策 / 偏离 / 新未知（行车记录）
+  docs/agentic_RL/training_design/repoharness_validation_experiment_design.md
+                                                             验证实验设计（草案，S0-8 收口）
+  docs/harness_improve/repo_harness_repositioning_after_polar.md
+                                                             设计原则与硬边界来源（H1~H10 见其 §16）
+  reference/*/CLAUDE.md                                      外部库导览（verifiers / slime / prime-rl 优先）
 ```
 
-### B. 代码导览（★ 推荐都读，建立心智模型）
+### 【legacy】旧架构选读清单
+
+以下 A~G 清单服务于冻结的旧架构（16G 线），仅在需要理解旧契约出处或复核旧 evidence 时选读。
+
+### A. 旧项目定位 + 旧进度
 
 ```text
-★ docs/agentic_RL/code_guide_index.html                      代码导览总览：T0-T9 执行时间线 + 4 侧栏
+docs/agentic_RL/repo_harness_verl_workstreams/49-stage-16g-0-execution-plan.md
+docs/agentic_RL/repo_harness_verl_stage16g2c_completion_report.html
+docs/agentic_RL/repo_harness_verl_harness_capability_acceptance_map.html
+```
+
+### B. 旧代码导览（理解 legacy 实现时选读）
+
+```text
+  docs/agentic_RL/code_guide_index.html                      代码导览总览：T0-T9 执行时间线 + 4 侧栏
   docs/agentic_RL/code_guide_t5_execute.html                 T5 工具执行（10 步调用链 + 13 段 code excerpt）
   docs/agentic_RL/code_guide_t8_projection.html              T8 投影（policy_loss 守门员 + 14 公开文件）
   docs/agentic_RL/code_guide_side_safety.html                侧栏 A：5 道安全防线 L1-L5
 ```
 
-### C. 16G.3 设计阶段（如果你接手 16G.3 实施 ★ 必读）
+### C. 16G.3 设计阶段（已废弃——16G.3 不再执行，仅作历史参考）
 
 ```text
-★ docs/agentic_RL/repo_harness_verl_workstreams/55-stage-16g-3-execution-plan.md
+  docs/agentic_RL/repo_harness_verl_workstreams/55-stage-16g-3-execution-plan.md
                                                              16G.3 原始执行计划（700+ 行）
-★ docs/agentic_RL/repo_harness_verl_workstreams/56-stage-16g-3-preplan-design-decisions.md
+  docs/agentic_RL/repo_harness_verl_workstreams/56-stage-16g-3-preplan-design-decisions.md
                                                              16G.3 启动前设计决策审议
-★ docs/harness_improve/bash_tool_advice.md
+  docs/harness_improve/bash_tool_advice.md
                                                              微软 MAI-Thinking-1（2026-06-02）SWE RL 报告启发的
                                                              bash 工具 vs 结构化 DSL 设计辩论
   docs/agentic_RL/repo_harness_verl_stage16g3_plan_overview.html
@@ -452,7 +496,7 @@ docs/harness_improve/codex_vs_claude_code_harness_design_analysis.md
                                                              Codex vs Claude Code 横向对比
 ```
 
-### E. 核心设计文档（旧但仍然准确，看模块前先看）
+### E. 旧核心设计文档（描述 legacy 模块，看旧代码前先看）
 
 ```text
 docs/00-reading-guide.md                                     阅读路径和当前文档定位
@@ -465,7 +509,7 @@ docs/08-trajectory-store-and-training-export.md              RunRecorder / trans
 docs/11-object-model-config-and-data-flow.md                 对象模型 / 配置字段 / 端到端数据流
 ```
 
-### F. 训练设计（如果你接手 RL 算法 / 训练流程 ★ 必读）
+### F. 旧训练设计文档（rh2 的训练实验以 repoharness_validation_experiment_design.md 为准，以下选读）
 
 ```text
 docs/agentic_RL/training_design/post_stage15_training_infra_stage_plan.md
@@ -480,7 +524,7 @@ docs/agentic_RL/training_design/长链路 SWE Agent RL 在 verl 异步 Harness �
                                                              长链路 SWE Agent RL 设计研究
 ```
 
-### G. 评测 worktree 同步背景（如果你需要跨 worktree 协作）
+### G. 评测 worktree 同步背景（协作已搁置，仅存档）
 
 ```text
 evaluation worktree 的 docs/resume/stage16_5_execution_plan.md
@@ -489,9 +533,11 @@ evaluation worktree 的 docs/resume/repo_harness_vs_claude_code_capability_gap_a
 
 ---
 
-## 常用复核命令
+## 【legacy】常用复核命令（旧 evidence 复核仍可用）
 
-### 16G 系列 inspector（最新）
+**以下命令针对冻结的旧 evidence（stage16g_* / v2~v5），仍可运行用于复核历史，但不会再新增。rh2 的复核命令随 S1 inspector 建立后补充到进度章节。**
+
+### 16G 系列 inspector（旧线最新）
 
 ```bash
 PYTHONPATH=src PATH=.venv/bin:$PATH python -m repo_harness.cli.main \
@@ -547,30 +593,25 @@ PATH=.venv/bin:$PATH repo-harness inspect-v4-acceptance \
 
 ---
 
-## 接手前最关键的 3 个判断（不要犯）
+## 接手前最关键的 4 个判断（不要犯）
 
-1. <b>不要默认 16G.0 是当前任务</b>。16G.0 / 16G.1 / 16G.2A / 16G.2B / 16G.2C 都已经完成。<b>当前任务是 16G.3 的设计冻结和实施前评估</b>。如果你打开仓库发现 16G.3 还没启动，那就是当前位置；如果已经启动了，看 `git log` 和 `docs/agentic_RL/repo_harness_verl_workstreams/` 下最大编号的执行计划。
+1. <b>不要按任何旧文档去做 16G.3</b>。16G.3 ~ 16G.6 已被 rh2 新架构取代、永不执行。当前任务看本文进度章节 + `docs/agentic_RL/repo_harness_rh2_workstreams/` 下最大编号执行计划。凡是与设计文档 2 / final review / 实施计划总纲冲突的旧文档表述，一律以这三份为准。
 
-2. <b>不要直接进入 Stage 17 数据冻结、Stage 20 warm-start 数据生成或 Stage 21 正式 RL</b>。所有 acceptance summary 的 17B / 20 / 21 闸门<b>都是 false</b>，必须经过 16G.3 ~ 16G.6 才能开。强行进入会让真实数据被污染、训练 reward signal 被 hack。
+2. <b>不要在 `rh2_formal_training_allowed = false` 时进入正式训练、数据冻结或 warm-start 数据生产</b>（旧 17B/20/21 闸门已作废，语义由 rh2 闸门承接）。强行进入会让训练 reward signal 被 hack、数据被污染。
 
-3. <b>不要把"运行 tools/file_mutation.py 的真实写盘"或"绕过 visibility.py 的 forbidden marker"当成"可以临时这么做"</b>。这两个机制是整个 16G.2 series 的成果，任何"我这次只是测试一下"的临时绕过都会让后续 inspector fail closed。新增字段或新增写盘动作必须先查：
+3. <b>不要在冻结的 `src/repo_harness/` 上新增功能</b>。它是 legacy：旧 inspector / evidence 仍可复核历史，但新代码一律进 `rh2/`。也不要修改 `docs/agentic_RL/repo_harness_verl_workstreams/stage16g_*/` 下任何旧 evidence（source_digests 会失配）。旧代码的价值是契约（五道防线 / fail-closed inspector / 原子语义），这些契约在 rh2 里重新落位，实现不迁移。
 
-```text
-新写盘动作  → 是否走 _apply_prepared_operation（不变量 I-2）
-新字段名    → 是否在 rl/visibility.py:56 的 forbidden 集合里（FORBIDDEN_FIELD_MARKERS）
-新公开文件  → 是否含 _FORBIDDEN_PUBLIC_MARKERS（episode_projection.py:46）
-新 evidence → 是否被 inspector 的字段白名单覆盖
-```
+4. <b>不要把凭据写进任何 git 追踪文件或产出物</b>。`deepseek_api.md` 等 key 文件已 gitignore，文档 / evidence / 代码只允许引用其路径，绝不允许出现 key 内容；提交前发现疑似凭据一律 fail closed 停下来问。
 
 ---
 
-## 文档同步原则
+## 文档同步原则（rh2）
 
-修改 RepoHarness 主链路代码时（特别是 `rl/runtime.py` / `tools/minimal.py` / `tools/file_mutation.py` / `evaluation/episode_projection.py` / `rl/visibility.py`），必须：
-
-1. 同步更新本 AGENTS.md 的"关键代码架构"章节（如果接口变化）
-2. 同步更新对应阶段的 implementation-notes.md（用户需要知道的设计决策 / 偏离 / 权衡 / 开放问题）
-3. 同步更新代码导览（`docs/agentic_RL/code_guide_*.html`）的相关章节
-4. 不要修改已经提交的 stage16g_*/ 下任何 evidence JSON（会让 source_digests sha256 失配，inspector 失败）
+1. rh2 每个任务 / 阶段推进时，同步更新本 AGENTS.md 的进度章节（阶段状态、闸门字段）。
+2. 执行中的设计决策 / 偏离计划 / 权衡 / 新未知，发现即记入当前阶段 evidence 目录的 `implementation-notes.md`（如 `repo_harness_rh2_workstreams/s0/implementation-notes.md`，分 Decisions / Deviations / New-Unknowns 三节）。
+3. 执行计划文档不随手改：只有决策实质改变计划内容时才回写对应小节并标注日期——"计划是地图、notes 是行车记录"。
+4. 每个任务完成 = 一个独立 commit（`rh2(s0-x): ...` 前缀），便于按 baseline diff 复查。
+5. 不要修改已提交的旧 evidence（`stage16g_*/`、`runs/`）——source_digests 会失配。
+6. legacy 章节（本文标【legacy】的部分）不再维护，只在纠错时更新。
 
 ---
