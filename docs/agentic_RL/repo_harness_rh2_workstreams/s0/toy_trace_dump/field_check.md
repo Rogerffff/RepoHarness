@@ -191,3 +191,7 @@ default×subprocess/docker 两题都观察到完整一轮往返：
 - 事后全量扫描 6 个 dump：无 `sk-` 形态串（`grep -rIE 'sk-[A-Za-z0-9_-]{8,}'` 无命中），无
   裸 `authorization`/`api_key`/`x-api-key`/`secret` 字段（grep 退出码 1 = 无命中）。
 - 发现 2 的跨服务误用已修复并复验：现在缺 key 时端点收到的是 `EMPTY`，不再发送任何真实凭据。
+
+---
+
+**2026-07-07 补充（key 补填后实跑）**：用户补填 DEEPSEEK_API_KEY 后，default×subprocess 已用真实 deepseek-chat 端点复跑：task0 reward=1.0（3 轮）、task1 reward=1.0（4 轮），stop=agent_completed，dump 为 `default_subprocess_deepseek.json`（落盘前 scrub + 事后独立扫描无 key 形态串）。"真实 provider 中继"缺口关闭，S0-3 无遗留。
