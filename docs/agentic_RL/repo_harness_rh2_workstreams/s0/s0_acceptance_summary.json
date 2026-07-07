@@ -1,0 +1,52 @@
+{
+  "stage": "rh2_s0",
+  "date": "2026-07-08",
+  "verifiers_pin": "5885ab9c54152e707af2a11797aa52c3eb1752da",
+  "verdicts": {
+    "V1_prime_deps": "pass_install_and_usage",
+    "V2_renderer": "pass",
+    "V3_protocol": "pass",
+    "V4_moe_passthrough": "pass_form_b_mainline"
+  },
+  "tasks": {
+    "S0-0": "done",
+    "S0-1": "done",
+    "S0-2": "done_17_tests",
+    "S0-3": "done_incl_real_deepseek",
+    "S0-4": "done",
+    "S0-5": "done",
+    "S0-6": "done_incl_topp_probe",
+    "S0-7": "done_8of8_ran_7of8_resolved",
+    "S0-8": "done"
+  },
+  "gates": {
+    "rh2_s0_complete": true,
+    "rh2_s1_closed_loop": false,
+    "rh2_s2_signal_trusted": false,
+    "rh2_formal_training_allowed": false
+  },
+  "open_unknowns": [
+    "U-C_multiGPU_training_side",
+    "U-H_slime_image_sm120"
+  ],
+  "pending_user": [
+    "swe_shortlist_freeze",
+    "exp_design_decisions_1_to_6"
+  ],
+  "source_digests": {
+    "01-s0-execution-plan.md": "6bdd49984148c050d8d58a08c8d6abac823757dbef3c3528d1da0582763ffe32",
+    "s0/deps_report.md": "57a3ef2ca1793dc796edc0cd6146462a78a8198b8a95d370343f301222eb1a5d",
+    "s0/contract_baseline.md": "1c8fe7805e3b2d551987ffc85a7f5e85de8f3188c7a632c3dccd484afce5f289",
+    "s0/toy_trace_dump/field_check.md": "591204d29ff0b495c08d0707212f005bbbecd2bbd2eee61dd42f608871669e8f",
+    "s0/v2_renderer_report.md": "3f4fea52981d8872d5f47149a014c143ce1e5ee8afe58f142adaf21af55dcd57",
+    "s0/v3_protocol_report.md": "a9b06a76cf3c0a6282239b3ca044dc8d972c4e021429acf2ce41edc4c27cf990",
+    "s0/topology_ab_report.md": "a96f0d82e95c35c6af3c5eb0bdbad46943527502b844c175bea3e65c1ae16feb",
+    "s0/swe_smoke_report.md": "8e73e8cdeea186f4cc3ebf33461007401248bc4e900121dda046b0a22f9cb3e7",
+    "s0/s0_8_expdesign_review.md": "29207f7f787cd592cb0d941345bf8b6635bc939db2712cad9b5bcf871e9f538a",
+    "s0/implementation-notes.md": "cf1f7df42be2bbffc00404a7182a229eb686b0b2e2d83a6f1a413f64b9bd3409"
+  },
+  "code_refs": {
+    "rh2/tests/contract_verifiers": "17 tests",
+    "rh2/src/repoharness2/taskset/swebench_smoke.py": "8748484859ae6e67c6858c42856904de1302ff039cdcf853e3960ae91120f991"
+  }
+}

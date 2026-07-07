@@ -37,14 +37,14 @@ RepoHarness =
                               16G.3"均已过时。
 【作废】Stage 17B / 20 / 21 闸门  由 rh2 新闸门体系取代（Stage 20 warm-start 语义
                               由 rh2 离线导出 adapter 承接）。
-【进行中】rh2 S0 可行性验证      当前任务。执行计划：
+【已完成】rh2 S0 可行性验证      V1~V4 全过；当前任务：S1 准备（题单冻结 + 实验层决策）。执行计划：
                               docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md
 ```
 
 rh2 新闸门字段当前真实值：
 
 ```text
-rh2_s0_complete              = false   （S0 进行中：S0-0 已完成）
+rh2_s0_complete              = true    （S0 全部 9 项任务完成，V1~V4 全过；见 s0_acceptance_summary.json）
 rh2_s1_closed_loop           = false
 rh2_s2_signal_trusted        = false
 rh2_formal_training_allowed  = false   （≈ 旧 stage21 语义；为 false 时禁止正式训练）
@@ -53,7 +53,7 @@ rh2_formal_training_allowed  = false   （≈ 旧 stage21 语义；为 false 时
 rh2 阶段一览（细节见实施计划总纲）：
 
 ```text
-S0 可行性验证（进行中）   verifiers pin 契约测试、玩具闭环、renderer/协议/MoE 张量
+S0 可行性验证（已完成）   verifiers pin 契约测试、玩具闭环、renderer/协议/MoE 张量
                         验证、SWE smoke 题、实验设计收口；S0-0~4 本机，S0-5 起租 GPU
 S1 端到端最小闭环        SWE taskset 冻结（20~50 题）、SWEGradingManager、
                         EligibilityReport + Gate、离线导出 adapter、slime adapter
