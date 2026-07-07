@@ -259,10 +259,12 @@ def make_task(task_id: str) -> RolloutTaskSpec:
         prompt=f"Fix the issue in {task_id}",
         public_bundle_payload=json.dumps({"instance_id": task_id}).encode(),
         public_bundle_digest=SHA_BUNDLE,
+        image_local_build=True,  # fake 镜像无 RepoDigests：显式豁免运行期 digest 比对
         grading_spec=GradingEnvSpec(
             task_id=task_id,
             image="fake-image:v1",
             base_commit=BASE_COMMIT,
+            image_local_build=True,
             eval_script="echo eval",
             parse_log=lambda text: (_ for _ in ()).throw(AssertionError("mock 不该调 parser")),
             grader_version="swebench-4.1.0",
@@ -770,7 +772,13 @@ def run_toy_dump_projection() -> dict[str, Any]:
         "projectable_dumps": len(PROJECTABLE_DUMPS),
         "projected_traces": total_traces,
         "per_dump": per_dump,
-        "reject_dump": {"dump": REJECT_DUMP, "reason_codes": reject_reasons},
+        "reject_dump": {
+            "dump": REJECT_DUMP,
+            # 报告侧去重（保序，F5 尾巴）：同一理由码每条被拒轨迹都会追加一次，
+            # 逐条计数由 rejected_traces 承担，reason_codes 只报"出现过哪些理由"。
+            "reason_codes": list(dict.fromkeys(reject_reasons)),
+            "rejected_traces": len(reject_reasons),
+        },
     }
 
 

@@ -775,6 +775,19 @@ class RolloutTaskSpec:
     grading_spec: GradingEnvSpec
     workdir: str = "/testbed"
     time_budget_seconds: int = 1800
+    # 运行期镜像 digest 比对（S1-7a 前置修复，codex#1，与 GradingEnvSpec 同纪律）：
+    # 要么给冻结 manifest digest（rollout 容器启动后与 RepoDigests 比对），
+    # 要么显式 image_local_build 豁免；两者都缺 = 构造即拒（豁免不许静默）。
+    image_manifest_digest: str | None = None
+    image_local_build: bool = False
+
+    def __post_init__(self) -> None:
+        if (self.image_manifest_digest is None) == (not self.image_local_build):
+            raise ValueError(
+                "镜像 digest 校验必须显式二选一：要么提供 image_manifest_digest"
+                "（冻结记录，运行期 RepoDigests 比对），要么声明 image_local_build=True"
+                "（本地构建镜像豁免）；两者都缺或同时给出都拒绝。"
+            )
 
 
 def rollout_task_from_bundle_pair(
@@ -787,6 +800,8 @@ def rollout_task_from_bundle_pair(
         task_id=pair.instance_id,
         image=public.image,
         base_commit=public.base_commit,
+        # 冻结 digest 进任务面：rollout 容器启动后与实际镜像 RepoDigests 比对（codex#1）。
+        image_manifest_digest=public.image_manifest_digest,
         prompt=bundles.render_user_prompt(public),
         public_bundle_payload=public.model_dump_json(indent=2).encode("utf-8"),
         public_bundle_digest=public.digest(),
@@ -1223,6 +1238,11 @@ class RolloutOrchestrator:
             )
 
         try:
+            # 启动后镜像 digest 比对（codex#1 fail-closed）：先于任何写入/探针，
+            # 漂移镜像上的 rollout 一步都不该跑。失败走本 try 的清理路径
+            # （容器已起必须清，Q7），异常在 generate() 收口为 infra_failure。
+            await self._verify_rollout_image_digest(task, name)
+
             # Q2：/testbed 物化校验——脚本与判据全部来自 envpack（库层所有权），
             # 编排只是执行通道（materialize.py 模块 docstring 的分工原文）。
             probe = await self._docker(
@@ -1283,6 +1303,35 @@ class RolloutOrchestrator:
         return _MaterializedSandbox(
             container_name=name, lease=lease, handle=handle, workspace=workspace
         )
+
+    async def _verify_rollout_image_digest(self, task: RolloutTaskSpec, name: str) -> None:
+        """启动后镜像 digest 比对（codex#1，与评分容器同判据）：容器实际运行的
+        镜像（`docker inspect -f {{.Image}}`，非 spec 标签——封住 :latest 在
+        inspect 与 run 之间被重指的窗口）的 RepoDigests 必须命中 envpack 冻结的
+        image_manifest_digest。本地构建镜像走 task.image_local_build 显式豁免；
+        无豁免且 RepoDigests 为空一律拒绝（evaluate_image_digest 的 fail-closed）。
+        """
+
+        if task.image_local_build:
+            return  # 显式豁免（RolloutTaskSpec.__post_init__ 强制二选一声明）
+        expected = task.image_manifest_digest
+        assert expected is not None  # __post_init__ 的二选一保证
+        ref = await self._docker("inspect", "-f", "{{.Image}}", name)
+        if ref.exit_code != 0:
+            raise SlimeBindingError(
+                "rollout_image_ref_inspect_failed",
+                f"容器实际镜像查询失败：{ref.stderr.strip()[-300:]}",
+            )
+        digests = await self._docker(
+            "image", "inspect", "-f", materialize.IMAGE_REPO_DIGESTS_FORMAT, ref.stdout.strip()
+        )
+        check = materialize.evaluate_image_digest(
+            expected, digests.exit_code, digests.stdout, digests.stderr
+        )
+        if not check.ok:
+            raise SlimeBindingError(
+                "rollout_image_digest_mismatch", check.failure_message()[:500]
+            )
 
     # ------------------------------------------------------------------ 步骤 6~8
     def _reward_input(

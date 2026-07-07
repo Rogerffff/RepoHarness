@@ -61,4 +61,6 @@ def test_all_six_real_dumps_project_and_error_dump_rejected():
     assert result["toy_dump_projection_pass"] is True
     assert result["projectable_dumps"] == 6
     assert result["projected_traces"] == 12
-    assert result["reject_dump"]["reason_codes"] == ["trace_has_no_branches"] * 2
+    # F5 尾巴修复：reason_codes 报告侧去重（保序），逐条计数在 rejected_traces
+    assert result["reject_dump"]["reason_codes"] == ["trace_has_no_branches"]
+    assert result["reject_dump"]["rejected_traces"] == 2

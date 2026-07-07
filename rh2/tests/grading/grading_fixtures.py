@@ -178,6 +178,9 @@ def make_fixture_spec(
         checkout_mode=checkout_mode,
         snapshot_host_path=snapshot_host_path,
         eval_script_path="/rh2/eval.sh",
+        # fixture 镜像是本地 docker build 产物，没有 RepoDigests——按 codex#1 的
+        # 纪律显式声明豁免；测试若传入 image_manifest_digest 则改走比对路径。
+        image_local_build="image_manifest_digest" not in overrides,
     )
     kwargs.update(overrides)
     return GradingEnvSpec(**kwargs)
@@ -273,7 +276,12 @@ class FakeDocker:
     container_running: bool = True
     ps_stdout: str = ""
     rm_fail_names: tuple[str, ...] = ()
+    # 镜像 RepoDigests 罐头值（codex#1 运行期比对用；json 序列化后返回）。
+    repo_digests: tuple[str, ...] = ()
     calls: list[tuple[str, ...]] = field(default_factory=list)
+    # 每次带 stdin 的调用记账（(args, payload)）：golden 隔离 negative test 会
+    # 扫描这里，证明评分容器的全部写入面都不含 golden_patch 内容。
+    input_payloads: list[tuple[tuple[str, ...], bytes]] = field(default_factory=list)
     pull_count: int = 0
     pulls_in_flight: int = 0
     max_concurrent_pulls: int = 0
@@ -290,9 +298,15 @@ class FakeDocker:
 
     async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
         self.calls.append(args)
+        if input_bytes is not None:
+            self.input_payloads.append((args, input_bytes))
         cmd = args[0]
         if cmd == "image":  # image inspect [-f fmt] <image>
             image = args[-1]
+            if "RepoDigests" in " ".join(args):  # codex#1：RepoDigests 查询
+                import json as _json
+
+                return ExecResult(0, _json.dumps(list(self.repo_digests)) + "\n", "")
             if "-f" in args:
                 return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
             if self.image_present or image in self.pulled_images:
@@ -314,6 +328,8 @@ class FakeDocker:
         if cmd == "run":
             return ExecResult(0, "f00dfeedcafe\n", "")
         if cmd == "inspect":
+            if "{{.Image}}" in args:  # 容器实际镜像 ID（codex#1 比对入口）
+                return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
             return ExecResult(0, "true\n" if self.container_running else "false\n", "")
         if cmd == "ps":
             return ExecResult(0, self.ps_stdout, "")

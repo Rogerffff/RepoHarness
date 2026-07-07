@@ -15,6 +15,7 @@
 
 import asyncio
 import hashlib
+import json
 import subprocess
 import time
 import uuid
@@ -34,11 +35,19 @@ from grading_fixtures import (
     make_fixture_spec,
 )
 
+from repoharness2.adapters.slime.generate import (
+    RolloutOrchestrator,
+    RolloutTaskSpec,
+    SlimeBindingConfig,
+    SlimeBindingError,
+)
 from repoharness2.contracts import GradingReport
 from repoharness2.grading.manager import (
+    GradingInfraError,
     GradingManagerConfig,
     HostWorkspace,
     SWEGradingManager,
+    _ContainerRecord,
 )
 
 pytestmark = [pytest.mark.docker, requires_docker]
@@ -390,3 +399,189 @@ async def test_grading_network_isolated_real(fixture_repo, fixture_image, make_w
     assert "NET_BLOCKED" in log_text
     assert manager.leases[-1].network_policy == "deny_all"
     _assert_no_leftover_containers(manager)
+
+
+# ---------------------------------------------------------------------------
+# S1-7a 前置修复（codex#3）：解法新增文件的端到端评分
+# ---------------------------------------------------------------------------
+
+
+async def test_grade_resolved_with_new_file_real(fixture_repo, fixture_image, make_workspace, tmp_path):
+    """codex#3 端到端正例：解法 = 新增 src/helper.py + 改 thing.py 引用它。
+
+    新文件必须随导出 patch（`git add -N` 登记的 intent-to-add 段）进评分容器：
+    若 add -N 被吞错、新文件漏出 patch，重放后 `from src.helper import impl`
+    会 ImportError，此题只能得假阴性 unresolved——resolved 即行为级证明。"""
+
+    ws = make_workspace()
+    (ws / "src" / "helper.py").write_text('def impl():\n    return "fixed"\n')  # 新增文件
+    (ws / "src" / "thing.py").write_text(
+        "from src.helper import impl\n\n\ndef feature():\n    return impl()\n"
+    )
+    manager = _make_manager(tmp_path)
+    report = await manager.grade(
+        trajectory_id="traj-newfile",
+        workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image),
+    )
+    assert report.outcome == "resolved" and report.reward == 1.0
+    assert (report.f2p_pass_count, report.f2p_total_count) == (1, 1)
+    assert report.patch_hygiene is not None and report.patch_hygiene.verdict == "clean"
+    assert "PASSED tests/test_thing.py::test_feature" in _read_eval_log(manager, report)
+    _assert_no_leftover_containers(manager)
+
+
+# ---------------------------------------------------------------------------
+# S1-7a 前置修复（codex#1）：运行期镜像 digest 比对（真 docker 正反例）
+# ---------------------------------------------------------------------------
+
+REGISTRY_IMAGE = "python:3.12-slim"  # fixture 镜像的基底：registry 拉取形态、带 RepoDigests
+
+
+def _repo_digest_of(image: str) -> str | None:
+    proc = _docker("image", "inspect", "-f", "{{json .RepoDigests}}", image)
+    if proc.returncode != 0:
+        return None
+    digests = json.loads(proc.stdout.strip() or "null") or []
+    return digests[0].rpartition("@")[2] if digests else None
+
+
+def _min_orchestrator() -> RolloutOrchestrator:
+    """只为直接调用 _verify_rollout_image_digest 而组的最小编排实例（真 docker CLI 通道）。"""
+
+    config = SlimeBindingConfig(
+        model_name="digest-probe",
+        backend_version="0",
+        renderer_cls_name="ProbeRenderer",
+        expected_renderer_cls_name="ProbeRenderer",
+        tokenizer_name="digest-probe",
+        template_hash="sha256:" + "a" * 64,
+        adapter_url="http://127.0.0.1:1",
+        harness_name="mock_harness",
+    )
+    return RolloutOrchestrator(
+        config=config,
+        task_resolver=lambda sample: (_ for _ in ()).throw(AssertionError("本测试不走 generate")),
+        adapter_factory=lambda hook, defaults: None,
+        harness_driver=None,
+        grading_submit=None,
+    )
+
+
+def _rollout_task(image: str, fixture_repo: FixtureRepo, **digest_kwargs) -> RolloutTaskSpec:
+    return RolloutTaskSpec(
+        task_id="digest-probe",
+        image=image,
+        base_commit=fixture_repo.base_commit,
+        prompt="digest probe",
+        public_bundle_payload=b"{}",
+        public_bundle_digest="sha256:" + "e" * 64,
+        grading_spec=make_fixture_spec(
+            fixture_repo.base_commit, image, checkout_mode="image_embedded"
+        ),
+        **digest_kwargs,
+    )
+
+
+async def test_image_digest_declared_but_unmet_rejected_real(
+    fixture_repo, fixture_image, make_workspace, tmp_path
+):
+    """codex#1 反例（真 docker，走完整 grade）：本地构建 fixture 镜像 + spec 声明
+    冻结 digest（即无 local_build 豁免）-> 必须 infra_failure 拒评。
+
+    两种 daemon 形态都必须拒：classic 镜像存储下本地构建镜像**没有** RepoDigests
+    （命中"缺 RepoDigests 且无标记即拒"分支）；containerd 镜像存储（本机实测形态）
+    下本地构建也带 RepoDigests，但值必不等于声明的冻结 digest（命中漂移分支）。
+    "缺 RepoDigests 即拒"的确定性钉死在单测（FakeDocker repo_digests=()）与
+    evaluate_image_digest 库层测试里。"""
+
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    manager = _make_manager(tmp_path)
+    report = await manager.grade(
+        trajectory_id="traj-digestreq",
+        workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image, image_manifest_digest="sha256:" + "0" * 64),
+    )
+    assert report.outcome == "failed_to_grade"
+    assert report.failure_category == "infra_failure"
+    assert report.reward is None
+    detail = report.infra_failure_detail or ""
+    assert "grading_image_digest_mismatch" in detail
+    # 两种拒绝形态都合法，但必须落在其中之一（都带 RepoDigests 证据字样）
+    assert ("digest 漂移" in detail) or ("local_build" in detail)
+    assert "RepoDigests" in detail
+    _assert_no_leftover_containers(manager)
+
+
+async def test_image_digest_verify_against_registry_image_real(fixture_repo, tmp_path):
+    """codex#1 正例（真 docker + registry 镜像）：容器实际镜像的真实 RepoDigests
+    命中冻结 digest -> 评分/rollout 两侧校验都通过；伪造 digest -> 两侧都拒。"""
+
+    expected = _repo_digest_of(REGISTRY_IMAGE)
+    if expected is None:
+        pull = subprocess.run(
+            ["docker", "pull", "-q", REGISTRY_IMAGE], capture_output=True, text=True, timeout=600
+        )
+        if pull.returncode != 0:
+            pytest.skip(f"registry 不可达，拉不到 {REGISTRY_IMAGE}: {pull.stderr[-200:]}")
+        expected = _repo_digest_of(REGISTRY_IMAGE)
+    assert expected is not None and expected.startswith("sha256:")
+
+    name = f"rh2-digest-probe-{uuid.uuid4().hex[:6]}"
+    run = _docker("run", "-d", "--network", "none", "--name", name, REGISTRY_IMAGE,
+                  "sleep", "infinity")
+    assert run.returncode == 0, run.stderr
+    try:
+        manager = _make_manager(tmp_path)
+        record = _ContainerRecord(
+            name=name, trajectory_id="traj-digest",
+            created_epoch=time.time(), created_monotonic=time.monotonic(),
+        )
+        await manager._verify_image_digest(  # 命中 -> 不抛
+            record, _spec(fixture_repo, REGISTRY_IMAGE, image_manifest_digest=expected)
+        )
+        with pytest.raises(GradingInfraError, match="grading_image_digest_mismatch"):
+            await manager._verify_image_digest(
+                record,
+                _spec(fixture_repo, REGISTRY_IMAGE, image_manifest_digest="sha256:" + "0" * 64),
+            )
+
+        # rollout 侧同判据（同一真容器、真 docker CLI 通道）
+        orch = _min_orchestrator()
+        await orch._verify_rollout_image_digest(  # 命中 -> 不抛
+            _rollout_task(REGISTRY_IMAGE, fixture_repo, image_manifest_digest=expected), name
+        )
+        with pytest.raises(SlimeBindingError, match="rollout_image_digest_mismatch"):
+            await orch._verify_rollout_image_digest(
+                _rollout_task(
+                    REGISTRY_IMAGE, fixture_repo, image_manifest_digest="sha256:" + "0" * 64
+                ),
+                name,
+            )
+    finally:
+        _docker("rm", "-f", name)
+
+
+async def test_rollout_image_digest_fixture_image_real(fixture_repo, fixture_image):
+    """codex#1 rollout 侧（真 docker）：本地构建镜像上，声明 digest -> 拒
+    （缺 RepoDigests 且无标记）；显式 local_build 豁免 -> 通过。"""
+
+    name = f"rh2-rollout-digest-{uuid.uuid4().hex[:6]}"
+    run = _docker("run", "-d", "--network", "none", "--name", name, fixture_image,
+                  "sleep", "infinity")
+    assert run.returncode == 0, run.stderr
+    try:
+        orch = _min_orchestrator()
+        with pytest.raises(SlimeBindingError, match="rollout_image_digest_mismatch"):
+            await orch._verify_rollout_image_digest(
+                _rollout_task(
+                    fixture_image, fixture_repo, image_manifest_digest="sha256:" + "0" * 64
+                ),
+                name,
+            )
+        await orch._verify_rollout_image_digest(  # 显式豁免 -> 不抛
+            _rollout_task(fixture_image, fixture_repo, image_local_build=True), name
+        )
+    finally:
+        _docker("rm", "-f", name)

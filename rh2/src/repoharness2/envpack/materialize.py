@@ -30,11 +30,12 @@ S1-6 的 slime 绑定用它自己的 sandbox 执行通道，两边共享同一�
 
 from __future__ import annotations
 
+import json
 import re
 
 from pydantic import Field
 
-from repoharness2.contracts._base import GitSha, StrictModel
+from repoharness2.contracts._base import GitSha, Sha256Digest, StrictModel
 
 # ---------------------------------------------------------------------------
 # agent 环境注入（与血缘校验同属"物化"动作，绑定层原样写进容器）
@@ -181,5 +182,99 @@ def evaluate_probe(
         base_object_ok=base_object_ok,
         env_diffstat_vs_base=tagged.get("diffstat", ""),
         dirty_paths=dirty,
+        stderr_tail=stderr.strip()[-500:] if stderr else "",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 运行期镜像 digest 比对（S1-7a 前置修复，codex#1 / F1①）
+# ---------------------------------------------------------------------------
+
+# 判据用 RepoDigests 而不是 image ID：envpack 冻结记录的 image_manifest_digest
+# 是 registry 侧的 manifest digest（`docker.io/xx/yy@sha256:<manifest>` 的 @ 后半），
+# 而 `docker image inspect -f {{.Id}}` 给出的是本地 config digest，两者永不相等。
+# S0-7 runner（experiments/s0_swe_smoke.py ensure_image）已实证 RepoDigests 可比对。
+IMAGE_REPO_DIGESTS_FORMAT = "{{json .RepoDigests}}"
+
+
+class ImageDigestError(RuntimeError):
+    """运行期镜像 digest 比对失败（fail-closed：漂移镜像上的 rollout/评分都不可信）。"""
+
+
+class ImageDigestCheck(StrictModel):
+    """一次镜像 RepoDigests 比对的解析结果 + 判定（与 MaterializeCheck 同风格）。
+
+    调用方约定：本对象只服务"任务声明了冻结 digest"的路径；本地构建镜像
+    （无 RepoDigests）必须在任务面用显式 local_build 标记豁免，**不允许**
+    用"RepoDigests 为空就跳过比对"来兜底——空清单在这里就是不通过。
+    """
+
+    expected_manifest_digest: Sha256Digest = Field(
+        description="envpack 冻结记录的镜像 manifest digest（frozen_v1 的 image_manifest_digest）。"
+    )
+    inspect_exit_code: int = Field(
+        description="`docker image inspect` 的退出码（非 0 = 查询失败，直接不通过）。"
+    )
+    repo_digests: list[str] = Field(
+        default_factory=list,
+        description='实际镜像的 RepoDigests 清单（形如 "docker.io/xx/yy@sha256:<hex>"）。',
+    )
+    stderr_tail: str = Field(default="", description="inspect stderr 尾部（失败排障用）。")
+
+    @property
+    def matched_repo_digest(self) -> str | None:
+        """命中的 RepoDigests 条目（@ 后半 == 冻结 digest 才算命中；没有则 None）。"""
+
+        for entry in self.repo_digests:
+            if entry.rpartition("@")[2] == self.expected_manifest_digest:
+                return entry
+        return None
+
+    @property
+    def ok(self) -> bool:
+        return self.inspect_exit_code == 0 and self.matched_repo_digest is not None
+
+    def failure_message(self) -> str:
+        if self.inspect_exit_code != 0:
+            return (
+                f"镜像 RepoDigests 查询失败: exit={self.inspect_exit_code}; "
+                f"stderr tail: {self.stderr_tail[-300:]}"
+            )
+        if not self.repo_digests:
+            return (
+                "镜像没有任何 RepoDigests（本地构建/未从 registry 拉取的形态），"
+                "且任务未显式声明 local_build 豁免——按 fail-closed 拒绝"
+            )
+        return (
+            f"镜像 digest 漂移: 冻结记录 {self.expected_manifest_digest}, "
+            f"实际 RepoDigests={self.repo_digests}"
+        )
+
+    def ensure_ok(self) -> None:
+        if not self.ok:
+            raise ImageDigestError(self.failure_message())
+
+
+def evaluate_image_digest(
+    expected_manifest_digest: str, exit_code: int, stdout: str, stderr: str = ""
+) -> ImageDigestCheck:
+    """解析 `docker image inspect -f '{{json .RepoDigests}}'` 输出并构造比对结果。
+
+    stdout 解析失败（非 JSON / 非字符串数组）按空清单处理——空清单本身就
+    判不通过，所以解析失败同样落在 fail-closed 一侧。
+    """
+
+    digests: list[str] = []
+    if exit_code == 0:
+        try:
+            parsed = json.loads(stdout.strip() or "null")
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, list):
+            digests = [str(item) for item in parsed]
+    return ImageDigestCheck(
+        expected_manifest_digest=expected_manifest_digest,
+        inspect_exit_code=exit_code,
+        repo_digests=digests,
         stderr_tail=stderr.strip()[-500:] if stderr else "",
     )

@@ -308,8 +308,14 @@ def clean_patch(raw_patch: str, rules: HygieneRules) -> CleanedPatch:
 # 导出脚本：`git add -N .` 把未跟踪新文件登记为 intent-to-add，让它们出现在
 # `git diff HEAD` 里（agent 新建的源文件/污染文件都不能漏）；`--binary` 保证
 # 二进制改动可重放；`core.fileMode=false` 与 S0-7 finalize 存证口径一致。
+#
+# fail-closed（S1-7a 前置修复，codex#3）：add -N 失败必须让整段导出失败——
+# 旧写法 `|| true` 会吞错，此时 `git diff HEAD` 照样成功但**静默漏掉全部
+# 未跟踪新文件**（典型注入：.git/index.lock 残留时 add -N 拿不到索引锁），
+# 评分就会在"少了新文件的半份 patch"上得出假阴性结论。`1>&2` 把 add 的
+# stdout 并进 stderr，保证 stdout 仍是纯净的 diff 载荷。
 EXPORT_PATCH_SCRIPT = (
-    "git add -N . >/dev/null 2>&1 || true; git -c core.fileMode=false diff --binary HEAD"
+    "git add -N . 1>&2 && git -c core.fileMode=false diff --binary HEAD"
 )
 
 
@@ -355,6 +361,12 @@ class GradingEnvSpec:
     parse_log: Callable[[str], scoring.EvalVerdict]  # 官方 parser 入口（绑定私有材料）
     grader_version: str
     hygiene: HygieneRules
+    # 运行期镜像 digest 比对（S1-7a 前置修复，codex#1）：二选一、必选其一——
+    # 要么给出 envpack 冻结的 manifest digest（评分容器启动后与实际镜像的
+    # RepoDigests 比对，不符即 infra_failure），要么显式声明 image_local_build
+    # 豁免（本地构建 fixture 镜像没有 RepoDigests）。两者都缺 = 构造即拒。
+    image_manifest_digest: str | None = None
+    image_local_build: bool = False
     checkout_mode: Literal["image_embedded", "clone_from_readonly_snapshot"] = "image_embedded"
     # clone 模式（本机 fixture）：宿主侧只读快照目录，以 :ro 挂进容器后 clone 出 /testbed（P6）。
     snapshot_host_path: str | None = None
@@ -367,6 +379,12 @@ class GradingEnvSpec:
     test_timeout_seconds: float = 1800.0  # P3：manager 内部分段 timeout，比外层 scoring_timeout 更严
 
     def __post_init__(self) -> None:
+        if (self.image_manifest_digest is None) == (not self.image_local_build):
+            raise ValueError(
+                "镜像 digest 校验必须显式二选一：要么提供 image_manifest_digest"
+                "（冻结记录，运行期 RepoDigests 比对），要么声明 image_local_build=True"
+                "（本地构建镜像豁免）；两者都缺或同时给出都拒绝——豁免不允许静默发生。"
+            )
         if self.checkout_mode == "clone_from_readonly_snapshot" and not self.snapshot_host_path:
             raise ValueError("clone_from_readonly_snapshot 模式必须提供 snapshot_host_path")
         if self.testbed_path != "/testbed":
@@ -395,6 +413,8 @@ def build_swe_grading_spec(pair: bundles.BundlePair) -> GradingEnvSpec:
         task_id=pair.instance_id,
         image=pair.public.image,
         base_commit=pair.public.base_commit,
+        # 冻结 digest 进 spec：评分容器启动后与实际镜像 RepoDigests 比对（codex#1）。
+        image_manifest_digest=pair.public.image_manifest_digest,
         eval_script=private.eval_script,
         parse_log=_parse,
         grader_version=f"swebench-{scoring.swebench_version()}",
@@ -610,9 +630,10 @@ class SWEGradingManager:
             # 阶段 3 前置：镜像就绪（P10 第一档，预拉取命中记 0.0）
             timing_parts["image_pull"] = await self._ensure_image(spec.image)
 
-            # 阶段 3：fresh 容器 + clean checkout + 血缘核验（A7 条 2）
+            # 阶段 3：fresh 容器 + 镜像 digest 比对 + clean checkout + 血缘核验（A7 条 2）
             reset_start = time.monotonic()
             record = await self._start_container(trajectory_id, spec, nonce)
+            await self._verify_image_digest(record, spec)
             await self._clean_checkout(record, spec)
             timing_parts["env_reset"] = time.monotonic() - reset_start
 
@@ -845,6 +866,36 @@ class SWEGradingManager:
         if result.exit_code != 0 and not await self._container_running(record):
             raise GradingInfraError(f"grading_container_killed_during_{phase}")
         return result
+
+    async def _verify_image_digest(self, record: _ContainerRecord, spec: GradingEnvSpec) -> None:
+        """启动后镜像 digest 比对（codex#1 fail-closed）：容器实际运行的镜像
+        必须命中 envpack 冻结的 image_manifest_digest（查 RepoDigests，不是 image ID）。
+
+        比对对象是 `docker inspect -f {{.Image}}` 给出的**容器实际镜像**而非
+        spec.image 标签——标签在 inspect 与 run 之间可能被重指（:latest 漂移），
+        以运行中容器为准才封得住这个窗口。本地构建 fixture 镜像（无 RepoDigests）
+        走 spec.image_local_build 显式豁免；豁免缺席时空 RepoDigests 一律拒绝。
+        """
+
+        if spec.image_local_build:
+            return  # 显式豁免：本地构建镜像没有 RepoDigests，schema 层已强制声明
+        expected = spec.image_manifest_digest
+        assert expected is not None  # GradingEnvSpec.__post_init__ 的二选一保证
+        ref = await self._docker("inspect", "-f", "{{.Image}}", record.name)
+        if ref.exit_code != 0:
+            raise GradingInfraError(
+                f"grading_image_ref_inspect_failed:{ref.stderr.strip()[-300:]}"
+            )
+        digests = await self._docker(
+            "image", "inspect", "-f", materialize.IMAGE_REPO_DIGESTS_FORMAT, ref.stdout.strip()
+        )
+        check = materialize.evaluate_image_digest(
+            expected, digests.exit_code, digests.stdout, digests.stderr
+        )
+        if not check.ok:
+            raise GradingInfraError(
+                f"grading_image_digest_mismatch:{check.failure_message()[:400]}"
+            )
 
     # ------------------------------------------------------------------ 内部：评分各阶段
     async def _clean_checkout(self, record: _ContainerRecord, spec: GradingEnvSpec) -> None:

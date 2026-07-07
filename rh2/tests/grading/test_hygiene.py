@@ -1,7 +1,8 @@
 """A7 条 1/3/4 的 hygiene 单测：diff 段切分、篡改/污染分类、cleaned patch 剥离。
 
-不需要 docker；最后两个用例用本机 git 仓库验证真实导出链路
-（含 `git add -N` 的未跟踪新文件导出）。
+不需要 docker；末尾几个用例用本机 git 仓库验证真实导出链路
+（含 `git add -N` 的未跟踪新文件导出，以及 add -N 失败必须 fail-closed
+的 codex#3 正反例）。
 """
 
 from pathlib import Path
@@ -161,3 +162,35 @@ async def test_export_from_dead_workspace_raises(tmp_path: Path):
     empty.mkdir()
     with pytest.raises(WorkspaceExportError):
         await export_cleaned_patch(HostWorkspace(empty), FIXTURE_HYGIENE)
+
+
+async def test_export_includes_untracked_new_source_file(tmp_path: Path):
+    """codex#3 正例：解法新增源文件（未跟踪）——导出 patch 必须完整含新文件段且判 clean。"""
+
+    repo = build_fixture_repo(tmp_path / "snapshot")
+    ws = clone_workspace(repo, tmp_path / "ws")
+    (ws / "src" / "helper.py").write_text('def impl():\n    return "fixed"\n')  # 新文件
+    (ws / "src" / "thing.py").write_text(
+        "from src.helper import impl\n\n\ndef feature():\n    return impl()\n"
+    )
+
+    cleaned = await export_cleaned_patch(HostWorkspace(ws), FIXTURE_HYGIENE)
+    assert cleaned.verdict == "clean"
+    assert "src/helper.py" in cleaned.cleaned_patch
+    assert "new file mode" in cleaned.cleaned_patch  # intent-to-add 段完整在场
+    assert 'return "fixed"' in cleaned.cleaned_patch
+
+
+async def test_export_fails_closed_when_intent_to_add_fails(tmp_path: Path):
+    """codex#3 反例：`git add -N` 失败（注入 index.lock 残留）必须让导出整体失败
+    （WorkspaceExportError 带 stderr），而不是旧行为的 `|| true` 吞错——那时
+    `git diff HEAD` 照样成功，未跟踪新文件被静默漏出 patch，评分得假阴性。"""
+
+    repo = build_fixture_repo(tmp_path / "snapshot")
+    ws = clone_workspace(repo, tmp_path / "ws")
+    (ws / "src" / "helper.py").write_text('def impl():\n    return "fixed"\n')  # 会被漏的新文件
+    (ws / ".git" / "index.lock").write_text("")  # add -N 拿不到索引锁 -> 失败
+
+    with pytest.raises(WorkspaceExportError) as exc_info:
+        await export_cleaned_patch(HostWorkspace(ws), FIXTURE_HYGIENE)
+    assert "index.lock" in str(exc_info.value)  # stderr 已记录进错误（排障可用）

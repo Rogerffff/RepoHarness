@@ -206,6 +206,150 @@ async def test_dead_workspace_is_infra_failure():
     assert report.patch_hygiene is None  # 没走到重放，不得伪称做过 clean 重放
 
 
+# ---------------------------------------------------------------------------
+# codex#1：运行期镜像 digest 比对（评分容器侧，S1-7a 前置修复）
+# ---------------------------------------------------------------------------
+
+FROZEN_IMG_DIGEST = "sha256:" + "1" * 64
+
+
+async def test_grade_image_digest_match_passes():
+    """正例：容器实际镜像 RepoDigests 命中冻结 digest -> 评分正常，且比对确实发生。"""
+
+    fake = FakeDocker(
+        base_commit=BASE, repo_digests=("docker.io/fake/img@" + FROZEN_IMG_DIGEST,)
+    )
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_digest_ok",
+        workspace=FakeWorkspace(GOOD_PATCH),
+        spec=make_spec(image_manifest_digest=FROZEN_IMG_DIGEST),
+    )
+    assert report.outcome == "resolved" and report.reward == 1.0
+    joined = [" ".join(call) for call in fake.calls]
+    assert any("{{.Image}}" in text for text in joined)  # 查容器实际镜像，不是 spec 标签
+    assert any("RepoDigests" in text for text in joined)  # 比对 RepoDigests，不是 image ID
+
+
+async def test_grade_image_digest_mismatch_is_infra_failure():
+    """反例：RepoDigests 与冻结 digest 不符 -> infra_failure（reward=None），容器不泄漏。"""
+
+    fake = FakeDocker(
+        base_commit=BASE, repo_digests=("docker.io/fake/img@sha256:" + "2" * 64,)
+    )
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_digest_drift",
+        workspace=FakeWorkspace(GOOD_PATCH),
+        spec=make_spec(image_manifest_digest=FROZEN_IMG_DIGEST),
+    )
+    assert report.outcome == "failed_to_grade"
+    assert report.failure_category == "infra_failure"
+    assert report.reward is None
+    assert "grading_image_digest_mismatch" in (report.infra_failure_detail or "")
+    assert "digest 漂移" in (report.infra_failure_detail or "")
+    assert len(fake.removed) == 1  # 已起的容器照常清理
+
+
+async def test_grade_image_without_repo_digests_and_no_marker_rejected():
+    """反例（豁免必须显式）：镜像无 RepoDigests 且 spec 未声明 local_build -> infra 拒。"""
+
+    fake = FakeDocker(base_commit=BASE, repo_digests=())
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_digest_none",
+        workspace=FakeWorkspace(GOOD_PATCH),
+        spec=make_spec(image_manifest_digest=FROZEN_IMG_DIGEST),
+    )
+    assert report.failure_category == "infra_failure" and report.reward is None
+    detail = report.infra_failure_detail or ""
+    assert "RepoDigests" in detail and "local_build" in detail
+
+
+async def test_grade_local_build_exemption_skips_digest_probe():
+    """豁免路径：image_local_build=True（fixture 默认）不做 RepoDigests 查询。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_localbuild", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec()
+    )
+    assert report.outcome == "resolved"
+    assert not any("RepoDigests" in " ".join(call) for call in fake.calls)
+
+
+def test_grading_spec_digest_declaration_is_mandatory():
+    """schema 层钉死：digest 与 local_build 二选一——两者都缺或都给，构造即拒。"""
+
+    with pytest.raises(ValueError, match="二选一"):
+        make_spec(image_local_build=False)  # 都缺
+    with pytest.raises(ValueError, match="二选一"):
+        make_spec(image_manifest_digest=FROZEN_IMG_DIGEST, image_local_build=True)  # 都给
+
+
+# ---------------------------------------------------------------------------
+# F3：golden_patch 永不进评分容器（把代码路径事实钉成不变量）
+# ---------------------------------------------------------------------------
+
+GOLDEN_SENTINEL = "RH2_GOLDEN_PATCH_SENTINEL_9f3ae1"
+
+
+async def test_golden_patch_never_reaches_grading_container_surfaces():
+    """F3 不变量：从含哨兵 golden_patch 的真实 BundlePair 走生产取数通道
+    （build_swe_grading_spec）跑完整 grade()，评分容器的全部注入面——docker
+    调用参数（run 挂载/labels、exec 脚本）与全部 stdin 写入字节（cleaned patch、
+    eval 脚本，即 manager 的 EVAL_SCRIPT_PATH 注入面）——找不到 golden_patch
+    内容。评分必须正常走完，排除"因早退而未泄漏"的假阴性。"""
+
+    from repoharness2.envpack import bundles
+
+    statement = "Fix the broken feature() function so it returns the right value."
+    instance_id = "rh2-fixture.golden-0001"
+    pair = bundles.BundlePair(
+        public=bundles.PublicTaskBundle(
+            instance_id=instance_id,
+            repo="psf/requests",
+            base_commit=BASE,
+            image="fake-image:v1",
+            image_manifest_digest="sha256:" + "c" * 64,
+            problem_statement=statement,
+            problem_statement_sha256=bundles.sha256_of_text(statement),
+        ),
+        private=bundles.PrivateGradingBundle(
+            instance_id=instance_id,
+            repo="psf/requests",
+            version="2.3",
+            base_commit=BASE,
+            golden_patch=(
+                "diff --git a/src/thing.py b/src/thing.py\n"
+                "--- a/src/thing.py\n+++ b/src/thing.py\n"
+                f"@@ -1 +1 @@\n-broken\n+{GOLDEN_SENTINEL}\n"
+            ),
+            test_patch=(
+                "diff --git a/tests/test_thing.py b/tests/test_thing.py\n"
+                "--- a/tests/test_thing.py\n+++ b/tests/test_thing.py\n"
+                "@@ -1 +1 @@\n-# a\n+# b\n"
+            ),
+            fail_to_pass=["tests/test_thing.py::test_feature"],
+            pass_to_pass=["tests/test_thing.py::test_stable"],
+            eval_script="echo eval",
+            test_cmd="python tests/test_thing.py",
+        ),
+    )
+    assert GOLDEN_SENTINEL in pair.private.golden_patch  # 哨兵在场，测试不空转
+    spec = build_swe_grading_spec(pair)
+    assert GOLDEN_SENTINEL not in spec.eval_script  # golden 不出 bundle 对象（codex#4）
+
+    fake = FakeDocker(
+        base_commit=BASE, repo_digests=("docker.io/fake/img@sha256:" + "c" * 64,)
+    )
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_golden_iso", workspace=FakeWorkspace(GOOD_PATCH), spec=spec
+    )
+    assert report.outcome == "resolved"  # 正常评完（GOOD_FAKE_LOG 覆盖 F2P/P2P）
+
+    for call in fake.calls:  # run 参数（挂载/labels/env）与 exec 脚本
+        assert GOLDEN_SENTINEL not in " ".join(call)
+    for args, payload in fake.input_payloads:  # 全部 stdin 写入（patch/eval 脚本）
+        assert GOLDEN_SENTINEL.encode() not in payload, f"泄漏进容器写入 {args}"
+
+
 def test_p4_schema_lock_infra_with_reward_is_unrepresentable():
     """P4 第二道锁：就算未来有人改坏 manager，infra+reward 的报告在 schema 层拒收。"""
 
@@ -381,6 +525,9 @@ def test_build_swe_grading_spec_wiring():
     assert spec.task_id == "django__django-11099"
     assert spec.image == pair.public.image
     assert spec.base_commit == pair.public.base_commit
+    # codex#1：冻结镜像 digest 进 spec（运行期 RepoDigests 比对），真实任务无豁免
+    assert spec.image_manifest_digest == pair.public.image_manifest_digest
+    assert spec.image_local_build is False
     assert spec.eval_script == pair.private.eval_script
     assert spec.checkout_mode == "image_embedded"
     assert spec.grader_name == GRADER_NAME

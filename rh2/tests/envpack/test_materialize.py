@@ -12,8 +12,11 @@ import pytest
 
 from repoharness2.envpack.materialize import (
     BASH_ENV_CONTENT,
+    IMAGE_REPO_DIGESTS_FORMAT,
+    ImageDigestError,
     MaterializeError,
     build_probe_script,
+    evaluate_image_digest,
     evaluate_probe,
 )
 
@@ -139,3 +142,75 @@ def test_probe_script_rejects_malformed_sha():
 
 def test_bash_env_content_activates_testbed():
     assert "activate testbed" in BASH_ENV_CONTENT
+
+
+# ---------------------------------------------------------------------------
+# 运行期镜像 digest 比对（codex#1，S1-7a 前置修复）：evaluate_image_digest
+# ---------------------------------------------------------------------------
+
+FROZEN_DIGEST = "sha256:" + "1" * 64
+OTHER_DIGEST = "sha256:" + "2" * 64
+
+
+def test_image_digest_format_targets_repo_digests_not_image_id():
+    """判据锚点：查询模板必须取 RepoDigests（manifest digest），不是 .Id（config digest）。"""
+
+    assert "RepoDigests" in IMAGE_REPO_DIGESTS_FORMAT
+    assert ".Id" not in IMAGE_REPO_DIGESTS_FORMAT
+
+
+def test_image_digest_match_passes():
+    check = evaluate_image_digest(
+        FROZEN_DIGEST, 0, f'["docker.io/swebench/sweb.eval@{FROZEN_DIGEST}"]\n'
+    )
+    assert check.ok
+    assert check.matched_repo_digest == f"docker.io/swebench/sweb.eval@{FROZEN_DIGEST}"
+    check.ensure_ok()  # 不抛
+
+
+def test_image_digest_multiple_entries_any_match_passes():
+    """同一镜像被打了多个 repo tag：任一 RepoDigests 条目命中即通过。"""
+
+    stdout = f'["ghcr.io/mirror/img@{OTHER_DIGEST}", "docker.io/official/img@{FROZEN_DIGEST}"]'
+    assert evaluate_image_digest(FROZEN_DIGEST, 0, stdout).ok
+
+
+def test_image_digest_mismatch_rejected():
+    check = evaluate_image_digest(FROZEN_DIGEST, 0, f'["docker.io/x/y@{OTHER_DIGEST}"]')
+    assert not check.ok
+    with pytest.raises(ImageDigestError, match="digest 漂移"):
+        check.ensure_ok()
+    assert FROZEN_DIGEST in check.failure_message()  # 冻结值与实际清单都进证据
+
+
+def test_image_digest_empty_repo_digests_rejected_and_names_exemption():
+    """本地构建形态（RepoDigests=[]）在比对路径里就是不通过——错误信息明说
+    豁免通道（local_build），把"缺 RepoDigests 且无标记即拒"的语义钉在库层。"""
+
+    check = evaluate_image_digest(FROZEN_DIGEST, 0, "[]")
+    assert not check.ok
+    message = check.failure_message()
+    assert "RepoDigests" in message and "local_build" in message
+
+
+def test_image_digest_inspect_failure_rejected():
+    check = evaluate_image_digest(FROZEN_DIGEST, 1, "", stderr="No such image: x")
+    assert not check.ok
+    with pytest.raises(ImageDigestError, match="No such image"):
+        check.ensure_ok()
+
+
+def test_image_digest_garbage_stdout_fail_closed():
+    """stdout 不是合法 JSON 数组（null / 垃圾文本）→ 按空清单处理，同样拒绝。"""
+
+    for stdout in ("null", "not-json-at-all", ""):
+        assert not evaluate_image_digest(FROZEN_DIGEST, 0, stdout).ok
+
+
+def test_image_digest_image_id_never_matches_manifest_digest():
+    """image ID（config digest）与 manifest digest 是两种 digest：把 image ID
+    形态塞进清单也命不中冻结 manifest digest（比对只认 @ 后半的精确相等）。"""
+
+    image_id_style = "sha256:" + "a" * 64  # docker image inspect -f {{.Id}} 的形态
+    check = evaluate_image_digest(FROZEN_DIGEST, 0, f'["docker.io/x/y@{image_id_style}"]')
+    assert not check.ok

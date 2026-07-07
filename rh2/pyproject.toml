@@ -13,6 +13,10 @@ dependencies = [
 inspect-rh2-artifact = "repoharness2.cli:entry"
 
 [dependency-groups]
+swe = [
+    # 真实 SWE 评分链路（make_test_spec / get_eval_report）需要；本机纯单测不需要
+    "swebench>=4.1,<5",
+]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.24",

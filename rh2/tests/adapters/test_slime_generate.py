@@ -34,9 +34,11 @@ from repoharness2.adapters.slime import (
     StartupCheckError,
     backfill_leaf_sample,
     rh2_custom_generate,
+    rollout_task_from_bundle_pair,
     startup_checks,
 )
 from repoharness2.contracts import BundleMount, GradingReport
+from repoharness2.envpack import bundles
 from repoharness2.grading.manager import ExecResult, GradingEnvSpec, HygieneRules
 
 BASE_COMMIT = "a" * 40
@@ -56,6 +58,8 @@ class FakeRolloutDocker:
     base_commit: str = BASE_COMMIT
     run_fail: bool = False
     rm_fail: bool = False
+    # 镜像 RepoDigests 罐头值（codex#1 运行期比对；json 序列化后返回）。
+    repo_digests: tuple[str, ...] = ()
     calls: list[tuple[str, ...]] = field(default_factory=list)
     removed: list[str] = field(default_factory=list)
     writes: dict[str, bytes] = field(default_factory=dict)  # 容器内路径 -> 写入内容
@@ -63,7 +67,14 @@ class FakeRolloutDocker:
     async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
         self.calls.append(args)
         cmd = args[0]
-        if cmd == "image":  # image inspect -f {{.Id}} <image>
+        if cmd == "image":  # image inspect -f {{.Id}}|{{json .RepoDigests}} <image>
+            if "RepoDigests" in " ".join(args):
+                import json as _json
+
+                return ExecResult(0, _json.dumps(list(self.repo_digests)) + "\n", "")
+            return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
+        if cmd == "inspect":  # inspect -f {{.Image}} <container>（codex#1 比对入口）
+            assert "{{.Image}}" in args, f"FakeRolloutDocker 不认识的 inspect: {args}"
             return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
         if cmd == "run":
             if self.run_fail:
@@ -276,7 +287,10 @@ TASK_ID_DENSE = "psf__requests-2931"
 TASK_ID_MOE = "django__django-11099"
 
 
-def make_task(task_id: str) -> RolloutTaskSpec:
+def make_task(task_id: str, *, image_manifest_digest: str | None = None) -> RolloutTaskSpec:
+    """默认 image_local_build=True（fake 镜像无 RepoDigests）；
+    传 image_manifest_digest 则改走运行期 RepoDigests 比对路径（codex#1 用例）。"""
+
     return RolloutTaskSpec(
         task_id=task_id,
         image="fake-image:v1",
@@ -284,10 +298,13 @@ def make_task(task_id: str) -> RolloutTaskSpec:
         prompt=f"Fix the issue in {task_id}",
         public_bundle_payload=b'{"instance_id": "%s"}' % task_id.encode(),
         public_bundle_digest=SHA_BUNDLE,
+        image_manifest_digest=image_manifest_digest,
+        image_local_build=image_manifest_digest is None,
         grading_spec=GradingEnvSpec(
             task_id=task_id,
             image="fake-image:v1",
             base_commit=BASE_COMMIT,
+            image_local_build=True,
             eval_script="echo eval",
             parse_log=lambda text: (_ for _ in ()).throw(AssertionError("mock 不该调 parser")),
             grader_version="swebench-4.1.0",
@@ -392,8 +409,10 @@ def build_dense_chain(
     config: SlimeBindingConfig | None = None,
     turns: list[MockTurn] | None = None,
     leaf_samples: list[Any] | None = None,
+    task: RolloutTaskSpec | None = None,
+    docker: FakeRolloutDocker | None = None,
 ) -> Chain:
-    docker = FakeRolloutDocker(rm_fail=rm_fail)
+    docker = docker if docker is not None else FakeRolloutDocker(rm_fail=rm_fail)
     grading = GradingSubmitStub(infra=infra_grading)
     adapter_ref: dict[str, MockSessionAdapter] = {}
     repair_signals: list[Any] = []
@@ -408,7 +427,7 @@ def build_dense_chain(
     driver = MockClaudeCodeDriver(adapter_ref, crash=crash)
     orchestrator = RolloutOrchestrator(
         config=config or dense_config(),
-        task_resolver=make_task(TASK_ID_DENSE),
+        task_resolver=task if task is not None else make_task(TASK_ID_DENSE),
         adapter_factory=adapter_factory,
         harness_driver=driver,
         grading_submit=grading,
@@ -692,6 +711,152 @@ async def test_cleanup_failure_injection_records_failure_category():
     assert cleanup_failure.lease_id == audit.lease.lease_id
     assert audit.lease_released is False  # 没删掉就不许记"已释放"
     assert audit.lease.cleanup.on_cleanup_failure == "record_runtime_finding_and_infra_failure"
+
+
+# ---------------------------------------------------------------------------
+# codex#1：运行期镜像 digest 比对（rollout 容器侧，S1-7a 前置修复）
+# ---------------------------------------------------------------------------
+
+FROZEN_IMG_DIGEST = "sha256:" + "1" * 64
+
+
+async def test_rollout_image_digest_match_delivers():
+    """正例：容器实际镜像的 RepoDigests 命中冻结 digest -> 正常交付，且比对确实发生。"""
+
+    docker = FakeRolloutDocker(repo_digests=("docker.io/fake/img@" + FROZEN_IMG_DIGEST,))
+    chain = build_dense_chain(
+        task=make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST), docker=docker
+    )
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert result[0].reward == 1.0
+    assert chain.orchestrator.audits[0].failure_records == []
+    joined = [" ".join(call) for call in docker.calls]
+    assert any("{{.Image}}" in text for text in joined)  # 查的是容器实际镜像
+    assert any("RepoDigests" in text for text in joined)  # 比对的是 RepoDigests 而非 image ID
+
+
+async def test_rollout_image_digest_mismatch_aborts_and_cleans():
+    """反例：RepoDigests 与冻结 digest 不符 -> materialize 阶段 infra_failure + 容器已清。"""
+
+    docker = FakeRolloutDocker(repo_digests=("docker.io/fake/img@sha256:" + "2" * 64,))
+    chain = build_dense_chain(
+        task=make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST), docker=docker
+    )
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    (failure,) = audit.failure_records
+    assert failure.stage == "materialize"
+    assert failure.failure_category == "infra_failure"
+    assert "rollout_image_digest_mismatch" in failure.detail
+    assert "digest 漂移" in failure.detail
+    assert result[0].remove_sample is True
+    assert len(docker.removed) == 1  # 容器已起必须清（Q7 物化中途失败路径）
+    assert chain.grading.calls == []  # 漂移镜像上一步都不跑
+
+
+async def test_rollout_image_without_repo_digests_and_no_marker_rejected():
+    """反例（豁免必须显式）：镜像无 RepoDigests 且任务未声明 local_build -> 拒。"""
+
+    docker = FakeRolloutDocker(repo_digests=())
+    chain = build_dense_chain(
+        task=make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST), docker=docker
+    )
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    (failure,) = chain.orchestrator.audits[0].failure_records
+    assert "rollout_image_digest_mismatch" in failure.detail
+    assert "RepoDigests" in failure.detail and "local_build" in failure.detail
+    assert result[0].remove_sample is True and len(docker.removed) == 1
+
+
+async def test_rollout_local_build_exemption_is_explicit_and_skips_probe():
+    """豁免路径：image_local_build=True 时不做 RepoDigests 查询，正常交付。"""
+
+    chain = build_dense_chain()  # make_task 默认 image_local_build=True
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert result[0].reward == 1.0
+    joined = [" ".join(call) for call in chain.docker.calls]
+    assert not any("RepoDigests" in text for text in joined)
+
+
+def test_rollout_task_spec_digest_declaration_is_mandatory():
+    """schema 层钉死：digest 与 local_build 二选一——两者都缺或都给，构造即拒。"""
+
+    with pytest.raises(ValueError, match="二选一"):
+        dataclasses.replace(make_task(TASK_ID_DENSE), image_local_build=False)  # 都缺
+    with pytest.raises(ValueError, match="二选一"):
+        dataclasses.replace(  # 都给
+            make_task(TASK_ID_DENSE), image_manifest_digest=FROZEN_IMG_DIGEST
+        )
+
+
+# ---------------------------------------------------------------------------
+# F3：golden_patch 永不进 rollout 容器（把代码路径事实钉成不变量）
+# ---------------------------------------------------------------------------
+
+GOLDEN_SENTINEL = "RH2_GOLDEN_PATCH_SENTINEL_9f3ae1"
+
+
+def make_pair_with_golden_sentinel() -> "bundles.BundlePair":
+    """真实 BundlePair（走生产构造与校验），private.golden_patch 植入唯一哨兵串。"""
+
+    statement = "Fix the broken feature() function so it returns the right value."
+    instance_id = "rh2-fixture.golden-0001"
+    public = bundles.PublicTaskBundle(
+        instance_id=instance_id,
+        repo="psf/requests",
+        base_commit=BASE_COMMIT,
+        image="fake-image:v1",
+        image_manifest_digest="sha256:" + "c" * 64,
+        problem_statement=statement,
+        problem_statement_sha256=bundles.sha256_of_text(statement),
+    )
+    private = bundles.PrivateGradingBundle(
+        instance_id=instance_id,
+        repo="psf/requests",
+        version="2.3",
+        base_commit=BASE_COMMIT,
+        golden_patch=(
+            "diff --git a/src/thing.py b/src/thing.py\n"
+            "--- a/src/thing.py\n+++ b/src/thing.py\n"
+            f"@@ -1 +1 @@\n-broken\n+{GOLDEN_SENTINEL}\n"
+        ),
+        test_patch=(
+            "diff --git a/tests/test_thing.py b/tests/test_thing.py\n"
+            "--- a/tests/test_thing.py\n+++ b/tests/test_thing.py\n@@ -1 +1 @@\n-# a\n+# b\n"
+        ),
+        fail_to_pass=["tests/test_thing.py::test_feature"],
+        eval_script="echo eval",
+        test_cmd="python tests/test_thing.py",
+    )
+    return bundles.BundlePair(public=public, private=private)
+
+
+async def test_golden_patch_never_reaches_rollout_container_surfaces():
+    """F3 不变量：真实取数通道（rollout_task_from_bundle_pair）构造任务并跑完整
+    rollout 编排，rollout 容器的全部注入面——docker 调用参数（run 挂载/labels、
+    exec 脚本）、容器内写入字节流、harness prompt、env 注入——找不到 golden_patch
+    内容。链路必须正常走完（reward 回写），排除"因早退而未泄漏"的假阴性。"""
+
+    pair = make_pair_with_golden_sentinel()
+    assert GOLDEN_SENTINEL in pair.private.golden_patch  # 哨兵确实在场，测试不空转
+    task = rollout_task_from_bundle_pair(pair, time_budget_seconds=900)
+    docker = FakeRolloutDocker(
+        repo_digests=("docker.io/fake/img@sha256:" + "c" * 64,)  # 与 public 冻结 digest 一致
+    )
+    chain = build_dense_chain(task=task, docker=docker)
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert result[0].reward == 1.0
+
+    for call in docker.calls:  # 挂载参数、exec 载荷、labels 全在这里
+        assert GOLDEN_SENTINEL not in " ".join(call)
+    for path, payload in docker.writes.items():  # 容器内全部写入字节
+        assert GOLDEN_SENTINEL.encode() not in payload, f"泄漏进容器写入 {path}"
+    assert GOLDEN_SENTINEL not in task.prompt
+    assert GOLDEN_SENTINEL.encode() not in task.public_bundle_payload
+    launch = chain.orchestrator.audits[0].launch_spec
+    assert GOLDEN_SENTINEL not in " ".join(
+        f"{key}={value}" for key, value in launch.env_injections.items()
+    )
 
 
 async def test_capture_hook_records_silent_downgrade_as_partial():
