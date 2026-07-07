@@ -400,6 +400,52 @@ def valid_backend_handshake() -> dict[str, Any]:
     }
 
 
+def valid_export_branch_tokens() -> dict[str, Any]:
+    """探针形状（prompt 15 + 生成 16）的导出分支：byte_size 与计数互锁。
+
+    token_ids = 31 个 int32 -> 124 字节；loss_mask = 16 个 int32 -> 64 字节；
+    logprobs = 16 个 float64 -> 128 字节。
+    """
+
+    return {
+        "branch_id": "b0",
+        "prompt_token_count": 15,
+        "response_token_count": 16,
+        "trainable_token_count": 16,
+        "token_fidelity": "token_faithful",
+        "token_ids_ref": {"ref_id": "texp_tokens_b0", "sha256": SHA_PROMPT, "byte_size": 124},
+        "loss_mask_ref": {"ref_id": "texp_mask_b0", "sha256": SHA_META, "byte_size": 64},
+        "rollout_logprobs_ref": {"ref_id": "texp_lp_b0", "sha256": SHA_PATCH, "byte_size": 128},
+        "capture_record_refs": ["cap_0001"],
+    }
+
+
+def valid_training_export_record() -> dict[str, Any]:
+    return {
+        "schema_id": "rh2.training_export_record.v1",
+        "record_id": "texp_traj_0001",
+        "trajectory_id": "traj_0001",
+        "task_id": "django__django-11099",
+        "source_framework": "slime",
+        "source_object_ref": "slime_rollout_7",
+        "exporter_version": "rh2.offline_export.s1.v1",
+        "projection_schema_id": "rh2.trajectory_projection.v1",
+        "projection_digest": SHA_TEMPLATE,
+        "eligibility_report_ref": "elig_0001",
+        "training_eligibility_class": "offline_or_sft_candidate",
+        "eligibility_facts_digest": SHA_META,
+        "gate_version": "rh2.gate.s1.v1",
+        "grading_report_ref": "rpt_grading_0001",
+        "reward_facts": valid_reward_facts(),
+        "renderer_cls_name": "Qwen3Renderer",
+        "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+        "chat_template_hash": SHA_TEMPLATE,
+        "branches": [valid_export_branch_tokens()],
+        "offline_filter_report_ref": None,
+        "exported_at_utc": TS,
+    }
+
+
 # schema_id -> 合法样例工厂（registry 级参数化测试 + CLI 测试共用）。
 VALID_SAMPLE_FACTORIES = {
     "rh2.trajectory_projection.v1": valid_trajectory_projection,
@@ -416,4 +462,5 @@ VALID_SAMPLE_FACTORIES = {
     "rh2.model_proxy_endpoint.v1": valid_model_proxy_endpoint,
     "rh2.cleanup_policy.v1": valid_cleanup_policy,
     "rh2.backend_handshake.v1": valid_backend_handshake,
+    "rh2.training_export_record.v1": valid_training_export_record,
 }

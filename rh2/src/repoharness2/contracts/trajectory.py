@@ -93,6 +93,7 @@ LossMaskReason = Literal[
     "user_or_system_message",  # 用户 / system 消息
     "replayed_sibling_response",  # 兄弟分支重放（第一次已训练，避免重复计入 loss）
     "retokenization_drift_downgraded",  # token 漂移无法证明采样来源，降级为上下文
+    "token_capture_unavailable_downgraded",  # 文本中继（verifiers EvalClient）无 token 级捕获，采样身份不可证明，降级为上下文（S1-8）
 ]
 
 
@@ -123,8 +124,8 @@ class LossMaskSpan(StrictModel):
         if self.mask == 0 and self.reason == "sampled_assistant_trainable":
             raise ValueError(
                 "mask=0 与 reason=sampled_assistant_trainable 矛盾：可训练理由必须配 mask=1；"
-                "被降级的采样 token 应使用 replayed_sibling_response 或 "
-                "retokenization_drift_downgraded 等降级理由。"
+                "被降级的采样 token 应使用 replayed_sibling_response / "
+                "retokenization_drift_downgraded / token_capture_unavailable_downgraded 等降级理由。"
             )
         return self
 
@@ -168,7 +169,13 @@ RoutingAlignment = Literal[
     "sglang_prompt_minus1_plus_gen",  # SGLang：行数 = prompt_len - 1 + generated_len
     "vllm_prompt_plus_gen",  # vLLM：行数 = prompt_len + generated_len
     "not_applicable_dense_model",  # dense 模型没有 routing tape（必须显式声明，禁止静默缺席）
+    "not_captured_text_relay",  # 文本中继（verifiers EvalClient）没有任何 token 级捕获——
+    # 模型是不是 MoE 都无从谈起，禁止谎报 dense 声明（S1-8 显式降级标注）
 ]
+
+# "声明无 tape"的两种合法形态：dense 模型（确知没有 routing）与文本中继
+# （根本没有 token 级捕获）。两者都必须与任何 tensor 字段互斥。
+_ROUTING_NO_TAPE_ALIGNMENTS = ("not_applicable_dense_model", "not_captured_text_relay")
 
 
 class RoutingTensorRef(StrictModel):
@@ -190,7 +197,9 @@ class RoutingTensorRef(StrictModel):
     alignment: RoutingAlignment = Field(
         description=(
             "routing 行与 token 的对齐约定。dense 模型必须显式填 "
-            "not_applicable_dense_model（A2：routing 缺失不得静默成功）。"
+            "not_applicable_dense_model（A2：routing 缺失不得静默成功）；"
+            "verifiers EvalClient 文本中继（无任何 token 级捕获）必须显式填 "
+            "not_captured_text_relay，不得谎报 dense 声明（S1-8）。"
         )
     )
     tensor_ref: ArtifactRef | None = Field(
@@ -230,12 +239,12 @@ class RoutingTensorRef(StrictModel):
             "prompt_token_count": self.prompt_token_count,
             "generated_token_count": self.generated_token_count,
         }
-        if self.alignment == "not_applicable_dense_model":
+        if self.alignment in _ROUTING_NO_TAPE_ALIGNMENTS:
             present = [name for name, value in tensor_fields.items() if value is not None]
             if present:
                 raise ValueError(
-                    "alignment=not_applicable_dense_model 时不得携带 routing 张量字段，"
-                    f"但发现 {present}（fail-closed：dense 声明与 tape 在场互斥）。"
+                    f"alignment={self.alignment} 时不得携带 routing 张量字段，"
+                    f"但发现 {present}（fail-closed：无 tape 声明与 tape 在场互斥）。"
                 )
             return self
 
@@ -263,6 +272,8 @@ class RoutingTensorRef(StrictModel):
 SamplingMaskKind = Literal[
     "top_p_kept_token_ids",  # top-p 核集合重放 tape（ragged：ids + offsets）
     "not_applicable_top_p_1",  # top_p=1.0 时不存在采样截断，无 tape（必须显式声明）
+    "not_captured_text_relay",  # 文本中继（verifiers EvalClient）：采样发生在 provider 侧，
+    # top_p 数值与核集合都未被捕获——禁止伪造 top_p=1.0 或空 tape（S1-8 显式降级标注）
 ]
 
 
@@ -281,12 +292,19 @@ class SamplingMaskRef(StrictModel):
     """
 
     mask_kind: SamplingMaskKind = Field(
-        description="tape 类型：top_p<1.0 必须是 top_p_kept_token_ids；top_p=1.0 必须显式 not_applicable_top_p_1。"
+        description=(
+            "tape 类型：top_p<1.0 必须是 top_p_kept_token_ids；top_p=1.0 必须显式 "
+            "not_applicable_top_p_1；文本中继（采样参数未捕获）必须显式 not_captured_text_relay。"
+        )
     )
-    top_p: float = Field(
+    top_p: float | None = Field(
         gt=0.0,
         le=1.0,
-        description="rollout 实际使用的 top_p（E2 定案 0.95；bring-up 应急才允许 1.0）。",
+        description=(
+            "rollout 实际使用的 top_p（E2 定案 0.95；bring-up 应急才允许 1.0）。"
+            "None 只允许与 mask_kind=not_captured_text_relay 搭配——采样发生在 provider "
+            "侧、参数未被捕获时禁止伪造任何数值（S1-8）。"
+        ),
     )
     token_ids_ref: ArtifactRef | None = Field(
         default=None, description="保留核集合 token ids（ragged 拼接后的一维 int32）的引用。"
@@ -319,6 +337,26 @@ class SamplingMaskRef(StrictModel):
             "offsets_len": self.offsets_len,
             "kept_token_count": self.kept_token_count,
         }
+        if self.mask_kind == "not_captured_text_relay":
+            if self.top_p is not None:
+                raise ValueError(
+                    f"mask_kind=not_captured_text_relay 要求 top_p 为 None，得到 {self.top_p}"
+                    "（文本中继根本没捕获采样参数，携带数值即伪造事实）。"
+                )
+            present = [name for name, value in tape_fields.items() if value is not None]
+            if present:
+                raise ValueError(
+                    f"mask_kind=not_captured_text_relay 时不得携带 tape 字段，但发现 {present}"
+                    "（没有捕获就不可能有 tape）。"
+                )
+            return self
+
+        if self.top_p is None:
+            raise ValueError(
+                f"mask_kind={self.mask_kind} 要求 top_p 数值必填；top_p=None 只允许与 "
+                "not_captured_text_relay 搭配（未捕获的采样参数不得静默缺席）。"
+            )
+
         if self.mask_kind == "not_applicable_top_p_1":
             if self.top_p != 1.0:
                 raise ValueError(
@@ -643,10 +681,15 @@ class BranchProjection(StrictModel):
                 )
 
         # 3b. mask=0 的 span 与 sampled_assistant 区间重叠时，reason 必须是降级类（N-3）：
-        #     采样 token 不训练只有两种合法故事——兄弟分支已训练（replayed_sibling_response）
-        #     或漂移降级（retokenization_drift_downgraded）；标 prompt_context 类
+        #     采样 token 不训练只有三种合法故事——兄弟分支已训练（replayed_sibling_response）、
+        #     漂移降级（retokenization_drift_downgraded）、文本中继无 token 捕获
+        #     （token_capture_unavailable_downgraded，S1-8）；标 prompt_context 类
         #     "本来就是上下文"的理由会把降级事实伪装成正常上下文，审计线索就断了。
-        downgrade_reasons = ("replayed_sibling_response", "retokenization_drift_downgraded")
+        downgrade_reasons = (
+            "replayed_sibling_response",
+            "retokenization_drift_downgraded",
+            "token_capture_unavailable_downgraded",
+        )
         for span in mask_spans:
             if span.mask != 0:
                 continue
@@ -678,8 +721,8 @@ class BranchProjection(StrictModel):
                 "logprob_alignment_status=missing 与 logprob_provenance 同时在场自相矛盾。"
             )
 
-        # 6. tape 计数与分支计数互检
-        if self.routing.alignment != "not_applicable_dense_model":
+        # 6. tape 计数与分支计数互检（无 tape 声明——dense / 文本中继——没有可核对的计数）
+        if self.routing.alignment not in _ROUTING_NO_TAPE_ALIGNMENTS:
             if self.routing.prompt_token_count != self.prompt_token_count:
                 raise ValueError(
                     f"routing.prompt_token_count({self.routing.prompt_token_count}) 与分支 "

@@ -1,6 +1,6 @@
-"""rh2 治理层契约（S1-1）：pydantic v2 严格 schema 全家桶。
+"""rh2 治理层契约（S1-1 起）：pydantic v2 严格 schema 全家桶。
 
-九个契约模块 + 公共底座：
+十个契约模块 + 公共底座：
 
 - trajectory.py  中立轨迹投影（治理层唯一消费的轨迹形态）
 - capture.py     GenerationCaptureRecord（SGLang 客户端响应层原始事实 sidecar，A4）
@@ -11,6 +11,8 @@
 - sandbox.py     sandbox 所有权握手五对象（A5 八问）
 - handshake.py   BackendHandshake（policy 版本 / staleness / 组信号）
 - timing.py      GradingTimingRecord（F5 五类计时 + 容器峰值/队列等待）
+- export.py      TrainingExportRecord（S1-8 离线导出：audit 档不可表示 +
+                 warm-start offline_filter_report_ref 挂点）
 - constants.py   FORBIDDEN_PUBLIC_MARKERS + 泄漏扫描（旧 L4/L5 + A6）
 
 `SCHEMA_REGISTRY` 把每个顶层对象的 schema_id 映射到模型类，
@@ -44,6 +46,11 @@ from repoharness2.contracts.eligibility import (
     EligibilityReport,
     TrainingEligibilityClass,
     compute_facts_digest,
+)
+from repoharness2.contracts.export import (
+    ExportableEligibilityClass,
+    ExportBranchTokens,
+    TrainingExportRecord,
 )
 from repoharness2.contracts.findings import (
     AntiCheatFinding,
@@ -93,6 +100,7 @@ SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.model_proxy_endpoint.v1": ModelProxyEndpoint,
     "rh2.cleanup_policy.v1": CleanupPolicy,
     "rh2.backend_handshake.v1": BackendHandshake,
+    "rh2.training_export_record.v1": TrainingExportRecord,
 }
 
 # runtime-private 审计资产：内容天然要描述作弊/私有事实（例如 finding 描述
@@ -128,6 +136,9 @@ __all__ = [
     "compute_facts_digest",
     "AntiCheatFinding",
     "TrajectoryQualityFinding",
+    "ExportableEligibilityClass",
+    "ExportBranchTokens",
+    "TrainingExportRecord",
     "GradingFailureCategory",
     "GradingReport",
     "INFRA_FAILURE_CATEGORIES",

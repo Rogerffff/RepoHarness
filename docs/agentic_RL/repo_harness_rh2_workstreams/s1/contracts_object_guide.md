@@ -31,7 +31,9 @@
                                               RoutingTensorRef、SamplingMaskRef、
                                               RewardFacts、CompactedSubTraceLineage）
 8. [RepoHarness] EligibilityGate 定资格        EligibilityReport（七维事实 + 三档结论）
-9. 合格样本交接训练后端 / 离线导出             BackendHandshake（含 GroupSignal）
+9. 合格样本交接训练后端 / 离线导出             BackendHandshake（含 GroupSignal）；
+                                              离线分支：TrainingExportRecord（含
+                                              ExportBranchTokens，S1-8，见 §8b）
 ```
 
 公共机制（不属于某一步）：`constants.py` 的 `FORBIDDEN_PUBLIC_MARKERS` 泄漏扫描、
@@ -402,12 +404,14 @@ token_spans:  [0,15) prompt_context | [15,23) sampled_assistant | [23,31) tool_r
   参训即污染——这正是 H4 拦的事故形态）
 ```
 
-**mask=0 的 reason 也要与来源互检（S1-1b，N-3）**：sampled_assistant 来源的
-token 若不参训，reason 只允许降级类（`replayed_sibling_response` /
-`retokenization_drift_downgraded`）——标成 `prompt_context` /
-`tool_or_env_context` 这类"本来就是上下文"的理由等于抹掉降级事实，审计线索
-就断了。反向不受影响：真在 tool_result 来源上的 mask=0 照常标
-tool_or_env_context。
+**mask=0 的 reason 也要与来源互检（S1-1b，N-3；S1-8 扩第三个降级码）**：
+sampled_assistant 来源的 token 若不参训，reason 只允许降级类
+（`replayed_sibling_response` / `retokenization_drift_downgraded` /
+`token_capture_unavailable_downgraded`——S1-8 新增，专用于 verifiers
+EvalClient 文本中继：文本确实是模型采样的，但没有任何 token 级捕获，
+采样身份不可证明）——标成 `prompt_context` / `tool_or_env_context` 这类
+"本来就是上下文"的理由等于抹掉降级事实，审计线索就断了。反向不受影响：
+真在 tool_result 来源上的 mask=0 照常标 tool_or_env_context。
 
 ```text
 token_spans:  [0,15) prompt_context | [15,31) sampled_assistant
@@ -438,8 +442,10 @@ vLLM:   行数 = prompt_len + generated_len       （13+8   = 21，S0-5 探针�
 
 - **fail-closed 行为**（逐条）：
   1. `alignment` 必填 → "tensor 在场但没说约定"**不可表示**（点名非法样例）；
-  2. dense 声明（`not_applicable_dense_model`）与任何 tensor 字段互斥——
-     A2 要求 dense 缺 routing 必须显式声明，不得静默成功；
+  2. 无 tape 声明与任何 tensor 字段互斥——两种合法形态：dense 声明
+     （`not_applicable_dense_model`，A2：dense 缺 routing 必须显式声明）与
+     文本中继声明（`not_captured_text_relay`，S1-8：verifiers EvalClient 没有
+     任何 token 级捕获，模型是不是 MoE 都无从谈起，**禁止谎报 dense**）；
   3. 引擎值时七个 tensor 字段必须齐全，且 `num_rows` 精确满足该引擎公式，
      差一行拒收（把 vLLM 的 31 行填给 SGLang 约定 → 拒收）。
 
@@ -461,6 +467,18 @@ vLLM:   行数 = prompt_len + generated_len       （13+8   = 21，S0-5 探针�
   `offsets_len != response+1` 拒收；`kept_token_count < response_token_count`
   拒收（S1-1b，N-4：top-p 对每个 response token 至少保留 1 个核 token，
   16 个 token 的 tape 总保留数不可能低于 16——低了说明 tape 记录不完整）。
+- **文本中继第三态（S1-8）**：`mask_kind="not_captured_text_relay"` ⇔
+  `top_p=null` 且无任何 tape 字段。verifiers EvalClient 的采样发生在 provider
+  侧、参数根本没被捕获——此时伪造 `top_p=1.0` 与伪造 0.95 一样是撒谎，
+  schema 允许（且只允许）配对表示"未捕获"。正反样例：
+
+```text
+合法：{"mask_kind": "not_captured_text_relay", "top_p": null}
+非法：{"mask_kind": "not_captured_text_relay", "top_p": 0.95}
+→ 拒收（未捕获却携带数值 = 伪造采样参数）
+非法：{"mask_kind": "top_p_kept_token_ids", "top_p": null, …}
+→ 拒收（捕获路径缺数值不得静默缺席）
+```
 
 ### 6.6 RewardFacts —— §16.11 的落点 + fan-out 建模定案
 
@@ -614,6 +632,74 @@ gate 侧建议用 `EligibilityReport.finalize(...)` 构造（自动算 digest、
                   "delivered_sample_count": 3, "degraded_sample_count": 1,
                   "degrade_visible_before_assembly": true},
  "accepted": true, "handshaked_at_utc": "2026-07-07T09:32:11Z"}
+```
+
+---
+
+## 8b. 步骤 9 的离线分支：TrainingExportRecord / ExportBranchTokens（S1-8）
+
+- **职责**：把一条**通过资格门**的轨迹固化成 warm-start 离线过滤流水线的入口
+  载体（`warm_start_offline_data_filtering_design.md` §2 数据流的第一站）：
+  资格引用 + reward 事实 + 分支 token 字节流清单 + `offline_filter_report_ref`
+  可空挂点（导出时为 null，离线过滤作业跑完后回填新记录，不改写原始记录）。
+- **创建者**：`adapters/offline_export/exporter.py`——**只吃 gate 之后的
+  FinalizedRollout**（finalize_rollout 的返回值），绕过治理关口的裸投影没有
+  资格结论，导出器不提供旁路。
+- **消费者**：TrajectoryHeuristicAnalyzer / WarmStartDatasetBuilder（离线）、
+  `inspect-rh2-artifact`（已注册 SCHEMA_REGISTRY，marker 扫描不豁免——导出面
+  是训练可见面）、S1-8 parity-core。
+- **训练安全关键字段**：`training_eligibility_class`（见下）、每分支的
+  `token_fidelity`（v1 只有 `token_faithful` 一个合法值——文本级导出必须先升
+  schema，不许静默混入）、三个 payload 引用的 `sha256/byte_size`（必填，
+  manifest 对账与防篡改的前提）。
+- **fail-closed 行为（最重要的一条：资格门是"不可表示"不是"被拦截"）**：
+  - `training_eligibility_class` 的类型是只含 online/offline 两档的 Literal，
+    `audit_only_or_rejected` **在 schema 上写不出来**；导出器在更早位置还有
+    显式拒绝（`[audit_tier_not_exportable]`），两道防线首尾相接；
+  - `reward_facts.reward_scope="none"` 拒收（infra 无 reward 的样本进不了
+    训练导出面，与 GradingReport/RewardFacts 的 P4 规则三处呼应）；
+  - `grading_report_ref` 必须出现在 `reward_facts.reward_event_refs` 里
+    （reward 出处与评分引用必须是同一份评分）；
+  - fan-out 账目在导出面**独立重锁**：`segment_count == len(branches)`、
+    `rollout_loss_denominator == Σ trainable_token_count`（导出记录会离开
+    治理进程流转，必须自证，不依赖上游校验过）；
+  - 分支级 byte_size 互锁：token_ids 恰为 4×(prompt+response) 字节、
+    loss_mask 恰为 4×response、logprobs 恰为 8×response。具体数值例：
+    prompt 12 + response 23 的分支 token_ids 必须恰 140 字节，差 4 字节拒收。
+- **导出器侧的 token 重建校验**（对象之外、写盘之前）：token 序列从
+  GenerationCaptureRecord 原始 payload 重建（末轮 prompt + 末轮输出），逐轮
+  验证"每轮 prompt 是全序列前缀 + 每个 mask=1 段逐位等于该轮 output_ids"，
+  payload digest 逐个重算比对；compaction 分支（lineage 非 null）显式拒绝
+  （`[lineage_reconstruction_not_supported]`）。
+
+最小合法样例（关键字段；完整版见 `tests/contracts/contract_samples.py` 的
+`valid_training_export_record`）：
+
+```json
+{"schema_id": "rh2.training_export_record.v1", "record_id": "texp_traj_0001",
+ "trajectory_id": "traj_0001", "task_id": "django__django-11099",
+ "source_framework": "slime", "source_object_ref": "slime_rollout_7",
+ "exporter_version": "rh2.offline_export.s1.v1",
+ "projection_digest": "sha256:aa…", "eligibility_report_ref": "elig_0001",
+ "training_eligibility_class": "offline_or_sft_candidate",
+ "eligibility_facts_digest": "sha256:cc…", "gate_version": "rh2.gate.s1.v1",
+ "grading_report_ref": "rpt_grading_0001",
+ "reward_facts": {…reward_event_refs 含 rpt_grading_0001…},
+ "branches": [{"branch_id": "b0", "prompt_token_count": 15,
+   "response_token_count": 16, "trainable_token_count": 16,
+   "token_fidelity": "token_faithful",
+   "token_ids_ref": {"ref_id": "texp_tokens_b0", "sha256": "sha256:…", "byte_size": 124},
+   "loss_mask_ref": {"ref_id": "texp_mask_b0", "sha256": "sha256:…", "byte_size": 64},
+   "capture_record_refs": ["cap_0001"]}],
+ "offline_filter_report_ref": null, "exported_at_utc": "2026-07-07T09:30:25Z"}
+```
+
+点名非法样例：
+
+```json
+{"training_eligibility_class": "audit_only_or_rejected", …}
+→ ValidationError（Literal 不含该值）：audit 档导出不是被 if 拦住，
+   而是根本写不出合法记录——资格门的 schema 层落点
 ```
 
 ---
