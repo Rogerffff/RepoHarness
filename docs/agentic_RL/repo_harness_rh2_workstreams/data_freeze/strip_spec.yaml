@@ -1,0 +1,44 @@
+# DF-3 行内字段剥离规格 v0（S2 ingestion 直接加载执行）
+# 处置类别（不变量）：
+#   model_visible      可进 agent 上下文；前提 = 通过 DF-5 泄漏扫描（未过扫描的题整题剔除或清洗后复检）
+#   env_materialization 环境物化/路由用的基础元数据；不作为内容注入 prompt
+#   grader_only        评分期资产；只在 grading 沙箱可见，绝不挂载进 rollout workspace（H5）
+#   validation_only    金标解；只供离线环境验证门（golden_patch_must_pass）使用，
+#                      存 runtime-private，rollout/grading(模型补丁) 两侧都不可见
+#   pipeline_meta      无泄漏风险的统计/难度分层元数据；不进模型上下文
+#   strip              进原始归档后即从一切下游剥离
+# 硬规则：本 spec 必须覆盖数据集全部字段；ingestion 遇到 spec 未列字段一律 fail-closed 拒绝。
+
+schema_version: v0
+generated: 2026-07-07
+sources_verified: HF datasets-server /info（字段清单逐列核对）
+
+swe_bench_family:            # SWE-Gym / SWE-Gym-Lite / SWE-bench_Verified 共用 schema（11 列）
+  instance_id: env_materialization
+  repo: env_materialization
+  base_commit: env_materialization
+  version: env_materialization
+  created_at: pipeline_meta
+  problem_statement: model_visible    # 经 DF-5 扫描
+  hints_text: strip                   # issue 评论，可能含修复方向甚至代码（线程 6 已核实），默认整体不进任何下游
+  patch: validation_only              # 金标 diff：仅环境验证门用
+  test_patch: grader_only             # 官方 grader 评分期 apply
+  FAIL_TO_PASS: grader_only
+  PASS_TO_PASS: grader_only
+
+r2e_gym_subset:              # 14 列
+  repo_name: env_materialization
+  docker_image: env_materialization
+  commit_hash: env_materialization    # DF-2 已核验：指向金标修复 commit 本身；镜像内 HEAD = 其 parent（修复前态）。
+                                      # ingestion 物化断言：容器 HEAD 必须是 commit_hash 的 parent，等于 commit_hash 即 fail-closed
+  problem_statement: model_visible    # 经 DF-5 扫描
+  prompt: strip                       # R2E 自带格式化 prompt，可能嵌入额外信息；我们只用 problem_statement 自行渲染
+  parsed_commit_content: validation_only   # 金标修复 commit：仅环境验证门用
+  expected_output_json: grader_only
+  execution_result_content: grader_only
+  modified_files: strip               # 修复触及文件清单 = 强定位泄漏
+  modified_entity_summaries: strip    # 被改函数摘要 = 强定位泄漏
+  relevant_files: strip               # 相关文件 = 定位泄漏
+  num_non_test_files: pipeline_meta
+  num_non_test_func_methods: pipeline_meta
+  num_non_test_lines: pipeline_meta

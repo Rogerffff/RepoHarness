@@ -1,0 +1,2726 @@
+Reading additional input from stdin...
+OpenAI Codex v0.142.5
+--------
+workdir: /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019f3ce5-60d3-7ee3-8a15-7a2d78b607a4
+--------
+user
+任务 DF-6：为 SWE RL 训练数据生成镜像清单与本地 registry 同步方案。本目录 meta/ 下有元数据：swe_gym_lite.jsonl / swe_gym_full.jsonl（字段 instance_id/repo）、r2e_subset.jsonl（字段 docker_image）。
+
+步骤：
+1. 生成镜像引用清单：SWE-Gym 镜像名规则 = 'xingyaoww/sweb.eval.x86_64.' + instance_id 小写（instance_id 中 '__' 需按 SWE-bench 惯例处理——先对 2~3 个实例用 docker manifest inspect 验证命名规则的正确形态，官方 SWE-bench 用 '_1776_' 替换 '__'，SWE-Gym/OpenHands 的规则可能不同，以实测为准）；R2E 直接用 docker_image 字段。产出 meta/image_refs_swegym.txt 与 meta/image_refs_r2e.txt。
+2. 体积抽样：从两个清单各随机抽 10 个（R2E 必须跨不同 repo，行序按 repo 聚集），用 docker manifest inspect（或 DockerHub API）取压缩体积，记录逐个数值，外推全量磁盘占用（Lite 230 / Full 2438 / R2E 4578 三档分别外推，注明层共享的不确定性）。不要 docker pull 全量镜像。
+3. 写 image_manifest.md：命名规则实测结论、抽样体积表、三档磁盘外推、DockerHub 限流规避方案（认证账号 + 分批节奏）、本地 registry:2 同步 runbook（起 registry 容器、批量 pull-tag-push 脚本形态、断点续传、校验方式）。
+4. 注意：全程只做 manifest 查询不拉镜像；报告中文；不改本目录其他文件。
+codex
+我会先检查 `meta/` 中三份元数据的字段形态和样本值，再用少量 `docker manifest inspect` 实测 SWE-Gym 镜像命名规则，确认后只生成任务要求的三个输出文件。
+exec
+/bin/zsh -lc 'pwd && find . -maxdepth 2 -type f | sort' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+./01-data-freeze-plan.md
+./df2_codex.log
+./df6_codex.log
+./implementation-notes.md
+./labels/calibration_human.jsonl
+./labels/labeling_prompt.md
+./labels/pilot_20.jsonl
+./labels/pilot_model.jsonl
+./labels/pilot_run.log
+./labels/run_labeling.py
+./meta/assert_repo_disjoint.py
+./meta/fetch_meta.log
+./meta/fetch_meta.sh
+./meta/fetch_r2e.log
+./meta/fetch_r2e.py
+./meta/heldout_candidates.jsonl
+./meta/r2e_subset.jsonl
+./meta/repo_disjoint_report.json
+./meta/swe_gym_full.jsonl
+./meta/swe_gym_full.revision
+./meta/swe_gym_lite.jsonl
+./meta/swe_gym_lite.revision
+./meta/verified.jsonl
+./meta/verified.revision
+./r2e_prefix_check.md
+./strip_spec.yaml
+
+exec
+/bin/zsh -lc "for f in meta/swe_gym_lite.jsonl meta/swe_gym_full.jsonl meta/r2e_subset.jsonl; do printf '%s\\t' \""'$f"; wc -l < "$f"; done' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+meta/swe_gym_lite.jsonl	     230
+meta/swe_gym_full.jsonl	    2438
+meta/r2e_subset.jsonl	    4578
+
+exec
+/bin/zsh -lc 'git status --short -- .' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+?? ./
+
+exec
+/bin/zsh -lc 'head -n 5 meta/swe_gym_lite.jsonl && head -n 5 meta/swe_gym_full.jsonl && head -n 8 meta/r2e_subset.jsonl' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+{"instance_id":"getmoto__moto-5752","repo":"getmoto/moto","base_commit":"b2300f1eae1323e3e8bc45f97e530ce129dff12e","version":"4.0","problem_statement":"describe_parameters depends on filter order, but shouldn't\n# Summary\r\n\r\nWhen calling `ssm` `describe_parameters`, you can pass in a list of filters.\r\nI have seen different behavior based on the order of my filters.\r\nWith certain orders, the values returned do not match the filters.\r\n\r\n# MWE\r\n\r\nLet's create two parameters, then filter them.\r\nRun this script. Then comment out `with mock_ssm():` and unindent all lines below that, and run again, to test against real AWS.\r\n\r\n```\r\nimport boto3\r\nfrom moto import mock_ssm\r\n\r\nwith mock_ssm():\r\n    client=boto3.client('ssm')\r\n    param_names = []\r\n    for x in 'ab':\r\n        param_name = f\"test_my_param_01_{x}\"\r\n        param_names.append(param_name)\r\n        assert isinstance(x, str)\r\n        client.put_parameter(\r\n            Name=param_name,\r\n            Value=f\"Contents of param {x}\", \r\n            Type='String',\r\n            Tags=[\r\n                {\r\n                    'Key': 'hello',\r\n                    'Value': 'world'\r\n                },\r\n                {\r\n                    'Key': 'x',\r\n                    'Value': x\r\n                }\r\n            ]\r\n        )\r\n    \r\n    response = client.describe_parameters(\r\n        ParameterFilters=[\r\n            {\r\n                \"Key\": \"tag:x\",\r\n                \"Option\": \"Equals\",\r\n                \"Values\": ['b']\r\n            },\r\n            {\r\n                \"Key\": \"tag:hello\",\r\n                \"Option\": \"Equals\",\r\n                \"Values\": ['world']\r\n            },\r\n        ]\r\n    )\r\n    assert len(response['Parameters']) == 1, \"not 1 result when hello is second\"\r\n    \r\n    response = client.describe_parameters(\r\n        ParameterFilters=[\r\n            {\r\n                \"Key\": \"tag:hello\",\r\n                \"Option\": \"Equals\",\r\n                \"Values\": ['world']\r\n            },\r\n            {\r\n                \"Key\": \"tag:x\",\r\n                \"Option\": \"Equals\",\r\n                \"Values\": ['b']\r\n            },\r\n        ]\r\n    )\r\n    assert len(response['Parameters']) == 1, \"not 1 result when hello is first\"\r\n    \r\n    client.delete_parameters(Names=param_names)\r\n```\r\n\r\n## Expected behavior\r\n\r\nWhen running against real AWS (no moto), the script runs without throwing any AssertionError. In both cases `describe_parameters` returns exactly 1 parameter, not 2.\r\n\r\n## Actual behavior\r\n\r\nWhen running with moto, the first assertion passes. Moto successfully evaluated the filter and deduced that only one parameter matches that filter.\r\n\r\nThen we swap the order of the filter, and do the same thing again.\r\nMoto now gives a different behavior. It returns both parameters. Even though one of them has a tag that mismatches the filter.\n","hints_text":"Here's the culprit:\r\n\r\nhttps://github.com/spulec/moto/blob/8f074b0799e4e5303f219549e177d52b016c2dfb/moto/ssm/models.py#L1612\r\n\r\nThat line returns True from the middle of the for loop. But that function is supposed to only return False from the for loop, and True at the end.\r\n\r\nA solution would be something like:\r\n\r\n```\r\n            elif key.startswith(\"tag:\"):\r\n                what = key[4:] or None\r\n                if not any((tag[\"Key\"] == what and tag[\"Value\"] in values) for tag in parameter.tag):\r\n                    return False\r\n```\nThanks for investigating and posting the solution, @mdavis-xyz!","FAIL_TO_PASS":["tests/test_ssm/test_ssm_boto3.py::test_describe_parameters__multiple_tags"],"PASS_TO_PASS":["tests/test_ssm/test_ssm_boto3.py::test_get_parameters_should_only_return_unique_requests","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_attributes","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters6-The","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_with_parameter_filters_path","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters12-The","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_path[/###]","tests/test_ssm/test_ssm_boto3.py::test_delete_parameters","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_with_label_non_latest","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_china","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters","tests/test_ssm/test_ssm_boto3.py::test_delete_parameter","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters13-The","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters10-The","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_invalid_data_type[not_ec2]","tests/test_ssm/test_ssm_boto3.py::test_tags_invalid_resource_id","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_exception_ten_labels_over_multiple_calls","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_empty_string_value","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_with_label","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_missing_parameter","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_with_parameter_filters_name","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters4-Member","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_paging","tests/test_ssm/test_ssm_boto3.py::test_get_parameters_errors","tests/test_ssm/test_ssm_boto3.py::test_get_command_invocations_by_instance_tag","tests/test_ssm/test_ssm_boto3.py::test_get_nonexistant_parameter","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_needs_param","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_path[test]","tests/test_ssm/test_ssm_boto3.py::test_get_command_invocation","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_exception_when_requesting_invalid_parameter","tests/test_ssm/test_ssm_boto3.py::test_get_parameters_includes_invalid_parameter_when_requesting_invalid_version","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_exception_ten_labels_at_once","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_invalid_names","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_with_parameter_filters_keyid","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_invalid","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_with_secure_string","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters5-2","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_secure_default_kms","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_twice","tests/test_ssm/test_ssm_boto3.py::test_add_remove_list_tags_for_resource","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_tags","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_filter_keyid","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_filter_names","tests/test_ssm/test_ssm_boto3.py::test_get_parameter","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_should_throw_exception_when_MaxResults_is_too_large","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_path[//]","tests/test_ssm/test_ssm_boto3.py::test_parameter_version_limit","tests/test_ssm/test_ssm_boto3.py::test_tags_invalid_resource_type","tests/test_ssm/test_ssm_boto3.py::test_put_parameter[my-cool-parameter]","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters3-Member","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_moving_versions_complex","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters0-Member","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters1-Member","tests/test_ssm/test_ssm_boto3.py::test_put_parameter[test]","tests/test_ssm/test_ssm_boto3.py::test_get_parameters_by_path","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_moving_versions","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_invalid_name","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_NextTokenImplementation","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_filter_type","tests/test_ssm/test_ssm_boto3.py::test_delete_nonexistent_parameter","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_invalid_data_type[not_text]","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_invalid_data_type[something","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters2-Member","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_with_version_and_labels","tests/test_ssm/test_ssm_boto3.py::test_put_parameter_secure_custom_kms","tests/test_ssm/test_ssm_boto3.py::test_parameter_overwrite_fails_when_limit_reached_and_oldest_version_has_label","tests/test_ssm/test_ssm_boto3.py::test_list_commands","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_invalid_label","tests/test_ssm/test_ssm_boto3.py::test_tags_in_list_tags_from_resource_parameter","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_with_specific_version","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters8-The","tests/test_ssm/test_ssm_boto3.py::test_send_command","tests/test_ssm/test_ssm_boto3.py::test_get_parameter_history_with_label_latest_assumed","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters7-The","tests/test_ssm/test_ssm_boto3.py::test_label_parameter_version_invalid_parameter_version","tests/test_ssm/test_ssm_boto3.py::test_get_parameters_includes_invalid_parameter_when_requesting_invalid_label","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters11-The","tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_invalid_parameter_filters[filters9-Filters"]}
+{"instance_id":"getmoto__moto-6178","repo":"getmoto/moto","base_commit":"9f91ac0eb96b1868905e1555cb819757c055b652","version":"4.1","problem_statement":"DynamoDB query with brackets in KeyConditionExpression causes: Invalid function name; function:\nSee the attached testcase\r\n\r\nI have found that when mocking DynamoDB and running a query, if I put brackets in my KeyConditionExpression then it raises an error\r\n\r\nMy KeyConditionExpression is `(#audit_object_id = :object_id) AND (#audit_timestamp < :before_timestamp)`\r\n\r\nExample traceback (there is no more detail)\r\n\r\n    Traceback (most recent call last):\r\n      File \"C:\\Users\\david.pottage\\git\\labs.platform-hub.audit-trail-api\\src\\tests\\test_demo_moto_query_bug.py\", line 140, in test_query_with_brackets\r\n        query_results = self.table.query(**self.query_args)\r\n    botocore.exceptions.ClientError: An error occurred (ValidationException) when calling the Query operation: Invalid KeyConditionExpression: Invalid function name; function:\r\n\r\nIf I omit brackets from my query then it works fine.\r\n\r\nSeen on moto version 4.1.6 with boto3 1.26.99\r\n\n","hints_text":"I thought I could attach my example code to the ticket. Looks like that won't work. Instead here it is pasted inline:\r\n\r\n    import boto3\r\n    import json\r\n    import unittest\r\n    from datetime import datetime, timedelta\r\n    from moto import mock_dynamodb\r\n\r\n    # Reported to the moto project on github as:\r\n    #   https://github.com/getmoto/moto/issues/6150\r\n\r\n    class DynamoDBQueryTests(unittest.TestCase):\r\n\r\n        # Do not decorate the class, instead create & remove the mock via setUp and tearDown\r\n        mock_dynamodb = mock_dynamodb()\r\n\r\n        def setUp(self) -> None:\r\n            self.mock_dynamodb.start()\r\n            kwargs = {}\r\n            boto3.setup_default_session()\r\n            dynamodb = boto3.resource('dynamodb', **kwargs)\r\n\r\n            self.query_args = {\r\n                # NB the KeyConditionExpression will be added by each test\r\n                \"ScanIndexForward\": False,\r\n                \"ExpressionAttributeNames\": {\r\n                    \"#audit_object_id\": \"object_id\",\r\n                    \"#audit_timestamp\": \"timestamp\",\r\n                    \"#audit_user\": \"user\"\r\n                },\r\n                \"ExpressionAttributeValues\": {\r\n                    \":object_id\": \"test.com\",\r\n                    \":before_timestamp\": 1676246400_000000,\r\n                    \":user\": \"test@test.com\"\r\n                },\r\n                \"FilterExpression\": \"#audit_user = :user\",\r\n                \"Limit\": 20,\r\n            }\r\n\r\n            table = dynamodb.create_table(\r\n                TableName=\"test-table\",\r\n                TableClass=\"STANDARD_INFREQUENT_ACCESS\",\r\n                BillingMode=\"PAY_PER_REQUEST\",\r\n                KeySchema=[\r\n                    {\"AttributeName\": \"object_id\", \"KeyType\": \"HASH\"},\r\n                    {\"AttributeName\": \"timestamp\", \"KeyType\": \"RANGE\"}\r\n                ],\r\n                AttributeDefinitions=[\r\n                    {\"AttributeName\": \"object_id\", \"AttributeType\": \"S\"},\r\n                    {\"AttributeName\": \"user\", \"AttributeType\": \"S\"},\r\n                    {\"AttributeName\": \"timestamp\", \"AttributeType\": \"N\"}\r\n                ],\r\n                GlobalSecondaryIndexes=[\r\n                    {\r\n                        \"IndexName\": \"gsi_user\",\r\n                        \"Projection\": {\"ProjectionType\": \"ALL\"},\r\n                        \"KeySchema\": [\r\n                            {\"AttributeName\": \"user\", \"KeyType\": \"HASH\"},\r\n                            {\"AttributeName\": \"timestamp\", \"KeyType\": \"RANGE\"}\r\n                        ]\r\n                    }\r\n                ]\r\n            )\r\n            table.wait_until_exists()\r\n\r\n            self.dynamodb = dynamodb\r\n            self.table = table\r\n            return\r\n\r\n        def tearDown(self) -> None:\r\n            dynamodb = self.dynamodb\r\n            table = dynamodb.Table('test-table')\r\n            table.delete()\r\n            table.wait_until_not_exists()\r\n            self.mock_dynamodb.stop()\r\n            return\r\n\r\n        def _store_fake_records(self, record_count=1, start_timestamp=1676246400_000000, timestamp_increment=-1_000_000):\r\n            # Put some records in the mocked DynamoDB. Returns the records that a future query on them should return.\r\n            ttl = datetime.now() + timedelta(days=365)\r\n            timestamp_seq = [start_timestamp +\r\n                            (i*timestamp_increment) for i in range(record_count)]\r\n\r\n            for i in range(record_count):\r\n                self.table.put_item(Item={\r\n                    'object_id': 'test.com',\r\n                    'object_type': 'domain',\r\n                    'system': 'test_system',\r\n                    'user': 'test@test.com',\r\n                    'category': 'classification',\r\n                    'timestamp': timestamp_seq[i],\r\n                    'details': json.dumps({'comment': 'some details', 'domain': 'test.com'}),\r\n                    'ttl': int(ttl.timestamp()),\r\n                })\r\n\r\n            # All done\r\n            return\r\n\r\n        @unittest.expectedFailure\r\n        def test_query_with_brackets(self):\r\n            # Query that should work but does not\r\n            events = self._store_fake_records(25)\r\n\r\n            # With brackets\r\n            self.query_args[\"KeyConditionExpression\"] = \"(#audit_object_id = :object_id) AND (#audit_timestamp < :before_timestamp)\"\r\n\r\n            try:\r\n                query_results = self.table.query(**self.query_args)\r\n            except:\r\n                self.fail(\"query call raised and exception\")\r\n\r\n            self.assertEqual(query_results['Count'], 20, 'Did not get the expected 20 results back')\r\n\r\n        def test_query_without_brackets(self):\r\n            # Same query but without brackets in the KeyConditionExpression - Works\r\n            events = self._store_fake_records(25)\r\n\r\n            # Without brackets\r\n            self.query_args[\"KeyConditionExpression\"] = \"#audit_object_id = :object_id AND #audit_timestamp < :before_timestamp\"\r\n\r\n            try:\r\n                query_results = self.table.query(**self.query_args)\r\n            except:\r\n                self.fail(\"query call raised and exception\")\r\n\r\n            self.assertEqual(query_results['Count'], 20, 'Did not get the expected 20 results back')\r\n\r\n\r\n    if __name__ == '__main__':\r\n        unittest.main()\r\n\nThanks for providing the test case @davidpottage - looks like our validation is too strict. Marking it as a bug.","FAIL_TO_PASS":["tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_brackets[(job_id","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_brackets[job_id"],"PASS_TO_PASS":["tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_reverse_keys[begins_with(start_date,:sk)","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashKey::test_unknown_hash_key","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_begin_with[job_id","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_numeric_comparisons[>=]","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashKey::test_unknown_hash_value","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_begin_with__wrong_case[Begins_with]","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_in_between[job_id","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_unknown_hash_key","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_numeric_comparisons[","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_begin_with__wrong_case[Begins_With]","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_reverse_keys[start_date","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_unknown_range_key[job_id","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_reverse_keys[start_date=:sk","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestNamesAndValues::test_names_and_values","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_numeric_comparisons[>]","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashKey::test_hash_key_only[job_id","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_reverse_keys[start_date>:sk","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_numeric_comparisons[=","tests/test_dynamodb/models/test_key_condition_expression_parser.py::TestHashAndRangeKey::test_begin_with__wrong_case[BEGINS_WITH]"]}
+{"instance_id":"getmoto__moto-5865","repo":"getmoto/moto","base_commit":"90e63c1cb5178acaa49cfc301b2688dcaba12115","version":"4.1","problem_statement":"ECS list_services ClusterNotFoundException Not raised\n## Reporting Bugs\r\n\r\nResource/Client:\r\n**ECS**\r\n\r\nMethod:\r\n**list_services**\r\n\r\nWhen calling the `ecs` `list_services` with a cluster that does not exist (in moto) the API returns an empty list response.\r\n\r\nExpected behavior:\r\nIt should raise `ClusterNotFoundException` if cluster_name is invalid.\r\n\r\nMoto version: 4.1.0\r\nPython: 3.9\r\n\n","hints_text":"Thanks for raising this @Bharat23 - marking it as an enhancement to implement this validation.\r\n\r\nJust as an implementation note: the docs state that `If you do not specify a cluster, the default cluster is assumed.` Which means that the same error may be raised if you do not specify a cluster, and the `default` cluster does not exist.","FAIL_TO_PASS":["tests/test_ecs/test_ecs_boto3.py::test_list_unknown_service[unknown]","tests/test_ecs/test_ecs_boto3.py::test_list_unknown_service[no"],"PASS_TO_PASS":["tests/test_ecs/test_ecs_boto3.py::test_update_missing_service","tests/test_ecs/test_ecs_boto3.py::test_start_task_with_tags","tests/test_ecs/test_ecs_boto3.py::test_update_service","tests/test_ecs/test_ecs_boto3.py::test_list_task_definitions_with_family_prefix","tests/test_ecs/test_ecs_boto3.py::test_delete_service_force","tests/test_ecs/test_ecs_boto3.py::test_ecs_service_tag_resource_overwrites_tag","tests/test_ecs/test_ecs_boto3.py::test_ecs_service_untag_resource","tests/test_ecs/test_ecs_boto3.py::test_describe_task_definition_by_family","tests/test_ecs/test_ecs_boto3.py::test_describe_services_with_known_unknown_services","tests/test_ecs/test_ecs_boto3.py::test_deregister_container_instance","tests/test_ecs/test_ecs_boto3.py::test_describe_clusters_missing","tests/test_ecs/test_ecs_boto3.py::test_describe_task_definitions","tests/test_ecs/test_ecs_boto3.py::test_run_task_awsvpc_network_error","tests/test_ecs/test_ecs_boto3.py::test_delete_cluster","tests/test_ecs/test_ecs_boto3.py::test_list_tasks_with_filters","tests/test_ecs/test_ecs_boto3.py::test_list_tags_for_resource_ecs_service","tests/test_ecs/test_ecs_boto3.py::test_update_task_set","tests/test_ecs/test_ecs_boto3.py::test_register_container_instance_new_arn_format","tests/test_ecs/test_ecs_boto3.py::test_list_task_definition_families","tests/test_ecs/test_ecs_boto3.py::test_describe_services_error_unknown_cluster","tests/test_ecs/test_ecs_boto3.py::test_describe_services","tests/test_ecs/test_ecs_boto3.py::test_ecs_service_untag_resource_multiple_tags","tests/test_ecs/test_ecs_boto3.py::test_list_tags_for_resource","tests/test_ecs/test_ecs_boto3.py::test_create_task_set_errors","tests/test_ecs/test_ecs_boto3.py::test_run_task_awsvpc_network","tests/test_ecs/test_ecs_boto3.py::test_start_task","tests/test_ecs/test_ecs_boto3.py::test_create_service","tests/test_ecs/test_ecs_boto3.py::test_delete_service_exceptions","tests/test_ecs/test_ecs_boto3.py::test_list_tasks_exceptions","tests/test_ecs/test_ecs_boto3.py::test_create_service_load_balancing","tests/test_ecs/test_ecs_boto3.py::test_list_container_instances","tests/test_ecs/test_ecs_boto3.py::test_describe_tasks_empty_tags","tests/test_ecs/test_ecs_boto3.py::test_task_definitions_unable_to_be_placed","tests/test_ecs/test_ecs_boto3.py::test_deregister_task_definition_2","tests/test_ecs/test_ecs_boto3.py::test_run_task_default_cluster_new_arn_format","tests/test_ecs/test_ecs_boto3.py::test_delete_service","tests/test_ecs/test_ecs_boto3.py::test_create_cluster_with_setting","tests/test_ecs/test_ecs_boto3.py::test_create_service_scheduling_strategy","tests/test_ecs/test_ecs_boto3.py::test_list_task_definitions","tests/test_ecs/test_ecs_boto3.py::test_register_container_instance","tests/test_ecs/test_ecs_boto3.py::test_attributes","tests/test_ecs/test_ecs_boto3.py::test_describe_container_instances","tests/test_ecs/test_ecs_boto3.py::test_create_cluster","tests/test_ecs/test_ecs_boto3.py::test_list_tags_exceptions","tests/test_ecs/test_ecs_boto3.py::test_list_tasks","tests/test_ecs/test_ecs_boto3.py::test_deregister_task_definition_1","tests/test_ecs/test_ecs_boto3.py::test_resource_reservation_and_release_memory_reservation","tests/test_ecs/test_ecs_boto3.py::test_run_task_exceptions","tests/test_ecs/test_ecs_boto3.py::test_task_definitions_with_port_clash","tests/test_ecs/test_ecs_boto3.py::test_create_task_set","tests/test_ecs/test_ecs_boto3.py::test_resource_reservation_and_release","tests/test_ecs/test_ecs_boto3.py::test_ecs_service_tag_resource[enabled]","tests/test_ecs/test_ecs_boto3.py::test_describe_tasks_include_tags","tests/test_ecs/test_ecs_boto3.py::test_ecs_service_tag_resource[disabled]","tests/test_ecs/test_ecs_boto3.py::test_list_services","tests/test_ecs/test_ecs_boto3.py::test_poll_endpoint","tests/test_ecs/test_ecs_boto3.py::test_update_container_instances_state","tests/test_ecs/test_ecs_boto3.py::test_delete_service__using_arns","tests/test_ecs/test_ecs_boto3.py::test_describe_clusters","tests/test_ecs/test_ecs_boto3.py::test_stop_task","tests/test_ecs/test_ecs_boto3.py::test_describe_tasks","tests/test_ecs/test_ecs_boto3.py::test_update_container_instances_state_by_arn","tests/test_ecs/test_ecs_boto3.py::test_stop_task_exceptions","tests/test_ecs/test_ecs_boto3.py::test_ecs_task_definition_placement_constraints","tests/test_ecs/test_ecs_boto3.py::test_default_container_instance_attributes","tests/test_ecs/test_ecs_boto3.py::test_run_task","tests/test_ecs/test_ecs_boto3.py::test_describe_services_new_arn","tests/test_ecs/test_ecs_boto3.py::test_describe_services_scheduling_strategy","tests/test_ecs/test_ecs_boto3.py::test_update_service_exceptions","tests/test_ecs/test_ecs_boto3.py::test_start_task_exceptions","tests/test_ecs/test_ecs_boto3.py::test_update_service_primary_task_set","tests/test_ecs/test_ecs_boto3.py::test_delete_task_set","tests/test_ecs/test_ecs_boto3.py::test_describe_container_instances_exceptions","tests/test_ecs/test_ecs_boto3.py::test_describe_tasks_exceptions","tests/test_ecs/test_ecs_boto3.py::test_create_service_errors","tests/test_ecs/test_ecs_boto3.py::test_describe_container_instances_with_attributes","tests/test_ecs/test_ecs_boto3.py::test_delete_cluster_exceptions","tests/test_ecs/test_ecs_boto3.py::test_describe_task_sets","tests/test_ecs/test_ecs_boto3.py::test_list_clusters","tests/test_ecs/test_ecs_boto3.py::test_register_task_definition","tests/test_ecs/test_ecs_boto3.py::test_run_task_default_cluster"]}
+{"instance_id":"getmoto__moto-5545","repo":"getmoto/moto","base_commit":"1a8f93dce33f1c1c7983a8052ef54de30ff64407","version":"4.0","problem_statement":"Large upload to S3 leaks file handle\n\r\n```python\r\n$ python -Wall\r\nPython 3.9.12 (main, Oct  8 2022, 00:52:50) \r\n[Clang 14.0.0 (clang-1400.0.29.102)] on darwin\r\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\r\n>>> import gc\r\n>>> from moto.s3.models import S3Backend\r\n>>> s3 = S3Backend('us-west-1', '1234')\r\n>>> s3.create_bucket('my-bucket','us-west-1')\r\n<moto.s3.models.FakeBucket object at 0x106009670>\r\n>>> s3.put_object('my-bucket','my-key', 'x' * 10_000_000)\r\n<moto.s3.models.FakeKey object at 0x105fed370>\r\n>>> s3.reset()\r\n>>> gc.collect()\r\n<stdin>:1: ResourceWarning: unclosed file <_io.BufferedRandom name=3>\r\nResourceWarning: Enable tracemalloc to get the object allocation traceback\r\n14271\r\n>>> \r\n```\r\n\r\nThe `gc.collect()` call reproduces this reliably. The call to `s3.reset()` is really where the open file handle becomes garbage. When it is collected, the warning is produced. The collection could happen anytime, not just during explicit calls to `gc.collect()`.\r\n\r\nAdding this to `S3Backend` fixes the warning:\r\n\r\n```python\r\ndef reset(self):\r\n    for bucket in self.buckets.values():\r\n        for key in bucket.keys.values():\r\n            key._value_buffer.close()\r\n            if key.multipart is not None:\r\n                for part in key.multipart.parts.values():\r\n                    part._value_buffer.close()\r\n    super().reset()\r\n```\r\n\r\nOh, and this is using version 4.0.6 of moto.\n","hints_text":"Hi @hannes-ucsc, thanks for raising this and providing the fix! Much appreciated","FAIL_TO_PASS":["tests/test_s3/test_s3_multipart.py::test_reset_after_multipart_upload_closes_file_handles"],"PASS_TO_PASS":["tests/test_s3/test_s3_multipart.py::test_head_object_returns_part_count","tests/test_s3/test_s3_multipart.py::test_multipart_upload_should_return_part_10000","tests/test_s3/test_s3_multipart.py::test_complete_multipart_with_empty_partlist","tests/test_s3/test_s3_multipart.py::test_multipart_list_parts","tests/test_s3/test_s3_multipart.py::test_multipart_version","tests/test_s3/test_s3_multipart.py::test_multipart_upload_cancel","tests/test_s3/test_s3_multipart.py::test_multipart_should_throw_nosuchupload_if_there_are_no_parts","tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[key-with?question-mark]","tests/test_s3/test_s3_multipart.py::test_ssm_key_headers_in_create_multipart","tests/test_s3/test_s3_multipart.py::test_deleting_large_upload_closes_file_handles","tests/test_s3/test_s3_multipart.py::test_multipart_upload_too_small","tests/test_s3/test_s3_multipart.py::test_multipart_etag","tests/test_s3/test_s3_multipart.py::test_s3_multipart_upload_cannot_upload_part_over_10000[10001]","tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]","tests/test_s3/test_s3_multipart.py::test_multipart_wrong_partnumber","tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_tags","tests/test_s3/test_s3_multipart.py::test_multipart_list_parts_invalid_argument[-42-Argument","tests/test_s3/test_s3_multipart.py::test_multipart_upload_out_of_order","tests/test_s3/test_s3_multipart.py::test_generate_presigned_url_on_multipart_upload_without_acl","tests/test_s3/test_s3_multipart.py::test_s3_abort_multipart_data_with_invalid_upload_and_key","tests/test_s3/test_s3_multipart.py::test_multipart_upload","tests/test_s3/test_s3_multipart.py::test_list_multiparts","tests/test_s3/test_s3_multipart.py::test_s3_multipart_upload_cannot_upload_part_over_10000[10002]","tests/test_s3/test_s3_multipart.py::test_multipart_part_size","tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[original-key]","tests/test_s3/test_s3_multipart.py::test_multipart_duplicate_upload","tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[key-with%2Fembedded%2Furl%2Fencoding]","tests/test_s3/test_s3_multipart.py::test_default_key_buffer_size","tests/test_s3/test_s3_multipart.py::test_multipart_list_parts_invalid_argument[2147483689-Provided","tests/test_s3/test_s3_multipart.py::test_multipart_etag_quotes_stripped","tests/test_s3/test_s3_multipart.py::test_multipart_upload_without_parts","tests/test_s3/test_s3_multipart.py::test_s3_multipart_upload_cannot_upload_part_over_10000[20000]","tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_headers"]}
+{"instance_id":"getmoto__moto-4833","repo":"getmoto/moto","base_commit":"bb6fb1200f8db61e0d39c9a4da5954469a403fb8","version":"3.0","problem_statement":"new clients/resources do not find the resources created in Setup()\nVersions: \r\nmoto 3.0.2\r\nboto3 1.20.24\r\npytest 6.2.5\r\n \r\n \r\n with the update past 3.0, any of our tests using moto failed with \"Resource not Found\"\r\n \r\n The tests originally looked something like this (which worked under 2.3.2:\r\n\r\n (create table creates the table in use and add a single item to, and returns a dynamodb resource)\r\n\r\n\r\n ```\r\n @mock_dynamodb2\r\nclass Test_from_dynamo():\r\n    def setup(self):\r\n        self.dynamodb = create_table()\r\n\r\n    def teardown(self):\r\n        # self.dynamodb.Table(TEST_TABLE_NAME).delete()\r\n       pass\r\n\r\n    def test_mock_data_in_dynamo(self):\r\n        table = self.dynamodb.Table(TEST_TABLE_NAME)\r\n        all_items = table.scan()\r\n        assert len(all_items[\"Items\"]) == 1\r\n```\r\n\r\nplease note the recreation of the boto3 resource inside the test.\r\n\r\nI am aware of the teardown workaround, however the test is failing with Resource Not Found on the table=self.dynamodb.Table(TEST_TABLE_NAME) line.\r\n\r\nso resources set up in setup are not sticking around  into the test itself.\r\n\r\nhowever, if we change the test to:\r\n\r\n```\r\ndef test_mock_data_successfully_setup_for_comparing_premiums(self):\r\n        dynamodb = create_table()\r\n        table = dynamodb.Table(TEST_TABLE_NAME)\r\n        all_items = table.scan()\r\n        assert len(all_items[\"Items\"]) == 1\r\n```\r\n\r\nThe test now passes.\r\n\r\nWith over 1700 unit tests across 40 some files, most of them dealing with boto3/moto resources in some way, is there some work around that does not involve me updating every single test to call the creation driectly? Or is there some other issue here?\r\n\r\n(of note, we've just gone back to 2.3.2 for now but would like to be able to keep our libs up to date.)\n","hints_text":"Hi @lynkfox, thanks for raising this. Looks like that's a bug on our side - we'll push out a fix shortly.\r\n\r\nThis does work for classes that extend `unittest.TestCase`, where the setup-method should be called `setUp` (uppercase U), but not for plain classes where the `setup`-method should have a lowercase u.","FAIL_TO_PASS":["tests/test_core/test_decorator_calls.py::TestWithSetup_LowercaseU::test_should_find_bucket","tests/test_core/test_decorator_calls.py::TestWithSetupMethod::test_should_find_bucket"],"PASS_TO_PASS":["tests/test_core/test_decorator_calls.py::TestWithNestedClasses::TestWithSetup::test_should_not_find_bucket_from_test_method","tests/test_core/test_decorator_calls.py::TestSetUpInBaseClass::test_a_thing","tests/test_core/test_decorator_calls.py::TestWithInvalidSetupMethod::test_should_not_find_bucket","tests/test_core/test_decorator_calls.py::TestWithSetupMethod::test_should_not_find_unknown_bucket","tests/test_core/test_decorator_calls.py::test_context_manager","tests/test_core/test_decorator_calls.py::Tester::test_still_the_same","tests/test_core/test_decorator_calls.py::TestWithPseudoPrivateMethod::test_should_not_find_bucket","tests/test_core/test_decorator_calls.py::TestWithSetup_UppercaseU::test_should_find_bucket","tests/test_core/test_decorator_calls.py::TestWithPublicMethod::test_should_not_find_bucket","tests/test_core/test_decorator_calls.py::test_decorator_start_and_stop","tests/test_core/test_decorator_calls.py::TesterWithSetup::test_still_the_same","tests/test_core/test_decorator_calls.py::TestWithNestedClasses::NestedClass::test_should_find_bucket","tests/test_core/test_decorator_calls.py::TesterWithStaticmethod::test_no_instance_sent_to_staticmethod","tests/test_core/test_decorator_calls.py::TestWithSetup_UppercaseU::test_should_not_find_unknown_bucket","tests/test_core/test_decorator_calls.py::TestWithSetup_LowercaseU::test_should_not_find_unknown_bucket","tests/test_core/test_decorator_calls.py::TestWithNestedClasses::TestWithSetup::test_should_find_bucket","tests/test_core/test_decorator_calls.py::test_basic_decorator","tests/test_core/test_decorator_calls.py::test_decorater_wrapped_gets_set","tests/test_core/test_decorator_calls.py::TestWithPseudoPrivateMethod::test_should_find_bucket","tests/test_core/test_decorator_calls.py::TestWithNestedClasses::NestedClass2::test_should_find_bucket","tests/test_core/test_decorator_calls.py::Tester::test_the_class","tests/test_core/test_decorator_calls.py::TestWithNestedClasses::NestedClass2::test_should_not_find_bucket_from_different_class","tests/test_core/test_decorator_calls.py::TestWithPublicMethod::test_should_find_bucket"]}
+{"instance_id":"getmoto__moto-7365","repo":"getmoto/moto","base_commit":"7f6c9cb1deafb280fe7fcc7551c38e397f11a706","version":"5.0"}
+{"instance_id":"getmoto__moto-6920","repo":"getmoto/moto","base_commit":"2021e564fafcdaa701b53de49bd580c8691a5fcc","version":"4.2"}
+{"instance_id":"getmoto__moto-5876","repo":"getmoto/moto","base_commit":"6d41ad72e09b49f61e54d47880f8a65026e7c0e4","version":"4.1"}
+{"instance_id":"getmoto__moto-5085","repo":"getmoto/moto","base_commit":"6b70cd1b6b1cf493b66b6fcaaea9d1041331e836","version":"3.1"}
+{"instance_id":"getmoto__moto-6709","repo":"getmoto/moto","base_commit":"78c518ddc832a30e1cf20015bc5c3b1850a1c797","version":"4.1"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d", "commit_hash": "2d9617bd0cb1f0ba61771258410ab8fae8e7e24d", "problem_statement": "[ISSUE]\n**Title:** Context migration fails to remove incompatible contexts, causing initialization errors\n\n**Description:**\nWhen initializing the `ContextHandler` with a mix of compatible and incompatible contexts, the migration process does not remove the incompatible contexts as expected. Instead, it raises an `IncompatibleContext` error, preventing successful initialization.\n\n**Example Code:**\n```python\nhandler = ContextHandler()\nhandler.bind(SimpleWidget)\n\nwidget = SimpleWidget()\ncontexts = [Context(foo=i) for i in (13, 13, 0, 1, 13, 2, 13)]\n\ndef migrate_context(context, _):\n    if context.foo == 13:\n        raise IncompatibleContext()\n\nhandler.initialize(widget, dict(context_settings=contexts))\n# Expected: Incompatible contexts with foo=13 should be removed\n# Actual: IncompatibleContext error is raised, and contexts are not removed\n```\n\n**Expected Behavior:**\nDuring initialization, contexts that are incompatible (e.g., those that cause `IncompatibleContext` to be raised) should be automatically removed, allowing the `ContextHandler` to proceed with only the compatible contexts.\n\n**Actual Behavior:**\nThe `ContextHandler` does not remove incompatible contexts, resulting in an `IncompatibleContext` error being raised and preventing successful initialization.\n\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:a95245e37f35446f9870feb68f5ebb97d1c279ce", "commit_hash": "a95245e37f35446f9870feb68f5ebb97d1c279ce", "problem_statement": "[ISSUE]\n**Title:** Unpickling `DiscreteVariable` Adds Unexpected Values Leading to Inconsistencies\n\n**Description:**\n\nWhen attempting to unpickle a `DiscreteVariable` with a predefined set of values, the resulting object unexpectedly includes additional values that were not present in the original. This leads to discrepancies between the expected and actual values of the variable, potentially causing issues in data processing workflows.\n\n**Example:**\n\n```python\nimport pickle\nfrom Orange.data import DiscreteVariable\n\n# Original DiscreteVariable with values ['two', 'one']\nd1 = DiscreteVariable('A', values=['two', 'one'])\ns = pickle.dumps(d1)\n\n# Creating another DiscreteVariable with an extended set of values\nd2 = DiscreteVariable.make('A', values=['one', 'two', 'three'])\nd1c = pickle.loads(s)\n\nprint(d2.values)   # Expected: ['one', 'two', 'three']\nprint(d1c.values)  # Actual: ['two', 'one', 'three']\n```\n\n**Expected Behavior:**\nUnpickling a `DiscreteVariable` should accurately reconstruct the original set of values without introducing any additional elements. The `values` attribute of the unpickled object should match exactly what was initially serialized.\n\n**Actual Behavior:**\nThe unpickled `DiscreteVariable` includes an extra value (`'three'`) that was not part of the original object. This results in `d1c.values` being `['two', 'one', 'three']` instead of the expected `['two', 'one']`.\n\nThis inconsistency can lead to unexpected behavior in applications relying on the integrity of the `DiscreteVariable`'s values, such as data analysis, serialization, and deserialization processes.\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:9764be4fa30b1ae85db3b875039f0a2983531a9d", "commit_hash": "9764be4fa30b1ae85db3b875039f0a2983531a9d", "problem_statement": "[ISSUE]\n**Title**: ImportError: Unable to import `table_to_frame` from `Orange.data.pandas_compat`\n\n**Description**:\nWhen trying to convert an `Orange.data.Table` instance to a pandas `DataFrame` using the `table_to_frame` function, an `ImportError` is raised. This prevents the conversion process from completing successfully.\n\n**Example Code**:\n```python\nfrom Orange.data.pandas_compat import table_to_frame\nfrom Orange.data import Table\n\ntable = Table(\"iris\")\ndf = table_to_frame(table)\n```\n\n**Expected Behavior**:\nThe `table_to_frame` function should be available in the `Orange.data.pandas_compat` module, allowing users to convert an `Orange.data.Table` to a pandas `DataFrame` without encountering import errors.\n\n**Actual Behavior**:\nAttempting to import `table_to_frame` results in the following error:\n\n```\nImportError: cannot import name 'table_to_frame' from 'Orange.data.pandas_compat'\n```\n\nThis error indicates that the `table_to_frame` function is not recognized or not properly exposed in the `Orange.data.pandas_compat` module.\n\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:ef8363b650134f6415704b064573707a6d304ca3", "commit_hash": "ef8363b650134f6415704b064573707a6d304ca3", "problem_statement": "[ISSUE]\n**Title:** Incorrect Year Formatting in Time Bins for Extended Date Ranges\n\n**Description:**\nWhen generating time bins over extended date ranges, the bin labels are incorrectly formatted using two-digit years instead of four-digit years. This results in mismatched labels that can cause confusion and failures in applications expecting full year representations.\n\n**Example:**\n```python\n# Generating time bins from 1975 to 1989\nbins = time_binnings(create(1975, 4, 2), create(1989, 3, 1), min_bins=3, max_bins=51)\nprint(bins[0].short_labels)  # Output: ['70', '80', '90']\n```\n\n**Expected Behavior:**\nBin labels should display four-digit years for clarity and consistency:\n```\n['1970', '1980', '1990']\n```\n\n**Actual Behavior:**\nBin labels are using two-digit years, leading to ambiguity:\n```\n['70', '80', '90']\n```\n\nThis inconsistency causes test failures and may lead to misinterpretation of the data in applications relying on accurate year formatting.\n\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:e48a32f29bd3736e53efb7290cae64d5688357d6", "commit_hash": "e48a32f29bd3736e53efb7290cae64d5688357d6", "problem_statement": "[ISSUE]\n**Title:** Incorrect Handling of Duplicate Names with Existing Indices in `get_unique_names_duplicates`\n\n**Description:**\nWhen generating unique names from a list that includes duplicates and already indexed names, the `get_unique_names_duplicates` function fails to assign the correct unique indices. This results in conflicting or improperly incremented names.\n\n**Buggy Code Example:**\n```python\nproposed = [\"x (2)\", \"x\", \"x\", \"x (2)\", \"x (3)\"]\nunique_names = get_unique_names_duplicates(proposed)\nprint(unique_names)\n# Output: [\"x (2) (1)\", \"x (1)\", \"x (4)\", \"x (2) (2)\", \"x (3)\"]\n```\n\n**Expected Behavior:**\nThe function should correctly assign the next available indices without conflicting with existing ones. For the given input, the expected unique names are:\n```\n[\"x (2) (1)\", \"x (4)\", \"x (5)\", \"x (2) (2)\", \"x (3)\"]\n```\n\n**Actual Behavior:**\nInstead of assigning `x (4)` and `x (5)` for the duplicates, the function incorrectly assigns `x (1)` and `x (4)`, causing a conflict with the existing `x (2)` entries.\n\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:74ffccc1d4a1dbb877490c9d6b59e6f501d5e438", "commit_hash": "74ffccc1d4a1dbb877490c9d6b59e6f501d5e438", "problem_statement": "[ISSUE]\n**Title:** `DistMatrix.max()` Returns Python `int` Instead of `numpy.int64`\n\n**Description:**\nWhen using the `DistMatrix` class, calling the `max()` method returns a Python `int` instead of a `numpy.int64`. This type mismatch can lead to unexpected behavior in parts of the code that expect NumPy data types.\n\n**Example Code:**\n```python\nimport numpy as np\nfrom Orange.misc.distmatrix import DistMatrix\n\ndata = np.array([1, 2], dtype=np.int64)\ndm = DistMatrix(data)\nmax_value = dm.max()\nprint(type(max_value))  # Outputs: <class 'int'>\n```\n\n**Expected Behavior:**\nThe `max()` method should return a `numpy.int64` object, ensuring consistency with NumPy data types.\n\n**Actual Behavior:**\nThe `max()` method returns a Python `int` object, causing type inconsistencies.\n\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:269e2a176b9b2b8e00be46f5a59e840625879bf9", "commit_hash": "269e2a176b9b2b8e00be46f5a59e840625879bf9", "problem_statement": "[ISSUE]\n**Title:** Numeric Variables with Missing Values Misclassified as Discrete\n\n**Description:**\nWhen using the `guess_data_type` function to determine the type of a variable, numeric variables that include missing values are incorrectly identified as discrete. \n\nFor example, consider the following data containing numeric strings and missing values represented by empty strings and question marks:\n\n```python\ndata = [\"9\", \"\", \"98\", \"?\", \"98\", \"98\", \"98\"]\nvariable_type = guess_data_type(data)[2]\n```\n\n**Expected Behavior:**\nThe `guess_data_type` function should recognize the presence of numeric values and correctly classify the variable as a continuous type (`ContinuousVariable`), even when some entries are missing.\n\n**Actual Behavior:**\nThe function misclassifies the variable as a discrete type (`DiscreteVariable`) due to the presence of missing values, leading to incorrect handling of the data in subsequent analyses.\n\n[/ISSUE]"}
+{"repo_name": "orange3", "docker_image": "namanjain12/orange3_final:9b5494e26f407b75e79699c9d40be6df1d80a040", "commit_hash": "9b5494e26f407b75e79699c9d40be6df1d80a040", "problem_statement": "[ISSUE]\n### Error When Using L1 Penalty with LogisticRegressionLearner\n\nWhen configuring `LogisticRegressionLearner` with `penalty='l1'`, an error is raised because the solver does not support the L1 penalty.\n\n**Example Code:**\n```python\nlearn = LogisticRegressionLearner(penalty='l1')\nmodel = learn(iris_data)\n```\n\n**Error Message:**\n```\nValueError: Solver lbfgs supports only 'l2' or 'none' penalties, got l1 penalty.\n```\n\n**Expected Behavior:**\nThe learner should automatically select a solver that supports the specified penalty, allowing the use of `penalty='l1'` without errors.\n[/ISSUE]"}
+
+codex
+元数据规模和任务描述一致：Lite 230 条，Full 2438 条，R2E 4578 条。`r2e_subset.jsonl` 的行确实按 `repo_name` 聚集，所以后面抽样会显式按不同仓库取样，避免只抽到同一个仓库。
+exec
+/bin/zsh -lc "jq -r '.instance_id + \"\\t\" + .repo' meta/swe_gym_lite.jsonl | head -n 20" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+getmoto__moto-5752	getmoto/moto
+getmoto__moto-6178	getmoto/moto
+getmoto__moto-5865	getmoto/moto
+getmoto__moto-5545	getmoto/moto
+getmoto__moto-4833	getmoto/moto
+getmoto__moto-7105	getmoto/moto
+getmoto__moto-6185	getmoto/moto
+getmoto__moto-6212	getmoto/moto
+getmoto__moto-6469	getmoto/moto
+getmoto__moto-7111	getmoto/moto
+getmoto__moto-5286	getmoto/moto
+getmoto__moto-6470	getmoto/moto
+getmoto__moto-7584	getmoto/moto
+getmoto__moto-6308	getmoto/moto
+getmoto__moto-5417	getmoto/moto
+getmoto__moto-4847	getmoto/moto
+getmoto__moto-5699	getmoto/moto
+getmoto__moto-5794	getmoto/moto
+getmoto__moto-7607	getmoto/moto
+getmoto__moto-5134	getmoto/moto
+
+exec
+/bin/zsh -lc "jq -r '.instance_id + \"\\t\" + .repo' meta/swe_gym_full.jsonl | head -n 20" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+getmoto__moto-7365	getmoto/moto
+getmoto__moto-6920	getmoto/moto
+getmoto__moto-5876	getmoto/moto
+getmoto__moto-5085	getmoto/moto
+getmoto__moto-6709	getmoto/moto
+getmoto__moto-7082	getmoto/moto
+getmoto__moto-5212	getmoto/moto
+getmoto__moto-5386	getmoto/moto
+getmoto__moto-4950	getmoto/moto
+getmoto__moto-7456	getmoto/moto
+getmoto__moto-5725	getmoto/moto
+getmoto__moto-5752	getmoto/moto
+getmoto__moto-6868	getmoto/moto
+getmoto__moto-6178	getmoto/moto
+getmoto__moto-6075	getmoto/moto
+getmoto__moto-6091	getmoto/moto
+getmoto__moto-5154	getmoto/moto
+getmoto__moto-6535	getmoto/moto
+getmoto__moto-5949	getmoto/moto
+getmoto__moto-5513	getmoto/moto
+
+exec
+/bin/zsh -lc 'command -v jq; command -v docker; docker --version' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+/usr/bin/jq
+/usr/local/bin/docker
+Docker version 29.4.1, build 055a478
+
+exec
+/bin/zsh -lc "jq -r '.repo_name + \"\\t\" + .docker_image' meta/r2e_subset.jsonl | awk '"'!seen[$1]++ {print}'"' | head -n 30" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+orange3	namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
+coveragepy	namanjain12/coveragepy_final:c1bfa7352368b63f3a9b30c02f242408d07a7ab2
+numpy	namanjain12/numpy_final:14445500bdf67600f926c6426bad55977441dca0
+datalad	namanjain12/datalad_final:f5e1d276ab51aefcf5e48e6f7bd9833b19ef7f90
+pyramid	namanjain12/pyramid_final:fbbb20c7953370c86f999e865b1a9d682690eb70
+aiohttp	namanjain12/aiohttp_final:f0d74880deec8fcd982bce639c93c5e130d41198
+scrapy	namanjain12/scrapy_final:fbb411a805724fec50b786f369be79dc221c798e
+tornado	namanjain12/tornado_final:b5ec807edc83c8e7d1d12553d635ebe765e5c614
+pillow	namanjain12/pillow_final:f644adbb05d615a9902ef3643714d5fe8049cea3
+pandas	namanjain12/pandas_final:fadb72cf5ef8489e409d4d33625bd16a76fa7a42
+
+codex
+接下来我会只查询 registry manifest，不执行 `docker pull`。先对同一个实例的几种候选命名做对照，再用不同仓库的实例复核，避免把 SWE-Bench 的替换规则误套到 SWE-Gym。
+exec
+/bin/zsh -lc "jq -r '.repo + \"\\t\" + .instance_id' meta/swe_gym_full.jsonl | awk '"'!seen[$1]++ {print}'"' | head -n 20" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+getmoto/moto	getmoto__moto-7365
+python/mypy	python__mypy-9903
+conan-io/conan	conan-io__conan-13788
+iterative/dvc	iterative__dvc-6893
+dask/dask	dask__dask-8462
+pydantic/pydantic	pydantic__pydantic-9053
+pandas-dev/pandas	pandas-dev__pandas-53375
+facebookresearch/hydra	facebookresearch__hydra-1616
+bokeh/bokeh	bokeh__bokeh-13641
+Project-MONAI/MONAI	Project-MONAI__MONAI-3837
+modin-project/modin	modin-project__modin-6844
+
+exec
+/bin/zsh -lc "for ref in \\
+  xingyaoww/sweb.eval.x86_64.getmoto__moto-5752 \\
+  xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752 \\
+  xingyaoww/sweb.eval.x86_64.getmoto.moto-5752; do \\
+    printf '\\n== %s ==\\n' \""'$ref"; '"\\
+    docker manifest inspect \""'$ref" >/tmp/df6_manifest_probe.json 2>/tmp/df6_manifest_probe.err && echo OK || { echo FAIL; sed -n '"'1,4p' /tmp/df6_manifest_probe.err; }; \\
+  done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 10852ms:
+FAIL
+errors:
+denied: requested access to the resource is denied
+unauthorized: authentication required
+
+
+== xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752 ==
+FAIL
+errors:
+denied: requested access to the resource is denied
+unauthorized: authentication required
+
+
+== xingyaoww/sweb.eval.x86_64.getmoto.moto-5752 ==
+FAIL
+errors:
+denied: requested access to the resource is denied
+unauthorized: authentication required
+
+
+codex
+第一次实测里，双下划线原样、`_1776_` 替换、点号替换三种形式都没有拿到 manifest，返回的是 Docker Hub 的访问拒绝或认证要求。这个结果还不能直接说明命名规则错误，我会继续用 Docker Hub API 和公开仓库列表确认是命名问题、可见性问题，还是需要认证。
+exec
+/bin/zsh -lc "docker manifest inspect hello-world:latest >/tmp/df6_hello_manifest.json && jq -r 'keys | join(\",\")' /tmp/df6_hello_manifest.json" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+exec
+/bin/zsh -lc "for repo in \\
+  sweb.eval.x86_64.getmoto__moto-5752 \\
+  sweb.eval.x86_64.getmoto_1776_moto-5752 \\
+  sweb.eval.x86_64.getmoto.moto-5752; do \\
+    printf '\\n== %s ==\\n' \""'$repo"; '"\\
+    curl -sS -o /tmp/df6_dh_api.json -w 'HTTP %{http_code}\\n' \"https://hub.docker.com/v2/repositories/xingyaoww/"'${repo}/tags/latest"; '"\\
+    jq -r '.message? // .detail? // .name? // .full_size? // .' /tmp/df6_dh_api.json | head -n 5; \\
+  done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+exec
+/bin/zsh -lc "curl -sS -o /tmp/df6_dh_xingyaoww.json -w 'HTTP %{http_code}\\n' 'https://hub.docker.com/v2/repositories/xingyaoww/?page_size=10' && jq -r '.count? // .message? // .detail? // .' /tmp/df6_dh_xingyaoww.json | head -n 20" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 253ms:
+HTTP 200
+4798
+
+ succeeded in 901ms:
+HTTP 404
+object not found
+
+== sweb.eval.x86_64.getmoto_1776_moto-5752 ==
+HTTP 404
+object not found
+
+== sweb.eval.x86_64.getmoto.moto-5752 ==
+HTTP 404
+object not found
+
+codex
+Docker Hub 的仓库接口显示 `xingyaoww` 账号下约有 4798 个公开仓库，说明不是账号整体不可见；但三个候选的单仓库 tag 查询都是 404。现在需要从公开仓库列表中反查实际的 SWE-Gym 仓库命名形式。
+ succeeded in 40935ms:
+manifests,mediaType,schemaVersion
+
+codex
+`docker manifest inspect hello-world` 在本机 Docker CLI 上也出现长时间无输出的情况，我后续会优先使用 Docker Hub HTTP registry/API 获取 manifest 信息；这同样只读取 manifest，不会拉取镜像层。
+exec
+/bin/zsh -lc "curl -sS 'https://hub.docker.com/v2/repositories/xingyaoww/?page_size=100&page=1' | jq -r '.results[].name' | head -n 100" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+exec
+/bin/zsh -lc "for q in 'sweb.eval.x86_64.getmoto' 'getmoto' 'sweb.eval.x86_64'; do printf '\\n== %s ==\\n' \""'$q"; curl -sS "https://hub.docker.com/v2/search/repositories/?query=xingyaoww/${q}&page_size=10" | jq -r '"'.count as "'$c | "count='"\\("'$c)", (.results[]?.repo_name // .results[]?.name)'"' | head -n 20; done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+exec
+/bin/zsh -lc "for q in 'sweb.eval.x86_64.getmoto' 'getmoto' 'sweb.eval.x86_64'; do printf '\\n== %s ==\\n' \""'$q"; curl -sS "https://hub.docker.com/v2/repositories/xingyaoww/?page_size=20&name=${q}" | jq -r '"'.count as "'$c | "count='"\\("'$c)", (.results[]?.name)'"' | head -n 30; done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 284ms:
+multilingual-moral-value-predictor
+interact_eval
+leti-cuda
+vllm
+fastchat
+intereval
+mint-bench
+mint-dev
+pt-megatron-llm
+pt-accelerate
+jupyter-kernel-gateway
+agent-jupyter-kernel-gateway
+chat-ui
+codeact-executor
+codeact-execute-api
+swe-bench
+nemo
+swe-bench-pallets_flask-testbed
+swe-bench-pylint-dev_pylint-testbed
+swe-bench-psf_requests-testbed
+swe-bench-mwaskom_seaborn-testbed
+swe-bench-marshmallow-code_marshmallow-testbed
+swe-bench-sqlfluff_sqlfluff-testbed
+swe-bench-matplotlib_matplotlib-testbed
+swe-bench-pytest-dev_pytest-testbed
+swe-bench-sympy_sympy-testbed
+swe-bench-scikit-learn_scikit-learn-instance
+swe-bench-scikit-learn_scikit-learn-testbed
+swe-bench-sphinx-doc_sphinx-testbed
+swe-bench-django_django-testbed
+swe-bench-pydicom_pydicom-testbed
+swe-bench-pyvista_pyvista-testbed
+swe-bench-pylint-dev_astroid-testbed
+swe-bench-pvlib_pvlib-python-testbed
+swe-bench-pydata_xarray-testbed
+swe-bench-astropy_astropy-testbed
+sweb.env.x86_64.e5bb89bf78258a7d14c34b
+sweb.env.x86_64.7037e8c448a4b8ebfe9b13
+sweb.env.x86_64.78278ae2cf880e395f1337
+sweb.env.x86_64.aa92880033da20ca313928
+sweb.env.x86_64.0d80c7dec81ee2f2f513e2
+sweb.env.x86_64.27dd9791e13f5c857a09f9
+sweb.env.x86_64.1b3b218535da0abf4469cb
+sweb.env.x86_64.b7ce4be3b3c35f68c61248
+sweb.env.x86_64.8f1f7b974f0c57c7aeba39
+sweb.env.x86_64.cc47cc71483942d0c3a15e
+sweb.env.x86_64.1c1a6945f732f9391228c5
+sweb.env.x86_64.5d1fda9d55d65d8a4e5bdb
+sweb.env.x86_64.088a7e628bda9770f9757b
+sweb.env.x86_64.756beac07713d7e8dc1129
+sweb.env.x86_64.0f99bce2750f3109957bec
+sweb.env.x86_64.71498c7426dbf05599642f
+sweb.env.x86_64.b649f0ff62fad147f7f073
+sweb.env.x86_64.31244378a92e3bcce809ac
+sweb.env.x86_64.e3afd7f04b325a4de4982d
+sweb.env.x86_64.2e50125951bc69cddd7421
+sweb.env.x86_64.1f92e6d7cef88badc4f744
+sweb.env.x86_64.efa6065ed5bf204410fd53
+sweb.env.x86_64.dc5ff4c0e3fe8db5afc4da
+sweb.env.x86_64.a0efca7a0fe6719dbf65c2
+sweb.env.x86_64.6b007979cf533f0f3016e8
+sweb.env.x86_64.a33dddf55cdff5d8e23374
+sweb.env.x86_64.c70909fdac4897d1c685df
+sweb.env.x86_64.297af196949a2a635bce66
+sweb.env.x86_64.e83e37f52c09532c62acfb
+sweb.env.x86_64.2baaea72acc974f6c02079
+sweb.env.x86_64.a18371b03f944585b4f08c
+sweb.env.x86_64.428468730904ff6b4232aa
+sweb.env.x86_64.934a137824256b612e9dc5
+sweb.env.x86_64.c795f4b88616b8462021ed
+sweb.base.x86_64
+sweb.env.x86_64.2f217c8b4490bfa0e2ba14
+sweb.eval.x86_64.sphinx-doc_s_sphinx-8627
+sweb.eval.x86_64.pylint-dev_s_pylint-5859
+sweb.eval.x86_64.sympy_s_sympy-24213
+sweb.eval.x86_64.sympy_s_sympy-24909
+sweb.eval.x86_64.sympy_s_sympy-24102
+sweb.eval.x86_64.sympy_s_sympy-24152
+sweb.eval.x86_64.sympy_s_sympy-24066
+sweb.eval.x86_64.sympy_s_sympy-23262
+sweb.eval.x86_64.sympy_s_sympy-22840
+sweb.eval.x86_64.sympy_s_sympy-23191
+sweb.eval.x86_64.sympy_s_sympy-23117
+sweb.eval.x86_64.sympy_s_sympy-22005
+sweb.eval.x86_64.sympy_s_sympy-22714
+sweb.eval.x86_64.sympy_s_sympy-21847
+sweb.eval.x86_64.sympy_s_sympy-21627
+sweb.eval.x86_64.sympy_s_sympy-21614
+sweb.eval.x86_64.sympy_s_sympy-21612
+sweb.eval.x86_64.sympy_s_sympy-21379
+sweb.eval.x86_64.sympy_s_sympy-21171
+sweb.eval.x86_64.sympy_s_sympy-21055
+sweb.eval.x86_64.sympy_s_sympy-20639
+sweb.eval.x86_64.sympy_s_sympy-20442
+sweb.eval.x86_64.sympy_s_sympy-20590
+sweb.eval.x86_64.sympy_s_sympy-20322
+sweb.eval.x86_64.sympy_s_sympy-20212
+sweb.eval.x86_64.sympy_s_sympy-19254
+sweb.eval.x86_64.sympy_s_sympy-20154
+sweb.eval.x86_64.sympy_s_sympy-20049
+
+ succeeded in 865ms:
+count=5259
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6226
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5841
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5876
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-4918
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5084
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6212
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5515
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6376
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5991
+
+== getmoto ==
+count=5259
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6226
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5841
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5876
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-4918
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5084
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6212
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5515
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6376
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5991
+
+== sweb.eval.x86_64 ==
+count=4801
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5841
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5876
+xingyaoww/sweb.eval.x86_64.project-monai_s_monai-6935
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-4918
+xingyaoww/sweb.eval.x86_64.project-monai_s_monai-6246
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6212
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6226
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5515
+xingyaoww/sweb.eval.x86_64.python_s_mypy-15976
+
+ succeeded in 926ms:
+count=343
+sweb.eval.x86_64.getmoto_s_moto-6082
+sweb.eval.x86_64.getmoto_s_moto-6075
+sweb.eval.x86_64.getmoto_s_moto-6057
+sweb.eval.x86_64.getmoto_s_moto-6056
+sweb.eval.x86_64.getmoto_s_moto-6049
+sweb.eval.x86_64.getmoto_s_moto-6022
+sweb.eval.x86_64.getmoto_s_moto-6028
+sweb.eval.x86_64.getmoto_s_moto-6019
+sweb.eval.x86_64.getmoto_s_moto-6041
+sweb.eval.x86_64.getmoto_s_moto-6011
+sweb.eval.x86_64.getmoto_s_moto-6006
+sweb.eval.x86_64.getmoto_s_moto-5999
+sweb.eval.x86_64.getmoto_s_moto-5991
+sweb.eval.x86_64.getmoto_s_moto-5997
+sweb.eval.x86_64.getmoto_s_moto-5980
+sweb.eval.x86_64.getmoto_s_moto-5969
+sweb.eval.x86_64.getmoto_s_moto-5968
+sweb.eval.x86_64.getmoto_s_moto-5960
+sweb.eval.x86_64.getmoto_s_moto-5959
+sweb.eval.x86_64.getmoto_s_moto-5940
+
+== getmoto ==
+count=343
+sweb.eval.x86_64.getmoto_s_moto-6082
+sweb.eval.x86_64.getmoto_s_moto-6075
+sweb.eval.x86_64.getmoto_s_moto-6057
+sweb.eval.x86_64.getmoto_s_moto-6056
+sweb.eval.x86_64.getmoto_s_moto-6049
+sweb.eval.x86_64.getmoto_s_moto-6022
+sweb.eval.x86_64.getmoto_s_moto-6028
+sweb.eval.x86_64.getmoto_s_moto-6019
+sweb.eval.x86_64.getmoto_s_moto-6041
+sweb.eval.x86_64.getmoto_s_moto-6011
+sweb.eval.x86_64.getmoto_s_moto-6006
+sweb.eval.x86_64.getmoto_s_moto-5999
+sweb.eval.x86_64.getmoto_s_moto-5991
+sweb.eval.x86_64.getmoto_s_moto-5997
+sweb.eval.x86_64.getmoto_s_moto-5980
+sweb.eval.x86_64.getmoto_s_moto-5969
+sweb.eval.x86_64.getmoto_s_moto-5968
+sweb.eval.x86_64.getmoto_s_moto-5960
+sweb.eval.x86_64.getmoto_s_moto-5959
+sweb.eval.x86_64.getmoto_s_moto-5940
+
+== sweb.eval.x86_64 ==
+count=4694
+sweb.eval.x86_64.sphinx-doc_s_sphinx-8627
+sweb.eval.x86_64.pylint-dev_s_pylint-5859
+sweb.eval.x86_64.sympy_s_sympy-24213
+sweb.eval.x86_64.sympy_s_sympy-24909
+sweb.eval.x86_64.sympy_s_sympy-24102
+sweb.eval.x86_64.sympy_s_sympy-24152
+sweb.eval.x86_64.sympy_s_sympy-24066
+sweb.eval.x86_64.sympy_s_sympy-23262
+sweb.eval.x86_64.sympy_s_sympy-22840
+sweb.eval.x86_64.sympy_s_sympy-23191
+sweb.eval.x86_64.sympy_s_sympy-23117
+sweb.eval.x86_64.sympy_s_sympy-22005
+sweb.eval.x86_64.sympy_s_sympy-22714
+sweb.eval.x86_64.sympy_s_sympy-21847
+sweb.eval.x86_64.sympy_s_sympy-21627
+sweb.eval.x86_64.sympy_s_sympy-21614
+sweb.eval.x86_64.sympy_s_sympy-21612
+sweb.eval.x86_64.sympy_s_sympy-21379
+sweb.eval.x86_64.sympy_s_sympy-21171
+sweb.eval.x86_64.sympy_s_sympy-21055
+
+codex
+反查结果已经把关键差异定位出来了：SWE-Gym/OpenHands 的公开仓库名不是原样双下划线，也不是 SWE-Bench 常见的 `_1776_`，而是把 `__` 转成 `_s_`，例如 `getmoto__moto-7365` 对应 `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365`。我会继续用具体 tag manifest 查询验证这个结论。
+exec
+/bin/zsh -lc "for repo in \\
+  sweb.eval.x86_64.getmoto_s_moto-5752 \\
+  sweb.eval.x86_64.getmoto_s_moto-7365 \\
+  sweb.eval.x86_64.python_s_mypy-9903 \\
+  sweb.eval.x86_64.project-monai_s_monai-3837; do \\
+    printf '\\n== %s ==\\n' \""'$repo"; '"\\
+    curl -sS -o /tmp/df6_dh_tag.json -w 'HTTP %{http_code}\\n' \"https://hub.docker.com/v2/repositories/xingyaoww/"'${repo}/tags/latest"; '"\\
+    jq -r '\"name=\" + (.name // \"\"), \"full_size=\" + ((.full_size // null)|tostring), \"digest=\" + (.digest // \"\")' /tmp/df6_dh_tag.json 2>/dev/null || sed -n '1,4p' /tmp/df6_dh_tag.json; \\
+  done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+exec
+/bin/zsh -lc "for ref in \\
+  xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest \\
+  xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest; do \\
+    printf '\\n== %s ==\\n' \""'$ref"; '"\\
+    docker manifest inspect \""'$ref" >/tmp/df6_manifest_probe2.json 2>/tmp/df6_manifest_probe2.err && jq -r '"'keys | join(\",\")' /tmp/df6_manifest_probe2.json || { echo FAIL; sed -n '1,6p' /tmp/df6_manifest_probe2.err; }; \\
+  done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 1379ms:
+HTTP 200
+name=latest
+full_size=1146016016
+digest=sha256:2665296135d73d6ed10e225ac3942fcc9086811fdfa0ede89a8465a63716c134
+
+== sweb.eval.x86_64.getmoto_s_moto-7365 ==
+HTTP 200
+name=latest
+full_size=1193106014
+digest=sha256:94e35e659e612830e1c6a0ed23bc1aae150eb3b8e8ffcb0ffde0f69eb68f82dc
+
+== sweb.eval.x86_64.python_s_mypy-9903 ==
+HTTP 200
+name=latest
+full_size=1065172212
+digest=sha256:4f11fe7cb12b715cd989009bc52696fafa6e09ce0d6b9efa8ce791c04e9d0a4d
+
+== sweb.eval.x86_64.project-monai_s_monai-3837 ==
+HTTP 200
+name=latest
+full_size=5946976394
+digest=sha256:341499664b410357e225997bd8815ce26c3557d7bbeeaf1e0cc7544764923e0a
+
+ succeeded in 5460ms:
+config,layers,mediaType,schemaVersion
+
+== xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest ==
+config,layers,mediaType,schemaVersion
+
+codex
+实测通过：`_s_` 形式既能被 Docker Hub API 解析，也能被 `docker manifest inspect` 读取。前面那个 `hello-world` 探针仍在本机 Docker CLI 中挂起，我会先中断它，避免留下无关后台会话。
+codex
+现在我会生成两个镜像清单。SWE-Gym 清单会按已经验证的规则使用 `__ -> _s_`，并显式补上 `:latest`，这样后续脚本不会依赖 Docker 对缺省 tag 的隐式解释；R2E 清单直接保留元数据里的 `docker_image` 字段。
+exec
+/bin/zsh -lc "jq -r '\"xingyaoww/sweb.eval.x86_64.\" + (.instance_id | ascii_downcase | gsub(\"__\"; \"_s_\")) + \":latest\"' meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
+jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
+wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt
+head -n 5 meta/image_refs_swegym.txt
+head -n 5 meta/image_refs_r2e.txt" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+    2438 meta/image_refs_swegym.txt
+    4578 meta/image_refs_r2e.txt
+    7016 total
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6920:latest
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5876:latest
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5085:latest
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6709:latest
+namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
+namanjain12/orange3_final:a95245e37f35446f9870feb68f5ebb97d1c279ce
+namanjain12/orange3_final:9764be4fa30b1ae85db3b875039f0a2983531a9d
+namanjain12/orange3_final:ef8363b650134f6415704b064573707a6d304ca3
+namanjain12/orange3_final:e48a32f29bd3736e53efb7290cae64d5688357d6
+
+exec
+/bin/zsh -lc "docker manifest inspect xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest > /tmp/df6_getmoto_manifest.json && jq -r '[.layers[].size] | add' /tmp/df6_getmoto_manifest.json" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 2596ms:
+1146016016
+
+codex
+清单已经写出，行数分别是 SWE-Gym Full 的 2438 条和 R2E 的 4578 条。下一步是固定随机种子抽样并查询每个样本的 manifest 层大小；这里会继续用 manifest/API 查询，不拉取镜像。
+exec
+/bin/zsh -lc "jq -r '.repo_name' meta/r2e_subset.jsonl | sort -u | wc -l && jq -r '.repo_name' meta/r2e_subset.jsonl | sort -u" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+      10
+aiohttp
+coveragepy
+datalad
+numpy
+orange3
+pandas
+pillow
+pyramid
+scrapy
+tornado
+
+exec
+/bin/zsh -lc "python3 - <<'PY' > /tmp/df6_sample_swegym.tsv
+import random
+random.seed(606)
+refs=[line.strip() for line in open('meta/image_refs_swegym.txt') if line.strip()]
+for ref in random.sample(refs, 10):
+    repo_part=ref.split('sweb.eval.x86_64.',1)[1].rsplit(':',1)[0]
+    print('SWE-Gym\\t' + repo_part + '\\t' + ref)
+PY
+python3 - <<'PY' > /tmp/df6_sample_r2e.tsv
+import json, random
+random.seed(606)
+by_repo={}
+with open('meta/r2e_subset.jsonl') as f:
+    for line in f:
+        row=json.loads(line)
+        by_repo.setdefault(row['repo_name'], []).append(row['docker_image'])
+repo_names=sorted(by_repo)
+chosen_repos=random.sample(repo_names, 10) if len(repo_names) > 10 else repo_names
+for repo in chosen_repos:
+    ref=random.choice(by_repo[repo])
+    print('R2E\\t' + repo + '\\t' + ref)
+PY
+cat /tmp/df6_sample_swegym.tsv
+cat /tmp/df6_sample_r2e.tsv" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+SWE-Gym	getmoto_s_moto-5406	xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest
+SWE-Gym	pandas-dev_s_pandas-49637	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest
+SWE-Gym	pandas-dev_s_pandas-47747	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest
+SWE-Gym	pandas-dev_s_pandas-48702	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest
+SWE-Gym	python_s_mypy-14093	xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest
+SWE-Gym	pandas-dev_s_pandas-51131	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest
+SWE-Gym	bokeh_s_bokeh-13258	xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest
+SWE-Gym	pandas-dev_s_pandas-51335	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest
+SWE-Gym	conan-io_s_conan-15422	xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest
+SWE-Gym	iterative_s_dvc-9246	xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest
+R2E	aiohttp	namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7
+R2E	coveragepy	namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1
+R2E	datalad	namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440
+R2E	numpy	namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e
+R2E	orange3	namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243
+R2E	pandas	namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb
+R2E	pillow	namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63
+R2E	pyramid	namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8
+R2E	scrapy	namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043
+R2E	tornado	namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226
+
+codex
+R2E 元数据中正好有 10 个不同仓库，所以 R2E 抽样会覆盖全部 10 个仓库，每个仓库随机取 1 个镜像；SWE-Gym 使用固定随机种子从 2438 条 Full 清单中抽 10 个。
+exec
+/bin/zsh -lc "{
+  printf 'dataset\\titem\\timage_ref\\tsize_bytes\\tsize_gib\\tdigest\\n'
+  cat /tmp/df6_sample_swegym.tsv /tmp/df6_sample_r2e.tsv | while IFS="'$'"'\\t' read -r dataset item ref; do
+    name_tag="'${ref#*/}
+    namespace=${ref%%/*}
+    repo=${name_tag%:*}
+    tag=${name_tag##*:}
+    url="https://hub.docker.com/v2/repositories/${namespace}/${repo}/tags/${tag}"
+    body=$(curl -sS "$url")
+    size=$(printf '"'%s' \""'$body" | jq -r '"'.full_size // empty')
+    digest="'$(printf '"'%s' \""'$body" | jq -r '"'.digest // empty')
+    if [ -z \""'$size" ]; then
+      printf '"'ERROR\\t%s\\t%s\\t%s\\t\\t\\t%s\\n' \""'$dataset" "$item" "$ref" "$(printf '"'%s' \""'$body" | jq -c '"'.')\" >&2
+      exit 1
+    fi
+    gib="'$(awk -v b="$size" '"'BEGIN { printf \"%.3f\", b/1024/1024/1024 }')
+    printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \""'$dataset" "$item" "$ref" "$size" "$gib" "$digest"
+    sleep 0.2
+  done
+} > /tmp/df6_sample_sizes.tsv
+cat /tmp/df6_sample_sizes.tsv' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 10786ms:
+dataset	item	image_ref	size_bytes	size_gib	digest
+SWE-Gym	getmoto_s_moto-5406	xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest	1118933479	1.042	sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6
+SWE-Gym	pandas-dev_s_pandas-49637	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest	3267304268	3.043	sha256:7e74f67fd0d21be29977d9d2b8070d1e722c252d1c51b6daad5861a291f34e7f
+SWE-Gym	pandas-dev_s_pandas-47747	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest	3885316797	3.618	sha256:7fa25795990a1eb6c0959719b0d602d8aaba5e1dcbde3bdd7a519030bac0aa0b
+SWE-Gym	pandas-dev_s_pandas-48702	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest	3883970913	3.617	sha256:866f74e1321cceb492603af5e9ef8da8a2cf9f520c870420fe3e99609ba9eaf8
+SWE-Gym	python_s_mypy-14093	xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest	1046749427	0.975	sha256:d4b76419bbcf6f69f23be2a96e9da1f1c1d0daeada82e9a7563db0fd6ab00538
+SWE-Gym	pandas-dev_s_pandas-51131	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest	2958924013	2.756	sha256:a56e332a4bc210043bd9a2aa0b8e1a2620491c41d61ed898117487e4f5e1867d
+SWE-Gym	bokeh_s_bokeh-13258	xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest	2426472332	2.260	sha256:c02df316f9d315ad7bcf4c1d2283367eb28f09286dc3669df56c6faee75a407a
+SWE-Gym	pandas-dev_s_pandas-51335	xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest	2955512154	2.753	sha256:54c3dad23bac563449b556df8fc041bb610b52c2872630d043ff66a97dbdee19
+SWE-Gym	conan-io_s_conan-15422	xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest	1052474059	0.980	sha256:afd7d4928ba361196d446926204dbd8e0c37ea2018dda392096972a8767c353a
+SWE-Gym	iterative_s_dvc-9246	xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest	1353094772	1.260	sha256:3be85fdcdd3f7989f53f7db81118525582aa6612252eb203af2e696863c13bff
+R2E	aiohttp	namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7	474398568	0.442	sha256:1101ad0b5c3690fef0ae53be11932f6d8b8546e33ce95e3989c54ab57d917c69
+R2E	coveragepy	namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1	291993333	0.272	sha256:aeb9c7766f89e7fcabf0b9851e8cfa1735fc9ab0188b2a7616618fe136df2285
+R2E	datalad	namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440	636723408	0.593	sha256:db1fa48a544c54cd268822dd7d544e4f95ca2b53913ee90126205a7762ff031d
+R2E	numpy	namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e	570194695	0.531	sha256:8591c1fd4d20e3c164a924d874f17dbfd70cc791a4931425fd32b95fa75a5a0a
+R2E	orange3	namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243	901064717	0.839	sha256:9ddfa5dcd78d1b9bac1c22e620bf7c5c53daba9a082e0b73ea12c2862a23ef2f
+R2E	pandas	namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb	946039614	0.881	sha256:dc3ca1da9e97ccfc6c473191ab336ffd65d2f3a8aac592f2f8942b6cd03804a9
+R2E	pillow	namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63	609290430	0.567	sha256:0bce6bf44a54a737287783b081fb8848e14492eaa1d8e6f7860a3e127665ea0d
+R2E	pyramid	namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8	365715660	0.341	sha256:0dc2708d6280bbf18d9bafcf738ff9b481ff7f184662397fe49c9bbaec8a3c42
+R2E	scrapy	namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043	371615268	0.346	sha256:2b56182c46b1866bafa28de9b45057380843f043eea9630ed8ee21c728273ca6
+R2E	tornado	namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226	351733536	0.328	sha256:eced2d9c8e909dacfd2ac99727db1a9b723279a43458a67c316bb60ab5ed113a
+
+exec
+/bin/zsh -lc "python3 - <<'PY'
+import csv, statistics
+rows=list(csv.DictReader(open('/tmp/df6_sample_sizes.tsv'), delimiter='\\t'))
+for dataset in ['SWE-Gym','R2E']:
+    vals=[int(r['size_bytes']) for r in rows if r['dataset']==dataset]
+    mean=sum(vals)/len(vals)
+    stdev=statistics.pstdev(vals)
+    print(dataset)
+    print('n', len(vals))
+    print('mean_bytes', round(mean))
+    print('mean_gib', mean/1024**3)
+    print('min_gib', min(vals)/1024**3)
+    print('max_gib', max(vals)/1024**3)
+    print('stdev_gib', stdev/1024**3)
+    for count in ([230,2438] if dataset=='SWE-Gym' else [4578]):
+        total=mean*count
+        print('count', count, 'total_bytes', round(total), 'total_gib', total/1024**3, 'total_tib', total/1024**4)
+PY" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+SWE-Gym
+n 10
+mean_bytes 2394875221
+mean_gib 2.230401357077062
+min_gib 0.9748613713309169
+max_gib 3.6184832425788045
+stdev_gib 1.027254945428987
+count 230 total_bytes 550821300922 total_gib 512.9923121277243 total_tib 0.5009690548122308
+count 2438 total_bytes 5838705789773 total_gib 5437.718508553878 total_tib 5.310271981009646
+R2E
+n 10
+mean_bytes 551876923
+mean_gib 0.5139754367060959
+min_gib 0.27193998266011477
+max_gib 0.8810680489987135
+stdev_gib 0.20166459800572464
+count 4578 total_bytes 2526492553036 total_gib 2352.979549240507 total_tib 2.2978315910551825
+
+codex
+抽样体积已经拿到。SWE-Gym 10 个样本平均约 2.23 GiB，R2E 10 个样本平均约 0.514 GiB；这些是 Docker Hub manifest/tag API 返回的压缩层体积，和 `docker manifest inspect` 对单个样本的层大小求和一致。
+exec
+/bin/zsh -lc "jq -r '.repo' meta/swe_gym_full.jsonl | sort | uniq -c | sort -nr" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+ 737 pandas-dev/pandas
+ 374 Project-MONAI/MONAI
+ 343 getmoto/moto
+ 257 python/mypy
+ 225 iterative/dvc
+ 145 dask/dask
+ 107 modin-project/modin
+  83 pydantic/pydantic
+  75 conan-io/conan
+  66 facebookresearch/hydra
+  26 bokeh/bokeh
+
+exec
+/bin/zsh -lc "jq -r '.repo' meta/swe_gym_lite.jsonl | sort | uniq -c | sort -nr" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+  59 getmoto/moto
+  40 python/mypy
+  36 iterative/dvc
+  27 Project-MONAI/MONAI
+  20 pydantic/pydantic
+  14 dask/dask
+  12 conan-io/conan
+  11 facebookresearch/hydra
+   5 pandas-dev/pandas
+   5 modin-project/modin
+   1 bokeh/bokeh
+
+exec
+/bin/zsh -lc "python3 - <<'PY'
+full=set(open('meta/image_refs_swegym.txt').read().splitlines())
+lite=[]
+import json
+with open('meta/swe_gym_lite.jsonl') as f:
+    for line in f:
+        row=json.loads(line)
+        norm=row['instance_id'].lower().replace('__','_s_')
+        lite.append(f'xingyaoww/sweb.eval.x86_64.{norm}:latest')
+print('lite_missing_from_full', sum(1 for x in lite if x not in full))
+print('lite_unique', len(set(lite)))
+PY" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+lite_missing_from_full 0
+lite_unique 230
+
+web search: 
+web search: Docker Hub pull usage rate limits authenticated docs Docker official
+web search: 
+web search: https://docs.docker.com/docker-hub/usage/
+codex
+我还检查了 Lite 与 Full 的关系：Lite 的 230 个镜像全部是 Full 清单的子集，但仓库分布不同，所以报告会明确说明 Lite 外推沿用 SWE-Gym 抽样均值时存在组成差异带来的误差。
+exec
+/bin/zsh -lc 'git status --short -- .' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+?? ./
+
+exec
+/bin/zsh -lc "docker manifest inspect namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7 > /tmp/df6_r2e_manifest.json && jq -r '[.layers[].size] | add' /tmp/df6_r2e_manifest.json" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 3871ms:
+474398568
+
+codex
+我会把结论、抽样表、外推和同步方案写入 `image_manifest.md`。文档会明确区分“本次已经执行的 manifest 查询”和“以后真正同步 registry 时才会执行的 pull/tag/push”。
+apply patch
+patch: completed
+/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+diff --git a/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfb058866db0e3008ec951c5ac2ec6d64355d72
+--- /dev/null
++++ b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+@@ -0,0 +1,263 @@
++# DF-6 镜像清单与本地 registry 同步方案
++
++## 产物范围
++
++本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
++
++已生成文件：
++
++| 文件 | 来源 | 行数 | 说明 |
++|---|---:|---:|---|
++| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
++| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
++
++SWE-Gym 生成命令形态：
++
++```bash
++jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
++  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
++```
++
++R2E 生成命令形态：
++
++```bash
++jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
++```
++
++## SWE-Gym 镜像命名规则实测结论
++
++实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
++
++规则为：
++
++```text
++xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
++```
++
++实测样例：
++
++| instance_id | 通过的镜像引用 | 查询结果 |
++|---|---|---|
++| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
++| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
++| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
++| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
++
++反例验证：
++
++| 候选形式 | 样例 | 结果 |
++|---|---|---|
++| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++
++本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
++
++## 抽样体积表
++
++抽样方法：
++
++1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
++2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
++
++| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
++|---|---|---|---:|---:|
++| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
++| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
++| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
++| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
++| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
++| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
++| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
++| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
++| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
++| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
++| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
++| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
++| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
++| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
++| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
++| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
++| R2E | `pillow` | `namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63` | 609,290,430 | 0.567 |
++| R2E | `pyramid` | `namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8` | 365,715,660 | 0.341 |
++| R2E | `scrapy` | `namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043` | 371,615,268 | 0.346 |
++| R2E | `tornado` | `namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226` | 351,733,536 | 0.328 |
++
++## 三档磁盘占用外推
++
++单位说明：GiB 和 TiB 都按二进制单位计算，`1 GiB = 1024^3 bytes`，`1 TiB = 1024 GiB`。
++
++| 数据档位 | 样本数 | 样本平均压缩体积 | 样本范围 | 外推镜像数 | 朴素外推压缩体积 |
++|---|---:|---:|---:|---:|---:|
++| SWE-Gym Lite | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 230 | 512.99 GiB，约 0.501 TiB |
++| SWE-Gym Full | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 2438 | 5437.72 GiB，约 5.310 TiB |
++| R2E | 10 个跨仓库样本 | 0.514 GiB | 0.272 到 0.881 GiB | 4578 | 2352.98 GiB，约 2.298 TiB |
++
++不确定性说明：
++
++1. 上表是“逐镜像压缩体积求和”的朴素外推。`registry:2` 实际按 content-addressed blob 存储，完全相同 digest 的层只存一份，所以同源镜像之间如果共享大量基础层，实际 registry 占用会低于朴素总和。
++2. 反过来，如果用 `docker pull -> docker tag -> docker push` 作为同步路径，中转机器的 Docker daemon 还会产生本地镜像存储和解包后的 snapshot 占用；这部分不等同于 registry 压缩 blob 体积，短时间内可能高于上表。
++3. Lite 的 230 条全部是 Full 的子集，但仓库分布不同：Lite 中 `getmoto/moto`、`python/mypy`、`iterative/dvc` 占比更高，Full 中 `pandas-dev/pandas` 和 `Project-MONAI/MONAI` 占比更高。本次 Lite 外推沿用 SWE-Gym Full 抽样均值，只能作为粗估，不应当作为最终容量承诺。
++4. 规划磁盘时建议把 registry 数据盘按朴素外推值再预留 30% 到 50% 的余量。如果采用 pull-tag-push 中转，还应给 Docker daemon 的数据目录单独留出临时空间，并在每个批次结束后清理本地 tag。
++
++## Docker Hub 限流规避方案
++
++Docker 官方文档当前说明：Unauthenticated 用户按 IP 地址或 IPv6 `/64` 子网计数；Personal authenticated 用户有每 6 小时 200 次 pull 的限制；Pro、Team、Business authenticated 用户的 pull rate limit 显示为 unlimited，但仍受 fair use 和 abuse rate limit 约束。官方也说明 abuse rate limit 会随负载变化，触发时通常表现为简单的 `429 Too Many Requests`。参考文档：https://docs.docker.com/docker-hub/usage/
++
++建议策略：
++
++1. 同步前执行 `docker login`，不要用匿名 pull 执行 7016 个镜像的批量同步。
++2. 如果只能使用 Personal authenticated 账号，批次规模建议控制在 150 到 180 个镜像，每 6 小时最多跑一个批次；7016 个镜像按 180 个一批约需要 39 个批次，时间跨度接近 10 天。
++3. 如果使用 Pro、Team 或 Business 账号，仍建议保留每个镜像之间 1 到 3 秒的间隔，并对 `429`、`5xx`、网络超时做指数退避，避免撞上 abuse rate limit。
++4. 单机批量同步时不要并发开太大。建议从 `CONCURRENCY=1` 开始；如果连续数小时没有 `429`，再提高到 `2` 或 `4`。对 Docker Hub 来说，大量小镜像并发和少量大镜像并发的风险不同，应该以实际错误率调节。
++5. 每个批次结束后记录成功列表和失败列表。失败镜像下一批重试，不要在同一时间窗口内无限重试。
++6. 对训练集长期使用，优先把 Docker Hub 作为源站，把本地 registry 作为训练集固定镜像源。训练任务只访问本地 registry，避免每次实验重新消耗 Docker Hub pull 配额。
++
++## 本地 registry:2 同步 runbook
++
++下面是后续真正同步时的执行方案。注意：本次 DF-6 没有执行这些 `docker pull` 命令。
++
++### 1. 启动本地 registry
++
++```bash
++export REGISTRY_HOST=localhost:5000
++export REGISTRY_DIR=/mnt/repoharness-registry
++
++mkdir -p "$REGISTRY_DIR"
++
++docker run -d \
++  --name repoharness-registry \
++  --restart unless-stopped \
++  -p 5000:5000 \
++  -e REGISTRY_STORAGE_DELETE_ENABLED=true \
++  -v "$REGISTRY_DIR:/var/lib/registry" \
++  registry:2
++
++curl -fsS "http://${REGISTRY_HOST}/v2/" >/dev/null
++```
++
++如果训练机器不在同一台主机，建议在局域网内给 registry 配置固定域名和 TLS。只在本机使用时，`localhost:5000` 足够。
++
++### 2. 拆分批次
++
++```bash
++mkdir -p batches
++split -l 150 meta/image_refs_swegym.txt batches/swegym_
++split -l 150 meta/image_refs_r2e.txt batches/r2e_
++```
++
++`150` 是面向 Personal authenticated Docker Hub 账号的保守批次大小。如果使用更高等级账号，可以把批次调大，但仍建议保留断点续传和退避逻辑。
++
++### 3. 批量 pull-tag-push 脚本形态
++
++```bash
++#!/usr/bin/env bash
++set -euo pipefail
++
++LIST_FILE="${1:?usage: sync_images.sh <image-list>}"
++REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
++PLATFORM="${PLATFORM:-linux/amd64}"
++DONE_FILE="${DONE_FILE:-sync.done}"
++FAILED_FILE="${FAILED_FILE:-sync.failed}"
++SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
++
++touch "$DONE_FILE" "$FAILED_FILE"
++
++while IFS= read -r src; do
++  [ -n "$src" ] || continue
++
++  if grep -Fqx "$src" "$DONE_FILE"; then
++    echo "skip already synced: $src"
++    continue
++  fi
++
++  dst="${REGISTRY_HOST}/mirror/${src}"
++  ok=0
++
++  for attempt in 1 2 3; do
++    echo "sync attempt=${attempt}: $src -> $dst"
++    if docker pull --platform "$PLATFORM" "$src" \
++      && docker tag "$src" "$dst" \
++      && docker push "$dst"; then
++      echo "$src" >> "$DONE_FILE"
++      grep -Fvx "$src" "$FAILED_FILE" > "${FAILED_FILE}.tmp" || true
++      mv "${FAILED_FILE}.tmp" "$FAILED_FILE"
++      docker image rm "$dst" "$src" >/dev/null 2>&1 || true
++      ok=1
++      break
++    fi
++
++    sleep "$((attempt * 60))"
++  done
++
++  if [ "$ok" -ne 1 ]; then
++    grep -Fqx "$src" "$FAILED_FILE" || echo "$src" >> "$FAILED_FILE"
++  fi
++
++  sleep "$SLEEP_SECONDS"
++done < "$LIST_FILE"
++```
++
++这个脚本把源镜像：
++
++```text
++xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++映射为本地 registry 镜像：
++
++```text
++localhost:5000/mirror/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++R2E 镜像也使用同一映射规则，例如：
++
++```text
++namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++localhost:5000/mirror/namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++```
++
++### 4. 断点续传
++
++断点续传依赖三个事实：
++
++1. `sync.done` 逐行记录已经完整 pull-tag-push 成功的源镜像。
++2. `sync.failed` 逐行记录连续三次失败的源镜像，后续可以单独重试。
++3. Docker registry 按 blob digest 存储。某次 push 中途失败后，下一次 push 会跳过已经存在的 blob，只补齐缺失部分。
++
++重新运行同一个批次时，脚本会跳过 `sync.done` 中已有的镜像，因此可以安全恢复。
++
++### 5. 校验方式
++
++校验分三层：
++
++第一层，检查任务清单与完成列表行数：
++
++```bash
++wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt sync.done sync.failed
++```
++
++第二层，对本地 registry 做 manifest 存在性检查，不拉取镜像层：
++
++```bash
++while IFS= read -r src; do
++  dst="localhost:5000/mirror/${src}"
++  docker manifest inspect "$dst" >/dev/null || echo "missing manifest: $dst"
++done < meta/image_refs_swegym.txt
++```
++
++R2E 使用同样命令，只需要把输入文件换成 `meta/image_refs_r2e.txt`。
++
++第三层，抽样对比源端和本地端的 manifest 层 digest：
++
++```bash
++src="xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest"
++dst="localhost:5000/mirror/${src}"
++
++docker manifest inspect "$src" | jq -r '.layers[].digest' > /tmp/src.layers
++docker manifest inspect "$dst" | jq -r '.layers[].digest' > /tmp/dst.layers
++diff -u /tmp/src.layers /tmp/dst.layers
++```
++
++如果源镜像未来发生 tag 漂移，源端和本地端 digest 可能不同。因此正式冻结后建议把源 manifest digest 另存为不可变审计表；训练时优先使用本地 registry 的固定 tag 或 digest 引用。
++
+
+diff --git a/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfb058866db0e3008ec951c5ac2ec6d64355d72
+--- /dev/null
++++ b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+@@ -0,0 +1,263 @@
++# DF-6 镜像清单与本地 registry 同步方案
++
++## 产物范围
++
++本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
++
++已生成文件：
++
++| 文件 | 来源 | 行数 | 说明 |
++|---|---:|---:|---|
++| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
++| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
++
++SWE-Gym 生成命令形态：
++
++```bash
++jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
++  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
++```
++
++R2E 生成命令形态：
++
++```bash
++jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
++```
++
++## SWE-Gym 镜像命名规则实测结论
++
++实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
++
++规则为：
++
++```text
++xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
++```
++
++实测样例：
++
++| instance_id | 通过的镜像引用 | 查询结果 |
++|---|---|---|
++| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
++| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
++| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
++| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
++
++反例验证：
++
++| 候选形式 | 样例 | 结果 |
++|---|---|---|
++| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++
++本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
++
++## 抽样体积表
++
++抽样方法：
++
++1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
++2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
++
++| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
++|---|---|---|---:|---:|
++| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
++| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
++| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
++| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
++| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
++| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
++| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
++| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
++| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
++| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
++| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
++| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
++| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
++| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
++| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
++| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
++| R2E | `pillow` | `namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63` | 609,290,430 | 0.567 |
++| R2E | `pyramid` | `namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8` | 365,715,660 | 0.341 |
++| R2E | `scrapy` | `namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043` | 371,615,268 | 0.346 |
++| R2E | `tornado` | `namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226` | 351,733,536 | 0.328 |
++
++## 三档磁盘占用外推
++
++单位说明：GiB 和 TiB 都按二进制单位计算，`1 GiB = 1024^3 bytes`，`1 TiB = 1024 GiB`。
++
++| 数据档位 | 样本数 | 样本平均压缩体积 | 样本范围 | 外推镜像数 | 朴素外推压缩体积 |
++|---|---:|---:|---:|---:|---:|
++| SWE-Gym Lite | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 230 | 512.99 GiB，约 0.501 TiB |
++| SWE-Gym Full | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 2438 | 5437.72 GiB，约 5.310 TiB |
++| R2E | 10 个跨仓库样本 | 0.514 GiB | 0.272 到 0.881 GiB | 4578 | 2352.98 GiB，约 2.298 TiB |
++
++不确定性说明：
++
++1. 上表是“逐镜像压缩体积求和”的朴素外推。`registry:2` 实际按 content-addressed blob 存储，完全相同 digest 的层只存一份，所以同源镜像之间如果共享大量基础层，实际 registry 占用会低于朴素总和。
++2. 反过来，如果用 `docker pull -> docker tag -> docker push` 作为同步路径，中转机器的 Docker daemon 还会产生本地镜像存储和解包后的 snapshot 占用；这部分不等同于 registry 压缩 blob 体积，短时间内可能高于上表。
++3. Lite 的 230 条全部是 Full 的子集，但仓库分布不同：Lite 中 `getmoto/moto`、`python/mypy`、`iterative/dvc` 占比更高，Full 中 `pandas-dev/pandas` 和 `Project-MONAI/MONAI` 占比更高。本次 Lite 外推沿用 SWE-Gym Full 抽样均值，只能作为粗估，不应当作为最终容量承诺。
++4. 规划磁盘时建议把 registry 数据盘按朴素外推值再预留 30% 到 50% 的余量。如果采用 pull-tag-push 中转，还应给 Docker daemon 的数据目录单独留出临时空间，并在每个批次结束后清理本地 tag。
++
++## Docker Hub 限流规避方案
++
++Docker 官方文档当前说明：Unauthenticated 用户按 IP 地址或 IPv6 `/64` 子网计数；Personal authenticated 用户有每 6 小时 200 次 pull 的限制；Pro、Team、Business authenticated 用户的 pull rate limit 显示为 unlimited，但仍受 fair use 和 abuse rate limit 约束。官方也说明 abuse rate limit 会随负载变化，触发时通常表现为简单的 `429 Too Many Requests`。参考文档：https://docs.docker.com/docker-hub/usage/
++
++建议策略：
++
++1. 同步前执行 `docker login`，不要用匿名 pull 执行 7016 个镜像的批量同步。
++2. 如果只能使用 Personal authenticated 账号，批次规模建议控制在 150 到 180 个镜像，每 6 小时最多跑一个批次；7016 个镜像按 180 个一批约需要 39 个批次，时间跨度接近 10 天。
++3. 如果使用 Pro、Team 或 Business 账号，仍建议保留每个镜像之间 1 到 3 秒的间隔，并对 `429`、`5xx`、网络超时做指数退避，避免撞上 abuse rate limit。
++4. 单机批量同步时不要并发开太大。建议从 `CONCURRENCY=1` 开始；如果连续数小时没有 `429`，再提高到 `2` 或 `4`。对 Docker Hub 来说，大量小镜像并发和少量大镜像并发的风险不同，应该以实际错误率调节。
++5. 每个批次结束后记录成功列表和失败列表。失败镜像下一批重试，不要在同一时间窗口内无限重试。
++6. 对训练集长期使用，优先把 Docker Hub 作为源站，把本地 registry 作为训练集固定镜像源。训练任务只访问本地 registry，避免每次实验重新消耗 Docker Hub pull 配额。
++
++## 本地 registry:2 同步 runbook
++
++下面是后续真正同步时的执行方案。注意：本次 DF-6 没有执行这些 `docker pull` 命令。
++
++### 1. 启动本地 registry
++
++```bash
++export REGISTRY_HOST=localhost:5000
++export REGISTRY_DIR=/mnt/repoharness-registry
++
++mkdir -p "$REGISTRY_DIR"
++
++docker run -d \
++  --name repoharness-registry \
++  --restart unless-stopped \
++  -p 5000:5000 \
++  -e REGISTRY_STORAGE_DELETE_ENABLED=true \
++  -v "$REGISTRY_DIR:/var/lib/registry" \
++  registry:2
++
++curl -fsS "http://${REGISTRY_HOST}/v2/" >/dev/null
++```
++
++如果训练机器不在同一台主机，建议在局域网内给 registry 配置固定域名和 TLS。只在本机使用时，`localhost:5000` 足够。
++
++### 2. 拆分批次
++
++```bash
++mkdir -p batches
++split -l 150 meta/image_refs_swegym.txt batches/swegym_
++split -l 150 meta/image_refs_r2e.txt batches/r2e_
++```
++
++`150` 是面向 Personal authenticated Docker Hub 账号的保守批次大小。如果使用更高等级账号，可以把批次调大，但仍建议保留断点续传和退避逻辑。
++
++### 3. 批量 pull-tag-push 脚本形态
++
++```bash
++#!/usr/bin/env bash
++set -euo pipefail
++
++LIST_FILE="${1:?usage: sync_images.sh <image-list>}"
++REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
++PLATFORM="${PLATFORM:-linux/amd64}"
++DONE_FILE="${DONE_FILE:-sync.done}"
++FAILED_FILE="${FAILED_FILE:-sync.failed}"
++SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
++
++touch "$DONE_FILE" "$FAILED_FILE"
++
++while IFS= read -r src; do
++  [ -n "$src" ] || continue
++
++  if grep -Fqx "$src" "$DONE_FILE"; then
++    echo "skip already synced: $src"
++    continue
++  fi
++
++  dst="${REGISTRY_HOST}/mirror/${src}"
++  ok=0
++
++  for attempt in 1 2 3; do
++    echo "sync attempt=${attempt}: $src -> $dst"
++    if docker pull --platform "$PLATFORM" "$src" \
++      && docker tag "$src" "$dst" \
++      && docker push "$dst"; then
++      echo "$src" >> "$DONE_FILE"
++      grep -Fvx "$src" "$FAILED_FILE" > "${FAILED_FILE}.tmp" || true
++      mv "${FAILED_FILE}.tmp" "$FAILED_FILE"
++      docker image rm "$dst" "$src" >/dev/null 2>&1 || true
++      ok=1
++      break
++    fi
++
++    sleep "$((attempt * 60))"
++  done
++
++  if [ "$ok" -ne 1 ]; then
++    grep -Fqx "$src" "$FAILED_FILE" || echo "$src" >> "$FAILED_FILE"
++  fi
++
++  sleep "$SLEEP_SECONDS"
++done < "$LIST_FILE"
++```
++
++这个脚本把源镜像：
++
++```text
++xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++映射为本地 registry 镜像：
++
++```text
++localhost:5000/mirror/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++R2E 镜像也使用同一映射规则，例如：
++
++```text
++namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++localhost:5000/mirror/namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++```
++
++### 4. 断点续传
++
++断点续传依赖三个事实：
++
++1. `sync.done` 逐行记录已经完整 pull-tag-push 成功的源镜像。
++2. `sync.failed` 逐行记录连续三次失败的源镜像，后续可以单独重试。
++3. Docker registry 按 blob digest 存储。某次 push 中途失败后，下一次 push 会跳过已经存在的 blob，只补齐缺失部分。
++
++重新运行同一个批次时，脚本会跳过 `sync.done` 中已有的镜像，因此可以安全恢复。
++
++### 5. 校验方式
++
++校验分三层：
++
++第一层，检查任务清单与完成列表行数：
++
++```bash
++wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt sync.done sync.failed
++```
++
++第二层，对本地 registry 做 manifest 存在性检查，不拉取镜像层：
++
++```bash
++while IFS= read -r src; do
++  dst="localhost:5000/mirror/${src}"
++  docker manifest inspect "$dst" >/dev/null || echo "missing manifest: $dst"
++done < meta/image_refs_swegym.txt
++```
++
++R2E 使用同样命令，只需要把输入文件换成 `meta/image_refs_r2e.txt`。
++
++第三层，抽样对比源端和本地端的 manifest 层 digest：
++
++```bash
++src="xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest"
++dst="localhost:5000/mirror/${src}"
++
++docker manifest inspect "$src" | jq -r '.layers[].digest' > /tmp/src.layers
++docker manifest inspect "$dst" | jq -r '.layers[].digest' > /tmp/dst.layers
++diff -u /tmp/src.layers /tmp/dst.layers
++```
++
++如果源镜像未来发生 tag 漂移，源端和本地端 digest 可能不同。因此正式冻结后建议把源 manifest digest 另存为不可变审计表；训练时优先使用本地 registry 的固定 tag 或 digest 引用。
++
+
+codex
+三个输出文件现在都已经生成。收尾前我会做一次本地核验：确认行数、抽样 manifest 查询记录、报告中的关键数值和文件改动范围。
+exec
+/bin/zsh -lc 'wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt image_manifest.md' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+exec
+/bin/zsh -lc "sed -n '1,80p' image_manifest.md" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+    2438 meta/image_refs_swegym.txt
+    4578 meta/image_refs_r2e.txt
+     263 image_manifest.md
+    7279 total
+
+ succeeded in 0ms:
+# DF-6 镜像清单与本地 registry 同步方案
+
+## 产物范围
+
+本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
+
+已生成文件：
+
+| 文件 | 来源 | 行数 | 说明 |
+|---|---:|---:|---|
+| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
+| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
+
+SWE-Gym 生成命令形态：
+
+```bash
+jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
+  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
+```
+
+R2E 生成命令形态：
+
+```bash
+jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
+```
+
+## SWE-Gym 镜像命名规则实测结论
+
+实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
+
+规则为：
+
+```text
+xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
+```
+
+实测样例：
+
+| instance_id | 通过的镜像引用 | 查询结果 |
+|---|---|---|
+| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
+| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
+| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
+| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
+
+反例验证：
+
+| 候选形式 | 样例 | 结果 |
+|---|---|---|
+| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
+| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
+| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
+
+本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
+
+## 抽样体积表
+
+抽样方法：
+
+1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
+2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
+
+| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
+|---|---|---|---:|---:|
+| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
+| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
+| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
+| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
+| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
+| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
+| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
+| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
+| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
+| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
+| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
+| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
+| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
+| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
+| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
+| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
+
+exec
+/bin/zsh -lc 'tail -n 5 meta/image_refs_swegym.txt && tail -n 5 meta/image_refs_r2e.txt' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+xingyaoww/sweb.eval.x86_64.modin-project_s_modin-6403:latest
+xingyaoww/sweb.eval.x86_64.modin-project_s_modin-6760:latest
+xingyaoww/sweb.eval.x86_64.modin-project_s_modin-7200:latest
+xingyaoww/sweb.eval.x86_64.modin-project_s_modin-6381:latest
+xingyaoww/sweb.eval.x86_64.modin-project_s_modin-7140:latest
+namanjain12/pandas_final:4a5d32a51bea8f175b1df6f4ff8680b51e691799
+namanjain12/pandas_final:eeff2b0c3bbaab646bfe019810931975fff7cdab
+namanjain12/pandas_final:79ffc96c578a57cb330113057281ce682d104f1a
+namanjain12/pandas_final:e1ec244688b80b52456264285033659bed01ffcd
+namanjain12/pandas_final:a53cf8d479a72b4d0036116ec1df5b3394c75207
+
+exec
+/bin/zsh -lc 'git status --short -- meta/image_refs_swegym.txt meta/image_refs_r2e.txt image_manifest.md' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+?? image_manifest.md
+?? meta/image_refs_r2e.txt
+?? meta/image_refs_swegym.txt
+
+diff --git a/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfb058866db0e3008ec951c5ac2ec6d64355d72
+--- /dev/null
++++ b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+@@ -0,0 +1,263 @@
++# DF-6 镜像清单与本地 registry 同步方案
++
++## 产物范围
++
++本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
++
++已生成文件：
++
++| 文件 | 来源 | 行数 | 说明 |
++|---|---:|---:|---|
++| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
++| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
++
++SWE-Gym 生成命令形态：
++
++```bash
++jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
++  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
++```
++
++R2E 生成命令形态：
++
++```bash
++jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
++```
++
++## SWE-Gym 镜像命名规则实测结论
++
++实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
++
++规则为：
++
++```text
++xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
++```
++
++实测样例：
++
++| instance_id | 通过的镜像引用 | 查询结果 |
++|---|---|---|
++| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
++| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
++| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
++| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
++
++反例验证：
++
++| 候选形式 | 样例 | 结果 |
++|---|---|---|
++| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++
++本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
++
++## 抽样体积表
++
++抽样方法：
++
++1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
++2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
++
++| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
++|---|---|---|---:|---:|
++| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
++| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
++| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
++| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
++| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
++| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
++| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
++| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
++| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
++| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
++| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
++| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
++| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
++| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
++| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
++| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
++| R2E | `pillow` | `namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63` | 609,290,430 | 0.567 |
++| R2E | `pyramid` | `namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8` | 365,715,660 | 0.341 |
++| R2E | `scrapy` | `namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043` | 371,615,268 | 0.346 |
++| R2E | `tornado` | `namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226` | 351,733,536 | 0.328 |
++
++## 三档磁盘占用外推
++
++单位说明：GiB 和 TiB 都按二进制单位计算，`1 GiB = 1024^3 bytes`，`1 TiB = 1024 GiB`。
++
++| 数据档位 | 样本数 | 样本平均压缩体积 | 样本范围 | 外推镜像数 | 朴素外推压缩体积 |
++|---|---:|---:|---:|---:|---:|
++| SWE-Gym Lite | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 230 | 512.99 GiB，约 0.501 TiB |
++| SWE-Gym Full | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 2438 | 5437.72 GiB，约 5.310 TiB |
++| R2E | 10 个跨仓库样本 | 0.514 GiB | 0.272 到 0.881 GiB | 4578 | 2352.98 GiB，约 2.298 TiB |
++
++不确定性说明：
++
++1. 上表是“逐镜像压缩体积求和”的朴素外推。`registry:2` 实际按 content-addressed blob 存储，完全相同 digest 的层只存一份，所以同源镜像之间如果共享大量基础层，实际 registry 占用会低于朴素总和。
++2. 反过来，如果用 `docker pull -> docker tag -> docker push` 作为同步路径，中转机器的 Docker daemon 还会产生本地镜像存储和解包后的 snapshot 占用；这部分不等同于 registry 压缩 blob 体积，短时间内可能高于上表。
++3. Lite 的 230 条全部是 Full 的子集，但仓库分布不同：Lite 中 `getmoto/moto`、`python/mypy`、`iterative/dvc` 占比更高，Full 中 `pandas-dev/pandas` 和 `Project-MONAI/MONAI` 占比更高。本次 Lite 外推沿用 SWE-Gym Full 抽样均值，只能作为粗估，不应当作为最终容量承诺。
++4. 规划磁盘时建议把 registry 数据盘按朴素外推值再预留 30% 到 50% 的余量。如果采用 pull-tag-push 中转，还应给 Docker daemon 的数据目录单独留出临时空间，并在每个批次结束后清理本地 tag。
++
++## Docker Hub 限流规避方案
++
++Docker 官方文档当前说明：Unauthenticated 用户按 IP 地址或 IPv6 `/64` 子网计数；Personal authenticated 用户有每 6 小时 200 次 pull 的限制；Pro、Team、Business authenticated 用户的 pull rate limit 显示为 unlimited，但仍受 fair use 和 abuse rate limit 约束。官方也说明 abuse rate limit 会随负载变化，触发时通常表现为简单的 `429 Too Many Requests`。参考文档：https://docs.docker.com/docker-hub/usage/
++
++建议策略：
++
++1. 同步前执行 `docker login`，不要用匿名 pull 执行 7016 个镜像的批量同步。
++2. 如果只能使用 Personal authenticated 账号，批次规模建议控制在 150 到 180 个镜像，每 6 小时最多跑一个批次；7016 个镜像按 180 个一批约需要 39 个批次，时间跨度接近 10 天。
++3. 如果使用 Pro、Team 或 Business 账号，仍建议保留每个镜像之间 1 到 3 秒的间隔，并对 `429`、`5xx`、网络超时做指数退避，避免撞上 abuse rate limit。
++4. 单机批量同步时不要并发开太大。建议从 `CONCURRENCY=1` 开始；如果连续数小时没有 `429`，再提高到 `2` 或 `4`。对 Docker Hub 来说，大量小镜像并发和少量大镜像并发的风险不同，应该以实际错误率调节。
++5. 每个批次结束后记录成功列表和失败列表。失败镜像下一批重试，不要在同一时间窗口内无限重试。
++6. 对训练集长期使用，优先把 Docker Hub 作为源站，把本地 registry 作为训练集固定镜像源。训练任务只访问本地 registry，避免每次实验重新消耗 Docker Hub pull 配额。
++
++## 本地 registry:2 同步 runbook
++
++下面是后续真正同步时的执行方案。注意：本次 DF-6 没有执行这些 `docker pull` 命令。
++
++### 1. 启动本地 registry
++
++```bash
++export REGISTRY_HOST=localhost:5000
++export REGISTRY_DIR=/mnt/repoharness-registry
++
++mkdir -p "$REGISTRY_DIR"
++
++docker run -d \
++  --name repoharness-registry \
++  --restart unless-stopped \
++  -p 5000:5000 \
++  -e REGISTRY_STORAGE_DELETE_ENABLED=true \
++  -v "$REGISTRY_DIR:/var/lib/registry" \
++  registry:2
++
++curl -fsS "http://${REGISTRY_HOST}/v2/" >/dev/null
++```
++
++如果训练机器不在同一台主机，建议在局域网内给 registry 配置固定域名和 TLS。只在本机使用时，`localhost:5000` 足够。
++
++### 2. 拆分批次
++
++```bash
++mkdir -p batches
++split -l 150 meta/image_refs_swegym.txt batches/swegym_
++split -l 150 meta/image_refs_r2e.txt batches/r2e_
++```
++
++`150` 是面向 Personal authenticated Docker Hub 账号的保守批次大小。如果使用更高等级账号，可以把批次调大，但仍建议保留断点续传和退避逻辑。
++
++### 3. 批量 pull-tag-push 脚本形态
++
++```bash
++#!/usr/bin/env bash
++set -euo pipefail
++
++LIST_FILE="${1:?usage: sync_images.sh <image-list>}"
++REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
++PLATFORM="${PLATFORM:-linux/amd64}"
++DONE_FILE="${DONE_FILE:-sync.done}"
++FAILED_FILE="${FAILED_FILE:-sync.failed}"
++SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
++
++touch "$DONE_FILE" "$FAILED_FILE"
++
++while IFS= read -r src; do
++  [ -n "$src" ] || continue
++
++  if grep -Fqx "$src" "$DONE_FILE"; then
++    echo "skip already synced: $src"
++    continue
++  fi
++
++  dst="${REGISTRY_HOST}/mirror/${src}"
++  ok=0
++
++  for attempt in 1 2 3; do
++    echo "sync attempt=${attempt}: $src -> $dst"
++    if docker pull --platform "$PLATFORM" "$src" \
++      && docker tag "$src" "$dst" \
++      && docker push "$dst"; then
++      echo "$src" >> "$DONE_FILE"
++      grep -Fvx "$src" "$FAILED_FILE" > "${FAILED_FILE}.tmp" || true
++      mv "${FAILED_FILE}.tmp" "$FAILED_FILE"
++      docker image rm "$dst" "$src" >/dev/null 2>&1 || true
++      ok=1
++      break
++    fi
++
++    sleep "$((attempt * 60))"
++  done
++
++  if [ "$ok" -ne 1 ]; then
++    grep -Fqx "$src" "$FAILED_FILE" || echo "$src" >> "$FAILED_FILE"
++  fi
++
++  sleep "$SLEEP_SECONDS"
++done < "$LIST_FILE"
++```
++
++这个脚本把源镜像：
++
++```text
++xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++映射为本地 registry 镜像：
++
++```text
++localhost:5000/mirror/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++R2E 镜像也使用同一映射规则，例如：
++
++```text
++namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++localhost:5000/mirror/namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++```
++
++### 4. 断点续传
++
++断点续传依赖三个事实：
++
++1. `sync.done` 逐行记录已经完整 pull-tag-push 成功的源镜像。
++2. `sync.failed` 逐行记录连续三次失败的源镜像，后续可以单独重试。
++3. Docker registry 按 blob digest 存储。某次 push 中途失败后，下一次 push 会跳过已经存在的 blob，只补齐缺失部分。
++
++重新运行同一个批次时，脚本会跳过 `sync.done` 中已有的镜像，因此可以安全恢复。
++
++### 5. 校验方式
++
++校验分三层：
++
++第一层，检查任务清单与完成列表行数：
++
++```bash
++wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt sync.done sync.failed
++```
++
++第二层，对本地 registry 做 manifest 存在性检查，不拉取镜像层：
++
++```bash
++while IFS= read -r src; do
++  dst="localhost:5000/mirror/${src}"
++  docker manifest inspect "$dst" >/dev/null || echo "missing manifest: $dst"
++done < meta/image_refs_swegym.txt
++```
++
++R2E 使用同样命令，只需要把输入文件换成 `meta/image_refs_r2e.txt`。
++
++第三层，抽样对比源端和本地端的 manifest 层 digest：
++
++```bash
++src="xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest"
++dst="localhost:5000/mirror/${src}"
++
++docker manifest inspect "$src" | jq -r '.layers[].digest' > /tmp/src.layers
++docker manifest inspect "$dst" | jq -r '.layers[].digest' > /tmp/dst.layers
++diff -u /tmp/src.layers /tmp/dst.layers
++```
++
++如果源镜像未来发生 tag 漂移，源端和本地端 digest 可能不同。因此正式冻结后建议把源 manifest digest 另存为不可变审计表；训练时优先使用本地 registry 的固定 tag 或 digest 引用。
++
+
+codex
+我会按当前环境的必用校验流程读一下完成前验证说明，然后执行最后一轮针对输出文件的核验命令，再给你简洁总结。
+exec
+/bin/zsh -lc "sed -n '1,240p' /Users/roger/.codex/skills/verification-before-completion/SKILL.md" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+---
+name: verification-before-completion
+description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+---
+
+# Verification Before Completion
+
+## Overview
+
+Claiming work is complete without verification is dishonesty, not efficiency.
+
+**Core principle:** Evidence before claims, always.
+
+**Violating the letter of this rule is violating the spirit of this rule.**
+
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+If you haven't run the verification command in this message, you cannot claim it passes.
+
+## The Gate Function
+
+```
+BEFORE claiming any status or expressing satisfaction:
+
+1. IDENTIFY: What command proves this claim?
+2. RUN: Execute the FULL command (fresh, complete)
+3. READ: Full output, check exit code, count failures
+4. VERIFY: Does output confirm the claim?
+   - If NO: State actual status with evidence
+   - If YES: State claim WITH evidence
+5. ONLY THEN: Make the claim
+
+Skip any step = lying, not verifying
+```
+
+## Common Failures
+
+| Claim | Requires | Not Sufficient |
+|-------|----------|----------------|
+| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
+| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
+| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
+| Regression test works | Red-green cycle verified | Test passes once |
+| Agent completed | VCS diff shows changes | Agent reports "success" |
+| Requirements met | Line-by-line checklist | Tests passing |
+
+## Red Flags - STOP
+
+- Using "should", "probably", "seems to"
+- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
+- About to commit/push/PR without verification
+- Trusting agent success reports
+- Relying on partial verification
+- Thinking "just this once"
+- Tired and wanting work over
+- **ANY wording implying success without having run verification**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+| "Different words so rule doesn't apply" | Spirit over letter |
+
+## Key Patterns
+
+**Tests:**
+```
+✅ [Run test command] [See: 34/34 pass] "All tests pass"
+❌ "Should pass now" / "Looks correct"
+```
+
+**Regression tests (TDD Red-Green):**
+```
+✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
+❌ "I've written a regression test" (without red-green verification)
+```
+
+**Build:**
+```
+✅ [Run build] [See: exit 0] "Build passes"
+❌ "Linter passed" (linter doesn't check compilation)
+```
+
+**Requirements:**
+```
+✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
+❌ "Tests pass, phase complete"
+```
+
+**Agent delegation:**
+```
+✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
+❌ Trust agent report
+```
+
+## Why This Matters
+
+From 24 failure memories:
+- your human partner said "I don't believe you" - trust broken
+- Undefined functions shipped - would crash
+- Missing requirements shipped - incomplete features
+- Time wasted on false completion → redirect → rework
+- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+
+## When To Apply
+
+**ALWAYS before:**
+- ANY variation of success/completion claims
+- ANY expression of satisfaction
+- ANY positive statement about work state
+- Committing, PR creation, task completion
+- Moving to next task
+- Delegating to agents
+
+**Rule applies to:**
+- Exact phrases
+- Paraphrases and synonyms
+- Implications of success
+- ANY communication suggesting completion/correctness
+
+## The Bottom Line
+
+**No shortcuts for verification.**
+
+Run the command. Read the output. THEN claim the result.
+
+This is non-negotiable.
+
+diff --git a/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfb058866db0e3008ec951c5ac2ec6d64355d72
+--- /dev/null
++++ b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+@@ -0,0 +1,263 @@
++# DF-6 镜像清单与本地 registry 同步方案
++
++## 产物范围
++
++本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
++
++已生成文件：
++
++| 文件 | 来源 | 行数 | 说明 |
++|---|---:|---:|---|
++| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
++| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
++
++SWE-Gym 生成命令形态：
++
++```bash
++jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
++  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
++```
++
++R2E 生成命令形态：
++
++```bash
++jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
++```
++
++## SWE-Gym 镜像命名规则实测结论
++
++实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
++
++规则为：
++
++```text
++xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
++```
++
++实测样例：
++
++| instance_id | 通过的镜像引用 | 查询结果 |
++|---|---|---|
++| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
++| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
++| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
++| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
++
++反例验证：
++
++| 候选形式 | 样例 | 结果 |
++|---|---|---|
++| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++
++本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
++
++## 抽样体积表
++
++抽样方法：
++
++1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
++2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
++
++| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
++|---|---|---|---:|---:|
++| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
++| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
++| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
++| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
++| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
++| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
++| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
++| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
++| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
++| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
++| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
++| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
++| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
++| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
++| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
++| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
++| R2E | `pillow` | `namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63` | 609,290,430 | 0.567 |
++| R2E | `pyramid` | `namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8` | 365,715,660 | 0.341 |
++| R2E | `scrapy` | `namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043` | 371,615,268 | 0.346 |
++| R2E | `tornado` | `namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226` | 351,733,536 | 0.328 |
++
++## 三档磁盘占用外推
++
++单位说明：GiB 和 TiB 都按二进制单位计算，`1 GiB = 1024^3 bytes`，`1 TiB = 1024 GiB`。
++
++| 数据档位 | 样本数 | 样本平均压缩体积 | 样本范围 | 外推镜像数 | 朴素外推压缩体积 |
++|---|---:|---:|---:|---:|---:|
++| SWE-Gym Lite | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 230 | 512.99 GiB，约 0.501 TiB |
++| SWE-Gym Full | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 2438 | 5437.72 GiB，约 5.310 TiB |
++| R2E | 10 个跨仓库样本 | 0.514 GiB | 0.272 到 0.881 GiB | 4578 | 2352.98 GiB，约 2.298 TiB |
++
++不确定性说明：
++
++1. 上表是“逐镜像压缩体积求和”的朴素外推。`registry:2` 实际按 content-addressed blob 存储，完全相同 digest 的层只存一份，所以同源镜像之间如果共享大量基础层，实际 registry 占用会低于朴素总和。
++2. 反过来，如果用 `docker pull -> docker tag -> docker push` 作为同步路径，中转机器的 Docker daemon 还会产生本地镜像存储和解包后的 snapshot 占用；这部分不等同于 registry 压缩 blob 体积，短时间内可能高于上表。
++3. Lite 的 230 条全部是 Full 的子集，但仓库分布不同：Lite 中 `getmoto/moto`、`python/mypy`、`iterative/dvc` 占比更高，Full 中 `pandas-dev/pandas` 和 `Project-MONAI/MONAI` 占比更高。本次 Lite 外推沿用 SWE-Gym Full 抽样均值，只能作为粗估，不应当作为最终容量承诺。
++4. 规划磁盘时建议把 registry 数据盘按朴素外推值再预留 30% 到 50% 的余量。如果采用 pull-tag-push 中转，还应给 Docker daemon 的数据目录单独留出临时空间，并在每个批次结束后清理本地 tag。
++
++## Docker Hub 限流规避方案
++
++Docker 官方文档当前说明：Unauthenticated 用户按 IP 地址或 IPv6 `/64` 子网计数；Personal authenticated 用户有每 6 小时 200 次 pull 的限制；Pro、Team、Business authenticated 用户的 pull rate limit 显示为 unlimited，但仍受 fair use 和 abuse rate limit 约束。官方也说明 abuse rate limit 会随负载变化，触发时通常表现为简单的 `429 Too Many Requests`。参考文档：https://docs.docker.com/docker-hub/usage/
++
++建议策略：
++
++1. 同步前执行 `docker login`，不要用匿名 pull 执行 7016 个镜像的批量同步。
++2. 如果只能使用 Personal authenticated 账号，批次规模建议控制在 150 到 180 个镜像，每 6 小时最多跑一个批次；7016 个镜像按 180 个一批约需要 39 个批次，时间跨度接近 10 天。
++3. 如果使用 Pro、Team 或 Business 账号，仍建议保留每个镜像之间 1 到 3 秒的间隔，并对 `429`、`5xx`、网络超时做指数退避，避免撞上 abuse rate limit。
++4. 单机批量同步时不要并发开太大。建议从 `CONCURRENCY=1` 开始；如果连续数小时没有 `429`，再提高到 `2` 或 `4`。对 Docker Hub 来说，大量小镜像并发和少量大镜像并发的风险不同，应该以实际错误率调节。
++5. 每个批次结束后记录成功列表和失败列表。失败镜像下一批重试，不要在同一时间窗口内无限重试。
++6. 对训练集长期使用，优先把 Docker Hub 作为源站，把本地 registry 作为训练集固定镜像源。训练任务只访问本地 registry，避免每次实验重新消耗 Docker Hub pull 配额。
++
++## 本地 registry:2 同步 runbook
++
++下面是后续真正同步时的执行方案。注意：本次 DF-6 没有执行这些 `docker pull` 命令。
++
++### 1. 启动本地 registry
++
++```bash
++export REGISTRY_HOST=localhost:5000
++export REGISTRY_DIR=/mnt/repoharness-registry
++
++mkdir -p "$REGISTRY_DIR"
++
++docker run -d \
++  --name repoharness-registry \
++  --restart unless-stopped \
++  -p 5000:5000 \
++  -e REGISTRY_STORAGE_DELETE_ENABLED=true \
++  -v "$REGISTRY_DIR:/var/lib/registry" \
++  registry:2
++
++curl -fsS "http://${REGISTRY_HOST}/v2/" >/dev/null
++```
++
++如果训练机器不在同一台主机，建议在局域网内给 registry 配置固定域名和 TLS。只在本机使用时，`localhost:5000` 足够。
++
++### 2. 拆分批次
++
++```bash
++mkdir -p batches
++split -l 150 meta/image_refs_swegym.txt batches/swegym_
++split -l 150 meta/image_refs_r2e.txt batches/r2e_
++```
++
++`150` 是面向 Personal authenticated Docker Hub 账号的保守批次大小。如果使用更高等级账号，可以把批次调大，但仍建议保留断点续传和退避逻辑。
++
++### 3. 批量 pull-tag-push 脚本形态
++
++```bash
++#!/usr/bin/env bash
++set -euo pipefail
++
++LIST_FILE="${1:?usage: sync_images.sh <image-list>}"
++REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
++PLATFORM="${PLATFORM:-linux/amd64}"
++DONE_FILE="${DONE_FILE:-sync.done}"
++FAILED_FILE="${FAILED_FILE:-sync.failed}"
++SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
++
++touch "$DONE_FILE" "$FAILED_FILE"
++
++while IFS= read -r src; do
++  [ -n "$src" ] || continue
++
++  if grep -Fqx "$src" "$DONE_FILE"; then
++    echo "skip already synced: $src"
++    continue
++  fi
++
++  dst="${REGISTRY_HOST}/mirror/${src}"
++  ok=0
++
++  for attempt in 1 2 3; do
++    echo "sync attempt=${attempt}: $src -> $dst"
++    if docker pull --platform "$PLATFORM" "$src" \
++      && docker tag "$src" "$dst" \
++      && docker push "$dst"; then
++      echo "$src" >> "$DONE_FILE"
++      grep -Fvx "$src" "$FAILED_FILE" > "${FAILED_FILE}.tmp" || true
++      mv "${FAILED_FILE}.tmp" "$FAILED_FILE"
++      docker image rm "$dst" "$src" >/dev/null 2>&1 || true
++      ok=1
++      break
++    fi
++
++    sleep "$((attempt * 60))"
++  done
++
++  if [ "$ok" -ne 1 ]; then
++    grep -Fqx "$src" "$FAILED_FILE" || echo "$src" >> "$FAILED_FILE"
++  fi
++
++  sleep "$SLEEP_SECONDS"
++done < "$LIST_FILE"
++```
++
++这个脚本把源镜像：
++
++```text
++xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++映射为本地 registry 镜像：
++
++```text
++localhost:5000/mirror/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++R2E 镜像也使用同一映射规则，例如：
++
++```text
++namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++localhost:5000/mirror/namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++```
++
++### 4. 断点续传
++
++断点续传依赖三个事实：
++
++1. `sync.done` 逐行记录已经完整 pull-tag-push 成功的源镜像。
++2. `sync.failed` 逐行记录连续三次失败的源镜像，后续可以单独重试。
++3. Docker registry 按 blob digest 存储。某次 push 中途失败后，下一次 push 会跳过已经存在的 blob，只补齐缺失部分。
++
++重新运行同一个批次时，脚本会跳过 `sync.done` 中已有的镜像，因此可以安全恢复。
++
++### 5. 校验方式
++
++校验分三层：
++
++第一层，检查任务清单与完成列表行数：
++
++```bash
++wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt sync.done sync.failed
++```
++
++第二层，对本地 registry 做 manifest 存在性检查，不拉取镜像层：
++
++```bash
++while IFS= read -r src; do
++  dst="localhost:5000/mirror/${src}"
++  docker manifest inspect "$dst" >/dev/null || echo "missing manifest: $dst"
++done < meta/image_refs_swegym.txt
++```
++
++R2E 使用同样命令，只需要把输入文件换成 `meta/image_refs_r2e.txt`。
++
++第三层，抽样对比源端和本地端的 manifest 层 digest：
++
++```bash
++src="xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest"
++dst="localhost:5000/mirror/${src}"
++
++docker manifest inspect "$src" | jq -r '.layers[].digest' > /tmp/src.layers
++docker manifest inspect "$dst" | jq -r '.layers[].digest' > /tmp/dst.layers
++diff -u /tmp/src.layers /tmp/dst.layers
++```
++
++如果源镜像未来发生 tag 漂移，源端和本地端 digest 可能不同。因此正式冻结后建议把源 manifest digest 另存为不可变审计表；训练时优先使用本地 registry 的固定 tag 或 digest 引用。
++
+
+codex
+校验项我会覆盖三类：清单是否逐行等于元数据推导结果、关键 manifest 查询是否仍能返回预期体积、工作区新增文件是否只包含任务要求的三个产物。
+exec
+/bin/zsh -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+base=Path('.')
+full_rows=[json.loads(line) for line in open(base/'meta/swe_gym_full.jsonl')]
+expected_swegym=[f\"xingyaoww/sweb.eval.x86_64.{row['instance_id'].lower().replace('__','_s_')}:latest\" for row in full_rows]
+actual_swegym=[line.strip() for line in open(base/'meta/image_refs_swegym.txt') if line.strip()]
+r2e_rows=[json.loads(line) for line in open(base/'meta/r2e_subset.jsonl')]
+expected_r2e=[row['docker_image'] for row in r2e_rows]
+actual_r2e=[line.strip() for line in open(base/'meta/image_refs_r2e.txt') if line.strip()]
+lite_rows=[json.loads(line) for line in open(base/'meta/swe_gym_lite.jsonl')]
+lite_refs={f\"xingyaoww/sweb.eval.x86_64.{row['instance_id'].lower().replace('__','_s_')}:latest\" for row in lite_rows}
+checks={
+    'swegym_count': len(actual_swegym)==2438,
+    'swegym_exact_transform': actual_swegym==expected_swegym,
+    'swegym_no_double_underscore': all('__' not in ref for ref in actual_swegym),
+    'swegym_no_1776_rule': all('_1776_' not in ref for ref in actual_swegym),
+    'r2e_count': len(actual_r2e)==4578,
+    'r2e_exact_field_copy': actual_r2e==expected_r2e,
+    'lite_subset_of_full': lite_refs.issubset(set(actual_swegym)) and len(lite_refs)==230,
+}
+for key, ok in checks.items():
+    print(f'{key}: {ok}')
+if not all(checks.values()):
+    raise SystemExit(1)
+PY" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+swegym_count: True
+swegym_exact_transform: True
+swegym_no_double_underscore: True
+swegym_no_1776_rule: True
+r2e_count: True
+r2e_exact_field_copy: True
+lite_subset_of_full: True
+
+exec
+/bin/zsh -lc 'wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt image_manifest.md && git status --short -- meta/image_refs_swegym.txt meta/image_refs_r2e.txt image_manifest.md' in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+ succeeded in 0ms:
+    2438 meta/image_refs_swegym.txt
+    4578 meta/image_refs_r2e.txt
+     263 image_manifest.md
+    7279 total
+?? image_manifest.md
+?? meta/image_refs_r2e.txt
+?? meta/image_refs_swegym.txt
+
+exec
+/bin/zsh -lc "for spec in \\
+  'xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752/latest/1146016016' \\
+  'xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365/latest/1193106014' \\
+  'namanjain12/aiohttp_final/4b6ff686b6d032aff74174e3c96712230172f1c7/474398568'; do \\
+    ns_repo="'${spec%/*/*}; tag_size=${spec#${ns_repo}/}; tag=${tag_size%/*}; expected=${tag_size##*/}; ns=${ns_repo%%/*}; repo=${ns_repo#*/}; '"\\
+    body="'$(curl -sS "https://hub.docker.com/v2/repositories/${ns}/${repo}/tags/${tag}"); '"\\
+    size="'$(printf '"'%s' \""'$body" | jq -r '"'.full_size // empty'); \\
+    printf '%s:%s size=%s expected=%s\\n' \""'$ns_repo" "$tag" "$size" "$expected"; '"\\
+    [ \""'$size" = "$expected" ] || exit 1; '"\\
+  done" in /Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze
+diff --git a/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfb058866db0e3008ec951c5ac2ec6d64355d72
+--- /dev/null
++++ b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+@@ -0,0 +1,263 @@
++# DF-6 镜像清单与本地 registry 同步方案
++
++## 产物范围
++
++本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
++
++已生成文件：
++
++| 文件 | 来源 | 行数 | 说明 |
++|---|---:|---:|---|
++| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
++| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
++
++SWE-Gym 生成命令形态：
++
++```bash
++jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
++  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
++```
++
++R2E 生成命令形态：
++
++```bash
++jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
++```
++
++## SWE-Gym 镜像命名规则实测结论
++
++实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
++
++规则为：
++
++```text
++xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
++```
++
++实测样例：
++
++| instance_id | 通过的镜像引用 | 查询结果 |
++|---|---|---|
++| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
++| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
++| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
++| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
++
++反例验证：
++
++| 候选形式 | 样例 | 结果 |
++|---|---|---|
++| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++
++本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
++
++## 抽样体积表
++
++抽样方法：
++
++1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
++2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
++
++| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
++|---|---|---|---:|---:|
++| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
++| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
++| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
++| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
++| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
++| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
++| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
++| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
++| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
++| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
++| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
++| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
++| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
++| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
++| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
++| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
++| R2E | `pillow` | `namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63` | 609,290,430 | 0.567 |
++| R2E | `pyramid` | `namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8` | 365,715,660 | 0.341 |
++| R2E | `scrapy` | `namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043` | 371,615,268 | 0.346 |
++| R2E | `tornado` | `namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226` | 351,733,536 | 0.328 |
++
++## 三档磁盘占用外推
++
++单位说明：GiB 和 TiB 都按二进制单位计算，`1 GiB = 1024^3 bytes`，`1 TiB = 1024 GiB`。
++
++| 数据档位 | 样本数 | 样本平均压缩体积 | 样本范围 | 外推镜像数 | 朴素外推压缩体积 |
++|---|---:|---:|---:|---:|---:|
++| SWE-Gym Lite | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 230 | 512.99 GiB，约 0.501 TiB |
++| SWE-Gym Full | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 2438 | 5437.72 GiB，约 5.310 TiB |
++| R2E | 10 个跨仓库样本 | 0.514 GiB | 0.272 到 0.881 GiB | 4578 | 2352.98 GiB，约 2.298 TiB |
++
++不确定性说明：
++
++1. 上表是“逐镜像压缩体积求和”的朴素外推。`registry:2` 实际按 content-addressed blob 存储，完全相同 digest 的层只存一份，所以同源镜像之间如果共享大量基础层，实际 registry 占用会低于朴素总和。
++2. 反过来，如果用 `docker pull -> docker tag -> docker push` 作为同步路径，中转机器的 Docker daemon 还会产生本地镜像存储和解包后的 snapshot 占用；这部分不等同于 registry 压缩 blob 体积，短时间内可能高于上表。
++3. Lite 的 230 条全部是 Full 的子集，但仓库分布不同：Lite 中 `getmoto/moto`、`python/mypy`、`iterative/dvc` 占比更高，Full 中 `pandas-dev/pandas` 和 `Project-MONAI/MONAI` 占比更高。本次 Lite 外推沿用 SWE-Gym Full 抽样均值，只能作为粗估，不应当作为最终容量承诺。
++4. 规划磁盘时建议把 registry 数据盘按朴素外推值再预留 30% 到 50% 的余量。如果采用 pull-tag-push 中转，还应给 Docker daemon 的数据目录单独留出临时空间，并在每个批次结束后清理本地 tag。
++
++## Docker Hub 限流规避方案
++
++Docker 官方文档当前说明：Unauthenticated 用户按 IP 地址或 IPv6 `/64` 子网计数；Personal authenticated 用户有每 6 小时 200 次 pull 的限制；Pro、Team、Business authenticated 用户的 pull rate limit 显示为 unlimited，但仍受 fair use 和 abuse rate limit 约束。官方也说明 abuse rate limit 会随负载变化，触发时通常表现为简单的 `429 Too Many Requests`。参考文档：https://docs.docker.com/docker-hub/usage/
++
++建议策略：
++
++1. 同步前执行 `docker login`，不要用匿名 pull 执行 7016 个镜像的批量同步。
++2. 如果只能使用 Personal authenticated 账号，批次规模建议控制在 150 到 180 个镜像，每 6 小时最多跑一个批次；7016 个镜像按 180 个一批约需要 39 个批次，时间跨度接近 10 天。
++3. 如果使用 Pro、Team 或 Business 账号，仍建议保留每个镜像之间 1 到 3 秒的间隔，并对 `429`、`5xx`、网络超时做指数退避，避免撞上 abuse rate limit。
++4. 单机批量同步时不要并发开太大。建议从 `CONCURRENCY=1` 开始；如果连续数小时没有 `429`，再提高到 `2` 或 `4`。对 Docker Hub 来说，大量小镜像并发和少量大镜像并发的风险不同，应该以实际错误率调节。
++5. 每个批次结束后记录成功列表和失败列表。失败镜像下一批重试，不要在同一时间窗口内无限重试。
++6. 对训练集长期使用，优先把 Docker Hub 作为源站，把本地 registry 作为训练集固定镜像源。训练任务只访问本地 registry，避免每次实验重新消耗 Docker Hub pull 配额。
++
++## 本地 registry:2 同步 runbook
++
++下面是后续真正同步时的执行方案。注意：本次 DF-6 没有执行这些 `docker pull` 命令。
++
++### 1. 启动本地 registry
++
++```bash
++export REGISTRY_HOST=localhost:5000
++export REGISTRY_DIR=/mnt/repoharness-registry
++
++mkdir -p "$REGISTRY_DIR"
++
++docker run -d \
++  --name repoharness-registry \
++  --restart unless-stopped \
++  -p 5000:5000 \
++  -e REGISTRY_STORAGE_DELETE_ENABLED=true \
++  -v "$REGISTRY_DIR:/var/lib/registry" \
++  registry:2
++
++curl -fsS "http://${REGISTRY_HOST}/v2/" >/dev/null
++```
++
++如果训练机器不在同一台主机，建议在局域网内给 registry 配置固定域名和 TLS。只在本机使用时，`localhost:5000` 足够。
++
++### 2. 拆分批次
++
++```bash
++mkdir -p batches
++split -l 150 meta/image_refs_swegym.txt batches/swegym_
++split -l 150 meta/image_refs_r2e.txt batches/r2e_
++```
++
++`150` 是面向 Personal authenticated Docker Hub 账号的保守批次大小。如果使用更高等级账号，可以把批次调大，但仍建议保留断点续传和退避逻辑。
++
++### 3. 批量 pull-tag-push 脚本形态
++
++```bash
++#!/usr/bin/env bash
++set -euo pipefail
++
++LIST_FILE="${1:?usage: sync_images.sh <image-list>}"
++REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
++PLATFORM="${PLATFORM:-linux/amd64}"
++DONE_FILE="${DONE_FILE:-sync.done}"
++FAILED_FILE="${FAILED_FILE:-sync.failed}"
++SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
++
++touch "$DONE_FILE" "$FAILED_FILE"
++
++while IFS= read -r src; do
++  [ -n "$src" ] || continue
++
++  if grep -Fqx "$src" "$DONE_FILE"; then
++    echo "skip already synced: $src"
++    continue
++  fi
++
++  dst="${REGISTRY_HOST}/mirror/${src}"
++  ok=0
++
++  for attempt in 1 2 3; do
++    echo "sync attempt=${attempt}: $src -> $dst"
++    if docker pull --platform "$PLATFORM" "$src" \
++      && docker tag "$src" "$dst" \
++      && docker push "$dst"; then
++      echo "$src" >> "$DONE_FILE"
++      grep -Fvx "$src" "$FAILED_FILE" > "${FAILED_FILE}.tmp" || true
++      mv "${FAILED_FILE}.tmp" "$FAILED_FILE"
++      docker image rm "$dst" "$src" >/dev/null 2>&1 || true
++      ok=1
++      break
++    fi
++
++    sleep "$((attempt * 60))"
++  done
++
++  if [ "$ok" -ne 1 ]; then
++    grep -Fqx "$src" "$FAILED_FILE" || echo "$src" >> "$FAILED_FILE"
++  fi
++
++  sleep "$SLEEP_SECONDS"
++done < "$LIST_FILE"
++```
++
++这个脚本把源镜像：
++
++```text
++xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++映射为本地 registry 镜像：
++
++```text
++localhost:5000/mirror/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++R2E 镜像也使用同一映射规则，例如：
++
++```text
++namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++localhost:5000/mirror/namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++```
++
++### 4. 断点续传
++
++断点续传依赖三个事实：
++
++1. `sync.done` 逐行记录已经完整 pull-tag-push 成功的源镜像。
++2. `sync.failed` 逐行记录连续三次失败的源镜像，后续可以单独重试。
++3. Docker registry 按 blob digest 存储。某次 push 中途失败后，下一次 push 会跳过已经存在的 blob，只补齐缺失部分。
++
++重新运行同一个批次时，脚本会跳过 `sync.done` 中已有的镜像，因此可以安全恢复。
++
++### 5. 校验方式
++
++校验分三层：
++
++第一层，检查任务清单与完成列表行数：
++
++```bash
++wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt sync.done sync.failed
++```
++
++第二层，对本地 registry 做 manifest 存在性检查，不拉取镜像层：
++
++```bash
++while IFS= read -r src; do
++  dst="localhost:5000/mirror/${src}"
++  docker manifest inspect "$dst" >/dev/null || echo "missing manifest: $dst"
++done < meta/image_refs_swegym.txt
++```
++
++R2E 使用同样命令，只需要把输入文件换成 `meta/image_refs_r2e.txt`。
++
++第三层，抽样对比源端和本地端的 manifest 层 digest：
++
++```bash
++src="xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest"
++dst="localhost:5000/mirror/${src}"
++
++docker manifest inspect "$src" | jq -r '.layers[].digest' > /tmp/src.layers
++docker manifest inspect "$dst" | jq -r '.layers[].digest' > /tmp/dst.layers
++diff -u /tmp/src.layers /tmp/dst.layers
++```
++
++如果源镜像未来发生 tag 漂移，源端和本地端 digest 可能不同。因此正式冻结后建议把源 manifest digest 另存为不可变审计表；训练时优先使用本地 registry 的固定 tag 或 digest 引用。
++
+
+ succeeded in 957ms:
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest size=1146016016 expected=1146016016
+xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest size=1193106014 expected=1193106014
+namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7 size=474398568 expected=474398568
+
+codex
+已按 DF-6 生成三个产物，且没有执行全量 `docker pull`：
+
+- [meta/image_refs_swegym.txt](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/meta/image_refs_swegym.txt)：2438 行，来自 `swe_gym_full.jsonl`
+- [meta/image_refs_r2e.txt](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/meta/image_refs_r2e.txt)：4578 行，直接复制 `docker_image`
+- [image_manifest.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md)：包含命名规则实测、抽样体积表、三档容量外推、Docker Hub 限流方案和本地 `registry:2` 同步 runbook
+
+关键结论：SWE-Gym/OpenHands 的实际命名规则是把 `instance_id` 中的 `__` 替换成 `_s_`，不是 SWE-Bench 常见的 `_1776_`。例如 `getmoto__moto-5752` 对应 `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest`。
+
+容量粗估写入了报告：SWE-Gym Lite 约 `0.501 TiB`，SWE-Gym Full 约 `5.310 TiB`，R2E 约 `2.298 TiB`，都基于压缩 manifest 体积并注明了层共享和本地 Docker 解包占用的不确定性。Docker Hub 限流部分参考了官方文档：https://docs.docker.com/docker-hub/usage/
+
+验证已跑过：清单逐行等于元数据推导结果，Lite 230 条确认是 Full 清单子集，关键 manifest API 体积复查一致；`git status -- meta/image_refs_swegym.txt meta/image_refs_r2e.txt image_manifest.md` 只显示这三个新增文件。
+diff --git a/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfb058866db0e3008ec951c5ac2ec6d64355d72
+--- /dev/null
++++ b/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md
+@@ -0,0 +1,263 @@
++# DF-6 镜像清单与本地 registry 同步方案
++
++## 产物范围
++
++本次只生成和查询镜像 manifest，没有执行任何全量 `docker pull`。
++
++已生成文件：
++
++| 文件 | 来源 | 行数 | 说明 |
++|---|---:|---:|---|
++| `meta/image_refs_swegym.txt` | `meta/swe_gym_full.jsonl` | 2438 | SWE-Gym Full 全量镜像引用；Lite 的 230 条是 Full 子集，未另写独立清单。 |
++| `meta/image_refs_r2e.txt` | `meta/r2e_subset.jsonl` | 4578 | R2E 镜像引用，直接使用 `docker_image` 字段。 |
++
++SWE-Gym 生成命令形态：
++
++```bash
++jq -r '"xingyaoww/sweb.eval.x86_64." + (.instance_id | ascii_downcase | gsub("__"; "_s_")) + ":latest"' \
++  meta/swe_gym_full.jsonl > meta/image_refs_swegym.txt
++```
++
++R2E 生成命令形态：
++
++```bash
++jq -r '.docker_image' meta/r2e_subset.jsonl > meta/image_refs_r2e.txt
++```
++
++## SWE-Gym 镜像命名规则实测结论
++
++实测结论：SWE-Gym/OpenHands 发布在 `xingyaoww` 命名空间下的 `sweb.eval.x86_64.*` 镜像没有沿用官方 SWE-Bench 常见的 `_1776_` 替换规则，而是把 `instance_id` 中的双下划线 `__` 替换成 `_s_`，并整体转成小写。
++
++规则为：
++
++```text
++xingyaoww/sweb.eval.x86_64. + lower(instance_id).replace("__", "_s_") + :latest
++```
++
++实测样例：
++
++| instance_id | 通过的镜像引用 | 查询结果 |
++|---|---|---|
++| `getmoto__moto-5752` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功；压缩层体积 1,146,016,016 bytes。 |
++| `getmoto__moto-7365` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest` | Docker Hub API HTTP 200；`docker manifest inspect` 成功。 |
++| `python__mypy-9903` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-9903:latest` | Docker Hub API HTTP 200。 |
++| `Project-MONAI__MONAI-3837` | `xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3837:latest` | Docker Hub API HTTP 200。 |
++
++反例验证：
++
++| 候选形式 | 样例 | 结果 |
++|---|---|---|
++| 原样保留 `__` | `xingyaoww/sweb.eval.x86_64.getmoto__moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为 `_1776_` | `xingyaoww/sweb.eval.x86_64.getmoto_1776_moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++| 替换为点号 | `xingyaoww/sweb.eval.x86_64.getmoto.moto-5752` | Docker Hub tag API 返回 404；`docker manifest inspect` 未取得 manifest。 |
++
++本次体积查询使用 Docker Hub tag API 的 `full_size` 字段。对 `getmoto_s_moto-5752` 和 R2E 的 `aiohttp_final:4b6ff...` 又用 `docker manifest inspect` 对 `.layers[].size` 求和复核，结果分别与 API 返回的 1,146,016,016 bytes 和 474,398,568 bytes 一致。因此下面的体积表按压缩层体积统计，适合估算 registry 存储和下载量。
++
++## 抽样体积表
++
++抽样方法：
++
++1. SWE-Gym：固定随机种子 `606`，从 `meta/image_refs_swegym.txt` 的 2438 条 Full 清单中随机抽 10 个。
++2. R2E：固定随机种子 `606`，因为 `meta/r2e_subset.jsonl` 正好包含 10 个不同 `repo_name`，所以每个仓库随机抽 1 个，保证跨不同仓库。
++
++| 数据集 | 实例或仓库 | 镜像引用 | 压缩体积 bytes | 压缩体积 GiB |
++|---|---|---|---:|---:|
++| SWE-Gym | `getmoto_s_moto-5406` | `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest` | 1,118,933,479 | 1.042 |
++| SWE-Gym | `pandas-dev_s_pandas-49637` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-49637:latest` | 3,267,304,268 | 3.043 |
++| SWE-Gym | `pandas-dev_s_pandas-47747` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-47747:latest` | 3,885,316,797 | 3.618 |
++| SWE-Gym | `pandas-dev_s_pandas-48702` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48702:latest` | 3,883,970,913 | 3.617 |
++| SWE-Gym | `python_s_mypy-14093` | `xingyaoww/sweb.eval.x86_64.python_s_mypy-14093:latest` | 1,046,749,427 | 0.975 |
++| SWE-Gym | `pandas-dev_s_pandas-51131` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51131:latest` | 2,958,924,013 | 2.756 |
++| SWE-Gym | `bokeh_s_bokeh-13258` | `xingyaoww/sweb.eval.x86_64.bokeh_s_bokeh-13258:latest` | 2,426,472,332 | 2.260 |
++| SWE-Gym | `pandas-dev_s_pandas-51335` | `xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-51335:latest` | 2,955,512,154 | 2.753 |
++| SWE-Gym | `conan-io_s_conan-15422` | `xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest` | 1,052,474,059 | 0.980 |
++| SWE-Gym | `iterative_s_dvc-9246` | `xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9246:latest` | 1,353,094,772 | 1.260 |
++| R2E | `aiohttp` | `namanjain12/aiohttp_final:4b6ff686b6d032aff74174e3c96712230172f1c7` | 474,398,568 | 0.442 |
++| R2E | `coveragepy` | `namanjain12/coveragepy_final:2e63e41be0774e51b7683457f31500d99c75c9f1` | 291,993,333 | 0.272 |
++| R2E | `datalad` | `namanjain12/datalad_final:553892df7fb3c1650f960c70c547342a77527440` | 636,723,408 | 0.593 |
++| R2E | `numpy` | `namanjain12/numpy_final:d9c1a1f91a3983469de7086ff589a6aeaa353b3e` | 570,194,695 | 0.531 |
++| R2E | `orange3` | `namanjain12/orange3_final:0abb16004532d21fe183b8c905fc8c4f7db57243` | 901,064,717 | 0.839 |
++| R2E | `pandas` | `namanjain12/pandas_final:17ad7916b970e7117fcaf36b37e113d6aff9b4fb` | 946,039,614 | 0.881 |
++| R2E | `pillow` | `namanjain12/pillow_final:4459dfadcbf5a137d9497e1bfbc325999ef46a63` | 609,290,430 | 0.567 |
++| R2E | `pyramid` | `namanjain12/pyramid_final:0a2701247146a57cba33683c6c386a04f51a6fa8` | 365,715,660 | 0.341 |
++| R2E | `scrapy` | `namanjain12/scrapy_final:c961438d5d9998344460d930ea502fae40553043` | 371,615,268 | 0.346 |
++| R2E | `tornado` | `namanjain12/tornado_final:5eb39608dff69b49ff3219f9016120568d558226` | 351,733,536 | 0.328 |
++
++## 三档磁盘占用外推
++
++单位说明：GiB 和 TiB 都按二进制单位计算，`1 GiB = 1024^3 bytes`，`1 TiB = 1024 GiB`。
++
++| 数据档位 | 样本数 | 样本平均压缩体积 | 样本范围 | 外推镜像数 | 朴素外推压缩体积 |
++|---|---:|---:|---:|---:|---:|
++| SWE-Gym Lite | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 230 | 512.99 GiB，约 0.501 TiB |
++| SWE-Gym Full | 10 个 SWE-Gym Full 样本 | 2.230 GiB | 0.975 到 3.618 GiB | 2438 | 5437.72 GiB，约 5.310 TiB |
++| R2E | 10 个跨仓库样本 | 0.514 GiB | 0.272 到 0.881 GiB | 4578 | 2352.98 GiB，约 2.298 TiB |
++
++不确定性说明：
++
++1. 上表是“逐镜像压缩体积求和”的朴素外推。`registry:2` 实际按 content-addressed blob 存储，完全相同 digest 的层只存一份，所以同源镜像之间如果共享大量基础层，实际 registry 占用会低于朴素总和。
++2. 反过来，如果用 `docker pull -> docker tag -> docker push` 作为同步路径，中转机器的 Docker daemon 还会产生本地镜像存储和解包后的 snapshot 占用；这部分不等同于 registry 压缩 blob 体积，短时间内可能高于上表。
++3. Lite 的 230 条全部是 Full 的子集，但仓库分布不同：Lite 中 `getmoto/moto`、`python/mypy`、`iterative/dvc` 占比更高，Full 中 `pandas-dev/pandas` 和 `Project-MONAI/MONAI` 占比更高。本次 Lite 外推沿用 SWE-Gym Full 抽样均值，只能作为粗估，不应当作为最终容量承诺。
++4. 规划磁盘时建议把 registry 数据盘按朴素外推值再预留 30% 到 50% 的余量。如果采用 pull-tag-push 中转，还应给 Docker daemon 的数据目录单独留出临时空间，并在每个批次结束后清理本地 tag。
++
++## Docker Hub 限流规避方案
++
++Docker 官方文档当前说明：Unauthenticated 用户按 IP 地址或 IPv6 `/64` 子网计数；Personal authenticated 用户有每 6 小时 200 次 pull 的限制；Pro、Team、Business authenticated 用户的 pull rate limit 显示为 unlimited，但仍受 fair use 和 abuse rate limit 约束。官方也说明 abuse rate limit 会随负载变化，触发时通常表现为简单的 `429 Too Many Requests`。参考文档：https://docs.docker.com/docker-hub/usage/
++
++建议策略：
++
++1. 同步前执行 `docker login`，不要用匿名 pull 执行 7016 个镜像的批量同步。
++2. 如果只能使用 Personal authenticated 账号，批次规模建议控制在 150 到 180 个镜像，每 6 小时最多跑一个批次；7016 个镜像按 180 个一批约需要 39 个批次，时间跨度接近 10 天。
++3. 如果使用 Pro、Team 或 Business 账号，仍建议保留每个镜像之间 1 到 3 秒的间隔，并对 `429`、`5xx`、网络超时做指数退避，避免撞上 abuse rate limit。
++4. 单机批量同步时不要并发开太大。建议从 `CONCURRENCY=1` 开始；如果连续数小时没有 `429`，再提高到 `2` 或 `4`。对 Docker Hub 来说，大量小镜像并发和少量大镜像并发的风险不同，应该以实际错误率调节。
++5. 每个批次结束后记录成功列表和失败列表。失败镜像下一批重试，不要在同一时间窗口内无限重试。
++6. 对训练集长期使用，优先把 Docker Hub 作为源站，把本地 registry 作为训练集固定镜像源。训练任务只访问本地 registry，避免每次实验重新消耗 Docker Hub pull 配额。
++
++## 本地 registry:2 同步 runbook
++
++下面是后续真正同步时的执行方案。注意：本次 DF-6 没有执行这些 `docker pull` 命令。
++
++### 1. 启动本地 registry
++
++```bash
++export REGISTRY_HOST=localhost:5000
++export REGISTRY_DIR=/mnt/repoharness-registry
++
++mkdir -p "$REGISTRY_DIR"
++
++docker run -d \
++  --name repoharness-registry \
++  --restart unless-stopped \
++  -p 5000:5000 \
++  -e REGISTRY_STORAGE_DELETE_ENABLED=true \
++  -v "$REGISTRY_DIR:/var/lib/registry" \
++  registry:2
++
++curl -fsS "http://${REGISTRY_HOST}/v2/" >/dev/null
++```
++
++如果训练机器不在同一台主机，建议在局域网内给 registry 配置固定域名和 TLS。只在本机使用时，`localhost:5000` 足够。
++
++### 2. 拆分批次
++
++```bash
++mkdir -p batches
++split -l 150 meta/image_refs_swegym.txt batches/swegym_
++split -l 150 meta/image_refs_r2e.txt batches/r2e_
++```
++
++`150` 是面向 Personal authenticated Docker Hub 账号的保守批次大小。如果使用更高等级账号，可以把批次调大，但仍建议保留断点续传和退避逻辑。
++
++### 3. 批量 pull-tag-push 脚本形态
++
++```bash
++#!/usr/bin/env bash
++set -euo pipefail
++
++LIST_FILE="${1:?usage: sync_images.sh <image-list>}"
++REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
++PLATFORM="${PLATFORM:-linux/amd64}"
++DONE_FILE="${DONE_FILE:-sync.done}"
++FAILED_FILE="${FAILED_FILE:-sync.failed}"
++SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
++
++touch "$DONE_FILE" "$FAILED_FILE"
++
++while IFS= read -r src; do
++  [ -n "$src" ] || continue
++
++  if grep -Fqx "$src" "$DONE_FILE"; then
++    echo "skip already synced: $src"
++    continue
++  fi
++
++  dst="${REGISTRY_HOST}/mirror/${src}"
++  ok=0
++
++  for attempt in 1 2 3; do
++    echo "sync attempt=${attempt}: $src -> $dst"
++    if docker pull --platform "$PLATFORM" "$src" \
++      && docker tag "$src" "$dst" \
++      && docker push "$dst"; then
++      echo "$src" >> "$DONE_FILE"
++      grep -Fvx "$src" "$FAILED_FILE" > "${FAILED_FILE}.tmp" || true
++      mv "${FAILED_FILE}.tmp" "$FAILED_FILE"
++      docker image rm "$dst" "$src" >/dev/null 2>&1 || true
++      ok=1
++      break
++    fi
++
++    sleep "$((attempt * 60))"
++  done
++
++  if [ "$ok" -ne 1 ]; then
++    grep -Fqx "$src" "$FAILED_FILE" || echo "$src" >> "$FAILED_FILE"
++  fi
++
++  sleep "$SLEEP_SECONDS"
++done < "$LIST_FILE"
++```
++
++这个脚本把源镜像：
++
++```text
++xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++映射为本地 registry 镜像：
++
++```text
++localhost:5000/mirror/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest
++```
++
++R2E 镜像也使用同一映射规则，例如：
++
++```text
++namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++localhost:5000/mirror/namanjain12/orange3_final:2d9617bd0cb1f0ba61771258410ab8fae8e7e24d
++```
++
++### 4. 断点续传
++
++断点续传依赖三个事实：
++
++1. `sync.done` 逐行记录已经完整 pull-tag-push 成功的源镜像。
++2. `sync.failed` 逐行记录连续三次失败的源镜像，后续可以单独重试。
++3. Docker registry 按 blob digest 存储。某次 push 中途失败后，下一次 push 会跳过已经存在的 blob，只补齐缺失部分。
++
++重新运行同一个批次时，脚本会跳过 `sync.done` 中已有的镜像，因此可以安全恢复。
++
++### 5. 校验方式
++
++校验分三层：
++
++第一层，检查任务清单与完成列表行数：
++
++```bash
++wc -l meta/image_refs_swegym.txt meta/image_refs_r2e.txt sync.done sync.failed
++```
++
++第二层，对本地 registry 做 manifest 存在性检查，不拉取镜像层：
++
++```bash
++while IFS= read -r src; do
++  dst="localhost:5000/mirror/${src}"
++  docker manifest inspect "$dst" >/dev/null || echo "missing manifest: $dst"
++done < meta/image_refs_swegym.txt
++```
++
++R2E 使用同样命令，只需要把输入文件换成 `meta/image_refs_r2e.txt`。
++
++第三层，抽样对比源端和本地端的 manifest 层 digest：
++
++```bash
++src="xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365:latest"
++dst="localhost:5000/mirror/${src}"
++
++docker manifest inspect "$src" | jq -r '.layers[].digest' > /tmp/src.layers
++docker manifest inspect "$dst" | jq -r '.layers[].digest' > /tmp/dst.layers
++diff -u /tmp/src.layers /tmp/dst.layers
++```
++
++如果源镜像未来发生 tag 漂移，源端和本地端 digest 可能不同。因此正式冻结后建议把源 manifest digest 另存为不可变审计表；训练时优先使用本地 registry 的固定 tag 或 digest 引用。
++
+
+tokens used
+156,446
+已按 DF-6 生成三个产物，且没有执行全量 `docker pull`：
+
+- [meta/image_refs_swegym.txt](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/meta/image_refs_swegym.txt)：2438 行，来自 `swe_gym_full.jsonl`
+- [meta/image_refs_r2e.txt](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/meta/image_refs_r2e.txt)：4578 行，直接复制 `docker_image`
+- [image_manifest.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/image_manifest.md)：包含命名规则实测、抽样体积表、三档容量外推、Docker Hub 限流方案和本地 `registry:2` 同步 runbook
+
+关键结论：SWE-Gym/OpenHands 的实际命名规则是把 `instance_id` 中的 `__` 替换成 `_s_`，不是 SWE-Bench 常见的 `_1776_`。例如 `getmoto__moto-5752` 对应 `xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest`。
+
+容量粗估写入了报告：SWE-Gym Lite 约 `0.501 TiB`，SWE-Gym Full 约 `5.310 TiB`，R2E 约 `2.298 TiB`，都基于压缩 manifest 体积并注明了层共享和本地 Docker 解包占用的不确定性。Docker Hub 限流部分参考了官方文档：https://docs.docker.com/docker-hub/usage/
+
+验证已跑过：清单逐行等于元数据推导结果，Lite 230 条确认是 Full 清单子集，关键 manifest API 体积复查一致；`git status -- meta/image_refs_swegym.txt meta/image_refs_r2e.txt image_manifest.md` 只显示这三个新增文件。

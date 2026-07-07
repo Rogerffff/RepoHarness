@@ -1,0 +1,97 @@
+{
+  "version": "v0.1",
+  "date": "2026-07-08",
+  "sources": {
+    "SWE-Gym/SWE-Gym-Lite": {
+      "rows": 230,
+      "hf_revision": "f70b1a29ab120eb0a0ee7a1deb029825e735b2b0",
+      "note": "官方 230（勘误：非 234）"
+    },
+    "SWE-Gym/SWE-Gym": {
+      "rows": 2438,
+      "hf_revision": "bb94ed9e39bbeb96a7fcbfb533b80f25a7fd59cb"
+    },
+    "R2E-Gym/R2E-Gym-Subset": {
+      "rows": 4578,
+      "prefix_state": "DF-2 抽样核验修复前态；commit_hash=fix commit，容器 HEAD=parent",
+      "hf_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a"
+    },
+    "SWE-bench/SWE-bench_Verified": {
+      "rows": 500,
+      "role": "外部参考面独占，训练不可用",
+      "hf_revision": "91aa3ed51b709be6457e12d00300a6a596d4c6a3"
+    }
+  },
+  "invariants": [
+    "训练池 ∩ Verified repos = ∅（已断言 PASS）",
+    "一切训练 run（含 bring-up）排除 held-out repos（D5）",
+    "泄漏门只对模型可见面生效；hints_text 全量剥离（D7）",
+    "ingestion 遇 strip_spec 未列字段 fail-closed",
+    "R2E 物化断言：容器 HEAD 必须是 commit_hash 的 parent",
+    "SWE-Gym 镜像名规则 __→_s_（D9 实测，勿用 _1776_）",
+    "ps-warn 存活题带 leakage_watch 标记进池，leakage_evidence 随行保留供事后归因（warn 下游义务）",
+    "S2 若重新抓取完整行/parquet，必须重新执行 strip_spec 的 fail-closed 字段检查（本包 meta/*.jsonl 已是裁剪后字段集）",
+    "R2E 行序按 repo 聚集：任何抽样必须跨 offset/分层，禁止取前 N 行"
+  ],
+  "static_gate_funnel_lite": {
+    "input": 230,
+    "heldout_repo_excluded": 12,
+    "adequacy_fail": 1,
+    "leakage_fail_ps": 1,
+    "survive": 216
+  },
+  "governance_evidence": {
+    "hints_only_leakage_neutralized": "109/230 (47.4%)",
+    "regex_ps_hits": "2/230 (0.9%)",
+    "regex_hints_only": "36/230",
+    "calibration_agreement": "15/15 (100%)"
+  },
+  "heldout_candidates": {
+    "total": 542,
+    "tornado": 261,
+    "pyramid": 189,
+    "hydra": 66,
+    "bokeh": 26
+  },
+  "disk_planning_tib": {
+    "lite": 0.501,
+    "swe_gym_full": 5.31,
+    "r2e": 2.298,
+    "note": "朴素压缩和，registry 去重后更低；建议 +30~50% 余量"
+  },
+  "pending_gpu_steps": [
+    "pass-rate 中段预筛 [0.1,0.8]（目标模型 n=8，单卡作业，与 pre-RL 诊断同批）",
+    "环境验证门（golden/empty/determinism，需 rh2 S2 库）"
+  ],
+  "artifact_digests": {
+    "strip_spec.yaml": "e96af018a660274c716e41fcdb10357c5892fa355d5d0998f2bc9b5e865ecd9c",
+    "heldout_proposal.md": "6aa82b6a02ac7538b716d79f19f0d042253cd20fcd918c3908514cc7d04ee50a",
+    "image_manifest.md": "c835933e1c431c96497fc5fbe25f53fd23a5c203b0c14758f90be25608bc8a0d",
+    "r2e_prefix_check.md": "807a01cb9301ff18b29a41c58237d8f690a1b2cc024b346a58a152ad42550ebd",
+    "meta/verified.jsonl": "c84a060b0d2f5ac44379fc81da809363ff92ba67d9b2483c3a9d2f848378ef35",
+    "meta/swe_gym_lite.jsonl": "ff4866017f2c5515984be1a2b9270f8802ef835d2abdc086ee50fb8950516f11",
+    "meta/swe_gym_full.jsonl": "cdabfac1e9ff74306e7c23fdefe41be551f491342b189caa5158bb20d27f61b5",
+    "meta/r2e_subset.jsonl": "bbc356291e7dabc2409fa760a8f26a9e01c967e949d17ce77300a8bc81101ce4",
+    "meta/repo_disjoint_report.json": "491f947e38bfd9a490c206cfd42158e4410a990941b4f39e83bcb61f1169c151",
+    "meta/heldout_candidates.jsonl": "56db2ac5dcbe00d4a6f11aea5261b6cb92bbe5ce51bfa4a0aad84b161813f4e7",
+    "meta/image_refs_swegym.txt": "e39da94c3e985b5fca59c94dabf63e7170206aba9ed15a490bab56f1680d55bf",
+    "meta/image_refs_r2e.txt": "e2a421845ca5e14c11b6c11015dbef94856bef72bf5fdf86eb72da0a66bd6df7",
+    "meta/fetch_meta.sh": "ee609e78b9dc1fc8b4fb954a67ce4fd08592a2e3f9aac305e00ce390dc9c19cd",
+    "meta/fetch_r2e.py": "486993ca3e217a8695e6b46f99eb20716b4ef62571c18d2e30b3ca9b0a84e509",
+    "meta/assert_repo_disjoint.py": "29e66f7755f9e074a00603d373eee114a4605d6e1cd9578cb90e1206d46480ba",
+    "labels/labeling_prompt.md": "cdf1d6f5e211db64577264d2e51fb4869a37041e6111a58510d911cc04d7f80f",
+    "labels/run_labeling.py": "348c805f37d67ca6c7cc33bdf8830fe801ba9d186675fc1744caf3c28969f5a2",
+    "labels/pilot_20.jsonl": "52bd5795330579abc2a8b933f7c93e84e779b4d5172a8836faa1ce2c96bd82c3",
+    "labels/pilot_model.jsonl": "60974e6259c2e50c1441b5eca45e093e28e298f506a68c8108b106ef5b04d52c",
+    "labels/calibration_human.jsonl": "dfec7437905bcbdbb6a4eb09aeaa08b725c5dd8a6d0ef05be86a404c2ab17254",
+    "labels/swe_gym_lite_quality_v0.jsonl": "f16aa2d1efc1a428649fce6bbe4cccb2d1fd06c9d935c33adbdb8cd5d8c1ece1",
+    "labels/swe_gym_lite_quality_final.jsonl": "030fafa0e734ca70af3f7cd43138296f82033a0e67463df2097d1bd786f533af",
+    "labels/static_gate_survivors.txt": "66400caaf6872e66efefc1aafdd3d93c843a2d943822521d89a1b8e2cc3c21f9",
+    "labels/regex_scan_lite.jsonl": "e11c5c05adea50ea4cf19a4c689b7f09ba24d070ada2670d7d5ed0f08289708d"
+  },
+  "scope_caveats": {
+    "r2e_prefix_check": "3 仓库抽样 git 语义核验（修复前态+commit_hash 语义），不等于环境质量验证；golden/empty/determinism 门仍在 pending_gpu_steps",
+    "label_spot_check": "门控相关标签全量复核（2 个 fail 题人工读题确认正确；13 个 ps-warn 归因 13/13 程序复核在题面）；随机 10% 抽检未执行，理由：校准 15 标签级判定 100% + 门控全查覆盖了全部影响准入的决定",
+    "calibration_wording": "校准口径为 5 题 × 3 标签 = 15 个标签级判定"
+  }
+}
