@@ -78,3 +78,11 @@
 - [S0-8] 审读判定：草案高质量、§6.3 六项全覆盖；10 处收口修订直接落草案（均标 `[S0-8 收口 2026-07-08]`），审读结论与遗留决策清单在 `s0/s0_8_expdesign_review.md`。实验层 E1/E7/E10 已按 S0 实测直接定案（30B-A3B + 形态 B + slime Claude Code harness），其余 E 项定案栏留给用户——这是有意划的线：实测能定的替用户定，价值判断类（数据策略、判据、预算）不代替。
 - [S0-8] **偏离说明**：草案 C2 写"租卡为零（自有 8 卡）"，与执行计划"租 GPU 整机"及 S0 租机记录矛盾，已按租用口径改写并在草案与审读文件双处标注"若实际自有请用户纠正"。属替用户改事实性表述，需用户过目确认。
 - [S0-8] **开放问题（转用户）**：S1 冻结题单前必须定四项——实验层 E4 首训数据、E2 算法配置含 rollout top_p（决定 top-p tape/U-H 依赖是否激活）、E5 判据预注册、E6 预算 + C3 墙钟上限；详见 `s0_8_expdesign_review.md` 第 3 节。
+
+## S0-7 SWE smoke 收口（前次线程被 session limit 中断，本线程续跑，2026-07-07）
+
+- [S0-7, 2026-07-07] **续跑说明**：SweSmokeTaskset/题单冻结数据/prep 脚本/单题 runner 均为前一线程的本地实现，本线程只做核验、最小补齐（新增 `experiments/s0_swe_smoke_run_all.sh` 顺序驱动脚本——runner docstring 里引用但缺失）与两处运行时修复（见下），未重写既有结构。**验收结果：8/8 端到端跑通，7/8 RESOLVED_FULL（reward=1.0），超过 ≥5/8 底线**；报告见 `s0/swe_smoke_report.md`，逐题 dump 与官方 eval 日志在 `s0/swe_smoke_dumps/`。U-D 关闭：8 镜像并行拉取 52s、实占磁盘共 8.13GB（共享基层，计划预留 ~50GB 属大幅高估）。
+- [S0-7, 2026-07-07] **修复 1（loader 插件 id 契约）**：runner 首版用多段点分 taskset id `repoharness2.taskset.swebench_smoke`，触发 verifiers pin 5885ab9c loader 的 `find_spec("verifiers.v1.tasksets.<id>")` 在中间父包不存在时直接抛 ModuleNotFoundError（本地 fallback 分支不可达），首轮 8 题全部秒败。改为单段 id `swebench_smoke` + taskset 目录进 sys.path——这本就是 S0-2/S0-3 已记录的"模块名即 taskset.id"本地插件约定，前次实现偏离了自己的约定。S1 冻结 taskset 命名沿用单段约定。
+- [S0-7, 2026-07-07] **修复 2（物化校验判据，两次实证迭代）**：taskset.setup 首版断言 `/testbed HEAD == base_commit`，实测官方镜像 HEAD 一律是构建叠加的 "SWE-bench" 提交（父提交才是 base）；第二版改"树内容与 base 等值"，又被 astropy-14995 证伪——它的 SWE-bench 提交带 pyproject.toml 1 行官方环境修补。最终判据（fail-closed）：base_commit 对象存在 且（HEAD==base 或 HEAD^==base），环境修补 diffstat 记入 trace.info。细节与证据见报告发现 2。
+- [S0-7, 2026-07-07] **偏离说明（模型端点）**：执行计划第 3 步写 "default harness + TrainClient（若 S0-5 已通）或 EvalClient"，本轮用 EvalClient→deepseek-chat（文本中继，token_ids/logprobs 为空是预期）。理由：S0-7 验收对象是物化与评分解析链路，与 token 保真正交；且 deepseek key 经 ssh stdin 注入环境变量的操作约束（不落盘/不进 argv/不回显）与 EvalClient 的 `api_key_var` 机制正好配套。key 卫生：dump 落盘前 scrub+assert，回传前后 `sk-` 形态与 key 字面值扫描均 0 命中。
+- [S0-7, 2026-07-07] **开放问题**：(1) 题单为初选，待用户过目后长期冻结（C6）；(2) deepseek-chat 对这批老题有背题嫌疑（7/8 秒解、diff 与正典高度一致），smoke 的 reward 数字不构成能力基准，S1 换 Qwen3-30B-A3B 后需重新标定难度；(3) 评分与 agent 同容器的隔离缺口按计划归 S2；(4) swebench==4.1.0 仍是 venv 手工附加依赖（`uv pip install`，未进 pyproject），S1 决定 taskset 归属时一并定依赖归属。
