@@ -72,3 +72,9 @@
 - [S0-5, 2026-07-07] **V3 最终判定：通过**。vLLM 0.24.0（Blackwell 保守参数）+ TrainClient + Qwen3Renderer 全链 token-in/token-out、logprobs 逐位对齐、Trace token identity 成立（4B 与 30B-A3B）；routing wire 为 base64 `.npy`，与 verifiers `RoutedExpertsPayload{data,shape,start}` 的差异已由薄 shim 证明可弥合（commit 后 `[21,48,8]`、identity 保持）。报告：`s0/v3_protocol_report.md`。
 - [S0-6, 2026-07-07] **V4 最终判定：通过，推荐形态 B 为 MoE RL 训练主形态**（形态 A 保留为协议基线与 dense/eval 路径）。四维对比与理由见 `s0/topology_ab_report.md`：token 保真 wire 层两条等价；MoE 张量上 top-p tape 是分水岭（B=拉现成 slime 镜像，A=改三个仓库）；B 的环境固化与 top-p patch 共享"固定 slime 镜像"一个解；治理契约经中立 `TrajectoryProjection` 收敛，切换形态不改治理层。硬性要求：pin 镜像版本 + 启动后 top_p<1.0 探针断言 + tape 解码校验只在 projection 层实现一次。
 - [S0-6, 2026-07-07] **U-H（新未知）**：slime patch 版 SGLang（镜像形态）在 Blackwell sm_120 上的实际可用性未验证——本轮只验证了 stock 0.5.9 的行为与 patch 的静态存在性；patch 兼容的 sglang 版本与镜像行为留 S1 接入时用同一探针关闭。
+
+## S0-8 实验设计文档复核收口（2026-07-08）
+
+- [S0-8] 审读判定：草案高质量、§6.3 六项全覆盖；10 处收口修订直接落草案（均标 `[S0-8 收口 2026-07-08]`），审读结论与遗留决策清单在 `s0/s0_8_expdesign_review.md`。实验层 E1/E7/E10 已按 S0 实测直接定案（30B-A3B + 形态 B + slime Claude Code harness），其余 E 项定案栏留给用户——这是有意划的线：实测能定的替用户定，价值判断类（数据策略、判据、预算）不代替。
+- [S0-8] **偏离说明**：草案 C2 写"租卡为零（自有 8 卡）"，与执行计划"租 GPU 整机"及 S0 租机记录矛盾，已按租用口径改写并在草案与审读文件双处标注"若实际自有请用户纠正"。属替用户改事实性表述，需用户过目确认。
+- [S0-8] **开放问题（转用户）**：S1 冻结题单前必须定四项——实验层 E4 首训数据、E2 算法配置含 rollout top_p（决定 top-p tape/U-H 依赖是否激活）、E5 判据预注册、E6 预算 + C3 墙钟上限；详见 `s0_8_expdesign_review.md` 第 3 节。

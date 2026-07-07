@@ -10,6 +10,8 @@
 
 时间基线：2026-07。S0 退出条件包含本文初稿完成（§6.3 定案）。
 
+> **[S0-8 收口 2026-07-08]** S0 实测结论（V2/V3/V4，见 `../repo_harness_rh2_workstreams/s0/` 各报告）已回填本文：E1/E7/E10 已定案（落 §4.1），硬约束 C1/C2 按实测修正；其余 E 项（E2/E3/E4/E5/E6/E8/E9）的"定案"栏仍待用户拍板，其中哪些必须在 S1 冻结题单前定，见 `../repo_harness_rh2_workstreams/s0/s0_8_expdesign_review.md`。
+
 ---
 
 ## 1. 硬约束框架（先于一切调查，待项目所有者填写）
@@ -17,19 +19,33 @@
 实验设计的根约束，技术报告无法替我们回答：
 
 ```text
-C1 算力形态（2026-07 已填）：单机 8 × RTX Pro 6000 Blackwell 工作站卡，
+C1 算力形态（2026-07 已填；[S0-8 收口 2026-07-08] 按 S0 实测修正）：
+   训练目标形态 = 单机 8 × RTX Pro 6000 Blackwell 工作站卡，
    单卡 96GB，合计 768GB；PCIe 互联、无 NVLink。
+   S0 实测口径：8 卡整机当期缺货，S0-5/6/7 以同型号单卡（96GB，sm_120）
+   完成推理侧验证——30B-A3B bf16 加载约 60GB，单卡余量充足、无需量化；
+   训练侧（多卡通信、权重同步、colocate 显存、训练 step 墙钟）完全未验证，
+   留 S4 前 8 卡专项预实验（见 §4.1 第 4 条）。
    直接推论：
    - 必须 --colocate（训推同卡）+ CPU offload（slime 示例已带该选项）；
    - PCIe 互联下 EP/TP 通信显著慢于服务器卡（NVLink），
      MoE all-to-all 是吞吐风险点，宜低 EP 度 + 长序列摊薄通信；
    - 30B-A3B 档初步核算可行：bf16 权重 60GB + 梯度 60GB，
-     Adam 优化器状态走 CPU offload，单卡余量支撑 32k 上下文训练；
-     35B-A3B 需 S0 实测后定；
-   - 新增 S0 验证项 V5：SGLang / Megatron 对 RTX Pro 6000（Blackwell
-     工作站 sm_120）的内核支持（attention kernel、FP8 KV、
-     EP all-to-all over PCIe 的实际带宽）。
-C2 货币预算上限：租卡为零（自有 8 卡）；API 面主要是 LLM judge（如有）。
+     Adam 优化器状态走 CPU offload，单卡余量支撑 32k 上下文训练
+     （[S0-8 收口 2026-07-08] 权重侧已由单卡实测印证约 60GB；
+     梯度/优化器侧仍是纸面核算，归 S4 前预实验）；
+     35B-A3B 升级选项关闭，仅在 S4 前预实验证明富余时重议（E1 已定）；
+   - S0 验证项 V5（本文自设，未进入 S0 执行计划的 V1~V4 清单）：
+     [S0-8 收口 2026-07-08] 推理半边已由 S0-5/6 顺带消除——vLLM 0.24.0
+     与 SGLang 0.5.9 在 sm_120 均可跑，但默认参数不可用，必须用
+     §4.1 第 3 条的固定参数/固定镜像；训练半边（Megatron 内核、
+     EP all-to-all over PCIe 实际带宽、FP8 KV）归并 U-C 训练侧，
+     留 S4 前预实验；slime patch 镜像在 sm_120 的可用性 = U-H（留 S1）。
+C2 货币预算上限：[S0-8 收口 2026-07-08] GPU 为租用形态、非自有
+   （原稿"租卡为零（自有 8 卡）"与 S0 事实不符：执行计划即按租机设计，
+   S0 因 8 卡缺货改租单卡完成验证，8 卡整机租用留 S4）——
+   租机成本随墙钟计，与 C3/E6 的"首训 ≤4 天"直接挂钩；
+   API 面主要是 LLM judge，judge 额度充足。
    —— 重要资源补充：codex / claude code agent 额度充足，
    可大规模用于离线数据流水线（环境构建、修复、质检、PR 抓取的 agent 化），
    这直接改变 E4 数据策略的可行域（自产任务成为现实选项）。
@@ -47,9 +63,11 @@ C4 已定约束（继承前序定案，不再讨论）：
 
 ---
 
-## 2. 决策清单（E1~E9，带依赖关系）
+## 2. 决策清单（E1~E10，带依赖关系）
 
 每项格式：问题 / 依赖 / 当前候选与倾向 / 需要调查回答的子问题 / 定案（空待填）。
+
+> 编号说明 [S0-8 收口 2026-07-08]：本节 E1~E10 是**实验层**编号（原标题笔误 "E1~E9" 已更正，E10 为后补的一等决策）。执行计划（`../repo_harness_rh2_workstreams/01-s0-execution-plan.md`）另有执行层 E 系列编号，两套相互独立；跨文档引用时请写明"实验层 E4"/"执行层 E4"，防止混淆。
 
 ### E1 训练目标模型具体型号 【根决策，依赖 C1】
 
@@ -60,7 +78,7 @@ C4 已定约束（继承前序定案，不再讨论）：
   - `Qwen3.6-35B-A3B`（slime 官方示例模型，配置卡见附录 A）：端到端配置现成，但示例是 8 节点 64 GPU（TP2/CP8/EP8 才吃下 96k 上下文）；C1 不足时需按 E6 大幅降上下文换可行性。
   - GLM 系 MoE（Air 级）：同生态加分，开源尺寸与 renderer 覆盖待核（V2）。
 - **调查结论**：前沿报告 RL 的激活参数下限是 3B（Qwen3-Coder-Next 80B-A3B），与 30B-A3B/35B-A3B 同档——**3B 激活是有背书的下限，再小无任何先验**。slime 示例卡型未披露；显存需求由上下文长度主导（`max-tokens-per-gpu = context/CP`），上下文是第一可行性杠杆。
-- **定案**：（C1 已填后倾向收紧为：**Qwen3-30B-A3B 档，32k 上下文起步**——8×96GB 单机下 30B-A3B 是"有前沿先验 + 显存可行"的交集；35B-A3B 仅在 S0 实测显存/吞吐允许时升级。最终锁定等 S0 的 V2/V4/V5 验证。）
+- **定案 [S0-8 收口 2026-07-08]**：**Qwen3-30B-A3B，32k 上下文起步**。S0 实测三项支撑：V2 通过——renderers `MODEL_RENDERER_MAP` 精确注册 `"Qwen/Qwen3-30B-A3B" → Qwen3Renderer`（hand-coded，非 DefaultRenderer），12 项渲染一致性 + 12 项 bridge 语义逐 token 实测通过，MoE 与 dense 共用同一渲染路径（chat template sha256 与 8B 一致）；V3 通过——单卡 96GB 上 bf16 加载约 60GB，token-in/out、logprobs 逐位对齐、Trace token identity 全链成立；V4 通过——routing tape 实测可透传。35B-A3B 升级选项关闭，仅在 S4 前 8 卡训练侧预实验证明显存/吞吐富余时重议。**随定案落地的守门要求（U-G）**：renderers 按 `tokenizer.name_or_path` 精确匹配注册表，用本地权重目录（如 `/models/Qwen3-30B-A3B`）加载会**静默降级 DefaultRenderer**（只打一条 INFO，bridge 恒 None、`sampled_mask` 全空，token 保真整体失效）——一切训练/评测脚本必须用 HF id 加载 tokenizer 或显式传 `Qwen3RendererConfig()`，并在启动时断言 `type(renderer).__name__ == "Qwen3Renderer"`。
 
 ### E2 算法族与后端配置 【依赖 E1、C1】
 
@@ -229,7 +247,8 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
   单轨迹上限 900s；评分 600s（与 rollout 重叠，计 1 个尾波）：
   rollout ≈ 4 波 × 900s + 600s ≈ 70min
   训练 step（8×Pro6000 PCIe + CPU offload，64 seq × ~20k token）
-  ≈ 10~30min（S0 实测项 V5 的一部分）
+  ≈ 10~30min（[S0-8 收口 2026-07-08] 仍为纸面估算：S0 只实测了
+  单卡推理侧，训练 step 墙钟留 S4 前 8 卡预实验实测，届时校准本表）
 ⇒ 每步 ≈ 1.3~1.7h；
   100 步 ≈ 5.5~7 天（贴死一周上限，不可取）；
   30~50 步 ≈ 2~3.5 天（推荐首训档）。
@@ -243,15 +262,20 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
 
 - **定案**：（待）
 
-### E7 接入形态（记录依赖，不在本文定案）
+### E7 接入形态（S0 已定案，此处回填）
 
 - 形态 A（verifiers TrainClient + 协议 shim）vs 形态 B（slime custom_generate 直调）由 S0 验证定案；MoE 定案后形态 B 显著加分（§5.1-D3：vLLM wire 协议无 top-p ids 槽位，routing tape 穿 shim 存疑）。本文只记录：**实验配置必须在 S0 形态定案后填 E6 的具体启动方式**。
+- **定案 [S0-8 收口 2026-07-08]**（依据 `../repo_harness_rh2_workstreams/s0/topology_ab_report.md` 四维实测）：**形态 B（SGLang 原生 `/generate` + slime patch 镜像，slime custom_generate 直调）为 MoE RL 训练主形态**；形态 A（vLLM `--tokens-only` 起 `/inference/v1/generate` + verifiers TrainClient）保留为协议基线与 dense 冒烟/调试路径（全链已验证可用，持有成本≈0）。两点实测更正上一行的旧推测：
+  1. routing tape 并非"穿 shim 存疑"——两引擎都实测拿到语义一致的 tape（`[prompt−1+生成数, 48, 8]`），vLLM 侧薄 shim（base64-npy → `RoutedExpertsPayload{data,shape,start}`，几十行纯格式转换）已用真实 `Trace.commit` 证明可行；
+  2. 真正的分水岭是 **top-p tape**：slime `loss.py:35-47` 在 `rollout_top_p != 1.0` 时硬性要求 `rollout_top_p_token_ids/offsets`，而 stock vLLM 0.24.0 与 stock SGLang 0.5.9 都不产出（SGLang 对该请求**静默忽略**，返回 200 不报错）——形态 B 的解是现成的 slime patch 镜像（`docker/patch/latest/sglang-top_p.patch`），形态 A 则是引擎 + wire 契约 + 消费端三端缺口。
+- **硬性实施要求**：pin slime 镜像版本；服务启动后必跑一次 `top_p<1.0` 探针断言 `meta_info` 含 `top_p_token_ids`（防打到 stock server 的静默失败）；routing/top-p 两类 tape 的解码校验只在中立 `TrajectoryProjection` 层实现一次。
+- **残余 U-H**：slime patch 镜像在 sm_120（RTX PRO 6000 Blackwell）上的实际可用性未验证，S1 接入时用同一探针关闭。U-H 失败的回退梯：手动对 stock SGLang 打 top-p patch → 临时 `top_p=1.0`（tape 需求消失，偏离主流采样配方需记录）→ 切回形态 A（放弃 top-p replay）。E6 的"具体启动方式"据此填写：rollout 推理栈 = slime 镜像内 SGLang；Blackwell 固化参数见 §4.1 第 3 条。
 
 ### E8 预期结论形态：什么算"证明设施有效" 【依赖全部】
 
 - **问题**：简历叙事的收尾——最小可信的证据包是什么。
 - **当前倾向**（三件套，缺一不可）：
-  1. **能力证据**：held-out 集 before/after pass@1 有统计上可辨别的提升（配方差区间），附 best-of-K 随训练上升曲线（Composer 2 Fig 5 范式）；
+  1. **能力证据**：held-out 集 before/after **Avg@n 解决率**（统一用 E5 统计设计第 1 条口径，不再写 pass@1 单次 [S0-8 收口 2026-07-08]）有统计上可辨别的提升（配方差区间），附 best-of-K 随训练上升曲线（Composer 2 Fig 5 范式）；
   2. **治理证据**：训练全程的治理拦截统计（gate 拒绝分布、anti-cheat finding、红队环境包全部拦截成功）——证明提升不是靠作弊。调查带回必需性铁证：**Qwen3 Figure 7：不带 hack blocker 时 agent 用 git 回捞答案把分数虚高到 84.6%（真实 75.1%）**——治理证据不是锦上添花，是分数可信的前提；
   3. **解耦证据**：同批 rollout 经离线导出与在线 adapter 的 parity 校验通过（final_review §4.2）。
 - **调查补充**：可选第四件交付——任务数消融（E4 定档 200 vs 1000~2000 两档），全部前沿报告都没有的小规模信息增量。量化口径新增一项：**导入开源数据集的环境验证良率**（多少题被 golden/empty/确定性门剔除）——治理层对第三方数据的第一个可量化实战指标。
@@ -273,7 +297,7 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
   4. RepoHarness 白盒 harness 不进首训（P2 交付后的第二轮实验目标）。
 - **调查结论（线程 5 已核实）**：前沿不存在"训练 harness 必须等于评测 harness"的统一要求，实践分两派——(A) **train=deploy 单一 harness**：Composer 2 明确 "training in the same Cursor harness that is used by the deployed model, with equivalent tools and structure"，以最小化 train-test mismatch 为纲；(B) **刻意多 harness 混训求泛化**：Qwen3 用 6 个框架采轨迹（SWE-agent / Mini-SWE / OpenHands / Claude-Code / Qwen-Code / Terminus），Nemotron SFT 用 4 harness 采集、RL 保证每个任务 vertical 至少覆盖 2/6 harness（附录 A.2 Harness Robustness）。**显式量化过 transfer gap 的只有 Qwen3（Fig.3：跨 scaffold 迁移 limited 且方向不对称）与 Nemotron（Fig.17 agent×model 矩阵）**——两家都实测出单 harness 训练跨 harness 掉点。
 - **定案方向**：本实验取 (A) 派（Composer 式）——**单 harness、训练=评测**。理由：内部有效性是本实验的命题，且个人规模下多 harness 混训成本翻倍、要证明的也不是泛化性；(B) 派的多 harness 混训与 transfer 矩阵留作第二轮实验扩展项。倾向第 3 条的单向 transfer gap 附加测量保留（低成本，作附加发现）。
-- **定案**：（待 S0 形态定案后与 E7 一并锁定）
+- **定案 [S0-8 收口 2026-07-08]（与 E7 成对锁定）**：形态 B ⇒ **训练 harness = slime Claude Code harness**（ClaudeCodeHarness + AnthropicAdapter，token 级捕获路径已由 slime 示例验证）；before/after 评测用**同一 harness、同一推理栈**（slime 镜像内 SGLang），保证内部有效性。注意与 E7 的措辞区分：形态 A 的"eval 路径"角色仅指**协议对照与 dense 冒烟**，不承担 before/after 主口径（否则跨引擎/跨采样栈差异会污染对照）。可选的 scaffold transfer gap 附加测量保留（如 mini-swe-agent 单向测一次，只作附加发现不作判据）。本定案同受 U-H 约束：若最终回退形态 A，harness 按绑定切 verifiers bash_edit，且必须在实验报告显式标注 harness 变更（前后不可直接比）。
 
 依赖图小结：
 
@@ -283,7 +307,8 @@ C1/C2/C3（用户填）
         │                          │
         └─ E3 warm-start           └─ E5 评测协议 ── E8 结论形态
 C4-D2 ── E4 数据构成 ──────────────┘
-S0 ──── E7 接入形态 ══ E10 harness 选择（成对绑定，S0 后定）
+S0 ──── E7 接入形态 ══ E10 harness 选择（成对绑定，已定：
+        形态 B + slime Claude Code harness [S0-8 收口 2026-07-08]）
 E9 独立
 ```
 
@@ -319,7 +344,18 @@ E9 独立
 
 ## 4. 定案记录
 
-（待逐项讨论后填写。）
+### 4.1 S0 实测定案回填 [S0-8 收口 2026-07-08]
+
+证据来源：`../repo_harness_rh2_workstreams/s0/v2_renderer_report.md`（V2）、`v3_protocol_report.md`（V3）、`topology_ab_report.md`（V4）、`implementation-notes.md`（U-B/U-G/U-H 条目）。以下五条为 S0 实测已定，是本文各处引用的锚点；正文如有与本节冲突的旧表述，以本节为准。
+
+1. **接入形态与 harness（实验层 E7 + E10，成对定案）**：形态 B（SGLang + slime patch 镜像，slime custom_generate 直调）为 MoE RL 训练主形态；形态 A（vLLM `/inference/v1/generate` + verifiers TrainClient）保留为协议基线与 dense 冒烟/调试路径。训练与 before/after 评测同用 slime Claude Code harness + 同一推理栈。判据、更正与回退梯详见 E7/E10 定案栏。
+2. **模型（实验层 E1）**：Qwen3-30B-A3B（V2 渲染 12+12 项逐 token 实测、V3 全链 token 保真、V4 routing 透传三项支撑）。**renderer 守门为硬性要求（U-G）**：本地路径加载 tokenizer 会静默降级 DefaultRenderer（只打 INFO），必须用 HF id 或显式 `Qwen3RendererConfig()`，启动断言 renderer 类名 `== "Qwen3Renderer"`。
+3. **Blackwell（sm_120）实测参数与镜像依赖**：
+   - vLLM 0.24.0（形态 A / 协议基线）**默认参数不可用**，固化组合：`--tokens-only`（缺失则无 `/inference/v1/generate` 端点）+ `--enforce-eager` + 环境变量 `VLLM_USE_FLASHINFER_SAMPLER=0`，MoE 模型另加 `--moe-backend triton`；`CUDA_HOME` 指向 venv 内 nvidia/cu13 toolkit（机器无系统级 CUDA 开发栈时）。
+   - SGLang（形态 B）：stock 0.5.9 实测可跑 30B-A3B，routing tape 原生（服务端 `--enable-return-routed-experts` + 请求侧 `return_routed_experts: true`），但 pip 安装对 CUDA 工具链路径极敏感 ⇒ 正式实现**必须固定 slime 官方 docker 镜像**（一步同时解决环境固化与 top-p patch 两件事）；**镜像在 sm_120 的可用性 = U-H，S1 接入时用探针关闭**。
+   - tape 归一化契约：routing tape 两引擎语义一致（行数 = prompt−1+生成数，48 层 × top-8，专家 id 0..127），wire 差异（vLLM base64-npy / SGLang base64-int32）统一归一为 uint8 + `{data,shape,start}`；top-p tape 只有 slime patch 镜像产出。两类 tape 的解码/校验只允许在中立 `TrajectoryProjection` 层实现一次；服务启动后必跑 `top_p<1.0` 探针（stock server 静默忽略该请求，不报错，训练侧才会炸）。
+4. **算力计划（C1/C2/E6）**：S0 已用**单卡** RTX PRO 6000 96GB（租用；8 卡缺货降配）实测 30B-A3B bf16 推理可行（权重加载约 60GB）。**8×RTX PRO 6000（PCIe 无 NVLink）是 S4 训练目标形态，训练侧未做任何验证**——S4 开训前必须先做训练侧专项预实验（多卡通信、权重同步、colocate 显存、训练 step 墙钟），E6 墙钟表的"训练 step 10~30min"在此之前只是纸面估算。
+5. **仍待用户拍板（S0 收口不代替用户决策）**：E2/E3/E4/E5/E6/E8/E9 的"定案"栏。其中 **E2（含训练 rollout 的 top_p 是否 ≠1.0——直接决定 top-p tape / U-H 依赖是否激活）、E4 首训数据策略、E5 成功判据预注册、E6 预算、C3 墙钟上限必须在 S1 冻结题单前定**；逐条清单与建议见 `../repo_harness_rh2_workstreams/s0/s0_8_expdesign_review.md`。
 
 ---
 
