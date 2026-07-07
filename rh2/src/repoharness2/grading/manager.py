@@ -314,15 +314,57 @@ def clean_patch(raw_patch: str, rules: HygieneRules) -> CleanedPatch:
 # 未跟踪新文件**（典型注入：.git/index.lock 残留时 add -N 拿不到索引锁），
 # 评分就会在"少了新文件的半份 patch"上得出假阴性结论。`1>&2` 把 add 的
 # stdout 并进 stderr，保证 stdout 仍是纯净的 diff 载荷。
-EXPORT_PATCH_SCRIPT = (
-    "git add -N . 1>&2 && git -c core.fileMode=false diff --binary HEAD"
+#
+# 基线未跟踪文件排除（S1-7a 远程回归实测发现）：部分官方镜像的 /testbed 在
+# **base 状态就自带未跟踪文件**（实测 psf__requests-1142 自带 872KB 的
+# `build/lib/**` 构建残留），`git add -N .` 会把这些非 agent 产物也卷进
+# patch，重放到 clean checkout 时因"already exists in working directory"
+# 整体 apply 失败（S0-7 直评 resolved 的题被误判 patch_apply_failed）。
+# 所以 workspace 所有者在物化完成时把基线未跟踪清单写到
+# BASE_UNTRACKED_MANIFEST（`git ls-files --others --exclude-standard`，
+# 与 add -N 的取数集合一致）；导出时对清单里的路径逐条
+# `:(exclude,literal)`。清单不存在时行为与旧版完全一致（fixture/host
+# workspace 兼容）。已知边界：agent 若**修改**了基线未跟踪文件，该改动会被
+# 排除出 patch——这些文件本就不属于被评分的源码树（clean checkout 上它们
+# 保持镜像原样），官方 eval 不消费。
+BASE_UNTRACKED_MANIFEST = "/rh2/base_untracked.txt"
+
+# 物化侧生成基线清单的脚本（workspace 所有者在 /testbed 就位后执行一次）。
+BASE_UNTRACKED_SNAPSHOT_SCRIPT = (
+    "mkdir -p $(dirname {manifest}) && "
+    "git ls-files --others --exclude-standard > {manifest}"
 )
 
 
-async def export_cleaned_patch(workspace: WorkspaceRunner, rules: HygieneRules) -> CleanedPatch:
-    """A7 条 1：从 agent workspace 导出 final patch 并按规则清洗。"""
+def build_export_patch_script(manifest_path: str = BASE_UNTRACKED_MANIFEST) -> str:
+    """构造 patch 导出脚本（manifest_path 可参数化，单测用临时路径注入）。"""
 
-    result = await workspace.run_bash(EXPORT_PATCH_SCRIPT)
+    return (
+        "git add -N . 1>&2 && excl=() && "
+        f'if [ -f {manifest_path} ]; then '
+        "while IFS= read -r p; do "
+        '[ -n "$p" ] && excl+=(":(exclude,literal)$p"); '
+        f"done < {manifest_path}; fi && "
+        'git -c core.fileMode=false diff --binary HEAD -- . "${excl[@]}"'
+    )
+
+
+EXPORT_PATCH_SCRIPT = build_export_patch_script()
+
+
+async def export_cleaned_patch(
+    workspace: WorkspaceRunner,
+    rules: HygieneRules,
+    *,
+    export_script: str = EXPORT_PATCH_SCRIPT,
+) -> CleanedPatch:
+    """A7 条 1：从 agent workspace 导出 final patch 并按规则清洗。
+
+    export_script 默认生产脚本；单测经 build_export_patch_script(临时 manifest)
+    注入宿主可写路径（生产 manifest 固定在容器内 BASE_UNTRACKED_MANIFEST）。
+    """
+
+    result = await workspace.run_bash(export_script)
     if result.exit_code != 0:
         raise WorkspaceExportError(
             f"workspace patch 导出失败（exit={result.exit_code}）: {result.stderr.strip()[-500:]}"

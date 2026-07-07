@@ -323,8 +323,12 @@ class SamplingMaskRef(StrictModel):
         ge=0,
         description=(
             "保留 token 总数（== offsets[-1]，生产者写入，inspector 可对 tape 重算比对）。"
-            "下界：每个 response token 的核集合至少含 1 个 token（top-p 定义保底保留 1 个），"
-            "因此必须 >= response_token_count（16 个 token 的 tape 至少 16）。"
+            "下界语义（S1-7a 真实多轮数据修正）：只有**引擎采样**的 response token "
+            "才有核集合（≥1）；多轮 agent 序列里的工具观察/上下文 token 从未被采样，"
+            "其 span 为零宽（slime `_pad_rollout_top_p_offsets` 同语义）。因此本层只锁 "
+            ">= 0；'每个可训练 token 至少 1 个核'的强下界在 BranchProjection 层与 "
+            "loss mask 交叉校验（kept >= Σ mask=1 长度）——真实反例：django-11099 "
+            "多轮轨迹 response 3317 token 中 mask=1 仅 456，kept=1302 完全合法。"
         ),
     )
 
@@ -389,12 +393,9 @@ class SamplingMaskRef(StrictModel):
                 f"offsets_len={self.offsets_len}，response_token_count={self.response_token_count}。"
             )
         assert self.kept_token_count is not None
-        if self.kept_token_count < self.response_token_count:
-            raise ValueError(
-                f"kept_token_count({self.kept_token_count}) 小于 "
-                f"response_token_count({self.response_token_count})：top-p 对每个 response token "
-                "至少保留 1 个核 token，总保留数不可能低于 token 数（tape 记录不完整或计数错误）。"
-            )
+        # N-4 强下界（kept >= 可训练 token 数）在 BranchProjection 层与 loss mask
+        # 交叉校验——response_token_count 含从未被采样的上下文 token（零宽 span），
+        # 在本层用它作下界会把真实多轮轨迹全部误拒（S1-7a 实测）。
         return self
 
 
@@ -741,6 +742,21 @@ class BranchProjection(StrictModel):
                 f"sampling_mask.response_token_count({self.sampling_mask.response_token_count}) 与分支 "
                 f"response_token_count({self.response_token_count}) 不一致。"
             )
+        if self.sampling_mask.mask_kind == "top_p_kept_token_ids":
+            # N-4 强下界（S1-7a 从 SamplingMaskRef 层移到本层）：每个可训练
+            # token 都是引擎采样产物，核集合至少 1 个 -> kept >= Σ mask=1 长度。
+            # response_token_count 不能作下界——多轮序列的工具观察/上下文 token
+            # 从未被采样、span 恒零宽（真实反例见 SamplingMaskRef.kept_token_count 注释）。
+            trainable_total = sum(
+                span.end - span.start for span in mask_spans if span.mask == 1
+            )
+            kept = self.sampling_mask.kept_token_count or 0
+            if kept < trainable_total:
+                raise ValueError(
+                    f"sampling_mask.kept_token_count({kept}) 小于分支 mask=1 token 总数 "
+                    f"({trainable_total})：可训练 token 每个至少保留 1 个核 token，"
+                    "tape 不完整或计数错误（N-4，S1-7a 座标修正版）。"
+                )
         return self
 
 

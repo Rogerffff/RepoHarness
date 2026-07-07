@@ -115,13 +115,15 @@ def test_top_p_one_with_kept_kind_rejected():
         SamplingMaskRef.model_validate(payload)
 
 
-def test_n4_kept_token_count_below_response_count_rejected():
-    """N-4：每个 response token 的核集合至少 1 个 -> kept 总数不可能低于 token 数。"""
+def test_n4_kept_below_response_count_is_legal_at_ref_level():
+    """N-4 座标修正（S1-7a 真实多轮数据）：response 含从未被采样的上下文 token
+    （工具观察等，span 恒零宽），kept < response_token_count 在 SamplingMaskRef
+    层**合法**——真实反例：django-11099 轨迹 response 3317、mask=1 仅 456、
+    kept=1302。强下界移到 BranchProjection 层与 loss mask 交叉校验。"""
 
     payload = valid_sampling_mask()
-    payload["kept_token_count"] = 10  # 16 个 response token 至少保留 16
-    with pytest.raises(ValidationError, match="kept_token_count"):
-        SamplingMaskRef.model_validate(payload)
+    payload["kept_token_count"] = 10  # < response_token_count=16：多轮真实形态
+    assert SamplingMaskRef.model_validate(payload).kept_token_count == 10
 
 
 def test_n4_kept_token_count_exact_lower_bound_passes():
@@ -130,6 +132,16 @@ def test_n4_kept_token_count_exact_lower_bound_passes():
     payload = valid_sampling_mask()
     payload["kept_token_count"] = 16
     assert SamplingMaskRef.model_validate(payload).kept_token_count == 16
+
+
+def test_n4_branch_level_kept_below_trainable_rejected():
+    """N-4 强下界的新落点：分支层 kept >= Σ mask=1 长度（每个可训练 token
+    必是采样产物、核集合至少 1）。valid_branch 的 mask=1 段长 16 -> kept=10 拒。"""
+
+    payload = valid_branch()
+    payload["sampling_mask"] = {**valid_sampling_mask(), "kept_token_count": 10}
+    with pytest.raises(ValidationError, match="mask=1 token 总数"):
+        BranchProjection.model_validate(payload)
 
 
 # ---------------------------------------------------------------------------

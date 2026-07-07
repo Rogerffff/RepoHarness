@@ -20,10 +20,12 @@ from grading_fixtures import (
 from repoharness2.contracts import PatchHygieneResult
 from repoharness2.envpack.bundles import sha256_of_text
 from repoharness2.grading.manager import (
+    BASE_UNTRACKED_SNAPSHOT_SCRIPT,
     UNPARSEABLE_SEGMENT_LABEL,
     HostWorkspace,
     HygieneRules,
     WorkspaceExportError,
+    build_export_patch_script,
     clean_patch,
     export_cleaned_patch,
     patch_touched_paths,
@@ -179,6 +181,48 @@ async def test_export_includes_untracked_new_source_file(tmp_path: Path):
     assert "src/helper.py" in cleaned.cleaned_patch
     assert "new file mode" in cleaned.cleaned_patch  # intent-to-add 段完整在场
     assert 'return "fixed"' in cleaned.cleaned_patch
+
+
+async def test_export_excludes_preexisting_untracked_baseline(tmp_path: Path):
+    """S1-7a 远程回归实测反例：镜像 /testbed 自带未跟踪残留（psf__requests-1142
+    的 build/lib/**）不得进 patch——否则 clean checkout 重放因 already exists
+    整体失败，S0-7 直评 resolved 的题被误判 patch_apply_failed。
+
+    生产链路：物化侧跑 BASE_UNTRACKED_SNAPSHOT_SCRIPT 存基线清单，导出脚本按
+    清单逐路径 :(exclude,literal)。本测试用宿主临时路径注入同一对脚本。
+    """
+
+    repo = build_fixture_repo(tmp_path / "snapshot")
+    ws = clone_workspace(repo, tmp_path / "ws")
+    # 基线未跟踪残留（agent 动工前就存在，非 agent 产物）
+    (ws / "build" / "lib").mkdir(parents=True)
+    (ws / "build" / "lib" / "junk.py").write_text("# stale build artifact\n")
+    manifest = tmp_path / "artifacts" / "base_untracked.txt"
+
+    snap = await HostWorkspace(ws).run_bash(
+        BASE_UNTRACKED_SNAPSHOT_SCRIPT.format(manifest=manifest)
+    )
+    assert snap.exit_code == 0
+    assert "build/lib/junk.py" in manifest.read_text()
+
+    # agent 改动：跟踪文件修改 + 新增源文件（codex#3 语义必须保留）
+    (ws / "src" / "helper.py").write_text('def impl():\n    return "fixed"\n')
+    (ws / "src" / "thing.py").write_text(
+        "from src.helper import impl\n\n\ndef feature():\n    return impl()\n"
+    )
+
+    cleaned = await export_cleaned_patch(
+        HostWorkspace(ws),
+        FIXTURE_HYGIENE,
+        export_script=build_export_patch_script(str(manifest)),
+    )
+    assert cleaned.verdict == "clean"
+    assert "src/helper.py" in cleaned.cleaned_patch  # agent 新文件仍在
+    assert 'return "fixed"' in cleaned.cleaned_patch
+    assert "build/lib/junk.py" not in cleaned.raw_patch  # 基线残留被排除
+    # 清单缺席时行为与旧版逐字节一致（fixture/host workspace 兼容）
+    legacy = await export_cleaned_patch(HostWorkspace(ws), FIXTURE_HYGIENE)
+    assert "build/lib/junk.py" in legacy.raw_patch  # 无清单 -> 残留仍会进（旧语义）
 
 
 async def test_export_fails_closed_when_intent_to_add_fails(tmp_path: Path):

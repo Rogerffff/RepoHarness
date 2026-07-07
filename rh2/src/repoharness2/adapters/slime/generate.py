@@ -106,6 +106,8 @@ from repoharness2.contracts import (
 from repoharness2.envpack import bundles, materialize
 from repoharness2.governance import FinalizedRollout, GroupRepairSignal, finalize_rollout
 from repoharness2.grading.manager import (
+    BASE_UNTRACKED_MANIFEST,
+    BASE_UNTRACKED_SNAPSHOT_SCRIPT,
     DockerRunner,
     ExecResult,
     GradingEnvSpec,
@@ -555,6 +557,64 @@ def _mask1_runs(loss_mask: Sequence[int]) -> list[tuple[int, int]]:
     return runs
 
 
+def _match_turns_to_runs(
+    response_tokens: Sequence[int],
+    runs: Sequence[tuple[int, int]],
+    turns: Sequence[TurnTape],
+) -> tuple[list[list[TurnTape]], list[TurnTape]]:
+    """token 同一性锚定的 run<->turn 匹配（S1-7a 实机形态的回填核心）。
+
+    S1-6 的 mock 假设"mask=1 连续段与轮次一一对应且等长"在真实 TrajectoryManager
+    上被证伪（S1-7a run6 实测两种形态）：
+
+    1. **整轮掉落**：REALIGN 把最近一轮响应整段降为上下文（mask=0）或树侧未
+       保留该轮 -> mask 段数 = 轮数 - 1（django-16139 实测 3 段 vs 4 轮）；
+    2. **同段多轮**：相邻两轮之间没有工具/模板 token 时两轮响应连成一个
+       mask=1 段（平铺 tiling）。
+
+    因此改为按 token 逐位锚定：每个 mask=1 段必须被**按提交顺序连续**的若干轮
+    output_ids **逐位精确**平铺覆盖；对不上该段起点的轮视为"掉落轮"跳过
+    （其 token 仍可能以 mask=0 上下文形式留在序列里，tape 不参与合并）。
+    任何段无法被剩余轮精确平铺 -> 当场炸（fail-closed 不放宽：现在是逐位
+    token 等值检查，比旧的"数段数"更严）。
+
+    返回 (per_run_turns, used_turns)。
+    """
+
+    per_run: list[list[TurnTape]] = []
+    turn_idx = 0
+    for start, end in runs:
+        segment: list[TurnTape] = []
+        position = start
+        while position < end:
+            matched = None
+            probe = turn_idx
+            while probe < len(turns):
+                tape = turns[probe]
+                width = tape.response_token_count
+                if (
+                    width > 0
+                    and position + width <= end
+                    and tuple(response_tokens[position : position + width]) == tape.output_ids
+                ):
+                    matched = probe
+                    break
+                probe += 1
+            if matched is None:
+                raise SlimeBindingError(
+                    "capture_turns_vs_mask_runs_mismatch",
+                    f"mask=1 段 [{start},{end}) 自 {position} 起无法被剩余捕获轮逐位平铺"
+                    f"（已用 {turn_idx}/{len(turns)} 轮）——存在没有捕获凭据的可训练 token"
+                    "或轮次被树侧改写成本函数不认识的形态。",
+                )
+            segment.append(turns[matched])
+            position += turns[matched].response_token_count
+            turn_idx = matched + 1
+        per_run.append(segment)
+    used = [tape for segment in per_run for tape in segment]
+    return per_run, used
+
+
 def backfill_leaf_sample(
     sample: Any,
     turns: Sequence[TurnTape],
@@ -562,7 +622,7 @@ def backfill_leaf_sample(
     moe_num_layers: int | None = None,
     moe_router_topk: int | None = None,
     policy_version: str | None = None,
-) -> None:
+) -> list[TurnTape]:
     """把 capture 钩子攒下的按轮 tape 回填到一条叶链 Sample 上（原地写字段）。
 
     背景（S1-3 slime 源码核对）：TrajectoryManager 叶链产物 `_SampleBuilder.
@@ -572,58 +632,50 @@ def backfill_leaf_sample(
     （非 TrajectoryManager 路径）。这些字段在 slime Sample dataclass 上都存在、
     可写，本函数按 slime 自己的合并语义回填：
 
+    - run<->turn 归属：token 同一性锚定（见 `_match_turns_to_runs`——S1-7a 用
+      真实 TrajectoryManager 证伪了 mock 的"段数=轮数且等长"假设 3）；
     - top-p：按轮拼接（`_merge_rollout_top_p_token_data` 语义），mask=0 的
-      工具/上下文 token 写零宽 span（`_pad_rollout_top_p_offsets` 语义）；
-      具体数值例：生成 10（每 token 核 3）+ 工具 5 + 生成 8（每 token 核 3）
-      -> offsets 长 24 = response 23 + 1，末位 54；
+      工具/上下文 token（含掉落轮残留的上下文 token）写零宽 span
+      （`_pad_rollout_top_p_offsets` 语义）；
     - routing：**每轮整段替换**（slime `_apply_meta_info` 对 routed_experts 的
       语义，S1-3 已核对），取最后一轮的全量 tape，行数必须 = len(tokens) - 1；
-    - weight_versions：每轮记一次 policy_version（真实值来源待 S1-7a 核对，
-      见 implementation-notes 差异假设清单）。
+    - weight_versions：每个**入训轮**记一次 policy_version（真实值来源 =
+      引擎 meta_info.weight_version，S1-7a 已核实）。
 
-    对应关系 fail-closed：mask=1 连续段与回链轮次必须一一对应且长度相等，
-    对不上说明编排接错线或出现了本 mock 链未建模的 REALIGN 降级段，当场炸。
+    返回实际入训（匹配上 mask=1 段）的轮列表，调用方用它构造分支注释的
+    capture 回链（掉落轮不回链——它们不支撑任何可训练 token）。
     """
 
     loss_mask = list(sample.loss_mask or [])
     runs = _mask1_runs(loss_mask)
-    if len(runs) != len(turns):
-        raise SlimeBindingError(
-            "capture_turns_vs_mask_runs_mismatch",
-            f"叶链 mask=1 连续段 {len(runs)} 个与回链轮次 {len(turns)} 个对不上"
-            "（REALIGN/树侧降级段需要树侧事实才能回填，S1-6 mock 链不建模该形态）。",
-        )
-    for (start, end), tape in zip(runs, turns):
-        if end - start != tape.response_token_count:
-            raise SlimeBindingError(
-                "turn_response_length_mismatch",
-                f"mask=1 段 [{start},{end}) 长 {end - start} 与轮 {tape.record_id} 的生成数 "
-                f"{tape.response_token_count} 不等。",
-            )
+    tokens = list(sample.tokens or [])
+    response_len = len(loss_mask)
+    response_tokens = tokens[-response_len:] if response_len else []
+    per_run, used = _match_turns_to_runs(response_tokens, runs, turns)
 
-    with_top_p = [tape for tape in turns if tape.top_p_token_ids is not None]
+    with_top_p = [tape for tape in used if tape.top_p_token_ids is not None]
     if with_top_p:
-        if len(with_top_p) != len(turns):
+        if len(with_top_p) != len(used):
             raise SlimeBindingError(
                 "top_p_tape_partial_across_turns",
-                "部分轮次有 top-p tape、部分没有——同一采样配方下不可能，事实不一致。",
+                "部分入训轮有 top-p tape、部分没有——同一采样配方下不可能，事实不一致。",
             )
         merged_ids: list[int] = []
         merged_offsets: list[int] = [0]
-        run_starts = {start: turn_idx for turn_idx, (start, _end) in enumerate(runs)}
+        run_segments = {start: segment for (start, _end), segment in zip(runs, per_run)}
         position = 0
         while position < len(loss_mask):
-            turn_idx = run_starts.get(position)
-            if turn_idx is None:
+            segment = run_segments.get(position)
+            if segment is None:
                 merged_offsets.append(merged_offsets[-1])  # 零宽 pad（slime pad 语义）
                 position += 1
                 continue
-            tape = turns[turn_idx]
-            base = merged_offsets[-1]
-            offsets = tape.top_p_token_offsets or ()
-            merged_ids.extend(tape.top_p_token_ids or ())
-            merged_offsets.extend(base + off for off in offsets[1:])
-            position += tape.response_token_count
+            for tape in segment:
+                base = merged_offsets[-1]
+                offsets = tape.top_p_token_offsets or ()
+                merged_ids.extend(tape.top_p_token_ids or ())
+                merged_offsets.extend(base + off for off in offsets[1:])
+                position += tape.response_token_count
         sample.rollout_top_p_token_ids = merged_ids
         sample.rollout_top_p_token_offsets = merged_offsets
 
@@ -653,7 +705,8 @@ def backfill_leaf_sample(
         sample.rollout_routed_experts = flat
 
     if policy_version is not None:
-        sample.weight_versions = [policy_version] * len(turns)
+        sample.weight_versions = [policy_version] * max(len(used), 1)
+    return used
 
 
 # ---------------------------------------------------------------------------
@@ -1093,6 +1146,7 @@ class RolloutOrchestrator:
                     f"树侧事实 {len(leaf_facts)} 条与叶链 Sample {len(samples)} 条不一致。",
                 )
             tape_index = hook.tape_by_record_id
+            used_record_ids: list[tuple[str, ...]] = []
             for leaf, facts in zip(samples, leaf_facts):
                 turns = []
                 for record_id in facts.capture_record_ids:
@@ -1103,13 +1157,29 @@ class RolloutOrchestrator:
                             f"叶链 {facts.branch_id} 回链 {record_id!r} 不在捕获轮次里。",
                         )
                     turns.append(tape)
-                backfill_leaf_sample(
+                used = backfill_leaf_sample(
                     leaf,
                     turns,
                     moe_num_layers=self.config.moe_num_layers,
                     moe_router_topk=self.config.moe_router_topk,
                     policy_version=self.config.policy_version,
                 )
+                # 分支注释只回链**入训轮**（掉落轮不支撑任何 mask=1 token；
+                # S1-7a token 锚定匹配的产物），空则回退 facts 原单
+                # （全 mask=0 的叶链在 gate 层按 no_trainable_tokens 收口）。
+                used_record_ids.append(
+                    tuple(tape.record_id for tape in used)
+                    or tuple(facts.capture_record_ids)
+                )
+            leaf_facts = [
+                LeafFacts(
+                    branch_id=facts.branch_id,
+                    capture_record_ids=used_ids,
+                    context_runs=facts.context_runs,
+                    lineage=facts.lineage,
+                )
+                for facts, used_ids in zip(leaf_facts, used_record_ids)
+            ]
             audit.step("step5_leaf_samples_assembled_and_backfilled")
 
             stage = "finalize"
@@ -1138,6 +1208,7 @@ class RolloutOrchestrator:
                 hook=hook,
                 audit=audit,
                 evaluation=evaluation,
+                top_p=top_p,
             )
         except asyncio.CancelledError:
             raise
@@ -1149,7 +1220,9 @@ class RolloutOrchestrator:
                     detail=str(exc)[:500],
                 )
             )
-            return self._abort_result(sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task)
+            return self._abort_result(
+                sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=top_p
+            )
         finally:
             if session_open:
                 try:
@@ -1254,6 +1327,24 @@ class RolloutOrchestrator:
             if not check.ok:
                 raise SlimeBindingError(
                     "rollout_testbed_lineage_failed", check.failure_message()[:500]
+                )
+
+            # 基线未跟踪清单（S1-7a 远程回归发现）：部分官方镜像 /testbed 自带
+            # 未跟踪构建残留（实测 psf__requests-1142 的 build/lib/**），必须在
+            # harness 动工前存证，评分导出（EXPORT_PATCH_SCRIPT）按清单排除，
+            # 否则 patch 掺入非 agent 产物且重放必失败（already exists）。
+            snapshot = await self._docker(
+                "exec",
+                name,
+                "bash",
+                "-c",
+                f"cd {task.workdir} && "
+                + BASE_UNTRACKED_SNAPSHOT_SCRIPT.format(manifest=BASE_UNTRACKED_MANIFEST),
+            )
+            if snapshot.exit_code != 0:
+                raise SlimeBindingError(
+                    "rollout_base_untracked_snapshot_failed",
+                    f"基线未跟踪清单生成失败：{snapshot.stderr.strip()[-300:]}",
                 )
 
             for path, payload, what in (
@@ -1462,6 +1553,7 @@ class RolloutOrchestrator:
         hook: GenerationCaptureHook,
         audit: RolloutAudit,
         evaluation: bool,
+        top_p: float | None = None,
     ) -> list[Any]:
         """步骤 9：先透传组修复信号（P4：组装配前可见），再决定交付或剔除。"""
 
@@ -1477,7 +1569,7 @@ class RolloutOrchestrator:
             # abort 形状剔除；完整判定依据在 sidecar（artifact 旁路已落盘）。
             audit.step("step9_degraded_signal_forwarded")
             return self._abort_result(
-                base_sample, reason="rh2_gate_degraded", task=task, report=report
+                base_sample, reason="rh2_gate_degraded", task=task, report=report, top_p=top_p
             )
 
         grading_reward = finalized.grading_report.reward
@@ -1489,6 +1581,10 @@ class RolloutOrchestrator:
             base_sample.response_length = 1
             base_sample.loss_mask = [0]
             base_sample.rollout_log_probs = [0.0]
+            if top_p is not None and top_p < 1.0:
+                # 与 _abort_result 同理：top-p 训练配置下占位样本也必须带零宽 tape。
+                base_sample.rollout_top_p_token_ids = []
+                base_sample.rollout_top_p_token_offsets = [0, 0]
             base_sample.reward = float(grading_reward or 0.0)
             base_sample.remove_sample = True
             _set_status(base_sample, "completed")
@@ -1602,14 +1698,28 @@ class RolloutOrchestrator:
         reason: str,
         task: RolloutTaskSpec,
         report: Any | None = None,
+        top_p: float | None = None,
     ) -> list[Any]:
-        """slime 例程 _abort_result 的同形收口：标记剔除并保持 fan-out 列表形状。"""
+        """slime 例程 _abort_result 的同形收口：标记剔除并保持 fan-out 列表形状。
+
+        top-p 补充（S1-7a 源码核对推翻差异假设 7 的"逐字段照抄即可"）：
+        `rollout_top_p != 1.0` 时 slime `_convert_samples_to_train_data` 对
+        **每条**样本（含 remove_sample 剔除样本）断言 top-p 双字段在场且
+        `len(offsets) == response_length + 1`——例程 abort 形状缺这两个字段，
+        在 top-p 训练配置下整个 batch 转换会当场 assert 崩。剔除样本没有任何
+        可训练 token，如实回填零宽 tape：ids=[]、offsets=[0,0]（response_length
+        =1 的占位 token 核集合为空）。top_p 为 None 或 1.0 时保持例程原形状
+        （此时 slime 反过来要求字段**不在场**，混填会让 batch 收集分叉）。
+        """
 
         sample.tokens = [0, 0]
         sample.response = ""
         sample.response_length = 1
         sample.loss_mask = [0]
         sample.rollout_log_probs = [0.0]
+        if top_p is not None and top_p < 1.0:
+            sample.rollout_top_p_token_ids = []
+            sample.rollout_top_p_token_offsets = [0, 0]
         sample.reward = 0.0
         sample.remove_sample = True
         _set_status(sample, "aborted")

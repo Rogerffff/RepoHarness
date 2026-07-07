@@ -693,8 +693,28 @@ async def test_gate_degraded_path_signal_forwarded_and_artifacts_written(tmp_pat
     assert aborted.metadata["abort_reason"] == "rh2_gate_degraded"
     assert aborted.metadata["eligibility_report_ref"] == report.report_id
     assert aborted.metadata["training_eligibility_class"] == "audit_only_or_rejected"
+    # top-p 训练配置（SAMPLING_PARAMS top_p=0.95）下剔除样本必须带零宽 tape：
+    # slime _convert_samples_to_train_data 在 rollout_top_p!=1.0 时对每条样本
+    # （含 remove_sample）断言双字段在场且 len(offsets)==response_length+1
+    # （S1-7a 源码核对，差异假设 7 的修正）。
+    assert aborted.rollout_top_p_token_ids == []
+    assert aborted.rollout_top_p_token_offsets == [0, 0]
+    assert len(aborted.rollout_top_p_token_offsets) == aborted.response_length + 1
     # 清理照常执行
     assert len(chain.docker.removed) == 1
+
+
+async def test_abort_shape_keeps_stock_fields_when_top_p_is_one():
+    """top_p=1.0 时 abort 形状必须与 slime 例程逐字段一致（不带 top-p 字段）：
+    此时 slime 转换按 samples[0] 是否带字段分叉收集，混填会让 batch 收集崩。"""
+
+    chain = build_dense_chain(infra_grading=True)
+    params = {**SAMPLING_PARAMS, "top_p": 1.0}
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, params)
+    aborted = result[0]
+    assert aborted.remove_sample is True
+    assert getattr(aborted, "rollout_top_p_token_ids", None) is None
+    assert getattr(aborted, "rollout_top_p_token_offsets", None) is None
 
 
 async def test_cleanup_failure_injection_records_failure_category():
@@ -1036,6 +1056,102 @@ def test_backfill_rejects_turn_run_mismatch():
         ),
     )
     # 叶链有两个 mask=1 段，但只回链一轮 -> 对不上就炸（fail-closed）
+    with pytest.raises(SlimeBindingError, match=r"^\[capture_turns_vs_mask_runs_mismatch\]"):
+        backfill_leaf_sample(leaf, hook.tapes)
+
+
+def _mk_hook_with_turns(turn_outputs: list[list[int]], prompt: list[int]) -> GenerationCaptureHook:
+    hook = GenerationCaptureHook(
+        trajectory_id="traj_match",
+        model_name="m",
+        backend_name="sglang",
+        backend_version="0.5.13",
+        renderer_cls_name="Qwen3Renderer",
+        tokenizer_name="t",
+        template_hash=SHA_TEMPLATE,
+    )
+    for output_ids in turn_outputs:
+        hook.on_generate_response(
+            prompt_token_ids=prompt,
+            sampling_params={
+                **SAMPLING_PARAMS,
+                "return_top_p_token_ids": True,
+                "return_routed_experts": False,
+            },
+            response=sglang_response(
+                rid=f"r{len(hook.records)}",
+                output_ids=output_ids,
+                top_p_ids=list(range(3 * len(output_ids))),
+                top_p_offsets=topp_offsets([3] * len(output_ids)),
+            ),
+        )
+    return hook
+
+
+def test_backfill_token_anchored_turn_drop():
+    """S1-7a 实机形态 1（REALIGN 整轮掉落，django-16139 实测 3 段 vs 4 轮）：
+    掉落轮的 token 以 mask=0 上下文留在序列，token 锚定匹配须跳过该轮、
+    只回链入训轮，top-p 合并只含入训轮的核集合。"""
+
+    prompt = [1, 2, 3]
+    t1, t_dropped, t2 = [11, 12], [21, 22, 23], [31, 32]
+    # 序列 = prompt + t1(mask1) + dropped(mask0 上下文) + t2(mask1)
+    leaf = FixtureSlimeSample(
+        tokens=prompt + t1 + t_dropped + t2,
+        response_length=len(t1) + len(t_dropped) + len(t2),
+        loss_mask=[1] * len(t1) + [0] * len(t_dropped) + [1] * len(t2),
+        rollout_log_probs=[-0.1] * 7,
+        weight_versions=[],
+        rollout_id=1,
+        index=0,
+    )
+    hook = _mk_hook_with_turns([t1, t_dropped, t2], prompt)
+    used = backfill_leaf_sample(leaf, hook.tapes, policy_version="wv1")
+    assert [tape.record_id for tape in used] == [
+        hook.tapes[0].record_id,
+        hook.tapes[2].record_id,
+    ]  # 掉落轮不入训
+    # top-p 合并：入训 4 token（每 token 核 3）+ mask0 位置零宽 pad
+    assert len(leaf.rollout_top_p_token_offsets) == leaf.response_length + 1
+    assert leaf.rollout_top_p_token_offsets[-1] == 3 * 4
+    assert leaf.weight_versions == ["wv1", "wv1"]
+
+
+def test_backfill_token_anchored_tiling_two_turns_one_run():
+    """S1-7a 实机形态 2（相邻轮无工具 token -> 两轮连成一个 mask=1 段）：
+    平铺匹配按 token 逐位切开，两轮 tape 顺序拼接。"""
+
+    prompt = [1, 2, 3]
+    t1, t2 = [11, 12], [21, 22, 23]
+    leaf = FixtureSlimeSample(
+        tokens=prompt + t1 + t2,
+        response_length=5,
+        loss_mask=[1] * 5,  # 一个连续段覆盖两轮
+        rollout_log_probs=[-0.1] * 5,
+        weight_versions=[],
+        rollout_id=1,
+        index=0,
+    )
+    hook = _mk_hook_with_turns([t1, t2], prompt)
+    used = backfill_leaf_sample(leaf, hook.tapes)
+    assert len(used) == 2
+    assert leaf.rollout_top_p_token_offsets == topp_offsets([3] * 5)
+
+
+def test_backfill_token_anchored_rejects_unbacked_tokens():
+    """mask=1 token 与任何捕获轮 token 都对不上 -> 当场炸（比旧版更严：逐位）。"""
+
+    prompt = [1, 2, 3]
+    leaf = FixtureSlimeSample(
+        tokens=prompt + [99, 98],  # 与捕获轮 [11,12] 不同
+        response_length=2,
+        loss_mask=[1, 1],
+        rollout_log_probs=[-0.1] * 2,
+        weight_versions=[],
+        rollout_id=1,
+        index=0,
+    )
+    hook = _mk_hook_with_turns([[11, 12]], prompt)
     with pytest.raises(SlimeBindingError, match=r"^\[capture_turns_vs_mask_runs_mismatch\]"):
         backfill_leaf_sample(leaf, hook.tapes)
 
