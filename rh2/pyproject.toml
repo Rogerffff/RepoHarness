@@ -39,3 +39,6 @@ package = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "docker: 需要本机 docker daemon 的评分容器行为测试（S1-4；daemon 不可用时自动跳过，本机验收须实跑 pytest -m docker）",
+]
