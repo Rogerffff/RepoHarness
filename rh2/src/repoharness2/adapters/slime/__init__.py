@@ -1,5 +1,25 @@
-"""slime 绑定：训练主线的投影 adapter（S1-3）与编排胶水（S1-6，未来）。"""
+"""slime 绑定：训练主线的投影 adapter（S1-3）与 custom_generate 编排胶水（S1-6）。"""
 
+from repoharness2.adapters.slime.generate import (
+    LIFECYCLE_STEPS,
+    CleanupFailureRecord,
+    GenerationCaptureHook,
+    HarnessDriver,
+    LeafFacts,
+    RolloutAudit,
+    RolloutFailureRecord,
+    RolloutOrchestrator,
+    RolloutTaskSpec,
+    SessionAdapter,
+    SlimeBindingConfig,
+    SlimeBindingError,
+    StartupCheckError,
+    TurnTape,
+    backfill_leaf_sample,
+    rh2_custom_generate,
+    rollout_task_from_bundle_pair,
+    startup_checks,
+)
 from repoharness2.adapters.slime.projection import (
     ResponseContextRun,
     SlimeBranchAnnotation,
@@ -11,11 +31,29 @@ from repoharness2.adapters.slime.projection import (
 )
 
 __all__ = [
+    "LIFECYCLE_STEPS",
+    "CleanupFailureRecord",
+    "GenerationCaptureHook",
+    "HarnessDriver",
+    "LeafFacts",
     "ResponseContextRun",
+    "RolloutAudit",
+    "RolloutFailureRecord",
+    "RolloutOrchestrator",
+    "RolloutTaskSpec",
+    "SessionAdapter",
+    "SlimeBindingConfig",
+    "SlimeBindingError",
     "SlimeBranchAnnotation",
     "SlimeProjectionError",
     "SlimeRewardInput",
+    "StartupCheckError",
+    "TurnTape",
     "assert_renderer_class",
+    "backfill_leaf_sample",
     "decode_int32_tape",
     "project_from_slime",
+    "rh2_custom_generate",
+    "rollout_task_from_bundle_pair",
+    "startup_checks",
 ]
