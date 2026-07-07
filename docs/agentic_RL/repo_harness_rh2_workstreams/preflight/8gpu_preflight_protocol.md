@@ -44,11 +44,43 @@ rollout 分区（mem-fraction 0.75）：
   4 卡 TP4×1 引擎：权重 15GB/卡，KV 池 ~228GB ≈ 76 条
   FP8 KV 使容量翻倍；GRPO n=8 同组共享 prompt 前缀（radix cache），
   实际并发容量显著高于上述下界
-候选拓扑：T1 colocate 8 卡（对照基线）/ T2 分离 6 训+2 推 / T3 分离 4+4
+候选拓扑（2026-07-08 第三轮修订，rollout-heavy 对齐行业惯例）：
+  T1 colocate 8 卡  ——纯同步对照（slime train_async.py:11 断言禁
+     colocate：colocate 模式下没有双缓冲，只有 train.py 全同步）
+  T2′ 分离 2 训 + 6 推 ——对齐 MAI 推理:训练 5.3:1（4096:768 GB300）
+     与 RollArt 3:1 的 rollout-heavy 惯例；风险 = 2 卡训练 step 变慢
+     反而拉长双缓冲周期，J3 实测定夺
+  T3 分离 4 + 4     ——slime fully_async 官方示例同款
+     （examples/fully_async：ACTOR 4 / ROLLOUT 4 / TP2×2 引擎）
 时间换显存旋钮清单（按代价从小到大）：
   --sglang-mem-fraction-static 下调 / FP8 KV / --recompute-granularity full
   （已默认）/ --optimizer-cpu-offload（必开）/ --offload-train·--offload-rollout
   （colocate 换入换出）/ CP=2 / mbs=1 + --use-dynamic-batch-size
+```
+
+## 1.6 异步档位决策（2026-07-08 第三轮调研定案，证据两线程交叉）
+
+**行业证据**：bounded-staleness 异步是分离式大规模 SWE RL 主流（MAI/GLM-5/Composer/RollArt/MiniMax 全带显式准入界），但**上限很紧**——RollArt 默认 α=1 且实测 α=2 后期退化；MiniMax lag 上限个位数；最松的 MAI 也只有 8 次推理更新（40 梯度步）。反例：Kimi K2 同规模刻意选 colocate 同步 + partial rollout（<30s 全参更新）。正确表述是"尽量异步 + 很紧的界"。
+
+**slime 现状（源码级核查）**：分离 + fully_async 是官方支持形态，但四个缺口——
+① partial-rollout 的 token 级续接**未接入** fully_async 路径（README 明示 aborted 组"starts over"；样本 tokens 保留使续跑可能意外生效但官方不支持）；
+② `--mask-offpolicy` 在 fully_async 下有盲区（引擎 pause/continue 使单次 generate 内 token 跨版本且不被 mask）；
+③ **`--dynamic-sampling-filter-path` 与 `--over-sampling-batch-size` 在 fully_async 路径静默失效**（过滤逻辑只在 sglang_rollout 标准路径）——E2 定案的"动态采样默认开"在该路径不成立，需自建；
+④ 无原生 staleness 准入旋钮——但记账字段齐全（`Sample.weight_versions` list，types.py:120/382）+ 天然插入点（`--buffer-filter-path`）。
+
+**定案**：
+```text
+首训档位 = 分离放置（T2′/T3 由 J3/J4b 定）+ train_async 双缓冲
+  + staleness 记账（不准入，只记录）。
+  理由：双缓冲结构性 staleness 上界 ≈ 1×update_interval 个版本，
+  天然落在行业最紧实践（α=1）内，不需自建准入；
+  fully_async 的四缺口不该由首训背。
+staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
+  handshake 字段 → gate 记录分布（为升级决策与 E8 资源证据备数）。
+升级档位（预注册触发）= fully_async + 自建三件
+  （buffer_filter staleness 准入 α=1 / custom_generate 内重写
+  DAPO 过滤 / 整组同版本准入策略）。
+  触发条件：J4b 或首训实测 rollout 尾部空闲 > 每步墙钟的 25%。
 ```
 
 ## 2. 作业序列（按信息量排序，总时间盒 ≤ 24h 墙钟）
@@ -59,9 +91,11 @@ rollout 分区（mem-fraction 0.75）：
 | J1 | PCIe all-to-all 微基准（nccl-tests `alltoall_perf`，2/4/8 卡三档） | 0.5h | U-C 带宽项 |
 | J2 | 推理侧 8 卡 serving 冒烟：SGLang 30B，TP/DP/EP 按 slime 示例缩配，32k 上下文，记 tokens/s 与显存 | 1h | 训推共存的推理半边 |
 | J3 | **训练侧并行配置扫描（核心矩阵）**：合成固定 batch 过 Megatron train step | 4h | U-C 内核/显存/step 时间 |
-| J4 | **全要素（S1-7b 本体）**：custom_generate，8 题 × n=2，E2 生产 flags，真实训练 step——在 T2（分离 6+2）拓扑上执行 | 3h | S1-7b + tape 消费 |
-| J4b | **拓扑/异步对比（2026-07-08 增补）**：T1 colocate 同步 vs T2 分离+train_async 双缓冲，各连跑 3 步，记每步墙钟分解与 GPU util 曲线 | 2h | 放置模式决策 |
-| J5 | 权重同步与切换：**跨分区 update_weights 耗时（分离拓扑的关键成本项）**、colocate 的 offload/onload 显存曲线（并入 J4/J4b 尾部） | 0.5h | U-C 切换项 + 权重同步 |
+| J4 | **全要素（S1-7b 本体）**：custom_generate，8 题 × n=2，E2 生产 flags，真实训练 step——在 T3（4+4，官方示例同款）执行 | 3h | S1-7b + tape 消费 |
+| J4b | **拓扑/异步对比（第三轮修订）**：T1 colocate 同步 vs T3 双缓冲 vs T2′ 双缓冲，各连跑 2~3 步，记每步墙钟分解、GPU util 曲线、**rollout 尾部空闲占比**（升级档位触发条件的基线数） | 2.5h | 放置模式决策 |
+| J4c | **fully_async 冒烟（30min）**：官方示例配置起 fully_async，验证可启动 + **实测 aborted 组重取时 token 复用行为**（README 称 starts over，但 tokens 保留可能意外续跑——记录真实语义供升级档位用） | 0.5h | 升级档位可行性 |
+| J5 | 权重同步与切换：跨分区 update_weights 的**耗时、节奏与字节量**（pause/flush/continue 三段停顿分解；`--update-weight-buffer-size` 512MB 默认对 MoE 两遍 pass 的敏感度扫 2 档）、colocate 的 offload/onload 显存曲线 | 1h | U-C 切换项 + 权重同步 |
+| J5b | **异步正确性与质量测量（两线程调研增补）**：见下方专项清单 | 并入 J3/J4 | staleness/数值正确性 |
 | J6 | 吞吐画像汇总与 E6 回填（分析，不占机时；机器可提前退租） | — | E6/C3 |
 | J7 | 可选：若本机即训练机，按 DF-6 runbook 批量同步镜像（与 J3/J4 并行，吃网络不吃 GPU） | 后台 | 数据侧准备 |
 
@@ -70,11 +104,12 @@ rollout 分区（mem-fraction 0.75）：
 ```text
 固定：Qwen3-30B-A3B bf16、E2 生产 flags、--optimizer-cpu-offload、
      sequence-parallel 开、合成 batch = 64 条 × 目标长度
-主轴 A 训练分区规模 × 并行组合（对应 §1.5 三种拓扑的训练侧）：
-     A1 6 卡 · TP2×DP3       （T2 首选：DP3 摊薄 offload 优化器带宽）
-     A2 4 卡 · TP2×DP2       （T3）
-     A3 8 卡 · TP2×DP4       （T1 colocate 的训练态，兼作对照）
-     A4 6 卡 · TP2×EP2 变体   （仅当 EP 通信在 J1 实测中可接受才试）
+主轴 A 训练分区规模 × 并行组合（对应 §1.5 拓扑的训练侧，第三轮修订）：
+     A1 2 卡 · TP2×DP1       （T2′ 训练侧：必测——它决定 rollout-heavy
+                              是否被训练步反噬；重点记 offload 带宽瓶颈）
+     A2 4 卡 · TP2×DP2       （T3 训练侧，官方示例同款）
+     A3 6 卡 · TP2×DP3       （回退候选：仅当 A1/A2 step 过慢）
+     A4 8 卡 · TP2×DP4       （T1 colocate 的训练态，对照）
      A5 任一 · CP=2          （仅当 32k 显存不够时启用）
 主轴 B 上下文：32k（目标档）→ 24k（降级档）
 副轴 mbs：1 → 2（显存允许才试）
@@ -82,6 +117,29 @@ rollout 分区（mem-fraction 0.75）：
      是否 OOM / 内核报错摘要
 执行序：A1×32k×mbs1 起步；通过 → 扫 A2/A3 比速度；
      OOM → 先 mbs 后 CP 后 24k，记录降档路径
+```
+
+### J5b 专项清单（报告实践 + slime 源码两轮调研的增补测量，随 J3/J4/J4b 顺带采集）
+
+```text
+M1 staleness 直方图：Sample.weight_versions 的长度与版本跨度分布
+   （一条 SWE 轨迹平均跨几个 policy version——升级档位 α 定档的实测依据）
+M2 训推 logprob 失配：同批 token 的 rollout logprob vs trainer 重算
+   logprob 的逐 token 差分布（MAI 一等监控项："小失配跨长轨迹复合
+   会破坏 IS 校正"；这是 GRPO 正确性项）
+M3 update 停顿吞吐塌陷：单次 update_weights 造成的 rollout 吞吐
+   下陷深度与恢复时长（pause/flush 清 KV 后前缀重算的代价）
+M4 abort 回收率与浪费：每次权重更新 abort 的在途组数、被丢弃重算的
+   token 量（有效算力利用的直接扣减项）
+M5 router 排队与 prefix cache 命中率：X-SMG-Routing-Key 一致性路由下
+   GRPO 同组是否稳定命中同引擎（组内 8 兄弟共享前缀的 KV 收益实测）
+M6 DP 序列打包失衡：各 DP rank 的 token 负载差（Composer 每步全局
+   packing 的动因；失衡即空泡）
+M7 生成引擎故障率：SGLang 引擎崩溃/超时次数与恢复行为
+   （MAI 三层看门狗的动因；Nemotron 56% 故障来自生成引擎）
+M8 优化器状态与权重推送的交互观察：若采用 per-step 推送，
+   记录 loss/grad-norm 在推送前后的行为（GLM-5 每次推送后重置
+   优化器的动因——slime 无此机制，观察是否需要）
 ```
 
 ### J4 判据（全要素 step 的六项断言）
@@ -103,11 +161,14 @@ rollout 分区（mem-fraction 0.75）：
 绿灯（S4 可按 E6 现行预算排期）：
   J3 最优配置的训练 step（64 轨迹 × ~20k token、32k 上下文）≤ 15min
   且 J4 六项全过，**且 J4b 产出明确的放置模式决策**——
-  预期主案 = T2 分离 + train_async 双缓冲（一步 off-policy，staleness
-  字段照 handshake schema 记录）；colocate 仅当 J4b 显示分离的
-  update_weights 跨分区开销吃掉全部重叠收益时才回退。
-  异步二档（fully_async_rollout + partial-rollout + mask-offpolicy）
-  作为 S4 中期若尾部仍主导时的升级项，本轮只验证其可启动性（30min 冒烟）。
+  预期主案 = 分离（T2′ 或 T3，按 J4b 的每步墙钟与尾部空闲占比定）
+  + train_async 双缓冲 + staleness 记账（§1.6 定案；双缓冲的
+  结构性 staleness 上界即行业最紧实践 α≈1，无需自建准入）。
+  colocate 仅当 J4b 显示跨分区 update_weights 开销吃掉全部重叠收益
+  时才回退（注意 colocate 在 slime 里无双缓冲，纯同步）。
+  升级档位（fully_async + 自建三件）触发条件预注册：
+  rollout 尾部空闲 > 每步墙钟 25%（J4b 与首训双处测量）；
+  本轮 J4c 只验证可启动性与 aborted 组 token 复用真实语义。
 黄灯（可开训但重排预算）：step ∈ 15~30min → E6 步数上限按 C3 反推收紧，
   或采纳 24k 上下文档；沙箱并发杠杆（16→32）优先于降步数。
 红灯（触发放弃线，停下与用户重议）：
