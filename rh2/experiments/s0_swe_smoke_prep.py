@@ -6,7 +6,9 @@
     2. 用 pinned swebench（4.1.0）的 make_test_spec 生成每题的官方 eval 脚本
        （含 golden test_patch、官方测试命令与 '>>>>> Start/End Test Output' 标记）。
     3. 向 Docker Hub registry API 核对每题官方 x86_64 镜像存在，并记录 manifest digest。
-    4. 写出 rh2/src/repoharness2/taskset/data/swe_smoke_tasks.json。
+    4. 写出 rh2/src/repoharness2/envpack/data/swe_smoke_tasks.json（S1-2 起题目数据归
+       envpack 库层所有；重新生成后必须同步重跑 `python -m repoharness2.envpack.freeze`
+       再生成 frozen_v1.json，否则加载时防漂移校验会 fail-closed 拒绝）。
 
 C6 选题标准与本次落点：
     - 官方预构建 x86_64 镜像存在：docker.io/swebench/sweb.eval.x86_64.<instance_id 中
@@ -30,7 +32,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OUT_PATH = (
-    REPO_ROOT / "rh2" / "src" / "repoharness2" / "taskset" / "data" / "swe_smoke_tasks.json"
+    REPO_ROOT / "rh2" / "src" / "repoharness2" / "envpack" / "data" / "swe_smoke_tasks.json"
 )
 
 DATASET = "princeton-nlp/SWE-bench_Verified"
