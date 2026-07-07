@@ -21,7 +21,12 @@ E6 回填  "训练 step 10~30min" 纸面估算 → 实测；C3 墙钟反推的�
 ```text
 P-1 slime 镜像 digest 已 pin（S1-0 产物）且 U-H 已关闭
 P-2 S1 闭环代码 commit 固定；7a 报告在手（bring-up 链路已验证）
-P-3 Qwen3-30B-A3B 权重的获取方案确认（~60GB：租用机带宽实测后
+P-3 Qwen3-30B-A3B 权重的获取方案确认——**双路径（codex 二轮核查）**：
+    rollout 侧用 HF checkpoint；训练侧必须先用 slime 的
+    convert_hf_to_torch_dist.py 转成 Megatron torch_dist 格式
+    （转换命令、模型脚本、路径与 digest 全部入 evidence；转换本身
+    需要 GPU/大内存，计入 J0 时间盒或提前在单卡租用时做）
+    （~60GB：租用机带宽实测后
     决定现场拉取还是对象存储中转；下载时间计入 J0 时间盒）
 P-4 8 题冻结集镜像引用与 J4 运行配置写成脚本（复用 S0 探针形态）
 P-5 nccl-tests 二进制或构建脚本备好（J1 用）
@@ -126,13 +131,45 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
      A3 6 卡 · TP2×DP3 · EP2·ETP1     （回退候选：仅当 A1/A2 step 过慢）
      A4 8 卡 · TP4×CP2 · EP8          （slime 官方测试同款，T1 对照）
      A5 任一 · CP=2                   （仅当 32k 显存不够时启用）
-每个组合的启动配置必须完整写出（租卡前入脚本，P-4）：
-     --expert-model-parallel-size / --expert-tensor-parallel-size /
-     --moe-token-dispatcher-type（alltoall 起步，DeepEP 视 J1 结果）/
-     --use-rollout-routing-replay（V4/M1 硬前提，必开）/
-     SGLang 侧 --enable-ep-moe 与 engine TP / update_weight 传输方式
-     （分离=NCCL distributed，colocate=IPC tensor）——
+每个组合的启动配置必须完整写出（租卡前入脚本，P-4；
+     完整清单见下方"J3 附：四组启动参数清单"）——
      失败时才分得清是硬件、拓扑还是参数写错。
+
+### J3 附：四组启动参数清单（codex 二轮核查修正版，租卡前逐组入脚本）
+
+```text
+① checkpoint / model args：
+   训练侧 torch_dist（P-3 转换产物）+ rollout 侧 HF 路径分别指定；
+   所有训练脚本必须 source scripts/models/qwen3-30B-A3B.sh
+   （--num-experts 128 / --moe-router-topk 8 / --moe-router-dtype fp32 /
+   --moe-grouped-gemm / --moe-permute-fusion 等模型参数由它展开），
+   并在 evidence 中 dump 展开后的 MODEL_ARGS。
+② train parallel + MoE args（按 A1~A5 逐组合填）：
+   TP/PP/EP/ETP/DP + --moe-token-dispatcher-type（alltoall 起步，
+   DeepEP 视 J1 结果）+ --use-rollout-routing-replay（V4/M1 硬前提，必开）
+   + 长上下文显存三件套（每拓扑必填）：--micro-batch-size 1 /
+   --log-probs-chunk-size 1024（32k 下 logprob 重算的隐藏 OOM 点）/
+   --max-tokens-per-gpu = CTX/CP。
+③ rollout SGLang args（两种模式二选一，写明）：
+   模式甲 TP-only 多引擎：--rollout-num-gpus-per-engine N（=TP）；
+   模式乙 DP/EP：--sglang-dp-size / --sglang-ep-size /
+   --sglang-enable-dp-attention / --sglang-enable-dp-lm-head /
+   --sglang-moe-dense-tp-size 1，可选 DeepEP：
+   --sglang-moe-a2a-backend deepep + --sglang-deepep-mode auto。
+   （注意：不存在 "--enable-ep-moe" 这个参数——上一稿笔误，已订正）
+④ async + weight sync + transport args：
+   --update-weight-mode / --update-weight-transport（分离基线 =
+   full + nccl；colocate = IPC tensor）/ --update-weights-interval 1 /
+   --update-weight-buffer-size（512MB 起，J5 扫 2 档）/
+   --rollout-data-transport（基线现值；NIXL 作为可选记录项，
+   slime 30B R3 测试用 nixl）。
+算法 flags（J4 用，写死不现场配）：E2 定案 = --advantage-estimator grpo
+   + n=4 + --eps-clip 0.2 / --eps-clip-high 0.28 +
+   --disable-grpo-std-normalization + 动态采样 filter；
+   --use-tis 的开关决策挂 M2 实测（失配大则开）。
+   旁注：slime 官方 30B-A3B R3 测试用 gspo + --use-tis +
+   --eps-clip 4e-4——这是 T5 预案（GSPO 切换）的现成参照配置。
+```
 主轴 B 上下文：32k（目标档）→ 24k（降级档）
 副轴 mbs：1 → 2（显存允许才试）
 每格记录：step 墙钟 / 显存峰值（train 态）/ tokens/s /
@@ -170,7 +207,10 @@ M3 update 停顿吞吐塌陷：单次 update_weights 造成的 rollout 吞吐
 M4 abort 回收率与浪费：每次权重更新 abort 的在途组数、被丢弃重算的
    token 量（有效算力利用的直接扣减项）
 M5 router 排队与 prefix cache 命中率：X-SMG-Routing-Key 一致性路由下
-   GRPO 同组是否稳定命中同引擎（组内 8 兄弟共享前缀的 KV 收益实测）
+   GRPO 同组是否稳定命中同引擎（组内 8 兄弟共享前缀的 KV 收益实测）。
+   **前提（codex 二轮核查）：同组同引擎不是自动成立**——slime 默认
+   可能给每个 sample 不同 session id；custom_generate 必须显式把
+   routing key 设为 group 级（同组同 key），否则 M5 数字不可解释。
 M6 DP 序列打包失衡：各 DP rank 的 token 负载差（Composer 每步全局
    packing 的动因；失衡即空泡）
 M7 生成引擎故障率：SGLang 引擎崩溃/超时次数与恢复行为
@@ -183,7 +223,7 @@ M8 优化器状态与权重推送的交互观察：若采用 per-step 推送，
 ### J4 判据（全要素 step 的六项断言）
 
 ```text
-1. rollout（8 题 × n2，top_p=0.95）经 S1 链路产出合格 Sample；
+1. rollout（8 题 × n=4，top_p=0.95；n=2 仅作显式关 filter 后的降级档）经 S1 链路产出合格 Sample；
 2. 启动期探针：renderer 类名断言（U-G）+ top-p tape 探针（U-H 同款）通过；
 3. loss 路径消费 rollout_top_p_token_ids/offsets 与 rollout_routed_experts
    无 raise、loss 有限值；
@@ -242,7 +282,7 @@ J5：update_weights 耗时 / sleep-resume 前后显存
 **时机（2026-07-08 修订）**：**S2 末 / S3 初——环境验证门完成之后**，不与 8 卡作业同期提前。理由（用户评审提出，采纳）：
 1. pass-rate 有效性依赖环境门先行——golden patch 跑不通的坏环境 pass-rate 恒 0，分不清"题难"还是"环境坏"；flaky 环境的 pass-rate 是噪声。漏斗顺序以 DF-7 为准：静态门 → 环境验证门 → GPU pass-rate 筛。
 2. 无关键路径收益——预筛的消费者（bring-up 题单）本来就等 S2 ingestion。
-3. 30B 早期行为信号由本协议 J4 覆盖（8 题 × n2 全要素即迷你行为冒烟），不需为此提前烧完整诊断。
+3. 30B 早期行为信号由本协议 J4 覆盖（8 题 × n4 全要素即迷你行为冒烟），不需为此提前烧完整诊断。
 
 ```text
 输入：static_gate_survivors 216 题中**通过 S2 环境验证门**的存活集
