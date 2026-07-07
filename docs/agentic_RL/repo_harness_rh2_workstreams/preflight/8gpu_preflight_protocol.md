@@ -109,23 +109,26 @@ J5：update_weights 耗时 / sleep-resume 前后显存
 
 ## 6. 姊妹单卡作业：pass-rate 预筛 + pre-RL 行为诊断（A3 归属落地）
 
-**时机**：S1 收口后即可，独立于 8 卡作业（可先跑）。单卡 96GB，S0 已证 30B 推理可行。
+**时机（2026-07-08 修订）**：**S2 末 / S3 初——环境验证门完成之后**，不与 8 卡作业同期提前。理由（用户评审提出，采纳）：
+1. pass-rate 有效性依赖环境门先行——golden patch 跑不通的坏环境 pass-rate 恒 0，分不清"题难"还是"环境坏"；flaky 环境的 pass-rate 是噪声。漏斗顺序以 DF-7 为准：静态门 → 环境验证门 → GPU pass-rate 筛。
+2. 无关键路径收益——预筛的消费者（bring-up 题单）本来就等 S2 ingestion。
+3. 30B 早期行为信号由本协议 J4 覆盖（8 题 × n2 全要素即迷你行为冒烟），不需为此提前烧完整诊断。
 
 ```text
-输入：bring-up 池 = static_gate_survivors 216 题（P1 冻结包）
+输入：static_gate_survivors 216 题中**通过 S2 环境验证门**的存活集
 配置：训练路径 eval 模式（同 harness 同栈）；T=1.0、top_p=0.95
-预算分层（控制单卡墙钟 ≈ 1 天）：
-  全量 216 题 × n=4  → pass-rate 粗估，过滤 [0.1,0.8]
+预算分层（控制单卡墙钟 ≈ 1 天，按环境门存活数等比缩放）：
+  存活全量 × n=4  → pass-rate 粗估，过滤 [0.1,0.8]
   诊断子集 60 题（分层抽）追加 × n=4 → 合计 n=8 的细估 + 诊断指标
 产出：
-  per-task pass-rate JSON（bring-up 题单的最终静态输入）
+  per-task pass-rate JSON（bring-up 题单的最终输入）
   诊断指标（E3 第 0 段硬门）：valid tool-call rate / submit rate /
     empty-patch rate / timeout rate / solve-none rate / 零方差组占比 /
     平均 turn 与 token——对照 E3 触发条件预演
 判据：诊断指标若显示行为崩坏（valid action / submit 大面积失败），
   按 E3 定案先修行为锚，不进 RL。
 后续批次（不在本作业）：held-out 候选与 R2E success-run 池的预筛，
-  等题单范围确定后按同规格分批。
+  等题单范围确定后按同规格分批（同样以各自环境验证门为前置）。
 ```
 
 ## 7. 结果回填清单（执行后逐项勾）
