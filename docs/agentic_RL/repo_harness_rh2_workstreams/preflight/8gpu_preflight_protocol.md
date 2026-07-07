@@ -38,6 +38,11 @@ P-7 主机内存分档确认：**400GB = 勉强最低线，≥512GB = 推荐线*
     30B 训练在本机不成立，直接进 §3 放弃线选项 (b)
 P-8 M2 采集脚本提前备好（基于 slime examples/train_infer_mismatch_helper
     的 mis.py 改）——不指望 24h 机时内现写
+P-9 pin 纪律（2026-07-08 增补）：P3 全程使用 S1-0 pin 的 slime 镜像与
+    pin 代码（e848052a）。上游已领先 8 commit，其中 680824dd 改了
+    routing tape 归一化契约（routed_experts_start_len）、c7487788 加了
+    --release-train——P3 期间禁止顺手升级；任何升级走 F6 契约测试先行，
+    且必须在 P3 之外单独执行（否则 P3 数据的可比性作废）。
 ```
 
 ## 1.5 拓扑候选与显存账（2026-07-08 增补：分离放置 + 异步为主案候选）
@@ -89,10 +94,15 @@ rollout 分区（mem-fraction 0.75）：
   fully_async 的四缺口不该由首训背。
 staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
   handshake 字段 → gate 记录分布（为升级决策与 E8 资源证据备数）。
-升级档位（预注册触发）= fully_async + 自建三件
-  （buffer_filter staleness 准入 α=1 / custom_generate 内重写
-  DAPO 过滤 / 整组同版本准入策略）。
-  触发条件：J4b 或首训实测 rollout 尾部空闲 > 每步墙钟的 25%。
+升级档位（预注册触发）= fully_async + 四缺口修补包。
+  **实现设计已细化至 slime_fully_async_upgrade_design.md（2026-07-08），
+  以该文档为准**（取代本行早先的"自建三件"概括）：
+  done_cb 接 dynamic_filter（缺口③，碰 core 极轻）→ starts-over+丢弃
+  过渡（缺口①——已升级为正确性问题：纯 starts-over 有系统性长度偏置，
+  短轨迹更易在更新间隔内完成）→ turn 级版本感知 mask + TIS 兜底
+  （缺口②，段边界我方掌握）→ staleness 准入 + worker 版本缓存（缺口④）
+  + N1 task 崩溃样本泄漏兜底。总量 ~7-9 人日（不含真续跑）。
+  触发条件不变：J4b 或首训实测 rollout 尾部空闲 > 每步墙钟的 25%。
 防误用断言（升级档启用时写进启动脚本）：若 rollout-function-path
   为 fully_async 且设置了 --dynamic-sampling-filter-path 或
   --over-sampling-batch-size，启动即 fail——防止误以为 DAPO
@@ -110,7 +120,7 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
 | J3 | **训练侧并行配置扫描（核心矩阵）**：合成固定 batch 过 Megatron train step | 4h | U-C 内核/显存/step 时间 |
 | J4 | **全要素（S1-7b 本体）**：custom_generate，8 题 × **n=4**（n=2 会被动态采样饿死 batch，与 S1-7a 的 A2 条款同款坑——注意对称性：fully_async 里怕 filter 静默失效，标准路径里怕 filter 活着饿死 batch；若必须 n=2 则显式关 filter 并记录偏离），E2 生产 flags，真实训练 step——在 T3（4+4，官方示例同款）执行 | 3h | S1-7b + tape 消费 |
 | J4b | **拓扑/异步对比（第三轮修订）**：T1 colocate 同步 vs T3 双缓冲 vs T2′ 双缓冲，各连跑 2~3 步，记每步墙钟分解、GPU util 曲线、**rollout 尾部空闲占比**。**预注册优先序：T3 先（直接复用 J4 的步数作 T3 数据点）→ T1 → T2′ 时间允许才做**；允许结论"T2′ 数据缺失，按 T3/T1 先定主案、T2′ 留首训期间对比" | 2.5h | 放置模式决策 |
-| J4c | **fully_async 冒烟（30min）**：官方示例配置起 fully_async，**设计成强制触发 abort**（长生成 + `update_weights_interval=1` + `save_debug_rollout_data`），**判定口径写死**：对比 abort 前后同 trajectory 的 `Sample.tokens` 前缀是否保留、response 重生成的分叉点位置、`response_length / loss_mask / weight_versions` 三字段一致性——只跑通不触发 abort 只能得到"能启动"一个 bit | 0.5h | 升级档位可行性 |
+| J4c | **fully_async 冒烟（30min，口径按升级设计 I-2 收窄）**：官方示例配置起 fully_async，**设计成强制触发 abort**（长生成 + `update_weights_interval=1` + `save_debug_rollout_data`）。**判定口径（2026-07-08 修订）**：标准 generate 路径的 token 级续跑已静态确证（`reuse_existing_input_ids` 链，见 `slime_fully_async_upgrade_design.md` §3 缺口①），**不再是本作业的未知**；J4c 的真正未知收窄为"**我方 custom_generate 对 ABORTED 组的实际行为**"——在 custom_generate 入口打点 `sample.status / len(tokens) / response_length` 三元组，确认是"带旧 token 重开沙箱从头跑"（旧 token 悬挂，最坏形态）还是干净重开。**顺带采集（I-3/N1/N2）**：`output_queue` size 曲线 + done_cb task 异常计数（升级设计新发现的静默泄漏与死锁风险面，监控成本一行） | 0.5h | 升级档位可行性 |
 | J5 | 权重同步与切换：跨分区 update_weights 的**耗时、节奏与字节量**（pause/flush/continue 三段停顿分解；`--update-weight-buffer-size` 512MB 默认对 MoE 两遍 pass 的敏感度扫 2 档）、colocate 的 offload/onload 显存曲线 | 1h | U-C 切换项 + 权重同步 |
 | J5b | **异步正确性与质量测量（两线程调研增补）**：见下方专项清单 | 并入 J3/J4 | staleness/数值正确性 |
 | J6 | 吞吐画像汇总与 E6 回填（分析，不占机时；机器可提前退租） | — | E6/C3 |
@@ -193,6 +203,9 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
 ```text
 M1 staleness 直方图：Sample.weight_versions 的长度与版本跨度分布
    （一条 SWE 轨迹平均跨几个 policy version——升级档位 α 定档的实测依据）。
+   增补（升级设计缺口②的可行性数据）：同时输出 turn 边界与版本边界的
+   对齐统计——"跨版本发生在轮间 vs 单轮内部"的比例，直接决定
+   turn 级版本 mask 方案能覆盖多少盲区。
    **采集点显式声明（codex 核查）**：slime 的 _convert_samples_to_train_data
    （ray/rollout.py:735）不透传 weight_versions——必须在我们的
    projection 层（消费转换前的 Sample）采集，或开 save_debug_rollout_data；
@@ -244,9 +257,10 @@ M8 优化器状态与权重推送的交互观察：若采用 per-step 推送，
   结构性 staleness 上界即行业最紧实践 α≈1，无需自建准入）。
   colocate 仅当 J4b 显示跨分区 update_weights 开销吃掉全部重叠收益
   时才回退（注意 colocate 在 slime 里无双缓冲，纯同步）。
-  升级档位（fully_async + 自建三件）触发条件预注册：
-  rollout 尾部空闲 > 每步墙钟 25%（J4b 与首训双处测量）；
-  本轮 J4c 只验证可启动性与 aborted 组 token 复用真实语义。
+  升级档位（fully_async + 四缺口修补包，详 slime_fully_async_upgrade_design.md）
+  触发条件预注册：rollout 尾部空闲 > 每步墙钟 25%（J4b 与首训双处测量）；
+  本轮 J4c 只验证可启动性与我方 custom_generate 对 ABORTED 组的实际行为
+  （标准路径续跑语义已静态确证，不再占用机时验证）。
 黄灯（可开训但重排预算）：step ∈ 15~30min → E6 步数上限按 C3 反推收紧，
   或采纳 24k 上下文档；沙箱并发杠杆（16→32）优先于降步数。
 红灯（触发放弃线，停下与用户重议）：
@@ -313,7 +327,9 @@ J5：update_weights 耗时 / sleep-resume 前后显存
 [ ] E1 定案栏：35B-A3B 升级选项重议（仅当 J3 显存/速度富余显著时）
 ```
 
-## 8. 交接给 S1 执行线的契约事项（下个检查点提出，防遗忘）
+## 8. 交接给 S1 执行线的契约事项【已交付：S1-9 全部落地，2026-07-08 核销】
+
+**状态**：H-1（weight_versions 透传 + gate 记分布不准入）、H-2（分离放置 + train_async 配置模板 `container_train_disaggregated.sh`）、H-3（分离拓扑 mock 冒烟）已随 S1-9 提交并通过 inspector（见 `s1/s1_acceptance_summary.json`）。以下保留原文供追溯。新增交接项 I-1（RoutingTensorRef 留 `routed_experts_start_len` 扩展位）归 S2 执行计划。
 
 ```text
 H-1 staleness 记账（S1-3 / S1-5 契约追加，成本极低）：
