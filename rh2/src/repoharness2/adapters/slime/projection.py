@@ -58,6 +58,8 @@ from repoharness2.contracts import (
     StrictModel,
     TokenSpan,
     TrajectoryProjection,
+    WeightVersionsHandshake,
+    derive_weight_version_max_lag,
 )
 from repoharness2.contracts._base import NonEmptyStr, SafeIdentifier
 from repoharness2.contracts.trajectory import (
@@ -969,6 +971,24 @@ def project_from_slime(
         rollout_loss_denominator=total_trainable,
     )
 
+    # staleness 记账（preflight §8 H-1）：Sample.weight_versions 在 slime 的
+    # _convert_samples_to_train_data 之后就没了，projection 层是唯一采集点。
+    # 原始 list 按（分支序, 轮次序）展平、保留重复；派生 max_lag 由契约校验器
+    # 与 derive_weight_version_max_lag 互检。全体 Sample 都无版本事实 -> None（诚实缺席）。
+    flattened_versions: list[str] = []
+    for sample in samples:
+        flattened_versions.extend(
+            str(version) for version in (getattr(sample, "weight_versions", None) or [])
+        )
+    staleness_handshake = (
+        WeightVersionsHandshake(
+            weight_versions=flattened_versions,
+            max_lag=derive_weight_version_max_lag(flattened_versions),
+        )
+        if flattened_versions
+        else None
+    )
+
     return TrajectoryProjection(
         trajectory_id=trajectory_id,
         task_id=task_id,
@@ -979,5 +999,6 @@ def project_from_slime(
         chat_template_hash=template_hash,
         branches=branches,
         reward_facts=reward_facts,
+        handshake=staleness_handshake,
         created_at_utc=created_at_utc or datetime.now(timezone.utc),
     )

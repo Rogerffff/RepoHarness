@@ -82,6 +82,8 @@ from repoharness2.contracts.trajectory import (
     SamplingMaskRef,
     TokenSpan,
     TrajectoryProjection,
+    WeightVersionsHandshake,
+    derive_weight_version_max_lag,
 )
 
 # schema_id -> 模型类。inspect-rh2-artifact 的类型判别表。
@@ -106,12 +108,18 @@ SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
 # runtime-private 审计资产：内容天然要描述作弊/私有事实（例如 finding 描述
 # "agent 试图 cat test_patch"），默认豁免 marker 扫描；但它们永远不得进入
 # public projection——那一侧的扫描不看本豁免表。
+# S1-9 定策：eligibility_report 收编进豁免表——security 维 evidence 串天然引用
+# 命中的 marker 本身（形如 `public_projection_scan:hit:$.path:fail_to_pass:key`，
+# S1-5 实测），与 grading_report/finding 同属"描述泄漏的审计资产必然引用泄漏名词"。
+# 真正的 marker 防线在 S1-5 的 public projection 扫描（不看本豁免表）；
+# 报告是 runtime-private sidecar，不进模型可见/训练可见面；--force-marker-scan 仍可强制。
 MARKER_SCAN_EXEMPT_SCHEMAS: frozenset[str] = frozenset(
     {
         "rh2.grading_report.v1",
         "rh2.anti_cheat_finding.v1",
         "rh2.trajectory_quality_finding.v1",
         "rh2.anti_hack_event.v1",
+        "rh2.eligibility_report.v1",
     }
 )
 
@@ -161,6 +169,8 @@ __all__ = [
     "SamplingMaskRef",
     "TokenSpan",
     "TrajectoryProjection",
+    "WeightVersionsHandshake",
+    "derive_weight_version_max_lag",
     "SCHEMA_REGISTRY",
     "MARKER_SCAN_EXEMPT_SCHEMAS",
 ]

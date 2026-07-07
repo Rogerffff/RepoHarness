@@ -40,8 +40,9 @@ class BackpressureEvent(StrictModel):
 
     消费方：EligibilityGate（S1-5）把 reason_code 写进相关轨迹的
     EligibilityReport；F5 吞吐画像统计打满频率决定是否升并发。
-    注意：schema_id 尚未注册进 contracts.SCHEMA_REGISTRY（与 bundle 两 schema
-    同一处理，S1-9 决定 CLI 聚合方式，见 implementation-notes）。
+    注册方式（S1-9 定案，codex#5）：经 `repoharness2.registry.FULL_SCHEMA_REGISTRY`
+    在 CLI 层聚合注册（依赖方向保持 grading -> contracts 不反转），
+    `inspect-rh2-artifact` 可直接校验本对象的 JSON 工件。
     """
 
     schema_id: Literal["rh2.grading_backpressure_event.v1"] = Field(

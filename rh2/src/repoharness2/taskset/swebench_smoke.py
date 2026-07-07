@@ -82,9 +82,19 @@ class SweSmokeTaskset(vf.Taskset[SweSmokeTask, SweSmokeConfig]):
         return cached
 
     def _rows(self) -> dict[str, dict]:
-        """原始冻结条目（instance_id -> dict）。兼容入口：s0_swe_smoke runner 用它取
-        image_manifest_digest 核对本地镜像；新代码请直接用 `_pairs()` 的 bundle。"""
-        return dict(bundles.load_task_entries(self.config.tasks_file))
+        """公开任务面（instance_id -> PublicTaskBundle dump）。兼容入口：s0_swe_smoke
+        runner 用它取 image_manifest_digest 核对本地镜像。
+
+        S1-9 收窄（codex#2/F2）：旧实现直接返回 `load_task_entries` 的原始冻结条目
+        ——里面带着 golden patch / test_patch / eval 脚本整个私有半区，构成绕过
+        A6 拆分的旁路。现改为从 `_pairs()` 的 **public 半区**派生（顺带获得
+        frozen_v1 防漂移校验），runner 消费的 `image_manifest_digest` 键不变；
+        评分材料的唯一通路回到 `_pairs()` 的 private 半区。
+        """
+        return {
+            instance_id: pair.public.model_dump(mode="json")
+            for instance_id, pair in self._pairs().items()
+        }
 
     def load_tasks(self) -> list[SweSmokeTask]:
         tasks = []

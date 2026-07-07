@@ -37,17 +37,40 @@ RepoHarness =
                               16G.3"均已过时。
 【作废】Stage 17B / 20 / 21 闸门  由 rh2 新闸门体系取代（Stage 20 warm-start 语义
                               由 rh2 离线导出 adapter 承接）。
-【已完成】rh2 S0 可行性验证      V1~V4 全过；当前任务：S1 准备（题单冻结 + 实验层决策）。执行计划：
+【已完成】rh2 S0 可行性验证      V1~V4 全过。执行计划：
                               docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md
+【已完成（待检查点确认）】rh2 S1 端到端最小闭环
+                              S1-0~9 全部执行完毕：slime 形态 B 数据链路真实闭环
+                              （7a 两个 optimizer step + checkpoint 用后即弃）、
+                              离线导出 parity 双通过、总 inspector inspect-rh2-s1
+                              + s1_acceptance_summary.json 就位；等待 orchestrator
+                              checkpoint-2 独立复核后 commit 定稿。执行计划：
+                              docs/agentic_RL/repo_harness_rh2_workstreams/03-s1-execution-plan.md
+                              递延与 S2 阻塞项见 s1/s1_acceptance_summary.json 的
+                              deferred_risks/blockers 字段与 s1/s2_blockers.md
+                              （S1-8 导出器对 thinking 模型轨迹全 fail-closed 拒绝，
+                              E3 warm-start 回退预案的前置依赖，S2 必须显式处置）。
 ```
 
 rh2 新闸门字段当前真实值：
 
 ```text
 rh2_s0_complete              = true    （S0 全部 9 项任务完成，V1~V4 全过；见 s0_acceptance_summary.json）
-rh2_s1_closed_loop           = false
+rh2_s1_closed_loop           = true（pending checkpoint-2 confirmation）
+                                       （S1-0~9 全验收 + acceptance summary 就位；
+                                       最终翻转由 orchestrator 独立复核后随 commit 定稿，
+                                       见 s1/s1_acceptance_summary.json gates 字段的同名注记）
 rh2_s2_signal_trusted        = false
-rh2_formal_training_allowed  = false   （≈ 旧 stage21 语义；为 false 时禁止正式训练）
+rh2_formal_training_allowed  = false   （≈ 旧 stage21 语义；为 false 时禁止正式训练。
+                                       S1-7a 为 debug transport step，checkpoint 已删除留证）
+```
+
+rh2 S1 复核命令（本机，rh2/ 目录下）：
+
+```bash
+cd rh2 && uv run inspect-rh2-s1                        # 四步范式校验阶段总账本
+cd rh2 && uv run inspect-rh2-s1 --run-contract-tests   # 附带重跑契约测试
+cd rh2 && uv run inspect-rh2-s1 --write --pytest-count <N>  # evidence 变动后重新生成 summary
 ```
 
 rh2 阶段一览（细节见实施计划总纲）：
@@ -535,7 +558,7 @@ evaluation worktree 的 docs/resume/repo_harness_vs_claude_code_capability_gap_a
 
 ## 【legacy】常用复核命令（旧 evidence 复核仍可用）
 
-**以下命令针对冻结的旧 evidence（stage16g_* / v2~v5），仍可运行用于复核历史，但不会再新增。rh2 的复核命令随 S1 inspector 建立后补充到进度章节。**
+**以下命令针对冻结的旧 evidence（stage16g_* / v2~v5），仍可运行用于复核历史，但不会再新增。rh2 的复核命令（`inspect-rh2-s1` / `inspect-rh2-artifact`）已随 S1 inspector 建立，见上文进度章节。**
 
 ### 16G 系列 inspector（旧线最新）
 

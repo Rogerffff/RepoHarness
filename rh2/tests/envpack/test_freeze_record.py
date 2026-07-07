@@ -1,6 +1,7 @@
 """frozen_v1 冻结账本单测：在盘记录与源数据互证 + 漂移 fail-closed。"""
 
 import json
+from datetime import datetime, timezone
 
 import pytest
 
@@ -26,10 +27,24 @@ EXPECTED_INSTANCE_IDS = [
 
 
 def test_frozen_v1_on_disk_matches_regeneration():
-    """在盘 frozen_v1.json == 从源数据确定性重建的结果（生成动作可复现）。"""
+    """在盘 frozen_v1.json == 从源数据确定性重建的结果（生成动作可复现）。
+
+    F4（S1-9）例外口径：`meta.frozen_at` 是生成动作的运行时 UTC 日期
+    （重新生成会变，且不许是未来日期），其余内容必须逐字段确定。
+    """
     on_disk = json.loads(FROZEN_V1_FILE.read_text())
     rebuilt = build_frozen_v1(TASKS_FILE)
-    assert on_disk == rebuilt
+
+    today_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    on_disk_meta = dict(on_disk["meta"])
+    rebuilt_meta = dict(rebuilt["meta"])
+    # ISO 日期字符串可直接按字典序比较：在盘日期不许晚于当前 UTC 日期（无未来日期）。
+    assert on_disk_meta.pop("frozen_at") <= today_utc
+    assert rebuilt_meta.pop("frozen_at") == today_utc
+
+    assert on_disk["schema_id"] == rebuilt["schema_id"]
+    assert on_disk_meta == rebuilt_meta
+    assert on_disk["tasks"] == rebuilt["tasks"]
 
 
 def test_frozen_v1_covers_exactly_the_eight_frozen_instances():

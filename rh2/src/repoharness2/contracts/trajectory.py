@@ -34,6 +34,7 @@ fan-out 建模定案（S1-1b）：**单投影多 branches 为权威**——
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Literal
 
 from pydantic import AwareDatetime, Field, model_validator
@@ -569,6 +570,76 @@ class CompactedSubTraceLineage(StrictModel):
 
 
 # ---------------------------------------------------------------------------
+# staleness 记账握手（preflight §8 H-1，S1-9 落地）
+# ---------------------------------------------------------------------------
+
+
+def derive_weight_version_max_lag(weight_versions: Sequence[str]) -> int | None:
+    """从原始版本列表派生 max_lag（版本跨度 = max - min）。
+
+    slime 引擎的 weight_version 是十进制整数字符串（update_weights 计数器，
+    S1-7a 实测 "1"）；全部可解析时返回跨度，任一不可解析（如 "default"、
+    "step_0"）返回 None——派生口径的选择权留给升级档位的准入设计（H-1），
+    这里绝不猜测非数值版本的先后关系。
+
+    具体数值例：["1", "1", "3"] -> 3-1 = 2；["default"] -> None。
+    """
+
+    try:
+        numeric = [int(version, 10) for version in weight_versions]
+    except ValueError:
+        return None
+    if not numeric:
+        return None
+    return max(numeric) - min(numeric)
+
+
+class WeightVersionsHandshake(StrictModel):
+    """staleness 记账（preflight §8 H-1）：Sample.weight_versions 原始透传 + 派生 max_lag。
+
+    背景：slime 的 `_convert_samples_to_train_data`（ray/rollout.py:735）**不透传**
+    `Sample.weight_versions`——训练侧 train_data 里已经没有它。因此采集必须发生在
+    projection 层（转换前的 Sample），本对象就是那次采集的落点；gate（S1-5）读它
+    把 staleness 分布（列表长度 + 版本跨度）写进 policy_staleness 维 evidence，
+    **只记录不准入**（准入界的设计留给升级档位，见 preflight §1.6 定案）。
+
+    两口径并存（H-1 原文要求）：
+    - `weight_versions`：原始 list，按（分支序, 轮次序）展平，保留重复——
+      长度即"这条轨迹的入训轮跨了几次版本记录"；
+    - `max_lag`：派生视图（全部版本为十进制整数时 = max-min，否则 None），
+      校验器强制与 `derive_weight_version_max_lag` 重算结果一致（派生视图互检
+      范式，同 BackendHandshake.staleness_within_threshold）。
+    """
+
+    weight_versions: list[NonEmptyStr] = Field(
+        min_length=1,
+        description=(
+            "rollout 期间引擎逐轮报告的权重版本（slime Sample.weight_versions 语义，"
+            "跨分支按分支序展平，保留重复）。"
+        ),
+    )
+    max_lag: int | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "派生的版本跨度（max-min，全部版本可解析为十进制整数时必填且必须等于"
+            "重算值；含非数值版本时必须为 None——不可派生就不派生）。"
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _check_max_lag_derivation(self) -> "WeightVersionsHandshake":
+        expected = derive_weight_version_max_lag(self.weight_versions)
+        if self.max_lag != expected:
+            raise ValueError(
+                f"max_lag({self.max_lag}) 与重算结果不符：weight_versions="
+                f"{list(self.weight_versions)} => 应为 {expected}"
+                "（派生视图互检失败；含非数值版本时必须为 None）。"
+            )
+        return self
+
+
+# ---------------------------------------------------------------------------
 # 分支与轨迹投影
 # ---------------------------------------------------------------------------
 
@@ -803,6 +874,15 @@ class TrajectoryProjection(StrictModel):
     )
     reward_facts: RewardFacts = Field(
         description="轨迹级 reward 原始事实（归一化归训练后端，见 §16.11）。"
+    )
+    handshake: WeightVersionsHandshake | None = Field(
+        default=None,
+        description=(
+            "staleness 记账（preflight §8 H-1）：Sample.weight_versions 原始 list + "
+            "派生 max_lag 两口径。slime 主线由 project_from_slime 采集（训练侧转换会"
+            "丢弃该字段，projection 层是唯一采集点）；文本中继（verifiers EvalClient）"
+            "或来源 Sample 无版本事实时为 None。gate 只记录分布、不据此准入。"
+        ),
     )
     created_at_utc: AwareDatetime = Field(
         description="投影生成时间（必须带时区；evidence 时间线核对用）。"

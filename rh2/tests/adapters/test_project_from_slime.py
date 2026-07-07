@@ -474,3 +474,37 @@ def test_decode_int32_tape_rejects_bad_payloads():
         decode_int32_tape([1, "x"], field_name="t")
     with _raises_reason("tape_payload_missing"):
         decode_int32_tape(None, field_name="t")
+
+
+# ---------------------------------------------------------------------------
+# staleness 记账透传（preflight §8 H-1，S1-9）
+# ---------------------------------------------------------------------------
+
+
+def test_weight_versions_passthrough_into_projection_handshake():
+    """H-1 正例：Sample.weight_versions 原始 list 透传 + 派生 max_lag 两口径。
+
+    fixture (a) 两叶链默认各带 ["default"]（非数值）-> 展平 ["default","default"]、
+    max_lag=None；改写成数值混版本 ["1","1"] / ["1","3"] -> 展平后 max_lag=3-1=2。
+    """
+    inputs = moe_30b_compaction.build()
+    projection = inputs.project()
+    assert projection.handshake is not None
+    assert list(projection.handshake.weight_versions) == ["default", "default"]
+    assert projection.handshake.max_lag is None  # 非数值版本不可派生，不猜
+
+    numeric = moe_30b_compaction.build()
+    numeric.samples[0] = dataclasses.replace(numeric.samples[0], weight_versions=["1", "1"])
+    numeric.samples[1] = dataclasses.replace(numeric.samples[1], weight_versions=["1", "3"])
+    projection = numeric.project()
+    assert projection.handshake is not None
+    assert list(projection.handshake.weight_versions) == ["1", "1", "1", "3"]
+    assert projection.handshake.max_lag == 2  # mid-rollout 权重更新的真实跨度
+
+
+def test_weight_versions_absent_yields_none_handshake():
+    """H-1 反例：全体 Sample 无版本事实 -> handshake=None（诚实缺席，不伪造）。"""
+    inputs = dense_4b.build()
+    inputs.samples[0] = dataclasses.replace(inputs.samples[0], weight_versions=[])
+    projection = inputs.project()
+    assert projection.handshake is None

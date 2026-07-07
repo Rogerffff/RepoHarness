@@ -67,6 +67,23 @@ def test_subset_single_instance_matches_runner_usage(taskset):
     assert row["image_manifest_digest"] == tasks[0].image_manifest_digest
 
 
+def test_rows_bypass_narrowed_to_public_bundle(taskset):
+    """S1-9 收窄回归（codex#2/F2）：_rows 只准外流 public 半区。
+
+    旧实现返回原始冻结条目（instance.patch / instance.test_patch / eval_script
+    全在里面）；现在 8 题的 _rows 输出必须：① 恰为 PublicTaskBundle 的字段集，
+    ② 整树过 forbidden marker 扫描 0 命中（原始条目会在 key 上命中 test_patch）。
+    """
+    from repoharness2.envpack.bundles import PublicTaskBundle
+
+    rows = taskset._rows()
+    assert len(rows) == 8
+    expected_fields = set(PublicTaskBundle.model_fields)
+    for instance_id, row in rows.items():
+        assert set(row) == expected_fields, f"{instance_id}: _rows 泄出了 public 面之外的键"
+        assert scan_for_forbidden_markers(row) == []
+
+
 def test_needs_container_still_pinned(taskset):
     assert SweSmokeTaskset.NEEDS_CONTAINER is True
 

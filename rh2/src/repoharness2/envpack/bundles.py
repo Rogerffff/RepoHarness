@@ -192,8 +192,18 @@ assert not (
 
 
 class BundlePair(StrictModel):
-    """同一题的 public/private 两半（构造时校验配对键一致）。"""
+    """同一题的 public/private 两半（构造时校验配对键一致）。
 
+    S1-9（codex#5）补 schema_id：与两半 bundle 一起经
+    `repoharness2.registry.FULL_SCHEMA_REGISTRY` 注册（CLI 层聚合，依赖方向
+    保持 envpack -> contracts 不反转）。注意 frozen_v1 账本记录的是
+    `public.digest()` / `private.digest()`（两半各自的规范化内容 digest），
+    本字段不进入任何一半的 digest，冻结账本不受影响。
+    """
+
+    schema_id: Literal["rh2.bundle_pair.v1"] = Field(
+        default="rh2.bundle_pair.v1", description="schema 判别字段。"
+    )
     public: PublicTaskBundle
     private: PrivateGradingBundle
 

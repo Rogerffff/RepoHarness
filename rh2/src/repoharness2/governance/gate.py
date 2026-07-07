@@ -40,6 +40,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime
+from typing import Literal
 
 from pydantic import Field, model_validator
 
@@ -146,8 +147,15 @@ class GroupRepairSignal(StrictModel):
     fail-closed 校验：degraded 与 failed_dimensions 账实相符；audit 档
     必然 degraded（security/账目级失败才会落 audit）；online 档必然不
     degraded（七维合取）；降级必须有理由码。
+
+    S1-9（codex#5）：S1-6/7a 已把本信号按 jsonl sidecar 落盘，故补 schema_id
+    并经 `repoharness2.registry.FULL_SCHEMA_REGISTRY` 注册（CLI 层聚合，
+    避免 contracts 反向 import governance），`inspect-rh2-artifact` 可校验。
     """
 
+    schema_id: Literal["rh2.group_repair_signal.v1"] = Field(
+        default="rh2.group_repair_signal.v1", description="schema 判别字段。"
+    )
     trajectory_id: NonEmptyStr = Field(description="被判定轨迹 id。")
     group_id: NonEmptyStr | None = Field(
         default=None,
@@ -438,21 +446,42 @@ def _dim_clean_grading(
     return DimensionFact(ok=not reasons, reason_codes=_dedup(reasons), evidence_refs=_dedup(evidence))
 
 
-def _dim_policy_staleness(handshake: BackendHandshake | None) -> DimensionFact:
+def _dim_policy_staleness(
+    handshake: BackendHandshake | None, projection: TrajectoryProjection
+) -> DimensionFact:
     """维度 7：policy staleness 在阈值内（事实来自 BackendHandshake）。
 
     - handshake 缺席即失败（fail-closed：没有 staleness 事实就当超阈值处理）；
     - 刻意**不读** handshake.accepted——S1-1b 定案：accepted 仅表示后端物理
       接收，不构成资格背书（后端有权按 H10 接收过期样本，但资格照降）。
+
+    staleness 分布记账（preflight §8 H-1，S1-9 落地）：projection.handshake
+    携带 Sample.weight_versions 的原始 list 与派生 max_lag，本维把分布
+    （列表长度 + 版本跨度）写进 evidence——**只记录不准入**：分布不改变
+    ok/reason 判定（准入界的设计留给升级档位，双缓冲的结构性上界 ≈ α=1）。
+    缺席也如实记 `weight_versions_unrecorded`（分不清"没混版本"和"没记账"）。
     """
 
+    distribution_evidence: list[str] = []
+    wv = projection.handshake
+    if wv is None:
+        distribution_evidence.append("weight_versions_unrecorded")
+    else:
+        distribution_evidence.append(f"weight_versions_count:{len(wv.weight_versions)}")
+        distribution_evidence.append(
+            "weight_versions_max_lag:"
+            + ("not_derivable" if wv.max_lag is None else str(wv.max_lag))
+        )
     if handshake is None:
         return DimensionFact(
-            ok=False, reason_codes=["staleness_facts_missing"], evidence_refs=[]
+            ok=False,
+            reason_codes=["staleness_facts_missing"],
+            evidence_refs=distribution_evidence,
         )
     evidence = [
         handshake.handshake_id,
         f"staleness:{handshake.staleness_steps}/{handshake.staleness_threshold}",
+        *distribution_evidence,
     ]
     if not handshake.staleness_within_threshold:
         return DimensionFact(
@@ -550,7 +579,7 @@ def _evaluate(
         reward_scope=_dim_reward_scope(projection, grading_report),
         security_and_leakage=_dim_security_and_leakage(grading_report, scan_result, findings),
         clean_grading=_dim_clean_grading(grading_report, own_backpressure),
-        policy_staleness=_dim_policy_staleness(handshake),
+        policy_staleness=_dim_policy_staleness(handshake, projection),
     )
 
     failed: list[tuple[str, DimensionFact]] = [

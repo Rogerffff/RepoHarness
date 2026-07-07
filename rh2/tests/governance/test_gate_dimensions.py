@@ -332,6 +332,42 @@ def test_group_repair_signal_rejects_out_of_order_dimensions():
         GroupRepairSignal.model_validate(payload)
 
 
+# ---------------------------------------------------------------------------
+# staleness 分布记账（preflight §8 H-1：只记录不准入）
+# ---------------------------------------------------------------------------
+
+
+async def test_staleness_distribution_recorded_not_admitted():
+    """H-1 正例：projection.handshake 的分布（长度+跨度）进 policy_staleness evidence。
+
+    关键断言"只记录不准入"：max_lag=2（版本跨了两步）也**不**构成维度失败——
+    准入界的设计留给升级档位；本维 ok 仍完全由 BackendHandshake 阈值事实决定。
+    """
+    projection = valid_trajectory_projection()
+    projection["handshake"] = {"weight_versions": ["1", "1", "3"], "max_lag": 2}
+    final = await run_finalize(projection=projection)
+    fact = final.eligibility_report.facts.policy_staleness
+    assert fact.ok is True  # 分布不改变判定（BackendHandshake 阈值内）
+    assert "weight_versions_count:3" in fact.evidence_refs
+    assert "weight_versions_max_lag:2" in fact.evidence_refs
+
+
+async def test_staleness_distribution_absence_recorded_honestly():
+    """H-1 反例：投影未记账（handshake=None）-> evidence 如实记 unrecorded，
+    维度判定照旧只看 BackendHandshake（不因缺分布而额外降级，也不因此放行）。"""
+    final = await run_finalize()  # valid_trajectory_projection 无 handshake 字段
+    fact = final.eligibility_report.facts.policy_staleness
+    assert fact.ok is True
+    assert "weight_versions_unrecorded" in fact.evidence_refs
+
+    # BackendHandshake 缺席时维度照常 fail-closed，分布 evidence 仍在场
+    degraded = await run_finalize(handshake=None)
+    fact = degraded.eligibility_report.facts.policy_staleness
+    assert fact.ok is False
+    assert "staleness_facts_missing" in fact.reason_codes
+    assert "weight_versions_unrecorded" in fact.evidence_refs
+
+
 def test_group_repair_signal_audit_class_requires_degraded():
     payload = _signal_payload()
     payload["degraded"] = False

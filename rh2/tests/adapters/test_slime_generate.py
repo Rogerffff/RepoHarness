@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -575,7 +576,10 @@ async def test_moe_probe_shape_routing_backfill():
         tokens=prompt_ids + gen_ids,
         response_length=16,
         loss_mask=[1] * 16,
-        rollout_log_probs=[-(i + 1) * 0.03125 for i in range(16)],
+        # 与 mock SGLang 响应的 output_token_logprobs 逐位同源（S1-9 F5 收口：
+        # 真实链路里两者同读一份 meta_info，fixture 不许出现第二个数值源——
+        # parity-core 首跑抓过 0.03125 vs 0.05 的不同源残留）。
+        rollout_log_probs=[-(i + 1) * 0.05 for i in range(16)],
         rollout_top_p_token_ids=None,
         rollout_top_p_token_offsets=None,
         rollout_routed_experts=None,
@@ -1188,3 +1192,74 @@ async def test_evaluation_mode_returns_eval_placeholder():
     assert placeholder.metadata["training_eligibility_class"] == "offline_or_sft_candidate"
     # eval 同样走完整条治理链（评分/投影/gate 都有 evidence）
     assert chain.orchestrator.audits[0].finalized is not None
+
+
+# ---------------------------------------------------------------------------
+# 分离拓扑配置冒烟（preflight §8 H-3，S1-9）
+# ---------------------------------------------------------------------------
+
+
+async def test_disaggregated_topology_args_mock_smoke():
+    """H-3：编排胶水在"分离放置 + train_async"形态的 args 下 mock 冒烟全绿。
+
+    背景：S1-6/7a 此前只在 colocate 单卡 args 下验证过；S4 预实验 J4 要在
+    分离拓扑（train_async，无 --colocate）复用同一编排胶水。本测试给 args
+    挂上 slime 分离放置解析后会出现的字段（colocate=False、rollout_num_gpus、
+    rollout_num_gpus_per_engine、actor/update-weight 参数），断言 9 步生命
+    周期、交付与清理与 colocate mock 完全一致——编排只读 rh2_orchestrator，
+    不对放置模式做任何隐藏假设（若未来有人误读 args.colocate 分支，
+    此处的显式 False 会立即暴露行为差异）。
+    """
+
+    chain = build_dense_chain()
+    args = _Args(chain.orchestrator)
+    # slime train_async 分离放置解析后的关键字段（preflight §1.5 T3 形态）
+    args.colocate = False
+    args.actor_num_nodes = 1
+    args.actor_num_gpus_per_node = 4
+    args.rollout_num_gpus = 4
+    args.rollout_num_gpus_per_engine = 2
+    args.update_weights_interval = 1
+    args.update_weight_mode = "full"
+    args.update_weight_transport = "nccl"
+
+    result = await rh2_custom_generate(args, chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.steps == list(LIFECYCLE_STEPS)  # 与 colocate mock 逐步一致
+    assert audit.failure_records == [] and audit.cleanup_failures == []
+    assert len(result) == 1 and result[0].reward == 1.0
+    assert result[0].metadata["training_eligibility_class"] == "offline_or_sft_candidate"
+    assert len(chain.docker.removed) == 1 and audit.lease_released is True
+    # H-1 顺带核对：分离形态下 staleness 记账照常落在投影 handshake
+    projection = audit.finalized.projection
+    assert projection.handshake is not None
+    assert set(projection.handshake.weight_versions) == {"step_0"}
+
+
+def test_disaggregated_template_pins_train_async_form():
+    """H-2 模板防漂移：container_train_disaggregated.sh 必须保持分离 + 双缓冲形态。
+
+    钉住四个不变量：入口 train_async.py、无激活的 --colocate（train_async
+    自身断言禁用）、显式 --rollout-num-gpus 分区、分离基线权重同步 full+nccl
+    （preflight §1.6 / J3 附④）。7a 实跑的 container_train.sh 是历史证据，
+    不在本断言范围。
+    """
+
+    template = (
+        Path(__file__).resolve().parents[2]
+        / "experiments"
+        / "s1_7a_bringup"
+        / "container_train_disaggregated.sh"
+    )
+    text = template.read_text(encoding="utf-8")
+    assert "train_async.py" in text
+    active_lines = [
+        line for line in text.splitlines() if not line.lstrip().startswith("#")
+    ]
+    assert not any("--colocate" in line for line in active_lines), (
+        "分离模板出现激活的 --colocate：train_async 断言禁 colocate，模板漂移"
+    )
+    assert any("--rollout-num-gpus " in line or "--rollout-num-gpus\t" in line
+               or line.strip().startswith("--rollout-num-gpus") for line in active_lines)
+    assert "--update-weight-transport nccl" in text
+    assert "--update-weights-interval 1" in text

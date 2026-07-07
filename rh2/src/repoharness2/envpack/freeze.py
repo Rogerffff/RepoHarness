@@ -9,13 +9,21 @@
     public_bundle_digest           PublicTaskBundle 规范化内容 digest
     private_grading_bundle_digest  PrivateGradingBundle 规范化内容 digest
 
-它回答的问题是：**后续任何时刻加载出来的题目，还是不是 2026-07-09 用户确认冻结的
-那 8 题**。`bundles.load_bundle_pairs` 默认对照本记录逐题重算比对（fail-closed），
+它回答的问题是：**后续任何时刻加载出来的题目，还是不是用户确认冻结的那 8 题**
+（确认动作发生在 S1 计划定稿时；当时线程内部时钟标注 2026-07-09，对应实际执行日
+2026-07-07/08——时钟基准声明见 s1/implementation-notes.md 顶部，F4）。
+`bundles.load_bundle_pairs` 默认对照本记录逐题重算比对（fail-closed），
 任何对题面、评分材料、镜像 pin 的改动都会当场炸出来，而不是悄悄改变训练分布。
 
-生成方式（确定性：同一份 swe_smoke_tasks.json 永远生成同一份记录，无运行期时间戳）：
+生成方式：
 
     cd rh2 && uv run python -m repoharness2.envpack.freeze
+
+确定性口径（F4 修订，S1-9）：`tasks` 记录与 `meta.records_digest` 等内容字段
+由源数据唯一决定（同一份 swe_smoke_tasks.json 永远生成同一批 digest）；
+`meta.frozen_at` 是**生成动作的运行时 UTC 日期**（`date -u` 口径，不许手写
+未来日期）——重新生成会更新它，这是"生成动作发生过"的诚实时间戳，
+防漂移校验（verify_pairs_against_frozen）只对账 tasks 记录、不读它。
 
 注意生成动作本身不做"防漂移校验"（自举时记录还不存在/即将被覆盖），
 但 public bundle 的泄漏扫描在 split_frozen_entry 里无条件执行。
@@ -24,6 +32,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 from repoharness2.contracts._base import canonical_json_digest
@@ -64,8 +73,11 @@ def build_frozen_v1(tasks_file: Path | str = TASKS_FILE) -> dict:
     return {
         "schema_id": FROZEN_SCHEMA_ID,
         "meta": {
-            # 冻结事实（来自 s0/swe_smoke_report.md §1 与 C2 状态同步，非运行期时间）。
-            "frozen_at": "2026-07-09",
+            # F4（S1-9 修订）：生成动作的运行时 UTC 日期（date -u 口径）。
+            # 旧版手写 "2026-07-09" 是线程内部时钟的未来日期（实际执行日
+            # 07-07/08，见 s1/implementation-notes.md 顶部时钟基准声明），
+            # evidence 禁止未来日期，改为运行期取值。
+            "frozen_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "frozen_by": "user-confirmed (C6 选题 + C2 状态同步)",
             "task_count": len(records),
             "dataset": payload_meta.get("dataset", ""),

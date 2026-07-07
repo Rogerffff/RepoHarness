@@ -1,9 +1,11 @@
 """inspect-rh2-artifact：rh2 契约对象的最小校验命令（S1-1 交付物）。
 
-四步中取三步（S1-9 的完整 inspector 再补 digest 重算对照与白名单核对）：
+四步中取三步（完整四步范式的阶段总账本见 inspect-rh2-s1，repoharness2/inspect_s1.py）：
 
   1. 读 JSON 文件；
-  2. 按顶层 `schema_id` 在 SCHEMA_REGISTRY 里判类型；
+  2. 按顶层 `schema_id` 在 FULL_SCHEMA_REGISTRY（S1-9 起为聚合表：contracts
+     15 个核心契约 + envpack bundle 三件 + BackpressureEvent + GroupRepairSignal，
+     见 repoharness2/registry.py）里判类型；
   3. 用对应 pydantic 模型做严格校验（extra="forbid"，未知字段即失败）；
   4. forbidden marker 扫描（runtime-private 审计资产默认豁免，
      用 --force-marker-scan 强制扫描；--skip-marker-scan 仅供排障）。
@@ -30,10 +32,12 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from repoharness2.contracts import (
-    MARKER_SCAN_EXEMPT_SCHEMAS,
-    SCHEMA_REGISTRY,
-    scan_for_forbidden_markers,
+from repoharness2.contracts import scan_for_forbidden_markers
+from repoharness2.registry import (
+    FULL_MARKER_SCAN_EXEMPT_SCHEMAS as MARKER_SCAN_EXEMPT_SCHEMAS,
+)
+from repoharness2.registry import (
+    FULL_SCHEMA_REGISTRY as SCHEMA_REGISTRY,
 )
 
 EXIT_OK = 0
