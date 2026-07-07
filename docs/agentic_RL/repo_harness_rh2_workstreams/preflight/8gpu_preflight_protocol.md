@@ -156,7 +156,12 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
    并在 evidence 中 dump 展开后的 MODEL_ARGS。
 ② train parallel + MoE args（按 A1~A5 逐组合填）：
    TP/PP/EP/ETP/DP + --moe-token-dispatcher-type（alltoall 起步，
-   DeepEP 视 J1 结果）+ --use-rollout-routing-replay（V4/M1 硬前提，必开）
+   DeepEP 视 J1 结果）+ --use-rollout-routing-replay（V4/M1 硬前提，必开。
+   **辨析（脚本包核对②）**：slime 锚测试 test_qwen3_30B_A3B.py:1080 用的
+   `--use-routing-replay` 是另一个 flag（arguments.py:1080 vs :1086）——
+   本协议要的是 rollout 引擎路由进训练 forward，即后者；J4 判据 3 的
+   "loss 消费 rollout_routed_experts" 会端到端证明选对了 flag，若 J4
+   发现路由未被消费，第一排查点就是这两个 flag 的混淆）
    + 长上下文显存三件套（每拓扑必填）：--micro-batch-size 1 /
    --log-probs-chunk-size 1024（32k 下 logprob 重算的隐藏 OOM 点）/
    --max-tokens-per-gpu = CTX/CP。
@@ -169,7 +174,10 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
    （注意：不存在 "--enable-ep-moe" 这个参数——上一稿笔误，已订正）
 ④ async + weight sync + transport args：
    --update-weight-mode / --update-weight-transport（分离基线 =
-   full + nccl；colocate = IPC tensor）/ --update-weights-interval 1 /
+   full + nccl；**勘误（脚本包核对①）**：transport 的 CLI choices 只有
+   {nccl, disk}（arguments.py:146），"IPC" 是 colocate 模式下
+   update_weight_from_tensor.py 的内部实现而非可选值——脚本一律
+   full + nccl）/ --update-weights-interval 1 /
    --update-weight-buffer-size（512MB 起，J5 扫 2 档）/
    --rollout-data-transport（基线现值；NIXL 作为可选记录项，
    slime 30B R3 测试用 nixl）。

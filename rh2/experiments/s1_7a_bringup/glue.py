@@ -77,6 +77,11 @@ HARNESS_KIND = os.environ.get("RH2_BRINGUP_HARNESS", "claude_code")  # claude_co
 AGENT_TIME_BUDGET_SEC = int(os.environ.get("SWE_AGENT_TIME_BUDGET_SEC", "600"))
 MAX_TURNS_PER_SID = int(os.environ.get("RH2_MAX_TURNS_PER_SID", "25"))
 INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
+# MoE routing tape 期望（P3 预实验 J4 增补，见 preflight/8gpu_preflight_protocol.md
+# J4 判据 2/3）：Qwen3-30B-A3B 等 MoE 模型置 "1"——启动探针与生产会话都请求
+# return_routed_experts，startup_checks 按 MoE 口径断言 routing tape 在场。
+# 默认 "0"，7a 的 Qwen3-4B dense 行为逐字不变（A2：dense 只是没有 routing）。
+EXPECT_MOE_ROUTING = os.environ.get("RH2_EXPECT_MOE_ROUTING", "0") == "1"
 
 _INJECTED_EVAL_SCRIPT = (
     "#!/bin/bash\n"
@@ -339,7 +344,7 @@ class BringupService:
             adapter_url=self.adapter_url,
             serving_precision="bfloat16",
             harness_name="claude_code" if HARNESS_KIND == "claude_code" else "mock_harness",
-            expect_moe_routing=False,  # Qwen3-4B dense（A2：dense 只是没有 routing）
+            expect_moe_routing=EXPECT_MOE_ROUTING,  # dense 默认 False；30B MoE 由 RH2_EXPECT_MOE_ROUTING=1 打开
             policy_version=self.policy_version,
             max_context_len=self.max_context_len,
         )
@@ -417,7 +422,7 @@ class BringupService:
                     "top_p": 0.95,
                     "max_new_tokens": 16,
                     "return_top_p_token_ids": True,
-                    "return_routed_experts": False,
+                    "return_routed_experts": EXPECT_MOE_ROUTING,
                 },
                 max_context_tokens=0,
             )
@@ -438,7 +443,7 @@ class BringupService:
             probe_sampling_params=probe_params,  # 生产路径生效值（含两个 tape flag）
             probe_response=data,
             prompt_token_count=len(ids),
-            expect_routing_tape=False,  # dense：不请求 routing tape（A2）
+            expect_routing_tape=EXPECT_MOE_ROUTING,  # dense 默认不请求；MoE（J4）按口径断言
         )
         meta = data.get("meta_info") or {}
         if meta.get("weight_version") is not None:
