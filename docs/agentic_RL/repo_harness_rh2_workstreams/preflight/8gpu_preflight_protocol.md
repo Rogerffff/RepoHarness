@@ -26,9 +26,13 @@ P-3 Qwen3-30B-A3B 权重的获取方案确认（~60GB：租用机带宽实测后
 P-4 8 题冻结集镜像引用与 J4 运行配置写成脚本（复用 S0 探针形态）
 P-5 nccl-tests 二进制或构建脚本备好（J1 用）
 P-6 记录模板（本文 §5）与 nvidia-smi/dmon 采样脚本备好
-P-7 主机内存确认 ≥ ~400GB（优化器 CPU offload 需 fp32 master 122GB
-    + Adam m/v 244GB ≈ 366GB；不足即提前红灯——30B 训练在本机不成立，
-    直接进 §3 放弃线选项 (b)）
+P-7 主机内存分档确认：**400GB = 勉强最低线，≥512GB = 推荐线**
+    （拆账：优化器 CPU offload 366GB + Ray object store + SGLang host
+    内存 + 评分沙箱同机 + 双缓冲期两批数据在途 + 页缓存/日志；
+    须记录 Ray object store 配置）。< 400GB 即提前红灯——
+    30B 训练在本机不成立，直接进 §3 放弃线选项 (b)
+P-8 M2 采集脚本提前备好（基于 slime examples/train_infer_mismatch_helper
+    的 mis.py 改）——不指望 24h 机时内现写
 ```
 
 ## 1.5 拓扑候选与显存账（2026-07-08 增补：分离放置 + 异步为主案候选）
@@ -41,7 +45,10 @@ P-7 主机内存确认 ≥ ~400GB（优化器 CPU offload 需 fp32 master 122GB
   优化器一律 CPU offload（见 P-7 主机内存硬预检）
 rollout 分区（mem-fraction 0.75）：
   2 卡 TP2×1 引擎：权重 30.5GB/卡，KV 池 ~83GB ≈ 27 条满 32k（bf16 KV）
-  4 卡 TP4×1 引擎：权重 15GB/卡，KV 池 ~228GB ≈ 76 条
+  4 卡 TP2×2 引擎：权重 30.5GB/卡，KV 池 ~166GB ≈ 55 条（官方示例形态）
+  6 卡 TP2×3 引擎：KV 池 ~250GB ≈ 83 条（T2′ 的推理侧形态，
+    引擎数 = rollout_num_gpus ÷ per-engine TP，须整除）
+  4 卡 TP4×1 引擎：权重 15GB/卡，KV 池 ~228GB ≈ 76 条（单引擎大 KV 备选）
   FP8 KV 使容量翻倍；GRPO n=8 同组共享 prompt 前缀（radix cache），
   实际并发容量显著高于上述下界
 候选拓扑（2026-07-08 第三轮修订，rollout-heavy 对齐行业惯例）：
@@ -81,6 +88,10 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
   （buffer_filter staleness 准入 α=1 / custom_generate 内重写
   DAPO 过滤 / 整组同版本准入策略）。
   触发条件：J4b 或首训实测 rollout 尾部空闲 > 每步墙钟的 25%。
+防误用断言（升级档启用时写进启动脚本）：若 rollout-function-path
+  为 fully_async 且设置了 --dynamic-sampling-filter-path 或
+  --over-sampling-batch-size，启动即 fail——防止误以为 DAPO
+  过滤仍生效（该路径静默忽略这两个参数）。
 ```
 
 ## 2. 作业序列（按信息量排序，总时间盒 ≤ 24h 墙钟）
@@ -88,12 +99,13 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
 | # | 作业 | 时间盒 | 关闭什么 |
 | --- | --- | --- | --- |
 | J0 | 环境就位：镜像/权重/GPU 可见性/`nvidia-smi topo -m` 拓扑留档 | 2h（含下载） | — |
-| J1 | PCIe all-to-all 微基准（nccl-tests `alltoall_perf`，2/4/8 卡三档） | 0.5h | U-C 带宽项 |
+| J0.5 | **训练内核最小冒烟（10min，插 J0 尾）**：slime 镜像单卡跑 tiny dense 模型 1 个 train step——把"Megatron 在 sm_120 一票否决"这个 U-C 核心疑点前置，避免 J1/J2 的 1.5h 白烧 | 0.2h | U-C 内核项预检 |
+| J1 | PCIe 通信微基准（nccl-tests：`alltoall_perf` **+ `broadcast_perf` + `all_reduce_perf`**，2/4/8 卡三档——权重同步走 broadcast，只测 all-to-all 画像不完整） | 0.7h | U-C 带宽项 |
 | J2 | 推理侧 8 卡 serving 冒烟：SGLang 30B，TP/DP/EP 按 slime 示例缩配，32k 上下文，记 tokens/s 与显存 | 1h | 训推共存的推理半边 |
 | J3 | **训练侧并行配置扫描（核心矩阵）**：合成固定 batch 过 Megatron train step | 4h | U-C 内核/显存/step 时间 |
-| J4 | **全要素（S1-7b 本体）**：custom_generate，8 题 × n=2，E2 生产 flags，真实训练 step——在 T3（4+4，官方示例同款）执行 | 3h | S1-7b + tape 消费 |
-| J4b | **拓扑/异步对比（第三轮修订）**：T1 colocate 同步 vs T3 双缓冲 vs T2′ 双缓冲，各连跑 2~3 步，记每步墙钟分解、GPU util 曲线、**rollout 尾部空闲占比**（升级档位触发条件的基线数） | 2.5h | 放置模式决策 |
-| J4c | **fully_async 冒烟（30min）**：官方示例配置起 fully_async，验证可启动 + **实测 aborted 组重取时 token 复用行为**（README 称 starts over，但 tokens 保留可能意外续跑——记录真实语义供升级档位用） | 0.5h | 升级档位可行性 |
+| J4 | **全要素（S1-7b 本体）**：custom_generate，8 题 × **n=4**（n=2 会被动态采样饿死 batch，与 S1-7a 的 A2 条款同款坑——注意对称性：fully_async 里怕 filter 静默失效，标准路径里怕 filter 活着饿死 batch；若必须 n=2 则显式关 filter 并记录偏离），E2 生产 flags，真实训练 step——在 T3（4+4，官方示例同款）执行 | 3h | S1-7b + tape 消费 |
+| J4b | **拓扑/异步对比（第三轮修订）**：T1 colocate 同步 vs T3 双缓冲 vs T2′ 双缓冲，各连跑 2~3 步，记每步墙钟分解、GPU util 曲线、**rollout 尾部空闲占比**。**预注册优先序：T3 先（直接复用 J4 的步数作 T3 数据点）→ T1 → T2′ 时间允许才做**；允许结论"T2′ 数据缺失，按 T3/T1 先定主案、T2′ 留首训期间对比" | 2.5h | 放置模式决策 |
+| J4c | **fully_async 冒烟（30min）**：官方示例配置起 fully_async，**设计成强制触发 abort**（长生成 + `update_weights_interval=1` + `save_debug_rollout_data`），**判定口径写死**：对比 abort 前后同 trajectory 的 `Sample.tokens` 前缀是否保留、response 重生成的分叉点位置、`response_length / loss_mask / weight_versions` 三字段一致性——只跑通不触发 abort 只能得到"能启动"一个 bit | 0.5h | 升级档位可行性 |
 | J5 | 权重同步与切换：跨分区 update_weights 的**耗时、节奏与字节量**（pause/flush/continue 三段停顿分解；`--update-weight-buffer-size` 512MB 默认对 MoE 两遍 pass 的敏感度扫 2 档）、colocate 的 offload/onload 显存曲线 | 1h | U-C 切换项 + 权重同步 |
 | J5b | **异步正确性与质量测量（两线程调研增补）**：见下方专项清单 | 并入 J3/J4 | staleness/数值正确性 |
 | J6 | 吞吐画像汇总与 E6 回填（分析，不占机时；机器可提前退租） | — | E6/C3 |
@@ -104,13 +116,23 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
 ```text
 固定：Qwen3-30B-A3B bf16、E2 生产 flags、--optimizer-cpu-offload、
      sequence-parallel 开、合成 batch = 64 条 × 目标长度
-主轴 A 训练分区规模 × 并行组合（对应 §1.5 拓扑的训练侧，第三轮修订）：
-     A1 2 卡 · TP2×DP1       （T2′ 训练侧：必测——它决定 rollout-heavy
-                              是否被训练步反噬；重点记 offload 带宽瓶颈）
-     A2 4 卡 · TP2×DP2       （T3 训练侧，官方示例同款）
-     A3 6 卡 · TP2×DP3       （回退候选：仅当 A1/A2 step 过慢）
-     A4 8 卡 · TP2×DP4       （T1 colocate 的训练态，对照）
-     A5 任一 · CP=2          （仅当 32k 显存不够时启用）
+主轴 A 训练分区规模 × 并行组合（对应 §1.5 拓扑的训练侧，第三轮修订；
+     **MoE 参数必须逐项显式**——参照锚：slime 自带 30B-A3B 测试用
+     8 卡 colocate `TP4/CP2/EP8` + routing replay，
+     reference/slime/tests/test_qwen3_30B_A3B.py:55）：
+     A1 2 卡 · TP2×DP1 · EP2·ETP1     （T2′ 训练侧：必测——决定
+                                       rollout-heavy 是否被训练步反噬）
+     A2 4 卡 · TP2×DP2 · EP4·ETP1     （T3 训练侧）
+     A3 6 卡 · TP2×DP3 · EP2·ETP1     （回退候选：仅当 A1/A2 step 过慢）
+     A4 8 卡 · TP4×CP2 · EP8          （slime 官方测试同款，T1 对照）
+     A5 任一 · CP=2                   （仅当 32k 显存不够时启用）
+每个组合的启动配置必须完整写出（租卡前入脚本，P-4）：
+     --expert-model-parallel-size / --expert-tensor-parallel-size /
+     --moe-token-dispatcher-type（alltoall 起步，DeepEP 视 J1 结果）/
+     --use-rollout-routing-replay（V4/M1 硬前提，必开）/
+     SGLang 侧 --enable-ep-moe 与 engine TP / update_weight 传输方式
+     （分离=NCCL distributed，colocate=IPC tensor）——
+     失败时才分得清是硬件、拓扑还是参数写错。
 主轴 B 上下文：32k（目标档）→ 24k（降级档）
 副轴 mbs：1 → 2（显存允许才试）
 每格记录：step 墙钟 / 显存峰值（train 态）/ tokens/s /
@@ -119,14 +141,30 @@ staleness 记账从 S1 起做：weight_versions → TrajectoryProjection
      OOM → 先 mbs 后 CP 后 24k，记录降档路径
 ```
 
+**"rollout 尾部空闲占比"的计算定义（升级档位触发条件的口径，不能现场发明）**：
+
+```text
+尾部空闲占比 = （rollout 阶段内，推理分区 GPU 平均利用率 < 30% 阈值的
+              尾段时长）/ 当前 step 总墙钟
+测量方式：nvidia-smi dmon 1s 采样（推理分区卡）+ 每条轨迹的
+  完成时间戳（slime rollout_time 指标辅助）；"尾段"起点 =
+  最后 25% 轨迹开始完成的时刻。
+```
+
 ### J5b 专项清单（报告实践 + slime 源码两轮调研的增补测量，随 J3/J4/J4b 顺带采集）
 
 ```text
 M1 staleness 直方图：Sample.weight_versions 的长度与版本跨度分布
-   （一条 SWE 轨迹平均跨几个 policy version——升级档位 α 定档的实测依据）
+   （一条 SWE 轨迹平均跨几个 policy version——升级档位 α 定档的实测依据）。
+   **采集点显式声明（codex 核查）**：slime 的 _convert_samples_to_train_data
+   （ray/rollout.py:735）不透传 weight_versions——必须在我们的
+   projection 层（消费转换前的 Sample）采集，或开 save_debug_rollout_data；
+   不得指望训练侧 train_data 里还有它。
 M2 训推 logprob 失配：同批 token 的 rollout logprob vs trainer 重算
    logprob 的逐 token 差分布（MAI 一等监控项："小失配跨长轨迹复合
-   会破坏 IS 校正"；这是 GRPO 正确性项）
+   会破坏 IS 校正"；这是 GRPO 正确性项）。
+   工具落点：--get-mismatch-metrics 或 debug train data；采集脚本
+   基于 examples/train_infer_mismatch_helper（mis.py）提前备好（P-8）。
 M3 update 停顿吞吐塌陷：单次 update_weights 造成的 rollout 吞吐
    下陷深度与恢复时长（pause/flush 清 KV 后前缀重算的代价）
 M4 abort 回收率与浪费：每次权重更新 abort 的在途组数、被丢弃重算的
@@ -150,7 +188,7 @@ M8 优化器状态与权重推送的交互观察：若采用 per-step 推送，
 3. loss 路径消费 rollout_top_p_token_ids/offsets 与 rollout_routed_experts
    无 raise、loss 有限值；
 4. 训练 step 完成且 grad norm 非 NaN；
-5. colocate 全程显存不 OOM（rollout 态与 train 态水位分别留档）；
+5. 训练分区与推理分区**各自**显存水位留档、全程无 OOM（J4 在 T3 分离拓扑执行；colocate 的 offload/onload 水位归 J4b 的 T1 对照与 J5）；
 6. checkpoint 用后即弃（8 题来自 Verified 仓库——A1/D5 条款，
    不得作为任何后续起点；acceptance 记录该声明）。
 ```
@@ -176,7 +214,8 @@ M8 优化器状态与权重推送的交互观察：若采用 per-step 推送，
   在 sm_120 有不可绕过的内核缺陷。
   重议选项：(a) E1 降档（无先验背书，最后选择）；
   (b) S4 训练改租云端 NVLink 机（8×A100/H100 短租），本机专职
-      数据/评分/单卡推理；
+      数据/评分/单卡推理——**代价旁注：本协议除 J1/J2 外的实测数据
+      基本作废，S4 放置决策全部重做，(b) 不是轻量退路**；
   (c) 每步轨迹数 64→32，拉长步数换显存/时间。
 ```
 
@@ -208,7 +247,9 @@ J5：update_weights 耗时 / sleep-resume 前后显存
 ```text
 输入：static_gate_survivors 216 题中**通过 S2 环境验证门**的存活集
 配置：训练路径 eval 模式（同 harness 同栈）；T=1.0、top_p=0.95
-预算分层（控制单卡墙钟 ≈ 1 天，按环境门存活数等比缩放）：
+预算分层（控制单卡墙钟 ≈ 1 天，按环境门存活数等比缩放；
+  估算式：约 204 存活题 × n4 + 60 题 × n4 ≈ 1056 条轨迹 ×
+  ~600s ÷ 并发 16 ≈ 11h）：
   存活全量 × n=4  → pass-rate 粗估，过滤 [0.1,0.8]
   诊断子集 60 题（分层抽）追加 × n=4 → 合计 n=8 的细估 + 诊断指标
 产出：
@@ -230,4 +271,25 @@ J5：update_weights 耗时 / sleep-resume 前后显存
 [ ] final_review V 清单：U-C 关闭记录
 [ ] S1/S4 执行文档：7b 判据引用本报告（由执行线程操作，本线程只交报告）
 [ ] E1 定案栏：35B-A3B 升级选项重议（仅当 J3 显存/速度富余显著时）
+```
+
+## 8. 交接给 S1 执行线的契约事项（下个检查点提出，防遗忘）
+
+```text
+H-1 staleness 记账（S1-3 / S1-5 契约追加，成本极低）：
+    project_from_slime 必须把 Sample.weight_versions（slime
+    types.py:120，list——一条轨迹可跨多版本）透传进
+    TrajectoryProjection 的 handshake 字段；gate（S1-5）记录
+    staleness 分布（版本跨度 max-min 与列表长度），只记录不准入。
+    关键依据（codex 核查）：slime 的 _convert_samples_to_train_data
+    （ray/rollout.py:735）不透传该字段——采集必须发生在 projection
+    层（转换前的 Sample），这恰是 S1-3 的输入位置，顺路带走即可。
+    版本聚合口径：handshake 同时存原始 list 与派生 max_lag，
+    派生口径的选择权留给升级档位的准入设计。
+H-2 训练拓扑输入变更：S1-6/S1-7a 的 slime 启动配置按本协议 §1.5/§1.6
+    准备为"分离放置 + train_async"（7a 单/双卡不受影响，但配置模板
+    应与 S4 目标形态同构，避免 7a 验过的配置到 S4 换形态重验）。
+H-3 J4 复用 S1 产物的接口确认：J4 需要 S1-6 编排胶水在分离拓扑下
+    可运行——若 S1-6 只在 colocate mock 下测过，需在 S1-9 验收前
+    补一个分离配置的 mock 冒烟。
 ```
