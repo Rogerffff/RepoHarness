@@ -43,7 +43,11 @@ note "== [1] GPU visibility"
 nvidia-smi -L | tee -a "${REPORT}"
 GPU_COUNT=$(nvidia-smi -L | wc -l | tr -d ' ')
 if [ "${GPU_COUNT}" -ne 8 ]; then
-  note "WARN: 可见 GPU=${GPU_COUNT}（协议按 8 卡设计，非 8 卡时 J1/J3 矩阵档位需手工裁剪）"
+  # fail-closed（codex 复核修正）：P3 就是 8 卡预实验，GPU 数不对不是
+  # "可手工裁剪的警告"而是租错了机器——报告仍完整生成，最终以非零退出
+  # 阻断后续作业（与 P-7 内存 RED 同款语义）。
+  note "FAIL: 可见 GPU=${GPU_COUNT} != 8（协议按 8 卡设计；startable=false，报告照常写完）"
+  FAIL=2
 fi
 
 # 2. 驱动 / CUDA -------------------------------------------------------------
