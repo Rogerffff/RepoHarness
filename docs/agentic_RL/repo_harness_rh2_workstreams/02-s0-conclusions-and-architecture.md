@@ -222,3 +222,5 @@ S0 之前的实施计划总纲写过"S1 只实现 verifiers Trace → 中立投�
 
 1. **训练路径运行时不实例化任何 verifiers 对象。** verifiers 对象模型对训练链路的贡献是"分层纪律"（ownership 划分决定 RepoHarness 库代码的组织方式）；其运行时实例只出现在评测/基线路径——同一套环境包库代码由 verifiers `Taskset` 子类包一层绑定（S0-7 的 `SweSmokeTaskset` 即此绑定）。即：**环境包库代码写一次，slime 绑定（训练）与 verifiers 绑定（评测）各包一层。**
 2. **三个消费者的归属**：slime trainer 与 SFT/离线导出挂在训练路径 gate 之后；**评测报告主要由 verifiers 评测路径产出**（同一环境包 + EvalClient），不经过训练链路。
+
+**§8 补充精化（2026-07-08，实验设计定案后）**：E10 定案"训练 = 主评测同 harness 同推理栈同采样参数"后，"评测报告"消费者的归属进一步细分——**主判据评测面**（自建 frozen held-out 的 before/after）跑在训练同款路径的 eval 模式（Claude Code harness + SGLang，只生成不训练）；**verifiers 评测路径**承载第二 scaffold transfer 面（如 mini-swe-agent 风格）、治理审计与协议基线。两者都经同一治理层与同一环境包，分工不冲突。

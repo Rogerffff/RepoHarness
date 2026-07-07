@@ -85,7 +85,7 @@ C4 已定约束（继承前序定案，不再讨论）：
 - **问题**：PPO with critic 还是 GRPO 起步；critic 的额外显存/卡数是否可承受。
 - **依赖**：C1（critic 约多一份模型显存）、E6（轨迹长度——GLM-5.2 因 compaction 长轨迹弃 GRPO 改 PPO，但我们第一版任务较短且建议关 compaction，组语义可能仍成立）。
 - **调查结论（一致性极高）**：GRPO 系是绝对主流——slime 示例（`--advantage-estimator grpo`、KL/熵全关、非对称 clip 0.2/0.28）、GLM-5（GRPO+IcePop，β=2、ε_low=0.2、ε_high=0.28）、Composer 2（Dr. GRPO：去长度归一、不除组 std）、MAI（GRPO+自适应熵+outer clip）、Nemotron（异步 GRPO，组 16）。唯一弃 GRPO 改 critic-PPO 的是 GLM-5.2，触发条件是 compaction 切碎超长轨迹——首版关 compaction 不触发。组尺寸锚点：slime 示例 8、Nemotron 16、GLM-5 reasoning 32、MAI 128（机构规模）。zero-advantage 标准处理：MAI early-exit（先采 16 估 pass-rate，[0.05,0.8] 内才补满）+ 组过滤 [0.1,0.8]。
-- **定案建议**：GRPO；n=8；clip 0.2/0.28、KL/熵关、lr 1e-6 常数全部沿用 slime 示例初值；**"关 compaction ↔ 用 GRPO"绑定写入**——未来开 compaction 必须同步评估切 PPO（接口已算法无关，§6.1 的价值就在此）。
+- **定案建议**：GRPO；n=8；clip 0.2/0.28、KL/熵关、lr 1e-6 常数全部沿用 slime 示例初值；**"关 compaction ↔ 用 GRPO"绑定写入**——未来开 compaction 必须同步评估切 PPO（接口已算法无关，§6.1 的价值就在此）。**训练 rollout top_p = 0.95（2026-07-07 第四轮补定案建议，回应 S0-8 遗留）**：全部前沿配方与评测协议都在 0.95~0.97，训练用 1.0 偏离所有参照系并造成训练/评测采样错配；代价是激活 top-p tape 硬依赖 ⇒ **U-H（slime patch 镜像在 sm_120 可用性）升级为 S1 硬阻塞项**，回退梯按 E7 定案执行（手动打 patch → 临时 top_p=1.0 并在报告标注偏离 → 切形态 A 放弃 top-p replay）。
 - **同规模公开配置锚点（线程 6 已核实）**：SkyRL-Agent SA-SWE-32B（2×8 H100、Qwen3-32B、R2E-Gym 4.5K 题）的确切配置：**group=8、train batch=64、lr=1e-6、KL/熵全关、advantage 不除 std、不做长度归一、超 context/step 轨迹 mask loss、32K 上下文、50 turns 上限**——与本文 E2/E6 定案几乎逐项重合，是"数十卡 SWE RL"的直接同款参照。DeepSWE（64×H100、6 天、同数据、Qwen3-32B）的 GRPO++ 配方同款，另加 Leave-One-Out advantage 与 Compact Filtering（超时/触顶轨迹 mask loss）。
 - **slime 默认与该配方的三处差距（首训必须显式配置，不能用默认）**：slime 默认**除 std**（Dr.GRPO 去 std 需显式开 `--disable-grpo-std-normalization`）；默认对称 clip（clip-high 0.28 在示例脚本已显式开，核对即可）；**动态采样默认关**（需 `--dynamic-sampling-filter-path` 挂 `check_reward_nonzero_std` + `--over-sampling-batch-size`）。有报告标准 GRPO 中 58.77% 的训练步会产生零方差组——小任务集下动态采样不是可选项，**从"触发式"升级为首训默认开**。
 - **其余稳定性预案（保持触发式）**：
@@ -115,7 +115,10 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
 
 - **问题**：直接从 instruct 模型 RL，还是先用离线导出 adapter 产 SFT 数据 warm-start 再 RL（对接 Stage 20 语义与 warm_start 文档）。
 - **调查结论（存在张力，显式记录）**：全部机构报告（GLM-5/Qwen3/MiniMax/Kimi/Composer/MAI/Nemotron/ROME）都在 RL 前做 agentic SFT 或 mid-training（ROME 明说"SFT 把 RL 锚定在可靠策略区"；MAI 给出量级：self-distillation O(1M) 轨迹即足、更多边际递减）。但它们多从 base/mid 模型起步；**slime 官方示例本身就是从 instruct checkpoint 直接 RL、不做 SFT**——"直接 RL"路线有可复现模板。
-- **定案建议**：第一次实验保留直接 RL from instruct（最短路径 + slime 示例背书），但写入**回退预案**：若触发下述量化条件，插入一轮小规模 agentic SFT warm-start——回退同时提前兑现离线导出 adapter 的价值叙事，与原第二轮实验计划合并。
+- **定案建议（2026-07-07 第四轮修订：升级为三段式，pre-RL 诊断成为硬门）**：
+  1. **第 0 段 pre-RL 行为诊断（硬门，必跑）**：与 pass-rate 难度预筛**合并为同一批 rollout**（预筛本来就要每题 8~16 次采样，诊断零额外成本）——在冻结候选池抽 50~100 题 × n8，统计 valid tool-call rate、submit rate、empty-patch rate、timeout rate、solve-none rate、非零方差组占比。若 valid action / submit 基本崩 → 先做小 SFT 修行为锚；若只是难度失配 → 调预筛区间与动态采样，不动 SFT。
+  2. **第 1 段 direct RL from instruct**（最短路径 + slime 示例背书 + DeepSWE/SkyRL 的 Qwen3-32B 纯 RL 先例）。
+  3. **第 2 段 SFT/RFT 回退**（量化触发见下）：目标是**修复行为锚点**而非提均分（Parallel-SFT 证据：功能等价导向的初始化比表面分布模仿的迁移更好）；只用 clean 成功轨迹 + 高质量 near-miss，1~5k 轨迹级。**措辞警示（第四轮核查纠偏）**：DeepSWE 原文是"在 Claude 轨迹 SFT 过的模型之上做 RL，100 iterations 无改进"——这是 **RL-on-SFT 停滞**的证据，不是"SFT 无用"，引用时必须写准。另有一个比 SFT 更便宜的中间选项：reward 稀疏而行为未崩时，混入 Hybrid-Gym 式辅助技能合成任务（函数定位/依赖搜索/上下文检索，agent 额度可产；其论文报 SWE-Bench Verified 绝对 +25.4pp 且与 in-domain 数据加性互补）。
 - **回退触发量化（首训前预注册；线程 5 核实结论：前沿报告不存在"前 N 步 reward 不动"类公开诊断指标——以下阈值为自建预注册值，首训跑完后校准）**：
 
 ```text
@@ -147,24 +150,40 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
   2. **开源数据集核实**（详见附录 B）：SWE-Gym（2,438 题 + Lite 234，SWE-bench 原生格式零改造走 `swebench` grader，仓库级与 Verified 无重叠）与 R2E-Gym-Subset（4,578 题去污子集，RL 战绩最硬：DeepSWE / SkyRL-Agent 在其上训到 Verified 39~42%）是安全首选；SWE-smith（~52K 合成，MIT，一 repo 一镜像最省盘）作多样性补充；**SWE-rebench V1/V2 只做时间去污、与 Verified 仓库大量重叠——不按 repo 过滤不得使用**。
   3. **agent 额度主战场**（线程 3）：全体报告的公共瓶颈步是"agent 建 Docker 环境 + 迭代自纠错"（MAI 实测建环境成功率仅 42.8%，是整条流水线最大损耗点）；其次是 LLM 生成语言感知测试日志解析器（GLM RepoLaunch）、问题陈述打分重写、合成增广（Qwen3：均 169.7 bug/仓库的杠杆）。唯一换不掉的 GPU 步是 pass-rate 难度筛选，可学 ROME 用开源基线模型粗筛以省自己的卡时。Nemotron 的 7 条轨迹过滤信号（禁 git 操作、edit-test 死循环、debug 残留等）是 warm-start SFT 清洗的现成清单，纯规则可跑。
   4. **治理层的第一个实战应用自动出现**：导入开源数据集必须先过我方环境验证门（golden patch 必过 / 空 patch 必败 / 重复执行确定）——社区反馈证实这些数据集普遍继承 flaky 测试与假阳性，**"导入集验证良率"因此成为可量化的治理指标**（纳入 E8 量化口径）。
-- **定案建议（数据策略三段）**：
+- **定案建议（数据策略，2026-07-07 第四轮修订：拆 bring-up / success run，R2E 前移）**：
 
 ```text
-首训（S1 后第一次正式训练）：纯开源起步——
-  SWE-Gym Lite(234) 经目标模型 pass-rate [0.1,0.8] 预筛
-  + 我方环境验证门，得约 150~200 有效题；
-  扩容时叠加 SWE-Gym 全量(2,438) + R2E-Gym-Subset(4,578)，
-  上探 1~2K（ROME 上沿锚）。
-  协议：SWE-Gym 走 swebench 官方 grader；R2E 走 scaleswe/eval_cmd。
+静态质量预筛（新增，GPU 预筛之前，纯 agent 额度）：
+  对候选题跑 SPICE 式三标签——issue clarity / test adequacy /
+  solution leakage（SPICE arXiv:2507.09108 实测 $5.10/千题、与人工
+  高一致；恰对应环境生产线子文档 task_quality_report 的三字段）——
+  低分题先剔，再进 GPU pass-rate 预筛，省 rollout 预算。
+
+Bring-up run（验证链路，不做能力结论）：
+  SWE-Gym Lite(234) 经静态预筛 + pass-rate [0.1,0.8] + 环境验证门，
+  得 ~100~200 题；只看非零方差组占比、有效轨迹率、导入良率、
+  墙钟四段分解。协议走 swebench 官方 grader。
+
+Success run（首个能力证明 run）：
+  300~800 有效题，R2E-Gym-Subset 占比 ≥50%——依据 DeepSWE 逐字
+  证据（"we observed limited performance improvements with the
+  other datasets [SWE-Smith/SWE-Gym], often showing high
+  solve-none rate ... R2E-Gym works best for RL training"，
+  其解释是 R2E 提供了足够的课程难度梯度）；
+  SWE-Gym Lite/Full 补多样性。R2E 走 scaleswe/eval_cmd。
+
+扩容 run：上探 1~2K（R2E-Subset + SWE-Gym Full；SWE-smith 只作
+  多样性补充）；触发条件 = success run 达到 E5 primary success。
 
 并行（不阻塞首训）：agent 自产流水线作为 5.4 环境生产线的实战验证——
-  用 codex/claude code 额度跑"PR 抓取 → agent 建环境自纠错 →
-  F2P/P2P 抽取 → 陈述重写 → 环境验证门"，目标自产 50~200 题
-  供第二次实验。自产不再是首训必需品，而是环境生产线的证明材料
-  （简历叙事：生产线真跑过，且有良率数据）。
+  "PR 抓取 → agent 建环境自纠错 → F2P/P2P 抽取 → 陈述重写 →
+  环境验证门"，目标自产 50~200 题供第二轮。良率数据即简历证据。
+  参考实现优先精读 Scale-SWE（arXiv:2602.09892——微调对象恰为
+  Qwen-30B-A3B，与本项目同底座）。
 
-消融与冻结：任务数可扫变量定档 200 vs 1000~2000 两档；
-  冻结协议含两条硬检查——训练集 repo ∩ Verified 12 repos = ∅、
+冻结协议三条硬检查：训练集 repo ∩ Verified 12 repos = ∅；
+  训练集 repo ∩ 主判据 held-out repos = ∅（E5 第四轮新增，
+  held-out 从 R2E/SWE-Gym 按 repo 整体切出）；
   SFT/RL prompt 完全不相交（Qwen3 做法）。
 ```
 
@@ -208,7 +227,40 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
 
 - **问题**：held-out 集大小、before/after 口径、方差控制。
 - **调查结论**：口径高度一致——MAI：pass@1 取 4 次平均、T=1、top-p=0.97；MiniMax：SWE 4 trials、T=1.0/top-p=0.95；Nemotron：avg-8/16/32 抑方差；Kimi：Avg@4~64。方差硬数据：GLM-5 SWE-rebench 报 SEM ±1.06%~2.12%（数百题规模）——30 题小集单次评测分辨率很粗，多次采样必不可少。Composer 2 的补充呈现范式：best-of-4/16 曲线随训练同升（证明 RL 扩大可达解集而非只重排概率质量）。
-- **定案建议**：held-out ≥30 题（按仓库与训练集零重叠）；每题采样 n=4~8 取均值，T=1.0、top-p 0.95~0.97；报告均值 ± 置信区间；对照组两个（未训模型、若可复现再加 slime 示例原配置）；附 best-of-K 随训练曲线作为第二能力证据。
+- **定案建议（2026-07-07 第四轮修订：评测面拆双层，判据分级）**：
+
+```text
+主判据面（自建 frozen held-out——与训练同分布、同 harness、同推理栈）：
+  从训练数据集按 repo 整体切出：建议 R2E-Subset 留出
+  tornado(261) + pyramid(189)、SWE-Gym 留出 hydra(66) + bokeh(26)，
+  共 ~540 候选，经同一套静态预筛 + 环境验证门后冻结 T≥50 题
+  （资源不足 T≥30，须标注为低功效版本）。
+  每题 n=8，T=1.0，top_p 与训练 rollout 同值（E2 定）。
+  主指标 = Avg@n 解决率；按 task 配对 bootstrap（10k 次）给 Δ 与 95% CI。
+
+外部参考面（公开可比性，不作主判据）：
+  SWE-bench Verified 子集 30~50 题 +（可选）SWE-bench Pro public 子集。
+  必须标注：OpenAI 2026-02-23 已公告 Verified 不再反映前沿能力
+  （审计 o3 反复失败的 138 题中 ≥59.4% 存在拒绝功能正确答案的坏测试；
+  前沿模型可复现题面与修复代码 = 预训练污染），其推荐替代即
+  SWE-bench Pro。外部面只报方向与量级，不进成败判据。
+
+成功判据分级（预注册，不允许事后降级）：
+  primary success = 主判据面 Δ ≥ 8pp 且 bootstrap 95% CI 下界 > 0
+  strong success  = Δ ≥ 10pp 且 CI 下界 > 0
+  Δ ≥ 8pp 但 CI 跨 0 → 只能写"方向性信号，统计不充分"，不得称成功
+
+必报的分布外指标（不进成败判据，两个面都零新增 harness）：
+  scaffold transfer gap（mini-swe-agent 单向测一次）；
+  prompt 改写面：用 agent 额度把主判据面题目 issue 改写成聊天式
+  用户请求再评一遍（Saving SWE-Bench 实测该类改写使各模型相对
+  成功率下滑 20~40%——本项目量化自己的下滑幅度作为附加发现）。
+
+可选治理加分（agent 额度）：对 held-out 通过补丁跑 UTBoost 式
+  增强测试复核假阳性（UTBoost 在 Verified 全集揪出 79 个误判通过）。
+```
+
+对照组两个（未训模型、若可复现再加 slime 示例原配置）；附 best-of-K 随训练曲线作为第二能力证据。
 - **统计设计补强（2026-07）**：
 
 ```text
@@ -236,7 +288,16 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
 
 - **问题**：总训练步数、每步 rollout 数、单轨迹上下文上限、compaction 开关。
 - **调查结论**：slime 示例的预算骨架——96k 上下文（autoCompact 80k 开启）/单轮生成 32k/每轨迹 agent 1800s + eval 600s/`--num-rollout 100` × 每步 8 prompt × 8 samples ≈ 全程 6400 条轨迹/总墙钟未披露（附录 A）。SWE-bench Verified 任务偏小（Composer：中位 7 行改动），96k 冗余；**降上下文直接砍训练侧 CP 需求（`max-tokens-per-gpu = context/CP`），是个人规模最大的可行性杠杆**。关 compaction 是 4/5 报告主流（preserved/interleaved thinking 或 turn 上限替代）。步数信号量级：Qwen3 约 220 步见收敛（旗舰规模），slime 示例 100 步。Qwen3 有两条低成本 reward shaping：未完成轨迹惩罚（turn 超限）、turn 级 tool-format 惩罚。
-- **定案建议**：上下文 32k~64k、关 autoCompact；每轨迹 agent 预算 600~900s（示例 1800s 对 Verified 偏松）、eval 600s；步数靶 30~100 步——下限以 reward 曲线出现趋势为准，上限由 C3 反推；纳入两条过程处理（未完成/超限轨迹 → mask loss；tool-format 违规 → 独立负分量，精确落点见下条澄清）；对照组复现示例时沙箱可按 README 提示从 E2B 换本地 Docker（省 C2 API 费；形态 B 下我们自己的 rollout 走 RepoHarness Runtime，不受此影响）。
+- **定案建议（2026-07-07 第四轮收紧：首训取保守档）**：上下文 **32k 起步、64k 不默认开**（DeepSWE 消融佐证：16K→128K 中超过 32K 边际收益不大；SkyRL 同用 32K/50 turns）、关 autoCompact；每轨迹 agent 预算 **600s 起步、900s 不默认**、eval 600s；步数 **30~50 步**；纳入两条过程处理（未完成/超限轨迹 → mask loss；tool-format 违规 → 独立负分量，精确落点见下条澄清）；对照组复现示例时沙箱可按 README 提示从 E2B 换本地 Docker（省 C2 API 费；形态 B 下我们自己的 rollout 走 RepoHarness Runtime，不受此影响）。64k / 900s / 更多步数只在 8 卡训练侧预实验（§4.1 第 4 条）与前 50 步曲线**同时**支持时开启。**Continuation rule（预注册）**：
+
+```text
+第 10 步：只查系统健康（墙钟四段分解、infra_failure 率、
+  零方差组占比），不做任何能力结论。
+第 30 步：若训练 reward、非零方差组占比、held-out 快评三者
+  全无上行 → 触发 E3 回退或停训分析。
+第 50 步：若快评 Avg@n 上行 + reward slope 为正 + 熵未塌 +
+  墙钟低于 C3 预算 → 可延长至 75/100 步；否则停训进入分析。
+```
 - **过程惩罚落点澄清（线程 5 已按原文核实——四家四种落点，不可混谈）**：Qwen3 的未完成惩罚是**扣轨迹级 reward 标量**（原文 "the trajectory reward is penalized"），tool-format 是 token 级惩罚（原文措辞未明确是 advantage 还是 reward）；Nemotron 是唯一显式写 **negative advantage** 的（malformed 推理/工具调用的 token 施负优势），未完成轨迹则 **mask loss**；GLM-5 **完全不把过程惩罚放进 reward**——纯 loss mask（只算 model token）+ 样本剔除（环境崩溃）；MiniMax 把 process 惩罚做成**密集 process reward 分量**（r = α·process + β·speed + perf，α/β 未披露）；Composer 反其道：产品级惩罚放 reward 且**明确不 mask 超长轨迹**。本实验定案取 GLM-5/Nemotron 一侧（与 DeepSWE/SkyRL 的 Compact Filtering / 轨迹掩码实践一致）：**outcome component 由 clean grading 独占；未完成/超限轨迹 mask loss（不进 policy loss，先过滤）；`tool_format_penalty` 作为独立负分量经 adapter 透传、由后端合成 advantage（后惩罚）；两者不叠加于同一轨迹**。Qwen3 式"扣轨迹 reward"显式不采纳，避免污染 outcome 语义。
 - **墙钟估算（回应"一周目标可能失真"）**：
 
@@ -274,12 +335,14 @@ T5 MoE 下 token 级 ratio 震荡：切 slime 内置 gspo 估计器
 ### E8 预期结论形态：什么算"证明设施有效" 【依赖全部】
 
 - **问题**：简历叙事的收尾——最小可信的证据包是什么。
-- **当前倾向**（三件套，缺一不可）：
+- **当前倾向**（证据包五件套，缺一不可；2026-07-07 第四轮由三件套升级）：
   1. **能力证据**：held-out 集 before/after **Avg@n 解决率**（统一用 E5 统计设计第 1 条口径，不再写 pass@1 单次 [S0-8 收口 2026-07-08]）有统计上可辨别的提升（配方差区间），附 best-of-K 随训练上升曲线（Composer 2 Fig 5 范式）；
   2. **治理证据**：训练全程的治理拦截统计（gate 拒绝分布、anti-cheat finding、红队环境包全部拦截成功）——证明提升不是靠作弊。调查带回必需性铁证：**Qwen3 Figure 7：不带 hack blocker 时 agent 用 git 回捞答案把分数虚高到 84.6%（真实 75.1%）**——治理证据不是锦上添花，是分数可信的前提；
-  3. **解耦证据**：同批 rollout 经离线导出与在线 adapter 的 parity 校验通过（final_review §4.2）。
-- **调查补充**：可选第四件交付——任务数消融（E4 定档 200 vs 1000~2000 两档），全部前沿报告都没有的小规模信息增量。量化口径新增一项：**导入开源数据集的环境验证良率**（多少题被 golden/empty/确定性门剔除）——治理层对第三方数据的第一个可量化实战指标。
-- **定案**：（待）
+  3. **解耦证据**：同批 rollout 经离线导出与在线 adapter 的 parity 校验通过（final_review §4.2）；
+  4. **数据证据（2026-07-07 第四轮从"可选补充"升为必交付）**：开源数据导入良率与剔除原因分布（静态预筛 / golden-empty-确定性门 / 泄漏扫描各剔多少）+ agent 自产线 50~200 题的成功率与失败归因——设施型项目区别于"一次模型训练"的核心证据；
+  5. **资源证据（第四轮新增）**：每步墙钟四段分解（生成/沙箱/评分/训练）、沙箱并发利用率、GPU 利用率、infra_failure 率——证明系统可诊断、可扩展，不只是"能跑"。
+- **调查补充**：任务数消融（200 vs 1000~2000）保留为 **success run 达到 primary success 之后**的可选追加贡献，不作首训硬门（首训没起信号时不烧消融预算）。
+- **定案**：（待；注意本项"三件套"已升级为五件套）
 
 ### E9 用户模拟与权限任务是否进第一次实验
 
@@ -339,6 +402,8 @@ E9 独立
 **第二轮数据专项调查（已完成，2026-07）**：线程 3（八份报告数据章节重读）与线程 4（开源数据集网络核实）结论已回填 E4"第二轮调查结论/定案建议"，数据集对比与落地坑固化在附录 B。两线程关键互证：报告侧点名的 RL 直用数据集（SWE-Gym / SWE-rebench / R2E-Gym / SWE-smith）与网络核实的安全可用名单一致；ROME 的 ~2K RL 有效集与开源数据集的可用规模（SWE-Gym 2,438 + R2E Subset 4,578 经筛选后）恰好匹配。
 
 **第三轮补充核查（已完成，2026-07，回应 codex 评审七条）**：线程 5（报告原文核实）与线程 6（网络专项）结论已分别回填——过程惩罚四种落点原文对照（→E6）、SFT→RL 回退证据与 O(1M) 上界（→E3）、harness 两派实践与 transfer 量化先例（→E10）、三训练集 repo 清单与 Verified 交集 = ∅ + 行内泄漏字段清单 + SWE-Bench+ 32.67% 描述泄漏（→E4）、SkyRL-Agent 同款配置卡 + slime 默认三处差距 + 动态采样升级为默认开（→E2）。
+
+**第四轮外部建议核查（已完成，2026-07-07，回应 gpt5.5pro 实验设计建议）**：对其 17 条文献引用逐条网络核实——**5 条承重引用全部成立**（DeepSWE 对 SWE-Gym "limited improvements / high solve-none" 为逐字原文；OpenAI 2026-02-23 公告 Verified 不再反映前沿能力、推荐 SWE-bench Pro；SPICE / UTBoost / Hybrid-Gym 均实）；两处措辞纠偏（DeepSWE 的 SFT 证据实为 "RL-on-SFT 停滞"非 "SFT 无用"；OpenAI 落点是"换 Pro"非"弃评"）；ProdCodeBench 数据未公开、不可自行复现，从副评测面候选剔除。据此完成第四轮修订：E2（top_p=0.95 定案建议）、E3（三段式 + 诊断硬门）、E4（bring-up / success run 拆分、R2E ≥50%、静态预筛）、E5（评测双层面 + 判据分级 + prompt 改写面）、E6（保守档 + continuation rule）、E8（五件套）。新文献速查见附录 C。
 
 ---
 
@@ -425,3 +490,36 @@ harness     SWE_AGENT=claude_code（ClaudeCodeHarness + AnthropicAdapter，
 **2026 新方向（观察项，不入首训）**：SWE-World（Docker-free 代理环境，与 slime 镜像路径不符）；SWE-Hub / SWE-Next（规模化环境生产系统）；MEnvAgent / DockSmith / EvoConfig（agent 自动建镜像基建——自产流水线的参考实现）。
 
 **关键 URL 备查**：SWE-Gym `github.com/SWE-Gym/SWE-Gym`；R2E-Gym-Subset `huggingface.co/datasets/R2E-Gym/R2E-Gym-Subset`；SWE-smith `github.com/SWE-bench/SWE-smith`；SWE-rebench V2 `huggingface.co/datasets/nebius/SWE-rebench-V2`；Multi-SWE-RL `huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL`；DeepSWE `together.ai/blog/deepswe`；SkyRL `github.com/NovaSky-AI/SkyRL`。
+
+---
+
+## 附录 C：第四轮新增文献速查（2026-07-07 已逐条核实存在性与关键数字）
+
+**改变决策的（已吸收进对应 E 项）**：
+
+- **DeepSWE**（together.ai/blog/deepswe，"Other Attempted Experiments" 节）：R2E-Gym 优于 SWE-Gym/SWE-Smith（逐字原文见 E4）；"RL-on-SFT 100 iterations 停滞"（caveat 见 E3——不是"SFT 无用"）。
+- **OpenAI 2026-02-23**《Why SWE-bench Verified no longer measures frontier coding capabilities》（openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/）：审计 o3 反复失败的 138 题中 ≥59.4% 为坏测试（35.5% narrow / 18.8% wide）+ 前沿模型预训练污染；推荐 SWE-bench Pro（→E5 双层评测面）。注：openai.com 反爬 403，正式引用逐字块需人工从浏览器复制。
+- **SPICE**（arXiv:2507.09108）：issue clarity / test coverage / effort 自动标注，$5.10/千题、与人工高一致（→E4 静态预筛）。
+- **UTBoost**（arXiv:2506.09289）：测试增强揪出 Verified 79 个假阳性通过、Lite 64 个；榜单排名变动 Lite 40.9% / Verified 24.4%（→E5 可选复核）。
+- **Hybrid-Gym**（arXiv:2602.16819）：辅助技能合成任务（定位/依赖搜索/上下文检索）迁移 SWE-Bench Verified 绝对 +25.4pp、SWT-Bench +7.9pp，与 in-domain 加性互补（→E3 回退梯中间选项）。
+
+**副评测面候选（首训不进，第二轮备选；除注明者均已核实公开可跑）**：
+
+- FeatureBench（arXiv:2602.10975，开源 github.com/LiberCoders/FeatureBench；SWE 强者 74.4%→11.0%）
+- ContextBench（arXiv:2602.05892，开源 github.com/EuniAI/ContextBench；过程级上下文检索，勿与 2602.08316 混淆）
+- SWE-Together（arXiv:2606.29957，开源；多轮用户交互重放 + reactive 用户模拟——与 P2 白盒 harness 的用户模拟方向契合）
+- RoadmapBench（arXiv:2605.15846，开源但超长程、30B 上 rollout 成本高）
+- Harness-Bench（arXiv:2605.27922；106 任务 × 6 harness × 8 后端矩阵——官方代码仓身份有歧义，以论文链接为准）
+- Self-Harness（arXiv:2606.09498；模型自迭代改 harness，Terminal-Bench-2.0 最高 +21.4pp——是方法不是评测面，作为第二阶段 "self-harness loop" 研究方向）
+- ProdCodeBench（arXiv:2604.01527；**Meta 内部数据未公开、不可自行复现，从可执行清单剔除**，仅方法论参考）
+
+**训练策略边界参考**：KLong（arXiv:2602.17547，极长程 trajectory-splitting SFT + progressive RL）；Tmax（arXiv:2606.23321，outcome-only GRPO 变体，9B 在 Terminal-Bench 2.0 达 27%，全开源）；Parallel-SFT（arXiv:2604.20835，功能等价导向初始化改善迁移）；Saving SWE-Bench（arXiv:2510.08996，聊天式改写致相对成功率降 20~40%——E5 prompt 改写面的依据）。
+
+**数据方向观察项**：Scale-SWE（arXiv:2602.09892，实际标题 "Immersion in the GitHub Universe"；6M PR→100k 验证实例，微调对象恰为 Qwen-30B-A3B——自产流水线优先精读）；Open-SWE-Traces（arXiv:2606.16038，207k 多语言 agentic 轨迹）；SWE-Bench++（arXiv:2512.17419，11k 实例 / 11 语言生成框架）；SWE-MERA（arXiv:2507.11059，动态抗污染评测）。
+---
+
+## 定案批准记录（2026-07-08，项目所有者 + infra 线程会签）
+
+用户批准第四轮修订全部推荐值：**E2**（GRPO n=8 + top_p=0.95，U-H 升为 S1 硬阻塞）、**E3**（三段式 + 行为诊断硬门 + 预注册回退阈值）、**E4**（静态预筛 + bring-up/success 拆分 + R2E≥50% + 三条冻结硬检查）、**E5**（双层评测面：主判据 = 自建 frozen held-out，Verified 降为外部参考面；判据分级预注册）、**E6+C3**（32k/600s/30-50 步 + continuation rule；首训 ≤4 天、硬上限一周）、**E8**（五件套证据包）、**E9**(用户模拟不进首训)。部分参数（吞吐/时长）留 8 卡预实验实测后动态微调。
+
+infra 线程审查意见：无异议。两条落地后果记入 S1 执行计划：(1) E10"训练=主评测同 harness 同栈"意味着主评测面跑在 slime/Claude Code 路径的 eval 模式上，verifiers 评测路径承载第二 scaffold transfer 面与治理审计（架构说明 02 文档 §8 已同步精化）；(2) bring-up run 数据源（SWE-Gym Lite 预筛）的 ingestion 不阻塞 S1 闭环（闭环用已冻结 8 题），排期见 S1 计划 F3。SWE smoke 8 题题单同日冻结，无调整。
