@@ -190,3 +190,35 @@ flowchart TD
 ## 7. 对 S1 计划的一个显式影响（提前说明，避免又一次困惑）
 
 S0 之前的实施计划总纲写过"S1 只实现 verifiers Trace → 中立投影这一个 adapter，slime 原生投影等形态 B 启用再写"。**形态 B 现在定为主形态，这句话过时了**：S1 计划编写时会把 `project_from_slime`（slime Sample → TrajectoryProjection）提升为训练主线交付物，`project_from_verifiers` 服务于评测与离线导出路径——两个 adapter 都要，只是主次对调。这是 S0 结论对 S1 的最大结构性输入，会写进 S1 执行计划并同步回总纲。
+
+---
+
+## 8. 训练链路逐步走查（2026-07-08 追问澄清）
+
+针对"训练路径是否使用 verifiers 对象"的追问，把形态 B 下一条轨迹的生命周期逐步列出（[]内为组件归属）：
+
+```text
+1. slime 触发 custom_generate(args, sample, ...)
+2. [RepoHarness 库]   环境包物化：起沙箱、按血缘契约校验 /testbed
+                      （HEAD^==base_commit，S0-7 发现 2）
+3. [slime 现成组件]   Claude Code harness 在沙箱内运行（直接复用，不重写）
+4. [slime 现成组件]   Anthropic adapter → SGLang /generate
+                      （token ids + logprobs + routing tape + top-p tape，
+                       slime patch 镜像，启动探针断言字段在场）
+5. [slime 现成组件]   TrajectoryManager：消息树 → loss-masked Sample(s)
+                      （compaction 分叉各成一条可训练轨迹）
+6. [RepoHarness 库]   GradingManager：fresh 评分沙箱重放 cleaned patch
+                      → RewardFacts + 失败归因三分（在 custom_generate
+                      编排之内，不是"返回后再打分"）
+7. [RepoHarness]      project_from_slime：Sample → TrajectoryProjection
+                      （tape 解码只在此层做一次）
+8. [RepoHarness]      EligibilityGate：provenance/评分/反作弊/可见性合取
+                      → 三档资格 + EligibilityReport sidecar + artifact 旁路
+9. 合格 → Sample 进 slime 训练 batch（advantage/loss/权重同步归 slime）；
+   降级 → 组修复信号及时浮给后端；样本转离线导出或 audit
+```
+
+**两条精确化结论**（修正常见误读）：
+
+1. **训练路径运行时不实例化任何 verifiers 对象。** verifiers 对象模型对训练链路的贡献是"分层纪律"（ownership 划分决定 RepoHarness 库代码的组织方式）；其运行时实例只出现在评测/基线路径——同一套环境包库代码由 verifiers `Taskset` 子类包一层绑定（S0-7 的 `SweSmokeTaskset` 即此绑定）。即：**环境包库代码写一次，slime 绑定（训练）与 verifiers 绑定（评测）各包一层。**
+2. **三个消费者的归属**：slime trainer 与 SFT/离线导出挂在训练路径 gate 之后；**评测报告主要由 verifiers 评测路径产出**（同一环境包 + EvalClient），不经过训练链路。
