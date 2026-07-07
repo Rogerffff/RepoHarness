@@ -93,11 +93,13 @@ def find_forbidden_marker(value: str) -> str | None:
     """在单个字符串里查找 forbidden marker，命中返回 marker 原文，否则 None。
 
     同时做归一化子串匹配与紧凑（去下划线）子串匹配，语义见模块 docstring。
+    按字典序遍历名单：一段文本命中多个 marker 时（如 "hidden_test_patch" 同时含
+    hidden_test / test_patch），返回值跨进程确定，evidence 可复现比对。
     """
 
     normalized = normalize_marker_text(value)
     compact = normalized.replace("_", "")
-    for marker in FORBIDDEN_PUBLIC_MARKERS:
+    for marker in sorted(FORBIDDEN_PUBLIC_MARKERS):
         normalized_marker = normalize_marker_text(marker)
         if normalized_marker and normalized_marker in normalized:
             return marker

@@ -68,7 +68,12 @@ class GenerationCaptureRecord(StrictModel):
        capture_status 不允许是 complete——这正是"镜像静默降级"的探测点（U-H 回归）；
     3. 请求了 routing tape 而 routed_experts_ref 缺失时，同样禁止 complete；
     4. top-p 的 ids/offsets 引用必须成对出现（slime 同款约束）；
-    5. prompt 侧必须至少给 hash 或 ref 之一；raw meta_info 必须至少给 digest 或 ref 之一。
+    5. prompt 侧必须至少给 hash 或 ref 之一；raw meta_info 必须至少给 digest 或 ref 之一
+       ——meta_info 一条在 capture_status=failed 时豁免（请求失败可能根本没有 meta_info）；
+    6. response_token_count > 0 时 response_token_ids_ref 必填（对 partial/failed 同样生效：
+       声称生成了 token 就必须能指出 ids 在哪，否则计数无凭据）；
+    7. capture_status=failed 时 capture_failure_reason 必填（失败不可无因）；
+       非 failed 状态不得携带该字段。
     """
 
     schema_id: Literal["rh2.generation_capture_record.v1"] = Field(
@@ -105,13 +110,16 @@ class GenerationCaptureRecord(StrictModel):
         default=None, description="prompt token ids 的 digest（与 ref 至少给一个）。"
     )
     response_token_ids_ref: ArtifactRef | None = Field(
-        default=None, description="采样 output ids 的引用（response_token_count>0 时必填）。"
+        default=None,
+        description="采样 output ids 的引用（response_token_count>0 时必填，任何 capture_status 下都不豁免）。",
     )
     raw_meta_info_ref: ArtifactRef | None = Field(
-        default=None, description="原始 meta_info 全文引用（与 digest 至少给一个）。"
+        default=None,
+        description="原始 meta_info 全文引用（与 digest 至少给一个；capture_status=failed 时可都缺）。",
     )
     raw_meta_info_digest: Sha256Digest | None = Field(
-        default=None, description="原始 meta_info 规范化 digest（与 ref 至少给一个）。"
+        default=None,
+        description="原始 meta_info 规范化 digest（与 ref 至少给一个；capture_status=failed 时可都缺）。",
     )
     logprobs_ref: ArtifactRef | None = Field(
         default=None, description="逐 token logprob（meta_info.output_token_logprobs）的引用。"
@@ -126,18 +134,49 @@ class GenerationCaptureRecord(StrictModel):
         default=None, description="MoE routing tape 的引用（dense 模型为 None）。"
     )
     capture_status: CaptureStatus = Field(description="本轮捕获完成度结论。")
+    capture_failure_reason: NonEmptyStr | None = Field(
+        default=None,
+        description=(
+            "捕获失败原因（如 request_timeout、response_parse_error）。"
+            "capture_status=failed 时必填；complete/partial 时必须为 None。"
+        ),
+    )
     alignment_status: AlignmentStatus = Field(description="本轮对齐核对结论。")
     captured_at_utc: AwareDatetime = Field(description="捕获时间（必须带时区）。")
 
     @model_validator(mode="after")
     def _check_capture_contract(self) -> "GenerationCaptureRecord":
-        # 5. prompt 与 meta_info 的"至少一个"规则
+        # 5. prompt 与 meta_info 的"至少一个"规则（meta_info 在 failed 时豁免：
+        #    请求失败可能根本没拿到 meta_info，强求会逼生产者伪造 digest）
         if self.prompt_token_ids_ref is None and self.prompt_token_ids_sha256 is None:
             raise ValueError(
                 "prompt_token_ids_ref 与 prompt_token_ids_sha256 至少提供一个（A4）。"
             )
-        if self.raw_meta_info_ref is None and self.raw_meta_info_digest is None:
-            raise ValueError("raw_meta_info_ref 与 raw_meta_info_digest 至少提供一个（A4）。")
+        if (
+            self.capture_status != "failed"
+            and self.raw_meta_info_ref is None
+            and self.raw_meta_info_digest is None
+        ):
+            raise ValueError(
+                "raw_meta_info_ref 与 raw_meta_info_digest 至少提供一个"
+                "（A4；仅 capture_status=failed 允许都缺）。"
+            )
+
+        # 6. 计数与 ids 引用互检：声称生成了 token 就必须能指出 ids 在哪
+        if self.response_token_count > 0 and self.response_token_ids_ref is None:
+            raise ValueError(
+                f"response_token_count={self.response_token_count} > 0 时 response_token_ids_ref 必填"
+                "（fail-closed：无 ids 引用的计数声明无凭据，partial/failed 也不豁免）。"
+            )
+
+        # 7. failed 必须有失败原因；非 failed 不得携带
+        if self.capture_status == "failed" and self.capture_failure_reason is None:
+            raise ValueError("capture_status=failed 时 capture_failure_reason 必填（失败不可无因）。")
+        if self.capture_status != "failed" and self.capture_failure_reason is not None:
+            raise ValueError(
+                f"capture_status={self.capture_status} 不得携带 capture_failure_reason"
+                "（失败原因只属于 failed 状态）。"
+            )
 
         # 4. top-p ids/offsets 成对
         if (self.top_p_token_ids_ref is None) != (self.top_p_token_offsets_ref is None):

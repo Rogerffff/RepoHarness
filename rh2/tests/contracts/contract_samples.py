@@ -225,6 +225,7 @@ def valid_grading_report() -> dict[str, Any]:
         "outcome": "resolved",
         "failure_category": None,
         "reward": 1.0,
+        "reward_scale_version": "binary_v1",
         "f2p_pass_count": 3,
         "f2p_total_count": 3,
         "p2p_fail_count": 0,
@@ -249,6 +250,7 @@ def valid_infra_grading_report() -> dict[str, Any]:
         "outcome": "failed_to_grade",
         "failure_category": "infra_failure",
         "reward": None,
+        "reward_scale_version": "binary_v1",
         "infra_failure_detail": "grading_container_killed_oom",
         "graded_at_utc": TS,
     }

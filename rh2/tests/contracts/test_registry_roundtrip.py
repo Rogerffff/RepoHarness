@@ -56,3 +56,12 @@ def test_frozen_models_reject_mutation(schema_id):
     instance = model_cls.model_validate(VALID_SAMPLE_FACTORIES[schema_id]())
     with pytest.raises(ValidationError):
         instance.schema_id = "tampered"  # type: ignore[misc]
+
+
+@pytest.mark.parametrize("schema_id", ALL_SCHEMA_IDS)
+def test_non_finite_floats_rejected_everywhere(schema_id):
+    """S1-1b：allow_inf_nan=False 在 StrictModel 基类一处生效、覆盖全部契约 schema
+    （R2/R5 的共同根修——NaN 与任何数比较都是 False，能穿过所有数值比较校验器）。"""
+
+    model_cls = SCHEMA_REGISTRY[schema_id]
+    assert model_cls.model_config.get("allow_inf_nan") is False

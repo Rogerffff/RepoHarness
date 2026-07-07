@@ -37,12 +37,17 @@
 公共机制（不属于某一步）：`constants.py` 的 `FORBIDDEN_PUBLIC_MARKERS` 泄漏扫描、
 `inspect-rh2-artifact` 校验命令、`SCHEMA_REGISTRY`（schema_id -> 模型类）。
 
-所有对象共享三条"宪法"级约定（`_base.py`）：
+所有对象共享四条"宪法"级约定（`_base.py`）：
 
 1. `extra="forbid"`：未知字段一律拒收。谁想偷偷塞一个新 key 进 evidence，
    校验直接失败，而不是静默透传。
 2. `frozen=True`：构造完成即不可变。evidence 不允许事后改字段。
-3. 大对象只存 `ArtifactRef`（opaque 引用 + 可选 sha256）：契约对象本身
+3. `allow_inf_nan=False`（S1-1b 补）：全部 float 字段拒收 NaN/±inf，基类一处
+   生效覆盖 14 个 schema。为什么必须在基类拦：`reward=float("nan")` 能穿过
+   `reward <= 0.0` 这类比较校验器（NaN 与任何数比较都是 False），一路流进
+   训练 batch 会把整个 loss 变成 NaN。数值缺失的唯一合法表示是 `null` +
+   相应语义字段（如 `reward_scope="none"`），绝不是 NaN。
+4. 大对象只存 `ArtifactRef`（opaque 引用 + 可选 sha256）：契约对象本身
    永不内嵌 token 数组、tape 张量、日志正文。
 
 ---
@@ -180,7 +185,15 @@ base=`d26b2424…`，但 HEAD^==base，所以填 `"lineage_check": "head_parent_
   - `complete` 必须同时满足：有 output ids 引用、有 logprobs 引用、
     `alignment_status="aligned"`、请求过的 tape 都在场；
   - top-p 的 ids/offsets 引用必须成对（slime 同款约束）；
-  - prompt 至少给 hash 或 ref 之一；raw meta_info 至少给 digest 或 ref 之一。
+  - prompt 至少给 hash 或 ref 之一；raw meta_info 至少给 digest 或 ref 之一
+    （meta_info 一条在 `capture_status="failed"` 时豁免——请求失败可能根本
+    没拿到 meta_info，强求会逼生产者伪造 digest）；
+  - `response_token_count > 0` ⇒ `response_token_ids_ref` 必填（S1-1b 收紧：
+    partial/failed 也不豁免——声称生成了 16 个 token 却指不出 ids 在哪，
+    这个计数就无凭据）；
+  - `capture_status="failed"` ⇒ `capture_failure_reason` 必填（失败不可无因，
+    如 `request_timeout` / `response_parse_error`）；complete/partial 携带
+    该字段反向拒收。
 
 最小合法样例（真实形状，S1-0 探针）：
 
@@ -227,26 +240,54 @@ dense 模型（S1-7a 的 Qwen3-4B）注意：请求方传 `return_routed_experts
   不是"返回后再打分"）。
 - **消费者**：RewardFacts（`reward_event_refs` 指向它）、gate 的 clean_grading
   维度、S1-4 故障注入测试、F5 吞吐画像。
-- **训练安全关键字段**：`failure_category` 与 `reward` 的互锁。
-- **fail-closed 行为（三分互锁表）**：
+- **训练安全关键字段**：`failure_category` 与 `reward` 的互锁 +
+  `reward_scale_version` 二值锁。
+- **fail-closed 行为（互锁表，S1-1b 收紧版）**：
 
 ```text
-outcome           允许的 failure_category      reward          测试计数
-resolved          （必须无）                   必填且 > 0      四个计数齐全，且
-                                                              f2p_pass==f2p_total、p2p_fail==0
-unresolved        patch_apply_failed|tests_failed  必填（0.0） apply 失败时必须无
-failed_to_grade   infra_failure（唯一）        必须为 null     必须无，且必须写 infra_failure_detail
+outcome           允许的 failure_category            reward        测试计数
+resolved          （必须无）                          恰为 1.0      四个计数齐全，且
+                                                                  f2p_pass==f2p_total、p2p_fail==0
+unresolved        patch_apply_failed                 恰为 0.0      必须全 null（测试未运行）
+                  tests_failed                       恰为 0.0      四个计数必须齐全
+failed_to_grade   infra_failure|test_log_parse_failed 必须为 null   必须全 null，且必须写
+                  （infra 族）                                      infra_failure_detail
 ```
+
+**reward 二值锁（S1-1b，`reward_scale_version="binary_v1"`）**：S1 的 reward
+语义是严格二值，schema 把它锁死——不是"resolved 时 > 0"，而是"恰为 1.0"。
+未来引入连续 reward（部分分、process 分量并入等）必须新增
+`reward_scale_version` 枚举值并同步改校验器，不允许在 binary_v1 下静默放宽。
+最小正反样例（R1/R3 回归）：
+
+```text
+非法：{"outcome": "unresolved", "failure_category": "tests_failed", "reward": 1.0, …}
+      → 拒收（R1：负样本携带满分 reward，训练信号直接反转）
+非法：{"outcome": "resolved", "reward": 0.5, …}
+      → 拒收（R3：binary_v1 下不存在中间值，0.5 必须先升版才可表示）
+合法：{"outcome": "resolved", "reward": 1.0, "reward_scale_version": "binary_v1", …}
+合法：{"outcome": "unresolved", "failure_category": "tests_failed", "reward": 0.0,
+       "f2p_pass_count": 1, "f2p_total_count": 3, "p2p_fail_count": 0, "p2p_total_count": 52, …}
+```
+
+**infra 族有两个成员（S1-1b 新增 `test_log_parse_failed`）**：
+"测试跑了但官方 parser 从日志里解析不出结果"（标记缺失、输出截断）是评分
+链路的问题，不是模型的负样本，与 `infra_failure` 同族、同样强制 reward=null。
+由此 `tests_failed` 的边界收紧为"测试跑了**且日志解析成功**"——所以它必须
+带全四个计数（R4 回归：tests_failed + 四计数全空即拒收，解析不出计数就该
+归因 test_log_parse_failed 而不是伪装成负样本）。
 
 **点名非法样例（本阶段最重要的一条）**：
 
 ```json
 {"outcome": "failed_to_grade", "failure_category": "infra_failure", "reward": 0.0}
-→ ValidationError: infra_failure 时 reward 必须为 None
+→ ValidationError: infra 族归因时 reward 必须为 None
    （基建故障绝不允许伪装成 reward=0 的负样本——否则模型会被评分容器 OOM "教育"）
 ```
 
-对应合法写法：`"reward": null` + `"infra_failure_detail": "grading_container_killed_oom"`。
+对应合法写法：`"reward": null` + `"infra_failure_detail": "grading_container_killed_oom"`；
+日志解析失败同形态：`"failure_category": "test_log_parse_failed"` +
+`"infra_failure_detail": "test_output_markers_missing"`。
 
 ### 4.2 PatchHygieneResult（内嵌于 GradingReport）
 
@@ -361,6 +402,21 @@ token_spans:  [0,15) prompt_context | [15,23) sampled_assistant | [23,31) tool_r
   参训即污染——这正是 H4 拦的事故形态）
 ```
 
+**mask=0 的 reason 也要与来源互检（S1-1b，N-3）**：sampled_assistant 来源的
+token 若不参训，reason 只允许降级类（`replayed_sibling_response` /
+`retokenization_drift_downgraded`）——标成 `prompt_context` /
+`tool_or_env_context` 这类"本来就是上下文"的理由等于抹掉降级事实，审计线索
+就断了。反向不受影响：真在 tool_result 来源上的 mask=0 照常标
+tool_or_env_context。
+
+```text
+token_spans:  [0,15) prompt_context | [15,31) sampled_assistant
+非法 loss_mask_spans: [15,23) mask=1 sampled_assistant_trainable
+                      [23,31) mask=0 tool_or_env_context
+→ 拒收：[23,31) 是模型采样段，"不训练"必须给降级理由，不得伪装成工具输出
+合法改法：[23,31) mask=0 retokenization_drift_downgraded
+```
+
 ### 6.3 LogprobProvenance —— M4 logprob_source
 
 - **职责**：logprob 是"谁、哪个版本、什么精度"算的：
@@ -402,18 +458,43 @@ vLLM:   行数 = prompt_len + generated_len       （13+8   = 21，S0-5 探针�
 
 - **fail-closed 行为**：`top_p<1.0` 缺 tape **不可表示**（stock SGLang 静默
   忽略形态被 schema 挡死）；`top_p=1.0` 必须显式 `not_applicable_top_p_1`；
-  `offsets_len != response+1` 拒收。
+  `offsets_len != response+1` 拒收；`kept_token_count < response_token_count`
+  拒收（S1-1b，N-4：top-p 对每个 response token 至少保留 1 个核 token，
+  16 个 token 的 tape 总保留数不可能低于 16——低了说明 tape 记录不完整）。
 
-### 6.6 RewardFacts —— §16.11 的落点
+### 6.6 RewardFacts —— §16.11 的落点 + fan-out 建模定案
 
 - **职责**：raw reward + components + 组信号。归一化/advantage 归训练后端。
 - **fail-closed 行为**：
   - `reward_scope="none"` ⇒ `raw_reward` 必须 null（infra 场景禁止携带 0.0，
-    与 GradingReport 的规则首尾呼应）；
+    与 GradingReport 的规则首尾呼应）；NaN/inf 由基类 `allow_inf_nan=False`
+    拒收（R5 回归：NaN 能穿过所有数值比较校验器）；
   - `trace_level` ⇒ `reward_event_refs` 至少一条（reward must 有出处）；
   - `group_level` ⇒ `group_id/parent_rollout_id/segment_count/
     rollout_loss_denominator` 四件齐全（防 compaction fan-out 重复放大，
     `rollout_loss_denominator` 即 slime `rollout_mask_sums` 语义）。
+
+**fan-out 建模定案（S1-1b）：单投影多 branches 为权威**。一个 rollout/session
+产一个 TrajectoryProjection，compaction/fan-out 的全部分段作为它的 branches，
+不拆成多个投影对象。由此两条硬规则：
+
+1. `segment_count`（在场时）必须 == 所属投影的 `len(branches)`——投影层校验器
+   互检（R6 回归）；多分支投影必须申报 segment_count，否则 fan-out 的 loss
+   账目（防重复放大）无从核对；
+2. `parent_rollout_id` **只用于跨 rollout 的 GRPO 同题兄弟组**（同一 prompt 的
+   n 条 rollout 共享），**不用于 rollout 内分段**——rollout 内分段就是 branches。
+
+最小正反样例（一个 rollout 被 compaction 拆成两段）：
+
+```text
+合法：TrajectoryProjection.branches = [b0, b1]（两段并列为分支）
+      + reward_facts.segment_count = 2
+非法：branches = [b0, b1] + segment_count = 5
+→ 拒收（R6：账目对不上——分段被拆去了别的投影，或申报数被凭空放大）
+非法：branches = [b0, b1] + segment_count = null
+→ 拒收（多分支必须申报分段账目）
+合法：branches = [b0]（无 fan-out）+ segment_count = null（隐含 1 段）
+```
 
 ### 6.7 CompactedSubTraceLineage —— compaction 血缘
 
@@ -434,7 +515,8 @@ BranchProjection 把上面所有事实装配成一条可训练分支，并做六
   给这条分支的，计数对不上说明解码接错了对象）。
 
 TrajectoryProjection 层再加：branch_id 唯一、`renderer_cls_name`（U-G 断言
-事实）、`created_at_utc` 必须带时区。
+事实）、`created_at_utc` 必须带时区、`reward_facts.segment_count ==
+len(branches)` 的 fan-out 账目互检（S1-1b，见 6.6 的正反样例）。
 
 ---
 
@@ -496,6 +578,21 @@ gate 侧建议用 `EligibilityReport.finalize(...)` 构造（自动算 digest、
   组信号、后端是否接受。staleness 的**使用**归后端（H10），RepoHarness 只记事实。
 - **创建者**：训练后端 adapter（slime 绑定 / 离线导出）。
 - **消费者**：gate 的 policy_staleness 维度、审计（拒收原因分布）。
+- **accepted 语义定案（S1-1b）**：`accepted` 仅表示**后端物理接收**了这份
+  样本；可训练性的唯一权威是 EligibilityReport（policy_staleness 维度消费
+  本对象的 staleness 事实）。契约刻意不新增第二个"可训练"字段（R2 单一权威
+  原则：两个字段各说各话时下游无所适从）。最小正反样例：
+
+```text
+合法：{"staleness_steps": 6, "staleness_threshold": 4,
+       "staleness_within_threshold": false, "accepted": true, …}
+      → 后端有权按自己的算法策略接收过期样本（H10），账实相符即可表示；
+        但 gate 的 policy_staleness 维度照样 ok=false，online 档不可表示
+        ——accepted=true 救不回资格（test_accepted_is_physical_receipt_not_trainability）
+非法：{"staleness_steps": 6, "staleness_threshold": 4,
+       "staleness_within_threshold": true, …}
+      → 拒收（账实不符：6 > 4 却声明在阈值内，见下面第 1 条）
+```
 - **fail-closed 行为**：
   1. `staleness_within_threshold` 是派生结论，校验器强制它等于
      `staleness_steps <= staleness_threshold` 的重算值（6 > 4 却声明 within=true
@@ -529,7 +626,10 @@ gate 侧建议用 `EligibilityReport.finalize(...)` 构造（自动算 digest、
 hidden_verifier/grader_only）+ 旧 L4 evaluator-only 名单（gold_patch/
 provider_secret/hidden_test_patch/…）+ 旧 batch 私有 key（run_dir/audit_ref/…），
 共 23 项。匹配做两层：归一化子串（"FAIL TO PASS"→fail_to_pass）+ 紧凑子串
-（"TestPatch"→testpatch）。
+（"TestPatch"→testpatch）。名单按**字典序**遍历（S1-1b）：一段文本命中多个
+marker 时（如 "hidden_test_patch" 同时含 hidden_test / test_patch）返回值
+跨进程确定——否则不同 PYTHONHASHSEED 下 frozenset 迭代序不同，同一份输入
+两次扫描报出不同 marker，evidence 无法逐字节复现比对。
 
 **已知误报形态（有意的 fail-closed 取舍）**："latest_patches" 紧凑后含
 "testpatch" 会命中。误报走人工豁免，漏报会直接污染训练数据，宁误报不漏报。
@@ -559,7 +659,8 @@ sidecar 关联、白名单核对）并读取 `uh_probe_result.json`（A10）。
 2. 大 payload 是不是都换成了 ArtifactRef？有没有把 token 数组/日志正文内嵌？
 3. dense / top_p=1.0 这类"缺席"场景，是不是用显式 not_applicable_* 声明的？
 4. 失败/降级路径有没有 reason code 或 detail？（无理由的失败都会被拒收）
-5. reward 缺失时是不是 null + scope=none？（绝不允许 0.0 顶替）
+5. reward 缺失时是不是 null + scope=none？（绝不允许 0.0 或 NaN 顶替；
+   有值时 binary_v1 下只有 1.0/0.0 两个合法取值）
 6. 模型可见面的字符串（env、公开题面）有没有过 find_forbidden_marker？
 7. 写完先 model_validate 自己的样例，再跑 inspect-rh2-artifact 看退出码。
 ```

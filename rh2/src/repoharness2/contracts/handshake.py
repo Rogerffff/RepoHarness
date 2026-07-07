@@ -72,6 +72,12 @@ class BackendHandshake(StrictModel):
     消费者：EligibilityGate 的 policy_staleness 维度（事实来源）、
     审计（拒收原因分布）、F5/吞吐画像。
 
+    accepted 语义定案（S1-1b）：**accepted 仅表示后端物理接收了这份样本；
+    可训练性的唯一权威是 EligibilityReport（policy_staleness 维度消费本对象的
+    staleness 事实）**。因此 accepted=True 与 staleness_within_threshold=False
+    可以并存（后端有权按自己的算法策略接收过期样本，H10），资格判定不看
+    accepted——本契约刻意不新增第二个"可训练"字段（R2 单一权威原则）。
+
     fail-closed 校验清单：
     1. accepted 与 rejection_reason 互斥互补（接受了就不能有拒收原因，反之必有）；
     2. staleness_within_threshold 必须等于 staleness_steps <= staleness_threshold
@@ -107,7 +113,12 @@ class BackendHandshake(StrictModel):
         default=None,
         description="组信号（仅组式算法后端出现；num_samples=1 的 PPO 形态为 None，算法无关原则）。",
     )
-    accepted: bool = Field(description="后端是否接受本样本。")
+    accepted: bool = Field(
+        description=(
+            "后端是否物理接收本样本。仅此而已——可训练性唯一权威是 "
+            "EligibilityReport（policy_staleness 维度），accepted=True 不构成任何资格背书。"
+        )
+    )
     backend_rejection_reason: BackendRejectionReason | None = Field(
         default=None, description="拒收原因（accepted=False 时必填；True 时必须为 None）。"
     )

@@ -21,6 +21,15 @@ tape 对齐约定（S1-0/S0-5 实测，两引擎不同构，必须显式编码�
 - vLLM routing 行数 = prompt_len + generated_len（13+8=21 行）；
 - top-p offsets 长度 = response_token_count + 1，offsets[0]=0，
   offsets[-1] = 全部保留 token 总数（uh_probe_result.json：gen 16 -> offsets 长 17）。
+
+fan-out 建模定案（S1-1b）：**单投影多 branches 为权威**——
+
+- 一个 rollout/session 产一个 TrajectoryProjection；compaction/fan-out 的
+  全部分段都作为它的 branches，不拆成多个投影对象；
+- RewardFacts.segment_count 必须等于 len(branches)（投影层校验器互检，
+  branches=2 却申报 segment_count=5 直接拒收）；
+- parent_rollout_id 只用于跨 rollout 的 GRPO 同题兄弟组（同一 prompt 的
+  n 条 rollout），**不用于 rollout 内分段**——rollout 内分段就是 branches。
 """
 
 from __future__ import annotations
@@ -294,7 +303,11 @@ class SamplingMaskRef(StrictModel):
     kept_token_count: int | None = Field(
         default=None,
         ge=0,
-        description="保留 token 总数（== offsets[-1]，生产者写入，inspector 可对 tape 重算比对）。",
+        description=(
+            "保留 token 总数（== offsets[-1]，生产者写入，inspector 可对 tape 重算比对）。"
+            "下界：每个 response token 的核集合至少含 1 个 token（top-p 定义保底保留 1 个），"
+            "因此必须 >= response_token_count（16 个 token 的 tape 至少 16）。"
+        ),
     )
 
     @model_validator(mode="after")
@@ -336,6 +349,13 @@ class SamplingMaskRef(StrictModel):
             raise ValueError(
                 f"top-p offsets 长度必须等于 response_token_count + 1："
                 f"offsets_len={self.offsets_len}，response_token_count={self.response_token_count}。"
+            )
+        assert self.kept_token_count is not None
+        if self.kept_token_count < self.response_token_count:
+            raise ValueError(
+                f"kept_token_count({self.kept_token_count}) 小于 "
+                f"response_token_count({self.response_token_count})：top-p 对每个 response token "
+                "至少保留 1 个核 token，总保留数不可能低于 token 数（tape 记录不完整或计数错误）。"
             )
         return self
 
@@ -391,13 +411,23 @@ class RewardFacts(StrictModel):
         default=None, description="GRPO 组 id（同 prompt 的 n 条 rollout 共享）。"
     )
     parent_rollout_id: NonEmptyStr | None = Field(
-        default=None, description="本样本所属的 rollout id（compaction fan-out 的兄弟样本共享）。"
+        default=None,
+        description=(
+            "跨 rollout 的 GRPO 同题兄弟组标识（同一 prompt 的 n 条 rollout 共享）。"
+            "**不用于 rollout 内分段**——rollout 内的 compaction/fan-out 分段是"
+            "同一 TrajectoryProjection 的 branches（S1-1b fan-out 建模定案）。"
+        ),
     )
     segment_index: int | None = Field(
-        default=None, ge=0, description="fan-out 分段序号（0 起）。"
+        default=None, ge=0, description="fan-out 分段序号（0 起，须小于 segment_count）。"
     )
     segment_count: int | None = Field(
-        default=None, ge=1, description="同一 rollout 拆出的训练分段总数。"
+        default=None,
+        ge=1,
+        description=(
+            "同一 rollout 的训练分段总数。权威建模下分段即投影的 branches，"
+            "本字段必须等于所属 TrajectoryProjection 的 len(branches)（投影层互检）。"
+        ),
     )
     rollout_loss_denominator: int | None = Field(
         default=None,
@@ -517,10 +547,14 @@ class BranchProjection(StrictModel):
     1. TokenSpan 无缝平铺 [0, prompt+response)；
     2. LossMaskSpan 无缝平铺 response 段 [prompt, prompt+response)；
     3. 每个 mask=1 的 span 必须完全落在 sampled_assistant 类型的 TokenSpan 内；
-    4. 存在 mask=1 的 span 时必须有 capture_record_refs（审计事实回链到
+    4. mask=0 的 span 若与 sampled_assistant 区间有重叠，reason 必须是降级类
+       （replayed_sibling_response / retokenization_drift_downgraded）——
+       模型采样出的 token 不训练必须给降级理由，标成 prompt_context /
+       tool_or_env_context 这类"本来就是上下文"的理由等于抹掉降级事实（N-3）；
+    5. 存在 mask=1 的 span 时必须有 capture_record_refs（审计事实回链到
        GenerationCaptureRecord，A4：不允许从训练后的 Sample 反推）；
-    5. logprob_alignment_status=aligned_per_token 时必须携带 LogprobProvenance；
-    6. routing / sampling_mask 的 token 计数必须与本分支的计数一致。
+    6. logprob_alignment_status=aligned_per_token 时必须携带 LogprobProvenance；
+    7. routing / sampling_mask 的 token 计数必须与本分支的计数一致。
     """
 
     branch_id: NonEmptyStr = Field(description="分支 id，在所属 TrajectoryProjection 内唯一。")
@@ -608,6 +642,24 @@ class BranchProjection(StrictModel):
                     "token 区间内（H4：只有模型真实采样的 assistant token 允许参训）。"
                 )
 
+        # 3b. mask=0 的 span 与 sampled_assistant 区间重叠时，reason 必须是降级类（N-3）：
+        #     采样 token 不训练只有两种合法故事——兄弟分支已训练（replayed_sibling_response）
+        #     或漂移降级（retokenization_drift_downgraded）；标 prompt_context 类
+        #     "本来就是上下文"的理由会把降级事实伪装成正常上下文，审计线索就断了。
+        downgrade_reasons = ("replayed_sibling_response", "retokenization_drift_downgraded")
+        for span in mask_spans:
+            if span.mask != 0:
+                continue
+            overlaps_sampled = any(
+                span.start < end and start < span.end for start, end in sampled_intervals
+            )
+            if overlaps_sampled and span.reason not in downgrade_reasons:
+                raise ValueError(
+                    f"mask=0 的 span [{span.start},{span.end}) 覆盖了 sampled_assistant 来源的 "
+                    f"token，reason 必须是降级类 {downgrade_reasons}，得到 {span.reason!r}"
+                    "（N-3：采样 token 不参训必须留下可审计的降级理由，不得标成普通上下文）。"
+                )
+
         # 4. 有可训练 token 就必须有捕获记录回链
         has_trainable = any(span.mask == 1 for span in mask_spans)
         if has_trainable and not self.capture_record_refs:
@@ -655,6 +707,11 @@ class TrajectoryProjection(StrictModel):
     创建者：project_from_slime（训练主线）/ project_from_verifiers（评测、导出线）。
     消费者：EligibilityGate、public projection 扫描、离线导出 adapter、parity 校验。
     tape 解码只允许在投影层做一次（S0 结论 5），本对象即解码结果的落点。
+
+    fan-out 建模（S1-1b 定案）：**单投影多 branches 为权威**——一个 rollout/session
+    产一个本对象，compaction/fan-out 分段全部作为 branches。因此校验器强制
+    reward_facts.segment_count == len(branches)（在场时），且多分支投影必须申报
+    segment_count——否则 fan-out 的 loss 账目（防重复放大）无从核对。
     """
 
     schema_id: Literal["rh2.trajectory_projection.v1"] = Field(
@@ -679,7 +736,11 @@ class TrajectoryProjection(StrictModel):
         default=None, description="chat template 内容 digest（可选，renderer 漂移排查用）。"
     )
     branches: list[BranchProjection] = Field(
-        min_length=1, description="可训练分支列表（compaction fan-out 的兄弟分支并列于此）。"
+        min_length=1,
+        description=(
+            "可训练分支列表。单投影多 branches 为权威建模：一个 rollout 的全部 "
+            "compaction/fan-out 分段并列于此，不拆成多个投影对象（S1-1b 定案）。"
+        ),
     )
     reward_facts: RewardFacts = Field(
         description="轨迹级 reward 原始事实（归一化归训练后端，见 §16.11）。"
@@ -693,4 +754,19 @@ class TrajectoryProjection(StrictModel):
         branch_ids = [branch.branch_id for branch in self.branches]
         if len(branch_ids) != len(set(branch_ids)):
             raise ValueError(f"branch_id 必须在轨迹内唯一，得到 {branch_ids}。")
+
+        # fan-out 账目互检（S1-1b 定案：单投影多 branches 为权威，分段即 branches）
+        segment_count = self.reward_facts.segment_count
+        if segment_count is not None and segment_count != len(self.branches):
+            raise ValueError(
+                f"reward_facts.segment_count({segment_count}) 与 len(branches)({len(self.branches)}) "
+                "不一致：fan-out 分段全部作为本投影的 branches，两个计数必须相等"
+                "（账目对不上说明分段被拆到了别的投影，或申报数被凭空放大）。"
+            )
+        if segment_count is None and len(self.branches) > 1:
+            raise ValueError(
+                f"多分支投影（len(branches)={len(self.branches)}）必须申报 "
+                "reward_facts.segment_count：没有分段账目就无法防止 fan-out 后 "
+                "reward/loss 重复放大（§16.11）。"
+            )
         return self

@@ -2,6 +2,8 @@
 
 覆盖执行计划点名的非法样例："routing alignment 缺失但 tensor 存在"，
 以及 tape 形状、loss mask 语义（H4）、reward 组信号（§16.11）等。
+S1-1b 追加：R5（raw_reward NaN/inf）、R6（segment_count 与 branches 互检）、
+N-3（mask=0 reason 与 source_type 互检）、N-4（kept_token_count 下界）。
 """
 
 import pytest
@@ -113,6 +115,23 @@ def test_top_p_one_with_kept_kind_rejected():
         SamplingMaskRef.model_validate(payload)
 
 
+def test_n4_kept_token_count_below_response_count_rejected():
+    """N-4：每个 response token 的核集合至少 1 个 -> kept 总数不可能低于 token 数。"""
+
+    payload = valid_sampling_mask()
+    payload["kept_token_count"] = 10  # 16 个 response token 至少保留 16
+    with pytest.raises(ValidationError, match="kept_token_count"):
+        SamplingMaskRef.model_validate(payload)
+
+
+def test_n4_kept_token_count_exact_lower_bound_passes():
+    """下界取等合法：每 token 核集合恰好 1 个（top_p 截断极限形态）。"""
+
+    payload = valid_sampling_mask()
+    payload["kept_token_count"] = 16
+    assert SamplingMaskRef.model_validate(payload).kept_token_count == 16
+
+
 # ---------------------------------------------------------------------------
 # LossMaskSpan / BranchProjection：H4 语义
 # ---------------------------------------------------------------------------
@@ -172,6 +191,48 @@ def test_trainable_tokens_require_capture_refs():
     payload["capture_record_refs"] = []
     with pytest.raises(ValidationError, match="capture_record_refs"):
         BranchProjection.model_validate(payload)
+
+
+def test_n3_mask_zero_context_reason_on_sampled_source_rejected():
+    """N-3：sampled_assistant 源上的 mask=0 不得标 prompt_context 类理由——
+    采样 token 不参训必须留下降级理由，标成普通上下文等于抹掉降级事实。"""
+
+    payload = valid_branch()
+    payload["loss_mask_spans"] = [
+        {"start": 15, "end": 23, "mask": 1, "reason": "sampled_assistant_trainable"},
+        {"start": 23, "end": 31, "mask": 0, "reason": "tool_or_env_context"},  # [23,31) 实为采样段
+    ]
+    with pytest.raises(ValidationError, match="降级类"):
+        BranchProjection.model_validate(payload)
+
+
+def test_n3_mask_zero_downgrade_reason_on_sampled_source_passes():
+    """同一形状换成降级理由即合法：漂移降级是采样段 mask=0 的正当故事。"""
+
+    payload = valid_branch()
+    payload["loss_mask_spans"] = [
+        {"start": 15, "end": 23, "mask": 1, "reason": "sampled_assistant_trainable"},
+        {"start": 23, "end": 31, "mask": 0, "reason": "retokenization_drift_downgraded"},
+    ]
+    branch = BranchProjection.model_validate(payload)
+    assert branch.loss_mask_spans[1].reason == "retokenization_drift_downgraded"
+
+
+def test_n3_mask_zero_context_reason_on_tool_source_still_valid():
+    """反向对照：真在 tool_result 源上的 mask=0 标 tool_or_env_context 不受影响。"""
+
+    payload = valid_branch()
+    payload["token_spans"] = [
+        {"start": 0, "end": 15, "source_type": "prompt_context"},
+        {"start": 15, "end": 23, "source_type": "sampled_assistant"},
+        {"start": 23, "end": 31, "source_type": "tool_result"},
+    ]
+    payload["loss_mask_spans"] = [
+        {"start": 15, "end": 23, "mask": 1, "reason": "sampled_assistant_trainable"},
+        {"start": 23, "end": 31, "mask": 0, "reason": "tool_or_env_context"},
+    ]
+    branch = BranchProjection.model_validate(payload)
+    assert branch.loss_mask_spans[1].mask == 0
 
 
 def test_aligned_logprob_requires_provenance():
@@ -246,11 +307,88 @@ def test_trace_level_reward_requires_event_refs():
         RewardFacts.model_validate(payload)
 
 
+def test_r5_raw_reward_nan_rejected():
+    """R5：raw_reward=NaN 会穿过所有数值比较校验，基类 allow_inf_nan=False 必须拦。"""
+
+    payload = valid_reward_facts()
+    payload["raw_reward"] = float("nan")
+    with pytest.raises(ValidationError):
+        RewardFacts.model_validate(payload)
+
+
+def test_r5_raw_reward_inf_rejected():
+    payload = valid_reward_facts()
+    payload["raw_reward"] = float("inf")
+    with pytest.raises(ValidationError):
+        RewardFacts.model_validate(payload)
+
+
 def test_duplicate_branch_ids_rejected():
     payload = valid_trajectory_projection()
     payload["branches"] = [valid_branch(), valid_branch()]  # 两个 b0
     with pytest.raises(ValidationError, match="唯一"):
         TrajectoryProjection.model_validate(payload)
+
+
+# ---------------------------------------------------------------------------
+# fan-out 建模定案（S1-1b）：单投影多 branches 为权威，segment_count 互检
+# ---------------------------------------------------------------------------
+
+
+def _two_branch_projection() -> dict:
+    """两分支投影底座：compaction fan-out 的两个分段作为同一投影的 branches。"""
+
+    payload = valid_trajectory_projection()
+    second = valid_branch()
+    second["branch_id"] = "b1"
+    payload["branches"] = [valid_branch(), second]
+    return payload
+
+
+def test_r6_segment_count_mismatch_with_branches_rejected():
+    """R6：branches=2 却申报 segment_count=5——fan-out 账目对不上必须拒收。"""
+
+    payload = _two_branch_projection()
+    payload["reward_facts"]["segment_count"] = 5
+    with pytest.raises(ValidationError, match="segment_count"):
+        TrajectoryProjection.model_validate(payload)
+
+
+def test_fanout_two_branches_with_matching_segment_count_passes():
+    """正例：一个 rollout 拆两段 -> 单投影 2 branches + segment_count=2。"""
+
+    payload = _two_branch_projection()
+    payload["reward_facts"]["segment_count"] = 2
+    projection = TrajectoryProjection.model_validate(payload)
+    assert len(projection.branches) == projection.reward_facts.segment_count == 2
+
+
+def test_multi_branch_without_segment_count_rejected():
+    """多分支投影不申报 segment_count：fan-out 账目缺失，防重复放大无从核对。"""
+
+    payload = _two_branch_projection()
+    payload["reward_facts"] = {
+        "reward_scope": "trace_level",
+        "raw_reward": 1.0,
+        "reward_event_refs": ["rpt_grading_0001"],
+        "credit_assignment_strategy": "direct_trace_reward",
+    }
+    with pytest.raises(ValidationError, match="segment_count"):
+        TrajectoryProjection.model_validate(payload)
+
+
+def test_single_branch_without_segment_count_passes():
+    """单分支 + 不申报 segment_count 合法：无 fan-out 时隐含分段数为 1。"""
+
+    payload = valid_trajectory_projection()
+    payload["reward_facts"] = {
+        "reward_scope": "trace_level",
+        "raw_reward": 1.0,
+        "reward_event_refs": ["rpt_grading_0001"],
+        "credit_assignment_strategy": "direct_trace_reward",
+    }
+    projection = TrajectoryProjection.model_validate(payload)
+    assert projection.reward_facts.segment_count is None
 
 
 def test_naive_datetime_rejected():

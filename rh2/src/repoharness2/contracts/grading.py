@@ -1,11 +1,14 @@
-"""GradingReport：评分结论 + 失败归因三分 + 最小 patch hygiene 结果（S1-4 / A7）。
+"""GradingReport：评分结论 + 失败归因 + 最小 patch hygiene 结果（S1-4 / A7）。
 
-失败归因三分（FailureCategory，02 文档 §4 契约映射表）：
+失败归因（FailureCategory，02 文档 §4 契约映射表 + S1-1b 补充）：
 
-  infra_failure       评分基础设施故障（容器被杀、镜像拉不下来、超时…）。
-                      **绝不允许落成 reward=0**——那会把基建噪声当成负样本教给模型。
-  patch_apply_failed  cleaned patch 在 clean checkout 上 apply 失败（模型产出问题）。
-  tests_failed        patch 应用成功但官方测试未全过（正常负样本）。
+  infra_failure         评分基础设施故障（容器被杀、镜像拉不下来、超时…）。
+                        **绝不允许落成 reward=0**——那会把基建噪声当成负样本教给模型。
+  test_log_parse_failed 测试跑了但官方 parser 从日志里解析不出结果（标记缺失、
+                        输出被截断…）。归 infra 族：这是评分链路的问题，不是模型
+                        的负样本，与 infra_failure 一样强制 reward=None。
+  patch_apply_failed    cleaned patch 在 clean checkout 上 apply 失败（模型产出问题）。
+  tests_failed          patch 应用成功但官方测试未全过（正常负样本）。
 
 最小 patch hygiene（A7，S1 不推迟）：从 agent workspace 导出 cleaned final patch，
 在 fresh grading sandbox / clean checkout 上重放，先做测试篡改与私有文件污染检查，
@@ -30,12 +33,21 @@ from repoharness2.contracts._base import (
 )
 from repoharness2.contracts.timing import GradingTimingRecord
 
-GradingFailureCategory = Literal["infra_failure", "patch_apply_failed", "tests_failed"]
+GradingFailureCategory = Literal[
+    "infra_failure",  # 评分基建故障（infra 族：强制 reward=None）
+    "test_log_parse_failed",  # 测试跑了但日志解析不出结果（infra 族：强制 reward=None）
+    "patch_apply_failed",  # patch 在 clean checkout 上 apply 失败（模型负样本）
+    "tests_failed",  # 测试跑了且解析成功但未全过（模型负样本）
+]
+
+# infra 族归因：评分链路自身的故障，与模型产出质量无关。
+# 族内任何取值都强制 reward=None（绝不伪装成 reward=0 的负样本）。
+INFRA_FAILURE_CATEGORIES: tuple[str, ...] = ("infra_failure", "test_log_parse_failed")
 
 GradingOutcome = Literal[
     "resolved",  # 官方 parser 判 RESOLVED_FULL（全部 F2P 过且 P2P 无一失败）
     "unresolved",  # 评了分但未解决（patch_apply_failed 或 tests_failed）
-    "failed_to_grade",  # 评分动作本身失败（唯一合法归因是 infra_failure）
+    "failed_to_grade",  # 评分动作本身失败（合法归因仅 infra 族：infra_failure / test_log_parse_failed）
 ]
 
 PatchHygieneVerdict = Literal[
@@ -108,12 +120,22 @@ class GradingReport(StrictModel):
     故障注入测试（杀容器 -> infra_failure）、F5 吞吐画像。
 
     fail-closed 校验清单：
-    1. outcome=failed_to_grade <=> failure_category=infra_failure，且 reward 必须为 None
+    1. outcome=failed_to_grade <=> failure_category 属 infra 族
+       （infra_failure / test_log_parse_failed），且 reward 必须为 None
        （关键非法样例：infra_failure + reward=0.0 直接拒收）；
-    2. outcome=unresolved 必须归因 patch_apply_failed 或 tests_failed，且 reward 必填；
-    3. outcome=resolved 不得携带 failure_category，reward 必填且 > 0；
+    2. outcome=unresolved 必须归因 patch_apply_failed 或 tests_failed，
+       且 reward 必须恰为 0.0（S1 二值语义，见 reward_scale_version）；
+    3. outcome=resolved 不得携带 failure_category，reward 必须恰为 1.0；
     4. hygiene verdict 非 clean 时 outcome 不得为 resolved（被拒 patch 不许拿满分）；
-    5. F2P/P2P 计数只在测试真正跑过时在场（failed_to_grade / patch_apply_failed 时必须为 None）。
+    5. F2P/P2P 计数当且仅当测试真正跑过且日志解析成功时在场：
+       resolved / tests_failed 四计数必须齐全，
+       failed_to_grade / patch_apply_failed 必须全为 None。
+
+    reward 二值锁（S1-1b）：S1 的 reward 语义是严格二值——resolved <=> 1.0，
+    unresolved <=> 0.0，由 reward_scale_version="binary_v1" 显式声明。未来引入
+    连续 reward（部分分、process reward 并入等）时，必须新增 reward_scale_version
+    的枚举值并同步修改本校验器，**不允许在 binary_v1 下静默放宽数值范围**——
+    否则 0.5 这类"看起来合理"的中间值会不经审计地混进训练信号。
     """
 
     schema_id: Literal["rh2.grading_report.v1"] = Field(
@@ -129,13 +151,22 @@ class GradingReport(StrictModel):
     outcome: GradingOutcome = Field(description="评分结论三态。")
     failure_category: GradingFailureCategory | None = Field(
         default=None,
-        description="失败归因三分。resolved 时必须为 None；unresolved/failed_to_grade 时必填且互斥约束见校验器。",
+        description="失败归因。resolved 时必须为 None；unresolved/failed_to_grade 时必填且互斥约束见校验器。",
     )
     reward: float | None = Field(
         default=None,
         description=(
-            "标量 reward（S1 语义：resolved=1.0，unresolved=0.0）。"
-            "infra_failure 时必须为 None——评不了分就没有 reward，绝不用 0.0 顶替。"
+            "标量 reward。binary_v1 语义下严格二值：resolved 必须恰为 1.0，"
+            "unresolved 必须恰为 0.0（0.5 之类中间值拒收）。"
+            "infra 族归因时必须为 None——评不了分就没有 reward，绝不用 0.0 顶替。"
+        ),
+    )
+    reward_scale_version: Literal["binary_v1"] = Field(
+        default="binary_v1",
+        description=(
+            "reward 数值语义版本。binary_v1 = 严格二值（resolved<=>1.0，unresolved<=>0.0）。"
+            "未来引入连续 reward 必须显式新增版本值并同步改校验器，"
+            "不允许在 binary_v1 下静默放宽（防止未审计的中间值混进训练信号）。"
         ),
     )
     f2p_pass_count: int | None = Field(
@@ -156,7 +187,10 @@ class GradingReport(StrictModel):
     )
     infra_failure_detail: NonEmptyStr | None = Field(
         default=None,
-        description="infra_failure 的具体故障描述（如 grading_container_killed）。failed_to_grade 时必填。",
+        description=(
+            "infra 族故障的具体描述（如 grading_container_killed、"
+            "test_output_markers_missing）。failed_to_grade 时必填。"
+        ),
     )
     eval_log_ref: ArtifactRef | None = Field(
         default=None, description="官方测试完整输出日志的 opaque 引用（runtime-private）。"
@@ -168,48 +202,57 @@ class GradingReport(StrictModel):
 
     @model_validator(mode="after")
     def _check_grading_contract(self) -> "GradingReport":
+        test_counts = (self.f2p_pass_count, self.f2p_total_count, self.p2p_fail_count, self.p2p_total_count)
         if self.outcome == "failed_to_grade":
-            # 1. infra 三联：归因、无 reward、有故障描述
-            if self.failure_category != "infra_failure":
+            # 1. infra 三联：infra 族归因、无 reward、有故障描述
+            if self.failure_category not in INFRA_FAILURE_CATEGORIES:
                 raise ValueError(
-                    f"outcome=failed_to_grade 的唯一合法归因是 infra_failure，得到 {self.failure_category}。"
+                    "outcome=failed_to_grade 的合法归因仅限 infra 族"
+                    f"（infra_failure / test_log_parse_failed），得到 {self.failure_category}。"
                 )
             if self.reward is not None:
                 raise ValueError(
-                    f"infra_failure 时 reward 必须为 None，得到 {self.reward}"
+                    f"infra 族归因（{self.failure_category}）时 reward 必须为 None，得到 {self.reward}"
                     "（fail-closed：基建故障绝不允许伪装成 reward=0 的负样本）。"
                 )
             if self.infra_failure_detail is None:
                 raise ValueError("failed_to_grade 时 infra_failure_detail 必填（故障要可归因、可复盘）。")
-            if any(
-                value is not None
-                for value in (self.f2p_pass_count, self.f2p_total_count, self.p2p_fail_count, self.p2p_total_count)
-            ):
-                raise ValueError("failed_to_grade 时不得携带 F2P/P2P 计数（测试根本没有可信运行）。")
+            if any(value is not None for value in test_counts):
+                raise ValueError(
+                    "failed_to_grade 时不得携带 F2P/P2P 计数"
+                    "（测试没有可信运行，或日志解析不出可信计数）。"
+                )
         elif self.outcome == "unresolved":
-            # 2. 未解决必须归因，且 reward 在场
+            # 2. 未解决必须归因，且 reward 恰为 0.0（binary_v1 二值锁）
             if self.failure_category not in ("patch_apply_failed", "tests_failed"):
                 raise ValueError(
                     "outcome=unresolved 必须归因为 patch_apply_failed 或 tests_failed，"
                     f"得到 {self.failure_category}。"
                 )
-            if self.reward is None:
-                raise ValueError("outcome=unresolved 时 reward 必填（正常负样本，S1 语义为 0.0）。")
-            if self.failure_category == "patch_apply_failed" and any(
-                value is not None
-                for value in (self.f2p_pass_count, self.f2p_total_count, self.p2p_fail_count, self.p2p_total_count)
-            ):
-                raise ValueError("patch_apply_failed 时不得携带 F2P/P2P 计数（测试未运行）。")
+            if self.reward != 0.0:
+                raise ValueError(
+                    f"outcome=unresolved 要求 reward 恰为 0.0（reward_scale_version=binary_v1），"
+                    f"得到 {self.reward}。放宽二值语义必须先升 reward_scale_version 并改本校验器。"
+                )
+            if self.failure_category == "patch_apply_failed":
+                if any(value is not None for value in test_counts):
+                    raise ValueError("patch_apply_failed 时不得携带 F2P/P2P 计数（测试未运行）。")
+            else:  # tests_failed
+                if any(value is None for value in test_counts):
+                    raise ValueError(
+                        "tests_failed 时 F2P/P2P 四个计数必须齐全——测试跑了且日志解析成功才允许"
+                        "归因 tests_failed；解析不出计数应归因 test_log_parse_failed（infra 族）。"
+                    )
         else:  # resolved
-            # 3. resolved 三联：无归因、reward>0、测试计数在场
+            # 3. resolved 三联：无归因、reward 恰为 1.0、测试计数在场
             if self.failure_category is not None:
                 raise ValueError(f"outcome=resolved 不得携带 failure_category（得到 {self.failure_category}）。")
-            if self.reward is None or self.reward <= 0.0:
+            if self.reward != 1.0:
                 raise ValueError(
-                    f"outcome=resolved 要求 reward 为正数（S1 语义 1.0），得到 {self.reward}。"
+                    f"outcome=resolved 要求 reward 恰为 1.0（reward_scale_version=binary_v1），"
+                    f"得到 {self.reward}。放宽二值语义必须先升 reward_scale_version 并改本校验器。"
                 )
-            counts = (self.f2p_pass_count, self.f2p_total_count, self.p2p_fail_count, self.p2p_total_count)
-            if any(value is None for value in counts):
+            if any(value is None for value in test_counts):
                 raise ValueError("outcome=resolved 时 F2P/P2P 四个计数必须齐全（RESOLVED_FULL 的判据输入）。")
             assert self.p2p_fail_count is not None
             if self.p2p_fail_count != 0:

@@ -41,14 +41,20 @@ GitSha = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{40}$")]
 
 
 class StrictModel(BaseModel):
-    """所有 rh2 契约对象的基类：未知字段拒收 + 构造后不可变。
+    """所有 rh2 契约对象的基类：未知字段拒收 + 构造后不可变 + 数值必须有限。
 
     `extra="forbid"` 是治理层的第一道防线：任何生产者悄悄塞进来的
     额外字段（例如把 golden patch 内容塞进某个临时 key）都会在
     schema 校验时直接失败，而不是被静默透传给下游。
+
+    `allow_inf_nan=False` 在基类一处生效、覆盖全部契约 schema 的 float 字段：
+    NaN / +inf / -inf 一律拒收。这不是理论洁癖——`reward=float("nan")` 能穿过
+    `reward <= 0.0` 这类比较校验（NaN 与任何数比较都是 False），一路流进训练
+    batch 后会把整个 loss 变成 NaN。数值缺失的唯一合法表示是 None + 相应的
+    缺失语义字段（如 reward_scope="none"），绝不是 NaN。
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
 
 class ArtifactRef(StrictModel):

@@ -50,6 +50,7 @@ from repoharness2.contracts.findings import (
     TrajectoryQualityFinding,
 )
 from repoharness2.contracts.grading import (
+    INFRA_FAILURE_CATEGORIES,
     GradingFailureCategory,
     GradingReport,
     PatchHygieneResult,
@@ -129,6 +130,7 @@ __all__ = [
     "TrajectoryQualityFinding",
     "GradingFailureCategory",
     "GradingReport",
+    "INFRA_FAILURE_CATEGORIES",
     "PatchHygieneResult",
     "BackendHandshake",
     "GroupSignal",

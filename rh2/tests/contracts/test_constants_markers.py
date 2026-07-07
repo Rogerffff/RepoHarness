@@ -72,3 +72,11 @@ def test_compact_matching_is_fail_closed_by_design():
     "latest_patches" 去下划线后包含 "testpatch"，按设计应命中而非放行。"""
 
     assert find_forbidden_marker("latest_patches") == "test_patch"
+
+
+def test_multi_marker_hit_is_deterministic():
+    """S1-1b：命中多个 marker 的文本（此例同时含 hidden_test / hidden_test_patch /
+    test_patch 三个）按字典序返回第一个——跨进程（不同 PYTHONHASHSEED 下
+    frozenset 迭代序不同）结果一致，evidence 才能逐字节复现比对。"""
+
+    assert find_forbidden_marker("swe_hidden_test_patch_path") == "hidden_test"

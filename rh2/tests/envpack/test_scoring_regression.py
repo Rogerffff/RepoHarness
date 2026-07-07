@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from repoharness2.contracts import GradingReport, PatchHygieneResult
+from repoharness2.contracts import INFRA_FAILURE_CATEGORIES, GradingReport, PatchHygieneResult
 from repoharness2.envpack.bundles import load_bundle_pairs
 from repoharness2.envpack.scoring import (
     GRADER_NAME,
@@ -169,9 +169,10 @@ def test_apply_failed_verdict_builds_valid_grading_report():
 
 
 def test_grading_outcome_fields_never_emits_infra_failure():
-    """parser 层只见日志，infra_failure 归 S1-4 manager——库层输出永远不含它。"""
+    """parser 层只见日志，infra 族归因（infra_failure / test_log_parse_failed）
+    归 S1-4 manager 判——库层输出永远不含它们。"""
     for iid in INSTANCE_IDS:
         log_text = (EVAL_LOG_DIR / f"{iid}.eval.log").read_text()
         fields = grading_outcome_fields(parse_eval_log(load_pair(iid).private, log_text))
-        assert fields["failure_category"] != "infra_failure"
+        assert fields["failure_category"] not in INFRA_FAILURE_CATEGORIES
         assert fields["reward"] is not None  # 评出结果就必有 reward（0/1），绝无 None
