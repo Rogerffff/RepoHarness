@@ -13,3 +13,4 @@
 ## New-Unknowns
 
 - [S1-0 核验, 2026-07-09] **引擎间 routing 行数约定不同（喂 S1-3）**：SGLang 路由行 = prompt_len - 1 + generated_len（本次 15-1+16=30，S0-6 的 [20,48,8] 同律）；vLLM（S0-5 probe）= prompt_len + generated_len（13+8=21）。TrajectoryProjection 的 tape 解码唯一点必须按引擎显式编码对齐约定（RoutingTensorRef.alignment 语义），不能假设两引擎同构。
+- [S1 计划定稿, 2026-07-09] 两复核线程建议 A1~A10/B1/C1~C3 全部采纳（正式化为 s1/s1_supplementary_clauses.md，验收级效力）；F2~F6 定案，F5 按用户收紧版（并发 4/队列 8/可配置/实测后升）；F4 升四段式（B1 补 GPU pass-rate 预筛归 S2 末/S3-0）；uh_probe_result.json 已生成（A10）；8 题冻结状态已同步 swe_smoke_report.md（C2）。

@@ -14,7 +14,7 @@
 
 ## 1. 题单（初选待用户过目冻结）
 
-**状态：初选 8 题，待用户过目后长期冻结**（C6 流程；选题标准见 `s0_swe_smoke_prep.py` docstring：
+**状态：8 题已于 2026-07-09 经用户确认冻结（frozen_v1）**（C6 流程；选题标准见 `s0_swe_smoke_prep.py` docstring：
 官方预构建 x86_64 镜像逐题核对 Docker Hub manifest、Python 主流仓库、单题测试 <5 分钟）。
 
 | # | instance_id | repo | version | F2P | P2P | 镜像 manifest digest（前 12 位） | 官方测试命令族 |

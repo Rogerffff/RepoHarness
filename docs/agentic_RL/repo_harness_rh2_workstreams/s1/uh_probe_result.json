@@ -1,0 +1,40 @@
+{
+  "probe": "s1_0_uh",
+  "date_utc": "2026-07-07 09:30:25 UTC",
+  "overall_pass": true,
+  "slime_image_digest": "sha256:a7317182c71d35712ee4edc86a5d1c313dc969efdf0026d339673299c186ea75",
+  "model": "Qwen/Qwen3-30B-A3B",
+  "server_info_subset": {
+    "model_path": "Qwen/Qwen3-30B-A3B",
+    "dtype": "bfloat16",
+    "device": "cuda",
+    "sampling_backend": "pytorch",
+    "attention_backend": "triton",
+    "moe_runner_backend": "triton",
+    "enable_return_routed_experts": true,
+    "max_total_tokens": 4096,
+    "mem_fraction_static": 0.9
+  },
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition 96GB",
+  "sampling_params": {
+    "top_p": 0.95,
+    "return_top_p_token_ids": true,
+    "return_routed_experts": true
+  },
+  "alignment": {
+    "logprobs_entries": 16,
+    "logprobs_finite": true,
+    "top_p_token_ids_present": true,
+    "top_p_token_offsets_len": 17,
+    "offsets_eq_genlen_plus_1": true,
+    "routed_experts_shape": [
+      30,
+      48,
+      8
+    ],
+    "routing_rows_rule": "prompt_len-1+generated_len",
+    "rows_check": "15-1+16=30 OK"
+  },
+  "control_case_without_custom_params": "fields absent (gating confirmed)",
+  "notes": "machine-readable companion to uh_probe_report.md, per clause A10"
+}
