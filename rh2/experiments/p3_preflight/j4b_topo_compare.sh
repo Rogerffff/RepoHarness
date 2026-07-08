@@ -25,13 +25,17 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 . "${SCRIPT_DIR}/common.sh"
 
 EV="${P3_EV}/j4b"
-BRINGUP_BASE=${BRINGUP_BASE:-/root/preflight_j4b}
+BRINGUP_BASE=${BRINGUP_BASE:-${P3_RUN_ROOT}/preflight_j4b}
 J4B_TOPOS=${J4B_TOPOS:-"t3 t1 t2p"}
 J4B_STEPS=${J4B_STEPS:-2}
+J4B_GLOBAL_BATCH_SIZE=${J4B_GLOBAL_BATCH_SIZE:-32}
 CSV="${EV}/j4b_topo.csv"
 CSV_HEADER="topo,entry,actor_gpus,rollout_gpus,steps,job_wall_s,step_wall_s,tail_idle_pct,oom,rc"
 
 p3_banner "J4b topo compare: ${J4B_TOPOS} (steps=${J4B_STEPS})"
+p3_require_large_storage_path "EV" "${EV}"
+p3_require_large_storage_path "BRINGUP_BASE" "${BRINGUP_BASE}"
+p3_require_large_storage_path "P3_RAY_TMP" "${P3_RAY_TMP}"
 
 run_topo() {
   _topo="$1"
@@ -62,8 +66,9 @@ run_topo() {
      --rollout-max-context-len "${RH2_MAX_CONTEXT_LEN:-32768}"
      --rollout-temperature 1.0
      --rollout-top-p 0.95
-     --global-batch-size 32
+     --global-batch-size "${J4B_GLOBAL_BATCH_SIZE}"
      --custom-generate-function-path s1_7a_bringup.glue.generate
+     --custom-convert-samples-to-train-data-path p3_preflight.rh2_convert.convert_samples_to_train_data
      --save-debug-rollout-data "${BRINGUP}/rollout_dumps/rollout_{rollout_id}.pt"
   )
   GRPO_ARGS=(

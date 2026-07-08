@@ -54,6 +54,7 @@ run_cell() {
   LOG="${CELL_EV}/train.log"
   SYNTH="${EV}/synth_ctx${_ctx}_{rollout_id}.pt"
   p3_banner "J3 cell ${CELL}: gpus=${J3_TRAIN_GPUS} TP${J3_TP} PP${J3_PP} CP${J3_CP} DP${J3_DP} EP${J3_EP} ETP${J3_ETP}"
+  if [ "${P3_DRY_RUN}" -eq 0 ]; then mkdir -p "${EV}"; fi
 
   # 合成数据（按 ctx 缓存，一次生成多格复用；含 routing tape + top-p tape，
   # 形状锚 types.py:352-369 / :122-125）
@@ -179,7 +180,7 @@ run_cell() {
     --fallback-wall "${WALL}" --steps "${J3_STEPS}" 2>/dev/null || echo "parse_failed")
   MEM_PEAK=$(awk -F', *' 'NR>1 && $4 ~ /^[0-9]+$/ {if ($4>m) m=$4} END {print m+0}' "${CELL_EV}/dmon.csv" 2>/dev/null || echo 0)
   OOM=no; p3_grep_oom "${LOG}" && OOM=yes
-  KERR=$(grep -icE "no kernel image|unsupported|illegal instruction|cutlass|CUBLAS_STATUS" "${LOG}" 2>/dev/null | head -1)
+  KERR=$(grep -icE "no kernel image|unsupported|illegal instruction|cutlass|CUBLAS_STATUS" "${LOG}" 2>/dev/null | head -1 || true)
   TOKENS_TOTAL=$((J3_NUM_SAMPLES * _ctx * J3_STEPS))
   if [ "${STEP_WALL}" != "parse_failed" ] && [ "${RC}" -eq 0 ]; then
     TPS=$(python3 -c "print(f'{${TOKENS_TOTAL}/${J3_STEPS}/${STEP_WALL}:.1f}')" 2>/dev/null || echo "-")

@@ -1,0 +1,112 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "3a2a116a-163a-4bb1-9fa9-868cc3c21f62",
+  "task_id": "astropy__astropy-14995",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_29",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18945,
+      "response_token_count": 2644,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18945,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18945,
+          "end": 20725,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20725,
+          "end": 21589,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18945,
+          "end": 20725,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20725,
+          "end": 21589,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "3a2a116a-163a-4bb1-9fa9-868cc3c21f62_b0_routing_tape",
+          "sha256": "sha256:7660ee0afd577fd98213d623007fa9daeb6fdfc30ab1668ce6fbbe76419bee53",
+          "byte_size": 33159168
+        },
+        "num_rows": 21588,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18945,
+        "generated_token_count": 2644
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "3a2a116a-163a-4bb1-9fa9-868cc3c21f62_b0_topp_ids",
+          "sha256": "sha256:a0057d376b2fbf3faae1e308d2563c5d95b03b9a1f54098f746cc834d6e7f26c",
+          "byte_size": 4624
+        },
+        "offsets_ref": {
+          "ref_id": "3a2a116a-163a-4bb1-9fa9-868cc3c21f62_b0_topp_offsets",
+          "sha256": "sha256:0d0b9df6148ff48e5ce2c3ed6ae143427da52a81e07c0f06b39f9b4ce04e2c25",
+          "byte_size": 10580
+        },
+        "response_token_count": 2644,
+        "offsets_len": 2645,
+        "kept_token_count": 1156
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_3a2a116a-163a-4bb1-9fa9-868cc3c21f62_t3"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_0b2c9100"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_astropy__astropy-14995_g7",
+    "parent_rollout_id": "rollout_astropy__astropy-14995_g7",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 864
+  },
+  "handshake": {
+    "weight_versions": [
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T14:29:06.985864Z"
+}

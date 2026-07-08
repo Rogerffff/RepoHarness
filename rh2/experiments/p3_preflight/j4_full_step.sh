@@ -24,24 +24,35 @@
 #   --use-rollout-routing-replay（V4/M1 硬前提，必开）。
 #
 # 用法：bash j4_full_step.sh [--dry-run]
-#   环境变量：J4_DYNAMIC_FILTER=1（E2 定案动态采样 filter，默认开）、
-#   J4_MISMATCH_METRICS=1（M2 监控，只出指标不改 loss，默认开）、
+#   环境变量：J4_DYNAMIC_FILTER=0（当前 custom_generate 返回嵌套 group，
+#   slime 内置 check_reward_nonzero_std 只支持平铺 Sample 列表；动态采样
+#   要单独提供兼容过滤器后再开启）、
+#   J4_MISMATCH_METRICS=0（M2 监控默认关；当前 slime 要求同时提供
+#   J4_CUSTOM_TIS_FUNCTION_PATH 才能开启 --get-mismatch-metrics）、
 #   RH2_MAX_RESPONSE_LEN/RH2_MAX_CONTEXT_LEN、SWE_AGENT_TIME_BUDGET_SEC。
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 . "${SCRIPT_DIR}/common.sh"
 
 EV="${P3_EV}/j4"
-BRINGUP=${BRINGUP:-/root/preflight_j4}
+BRINGUP=${BRINGUP:-${P3_RUN_ROOT}/preflight_j4}
 J4_ACTOR_GPUS=${J4_ACTOR_GPUS:-4}
 J4_ROLLOUT_GPUS=${J4_ROLLOUT_GPUS:-4}
 J4_ROLLOUT_TP=${J4_ROLLOUT_TP:-2}
-J4_DYNAMIC_FILTER=${J4_DYNAMIC_FILTER:-1}
-J4_MISMATCH_METRICS=${J4_MISMATCH_METRICS:-1}
+J4_DYNAMIC_FILTER=${J4_DYNAMIC_FILTER:-0}
+J4_MISMATCH_METRICS=${J4_MISMATCH_METRICS:-0}
+J4_CUSTOM_TIS_FUNCTION_PATH=${J4_CUSTOM_TIS_FUNCTION_PATH:-}
 J4_NUM_ROLLOUT=${J4_NUM_ROLLOUT:-1}
+# 严格验收默认锚点：--n-samples-per-prompt 4；快速 probe 才覆盖此值。
+J4_ROLLOUT_BATCH_SIZE=${J4_ROLLOUT_BATCH_SIZE:-8}
+J4_N_SAMPLES_PER_PROMPT=${J4_N_SAMPLES_PER_PROMPT:-4}
+J4_EXPECTED_SAMPLES=$((J4_NUM_ROLLOUT * J4_ROLLOUT_BATCH_SIZE * J4_N_SAMPLES_PER_PROMPT))
 TOTAL_GPUS=$((J4_ACTOR_GPUS + J4_ROLLOUT_GPUS))
 LOG="${EV}/j4_train.log"
 
-p3_banner "J4 full step (T3: ${J4_ACTOR_GPUS} train + ${J4_ROLLOUT_GPUS} rollout, TP${J4_ROLLOUT_TP} engines)"
+p3_banner "J4 full step (T3: ${J4_ACTOR_GPUS} train + ${J4_ROLLOUT_GPUS} rollout, TP${J4_ROLLOUT_TP} engines, samples=${J4_EXPECTED_SAMPLES})"
+p3_require_large_storage_path "EV" "${EV}"
+p3_require_large_storage_path "BRINGUP" "${BRINGUP}"
+p3_require_large_storage_path "P3_RAY_TMP" "${P3_RAY_TMP}"
 
 # ---------------------------------------------------------------- 依赖 + 数据面（与 7a 同）
 if [ "${P3_DRY_RUN}" -eq 0 ]; then
@@ -67,21 +78,23 @@ CKPT_ARGS=(
    --save "${BRINGUP}/ckpt"
    --save-interval 1
 )
-# 8 题 × n=4 = 32 条；custom_generate 编排配置与 7a 同构（H-2 契约）
+# 默认 8 题 × n=4 = 32 条；可用 J4_ROLLOUT_BATCH_SIZE/J4_N_SAMPLES_PER_PROMPT
+# 缩小为快速 probe，严格验收仍保留默认规模。
 ROLLOUT_ARGS=(
    --prompt-data "${BRINGUP}/swe_bringup_8.jsonl"
    --input-key prompt
    --label-key label
    --metadata-key metadata
    --num-rollout "${J4_NUM_ROLLOUT}"
-   --rollout-batch-size 8
-   --n-samples-per-prompt 4
+   --rollout-batch-size "${J4_ROLLOUT_BATCH_SIZE}"
+   --n-samples-per-prompt "${J4_N_SAMPLES_PER_PROMPT}"
    --rollout-max-response-len "${RH2_MAX_RESPONSE_LEN:-2048}"
    --rollout-max-context-len "${RH2_MAX_CONTEXT_LEN:-32768}"
    --rollout-temperature 1.0
    --rollout-top-p 0.95
-   --global-batch-size 32
+   --global-batch-size "${J4_GLOBAL_BATCH_SIZE:-32}"
    --custom-generate-function-path s1_7a_bringup.glue.generate
+   --custom-convert-samples-to-train-data-path p3_preflight.rh2_convert.convert_samples_to_train_data
    --save-debug-rollout-data "${BRINGUP}/rollout_dumps/rollout_{rollout_id}.pt"
 )
 # E2 定案动态采样 filter（标准路径有效；fully_async 下静默失效的对称坑归 J4c）
@@ -104,7 +117,12 @@ GRPO_ARGS=(
    --use-rollout-routing-replay
 )
 if [ "${J4_MISMATCH_METRICS}" = "1" ]; then
+  if [ -z "${J4_CUSTOM_TIS_FUNCTION_PATH}" ]; then
+    echo "J4_MISMATCH_METRICS=1 requires J4_CUSTOM_TIS_FUNCTION_PATH for this slime pin" >&2
+    exit 2
+  fi
   GRPO_ARGS=("${GRPO_ARGS[@]}" --get-mismatch-metrics)
+  GRPO_ARGS=("${GRPO_ARGS[@]}" --custom-tis-function-path "${J4_CUSTOM_TIS_FUNCTION_PATH}")
 fi
 OPTIMIZER_ARGS=(
    --optimizer adam
@@ -173,6 +191,8 @@ RUNTIME_ENV_JSON="{
     \"ADAPTER_PORT\": \"${ADAPTER_PORT:-18001}\",
     \"RH2_MODEL_ID\": \"Qwen/Qwen3-30B-A3B\",
     \"RH2_EXPECT_MOE_ROUTING\": \"1\",
+    \"RH2_MOE_NUM_LAYERS\": \"48\",
+    \"RH2_MOE_ROUTER_TOPK\": \"8\",
     \"RH2_BRINGUP_ARTIFACT_DIR\": \"${BRINGUP}/artifacts\",
     \"RH2_BRINGUP_HARNESS\": \"${RH2_BRINGUP_HARNESS:-claude_code}\",
     \"SWE_AGENT_TIME_BUDGET_SEC\": \"${SWE_AGENT_TIME_BUDGET_SEC:-600}\",
@@ -197,6 +217,10 @@ fi
 
 # ---------------------------------------------------------------- 实跑
 p3_ray_restart "${TOTAL_GPUS}"
+mkdir -p "${EV}" "${BRINGUP}/rollout_dumps" "${BRINGUP}/artifacts" "${BRINGUP}/ckpt"
+PYTHONPATH="${P3_RH2}/src" python "${P3_RH2}/experiments/s1_7a_bringup/make_prompt_data.py" \
+  --out "${BRINGUP}/swe_bringup_8.jsonl"
+test -s "${BRINGUP}/swe_bringup_8.jsonl"
 cd "${P3_SLIME}"
 # shellcheck disable=SC1090
 source "scripts/models/${P3_MODEL_SCRIPT}"
@@ -221,7 +245,18 @@ T1=$(date +%s)
 p3_dmon_stop
 echo "j4_wall_seconds=$((T1 - T0)) rc=${RC}" | tee -a "${EV}/j4_wall.txt"
 
-# ---------------------------------------------------------------- 六项断言自动检查
+# ---------------------------------------------------------------- 离线转换边界检查 + 六项断言自动检查
+set +e
+python3 "${SCRIPT_DIR}/lib/j4_converter_offline.py" \
+  --dumps-dir "${BRINGUP}/rollout_dumps" \
+  --expect-routing \
+  --rollout-top-p 0.95 \
+  --rollout-batch-size "${J4_ROLLOUT_BATCH_SIZE}" \
+  --n-samples-per-prompt "${J4_N_SAMPLES_PER_PROMPT}" \
+  --out "${EV}/j4_converter_offline.json"
+CONVERTER_RC=$?
+set -e
+
 set +e
 python3 "${SCRIPT_DIR}/lib/j4_assert.py" \
   --log "${LOG}" \
@@ -229,7 +264,7 @@ python3 "${SCRIPT_DIR}/lib/j4_assert.py" \
   --artifacts-dir "${BRINGUP}/artifacts" \
   --dmon-csv "${EV}/dmon_all.csv" \
   --ckpt-dir "${BRINGUP}/ckpt" \
-  --expected-samples 32 \
+  --expected-samples "${J4_EXPECTED_SAMPLES}" \
   --out "${EV}/j4_assertions.json"
 ASSERT_RC=$?
 set -e
@@ -239,9 +274,9 @@ p3_run rm -rf "${BRINGUP}/ckpt"
 echo "checkpoint_discarded=true  # A1/D5：8 题来自 Verified 仓库，checkpoint 不得作为任何后续起点" \
   >> "${EV}/j4_assertions_acceptance.txt"
 
-if [ ${RC} -eq 0 ] && [ ${ASSERT_RC} -eq 0 ]; then
+if [ ${RC} -eq 0 ] && [ ${CONVERTER_RC} -eq 0 ] && [ ${ASSERT_RC} -eq 0 ]; then
   echo "J4 RESULT: PASS（六项断言 -> ${EV}/j4_assertions.json）"
 else
-  echo "J4 RESULT: FAIL（train rc=${RC}, assert rc=${ASSERT_RC}）——失败不修不猜，摘要进 preflight_report"
+  echo "J4 RESULT: FAIL（train rc=${RC}, converter rc=${CONVERTER_RC}, assert rc=${ASSERT_RC}）——失败不修不猜，摘要进 preflight_report"
   exit 1
 fi

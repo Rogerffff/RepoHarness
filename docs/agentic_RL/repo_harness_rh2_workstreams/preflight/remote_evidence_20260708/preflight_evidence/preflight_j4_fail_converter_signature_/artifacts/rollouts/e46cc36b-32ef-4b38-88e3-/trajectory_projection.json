@@ -1,0 +1,160 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "e46cc36b-32ef-4b38-88e3-a9799cdb1ea7",
+  "task_id": "django__django-11099",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_3",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18375,
+      "response_token_count": 3451,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18375,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18375,
+          "end": 20417,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20417,
+          "end": 20774,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 20774,
+          "end": 21000,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 21000,
+          "end": 21365,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 21365,
+          "end": 21416,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 21416,
+          "end": 21826,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18375,
+          "end": 20417,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20417,
+          "end": 20774,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 20774,
+          "end": 21000,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 21000,
+          "end": 21365,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 21365,
+          "end": 21416,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 21416,
+          "end": 21826,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "e46cc36b-32ef-4b38-88e3-a9799cdb1ea7_b0_routing_tape",
+          "sha256": "sha256:03212e442eedd9a116d78d03d8c88f0b330c5e4918b96944feee9ae58ac90aef",
+          "byte_size": 33523200
+        },
+        "num_rows": 21825,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18375,
+        "generated_token_count": 3451
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "e46cc36b-32ef-4b38-88e3-a9799cdb1ea7_b0_topp_ids",
+          "sha256": "sha256:c0f1d090eee17ade302cc9bc79b85161a332aee45ba2765491f5eb1ee20abc2e",
+          "byte_size": 5308
+        },
+        "offsets_ref": {
+          "ref_id": "e46cc36b-32ef-4b38-88e3-a9799cdb1ea7_b0_topp_offsets",
+          "sha256": "sha256:e32eed33f1d84788d7be83f980d2e960425952b7b2fb6dd3a0bf6ad1eef36f14",
+          "byte_size": 13808
+        },
+        "response_token_count": 3451,
+        "offsets_len": 3452,
+        "kept_token_count": 1327
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_e46cc36b-32ef-4b38-88e3-a9799cdb1ea7_t2",
+        "cap_e46cc36b-32ef-4b38-88e3-a9799cdb1ea7_t3",
+        "cap_e46cc36b-32ef-4b38-88e3-a9799cdb1ea7_t4"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 1.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_d2eafdb3"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_django__django-11099_g0",
+    "parent_rollout_id": "rollout_django__django-11099_g0",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1132
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T13:54:46.604734Z"
+}

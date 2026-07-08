@@ -1,0 +1,136 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "8a81b422-c2aa-46e8-a3b7-205d9ce5e24b",
+  "task_id": "sympy__sympy-14711",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_15",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18507,
+      "response_token_count": 2974,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18507,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18507,
+          "end": 20222,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20222,
+          "end": 20906,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 20906,
+          "end": 20922,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20922,
+          "end": 21481,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18507,
+          "end": 20222,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20222,
+          "end": 20906,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 20906,
+          "end": 20922,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20922,
+          "end": 21481,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "8a81b422-c2aa-46e8-a3b7-205d9ce5e24b_b0_routing_tape",
+          "sha256": "sha256:87b8d580155f1bf0aad456b6f31c07757a1a1a0250a8260afc7879435a1f8d62",
+          "byte_size": 32993280
+        },
+        "num_rows": 21480,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18507,
+        "generated_token_count": 2974
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "8a81b422-c2aa-46e8-a3b7-205d9ce5e24b_b0_topp_ids",
+          "sha256": "sha256:abb6ff4a6c78c6a08e66ac5d24f32500ac6a0d1fa3b1459936bc722f63560ae9",
+          "byte_size": 6224
+        },
+        "offsets_ref": {
+          "ref_id": "8a81b422-c2aa-46e8-a3b7-205d9ce5e24b_b0_topp_offsets",
+          "sha256": "sha256:e54221ca8cf4e96c8b4db1a6ee623557eb766309ab5b8dbe6295b00546d25a6b",
+          "byte_size": 11900
+        },
+        "response_token_count": 2974,
+        "offsets_len": 2975,
+        "kept_token_count": 1556
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_8a81b422-c2aa-46e8-a3b7-205d9ce5e24b_t2",
+        "cap_8a81b422-c2aa-46e8-a3b7-205d9ce5e24b_t3"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_1bbf1199"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_sympy__sympy-14711_g3",
+    "parent_rollout_id": "rollout_sympy__sympy-14711_g3",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1243
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T13:27:10.082119Z"
+}

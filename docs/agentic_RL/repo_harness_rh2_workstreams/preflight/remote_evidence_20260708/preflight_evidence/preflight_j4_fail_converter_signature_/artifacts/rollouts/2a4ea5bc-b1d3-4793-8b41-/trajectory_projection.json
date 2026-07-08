@@ -1,0 +1,173 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "2a4ea5bc-b1d3-4793-8b41-865da9895a11",
+  "task_id": "django__django-16139",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_8",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18580,
+      "response_token_count": 7292,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18580,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18580,
+          "end": 19344,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19344,
+          "end": 19602,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 19602,
+          "end": 19756,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19756,
+          "end": 24897,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 24897,
+          "end": 25115,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 25115,
+          "end": 25156,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 25156,
+          "end": 25872,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18580,
+          "end": 19344,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19344,
+          "end": 19602,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 19602,
+          "end": 19756,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19756,
+          "end": 24897,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 24897,
+          "end": 25115,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 25115,
+          "end": 25156,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 25156,
+          "end": 25872,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "2a4ea5bc-b1d3-4793-8b41-865da9895a11_b0_routing_tape",
+          "sha256": "sha256:4ebe39b7dc8080757bc9f41e42997126df593dcfda01b2937cebf7434a0430bd",
+          "byte_size": 39737856
+        },
+        "num_rows": 25871,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18580,
+        "generated_token_count": 7292
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "2a4ea5bc-b1d3-4793-8b41-865da9895a11_b0_topp_ids",
+          "sha256": "sha256:b5ddb49c40ebce7b4dbed3616c9c2d7aea2c426d546ef494f6690bb4f8bd9be4",
+          "byte_size": 9272
+        },
+        "offsets_ref": {
+          "ref_id": "2a4ea5bc-b1d3-4793-8b41-865da9895a11_b0_topp_offsets",
+          "sha256": "sha256:858cab327ceb197baa81dbb39b301bc3934f134e8852c57fdc75a8a14542a29c",
+          "byte_size": 29172
+        },
+        "response_token_count": 7292,
+        "offsets_len": 7293,
+        "kept_token_count": 2318
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_2a4ea5bc-b1d3-4793-8b41-865da9895a11_t0",
+        "cap_2a4ea5bc-b1d3-4793-8b41-865da9895a11_t1",
+        "cap_2a4ea5bc-b1d3-4793-8b41-865da9895a11_t3",
+        "cap_2a4ea5bc-b1d3-4793-8b41-865da9895a11_t4"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 1.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_f0fe6f31"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_django__django-16139_g2",
+    "parent_rollout_id": "rollout_django__django-16139_g2",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1852
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T13:55:46.878702Z"
+}

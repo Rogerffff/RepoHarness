@@ -28,7 +28,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 . "${SCRIPT_DIR}/common.sh"
 
 EV="${P3_EV}/j4c"
-BRINGUP=${BRINGUP:-/root/preflight_j4c}
+BRINGUP=${BRINGUP:-${P3_RUN_ROOT}/preflight_j4c}
 J4C_MODEL_HF=${J4C_MODEL_HF:-/root/models/Qwen3-4B}
 J4C_MODEL_DIST=${J4C_MODEL_DIST:-/root/models/Qwen3-4B_torch_dist}
 J4C_MODEL_SCRIPT=${J4C_MODEL_SCRIPT:-qwen3-4B.sh}
@@ -41,6 +41,9 @@ LOG="${EV}/j4c_train.log"
 PROBE_LOG="${EV}/probe_triples.jsonl"
 
 p3_banner "J4c fully_async smoke: ${J4C_MODEL_ID}, ${J4C_ACTOR_GPUS}+${J4C_ROLLOUT_GPUS}, 强制 abort"
+p3_require_large_storage_path "EV" "${EV}"
+p3_require_large_storage_path "BRINGUP" "${BRINGUP}"
+p3_require_large_storage_path "P3_RAY_TMP" "${P3_RAY_TMP}"
 
 # ---------------------------------------------------------------- 防误用断言（§1.6）
 if [ -n "${RH2_DYNAMIC_SAMPLING_FILTER_PATH:-}" ] || [ -n "${RH2_OVER_SAMPLING_BATCH_SIZE:-}" ]; then

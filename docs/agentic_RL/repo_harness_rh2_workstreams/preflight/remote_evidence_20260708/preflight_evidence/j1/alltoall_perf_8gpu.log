@@ -1,0 +1,27 @@
+# nccl-tests version 2.19.5 nccl-headers=22703 nccl-library=22703
+# Collective test starting: alltoall_perf
+# nThread 1 nGpus 8 minBytes 16777216 maxBytes 1073741824 step: 4(factor) warmup iters: 1 iters: 20 agg iters: 1 validation: 1 graph: 0 unalign: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  0 [0000:db:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  1 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  1 [0000:e0:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  2 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  2 [0000:e5:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  3 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  3 [0000:ea:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  4 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  4 [0000:ef:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  5 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  5 [0000:f4:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  6 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  6 [0000:f9:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  7 Group  0 Pid  21199 on computeinstance-u00tfr70n13et452j2 device  7 [0000:fe:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw  #wrong     time   algbw   busbw  #wrong 
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)             (us)  (GB/s)  (GB/s)         
+    16777216        524288     float    none      -1  1045.92   16.04   14.04       0  1060.30   15.82   13.85    N/A
+    67108864       2097152     float    none      -1  3760.22   17.85   15.62       0  3670.81   18.28   16.00    N/A
+   268435456       8388608     float    none      -1  13781.0   19.48   17.04       0  13879.3   19.34   16.92    N/A
+  1073741824      33554432     float    none      -1  54713.2   19.62   17.17       0  54210.6   19.81   17.33    N/A
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 15.9954 
+#
+# Collective test concluded: alltoall_perf
+#
+

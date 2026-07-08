@@ -1,0 +1,184 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "b99244cc-ecd3-480c-af83-7fee175989f3",
+  "task_id": "sympy__sympy-14711",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_15",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18507,
+      "response_token_count": 12590,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18507,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18507,
+          "end": 20886,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20886,
+          "end": 21185,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 21185,
+          "end": 29337,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 29337,
+          "end": 29779,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 29779,
+          "end": 29828,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 29828,
+          "end": 30486,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 30486,
+          "end": 30533,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 30533,
+          "end": 31097,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18507,
+          "end": 20886,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20886,
+          "end": 21185,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 21185,
+          "end": 29337,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 29337,
+          "end": 29779,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 29779,
+          "end": 29828,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 29828,
+          "end": 30486,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 30486,
+          "end": 30533,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 30533,
+          "end": 31097,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "b99244cc-ecd3-480c-af83-7fee175989f3_b0_routing_tape",
+          "sha256": "sha256:175fa2cc00149e25c9139995344f3f9eb996f73c01df71b11183c3cdfb894b20",
+          "byte_size": 47763456
+        },
+        "num_rows": 31096,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18507,
+        "generated_token_count": 12590
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "b99244cc-ecd3-480c-af83-7fee175989f3_b0_topp_ids",
+          "sha256": "sha256:946bf7f61339cfd917adbd199108591fd9e527b6165417ee93837ea4d129f6de",
+          "byte_size": 9144
+        },
+        "offsets_ref": {
+          "ref_id": "b99244cc-ecd3-480c-af83-7fee175989f3_b0_topp_offsets",
+          "sha256": "sha256:40a496390ad0175dc0493f868a9c5d42bf9a22e284af7195958b1ae5d2556a52",
+          "byte_size": 50364
+        },
+        "response_token_count": 12590,
+        "offsets_len": 12591,
+        "kept_token_count": 2286
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_b99244cc-ecd3-480c-af83-7fee175989f3_t2",
+        "cap_b99244cc-ecd3-480c-af83-7fee175989f3_t3",
+        "cap_b99244cc-ecd3-480c-af83-7fee175989f3_t4",
+        "cap_b99244cc-ecd3-480c-af83-7fee175989f3_t5"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_4565886e"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_sympy__sympy-14711_g3",
+    "parent_rollout_id": "rollout_sympy__sympy-14711_g3",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1963
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T16:21:33.661410Z"
+}

@@ -25,9 +25,39 @@ done
 export P3_DRY_RUN
 
 # ---------------------------------------------------------------- 路径约定
-# evidence 目录（协议 §4：所有脚本与判据版本进 evidence 目录）。
-# 真机默认 /root/preflight_evidence；本地 dry-run 可用 P3_EV 覆盖。
-P3_EV=${P3_EV:-/root/preflight_evidence}
+# evidence / run 目录（协议 §4：所有脚本与判据版本进 evidence 目录）。
+#
+# P3 会写出大文件：rollout dump、Ray session、debug checkpoint。真机上必须
+# 默认走外接卷或外接卷 bind mount，避免再次写满 Docker 根盘。当前已知安全
+# 形态：
+#   1. 直接挂载 /mnt/p3；
+#   2. 容器内把 /mnt/p3/bringup 绑定到 /root/bringup；
+#   3. 容器内把 /mnt/p3/preflight_evidence 绑定到 /root/preflight_evidence。
+# 本地 dry-run 没有这些路径时仍保留 /root fallback，方便静态检查。
+if [ -z "${P3_STORAGE_ROOT:-}" ]; then
+  if [ -d /mnt/p3 ] && [ -w /mnt/p3 ]; then
+    P3_STORAGE_ROOT=/mnt/p3
+  elif [ -d /root/bringup ] && [ -w /root/bringup ]; then
+    P3_STORAGE_ROOT=/root/bringup
+  else
+    P3_STORAGE_ROOT=/root
+  fi
+fi
+case "${P3_STORAGE_ROOT}" in
+  /mnt/p3)
+    P3_EV=${P3_EV:-/mnt/p3/preflight_evidence}
+    P3_RUN_ROOT=${P3_RUN_ROOT:-/mnt/p3/preflight_runs}
+    ;;
+  /root/bringup)
+    P3_EV=${P3_EV:-/root/preflight_evidence}
+    P3_RUN_ROOT=${P3_RUN_ROOT:-/root/bringup}
+    ;;
+  *)
+    P3_EV=${P3_EV:-/root/preflight_evidence}
+    P3_RUN_ROOT=${P3_RUN_ROOT:-/root}
+    ;;
+esac
+P3_RAY_TMP=${P3_RAY_TMP:-${P3_RUN_ROOT}/ray_tmp}
 # slime 仓库在 pin 镜像内的位置（与 s1_7a_bringup 相同）。
 P3_SLIME=${P3_SLIME:-/root/slime}
 P3_MEGATRON=${P3_MEGATRON:-/root/Megatron-LM}
@@ -61,6 +91,42 @@ p3_run_sh() {
   echo "+ $*"
   if [ "${P3_DRY_RUN}" -eq 0 ]; then
     bash -c "$*"
+  fi
+}
+
+p3_path_on_known_large_storage() {
+  _p3_path="$1"
+  case "${_p3_path}" in
+    /mnt/p3|/mnt/p3/*)
+      grep -q " /mnt/p3 " /proc/mounts 2>/dev/null
+      ;;
+    /root/bringup|/root/bringup/*)
+      grep -q " /root/bringup " /proc/mounts 2>/dev/null
+      ;;
+    /root/preflight_evidence|/root/preflight_evidence/*)
+      grep -q " /root/preflight_evidence " /proc/mounts 2>/dev/null
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# p3_require_large_storage_path <label> <path>：正式运行时防止大文件落到
+# Docker 根盘。dry-run 不检查；没有任何已知大盘挂载时也不拦截，便于在
+# 小型调试容器中跑静态脚本。但一旦检测到 /mnt/p3 或 /root/bringup 这类
+# 大盘挂载，关键路径必须落在这些挂载上。
+p3_require_large_storage_path() {
+  _p3_label="$1"; _p3_path="$2"
+  if [ "${P3_DRY_RUN}" -ne 0 ]; then return 0; fi
+  if ! grep -qE " /(mnt/p3|root/bringup|root/preflight_evidence) " /proc/mounts 2>/dev/null; then
+    return 0
+  fi
+  if ! p3_path_on_known_large_storage "${_p3_path}"; then
+    echo "FATAL: ${_p3_label}=${_p3_path} 不在已知外接卷路径上。" >&2
+    echo "       请设置 P3_RUN_ROOT=/mnt/p3/preflight_runs 或 /root/bringup，" >&2
+    echo "       并确保 P3_EV / P3_RAY_TMP 也落在外接卷或其 bind mount 上。" >&2
+    exit 12
   fi
 }
 
@@ -121,12 +187,15 @@ p3_dmon_stop() {
 # ---------------------------------------------------------------- ray 生命周期
 p3_ray_restart() {
   _p3_num_gpus="$1"
+  p3_require_large_storage_path "P3_RAY_TMP" "${P3_RAY_TMP}"
+  p3_run mkdir -p "${P3_RAY_TMP}"
   p3_run_sh "ray stop --force || true"
   p3_run_sh "pkill -9 sglang || true"
   p3_run_sh "sleep 2"
   export MASTER_ADDR=${MASTER_ADDR:-127.0.0.1}
   p3_run ray start --head --node-ip-address "${MASTER_ADDR}" --num-gpus "${_p3_num_gpus}" \
-    --disable-usage-stats --dashboard-host=0.0.0.0 --dashboard-port=8265
+    --disable-usage-stats --dashboard-host=0.0.0.0 --dashboard-port=8265 \
+    --temp-dir "${P3_RAY_TMP}"
 }
 
 # ---------------------------------------------------------------- 结果解析辅助

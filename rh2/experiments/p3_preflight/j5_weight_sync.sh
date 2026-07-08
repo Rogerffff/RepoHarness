@@ -26,14 +26,18 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 . "${SCRIPT_DIR}/common.sh"
 
 EV="${P3_EV}/j5"
-BRINGUP_BASE=${BRINGUP_BASE:-/root/preflight_j5}
+BRINGUP_BASE=${BRINGUP_BASE:-${P3_RUN_ROOT}/preflight_j5}
 J5_BUFFER_SIZES=${J5_BUFFER_SIZES:-"536870912 2147483648"}
 J5_STEPS=${J5_STEPS:-2}
 J5_COLOCATE=${J5_COLOCATE:-0}
+J5_GLOBAL_BATCH_SIZE=${J5_GLOBAL_BATCH_SIZE:-32}
 CSV="${EV}/j5_update_weights.csv"
 CSV_HEADER="buffer_size_bytes,steps,update_weights_time_s_list,pause_flush_s,send_s,continue_s,three_phase_resolved,rc"
 
 p3_banner "J5 weight sync: buffer sweep (${J5_BUFFER_SIZES}), steps=${J5_STEPS}"
+p3_require_large_storage_path "EV" "${EV}"
+p3_require_large_storage_path "BRINGUP_BASE" "${BRINGUP_BASE}"
+p3_require_large_storage_path "P3_RAY_TMP" "${P3_RAY_TMP}"
 
 run_buffer() {
   _buf="$1"
@@ -58,8 +62,9 @@ run_buffer() {
      --rollout-max-context-len "${RH2_MAX_CONTEXT_LEN:-32768}"
      --rollout-temperature 1.0
      --rollout-top-p 0.95
-     --global-batch-size 32
+     --global-batch-size "${J5_GLOBAL_BATCH_SIZE}"
      --custom-generate-function-path s1_7a_bringup.glue.generate
+     --custom-convert-samples-to-train-data-path p3_preflight.rh2_convert.convert_samples_to_train_data
   )
   GRPO_ARGS=(
      --advantage-estimator grpo

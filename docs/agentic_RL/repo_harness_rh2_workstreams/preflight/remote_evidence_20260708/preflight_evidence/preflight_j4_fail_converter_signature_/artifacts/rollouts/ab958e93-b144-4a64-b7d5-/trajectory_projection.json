@@ -1,0 +1,136 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "ab958e93-b144-4a64-b7d5-822776eaec2f",
+  "task_id": "astropy__astropy-14995",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_31",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18945,
+      "response_token_count": 3903,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18945,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18945,
+          "end": 20595,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20595,
+          "end": 21271,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 21271,
+          "end": 21882,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 21882,
+          "end": 22848,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18945,
+          "end": 20595,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20595,
+          "end": 21271,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 21271,
+          "end": 21882,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 21882,
+          "end": 22848,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "ab958e93-b144-4a64-b7d5-822776eaec2f_b0_routing_tape",
+          "sha256": "sha256:234d8d6455079c55642e66bca8d9e72334d18332c0d454a01a141c3bfdacbc11",
+          "byte_size": 35092992
+        },
+        "num_rows": 22847,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18945,
+        "generated_token_count": 3903
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "ab958e93-b144-4a64-b7d5-822776eaec2f_b0_topp_ids",
+          "sha256": "sha256:daf4b77900cce582a59f4aba18aa3d6a04deea18b18b3f6ad4951138c76fe83e",
+          "byte_size": 8384
+        },
+        "offsets_ref": {
+          "ref_id": "ab958e93-b144-4a64-b7d5-822776eaec2f_b0_topp_offsets",
+          "sha256": "sha256:f71864c9dcd454bdb788eadb2caa0168f330717611660125ce34c7b174339734",
+          "byte_size": 15616
+        },
+        "response_token_count": 3903,
+        "offsets_len": 3904,
+        "kept_token_count": 2096
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_ab958e93-b144-4a64-b7d5-822776eaec2f_t1",
+        "cap_ab958e93-b144-4a64-b7d5-822776eaec2f_t2"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_33609c24"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_astropy__astropy-14995_g7",
+    "parent_rollout_id": "rollout_astropy__astropy-14995_g7",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1642
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T13:26:58.864614Z"
+}

@@ -1,0 +1,940 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "234df937-d72c-4224-8d3e-055595d3e38c",
+  "task_id": "psf__requests-1142",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_22",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18276,
+      "response_token_count": 969,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18276,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18276,
+          "end": 19245,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18276,
+          "end": 19245,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b0_routing_tape",
+          "sha256": "sha256:e2385e1ae81e991f39ba18f275df10ab84fe6b72b4629bead8aaac7894b19717",
+          "byte_size": 29558784
+        },
+        "num_rows": 19244,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18276,
+        "generated_token_count": 969
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b0_topp_ids",
+          "sha256": "sha256:8ea09623920e742ad96f179331c4844043ad5e73dc4c72049f48c17ea1e798a3",
+          "byte_size": 5544
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b0_topp_offsets",
+          "sha256": "sha256:00a9b62f2983efe29c9b9f095741ce9bdc270c23df47a8d83294e485e934ecf6",
+          "byte_size": 3880
+        },
+        "response_token_count": 969,
+        "offsets_len": 970,
+        "kept_token_count": 1386
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t0"
+      ]
+    },
+    {
+      "branch_id": "b1",
+      "prompt_token_count": 18585,
+      "response_token_count": 4142,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18585,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18585,
+          "end": 19660,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19660,
+          "end": 20080,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20080,
+          "end": 20591,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 20591,
+          "end": 20620,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20620,
+          "end": 21347,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 21347,
+          "end": 21367,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 21367,
+          "end": 22132,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 22132,
+          "end": 22152,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 22152,
+          "end": 22727,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18585,
+          "end": 19660,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19660,
+          "end": 20080,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20080,
+          "end": 20591,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 20591,
+          "end": 20620,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20620,
+          "end": 21347,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 21347,
+          "end": 21367,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 21367,
+          "end": 22132,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 22132,
+          "end": 22152,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 22152,
+          "end": 22727,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b1_routing_tape",
+          "sha256": "sha256:f6dfc4c5fd741fefae2d126bc168f41ec331d582a60218c37ae977c0cb12afaa",
+          "byte_size": 34907136
+        },
+        "num_rows": 22726,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18585,
+        "generated_token_count": 4142
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b1_topp_ids",
+          "sha256": "sha256:2b027036284a21fe6954c09e80f5d024b352f5d7325888e5b8cb20db5fdd2b44",
+          "byte_size": 17212
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b1_topp_offsets",
+          "sha256": "sha256:e2aa9176dd4389dc7a4accf5bb54d5c56037b9667c82cca6fd3b53f9fdd08b77",
+          "byte_size": 16572
+        },
+        "response_token_count": 4142,
+        "offsets_len": 4143,
+        "kept_token_count": 4303
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t1",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t4",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t10",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t17",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t24"
+      ]
+    },
+    {
+      "branch_id": "b2",
+      "prompt_token_count": 11012,
+      "response_token_count": 2286,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 11012,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 11012,
+          "end": 11294,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 11294,
+          "end": 11959,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 11959,
+          "end": 12010,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12010,
+          "end": 12532,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12532,
+          "end": 12557,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12557,
+          "end": 12827,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12827,
+          "end": 12878,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12878,
+          "end": 13298,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 11012,
+          "end": 11294,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 11294,
+          "end": 11959,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 11959,
+          "end": 12010,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12010,
+          "end": 12532,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12532,
+          "end": 12557,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12557,
+          "end": 12827,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12827,
+          "end": 12878,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12878,
+          "end": 13298,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b2_routing_tape",
+          "sha256": "sha256:64bb5b23829dc9ea924c8c24d26fd613a84da8c728491db5315b6b86b51460be",
+          "byte_size": 20424192
+        },
+        "num_rows": 13297,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 11012,
+        "generated_token_count": 2286
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b2_topp_ids",
+          "sha256": "sha256:93efea55a409a469c1c7984a66aa500c676abdd5cb795d9008cd5faf36974054",
+          "byte_size": 9164
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b2_topp_offsets",
+          "sha256": "sha256:92ce7af1b1bae43947575af6a5291ca69074165c4a044bd1fce197c0dfffdccf",
+          "byte_size": 9148
+        },
+        "response_token_count": 2286,
+        "offsets_len": 2287,
+        "kept_token_count": 2291
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t8",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t12",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t14",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t20"
+      ]
+    },
+    {
+      "branch_id": "b3",
+      "prompt_token_count": 11021,
+      "response_token_count": 2609,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 11021,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 11021,
+          "end": 11318,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 11318,
+          "end": 12068,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12068,
+          "end": 12119,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12119,
+          "end": 12773,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12773,
+          "end": 12798,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12798,
+          "end": 13630,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 11021,
+          "end": 11318,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 11318,
+          "end": 12068,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12068,
+          "end": 12119,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12119,
+          "end": 12773,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12773,
+          "end": 12798,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12798,
+          "end": 13630,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b3_routing_tape",
+          "sha256": "sha256:38b00bdf78a5dae328c7c582cb916c0f4ff9927966ba3c42cca7ca40c249ee2e",
+          "byte_size": 20934144
+        },
+        "num_rows": 13629,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 11021,
+        "generated_token_count": 2609
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b3_topp_ids",
+          "sha256": "sha256:509ff6c782a818879c28b422978d2db00fe2a6e561fffa78a3adcba2996fcec8",
+          "byte_size": 11232
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b3_topp_offsets",
+          "sha256": "sha256:d0fdf2c1791646ae519c2c0d49247f39938a41c030a0d62c8ee673af605fd231",
+          "byte_size": 10440
+        },
+        "response_token_count": 2609,
+        "offsets_len": 2610,
+        "kept_token_count": 2808
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t9",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t15",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t23"
+      ]
+    },
+    {
+      "branch_id": "b4",
+      "prompt_token_count": 11011,
+      "response_token_count": 2098,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 11011,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 11011,
+          "end": 11289,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 11289,
+          "end": 12238,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12238,
+          "end": 12289,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12289,
+          "end": 12694,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12694,
+          "end": 12719,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12719,
+          "end": 13109,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 11011,
+          "end": 11289,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 11289,
+          "end": 12238,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12238,
+          "end": 12289,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12289,
+          "end": 12694,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12694,
+          "end": 12719,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12719,
+          "end": 13109,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b4_routing_tape",
+          "sha256": "sha256:029aa398a20efa2297fc83954866fa4d469a654b318d3c2585c214543e2b62ee",
+          "byte_size": 20133888
+        },
+        "num_rows": 13108,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 11011,
+        "generated_token_count": 2098
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b4_topp_ids",
+          "sha256": "sha256:d52d86cadbc98b253b722bdf7d8573dabec65d9b47da9310a835f69cb906eeb1",
+          "byte_size": 9544
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b4_topp_offsets",
+          "sha256": "sha256:cf9a2ba7e0f9df4fa10ce6af1c6e597ea6b0f588bf649f9b973afc71c4c98076",
+          "byte_size": 8396
+        },
+        "response_token_count": 2098,
+        "offsets_len": 2099,
+        "kept_token_count": 2386
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t11",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t16",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t21"
+      ]
+    },
+    {
+      "branch_id": "b5",
+      "prompt_token_count": 11020,
+      "response_token_count": 1894,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 11020,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 11020,
+          "end": 11316,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 11316,
+          "end": 12210,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12210,
+          "end": 12261,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12261,
+          "end": 12914,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 11020,
+          "end": 11316,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 11316,
+          "end": 12210,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12210,
+          "end": 12261,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12261,
+          "end": 12914,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b5_routing_tape",
+          "sha256": "sha256:61cacfaafd83ce3e29dfcb456b30d64b9e7793738d81360db65721da3d1ee5da",
+          "byte_size": 19834368
+        },
+        "num_rows": 12913,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 11020,
+        "generated_token_count": 1894
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b5_topp_ids",
+          "sha256": "sha256:ff7e956f7276590b62a85392fd836754a8dfe065a1ad273aa013d30d2f386c3d",
+          "byte_size": 8300
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b5_topp_offsets",
+          "sha256": "sha256:bb046861417ff7f49ff33532587ecc366b6c4a25b669d11509222bb55087c1ef",
+          "byte_size": 7580
+        },
+        "response_token_count": 1894,
+        "offsets_len": 1895,
+        "kept_token_count": 2075
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t13",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t19"
+      ]
+    },
+    {
+      "branch_id": "b6",
+      "prompt_token_count": 11015,
+      "response_token_count": 999,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 11015,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 11015,
+          "end": 12014,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 11015,
+          "end": 12014,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b6_routing_tape",
+          "sha256": "sha256:7e2b1c8bcaa5eb565ea62d78d3f56ffb312a3c4ed554f2e94ceb70722fbc8853",
+          "byte_size": 18451968
+        },
+        "num_rows": 12013,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 11015,
+        "generated_token_count": 999
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b6_topp_ids",
+          "sha256": "sha256:b23ee17f48381abec33617120bfa239be0d29ed46643c73389882b3c1174585d",
+          "byte_size": 5456
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b6_topp_offsets",
+          "sha256": "sha256:210d6d76977644cbdad4ec5a6cc1f5996b86974611536fe329ddea41f04eba0c",
+          "byte_size": 4000
+        },
+        "response_token_count": 999,
+        "offsets_len": 1000,
+        "kept_token_count": 1364
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t7"
+      ]
+    },
+    {
+      "branch_id": "b7",
+      "prompt_token_count": 11307,
+      "response_token_count": 1559,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 11307,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 11307,
+          "end": 12453,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 12453,
+          "end": 12478,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 12478,
+          "end": 12866,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 11307,
+          "end": 12453,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 12453,
+          "end": 12478,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 12478,
+          "end": 12866,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b7_routing_tape",
+          "sha256": "sha256:d2e05d05a0b9fcfc84804df8ba0e86f677782563b50e3916b9487bf539a38e2f",
+          "byte_size": 19760640
+        },
+        "num_rows": 12865,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 11307,
+        "generated_token_count": 1559
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b7_topp_ids",
+          "sha256": "sha256:334f71f5707600679764647eac58de36aedad3f0a527ffdca906239c0957b0eb",
+          "byte_size": 8304
+        },
+        "offsets_ref": {
+          "ref_id": "234df937-d72c-4224-8d3e-055595d3e38c_b7_topp_offsets",
+          "sha256": "sha256:9f6971854a3d7284e46c7a1b5e2e119056c1d077e3bb8e5cdd2f13f191b8c5bf",
+          "byte_size": 6240
+        },
+        "response_token_count": 1559,
+        "offsets_len": 1560,
+        "kept_token_count": 2076
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t18",
+        "cap_234df937-d72c-4224-8d3e-055595d3e38c_t22"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_7d7b1b7d"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_psf__requests-1142_g5",
+    "parent_rollout_id": "rollout_psf__requests-1142_g5",
+    "segment_index": null,
+    "segment_count": 8,
+    "rollout_loss_denominator": 14559
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T16:26:29.873957Z"
+}

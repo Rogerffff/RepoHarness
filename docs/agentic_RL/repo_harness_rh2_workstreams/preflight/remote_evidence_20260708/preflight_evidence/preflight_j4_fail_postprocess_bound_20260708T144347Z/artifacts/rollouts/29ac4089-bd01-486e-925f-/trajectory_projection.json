@@ -1,0 +1,173 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "29ac4089-bd01-486e-925f-56ce56b4c94c",
+  "task_id": "psf__requests-2931",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_25",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18924,
+      "response_token_count": 11318,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18924,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18924,
+          "end": 19246,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19246,
+          "end": 19632,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 19632,
+          "end": 19979,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19979,
+          "end": 20029,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20029,
+          "end": 20486,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 20486,
+          "end": 29363,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 29363,
+          "end": 30242,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18924,
+          "end": 19246,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19246,
+          "end": 19632,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 19632,
+          "end": 19979,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19979,
+          "end": 20029,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20029,
+          "end": 20486,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 20486,
+          "end": 29363,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 29363,
+          "end": 30242,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "29ac4089-bd01-486e-925f-56ce56b4c94c_b0_routing_tape",
+          "sha256": "sha256:6af0e96bf720df8a317fae3fc0afee717d5377d1b86fa1406c7debc6b2268984",
+          "byte_size": 46450176
+        },
+        "num_rows": 30241,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18924,
+        "generated_token_count": 11318
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "29ac4089-bd01-486e-925f-56ce56b4c94c_b0_topp_ids",
+          "sha256": "sha256:dc9aed8ff267dcf2ee940efa6563aedcb90cca47c9adde6a83c7069d68a6d458",
+          "byte_size": 9604
+        },
+        "offsets_ref": {
+          "ref_id": "29ac4089-bd01-486e-925f-56ce56b4c94c_b0_topp_offsets",
+          "sha256": "sha256:b862b16853d3ea7f48f7159cc30c7c83b1b13b164a82524daf41a06cbccde5bd",
+          "byte_size": 45276
+        },
+        "response_token_count": 11318,
+        "offsets_len": 11319,
+        "kept_token_count": 2401
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_29ac4089-bd01-486e-925f-56ce56b4c94c_t1",
+        "cap_29ac4089-bd01-486e-925f-56ce56b4c94c_t2",
+        "cap_29ac4089-bd01-486e-925f-56ce56b4c94c_t3",
+        "cap_29ac4089-bd01-486e-925f-56ce56b4c94c_t4"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_44882765"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_psf__requests-2931_g6",
+    "parent_rollout_id": "rollout_psf__requests-2931_g6",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 2005
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T14:27:47.931244Z"
+}

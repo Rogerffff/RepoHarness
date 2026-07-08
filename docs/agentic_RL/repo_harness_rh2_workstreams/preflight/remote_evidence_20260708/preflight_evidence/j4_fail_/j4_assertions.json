@@ -1,0 +1,45 @@
+{
+  "1_rollout_samples": {
+    "status": "FAIL",
+    "num_samples": 0,
+    "num_trainable_samples": 0,
+    "expected_min": 32,
+    "dump_files": []
+  },
+  "2_startup_probes": {
+    "status": "FAIL",
+    "reason": "startup_evidence.json 不存在（glue 启动探针未跑到写盘点）"
+  },
+  "3_tape_consumed_loss_finite": {
+    "status": "FAIL",
+    "tape_missing": [
+      "no trainable samples after remove_sample filtering"
+    ],
+    "tape_raise_in_log": false,
+    "num_loss_values": 0
+  },
+  "4_grad_norm": {
+    "status": "UNKNOWN",
+    "num_values": 0,
+    "bad_values": []
+  },
+  "5_memory_watermark_no_oom": {
+    "status": "PASS",
+    "per_gpu_peak_mib": {
+      "0": 63714,
+      "1": 63714,
+      "2": 63714,
+      "3": 63714,
+      "4": 75344,
+      "5": 75344,
+      "6": 75344,
+      "7": 75344
+    },
+    "oom_in_log": false,
+    "note": "训练/推理分区归属按 ray 分配核对（J4 为 4+4 分离，dmon 全 8 卡采样）"
+  },
+  "6_checkpoint_produced_then_discarded": {
+    "status": "FAIL",
+    "declaration": "8 题来自 Verified 仓库（A1/D5）：checkpoint 用后即弃，不得作为任何后续起点"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "3af139d7-f79f-41cd-b677-8b4b8bc24758",
+  "task_id": "sympy__sympy-15349",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_18",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18424,
+      "response_token_count": 1021,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18424,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18424,
+          "end": 19445,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18424,
+          "end": 19445,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "3af139d7-f79f-41cd-b677-8b4b8bc24758_b0_routing_tape",
+          "sha256": "sha256:f3272acf98b0a24b941cf411052d56e680e325c1bc1db4663158315d09bf8088",
+          "byte_size": 29865984
+        },
+        "num_rows": 19444,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18424,
+        "generated_token_count": 1021
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "3af139d7-f79f-41cd-b677-8b4b8bc24758_b0_topp_ids",
+          "sha256": "sha256:85f76f79d93863ac8909593a9989f739ac4f5c3d10ddcc682d7c533ce409e07d",
+          "byte_size": 4724
+        },
+        "offsets_ref": {
+          "ref_id": "3af139d7-f79f-41cd-b677-8b4b8bc24758_b0_topp_offsets",
+          "sha256": "sha256:0b8d7256c9b1690b51c7cd5116faf3ee44ca7814cbddab08a2653db88e0e94d5",
+          "byte_size": 4088
+        },
+        "response_token_count": 1021,
+        "offsets_len": 1022,
+        "kept_token_count": 1181
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_3af139d7-f79f-41cd-b677-8b4b8bc24758_t0"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_59bedeba"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_sympy__sympy-15349_g4",
+    "parent_rollout_id": "rollout_sympy__sympy-15349_g4",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1021
+  },
+  "handshake": {
+    "weight_versions": [
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T13:48:34.025587Z"
+}

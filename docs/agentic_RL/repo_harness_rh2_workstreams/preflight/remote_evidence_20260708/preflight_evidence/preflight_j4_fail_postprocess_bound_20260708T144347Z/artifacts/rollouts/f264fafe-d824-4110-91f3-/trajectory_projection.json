@@ -1,0 +1,149 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "f264fafe-d824-4110-91f3-39c922fde1a9",
+  "task_id": "django__django-11099",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_0",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18375,
+      "response_token_count": 1974,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18375,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18375,
+          "end": 18836,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 18836,
+          "end": 19483,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 19483,
+          "end": 19907,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19907,
+          "end": 19958,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 19958,
+          "end": 20349,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18375,
+          "end": 18836,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 18836,
+          "end": 19483,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 19483,
+          "end": 19907,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19907,
+          "end": 19958,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 19958,
+          "end": 20349,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "f264fafe-d824-4110-91f3-39c922fde1a9_b0_routing_tape",
+          "sha256": "sha256:9be6b0f34fecc2c3172f66f05139507ea477cc86d279c1abb4f27390bff42461",
+          "byte_size": 31254528
+        },
+        "num_rows": 20348,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18375,
+        "generated_token_count": 1974
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "f264fafe-d824-4110-91f3-39c922fde1a9_b0_topp_ids",
+          "sha256": "sha256:e8497b6df0330bc2f0efc2305187630564af617caf36541356dfd7c50728554a",
+          "byte_size": 6160
+        },
+        "offsets_ref": {
+          "ref_id": "f264fafe-d824-4110-91f3-39c922fde1a9_b0_topp_offsets",
+          "sha256": "sha256:9fa857bf8ac04c6a772772c624429f0ffcda5650324fa756670aff24b94b02d9",
+          "byte_size": 7900
+        },
+        "response_token_count": 1974,
+        "offsets_len": 1975,
+        "kept_token_count": 1540
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_f264fafe-d824-4110-91f3-39c922fde1a9_t0",
+        "cap_f264fafe-d824-4110-91f3-39c922fde1a9_t2",
+        "cap_f264fafe-d824-4110-91f3-39c922fde1a9_t3"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 1.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_116c34d5"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_django__django-11099_g0",
+    "parent_rollout_id": "rollout_django__django-11099_g0",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1276
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T14:31:17.710971Z"
+}

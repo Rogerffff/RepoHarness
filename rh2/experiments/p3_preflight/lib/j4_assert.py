@@ -13,8 +13,10 @@ startup_evidence.json + dmon 显存采样 csv + checkpoint 目录。
 2. 启动期探针：startup_evidence.json 存在且 renderer 类名断言 + top-p tape
    探针字段在场（U-G/U-H；写该文件前任一失败 glue 会直接 raise，
    文件存在本身即通过的强证据）。
-3. tape 消费：dump 内样本带 rollout_top_p_token_ids/offsets 与
-   rollout_routed_experts（MoE），且日志无 tape 相关 raise、loss 有限值。
+3. tape 消费：dump 内训练准入样本（remove_sample=False）带
+   rollout_top_p_token_ids/offsets 与 rollout_routed_experts（MoE），
+   且日志无 tape 相关 raise、loss 有限值。被治理层剔除的样本允许没有
+   tape，因为它们不会进入训练 batch。
 4. grad norm 非 NaN：日志抓 grad[ _-]norm 数值，全部有限。
 5. 显存水位 + 无 OOM：dmon csv 每 GPU 的 memory.used 峰值成表；日志无 OOM。
 6. checkpoint：目录曾产出（iter 目录或 latest 文件存在）；"即弃"由外层 rm，
@@ -53,6 +55,7 @@ def main() -> int:
 
     dump_files = sorted(Path(args.dumps_dir).glob("rollout_*.pt"))
     n_samples = 0
+    n_trainable_samples = 0
     sample_ok = True
     tape_ok = True
     tape_missing: list[str] = []
@@ -65,15 +68,22 @@ def main() -> int:
             lm = s.get("loss_mask")
             if not tokens or rl <= 0 or (lm is not None and len(lm) != rl):
                 sample_ok = False
+            if bool(s.get("remove_sample", False)):
+                continue
+            n_trainable_samples += 1
             if s.get("rollout_top_p_token_ids") is None or s.get("rollout_top_p_token_offsets") is None:
                 tape_ok = False
                 tape_missing.append(f"{f.name}: top-p tape missing")
             if s.get("rollout_routed_experts") is None:
                 tape_ok = False
                 tape_missing.append(f"{f.name}: routing tape missing")
+    if n_trainable_samples == 0:
+        tape_ok = False
+        tape_missing.append("no trainable samples after remove_sample filtering")
     results["1_rollout_samples"] = {
         "status": "PASS" if (n_samples >= args.expected_samples and sample_ok and dump_files) else "FAIL",
         "num_samples": n_samples,
+        "num_trainable_samples": n_trainable_samples,
         "expected_min": args.expected_samples,
         "dump_files": [f.name for f in dump_files],
     }

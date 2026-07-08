@@ -1,0 +1,149 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "80f98a7d-52c6-496f-8ffa-1d13df8fceec",
+  "task_id": "psf__requests-1142",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_21",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18755,
+      "response_token_count": 3182,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18755,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18755,
+          "end": 19296,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19296,
+          "end": 19336,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 19336,
+          "end": 19747,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 19747,
+          "end": 21123,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 21123,
+          "end": 21937,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18755,
+          "end": 19296,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19296,
+          "end": 19336,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 19336,
+          "end": 19747,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 19747,
+          "end": 21123,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 21123,
+          "end": 21937,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "80f98a7d-52c6-496f-8ffa-1d13df8fceec_b0_routing_tape",
+          "sha256": "sha256:655aedd42520cbde5e198697b79b9371d59972fbf4e30d46cbe457d4ba226051",
+          "byte_size": 33693696
+        },
+        "num_rows": 21936,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18755,
+        "generated_token_count": 3182
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "80f98a7d-52c6-496f-8ffa-1d13df8fceec_b0_topp_ids",
+          "sha256": "sha256:08552fc981c2a06887760839ccc4908e058901eaf668534ebd80675a726df816",
+          "byte_size": 8436
+        },
+        "offsets_ref": {
+          "ref_id": "80f98a7d-52c6-496f-8ffa-1d13df8fceec_b0_topp_offsets",
+          "sha256": "sha256:afeb927ba145f696ef2e57bf22d7897db46f6a4bbc5bf7acb96a575d4339cd67",
+          "byte_size": 12732
+        },
+        "response_token_count": 3182,
+        "offsets_len": 3183,
+        "kept_token_count": 2109
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_80f98a7d-52c6-496f-8ffa-1d13df8fceec_t1",
+        "cap_80f98a7d-52c6-496f-8ffa-1d13df8fceec_t2",
+        "cap_80f98a7d-52c6-496f-8ffa-1d13df8fceec_t3"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_6900366b"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_psf__requests-1142_g5",
+    "parent_rollout_id": "rollout_psf__requests-1142_g5",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 1766
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T14:27:05.974385Z"
+}

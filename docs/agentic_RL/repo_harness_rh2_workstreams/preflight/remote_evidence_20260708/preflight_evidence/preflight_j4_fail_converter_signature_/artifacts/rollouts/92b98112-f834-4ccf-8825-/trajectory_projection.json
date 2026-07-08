@@ -1,0 +1,160 @@
+{
+  "schema_id": "rh2.trajectory_projection.v1",
+  "trajectory_id": "92b98112-f834-4ccf-8825-2dcaba115100",
+  "task_id": "psf__requests-1142",
+  "source_framework": "slime",
+  "source_object_ref": "slime_rollout_20",
+  "renderer_cls_name": "Qwen3Renderer",
+  "tokenizer_name": "Qwen/Qwen3-30B-A3B",
+  "chat_template_hash": "sha256:a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "branches": [
+    {
+      "branch_id": "b0",
+      "prompt_token_count": 18276,
+      "response_token_count": 4933,
+      "token_spans": [
+        {
+          "start": 0,
+          "end": 18276,
+          "source_type": "prompt_context"
+        },
+        {
+          "start": 18276,
+          "end": 19926,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 19926,
+          "end": 20488,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 20488,
+          "end": 20507,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 20507,
+          "end": 21137,
+          "source_type": "sampled_assistant"
+        },
+        {
+          "start": 21137,
+          "end": 21947,
+          "source_type": "tool_result"
+        },
+        {
+          "start": 21947,
+          "end": 23209,
+          "source_type": "sampled_assistant"
+        }
+      ],
+      "loss_mask_spans": [
+        {
+          "start": 18276,
+          "end": 19926,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 19926,
+          "end": 20488,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 20488,
+          "end": 20507,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 20507,
+          "end": 21137,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        },
+        {
+          "start": 21137,
+          "end": 21947,
+          "mask": 0,
+          "reason": "tool_or_env_context"
+        },
+        {
+          "start": 21947,
+          "end": 23209,
+          "mask": 1,
+          "reason": "sampled_assistant_trainable"
+        }
+      ],
+      "logprob_alignment_status": "aligned_per_token",
+      "logprob_provenance": {
+        "engine_name": "sglang",
+        "engine_version": "sglang-0.5.13",
+        "precision": "bfloat16",
+        "sampling_backend": "pytorch",
+        "weight_version": "1"
+      },
+      "routing": {
+        "alignment": "sglang_prompt_minus1_plus_gen",
+        "tensor_ref": {
+          "ref_id": "92b98112-f834-4ccf-8825-2dcaba115100_b0_routing_tape",
+          "sha256": "sha256:f06d09c27408a7f8145ada0a2dc44cde895b664c3d74875e003410e387420d99",
+          "byte_size": 35647488
+        },
+        "num_rows": 23208,
+        "num_layers": 48,
+        "router_topk": 8,
+        "dtype": "int32",
+        "prompt_token_count": 18276,
+        "generated_token_count": 4933
+      },
+      "sampling_mask": {
+        "mask_kind": "top_p_kept_token_ids",
+        "top_p": 0.95,
+        "token_ids_ref": {
+          "ref_id": "92b98112-f834-4ccf-8825-2dcaba115100_b0_topp_ids",
+          "sha256": "sha256:34bb424123bce906231767dd3a06dc01640707a0d0a98620f2c30094c07b4063",
+          "byte_size": 12852
+        },
+        "offsets_ref": {
+          "ref_id": "92b98112-f834-4ccf-8825-2dcaba115100_b0_topp_offsets",
+          "sha256": "sha256:58c4d79e9ed6c2623ce98bf90c23b057d743cee3cf8c7009178b15b0ba3b6e8f",
+          "byte_size": 19736
+        },
+        "response_token_count": 4933,
+        "offsets_len": 4934,
+        "kept_token_count": 3213
+      },
+      "lineage": null,
+      "capture_record_refs": [
+        "cap_92b98112-f834-4ccf-8825-2dcaba115100_t1",
+        "cap_92b98112-f834-4ccf-8825-2dcaba115100_t2",
+        "cap_92b98112-f834-4ccf-8825-2dcaba115100_t3"
+      ]
+    }
+  ],
+  "reward_facts": {
+    "reward_scope": "group_level",
+    "raw_reward": 0.0,
+    "components": {},
+    "reward_event_refs": [
+      "rpt_grading_67e09ac2"
+    ],
+    "credit_assignment_strategy": "backend_group_normalized",
+    "group_id": "group_psf__requests-1142_g5",
+    "parent_rollout_id": "rollout_psf__requests-1142_g5",
+    "segment_index": null,
+    "segment_count": 1,
+    "rollout_loss_denominator": 2454
+  },
+  "handshake": {
+    "weight_versions": [
+      "1",
+      "1",
+      "1"
+    ],
+    "max_lag": 0
+  },
+  "created_at_utc": "2026-07-08T13:27:32.000924Z"
+}

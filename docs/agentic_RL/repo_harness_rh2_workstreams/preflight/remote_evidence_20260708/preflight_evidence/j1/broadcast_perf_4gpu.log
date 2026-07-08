@@ -1,0 +1,23 @@
+# nccl-tests version 2.19.5 nccl-headers=22703 nccl-library=22703
+# Collective test starting: broadcast_perf
+# nThread 1 nGpus 4 minBytes 16777216 maxBytes 1073741824 step: 4(factor) warmup iters: 1 iters: 20 agg iters: 1 validation: 1 graph: 0 unalign: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  21496 on computeinstance-u00tfr70n13et452j2 device  0 [0000:db:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  1 Group  0 Pid  21496 on computeinstance-u00tfr70n13et452j2 device  1 [0000:e0:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  2 Group  0 Pid  21496 on computeinstance-u00tfr70n13et452j2 device  2 [0000:e5:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#  Rank  3 Group  0 Pid  21496 on computeinstance-u00tfr70n13et452j2 device  3 [0000:ea:00] NVIDIA RTX PRO 6000 Blackwell Server Edition
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw  #wrong     time   algbw   busbw  #wrong 
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)             (us)  (GB/s)  (GB/s)         
+    16777216       4194304     float    none       0   748.03   22.43   22.43       0   746.43   22.48   22.48       0
+    67108864      16777216     float    none       0  2903.46   23.11   23.11       0  2906.39   23.09   23.09       0
+   268435456      67108864     float    none       0  11521.2   23.30   23.30       0  11532.2   23.28   23.28       0
+  1073741824     268435456     float    none       0  45947.5   23.37   23.37       0  45994.1   23.35   23.35       0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 23.0499 
+#
+# Collective test concluded: broadcast_perf
+#
+
