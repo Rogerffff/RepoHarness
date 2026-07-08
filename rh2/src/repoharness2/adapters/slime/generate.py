@@ -72,6 +72,7 @@ import math
 import re
 import secrets
 import struct
+import time
 import uuid
 from collections.abc import Awaitable, Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
@@ -122,6 +123,7 @@ __all__ = [
     "GenerationCaptureHook",
     "HarnessDriver",
     "LeafFacts",
+    "RolloutTimelineEntry",
     "RolloutAudit",
     "RolloutFailureRecord",
     "RolloutOrchestrator",
@@ -615,6 +617,22 @@ def _match_turns_to_runs(
     return per_run, used
 
 
+def _shape_routing_experts(flat: Sequence[int], *, rows: int, layers: int, topk: int) -> Any:
+    """返回 slime 原生的 [rows, layers, topk] routing replay 形状。"""
+
+    try:
+        import torch
+
+        return torch.tensor(list(flat), dtype=torch.int32).reshape(rows, layers, topk)
+    except Exception:  # noqa: BLE001 - 单测或轻量环境没有 torch 时保留等价嵌套形状
+        shaped: list[list[list[int]]] = []
+        per_token = layers * topk
+        for row in range(rows):
+            row_values = list(flat[row * per_token : (row + 1) * per_token])
+            shaped.append([row_values[layer * topk : (layer + 1) * topk] for layer in range(layers)])
+        return shaped
+
+
 def backfill_leaf_sample(
     sample: Any,
     turns: Sequence[TurnTape],
@@ -637,8 +655,10 @@ def backfill_leaf_sample(
     - top-p：按轮拼接（`_merge_rollout_top_p_token_data` 语义），mask=0 的
       工具/上下文 token（含掉落轮残留的上下文 token）写零宽 span
       （`_pad_rollout_top_p_offsets` 语义）；
-    - routing：**每轮整段替换**（slime `_apply_meta_info` 对 routed_experts 的
-      语义，S1-3 已核对），取最后一轮的全量 tape，行数必须 = len(tokens) - 1；
+    - routing：取最后一轮的全量 tape。理想情况下行数 = len(tokens) - 1；
+      实机上黑盒 harness 可能让 capture prompt 比最终叶链 prompt 多出一段
+      前缀上下文（例如 thinking/终端片段被叶链剥离），此时只允许裁掉前缀
+      多余行并保留末尾行；少行或不能按 [layers, topk] 整除仍 fail-closed；
     - weight_versions：每个**入训轮**记一次 policy_version（真实值来源 =
       引擎 meta_info.weight_version，S1-7a 已核实）。
 
@@ -690,19 +710,41 @@ def backfill_leaf_sample(
         flat = list(last.routed_experts_flat)
         rows = len(sample.tokens) - 1  # slime _apply_meta_info: expected_rows = len(tokens)-1
         if moe_num_layers is not None and moe_router_topk is not None:
-            expected = rows * moe_num_layers * moe_router_topk
-            if len(flat) != expected:
+            per_row = moe_num_layers * moe_router_topk
+            expected = rows * per_row
+            if len(flat) < expected or len(flat) % per_row != 0:
                 raise SlimeBindingError(
                     "routing_rows_mismatch_backfill",
                     f"最后一轮 routing 元素数 {len(flat)} != len(tokens)-1 行的期望 {expected}"
                     f"（rows={rows} x layers={moe_num_layers} x topk={moe_router_topk}）。",
                 )
+            if len(flat) > expected:
+                actual_rows = len(flat) // per_row
+                extra_rows = actual_rows - rows
+                flat = flat[extra_rows * per_row :]
+                metadata = dict(getattr(sample, "metadata", None) or {})
+                metadata.update(
+                    {
+                        "rh2_routing_backfill_trimmed_prefix_rows": extra_rows,
+                        "rh2_routing_backfill_actual_rows": actual_rows,
+                        "rh2_routing_backfill_expected_rows": rows,
+                    }
+                )
+                sample.metadata = metadata
         elif rows > 0 and len(flat) % rows != 0:
             raise SlimeBindingError(
                 "routing_rows_mismatch_backfill",
                 f"最后一轮 routing 元素数 {len(flat)} 不能按 len(tokens)-1={rows} 行整除。",
             )
-        sample.rollout_routed_experts = flat
+        if moe_num_layers is not None and moe_router_topk is not None:
+            sample.rollout_routed_experts = _shape_routing_experts(
+                flat,
+                rows=rows,
+                layers=moe_num_layers,
+                topk=moe_router_topk,
+            )
+        else:
+            sample.rollout_routed_experts = flat
 
     if policy_version is not None:
         sample.weight_versions = [policy_version] * max(len(used), 1)
@@ -923,12 +965,29 @@ class RolloutFailureRecord:
 
 
 @dataclass
+class RolloutTimelineEntry:
+    """一次 rollout 内部的时间线事件。
+
+    `audit.steps` 继续只保存 S1 验收过的生命周期步骤名；本结构作为旁路
+    evidence 给 P3/P4 定位长尾瓶颈，避免为了定位一个 Python 转换错误重跑
+    完整黑盒 rollout。
+    """
+
+    step: str
+    seconds_since_start: float
+    epoch_seconds: float
+
+
+@dataclass
 class RolloutAudit:
     """一次 custom_generate 的完整编排 evidence（tests 与 S1-9 inspector 的对账面）。"""
 
     trajectory_id: str
     task_id: str
+    started_monotonic: float = field(default_factory=time.monotonic)
+    started_epoch_seconds: float = field(default_factory=time.time)
     steps: list[str] = field(default_factory=list)
+    timeline: list[RolloutTimelineEntry] = field(default_factory=list)
     lease: SandboxLease | None = None
     workspace_handle: WorkspaceHandle | None = None
     launch_spec: HarnessLaunchSpec | None = None
@@ -944,6 +1003,67 @@ class RolloutAudit:
 
     def step(self, name: str) -> None:
         self.steps.append(name)
+        self.mark(name)
+
+    def mark(self, name: str) -> None:
+        """记录不改变 S1 生命周期步骤语义的旁路时间线事件。"""
+
+        self.timeline.append(
+            RolloutTimelineEntry(
+                step=name,
+                seconds_since_start=round(time.monotonic() - self.started_monotonic, 3),
+                epoch_seconds=round(time.time(), 3),
+            )
+        )
+
+    def timeline_dicts(self) -> list[dict[str, float | str]]:
+        return [
+            {
+                "step": entry.step,
+                "seconds_since_start": entry.seconds_since_start,
+                "epoch_seconds": entry.epoch_seconds,
+            }
+            for entry in self.timeline
+        ]
+
+    def timing_summary(self) -> dict[str, float | None]:
+        last_by_step = {entry.step: entry.seconds_since_start for entry in self.timeline}
+
+        def delta(start: str, end: str) -> float | None:
+            if start not in last_by_step or end not in last_by_step:
+                return None
+            return round(last_by_step[end] - last_by_step[start], 3)
+
+        deliver_step = (
+            "step9_samples_delivered"
+            if "step9_samples_delivered" in last_by_step
+            else "step9_degraded_signal_forwarded"
+            if "step9_degraded_signal_forwarded" in last_by_step
+            else None
+        )
+        last = self.timeline[-1].seconds_since_start if self.timeline else None
+        return {
+            "materialize_seconds": delta(
+                "step1_custom_generate_invoked", "step2_workspace_materialized"
+            ),
+            "harness_run_seconds": delta("harness_started", "step3_harness_completed")
+            or delta("step2_workspace_materialized", "step3_harness_completed"),
+            "capture_finish_backfill_seconds": delta(
+                "step3_harness_completed", "step5_leaf_samples_assembled_and_backfilled"
+            ),
+            "grading_seconds": delta("grading_started", "step6_grading_completed")
+            or delta("step5_leaf_samples_assembled_and_backfilled", "step6_grading_completed"),
+            "projection_seconds": delta("projection_started", "step7_projection_completed")
+            or delta("step6_grading_completed", "step7_projection_completed"),
+            "eligibility_gate_seconds": delta(
+                "step7_projection_completed", "step8_gate_finalized"
+            ),
+            "delivery_seconds": delta("step8_gate_finalized", deliver_step)
+            if deliver_step is not None
+            else None,
+            "cleanup_seconds": delta("cleanup_started", "cleanup_completed"),
+            "total_audit_seconds": last,
+        }
 
 
 @dataclass(frozen=True)
@@ -1110,6 +1230,7 @@ class RolloutOrchestrator:
                 max_context_tokens=self.config.max_context_len,
             )
             session_open = True
+            audit.mark("harness_started")
             exit_code = await self._harness_driver.run(
                 sandbox.workspace,
                 workdir=launch.workdir,
@@ -1224,6 +1345,7 @@ class RolloutOrchestrator:
                 sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=top_p
             )
         finally:
+            audit.mark("cleanup_started")
             if session_open:
                 try:
                     await adapter.drop_session(sid, wait_timeout=5.0)
@@ -1237,6 +1359,7 @@ class RolloutOrchestrator:
                     )
             if sandbox is not None:
                 await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+            audit.mark("cleanup_completed")
 
     # ------------------------------------------------------------------ 步骤 2
     def _default_mount_planner(self, task: RolloutTaskSpec) -> list[BundleMount]:
@@ -1509,6 +1632,7 @@ class RolloutOrchestrator:
         ]
 
         async def _grade() -> GradingReport:
+            audit.mark("grading_started")
             report = await self._grading_submit(
                 trajectory_id=trajectory_id, workspace=workspace, spec=task.grading_spec
             )
@@ -1516,6 +1640,7 @@ class RolloutOrchestrator:
             return report
 
         def _project(report: GradingReport):
+            audit.mark("projection_started")
             projection = project_from_slime(
                 list(samples),
                 hook.records,

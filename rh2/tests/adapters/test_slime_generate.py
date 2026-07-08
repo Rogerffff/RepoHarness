@@ -47,6 +47,13 @@ SHA_TEMPLATE = "sha256:" + "a" * 64
 SHA_BUNDLE = "sha256:" + "e" * 64
 TS = "2026-07-07T09:30:25Z"
 
+
+def _routing_shape(value: Any) -> tuple[int, int, int]:
+    if hasattr(value, "shape"):
+        return tuple(int(dim) for dim in value.shape)
+    return (len(value), len(value[0]), len(value[0][0]))
+
+
 # ---------------------------------------------------------------------------
 # 替身：docker / harness / adapter / SGLang 响应 / 评分提交
 # ---------------------------------------------------------------------------
@@ -597,13 +604,67 @@ async def test_moe_probe_shape_routing_backfill():
     chain = build_dense_chain(config=config, turns=turns, leaf_samples=[leaf])
     result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
 
-    assert len(result[0].rollout_routed_experts) == rows * 48 * 8  # len(tokens)-1 行
+    assert _routing_shape(result[0].rollout_routed_experts) == (rows, 48, 8)
     projection = chain.orchestrator.audits[0].finalized.projection
     (branch,) = projection.branches
     assert branch.routing.alignment == "sglang_prompt_minus1_plus_gen"
     assert (branch.routing.num_rows, branch.routing.num_layers, branch.routing.router_topk) == (30, 48, 8)
     assert branch.sampling_mask.offsets_len == 17
     assert chain.orchestrator.audits[0].steps == list(LIFECYCLE_STEPS)
+
+
+def test_moe_routing_backfill_trims_extra_prefix_rows():
+    """实机 J4 mini 形态：capture prompt 比叶链 prompt 多前缀行。
+
+    routing tape 行序是 prompt-1 后接 generated；当叶链 prompt 少了一段前缀时，
+    只能裁前缀、保留末尾 response 对齐行。少行仍由 backfill fail-closed。
+    """
+
+    capture_prompt = [1000 + i for i in range(15)]
+    leaf_prompt = capture_prompt[2:]
+    gen_ids = [2000 + i for i in range(16)]
+    capture_rows = len(capture_prompt) - 1 + len(gen_ids)  # 30
+    leaf_rows = len(leaf_prompt) - 1 + len(gen_ids)  # 28
+    hook = GenerationCaptureHook(
+        trajectory_id="traj_moe_trim",
+        model_name="Qwen/Qwen3-30B-A3B",
+        backend_name="sglang",
+        backend_version="0.5.13",
+        renderer_cls_name="Qwen3Renderer",
+        tokenizer_name="Qwen/Qwen3-30B-A3B",
+        template_hash=SHA_TEMPLATE,
+    )
+    hook.on_generate_response(
+        prompt_token_ids=capture_prompt,
+        sampling_params={
+            **SAMPLING_PARAMS,
+            "return_top_p_token_ids": True,
+            "return_routed_experts": True,
+        },
+        response=sglang_response(
+            rid="rid_moe_trim",
+            output_ids=gen_ids,
+            top_p_ids=list(range(100000, 100000 + 3 * len(gen_ids))),
+            top_p_offsets=topp_offsets([3] * len(gen_ids)),
+            routed_flat=routing_flat(capture_rows, 48, 8),
+        ),
+    )
+    leaf = FixtureSlimeSample(
+        tokens=leaf_prompt + gen_ids,
+        response_length=len(gen_ids),
+        loss_mask=[1] * len(gen_ids),
+        rollout_log_probs=[-(i + 1) * 0.05 for i in range(len(gen_ids))],
+        rollout_id=9,
+        index=0,
+    )
+
+    used = backfill_leaf_sample(leaf, hook.tapes, moe_num_layers=48, moe_router_topk=8)
+
+    assert [tape.record_id for tape in used] == [hook.tapes[0].record_id]
+    assert _routing_shape(leaf.rollout_routed_experts) == (leaf_rows, 48, 8)
+    assert leaf.metadata["rh2_routing_backfill_trimmed_prefix_rows"] == 2
+    assert leaf.metadata["rh2_routing_backfill_actual_rows"] == capture_rows
+    assert leaf.metadata["rh2_routing_backfill_expected_rows"] == leaf_rows
 
 
 # ---------------------------------------------------------------------------

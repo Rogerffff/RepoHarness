@@ -82,6 +82,8 @@ INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
 # return_routed_experts，startup_checks 按 MoE 口径断言 routing tape 在场。
 # 默认 "0"，7a 的 Qwen3-4B dense 行为逐字不变（A2：dense 只是没有 routing）。
 EXPECT_MOE_ROUTING = os.environ.get("RH2_EXPECT_MOE_ROUTING", "0") == "1"
+MOE_NUM_LAYERS = int(os.environ["RH2_MOE_NUM_LAYERS"]) if os.environ.get("RH2_MOE_NUM_LAYERS") else None
+MOE_ROUTER_TOPK = int(os.environ["RH2_MOE_ROUTER_TOPK"]) if os.environ.get("RH2_MOE_ROUTER_TOPK") else None
 
 _INJECTED_EVAL_SCRIPT = (
     "#!/bin/bash\n"
@@ -333,6 +335,13 @@ class BringupService:
             (self.tokenizer.chat_template or "").encode()
         ).hexdigest()
 
+        moe_num_layers = MOE_NUM_LAYERS
+        if moe_num_layers is None and EXPECT_MOE_ROUTING:
+            moe_num_layers = getattr(args, "num_layers", None)
+        moe_router_topk = MOE_ROUTER_TOPK
+        if moe_router_topk is None and EXPECT_MOE_ROUTING:
+            moe_router_topk = getattr(args, "moe_router_topk", None)
+
         config = SlimeBindingConfig(
             model_name=MODEL_ID,
             backend_name="sglang",
@@ -345,6 +354,8 @@ class BringupService:
             serving_precision="bfloat16",
             harness_name="claude_code" if HARNESS_KIND == "claude_code" else "mock_harness",
             expect_moe_routing=EXPECT_MOE_ROUTING,  # dense 默认 False；30B MoE 由 RH2_EXPECT_MOE_ROUTING=1 打开
+            moe_num_layers=moe_num_layers,
+            moe_router_topk=moe_router_topk,
             policy_version=self.policy_version,
             max_context_len=self.max_context_len,
         )
@@ -444,6 +455,8 @@ class BringupService:
             probe_response=data,
             prompt_token_count=len(ids),
             expect_routing_tape=EXPECT_MOE_ROUTING,  # dense 默认不请求；MoE（J4）按口径断言
+            moe_num_layers=MOE_NUM_LAYERS,
+            moe_router_topk=MOE_ROUTER_TOPK,
         )
         meta = data.get("meta_info") or {}
         if meta.get("weight_version") is not None:
@@ -562,6 +575,8 @@ class BringupService:
             ],
             "capture_stats": dict(self.registry.stats),
             "audit_steps": list(audit.steps) if audit else None,
+            "audit_timeline": audit.timeline_dicts() if audit else None,
+            "rollout_timings": audit.timing_summary() if audit else None,
             "harness_exit_code": audit.harness_exit_code if audit else None,
             "failure_records": (
                 [
