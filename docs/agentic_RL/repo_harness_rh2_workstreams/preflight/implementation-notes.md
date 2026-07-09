@@ -91,3 +91,38 @@
 - **J2 吞吐口径**：`sglang.bench_serving` 的 random 数据集（in 4096/out
   1024）不是 SWE agent 的真实请求形态（多轮长 prefix + radix cache 命中），
   J2 数字只作画像下界；真实形态吞吐以 J4/J4b 的 rollout 段为准。
+
+## 4. 执行期追加（2026-07-08/09 真机；判定汇总见 preflight_report.md）
+
+codex 段（J0~J5 gbs20，~7h）的执行事项见其交接文档
+`p3_remote_experiment_handoff_20260708.md`；本节只记接手段（J4c + 收口）。
+
+- **J4c 用 Qwen3-0.6B 而非默认 4B**：4B 权重未预置在机上，下载约 40min
+  不划算；0.6B 已就位且 J4c 只验机制。协议允许 `J4C_MODEL_*` 覆盖，
+  实跑覆盖为 `/root/models/Qwen3-0.6B` + 脚本 `qwen3-0.6B.sh`。
+- **J4c 三次尝试的两个坑（复跑者注意）**：
+  1. `docker exec -d bash -c "... > $LOG ..."` 里重定向目标目录不存在时
+     bash -c 瞬死且无任何痕迹——`mkdir -p` 必须写进同一个 bash -c。
+  2. slime 模块在 Ray job 启动时即被 import，**对 slime 源码打补丁必须在
+     launch 之前落盘并 grep 验证**；heredoc 穿 ssh+docker exec 会被静默
+     吞掉（当时 grep=0 才发现），改用 scp→docker cp→容器内 python 改写。
+     发现 attempt2 未带补丁后立即 kill（ray job stop + ray stop --force）
+     止损，不等它跑完。
+- **J4c 消费侧 `_key` 崩溃是新缺口**（fully_async_rollout.py:238 对
+  fan-out 嵌套形状 TypeError）：诊断补丁只在容器内生效，本地留档
+  `remote_evidence_20260708/preflight_evidence/j4c/
+  slime_fully_async_key_diagnostic_patch.py`，正式方案（fan-out aware
+  展平/排序）归升级设计文档独立工作项，**未合入本地 slime 参考副本**。
+- **ABORTED 重入未观测到（诚实留档）**：0.6B 权重更新窗仅秒级，abort
+  窗口太窄。J4c 判 `no_aborted_reentry`（非 pass 非 fail），该项转
+  升级实施期注入式测试（harness 里人为插长 sleep 制造确定 abort 窗口），
+  不为它续租机器。
+- **尾部空闲的计量方法**：不是读现成指标，而是从 bringup_events 时间戳
+  重建——rollout 段总长 vs 75% 轨迹完成时刻，尾段 ÷ step 墙钟。J5 gbs20
+  = 28%、J4 formal = 26%，双 run 一致 > 25% 注册阈值。该方法基于事件
+  时间戳，**不依赖 §3 的 GPU 分区编号假设**（dmon 曲线法才依赖分区，
+  本轮未用作判定依据）。
+- **经济性裁剪（均记录在 preflight_report.md §5）**：跳过 J5 2GiB 档、
+  跳过 J4b T1/T2′ 实跑（分析性定案）、跳过 formal J4 的 GPU 复现
+  （根因 batch schedule alignment 属纯本地可修）。机器释放前确认显存
+  全零、无残留进程、evidence 已全量同步（19MB 纯文本 0 二进制）。

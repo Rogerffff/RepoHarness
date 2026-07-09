@@ -28,3 +28,13 @@
 递延与阻塞（均已在 s1_acceptance_summary.json 结构化登记）：30B 全要素
 训练 step / U-C 多卡训练侧 → S4 前 8 卡预实验（preflight 协议 P3）；
 S1-8 导出器分叉感知重建 → S2 显式阻塞项（E3 warm-start 回退的前置依赖）。
+
+**[P3 收口 2026-07-09 回填]**：上面第一组递延项已由 P3 八卡预实验关闭
+——30B 全要素训练 step（J4 replay + J5 gbs20 真实训练 step + 权重同步）、
+U-C 训练侧四项（Megatron on sm_120 / PCIe all-to-all / CPU offload 实测绿；
+colocate 显存水位以 T3 分离放置定案的方式关闭）、routing tape 训练侧
+消费（首次真实进 loss）。acceptance summary 中对应三条已改判
+`closed_by_p3_20260708`；判定依据与实测数值见
+`../preflight/preflight_report.md`。S1-8 导出器阻塞项不受 P3 影响，
+仍留 S2。P3 新增的独立验收项（治理过滤后 batch schedule alignment）
+登记在 preflight 协议 J4 判据第 0 项，不改本判定。

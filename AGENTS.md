@@ -50,6 +50,16 @@ RepoHarness =
                               deferred_risks/blockers 字段与 s1/s2_blockers.md
                               （S1-8 导出器对 thinking 模型轨迹全 fail-closed 拒绝，
                               E3 warm-start 回退预案的前置依赖，S2 必须显式处置）。
+【已完成】rh2 P3 八卡预实验     2026-07-08/09 真机执行（8×RTX PRO 6000, sm_120）。
+                              训练侧四项未知全关、S1-7b routing tape 首次真实进
+                              loss、放置定案 T3 分离 + train_async（废弃"必须
+                              colocate"）、整 step 实测 23min（rollout-bound
+                              0.82）、尾部空闲 26~28% > 25% 升级阈值。
+                              formal J4 严格绿灯留一项本地任务：治理过滤后
+                              batch schedule alignment（纯 Python 可修，归 S2
+                              adapter 层，协议 J4 判据第 0 项）。收口判定：
+                              docs/agentic_RL/repo_harness_rh2_workstreams/preflight/preflight_report.md
+                              acceptance 三条递延项已改判 closed_by_p3_20260708。
 ```
 
 rh2 新闸门字段当前真实值：

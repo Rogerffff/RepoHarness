@@ -11,6 +11,8 @@
 时间基线：2026-07。S0 退出条件包含本文初稿完成（§6.3 定案）。
 
 > **[S0-8 收口 2026-07-08]** S0 实测结论（V2/V3/V4，见 `../repo_harness_rh2_workstreams/s0/` 各报告）已回填本文：E1/E7/E10 已定案（落 §4.1），硬约束 C1/C2 按实测修正；其余 E 项（E2/E3/E4/E5/E6/E8/E9）的"定案"栏仍待用户拍板，其中哪些必须在 S1 冻结题单前定，见 `../repo_harness_rh2_workstreams/s0/s0_8_expdesign_review.md`。
+>
+> **[P3 收口 2026-07-09]** 八卡预实验实测结论已回填本文（落 §4.2）：训练侧四项未知关闭、放置定案 T3 分离（废弃 C1"必须 colocate"旧推论）、E6 墙钟表实测校准（整 step 23min，rollout-bound）、新增 batch schedule alignment 独立验收项。判定依据见 `../repo_harness_rh2_workstreams/preflight/preflight_report.md`。
 
 ---
 
@@ -27,7 +29,9 @@ C1 算力形态（2026-07 已填；[S0-8 收口 2026-07-08] 按 S0 实测修正�
    训练侧（多卡通信、权重同步、colocate 显存、训练 step 墙钟）完全未验证，
    留 S4 前 8 卡专项预实验（见 §4.1 第 4 条）。
    直接推论：
-   - 必须 --colocate（训推同卡）+ CPU offload（slime 示例已带该选项）；
+   - ~~必须 --colocate（训推同卡）+ CPU offload~~
+     [P3 收口 2026-07-09 修正]：放置定案 = T3 分离（4 训 + 4 推）
+     + train_async 双缓冲 + CPU offload，colocate 废弃（依据见 §4.2 第 2 条）；
    - PCIe 互联下 EP/TP 通信显著慢于服务器卡（NVLink），
      MoE all-to-all 是吞吐风险点，宜低 EP 度 + 长序列摊薄通信；
    - 30B-A3B 档初步核算可行：bf16 权重 60GB + 梯度 60GB，
@@ -308,8 +312,10 @@ Success run（首个能力证明 run）：
   单轨迹上限 900s；评分 600s（与 rollout 重叠，计 1 个尾波）：
   rollout ≈ 4 波 × 900s + 600s ≈ 70min
   训练 step（8×Pro6000 PCIe + CPU offload，64 seq × ~20k token）
-  ≈ 10~30min（[S0-8 收口 2026-07-08] 仍为纸面估算：S0 只实测了
-  单卡推理侧，训练 step 墙钟留 S4 前 8 卡预实验实测，届时校准本表）
+  ≈ 10~30min（[P3 收口 2026-07-09 实测校准]：纯训练段实测仅 252s
+  ≈ 4min（n4/32 rollout 档），比纸面估算乐观得多；整 step 墙钟 1387s
+  ≈ 23min 且 82% 是等 rollout——瓶颈在 harness 长尾而非训练，
+  实测明细与 C3 反推见 §4.2 第 3 条）
 ⇒ 每步 ≈ 1.3~1.7h；
   100 步 ≈ 5.5~7 天（贴死一周上限，不可取）；
   30~50 步 ≈ 2~3.5 天（推荐首训档）。
@@ -419,8 +425,18 @@ E9 独立
    - vLLM 0.24.0（形态 A / 协议基线）**默认参数不可用**，固化组合：`--tokens-only`（缺失则无 `/inference/v1/generate` 端点）+ `--enforce-eager` + 环境变量 `VLLM_USE_FLASHINFER_SAMPLER=0`，MoE 模型另加 `--moe-backend triton`；`CUDA_HOME` 指向 venv 内 nvidia/cu13 toolkit（机器无系统级 CUDA 开发栈时）。
    - SGLang（形态 B）：stock 0.5.9 实测可跑 30B-A3B，routing tape 原生（服务端 `--enable-return-routed-experts` + 请求侧 `return_routed_experts: true`），但 pip 安装对 CUDA 工具链路径极敏感 ⇒ 正式实现**必须固定 slime 官方 docker 镜像**（一步同时解决环境固化与 top-p patch 两件事）；**镜像在 sm_120 的可用性 = U-H，S1 接入时用探针关闭**。
    - tape 归一化契约：routing tape 两引擎语义一致（行数 = prompt−1+生成数，48 层 × top-8，专家 id 0..127），wire 差异（vLLM base64-npy / SGLang base64-int32）统一归一为 uint8 + `{data,shape,start}`；top-p tape 只有 slime patch 镜像产出。两类 tape 的解码/校验只允许在中立 `TrajectoryProjection` 层实现一次；服务启动后必跑 `top_p<1.0` 探针（stock server 静默忽略该请求，不报错，训练侧才会炸）。
-4. **算力计划（C1/C2/E6）**：S0 已用**单卡** RTX PRO 6000 96GB（租用；8 卡缺货降配）实测 30B-A3B bf16 推理可行（权重加载约 60GB）。**8×RTX PRO 6000（PCIe 无 NVLink）是 S4 训练目标形态，训练侧未做任何验证**——S4 开训前必须先做训练侧专项预实验（多卡通信、权重同步、colocate 显存、训练 step 墙钟），E6 墙钟表的"训练 step 10~30min"在此之前只是纸面估算。
+4. **算力计划（C1/C2/E6）**：S0 已用**单卡** RTX PRO 6000 96GB（租用；8 卡缺货降配）实测 30B-A3B bf16 推理可行（权重加载约 60GB）。~~8×RTX PRO 6000（PCIe 无 NVLink）是 S4 训练目标形态，训练侧未做任何验证~~ **[P3 收口 2026-07-09 状态翻转]：训练侧四项未知已由 P3 八卡预实验实测关闭**（Megatron on sm_120 / PCIe all-to-all / CPU offload 全绿；colocate 显存水位以放置决策方式关闭——T3 分离定案后不再是候选），实测数值与判定见 §4.2。
 5. **仍待用户拍板（S0 收口不代替用户决策）**：E2/E3/E4/E5/E6/E8/E9 的"定案"栏。其中 **E2（含训练 rollout 的 top_p 是否 ≠1.0——直接决定 top-p tape / U-H 依赖是否激活）、E4 首训数据策略、E5 成功判据预注册、E6 预算、C3 墙钟上限必须在 S1 冻结题单前定**；逐条清单与建议见 `../repo_harness_rh2_workstreams/s0/s0_8_expdesign_review.md`。
+
+### 4.2 P3 八卡预实验实测定案回填 [P3 收口 2026-07-09]
+
+证据来源：`../repo_harness_rh2_workstreams/preflight/preflight_report.md`（收口判定）+ `p3_remote_experiment_handoff_20260708.md`（原始事实）+ `remote_evidence_20260708/`。机器：8×RTX PRO 6000 Blackwell（sm_120，96GB/卡，PCIe）。以下实测数值是本文 C1/C3/E6 引用的锚点，与 §4.1 冲突处以本节为准。
+
+1. **训练侧四项未知全部关闭（U-C）**：Megatron 内核在 sm_120 正常训练（J3 A4 TP4/CP2/EP8 + J4 replay + J5 完整 step）；PCIe all-to-all 实测 actor_train 174s / 训练段 252s（远低于 15min 绿灯线）；optimizer CPU offload 下 actor_train_tok_per_s=4528；colocate 显存水位不再需要实测——见第 2 条。
+2. **放置定案：T3 分离（4 训 + 4 推）+ train_async 双缓冲，废弃"必须 --colocate"旧推论**。实测 rollout 是绝对瓶颈（wait_time_ratio=0.82，step 墙钟 1387s 里约 1135s 是 train 等 rollout），colocate 唯一优势=省跨分区权重同步 11.45s/step（仅占 step 0.8%），且 slime train_async 断言禁 colocate——用 0.8% 换不回双缓冲重叠。C1 的"必须 --colocate + CPU offload"修正为"**T3 分离 + train_async + CPU offload**"。
+3. **E6 墙钟表校准（"训练 step 10~30min"纸面估算 → 实测）**：J5 gbs20（8 题 × n4 ≈ 32 rollout，30B-A3B）实测**整 step 墙钟 1387s ≈ 23min**，其中 rollout 段 1116s（rollout-bound）、训练段 252s、权重同步 11.45s@512MB buffer；单轨迹 harness 段 280~1116s（中位 ≈614s）；train_rollout_logprob_abs_diff≈0.036~0.039。**C3 反推：30~50 步 × 23min ≈ 12~19h**，远低于"首训 ≤4 天"上限——即使正式配置（n8=64 轨迹、更长轨迹、batch 准入过采样）使 step 时长翻 2~3 倍，仍在预算内。注意该实测为 n4 短题配置，n8 正式档开训前用 E6 公式按实测单轨迹分布重算一次波次数。
+4. **新增独立验收项：治理过滤后的 batch schedule alignment**（P3 最重要教训）。fan-out + fail-closed 治理会使实际可训练样本数偏离名义值，slime `build_dp_schedule` 要求 microbatch 数对齐 `dp_size × mb_group`——formal J4 与 J5 gbs16 均死在此断言（`num_rollouts 19 < 32`、`23 mbs need 24`），J5 gbs20 只改 batch size 即通过，证明根因是调度对齐而非硬件。**开训前必须先跑纯 Python 的 batch schedule preflight**（协议 J4 判据第 0 项；实现归 S2 adapter 层）；严禁人工碰运气选 global_batch_size。
+5. **尾部空闲实测 26~28% > 25% 注册阈值（双 run 一致）**：fully_async 升级触发条件成立；J4c 冒烟证明 fully_async 与我们的 fan-out 形状在补消费侧 `_key` 补丁后可启动（top-up 补采、无泄漏、2 个真实 step）。升级实施细节归 `preflight/slime_fully_async_upgrade_design.md`，不改本文 E6 首训定案（首训仍按同步 train_async 双缓冲预算）。
 
 ---
 
