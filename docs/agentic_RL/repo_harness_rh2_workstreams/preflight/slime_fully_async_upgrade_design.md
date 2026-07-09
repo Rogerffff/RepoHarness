@@ -108,11 +108,17 @@ F6 纪律的第一个真实案例：pin 之后上游确实在动我们的契约�
 
 **推荐**：done_cb 内接 dynamic_filter，drop 的组不 put queue（类比 ABORTED 回收路径，~30-50 行碰 core 但语义精确复刻原生 over-sample→drop→补采）。custom_generate 组内自否决可作补充，buffer_filter 消费侧过滤（只丢不补）不推荐。
 
+**P3 实测扩充（2026-07-09）：fan-out 假设破裂点 = 两处，不止 dynamic_filter。** J4c 实跑发现 slime **消费侧排序** `_key`（`fully_async_rollout.py:238`）对我们的 fan-out 嵌套形状 `list[list[Sample]]` 同样崩溃——`getattr(list, "index")` 拿到 `list.index` 绑定方法 → `int()` TypeError（诊断补丁：递归展平 + callable 防御，见 `remote_evidence_20260708/preflight_evidence/j4c/slime_fully_async_key_diagnostic_patch.py`）。根因与 dynamic_filter 崩溃相同：**slime 标准路径与 fully_async 路径都假设平铺 `Sample`，我们的 fan-out `list[Sample]` 系统性破坏该假设。** 升级实施必须把"**fan-out aware 的样本展平/排序**"作为独立工作项（覆盖 dynamic_filter、`_key`、以及未来任何按 sample 属性索引/排序的消费点），不能逐点打补丁。
+
 ### 缺口④ staleness 准入
 
 **关键障碍确证**：buffer_filter 调用时 `rollout_id=None`（data_source.py:195）且拿不到 engine 句柄——**current policy version 无现成管道**。两个方案：(i) worker top-up 时缓存 `engine.get_weight_version`（~20 行碰 worker）；(ii) 用 buffer 内最大版本近似 current（零管道但偏旧）。推荐 (i)。
 
 准入形态：`staleness_filter`（我方 `--buffer-filter-path`，~40-80 行）——`cur - max(weight_versions) ≤ α`（α=1，RollArt 实证），被拒**丢弃**（依赖缺口③补采），不回收重跑（踩缺口①循环）。
+
+### 边界澄清（2026-07-09 P3 教训）：fully_async 不解决 batch schedule 非法
+
+fully_async 升级解决的是 **rollout/trainer overlap 与长尾空闲**（尾部空闲 25%+ 才触发，P3 实测 J5 gbs20 尾段 28%）。它**不解决**"治理过滤后可训练样本数/microbatch 数无法对齐 `dp_size × mb_group`"这个问题——那是 slime `build_dp_schedule` 的调度约束，与同步/异步无关（P3 formal J4 与 J5 gbs16 都死在这，J5 gbs20 靠改 batch size 碰巧对齐才过）。**batch schedule preflight/repair 是独立于 fully_async 的 adapter 层任务**（见 `8gpu_preflight_protocol.md` J4 判据第 0 项、`preflight_report.md` §3），必须先做；fully_async 升级不能替代它，也不应等它。
 
 ## 4. 未注意点（四缺口清单外，本轮新扫出）
 

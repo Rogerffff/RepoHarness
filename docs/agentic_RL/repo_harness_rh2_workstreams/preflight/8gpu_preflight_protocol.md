@@ -254,6 +254,23 @@ M8 优化器状态与权重推送的交互观察：若采用 per-step 推送，
    不得作为任何后续起点；acceptance 记录该声明）。
 ```
 
+**J4 判据补充（2026-07-09 P3 实测新增，第 0 项，先于上述六项）**：
+
+```text
+0. batch schedule alignment 是独立验收项，不是训练配置的副产品。
+   P3 formal J4 实测教训：治理层 fan-out + fail-closed（routing rows 不足 /
+   top-p 缺失 / capture 未完成 / 投影失败 / eligibility 降档 / remove_sample）
+   会使"名义 8 题 × n4 = 32 rollout"远大于 trainer 实际可训练的 rollout id
+   数；名义 raw samples 也不等于 slime 每 step 能调度的 microbatch 数
+   （microbatch 须对齐 dp_size × mb_group）。formal J4 因此死在
+   build_dp_schedule 断言，不是硬件/显存/tape 问题。
+   要求：J4 严格模式启动前，必须先跑 batch schedule preflight（纯 Python，
+   见 preflight_report.md §3）——输入治理过滤后的样本，输出是否会触发
+   build_dp_schedule 断言 + backend_rejection_reason；不满足则 fail-closed /
+   延迟拼 batch / 补采 / 子集选择。严禁靠人工碰运气选一个恰好对齐的
+   global_batch_size（J5 gbs20 是诊断性对照，不是方案）。
+```
+
 ## 3. 通过判据与降级阶梯
 
 ```text
