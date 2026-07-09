@@ -1,6 +1,6 @@
 {
   "stage": "rh2_s1",
-  "generated_at_utc": "2026-07-08T19:06:25Z",
+  "generated_at_utc": "2026-07-09T06:32:36Z",
   "clock_baseline_note": "时间戳基准声明见 s1/implementation-notes.md 顶部（F4）：S1 线程内部标注曾统一用 2026-07-09，实际执行日为 UTC 2026-07-07/08；本文件与后续 evidence 一律以生成时刻的 date -u 为准，不许未来日期",
   "slime_image_digest_pin": "sha256:a7317182c71d35712ee4edc86a5d1c313dc969efdf0026d339673299c186ea75",
   "verifiers_pin": "5885ab9c54152e707af2a11797aa52c3eb1752da",
@@ -26,18 +26,18 @@
   "deferred_risks": [
     {
       "id": "s1_7b_30b_full_train_step",
-      "status": "deferred_to_s4_pre_8card",
-      "note": "30B-A3B 全要素训练 step 并入 S4 前 8 卡预实验（J4）；30B 服务端 top-p/routing 能力由 S1-0 探针背书"
+      "status": "closed_by_p3_20260708",
+      "note": "P3 关闭：J4 replay（gbs16）+ J5 gbs20 online 完成 30B-A3B 真实训练 step + 权重同步（update_weights 11.45s@512MB）。注意：formal J4 严格模式（治理过滤后在线组 batch）仍受 batch schedule alignment 阻塞，该问题独立登记（preflight_report.md §3），不影响本项关闭"
     },
     {
       "id": "u_c_multi_gpu_training_side",
-      "status": "open",
-      "note": "多卡训练侧四项未知（Megatron on sm_120 / PCIe all-to-all / colocate 显存水位 / CPU offload 代价）随 8 卡预实验关闭"
+      "status": "closed_by_p3_20260708",
+      "note": "P3 关闭：Megatron on sm_120 绿（J3 A4 + J4 replay + J5 训练 step）；PCIe all-to-all 绿（J1 基准 + J5 actor_train 174s）；CPU offload 代价绿（actor_train_tok_per_s=4528）；colocate 显存水位以放置决策方式关闭——T3 分离 + train_async 定案后 colocate 不再是候选（分析性关闭，preflight_report.md §2）"
     },
     {
       "id": "routing_tape_training_consumption",
-      "status": "not_closed_by_dense_run",
-      "note": "7a 用 Qwen3-4B dense：routing tape 的训练侧消费未被真实关闭（top-p tape 已逐位实证），归 S4 前预实验 J4"
+      "status": "closed_by_p3_20260708",
+      "note": "P3 关闭：J4 replay + J5 gbs20 两条路径均真实消费 rollout_top_p_token_ids/offsets + rollout_routed_experts 进 loss，loss/grad_norm 有限；train_rollout_logprob_abs_diff≈0.036~0.039 留档"
     },
     {
       "id": "s1_7a_checkpoint",
@@ -125,7 +125,7 @@
     "rh2/src/repoharness2/grading/__init__.py": "92208d3a7ce1e72f76c9aeb4b18a6a5b65152e6b3a7454e8a2e40d9db9875447",
     "rh2/src/repoharness2/grading/manager.py": "970fbb969b7de4c60cd2b1e0534bb0999bc0c89082bee51da6a2e8e23aced0f9",
     "rh2/src/repoharness2/grading/queue.py": "5ee03fe4cbb823f2554ed37bc14557f099c1906b33f3ec6a7d749c5ddb7b37db",
-    "rh2/src/repoharness2/inspect_s1.py": "4f681859b0ba4300e7d42e5aa8acae5eda8a55f5ec07e999fb8e4b6b14cfc5ed",
+    "rh2/src/repoharness2/inspect_s1.py": "aa2c2c24ff8c8a070ff0055e763418fcf6ae2c53fa42f003331d5d34e7476b11",
     "rh2/src/repoharness2/registry.py": "4de2166e503530bf00bc5a9a8a638d2fc52bf9915e763c7631baeadf007fdd0c",
     "rh2/src/repoharness2/taskset/__init__.py": "b2d65b25860caa34a174c203108543ae1e99e27a3c72bb981bcde68beb258b50",
     "rh2/src/repoharness2/taskset/swebench_smoke.py": "4c3c1e1939a76b76ee4a92823b92b4f9fbc02f6070ce85ed9161d2bf0649b0eb",

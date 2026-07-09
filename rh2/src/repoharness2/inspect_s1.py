@@ -107,22 +107,23 @@ GATES: dict[str, Any] = {
     "rh2_formal_training_allowed": False,
 }
 
-# 递延风险清单（C3/A3 措辞，逐条来自 03 计划与 7a 报告 §4）
+# 递延风险清单（C3/A3 措辞，逐条来自 03 计划与 7a 报告 §4；
+# 2026-07-09 P3 八卡预实验后改判，判定依据见 preflight/preflight_report.md §1）
 DEFERRED_RISKS: list[dict[str, str]] = [
     {
         "id": "s1_7b_30b_full_train_step",
-        "status": "deferred_to_s4_pre_8card",
-        "note": "30B-A3B 全要素训练 step 并入 S4 前 8 卡预实验（J4）；30B 服务端 top-p/routing 能力由 S1-0 探针背书",
+        "status": "closed_by_p3_20260708",
+        "note": "P3 关闭：J4 replay（gbs16）+ J5 gbs20 online 完成 30B-A3B 真实训练 step + 权重同步（update_weights 11.45s@512MB）。注意：formal J4 严格模式（治理过滤后在线组 batch）仍受 batch schedule alignment 阻塞，该问题独立登记（preflight_report.md §3），不影响本项关闭",
     },
     {
         "id": "u_c_multi_gpu_training_side",
-        "status": "open",
-        "note": "多卡训练侧四项未知（Megatron on sm_120 / PCIe all-to-all / colocate 显存水位 / CPU offload 代价）随 8 卡预实验关闭",
+        "status": "closed_by_p3_20260708",
+        "note": "P3 关闭：Megatron on sm_120 绿（J3 A4 + J4 replay + J5 训练 step）；PCIe all-to-all 绿（J1 基准 + J5 actor_train 174s）；CPU offload 代价绿（actor_train_tok_per_s=4528）；colocate 显存水位以放置决策方式关闭——T3 分离 + train_async 定案后 colocate 不再是候选（分析性关闭，preflight_report.md §2）",
     },
     {
         "id": "routing_tape_training_consumption",
-        "status": "not_closed_by_dense_run",
-        "note": "7a 用 Qwen3-4B dense：routing tape 的训练侧消费未被真实关闭（top-p tape 已逐位实证），归 S4 前预实验 J4",
+        "status": "closed_by_p3_20260708",
+        "note": "P3 关闭：J4 replay + J5 gbs20 两条路径均真实消费 rollout_top_p_token_ids/offsets + rollout_routed_experts 进 loss，loss/grad_norm 有限；train_rollout_logprob_abs_diff≈0.036~0.039 留档",
     },
     {
         "id": "s1_7a_checkpoint",
