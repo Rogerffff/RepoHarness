@@ -23,7 +23,9 @@ RepoHarness =
 
 ## 当前进度（接手前必读）
 
-**重要：AGENTS.md 这一节随阶段推进同步更新。如果你接手时发现与最新 commit 不一致，以 `git log --oneline` 和 `docs/agentic_RL/repo_harness_rh2_workstreams/` 下最新执行计划 / evidence 为准。**
+**单一入口：`docs/agentic_RL/repo_harness_rh2_workstreams/00-project-status.md`**（2026-07-09 起）——当前位置、各阶段完成详情、闸门状态、全项目遗留/阻塞合并表、文档地图、术语速查都在那里；本节只保留压缩版。
+
+**重要：AGENTS.md 这一节与 00-project-status.md 随阶段推进同步更新。如果你接手时发现与最新 commit 不一致，以 `git log --oneline` 和 `docs/agentic_RL/repo_harness_rh2_workstreams/` 下最新执行计划 / evidence 为准。**
 
 **2026-07 重大转折：项目已转入 rh2 新架构，旧阶段线（16G.x）终止。**
 
@@ -50,6 +52,14 @@ RepoHarness =
                               deferred_risks/blockers 字段与 s1/s2_blockers.md
                               （S1-8 导出器对 thinking 模型轨迹全 fail-closed 拒绝，
                               E3 warm-start 回退预案的前置依赖，S2 必须显式处置）。
+【已完成】rh2 P1 数据冻结包 v0.1（训练数据预处理，codex 线程 2026-07-08）
+                              DF-1~8 全部完成：SWE-Gym Lite 静态门存活 216/230、
+                              held-out 候选 542 题（冻结 T=50~80 待四道门）、
+                              hints 剥离中和 47.4% 泄漏、四源 HF revision pin +
+                              24 项 digest 账本。收口报告：
+                              docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze/data_freeze_report.md
+                              注意：S1 的 8 题 Verified 冻结集只是基建探针，
+                              正式训练数据 = 本包 216 存活题（等 S2-1 环境四门）。
 【已完成】rh2 P3 八卡预实验     2026-07-08/09 真机执行（8×RTX PRO 6000, sm_120）。
                               训练侧四项未知全关、S1-7b routing tape 首次真实进
                               loss、放置定案 T3 分离 + train_async（废弃"必须
@@ -60,6 +70,14 @@ RepoHarness =
                               adapter 层，协议 J4 判据第 0 项）。收口判定：
                               docs/agentic_RL/repo_harness_rh2_workstreams/preflight/preflight_report.md
                               acceptance 三条递延项已改判 closed_by_p3_20260708。
+【下一阶段】rh2 S2 SWE-Safety 加固
+                              计划草案已就位：
+                              docs/agentic_RL/repo_harness_rh2_workstreams/04-s2-execution-plan.md
+                              （G0 起点排序可重议、G1~G5 待用户确认；P3 新增的
+                              batch schedule 准入任务尚未编入计划——开工前先补）。
+                              另有一项用户动作待办：S1 检查点 2 确认
+                              （复核 s1/s1_final_review.md 后单行 commit 摘除
+                              闸门 pending 注记）。
 ```
 
 rh2 新闸门字段当前真实值：
@@ -88,9 +106,13 @@ rh2 阶段一览（细节见实施计划总纲）：
 ```text
 S0 可行性验证（已完成）   verifiers pin 契约测试、玩具闭环、renderer/协议/MoE 张量
                         验证、SWE smoke 题、实验设计收口；S0-0~4 本机，S0-5 起租 GPU
-S1 端到端最小闭环        SWE taskset 冻结（20~50 题）、SWEGradingManager、
+S1 端到端最小闭环（已完成，待检查点 2 确认）
+                        SWE taskset 冻结（8 题探针）、SWEGradingManager、
                         EligibilityReport + Gate、离线导出 adapter、slime adapter
-S2 SWE-Safety 加固       安全 Runtime、anti-cheat（在线拦截）、红队环境包
+P1 数据冻结 / P3 八卡预实验（已完成，穿插工作流，不在 S 编号序列）
+S2 SWE-Safety 加固（计划已写未开工）
+                        安全 Runtime、anti-cheat（在线拦截）、红队环境包、
+                        数据 ingestion + 环境四门、导出器重建、batch schedule 准入
 S3 训练治理完备          三档资格全量、环境验证四门收尾
 S4 正式训练实验          before/after 实验（简历叙事收尾）
 S5 第二后端 + 服务化     verl adapter、EnvServer 服务化（按需）
