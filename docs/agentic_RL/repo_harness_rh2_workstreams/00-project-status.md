@@ -16,8 +16,8 @@
 
 ```text
 S0 可行性验证            ✅ 已完成（V1~V4 全过；Form B 定为训练主线）
-S1 端到端最小闭环        ✅ 已完成（S1-0~9 全验收；闸门已翻 true，
-                            带"待检查点 2 确认"注记——确认权在用户，见 §6）
+S1 端到端最小闭环        ✅ 已完成（S1-0~9 全验收；检查点 2 已由用户确认
+                            2026-07-11，闸门 pending 注记已摘除）
 P1 数据冻结包 v0.1       ✅ 已完成（即"训练数据预处理"，codex 线程执行）
 P3 八卡预实验            ✅ 已完成（2026-07-08/09 真机，机器已释放）
 S2 SWE-Safety 加固       ⏳ 计划已写（草案），尚未开工 ← ★ 我们在这里
@@ -30,16 +30,20 @@ S5 第二后端 + 服务化     按需（verl adapter、EnvServer 服务化）
 
 ## 3. 已完成工作详情
 
+
+
 ### 3.1 S0 可行性验证（已完成）
 
 **回答的问题**："这条技术路线物理上走得通吗？"四项验证全过：
 
-| 验证 | 结论 | 证据 |
-| --- | --- | --- |
-| V1 verifiers 依赖与用法 | pass（pin + 契约测试） | `s0/contract_baseline.md`、`s0/deps_report.md` |
-| V2 renderer 逐 token 保真 | pass（Qwen3Renderer 12+12 项） | `s0/v2_renderer_report.md` |
-| V3 协议 token 保真 | pass | `s0/v3_protocol_report.md` |
-| V4 MoE 张量透传 | pass，**Form B 定为主线** | `s0/topology_ab_report.md` |
+
+| 验证                     | 结论                          | 证据                                            |
+| ---------------------- | --------------------------- | --------------------------------------------- |
+| V1 verifiers 依赖与用法     | pass（pin + 契约测试）            | `s0/contract_baseline.md`、`s0/deps_report.md` |
+| V2 renderer 逐 token 保真 | pass（Qwen3Renderer 12+12 项） | `s0/v2_renderer_report.md`                    |
+| V3 协议 token 保真         | pass                        | `s0/v3_protocol_report.md`                    |
+| V4 MoE 张量透传            | pass，**Form B 定为主线**        | `s0/topology_ab_report.md`                    |
+
 
 （本节路径均相对 `docs/agentic_RL/repo_harness_rh2_workstreams/`，下同。）
 
@@ -51,23 +55,25 @@ S5 第二后端 + 服务化     按需（verl adapter、EnvServer 服务化）
 
 **回答的问题**："从 Claude Code harness 跑 SWE 题，到轨迹投影、评分、资格治理，再到 slime 真实训练 step，整条链是不是真的（token 级保真地）通了？" 答案是通了。十个任务：
 
-| 任务 | 一句话 | 关键证据 |
-| --- | --- | --- |
-| S1-0 | U-H 探针：slime 官方镜像在 sm_120 跑 30B + top-p tape 可用，镜像 digest pin | `s1/uh_probe_report.md` |
-| S1-1(+1b) | 契约层 15 个 schema + 六处泄漏收紧 | `s1/contracts_object_guide.md` |
-| S1-2 | 框架中立 envpack 库 + **frozen_v1（8 题 SWE-bench Verified 冻结集）** | `s1/envpack_freeze_v1.md` |
-| S1-3 | `project_from_slime` 主线投影 adapter | `rh2/src/repoharness2/adapters/` |
-| S1-4 | SWEGradingManager（P1~P11 故障矩阵 + 双沙箱 clean grading） | `s1/grading_p_matrix.md` |
-| S1-5 | TrainingEligibilityGate 七维 + finalize wrapper 唯一入口 + `S1_TIER_CAP` | `rh2/src/repoharness2/governance/` |
-| S1-6 | slime `custom_generate` 编排 glue（Form B 主线拼装） | `rh2/experiments/s1_7a_bringup/glue.py` |
-| S1-7a | **真实 slime 循环跑通 debug transport step**（Qwen3-4B dense，2 个 optimizer step，checkpoint 用后即弃留证） | `s1/bringup_7a_report.md` |
-| S1-7b | 30B 全要素训练 step → 递延给 P3 → **P3 已关闭** | `preflight/preflight_report.md` §1 |
-| S1-8 | 离线导出 + verifiers 投影 + 双 parity PASS；**发现导出器对 thinking 模型真实轨迹全量 fail-closed 拒绝** → 登记为 S2 阻塞项 | `s1/parity_report.md`、`s1/s2_blockers.md` |
-| S1-9 | 收口：inspector 账本、三处阻塞登记、闸门翻转 | `s1/s1_final_review.md` |
+
+| 任务        | 一句话                                                                                          | 关键证据                                      |
+| --------- | -------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| S1-0      | U-H 探针：slime 官方镜像在 sm_120 跑 30B + top-p tape 可用，镜像 digest pin                                | `s1/uh_probe_report.md`                   |
+| S1-1(+1b) | 契约层 15 个 schema + 六处泄漏收紧                                                                     | `s1/contracts_object_guide.md`            |
+| S1-2      | 框架中立 envpack 库 + **frozen_v1（8 题 SWE-bench Verified 冻结集）**                                   | `s1/envpack_freeze_v1.md`                 |
+| S1-3      | `project_from_slime` 主线投影 adapter                                                            | `rh2/src/repoharness2/adapters/`          |
+| S1-4      | SWEGradingManager（P1~P11 故障矩阵 + 双沙箱 clean grading）                                           | `s1/grading_p_matrix.md`                  |
+| S1-5      | TrainingEligibilityGate 七维 + finalize wrapper 唯一入口 + `S1_TIER_CAP`                           | `rh2/src/repoharness2/governance/`        |
+| S1-6      | slime `custom_generate` 编排 glue（Form B 主线拼装）                                                 | `rh2/experiments/s1_7a_bringup/glue.py`   |
+| S1-7a     | **真实 slime 循环跑通 debug transport step**（Qwen3-4B dense，2 个 optimizer step，checkpoint 用后即弃留证）  | `s1/bringup_7a_report.md`                 |
+| S1-7b     | 30B 全要素训练 step → 递延给 P3 → **P3 已关闭**                                                         | `preflight/preflight_report.md` §1        |
+| S1-8      | 离线导出 + verifiers 投影 + 双 parity PASS；**发现导出器对 thinking 模型真实轨迹全量 fail-closed 拒绝** → 登记为 S2 阻塞项 | `s1/parity_report.md`、`s1/s2_blockers.md` |
+| S1-9      | 收口：inspector 账本、三处阻塞登记、闸门翻转                                                                  | `s1/s1_final_review.md`                   |
+
 
 **账本与复核**：`s1/s1_acceptance_summary.json` 由 `rh2/src/repoharness2/inspect_s1.py` 生成/校验（digest 覆盖 22 个 evidence 文件 + 51 个代码文件）。任何 rh2 提交前跑 `cd rh2 && uv run inspect-rh2-s1` 必须 PASS。测试基线：**647 个 pytest 全绿**。
 
-**`s1/s2_blockers.md` 的来历**（用户 2026-07-09 问过）：这是 **S1-9 收口时建档的**（commit `f9181997`），内容是 S1-8 实测发现的导出器问题——线性追加式 token 重建假设被 Claude Code 的 thinking 块剥离行为打破，真实轨迹全部 `token_reconstruction_mismatch` 拒绝（fail-closed 按设计工作，但意味着离线导出/warm-start 对 thinking 模型暂不可用）。它是三处登记之一（另两处：acceptance summary 的 `blockers` 字段、`s1/implementation-notes.md`），按"显式登记、不淡化"的纪律留下的。
+`s1/s2_blockers.md` **的来历**（用户 2026-07-09 问过）：这是 **S1-9 收口时建档的**（commit `f9181997`），内容是 S1-8 实测发现的导出器问题——线性追加式 token 重建假设被 Claude Code 的 thinking 块剥离行为打破，真实轨迹全部 `token_reconstruction_mismatch` 拒绝（fail-closed 按设计工作，但意味着离线导出/warm-start 对 thinking 模型暂不可用）。它是三处登记之一（另两处：acceptance summary 的 `blockers` 字段、`s1/implementation-notes.md`），按"显式登记、不淡化"的纪律留下的。
 
 ### 3.3 P1 数据冻结包 v0.1（已完成——即"训练数据预处理"）
 
@@ -91,7 +97,7 @@ held-out 候选：542 题（tornado 261 / pyramid 189 / hydra 66 / bokeh 26）
 
 ### 3.4 P3 八卡预实验（刚完成，机器已释放）
 
-**回答的问题**："8×RTX PRO 6000（sm_120，PCIe 无 NVLink）这个训练形态到底行不行，数值是多少？" 2026-07-08/09 真机执行（codex ~7h + orchestrator 接手 ~2h）。**收口判定全文：`preflight/preflight_report.md`**（每个未知的绿/黄/红灯 + 依据），原始过程记录：`preflight/p3_remote_experiment_handoff_20260708.md`，证据 19MB：`preflight/remote_evidence_20260708/`。
+**回答的问题**："8×RTX PRO 6000（sm_120，PCIe 无 NVLink）这个训练形态到底行不行，数值是多少？" 2026-07-08/09 真机执行（codex ~7h + orchestrator 接手 ~2h）。**收口判定全文：**`preflight/preflight_report.md`（每个未知的绿/黄/红灯 + 依据），原始过程记录：`preflight/p3_remote_experiment_handoff_20260708.md`，证据 19MB：`preflight/remote_evidence_20260708/`。
 
 一句话结论 + 关键数字：
 
@@ -112,31 +118,39 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 
 ## 4. 闸门状态（真实值，出处 `s1/s1_acceptance_summary.json` 的 gates 字段）
 
-| 闸门 | 值 | 说明 |
-| --- | --- | --- |
-| `rh2_s0_complete` | true | S0 全部完成 |
-| `rh2_s1_closed_loop` | true | **带注记 pending_checkpoint2_confirmation**：闸门已随 S1-9 commit 翻真，但保留"待检查点 2 确认"注记，**最终确认权在项目所有者**——用户复核 `s1/s1_final_review.md` 后，由一个单行 commit 摘除注记 |
-| `rh2_s2_signal_trusted` | false | S2 的退出闸门 |
-| `rh2_formal_training_allowed` | false | 正式训练总闸门；8 题 Verified 探针不得用于正式训练 |
+
+| 闸门                            | 值     | 说明                                                                                                                                              |
+| ----------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rh2_s0_complete`             | true  | S0 全部完成                                                                                                                                         |
+| `rh2_s1_closed_loop`          | true  | 检查点 2 已由用户确认（2026-07-11），pending 注记已摘除；gates 字段保留 `checkpoint2_confirmed_by_user_20260711` 作为审计痕迹 |
+| `rh2_s2_signal_trusted`       | false | S2 的退出闸门                                                                                                                                        |
+| `rh2_formal_training_allowed` | false | 正式训练总闸门；8 题 Verified 探针不得用于正式训练                                                                                                                 |
+
+
+
 
 ## 5. 遗留问题与阻塞项总表（全项目合并视图）
 
-| # | 事项 | 来源 | 归属 | 状态 |
-| --- | --- | --- | --- | --- |
-| 1 | **用户检查点 2 确认**（S1 闸门注记摘除） | S1-9 | 用户 | 等用户复核 `s1/s1_final_review.md` |
-| 2 | **batch schedule 准入 preflight/repair**（治理过滤后样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言炸；formal J4 严格绿灯的唯一阻塞） | P3 新发现 | S2（**尚未写进 S2 计划**） | 待实现，纯本地，设计草稿见 handoff §7.2 + `preflight/preflight_report.md` §3 |
-| 3 | **导出器分叉感知重建**（thinking 模型轨迹离线导出 0 可用，E3 warm-start 回退预案的前置依赖） | S1-8 | S2-6 | 待实现，技术方案已写在 `s1/s2_blockers.md` |
-| 4 | fan-out 形状正式方案（我们的嵌套 `list[list[Sample]]` 打崩 slime 两条路径：dynamic_filter 和 fully_async 消费侧 `_key`） | P3 | 建议并入 #2 一起做 | 待决策：交付时展平 vs 补丁 slime |
-| 5 | ABORTED 组重入实证（fully_async 缺口①，P3 未观测到，非否定） | P3 | fully_async 升级实施期 | 注入式测试，不租卡 |
-| 6 | data_freeze 遗留：GPU pass-rate 预筛 / P5 两条勘误回写附录 B / R2E 打标 | P1 | S3/S4 前 | 已登记 |
-| 7 | S2 计划 G1~G5 决策确认（"无异议即按推荐执行"） | S2 计划 §5 | 用户 | 待确认 |
-| 8 | 下次租卡捆绑包：formal J4 严格绿灯复验（#2 修好后）+ S2-7 在线拦截 G4 实机证据 | P3 + S2 计划 | 下次 GPU 窗口 | 几小时短租，不是完整 P3 |
+
+| #   | 事项                                                                                                                            | 来源         | 归属                 | 状态                                                              |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ | --------------------------------------------------------------- |
+| 1   | ~~用户检查点 2 确认~~                                                                                                     | S1-9       | 用户                 | ✅ 已确认（2026-07-11），注记已摘除                                   |
+| 2   | **batch schedule 准入 preflight/repair**（治理过滤后样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言炸；formal J4 严格绿灯的唯一阻塞） | P3 新发现     | S2（**尚未写进 S2 计划**） | 待实现，纯本地，设计草稿见 handoff §7.2 + `preflight/preflight_report.md` §3 |
+| 3   | **导出器分叉感知重建**（thinking 模型轨迹离线导出 0 可用，E3 warm-start 回退预案的前置依赖）                                                                 | S1-8       | S2-6               | 待实现，技术方案已写在 `s1/s2_blockers.md`                                 |
+| 4   | fan-out 形状正式方案（我们的嵌套 `list[list[Sample]]` 打崩 slime 两条路径：dynamic_filter 和 fully_async 消费侧 `_key`）                              | P3         | 建议并入 #2 一起做        | 待决策：交付时展平 vs 补丁 slime                                           |
+| 5   | ABORTED 组重入实证（fully_async 缺口①，P3 未观测到，非否定）                                                                                    | P3         | fully_async 升级实施期  | 注入式测试，不租卡                                                       |
+| 6   | data_freeze 遗留：GPU pass-rate 预筛 / P5 两条勘误回写附录 B / R2E 打标                                                                      | P1         | S3/S4 前            | 已登记                                                             |
+| 7   | S2 计划 G1~G5 决策确认（"无异议即按推荐执行"）                                                                                                 | S2 计划 §5   | 用户                 | 待确认                                                             |
+| 8   | 下次租卡捆绑包：formal J4 严格绿灯复验（#2 修好后）+ S2-7 在线拦截 G4 实机证据                                                                           | P3 + S2 计划 | 下次 GPU 窗口          | 几小时短租，不是完整 P3                                                   |
+
+
+
 
 ## 6. 下一阶段：S2 概览与待决策项
 
 S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：把 S1 闭环从"链路正确"加固到"**训练信号可信**"——退出判据 = 红队环境包全部被正确拦截 + `S1_TIER_CAP` 解除 + bring-up 数据 ingestion 完成。全程不需要 GPU。任务：S2-0 契约小项包 → S2-1 数据 ingestion + 环境四门（消费 data_freeze 的 216 题）→ S2-2 安全 Runtime → S2-3/4 anti-cheat → S2-5 红队环境包 → S2-6 导出器重建 → S2-7 TIER_CAP 解除 → S2-8 验收（`inspect-rh2-s2`）。
 
-**关于"S2-6 导出器先做"（G0）的出处说明**：S2 计划 §5 把 G0 记为"用户 2026-07-09 指定"。实际经过是：当时用户在 S2 规划讨论中表达了"先清 S1 遗留阻塞项"的意向，计划据此把导出器（唯一的 S1 显式阻塞项）排为起点。用户后来（2026-07-09 晚）表示不记得做过这个具体指定且尚未读过 S2 计划——**因此 G0 应视为可重议**。当前的重排建议（orchestrator，P3 结论出来之后）：**把 #2 batch schedule 准入放在导出器之前**作为 S2 第一个实现任务，理由是它阻塞训练主线（导出器只阻塞回退预案）、体量小（1~2 天 vs 3~5 天）、可用 P3 真实 rollout dump 离线验证、且决定下次租卡效率。等用户拍板。
+**关于"S2-6 导出器先做"（G0）的出处说明**：S2 计划 §5 把 G0 记为"用户 2026-07-09 指定"。实际经过是：当时用户在 S2 规划讨论中表达了"先清 S1 遗留阻塞项"的意向，计划据此把导出器（唯一的 S1 显式阻塞项）排为起点。用户后来（2026-07-09 晚）表示不记得做过这个具体指定且尚未读过 S2 计划——**因此 G0 应视为可重议**。当前的重排建议（orchestrator，P3 结论出来之后）：**把 #2 batch schedule 准入放在导出器之前**作为 S2 第一个实现任务，理由是它阻塞训练主线（导出器只阻塞回退预案）、体量小（1~~2 天 vs 3~~5 天）、可用 P3 真实 rollout dump 离线验证、且决定下次租卡效率。等用户拍板。
 
 ## 7. 文档地图（新接手者按层查找）
 
@@ -153,7 +167,7 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
 【第 2 层：训练实验设计】docs/agentic_RL/training_design/
   repoharness_validation_experiment_design.md   E/C 系列定案 + §4.1 S0 实测锚点
                                                 + §4.2 P3 实测锚点（最新）
-  repoharness_validation_experiment_design_review.md  （另一线程编辑中，勿动）
+  repoharness_validation_experiment_design_review.md  （已经不需要了，看最终的实验设计文档即可）
   RL_algorithm_design.md / warm_start_offline_data_filtering_design.md
 
 【第 3 层：执行计划】docs/agentic_RL/repo_harness_rh2_workstreams/
@@ -180,6 +194,8 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
   reference/                外部参考库（slime pin、verifiers、verl 等，勿改）
 ```
 
+
+
 ## 8. 协作纪律与安全约束（对所有接手 agent 生效）
 
 1. **账本纪律**：任何 rh2 相关 commit 前跑 `cd rh2 && uv run inspect-rh2-s1` 必须 PASS；改动被 digest 追踪的文件时，同一 commit 内先改文件、再 `--write --pytest-count <N>` 重生成账本、verify 后提交。此纪律来自三次账本漂移事故（见 `s1/implementation-notes.md` S1-9 条目）。
@@ -188,17 +204,22 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
 4. **不碰**：`reference/` 子模块工作区、另一线程正在编辑的 `training_design/repoharness_validation_experiment_design_review.md`。
 5. **checkpoint 纪律**：基建验证产生的模型 checkpoint 一律用后即弃并留删除证据（8 题 Verified 探针不得成为任何后续训练起点）。
 
+
+
 ## 9. 术语速查
 
-| 术语 | 含义 |
-| --- | --- |
-| Form B | slime `custom_generate` 直调 SGLang 的训练主线接入形态（vs Form A = verifiers + vLLM shim） |
-| tape | 采样期逐 token 记录：routing tape（MoE 每 token 每层 top-8 专家 id）与 top-p tape（截断集 token ids），训练侧 replay 用，保证训推一致 |
-| fan-out | 一条 harness 轨迹树按 root-to-leaf 展开成多个训练样本（reward/K 分摊，共享 rollout_id）；我们交付嵌套 `list[list[Sample]]` |
-| TrajectoryProjection | 后端中立的轨迹投影契约（slime/verifiers 两路都汇入它，tape 解码只在这一层做一次） |
-| EligibilityGate / TIER_CAP | 训练资格治理：七维检查决定样本能否进 loss；`S1_TIER_CAP` 是 S1 期的资格上限（S2-7 解除后才能发放 `online_policy_loss_eligible`） |
-| U-C / U-H | 未知项编号：U-C = 多卡训练侧四未知（P3 已关）；U-H = slime 镜像在 sm_120 可用性（S1-0 已关） |
-| J0~J5 / J4b / J4c | P3 作业序列：环境检查/带宽/推理画像/合成训练/端到端/放置对比/fully_async 冒烟/权重同步 |
-| V / E / C / DF / G 系列 | 分别为 S0 验证项、实验设计决策项、硬约束、数据冻结任务、S2 待决策项的编号前缀 |
-| batch schedule alignment | P3 主要教训：治理过滤后可训练样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言失败；须做纯 Python 准入预检 |
-| 账本（ledger） | 各阶段 acceptance summary JSON：digest 锁定 evidence + 代码，inspector 四步范式校验，防静默漂移 |
+
+| 术语                         | 含义                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Form B                     | slime `custom_generate` 直调 SGLang 的训练主线接入形态（vs Form A = verifiers + vLLM shim）                        |
+| tape                       | 采样期逐 token 记录：routing tape（MoE 每 token 每层 top-8 专家 id）与 top-p tape（截断集 token ids），训练侧 replay 用，保证训推一致 |
+| fan-out                    | 一条 harness 轨迹树按 root-to-leaf 展开成多个训练样本（reward/K 分摊，共享 rollout_id）；我们交付嵌套 `list[list[Sample]]`         |
+| TrajectoryProjection       | 后端中立的轨迹投影契约（slime/verifiers 两路都汇入它，tape 解码只在这一层做一次）                                                   |
+| EligibilityGate / TIER_CAP | 训练资格治理：七维检查决定样本能否进 loss；`S1_TIER_CAP` 是 S1 期的资格上限（S2-7 解除后才能发放 `online_policy_loss_eligible`）         |
+| U-C / U-H                  | 未知项编号：U-C = 多卡训练侧四未知（P3 已关）；U-H = slime 镜像在 sm_120 可用性（S1-0 已关）                                       |
+| J0~J5 / J4b / J4c          | P3 作业序列：环境检查/带宽/推理画像/合成训练/端到端/放置对比/fully_async 冒烟/权重同步                                                |
+| V / E / C / DF / G 系列      | 分别为 S0 验证项、实验设计决策项、硬约束、数据冻结任务、S2 待决策项的编号前缀                                                            |
+| batch schedule alignment   | P3 主要教训：治理过滤后可训练样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言失败；须做纯 Python 准入预检         |
+| 账本（ledger）                 | 各阶段 acceptance summary JSON：digest 锁定 evidence + 代码，inspector 四步范式校验，防静默漂移                            |
+
+

@@ -41,12 +41,11 @@ RepoHarness =
                               由 rh2 离线导出 adapter 承接）。
 【已完成】rh2 S0 可行性验证      V1~V4 全过。执行计划：
                               docs/agentic_RL/repo_harness_rh2_workstreams/01-s0-execution-plan.md
-【已完成（待检查点确认）】rh2 S1 端到端最小闭环
+【已完成】rh2 S1 端到端最小闭环（检查点 2 已由用户确认，2026-07-11）
                               S1-0~9 全部执行完毕：slime 形态 B 数据链路真实闭环
                               （7a 两个 optimizer step + checkpoint 用后即弃）、
                               离线导出 parity 双通过、总 inspector inspect-rh2-s1
-                              + s1_acceptance_summary.json 就位；等待 orchestrator
-                              checkpoint-2 独立复核后 commit 定稿。执行计划：
+                              + s1_acceptance_summary.json 就位。执行计划：
                               docs/agentic_RL/repo_harness_rh2_workstreams/03-s1-execution-plan.md
                               递延与 S2 阻塞项见 s1/s1_acceptance_summary.json 的
                               deferred_risks/blockers 字段与 s1/s2_blockers.md
@@ -73,21 +72,20 @@ RepoHarness =
 【下一阶段】rh2 S2 SWE-Safety 加固
                               计划草案已就位：
                               docs/agentic_RL/repo_harness_rh2_workstreams/04-s2-execution-plan.md
-                              （G0 起点排序可重议、G1~G5 待用户确认；P3 新增的
-                              batch schedule 准入任务尚未编入计划——开工前先补）。
-                              另有一项用户动作待办：S1 检查点 2 确认
-                              （复核 s1/s1_final_review.md 后单行 commit 摘除
-                              闸门 pending 注记）。
+                              用户 2026-07-11 定案：S2 第一个实现任务 =
+                              batch schedule 准入 + fan-out 交付边界正规化
+                              （已编入计划，问题 A/B/C/D 定义见计划 S2-0b 节）；
+                              其余既有任务（SWE-Safety 加固 + 数据 ingestion）
+                              的改动与 G 系列决策留下一轮。
 ```
 
 rh2 新闸门字段当前真实值：
 
 ```text
 rh2_s0_complete              = true    （S0 全部 9 项任务完成，V1~V4 全过；见 s0_acceptance_summary.json）
-rh2_s1_closed_loop           = true（pending checkpoint-2 confirmation）
-                                       （S1-0~9 全验收 + acceptance summary 就位；
-                                       最终翻转由 orchestrator 独立复核后随 commit 定稿，
-                                       见 s1/s1_acceptance_summary.json gates 字段的同名注记）
+rh2_s1_closed_loop           = true   （checkpoint-2 已由用户确认 2026-07-11，pending 注记
+                                       已摘除；gates 字段保留 checkpoint2_confirmed_by_user_20260711
+                                       作为审计痕迹）
 rh2_s2_signal_trusted        = false
 rh2_formal_training_allowed  = false   （≈ 旧 stage21 语义；为 false 时禁止正式训练。
                                        S1-7a 为 debug transport step，checkpoint 已删除留证）

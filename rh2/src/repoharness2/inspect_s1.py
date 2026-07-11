@@ -93,16 +93,17 @@ TASK_STATUS: dict[str, str] = {
     "S1-5": "done_gate_seven_dims_finalize_wrapper",
     "S1-6": "done_custom_generate_glue_a5_handshake",
     "S1-7a": "done_debug_transport_step_2_optimizer_steps_ckpt_discarded",
-    "S1-7b": "deferred_to_s4_pre_8card",
+    # 与 deferred_risks 同步（codex 2026-07-10 指出两处状态曾不一致）
+    "S1-7b": "closed_by_p3_20260708",
     "S1-8": "done_offline_export_parity_core_cross_pass",
     "S1-9": "done_closeout_inspector_h1_h2_h3",
 }
 
 GATES: dict[str, Any] = {
-    # 闸门值按任务指令置 true；最终翻转由 orchestrator 在 checkpoint-2 独立复核
-    # 后随 commit 定稿（AGENTS.md 同步标注 pending 字样）。
+    # 检查点 2 已由用户（项目所有者）于 2026-07-11 确认，pending 注记摘除；
+    # note 保留确认事件本身作为审计痕迹。
     "rh2_s1_closed_loop": True,
-    "rh2_s1_closed_loop_note": "pending_checkpoint2_confirmation_by_orchestrator",
+    "rh2_s1_closed_loop_note": "checkpoint2_confirmed_by_user_20260711",
     "rh2_s2_signal_trusted": False,
     "rh2_formal_training_allowed": False,
 }
