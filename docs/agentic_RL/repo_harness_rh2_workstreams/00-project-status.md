@@ -19,7 +19,9 @@ S0 可行性验证            ✅ 已完成（V1~V4 全过；Form B 定为训练
 S1 端到端最小闭环        ✅ 已完成（S1-0~9 全验收；检查点 2 已由用户确认
                             2026-07-11，闸门 pending 注记已摘除）
 P1 数据冻结包 v0.1       ✅ 已完成（即"训练数据预处理"，codex 线程执行）
-P3 八卡预实验            ✅ 已完成（2026-07-08/09 真机，机器已释放）
+P3 八卡预实验            ✅ 已完成（2026-07-08/09 真机，机器已释放。准确口径：
+                            训练后端与架构决策完成；formal J4 严格绿灯
+                            留待 S2-0b 修复后随下次短租复验）
 S2 SWE-Safety 加固       ⏳ 计划已写（草案），尚未开工 ← ★ 我们在这里
 S3 训练治理完备          未开始（三档资格全量、环境验证四门收尾）
 S4 正式训练实验          未开始（before/after 实验，简历叙事收尾）
@@ -135,22 +137,23 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 | #   | 事项                                                                                                                            | 来源         | 归属                 | 状态                                                              |
 | --- | ----------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ | --------------------------------------------------------------- |
 | 1   | ~~用户检查点 2 确认~~                                                                                                     | S1-9       | 用户                 | ✅ 已确认（2026-07-11），注记已摘除                                   |
-| 2   | **batch schedule 准入 preflight/repair**（治理过滤后样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言炸；formal J4 严格绿灯的唯一阻塞） | P3 新发现     | S2（**尚未写进 S2 计划**） | 待实现，纯本地，设计草稿见 handoff §7.2 + `preflight/preflight_report.md` §3 |
-| 3   | **导出器分叉感知重建**（thinking 模型轨迹离线导出 0 可用，E3 warm-start 回退预案的前置依赖）                                                                 | S1-8       | S2-6               | 待实现，技术方案已写在 `s1/s2_blockers.md`                                 |
-| 4   | fan-out 形状正式方案（我们的嵌套 `list[list[Sample]]` 打崩 slime 两条路径：dynamic_filter 和 fully_async 消费侧 `_key`）                              | P3         | 建议并入 #2 一起做        | 待决策：交付时展平 vs 补丁 slime                                           |
-| 5   | ABORTED 组重入实证（fully_async 缺口①，P3 未观测到，非否定）                                                                                    | P3         | fully_async 升级实施期  | 注入式测试，不租卡                                                       |
+| 2   | **batch schedule 准入 + fan-out 交付边界正规化**（问题 A/B/C/D 定义见 S2 计划 S2-0b 节；formal J4 严格绿灯的唯一阻塞） | P3 新发现     | **S2-0b（用户 2026-07-11 定案为 S2 第一个实现任务）** | 已编入计划待实现；验收用 J4 事件元数据夹具（**本地无 .pt 张量**，不能原样重放 converter） |
+| 3   | **导出器分叉感知重建**（thinking 模型轨迹离线导出 0 可用。依赖澄清：它阻塞的是 E3 的**同策略 token 级回收路径**，不阻塞 teacher-SFT 路径——后者的前置是 SemanticSFT 契约，见 G9）                                                                 | S1-8       | S2-6（排 S2-0b 之后）               | 待实现，技术方案在 `s1/s2_blockers.md`；验收资产需改判（G8：60+65 条 .pt 不在本地）                                 |
+| 4   | ~~fan-out 形状正式方案~~                              | P3         | 并入 S2-0b        | ✅ 方向已定（用户 2026-07-11）：交付边界统一展平，保留 rollout_id/branch/group/reward 分摊语义，不给 slime 打零散补丁                                           |
+| 5   | ABORTED 组重入实证（fully_async 缺口①，P3 未观测到，非否定）                                                                                    | P3         | fully_async 升级实施期  | 注入式测试，不租卡；fully_async 本身不作当前主线（首训用 T3 分离 + train_async）                                                       |
 | 6   | data_freeze 遗留：GPU pass-rate 预筛 / P5 两条勘误回写附录 B / R2E 打标                                                                      | P1         | S3/S4 前            | 已登记                                                             |
-| 7   | S2 计划 G1~G5 决策确认（"无异议即按推荐执行"）                                                                                                 | S2 计划 §5   | 用户                 | 待确认                                                             |
-| 8   | 下次租卡捆绑包：formal J4 严格绿灯复验（#2 修好后）+ S2-7 在线拦截 G4 实机证据                                                                           | P3 + S2 计划 | 下次 GPU 窗口          | 几小时短租，不是完整 P3                                                   |
+| 7   | S2 计划 G 系列决策：G1~G5（无异议即按推荐执行）+ **G6~G10（P3 后新增，codex 复核意见，涉及既有任务修改）**                                                                                                 | S2 计划 §5   | 用户（下一轮）                 | 待确认                                                             |
+| 8   | 下次租卡捆绑包（G10 的 S2 集成验收短租）：strict J4 复验（#2 修好后）+ 真实在线拦截链 + 代表性轨迹留存（兼供 #3 复验）                                                                           | P3 + S2 计划 | 下次 GPU 窗口          | 几小时短租，不是完整 P3                                                   |
+| 9   | **SemanticSFT 导出契约**（新设计缺口：teacher 异构模型 → Qwen SFT 需要结构化语义导出，当前只有 token-faithful 出口）                                                                           | codex 复核 2026-07-10 | G9（下一轮定）          | 建议 S2 定契约 + 最小闭环，批量生产放 S3                                                   |
 
 
 
 
 ## 6. 下一阶段：S2 概览与待决策项
 
-S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：把 S1 闭环从"链路正确"加固到"**训练信号可信**"——退出判据 = 红队环境包全部被正确拦截 + `S1_TIER_CAP` 解除 + bring-up 数据 ingestion 完成。全程不需要 GPU。任务：S2-0 契约小项包 → S2-1 数据 ingestion + 环境四门（消费 data_freeze 的 216 题）→ S2-2 安全 Runtime → S2-3/4 anti-cheat → S2-5 红队环境包 → S2-6 导出器重建 → S2-7 TIER_CAP 解除 → S2-8 验收（`inspect-rh2-s2`）。
+S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：把 S1 闭环从"链路正确"加固到"**训练信号可信**"——退出判据 = 红队环境包全部被正确拦截 + `S1_TIER_CAP` 解除 + bring-up 数据 ingestion 完成。任务：**S2-0b batch schedule 准入 + fan-out 正规化（第一个实现任务）** → 其余与 S2-1 数据 ingestion 可并行：S2-2 安全 Runtime → S2-3/4 anti-cheat → S2-5 红队环境包 → S2-6 导出器重建 → S2-7 TIER_CAP 解除 → S2-8 验收（`inspect-rh2-s2`）→（G10 待定）末尾一次短租集成验收。
 
-**关于"S2-6 导出器先做"（G0）的出处说明**：S2 计划 §5 把 G0 记为"用户 2026-07-09 指定"。实际经过是：当时用户在 S2 规划讨论中表达了"先清 S1 遗留阻塞项"的意向，计划据此把导出器（唯一的 S1 显式阻塞项）排为起点。用户后来（2026-07-09 晚）表示不记得做过这个具体指定且尚未读过 S2 计划——**因此 G0 应视为可重议**。当前的重排建议（orchestrator，P3 结论出来之后）：**把 #2 batch schedule 准入放在导出器之前**作为 S2 第一个实现任务，理由是它阻塞训练主线（导出器只阻塞回退预案）、体量小（1~~2 天 vs 3~~5 天）、可用 P3 真实 rollout dump 离线验证、且决定下次租卡效率。等用户拍板。
+**排序定案（用户 2026-07-11）**：S2-0b 先做（阻塞训练主线的唯一项），S2-6 导出器其次（只阻塞 E3 回退预案的同策略路径）；原 G0"导出器先做"（2026-07-09 依据"先清 S1 遗留阻塞项"意向登记）已改判。**更正一处早前表述**：S2-0b 的离线验收用的是 P3 的**事件元数据**构造夹具（逐 rollout 的 remove_sample/长度/fan-out 记录），本地**没有** .pt 张量 dump（远程同步排除了大文件），不能原样重放 slime tensor converter——强验证挂下次短租的 strict J4。既有任务内容（SWE-Safety 加固 + 数据 ingestion 等）与 G1~G10 决策留下一轮。
 
 ## 7. 文档地图（新接手者按层查找）
 
@@ -183,7 +186,8 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
           8gpu_preflight_protocol.md（协议）、p3_remote_experiment_handoff_20260708.md
           （过程实录）、slime_fully_async_upgrade_design.md（升级设计）、
           implementation-notes.md、remote_evidence_20260708/（19MB 证据）
-  tmp/  → 外部顾问意见存档（gpt5.5pro 等），只读参考
+  tmp/  → 外部顾问意见存档（gpt5.5pro 等；codx_adv.md = codex 对 P3 后
+          状态的复核意见，已消化进 S2 计划 G6~G10），只读参考
 
 【第 5 层：代码】
   rh2/src/repoharness2/     contracts / envpack / grading / governance /

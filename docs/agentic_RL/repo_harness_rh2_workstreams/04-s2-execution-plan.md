@@ -4,7 +4,9 @@
 
 S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号可信"**——退出判据 = 红队环境包全部被正确拦截/降级 + `S1_TIER_CAP` 解除（gate 可发放 `online_policy_loss_eligible`）+ bring-up 数据 ingestion 完成（F3 收尾）。
 
-与 P3 的关系：**完全独立**。S2 全程不需要 GPU；需要 x86 docker 的部分（验证门、红队包容器实验）用便宜 CPU 实例（G1），不被 P3 租卡排期绑架。协作纪律沿用（notes 三节制、每任务一 commit、独立复核、检查点在 S2-8 前）。
+与 P3 的关系：**完全独立**。S2 全程不需要 GPU（**该表述已过时，待 G10 修正**：S2 末尾应有一次短租集成验收，见 §5）；需要 x86 docker 的部分（验证门、红队包容器实验）用便宜 CPU 实例（G1），不被 P3 租卡排期绑架。协作纪律沿用（notes 三节制、每任务一 commit、独立复核、检查点在 S2-8 前）。
+
+> **[P3 后修订 2026-07-11]** 本轮只做两类改动：(a) 新增任务 **S2-0b（batch schedule 准入 + fan-out 交付边界正规化）**，用户 2026-07-11 定案为 **S2 第一个实现任务**（G0 相应改判）；(b) codex 复核意见（`tmp/codx_adv.md`）与相关修正登记为 **G6~G10 待决策项**。既有任务（S2-1~S2-8）的内容本轮不改，下一轮随 G 系列一并定案。
 
 ---
 
@@ -13,6 +15,7 @@ S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号�
 | # | 任务 | 位置 | 依赖 |
 | --- | --- | --- | --- |
 | S2-0 | 契约小项包（start_len 扩展位 + cleanup 账本 + CAP 解除机制定义） | 本机 | — |
+| **S2-0b** | **batch schedule 准入 + fan-out 交付边界正规化（P3 后新增；用户 2026-07-11 定案为第一个实现任务）** | 本机（离线验收） | — |
 | S2-1 | 数据 ingestion + 环境验证四门 | 本机开发；四门跑 x86 实例 | data_freeze v0，G1/G4 |
 | S2-2 | SWE-SEE 安全 Runtime + 命令事件日志 | 本机开发；x86 验证 | G2 |
 | S2-3 | anti-cheat 物化期：git sanitizer | 本机开发；x86 验证 | S2-2 |
@@ -27,6 +30,59 @@ S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号�
 1. `RoutingTensorRef` 留 `routed_experts_start_len` 扩展位（升级设计 I-1：上游 680824dd 已改 tape 契约，现在留位一行事，字段默认 0 + 校验器兼容中段拼接语义的注释）。
 2. cleanup failure 进阶段账本（codex#6）：`CleanupFailureRecord` 汇入 acceptance summary 的结构化字段 + 告警口径（计数 > 0 即 summary 黄标）。
 3. `S1_TIER_CAP` 解除机制**定义**（不解除）：解除条件写成代码内显式清单（S2-2~S2-5 验收 + 红队全拦截），`GATE_VERSION` 升版流程与测试骨架就位，真正解除在 S2-7。
+
+### S2-0b batch schedule 准入 + fan-out 交付边界正规化（P3 后新增；**用户 2026-07-11 定案为 S2 第一个实现任务**）
+
+**为什么第一**：这是 formal J4 严格绿灯的唯一阻塞，也是正式训练每一步都要过的关口；纯本地、可完全离线验收、直接决定下次租卡窗口的效率。（导出器 S2-6 只阻塞 E3 回退预案的一条路径，排它后面。）
+
+**要解决的四个问题（用户 2026-07-11 定义，A/B 是 P3 实测失败，C 是兼容缺口，D 是修复的不变量约束）**：
+
+```text
+A 治理过滤后，有效 rollout 数不足以组成 global batch
+  实测：formal J4 名义 8 题 × n4 = 32，治理过滤（remove_sample / fail-closed /
+  eligibility 降档）后 num_rollouts=19 < global_batch_size=32，slime 在组
+  batch 前直接断言失败（j4_formal…/j4/j4_train.log 本地可复核）。
+B 动态装箱后的 microbatch 数不满足 DP/VPP 对齐
+  实测：J5 gbs16 死于 build_dp_schedule "could only produce 23 mbs; need 24"。
+  对齐要求 = dp_size × (mb_group if vpp_size>1 else 1)，T3 拓扑下 dp=2。
+  J5 gbs20 只改 batch size 即通过——证明根因是调度对齐，但 gbs20 是诊断
+  对照，严禁作为方案（人工碰运气选 global_batch_size 不可接受）。
+C fan-out 数据形状不统一，部分 slime 路径无法消费
+  RepoHarness 返回的嵌套 list[list[Sample]] 已打崩 slime 两处：
+  dynamic_filter（'list' object has no attribute 'get_reward_value'）与
+  fully_async 消费侧 _key（fully_async_rollout.py:238 TypeError）。
+  正式方案（用户 2026-07-11 定向）：在 RepoHarness→slime 交付边界统一
+  展平为平铺 list[Sample]，同时保留 rollout_id / branch / group / reward
+  分摊语义——不再给 slime 各处打零散补丁；P3 的 _key 诊断补丁随本任务废弃。
+D 过滤与 repair 不能破坏 GRPO 同题组、reward 和 loss denominator 语义
+  修 A/B 的任何策略（剔除/补采/延迟拼 batch）都不得：拆散同 prompt 组、
+  改变组内 reward 分摊结果、静默改变 loss 归一化分母。凡影响分母的处置
+  必须显式记账。
+```
+
+**实现形态**：adapter 层纯 Python 预检/修复器，在训练消费之前运行：
+
+1. **输入**：治理过滤后的交付样本集（每 sample 的 token 长度、rollout_id、组结构、剔除状态）+ 训练侧并行参数（dp_size / cp_size / vpp_size / mb_group / global_batch_size / 动态装箱参数）。
+2. **预检**：模拟 slime `build_dp_schedule` 的对齐约束，预测 A/B 两类断言是否会触发；结论输出为结构化 `backend_rejection_reason` 字段（进投影/eligibility 账本，不是日志字符串）。
+3. **修复策略**（按序尝试，每一步都过 D 的不变量检查）：fail-closed 拒绝并报因 → 延迟拼 batch（跨波次凑齐）→ 组级子集选择（整组保留或整组剔除，绝不拆组）→ 组级补采（oversample 后按组丢弃）。
+4. **交付边界展平层**（问题 C）：展平/还原双向语义保持，siblings 的 group 归属与 reward/K 分摊在平铺形状上可完整重建。
+
+**验收（离线，不需要 GPU）**——注意：**本地没有 P3 的 .pt 张量 dump**（远程同步时排除了大文件），但逐 rollout 事件元数据齐全（`preflight/remote_evidence_20260708/bringup_selected/j4_formal_20260708T160749Z/` 的 bringup_events：remove_sample / 长度 / fan-out / 时间线），验收基于元数据构造真实形状夹具，不是原样重放 tensor converter：
+
+```text
+1. 用 J4 formal 事件元数据构造回归夹具，离线复现两种真实失败：
+   A 类（44 raw → 31 保留 → 19 rollout < 32）与 B 类（23 mbs ≠ 24）。
+   预检器必须在不起 slime 的情况下把两个失败都提前判出。
+2. 修复策略属性测试：任意修复输出满足 D 的三条不变量
+   （组完整性 / reward 分摊不变 / 分母变化显式记账）。
+3. 展平层 round-trip 测试：rollout_id/branch/group/reward 语义双向可重建；
+   对 slime 的 dynamic_filter 与 fully_async _key 两个历史崩溃点，用
+   slime 源码内的真函数 + 平铺交付形状做直接单测（不给 slime 打补丁）。
+4. 强验证挂下次租卡短租窗口：strict J4 复验（= 协议 J4 判据第 0 项落地，
+   与 G4/G10 的 GPU 段验收合并成一次短租）。
+```
+
+**与协议/报告的关系**：本任务实现的就是 `preflight/8gpu_preflight_protocol.md` J4 判据第 0 项要求的预检工具；完成后改判 `preflight/preflight_report.md` §6 的对应回填项。
 
 ### S2-1 数据 ingestion + 环境验证四门（S2 最大件之一）
 
@@ -76,9 +132,27 @@ R-5 谎报成功（声明通过但未跑测试）             → S2-4 claim-che
 
 **验收**：5 类各自"作弊可行性对照（防线关闭时能成功）+ 防线开启后被拦截"的双态证据——这是"用注入实验证明治理有效"的完整叙事，E8 治理证据的核心件。
 
-### S2-6 导出器分叉感知重建（S2 blocker；**用户 2026-07-09 指定为 S2 第一优先任务**）
+### S2-6 导出器分叉感知重建（S2 blocker）
 
-**排序说明**：本任务在任务表里编号 S2-6，但用户指定它作为 S2 起点先做——理由是它纯本地、闭环风险最低、且是 E3 warm-start 回退预案的前置依赖，先把 S1 的尾巴收干净再开安全加固的新面。与 S2-1~5 无依赖，可最先启动。
+**排序说明（2026-07-11 改判）**：原 G0 把本任务定为 S2 起点（2026-07-09 依据用户"先清 S1 遗留阻塞项"的意向登记）；P3 之后用户 2026-07-11 定案 **S2-0b（batch schedule 准入）先做，本任务其次**——理由：S2-0b 阻塞训练主线，本任务只阻塞 E3 回退预案的一条路径。与 S2-1~5 无依赖，可与其并行。
+
+**依赖关系澄清（回应用户 2026-07-10 的疑问"导出器是不是 E3 warm-start 的前置依赖"）**：说"前置依赖"过强，准确的说法是**分路径的**：
+
+```text
+E3 warm-start 回退 = RL 行为崩坏时用离线过滤后的 SFT 数据回锚。SFT 数据来源分两路：
+路径 1：回收当前策略自己的成功 rollout（同一个 Qwen MoE 模型）
+  → token 级轨迹可直接 SFT，不需要重新分词（同模型同 tokenizer，token-faithful
+    导出给出的就是精确 token 序列 + loss mask；重新渲染反而会引入漂移——
+    thinking 块重渲染漂移正是 REALIGN 发生的原因）。
+  → 本任务（token-faithful 分叉感知重建）是这条路径的硬前置。
+路径 2：用强 teacher（Claude/GPT 等异构模型）生成轨迹做 Qwen 的 SFT
+  → teacher 的 token 在别家词表里，必须以结构化语义形态（messages / tool call /
+    tool result / assistant target / 来源模型）导出后重新渲染+分词。
+  → 这需要一个当前不存在的 SemanticSFT 导出器（新发现的设计缺口，见 G9）；
+    本任务帮不上这条路径。
+结论：本任务阻塞的是路径 1（以及在线/离线 parity、同模型 RFT），不阻塞所有 SFT。
+E3 究竟主用哪条路径，随 G9 一起定。
+```
 
 按 `s1/s2_blockers.md` 的升级路径实施（档案已写死技术要点与验收判据，此处只提要）：
 
@@ -167,11 +241,21 @@ evidence 目录：`docs/agentic_RL/repo_harness_rh2_workstreams/s2/`（implement
 
 | # | 决策 | 推荐 | 状态 |
 | --- | --- | --- | --- |
-| G0 | S2 起点 | **已定**：S2-6 导出器分叉感知重建（用户 2026-07-09 指定），与 S2-1 数据 ingestion 可并行 | 定案 |
+| G0 | S2 起点 | ~~S2-6 导出器（2026-07-09）~~ → **改判（用户 2026-07-11）：S2-0b batch schedule 准入 + fan-out 正规化第一，S2-6 其次**；两者都可与 S2-1 并行 | **定案（已改判）** |
 | G1 | 四门/红队的 x86 docker 载体 | 优先本机 docker（S1 已证可用，8 题镜像 8GB）；216 全量四门若磁盘/时长吃紧再租便宜 CPU x86 实例（非 GPU），不被 P3 排期绑架 | 待确认 |
-| G2 | 安全 Runtime 网络机制本机段范围 | 本机段做"预装镜像 + `--network none` + 规则式 CommandFilter"；透明出网代理（Anygress 式）留 GPU 段/S3——本机断网场景不需要代理 | 待确认 |
+| G2 | 安全 Runtime 网络机制本机段范围 | 本机段做"预装镜像 + `--network none` + 规则式 CommandFilter"；透明出网代理（Anygress 式）留 GPU 段/S3——本机断网场景不需要代理。**注意与 G7 联动：`--network none` 的适用面需收窄** | 待确认 |
 | G3 | 谎报成功检测形态 | 规则式 evidence-backed claim checking 起步（D7 已定）；LLM judge 复核异步后置，S2 本机段不接 LLM（省额度，规则够覆盖红队 fixture） | 待确认 |
-| G4 | 在线拦截 GPU 验收与 P3 的关系 | S2 在线拦截 GPU 段并入 P3 租卡窗口或姊妹单卡作业（都要真实 slime 循环），不单独租卡 | 待确认 |
+| G4 | 在线拦截 GPU 验收与 P3 的关系 | S2 在线拦截 GPU 段并入下次租卡窗口（P3 已结束，即 G10 的 S2 集成验收短租），不单独租卡 | 待确认 |
 | G5 | micro-VM 安全档 | 本机段只做容器档 + 留 `SandboxSecurityTier` 枚举扩展位，micro-VM 不实现 | 待确认 |
 
-G1~G5 无异议即按推荐执行。
+以下 G6~G10 为 P3 后新增（codex 复核意见 `tmp/codx_adv.md` + 本轮核实），**涉及既有任务内容的修改，按用户 2026-07-11 指示留下一轮定案**：
+
+| # | 决策 | 推荐 | 状态 |
+| --- | --- | --- | --- |
+| G6 | 资格解封两处表述统一 | 计划存在张力：S2-7 写"解除 TIER_CAP 后 gate 才允许发放 `online_policy_loss_eligible`"，§4 又写"解封需要 `rh2_s2_signal_trusted` = 本机段 AND GPU 段"。建议（codex 同）：本机验收只解除**实现档封顶**，正式在线训练的资格发放必须等 GPU 段在线拦截实证 | 待下一轮 |
+| G7 | 黑盒 rollout 容器网络方案 | `--network none` **不能**覆盖黑盒 rollout——Claude Code 必须访问模型代理，且容器内 localhost 不是宿主机。建议：预装依赖 + 隔离 docker 网络 + 仅放行模型代理/必要内部服务 + 公网默认拒绝；`--network none` 保留给评分容器、白盒任务、安全单测（影响 S2-2 条目 1 与 G2） | 待下一轮 |
+| G8 | S2-6 验收资产改判 | 原验收"run8/run9 60+65 条全部导出"**已不可执行**（.pt 不在本地）。建议改为：1 条已留存的真实 t0 掉落轨迹（`7a_artifacts/export_sample/` 邻近资产）+ REALIGN/fan-out/compaction 合成回归夹具 + 下次短租采集少量完整真实轨迹复验 | 待下一轮 |
+| G9 | SemanticSFT 导出契约（新设计缺口） | token-faithful 导出只服务"同模型回收自身 rollout"的 SFT/RFT；teacher（Claude/GPT）→ Qwen SFT 需要结构化语义导出（messages/tool call/tool result/target/来源模型），当前完全没有。建议（codex 同）：S2 至少定义 `SemanticSFTRecord` 契约 + 一个最小导出闭环，批量 teacher 数据生产放 S3——避免架构再次被 token-only 出口锁死。与 E3 回退形态的选择绑定（见 S2-6 依赖澄清） | 待下一轮 |
+| G10 | "S2 全程不需要 GPU"表述修正 | 大部分 S2 是本机/x86 工作，但 S2 末尾应有**一次短租集成验收**（不是重做 P3）：strict J4（S2-0b 准入 + fan-out + 真实 optimizer step）+ 真实在线拦截链（CC 发违规命令 → CommandFilter 拦截 → dummy 返回 → agent 继续 → capture/评分/投影不崩）+ 代表性轨迹留存（线性 / t0 掉落 / fan-out 多叶 / attempted 作弊各至少一条，兼供 G8 复验）。与 G4 合并为同一次短租 | 待下一轮 |
+
+G1~G5 无异议即按推荐执行；G6~G10 下一轮与既有任务内容一起定案。
