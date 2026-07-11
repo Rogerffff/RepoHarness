@@ -1,4 +1,4 @@
-# rh2 项目进度总览（状态快照：2026-07-09）
+# rh2 项目进度总览（状态快照：2026-07-11）
 
 > **本文档的用途**：给项目所有者和任何新接手的 agent 一份"当前我们在哪、已经完成什么、证据在哪、接下来做什么"的单一入口。每个结论都标注了证据文件路径，可以直接点开核对。
 >
@@ -137,7 +137,7 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 | #   | 事项                                                                                                                            | 来源         | 归属                 | 状态                                                              |
 | --- | ----------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ | --------------------------------------------------------------- |
 | 1   | ~~用户检查点 2 确认~~                                                                                                     | S1-9       | 用户                 | ✅ 已确认（2026-07-11），注记已摘除                                   |
-| 2   | **batch schedule 准入 + fan-out 交付边界正规化**（问题 A/B/C/D 定义见 S2 计划 S2-0b 节；formal J4 严格绿灯的唯一阻塞） | P3 新发现     | **S2-0b（用户 2026-07-11 定案为 S2 第一个实现任务）** | 已编入计划待实现；验收用 J4 事件元数据夹具（**本地无 .pt 张量**，不能原样重放 converter） |
+| 2   | **batch schedule 准入 + fan-out 交付边界正规化**（问题 A~E 定义见 S2 计划 S2-0b 节；formal J4 严格绿灯的唯一阻塞。E = 层次化 GRPO 归一化——J5 gbs20 保留 36≠32 已实测踩中 slime 单组回退，P3 的有限 loss 不证明组归一化语义正确） | P3 新发现 + codex 轮次 2     | **S2-0b（用户 2026-07-11 定案为 S2 第一个实现任务）** | 已编入计划待实现；验收用 J4 事件元数据夹具（**本地无 .pt 张量**）+ 与真 `build_dp_schedule` 差分验证 |
 | 3   | **导出器分叉感知重建**（thinking 模型轨迹离线导出 0 可用。依赖澄清：它阻塞的是 E3 的**同策略 token 级回收路径**，不阻塞 teacher-SFT 路径——后者的前置是 SemanticSFT 契约，见 G9）                                                                 | S1-8       | S2-6（排 S2-0b 之后）               | 待实现，技术方案在 `s1/s2_blockers.md`；验收资产需改判（G8：60+65 条 .pt 不在本地）                                 |
 | 4   | ~~fan-out 形状正式方案~~                              | P3         | 并入 S2-0b        | ✅ 方向已定（用户 2026-07-11）：交付边界统一展平，保留 rollout_id/branch/group/reward 分摊语义，不给 slime 打零散补丁                                           |
 | 5   | ABORTED 组重入实证（fully_async 缺口①，P3 未观测到，非否定）                                                                                    | P3         | fully_async 升级实施期  | 注入式测试，不租卡；fully_async 本身不作当前主线（首训用 T3 分离 + train_async）                                                       |
@@ -186,8 +186,9 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
           8gpu_preflight_protocol.md（协议）、p3_remote_experiment_handoff_20260708.md
           （过程实录）、slime_fully_async_upgrade_design.md（升级设计）、
           implementation-notes.md、remote_evidence_20260708/（19MB 证据）
-  tmp/  → 外部顾问意见存档（gpt5.5pro 等；codx_adv.md = codex 对 P3 后
-          状态的复核意见，已消化进 S2 计划 G6~G10），只读参考
+  s2/   → codex_reviews.md（codex 两轮复核意见的受版本控制存档——
+          tmp/ 被 .gitignore，正式引用一律指向这里）
+  tmp/  → 外部顾问意见草稿箱（gpt5.5pro 等），gitignore 不入库，只读参考
 
 【第 5 层：代码】
   rh2/src/repoharness2/     contracts / envpack / grading / governance /
@@ -225,5 +226,3 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
 | V / E / C / DF / G 系列      | 分别为 S0 验证项、实验设计决策项、硬约束、数据冻结任务、S2 待决策项的编号前缀                                                            |
 | batch schedule alignment   | P3 主要教训：治理过滤后可训练样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言失败；须做纯 Python 准入预检         |
 | 账本（ledger）                 | 各阶段 acceptance summary JSON：digest 锁定 evidence + 代码，inspector 四步范式校验，防静默漂移                            |
-
-

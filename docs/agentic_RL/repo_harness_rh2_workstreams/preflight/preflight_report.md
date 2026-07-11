@@ -28,6 +28,8 @@
 | **J4c fully_async 可行性** | 🟢 绿（一项存疑留档） | startable ✓、top-up 补采 ✓（probe 95 » target 64）、N1 done_cb 泄漏=0 / N2 队列阻塞=0、2 个真实训练 step；**ABORTED 重入未触发**（见 §4） | 否 |
 | **M1 staleness 记账** | 🟢 机制验证 | weight_versions 透传链路工作（events 带 weight_versions_sample/engine）；单步 run 跨度=0 预期。多步分布留升级实施期采 | 否 |
 
+**补注（2026-07-11，codex 轮次 2 审查，详见 `../s2/codex_reviews.md`）**：上表 S1-7b 的"绿"只覆盖 **tape 消费 / 反向传播 / 权重同步能工作**，**不覆盖 GRPO 组归一化语义正确性**——J5 gbs20 治理过滤后保留 36 样本 ≠ 名义 32，P3 转换器（`rh2_convert.py`，镜像 slime stock `_post_process_rewards` 的 reshape-by-shape 逻辑）走了 `view(-1, total)` 单组回退，把 36 个样本折叠成一个大组做均值中心化（`rewards_normalization=True` 生效中）。fan-out 下的层次化归一化（group_index 键控）是 S2-0b 问题 E 的验收对象；在它关闭前，**P3/7a 产生的任何 advantage 数值不得被引用为"语义正确"的参照**。
+
 ---
 
 ## 2. 放置决策定案：T3 分离 + train_async 双缓冲

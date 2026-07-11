@@ -74,7 +74,9 @@ RepoHarness =
                               docs/agentic_RL/repo_harness_rh2_workstreams/04-s2-execution-plan.md
                               用户 2026-07-11 定案：S2 第一个实现任务 =
                               batch schedule 准入 + fan-out 交付边界正规化
-                              （已编入计划，问题 A/B/C/D 定义见计划 S2-0b 节）；
+                              （已编入计划，问题 A~E 定义见计划 S2-0b 节；
+                              E = 层次化 GRPO 归一化，codex 轮次 2 审查新增，
+                              审查存档 s2/codex_reviews.md）；
                               其余既有任务（SWE-Safety 加固 + 数据 ingestion）
                               的改动与 G 系列决策留下一轮。
 ```
@@ -104,7 +106,7 @@ rh2 阶段一览（细节见实施计划总纲）：
 ```text
 S0 可行性验证（已完成）   verifiers pin 契约测试、玩具闭环、renderer/协议/MoE 张量
                         验证、SWE smoke 题、实验设计收口；S0-0~4 本机，S0-5 起租 GPU
-S1 端到端最小闭环（已完成，待检查点 2 确认）
+S1 端到端最小闭环（已完成，检查点 2 已确认 2026-07-11）
                         SWE taskset 冻结（8 题探针）、SWEGradingManager、
                         EligibilityReport + Gate、离线导出 adapter、slime adapter
 P1 数据冻结 / P3 八卡预实验（已完成，穿插工作流，不在 S 编号序列）

@@ -6,7 +6,9 @@ S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号�
 
 与 P3 的关系：**完全独立**。S2 全程不需要 GPU（**该表述已过时，待 G10 修正**：S2 末尾应有一次短租集成验收，见 §5）；需要 x86 docker 的部分（验证门、红队包容器实验）用便宜 CPU 实例（G1），不被 P3 租卡排期绑架。协作纪律沿用（notes 三节制、每任务一 commit、独立复核、检查点在 S2-8 前）。
 
-> **[P3 后修订 2026-07-11]** 本轮只做两类改动：(a) 新增任务 **S2-0b（batch schedule 准入 + fan-out 交付边界正规化）**，用户 2026-07-11 定案为 **S2 第一个实现任务**（G0 相应改判）；(b) codex 复核意见（`tmp/codx_adv.md`）与相关修正登记为 **G6~G10 待决策项**。既有任务（S2-1~S2-8）的内容本轮不改，下一轮随 G 系列一并定案。
+> **[P3 后修订 2026-07-11]** 本轮只做两类改动：(a) 新增任务 **S2-0b（batch schedule 准入 + fan-out 交付边界正规化）**，用户 2026-07-11 定案为 **S2 第一个实现任务**（G0 相应改判）；(b) codex 复核意见（存档 `s2/codex_reviews.md`，轮次 1）与相关修正登记为 **G6~G10 待决策项**。既有任务（S2-1~S2-8）的内容本轮不改，下一轮随 G 系列一并定案。
+>
+> **[S2-0b 开工前加固 2026-07-11]** codex 轮次 2 审查（`s2/codex_reviews.md`）指出两个 GRPO 正确性级遗漏，已补入 S2-0b：三层身份模型（PromptGroup / RolloutExecution / Branch）、问题 E（层次化优势归一化，含 J5 gbs20 单组回退实锤）、批次级记账归属改为 `BatchAdmissionReport`（不碰 eligibility）、修复管线顺序改写（fail-closed 是终点）、验收加与真 `build_dp_schedule` 的差分验证。
 
 ---
 
@@ -35,7 +37,21 @@ S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号�
 
 **为什么第一**：这是 formal J4 严格绿灯的唯一阻塞，也是正式训练每一步都要过的关口；纯本地、可完全离线验收、直接决定下次租卡窗口的效率。（导出器 S2-6 只阻塞 E3 回退预案的一条路径，排它后面。）
 
-**要解决的四个问题（用户 2026-07-11 定义，A/B 是 P3 实测失败，C 是兼容缺口，D 是修复的不变量约束）**：
+**先立三层身份模型（codex 轮次 2 审查补入，`s2/codex_reviews.md`）**——问题 C/D/E 全部围绕它，实现前必须写成契约字段而不是约定俗成：
+
+```text
+PromptGroup       同一任务 prompt 的 n 次采样（group_index / parent_rollout_id）
+                  —— GRPO reward/advantage 归一化的单位
+RolloutExecution  一次独立 harness 执行（Sample.index / rollout_id）
+                  —— slime build_dp_schedule 按它计 global_batch_size 的单位
+Branch            一次执行因 compaction/subagent 产生的叶链
+                  —— 多 branch 共享 rollout_id，loss 必须按 rollout 聚合
+反例（本地可复核，bringup_selected/j4_formal…events）：group_index=5 只有
+一次有效执行 index=22，却 fan-out 出 8 个 branch——这 8 个 branch 既不是
+8 次独立 GRPO 采样，也不能用来凑 global_batch_size。
+```
+
+**要解决的五个问题（A/B/C/D 用户 2026-07-11 定义；E 为 codex 轮次 2 审查新增，用户同轮采纳）**：
 
 ```text
 A 治理过滤后，有效 rollout 数不足以组成 global batch
@@ -58,14 +74,29 @@ D 过滤与 repair 不能破坏 GRPO 同题组、reward 和 loss denominator 语
   修 A/B 的任何策略（剔除/补采/延迟拼 batch）都不得：拆散同 prompt 组、
   改变组内 reward 分摊结果、静默改变 loss 归一化分母。凡影响分母的处置
   必须显式记账。
+E 层次化优势归一化（GRPO 正确性缺口，P3 已实测踩中）
+  slime stock 的 _post_process_rewards 按形状 reshape：保留样本数 ==
+  rollout_batch_size × n_samples_per_prompt 时按组切；否则 view(-1, total)
+  把全部样本折叠成一个大组做均值中心化。P3 的 rh2_convert.py 镜像了该逻辑，
+  J5 gbs20 实际保留 36 ≠ 名义 32，确实走了单组回退（rewards_normalization=
+  True）——因此 P3 的有限 loss 只证明 replay/反传/权重同步工作，不证明
+  GRPO 组归一化语义正确（preflight_report.md 补注同步此结论）。
+  正确做法 = group_index 键控分组（slime 自带原型：
+  reference/slime/slime/rollout/_fanout_test_helpers.py 的
+  grpo_normalize_by_group_index），并满足五条不变量：
+  1) 同 prompt group 内先按唯一 rollout execution 计算 reward/advantage；
+  2) 一个 rollout 的 branch 数变化不得改变其他 rollout 的 advantage；
+  3) 同一 rollout 的 advantage 广播给它的 branches；
+  4) branch 对 loss 的总贡献按 rollout 级分母聚合，不随 branch 数放大；
+  5) 缺员 prompt group 首训默认整组补采或整组拒绝，不做隐式可变 n 的 GRPO。
 ```
 
 **实现形态**：adapter 层纯 Python 预检/修复器，在训练消费之前运行：
 
 1. **输入**：治理过滤后的交付样本集（每 sample 的 token 长度、rollout_id、组结构、剔除状态）+ 训练侧并行参数（dp_size / cp_size / vpp_size / mb_group / global_batch_size / 动态装箱参数）。
-2. **预检**：模拟 slime `build_dp_schedule` 的对齐约束，预测 A/B 两类断言是否会触发；结论输出为结构化 `backend_rejection_reason` 字段（进投影/eligibility 账本，不是日志字符串）。
-3. **修复策略**（按序尝试，每一步都过 D 的不变量检查）：fail-closed 拒绝并报因 → 延迟拼 batch（跨波次凑齐）→ 组级子集选择（整组保留或整组剔除，绝不拆组）→ 组级补采（oversample 后按组丢弃）。
-4. **交付边界展平层**（问题 C）：展平/还原双向语义保持，siblings 的 group 归属与 reward/K 分摊在平铺形状上可完整重建。
+2. **预检与记账归属（codex 轮次 2 修正）**：预检模拟 slime `build_dp_schedule` 的对齐约束，预测 A/B 两类断言是否触发。结论**不进 TrajectoryProjection / EligibilityReport**——一条轨迹可能语义完全合格、只是当前批次装箱失败，不应因此改 eligibility（我方契约已明言"可训练性唯一权威是 EligibilityReport，accepted 不构成资格背书"，`contracts/handshake.py`）。正确落点：新增**批次级 `BatchAdmissionReport`**，各条样本的 `BackendHandshake.backend_rejection_reason` 引用它；`BackendRejectionReason` 枚举扩充 `insufficient_rollout_count` / `microbatch_alignment_failed` / `prompt_group_incomplete` / `capacity_backpressure`。
+3. **修复管线（codex 轮次 2 改写顺序——fail-closed 是终点不是起点，否则永远没有 repair）**：预检 → 按配置尝试修复（延迟聚合跨波次凑齐 / 同 prompt 补采完整组 / 完整组选择——整组保留或整组剔除，绝不拆组）→ **重新预检** → 仍不合法才 fail-closed 拒绝并出 `BatchAdmissionReport`。注意边界：组级子集选择只能减样本，**解决不了 A 类**（19<32）；A 类的合法出路只有跨波次等待、降到预注册的更小 batch 目标、或补采完整 prompt group。每一步修复都必须通过 D/E 的不变量检查。
+4. **交付边界形状（问题 C，按三视图实现而非一刀切全局展平——slime rollout 层原生就是 `list[list[Sample]]`，外层是 prompt group，过早展平会丢组边界）**：RepoHarness 内部权威结构 = PromptGroup → RolloutExecution → Branch；slime rollout/filter 视图 = 保留 PromptGroup 外层、组内展开 execution/branch 并携带显式身份 sidecar（group_index / rollout_id / branch_id）；slime train converter 视图 = 平铺 `list[Sample]` 且凭身份字段无损回链。若维持不改 slime 源码，需要我方自己的 rollout-function-path 或统一 fan-out adapter——仅改 custom_generate 返回值覆盖不了 stock rollout 的 `len(group)==n_samples_per_prompt` 假设。
 
 **验收（离线，不需要 GPU）**——注意：**本地没有 P3 的 .pt 张量 dump**（远程同步时排除了大文件），但逐 rollout 事件元数据齐全（`preflight/remote_evidence_20260708/bringup_selected/j4_formal_20260708T160749Z/` 的 bringup_events：remove_sample / 长度 / fan-out / 时间线），验收基于元数据构造真实形状夹具，不是原样重放 tensor converter：
 
@@ -73,12 +104,18 @@ D 过滤与 repair 不能破坏 GRPO 同题组、reward 和 loss denominator 语
 1. 用 J4 formal 事件元数据构造回归夹具，离线复现两种真实失败：
    A 类（44 raw → 31 保留 → 19 rollout < 32）与 B 类（23 mbs ≠ 24）。
    预检器必须在不起 slime 的情况下把两个失败都提前判出。
-2. 修复策略属性测试：任意修复输出满足 D 的三条不变量
+2. 差分验证（codex 轮次 2 新增）：同一输入同时喂我方预检器和 slime 的
+   真实 build_dp_schedule（纯 Python，可直接 import 调用），要求
+   成功/失败类别、step 数、microbatch 数三项一致——"模拟"必须对得上真物。
+3. 修复策略属性测试：任意修复输出满足 D 的三条不变量
    （组完整性 / reward 分摊不变 / 分母变化显式记账）。
-3. 展平层 round-trip 测试：rollout_id/branch/group/reward 语义双向可重建；
-   对 slime 的 dynamic_filter 与 fully_async _key 两个历史崩溃点，用
-   slime 源码内的真函数 + 平铺交付形状做直接单测（不给 slime 打补丁）。
-4. 强验证挂下次租卡短租窗口：strict J4 复验（= 协议 J4 判据第 0 项落地，
+4. 问题 E 属性测试：五条归一化不变量全部成立；用 J4 的
+   group_index=5 × 8 branch 反例做定向回归（该形状下 stock reshape 路径
+   必然折叠单组，我方实现必须给出按 group_index 的正确归一化）。
+5. 展平层 round-trip 测试：group_index/rollout_id/branch_id/reward 语义
+   双向可重建；对 slime 的 dynamic_filter 与 fully_async _key 两个历史
+   崩溃点，用 slime 源码内的真函数 + 交付形状做直接单测（不给 slime 打补丁）。
+6. 强验证挂下次租卡短租窗口：strict J4 复验（= 协议 J4 判据第 0 项落地，
    与 G4/G10 的 GPU 段验收合并成一次短租）。
 ```
 
@@ -140,10 +177,11 @@ R-5 谎报成功（声明通过但未跑测试）             → S2-4 claim-che
 
 ```text
 E3 warm-start 回退 = RL 行为崩坏时用离线过滤后的 SFT 数据回锚。SFT 数据来源分两路：
-路径 1：回收当前策略自己的成功 rollout（同一个 Qwen MoE 模型）
-  → token 级轨迹可直接 SFT，不需要重新分词（同模型同 tokenizer，token-faithful
-    导出给出的就是精确 token 序列 + loss mask；重新渲染反而会引入漂移——
-    thinking 块重渲染漂移正是 REALIGN 发生的原因）。
+路径 1：回收当前策略自己的成功 rollout
+  → token 级轨迹可直接 SFT，不需要重新分词。严谨条件是**同 tokenizer 与
+    renderer 契约**（不要求权重是同一份——同家族续训模型也适用）：
+    token-faithful 导出给出的就是精确 token 序列 + loss mask；重新渲染
+    反而会引入漂移——thinking 块重渲染漂移正是 REALIGN 发生的原因。
   → 本任务（token-faithful 分叉感知重建）是这条路径的硬前置。
 路径 2：用强 teacher（Claude/GPT 等异构模型）生成轨迹做 Qwen 的 SFT
   → teacher 的 token 在别家词表里，必须以结构化语义形态（messages / tool call /
@@ -161,7 +199,7 @@ E3 究竟主用哪条路径，随 G9 一起定。
 3. **契约面升级（显式，非配置开关）**：`ExportTokenFidelity` 加枚举（如 `token_faithful_anchor_verified`）或升 `EXPORTER_VERSION`，让线性重建与锚定重建两种证据形态在记录上可区分；audit 双防线原样保留；幂等语义保持。
 4. **树侧血缘（增强，可选）**：hook TrajectoryManager 树快照导出 fork 点与 REALIGN 覆盖区（S1-6 假设 2 已证无现成 API，需自建提取器），解锁 compaction 分支的 `lineage_reconstruction_not_supported` 当前拒绝态。
 
-**验收（档案定死的关闭标准）**：run8/run9 真实 CC 轨迹（60+65 条交付样本）导出成功且导出 token 与训练侧 rollout dump 逐位一致（与 verify_transport 交叉验证）；t0 掉落 / REALIGN 平铺 / fan-out 多叶三形态各覆盖至少一条；旧线性假设路径对错位输入仍 fail-closed。关闭后在三处（`s1_acceptance_summary.json` blockers / `implementation-notes` / `s2_blockers.md`）显式改判为 closed，不允许静默消失。
+**验收**：~~run8/run9 真实 CC 轨迹（60+65 条交付样本）导出成功且导出 token 与训练侧 rollout dump 逐位一致（与 verify_transport 交叉验证）~~ **该原标准已不可执行**（60+65 条原始 .pt 未同步到本地，codex 轮次 1 核实）——**开工前以 G8 的替代标准为准**：一条已留存的真实 t0 掉落轨迹（`s1/7a_artifacts/export_sample/` 邻近资产）+ REALIGN 平铺 / fan-out 多叶 / compaction 合成回归夹具 + 下次短租采集少量完整真实轨迹复验；旧线性假设路径对错位输入仍 fail-closed。关闭后在三处（`s1_acceptance_summary.json` blockers / `implementation-notes` / `s2_blockers.md`）显式改判为 closed，不允许静默消失。
 
 ### S2-7 TIER_CAP 解除 + 治理收尾
 
@@ -248,7 +286,7 @@ evidence 目录：`docs/agentic_RL/repo_harness_rh2_workstreams/s2/`（implement
 | G4 | 在线拦截 GPU 验收与 P3 的关系 | S2 在线拦截 GPU 段并入下次租卡窗口（P3 已结束，即 G10 的 S2 集成验收短租），不单独租卡 | 待确认 |
 | G5 | micro-VM 安全档 | 本机段只做容器档 + 留 `SandboxSecurityTier` 枚举扩展位，micro-VM 不实现 | 待确认 |
 
-以下 G6~G10 为 P3 后新增（codex 复核意见 `tmp/codx_adv.md` + 本轮核实），**涉及既有任务内容的修改，按用户 2026-07-11 指示留下一轮定案**：
+以下 G6~G10 为 P3 后新增（codex 复核意见，存档 `s2/codex_reviews.md` 轮次 1 + 本轮核实），**涉及既有任务内容的修改，按用户 2026-07-11 指示留下一轮定案**：
 
 | # | 决策 | 推荐 | 状态 |
 | --- | --- | --- | --- |
