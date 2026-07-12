@@ -1,0 +1,62 @@
+{
+  "schema_id": "rh2.fa.claude_code_http_probe.v1",
+  "recorded_at": "2026-07-12T15:09:52.305338+00:00",
+  "scenario": "partial_sse_disconnect",
+  "claude_version": "2.1.205 (Claude Code)",
+  "command_flags": [
+    "--permission-mode",
+    "bypassPermissions",
+    "--output-format",
+    "stream-json",
+    "--include-partial-messages",
+    "--include-hook-events",
+    "--verbose",
+    "--no-session-persistence",
+    "--disable-slash-commands",
+    "--no-chrome"
+  ],
+  "delay_seconds": 0.0,
+  "process_timeout_seconds": 20.0,
+  "elapsed_seconds": 0.851553,
+  "process_exit_code": 1,
+  "terminated_by_probe": false,
+  "request_count": 2,
+  "count_token_request_count": 0,
+  "retry_intervals_seconds": [
+    0.007338
+  ],
+  "request_bodies_identical": false,
+  "requests": [
+    {
+      "request_number": 1,
+      "received_offset_seconds": 0.7843689160072245,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "cd364178b879cff86e49bd35d167a0d31ba159a11150eaaa3f31974e00fe2087",
+      "body_bytes": 101963,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 0.7844360410235822,
+      "response_status": 200,
+      "write_error": "injected_disconnect_after_partial_sse"
+    },
+    {
+      "request_number": 2,
+      "received_offset_seconds": 0.791707290976774,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "fe6243f8333067972f5516ae4fcc3ce98d27ac9c22a5c0b36e5dde3f094d97d6",
+      "body_bytes": 101949,
+      "stream_requested": false,
+      "response_headers_offset_seconds": 0.7917529579717666,
+      "response_status": 200,
+      "write_error": "injected_disconnect_after_partial_sse"
+    }
+  ],
+  "client_retry_events": [],
+  "client_result": {
+    "subtype": "success",
+    "is_error": true,
+    "api_error_status": null,
+    "num_turns": 1,
+    "terminal_reason": "completed"
+  },
+  "stderr_nonempty": true
+}

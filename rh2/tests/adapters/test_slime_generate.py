@@ -41,7 +41,9 @@ from repoharness2.adapters.slime import (
 from repoharness2.adapters.slime.generate import (
     TurnTape,
     detect_context_shrink,
-    ensure_claude_code_compaction_disabled,
+    CLAUDE_CODE_TRAINING_GUARD_ENVS,
+    assert_adapter_status_not_404,
+    ensure_claude_code_training_guards,
 )
 from repoharness2.contracts import BundleMount, GradingReport
 from repoharness2.envpack import bundles
@@ -1626,16 +1628,32 @@ def test_ensure_compaction_disabled_merges_and_fail_closed():
     """DISABLE_COMPACT 合并进 SLIME_AGENT_CC_EXTRA_ENVS；已有键保留；坏 JSON 拒绝。"""
 
     env: dict[str, str] = {}
-    merged = ensure_claude_code_compaction_disabled(env)
-    assert merged == {"DISABLE_COMPACT": "1"}
+    merged = ensure_claude_code_training_guards(env)
+    # 四变量训练守卫全在（codex 轮次 8：源码引导验证）
+    assert merged == dict(CLAUDE_CODE_TRAINING_GUARD_ENVS)
+    assert merged["CLAUDE_CODE_MAX_RETRIES"] == "0"
+    assert merged["CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK"] == "1"
 
     env2 = {"SLIME_AGENT_CC_EXTRA_ENVS": '{"FOO": "bar"}'}
-    merged2 = ensure_claude_code_compaction_disabled(env2)
-    assert merged2 == {"FOO": "bar", "DISABLE_COMPACT": "1"}
+    merged2 = ensure_claude_code_training_guards(env2)
+    assert merged2["FOO"] == "bar" and merged2["DISABLE_COMPACT"] == "1"
 
     env3 = {"SLIME_AGENT_CC_EXTRA_ENVS": "[1, 2]"}
     with pytest.raises(SlimeBindingError, match="cc_extra_envs_not_object"):
-        ensure_claude_code_compaction_disabled(env3)
+        ensure_claude_code_training_guards(env3)
+
+    # 冲突检测：用户不得覆盖正式防线
+    env4 = {"SLIME_AGENT_CC_EXTRA_ENVS": '{"CLAUDE_CODE_MAX_RETRIES": "3"}'}
+    with pytest.raises(SlimeBindingError, match="cc_training_guard_conflict"):
+        ensure_claude_code_training_guards(env4)
+
+
+def test_adapter_status_not_404_guard():
+    """CC 2.1.205 对流式创建阶段 404 绕过 fallback 开关——adapter 不得返 404。"""
+
+    assert assert_adapter_status_not_404(503) == 503
+    with pytest.raises(SlimeBindingError, match="adapter_must_not_return_404"):
+        assert_adapter_status_not_404(404)
 
 
 def test_compaction_disabled_env_reaches_child_process():
@@ -1646,7 +1664,7 @@ def test_compaction_disabled_env_reaches_child_process():
     """
 
     env = dict(_os.environ)
-    ensure_claude_code_compaction_disabled(env)
+    ensure_claude_code_training_guards(env)
     out = _subprocess.run(
         [
             _sys.executable,

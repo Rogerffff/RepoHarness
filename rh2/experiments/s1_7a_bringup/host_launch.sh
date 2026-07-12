@@ -20,19 +20,23 @@ prepare() {
   fi
   # Claude Code CLI：2.x 的 npm 主包只是 bootstrap（postinstall 拉平台二进制），
   # 直接下载 linux-x64 平台包——里面是自包含原生二进制，rollout 容器内免 Node/npm。
-  if [ ! -f /root/tarballs/claude-code.tgz ]; then
-    CC_URL=$(curl -fsSL https://registry.npmjs.org/@anthropic-ai/claude-code/latest \
-      | python3 -c "import json,sys; print(json.load(sys.stdin)['dist']['tarball'])")
-    echo "claude-code bootstrap tarball: ${CC_URL}"
-    curl -fL -o /root/tarballs/claude-code.tgz "${CC_URL}"
-  fi
+  # codex 轮次 8 P0-8：**固定版本 + 校验 sha256**（原 `latest` 不可复现；FA-5
+  # 的 CC 行为画像绑定 2.1.205，见 fa/claude_code_retry_timeout_source_guided_
+  # validation.md §4）。升级 CC 必须先重跑探针套件生成新证据、人工裁决差异。
+  CC_VER="${RH2_CLAUDE_CODE_VERSION:-2.1.205}"
+  CC_LINUX_SHA256="${RH2_CLAUDE_CODE_LINUX_SHA256:-d3dadfa9cde294ac82c755eb6d889291228849180bac5d677ad1a4027aca1bc4}"
   if [ ! -s /root/tarballs/claude-code-linux-x64.tgz ]; then
-    CC_VER=$(curl -fsSL https://registry.npmjs.org/@anthropic-ai/claude-code/latest \
-      | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
-    echo "claude-code platform package version: ${CC_VER}"
+    echo "claude-code platform package pinned version: ${CC_VER}"
     curl -fL -o /root/tarballs/claude-code-linux-x64.tgz \
       "https://registry.npmjs.org/@anthropic-ai/claude-code-linux-x64/-/claude-code-linux-x64-${CC_VER}.tgz"
+    ACTUAL_SHA=$(sha256sum /root/tarballs/claude-code-linux-x64.tgz | awk '{print $1}')
+    if [ "${ACTUAL_SHA}" != "${CC_LINUX_SHA256}" ]; then
+      echo "FATAL: claude-code-linux-x64 sha256 mismatch: got ${ACTUAL_SHA} want ${CC_LINUX_SHA256}" >&2
+      rm -f /root/tarballs/claude-code-linux-x64.tgz
+      exit 1
+    fi
     echo "${CC_VER}" > /root/tarballs/claude-code-version.txt
+    echo "claude-code-linux-x64 sha256 verified: ${ACTUAL_SHA}"
   fi
   # 静态 docker CLI（挂进 slime 容器用，daemon 走宿主 socket）
   if [ ! -x /root/tarballs/docker-cli/docker ]; then

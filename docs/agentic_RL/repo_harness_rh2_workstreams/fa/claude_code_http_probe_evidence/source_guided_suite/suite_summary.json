@@ -1,0 +1,141 @@
+{
+  "schema_id": "rh2.fa.claude_code_http_source_guided_suite.v1",
+  "recorded_at": "2026-07-12T15:47:12.305229+00:00",
+  "claude_version": "2.1.205 (Claude Code)",
+  "claude_binary_sha256": "33e28624c5ae84f2bd7d2d8761e5d2e77997ba965cb11b6448de6b6e2c566f9c",
+  "expected_version": "2.1.205",
+  "hard_pass": true,
+  "hard_failures": [],
+  "diagnostic_findings": [],
+  "diagnostic_observations": [
+    {
+      "name": "stream_watchdog_diagnostic",
+      "observed": "stream watchdog configured for 1000ms did not terminate the request before the 3s probe cap",
+      "request_count": 1,
+      "terminated_by_probe": true
+    }
+  ],
+  "cases": [
+    {
+      "name": "delayed_success_hardened",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 0,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "http500_max0",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "http429_max0",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "disconnect_max0",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "partial_disconnect_hardened",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "http404_hardened_exception",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 2,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true,
+        false
+      ]
+    },
+    {
+      "name": "http500_header_no_retry",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "preheader_timeout_max0",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 1,
+      "terminated_by_probe": false,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "partial_hang_api_timeout_only",
+      "diagnostic_only": false,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 143,
+      "terminated_by_probe": true,
+      "stream_flags": [
+        true
+      ]
+    },
+    {
+      "name": "stream_watchdog_diagnostic",
+      "diagnostic_only": true,
+      "passed_characterization": true,
+      "failures": [],
+      "request_count": 1,
+      "process_exit_code": 143,
+      "terminated_by_probe": true,
+      "stream_flags": [
+        true
+      ]
+    }
+  ]
+}

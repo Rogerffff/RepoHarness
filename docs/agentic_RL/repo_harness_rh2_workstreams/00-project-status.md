@@ -30,7 +30,9 @@ FA fully async 训练链    🔨 进行中 ← ★ 第一实施工作流（05 �
                             FA-4 对拍部分 ✅（faithful DIS 参考实现 + 三方对拍，
                             信任区间按论文式 3 勘误为 (0.2,4.0) 开区间）；
                             FA-1 ✅（持续 worker/有界队列/资源限额/ModelCallProxy
-                            守卫三条件/重试白名单 + glue 接线）。测试 647→749。
+                            守卫三条件/重试白名单 + 生产接线薄壳 + proxy 接入
+                            capture wire + CC 四变量训练守卫 + 版本固定 2.1.205；
+                            含 codex 轮次 6/7/8 三轮 follow-up）。测试 647→831。
                             下一步：FA-2 PromptGroupAssembler → FA-3/4 接线 →
                             FA-5（notes：fa/implementation-notes.md）
 S2 SWE-Safety 加固       ⏳ 计划草案（S2-0b 已迁出），与 FA 并行，尚未开工

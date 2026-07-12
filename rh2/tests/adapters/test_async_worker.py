@@ -988,3 +988,57 @@ def test_static_active_coordinator_conservative_window():
     assert window.active_version == window.target_version == "7"
     non_numeric = StaticActiveCoordinator(lambda: "ckpt_a").current_window()
     assert non_numeric.old_version == "ckpt_a_prev"
+
+
+async def test_all_unattributable_terminations_poison():
+    """codex 轮次 8 P0-3：发前等待超时/版本恢复超时/fencing 不符/版本回退
+    等分支都必须统一 poison（此前只有部分分支 poison）。"""
+
+    registry = SessionPoisonRegistry()
+
+    # 版本恢复超时（守卫 3 超时）
+    coord = FakeCoordinator(
+        [_window(epoch=1, phase="ACTIVE", active="1")] * 2
+        + [_window(epoch=2, phase="UPDATING", active="1", target="2")] * 4
+    )
+    clock_values = iter([0.0, 0.0, 0.0, 100.0])
+    proxy = ModelCallProxy(
+        coord, sleeper=_no_sleep, wait_timeout_seconds=50.0,
+        clock=lambda: next(clock_values, 200.0),
+    )
+
+    async def send(attempt: int) -> dict:
+        return _abort_response([])
+
+    with pytest.raises(UnattributableModelCallError, match="version_did_not_advance"):
+        await proxy.call("exec_U", "turn_0", send, session_id="sid_U", poison_registry=registry)
+    assert registry.is_poisoned("sid_U")  # 此前该分支漏 poison
+
+
+async def test_recovery_wait_respects_episode_deadline():
+    """P0-3：版本恢复等待受 episode 绝对 deadline 约束（不再独立 60s）。"""
+
+    registry = SessionPoisonRegistry()
+    coord = FakeCoordinator(
+        [_window(epoch=1, phase="ACTIVE", active="1")] * 2
+        + [_window(epoch=2, phase="UPDATING", active="1", target="2")] * 10
+    )
+    # episode 只剩 3s（< wait_timeout 50s）；clock 前进使 deadline 很快到
+    clock = {"t": 0.0}
+
+    def tick() -> float:
+        clock["t"] += 1.0
+        return clock["t"]
+
+    proxy = ModelCallProxy(coord, sleeper=_no_sleep, wait_timeout_seconds=50.0, clock=tick)
+
+    async def send(attempt: int) -> dict:
+        return _abort_response([])
+
+    with pytest.raises(UnattributableModelCallError):
+        await proxy.call(
+            "exec_V", "turn_0", send,
+            session_id="sid_V", poison_registry=registry,
+            deadline_monotonic=3.0,  # 绝对 deadline 远早于 50s wait
+        )
+    assert registry.is_poisoned("sid_V")

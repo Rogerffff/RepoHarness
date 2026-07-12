@@ -299,3 +299,60 @@ def test_parse_bool_env_flag_strict():
     for bad in ("true", "True", "yes", "2", " 1"):
         with pytest.raises(SlimeBindingError, match="invalid_bool_env_flag"):
             parse_bool_env_flag("RH2_REQUIRE_REAL_WEIGHT_VERSIONS", bad)
+
+
+async def test_worker_crash_not_silently_restarted():
+    """codex 轮次 8 P0-5：worker 以 WorkerHalted 崩溃后，下一批不得静默重启
+    ——必须传播原异常（sink/任务源故障后训练不得继续）。"""
+
+    from repoharness2.adapters.slime.async_worker import WorkerHalted
+
+    groups = [[FakeSample("g1_m0")], [FakeSample("g2_m0")]]
+    call = {"n": 0}
+
+    async def execute(member: FakeSample):
+        call["n"] += 1
+        return [FakeSample(f"{member.name}_leaf")]
+
+    def bad_sink(spec, exc):
+        raise ValueError("sink broken")
+
+    service = FaRolloutService(
+        group_source=_group_source_from(groups),
+        execute_member=execute,
+        group_size=1,
+        rollout_batch_size=1,
+        concurrency=1,
+        drain_timeout_seconds=0.5,
+    )
+    # 注入坏 sink：手动构造 worker 让第一批就 halt
+    import asyncio as _a
+
+    from repoharness2.adapters.slime.async_worker import (
+        BoundedDeliveryQueue,
+        ContinuousExecutionWorker,
+    )
+
+    async def crashing_execute(spec):
+        raise RuntimeError("boom")
+
+    service._queue = BoundedDeliveryQueue(maxsize=8)
+    from fa_bringup.rollout_entry import _InterimGroupCollector
+
+    service._collector = _InterimGroupCollector(1)
+    service._worker = ContinuousExecutionWorker(
+        task_source=service._task_source,
+        execute_fn=crashing_execute,
+        delivery_queue=service._queue,
+        failure_sink=bad_sink,
+        concurrency=1,
+        drain_timeout_seconds=0.5,
+    )
+    service._stop = _a.Event()
+    service._worker_task = _a.create_task(service._worker.run(service._stop))
+    # 等 worker 崩溃
+    with pytest.raises(WorkerHalted):
+        await _a.wait_for(service._worker_task, timeout=5)
+    # 下一批调用必须传播故障，不静默重启
+    with pytest.raises(WorkerHalted):
+        await service.collect_batch()

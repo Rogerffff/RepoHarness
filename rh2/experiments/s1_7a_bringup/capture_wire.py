@@ -48,19 +48,28 @@ class PendingTurn:
     capture_params: dict[str, Any]
     raw_response: dict[str, Any]
     weight_version: str | None
+    request_id: str  # SGLang rid（本轮请求身份，P0-6 去覆盖的键）
+    proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
 
 
 class CaptureRegistry:
-    """sid -> (hook, 暂存轮, 按轮 weight_version) 的进程级登记表。"""
+    """sid -> (hook, 暂存轮 FIFO, 按轮 weight_version) 的进程级登记表。"""
 
     def __init__(self) -> None:
         self.hooks: dict[str, GenerationCaptureHook] = {}
-        self.pending: dict[str, PendingTurn] = {}
+        # P0-6（codex 轮次 8）：pending 改 **FIFO 队列**——同 session 的并发
+        # 请求（CC subagent 共享 sid）不再互相覆盖静默丢数据；commit 按暂存
+        # 顺序弹最旧。完整的 request/turn 级归属（record_turn 传 request_id）
+        # 需要改 slime 签名，留 FA-2/FA-5；本版消除的是**静默覆盖**这个真 bug。
+        self.pending: dict[str, list[PendingTurn]] = {}
         self.weight_versions: dict[str, list[str]] = {}
-        self.stats = {"staged": 0, "committed": 0, "dropped_uncommitted": 0}
-        # FA-1 follow-up（codex 轮次 7 P0-4）：proxy 接入真实 HTTP 链的挂点。
-        # glue 启动时装配（协调器缺席期用 StaticActiveCoordinator——任何中断
-        # 不可归因 → poison + 缺员，保守正确）；未装配时 wire 走原直连路径。
+        self.stats = {
+            "staged": 0,
+            "committed": 0,
+            "dropped_uncommitted": 0,
+            "concurrent_overlap_seen": 0,
+        }
+        # FA-1 follow-up（codex 轮次 7/8）：proxy 接入真实 HTTP 链的挂点。
         self.model_call_proxy: ModelCallProxy | None = None
         self.poison = SessionPoisonRegistry()
         self.session_deadlines: dict[str, float] = {}
@@ -70,6 +79,7 @@ class CaptureRegistry:
     def register(self, sid: str, hook: GenerationCaptureHook) -> None:
         self.hooks[sid] = hook
         self.weight_versions[sid] = []
+        self.pending.setdefault(sid, [])
 
     def session_deadline(self, sid: str | None) -> float | None:
         """会话 deadline（episode 预算传播）。首次调用即按默认预算起表——
@@ -94,22 +104,35 @@ class CaptureRegistry:
 
     def unregister(self, sid: str) -> None:
         self.hooks.pop(sid, None)
-        if self.pending.pop(sid, None) is not None:
+        # P0-1（codex 轮次 8）：会话销毁时，暂存但未 commit 的轮 = 未真正交付
+        # 给 CC（HTTP flush 前断连/失败）——显式 abandon delivered draft，
+        # 消除"delivered 但 CC 没收到"的虚假交付。
+        leftover = self.pending.pop(sid, None) or []
+        for turn in leftover:
             self.stats["dropped_uncommitted"] += 1
+            if turn.proxy_result is not None:
+                try:
+                    turn.proxy_result.abandon_delivered("session_unregistered_before_commit")
+                except ValueError:
+                    pass  # 已 finalize/abandon（幂等）
+        self.session_deadlines.pop(sid, None)
+        self._turn_seq.pop(sid, None)
 
     def stage(self, sid: str | None, turn: PendingTurn) -> None:
         if sid is None or sid not in self.hooks:
             return  # 非 rh2 会话（探针等）不捕获
-        if self.pending.pop(sid, None) is not None:
-            self.stats["dropped_uncommitted"] += 1  # 上一轮 flush 失败未入树
-        self.pending[sid] = turn
+        queue = self.pending.setdefault(sid, [])
+        if queue:
+            self.stats["concurrent_overlap_seen"] += 1  # 上轮未 commit 又来新轮
+        queue.append(turn)  # FIFO：不再静默覆盖旧轮（P0-6）
         self.stats["staged"] += 1
 
     def commit(self, sid: str) -> None:
         hook = self.hooks.get(sid)
-        turn = self.pending.pop(sid, None)
-        if hook is None or turn is None:
+        queue = self.pending.get(sid)
+        if hook is None or not queue:
             return
+        turn = queue.pop(0)  # FIFO：按暂存顺序弹最旧
         hook.on_generate_response(
             prompt_token_ids=turn.prompt_ids,
             sampling_params=turn.capture_params,
@@ -117,6 +140,13 @@ class CaptureRegistry:
         )
         if turn.weight_version is not None:
             self.weight_versions[sid].append(turn.weight_version)
+        # P0-1：commit 成功（该轮已确定进入轨迹树、CC 已收到响应）才 finalize
+        # delivered——capture ref 用真实 request_id（不再是复用的 staged:sid:tN）
+        if turn.proxy_result is not None:
+            try:
+                turn.proxy_result.finalize_delivered(f"capture:{sid}:{turn.request_id}")
+            except ValueError:
+                pass  # 已 finalize（幂等，防重复 commit）
         self.stats["committed"] += 1
 
 
@@ -169,20 +199,26 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 )
             sp["max_new_tokens"] = min(int(sp.get("max_new_tokens", remaining)), remaining)
 
-        payload: dict[str, Any] = {
-            "rid": uuid.uuid4().hex,
+        base_payload: dict[str, Any] = {
             "input_ids": list(prompt_ids),
             "sampling_params": sp,
             "return_logprob": True,
         }
         if want_routing:
-            payload["return_routed_experts"] = True
+            base_payload["return_routed_experts"] = True
         headers = (
             {"X-SMG-Routing-Key": session_id} if session_id and session_id != "default" else None
         )
         timeout = aiohttp.ClientTimeout(total=None, sock_read=900)
+        last_rid: dict[str, str] = {}
 
-        async def _send_once(_attempt_number: int) -> dict:
+        async def _send_once(attempt_number: int) -> dict:
+            # P0-4（codex 轮次 8）：**每个 attempt 独立 rid**——proxy 内部重生成
+            # 的 attempt1/attempt2 不再共用同一 SGLang rid（否则 /abort_request
+            # 无法精确指向被 abort 的那次）。
+            rid = uuid.uuid4().hex
+            last_rid["rid"] = rid
+            payload = {"rid": rid, **base_payload}
             try:
                 async with aiohttp.ClientSession(timeout=timeout) as sess, sess.post(
                     f"{adapter.sglang_url}/generate", json=payload, headers=headers
@@ -192,13 +228,11 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                         raise RuntimeError(f"sglang upstream {r.status}: {text[:400]}")
                     return await r.json(content_type=None)
             except (asyncio.CancelledError, aiohttp.ClientError, asyncio.TimeoutError):
-                try:  # stock 同款：eager abort，释放引擎槽位
+                try:  # stock 同款：eager abort **本 attempt 的 rid**，释放引擎槽位
                     async with aiohttp.ClientSession(
                         timeout=aiohttp.ClientTimeout(total=5)
                     ) as s2:
-                        await s2.post(
-                            f"{adapter.sglang_url}/abort_request", json={"rid": payload["rid"]}
-                        )
+                        await s2.post(f"{adapter.sglang_url}/abort_request", json={"rid": rid})
                 except Exception:
                     pass
                 raise
@@ -208,8 +242,9 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         if proxy is None or session_id is None or session_id not in registry.hooks:
             # 未装配 proxy / 非 rh2 会话（探针）：原直连路径逐字保留
             data = await _send_once(1)
+            request_id = last_rid.get("rid", uuid.uuid4().hex)
         else:
-            # D-FA-3 生产接线（codex 轮次 7 P0-4）：poison 快速拒绝 + deadline
+            # D-FA-3 生产接线（codex 轮次 7/8）：poison 快速拒绝 + deadline
             # 传播 + 发前 ACTIVE 等待 + 更新窗口 abort 内部重生成，全在 proxy 内
             registry.poison.check(session_id)
             turn_seq = registry.next_turn_seq(session_id)
@@ -222,6 +257,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 deadline_monotonic=registry.session_deadline(session_id),
             )
             data = dict(proxy_result.response)
+            request_id = last_rid.get("rid", f"t{turn_seq}")
 
         meta = data.get("meta_info") or {}
         pairs = meta.get("output_token_logprobs") or []
@@ -231,6 +267,12 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
 
         # 暂存捕获（record_turn 时提交）。capture 参数记录**生效值**：
         # temperature/top_p 若请求未带则为引擎默认 1.0（SGLang SamplingParams 默认）。
+        # P0-1（codex 轮次 8）：proxy_result 挂进 PendingTurn，**finalize 移到
+        # commit**——stage 只是本进程暂存，CC 的 SSE flush 发生在 slime
+        # _respond()（本函数返回之后）。在 flush 前 finalize 会造成"delivered
+        # 但 CC 没收到"的虚假交付；改到 record_turn/commit 成功（该轮确定进入
+        # 轨迹树、CC 已收到）才 finalize，会话销毁时未 commit 的 draft 由
+        # unregister abandon。
         registry.stage(
             session_id,
             PendingTurn(
@@ -246,12 +288,10 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 weight_version=(
                     str(meta["weight_version"]) if meta.get("weight_version") is not None else None
                 ),
+                request_id=request_id,
+                proxy_result=proxy_result,
             ),
         )
-        if proxy_result is not None:
-            # 两阶段第二步：暂存（本进程持久化点）成功才 finalize delivered；
-            # stage 之前任何异常路径都会留下 unfinalized draft（对账可见）
-            proxy_result.finalize_delivered(f"staged:{session_id}:t{proxy_result.draft.attempt_number}")
         return slime_common.TurnRecord(
             prompt_ids=list(prompt_ids),
             output_ids=output_ids,

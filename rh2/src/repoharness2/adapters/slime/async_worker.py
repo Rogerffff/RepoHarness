@@ -616,19 +616,42 @@ class ModelCallProxy:
         deadline_monotonic: float | None = None,
         min_attempt_budget_seconds: float = 5.0,
     ) -> ProxyCallResult:
-        """一次逻辑轮（codex 轮次 7 扩展：poison / episode deadline / 发前等待）。
+        """一次逻辑轮（codex 轮次 7/8：poison / episode deadline / 发前等待）。
 
-        - 发前 poison 检查：中毒 session 一律 SessionPoisonedError 快速拒绝
-          （CC 的 5xx 指数退避重试由此截断）；
-        - 发前 ACTIVE 等待：明知窗口在更新（phase != ACTIVE）不发大概率被
-          abort 的请求，等回 ACTIVE 再发（受 deadline 约束）；
-        - deadline 传播：attempt 超时与等待超时都被 `episode_deadline - now`
-          截断；剩余预算不足一次重生成 → poison + 缺员，不再尝试。
+        薄包装：**任何** UnattributableModelCallError 终止都在此统一 poison
+        （codex 轮次 8 P0-3——发前等待超时/版本恢复超时/fencing 不符/版本回退
+        等分支此前漏 poison）。CC 客户端取消（CancelledError）在内部已落账 +
+        poison 后原样传播。
         """
 
+        sid = session_id or execution_scope
+        try:
+            return await self._call_inner(
+                execution_scope,
+                logical_turn_id,
+                send_fn,
+                sid=sid,
+                poison_registry=poison_registry,
+                deadline_monotonic=deadline_monotonic,
+                min_attempt_budget_seconds=min_attempt_budget_seconds,
+            )
+        except UnattributableModelCallError as exc:
+            self._poison(sid, poison_registry, exc.reason_code)
+            raise
+
+    async def _call_inner(
+        self,
+        execution_scope: str,
+        logical_turn_id: str,
+        send_fn: Callable[[int], Awaitable[Mapping[str, Any]]],
+        *,
+        sid: str,
+        poison_registry: "SessionPoisonRegistry | None",
+        deadline_monotonic: float | None,
+        min_attempt_budget_seconds: float,
+    ) -> ProxyCallResult:
         if not execution_scope:
             raise ValueError("execution_scope 必填（attempt 全局身份的组成部分）。")
-        sid = session_id or execution_scope
         scoped = f"{execution_scope}/{logical_turn_id}"
         attempts: list[ModelCallAttempt] = []
         attempt_number = 0
@@ -639,7 +662,6 @@ class ModelCallProxy:
                 poison_registry.check(sid)
             remaining = self._remaining(deadline_monotonic)
             if remaining is not None and remaining < min_attempt_budget_seconds:
-                self._poison(sid, poison_registry, "episode_deadline_exhausted")
                 self._record_failed(attempts, scoped, attempt_id, attempt_number)
                 raise UnattributableModelCallError(
                     "episode_deadline_exhausted",
@@ -659,7 +681,7 @@ class ModelCallProxy:
                 # 但先落账 + poison——取消后 CC 的重试不得复活该 session
                 ref = self._store_artifact(attempt_id, "client_cancelled")
                 self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
-                self._poison(sid, poison_registry, "client_cancelled")
+                self._poison(sid, poison_registry, "client_cancelled")  # 取消不走外层统一路径
                 raise
             except Exception as exc:  # noqa: BLE001 —— 归因在下方守卫做
                 failure = exc
@@ -675,7 +697,6 @@ class ModelCallProxy:
                     self._record_failed(
                         attempts, scoped, attempt_id, attempt_number, evidence=[ref]
                     )
-                    self._poison(sid, poison_registry, "delivered_response_missing_weight_version")
                     raise UnattributableModelCallError(
                         "delivered_response_missing_weight_version",
                         f"{attempt_id}: 响应缺 meta_info.weight_version，provenance 不完整。",
@@ -704,7 +725,6 @@ class ModelCallProxy:
             ref = self._store_artifact(attempt_id, payload)
             if not overlapped:
                 self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
-                self._poison(sid, poison_registry, "no_overlapping_update_window")
                 raise UnattributableModelCallError(
                     "no_overlapping_update_window",
                     f"{attempt_id}: 中断与任何更新窗口不重叠——按缺员处置，不做透明重试。",
@@ -724,7 +744,6 @@ class ModelCallProxy:
                 self._record_failed(
                     attempts, scoped, f"{attempt_id}_cap", attempt_number, evidence=[ref]
                 )
-                self._poison(sid, poison_registry, "max_regenerations_exceeded")
                 raise UnattributableModelCallError(
                     "max_regenerations_exceeded",
                     f"{scoped}: 连续 {attempt_number} 次被 abort——超过重生成上限。",
@@ -759,8 +778,11 @@ class ModelCallProxy:
         scoped: str,
         attempt_number: int,
         abort_window: TrainingRuntimeWindow,
+        deadline_monotonic: float | None = None,
     ) -> None:
-        """守卫 3：恢复必须**达到 abort 窗口的 target_version**（轮次 6 严重 6）。"""
+        """守卫 3：恢复必须**达到 abort 窗口的 target_version**（轮次 6 严重 6）；
+        等待受 episode 绝对 deadline 约束（轮次 8 P0-3：此前用独立固定 60s，
+        与 attempt1 生成 + attempt2 生成叠加可远超 episode 预算）。"""
 
         try:
             target = _version_int(abort_window.target_version)
@@ -770,7 +792,9 @@ class ModelCallProxy:
                 "non_numeric_version_in_window",
                 f"abort 窗口 target_version={abort_window.target_version!r} 非数值。",
             ) from None
-        deadline = self._clock() + self._wait_timeout
+        remaining = self._remaining(deadline_monotonic)
+        budget = self._wait_timeout if remaining is None else min(self._wait_timeout, remaining)
+        deadline = self._clock() + max(budget, 0.0)
         while True:
             window = self._coordinator.current_window()
             if window.phase == "ACTIVE":

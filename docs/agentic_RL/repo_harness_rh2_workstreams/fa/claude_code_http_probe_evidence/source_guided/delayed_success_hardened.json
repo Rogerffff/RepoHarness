@@ -1,0 +1,55 @@
+{
+  "schema_id": "rh2.fa.claude_code_http_probe.v1",
+  "recorded_at": "2026-07-12T15:41:07.232749+00:00",
+  "scenario": "delay_success",
+  "claude_version": "2.1.205 (Claude Code)",
+  "control_env": {
+    "CLAUDE_CODE_MAX_RETRIES": "0",
+    "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+    "CLAUDE_CODE_UNATTENDED_RETRY": "0",
+    "API_TIMEOUT_MS": "5000"
+  },
+  "command_flags": [
+    "--permission-mode",
+    "bypassPermissions",
+    "--output-format",
+    "stream-json",
+    "--include-partial-messages",
+    "--include-hook-events",
+    "--verbose",
+    "--no-session-persistence",
+    "--disable-slash-commands",
+    "--no-chrome"
+  ],
+  "delay_seconds": 3.0,
+  "process_timeout_seconds": 8.0,
+  "elapsed_seconds": 3.856045,
+  "process_exit_code": 0,
+  "terminated_by_probe": false,
+  "request_count": 1,
+  "count_token_request_count": 0,
+  "retry_intervals_seconds": [],
+  "request_bodies_identical": true,
+  "requests": [
+    {
+      "request_number": 1,
+      "received_offset_seconds": 0.7848568339832127,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "eab50c21452c6c015121025808c56d049cbb26cfcba697c1522171d08b07eca2",
+      "body_bytes": 101962,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 3.785711916978471,
+      "response_status": 200,
+      "write_error": null
+    }
+  ],
+  "client_retry_events": [],
+  "client_result": {
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "num_turns": 1,
+    "terminal_reason": "completed"
+  },
+  "stderr_nonempty": true
+}

@@ -352,3 +352,55 @@ BoundedDeliveryQueue / ResourceLimits / ModelCallProxy / 重试白名单）+
   一致性等）列为 FA-5 前的独立本地任务。
 - 测试 768 → 797。仍留 FA-2/FA-5 的：assembler 替换 interim 聚合器、
   真机验证 slime 调用入口与 CC 真实二进制行为。
+
+## FA-1 follow-up 3（2026-07-13，codex 轮次 8：6 P0 + 源码引导 CC 实验；原文
+## 存档 `../s2/codex_reviews.md` 轮次 8，CC 行为证据见本目录两份报告）
+
+- **P0-1（finalize 早于真实 SSE flush）**：finalize_delivered 从 wire 的
+  stage 时刻移到 **commit（record_turn 成功）时刻**——CC 的 SSE flush 发生
+  在 slime `_respond()`（wire 返回之后），stage 时 finalize 会造成"delivered
+  但 CC 没收到"虚假交付。ProxyCallResult 挂进 PendingTurn；unregister 对
+  未 commit 的 draft 显式 `abandon_delivered`。capture ref 改用真实
+  request_id（不再是复用的 `staged:sid:tN`）。
+- **P0-2（poison/非零 exit 不强制拒绝）**：orchestrator 加可注入
+  `session_poison_check`（glue 接 `registry.poison.is_poisoned`），harness
+  返回后复检——执行期中毒即整 execution 缺员（SlimeBindingError 收口成
+  abort 形状），已捕获的 partial trace 全部作废；正式链另加
+  `reject_on_nonzero_harness_exit`（默认 False = S1 兼容，非零退出可能是
+  合法任务失败负样本；True 时训练守卫下的非零退出可疑到拒绝）。
+- **P0-3（不可归因分支漏 poison + 恢复等待无视 episode deadline）**：
+  call() 改薄包装——**任何** UnattributableModelCallError 在外层统一 poison
+  （发前等待超时/版本恢复超时/fencing 不符/版本回退此前漏 poison）；
+  `_wait_version_advance` 接 episode 绝对 deadline（此前独立固定 60s，
+  与 attempt1+attempt2 生成叠加可远超 episode 预算）。
+- **P0-4（重生成复用同一 rid）**：rid 生成移进 `_send_once`——每个 attempt
+  独立 rid，`/abort_request` 精确指向被 abort 的那次。
+- **P0-5（worker 跨 batch 崩溃静默重启）**：`_ensure_worker` 发现旧 task
+  已 done 时**先 `.result()` 传播异常**——WorkerHalted 必炸给启动方，
+  正常退出则报 `worker_already_exited`（已 shutdown 不自动重启）；重启只
+  能走显式新建 service。"故障后训练不得继续"成为硬规则。
+- **P0-6（同 session 并发覆盖 capture）**：`pending` 改 **FIFO 队列**
+  （dict[sid, list]）——并发暂存不再静默覆盖丢数据，commit 按序弹最旧，
+  `concurrent_overlap_seen` 计数。完整 request/turn 级归属（record_turn
+  传 request_id）需改 slime 签名，留 FA-2/FA-5；本版消除的是静默丢数据。
+- **CC 训练守卫升级**：`ensure_claude_code_compaction_disabled` →
+  `ensure_claude_code_training_guards`（四变量：DISABLE_COMPACT=1 +
+  CLAUDE_CODE_MAX_RETRIES=0 + DISABLE_NONSTREAMING_FALLBACK=1 +
+  UNATTENDED_RETRY=0，源码 + CC 2.1.205 实测背书）；冲突检测（用户不得
+  覆盖）；`assert_adapter_status_not_404`（CC 对流式创建阶段 404 绕过
+  fallback 开关，adapter 任何错误路径不得返 404）。
+- **P1**：host_launch.sh 固定 **CC 2.1.205 + sha256 校验**（原 `latest`
+  不可复现）；session_deadlines/turn_seq 在 unregister 时清理（有界）；
+  provider 同步 requests.get 保持同步但注释澄清它只在握手构造时算一次、
+  不在 wire finalize 热路径。
+- **CC 行为证据入库**（codex 本机 2.1.205 + fake endpoint，两份报告 +
+  探针套件 + 34 个 JSON 证据）：500/429/断连指数退避实测、120s+ 无重试
+  等待下界、404 fallback 例外、`proxy_deadline < CC API timeout <
+  harness hard-kill` 不变量。**探针套件是版本画像/漂移检测器**，升级 CC
+  必须先生成新证据人工裁决，不许改旧期望值让测试变绿。
+- 测试 797 → 831。**明确留 FA-5 真机**（本机 fake endpoint 代替不了）：
+  真 CC 二进制被 execution owner 主动终止（sandbox kill）、真 SGLang
+  rid/abort_request 四方对账、容器内 tarball sha256/版本 fail-fast、
+  pause_generation abort/hold 语义、Linux x64 vs macOS arm64 行为差异。
+  **明确留 FA-2**：request/turn 级 capture 归属（改 slime record_turn 签名）、
+  interim collector 替换为 assembler、worker 显式 recovery API。

@@ -134,8 +134,10 @@ __all__ = [
     "StartupCheckError",
     "TurnTape",
     "backfill_leaf_sample",
+    "assert_adapter_status_not_404",
     "detect_context_shrink",
     "ensure_claude_code_compaction_disabled",
+    "ensure_claude_code_training_guards",
     "parse_bool_env_flag",
     "rh2_custom_generate",
     "rollout_task_from_bundle_pair",
@@ -578,17 +580,37 @@ def parse_bool_env_flag(name: str, raw: str | None, *, default: bool = False) ->
     )
 
 
-def ensure_claude_code_compaction_disabled(env: MutableMapping[str, str]) -> dict[str, str]:
-    """把 `DISABLE_COMPACT=1` 合并进 SLIME_AGENT_CC_EXTRA_ENVS（原地写 env）。
+# CC 训练守卫环境（codex 轮次 8 源码引导验证：CC 2.1.205 源码 + 黑盒实测）。
+# 值语义（`fa/claude_code_retry_timeout_source_guided_validation.md`）：
+# - DISABLE_COMPACT=1：关 auto/manual compaction（D-FA-6）；
+# - CLAUDE_CODE_MAX_RETRIES=0：CC 自带重试改用 withRetry.ts，默认最多 11 次
+#   请求，置 0 使 500/429/断连都只发 1 次——proxy 成为唯一重试 owner；
+# - CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK=1：关流式中断后的非流式重发；
+# - CLAUDE_CODE_UNATTENDED_RETRY=0：关无人值守持久重试（2.1.205 external
+#   build 里该字符串被 tree-shake，设 0 无害、语义留档）。
+# 已知例外（实测，不是这几个变量能关的）：流式创建阶段的 **404** 会绕过
+# fallback 开关再发一次非流式请求（claude.ts:2607 分支不检查禁用变量）——
+# 因此 adapter **任何错误路径都不得返回 404**（见 assert_adapter_status_not_404）。
+CLAUDE_CODE_TRAINING_GUARD_ENVS: dict[str, str] = {
+    "DISABLE_COMPACT": "1",
+    "CLAUDE_CODE_MAX_RETRIES": "0",
+    "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+    "CLAUDE_CODE_UNATTENDED_RETRY": "0",
+}
+
+
+def ensure_claude_code_training_guards(env: MutableMapping[str, str]) -> dict[str, str]:
+    """把 CC 训练守卫环境合并进 SLIME_AGENT_CC_EXTRA_ENVS（原地写 env）。
 
     slime `agent/harness/claude_code.py` 会把该变量的 JSON 合并进 Claude Code
-    子进程环境；返回合并后的 extra-envs dict 作为 audit 证据（inspector 探针
-    比对用）。已有 JSON 非法时直接抛错（fail-closed，不静默覆盖）。
+    子进程环境；返回合并后的 extra-envs dict 作为 audit 证据。冲突检测：
+    已有值与守卫值不符即 fail-closed（用户不得覆盖正式防线）。
 
-    警示（codex 轮次 3 #11，CC 压缩文档证实）：DISABLE_COMPACT 只覆盖
-    auto/manual compact；Microcompact / Context Collapse 是独立压缩层——
-    **装配期上下文收缩检测（reject_context_shrink）是硬兜底，不能只凭本函数
-    宣布 compaction 已关闭**。
+    警示（CC 压缩文档 + 源码验证）：DISABLE_COMPACT 只覆盖 auto/manual
+    compact；Microcompact / Context Collapse 是独立压缩层——**装配期上下文
+    收缩检测（reject_context_shrink）是硬兜底**。MAX_RETRIES=0 等只减负 CC
+    自身重试，**session poison + execution 主动终止**仍是不可归因故障的主
+    防线（404 例外证明环境变量不是完整闭环）。
     """
 
     merged: dict[str, str] = {}
@@ -601,9 +623,36 @@ def ensure_claude_code_compaction_disabled(env: MutableMapping[str, str]) -> dic
                 f"{_CC_EXTRA_ENVS_KEY} 已存在但不是 JSON object：{raw!r}。",
             )
         merged.update({str(k): str(v) for k, v in parsed.items()})
-    merged["DISABLE_COMPACT"] = "1"
+    for key, value in CLAUDE_CODE_TRAINING_GUARD_ENVS.items():
+        existing = merged.get(key)
+        if existing is not None and existing != value:
+            raise SlimeBindingError(
+                "cc_training_guard_conflict",
+                f"{key}={existing!r} 与训练守卫要求值 {value!r} 冲突——正式防线"
+                "不得被用户覆盖（fail-closed）。",
+            )
+        merged[key] = value
     env[_CC_EXTRA_ENVS_KEY] = json.dumps(merged, ensure_ascii=False, sort_keys=True)
     return merged
+
+
+# 向后兼容别名（旧调用点 = 只关 compaction 的语义子集，现指向全守卫）。
+ensure_claude_code_compaction_disabled = ensure_claude_code_training_guards
+
+
+def assert_adapter_status_not_404(status: int) -> int:
+    """adapter 错误路径守卫（codex 轮次 8：CC 2.1.205 对流式创建阶段 404 会
+    绕过 fallback 开关再发一次非流式请求）——任何我方 adapter 状态码用本
+    函数过一遍，404 直接 fail-closed，改用非 404 + `x-should-retry:false`
+    或（主路径）poison + 终止 execution。"""
+
+    if status == 404:
+        raise SlimeBindingError(
+            "adapter_must_not_return_404",
+            "adapter 错误路径返回了 404——CC 2.1.205 会据此绕过 nonstreaming "
+            "fallback 开关再发一次请求；改用非 404 状态并 poison session。",
+        )
+    return status
 
 
 def detect_context_shrink(
@@ -1066,6 +1115,11 @@ class SlimeBindingConfig:
     # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
     reject_context_shrink: bool = False
     context_shrink_ratio: float = 0.6  # 预注册黄线（05 计划 D-FA-6），FA-5 校准
+    # P0-2（codex 轮次 8）：正式链下 harness 非零退出即拒绝该 execution
+    # （DISABLE_COMPACT + 训练守卫下 CC 不该因 infra 失败；非零退出可疑到
+    # 足以拒绝）。默认 False = S1 兼容（非零退出可能是合法的任务失败负样本，
+    # 由双沙箱 clean grading 判 reward，不在此拒）。
+    reject_on_nonzero_harness_exit: bool = False
     max_context_len: int = 0
     name_prefix: str = "rh2-rollout"
     label_prefix: str = "rh2.rollout"
@@ -1290,6 +1344,7 @@ class RolloutOrchestrator:
         mount_planner: Callable[[RolloutTaskSpec], list[BundleMount]] | None = None,
         artifact_dir: Path | str | None = None,
         current_policy_version_provider: Callable[[], str] | None = None,
+        session_poison_check: Callable[[str], bool] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1334,6 +1389,10 @@ class RolloutOrchestrator:
         # 接入前，握手的 staleness 只是"相对启动版本"的口径，不得称为实时
         # staleness；事实矛盾（seen 比 current 新）无论哪种口径都 fail-closed。
         self._current_policy_version_provider = current_policy_version_provider
+        # P0-2（codex 轮次 8）：session poison 复检——harness 返回后，若该
+        # session 在执行期间中毒（proxy 判不可归因故障），已捕获的 partial
+        # trace 绝不能进评分/训练。glue 注入 registry.poison.is_poisoned。
+        self._session_poison_check = session_poison_check
         self.audits: list[RolloutAudit] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1419,6 +1478,20 @@ class RolloutOrchestrator:
             audit.step("step3_harness_completed")
 
             stage = "assemble"
+            # P0-2：harness 返回后复检 session poison（权威信号）——不可归因
+            # 故障期间捕获的任何轮都不可训，整 execution 缺员。
+            if self._session_poison_check is not None and self._session_poison_check(sid):
+                raise SlimeBindingError(
+                    "session_poisoned_during_execution",
+                    f"session {sid} 在 harness 执行期间中毒（proxy 判不可归因故障）"
+                    "——已捕获的 partial trace 全部作废，execution 缺员。",
+                )
+            if self.config.reject_on_nonzero_harness_exit and exit_code != 0:
+                raise SlimeBindingError(
+                    "nonzero_harness_exit_in_formal_chain",
+                    f"harness 非零退出 {exit_code}（正式链拒绝）——训练守卫下 CC "
+                    "不该因 infra 失败退出，可疑到拒绝该 execution。",
+                )
             if not hook.records:
                 raise SlimeBindingError(
                     "no_capture_records",

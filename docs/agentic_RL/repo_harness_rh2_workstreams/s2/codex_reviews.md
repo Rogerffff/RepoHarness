@@ -935,3 +935,250 @@ Claude Code 取消 HTTP 请求
 - **一般 2：迁移只 pin manifest**——旧产物无内嵌提交 SHA 时 evidence 可在 pin 后被替换（codex 复现 fetched_at 替换后迁移成功）。【v4.1：双 pin + 旧 header 内嵌 SHA 与 pin 互检】
 - **一般 3：计数字段无严格类型**——216.0/True/False 均被 == 接受。【v4.1：type(v) is int ∧ >=0 + 计数链 enriched+reverify <= evidence <= count】
 - 回归 +10，store 43 项全绿；本轮限额窗口重置，剩余 30 条收满——**T1b 216/216 fully-verified，ALL PASS**。
+
+
+---
+
+## 轮次 8（2026-07-13：FA-1 第三轮审查 + 源码引导 CC 实验 → 6 P0 全部采纳）
+
+> 原文全文转录（tmp/FA1_codex.md 第三版）。处置见 `fa/implementation-notes.md` "FA-1 follow-up 3"：finalize 移到 commit / poison+非零 exit 强制缺员 / 统一 poison + episode deadline / 逐 attempt rid / worker 崩溃不静默重启 / capture FIFO 去覆盖 / CC 四变量训练守卫 + 不返 404 + 版本固定。CC 2.1.205 行为证据（两份报告 + 探针套件 + 34 JSON）随本轮入库，是版本画像/漂移检测器。测试 797 → 831。
+
+**结论**
+
+`6b5d0354` 确实修复了上一轮指出的主要问题，`797` 项测试和 S1 inspector 均通过。但“5 个 P0 全部闭合”这个结论仍然过早：我确认还有 **6 个会影响真实 fully async 链路正确性的 P0**。目前不建议直接进入 FA-2 后就租卡，应该先补一轮本地接线修复与集成测试。
+
+**P0 阻塞问题**
+
+1. **模型结果在真正交付给 Claude Code 前就被标记为 delivered**
+
+[capture_wire.py:232](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:232) 在 `registry.stage()` 后立刻调用 `finalize_delivered()`；但真正写 HTTP/SSE 响应发生在 [common.py:359](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/common.py:359)。
+
+客户端若在两者之间断开，会出现：
+
+```text
+ModelCallAttempt = delivered
+但 Claude Code 没收到响应
+Trace 也没有 commit 这一轮
+```
+
+而且成功 attempt 的引用形如 `staged:{session}:t1`，同一 session 的多个正常 turn 会重复使用该引用。
+
+建议把 `ProxyCallResult` 放进 `PendingTurn`，只在 `_respond()` 成功且 `record_turn/registry.commit` 完成后 finalize；取消、断连和 unregister 路径必须调用 `abandon_delivered()`。capture ref 应使用真实 request/turn/capture record ID。
+
+2. **session poison 没有真正终止 harness execution**
+
+`SessionPoisonRegistry` 当前只是字典和请求入口检查，[async_worker.py:274](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:274) 没有向 execution owner 发取消信号。
+
+更危险的是 [generate.py:1410](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1410) 记录了非零 harness exit code，却没有据此强制拒绝轨迹。若先产生几个有效 turn，之后 session 中毒并导致 Claude Code 失败退出，已有部分轨迹仍可能进入评分和训练。
+
+需要建立：
+
+```text
+poison session
+-> 原子标记 execution failed
+-> 取消 Claude Code / sandbox execution
+-> harness 返回后再次检查 poison
+-> 强制该 execution 缺员
+```
+
+不能依赖 HTTP 状态码让 Claude Code 自行退出。
+
+3. **并非所有不可归因错误都会 poison，且恢复等待无视 episode deadline**
+
+发前等待 ACTIVE 超时、版本恢复超时、fencing 不符、版本回退等分支会抛 `UnattributableModelCallError`，但不会统一 poison。
+
+我构造的探针结果是：
+
+```text
+presend deadline exceeded -> poisoned=False
+episode deadline=5s，但版本恢复等待跑到 60s -> poisoned=False
+```
+
+应在 `ModelCallProxy.call()` 外层统一捕获所有不可归因终止，执行 poison + attempt 落账；`_wait_version_advance()` 必须接收同一个绝对 episode deadline，而不是独立使用固定 60 秒。
+
+4. **内部重生成重复使用同一个 SGLang request ID**
+
+[capture_wire.py:172](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:172) 在 `_send_once()` 外构造一次 payload/rid，后续 attempt 忽略 `attempt_number`，因此 attempt 1 和 attempt 2 使用相同 rid。
+
+每个 proxy attempt 必须生成独立 rid，并让 `/abort_request` 精确指向对应 attempt。当前没有真实 wire 测试覆盖这一点。
+
+5. **worker 在两个 batch 之间崩溃会被静默重启**
+
+[rollout_entry.py:219](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:219) 发现旧 worker task 已完成时直接覆盖，没有读取 `.result()`。
+
+我复现到：
+
+```text
+batch1 正常
+worker 随后以 WorkerHalted 崩溃
+batch2 自动启动新 worker 并继续训练
+```
+
+这违反“sink/task source 故障后训练不得继续”。如果旧 task 已结束，必须先传播其异常；只能通过显式、可审计的 recovery API 重启。
+
+6. **同一 session 的并发模型请求仍会破坏 capture 对账**
+
+`CaptureRegistry.pending` 以 `session_id` 为唯一 key。Claude Code subagent 或并发请求共享 session 时，第二个请求会覆盖第一个 pending turn，导致第一个 `record_turn()` 提交错误数据。
+
+应以 `request_id/logical_turn_id` 为 key，并从 HTTP handler 一直传递到 `record_turn()`。单独增加 `turn_seq` 不能解决覆盖问题。
+
+**P1 问题**
+
+- [glue.py:454](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:454) 在 asyncio 请求路径里同步执行 `requests.get(..., timeout=5)`，可能阻塞整个 adapter。并且它查询的是 router URL，尚未证明等价于所有 SGLang engine 已完成权重同步。长期应由 coordinator 发布所有 engine ACK 后的 consensus version。
+- audit tombstone、`weight_versions`、`session_deadlines`、`turn_seq`、poison registry 和 dropped group 记录仍会无限增长。测试中 `max_audit_artifacts=1` 写入 100 项后字典仍有 100 个 key。
+- `FaRolloutService.shutdown()` 目前只有测试调用，没有接到 trainer/eval 切换或进程退出生命周期。
+- 当前没有 production-level `capture_wire` 集成测试，因此 797 项测试全绿并不能覆盖响应提交、断连、rid、真实 poison 和版本端点。
+
+**Claude Code 本地补测**
+
+我使用 Claude Code `2.1.205` 和本地 fake Anthropic endpoint 补测，结果如下：
+
+- 完全不发送响应头，延迟 `30/60/120` 秒后返回成功：均只有 1 个请求且正常退出。因此客户端 timeout **大于 120 秒**，精确边界仍未知。
+- 连续 HTTP 500：20 秒内 6 次请求，约按 `0.60/1.05/2.32/4.51/9.21s` 退避，请求 body 相同。
+- HTTP 429 + `Retry-After: 2`：至少 5 次请求，前两次约等待 2 秒。
+- 响应头前断连：会自动重试，请求 body 相同。
+- 发送部分 SSE 后断连：约 7ms 后重试，但第二次请求发生了 `stream=true -> false` 等 body 变化。因此不能仅靠 body hash 去重。
+- 挂起请求期间终止 Claude Code：server 能观察到客户端关闭，只有 1 个请求。
+
+这进一步证明：
+
+```text
+proxy 内部重生成期间不能提前发送响应头或 SSE heartbeat
+不可归因错误必须 poison + 终止 execution
+不能依赖 body 相同进行重试去重
+cancellation 必须 abort SGLang attempt 且不 commit capture
+```
+
+详细报告在 [claude_code_http_retry_local_baseline.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/claude_code_http_retry_local_baseline.md)。这些探针和证据当前尚未提交。
+
+**建议顺序**
+
+先修上述 P0，并补一个本地 adapter 集成测试，至少覆盖：
+
+```text
+proxy attempt1 abort -> attempt2 新 rid -> 单次 HTTP 成功
+响应提交前客户端取消 -> abandon、不 finalize
+不可归因错误 -> poison -> harness 被取消 -> execution 缺员
+同 session 两个并发请求不串账
+worker 跨 batch 崩溃不得静默重启
+```
+
+完成后再进入 FA-2。FA-5 只需复测容器内实际 Claude Code tarball 行为，而不应再承担发现这些本地可验证接线错误的职责。
+
+
+
+
+补充的claude code cli实验和结论：
+**结论**
+
+源码引导的补测完成。它进一步证明 `6b5d0354` 仍不能视为 FA-1 P0 全部关闭，除了上一轮发现的生产接线问题，还缺少 Claude Code 客户端重试 ownership 的正式控制。
+
+下面这段可以直接发给 Claude。
+
+---
+
+## 给 Claude 的复核结论
+
+### 一、源码与黑盒实验的新结论
+
+基于 `reference/claude-code-typescript-src` 和固定 Claude Code `2.1.205` 的本地测试，确认正式训练子进程必须强制注入：
+
+```json
+{
+  "DISABLE_COMPACT": "1",
+  "CLAUDE_CODE_MAX_RETRIES": "0",
+  "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+  "CLAUDE_CODE_UNATTENDED_RETRY": "0"
+}
+```
+
+当前 RH2 只在 [generate.py:581](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:581) 强制注入 `DISABLE_COMPACT=1`，其余三项尚未进入生产子进程环境，因此“proxy 是唯一模型调用重试 owner”目前还不是运行时硬事实。
+
+`2.1.205` 的实际实验结果：
+
+| 场景 | 上述防线启用后请求数 |
+|---|---:|
+| HTTP 500 | 1 |
+| HTTP 429 | 1 |
+| 响应头前断连 | 1 |
+| 部分 SSE 后断连 | 1 |
+| 延迟后成功 | 1 |
+| HTTP 404 | **2**，先 stream，随后 non-stream |
+
+`404` 是重要例外。即使：
+
+```text
+CLAUDE_CODE_MAX_RETRIES=0
+CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK=1
+```
+
+Claude Code 仍会立即发起第二个非流式请求。源码 [claude.ts:2607](/Users/roger/Desktop/claude-code-verl-stage0h/reference/claude-code-typescript-src/services/api/claude.ts:2607) 的 404 fallback 分支确实没有检查禁用变量。
+
+因此 adapter 所有错误路径都不得返回 404。若必须返回 HTTP 错误，应使用非 404 状态并附 `x-should-retry:false`；但真正的边界仍是 poison session 并主动终止 execution。
+
+### 二、超时结论
+
+`API_TIMEOUT_MS=1000` 对“尚未收到响应头”有效：约一秒后客户端取消，且 `MAX_RETRIES=0` 时只有一次请求。
+
+但收到部分 SSE 后 body 永久停止时，`API_TIMEOUT_MS` 不生效。源码中的 stream watchdog 虽然在二进制中存在：
+
+```text
+CLAUDE_ENABLE_STREAM_WATCHDOG=1
+CLAUDE_STREAM_IDLE_TIMEOUT_MS=1000
+```
+
+实际 `2.1.205` 在 3 至 5 秒窗口内仍未终止。探针已使用 HTTP/1.1 chunked framing 排除普通 body 缓冲问题。
+
+这只能登记为“源码意图与黑盒行为不一致”，不能把 watchdog 当成正式正确性依赖。必须保持：
+
+```text
+proxy_deadline < Claude API timeout < harness hard-kill deadline
+```
+
+动态 episode deadline、handler cancellation、SGLang abort 和 capture rollback 都仍需 RH2 自己实现。
+
+### 三、仍未关闭的 P0
+
+1. [capture_wire.py:232](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:232) 在真正向 Claude Code flush SSE 前就 `finalize_delivered()`。客户端在 flush 前断开会形成虚假 delivered。应在 `_respond()` 成功和 capture commit 后 finalize，失败路径调用 `abandon_delivered()`。
+
+2. `SessionPoisonRegistry` 没有通知 execution owner 终止 Claude Code/sandbox。非零 harness exit 也没有强制现有 partial trace 缺员。poison 必须触发 execution cancellation，并在 harness 返回后再次检查。
+
+3. 发前 ACTIVE 超时、版本恢复超时、fencing 错误等不可归因分支没有统一 poison；版本恢复等待也没有受 episode 绝对 deadline 限制。
+
+4. proxy 内部重生成重复使用同一个 SGLang rid。每个 attempt 必须生成独立 rid，并让 `/abort_request` 指向对应 attempt。
+
+5. persistent worker 在两个 batch 之间以 `WorkerHalted` 崩溃后会被静默替换。启动下一 worker 前必须读取旧 task `.result()` 并传播错误，禁止无审计自动恢复。
+
+6. `CaptureRegistry.pending` 只按 `session_id` 索引。同 session 的并发 subagent 请求会互相覆盖，必须改为 request/logical-turn 级身份。
+
+7. 正式 Claude Code 子进程环境没有强制关闭客户端 retry/fallback，也没有 inspector 验证真实子进程收到这些值。
+
+8. 当前 [host_launch.sh:23](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/host_launch.sh:23) 仍下载 npm `latest`。FA-5 必须固定版本和 digest。
+
+### 四、版本冻结建议
+
+建议 FA-5 固定：
+
+```text
+Claude Code version = 2.1.205
+Linux x64 tarball sha256 =
+d3dadfa9cde294ac82c755eb6d889291228849180bac5d677ad1a4027aca1bc4
+```
+
+容器启动时必须检查：
+
+```text
+tarball sha256
+bootstrap/platform 版本一致
+claude --version == 2.1.205
+训练守卫环境变量进入真实子进程
+```
+
+任一不符都应 fail-fast。
+
+---
+
+完整分析在 [claude_code_retry_timeout_source_guided_validation.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/claude_code_retry_timeout_source_guided_validation.md)。
+
+新增了可重复套件 [claude_code_http_probe_suite.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/claude_code_http_probe_suite.py)，固定版本下执行 10 个场景，结果 `hard_pass=true`，证据安全扫描零命中。`py_compile` 通过；当前环境未安装 `ruff`，因此没有运行 ruff。所有新增实验、报告和证据尚未提交。
+

@@ -1,0 +1,128 @@
+{
+  "schema_id": "rh2.fa.claude_code_http_probe.v1",
+  "recorded_at": "2026-07-12T15:09:16.795980+00:00",
+  "scenario": "http_429",
+  "claude_version": "2.1.205 (Claude Code)",
+  "command_flags": [
+    "--permission-mode",
+    "bypassPermissions",
+    "--output-format",
+    "stream-json",
+    "--include-partial-messages",
+    "--include-hook-events",
+    "--verbose",
+    "--no-session-persistence",
+    "--disable-slash-commands",
+    "--no-chrome"
+  ],
+  "delay_seconds": 0.0,
+  "process_timeout_seconds": 20.0,
+  "elapsed_seconds": 20.082639,
+  "process_exit_code": 143,
+  "terminated_by_probe": true,
+  "request_count": 5,
+  "count_token_request_count": 0,
+  "retry_intervals_seconds": [
+    2.00675,
+    2.007007,
+    2.42074,
+    4.272855
+  ],
+  "request_bodies_identical": true,
+  "requests": [
+    {
+      "request_number": 1,
+      "received_offset_seconds": 0.7867542909807526,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "eabed50b6d1ed2a4c591b1d0160c10e5a9050e1d7cf7681e0edfb9faf79acf75",
+      "body_bytes": 101963,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 0.7868337910040282,
+      "response_status": 429,
+      "write_error": null
+    },
+    {
+      "request_number": 2,
+      "received_offset_seconds": 2.7935040409793146,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "eabed50b6d1ed2a4c591b1d0160c10e5a9050e1d7cf7681e0edfb9faf79acf75",
+      "body_bytes": 101963,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 2.7935996659798548,
+      "response_status": 429,
+      "write_error": null
+    },
+    {
+      "request_number": 3,
+      "received_offset_seconds": 4.800510875007603,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "eabed50b6d1ed2a4c591b1d0160c10e5a9050e1d7cf7681e0edfb9faf79acf75",
+      "body_bytes": 101963,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 4.800660957989749,
+      "response_status": 429,
+      "write_error": null
+    },
+    {
+      "request_number": 4,
+      "received_offset_seconds": 7.22125108295586,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "eabed50b6d1ed2a4c591b1d0160c10e5a9050e1d7cf7681e0edfb9faf79acf75",
+      "body_bytes": 101963,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 7.221349707979243,
+      "response_status": 429,
+      "write_error": null
+    },
+    {
+      "request_number": 5,
+      "received_offset_seconds": 11.494106040976476,
+      "path": "/v1/messages?beta=true",
+      "body_sha256": "eabed50b6d1ed2a4c591b1d0160c10e5a9050e1d7cf7681e0edfb9faf79acf75",
+      "body_bytes": 101963,
+      "stream_requested": true,
+      "response_headers_offset_seconds": 11.494226499984507,
+      "response_status": 429,
+      "write_error": null
+    }
+  ],
+  "client_retry_events": [
+    {
+      "attempt": 1,
+      "max_retries": 10,
+      "retry_delay_ms": 2000,
+      "error_status": 429,
+      "error": "rate_limit"
+    },
+    {
+      "attempt": 2,
+      "max_retries": 10,
+      "retry_delay_ms": 2000,
+      "error_status": 429,
+      "error": "rate_limit"
+    },
+    {
+      "attempt": 3,
+      "max_retries": 10,
+      "retry_delay_ms": 2415.5044383321074,
+      "error_status": 429,
+      "error": "rate_limit"
+    },
+    {
+      "attempt": 4,
+      "max_retries": 10,
+      "retry_delay_ms": 4267.220506439735,
+      "error_status": 429,
+      "error": "rate_limit"
+    },
+    {
+      "attempt": 5,
+      "max_retries": 10,
+      "retry_delay_ms": 9982.788500095285,
+      "error_status": 429,
+      "error": "rate_limit"
+    }
+  ],
+  "client_result": null,
+  "stderr_nonempty": true
+}

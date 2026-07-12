@@ -219,6 +219,17 @@ class FaRolloutService:
     async def _ensure_worker(self) -> None:
         if self._worker_task is not None and not self._worker_task.done():
             return
+        if self._worker_task is not None and self._worker_task.done():
+            # P0-5（codex 轮次 8）：旧 worker 已结束——**先传播它的异常**，
+            # 绝不静默覆盖重启。WorkerHalted（sink/任务源故障）到这里必须炸给
+            # 启动方："故障后训练不得继续"是硬规则；重启只能走显式
+            # recovery API（本版不提供——需要人工裁决 unrecorded_failures）。
+            self._worker_task.result()  # 无异常 = worker 正常退出（stop 后）
+            raise FaEntryError(
+                "worker_already_exited",
+                "上一次 worker 已退出（无异常）——服务已 shutdown，不自动重启；"
+                "重启需显式新建 FaRolloutService 或 recovery API。",
+            )
         self._queue = self._queue or BoundedDeliveryQueue(maxsize=self._queue_maxsize)
         self._collector = self._collector or _InterimGroupCollector(self._group_size)
 

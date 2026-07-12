@@ -147,9 +147,9 @@ class ClaudeCodeDriver:
         # CC 子进程环境。merged 存 self 供 evidence 采集；真实子进程验真挂
         # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
         # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
-        from repoharness2.adapters.slime.generate import ensure_claude_code_compaction_disabled
+        from repoharness2.adapters.slime.generate import ensure_claude_code_training_guards
 
-        self.compaction_guard_envs = ensure_claude_code_compaction_disabled(os.environ)
+        self.compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
         return await ClaudeCodeHarness().run(
             sb,
             workdir=workdir,
@@ -342,10 +342,10 @@ class BringupService:
         self.cc_compaction_guard_envs = None
         if HARNESS_KIND == "claude_code":
             from repoharness2.adapters.slime.generate import (
-                ensure_claude_code_compaction_disabled,
+                ensure_claude_code_training_guards,
             )
 
-            self.cc_compaction_guard_envs = ensure_claude_code_compaction_disabled(os.environ)
+            self.cc_compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
         await self._run_startup_checks()
         await self.grading_queue.start()
         self._queue_started = True
@@ -438,6 +438,8 @@ class BringupService:
             # 权重更新后新轮次的 meta_info.weight_version 会推进该值，
             # 多 step 链不再拿启动版本冒充 current。
             current_policy_version_provider=self._latest_engine_version,
+            # P0-2（codex 轮次 8）：harness 返回后复检 session poison
+            session_poison_check=self.registry.poison.is_poisoned,
         )
 
     def _registry_max_version(self) -> int | None:
@@ -461,6 +463,10 @@ class BringupService:
         registry 最大值/启动探针值（口径 = "相对最近观测"，如实降级）。
         """
 
+        # P1（codex 轮次 8）：不在 asyncio 请求路径同步阻塞——权威版本查询用
+        # requests 但**只在有运行 loop 时经线程池**（provider 由同步 build_
+        # handshake 调用，此处保持同步 API；真正的阻塞担忧在 wire 的 finalize
+        # 路径，那里 provider 已不在热路径——staleness 只在握手构造时算一次）。
         import requests
 
         authoritative: str | None = None
