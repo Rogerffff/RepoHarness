@@ -466,7 +466,10 @@ harness     SWE_AGENT=claude_code（ClaudeCodeHarness + AnthropicAdapter，
             reward 二值 0/1；评分协议 scaleswe（默认）或 swebench（官方 grader）
 数据        swe_train.jsonl（prompt / label / metadata{image, workdir, ...}；
             题数未披露）；fan-out：每条 root-to-leaf 一个 Sample，
-            reward/K 分摊，siblings 共享 rollout_id
+            siblings 共享 rollout_id。【2026-07-12 勘误】reward 语义
+            以源码为准 = 整 reward 广播给每个 Sample（README 声称的
+            reward/K 与 TrajectoryManager.get_trajectory 现行实现不符），
+            loss 按 rollout 级分母聚合——我方 adapter 同语义（05 计划 D-FA-7）
 ```
 
 ---

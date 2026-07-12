@@ -95,3 +95,148 @@ inspect-rh2-s1                         PASS
 inspect-rh2-s1 --run-contract-tests    303 passed
 uv run pytest -q                       647 passed
 ```
+
+
+---
+
+## 轮次 3（2026-07-12：对 05-fully-async-execution-plan.md 的开工前审查 → 12 条全部采纳，编号 codex #1~#12）
+
+> 原文全文转录如下（tmp/codex_adv_async.md，gitignore 不入库故迁此）。处置：#1~#4（proxy 内部重生成 / TrainingRuntimeCoordinator 跨进程协议 / DIS 准入分层 / batch lease+ACK）已写回 05 计划 D-FA-3、FA-0 3b/3c、FA-1、FA-3、FA-4；#5~#11（多版本 schema、present+eligibility 引用、DIS 对拍清单+ε 区间、训练进度权威、双 TTL+资源分类限额、训后周期 checkpoint 评测、microcompact 警示）逐条落对应任务；#12 账目残留当轮修复。
+
+**总判定**
+
+整体方向正确，我同意继续采用：
+
+- `version-aware fully async + faithful DIS`
+- 首版不做成员补采
+- 权重更新 abort 采用 proxy 级 turn 重生成
+- 训练期间不评测，只做 before/after
+- FA 与 S2 独立并行
+
+但当前计划还不适合不加修改地全面开工。至少有四个正确性问题应先写回 FA-0/FA-1，否则容易实现出“看似完全异步、实际无法可靠恢复或准入”的链路。
+
+**执行前阻塞问题**
+
+1. **Proxy 重生成不应依赖 Claude Code 自己重试**
+
+计划一边规定 proxy 是唯一重试执行点，一边写成“proxy 返回错误 → Claude Code 原生重试”，两者矛盾，见 [05-fully-async-execution-plan.md:17](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:17) 和 [同文档:50](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:50)。
+
+当前 slime adapter 会等待 `/generate` 返回完整 JSON 后，才向 Claude Code 伪装成 SSE 流发送结果，见 [common.py:344](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/common.py:344) 和 [anthropic.py:211](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/anthropic.py:211)。所以 non-delivered 保证来自“完整响应缓冲”，不是“逐 token 捕获”。
+
+建议定为：
+
+```text
+同一个 Claude Code HTTP 请求
+  -> proxy 发起 model_call_attempt_1
+  -> 识别更新窗口 abort，丢弃未交付 attempt
+  -> 等待引擎 ACTIVE 且版本前进
+  -> proxy 内部发起 model_call_attempt_2
+  -> 只把最终成功响应交付 Claude Code
+```
+
+这样不依赖黑盒 SDK 重试，也不会重复消耗当前在生成前递增的 turn cap。必须新增 `logical_turn_id / model_call_attempt_id / delivery_status`，并处理 SGLang 以正常 JSON 返回 `finish_reason=abort` 的情况，而不只是网络异常。
+
+2. **`TrainingRuntimeCoordinator` 目前只有名字，没有跨进程协议**
+
+计划说 proxy 与协调器“共享更新窗口开始/结束事件即可”，见 [执行计划:62](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:62)。但权重更新、RolloutManager、proxy 和 trainer 位于不同 Ray actor/线程，不能依赖普通内存事件。
+
+FA-0 应定义显式协议：
+
+```text
+update_epoch
+phase = ACTIVE / PAUSING / UPDATING / RESUMING
+old_version / target_version / active_version
+window_started_at / window_completed_at
+fencing_token
+```
+
+Proxy 只有在失败与已知更新窗口重叠、响应未交付、恢复后版本满足预期时，才能内部重生成。否则必须按不可归因故障处理。
+
+3. **DIS 有效 token 比例无法在 ready queue 阶段计算**
+
+计划要求 DIS 有效 token 比例超限时“不进 ready queue / TrainBatch”，见 [执行计划:95](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:95)。但 DIS ratio 需要当前训练模型的 logprob，通常到 trainer forward 才能得到。BatchAssembler 此时只有 rollout logprob、token 和版本事实。
+
+建议首版明确分层：
+
+```text
+ready queue 准入：
+  provenance、完整组、版本跨度、current-version staleness
+
+trainer forward：
+  计算 current logprob、faithful DIS ratio、token mask
+
+训练决定：
+  正常反向传播，或在全局有效 token 为 0 时跳过整个 optimizer step
+```
+
+`90%` 首版应作为监控和黄灯阈值，不应直接成为 ready queue 硬门。若以后坚持按它换 batch，需要新增“两阶段 logprob 预检”或“forward 后取消并重新取 batch”的 trainer 协议，复杂度明显更高。
+
+4. **Batch 消费缺少 lease 和 trainer acknowledgement**
+
+计划只写 `peek → preflight → consume`，见 [执行计划:83](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:83)。这无法处理 trainer 崩溃：
+
+- 提交前删除会丢 batch。
+- 训练完成后删除又可能在重启后重复训练。
+- Ray future 成功不等于 checkpoint 与队列状态已经原子提交。
+
+至少需要：
+
+```text
+READY
+  -> RESERVED(batch_lease_id, expires_at)
+  -> SUBMITTED(optimizer_step_id)
+  -> TRAINED
+  -> ACKED / RELEASED
+```
+
+恢复语义也要定案：建议采用 at-least-once 提交，加 `batch_id + optimizer_step_id` 去重；不要声称实现严格 exactly-once，除非队列账本与 trainer checkpoint 能原子提交。
+
+**其他重要修正**
+
+5. `RolloutAttemptOutcome.behavior_policy_version` 不能是单值。一个 execution 可以跨多个版本。应保存逐 turn 引用或版本序列，并分别派生：
+
+```text
+intra_execution_version_span
+current_version_at_finalize
+current_version_at_consume
+worst_token_lag
+```
+
+现有 `BackendHandshake.policy_version` 也是单值，见 [handshake.py:96](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/handshake.py:96)，FA-0 应升级 schema，不能把多版本事实压回单值。
+
+6. `present_trainable` 会复制 `EligibilityReport` 的权威结论。Outcome 应记录 `present`，并引用 `eligibility_report_id`；在线训练资格仍只能由 EligibilityReport 决定。
+
+7. Faithful DIS 验收不能只对拍 forward loss。还要固定：
+
+- loss 正负号；
+- importance ratio 是否 `detach`；
+- 越界 token 的梯度是否精确为零；
+- denominator 是否包含被拒 token；
+- top-p replay 是否参与 current logprob；
+- DP/CP/VPP 下归约是否一致；
+- 每个 token 的梯度与手算结果是否一致。
+
+论文 coding-agent 参数是 `epsilon_low=0.8`、`epsilon_high=3.0`，不是模糊的“论文默认”。计划应写明初始区间及来源。
+
+8. 完全异步后，slime 的名义 epoch 和学习率调度会漂移。当前 `train_iters` 按名义 rollout 数推导，而数据源会为 reserve/rejected groups 继续推进。应以已确认 optimizer step、已消费 RolloutExecution 或有效 token 为训练进度权威，同时分别记录 attempted/trained prompt coverage。
+
+9. `ready queue TTL` 不能只按版本。若 trainer 停住且权重不更新，版本 TTL 永远不会过期。应同时有：
+
+```text
+policy_version_ttl
+wall_clock_ttl
+```
+
+并分别限制 active sandbox、模型调用、评分容器、pending groups 和 ready groups，不能只设一个全局并发池。
+
+10. 同意“训中不评”，但建议训练结束后依次评测保留的周期 checkpoint，而不只是最终 checkpoint。否则无法判断中途能力峰值或后期退化。
+
+11. `DISABLE_COMPACT=1` 主要关闭 auto/manual compact；Claude Code 的 microcompact/context-collapse 是其他路径。计划已有“上下文收缩即拒绝”的兜底，这条必须保留，不能只凭环境变量宣布 compaction 已关闭。
+
+12. 文档声称 reward/K 已全仓清理，但正式实验设计仍有旧表述；[repoharness_validation_experiment_design.md:469](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/training_design/repoharness_validation_experiment_design.md:469) 尚未修正。项目状态文档也还有一处把遗留任务写成 S2-0b，属于低风险账目问题。
+
+**可以保持不变的部分**
+
+FA/S2 分离、完整 PromptGroup 才进 ready queue、branch 不计作 rollout、reward 整体广播配 rollout 级分母、`build_dp_schedule` 差分验证、禁用 `--release-train`、不做成员补采、FA-5 与 S2 共用租卡窗口，这些设计都合理。
+
+我的建议是先让 Claude 把前四项写回计划，再开 FA-0。FA-3 的纯 Python schedule 差分测试可以提前并行；FA-4 可以先做公式和梯度级小张量测试，但在 DIS 时序与 denominator 定案前，不应开始最终 custom loss 接线。本轮我只做了审阅，没有修改文件。
