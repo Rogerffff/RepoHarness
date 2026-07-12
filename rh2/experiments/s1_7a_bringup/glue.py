@@ -141,6 +141,14 @@ class ClaudeCodeDriver:
             check=True,
             timeout=900,
         )
+        # D-FA-6 接线（FA-1，FA-0 递延项）：DISABLE_COMPACT=1 合并进
+        # SLIME_AGENT_CC_EXTRA_ENVS——slime ClaudeCodeHarness 会把该 JSON 并入
+        # CC 子进程环境。merged 存 self 供 evidence 采集；真实子进程验真挂
+        # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
+        # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
+        from repoharness2.adapters.slime.generate import ensure_claude_code_compaction_disabled
+
+        self.compaction_guard_envs = ensure_claude_code_compaction_disabled(os.environ)
         return await ClaudeCodeHarness().run(
             sb,
             workdir=workdir,
@@ -327,6 +335,16 @@ class BringupService:
     # -- 一次性异步启动（探针必须在事件循环里发）---------------------------------
 
     async def async_start(self, args: Any) -> None:
+        # D-FA-6 接线（FA-1）：启动即把 DISABLE_COMPACT=1 合并进
+        # SLIME_AGENT_CC_EXTRA_ENVS（幂等；driver.run 内再合并一次是 no-op），
+        # merged dict 进 startup evidence 供 inspector 比对。
+        self.cc_compaction_guard_envs = None
+        if HARNESS_KIND == "claude_code":
+            from repoharness2.adapters.slime.generate import (
+                ensure_claude_code_compaction_disabled,
+            )
+
+            self.cc_compaction_guard_envs = ensure_claude_code_compaction_disabled(os.environ)
         await self._run_startup_checks()
         await self.grading_queue.start()
         self._queue_started = True
@@ -358,6 +376,12 @@ class BringupService:
             moe_router_topk=moe_router_topk,
             policy_version=self.policy_version,
             max_context_len=self.max_context_len,
+            # FA-1 接线：正式链两旋钮（默认 0 = bring-up/S1 行为逐字不变；
+            # FA-5 正式冒烟置 1——require 打开时启动断言会强制 reject 同开）
+            require_real_weight_versions=os.environ.get(
+                "RH2_REQUIRE_REAL_WEIGHT_VERSIONS", "0"
+            ) == "1",
+            reject_context_shrink=os.environ.get("RH2_REJECT_CONTEXT_SHRINK", "0") == "1",
         )
         driver = ClaudeCodeDriver() if HARNESS_KIND == "claude_code" else SimpleLoopDriver()
 
@@ -465,6 +489,11 @@ class BringupService:
         evidence["sglang_url"] = self.sglang_url
         evidence["adapter_url"] = self.adapter_url
         evidence["harness_kind"] = HARNESS_KIND
+        # D-FA-6 探针证据：合并进 CC 子进程环境的 extra-envs（async_start 急切
+        # 合并；inspector 比对 DISABLE_COMPACT=1 在场，FA-5 短租对真实子进程验真）
+        evidence["cc_compaction_guard_envs"] = getattr(
+            self, "cc_compaction_guard_envs", None
+        )
         self.probe_evidence = evidence
         (ARTIFACT_DIR / "startup_evidence.json").write_text(
             json.dumps(evidence, indent=2, ensure_ascii=False)

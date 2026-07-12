@@ -207,3 +207,53 @@ backfill 逐入训轮回填 → 握手 staleness 真实计算）；正式链启�
   CP/VPP 分布式归约、lease/ACK 本体（FA-3 接线，等 FA-2）。
 - codex 附加验证留档：5000 例随机调度差分全部一致（我方 200 例 seed 扫
   的独立加强）。测试 724 → 732。
+
+## FA-1 持续 worker、有界队列与 proxy 边界（2026-07-12 完成；slime 薄壳入口留 FA-5）
+
+**交付**：`adapters/slime/async_worker.py`（ContinuousExecutionWorker /
+BoundedDeliveryQueue / ResourceLimits / ModelCallProxy / 重试白名单）+
+17 条故障注入测试 + glue 两处接线。测试 732 → 749。
+
+### 设计决策
+
+1. **零 slime import 的运行时层**：所有组件可注入（task_source /
+   execute_fn / coordinator / send_fn），本地故障注入即 FA-1 验收；
+   slime `--rollout-function-path` 薄壳在 FA-5 短租的 glue 层落地——
+   与 FA-0"slime 不可本地 import"的诚实分界一致。
+2. **N1/N2 修复形态**：worker 账目守恒（dispatched == delivered + failed，
+   异常执行必经 failure_sink 落账，sink 自身异常也不炸 worker）；交付
+   走非阻塞 try_put + 待投列表，队列满只计数反压并暂停 top-up（反压
+   传导到生产侧），reap 与主循环永不停摆。ABORTED 回队完全不使用
+   （abort 在 proxy 层内部重生成，worker 面不存在 ABORTED 样本）。
+3. **ModelCallProxy 守卫三条件的协议化**：重叠判定 = 失败时刻窗口
+   phase != ACTIVE 或 update_epoch 相对发起时刻前进；版本前进等待 =
+   phase==ACTIVE ∧ active_version 数值 > 发起时刻版本 ∧ fencing 与观测
+   abort 窗口一致（epoch 更新时放行新窗口）。上限 max_regenerations=3
+   （更新风暴防线），超限/超时/围栏不符/非重叠一律不可归因缺员。
+   delivered 缺 weight_version 也按不可归因处置（契约强制 provenance）。
+4. **半截输出的物理隔离**：non-delivered attempt 的响应只进
+   proxy.audit_artifacts（审计面），capture_record_ref 强制 None——
+   旧 token 悬挂负测试断言交付面只含最终 attempt 的 token。
+5. **重试白名单代码化**（讨论稿 §4 逐行）：默认不在表中 = 只执行一次；
+   评分段 max_attempts=2（首次+1）；full-jitter 封顶 min(8s, 0.5·2^k)。
+
+### 偏离/递延说明
+
+- `_key` 真函数单测仍不可本地做（import 链穿 sglang_rollout）——FA-1 的
+  GPU 侧遗留，与 FA-3 时的口径一致；源码 pin 在位。
+- glue 接线两处：async_start 急切合并 DISABLE_COMPACT（幂等，evidence 记
+  `cc_compaction_guard_envs`）+ SlimeBindingConfig 两旋钮
+  （RH2_REQUIRE_REAL_WEIGHT_VERSIONS / RH2_REJECT_CONTEXT_SHRINK，默认 0
+  = S1 行为逐字不变）。glue 在本机不可冒烟（aiohttp/slime/docker 链），
+  改动为静态审查级——FA-5 短租首个验证项。
+- 协调器的**生产端**（trainer 侧发布 TrainingRuntimeWindow 的 Ray actor）
+  属 FA-4 接线/FA-5；本轮交付其消费端协议（CoordinatorView）与全部
+  边界行为。
+
+### 开放问题
+
+- worker 退出语义 = 显式 stop + 账目清零；若消费者死亡且队列满，run()
+  不自行放弃（待投样本不丢）——FA-2 assembler 侧需要配 watchdog/超时
+  策略（组 deadline 已在计划内）。
+- max_regenerations=3 是预注册值（更新间隔 » 单轮解码时长时理论上
+  1 次就够）；FA-5 实测更新风暴形态后校准。
