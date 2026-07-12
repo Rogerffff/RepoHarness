@@ -42,6 +42,7 @@
 5. **D-FA-6 落地**：`DISABLE_COMPACT=1` 注入 + inspector 探针（验证 CC 子进程环境）+ "检测到 compaction/上下文收缩 → 轨迹退出基线"的 gate 维度。
 6. **D-FA-7 落地**：reward 广播 + rollout 分母写进 RewardFacts/契约注释；全仓 "reward/K" 表述清理（本计划落地时已完成文档面清理，代码契约随本任务）。
 7. **fully_async 表面契约测试**（F6 纪律扩展，orchestrator 审查补充）：对我们依赖的 slime 面钉契约测试——worker 生命周期/done_cb 行为/output_queue 语义/`add_samples` 组长度断言/`pause_generation`+`continue_generation` 端点行为。上游已领先 8+ commit，升级前先跑契约测试。
+8. **`RoutingTensorRef.routed_experts_start_len` 扩展位**（2026-07-12 自 S2-0 迁入，用户确认）：字段默认 0 + 校验器兼容中段拼接语义的注释（上游 680824dd 已改 tape 契约）。它是 §6 第 7 条真续跑递延路径的契约前置，随本任务的 tape 契约批次一并落。
 
 **验收**：契约测试全绿；假 `step_0` 进正式链被启动断言拒绝的负测试；DISABLE_COMPACT inspector 探针在本地 harness 冒烟中验真；三层身份在一条真实 P3 元数据夹具轨迹上可完整往返。
 
@@ -166,7 +167,16 @@ FA-5 本地（2~3 人日）→ 短租（数小时，与 S2 G10 合并）
 约六成工作（FA-0 契约、FA-3 归一化/准入、真实版本管道）与路线无关
 （同步路线也必须做）；纯 fully-async 增量约四成。
 吞吐回收上限 = 实测尾闲 26~28%；主要回报在正式长预算训练 + DIS 正确性。
-S2（安全/数据 ingestion）与本工作流并行，互不阻塞；S2-1 可由并行线程执行。
+
+全局顺序（用户 2026-07-12 确认）：
+① FA-0 →（FA-3 离线 ∥ FA-4 对拍 ∥ 并行线程跑 S2-1 ingestion+四门）
+② FA-1 → FA-2 → FA-3/FA-4 接线 → FA-5 本地故障注入（短租项除外）
+③ S2 其余按序（S2-0 剩余两项 → S2-2 → S2-3/4 → S2-5 → S2-6 →
+   S2-7/8 本机段）。开工前置：用户批复 G 系列（尤其 G2/G7 网络方案
+   决定 S2-2 写法）。若需压日历时间，S2-2~6 可由第二线程在 ② 期间
+   并行（与 FA 无依赖），默认单线程串行。
+④ 一次合并短租收尾：FA-5 GPU 清单 + S2 G10（拦截链证据要求
+   S2-2 事件日志 + S2-4 CommandFilter 已实现；轨迹留存兼供 G8 复验）。
 ```
 
 ## 3. 验收场景
@@ -245,7 +255,8 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
    start_rollout_id，30-80 行 + agent 沙箱中间态序列化）+ done_cb 补
    start_rollout_id（~5 行碰 core）+ cherry-pick 上游 680824dd
    （routed_experts_start_len，tape 中段拼接基建）——见升级设计文档
-   缺口①"正式接线"段。S2-0 的 start_len 留位是它的契约前置。
+   缺口①"正式接线"段。FA-0 第 8 条的 start_len 留位是它的契约前置
+   （2026-07-12 自 S2-0 迁入）。
 8. 【递延登记：worker poll 粒度】stock worker 1s poll 对 SWE 分钟级任务
    可忽略（升级设计 N3 已定性）；只有未来混入秒级短任务才需要降到
    50-100ms 或事件驱动——记录在此防止重复调查，FA-1 不做。

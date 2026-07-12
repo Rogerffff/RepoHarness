@@ -31,7 +31,7 @@ S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号�
 
 ### S2-0 契约小项包（半天）
 
-1. `RoutingTensorRef` 留 `routed_experts_start_len` 扩展位（升级设计 I-1：上游 680824dd 已改 tape 契约，现在留位一行事，字段默认 0 + 校验器兼容中段拼接语义的注释）。
+1. ~~`RoutingTensorRef` 留 `routed_experts_start_len` 扩展位~~ **已迁出 → FA-0**（用户 2026-07-12 确认）：该项是 rollout tape 契约、唯一下游消费是 FA 递延的真续跑路径（680824dd cherry-pick），且 FA-0 本就要动同一批 tape/投影契约面——见 `05-fully-async-execution-plan.md` FA-0 第 8 条。
 2. cleanup failure 进阶段账本（codex#6）：`CleanupFailureRecord` 汇入 acceptance summary 的结构化字段 + 告警口径（计数 > 0 即 summary 黄标）。
 3. `S1_TIER_CAP` 解除机制**定义**（不解除）：解除条件写成代码内显式清单（S2-2~S2-5 验收 + 红队全拦截），`GATE_VERSION` 升版流程与测试骨架就位，真正解除在 S2-7。
 
