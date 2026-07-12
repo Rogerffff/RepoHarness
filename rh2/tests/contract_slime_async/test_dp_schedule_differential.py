@@ -48,8 +48,8 @@ from repoharness2.adapters.slime.batch_admission import (  # noqa: E402
 )
 
 
-def _real_schedule(lengths, rollout_indices, *, gbs, parallel, packing):
-    """调用 slime 真函数；返回 ("ok", num_microbatches) 或 ("fail", 断言文本)。"""
+def _real_schedule_full(lengths, rollout_indices, *, gbs, parallel, packing):
+    """调用 slime 真函数；返回 dict（kind/payload/num_microbatches/partitions）。"""
 
     from slime.utils.dp_schedule import build_dp_schedule
 
@@ -67,35 +67,62 @@ def _real_schedule(lengths, rollout_indices, *, gbs, parallel, packing):
         "microbatch_group_size_per_vp_stage": parallel.microbatch_group_size_per_vp_stage,
     }
     try:
-        _, _, num_microbatches, _ = build_dp_schedule(
+        partitions, _, num_microbatches, _ = build_dp_schedule(
             args, config, lengths, global_batch_size=gbs, rollout_indices=rollout_indices
         )
     except AssertionError as exc:
-        return "fail", str(exc)
-    return "ok", num_microbatches
+        return {"kind": "fail", "payload": str(exc)}
+    return {
+        "kind": "ok",
+        "payload": num_microbatches,
+        "num_microbatches": num_microbatches,
+        "partitions": partitions,
+    }
+
+
+def _classify_real_failure(text: str) -> str:
+    """真函数断言文本 -> 预检 verdict 类别（差分必须比到类别级，不止"都失败"）。"""
+
+    if "num_rollouts" in text and "global_batch_size" in text:
+        return "insufficient_rollout_count"
+    if "samples < dp_size" in text:
+        return "step_samples_below_dp_size"
+    if "could only produce" in text or "not a multiple" in text:
+        return "microbatch_alignment_failed"
+    raise AssertionError(f"真函数出现未分类断言（预检器镜像面可能缺失）：{text}")
 
 
 def _differential(lengths, rollout_indices, *, gbs, parallel, packing):
     prediction = predict_batch_schedule(
         lengths, rollout_indices, global_batch_size=gbs, parallel=parallel, packing=packing
     )
-    real_kind, real_payload = _real_schedule(
+    real = _real_schedule_full(
         lengths, rollout_indices, gbs=gbs, parallel=parallel, packing=packing
     )
     if prediction.admitted:
-        assert real_kind == "ok", (
-            f"预检判可、真函数判负：{real_payload}\n prediction={prediction}"
+        assert real["kind"] == "ok", (
+            f"预检判可、真函数判负：{real['payload']}\n prediction={prediction}"
         )
-        assert list(prediction.num_microbatches_per_rank) == list(real_payload), (
+        assert list(prediction.num_microbatches_per_rank) == list(real["num_microbatches"]), (
             f"每 rank mbs 数不一致：predict={prediction.num_microbatches_per_rank} "
-            f"real={real_payload}"
+            f"real={real['num_microbatches']}"
         )
-        assert prediction.num_steps == len(real_payload)
+        assert prediction.num_steps == len(real["num_microbatches"])
+        # selected 集合比对（codex FA-3/4 审查遗漏项）：真函数 partitions 的
+        # 全局样本下标并集 == 预检 selected；其余 == 预检 deferred
+        real_selected = {pos for rank in real["partitions"] for pos in rank}
+        assert real_selected == set(prediction.selected_sample_positions)
+        assert set(prediction.deferred_sample_positions) == (
+            set(range(len(lengths))) - real_selected
+        )
     else:
-        assert real_kind == "fail", (
-            f"预检判负（{prediction.verdict}）、真函数判可：{real_payload}"
+        assert real["kind"] == "fail", (
+            f"预检判负（{prediction.verdict}）、真函数判可：{real['payload']}"
         )
-    return prediction, (real_kind, real_payload)
+        assert _classify_real_failure(real["payload"]) == prediction.verdict, (
+            f"失败类别不一致：predict={prediction.verdict} real={real['payload']}"
+        )
+    return prediction, (real["kind"], real["payload"])
 
 
 P3_PARALLEL = TrainParallelConfig(dp_size=2, cp_size=1, vpp_size=1)

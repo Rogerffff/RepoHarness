@@ -24,8 +24,11 @@ import pytest
 from repoharness2.training.faithful_dis import (
     DIS_EPS_HIGH_PREREGISTERED,
     DIS_EPS_LOW_PREREGISTERED,
+    DIS_TRUST_HIGH,
+    DIS_TRUST_LOW,
     DisTokenRecord,
     faithful_dis_loss,
+    faithful_dis_loss_by_execution,
     reject_ratio_by_length_bucket,
 )
 
@@ -43,7 +46,7 @@ def test_hand_computed_case_exact():
     """三 token 手算：接受/拒绝/mask0 各一。
 
     t0: ratio = exp(-0.5+0.6) = e^0.1 ≈ 1.10517（区间内），A=2.0
-    t1: ratio = exp(-3.0+0.1) = e^-2.9 ≈ 0.05502（< 0.8 拒绝），A=1.0
+    t1: ratio = exp(-3.0+0.1) = e^-2.9 ≈ 0.05502（< 信任下界 0.2 拒绝），A=1.0
     t2: mask=0（不进 D、不进 loss）
     D = provenance tokens = 2
     loss = -(w0*A0*logp0)/D = -(1.10517*2.0*(-0.5))/2 = +0.55259
@@ -118,15 +121,23 @@ def _torch_faithful_dis(
 ) -> "torch.Tensor":
     """torch 同构实现（未来 Megatron custom loss 的形状雏形）。
 
-    关键语义与参考实现逐条对应：ratio 走 `.detach()`；越界 token 权重置零；
-    D = provenance token 数（DENOMINATOR_SEMANTICS_V1）。
+    关键语义与参考实现逐条对应：ratio 走 `.detach()`；信任区间 =
+    (1-eps_low, 1+eps_high) 开区间（论文式 3）；越界 token 权重置零；
+    D = provenance token 数（DENOMINATOR_SEMANTICS_V1）；全零 D 返回
+    可微零（无 NaN）。
     """
 
     ratio = torch.exp(logp_current - logp_rollout).detach()
-    in_range = (ratio >= eps_low) & (ratio <= eps_high)
+    trust_low, trust_high = 1.0 - eps_low, 1.0 + eps_high  # 论文式 3 参数化
+    in_range = (ratio > trust_low) & (ratio < trust_high)  # 开区间（严格不等号）
     weights = torch.where(in_range, ratio, torch.zeros_like(ratio)) * mask
+    numerator = -(weights * advantages * logp_current).sum()
     denominator = mask.sum()
-    return -(weights * advantages * logp_current).sum() / denominator
+    # 零安全（codex FA-3/4 审查 #5）：全局有效 token 为零时返回与 logits
+    # 连接的可微零（clamp 防除零 + 门控清零），不产生 NaN、不断计算图——
+    # 分布式实现的 CP 空 rank 同款语义。
+    safe = torch.clamp(denominator, min=1.0)
+    return (numerator / safe) * (denominator > 0)
 
 
 def test_torch_parity_loss_and_per_token_grads():
@@ -168,27 +179,32 @@ def test_torch_out_of_range_grads_exactly_zero():
 # --------------------------------------------------------- 语义边界与信号
 
 
-def test_interval_boundaries_are_closed():
-    """ratio 恰等于 eps_low/eps_high：接受（闭区间语义）。
+def test_trust_interval_is_open_per_paper_eq3():
+    """论文式 3：1-ε_ℓ < r < 1+ε_h **严格不等号**——恰在边界上的 ratio 拒绝。
 
-    边界值取"实际计算出的 ratio"本身（exp(log(x)) 的浮点回环会差 1ulp，
-    直接用预注册常数做 logp 构造会假失败——这里测的是闭区间语义，
-    不是浮点回环）。"""
+    coding 配置 ε=(0.8, 3.0) -> 信任区间 (0.2, 4.0)。2026-07-12 勘误：此前
+    误实现为 [0.8, 3.0] 直接 ratio 闭区间（codex FA-3/4 审查 #1，已对照
+    论文 p.4 原文裁决）。论文正文写 "[1-ε_ℓ, 1+ε_h]" 闭括号与式 3 矛盾，
+    以正式定义（式 3）为准。边界判断在 log 空间完成（溢出防护），测试
+    直接用 log 值构造精确边界命中。"""
 
-    low_ratio = math.exp(-0.75 - (-0.52))  # ≈0.7945
-    high_ratio = math.exp(-0.10 - (-1.19))  # ≈2.9743
-    tokens = [_tok(-0.75, -0.52, 1.0), _tok(-0.10, -1.19, 1.0)]
-    result = faithful_dis_loss(tokens, eps_low=low_ratio, eps_high=high_ratio)
-    assert result.accepted_token_count == 2  # 两端都恰在边界上，闭区间接受
-    assert result.per_token_weight == pytest.approx((low_ratio, high_ratio))
-    # 越过边界 1ulp 级别即拒绝
-    import math as _m
-    result2 = faithful_dis_loss(
-        tokens,
-        eps_low=_m.nextafter(low_ratio, 1.0),
-        eps_high=_m.nextafter(high_ratio, 0.0),
+    assert DIS_TRUST_LOW == 1.0 - DIS_EPS_LOW_PREREGISTERED
+    assert DIS_TRUST_HIGH == 1.0 + DIS_EPS_HIGH_PREREGISTERED
+    assert (DIS_TRUST_LOW, DIS_TRUST_HIGH) == pytest.approx((0.2, 4.0))
+    # 精确边界：log_ratio == log(0.2) / log(4.0) -> 开区间拒绝
+    at_low = _tok(math.log(DIS_TRUST_LOW), 0.0, 1.0)
+    at_high = _tok(math.log(DIS_TRUST_HIGH), 0.0, 1.0)
+    boundary = faithful_dis_loss([at_low, at_high])
+    assert boundary.accepted_token_count == 0
+    assert boundary.rejected_token_count == 2
+    # 区间内侧（含 ratio=1 完全 on-policy 与靠近边界的值）接受
+    inside = faithful_dis_loss(
+        [_tok(0.0, 0.0, 1.0), _tok(math.log(0.25), 0.0, 1.0), _tok(math.log(3.9), 0.0, 1.0)]
     )
-    assert result2.accepted_token_count == 0
+    assert inside.accepted_token_count == 3
+    # 巨大 logp 差不溢出（log 空间阈判）：先拒绝、不执行 exp
+    huge = faithful_dis_loss([_tok(500.0, -500.0, 1.0), _tok(0.0, 0.0, 1.0)])
+    assert huge.rejected_token_count == 1 and huge.accepted_token_count == 1
 
 
 def test_denominator_semantics_differ_observably():
@@ -229,12 +245,20 @@ def test_provenance_mask_is_not_rewritten():
 
 
 def test_eps_interval_validation():
-    with pytest.raises(ValueError, match="eps"):
-        faithful_dis_loss([_tok(-0.5, -0.5, 1.0)], eps_low=0.0)
-    with pytest.raises(ValueError, match="eps"):
-        faithful_dis_loss([_tok(-0.5, -0.5, 1.0)], eps_low=1.2, eps_high=3.0)
-    with pytest.raises(ValueError, match="eps"):
-        faithful_dis_loss([_tok(-0.5, -0.5, 1.0)], eps_high=0.9)
+    """ε 参数域：0<eps_low<1（信任下界为正）、eps_high>0、有限。"""
+
+    for bad in (dict(eps_low=0.0), dict(eps_low=1.0), dict(eps_low=1.2),
+                dict(eps_high=0.0), dict(eps_high=-1.0),
+                dict(eps_low=float("nan"))):
+        with pytest.raises(ValueError, match="ε|eps"):
+            faithful_dis_loss([_tok(-0.5, -0.5, 1.0)], **bad)
+
+
+def test_nan_advantage_fail_closed():
+    """codex FA-3/4 审查（输入校验）：NaN advantage 必须显式拒绝。"""
+
+    with pytest.raises(ValueError, match="advantage"):
+        faithful_dis_loss([_tok(-0.5, -0.5, float("nan"))])
 
 
 # ----------------------------------------------------------------- 指标 helper
@@ -249,3 +273,103 @@ def test_reject_ratio_by_length_bucket_counts():
     assert counts["(0,2048]"] == (4, 4)
     assert counts["(2048,8192]"] == (0, 3000)
     assert counts["(8192,32768]"] == (0, 0)
+
+
+# ------------------------------------------- execution 级归约层次（codex #4）
+
+
+def _exec_tokens(n: int, *, logp_gap: float = 0.0, advantage: float = 1.0) -> list[DisTokenRecord]:
+    return [_tok(-0.5, -0.5 - logp_gap, advantage) for _ in range(n)]
+
+
+def test_hierarchy_branch_split_invariance():
+    """branch 怎么切不改变结果：同一 execution 的 token 集按 2 段或 3 段
+    branch 交付，execution 级归约的 loss 与逐 token 梯度完全一致。"""
+
+    tokens = [_tok(-0.4 - 0.01 * i, -0.5, 1.0) for i in range(12)]
+    as_one = faithful_dis_loss_by_execution({"e1": tokens})
+    # branch 切分只是交付分组，归约按 execution 聚合 -> 输入相同集合即等价
+    regrouped = faithful_dis_loss_by_execution({"e1": tokens[:5] + tokens[5:]})
+    assert as_one.loss == pytest.approx(regrouped.loss)
+    assert as_one.per_token_grad_logp_current["e1"] == pytest.approx(
+        regrouped.per_token_grad_logp_current["e1"]
+    )
+
+
+def test_hierarchy_fanout_change_isolated_to_own_execution():
+    """一个 execution 的 token/branch 数变化不改变其他 execution 的
+    per-execution loss（分母隔离——stock 单分母折叠做不到这一点）。"""
+
+    base = faithful_dis_loss_by_execution(
+        {"e1": _exec_tokens(4), "e2": _exec_tokens(6, advantage=-1.0)}
+    )
+    fanned = faithful_dis_loss_by_execution(
+        {"e1": _exec_tokens(16), "e2": _exec_tokens(6, advantage=-1.0)}
+    )
+    assert base.per_execution_loss["e2"] == pytest.approx(fanned.per_execution_loss["e2"])
+    # 对照：平铺单分母下 e2 的贡献会被 e1 的 token 数稀释（两种 reducer 语义
+    # 可区分——治理层准确提供两种分母，reducer 选择归训练算法，分析文档 §3.2）
+    flat_base = faithful_dis_loss(_exec_tokens(4) + _exec_tokens(6, advantage=-1.0))
+    flat_fanned = faithful_dis_loss(_exec_tokens(16) + _exec_tokens(6, advantage=-1.0))
+    assert flat_base.loss != pytest.approx(flat_fanned.loss)
+
+
+def test_hierarchy_dp_partition_invariance():
+    """DP 分区不变性：把 executions 拆成两个分区分别归约，按 execution 数
+    加权重组 == 全批一次归约（分布式归约的离线等价形）。"""
+
+    executions = {
+        "e1": _exec_tokens(3),
+        "e2": _exec_tokens(5, advantage=-0.5),
+        "e3": _exec_tokens(7, logp_gap=0.05),
+        "e4": _exec_tokens(2, advantage=2.0),
+    }
+    full = faithful_dis_loss_by_execution(executions)
+    part1 = faithful_dis_loss_by_execution({k: executions[k] for k in ("e1", "e2")})
+    part2 = faithful_dis_loss_by_execution({k: executions[k] for k in ("e3", "e4")})
+    recombined = (part1.loss * part1.execution_count + part2.loss * part2.execution_count) / (
+        part1.execution_count + part2.execution_count
+    )
+    assert full.loss == pytest.approx(recombined)
+
+
+def test_hierarchy_denominator_cross_check_with_fa3():
+    """FA-3 rollout_loss_denominator 互检：口径一致通过，不一致 fail-closed。"""
+
+    executions = {"e1": _exec_tokens(4)}
+    ok = faithful_dis_loss_by_execution(executions, expected_denominators={"e1": 4})
+    assert ok.per_execution_denominator == {"e1": 4}
+    with pytest.raises(ValueError, match="分母互检失败"):
+        faithful_dis_loss_by_execution(executions, expected_denominators={"e1": 5})
+    with pytest.raises(ValueError, match="provenance token 数为 0"):
+        faithful_dis_loss_by_execution({"e1": [_tok(-0.5, -0.5, 1.0, mask=0)]})
+
+
+def test_cross_version_two_turn_scenario():
+    """跨版本双 turn（codex FA-3/4 审查遗漏项的 DIS 层形态）：turn1 与
+    current 同版本（ratio≈1 接受），turn2 来自更旧行为策略（logp 差大 →
+    ratio 越界拒绝）——同一 execution 内逐 token 各判各的，turn1 照常训练。"""
+
+    turn1 = [_tok(-0.5, -0.5, 1.0) for _ in range(3)]  # 同版本：ratio=1
+    turn2 = [_tok(-0.5, -3.0, 1.0) for _ in range(2)]  # 旧版本：ratio=e^2.5≈12.2 越界
+    result = faithful_dis_loss_by_execution({"e1": turn1 + turn2})
+    inner = faithful_dis_loss(turn1 + turn2)
+    assert inner.accepted_token_count == 3
+    assert inner.rejected_token_count == 2
+    assert all(g != 0.0 for g in result.per_token_grad_logp_current["e1"][:3])
+    assert all(g == 0.0 for g in result.per_token_grad_logp_current["e1"][3:])
+
+
+def test_torch_all_masked_returns_differentiable_zero_no_nan():
+    """codex FA-3/4 审查 #5：torch 侧全 mask=0 -> loss 0、梯度 0、无 NaN，
+    且计算图保持连接（backward 不炸）——CP 空 rank 的语义雏形。"""
+
+    logp_current = torch.tensor([-0.5, -1.0], dtype=torch.float64, requires_grad=True)
+    logp_rollout = torch.tensor([-0.5, -1.0], dtype=torch.float64)
+    advantages = torch.tensor([1.0, 1.0], dtype=torch.float64)
+    mask = torch.zeros(2, dtype=torch.float64)
+    loss = _torch_faithful_dis(logp_current, logp_rollout, advantages, mask)
+    loss.backward()  # 图连接：backward 可执行
+    assert loss.item() == 0.0 and not math.isnan(loss.item())
+    assert logp_current.grad is not None
+    assert all(g == 0.0 for g in logp_current.grad.tolist())

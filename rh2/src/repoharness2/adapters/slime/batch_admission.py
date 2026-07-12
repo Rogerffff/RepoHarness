@@ -11,8 +11,9 @@
    镜像的忠实性由差分测试保证（同一输入喂本预测器与 slime 真函数，
    成功/失败类别、step 数、每 rank microbatch 数三项必须一致）——差分
    测试是本模块的**正确性权威**，改本模块必须先过差分。
-2. ``normalize_rewards_by_group``：问题 E 的层次化优势归一化（group_index
-   键控，advantage 按唯一 RolloutExecution 计算后广播给 branches，
+2. ``normalize_rewards_by_group``：问题 E 的层次化优势归一化
+   （**prompt_group_id 权威键**——FA-0 稳定身份，group_index 只是 slime
+   批次内编号；advantage 按唯一 RolloutExecution 计算后广播给 branches，
    rollout 级 loss 分母），替代 slime stock ``_post_process_rewards`` 的
    reshape-by-shape 逻辑（J5 gbs20 保留 36≠32 时折叠单组的实锤缺陷）。
 3. ``flatten_delivery`` / ``rebuild_group_view``：问题 C 的交付边界三视图
@@ -65,6 +66,15 @@ class TrainParallelConfig:
     vpp_size: int = 1
     microbatch_group_size_per_vp_stage: int = 1
 
+    def __post_init__(self) -> None:
+        for name in ("dp_size", "cp_size", "vpp_size", "microbatch_group_size_per_vp_stage"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or value < 1:
+                raise BatchAdmissionError(
+                    "invalid_parallel_config",
+                    f"{name}={value!r} 必须是 >=1 的整数（否则真函数 ZeroDivision/错排）。",
+                )
+
     @property
     def align_to(self) -> int:
         """microbatch 数的对齐模数（dp_schedule.py:124 同式）。"""
@@ -103,6 +113,13 @@ class BatchSchedulePrediction:
     num_unique_rollouts: int
     num_steps: int  # 判负时为 0 或已能确定的 step 数
     num_microbatches_per_rank: tuple[int, ...] = ()  # verdict=ok 时逐 step
+    # codex FA-3/4 审查 #2：`ok` 必须说明选了谁、延后了谁——尾部不足一个
+    # step 的 rollout 被真函数**静默丢弃**，异步队列的 lease/ACK 语义要求
+    # 它们显式回 READY 而不是消失。deferred 非空时消费方必须逐条记账。
+    selected_rollout_ids: tuple[tuple[int, ...], ...] = ()  # verdict=ok 时逐 step
+    deferred_rollout_ids: tuple[int, ...] = ()  # 尾部未进任何 step 的 rollout
+    selected_sample_positions: tuple[int, ...] = ()  # 全部入选样本的全局下标
+    deferred_sample_positions: tuple[int, ...] = ()
 
     @property
     def admitted(self) -> bool:
@@ -172,10 +189,21 @@ def predict_batch_schedule(
             raise BatchAdmissionError(
                 "max_tokens_per_gpu_missing", "动态装箱要求 max_tokens_per_gpu（真函数同断言）。"
             )
-    elif packing.micro_batch_size is None:
-        raise BatchAdmissionError(
-            "micro_batch_size_missing", "静态装箱要求 micro_batch_size（真函数同断言）。"
-        )
+        if packing.max_tokens_per_gpu < 1:
+            raise BatchAdmissionError(
+                "invalid_max_tokens_per_gpu",
+                f"max_tokens_per_gpu={packing.max_tokens_per_gpu} 必须 >= 1。",
+            )
+    else:
+        if packing.micro_batch_size is None:
+            raise BatchAdmissionError(
+                "micro_batch_size_missing", "静态装箱要求 micro_batch_size（真函数同断言）。"
+            )
+        if packing.micro_batch_size < 1:
+            raise BatchAdmissionError(
+                "invalid_micro_batch_size",
+                f"micro_batch_size={packing.micro_batch_size} 必须 >= 1。",
+            )
 
     align_to = parallel.align_to
 
@@ -249,13 +277,33 @@ def predict_batch_schedule(
             k = k0
         per_rank.append(k // parallel.dp_size)
 
+    selected_per_step = tuple(
+        tuple(rollout_ids[s * global_batch_size : (s + 1) * global_batch_size])
+        for s in range(num_steps)
+    )
+    deferred_ids = tuple(rollout_ids[num_steps * global_batch_size :])
+    selected_positions = tuple(
+        pos for step in selected_per_step for rid in step for pos in rollout_to_samples[rid]
+    )
+    deferred_positions = tuple(
+        pos for rid in deferred_ids for pos in rollout_to_samples[rid]
+    )
     return BatchSchedulePrediction(
         verdict="ok",
-        reason="schedule admissible",
+        reason=(
+            "schedule admissible"
+            if not deferred_ids
+            else f"schedule admissible；尾部 {len(deferred_ids)} 个 rollout 未入 step"
+            "（真函数会静默丢弃——消费方必须让它们回 READY 并显式记账）"
+        ),
         align_to=align_to,
         num_unique_rollouts=num_rollouts,
         num_steps=num_steps,
         num_microbatches_per_rank=tuple(per_rank),
+        selected_rollout_ids=selected_per_step,
+        deferred_rollout_ids=deferred_ids,
+        selected_sample_positions=selected_positions,
+        deferred_sample_positions=deferred_positions,
     )
 
 
@@ -266,9 +314,15 @@ def predict_batch_schedule(
 
 @dataclass(frozen=True)
 class BranchDelivery:
-    """一条交付 branch 的归一化输入（三层身份 + reward/token 事实）。"""
+    """一条交付 branch 的归一化输入（FA-0 三层身份 + reward/token 事实）。
 
-    group_index: int
+    codex FA-3/4 审查 #3：GRPO 分组的**权威键是 `prompt_group_id`**（FA-0
+    ExecutionIdentity 的稳定 id）——`group_index` 只是 slime 本批次的整数
+    编号，多 worker/数据源重启/回放时可能复用，不得作为归一化键。
+    """
+
+    prompt_group_id: str
+    group_index: int  # slime 批次内编号（信息性；不作分组键）
     rollout_execution_id: str
     branch_id: str
     reward: float
@@ -282,7 +336,7 @@ class GroupNormalizationResult:
     branch_advantages: tuple[float, ...]
     rollout_loss_denominators: tuple[int, ...]  # 逐 branch：其所属 execution 的分母
     execution_advantages: dict[str, float] = field(default_factory=dict)
-    group_execution_counts: dict[int, int] = field(default_factory=dict)
+    group_execution_counts: dict[str, int] = field(default_factory=dict)  # 键 = prompt_group_id
 
 
 def normalize_rewards_by_group(
@@ -291,7 +345,7 @@ def normalize_rewards_by_group(
     std_normalization: bool = False,
     std_epsilon: float = 1e-6,
 ) -> GroupNormalizationResult:
-    """问题 E：group_index 键控的层次化优势归一化。
+    """问题 E：prompt_group_id 键控的层次化优势归一化。
 
     五条不变量（05 计划 FA-3 验收，属性测试逐条钉）：
 
@@ -315,13 +369,27 @@ def normalize_rewards_by_group(
     if not branches:
         raise BatchAdmissionError("empty_delivery", "归一化输入为空。")
 
-    # execution 级事实收集 + 广播一致性校验（不变量 1 的输入面）
+    # execution 级事实收集 + 广播一致性/身份唯一性/数值有限性校验
     execution_reward: dict[str, float] = {}
-    execution_group: dict[str, int] = {}
+    execution_group: dict[str, str] = {}
     execution_token_sum: dict[str, int] = {}
+    seen_branch_keys: set[tuple[str, str, str]] = set()
     for branch in branches:
         if branch.trainable_token_count < 0:
             raise BatchAdmissionError("negative_token_count", f"{branch.branch_id} token 数为负。")
+        if not math.isfinite(branch.reward):
+            raise BatchAdmissionError(
+                "non_finite_reward",
+                f"{branch.branch_id} reward={branch.reward!r} 非有限值——上游评分事实矛盾，"
+                "NaN 会静默污染整组 advantage。",
+            )
+        key = (branch.prompt_group_id, branch.rollout_execution_id, branch.branch_id)
+        if key in seen_branch_keys:
+            raise BatchAdmissionError(
+                "duplicate_branch_identity",
+                f"重复交付 {key}——分母会被重复累计，身份唯一性被破坏。",
+            )
+        seen_branch_keys.add(key)
         eid = branch.rollout_execution_id
         if eid in execution_reward:
             if execution_reward[eid] != branch.reward:
@@ -330,22 +398,30 @@ def normalize_rewards_by_group(
                     f"execution {eid} 的 branch 间 reward 不一致"
                     f"（{execution_reward[eid]} vs {branch.reward}）——违反 D-FA-7 广播语义。",
                 )
-            if execution_group[eid] != branch.group_index:
+            if execution_group[eid] != branch.prompt_group_id:
                 raise BatchAdmissionError(
                     "execution_group_conflict",
-                    f"execution {eid} 出现在两个 group（{execution_group[eid]} vs "
-                    f"{branch.group_index}）——三层身份矛盾。",
+                    f"execution {eid} 出现在两个 prompt group（{execution_group[eid]} vs "
+                    f"{branch.prompt_group_id}）——三层身份矛盾。",
                 )
         else:
             execution_reward[eid] = branch.reward
-            execution_group[eid] = branch.group_index
+            execution_group[eid] = branch.prompt_group_id
             execution_token_sum[eid] = 0
         execution_token_sum[eid] += branch.trainable_token_count
 
-    # group -> executions（不变量 1：按唯一 execution 计算组统计）
-    group_to_executions: dict[int, list[str]] = {}
-    for eid, gid in execution_group.items():
-        group_to_executions.setdefault(gid, []).append(eid)
+    for eid, token_sum in execution_token_sum.items():
+        if token_sum == 0:
+            raise BatchAdmissionError(
+                "zero_trainable_tokens_execution",
+                f"execution {eid} 的可训练 token 总数为 0——rollout 分母不可为零，"
+                "全 mask=0 的执行应在 gate 层收口（no_trainable_tokens），不该到这里。",
+            )
+
+    # prompt_group_id -> executions（不变量 1：按唯一 execution 计算组统计）
+    group_to_executions: dict[str, list[str]] = {}
+    for eid, pgid in execution_group.items():
+        group_to_executions.setdefault(pgid, []).append(eid)
 
     execution_advantage: dict[str, float] = {}
     for gid, eids in group_to_executions.items():
@@ -378,24 +454,25 @@ def normalize_rewards_by_group(
 
 
 def flatten_delivery(
-    groups: dict[int, dict[str, list[BranchDelivery]]],
+    groups: dict[str, dict[str, list[BranchDelivery]]],
 ) -> list[BranchDelivery]:
-    """内部三层结构（group -> execution -> branches）→ 平铺 list。
+    """内部三层结构（prompt_group_id -> execution -> branches）→ 平铺 list。
 
     身份 sidecar 就是 BranchDelivery 自身的三层字段——平铺不丢失任何身份；
     `rebuild_group_view` 可无损还原（round-trip 测试钉死）。顺序确定性：
-    按 group_index、execution 首次插入顺序、branch 列表顺序。
+    按 prompt_group_id、execution 首次插入顺序、branch 列表顺序。
     """
 
     flat: list[BranchDelivery] = []
-    for gid in sorted(groups):
-        for eid, branch_list in groups[gid].items():
+    for pgid in sorted(groups):
+        for eid, branch_list in groups[pgid].items():
             for branch in branch_list:
-                if branch.group_index != gid or branch.rollout_execution_id != eid:
+                if branch.prompt_group_id != pgid or branch.rollout_execution_id != eid:
                     raise BatchAdmissionError(
                         "identity_sidecar_mismatch",
                         f"branch {branch.branch_id} 的身份字段与所在结构位置不一致"
-                        f"（{branch.group_index}/{branch.rollout_execution_id} vs {gid}/{eid}）。",
+                        f"（{branch.prompt_group_id}/{branch.rollout_execution_id} vs "
+                        f"{pgid}/{eid}）。",
                     )
                 flat.append(branch)
     return flat
@@ -403,12 +480,12 @@ def flatten_delivery(
 
 def rebuild_group_view(
     flat: list[BranchDelivery],
-) -> dict[int, dict[str, list[BranchDelivery]]]:
-    """平铺 list → 三层结构（凭身份字段无损回链）。"""
+) -> dict[str, dict[str, list[BranchDelivery]]]:
+    """平铺 list → 三层结构（凭身份字段无损回链；键 = prompt_group_id）。"""
 
-    groups: dict[int, dict[str, list[BranchDelivery]]] = {}
+    groups: dict[str, dict[str, list[BranchDelivery]]] = {}
     for branch in flat:
-        groups.setdefault(branch.group_index, {}).setdefault(
+        groups.setdefault(branch.prompt_group_id, {}).setdefault(
             branch.rollout_execution_id, []
         ).append(branch)
     return groups

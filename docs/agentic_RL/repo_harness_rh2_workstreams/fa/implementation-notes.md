@@ -168,7 +168,42 @@ backfill 逐入训轮回填 → 握手 staleness 真实计算）；正式链启�
 
 ### 开放问题
 
-- 论文忠实性只到"公式语义"层：ε 数值、denominator 档位、以及 top-p
-  replay 是否参与 current logprob 计算（对拍清单第 5 项）都要在接线时
-  对照原文/实测定死——参考实现把每个自由度做成显式参数，就是为了那时
-  不需要改结构。
+- 论文忠实性只到"公式语义"层：denominator 档位、以及 top-p replay 是否
+  参与 current logprob 计算（对拍清单第 5 项）要在接线时对照实测定死——
+  参考实现把每个自由度做成显式参数，就是为了那时不需要改结构。
+
+## FA-3/FA-4 follow-up（2026-07-12，codex 审查 12 项全部采纳；原文存档
+## `../s2/codex_reviews.md` 轮次 5）
+
+- **严重 1（DIS 区间勘误——本轮最重要修正）**：对照 SAO 论文 p.4 原文
+  裁决，式 3 = `f(x)=x if 1−ε_ℓ < x < 1+ε_h else 0`——**开区间、
+  (1−ε, 1+ε) 参数化**；coding 配置 ε=(0.8, 3.0) → 信任区间 **(0.2, 4.0)**。
+  轮次 3 的"直接 ratio 边界"读法与我方闭区间实现 [0.8, 3.0] 都是错的，
+  已改并在 05 计划 §5 勘误。注：论文正文写 "[1−ε_ℓ, 1+ε_h]" 闭括号与
+  式 3 严格不等号自相矛盾，预注册以正式定义（式 3）为准并留注。
+  detach 补记为 RH2 显式算法决策（论文未写 stop-gradient）。
+- **严重 2（selected/deferred 报告）**：预检 `ok` 现在返回逐 step
+  selected_rollout_ids + deferred_rollout_ids + 双侧 sample positions
+  ——尾部不足一 step 的 rollout 是"延后"不是"丢弃"，lease/ACK 接线
+  的 READY 回队语义有了数据面。差分测试同步比对 selected 集合
+  （真函数 partitions 并集 == 预检 selected）。
+- **严重 3（prompt_group_id 权威键）**：BranchDelivery 补 FA-0 稳定身份，
+  归一化/三视图全部改键 prompt_group_id（group_index 降为 slime 批次内
+  编号）；重复 (pg, exec, branch) 身份 fail-closed。
+- **严重 4（execution 级归约层次）**：新增 `faithful_dis_loss_by_execution`
+  ——branch 分子 → execution 共享分母（与 FA-3 rollout_loss_denominator
+  互检）→ batch 按 execution 等权平均；branch-split 不变性、fan-out 隔离
+  （对照平铺单分母的可区分差异）、DP 分区加权重组不变性三组测试钉死。
+  CP/VPP 分布式归约留接线期真实并行环境。
+- **严重 5（torch 全零 NaN）**：codex 实测属实——torch 对拍 helper 改
+  clamp+门控（全零 → 可微零，backward 不断图，无 NaN），加专测。
+- **输入校验全套**：NaN reward/advantage、重复 branch、零 token
+  execution、非法并行/装箱参数全部 fail-closed；DIS 阈判移到 log-ratio
+  空间（巨大 logp 差先拒绝、不执行 exp，溢出免疫）。
+- **遗漏项处置**：失败类别差分比对（不再只"两边都失败"）；P3 分母回归
+  改用 `loss_mask_ones`（可训练 token 口径，不是 response_lengths）；
+  跨版本双 turn 场景测试（同 execution 内逐 token 各判各的）。
+  仍留接线期的：top-p replay 进对拍、DIS 旁路启动负测试（接线配置面）、
+  CP/VPP 分布式归约、lease/ACK 本体（FA-3 接线，等 FA-2）。
+- codex 附加验证留档：5000 例随机调度差分全部一致（我方 200 例 seed 扫
+  的独立加强）。测试 724 → 732。

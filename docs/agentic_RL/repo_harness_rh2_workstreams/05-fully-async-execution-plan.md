@@ -224,7 +224,7 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 | 最大 policy lag | 1 个 optimizer step | 不继承 S1 默认 4 |
 | PromptGroup 版本跨度上限 | 1 | 组内成员版本差 ≤1；DIS 修 token 梯度，不修 reward baseline 的跨版本可交换性 |
 | DIS 有效 token 比例 | 90%（**监控黄灯阈值，非 queue 硬门**——ratio 只在 trainer forward 可得，codex #3） | 持续低于 → 排查 staleness/对齐，FA-5 校准 |
-| DIS ratio 信任区间 | ε_low=0.8 / ε_high=3.0（codex 引 SAO 论文 coding-agent 配置；FA-4 对拍时对照论文原文复核后定死） | denominator 语义随 FA-4 预注册 |
+| DIS ratio 信任区间 | **(1−ε_low, 1+ε_high) = (0.2, 4.0) 开区间**（论文式 3 原文裁决 2026-07-12：ε_low=0.8/ε_high=3.0 是式 3 参数不是直接 ratio 边界；此前闭区间 [0.8,3.0] 读法作废——codex FA-3/4 审查 #1。论文正文闭括号与式 3 严格不等号矛盾，以式 3 为准） | denominator 语义随 FA-4 预注册（v1=provenance_tokens 已落 faithful_dis.py） |
 | 组 deadline | 任务 time budget + 评分预算，×1.5 p95 安全系数 | 动态推导 |
 | ready queue TTL | **双限**：policy_version_ttl（staleness 上限）**∧** wall_clock_ttl（codex #9：trainer 停滞时版本 TTL 永不过期） | 消费时重算 |
 | batch fallback | 首版禁用（只换组 + 等待） | 启用需与 lr/梯度累积/optimizer-step 语义一起定案 |

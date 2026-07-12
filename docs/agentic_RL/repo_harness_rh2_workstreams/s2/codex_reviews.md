@@ -375,3 +375,115 @@ inspect-rh2-s1：PASS
 ### 保持项
 
 T0 冻结账本自检、D5 代码级重验、leakage_watch 透传、先 8 题再 50 题再全量、逐题报告与漏斗账、S2/FA 文件边界。
+
+
+---
+
+## 轮次 5（2026-07-12：FA-3 离线 / FA-4 对拍实现审查 → 12 项全部采纳）
+
+> 原文全文转录（tmp/FA3/4_codex.md）。处置见 `fa/implementation-notes.md` "FA-3/FA-4 follow-up" 节。最重要裁决：DIS 信任区间按论文式 3 原文核实为 (1−ε_ℓ, 1+ε_h) 开区间 = (0.2, 4.0)——轮次 3 的"直接 ratio 边界"读法与我方闭区间实现均错误，已修正。codex 附加验证：5000 例随机调度差分全部一致。
+
+**结论**
+
+两个提交的核心方向正确，但目前更准确的状态应是：
+
+- FA-3：**调度镜像原型完成，正式队列接线前仍需加固**
+- FA-4：**标量 DIS 参考原型完成，尚未达到论文忠实和分布式训练验收**
+
+没有必要推翻实现。FA-1 的 worker/proxy 工作可以继续，但不要直接把当前 FA-3 接入 lease/ACK，也不要基于当前 FA-4 开始正式 custom loss 接线。
+
+**严重问题**
+
+1. **FA-4 的 DIS 阈值与论文原文不一致**
+
+[faithful_dis.py:12](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/training/faithful_dis.py:12) 实现 `[0.8, 3.0]` 闭区间。
+
+但 SAO 论文公式 3 是：
+
+```text
+1 - eps_low < ratio < 1 + eps_high
+```
+
+coding 配置给出 `eps_low=0.8, eps_high=3.0`，按字面应为 `(0.2, 4.0)` 开区间。当前测试还把闭区间钉成正确行为，见 [test_faithful_dis.py:171](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/training/test_faithful_dis.py:171)。
+
+必须在接线前定案：
+
+- 按论文原文实现 `(0.2, 4.0)`；或
+- 若有作者代码证明参数是直接 ratio bounds，则保留 `[0.8,3.0]`，但明确称 RH2 变体，暂时不能叫 faithful DIS。
+
+2. **FA-3 `ok` 没有说明实际选择和延后了哪些 execution**
+
+[batch_admission.py:189](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/batch_admission.py:189) 整除得到 step 数，尾部 execution 被忽略。比如 25 个 execution、`gbs=20` 返回 `ok`，但结果没有说明后 5 个未训练。
+
+这不能支撑异步队列的 lease/ACK。建议：
+
+- 首版一个 lease 严格只取一个完整 step；或
+- 返回 `selected_execution_ids`、`deferred_execution_ids` 及对应 sample positions。
+- ACK 只确认 selected，deferred 必须回到 READY，不能记成丢弃。
+
+3. **FA-3 没有使用 FA-0 的稳定 PromptGroup 身份**
+
+[BranchDelivery](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/batch_admission.py:267) 只有 `group_index`，没有 `prompt_group_id`；归一化也按整数 `group_index` 分组。
+
+多个 worker、数据源重启或回放时，`group_index` 可能复用。应携带完整 `ExecutionIdentity`，以 `prompt_group_id` 为 GRPO 权威键，`group_index` 只作为 slime 本批次编号。同时拒绝重复的 `(prompt_group_id, rollout_execution_id, branch_id)`。
+
+4. **FA-4 没有实现 execution 级归约层次**
+
+[faithful_dis_loss](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/training/faithful_dis.py:78) 把传入 token 全部除以单一分母，没有 execution/branch 身份，也不消费 FA-3 产生的 rollout denominator。
+
+因此尚未证明：
+
+```text
+branch numerator
+-> RolloutExecution 共享 denominator
+-> batch execution mean
+-> DP/CP/microbatch 归约
+```
+
+需要补 branch split、fan-out 数量变化、DP partition invariance 测试，并让参考层显式接收 execution 分区或 `rollout_mask_sums`。
+
+5. **torch 对拍的全零路径会产生 NaN**
+
+[test_faithful_dis.py:125](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/training/test_faithful_dis.py:125) 直接除以 `mask.sum()`。我实测全 mask=0 时 loss 和梯度均为 NaN；现有“无 NaN”测试只测 Python 标量实现。
+
+正式实现必须全局归约 numerator/denominator，只有全局有效 token 为零才跳 step；局部空 CP rank 仍需返回连接 logits 的可微零，避免 collective/backward 死锁。
+
+**重要遗漏**
+
+- top-p replay 没有进入对拍；测试从预先给定的 `logp_current` 开始。
+- 没有跨版本双 turn 场景。
+- 没有 DP/CP/VPP 归约测试。
+- 没有“正式配置禁用 DIS 必须启动失败”的负测试。
+- FA-3 真 slime 差分在 `reference/slime` 不存在时全部 skip，而且该目录未被父仓库追踪。正式 FA inspector 必须验证源码存在及 HEAD/digest。
+- 随机差分只验证“两边都失败”，没有真正比较失败类别；也没有比较 selected/deferred sample 集合。
+- P3 分母回归使用 `response_lengths`，正式分母应来自 `loss_mask` 中的 1 数量。
+
+**输入校验**
+
+边界探针确认当前会接受：
+
+- `NaN reward`，产生 NaN advantage；
+- `NaN advantage`，产生 NaN DIS loss；
+- 重复 branch，重复累计 denominator；
+- execution 总 trainable token 为 0；
+- 负 `max_tokens_per_gpu`；
+- 非法并行配置可能直接 `ZeroDivisionError`。
+
+另外，有限 logprob 差也可能让 `math.exp` 溢出。应在 log-ratio 空间先判断阈值，只对已确认在区间内的值执行 `exp`。
+
+**可保留的优点**
+
+FA-3 的调度镜像本身质量很好：我额外做了 **5000 组随机受支持参数差分**，与真实 `build_dp_schedule` 的准入和 microbatch 数全部一致。execution 级 reward 广播与 branch 共享分母方向也正确。
+
+FA-4 的 loss 符号、detach 后解析梯度、越界 token 零梯度、provenance mask 不变等标量语义是自洽的。只是 detach 应记录为明确算法决策，因为论文没有显式写 stop-gradient。
+
+验证结果：
+
+```text
+聚焦测试：32 passed
+全套测试：724 passed
+inspect-rh2-s1：PASS
+5000 例额外调度差分：全部一致
+```
+
+建议先做两个小型 follow-up：`FA-3 hardening` 与 `FA-4 formula/reducer correction`。FA-1 可以并行推进，但 FA-2/FA-3 队列接线必须等前者，custom loss 接线必须等后者。没有修改文件。

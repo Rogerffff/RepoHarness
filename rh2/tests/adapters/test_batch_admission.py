@@ -104,6 +104,16 @@ def test_j5_gbs20_diagnostic_control_admits():
     assert prediction.verdict == "ok"
     assert prediction.num_steps == 1
     assert prediction.num_microbatches_per_rank == (16,)  # 32 mbs / dp2
+    # codex FA-3/4 审查 #2：ok 必须说明选了谁、延后了谁（25 个有效 rollout
+    # 只有前 20 个进 step，后 5 个是 deferred——不是丢弃，消费方必须回 READY）
+    assert len(prediction.selected_rollout_ids) == 1
+    assert len(prediction.selected_rollout_ids[0]) == 20
+    assert len(prediction.deferred_rollout_ids) == 5
+    assert len(prediction.selected_sample_positions) == 32
+    assert len(prediction.deferred_sample_positions) == 41 - 32
+    assert set(prediction.selected_sample_positions).isdisjoint(
+        prediction.deferred_sample_positions
+    )
 
 
 def test_static_path_misalignment_detected():
@@ -146,6 +156,7 @@ def test_unmirrored_packing_modes_fail_closed():
 
 def _branch(gid: int, eid: str, bid: str, reward: float, tokens: int = 100) -> BranchDelivery:
     return BranchDelivery(
+        prompt_group_id=f"pg_{gid}",
         group_index=gid,
         rollout_execution_id=eid,
         branch_id=bid,
@@ -174,7 +185,7 @@ def test_invariant_1_advantage_computed_over_unique_executions():
     assert result.execution_advantages == {
         "e1": 0.5, "e2": -0.5, "e3": -0.5, "e4": 0.5,
     }
-    assert result.group_execution_counts == {0: 4}
+    assert result.group_execution_counts == {"pg_0": 4}
 
 
 def test_invariant_2_branch_count_change_does_not_move_other_advantages():
@@ -231,6 +242,14 @@ def test_invariant_5_no_implicit_variable_n_and_broadcast_mismatch_fail_closed()
         normalize_rewards_by_group(
             [_branch(0, "e1", "b0", 1.0), _branch(1, "e1", "b1", 1.0)]
         )
+    with pytest.raises(BatchAdmissionError, match="duplicate_branch_identity"):
+        normalize_rewards_by_group(
+            [_branch(0, "e1", "b0", 1.0), _branch(0, "e1", "b0", 1.0)]
+        )
+    with pytest.raises(BatchAdmissionError, match="non_finite_reward"):
+        normalize_rewards_by_group([_branch(0, "e1", "b0", float("nan"))])
+    with pytest.raises(BatchAdmissionError, match="zero_trainable_tokens_execution"):
+        normalize_rewards_by_group([_branch(0, "e1", "b0", 1.0, tokens=0)])
 
 
 def test_group5_exec22_regression_from_real_j4_events():
@@ -242,7 +261,9 @@ def test_group5_exec22_regression_from_real_j4_events():
     for event in events:
         removes = list(event.get("remove_sample") or [])
         rewards = list(event.get("rewards") or [])
-        lengths = list(event.get("response_lengths") or [])
+        # 正式分母口径 = 可训练 token 数（loss_mask 里 1 的数量），
+        # 不是 response_lengths（codex FA-3/4 审查遗漏项）
+        lengths = list(event.get("loss_mask_ones") or [])
         eid = f"exec_{event['index']}"
         # D-FA-7 广播语义：execution 级 reward = 各 branch 相同；真实事件里
         # rewards 逐 branch 记录，全 0（无一 resolved）——逐位核对广播一致性
@@ -250,6 +271,7 @@ def test_group5_exec22_regression_from_real_j4_events():
             if removed is False:
                 branches.append(
                     BranchDelivery(
+                        prompt_group_id=f"pg_{event['group_index']}",
                         group_index=int(event["group_index"]),
                         rollout_execution_id=eid,
                         branch_id=f"{eid}_b{pos}",
@@ -261,7 +283,7 @@ def test_group5_exec22_regression_from_real_j4_events():
     result = normalize_rewards_by_group(branches)
     # 全 0 reward -> 所有 advantage 为 0，但组结构必须正确：8 个组、
     # group5 只有 1 个 execution（8 branch 不是 8 次采样）
-    assert set(result.group_execution_counts) == set(range(8))
+    assert set(result.group_execution_counts) == {f"pg_{g}" for g in range(8)}
     g5_executions = {
         b.rollout_execution_id for b in branches if b.group_index == 5
     }
@@ -316,6 +338,25 @@ def test_flatten_rebuild_round_trip():
 
 
 def test_flatten_rejects_identity_mismatch():
-    grouped = {0: {"e_other": [_branch(0, "e1", "b0", 1.0)]}}
+    grouped = {"pg_0": {"e_other": [_branch(0, "e1", "b0", 1.0)]}}
     with pytest.raises(BatchAdmissionError, match="identity_sidecar_mismatch"):
         flatten_delivery(grouped)
+
+
+def test_predictor_input_validation_fail_closed():
+    """codex FA-3/4 审查（输入校验）：非法并行/装箱配置必须显式拒绝。"""
+
+    with pytest.raises(BatchAdmissionError, match="invalid_parallel_config"):
+        TrainParallelConfig(dp_size=0)
+    with pytest.raises(BatchAdmissionError, match="invalid_max_tokens_per_gpu"):
+        predict_batch_schedule(
+            [100], [0], global_batch_size=1,
+            parallel=TrainParallelConfig(dp_size=1),
+            packing=PackingArgs(max_tokens_per_gpu=-5),
+        )
+    with pytest.raises(BatchAdmissionError, match="invalid_micro_batch_size"):
+        predict_batch_schedule(
+            [100], [0], global_batch_size=1,
+            parallel=TrainParallelConfig(dp_size=1),
+            packing=PackingArgs(use_dynamic_batch_size=False, micro_batch_size=0),
+        )
