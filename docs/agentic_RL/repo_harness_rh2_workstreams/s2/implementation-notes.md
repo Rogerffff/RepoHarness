@@ -15,6 +15,8 @@
 - **[S2-1 T1-followup2, 2026-07-13] resolver v3：引用完整性 + 双文件事务**（codex 轮次 7）。教训沉淀两条：① "存在一个非空 ref 字符串"不是引用完整性——被引用物必须存在且逐字段一致才算数；② 双文件产物必须定义**提交记录**（本例 = manifest header 内嵌 evidence digest），否则两次原子写之间仍是撕裂窗口。状态机已抽成可单测模块（13 项无网络测试），这是"数据脚本必须可单测"纪律的第一个正式实例。
 - **[S2-1 T1-followup2, 2026-07-13] legacy 升级通道的限额工程**：blob GET 不计 Docker Hub pull 限额——183 条 v2 条目全部零限额补验 config blob 哈希；manifest GET 限额窗口比预想恢复慢（1 天后余量仍 7），剩余 32 条继续等待窗口。
 
+- **[S2-1 T1-followup3, 2026-07-13] 事务恢复必须回验提交记录**（codex 轮次 8）：恢复路径里"删掉多余行"不等于"恢复到已提交状态"——必须把已提交集合按写入同规则重序列化并回验 SHA，否则已提交行的非关键字段（如 fetched_at）可被静默篡改。配套：重复 id 显式拒绝、header 机器账目（count/evidence_line_count/enriched_count+reverify_count 标记）对账。v3.0→v3.1 的口径迁移用"新标记字段在场才启用严格对账"处理，避免把旧文件误判为篡改。
+
 ## 2. 权衡取舍
 
 - **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。

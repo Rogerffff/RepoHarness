@@ -16,6 +16,7 @@ from repoharness2.taskset.image_manifest_store import (
     evidence_ref_for, finish_assertions, flush_transaction, is_enriched,
     load_state, sha256_bytes,
 )
+from repoharness2.taskset import image_manifest_store as ims
 
 SURVIVORS = {"repoA__pkg-1", "repoB__pkg-2"}
 
@@ -56,6 +57,7 @@ def make_evidence(iid: str) -> dict:
         "config_digest": CFG,
         "config_platform": {"os": "linux", "architecture": "amd64"},
         "config_blob_sha256_verified": True,
+        "manifest_blob_sha256_verified": True,
         "fetched_at": "2026-07-13T00:00:00+00:00",
     }
 
@@ -111,7 +113,7 @@ def test_extra_evidence_id_rejected(tmp_path: Path):
     doc = json.loads(mp.read_text())
     doc["header"]["evidence_file_sha256"] = sha256_bytes(ep.read_bytes())
     mp.write_text(json.dumps(doc))
-    with pytest.raises(ValueError, match="manifest 之外的 id"):
+    with pytest.raises(ValueError, match="manifest 之外的 id|evidence_line_count"):
         load(mp, ep)
 
 
@@ -206,6 +208,7 @@ def test_transaction_interruption_recovers(tmp_path: Path):
 
 def test_manifest_claims_but_evidence_behind_rejected(tmp_path: Path):
     # 反方向（manifest 声称 enriched、evidence 缺该行）不可恢复——必须拒绝
+    # （v3.1 起 header 机器账目对账先触发，同样是 fail-closed）
     mp, ep, _ = write_complete_state(tmp_path)
     lines = ep.read_text().splitlines()
     payload = lines[0] + "\n"
@@ -213,7 +216,7 @@ def test_manifest_claims_but_evidence_behind_rejected(tmp_path: Path):
     doc = json.loads(mp.read_text())
     doc["header"]["evidence_file_sha256"] = sha256_bytes(payload.encode())
     mp.write_text(json.dumps(doc))
-    with pytest.raises(ValueError, match="evidence 缺失"):
+    with pytest.raises(ValueError, match="evidence 缺失|evidence_line_count"):
         load(mp, ep)
 
 
@@ -252,3 +255,55 @@ def test_legacy_v2_state_classified_for_upgrade(tmp_path: Path):
     st = load(mp, ep)
     assert st.legacy_ids == SURVIVORS
     assert all(not is_enriched(st, i) for i in SURVIVORS)
+
+
+# ---- 轮次 8 回归：已提交行被修改（非交叉核对字段）必须拒绝 --------------------
+
+def test_committed_line_mutation_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    lines = [json.loads(x) for x in ep.read_text().splitlines()]
+    lines[0]["fetched_at"] = "1999-01-01T00:00:00+00:00"  # 不在 cross_check 字段内
+    ep.write_text("".join(json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n" for x in lines))
+    # manifest 保留旧 committed_sha —— codex 轮次 8 的反例形态
+    with pytest.raises(ValueError, match="SHA 回验不符"):
+        load(mp, ep)
+
+
+# ---- 轮次 8 回归：manifest 重复 instance_id 必须拒绝 -------------------------
+
+def test_duplicate_manifest_entry_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    doc = json.loads(mp.read_text())
+    doc["entries"].append(dict(doc["entries"][0]))
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="manifest 重复 instance_id"):
+        load(mp, ep)
+
+
+# ---- 轮次 8 回归：header 机器账目被篡改必须拒绝 ------------------------------
+
+@pytest.mark.parametrize("field", ["count", "enriched_count", "evidence_line_count"])
+def test_header_counts_tampered_rejected(tmp_path: Path, field: str):
+    mp, ep, _ = write_complete_state(tmp_path)
+    doc = json.loads(mp.read_text())
+    doc["header"][field] = 999
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match=field.replace("_", ".")):
+        load(mp, ep)
+
+
+# ---- 轮次 8：evidence 缺 manifest 字节实证 → 归 reverify 而非 enriched --------
+
+def test_missing_manifest_flag_classified_reverify(tmp_path: Path):
+    mp, ep = paths(tmp_path)
+    st = Store()
+    for iid in SURVIVORS:
+        st.entries[iid] = make_entry(iid)
+        ev = make_evidence(iid)
+        del ev["manifest_blob_sha256_verified"]
+        st.evidence[iid] = ev
+    flush_transaction(mp, ep, st, REFS_DIGEST)
+    st2 = load(mp, ep)
+    assert st2.reverify_ids == SURVIVORS
+    assert all(not is_enriched(st2, i) for i in SURVIVORS)
+    assert finish_assertions(st2, SURVIVORS)  # 未全实证 → 不许收口

@@ -18,15 +18,15 @@
    "note": "T1a 不可变 raw archive（immutable 守卫 + 原子写，followup 加固）"
   },
   "image_manifest_keyed.json": {
-   "sha256": "2d548ab13350278600397d29cd046d6aa36c69ff1d997007093050abf1e92844",
+   "sha256": "20ad8f3334c43e267b055340373c622c676432f6016596ab966434519ae0c462",
    "schema_id": "rh2.s2_1.image_manifest_keyed.v3",
    "entries": 216,
-   "enriched": 184,
-   "note": "T1b v3：digest 216/216；实证富化 184/216（限额停车可续跑）。v3 = manifest↔evidence 引用完整性 + 双文件事务 + blob 哈希实证（codex 轮次 7）"
+   "enriched": 185,
+   "note": "T1b v3.1：digest 216/216；fully-verified 185/216（manifest 字节哈希实证；限额停车可续跑）。v3.1 = 事务恢复 SHA 回验 + 重复 id 拒绝 + header 机器账目对账（codex 轮次 8）"
   },
   "raw/image_registry_evidence.jsonl": {
-   "sha256": "3e52060ca6a13d23df08a5ac78a6980ad165ba0d18354ca1d86f9a2ed2eec368",
-   "lines": 184,
+   "sha256": "0357c6dd1de534994e93d1dc289c66b642919d9d2d25eb13f456fbc34fc67477",
+   "lines": 185,
    "note": "逐镜像 evidence（schema_id + evidence_id + config blob 哈希实证；由 manifest header 的 digest 作提交记录锁定）"
   },
   "tools/fetch_raw_lite.py": {
@@ -35,12 +35,12 @@
   },
   "tools/resolve_image_digests.py": {
    "path": "rh2/experiments/s2_1_ingestion/resolve_image_digests.py",
-   "sha256": "6f81e59fae13f516152075dc05c761502d81dca2bc0b731b0a623b0a32547bcd",
+   "sha256": "8353d1fb202832d93ae567286ca15c30fac124b5b95c3f75a400191f2fe1acc9",
    "note": "v3：状态机抽至 src/repoharness2/taskset/image_manifest_store.py（13 项无网络单测）"
   },
   "tools/image_manifest_store.py": {
    "path": "rh2/src/repoharness2/taskset/image_manifest_store.py",
-   "sha256": "76f34004fc5d7bbaf82575212595e92cb2c7254436ffcb5e43e6f8d68bdc3078"
+   "sha256": "601ac5fa1eccd732e76be427676629e78aec0bcae30567f9f8300fa0106f422b"
   }
  }
 }

@@ -62,7 +62,8 @@ class Store:
 
     entries: dict[str, dict] = field(default_factory=dict)
     evidence: dict[str, dict] = field(default_factory=dict)
-    legacy_ids: set[str] = field(default_factory=set)  # 需 blob 补验的旧条目
+    legacy_ids: set[str] = field(default_factory=set)   # v2 旧条目：blob 补验通道（零限额）
+    reverify_ids: set[str] = field(default_factory=set)  # evidence 缺 manifest 字节实证：manifest GET 复验通道（计限额）
     recovered_drop: int = 0  # 事务恢复时丢弃的未提交 evidence 行数
 
 
@@ -113,6 +114,11 @@ def cross_check(e: dict, ev: dict) -> list[str]:
     return problems
 
 
+def fully_verified(e: dict, ev: dict) -> bool:
+    """完整实证 = core 交叉核对通过 ∧ manifest 原始字节哈希已验（codex 轮次 8 补强）。"""
+    return not cross_check(e, ev) and ev.get("manifest_blob_sha256_verified") is True
+
+
 def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
                frozen_refs: set[str], refs_digest: str, expected_ref) -> Store:
     """fail-closed 加载；唯一允许的降级 = 事务恢复（evidence 超前）与 legacy 归类。"""
@@ -132,9 +138,14 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
         raise ValueError("header 的 refs 文件 digest 与当前冻结清单不符（数据面变动？）")
 
     problems: list[str] = []
+    raw_entry_count = 0
     for e in doc.get("entries", []):
+        raw_entry_count += 1
+        iid = e.get("instance_id", "")
+        if iid in st.entries:
+            raise ValueError(f"manifest 重复 instance_id: {iid}")  # codex 轮次 8 问题 2
         problems.extend(validate_entry(e, survivors, frozen_refs, expected_ref))
-        st.entries[e.get("instance_id", "")] = e
+        st.entries[iid] = e
     if problems:
         raise ValueError("manifest entries 校验不过，拒绝续跑：\n  " + "\n  ".join(problems[:10]))
 
@@ -152,19 +163,35 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
 
     # 事务恢复判定：header 记录的 evidence digest 是提交记录。
     committed_sha = hdr.get("evidence_file_sha256")
+    claimed = {i for i, e in st.entries.items() if entry_shape_enriched(e)}
+    if committed_sha is not None and not evidence_path.exists():
+        raise ValueError("提交记录存在但 evidence 文件缺失——不可恢复，拒绝")
     if committed_sha is not None and evidence_path.exists():
         actual = sha256_bytes(evidence_path.read_bytes())
         if actual != committed_sha:
-            # 唯一可恢复方向：evidence 超前（含全部已提交行 + 未提交新行）。
-            claimed = {i for i, e in st.entries.items() if entry_shape_enriched(e)}
+            # 唯一可恢复方向：evidence 超前 = 已提交行**逐字节原样**存在 + 若干
+            # 未提交新行。已提交集合按 flush 同规则规范化重序列化后回验 SHA
+            # ——已提交行的任何字段变更（含 cross_check 之外的字段，如
+            # fetched_at）都会使回验失败而被拒绝（codex 轮次 8 问题 1）。
             if not claimed <= set(raw_lines):
                 raise ValueError("evidence 与提交记录不符且缺已提交行——不可恢复，拒绝")
+            committed_payload = _canonical_evidence_payload({i: raw_lines[i] for i in claimed})
+            if sha256_bytes(committed_payload) != committed_sha:
+                raise ValueError("evidence 已提交行与提交记录 SHA 回验不符（已提交内容被修改）——拒绝")
             extras = set(raw_lines) - claimed
             for x in extras:
                 raw_lines.pop(x)
             st.recovered_drop = len(extras)
 
-    # 逐 entry 分类：enriched（须 evidence 交叉一致）/ legacy / digest-only
+    # header 机器账目对账（codex 轮次 8 问题 3；legacy v2 header 无这些字段则跳过）
+    if hdr.get("count") is not None and hdr["count"] != raw_entry_count:
+        raise ValueError(f"header.count={hdr['count']} 与 entries 实际 {raw_entry_count} 不符")
+    if hdr.get("evidence_line_count") is not None and hdr["evidence_line_count"] != len(raw_lines):
+        raise ValueError(
+            f"header.evidence_line_count={hdr['evidence_line_count']} 与已提交 evidence {len(raw_lines)} 不符")
+
+    # 逐 entry 分类：fully-verified / reverify（缺 manifest 字节实证）/ legacy / digest-only
+    n_fully = 0
     for iid, e in st.entries.items():
         if entry_shape_enriched(e):
             ev = raw_lines.get(iid)
@@ -174,24 +201,37 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
             if errs:
                 raise ValueError("entry↔evidence 交叉核对失败：\n  " + "\n  ".join(errs[:6]))
             st.evidence[iid] = ev
+            if ev.get("manifest_blob_sha256_verified") is True:
+                n_fully += 1
+            else:
+                st.reverify_ids.add(iid)  # manifest GET 复验通道（计限额）
         elif legacy_manifest or e.get("config_digest"):
-            # v2 legacy：digest 事实在，blob 未验/ref 旧格式 → 归 legacy 待升级
+            # v2 legacy：digest 事实在 entries 里；旧格式 evidence 不保留
+            # （升级通道从 blob 重建，事实无损）
             st.legacy_ids.add(iid)
-            if iid in raw_lines:
-                st.evidence[iid] = raw_lines[iid]  # 旧 evidence 保留，升级时重写
         # 其余 = digest-only（v1 形态），走完整富化
+    # enriched_count 严格对账只对 v3.1+ 文件（带 reverify_count 标记）执行；
+    # v3.0 文件的 enriched_count 是"cross-check 通过"旧口径，一次性迁移时跳过。
+    if hdr.get("reverify_count") is not None:
+        if hdr.get("enriched_count") != n_fully:
+            raise ValueError(f"header.enriched_count={hdr.get('enriched_count')} 与实际 fully-verified {n_fully} 不符")
+        if hdr["reverify_count"] != len(st.reverify_ids):
+            raise ValueError(f"header.reverify_count={hdr['reverify_count']} 与实际 {len(st.reverify_ids)} 不符")
     extra_ev = set(raw_lines) - set(st.entries)
     if extra_ev:
         raise ValueError(f"evidence 含 manifest 之外的 id（{len(extra_ev)} 条）——拒绝")
+    for iid in set(raw_lines) - claimed:
+        # 非 enriched-shape 条目名下的 evidence 行（如 legacy 旧格式）不保留
+        raw_lines.pop(iid, None)
     return st
 
 
 def is_enriched(st: Store, iid: str) -> bool:
     e = st.entries.get(iid)
-    if e is None or iid in st.legacy_ids or not entry_shape_enriched(e):
+    if e is None or iid in st.legacy_ids or iid in st.reverify_ids or not entry_shape_enriched(e):
         return False
     ev = st.evidence.get(iid)
-    return ev is not None and not cross_check(e, ev)
+    return ev is not None and fully_verified(e, ev)
 
 
 def _atomic_write(path: Path, payload: bytes) -> None:
@@ -204,13 +244,17 @@ def _atomic_write(path: Path, payload: bytes) -> None:
     os.replace(tmp, path)
 
 
+def _canonical_evidence_payload(evidence: dict[str, dict]) -> bytes:
+    return "".join(
+        json.dumps(evidence[k], ensure_ascii=False, sort_keys=True) + "\n"
+        for k in sorted(evidence)
+    ).encode("utf-8")
+
+
 def flush_transaction(manifest_path: Path, evidence_path: Path, st: Store,
                       refs_digest: str) -> None:
     """事务序：evidence 先落盘 → digest/行数进 header → manifest 最后作为提交记录。"""
-    ev_payload = "".join(
-        json.dumps(st.evidence[k], ensure_ascii=False, sort_keys=True) + "\n"
-        for k in sorted(st.evidence)
-    ).encode("utf-8")
+    ev_payload = _canonical_evidence_payload(st.evidence)
     _atomic_write(evidence_path, ev_payload)
     enriched = sum(1 for k in st.entries if is_enriched(st, k))
     doc = {
@@ -224,7 +268,11 @@ def flush_transaction(manifest_path: Path, evidence_path: Path, st: Store,
             "evidence_file_sha256": sha256_bytes(ev_payload),
             "evidence_line_count": len(st.evidence),
             "count": len(st.entries),
-            "enriched_count": enriched,
+            "enriched_count": enriched,  # v3.1 起 = fully-verified 数
+            "reverify_count": sum(
+                1 for k in st.entries
+                if entry_shape_enriched(st.entries[k]) and not is_enriched(st, k)
+            ),  # v3.1 标记字段：存在即启用 enriched_count 严格对账
         },
         "entries": [st.entries[k] for k in sorted(st.entries)],
     }

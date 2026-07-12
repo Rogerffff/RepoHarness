@@ -1,6 +1,6 @@
 # S2-1 T1 报告：raw 重抓归档 + 键控镜像清单
 
-日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 修正措辞，codex 轮次 7）：**T1a PASS；T1b 部分完成（digest 216/216，实证富化 184/216）——T2 可并行开工，但 T1 未验收**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
+日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 二次更新）：**T1a PASS；T1b 部分完成（digest 216/216，fully-verified 185/216）——T2 可并行开工，T1 未验收**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
 
 ## T1a raw 重抓归档（`rh2/experiments/s2_1_ingestion/fetch_raw_lite.py`，可重跑）
 
@@ -101,3 +101,26 @@ v2 仍 ALL PASS）。v3 修复（状态机抽到
 执行：183 条 v2 legacy 走**零限额升级通道**（仅重取 config blob 补验哈希，
 不重复消耗 manifest GET 限额），blob 哈希 183/183 实证一致；限额窗口未复位
 （余 7），完整富化续做 1 条后再次优雅停车——**当前 184/216**，重跑续做剩余 32。
+
+## T1 follow-up 3（2026-07-13，codex 轮次 8 → store v3.1）
+
+事务恢复的 SHA 回验缺口成立（反例：改已提交行的 fetched_at、保留旧 header
+SHA → v3.0 照单全收且 recovered_drop=0，因为 fetched_at 不在 cross_check
+字段内）。v3.1 修复三项 + 一项补强：
+
+```text
+1. 恢复规则收严：evidence 文件 SHA ≠ 提交记录时，取已提交 id 集合按 flush
+   同规则规范化重序列化回验 SHA——已提交行任何字段变更（含非交叉核对字段）
+   都被拒绝；只有"逐字节原样 + 纯追加"才算 evidence 超前。
+2. manifest 重复 instance_id 显式拒绝（原先字典写入静默覆盖）。
+3. header 机器账目对账：count / evidence_line_count 必须与实际相等；
+   enriched_count 严格对账对 v3.1+ 文件（reverify_count 标记在场）执行，
+   v3.0 旧口径文件一次性迁移跳过。
+4. 补强：manifest 原始字节 sha256 == Docker-Content-Digest 实证
+   （manifest_blob_sha256_verified 入 evidence；旧条目归 reverify 通道
+   由完整富化补验）。
+回归测试 +6（含"已提交行被修改必须拒绝"），店面单测 19 项全绿。
+执行：限额窗口恰好重置，本轮 ~190 个 manifest GET 把 184 条 reverify 全部
+补齐字节实证（零 digest 漂移——相当于对既有数据做了一次全量复验）+ 1 条新
+富化：当前 185/216 fully-verified，剩 31 条待下一窗口。
+```

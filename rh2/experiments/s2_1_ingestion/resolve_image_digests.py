@@ -10,6 +10,10 @@ v3（codex 轮次 7）：状态机抽到 `repoharness2.taskset.image_manifest_st
   3. evidence_ref 修正为 `raw/image_registry_evidence.jsonl#imgev-<id>`，
      evidence 行带 schema_id + 稳定 evidence_id + config blob 哈希实证
      （下载 blob 原始字节重算 sha256 必须等于 config_digest）。
+  4.（轮次 8）事务恢复对已提交集合做规范化重序列化 SHA 回验；manifest
+     重复 id 拒绝；header 机器账目对账；manifest 原始字节 sha256 ==
+     Docker-Content-Digest 实证（manifest_blob_sha256_verified）——旧 evidence
+     缺该实证的条目归 reverify 通道由完整富化补验（计 pull 限额）。
 
 v2 legacy 产物的升级通道：digest 事实保留，逐条仅重取 config blob
 （blob GET 不计 pull 限额）补验哈希与平台后升格——不重复消耗 manifest GET 限额。
@@ -79,7 +83,7 @@ def get_token(repository: str) -> str:
         return json.loads(resp.read())["token"]
 
 
-def get_manifest(repository: str, token: str) -> tuple[dict, str, str, int | None]:
+def get_manifest(repository: str, token: str) -> tuple[dict, bytes, str, str, int | None]:
     url = f"https://registry-1.docker.io/v2/{repository}/manifests/latest"
     hdrs = {"Authorization": f"Bearer {token}", "Accept": ACCEPT}
     with with_backoff(lambda: http(url, "GET", hdrs), f"GET manifest {repository}") as resp:
@@ -88,7 +92,7 @@ def get_manifest(repository: str, token: str) -> tuple[dict, str, str, int | Non
         ctype = resp.headers.get("Content-Type", "")
         remaining = resp.headers.get("ratelimit-remaining")
     rem = int(remaining.split(";")[0]) if remaining else None
-    return json.loads(raw), digest, ctype, rem
+    return json.loads(raw), raw, digest, ctype, rem
 
 
 def get_config_blob(repository: str, token: str, config_digest: str) -> tuple[dict, bool]:
@@ -107,7 +111,8 @@ def expected_ref(iid: str) -> str:
 
 
 def build_evidence(iid: str, repository: str, digest: str, ctype: str,
-                   config_digest: str, platform: dict, blob_ok: bool) -> dict:
+                   config_digest: str, platform: dict, blob_ok: bool,
+                   manifest_ok: bool) -> dict:
     return {
         "schema_id": EVIDENCE_SCHEMA_ID,
         "evidence_id": evidence_id_for(iid),
@@ -118,6 +123,7 @@ def build_evidence(iid: str, repository: str, digest: str, ctype: str,
         "config_digest": config_digest,
         "config_platform": platform,
         "config_blob_sha256_verified": blob_ok,
+        "manifest_blob_sha256_verified": manifest_ok,  # codex 轮次 8 补强：原始字节 sha256 == Docker-Content-Digest
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -139,7 +145,9 @@ def verify_blob_and_upgrade(st: Store, iid: str) -> None:
         fail(f"{iid}: 平台断言失败 {platform}")
     st.evidence[iid] = build_evidence(
         iid, repository, e["resolved_manifest_digest"],
-        e["manifest_content_type"], config_digest, platform, True)
+        e["manifest_content_type"], config_digest, platform, True,
+        manifest_ok=False)  # blob 通道不取 manifest 字节 → 归 reverify，由完整通道补验
+    st.reverify_ids.add(iid)
     e["platform"] = "linux/amd64"
     e["platform_source"] = "config_blob"
     e["registry_evidence_ref"] = evidence_ref_for(iid)
@@ -151,9 +159,11 @@ def enrich_full(st: Store, iid: str) -> int | None:
     """完整富化：manifest GET（计限额，含 digest 漂移检测）+ blob 实证。"""
     repository = expected_ref(iid).partition(":")[0]
     token = get_token(repository)
-    body, digest, ctype, remaining = get_manifest(repository, token)
+    body, raw, digest, ctype, remaining = get_manifest(repository, token)
     if not DIGEST_RE.match(digest):
         fail(f"{iid}: GET 未返回合法 Docker-Content-Digest")
+    if f"sha256:{hashlib.sha256(raw).hexdigest()}" != digest:
+        fail(f"{iid}: manifest 原始字节 sha256 与 Docker-Content-Digest 不符")
     old = st.entries.get(iid, {}).get("resolved_manifest_digest")
     if old not in (None, digest):
         fail(f"{iid}: digest 漂移！已存 {old[:20]}… vs 现取 {digest[:20]}…（:latest 被重推？先人工裁决）")
@@ -167,7 +177,8 @@ def enrich_full(st: Store, iid: str) -> int | None:
     if (platform["os"], platform["architecture"]) != ("linux", "amd64"):
         fail(f"{iid}: 平台断言失败 {platform}")
     st.evidence[iid] = build_evidence(iid, repository, digest, ctype,
-                                      config_digest, platform, True)
+                                      config_digest, platform, True,
+                                      manifest_ok=True)
     st.entries[iid] = {
         "instance_id": iid,
         "source_image_ref": expected_ref(iid),
@@ -181,6 +192,7 @@ def enrich_full(st: Store, iid: str) -> int | None:
         "method": "registry GET manifest + config blob（blob 哈希实证；GET 计 pull 限额，blob 不计）",
     }
     st.legacy_ids.discard(iid)
+    st.reverify_ids.discard(iid)
     return remaining
 
 
@@ -208,7 +220,8 @@ def main() -> None:
     if st.recovered_drop:
         print(f"[t1b] 事务恢复：丢弃 {st.recovered_drop} 条未提交 evidence 行（manifest 为提交记录）")
     n_ok = sum(1 for k in st.entries if is_enriched(st, k))
-    print(f"[t1b] 旧状态校验 OK：{len(st.entries)} 条（enriched {n_ok}，legacy 待升级 {len(st.legacy_ids)}）")
+    print(f"[t1b] 旧状态校验 OK：{len(st.entries)} 条（fully-verified {n_ok}，"
+          f"reverify 待 manifest 字节实证 {len(st.reverify_ids)}，legacy 待升级 {len(st.legacy_ids)}）")
 
     def flush() -> None:
         flush_transaction(OUT_PATH, EVIDENCE_PATH, st, refs_digest)

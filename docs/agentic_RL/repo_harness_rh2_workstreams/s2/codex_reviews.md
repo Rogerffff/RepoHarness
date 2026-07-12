@@ -904,3 +904,14 @@ Claude Code 取消 HTTP 请求
 先暂停“FA-1 已完成”的判定。立即修复同步入口、BringupService 初始化、sampling params 来源和 proxy HTTP 接线；持久 worker、ready queue 与无丢失交付则和 FA-2 一起完成。完成本地 HTTP 故障注入后再进入 FA-5 真机验证。
 
 验证方面，现有测试本身全绿：定向测试 `36 passed`，全套 `768 passed`，`inspect-rh2-s1` 通过。但上述反例说明当前测试没有覆盖真实 slime 调用契约和跨 batch 生命周期。未修改任何文件。
+
+
+---
+
+## 轮次 8（2026-07-13：v3 复审 → 大部分修复正确；1 严重 + 2 一般 + 1 补强）
+
+- **严重：evidence_file_sha256 不真正约束已提交行**——恢复路径只查 id 集合与多余行，删除后不重序列化回验 SHA；反例 = 改已提交行 fetched_at（不在 cross_check 内）保留旧 SHA → 接受且 recovered_drop=0。【v3.1：已提交集合规范化重序列化回验 SHA，不符即拒；新增"已提交行被修改"回归测试】
+- **一般 1：manifest 重复 instance_id 静默覆盖**。【v3.1 显式拒绝】
+- **一般 2：header 机器账目（count/enriched_count/evidence_line_count）不对账**——全改 999 仍加载成功。【v3.1 对账；enriched_count 严格检查以 reverify_count 标记区分 v3.0 旧口径一次性迁移】
+- **补强：manifest 原始字节 sha256 == Docker-Content-Digest**。【v3.1 实证并入 evidence（manifest_blob_sha256_verified）；旧 184 条归 reverify 通道，本轮限额窗口重置后全部补验，零漂移；185/216 fully-verified】
+- codex 独立验证：13 定向 + 781 全套通过、inspect-rh2-s1 PASS、184 条内部交叉核对通过；T1 保持 OPEN、T2 可并行的判定与我方一致。
