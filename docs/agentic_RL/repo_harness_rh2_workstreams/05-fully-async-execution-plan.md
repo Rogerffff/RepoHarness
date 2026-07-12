@@ -63,7 +63,7 @@
 4. 交付边界 fan-out aware（三视图，讨论稿 §6.1/原 S2-0b 问题 C）：内部权威三层结构；rollout/filter 视图保留 PromptGroup 外层 + 身份 sidecar；train converter 视图平铺 + 无损回链。
 5. 局部幂等重试按讨论稿 §4 白名单表（max_attempts=3、指数退避 full jitter、评分阶段只允许一次完整重试）；重试记录进 `RolloutAudit` 时间线，不新增公共 schema。
 
-**验收**：故障注入单测覆盖——task 异常不泄漏、queue 满反压不停摆、更新窗口 abort → turn 重生成且 non-delivered 留痕、不可归因中断 → 正确缺员；fan-out 形状对 dynamic_filter 与 `_key` 的直接单测（slime 真函数 + 我方交付形状，不打补丁）。
+**验收**：故障注入单测覆盖——task 异常不泄漏、queue 满反压不停摆、更新窗口 abort → turn 重生成且 non-delivered 留痕、不可归因中断 → 正确缺员；fan-out 形状对 dynamic_filter 与 `_key` 的直接单测（slime 真函数 + 我方交付形状，不打补丁）；**旧 token 悬挂负测试**（升级设计缺口①的最坏组合"带旧 token 但 agent 重开沙箱"——我方从不回队 ABORTED 样本，断言任何进入组装器的 execution 不携带上一 attempt 的残留 tokens）。
 
 ### FA-2 PromptGroupAssembler 与合格组队列
 
@@ -93,7 +93,9 @@
 2. **逐 token 手算对拍**：固定小张量（token/logprob/version/advantage）+ 手算结果逐位比对 ratio、裁剪、拒绝原因、最终 advantage/loss；先合成张量，后接真实 rollout dump。
 3. IcePop-style 近似（`--use-tis` + custom TIS hard mask）只作实现对照档，结果**不得标注为 GRPO+DIS**。
 4. 准入链：单 rollout 与 PromptGroup 的 policy-version span、最大 staleness、DIS 有效 token 比例三重上限（§5 预注册值）；超限不进 ready queue / TrainBatch；消费时重算。
-5. 记录指标：staleness 分布、DIS reject ratio（按轨迹长度分桶——监测长度相关拒绝偏差）、有效 token 数、全零梯度 rollout/microbatch 计数、M1 多步版本跨度分布（P3 递延项）。
+5. **current policy version 取数机制**（升级设计缺口④：buffer_filter 调用时 `rollout_id=None` 且拿不到 engine 句柄，current version 无现成管道）：采用其推荐方案 (i)——worker top-up / TrainingRuntimeCoordinator 缓存 `engine.get_weight_version`（~20 行碰 worker），consumer 侧重算 staleness 用该值；方案 (ii)（buffer 内最大版本近似）只作降级对照。`buffer_filter` 可作 slime 侧第二道防线，但不是版本与拒绝事实的唯一权威。
+6. **`--release-train`（上游 c7487788）默认禁用**：每步 update_weights 会急剧扩大跨版本盲区——只有真实 weight version 管道 + faithful DIS 对拍 + staleness 验收（本任务 + FA-5）全部通过后才允许评估启用；TIS 近似不能作为其正确性兜底。
+7. 记录指标：staleness 分布、**跨版本 token 比例**（升级设计缺口②的前置验证项）、DIS reject ratio（按轨迹长度分桶——监测长度相关拒绝偏差）、有效 token 数、全零梯度 rollout/microbatch 计数、M1 多步版本跨度分布（P3 递延项）。
 
 **验收**：对拍逐位通过；跨版本双 turn 合成轨迹（场景 18）端到端正确；无 DIS 旁路的负测试（正式链配置下禁用 DIS 必须启动失败）。
 
@@ -114,6 +116,12 @@
    （如 pause 实为 hold、无 abort 发生），按实测简化 proxy 分支并回写本节。
 4. M1 staleness 多步分布采集（P3 单步跨度=0，多步分布一直缺数）。
 5. before/after eval 路径冒烟（D-FA-4：标准路径，FA worker 停止后执行）。
+6. 【升级设计 §5"必须实验验证"补齐】current policy version 传播延迟、
+   engine.get_weight_version 调用开销、跨版本 token 比例实测、
+   N1 泄漏实际发生率（应为 0，兜底代码在位的前提下验证计数器）。
+7. 【N6 worker 崩溃恢复】注入 worker 线程死亡 → 验证线程重建 + in-flight
+   丢失被 prompt 覆盖率对账捕获（长训练必备审计：每个 prompt 的
+   dispatched/finalized/consumed 计数对账，缺口即告警）。
 ```
 
 **验收**：短租清单全绿 → `rh2_fully_async_training_path_verified = true`；黄灯条款——场景 3 实测推翻假设但 proxy 简化后其余全绿，闸门仍可翻，偏离记 implementation-notes。
@@ -177,6 +185,7 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 | 组 deadline | 任务 time budget + 评分预算，×1.5 p95 安全系数 | 动态推导 |
 | ready queue TTL | 按版本数计（staleness 上限），不按秒 | 消费时重算 |
 | batch fallback | 首版禁用（只换组 + 等待） | 启用需与 lr/梯度累积/optimizer-step 语义一起定案 |
+| `--release-train` | **禁用** | FA-4 第 6 条门槛通过后才允许评估 |
 | 局部重试 | max_attempts=3，base 0.5s，max 8s，full jitter；评分阶段整段重试 ≤1 次 | 讨论稿 §4 |
 
 ## 6. 风险与未知
@@ -196,6 +205,17 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 6. 残组浪费率未知：qualified_group_rate 实测后才知道 reserve_groups 是否
    够用；若 group_not_admitted 浪费显著且残组稳定为 n-1 可信成员，
    另立工作流评估成员补采（明确不在 FA-0~5 内）。
+7. 【递延登记：token 级真续跑】首版对更新窗口 abort 用 proxy turn 重生成
+   （D-FA-3），不做 token 级续跑。若 FA-5/首训实测发现长轨迹被非更新窗口
+   中断终止的比例显著（长度偏置监测报警），升级路径已有设计存档：
+   custom_generate 入口 resume 分支（判 ABORTED ∧ tokens ∧
+   start_rollout_id，30-80 行 + agent 沙箱中间态序列化）+ done_cb 补
+   start_rollout_id（~5 行碰 core）+ cherry-pick 上游 680824dd
+   （routed_experts_start_len，tape 中段拼接基建）——见升级设计文档
+   缺口①"正式接线"段。S2-0 的 start_len 留位是它的契约前置。
+8. 【递延登记：worker poll 粒度】stock worker 1s poll 对 SWE 分钟级任务
+   可忽略（升级设计 N3 已定性）；只有未来混入秒级短任务才需要降到
+   50-100ms 或事件驱动——记录在此防止重复调查，FA-1 不做。
 ```
 
 ## 7. 关联文档回填清单（FA 推进过程中完成，不阻塞开工）
