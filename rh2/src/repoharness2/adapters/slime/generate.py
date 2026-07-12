@@ -1348,6 +1348,7 @@ class RolloutOrchestrator:
         session_poison_check: Callable[[str], bool] | None = None,
         session_poison_subscribe: Callable[[str, Callable[[str, str], None]], None] | None = None,
         session_poison_unsubscribe: Callable[[str], None] | None = None,
+        session_poison_release: Callable[[str], None] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1409,6 +1410,9 @@ class RolloutOrchestrator:
         # 已证明客户端自退不可靠）；sandbox 清理走既有 finally 链。
         self._session_poison_subscribe = session_poison_subscribe
         self._session_poison_unsubscribe = session_poison_unsubscribe
+        # 轮次 11 身份 4：release = execution 清理 ACK——在 finally 的 sandbox
+        # 清理完成后调用（adapter drop_session 只是会话关闭，不算 ACK）
+        self._session_poison_release = session_poison_release
         self.audits: list[RolloutAudit] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1680,6 +1684,10 @@ class RolloutOrchestrator:
             if sandbox is not None:
                 await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
             audit.mark("cleanup_completed")
+            if self._session_poison_release is not None:
+                # 真正的 execution 清理 ACK：harness 终止 + 会话撤销 + 容器
+                # 清理都已完成，active poison 此刻才允许归档（轮次 11）
+                self._session_poison_release(sid)
 
     # ------------------------------------------------------------------ 步骤 2
     def _default_mount_planner(self, task: RolloutTaskSpec) -> list[BundleMount]:

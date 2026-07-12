@@ -38,6 +38,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -128,12 +129,22 @@ class ClaudeCodeDriver:
         # guided_validation.md §4）。结果进 startup evidence。
         expected = os.environ.get("RH2_CLAUDE_CODE_VERSION", "2.1.205")
         observed = _out.strip().splitlines()[-1] if _out.strip() else ""
-        if expected not in observed:
+        # 轮次 11 一般 1：token 精确比较——子串判断会放过 "12.1.205-x"
+        tokens = re.split(r"[^0-9A-Za-z.\-]+", observed)
+        if expected not in tokens:
             raise RuntimeError(
-                f"容器内 claude --version 不符：观测 {observed!r}，期望包含 {expected!r}"
-                "——CC 版本画像失效，fail-fast（升级须先重跑探针套件）。"
+                f"容器内 claude --version 不符：观测 {observed!r} 的 token 集不含"
+                f"期望 {expected!r}——CC 版本画像失效，fail-fast（升级须先重跑探针套件）。"
             )
         self.cc_version_observed = observed
+        # 轮次 11 一般 2：落盘为独立 evidence 文件（安装发生在首次 rollout，
+        # 晚于 startup_evidence.json 写出——不再声称写进后者）
+        try:
+            (ARTIFACT_DIR / "cc_version_observed.json").write_text(
+                json.dumps({"observed": observed, "expected": expected}, ensure_ascii=False)
+            )
+        except Exception:  # noqa: BLE001 - evidence 落盘失败不阻断已通过的校验
+            pass
 
     async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
         from slime.agent.harness import ClaudeCodeHarness
@@ -453,20 +464,46 @@ class BringupService:
         audit_dir.mkdir(parents=True, exist_ok=True)
 
         def audit_artifact_sink(attempt_id: str, payload) -> str:
-            safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in attempt_id)[:180]
-            path = audit_dir / f"{safe}.json"
-            with path.open("w", encoding="utf-8") as fh:
-                json.dump(
-                    {"attempt_id": attempt_id, "payload_repr": repr(payload)[:4096]},
-                    fh,
-                    ensure_ascii=False,
-                )
-            return str(path)
+            """持久 evidence sink（codex 轮次 11 P0-2 加固）：
+            - 文件名 = sha256(attempt_id)（清洗/截断不再可能碰撞）；
+            - 临时文件 + fsync + os.replace 原子落盘（半写文件不可见）；
+            - 内容含完整 payload 的 sha256 digest（repr 截断只是预览）；
+            - 返回 **相对 opaque 引用**（不泄漏本机绝对路径）。"""
+
+            import hashlib
+
+            name = hashlib.sha256(attempt_id.encode()).hexdigest()
+            payload_bytes = repr(payload).encode()
+            record = {
+                "attempt_id": attempt_id,
+                "payload_sha256": hashlib.sha256(payload_bytes).hexdigest(),
+                "payload_repr_preview": payload_bytes[:4096].decode(errors="replace"),
+            }
+            path = audit_dir / f"{name}.json"
+            tmp = audit_dir / f".{name}.tmp"
+            with tmp.open("w", encoding="utf-8") as fh:
+                json.dump(record, fh, ensure_ascii=False)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, path)
+            return f"artifact:model_call_audit/{name}.json"
+
+        # 启动 write/read/delete 探针（轮次 11：磁盘满/权限错在训练前暴露）
+        probe_ref = audit_artifact_sink("rh2_sink_startup_probe", {"probe": True})
+        probe_path = audit_dir / probe_ref.removeprefix("artifact:model_call_audit/")
+        if not probe_path.is_file() or "payload_sha256" not in json.loads(
+            probe_path.read_text(encoding="utf-8")
+        ):
+            raise RuntimeError("artifact sink 启动探针失败：写入不可读回。")
+        probe_path.unlink()
 
         self.registry.model_call_proxy = ModelCallProxy(
             StaticActiveCoordinator(self._latest_engine_version),
             attempt_timeout_seconds=900.0,  # 与 wire sock_read 同级
             artifact_sink=audit_artifact_sink,
+            # 轮次 11 P0-2：正式链 sink 写失败 fail-closed（poison + 缺员），
+            # 不许静默退回内存引用后留悬空 evidence
+            sink_required=config.require_real_weight_versions,
         )
         if config.require_real_weight_versions and (
             self.registry.model_call_proxy._artifact_sink is None
@@ -495,6 +532,8 @@ class BringupService:
             # P0-4（codex 轮次 9）：poison 即主动取消 harness task
             session_poison_subscribe=self.registry.poison.subscribe,
             session_poison_unsubscribe=self.registry.poison.unsubscribe,
+            # 轮次 11：清理完成后才归档 poison（真 ACK；unregister 不再释放）
+            session_poison_release=self.registry.poison.release,
         )
 
     def _registry_max_version(self) -> int | None:
@@ -601,11 +640,11 @@ class BringupService:
             await slime_common.call_sglang_generate(
                 list(ids), session, {}, adapter=self.adapter, session_id=probe_sid
             )
-            pending = self.registry.pending.get(probe_sid)
-            if pending is None:
-                raise RuntimeError("探针轮未进入 capture 暂存槽——capture wire 未接上（A4）。")
-            data = pending.raw_response
-            probe_params = pending.capture_params
+            # codex 轮次 11 P0-1：pending 是 list[PendingTurn]——经形状权威
+            # helper 取恰好一条（旧代码按单对象取会 AttributeError 崩启动）
+            turn = self.registry.single_pending_turn(probe_sid)
+            data = turn.raw_response
+            probe_params = turn.capture_params
         finally:
             self.registry.unregister(probe_sid)
 

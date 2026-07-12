@@ -94,9 +94,31 @@ class CaptureRegistry:
         self._turn_seq: dict[str, int] = {}
 
     def register(self, sid: str, hook: GenerationCaptureHook) -> None:
+        # 轮次 11 身份兜底：中毒 SID（含归档）不得复用注册——稳定 ID
+        # （task+index+group）跨补采/epoch 复用时先 fail-fast，不让 harness
+        # 带毒起跑。execution 唯一身份是 FA-2 第一验收项。
+        self.poison.check(sid)
         self.hooks[sid] = hook
         self.weight_versions[sid] = []
         self.pending.setdefault(sid, [])
+
+    def single_pending_turn(self, sid: str) -> PendingTurn:
+        """取恰好一条暂存轮（启动探针/单轮消费的形状权威）。
+
+        codex 轮次 11 P0-1：pending 是 list[PendingTurn]——旧探针代码按单
+        对象取 `.raw_response` 会在真实启动时 AttributeError。这里收口形状
+        断言：无暂存或多于一条都显式报错。"""
+
+        queue = self.pending.get(sid)
+        if not queue:
+            raise RuntimeError(
+                f"session {sid} 无暂存轮——capture wire 未接上（A4）或已被 commit。"
+            )
+        if len(queue) != 1:
+            raise RuntimeError(
+                f"session {sid} 暂存轮数量异常：{len(queue)}（期望恰好 1）。"
+            )
+        return queue[0]
 
     def session_deadline(self, sid: str | None) -> float | None:
         """会话 deadline（episode 预算传播）。首次调用即按默认预算起表——
@@ -138,9 +160,10 @@ class CaptureRegistry:
         # provider 的 registry 交叉检查从此只覆盖**存活会话**（权威来源是
         # engine /get_weight_version，交叉检查弱化可接受、如实记录）。
         self.weight_versions.pop(sid, None)
-        # 轮次 10 P0-4：unregister = execution 清理 ACK——active poison
-        # 归档（有界摘要），活跃期绝不被容量淘汰。
-        self.poison.release(sid)
+        # 轮次 11 身份 4：unregister 只是 **adapter 会话关闭**，不是完整
+        # execution 清理 ACK（容器清理在 orchestrator finally 更晚发生）——
+        # poison 的归档（release）由 orchestrator 在 sandbox 清理完成后触发
+        #（glue 注入 session_poison_release），此处不再提前释放。
 
     def stage(self, sid: str | None, turn: PendingTurn) -> None:
         if sid is None or sid not in self.hooks:

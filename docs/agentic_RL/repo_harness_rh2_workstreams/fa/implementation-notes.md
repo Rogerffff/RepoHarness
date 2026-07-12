@@ -489,3 +489,41 @@ aiohttp adapter 线程"双线程拓扑**——四个问题全是这个盲区的�
 - codex 确认已修好的部分（轮次 9 全项）与"FA-2 第一验收项 = request 级
   capture 归属"维持不变。artifact sink 与容器版本断言已按其要求在租卡
   前完成，不留真机现场。
+
+## FA-1 follow-up 6（2026-07-13，codex 轮次 11：2 正式链阻塞 + 2 身份/生命
+## 周期项；原文存档 `../s2/codex_reviews.md` 轮次 11）
+
+- **P0-1（启动探针必崩）**：轮次 8 把 `registry.pending` 改成
+  `list[PendingTurn]` 时漏改了 `_run_startup_checks` 的消费点（仍按单对象
+  取 `.raw_response`）——真实 GPU 启动会在训练前 AttributeError。修复：
+  新增形状权威 `CaptureRegistry.single_pending_turn(sid)`（恰好一条；空/
+  多条显式报错），glue 探针改走它；本地测试覆盖三种形状。**这是"改容器
+  形状必须全仓搜消费点"的教训**——852 条测试没有一条走到该入口。
+- **P0-2（正式链 sink fail-open）**：`_store_artifact` 此前吞 sink 磁盘
+  错误退回内存 `audit:` 引用（磁盘满/权限错时训练继续、evidence 悬空）。
+  修复：`ModelCallProxy(sink_required=True)`（glue 接
+  `require_real_weight_versions`）下 sink 写失败抛
+  `ArtifactSinkWriteError`（UnattributableModelCallError 子类 → 外层统一
+  poison + 缺员）；bring-up 保留退回。glue sink 加固：sha256(attempt_id)
+  文件名（清洗截断不再碰撞）、临时文件 + fsync + os.replace 原子落盘、
+  内容含完整 payload sha256（repr 截断只是预览）、返回相对 opaque 引用
+  （不泄漏绝对路径）；async_start 做一次 write/read/delete 启动探针。
+- **身份 3（SID 复用 vs 毒归档）**：`_session_id` 的稳定 ID（task+index+
+  group）跨补采/epoch 会复用。registry 侧兜底两条：`subscribe` 对**归档
+  毒**也立即回调；`CaptureRegistry.register` 对中毒 SID（含归档）直接
+  SessionPoisonedError（不让 harness 带毒起跑）。**execution 唯一身份
+  （SID 绑 RolloutExecutionIdentity + nonce，poison 以 execution 为键）
+  与 request 级 capture 归属并列为 FA-2 第一项硬验收**。
+- **身份 4（release 不是真 ACK）**：轮次 10 把 release 挂在 unregister
+  （drop_session 时）——但容器清理在其后。修正时序：unregister 只关会话
+  不释放；orchestrator 注入 `session_poison_release`，在 finally 的
+  `cleanup_completed` 之后调用（harness 终止 + 会话撤销 + 容器清理全完成
+  才归档）。
+- **一般项**：容器版本改 **token 精确比较**（子串判断会放过
+  `12.1.205-x`）；`cc_version_observed` 落盘为独立 evidence 文件
+  `cc_version_observed.json`（安装晚于 startup_evidence.json 写出，修正
+  轮次 10 "进 startup evidence"的不实表述）；notify_failures 上锁 + 有界
+  失败记录（64 条）；TTL 轮询/consensus version 如实递延 FA-4。
+- 测试 852 → 870。codex 确认轮次 10 四项修复全部成立。
+- **FA-2 第一项硬验收（更新）**：execution 唯一身份 + request 级 capture
+  归属（两者一体：SID/poison/capture 都以 execution identity 为键）。

@@ -1539,3 +1539,125 @@ host_launch.sh bash -n：PASS
 - **一般 3：provenance**——source_url 指 main 会漂移；2000 行 MIT 代码只留一句注记。【修复：immutable commit URL + LICENSE 全文入库 + digest 登记】
 - **一般 4：报告数字无机器复算**——vendor 33/808、216/216、官方 0/216 只在文字里。【修复：test_vendor_specs.py 7 项复算断言 + 3 个 CLI marker 测试】
 - codex 确认正确：T1 关闭记账、vendor 逐字节一致（三方 sha 同值）、大小写投影、golden/grading 结构分离、8 项 digest 匹配、28+847 通过。
+
+
+---
+
+## 轮次 11（2026-07-13：FA-1 第六轮审查 → 2 正式链阻塞 + 2 身份/生命周期项，全部采纳）
+
+> 原文全文转录（tmp/FA1_codex.md 第六版）。处置见 `fa/implementation-notes.md` "FA-1 follow-up 6"。启动探针 list 形状崩溃（single_pending_turn 形状权威）；正式链 sink fail-closed（ArtifactSinkWriteError + sha256 文件名 + 原子落盘 + 启动探针）；SID 复用兜底（subscribe 查归档、register 拒毒）；release 移到容器清理后（真 ACK）。FA-2 第一项硬验收更新为 execution 唯一身份 + request 级 capture 归属。测试 852 → 870。
+
+**结论**
+
+`4976ea70` 的四项跨线程修复基本正确，但 **FA-1 仍不能宣告闭合**。我确认有两个正式链阻塞问题、两个需要在 FA-2 首项解决的问题。
+
+**严重问题**
+
+1. **启动探针必然触发 `AttributeError`**
+
+[glue.py:604](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:604) 仍把 `registry.pending[sid]` 当成单个 `PendingTurn`：
+
+```python
+pending = self.registry.pending.get(probe_sid)
+data = pending.raw_response
+```
+
+但当前结构已经是 `list[PendingTurn]`。真实启动进入 `_run_startup_checks()` 后会在 GPU 训练前直接崩溃。
+
+应改为：
+
+```python
+pending = self.registry.pending.get(probe_sid)
+if not pending or len(pending) != 1:
+    raise RuntimeError(...)
+turn = pending[0]
+data = turn.raw_response
+probe_params = turn.capture_params
+```
+
+必须补一条调用真实 `_run_startup_checks` 数据形状的本地测试。当前 852/866 条测试没有覆盖这个入口。
+
+2. **正式链的持久 artifact sink 仍然 fail-open**
+
+[async_worker.py:599](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:599) 会吞掉 sink 的磁盘错误，退回内存 `audit:` 引用；正式链在 [glue.py:471](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:471) 只检查“配置了 sink”，不检查它能否成功写入。
+
+确定性探针结果：
+
+```text
+sink_failure_raised = false
+returned_ref = audit:a0
+first_ref_resolvable = false
+```
+
+也就是说，磁盘满、权限错误或路径冲突时训练继续，稍后 evidence 引用会悬空。
+
+正式链应：
+
+- sink 写失败立即 fail-closed，并 poison 当前 execution；
+- 启动时执行一次 write/read/delete 探针；
+- 使用临时文件、`fsync`、原子 `rename`；
+- 文件名加入完整 `attempt_id` 的 SHA256，避免清洗和截断碰撞；
+- 文件保存完整 payload digest，而不只是 `repr(payload)[:4096]`；
+- 返回 opaque artifact ID，不返回本机绝对路径。
+
+**身份与生命周期问题**
+
+3. **session ID 会复用，与 poison 归档语义冲突**
+
+[_session_id()](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2156) 在存在 `index/group_index` 时产生稳定 ID：
+
+```text
+rh2-{task_id}-{index}-{group_index}
+```
+
+因此同一题下一次补采、下一批或下一 epoch 可能复用旧 SID。但：
+
+- `subscribe()` 只检查 active poison，不检查 archived poison；
+- archived poison 达到容量后又会被淘汰；
+- `register()` 不拒绝复用 SID。
+
+探针已经复现：
+
+```text
+archived_is_poisoned = true
+resubscribe_fired = false
+subscriber_retained = true
+```
+
+结果可能是：复用后 harness 先启动，直到第一次模型调用才被拒绝；归档被淘汰后，旧 poisoned SID 又可能“复活”。
+
+建议将 SID 绑定到唯一的 `RolloutExecutionIdentity + attempt_number/nonce`，禁止跨 execution 复用。poison 也应以 execution identity 为键。这个应成为 **FA-2 的第一项硬验收**，不能只修 `subscribe()`。
+
+4. **`release()` 并不是真正的 execution cleanup ACK**
+
+[capture_wire.py:141](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:141) 在 `drop_session` 时归档 poison，但容器清理发生在之后的 [generate.py:1680](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1680)。
+
+若要称为 execution cleanup ACK，应在 harness 已终止、adapter 已撤销、容器清理完成后释放。否则应改名为 `adapter_session_closed`，避免把它当成完整 execution 生命周期确认。
+
+**一般问题**
+
+- [glue.py:131](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:131) 使用子串判断版本，`12.1.205-malicious` 也能通过期望 `2.1.205`。应解析版本 token 后精确比较。
+- `cc_version_observed` 实际没有写入 `startup_evidence.json`；当前注释和完成报告所说的“结果进 startup evidence”不成立。
+- `notify_failures += 1` 没有受锁保护，也没有向控制面发出 halt/failure fact。它目前只是内部计数，不能保证取消通知失败后及时终止 execution。
+- `StaticActiveCoordinator` 的同步 TTL 轮询和多引擎 consensus 仍是 FA-4 接线事项，这一项如实递延即可。
+
+**确认有效的修复**
+
+这轮以下修复确实成立：
+
+- `call_soon_threadsafe(task.cancel)` 正确处理 adapter 线程到 actor loop 的取消；
+- 404 middleware 已挂到现有生产 adapter，而不再只依赖构造器 monkeypatch；
+- poison 的检查、订阅、写入已在同一把锁下原子化；
+- active poison 不再被容量策略淘汰。
+
+验证结果：
+
+```text
+相关定向测试：101 passed
+当前全套测试：866 passed
+inspect-rh2-s1：PASS
+py_compile / bash -n：PASS
+```
+
+全套数量高于报告中的 852，是因为当前 HEAD 还包含之后的 S2 提交。没有修改任何文件。建议先修前两个阻塞问题，再进入 FA-2；FA-2 首项同时完成 execution 唯一身份和 request 级 capture 归属。
+

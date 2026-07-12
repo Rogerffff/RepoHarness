@@ -200,14 +200,51 @@ async def test_middleware_production_order_direct_append():
         await client.close()
 
 
-def test_unregister_releases_poison_to_archive():
-    """轮次 10 P0-4 接线：CaptureRegistry.unregister = 清理 ACK ->
-    poison.release（active -> 有界归档，仍可查）。"""
+def test_unregister_does_not_release_poison():
+    """轮次 11 身份 4（修正轮次 10）：unregister 只是 adapter 会话关闭，
+    **不是** execution 清理 ACK——active poison 保持到 orchestrator 在容器
+    清理完成后显式 release（时序：drop_session < 容器清理 < release）。"""
 
     registry = CaptureRegistry()
     registry.register("sid_G", FakeHook())
     registry.poison.poison("sid_G", "bad")
-    assert "sid_G" in registry.poison._active
     registry.unregister("sid_G")
-    assert "sid_G" not in registry.poison._active  # 已释放
+    assert "sid_G" in registry.poison._active  # 仍 active（容器还没清完）
+    registry.poison.release("sid_G")  # orchestrator finally（清理后）才归档
+    assert "sid_G" not in registry.poison._active
     assert registry.poison.is_poisoned("sid_G")  # 归档仍拒绝
+
+
+def test_single_pending_turn_shape_authority():
+    """codex 轮次 11 P0-1 回归：启动探针的暂存消费必须走形状权威——
+    list 形状取单轮、空/多轮显式报错（旧代码按单对象取 .raw_response 会在
+    真实启动时 AttributeError）。"""
+
+    registry = CaptureRegistry()
+    registry.register("sid_P", FakeHook())
+    with pytest.raises(RuntimeError, match="无暂存轮"):
+        registry.single_pending_turn("sid_P")
+    registry.stage("sid_P", _turn("rid_probe"))
+    turn = registry.single_pending_turn("sid_P")
+    assert turn.raw_response == {"meta_info": {"id": "rid_probe"}}  # 探针消费的两个字段
+    assert turn.capture_params["top_p"] == 0.95
+    # 多于一条（理论防御路径）：先 commit 掉再 stage 两次会触发 overlap
+    # fail-closed，所以 len>1 分支只做直接构造验证
+    registry.pending["sid_P"].append(_turn("rid_extra"))
+    with pytest.raises(RuntimeError, match="数量异常"):
+        registry.single_pending_turn("sid_P")
+
+
+def test_register_rejects_poisoned_sid_reuse():
+    """轮次 11 身份 3：中毒 SID（含归档）不得复用注册——稳定 ID 跨补采/
+    epoch 复用时 fail-fast，不让 harness 带毒起跑。"""
+
+    from repoharness2.adapters.slime.async_worker import SessionPoisonedError
+
+    registry = CaptureRegistry()
+    registry.poison.poison("sid_R", "bad")
+    with pytest.raises(SessionPoisonedError):
+        registry.register("sid_R", FakeHook())
+    registry.poison.release("sid_R")  # 归档后依然拒绝
+    with pytest.raises(SessionPoisonedError):
+        registry.register("sid_R", FakeHook())

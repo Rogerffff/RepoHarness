@@ -1137,3 +1137,58 @@ def test_registry_check_subscribe_race_window_closed():
         t2 = threading.Thread(target=do_poison)
         t1.start(); t2.start(); t1.join(5); t2.join(5)
         assert fired.wait(timeout=5)  # 无论交错顺序，回调必达
+
+
+# ----------------------------------------- 轮次 11：sink fail-closed / 归档毒订阅
+
+
+async def test_sink_required_write_failure_fails_closed_and_poisons():
+    """codex 轮次 11 P0-2：正式链 sink 写失败不得静默退回内存引用（悬空
+    evidence）——ArtifactSinkWriteError（不可归因子类）+ 统一 poison。"""
+
+    from repoharness2.adapters.slime.async_worker import ArtifactSinkWriteError
+
+    registry = SessionPoisonRegistry()
+
+    def broken_sink(attempt_id: str, payload) -> str:
+        raise OSError("disk full")
+
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep,
+        artifact_sink=broken_sink,
+        sink_required=True,
+    )
+
+    async def send(attempt: int) -> dict:
+        raise ConnectionError("boom")  # 触发失败路径的 _store_artifact
+
+    with pytest.raises(ArtifactSinkWriteError):
+        await proxy.call(
+            "exec_S11", "turn_0", send, session_id="sid_S11", poison_registry=registry
+        )
+    assert registry.is_poisoned("sid_S11")
+
+    # bring-up（sink_required=False）：保持退回内存引用的旧行为
+    proxy2 = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep,
+        artifact_sink=broken_sink,
+        sink_required=False,
+    )
+    with pytest.raises(UnattributableModelCallError, match="no_overlapping"):
+        await proxy2.call("exec_S12", "turn_0", send)
+    refs = [r for a in proxy2.attempts_ledger for r in a.evidence_refs]
+    assert any(r.startswith("audit:") for r in refs)  # 内存引用兜底仍在
+
+
+def test_subscribe_fires_for_archived_poison():
+    """轮次 11 身份 3（registry 侧兜底）：归档毒的 SID 复用订阅也立即回调
+    ——不得静默挂上装作健康。"""
+
+    registry = SessionPoisonRegistry()
+    registry.poison("sid_A11", "bad")
+    registry.release("sid_A11")  # 归档
+    fired: list[str] = []
+    registry.subscribe("sid_A11", lambda sid, reason: fired.append(reason))
+    assert fired == ["bad"]

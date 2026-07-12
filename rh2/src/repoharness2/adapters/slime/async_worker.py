@@ -43,6 +43,7 @@ from repoharness2.contracts.fa_runtime import (
 )
 
 __all__ = [
+    "ArtifactSinkWriteError",
     "BoundedDeliveryQueue",
     "ContinuousExecutionWorker",
     "DEFAULT_RETRY_WHITELIST",
@@ -308,6 +309,7 @@ class SessionPoisonRegistry:
         self._subscribers: dict[str, list[Callable[[str, str], None]]] = {}
         self.archived_evictions = 0
         self.notify_failures = 0
+        self.notify_failure_records: list[tuple[str, str]] = []
 
     def subscribe(self, session_id: str, callback: Callable[[str, str], None]) -> None:
         """execution owner 注册终止回调。已中毒则立即回调（锁外）。回调必须
@@ -315,7 +317,10 @@ class SessionPoisonRegistry:
         `loop.call_soon_threadsafe(task.cancel)`（poison 可能来自 adapter 线程）。"""
 
         with self._lock:
-            reason = self._active.get(session_id)
+            # 轮次 11：归档毒也立即回调——SID 复用（同题补采/下一 epoch 的
+            # 稳定 ID）不得静默挂上订阅装作健康。execution 唯一身份是 FA-2
+            # 第一验收项，这里是 registry 侧兜底。
+            reason = self._active.get(session_id) or self._archived.get(session_id)
             if reason is None:
                 self._subscribers.setdefault(session_id, []).append(callback)
                 return
@@ -350,8 +355,11 @@ class SessionPoisonRegistry:
     def _invoke(self, callback: Callable[[str, str], None], sid: str, reason: str) -> None:
         try:
             callback(sid, reason)
-        except Exception:  # noqa: BLE001 - 通知失败不掩盖 poison 本身
-            self.notify_failures += 1  # 轮次 10：不再纯吞——失败可见（audit 面）
+        except Exception as exc:  # noqa: BLE001 - 通知失败不掩盖 poison 本身
+            with self._lock:  # 轮次 11：计数上锁 + 有界记录（控制面可查）
+                self.notify_failures += 1
+                self.notify_failure_records.append((sid, f"{type(exc).__name__}: {exc}"))
+                del self.notify_failure_records[:-64]
 
     def is_poisoned(self, session_id: str) -> bool:
         with self._lock:
@@ -429,6 +437,16 @@ class UnattributableModelCallError(RuntimeError):
     def __init__(self, reason_code: str, message: str) -> None:
         super().__init__(f"{reason_code}: {message}")
         self.reason_code = reason_code
+
+
+class ArtifactSinkWriteError(UnattributableModelCallError):
+    """持久 sink 写失败（codex 轮次 11 P0-2）：正式链 fail-closed——
+    evidence 无法持久化时训练不得继续该 execution（磁盘满/权限/路径冲突
+    继续跑会留下悬空 evidence_refs）。作为 UnattributableModelCallError
+    子类走 call() 外层统一 poison + 缺员。"""
+
+    def __init__(self, message: str) -> None:
+        super().__init__("artifact_sink_write_failed", message)
 
 
 @dataclass(frozen=True)
@@ -566,6 +584,7 @@ class ModelCallProxy:
         attempt_timeout_seconds: float | None = None,
         limits: ResourceLimits | None = None,
         artifact_sink: Callable[[str, Any], str] | None = None,
+        sink_required: bool = False,
         max_audit_artifacts: int = 256,
         sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
         clock: Callable[[], float] = time.monotonic,
@@ -581,6 +600,7 @@ class ModelCallProxy:
         self._attempt_timeout = attempt_timeout_seconds
         self._limits = limits
         self._artifact_sink = artifact_sink
+        self._sink_required = sink_required
         self._max_artifacts = max_audit_artifacts
         self._sleeper = sleeper
         self._clock = clock
@@ -610,7 +630,13 @@ class ModelCallProxy:
             try:
                 external = self._artifact_sink(attempt_id, payload)
                 record["external_ref"] = external
-            except Exception as exc:  # noqa: BLE001 —— sink 失败不丢 digest 留痕
+            except Exception as exc:  # noqa: BLE001 —— 分链路处置（轮次 11 P0-2）
+                if self._sink_required:
+                    # 正式链：evidence 持久化失败 = fail-closed（吞掉会让
+                    # 训练带着悬空引用继续跑）
+                    raise ArtifactSinkWriteError(
+                        f"{attempt_id}: sink 写失败 {type(exc).__name__}: {exc}"
+                    ) from exc
                 record["external_ref_error"] = f"{type(exc).__name__}: {exc}"
         def _live_count() -> int:
             return sum(1 for v in self.audit_artifacts.values() if not v.get("tombstone"))
