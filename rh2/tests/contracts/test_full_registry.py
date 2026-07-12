@@ -28,6 +28,9 @@ EXPECTED_EXTRA_IDS = {
     "rh2.group_repair_signal.v1",
     "rh2.public_task_bundle.v1",
     "rh2.private_grading_bundle.v1",
+    "rh2.private_grading_bundle.v2",
+    "rh2.validation_only_bundle.v1",
+    "rh2.environment_package.v1",
     "rh2.bundle_pair.v1",
     # FA-0（2026-07-12）：fa_runtime 四契约（S1 核心 15 个保持冻结，走聚合扩展）
     "rh2.fa.execution_identity.v1",
@@ -197,6 +200,52 @@ def _fa_attempt_payload() -> dict:
     }
 
 
+def _grading_v2_payload():
+    return {
+        "instance_id": "getmoto__moto-1",
+        "repo": "getmoto/moto",
+        "repo_key_lower": "getmoto/moto",
+        "version": "4.1",
+        "base_commit": "0" * 40,
+        "test_patch": "diff --git a/t.py b/t.py\n+x\n",
+        "fail_to_pass": ["t.py::test_a"],
+        "pass_to_pass": [],
+        "eval_cmd": "pytest -n0 -rA",
+        "spec_vendor_file": "docs/x/swegym_constants_242429c1.py",
+        "spec_vendor_sha256": "sha256:" + "a" * 64,
+    }
+
+
+def _validation_only_payload():
+    import hashlib as _h
+    patch = "diff --git a/m.py b/m.py\n-bug\n+fix\n"
+    return {
+        "instance_id": "getmoto__moto-1",
+        "golden_patch": patch,
+        "golden_patch_sha256": "sha256:" + _h.sha256(patch.encode()).hexdigest(),
+    }
+
+
+def _environment_package_payload():
+    d = "sha256:" + "a" * 64
+    return {
+        "task_id": "swe_gym_lite::getmoto__moto-1",
+        "source": "swe_gym_lite",
+        "instance_id": "getmoto__moto-1",
+        "repo": "getmoto/moto",
+        "repo_key_lower": "getmoto/moto",
+        "base_commit": "0" * 40,
+        "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-1:latest",
+        "image_manifest_digest": d,
+        "public_bundle_digest": d,
+        "grading_bundle_digest": d,
+        "validation_bundle_digest": d,
+        "raw_archive_sha256": d,
+        "image_manifest_keyed_sha256": d,
+        "spec_vendor_sha256": d,
+    }
+
+
 @pytest.mark.parametrize("schema_id", sorted(EXPECTED_EXTRA_IDS))
 def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
     factories = {
@@ -204,6 +253,9 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.group_repair_signal.v1": _signal_payload,
         "rh2.public_task_bundle.v1": lambda: frozen_pair.public.model_dump(mode="json"),
         "rh2.private_grading_bundle.v1": lambda: frozen_pair.private.model_dump(mode="json"),
+        "rh2.private_grading_bundle.v2": _grading_v2_payload,
+        "rh2.validation_only_bundle.v1": _validation_only_payload,
+        "rh2.environment_package.v1": _environment_package_payload,
         "rh2.bundle_pair.v1": lambda: frozen_pair.model_dump(mode="json"),
         "rh2.fa.execution_identity.v1": _fa_identity_payload,
         "rh2.fa.rollout_attempt_outcome.v1": _fa_outcome_payload,

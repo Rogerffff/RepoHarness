@@ -366,10 +366,17 @@ def verify(
         "rh2.bundle_pair.v1",
     }
     _post_s1_prefixes = ("rh2.fa.",)  # FA 工作流契约（05 计划 FA-0，2026-07-12）
+    # S2-1 T2-b（2026-07-13）：bundle v2 三分体系（golden 面与 grading 面分离，
+    # 执行计划 §3.0）。显式清单放行（不共享前缀，故不用前缀机制）。
+    _post_s1_extra_ids = {
+        "rh2.private_grading_bundle.v2",
+        "rh2.validation_only_bundle.v1",
+        "rh2.environment_package.v1",
+    }
     missing_extra = expected_extra - set(EXTRA_SCHEMA_REGISTRY)
     unknown_extra = {
         schema_id
-        for schema_id in set(EXTRA_SCHEMA_REGISTRY) - expected_extra
+        for schema_id in set(EXTRA_SCHEMA_REGISTRY) - expected_extra - _post_s1_extra_ids
         if not schema_id.startswith(_post_s1_prefixes)
     }
     if missing_extra or unknown_extra:

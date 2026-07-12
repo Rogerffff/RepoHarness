@@ -52,6 +52,11 @@ from repoharness2.envpack.bundles import (
     PrivateGradingBundle,
     PublicTaskBundle,
 )
+from repoharness2.envpack.bundles_v2 import (
+    EnvironmentPackageV1,
+    PrivateGradingBundleV2,
+    ValidationOnlyBundle,
+)
 from repoharness2.governance import GroupRepairSignal
 from repoharness2.grading.queue import BackpressureEvent
 
@@ -71,6 +76,9 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.group_repair_signal.v1": GroupRepairSignal,
     "rh2.public_task_bundle.v1": PublicTaskBundle,
     "rh2.private_grading_bundle.v1": PrivateGradingBundle,
+    "rh2.private_grading_bundle.v2": PrivateGradingBundleV2,
+    "rh2.validation_only_bundle.v1": ValidationOnlyBundle,
+    "rh2.environment_package.v1": EnvironmentPackageV1,
     "rh2.bundle_pair.v1": BundlePair,
     "rh2.fa.execution_identity.v1": ExecutionIdentity,
     "rh2.fa.rollout_attempt_outcome.v1": RolloutAttemptOutcome,
@@ -96,5 +104,8 @@ FULL_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
 # 可见面，必须保持 0 命中（S1-2 实测 8 题 0 误报）。
 FULL_MARKER_SCAN_EXEMPT_SCHEMAS: frozenset[str] = MARKER_SCAN_EXEMPT_SCHEMAS | {
     "rh2.private_grading_bundle.v1",
+    "rh2.private_grading_bundle.v2",   # 评分材料本体（test_patch/F2P），同 v1 豁免
+    "rh2.validation_only_bundle.v1",   # 金标解本体，runtime-private，同理豁免
     "rh2.bundle_pair.v1",
+    # EnvironmentPackageV1 不豁免：只含 digest/身份，扫描必须保持 0 命中
 }
