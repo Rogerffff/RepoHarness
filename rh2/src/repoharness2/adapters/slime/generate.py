@@ -1493,10 +1493,16 @@ class RolloutOrchestrator:
                 )
             )
             if self._session_poison_subscribe is not None:
-                # P0-4：poison 即取消 harness（回调同步、非阻塞）
-                self._session_poison_subscribe(
-                    sid, lambda _sid, _reason: harness_task.cancel()
-                )
+                # P0-4/轮次 10 P0-1：poison 即取消 harness。生产拓扑是双线程
+                # （Ray actor loop 持 harness_task；poison 从 aiohttp adapter
+                # 线程发出）——Task.cancel() 不是跨线程安全 API，必须经
+                # owner loop 的 call_soon_threadsafe 投递。
+                owner_loop = asyncio.get_running_loop()
+
+                def _cancel_from_any_thread(_sid: str, _reason: str) -> None:
+                    owner_loop.call_soon_threadsafe(harness_task.cancel)
+
+                self._session_poison_subscribe(sid, _cancel_from_any_thread)
             try:
                 exit_code = await harness_task
             except asyncio.CancelledError:

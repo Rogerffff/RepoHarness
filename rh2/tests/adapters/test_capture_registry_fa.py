@@ -19,6 +19,8 @@ from s1_7a_bringup.capture_wire import (  # noqa: E402
     CapturePendingOverlapError,
     CaptureRegistry,
     PendingTurn,
+    assert_no_404_guard_installed,
+    ensure_no_404_middleware,
     rh2_no_404_middleware,
 )
 
@@ -171,3 +173,41 @@ async def test_no_404_middleware_route_level():
         assert r3.status == 200  # 正常路径不受影响
     finally:
         await client.close()
+
+
+async def test_middleware_production_order_direct_append():
+    """codex 轮次 10 P0-2：生产顺序 = 先构造 adapter 再 install——构造器
+    patch 对已存在 app 无效，必须 ensure_no_404_middleware 直接挂 + 启动前
+    断言。本测试按生产顺序：裸 app（模拟先构造的 adapter）→ ensure → 断言
+    → 路由级验证 404 已被转换。"""
+
+    from aiohttp import web
+    from aiohttp.test_utils import TestClient, TestServer
+
+    app = web.Application()  # 先构造（无 middleware，= 生产 adapter 现状）
+    with pytest.raises(RuntimeError, match="rh2_no_404_middleware 不在"):
+        assert_no_404_guard_installed(app)  # 修复前生产就是这个状态
+    assert ensure_no_404_middleware(app) is True
+    assert ensure_no_404_middleware(app) is False  # 幂等：不双挂
+    assert_no_404_guard_installed(app)  # 启动前断言通过
+    client = TestClient(TestServer(app))
+    await client.start_server()
+    try:
+        r = await client.get("/never_registered")
+        assert r.status == 503
+        assert r.headers["x-should-retry"] == "false"
+    finally:
+        await client.close()
+
+
+def test_unregister_releases_poison_to_archive():
+    """轮次 10 P0-4 接线：CaptureRegistry.unregister = 清理 ACK ->
+    poison.release（active -> 有界归档，仍可查）。"""
+
+    registry = CaptureRegistry()
+    registry.register("sid_G", FakeHook())
+    registry.poison.poison("sid_G", "bad")
+    assert "sid_G" in registry.poison._active
+    registry.unregister("sid_G")
+    assert "sid_G" not in registry.poison._active  # 已释放
+    assert registry.poison.is_poisoned("sid_G")  # 归档仍拒绝

@@ -114,7 +114,7 @@ class ClaudeCodeDriver:
     async def _install_native_cli(self, sb: DockerSandbox) -> None:
         tarball = os.environ[self.platform_tarball_env]
         await sb.write_file("/tmp/cc-platform.tgz", Path(tarball))
-        await sb.exec(
+        _code, _out, _err = await sb.exec(
             "set -e && mkdir -p /tmp/cc-extract && "
             "tar -xzf /tmp/cc-platform.tgz -C /tmp/cc-extract && "
             "install -m 0755 /tmp/cc-extract/package/claude /usr/local/bin/claude && "
@@ -123,6 +123,17 @@ class ClaudeCodeDriver:
             timeout=180,
             check=True,
         )
+        # codex 轮次 10 一般 2：不只运行，还要**比较**——版本漂移 fail-fast
+        # （CC 行为画像绑定固定版本，见 fa/claude_code_retry_timeout_source_
+        # guided_validation.md §4）。结果进 startup evidence。
+        expected = os.environ.get("RH2_CLAUDE_CODE_VERSION", "2.1.205")
+        observed = _out.strip().splitlines()[-1] if _out.strip() else ""
+        if expected not in observed:
+            raise RuntimeError(
+                f"容器内 claude --version 不符：观测 {observed!r}，期望包含 {expected!r}"
+                "——CC 版本画像失效，fail-fast（升级须先重跑探针套件）。"
+            )
+        self.cc_version_observed = observed
 
     async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
         from slime.agent.harness import ClaudeCodeHarness
@@ -295,6 +306,15 @@ class BringupService:
             max_turns_per_sid=MAX_TURNS_PER_SID,
         )
         install_capture_wire(self.registry)
+        # codex 轮次 10 P0-2：install 的构造器 patch 对**已创建**的生产
+        # adapter 无效——直接对其 app 挂 404 守卫，并在起线程前断言在场
+        from s1_7a_bringup.capture_wire import (
+            assert_no_404_guard_installed,
+            ensure_no_404_middleware,
+        )
+
+        ensure_no_404_middleware(self.adapter.app)
+        assert_no_404_guard_installed(self.adapter.app)
         self.app_handle = run_app_in_thread(
             self.adapter.app,
             host=ADAPTER_BIND_HOST,
@@ -426,10 +446,32 @@ class BringupService:
             StaticActiveCoordinator,
         )
 
+        # 轮次 10 一般 1：持久 artifact sink——audit tombstone 有上限会丢
+        # 最旧 digest，evidence_refs 不得指向已删除对象；sink 落盘后引用是
+        # 外部持久路径，不受内存淘汰影响。正式链强制配置（下方断言）。
+        audit_dir = ARTIFACT_DIR / "model_call_audit"
+        audit_dir.mkdir(parents=True, exist_ok=True)
+
+        def audit_artifact_sink(attempt_id: str, payload) -> str:
+            safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in attempt_id)[:180]
+            path = audit_dir / f"{safe}.json"
+            with path.open("w", encoding="utf-8") as fh:
+                json.dump(
+                    {"attempt_id": attempt_id, "payload_repr": repr(payload)[:4096]},
+                    fh,
+                    ensure_ascii=False,
+                )
+            return str(path)
+
         self.registry.model_call_proxy = ModelCallProxy(
             StaticActiveCoordinator(self._latest_engine_version),
             attempt_timeout_seconds=900.0,  # 与 wire sock_read 同级
+            artifact_sink=audit_artifact_sink,
         )
+        if config.require_real_weight_versions and (
+            self.registry.model_call_proxy._artifact_sink is None
+        ):  # pragma: no cover - 上两行恒配置；防未来编辑退化
+            raise RuntimeError("正式链必须配置持久 artifact_sink（evidence_refs 不可悬空）。")
         self.registry.default_session_budget_seconds = float(AGENT_TIME_BUDGET_SEC)
 
         self.orchestrator = RolloutOrchestrator(

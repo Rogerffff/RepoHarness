@@ -1052,3 +1052,88 @@ async def test_recovery_wait_respects_episode_deadline():
     assert sends == [1]  # 真发出过一次（进入了 abort→恢复等待分支）
     assert clock["t"] <= 20.0 + 1.0  # 失败发生在 episode deadline 附近，不是 500s
     assert registry.is_poisoned("sid_V")
+
+
+# ----------------------------------------- 轮次 10：跨线程拓扑 / poison 生命周期
+
+
+async def test_poison_from_real_thread_cancels_harness_in_owner_loop():
+    """codex 轮次 10 P0-1：生产拓扑 = Ray actor loop 持 task + adapter **线程**
+    发 poison。Task.cancel 非跨线程安全——owner 必须经 call_soon_threadsafe。
+    本测试从真 threading.Thread 调 poison()，断言 owner loop 中的 task 收到
+    CancelledError。"""
+
+    import threading
+
+    registry = SessionPoisonRegistry()
+    owner_loop = asyncio.get_running_loop()
+    cancelled = asyncio.Event()
+
+    async def hanging_harness():
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+
+    task = asyncio.ensure_future(hanging_harness())
+    await asyncio.sleep(0)  # 让协程真正启动
+
+    def cancel_from_any_thread(_sid: str, _reason: str) -> None:
+        owner_loop.call_soon_threadsafe(task.cancel)  # 生产 orchestrator 同款
+
+    registry.subscribe("sid_T10", cancel_from_any_thread)
+    thread = threading.Thread(
+        target=registry.poison, args=("sid_T10", "unattributable"), name="fake-adapter"
+    )
+    thread.start()
+    thread.join(timeout=5)
+    await asyncio.wait_for(cancelled.wait(), timeout=5)  # 修复前此处永久挂起
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert registry.notify_failures == 0
+
+
+def test_active_poison_never_evicted_archived_bounded():
+    """codex 轮次 10 P0-4：active poison 绝不被容量淘汰（无 termination ACK
+    前淘汰 = 中毒 session 复活）；release（清理 ACK）后归档，归档有界。"""
+
+    registry = SessionPoisonRegistry(max_archived=2)
+    registry.poison("sid_A", "bad_a")  # active，永不淘汰
+    for i in range(10):
+        registry.poison(f"sid_b{i}", "bad")
+    assert registry.is_poisoned("sid_A")  # 修复前 max_entries=1 时这里 False
+    # release 生命周期：active -> archived（仍可查），归档满 2 个后最旧被淘汰
+    for i in range(10):
+        registry.release(f"sid_b{i}")
+    assert registry.is_poisoned("sid_b9") and registry.is_poisoned("sid_b8")
+    assert not registry.is_poisoned("sid_b0")  # 已淘汰（归档摘要有界）
+    assert registry.archived_evictions == 8
+    assert registry.is_poisoned("sid_A")  # active 全程健在
+    registry.release("sid_A")
+    assert registry.is_poisoned("sid_A")  # 归档后仍拒绝（audit 面）
+
+
+def test_registry_check_subscribe_race_window_closed():
+    """codex 轮次 10 P0-3：check-then-subscribe 与 poison-then-extract 原子化
+    ——两线程交错高频跑不丢通知（丢通知 = harness 永不被取消）。"""
+
+    import threading
+
+    for _ in range(200):
+        registry = SessionPoisonRegistry()
+        fired = threading.Event()
+        barrier = threading.Barrier(2)
+
+        def do_subscribe():
+            barrier.wait()
+            registry.subscribe("sid_R", lambda _s, _r: fired.set())
+
+        def do_poison():
+            barrier.wait()
+            registry.poison("sid_R", "bad")
+
+        t1 = threading.Thread(target=do_subscribe)
+        t2 = threading.Thread(target=do_poison)
+        t1.start(); t2.start(); t1.join(5); t2.join(5)
+        assert fired.wait(timeout=5)  # 无论交错顺序，回调必达

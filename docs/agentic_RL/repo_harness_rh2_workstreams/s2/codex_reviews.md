@@ -1357,3 +1357,174 @@ host_launch.sh bash -n：PASS
 5. FA-2 其余 assembler 工作继续。
 6. FA-5 前实现 execution-owner cancellation，再用真实 Linux Claude Code 和 SGLang 验证。
 
+
+
+---
+
+## 轮次 10（2026-07-13：FA-1 第五轮审查 → 双线程拓扑 4 P0 全部采纳）
+
+> 原文全文转录（tmp/FA1_codex.md 第五版）。处置见 `fa/implementation-notes.md` "FA-1 follow-up 5"。主题：既有测试全在单事件循环，生产是 Ray actor loop + aiohttp adapter 线程——跨线程取消（call_soon_threadsafe）、middleware 生产序直挂、registry 锁原子化、active poison 不淘汰 + release 归档。glue 持久 artifact_sink、容器内版本精确比较随本轮落地。测试 835 → 852。
+
+**结论**
+
+`60c6b3fd` 正确修复了 deadline 传参、formal 非零 exit、FIFO 猜测和 tarball 缓存校验。但 FA-1 仍不能关闭：我确认有 **2 个生产路径 P0**，以及 poison registry 的并发与淘汰设计问题。现有测试都在单事件循环中运行，没有覆盖真实的“Ray actor loop + aiohttp adapter thread”拓扑。
+
+以下可直接返回给 Claude。
+
+---
+
+## P0-1：主动取消在真实双线程拓扑中不生效
+
+真实架构在 [glue.py:298](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:298) 明确把 adapter 放在独立线程：
+
+```text
+Ray actor event loop：harness_task
+aiohttp adapter thread：proxy / poison()
+```
+
+但 [generate.py:1495](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1495) 注册的回调直接执行：
+
+```python
+lambda _sid, _reason: harness_task.cancel()
+```
+
+`asyncio.Task.cancel()` 不是跨线程安全 API。生产中 poison 从 adapter 线程调用该回调，不能直接取消 actor loop 中的 task。
+
+确定性双线程探针结果：
+
+```text
+task_done = false
+task_cancelled = false
+cancel_handler_seen = false
+subscriber_removed = true
+```
+
+更严重的是 [async_worker.py:327](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:327) 吞掉 callback 异常，因此账面显示 subscriber 已处理，实际 harness 仍在运行。
+
+当前 e2e 测试是假拓扑：poison 和 harness task 在同一个 pytest event loop，无法覆盖生产问题。
+
+正确实现：
+
+```python
+owner_loop = asyncio.get_running_loop()
+
+def cancel_from_any_thread(_sid, _reason):
+    owner_loop.call_soon_threadsafe(harness_task.cancel)
+```
+
+测试必须从真实 `threading.Thread` 调用 `registry.poison()`，并断言 actor loop 中的 harness 收到 `CancelledError`。
+
+## P0-2：404 middleware 没装到首个生产 adapter
+
+[glue.py:290](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:290) 的顺序是：
+
+```python
+self.adapter = AnthropicAdapter(...)
+install_capture_wire(self.registry)
+```
+
+但 `install_capture_wire()` 只是 monkeypatch 未来的 `BaseAdapter.__init__`。已经构造好的 `self.adapter` 不会获得 middleware。
+
+确定性探针：
+
+```text
+adapter_created_before_install_has_guard = false
+adapter_created_after_install_has_guard = true
+```
+
+而生产中只有这一个先创建的 adapter。因此当前正式 adapter 仍会暴露 aiohttp 默认 404，Claude Code 仍可能绕过 fallback 开关再发一次请求。
+
+建议不要靠构造器 monkeypatch。直接：
+
+```python
+self.adapter = AnthropicAdapter(...)
+self.adapter.app.middlewares.append(rh2_no_404_middleware)
+```
+
+并在 `run_app_in_thread()` 前断言 middleware 在场。测试应使用与生产相同的“先构造 adapter，再 install”顺序，而不是手工创建已经带 middleware 的测试 app。
+
+## P0-3：SessionPoisonRegistry 跨线程存在丢通知竞态
+
+`subscribe()` 和 `poison()` 会从不同线程调用，但内部 dict 没有锁：
+
+```text
+actor thread：检查 sid 尚未 poisoned
+adapter thread：写入 poisoned，发现没有 subscriber
+actor thread：随后写入 subscriber
+```
+
+此时 poison 已发生，但 callback 永远不会执行。
+
+需要使用 `threading.Lock` 将以下操作原子化：
+
+```text
+检查 poisoned + 注册 subscriber
+首次 poison + 提取 subscriber
+unsubscribe
+is_poisoned / reason
+```
+
+callback 应复制出来后在锁外调用，避免死锁。
+
+## P0-4：poison FIFO 会淘汰仍活跃的安全事实
+
+[async_worker.py:318](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:318) 达到 `max_entries` 后无条件删除最旧 poison，并假设其 execution 已终止，但代码没有 termination ACK。
+
+最小反例：
+
+```text
+max_entries = 1
+poison active session A
+poison session B
+A_still_poisoned = false
+```
+
+如果 A 的主动取消失败或仍在清理，后续请求会重新通过 `check()`，orchestrator post-check 也可能看不到 poison。
+
+不要淘汰 active poison。建议：
+
+```text
+active poison：保留直到 execution cleanup ACK / unregister
+archived poison：只保存有界摘要
+```
+
+active 数量自然受 rollout concurrency 限制，不需要 FIFO 猜测生命周期。
+
+## 一般问题
+
+1. **audit 引用会变悬空。**  
+   tombstone 超过 `8 × max_artifacts` 后直接删除，但 glue 构造 `ModelCallProxy` 时没有配置 `artifact_sink`。探针中 `audit:a0` 已无法解析。formal 链应强制配置持久 artifact sink，不能让 `ModelCallAttempt.evidence_refs` 指向已删除对象。
+
+2. **容器内版本检查仍未实现。**  
+   host tarball SHA 每次校验已修好，但 [glue.py:121](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:121) 只运行 `claude --version`，没有比较结果。`host_launch.sh` 自己也写明这仍待 container 侧完成。应比较精确版本 `2.1.205` 并把结果写入启动 evidence。
+
+3. **TTL 只减少同步阻塞，没有消除它。**  
+   `StaticActiveCoordinator` 每次 TTL 到期仍会在 adapter event loop 中同步执行最长 5 秒的 `requests.get`。FA-4 的真实 coordinator 必须彻底替换这条轮询，且版本应是全部推理 engine ACK 后的 consensus version。
+
+4. **request 级 capture 归属仍是 FA-2 硬前置。**  
+   当前 overlap fail-closed 本身是合理临时方案；两条 draft 确实都会 abandon，队列不会继续 commit。但修复跨线程 poison 前，它不能保证主动终止 harness。
+
+## 已确认修好的部分
+
+- `deadline_monotonic` 已真实传入 `_wait_version_advance()`。
+- 新 deadline 测试已进入 abort→恢复分支，不再是假阳性。
+- formal 链启动断言已要求 `reject_on_nonzero_harness_exit=True`。
+- overlap 不再使用 FIFO 猜测，改为 fail-closed。
+- cached tarball 每次校验、临时下载和原子替换已实现。
+
+## 验证
+
+```text
+FA 定向测试：108 passed
+当前完整工作树：847 passed
+inspect-rh2-s1：PASS
+py_compile：PASS
+host_launch.sh bash -n：PASS
+```
+
+完整测试数高于 commit 声明的 835，是因为当前工作树还有并行 S2 变更；FA 文件本身没有未提交修改。
+
+**建议顺序**
+
+先修跨线程 cancellation、poison registry 原子性和 middleware 安装顺序，再关闭 FA-1。FA-2 可以并行开始设计，但 request 级 capture 归属必须保持第一验收项。artifact sink 和容器版本断言应在 FA-5 租卡前完成，而不是留到真机现场编写。
+

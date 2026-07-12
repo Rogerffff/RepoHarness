@@ -448,3 +448,44 @@ BoundedDeliveryQueue / ResourceLimits / ModelCallProxy / 重试白名单）+
   ×2、404 路由级、订阅即回调；净数受重写抵消）。
 - FA-2 验收项排序更新：**第一项 = request 级 capture 归属**（改 slime
   record_turn 签名或 ContextVar 传 rid），落地后解除 overlap fail-fast。
+
+## FA-1 follow-up 5（2026-07-13，codex 轮次 10：双线程拓扑 2 P0 + registry
+## 并发/生命周期 2 P0；原文存档 `../s2/codex_reviews.md` 轮次 10）
+
+本轮主题：**所有既有测试都跑在单事件循环里，而生产是"Ray actor loop +
+aiohttp adapter 线程"双线程拓扑**——四个问题全是这个盲区的产物。
+
+- **P0-1（跨线程取消不生效）**：poison 从 adapter 线程发出，回调里直接
+  `harness_task.cancel()` 非跨线程安全（codex 双线程探针：task 未取消、
+  账面却显示 subscriber 已处理——`_invoke` 吞异常加重了误导）。修复：
+  orchestrator 捕获 `owner_loop = get_running_loop()`，回调走
+  `owner_loop.call_soon_threadsafe(task.cancel)`；`notify_failures` 计数
+  取代纯吞。新测试从**真 threading.Thread** 发 poison，断言 owner loop
+  中的 task 收到 CancelledError（修复前该测试永久挂起）。
+- **P0-2（middleware 没装到唯一的生产 adapter）**：glue 顺序是先
+  `AnthropicAdapter(...)` 再 `install_capture_wire()`——构造器 patch 只
+  影响之后创建的 adapter，对已存在的生产 adapter 无效（codex 探针：
+  before=false / after=true）。修复：`ensure_no_404_middleware(app)`
+  幂等直挂 + `assert_no_404_guard_installed` 启动前断言；glue 按生产序
+  直挂到 `self.adapter.app`；测试按生产序复现（裸 app 断言先红后绿）。
+- **P0-3（registry 跨线程丢通知竞态）**：check-then-subscribe 与
+  poison-then-extract 之间的窗口会让回调永不执行。修复：threading.Lock
+  原子化全部状态转换，回调复制后**锁外**调用（防死锁）；200 轮双线程
+  barrier 交错测试钉死。
+- **P0-4（FIFO 淘汰活跃毒）**：max_entries 淘汰假设"最旧已终止"但没有
+  termination ACK（反例：max=1 时 A 被 B 挤出，A 的后续请求重新通过
+  check）。重构生命周期：**active poison 绝不容量淘汰**（数量受 rollout
+  并发自然约束），`release()`（= CaptureRegistry.unregister 的清理 ACK）
+  后转有界归档摘要（归档后 is_poisoned 仍真，audit 面保留）。
+- **一般项**：glue 配置**持久 artifact_sink**（落盘 ARTIFACT_DIR/
+  model_call_audit/{attempt}.json，evidence_refs 从此指向外部持久路径，
+  不受内存 tombstone 上限影响；正式链断言 sink 在场）；容器内
+  `claude --version` **精确比较**（观测值含 RH2_CLAUDE_CODE_VERSION=
+  2.1.205 才放行，结果存 self.cc_version_observed 供 startup evidence）；
+  TTL 轮询的残余同步阻塞如实记录——FA-4 用 coordinator 发布的全引擎
+  ACK consensus version 彻底替换（05 计划 FA-4 增补项）。
+- 测试 835 → 852（+真线程取消、竞态窗口 200 轮、active 不淘汰、
+  unregister→release、生产序 middleware；847 基线含并行 S2 变更）。
+- codex 确认已修好的部分（轮次 9 全项）与"FA-2 第一验收项 = request 级
+  capture 归属"维持不变。artifact sink 与容器版本断言已按其要求在租卡
+  前完成，不留真机现场。

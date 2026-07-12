@@ -284,56 +284,88 @@ class SessionPoisonedError(RuntimeError):
 
 class SessionPoisonRegistry:
     """session 中毒登记：不可归因故障/预算耗尽后，同 session 的一切后续
-    请求快速拒绝，并**主动通知 execution owner 终止**（codex 轮次 9 P0-4：
-    不能依赖 HTTP 状态码让 CC 自行退出——404 fallback 与版本漂移已证明
-    客户端自退不可靠；owner 收到回调后取消 harness task/sandbox）。
+    请求快速拒绝，并**主动通知 execution owner 终止**（codex 轮次 9 P0-4）。
 
-    有界性（轮次 9 一般 4）：max_entries FIFO 淘汰——被淘汰的 session 已
-    终止且 id 全局唯一，理论复活风险记 docstring 即可。"""
+    线程模型（codex 轮次 10 P0-3）：生产拓扑是 Ray actor loop（orchestrator/
+    subscribe）+ aiohttp adapter 线程（proxy/poison）**跨线程并发**——所有
+    状态转换在 `threading.Lock` 内原子完成（check-then-subscribe 与
+    poison-then-extract 的窗口竞态会丢通知）；回调复制出来在**锁外**调用
+    （防死锁），且回调自身必须线程安全（owner 用 call_soon_threadsafe）。
 
-    def __init__(self, max_entries: int = 4096) -> None:
-        if max_entries < 1:
-            raise ValueError("max_entries 必须 >= 1。")
-        self._poisoned: dict[str, str] = {}
-        self._max_entries = max_entries
+    生命周期（轮次 10 P0-4——不再 FIFO 淘汰活跃毒）：active poison 保留到
+    execution 清理 ACK（`release()`，由 CaptureRegistry.unregister 触发）；
+    释放后归档为有界摘要（audit 用）。active 数量受 rollout 并发自然约束。"""
+
+    def __init__(self, max_archived: int = 4096) -> None:
+        if max_archived < 1:
+            raise ValueError("max_archived 必须 >= 1。")
+        import threading
+
+        self._lock = threading.Lock()
+        self._active: dict[str, str] = {}
+        self._archived: dict[str, str] = {}
+        self._max_archived = max_archived
         self._subscribers: dict[str, list[Callable[[str, str], None]]] = {}
-        self.evicted_count = 0
+        self.archived_evictions = 0
+        self.notify_failures = 0
 
     def subscribe(self, session_id: str, callback: Callable[[str, str], None]) -> None:
-        """execution owner 注册终止回调（poison 时同步调用，回调必须
-        非阻塞——典型实现是 asyncio.Task.cancel）。已中毒则立即回调。"""
+        """execution owner 注册终止回调。已中毒则立即回调（锁外）。回调必须
+        非阻塞且线程安全——owner 侧标准形态：
+        `loop.call_soon_threadsafe(task.cancel)`（poison 可能来自 adapter 线程）。"""
 
-        if session_id in self._poisoned:
-            callback(session_id, self._poisoned[session_id])
-            return
-        self._subscribers.setdefault(session_id, []).append(callback)
+        with self._lock:
+            reason = self._active.get(session_id)
+            if reason is None:
+                self._subscribers.setdefault(session_id, []).append(callback)
+                return
+        self._invoke(callback, session_id, reason)
 
     def unsubscribe(self, session_id: str) -> None:
-        self._subscribers.pop(session_id, None)
+        with self._lock:
+            self._subscribers.pop(session_id, None)
 
     def poison(self, session_id: str, reason: str) -> None:
-        if session_id in self._poisoned:
-            return
-        while len(self._poisoned) >= self._max_entries:
-            oldest = next(iter(self._poisoned))
-            del self._poisoned[oldest]
-            self.evicted_count += 1
-        self._poisoned[session_id] = reason
-        for callback in self._subscribers.pop(session_id, []):
-            try:
-                callback(session_id, reason)
-            except Exception:  # noqa: BLE001 - 通知失败不掩盖 poison 本身
-                pass
+        with self._lock:
+            if session_id in self._active or session_id in self._archived:
+                return
+            self._active[session_id] = reason
+            callbacks = self._subscribers.pop(session_id, [])
+        for callback in callbacks:  # 锁外调用（防死锁）
+            self._invoke(callback, session_id, reason)
+
+    def release(self, session_id: str) -> None:
+        """execution 清理 ACK：active -> 有界归档（活跃毒绝不被容量淘汰）。"""
+
+        with self._lock:
+            reason = self._active.pop(session_id, None)
+            if reason is None:
+                return
+            while len(self._archived) >= self._max_archived:
+                oldest = next(iter(self._archived))
+                del self._archived[oldest]
+                self.archived_evictions += 1
+            self._archived[session_id] = reason
+
+    def _invoke(self, callback: Callable[[str, str], None], sid: str, reason: str) -> None:
+        try:
+            callback(sid, reason)
+        except Exception:  # noqa: BLE001 - 通知失败不掩盖 poison 本身
+            self.notify_failures += 1  # 轮次 10：不再纯吞——失败可见（audit 面）
 
     def is_poisoned(self, session_id: str) -> bool:
-        return session_id in self._poisoned
+        with self._lock:
+            return session_id in self._active or session_id in self._archived
 
     def reason(self, session_id: str) -> str | None:
-        return self._poisoned.get(session_id)
+        with self._lock:
+            return self._active.get(session_id) or self._archived.get(session_id)
 
     def check(self, session_id: str) -> None:
-        if session_id in self._poisoned:
-            raise SessionPoisonedError(session_id, self._poisoned[session_id])
+        with self._lock:
+            reason = self._active.get(session_id) or self._archived.get(session_id)
+        if reason is not None:
+            raise SessionPoisonedError(session_id, reason)
 
 
 class CoordinatorView(Protocol):

@@ -138,6 +138,9 @@ class CaptureRegistry:
         # provider 的 registry 交叉检查从此只覆盖**存活会话**（权威来源是
         # engine /get_weight_version，交叉检查弱化可接受、如实记录）。
         self.weight_versions.pop(sid, None)
+        # 轮次 10 P0-4：unregister = execution 清理 ACK——active poison
+        # 归档（有界摘要），活跃期绝不被容量淘汰。
+        self.poison.release(sid)
 
     def stage(self, sid: str | None, turn: PendingTurn) -> None:
         if sid is None or sid not in self.hooks:
@@ -215,6 +218,28 @@ async def rh2_no_404_middleware(request: "aiohttp_web.Request", handler):
     return response
 
 
+def ensure_no_404_middleware(app: "aiohttp_web.Application") -> bool:
+    """给**已构造**的 adapter app 挂 404 守卫（幂等）。
+
+    codex 轮次 10 P0-2：生产顺序是先 `AnthropicAdapter(...)` 再
+    `install_capture_wire()`——构造器 monkeypatch 只影响之后创建的 adapter，
+    对首个（唯一的）生产 adapter 无效。glue 必须对已存在的 app 直接 append，
+    并在 run_app_in_thread 前断言在场。返回 True = 本次新挂上。"""
+
+    if rh2_no_404_middleware in app.middlewares:
+        return False
+    app.middlewares.append(rh2_no_404_middleware)
+    return True
+
+
+def assert_no_404_guard_installed(app: "aiohttp_web.Application") -> None:
+    if rh2_no_404_middleware not in app.middlewares:
+        raise RuntimeError(
+            "rh2_no_404_middleware 不在 adapter app 上——404 会绕过 CC 的 "
+            "nonstreaming fallback 开关（轮次 10 P0-2），启动中止。"
+        )
+
+
 def install_capture_wire(registry: CaptureRegistry) -> None:
     """安装两处接线：模块级 call_sglang_generate 替换 + record_turn 包装。
 
@@ -233,7 +258,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
 
     def rh2_adapter_init(self, *args, **kwargs):
         original_adapter_init(self, *args, **kwargs)
-        self.app.middlewares.append(rh2_no_404_middleware)
+        ensure_no_404_middleware(self.app)
 
     slime_common.BaseAdapter.__init__ = rh2_adapter_init
 
