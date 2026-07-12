@@ -21,6 +21,10 @@
 
 - **[S2-1 T1-followup5, 2026-07-13] 无损往返是账本工具的基本性质**（codex 轮次 10）：writer 能写出、loader 却静默丢数据的状态 = 完整性漏洞。修复模式 = 写盘前守卫（拒绝写出非法状态）+ 加载全量消费断言（evidence 集合 == 文件行集合），"允许丢弃"只存在于显式迁移路径且必须计数。T1b 至此收满 216/216，store 定型（43 项单测），可供 T2 EnvValidationReport 与 S2-8 inspector 复用。
 
+- **[S2-1 T1 关闭, 2026-07-13]** 用户确认关闭。最终交付：raw archive（230×11 列，冻结 revision，双向 strip_spec 覆盖 + survivor 级 D5 + 与冻结 meta 逐字节一致）+ 键控镜像清单 v4（216/216 digest + manifest/config 双哈希实证 + 平台 linux/amd64 + evidence 交叉核对）+ image_manifest_store（44 项单测，写盘对称守卫/事务提交记录/双 pin 迁移）。六轮 codex 审查（轮次 6~11）全部消化，存档 codex_reviews.md。
+
+- **[S2-1 T2-a, 2026-07-13] 风险 F 关闭 + spec 表 vendor 决策**：官方 swebench 4.1.0 对 SWE-Gym 仓库零覆盖；SWE-Gym fork constants（commit pin 242429c1）覆盖 216/216，逐字节 vendor + provenance 旁证（不改内容、importlib 按路径消费、不在运行期拉 GitHub）。fork 末行把 spec 表重绑定为小写键——与 T1 镜像名小写化是同一坑的第二次出现，repo 身份的大小写归一化写入 T2 身份定案（内部原始大小写权威 + 小写投影用于 registry/spec 查表）。
+
 ## 2. 权衡取舍
 
 - **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。

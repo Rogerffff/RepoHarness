@@ -167,10 +167,10 @@ EnvironmentPackage（新）                      三者只以 digest/ref 关联�
 风险 D：磁盘/限流（§3.3 已含缓解：分批 + 认证账号 + 退避）。
 风险 E：216 题分布偏斜（漏斗账要按 repo 分组呈现，若某仓库整体
   门失败率异常，先怀疑门对该仓库测试栈的适配而非题）。
-风险 F：SWE-Gym 的 eval_script 生成——S1 的 8 题用 Verified 官方
-  make_test_spec 产物；SWE-Gym 仓库的 version→spec 映射是否被
-  swebench 库同版覆盖未验证，T2 首先用 3~5 题实测（不覆盖则需
-  引 SWE-Gym/OpenHands 的 spec 表，工作量并入风险 B 预留）。
+风险 F【已关闭 2026-07-13，T2-a】：swebench 4.1.0 官方对 11 仓库
+  0 覆盖（实锤）；SWE-Gym fork constants（pin 242429c1）216/216 全覆盖，
+  已 vendor 为冻结资产（s2/vendor/ + provenance），门 runner 只消费
+  vendor 文件。注意最终表为小写键——repo 大小写归一化并入 T2 身份定案。
 ```
 
 ## 8. 开放问题定案记录（2026-07-12，codex 轮次 4 审查 + orchestrator 复核）

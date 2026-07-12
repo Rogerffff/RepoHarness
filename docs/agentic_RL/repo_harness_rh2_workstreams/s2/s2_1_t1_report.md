@@ -1,6 +1,6 @@
 # S2-1 T1 报告：raw 重抓归档 + 键控镜像清单
 
-日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 终态）：**T1a PASS；T1b 完成（216/216 fully-verified，完成断言全过，schema v4）——待复核后 T1 关闭**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
+日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定：**T1 已关闭（用户确认 2026-07-13）**——T1a PASS；T1b 216/216 fully-verified（schema v4，完成断言全过）；codex 轮次 11 复核确认数据交付达标，代码面两项收尾修复完成（follow-up 6）。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
 
 ## T1a raw 重抓归档（`rh2/experiments/s2_1_ingestion/fetch_raw_lite.py`，可重跑）
 
