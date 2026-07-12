@@ -2,6 +2,10 @@
 
 日期：2026-07-08。定位：P3 预注册升级档（分离 + fully_async + 自建三件）的**实现设计文档**——只分析不写代码；同时把三轮 slime 源码调研的机制知识持久化（此前散在对话与 task 输出中，易失）。触发条件不变：J4b 或首训实测 rollout 尾部空闲 > 每步墙钟 25%。
 
+> **2026-07-12 修订说明**：P3 已实测 `wait_time_ratio=0.82`、J4/J5 rollout 尾部空闲 26%～28%，升级条件已经满足。fully async 不再只是“首训后按需开启”的可选档，而应成为正式长预算训练前的主链改造。本文原先把 batch schedule preflight 描述为“必须先做、fully async 不应等它”，需要区分逻辑和接线顺序：预检算法可并行离线开发，但正式接线应先有 continuous worker → RH2 finalize → PromptGroupAssembler → QualifiedPromptGroupQueue，再由 SlimeBatchAssembler 调用 `build_dp_schedule` 预检和换组。详见 `../fully_async_rollout_pipeline_design_discussion.md` 的 2026-07-12 修订；`04-s2-execution-plan.md` 尚未据此重排。
+>
+> **本轮决策对旧建议的取代关系**：正式链直接采用 version-aware fully async + faithful DIS，不再把 session-pinned policy、bounded async/update barrier 或 TIS/IcePop-style 近似当作候选主方案。首版也不实现同 prompt 成员补采。本文下方关于 starts-over 后自动补采、依赖补采的 dynamic filter，以及“turn 级 mask + TIS”推荐组合，保留用于解释当时如何发现 slime 缺口，但已经被新的独立 FA 工作流取代，不能直接转写为实施任务。
+
 所有 `file:line` 相对 `reference/slime/`，基于 pin `e848052a`；上游影响见 §2。
 
 ## 0. 结论先行
@@ -15,7 +19,8 @@
    缺口① = 在我方 custom_generate 写 resume 分支，不是等上游。
 3. 缺口①升级为正确性问题：starts-over 有系统性长度偏置
    （短轨迹更易在权重更新间隔内完成——DeepSeek-V4 不变量的 slime 版）。
-   过渡方案 = starts-over + 丢弃（配自动补采），杜绝纯 starts-over。
+   当前定案是终止该 execution、把所属 PromptGroup 记为缺员并继续创建新组；
+   不从头重跑该成员，也不做同 prompt 成员补采。
 4. 新发现一个隐性 bug 风险：fully_async worker 的 task 崩溃时样本
    静默泄漏（不进 queue 也不回 buffer），长训练累积后某些 prompt
    永不被训——升级时必须兜底。
@@ -72,7 +77,7 @@ buffer_filter 插入点：
 | commit | 影响 | 处置 |
 | --- | --- | --- |
 | **680824dd** `routed_experts_start_len` | **高**：routing tape 支持中段偏移拼接（`expected_rows = len(tokens)-1-start_len` + `torch.cat` 中段拼接，types.py:352-369）——**续跑场景的 tape 基建**，也改变 tape 归一化契约 | ① S1-3 的 tape 归一化留 start_len 扩展位（现在留位一行事）；② 若做真续跑必须 cherry-pick |
-| **c7487788** `--release-train` | **中**：新增每步 update_weights 分支（train_async.py:39-69）——若启用，缺口②的跨版本盲区急剧恶化 | 升级档明确不默认启用；若用，TIS 兜底从建议变必须 |
+| **c7487788** `--release-train` | **中**：新增每步 update_weights 分支（train_async.py:39-69）——若启用，缺口②的跨版本盲区急剧恶化 | 只有真实 weight version、逐 token faithful DIS 和 staleness 验收通过后才能启用；TIS 不能作为正确性兜底 |
 | **2d909df5** cleanup | 排雷项：删 ppo_utils.py 63 行等 | 升级 rebase 前精读 diff 确认未删依赖 API |
 | 474861aa /pull_weights、f27ef35c source_names、3× docker patch | 低/无 | 记录即可 |
 
@@ -90,7 +95,7 @@ F6 纪律的第一个真实案例：pin 之后上游确实在动我们的契约�
 | --- | --- | --- |
 | 真续跑 | 近无偏 | 最优但最贵：需缺口② mask 配合 + **沙箱中间态恢复**（token 续跑对沙箱 agent 意味着 checkpoint/restore workspace，代价可能高于重跑） |
 | starts-over（现状） | 最差 | 尽快废弃 |
-| **starts-over + 丢弃**（不回收，直接放弃该组，靠补采补组） | 中性偏短但无 stale 污染、无重算浪费 | **推荐过渡方案**（~0.5 人日，复用缺口③的 drop 机制） |
+| 终止 execution + 缺员组不准入 | 不重复旧轨迹，也不把新采样伪装成重试 | **首版定案**：持续创建新的 PromptGroup，不做成员补采 |
 
 正式接线（若长轨迹占比证明必要）：我方 custom_generate 开头加 resume 分支（判 `status==ABORTED ∧ tokens ∧ metadata.start_rollout_id`，30-80 行 + agent 中间态序列化）+ done_cb 补 start_rollout_id 标记（~5 行碰 core）+ cherry-pick 680824dd。
 
@@ -100,13 +105,13 @@ F6 纪律的第一个真实案例：pin 之后上游确实在动我们的契约�
 
 **但对我们的多轮 SWE agent 有一个关键利好**：每轮 = 一次 /generate = 一次 append = 一条 weight_versions 记录，**段边界我方 custom_generate 完全掌握** → **turn 级版本感知 mask 在 projection 层可行**（~50-100 行，零碰 core），盲区收窄到"单轮内部跨版本"。
 
-**推荐组合**：turn 级版本 mask（我方 projection，覆盖主要场景）+ TIS 兜底单轮内部（slime 有 `--use-tis`，arguments.py:1047；E2 定案已预留"M2 失配大则开"钩子）+ 版本跨度超阈值整轨迹硬丢弃（buffer_filter，~20-40 行）。**前置验证**：实测跨版本 token 比例（J5b-M1 的直方图正是此数）。
+**当前定案**：逐次模型调用记录 rollout logprob、weight version 和 token span；训练时基于 current/rollout ratio 执行 faithful DIS，并对缺少 provenance、比率不可计算或过度陈旧的 token/轨迹 fail closed。turn 级版本边界仍是必要输入，但不再以“mask + TIS 兜底”替代 faithful DIS。slime 的 `--use-tis`（arguments.py:1047）只保留为后续小规模近似对照，不是正式训练主链。**前置验证**：实测跨版本 token 比例，并逐 token 对拍 DIS 比率、裁剪、拒绝原因和最终 advantage。
 
 ### 缺口③ 动态采样失效
 
-**关键确证：补采在 fully_async 下天然成立**——worker top-up 的 `get_samples(1)` 在 buffer 空时自动落到全局 prompt 数据集读新组（data_source.py:177-189），drop 不会饥饿。
+**关键确证：新组持续供给在 fully_async 下天然成立**——worker top-up 的 `get_samples(1)` 在 buffer 空时自动落到全局 prompt 数据集读取新的 prompt group（data_source.py:177-189）。这里是“创建新组”，不是为残缺组补一个同 prompt 成员，二者必须在指标与 lineage 中分开命名。
 
-**推荐**：done_cb 内接 dynamic_filter，drop 的组不 put queue（类比 ABORTED 回收路径，~30-50 行碰 core 但语义精确复刻原生 over-sample→drop→补采）。custom_generate 组内自否决可作补充，buffer_filter 消费侧过滤（只丢不补）不推荐。
+**当前定案**：RH2 单轨迹 finalize 与 PromptGroupAssembler 在进入 qualified queue 前完成资格判断；残缺组不进入在线 ready queue，worker 继续创建新组。不能把动态过滤写成“丢一条后自动补回同 prompt 成员”，也不能在 slime 消费侧才第一次暴露治理拒绝。
 
 **P3 实测扩充（2026-07-09）：fan-out 假设破裂点 = 两处，不止 dynamic_filter。** J4c 实跑发现 slime **消费侧排序** `_key`（`fully_async_rollout.py:238`）对我们的 fan-out 嵌套形状 `list[list[Sample]]` 同样崩溃——`getattr(list, "index")` 拿到 `list.index` 绑定方法 → `int()` TypeError（诊断补丁：递归展平 + callable 防御，见 `remote_evidence_20260708/preflight_evidence/j4c/slime_fully_async_key_diagnostic_patch.py`）。根因与 dynamic_filter 崩溃相同：**slime 标准路径与 fully_async 路径都假设平铺 `Sample`，我们的 fan-out `list[Sample]` 系统性破坏该假设。** 升级实施必须把"**fan-out aware 的样本展平/排序**"作为独立工作项（覆盖 dynamic_filter、`_key`、以及未来任何按 sample 属性索引/排序的消费点），不能逐点打补丁。
 
@@ -114,11 +119,11 @@ F6 纪律的第一个真实案例：pin 之后上游确实在动我们的契约�
 
 **关键障碍确证**：buffer_filter 调用时 `rollout_id=None`（data_source.py:195）且拿不到 engine 句柄——**current policy version 无现成管道**。两个方案：(i) worker top-up 时缓存 `engine.get_weight_version`（~20 行碰 worker）；(ii) 用 buffer 内最大版本近似 current（零管道但偏旧）。推荐 (i)。
 
-准入形态：`staleness_filter`（我方 `--buffer-filter-path`，~40-80 行）——`cur - max(weight_versions) ≤ α`（α=1，RollArt 实证），被拒**丢弃**（依赖缺口③补采），不回收重跑（踩缺口①循环）。
+准入形态：由 FA 运行时把 current policy version 传到逐 token DIS 与组级 staleness gate。无法校正或超过预注册阈值的轨迹被拒绝进入 qualified queue；不回收重跑，也不触发同 prompt 成员补采。`buffer_filter` 可以作为 slime 侧的第二道防线，但不能成为 policy version 与拒绝事实的唯一权威。
 
 ### 边界澄清（2026-07-09 P3 教训）：fully_async 不解决 batch schedule 非法
 
-fully_async 升级解决的是 **rollout/trainer overlap 与长尾空闲**（尾部空闲 25%+ 才触发，P3 实测 J5 gbs20 尾段 28%）。它**不解决**"治理过滤后可训练样本数/microbatch 数无法对齐 `dp_size × mb_group`"这个问题——那是 slime `build_dp_schedule` 的调度约束，与同步/异步无关（P3 formal J4 与 J5 gbs16 都死在这，J5 gbs20 靠改 batch size 碰巧对齐才过）。**batch schedule preflight/repair 是独立于 fully_async 的 adapter 层任务**（见 `8gpu_preflight_protocol.md` J4 判据第 0 项、`preflight_report.md` §3），必须先做；fully_async 升级不能替代它，也不应等它。
+fully_async 升级解决的是 **rollout/trainer overlap 与长尾空闲**（P3 实测 J5 gbs20 尾段 28%，升级阈值已经触发）。它**不自动解决**“治理过滤后可训练样本数/microbatch 数无法对齐 `dp_size × mb_group`”的问题——那是 slime `build_dp_schedule` 的调度约束，与同步/异步本身正交（P3 formal J4 与 J5 gbs16 都死在这，J5 gbs20 靠改 batch size 碰巧对齐才过）。因此 batch schedule preflight/repair 仍是独立的 adapter 层能力；但实现接线顺序应修正为：先让 fully async 的 per-execution finalize 结果进入完整组 ready queue，再由 BatchAssembler 对 ready groups 进行预检、换组或等待。单独提前实现 predictor 只能更早报错，不能制造缺失 rollout，也不能替代 ready queue 选择。
 
 ## 4. 未注意点（四缺口清单外，本轮新扫出）
 
@@ -141,23 +146,20 @@ N6 worker 崩溃恢复：线程死亡会重建（:56），但 in-flight 与 buff
    回收样本随旧 event loop 丢失——长训练需外层对账（prompt 覆盖率审计）。
 ```
 
-## 5. 触发升级后的实施顺序与工作量
+## 5. 触发升级后的实施顺序
+
+旧的“四缺口顺序”已经被独立 FA 工作流取代。权威顺序以 `../fully_async_rollout_pipeline_design_discussion.md` 为准：
 
 ```text
-0. 验证轮（0.5-1 人日，J4c 扩展执行）：
-   custom_generate 对 ABORTED 的实际行为 / 跨版本 token 比例 /
-   TIS 配置现状 / worker 补采速率
-1. 缺口③ done_cb dynamic_filter（1-1.5 人日，碰 core 极轻）
-2. 缺口① 过渡态 starts-over+丢弃（0.5 人日，复用 ③ 的 drop）
-3. 缺口② turn 级版本 mask + TIS 开关（1-2 人日，主要在我方 projection）
-4. 缺口④ staleness 准入 + worker 版本缓存管道（1-2 人日）
-5. N1 泄漏兜底 + N2 监控（1 人日）
-—— 至此 ~7-9 人日，升级档可用 ——
-6. （可选）缺口① 真续跑：cherry-pick 680824dd + resume 分支 +
-   沙箱中间态恢复（2-5 人日，高不确定；仅当长轨迹占比实证必要）
+FA-0  冻结异步契约、版本语义和结果分类
+FA-1  continuous worker、队列、背压和退出语义
+FA-2  RH2 finalize、PromptGroupAssembler 与完整组准入
+FA-3  qualified ready queue、BatchAssembler 与 build_dp_schedule 预检
+FA-4  weight version、逐 token faithful DIS、staleness 与数值对拍
+FA-5  故障注入、监控和短租 GPU 端到端验收
 ```
 
-必须实验验证（静态不可判）：custom_generate ABORTED 行为、训练侧 TIS 现状、跨版本 token 比例（release-train 下尤甚）、worker 补采速率 vs drop 率、engine.get_weight_version 调用开销、N1 泄漏实际发生率。
+必须实验验证（静态不可判）：custom_generate 对 ABORTED 的实际行为、跨版本 token 比例、current policy version 传播延迟、faithful DIS 数值对拍、engine.get_weight_version 调用开销、N1 泄漏实际发生率，以及 ready queue 在残缺组与长尾并存时是否持续供给合法 train batch。
 
 ## 6. 对当前阶段的三条即时影响（不等升级触发）
 
