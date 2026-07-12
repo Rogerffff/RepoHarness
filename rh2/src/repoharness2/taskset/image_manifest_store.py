@@ -64,6 +64,7 @@ class Store:
     legacy_ids: set[str] = field(default_factory=set)   # v2 旧条目：blob 补验通道（零限额）
     reverify_ids: set[str] = field(default_factory=set)  # 缺 manifest 字节实证：manifest GET 复验通道（计限额）
     recovered_drop: int = 0  # 事务恢复时丢弃的未提交 evidence 行数
+    migrated_dropped_evidence: int = 0  # 显式迁移时丢弃的旧格式 evidence 行数（仅迁移路径允许丢弃）
 
 
 def validate_entry(e: dict, survivors: set[str], frozen_refs: set[str],
@@ -241,7 +242,16 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
     if not SHA256_RE.match(committed_sha):
         raise ValueError("evidence_file_sha256 不是合法 sha256")
     for fld in ("evidence_line_count", "count", "enriched_count", "reverify_count"):
-        _req(fld)
+        v = _req(fld)
+        # type(v) is int：显式排除 bool（bool 是 int 子类，True==1 会骗过 ==）
+        # 与 float（216.0==216 同理）——轮次 10 问题 3。
+        if type(v) is not int or v < 0:
+            raise ValueError(f"header.{fld}={v!r} 不是非负 int（严格类型校验）")
+    if not (hdr["enriched_count"] + hdr["reverify_count"]
+            <= hdr["evidence_line_count"] <= hdr["count"]):
+        raise ValueError(
+            f"header 计数链不一致：enriched {hdr['enriched_count']} + reverify "
+            f"{hdr['reverify_count']} <= evidence {hdr['evidence_line_count']} <= count {hdr['count']} 不成立")
 
     st.entries, raw_entry_count = _parse_entries(doc, survivors, frozen_refs, expected_ref)
     if not evidence_path.exists():
@@ -256,6 +266,11 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
             f"header.evidence_line_count={hdr['evidence_line_count']} 与已提交 evidence {len(raw_lines)} 不符")
 
     n_fully = _classify(st, raw_lines, legacy_tolerant=False)
+    unconsumed = set(raw_lines) - set(st.evidence)
+    if unconsumed:
+        raise ValueError(
+            f"evidence 存在无归属行（对应 entry 非 enriched 形状，{len(unconsumed)} 条，"
+            f"如 {sorted(unconsumed)[:3]}）——严格加载拒绝（writer 状态必须无损往返）")
     if hdr["enriched_count"] != n_fully:
         raise ValueError(f"header.enriched_count={hdr['enriched_count']} 与实际 fully-verified {n_fully} 不符")
     if hdr["reverify_count"] != len(st.reverify_ids):
@@ -265,11 +280,14 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
 
 def migrate_v3_manifest(manifest_path: Path, evidence_path: Path, survivors: set[str],
                         frozen_refs: set[str], refs_digest: str, expected_ref,
-                        expected_manifest_sha256: str) -> Store:
-    """一次性显式迁移：只接受 sha256 pin 命中的已知旧产物（轮次 9）。
+                        expected_manifest_sha256: str,
+                        expected_evidence_sha256: str) -> Store:
+    """一次性显式迁移：manifest 与 evidence **双 sha256 pin** 都命中才接受
+    （轮次 10 问题 2：只 pin manifest 时，无内嵌提交 SHA 的旧产物可被换 evidence）。
 
-    调用方拿到 Store 后必须立即 `flush_transaction` 重写为 v4——旧文件
-    不允许以旧 schema 继续存在。
+    旧 header 内嵌 evidence SHA 时与调用方 pin 互检。旧格式 evidence 的丢弃
+    只允许发生在本路径，数量记入 `Store.migrated_dropped_evidence`。调用方拿到
+    Store 后必须立即 `flush_transaction` 重写为 v4。
     """
     if not manifest_path.exists():
         raise ValueError("迁移目标 manifest 不存在")
@@ -278,12 +296,20 @@ def migrate_v3_manifest(manifest_path: Path, evidence_path: Path, survivors: set
         raise ValueError(
             f"旧产物 digest 不符（actual {actual[:16]}… != pin {expected_manifest_sha256[:16]}…）"
             "——只迁移已知产物，拒绝")
+    ev_actual = sha256_bytes(evidence_path.read_bytes()) if evidence_path.exists() else sha256_bytes(b"")
+    if ev_actual != expected_evidence_sha256:
+        raise ValueError(
+            f"旧 evidence digest 不符（actual {ev_actual[:16]}… != pin "
+            f"{expected_evidence_sha256[:16]}…）——只迁移已知产物，拒绝")
     doc = json.loads(manifest_path.read_text())
     hdr = doc.get("header", {})
     if hdr.get("schema_id") not in MIGRATABLE_SCHEMA_IDS:
         raise ValueError(f"schema {hdr.get('schema_id')!r} 不在可迁移集合 {sorted(MIGRATABLE_SCHEMA_IDS)}")
     if hdr.get("source_refs_file_sha256") not in (None, refs_digest):
         raise ValueError("旧 header 的 refs 文件 digest 与当前冻结清单不符")
+    embedded = hdr.get("evidence_file_sha256")
+    if embedded is not None and embedded != expected_evidence_sha256:
+        raise ValueError("旧 header 内嵌 evidence SHA 与调用方 pin 不符——互检失败，拒绝")
 
     st = Store()
     st.entries, _ = _parse_entries(doc, survivors, frozen_refs, expected_ref)
@@ -292,6 +318,7 @@ def migrate_v3_manifest(manifest_path: Path, evidence_path: Path, survivors: set
     if committed_sha is not None and evidence_path.exists():
         st.recovered_drop = _recover_transaction(st.entries, raw_lines, committed_sha, evidence_path)
     _classify(st, raw_lines, legacy_tolerant=True)
+    st.migrated_dropped_evidence = len(set(raw_lines) - set(st.evidence))
     return st
 
 
@@ -316,6 +343,13 @@ def _atomic_write(path: Path, payload: bytes) -> None:
 def flush_transaction(manifest_path: Path, evidence_path: Path, st: Store,
                       refs_digest: str) -> None:
     """事务序：evidence 先落盘 → digest/行数进 header → manifest 最后作为提交记录。"""
+    for iid, ev in st.evidence.items():
+        e = st.entries.get(iid)
+        if e is None or not entry_shape_enriched(e):
+            raise ValueError(f"{iid}: evidence 无归属（entry 缺失或非 enriched 形状）——拒绝写盘")
+        errs = cross_check(e, ev)
+        if errs:
+            raise ValueError("写盘前 entry↔evidence 交叉核对失败：\n  " + "\n  ".join(errs[:6]))
     ev_payload = _canonical_evidence_payload(st.evidence)
     _atomic_write(evidence_path, ev_payload)
     enriched = sum(1 for k in st.entries if is_enriched(st, k))

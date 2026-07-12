@@ -1,6 +1,6 @@
 # S2-1 T1 报告：raw 重抓归档 + 键控镜像清单
 
-日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 三次更新）：**T1a PASS；T1b 部分完成（digest 216/216，fully-verified 186/216，schema v4）——T2 可并行开工，T1 未验收**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
+日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 终态）：**T1a PASS；T1b 完成（216/216 fully-verified，完成断言全过，schema v4）——待复核后 T1 关闭**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
 
 ## T1a raw 重抓归档（`rh2/experiments/s2_1_ingestion/fetch_raw_lite.py`，可重跑）
 
@@ -144,3 +144,29 @@ sha256/evidence_line_count/count/enriched_count/reverify_count；路径字段与
 执行：真实产物以 pin=20ad8f33… 一次性迁移为 v4 并通过严格加载（185 条
 fully-verified 无损保留）；限额余量仍低，续富化 1 条后停车——当前
 **186/216**，剩 30 条待下一限额窗口。
+
+## T1 follow-up 5（2026-07-13，codex 轮次 10 → store v4.1 + T1b 收满）
+
+三个问题全部成立并修复：
+
+```text
+严重 1 无归属 evidence（digest-only entry 名下的 evidence 行）：v4 加载接受
+  但不消费，下次 flush 静默删除——writer 可写出无法无损往返的状态。
+  修复双防守：flush 写盘前逐条校验 evidence 归属（enriched-shape entry 存在
+  且 cross_check 通过，否则拒绝写盘）；严格加载要求
+  set(st.evidence) == set(raw_lines)，未消费行一律拒绝。旧格式 evidence 的
+  丢弃只允许发生在显式迁移路径且计数（migrated_dropped_evidence）。
+一般 2 迁移只 pin manifest：无内嵌提交 SHA 的旧产物可在 pin 后换 evidence。
+  修复：迁移要求 manifest+evidence 双 pin；旧 header 内嵌 SHA 与调用方 pin
+  互检；resolver CLI 的迁移入口保留（真实迁移已完成，入口带双重防护）。
+一般 3 计数字段类型：216.0/True/False 都能通过 ==。修复：type(v) is int
+  且 >= 0（显式排除 bool/float）+ 计数链一致性
+  enriched + reverify <= evidence_line_count <= count。
+回归测试 +10（无归属 evidence 加载/写盘双向、双 pin、header 互检、丢弃计数、
+类型参数化），store 单测 43 项全绿。
+```
+
+**T1b 收满**：本轮限额窗口重置，剩余 30 条完整富化全部完成——
+**216/216 fully-verified**（digest + manifest 字节哈希 + config blob 哈希 +
+平台 linux/amd64 + evidence 逐字段交叉核对），`finish_assertions` 全过，
+resolver 以 ALL PASS 退出。T1 全部交付物就位，待复核后关闭。

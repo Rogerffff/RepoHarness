@@ -925,3 +925,13 @@ Claude Code 取消 HTTP 请求
 - 其余确认正确：已提交行 SHA 回验 / 重复 id 拒绝 / header 计数（标记在场时）/ manifest 字节哈希；真实产物 216/185/零 legacy/零恢复丢弃、6 项 digest 匹配、19+797 通过、inspect-rh2-s1 PASS。
 - 小问题：s2_1_manifest 的"13 项无网络单测"过时。【已更新为 33 项】
 - 建议"最后 31 条拉取前先升版，避免收口后再迁移整份账本"——已照做（本轮先迁移后续富化）。
+
+
+---
+
+## 轮次 10（2026-07-13：v4 复审 → 降级绕过修复确认；1 严重 + 2 一般，均已修复；T1b 随后收满）
+
+- **严重：无归属 evidence 静默丢弃**——digest-only entry 名下的 evidence 行被 v4 加载接受但不消费，下次 flush 静默删除（codex 用公开 API 复现：561 bytes → load 返回 0 条 → 再 flush 0 bytes）。【v4.1：flush 写盘前逐条归属+交叉校验；严格加载要求 evidence 全量被消费；丢弃仅限显式迁移路径且计数】
+- **一般 2：迁移只 pin manifest**——旧产物无内嵌提交 SHA 时 evidence 可在 pin 后被替换（codex 复现 fetched_at 替换后迁移成功）。【v4.1：双 pin + 旧 header 内嵌 SHA 与 pin 互检】
+- **一般 3：计数字段无严格类型**——216.0/True/False 均被 == 接受。【v4.1：type(v) is int ∧ >=0 + 计数链 enriched+reverify <= evidence <= count】
+- 回归 +10，store 43 项全绿；本轮限额窗口重置，剩余 30 条收满——**T1b 216/216 fully-verified，ALL PASS**。

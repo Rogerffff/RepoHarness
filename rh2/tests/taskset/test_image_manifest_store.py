@@ -251,10 +251,11 @@ def test_legacy_v2_state_requires_explicit_migration(tmp_path: Path):
     # v4 起：直接加载必须拒绝（防降级伪装）
     with pytest.raises(ValueError, match="显式迁移"):
         load(mp, ep)
-    # 迁移通道：pin 命中 → 归 legacy 待升级，不算 enriched
+    # 迁移通道：双 pin 命中 → 归 legacy 待升级，不算 enriched
     pin = sha256_bytes(mp.read_bytes())
+    ev_pin = sha256_bytes(ep.read_bytes())
     st = migrate_v3_manifest(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST,
-                             expected_ref, pin)
+                             expected_ref, pin, ev_pin)
     assert st.legacy_ids == SURVIVORS
     assert all(not is_enriched(st, i) for i in SURVIVORS)
 
@@ -290,7 +291,7 @@ def test_header_counts_tampered_rejected(tmp_path: Path, field: str):
     doc = json.loads(mp.read_text())
     doc["header"][field] = 999
     mp.write_text(json.dumps(doc))
-    with pytest.raises(ValueError, match=field.replace("_", ".")):
+    with pytest.raises(ValueError, match=field.replace("_", ".") + "|计数链不一致"):
         load(mp, ep)
 
 
@@ -381,16 +382,119 @@ def _write_legacy_v3_state(tmp_path: Path) -> tuple[Path, Path]:
 
 def test_migration_requires_correct_pin(tmp_path: Path):
     mp, ep = _write_legacy_v3_state(tmp_path)
+    ev_pin = sha256_bytes(ep.read_bytes())
     with pytest.raises(ValueError, match="只迁移已知产物"):
         migrate_v3_manifest(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST,
-                            expected_ref, "0" * 64)
+                            expected_ref, "0" * 64, ev_pin)
 
 
 def test_migration_with_pin_then_v4_roundtrip(tmp_path: Path):
     mp, ep = _write_legacy_v3_state(tmp_path)
     pin = sha256_bytes(mp.read_bytes())
+    ev_pin = sha256_bytes(ep.read_bytes())
     st = migrate_v3_manifest(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST,
-                             expected_ref, pin)
+                             expected_ref, pin, ev_pin)
     flush_transaction(mp, ep, st, REFS_DIGEST)
     st2 = load(mp, ep)  # 迁移后必须能被严格 v4 加载
     assert finish_assertions(st2, SURVIVORS) == []
+
+
+# ---- 轮次 10 严重 1：无归属 evidence——加载拒绝 + 写盘守卫 --------------------
+
+def _digest_only_entry(iid: str) -> dict:
+    e = make_entry(iid)
+    for f in ("config_digest", "platform", "platform_source", "registry_evidence_ref"):
+        e.pop(f, None)
+    return e
+
+
+def test_unowned_evidence_rejected_on_load(tmp_path: Path):
+    # digest-only entry 名下出现 evidence 行：v4.1 严格加载必须拒绝（不许静默丢弃）
+    mp, ep = paths(tmp_path)
+    a, b = sorted(SURVIVORS)
+    st = Store()
+    st.entries[a] = make_entry(a)
+    st.evidence[a] = make_evidence(a)
+    flush_transaction(mp, ep, st, REFS_DIGEST)
+    doc = json.loads(mp.read_text())
+    doc["entries"].append(_digest_only_entry(b))
+    doc["header"]["count"] = 2
+    payload = ep.read_text() + json.dumps(make_evidence(b), ensure_ascii=False, sort_keys=True) + "\n"
+    ep.write_text(payload)
+    doc["header"]["evidence_file_sha256"] = sha256_bytes(payload.encode())
+    doc["header"]["evidence_line_count"] = 2
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="无归属"):
+        load(mp, ep)
+
+
+def test_flush_guard_rejects_unowned_evidence(tmp_path: Path):
+    mp, ep = paths(tmp_path)
+    a, b = sorted(SURVIVORS)
+    st = Store()
+    st.entries[a] = make_entry(a)
+    st.evidence[a] = make_evidence(a)
+    st.entries[b] = _digest_only_entry(b)
+    st.evidence[b] = make_evidence(b)  # 无归属：entry 非 enriched 形状
+    with pytest.raises(ValueError, match="无归属"):
+        flush_transaction(mp, ep, st, REFS_DIGEST)
+
+
+# ---- 轮次 10 一般 2：迁移双 pin -----------------------------------------------
+
+def test_migration_requires_evidence_pin(tmp_path: Path):
+    mp, ep = _write_legacy_v3_state(tmp_path)
+    pin = sha256_bytes(mp.read_bytes())
+    with pytest.raises(ValueError, match="旧 evidence digest 不符"):
+        migrate_v3_manifest(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST,
+                            expected_ref, pin, "0" * 64)
+
+
+def test_migration_header_embedded_sha_cross_checked(tmp_path: Path):
+    mp, ep = _write_legacy_v3_state(tmp_path)
+    # 篡改 evidence（fetched_at）后按新文件算 pin——header 内嵌 SHA 与 pin 互检必须拦截
+    lines = [json.loads(x) for x in ep.read_text().splitlines()]
+    lines[0]["fetched_at"] = "1999-01-01T00:00:00+00:00"
+    ep.write_text("".join(json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n" for x in lines))
+    pin = sha256_bytes(mp.read_bytes())
+    ev_pin = sha256_bytes(ep.read_bytes())
+    with pytest.raises(ValueError, match="互检失败"):
+        migrate_v3_manifest(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST,
+                            expected_ref, pin, ev_pin)
+
+
+def test_migration_records_dropped_legacy_evidence(tmp_path: Path):
+    # 旧格式 evidence（非 enriched 形状 entry 名下）在迁移时被丢弃且计数
+    mp, ep = paths(tmp_path)
+    a, b = sorted(SURVIVORS)
+    entries = [make_entry(a), _digest_only_entry(b)]
+    payload = (json.dumps(make_evidence(a), ensure_ascii=False, sort_keys=True) + "\n"
+               + json.dumps({"instance_id": b, "old_format": True},
+                            ensure_ascii=False, sort_keys=True) + "\n")
+    ep.parent.mkdir(parents=True, exist_ok=True)
+    ep.write_text(payload)
+    mp.write_text(json.dumps({
+        "header": {"schema_id": "rh2.s2_1.image_manifest_keyed.v3",
+                   "source_refs_file_sha256": REFS_DIGEST},
+        "entries": entries,
+    }))
+    st = migrate_v3_manifest(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST,
+                             expected_ref,
+                             sha256_bytes(mp.read_bytes()),
+                             sha256_bytes(ep.read_bytes()))
+    assert st.migrated_dropped_evidence == 1
+
+
+# ---- 轮次 10 一般 3：计数字段严格类型 -----------------------------------------
+
+@pytest.mark.parametrize("field,value", [
+    ("count", 2.0), ("evidence_line_count", True),
+    ("enriched_count", 2.0), ("reverify_count", False), ("count", -1),
+])
+def test_header_count_type_strictness(tmp_path: Path, field: str, value):
+    mp, ep, _ = write_complete_state(tmp_path)
+    doc = json.loads(mp.read_text())
+    doc["header"][field] = value
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="非负 int|不符"):
+        load(mp, ep)
