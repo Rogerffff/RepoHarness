@@ -35,6 +35,10 @@ from typing import Any
 
 import aiohttp
 
+from repoharness2.adapters.slime.async_worker import (
+    ModelCallProxy,
+    SessionPoisonRegistry,
+)
 from repoharness2.adapters.slime.generate import GenerationCaptureHook
 
 
@@ -54,10 +58,39 @@ class CaptureRegistry:
         self.pending: dict[str, PendingTurn] = {}
         self.weight_versions: dict[str, list[str]] = {}
         self.stats = {"staged": 0, "committed": 0, "dropped_uncommitted": 0}
+        # FA-1 follow-up（codex 轮次 7 P0-4）：proxy 接入真实 HTTP 链的挂点。
+        # glue 启动时装配（协调器缺席期用 StaticActiveCoordinator——任何中断
+        # 不可归因 → poison + 缺员，保守正确）；未装配时 wire 走原直连路径。
+        self.model_call_proxy: ModelCallProxy | None = None
+        self.poison = SessionPoisonRegistry()
+        self.session_deadlines: dict[str, float] = {}
+        self.default_session_budget_seconds: float | None = None
+        self._turn_seq: dict[str, int] = {}
 
     def register(self, sid: str, hook: GenerationCaptureHook) -> None:
         self.hooks[sid] = hook
         self.weight_versions[sid] = []
+
+    def session_deadline(self, sid: str | None) -> float | None:
+        """会话 deadline（episode 预算传播）。首次调用即按默认预算起表——
+        第一次模型调用 ≈ harness 启动后数秒，余量记入 notes。"""
+
+        if sid is None:
+            return None
+        if sid not in self.session_deadlines:
+            if self.default_session_budget_seconds is None:
+                return None
+            import time as _time
+
+            self.session_deadlines[sid] = (
+                _time.monotonic() + self.default_session_budget_seconds
+            )
+        return self.session_deadlines[sid]
+
+    def next_turn_seq(self, sid: str | None) -> int:
+        key = sid or "default"
+        self._turn_seq[key] = self._turn_seq.get(key, 0) + 1
+        return self._turn_seq[key]
 
     def unregister(self, sid: str) -> None:
         self.hooks.pop(sid, None)
@@ -148,23 +181,47 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
             {"X-SMG-Routing-Key": session_id} if session_id and session_id != "default" else None
         )
         timeout = aiohttp.ClientTimeout(total=None, sock_read=900)
-        try:
-            async with aiohttp.ClientSession(timeout=timeout) as sess, sess.post(
-                f"{adapter.sglang_url}/generate", json=payload, headers=headers
-            ) as r:
-                if r.status >= 400:
-                    text = await r.text()
-                    raise RuntimeError(f"sglang upstream {r.status}: {text[:400]}")
-                data = await r.json(content_type=None)
-        except (asyncio.CancelledError, aiohttp.ClientError, asyncio.TimeoutError):
-            try:  # stock 同款：eager abort，释放引擎槽位
-                async with aiohttp.ClientSession(
-                    timeout=aiohttp.ClientTimeout(total=5)
-                ) as s2:
-                    await s2.post(f"{adapter.sglang_url}/abort_request", json={"rid": payload["rid"]})
-            except Exception:
-                pass
-            raise
+
+        async def _send_once(_attempt_number: int) -> dict:
+            try:
+                async with aiohttp.ClientSession(timeout=timeout) as sess, sess.post(
+                    f"{adapter.sglang_url}/generate", json=payload, headers=headers
+                ) as r:
+                    if r.status >= 400:
+                        text = await r.text()
+                        raise RuntimeError(f"sglang upstream {r.status}: {text[:400]}")
+                    return await r.json(content_type=None)
+            except (asyncio.CancelledError, aiohttp.ClientError, asyncio.TimeoutError):
+                try:  # stock 同款：eager abort，释放引擎槽位
+                    async with aiohttp.ClientSession(
+                        timeout=aiohttp.ClientTimeout(total=5)
+                    ) as s2:
+                        await s2.post(
+                            f"{adapter.sglang_url}/abort_request", json={"rid": payload["rid"]}
+                        )
+                except Exception:
+                    pass
+                raise
+
+        proxy = registry.model_call_proxy
+        proxy_result = None
+        if proxy is None or session_id is None or session_id not in registry.hooks:
+            # 未装配 proxy / 非 rh2 会话（探针）：原直连路径逐字保留
+            data = await _send_once(1)
+        else:
+            # D-FA-3 生产接线（codex 轮次 7 P0-4）：poison 快速拒绝 + deadline
+            # 传播 + 发前 ACTIVE 等待 + 更新窗口 abort 内部重生成，全在 proxy 内
+            registry.poison.check(session_id)
+            turn_seq = registry.next_turn_seq(session_id)
+            proxy_result = await proxy.call(
+                session_id,
+                f"t{turn_seq}",
+                _send_once,
+                session_id=session_id,
+                poison_registry=registry.poison,
+                deadline_monotonic=registry.session_deadline(session_id),
+            )
+            data = dict(proxy_result.response)
 
         meta = data.get("meta_info") or {}
         pairs = meta.get("output_token_logprobs") or []
@@ -191,6 +248,10 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 ),
             ),
         )
+        if proxy_result is not None:
+            # 两阶段第二步：暂存（本进程持久化点）成功才 finalize delivered；
+            # stage 之前任何异常路径都会留下 unfinalized draft（对账可见）
+            proxy_result.finalize_delivered(f"staged:{session_id}:t{proxy_result.draft.attempt_number}")
         return slime_common.TurnRecord(
             prompt_ids=list(prompt_ids),
             output_ids=output_ids,

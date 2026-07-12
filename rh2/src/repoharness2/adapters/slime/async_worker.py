@@ -32,6 +32,7 @@ import hashlib
 import json
 import random
 import time
+from datetime import datetime, timezone
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
@@ -54,6 +55,9 @@ __all__ = [
     "ResourceLimits",
     "RetryAttemptRecord",
     "RetrySpec",
+    "SessionPoisonRegistry",
+    "SessionPoisonedError",
+    "StaticActiveCoordinator",
     "UnattributableModelCallError",
     "WorkerHalted",
     "retry_local_operation",
@@ -267,10 +271,72 @@ async def retry_local_operation(
 # ---------------------------------------------------------------------------
 
 
+class SessionPoisonedError(RuntimeError):
+    """session 已中毒：后续同 session 的模型调用一律拒绝（codex 轮次 7——
+    CC 会对 5xx 指数退避重试且 20s 内不放弃，实测 2.1.205；仅靠 turn 去重
+    不够，execution 判缺员后必须整 session 拒绝）。"""
+
+    def __init__(self, session_id: str, reason: str) -> None:
+        super().__init__(f"session_poisoned: {session_id}: {reason}")
+        self.session_id = session_id
+        self.reason = reason
+
+
+class SessionPoisonRegistry:
+    """session 中毒登记：不可归因故障/预算耗尽后，同 session 的一切后续
+    请求快速拒绝，orchestrator 据此终止 execution（缺员分支）。"""
+
+    def __init__(self) -> None:
+        self._poisoned: dict[str, str] = {}
+
+    def poison(self, session_id: str, reason: str) -> None:
+        self._poisoned.setdefault(session_id, reason)
+
+    def is_poisoned(self, session_id: str) -> bool:
+        return session_id in self._poisoned
+
+    def reason(self, session_id: str) -> str | None:
+        return self._poisoned.get(session_id)
+
+    def check(self, session_id: str) -> None:
+        if session_id in self._poisoned:
+            raise SessionPoisonedError(session_id, self._poisoned[session_id])
+
+
 class CoordinatorView(Protocol):
     """TrainingRuntimeCoordinator 协议的消费端形状（FA-0 3b）。"""
 
     def current_window(self) -> TrainingRuntimeWindow: ...
+
+
+class StaticActiveCoordinator:
+    """真实协调器（trainer 侧，FA-4 接线）就位前的保守替身：永远 ACTIVE。
+
+    语义后果（刻意保守）：没有窗口事实 → **任何中断都不可归因** → proxy
+    不做内部重生成，一律 poison + 缺员。这正是"协调器缺席时的正确行为"
+    ——宁可缺员也不猜测 abort 归因。版本由注入的 provider 提供
+    （glue 的权威 engine 版本）。"""
+
+    def __init__(self, version_provider: Callable[[], str]) -> None:
+        self._provider = version_provider
+
+    def current_window(self) -> TrainingRuntimeWindow:
+        version = str(self._provider())
+        try:
+            old = str(int(version, 10) - 1)
+        except ValueError:
+            old = f"{version}_prev"
+        now = datetime.now(timezone.utc)
+        return TrainingRuntimeWindow(
+            update_epoch=0,
+            phase="ACTIVE",
+            old_version=old,
+            target_version=version,
+            active_version=version,
+            window_started_at=now,
+            window_completed_at=now,
+            fencing_token="static_active",
+        )
 
 
 class UnattributableModelCallError(RuntimeError):
@@ -317,6 +383,25 @@ class ProxyCallResult:
         if self._finalized is None:
             return self.prior_attempts
         return (*self.prior_attempts, self._finalized)
+
+    def abandon_delivered(self, reason: str) -> ModelCallAttempt:
+        """capture 未能持久化（flush 失败/客户端断连）时显式关闭 draft
+        （codex 轮次 7：unfinalized 不能只有"可见"，还要有出口）。"""
+
+        if self._finalized is not None:
+            raise ValueError(f"{self.draft.attempt_id} 已 finalize，不能再 abandon。")
+        ref = self._proxy._store_artifact(f"{self.draft.attempt_id}_abandon", reason)
+        attempt = ModelCallAttempt(
+            logical_turn_id=self.draft.scoped_turn_id,
+            model_call_attempt_id=f"{self.draft.attempt_id}_abandoned",
+            attempt_number=self.draft.attempt_number,
+            delivery_status="non_delivered_failed",
+            evidence_refs=[ref],
+        )
+        self._finalized = attempt
+        self._proxy.attempts_ledger.append(attempt)
+        self._proxy._pending_drafts.discard(self.draft.attempt_id)
+        return attempt
 
     def finalize_delivered(self, capture_record_ref: str) -> ModelCallAttempt:
         """capture 持久化成功后落账 delivered attempt（两阶段第二步）。"""
@@ -427,49 +512,155 @@ class ModelCallProxy:
         return frozenset(self._pending_drafts)
 
     def _store_artifact(self, attempt_id: str, payload: Any) -> str:
+        """留痕并返回 evidence 引用。
+
+        悬空修复（codex 轮次 7）：artifact_sink 成功时**直接返回持久外部
+        引用**（内存条目只是缓存，可淘汰）；无 sink 时内存条目淘汰后留
+        digest tombstone——`audit:` 引用永远可解析（tombstone 只含 sha256，
+        体积 ~100B；长训练必须配 artifact_sink，见 docstring）。"""
+
         record = _artifact_record(payload)
+        external: str | None = None
         if self._artifact_sink is not None:
             try:
                 external = self._artifact_sink(attempt_id, payload)
                 record["external_ref"] = external
             except Exception as exc:  # noqa: BLE001 —— sink 失败不丢 digest 留痕
                 record["external_ref_error"] = f"{type(exc).__name__}: {exc}"
-        while len(self.audit_artifacts) >= self._max_artifacts:
-            oldest = next(iter(self.audit_artifacts))
-            del self.audit_artifacts[oldest]
+        def _live_count() -> int:
+            return sum(1 for v in self.audit_artifacts.values() if not v.get("tombstone"))
+
+        while _live_count() >= self._max_artifacts:
+            oldest_key = next(
+                (k for k, v in self.audit_artifacts.items() if not v.get("tombstone")), None
+            )
+            if oldest_key is None:  # pragma: no cover - _live_count 保证存在
+                break
+            evicted = self.audit_artifacts.pop(oldest_key)
+            self.audit_artifacts[oldest_key] = {
+                "tombstone": True,
+                "sha256": evicted["sha256"],
+                "external_ref": evicted.get("external_ref"),
+            }
             self.audit_evictions += 1
         self.audit_artifacts[attempt_id] = record
-        return f"audit:{attempt_id}"
+        return external if external is not None else f"audit:{attempt_id}"
 
-    async def _send(self, send_fn: Callable[[int], Awaitable[Mapping[str, Any]]], n: int):
+    def _effective_timeout(self, deadline_monotonic: float | None) -> float | None:
+        remaining = self._remaining(deadline_monotonic)
+        if remaining is None:
+            return self._attempt_timeout
+        if self._attempt_timeout is None:
+            return max(remaining, 0.0)
+        return max(min(self._attempt_timeout, remaining), 0.0)
+
+    async def _send(
+        self,
+        send_fn: Callable[[int], Awaitable[Mapping[str, Any]]],
+        n: int,
+        deadline_monotonic: float | None = None,
+    ):
+        timeout = self._effective_timeout(deadline_monotonic)
         if self._limits is None:
-            if self._attempt_timeout is None:
+            if timeout is None:
                 return await send_fn(n)
-            return await asyncio.wait_for(send_fn(n), timeout=self._attempt_timeout)
+            return await asyncio.wait_for(send_fn(n), timeout=timeout)
         async with self._limits.acquire("model_call"):
-            if self._attempt_timeout is None:
+            if timeout is None:
                 return await send_fn(n)
-            return await asyncio.wait_for(send_fn(n), timeout=self._attempt_timeout)
+            return await asyncio.wait_for(send_fn(n), timeout=timeout)
+
+    async def _wait_active_before_send(
+        self,
+        attempts: list[ModelCallAttempt],
+        scoped: str,
+        attempt_number: int,
+        deadline_monotonic: float | None,
+    ) -> None:
+        """发前 ACTIVE 等待：窗口更新中不发注定被 abort 的请求（codex 轮次 7）。"""
+
+        remaining = self._remaining(deadline_monotonic)
+        budget = self._wait_timeout if remaining is None else min(self._wait_timeout, remaining)
+        deadline = self._clock() + max(budget, 0.0)
+        while True:
+            window = self._coordinator.current_window()
+            if window.phase == "ACTIVE":
+                return
+            if self._clock() >= deadline:
+                self._record_failed(
+                    attempts, scoped, f"{scoped}_presend_timeout", attempt_number
+                )
+                raise UnattributableModelCallError(
+                    "engine_not_active_before_send",
+                    f"{scoped}: 发前等待 ACTIVE 超时（budget={budget:.1f}s）。",
+                )
+            await self._sleeper(self._wait_poll)
+
+    def _poison(self, session_id: str | None, registry: "SessionPoisonRegistry | None", reason: str) -> None:
+        if registry is not None and session_id:
+            registry.poison(session_id, reason)
+
+    def _remaining(self, deadline_monotonic: float | None) -> float | None:
+        if deadline_monotonic is None:
+            return None
+        return deadline_monotonic - self._clock()
 
     async def call(
         self,
         execution_scope: str,
         logical_turn_id: str,
         send_fn: Callable[[int], Awaitable[Mapping[str, Any]]],
+        *,
+        session_id: str | None = None,
+        poison_registry: "SessionPoisonRegistry | None" = None,
+        deadline_monotonic: float | None = None,
+        min_attempt_budget_seconds: float = 5.0,
     ) -> ProxyCallResult:
+        """一次逻辑轮（codex 轮次 7 扩展：poison / episode deadline / 发前等待）。
+
+        - 发前 poison 检查：中毒 session 一律 SessionPoisonedError 快速拒绝
+          （CC 的 5xx 指数退避重试由此截断）；
+        - 发前 ACTIVE 等待：明知窗口在更新（phase != ACTIVE）不发大概率被
+          abort 的请求，等回 ACTIVE 再发（受 deadline 约束）；
+        - deadline 传播：attempt 超时与等待超时都被 `episode_deadline - now`
+          截断；剩余预算不足一次重生成 → poison + 缺员，不再尝试。
+        """
+
         if not execution_scope:
             raise ValueError("execution_scope 必填（attempt 全局身份的组成部分）。")
+        sid = session_id or execution_scope
         scoped = f"{execution_scope}/{logical_turn_id}"
         attempts: list[ModelCallAttempt] = []
         attempt_number = 0
         while True:
             attempt_number += 1
             attempt_id = f"{scoped}_a{attempt_number}"
+            if poison_registry is not None:
+                poison_registry.check(sid)
+            remaining = self._remaining(deadline_monotonic)
+            if remaining is not None and remaining < min_attempt_budget_seconds:
+                self._poison(sid, poison_registry, "episode_deadline_exhausted")
+                self._record_failed(attempts, scoped, attempt_id, attempt_number)
+                raise UnattributableModelCallError(
+                    "episode_deadline_exhausted",
+                    f"{attempt_id}: 剩余预算 {remaining:.1f}s < {min_attempt_budget_seconds}s"
+                    "——不再尝试，session 中毒，execution 缺员。",
+                )
+            await self._wait_active_before_send(
+                attempts, scoped, attempt_number, deadline_monotonic
+            )
             window_before = self._coordinator.current_window()
             failure: BaseException | None = None
             response: Mapping[str, Any] | None = None
             try:
-                response = await self._send(send_fn, attempt_number)
+                response = await self._send(send_fn, attempt_number, deadline_monotonic)
+            except asyncio.CancelledError:
+                # CC/客户端取消必须原样传播（aiohttp handler_cancellation 链），
+                # 但先落账 + poison——取消后 CC 的重试不得复活该 session
+                ref = self._store_artifact(attempt_id, "client_cancelled")
+                self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
+                self._poison(sid, poison_registry, "client_cancelled")
+                raise
             except Exception as exc:  # noqa: BLE001 —— 归因在下方守卫做
                 failure = exc
 
@@ -484,6 +675,7 @@ class ModelCallProxy:
                     self._record_failed(
                         attempts, scoped, attempt_id, attempt_number, evidence=[ref]
                     )
+                    self._poison(sid, poison_registry, "delivered_response_missing_weight_version")
                     raise UnattributableModelCallError(
                         "delivered_response_missing_weight_version",
                         f"{attempt_id}: 响应缺 meta_info.weight_version，provenance 不完整。",
@@ -512,6 +704,7 @@ class ModelCallProxy:
             ref = self._store_artifact(attempt_id, payload)
             if not overlapped:
                 self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
+                self._poison(sid, poison_registry, "no_overlapping_update_window")
                 raise UnattributableModelCallError(
                     "no_overlapping_update_window",
                     f"{attempt_id}: 中断与任何更新窗口不重叠——按缺员处置，不做透明重试。",
@@ -531,6 +724,7 @@ class ModelCallProxy:
                 self._record_failed(
                     attempts, scoped, f"{attempt_id}_cap", attempt_number, evidence=[ref]
                 )
+                self._poison(sid, poison_registry, "max_regenerations_exceeded")
                 raise UnattributableModelCallError(
                     "max_regenerations_exceeded",
                     f"{scoped}: 连续 {attempt_number} 次被 abort——超过重生成上限。",

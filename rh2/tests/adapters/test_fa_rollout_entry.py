@@ -16,6 +16,9 @@ from types import SimpleNamespace
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
+_SLIME_ROOT = Path(__file__).resolve().parents[3] / "reference" / "slime"
+if _SLIME_ROOT.exists():
+    sys.path.insert(0, str(_SLIME_ROOT))
 
 from fa_bringup.rollout_entry import (  # noqa: E402
     FaEntryError,
@@ -155,17 +158,132 @@ async def test_entry_eval_fails_fast_scenario_21():
 
 
 async def test_entry_requires_orchestrator_and_sampling_params():
-    """配置缺失 fail-fast：编排本体/采样配方没挂上不许起跑。"""
+    """配置缺失 fail-fast（_build_service 直测）+ 入口会先尝试 glue 引导。"""
+
+    from fa_bringup import rollout_entry
 
     class FakeBuffer:
         def get_samples(self, n):
             return []
 
     with pytest.raises(FaEntryError, match="orchestrator_not_attached"):
-        await generate_rollout_async(SimpleNamespace(), 0, FakeBuffer())
+        rollout_entry._build_service(SimpleNamespace(), FakeBuffer())
     args = SimpleNamespace(rh2_orchestrator=object())
     with pytest.raises(FaEntryError, match="sampling_params_not_attached"):
-        await generate_rollout_async(args, 0, FakeBuffer())
+        rollout_entry._build_service(args, FakeBuffer())
+
+    # 入口层：缺挂载 → 先走 glue 引导（打桩验证确实被调用）
+    calls: list[str] = []
+
+    async def fake_bootstrap(a, b):
+        calls.append("bootstrap")
+        raise FaEntryError("glue_bootstrap_unavailable", "stub")
+
+    original = rollout_entry._bootstrap_via_glue
+    rollout_entry._bootstrap_via_glue = fake_bootstrap
+    try:
+        with pytest.raises(FaEntryError, match="glue_bootstrap_unavailable"):
+            await generate_rollout_async(SimpleNamespace(), 0, FakeBuffer())
+    finally:
+        rollout_entry._bootstrap_via_glue = original
+    assert calls == ["bootstrap"]
+
+
+def test_sync_entry_returns_samples_not_coroutine():
+    """codex 轮次 7 P0-1：注册路径必须是同步函数——返回值是样本列表，
+    不是 coroutine（slime call_rollout_fn 不 await）。"""
+
+    import fa_bringup.rollout_entry as entry
+
+    class FakeService:
+        async def collect_batch(self):
+            return [["sample"]]
+
+    original = entry._SERVICE
+    entry._SERVICE = FakeService()
+    try:
+        result = entry.generate_rollout(SimpleNamespace(), 0, data_buffer=None)
+    finally:
+        entry._SERVICE = original
+    assert result == [["sample"]]  # 已解包，不是 coroutine
+
+
+def test_sync_entry_against_real_slime_call_rollout_fn():
+    """真 slime 契约测试：用 slime 自己的 call_rollout_fn 调我们的同步入口，
+    产物必须是 RolloutFnTrainOutput 且 samples 已解包（codex 探针的回归）。"""
+
+    slime_base = pytest.importorskip(
+        "slime.rollout.base_types", reason="需要 reference/slime + torch dev 依赖"
+    )
+    import fa_bringup.rollout_entry as entry
+
+    class FakeService:
+        async def collect_batch(self):
+            return [["s1"], ["s2"]]
+
+    original = entry._SERVICE
+    entry._SERVICE = FakeService()
+    try:
+        output = slime_base.call_rollout_fn(
+            entry.generate_rollout, SimpleNamespace(), 0, None, evaluation=False
+        )
+    finally:
+        entry._SERVICE = original
+    assert isinstance(output, slime_base.RolloutFnTrainOutput)
+    import inspect
+
+    assert not inspect.iscoroutine(output.samples)
+    assert output.samples == [["s1"], ["s2"]]
+
+
+async def test_persistent_service_no_prefetch_loss():
+    """codex 轮次 7 P0-3 探针回归：batch_size=1、concurrency=8、5 个组——
+    第一批返回 1 组，其余预取结果**不丢**，后续批次全部取回。"""
+
+    groups = [[FakeSample(f"g{i}_m0")] for i in range(5)]
+
+    async def execute(member: FakeSample):
+        return [FakeSample(f"{member.name}_leaf")]
+
+    service = FaRolloutService(
+        group_source=_group_source_from(groups),
+        execute_member=execute,
+        group_size=1,
+        rollout_batch_size=1,
+        concurrency=8,
+        drain_timeout_seconds=1.0,
+        starvation_timeout_seconds=5.0,
+    )
+    collected: list[list] = []
+    for _ in range(5):
+        batch = await service.collect_batch()
+        collected.extend(batch)
+    await service.shutdown()
+    names = sorted(leaf.name for group in collected for leaf in group)
+    assert names == sorted(f"g{i}_m0_leaf" for i in range(5))  # 零丢失
+    assert service.failure_records == []
+
+
+async def test_collector_drops_do_not_leak_buckets():
+    """codex 轮次 7 一般项：失败组不滞留 _buckets（1000 组探针的回归）。"""
+
+    from fa_bringup.rollout_entry import _InterimGroupCollector
+    from repoharness2.adapters.slime.async_worker import ExecutionTaskSpec
+
+    collector = _InterimGroupCollector(2)
+    for i in range(100):
+        spec = ExecutionTaskSpec(
+            rollout_execution_id=f"g{i}_m0", prompt_group_id=f"g{i}", member_slot=0
+        )
+        collector.add_failure(spec, "boom")
+    assert collector.open_group_count == 0  # 弃置即删桶
+    assert len(collector.dropped_groups) == 100
+    # 迟到成员只计数，不复活组
+    late = ExecutionTaskSpec(
+        rollout_execution_id="g0_m1", prompt_group_id="g0", member_slot=1
+    )
+    assert collector.add_delivery(late, [FakeSample("late")]) is None
+    assert collector.late_deliveries_ignored == 1
 
 
 def test_parse_bool_env_flag_strict():

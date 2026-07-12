@@ -304,3 +304,51 @@ BoundedDeliveryQueue / ResourceLimits / ModelCallProxy / 重试白名单）+
   raise 同位）；S1 路径支持 eval、FA 路径拒绝 eval 是设计差异，两条路径
   各有测试钉死。
 - 测试 749 → 768（worker/proxy 重写 29 条 + 薄壳 7 条）。
+
+## FA-1 follow-up 2（2026-07-13，codex 轮次 7 全项采纳；原文存档
+## `../s2/codex_reviews.md` 轮次 7——五个 P0 全部属实）
+
+- **P0-1（同步接口不兼容）**：slime `call_rollout_fn` 不 await——注册路径
+  改为同步 `generate_rollout`（内部用 slime `run()` 驱动，本地回退
+  asyncio.run）。**真 slime 契约测试**落地（torch dev 依赖使
+  `slime.rollout.base_types` 可本地 import）：用 slime 自己的
+  `call_rollout_fn` 调我们的入口，断言产物是 `RolloutFnTrainOutput` 且
+  samples 不是 coroutine——codex 探针的直接回归。
+- **P0-2（启动挂载缺失）**：glue 新增 `ensure_fa_started(args)`（与
+  custom_generate 首调用共用 BringupService 单例）+
+  `build_fa_sampling_params(args)`（从 slime args 字段构造，缺字段
+  fail-closed——仓库此前没有任何代码写 rh2_sampling_params）；FA 入口
+  缺挂载时先经 glue 引导再 fail-fast。
+- **P0-3（预取丢失）**：FaRolloutService 持久化——worker/queue/collector
+  跨 collect_batch 保温（真 fully-async：训练时后台继续生成），多出的
+  完整组留在队列/结余表供下批消费；显式 `shutdown()` 走 drain 协议。
+  codex 探针（batch=1/concurrency=8 丢 15 个执行）转为零丢失回归测试
+  （5 组 5 批全取回）。
+- **P0-4（proxy 未接线）**：capture_wire 的 `rh2_call_sglang_generate`
+  现在经 proxy 调用（send 闭包抽出，原直连路径仅在 proxy 未装配/非 rh2
+  会话时保留）；glue 启动时装配 proxy + StaticActiveCoordinator（真协调
+  器 FA-4 接线前的保守替身：**任何中断不可归因 → poison + 缺员**——
+  没有窗口事实就不猜归因）。新增：`SessionPoisonRegistry`（不可归因/
+  预算耗尽/客户端取消 → 整 session 中毒，后续 CC 退避重试快速拒绝——
+  codex 实测 CC 2.1.205 对 5xx 指数退避且 20s 不放弃，仅 turn 去重不够）；
+  **episode deadline 传播**（attempt 超时与等待超时被剩余预算截断，
+  不足一次重生成即 poison+缺员）；**发前 ACTIVE 等待**（明知更新中不发
+  注定被 abort 的请求）；CancelledError 原样传播但先落账+poison（aiohttp
+  handler_cancellation 链保持）；两阶段 finalize 接到 stage 点（暂存即
+  本进程持久化点）。
+- **P0-5（provider 语义）**：`_latest_engine_version` 权威化——先取引擎
+  `/get_weight_version`（trainer 更新后即便无新成功响应也是新版本）；
+  registry 最大值降为**交叉检查**（大于权威值 = 版本管道错乱 fail-closed）；
+  HTTP 失败时正式链 fail-closed、bring-up 如实降级为"相对最近观测"。
+- **一般项**：audit 淘汰改 live-count + digest tombstone（`audit:` 引用
+  永远可解析；sink 成功直接返回持久外部引用）；`abandon_delivered(reason)`
+  给 unfinalized draft 显式出口；interim collector 弃置即删桶 + 迟到成员
+  计数（100 组泄漏回归）；dead-consumer 测试改真实分派后 stop（原
+  dispatched=0 空验证）；`_build_service` 构造并传入 ResourceLimits。
+- **CC 重试实测留档**（codex 本机 2.1.205，fake endpoint）：连接保持时
+  至少等 12s 不重试；对 500 指数退避（0.58/1.17/2.08/4.80/8.20s，20s 内
+  6 次不放弃）。FA-5 用容器内同一 tarball 复测；本地 fake-endpoint 故障
+  注入战役（30/60/120/300s 延迟、429+Retry-After、半 SSE 断连、重试 body
+  一致性等）列为 FA-5 前的独立本地任务。
+- 测试 768 → 797。仍留 FA-2/FA-5 的：assembler 替换 interim 聚合器、
+  真机验证 slime 调用入口与 CC 真实二进制行为。

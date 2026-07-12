@@ -686,3 +686,221 @@ inspect-rh2-s1：PASS
 - **应补测试**：七类无网络场景。【已补：tests/taskset/test_image_manifest_store.py，13 项】
 - **一般**：报告顶行"全 PASS"与 OPEN 矛盾【已改"T1a PASS；T1b 184/216，T1 未验收"】；config blob 内容哈希未验【v3 下载原始字节重算 == config_digest 并入 evidence】；evidence 加 schema/version + evidence_id【已加】。
 - **codex 独立确认**：三个旧修复正确、183 条 entry/evidence 零 mismatch、草稿账本 5 项 digest 正确、768 passed、inspect-rh2-s1 PASS。
+
+
+---
+
+## 轮次 7（2026-07-13：FA-1 第二轮审查（生产接线与 CC HTTP 边界）→ 五 P0 全部采纳）
+
+> 原文全文转录（tmp/FA1_codex.md 第二版）。处置见 `fa/implementation-notes.md` "FA-1 follow-up 2"：同步入口 + 真 call_rollout_fn 契约测试 / glue ensure_fa_started + sampling params / 持久化 service 零丢失 / proxy 接入 capture wire + SessionPoisonRegistry + episode deadline + 发前 ACTIVE 等待 / provider 权威化（engine /get_weight_version + registry 交叉检查）。含 codex 本机 CC 2.1.205 重试实测数据（留档供 FA-5 复测）。测试 768 → 797。
+
+**结论**
+
+当前不能把 FA-1 判定为真正完成。基础组件质量已经明显改善，但生产入口和 Claude Code HTTP 边界仍有四个阻塞问题。其中两个会让 FA-5 真机启动直接失败，另一个会导致预取 rollout 静默丢失。
+
+**严重问题**
+
+1. **P0：rollout 入口与 slime 的同步接口不兼容。**
+
+新入口是 `async def`：[rollout_entry.py:305](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:305)，但 slime 的 `call_rollout_fn()` 是同步调用，不会 `await`：[base_types.py:19](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/rollout/base_types.py:19)。
+
+我用 slime 真实 `call_rollout_fn` 做了探针，结果是：
+
+```text
+rollout_fn_samples_type=coroutine
+is_coro=True
+```
+
+需要提供同步外壳，例如：
+
+```python
+def generate_rollout(...):
+    return run(_generate_rollout_async(...))
+```
+
+并使用 slime 真实 `call_rollout_fn` 写接口契约测试。
+
+2. **P0：新入口启动时拿不到 orchestrator 和 sampling params。**
+
+`_build_service()` 要求 `args.rh2_orchestrator` 和 `args.rh2_sampling_params` 已存在：[rollout_entry.py:268](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:268)。
+
+但 orchestrator 目前只在旧 `custom_generate` 第一次执行时才挂载：[glue.py:693](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:693)，而新入口绕过了这一步。仓库中也没有任何代码写入 `rh2_sampling_params`。因此修完同步接口后，真实启动仍会立即 fail-fast。
+
+3. **P0：当前生产薄壳并不 fully async，而且会丢预取结果。**
+
+`collect_batch()` 每次调用都新建 worker、queue 和 collector，收够当前 batch 后立即停止 worker：[rollout_entry.py:194](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:194)。它没有跨 optimizer step 保温。
+
+更严重的是，worker 已经投进局部 queue、但尚未被当前 batch 消费的结果会随函数返回而消失。我构造了 `rollout_batch_size=1, concurrency=8` 的探针：
+
+```text
+returned_groups=1
+executed_members=16
+source_remaining=4
+```
+
+即返回 1 个组，却已经执行 16 个成员，其余结果没有进入下一批，也没有 abandoned 账目。
+
+正确形态是让 worker、delivery queue、PromptGroupAssembler 和 ready queue 都由持久 `FaRolloutService` 拥有；`collect_batch()` 只从 ready queue 取批次，不停止 worker。这个修复适合与 FA-2 一起完成。
+
+4. **P0：ModelCallProxy 仍未接入真实 Claude Code HTTP 请求链。**
+
+`ModelCallProxy` 目前只有单元测试引用。真实 capture wire 仍直接调用 SGLang：[capture_wire.py:102](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:102)。
+
+因此以下能力当前都没有在生产路径生效：
+
+- 同一个 Claude Code HTTP 请求内透明重生成。
+- 不可归因故障后终止 execution。
+- session poison 和后续请求拒绝。
+- episode 剩余 deadline 传播。
+- 发送前等待 coordinator 回到 `ACTIVE`。
+- cancellation 与 `RolloutAttemptOutcome` 的完整对账。
+
+`ModelCallProxy.call()` 现在会在读取窗口后立即发送请求，即使窗口处于 `UPDATING`：[async_worker.py:454](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:454)。等待更新又使用独立固定 60 秒 deadline：[async_worker.py:579](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:579)。
+
+5. **P0：`current_policy_version_provider` 不是 current version。**
+
+当前实现取“历史 capture 响应报告过的最大版本”：[glue.py:427](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:427)。
+
+如果 trainer 已更新到版本 8，但更新后还没有成功响应，registry 最大值仍可能是 7。系统就会把陈旧轨迹错误计算成 `lag=0`。正式链必须使用 TrainingRuntimeCoordinator 或 `engine.get_weight_version()` 的权威版本，capture 最大值只能做交叉检查。
+
+**一般问题**
+
+- Audit FIFO 淘汰会制造悬空 `evidence_refs`：[async_worker.py:429](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:429)。我的探针确认第一条 `audit:` 引用在下一条失败后已经不可解析。外部 artifact sink 成功时应直接返回持久引用，不能继续引用会被淘汰的内存键。
+- `unfinalized_deliveries` 没有 abandon/fail 接口。响应 flush、capture commit 或客户端连接中断时，需要显式关闭 draft。
+- 失败的 interim group 没有从 `_buckets` 删除：[rollout_entry.py:99](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:99)。探针创建 1000 个失败组后，`open_group_count` 仍为 1000。
+- “dead consumer” 测试在 worker 启动前就设置了 stop，实际 `dispatched=0`，属于空验证：[test_async_worker.py:593](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/adapters/test_async_worker.py:593)。
+- `ResourceLimits` 虽已接入类，但生产 `_build_service()` 没有构造或传入 limits，真实路径仍不生效。
+
+**Claude Code 重试**
+
+另一个线程的分析是正确的，而且当前尚未处理完成。
+
+Claude Code 自己有重试机制并不意味着无法控制，因为我们控制它访问的 adapter endpoint。首版最稳妥的设计是：
+
+```text
+可归因的更新窗口 abort
+-> proxy 在同一个 HTTP handler 内部重生成
+-> Claude Code 只收到一次成功响应
+
+不可归因故障
+-> 原子地把 session 标为 POISONED
+-> 通知 orchestrator 终止当前 execution
+-> 后续所有 Claude Code 自动重试均被拒绝
+-> 当前 execution 记为 missing_after_local_retry
+```
+
+仅做 `logical_turn_id` 去重不够，因为 Claude Code 重试时可能轻微修改请求。execution 已经判为缺员后，直接 poison 整个 session 更清楚。
+
+现有底层取消链有一部分是正确的：aiohttp 开启了 `handler_cancellation=True`，capture wire 捕获 `CancelledError` 后会调用 SGLang `/abort_request`。但还需要把取消写入 attempt/outcome 账目，并触发 session poison 和 execution 停止。
+
+FA-5 应负责测量真实 Claude Code 的重试次数、退避和超时，不应负责第一次发现这些防线还没有实现。
+
+先在本地测了一次claude code cli:
+codex:
+会。**如果 proxy 在同一个 HTTP 请求内等待或重生成时间过长，Claude Code 最终可能先触发客户端超时，取消当前请求，然后按自己的策略重试或退出进程。**所以“同一 HTTP 请求内透明重生成”并不意味着可以无限等待。
+
+**本地实测**
+
+本机 Claude Code 版本是 `2.1.205`。我让它连接本地 fake Anthropic endpoint，全程不访问真实 API。
+
+延迟成功测试：
+
+```text
+server 建立连接后等待 12 秒
+Claude Code 请求数：1
+没有并行重试
+12 秒后收到合法 SSE
+Claude Code exit code：0
+总耗时：13.33 秒
+```
+
+这说明连接保持正常时，Claude Code 至少能等待 12 秒，不会因为短暂无响应立即重试。
+
+连续返回 `500` 时：
+
+```text
+请求时间：0.93s, 1.51s, 2.67s, 4.75s, 9.55s, 17.75s
+退避间隔：0.58s, 1.17s, 2.08s, 4.80s, 8.20s
+20 秒内请求 6 次，仍未自行放弃
+```
+
+它确实有指数退避式重试。因此如果 proxy 抛出 `5xx` 而 session 仍然开放，Claude Code 会重新提交 HTTP 请求，当前实现无法安全处理这种情况。
+
+**对 Proxy 的影响**
+
+当前设计中一次 turn 的最坏时间不是只有 `wait_timeout_seconds=60`：
+
+```text
+attempt_1 生成时间
++ 等权重更新最多 60 秒
++ attempt_2 生成时间
++ 可能再次等待和生成
+```
+
+SGLang 单次读取超时又是 900 秒。这个组合可能超过：
+
+- Claude Code 自己的 HTTP timeout；
+- 整个 episode 的 600～900 秒预算；
+- slime harness 的外层运行预算。
+
+因此必须把 deadline 从 episode 传到 HTTP session 和 proxy：
+
+```text
+remaining = episode_deadline - now
+
+attempt_timeout =
+  min(configured_attempt_timeout, remaining)
+
+update_wait_timeout =
+  min(configured_update_wait_timeout, remaining)
+
+没有足够时间完成下一次重生成
+-> 不再尝试
+-> poison session
+-> execution 进入缺员
+```
+
+还应在发送 attempt 前等待 coordinator 进入 `ACTIVE`，避免明知正在更新还启动一个大概率被 abort 的请求。
+
+**Claude Code 超时后的处理**
+
+如果 Claude Code 先取消请求，正确链路应是：
+
+```text
+Claude Code 取消 HTTP 请求
+-> aiohttp handler 收到 CancelledError
+-> 取消当前 proxy wait/send
+-> 调用 SGLang /abort_request
+-> 不 commit capture
+-> 不产生 delivered ModelCallAttempt
+-> poison 当前 session
+-> 终止当前 RolloutExecution
+```
+
+现有 capture wire 已经实现了 cancellation 后调用 `/abort_request` 的底层部分，但 proxy 尚未接入真实 HTTP handler，也没有 session poison 和 execution 终止。
+
+**本地可以测什么**
+
+完全可以在本地用同一个 Claude Code CLI 和 fake endpoint 系统测试：
+
+- 延迟 30/60/120/300 秒时的客户端超时阈值。
+- `500`、`429 + Retry-After` 的重试次数和退避。
+- 建连后立即断开。
+- 返回一半 SSE 后断开。
+- 请求期间一直不发送响应头。
+- 每次重试的 request body 是否完全一致。
+- 重试是否增加 adapter turn count。
+- 失败后是否启动新的 HTTP 请求。
+- proxy 内部成功重生成时是否始终只有一个 Claude Code 请求。
+
+不过结果必须按 Claude Code 版本记录。正式 FA-5 使用的容器二进制若不是本机 `2.1.205`，需要用相同 tarball 再跑一遍。
+
+最终边界应是：**本地测试用于确定 timeout/retry 参数；session poison 和 episode deadline 是代码层必备防线；FA-5 只验证真实环境行为，不能依赖 Claude Code “通常会等足够久”。**
+
+
+
+**建议顺序**
+
+先暂停“FA-1 已完成”的判定。立即修复同步入口、BringupService 初始化、sampling params 来源和 proxy HTTP 接线；持久 worker、ready queue 与无丢失交付则和 FA-2 一起完成。完成本地 HTTP 故障注入后再进入 FA-5 真机验证。
+
+验证方面，现有测试本身全绿：定向测试 `36 passed`，全套 `768 passed`，`inspect-rh2-s1` 通过。但上述反例说明当前测试没有覆盖真实 slime 调用契约和跨 batch 生命周期。未修改任何文件。

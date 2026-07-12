@@ -116,10 +116,12 @@ async def test_proxy_regenerates_within_update_window_scenario_19():
 
     coordinator = FakeCoordinator(
         [
-            _window(epoch=3, phase="UPDATING", active="2", target="3"),
-            _window(epoch=3, phase="UPDATING", active="2", target="3"),
-            _window(epoch=3, phase="ACTIVE", active="3"),
-            _window(epoch=3, phase="ACTIVE", active="3"),
+            _window(epoch=2, phase="ACTIVE", active="2"),  # attempt_1 发前
+            _window(epoch=2, phase="ACTIVE", active="2"),  # attempt_1 发起时
+            _window(epoch=3, phase="UPDATING", active="2", target="3"),  # 失败时：窗口开启
+            _window(epoch=3, phase="ACTIVE", active="3"),  # 等待：达 target
+            _window(epoch=3, phase="ACTIVE", active="3"),  # attempt_2 发前
+            _window(epoch=3, phase="ACTIVE", active="3"),  # attempt_2 发起时
         ]
     )
     proxy = ModelCallProxy(coordinator, sleeper=_no_sleep)
@@ -233,9 +235,10 @@ async def test_proxy_recovery_must_reach_abort_target_version():
 
     coordinator = FakeCoordinator(
         [
-            _window(epoch=7, phase="UPDATING", active="3", target="5", old="3"),
-            _window(epoch=7, phase="UPDATING", active="3", target="5", old="3"),
-            _window(epoch=8, phase="ACTIVE", active="4", old="3"),
+            _window(epoch=6, phase="ACTIVE", active="3"),  # 发前
+            _window(epoch=6, phase="ACTIVE", active="3"),  # 发起时
+            _window(epoch=7, phase="UPDATING", active="3", target="5", old="3"),  # 失败时
+            _window(epoch=8, phase="ACTIVE", active="4", old="3"),  # 恢复：4 < target 5
         ]
     )
     proxy = ModelCallProxy(coordinator, sleeper=_no_sleep)
@@ -252,10 +255,12 @@ async def test_proxy_recovery_accepts_target_reached_via_later_epoch():
 
     coordinator = FakeCoordinator(
         [
-            _window(epoch=7, phase="UPDATING", active="3", target="5", old="3"),
-            _window(epoch=7, phase="UPDATING", active="3", target="5", old="3"),
-            _window(epoch=8, phase="ACTIVE", active="6", old="5"),
-            _window(epoch=8, phase="ACTIVE", active="6", old="5"),
+            _window(epoch=6, phase="ACTIVE", active="3"),  # 发前
+            _window(epoch=6, phase="ACTIVE", active="3"),  # 发起时
+            _window(epoch=7, phase="UPDATING", active="3", target="5", old="3"),  # 失败时
+            _window(epoch=8, phase="ACTIVE", active="6", old="5"),  # 恢复：6 >= 5
+            _window(epoch=8, phase="ACTIVE", active="6", old="5"),  # attempt_2 发前
+            _window(epoch=8, phase="ACTIVE", active="6", old="5"),  # attempt_2 发起时
         ]
     )
     proxy = ModelCallProxy(coordinator, sleeper=_no_sleep)
@@ -271,9 +276,10 @@ async def test_proxy_recovery_accepts_target_reached_via_later_epoch():
 
 async def test_proxy_guard_version_stall_times_out():
     coordinator = FakeCoordinator(
-        [_window(epoch=2, phase="UPDATING", active="1", target="2")] * 4
+        [_window(epoch=1, phase="ACTIVE", active="1")] * 2
+        + [_window(epoch=2, phase="UPDATING", active="1", target="2")] * 4
     )
-    clock_values = iter([0.0, 0.0, 100.0])
+    clock_values = iter([0.0, 0.0, 0.0, 100.0])
     proxy = ModelCallProxy(
         coordinator,
         sleeper=_no_sleep,
@@ -291,7 +297,8 @@ async def test_proxy_guard_version_stall_times_out():
 async def test_proxy_guard_fencing_mismatch_same_epoch():
     coordinator = FakeCoordinator(
         [
-            _window(epoch=4, phase="UPDATING", active="3", target="4", fence="fence_4"),
+            _window(epoch=3, phase="ACTIVE", active="3"),  # 发前
+            _window(epoch=3, phase="ACTIVE", active="3"),  # 发起时
             _window(epoch=4, phase="UPDATING", active="3", target="4", fence="fence_4"),
             _window(epoch=4, phase="ACTIVE", active="4", fence="fence_STALE"),
         ]
@@ -308,8 +315,9 @@ async def test_proxy_guard_fencing_mismatch_same_epoch():
 async def test_proxy_non_numeric_recovery_version_rejected():
     coordinator = FakeCoordinator(
         [
-            _window(epoch=2, phase="UPDATING", active="1", target="2"),
-            _window(epoch=2, phase="UPDATING", active="1", target="2"),
+            _window(epoch=1, phase="ACTIVE", active="1"),  # 发前
+            _window(epoch=1, phase="ACTIVE", active="1"),  # 发起时
+            _window(epoch=2, phase="UPDATING", active="1", target="2"),  # 失败时
             TrainingRuntimeWindow(
                 update_epoch=2,
                 phase="ACTIVE",
@@ -332,14 +340,15 @@ async def test_proxy_non_numeric_recovery_version_rejected():
 
 
 async def test_proxy_max_regenerations_cap():
-    windows: list[TrainingRuntimeWindow] = []
-    for epoch in range(1, 12):
-        windows += [
-            _window(epoch=epoch, phase="UPDATING", active=str(epoch - 1), target=str(epoch)),
-            _window(epoch=epoch, phase="UPDATING", active=str(epoch - 1), target=str(epoch)),
-            _window(epoch=epoch, phase="ACTIVE", active=str(epoch)),
-        ]
-    proxy = ModelCallProxy(FakeCoordinator(windows), sleeper=_no_sleep, max_regenerations=3)
+    class AdvancingCoordinator:
+        def __init__(self) -> None:
+            self.reads = 0
+
+        def current_window(self) -> TrainingRuntimeWindow:
+            self.reads += 1
+            return _window(epoch=self.reads, phase="ACTIVE", active=str(self.reads))
+
+    proxy = ModelCallProxy(AdvancingCoordinator(), sleeper=_no_sleep, max_regenerations=3)
 
     async def send(attempt: int) -> dict:
         return _abort_response([])
@@ -398,8 +407,14 @@ async def test_proxy_audit_artifacts_bounded():
     for turn in range(3):
         with pytest.raises(UnattributableModelCallError):
             await proxy.call("exec_M", f"turn_{turn}", send)
-    assert len(proxy.audit_artifacts) <= 2
+    live = [k for k, v in proxy.audit_artifacts.items() if not v.get("tombstone")]
+    assert len(live) <= 2  # 活跃条目有界
     assert proxy.audit_evictions >= 1
+    # 悬空修复：所有 audit: 引用（含被淘汰的）仍可解析——tombstone 保 digest
+    for attempt in proxy.attempts_ledger:
+        for ref in attempt.evidence_refs:
+            if ref.startswith("audit:"):
+                assert ref.removeprefix("audit:") in proxy.audit_artifacts
 
 
 async def test_proxy_model_call_resource_limit_enforced():
@@ -620,9 +635,18 @@ async def test_worker_shutdown_deadline_with_dead_consumer():
         clock=fake_clock,
     )
     stop = asyncio.Event()
-    stop.set()  # 一启动就处于 stopping（消费者已死场景）
-    await asyncio.wait_for(worker.run(stop), timeout=10)
-    assert worker.counters.abandoned + worker.counters.delivered == worker.counters.dispatched
+
+    async def stop_after_dispatch():
+        # codex 轮次 7：必须先真实分派与投递（旧版 stop 先置位 -> dispatched=0
+        # 空验证）。等 4 个全部执行完、1 个进队后再宣告消费者死亡。
+        while worker.counters.dispatched < 4 or worker.counters.delivered < 1:
+            await asyncio.sleep(0)
+        stop.set()
+
+    await asyncio.wait_for(asyncio.gather(worker.run(stop), stop_after_dispatch()), timeout=10)
+    assert worker.counters.dispatched == 4
+    assert worker.counters.delivered == 1  # 队列容量 1
+    assert worker.counters.abandoned == 3  # 其余显式弃置，绝不静默等死
     assert worker.ledger_balanced()
     assert len(worker.abandoned_deliveries) == worker.counters.abandoned
 
@@ -825,3 +849,142 @@ def test_retry_spec_validation():
         RetrySpec(3, base_delay_seconds=0.0)
     with pytest.raises(ValueError, match="delay"):
         RetrySpec(3, base_delay_seconds=9.0, max_delay_seconds=8.0)
+
+
+# ----------------------------------------- 轮次 7：poison / deadline / 发前等待
+
+
+from repoharness2.adapters.slime.async_worker import (  # noqa: E402
+    SessionPoisonRegistry,
+    SessionPoisonedError,
+    StaticActiveCoordinator,
+)
+
+
+async def test_poisoned_session_rejected_fast():
+    """session 中毒后同 session 一切调用快速拒绝（CC 5xx 退避重试的截断点）。"""
+
+    registry = SessionPoisonRegistry()
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]), sleeper=_no_sleep
+    )
+    calls: list[int] = []
+
+    async def send(attempt: int) -> dict:
+        calls.append(attempt)
+        raise ConnectionError("boom")
+
+    with pytest.raises(UnattributableModelCallError):
+        await proxy.call(
+            "exec_P", "turn_0", send, session_id="sid_P", poison_registry=registry
+        )
+    assert registry.is_poisoned("sid_P")  # 不可归因 -> 自动中毒
+    with pytest.raises(SessionPoisonedError):
+        await proxy.call(
+            "exec_P", "turn_1", send, session_id="sid_P", poison_registry=registry
+        )
+    assert calls == [1]  # 第二轮一次都没发出去
+
+
+async def test_episode_deadline_exhausted_poisons_and_refuses():
+    """episode 预算不足一次重生成 -> 不再尝试 + poison + 缺员（codex 实测
+    CC 会退避重试，deadline 必须从 episode 传到 proxy）。"""
+
+    registry = SessionPoisonRegistry()
+    clock = {"t": 100.0}
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep,
+        clock=lambda: clock["t"],
+    )
+    calls: list[int] = []
+
+    async def send(attempt: int) -> dict:
+        calls.append(attempt)
+        return _ok_response([1], version="1")
+
+    with pytest.raises(UnattributableModelCallError, match="episode_deadline_exhausted"):
+        await proxy.call(
+            "exec_Q",
+            "turn_0",
+            send,
+            session_id="sid_Q",
+            poison_registry=registry,
+            deadline_monotonic=102.0,  # 剩 2s < min_attempt_budget 5s
+        )
+    assert calls == []  # 一次都不发
+    assert registry.is_poisoned("sid_Q")
+
+
+async def test_presend_waits_for_active_window():
+    """发前 ACTIVE 等待：窗口更新中不发注定被 abort 的请求，恢复后才发。"""
+
+    coordinator = FakeCoordinator(
+        [
+            _window(epoch=2, phase="UPDATING", active="1", target="2"),  # 发前：更新中
+            _window(epoch=2, phase="UPDATING", active="1", target="2"),  # 等待…
+            _window(epoch=2, phase="ACTIVE", active="2"),  # 恢复
+            _window(epoch=2, phase="ACTIVE", active="2"),  # 发起时
+        ]
+    )
+    proxy = ModelCallProxy(coordinator, sleeper=_no_sleep)
+    observed: list[int] = []
+
+    async def send(attempt: int) -> dict:
+        observed.append(coordinator._cursor)  # 发出时协调器已消费到 ACTIVE 之后
+        return _ok_response([1], version="2")
+
+    result = await proxy.call("exec_R", "turn_0", send)
+    assert result.draft.weight_version == "2"
+    assert observed and observed[0] >= 3  # 确实等过了 UPDATING 窗口
+
+
+async def test_client_cancellation_propagates_and_poisons():
+    """CC 取消 HTTP 请求：CancelledError 原样传播（aiohttp 链），但先落账
+    + poison——取消后的 CC 重试不得复活 session。"""
+
+    registry = SessionPoisonRegistry()
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]), sleeper=_no_sleep
+    )
+
+    async def send(attempt: int) -> dict:
+        raise asyncio.CancelledError()
+
+    with pytest.raises(asyncio.CancelledError):
+        await proxy.call(
+            "exec_S", "turn_0", send, session_id="sid_S", poison_registry=registry
+        )
+    assert registry.is_poisoned("sid_S")
+    assert proxy.attempts_ledger[-1].delivery_status == "non_delivered_failed"
+
+
+async def test_abandon_delivered_closes_draft():
+    """unfinalized draft 的显式出口：capture 未持久化 -> abandon 落账。"""
+
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]), sleeper=_no_sleep
+    )
+
+    async def send(attempt: int) -> dict:
+        return _ok_response([1], version="1")
+
+    result = await proxy.call("exec_T", "turn_0", send)
+    assert proxy.unfinalized_deliveries
+    attempt = result.abandon_delivered("capture flush failed")
+    assert attempt.delivery_status == "non_delivered_failed"
+    assert proxy.unfinalized_deliveries == frozenset()
+    with pytest.raises(ValueError, match="finalize"):
+        result.finalize_delivered("cap_late")  # abandon 后不可再 finalize
+
+
+def test_static_active_coordinator_conservative_window():
+    """协调器缺席期的保守替身：永远 ACTIVE（任何中断不可归因）+ 版本来自
+    注入 provider。"""
+
+    coordinator = StaticActiveCoordinator(lambda: "7")
+    window = coordinator.current_window()
+    assert window.phase == "ACTIVE"
+    assert window.active_version == window.target_version == "7"
+    non_numeric = StaticActiveCoordinator(lambda: "ckpt_a").current_window()
+    assert non_numeric.old_version == "ckpt_a_prev"

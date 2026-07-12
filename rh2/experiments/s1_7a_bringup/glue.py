@@ -406,6 +406,22 @@ class BringupService:
                 for i in range(len(samples))
             ]
 
+        self._require_real_weight_versions = config.require_real_weight_versions
+        # FA-1 follow-up（codex 轮次 7 P0-4）：proxy 接入真实模型调用链。
+        # 真协调器（trainer 侧）FA-4 接线；缺席期 StaticActiveCoordinator =
+        # 任何中断不可归因 → poison + 缺员（保守正确）。episode 预算传播：
+        # 会话首个模型调用起表（余量偏差 ≈ harness 启动秒级，记 notes）。
+        from repoharness2.adapters.slime.async_worker import (
+            ModelCallProxy,
+            StaticActiveCoordinator,
+        )
+
+        self.registry.model_call_proxy = ModelCallProxy(
+            StaticActiveCoordinator(self._latest_engine_version),
+            attempt_timeout_seconds=900.0,  # 与 wire sock_read 同级
+        )
+        self.registry.default_session_budget_seconds = float(AGENT_TIME_BUDGET_SEC)
+
         self.orchestrator = RolloutOrchestrator(
             config=config,
             task_resolver=self._resolve_task,
@@ -424,7 +440,7 @@ class BringupService:
             current_policy_version_provider=self._latest_engine_version,
         )
 
-    def _latest_engine_version(self) -> str:
+    def _registry_max_version(self) -> int | None:
         latest: int | None = None
         for versions in self.registry.weight_versions.values():
             for version in versions:
@@ -433,8 +449,44 @@ class BringupService:
                 except ValueError:
                     continue
                 latest = value if latest is None or value > latest else latest
-        if latest is not None:
-            return str(latest)
+        return latest
+
+    def _latest_engine_version(self) -> str:
+        """finalize 时刻的 current version（codex 轮次 7 P0-5 权威化）。
+
+        权威来源 = 引擎 `/get_weight_version`（sglang_engine.get_weight_version
+        同端点）——trainer 更新后即便还没有新的成功响应，该端点也是新版本；
+        capture registry 最大值只作**交叉检查**（大于权威值 = 事实矛盾，
+        fail-closed）。HTTP 失败时：正式链 fail-closed，bring-up 回退
+        registry 最大值/启动探针值（口径 = "相对最近观测"，如实降级）。
+        """
+
+        import requests
+
+        authoritative: str | None = None
+        try:
+            response = requests.get(f"{self.sglang_url}/get_weight_version", timeout=5)
+            response.raise_for_status()
+            authoritative = str(response.json()["weight_version"])
+        except Exception as exc:  # noqa: BLE001 —— 分链路处置
+            if self._require_real_weight_versions:
+                raise RuntimeError(
+                    f"正式链取权威 weight_version 失败（{type(exc).__name__}: {exc}）"
+                    "——fail-closed，不许用历史观测冒充 current。"
+                ) from exc
+        registry_max = self._registry_max_version()
+        if authoritative is not None:
+            try:
+                if registry_max is not None and registry_max > int(authoritative, 10):
+                    raise RuntimeError(
+                        f"版本事实矛盾：capture 观测最大 {registry_max} > 引擎权威 "
+                        f"{authoritative}——版本管道错乱，fail-closed。"
+                    )
+            except ValueError:
+                pass  # 非数值权威版本：交叉检查不适用
+            return authoritative
+        if registry_max is not None:
+            return str(registry_max)
         return self.policy_version
 
     async def _run_startup_checks(self) -> None:
@@ -688,6 +740,53 @@ def _sglang_version() -> str:
 # ---------------------------------------------------------------------------
 # slime custom_generate 入口
 # ---------------------------------------------------------------------------
+
+
+def build_fa_sampling_params(args: Any) -> dict[str, Any]:
+    """FA rollout 入口的采样配方（codex 轮次 7 P0-2：仓库里此前没有任何
+    代码写 rh2_sampling_params）。
+
+    custom_generate 路径的采样参数由 slime 训练循环逐调用传入；FA
+    rollout-fn 路径 slime 不传参——从 args 按 slime 自身的字段名构造，
+    **缺字段 fail-closed**（采样配方决定 top-p tape 语义，不许猜默认值）。
+    """
+
+    required = {
+        "rollout_temperature": "temperature",
+        "rollout_top_p": "top_p",
+        "rollout_max_response_len": "max_new_tokens",
+    }
+    params: dict[str, Any] = {}
+    missing: list[str] = []
+    for attr, key in required.items():
+        value = getattr(args, attr, None)
+        if value is None:
+            missing.append(attr)
+        else:
+            params[key] = value
+    if missing:
+        raise RuntimeError(
+            f"build_fa_sampling_params: args 缺采样字段 {missing}——"
+            "FA 入口不猜测采样配方（top-p tape 语义依赖显式值）。"
+        )
+    params["temperature"] = float(params["temperature"])
+    params["top_p"] = float(params["top_p"])
+    params["max_new_tokens"] = int(params["max_new_tokens"])
+    return params
+
+
+async def ensure_fa_started(args: Any) -> None:
+    """FA rollout 入口的启动引导（codex 轮次 7 P0-2）。
+
+    与 custom_generate 首调用共用同一 BringupService 单例：挂
+    `args.rh2_orchestrator` 与 `args.rh2_sampling_params`。幂等。
+    """
+
+    service = await BringupService.get(args)
+    if getattr(args, "rh2_orchestrator", None) is None:
+        args.rh2_orchestrator = service.orchestrator
+    if getattr(args, "rh2_sampling_params", None) is None:
+        args.rh2_sampling_params = build_fa_sampling_params(args)
 
 
 async def generate(args: Any, sample: Any, sampling_params: dict, evaluation: bool = False):
