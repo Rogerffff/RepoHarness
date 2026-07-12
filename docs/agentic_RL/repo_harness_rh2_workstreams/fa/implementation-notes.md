@@ -100,3 +100,75 @@ backfill 逐入训轮回填 → 握手 staleness 真实计算）；正式链启�
   校验；缺席仍 skip，`inspect-rh2-fa` 建账后升为 fail）；误名的收缩测试
   重写为真 e2e（orchestrator 全链 + remove_sample 断言）+ audit-only
   对照。测试 684 → 692。
+
+## FA-3 离线部分（2026-07-12 完成；接线部分待 FA-2）
+
+**交付**：`adapters/slime/batch_admission.py`（预检器 + 层次化归一化 +
+三视图纯函数）+ P3 事件夹具加载器 + 21 条测试（单元 15 + 差分 6）。
+测试 692 → 713。
+
+### 设计决策
+
+1. **差分测试是预检器的正确性权威**：slime `utils/dp_schedule.py` 模块
+   自述纯 Python、CPU-only 可测——差分测试直接 import **真函数**，同一
+   输入比对成功/失败类别 + step 数 + 每 rank microbatch 数三项（J4/J5
+   夹具 + 200 例随机扫，seed 固定）。预检器镜像 first-fit 装箱与对齐
+   判定；`balance_by_flops`/`balance_data` 未镜像（P3/首训均关闭），
+   开启即 fail-closed 拒绝——防止镜像面静默失真。
+2. **B 类失败的机制确认**：J5 gbs16 的 "could only produce 23 mbs;
+   need 24" = step0 恰 23 个样本（前 16 个有效 rollout 的真实 fan-out
+   分布，事件元数据核实）+ align_to=dp2×1=2 + K0=23（全单箱）→
+   round_up(23,2)=24 > 可拆分上限 23。夹具结构 100% 真实；样本 token
+   总长不在事件元数据里（.pt 未同步），用校准值 20000 保持全单箱——
+   报错里的 23/24 两个数字由结构决定，与校准值无关（测试 docstring
+   已声明口径）。
+3. **归一化实现放 adapter 纯函数层**（不进契约、不碰队列）：五条 E
+   不变量以构造保证 + 属性测试钉死；广播不一致/身份矛盾 fail-closed。
+   group5×8branch 定向回归直接吃 J4 真实事件（8 branch = 1 execution，
+   分母 = 8 branch token 和）。
+4. **torch 加入 dev 依赖组**（torch 2.13 CPU）：dynamic_filter 真调用
+   测试（P3 崩溃形状复现 + 平铺形状通过）与 FA-4 torch 对拍都需要；
+   运行时依赖面不变（只进 dependency-groups.dev）。
+
+### 偏离说明
+
+- 05 计划离线验收 5 要求 dynamic_filter 与 `_key` 都做真函数直接单测：
+  **`_key` 的真调用做不到**——import 链穿 `sglang_rollout`（需要 sglang/
+  ray，本机不装）。dynamic_filter 真调用已做；`_key` 保持源码级 pin
+  （test_fully_async_surface），真调用留 FA-1 的 GPU 环境。如实降级，
+  不冒充。
+
+### 开放问题
+
+- J5 gbs20 对照在预检器下 num_steps=1（41 样本中后 9 个 rollout 不足
+  第二个 step 被真函数同款丢弃）——"尾部 rollout 静默丢弃"是 stock
+  语义，FA-3 接线的 assembler 必须把它变成显式记账（丢弃即 log）。
+
+## FA-4 对拍部分（2026-07-12 完成；custom loss 接线待 GPU 环境）
+
+**交付**：`training/faithful_dis.py`（参考 loss + 解析梯度 + 指标）+
+11 条对拍测试。测试 713 → 724。
+
+### 设计决策
+
+1. **三方对拍**：手算逐位 / 冻结权重有限差分（专测 detach 语义——若实现
+   忘了 detach，接受 token 上必失配）/ torch autograd 同构实现
+   （`ratio.detach()`，loss 与逐 token 梯度 1e-9 容差逐位）。torch 同构
+   函数就是未来 Megatron custom loss 的形状雏形与对拍权威。
+2. **denominator 语义预注册 v1 = provenance_tokens**（被拒 token 留分母、
+   梯度为零）：与 slime stock TIS 的 `rollout_mask_sums` 口径一致，使
+   IcePop 近似对照可同分母比较；`accepted_tokens` 第二实现保留用于消融。
+   **FA-4 接线时须对照论文原文最终定死并回写**（codex 轮次 3 #7 的
+   预注册要求——两档差异测试证明它直接改变有效学习率，不能含糊）。
+3. ε 区间 0.8/3.0 按 codex 引注写入常数并标注"接线时对照原文复核"；
+   区间语义 = 闭区间（边界测试用实际 ratio 值构造，避开 exp/log 浮点
+   回环的 1ulp 假失败——这是实现细节里唯一踩过的坑）。
+4. 全零有效 token → `zero_grad_step=True` + loss 0 + 无除零：FA-4 接线
+   的"跳过 optimizer step"信号在参考层就位。
+
+### 开放问题
+
+- 论文忠实性只到"公式语义"层：ε 数值、denominator 档位、以及 top-p
+  replay 是否参与 current logprob 计算（对拍清单第 5 项）都要在接线时
+  对照原文/实测定死——参考实现把每个自由度做成显式参数，就是为了那时
+  不需要改结构。
