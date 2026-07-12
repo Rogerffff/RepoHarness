@@ -13,32 +13,30 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from pathlib import Path
-
-# envpack/ 比 inspect_s1.py 深一层：spec_vendor.py -> envpack(0) ->
-# repoharness2(1) -> src(2) -> rh2(3) -> 仓库根(4)
-_REPO_ROOT = Path(__file__).resolve().parents[4]
+from importlib.resources import files as _pkg_files
 
 SPEC_VENDOR_ID_SWEGYM_242429C1 = "swegym_constants_242429c1"
 
 
 @dataclass(frozen=True)
 class VendorPin:
-    """一个 vendor 资产的固定身份（路径与 digest 都不接受外部输入）。"""
+    """一个 vendor 资产的固定身份（路径与 digest 都不接受外部输入）。
 
-    json_relpath: str          # 规范化 JSON（运行期唯一消费物）
+    运行期 JSON 是**包内数据**（envpack/data/，随 wheel 发布，
+    importlib.resources 读取——codex 轮次 13：推算仓库根在安装态必坏）；
+    原始 vendored Python / provenance / LICENSE 是 docs 下的审计资产。
+    """
+
+    json_package_name: str     # 规范化 JSON 的包内文件名（envpack/data/ 下）
     json_sha256: str
-    source_py_relpath: str     # 原始 vendored Python（只供构建期提取与审计）
+    source_py_relpath: str     # 原始 vendored Python（仓库审计资产，非运行期依赖）
     source_py_sha256: str
     source_commit: str
 
 
 VENDOR_REGISTRY: dict[str, VendorPin] = {
     SPEC_VENDOR_ID_SWEGYM_242429C1: VendorPin(
-        json_relpath=(
-            "docs/agentic_RL/repo_harness_rh2_workstreams/s2/vendor/"
-            "swegym_specs_242429c1.json"
-        ),
+        json_package_name="swegym_specs_242429c1.json",
         json_sha256="0da8f9caeec18e3b41386fb66e677807335c0fe12c41d811dd9fb65f9bfcc925",
         source_py_relpath=(
             "docs/agentic_RL/repo_harness_rh2_workstreams/s2/vendor/"
@@ -61,12 +59,12 @@ def vendor_pin(vendor_id: str) -> VendorPin:
 
 
 def load_vendor_specs(vendor_id: str) -> dict[str, dict[str, dict]]:
-    """读 pinned JSON（sha256 必须命中注册表）→ {repo_key_lower: {version: spec}}。"""
+    """读包内 pinned JSON（sha256 必须命中注册表）→ {repo_key_lower: {version: spec}}。"""
     pin = vendor_pin(vendor_id)
-    path = _REPO_ROOT / pin.json_relpath
-    if not path.exists():
-        raise VendorSpecError(f"vendor JSON 缺失: {pin.json_relpath}")
-    data = path.read_bytes()
+    resource = _pkg_files("repoharness2.envpack") / "data" / pin.json_package_name
+    if not resource.is_file():
+        raise VendorSpecError(f"vendor JSON 包内缺失: envpack/data/{pin.json_package_name}")
+    data = resource.read_bytes()
     actual = hashlib.sha256(data).hexdigest()
     if actual != pin.json_sha256:
         raise VendorSpecError(

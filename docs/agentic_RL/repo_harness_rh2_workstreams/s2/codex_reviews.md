@@ -1661,3 +1661,14 @@ py_compile / bash -n：PASS
 
 全套数量高于报告中的 852，是因为当前 HEAD 还包含之后的 S2 提交。没有修改任何文件。建议先修前两个阻塞问题，再进入 FA-2；FA-2 首项同时完成 execution 唯一身份和 request 级 capture 归属。
 
+
+
+---
+
+## 轮次 13（2026-07-13：轮次 12 修复复审 → 大体正确；2 关键 + 2 一般，T2-c 前修复）
+
+- **严重 1：eval_cmd 互检是可选调用**——builder 只调 vendor_pin 不调 verify_grading_eval_cmd，恶意 eval_cmd（rm -rf / #）仍组包成功。【修复：builder 强制互检 + build_private_grading_bundle 派生构造器 + 恶意命令不能组包负测试；消费期两道防线义务保持登记】
+- **严重 2：运行期 JSON 不进 wheel**——parents[4] 推算仓库根，codex 实构 wheel 验证 contains_vendor_json=False。【修复：JSON 移入 envpack/data/ 包内数据 + importlib.resources；本地 wheel 重建实证 True；资源存在性测试】
+- **一般 3：缺"重提取 == JSON"机器验证**（codex 独立重算相等）。【修复：re-extraction 逐字节等价测试（exec 仅测试/构建期）】
+- **一般 4：provenance 旧措辞**。【已更新】
+- codex 确认正确：身份错配拒绝、路径注入拒绝、immutable URL、LICENSE、覆盖复算、10 项 digest、42 定向 + 866 全套、隔离快照 inspect-rh2-s1 通过；工作区单个失败来自 FA 线程未提交文件（与 T2 无关）。

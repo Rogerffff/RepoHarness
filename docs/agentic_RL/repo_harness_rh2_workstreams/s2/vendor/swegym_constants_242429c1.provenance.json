@@ -6,7 +6,7 @@
  "source_commit_sha": "242429c188fcfd06aad13fce9a54d450470bf0ac",
  "fetched_at": "2026-07-13",
  "sha256": "5bd655172c9a9dfcb494d9c52bcbcc0d79a59cd20c39b8bbdc41ab8b0a9baf14",
- "license_note": "上游为 SWE-bench 的 fork（MIT），vendor 原样逐字节保存、不作任何修改；消费方式 = importlib 按路径加载（见 T2 实现）",
+ "license_note": "上游为 SWE-bench 的 fork（MIT，全文见旁置 swegym_fork_LICENSE），vendor 原样逐字节保存、不作任何修改；消费模型 = 构建期一次性提取为规范化 JSON（extract_vendor_specs.py），运行期只读包内 JSON（envpack/data/，importlib.resources），永不 exec 本文件（codex 轮次 12/13 定案）",
  "coverage_verification": {
   "swebench_4_1_0_official": "0/216（11 仓库全部无 spec）",
   "this_file_final_map": "216/216（注意：文件末行把 MAP_REPO_VERSION_TO_SPECS 重绑定为小写键版本 LOWER_MAP_…——查表必须用 repo.lower()，与镜像名小写化是同一个大小写坑）",
@@ -19,8 +19,8 @@
   "license": "MIT（SWE-bench 原始版权人 + fork）"
  },
  "extracted_json": {
-  "path": "s2/vendor/swegym_specs_242429c1.json",
+  "path": "rh2/src/repoharness2/envpack/data/swegym_specs_242429c1.json",
   "sha256": "0da8f9caeec18e3b41386fb66e677807335c0fe12c41d811dd9fb65f9bfcc925",
-  "note": "构建期一次性提取的最终小写键 spec 表；运行期唯一消费物（永不 exec vendored Python），pin 登记在 rh2/src/repoharness2/envpack/spec_vendor.py"
+  "note": "包内数据随 wheel 发布（轮次 13：仓库根推算在安装态必坏，已实证 wheel 含该文件）；pin 登记在 envpack/spec_vendor.py"
  }
 }

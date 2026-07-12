@@ -6,7 +6,7 @@ digest 锁定的已知产物）；运行期消费方（ingestion / 门 runner）
 的 JSON 并核对 `repoharness2.envpack.spec_vendor` 里的 pinned sha256——
 **运行期永不 exec vendored 代码，也不接受 artifact 里的自由文件路径**。
 
-产出：s2/vendor/swegym_specs_242429c1.json
+产出：rh2/src/repoharness2/envpack/data/swegym_specs_242429c1.json（包内数据，随 wheel 发布）
   结构 = {repo_key_lower: {version: spec_dict}}（键排序、紧凑规范化）。
   提取自 vendored 文件的最终 MAP_REPO_VERSION_TO_SPECS（小写键版本）。
 
@@ -27,7 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 VENDOR_DIR = REPO_ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams/s2/vendor"
 VENDOR_PY = VENDOR_DIR / "swegym_constants_242429c1.py"
 VENDOR_PY_SHA256 = "5bd655172c9a9dfcb494d9c52bcbcc0d79a59cd20c39b8bbdc41ab8b0a9baf14"
-OUT_JSON = VENDOR_DIR / "swegym_specs_242429c1.json"
+OUT_JSON = REPO_ROOT / "rh2/src/repoharness2/envpack/data/swegym_specs_242429c1.json"
 
 
 def main() -> None:

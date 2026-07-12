@@ -181,6 +181,39 @@ class EnvironmentPackageV1(StrictModel):
         return canonical_json_digest(self.model_dump(mode="json"))
 
 
+def build_private_grading_bundle(
+    *,
+    instance_id: str,
+    repo: str,
+    version: str,
+    base_commit: str,
+    test_patch: str,
+    fail_to_pass: list[str],
+    pass_to_pass: list[str],
+    spec_vendor_id: str = "swegym_constants_242429c1",
+) -> PrivateGradingBundleV2:
+    """grading bundle 的 canonical 构造器：`eval_cmd`/`python_version` 由
+    vendor 注册表**派生**（codex 轮次 13：ingestion 不自己填 eval_cmd，
+    自由字符串没有进入路径）。"""
+    from repoharness2.envpack.spec_vendor import derive_eval_cmd, lookup_spec
+
+    repo_key_lower = repo.lower()
+    spec = lookup_spec(spec_vendor_id, repo_key_lower, version)
+    return PrivateGradingBundleV2(
+        instance_id=instance_id,
+        repo=repo,
+        repo_key_lower=repo_key_lower,
+        version=version,
+        base_commit=base_commit,
+        test_patch=test_patch,
+        fail_to_pass=fail_to_pass,
+        pass_to_pass=pass_to_pass,
+        eval_cmd=derive_eval_cmd(spec_vendor_id, repo_key_lower, version),
+        python_version=(str(spec["python"]) if spec.get("python") is not None else None),
+        spec_vendor_id=spec_vendor_id,  # type: ignore[arg-type]
+    )
+
+
 def build_environment_package(
     *,
     public,  # PublicTaskBundle（v1 类型，不在此文件 import 以免循环；duck-typed digest()）
@@ -205,7 +238,14 @@ def build_environment_package(
         raise ValueError(
             f"public.base_commit={public.base_commit} 与 grading.base_commit={grading.base_commit} 不一致"
         )
-    from repoharness2.envpack.spec_vendor import vendor_pin  # 延迟 import 防环
+    from repoharness2.envpack.spec_vendor import (  # 延迟 import 防环
+        vendor_pin,
+        verify_grading_eval_cmd,
+    )
+    # eval_cmd 强制互检（codex 轮次 13 严重 1：互检函数不进 canonical builder
+    # 就只是注释——恶意 eval_cmd 曾能组出正式包）。构造期第一道防线；
+    # T2-c resolved-package validator 与 T2-d 消费前互检是第二、三道。
+    verify_grading_eval_cmd(grading)
     return EnvironmentPackageV1(
         task_id=task_id_for(source, grading.instance_id),
         source=source,  # type: ignore[arg-type] —— Literal 校验由模型执行

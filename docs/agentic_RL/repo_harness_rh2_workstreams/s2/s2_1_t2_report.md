@@ -70,3 +70,22 @@ T2-e：门 runner + fixture（§3.1 规格）+ `EnvValidationReport`。
   0/216（skipif 无 swe 依赖组）全部变成可重算断言；三个 CLI marker 测试
   （grading v2 / validation-only 默认豁免+强制命中；package 默认与强制都过）。
 ```
+
+## T2-b 修订 2（2026-07-13，codex 轮次 13 → 互检接线 + 打包正确性）
+
+```text
+严重 1 互检未接线：verify_grading_eval_cmd 存在但 build_environment_package
+  没调用——"rm -rf / #" 的 grading bundle 仍能组出正式包（"权威"只写在注释里）。
+  修复：builder 强制互检（构造期第一道防线）+ 新增 build_private_grading_bundle
+  （eval_cmd/python_version 由注册表派生，ingestion 不自己填）+
+  "恶意命令不能组包"负测试。T2-c/T2-d 的消费期互检义务保持登记。
+严重 2 运行期 JSON 不在 wheel 里：spec_vendor 用 parents[4] 推算仓库根，
+  codex 实构 wheel 验证 contains_vendor_json=False——安装态必坏。
+  修复：JSON 移入包内 envpack/data/、importlib.resources 读取；
+  本地重建 wheel 实证 contains_vendor_json=True
+  （repoharness2/envpack/data/swegym_specs_242429c1.json）；
+  包内资源存在性 + 重提取逐字节等价两个测试钉死。
+一般 3 重提取等价：新增测试——digest 锁定的 vendored Python 重新提取后
+  必须逐字节等于包内 JSON（防两个 pin 分别更新语义脱节）。
+一般 4 provenance 的"importlib 按路径加载"旧措辞已更新为运行期只读 JSON。
+```

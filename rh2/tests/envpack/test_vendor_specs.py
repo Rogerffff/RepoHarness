@@ -93,3 +93,38 @@ def test_official_swebench_covers_zero_of_216(survivor_rows):
         or r["version"] in official.get(r["repo"].lower(), {})
     ]
     assert covered == [], f"官方表意外覆盖: {covered[:5]}（风险 F 前提变化，需复核）"
+
+
+# ---- 轮次 13：包内数据 + 重提取逐字节等价 --------------------------------------
+
+def test_vendor_json_is_package_data():
+    """运行期 JSON 必须是包内资源（wheel 安装态可用），不靠仓库根推算。"""
+    from importlib.resources import files
+    pin = vendor_pin(SPEC_VENDOR_ID_SWEGYM_242429C1)
+    res = files("repoharness2.envpack") / "data" / pin.json_package_name
+    assert res.is_file(), "vendor JSON 不在包内 data/——wheel 安装后 load_vendor_specs 必坏"
+
+
+def test_reextraction_byte_identical_to_package_json():
+    """vendored Python（digest 锁定）重新提取后必须逐字节等于包内 JSON——
+    防两个 pin 分别更新造成语义脱节（codex 轮次 13 一般 3）。
+    exec 只发生在测试/构建期，运行期仍只读 JSON。"""
+    import hashlib as _h
+    import importlib.util
+    import json as _json
+    import warnings
+    from importlib.resources import files
+
+    pin = vendor_pin(SPEC_VENDOR_ID_SWEGYM_242429C1)
+    py = REPO_ROOT / pin.source_py_relpath
+    assert _h.sha256(py.read_bytes()).hexdigest() == pin.source_py_sha256
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        spec = importlib.util.spec_from_file_location("swegym_constants_reextract", py)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+    payload = (_json.dumps(mod.MAP_REPO_VERSION_TO_SPECS, ensure_ascii=False,
+                           sort_keys=True, separators=(",", ":")) + "\n").encode()
+    packaged = (files("repoharness2.envpack") / "data" / pin.json_package_name).read_bytes()
+    assert payload == packaged, "重提取结果与包内 JSON 不一致（两个 pin 语义脱节）"
+    assert _h.sha256(packaged).hexdigest() == pin.json_sha256

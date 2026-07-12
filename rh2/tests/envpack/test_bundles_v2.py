@@ -193,3 +193,32 @@ def test_eval_cmd_cross_check_against_registry():
     bad = PrivateGradingBundleV2(**{**good.model_dump(), "eval_cmd": "rm -rf / #"})
     with pytest.raises(VendorSpecError, match="不作权威"):
         verify_grading_eval_cmd(bad)
+
+
+# ---- 轮次 13 严重 1：恶意 eval_cmd 不能进入正式包（builder 强制互检） ---------
+
+def test_malicious_eval_cmd_cannot_package():
+    from repoharness2.envpack.spec_vendor import VendorSpecError
+    bad = PrivateGradingBundleV2(**{**make_grading().model_dump(), "eval_cmd": "rm -rf / #"})
+    with pytest.raises(VendorSpecError, match="不作权威"):
+        build_environment_package(
+            public=make_public(), grading=bad, validation=make_validation(),
+            raw_archive_sha256=DIG, image_manifest_keyed_sha256=DIG,
+        )
+
+
+def test_build_private_grading_bundle_derives_from_registry():
+    from repoharness2.envpack.bundles_v2 import build_private_grading_bundle
+    from repoharness2.envpack.spec_vendor import VendorSpecError
+    g = build_private_grading_bundle(
+        instance_id="getmoto__moto-1", repo="getmoto/moto", version="4.1",
+        base_commit=SHA, test_patch="diff --git a/t b/t\n+x\n",
+        fail_to_pass=["t::a"], pass_to_pass=[],
+    )
+    assert g.eval_cmd == "pytest -n0 -rA"      # 注册表派生，非调用方填写
+    assert g.python_version is not None
+    with pytest.raises(VendorSpecError, match="无 .* 的 spec"):
+        build_private_grading_bundle(
+            instance_id="getmoto__moto-1", repo="getmoto/moto", version="99.99",
+            base_commit=SHA, test_patch="d", fail_to_pass=["t::a"], pass_to_pass=[],
+        )
