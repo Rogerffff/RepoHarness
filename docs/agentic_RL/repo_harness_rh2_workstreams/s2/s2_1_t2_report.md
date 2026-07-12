@@ -122,3 +122,31 @@ build_environment_packages.py`（运行器）。真实构造 **216/216 ALL PASS*
 
 **T2 剩余**：T2-d `grade_controlled_patch` 受控入口 → T2-e 门 runner +
 fixture + `EnvValidationReport`。
+
+## T2-c follow-up（2026-07-13，codex 轮次 14 → 可信输入链 + 严格消费链闭合）
+
+四条全部成立并修复（数据内容本身经其核验无误——五文件确定性复建逐字节相等）：
+
+```text
+严重 1 输入未对 T1 封板验证：运行器曾"读当前文件现算 SHA 当 provenance"，
+  输入被一致修改会被合法化而非报漂移。修复：新建独立封板记录
+  t1_input_pins_v1.json（七项输入 digest；不可追加，区别于持续追加的
+  s2_1 总 manifest），其自身 sha256 钉死在 envpack/t1_pins.py 常量
+  （代码在 S1 账本 rglob 内）→ 代码→pins→输入文件三级防篡改链；
+  运行器 provenance 值改为取自 pins（7/7 命中才开工），漂移注入有测试。
+严重 2 strict validator 三旁路：vendor digest 不核注册表 / raw+keyed 不核
+  pins / image_store 可选忘传即静默跳过 / 消费期无泄漏扫描。修复：
+  verify_package_relations 改为 pins+image_store 必传、无条件全查
+  （含消费期 scan_public_bundle）；合成夹具用显式命名的
+  verify_bundle_relations_non_authoritative，正式 validator 无 None 降级；
+  vendor/provenance 篡改各有回归测试。
+一般 3 输入面收严：raw 行重复 id 拒绝（不静默覆盖）、全部 230 行先过字段面
+  （不只选中 216）、F2P/P2P 内部重复与交集拒绝、fingerprint 复用
+  _as_test_list 归一化。
+一般 4 输出事务化：五文件原子写 + ingest_manifest_v0.json 提交记录
+  （五 digest+行数+T1 pins）最后原子落盘；新增 load_ingest_outputs
+  strict loader（提交记录→digest→模型→去重→216 逐包 strict 验证），
+  T2-d/e 只许经它消费；运行器带回读自检，篡改数据文件有拒绝测试。
+真实产物重建：五数据文件 digest 与上轮逐字节一致（内容零变化）+
+  新提交记录 3408bab7…；测试 20 项（本文件）/ 全套 903。
+```

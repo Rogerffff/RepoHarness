@@ -28,6 +28,8 @@
 - **[S2-1 T2-c, 2026-07-13] strip_spec 家族映射的"常量 + digest pin + 等价测试"三保险**：运行库不依赖 pyyaml（常量驱动），冻结 yaml 的 digest pin 让文件与常量脱节先红灯，语义等价测试（importorskip yaml）保证两者内容一致。单一事实源仍是冻结 yaml，常量是它的受锚定投影。
 - **[S2-1 T2-c, 2026-07-13] 真实 216 题构造结果**：duplicate cluster 恰为 T1 实测的两簇且全部 distinct（0 suspected）——去重语义定案（任务身份≠环境身份）在真实数据上零误伤。消费期重验（verify_package_relations）作为可调用函数交付，T2-d/e 与未来 rollout 物化必须调用（登记义务的实现落点）。
 
+- **[S2-1 T2-c followup, 2026-07-13] 可信输入链的根必须独立于"仍在生长的账本"**（codex 轮次 14）：T1 封板输入的 pins 单独成记录（不可追加），digest 锚定在被 S1 账本追踪的代码常量里——消费方对"输入漂移"的唯一正确反应是 fail-closed 报告，绝不是重算新 SHA 合法化。配套：strict validator 必传参数化（不给"忘传即降级"留路径）、非权威变体显式命名、输出五文件 + 提交记录事务化、strict loader 成为下游唯一消费入口。
+
 ## 2. 权衡取舍
 
 - **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。

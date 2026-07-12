@@ -20,9 +20,12 @@ from repoharness2.envpack.ingest_swegym_lite import (
     build_task,
     check_strip_spec_fields,
     ingest_swegym_lite,
+    load_ingest_outputs,
+    verify_bundle_relations_non_authoritative,
     verify_package_relations,
     write_ingest_outputs,
 )
+from repoharness2.envpack.t1_pins import T1PinsError, load_and_verify_t1_pins
 from repoharness2.taskset.image_manifest_store import Store
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -132,23 +135,12 @@ def test_true_duplicate_flagged_not_dropped():
 
 # ---- 消费期重验 ------------------------------------------------------------------
 
-def test_verify_package_relations_catches_swapped_bundle():
+def test_verify_relations_catches_swapped_bundle():
     public, grading, validation, package = _build(make_row())
-    verify_package_relations(package, public, grading, validation)  # 正常过
+    verify_bundle_relations_non_authoritative(package, public, grading, validation)
     _, _, validation2, _ = _build(make_row(iid="getmoto__moto-2", statement="other"))
     with pytest.raises(IngestError, match="validation digest 不符"):
-        verify_package_relations(package, public, grading, validation2)
-
-
-def test_verify_package_relations_checks_image_store():
-    public, grading, validation, package = _build(make_row())
-    st = Store()
-    st.entries["getmoto__moto-1"] = {
-        **make_image_entry("getmoto__moto-1"),
-        "resolved_manifest_digest": "sha256:" + "f" * 64,  # 与包内不符
-    }
-    with pytest.raises(IngestError, match="键控清单不符"):
-        verify_package_relations(package, public, grading, validation, image_store=st)
+        verify_bundle_relations_non_authoritative(package, public, grading, validation2)
 
 
 # ---- 真实 216 题集成（读冻结资产；确定性） ---------------------------------------
@@ -193,3 +185,113 @@ def test_real_outputs_deterministic(real_ingest, tmp_path):
     d1 = write_ingest_outputs(real_ingest, tmp_path / "run1")
     d2 = write_ingest_outputs(real_ingest, tmp_path / "run2")
     assert d1 == d2
+
+
+# ---- 轮次 14 一般 3：输入面 fail-closed 扩展 -----------------------------------
+
+def test_duplicate_raw_instance_id_rejected():
+    rows = [make_row(), make_row()]  # 同 id 两行
+    st = Store()
+    with pytest.raises(IngestError, match="raw 行重复 instance_id"):
+        ingest_swegym_lite(rows=rows, survivors=["getmoto__moto-1"],
+                           image_store=st, raw_archive_sha256=D,
+                           image_manifest_keyed_sha256=D)
+
+
+def test_f2p_internal_duplicate_rejected():
+    row = make_row()
+    row["FAIL_TO_PASS"] = ["t.py::a", "t.py::a"]
+    with pytest.raises(IngestError, match="含重复测试项"):
+        _build(row)
+
+
+def test_f2p_p2p_overlap_rejected():
+    row = make_row()
+    row["PASS_TO_PASS"] = list(row["FAIL_TO_PASS"])
+    with pytest.raises(IngestError, match="交集非空"):
+        _build(row)
+
+
+# ---- 轮次 14 严重 1/2 + 一般 4：pins / strict validator / loader ----------------
+
+@pytest.fixture(scope="module")
+def real_pins():
+    return load_and_verify_t1_pins(REPO_ROOT)
+
+
+@pytest.fixture(scope="module")
+def real_store():
+    from repoharness2.taskset.image_manifest_store import load_state
+    df = DOCS / "data_freeze"
+    survivors = [s.strip() for s in (df / "labels/static_gate_survivors.txt").read_text().splitlines() if s.strip()]
+    frozen_refs = {l.strip() for l in (df / "meta/image_refs_swegym.txt").read_text().splitlines() if l.strip()}
+    refs_digest = hashlib.sha256((df / "meta/image_refs_swegym.txt").read_bytes()).hexdigest()
+
+    def expected_ref(iid: str) -> str:
+        return f"xingyaoww/sweb.eval.x86_64.{iid.replace('__', '_s_').lower()}:latest"
+
+    return load_state(DOCS / "s2/image_manifest_keyed.json",
+                      DOCS / "s2/raw/image_registry_evidence.jsonl",
+                      set(survivors), frozen_refs, refs_digest, expected_ref)
+
+
+def test_t1_pins_verify_ok_on_real_repo(real_pins):
+    assert len(vars(real_pins)) == 7
+
+
+def test_t1_pins_tamper_detected(tmp_path):
+    import shutil
+    from repoharness2.envpack import t1_pins as tp
+    fake_root = tmp_path
+    src = REPO_ROOT / tp.T1_PINS_RELPATH
+    dst = fake_root / tp.T1_PINS_RELPATH
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(src, dst)
+    doc = json.loads(src.read_text())
+    for ent in doc["pins"].values():
+        if ent["kind"] != "repo_file":
+            continue
+        p = fake_root / ent["path"]
+        p.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(REPO_ROOT / ent["path"], p)
+    raw_rel = doc["pins"]["raw_archive"]["path"]
+    p = fake_root / raw_rel
+    p.write_bytes(p.read_bytes() + b"\n")  # 篡改一个字节级差异
+    with pytest.raises(T1PinsError, match="T1 输入漂移"):
+        load_and_verify_t1_pins(fake_root)
+
+
+def test_strict_validator_rejects_vendor_digest_tamper(real_pins, real_store):
+    result = load_ingest_outputs(DOCS / "s2/ingest", pins=real_pins, image_store=real_store)
+    from repoharness2.envpack.bundles_v2 import EnvironmentPackageV1
+    pkg, pub, grd, val = (result.packages[0], result.public_bundles[0],
+                          result.grading_bundles[0], result.validation_bundles[0])
+    tampered = EnvironmentPackageV1(**{**pkg.model_dump(), "spec_vendor_json_sha256": "sha256:" + "e" * 64})
+    with pytest.raises(IngestError, match="固定注册表不符"):
+        verify_package_relations(tampered, pub, grd, val, pins=real_pins, image_store=real_store)
+
+
+def test_strict_validator_rejects_provenance_tamper(real_pins, real_store):
+    result = load_ingest_outputs(DOCS / "s2/ingest", pins=real_pins, image_store=real_store)
+    from repoharness2.envpack.bundles_v2 import EnvironmentPackageV1
+    pkg, pub, grd, val = (result.packages[0], result.public_bundles[0],
+                          result.grading_bundles[0], result.validation_bundles[0])
+    tampered = EnvironmentPackageV1(**{**pkg.model_dump(), "raw_archive_sha256": "sha256:" + "d" * 64})
+    with pytest.raises(IngestError, match="T1 封板 pin 不符"):
+        verify_package_relations(tampered, pub, grd, val, pins=real_pins, image_store=real_store)
+
+
+def test_strict_loader_real_roundtrip(real_pins, real_store):
+    result = load_ingest_outputs(DOCS / "s2/ingest", pins=real_pins, image_store=real_store)
+    assert len(result.packages) == 216
+    assert len(result.duplicate_clusters) == 2
+
+
+def test_strict_loader_rejects_data_file_tamper(tmp_path, real_pins, real_store):
+    import shutil
+    dst = tmp_path / "ingest"
+    shutil.copytree(DOCS / "s2/ingest", dst)
+    f = dst / "public_bundles_v0.jsonl"
+    f.write_bytes(f.read_bytes() + b"\n")
+    with pytest.raises(IngestError, match="与提交记录不符"):
+        load_ingest_outputs(dst, pins=real_pins, image_store=real_store)

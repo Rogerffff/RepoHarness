@@ -19,11 +19,11 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "rh2" / "src"))
 
 from repoharness2.envpack.ingest_swegym_lite import (  # noqa: E402
-    STRIP_SPEC_SHA256,
     ingest_swegym_lite,
-    verify_package_relations,
+    load_ingest_outputs,
     write_ingest_outputs,
 )
+from repoharness2.envpack.t1_pins import T1PinsError, load_and_verify_t1_pins  # noqa: E402
 from repoharness2.taskset.image_manifest_store import load_state  # noqa: E402
 
 DOCS = REPO_ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams"
@@ -46,11 +46,13 @@ def fail(msg: str) -> None:
 
 
 def main() -> None:
-    # 前置 0：strip_spec 常量与冻结文件同步（digest pin）
-    strip_spec = DATA_FREEZE / "strip_spec.yaml"
-    actual = hashlib.sha256(strip_spec.read_bytes()).hexdigest()
-    if actual != STRIP_SPEC_SHA256:
-        fail(f"strip_spec.yaml digest 不符（{actual[:16]}…）——常量可能与冻结文件脱节")
+    # 前置 0（codex 轮次 14 严重 1）：全部输入对 T1 封板 pins 验证——
+    # 不是"读当前文件现算 SHA 当 provenance"，漂移即 fail-closed 报告。
+    try:
+        pins = load_and_verify_t1_pins(REPO_ROOT)
+    except T1PinsError as exc:
+        fail(str(exc))
+    print("[t2c] T1 封板 pins 验证 OK：7/7 输入资产 digest 命中")
 
     survivors = [s.strip() for s in
                  (DATA_FREEZE / "labels/static_gate_survivors.txt").read_text().splitlines()
@@ -70,22 +72,15 @@ def main() -> None:
         fail(f"键控镜像清单加载失败: {exc}")
 
     rows = [json.loads(l) for l in RAW.read_text().splitlines() if l.strip()]
-    raw_sha = hashlib.sha256(RAW.read_bytes()).hexdigest()
-    keyed_sha = hashlib.sha256((DOCS / "s2/image_manifest_keyed.json").read_bytes()).hexdigest()
 
     try:
         result = ingest_swegym_lite(
             rows=rows, survivors=survivors, image_store=store,
-            raw_archive_sha256="sha256:" + raw_sha,
-            image_manifest_keyed_sha256="sha256:" + keyed_sha,
+            raw_archive_sha256="sha256:" + pins.raw_archive,          # 来自封板 pins
+            image_manifest_keyed_sha256="sha256:" + pins.image_manifest_keyed,
         )
     except ValueError as exc:
         fail(str(exc))
-
-    # 消费期重验抽全量（构造后立刻按登记义务过一遍四方关系 + eval_cmd 互检）
-    for pkg, pub, grd, val in zip(result.packages, result.public_bundles,
-                                  result.grading_bundles, result.validation_bundles):
-        verify_package_relations(pkg, pub, grd, val, image_store=store)
 
     # 已知同环境两对必须保留且判为 distinct（T1 报告语义定案）
     ids = {p.instance_id for p in result.packages}
@@ -94,7 +89,13 @@ def main() -> None:
             fail(f"已知同环境对 {a}/{b} 未同时保留（去重语义违约）")
     suspected = [c for c in result.duplicate_clusters if c.classification == "suspected_duplicate"]
 
-    digests = write_ingest_outputs(result, OUT_DIR)
+    digests = write_ingest_outputs(result, OUT_DIR, pins=pins)
+    # strict loader 回读自检（T2-d/e 的唯一消费入口在此先行实证：
+    # 提交记录 → 文件 digest → 模型 → 去重 → 216 条逐包 strict 验证）
+    reloaded = load_ingest_outputs(OUT_DIR, pins=pins, image_store=store)
+    if len(reloaded.packages) != len(result.packages):
+        fail("strict loader 回读数量不符")
+    print(f"[t2c] strict loader 回读自检 OK：{len(reloaded.packages)} 包全部通过消费期验证")
     print(f"[t2c] 216/216 构造成功；duplicate clusters: {len(result.duplicate_clusters)} "
           f"(suspected_duplicate: {len(suspected)})")
     for name, dig in sorted(digests.items()):

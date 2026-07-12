@@ -41,7 +41,8 @@ from repoharness2.envpack.bundles_v2 import (
     build_environment_package,
     build_private_grading_bundle,
 )
-from repoharness2.envpack.spec_vendor import verify_grading_eval_cmd
+from repoharness2.envpack.spec_vendor import vendor_pin, verify_grading_eval_cmd
+from repoharness2.envpack.t1_pins import T1InputPins
 from repoharness2.taskset.image_manifest_store import Store, finish_assertions
 
 # ---------------------------------------------------------------------------
@@ -124,6 +125,8 @@ def _as_test_list(value, what: str, iid: str) -> list[str]:
         value = json.loads(value)
     if not isinstance(value, list) or not all(isinstance(x, str) and x for x in value):
         raise IngestError(f"{iid}: {what} 不是非空字符串列表")
+    if len(set(value)) != len(value):  # 轮次 14 一般 3：内部重复拒绝
+        raise IngestError(f"{iid}: {what} 含重复测试项")
     return list(value)
 
 
@@ -152,14 +155,19 @@ def build_task(row: dict, image_entry: dict, *,
     )
     scan_public_bundle(public)  # 模型可见面泄漏扫描（v1 第三道防线复用）
 
+    f2p = _as_test_list(row["FAIL_TO_PASS"], "FAIL_TO_PASS", iid)
+    p2p = _as_test_list(row["PASS_TO_PASS"], "PASS_TO_PASS", iid)
+    overlap = set(f2p) & set(p2p)
+    if overlap:  # 轮次 14 一般 3：同一测试不能既是 F2P 又是 P2P
+        raise IngestError(f"{iid}: FAIL_TO_PASS 与 PASS_TO_PASS 交集非空: {sorted(overlap)[:3]}")
     grading = build_private_grading_bundle(
         instance_id=iid,
         repo=row["repo"],
         version=row["version"],
         base_commit=row["base_commit"],
         test_patch=row["test_patch"],
-        fail_to_pass=_as_test_list(row["FAIL_TO_PASS"], "FAIL_TO_PASS", iid),
-        pass_to_pass=_as_test_list(row["PASS_TO_PASS"], "PASS_TO_PASS", iid),
+        fail_to_pass=f2p,
+        pass_to_pass=p2p,
     )
     validation = ValidationOnlyBundle(
         instance_id=iid,
@@ -175,11 +183,14 @@ def build_task(row: dict, image_entry: dict, *,
 
 
 def _member_fingerprint(row: dict) -> dict[str, str]:
+    iid = row["instance_id"]
     return {
         "problem_statement_sha256": _sha256_text(row["problem_statement"]),
         "test_patch_sha256": _sha256_text(row["test_patch"]),
-        "fail_to_pass_sha256": _sha256_text(json.dumps(sorted(row["FAIL_TO_PASS"]))),
-        "pass_to_pass_sha256": _sha256_text(json.dumps(sorted(row["PASS_TO_PASS"]))),
+        "fail_to_pass_sha256": _sha256_text(
+            json.dumps(sorted(_as_test_list(row["FAIL_TO_PASS"], "FAIL_TO_PASS", iid)))),
+        "pass_to_pass_sha256": _sha256_text(
+            json.dumps(sorted(_as_test_list(row["PASS_TO_PASS"], "PASS_TO_PASS", iid)))),
         "golden_patch_sha256": _sha256_text(row["patch"]),
     }
 
@@ -210,13 +221,19 @@ def ingest_swegym_lite(*, rows: list[dict], survivors: list[str],
                        image_store: Store, raw_archive_sha256: str,
                        image_manifest_keyed_sha256: str) -> IngestResult:
     """216 题主入口。任何一步 fail-closed，不产出半成品。"""
+    # 输入行损坏最先报（字段面 + 重复 id），再做 survivor 面与镜像面检查
+    by_id: dict[str, dict] = {}
+    for r in rows:
+        check_strip_spec_fields(r)  # 轮次 14 一般 3：全部行（230）先过字段面，不只选中 216
+        iid_r = r["instance_id"]
+        if iid_r in by_id:
+            raise IngestError(f"raw 行重复 instance_id: {iid_r}（fail-closed，不静默覆盖）")
+        by_id[iid_r] = r
     if len(survivors) != EXPECTED_SURVIVOR_COUNT or len(set(survivors)) != EXPECTED_SURVIVOR_COUNT:
         raise IngestError(f"survivors 数量/唯一性异常: {len(survivors)}")
     problems = finish_assertions(image_store, set(survivors))
     if problems:
         raise IngestError("键控镜像清单未达完成态，拒绝消费：\n  " + "\n  ".join(problems))
-
-    by_id = {r["instance_id"]: r for r in rows}
     missing = [s for s in survivors if s not in by_id]
     if missing:
         raise IngestError(f"{len(missing)} 个 survivor 不在 raw 行中: {missing[:5]}")
@@ -239,13 +256,9 @@ def ingest_swegym_lite(*, rows: list[dict], survivors: list[str],
     return result
 
 
-def verify_package_relations(package: EnvironmentPackageV1,
-                             public: PublicTaskBundle,
-                             grading: PrivateGradingBundleV2,
-                             validation: ValidationOnlyBundle,
-                             image_store: Store | None = None) -> None:
-    """消费期重验（codex 轮次 12 义务）：按 digest 取回 bundle 后必须重跑本函数，
-    不能只信构造时检查。image_store 提供时同时核对镜像身份。"""
+def _relation_errors(package: EnvironmentPackageV1, public: PublicTaskBundle,
+                     grading: PrivateGradingBundleV2,
+                     validation: ValidationOnlyBundle) -> list[str]:
     errs: list[str] = []
     if package.public_bundle_digest != public.digest():
         errs.append("public digest 不符")
@@ -261,38 +274,191 @@ def verify_package_relations(package: EnvironmentPackageV1,
         errs.append("base_commit 三方不一致")
     if (package.image, package.image_manifest_digest) != (public.image, public.image_manifest_digest):
         errs.append("镜像身份 package↔public 不符")
-    if image_store is not None:
-        entry = image_store.entries.get(package.instance_id)
-        if entry is None:
-            errs.append("键控清单无该 instance_id")
-        elif (entry["source_image_ref"], entry["resolved_manifest_digest"]) != (
-                package.image, package.image_manifest_digest):
-            errs.append("镜像身份与键控清单不符")
+    return errs
+
+
+def verify_bundle_relations_non_authoritative(package: EnvironmentPackageV1,
+                                              public: PublicTaskBundle,
+                                              grading: PrivateGradingBundleV2,
+                                              validation: ValidationOnlyBundle) -> None:
+    """**非权威**关系检查（合成夹具单测用）：不核 T1 pins、不核镜像清单、
+    不做消费期泄漏扫描。正式消费方一律用 `verify_package_relations`。"""
+    errs = _relation_errors(package, public, grading, validation)
+    if errs:
+        raise IngestError(f"{package.instance_id}: 关系验证失败: {'; '.join(errs)}")
+    verify_grading_eval_cmd(grading)
+
+
+def verify_package_relations(package: EnvironmentPackageV1,
+                             public: PublicTaskBundle,
+                             grading: PrivateGradingBundleV2,
+                             validation: ValidationOnlyBundle,
+                             *, pins: T1InputPins, image_store: Store) -> None:
+    """strict 消费期重验（codex 轮次 12 义务 + 轮次 14 严重 2 封旁路）：
+    pins 与 image_store 都是**必传**——不存在"忘传就静默跳过"的降级路径。
+
+    无条件验证：四方 digest/身份关系、镜像身份对键控清单、provenance 三 digest
+    对可信 pins/注册表、eval_cmd 注册表互检、public 面消费期泄漏扫描。"""
+    errs = _relation_errors(package, public, grading, validation)
+    entry = image_store.entries.get(package.instance_id)
+    if entry is None:
+        errs.append("键控清单无该 instance_id")
+    elif (entry["source_image_ref"], entry["resolved_manifest_digest"]) != (
+            package.image, package.image_manifest_digest):
+        errs.append("镜像身份与键控清单不符")
+    # provenance 三 digest：raw/keyed 对封板 pins；vendor 对固定注册表（轮次 14 旁路 1/2）
+    if package.raw_archive_sha256 != "sha256:" + pins.raw_archive:
+        errs.append("raw_archive_sha256 与 T1 封板 pin 不符")
+    if package.image_manifest_keyed_sha256 != "sha256:" + pins.image_manifest_keyed:
+        errs.append("image_manifest_keyed_sha256 与 T1 封板 pin 不符")
+    if package.spec_vendor_json_sha256 != "sha256:" + vendor_pin(grading.spec_vendor_id).json_sha256:
+        errs.append("spec_vendor_json_sha256 与固定注册表不符")
     if errs:
         raise IngestError(f"{package.instance_id}: 消费期关系验证失败: {'; '.join(errs)}")
-    verify_grading_eval_cmd(grading)  # eval_cmd 第 N 道互检（消费期防线）
+    verify_grading_eval_cmd(grading)   # eval_cmd 消费期互检
+    scan_public_bundle(public)         # 消费期泄漏扫描（轮次 14 旁路 4）
 
 
-def write_ingest_outputs(result: IngestResult, out_dir: Path) -> dict[str, str]:
-    """确定性落盘（instance_id 排序 + 键排序），返回 {相对文件名: sha256}。"""
-    out_dir.mkdir(parents=True, exist_ok=True)
+INGEST_MANIFEST_NAME = "ingest_manifest_v0.json"
+INGEST_MANIFEST_SCHEMA_ID = "rh2.s2_1.ingest_manifest.v1"
+_DATA_FILES = (
+    "environment_packages_v0.jsonl",
+    "public_bundles_v0.jsonl",
+    "grading_bundles_v2_v0.jsonl",
+    "validation_bundles_v0.jsonl",
+    "duplicate_clusters_v0.json",
+)
+
+
+def _atomic_write(path: Path, payload: bytes) -> None:
+    import os
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with tmp.open("wb") as fh:
+        fh.write(payload)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
+def write_ingest_outputs(result: IngestResult, out_dir: Path,
+                         pins: T1InputPins | None = None) -> dict[str, str]:
+    """事务化落盘（轮次 14 一般 4）：五数据文件逐个原子写，最后原子写
+    `ingest_manifest_v0.json` 作为**提交记录**（五文件 digest + 行数 +
+    T1 输入 pins）。崩溃只可能留下"数据文件超前、无提交记录更新"的状态，
+    严格 loader 以提交记录为准。返回 {文件名: sha256}（含提交记录自身）。"""
     digests: dict[str, str] = {}
+    counts: dict[str, int] = {}
 
-    def _dump_jsonl(name: str, models) -> None:
-        payload = "".join(
+    def _payload_jsonl(models) -> bytes:
+        return "".join(
             json.dumps(m.model_dump(mode="json"), ensure_ascii=False, sort_keys=True) + "\n"
             for m in models
         ).encode("utf-8")
-        (out_dir / name).write_bytes(payload)
-        digests[name] = hashlib.sha256(payload).hexdigest()
 
-    _dump_jsonl("environment_packages_v0.jsonl", result.packages)
-    _dump_jsonl("public_bundles_v0.jsonl", result.public_bundles)
-    _dump_jsonl("grading_bundles_v2_v0.jsonl", result.grading_bundles)
-    _dump_jsonl("validation_bundles_v0.jsonl", result.validation_bundles)
-    clusters_payload = (json.dumps(
-        [c.to_json() for c in result.duplicate_clusters],
-        ensure_ascii=False, sort_keys=True, indent=1) + "\n").encode("utf-8")
-    (out_dir / "duplicate_clusters_v0.json").write_bytes(clusters_payload)
-    digests["duplicate_clusters_v0.json"] = hashlib.sha256(clusters_payload).hexdigest()
+    payloads = {
+        "environment_packages_v0.jsonl": _payload_jsonl(result.packages),
+        "public_bundles_v0.jsonl": _payload_jsonl(result.public_bundles),
+        "grading_bundles_v2_v0.jsonl": _payload_jsonl(result.grading_bundles),
+        "validation_bundles_v0.jsonl": _payload_jsonl(result.validation_bundles),
+        "duplicate_clusters_v0.json": (json.dumps(
+            [c.to_json() for c in result.duplicate_clusters],
+            ensure_ascii=False, sort_keys=True, indent=1) + "\n").encode("utf-8"),
+    }
+    line_counts = {
+        "environment_packages_v0.jsonl": len(result.packages),
+        "public_bundles_v0.jsonl": len(result.public_bundles),
+        "grading_bundles_v2_v0.jsonl": len(result.grading_bundles),
+        "validation_bundles_v0.jsonl": len(result.validation_bundles),
+        "duplicate_clusters_v0.json": len(result.duplicate_clusters),
+    }
+    for name in _DATA_FILES:
+        _atomic_write(out_dir / name, payloads[name])
+        digests[name] = hashlib.sha256(payloads[name]).hexdigest()
+        counts[name] = line_counts[name]
+
+    manifest = {
+        "schema_id": INGEST_MANIFEST_SCHEMA_ID,
+        "files": {n: {"sha256": digests[n], "count": counts[n]} for n in _DATA_FILES},
+        "package_count": len(result.packages),
+        "t1_input_pins": (
+            {k: getattr(pins, k) for k in sorted(vars(pins))} if pins is not None else None
+        ),
+    }
+    mp = (json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=1) + "\n").encode("utf-8")
+    _atomic_write(out_dir / INGEST_MANIFEST_NAME, mp)
+    digests[INGEST_MANIFEST_NAME] = hashlib.sha256(mp).hexdigest()
     return digests
+
+
+def load_ingest_outputs(out_dir: Path, *, pins: T1InputPins,
+                        image_store: Store) -> IngestResult:
+    """strict loader（轮次 14 一般 4）：T2-d/e 消费 ingest 产物的**唯一入口**
+    ——不许直接打开 JSONL。链条：提交记录 → 五文件 digest → 模型解析 →
+    重复 id 拒绝 → 四文件 id 集合相等 → 逐包 strict `verify_package_relations`。"""
+    mp = out_dir / INGEST_MANIFEST_NAME
+    if not mp.exists():
+        raise IngestError(f"提交记录缺失: {INGEST_MANIFEST_NAME}")
+    manifest = json.loads(mp.read_text())
+    if manifest.get("schema_id") != INGEST_MANIFEST_SCHEMA_ID:
+        raise IngestError(f"提交记录 schema_id 非法: {manifest.get('schema_id')!r}")
+    recorded_pins = manifest.get("t1_input_pins") or {}
+    for k in sorted(vars(pins)):
+        if recorded_pins.get(k) != getattr(pins, k):
+            raise IngestError(f"提交记录的 t1_input_pins.{k} 与封板 pins 不符")
+    files = manifest.get("files", {})
+    if set(files) != set(_DATA_FILES):
+        raise IngestError("提交记录 files 键集合不符")
+    for name in _DATA_FILES:
+        p = out_dir / name
+        if not p.exists():
+            raise IngestError(f"数据文件缺失: {name}")
+        actual = hashlib.sha256(p.read_bytes()).hexdigest()
+        if actual != files[name]["sha256"]:
+            raise IngestError(f"{name}: digest 与提交记录不符（数据文件被改/半写）")
+
+    def _load_models(name: str, cls):
+        out = []
+        seen: set[str] = set()
+        for line in (out_dir / name).read_text().splitlines():
+            if not line.strip():
+                continue
+            m = cls.model_validate(json.loads(line))
+            if m.instance_id in seen:
+                raise IngestError(f"{name}: 重复 instance_id {m.instance_id}")
+            seen.add(m.instance_id)
+            out.append(m)
+        if len(out) != files[name]["count"]:
+            raise IngestError(f"{name}: 行数 {len(out)} 与提交记录 {files[name]['count']} 不符")
+        return out
+
+    result = IngestResult(
+        packages=_load_models("environment_packages_v0.jsonl", EnvironmentPackageV1),
+        public_bundles=_load_models("public_bundles_v0.jsonl", PublicTaskBundle),
+        grading_bundles=_load_models("grading_bundles_v2_v0.jsonl", PrivateGradingBundleV2),
+        validation_bundles=_load_models("validation_bundles_v0.jsonl", ValidationOnlyBundle),
+    )
+    ids = [
+        {m.instance_id for m in result.packages},
+        {m.instance_id for m in result.public_bundles},
+        {m.instance_id for m in result.grading_bundles},
+        {m.instance_id for m in result.validation_bundles},
+    ]
+    if not (ids[0] == ids[1] == ids[2] == ids[3]):
+        raise IngestError("四文件 instance_id 集合不一致")
+    by = {
+        "public": {m.instance_id: m for m in result.public_bundles},
+        "grading": {m.instance_id: m for m in result.grading_bundles},
+        "validation": {m.instance_id: m for m in result.validation_bundles},
+    }
+    for pkg in result.packages:
+        verify_package_relations(
+            pkg, by["public"][pkg.instance_id], by["grading"][pkg.instance_id],
+            by["validation"][pkg.instance_id], pins=pins, image_store=image_store)
+    clusters = json.loads((out_dir / "duplicate_clusters_v0.json").read_text())
+    result.duplicate_clusters = [
+        DuplicateCluster(repo_key_lower=c["repo_key_lower"], base_commit=c["base_commit"],
+                         members=c["members"], classification=c["classification"])
+        for c in clusters
+    ]
+    return result

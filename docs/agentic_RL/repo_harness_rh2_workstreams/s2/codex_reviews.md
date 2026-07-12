@@ -2459,3 +2459,14 @@ FA-1 不是失败实现。它已经把 fully async 最难的一批局部机制�
 
 在本文 P0 和 FA-2 identity foundation 完成前，`rh2_fully_async_training_path_verified` 必须保持 `false`。
 
+
+
+---
+
+## 轮次 14（2026-07-13：T2-c 复审 → 数据内容正确；2 严重 + 2 一般，T2-d 前修复）
+
+- **严重 1：运行器不验 T1 封板输入**——现算 SHA 当 provenance，一致性修改会被合法化。【修复：t1_input_pins_v1.json 独立封板记录 + 代码常量锚定 + 运行器 7/7 pins 验证 + 漂移注入测试】
+- **严重 2：strict validator 三旁路**——vendor digest/raw+keyed pins 不核、image_store 可选静默跳过、消费期无泄漏扫描。【修复：pins+store 必传无条件全查 + 消费期 scan_public_bundle + 非权威变体显式命名 + 篡改回归测试】
+- **一般 3：raw 重复 id 静默覆盖 / 只查选中 216 行字段面 / F2P/P2P 重复与交集未拒**。【全部修复 + 测试】
+- **一般 4：五文件输出无事务提交记录**。【修复：原子写 + ingest_manifest_v0.json 提交记录 + load_ingest_outputs strict loader（T2-d/e 唯一入口）+ 回读自检】
+- codex 核验正确项：四文件 216 条 ID/顺序一致、关系/镜像/eval/泄漏全过、两簇符合预期、15 项 digest 匹配、确定性复建逐字节相等、36+890 通过；工作区 inspector 红灯来自 FA 在制文件与 T2-c 无关。
