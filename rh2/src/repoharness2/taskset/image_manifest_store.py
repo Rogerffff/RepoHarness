@@ -1,0 +1,244 @@
+"""S2-1 键控镜像清单的状态存储：加载校验 / 事务写 / 完成断言（纯逻辑，零网络）。
+
+从 `rh2/experiments/s2_1_ingestion/resolve_image_digests.py` 抽出（codex 轮次 7：
+数据脚本的状态机必须可单测），修复该轮指出的三个缺口：
+
+1. **manifest ↔ evidence 引用完整性**：`is_enriched` 只看 entry 字段形状；
+   真正的 enriched 判定发生在 `load_state` / `finish_assertions`——逐 entry
+   交叉核对 evidence 行（manifest/config digest、repository、content type、
+   platform、evidence_id），evidence 不得有多余/重复 id。
+2. **双文件事务**：`flush_transaction` 先原子写 evidence → 计算其 sha256 +
+   行数写进 manifest header → 最后原子写 manifest（manifest = 提交记录）。
+   崩溃只可能留下"evidence 超前于 manifest"的状态，`load_state` 按提交记录
+   恢复（丢弃未提交的 evidence 行并告警），反方向（manifest 声称而 evidence
+   缺失/不符）一律拒绝。
+3. **引用路径**：`registry_evidence_ref = raw/image_registry_evidence.jsonl#<evidence_id>`
+   （相对 manifest 所在目录可解析；evidence 行带稳定 `evidence_id` 与 schema_id）。
+
+legacy 迁移：v2 产物（旧 ref 格式、evidence 无 schema_id、未验 config blob
+哈希）加载时归类为 `legacy`——digest 事实保留，但不算 enriched，由脚本的
+升级通道（仅 blob GET，不计 pull 限额）补验后升格。
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+MANIFEST_SCHEMA_ID = "rh2.s2_1.image_manifest_keyed.v3"
+LEGACY_MANIFEST_SCHEMA_IDS = {"rh2.s2_1.image_manifest_keyed.v2"}
+EVIDENCE_SCHEMA_ID = "rh2.s2_1.image_registry_evidence.v1"
+EVIDENCE_RELPATH = "raw/image_registry_evidence.jsonl"
+DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+ENTRY_REQUIRED = ("manifest_content_type", "resolved_at", "method")
+# entry ↔ evidence 必须逐字段一致的事实面
+CROSS_FIELDS = (
+    ("resolved_manifest_digest", "manifest_digest"),
+    ("config_digest", "config_digest"),
+    ("manifest_content_type", "manifest_content_type"),
+)
+
+
+def evidence_id_for(iid: str) -> str:
+    return f"imgev-{iid}"
+
+
+def evidence_ref_for(iid: str) -> str:
+    return f"{EVIDENCE_RELPATH}#{evidence_id_for(iid)}"
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+@dataclass
+class Store:
+    """内存态：entries 按 instance_id 键控；evidence 同键。"""
+
+    entries: dict[str, dict] = field(default_factory=dict)
+    evidence: dict[str, dict] = field(default_factory=dict)
+    legacy_ids: set[str] = field(default_factory=set)  # 需 blob 补验的旧条目
+    recovered_drop: int = 0  # 事务恢复时丢弃的未提交 evidence 行数
+
+
+def validate_entry(e: dict, survivors: set[str], frozen_refs: set[str],
+                   expected_ref) -> list[str]:
+    problems: list[str] = []
+    iid = e.get("instance_id", "")
+    if iid not in survivors:
+        return [f"未知 instance_id: {iid!r}"]
+    if e.get("source_image_ref") != expected_ref(iid) or e["source_image_ref"] not in frozen_refs:
+        problems.append(f"{iid}: source_image_ref 非法")
+    if not DIGEST_RE.match(e.get("resolved_manifest_digest", "") or ""):
+        problems.append(f"{iid}: manifest digest 非法")
+    for f in ENTRY_REQUIRED:
+        if not e.get(f):
+            problems.append(f"{iid}: 缺字段 {f}")
+    return problems
+
+
+def entry_shape_enriched(e: dict) -> bool:
+    """entry 自身字段形状是否声称 enriched（不含 evidence 交叉核对）。"""
+    return (
+        DIGEST_RE.match(e.get("config_digest", "") or "") is not None
+        and e.get("platform") == "linux/amd64"
+        and e.get("platform_source") == "config_blob"
+        and e.get("registry_evidence_ref") == evidence_ref_for(e.get("instance_id", ""))
+    )
+
+
+def cross_check(e: dict, ev: dict) -> list[str]:
+    iid = e.get("instance_id", "")
+    problems: list[str] = []
+    if ev.get("schema_id") != EVIDENCE_SCHEMA_ID:
+        problems.append(f"{iid}: evidence schema_id 非法: {ev.get('schema_id')!r}")
+    if ev.get("evidence_id") != evidence_id_for(iid):
+        problems.append(f"{iid}: evidence_id 不符")
+    for ef, vf in CROSS_FIELDS:
+        if e.get(ef) != ev.get(vf):
+            problems.append(f"{iid}: entry.{ef} 与 evidence.{vf} 不一致")
+    repo = e.get("source_image_ref", "").partition(":")[0]
+    if ev.get("repository") != repo:
+        problems.append(f"{iid}: evidence.repository 不符")
+    plat = ev.get("config_platform") or {}
+    if (plat.get("os"), plat.get("architecture")) != ("linux", "amd64"):
+        problems.append(f"{iid}: evidence 平台事实非 linux/amd64: {plat}")
+    if ev.get("config_blob_sha256_verified") is not True:
+        problems.append(f"{iid}: config blob 哈希未验证")
+    return problems
+
+
+def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
+               frozen_refs: set[str], refs_digest: str, expected_ref) -> Store:
+    """fail-closed 加载；唯一允许的降级 = 事务恢复（evidence 超前）与 legacy 归类。"""
+    st = Store()
+    if not manifest_path.exists():
+        if evidence_path.exists():
+            raise ValueError("evidence 存在而 manifest 不存在——无提交记录，拒绝加载（先人工裁决）")
+        return st
+
+    doc = json.loads(manifest_path.read_text())
+    hdr = doc.get("header", {})
+    schema = hdr.get("schema_id")
+    legacy_manifest = schema in LEGACY_MANIFEST_SCHEMA_IDS
+    if schema != MANIFEST_SCHEMA_ID and not legacy_manifest:
+        raise ValueError(f"manifest schema_id 不认识: {schema!r}")
+    if hdr.get("source_refs_file_sha256") not in (None, refs_digest):
+        raise ValueError("header 的 refs 文件 digest 与当前冻结清单不符（数据面变动？）")
+
+    problems: list[str] = []
+    for e in doc.get("entries", []):
+        problems.extend(validate_entry(e, survivors, frozen_refs, expected_ref))
+        st.entries[e.get("instance_id", "")] = e
+    if problems:
+        raise ValueError("manifest entries 校验不过，拒绝续跑：\n  " + "\n  ".join(problems[:10]))
+
+    # evidence 读入（重复 id 即拒）
+    raw_lines: dict[str, dict] = {}
+    if evidence_path.exists():
+        for line in evidence_path.read_text().splitlines():
+            if not line.strip():
+                continue
+            ev = json.loads(line)
+            iid = ev.get("instance_id", "")
+            if iid in raw_lines:
+                raise ValueError(f"evidence 重复 instance_id: {iid}")
+            raw_lines[iid] = ev
+
+    # 事务恢复判定：header 记录的 evidence digest 是提交记录。
+    committed_sha = hdr.get("evidence_file_sha256")
+    if committed_sha is not None and evidence_path.exists():
+        actual = sha256_bytes(evidence_path.read_bytes())
+        if actual != committed_sha:
+            # 唯一可恢复方向：evidence 超前（含全部已提交行 + 未提交新行）。
+            claimed = {i for i, e in st.entries.items() if entry_shape_enriched(e)}
+            if not claimed <= set(raw_lines):
+                raise ValueError("evidence 与提交记录不符且缺已提交行——不可恢复，拒绝")
+            extras = set(raw_lines) - claimed
+            for x in extras:
+                raw_lines.pop(x)
+            st.recovered_drop = len(extras)
+
+    # 逐 entry 分类：enriched（须 evidence 交叉一致）/ legacy / digest-only
+    for iid, e in st.entries.items():
+        if entry_shape_enriched(e):
+            ev = raw_lines.get(iid)
+            if ev is None:
+                raise ValueError(f"{iid}: entry 声称 enriched 但 evidence 缺失——拒绝")
+            errs = cross_check(e, ev)
+            if errs:
+                raise ValueError("entry↔evidence 交叉核对失败：\n  " + "\n  ".join(errs[:6]))
+            st.evidence[iid] = ev
+        elif legacy_manifest or e.get("config_digest"):
+            # v2 legacy：digest 事实在，blob 未验/ref 旧格式 → 归 legacy 待升级
+            st.legacy_ids.add(iid)
+            if iid in raw_lines:
+                st.evidence[iid] = raw_lines[iid]  # 旧 evidence 保留，升级时重写
+        # 其余 = digest-only（v1 形态），走完整富化
+    extra_ev = set(raw_lines) - set(st.entries)
+    if extra_ev:
+        raise ValueError(f"evidence 含 manifest 之外的 id（{len(extra_ev)} 条）——拒绝")
+    return st
+
+
+def is_enriched(st: Store, iid: str) -> bool:
+    e = st.entries.get(iid)
+    if e is None or iid in st.legacy_ids or not entry_shape_enriched(e):
+        return False
+    ev = st.evidence.get(iid)
+    return ev is not None and not cross_check(e, ev)
+
+
+def _atomic_write(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with tmp.open("wb") as fh:
+        fh.write(payload)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
+def flush_transaction(manifest_path: Path, evidence_path: Path, st: Store,
+                      refs_digest: str) -> None:
+    """事务序：evidence 先落盘 → digest/行数进 header → manifest 最后作为提交记录。"""
+    ev_payload = "".join(
+        json.dumps(st.evidence[k], ensure_ascii=False, sort_keys=True) + "\n"
+        for k in sorted(st.evidence)
+    ).encode("utf-8")
+    _atomic_write(evidence_path, ev_payload)
+    enriched = sum(1 for k in st.entries if is_enriched(st, k))
+    doc = {
+        "header": {
+            "schema_id": MANIFEST_SCHEMA_ID,
+            "schema_version": 3,
+            "purpose": "S2-1 T1b 键控镜像清单：216 survivor 的稳定镜像身份 + 实证平台",
+            "source_refs_file": "data_freeze/meta/image_refs_swegym.txt",
+            "source_refs_file_sha256": refs_digest,
+            "evidence_file": EVIDENCE_RELPATH,
+            "evidence_file_sha256": sha256_bytes(ev_payload),
+            "evidence_line_count": len(st.evidence),
+            "count": len(st.entries),
+            "enriched_count": enriched,
+        },
+        "entries": [st.entries[k] for k in sorted(st.entries)],
+    }
+    payload = (json.dumps(doc, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+    _atomic_write(manifest_path, payload)
+
+
+def finish_assertions(st: Store, survivors: set[str]) -> list[str]:
+    problems: list[str] = []
+    if set(st.entries) != survivors:
+        problems.append(f"entries {len(st.entries)} 与 survivors {len(survivors)} 集合不等")
+    if set(st.evidence) != survivors:
+        problems.append(f"evidence {len(st.evidence)} 与 survivors {len(survivors)} 集合不等")
+    not_enriched = [k for k in st.entries if not is_enriched(st, k)]
+    if not_enriched:
+        problems.append(f"{len(not_enriched)} 条未 enriched: {sorted(not_enriched)[:5]}")
+    return problems

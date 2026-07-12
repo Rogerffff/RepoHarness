@@ -1,32 +1,27 @@
 #!/usr/bin/env python3
-"""S2-1 T1b（v2）：216 survivor 的键控镜像清单——digest + 实证 platform + evidence。
+"""S2-1 T1b（v3）：216 survivor 键控镜像清单——digest + 实证 platform + evidence。
 
-v2 相对 v1 的修复（codex 轮次 6 审查，存档 s2/codex_reviews.md）：
-  1. 续跑 fail-closed：加载旧文件先逐条严格校验（id ∈ survivors、ref 与规则
-     推导一致且在冻结清单中、digest 是合法 sha256、必填字段齐全、无多余 id、
-     header 的 refs 文件 digest 匹配），任何损坏即拒绝续跑；完成时强制
-     set(entries) == set(survivors) 且逐条 enriched。
-  2. 幂等：header（含 schema_id）由事实重建并与旧值比对，不静默清空。
-  3. 原子写：临时文件 + fsync + os.replace，任何时刻磁盘上都是合法 JSON。
-  4. 平台实证（计划 §2 交付物 2 的完整口径）：逐镜像 GET manifest（校验
-     Docker-Content-Digest == 已存 digest，顺带漂移检测）→ 取 config.digest
-     → GET config blob（blob 不计 pull 限额）→ 读 os/architecture 断言
-     linux/amd64；evidence 逐镜像落 s2/raw/image_registry_evidence.jsonl
-     （manifest/config digest + platform 事实 + 时间戳），entry 带
-     registry_evidence_ref 回链。
-  5. 限额感知：manifest GET 计入 Docker Hub pull 限额（匿名 100/6h/IP）——
-     每次响应读 ratelimit-remaining 头，余量 < 8 时优雅停车（checkpoint
-     已落盘，重跑续做），退出码 3 = INCOMPLETE_RESUMABLE。
+v3（codex 轮次 7）：状态机抽到 `repoharness2.taskset.image_manifest_store`
+（可单测，见 rh2/tests/taskset/test_image_manifest_store.py），修复：
+  1. manifest ↔ evidence 引用完整性（enriched 判定含逐字段交叉核对；
+     evidence 缺失/篡改/多余/重复一律拒绝）。
+  2. 双文件事务（evidence 先写，digest+行数入 header，manifest 最后作提交
+     记录；崩溃唯一可能 = evidence 超前，load 按提交记录恢复）。
+  3. evidence_ref 修正为 `raw/image_registry_evidence.jsonl#imgev-<id>`，
+     evidence 行带 schema_id + 稳定 evidence_id + config blob 哈希实证
+     （下载 blob 原始字节重算 sha256 必须等于 config_digest）。
 
-用法：uv run --group data python rh2/experiments/s2_1_ingestion/resolve_image_digests.py
+v2 legacy 产物的升级通道：digest 事实保留，逐条仅重取 config blob
+（blob GET 不计 pull 限额）补验哈希与平台后升格——不重复消耗 manifest GET 限额。
+
+退出码：0 = 216/216 全部 enriched；3 = INCOMPLETE_RESUMABLE（限额停车）。
+用法：uv run python rh2/experiments/s2_1_ingestion/resolve_image_digests.py
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import os
-import re
 import sys
 import time
 import urllib.request
@@ -34,19 +29,24 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT / "rh2" / "src"))
+
+from repoharness2.taskset.image_manifest_store import (  # noqa: E402
+    DIGEST_RE, EVIDENCE_SCHEMA_ID, Store, evidence_id_for, evidence_ref_for,
+    finish_assertions, flush_transaction, is_enriched, load_state, sha256_bytes,
+)
+
 DATA_FREEZE = REPO_ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze"
 S2_DIR = REPO_ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams/s2"
 OUT_PATH = S2_DIR / "image_manifest_keyed.json"
 EVIDENCE_PATH = S2_DIR / "raw/image_registry_evidence.jsonl"
-SCHEMA_ID = "rh2.s2_1.image_manifest_keyed.v2"
-DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 ACCEPT = ", ".join([
     "application/vnd.docker.distribution.manifest.list.v2+json",
     "application/vnd.oci.image.index.v1+json",
     "application/vnd.docker.distribution.manifest.v2+json",
     "application/vnd.oci.image.manifest.v1+json",
 ])
-RATE_FLOOR = 8  # 匿名 pull 限额余量低于此值即优雅停车
+RATE_FLOOR = 8
 
 
 def fail(msg: str) -> None:
@@ -63,7 +63,7 @@ def with_backoff(fn, what: str):
     for attempt in range(1, 5):
         try:
             return fn()
-        except Exception as exc:  # noqa: BLE001 —— 429/5xx/超时统一退避
+        except Exception as exc:  # noqa: BLE001
             if attempt == 4:
                 raise RuntimeError(f"{what} 4 次尝试后仍失败: {exc}") from exc
             wait = 2 ** attempt
@@ -80,7 +80,6 @@ def get_token(repository: str) -> str:
 
 
 def get_manifest(repository: str, token: str) -> tuple[dict, str, str, int | None]:
-    """GET manifest → (body, Docker-Content-Digest, content_type, ratelimit_remaining)。"""
     url = f"https://registry-1.docker.io/v2/{repository}/manifests/latest"
     hdrs = {"Authorization": f"Bearer {token}", "Accept": ACCEPT}
     with with_backoff(lambda: http(url, "GET", hdrs), f"GET manifest {repository}") as resp:
@@ -92,65 +91,97 @@ def get_manifest(repository: str, token: str) -> tuple[dict, str, str, int | Non
     return json.loads(raw), digest, ctype, rem
 
 
-def get_config_platform(repository: str, token: str, config_digest: str) -> dict:
-    """GET config blob（不计 pull 限额）→ {os, architecture}。"""
+def get_config_blob(repository: str, token: str, config_digest: str) -> tuple[dict, bool]:
+    """GET config blob（不计 pull 限额）→ (config, 原始字节 sha256 == config_digest)。"""
     url = f"https://registry-1.docker.io/v2/{repository}/blobs/{config_digest}"
     hdrs = {"Authorization": f"Bearer {token}"}
     with with_backoff(lambda: http(url, "GET", hdrs), f"GET config {repository}") as resp:
-        cfg = json.loads(resp.read())
-    return {"os": cfg.get("os"), "architecture": cfg.get("architecture")}
+        raw = resp.read()
+    verified = f"sha256:{hashlib.sha256(raw).hexdigest()}" == config_digest
+    return json.loads(raw), verified
 
 
 def expected_ref(iid: str) -> str:
-    # Docker 仓库名强制小写（T1 首跑实测坑：Project-MONAI → project-monai）
+    # Docker 仓库名强制小写（T1 首跑实测坑）
     return f"xingyaoww/sweb.eval.x86_64.{iid.replace('__', '_s_').lower()}:latest"
 
 
-def atomic_write_json(path: Path, doc: dict) -> None:
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with tmp.open("w", encoding="utf-8") as fh:
-        json.dump(doc, fh, ensure_ascii=False, indent=1)
-        fh.write("\n")
-        fh.flush()
-        os.fsync(fh.fileno())
-    os.replace(tmp, path)
+def build_evidence(iid: str, repository: str, digest: str, ctype: str,
+                   config_digest: str, platform: dict, blob_ok: bool) -> dict:
+    return {
+        "schema_id": EVIDENCE_SCHEMA_ID,
+        "evidence_id": evidence_id_for(iid),
+        "instance_id": iid,
+        "repository": repository,
+        "manifest_digest": digest,
+        "manifest_content_type": ctype,
+        "config_digest": config_digest,
+        "config_platform": platform,
+        "config_blob_sha256_verified": blob_ok,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
 
 
-def atomic_write_evidence(entries: dict[str, dict]) -> None:
-    EVIDENCE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = EVIDENCE_PATH.with_suffix(".jsonl.tmp")
-    with tmp.open("w", encoding="utf-8") as fh:
-        for k in sorted(entries):
-            fh.write(json.dumps(entries[k], ensure_ascii=False, sort_keys=True) + "\n")
-        fh.flush()
-        os.fsync(fh.fileno())
-    os.replace(tmp, EVIDENCE_PATH)
+def verify_blob_and_upgrade(st: Store, iid: str) -> None:
+    """legacy 升级通道：只取 config blob（零 pull 限额），补验哈希与平台。"""
+    e = st.entries[iid]
+    repository = expected_ref(iid).partition(":")[0]
+    config_digest = e.get("config_digest") or ""
+    if not DIGEST_RE.match(config_digest):
+        # v1 形态（无 config_digest）不能走升级通道，转完整富化
+        raise KeyError(iid)
+    token = get_token(repository)
+    cfg, blob_ok = get_config_blob(repository, token, config_digest)
+    if not blob_ok:
+        fail(f"{iid}: config blob 原始字节 sha256 与 config_digest 不符（内容漂移）")
+    platform = {"os": cfg.get("os"), "architecture": cfg.get("architecture")}
+    if (platform["os"], platform["architecture"]) != ("linux", "amd64"):
+        fail(f"{iid}: 平台断言失败 {platform}")
+    st.evidence[iid] = build_evidence(
+        iid, repository, e["resolved_manifest_digest"],
+        e["manifest_content_type"], config_digest, platform, True)
+    e["platform"] = "linux/amd64"
+    e["platform_source"] = "config_blob"
+    e["registry_evidence_ref"] = evidence_ref_for(iid)
+    e["method"] = "registry GET manifest + config blob（blob 哈希实证；GET 计 pull 限额，blob 不计）"
+    st.legacy_ids.discard(iid)
 
 
-def validate_entry(e: dict, survivors: set[str], frozen_refs: set[str]) -> list[str]:
-    """校验单条 entry；返回问题清单（空 = 合法）。enriched 与否另行判断。"""
-    problems = []
-    iid = e.get("instance_id", "")
-    if iid not in survivors:
-        problems.append(f"未知 instance_id: {iid!r}")
-        return problems
-    if e.get("source_image_ref") != expected_ref(iid) or e["source_image_ref"] not in frozen_refs:
-        problems.append(f"{iid}: source_image_ref 非法")
-    if not DIGEST_RE.match(e.get("resolved_manifest_digest", "")):
-        problems.append(f"{iid}: manifest digest 非法")
-    for f in ("manifest_content_type", "resolved_at", "method"):
-        if not e.get(f):
-            problems.append(f"{iid}: 缺字段 {f}")
-    return problems
-
-
-def is_enriched(e: dict) -> bool:
-    return (
-        DIGEST_RE.match(e.get("config_digest", "") or "") is not None
-        and e.get("platform") == "linux/amd64"
-        and e.get("platform_source") == "config_blob"
-        and bool(e.get("registry_evidence_ref"))
-    )
+def enrich_full(st: Store, iid: str) -> int | None:
+    """完整富化：manifest GET（计限额，含 digest 漂移检测）+ blob 实证。"""
+    repository = expected_ref(iid).partition(":")[0]
+    token = get_token(repository)
+    body, digest, ctype, remaining = get_manifest(repository, token)
+    if not DIGEST_RE.match(digest):
+        fail(f"{iid}: GET 未返回合法 Docker-Content-Digest")
+    old = st.entries.get(iid, {}).get("resolved_manifest_digest")
+    if old not in (None, digest):
+        fail(f"{iid}: digest 漂移！已存 {old[:20]}… vs 现取 {digest[:20]}…（:latest 被重推？先人工裁决）")
+    if "manifests" in body:
+        fail(f"{iid}: 意外的 manifest list（此前实测全为单架构 v2 manifest）")
+    config_digest = body["config"]["digest"]
+    cfg, blob_ok = get_config_blob(repository, token, config_digest)
+    if not blob_ok:
+        fail(f"{iid}: config blob 哈希与 config_digest 不符")
+    platform = {"os": cfg.get("os"), "architecture": cfg.get("architecture")}
+    if (platform["os"], platform["architecture"]) != ("linux", "amd64"):
+        fail(f"{iid}: 平台断言失败 {platform}")
+    st.evidence[iid] = build_evidence(iid, repository, digest, ctype,
+                                      config_digest, platform, True)
+    st.entries[iid] = {
+        "instance_id": iid,
+        "source_image_ref": expected_ref(iid),
+        "resolved_manifest_digest": digest,
+        "manifest_content_type": ctype,
+        "config_digest": config_digest,
+        "platform": "linux/amd64",
+        "platform_source": "config_blob",
+        "registry_evidence_ref": evidence_ref_for(iid),
+        "resolved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "method": "registry GET manifest + config blob（blob 哈希实证；GET 计 pull 限额，blob 不计）",
+    }
+    st.legacy_ids.discard(iid)
+    return remaining
 
 
 def main() -> None:
@@ -169,109 +200,58 @@ def main() -> None:
             fail(f"规则推导的 {expected_ref(iid)} 不在冻结清单中（映射校验失败）")
     print("[t1b] `_s_`+lower 映射校验 OK：216/216 推导 ref 均存在于冻结清单")
 
-    # ---- 严格加载旧状态（fail-closed 续跑，codex 轮次 6 问题 1/2） ----
-    entries: dict[str, dict] = {}
-    evidence: dict[str, dict] = {}
-    if OUT_PATH.exists():
-        doc = json.loads(OUT_PATH.read_text())
-        hdr = doc.get("header", {})
-        if hdr.get("schema_id") not in (None, SCHEMA_ID):
-            fail(f"header schema_id 不认识: {hdr.get('schema_id')}")
-        if hdr.get("source_refs_file_sha256") not in (None, refs_digest):
-            fail("header 的 refs 文件 digest 与当前冻结清单不符（数据面变动？）")
-        problems: list[str] = []
-        for e in doc.get("entries", []):
-            problems.extend(validate_entry(e, survivors, frozen_refs))
-            entries[e.get("instance_id", "")] = e
-        if problems:
-            fail("旧文件校验不过，拒绝续跑（先人工裁决）：\n  " + "\n  ".join(problems[:10]))
-        print(f"[t1b] 旧状态校验 OK：{len(entries)} 条合法（其中 enriched "
-              f"{sum(1 for e in entries.values() if is_enriched(e))} 条）")
-    if EVIDENCE_PATH.exists():
-        for line in EVIDENCE_PATH.read_text().splitlines():
-            if line.strip():
-                ev = json.loads(line)
-                evidence[ev["instance_id"]] = ev
+    try:
+        st = load_state(OUT_PATH, EVIDENCE_PATH, survivors, frozen_refs,
+                        refs_digest, expected_ref)
+    except ValueError as exc:
+        fail(str(exc))
+    if st.recovered_drop:
+        print(f"[t1b] 事务恢复：丢弃 {st.recovered_drop} 条未提交 evidence 行（manifest 为提交记录）")
+    n_ok = sum(1 for k in st.entries if is_enriched(st, k))
+    print(f"[t1b] 旧状态校验 OK：{len(st.entries)} 条（enriched {n_ok}，legacy 待升级 {len(st.legacy_ids)}）")
 
     def flush() -> None:
-        doc = {
-            "header": {
-                "schema_id": SCHEMA_ID,
-                "schema_version": 2,
-                "purpose": "S2-1 T1b 键控镜像清单：216 survivor 的稳定镜像身份 + 实证平台",
-                "source_refs_file": "data_freeze/meta/image_refs_swegym.txt",
-                "source_refs_file_sha256": refs_digest,
-                "evidence_file": "s2/raw/image_registry_evidence.jsonl",
-                "count": len(entries),
-                "enriched_count": sum(1 for e in entries.values() if is_enriched(e)),
-            },
-            "entries": [entries[k] for k in sorted(entries)],
-        }
-        atomic_write_json(OUT_PATH, doc)
-        atomic_write_evidence(evidence)
+        flush_transaction(OUT_PATH, EVIDENCE_PATH, st, refs_digest)
 
-    # ---- 富化循环（digest 缺 → HEAD 语义由 GET 覆盖；GET 计 1 次 pull） ----
+    # 升级通道（零 pull 限额）
+    done = 0
+    for iid in sorted(st.legacy_ids):
+        try:
+            verify_blob_and_upgrade(st, iid)
+        except KeyError:
+            continue  # v1 形态 → 留给完整富化
+        done += 1
+        if done % 20 == 0:
+            flush()
+            print(f"[t1b] legacy 升级 +{done}")
+        time.sleep(0.2)
+    if done:
+        flush()
+        print(f"[t1b] legacy 升级完成：{done} 条（blob 哈希全部实证）")
+
+    # 完整富化（计 pull 限额，限额感知停车）
     done = 0
     for iid in survivors_list:
-        e = entries.get(iid)
-        if e and is_enriched(e):
+        if is_enriched(st, iid):
             continue
-        repository = expected_ref(iid).partition(":")[0]
-        token = get_token(repository)
-        body, digest, ctype, remaining = get_manifest(repository, token)
-        if not DIGEST_RE.match(digest):
-            fail(f"{iid}: GET 未返回合法 Docker-Content-Digest")
-        if e and e.get("resolved_manifest_digest") not in (None, digest):
-            fail(f"{iid}: digest 漂移！已存 {e['resolved_manifest_digest'][:20]}… "
-                 f"vs 现取 {digest[:20]}…（:latest 被重推？先人工裁决）")
-        if "manifests" in body:
-            fail(f"{iid}: 意外的 manifest list（此前实测全为单架构 v2 manifest）")
-        config_digest = body["config"]["digest"]
-        platform = get_config_platform(repository, token, config_digest)
-        if (platform["os"], platform["architecture"]) != ("linux", "amd64"):
-            fail(f"{iid}: 平台断言失败 {platform}（计划要求 linux/amd64）")
-        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        evidence[iid] = {
-            "instance_id": iid,
-            "repository": repository,
-            "manifest_digest": digest,
-            "manifest_content_type": ctype,
-            "config_digest": config_digest,
-            "config_platform": platform,
-            "fetched_at": now,
-        }
-        entries[iid] = {
-            "instance_id": iid,
-            "source_image_ref": expected_ref(iid),
-            "resolved_manifest_digest": digest,
-            "manifest_content_type": ctype,
-            "config_digest": config_digest,
-            "platform": "linux/amd64",
-            "platform_source": "config_blob",
-            "registry_evidence_ref": f"image_registry_evidence.jsonl#{iid}",
-            "resolved_at": now,
-            "method": "registry GET manifest + config blob（GET 计 pull 限额，blob 不计）",
-        }
+        remaining = enrich_full(st, iid)
         done += 1
         if done % 20 == 0:
             flush()
             print(f"[t1b] progress enriched+{done}（ratelimit-remaining={remaining}）")
         if remaining is not None and remaining < RATE_FLOOR:
             flush()
+            n = sum(1 for k in st.entries if is_enriched(st, k))
             print(f"[t1b] INCOMPLETE_RESUMABLE：pull 限额余量 {remaining} < {RATE_FLOOR}，"
-                  f"优雅停车（已 enriched {sum(1 for x in entries.values() if is_enriched(x))}/216；"
-                  f"限额窗口重置后重跑本脚本续做）")
+                  f"优雅停车（enriched {n}/216；限额窗口重置后重跑续做）")
             sys.exit(3)
         time.sleep(0.4)
 
     flush()
-    # ---- 完成断言（codex 轮次 6 问题 1 的完成时强制检查） ----
-    if set(entries) != survivors:
-        fail(f"完成断言失败：entries {len(entries)} 与 survivors 216 集合不等")
-    not_enriched = [k for k, e in entries.items() if not is_enriched(e)]
-    if not_enriched:
-        fail(f"完成断言失败：{len(not_enriched)} 条未 enriched: {not_enriched[:5]}")
-    print(f"[t1b] ALL PASS：216/216 digest + 实证平台 linux/amd64 + evidence 回链 "
+    problems = finish_assertions(st, survivors)
+    if problems:
+        fail("完成断言失败：\n  " + "\n  ".join(problems))
+    print(f"[t1b] ALL PASS：216/216 digest + blob 实证平台 + evidence 交叉核对 "
           f"→ {OUT_PATH.relative_to(REPO_ROOT)}")
 
 

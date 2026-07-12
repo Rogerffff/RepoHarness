@@ -1,6 +1,6 @@
 # S2-1 T1 报告：raw 重抓归档 + 键控镜像清单
 
-日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定：**全 PASS，T2 可开工**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
+日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 修正措辞，codex 轮次 7）：**T1a PASS；T1b 部分完成（digest 216/216，实证富化 184/216）——T2 可并行开工，但 T1 未验收**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
 
 ## T1a raw 重抓归档（`rh2/experiments/s2_1_ingestion/fetch_raw_lite.py`，可重跑）
 
@@ -77,3 +77,27 @@ config blob（不计 pull 限额）→ 断言 os/architecture == linux/amd64；
 装有）；去重语义按 codex 建议再收严——`(repo, base_commit, F2P)` 也不作
 自动去重主键，改为 source-qualified task_id + 多 digest（题面/test_patch/
 F2P/P2P/gold patch）构成 duplicate cluster 交规则或人工判定（T2 落实）。
+
+## T1 follow-up 2（2026-07-13，codex 轮次 7 → resolver v3）
+
+新发现的引用完整性缺口成立（他的反例：evidence 文件整个删掉或 digest 全改错，
+v2 仍 ALL PASS）。v3 修复（状态机抽到
+`rh2/src/repoharness2/taskset/image_manifest_store.py`，13 项无网络单测覆盖
+他要求的全部七类场景）：
+
+```text
+1. enriched 判定 = entry 字段形状 ∧ evidence 行存在 ∧ 逐字段交叉核对
+   （manifest/config digest、repository、content type、平台、evidence_id、
+   blob 哈希已验）∧ evidence 无多余/重复 id。
+2. 双文件事务：evidence 先原子写 → sha256+行数入 manifest header →
+   manifest 最后原子写（提交记录）。崩溃唯一可能 = evidence 超前，
+   load 按提交记录恢复（丢未提交行并计数告警）；反方向一律拒绝。
+3. evidence_ref 修正为 raw/image_registry_evidence.jsonl#imgev-<id>；
+   evidence 行带 schema_id（rh2.s2_1.image_registry_evidence.v1）+
+   稳定 evidence_id + config_blob_sha256_verified（下载原始字节重算
+   sha256 必须等于 config_digest——不再只信解析后的 JSON）。
+```
+
+执行：183 条 v2 legacy 走**零限额升级通道**（仅重取 config blob 补验哈希，
+不重复消耗 manifest GET 限额），blob 哈希 183/183 实证一致；限额窗口未复位
+（余 7），完整富化续做 1 条后再次优雅停车——**当前 184/216**，重跑续做剩余 32。

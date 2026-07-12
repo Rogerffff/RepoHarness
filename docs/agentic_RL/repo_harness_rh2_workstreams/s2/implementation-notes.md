@@ -12,6 +12,9 @@
 - **[S2-1 T1-followup, 2026-07-13] resolver v1 的续跑 fail-open 是真实缺陷**（codex 轮次 6 反例证明），v2 全面修复（严格校验/原子写/幂等 header/完成断言）。教训沉淀：**任何"断点续跑"工具的旧状态都必须先过 fail-closed 校验再信任**——与账本纪律同源。
 - **[S2-1 T1-followup, 2026-07-13] 去重键再收严**：`(repo, base_commit, F2P 集合)` 也不作自动去重主键；正式方案 = source-qualified task_id + 题面/test_patch/F2P/P2P/gold patch 多 digest 构成 duplicate cluster，规则或人工判定，不自动删除（T2 落实，T1 报告有细节）。
 
+- **[S2-1 T1-followup2, 2026-07-13] resolver v3：引用完整性 + 双文件事务**（codex 轮次 7）。教训沉淀两条：① "存在一个非空 ref 字符串"不是引用完整性——被引用物必须存在且逐字段一致才算数；② 双文件产物必须定义**提交记录**（本例 = manifest header 内嵌 evidence digest），否则两次原子写之间仍是撕裂窗口。状态机已抽成可单测模块（13 项无网络测试），这是"数据脚本必须可单测"纪律的第一个正式实例。
+- **[S2-1 T1-followup2, 2026-07-13] legacy 升级通道的限额工程**：blob GET 不计 Docker Hub pull 限额——183 条 v2 条目全部零限额补验 config blob 哈希；manifest GET 限额窗口比预想恢复慢（1 天后余量仍 7），剩余 32 条继续等待窗口。
+
 ## 2. 权衡取舍
 
 - **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。

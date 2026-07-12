@@ -1,0 +1,254 @@
+"""image_manifest_store 的无网络单测（codex 轮次 7 要求的七类场景）。
+
+被测对象：S2-1 T1b 键控镜像清单的状态机（加载校验 / 双文件事务 / 完成断言）。
+所有场景都在 tmp_path 上用合成状态构造，零网络。
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from repoharness2.taskset.image_manifest_store import (
+    EVIDENCE_SCHEMA_ID, MANIFEST_SCHEMA_ID, Store, evidence_id_for,
+    evidence_ref_for, finish_assertions, flush_transaction, is_enriched,
+    load_state, sha256_bytes,
+)
+
+SURVIVORS = {"repoA__pkg-1", "repoB__pkg-2"}
+
+
+def expected_ref(iid: str) -> str:
+    return f"org/img.{iid.replace('__', '_s_').lower()}:latest"
+
+
+FROZEN_REFS = {expected_ref(i) for i in SURVIVORS}
+REFS_DIGEST = "0" * 64
+DIG = "sha256:" + "a" * 64
+CFG = "sha256:" + "b" * 64
+
+
+def make_entry(iid: str) -> dict:
+    return {
+        "instance_id": iid,
+        "source_image_ref": expected_ref(iid),
+        "resolved_manifest_digest": DIG,
+        "manifest_content_type": "application/vnd.docker.distribution.manifest.v2+json",
+        "config_digest": CFG,
+        "platform": "linux/amd64",
+        "platform_source": "config_blob",
+        "registry_evidence_ref": evidence_ref_for(iid),
+        "resolved_at": "2026-07-13T00:00:00+00:00",
+        "method": "test",
+    }
+
+
+def make_evidence(iid: str) -> dict:
+    return {
+        "schema_id": EVIDENCE_SCHEMA_ID,
+        "evidence_id": evidence_id_for(iid),
+        "instance_id": iid,
+        "repository": expected_ref(iid).partition(":")[0],
+        "manifest_digest": DIG,
+        "manifest_content_type": "application/vnd.docker.distribution.manifest.v2+json",
+        "config_digest": CFG,
+        "config_platform": {"os": "linux", "architecture": "amd64"},
+        "config_blob_sha256_verified": True,
+        "fetched_at": "2026-07-13T00:00:00+00:00",
+    }
+
+
+def paths(tmp: Path) -> tuple[Path, Path]:
+    return tmp / "image_manifest_keyed.json", tmp / "raw/image_registry_evidence.jsonl"
+
+
+def write_complete_state(tmp: Path) -> tuple[Path, Path, Store]:
+    mp, ep = paths(tmp)
+    st = Store()
+    for iid in SURVIVORS:
+        st.entries[iid] = make_entry(iid)
+        st.evidence[iid] = make_evidence(iid)
+    flush_transaction(mp, ep, st, REFS_DIGEST)
+    return mp, ep, st
+
+
+def load(mp: Path, ep: Path) -> Store:
+    return load_state(mp, ep, SURVIVORS, FROZEN_REFS, REFS_DIGEST, expected_ref)
+
+
+# ---- 场景 1：旧 digest 损坏必须拒绝 -----------------------------------------
+
+def test_corrupted_digest_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    doc = json.loads(mp.read_text())
+    doc["entries"][0]["resolved_manifest_digest"] = "bad"
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="digest 非法"):
+        load(mp, ep)
+
+
+# ---- 场景 2：多余 / 未知 id 必须拒绝 ----------------------------------------
+
+def test_unknown_entry_id_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    doc = json.loads(mp.read_text())
+    doc["entries"].append({**make_entry("repoA__pkg-1"), "instance_id": "evil__extra-9"})
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="未知 instance_id"):
+        load(mp, ep)
+
+
+def test_extra_evidence_id_rejected(tmp_path: Path):
+    mp, ep, st = write_complete_state(tmp_path)
+    lines = ep.read_text() + json.dumps({**make_evidence("repoA__pkg-1"),
+                                         "instance_id": "ghost__x-1",
+                                         "evidence_id": "imgev-ghost__x-1"}) + "\n"
+    ep.write_text(lines)
+    # evidence 变动会先触发提交记录不符；ghost 行不在已提交集合内且缺已提交行不成立
+    # → 走恢复路径丢弃 ghost；再人为同步 header digest 模拟"digest 匹配但有多余行"
+    doc = json.loads(mp.read_text())
+    doc["header"]["evidence_file_sha256"] = sha256_bytes(ep.read_bytes())
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="manifest 之外的 id"):
+        load(mp, ep)
+
+
+def test_duplicate_evidence_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    first = ep.read_text().splitlines()[0]
+    ep.write_text(ep.read_text() + first + "\n")
+    with pytest.raises(ValueError, match="重复 instance_id"):
+        load(mp, ep)
+
+
+# ---- 场景 3：evidence 缺失 / 事实不一致必须拒绝 ------------------------------
+
+def test_missing_evidence_file_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    ep.unlink()
+    with pytest.raises(ValueError, match="evidence 缺失|提交记录"):
+        load(mp, ep)
+
+
+def test_evidence_fact_mismatch_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    lines = [json.loads(x) for x in ep.read_text().splitlines()]
+    lines[0]["config_digest"] = "sha256:" + "f" * 64
+    payload = "".join(json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n" for x in lines)
+    ep.write_text(payload)
+    doc = json.loads(mp.read_text())
+    doc["header"]["evidence_file_sha256"] = sha256_bytes(payload.encode())
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="交叉核对失败"):
+        load(mp, ep)
+
+
+def test_unverified_blob_hash_rejected(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    lines = [json.loads(x) for x in ep.read_text().splitlines()]
+    lines[0]["config_blob_sha256_verified"] = False
+    payload = "".join(json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n" for x in lines)
+    ep.write_text(payload)
+    doc = json.loads(mp.read_text())
+    doc["header"]["evidence_file_sha256"] = sha256_bytes(payload.encode())
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="config blob 哈希未验证"):
+        load(mp, ep)
+
+
+# ---- 场景 4：完整 checkpoint 无操作重跑字节级不变 ----------------------------
+
+def test_noop_rerun_byte_idempotent(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    before_m, before_e = mp.read_bytes(), ep.read_bytes()
+    st = load(mp, ep)
+    flush_transaction(mp, ep, st, REFS_DIGEST)
+    assert mp.read_bytes() == before_m
+    assert ep.read_bytes() == before_e
+
+
+# ---- 场景 5：incomplete checkpoint 正确续跑 ---------------------------------
+
+def test_incomplete_checkpoint_resumes(tmp_path: Path):
+    mp, ep = paths(tmp_path)
+    st = Store()
+    only = sorted(SURVIVORS)[0]
+    st.entries[only] = make_entry(only)
+    st.evidence[only] = make_evidence(only)
+    flush_transaction(mp, ep, st, REFS_DIGEST)
+    st2 = load(mp, ep)
+    assert is_enriched(st2, only)
+    missing = SURVIVORS - set(st2.entries)
+    assert missing == {sorted(SURVIVORS)[1]}
+    assert finish_assertions(st2, SURVIVORS)  # 未收满 → 完成断言必须报问题
+
+
+# ---- 场景 6：manifest/evidence 事务中断可恢复 --------------------------------
+
+def test_transaction_interruption_recovers(tmp_path: Path):
+    mp, ep = paths(tmp_path)
+    st = Store()
+    only = sorted(SURVIVORS)[0]
+    st.entries[only] = make_entry(only)
+    st.evidence[only] = make_evidence(only)
+    flush_transaction(mp, ep, st, REFS_DIGEST)
+    # 模拟崩溃窗口：evidence 已含第二条（超前），manifest 仍是旧提交记录
+    other = sorted(SURVIVORS)[1]
+    ep.write_text(ep.read_text()
+                  + json.dumps(make_evidence(other), ensure_ascii=False, sort_keys=True) + "\n")
+    st2 = load(mp, ep)
+    assert st2.recovered_drop == 1          # 未提交行被丢弃
+    assert set(st2.evidence) == {only}      # 恢复到提交记录
+    assert is_enriched(st2, only)
+
+
+def test_manifest_claims_but_evidence_behind_rejected(tmp_path: Path):
+    # 反方向（manifest 声称 enriched、evidence 缺该行）不可恢复——必须拒绝
+    mp, ep, _ = write_complete_state(tmp_path)
+    lines = ep.read_text().splitlines()
+    payload = lines[0] + "\n"
+    ep.write_text(payload)
+    doc = json.loads(mp.read_text())
+    doc["header"]["evidence_file_sha256"] = sha256_bytes(payload.encode())
+    mp.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="evidence 缺失"):
+        load(mp, ep)
+
+
+# ---- 场景 7：完成状态恰好 N entry + N evidence -------------------------------
+
+def test_finish_assertions_exact_sets(tmp_path: Path):
+    mp, ep, _ = write_complete_state(tmp_path)
+    st = load(mp, ep)
+    assert finish_assertions(st, SURVIVORS) == []
+    assert json.loads(mp.read_text())["header"]["schema_id"] == MANIFEST_SCHEMA_ID
+    st.evidence.pop(sorted(SURVIVORS)[0])
+    assert any("evidence" in p for p in finish_assertions(st, SURVIVORS))
+
+
+# ---- legacy（v2）迁移：归类为待升级而非 enriched ------------------------------
+
+def test_legacy_v2_state_classified_for_upgrade(tmp_path: Path):
+    mp, ep = paths(tmp_path)
+    legacy_entries = []
+    for iid in SURVIVORS:
+        e = make_entry(iid)
+        e["registry_evidence_ref"] = f"image_registry_evidence.jsonl#{iid}"  # v2 旧格式
+        legacy_entries.append(e)
+    ev_payload = "".join(
+        json.dumps({k: v for k, v in make_evidence(i).items()
+                    if k not in ("schema_id", "evidence_id", "config_blob_sha256_verified")},
+                   ensure_ascii=False, sort_keys=True) + "\n"
+        for i in sorted(SURVIVORS))
+    ep.parent.mkdir(parents=True, exist_ok=True)
+    ep.write_text(ev_payload)
+    mp.write_text(json.dumps({
+        "header": {"schema_id": "rh2.s2_1.image_manifest_keyed.v2",
+                   "source_refs_file_sha256": REFS_DIGEST},
+        "entries": legacy_entries,
+    }))
+    st = load(mp, ep)
+    assert st.legacy_ids == SURVIVORS
+    assert all(not is_enriched(st, i) for i in SURVIVORS)

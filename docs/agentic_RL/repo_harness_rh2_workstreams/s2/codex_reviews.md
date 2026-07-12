@@ -674,3 +674,15 @@ inspect-rh2-s1：PASS
 ```
 
 建议下一步先补 `FA-1 follow-up`，至少关闭生产接线、durable failure ledger、取消/退出语义、全局 attempt identity、capture 事务和窗口 target 校验。FA-2 可同时编写状态机与报告 schema，但暂时不要绑定当前 worker 输出形状。没有修改文件。
+
+
+---
+
+## 轮次 7（2026-07-13：T1-followup 复审 → 三修复确认正确；新严重缺口 = manifest↔evidence 引用完整性；T1 保持 OPEN 正确）
+
+- **严重 1 引用完整性缺失**：is_enriched 只查非空 ref 字符串；codex 反例——evidence 文件缺失 → ALL PASS 且自动写出空 evidence；digest 全改错 → ALL PASS 保留错误 evidence。真实 183 条经其独立交叉核对为 0 mismatch，漏洞影响续跑/恢复/防篡改。【v3 修复：enriched = 形状 ∧ evidence 存在 ∧ 逐字段交叉 ∧ 无多余/重复】
+- **严重 2 双文件非事务**：先 manifest 后 evidence，两次 replace 之间死亡 → "声称 enriched 但 evidence 未写"且会被接受。【v3 修复：evidence 先写 → digest+行数入 header → manifest 最后为提交记录；load 重算 evidence digest；崩溃唯一方向（evidence 超前）按提交记录恢复】
+- **严重 3 evidence_ref 路径错**：写 `image_registry_evidence.jsonl#id` 但文件在 `raw/` 下。【v3 修复：`raw/image_registry_evidence.jsonl#imgev-<id>` + 稳定 evidence_id】
+- **应补测试**：七类无网络场景。【已补：tests/taskset/test_image_manifest_store.py，13 项】
+- **一般**：报告顶行"全 PASS"与 OPEN 矛盾【已改"T1a PASS；T1b 184/216，T1 未验收"】；config blob 内容哈希未验【v3 下载原始字节重算 == config_digest 并入 evidence】；evidence 加 schema/version + evidence_id【已加】。
+- **codex 独立确认**：三个旧修复正确、183 条 entry/evidence 零 mismatch、草稿账本 5 项 digest 正确、768 passed、inspect-rh2-s1 PASS。
