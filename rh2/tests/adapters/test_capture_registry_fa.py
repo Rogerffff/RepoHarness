@@ -299,3 +299,116 @@ def test_register_rejects_duplicate_active_sid():
     # 正常时序（关旧开新）仍放行
     registry.unregister("sid_D12")
     registry.register("sid_D12", FakeHook())
+
+
+def test_capture_registry_two_thread_stress():
+    """codex 轮次 13 P0-3：真双线程压力——aiohttp 线程 stage/commit vs
+    AsyncLoop 线程 register/unregister/assert 交错，不得 KeyError/丢账
+    （旧实现确定性复现 KeyError('race_sid')）。"""
+
+    import threading
+
+    errors: list[BaseException] = []
+
+    for round_i in range(50):
+        registry = CaptureRegistry()
+        sid = f"race_{round_i}"
+        registry.register(sid, FakeHook())
+        registry.stage(sid, _turn("rid_1"))
+        barrier = threading.Barrier(2)
+
+        def committer():
+            try:
+                barrier.wait()
+                registry.commit(sid)
+            except BaseException as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        def unregisterer():
+            try:
+                barrier.wait()
+                registry.unregister(sid)
+            except BaseException as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        t1 = threading.Thread(target=committer)
+        t2 = threading.Thread(target=unregisterer)
+        t1.start(); t2.start(); t1.join(5); t2.join(5)
+    assert errors == []  # 修复前：KeyError('race_sid')
+
+
+def test_commit_midpoint_hook_failure_abandons_and_poisons():
+    """codex 轮次 13 P0-3 探针回归：commit 先 pop 再 hook——hook 中点异常
+    必须 poison + 关闭 draft（旧行为：pending=0、draft 悬挂、无毒、账 0）。"""
+
+    class ExplodingHook(FakeHook):
+        def on_generate_response(self, **kwargs):
+            raise RuntimeError("capture store failed")
+
+    registry = CaptureRegistry()
+    registry.register("sid_MID", ExplodingHook())
+    proxy = FakeProxyResult("sid_MID/t1_a1")
+    registry.stage("sid_MID", _turn("rid_1", proxy=proxy))
+    with pytest.raises(RuntimeError, match="capture store failed"):
+        registry.commit("sid_MID")
+    assert registry.poison.is_poisoned("sid_MID")  # 修复前 false
+    assert proxy.state.startswith("abandoned:capture_commit_hook_failed")  # 修复前悬挂
+    assert registry.pending["sid_MID"] == []
+
+
+def test_commit_after_unregister_does_not_resurrect():
+    """P0-3 竞态语义：commit 的 hook 执行期间会话被 unregister——本轮不进
+    树后账（weight_versions 不复活）、poison + abandon。"""
+
+    registry = CaptureRegistry()
+
+    class UnregisterDuringHook(FakeHook):
+        def on_generate_response(self, **kwargs):
+            registry.unregister("sid_RC")  # 模拟另一线程在 hook 窗口完成销毁
+
+    registry.register("sid_RC", UnregisterDuringHook())
+    proxy = FakeProxyResult("sid_RC/t1_a1")
+    registry.stage("sid_RC", _turn("rid_1", version="9", proxy=proxy))
+    registry.commit("sid_RC")
+    assert "sid_RC" not in registry.weight_versions  # 不给已销毁会话追加
+    assert registry.poison.is_poisoned("sid_RC")
+    assert proxy.state.startswith("abandoned:commit_after_unregister")
+
+
+async def test_session_guard_middleware_rejects_unknown_and_poisoned():
+    """codex 轮次 13 P0-1：HTTP 层会话能力预检——未知/中毒 bearer 全部
+    403 + x-should-retry:false（绝不 404），已注册健康会话放行。"""
+
+    from aiohttp import web
+    from aiohttp.test_utils import TestClient, TestServer
+
+    from s1_7a_bringup.capture_wire import build_session_guard_middleware
+
+    registry = CaptureRegistry()
+    registry.register("sid_OK", FakeHook())
+    registry.poison.poison("sid_BAD", "bad")
+    hits: list[str] = []
+
+    async def turn_handler(request):
+        hits.append(request.headers.get("Authorization", ""))
+        return web.json_response({"ok": True})
+
+    app = web.Application(middlewares=[build_session_guard_middleware(registry)])
+    app.router.add_post("/v1/messages", turn_handler)
+    app.router.add_get("/healthz", turn_handler)
+    client = TestClient(TestServer(app))
+    await client.start_server()
+    try:
+        r1 = await client.post("/v1/messages", headers={"Authorization": "Bearer sid_UNKNOWN"})
+        assert r1.status == 403 and r1.headers["x-should-retry"] == "false"
+        r2 = await client.post("/v1/messages", headers={"Authorization": "Bearer sid_BAD"})
+        assert r2.status == 403
+        r3 = await client.post("/v1/messages")  # 无凭证
+        assert r3.status == 403
+        assert hits == []  # 以上没有一个到达 handler（= 不产生 SGLang 请求）
+        r4 = await client.post("/v1/messages", headers={"Authorization": "Bearer sid_OK"})
+        assert r4.status == 200
+        r5 = await client.get("/healthz")  # 健康检查放行
+        assert r5.status == 200
+    finally:
+        await client.close()

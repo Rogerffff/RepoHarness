@@ -78,6 +78,31 @@
 
 ### FA-2 PromptGroupAssembler 与合格组队列
 
+> **分批重排（codex 轮次 13 完整审计，2026-07-13）**：FA-2 不先写 assembler
+> 状态机。第一批 = **identity foundation**（下列 F2-1~F2-6，全部是 assembler
+> 的前置条件），第二批才是本节原有的组状态机/队列。FA-1 closure 六项
+> （未知 SID fail-closed / drain 先行 / capture 事务化 / open-session
+> rollback / limiter 真接线 / execution audit sink）已随轮次 13 落地。
+>
+> **F2-1 身份贯穿**：`ExecutionIdentity` 从 task source 一路传到
+> worker→orchestrator→session→proxy→capture→grading→artifact→Outcome；
+> 消灭 orchestrator 从 task+index+group 重造稳定 SID（epoch 复用、
+> artifact 覆盖、poison 无法隔离的根源）。
+> **F2-2 身份与凭证分离**：`rollout_execution_id`（公开可审计）与
+> `session_auth_capability`（128-bit 随机、仅当前会话、不落公开 artifact）
+> 拆开；adapter 存 capability→execution 映射，会话关闭即失效。
+> **F2-3 request 级 capture 归属**：`(execution_id, request_id)` 键替代
+> SID+FIFO/fail-closed；SGLang RID 传到 record_turn。
+> **F2-4 预取恢复语义**：三选一定案（checkpoint 含 RH2 pending 状态 /
+> data source lease-ACK / at-least-once + execution·batch id 去重）——
+> codex 探针：batch=1 预取 7 组时崩溃 = 7 组永久跳题。
+> **F2-5 collector 组不变量**：组长度 = n、member_slot 0..n-1 无重复、
+> 重复 execution_id 拒绝、混合 branch 策略显式、按 slot 排序、
+> dropped 记录有界——进 assembler 契约。
+> **F2-6 attempt→Outcome 血缘**：`drain_attempts`（已落地）接
+> per-execution manifest；delivered↔capture、non-delivered↔digest
+> evidence 双向引用；进程退出前无 owner draft/attempt 检查。
+
 1. 每条执行完成评分/投影/Gate 后才提交 `RolloutAttemptOutcome` 给 assembler；`PromptGroupState` 为进程内轻量状态机（定期 checkpoint，不注册公共 schema）；组终结时唯一落盘 `PromptGroupAdmissionReport`（admitted/rejected/quarantined + 讨论稿 §5.3 字段）。
 2. 状态机照讨论稿 §9（NEW→RUNNING→PRESENT/LOCAL_RETRY/MISSING/PERMANENT_REJECTED；组 OPEN→READY/EXPIRED/QUARANTINED；READY→BatchAdmission）。`WAITING_FOR_BATCH_ALIGNMENT` 不倒写 eligibility、不重跑 harness。
 3. 只有固定 n 完整、eligibility 合格、policy span 达标的组进 `QualifiedPromptGroupQueue`（保存 raw group facts + token 长度 + 身份；不固化任何 step-local 算法张量）；组进队后**消费时重算 staleness**。
@@ -261,6 +286,34 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
    可忽略（升级设计 N3 已定性）；只有未来混入秒级短任务才需要降到
    50-100ms 或事件驱动——记录在此防止重复调查，FA-1 不做。
 ```
+
+### 6.1 codex 轮次 13 完整审计的 P1/P2 递延登记（FA-5 前必须逐项销案或改判）
+
+| # | 事项 | 归属 |
+|---|------|------|
+| P1-1 | `retry_local_operation` 零生产调用点——逐操作（image/container/artifact/grading/发前请求）定幂等键+错误分类后接入，不做整段装饰器 | FA-2/FA-3 接线时 |
+| P1-2 | 生产 shutdown 链缺失：actor teardown 时 worker/GradingQueue/adapter 线程/在途 sandbox/artifact writer 的统一关闭 + 退出校验（账平、in-flight=0、无 open session、隔离区移交） | FA-5 前 |
+| P1-3 | 单例 + monkeypatch 不支持进程内恢复——当前恢复语义显式定为 **halt→整 actor 重启**；可重绑 registry holder 前不得声称进程内 recovery | 文档已定，FA-5 验收 |
+| P1-4 | 长运行内存无界残余：`audits`/`failure_records`/`dropped_groups`/`cleanup_quarantine`/`GradingQueue.events`（后者还有 O(N²) 扫描）——durable sink + 有界窗口（attempts_ledger 已 drain 化） | FA-2 audit 面 |
+| P1-5 | episode deadline 起点晚（首次模型调用起表，未含 CLI 安装/workspace/CC 启动）——orchestrator 在 execution 启动时生成绝对 deadline 并注册 | FA-2 身份批 |
+| P1-7 | cleanup_quarantine 只有内存 list——最小 reconciler（持久化 + 重试 + run-halt 阈值） | FA-5 前 |
+| P1-8 | StaticActiveCoordinator 永远 ACTIVE：正式链**不会**透明重生成（只保守缺员）；version provider 同步 requests 在 TTL miss 时阻塞 adapter loop ≤5s——trainer 发布、全引擎 ACK 的异步 consensus 快照替换 | FA-4 |
+| P1-9 | `/abort_request` 失败无事实记录——计数 + 引擎健康告警；FA-5 四方对账（HTTP req id / RID / abort ACK / attempt status） | FA-5 |
+| P2-1 | FA `rollout_id` 未使用——写进 batch request/身份/audit manifest | FA-3 |
+| P2-2 | `record_event.weight_versions_engine` 在 unregister 后恒空——cleanup 前冻结 execution snapshot | FA-2 audit 面 |
+| P2-3 | fsync 在 adapter 热线程同步执行——专用 writer/WAL 或 to_thread + fsync p95 实测 | FA-5 前 |
+| P2-4 | `os.replace` 缺父目录 fsync——crash recovery 若入 FA-5 验收则补齐，否则文档声明进程级原子性 | FA-5 定案 |
+
+**FA-5 验收增项（轮次 13 §11，并入 FA-5 清单）**：未知/伪造 SID 不达
+SGLang；并发 subagent 按 request id 归属；commit 故障无 pending draft
+残留；`rh2_fa_limit_model_call=1` 实测峰值 =1；actor kill/restart 预取组
+不丢不重；≥1h 热状态 cardinality 有上限；shutdown 全归零；update abort
+的 RID/ACK/ledger/capture/sample 五方一致；CC 取消终止真实 SGLang 请求
+与 sandbox CLI；audit artifact 可重建四态守恒式。
+
+**闸门重申**：本节 P0（已闭）+ F2-1~6 完成前，`rh2_fully_async_training_
+path_verified` 保持 **false**；`StaticActiveCoordinator` 在位期间不得声称
+"权重更新 abort 已在生产链透明重生成"（只有保守缺员）。
 
 ## 7. 关联文档回填清单（FA 推进过程中完成，不阻塞开工）
 

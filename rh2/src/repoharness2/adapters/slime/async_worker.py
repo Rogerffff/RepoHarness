@@ -513,8 +513,9 @@ class ProxyCallResult:
             evidence_refs=evidence,
         )
         self._finalized = attempt
-        self._proxy.attempts_ledger.append(attempt)
-        self._proxy._pending_drafts.discard(self.draft.attempt_id)
+        with self._proxy._ledger_lock:
+            self._proxy.attempts_ledger.append(attempt)
+            self._proxy._pending_drafts.discard(self.draft.attempt_id)
         if sink_failure is not None:
             raise sink_failure
         return attempt
@@ -533,8 +534,9 @@ class ProxyCallResult:
             weight_version=self.draft.weight_version,
         )
         self._finalized = attempt
-        self._proxy.attempts_ledger.append(attempt)
-        self._proxy._pending_drafts.discard(self.draft.attempt_id)
+        with self._proxy._ledger_lock:
+            self._proxy.attempts_ledger.append(attempt)
+            self._proxy._pending_drafts.discard(self.draft.attempt_id)
         return attempt
 
 
@@ -624,6 +626,11 @@ class ModelCallProxy:
         self._limits = limits
         self._artifact_sink = artifact_sink
         self._sink_required = sink_required
+        import threading
+
+        # 轮次 13 P0-3：ledger/_pending_drafts 跨线程共享（adapter 线程写、
+        # AsyncLoop 线程读/drain）——短临界区锁
+        self._ledger_lock = threading.Lock()
         self._max_artifacts = max_audit_artifacts
         self._sleeper = sleeper
         self._clock = clock
@@ -632,6 +639,18 @@ class ModelCallProxy:
         self.audit_evictions = 0
         self.tombstones_dropped = 0
         self._pending_drafts: set[str] = set()
+
+    def drain_attempts(self, execution_scope: str) -> list[ModelCallAttempt]:
+        """按 execution 摘走 attempt ledger（codex 轮次 13 P0-5/F2-6）：
+        audit sink 落盘后从热内存删除——ledger 不再无界增长。"""
+
+        prefix = f"{execution_scope}/"
+        with self._ledger_lock:
+            drained = [a for a in self.attempts_ledger if a.logical_turn_id.startswith(prefix)]
+            self.attempts_ledger = [
+                a for a in self.attempts_ledger if not a.logical_turn_id.startswith(prefix)
+            ]
+        return drained
 
     @property
     def unfinalized_deliveries(self) -> frozenset[str]:
@@ -851,8 +870,9 @@ class ModelCallProxy:
                     attempt_number=attempt_number,
                     weight_version=weight_version,
                 )
-                self.attempts_ledger.extend(attempts)
-                self._pending_drafts.add(attempt_id)
+                with self._ledger_lock:
+                    self.attempts_ledger.extend(attempts)
+                    self._pending_drafts.add(attempt_id)
                 return ProxyCallResult(
                     response=response,
                     prior_attempts=tuple(attempts),
@@ -917,7 +937,8 @@ class ModelCallProxy:
                 evidence_refs=evidence or [],
             )
         )
-        self.attempts_ledger.extend(attempts)
+        with self._ledger_lock:
+            self.attempts_ledger.extend(attempts)
 
     async def _wait_version_advance(
         self,

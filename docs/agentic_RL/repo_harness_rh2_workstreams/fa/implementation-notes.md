@@ -564,3 +564,53 @@ aiohttp adapter 线程"双线程拓扑**——四个问题全是这个盲区的�
   当前 PASS，bundles_v2/spec_vendor 已由 S2 线程收敛）。
 - 测试 870 → 878。codex 认可"可以开始 FA-2，但先修本 P0 + SID 唯一化为
   FA-2 第一个提交"——本 P0 已闭合。
+
+## FA-1 closure（2026-07-13，codex 轮次 13 完整审计第一批；原文存档
+## `../s2/codex_reviews.md` 轮次 13——全链路审计，非增量 diff 审查）
+
+codex 本轮从 slime 调用入口走完全链（RolloutManager→entry→worker→
+orchestrator→adapter 线程→proxy→SGLang→capture→评分→collector→转换器），
+判定："FA-1 不是失败实现……问题主要来自把局部正确组件接入真实三线程
+拓扑、长运行状态和安全边界时的所有权缺口"。按其实施顺序执行第一批：
+
+- **P0-1（未知 SID 直连 SGLang 的安全旁路）**：wire 对未注册 SID 从
+  "直连放行"改 **fail-closed**（`UnknownSessionError`——旧行为 = 绕过
+  proxy/poison/版本/deadline/限额/capture 的未登记推理代理，adapter 又
+  绑 0.0.0.0）；新增 `build_session_guard_middleware`（bearer 能力预检：
+  未知/已关/中毒会话 HTTP 层 403 + x-should-retry:false，不产生 SGLang
+  请求；/healthz 放行），glue 挂到生产 adapter app。启动探针的会话是
+  显式 register 的，不受影响。绑定地址默认值改动风险大（容器桥接可达性
+  依赖 GPU 环境），FA-5 用 ADAPTER_BIND_HOST 显式设定——递延已登记。
+- **P0-2（边界检查在 drain 屏障之前）**：`finish_session`（内部
+  shutdown_session 才等/取消 in-flight turn）**前移**到一切检查之前；
+  顺序改为 drain → poison 复检 → 非零 exit → 边界断言 → 冻结
+  hook.records 快照。消除 false reject（正常轮还在 flush 就被拒）与
+  false accept（drain 期间才 commit/overlap/sink 失败无第二次检查）。
+- **P0-3（CaptureRegistry/proxy 非线程安全 + commit 中点悬挂）**：
+  registry 全部共享容器进短临界区 `threading.Lock`（锁内只移动所有权，
+  hook/磁盘/回调全在锁外）；commit 事务化 PENDING→COMMITTING→
+  COMMITTED/ABANDONED——hook 中点异常 poison + abandon draft（codex 探针
+  的"永久悬挂"消灭）；hook 后复检会话仍在（与 unregister 竞态时本轮
+  poison+abandon，不给已销毁会话追加版本——KeyError('race_sid') 根修）；
+  重复 finalize 不再静默吞 ValueError（poison + 计数 = 契约违规可见）。
+  proxy 的 attempts_ledger/_pending_drafts 加 `_ledger_lock`。50 轮真双
+  线程压力测试 + 中点异常 + 竞态复检三条回归钉死。
+- **P0-4（limiter 假配置）**：model_call 限额真接生产 proxy（glue
+  `model_call_limits`，env RH2_FA_LIMIT_MODEL_CALL；所有权 = adapter
+  线程 loop）；评分并发接 GradingQueueConfig（env RH2_FA_LIMIT_GRADING）；
+  FA 入口删掉无消费者的 model_call/grading_container 假键（只留 worker
+  真消费的 sandbox 类，绑 AsyncLoopThread）——**不跨 loop 共享 semaphore**。
+- **P0-5（FA 路径审计只在内存）**：orchestrator 注入 `audit_sink`，每个
+  execution 终态写一次 `fa_execution_audit.jsonl`（steps/失败/清理/收缩
+  + **按 execution drain 的 ModelCallAttempt ledger**——drain 后热内存即
+  清，P1-4 的 ledger 项随之闭合）；正式链落盘失败 fail-closed 上抛。
+  audit 增 `session_id` 字段（drain 键）。
+- **P1-6（open_session 泄漏）**：glue PerRolloutAdapter.open 事务化——
+  底层 open 失败回滚 registry 注册。
+- **05 计划更新**：FA-2 分批重排（第一批 = F2-1~6 身份基座：身份贯穿/
+  身份凭证分离/request 级归属/预取恢复语义三选一/collector 组不变量/
+  attempt manifest；第二批才是 assembler 状态机）；§6.1 新增 P1×8+P2×4
+  递延登记表；FA-5 验收增项 10 条；闸门重申（P0 已闭但 F2 完成前
+  `rh2_fully_async_training_path_verified` 保持 false；StaticActive 在位
+  期间不得声称生产透明重生成）。
+- 测试 878 → 895。codex §8 确认的 15 项正确实现保持不动。

@@ -1800,3 +1800,662 @@ cleanup_failures = 0
 
 `inspect-rh2-s1` 当前失败是并行 S2 工作树修改了 `bundles_v2.py/spec_vendor.py`，导致两个 digest 漂移，不是本次 FA commit 回归。没有修改任何文件。
 
+
+
+---
+
+## 轮次 13（2026-07-13：FA-1 完整代码审计（全链路，非增量）→ 第一批 closure 全部落地）
+
+> 原文全文转录（tmp/FA1_codex.md 第八版——完整审计报告）。处置见 `fa/implementation-notes.md` "FA-1 closure"。五 P0（未知 SID 旁路 fail-closed + 会话守卫 middleware / drain 先行 / capture 锁+事务化 commit / limiter 真接线 / execution audit sink + drain_attempts）+ open_session rollback 随本轮落地；F2-1~6 定为 FA-2 第一批（身份基座），P1×8+P2×4 递延登记进 05 计划 §6.1，FA-5 验收增 10 项。测试 878 → 895。
+
+# FA-1 完整代码审计
+
+日期：2026-07-13  
+审计对象：FA-1 持续 rollout worker、model proxy、capture 事务、slime 入口及其与 S1 编排链的完整接线  
+FA-1 最新实现提交：`9969f050`  
+审计时仓库 HEAD：`e48f26a6`（包含并行 S2 提交；本审计不评价 S2）
+
+## 1. 总结论
+
+FA-1 的总体方向正确，不需要推翻重写。以下能力已经形成了有价值的实现基础：
+
+- `ContinuousExecutionWorker` 已把 task 异常、队列反压、取消、drain 和账目守恒显式化；
+- proxy 内部重生成的状态机、版本恢复守卫、episode deadline 和逐 attempt RID 已有较完整的纯逻辑测试；
+- poison 主动取消 harness、404 防线、Claude Code 重试守卫、artifact sink fail-closed 等此前发现的问题已经逐项修复；
+- FA 入口已经使用 slime 的真实同步 `rollout-function-path` 契约，不再返回未 await 的 coroutine；
+- 启动探针、top-p/routing tape、token provenance 和评分/Gate 仍沿用 S1 已验证链路。
+
+但是，**当前实现还不能作为正式 fully async 训练链进入 FA-5**。完整审计发现四类必须先处理的问题：
+
+1. 模型边界仍存在未知 SID 直连 SGLang 的安全旁路；
+2. capture 的 drain、检查、commit 和跨线程所有权尚未形成真正的事务；
+3. FA 声明的模型调用资源限额没有接入生产 proxy；
+4. execution identity、attempt ledger、outcome、预取恢复状态和长期审计仍只存在于进程内，必须由 FA-2 第一批工作闭合。
+
+建议结论：
+
+- 可以继续 FA-2，但 **FA-2 不应先写 PromptGroupAssembler 的普通状态机**；
+- 先做一组 `FA-1 closure / FA-2 identity foundation` 提交，关闭本文 P0；
+- 然后再做 PromptGroupAssembler、QualifiedPromptGroupQueue 和 batch admission；
+- FA-4 真 coordinator 接通之前，不能宣称“权重更新 abort 已在生产链透明重生成”；当前 `StaticActiveCoordinator` 只会保守拒绝；
+- FA-5 必须增加多线程、未知 SID、长运行内存、checkpoint 恢复和真实 shutdown 验收。
+
+## 2. 审计范围与方法
+
+本轮不是审查最新 diff，而是从 slime 调用入口完整走了一遍：
+
+```text
+slime RolloutManager.generate
+  -> call_rollout_fn
+  -> fa_bringup.rollout_entry.generate_rollout
+  -> slime.utils.async_utils.run（持久后台 event loop）
+  -> FaRolloutService.collect_batch
+  -> ContinuousExecutionWorker
+  -> RolloutOrchestrator.generate
+  -> sandbox + Claude Code
+  -> AnthropicAdapter（独立 aiohttp 线程）
+  -> ModelCallProxy
+  -> SGLang /generate
+  -> CaptureRegistry.stage
+  -> Anthropic SSE flush
+  -> TrajectoryManager.record_turn
+  -> CaptureRegistry.commit
+  -> finish_session / trajectory / backfill
+  -> grading / projection / EligibilityGate
+  -> interim group collector
+  -> slime train-data converter
+```
+
+阅读和对照的主要文件：
+
+- `rh2/experiments/fa_bringup/rollout_entry.py`
+- `rh2/src/repoharness2/adapters/slime/async_worker.py`
+- `rh2/experiments/s1_7a_bringup/capture_wire.py`
+- `rh2/experiments/s1_7a_bringup/glue.py`
+- `rh2/src/repoharness2/adapters/slime/generate.py`
+- `rh2/src/repoharness2/contracts/fa_runtime.py`
+- `reference/slime/slime/agent/adapters/common.py`
+- `reference/slime/slime/agent/adapters/anthropic.py`
+- `reference/slime/slime/agent/trajectory.py`
+- `reference/slime/slime/ray/rollout.py`
+- `reference/slime/slime/rollout/data_source.py`
+- `reference/slime/slime/rollout/fully_async_rollout.py`
+
+除现有测试外，本轮还运行了确定性交错、事务中点异常、预取恢复和 collector 非法输入探针。
+
+## 3. 当前真实线程与所有权拓扑
+
+当前至少存在三个执行域：
+
+```text
+Ray rollout actor 主线程
+  -> 同步调用 generate_rollout
+
+slime AsyncLoopThread
+  -> FaRolloutService / worker / orchestrator / sandbox / grading
+
+aiohttp adapter thread
+  -> HTTP handler / ModelCallProxy / SGLang / stage / record_turn / commit
+```
+
+`SessionPoisonRegistry` 已经使用 `threading.Lock`，但 `CaptureRegistry`、`ModelCallProxy._pending_drafts`、`attempts_ledger` 和部分 evidence 容器仍跨执行域共享。必须通过“单 owner + 消息传递”或明确的锁与快照协议解决，不能依赖 GIL。
+
+## 4. P0：进入 FA-5 前必须关闭
+
+### P0-1：未知 SID 可以绕过 RH2，直接调用 SGLang
+
+位置：
+
+- `capture_wire.py:408-413`
+- `reference/slime/slime/agent/adapters/common.py:325-344`
+- `glue.py:73-76`
+
+当前 wire 逻辑：
+
+```python
+if proxy is None or session_id is None or session_id not in registry.hooks:
+    data = await _send_once(1)
+```
+
+而 slime `BaseAdapter` 对未知 SID 使用 `store.setdefault(sid, Session())`。这意味着任意能访问 adapter 的客户端，只要带一个从未注册的 bearer token，就能获得一个新 session，并直接调用 SGLang。该请求绕过：
+
+- `ModelCallProxy`；
+- poison；
+- weight-version 和 staleness；
+- episode deadline；
+- model-call 并发限制；
+- capture 和训练资格治理。
+
+adapter 默认绑定 `0.0.0.0`，因此这不是纯理论分支，而是一个未登记推理代理。
+
+处理建议：
+
+1. 正式服务中，`session_id is None` 或不在 active registry 必须返回非 404 的 fail-closed 响应；
+2. 启动探针使用显式 `internal_probe=True` 通道，不复用“未知 SID 直连”旁路；
+3. adapter middleware 在进入 `_run_turn` 前验证 active session capability；
+4. 增加网络级测试：未知 SID、已关闭 SID、poisoned SID 都不能产生 SGLang 请求；
+5. 默认绑定 docker bridge 地址或受控接口，不使用 `0.0.0.0` 作为正式默认值。
+
+### P0-2：capture 边界检查发生在真正的 drain 屏障之前
+
+位置：
+
+- `generate.py:1533-1583`
+- `reference/slime/slime/agent/adapters/common.py:225-270`
+
+当前顺序：
+
+```text
+harness 退出
+-> 检查 poison
+-> assert_session_clean
+-> 检查 hook.records
+-> finish_session（这里才 drain inflight HTTP turn）
+```
+
+但 `finish_session()` 内部的 `shutdown_session()` 才会等待或取消该 SID 的全部 in-flight 请求。现有顺序会产生两种错误：
+
+1. false reject：一个正常请求已经 stage、正在完成 SSE/record_turn，边界检查看到 pending 就提前拒绝；
+2. false accept：检查时请求尚未 stage，随后在 finish-session drain 期间发生 commit、overlap 或 sink failure；因为没有第二次检查，execution 可能继续进入评分。
+
+`hook.records` 和 session-level shrink 检查也在 drain 之前，读取的是不完整快照。
+
+正确顺序应为：
+
+```text
+harness 退出
+-> adapter.finish_session：close + drain inflight + 得到 samples
+-> 再检查 poison
+-> 再检查 pending / unfinalized drafts
+-> 再冻结 hook.records / tapes / weight versions 快照
+-> backfill
+-> grading / projection / Gate
+```
+
+需要增加一个真实交错测试：harness 已退出，但 adapter turn 在 drain 期间才完成 `record_turn`。
+
+### P0-3：CaptureRegistry 不是跨线程事务，commit 中点异常会留下永久悬挂 draft
+
+位置：
+
+- `capture_wire.py:109-259`
+- `async_worker.py:470-538`
+
+`register / assert_session_clean / unregister` 由 AsyncLoopThread 调用；`stage / commit` 由 aiohttp thread 调用。除 poison 子对象外，以下容器都没有线程同步：
+
+- `hooks`
+- `pending`
+- `weight_versions`
+- `session_deadlines`
+- `_turn_seq`
+- `ModelCallProxy._pending_drafts`
+- `ModelCallProxy.attempts_ledger`
+
+确定性交错已经复现：在 `commit()` 读取 hook/queue 后执行 `unregister()`，随后 `commit()` 继续追加版本，得到：
+
+```text
+raised = KeyError('race_sid')
+```
+
+另一个事务问题是 `commit()` 先 `pop(0)`，再调用 `hook.on_generate_response()`。如果 capture store/tape 构造抛异常：
+
+```text
+pending_count = 0
+draft_unfinalized = true
+poisoned = false
+ledger_count = 0
+```
+
+此时边界检查只能看到 proxy 中残留的 attempt id，却已经失去 `ProxyCallResult` 对象，无法调用 `abandon_delivered()`，形成永久悬挂状态。
+
+处理建议：
+
+1. 为 CaptureRegistry 定义唯一 owner；优先让 adapter thread 拥有全部 capture 状态，orchestrator 通过线程安全命令/快照接口操作；
+2. 如果暂时使用锁，使用短临界区：只移动对象所有权，不在锁内执行磁盘写、hook、callback；
+3. `commit()` 改成显式事务：`PENDING -> COMMITTING -> COMMITTED/ABANDONED`；
+4. hook/finalize 失败时必须 poison，并确保 draft 被关闭、最小 FailureFact 入账；
+5. 不要无条件吞 `finalize_delivered()` 的 `ValueError`。重复 finalize 是契约违规，不等于普通幂等成功；
+6. 增加真实双线程压力测试，而不是只测试 `SessionPoisonRegistry`。
+
+### P0-4：模型调用资源限额配置没有接入生产 proxy
+
+位置：
+
+- `rollout_entry.py:372-390`
+- `glue.py:521-528`
+- `async_worker.py:701-715`
+
+FA 入口创建 `ResourceLimits`，并传给 worker：
+
+```python
+ContinuousExecutionWorker(... execution_limits=limits)
+```
+
+因此 `sandbox` 类限额有效。但 `ModelCallProxy` 在更早的 glue 路径独立构造，没有传入 `limits`：
+
+```python
+ModelCallProxy(... artifact_sink=..., sink_required=...)
+```
+
+所以 `rh2_fa_limit_model_call` 当前是没有生产消费者的配置。现有测试只证明“手工给 proxy 传 `ResourceLimits` 时 semaphore 有效”，没有测试 `_build_service -> BringupService -> ModelCallProxy` 的真实接线。
+
+评分并发由 `GradingQueueConfig` 独立管理，`rh2_fa_limit_grading` 也没有改变它。
+
+处理建议：
+
+1. 将资源配置定义为跨组件配置对象，而不是在 FA 入口临时创建；
+2. adapter loop 拥有 model-call limiter；AsyncLoopThread 拥有 sandbox limiter；不要无说明地跨 loop 共享 `asyncio.Semaphore`；
+3. `rh2_fa_limit_grading` 要么真正构造 `GradingQueueConfig(concurrency=...)`，要么删除该假配置；
+4. 增加生产装配测试，断言 proxy `_limits` 不为空，并测两个真实并发 HTTP turn 的峰值；
+5. inspector 输出“配置值、实际 limiter owner、实测峰值”三项。
+
+### P0-5：FA 路径绕过 record_event，关键运行事实只留在无界内存
+
+位置：
+
+- `rollout_entry.py:369-370`
+- `glue.py:766-840`
+- `glue.py:915-927`
+
+batch-sync 入口 `glue.generate()` 会在 rollout 后调用 `record_event()`。FA 入口则直接调用：
+
+```python
+orchestrator.generate(args, member, sampling_params)
+```
+
+因此 fully async 路径不会写 `bringup_events.jsonl`。以下信息只留在内存或根本没有 execution 级索引：
+
+- audit timeline 和分段耗时；
+- cleanup failure；
+- ModelCallAttempt ledger；
+- poison/notify failure；
+- worker backpressure；
+- execution 与 artifact 的关联；
+- 完整的失败分类。
+
+这会使 FA-5 无法可靠统计吞吐，也不满足正式训练的可审计要求。
+
+处理建议：
+
+1. 给 orchestrator 注入 execution-level `audit_sink`，在每个 execution 终态写一次；
+2. FA 入口传递 `ExecutionTaskSpec`，不要只传 `payload`，使 sink 能写入 `rollout_execution_id / prompt_group_id / member_slot`；
+3. ModelCallAttempt 必须按 execution drain 到 artifact/Outcome，然后从 proxy 热内存删除；
+4. audit 落盘失败按正式链 fail-closed 或 run-halt 处理，不能像普通日志一样忽略；
+5. FA-5 inspector 必须从持久 artifact 重建 attempted/delivered/rejected/abandoned 守恒式。
+
+## 5. FA-2 第一提交必须解决的基础问题
+
+以下问题已经在计划中部分提到，但完整审计确认它们不是普通优化，而是 assembler 的前置条件。
+
+### F2-1：ExecutionTaskSpec 身份没有传入实际 execution
+
+`FaRolloutService` 生成：
+
+```text
+rollout_execution_id = fa_gX_mY
+prompt_group_id = fa_gX
+```
+
+但 `execute()` 只调用 `_execute_member(spec.payload)`，spec 本身被丢弃。orchestrator 又从 `task_id + sample.index + group_index` 重新生成稳定 SID。
+
+结果：
+
+- FA worker identity、capture SID、artifact trajectory id 不是同一权威；
+- 同一题下一 epoch 会复用 SID；
+- `_write_artifacts()` 会覆盖旧 trajectory 目录；
+- attempt id 和 model-call audit 文件可能碰撞；
+- poison 无法严格隔离一次 RolloutExecution。
+
+FA-2 第一提交应让 `ExecutionIdentity` 从 task source 一路传到：
+
+```text
+worker -> orchestrator -> session -> proxy -> capture -> grading -> artifact -> Outcome
+```
+
+### F2-2：身份与 bearer secret 不应是同一个值
+
+当前 SID 同时是：
+
+- public execution identity；
+- adapter 路由键；
+- `ANTHROPIC_AUTH_TOKEN` bearer secret。
+
+现有 SID 还可由 task/index/group 推导。模型拥有完整 shell，可以读取自己的 token；同一 Docker bridge 上的 execution 也共享 adapter 地址。
+
+建议拆分：
+
+```text
+rollout_execution_id：可审计、可持久化的公开身份
+session_auth_capability：128-bit 随机、只用于当前 session、禁止写公开 artifact
+```
+
+adapter 保存 capability -> execution 的映射。关闭 session 后 capability 永久失效。
+
+### F2-3：request 级 capture 归属必须替代 SID + FIFO
+
+当前对同 SID 并发请求采取 fail-closed，是合理临时策略，但 Claude Code subagent 会真实产生并发模型调用。FA-2 必须把 SGLang RID/HTTP request id 传到 `record_turn`，使用：
+
+```text
+(execution_id, request_id) -> PendingTurn
+```
+
+不能按完成顺序猜测。
+
+### F2-4：预取状态没有进入 checkpoint，actor 重启会永久跳题
+
+FA worker 会在返回一个 batch 前从 data source 预取更多组。确定性探针：
+
+```text
+source_groups_consumed = 8
+groups_returned = 1
+queue_prefetched = 7
+checkpoint_would_skip = 7
+```
+
+slime `RolloutDataSource.save()` 保存的是已经前进的 `sample_offset / sample_index / group_index`，但 RH2 queue、in-flight、collector 和 completed backlog 都没有持久化。若在该时刻保存 checkpoint 后 actor 崩溃，7 个已从 data source 移除但尚未训练的组会永久丢失。
+
+FA-2/FA-3 必须选择明确语义：
+
+1. checkpoint 同时保存 task-source cursor 和 RH2 pending/ready 状态；或
+2. data source 使用 lease/ACK，只有 group 进入已确认训练状态后才推进 durable cursor；或
+3. 允许 at-least-once replay，并通过 execution/batch id 去重。
+
+仅记录 attempted coverage 不能修复训练分布漂移，只能发现漂移。
+
+### F2-5：interim collector 没有完整的组不变量
+
+当前问题：
+
+- 不验证 data source 返回的组长度是否等于 `n_samples_per_prompt`；
+- 不验证 member slots 为 `0..n-1` 且不重复；
+- 重复 `rollout_execution_id` 会静默覆盖旧 delivery；
+- `_member_ok()` 使用 `any(non-remove)`，混合 `[valid branch, remove_sample branch]` 也被接受；
+- 排序按字符串 execution id，不按 `member_slot`；
+- `_dropped_ids` 和 `dropped_groups` 长训练无界增长。
+
+确定性探针：
+
+```text
+duplicate_delivery_rejected = false
+bucket_member_count = 1
+mixed_branch_member_ok = true
+```
+
+PromptGroupAssembler 必须把上述情况视为契约冲突或明确的 branch-level policy，不能交给后续 slime filter 静默改变组大小。
+
+### F2-6：ModelCallAttempt 已生成，但没有进入 Trajectory/Outcome 的持久血缘
+
+`ModelCallProxy.attempts_ledger` 是全局无界 list，仓库中没有生产消费者把它按 execution 写入 artifact。外部 `model_call_audit/*.json` 也只是 digest-only 单件，没有完整 ledger manifest。
+
+必须提供：
+
+- `drain_attempts(execution_id)` 或等价事务接口；
+- delivered attempt -> capture record 的双向引用；
+- non-delivered attempt -> digest-only evidence 的引用；
+- Outcome/TrajectoryArtifact -> attempt ledger manifest；
+- drain 后从热内存删除；
+- 进程退出前检查不存在无 owner 的 draft/attempt。
+
+## 6. P1：应在 FA-5 前或与 FA-2/FA-4 同步处理
+
+### P1-1：局部重试只有 helper，没有任何生产调用点
+
+`retry_local_operation()` 和白名单已有单测，但除测试外全仓零调用。以下操作仍直接执行：
+
+- image inspect/pull；
+- container create/remove；
+- artifact atomic write；
+- grading stage；
+- model request before send。
+
+因此“指数退避和幂等重试已经接入”目前不成立。应逐操作明确幂等键、错误分类和 deadline，再接入；不要一层通用装饰器包住整个 episode。
+
+### P1-2：没有生产 shutdown/close 调用链
+
+`FaRolloutService.shutdown()` 只有测试调用。正式代码没有在训练结束、actor teardown、异常停机或 before/after eval 前调用它。`BringupService` 也没有统一关闭：
+
+- continuous worker；
+- GradingQueue workers；
+- adapter HTTP thread；
+- in-flight sandbox；
+- artifact writer。
+
+需要 rollout actor 生命周期 hook，并在退出时验证：
+
+```text
+worker ledger balanced
+in_flight = 0
+pending drafts = 0
+open sessions = 0
+grading queue drained
+cleanup quarantine 已移交
+```
+
+### P1-3：单例和 monkeypatch 不支持进程内恢复
+
+`_SERVICE` 和 `BringupService._instance` 都是进程级单例。`install_capture_wire()` 又把第一个 registry 闭包永久写进 monkeypatch，并用 `_rh2_capture_wire_installed` 阻止重绑。
+
+如果尝试在同一进程构造新 BringupService，patched wire 仍可能指向旧 registry。因此当前正确恢复语义应是：
+
+```text
+worker/systemic halt -> 整个 rollout actor 退出并重启
+```
+
+在实现可重绑 registry holder 前，不应声称支持进程内 recovery。
+
+### P1-4：多处长运行内存无界
+
+至少包括：
+
+- `ModelCallProxy.attempts_ledger`
+- `RolloutOrchestrator.audits`
+- `FaRolloutService.failure_records`
+- `_InterimGroupCollector.dropped_groups`
+- `_InterimGroupCollector._dropped_ids`
+- `RolloutOrchestrator.cleanup_quarantine`
+- `GradingQueue.events`
+
+其中 `GradingQueue.events` 每次 finalize 都复制全量并按 trajectory 过滤，长期会从内存增长演变为 O(N²) 扫描。
+
+所有长期事实应写 durable sink；进程内只保留有界窗口、计数器和待处理状态。
+
+### P1-5：episode deadline 从第一次模型调用开始，晚于真实 episode 起点
+
+`CaptureRegistry.session_deadline()` 第一次被 model proxy 调用时才创建 deadline。CLI 安装、用户创建、workspace 初始化和 Claude Code 启动时间都没有计入 proxy 预算。
+
+应由 orchestrator 在 execution 启动时生成绝对 deadline，并在 `open_session` 时注册。proxy、harness、SGLang attempt、版本等待和 cleanup reserve 共用同一个 deadline。
+
+### P1-6：open_session 不是事务，底层打开失败会泄漏 registry
+
+`PerRolloutAdapter.open_session()` 先 `registry.register()`，再调用 slime adapter。若后者抛异常，`session_open` 尚未置 True，orchestrator finally 不会执行 drop/unregister，健康 SID 会永久占用 registry。
+
+需要 rollback：底层 open 失败时撤销 registry 注册，并留下启动失败事实。
+
+### P1-7：cleanup quarantine 只有 list，没有消费者和持久化
+
+现在 Docker cleanup 异常会进入 `cleanup_quarantine`，比无账丢失正确；但它只是无界内存列表，没有后台重试、TTL、控制面告警或重启恢复。
+
+应实现最小 cleanup reconciler，至少持久化 container/lease/execution/reason/attempts，并在 run-halt 阈值触发后停止继续创建 sandbox。
+
+### P1-8：StaticActiveCoordinator 不是正式 coordinator
+
+当前 production glue 使用 `StaticActiveCoordinator`：
+
+- 永远报告 `ACTIVE`；
+- `update_epoch=0`；
+- 无法证明一次 abort 与更新窗口重叠；
+- 因而正式链不会执行透明重生成，只会保守缺员；
+- version provider 使用同步 `requests.get`，在 adapter event loop 内最多阻塞 5 秒；TTL miss 会暂停该线程上的所有 HTTP turn。
+
+这属于 FA-4 已知工作，但必须在 FA-5 前替换为 trainer 发布、全引擎 ACK 的异步快照。FA-1 现在只能声称“proxy 算法和消费接口完成”，不能声称生产透明重生成完成。
+
+### P1-9：SGLang abort_request 失败没有事实记录
+
+客户端取消时会尽力调用 `/abort_request`，但异常全部吞掉。FA-5 需要四方对账：
+
+- HTTP request id；
+- SGLang RID；
+- abort_request 返回；
+- ModelCallAttempt delivery status。
+
+abort 失败意味着 KV/算力可能继续占用，必须计数并可触发引擎健康告警。
+
+## 7. P2：证据与性能问题
+
+### P2-1：FA 的 `rollout_id` 参数完全未使用
+
+这会削弱 step/checkpoint 血缘和确定性调试。应至少写进 batch request、execution identity 和 audit manifest。
+
+### P2-2：record_event 的 `weight_versions_engine` 在正常路径通常为空
+
+`record_event()` 在 orchestrator 返回后执行，而 orchestrator finally 已经 `unregister()` 并删除 `registry.weight_versions[sid]`。样本侧 `weight_versions_sample` 仍存在，但 engine registry 字段不能作为有效证据。
+
+应在 cleanup 前冻结 execution snapshot，再交给 audit sink。
+
+### P2-3：同步 fsync 位于 adapter 热线程
+
+non-delivered artifact 每次写入都在 aiohttp thread 同步执行 JSON、flush 和 fsync。更新窗口集中 abort 时会串行阻塞其他 session。正确性优先可以保留 durable ack，但应使用专用 writer/WAL 或 `to_thread`，并测量 fsync p95。
+
+### P2-4：artifact 原子性还缺目录 fsync
+
+`os.replace()` 保证可见性原子，但进程/主机崩溃后的目录项持久性通常还需要对父目录 fsync。FA-5 如果把 crash recovery 列为验收，应补齐；若只承诺进程级原子性，文档需要明确。
+
+## 8. 已确认正确或可以保持的部分
+
+以下实现经过本轮完整调用链复核，方向可以保留：
+
+1. slime `call_rollout_fn` 确实是同步调用，当前同步外壳正确；
+2. slime `run()` 使用持久后台 event loop，因此 worker 可以跨 batch 保温；
+3. slime `_respond()` 在 `record_turn()` 之前 await 完整响应写出，选择 `record_turn` 作为“可进入 trajectory”的提交点有上游依据；
+4. 每个 proxy regeneration 使用独立 SGLang RID；
+5. client cancellation 会尝试 abort 对应 RID；
+6. proxy 的版本恢复守卫、fencing、deadline 和最大重生成数逻辑测试较完整；
+7. poison 从 adapter thread 经 `call_soon_threadsafe` 取消 owner loop 的 harness task，线程方向正确；
+8. active poison 不再因容量被淘汰；
+9. sink required 在 `call()` 内部已经 fail-closed；
+10. abandon 现在先关闭 draft 和写最小 FailureFact，再上抛 sink error，修复了上一轮中间态；
+11. worker 的 `dispatched = delivered + failed + abandoned` 终态不变量合理；
+12. 非阻塞 delivery + pending_out 能避免 queue full 时停止 reap；
+13. 评分队列本身有界，并能产生反压事实；
+14. Claude Code 2.1.205 的版本 pin、retry guard 和 404 防线有源码与黑盒探针依据；
+15. Eval 不进入 FA worker，before/after 走标准路径的边界清楚。
+
+## 9. 测试覆盖评价
+
+现有 FA-1 测试的优点：
+
+- proxy 状态机覆盖密度高；
+- cancellation、poison、sink failure、deadline、版本恢复都有定向负测试；
+- worker 的反压、sink failure、source failure 和账目守恒有故障注入；
+- 使用 slime 真 `call_rollout_fn` 检查了同步入口；
+- startup pending 形状、重复 active SID、abandon sink 双失败均已有回归测试。
+
+关键缺口：
+
+1. 没有 CaptureRegistry 的真实双线程测试；
+2. 没有 `finish_session drain -> boundary freeze` 顺序测试；
+3. 没有 unknown SID 不能触发 SGLang 的网络测试；
+4. 没有生产装配后的 model-call limiter 测试；
+5. 没有 FA 路径 audit artifact 完整性测试；
+6. 没有 data-source checkpoint + worker prefetch 恢复测试；
+7. 没有 1 小时以上长运行的 heap/state cardinality 断言；
+8. 没有 actor teardown/shutdown/重启测试；
+9. 没有 open_session 半成功 rollback 测试；
+10. 没有 collector 的组长度、slot、重复 delivery 和 mixed branch 属性测试。
+
+## 10. 建议实施顺序
+
+### 第一批：FA-1 closure，先于 assembler
+
+1. 未知 SID/capability fail-closed；
+2. 把 finish-session drain 移到 capture freeze 之前，并在 drain 后复检 poison；
+3. CaptureRegistry 单 owner/事务化 commit/异常 abandon；
+4. open-session rollback；
+5. 真正接通 model-call limiter 与 grading 配置；
+6. 为 FA execution 增加 audit sink，避免继续只留内存。
+
+### 第二批：FA-2 identity foundation
+
+1. 唯一 `RolloutExecutionIdentity` 贯穿全链；
+2. execution id 与 session auth capability 分离；
+3. request-id capture map；
+4. per-execution ModelCallAttempt manifest；
+5. RolloutAttemptOutcome 发射点；
+6. data-source lease/checkpoint/replay 语义。
+
+### 第三批：PromptGroupAssembler
+
+在身份、capture 和 outcome 已稳定后，再实现组状态机、TTL、完整 n 准入、永久拒绝和 ready queue。
+
+### 第四批：FA-4 + FA-5
+
+接通真实 TrainingRuntimeCoordinator、consensus version、faithful DIS、consume-time staleness，再进行 GPU 真机测试。
+
+## 11. FA-5 必加验收
+
+除现有计划外，新增：
+
+1. 未知/伪造 SID 请求不能到达 SGLang；
+2. 两个真实并发 Claude Code/subagent 请求按 request id 正确归属；
+3. capture commit 故障不会留下 pending draft；
+4. `rh2_fa_limit_model_call=1` 时真实 SGLang 峰值并发严格为 1；
+5. rollout actor kill/restart 后，prefetched groups 不丢、不重复训练；
+6. 运行至少一小时，所有热状态 cardinality 有上限；
+7. trainer shutdown 后 worker、adapter、grading 和 sandbox 全部归零；
+8. update window abort 的 RID、abort ACK、attempt ledger、capture 和最终 sample 五方一致；
+9. Claude Code 客户端取消会终止真实 SGLang request 和 sandbox CLI；
+10. audit artifact 可重建 attempted/delivered/rejected/abandoned 守恒式。
+
+## 12. 本轮确定性探针结果
+
+### 12.1 CaptureRegistry 事务交错
+
+```text
+raised = KeyError('race_sid')
+```
+
+### 12.2 capture hook 在 commit 中点失败
+
+```text
+raised = RuntimeError
+pending_count = 0
+draft_unfinalized = true
+poisoned = false
+ledger_count = 0
+```
+
+### 12.3 fully async 预取与 checkpoint 漂移
+
+```text
+source_groups_consumed = 8
+groups_returned = 1
+queue_prefetched = 7
+checkpoint_would_skip = 7
+```
+
+### 12.4 interim collector 非法输入
+
+```text
+duplicate_delivery_rejected = false
+bucket_member_count = 1
+mixed_branch_member_ok = true
+```
+
+这些探针都不修改仓库文件，可转成正式回归测试。
+
+## 13. 最终判定
+
+FA-1 不是失败实现。它已经把 fully async 最难的一批局部机制——worker 账目、反压、proxy regeneration、版本守卫、poison 和 capture 草案——建立起来了。当前问题主要来自把这些局部正确组件接入真实三线程拓扑、长运行状态和安全边界时出现的所有权缺口。
+
+因此正确行动不是回退到 batch-synchronous，也不是推翻 FA 设计，而是：
+
+```text
+先关闭 FA-1 的模型边界与 capture 事务 P0
+-> 建立 FA-2 唯一身份、request capture、durable outcome 基础
+-> 再实现 PromptGroupAssembler
+-> 接通 FA-4 coordinator / DIS
+-> 最后做 FA-5 真机与恢复验收
+```
+
+在本文 P0 和 FA-2 identity foundation 完成前，`rh2_fully_async_training_path_verified` 必须保持 `false`。
+

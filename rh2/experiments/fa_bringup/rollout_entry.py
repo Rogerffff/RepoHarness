@@ -369,12 +369,13 @@ def _build_service(args: Any, data_buffer: Any) -> FaRolloutService:
     async def execute_member(member: Any) -> Sequence[Any]:
         return await orchestrator.generate(args, member, dict(sampling_params))
 
+    # 轮次 13 P0-4：本对象只供 worker 的 **sandbox** 类（绑 AsyncLoopThread
+    # 的 event loop）。model_call 限额的真实 owner 是 glue 的 adapter 线程
+    #（BringupService.model_call_limits，env RH2_FA_LIMIT_MODEL_CALL）；评分
+    # 并发的 owner 是 GradingQueueConfig（env RH2_FA_LIMIT_GRADING）。此前
+    # 这里的 model_call/grading_container 键是无消费者的假配置，已删。
     limits = ResourceLimits(
-        {
-            "sandbox": int(getattr(args, "rh2_fa_limit_sandbox", 16)),
-            "model_call": int(getattr(args, "rh2_fa_limit_model_call", 32)),
-            "grading_container": int(getattr(args, "rh2_fa_limit_grading", 8)),
-        }
+        {"sandbox": int(getattr(args, "rh2_fa_limit_sandbox", 16))}
     )
     return FaRolloutService(
         group_source=group_source,

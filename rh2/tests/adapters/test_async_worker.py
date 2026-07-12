@@ -1224,3 +1224,30 @@ async def test_abandon_with_broken_sink_closes_draft_then_raises():
     assert last.delivery_status == "non_delivered_failed"
     assert last.model_call_attempt_id.endswith("_abandoned")
     assert last.evidence_refs == []  # 最小 FailureFact（evidence 持久化失败）
+
+
+def test_drain_attempts_removes_from_hot_memory():
+    """codex 轮次 13 P0-5/F2-6：按 execution 摘走 attempt ledger——落盘后
+    热内存即清（ledger 不再无界）。"""
+
+    import asyncio as _a
+
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")] * 8), sleeper=_no_sleep
+    )
+
+    async def scenario():
+        async def send(attempt: int) -> dict:
+            return _ok_response([1], version="1")
+
+        r1 = await proxy.call("exec_D1", "turn_0", send)
+        r1.finalize_delivered("cap_1")
+        r2 = await proxy.call("exec_D2", "turn_0", send)
+        r2.finalize_delivered("cap_2")
+
+    _a.get_event_loop_policy().new_event_loop().run_until_complete(scenario())
+    drained = proxy.drain_attempts("exec_D1")
+    assert len(drained) == 1 and drained[0].logical_turn_id.startswith("exec_D1/")
+    remaining = [a.logical_turn_id for a in proxy.attempts_ledger]
+    assert all(t.startswith("exec_D2/") for t in remaining)  # 只剩别的 execution
+    assert proxy.drain_attempts("exec_D1") == []  # 幂等

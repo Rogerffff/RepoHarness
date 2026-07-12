@@ -53,6 +53,19 @@ class PendingTurn:
     proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
 
 
+class UnknownSessionError(RuntimeError):
+    """未知/未注册 SID 的模型调用（codex 轮次 13 P0-1）：此前直连 SGLang
+    ——绕过 proxy/poison/版本/deadline/限额/capture 的未登记推理旁路，
+    正式服务一律 fail-closed（探针会话走显式注册，不复用旁路）。"""
+
+    def __init__(self, session_id) -> None:
+        super().__init__(
+            f"unknown_session: {session_id!r} 不在 active registry——"
+            "未注册会话不得触达推理引擎（fail-closed）。"
+        )
+        self.session_id = session_id
+
+
 class DuplicateActiveSessionError(RuntimeError):
     """健康 SID 并发重复注册（codex 轮次 12）：稳定 SID（task+index+group）
     在完全异步下并发出现会静默覆盖 hook/pending/weight_versions/artifact
@@ -87,6 +100,12 @@ class CaptureRegistry:
     """sid -> (hook, 暂存轮, 按轮 weight_version) 的进程级登记表。"""
 
     def __init__(self) -> None:
+        import threading
+
+        # 轮次 13 P0-3：register/assert/unregister 在 AsyncLoopThread，
+        # stage/commit 在 aiohttp 线程——共享容器全部走短临界区锁（只移动
+        # 所有权，hook/磁盘/回调都在锁外）。单 owner 消息化重构留 FA-2。
+        self._lock = threading.Lock()
         self.hooks: dict[str, GenerationCaptureHook] = {}
         # 容器保持 list（FA-2 request 级归属会改成 rid 映射），但 stage 对已有
         # 未 commit 暂存 **fail-closed**（CapturePendingOverlapError）——不做
@@ -111,11 +130,12 @@ class CaptureRegistry:
         # （task+index+group）跨补采/epoch 复用时先 fail-fast，不让 harness
         # 带毒起跑。execution 唯一身份是 FA-2 第一验收项。
         self.poison.check(sid)
-        if sid in self.hooks:
-            raise DuplicateActiveSessionError(sid)  # 轮次 12：不静默覆盖
-        self.hooks[sid] = hook
-        self.weight_versions[sid] = []
-        self.pending.setdefault(sid, [])
+        with self._lock:
+            if sid in self.hooks:
+                raise DuplicateActiveSessionError(sid)  # 轮次 12：不静默覆盖
+            self.hooks[sid] = hook
+            self.weight_versions[sid] = []
+            self.pending.setdefault(sid, [])
 
     def assert_session_clean(self, sid: str) -> None:
         """评分/Gate 前边界断言（codex 轮次 12 P0 层 1）：该 SID 不得残留
@@ -123,8 +143,10 @@ class CaptureRegistry:
         不完整（flush 失败/abandon 未闭合），先 poison 再抛，execution 缺员。"""
 
         problems: list[str] = []
-        if self.pending.get(sid):
-            problems.append(f"pending_turns={len(self.pending[sid])}")
+        with self._lock:
+            pending_count = len(self.pending.get(sid) or [])
+        if pending_count:
+            problems.append(f"pending_turns={pending_count}")
         proxy = self.model_call_proxy
         if proxy is not None:
             stale = [a for a in proxy.unfinalized_deliveries if a.startswith(f"{sid}/")]
@@ -144,7 +166,8 @@ class CaptureRegistry:
         对象取 `.raw_response` 会在真实启动时 AttributeError。这里收口形状
         断言：无暂存或多于一条都显式报错。"""
 
-        queue = self.pending.get(sid)
+        with self._lock:
+            queue = list(self.pending.get(sid) or [])
         if not queue:
             raise RuntimeError(
                 f"session {sid} 无暂存轮——capture wire 未接上（A4）或已被 commit。"
@@ -177,11 +200,18 @@ class CaptureRegistry:
         return self._turn_seq[key]
 
     def unregister(self, sid: str) -> None:
-        self.hooks.pop(sid, None)
-        # P0-1（codex 轮次 8）：会话销毁时，暂存但未 commit 的轮 = 未真正交付
-        # 给 CC（HTTP flush 前断连/失败）——显式 abandon delivered draft，
-        # 消除"delivered 但 CC 没收到"的虚假交付。
-        leftover = self.pending.pop(sid, None) or []
+        with self._lock:
+            self.hooks.pop(sid, None)
+            leftover_locked = self.pending.pop(sid, None) or []
+            self.session_deadlines.pop(sid, None)
+            self._turn_seq.pop(sid, None)
+            self.weight_versions.pop(sid, None)
+        self._finish_unregister(sid, leftover_locked)
+        return
+
+    def _finish_unregister(self, sid: str, leftover: list[PendingTurn]) -> None:
+        # P0-1（codex 轮次 8）：暂存但未 commit 的轮 = 未真正交付给 CC——
+        # 显式 abandon（锁外：涉及 sink 磁盘写）。
         if any(turn.proxy_result is not None for turn in leftover):
             # 轮次 12 P0 层 2：有未 commit 的 delivered draft = 该 execution
             # 的交付账不完整——**先 poison** 再尝试持久化 abandon evidence
@@ -199,28 +229,27 @@ class CaptureRegistry:
                         self.stats.get("abandon_evidence_failures", 0) + 1
                     )
                     print(f"[rh2-capture] abandon evidence 持久化失败 sid={sid}: {exc}")
-        self.session_deadlines.pop(sid, None)
-        self._turn_seq.pop(sid, None)
-        # 有界内存（codex 轮次 9 一般 4）：weight_versions 随会话清理——
-        # provider 的 registry 交叉检查从此只覆盖**存活会话**（权威来源是
-        # engine /get_weight_version，交叉检查弱化可接受、如实记录）。
-        self.weight_versions.pop(sid, None)
-        # 轮次 11 身份 4：unregister 只是 **adapter 会话关闭**，不是完整
-        # execution 清理 ACK（容器清理在 orchestrator finally 更晚发生）——
-        # poison 的归档（release）由 orchestrator 在 sandbox 清理完成后触发
-        #（glue 注入 session_poison_release），此处不再提前释放。
+        # session_deadlines/_turn_seq/weight_versions 已在锁内随会话清理；
+        # poison 的归档（release）由 orchestrator 在容器清理后触发（轮次 11）。
 
     def stage(self, sid: str | None, turn: PendingTurn) -> None:
-        if sid is None or sid not in self.hooks:
-            return  # 非 rh2 会话（探针等）不捕获
-        queue = self.pending.setdefault(sid, [])
-        if queue:
+        if sid is None:
+            return  # 非 rh2 会话不捕获（未知 SID 的拒绝在 wire 入口，轮次 13 P0-1）
+        with self._lock:
+            if sid not in self.hooks:
+                return
+            queue = self.pending.setdefault(sid, [])
+            overlap = bool(queue)
+            stale = queue.pop(0) if overlap else None
+            if not overlap:
+                queue.append(turn)
+                self.stats["staged"] += 1
+                return
+        if overlap:
             # P0-2（codex 轮次 9）：overlap = 并发同 session 请求在飞——FIFO
-            # 猜测会串账（A 的 token 记到 B 名下），fail-closed：本请求失败 +
-            # session 中毒 + 旧暂存 abandon（两轮都不可信：完成序未知）。
+            # 猜测会串账，fail-closed：poison + 两轮 abandon（锁外：磁盘写）。
             self.stats["concurrent_overlap_seen"] += 1
             self.poison.poison(sid, "capture_pending_overlap")
-            stale = queue.pop(0)
             self.stats["dropped_uncommitted"] += 1
             if stale.proxy_result is not None:
                 try:
@@ -237,25 +266,61 @@ class CaptureRegistry:
         self.stats["staged"] += 1
 
     def commit(self, sid: str) -> None:
-        hook = self.hooks.get(sid)
-        queue = self.pending.get(sid)
-        if hook is None or not queue:
+        """PENDING -> COMMITTING -> COMMITTED/ABANDONED（轮次 13 P0-3 事务化）。
+
+        锁内只摘取所有权；hook（capture store/tape 构造）在锁外执行——
+        中点异常不再留永久悬挂 draft（turn 持有 proxy_result，事务化
+        abandon 先关账再传播）；hook 后复检会话仍在（unregister 竞态时
+        弃置本轮，不给已销毁会话追加版本——KeyError 竞态的根修）。"""
+
+        with self._lock:
+            hook = self.hooks.get(sid)
+            queue = self.pending.get(sid)
+            if hook is None or not queue:
+                return
+            turn = queue.pop(0)  # COMMITTING：所有权已移出共享容器
+        try:
+            hook.on_generate_response(
+                prompt_token_ids=turn.prompt_ids,
+                sampling_params=turn.capture_params,
+                response=turn.raw_response,
+            )
+        except Exception:
+            # 中点异常：poison + 关闭 draft（最小 FailureFact），再传播
+            self.poison.poison(sid, "capture_commit_hook_failed")
+            if turn.proxy_result is not None:
+                try:
+                    turn.proxy_result.abandon_delivered("capture_commit_hook_failed")
+                except Exception:  # noqa: BLE001 - abandon 已事务化（先关账）
+                    self.stats["abandon_evidence_failures"] = (
+                        self.stats.get("abandon_evidence_failures", 0) + 1
+                    )
+            raise
+        with self._lock:
+            still_registered = sid in self.hooks
+            if still_registered and turn.weight_version is not None:
+                self.weight_versions[sid].append(turn.weight_version)
+        if not still_registered:
+            # commit 与 unregister 竞态：会话已销毁——本轮不进树后账，
+            # poison + abandon（不静默复活已清理的会话容器）
+            self.poison.poison(sid, "commit_after_unregister")
+            if turn.proxy_result is not None:
+                try:
+                    turn.proxy_result.abandon_delivered("commit_after_unregister")
+                except Exception:  # noqa: BLE001
+                    self.stats["abandon_evidence_failures"] = (
+                        self.stats.get("abandon_evidence_failures", 0) + 1
+                    )
             return
-        turn = queue.pop(0)  # 不变量 len<=1：弹出即本轮（无 FIFO 猜测面）
-        hook.on_generate_response(
-            prompt_token_ids=turn.prompt_ids,
-            sampling_params=turn.capture_params,
-            response=turn.raw_response,
-        )
-        if turn.weight_version is not None:
-            self.weight_versions[sid].append(turn.weight_version)
-        # P0-1：commit 成功（该轮已确定进入轨迹树、CC 已收到响应）才 finalize
-        # delivered——capture ref 用真实 request_id（不再是复用的 staged:sid:tN）
+        # COMMITTED：finalize（重复 finalize = 契约违规，poison 不静默吞）
         if turn.proxy_result is not None:
             try:
                 turn.proxy_result.finalize_delivered(f"capture:{sid}:{turn.request_id}")
             except ValueError:
-                pass  # 已 finalize（幂等，防重复 commit）
+                self.poison.poison(sid, "duplicate_finalize_contract_violation")
+                self.stats["duplicate_finalize_violations"] = (
+                    self.stats.get("duplicate_finalize_violations", 0) + 1
+                )
         self.stats["committed"] += 1
 
 
@@ -284,6 +349,36 @@ async def rh2_no_404_middleware(request: "aiohttp_web.Request", handler):
             headers={"x-should-retry": "false"},
         )
     return response
+
+
+def build_session_guard_middleware(registry: "CaptureRegistry"):
+    """adapter 入口的会话能力预检（codex 轮次 13 P0-1 建议 3）：进入
+    _run_turn 前验证 bearer（= 当前 SID）在 active registry 且未中毒——
+    未知/已关闭/中毒会话在 HTTP 层就拒绝（403 + x-should-retry:false，
+    绝不 404），根本不产生 SGLang 请求。/healthz 与 /v1/models 放行。"""
+
+    @aiohttp_web.middleware
+    async def session_guard(request: "aiohttp_web.Request", handler):
+        if request.path in ("/healthz", "/v1/models"):
+            return await handler(request)
+        auth = request.headers.get("Authorization", "")
+        token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else None
+        if token:
+            with registry._lock:
+                known = token in registry.hooks
+            poisoned = registry.poison.is_poisoned(token)
+        else:
+            known, poisoned = False, False
+        if token is None or not known or poisoned:
+            reason = "session_poisoned" if poisoned else "unknown_or_closed_session"
+            return aiohttp_web.json_response(
+                {"error": {"type": f"rh2_{reason}", "message": "session not authorized"}},
+                status=403,
+                headers={"x-should-retry": "false"},
+            )
+        return await handler(request)
+
+    return session_guard
 
 
 def ensure_no_404_middleware(app: "aiohttp_web.Application") -> bool:
@@ -407,13 +502,21 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
 
         proxy = registry.model_call_proxy
         proxy_result = None
-        if proxy is None or session_id is None or session_id not in registry.hooks:
-            # 未装配 proxy / 非 rh2 会话（探针）：原直连路径逐字保留
+        with registry._lock:
+            session_known = session_id is not None and session_id in registry.hooks
+        if not session_known:
+            # 轮次 13 P0-1：未知 SID **fail-closed**——旧行为是直连 SGLang
+            #（未登记推理旁路：绕过 proxy/poison/版本/deadline/限额/capture）。
+            # 启动探针的会话是显式 register 过的，不受影响。
+            raise UnknownSessionError(session_id)
+        if proxy is None:
+            # 未装配 proxy（纯 S1 mock 链）：已注册会话按原直连路径
             data = await _send_once(1)
             request_id = last_rid.get("rid", uuid.uuid4().hex)
         else:
             # D-FA-3 生产接线（codex 轮次 7/8）：poison 快速拒绝 + deadline
             # 传播 + 发前 ACTIVE 等待 + 更新窗口 abort 内部重生成，全在 proxy 内
+            assert session_id is not None  # session_known 已保证
             registry.poison.check(session_id)
             turn_seq = registry.next_turn_seq(session_id)
             proxy_result = await proxy.call(

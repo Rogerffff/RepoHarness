@@ -1194,6 +1194,8 @@ class RolloutAudit:
     artifact_paths: list[Path] = field(default_factory=list)
     # D-FA-6：上下文收缩检测结果（空 = 未检出；非空 + reject 关闭 = 只记录）
     context_shrink_reasons: list[str] = field(default_factory=list)
+    # 轮次 13 P0-5：audit sink 按 sid drain attempt ledger 的键
+    session_id: str | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -1350,6 +1352,7 @@ class RolloutOrchestrator:
         session_poison_unsubscribe: Callable[[str], None] | None = None,
         session_poison_release: Callable[[str], None] | None = None,
         capture_boundary_check: Callable[[str], None] | None = None,
+        audit_sink: Callable[[Any], None] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1418,6 +1421,10 @@ class RolloutOrchestrator:
         # registry.assert_session_clean——pending/unfinalized draft 在场即
         # poison + 缺员）
         self._capture_boundary_check = capture_boundary_check
+        # 轮次 13 P0-5：execution 终态审计落盘（FA 路径绕过 record_event，
+        # audit/attempt/清理事实此前只在无界内存）。每个 execution 结束时
+        # 调用一次；正式链落盘失败 fail-closed（glue 侧实现语义）。
+        self._audit_sink = audit_sink
         self.audits: list[RolloutAudit] = []
         self.cleanup_quarantine: list[str] = []
 
@@ -1441,7 +1448,9 @@ class RolloutOrchestrator:
         sample.session_id = sid
         trajectory_id = sid
 
-        audit = RolloutAudit(trajectory_id=trajectory_id, task_id=task.task_id)
+        audit = RolloutAudit(
+            trajectory_id=trajectory_id, task_id=task.task_id, session_id=sid
+        )
         self.audits.append(audit)
         audit.step("step1_custom_generate_invoked")
 
@@ -1531,8 +1540,18 @@ class RolloutOrchestrator:
             audit.step("step3_harness_completed")
 
             stage = "assemble"
-            # P0-2：harness 返回后复检 session poison（权威信号）——不可归因
-            # 故障期间捕获的任何轮都不可训，整 execution 缺员。
+            # 轮次 13 P0-2：**drain 屏障先行**——finish_session 内部的
+            # shutdown_session 才会等/取消该 SID 的全部 in-flight HTTP turn；
+            # 在它之前做 poison/边界/records 检查读到的是不完整快照（false
+            # reject：正常轮还在 flush；false accept：drain 期间才 commit/
+            # overlap/sink 失败）。顺序：drain -> poison -> 非零 exit ->
+            # 边界断言 -> 冻结 records 快照。
+            samples = await adapter.finish_session(
+                sid,
+                base_sample=sample,
+                reward=0.0,  # 真实 reward 出自步骤 6 评分，之后再回写
+                extra_metadata={"instance_id": task.task_id},
+            )
             if self._session_poison_check is not None and self._session_poison_check(sid):
                 raise SlimeBindingError(
                     "session_poisoned_during_execution",
@@ -1551,7 +1570,7 @@ class RolloutOrchestrator:
                 except Exception as exc:
                     raise SlimeBindingError(
                         "capture_boundary_unclean",
-                        f"评分前交付账边界断言失败：{exc}",
+                        f"评分前交付账边界断言失败（drain 之后）：{exc}",
                     ) from exc
             if not hook.records:
                 raise SlimeBindingError(
@@ -1571,12 +1590,6 @@ class RolloutOrchestrator:
                 audit.context_shrink_reasons.extend(
                     f"session: {reason}" for reason in session_shrink
                 )
-            samples = await adapter.finish_session(
-                sid,
-                base_sample=sample,
-                reward=0.0,  # 真实 reward 出自步骤 6 评分，之后再回写（见差异假设清单）
-                extra_metadata={"instance_id": task.task_id},
-            )
             if not samples:
                 raise SlimeBindingError(
                     "adapter_session_empty", "finish_session 没有产出任何叶链 Sample。"
@@ -1720,6 +1733,13 @@ class RolloutOrchestrator:
                 # 真正的 execution 清理 ACK：harness 终止 + 会话撤销 + 容器
                 # 清理都已完成，active poison 此刻才允许归档（轮次 11）
                 self._session_poison_release(sid)
+            if self._audit_sink is not None:
+                try:
+                    self._audit_sink(audit)
+                except Exception as exc:  # noqa: BLE001 —— 分链路处置
+                    if self.config.require_real_weight_versions:
+                        raise  # 正式链：审计落盘失败不许静默（run-halt 语义）
+                    print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
 
     # ------------------------------------------------------------------ 步骤 2
     def _default_mount_planner(self, task: RolloutTaskSpec) -> list[BundleMount]:

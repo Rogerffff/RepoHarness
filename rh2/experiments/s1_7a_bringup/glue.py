@@ -333,6 +333,11 @@ class BringupService:
 
         ensure_no_404_middleware(self.adapter.app)
         assert_no_404_guard_installed(self.adapter.app)
+        # 轮次 13 P0-1：bearer 能力预检——未知/已关/中毒会话 HTTP 层拒绝，
+        # 不产生 SGLang 请求（wire 内 UnknownSessionError 是第二道）
+        from s1_7a_bringup.capture_wire import build_session_guard_middleware
+
+        self.adapter.app.middlewares.append(build_session_guard_middleware(self.registry))
         self.app_handle = run_app_in_thread(
             self.adapter.app,
             host=ADAPTER_BIND_HOST,
@@ -358,7 +363,15 @@ class BringupService:
         self.grading_manager = SWEGradingManager(
             GradingManagerConfig(eval_log_dir=eval_log_dir)
         )
-        self.grading_queue = GradingQueue(self.grading_manager, GradingQueueConfig())
+        # 轮次 13 P0-4：评分并发旋钮真实接线（此前 rh2_fa_limit_grading 是
+        # 无消费者的假配置——评分并发一直由 GradingQueueConfig 独立管理）
+        grading_concurrency = int(os.environ.get("RH2_FA_LIMIT_GRADING", "4"))
+        self.grading_queue = GradingQueue(
+            self.grading_manager,
+            GradingQueueConfig(
+                concurrency=grading_concurrency, queue_size=grading_concurrency * 2
+            ),
+        )
         self._queue_started = False
 
         # -- 事件流（假设核对 + 计时证据的落盘面）
@@ -518,6 +531,16 @@ class BringupService:
             raise RuntimeError("artifact sink 启动探针失败：写入不可读回。")
         probe_path.unlink()
 
+        # 轮次 13 P0-4：model_call 限额接入**生产 proxy**（此前 ResourceLimits
+        # 只在 FA 入口给 worker 的 sandbox 类，rh2_fa_limit_model_call 无生产
+        # 消费者）。所有权：本 limits 对象只在 adapter 线程的 event loop 内
+        # await（model_call 类信号量绑定该 loop）；worker 的 sandbox 类由 FA
+        # 入口另建对象、绑 AsyncLoopThread——**不跨 loop 共享同一 semaphore**。
+        from repoharness2.adapters.slime.async_worker import ResourceLimits
+
+        self.model_call_limits = ResourceLimits(
+            {"model_call": int(os.environ.get("RH2_FA_LIMIT_MODEL_CALL", "32"))}
+        )
         self.registry.model_call_proxy = ModelCallProxy(
             StaticActiveCoordinator(self._latest_engine_version),
             attempt_timeout_seconds=900.0,  # 与 wire sock_read 同级
@@ -525,6 +548,7 @@ class BringupService:
             # 轮次 11 P0-2：正式链 sink 写失败 fail-closed（poison + 缺员），
             # 不许静默退回内存引用后留悬空 evidence
             sink_required=config.require_real_weight_versions,
+            limits=self.model_call_limits,
         )
         if config.require_real_weight_versions and (
             self.registry.model_call_proxy._artifact_sink is None
@@ -557,6 +581,8 @@ class BringupService:
             session_poison_release=self.registry.poison.release,
             # 轮次 12 P0 层 1：评分前交付账边界断言
             capture_boundary_check=self.registry.assert_session_clean,
+            # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
+            audit_sink=self._write_execution_audit,
         )
 
     def _registry_max_version(self) -> int | None:
@@ -707,6 +733,38 @@ class BringupService:
             raise ValueError(f"样本没有可识别的 instance_id（metadata/label 均未命中）: {iid!r}")
         return self.task_specs[iid]
 
+    def _write_execution_audit(self, audit) -> None:
+        """execution 终态审计（轮次 13 P0-5）：audit 时间线 + 按 execution
+        drain 的 ModelCallAttempt ledger 一起落 JSONL；drain 后热内存即清。
+        正式链写失败由 orchestrator 上抛（fail-closed）。"""
+
+        attempts = []
+        proxy = self.registry.model_call_proxy
+        if proxy is not None and audit.session_id:
+            attempts = [
+                a.model_dump(mode="json") for a in proxy.drain_attempts(audit.session_id)
+            ]
+        record = {
+            "schema_id": "rh2.fa.execution_audit.v1",
+            "trajectory_id": audit.trajectory_id,
+            "session_id": audit.session_id,
+            "task_id": audit.task_id,
+            "steps": list(audit.steps),
+            "harness_exit_code": audit.harness_exit_code,
+            "failure_records": [
+                {"stage": f.stage, "error_type": f.error_type, "detail": f.detail}
+                for f in audit.failure_records
+            ],
+            "cleanup_failures": [
+                {"step": c.step, "detail": c.detail} for c in audit.cleanup_failures
+            ],
+            "context_shrink_reasons": list(audit.context_shrink_reasons),
+            "model_call_attempts": attempts,
+        }
+        path = ARTIFACT_DIR / "fa_execution_audit.jsonl"
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+
     def _adapter_factory(self, hook, session_defaults):
         service = self
 
@@ -714,12 +772,19 @@ class BringupService:
             """SessionAdapter 形状：共享 AnthropicAdapter + 按 sid 挂 capture hook。"""
 
             def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
+                # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
+                # 注册（否则 session_open 未置位、finally 不 drop，健康 SID
+                # 永久占用 registry）
                 service.registry.register(sid, hook)
-                service.adapter.open_session(
-                    sid,
-                    sampling_defaults=sampling_defaults,
-                    max_context_tokens=max_context_tokens,
-                )
+                try:
+                    service.adapter.open_session(
+                        sid,
+                        sampling_defaults=sampling_defaults,
+                        max_context_tokens=max_context_tokens,
+                    )
+                except BaseException:
+                    service.registry.unregister(sid)
+                    raise
 
             async def finish_session(
                 self, sid, *, base_sample, reward=0.0, extra_metadata=None, wait_timeout=5.0
