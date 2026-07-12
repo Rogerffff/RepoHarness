@@ -134,6 +134,8 @@ __all__ = [
     "StartupCheckError",
     "TurnTape",
     "backfill_leaf_sample",
+    "detect_context_shrink",
+    "ensure_claude_code_compaction_disabled",
     "rh2_custom_generate",
     "rollout_task_from_bundle_pair",
     "startup_checks",
@@ -328,6 +330,9 @@ class TurnTape:
     top_p_token_ids: tuple[int, ...] | None
     top_p_token_offsets: tuple[int, ...] | None
     routed_experts_flat: tuple[int, ...] | None
+    # FA-0：本轮引擎真实 weight_version（meta_info.weight_version 原文透传；
+    # 权重更新可发生在轮与轮之间，逐轮记录是 faithful DIS 的前置事实）。
+    weight_version: str | None = None
 
 
 class GenerationCaptureHook:
@@ -434,6 +439,11 @@ class GenerationCaptureHook:
             self.records.append(record)
             return record
 
+        # FA-0：逐轮真实引擎版本（slime _apply_meta_info 同源字段；缺失记 None，
+        # 是否容忍缺失由正式链 require_real_weight_versions 断言决定，这里只记录事实）。
+        raw_weight_version = meta.get("weight_version")
+        turn_weight_version = str(raw_weight_version) if raw_weight_version is not None else None
+
         # 与 slime call_sglang_generate 完全一致的取数方式：
         #   output_ids = [x[1] for x in meta["output_token_logprobs"]]
         #   output_log_probs = [float(x[0]) for x in ...]
@@ -514,6 +524,7 @@ class GenerationCaptureHook:
                 if routing_flat is not None
                 else None
             ),
+            weight_version=turn_weight_version,
             capture_status="complete" if complete else "partial",
             alignment_status=(
                 "aligned" if complete else ("mismatch" if mismatches else "not_checked")
@@ -532,6 +543,7 @@ class GenerationCaptureHook:
                 top_p_token_ids=tuple(top_p_ids) if top_p_ids is not None else None,
                 top_p_token_offsets=tuple(top_p_offsets) if top_p_offsets is not None else None,
                 routed_experts_flat=tuple(routing_flat) if routing_flat is not None else None,
+                weight_version=turn_weight_version,
             )
         )
         return record
@@ -539,6 +551,65 @@ class GenerationCaptureHook:
     @property
     def tape_by_record_id(self) -> dict[str, TurnTape]:
         return {tape.record_id: tape for tape in self.tapes}
+
+
+# ---------------------------------------------------------------------------
+# D-FA-6：compaction 关闭硬事实（环境注入 + 装配期上下文收缩兜底）
+# ---------------------------------------------------------------------------
+
+_CC_EXTRA_ENVS_KEY = "SLIME_AGENT_CC_EXTRA_ENVS"
+
+
+def ensure_claude_code_compaction_disabled(env: MutableMapping[str, str]) -> dict[str, str]:
+    """把 `DISABLE_COMPACT=1` 合并进 SLIME_AGENT_CC_EXTRA_ENVS（原地写 env）。
+
+    slime `agent/harness/claude_code.py` 会把该变量的 JSON 合并进 Claude Code
+    子进程环境；返回合并后的 extra-envs dict 作为 audit 证据（inspector 探针
+    比对用）。已有 JSON 非法时直接抛错（fail-closed，不静默覆盖）。
+
+    警示（codex 轮次 3 #11，CC 压缩文档证实）：DISABLE_COMPACT 只覆盖
+    auto/manual compact；Microcompact / Context Collapse 是独立压缩层——
+    **装配期上下文收缩检测（reject_context_shrink）是硬兜底，不能只凭本函数
+    宣布 compaction 已关闭**。
+    """
+
+    merged: dict[str, str] = {}
+    raw = env.get(_CC_EXTRA_ENVS_KEY)
+    if raw:
+        parsed = json.loads(raw)
+        if not isinstance(parsed, dict):
+            raise SlimeBindingError(
+                "cc_extra_envs_not_object",
+                f"{_CC_EXTRA_ENVS_KEY} 已存在但不是 JSON object：{raw!r}。",
+            )
+        merged.update({str(k): str(v) for k, v in parsed.items()})
+    merged["DISABLE_COMPACT"] = "1"
+    env[_CC_EXTRA_ENVS_KEY] = json.dumps(merged, ensure_ascii=False, sort_keys=True)
+    return merged
+
+
+def detect_context_shrink(
+    turns: Sequence[TurnTape], *, shrink_ratio: float = 0.6
+) -> list[str]:
+    """检测 session 轮序列中"无法解释的上下文收缩"（D-FA-6 兜底信号）。
+
+    正常多轮会话的 prompt 单调增长（历史累积）；thinking 剥离/REALIGN 只会
+    小幅缩短，compaction / Microcompact / Context Collapse 则把历史替换成
+    摘要——prompt 大幅坍缩。判据：某轮 prompt_token_count <
+    shrink_ratio ×（此前最大 prompt_token_count）。ratio 预注册 0.6
+    （05 计划 D-FA-6；黄线，FA-5 冒烟后校准），返回逐条理由串（空 = 未检出）。
+    """
+
+    reasons: list[str] = []
+    max_prompt = 0
+    for tape in sorted(turns, key=lambda t: t.turn_index):
+        if max_prompt and tape.prompt_token_count < shrink_ratio * max_prompt:
+            reasons.append(
+                f"turn {tape.turn_index}: prompt {tape.prompt_token_count} < "
+                f"{shrink_ratio} x max_seen {max_prompt}"
+            )
+        max_prompt = max(max_prompt, tape.prompt_token_count)
+    return reasons
 
 
 # ---------------------------------------------------------------------------
@@ -640,6 +711,7 @@ def backfill_leaf_sample(
     moe_num_layers: int | None = None,
     moe_router_topk: int | None = None,
     policy_version: str | None = None,
+    require_real_weight_versions: bool = False,
 ) -> list[TurnTape]:
     """把 capture 钩子攒下的按轮 tape 回填到一条叶链 Sample 上（原地写字段）。
 
@@ -746,8 +818,26 @@ def backfill_leaf_sample(
         else:
             sample.rollout_routed_experts = flat
 
-    if policy_version is not None:
-        sample.weight_versions = [policy_version] * max(len(used), 1)
+    # FA-0 真实版本管道：逐入训轮取 tape 上的真实 weight_version，缺失才回退
+    # policy_version（测试/dense 冒烟路径）。某轮既无真实版本又无回退值时，
+    # **整个字段不写**（无事实——gate 的 policy_staleness 维会 fail-closed 降级），
+    # 绝不允许把部分真实、部分猜测的序列拼在一起冒充逐轮事实。
+    per_turn_versions: list[str] = []
+    versions_complete = True
+    for tape in used:
+        if require_real_weight_versions and tape.weight_version is None:
+            raise SlimeBindingError(
+                "turn_weight_version_missing_in_formal_chain",
+                f"入训轮 {tape.record_id} 的响应没有 meta_info.weight_version——"
+                "正式链禁止用配置值冒充逐轮版本事实（faithful DIS 的 provenance 前置）。",
+            )
+        version = tape.weight_version if tape.weight_version is not None else policy_version
+        if version is None:
+            versions_complete = False
+            break
+        per_turn_versions.append(version)
+    if versions_complete and (per_turn_versions or policy_version is not None):
+        sample.weight_versions = per_turn_versions or [policy_version]
     return used
 
 
@@ -929,6 +1019,18 @@ class SlimeBindingConfig:
     moe_router_topk: int | None = None
     policy_version: str | None = "step_0"  # None = 无 staleness 事实（gate 将 fail-closed 降级）
     staleness_threshold: int = 4
+    # FA-0（05 计划 D-FA-1/FA-0.3）：正式链开关。True 时：
+    #   1. 构造 orchestrator 即断言 policy_version 不是静态哨兵值（step_0/None）
+    #      且可解析为十进制整数（引擎 update_weights 计数器语义）；
+    #   2. 装配期要求每个入训轮的 tape 都带真实 weight_version（缺失 fail-closed）；
+    #   3. 握手的 staleness_steps 按真实版本差计算，不再恒 0。
+    # False = S1 兼容/测试路径（默认），行为逐字不变。
+    require_real_weight_versions: bool = False
+    # D-FA-6 兜底：装配期检测到"无法解释的上下文收缩"（compaction/Microcompact/
+    # Context Collapse 的机械信号）时整条轨迹 fail-closed 退出（收口为 abort 形状，
+    # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
+    reject_context_shrink: bool = False
+    context_shrink_ratio: float = 0.6  # 预注册黄线（05 计划 D-FA-6），FA-5 校准
     max_context_len: int = 0
     name_prefix: str = "rh2-rollout"
     label_prefix: str = "rh2.rollout"
@@ -1000,6 +1102,8 @@ class RolloutAudit:
     cleanup_failures: list[CleanupFailureRecord] = field(default_factory=list)
     failure_records: list[RolloutFailureRecord] = field(default_factory=list)
     artifact_paths: list[Path] = field(default_factory=list)
+    # D-FA-6：上下文收缩检测结果（空 = 未检出；非空 + reject 关闭 = 只记录）
+    context_shrink_reasons: list[str] = field(default_factory=list)
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -1151,6 +1255,24 @@ class RolloutOrchestrator:
         mount_planner: Callable[[RolloutTaskSpec], list[BundleMount]] | None = None,
         artifact_dir: Path | str | None = None,
     ) -> None:
+        if config.require_real_weight_versions:
+            # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
+            version = config.policy_version
+            if version is None or version == "step_0":
+                raise StartupCheckError(
+                    "static_policy_version_forbidden_in_formal_chain",
+                    f"require_real_weight_versions=True 但 policy_version={version!r}——"
+                    "正式链必须用引擎探针实测的 weight_version（glue 假设 4 管道），"
+                    "静态哨兵值只允许测试路径。",
+                )
+            try:
+                int(version, 10)
+            except ValueError:
+                raise StartupCheckError(
+                    "policy_version_not_numeric_in_formal_chain",
+                    f"policy_version={version!r} 不是十进制整数——引擎 update_weights "
+                    "计数器语义要求数值版本，staleness 派生依赖它。",
+                ) from None
         self.config = config
         self._task_resolver = task_resolver
         self._adapter_factory = adapter_factory
@@ -1250,6 +1372,21 @@ class RolloutOrchestrator:
                     "或钩子没接上（A4：无捕获事实的轨迹不可训练）。",
                 )
             audit.step("step4_capture_records_ready")
+            # D-FA-6 兜底：session 级上下文收缩检测（判据与 ratio 见
+            # detect_context_shrink）。检出即整条轨迹退出（fail-closed 收口为
+            # abort 形状）——DISABLE_COMPACT 环境变量覆盖不了 Microcompact /
+            # Context Collapse，这道检测是硬兜底不是可选项。
+            shrink_reasons = detect_context_shrink(
+                hook.tapes, shrink_ratio=self.config.context_shrink_ratio
+            )
+            if shrink_reasons:
+                audit.context_shrink_reasons = list(shrink_reasons)
+                if self.config.reject_context_shrink:
+                    raise SlimeBindingError(
+                        "context_shrink_detected",
+                        "检测到无法解释的上下文收缩（compaction 嫌疑），轨迹退出基线："
+                        + "; ".join(shrink_reasons),
+                    )
             samples = await adapter.finish_session(
                 sid,
                 base_sample=sample,
@@ -1284,6 +1421,7 @@ class RolloutOrchestrator:
                     moe_num_layers=self.config.moe_num_layers,
                     moe_router_topk=self.config.moe_router_topk,
                     policy_version=self.config.policy_version,
+                    require_real_weight_versions=self.config.require_real_weight_versions,
                 )
                 # 分支注释只回链**入训轮**（掉落轮不支撑任何 mask=1 token；
                 # S1-7a token 锚定匹配的产物），空则回退 facts 原单
@@ -1592,15 +1730,30 @@ class RolloutOrchestrator:
             for version in getattr(leaf, "weight_versions", None) or []:
                 if version not in seen:
                     seen.append(version)
+        # FA-0：正式链的 staleness 按真实版本差计算——current（finalize 时刻
+        # policy_version，启动断言已保证数值）减去 seen 中最旧版本。S1 兼容
+        # 路径（flag=False）保持恒 0 语义逐字不变。
+        staleness_steps = 0
+        if self.config.require_real_weight_versions:
+            try:
+                current = int(self.config.policy_version, 10)
+                seen_numeric = [int(v, 10) for v in seen] or [current]
+            except ValueError:
+                raise SlimeBindingError(
+                    "weight_versions_not_numeric_in_formal_chain",
+                    f"正式链要求数值版本：policy_version={self.config.policy_version!r}, "
+                    f"seen={seen!r}——staleness 无法派生，fail-closed。",
+                ) from None
+            staleness_steps = max(current - min(seen_numeric), 0)
         return BackendHandshake(
             handshake_id=f"hs_{trajectory_id}",
             trajectory_id=trajectory_id,
             backend_name="slime",
             policy_version=self.config.policy_version,
             weight_versions_seen=seen or [self.config.policy_version],
-            staleness_steps=0,
+            staleness_steps=staleness_steps,
             staleness_threshold=self.config.staleness_threshold,
-            staleness_within_threshold=True,
+            staleness_within_threshold=staleness_steps <= self.config.staleness_threshold,
             group_signal=None,
             accepted=True,
             handshaked_at_utc=_now_utc(),

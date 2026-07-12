@@ -94,7 +94,13 @@ class BackendHandshake(StrictModel):
         description="目标后端（取值封闭：新后端先扩契约）。"
     )
     policy_version: NonEmptyStr = Field(
-        description="生成该轨迹的策略版本（训练侧 step/ckpt 标识，staleness 计算基准）。"
+        description=(
+            "策略版本单值口径（FA-0 收窄，codex 轮次 3 #5）：= **finalize 时刻的 "
+            "current version**（staleness 计算基准）。一次执行可跨多个版本——多版本"
+            "事实的权威序列是 weight_versions_seen（逐轮真实值），执行级派生视图"
+            "（intra_execution_version_span 等）在 RolloutAttemptOutcome；"
+            "禁止把多版本事实压回本字段。"
+        )
     )
     weight_versions_seen: list[NonEmptyStr] = Field(
         min_length=1,

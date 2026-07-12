@@ -22,10 +22,12 @@ P1 数据冻结包 v0.1       ✅ 已完成（即"训练数据预处理"，codex
 P3 八卡预实验            ✅ 已完成（2026-07-08/09 真机，机器已释放。准确口径：
                             训练后端与架构决策完成；formal J4 严格绿灯
                             留待 FA-3 batch 准入落地后随合并短租复验）
-FA fully async 训练链    ⏳ 计划已写（05-fully-async-execution-plan.md，FA-0~5），
-                            未开工 ← ★ 第一实施工作流（用户 2026-07-12 定案
-                            fully-async-first：正式链 = version-aware fully
-                            async + faithful DIS；原 S2-0b 全部迁入）
+FA fully async 训练链    🔨 进行中 ← ★ 第一实施工作流（05 计划，FA-0~5；
+                            用户 2026-07-12 定案 fully-async-first）。
+                            FA-0 ✅ 已完成（四契约 + 真实 weight_version 管道 +
+                            正式链启动断言 + D-FA-6 硬事实 + 表面契约测试，
+                            测试 647→684；notes：fa/implementation-notes.md）。
+                            下一步：FA-3 离线部分 ∥ FA-4 对拍（可并行）→ FA-1/2
 S2 SWE-Safety 加固       ⏳ 计划草案（S2-0b 已迁出），与 FA 并行，尚未开工
 S3 训练治理完备          未开始（三档资格全量、环境验证四门收尾）
 S4 正式训练实验          未开始（before/after 实验，简历叙事收尾）

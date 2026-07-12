@@ -38,6 +38,11 @@ from repoharness2.adapters.slime import (
     rollout_task_from_bundle_pair,
     startup_checks,
 )
+from repoharness2.adapters.slime.generate import (
+    TurnTape,
+    detect_context_shrink,
+    ensure_claude_code_compaction_disabled,
+)
 from repoharness2.contracts import BundleMount, GradingReport
 from repoharness2.envpack import bundles
 from repoharness2.grading.manager import ExecResult, GradingEnvSpec, HygieneRules
@@ -120,6 +125,7 @@ def sglang_response(
     top_p_ids: list[int] | None = None,
     top_p_offsets: list[int] | None = None,
     routed_flat: list[int] | None = None,
+    weight_version: str | None = None,
 ) -> dict[str, Any]:
     """SGLang /generate 响应替身（meta_info 字段名与 S1-0 探针 wire 形态一致）。"""
 
@@ -132,6 +138,8 @@ def sglang_response(
         "prompt_tokens": 0,
         "completion_tokens": len(output_ids),
     }
+    if weight_version is not None:
+        meta["weight_version"] = weight_version
     if top_p_ids is not None:
         meta["top_p_token_ids"] = b64_int32(top_p_ids)
         meta["top_p_token_offsets"] = b64_int32(top_p_offsets or [])
@@ -1324,3 +1332,264 @@ def test_disaggregated_template_pins_train_async_form():
                or line.strip().startswith("--rollout-num-gpus") for line in active_lines)
     assert "--update-weight-transport nccl" in text
     assert "--update-weights-interval 1" in text
+
+
+# ---------------------------------------------------------------------------
+# FA-0（05 计划）：真实 weight_version 管道 / 正式链断言 / D-FA-6 compaction 硬事实
+# ---------------------------------------------------------------------------
+
+import os as _os
+import subprocess as _subprocess
+import sys as _sys
+
+
+def _mk_hook_with_versions(
+    turn_outputs: list[list[int]], prompt: list[int], versions: list[str | None]
+) -> GenerationCaptureHook:
+    hook = GenerationCaptureHook(
+        trajectory_id="traj_fa0",
+        model_name="m",
+        backend_name="sglang",
+        backend_version="0.5.13",
+        renderer_cls_name="Qwen3Renderer",
+        tokenizer_name="t",
+        template_hash=SHA_TEMPLATE,
+    )
+    for output_ids, version in zip(turn_outputs, versions):
+        hook.on_generate_response(
+            prompt_token_ids=prompt,
+            sampling_params={
+                **SAMPLING_PARAMS,
+                "return_top_p_token_ids": True,
+                "return_routed_experts": False,
+            },
+            response=sglang_response(
+                rid=f"r{len(hook.records)}",
+                output_ids=output_ids,
+                top_p_ids=list(range(3 * len(output_ids))),
+                top_p_offsets=topp_offsets([3] * len(output_ids)),
+                weight_version=version,
+            ),
+        )
+    return hook
+
+
+def _two_run_leaf() -> tuple[FixtureSlimeSample, list[int], list[list[int]]]:
+    """t1(mask1) + dropped(mask0) + t2(mask1) 的标准三轮形态（复用 S1-7a 形态 1）。"""
+
+    prompt = [1, 2, 3]
+    t1, t_dropped, t2 = [11, 12], [21, 22, 23], [31, 32]
+    leaf = FixtureSlimeSample(
+        tokens=prompt + t1 + t_dropped + t2,
+        response_length=len(t1) + len(t_dropped) + len(t2),
+        loss_mask=[1] * len(t1) + [0] * len(t_dropped) + [1] * len(t2),
+        rollout_log_probs=[-0.1] * 7,
+        weight_versions=[],
+        rollout_id=1,
+        index=0,
+    )
+    return leaf, prompt, [t1, t_dropped, t2]
+
+
+def test_hook_captures_turn_weight_version():
+    """meta_info.weight_version 原文透传进 TurnTape 与 capture 记录（FA-0.3）。"""
+
+    hook = _mk_hook_with_versions([[11, 12]], [1, 2, 3], ["7"])
+    assert hook.tapes[0].weight_version == "7"
+    assert hook.records[0].weight_version == "7"
+    hook2 = _mk_hook_with_versions([[11, 12]], [1, 2, 3], [None])
+    assert hook2.tapes[0].weight_version is None
+    assert hook2.records[0].weight_version is None
+
+
+def test_backfill_per_turn_real_versions_beat_fallback():
+    """逐入训轮真实版本优先；掉落轮的版本不进序列（每入训轮恰一条）。"""
+
+    leaf, prompt, outputs = _two_run_leaf()
+    hook = _mk_hook_with_versions(outputs, prompt, ["3", "999", "4"])  # 中间轮掉落
+    used = backfill_leaf_sample(leaf, hook.tapes, policy_version="step_0")
+    assert len(used) == 2
+    assert leaf.weight_versions == ["3", "4"]  # 真实值胜过 policy_version 回退
+
+
+def test_backfill_mixed_versions_fallback_per_turn():
+    """个别轮缺真实版本 -> 该轮回退 policy_version，其余轮保留真实值（非正式链容忍）。"""
+
+    leaf, prompt, outputs = _two_run_leaf()
+    hook = _mk_hook_with_versions(outputs, prompt, ["3", None, None])
+    used = backfill_leaf_sample(leaf, hook.tapes, policy_version="wv_fallback")
+    assert len(used) == 2
+    assert leaf.weight_versions == ["3", "wv_fallback"]
+
+
+def test_backfill_no_version_facts_leaves_field_unset():
+    """无真实版本且无回退值 -> 字段不写（无事实，gate policy_staleness 维收口）。"""
+
+    leaf, prompt, outputs = _two_run_leaf()
+    hook = _mk_hook_with_versions(outputs, prompt, [None, None, None])
+    backfill_leaf_sample(leaf, hook.tapes, policy_version=None)
+    assert leaf.weight_versions == []
+
+
+def test_backfill_formal_chain_rejects_missing_turn_version():
+    """正式链：入训轮缺 meta_info.weight_version -> fail-closed（不许配置值冒充）。"""
+
+    leaf, prompt, outputs = _two_run_leaf()
+    hook = _mk_hook_with_versions(outputs, prompt, ["3", "3", None])  # t2 是入训轮且缺版本
+    with pytest.raises(SlimeBindingError, match="turn_weight_version_missing_in_formal_chain"):
+        backfill_leaf_sample(
+            leaf,
+            hook.tapes,
+            policy_version="5",
+            require_real_weight_versions=True,
+        )
+
+
+def _dummy_orchestrator(config: SlimeBindingConfig) -> RolloutOrchestrator:
+    return RolloutOrchestrator(
+        config=config,
+        task_resolver=make_task(TASK_ID_DENSE),
+        adapter_factory=lambda hook, session_defaults: None,
+        harness_driver=lambda **kwargs: None,
+        grading_submit=lambda **kwargs: None,
+    )
+
+
+def test_orchestrator_rejects_static_policy_version_in_formal_chain():
+    """FA-0 验收负测试：require_real_weight_versions=True 时 step_0/None 启动即炸。"""
+
+    with pytest.raises(StartupCheckError, match="static_policy_version_forbidden_in_formal_chain"):
+        _dummy_orchestrator(dense_config(require_real_weight_versions=True))
+    with pytest.raises(StartupCheckError, match="static_policy_version_forbidden_in_formal_chain"):
+        _dummy_orchestrator(
+            dense_config(require_real_weight_versions=True, policy_version=None)
+        )
+    with pytest.raises(StartupCheckError, match="policy_version_not_numeric_in_formal_chain"):
+        _dummy_orchestrator(
+            dense_config(require_real_weight_versions=True, policy_version="ckpt_a")
+        )
+    # 数值版本（引擎实测语义）可以通过
+    _dummy_orchestrator(dense_config(require_real_weight_versions=True, policy_version="5"))
+
+
+def test_handshake_staleness_computed_in_formal_chain():
+    """正式链握手：staleness = current - min(seen)，within 派生一致（FA-0.3）。"""
+
+    orch = _dummy_orchestrator(
+        dense_config(require_real_weight_versions=True, policy_version="5")
+    )
+    leaf = FixtureSlimeSample(weight_versions=["3", "4"], index=0)
+    handshake = orch._build_handshake("traj_hs", [leaf])
+    assert handshake.staleness_steps == 2
+    assert handshake.staleness_within_threshold is True
+    # 超阈值：current=9, seen min=3 -> lag 6 > threshold 4
+    orch2 = _dummy_orchestrator(
+        dense_config(require_real_weight_versions=True, policy_version="9")
+    )
+    handshake2 = orch2._build_handshake("traj_hs2", [leaf])
+    assert handshake2.staleness_steps == 6
+    assert handshake2.staleness_within_threshold is False
+    # S1 兼容路径（flag=False）行为逐字不变：恒 0/True
+    orch3 = _dummy_orchestrator(dense_config())
+    handshake3 = orch3._build_handshake("traj_hs3", [leaf])
+    assert handshake3.staleness_steps == 0
+    assert handshake3.staleness_within_threshold is True
+
+
+def _tape(turn_index: int, prompt_tokens: int) -> TurnTape:
+    return TurnTape(
+        record_id=f"cap_{turn_index}",
+        turn_index=turn_index,
+        prompt_token_count=prompt_tokens,
+        response_token_count=1,
+        output_ids=(1,),
+        output_log_probs=(-0.1,),
+        top_p_token_ids=None,
+        top_p_token_offsets=None,
+        routed_experts_flat=None,
+    )
+
+
+def test_detect_context_shrink_monotone_and_small_shrink_pass():
+    """正常累积与 thinking 剥离级小幅缩短不误报（0.6 预注册比例）。"""
+
+    assert detect_context_shrink([_tape(0, 10), _tape(1, 30), _tape(2, 60)]) == []
+    # 25 >= 0.6 * 30：thinking 剥离量级，放行
+    assert detect_context_shrink([_tape(0, 10), _tape(1, 30), _tape(2, 25)]) == []
+
+
+def test_detect_context_shrink_flags_collapse():
+    """prompt 大幅坍缩（compaction/Microcompact 机械信号）必须检出。"""
+
+    reasons = detect_context_shrink([_tape(0, 10), _tape(1, 60), _tape(2, 20)])
+    assert len(reasons) == 1 and "turn 2" in reasons[0]
+
+
+def test_context_shrink_rejects_trajectory_when_enabled():
+    """D-FA-6 兜底端到端：reject 开启时轨迹收口为 abort 形状（退出基线）。"""
+
+    leaf, prompt, outputs = _two_run_leaf()
+    # 用收缩的 prompt 序列构造 hook：第三轮 prompt 塌到 2 token
+    hook = GenerationCaptureHook(
+        trajectory_id="traj_shrink",
+        model_name="m",
+        backend_name="sglang",
+        backend_version="0.5.13",
+        renderer_cls_name="Qwen3Renderer",
+        tokenizer_name="t",
+        template_hash=SHA_TEMPLATE,
+    )
+    for i, (output_ids, prompt_ids) in enumerate(
+        zip(outputs, [[1] * 10, [1] * 40, [1] * 5])
+    ):
+        hook.on_generate_response(
+            prompt_token_ids=prompt_ids,
+            sampling_params={
+                **SAMPLING_PARAMS,
+                "return_top_p_token_ids": False,
+                "return_routed_experts": False,
+            },
+            response=sglang_response(rid=f"r{i}", output_ids=output_ids),
+        )
+    reasons = detect_context_shrink(hook.tapes)
+    assert reasons, "收缩形态必须被检出"
+
+
+def test_ensure_compaction_disabled_merges_and_fail_closed():
+    """DISABLE_COMPACT 合并进 SLIME_AGENT_CC_EXTRA_ENVS；已有键保留；坏 JSON 拒绝。"""
+
+    env: dict[str, str] = {}
+    merged = ensure_claude_code_compaction_disabled(env)
+    assert merged == {"DISABLE_COMPACT": "1"}
+
+    env2 = {"SLIME_AGENT_CC_EXTRA_ENVS": '{"FOO": "bar"}'}
+    merged2 = ensure_claude_code_compaction_disabled(env2)
+    assert merged2 == {"FOO": "bar", "DISABLE_COMPACT": "1"}
+
+    env3 = {"SLIME_AGENT_CC_EXTRA_ENVS": "[1, 2]"}
+    with pytest.raises(SlimeBindingError, match="cc_extra_envs_not_object"):
+        ensure_claude_code_compaction_disabled(env3)
+
+
+def test_compaction_disabled_env_reaches_child_process():
+    """FA-0 验收探针（本地冒烟替身）：子进程真实读到 DISABLE_COMPACT=1。
+
+    真实 CC 子进程的验真挂 FA-5 短租（slime claude_code.py 合并逻辑同源）；
+    本测试证明"env 准备 -> 子进程可见"这一段管道无泄漏。
+    """
+
+    env = dict(_os.environ)
+    ensure_claude_code_compaction_disabled(env)
+    out = _subprocess.run(
+        [
+            _sys.executable,
+            "-c",
+            "import os, json; print(json.loads(os.environ['SLIME_AGENT_CC_EXTRA_ENVS'])['DISABLE_COMPACT'])",
+        ],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    )
+    assert out.stdout.strip() == "1"

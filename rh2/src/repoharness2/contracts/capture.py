@@ -121,6 +121,14 @@ class GenerationCaptureRecord(StrictModel):
         default=None,
         description="原始 meta_info 规范化 digest（与 ref 至少给一个；capture_status=failed 时可都缺）。",
     )
+    weight_version: NonEmptyStr | None = Field(
+        default=None,
+        description=(
+            "本轮引擎真实 weight_version（meta_info.weight_version 原文，FA-0 真实版本管道）。"
+            "正式链（require_real_weight_versions）下缺失会在装配期 fail-closed；"
+            "测试路径与历史记录（S1 evidence）允许为 None。"
+        ),
+    )
     logprobs_ref: ArtifactRef | None = Field(
         default=None, description="逐 token logprob（meta_info.output_token_logprobs）的引用。"
     )

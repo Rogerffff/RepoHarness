@@ -354,7 +354,10 @@ def verify(
         if "分叉感知重建" not in doc_text:
             structural_problems.append("s2_blockers.md 缺少升级路径'分叉感知重建'的技术要点")
 
-    # codex#5 收编闭环：聚合 registry 必须仍含全部五个收编 id
+    # codex#5 收编闭环：聚合 registry 必须仍含全部五个收编 id。
+    # 校验语义 = S1-9 五个是**下界**（漂移/丢失即 FAIL）；S1 之后的阶段
+    # （FA-0 起）按扩展机制新增的 id 走各自阶段的 inspector，这里用白名单
+    # 前缀放行，未知前缀仍 FAIL（防不明 schema 静默混入）。
     expected_extra = {
         "rh2.grading_backpressure_event.v1",
         "rh2.group_repair_signal.v1",
@@ -362,9 +365,16 @@ def verify(
         "rh2.private_grading_bundle.v1",
         "rh2.bundle_pair.v1",
     }
-    if set(EXTRA_SCHEMA_REGISTRY) != expected_extra:
+    _post_s1_prefixes = ("rh2.fa.",)  # FA 工作流契约（05 计划 FA-0，2026-07-12）
+    missing_extra = expected_extra - set(EXTRA_SCHEMA_REGISTRY)
+    unknown_extra = {
+        schema_id
+        for schema_id in set(EXTRA_SCHEMA_REGISTRY) - expected_extra
+        if not schema_id.startswith(_post_s1_prefixes)
+    }
+    if missing_extra or unknown_extra:
         structural_problems.append(
-            f"聚合 registry 收编清单漂移: {sorted(EXTRA_SCHEMA_REGISTRY)} != {sorted(expected_extra)}"
+            f"聚合 registry 收编清单漂移: 缺失={sorted(missing_extra)} 未知={sorted(unknown_extra)}"
         )
 
     # -------------------------------------------------- A10 机器可读探针

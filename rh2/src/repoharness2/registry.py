@@ -41,6 +41,12 @@ from repoharness2.contracts import (
     SCHEMA_REGISTRY,
     StrictModel,
 )
+from repoharness2.contracts.fa_runtime import (
+    ExecutionIdentity,
+    ModelCallAttempt,
+    RolloutAttemptOutcome,
+    TrainingRuntimeWindow,
+)
 from repoharness2.envpack.bundles import (
     BundlePair,
     PrivateGradingBundle,
@@ -56,12 +62,20 @@ __all__ = [
 ]
 
 # contracts 之外、带 schema_id 的持久化对象（见模块 docstring 收编清单）。
+# FA-0（2026-07-12）补充：contracts/fa_runtime.py 的四个 FA 契约物理上在
+# contracts 包内（无反向依赖问题），但注册在本聚合表——S1 核心 registry
+# 保持验收口径的 15 个契约冻结（done_contracts_15_schemas），FA 面按
+# S1-9 建立的扩展机制走 CLI 层聚合。
 EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.grading_backpressure_event.v1": BackpressureEvent,
     "rh2.group_repair_signal.v1": GroupRepairSignal,
     "rh2.public_task_bundle.v1": PublicTaskBundle,
     "rh2.private_grading_bundle.v1": PrivateGradingBundle,
     "rh2.bundle_pair.v1": BundlePair,
+    "rh2.fa.execution_identity.v1": ExecutionIdentity,
+    "rh2.fa.rollout_attempt_outcome.v1": RolloutAttemptOutcome,
+    "rh2.fa.training_runtime_window.v1": TrainingRuntimeWindow,
+    "rh2.fa.model_call_attempt.v1": ModelCallAttempt,
 }
 
 _overlap = set(EXTRA_SCHEMA_REGISTRY) & set(SCHEMA_REGISTRY)

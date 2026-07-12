@@ -104,6 +104,14 @@ class LossMaskSpan(StrictModel):
     fail-closed 行为：mask=1 当且仅当 reason == "sampled_assistant_trainable"；
     mask 与 reason 不一致（例如 mask=1 却标着 tool_or_env_context）直接拒收——
     这是"loss mask 可解释"（H1 第 3 条）在 schema 层的落点。
+
+    provenance/algorithmic 分离（FA-0 第 4 条，faithful DIS 前置约定）：本对象
+    是 **provenance loss mask**——回答"token 是否由模型真实采样、角色是否允许
+    进 policy loss"，属于投影的不可变历史事实。训练侧的 DIS/staleness 算法
+    掩码（dis_mask / importance_weight）回答的是"本次 trainer step 中
+    current/rollout ratio 是否在信任区间"，逐 step 变化，**不得改写本对象**；
+    正确实现保留原始 mask、另出 step-local 张量（完整定义见
+    contracts/fa_runtime.py 模块 docstring 与 05 计划 FA-4）。
     """
 
     start: int = Field(ge=0, description="区间起点（含），同 TokenSpan 座标系。")
@@ -228,9 +236,26 @@ class RoutingTensorRef(StrictModel):
     generated_token_count: int | None = Field(
         default=None, ge=1, description="产生本 tape 的生成 token 数（对齐公式的输入之一）。"
     )
+    routed_experts_start_len: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "tape 起始行偏移（FA-0 第 8 条扩展位，2026-07-12 自 S2-0 迁入）。"
+            "上游 slime 680824dd 改为 expected_rows = len(tokens)-1-start_len 的"
+            "中段拼接语义（token 级真续跑时新 tape 只覆盖续跑段，torch.cat 拼回）；"
+            "该语义在本仓库尚未实现，当前必须为 0——真续跑递延项（05 计划 §6 第 7 条）"
+            "启用并 cherry-pick 680824dd 后才解除此断言。"
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_alignment_contract(self) -> "RoutingTensorRef":
+        if self.routed_experts_start_len != 0:
+            raise ValueError(
+                f"routed_experts_start_len={self.routed_experts_start_len} 尚不支持："
+                "中段拼接（上游 680824dd）是真续跑递延项的基建，当前实现只接受 0"
+                "（fail-closed 留位，不静默接受未实现语义）。"
+            )
         tensor_fields = {
             "tensor_ref": self.tensor_ref,
             "num_rows": self.num_rows,
@@ -421,6 +446,14 @@ class RewardFacts(StrictModel):
     职责边界：RepoHarness 只输出 raw reward / components / group 信号，
     归一化与 advantage 计算归训练后端。scope=unknown 或字段互相矛盾时
     fail-closed（gate 会把 unknown scope 降级出 online 档）。
+
+    fan-out reward 权威语义（FA-0 / D-FA-7，2026-07-12 定案）：一次
+    RolloutExecution 的 raw reward **整体广播给它的每个 branch**（我方
+    adapter 实际行为，generate.py 交付段 `leaf.reward = grading_reward`），
+    重复放大由 `rollout_loss_denominator`（rollout 级分母聚合）防住——
+    branch 数变化不得改变该 execution 对 loss 的总贡献。slime README 声称
+    的 "reward/K 分摊" 与其源码（TrajectoryManager.get_trajectory 写整
+    reward）不符，本项目一律以广播 + rollout 分母为准，不做除法。
     """
 
     reward_scope: RewardScope = Field(

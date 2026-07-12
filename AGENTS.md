@@ -78,6 +78,8 @@ RepoHarness =
                               验收）；权重更新 abort = proxy 级 turn 重生成；
                               eval 首版只 before/after；退出闸门
                               rh2_fully_async_training_path_verified。
+                              进度：FA-0 已完成（2026-07-12，测试 647→684，
+                              notes 见 workstreams/fa/implementation-notes.md）。
                               ② S2 SWE-Safety + 数据 ingestion（并行）：
                               docs/agentic_RL/repo_harness_rh2_workstreams/04-s2-execution-plan.md
                               S2-0b 已迁出；S2 侧起点 = S2-6 导出器 ∥ S2-1

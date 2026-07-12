@@ -23,11 +23,17 @@ from repoharness2.registry import (
 )
 
 EXPECTED_EXTRA_IDS = {
+    # S1-9 收编的五个
     "rh2.grading_backpressure_event.v1",
     "rh2.group_repair_signal.v1",
     "rh2.public_task_bundle.v1",
     "rh2.private_grading_bundle.v1",
     "rh2.bundle_pair.v1",
+    # FA-0（2026-07-12）：fa_runtime 四契约（S1 核心 15 个保持冻结，走聚合扩展）
+    "rh2.fa.execution_identity.v1",
+    "rh2.fa.rollout_attempt_outcome.v1",
+    "rh2.fa.training_runtime_window.v1",
+    "rh2.fa.model_call_attempt.v1",
 }
 
 
@@ -68,7 +74,7 @@ def frozen_pair():
     return load_bundle_pairs(subset=["django__django-11099"])[0]
 
 
-def test_full_registry_is_contracts_plus_exactly_the_five_new_ids():
+def test_full_registry_is_contracts_plus_exactly_the_expected_extra_ids():
     assert set(EXTRA_SCHEMA_REGISTRY) == EXPECTED_EXTRA_IDS
     assert set(FULL_SCHEMA_REGISTRY) == set(SCHEMA_REGISTRY) | EXPECTED_EXTRA_IDS
     assert not set(EXTRA_SCHEMA_REGISTRY) & set(SCHEMA_REGISTRY)
@@ -139,6 +145,58 @@ def test_eligibility_report_exempt_when_evidence_quotes_marker(tmp_path):
     assert main([path, "--force-marker-scan"]) == EXIT_FORBIDDEN_MARKER  # 强制通道仍在
 
 
+def _fa_identity_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_5",
+        "group_index": 5,
+        "rollout_execution_id": "exec_22",
+    }
+
+
+def _fa_outcome_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.rollout_attempt_outcome.v1",
+        "outcome_id": "o1",
+        "identity": _fa_identity_payload(),
+        "member_slot": 2,
+        "attempt_number": 1,
+        "completion_class": "present",
+        "task_outcome": "unresolved",
+        "recovery_scope": "none",
+        "turn_weight_versions": ["1", "1"],
+        "intra_execution_version_span": 0,
+        "current_version_at_finalize": "1",
+        "eligibility_report_id": "er_1",
+    }
+
+
+def _fa_window_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.training_runtime_window.v1",
+        "update_epoch": 3,
+        "phase": "ACTIVE",
+        "old_version": "2",
+        "target_version": "3",
+        "active_version": "3",
+        "window_started_at": "2026-07-12T00:00:00+00:00",
+        "window_completed_at": "2026-07-12T00:00:12+00:00",
+        "fencing_token": "fence_3",
+    }
+
+
+def _fa_attempt_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.model_call_attempt.v1",
+        "logical_turn_id": "turn_7",
+        "model_call_attempt_id": "attempt_7_2",
+        "attempt_number": 2,
+        "delivery_status": "delivered",
+        "capture_record_ref": "cap_7",
+        "weight_version": "3",
+    }
+
+
 @pytest.mark.parametrize("schema_id", sorted(EXPECTED_EXTRA_IDS))
 def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
     factories = {
@@ -147,6 +205,10 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.public_task_bundle.v1": lambda: frozen_pair.public.model_dump(mode="json"),
         "rh2.private_grading_bundle.v1": lambda: frozen_pair.private.model_dump(mode="json"),
         "rh2.bundle_pair.v1": lambda: frozen_pair.model_dump(mode="json"),
+        "rh2.fa.execution_identity.v1": _fa_identity_payload,
+        "rh2.fa.rollout_attempt_outcome.v1": _fa_outcome_payload,
+        "rh2.fa.training_runtime_window.v1": _fa_window_payload,
+        "rh2.fa.model_call_attempt.v1": _fa_attempt_payload,
     }
     payload = factories[schema_id]()
     payload["unexpected_extra_field"] = "smuggled"
