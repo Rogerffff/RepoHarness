@@ -498,3 +498,15 @@ def test_header_count_type_strictness(tmp_path: Path, field: str, value):
     mp.write_text(json.dumps(doc))
     with pytest.raises(ValueError, match="非负 int|不符"):
         load(mp, ep)
+
+
+# ---- 轮次 11：writer/loader 对称——enriched entry 缺 evidence 拒绝写盘 --------
+
+def test_flush_guard_rejects_missing_evidence_for_enriched_entry(tmp_path: Path):
+    mp, ep = paths(tmp_path)
+    a = sorted(SURVIVORS)[0]
+    st = Store()
+    st.entries[a] = make_entry(a)  # enriched 形状
+    # 不放 st.evidence[a] —— v4.1 之前可写出、加载必拒；现在写盘即拒
+    with pytest.raises(ValueError, match="缺 evidence"):
+        flush_transaction(mp, ep, st, REFS_DIGEST)

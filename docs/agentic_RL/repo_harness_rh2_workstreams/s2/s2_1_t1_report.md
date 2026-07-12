@@ -158,7 +158,7 @@ fully-verified 无损保留）；限额余量仍低，续富化 1 条后停车�
   丢弃只允许发生在显式迁移路径且计数（migrated_dropped_evidence）。
 一般 2 迁移只 pin manifest：无内嵌提交 SHA 的旧产物可在 pin 后换 evidence。
   修复：迁移要求 manifest+evidence 双 pin；旧 header 内嵌 SHA 与调用方 pin
-  互检；resolver CLI 的迁移入口保留（真实迁移已完成，入口带双重防护）。
+  互检；resolver CLI 的迁移入口其后按轮次 11 移除（见 follow-up 6）。
 一般 3 计数字段类型：216.0/True/False 都能通过 ==。修复：type(v) is int
   且 >= 0（显式排除 bool/float）+ 计数链一致性
   enriched + reverify <= evidence_line_count <= count。
@@ -170,3 +170,21 @@ fully-verified 无损保留）；限额余量仍低，续富化 1 条后停车�
 **216/216 fully-verified**（digest + manifest 字节哈希 + config blob 哈希 +
 平台 linux/amd64 + evidence 逐字段交叉核对），`finish_assertions` 全过，
 resolver 以 ALL PASS 退出。T1 全部交付物就位，待复核后关闭。
+
+## T1 follow-up 6（2026-07-13，codex 轮次 11 → 代码面收尾，T1 交付终态）
+
+两条均成立并修复：
+
+```text
+严重 1 迁移 CLI 与双 pin API 脱节：v4.1 改了 migrate_v3_manifest 签名
+  （双 pin）但 CLI 仍传单 pin——调用即 TypeError；报告"CLI 带双重防护"
+  与代码不符。处置（按 codex 推荐的最干净方案）：从 resolver CLI 移除
+  迁移入口（真实迁移已完成）；migrate_v3_manifest 留在 store 供未来
+  一次性审计化使用（双 pin + 互检 + 丢弃计数，单测覆盖）；报告措辞修正。
+一般 2 writer/loader 不对称：flush 拒绝"evidence 无归属"但不拒绝
+  "enriched entry 缺 evidence"——能写出 loader 必拒（计数链）的状态。
+  修复：写盘前对称守卫 set(st.evidence) == owned_ids（多与少双向拒绝）
+  + 逐条 cross_check；新增写盘拒绝测试。
+store 单测 44 项全绿；真实产物复跑 ALL PASS（216/216 保持）。
+上轮提交信息里的"822"是文字口径过时（提交时全套已 831，账本记录一致）。
+```

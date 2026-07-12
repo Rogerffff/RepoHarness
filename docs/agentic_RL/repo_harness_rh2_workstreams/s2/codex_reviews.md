@@ -1182,3 +1182,13 @@ claude --version == 2.1.205
 
 新增了可重复套件 [claude_code_http_probe_suite.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/claude_code_http_probe_suite.py)，固定版本下执行 10 个场景，结果 `hard_pass=true`，证据安全扫描零命中。`py_compile` 通过；当前环境未安装 `ruff`，因此没有运行 ruff。所有新增实验、报告和证据尚未提交。
 
+
+
+---
+
+## 轮次 11（2026-07-13：v4.1 复审 → 数据资产达标确认；1 运行错误 + 1 对称性问题，修复后 T1 代码面同步达标）
+
+- **严重：迁移 CLI 与双 pin API 脱节**——CLI 单 pin 调用双 pin 函数，触发即 TypeError；报告表述与代码不符。【处置：CLI 迁移入口移除（codex 首选方案）；函数留 store 审计化使用；报告修正】
+- **一般：writer/loader 不对称**——enriched entry 缺 evidence 可写出、loader 必拒（计数链不成立）。【修复：flush 对称守卫 set(evidence)==owned_ids 双向拒绝 + 新测试；store 44 项全绿】
+- codex 最终资产核验：216/216/216 三集合相等、双哈希标志全 True、214 唯一 digest（两对共享符合预期）、6 项 digest 匹配、inspect-rh2-s1 PASS；指出上轮提交信息 822 为过时口径（实际 831，账本一致）。
+- 判定：**T1 数据交付达标**；本轮代码修复后 T1 可正式关闭评审。

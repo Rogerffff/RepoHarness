@@ -343,11 +343,18 @@ def _atomic_write(path: Path, payload: bytes) -> None:
 def flush_transaction(manifest_path: Path, evidence_path: Path, st: Store,
                       refs_digest: str) -> None:
     """事务序：evidence 先落盘 → digest/行数进 header → manifest 最后作为提交记录。"""
+    # 写盘前对称守卫（轮次 10 问题 1 + 轮次 11 问题 2）：evidence 集合必须
+    # 恰好等于 enriched-shape entry 集合——多（无归属）与少（enriched entry
+    # 缺 evidence，写出后 loader 必拒、无法恢复）双向都拒绝写盘。
+    owned_ids = {iid for iid, e in st.entries.items() if entry_shape_enriched(e)}
+    if set(st.evidence) != owned_ids:
+        extra = sorted(set(st.evidence) - owned_ids)[:3]
+        missing = sorted(owned_ids - set(st.evidence))[:3]
+        raise ValueError(
+            f"写盘前 evidence 集合与 enriched-shape entry 集合不等——拒绝写盘"
+            f"（无归属 {extra}，缺 evidence {missing}）")
     for iid, ev in st.evidence.items():
-        e = st.entries.get(iid)
-        if e is None or not entry_shape_enriched(e):
-            raise ValueError(f"{iid}: evidence 无归属（entry 缺失或非 enriched 形状）——拒绝写盘")
-        errs = cross_check(e, ev)
+        errs = cross_check(st.entries[iid], ev)
         if errs:
             raise ValueError("写盘前 entry↔evidence 交叉核对失败：\n  " + "\n  ".join(errs[:6]))
     ev_payload = _canonical_evidence_payload(st.evidence)
