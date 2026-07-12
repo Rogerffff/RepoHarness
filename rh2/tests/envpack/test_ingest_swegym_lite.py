@@ -1,0 +1,195 @@
+"""ingestion 构造器测试（S2-1 T2-c）。
+
+合成夹具单测 + 真实 216 题集成测试（读冻结 docs 资产，确定性可重跑）。
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import pytest
+
+from repoharness2.envpack.ingest_swegym_lite import (
+    HELDOUT_BASENAMES,
+    STRIP_SPEC_SHA256,
+    SWE_BENCH_FAMILY_FIELD_CLASSES,
+    IngestError,
+    build_duplicate_clusters,
+    build_task,
+    check_strip_spec_fields,
+    ingest_swegym_lite,
+    verify_package_relations,
+    write_ingest_outputs,
+)
+from repoharness2.taskset.image_manifest_store import Store
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DOCS = REPO_ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams"
+IMG_DIG = "sha256:" + "b" * 64
+D = "sha256:" + "a" * 64
+
+
+def make_row(iid: str = "getmoto__moto-1", repo: str = "getmoto/moto",
+             commit: str = "0" * 40, statement: str = "Fix the moto bug.") -> dict:
+    return {
+        "instance_id": iid,
+        "repo": repo,
+        "base_commit": commit,
+        "version": "4.1",
+        "created_at": "2023-01-01T00:00:00Z",
+        "problem_statement": statement,
+        "hints_text": "maintainer said: apply this diff ...",  # strip 类，绝不进 bundle
+        "patch": f"diff --git a/m.py b/m.py\n-bug\n+fix({iid})\n",
+        "test_patch": f"diff --git a/t.py b/t.py\n+test({iid})\n",
+        "FAIL_TO_PASS": [f"t.py::test_{iid[-1]}"],
+        "PASS_TO_PASS": ["t.py::test_ok"],
+    }
+
+
+def make_image_entry(iid: str) -> dict:
+    return {
+        "instance_id": iid,
+        "source_image_ref": f"xingyaoww/sweb.eval.x86_64.{iid.replace('__', '_s_').lower()}:latest",
+        "resolved_manifest_digest": IMG_DIG,
+    }
+
+
+def _build(row):
+    return build_task(row, make_image_entry(row["instance_id"]),
+                      raw_archive_sha256=D, image_manifest_keyed_sha256=D)
+
+
+# ---- strip_spec 驱动的 fail-closed ---------------------------------------------
+
+def test_unknown_field_fail_closed():
+    row = {**make_row(), "smuggled_answer": "x"}
+    with pytest.raises(IngestError, match="未列字段"):
+        check_strip_spec_fields(row)
+
+
+def test_missing_field_fail_closed():
+    row = make_row()
+    del row["created_at"]
+    with pytest.raises(IngestError, match="行缺"):
+        check_strip_spec_fields(row)
+
+
+def test_strip_class_fields_never_enter_bundles():
+    public, grading, validation, package = _build(make_row())
+    for m in (public, grading, validation, package):
+        dumped = json.dumps(m.model_dump(mode="json"), ensure_ascii=False)
+        assert "maintainer said" not in dumped  # hints_text 内容
+        assert "hints_text" not in type(m).model_fields
+
+
+def test_strip_spec_constant_matches_frozen_yaml():
+    yaml = pytest.importorskip("yaml", reason="pyyaml（data 依赖组）未装，跳过语义等价复核")
+    p = DOCS / "data_freeze/strip_spec.yaml"
+    assert hashlib.sha256(p.read_bytes()).hexdigest() == STRIP_SPEC_SHA256
+    spec = yaml.safe_load(p.read_text())
+    assert spec["swe_bench_family"] == SWE_BENCH_FAMILY_FIELD_CLASSES
+
+
+# ---- D5 与身份 ------------------------------------------------------------------
+
+def test_heldout_injection_rejected():
+    row = make_row(iid="bokeh__bokeh-99", repo="bokeh/bokeh")
+    with pytest.raises(IngestError, match="D5 违反"):
+        _build(row)
+    assert HELDOUT_BASENAMES == {"tornado", "pyramid", "hydra", "bokeh"}
+
+
+def test_image_entry_id_mismatch_rejected():
+    row = make_row()
+    with pytest.raises(IngestError, match="instance_id 不符"):
+        build_task(row, make_image_entry("other__task-2"),
+                   raw_archive_sha256=D, image_manifest_keyed_sha256=D)
+
+
+# ---- 去重语义：只标记不删除 ------------------------------------------------------
+
+def test_shared_environment_distinct_tasks_not_flagged():
+    a = make_row(iid="getmoto__moto-1")
+    b = make_row(iid="getmoto__moto-2", statement="A different bug.")
+    b["FAIL_TO_PASS"] = ["t.py::test_other"]
+    clusters = build_duplicate_clusters([a, b])
+    assert len(clusters) == 1
+    assert clusters[0].classification == "distinct_tasks_shared_environment"
+
+
+def test_true_duplicate_flagged_not_dropped():
+    a = make_row(iid="getmoto__moto-1")
+    b = {**make_row(iid="getmoto__moto-1b"),  # 五重内容全同（只有 id 不同）
+         "problem_statement": a["problem_statement"],
+         "patch": a["patch"], "test_patch": a["test_patch"],
+         "FAIL_TO_PASS": a["FAIL_TO_PASS"], "PASS_TO_PASS": a["PASS_TO_PASS"]}
+    clusters = build_duplicate_clusters([a, b])
+    assert clusters[0].classification == "suspected_duplicate"
+    assert set(clusters[0].members) == {"getmoto__moto-1", "getmoto__moto-1b"}  # 都在，没删
+
+
+# ---- 消费期重验 ------------------------------------------------------------------
+
+def test_verify_package_relations_catches_swapped_bundle():
+    public, grading, validation, package = _build(make_row())
+    verify_package_relations(package, public, grading, validation)  # 正常过
+    _, _, validation2, _ = _build(make_row(iid="getmoto__moto-2", statement="other"))
+    with pytest.raises(IngestError, match="validation digest 不符"):
+        verify_package_relations(package, public, grading, validation2)
+
+
+def test_verify_package_relations_checks_image_store():
+    public, grading, validation, package = _build(make_row())
+    st = Store()
+    st.entries["getmoto__moto-1"] = {
+        **make_image_entry("getmoto__moto-1"),
+        "resolved_manifest_digest": "sha256:" + "f" * 64,  # 与包内不符
+    }
+    with pytest.raises(IngestError, match="键控清单不符"):
+        verify_package_relations(package, public, grading, validation, image_store=st)
+
+
+# ---- 真实 216 题集成（读冻结资产；确定性） ---------------------------------------
+
+@pytest.fixture(scope="module")
+def real_ingest():
+    from repoharness2.taskset.image_manifest_store import load_state
+    df = DOCS / "data_freeze"
+    survivors = [s.strip() for s in (df / "labels/static_gate_survivors.txt").read_text().splitlines() if s.strip()]
+    frozen_refs = {l.strip() for l in (df / "meta/image_refs_swegym.txt").read_text().splitlines() if l.strip()}
+    refs_digest = hashlib.sha256((df / "meta/image_refs_swegym.txt").read_bytes()).hexdigest()
+
+    def expected_ref(iid: str) -> str:
+        return f"xingyaoww/sweb.eval.x86_64.{iid.replace('__', '_s_').lower()}:latest"
+
+    store = load_state(DOCS / "s2/image_manifest_keyed.json",
+                       DOCS / "s2/raw/image_registry_evidence.jsonl",
+                       set(survivors), frozen_refs, refs_digest, expected_ref)
+    raw = DOCS / "s2/raw/swe_gym_lite_full_f70b1a29.jsonl"
+    rows = [json.loads(l) for l in raw.read_text().splitlines() if l.strip()]
+    return ingest_swegym_lite(
+        rows=rows, survivors=survivors, image_store=store,
+        raw_archive_sha256="sha256:" + hashlib.sha256(raw.read_bytes()).hexdigest(),
+        image_manifest_keyed_sha256="sha256:" + hashlib.sha256(
+            (DOCS / "s2/image_manifest_keyed.json").read_bytes()).hexdigest(),
+    )
+
+
+def test_real_216_construction(real_ingest):
+    assert len(real_ingest.packages) == 216
+    ids = {p.instance_id for p in real_ingest.packages}
+    # T1 实测两对同环境不同任务必须保留（去重语义定案的回归锚点）
+    for a, b in (("getmoto__moto-6469", "getmoto__moto-6470"),
+                 ("python__mypy-11824", "python__mypy-11857")):
+        assert a in ids and b in ids
+    # 两对所在簇必须是 distinct，且真实数据当前不应有 suspected_duplicate
+    assert all(c.classification == "distinct_tasks_shared_environment"
+               for c in real_ingest.duplicate_clusters)
+
+
+def test_real_outputs_deterministic(real_ingest, tmp_path):
+    d1 = write_ingest_outputs(real_ingest, tmp_path / "run1")
+    d2 = write_ingest_outputs(real_ingest, tmp_path / "run2")
+    assert d1 == d2

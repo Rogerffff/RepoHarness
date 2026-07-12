@@ -25,6 +25,9 @@
 
 - **[S2-1 T2-a, 2026-07-13] 风险 F 关闭 + spec 表 vendor 决策**：官方 swebench 4.1.0 对 SWE-Gym 仓库零覆盖；SWE-Gym fork constants（commit pin 242429c1）覆盖 216/216，逐字节 vendor + provenance 旁证（不改内容、importlib 按路径消费、不在运行期拉 GitHub）。fork 末行把 spec 表重绑定为小写键——与 T1 镜像名小写化是同一坑的第二次出现，repo 身份的大小写归一化写入 T2 身份定案（内部原始大小写权威 + 小写投影用于 registry/spec 查表）。
 
+- **[S2-1 T2-c, 2026-07-13] strip_spec 家族映射的"常量 + digest pin + 等价测试"三保险**：运行库不依赖 pyyaml（常量驱动），冻结 yaml 的 digest pin 让文件与常量脱节先红灯，语义等价测试（importorskip yaml）保证两者内容一致。单一事实源仍是冻结 yaml，常量是它的受锚定投影。
+- **[S2-1 T2-c, 2026-07-13] 真实 216 题构造结果**：duplicate cluster 恰为 T1 实测的两簇且全部 distinct（0 suspected）——去重语义定案（任务身份≠环境身份）在真实数据上零误伤。消费期重验（verify_package_relations）作为可调用函数交付，T2-d/e 与未来 rollout 物化必须调用（登记义务的实现落点）。
+
 ## 2. 权衡取舍
 
 - **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。

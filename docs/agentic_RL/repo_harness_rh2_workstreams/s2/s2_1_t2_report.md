@@ -89,3 +89,36 @@ T2-e：门 runner + fixture（§3.1 规格）+ `EnvValidationReport`。
   必须逐字节等于包内 JSON（防两个 pin 分别更新语义脱节）。
 一般 4 provenance 的"importlib 按路径加载"旧措辞已更新为运行期只读 JSON。
 ```
+
+## T2-c 完成（2026-07-13）：ingestion 构造器 + 真实 216 题构造
+
+`envpack/ingest_swegym_lite.py`（库）+ `experiments/s2_1_ingestion/
+build_environment_packages.py`（运行器）。真实构造 **216/216 ALL PASS**，
+产物落 `s2/ingest/`（五文件，确定性字节，digest 入 manifest）。
+
+```text
+关键落位（历轮登记义务逐条）：
+- strip_spec 驱动：11 列双向 fail-closed；家族映射 = 冻结常量 + yaml digest
+  pin（运行器核对）+ 语义等价测试（pyyaml importorskip）三保险；
+  hints_text/created_at 等 strip/pipeline_meta 字段实测不进任何 bundle。
+- D5 survivor 级断言收编为库函数（T1a 原型 → build_task 内断言）。
+- 镜像身份：只消费 T1 v4 store（load_state 严格加载 + finish_assertions
+  全过才许进入）；public 的 image/digest 逐字来自键控清单条目。
+- eval_cmd：全部经 build_private_grading_bundle 注册表派生（轮次 13 定案），
+  运行器对 216 条全量跑消费期重验（verify_package_relations：四方 digest/
+  身份/镜像身份/eval_cmd 互检——轮次 12 登记的消费期义务的可调用实现）。
+- 去重语义：环境身份簇报告 = 2 簇（moto-6469/6470、mypy-11824/11857），
+  全部 distinct_tasks_shared_environment、0 suspected_duplicate，
+  两对均保留（回归测试锚定）；suspected 只标记进人工复核，永不自动删。
+- 泄漏防线：public 面逐条过 scan_public_bundle（0 命中）。
+测试：12 项（合成夹具 9 + 真实 216 集成 2 + strip_spec 等价 1）。
+产物 digest：
+  environment_packages_v0.jsonl  e9de7677…
+  public_bundles_v0.jsonl        278a52be…
+  grading_bundles_v2_v0.jsonl    762a3ad1…
+  validation_bundles_v0.jsonl    196fdf81…
+  duplicate_clusters_v0.json     e0b7d2d9…
+```
+
+**T2 剩余**：T2-d `grade_controlled_patch` 受控入口 → T2-e 门 runner +
+fixture + `EnvValidationReport`。
