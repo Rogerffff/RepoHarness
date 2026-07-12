@@ -120,7 +120,7 @@ EnvironmentPackage（新）                      三者只以 digest/ref 关联�
 | --- | --- | --- |
 | T0 | 开工自检：`freeze_manifest_v0.json` 24 项 digest 复验 + `assert_repo_disjoint.py` 重跑 | 全 PASS 留证（不 PASS 即停，先查数据面变动） |
 | T1 | **数据身份就位**：按冻结 revision 重抓 Lite 完整 11 列 → 不可变 raw archive + digest；对完整字段集跑 strip_spec fail-closed；生成键控镜像清单（216 题逐题 resolve manifest digest） | raw archive digest 入 s2_1 manifest；11 列全部被 strip_spec 覆盖（负测试：注入未知字段拒绝）；216/216 镜像 digest 解析成功且 `_s_` 映射校验通过 |
-| T2 | **契约与 runner**：bundle v2 三分体系（§3.0）+ ingestion 构造器（strip_spec 驱动 + D5 断言 + `(repo,base_commit)` 去重 + eval_script 生成）+ `grade_controlled_patch` 受控入口 + 门 runner 与 fixture（§3.1）+ `EnvValidationReport` | 契约测试（注册 EXTRA_SCHEMA_REGISTRY）；216 题全构造成功；held-out 题注入被 D5 拦截；门逻辑单测（含 3b 变异器对单/多 hunk 的四态行为、幂等键、原子写断点续跑） |
+| T2 | **契约与 runner**：bundle v2 三分体系（§3.0）+ ingestion 构造器（strip_spec 驱动 + survivor 级 D5 断言收编【T1a 已有原型】+ 去重语义按**任务身份 ≠ 环境身份**定案：任务键 = `(repo, base_commit, F2P 集合)` 级或标记复核，禁止按 `(repo,base_commit)` 盲目去重【T1 实测两对同镜像不同 issue】+ **规范化完整 repo identity（owner/name，不用 basename，codex 轮次 5）** + eval_script 生成）+ `grade_controlled_patch` 受控入口 + 门 runner 与 fixture（§3.1）+ `EnvValidationReport` | 契约测试（注册 EXTRA_SCHEMA_REGISTRY）；216 题全构造成功；held-out 题注入被 D5 拦截；moto-6469/6470 与 mypy-11824/11857 两对在去重断言下均保留；门逻辑单测（含 3b 变异器对单/多 hunk 的四态行为、幂等键、原子写断点续跑） |
 | T3 | 8 题基线回归（本机，经 `GateInputs.from_v1_pair` 适配） | **硬门（empty/golden/determinism）8/8 全过**；probe 层只验诚实分类（不要求 mutation 必 rejected）；任何硬门 fail = 门的 bug，修门不动题 |
 | T4 | x86 CPU 实例就位 → 8 题跨基质 re-baseline → **50 题分层抽样**试运行（repo × golden hunk 数 × F2P/P2P 规模，固定 seed） | re-baseline 与 T3 语义一致；试运行报告：门校准问题清单 + 修复记录 + 单题耗时分布（外推 T5 预算） |
 | T5 | 216 全量（同一实例，分批 pull-run-rmi） | 漏斗账（216 → 硬门存活 N）+ 逐题 EnvValidationReport + probe suspicious 清单人工复核记录 |

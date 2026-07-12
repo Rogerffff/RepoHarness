@@ -487,3 +487,12 @@ inspect-rh2-s1：PASS
 ```
 
 建议先做两个小型 follow-up：`FA-3 hardening` 与 `FA-4 formula/reducer correction`。FA-1 可以并行推进，但 FA-2/FA-3 队列接线必须等前者，custom loss 接线必须等后者。没有修改文件。
+
+
+---
+
+## 轮次 5（2026-07-12：T0 验收审查 → T0 可验收、T1 解锁；一个实质遗漏 + 三条证据工程建议）
+
+- **实质遗漏（已在 T1a 修复为正式断言）**：`assert_repo_disjoint.py` 先 `train_pool = (swe_gym | r2e) - heldout` 再查 `train_pool ∩ heldout`，数学上必空——不构成"216 survivor 不含 held-out 题"的证明。codex 独立补跑真实关联检查（216 唯一、join 全中、held-out 命中 0，PASS）；正式机器断言 = survivors → join Lite by instance_id → repo ∩ {hydra,bokeh,tornado,pyramid} == ∅，已实现于 `rh2/experiments/s2_1_ingestion/fetch_raw_lite.py` 第 4 步，T0 报告已补注。
+- **证据工程建议（登记 S2-8/T2）**：① inspector 只读重算，不原地重写被检 evidence；② T0 收编为机器可重算项（manifest 自 digest / 24 项通过数 / 脚本 digest / survivor 级 D5 / 报告前后 digest）；③ 正式数据身份用规范化完整 repo identity，不用 basename。
+- **codex 独立验证**：脚本运行前后 digest 24/24 PASS、报告前后 digest 一致、216 survivor 真实 D5 PASS、inspect-rh2-s1 PASS（22 evidence + 55 code）。结论：T0 结果可信，遗漏并入 T1/T2 正式 checker，不阻塞 T1。

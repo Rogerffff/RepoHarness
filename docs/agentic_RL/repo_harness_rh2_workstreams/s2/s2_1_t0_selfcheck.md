@@ -29,3 +29,7 @@ verdict: PASS，退出码 0
 ## 结论
 
 数据面自 v0.1 冻结后零漂移，互斥不变量在当前文件上仍然成立。T1（完整 11 列 raw 重抓 + 键控镜像清单）的输入前提就位。
+
+## 补注（2026-07-12，codex 轮次 5 审查）
+
+检查 2 中 `train_pool ∩ heldout = []` 一行**不构成 survivor 级证明**：脚本先执行 `train_pool = (swe_gym | r2e) - heldout` 再查交集，结果在数学上必空（同义反复）。"216 个 survivor 不含 held-out 题"的真实证明 = codex 独立补跑的关联检查（216/216 join、held-out 命中 0）+ T1a 起的正式机器断言（`fetch_raw_lite.py` 第 4 步，`s2_1_t1_report.md`）。本报告其余结论（24 项 digest 零漂移、与 Verified 互斥）不受影响。
