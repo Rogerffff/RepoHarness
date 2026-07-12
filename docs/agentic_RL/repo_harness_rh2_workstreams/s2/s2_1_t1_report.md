@@ -48,3 +48,32 @@ python__mypy-11824 / python__mypy-11857    同 repo+base_commit（f96446ce…）
 ## T0 补注（codex 轮次 5）
 
 旧互斥脚本的 `train_pool ∩ heldout` 检查在数学上必空（`train_pool` 定义时已减去 heldout），T0 报告的该行不构成 survivor 级证明；真实证明由本报告 T1a 第 3 项 + codex 独立复跑（216/216 join、命中 0）补齐。T0 的其余结论（digest 零漂移、与 Verified 互斥）不受影响。
+
+## T1 follow-up（2026-07-13，codex 轮次 6 审查后修复；T1 验收状态 = 待富化收满）
+
+codex 用反例证明了 v1 resolver 三个真实缺陷，全部修复（`resolve_image_digests.py` v2）：
+
+```text
+1. 续跑 fail-open（改 digest 为 "bad"/塞多余条目仍报 ALL PASS）
+   → v2 加载旧文件逐条严格校验（id∈survivors / ref 与规则+冻结清单双合 /
+     digest 正则 / 必填字段 / 无多余 id / header refs digest 匹配），
+     损坏即拒绝；完成时强制 set(entries)==set(survivors) 且逐条 enriched。
+2. 重跑清空 platform_sample header → v2 header 由事实重建（含
+     schema_id=rh2.s2_1.image_manifest_keyed.v2），幂等。
+3. 非原子写 → 临时文件 + fsync + os.replace（主文件与 evidence 同律）。
+```
+
+计划要求的完整口径补齐中：**平台实证** = 逐镜像 GET manifest（顺带 digest
+漂移检测：GET 返回的 Docker-Content-Digest 与已存值不符即 fail）→ GET
+config blob（不计 pull 限额）→ 断言 os/architecture == linux/amd64；
+**registry_evidence_ref** 回链 `raw/image_registry_evidence.jsonl` 逐镜像
+事实行。进度：**183/216 enriched**（匿名 pull 限额 ratelimit-remaining
+降至 7 触发优雅停车，checkpoint 原子落盘；限额窗口重置后重跑续做剩余 33）。
+已 enriched 的 183 条全部平台断言通过、零 digest 漂移。
+
+其余修复：fetch_raw_lite 加 immutable 守卫（同名不同内容拒绝覆盖）+ 原子写
++ 脚本内 current-sha 对照（复跑实证 verify-only 路径）；pyproject 新增
+`data` dependency group（huggingface_hub/pyarrow/pyyaml，此前靠环境碰巧
+装有）；去重语义按 codex 建议再收严——`(repo, base_commit, F2P)` 也不作
+自动去重主键，改为 source-qualified task_id + 多 digest（题面/test_patch/
+F2P/P2P/gold patch）构成 duplicate cluster 交规则或人工判定（T2 落实）。

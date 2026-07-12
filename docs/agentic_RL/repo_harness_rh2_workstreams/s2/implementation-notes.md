@@ -9,9 +9,12 @@
 - **[S2-1 T1, 2026-07-12] 任务身份 vs 环境身份的语义定案（T2 落实）**：216 题里发现两对同 `(repo, base_commit)` 不同 issue 的任务（moto-6469/6470、mypy-11824/11857，镜像 digest 相同）。`(repo, base_commit)` 是环境身份（物化/缓存可去重），不是任务身份；跨源去重的正确键 = `(repo, base_commit, F2P 集合)` 或标记人工复核，**禁止按 (repo, base_commit) 盲目去重**（会错杀这两对里各一题）。
 - **[S2-1 T1, 2026-07-12] platform 字段的诚实口径**：216 镜像全部是单架构 v2 manifest（非 manifest list），架构信息在 config blob（未展开抓取，避免逐镜像计费 GET）；platform 按命名约定记 x86_64 + 抽样 GET 证实 manifest 形态。若 T4/T5 在 x86 实例上拉取失败再升级为逐镜像实证。
 
+- **[S2-1 T1-followup, 2026-07-13] resolver v1 的续跑 fail-open 是真实缺陷**（codex 轮次 6 反例证明），v2 全面修复（严格校验/原子写/幂等 header/完成断言）。教训沉淀：**任何"断点续跑"工具的旧状态都必须先过 fail-closed 校验再信任**——与账本纪律同源。
+- **[S2-1 T1-followup, 2026-07-13] 去重键再收严**：`(repo, base_commit, F2P 集合)` 也不作自动去重主键；正式方案 = source-qualified task_id + 题面/test_patch/F2P/P2P/gold patch 多 digest 构成 duplicate cluster，规则或人工判定，不自动删除（T2 落实，T1 报告有细节）。
+
 ## 2. 权衡取舍
 
-- **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）；代价是拿不到 manifest 内容（platform 详情），按上面的诚实口径处理。
+- **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。
 
 ## 3. 开放问题
 

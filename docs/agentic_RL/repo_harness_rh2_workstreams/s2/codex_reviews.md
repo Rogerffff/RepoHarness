@@ -496,3 +496,15 @@ inspect-rh2-s1：PASS
 - **实质遗漏（已在 T1a 修复为正式断言）**：`assert_repo_disjoint.py` 先 `train_pool = (swe_gym | r2e) - heldout` 再查 `train_pool ∩ heldout`，数学上必空——不构成"216 survivor 不含 held-out 题"的证明。codex 独立补跑真实关联检查（216 唯一、join 全中、held-out 命中 0，PASS）；正式机器断言 = survivors → join Lite by instance_id → repo ∩ {hydra,bokeh,tornado,pyramid} == ∅，已实现于 `rh2/experiments/s2_1_ingestion/fetch_raw_lite.py` 第 4 步，T0 报告已补注。
 - **证据工程建议（登记 S2-8/T2）**：① inspector 只读重算，不原地重写被检 evidence；② T0 收编为机器可重算项（manifest 自 digest / 24 项通过数 / 脚本 digest / survivor 级 D5 / 报告前后 digest）；③ 正式数据身份用规范化完整 repo identity，不用 basename。
 - **codex 独立验证**：脚本运行前后 digest 24/24 PASS、报告前后 digest 一致、216 survivor 真实 D5 PASS、inspect-rh2-s1 PASS（22 evidence + 55 code）。结论：T0 结果可信，遗漏并入 T1/T2 正式 checker，不阻塞 T1。
+
+
+---
+
+## 轮次 6（2026-07-13：T1 验收审查 → 数据产物可信，但 T1 不应完全验收；三个严重问题 + 计划要求未完成）
+
+- **严重 1 续跑 fail-open**：resolver 只按 instance_id 跳过，不校验旧条目；codex 反例（digest 改 "bad" → ALL PASS 216/216；塞 unexpected_extra → ALL PASS 217/216）。【v2 修复：加载即逐条严格校验 + 完成断言 set(entries)==set(survivors)】
+- **严重 2 重跑非幂等**：完整文件上重跑把 platform_sample 覆盖为空列表（codex 复现 resume_byte_idempotent=false）。【v2 修复：header 由事实重建含 schema_id，幂等】
+- **严重 3 非原子写**：直接覆盖 JSON，中途死亡留损坏文件。【v2 修复：temp+fsync+os.replace】
+- **计划要求未交付**：真实 platform（原口径仅命名约定）与 registry_evidence_ref（0/216）。【followup 补齐：manifest GET + config blob 断言 linux/amd64 + evidence jsonl 回链；183/216 后限额停车可续跑】
+- **一般**：pyproject 缺 data 依赖声明【已加 data group】；缺 schema_id【v2 已加】；raw archive 覆盖不设防【immutable 守卫 + 原子写】；"当前 sha == pin"未在脚本内实现【已加信息性核对】；(repo,base_commit,F2P) 仍不宜作自动去重主键，应 task_id + duplicate cluster 人工/规则判定【T2 落实，plan 与 notes 已记】。
+- **codex 独立确认正确**：raw 230/11 列/一致性、216 映射唯一覆盖、digest 全合法、214 唯一 + 两对共享（题面/F2P/test_patch/gold 均异）、父 manifest 四项 digest 匹配、pytest 749、inspect-rh2-s1 PASS。

@@ -1,6 +1,6 @@
 {
  "manifest": "s2_1_manifest_v0",
- "status": "draft（T6 收口时定稿；本文件由 T1 建立）",
+ "status": "draft（T6 收口时定稿；T1 建立，T1-followup 更新）",
  "date_started": "2026-07-12",
  "links": {
   "freeze_manifest_v0.json": {
@@ -15,20 +15,28 @@
    "rows": 230,
    "columns": 11,
    "hf_revision": "f70b1a29ab120eb0a0ee7a1deb029825e735b2b0",
-   "note": "T1a 不可变 raw archive：完整 11 列，规范化排序；strip_spec 双向覆盖 + survivor 级 D5 + 与冻结 meta 一致性回验全 PASS"
+   "note": "T1a 不可变 raw archive（immutable 守卫 + 原子写，followup 加固）"
   },
   "image_manifest_keyed.json": {
-   "sha256": "5529457975e719c20ac16e96601880b997dde28c49afefcce154465912bb4667",
+   "sha256": "343e034661a60cc44ee471771cd3bcd844090a7111b7b09d3906bb01aa0750c8",
+   "schema_id": "rh2.s2_1.image_manifest_keyed.v2",
    "entries": 216,
-   "note": "T1b 键控镜像清单：registry HEAD 解析 manifest digest；214 唯一 digest（两对同 repo+base_commit 的不同 issue 共享镜像，见 t1 报告）"
+   "enriched": 183,
+   "note": "T1b v2：digest 216/216；平台实证富化 183/216（匿名 pull 限额优雅停车，可续跑）——T1 完全验收待富化收满"
+  },
+  "raw/image_registry_evidence.jsonl": {
+   "sha256": "0bb924f72147e3099820a12c08be4ecc1246f5aaf5f6c5590a1386b194b09586",
+   "lines": 183,
+   "note": "逐镜像 registry evidence（manifest/config digest + config blob 平台事实）"
   },
   "tools/fetch_raw_lite.py": {
    "path": "rh2/experiments/s2_1_ingestion/fetch_raw_lite.py",
-   "sha256": "8ed1a88321b14679dafd71675d10722acc0c866e5e9bb18d580cb6ca39360a40"
+   "sha256": "313cda1d24c62a25655fdfad15162cf362687c01385d1c3f8a9593843f97f621"
   },
   "tools/resolve_image_digests.py": {
    "path": "rh2/experiments/s2_1_ingestion/resolve_image_digests.py",
-   "sha256": "85724b3a95d7dee67b8072276b56c6ec502e3054090dccb66d7145602213d7a0"
+   "sha256": "ebce81f87918da388ae6ccbc6c338eac14f14738daf733bc2635add53cc42de0",
+   "note": "v2：fail-closed 续跑 + 原子写 + 平台实证 + 限额感知"
   }
  }
 }

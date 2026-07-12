@@ -51,6 +51,16 @@ def main() -> None:
     revision = (DATA_FREEZE / "meta/swe_gym_lite.revision").read_text().strip()
     print(f"[t1a] pinned revision = {revision}")
 
+    # 信息性核对：当前 HF sha 是否仍等于 pin（不影响取数——下载始终按 pin；
+    # 漂移只说明上游动过，记录事实供报告引用，codex 轮次 6 措辞修正）。
+    try:
+        from huggingface_hub import HfApi
+        current_sha = HfApi().dataset_info(DATASET).sha
+        print(f"[t1a] current HF sha = {current_sha} "
+              f"({'== pin' if current_sha == revision else '!= pin（上游已前进，本次仍按 pin 取数）'})")
+    except Exception as exc:  # noqa: BLE001 —— 离线/网络失败不阻塞按 pin 下载
+        print(f"[t1a] current sha 查询失败（不阻塞）: {exc}")
+
     local = hf_hub_download(
         DATASET, PARQUET_PATH, repo_type="dataset", revision=revision
     )
@@ -107,18 +117,35 @@ def main() -> None:
                 fail(f"{iid} 字段 {f} 与冻结 meta 不一致")
     print("[t1a] 一致性回验 OK：230 行 × 8 裁剪字段逐字节等于冻结 meta")
 
-    # 2. 规范化落盘（排序 + 键排序；明文 jsonl，方便 diff 与 digest 复算）
+    # 2. 规范化落盘（排序 + 键排序；明文 jsonl，方便 diff 与 digest 复算）。
+    # 不可变守卫（codex 轮次 6）：已有同名 archive 时——内容一致则只验证不重写；
+    # 内容不同则拒绝（immutable 承诺 fail-closed，绝不静默覆盖）。
+    # 写入走临时文件 + fsync + os.replace（原子替换，不留半成品）。
+    import os
     out_dir = S2_DIR / "raw"
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"swe_gym_lite_full_{revision[:8]}.jsonl"
-    with out.open("w", encoding="utf-8") as fh:
-        for r in sorted(rows, key=lambda x: x["instance_id"]):
-            fh.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
-    digest = hashlib.sha256(out.read_bytes()).hexdigest()
+    payload = "".join(
+        json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n"
+        for r in sorted(rows, key=lambda x: x["instance_id"])
+    ).encode("utf-8")
+    digest = hashlib.sha256(payload).hexdigest()
+    if out.exists():
+        existing = hashlib.sha256(out.read_bytes()).hexdigest()
+        if existing != digest:
+            fail(f"immutable 违约：{out.name} 已存在且内容不同 "
+                 f"(existing {existing[:16]}… vs refetch {digest[:16]}…)——拒绝覆盖，先人工裁决")
+        print(f"[t1a] archive 已存在且内容一致（sha256={digest[:16]}…），验证通过不重写")
+    else:
+        tmp = out.with_suffix(".jsonl.tmp")
+        with tmp.open("wb") as fh:
+            fh.write(payload)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, out)
+        print(f"[t1a] raw archive 写出: {out.relative_to(REPO_ROOT)} "
+              f"({len(payload)/1e6:.1f} MB, sha256={digest[:16]}…)")
     (out_dir / f"{out.name}.sha256").write_text(digest + "\n")
-    size_mb = out.stat().st_size / 1e6
-    print(f"[t1a] raw archive 写出: {out.relative_to(REPO_ROOT)} "
-          f"({size_mb:.1f} MB, sha256={digest[:16]}…)")
     print("[t1a] ALL PASS")
 
 
