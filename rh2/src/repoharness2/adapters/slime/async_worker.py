@@ -44,6 +44,7 @@ from repoharness2.contracts.fa_runtime import (
 
 __all__ = [
     "ArtifactSinkWriteError",
+    "canonical_artifact_bytes",
     "BoundedDeliveryQueue",
     "ContinuousExecutionWorker",
     "DEFAULT_RETRY_WHITELIST",
@@ -488,21 +489,34 @@ class ProxyCallResult:
 
     def abandon_delivered(self, reason: str) -> ModelCallAttempt:
         """capture 未能持久化（flush 失败/客户端断连）时显式关闭 draft
-        （codex 轮次 7：unfinalized 不能只有"可见"，还要有出口）。"""
+        （codex 轮次 7：unfinalized 不能只有"可见"，还要有出口）。
+
+        事务语义（codex 轮次 12 P0）：本方法在 call() 返回**之后**被调，
+        sink 失败不经过 call() 外层统一 poison——所以必须**先关 draft、
+        落最小 FailureFact 账**，再把 ArtifactSinkWriteError 抛给调用方
+        （由调用方 poison；unregister 路径在调用前已 poison）。绝不允许
+        "抛了异常但 draft 还 pending、账上没记录"的中间态。"""
 
         if self._finalized is not None:
             raise ValueError(f"{self.draft.attempt_id} 已 finalize，不能再 abandon。")
-        ref = self._proxy._store_artifact(f"{self.draft.attempt_id}_abandon", reason)
+        sink_failure: ArtifactSinkWriteError | None = None
+        evidence: list[str] = []
+        try:
+            evidence = [self._proxy._store_artifact(f"{self.draft.attempt_id}_abandon", reason)]
+        except ArtifactSinkWriteError as exc:
+            sink_failure = exc  # 先关账再抛
         attempt = ModelCallAttempt(
             logical_turn_id=self.draft.scoped_turn_id,
             model_call_attempt_id=f"{self.draft.attempt_id}_abandoned",
             attempt_number=self.draft.attempt_number,
             delivery_status="non_delivered_failed",
-            evidence_refs=[ref],
+            evidence_refs=evidence,
         )
         self._finalized = attempt
         self._proxy.attempts_ledger.append(attempt)
         self._proxy._pending_drafts.discard(self.draft.attempt_id)
+        if sink_failure is not None:
+            raise sink_failure
         return attempt
 
     def finalize_delivered(self, capture_record_ref: str) -> ModelCallAttempt:
@@ -540,13 +554,22 @@ def _version_int(version: str) -> int:
     return int(version, 10)
 
 
-def _artifact_record(payload: Any) -> dict[str, Any]:
-    """半截输出的有界留痕：digest + 截断预览（完整体积交外部 artifact_sink）。"""
+def canonical_artifact_bytes(payload: Any) -> bytes:
+    """artifact digest 的**单一字节口径**（codex 轮次 12 一般 3）：内存
+    record 与外部 sink 必须用同一序列化，否则同一 payload 两个 digest。"""
 
     try:
         text = json.dumps(payload, ensure_ascii=False, default=repr, sort_keys=True)
     except (TypeError, ValueError):
         text = repr(payload)
+    return text.encode("utf-8", "replace")
+
+
+def _artifact_record(payload: Any) -> dict[str, Any]:
+    """digest-only 有界留痕：digest + 截断预览（**刻意不存完整 payload**——
+    最小化私有内容落内存；外部 sink 同一契约，见 glue sink docstring）。"""
+
+    text = canonical_artifact_bytes(payload).decode("utf-8", "replace")
     return {
         "sha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest(),
         "preview": text[:256],

@@ -53,6 +53,19 @@ class PendingTurn:
     proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
 
 
+class DuplicateActiveSessionError(RuntimeError):
+    """健康 SID 并发重复注册（codex 轮次 12）：稳定 SID（task+index+group）
+    在完全异步下并发出现会静默覆盖 hook/pending/weight_versions/artifact
+    ——临时守卫直接拒绝；FA-2 第一项用 execution 唯一身份根治。"""
+
+    def __init__(self, session_id: str) -> None:
+        super().__init__(
+            f"duplicate_active_session: {session_id} 已有活跃注册——并发同 SID "
+            "execution 在唯一身份落地前不可安全共存。"
+        )
+        self.session_id = session_id
+
+
 class CapturePendingOverlapError(RuntimeError):
     """同 session 并发暂存重叠（codex 轮次 9 P0-2）：slime 把同 session 请求
     作为独立 asyncio task 并发执行（common.py inflight，无 per-session 串行
@@ -98,9 +111,31 @@ class CaptureRegistry:
         # （task+index+group）跨补采/epoch 复用时先 fail-fast，不让 harness
         # 带毒起跑。execution 唯一身份是 FA-2 第一验收项。
         self.poison.check(sid)
+        if sid in self.hooks:
+            raise DuplicateActiveSessionError(sid)  # 轮次 12：不静默覆盖
         self.hooks[sid] = hook
         self.weight_versions[sid] = []
         self.pending.setdefault(sid, [])
+
+    def assert_session_clean(self, sid: str) -> None:
+        """评分/Gate 前边界断言（codex 轮次 12 P0 层 1）：该 SID 不得残留
+        pending 暂存轮或 unfinalized delivered draft——任一在场说明交付账
+        不完整（flush 失败/abandon 未闭合），先 poison 再抛，execution 缺员。"""
+
+        problems: list[str] = []
+        if self.pending.get(sid):
+            problems.append(f"pending_turns={len(self.pending[sid])}")
+        proxy = self.model_call_proxy
+        if proxy is not None:
+            stale = [a for a in proxy.unfinalized_deliveries if a.startswith(f"{sid}/")]
+            if stale:
+                problems.append(f"unfinalized_drafts={sorted(stale)}")
+        if problems:
+            self.poison.poison(sid, "capture_boundary_unclean")
+            raise RuntimeError(
+                f"capture_boundary_unclean: session {sid} 交付账不完整（{'; '.join(problems)}）"
+                "——评分/Gate 前拒绝，execution 缺员。"
+            )
 
     def single_pending_turn(self, sid: str) -> PendingTurn:
         """取恰好一条暂存轮（启动探针/单轮消费的形状权威）。
@@ -147,6 +182,11 @@ class CaptureRegistry:
         # 给 CC（HTTP flush 前断连/失败）——显式 abandon delivered draft，
         # 消除"delivered 但 CC 没收到"的虚假交付。
         leftover = self.pending.pop(sid, None) or []
+        if any(turn.proxy_result is not None for turn in leftover):
+            # 轮次 12 P0 层 2：有未 commit 的 delivered draft = 该 execution
+            # 的交付账不完整——**先 poison** 再尝试持久化 abandon evidence
+            #（sink 再失败也不会出现"训练样本带着 pending draft 继续走"）
+            self.poison.poison(sid, "uncommitted_draft_at_unregister")
         for turn in leftover:
             self.stats["dropped_uncommitted"] += 1
             if turn.proxy_result is not None:
@@ -154,6 +194,11 @@ class CaptureRegistry:
                     turn.proxy_result.abandon_delivered("session_unregistered_before_commit")
                 except ValueError:
                     pass  # 已 finalize/abandon（幂等）
+                except Exception as exc:  # noqa: BLE001 - abandon 已先关账（事务化）
+                    self.stats["abandon_evidence_failures"] = (
+                        self.stats.get("abandon_evidence_failures", 0) + 1
+                    )
+                    print(f"[rh2-capture] abandon evidence 持久化失败 sid={sid}: {exc}")
         self.session_deadlines.pop(sid, None)
         self._turn_seq.pop(sid, None)
         # 有界内存（codex 轮次 9 一般 4）：weight_versions 随会话清理——

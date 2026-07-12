@@ -1349,6 +1349,7 @@ class RolloutOrchestrator:
         session_poison_subscribe: Callable[[str, Callable[[str, str], None]], None] | None = None,
         session_poison_unsubscribe: Callable[[str], None] | None = None,
         session_poison_release: Callable[[str], None] | None = None,
+        capture_boundary_check: Callable[[str], None] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1413,7 +1414,12 @@ class RolloutOrchestrator:
         # 轮次 11 身份 4：release = execution 清理 ACK——在 finally 的 sandbox
         # 清理完成后调用（adapter drop_session 只是会话关闭，不算 ACK）
         self._session_poison_release = session_poison_release
+        # 轮次 12 P0 层 1：评分/Gate 前的交付账边界断言（glue 注入
+        # registry.assert_session_clean——pending/unfinalized draft 在场即
+        # poison + 缺员）
+        self._capture_boundary_check = capture_boundary_check
         self.audits: list[RolloutAudit] = []
+        self.cleanup_quarantine: list[str] = []
 
     # ------------------------------------------------------------------ 入口
     async def generate(
@@ -1539,6 +1545,14 @@ class RolloutOrchestrator:
                     f"harness 非零退出 {exit_code}（正式链拒绝）——训练守卫下 CC "
                     "不该因 infra 失败退出，可疑到拒绝该 execution。",
                 )
+            if self._capture_boundary_check is not None:
+                try:
+                    self._capture_boundary_check(sid)
+                except Exception as exc:
+                    raise SlimeBindingError(
+                        "capture_boundary_unclean",
+                        f"评分前交付账边界断言失败：{exc}",
+                    ) from exc
             if not hook.records:
                 raise SlimeBindingError(
                     "no_capture_records",
@@ -1681,10 +1695,28 @@ class RolloutOrchestrator:
                             detail=str(exc)[:300],
                         )
                     )
+            cleanup_exception = False
             if sandbox is not None:
-                await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+                try:
+                    await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+                except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
+                    # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
+                    # 不让清理异常覆盖 rollout 结果
+                    cleanup_exception = True
+                    audit.cleanup_failures.append(
+                        CleanupFailureRecord(
+                            lease_id=sandbox.lease.lease_id,
+                            step="container_cleanup_exception",
+                            detail=f"{type(exc).__name__}: {exc}"[:300],
+                        )
+                    )
+                    self.cleanup_quarantine.append(sandbox.container_name)
             audit.mark("cleanup_completed")
-            if self._session_poison_release is not None:
+            if cleanup_exception or (audit.cleanup_failures and not audit.lease_released):
+                # 清理未确认成功：poison **不释放**（active 保持拒绝力），
+                # 容器进隔离队列等重试/人工——release 只在清理确认后发生
+                pass
+            elif self._session_poison_release is not None:
                 # 真正的 execution 清理 ACK：harness 终止 + 会话撤销 + 容器
                 # 清理都已完成，active poison 此刻才允许归档（轮次 11）
                 self._session_poison_release(sid)

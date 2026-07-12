@@ -527,3 +527,40 @@ aiohttp adapter 线程"双线程拓扑**——四个问题全是这个盲区的�
 - 测试 852 → 870。codex 确认轮次 10 四项修复全部成立。
 - **FA-2 第一项硬验收（更新）**：execution 唯一身份 + request 级 capture
   归属（两者一体：SID/poison/capture 都以 execution identity 为键）。
+
+## FA-1 follow-up 7（2026-07-13，codex 轮次 12：abandon 绕过 fail-closed 的
+## P0 + 重复注册守卫；原文存档 `../s2/codex_reviews.md` 轮次 12）
+
+- **P0（abandon 路径绕过 sink fail-closed）**：轮次 11 的 sink fail-closed
+  只覆盖 call() 内部；`abandon_delivered` 在 call() 返回**之后**被调，sink
+  失败会抛 ArtifactSinkWriteError 但不经过外层统一 poison——draft 仍
+  pending、账上零记录，且 unregister 的清理路径把异常当普通 cleanup
+  failure 吞掉，**构造好的训练样本可能带着不完整交付账继续走**（codex
+  确定性探针复现）。按其建议落三层防线：
+  1. **评分/Gate 前边界断言**：`CaptureRegistry.assert_session_clean(sid)`
+     （pending 暂存轮或该 sid 前缀的 unfinalized draft 在场 → poison +
+     拒绝），orchestrator 注入 `capture_boundary_check` 在 assemble 前调用；
+  2. **unregister 先 poison 再 abandon**：leftover draft 存在即先
+     `uncommitted_draft_at_unregister` poison，abandon 的 sink 异常不传播
+     （`abandon_evidence_failures` 计数可见）；
+  3. **abandon 事务化**：先关 draft、落最小 FailureFact（evidence_refs=[]），
+     再抛 ArtifactSinkWriteError——"抛了异常但 draft 还 pending"的中间态
+     被消灭。组合测试按 codex 点名补齐（成功交付 + flush 失败 + sink 失败）。
+- **重复注册守卫（FA-2 硬阻塞的临时挡板）**：健康 SID 并发重复 register
+  此前会静默覆盖 hook/pending/weight_versions——现抛
+  `DuplicateActiveSessionError`（顺序关旧开新仍放行）。FA-2 第一项验收含：
+  并发同题组不共享 SID、attempt id 全局唯一、artifact 禁静默覆盖、poison
+  按 execution 隔离。
+- **一般项**：`_cleanup_container` 意外异常（docker socket OSError 等）
+  结构化收口——CleanupFailureRecord(step=container_cleanup_exception) +
+  `cleanup_quarantine` 隔离队列，异常不再覆盖 rollout 结果；**清理未确认
+  成功时 poison 不 release**（active 保持拒绝力）。版本 evidence：进程内
+  只写一次 + 临时文件原子 replace（并发竞写消除）+ 失败计数打印不静默。
+  artifact digest 统一 canonical 口径（`canonical_artifact_bytes` 内外共
+  用）；sink 文件已存在时 digest 相同幂等返回、不同即身份碰撞报错（禁
+  静默覆盖）；契约显式定名 **digest-only evidence**（刻意不存完整私有
+  payload——与密钥/最小化纪律一致，preview 有界）。
+- codex 澄清其看到的 inspect 失败是并行 S2 线程的瞬时脏工作树（我方验证
+  当前 PASS，bundles_v2/spec_vendor 已由 S2 线程收敛）。
+- 测试 870 → 878。codex 认可"可以开始 FA-2，但先修本 P0 + SID 唯一化为
+  FA-2 第一个提交"——本 P0 已闭合。

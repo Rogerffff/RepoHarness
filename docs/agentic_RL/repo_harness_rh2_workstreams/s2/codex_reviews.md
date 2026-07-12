@@ -1672,3 +1672,131 @@ py_compile / bash -n：PASS
 - **一般 3：缺"重提取 == JSON"机器验证**（codex 独立重算相等）。【修复：re-extraction 逐字节等价测试（exec 仅测试/构建期）】
 - **一般 4：provenance 旧措辞**。【已更新】
 - codex 确认正确：身份错配拒绝、路径注入拒绝、immutable URL、LICENSE、覆盖复算、10 项 digest、42 定向 + 866 全套、隔离快照 inspect-rh2-s1 通过；工作区单个失败来自 FA 线程未提交文件（与 T2 无关）。
+
+
+---
+
+## 轮次 12（2026-07-13：FA-1 第七轮审查 → abandon 绕过 fail-closed P0 + 重复注册守卫，全部采纳）
+
+> 原文全文转录（tmp/FA1_codex.md 第七版）。处置见 `fa/implementation-notes.md` "FA-1 follow-up 7"。三层防线：评分前 assert_session_clean 边界断言 / unregister 先 poison 再 abandon / abandon 事务化（先关账再抛）。DuplicateActiveSessionError 临时挡板；cleanup 异常隔离队列 + 未确认不 release；版本 evidence 原子化；canonical digest 统一 + 禁静默覆盖（digest-only evidence 契约定名）。测试 870 → 878。
+
+**结论**
+
+上一轮两个正式链阻塞已正确修复，但又发现一个新的 **P0 fail-closed 缺口**。FA-1 暂时仍不应宣告完全闭合；可以开始 FA-2，但应先修下面的 P0，并把 SID 唯一化作为 FA-2 第一个提交。
+
+**P0：abandon 路径绕过 sink fail-closed**
+
+[sync_worker.py:489](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:489) 的 `abandon_delivered()` 在 `ModelCallProxy.call()` 已经返回后才调用 `_store_artifact()`。
+
+因此 sink 失败虽然抛出 `ArtifactSinkWriteError`，却不会经过 `call()` 外层的统一 poison 逻辑：
+
+```text
+proxy.call() 成功返回 DeliveredDraft
+-> capture flush / session commit 失败
+-> abandon_delivered()
+-> artifact sink 磁盘错误
+-> ArtifactSinkWriteError
+-> session 没有 poison
+-> draft 仍处于 pending
+```
+
+确定性探针结果：
+
+```text
+raised = ArtifactSinkWriteError
+session_poisoned = false
+draft_still_pending = true
+ledger_count = 0
+```
+
+更危险的是，[capture_wire.py:127](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:127) 会在 `unregister()` 调用 abandon，而 [generate.py:1670](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1670) 会把该异常当普通 cleanup failure 吞下。已经构造好的训练样本可能继续返回。
+
+建议同时做三层防线：
+
+1. `finish_session()` 返回后、进入评分和 Gate 前，强制断言该 SID 没有 pending/unfinalized draft；否则先 poison，再将 execution 判为缺员。
+2. `CaptureRegistry.unregister()` 发现 leftover draft 时，应在尝试持久化 abandon evidence **之前** poison SID。
+3. `abandon_delivered()` 应持有 failure callback 或由 proxy 提供事务式 `abandon(...)`，确保 sink 失败也会关闭 draft、poison execution，并留下最小 FailureFact。
+
+必须补“成功响应后 capture flush 失败 + sink 同时失败”的组合测试。当前新增测试只覆盖 `call()` 内部写 sink 失败。
+
+**FA-2 硬阻塞：健康 SID 也能并发覆盖**
+
+[CaptureRegistry.register()](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:96) 只拒绝 poisoned SID，不拒绝已经注册的健康 SID。探针结果：
+
+```text
+duplicate_register_rejected = false
+hook_overwritten = true
+```
+
+完全异步执行时，同一稳定 SID 并发出现会静默覆盖：
+
+- capture hook；
+- pending 队列归属；
+- weight version 记录；
+- model-call artifact。
+
+建议立即加临时守卫：
+
+```python
+if sid in self.hooks:
+    raise DuplicateActiveSessionError(...)
+```
+
+然后 FA-2 用 `RolloutExecutionIdentity + attempt_number/nonce` 生成全局唯一 SID。验收还应包含：
+
+- 两个相同 prompt/group 的并发 execution 不共享 SID；
+- `model_call_attempt_id` 全局唯一；
+- artifact 文件禁止静默覆盖；
+- poison 只影响对应 execution。
+
+**一般问题**
+
+1. **cleanup 异常没有结构化收口**
+
+[_cleanup_container()](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2133) 只处理 timeout 和非零退出。Docker socket 抛 `OSError` 时，探针结果为：
+
+```text
+raised = OSError
+released = []
+cleanup_failures = 0
+```
+
+不 release poison 是正确的，因为清理并未确认成功；但必须写入 `CleanupFailureRecord`，把 execution/container 放入 quarantine/cleanup-retry 队列，不能无账地让异常覆盖 rollout 结果。
+
+2. **版本 evidence 仍是 fail-open 且存在并发写竞争**
+
+[glue.py:141](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:141) 对 `cc_version_observed.json` 使用共享文件、非原子 `write_text()`，并吞掉所有异常。多个 rollout 会并发写同一个文件。
+
+版本校验本身已经修好，但 evidence 应改成：
+
+- 启动期只写一次并原子落盘，或按 execution 单独记录；
+- 正式链写失败不应静默；
+- inspector 校验 observed version、预期版本及 tarball SHA256 的一致性。
+
+3. **artifact digest 口径不一致且会覆盖**
+
+内存 `_artifact_record()` 使用排序 JSON 计算 digest，外部 sink 使用 `repr(payload)`；二者不是同一字节口径。外部文件又只保存 digest 和预览，并未保存 `_artifact_record()` 注释所称的完整 payload。
+
+此外，同一个 `attempt_id` 会被 `os.replace()` 静默覆盖。FA-2 唯一身份能解决大部分碰撞，但 sink 本身仍应采用：
+
+- 单一 canonical serialization；
+- `O_EXCL` 或“已存在则 digest 必须相同”；
+- 明确选择保存完整 private payload，或把契约名称改为 digest-only evidence，不能两种语义混用。
+
+**确认修复有效**
+
+- `single_pending_turn()` 已正确修复启动探针的列表形状。
+- `sink_required=True` 下，`call()` 内部 sink 失败会 poison。
+- archived poison 的订阅和注册兜底已生效。
+- release 已从 `unregister()` 移至 cleanup 之后。
+- Claude Code 版本已改为 token 精确比较。
+
+验证结果：
+
+```text
+相关定向测试：105 passed
+当前全套测试：874 passed
+```
+
+`inspect-rh2-s1` 当前失败是并行 S2 工作树修改了 `bundles_v2.py/spec_vendor.py`，导致两个 digest 漂移，不是本次 FA commit 回归。没有修改任何文件。
+

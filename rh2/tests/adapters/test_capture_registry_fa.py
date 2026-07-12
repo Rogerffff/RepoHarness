@@ -248,3 +248,54 @@ def test_register_rejects_poisoned_sid_reuse():
     registry.poison.release("sid_R")  # 归档后依然拒绝
     with pytest.raises(SessionPoisonedError):
         registry.register("sid_R", FakeHook())
+
+
+def test_unregister_poisons_before_abandon_even_if_sink_fails():
+    """codex 轮次 12 P0 层 2：unregister 发现 leftover draft 时**先 poison**
+    再尝试持久化 abandon evidence——sink 失败也不出现"带 pending draft 的
+    训练样本继续走"，且异常不从清理路径传播（计数可见）。"""
+
+    class SinkFailingProxyResult(FakeProxyResult):
+        def abandon_delivered(self, reason: str) -> None:
+            if self.state != "pending":
+                raise ValueError("已定案")
+            self.state = f"abandoned:{reason}"  # 事务化：先关
+            raise OSError("disk full")  # 再报持久化失败
+
+    registry = CaptureRegistry()
+    registry.register("sid_U12", FakeHook())
+    proxy = SinkFailingProxyResult("sid_U12/t1_a1")
+    registry.stage("sid_U12", _turn("rid_1", proxy=proxy))
+    registry.unregister("sid_U12")  # 不得抛
+    assert registry.poison.is_poisoned("sid_U12")  # poison 先于 abandon
+    assert registry.poison.reason("sid_U12") == "uncommitted_draft_at_unregister"
+    assert proxy.state.startswith("abandoned:")  # draft 已关
+    assert registry.stats["abandon_evidence_failures"] == 1
+
+
+def test_assert_session_clean_boundary():
+    """codex 轮次 12 P0 层 1：评分/Gate 前边界断言——pending 暂存或
+    unfinalized draft 在场即 poison + 拒绝；干净则放行。"""
+
+    registry = CaptureRegistry()
+    registry.register("sid_B12", FakeHook())
+    registry.assert_session_clean("sid_B12")  # 干净放行
+    registry.stage("sid_B12", _turn("rid_1"))
+    with pytest.raises(RuntimeError, match="capture_boundary_unclean"):
+        registry.assert_session_clean("sid_B12")
+    assert registry.poison.is_poisoned("sid_B12")
+
+
+def test_register_rejects_duplicate_active_sid():
+    """codex 轮次 12：健康 SID 并发重复注册不得静默覆盖 hook/账目——
+    临时守卫直接拒绝（FA-2 唯一身份根治）。"""
+
+    from s1_7a_bringup.capture_wire import DuplicateActiveSessionError
+
+    registry = CaptureRegistry()
+    registry.register("sid_D12", FakeHook())
+    with pytest.raises(DuplicateActiveSessionError):
+        registry.register("sid_D12", FakeHook())
+    # 正常时序（关旧开新）仍放行
+    registry.unregister("sid_D12")
+    registry.register("sid_D12", FakeHook())

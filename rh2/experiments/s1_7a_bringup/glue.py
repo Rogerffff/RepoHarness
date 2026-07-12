@@ -137,14 +137,21 @@ class ClaudeCodeDriver:
                 f"期望 {expected!r}——CC 版本画像失效，fail-fast（升级须先重跑探针套件）。"
             )
         self.cc_version_observed = observed
-        # 轮次 11 一般 2：落盘为独立 evidence 文件（安装发生在首次 rollout，
-        # 晚于 startup_evidence.json 写出——不再声称写进后者）
-        try:
-            (ARTIFACT_DIR / "cc_version_observed.json").write_text(
-                json.dumps({"observed": observed, "expected": expected}, ensure_ascii=False)
-            )
-        except Exception:  # noqa: BLE001 - evidence 落盘失败不阻断已通过的校验
-            pass
+        # 轮次 11 一般 2 / 轮次 12 一般 2：进程内**只写一次** + 临时文件原子
+        # replace（多 rollout 并发不再竞写同一文件）；失败不静默（计数 + 打印，
+        # 版本校验本身已通过，evidence 缺失只降级审计面不阻断）
+        if not getattr(self, "_cc_version_evidence_written", False):
+            try:
+                target = ARTIFACT_DIR / "cc_version_observed.json"
+                tmp = ARTIFACT_DIR / ".cc_version_observed.tmp"
+                tmp.write_text(
+                    json.dumps({"observed": observed, "expected": expected}, ensure_ascii=False)
+                )
+                os.replace(tmp, target)
+                self._cc_version_evidence_written = True
+            except Exception as exc:  # noqa: BLE001
+                self.cc_version_evidence_error = f"{type(exc).__name__}: {exc}"
+                print(f"[rh2-bringup] cc_version evidence 落盘失败：{exc}")
 
     async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
         from slime.agent.harness import ClaudeCodeHarness
@@ -472,14 +479,28 @@ class BringupService:
 
             import hashlib
 
+            from repoharness2.adapters.slime.async_worker import canonical_artifact_bytes
+
             name = hashlib.sha256(attempt_id.encode()).hexdigest()
-            payload_bytes = repr(payload).encode()
+            # 轮次 12 一般 3：与内存 record 同一 canonical 字节口径；契约 =
+            # **digest-only evidence**（刻意不存完整私有 payload——最小化
+            # 原则与密钥纪律一致；preview 有界）
+            payload_bytes = canonical_artifact_bytes(payload)
+            digest = hashlib.sha256(payload_bytes).hexdigest()
             record = {
                 "attempt_id": attempt_id,
-                "payload_sha256": hashlib.sha256(payload_bytes).hexdigest(),
-                "payload_repr_preview": payload_bytes[:4096].decode(errors="replace"),
+                "payload_sha256": digest,
+                "payload_preview": payload_bytes[:4096].decode(errors="replace"),
             }
             path = audit_dir / f"{name}.json"
+            if path.exists():
+                existing = json.loads(path.read_text(encoding="utf-8"))
+                if existing.get("payload_sha256") == digest:
+                    return f"artifact:model_call_audit/{name}.json"  # 幂等重写
+                raise RuntimeError(
+                    f"artifact 身份碰撞：{attempt_id} 已存在且 digest 不同——"
+                    "attempt 身份必须全局唯一（FA-2 唯一身份验收项）。"
+                )
             tmp = audit_dir / f".{name}.tmp"
             with tmp.open("w", encoding="utf-8") as fh:
                 json.dump(record, fh, ensure_ascii=False)
@@ -534,6 +555,8 @@ class BringupService:
             session_poison_unsubscribe=self.registry.poison.unsubscribe,
             # 轮次 11：清理完成后才归档 poison（真 ACK；unregister 不再释放）
             session_poison_release=self.registry.poison.release,
+            # 轮次 12 P0 层 1：评分前交付账边界断言
+            capture_boundary_check=self.registry.assert_session_clean,
         )
 
     def _registry_max_version(self) -> int | None:

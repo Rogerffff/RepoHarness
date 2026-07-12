@@ -1192,3 +1192,35 @@ def test_subscribe_fires_for_archived_poison():
     fired: list[str] = []
     registry.subscribe("sid_A11", lambda sid, reason: fired.append(reason))
     assert fired == ["bad"]
+
+
+async def test_abandon_with_broken_sink_closes_draft_then_raises():
+    """codex 轮次 12 P0 组合测试：**成功交付后** capture flush 失败 + sink
+    同时失败——abandon 必须先关 draft、落最小账，再抛 ArtifactSinkWriteError
+    （旧行为：抛了异常但 draft 仍 pending、账上零记录）。"""
+
+    from repoharness2.adapters.slime.async_worker import ArtifactSinkWriteError
+
+    def broken_sink(attempt_id: str, payload) -> str:
+        raise OSError("disk full")
+
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep,
+        artifact_sink=broken_sink,
+        sink_required=True,
+    )
+
+    async def send(attempt: int) -> dict:
+        return _ok_response([1], version="1")
+
+    result = await proxy.call("exec_AB", "turn_0", send)  # 成功交付
+    assert proxy.unfinalized_deliveries  # flush 前
+    with pytest.raises(ArtifactSinkWriteError):
+        result.abandon_delivered("capture flush failed")  # sink 也坏了
+    # 事务语义：异常抛出前 draft 已关、账已落
+    assert proxy.unfinalized_deliveries == frozenset()
+    last = proxy.attempts_ledger[-1]
+    assert last.delivery_status == "non_delivered_failed"
+    assert last.model_call_attempt_id.endswith("_abandoned")
+    assert last.evidence_refs == []  # 最小 FailureFact（evidence 持久化失败）
