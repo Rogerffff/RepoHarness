@@ -337,3 +337,41 @@ inspect-rh2-s1：PASS
 ```
 
 因此 S1 没有回归。建议把上述问题做成一个很小的 `FA-0 follow-up`，修完再进入 FA-1；FA-3 离线部分与 FA-4 数学对拍不必等待。没有修改任何文件。
+
+
+---
+
+## 轮次 4（2026-07-12：对 s2/s2_1_data_ingestion_execution_plan.md 的开工前审查 → 全部采纳）
+
+> 用户转达，原文要点转录。处置：4 个硬阻塞全部核实成立并修入执行文档（§1/§2/§3.0/§3.1/§4）；四门规格修正（硬门=empty/golden/determinism，假阳性降为 probe 层四态结果）；执行完整性 8 项全部采纳；O-1 改判不并入、O-2 改判 50/216 同实例、O-3 N=3 双门、O-4 probe 化。
+
+### 硬阻塞（4 项，均经源码核实）
+
+1. **冻结元数据缺四门所需字段**：`meta/swe_gym_lite.jsonl` 只有 8 列（instance_id/repo/base_commit/version/problem_statement/hints_text/F2P/P2P），缺 patch/test_patch/created_at——既不能构造 BundlePair 也不能跑 golden 门。改为：按冻结 revision 重抓完整 11 列 → 不可变 raw archive + digest → 全字段 strip_spec fail-closed；裁剪版 meta 不作字段覆盖验证依据。
+2. **镜像清单无法提供稳定身份**：`image_refs_swegym.txt` 是 Full 2438 条无键 `:latest` 列表、无 manifest digest，而 `PublicTaskBundle` 强制 `image_manifest_digest`。改为：生成键控解析清单（instance_id/source_image_ref/resolved_manifest_digest/resolved_at/platform/registry_evidence_ref），运行期按 digest 拉取比对；`_s_` 规则只作映射校验。
+3. **validation_only 与 grader_only 归属冲突**：`PrivateGradingBundle.v1` 强制含 `golden_patch`（bundles.py:152），违反 strip_spec:24 的 validation_only 归属。改为 v2 三分体系（PublicTaskBundle 复用 / PrivateGradingBundleV2 无 golden / ValidationOnlyBundle 持 golden+mutation fixtures / EnvironmentPackage digest 关联）；冻结 v1 不改，"只加构造器不改 schema"的原表述不成立。
+4. **grader 缺受控 patch 入口**：`grade()` 只从 agent workspace 导出 patch（manager.py:356 WorkspaceRunner）。新增 `grade_controlled_patch(patch_bytes, patch_origin, patch_digest, validation_run_id)` 与原入口共用 image check/clean checkout/apply/eval/parser；不为四门伪造 workspace。
+
+### 四门修正
+
+- empty 门前提 = 测试真实运行且 parser 成功解析 + ≥1 F2P 失败；infra_failure/patch_apply_failed 不算门正确失败。
+- golden 门 = 全部 F2P 通过 ∧ P2P 零失败（RESOLVED_FULL），不只是 F2P>0。
+- 3a 的 /tmp 文件不构成 repo patch → 改仓库内可 clean-apply 的无关文件变更。
+- 3b 删末 hunk 不保证是错误解（可能是冗余清理）→ 改名 mutation probe，四态（rejected/suspicious_pass/fixture_invalid/infra_failure），suspicious_pass 人工复核不自动剔题。
+- 8 题基线只硬要求 empty/golden/determinism；probe 验证 runner 诚实分类。
+- 确定性 = empty 与 golden 各 N=3、全新容器、比较语义 verdict + F2P/P2P 集合（不比日志文本）。
+
+### 执行完整性（全部采纳）
+
+50 题按 repo/golden hunk 数/F2P、P2P 规模分层 + 固定 seed（不取前 50）；幂等键 (instance_id, gate, fixture_digest, image_digest, validator_config_digest, attempt)；原子写 + 断点续跑；只重试 infra failure；日志 digest 必须对应留存 artifact；EnvValidationReport 用五态枚举非布尔；provenance 全量（source revision/三 bundle digest/image digest/swebench+parser 版本/runtime fingerprint/validator config digest）；新建 s2_1 manifest 回链 v0.1（不向冻结 manifest 追加）；新 schema 注册 EXTRA_SCHEMA_REGISTRY 扩展面（S1 核心 15 契约冻结不动）。
+
+### O-1~O-4 定案
+
+- O-1 **不并入** held-out（542 中 450 题是 R2E：需另一套 ingestion、parent 断言实战、scaleswe grader；并入 = 216→758 题 / 4500+ 次评分，成本失效）。S2-1 只保证 runner 可复用；静态门打标（无 docker）任意线程可先行。
+- O-2 T0~T3 本机；**T4 50 题与 T5 216 同一 x86 实例**（不得 ARM 校准后换 x86 判题）。
+- O-3 N=3，empty/golden 各 3 次。
+- O-4 3a 保留为控制探针，3b 非强制 mutation probe + 人工复核。
+
+### 保持项
+
+T0 冻结账本自检、D5 代码级重验、leakage_watch 透传、先 8 题再 50 题再全量、逐题报告与漏斗账、S2/FA 文件边界。
