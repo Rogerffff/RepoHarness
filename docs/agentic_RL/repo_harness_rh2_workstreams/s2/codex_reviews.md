@@ -1192,3 +1192,168 @@ claude --version == 2.1.205
 - **一般：writer/loader 不对称**——enriched entry 缺 evidence 可写出、loader 必拒（计数链不成立）。【修复：flush 对称守卫 set(evidence)==owned_ids 双向拒绝 + 新测试；store 44 项全绿】
 - codex 最终资产核验：216/216/216 三集合相等、双哈希标志全 True、214 唯一 digest（两对共享符合预期）、6 项 digest 匹配、inspect-rh2-s1 PASS；指出上轮提交信息 822 为过时口径（实际 831，账本一致）。
 - 判定：**T1 数据交付达标**；本轮代码修复后 T1 可正式关闭评审。
+
+
+---
+
+## 轮次 9（2026-07-13：FA-1 第四轮审查 → 2 确定性 P0 + 4 接线缺口，全部采纳）
+
+> 原文全文转录（tmp/FA1_codex.md 第四版）。处置见 `fa/implementation-notes.md` "FA-1 follow-up 4"。本轮最重要教训：轮次 8 的 deadline 修复**静默失败**（无 assert 文本替换）且配套测试**假阳性**（在目标分支前就退出）——修复必须配"真进目标分支"的断言。FIFO 串账改 overlap fail-closed（request 级归属 = FA-2 第一验收项）；formal 链强制拒绝非零 exit（纠正轮次 8 的错误理由：任务失败负样本 = exit 0 + reward 0）；poison 主动取消 harness task；404 middleware 真接线；host_launch 每次校验 + 原子 mv；StaticActiveCoordinator TTL 缓存；poison/tombstone/weight_versions 有界。测试 831 → 835。
+
+**结论**
+
+`d3319573` 修复了 rid、worker 异常传播和 CC 环境守卫等真实问题，但“六个 P0 全部闭合”仍不成立。我复现出 **2 个确定性 P0**，另外有 **4 个生产接线缺口**。建议先补完这些，再把 FA-1 标为完成；FA-2 可以同步设计，但 request 级 capture 归属必须成为 FA-2 第一项。
+
+以下内容可以直接返回给 Claude。
+
+---
+
+## P0-1：episode deadline 仍未传进版本恢复等待
+
+[async_worker.py:751](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:751) 调用：
+
+```python
+await self._wait_version_advance(
+    attempts, scoped, attempt_number, window_now
+)
+```
+
+漏传了 `deadline_monotonic`。虽然函数签名新增了该参数，但真实调用仍使用默认 `None`，继续独立等待 `wait_timeout_seconds=60`。
+
+确定性探针结果：
+
+```text
+episode deadline = 3s
+wait_timeout = 50s
+实际失败时 fake clock = 50s
+预期 = 3s
+```
+
+现有 `test_recovery_wait_respects_episode_deadline` 是假阳性：它设置 deadline=3，但默认 `min_attempt_budget_seconds=5`，调用在第一次发送前就以预算不足退出，根本没有进入版本恢复等待；测试又只断言任意 `UnattributableModelCallError`，所以仍然通过。
+
+修复要求：
+
+```python
+await self._wait_version_advance(
+    attempts,
+    scoped,
+    attempt_number,
+    window_now,
+    deadline_monotonic,
+)
+```
+
+测试必须额外断言：
+
+```text
+send 被调用一次
+reason_code == version_did_not_advance
+clock_at_failure <= episode deadline
+```
+
+## P0-2：FIFO 仍会在并发完成乱序时静默串账
+
+[capture_wire.py:130](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:130) 的 `commit(sid)` 没有请求身份，只能弹出最早 stage 的记录。
+
+真实 slime [common.py:318](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/common.py:318) 会把同 session 请求作为独立 asyncio task 放进 `inflight`，没有 per-session 串行锁。因此合法顺序可能是：
+
+```text
+A stage
+B stage
+B 先完成 SSE flush
+record_turn(B) -> commit(sid) -> FIFO 弹出 A
+```
+
+确定性探针已经复现：
+
+```text
+B completion 实际 commit = request_A_slow
+预期 = request_B_fast
+silent_misattribution = true
+```
+
+这比覆盖丢失更危险，因为它会生成结构合法但 token、logprob、weight version 属于另一请求的训练轨迹。
+
+FA-2 必须首先改成 request 级归属。可选方案：
+
+- 给 `record_turn` 传播 `request_id`；
+- 使用 `ContextVar` 在每个 asyncio request task 中保存 rid；
+- 以 `TurnRecord` 对象身份建立 pending 映射。
+
+在精确归属完成前，检测到 pending overlap 应 fail-closed，不应使用 FIFO 猜测。
+
+## P0-3：formal 链没有启用非零 harness exit 拒绝
+
+虽然新增了 `reject_on_nonzero_harness_exit`，但默认值是 `False`，而 [glue.py:364](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:364) 构造 formal config 时没有设置它。因此即使 `RH2_REQUIRE_REAL_WEIGHT_VERSIONS=1`，非零退出仍不会拒绝。
+
+“非零 exit 可能是合法任务失败负样本”这个理由不准确：
+
+```text
+任务没有解决 -> Claude Code 正常 exit 0，grader 给 reward=0
+Claude Code exit 非零 -> harness/API/进程执行失败
+```
+
+除非存在经过验证的特定非零业务退出码，否则首版 formal baseline 应全部拒绝。建议在 `require_real_weight_versions=True` 时启动断言要求该开关同时为真。
+
+## P0-4：poison 仍没有主动终止 execution
+
+当前新增的是：
+
+```text
+await harness_driver.run(...)
+-> harness 返回
+-> session_poison_check
+-> partial trace 作废
+```
+
+这保护了训练准入，但没有实现：
+
+```text
+proxy poison
+-> 立即取消 Claude Code
+-> 终止 sandbox execution
+```
+
+若 Claude Code 没有快速退出，worker 仍会一直等到 episode hard timeout。`MAX_RETRIES=0` 降低了概率，但 404 fallback 和未来版本漂移证明不能依赖客户端自退。
+
+这可以留到 FA-5 真机验收，但执行 owner cancellation 的代码必须在 FA-5 前实现，FA-5 应验证它，而不是现场才开始写。
+
+## 一般问题
+
+1. `assert_adapter_status_not_404()` 全仓只有测试调用，没有生产调用点。它目前是未接线 helper，不能支持“adapter 任何错误路径不得返回 404”的结论。建议用 aiohttp middleware 转换 404，或做路由级集成测试并确保未知模型路径返回 503 + `x-should-retry:false`。
+
+2. [host_launch.sh:28](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/host_launch.sh:28) 只在 tarball 不存在时校验 SHA。volume 中已有错误、旧版或中断下载留下的非空文件会完全绕过校验。应每次都校验，下载采用临时文件，验证成功后原子 `mv`，并核对 tarball 内 `package.json` 和容器内 `claude --version`。
+
+3. `_latest_engine_version()` 仍在同步执行 `requests.get(timeout=5)`。注释称会经线程池，但代码没有 `asyncio.to_thread`；而 `StaticActiveCoordinator.current_window()` 在 proxy 热路径会反复调用它。32 路并发下可能串行阻塞 adapter event loop。FA-4 应以 coordinator 发布的 engine consensus version 取代这里的同步轮询。
+
+4. `SessionPoisonRegistry._poisoned` 没有清理接口，`CaptureRegistry.unregister()` 也没有删除 poison。长训练中每个失败 session 都永久留在内存。audit tombstone 同样仍然随 attempt 总数增长。
+
+## 验证结果
+
+我实际执行了：
+
+```text
+完整 pytest：831 passed
+inspect-rh2-s1：PASS
+Claude Code 2.1.205 行为套件：hard_pass=true，10 cases
+py_compile：PASS
+host_launch.sh bash -n：PASS
+```
+
+测试全绿没有抓到上述问题的原因很明确：
+
+- deadline 测试在进入恢复等待前就提前失败；
+- FIFO 测试只覆盖 stage 与 commit 同序；
+- 404 测试只测试未接线 helper；
+- 没有 formal config 的非零 exit 端到端测试；
+- 没有 cached tarball 反例测试。
+
+**建议顺序**
+
+1. 立即修 deadline 参数漏传和假阳性测试。
+2. formal config 强制拒绝非零 exit。
+3. 把 request 级 capture 归属设为 FA-2 第一验收项；完成前 overlap 必须拒绝。
+4. 接通 404 middleware/路由守卫和缓存 tarball 校验。
+5. FA-2 其余 assembler 工作继续。
+6. FA-5 前实现 execution-owner cancellation，再用真实 Linux Claude Code 和 SGLang 验证。
+

@@ -1115,10 +1115,11 @@ class SlimeBindingConfig:
     # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
     reject_context_shrink: bool = False
     context_shrink_ratio: float = 0.6  # 预注册黄线（05 计划 D-FA-6），FA-5 校准
-    # P0-2（codex 轮次 8）：正式链下 harness 非零退出即拒绝该 execution
-    # （DISABLE_COMPACT + 训练守卫下 CC 不该因 infra 失败；非零退出可疑到
-    # 足以拒绝）。默认 False = S1 兼容（非零退出可能是合法的任务失败负样本，
-    # 由双沙箱 clean grading 判 reward，不在此拒）。
+    # P0-2/轮次 9 P0-3（codex）：正式链下 harness 非零退出即拒绝该 execution。
+    # 语义澄清（轮次 9 纠正轮次 8 的错误理由）：任务失败负样本 = CC **exit 0**
+    # + grader reward=0；CC 非零退出只可能是 harness/API/进程执行失败——
+    # 没有已验证的非零业务退出码，formal baseline 全拒。默认 False 仅为
+    # S1 测试路径兼容；正式链启动断言强制其为 True（见 __init__）。
     reject_on_nonzero_harness_exit: bool = False
     max_context_len: int = 0
     name_prefix: str = "rh2-rollout"
@@ -1345,6 +1346,8 @@ class RolloutOrchestrator:
         artifact_dir: Path | str | None = None,
         current_policy_version_provider: Callable[[], str] | None = None,
         session_poison_check: Callable[[str], bool] | None = None,
+        session_poison_subscribe: Callable[[str, Callable[[str, str], None]], None] | None = None,
+        session_poison_unsubscribe: Callable[[str], None] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1371,6 +1374,14 @@ class RolloutOrchestrator:
                     "reject_context_shrink——D-FA-6 的收缩兜底是硬要求，"
                     "不能只凭 DISABLE_COMPACT 环境变量宣布 compaction 已关闭。",
                 )
+            if not config.reject_on_nonzero_harness_exit:
+                raise StartupCheckError(
+                    "nonzero_exit_rejection_disabled_in_formal_chain",
+                    "正式链必须同时开启 reject_on_nonzero_harness_exit——"
+                    "任务失败的负样本是 CC exit 0 + grader reward=0；CC 非零"
+                    "退出只可能是 harness/API/进程执行失败，无已验证的非零"
+                    "业务退出码前一律拒绝（codex 轮次 9 P0-3）。",
+                )
         self.config = config
         self._task_resolver = task_resolver
         self._adapter_factory = adapter_factory
@@ -1393,6 +1404,11 @@ class RolloutOrchestrator:
         # session 在执行期间中毒（proxy 判不可归因故障），已捕获的 partial
         # trace 绝不能进评分/训练。glue 注入 registry.poison.is_poisoned。
         self._session_poison_check = session_poison_check
+        # 轮次 9 P0-4：poison -> **主动终止**。订阅回调在 harness 运行期挂上，
+        # proxy 判不可归因即取消 harness task（不等 CC 自退——404 fallback
+        # 已证明客户端自退不可靠）；sandbox 清理走既有 finally 链。
+        self._session_poison_subscribe = session_poison_subscribe
+        self._session_poison_unsubscribe = session_poison_unsubscribe
         self.audits: list[RolloutAudit] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1466,14 +1482,35 @@ class RolloutOrchestrator:
             )
             session_open = True
             audit.mark("harness_started")
-            exit_code = await self._harness_driver.run(
-                sandbox.workspace,
-                workdir=launch.workdir,
-                session_id=launch.model_proxy.session_id,
-                adapter_url=launch.model_proxy.base_url,
-                time_budget_sec=launch.time_budget_seconds,
-                prompt=task.prompt,
+            harness_task = asyncio.ensure_future(
+                self._harness_driver.run(
+                    sandbox.workspace,
+                    workdir=launch.workdir,
+                    session_id=launch.model_proxy.session_id,
+                    adapter_url=launch.model_proxy.base_url,
+                    time_budget_sec=launch.time_budget_seconds,
+                    prompt=task.prompt,
+                )
             )
+            if self._session_poison_subscribe is not None:
+                # P0-4：poison 即取消 harness（回调同步、非阻塞）
+                self._session_poison_subscribe(
+                    sid, lambda _sid, _reason: harness_task.cancel()
+                )
+            try:
+                exit_code = await harness_task
+            except asyncio.CancelledError:
+                if self._session_poison_check is not None and self._session_poison_check(sid):
+                    # poison 触发的取消：收口为缺员（不是外层关停）
+                    raise SlimeBindingError(
+                        "session_poisoned_during_execution",
+                        f"session {sid} 中毒且 harness 已被主动终止——"
+                        "partial trace 作废，execution 缺员。",
+                    ) from None
+                raise  # 外层取消（关停/超时）原样传播
+            finally:
+                if self._session_poison_unsubscribe is not None:
+                    self._session_poison_unsubscribe(sid)
             audit.harness_exit_code = exit_code
             audit.step("step3_harness_completed")
 

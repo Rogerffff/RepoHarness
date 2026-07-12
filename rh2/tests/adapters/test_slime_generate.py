@@ -1462,6 +1462,7 @@ def _formal_config(**overrides: Any) -> SlimeBindingConfig:
         require_real_weight_versions=True,
         policy_version="5",
         reject_context_shrink=True,
+        reject_on_nonzero_harness_exit=True,  # codex 轮次 9 P0-3：正式链强制
     )
     defaults.update(overrides)
     return dense_config(**defaults)
@@ -1479,6 +1480,10 @@ def test_orchestrator_rejects_static_policy_version_in_formal_chain():
     # 正式链必须同时开启收缩兜底（D-FA-6 是硬要求不是注释——codex FA-0 审查）
     with pytest.raises(StartupCheckError, match="context_shrink_rejection_disabled"):
         _dummy_orchestrator(_formal_config(reject_context_shrink=False))
+    # 正式链必须同时拒绝非零 harness exit（codex 轮次 9 P0-3：任务失败负
+    # 样本 = exit 0 + reward 0；非零退出只能是 infra/进程失败）
+    with pytest.raises(StartupCheckError, match="nonzero_exit_rejection_disabled"):
+        _dummy_orchestrator(_formal_config(reject_on_nonzero_harness_exit=False))
     # 数值版本 + 收缩兜底开启：通过
     _dummy_orchestrator(_formal_config())
 
@@ -1678,3 +1683,76 @@ def test_compaction_disabled_env_reaches_child_process():
         timeout=30,
     )
     assert out.stdout.strip() == "1"
+
+
+async def test_poison_actively_cancels_running_harness():
+    import asyncio
+    """codex 轮次 9 P0-4：poison 不再只是"harness 返回后复检"——proxy 判
+    不可归因时**主动取消**运行中的 harness task（不等 CC 自退），收口为
+    缺员 abort 形状，且订阅在结束后清理。"""
+
+    from repoharness2.adapters.slime.async_worker import SessionPoisonRegistry
+
+    registry = SessionPoisonRegistry()
+    cancelled = {"seen": False}
+    started = None  # 在事件循环内创建
+
+    class HangingDriver:
+        async def run(self, *args, **kwargs):
+            started.set()  # 先宣告已运行，再投毒（消除"取消先于首次调度"竞态）
+            try:
+                await asyncio.Event().wait()  # 永不返回，只能被取消
+            except asyncio.CancelledError:
+                cancelled["seen"] = True
+                raise
+
+    adapter_ref: dict[str, MockSessionAdapter] = {}
+
+    def adapter_factory(hook, session_defaults):
+        adapter = MockSessionAdapter(hook, session_defaults, dense_turns(), [dense_leaf_sample()])
+        adapter_ref["adapter"] = adapter
+        return adapter
+
+    docker = FakeRolloutDocker()
+    orch = RolloutOrchestrator(
+        config=dense_config(),
+        task_resolver=make_task(TASK_ID_DENSE),
+        adapter_factory=adapter_factory,
+        harness_driver=HangingDriver(),
+        grading_submit=GradingSubmitStub(),
+        docker=docker,
+        session_poison_check=registry.is_poisoned,
+        session_poison_subscribe=registry.subscribe,
+        session_poison_unsubscribe=registry.unsubscribe,
+    )
+
+    async def poison_when_subscribed():
+        await started.wait()  # harness 真在运行中
+        (sid,) = registry._subscribers
+        registry.poison(sid, "unattributable_model_call")
+
+    started = asyncio.Event()
+    result, _ = await asyncio.gather(
+        orch.generate(_Args(), FixtureSlimeSample(index=0), dict(SAMPLING_PARAMS)),
+        poison_when_subscribed(),
+    )
+    assert cancelled["seen"] is True  # harness 被主动取消，不是自然退出
+    aborted = result[0]
+    assert aborted.remove_sample is True  # 缺员 abort 形状
+    audit = orch.audits[0]
+    (failure,) = audit.failure_records
+    assert "session_poisoned_during_execution" in failure.detail
+    assert registry._subscribers == {}  # 订阅已清理（有界）
+    assert len(docker.removed) == 1  # sandbox 清理照常
+
+
+async def test_poison_subscribe_after_poison_fires_immediately():
+    """订阅时已中毒 -> 立即回调（竞态窗口收口：poison 先于 subscribe 到达）。"""
+
+    from repoharness2.adapters.slime.async_worker import SessionPoisonRegistry
+
+    registry = SessionPoisonRegistry()
+    registry.poison("sid_X", "already_bad")
+    fired: list[tuple[str, str]] = []
+    registry.subscribe("sid_X", lambda sid, reason: fired.append((sid, reason)))
+    assert fired == [("sid_X", "already_bad")]

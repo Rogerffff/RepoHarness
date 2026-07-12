@@ -34,6 +34,7 @@ import uuid
 from typing import Any
 
 import aiohttp
+from aiohttp import web as aiohttp_web
 
 from repoharness2.adapters.slime.async_worker import (
     ModelCallProxy,
@@ -52,15 +53,31 @@ class PendingTurn:
     proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
 
 
+class CapturePendingOverlapError(RuntimeError):
+    """同 session 并发暂存重叠（codex 轮次 9 P0-2）：slime 把同 session 请求
+    作为独立 asyncio task 并发执行（common.py inflight，无 per-session 串行
+    锁），record_turn 按**完成序**到达——FIFO 弹最旧会把请求 A 的 token/
+    logprob/weight_version 记到请求 B 名下（结构合法但内容串账的训练轨迹，
+    比丢数据更危险，codex 探针确定性复现）。request 级归属（record_turn 传
+    request_id，需改 slime 签名）是 FA-2 第一验收项；落地前 overlap 一律
+    fail-closed：poison session + 本请求失败 + execution 缺员。"""
+
+    def __init__(self, session_id: str) -> None:
+        super().__init__(
+            f"capture_pending_overlap: session {session_id} 已有未 commit 的暂存轮"
+            "——request 级归属落地前，并发同 session 模型调用不可安全捕获。"
+        )
+        self.session_id = session_id
+
+
 class CaptureRegistry:
-    """sid -> (hook, 暂存轮 FIFO, 按轮 weight_version) 的进程级登记表。"""
+    """sid -> (hook, 暂存轮, 按轮 weight_version) 的进程级登记表。"""
 
     def __init__(self) -> None:
         self.hooks: dict[str, GenerationCaptureHook] = {}
-        # P0-6（codex 轮次 8）：pending 改 **FIFO 队列**——同 session 的并发
-        # 请求（CC subagent 共享 sid）不再互相覆盖静默丢数据；commit 按暂存
-        # 顺序弹最旧。完整的 request/turn 级归属（record_turn 传 request_id）
-        # 需要改 slime 签名，留 FA-2/FA-5；本版消除的是**静默覆盖**这个真 bug。
+        # 容器保持 list（FA-2 request 级归属会改成 rid 映射），但 stage 对已有
+        # 未 commit 暂存 **fail-closed**（CapturePendingOverlapError）——不做
+        # FIFO 猜测。不变量：len(pending[sid]) <= 1。
         self.pending: dict[str, list[PendingTurn]] = {}
         self.weight_versions: dict[str, list[str]] = {}
         self.stats = {
@@ -117,14 +134,35 @@ class CaptureRegistry:
                     pass  # 已 finalize/abandon（幂等）
         self.session_deadlines.pop(sid, None)
         self._turn_seq.pop(sid, None)
+        # 有界内存（codex 轮次 9 一般 4）：weight_versions 随会话清理——
+        # provider 的 registry 交叉检查从此只覆盖**存活会话**（权威来源是
+        # engine /get_weight_version，交叉检查弱化可接受、如实记录）。
+        self.weight_versions.pop(sid, None)
 
     def stage(self, sid: str | None, turn: PendingTurn) -> None:
         if sid is None or sid not in self.hooks:
             return  # 非 rh2 会话（探针等）不捕获
         queue = self.pending.setdefault(sid, [])
         if queue:
-            self.stats["concurrent_overlap_seen"] += 1  # 上轮未 commit 又来新轮
-        queue.append(turn)  # FIFO：不再静默覆盖旧轮（P0-6）
+            # P0-2（codex 轮次 9）：overlap = 并发同 session 请求在飞——FIFO
+            # 猜测会串账（A 的 token 记到 B 名下），fail-closed：本请求失败 +
+            # session 中毒 + 旧暂存 abandon（两轮都不可信：完成序未知）。
+            self.stats["concurrent_overlap_seen"] += 1
+            self.poison.poison(sid, "capture_pending_overlap")
+            stale = queue.pop(0)
+            self.stats["dropped_uncommitted"] += 1
+            if stale.proxy_result is not None:
+                try:
+                    stale.proxy_result.abandon_delivered("capture_pending_overlap")
+                except ValueError:
+                    pass  # 已定案（幂等）
+            if turn.proxy_result is not None:
+                try:
+                    turn.proxy_result.abandon_delivered("capture_pending_overlap")
+                except ValueError:
+                    pass
+            raise CapturePendingOverlapError(sid)
+        queue.append(turn)
         self.stats["staged"] += 1
 
     def commit(self, sid: str) -> None:
@@ -132,7 +170,7 @@ class CaptureRegistry:
         queue = self.pending.get(sid)
         if hook is None or not queue:
             return
-        turn = queue.pop(0)  # FIFO：按暂存顺序弹最旧
+        turn = queue.pop(0)  # 不变量 len<=1：弹出即本轮（无 FIFO 猜测面）
         hook.on_generate_response(
             prompt_token_ids=turn.prompt_ids,
             sampling_params=turn.capture_params,
@@ -150,6 +188,33 @@ class CaptureRegistry:
         self.stats["committed"] += 1
 
 
+@aiohttp_web.middleware
+async def rh2_no_404_middleware(request: "aiohttp_web.Request", handler):
+    """adapter 永不返回 404（codex 轮次 8/9：CC 2.1.205 对流式创建阶段的 404
+    会绕过 CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK 再发一次非流式请求，
+    claude.ts:2607 分支不检查禁用变量）。
+
+    未知路由/内部 404 一律转 503 + `x-should-retry: false`（实测该头对
+    external build 的 5xx 生效、单请求收束）。这是 HTTP 面的兜底；主防线
+    仍是 session poison + execution 主动终止。"""
+
+    try:
+        response = await handler(request)
+    except aiohttp_web.HTTPNotFound:
+        return aiohttp_web.json_response(
+            {"error": {"type": "rh2_route_unavailable", "message": "not found is never exposed"}},
+            status=503,
+            headers={"x-should-retry": "false"},
+        )
+    if getattr(response, "status", None) == 404:
+        return aiohttp_web.json_response(
+            {"error": {"type": "rh2_route_unavailable", "message": "not found is never exposed"}},
+            status=503,
+            headers={"x-should-retry": "false"},
+        )
+    return response
+
+
 def install_capture_wire(registry: CaptureRegistry) -> None:
     """安装两处接线：模块级 call_sglang_generate 替换 + record_turn 包装。
 
@@ -161,6 +226,16 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
 
     if getattr(slime_common, "_rh2_capture_wire_installed", False):
         return
+
+    # 404 -> 503 middleware（codex 轮次 9 一般 1：helper 必须真接线）——
+    # BaseAdapter.__init__ 构造 app 后追加；aiohttp 允许 runner 起动前 append
+    original_adapter_init = slime_common.BaseAdapter.__init__
+
+    def rh2_adapter_init(self, *args, **kwargs):
+        original_adapter_init(self, *args, **kwargs)
+        self.app.middlewares.append(rh2_no_404_middleware)
+
+    slime_common.BaseAdapter.__init__ = rh2_adapter_init
 
     async def rh2_call_sglang_generate(
         prompt_ids: list[int],

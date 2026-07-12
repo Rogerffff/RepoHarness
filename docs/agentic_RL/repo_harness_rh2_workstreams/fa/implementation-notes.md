@@ -404,3 +404,47 @@ BoundedDeliveryQueue / ResourceLimits / ModelCallProxy / 重试白名单）+
   pause_generation abort/hold 语义、Linux x64 vs macOS arm64 行为差异。
   **明确留 FA-2**：request/turn 级 capture 归属（改 slime record_turn 签名）、
   interim collector 替换为 assembler、worker 显式 recovery API。
+
+## FA-1 follow-up 4（2026-07-13，codex 轮次 9：2 个确定性 P0 + 4 个接线缺口；
+## 原文存档 `../s2/codex_reviews.md` 轮次 9）
+
+- **P0-1（deadline 仍漏传——轮次 8 修复失败的修复）**：守卫 3 调用点真正
+  传入 `deadline_monotonic`。**过程教训（重要）**：轮次 8 的修复用了无
+  assert 的文本替换（静默未生效），而配套测试设 deadline=3 < 发前预算 5，
+  在进入恢复等待前就以预算不足退出——**修复没生效 + 测试假阳性双重漏网**。
+  新测试断言三件事：send 恰被调用一次（真进入 abort→恢复分支）、失败原因
+  是 `version_did_not_advance`、失败时钟 ≤ episode deadline（不是独立 500s）。
+  规矩固化：文本替换必须带 assert；修复测试必须证明"真走到了目标分支"。
+- **P0-2（FIFO 乱序串账）**：轮次 8 的 FIFO 在并发完成乱序时会把请求 A 的
+  token/logprob/weight_version 记到 B 名下（slime 同 session 请求是独立
+  asyncio task、record_turn 按完成序到达；串账比丢数据更危险——结构合法
+  内容错误的训练轨迹）。改 **fail-closed**：stage 遇 overlap → poison +
+  两轮全 abandon（完成序未知，都不可信）+ `CapturePendingOverlapError`。
+  含义：request 级归属（record_turn 传 request_id，改 slime 签名）落地前，
+  并发同 session 模型调用（CC 并行 subagent）会 fail-fast——这是**正确性
+  优先于可用性**的显式取舍，request 级归属定为 **FA-2 第一验收项**。
+- **P0-3（formal 链没启用非零 exit 拒绝）**：接受 codex 对我轮次 8 理由的
+  纠正——任务失败负样本 = CC **exit 0** + grader reward=0；CC 非零退出只
+  可能是 harness/API/进程失败。启动断言强制耦合：`require_real_weight_
+  versions=True` 必须同时 `reject_on_nonzero_harness_exit=True`；glue 默认
+  联动（RH2_REJECT_NONZERO_HARNESS_EXIT 默认随 require 旗标）。
+- **P0-4（poison 不主动终止）**：SessionPoisonRegistry 加 `subscribe/
+  unsubscribe`（poison 同步回调通知，已中毒立即回调）；orchestrator 把
+  harness run 包成 task，poison 即 `task.cancel()`——不再等 CC 自退（404
+  fallback 已证明客户端自退不可靠）。取消区分：poison 触发 → 收口缺员
+  abort；外层取消 → 原样传播。e2e 测试：挂起 driver 被主动取消 + abort
+  形状 + 订阅清理 + sandbox 照常清理。
+- **一般项**：404 守卫真接线——`rh2_no_404_middleware`（纯 aiohttp，路由级
+  本地测试：未知路径/显式 404 → 503 + `x-should-retry:false`）+ install 时
+  patch `BaseAdapter.__init__` 挂进 app；host_launch.sh **每次校验** sha256
+  （缓存坏文件不再绕过）+ 临时文件下载 + 校验通过原子 mv；
+  StaticActiveCoordinator 加 TTL 缓存（默认 2s——provider 是同步 HTTP，
+  此前 proxy 热路径每次窗口读取都打一次引擎端点，32 路并发会串行阻塞
+  event loop；版本至多滞后 TTL 秒，FA-4 用 consensus version 取代）；
+  有界性收口：poison registry max_entries=4096 FIFO 淘汰、audit tombstone
+  上限 8×max_artifacts（超限丢最旧只留计数）、weight_versions 随会话清理
+  （registry 交叉检查从此只覆盖存活会话，如实降级）。
+- 测试 831 → 835（+deadline 真分支、overlap fail-closed、poison 主动取消
+  ×2、404 路由级、订阅即回调；净数受重写抵消）。
+- FA-2 验收项排序更新：**第一项 = request 级 capture 归属**（改 slime
+  record_turn 签名或 ContextVar 传 rid），落地后解除 overlap fail-fast。

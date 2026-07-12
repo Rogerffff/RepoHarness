@@ -387,6 +387,16 @@ class BringupService:
             reject_context_shrink=parse_bool_env_flag(
                 "RH2_REJECT_CONTEXT_SHRINK", os.environ.get("RH2_REJECT_CONTEXT_SHRINK")
             ),
+            # codex 轮次 9 P0-3：正式链默认联动拒绝非零 harness exit（启动
+            # 断言强制耦合；env 只允许在非正式链下显式关）
+            reject_on_nonzero_harness_exit=parse_bool_env_flag(
+                "RH2_REJECT_NONZERO_HARNESS_EXIT",
+                os.environ.get("RH2_REJECT_NONZERO_HARNESS_EXIT"),
+                default=parse_bool_env_flag(
+                    "RH2_REQUIRE_REAL_WEIGHT_VERSIONS",
+                    os.environ.get("RH2_REQUIRE_REAL_WEIGHT_VERSIONS"),
+                ),
+            ),
         )
         driver = ClaudeCodeDriver() if HARNESS_KIND == "claude_code" else SimpleLoopDriver()
 
@@ -440,6 +450,9 @@ class BringupService:
             current_policy_version_provider=self._latest_engine_version,
             # P0-2（codex 轮次 8）：harness 返回后复检 session poison
             session_poison_check=self.registry.poison.is_poisoned,
+            # P0-4（codex 轮次 9）：poison 即主动取消 harness task
+            session_poison_subscribe=self.registry.poison.subscribe,
+            session_poison_unsubscribe=self.registry.poison.unsubscribe,
         )
 
     def _registry_max_version(self) -> int | None:

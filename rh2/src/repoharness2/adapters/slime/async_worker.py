@@ -284,13 +284,46 @@ class SessionPoisonedError(RuntimeError):
 
 class SessionPoisonRegistry:
     """session 中毒登记：不可归因故障/预算耗尽后，同 session 的一切后续
-    请求快速拒绝，orchestrator 据此终止 execution（缺员分支）。"""
+    请求快速拒绝，并**主动通知 execution owner 终止**（codex 轮次 9 P0-4：
+    不能依赖 HTTP 状态码让 CC 自行退出——404 fallback 与版本漂移已证明
+    客户端自退不可靠；owner 收到回调后取消 harness task/sandbox）。
 
-    def __init__(self) -> None:
+    有界性（轮次 9 一般 4）：max_entries FIFO 淘汰——被淘汰的 session 已
+    终止且 id 全局唯一，理论复活风险记 docstring 即可。"""
+
+    def __init__(self, max_entries: int = 4096) -> None:
+        if max_entries < 1:
+            raise ValueError("max_entries 必须 >= 1。")
         self._poisoned: dict[str, str] = {}
+        self._max_entries = max_entries
+        self._subscribers: dict[str, list[Callable[[str, str], None]]] = {}
+        self.evicted_count = 0
+
+    def subscribe(self, session_id: str, callback: Callable[[str, str], None]) -> None:
+        """execution owner 注册终止回调（poison 时同步调用，回调必须
+        非阻塞——典型实现是 asyncio.Task.cancel）。已中毒则立即回调。"""
+
+        if session_id in self._poisoned:
+            callback(session_id, self._poisoned[session_id])
+            return
+        self._subscribers.setdefault(session_id, []).append(callback)
+
+    def unsubscribe(self, session_id: str) -> None:
+        self._subscribers.pop(session_id, None)
 
     def poison(self, session_id: str, reason: str) -> None:
-        self._poisoned.setdefault(session_id, reason)
+        if session_id in self._poisoned:
+            return
+        while len(self._poisoned) >= self._max_entries:
+            oldest = next(iter(self._poisoned))
+            del self._poisoned[oldest]
+            self.evicted_count += 1
+        self._poisoned[session_id] = reason
+        for callback in self._subscribers.pop(session_id, []):
+            try:
+                callback(session_id, reason)
+            except Exception:  # noqa: BLE001 - 通知失败不掩盖 poison 本身
+                pass
 
     def is_poisoned(self, session_id: str) -> bool:
         return session_id in self._poisoned
@@ -317,11 +350,30 @@ class StaticActiveCoordinator:
     ——宁可缺员也不猜测 abort 归因。版本由注入的 provider 提供
     （glue 的权威 engine 版本）。"""
 
-    def __init__(self, version_provider: Callable[[], str]) -> None:
+    def __init__(
+        self,
+        version_provider: Callable[[], str],
+        *,
+        cache_ttl_seconds: float = 2.0,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         self._provider = version_provider
+        # codex 轮次 9 一般 3：provider 可能是同步 HTTP（glue 的
+        # /get_weight_version）——本类在 proxy 热路径每次窗口读取都被调，
+        # 无缓存会把 event loop 反复阻塞。TTL 缓存把调用压到 <=1 次/TTL；
+        # 版本至多滞后 TTL 秒（bring-up 可接受；FA-4 用 coordinator 发布的
+        # consensus version 取代整个替身）。
+        self._cache_ttl = cache_ttl_seconds
+        self._clock = clock
+        self._cached_version: str | None = None
+        self._cached_at: float = float("-inf")
 
     def current_window(self) -> TrainingRuntimeWindow:
-        version = str(self._provider())
+        now_ts = self._clock()
+        if self._cached_version is None or now_ts - self._cached_at >= self._cache_ttl:
+            self._cached_version = str(self._provider())
+            self._cached_at = now_ts
+        version = self._cached_version
         try:
             old = str(int(version, 10) - 1)
         except ValueError:
@@ -503,6 +555,7 @@ class ModelCallProxy:
         self.attempts_ledger: list[ModelCallAttempt] = []
         self.audit_artifacts: dict[str, Any] = {}
         self.audit_evictions = 0
+        self.tombstones_dropped = 0
         self._pending_drafts: set[str] = set()
 
     @property
@@ -529,6 +582,16 @@ class ModelCallProxy:
                 record["external_ref_error"] = f"{type(exc).__name__}: {exc}"
         def _live_count() -> int:
             return sum(1 for v in self.audit_artifacts.values() if not v.get("tombstone"))
+
+        # tombstone 也有界（codex 轮次 9）：超过 8x 上限时丢最旧 tombstone，
+        # 只留计数——digest 可解析性让位于有界内存（长训练必须配 artifact_sink，
+        # 那时引用是外部持久 ref，不受此影响）
+        tombstone_cap = self._max_artifacts * 8
+        tombstone_keys = [k for k, v in self.audit_artifacts.items() if v.get("tombstone")]
+        while len(tombstone_keys) > tombstone_cap:
+            dropped = tombstone_keys.pop(0)
+            del self.audit_artifacts[dropped]
+            self.tombstones_dropped += 1
 
         while _live_count() >= self._max_artifacts:
             oldest_key = next(
@@ -748,8 +811,11 @@ class ModelCallProxy:
                     "max_regenerations_exceeded",
                     f"{scoped}: 连续 {attempt_number} 次被 abort——超过重生成上限。",
                 )
+            # codex 轮次 9 P0-1：deadline_monotonic 必须真传进去（轮次 8 的
+            # replace 静默失败 + 测试假阳性双重漏网——教训：无 assert 的文本
+            # 替换不可信，修复必须配"真进到目标分支"的测试断言）
             await self._wait_version_advance(
-                attempts, scoped, attempt_number, window_now
+                attempts, scoped, attempt_number, window_now, deadline_monotonic
             )
 
     def _record_failed(

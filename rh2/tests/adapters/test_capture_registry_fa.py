@@ -15,7 +15,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
 
-from s1_7a_bringup.capture_wire import CaptureRegistry, PendingTurn  # noqa: E402
+from s1_7a_bringup.capture_wire import (  # noqa: E402
+    CapturePendingOverlapError,
+    CaptureRegistry,
+    PendingTurn,
+    rh2_no_404_middleware,
+)
 
 
 class FakeHook:
@@ -81,22 +86,27 @@ def test_unregister_abandons_uncommitted_draft():
     assert registry.session_deadlines.get("sid_B") is None  # 会话状态清理（有界）
 
 
-def test_fifo_no_silent_overwrite_on_concurrent_stage():
-    """P0-6：同 session 并发暂存改 FIFO——不再静默覆盖丢数据；commit 按序弹。"""
+def test_concurrent_stage_overlap_fails_closed():
+    """codex 轮次 9 P0-2：并发同 session 暂存重叠 fail-closed——slime 的
+    record_turn 按完成序到达，FIFO 弹最旧会把 A 的 token 记到 B 名下（串账
+    比丢数据更危险）。request 级归属是 FA-2 第一验收项；落地前：poison +
+    两轮 abandon + 抛 CapturePendingOverlapError。"""
 
     registry = CaptureRegistry()
     hook = FakeHook()
     registry.register("sid_C", hook)
     p1, p2 = FakeProxyResult("a1"), FakeProxyResult("a2")
     registry.stage("sid_C", _turn("rid_1", version="1", proxy=p1))
-    registry.stage("sid_C", _turn("rid_2", version="2", proxy=p2))  # 上轮未 commit 又来
+    with pytest.raises(CapturePendingOverlapError):
+        registry.stage("sid_C", _turn("rid_2", version="2", proxy=p2))
     assert registry.stats["concurrent_overlap_seen"] == 1
-    assert registry.stats["dropped_uncommitted"] == 0  # 关键：没丢数据
+    assert registry.poison.is_poisoned("sid_C")  # session 中毒
+    # 两轮都不可信（完成序未知）：全部 abandon，不做归属猜测
+    assert p1.state.startswith("abandoned:capture_pending_overlap")
+    assert p2.state.startswith("abandoned:capture_pending_overlap")
     registry.commit("sid_C")
-    registry.commit("sid_C")
-    assert len(hook.calls) == 2  # 两轮都进了树
-    assert registry.weight_versions["sid_C"] == ["1", "2"]  # FIFO 顺序
-    assert p1.state.startswith("finalized:") and p2.state.startswith("finalized:")
+    assert len(hook.calls) == 0  # 什么都没进树
+    assert registry.pending["sid_C"] == []  # 无残留
 
 
 def test_commit_without_pending_is_noop():
@@ -129,3 +139,35 @@ def test_session_deadline_starts_on_first_call_and_is_bounded():
     registry.register("sid_F", FakeHook())
     registry.unregister("sid_F")
     assert "sid_F" not in registry.session_deadlines  # 销毁即清理（有界增长修复）
+
+
+async def test_no_404_middleware_route_level():
+    """codex 轮次 9 一般 1：404 守卫必须真接线——路由级测试：未知路径与
+    显式 404 响应都转 503 + x-should-retry:false（CC 2.1.205 对 404 会绕过
+    nonstreaming fallback 开关；实测 x-should-retry:false 对 5xx 生效）。"""
+
+    from aiohttp import web
+    from aiohttp.test_utils import TestClient, TestServer
+
+    async def explicit_404(request):
+        return web.json_response({"error": "nope"}, status=404)
+
+    async def ok(request):
+        return web.json_response({"ok": True})
+
+    app = web.Application(middlewares=[rh2_no_404_middleware])
+    app.router.add_get("/explicit404", explicit_404)
+    app.router.add_get("/ok", ok)
+    client = TestClient(TestServer(app))
+    await client.start_server()
+    try:
+        r1 = await client.get("/unknown_route")  # aiohttp 默认 HTTPNotFound
+        assert r1.status == 503
+        assert r1.headers["x-should-retry"] == "false"
+        r2 = await client.get("/explicit404")
+        assert r2.status == 503
+        assert r2.headers["x-should-retry"] == "false"
+        r3 = await client.get("/ok")
+        assert r3.status == 200  # 正常路径不受影响
+    finally:
+        await client.close()

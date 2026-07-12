@@ -1016,29 +1016,39 @@ async def test_all_unattributable_terminations_poison():
 
 
 async def test_recovery_wait_respects_episode_deadline():
-    """P0-3：版本恢复等待受 episode 绝对 deadline 约束（不再独立 60s）。"""
+    """codex 轮次 9 P0-1（修正轮次 8 假阳性测试）：版本恢复等待必须受 episode
+    绝对 deadline 约束。旧测试 deadline=3 < min_attempt_budget=5，在**发送前**
+    就以预算不足退出，从未进入恢复等待分支——本版断言：send 真被调用一次、
+    失败原因是 version_did_not_advance、失败时钟不超过 episode deadline。"""
 
     registry = SessionPoisonRegistry()
     coord = FakeCoordinator(
         [_window(epoch=1, phase="ACTIVE", active="1")] * 2
-        + [_window(epoch=2, phase="UPDATING", active="1", target="2")] * 10
+        + [_window(epoch=2, phase="UPDATING", active="1", target="2")] * 50
     )
-    # episode 只剩 3s（< wait_timeout 50s）；clock 前进使 deadline 很快到
+    # 时钟推进 0.5s/次；episode deadline=20s，wait_timeout=500s（独立等待会
+    # 跑到 500s）——修复后必须在 20s 内以恢复等待超时失败
     clock = {"t": 0.0}
 
     def tick() -> float:
-        clock["t"] += 1.0
+        clock["t"] += 0.5
         return clock["t"]
 
-    proxy = ModelCallProxy(coord, sleeper=_no_sleep, wait_timeout_seconds=50.0, clock=tick)
+    proxy = ModelCallProxy(
+        coord, sleeper=_no_sleep, wait_timeout_seconds=500.0, clock=tick
+    )
+    sends: list[int] = []
 
     async def send(attempt: int) -> dict:
+        sends.append(attempt)
         return _abort_response([])
 
-    with pytest.raises(UnattributableModelCallError):
+    with pytest.raises(UnattributableModelCallError, match="version_did_not_advance"):
         await proxy.call(
             "exec_V", "turn_0", send,
             session_id="sid_V", poison_registry=registry,
-            deadline_monotonic=3.0,  # 绝对 deadline 远早于 50s wait
+            deadline_monotonic=20.0,
         )
+    assert sends == [1]  # 真发出过一次（进入了 abort→恢复等待分支）
+    assert clock["t"] <= 20.0 + 1.0  # 失败发生在 episode deadline 附近，不是 500s
     assert registry.is_poisoned("sid_V")

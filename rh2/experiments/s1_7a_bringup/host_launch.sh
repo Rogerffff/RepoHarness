@@ -25,19 +25,26 @@ prepare() {
   # validation.md §4）。升级 CC 必须先重跑探针套件生成新证据、人工裁决差异。
   CC_VER="${RH2_CLAUDE_CODE_VERSION:-2.1.205}"
   CC_LINUX_SHA256="${RH2_CLAUDE_CODE_LINUX_SHA256:-d3dadfa9cde294ac82c755eb6d889291228849180bac5d677ad1a4027aca1bc4}"
-  if [ ! -s /root/tarballs/claude-code-linux-x64.tgz ]; then
-    echo "claude-code platform package pinned version: ${CC_VER}"
-    curl -fL -o /root/tarballs/claude-code-linux-x64.tgz \
+  CC_TGZ=/root/tarballs/claude-code-linux-x64.tgz
+  # codex 轮次 9 一般 2：**每次都校验**（volume 里旧版/中断下载的非空文件不得
+  # 绕过）；下载走临时文件 + 校验通过后原子 mv。
+  cc_sha_ok() { [ -s "$1" ] && [ "$(sha256sum "$1" | awk '{print $1}')" = "${CC_LINUX_SHA256}" ]; }
+  if ! cc_sha_ok "${CC_TGZ}"; then
+    echo "claude-code platform package pinned version: ${CC_VER}（缓存缺失或校验不符，重新下载）"
+    rm -f "${CC_TGZ}"
+    CC_TMP=$(mktemp /root/tarballs/.cc-download.XXXXXX)
+    curl -fL -o "${CC_TMP}" \
       "https://registry.npmjs.org/@anthropic-ai/claude-code-linux-x64/-/claude-code-linux-x64-${CC_VER}.tgz"
-    ACTUAL_SHA=$(sha256sum /root/tarballs/claude-code-linux-x64.tgz | awk '{print $1}')
-    if [ "${ACTUAL_SHA}" != "${CC_LINUX_SHA256}" ]; then
-      echo "FATAL: claude-code-linux-x64 sha256 mismatch: got ${ACTUAL_SHA} want ${CC_LINUX_SHA256}" >&2
-      rm -f /root/tarballs/claude-code-linux-x64.tgz
+    if ! cc_sha_ok "${CC_TMP}"; then
+      echo "FATAL: claude-code-linux-x64 sha256 mismatch: got $(sha256sum "${CC_TMP}" | awk '{print $1}') want ${CC_LINUX_SHA256}" >&2
+      rm -f "${CC_TMP}"
       exit 1
     fi
+    mv "${CC_TMP}" "${CC_TGZ}"
     echo "${CC_VER}" > /root/tarballs/claude-code-version.txt
-    echo "claude-code-linux-x64 sha256 verified: ${ACTUAL_SHA}"
   fi
+  echo "claude-code-linux-x64 sha256 verified: $(sha256sum "${CC_TGZ}" | awk '{print $1}')"
+  # 容器内启动仍须 fail-fast 核对 `claude --version` == ${CC_VER}（container_train 侧）
   # 静态 docker CLI（挂进 slime 容器用，daemon 走宿主 socket）
   if [ ! -x /root/tarballs/docker-cli/docker ]; then
     mkdir -p /root/tarballs/docker-cli
