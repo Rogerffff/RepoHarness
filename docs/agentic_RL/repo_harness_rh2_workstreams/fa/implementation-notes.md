@@ -67,3 +67,36 @@ backfill 逐入训轮回填 → 握手 staleness 真实计算）；正式链启�
 - P3 夹具往返测试依赖本地 evidence 目录（浅 checkout 自动 skip）——
   `inspect-rh2-fa` 建账时把该测试列为必跑项（evidence 在库，正常 clone
   不会 skip）。
+
+## FA-0 follow-up（2026-07-12，codex FA-0 审查全 12 项采纳；原文存档
+## `../s2/codex_reviews.md` 轮次 4）
+
+- **严重 1（staleness 事实矛盾被 clamp 掩盖）**：`max(current-min(seen), 0)`
+  的 clamp 删除——任何 seen 版本比 current 新即
+  `weight_version_ahead_of_current` fail-closed（codex 反例 current=3/
+  seen=[5] 现在必炸）。新增 `current_policy_version_provider` 注入点
+  （FA-1 接 `engine.get_weight_version` 包装）；provider 缺席时回退
+  config 值，注释明确该口径是"相对启动版本"、不得称实时 staleness。
+- **严重 2（session 级收缩检测误杀子 agent）**：核实 CC 子 agent 与主
+  agent 共享 session id（`claude_code.py` ANTHROPIC_AUTH_TOKEN=session_id
+  → adapter 按 token 归组）。重构：session 级检测降为纯 audit 信号；
+  **硬拒绝只在叶链自己的入链轮序列上执行**（lineage 内比较，子 agent 是
+  独立叶链天然免疫）。负测试：主 agent 长上下文 + 子 agent 短上下文不拒；
+  真 e2e：叶链内坍缩 → abort 形状 remove_sample=True。已知边界（诚实
+  记录）：compaction 延续分支若经 REALIGN 把压缩前轮全部掉落，叶链级
+  检测也看不见——正式基线的完整防线 = DISABLE_COMPACT 验真 + session
+  级 audit 信号复核 + 叶链级硬拒绝三层，缺一不可。
+- **严重 3（评分枚举统治执行期归因）**：新增 `RuntimeFailureCategory`
+  13 值（proxy/推理服务/沙箱/harness/worker/评分基建/capture/对齐/
+  staleness/安全/身份/契约/清理），`RolloutAttemptOutcome.failure_category`
+  改用之；评分故障映射 grading_infra_failure + evidence 回链 GradingReport。
+- **一般项**：present 强制 `current_version_at_finalize`；窗口
+  old==target 拒绝（无前进的更新窗口是事实矛盾）；delivered attempt 强制
+  weight_version；aborted attempt 加 `abort_fencing_token`（窗口归因双
+  凭据）；`shrink_ratio` 域校验 (0,1) 开区间；正式链启动断言强制
+  `reject_context_shrink=True`（不再只是注释）；混合序列注释改为精确
+  两档口径（正式链 100% 真实、非正式链允许显式回退混合）。
+- **测试项**：pin 守卫测试（reference/slime HEAD 必须 e848052a，在场即
+  校验；缺席仍 skip，`inspect-rh2-fa` 建账后升为 fail）；误名的收缩测试
+  重写为真 e2e（orchestrator 全链 + remove_sample 断言）+ audit-only
+  对照。测试 684 → 692。

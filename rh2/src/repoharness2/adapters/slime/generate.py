@@ -591,15 +591,28 @@ def ensure_claude_code_compaction_disabled(env: MutableMapping[str, str]) -> dic
 def detect_context_shrink(
     turns: Sequence[TurnTape], *, shrink_ratio: float = 0.6
 ) -> list[str]:
-    """检测 session 轮序列中"无法解释的上下文收缩"（D-FA-6 兜底信号）。
+    """检测一条轮序列中"无法解释的上下文收缩"（D-FA-6 兜底信号）。
 
     正常多轮会话的 prompt 单调增长（历史累积）；thinking 剥离/REALIGN 只会
     小幅缩短，compaction / Microcompact / Context Collapse 则把历史替换成
     摘要——prompt 大幅坍缩。判据：某轮 prompt_token_count <
     shrink_ratio ×（此前最大 prompt_token_count）。ratio 预注册 0.6
     （05 计划 D-FA-6；黄线，FA-5 冒烟后校准），返回逐条理由串（空 = 未检出）。
+
+    **作用域警示（codex FA-0 审查严重 2）**：Claude Code 的子 agent 与主
+    agent 共享同一 session id（harness 用 ANTHROPIC_AUTH_TOKEN=session_id，
+    adapter 以该 token 归组）——**session 级全量 tapes 上跑本检测会把
+    "长上下文主 agent 之后启动短上下文子 agent"误判为收缩**。因此：
+    session 级结果只作 audit 信号；硬拒绝只允许在**叶链自己的入链轮序列**
+    （lineage 内）上执行——编排层照此接线，调用方不得反着用。
     """
 
+    if not (0.0 < shrink_ratio < 1.0) or not math.isfinite(shrink_ratio):
+        raise SlimeBindingError(
+            "context_shrink_ratio_invalid",
+            f"shrink_ratio={shrink_ratio!r} 必须在 (0, 1) 开区间内："
+            "0 等于关闭检测，>=1 会把正常等长 prompt 误报为收缩。",
+        )
     reasons: list[str] = []
     max_prompt = 0
     for tape in sorted(turns, key=lambda t: t.turn_index):
@@ -819,9 +832,13 @@ def backfill_leaf_sample(
             sample.rollout_routed_experts = flat
 
     # FA-0 真实版本管道：逐入训轮取 tape 上的真实 weight_version，缺失才回退
-    # policy_version（测试/dense 冒烟路径）。某轮既无真实版本又无回退值时，
-    # **整个字段不写**（无事实——gate 的 policy_staleness 维会 fail-closed 降级），
-    # 绝不允许把部分真实、部分猜测的序列拼在一起冒充逐轮事实。
+    # policy_version。口径分两档（精确表述，codex FA-0 审查一般项）：
+    # - 正式链（require_real_weight_versions=True）：任何入训轮缺真实值直接
+    #   fail-closed（上方断言），序列 100% 真实，禁止任何回退混入；
+    # - 非正式路径（bring-up/S1 兼容）：允许逐轮回退 policy_version 形成
+    #   真实+回退的混合序列（回退值本身是显式配置事实，不是猜测）；
+    # - 两档共同底线：某轮既无真实值又无回退值时**整个字段不写**
+    #   （无事实——gate 的 policy_staleness 维会 fail-closed 降级）。
     per_turn_versions: list[str] = []
     versions_complete = True
     for tape in used:
@@ -1254,6 +1271,7 @@ class RolloutOrchestrator:
         backpressure_events_source: Callable[[], Sequence[BackpressureEvent]] | None = None,
         mount_planner: Callable[[RolloutTaskSpec], list[BundleMount]] | None = None,
         artifact_dir: Path | str | None = None,
+        current_policy_version_provider: Callable[[], str] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1273,6 +1291,13 @@ class RolloutOrchestrator:
                     f"policy_version={version!r} 不是十进制整数——引擎 update_weights "
                     "计数器语义要求数值版本，staleness 派生依赖它。",
                 ) from None
+            if not config.reject_context_shrink:
+                raise StartupCheckError(
+                    "context_shrink_rejection_disabled_in_formal_chain",
+                    "正式链（require_real_weight_versions=True）必须同时开启 "
+                    "reject_context_shrink——D-FA-6 的收缩兜底是硬要求，"
+                    "不能只凭 DISABLE_COMPACT 环境变量宣布 compaction 已关闭。",
+                )
         self.config = config
         self._task_resolver = task_resolver
         self._adapter_factory = adapter_factory
@@ -1285,6 +1310,12 @@ class RolloutOrchestrator:
         self._backpressure_events_source = backpressure_events_source or (lambda: ())
         self._mount_planner = mount_planner or self._default_mount_planner
         self.artifact_dir = Path(artifact_dir) if artifact_dir is not None else None
+        # FA-0 follow-up（codex 严重 1）：finalize 时刻的 current version 取数点。
+        # 真实实现 = glue 注入 engine.get_weight_version 包装（FA-1 接线）；
+        # 缺省回退 config.policy_version（rollout 启动时探针值）——在 provider
+        # 接入前，握手的 staleness 只是"相对启动版本"的口径，不得称为实时
+        # staleness；事实矛盾（seen 比 current 新）无论哪种口径都 fail-closed。
+        self._current_policy_version_provider = current_policy_version_provider
         self.audits: list[RolloutAudit] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1372,21 +1403,17 @@ class RolloutOrchestrator:
                     "或钩子没接上（A4：无捕获事实的轨迹不可训练）。",
                 )
             audit.step("step4_capture_records_ready")
-            # D-FA-6 兜底：session 级上下文收缩检测（判据与 ratio 见
-            # detect_context_shrink）。检出即整条轨迹退出（fail-closed 收口为
-            # abort 形状）——DISABLE_COMPACT 环境变量覆盖不了 Microcompact /
-            # Context Collapse，这道检测是硬兜底不是可选项。
-            shrink_reasons = detect_context_shrink(
+            # D-FA-6 兜底（session 级）：只作 audit 信号，不硬拒绝——CC 子 agent
+            # 与主 agent 共享 session id，session 级比较会误杀合法的短上下文
+            # 子 agent（codex FA-0 审查严重 2）。硬拒绝在叶链级执行（见下方
+            # 装配循环，lineage 内比较）。
+            session_shrink = detect_context_shrink(
                 hook.tapes, shrink_ratio=self.config.context_shrink_ratio
             )
-            if shrink_reasons:
-                audit.context_shrink_reasons = list(shrink_reasons)
-                if self.config.reject_context_shrink:
-                    raise SlimeBindingError(
-                        "context_shrink_detected",
-                        "检测到无法解释的上下文收缩（compaction 嫌疑），轨迹退出基线："
-                        + "; ".join(shrink_reasons),
-                    )
+            if session_shrink:
+                audit.context_shrink_reasons.extend(
+                    f"session: {reason}" for reason in session_shrink
+                )
             samples = await adapter.finish_session(
                 sid,
                 base_sample=sample,
@@ -1415,6 +1442,22 @@ class RolloutOrchestrator:
                             f"叶链 {facts.branch_id} 回链 {record_id!r} 不在捕获轮次里。",
                         )
                     turns.append(tape)
+                # D-FA-6 硬拒绝（叶链级）：只在该叶链自己的入链轮序列上检测
+                # ——lineage 内的 prompt 坍缩没有"子 agent 独立会话"这种合法
+                # 解释，检出即整条轨迹 fail-closed 退出基线。
+                branch_shrink = detect_context_shrink(
+                    turns, shrink_ratio=self.config.context_shrink_ratio
+                )
+                if branch_shrink:
+                    audit.context_shrink_reasons.extend(
+                        f"branch {facts.branch_id}: {reason}" for reason in branch_shrink
+                    )
+                    if self.config.reject_context_shrink:
+                        raise SlimeBindingError(
+                            "context_shrink_detected",
+                            f"叶链 {facts.branch_id} 检测到无法解释的上下文收缩"
+                            "（compaction 嫌疑），轨迹退出基线：" + "; ".join(branch_shrink),
+                        )
                 used = backfill_leaf_sample(
                     leaf,
                     turns,
@@ -1730,27 +1773,41 @@ class RolloutOrchestrator:
             for version in getattr(leaf, "weight_versions", None) or []:
                 if version not in seen:
                     seen.append(version)
-        # FA-0：正式链的 staleness 按真实版本差计算——current（finalize 时刻
-        # policy_version，启动断言已保证数值）减去 seen 中最旧版本。S1 兼容
-        # 路径（flag=False）保持恒 0 语义逐字不变。
+        # FA-0：正式链的 staleness 按版本差计算——current（finalize 时刻，
+        # provider 实测值优先，缺省回退 config.policy_version）减去 seen 中
+        # 最旧版本。事实矛盾（任何 seen 版本比 current 新）fail-closed，
+        # 绝不 clamp 成 0 伪装健康（codex FA-0 审查严重 1 的反例）。
+        # S1 兼容路径（flag=False）保持恒 0 语义逐字不变。
+        current_version = (
+            self._current_policy_version_provider()
+            if self._current_policy_version_provider is not None
+            else self.config.policy_version
+        )
         staleness_steps = 0
         if self.config.require_real_weight_versions:
             try:
-                current = int(self.config.policy_version, 10)
+                current = int(current_version, 10)
                 seen_numeric = [int(v, 10) for v in seen] or [current]
-            except ValueError:
+            except (TypeError, ValueError):
                 raise SlimeBindingError(
                     "weight_versions_not_numeric_in_formal_chain",
-                    f"正式链要求数值版本：policy_version={self.config.policy_version!r}, "
+                    f"正式链要求数值版本：current={current_version!r}, "
                     f"seen={seen!r}——staleness 无法派生，fail-closed。",
                 ) from None
-            staleness_steps = max(current - min(seen_numeric), 0)
+            if max(seen_numeric) > current:
+                raise SlimeBindingError(
+                    "weight_version_ahead_of_current",
+                    f"事实矛盾：seen 含比 current({current}) 更新的版本 "
+                    f"{max(seen_numeric)}——current 版本事实过期或版本管道错乱，"
+                    "fail-closed（不得 clamp 成 staleness=0 伪装健康）。",
+                )
+            staleness_steps = current - min(seen_numeric)
         return BackendHandshake(
             handshake_id=f"hs_{trajectory_id}",
             trajectory_id=trajectory_id,
             backend_name="slime",
-            policy_version=self.config.policy_version,
-            weight_versions_seen=seen or [self.config.policy_version],
+            policy_version=current_version,
+            weight_versions_seen=seen or [current_version],
             staleness_steps=staleness_steps,
             staleness_threshold=self.config.staleness_threshold,
             staleness_within_threshold=staleness_steps <= self.config.staleness_threshold,

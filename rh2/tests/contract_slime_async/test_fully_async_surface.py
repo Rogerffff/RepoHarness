@@ -103,3 +103,23 @@ def test_sample_weight_version_plumbing_exists():
 
     text = _read("utils/types.py")
     assert "weight_version" in text
+
+
+def test_slime_checkout_matches_pin():
+    """pin 守卫（codex FA-0 审查测试项）：reference/slime 在场时 HEAD 必须是
+    e848052a——升级必须显式走"改 pin + 重跑本文件全部断言"，不许静默漂移。
+    仓库缺席仍走文件级 skip（inspect-rh2-fa 建账后升级为 fail）。"""
+
+    import subprocess
+
+    head = subprocess.run(
+        ["git", "-C", str(_SLIME.parent), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    ).stdout.strip()
+    assert head.startswith("e848052a"), (
+        f"reference/slime HEAD={head[:12]} 偏离 pin e848052a——"
+        "本文件的全部源码断言基于该 pin，升级前先重审 FA 设计假设。"
+    )

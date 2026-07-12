@@ -1455,37 +1455,42 @@ def _dummy_orchestrator(config: SlimeBindingConfig) -> RolloutOrchestrator:
     )
 
 
+def _formal_config(**overrides: Any) -> SlimeBindingConfig:
+    defaults = dict(
+        require_real_weight_versions=True,
+        policy_version="5",
+        reject_context_shrink=True,
+    )
+    defaults.update(overrides)
+    return dense_config(**defaults)
+
+
 def test_orchestrator_rejects_static_policy_version_in_formal_chain():
     """FA-0 验收负测试：require_real_weight_versions=True 时 step_0/None 启动即炸。"""
 
     with pytest.raises(StartupCheckError, match="static_policy_version_forbidden_in_formal_chain"):
-        _dummy_orchestrator(dense_config(require_real_weight_versions=True))
+        _dummy_orchestrator(_formal_config(policy_version="step_0"))
     with pytest.raises(StartupCheckError, match="static_policy_version_forbidden_in_formal_chain"):
-        _dummy_orchestrator(
-            dense_config(require_real_weight_versions=True, policy_version=None)
-        )
+        _dummy_orchestrator(_formal_config(policy_version=None))
     with pytest.raises(StartupCheckError, match="policy_version_not_numeric_in_formal_chain"):
-        _dummy_orchestrator(
-            dense_config(require_real_weight_versions=True, policy_version="ckpt_a")
-        )
-    # 数值版本（引擎实测语义）可以通过
-    _dummy_orchestrator(dense_config(require_real_weight_versions=True, policy_version="5"))
+        _dummy_orchestrator(_formal_config(policy_version="ckpt_a"))
+    # 正式链必须同时开启收缩兜底（D-FA-6 是硬要求不是注释——codex FA-0 审查）
+    with pytest.raises(StartupCheckError, match="context_shrink_rejection_disabled"):
+        _dummy_orchestrator(_formal_config(reject_context_shrink=False))
+    # 数值版本 + 收缩兜底开启：通过
+    _dummy_orchestrator(_formal_config())
 
 
 def test_handshake_staleness_computed_in_formal_chain():
     """正式链握手：staleness = current - min(seen)，within 派生一致（FA-0.3）。"""
 
-    orch = _dummy_orchestrator(
-        dense_config(require_real_weight_versions=True, policy_version="5")
-    )
+    orch = _dummy_orchestrator(_formal_config())
     leaf = FixtureSlimeSample(weight_versions=["3", "4"], index=0)
     handshake = orch._build_handshake("traj_hs", [leaf])
     assert handshake.staleness_steps == 2
     assert handshake.staleness_within_threshold is True
     # 超阈值：current=9, seen min=3 -> lag 6 > threshold 4
-    orch2 = _dummy_orchestrator(
-        dense_config(require_real_weight_versions=True, policy_version="9")
-    )
+    orch2 = _dummy_orchestrator(_formal_config(policy_version="9"))
     handshake2 = orch2._build_handshake("traj_hs2", [leaf])
     assert handshake2.staleness_steps == 6
     assert handshake2.staleness_within_threshold is False
@@ -1494,6 +1499,33 @@ def test_handshake_staleness_computed_in_formal_chain():
     handshake3 = orch3._build_handshake("traj_hs3", [leaf])
     assert handshake3.staleness_steps == 0
     assert handshake3.staleness_within_threshold is True
+
+
+def test_handshake_rejects_seen_newer_than_current():
+    """codex FA-0 反例：current=3、turn 版本 [5] -> 必须 fail-closed，
+    不得 clamp 成 staleness=0 伪装健康。"""
+
+    orch = _dummy_orchestrator(_formal_config(policy_version="3"))
+    leaf = FixtureSlimeSample(weight_versions=["5"], index=0)
+    with pytest.raises(SlimeBindingError, match="weight_version_ahead_of_current"):
+        orch._build_handshake("traj_contradiction", [leaf])
+
+
+def test_handshake_uses_current_version_provider_when_injected():
+    """FA-1 接线点：provider 实测值优先于 config（finalize 时刻 current）。"""
+
+    orch = RolloutOrchestrator(
+        config=_formal_config(),
+        task_resolver=make_task(TASK_ID_DENSE),
+        adapter_factory=lambda hook, session_defaults: None,
+        harness_driver=lambda **kwargs: None,
+        grading_submit=lambda **kwargs: None,
+        current_policy_version_provider=lambda: "7",
+    )
+    leaf = FixtureSlimeSample(weight_versions=["5", "6"], index=0)
+    handshake = orch._build_handshake("traj_provider", [leaf])
+    assert handshake.policy_version == "7"
+    assert handshake.staleness_steps == 2  # 7 - min(5,6)
 
 
 def _tape(turn_index: int, prompt_tokens: int) -> TurnTape:
@@ -1525,34 +1557,69 @@ def test_detect_context_shrink_flags_collapse():
     assert len(reasons) == 1 and "turn 2" in reasons[0]
 
 
-def test_context_shrink_rejects_trajectory_when_enabled():
-    """D-FA-6 兜底端到端：reject 开启时轨迹收口为 abort 形状（退出基线）。"""
+def test_detect_context_shrink_ratio_must_be_valid():
+    """ratio 域校验：0 关闭检测、>=1 误报等长 prompt——都拒绝（codex FA-0 审查）。"""
 
-    leaf, prompt, outputs = _two_run_leaf()
-    # 用收缩的 prompt 序列构造 hook：第三轮 prompt 塌到 2 token
-    hook = GenerationCaptureHook(
-        trajectory_id="traj_shrink",
-        model_name="m",
-        backend_name="sglang",
-        backend_version="0.5.13",
-        renderer_cls_name="Qwen3Renderer",
-        tokenizer_name="t",
-        template_hash=SHA_TEMPLATE,
+    tapes = [_tape(0, 10), _tape(1, 30)]
+    for bad in (0.0, 1.0, 1.5, -0.2, float("inf"), float("nan")):
+        with pytest.raises(SlimeBindingError, match="context_shrink_ratio_invalid"):
+            detect_context_shrink(tapes, shrink_ratio=bad)
+
+
+def test_detect_context_shrink_per_branch_spares_subagent():
+    """codex FA-0 严重 2 的负测试：主 agent 长上下文后启动短上下文子 agent。
+
+    CC 子 agent 与主 agent 共享 session id——session 级全量比较会误判；
+    按叶链（lineage）分开检测时两条链各自单调，都不得报收缩。
+    """
+
+    main_chain = [_tape(0, 10), _tape(1, 40), _tape(2, 80)]
+    sub_chain = [_tape(3, 6), _tape(4, 12)]  # 子 agent：全新短上下文，随后增长
+    # 叶链级（编排层的硬拒绝口径）：各自干净
+    assert detect_context_shrink(main_chain) == []
+    assert detect_context_shrink(sub_chain) == []
+    # session 级（audit-only 口径）：混排后必然报警——这正是它只能作审计信号的原因
+    assert detect_context_shrink(main_chain + sub_chain) != []
+
+
+async def test_context_shrink_rejects_trajectory_end_to_end():
+    """D-FA-6 兜底端到端：叶链内 prompt 坍缩 + reject 开启 -> 轨迹收口为
+    abort 形状（remove_sample=True，退出基线），audit 留痕。"""
+
+    base = dense_turns()
+    shrunk = [
+        base[0],
+        MockTurn(prompt_ids=[1, 2, 3, 4, 5], response=base[1].response),  # 5 < 0.6*12
+    ]
+    chain = build_dense_chain(config=dense_config(reject_context_shrink=True), turns=shrunk)
+    result = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
     )
-    for i, (output_ids, prompt_ids) in enumerate(
-        zip(outputs, [[1] * 10, [1] * 40, [1] * 5])
-    ):
-        hook.on_generate_response(
-            prompt_token_ids=prompt_ids,
-            sampling_params={
-                **SAMPLING_PARAMS,
-                "return_top_p_token_ids": False,
-                "return_routed_experts": False,
-            },
-            response=sglang_response(rid=f"r{i}", output_ids=output_ids),
-        )
-    reasons = detect_context_shrink(hook.tapes)
-    assert reasons, "收缩形态必须被检出"
+    assert result[0].remove_sample is True
+    assert result[0].metadata["abort_reason"].startswith("rh2_assemble_failed")
+    audit = chain.orchestrator.audits[-1]
+    assert any("branch" in reason for reason in audit.context_shrink_reasons)
+    assert any(
+        "context_shrink_detected" in record.detail or "上下文收缩" in record.detail
+        for record in audit.failure_records
+    )
+
+
+async def test_context_shrink_audit_only_when_reject_disabled():
+    """reject 关闭（S1 兼容默认）：同样的收缩只记录 audit，不改变交付。"""
+
+    base = dense_turns()
+    shrunk = [
+        base[0],
+        MockTurn(prompt_ids=[1, 2, 3, 4, 5], response=base[1].response),
+    ]
+    chain = build_dense_chain(config=dense_config(), turns=shrunk)
+    result = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
+    )
+    assert not getattr(result[0], "remove_sample", False)
+    audit = chain.orchestrator.audits[-1]
+    assert audit.context_shrink_reasons  # 信号仍留痕
 
 
 def test_ensure_compaction_disabled_merges_and_fail_closed():

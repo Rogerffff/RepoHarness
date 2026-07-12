@@ -40,7 +40,6 @@ from typing import Literal
 from pydantic import AwareDatetime, Field, model_validator
 
 from ._base import NonEmptyStr, StrictModel
-from .grading import GradingFailureCategory
 from .trajectory import derive_weight_version_max_lag
 
 __all__ = [
@@ -50,9 +49,31 @@ __all__ = [
     "ModelCallDeliveryStatus",
     "RecoveryScope",
     "RolloutAttemptOutcome",
+    "RuntimeFailureCategory",
     "TaskOutcome",
     "TrainingRuntimePhase",
     "TrainingRuntimeWindow",
+]
+
+
+# 执行期故障归因（FA-0 follow-up，codex FA-0 审查严重 3）：GradingFailureCategory
+# 只有四种**评分**结果，覆盖不了 rollout 生命周期的故障面——组终结/重试/熔断
+# （FA-2）需要独立枚举。评分基建故障映射为 grading_infra_failure，原
+# GradingReport 经 evidence_refs 回链（评分枚举不统治整个生命周期）。
+RuntimeFailureCategory = Literal[
+    "model_proxy_failure",  # 模型代理/adapter 层失败
+    "inference_service_failure",  # SGLang/推理服务失败（非更新窗口 abort 的不可归因中断）
+    "sandbox_crash",  # rollout 沙箱异常死亡
+    "harness_crash",  # 黑盒 harness 进程崩溃
+    "worker_crash",  # 异步 worker/task 层崩溃（N1 面）
+    "grading_infra_failure",  # 评分基建故障（GradingReport 的 infra 族，经 evidence 回链）
+    "capture_incomplete",  # capture 记录缺失/不完整（no_capture_records 等）
+    "token_alignment_failure",  # token 锚定/对齐失败
+    "staleness_exceeded",  # 版本跨度/新鲜度超预注册上限
+    "security_violation",  # executed 级安全事件（组级永久拒绝的归因）
+    "identity_conflict",  # 镜像 digest/base commit/bundle 血缘矛盾（task quarantine 归因）
+    "contract_violation",  # schema/账目对账矛盾（run halt 归因）
+    "cleanup_failure",  # 清理失败（资源泄漏风险）
 ]
 
 
@@ -130,8 +151,8 @@ class RolloutAttemptOutcome(StrictModel):
     task_outcome: TaskOutcome = Field(
         description="任务结局（present 时必须是 resolved/unresolved；缺失/拒绝时用 unknown）。"
     )
-    failure_category: GradingFailureCategory | None = Field(
-        default=None, description="失败归因类别（completion_class=present 时必须为 None）。"
+    failure_category: RuntimeFailureCategory | None = Field(
+        default=None, description="执行期失败归因（completion_class=present 时必须为 None）。"
     )
     failed_component: NonEmptyStr | None = Field(
         default=None, description="失败组件（如 grading_container / model_proxy / sandbox）。"
@@ -189,6 +210,11 @@ class RolloutAttemptOutcome(StrictModel):
                 )
             if not self.turn_weight_versions:
                 raise ValueError("present 成员必须携带至少 1 条逐轮 weight_version。")
+            if self.current_version_at_finalize is None:
+                raise ValueError(
+                    "present 成员必须携带 current_version_at_finalize"
+                    "（staleness 计算基准；字段说明即契约，codex FA-0 审查修正）。"
+                )
         else:
             if self.task_outcome != "unknown":
                 raise ValueError(
@@ -249,6 +275,11 @@ class TrainingRuntimeWindow(StrictModel):
 
     @model_validator(mode="after")
     def _check_phase_consistency(self) -> "TrainingRuntimeWindow":
+        if self.old_version == self.target_version:
+            raise ValueError(
+                f"target_version({self.target_version}) == old_version——权重更新窗口"
+                "必须使版本前进，无前进的窗口是事实矛盾（codex FA-0 审查修正）。"
+            )
         if self.phase == "ACTIVE":
             if self.window_completed_at is None:
                 raise ValueError("phase=ACTIVE 表示窗口已完成，window_completed_at 必填。")
@@ -299,8 +330,15 @@ class ModelCallAttempt(StrictModel):
         ge=0,
         description="导致 abort 的更新窗口 update_epoch（non_delivered_aborted 时必填）。",
     )
+    abort_fencing_token: NonEmptyStr | None = Field(
+        default=None,
+        description=(
+            "导致 abort 的窗口 fencing_token（non_delivered_aborted 时必填）——"
+            "证明 abort 确实与该次更新窗口重叠，防止陈旧窗口误归因（codex FA-0 审查）。"
+        ),
+    )
     weight_version: NonEmptyStr | None = Field(
-        default=None, description="本 attempt 实际使用的引擎版本（delivered 时应在场）。"
+        default=None, description="本 attempt 实际使用的引擎版本（delivered 时必填）。"
     )
     evidence_refs: list[NonEmptyStr] = Field(
         default_factory=list, description="审计证据（含 non-delivered 半截输出的留痕引用）。"
@@ -308,13 +346,24 @@ class ModelCallAttempt(StrictModel):
 
     @model_validator(mode="after")
     def _check_delivery_consistency(self) -> "ModelCallAttempt":
-        if self.delivery_status == "delivered" and self.capture_record_ref is None:
-            raise ValueError("delivered 的 attempt 必须回链 capture 记录。")
+        if self.delivery_status == "delivered":
+            if self.capture_record_ref is None:
+                raise ValueError("delivered 的 attempt 必须回链 capture 记录。")
+            if self.weight_version is None:
+                raise ValueError(
+                    "delivered 的 attempt 必须携带 weight_version"
+                    "（交付即 provenance 事实，缺失让 DIS 无法归因）。"
+                )
         if self.delivery_status != "delivered" and self.capture_record_ref is not None:
             raise ValueError(
                 "non-delivered 的 attempt 不得回链 capture 记录"
                 "（半截输出是审计物，不是训练面事实——防止误入投影）。"
             )
-        if self.delivery_status == "non_delivered_aborted" and self.abort_update_epoch is None:
-            raise ValueError("non_delivered_aborted 必须记录导致 abort 的 update_epoch。")
+        if self.delivery_status == "non_delivered_aborted" and (
+            self.abort_update_epoch is None or self.abort_fencing_token is None
+        ):
+            raise ValueError(
+                "non_delivered_aborted 必须同时记录 abort_update_epoch 与 abort_fencing_token"
+                "（窗口归因的双凭据）。"
+            )
         return self

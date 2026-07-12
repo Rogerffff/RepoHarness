@@ -240,3 +240,100 @@ wall_clock_ttl
 FA/S2 分离、完整 PromptGroup 才进 ready queue、branch 不计作 rollout、reward 整体广播配 rollout 级分母、`build_dp_schedule` 差分验证、禁用 `--release-train`、不做成员补采、FA-5 与 S2 共用租卡窗口，这些设计都合理。
 
 我的建议是先让 Claude 把前四项写回计划，再开 FA-0。FA-3 的纯 Python schedule 差分测试可以提前并行；FA-4 可以先做公式和梯度级小张量测试，但在 DIS 时序与 denominator 定案前，不应开始最终 custom loss 接线。本轮我只做了审阅，没有修改文件。
+
+
+---
+
+## 轮次 4（2026-07-12：FA-0 实现审查 → 12 项全部采纳，follow-up 随 commit 落地）
+
+> 原文全文转录（tmp/FA-0_codex.md，gitignore 不入库故迁此）。处置见 `fa/implementation-notes.md` 的 "FA-0 follow-up" 节：严重 1（staleness clamp 掩盖矛盾 → fail-closed + provider 注入点）、严重 2（session 级收缩误杀子 agent → 叶链级硬拒绝 + session 级 audit-only）、严重 3（RuntimeFailureCategory 13 值独立枚举）+ 一般/测试项逐条修复；测试 684 → 692。
+
+**结论**
+
+FA-0 的总体设计正确，不需要推翻；三层身份和逐 turn 版本事实值得保留。但目前还不能把它视为正式链契约已经完全闭合。存在 3 个进入 FA-1 前应修复的问题，以及若干契约和测试缺口。
+
+FA-3 离线调度预检、FA-4 合成张量对拍可以继续并行；FA-1 真实异步接线最好等下面前三项修完。
+
+**严重问题**
+
+1. **finalize 当前版本仍是静态配置，不是真实运行时版本**
+
+[generate.py:1258](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1258) 只检查 `config.policy_version` 是数字；[generate.py:1737](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1737) 又直接拿它计算 staleness，没有在 finalize 调用 `engine.get_weight_version`。
+
+我构造了反例：
+
+```text
+config current version = 3
+turn weight_versions = [5]
+结果 staleness_steps = 0
+staleness_within_threshold = true
+```
+
+这实际上是事实矛盾，却被判定为健康。修复建议：
+
+- 注入 `CurrentPolicyVersionProvider`，在 finalize/消费时读取真实版本。
+- `seen_version > current_version` 必须 fail-closed，不能 `max(..., 0)`。
+- 区分 `current_version_at_finalize` 和 FA-3 的 `current_version_at_consume`。
+- 在实时 provider 接入前，不应把当前 handshake 称为“真实 staleness”。
+
+2. **上下文收缩检测会误杀 Claude Code 子 agent 或合法分叉**
+
+[generate.py:591](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:591) 把同一 session 的所有 turn 按序排列，和全局最大 prompt 长度比较。
+
+但 Claude Code 的所有请求共享同一个 `ANTHROPIC_AUTH_TOKEN=session_id`，见 [claude_code.py:62](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/harness/claude_code.py:62)；Anthropic adapter 又直接用该 token 作为 session id，见 [anthropic.py:192](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/anthropic.py:192)。因此子 agent 启动较短上下文时，很可能被误判为 compaction。
+
+建议：
+
+- 检测必须按逻辑会话 lineage/消息图分支执行，不能跨 branch 比较。
+- 在没有 lineage 信息前，token 数骤降只能作为 audit 信号，不宜作为正式硬拒绝。
+- 真正的硬规则先依赖 `DISABLE_COMPACT=1` 验真和明确 compaction hook/event。
+- 增加“主 agent 长上下文后启动短上下文子 agent，不得拒绝”的负测试。
+
+3. **执行故障错误复用了评分故障枚举**
+
+[fa_runtime.py:133](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:133) 使用 `GradingFailureCategory`，但它只有四种评分结果，见 [grading.py:36](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/grading.py:36)。
+
+它无法表达：
+
+- model proxy 或 inference 服务失败
+- sandbox/harness/worker 崩溃
+- capture、token alignment、staleness 失败
+- security、anti-cheat、身份冲突
+
+这会让 FA-2 的组终结、重试和熔断无法可靠决策。应新增独立的 `RuntimeFailureCategory`，评分失败作为其中一个来源或 evidence ref，而不是让评分枚举统治整个 rollout 生命周期。
+
+**一般问题**
+
+- `present` 没有强制 `current_version_at_finalize`，与字段说明冲突，见 [fa_runtime.py:178](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:178)。
+- `TrainingRuntimeWindow` 允许 `old_version == target_version` 后宣布 `ACTIVE`，并未真正保证版本前进，见 [fa_runtime.py:250](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:250)。
+- `ModelCallAttempt(delivered)` 没有强制 `weight_version`，见 [fa_runtime.py:309](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:309)。
+- abort attempt 只记录 `update_epoch`，没有回链具体窗口或 `fencing_token`，不足以证明它确实与最新更新窗口重叠。
+- `context_shrink_ratio` 没有范围和有限数校验；`0` 会彻底关闭检测，`>1` 会误报正常等长 prompt。
+- `require_real_weight_versions=True` 并不会强制 `reject_context_shrink=True`，所谓“正式配置必须开启”目前只是注释。
+- 非正式路径确实允许真实版本与 fallback 混合，例如 `["3", "wv_fallback"]`；这与代码注释和 commit 中“不拼混合序列”的表述不一致。
+
+**测试问题**
+
+[test_fully_async_surface.py:21](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/contract_slime_async/test_fully_async_surface.py:21) 在 `reference/slime` 不存在时整文件跳过。该仓库目前未被父仓库追踪，干净 clone 中这 7 条关键 pin 很可能全部 skip，而且没有检查 HEAD 必须为 `e848052a`。
+
+建议未来 `inspect-rh2-fa`：
+
+- 缺少 slime 源码时 fail，而不是 skip。
+- 验证精确 commit/digest。
+- 源码正则只作为补充，FA-5 再做真实行为测试。
+
+此外，[test_slime_generate.py:1528](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/adapters/test_slime_generate.py:1528) 名称声称测试“轨迹收口为 abort”，实际只直接调用了检测函数，没有运行 orchestrator，也没有断言 `remove_sample=True`。
+
+**可以保持不变**
+
+三层身份、eligibility 单一权威、消费时版本事实不回写 finalize 记录、non-delivered attempt 不进入 capture 训练面、逐 turn `weight_version` 透传、`routed_experts_start_len` 非零 fail-closed，这些设计都合理。
+
+验证结果：
+
+```text
+聚焦测试：81 passed
+全套测试：684 passed
+inspect-rh2-s1：PASS
+```
+
+因此 S1 没有回归。建议把上述问题做成一个很小的 `FA-0 follow-up`，修完再进入 FA-1；FA-3 离线部分与 FA-4 数学对拍不必等待。没有修改任何文件。

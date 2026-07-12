@@ -68,7 +68,7 @@ def test_present_rejects_unknown_outcome_and_failure_category():
     with pytest.raises(ValidationError, match="unknown"):
         _outcome(task_outcome="unknown")
     with pytest.raises(ValidationError, match="failure_category"):
-        _outcome(failure_category="infra_failure")
+        _outcome(failure_category="harness_crash")
 
 
 def test_present_requires_turn_versions():
@@ -80,7 +80,7 @@ def test_missing_member_requires_unknown_outcome_and_category():
     outcome = _outcome(
         completion_class="missing_after_local_retry",
         task_outcome="unknown",
-        failure_category="infra_failure",
+        failure_category="harness_crash",
         eligibility_report_id=None,
         turn_weight_versions=["1"],
         intra_execution_version_span=0,
@@ -88,7 +88,7 @@ def test_missing_member_requires_unknown_outcome_and_category():
     )
     assert outcome.completion_class == "missing_after_local_retry"
     with pytest.raises(ValidationError, match="unknown"):
-        _outcome(completion_class="missing_after_local_retry", failure_category="infra_failure")
+        _outcome(completion_class="missing_after_local_retry", failure_category="harness_crash")
     with pytest.raises(ValidationError, match="failure_category"):
         _outcome(
             completion_class="missing_after_local_retry",
@@ -149,6 +149,29 @@ def test_window_completion_not_before_start():
         _window(window_completed_at=NOW - timedelta(seconds=1))
 
 
+def test_window_requires_version_advance():
+    """codex FA-0 审查：old == target 的"无前进窗口"是事实矛盾，任何 phase 都拒绝。"""
+
+    with pytest.raises(ValidationError, match="版本前进"):
+        _window(old_version="3", target_version="3")
+    with pytest.raises(ValidationError, match="版本前进"):
+        _window(phase="UPDATING", window_completed_at=None,
+                old_version="3", target_version="3", active_version="3")
+
+
+def test_delivered_attempt_requires_weight_version():
+    """codex FA-0 审查：delivered 即 provenance 事实，weight_version 必填。"""
+
+    with pytest.raises(ValidationError, match="weight_version"):
+        ModelCallAttempt(
+            logical_turn_id="turn_7",
+            model_call_attempt_id="a1",
+            attempt_number=1,
+            delivery_status="delivered",
+            capture_record_ref="cap_7",
+        )
+
+
 # --------------------------------------------------------- 调用账目校验器
 
 
@@ -196,6 +219,7 @@ def test_proxy_regeneration_ledger_shape():
         attempt_number=1,
         delivery_status="non_delivered_aborted",
         abort_update_epoch=3,
+        abort_fencing_token="fence_3",
         weight_version="2",
         evidence_refs=["partial_output_audit_ref"],
     )
