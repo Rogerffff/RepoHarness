@@ -43,6 +43,8 @@ S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号�
 
 ### S2-1 数据 ingestion + 环境验证四门（S2 最大件之一）
 
+> **执行级展开（2026-07-12）**：任务级执行文档见 **`s2/s2_1_data_ingestion_execution_plan.md`**（资产盘点 / 四门 fixture 预注册规格 / T0~T7 步骤 / 载体与成本估算 / 六不变量落位映射 / 与 FA 线程的并行纪律 / 开放问题 O-1~O-4）。本节以下为原始任务定义，细节以执行文档为准。
+
 1. **ingestion**：envpack 扩展为多源——SWE-Gym Lite 格式进 `envpack/`（`strip_spec.yaml` 逐字段执行、**遇未列字段 fail-closed**（data_freeze 不变量 4）、labels 过滤只收 216 存活、`freeze_manifest_v0` 数据源 pin、镜像引用按 `image_manifest.md` 的 `_s_` 命名实测规则）。private 字段（patch/test_patch/F2P/P2P/hints）全部进 private bundle，`hints_text` 剥离即中和的语义保持。
 2. **环境验证四门 runner**（设计文档 §5.4 定案的执行体）：empty patch 必失败 / golden patch 必通过且 **F2P>0 ∧ P2F=0** / **假阳性解检测**（已知错误 patch 必须被拒）/ 确定性（同题重跑 N=3 结果一致）。golden 来源 = private bundle 的 patch 字段。四门结果逐题写 `EnvValidationReport`（进 SCHEMA_REGISTRY）。
 3. 执行策略（G4）：先 50 题试运行校准四门本身（SWE-Gym golden patch 质量未知——四门第一次跑很可能先暴露门的 bug 而非题的坏），再 216 全量。产出：**bring-up 候选题单**（过门存活集）+ 漏斗账（静态 216 → 环境门存活 N）+ benchmark card 雏形。
