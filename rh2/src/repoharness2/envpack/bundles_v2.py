@@ -87,18 +87,19 @@ class PrivateGradingBundleV2(StrictModel):
         default_factory=list, description="PASS_TO_PASS 清单（修复不得让这些测试回归）。"
     )
     eval_cmd: NonEmptyStr = Field(
-        description="容器内测试命令（vendor spec 的 test_cmd；预构建镜像内直接执行，"
-        "不走官方 checkout/install eval_script）。"
+        description="容器内测试命令（vendor spec 的 test_cmd 的**信息性副本**；"
+        "预构建镜像内直接执行，不走官方 checkout/install eval_script。"
+        "权威 = spec_vendor.derive_eval_cmd 派生值，消费方必须互检——"
+        "本字段不是可独立信任的自由字符串）。"
     )
     python_version: NonEmptyStr | None = Field(
         default=None, description="vendor spec 声明的 python 版本（证据用；镜像内已就位）。"
     )
-    spec_vendor_file: NonEmptyStr = Field(
-        description="eval_cmd 的来源 vendor 文件（仓库相对路径，如 "
-        "docs/.../s2/vendor/swegym_constants_242429c1.py）。"
-    )
-    spec_vendor_sha256: Sha256Digest = Field(
-        description="vendor 文件内容 digest（spec 可回溯性；与 provenance 旁证一致）。"
+    spec_vendor_id: Literal["swegym_constants_242429c1"] = Field(
+        description="eval_cmd 的来源 vendor 身份（封闭枚举，codex 轮次 12：artifact "
+        "不携带可执行文件路径——路径与 digest 由 envpack.spec_vendor 固定注册表映射；"
+        "eval_cmd 权威 = derive_eval_cmd(vendor_id, repo_key_lower, version)，"
+        "本字段值消费时必须互检）。"
     )
 
     @model_validator(mode="after")
@@ -163,7 +164,10 @@ class EnvironmentPackageV1(StrictModel):
     validation_bundle_digest: Sha256Digest = Field(description="ValidationOnlyBundle.digest()。")
     raw_archive_sha256: Sha256Digest = Field(description="来源 raw archive（T1a）的文件 digest。")
     image_manifest_keyed_sha256: Sha256Digest = Field(description="键控镜像清单（T1b）的文件 digest。")
-    spec_vendor_sha256: Sha256Digest = Field(description="vendor spec 文件 digest（与 grading bundle 一致）。")
+    spec_vendor_json_sha256: Sha256Digest = Field(
+        description="vendor 规范化 JSON 的 digest（由 spec_vendor_id 经固定注册表派生，"
+        "builder 现算填入，不接受调用方自由值）。"
+    )
 
     @model_validator(mode="after")
     def _check_identity(self) -> "EnvironmentPackageV1":
@@ -193,6 +197,15 @@ def build_environment_package(
             f"三 bundle instance_id 不一致: {public.instance_id} / "
             f"{grading.instance_id} / {validation.instance_id}"
         )
+    # 任务身份交叉核对（codex 轮次 12 严重 1：不核对则可组出"模型解 A 仓、
+    # 评分器评 B 仓"的包——public 与 grading 的 repo/base_commit 必须逐字相等）。
+    if public.repo != grading.repo:
+        raise ValueError(f"public.repo={public.repo!r} 与 grading.repo={grading.repo!r} 不一致")
+    if public.base_commit != grading.base_commit:
+        raise ValueError(
+            f"public.base_commit={public.base_commit} 与 grading.base_commit={grading.base_commit} 不一致"
+        )
+    from repoharness2.envpack.spec_vendor import vendor_pin  # 延迟 import 防环
     return EnvironmentPackageV1(
         task_id=task_id_for(source, grading.instance_id),
         source=source,  # type: ignore[arg-type] —— Literal 校验由模型执行
@@ -207,5 +220,5 @@ def build_environment_package(
         validation_bundle_digest=validation.digest(),
         raw_archive_sha256=raw_archive_sha256,
         image_manifest_keyed_sha256=image_manifest_keyed_sha256,
-        spec_vendor_sha256=grading.spec_vendor_sha256,
+        spec_vendor_json_sha256="sha256:" + vendor_pin(grading.spec_vendor_id).json_sha256,
     )

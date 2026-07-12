@@ -22,10 +22,12 @@
 ```
 
 **处置**：fork constants 以 commit pin `242429c1` vendor 为冻结资产
-`vendor/swegym_constants_242429c1.py`（逐字节原样 + 旁置 provenance JSON：
-来源 URL/commit/取回时间/sha256/许可注记/覆盖验证结论），登记入
-`s2_1_manifest_v0.json`。T2 的门 runner 与 eval 命令生成只消费该 vendor
-文件（importlib 按路径加载），不在运行期访问 GitHub。
+`vendor/swegym_constants_242429c1.py`（逐字节原样 + 旁置 provenance JSON），
+登记入 `s2_1_manifest_v0.json`。~~门 runner importlib 按路径加载~~
+**（轮次 12 修正）消费模型**：构建期 `extract_vendor_specs.py` 一次性
+exec vendored Python 提取为规范化 JSON（`vendor/swegym_specs_242429c1.json`）；
+运行期只读 JSON 并核对 `envpack/spec_vendor.py` 固定注册表的 pinned sha256
+——**永不在运行期 exec vendored 代码，也不接受 artifact 里的文件路径**。
 
 **对门 runner 形态的推论**（T2-b 设计输入）：SWE-Gym 的 xingyaoww 镜像是
 预构建的（conda 环境与依赖已装好，install 命令在镜像构建期已执行），
@@ -42,3 +44,29 @@ T2-c：ingestion 构造器（strip_spec 驱动 + D5 收编 + task_id/duplicate
 cluster 去重语义 + 大小写归一化的 repo identity）。
 T2-d：`grade_controlled_patch` 受控入口。
 T2-e：门 runner + fixture（§3.1 规格）+ `EnvValidationReport`。
+
+## T2-b 修订（2026-07-13，codex 轮次 12 → 契约加固后 T2-c 才开工）
+
+四条全部成立并修复：
+
+```text
+严重 1 身份交叉核对缺失：build_environment_package 只查 instance_id，
+  public.repo/base_commit 与 grading 不一致也能组包（模型解 A 仓、评分器
+  评 B 仓）。修复：repo 与 base_commit 逐字相等断言 + 两个负测试；
+  登记 T2-c 义务——resolved-package validator 还须比对 public.image/
+  image_manifest_digest 与 T1 键控清单该 instance_id 的记录；消费方按
+  digest 取回 bundle 后必须重跑关系验证（不能只信构造时检查）。
+严重 2 vendor 路径/命令自声明：spec_vendor_file 接受任意路径（/tmp/attacker.py
+  过 schema），叠加"importlib 按路径加载"的计划 = 路径注入 + 命令执行入口。
+  修复（采纳其更稳妥方案）：spec_vendor_id 封闭 Literal + envpack/spec_vendor.py
+  固定注册表（id → pinned 路径+sha256）；构建期提取规范化 JSON、运行期只读
+  JSON；eval_cmd 权威 = derive_eval_cmd(vendor_id, repo_key_lower, version)
+  派生，bundle 字段只是信息性副本，verify_grading_eval_cmd 互检（"rm -rf /"
+  注入负测试）。
+一般 3 provenance 可复现性：source_url 改为含完整 commit sha 的 immutable
+  URL；上游 MIT LICENSE 全文入库并登记 digest（不再只留一句 license_note）。
+一般 4 机器复算：新增 tests/envpack/test_vendor_specs.py——33 仓库/808 对、
+  216/216 覆盖、全小写键、逐 survivor derive_eval_cmd 非空、官方 swebench
+  0/216（skipif 无 swe 依赖组）全部变成可重算断言；三个 CLI marker 测试
+  （grading v2 / validation-only 默认豁免+强制命中；package 默认与强制都过）。
+```

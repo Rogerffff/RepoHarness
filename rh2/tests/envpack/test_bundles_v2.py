@@ -55,8 +55,7 @@ def make_grading(iid: str = "getmoto__moto-1", repo: str = "getmoto/moto") -> Pr
         pass_to_pass=["tests/x.py::test_b"],
         eval_cmd="pytest -n0 -rA",
         python_version="3.11",
-        spec_vendor_file="docs/agentic_RL/repo_harness_rh2_workstreams/s2/vendor/swegym_constants_242429c1.py",
-        spec_vendor_sha256=DIG,
+        spec_vendor_id="swegym_constants_242429c1",
     )
 
 
@@ -121,7 +120,8 @@ def test_package_digests_recomputed_from_bundles():
     assert pkg.grading_bundle_digest == make_grading().digest()
     assert pkg.validation_bundle_digest == make_validation().digest()
     assert pkg.task_id == task_id_for("swe_gym_lite", "getmoto__moto-1")
-    assert pkg.spec_vendor_sha256 == make_grading().spec_vendor_sha256
+    from repoharness2.envpack.spec_vendor import vendor_pin
+    assert pkg.spec_vendor_json_sha256 == "sha256:" + vendor_pin("swegym_constants_242429c1").json_sha256
 
 
 def test_package_rejects_mismatched_instance_ids():
@@ -153,3 +153,43 @@ def test_environment_identity_documented_pairs_coexist():
     )
     assert (p1.repo, p1.base_commit) == (p2.repo, p2.base_commit)
     assert p1.task_id != p2.task_id and p1.digest() != p2.digest()
+
+
+# ---- 轮次 12 严重 1：public↔grading 任务身份交叉核对 --------------------------
+
+def test_package_rejects_repo_mismatch():
+    pub = make_public()
+    g = make_grading(repo="evil/other")
+    with pytest.raises(ValueError, match="repo.*不一致"):
+        build_environment_package(
+            public=pub, grading=g, validation=make_validation(),
+            raw_archive_sha256=DIG, image_manifest_keyed_sha256=DIG,
+        )
+
+
+def test_package_rejects_base_commit_mismatch():
+    pub = make_public()
+    g = make_grading()
+    g = PrivateGradingBundleV2(**{**g.model_dump(), "base_commit": "1" * 40})
+    with pytest.raises(ValueError, match="base_commit.*不一致"):
+        build_environment_package(
+            public=pub, grading=g, validation=make_validation(),
+            raw_archive_sha256=DIG, image_manifest_keyed_sha256=DIG,
+        )
+
+
+# ---- 轮次 12 严重 2：vendor 路径注入封死 + eval_cmd 互检 ----------------------
+
+def test_spec_vendor_id_rejects_arbitrary_path():
+    with pytest.raises(ValidationError):
+        PrivateGradingBundleV2(**{**make_grading().model_dump(),
+                                  "spec_vendor_id": "/tmp/attacker.py"})
+
+
+def test_eval_cmd_cross_check_against_registry():
+    from repoharness2.envpack.spec_vendor import VendorSpecError, verify_grading_eval_cmd
+    good = make_grading()  # getmoto/moto 4.1 的真实 test_cmd = pytest -n0 -rA
+    verify_grading_eval_cmd(good)  # 不抛 = 互检通过
+    bad = PrivateGradingBundleV2(**{**good.model_dump(), "eval_cmd": "rm -rf / #"})
+    with pytest.raises(VendorSpecError, match="不作权威"):
+        verify_grading_eval_cmd(bad)

@@ -1528,3 +1528,14 @@ host_launch.sh bash -n：PASS
 
 先修跨线程 cancellation、poison registry 原子性和 middleware 安装顺序，再关闭 FA-1。FA-2 可以并行开始设计，但 request 级 capture 归属必须保持第一验收项。artifact sink 和容器版本断言应在 FA-5 租卡前完成，而不是留到真机现场编写。
 
+
+
+---
+
+## 轮次 12（2026-07-13：T2-a/b 复审 → vendor 与 T1 关闭正确；2 关键 + 2 一般，T2-c 开工前修复）
+
+- **严重 1：包构造缺身份交叉核对**——public.repo/base_commit 与 grading 不一致仍组包成功（反例 evil/other 仓库）。【修复：逐字相等断言 + 负测试；T2-c 登记 resolved-package validator（对 T1 键控清单核 image 身份）与消费期重验义务】
+- **严重 2：vendor 路径与 eval_cmd 自声明**——spec_vendor_file 接受 /tmp/attacker.py；报告计划 importlib 按路径加载 = 注入入口。【修复：spec_vendor_id 封闭枚举 + 固定注册表；构建期提取 JSON、运行期只读（永不 exec vendored Python）；eval_cmd 注册表派生 + 互检】
+- **一般 3：provenance**——source_url 指 main 会漂移；2000 行 MIT 代码只留一句注记。【修复：immutable commit URL + LICENSE 全文入库 + digest 登记】
+- **一般 4：报告数字无机器复算**——vendor 33/808、216/216、官方 0/216 只在文字里。【修复：test_vendor_specs.py 7 项复算断言 + 3 个 CLI marker 测试】
+- codex 确认正确：T1 关闭记账、vendor 逐字节一致（三方 sha 同值）、大小写投影、golden/grading 结构分离、8 项 digest 匹配、28+847 通过。

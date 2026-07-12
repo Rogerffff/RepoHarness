@@ -202,6 +202,7 @@ def _fa_attempt_payload() -> dict:
 
 def _grading_v2_payload():
     return {
+        "schema_id": "rh2.private_grading_bundle.v2",
         "instance_id": "getmoto__moto-1",
         "repo": "getmoto/moto",
         "repo_key_lower": "getmoto/moto",
@@ -211,8 +212,7 @@ def _grading_v2_payload():
         "fail_to_pass": ["t.py::test_a"],
         "pass_to_pass": [],
         "eval_cmd": "pytest -n0 -rA",
-        "spec_vendor_file": "docs/x/swegym_constants_242429c1.py",
-        "spec_vendor_sha256": "sha256:" + "a" * 64,
+        "spec_vendor_id": "swegym_constants_242429c1",
     }
 
 
@@ -220,6 +220,7 @@ def _validation_only_payload():
     import hashlib as _h
     patch = "diff --git a/m.py b/m.py\n-bug\n+fix\n"
     return {
+        "schema_id": "rh2.validation_only_bundle.v1",
         "instance_id": "getmoto__moto-1",
         "golden_patch": patch,
         "golden_patch_sha256": "sha256:" + _h.sha256(patch.encode()).hexdigest(),
@@ -229,6 +230,7 @@ def _validation_only_payload():
 def _environment_package_payload():
     d = "sha256:" + "a" * 64
     return {
+        "schema_id": "rh2.environment_package.v1",
         "task_id": "swe_gym_lite::getmoto__moto-1",
         "source": "swe_gym_lite",
         "instance_id": "getmoto__moto-1",
@@ -242,7 +244,7 @@ def _environment_package_payload():
         "validation_bundle_digest": d,
         "raw_archive_sha256": d,
         "image_manifest_keyed_sha256": d,
-        "spec_vendor_sha256": d,
+        "spec_vendor_json_sha256": d,
     }
 
 
@@ -266,3 +268,30 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
     payload["unexpected_extra_field"] = "smuggled"
     with pytest.raises(ValidationError, match="unexpected_extra_field"):
         FULL_SCHEMA_REGISTRY[schema_id].model_validate(payload)
+
+
+# ---- S2-1 T2（codex 轮次 12 一般 4）：v2 三 schema 的 CLI 扫描行为 -------------
+
+def test_grading_v2_exempt_by_default_hits_when_forced(tmp_path):
+    assert "rh2.private_grading_bundle.v2" in FULL_MARKER_SCAN_EXEMPT_SCHEMAS
+    path = _write(tmp_path, "g2.json", _grading_v2_payload())
+    assert main([path]) == EXIT_OK
+    assert main([path, "--force-marker-scan"]) == EXIT_FORBIDDEN_MARKER
+
+
+def test_validation_only_exempt_by_default_hits_when_forced(tmp_path):
+    assert "rh2.validation_only_bundle.v1" in FULL_MARKER_SCAN_EXEMPT_SCHEMAS
+    payload = _validation_only_payload()
+    payload["golden_patch"] = payload["golden_patch"] + "\n# touches test_patch semantics\n"
+    import hashlib as _h
+    payload["golden_patch_sha256"] = "sha256:" + _h.sha256(payload["golden_patch"].encode()).hexdigest()
+    path = _write(tmp_path, "vo.json", payload)
+    assert main([path]) == EXIT_OK
+    assert main([path, "--force-marker-scan"]) == EXIT_FORBIDDEN_MARKER
+
+
+def test_environment_package_passes_default_and_forced(tmp_path):
+    assert "rh2.environment_package.v1" not in FULL_MARKER_SCAN_EXEMPT_SCHEMAS
+    path = _write(tmp_path, "pkg.json", _environment_package_payload())
+    assert main([path]) == EXIT_OK
+    assert main([path, "--force-marker-scan"]) == EXIT_OK
