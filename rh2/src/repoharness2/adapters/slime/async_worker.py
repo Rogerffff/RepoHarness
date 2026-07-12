@@ -2,29 +2,34 @@
 model proxy 边界（D-FA-3 内部重生成）、局部幂等重试白名单。
 
 出处：05 计划 FA-1；机制论证见 `fully_async_rollout_pipeline_design_discussion.md`
-§3.2/§4/§6 与 D-FA-3（proxy 内部重生成，codex 轮次 3 #1/#2 修正后的形态）。
+§3.2/§4/§6 与 D-FA-3。本版含 FA-1 follow-up（codex 轮次 6 审查全项采纳，
+存档 `s2/codex_reviews.md`）：sink 失败的 durable fallback + run-halt、
+取消/任务源故障/关闭协议收口、attempt 全局身份、capture 两阶段事务、
+恢复必须达到 abort 窗口 target_version、attempt 超时、audit 有界存储、
+资源限额接入执行生命周期。
 
-与 slime 的绑定边界：本模块 **零 slime import**——所有运行时组件可注入
-（task_source / execute_fn / coordinator / send_fn），本地故障注入测试
-即 FA-1 验收；slime 侧 `--rollout-function-path` 的薄壳入口在 FA-5 短租
-的 glue 层落地（slime 模块在本机不可 import，诚实分界与 FA-0 同款）。
+与 slime 的绑定边界：本模块 **零 slime import**——所有运行时组件可注入；
+slime 侧生产薄壳在 `rh2/experiments/fa_bringup/rollout_entry.py`（惰性
+import，本机静态审查 + 假件测试，GPU 行为验证归 FA-5）。
 
 对 stock fully_async 三缺陷的修复对应（表面契约测试 pin 的三处）：
 
-- **N1 task 异常静默泄漏**（done_cb 只 log 后 return）→ 本 worker 把每个
-  异常执行交给注入的 failure_sink（RolloutAttemptOutcome 的生产点），
-  dispatched == delivered + failed 恒等式在测试里逐例断言；
-- **N2 阻塞式 put 停摆 reap/top-up** → 交付走非阻塞 try_put + 待投列表，
-  队列满只计数反压、暂停 top-up（反压传导到生产侧），reap 与循环本体
-  永不停摆；
-- **ABORTED 整组回队**（add_samples 组长断言对 fan-out 也会炸）→ 我方
-  abort 处置整体在 proxy 层（内部重生成），worker 面不存在 ABORTED 样本，
-  自然不依赖 stock 回队。
+- **N1 task 异常静默泄漏** → 每个异常执行经 failure_sink 落账；sink 自身
+  失败进 worker 内部 durable fallback（`unrecorded_failures`）并触发
+  **run-halt**（停止 top-up、收尾后抛 `WorkerHalted`）——账平但无记录的
+  形态被消灭；
+- **N2 阻塞式 put 停摆** → 非阻塞 try_put + 待投列表 + 反压传导；stop 后
+  消费者死亡有 drain 超时协议（未投样本进 `abandoned_deliveries` 显式
+  记账，绝不静默等死）；
+- **ABORTED 整组回队** → abort 在 proxy 层内部重生成，worker 面不存在
+  ABORTED 样本。
 """
 
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import random
 import time
 from collections.abc import Awaitable, Callable, Mapping
@@ -40,20 +45,23 @@ __all__ = [
     "BoundedDeliveryQueue",
     "ContinuousExecutionWorker",
     "DEFAULT_RETRY_WHITELIST",
+    "DeliveredDraft",
     "ExecutionTaskSpec",
     "ModelCallProxy",
+    "NonRetryableError",
     "ProxyCallResult",
     "ResourceClassName",
     "ResourceLimits",
     "RetryAttemptRecord",
     "RetrySpec",
     "UnattributableModelCallError",
+    "WorkerHalted",
     "retry_local_operation",
 ]
 
 
 # ---------------------------------------------------------------------------
-# 资源分类限额（codex 轮次 3 #9：各类独立限额，不共用全局池）
+# 资源分类限额（codex 轮次 3 #9；轮次 6：必须接入真实生命周期，见 worker/proxy）
 # ---------------------------------------------------------------------------
 
 ResourceClassName = Literal[
@@ -70,7 +78,14 @@ _DEFAULT_LIMITS: dict[str, int] = {
 
 
 class ResourceLimits:
-    """按资源类分离的并发限额：一类打满只反压自己的上游，不饿死其他类。"""
+    """按资源类分离的并发限额：一类打满只反压自己的上游，不饿死其他类。
+
+    接入点（轮次 6 修正——限额必须真实生效，不是独立摆设）：
+    `ContinuousExecutionWorker(execution_limits=...)` 把整次执行圈进
+    `sandbox` 类；`ModelCallProxy(limits=...)` 把每次 send 圈进
+    `model_call` 类；评分容器类由 GradingQueue 侧接（F5 既有并发面），
+    pending/ready 组类由 FA-2 assembler 接。
+    """
 
     def __init__(self, limits: Mapping[str, int] | None = None) -> None:
         merged = dict(_DEFAULT_LIMITS)
@@ -141,11 +156,25 @@ class BoundedDeliveryQueue:
 # ---------------------------------------------------------------------------
 
 
+class NonRetryableError(RuntimeError):
+    """显式永久错误标记：任何操作里抛出它都立即终止重试（认证失败、契约
+    冲突、digest 不符等——重复执行不可能改变结果的错误）。"""
+
+
 @dataclass(frozen=True)
 class RetrySpec:
     max_attempts: int  # 含首次
     base_delay_seconds: float = 0.5
     max_delay_seconds: float = 8.0
+
+    def __post_init__(self) -> None:
+        if self.max_attempts < 1:
+            raise ValueError(f"max_attempts={self.max_attempts} 必须 >= 1（含首次）。")
+        if not (0.0 < self.base_delay_seconds <= self.max_delay_seconds):
+            raise ValueError(
+                f"delay 非法：base={self.base_delay_seconds}, max={self.max_delay_seconds}"
+                "——须 0 < base <= max。"
+            )
 
 
 # 键 = 操作名（讨论稿 §4 白名单表的代码化）。整环境+harness 重跑、
@@ -179,11 +208,13 @@ async def retry_local_operation(
     ledger: list[RetryAttemptRecord] | None = None,
     rng: random.Random | None = None,
     sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    retryable: Callable[[BaseException], bool] | None = None,
 ) -> Any:
     """白名单式局部重试（full-jitter 指数退避）。
 
-    不在白名单的操作**只执行一次**（失败原样抛出）——"默认不重试"是
-    讨论稿 §4 的硬规则；重试记录追加进 ledger（RolloutAudit 时间线的
+    不在白名单的操作**只执行一次**；`NonRetryableError` 与 `retryable`
+    判负的异常**立即终止**（轮次 6：认证失败/契约冲突/digest 不符等永久
+    错误不许烧重试预算）。重试记录追加进 ledger（RolloutAudit 时间线的
     数据源，不新增公共 schema）。
     """
 
@@ -195,8 +226,11 @@ async def retry_local_operation(
     for attempt in range(1, max_attempts + 1):
         try:
             result = await fn()
-        except Exception as exc:  # noqa: BLE001 —— 分类交给白名单与调用方
-            is_final = attempt >= max_attempts
+        except Exception as exc:  # noqa: BLE001 —— 分类就在下面两行
+            permanent = isinstance(exc, NonRetryableError) or (
+                retryable is not None and not retryable(exc)
+            )
+            is_final = permanent or attempt >= max_attempts
             backoff = 0.0
             if not is_final:
                 assert spec is not None
@@ -248,16 +282,63 @@ class UnattributableModelCallError(RuntimeError):
 
 
 @dataclass(frozen=True)
+class DeliveredDraft:
+    """delivered attempt 的草案（capture 两阶段事务的中间态，轮次 6 严重 5）。
+
+    proxy 在响应返回时**不**直接生成 delivered 的 ModelCallAttempt——
+    capture 持久化成功之前，`capture_record_ref` 是"声称存在"的悬空引用。
+    正确顺序：proxy 返回草案 → 调用方完成 capture 持久化 →
+    `ProxyCallResult.finalize_delivered(ref)` 落账。未 finalize 的交付在
+    `ModelCallProxy.unfinalized_deliveries` 可见（FA-2/审计对账面）。
+    """
+
+    scoped_turn_id: str
+    attempt_id: str
+    attempt_number: int
+    weight_version: str
+
+
+@dataclass
 class ProxyCallResult:
-    """一次逻辑轮的最终交付：只含 delivered attempt 的响应。"""
+    """一次逻辑轮的交付：响应 + 已定案的非交付 attempts + 待 finalize 草案。"""
 
     response: Mapping[str, Any]
-    attempts: tuple[ModelCallAttempt, ...]
-    delivered_attempt_number: int
+    prior_attempts: tuple[ModelCallAttempt, ...]
+    draft: DeliveredDraft
+    _proxy: "ModelCallProxy" = field(repr=False)
+    _finalized: ModelCallAttempt | None = field(default=None, repr=False)
+
+    @property
+    def delivered_attempt_number(self) -> int:
+        return self.draft.attempt_number
+
+    @property
+    def attempts(self) -> tuple[ModelCallAttempt, ...]:
+        if self._finalized is None:
+            return self.prior_attempts
+        return (*self.prior_attempts, self._finalized)
+
+    def finalize_delivered(self, capture_record_ref: str) -> ModelCallAttempt:
+        """capture 持久化成功后落账 delivered attempt（两阶段第二步）。"""
+
+        if self._finalized is not None:
+            raise ValueError(f"{self.draft.attempt_id} 已 finalize 过（幂等违规）。")
+        attempt = ModelCallAttempt(
+            logical_turn_id=self.draft.scoped_turn_id,
+            model_call_attempt_id=self.draft.attempt_id,
+            attempt_number=self.draft.attempt_number,
+            delivery_status="delivered",
+            capture_record_ref=capture_record_ref,
+            weight_version=self.draft.weight_version,
+        )
+        self._finalized = attempt
+        self._proxy.attempts_ledger.append(attempt)
+        self._proxy._pending_drafts.discard(self.draft.attempt_id)
+        return attempt
 
 
 def _response_is_abort(response: Mapping[str, Any]) -> bool:
-    """SGLang 以**正常 JSON**返回 abort 的形态（codex 轮次 3 #1：不只网络异常）。"""
+    """SGLang 以**正常 JSON**返回 abort 的形态（不只网络异常）。"""
 
     meta = response.get("meta_info")
     if not isinstance(meta, Mapping):
@@ -272,22 +353,38 @@ def _version_int(version: str) -> int:
     return int(version, 10)
 
 
+def _artifact_record(payload: Any) -> dict[str, Any]:
+    """半截输出的有界留痕：digest + 截断预览（完整体积交外部 artifact_sink）。"""
+
+    try:
+        text = json.dumps(payload, ensure_ascii=False, default=repr, sort_keys=True)
+    except (TypeError, ValueError):
+        text = repr(payload)
+    return {
+        "sha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest(),
+        "preview": text[:256],
+        "bytes": len(text),
+    }
+
+
 class ModelCallProxy:
     """D-FA-3：更新窗口 abort 的 proxy 内部重生成（CC 全程无感知）。
 
-    守卫三条件（缺一按不可归因故障，05 计划 D-FA-3）：
+    守卫三条件（缺一按不可归因故障）：
 
-    1. **失败与已知更新窗口重叠**：以协调器协议为唯一事实源——失败时刻
-       窗口 phase != ACTIVE，或 update_epoch 相对发起时刻前进了（窗口在
-       调用期间开启过）；
-    2. **响应未交付**：结构性保证（本方法未返回即未交付；adapter 完整
-       缓冲语义是物理依据）；
-    3. **恢复后版本前进**：等到 phase==ACTIVE 且 active_version 数值大于
-       发起时刻版本，且 fencing_token 与观测到的 abort 窗口一致。
+    1. **重叠**：失败时刻窗口 phase != ACTIVE，或 update_epoch 相对发起
+       时刻前进（窗口在调用期间开启过）；
+    2. **未交付**：结构性保证（本方法未返回即未交付）；
+    3. **恢复达标**（轮次 6 严重 6 修正）：phase==ACTIVE 且
+       同 epoch → active_version == abort 窗口 target_version；
+       更晚 epoch → active_version >= target_version（epoch 单调即新窗口
+       凭据）。只"版本变大"不够——必须至少到达把我们 abort 的那次更新的
+       目标版本，否则中间态版本会被误放行。
 
-    非 abort 的异常/超出重生成上限/等待超时 → UnattributableModelCallError
-    （调用方按缺员处置）。半截输出只进 audit_artifacts，**绝不**进交付面
-    （旧 token 悬挂负测试的断言点）。
+    身份（轮次 6 严重 4）：attempt id = `{execution_scope}/{turn}_a{n}`——
+    并发 rollout 的同名 turn 不再冲突。半截输出经 `_artifact_record` 有界
+    留痕（digest+预览；完整体交 `artifact_sink`），超过 `max_audit_artifacts`
+    时按 FIFO 淘汰并计数（`audit_evictions`，长训练内存有界）。
     """
 
     def __init__(
@@ -297,38 +394,82 @@ class ModelCallProxy:
         max_regenerations: int = 3,
         wait_poll_seconds: float = 0.02,
         wait_timeout_seconds: float = 60.0,
+        attempt_timeout_seconds: float | None = None,
+        limits: ResourceLimits | None = None,
+        artifact_sink: Callable[[str, Any], str] | None = None,
+        max_audit_artifacts: int = 256,
         sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         if max_regenerations < 1:
             raise ValueError("max_regenerations 必须 >= 1。")
+        if max_audit_artifacts < 1:
+            raise ValueError("max_audit_artifacts 必须 >= 1。")
         self._coordinator = coordinator
         self._max_regenerations = max_regenerations
         self._wait_poll = wait_poll_seconds
         self._wait_timeout = wait_timeout_seconds
+        self._attempt_timeout = attempt_timeout_seconds
+        self._limits = limits
+        self._artifact_sink = artifact_sink
+        self._max_artifacts = max_audit_artifacts
         self._sleeper = sleeper
         self._clock = clock
         self.attempts_ledger: list[ModelCallAttempt] = []
-        # 半截输出的审计存放点：attempt_id -> 原始响应/异常描述（不进交付面）
         self.audit_artifacts: dict[str, Any] = {}
+        self.audit_evictions = 0
+        self._pending_drafts: set[str] = set()
+
+    @property
+    def unfinalized_deliveries(self) -> frozenset[str]:
+        """已返回草案但未 finalize 的交付（capture 事务未闭合的对账面）。"""
+
+        return frozenset(self._pending_drafts)
+
+    def _store_artifact(self, attempt_id: str, payload: Any) -> str:
+        record = _artifact_record(payload)
+        if self._artifact_sink is not None:
+            try:
+                external = self._artifact_sink(attempt_id, payload)
+                record["external_ref"] = external
+            except Exception as exc:  # noqa: BLE001 —— sink 失败不丢 digest 留痕
+                record["external_ref_error"] = f"{type(exc).__name__}: {exc}"
+        while len(self.audit_artifacts) >= self._max_artifacts:
+            oldest = next(iter(self.audit_artifacts))
+            del self.audit_artifacts[oldest]
+            self.audit_evictions += 1
+        self.audit_artifacts[attempt_id] = record
+        return f"audit:{attempt_id}"
+
+    async def _send(self, send_fn: Callable[[int], Awaitable[Mapping[str, Any]]], n: int):
+        if self._limits is None:
+            if self._attempt_timeout is None:
+                return await send_fn(n)
+            return await asyncio.wait_for(send_fn(n), timeout=self._attempt_timeout)
+        async with self._limits.acquire("model_call"):
+            if self._attempt_timeout is None:
+                return await send_fn(n)
+            return await asyncio.wait_for(send_fn(n), timeout=self._attempt_timeout)
 
     async def call(
         self,
+        execution_scope: str,
         logical_turn_id: str,
         send_fn: Callable[[int], Awaitable[Mapping[str, Any]]],
-        *,
-        capture_record_ref: Callable[[int], str],
     ) -> ProxyCallResult:
+        if not execution_scope:
+            raise ValueError("execution_scope 必填（attempt 全局身份的组成部分）。")
+        scoped = f"{execution_scope}/{logical_turn_id}"
         attempts: list[ModelCallAttempt] = []
         attempt_number = 0
         while True:
             attempt_number += 1
-            attempt_id = f"{logical_turn_id}_a{attempt_number}"
+            attempt_id = f"{scoped}_a{attempt_number}"
             window_before = self._coordinator.current_window()
             failure: BaseException | None = None
             response: Mapping[str, Any] | None = None
             try:
-                response = await send_fn(attempt_number)
+                response = await self._send(send_fn, attempt_number)
             except Exception as exc:  # noqa: BLE001 —— 归因在下方守卫做
                 failure = exc
 
@@ -338,81 +479,82 @@ class ModelCallProxy:
                 if isinstance(meta, Mapping) and meta.get("weight_version") is not None:
                     weight_version = str(meta["weight_version"])
                 if weight_version is None:
-                    # delivered 必须携带版本（契约强制）；缺失按不可归因处置
-                    self._record_failed(attempts, logical_turn_id, attempt_id, attempt_number)
+                    # delivered 必须携带版本；先留痕再落账（悬空 evidence 修复）
+                    ref = self._store_artifact(attempt_id, response)
+                    self._record_failed(
+                        attempts, scoped, attempt_id, attempt_number, evidence=[ref]
+                    )
                     raise UnattributableModelCallError(
                         "delivered_response_missing_weight_version",
                         f"{attempt_id}: 响应缺 meta_info.weight_version，provenance 不完整。",
                     )
-                attempt = ModelCallAttempt(
-                    logical_turn_id=logical_turn_id,
-                    model_call_attempt_id=attempt_id,
+                draft = DeliveredDraft(
+                    scoped_turn_id=scoped,
+                    attempt_id=attempt_id,
                     attempt_number=attempt_number,
-                    delivery_status="delivered",
-                    capture_record_ref=capture_record_ref(attempt_number),
                     weight_version=weight_version,
                 )
-                attempts.append(attempt)
                 self.attempts_ledger.extend(attempts)
+                self._pending_drafts.add(attempt_id)
                 return ProxyCallResult(
                     response=response,
-                    attempts=tuple(attempts),
-                    delivered_attempt_number=attempt_number,
+                    prior_attempts=tuple(attempts),
+                    draft=draft,
+                    _proxy=self,
                 )
 
-            # 未交付：先按协议判定窗口重叠（守卫 1）
+            payload = response if response is not None else repr(failure)
             window_now = self._coordinator.current_window()
             overlapped = (
                 window_now.phase != "ACTIVE"
                 or window_now.update_epoch > window_before.update_epoch
             )
+            ref = self._store_artifact(attempt_id, payload)
             if not overlapped:
-                self.audit_artifacts[attempt_id] = response if response is not None else repr(failure)
-                self._record_failed(attempts, logical_turn_id, attempt_id, attempt_number)
+                self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
                 raise UnattributableModelCallError(
                     "no_overlapping_update_window",
-                    f"{attempt_id}: 中断与任何更新窗口不重叠（协议 phase=ACTIVE 且 "
-                    "epoch 未前进）——按缺员处置，不做透明重试。",
+                    f"{attempt_id}: 中断与任何更新窗口不重叠——按缺员处置，不做透明重试。",
                 )
-            # abort 归因成立：记 non_delivered_aborted（窗口双凭据）
-            self.audit_artifacts[attempt_id] = response if response is not None else repr(failure)
             attempts.append(
                 ModelCallAttempt(
-                    logical_turn_id=logical_turn_id,
+                    logical_turn_id=scoped,
                     model_call_attempt_id=attempt_id,
                     attempt_number=attempt_number,
                     delivery_status="non_delivered_aborted",
                     abort_update_epoch=window_now.update_epoch,
                     abort_fencing_token=window_now.fencing_token,
-                    evidence_refs=[f"audit:{attempt_id}"],
+                    evidence_refs=[ref],
                 )
             )
             if attempt_number > self._max_regenerations:
-                self._record_failed(attempts, logical_turn_id, f"{attempt_id}_cap", attempt_number)
+                self._record_failed(
+                    attempts, scoped, f"{attempt_id}_cap", attempt_number, evidence=[ref]
+                )
                 raise UnattributableModelCallError(
                     "max_regenerations_exceeded",
-                    f"{logical_turn_id}: 连续 {attempt_number} 次被 abort——超过重生成上限，"
-                    "按不可归因故障缺员（可能是更新风暴或窗口协议异常）。",
+                    f"{scoped}: 连续 {attempt_number} 次被 abort——超过重生成上限。",
                 )
-            # 守卫 3：等 ACTIVE + 版本前进 + fencing 一致
             await self._wait_version_advance(
-                attempts, logical_turn_id, attempt_number, window_before, window_now
+                attempts, scoped, attempt_number, window_now
             )
 
     def _record_failed(
         self,
         attempts: list[ModelCallAttempt],
-        logical_turn_id: str,
+        scoped: str,
         attempt_id: str,
         attempt_number: int,
+        *,
+        evidence: list[str] | None = None,
     ) -> None:
         attempts.append(
             ModelCallAttempt(
-                logical_turn_id=logical_turn_id,
+                logical_turn_id=scoped,
                 model_call_attempt_id=f"{attempt_id}_failed",
                 attempt_number=attempt_number,
                 delivery_status="non_delivered_failed",
-                evidence_refs=[f"audit:{attempt_id}"],
+                evidence_refs=evidence or [],
             )
         )
         self.attempts_ledger.extend(attempts)
@@ -420,54 +562,83 @@ class ModelCallProxy:
     async def _wait_version_advance(
         self,
         attempts: list[ModelCallAttempt],
-        logical_turn_id: str,
+        scoped: str,
         attempt_number: int,
-        window_before: TrainingRuntimeWindow,
         abort_window: TrainingRuntimeWindow,
     ) -> None:
+        """守卫 3：恢复必须**达到 abort 窗口的 target_version**（轮次 6 严重 6）。"""
+
         try:
-            version_floor = _version_int(window_before.active_version)
-        except ValueError as exc:
-            self._record_failed(
-                attempts, logical_turn_id, f"{logical_turn_id}_nonnum", attempt_number
-            )
+            target = _version_int(abort_window.target_version)
+        except ValueError:
+            self._record_failed(attempts, scoped, f"{scoped}_nonnum", attempt_number)
             raise UnattributableModelCallError(
-                "non_numeric_version_in_window", f"协议版本非数值：{exc}"
+                "non_numeric_version_in_window",
+                f"abort 窗口 target_version={abort_window.target_version!r} 非数值。",
             ) from None
         deadline = self._clock() + self._wait_timeout
         while True:
             window = self._coordinator.current_window()
             if window.phase == "ACTIVE":
-                advanced = _version_int(window.active_version) > version_floor
-                fencing_consistent = (
-                    window.update_epoch > abort_window.update_epoch
-                    or window.fencing_token == abort_window.fencing_token
-                )
-                if advanced and fencing_consistent:
-                    return
-                if advanced and not fencing_consistent:
+                try:
+                    active = _version_int(window.active_version)
+                except ValueError:
+                    self._record_failed(attempts, scoped, f"{scoped}_nonnum", attempt_number)
+                    raise UnattributableModelCallError(
+                        "non_numeric_version_in_window",
+                        f"恢复窗口 active_version={window.active_version!r} 非数值。",
+                    ) from None
+                if window.update_epoch == abort_window.update_epoch:
+                    if window.fencing_token != abort_window.fencing_token:
+                        self._record_failed(
+                            attempts, scoped, f"{scoped}_fence", attempt_number
+                        )
+                        raise UnattributableModelCallError(
+                            "fencing_token_mismatch",
+                            f"{scoped}: 同 epoch 的 ACTIVE 窗口 fencing 与 abort 窗口不一致。",
+                        )
+                    if active == target:
+                        return
+                    if active > target:  # 同 epoch 版本超过 target：协议矛盾
+                        self._record_failed(
+                            attempts, scoped, f"{scoped}_overshoot", attempt_number
+                        )
+                        raise UnattributableModelCallError(
+                            "version_overshoot_same_epoch",
+                            f"{scoped}: 同 epoch active({active}) > target({target})——协议矛盾。",
+                        )
+                elif window.update_epoch > abort_window.update_epoch:
+                    if active >= target:
+                        return  # 更晚窗口已把版本推到/推过目标（epoch 单调即凭据）
+                    # 更晚 epoch 但版本仍低于目标：协议矛盾（版本必须单调）
                     self._record_failed(
-                        attempts, logical_turn_id, f"{logical_turn_id}_fence", attempt_number
+                        attempts, scoped, f"{scoped}_regress", attempt_number
                     )
                     raise UnattributableModelCallError(
-                        "fencing_token_mismatch",
-                        f"{logical_turn_id}: ACTIVE 窗口 fencing 与观测 abort 窗口不一致"
-                        "（陈旧窗口误归因防线）。",
+                        "version_regressed_across_epochs",
+                        f"{scoped}: epoch 前进但 active({active}) < abort target({target})。",
                     )
+                # window.update_epoch < abort_window.update_epoch：陈旧快照，继续等
             if self._clock() >= deadline:
-                self._record_failed(
-                    attempts, logical_turn_id, f"{logical_turn_id}_timeout", attempt_number
-                )
+                self._record_failed(attempts, scoped, f"{scoped}_timeout", attempt_number)
                 raise UnattributableModelCallError(
                     "version_did_not_advance",
-                    f"{logical_turn_id}: 等待 {self._wait_timeout}s 后版本未前进/未回 ACTIVE。",
+                    f"{scoped}: 等待 {self._wait_timeout}s 后未达 abort 窗口 target_version。",
                 )
             await self._sleeper(self._wait_poll)
 
 
 # ---------------------------------------------------------------------------
-# 持续执行 worker（N1/N2 修复本体）
+# 持续执行 worker（N1/N2 修复本体 + 轮次 6 生命周期收口）
 # ---------------------------------------------------------------------------
+
+
+class WorkerHalted(RuntimeError):
+    """worker 因系统性故障停机（sink 失败/任务源故障）——训练不得继续。"""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        super().__init__(f"{reason_code}: {message}")
+        self.reason_code = reason_code
 
 
 @dataclass(frozen=True)
@@ -485,6 +656,9 @@ class WorkerCounters:
     dispatched: int = 0
     delivered: int = 0
     failed: int = 0
+    abandoned: int = 0  # stop 后 drain 超时仍未投出的完成样本（显式记账）
+    sink_failures: int = 0
+    source_errors: int = 0
     delivery_backpressure: int = 0
     topup_paused_by_backpressure: int = 0
 
@@ -492,15 +666,21 @@ class WorkerCounters:
 class ContinuousExecutionWorker:
     """持续分派独立 RolloutExecution 的异步 worker（讨论稿 §6 拓扑的 A 节点）。
 
-    不变量（测试逐条断言）：
+    账目守恒（任何终态）：``dispatched == delivered + failed + abandoned``。
 
-    - **账目守恒**：dispatched == delivered + failed + in_flight + pending_out
-      （任何时刻）；结束时 dispatched == delivered + failed——异常执行经
-      failure_sink 落账（N1 修复），绝无静默消失。
-    - **反压不停摆**：交付队列满时 reap 照常、循环照常，只暂停 top-up 并
-      计数（N2 修复）；队列腾出后待投样本继续交付。
-    - worker 不感知 PromptGroup 完整性（那是 FA-2 assembler 的职责）——
-      它只保证"每次执行要么交付、要么显式失败落账"。
+    生命周期协议（轮次 6 严重 2/3 收口）：
+
+    - **sink 失败**：failure_sink 抛异常 → 失败事实进 worker 内部
+      `unrecorded_failures`（durable fallback），置 halt——停止 top-up、
+      drain 在途后抛 `WorkerHalted`（账平但无外部记录 = 不可继续训练）；
+    - **任务取消**：task.cancelled() 按失败落账（CancelledError 交 sink）；
+    - **任务源故障**：task_source 抛异常 → source_errors + halt（在途照常
+      收尾，绝不中途弃账）；
+    - **worker 自身被取消**：finally 里取消并 await 全部在途 task，逐个
+      落账后再传播取消；
+    - **stop 后消费者死亡**：`drain_timeout_seconds` 到期 → 未投样本进
+      `abandoned` 计数 +（spec, result）留在 `abandoned_deliveries`，退出
+      （绝不静默等死）。
     """
 
     def __init__(
@@ -513,64 +693,140 @@ class ContinuousExecutionWorker:
         concurrency: int = 8,
         max_pending_out: int | None = None,
         poll_interval_seconds: float = 0.005,
+        drain_timeout_seconds: float | None = None,
+        execution_limits: ResourceLimits | None = None,
+        execution_resource_class: ResourceClassName = "sandbox",
         sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         if concurrency < 1:
             raise ValueError("concurrency 必须 >= 1。")
+        resolved_pending = max_pending_out if max_pending_out is not None else concurrency
+        if resolved_pending < 1:
+            raise ValueError(f"max_pending_out={resolved_pending} 必须 >= 1。")
         self._task_source = task_source
         self._execute_fn = execute_fn
         self._queue = delivery_queue
         self._failure_sink = failure_sink
         self._concurrency = concurrency
-        self._max_pending_out = max_pending_out if max_pending_out is not None else concurrency
+        self._max_pending_out = resolved_pending
         self._poll = poll_interval_seconds
+        self._drain_timeout = drain_timeout_seconds
+        self._limits = execution_limits
+        self._resource_class = execution_resource_class
         self._sleeper = sleeper
+        self._clock = clock
         self.counters = WorkerCounters()
+        self.unrecorded_failures: list[tuple[ExecutionTaskSpec, str, str]] = []
+        self.abandoned_deliveries: list[tuple[ExecutionTaskSpec, Any]] = []
+        self.halt_reason: str | None = None
+
+    async def _guarded_execute(self, spec: ExecutionTaskSpec) -> Any:
+        if self._limits is None:
+            return await self._execute_fn(spec)
+        async with self._limits.acquire(self._resource_class):
+            return await self._execute_fn(spec)
+
+    def _account_failure(self, spec: ExecutionTaskSpec, exc: BaseException) -> None:
+        """失败必有账：sink 优先；sink 失败进 durable fallback + halt。"""
+
+        self.counters.failed += 1
+        try:
+            self._failure_sink(spec, exc)
+        except Exception as sink_exc:  # noqa: BLE001
+            self.counters.sink_failures += 1
+            self.unrecorded_failures.append(
+                (spec, f"{type(exc).__name__}: {exc}", f"{type(sink_exc).__name__}: {sink_exc}")
+            )
+            self.halt_reason = self.halt_reason or "failure_sink_failed"
 
     async def run(self, stop: asyncio.Event) -> None:
         in_flight: dict[asyncio.Task[Any], ExecutionTaskSpec] = {}
         pending_out: list[tuple[ExecutionTaskSpec, Any]] = []
-        while True:
-            # 1. reap（永不因队列状态停摆）
-            for task in [t for t in in_flight if t.done()]:
-                spec = in_flight.pop(task)
-                exc = task.exception()
-                if exc is not None:
-                    self.counters.failed += 1
-                    try:
-                        self._failure_sink(spec, exc)
-                    except Exception:  # noqa: BLE001 —— sink 自身异常不允许炸 worker
-                        pass
-                else:
-                    pending_out.append((spec, task.result()))
-            # 2. 非阻塞交付（满 = 反压计数，样本留在待投列表）
-            remaining: list[tuple[ExecutionTaskSpec, Any]] = []
-            for item in pending_out:
-                if self._queue.try_put(item):
-                    self.counters.delivered += 1
-                else:
-                    self.counters.delivery_backpressure += 1
-                    remaining.append(item)
-            pending_out = remaining
-            # 3. top-up（反压传导：待投积压超限即暂停取新任务）
-            if not stop.is_set():
-                if len(pending_out) > self._max_pending_out:
-                    self.counters.topup_paused_by_backpressure += 1
-                else:
-                    while len(in_flight) < self._concurrency:
-                        spec = self._task_source()
-                        if spec is None:  # 暂无新任务（持续 worker：下轮再询，不退出）
+        drain_deadline: float | None = None
+        try:
+            while True:
+                # 1. reap（永不因队列状态停摆；取消也按失败落账）
+                for task in [t for t in in_flight if t.done()]:
+                    spec = in_flight.pop(task)
+                    if task.cancelled():
+                        self._account_failure(spec, asyncio.CancelledError("execution cancelled"))
+                        continue
+                    exc = task.exception()
+                    if exc is not None:
+                        self._account_failure(spec, exc)
+                    else:
+                        pending_out.append((spec, task.result()))
+                # 2. 非阻塞交付（满 = 反压计数，样本留在待投列表）
+                remaining: list[tuple[ExecutionTaskSpec, Any]] = []
+                for item in pending_out:
+                    if self._queue.try_put(item):
+                        self.counters.delivered += 1
+                    else:
+                        self.counters.delivery_backpressure += 1
+                        remaining.append(item)
+                pending_out = remaining
+                # 3. top-up（halt/stop 停取新；待投积压达上限即暂停并计数）
+                halted = self.halt_reason is not None
+                if not stop.is_set() and not halted:
+                    if len(pending_out) >= self._max_pending_out:
+                        self.counters.topup_paused_by_backpressure += 1
+                    else:
+                        while len(in_flight) < self._concurrency:
+                            try:
+                                spec = self._task_source()
+                            except Exception:  # noqa: BLE001 —— 源故障 = 系统性问题
+                                self.counters.source_errors += 1
+                                self.halt_reason = self.halt_reason or "task_source_failed"
+                                break
+                            if spec is None:  # 暂无新任务（持续 worker：下轮再询）
+                                break
+                            task = asyncio.create_task(self._guarded_execute(spec))
+                            in_flight[task] = spec
+                            self.counters.dispatched += 1
+                # 4. 退出协议
+                stopping = stop.is_set() or halted
+                if stopping and not in_flight and not pending_out:
+                    break
+                if stopping and self._drain_timeout is not None:
+                    if drain_deadline is None:
+                        drain_deadline = self._clock() + self._drain_timeout
+                    elif self._clock() >= drain_deadline:
+                        # drain 超时：在途取消（下轮 reap 落账）；已完成未投样本
+                        # 显式弃置记账——绝不静默等死
+                        for task in in_flight:
+                            task.cancel()
+                        if not in_flight:
+                            for item in pending_out:
+                                self.counters.abandoned += 1
+                                self.abandoned_deliveries.append(item)
+                            pending_out = []
                             break
-                        task = asyncio.create_task(self._execute_fn(spec))
-                        in_flight[task] = spec
-                        self.counters.dispatched += 1
-            # 4. 退出条件：显式停止且账目清零（在途收完、待投投完）
-            if stop.is_set() and not in_flight and not pending_out:
-                return
-            await self._sleeper(self._poll)
+                await self._sleeper(self._poll)
+        except asyncio.CancelledError:
+            # worker 自身被取消：取消并收齐全部在途，逐个落账后再传播
+            for task in in_flight:
+                task.cancel()
+            results = await asyncio.gather(*in_flight, return_exceptions=True)
+            for (task, spec), outcome in zip(list(in_flight.items()), results):
+                if isinstance(outcome, BaseException):
+                    self._account_failure(spec, outcome)
+                else:
+                    self.counters.abandoned += 1
+                    self.abandoned_deliveries.append((spec, outcome))
+            for item in pending_out:
+                self.counters.abandoned += 1
+                self.abandoned_deliveries.append(item)
+            raise
+        if self.halt_reason is not None:
+            raise WorkerHalted(
+                self.halt_reason,
+                f"worker 停机：{self.halt_reason}（unrecorded={len(self.unrecorded_failures)}, "
+                f"source_errors={self.counters.source_errors}）——训练不得继续。",
+            )
 
     def ledger_balanced(self) -> bool:
-        """账目守恒的终态检查（N1 验收式）。"""
+        """账目守恒的终态检查（N1 验收式，含 abandoned 显式项）。"""
 
-        return self.counters.dispatched == self.counters.delivered + self.counters.failed
-
+        c = self.counters
+        return c.dispatched == c.delivered + c.failed + c.abandoned

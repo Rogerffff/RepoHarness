@@ -48,6 +48,7 @@ from repoharness2.adapters.slime.generate import (
     LeafFacts,
     RolloutOrchestrator,
     SlimeBindingConfig,
+    parse_bool_env_flag,
     rh2_custom_generate,
     rollout_task_from_bundle_pair,
     startup_checks,
@@ -377,11 +378,15 @@ class BringupService:
             policy_version=self.policy_version,
             max_context_len=self.max_context_len,
             # FA-1 接线：正式链两旋钮（默认 0 = bring-up/S1 行为逐字不变；
-            # FA-5 正式冒烟置 1——require 打开时启动断言会强制 reject 同开）
-            require_real_weight_versions=os.environ.get(
-                "RH2_REQUIRE_REAL_WEIGHT_VERSIONS", "0"
-            ) == "1",
-            reject_context_shrink=os.environ.get("RH2_REJECT_CONTEXT_SHRINK", "0") == "1",
+            # FA-5 正式冒烟置 1——require 打开时启动断言会强制 reject 同开）。
+            # 严格解析：只认 "0"/"1"，拼写错误直接炸（防静默关闭正式防线）
+            require_real_weight_versions=parse_bool_env_flag(
+                "RH2_REQUIRE_REAL_WEIGHT_VERSIONS",
+                os.environ.get("RH2_REQUIRE_REAL_WEIGHT_VERSIONS"),
+            ),
+            reject_context_shrink=parse_bool_env_flag(
+                "RH2_REJECT_CONTEXT_SHRINK", os.environ.get("RH2_REJECT_CONTEXT_SHRINK")
+            ),
         )
         driver = ClaudeCodeDriver() if HARNESS_KIND == "claude_code" else SimpleLoopDriver()
 
@@ -411,7 +416,26 @@ class BringupService:
             repair_signal_sink=repair_signal_sink,
             backpressure_events_source=lambda: list(self.grading_queue.events),
             artifact_dir=ARTIFACT_DIR / "rollouts",
+            # FA-1 follow-up（codex 轮次 6）：finalize 时刻的 current version
+            # 提供者——取 capture wire 逐轮记录的引擎实测版本里的数值最大值
+            # （"截至目前引擎报告过的最新版本"），无记录时回退启动探针值。
+            # 权重更新后新轮次的 meta_info.weight_version 会推进该值，
+            # 多 step 链不再拿启动版本冒充 current。
+            current_policy_version_provider=self._latest_engine_version,
         )
+
+    def _latest_engine_version(self) -> str:
+        latest: int | None = None
+        for versions in self.registry.weight_versions.values():
+            for version in versions:
+                try:
+                    value = int(str(version), 10)
+                except ValueError:
+                    continue
+                latest = value if latest is None or value > latest else latest
+        if latest is not None:
+            return str(latest)
+        return self.policy_version
 
     async def _run_startup_checks(self) -> None:
         """U-G renderer 断言 + U-H tape 探针。

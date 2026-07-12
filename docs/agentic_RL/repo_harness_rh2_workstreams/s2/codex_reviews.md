@@ -508,3 +508,169 @@ inspect-rh2-s1：PASS
 - **计划要求未交付**：真实 platform（原口径仅命名约定）与 registry_evidence_ref（0/216）。【followup 补齐：manifest GET + config blob 断言 linux/amd64 + evidence jsonl 回链；183/216 后限额停车可续跑】
 - **一般**：pyproject 缺 data 依赖声明【已加 data group】；缺 schema_id【v2 已加】；raw archive 覆盖不设防【immutable 守卫 + 原子写】；"当前 sha == pin"未在脚本内实现【已加信息性核对】；(repo,base_commit,F2P) 仍不宜作自动去重主键，应 task_id + duplicate cluster 人工/规则判定【T2 落实，plan 与 notes 已记】。
 - **codex 独立确认正确**：raw 230/11 列/一致性、216 映射唯一覆盖、digest 全合法、214 唯一 + 两对共享（题面/F2P/test_patch/gold 均异）、父 manifest 四项 digest 匹配、pytest 749、inspect-rh2-s1 PASS。
+
+
+---
+
+## 轮次 6（2026-07-13：FA-1 实现审查 → 全项采纳，follow-up 随 commit 落地）
+
+> 原文全文转录（tmp/FA1_codex.md）。处置见 `fa/implementation-notes.md` "FA-1 follow-up" 节：严重 1~6（生产接线薄壳 / sink durable fallback+halt / 生命周期收口 / attempt 全局身份 / capture 两阶段事务 / target_version 校验）+ 遗漏项与测试缺口逐条修复；场景 21 的落点从 orchestrator 修正到 FA 入口（S1 eval 面是 E10 正式定案，不得破坏）。测试 749 → 768。
+
+**结论**
+
+FA-1 的组件设计方向合理，但当前不能判定为“FA-1 完成”。更准确的状态是：
+
+```text
+FA-1 本地运行时组件原型完成
+FA-1 生产链接线与生命周期闭环未完成
+```
+
+建议先做一个 `FA-1 follow-up`。FA-2 可以并行设计纯状态机，但不要冻结 worker→assembler 接口，也不要进入实际接线。
+
+**严重问题**
+
+1. **FA-1 组件目前完全没有进入生产路径**
+
+仓库检索表明 [async_worker.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py) 只被测试引用。当前 glue 没有使用：
+
+- `ContinuousExecutionWorker`
+- `ModelCallProxy`
+- `ResourceLimits`
+- `BoundedDeliveryQueue`
+- FA fully-async `rollout-function-path`
+
+[glue.py:404](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:404) 仍然构造原来的 `RolloutOrchestrator`，只接了 compaction 和两个布尔开关。这与计划 [FA-1 第 1 条](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:51) 不一致。
+
+将整个 slime 薄壳推迟到 FA-5 风险太高：FA-5 应验证真实 GPU 行为，不应第一次发现接口根本没有接通。
+
+2. **worker 的“失败必有账”实际上不成立**
+
+[async_worker.py:539](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:539) 先增加 `failed`，然后调用 `failure_sink`；sink 失败后异常被直接吞掉。
+
+结果是：
+
+```text
+ledger_balanced() == true
+但没有 RolloutAttemptOutcome 或任何持久化失败记录
+```
+
+这仍然属于 N1 的“任务静默消失”，只是从 task 层转移到了 failure sink 层。必须有内部 durable fallback；fallback 也失败时应 `run_halt`，不能继续训练。
+
+3. **worker 对取消、task source 故障没有收口**
+
+最小探针已复现：
+
+- 被取消的 execution 使 [task.exception()](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:537) 抛 `CancelledError`，worker 本体退出。
+- `task_source()` 抛异常会直接终止 worker。
+- worker 自身被取消时，没有 `finally` 取消并 await 所有 in-flight task。
+- 消费者死亡且交付队列满时，stop 后也会永久等待。
+
+需要明确 shutdown protocol：停止 top-up、给在途任务 deadline、持久化 pending、取消并 drain、最终对账。
+
+4. **ModelCallProxy 的 attempt 身份会跨 rollout 冲突**
+
+[async_worker.py:326](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:326) 只用：
+
+```text
+logical_turn_id + attempt_number
+```
+
+多个并发 rollout 通常都从 `turn_0` 开始。我并发调用两次后得到：
+
+```text
+turn_0_a1
+turn_0_a1
+```
+
+这会覆盖 `audit_artifacts`，也无法唯一回链 capture。attempt id 至少必须包含 `rollout_execution_id/session_id`。
+
+5. **capture 引用不是事务性的，已经出现悬空 evidence**
+
+响应缺 `weight_version` 时，[async_worker.py:342](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:342) 生成：
+
+```text
+evidence_refs = ["audit:turn_x_a1"]
+```
+
+但 `audit_artifacts` 中没有该对象。`capture_record_ref()` 自身抛错时，ledger 和 audit 也都为空。
+
+更根本的问题是：proxy 在真实 capture 成功前就写入 `capture_record_ref`。如果后续 capture 失败，会留下“声称存在但实际不存在”的引用。建议：
+
+```text
+proxy 返回 delivered attempt draft
+-> capture 持久化成功
+-> finalize ModelCallAttempt
+```
+
+6. **恢复条件没有验证 abort 窗口的目标版本**
+
+[async_worker.py:441](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:441) 只要求恢复版本大于调用开始版本，没有要求达到 `abort_window.target_version`。
+
+我构造了：
+
+```text
+调用前 active=3
+abort window target=5
+恢复窗口 active=4
+```
+
+proxy 错误放行并交付版本 4。应验证：
+
+```text
+same epoch:
+  active_version == abort_window.target_version
+later epoch:
+  active_version >= abort_window.target_version
+  且 epoch/fencing 单调一致
+```
+
+**重要遗漏**
+
+- `attempts_ledger` 和 `audit_artifacts` 永久保存在内存，后者还保存完整半截输出。长训练会持续增长。应写 artifact store，只在内存保留引用和有界指标。
+- `ResourceLimits` 没有接入 worker、proxy、sandbox 或评分生命周期；目前只是独立 semaphore 类，不能声称五类限额已经生效。
+- `max_pending_out` 使用 `>` 而不是 `>=`，且不校验负值，实际积压可超过命名上限。
+- `retry_local_operation` 只按操作名重试，不区分异常是否可重试。认证失败、契约冲突、digest mismatch 等永久错误也会重试。需要 `retry_if(exception)` 或 typed retryable error。
+- `RetrySpec` 没有校验次数和 delay；`max_attempts=0` 最终得到 `AssertionError("unreachable")`。
+- `ModelCallProxy` 没有每 attempt timeout，模型请求永久挂起会长期占用资源。
+- glue 对布尔环境变量只认字符串 `"1"`；拼错或写 `"true"` 会静默关闭正式防线，应严格解析并拒绝未知值。
+- glue 没有给 `RolloutOrchestrator` 注入 `current_policy_version_provider`。权重更新后仍以启动探针版本作为 current，正式多 step 链会错误拒绝或计算错误 staleness。
+- 全局验收场景 21“eval 进入 FA 路径必须 fail-fast”尚未实现。
+
+**测试缺口**
+
+当前 17 条测试没有覆盖：
+
+- execution task cancellation；
+- task source / failure sink 持久化失败；
+- worker 被取消后的 in-flight 清理；
+- 消费者死亡与 shutdown deadline；
+- 重复 `logical_turn_id` 的并发调用；
+- capture callback 失败与 evidence 存在性；
+- coordinator 快照回退、非数值恢复版本、目标版本未达到；
+- raw audit 内存上限；
+- 五类 `ResourceLimits` 的真实生命周期接线；
+- 正式 env 配置解析；
+- worker→Outcome→FA-2 assembler 的端到端交付；
+- `evaluation=True` fail-fast；
+- 真实 slime `_key` 和 rollout-function-path。
+
+**可以保留**
+
+以下实现基础不错：
+
+- 非阻塞 `try_put` + pending 列表的反压方向；
+- execution 并发上限；
+- abort 响应不交付旧 token；
+- 更新风暴重生成上限；
+- retry 默认不在白名单就只运行一次；
+- S1 行为保持不变。
+
+验证结果：
+
+```text
+FA-1 专项：17 passed
+rh2 全套：749 passed
+inspect-rh2-s1：PASS
+```
+
+建议下一步先补 `FA-1 follow-up`，至少关闭生产接线、durable failure ledger、取消/退出语义、全局 attempt identity、capture 事务和窗口 target 校验。FA-2 可同时编写状态机与报告 schema，但暂时不要绑定当前 worker 输出形状。没有修改文件。

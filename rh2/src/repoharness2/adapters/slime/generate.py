@@ -136,6 +136,7 @@ __all__ = [
     "backfill_leaf_sample",
     "detect_context_shrink",
     "ensure_claude_code_compaction_disabled",
+    "parse_bool_env_flag",
     "rh2_custom_generate",
     "rollout_task_from_bundle_pair",
     "startup_checks",
@@ -558,6 +559,23 @@ class GenerationCaptureHook:
 # ---------------------------------------------------------------------------
 
 _CC_EXTRA_ENVS_KEY = "SLIME_AGENT_CC_EXTRA_ENVS"
+
+
+def parse_bool_env_flag(name: str, raw: str | None, *, default: bool = False) -> bool:
+    """正式防线开关的严格解析：只认 "0"/"1"（codex FA-1 审查——"true"/拼写
+    错误静默变 False 会无声关闭正式防线，必须拒绝未知值）。"""
+
+    if raw is None or raw == "":
+        return default
+    if raw == "1":
+        return True
+    if raw == "0":
+        return False
+    raise SlimeBindingError(
+        "invalid_bool_env_flag",
+        f"{name}={raw!r} 不是合法布尔开关——只接受 '0'/'1'（严格解析，"
+        "防止拼写错误静默关闭正式防线）。",
+    )
 
 
 def ensure_claude_code_compaction_disabled(env: MutableMapping[str, str]) -> dict[str, str]:
@@ -1324,6 +1342,11 @@ class RolloutOrchestrator:
     ) -> list[Any]:
         """custom_generate 本体。任何异常都收口为 slime abort 形状 + 清理执行。"""
 
+        # 注意：evaluation=True 是 S1 既有正式面（E10 定案：训练与评测同链路，
+        # eval 占位形状返回）——**本方法不拒绝 eval**。05 计划场景 21 的
+        # "eval 进入 FA 路径 fail-fast" 落在 FA 生产薄壳
+        # （experiments/fa_bringup/rollout_entry.py）：持续 worker 拓扑下
+        # eval 必须走标准路径，与 stock fully_async 的 raise 同位。
         task = (
             self._task_resolver
             if isinstance(self._task_resolver, RolloutTaskSpec)

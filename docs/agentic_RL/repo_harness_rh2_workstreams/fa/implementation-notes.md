@@ -257,3 +257,50 @@ BoundedDeliveryQueue / ResourceLimits / ModelCallProxy / 重试白名单）+
   策略（组 deadline 已在计划内）。
 - max_regenerations=3 是预注册值（更新间隔 » 单轮解码时长时理论上
   1 次就够）；FA-5 实测更新风暴形态后校准。
+
+## FA-1 follow-up（2026-07-13，codex 审查全项采纳；原文存档
+## `../s2/codex_reviews.md` 轮次 6）
+
+- **严重 1（组件未进生产路径）**：新建 `experiments/fa_bringup/rollout_entry.py`
+  ——slime `--rollout-function-path` 的真实 FA 入口，组装 worker/queue/
+  limits，从 data_buffer 取组、逐 execution 分派 `args.rh2_orchestrator.
+  generate`、interim 聚合器按组收齐/整组显式弃置/收满批次返回。**零
+  slime import**（Sample 全程鸭子类型）→ 本地假件测试覆盖全部编排逻辑，
+  GPU 侧只剩"slime 真把它当入口调"（FA-5 首检项）。FA-2 接缝显式：
+  interim 聚合器整体替换为 assembler，worker 输出形状保持。开发中自查
+  补了一个真缺口：源枯竭 + 批次未满会永久空转 → 加 `batch_starved`
+  饥饿超时。
+- **严重 2（sink 失败静默）**：failure_sink 抛异常 → worker 内部
+  `unrecorded_failures` durable fallback + **run-halt**（停止 top-up、
+  drain 后抛 `WorkerHalted`）——"账平但无记录"形态被消灭。
+- **严重 3（生命周期）**：取消的 execution 按失败落账；task_source 异常
+  → halt（在途照常收尾）；worker 自身被取消 → finally 取消并 await 全部
+  在途、逐个落账再传播；stop 后消费者死亡 → `drain_timeout_seconds` 到期
+  把未投样本进 `abandoned` 显式记账退出。账目守恒扩为
+  dispatched == delivered + failed + abandoned。
+- **严重 4（attempt 身份）**：`proxy.call(execution_scope, turn, send)`
+  ——attempt id = `{scope}/{turn}_a{n}`，并发 rollout 同名 turn 不冲突
+  （交错鲁棒的并发测试）。
+- **严重 5（capture 事务）**：delivered 改**两阶段**——proxy 返回
+  `DeliveredDraft`，调用方 capture 持久化后 `finalize_delivered(ref)` 落账；
+  未 finalize 的交付在 `unfinalized_deliveries` 对账可见。悬空 evidence
+  修复：所有 evidence_refs 先 `_store_artifact` 再引用（存在性测试）。
+- **严重 6（版本放行漏洞）**：恢复必须**达到 abort 窗口 target_version**
+  ——同 epoch 要求 active==target（fence 一致）；更晚 epoch 要求
+  active>=target；codex 反例（before 3/target 5/恢复 4）现在正确拒绝
+  （version_regressed_across_epochs），另加同 epoch overshoot 矛盾检查。
+- **遗漏项**：audit_artifacts 改有界（digest+256B 预览，FIFO 淘汰计数，
+  完整体交可注入 artifact_sink）；ResourceLimits 真实接入（worker 的
+  execution 圈 sandbox 类、proxy 的 send 圈 model_call 类，各有生效
+  测试）；`max_pending_out` 改 `>=` 并校验；retry 加 `NonRetryableError`
+  + `retryable` 谓词（永久错误不烧预算）+ RetrySpec 域校验；proxy 加
+  `attempt_timeout_seconds`；glue 布尔旋钮改 `parse_bool_env_flag` 严格
+  解析（只认 0/1，拼错即炸）；glue 注入 `current_policy_version_provider`
+  （= capture registry 逐轮引擎版本的数值最大值，回退启动探针值）。
+- **场景 21 的落点修正（重要）**：初版把 eval fail-fast 放进
+  `orchestrator.generate`，被既有测试当场揪出——**eval 占位形状是 S1 的
+  正式面**（E10 定案：训练与评测同链路）。拒绝移到 FA 入口
+  `generate_rollout_async(evaluation=True)`（与 stock fully_async 的
+  raise 同位）；S1 路径支持 eval、FA 路径拒绝 eval 是设计差异，两条路径
+  各有测试钉死。
+- 测试 749 → 768（worker/proxy 重写 29 条 + 薄壳 7 条）。
