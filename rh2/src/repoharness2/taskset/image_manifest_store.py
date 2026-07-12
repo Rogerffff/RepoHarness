@@ -1,23 +1,16 @@
 """S2-1 键控镜像清单的状态存储：加载校验 / 事务写 / 完成断言（纯逻辑，零网络）。
 
-从 `rh2/experiments/s2_1_ingestion/resolve_image_digests.py` 抽出（codex 轮次 7：
-数据脚本的状态机必须可单测），修复该轮指出的三个缺口：
-
-1. **manifest ↔ evidence 引用完整性**：`is_enriched` 只看 entry 字段形状；
-   真正的 enriched 判定发生在 `load_state` / `finish_assertions`——逐 entry
-   交叉核对 evidence 行（manifest/config digest、repository、content type、
-   platform、evidence_id），evidence 不得有多余/重复 id。
-2. **双文件事务**：`flush_transaction` 先原子写 evidence → 计算其 sha256 +
-   行数写进 manifest header → 最后原子写 manifest（manifest = 提交记录）。
-   崩溃只可能留下"evidence 超前于 manifest"的状态，`load_state` 按提交记录
-   恢复（丢弃未提交的 evidence 行并告警），反方向（manifest 声称而 evidence
-   缺失/不符）一律拒绝。
-3. **引用路径**：`registry_evidence_ref = raw/image_registry_evidence.jsonl#<evidence_id>`
-   （相对 manifest 所在目录可解析；evidence 行带稳定 `evidence_id` 与 schema_id）。
-
-legacy 迁移：v2 产物（旧 ref 格式、evidence 无 schema_id、未验 config blob
-哈希）加载时归类为 `legacy`——digest 事实保留，但不算 enriched，由脚本的
-升级通道（仅 blob GET，不计 pull 限额）补验后升格。
+演进史（codex 轮次 7~9 审查驱动，存档 s2/codex_reviews.md）：
+  v3   轮次 7：manifest↔evidence 引用完整性、双文件事务（evidence 先写、
+       manifest 为提交记录）、evidence_ref 修正 + config blob 哈希实证。
+  v3.1 轮次 8：事务恢复对已提交集合做规范化重序列化 SHA 回验、manifest
+       重复 id 拒绝、header 机器账目对账、manifest 原始字节哈希实证。
+  v4   轮次 9：**严格性不再可被"删字段"关闭**——v3.1 把严格对账挂在可选
+       字段上（删掉 evidence_file_sha256 / reverify_count / source_refs_
+       file_sha256 或改 evidence_file 路径即可降级绕过，fail-open）。v4 是
+       显式新 schema：全部 header 字段必填必验；旧 v2/v3 产物只能通过
+       `migrate_v3_manifest`（调用方提供旧文件 sha256 pin，只接受已知产物）
+       一次性显式迁移并立即重写为 v4；`load_state` 只认 v4。
 """
 
 from __future__ import annotations
@@ -29,11 +22,17 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-MANIFEST_SCHEMA_ID = "rh2.s2_1.image_manifest_keyed.v3"
-LEGACY_MANIFEST_SCHEMA_IDS = {"rh2.s2_1.image_manifest_keyed.v2"}
+MANIFEST_SCHEMA_ID = "rh2.s2_1.image_manifest_keyed.v4"
+MANIFEST_SCHEMA_VERSION = 4
+MIGRATABLE_SCHEMA_IDS = {
+    "rh2.s2_1.image_manifest_keyed.v2",
+    "rh2.s2_1.image_manifest_keyed.v3",
+}
 EVIDENCE_SCHEMA_ID = "rh2.s2_1.image_registry_evidence.v1"
 EVIDENCE_RELPATH = "raw/image_registry_evidence.jsonl"
+SOURCE_REFS_RELPATH = "data_freeze/meta/image_refs_swegym.txt"
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 ENTRY_REQUIRED = ("manifest_content_type", "resolved_at", "method")
 # entry ↔ evidence 必须逐字段一致的事实面
@@ -63,7 +62,7 @@ class Store:
     entries: dict[str, dict] = field(default_factory=dict)
     evidence: dict[str, dict] = field(default_factory=dict)
     legacy_ids: set[str] = field(default_factory=set)   # v2 旧条目：blob 补验通道（零限额）
-    reverify_ids: set[str] = field(default_factory=set)  # evidence 缺 manifest 字节实证：manifest GET 复验通道（计限额）
+    reverify_ids: set[str] = field(default_factory=set)  # 缺 manifest 字节实证：manifest GET 复验通道（计限额）
     recovered_drop: int = 0  # 事务恢复时丢弃的未提交 evidence 行数
 
 
@@ -115,41 +114,35 @@ def cross_check(e: dict, ev: dict) -> list[str]:
 
 
 def fully_verified(e: dict, ev: dict) -> bool:
-    """完整实证 = core 交叉核对通过 ∧ manifest 原始字节哈希已验（codex 轮次 8 补强）。"""
+    """完整实证 = core 交叉核对通过 ∧ manifest 原始字节哈希已验（轮次 8 补强）。"""
     return not cross_check(e, ev) and ev.get("manifest_blob_sha256_verified") is True
 
 
-def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
-               frozen_refs: set[str], refs_digest: str, expected_ref) -> Store:
-    """fail-closed 加载；唯一允许的降级 = 事务恢复（evidence 超前）与 legacy 归类。"""
-    st = Store()
-    if not manifest_path.exists():
-        if evidence_path.exists():
-            raise ValueError("evidence 存在而 manifest 不存在——无提交记录，拒绝加载（先人工裁决）")
-        return st
+def _canonical_evidence_payload(evidence: dict[str, dict]) -> bytes:
+    return "".join(
+        json.dumps(evidence[k], ensure_ascii=False, sort_keys=True) + "\n"
+        for k in sorted(evidence)
+    ).encode("utf-8")
 
-    doc = json.loads(manifest_path.read_text())
-    hdr = doc.get("header", {})
-    schema = hdr.get("schema_id")
-    legacy_manifest = schema in LEGACY_MANIFEST_SCHEMA_IDS
-    if schema != MANIFEST_SCHEMA_ID and not legacy_manifest:
-        raise ValueError(f"manifest schema_id 不认识: {schema!r}")
-    if hdr.get("source_refs_file_sha256") not in (None, refs_digest):
-        raise ValueError("header 的 refs 文件 digest 与当前冻结清单不符（数据面变动？）")
 
+def _parse_entries(doc: dict, survivors: set[str], frozen_refs: set[str],
+                   expected_ref) -> tuple[dict[str, dict], int]:
+    entries: dict[str, dict] = {}
     problems: list[str] = []
-    raw_entry_count = 0
+    raw_count = 0
     for e in doc.get("entries", []):
-        raw_entry_count += 1
+        raw_count += 1
         iid = e.get("instance_id", "")
-        if iid in st.entries:
-            raise ValueError(f"manifest 重复 instance_id: {iid}")  # codex 轮次 8 问题 2
+        if iid in entries:
+            raise ValueError(f"manifest 重复 instance_id: {iid}")  # 轮次 8 问题 2
         problems.extend(validate_entry(e, survivors, frozen_refs, expected_ref))
-        st.entries[iid] = e
+        entries[iid] = e
     if problems:
         raise ValueError("manifest entries 校验不过，拒绝续跑：\n  " + "\n  ".join(problems[:10]))
+    return entries, raw_count
 
-    # evidence 读入（重复 id 即拒）
+
+def _parse_evidence(evidence_path: Path) -> dict[str, dict]:
     raw_lines: dict[str, dict] = {}
     if evidence_path.exists():
         for line in evidence_path.read_text().splitlines():
@@ -160,37 +153,30 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
             if iid in raw_lines:
                 raise ValueError(f"evidence 重复 instance_id: {iid}")
             raw_lines[iid] = ev
+    return raw_lines
 
-    # 事务恢复判定：header 记录的 evidence digest 是提交记录。
-    committed_sha = hdr.get("evidence_file_sha256")
-    claimed = {i for i, e in st.entries.items() if entry_shape_enriched(e)}
-    if committed_sha is not None and not evidence_path.exists():
-        raise ValueError("提交记录存在但 evidence 文件缺失——不可恢复，拒绝")
-    if committed_sha is not None and evidence_path.exists():
-        actual = sha256_bytes(evidence_path.read_bytes())
-        if actual != committed_sha:
-            # 唯一可恢复方向：evidence 超前 = 已提交行**逐字节原样**存在 + 若干
-            # 未提交新行。已提交集合按 flush 同规则规范化重序列化后回验 SHA
-            # ——已提交行的任何字段变更（含 cross_check 之外的字段，如
-            # fetched_at）都会使回验失败而被拒绝（codex 轮次 8 问题 1）。
-            if not claimed <= set(raw_lines):
-                raise ValueError("evidence 与提交记录不符且缺已提交行——不可恢复，拒绝")
-            committed_payload = _canonical_evidence_payload({i: raw_lines[i] for i in claimed})
-            if sha256_bytes(committed_payload) != committed_sha:
-                raise ValueError("evidence 已提交行与提交记录 SHA 回验不符（已提交内容被修改）——拒绝")
-            extras = set(raw_lines) - claimed
-            for x in extras:
-                raw_lines.pop(x)
-            st.recovered_drop = len(extras)
 
-    # header 机器账目对账（codex 轮次 8 问题 3；legacy v2 header 无这些字段则跳过）
-    if hdr.get("count") is not None and hdr["count"] != raw_entry_count:
-        raise ValueError(f"header.count={hdr['count']} 与 entries 实际 {raw_entry_count} 不符")
-    if hdr.get("evidence_line_count") is not None and hdr["evidence_line_count"] != len(raw_lines):
-        raise ValueError(
-            f"header.evidence_line_count={hdr['evidence_line_count']} 与已提交 evidence {len(raw_lines)} 不符")
+def _recover_transaction(entries: dict[str, dict], raw_lines: dict[str, dict],
+                         committed_sha: str, evidence_path: Path) -> int:
+    """提交记录回验（轮次 8 问题 1）：已提交集合规范化重序列化 SHA 必须命中；
+    唯一可恢复方向 = evidence 超前（已提交行逐字节原样 + 纯追加）。返回丢弃行数。"""
+    actual = sha256_bytes(evidence_path.read_bytes())
+    if actual == committed_sha:
+        return 0
+    claimed = {i for i, e in entries.items() if entry_shape_enriched(e)}
+    if not claimed <= set(raw_lines):
+        raise ValueError("evidence 与提交记录不符且缺已提交行——不可恢复，拒绝")
+    committed_payload = _canonical_evidence_payload({i: raw_lines[i] for i in claimed})
+    if sha256_bytes(committed_payload) != committed_sha:
+        raise ValueError("evidence 已提交行与提交记录 SHA 回验不符（已提交内容被修改）——拒绝")
+    extras = set(raw_lines) - claimed
+    for x in extras:
+        raw_lines.pop(x)
+    return len(extras)
 
-    # 逐 entry 分类：fully-verified / reverify（缺 manifest 字节实证）/ legacy / digest-only
+
+def _classify(st: Store, raw_lines: dict[str, dict], legacy_tolerant: bool) -> int:
+    """逐 entry 分类（enriched 需 evidence 交叉一致）；返回 fully-verified 数。"""
     n_fully = 0
     for iid, e in st.entries.items():
         if entry_shape_enriched(e):
@@ -204,25 +190,108 @@ def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
             if ev.get("manifest_blob_sha256_verified") is True:
                 n_fully += 1
             else:
-                st.reverify_ids.add(iid)  # manifest GET 复验通道（计限额）
-        elif legacy_manifest or e.get("config_digest"):
-            # v2 legacy：digest 事实在 entries 里；旧格式 evidence 不保留
-            # （升级通道从 blob 重建，事实无损）
+                st.reverify_ids.add(iid)
+        elif legacy_tolerant and e.get("config_digest"):
+            # v2 legacy：digest 事实在 entries；旧格式 evidence 不保留（升级通道重建）
             st.legacy_ids.add(iid)
         # 其余 = digest-only（v1 形态），走完整富化
-    # enriched_count 严格对账只对 v3.1+ 文件（带 reverify_count 标记）执行；
-    # v3.0 文件的 enriched_count 是"cross-check 通过"旧口径，一次性迁移时跳过。
-    if hdr.get("reverify_count") is not None:
-        if hdr.get("enriched_count") != n_fully:
-            raise ValueError(f"header.enriched_count={hdr.get('enriched_count')} 与实际 fully-verified {n_fully} 不符")
-        if hdr["reverify_count"] != len(st.reverify_ids):
-            raise ValueError(f"header.reverify_count={hdr['reverify_count']} 与实际 {len(st.reverify_ids)} 不符")
     extra_ev = set(raw_lines) - set(st.entries)
     if extra_ev:
         raise ValueError(f"evidence 含 manifest 之外的 id（{len(extra_ev)} 条）——拒绝")
-    for iid in set(raw_lines) - claimed:
-        # 非 enriched-shape 条目名下的 evidence 行（如 legacy 旧格式）不保留
-        raw_lines.pop(iid, None)
+    return n_fully
+
+
+def load_state(manifest_path: Path, evidence_path: Path, survivors: set[str],
+               frozen_refs: set[str], refs_digest: str, expected_ref) -> Store:
+    """严格 v4 加载：全部 header 字段必填必验，缺任一即拒（fail-closed）。
+
+    轮次 9 修复核心：严格性不可被"删字段"降级——v2/v3 产物不被直接加载，
+    报错指向 `migrate_v3_manifest` 显式迁移。
+    """
+    st = Store()
+    if not manifest_path.exists():
+        if evidence_path.exists():
+            raise ValueError("evidence 存在而 manifest 不存在——无提交记录，拒绝加载（先人工裁决）")
+        return st
+
+    doc = json.loads(manifest_path.read_text())
+    hdr = doc.get("header", {})
+    schema = hdr.get("schema_id")
+    if schema in MIGRATABLE_SCHEMA_IDS:
+        raise ValueError(
+            f"旧 schema {schema!r} 不再被直接加载（防降级伪装）——"
+            "用 migrate_v3_manifest 提供旧文件 sha256 pin 做一次性显式迁移")
+    if schema != MANIFEST_SCHEMA_ID:
+        raise ValueError(f"manifest schema_id 不认识: {schema!r}")
+
+    def _req(fld: str):
+        if fld not in hdr or hdr[fld] is None:
+            raise ValueError(f"v4 header 缺必填字段 {fld}——拒绝（严格性不可被删字段关闭）")
+        return hdr[fld]
+
+    if _req("schema_version") != MANIFEST_SCHEMA_VERSION:
+        raise ValueError(f"schema_version={hdr['schema_version']} != {MANIFEST_SCHEMA_VERSION}")
+    if _req("source_refs_file") != SOURCE_REFS_RELPATH:
+        raise ValueError(f"source_refs_file={hdr['source_refs_file']!r} 与固定路径不符")
+    if _req("source_refs_file_sha256") != refs_digest:
+        raise ValueError("header 的 refs 文件 digest 与当前冻结清单不符（数据面变动？）")
+    if _req("evidence_file") != EVIDENCE_RELPATH:
+        raise ValueError(f"evidence_file={hdr['evidence_file']!r} 与固定路径不符")
+    committed_sha = str(_req("evidence_file_sha256"))
+    if not SHA256_RE.match(committed_sha):
+        raise ValueError("evidence_file_sha256 不是合法 sha256")
+    for fld in ("evidence_line_count", "count", "enriched_count", "reverify_count"):
+        _req(fld)
+
+    st.entries, raw_entry_count = _parse_entries(doc, survivors, frozen_refs, expected_ref)
+    if not evidence_path.exists():
+        raise ValueError("提交记录存在但 evidence 文件缺失——不可恢复，拒绝")
+    raw_lines = _parse_evidence(evidence_path)
+    st.recovered_drop = _recover_transaction(st.entries, raw_lines, committed_sha, evidence_path)
+
+    if hdr["count"] != raw_entry_count:
+        raise ValueError(f"header.count={hdr['count']} 与 entries 实际 {raw_entry_count} 不符")
+    if hdr["evidence_line_count"] != len(raw_lines):
+        raise ValueError(
+            f"header.evidence_line_count={hdr['evidence_line_count']} 与已提交 evidence {len(raw_lines)} 不符")
+
+    n_fully = _classify(st, raw_lines, legacy_tolerant=False)
+    if hdr["enriched_count"] != n_fully:
+        raise ValueError(f"header.enriched_count={hdr['enriched_count']} 与实际 fully-verified {n_fully} 不符")
+    if hdr["reverify_count"] != len(st.reverify_ids):
+        raise ValueError(f"header.reverify_count={hdr['reverify_count']} 与实际 {len(st.reverify_ids)} 不符")
+    return st
+
+
+def migrate_v3_manifest(manifest_path: Path, evidence_path: Path, survivors: set[str],
+                        frozen_refs: set[str], refs_digest: str, expected_ref,
+                        expected_manifest_sha256: str) -> Store:
+    """一次性显式迁移：只接受 sha256 pin 命中的已知旧产物（轮次 9）。
+
+    调用方拿到 Store 后必须立即 `flush_transaction` 重写为 v4——旧文件
+    不允许以旧 schema 继续存在。
+    """
+    if not manifest_path.exists():
+        raise ValueError("迁移目标 manifest 不存在")
+    actual = sha256_bytes(manifest_path.read_bytes())
+    if actual != expected_manifest_sha256:
+        raise ValueError(
+            f"旧产物 digest 不符（actual {actual[:16]}… != pin {expected_manifest_sha256[:16]}…）"
+            "——只迁移已知产物，拒绝")
+    doc = json.loads(manifest_path.read_text())
+    hdr = doc.get("header", {})
+    if hdr.get("schema_id") not in MIGRATABLE_SCHEMA_IDS:
+        raise ValueError(f"schema {hdr.get('schema_id')!r} 不在可迁移集合 {sorted(MIGRATABLE_SCHEMA_IDS)}")
+    if hdr.get("source_refs_file_sha256") not in (None, refs_digest):
+        raise ValueError("旧 header 的 refs 文件 digest 与当前冻结清单不符")
+
+    st = Store()
+    st.entries, _ = _parse_entries(doc, survivors, frozen_refs, expected_ref)
+    raw_lines = _parse_evidence(evidence_path)
+    committed_sha = hdr.get("evidence_file_sha256")
+    if committed_sha is not None and evidence_path.exists():
+        st.recovered_drop = _recover_transaction(st.entries, raw_lines, committed_sha, evidence_path)
+    _classify(st, raw_lines, legacy_tolerant=True)
     return st
 
 
@@ -244,35 +313,29 @@ def _atomic_write(path: Path, payload: bytes) -> None:
     os.replace(tmp, path)
 
 
-def _canonical_evidence_payload(evidence: dict[str, dict]) -> bytes:
-    return "".join(
-        json.dumps(evidence[k], ensure_ascii=False, sort_keys=True) + "\n"
-        for k in sorted(evidence)
-    ).encode("utf-8")
-
-
 def flush_transaction(manifest_path: Path, evidence_path: Path, st: Store,
                       refs_digest: str) -> None:
     """事务序：evidence 先落盘 → digest/行数进 header → manifest 最后作为提交记录。"""
     ev_payload = _canonical_evidence_payload(st.evidence)
     _atomic_write(evidence_path, ev_payload)
     enriched = sum(1 for k in st.entries if is_enriched(st, k))
+    reverify = sum(
+        1 for k in st.entries
+        if entry_shape_enriched(st.entries[k]) and not is_enriched(st, k)
+    )
     doc = {
         "header": {
             "schema_id": MANIFEST_SCHEMA_ID,
-            "schema_version": 3,
+            "schema_version": MANIFEST_SCHEMA_VERSION,
             "purpose": "S2-1 T1b 键控镜像清单：216 survivor 的稳定镜像身份 + 实证平台",
-            "source_refs_file": "data_freeze/meta/image_refs_swegym.txt",
+            "source_refs_file": SOURCE_REFS_RELPATH,
             "source_refs_file_sha256": refs_digest,
             "evidence_file": EVIDENCE_RELPATH,
             "evidence_file_sha256": sha256_bytes(ev_payload),
             "evidence_line_count": len(st.evidence),
             "count": len(st.entries),
-            "enriched_count": enriched,  # v3.1 起 = fully-verified 数
-            "reverify_count": sum(
-                1 for k in st.entries
-                if entry_shape_enriched(st.entries[k]) and not is_enriched(st, k)
-            ),  # v3.1 标记字段：存在即启用 enriched_count 严格对账
+            "enriched_count": enriched,
+            "reverify_count": reverify,
         },
         "entries": [st.entries[k] for k in sorted(st.entries)],
     }

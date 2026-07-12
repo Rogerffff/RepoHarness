@@ -915,3 +915,13 @@ Claude Code 取消 HTTP 请求
 - **一般 2：header 机器账目（count/enriched_count/evidence_line_count）不对账**——全改 999 仍加载成功。【v3.1 对账；enriched_count 严格检查以 reverify_count 标记区分 v3.0 旧口径一次性迁移】
 - **补强：manifest 原始字节 sha256 == Docker-Content-Digest**。【v3.1 实证并入 evidence（manifest_blob_sha256_verified）；旧 184 条归 reverify 通道，本轮限额窗口重置后全部补验，零漂移；185/216 fully-verified】
 - codex 独立验证：13 定向 + 781 全套通过、inspect-rh2-s1 PASS、184 条内部交叉核对通过；T1 保持 OPEN、T2 可并行的判定与我方一致。
+
+
+---
+
+## 轮次 9（2026-07-13：v3.1 复审 → 四项修复正确；1 严重 = 严格性可被删字段降级绕过）
+
+- **严重：v3.1 可伪装成旧 v3**——严格对账挂在可选字段（reverify_count 等）上；四个反例（删 evidence_file_sha256 / 删 reverify_count+改 enriched_count=999 / 删 source_refs_file_sha256 / 改 evidence_file 路径）均被接受，组合反例（删提交 SHA + 改已提交 evidence）也被接受。【v4 修复：显式新 schema，header 十字段必填必验；v2/v3 直接加载拒绝；migrate_v3_manifest 仅接受 sha256 pin 命中的已知产物并立即重写 v4；+14 回归测试（33 项全绿）；真实产物已 pin 迁移，185 条无损，现 186/216】
+- 其余确认正确：已提交行 SHA 回验 / 重复 id 拒绝 / header 计数（标记在场时）/ manifest 字节哈希；真实产物 216/185/零 legacy/零恢复丢弃、6 项 digest 匹配、19+797 通过、inspect-rh2-s1 PASS。
+- 小问题：s2_1_manifest 的"13 项无网络单测"过时。【已更新为 33 项】
+- 建议"最后 31 条拉取前先升版，避免收口后再迁移整份账本"——已照做（本轮先迁移后续富化）。

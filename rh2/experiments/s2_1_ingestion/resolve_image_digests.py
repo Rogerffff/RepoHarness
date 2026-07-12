@@ -37,7 +37,8 @@ sys.path.insert(0, str(REPO_ROOT / "rh2" / "src"))
 
 from repoharness2.taskset.image_manifest_store import (  # noqa: E402
     DIGEST_RE, EVIDENCE_SCHEMA_ID, Store, evidence_id_for, evidence_ref_for,
-    finish_assertions, flush_transaction, is_enriched, load_state, sha256_bytes,
+    finish_assertions, flush_transaction, is_enriched, load_state,
+    migrate_v3_manifest, sha256_bytes,
 )
 
 DATA_FREEZE = REPO_ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams/data_freeze"
@@ -212,7 +213,21 @@ def main() -> None:
             fail(f"规则推导的 {expected_ref(iid)} 不在冻结清单中（映射校验失败）")
     print("[t1b] `_s_`+lower 映射校验 OK：216/216 推导 ref 均存在于冻结清单")
 
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--migrate-legacy-sha256", default=None,
+                    help="一次性显式迁移旧 v2/v3 manifest：传入旧文件的 sha256 pin"
+                         "（只接受已知产物；迁移后立即重写为 v4）")
+    args = ap.parse_args()
+
     try:
+        if args.migrate_legacy_sha256:
+            st = migrate_v3_manifest(OUT_PATH, EVIDENCE_PATH, survivors, frozen_refs,
+                                     refs_digest, expected_ref,
+                                     args.migrate_legacy_sha256)
+            flush_transaction(OUT_PATH, EVIDENCE_PATH, st, refs_digest)
+            print(f"[t1b] legacy 迁移完成并已重写为 v4（entries {len(st.entries)}，"
+                  f"reverify {len(st.reverify_ids)}，legacy {len(st.legacy_ids)}）")
         st = load_state(OUT_PATH, EVIDENCE_PATH, survivors, frozen_refs,
                         refs_digest, expected_ref)
     except ValueError as exc:

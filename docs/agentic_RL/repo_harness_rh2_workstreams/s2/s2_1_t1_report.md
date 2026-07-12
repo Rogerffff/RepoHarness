@@ -1,6 +1,6 @@
 # S2-1 T1 报告：raw 重抓归档 + 键控镜像清单
 
-日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 二次更新）：**T1a PASS；T1b 部分完成（digest 216/216，fully-verified 185/216）——T2 可并行开工，T1 未验收**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
+日期：2026-07-12。执行：S2-1 线程（本机）。依据：执行计划 §4 T1。判定（2026-07-13 三次更新）：**T1a PASS；T1b 部分完成（digest 216/216，fully-verified 186/216，schema v4）——T2 可并行开工，T1 未验收**。产物 digest 账：`s2_1_manifest_v0.json`（回链 freeze_manifest v0.1，冻结账本未动）。
 
 ## T1a raw 重抓归档（`rh2/experiments/s2_1_ingestion/fetch_raw_lite.py`，可重跑）
 
@@ -124,3 +124,23 @@ SHA → v3.0 照单全收且 recovered_drop=0，因为 fetched_at 不在 cross_c
 补齐字节实证（零 digest 漂移——相当于对既有数据做了一次全量复验）+ 1 条新
 富化：当前 185/216 fully-verified，剩 31 条待下一窗口。
 ```
+
+## T1 follow-up 4（2026-07-13，codex 轮次 9 → schema v4）
+
+降级绕过缺口成立（四个反例：删 evidence_file_sha256 / 删 reverify_count 改
+enriched_count=999 / 删 source_refs_file_sha256 / 改 evidence_file 路径均被
+v3.1 接受；组合反例 = 删提交 SHA 后改已提交 evidence 也被接受）。根因：
+v3.1 的严格性挂在**可选字段**上——删字段即关闭 fail-closed。
+
+v4 修复：显式新 schema（rh2.s2_1.image_manifest_keyed.v4），header 十个字段
+**必填必验**（schema_version/source_refs_file 及其 sha256/evidence_file 及其
+sha256/evidence_line_count/count/enriched_count/reverify_count；路径字段与
+固定值比对、digest 字段正则校验）；v2/v3 直接加载一律拒绝（报错指向显式
+迁移），`migrate_v3_manifest` 只接受调用方提供 sha256 pin 命中的**已知旧
+产物**，迁移后立即重写为 v4。回归测试 +14（含 9 字段删除参数化、路径不符、
+删版本标记伪造计数、删提交 SHA 改 evidence 组合反例、迁移 pin 错误拒绝、
+迁移后 v4 round-trip），store 单测 33 项全绿。
+
+执行：真实产物以 pin=20ad8f33… 一次性迁移为 v4 并通过严格加载（185 条
+fully-verified 无损保留）；限额余量仍低，续富化 1 条后停车——当前
+**186/216**，剩 30 条待下一限额窗口。

@@ -1,15 +1,15 @@
 {
  "header": {
-  "schema_id": "rh2.s2_1.image_manifest_keyed.v3",
-  "schema_version": 3,
+  "schema_id": "rh2.s2_1.image_manifest_keyed.v4",
+  "schema_version": 4,
   "purpose": "S2-1 T1b 键控镜像清单：216 survivor 的稳定镜像身份 + 实证平台",
   "source_refs_file": "data_freeze/meta/image_refs_swegym.txt",
   "source_refs_file_sha256": "e39da94c3e985b5fca59c94dabf63e7170206aba9ed15a490bab56f1680d55bf",
   "evidence_file": "raw/image_registry_evidence.jsonl",
-  "evidence_file_sha256": "0357c6dd1de534994e93d1dc289c66b642919d9d2d25eb13f456fbc34fc67477",
-  "evidence_line_count": 185,
+  "evidence_file_sha256": "98066f43d888581d4539112da659f746638a41f21f1b7b7111781fa433f30b35",
+  "evidence_line_count": 186,
   "count": 216,
-  "enriched_count": 185,
+  "enriched_count": 186,
   "reverify_count": 0
  },
  "entries": [
@@ -144,9 +144,12 @@
    "source_image_ref": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-4688:latest",
    "resolved_manifest_digest": "sha256:d03df1d00665c515c71c0779fa12aa27d7e048071271817b41244d4da429163c",
    "manifest_content_type": "application/vnd.docker.distribution.manifest.v2+json",
-   "platform": "x86_64（命名约定；抽样实证见 header.platform_sample）",
-   "resolved_at": "2026-07-12T13:50:17+00:00",
-   "method": "registry HEAD Docker-Content-Digest（不计 pull 限额）"
+   "config_digest": "sha256:97064d8b67bbf61cf3f450954e233e5eabb8b2c53ab08a5cbee2ac852f346b37",
+   "platform": "linux/amd64",
+   "platform_source": "config_blob",
+   "registry_evidence_ref": "raw/image_registry_evidence.jsonl#imgev-Project-MONAI__MONAI-4688",
+   "resolved_at": "2026-07-12T15:45:02+00:00",
+   "method": "registry GET manifest + config blob（blob 哈希实证；GET 计 pull 限额，blob 不计）"
   },
   {
    "instance_id": "Project-MONAI__MONAI-4775",

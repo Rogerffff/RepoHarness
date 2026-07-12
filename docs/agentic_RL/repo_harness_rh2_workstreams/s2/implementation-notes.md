@@ -17,6 +17,8 @@
 
 - **[S2-1 T1-followup3, 2026-07-13] 事务恢复必须回验提交记录**（codex 轮次 8）：恢复路径里"删掉多余行"不等于"恢复到已提交状态"——必须把已提交集合按写入同规则重序列化并回验 SHA，否则已提交行的非关键字段（如 fetched_at）可被静默篡改。配套：重复 id 显式拒绝、header 机器账目（count/evidence_line_count/enriched_count+reverify_count 标记）对账。v3.0→v3.1 的口径迁移用"新标记字段在场才启用严格对账"处理，避免把旧文件误判为篡改。
 
+- **[S2-1 T1-followup4, 2026-07-13] 严格性必须绑定 schema 版本，不能挂在可选字段上**（codex 轮次 9）：v3.1 用"新字段在场才启用严格对账"处理迁移，结果等于给了"删字段即降级"的关闭开关——正确做法是显式升版（v4 全字段必填必验）+ 旧产物只走 digest 锁定的一次性显式迁移。教训与 gate 的 GATE_VERSION 升版纪律同源：**宽松路径必须是显式、可审计、一次性的，绝不能是隐式默认**。
+
 ## 2. 权衡取舍
 
 - **[T1b] digest 解析用 registry HEAD 而非 `docker manifest inspect`**：HEAD 不计 Docker Hub pull 限额，匿名可安全跑 216 个（实跑零 429、约 4 分钟）。~~代价是拿不到 platform 详情~~ followup 已按计划完整口径补平台实证（manifest GET + config blob），GET 计 pull 限额 → 限额感知优雅停车 + 续跑（183/216 后停车，余 33 待窗口重置）。
