@@ -1,4 +1,4 @@
-# rh2 项目进度总览（状态快照：2026-07-11）
+# rh2 项目进度总览（状态快照：2026-07-12）
 
 > **本文档的用途**：给项目所有者和任何新接手的 agent 一份"当前我们在哪、已经完成什么、证据在哪、接下来做什么"的单一入口。每个结论都标注了证据文件路径，可以直接点开核对。
 >
@@ -22,7 +22,11 @@ P1 数据冻结包 v0.1       ✅ 已完成（即"训练数据预处理"，codex
 P3 八卡预实验            ✅ 已完成（2026-07-08/09 真机，机器已释放。准确口径：
                             训练后端与架构决策完成；formal J4 严格绿灯
                             留待 S2-0b 修复后随下次短租复验）
-S2 SWE-Safety 加固       ⏳ 计划已写（草案），尚未开工 ← ★ 我们在这里
+FA fully async 训练链    ⏳ 计划已写（05-fully-async-execution-plan.md，FA-0~5），
+                            未开工 ← ★ 第一实施工作流（用户 2026-07-12 定案
+                            fully-async-first：正式链 = version-aware fully
+                            async + faithful DIS；原 S2-0b 全部迁入）
+S2 SWE-Safety 加固       ⏳ 计划草案（S2-0b 已迁出），与 FA 并行，尚未开工
 S3 训练治理完备          未开始（三档资格全量、环境验证四门收尾）
 S4 正式训练实验          未开始（before/after 实验，简历叙事收尾）
 S5 第二后端 + 服务化     按需（verl adapter、EnvServer 服务化）
@@ -137,13 +141,13 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 | #   | 事项                                                                                                                            | 来源         | 归属                 | 状态                                                              |
 | --- | ----------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ | --------------------------------------------------------------- |
 | 1   | ~~用户检查点 2 确认~~                                                                                                     | S1-9       | 用户                 | ✅ 已确认（2026-07-11），注记已摘除                                   |
-| 2   | **batch schedule 准入 + fan-out 交付边界正规化**（问题 A~E 定义见 S2 计划 S2-0b 节；formal J4 严格绿灯的唯一阻塞。E = 层次化 GRPO 归一化——J5 gbs20 保留 36≠32 已实测踩中 slime 单组回退，P3 的有限 loss 不证明组归一化语义正确） | P3 新发现 + codex 轮次 2     | **S2-0b（用户 2026-07-11 定案为 S2 第一个实现任务）** | 已编入计划待实现；验收用 J4 事件元数据夹具（**本地无 .pt 张量**）+ 与真 `build_dp_schedule` 差分验证 |
+| 2   | **batch schedule 准入 + fan-out 正规化 + 层次化 GRPO 归一化（问题 A~E）**（formal J4 严格绿灯的唯一阻塞；J5 gbs20 保留 36≠32 已实测踩中 slime 单组回退，P3 的有限 loss 不证明组归一化语义正确） | P3 + codex 轮次 2     | **FA 工作流（05 计划 FA-0/1/3；2026-07-12 自 S2-0b 迁入）** | FA-3 离线部分可先行；验收用 J4 事件元数据夹具（**本地无 .pt 张量**）+ 与真 `build_dp_schedule` 差分验证 |
 | 3   | **导出器分叉感知重建**（thinking 模型轨迹离线导出 0 可用。依赖澄清：它阻塞的是 E3 的**同策略 token 级回收路径**，不阻塞 teacher-SFT 路径——后者的前置是 SemanticSFT 契约，见 G9）                                                                 | S1-8       | S2-6（排 S2-0b 之后）               | 待实现，技术方案在 `s1/s2_blockers.md`；验收资产需改判（G8：60+65 条 .pt 不在本地）                                 |
-| 4   | ~~fan-out 形状正式方案~~                              | P3         | 并入 S2-0b        | ✅ 方向已定（用户 2026-07-11）：交付边界统一展平，保留 rollout_id/branch/group/reward 分摊语义，不给 slime 打零散补丁                                           |
-| 5   | ABORTED 组重入实证（fully_async 缺口①，P3 未观测到，非否定）                                                                                    | P3         | fully_async 升级实施期  | 注入式测试，不租卡；fully_async 本身不作当前主线（首训用 T3 分离 + train_async）                                                       |
+| 4   | ~~fan-out 形状正式方案~~                              | P3         | 并入 FA-1（三视图交付边界）        | ✅ 方向已定：内部三层结构 / rollout-filter 视图保留组外层 / converter 平铺 + 身份回链；不给 slime 打零散补丁                                           |
+| 5   | pause_generation 对在途请求 abort/hold 语义 + CC 原生重试行为实证（原 gap ①收窄版；proxy 更新窗口逻辑 D-FA-3 的经验基础）                                                                                    | P3 + FA 设计         | **FA-5 短租实证项**（05 计划 §1）  | 2026-07-12 起 fully async 即正式主线；该实证决定 proxy 分支最终形态                                                       |
 | 6   | data_freeze 遗留：GPU pass-rate 预筛 / P5 两条勘误回写附录 B / R2E 打标                                                                      | P1         | S3/S4 前            | 已登记                                                             |
 | 7   | S2 计划 G 系列决策：G1~G5（无异议即按推荐执行）+ **G6~G10（P3 后新增，codex 复核意见，涉及既有任务修改）**                                                                                                 | S2 计划 §5   | 用户（下一轮）                 | 待确认                                                             |
-| 8   | 下次租卡捆绑包（G10 的 S2 集成验收短租）：strict J4 复验（#2 修好后）+ 真实在线拦截链 + 代表性轨迹留存（兼供 #3 复验）                                                                           | P3 + S2 计划 | 下次 GPU 窗口          | 几小时短租，不是完整 P3                                                   |
+| 8   | 下次租卡 = **FA-5 + S2 G10 合并短租**：FA 六项集成验收 + strict J4 复验 + abort 语义实证 + M1 多步分布 + 真实在线拦截链 + 代表性轨迹留存（兼供 #3 复验）                                                                           | FA + S2 计划 | 下次 GPU 窗口          | 一次短租、两份验收账目、两个闸门独立记账                                                   |
 | 9   | **SemanticSFT 导出契约**（新设计缺口：teacher 异构模型 → Qwen SFT 需要结构化语义导出，当前只有 token-faithful 出口）                                                                           | codex 复核 2026-07-10 | G9（下一轮定）          | 建议 S2 定契约 + 最小闭环，批量生产放 S3                                                   |
 
 
@@ -151,9 +155,9 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 
 ## 6. 下一阶段：S2 概览与待决策项
 
-S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：把 S1 闭环从"链路正确"加固到"**训练信号可信**"——退出判据 = 红队环境包全部被正确拦截 + `S1_TIER_CAP` 解除 + bring-up 数据 ingestion 完成。任务：**S2-0b batch schedule 准入 + fan-out 正规化（第一个实现任务）** → 其余与 S2-1 数据 ingestion 可并行：S2-2 安全 Runtime → S2-3/4 anti-cheat → S2-5 红队环境包 → S2-6 导出器重建 → S2-7 TIER_CAP 解除 → S2-8 验收（`inspect-rh2-s2`）→（G10 待定）末尾一次短租集成验收。
+**FA 工作流（第一实施工作流，用户 2026-07-12 定案 fully-async-first）**：`05-fully-async-execution-plan.md`。正式训练链 = **version-aware fully async + faithful DIS**（P3 实测尾闲 26~28% 触发升级阈值；GRPO 保持首训算法，DIS 是正确性组件而非可选增量）。任务：FA-0 身份/版本/执行结果契约 → FA-1 持续 worker + proxy 边界（权重更新 abort → **proxy 级 turn 重生成**，用户已拍板）→ FA-2 PromptGroupAssembler + 合格组队列 → FA-3 SlimeBatchAssembler + `build_dp_schedule` 差分预检（原 S2-0b 问题 A~E 迁入，离线部分可先行）→ FA-4 faithful DIS + 逐 token 对拍 → FA-5 故障注入 + 短租集成验收。eval 首版定案：**训中不评，只 before/after**。退出闸门 `rh2_fully_async_training_path_verified`；估计 16~24 人日本地 + 1 次短租。设计依据：`fully_async_rollout_pipeline_design_discussion.md`（codex）+ `training_design/repoharness_sao_dis_grpo_ppo_analysis.md`（算法定案）。
 
-**排序定案（用户 2026-07-11）**：S2-0b 先做（阻塞训练主线的唯一项），S2-6 导出器其次（只阻塞 E3 回退预案的同策略路径）；原 G0"导出器先做"（2026-07-09 依据"先清 S1 遗留阻塞项"意向登记）已改判。**更正一处早前表述**：S2-0b 的离线验收用的是 P3 的**事件元数据**构造夹具（逐 rollout 的 remove_sample/长度/fan-out 记录），本地**没有** .pt 张量 dump（远程同步排除了大文件），不能原样重放 slime tensor converter——强验证挂下次短租的 strict J4。既有任务内容（SWE-Safety 加固 + 数据 ingestion 等）与 G1~G10 决策留下一轮。
+**S2 执行计划（草案，与 FA 并行）**：`04-s2-execution-plan.md`。目标不变：把 S1 闭环加固到"训练信号可信"。S2-0b 已迁出；S2 侧起点 = S2-6 导出器重建与 S2-1 数据 ingestion 并行 → S2-2 安全 Runtime → S2-3/4 anti-cheat → S2-5 红队环境包 → S2-7 TIER_CAP 解除 → S2-8 验收。S2 的 GPU 段（G4/G10）与 FA-5 合并为同一次短租。G1~G10 决策仍待下一轮。`rh2_formal_training_allowed` = FA 闸门 ∧ `rh2_s2_signal_trusted`。
 
 ## 7. 文档地图（新接手者按层查找）
 
@@ -170,12 +174,18 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
 【第 2 层：训练实验设计】docs/agentic_RL/training_design/
   repoharness_validation_experiment_design.md   E/C 系列定案 + §4.1 S0 实测锚点
                                                 + §4.2 P3 实测锚点（最新）
+  repoharness_sao_dis_grpo_ppo_analysis.md      算法定案（GRPO 首训 + faithful
+                                                DIS 正确性组件；PPO/SAO/
+                                                CompactionRL 分期路线）
   repoharness_validation_experiment_design_review.md  （已经不需要了，看最终的实验设计文档即可）
   RL_algorithm_design.md / warm_start_offline_data_filtering_design.md
 
 【第 3 层：执行计划】docs/agentic_RL/repo_harness_rh2_workstreams/
   01-s0-execution-plan.md / 02-s0-conclusions-and-architecture.md
-  03-s1-execution-plan.md / 04-s2-execution-plan.md（草案）
+  03-s1-execution-plan.md / 04-s2-execution-plan.md（草案，S2-0b 已迁出）
+  05-fully-async-execution-plan.md（FA-0~5，第一实施工作流）
+  fully_async_rollout_pipeline_design_discussion.md（FA 设计讨论稿，codex，
+    机制分析与对象模型的权威出处）
 
 【第 4 层：阶段证据】docs/agentic_RL/repo_harness_rh2_workstreams/
   s0/   → s0_acceptance_summary.json 为账本，各 V 报告
@@ -218,7 +228,9 @@ S2 执行计划（**草案**）：`04-s2-execution-plan.md`。一句话目标：
 | -------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Form B                     | slime `custom_generate` 直调 SGLang 的训练主线接入形态（vs Form A = verifiers + vLLM shim）                        |
 | tape                       | 采样期逐 token 记录：routing tape（MoE 每 token 每层 top-8 专家 id）与 top-p tape（截断集 token ids），训练侧 replay 用，保证训推一致 |
-| fan-out                    | 一条 harness 轨迹树按 root-to-leaf 展开成多个训练样本（reward/K 分摊，共享 rollout_id）；我们交付嵌套 `list[list[Sample]]`         |
+| fan-out                    | 一条 harness 轨迹树按 root-to-leaf 展开成多个训练样本（branch）。权威 reward 语义 = **整 reward 广播给每个 branch + rollout 级 loss 分母**（我方 adapter 实际行为，`generate.py:1727`）；旧文档 "reward/K 分摊" 说法源自 slime README，与源码不符，已废止（D-FA-7）         |
+| 三层身份                    | PromptGroup（GRPO 归一化单位）/ RolloutExecution（batch 计数单位）/ Branch（共享 rollout_id，loss 按 rollout 聚合）——FA-0 契约         |
+| faithful DIS                | 训练时按 current/rollout token logprob 比值加权/拒绝的重要性采样修正（论文语义自定义 loss，逐 token 对拍）；与 slime TIS/IcePop 近似分开命名；algorithmic mask 不改写 provenance loss mask         |
 | TrajectoryProjection       | 后端中立的轨迹投影契约（slime/verifiers 两路都汇入它，tape 解码只在这一层做一次）                                                   |
 | EligibilityGate / TIER_CAP | 训练资格治理：七维检查决定样本能否进 loss；`S1_TIER_CAP` 是 S1 期的资格上限（S2-7 解除后才能发放 `online_policy_loss_eligible`）         |
 | U-C / U-H                  | 未知项编号：U-C = 多卡训练侧四未知（P3 已关）；U-H = slime 镜像在 sm_120 可用性（S1-0 已关）                                       |

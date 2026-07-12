@@ -69,16 +69,21 @@ RepoHarness =
                               adapter 层，协议 J4 判据第 0 项）。收口判定：
                               docs/agentic_RL/repo_harness_rh2_workstreams/preflight/preflight_report.md
                               acceptance 三条递延项已改判 closed_by_p3_20260708。
-【下一阶段】rh2 S2 SWE-Safety 加固
-                              计划草案已就位：
+【下一阶段·双工作流并行】（用户 2026-07-12 定案 fully-async-first）
+                              ① FA fully async 训练链（第一实施工作流）：
+                              docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md
+                              正式链 = version-aware fully async + faithful DIS；
+                              FA-0~5（身份契约 → worker/proxy 边界 → 组装器 →
+                              batch 准入[原 S2-0b 问题 A~E 迁入] → DIS → 短租
+                              验收）；权重更新 abort = proxy 级 turn 重生成；
+                              eval 首版只 before/after；退出闸门
+                              rh2_fully_async_training_path_verified。
+                              ② S2 SWE-Safety + 数据 ingestion（并行）：
                               docs/agentic_RL/repo_harness_rh2_workstreams/04-s2-execution-plan.md
-                              用户 2026-07-11 定案：S2 第一个实现任务 =
-                              batch schedule 准入 + fan-out 交付边界正规化
-                              （已编入计划，问题 A~E 定义见计划 S2-0b 节；
-                              E = 层次化 GRPO 归一化，codex 轮次 2 审查新增，
-                              审查存档 s2/codex_reviews.md）；
-                              其余既有任务（SWE-Safety 加固 + 数据 ingestion）
-                              的改动与 G 系列决策留下一轮。
+                              S2-0b 已迁出；S2 侧起点 = S2-6 导出器 ∥ S2-1
+                              ingestion；G1~G10 决策待用户下一轮。
+                              rh2_formal_training_allowed = FA 闸门 ∧ S2 闸门；
+                              两工作流的 GPU 段合并为同一次短租（FA-5 + G10）。
 ```
 
 rh2 新闸门字段当前真实值：
@@ -110,9 +115,12 @@ S1 端到端最小闭环（已完成，检查点 2 已确认 2026-07-11）
                         SWE taskset 冻结（8 题探针）、SWEGradingManager、
                         EligibilityReport + Gate、离线导出 adapter、slime adapter
 P1 数据冻结 / P3 八卡预实验（已完成，穿插工作流，不在 S 编号序列）
-S2 SWE-Safety 加固（计划已写未开工）
+FA fully async 训练链（计划已写未开工，第一实施工作流，与 S2 并行）
+                        持续 worker + PromptGroupAssembler + batch 准入
+                        （原 S2-0b）+ faithful DIS + 短租验收；05 计划
+S2 SWE-Safety 加固（计划已写未开工，与 FA 并行）
                         安全 Runtime、anti-cheat（在线拦截）、红队环境包、
-                        数据 ingestion + 环境四门、导出器重建、batch schedule 准入
+                        数据 ingestion + 环境四门、导出器重建
 S3 训练治理完备          三档资格全量、环境验证四门收尾
 S4 正式训练实验          before/after 实验（简历叙事收尾）
 S5 第二后端 + 服务化     verl adapter、EnvServer 服务化（按需）
