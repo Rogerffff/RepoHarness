@@ -3,6 +3,50 @@
 范围：`05-fully-async-execution-plan.md` 的 FA-0~FA-5 实现期记录。每任务一节，
 只记重要事项。
 
+## ⚡ 当前权威状态（2026-07-20，每次大轮次后更新——先读这页再读历史）
+
+> 下面的历史轮次是**流水账**：早期结论可能已被后续轮次推翻。凡与本页冲突，
+> 以本页为准；被推翻的机制在括号里标注了替代它的轮次。
+
+**阶段状态**：FA-0 完成；FA-1 本机实现完成（codex 轮次 6~14 九轮审查全部
+处置，closure 批次已落地）；FA-3 离线/FA-4 对拍完成（接线未做）；FA-2 未
+开工（下一步，先 2A）；FA-5 未开工。闸门
+`rh2_fully_async_training_path_verified` = **false**。测试基线 903+。
+
+**当前有效的关键机制**（历史轮次里的旧形态全部作废）：
+
+- capture 暂存：stage 单槽 + overlap **fail-closed**（轮次 9；轮次 8 的
+  FIFO 已废弃）；commit 事务化 PENDING→COMMITTING→COMMITTED/ABANDONED
+  （轮次 13）；registry/proxy 短临界区锁（轮次 13/14；终局 = FA-2A 单
+  owner 重构，锁是明知要重写的脚手架）。
+- poison 生命周期：active 绝不容量淘汰 → orchestrator 在**容器清理完成后**
+  release 归档（轮次 11/12；轮次 10 的"unregister 即 release"已废弃）；
+  poison 触发跨线程主动取消 harness（call_soon_threadsafe，轮次 10）。
+- 交付定案：finalize 在 **commit（record_turn 成功）时刻**（轮次 8；stage
+  时 finalize 已废弃）；abandon 事务化先关账再抛（轮次 12）。
+- 模型边界：未知 SID fail-closed + 会话守卫 middleware 403（轮次 13）；
+  404 一律转 503 + x-should-retry:false（轮次 9/10）。
+- 审计：execution 终态 audit sink（含 timeline/timing/disposition）+
+  attempt ledger **snapshot→写成功→ack** 事务（轮次 14；先 drain 后写已
+  废弃）；正式链审计写失败 = FatalExecutionInfrastructureError → worker
+  停机（轮次 14）。
+- 非零 harness exit：与正式链的启动断言**硬耦合已解除**（轮次 14 推翻
+  轮次 9——slime episode 超时返回 EXIT_TIME_BUDGET_EXCEEDED=-1 是正常
+  终止；旋钮保留、glue 默认仍联动；结构化终止枚举是 FA-2A 前置定义项）。
+- 恢复语义：halt → **整个 rollout actor 重启**（进程内线程重建不存在）。
+
+**临时挡板登记（每个都有替代任务与移除条件；FA-2A 完成时逐个显式裁决）**：
+
+| 挡板 | 加于 | 移除条件 |
+|------|------|----------|
+| overlap fail-fast（并行 subagent 被拒） | 轮次 9 | F2-3 request 级归属落地；且列入 `rh2_formal_training_allowed` 前置 |
+| DuplicateActiveSessionError | 轮次 12 | F2-1 execution 唯一身份 |
+| 中毒 SID（含归档）拒绝 register | 轮次 11 | F2-1/F2-2 身份与凭证分离（poison 改绑 session/attempt） |
+| StaticActiveCoordinator（永远 ACTIVE，只保守缺员） | 轮次 7 | FA-4 真协调器（consensus version） |
+| capture_wire/glue 住在 experiments/ | S1 沿革 | F2-0 提升进 src/repoharness2 |
+
+**未闭合项**：见 05 计划 §6.1 递延表（P1×8 + P2×4）与 FA-2A 批次定义。
+
 ## FA-0 身份、版本与执行结果契约（2026-07-12 完成）
 
 **交付**：`contracts/fa_runtime.py`（ExecutionIdentity / RolloutAttemptOutcome /
@@ -614,3 +658,53 @@ orchestrator→adapter 线程→proxy→SGLang→capture→评分→collector→
   `rh2_fully_async_training_path_verified` 保持 false；StaticActive 在位
   期间不得声称生产透明重生成）。
 - 测试 878 → 895。codex §8 确认的 15 项正确实现保持不动。
+
+## FA-1 closure 批次 2 + 过度防御评估落地（2026-07-20，codex 轮次 14；
+## 原文存档 `../s2/codex_reviews.md` 轮次 14——含对"过度防御"评估的裁决）
+
+本轮双重输入：codex 对轮次 13 的复查（4 项仍需修正 + 测试缺口）+ 它对
+我方"过度防御/可维护性"评估的裁决（八成同意，给出可执行设计规则）。
+
+- **仍需修正 1（provider 无锁遍历）**：`_registry_max_version` 直接遍历
+  `weight_versions.values()`——并发 commit/unregister 复现
+  `dictionary changed size during iteration`（变成未归因 adapter 500）。
+  新增 `CaptureRegistry.snapshot_weight_versions()`（锁内深拷贝）；
+  `session_deadline`/`next_turn_seq`/overlap 路径 stats 增量一并补锁。
+  双线程 churn+reader 回归测试。
+- **仍需修正 2（审计非事务）**：先 `drain_attempts()` 再写 JSONL——磁盘
+  满时既拒 rollout 又丢内存证据。改 **snapshot → 持久写成功（fsync）→
+  ack 移除**（proxy 新增 snapshot_attempts/ack_attempts，drain 降为二者
+  合成）。写失败回归测试断言 ledger 完好。
+- **仍需修正 3（审计失败没有真 run-halt）**：正式链裸 raise 被 worker 当
+  普通成员失败（codex 探针：failed=4、halt=None、继续 top-up）。新增
+  `FatalExecutionInfrastructureError`；orchestrator 审计失败（正式链）
+  包装之；worker `_account_failure` 识别后置 halt（WorkerHalted）。
+- **仍需修正 4（审计丢时间线）**：记录补 `timeline_dicts()` /
+  `timing_summary()` / disposition / eligibility_report_ref /
+  delivered_sample_count / lease_released。
+- **测试缺口**：drain 先于边界断言的顺序录制测试、生产装配 limiter 测试、
+  open rollback 测试、审计成功/失败/Fatal 三态测试、worker fatal 停机
+  测试——为此把 glue 的三个装配件提取为模块级可测函数
+  （`build_production_model_call_proxy` / `make_per_rollout_adapter` /
+  `write_execution_audit_record`，也是 F2-0 提升方向的第一步）。
+- **设计规则采纳（写入 05 计划 FA-2A 节）**：F2-4 恢复语义先于 F2-1 编码
+  定案（replay-stable 公开 id + 每会话新 capability + cursor 语义，拒绝
+  裸 at-least-once）；F2-0 代码提升；poison 只绑 session/attempt 不绑
+  任务槽位；**结构化终止枚举**（episode_time_limit 可为截断有效样本——
+  事实纠正：slime 超时返回 EXIT_TIME_BUDGET_EXCEEDED=**-1**（sandbox.py:60），
+  非我方评估里说的 SIGKILL/137；Docker RPC 超时才是 124）；require ↔
+  非零 exit 启动断言**硬耦合解除**（轮次 14 推翻轮次 9，代码已改，glue
+  默认联动保留）；熔断按 **fault domain** 六分类（不隔离任务的类别明确
+  列出），载体 = Outcome + 纯函数 RecoveryPolicy + AdmissionReport，不
+  新增报告层；正式训练闸门补两条前置（overlap 挡板已替代 + 熔断在位）。
+- **文档收敛**：notes 顶部新增"⚡ 当前权威状态"页（有效机制 + 临时挡板
+  登记表含移除条件 + 被推翻结论标注）——历史轮次保留为流水账但不再是
+  现状权威；05 计划重启语义统一为"halt → 整 actor 重启"（FA-5 N6 场景
+  改写）、顶部状态行更新；AGENTS/00-status 进度与测试数刷新。
+- **环境漂移排查（本轮额外）**：全量跑出 1 个与 FA 无关的失败——
+  `test_request_carries_token_ids_not_messages` 断言 `X-Session-ID` 精确
+  大小写，而依赖重锁后新版 httpx/h11 把线上头名规范成 `X-Session-Id`。
+  HTTP 头名按 RFC 9110 大小写不敏感，属测试过度约束；改为小写键匹配。
+  排查过程排除了 openai 2.44/verifiers pin/renderers pull 三个嫌疑
+  （逐层最小复现定位到 wire 大小写）。
+- 测试 903 → 911。

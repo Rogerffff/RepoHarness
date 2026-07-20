@@ -1480,10 +1480,10 @@ def test_orchestrator_rejects_static_policy_version_in_formal_chain():
     # 正式链必须同时开启收缩兜底（D-FA-6 是硬要求不是注释——codex FA-0 审查）
     with pytest.raises(StartupCheckError, match="context_shrink_rejection_disabled"):
         _dummy_orchestrator(_formal_config(reject_context_shrink=False))
-    # 正式链必须同时拒绝非零 harness exit（codex 轮次 9 P0-3：任务失败负
-    # 样本 = exit 0 + reward 0；非零退出只能是 infra/进程失败）
-    with pytest.raises(StartupCheckError, match="nonzero_exit_rejection_disabled"):
-        _dummy_orchestrator(_formal_config(reject_on_nonzero_harness_exit=False))
+    # 轮次 14 解耦回归：非零 exit 拒绝不再与正式链硬耦合（episode 时间
+    # 预算耗尽 = slime EXIT_TIME_BUDGET_EXCEEDED=-1 是正常终止，硬耦合会
+    # 确定性剔除长任务）——关闭旋钮的正式链配置必须能启动
+    _dummy_orchestrator(_formal_config(reject_on_nonzero_harness_exit=False))
     # 数值版本 + 收缩兜底开启：通过
     _dummy_orchestrator(_formal_config())
 
@@ -1756,3 +1756,91 @@ async def test_poison_subscribe_after_poison_fires_immediately():
     fired: list[tuple[str, str]] = []
     registry.subscribe("sid_X", lambda sid, reason: fired.append((sid, reason)))
     assert fired == [("sid_X", "already_bad")]
+
+
+async def test_finish_session_drain_precedes_boundary_check():
+    """codex 轮次 14 仍需修正 5：drain 屏障（finish_session）必须先于交付账
+    边界断言——顺序错了会 false reject（正常轮还在 flush）或 false accept
+    （drain 期间才失败）。本测试录制真实调用顺序。"""
+
+    order: list[str] = []
+    adapter_ref: dict[str, MockSessionAdapter] = {}
+
+    class OrderRecordingAdapter:
+        """包装 MockSessionAdapter，录制 finish_session 时刻。"""
+
+        def __init__(self, inner):
+            self._inner = inner
+
+        def open_session(self, *a, **k):
+            return self._inner.open_session(*a, **k)
+
+        async def finish_session(self, *a, **k):
+            order.append("drain")
+            return await self._inner.finish_session(*a, **k)
+
+        async def drop_session(self, *a, **k):
+            return await self._inner.drop_session(*a, **k)
+
+    def adapter_factory(hook, session_defaults):
+        inner = MockSessionAdapter(hook, session_defaults, dense_turns(), [dense_leaf_sample()])
+        adapter_ref["adapter"] = inner
+        return OrderRecordingAdapter(inner)
+
+    def boundary_check(sid: str) -> None:
+        order.append("boundary")
+
+    orch = RolloutOrchestrator(
+        config=dense_config(),
+        task_resolver=make_task(TASK_ID_DENSE),
+        adapter_factory=adapter_factory,
+        harness_driver=MockClaudeCodeDriver(adapter_ref),
+        grading_submit=GradingSubmitStub(),
+        docker=FakeRolloutDocker(),
+        capture_boundary_check=boundary_check,
+    )
+    result = await orch.generate(_Args(), FixtureSlimeSample(index=0), dict(SAMPLING_PARAMS))
+    assert result[0].remove_sample is not True  # 正常交付
+    assert order == ["drain", "boundary"]  # drain 屏障先行（轮次 13 P0-2 顺序）
+
+
+async def test_audit_sink_failure_formal_chain_raises_fatal():
+    """codex 轮次 14 仍需修正 3：正式链审计落盘失败必须是**基建级致命错误**
+    （worker 据此停机），不是普通 execution 失败；bring-up 链只打印容忍。"""
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
+
+    def broken_sink(audit) -> None:
+        raise OSError("audit disk full")
+
+    def build(config):
+        adapter_ref: dict[str, MockSessionAdapter] = {}
+
+        def adapter_factory(hook, session_defaults):
+            adapter = MockSessionAdapter(
+                hook, session_defaults, dense_turns(), [dense_leaf_sample()]
+            )
+            adapter_ref["adapter"] = adapter
+            return adapter
+
+        return RolloutOrchestrator(
+            config=config,
+            task_resolver=make_task(TASK_ID_DENSE),
+            adapter_factory=adapter_factory,
+            harness_driver=MockClaudeCodeDriver(adapter_ref),
+            grading_submit=GradingSubmitStub(),
+            docker=FakeRolloutDocker(),
+            audit_sink=broken_sink,
+        )
+
+    # bring-up：容忍（正常返回）
+    orch = build(dense_config())
+    result = await orch.generate(_Args(), FixtureSlimeSample(index=0), dict(SAMPLING_PARAMS))
+    assert result  # 未被审计失败打断
+
+    # 正式链：FatalExecutionInfrastructureError 传播（worker 停机信号）
+    orch2 = build(_formal_config())
+    with pytest.raises(FatalExecutionInfrastructureError, match="execution_audit_write_failed"):
+        await orch2.generate(_Args(), FixtureSlimeSample(index=0), dict(SAMPLING_PARAMS))

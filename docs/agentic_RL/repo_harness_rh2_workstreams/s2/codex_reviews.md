@@ -2470,3 +2470,249 @@ FA-1 不是失败实现。它已经把 fully async 最难的一批局部机制�
 - **一般 3：raw 重复 id 静默覆盖 / 只查选中 216 行字段面 / F2P/P2P 重复与交集未拒**。【全部修复 + 测试】
 - **一般 4：五文件输出无事务提交记录**。【修复：原子写 + ingest_manifest_v0.json 提交记录 + load_ingest_outputs strict loader（T2-d/e 唯一入口）+ 回读自检】
 - codex 核验正确项：四文件 216 条 ID/顺序一致、关系/镜像/eval/泄漏全过、两簇符合预期、15 项 digest 匹配、确定性复建逐字节相等、36+890 通过；工作区 inspector 红灯来自 FA 在制文件与 T2-c 无关。
+
+
+---
+
+## 轮次 14（2026-07-20：轮次 13 复查 4 项仍需修正 + "过度防御"评估裁决与设计规则，全部采纳）
+
+> 原文全文转录（tmp/codex_adv_720602.md，双部分：FA-1 复查 + 对 Claude 过度防御评估的裁决）。处置见 `fa/implementation-notes.md` "FA-1 closure 批次 2"。要点：provider 锁内快照；审计 snapshot→写→ack 事务；FatalExecutionInfrastructureError 真 run-halt；审计记录补时间线；glue 装配件提取为可测工厂；require↔非零 exit 硬耦合解除（EXIT_TIME_BUDGET_EXCEEDED=-1 事实纠正）；FA-2A 定序（F2-4 语义先行 + F2-0 提升）；毒绑 session 不绑槽位；fault-domain 熔断六分类；notes 顶部权威状态页。测试 903 → 911。
+
+**结论**
+
+方向正确，`178cbdff` 确实闭合了 unknown SID 旁路、drain 顺序、capture 事务、limiter 接线、审计入口和 `open_session` 回滚等主要问题。可以开始 FA-2，但我不建议把 FA-1 标为“完全闭合”：还有一项并发缺陷和一项审计持久化缺口需要先做短补丁，或者明确纳入 FA-2A 的第一个提交。
+
+**仍需修正**
+
+1. **跨线程锁覆盖仍不完整，已能稳定复现异常。**
+
+[glue.py:588](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:588) 直接遍历 `registry.weight_versions.values()`，没有使用新加的 registry 锁。并发 `commit/unregister` 时，我的探针复现了：
+
+```text
+RuntimeError: dictionary changed size during iteration
+```
+
+它发生在版本提供者路径，会变成未归因的 adapter 500，而不是干净的 poison/缺员。应增加 `CaptureRegistry.snapshot_weight_versions()`，在锁内复制后再计算；顺便检查 `session_deadlines`、`_turn_seq`、`stats` 的所有跨线程访问。
+
+2. **execution audit 不是事务式持久化。**
+
+[glue.py:741](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:741) 先调用 `drain_attempts()`，然后才打开并写 JSONL。我用不可写路径验证：写入报错前 attempt 已经被摘走。因此磁盘满时既拒绝 rollout，又丢失了恢复和审计依据。
+
+建议改成：
+
+```text
+snapshot_attempts
+-> 持久写入成功
+-> ack/remove attempts
+```
+
+或者写失败时原子恢复 ledger。
+
+3. **审计写失败并没有真正 run-halt。**
+
+[generate.py:1736](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1736) 虽然正式链会重新抛出异常，但 worker 会把它当普通 execution failure，经正常 `failure_sink` 后继续 top-up。
+
+我的探针连续注入 4 次审计磁盘错误，结果是：
+
+```text
+failed=4
+halt_reason=None
+ledger_balanced=True
+```
+
+应引入 `FatalExecutionInfrastructureError` 或 worker 的系统故障分类，让审计存储不可用、账本存储不可用这类错误停止整个 rollout actor。
+
+4. **新审计文件没有保存真正的时间线。**
+
+[glue.py:747](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:747) 只写了 `steps`，没有写已经存在的 `audit.timeline_dicts()` 和 `audit.timing_summary()`。这会重新丢掉此前专门补充的 rollout 分段耗时证据。还应加入最终 disposition、`delivered_sample_count`、`lease_released` 和 Outcome/Eligibility 引用。
+
+5. **关键新接线缺少对应回归测试。**
+
+现有新增测试覆盖了 registry 竞态和 attempt drain，但没有直接测试：
+
+- `finish_session/drain` 必须发生在 boundary check 前；
+- 真实 glue 装配确实把 model-call limiter 传给 proxy；
+- 底层 `open_session` 失败后的 registry 回滚；
+- execution audit 成功、写失败、run-halt 和 attempt 不丢失。
+
+这些都可以用 fake adapter 本机验证，不必留到 GPU。
+
+**计划重排**
+
+原计划是：
+
+```text
+FA-1 worker/proxy
+-> FA-2 直接写 PromptGroupAssembler
+-> FA-3 batch admission
+-> FA-4 DIS
+-> FA-5 真机
+```
+
+现在合理地改成了：
+
+```text
+FA-1 closure
+-> FA-2A Runtime Identity & Durability Foundation
+   F2-1 身份贯穿
+   F2-2 公开身份与私有 capability 分离
+   F2-3 request 级 capture 归属
+   F2-4 预取崩溃恢复
+   F2-5 collector 不变量
+   F2-6 attempt/outcome manifest
+-> FA-2B PromptGroupAssembler + QualifiedPromptGroupQueue
+-> FA-3 batch lease/admission 接线
+-> FA-4 coordinator + faithful DIS 接线
+-> FA-5 本地故障战役和 GPU 验收
+```
+
+这个顺序是对的，但“identity foundation”名称太窄，里面还包含 durability 和 collector 契约。
+
+F2-4 应在 F2-1 编码前先定案，因为 crash replay 是否复用 public execution ID，会直接影响身份格式。我的首版建议是：
+
+```text
+slime data-source checkpoint
++ 同 rollout_id 绑定的 RH2 pending-state checkpoint
++ replay-stable public execution ID
++ 每次真实会话重新生成私有 capability
++ 下游按 execution_id/batch_id 幂等去重
+```
+
+不建议首版改造 data source 为完整 lease/ACK；而“只做 at-least-once + dedup”也不够，因为没有 cursor 回退就无法重新取得已预取但丢失的组。
+
+**文档问题**
+
+[05 计划:174](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:174) 仍要求“worker 线程重建”，但 [同文档:296](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:296) 已定为 `halt -> 整个 rollout actor 重启`，两处必须统一。顶部“待开工”、FA-2 的 `2~3 人日`估算、FA-4 依赖以及 AGENTS/状态文档中的测试数也都已过时。
+
+**当前准确进度**
+
+可以表述为：
+
+```text
+FA-0：完成
+FA-1：worker/proxy/同步入口的本机实现基本完成
+      尚有一个短 closure patch；真实更新窗口协调仍等 FA-4
+FA-2：尚未开始，下一步
+FA-3：离线预检与归一化完成，生产接线未完成
+FA-4：数值参考与对拍完成，coordinator/custom loss 接线未完成
+FA-5：未开始
+fully_async 闸门：仍为 false
+```
+
+验证结果：FA 定向测试 `150 passed`，全套 `903 passed`，`inspect-rh2-s1` 通过。没有发现需要推翻 fully async 方向的问题。
+
+
+
+
+**结论**
+
+Claude 的总体判断大约八成正确，可以据此修改 05 计划，但不建议原样照搬。绝大多数 Codex P0 都是可复现的正确性、安全性或数据完整性问题，必须修。真正需要警惕的是：
+
+1. 临时 fail-closed 挡板长期残留，造成训练分布偏置。
+2. 每发现一个问题就叠一层守卫，状态所有权越来越难推理。
+3. 拒绝虽有计数，却还没有形成统一、分类明确的 fail-loud 机制。
+4. `implementation-notes.md` 已经是历史流水账，旧结论和后续修正混在一起，开始影响接手效率。
+
+**我同意的部分**
+
+- 并行 subagent 被 `overlap fail-closed` 拒绝，确实会系统性裁掉复杂轨迹。F2-3 必须解除合法并发的误杀。
+- 稳定 SID 与 poison 绑定确实有问题，F2 必须拆成公开执行身份和随机私有会话凭证。
+- 正式运行前必须有按故障类别统计的拒绝率、长度分桶和熔断。
+- 正式链关键逻辑不应继续放在 `experiments/s1_7a_bringup/`。
+- 临时挡板应有明确的替代任务、移除条件和正式训练闸门。
+- 共享可变状态跨 Ray loop、aiohttp loop 和线程传播，是连续几轮竞态问题的共同根源。最终应收敛到单 owner 串行化状态变更，而不是继续增加零散锁。
+
+**我建议的可执行的设计规则**
+
+1. 稳定 SID 并非“永久拉黑整个 run”
+
+当前 poison archive 有 4096 上限，旧记录会被淘汰。因此实际问题更糟糕一些：同一槽位会被拒绝多久，取决于之后产生了多少无关 poison 记录。它是非确定性隔离，而不是严格永久隔离。
+
+F2 应采用：
+
+```text
+稳定 logical execution id
++ 每次实际执行的 attempt id / nonce
++ 随机会话 capability
+```
+
+poison 只绑定实际 session/attempt，不绑定任务槽位。
+
+2. 非零 exit 问题不能只留给 FA-5
+
+Claude 举的 `SIGKILL → 137` 不是当前主路径的主要事实。slime 在 episode 时间预算耗尽时返回专门的 `EXIT_TIME_BUDGET_EXCEEDED = -1`，见 [sandbox.py](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/sandbox.py:60)；RH2 Docker RPC 自身超时才返回 124，见 [docker_sandbox.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/docker_sandbox.py:36)。
+
+但当前正式链在 [generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1561) 对所有非零值一律拒绝，所以正常的 episode horizon timeout 也会被丢弃，长度偏置已经是确定的设计问题。
+
+FA-2 前应先定义结构化终止结果：
+
+```text
+completed
+episode_time_limit
+owner_cancelled
+policy_update_abort
+harness_crash
+api_failure
+sandbox_failure
+```
+
+`episode_time_limit` 若 capture 已完整闭合、没有半截模型响应且 workspace 可评分，可以作为截断但有效的 rollout 评分，而不应自动视为 infra failure。FA-5 负责实测映射，不能承担首次定义语义。
+
+同时应解除 `require_real_weight_versions` 与“所有非零 exit 都拒绝”的硬耦合。二者不是同一个安全事实。
+
+3. 熔断必须按 fault domain 分类
+
+不能简单写成“某类拒绝率高就 task_quarantine/run_halt”：
+
+- `contract_violation`、audit 持久化失败、身份矛盾：立即 `run_halt`。
+- 模型服务、sandbox、capture 基建故障：组件级暂停或 `run_halt`，不能隔离任务。
+- 环境包确定性损坏：`task_quarantine`。
+- 模型真实失败、reward=0：正常样本，不进故障熔断。
+- 模型触发安全策略：拒绝 execution/group，但不能默认隔离任务。
+- staleness 偏高：反压或暂停权重更新协调，不应隔离任务。
+
+不需要再新增四层报告。现有 `RolloutAttemptOutcome` 加纯函数式 `RecoveryPolicy`，最终写 `PromptGroupAdmissionReport` 就够了。
+
+4. “测试过度绑定中文文案”略有夸大
+
+目前多数测试断言的是 reason code 或关键子串，并非完整中文句子。方向上仍建议逐步改成：
+
+```python
+assert exc.value.reason_code == "..."
+```
+
+但这不是当前阻塞，也不值得现在大规模重写 895 个测试。
+
+**还要一起反馈给 Claude 的 FA-1 闭合问题**
+
+这些是我上一轮已经验证、但尚未发给他的内容：
+
+- [glue.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:588) 无锁遍历 `weight_versions`，并发时可触发 `dictionary changed size during iteration`。
+- [glue.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:741) 先 `drain_attempts()` 再写 JSONL，落盘失败会同时丢失内存证据。
+- audit sink 抛错目前会被 worker 当作普通成员失败；只要 `failure_sink` 成功，worker 仍继续 top-up。审计存储失败应是 typed fatal error 并触发 `WorkerHalted`。
+- execution audit 没有写 `timeline_dicts()` 和 `timing_summary()`，丢掉了本轮专门建设的阶段耗时。
+- 需要增加 audit 成功、写失败不丢记录、写失败停机、drain 先于边界检查、open rollback 的定向测试。
+- 05 计划一处仍写 worker 线程重建，另一处已定案整 actor 重启，两者需统一为后者。
+
+**建议如何修改 05 计划**
+
+在 FA-2 前加一个很小的“FA-1 closure”，先修上面四个代码问题。随后顺序建议调整为：
+
+```text
+FA-1 closure
+-> 先定 F2-4 崩溃恢复与 replay 身份语义
+-> F2-0 正式运行时代码从 experiments 提升到 src
+-> F2-1/F2-2 执行身份与私有 capability
+-> F2-3 request 级 capture + 单 owner 状态变更
+-> F2-4 恢复实现
+-> F2-5/F2-6 组不变量与 durable manifest
+-> PromptGroupAssembler
+-> 分类统计、阈值与熔断
+```
+
+另外建议在 [implementation-notes.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/implementation-notes.md:568) 顶部增加一页“当前权威状态”，列出当前有效设计、临时挡板和未闭合项。历史轮次继续保留，但标明 `superseded_by`。否则后续 agent 很容易把早期 FIFO、旧 release 时机等已推翻结论重新当成现状。
+
+所以可以让 Claude 修改 05 计划，但应把以上修正连同上一轮 FA-1 反馈一起交给他。当前不是“防御太多所以删守卫”，而是进入了“停止叠补丁，开始收敛身份、所有权和可观测性”的阶段。
+
+
+

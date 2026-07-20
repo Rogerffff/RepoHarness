@@ -178,26 +178,37 @@ class CaptureRegistry:
             )
         return queue[0]
 
+    def snapshot_weight_versions(self) -> dict[str, list[str]]:
+        """锁内复制全部会话的版本序列（codex 轮次 14 仍需修正 1：provider
+        此前无锁遍历 dict.values()，并发 commit/unregister 会
+        `dictionary changed size during iteration`——变成未归因 adapter 500
+        而不是干净缺员）。"""
+
+        with self._lock:
+            return {sid: list(vs) for sid, vs in self.weight_versions.items()}
+
     def session_deadline(self, sid: str | None) -> float | None:
         """会话 deadline（episode 预算传播）。首次调用即按默认预算起表——
         第一次模型调用 ≈ harness 启动后数秒，余量记入 notes。"""
 
         if sid is None:
             return None
-        if sid not in self.session_deadlines:
-            if self.default_session_budget_seconds is None:
-                return None
-            import time as _time
+        import time as _time
 
-            self.session_deadlines[sid] = (
-                _time.monotonic() + self.default_session_budget_seconds
-            )
-        return self.session_deadlines[sid]
+        with self._lock:
+            if sid not in self.session_deadlines:
+                if self.default_session_budget_seconds is None:
+                    return None
+                self.session_deadlines[sid] = (
+                    _time.monotonic() + self.default_session_budget_seconds
+                )
+            return self.session_deadlines[sid]
 
     def next_turn_seq(self, sid: str | None) -> int:
         key = sid or "default"
-        self._turn_seq[key] = self._turn_seq.get(key, 0) + 1
-        return self._turn_seq[key]
+        with self._lock:
+            self._turn_seq[key] = self._turn_seq.get(key, 0) + 1
+            return self._turn_seq[key]
 
     def unregister(self, sid: str) -> None:
         with self._lock:
@@ -247,10 +258,12 @@ class CaptureRegistry:
                 return
         if overlap:
             # P0-2（codex 轮次 9）：overlap = 并发同 session 请求在飞——FIFO
-            # 猜测会串账，fail-closed：poison + 两轮 abandon（锁外：磁盘写）。
-            self.stats["concurrent_overlap_seen"] += 1
+            # 猜测会串账，fail-closed：poison + 两轮 abandon（锁外：磁盘写；
+            # 轮次 14：stats 增量补锁）。
+            with self._lock:
+                self.stats["concurrent_overlap_seen"] += 1
+                self.stats["dropped_uncommitted"] += 1
             self.poison.poison(sid, "capture_pending_overlap")
-            self.stats["dropped_uncommitted"] += 1
             if stale.proxy_result is not None:
                 try:
                     stale.proxy_result.abandon_delivered("capture_pending_overlap")

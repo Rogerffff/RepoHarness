@@ -204,7 +204,10 @@ async def test_request_carries_token_ids_not_messages():
     assert sp["logprobs"] == 1
     assert sp["skip_special_tokens"] is False
     # rollout 亲和路由头：同一 rollout 的多轮请求带同一 session id。
-    assert req.headers.get(SESSION_ID_HEADER) == "trace-abc123"
+    # HTTP 头名大小写不敏感（RFC 9110）：新版 httpx/h11 会把线上形态规范成
+    # "X-Session-Id"——按小写键匹配，不锁大小写（依赖重锁后暴露的过度约束）
+    headers_ci = {k.lower(): v for k, v in req.headers.items()}
+    assert headers_ci.get(SESSION_ID_HEADER.lower()) == "trace-abc123"
 
 
 # ---------------------------------------------------------------------------

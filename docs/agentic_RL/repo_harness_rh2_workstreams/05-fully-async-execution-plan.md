@@ -1,6 +1,6 @@
 # 05 — FA 独立工作流执行计划：version-aware fully async 训练链
 
-日期：2026-07-12。状态：**已定案，待开工**（设计依据与本计划的分工见下"输入"）。
+日期：2026-07-12（状态更新 2026-07-20）。状态：**执行中**——FA-0 完成；FA-1 本机实现完成（含 codex 轮次 6~14 九轮审查修复，closure 批次落地）；FA-3 离线/FA-4 对拍完成（接线未做）；FA-2 下一步（先 2A 身份与持久性基座，见 FA-2 节分批重排）；闸门 `rh2_fully_async_training_path_verified` 仍 false。
 
 输入：P3 收口结论（`preflight/preflight_report.md`：wait_time_ratio=0.82、尾闲 26~28% > 25% 阈值）、FA 设计讨论稿（`fully_async_rollout_pipeline_design_discussion.md`，codex，2026-07-12——**机制分析与对象模型的权威出处，本计划不复述其论证**）、fully_async 升级设计（`preflight/slime_fully_async_upgrade_design.md`：四缺口 + slime 机制知识）、原 S2-0b 硬化规格（问题 A~E，自 `04-s2-execution-plan.md` 迁入并废止原节）、算法分析（`../training_design/repoharness_sao_dis_grpo_ppo_analysis.md`：GRPO 保持首训、faithful DIS 为正确性组件）、orchestrator 审查（2026-07-12：proxy 边界、eval 路径、契约测试先行、reward 广播语义核实）。
 
@@ -78,30 +78,67 @@
 
 ### FA-2 PromptGroupAssembler 与合格组队列
 
-> **分批重排（codex 轮次 13 完整审计，2026-07-13）**：FA-2 不先写 assembler
-> 状态机。第一批 = **identity foundation**（下列 F2-1~F2-6，全部是 assembler
-> 的前置条件），第二批才是本节原有的组状态机/队列。FA-1 closure 六项
-> （未知 SID fail-closed / drain 先行 / capture 事务化 / open-session
-> rollback / limiter 真接线 / execution audit sink）已随轮次 13 落地。
+> **分批重排（codex 轮次 13 完整审计定序，轮次 14 修订，2026-07-20）**：
+> FA-2 分两批。第一批 **FA-2A：Runtime Identity & Durability Foundation**
+> （不只"身份"——含持久性与 collector 契约），第二批 FA-2B 才是本节原有的
+> assembler 状态机。FA-1 closure（未知 SID fail-closed / drain 先行 /
+> capture 事务化 / open rollback / limiter 真接线 / audit sink + 事务化
+> 落盘 + FatalExecutionInfrastructureError 停机）已随轮次 13/14 落地。
 >
-> **F2-1 身份贯穿**：`ExecutionIdentity` 从 task source 一路传到
-> worker→orchestrator→session→proxy→capture→grading→artifact→Outcome；
-> 消灭 orchestrator 从 task+index+group 重造稳定 SID（epoch 复用、
-> artifact 覆盖、poison 无法隔离的根源）。
-> **F2-2 身份与凭证分离**：`rollout_execution_id`（公开可审计）与
-> `session_auth_capability`（128-bit 随机、仅当前会话、不落公开 artifact）
-> 拆开；adapter 存 capability→execution 映射，会话关闭即失效。
-> **F2-3 request 级 capture 归属**：`(execution_id, request_id)` 键替代
-> SID+FIFO/fail-closed；SGLang RID 传到 record_turn。
-> **F2-4 预取恢复语义**：三选一定案（checkpoint 含 RH2 pending 状态 /
-> data source lease-ACK / at-least-once + execution·batch id 去重）——
-> codex 探针：batch=1 预取 7 组时崩溃 = 7 组永久跳题。
-> **F2-5 collector 组不变量**：组长度 = n、member_slot 0..n-1 无重复、
-> 重复 execution_id 拒绝、混合 branch 策略显式、按 slot 排序、
-> dropped 记录有界——进 assembler 契约。
-> **F2-6 attempt→Outcome 血缘**：`drain_attempts`（已落地）接
-> per-execution manifest；delivered↔capture、non-delivered↔digest
-> evidence 双向引用；进程退出前无 owner draft/attempt 检查。
+> **FA-2A 执行顺序（codex 轮次 14 定序——F2-4 语义必须先于 F2-1 编码，
+> 因为 crash replay 是否复用公开 execution id 直接决定身份格式）**：
+>
+> 1. **F2-4 定案（先设计后编码）**：崩溃恢复与 replay 身份语义。首版方案
+>    （codex 轮次 14 建议，采纳）：slime data-source checkpoint + 与
+>    rollout_id 绑定的 RH2 pending-state checkpoint + **replay-stable 公开
+>    execution id** + 每次真实会话重新生成私有 capability + 下游按
+>    execution_id/batch_id 幂等去重。**不做**完整 data source lease/ACK
+>    改造（首版过重）；也**不允许**裸 at-least-once + dedup（无 cursor
+>    回退则已预取但丢失的组永远取不回来）。
+> 2. **F2-0 代码提升**：正式运行时代码从 `experiments/s1_7a_bringup/`
+>    提升进 `src/repoharness2/`（capture_wire 的 registry/事务/守卫、glue
+>    的装配工厂——正式链承重墙不住在 experiments 目录）。
+> 3. **F2-1/F2-2 身份与凭证**：ExecutionIdentity 贯穿 worker→orchestrator
+>    →session→proxy→capture→grading→artifact→Outcome；公开
+>    `rollout_execution_id`（可审计、replay-stable）与
+>    `session_auth_capability`（128-bit 随机、仅当前会话、不落公开
+>    artifact、会话关闭即失效）分离。**poison 只绑定实际 session/attempt，
+>    不绑任务槽位**（轮次 14 设计规则 1：当前稳定 SID + 归档毒 = 非确定性
+>    任务拉黑，一次 infra 抖动可能整 run 排除一个题——身份拆分后此病根治）。
+> 4. **F2-3 request 级 capture 归属 + 单 owner 状态变更**：
+>    `(execution_id, request_id)` 键替代 SID+fail-closed；同时把
+>    CaptureRegistry 从"散锁"收敛到单 owner 串行化状态变更（连续多轮竞态
+>    问题的共同根源是共享可变状态跨三个执行域传播——停止叠锁，收敛所有权）。
+>    落地后解除 overlap fail-fast（并行 subagent 误杀解除）。
+> 5. **F2-4 实现**：按第 1 步定案落地恢复语义。
+> 6. **F2-5/F2-6**：collector 组不变量（组长度 == n、slot 0..n-1 无重复、
+>    重复投递拒绝、混合 branch 策略显式、dropped 有界）；attempt→Outcome
+>    durable manifest（snapshot/ack 事务接口已在，接 per-execution
+>    manifest 与双向引用）。
+>
+> **FA-2A 附带定义项（编码前定案）**：
+>
+> - **结构化终止结果枚举**（轮次 14 设计规则 2）：`completed /
+>   episode_time_limit / owner_cancelled / policy_update_abort /
+>   harness_crash / api_failure / sandbox_failure`。事实依据：slime episode
+>   时间预算耗尽返回 `EXIT_TIME_BUDGET_EXCEEDED = -1`（sandbox.py:60），
+>   rh2 Docker RPC 超时返回 124——"所有非零 exit 一律拒绝"会确定性剔除
+>   长任务（长度偏置）。`episode_time_limit` 在 capture 完整闭合、无半截
+>   响应、workspace 可评分时按**截断但有效**的 rollout 评分，不自动判
+>   infra failure。require_real_weight_versions 与非零 exit 拒绝的启动
+>   断言硬耦合已解除（轮次 14 代码已落，推翻轮次 9）；FA-5 负责实测映射，
+>   不承担首次定义语义。
+> - **按 fault domain 分类的熔断**（轮次 14 设计规则 3，实现挂 FA-2B 与
+>   assembler 同批）：contract_violation/审计持久化失败/身份矛盾 → 立即
+>   run_halt；模型服务/sandbox/capture 基建故障 → 组件级暂停或 run_halt
+>   （**不隔离任务**）；环境包确定性损坏 → task_quarantine；模型真实失败
+>   reward=0 → 正常样本不进熔断；安全策略触发 → 拒绝 execution/group 但
+>   默认不隔离任务；staleness 偏高 → 反压/暂停权重更新协调，不隔离任务。
+>   载体：现有 `RolloutAttemptOutcome` + 纯函数 `RecoveryPolicy` + 最终写
+>   `PromptGroupAdmissionReport`——**不新增报告层**。
+> - **正式训练闸门补充**：`rh2_formal_training_allowed` 的前置检查显式
+>   包含"overlap fail-fast 挡板已由 request 级归属替代"与"分类拒绝率
+>   熔断在位"两条——临时挡板不解除不得开正式训练（防训练分布被隐性裁剪）。
 
 1. 每条执行完成评分/投影/Gate 后才提交 `RolloutAttemptOutcome` 给 assembler；`PromptGroupState` 为进程内轻量状态机（定期 checkpoint，不注册公共 schema）；组终结时唯一落盘 `PromptGroupAdmissionReport`（admitted/rejected/quarantined + 讨论稿 §5.3 字段）。
 2. 状态机照讨论稿 §9（NEW→RUNNING→PRESENT/LOCAL_RETRY/MISSING/PERMANENT_REJECTED；组 OPEN→READY/EXPIRED/QUARANTINED；READY→BatchAdmission）。`WAITING_FOR_BATCH_ALIGNMENT` 不倒写 eligibility、不重跑 harness。
@@ -171,9 +208,11 @@
 6. 【升级设计 §5"必须实验验证"补齐】current policy version 传播延迟、
    engine.get_weight_version 调用开销、跨版本 token 比例实测、
    N1 泄漏实际发生率（应为 0，兜底代码在位的前提下验证计数器）。
-7. 【N6 worker 崩溃恢复】注入 worker 线程死亡 → 验证线程重建 + in-flight
-   丢失被 prompt 覆盖率对账捕获（长训练必备审计：每个 prompt 的
-   dispatched/finalized/consumed 计数对账，缺口即告警）。
+7. 【N6 worker 崩溃恢复】注入 worker 死亡 → 验证 **halt → 整个 rollout
+   actor 退出并重启**（与 §6.1 P1-3 定案一致；单例 + monkeypatch 拓扑不
+   支持进程内线程重建，不得验证"线程重建"这种不存在的语义）+ in-flight
+   丢失被 prompt 覆盖率对账捕获（每个 prompt 的 dispatched/finalized/
+   consumed 计数对账，缺口即告警）。
 ```
 
 **验收**：短租清单全绿 → `rh2_fully_async_training_path_verified = true`；黄灯条款——场景 3 实测推翻假设但 proxy 简化后其余全绿，闸门仍可翻，偏离记 implementation-notes。

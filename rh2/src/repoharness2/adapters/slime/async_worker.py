@@ -44,6 +44,7 @@ from repoharness2.contracts.fa_runtime import (
 
 __all__ = [
     "ArtifactSinkWriteError",
+    "FatalExecutionInfrastructureError",
     "canonical_artifact_bytes",
     "BoundedDeliveryQueue",
     "ContinuousExecutionWorker",
@@ -640,16 +641,32 @@ class ModelCallProxy:
         self.tombstones_dropped = 0
         self._pending_drafts: set[str] = set()
 
-    def drain_attempts(self, execution_scope: str) -> list[ModelCallAttempt]:
-        """按 execution 摘走 attempt ledger（codex 轮次 13 P0-5/F2-6）：
-        audit sink 落盘后从热内存删除——ledger 不再无界增长。"""
+    def snapshot_attempts(self, execution_scope: str) -> list[ModelCallAttempt]:
+        """锁内复制该 execution 的 attempt（**不移除**）——审计事务第一步
+        （codex 轮次 14 仍需修正 2：先持久化成功、再 ack 移除，写失败时
+        内存证据不丢）。"""
 
         prefix = f"{execution_scope}/"
         with self._ledger_lock:
-            drained = [a for a in self.attempts_ledger if a.logical_turn_id.startswith(prefix)]
+            return [a for a in self.attempts_ledger if a.logical_turn_id.startswith(prefix)]
+
+    def ack_attempts(self, execution_scope: str) -> int:
+        """审计事务第二步：持久化成功后从热内存移除，返回移除数。"""
+
+        prefix = f"{execution_scope}/"
+        with self._ledger_lock:
+            before = len(self.attempts_ledger)
             self.attempts_ledger = [
                 a for a in self.attempts_ledger if not a.logical_turn_id.startswith(prefix)
             ]
+            return before - len(self.attempts_ledger)
+
+    def drain_attempts(self, execution_scope: str) -> list[ModelCallAttempt]:
+        """snapshot + ack 的合成（无持久化需求的调用方用；审计路径必须
+        分两步走事务）。"""
+
+        drained = self.snapshot_attempts(execution_scope)
+        self.ack_attempts(execution_scope)
         return drained
 
     @property
@@ -1019,6 +1036,17 @@ class ModelCallProxy:
 # ---------------------------------------------------------------------------
 
 
+class FatalExecutionInfrastructureError(RuntimeError):
+    """基建级致命错误（codex 轮次 14 建议 3）：审计存储不可用、账本存储
+    不可用等——**不是**单个 execution 的失败，继续 top-up 会持续产出
+    无审计依据的 rollout。worker 遇到它按系统故障停机（WorkerHalted），
+    恢复语义 = 整个 rollout actor 重启（05 计划已定案）。"""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        super().__init__(f"{reason_code}: {message}")
+        self.reason_code = reason_code
+
+
 class WorkerHalted(RuntimeError):
     """worker 因系统性故障停机（sink 失败/任务源故障）——训练不得继续。"""
 
@@ -1114,8 +1142,12 @@ class ContinuousExecutionWorker:
             return await self._execute_fn(spec)
 
     def _account_failure(self, spec: ExecutionTaskSpec, exc: BaseException) -> None:
-        """失败必有账：sink 优先；sink 失败进 durable fallback + halt。"""
+        """失败必有账：sink 优先；sink 失败进 durable fallback + halt。
+        基建级致命错误（FatalExecutionInfrastructureError）额外触发 halt——
+        它不是成员失败，继续 top-up 只会积累无审计依据的 rollout。"""
 
+        if isinstance(exc, FatalExecutionInfrastructureError):
+            self.halt_reason = self.halt_reason or f"fatal_infrastructure:{exc.reason_code}"
         self.counters.failed += 1
         try:
             self._failure_sink(spec, exc)

@@ -32,9 +32,12 @@ FA fully async 训练链    🔨 进行中 ← ★ 第一实施工作流（05 �
                             FA-1 ✅（持续 worker/有界队列/资源限额/ModelCallProxy
                             守卫三条件/重试白名单 + 生产接线薄壳 + proxy 接入
                             capture wire + CC 四变量训练守卫 + 版本固定 2.1.205；
-                            含 codex 轮次 6/7/8 三轮 follow-up）。测试 647→831。
-                            下一步：FA-2 PromptGroupAssembler → FA-3/4 接线 →
-                            FA-5（notes：fa/implementation-notes.md）
+                            含 codex 轮次 6~14 **九轮** follow-up 与 closure
+                            批次：三线程拓扑修复/未知 SID fail-closed/capture
+                            事务化/审计事务化落盘/Fatal 停机）。测试 647→903+。
+                            下一步：FA-2A 身份与持久性基座（F2-0~F2-6）→
+                            FA-2B assembler → FA-3/4 接线 → FA-5（现状权威：
+                            fa/implementation-notes.md 顶部"当前权威状态"页）
 S2 SWE-Safety 加固       ⏳ 计划草案（S2-0b 已迁出），与 FA 并行，尚未开工
 S3 训练治理完备          未开始（三档资格全量、环境验证四门收尾）
 S4 正式训练实验          未开始（before/after 实验，简历叙事收尾）

@@ -79,8 +79,10 @@ RepoHarness =
                               eval 首版只 before/after；退出闸门
                               rh2_fully_async_training_path_verified。
                               进度：FA-0 / FA-1 / FA-3 离线 / FA-4 对拍 已完成
-                              （2026-07-12，测试 647→749；FA-2 与接线、FA-5
-                              待做；notes 见 workstreams/fa/implementation-notes.md）。
+                              （FA-1 含 codex 轮次 6~14 九轮审查修复与 closure
+                              批次，2026-07-20，测试 647→903+；FA-2 下一步：
+                              先 2A 身份与持久性基座再 assembler；notes 顶部
+                              "当前权威状态"页是现状权威）。
                               ② S2 SWE-Safety + 数据 ingestion（并行）：
                               docs/agentic_RL/repo_harness_rh2_workstreams/04-s2-execution-plan.md
                               S2-0b 已迁出；S2 侧起点 = S2-6 导出器 ∥ S2-1

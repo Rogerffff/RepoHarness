@@ -1379,14 +1379,13 @@ class RolloutOrchestrator:
                     "reject_context_shrink——D-FA-6 的收缩兜底是硬要求，"
                     "不能只凭 DISABLE_COMPACT 环境变量宣布 compaction 已关闭。",
                 )
-            if not config.reject_on_nonzero_harness_exit:
-                raise StartupCheckError(
-                    "nonzero_exit_rejection_disabled_in_formal_chain",
-                    "正式链必须同时开启 reject_on_nonzero_harness_exit——"
-                    "任务失败的负样本是 CC exit 0 + grader reward=0；CC 非零"
-                    "退出只可能是 harness/API/进程执行失败，无已验证的非零"
-                    "业务退出码前一律拒绝（codex 轮次 9 P0-3）。",
-                )
+            # 轮次 14（推翻轮次 9 的硬耦合断言）：非零 exit 拒绝与真实权重
+            # 版本不是同一个安全事实——slime episode 时间预算耗尽返回
+            # EXIT_TIME_BUDGET_EXCEEDED=-1（sandbox.py:60），是主路径的正常
+            # 终止形态；"全部非零一律拒绝"会确定性剔除长任务（长度偏置）。
+            # 旋钮保留、glue 默认仍随正式链联动（行为暂不变），但不再启动
+            # 断言强制；结构化终止枚举（completed/episode_time_limit/...）
+            # 是 FA-2A 前置定义项，落地后按类别决定拒绝/截断评分。
         self.config = config
         self._task_resolver = task_resolver
         self._adapter_factory = adapter_factory
@@ -1738,7 +1737,18 @@ class RolloutOrchestrator:
                     self._audit_sink(audit)
                 except Exception as exc:  # noqa: BLE001 —— 分链路处置
                     if self.config.require_real_weight_versions:
-                        raise  # 正式链：审计落盘失败不许静默（run-halt 语义）
+                        # 轮次 14 仍需修正 3：裸 raise 会被 worker 当普通成员
+                        # 失败（failure_sink 成功就继续 top-up）——包装成基建
+                        # 级致命错误，worker 据此停机（真 run-halt）
+                        from repoharness2.adapters.slime.async_worker import (
+                            FatalExecutionInfrastructureError,
+                        )
+
+                        raise FatalExecutionInfrastructureError(
+                            "execution_audit_write_failed",
+                            f"审计存储不可用：{type(exc).__name__}: {exc}——"
+                            "继续 top-up 只会积累无审计依据的 rollout。",
+                        ) from exc
                     print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
 
     # ------------------------------------------------------------------ 步骤 2

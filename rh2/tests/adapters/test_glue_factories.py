@@ -1,0 +1,147 @@
+"""codex 轮次 14 仍需修正 5：生产装配面的本地回归——limiter 真传进 proxy、
+open_session 回滚、audit 事务化（写失败不丢内存证据）。glue 可本地 import
+（重物在 async_start 内惰性加载），这些工厂正是为可测性从闭包提取的。"""
+
+from __future__ import annotations
+
+import json
+import sys
+import types
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
+
+from s1_7a_bringup.capture_wire import CaptureRegistry  # noqa: E402
+from s1_7a_bringup.glue import (  # noqa: E402
+    build_production_model_call_proxy,
+    make_per_rollout_adapter,
+    write_execution_audit_record,
+)
+
+
+class FakeHook:
+    def on_generate_response(self, **kwargs) -> None:
+        pass
+
+
+def test_production_proxy_assembly_wires_limiter(monkeypatch):
+    """轮次 13 P0-4 的装配回归：env 旋钮 -> 生产 proxy 的 _limits 真实生效
+    （此前 rh2_fa_limit_model_call 是无消费者的假配置）。"""
+
+    monkeypatch.setenv("RH2_FA_LIMIT_MODEL_CALL", "1")
+    registry = CaptureRegistry()
+    proxy = build_production_model_call_proxy(
+        registry, lambda: "3", require_real=False, artifact_sink=None
+    )
+    assert proxy._limits is not None
+    assert proxy._limits.limits["model_call"] == 1  # env 真的传进 semaphore 配置
+    assert registry.model_call_proxy is proxy  # 装配点挂上 registry
+    assert proxy._sink_required is False
+
+
+def test_open_session_rollback_on_underlying_failure():
+    """轮次 13 P1-6 的装配回归：底层 open 失败 -> registry 注册回滚
+    （否则健康 SID 永久占用 registry，后续同 SID 全被 Duplicate 拒绝）。"""
+
+    registry = CaptureRegistry()
+
+    class ExplodingSharedAdapter:
+        def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
+            raise RuntimeError("underlying open failed")
+
+    adapter = make_per_rollout_adapter(registry, ExplodingSharedAdapter(), FakeHook())
+    with pytest.raises(RuntimeError, match="underlying open failed"):
+        adapter.open_session("sid_RB")
+    assert "sid_RB" not in registry.hooks  # 已回滚
+
+    class OkSharedAdapter:
+        def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
+            pass
+
+    adapter2 = make_per_rollout_adapter(registry, OkSharedAdapter(), FakeHook())
+    adapter2.open_session("sid_RB")  # 回滚干净 -> 同 SID 可重新打开
+    assert "sid_RB" in registry.hooks
+
+
+def _fake_audit(sid: str) -> types.SimpleNamespace:
+    return types.SimpleNamespace(
+        session_id=sid,
+        trajectory_id="traj_x",
+        task_id="task_x",
+        finalized=None,
+        failure_records=[types.SimpleNamespace(stage="assemble", error_type="E", detail="d")],
+        cleanup_failures=[],
+        context_shrink_reasons=[],
+        steps=["step1"],
+        delivered_sample_count=0,
+        lease_released=True,
+        repair_signal_forwarded=False,
+        harness_exit_code=0,
+        timeline_dicts=lambda: [{"name": "step1", "at": 1.0}],
+        timing_summary=lambda: {"total_seconds": 2.5},
+    )
+
+
+def _proxy_with_attempt(sid: str):
+    import asyncio
+
+    from repoharness2.adapters.slime.async_worker import ModelCallProxy
+    from repoharness2.contracts.fa_runtime import TrainingRuntimeWindow
+
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+
+    class Active:
+        def current_window(self) -> TrainingRuntimeWindow:
+            return TrainingRuntimeWindow(
+                update_epoch=1,
+                phase="ACTIVE",
+                old_version="0",
+                target_version="1",
+                active_version="1",
+                window_started_at=now,
+                window_completed_at=now + timedelta(seconds=5),
+                fencing_token="f1",
+            )
+
+    proxy = ModelCallProxy(Active())
+
+    async def scenario():
+        async def send(attempt: int) -> dict:
+            return {"text": "ok", "meta_info": {"id": "rid", "weight_version": "1"}}
+
+        result = await proxy.call(sid, "turn_0", send)
+        result.finalize_delivered("cap_ref")
+
+    asyncio.new_event_loop().run_until_complete(scenario())
+    return proxy
+
+
+def test_write_execution_audit_success_acks_and_enriches(tmp_path):
+    """轮次 14 仍需修正 2/4：成功路径——记录含 timeline/timing/disposition/
+    attempts，且持久化成功后 ledger 才被 ack 清空。"""
+
+    proxy = _proxy_with_attempt("sid_AU")
+    assert len(proxy.attempts_ledger) == 1
+    path = tmp_path / "audit.jsonl"
+    write_execution_audit_record(proxy, _fake_audit("sid_AU"), path)
+    record = json.loads(path.read_text().strip())
+    assert record["timeline"] == [{"name": "step1", "at": 1.0}]  # 时间线不再丢
+    assert record["timing_summary"] == {"total_seconds": 2.5}
+    assert record["disposition"] == "aborted" and record["lease_released"] is True
+    assert len(record["model_call_attempts"]) == 1
+    assert proxy.attempts_ledger == []  # 持久化成功 -> ack 移除
+
+
+def test_write_execution_audit_failure_keeps_ledger(tmp_path):
+    """轮次 14 仍需修正 2 的反例回归：写失败（目录不存在）时 attempt **不被
+    摘走**——不会"既拒绝 rollout 又丢审计依据"。"""
+
+    proxy = _proxy_with_attempt("sid_AF")
+    bad_path = tmp_path / "no_such_dir" / "audit.jsonl"
+    with pytest.raises(OSError):
+        write_execution_audit_record(proxy, _fake_audit("sid_AF"), bad_path)
+    assert len(proxy.attempts_ledger) == 1  # 内存证据仍在（修复前已被 drain 丢失）

@@ -1251,3 +1251,94 @@ def test_drain_attempts_removes_from_hot_memory():
     remaining = [a.logical_turn_id for a in proxy.attempts_ledger]
     assert all(t.startswith("exec_D2/") for t in remaining)  # 只剩别的 execution
     assert proxy.drain_attempts("exec_D1") == []  # 幂等
+
+
+async def test_worker_halts_on_fatal_infrastructure_error():
+    """codex 轮次 14 仍需修正 3：审计/账本存储不可用是基建级致命错误——
+    即便 failure_sink 成功落账，worker 也必须停机（WorkerHalted），不许
+    继续 top-up 产出无审计依据的 rollout（修复前：failed=4、halt=None、
+    继续跑）。"""
+
+    from repoharness2.adapters.slime.async_worker import (
+        ContinuousExecutionWorker,
+        ExecutionTaskSpec,
+        FatalExecutionInfrastructureError,
+    )
+
+    specs = [
+        ExecutionTaskSpec(
+            rollout_execution_id=f"e{i}", prompt_group_id="g0", member_slot=i
+        )
+        for i in range(4)
+    ]
+    it = iter(specs)
+    sink_calls: list[str] = []
+
+    async def execute(spec):
+        raise FatalExecutionInfrastructureError(
+            "execution_audit_write_failed", "disk full"
+        )
+
+    worker = ContinuousExecutionWorker(
+        task_source=lambda: next(it, None),
+        execute_fn=execute,
+        delivery_queue=BoundedDeliveryQueue(8),
+        failure_sink=lambda spec, exc: sink_calls.append(spec.rollout_execution_id),
+        concurrency=2,
+        poll_interval_seconds=0.0,
+        sleeper=_no_sleep,
+    )
+    stop = asyncio.Event()
+    with pytest.raises(WorkerHalted, match="fatal_infrastructure:execution_audit_write_failed"):
+        await worker.run(stop)
+    assert worker.halt_reason.startswith("fatal_infrastructure:")
+    assert len(sink_calls) >= 1  # 失败照常有账
+    assert worker.ledger_balanced()
+
+
+def test_snapshot_weight_versions_survives_concurrent_mutation():
+    """codex 轮次 14 仍需修正 1：provider 遍历必须走锁内快照——并发
+    register/unregister 下裸遍历会 `dictionary changed size during
+    iteration`（未归因 adapter 500）。"""
+
+    import sys as _sys
+    import threading
+    from pathlib import Path as _Path
+
+    _sys.path.insert(0, str(_Path(__file__).resolve().parents[2] / "experiments"))
+    from s1_7a_bringup.capture_wire import CaptureRegistry
+
+    class _Hook:
+        def on_generate_response(self, **kwargs):
+            pass
+
+    registry = CaptureRegistry()
+    stop = threading.Event()
+    errors: list[BaseException] = []
+
+    def churn():
+        i = 0
+        while not stop.is_set():
+            sid = f"sid_{i % 7}"
+            try:
+                registry.register(sid, _Hook())
+                registry.weight_versions[sid].append(str(i))
+                registry.unregister(sid)
+            except Exception:  # noqa: BLE001 - Duplicate 竞态可接受，此处只关心遍历崩溃
+                pass
+            i += 1
+
+    def reader():
+        try:
+            for _ in range(2000):
+                snap = registry.snapshot_weight_versions()
+                for versions in snap.values():
+                    list(versions)
+        except BaseException as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    t1 = threading.Thread(target=churn)
+    t2 = threading.Thread(target=reader)
+    t1.start(); t2.start()
+    t2.join(20); stop.set(); t1.join(5)
+    assert errors == []  # 修复前：RuntimeError(dictionary changed size)

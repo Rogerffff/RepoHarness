@@ -296,6 +296,126 @@ class SimpleLoopDriver:
 _SERVICE_LOCK = asyncio.Lock()
 
 
+def write_execution_audit_record(proxy, audit, path) -> None:
+    """execution 终态审计（轮次 13 P0-5 + 轮次 14 事务化）：
+
+    事务顺序 = **snapshot → 持久写成功 → ack 移除**——写失败时 attempt 仍在
+    热内存（下次审计/停机报告仍可导出），不会"既拒绝 rollout 又丢审计依据"。
+    记录含完整时间线与分段耗时（timeline_dicts/timing_summary——轮次 14 仍需
+    修正 4：此前只写 steps，丢掉了专门建设的阶段耗时证据）、最终 disposition
+    与 Eligibility 引用。"""
+
+    attempts_snapshot = []
+    if proxy is not None and audit.session_id:
+        attempts_snapshot = proxy.snapshot_attempts(audit.session_id)
+    finalized = audit.finalized
+    eligibility_ref = None
+    disposition = "aborted"
+    if finalized is not None:
+        disposition = "finalized"
+        report = getattr(finalized, "eligibility_report", None)
+        eligibility_ref = getattr(report, "report_id", None)
+    elif not audit.failure_records:
+        disposition = "unknown_terminal"
+    record = {
+        "schema_id": "rh2.fa.execution_audit.v1",
+        "trajectory_id": audit.trajectory_id,
+        "session_id": audit.session_id,
+        "task_id": audit.task_id,
+        "disposition": disposition,
+        "eligibility_report_ref": eligibility_ref,
+        "delivered_sample_count": audit.delivered_sample_count,
+        "lease_released": audit.lease_released,
+        "repair_signal_forwarded": audit.repair_signal_forwarded,
+        "steps": list(audit.steps),
+        "timeline": audit.timeline_dicts(),
+        "timing_summary": audit.timing_summary(),
+        "harness_exit_code": audit.harness_exit_code,
+        "failure_records": [
+            {"stage": f.stage, "error_type": f.error_type, "detail": f.detail}
+            for f in audit.failure_records
+        ],
+        "cleanup_failures": [
+            {"step": c.step, "detail": c.detail} for c in audit.cleanup_failures
+        ],
+        "context_shrink_reasons": list(audit.context_shrink_reasons),
+        "model_call_attempts": [a.model_dump(mode="json") for a in attempts_snapshot],
+    }
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+        fh.flush()
+        os.fsync(fh.fileno())
+    # 持久化成功才移除热内存（ack）
+    if proxy is not None and audit.session_id:
+        proxy.ack_attempts(audit.session_id)
+
+
+def build_production_model_call_proxy(
+    registry, version_provider, *, require_real: bool, artifact_sink
+):
+    """生产 proxy 装配（轮次 14 仍需修正 5：装配面必须可本地回归——测试
+    断言 limiter 真的传进 proxy，而不是散在 async_start 里没法测）。"""
+
+    from repoharness2.adapters.slime.async_worker import (
+        ModelCallProxy,
+        ResourceLimits,
+        StaticActiveCoordinator,
+    )
+
+    limits = ResourceLimits(
+        {"model_call": int(os.environ.get("RH2_FA_LIMIT_MODEL_CALL", "32"))}
+    )
+    proxy = ModelCallProxy(
+        StaticActiveCoordinator(version_provider),
+        attempt_timeout_seconds=900.0,  # 与 wire sock_read 同级
+        artifact_sink=artifact_sink,
+        sink_required=require_real,
+        limits=limits,
+    )
+    registry.model_call_proxy = proxy
+    return proxy
+
+
+def make_per_rollout_adapter(registry, shared_adapter, hook):
+    """SessionAdapter 形状（轮次 14：从闭包提取为模块级，open rollback 等
+    语义可本地回归）。"""
+
+    class PerRolloutAdapter:
+        def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
+            # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
+            # 注册（否则 session_open 未置位、finally 不 drop，健康 SID
+            # 永久占用 registry）
+            registry.register(sid, hook)
+            try:
+                shared_adapter.open_session(
+                    sid,
+                    sampling_defaults=sampling_defaults,
+                    max_context_tokens=max_context_tokens,
+                )
+            except BaseException:
+                registry.unregister(sid)
+                raise
+
+        async def finish_session(
+            self, sid, *, base_sample, reward=0.0, extra_metadata=None, wait_timeout=5.0
+        ):
+            return await shared_adapter.finish_session(
+                sid,
+                base_sample=base_sample,
+                reward=reward,
+                extra_metadata=extra_metadata,
+                wait_timeout=wait_timeout,
+            )
+
+        async def drop_session(self, sid, *, wait_timeout=5.0):
+            try:
+                await shared_adapter.drop_session(sid, wait_timeout=wait_timeout)
+            finally:
+                registry.unregister(sid)
+
+    return PerRolloutAdapter()
+
+
 class BringupService:
     _instance: "BringupService | None" = None
 
@@ -531,25 +651,16 @@ class BringupService:
             raise RuntimeError("artifact sink 启动探针失败：写入不可读回。")
         probe_path.unlink()
 
-        # 轮次 13 P0-4：model_call 限额接入**生产 proxy**（此前 ResourceLimits
-        # 只在 FA 入口给 worker 的 sandbox 类，rh2_fa_limit_model_call 无生产
-        # 消费者）。所有权：本 limits 对象只在 adapter 线程的 event loop 内
-        # await（model_call 类信号量绑定该 loop）；worker 的 sandbox 类由 FA
-        # 入口另建对象、绑 AsyncLoopThread——**不跨 loop 共享同一 semaphore**。
-        from repoharness2.adapters.slime.async_worker import ResourceLimits
-
-        self.model_call_limits = ResourceLimits(
-            {"model_call": int(os.environ.get("RH2_FA_LIMIT_MODEL_CALL", "32"))}
-        )
-        self.registry.model_call_proxy = ModelCallProxy(
-            StaticActiveCoordinator(self._latest_engine_version),
-            attempt_timeout_seconds=900.0,  # 与 wire sock_read 同级
+        # 轮次 13 P0-4 / 轮次 14：生产 proxy 走模块级工厂（可本地回归的
+        # 装配面）。所有权：model_call 类信号量只在 adapter 线程 loop 内
+        # await；worker 的 sandbox 类由 FA 入口另建——不跨 loop 共享。
+        proxy = build_production_model_call_proxy(
+            self.registry,
+            self._latest_engine_version,
+            require_real=config.require_real_weight_versions,
             artifact_sink=audit_artifact_sink,
-            # 轮次 11 P0-2：正式链 sink 写失败 fail-closed（poison + 缺员），
-            # 不许静默退回内存引用后留悬空 evidence
-            sink_required=config.require_real_weight_versions,
-            limits=self.model_call_limits,
         )
+        self.model_call_limits = proxy._limits
         if config.require_real_weight_versions and (
             self.registry.model_call_proxy._artifact_sink is None
         ):  # pragma: no cover - 上两行恒配置；防未来编辑退化
@@ -587,7 +698,9 @@ class BringupService:
 
     def _registry_max_version(self) -> int | None:
         latest: int | None = None
-        for versions in self.registry.weight_versions.values():
+        # 轮次 14：锁内快照后遍历——并发 commit/unregister 下直接遍历会
+        # `dictionary changed size during iteration`（未归因 adapter 500）
+        for versions in self.registry.snapshot_weight_versions().values():
             for version in versions:
                 try:
                     value = int(str(version), 10)
@@ -734,81 +847,12 @@ class BringupService:
         return self.task_specs[iid]
 
     def _write_execution_audit(self, audit) -> None:
-        """execution 终态审计（轮次 13 P0-5）：audit 时间线 + 按 execution
-        drain 的 ModelCallAttempt ledger 一起落 JSONL；drain 后热内存即清。
-        正式链写失败由 orchestrator 上抛（fail-closed）。"""
-
-        attempts = []
-        proxy = self.registry.model_call_proxy
-        if proxy is not None and audit.session_id:
-            attempts = [
-                a.model_dump(mode="json") for a in proxy.drain_attempts(audit.session_id)
-            ]
-        record = {
-            "schema_id": "rh2.fa.execution_audit.v1",
-            "trajectory_id": audit.trajectory_id,
-            "session_id": audit.session_id,
-            "task_id": audit.task_id,
-            "steps": list(audit.steps),
-            "harness_exit_code": audit.harness_exit_code,
-            "failure_records": [
-                {"stage": f.stage, "error_type": f.error_type, "detail": f.detail}
-                for f in audit.failure_records
-            ],
-            "cleanup_failures": [
-                {"step": c.step, "detail": c.detail} for c in audit.cleanup_failures
-            ],
-            "context_shrink_reasons": list(audit.context_shrink_reasons),
-            "model_call_attempts": attempts,
-        }
-        path = ARTIFACT_DIR / "fa_execution_audit.jsonl"
-        with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+        write_execution_audit_record(
+            self.registry.model_call_proxy, audit, ARTIFACT_DIR / "fa_execution_audit.jsonl"
+        )
 
     def _adapter_factory(self, hook, session_defaults):
-        service = self
-
-        class PerRolloutAdapter:
-            """SessionAdapter 形状：共享 AnthropicAdapter + 按 sid 挂 capture hook。"""
-
-            def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
-                # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
-                # 注册（否则 session_open 未置位、finally 不 drop，健康 SID
-                # 永久占用 registry）
-                service.registry.register(sid, hook)
-                try:
-                    service.adapter.open_session(
-                        sid,
-                        sampling_defaults=sampling_defaults,
-                        max_context_tokens=max_context_tokens,
-                    )
-                except BaseException:
-                    service.registry.unregister(sid)
-                    raise
-
-            async def finish_session(
-                self, sid, *, base_sample, reward=0.0, extra_metadata=None, wait_timeout=5.0
-            ):
-                try:
-                    return await service.adapter.finish_session(
-                        sid,
-                        base_sample=base_sample,
-                        reward=reward,
-                        extra_metadata=extra_metadata,
-                        wait_timeout=wait_timeout,
-                    )
-                finally:
-                    # weight_versions 证据在 finish 后仍需要（events 记录），
-                    # 注销推迟到 drop_session（编排 finally 必经）。
-                    pass
-
-            async def drop_session(self, sid, *, wait_timeout=5.0):
-                try:
-                    await service.adapter.drop_session(sid, wait_timeout=wait_timeout)
-                finally:
-                    service.registry.unregister(sid)
-
-        return PerRolloutAdapter()
+        return make_per_rollout_adapter(self.registry, self.adapter, hook)
 
     async def _grading_submit(self, *, trajectory_id, workspace, spec):
         if INJECT_INFRA_INSTANCE and spec.task_id == INJECT_INFRA_INSTANCE:
