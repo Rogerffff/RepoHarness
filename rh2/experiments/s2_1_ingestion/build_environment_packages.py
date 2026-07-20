@@ -20,7 +20,7 @@ sys.path.insert(0, str(REPO_ROOT / "rh2" / "src"))
 
 from repoharness2.envpack.ingest_swegym_lite import (  # noqa: E402
     ingest_swegym_lite,
-    load_ingest_outputs,
+    load_trusted_ingest_outputs,
     write_ingest_outputs,
 )
 from repoharness2.envpack.t1_pins import T1PinsError, load_and_verify_t1_pins  # noqa: E402
@@ -90,12 +90,16 @@ def main() -> None:
     suspected = [c for c in result.duplicate_clusters if c.classification == "suspected_duplicate"]
 
     digests = write_ingest_outputs(result, OUT_DIR, pins=pins)
-    # strict loader 回读自检（T2-d/e 的唯一消费入口在此先行实证：
-    # 提交记录 → 文件 digest → 模型 → 去重 → 216 条逐包 strict 验证）
-    reloaded = load_ingest_outputs(OUT_DIR, pins=pins, image_store=store)
-    if len(reloaded.packages) != len(result.packages):
-        fail("strict loader 回读数量不符")
-    print(f"[t2c] strict loader 回读自检 OK：{len(reloaded.packages)} 包全部通过消费期验证")
+    # trusted 入口回读自检（T2-d/e 唯一正式消费入口在此先行实证）。
+    # 注意：重新生成产物后若提交记录 digest 变化，须同步更新
+    # ingest_swegym_lite.INGEST_MANIFEST_SHA256_PIN（审计事件）再跑本自检。
+    try:
+        trusted = load_trusted_ingest_outputs(REPO_ROOT)
+    except ValueError as exc:
+        fail(f"trusted 回读失败（若刚重生成产物：先按注释更新代码 pin）: {exc}")
+    if len(trusted.result.packages) != len(result.packages):
+        fail("trusted 回读数量不符")
+    print(f"[t2c] trusted 入口回读自检 OK：{len(trusted.result.packages)} 包全链验证通过")
     print(f"[t2c] 216/216 构造成功；duplicate clusters: {len(result.duplicate_clusters)} "
           f"(suspected_duplicate: {len(suspected)})")
     for name, dig in sorted(digests.items()):

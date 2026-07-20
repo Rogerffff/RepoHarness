@@ -54,7 +54,7 @@ def make_grading(iid: str = "getmoto__moto-1", repo: str = "getmoto/moto") -> Pr
         fail_to_pass=["tests/x.py::test_a"],
         pass_to_pass=["tests/x.py::test_b"],
         eval_cmd="pytest -n0 -rA",
-        python_version="3.11",
+        python_version="3.12",  # 必须等于 vendor 派生值（轮次 15 起消费期互检）
         spec_vendor_id="swegym_constants_242429c1",
     )
 

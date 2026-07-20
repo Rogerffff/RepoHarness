@@ -110,6 +110,21 @@ class PrivateGradingBundleV2(StrictModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def _check_test_set_invariants(self) -> "PrivateGradingBundleV2":
+        """F2P/P2P 集合不变量进 schema（codex 轮次 15 一般 3）：矛盾评分事实
+        （同测试既 F2P 又 P2P、或列表内重复）在模型层不可表示——不再依赖
+        ingestion 构造时检查（那只是第一道防线，绕过构造器直接造 bundle
+        也必须被拒）。"""
+        if len(set(self.fail_to_pass)) != len(self.fail_to_pass):
+            raise ValueError("fail_to_pass 含重复测试项")
+        if len(set(self.pass_to_pass)) != len(self.pass_to_pass):
+            raise ValueError("pass_to_pass 含重复测试项")
+        overlap = set(self.fail_to_pass) & set(self.pass_to_pass)
+        if overlap:
+            raise ValueError(f"fail_to_pass 与 pass_to_pass 交集非空: {sorted(overlap)[:3]}")
+        return self
+
     def digest(self) -> str:
         return canonical_json_digest(self.model_dump(mode="json"))
 

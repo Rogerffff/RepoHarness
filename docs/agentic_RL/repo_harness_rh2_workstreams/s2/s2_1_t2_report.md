@@ -150,3 +150,23 @@ fixture + `EnvValidationReport`。
 真实产物重建：五数据文件 digest 与上轮逐字节一致（内容零变化）+
   新提交记录 3408bab7…；测试 20 项（本文件）/ 全套 903。
 ```
+
+## T2-c follow-up 2（2026-07-13，codex 轮次 15 → 可信链最后两环）
+
+```text
+严重 1 输出外部锚：提交记录本身可被一致性重封——新增
+  INGEST_MANIFEST_SHA256_PIN 代码常量（与 t1_pins 同信任根：账本 rglob
+  追踪的代码 → 提交记录 → 五数据文件），load_trusted_ingest_outputs
+  成为 T2-d/e 唯一正式入口（T1 pins→store 完成断言→输出锚→严格解析
+  一条龙）；重新生成产物 = 修改 pin 常量 = 账本可见审计事件。
+严重 2 全集绑定：manifest 严格键集/int 类型、package_count 对账、四方
+  id 集合 == 可信 survivor 全集、image store 重跑完成断言、duplicate
+  clusters 由已加载 bundle 重算逐字比对。裁剪/计数造假/簇翻转反例各有
+  回归测试（模拟"一致性篡改者"的 _reseal_manifest 助手）。
+一般 3 F2P/P2P 唯一+互斥进 schema validator（矛盾评分事实不可表示）；
+  python_version 纳入消费期互检（vendor 声称字段一律重派生比对）。
+一般 4 正式 writer pins 必传；test-only 写出显式命名。
+真实产物五文件 digest 全程未变（改的是链条不是数据）；envpack+registry
+定向 133 项全绿；trusted 入口真实回读 216 包通过。
+开发沟通文档 s2/dev_dialog.md 自本轮建立（用户要求）。
+```

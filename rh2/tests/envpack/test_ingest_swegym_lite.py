@@ -21,7 +21,9 @@ from repoharness2.envpack.ingest_swegym_lite import (
     check_strip_spec_fields,
     ingest_swegym_lite,
     load_ingest_outputs,
+    load_trusted_ingest_outputs,
     verify_bundle_relations_non_authoritative,
+    write_ingest_outputs_for_tests,
     verify_package_relations,
     write_ingest_outputs,
 )
@@ -182,8 +184,8 @@ def test_real_216_construction(real_ingest):
 
 
 def test_real_outputs_deterministic(real_ingest, tmp_path):
-    d1 = write_ingest_outputs(real_ingest, tmp_path / "run1")
-    d2 = write_ingest_outputs(real_ingest, tmp_path / "run2")
+    d1 = write_ingest_outputs_for_tests(real_ingest, tmp_path / "run1")
+    d2 = write_ingest_outputs_for_tests(real_ingest, tmp_path / "run2")
     assert d1 == d2
 
 
@@ -261,8 +263,20 @@ def test_t1_pins_tamper_detected(tmp_path):
         load_and_verify_t1_pins(fake_root)
 
 
-def test_strict_validator_rejects_vendor_digest_tamper(real_pins, real_store):
-    result = load_ingest_outputs(DOCS / "s2/ingest", pins=real_pins, image_store=real_store)
+@pytest.fixture(scope="module")
+def real_survivors():
+    return [s.strip() for s in
+            (DOCS / "data_freeze/labels/static_gate_survivors.txt").read_text().splitlines()
+            if s.strip()]
+
+
+def _load_real(pins, store, survivors, out=None):
+    return load_ingest_outputs(out or (DOCS / "s2/ingest"), pins=pins,
+                               image_store=store, expected_survivors=set(survivors))
+
+
+def test_strict_validator_rejects_vendor_digest_tamper(real_pins, real_store, real_survivors):
+    result = _load_real(real_pins, real_store, real_survivors)
     from repoharness2.envpack.bundles_v2 import EnvironmentPackageV1
     pkg, pub, grd, val = (result.packages[0], result.public_bundles[0],
                           result.grading_bundles[0], result.validation_bundles[0])
@@ -271,8 +285,8 @@ def test_strict_validator_rejects_vendor_digest_tamper(real_pins, real_store):
         verify_package_relations(tampered, pub, grd, val, pins=real_pins, image_store=real_store)
 
 
-def test_strict_validator_rejects_provenance_tamper(real_pins, real_store):
-    result = load_ingest_outputs(DOCS / "s2/ingest", pins=real_pins, image_store=real_store)
+def test_strict_validator_rejects_provenance_tamper(real_pins, real_store, real_survivors):
+    result = _load_real(real_pins, real_store, real_survivors)
     from repoharness2.envpack.bundles_v2 import EnvironmentPackageV1
     pkg, pub, grd, val = (result.packages[0], result.public_bundles[0],
                           result.grading_bundles[0], result.validation_bundles[0])
@@ -281,17 +295,114 @@ def test_strict_validator_rejects_provenance_tamper(real_pins, real_store):
         verify_package_relations(tampered, pub, grd, val, pins=real_pins, image_store=real_store)
 
 
-def test_strict_loader_real_roundtrip(real_pins, real_store):
-    result = load_ingest_outputs(DOCS / "s2/ingest", pins=real_pins, image_store=real_store)
+def test_strict_loader_real_roundtrip(real_pins, real_store, real_survivors):
+    result = _load_real(real_pins, real_store, real_survivors)
     assert len(result.packages) == 216
     assert len(result.duplicate_clusters) == 2
 
 
-def test_strict_loader_rejects_data_file_tamper(tmp_path, real_pins, real_store):
+def test_strict_loader_rejects_data_file_tamper(tmp_path, real_pins, real_store, real_survivors):
     import shutil
     dst = tmp_path / "ingest"
     shutil.copytree(DOCS / "s2/ingest", dst)
     f = dst / "public_bundles_v0.jsonl"
     f.write_bytes(f.read_bytes() + b"\n")
     with pytest.raises(IngestError, match="与提交记录不符"):
-        load_ingest_outputs(dst, pins=real_pins, image_store=real_store)
+        _load_real(real_pins, real_store, real_survivors, out=dst)
+
+
+# ---- 轮次 15：外部锚 / 全集绑定 / 簇重算 / 契约不变量 ---------------------------
+
+def _reseal_manifest(out_dir: Path, real_pins) -> None:
+    """模拟'一致性篡改者'：按目录现状重算五文件 digest/行数并重写提交记录
+    （t1_input_pins 用真实值——攻击者能做到这一步，外部锚才是最后防线）。"""
+    from repoharness2.envpack.ingest_swegym_lite import (
+        _DATA_FILES, INGEST_MANIFEST_NAME, INGEST_MANIFEST_SCHEMA_ID)
+    files = {}
+    for name in _DATA_FILES:
+        data = (out_dir / name).read_bytes()
+        n = (len([l for l in data.decode().splitlines() if l.strip()])
+             if name.endswith(".jsonl") else len(json.loads(data)))
+        files[name] = {"sha256": hashlib.sha256(data).hexdigest(), "count": n}
+    manifest = {
+        "schema_id": INGEST_MANIFEST_SCHEMA_ID,
+        "files": files,
+        "package_count": files["environment_packages_v0.jsonl"]["count"],
+        "t1_input_pins": {k: getattr(real_pins, k) for k in sorted(vars(real_pins))},
+    }
+    (out_dir / INGEST_MANIFEST_NAME).write_text(
+        json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=1) + "\n")
+
+
+def test_subset_truncation_rejected_by_fullset_binding(tmp_path, real_pins, real_store, real_survivors):
+    """codex 轮次 15 严重 2 反例：裁成 1 条 + 重封提交记录 → 全集绑定必须拒。"""
+    import shutil
+    dst = tmp_path / "ingest"
+    shutil.copytree(DOCS / "s2/ingest", dst)
+    for name in ("environment_packages_v0.jsonl", "public_bundles_v0.jsonl",
+                 "grading_bundles_v2_v0.jsonl", "validation_bundles_v0.jsonl"):
+        first = (dst / name).read_text().splitlines()[0]
+        (dst / name).write_text(first + "\n")
+    (dst / "duplicate_clusters_v0.json").write_text("[]\n")
+    _reseal_manifest(dst, real_pins)
+    with pytest.raises(IngestError, match="可信 survivor 全集"):
+        _load_real(real_pins, real_store, real_survivors, out=dst)
+
+
+def test_cluster_recompute_catches_report_tamper(tmp_path, real_pins, real_store, real_survivors):
+    """簇报告被改（分类翻转）+ 重封提交记录 → 重算比对必须拒。"""
+    import shutil
+    dst = tmp_path / "ingest"
+    shutil.copytree(DOCS / "s2/ingest", dst)
+    clusters = json.loads((dst / "duplicate_clusters_v0.json").read_text())
+    clusters[0]["classification"] = "suspected_duplicate"
+    (dst / "duplicate_clusters_v0.json").write_text(
+        json.dumps(clusters, ensure_ascii=False, sort_keys=True, indent=1) + "\n")
+    _reseal_manifest(dst, real_pins)
+    with pytest.raises(IngestError, match="重算结果不符"):
+        _load_real(real_pins, real_store, real_survivors, out=dst)
+
+
+def test_trusted_entry_real_load_ok():
+    trusted = load_trusted_ingest_outputs(REPO_ROOT)
+    assert len(trusted.result.packages) == 216
+    assert len(trusted.survivors) == 216
+
+
+def test_trusted_entry_rejects_pin_mismatch(monkeypatch):
+    """外部锚（codex 轮次 15 严重 1）：提交记录若被审计外重生成/篡改（含一致性
+    篡改），代码 pin 不匹配即拒——用 monkeypatch 模拟 pin 与文件不符。"""
+    from repoharness2.envpack import ingest_swegym_lite as mod
+    monkeypatch.setattr(mod, "INGEST_MANIFEST_SHA256_PIN", "0" * 64)
+    with pytest.raises(IngestError, match="代码 pin 不符"):
+        load_trusted_ingest_outputs(REPO_ROOT)
+
+
+def test_grading_schema_rejects_f2p_p2p_contradiction():
+    """轮次 15 一般 3：矛盾评分事实在模型层不可表示（绕过构造器也拦得住）。"""
+    from pydantic import ValidationError
+    from repoharness2.envpack.bundles_v2 import PrivateGradingBundleV2
+    base = dict(
+        instance_id="getmoto__moto-1", repo="getmoto/moto",
+        repo_key_lower="getmoto/moto", version="4.1", base_commit="0" * 40,
+        test_patch="d", eval_cmd="pytest -n0 -rA", python_version="3.12",
+        spec_vendor_id="swegym_constants_242429c1",
+    )
+    with pytest.raises(ValidationError, match="交集非空"):
+        PrivateGradingBundleV2(**base, fail_to_pass=["t::a"], pass_to_pass=["t::a"])
+    with pytest.raises(ValidationError, match="重复测试项"):
+        PrivateGradingBundleV2(**base, fail_to_pass=["t::a", "t::a"], pass_to_pass=[])
+
+
+def test_python_version_cross_checked_at_consumption():
+    from repoharness2.envpack.spec_vendor import VendorSpecError, verify_grading_eval_cmd
+    from repoharness2.envpack.bundles_v2 import PrivateGradingBundleV2
+    g = PrivateGradingBundleV2(
+        instance_id="getmoto__moto-1", repo="getmoto/moto",
+        repo_key_lower="getmoto/moto", version="4.1", base_commit="0" * 40,
+        test_patch="d", fail_to_pass=["t::a"], pass_to_pass=[],
+        eval_cmd="pytest -n0 -rA", python_version="2.7",  # 与 vendor 派生 3.12 不符
+        spec_vendor_id="swegym_constants_242429c1",
+    )
+    with pytest.raises(VendorSpecError, match="python_version"):
+        verify_grading_eval_cmd(g)

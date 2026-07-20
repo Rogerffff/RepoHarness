@@ -2716,3 +2716,14 @@ FA-1 closure
 
 
 
+
+
+---
+
+## 轮次 15（2026-07-13：T2-c 复审 → 四项修复真实生效；2 严重 + 2 一般，T2-c 关闭前收口）
+
+- **严重 1：提交记录无外部锚**——只防半写不防一致性篡改（codex 反例：改题面+自证 digest+包 digest+重封 manifest → 216 包全过；T1 pins 只证输入未漂移，不证输出由输入派生）。【修复：INGEST_MANIFEST_SHA256_PIN 代码常量锚（与 t1_pins 同信任根，重生成产物=审计事件）+ load_trusted_ingest_outputs 唯一正式入口先验锚；monkeypatch pin 失配拒绝测试】
+- **严重 2：loader 未绑定封板全集**——裁成 1 条 + package_count=0 + 簇计数造假仍通过。【修复：manifest 顶层/条目严格键集 + 计数严格 int；四方 id 集合 == 可信 survivor 全集；package_count 对账；image store 重跑完成断言；簇由已加载 bundle 重算逐字比对；裁剪/簇篡改反例各有测试】
+- **一般 3：F2P/P2P 不变量未进 schema**。【修复：模型 validator 使矛盾评分事实不可表示；python_version 纳入消费期互检】
+- **一般 4：writer 仍许 pins=None**。【修复：正式 writer pins 必传；write_ingest_outputs_for_tests 显式命名 test-only】
+- codex 确认正确：T1 单字节漂移拒绝、此前旁路全关、真实产物 216 正常载入、44 定向 + 903 全套。

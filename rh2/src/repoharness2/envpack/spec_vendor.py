@@ -97,10 +97,19 @@ def derive_eval_cmd(vendor_id: str, repo_key_lower: str, version: str) -> str:
 
 
 def verify_grading_eval_cmd(bundle) -> None:
-    """互检入口：bundle.eval_cmd 必须等于注册表派生值（不一致即拒）。"""
+    """互检入口：bundle 的 eval_cmd 与 python_version 都必须等于注册表派生值
+    （轮次 13 定 eval_cmd；轮次 15 一般 3 补 python_version——凡声称来自
+    vendor 的字段消费时一律重派生互检，不一致即拒）。"""
     derived = derive_eval_cmd(bundle.spec_vendor_id, bundle.repo_key_lower, bundle.version)
     if bundle.eval_cmd != derived:
         raise VendorSpecError(
             f"{bundle.instance_id}: eval_cmd 与注册表派生值不符"
             f"（bundle {bundle.eval_cmd!r} != derived {derived!r}）——自由字符串不作权威"
+        )
+    spec = lookup_spec(bundle.spec_vendor_id, bundle.repo_key_lower, bundle.version)
+    derived_py = str(spec["python"]) if spec.get("python") is not None else None
+    if bundle.python_version != derived_py:
+        raise VendorSpecError(
+            f"{bundle.instance_id}: python_version 与注册表派生值不符"
+            f"（bundle {bundle.python_version!r} != derived {derived_py!r}）"
         )

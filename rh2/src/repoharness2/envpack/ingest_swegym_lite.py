@@ -217,6 +217,27 @@ def build_duplicate_clusters(rows: list[dict]) -> list[DuplicateCluster]:
     return clusters
 
 
+def build_duplicate_clusters_from_bundles(publics, gradings, validations) -> list[DuplicateCluster]:
+    """从已加载 bundle 重构行事实并复算簇（loader 的"声明不可信，重算才可信"）。"""
+    g_by = {g.instance_id: g for g in gradings}
+    v_by = {v.instance_id: v for v in validations}
+    rows = []
+    for pub in publics:
+        g = g_by[pub.instance_id]
+        v = v_by[pub.instance_id]
+        rows.append({
+            "instance_id": pub.instance_id,
+            "repo": pub.repo,
+            "base_commit": pub.base_commit,
+            "problem_statement": pub.problem_statement,
+            "test_patch": g.test_patch,
+            "FAIL_TO_PASS": list(g.fail_to_pass),
+            "PASS_TO_PASS": list(g.pass_to_pass),
+            "patch": v.golden_patch,
+        })
+    return build_duplicate_clusters(rows)
+
+
 def ingest_swegym_lite(*, rows: list[dict], survivors: list[str],
                        image_store: Store, raw_archive_sha256: str,
                        image_manifest_keyed_sha256: str) -> IngestResult:
@@ -341,12 +362,16 @@ def _atomic_write(path: Path, payload: bytes) -> None:
     os.replace(tmp, path)
 
 
-def write_ingest_outputs(result: IngestResult, out_dir: Path,
-                         pins: T1InputPins | None = None) -> dict[str, str]:
+def write_ingest_outputs(result: IngestResult, out_dir: Path, *,
+                         pins: T1InputPins) -> dict[str, str]:
     """事务化落盘（轮次 14 一般 4）：五数据文件逐个原子写，最后原子写
     `ingest_manifest_v0.json` 作为**提交记录**（五文件 digest + 行数 +
     T1 输入 pins）。崩溃只可能留下"数据文件超前、无提交记录更新"的状态，
-    严格 loader 以提交记录为准。返回 {文件名: sha256}（含提交记录自身）。"""
+    严格 loader 以提交记录为准。返回 {文件名: sha256}（含提交记录自身）。
+
+    pins **必传**（轮次 15 一般 4）：正式 writer 不许写出 strict loader
+    永远无法接受的无 pins 产物；测试需要无权威写出时用
+    `write_ingest_outputs_for_tests`（显式命名，产物不可进正式消费链）。"""
     digests: dict[str, str] = {}
     counts: dict[str, int] = {}
 
@@ -381,9 +406,7 @@ def write_ingest_outputs(result: IngestResult, out_dir: Path,
         "schema_id": INGEST_MANIFEST_SCHEMA_ID,
         "files": {n: {"sha256": digests[n], "count": counts[n]} for n in _DATA_FILES},
         "package_count": len(result.packages),
-        "t1_input_pins": (
-            {k: getattr(pins, k) for k in sorted(vars(pins))} if pins is not None else None
-        ),
+        "t1_input_pins": {k: getattr(pins, k) for k in sorted(vars(pins))},
     }
     mp = (json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=1) + "\n").encode("utf-8")
     _atomic_write(out_dir / INGEST_MANIFEST_NAME, mp)
@@ -391,17 +414,37 @@ def write_ingest_outputs(result: IngestResult, out_dir: Path,
     return digests
 
 
+def write_ingest_outputs_for_tests(result: IngestResult, out_dir: Path) -> dict[str, str]:
+    """**test-only**：无权威 pins 写出（t1_input_pins 全零占位）。产物永远过不了
+    strict loader 的 pins 对账——只用于确定性/字节级单测，绝不进正式消费链。"""
+    placeholder = T1InputPins(**{k: "0" * 64 for k in (
+        "raw_archive", "image_manifest_keyed", "image_registry_evidence",
+        "survivors", "image_refs", "strip_spec", "vendor_specs_json")})
+    return write_ingest_outputs(result, out_dir, pins=placeholder)
+
+
 def load_ingest_outputs(out_dir: Path, *, pins: T1InputPins,
-                        image_store: Store) -> IngestResult:
-    """strict loader（轮次 14 一般 4）：T2-d/e 消费 ingest 产物的**唯一入口**
-    ——不许直接打开 JSONL。链条：提交记录 → 五文件 digest → 模型解析 →
-    重复 id 拒绝 → 四文件 id 集合相等 → 逐包 strict `verify_package_relations`。"""
+                        image_store: Store,
+                        expected_survivors: set[str]) -> IngestResult:
+    """strict loader（轮次 14 一般 4 + 轮次 15 严重 2 全集绑定）。链条：
+    提交记录严格字段/类型 → 五文件 digest → 模型解析 → 重复 id 拒绝 →
+    **四方 id 集合 == 可信 survivor 全集**（裁剪成子集必被拒）→ image_store
+    重跑完成断言 → 逐包 strict 验证 → duplicate clusters 由已加载 bundle
+    **重算并逐字比对**（声明计数造假必红灯）。
+
+    本函数不验证提交记录的外部锚（代码 pin）——正式消费请用
+    `load_trusted_ingest_outputs`（T2-d/e 唯一正式入口）。"""
     mp = out_dir / INGEST_MANIFEST_NAME
     if not mp.exists():
         raise IngestError(f"提交记录缺失: {INGEST_MANIFEST_NAME}")
     manifest = json.loads(mp.read_text())
+    # 提交记录严格字段/类型（轮次 15 严重 2：不许多键少键，计数必须真 int）
+    if set(manifest) != {"schema_id", "files", "package_count", "t1_input_pins"}:
+        raise IngestError(f"提交记录顶层键集合不符: {sorted(manifest)}")
     if manifest.get("schema_id") != INGEST_MANIFEST_SCHEMA_ID:
         raise IngestError(f"提交记录 schema_id 非法: {manifest.get('schema_id')!r}")
+    if type(manifest["package_count"]) is not int or manifest["package_count"] < 0:
+        raise IngestError("package_count 不是非负 int")
     recorded_pins = manifest.get("t1_input_pins") or {}
     for k in sorted(vars(pins)):
         if recorded_pins.get(k) != getattr(pins, k):
@@ -409,6 +452,11 @@ def load_ingest_outputs(out_dir: Path, *, pins: T1InputPins,
     files = manifest.get("files", {})
     if set(files) != set(_DATA_FILES):
         raise IngestError("提交记录 files 键集合不符")
+    for name, ent in files.items():
+        if set(ent) != {"sha256", "count"}:
+            raise IngestError(f"{name}: 提交记录条目键集合不符")
+        if type(ent["count"]) is not int or ent["count"] < 0:
+            raise IngestError(f"{name}: count 不是非负 int")
     for name in _DATA_FILES:
         p = out_dir / name
         if not p.exists():
@@ -446,6 +494,17 @@ def load_ingest_outputs(out_dir: Path, *, pins: T1InputPins,
     ]
     if not (ids[0] == ids[1] == ids[2] == ids[3]):
         raise IngestError("四文件 instance_id 集合不一致")
+    # 全集绑定（轮次 15 严重 2）：等于可信 survivor 集合，而非只彼此相等
+    if ids[0] != set(expected_survivors):
+        raise IngestError(
+            f"包集合 != 可信 survivor 全集（{len(ids[0])} vs {len(expected_survivors)}；"
+            f"缺 {sorted(set(expected_survivors) - ids[0])[:3]}）")
+    if manifest["package_count"] != len(result.packages):
+        raise IngestError(
+            f"package_count={manifest['package_count']} 与实际 {len(result.packages)} 不符")
+    problems = finish_assertions(image_store, set(expected_survivors))
+    if problems:
+        raise IngestError("image store 完成断言不过：\n  " + "\n  ".join(problems))
     by = {
         "public": {m.instance_id: m for m in result.public_bundles},
         "grading": {m.instance_id: m for m in result.grading_bundles},
@@ -461,4 +520,79 @@ def load_ingest_outputs(out_dir: Path, *, pins: T1InputPins,
                          members=c["members"], classification=c["classification"])
         for c in clusters
     ]
+    if files["duplicate_clusters_v0.json"]["count"] != len(result.duplicate_clusters):
+        raise IngestError("duplicate cluster 声明计数与内容不符")
+    # 簇由已加载 bundle 重算并逐字比对（轮次 15 严重 2：声明不可信，重算才可信）
+    recomputed = build_duplicate_clusters_from_bundles(
+        result.public_bundles, result.grading_bundles, result.validation_bundles)
+    if [c.to_json() for c in recomputed] != [c.to_json() for c in result.duplicate_clusters]:
+        raise IngestError("duplicate clusters 与按 bundle 重算结果不符")
     return result
+
+
+# ---------------------------------------------------------------------------
+# T2-c 输出外部锚 + 唯一正式消费入口（codex 轮次 15 严重 1 / 一般 4）
+# ---------------------------------------------------------------------------
+
+# 真实 216 题产物提交记录（s2/ingest/ingest_manifest_v0.json）的 sha256 pin。
+# 与 t1_pins 同律：本文件被 S1 账本 rglob 追踪 → 代码 → 提交记录 → 五数据
+# 文件的防篡改链。重新生成产物 = 修改本常量 = 账本可见的审计事件。
+INGEST_MANIFEST_SHA256_PIN = "3408bab759b0a22ea2f038b908f298c8a1c241d2f710500c52224f14125003a7"
+INGEST_OUT_RELPATH = "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest"
+
+
+@dataclass
+class TrustedIngest:
+    """load_trusted_ingest_outputs 的返回：结果 + 下游继续验证所需的可信上下文。"""
+
+    result: IngestResult
+    pins: T1InputPins
+    image_store: Store
+    survivors: list[str]
+
+
+def load_trusted_ingest_outputs(repo_root: Path) -> TrustedIngest:
+    """T2-d/e 的**唯一正式消费入口**（轮次 15 一般 4）：调用方不自行拼装
+    可能未经验证的 pins/store。链条：
+
+      1. T1 封板 pins 三级验证（代码常量 → pins 记录 → 七输入文件）；
+      2. survivors 从 pins 已验文件读出；image store 严格加载 + 完成断言；
+      3. 提交记录对**代码 pin** 验证（轮次 15 严重 1：T1 pins 只证输入未漂移，
+         不证输出由输入派生——外部锚补上这一环；一致性篡改整套产物也会
+         在此红灯，因为攻击者改不了账本内的代码常量）；
+      4. `load_ingest_outputs` 严格解析 + 全集绑定 + 逐包验证 + 簇重算。
+    """
+    from repoharness2.envpack.t1_pins import load_and_verify_t1_pins
+    from repoharness2.taskset.image_manifest_store import load_state
+
+    pins = load_and_verify_t1_pins(repo_root)
+    docs = repo_root / "docs/agentic_RL/repo_harness_rh2_workstreams"
+    survivors = [x.strip() for x in
+                 (docs / "data_freeze/labels/static_gate_survivors.txt").read_text().splitlines()
+                 if x.strip()]
+    frozen_refs = {x.strip() for x in
+                   (docs / "data_freeze/meta/image_refs_swegym.txt").read_text().splitlines()
+                   if x.strip()}
+    refs_digest = pins.image_refs
+
+    def _expected_ref(iid: str) -> str:
+        return f"xingyaoww/sweb.eval.x86_64.{iid.replace('__', '_s_').lower()}:latest"
+
+    image_store = load_state(
+        docs / "s2/image_manifest_keyed.json",
+        docs / "s2/raw/image_registry_evidence.jsonl",
+        set(survivors), frozen_refs, refs_digest, _expected_ref,
+    )
+    out_dir = repo_root / INGEST_OUT_RELPATH
+    mp = out_dir / INGEST_MANIFEST_NAME
+    if not mp.exists():
+        raise IngestError("提交记录缺失（trusted 入口）")
+    actual = hashlib.sha256(mp.read_bytes()).hexdigest()
+    if actual != INGEST_MANIFEST_SHA256_PIN:
+        raise IngestError(
+            f"提交记录与代码 pin 不符（actual {actual[:16]}… != pin "
+            f"{INGEST_MANIFEST_SHA256_PIN[:16]}…）——输出面被改或未经审计重生成，拒绝消费")
+    result = load_ingest_outputs(out_dir, pins=pins, image_store=image_store,
+                                 expected_survivors=set(survivors))
+    return TrustedIngest(result=result, pins=pins, image_store=image_store,
+                         survivors=survivors)
