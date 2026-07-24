@@ -70,6 +70,7 @@ line-length = 120
 select = ["E9", "F"]
 
 [tool.ruff.lint.per-file-ignores]
-# 并行 S2-1 线程所有的文件：存量违例留给该线程自清（并行纪律：不动
-# 对方在改的文件），豁免使全仓 check 对本线程保持零违例基线
+# 已登记的临时挡板（review-standards.md §8 / fa/implementation-notes.md
+# 权威状态页挡板登记表）：owner = S2 线程；移除条件 = S2 收敛后清理并删
+# 本豁免；gate = 训前总审计前。豁免 != 问题不存在。
 "experiments/s2_1_ingestion/resolve_image_digests.py" = ["F401"]
