@@ -26,7 +26,6 @@ from fixtures.common import FixtureSlimeSample, b64_int32, routing_flat, topp_of
 from repoharness2.adapters.slime import (
     LIFECYCLE_STEPS,
     GenerationCaptureHook,
-    LeafFacts,
     RolloutOrchestrator,
     RolloutTaskSpec,
     SlimeBindingConfig,

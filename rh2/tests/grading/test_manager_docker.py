@@ -133,7 +133,7 @@ async def test_grade_resolved_real(fixture_repo, fixture_image, make_workspace, 
     # eval 原始日志落盘且 digest 自证；官方标记在场
     log_text = _read_eval_log(manager, report)
     assert ">>>>> Start Test Output" in log_text
-    assert f"PASSED tests/test_thing.py::test_feature" in log_text
+    assert "PASSED tests/test_thing.py::test_feature" in log_text
     # P9 租约 evidence + P1 容器零泄漏
     assert manager.leases[-1].network_policy == "deny_all"
     GradingReport.model_validate(report.model_dump(mode="json"))

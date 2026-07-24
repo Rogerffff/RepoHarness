@@ -43,7 +43,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-import aiohttp
 
 from repoharness2.adapters.slime.generate import (
     LeafFacts,
@@ -592,10 +591,6 @@ class BringupService:
         # 真协调器（trainer 侧）FA-4 接线；缺席期 StaticActiveCoordinator =
         # 任何中断不可归因 → poison + 缺员（保守正确）。episode 预算传播：
         # 会话首个模型调用起表（余量偏差 ≈ harness 启动秒级，记 notes）。
-        from repoharness2.adapters.slime.async_worker import (
-            ModelCallProxy,
-            StaticActiveCoordinator,
-        )
 
         # 轮次 10 一般 1：持久 artifact sink——audit tombstone 有上限会丢
         # 最旧 digest，evidence_refs 不得指向已删除对象；sink 落盘后引用是

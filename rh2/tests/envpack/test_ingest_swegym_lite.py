@@ -25,7 +25,6 @@ from repoharness2.envpack.ingest_swegym_lite import (
     verify_bundle_relations_non_authoritative,
     write_ingest_outputs_for_tests,
     verify_package_relations,
-    write_ingest_outputs,
 )
 from repoharness2.envpack.t1_pins import T1PinsError, load_and_verify_t1_pins
 from repoharness2.taskset.image_manifest_store import Store

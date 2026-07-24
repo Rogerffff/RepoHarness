@@ -125,7 +125,6 @@ def main() -> int:
             )
 
         proj_branch = None
-        flat_cap_ids: list[int] = []
         flat_cap_lps: list[float] = []
         mask_ok = token_ok = False
         for branch in side["projection"]["branches"]:
@@ -142,7 +141,7 @@ def main() -> int:
             ids, lps = branch_tapes(branch)
             if [response[i] for i in mask_positions] == ids:
                 proj_branch = branch
-                flat_cap_ids, flat_cap_lps = ids, lps
+                flat_cap_lps = lps  # ids 已在上行比对消费（ruff F841）
                 mask_ok = token_ok = True
                 side["consumed_branches"].add(branch["branch_id"])
                 break

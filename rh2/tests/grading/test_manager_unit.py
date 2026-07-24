@@ -6,7 +6,6 @@ test_manager_docker.py；这里用桩把控制流逐条钉死。
 
 import subprocess
 import sys
-from dataclasses import replace
 
 import pytest
 from grading_fixtures import (

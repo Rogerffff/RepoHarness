@@ -16,7 +16,6 @@ from repoharness2.taskset.image_manifest_store import (
     evidence_ref_for, finish_assertions, flush_transaction, is_enriched,
     load_state, sha256_bytes,
 )
-from repoharness2.taskset import image_manifest_store as ims
 from repoharness2.taskset.image_manifest_store import migrate_v3_manifest
 
 SURVIVORS = {"repoA__pkg-1", "repoB__pkg-2"}

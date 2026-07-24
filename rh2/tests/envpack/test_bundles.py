@@ -9,7 +9,6 @@ from repoharness2.envpack.bundles import (
     PUBLIC_SYSTEM_HINTS,
     BundleLeakError,
     BundlePair,
-    PrivateGradingBundle,
     PublicTaskBundle,
     load_bundle_pairs,
     load_task_entries,

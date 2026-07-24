@@ -60,7 +60,7 @@ from repoharness2.adapters.verifiers_projection import (
     VerifiersRewardInput,
     project_from_verifiers,
 )
-from repoharness2.contracts import BackendHandshake, GradingReport, canonical_json_digest
+from repoharness2.contracts import GradingReport, canonical_json_digest
 from repoharness2.governance import finalize_rollout
 from repoharness2.grading.manager import ExecResult, GradingEnvSpec, HygieneRules
 
