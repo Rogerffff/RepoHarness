@@ -17,7 +17,7 @@
 - 节奏：阶段级确认——阶段决策包拍板一次；小批开工前发一页 Owner Brief 供了解但不等回复；批内冒出新 T0 即停下来问。
 - 对 codex finding 只能三选一回应：accepted / rejected_with_evidence / deferred_with_owner_and_gate；T0 或闸门相关分歧交用户，普通 T1 分歧记录双方证据后收束。
 - 修复循环熔断：同一状态边界连续两轮新 P0、或修复引入新 P0、或修复跨越原切片多个 ownership 边界——停止叠补丁，先出根因分析与替代设计。
-- 协议修改权：改 T0/T1/T2 边界、角色权限、审批节奏、审查要求 = T0（用户批准后生效）；纯文字澄清 = T2。
+- 协议修改权：改 T0/T1/T2 边界、角色权限、审批节奏 = T0；审查标准按 review-standards.md §9 三档（补锚点 T2 / 收紧或新增自检项 T1 / 增删维度、移晚检查、取消强制、降独立上下文要求、缩小覆盖 = T0）；纯文字澄清 = T2。
 - 审查维度/自检清单/风格政策以 `docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md` 为准：每批交接前过其 §7 机械自检（形状改动全仓搜消费点、新配置指认消费者、修复配真进分支的测试、文本替换带 assert、新拒绝路径登记剔除面、测试 oracle 改动升 T1、pytest+账本+ruff）。
 - 提交纪律：协议/标准变更、工具链配置、存量源码清理分开提交。
 - 审查标准演进（review-standards.md §9）：漏网 finding 当轮分类（补锚点 T2 / 收紧范围 T1 / 增删维度 T0）；集成审查带标准复盘项；变更记录注明触发事故。
