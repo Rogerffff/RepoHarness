@@ -44,6 +44,7 @@
 | 中毒 SID（含归档）拒绝 register | 轮次 11 | F2-1/F2-2 身份与凭证分离（poison 改绑 session/attempt） |
 | StaticActiveCoordinator（永远 ACTIVE，只保守缺员） | 轮次 7 | FA-4 真协调器（consensus version） |
 | capture_wire/glue 住在 experiments/ | S1 沿革 | F2-0 提升进 src/repoharness2 |
+| ruff F401 豁免（s2_1_ingestion/resolve_image_digests.py） | 2026-07-24 | owner = S2 线程；S2 收敛后清理并删豁免；gate = 训前总审计前 |
 
 **未闭合项**：见 05 计划 §6.1 递延表（P1×8 + P2×4）与 FA-2A 批次定义。
 

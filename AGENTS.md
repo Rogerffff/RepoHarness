@@ -37,12 +37,14 @@ RepoHarness =
   H 唯一事实来源 / I 问题分期（"本轮必修 / 正式训练前修 / 可递延"，并
   列出不值得立即修的）。每轮必答：新拒绝路径丢哪类轨迹？失败是否结构化
   留痕？有无静默降级？测试是否经过真实线程拓扑？哪些不值得立即修？
-- **审查标准**：四级审查（设计 B/C/D/F/H+设计三问 / 切片 A~K / 阶段
-  集成全链路 / 训前总审计）与 finding 格式、必答五问、自检清单、风格
-  工具化政策，唯一权威 = `docs/agentic_RL/repo_harness_rh2_workstreams/
-  review-standards.md`。finding 必须含"当前行为/违反的不变量/证据/
-  影响/分期"；Claude 只能三选一回应（accepted / rejected_with_evidence /
-  deferred_with_owner_and_gate），复核最多一轮，T0 分歧交用户。
+- **审查标准**：五级审查（决策包含 T0 完整性扫描 / 执行计划审迁移
+  顺序与回滚 / 切片 A~N / 小阶段集成与大阶段验收（强制独立上下文 +
+  证据产物清单）/ 训前总审计出 Owner Gate Packet），唯一权威 =
+  `docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md`。
+  finding 八要素（行为/不变量/证据/影响/分期/位置/复现/修复验收条件）；
+  N/A 与"未发现问题"必须给证据；Claude 只能三选一回应（accepted /
+  rejected_with_evidence / deferred_with_owner_and_gate），复核最多一轮，
+  T0 分歧交用户。测试 oracle 改动不是 T2。
 - **修复循环熔断**：同一状态边界连续两轮新 P0 / 修复引入新 P0 / 修复
   跨多个 ownership 边界 → 停止增量修补，先出根因分析与替代设计。
 - **现状权威**：实现现状看 `fa/implementation-notes.md` 顶部"⚡ 当前权威
