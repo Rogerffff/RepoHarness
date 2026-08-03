@@ -3756,3 +3756,185 @@ RH2 的 proxy turn 重生成状态机已经实现了主体，但正式链现在�
 - RH2 当前已经设计的是 live execution 跨训练步继续，以及必要时当前 turn 重生成；
 - K3 式 sandbox/KV checkpoint resume 是另一种用于同步迭代长尾的未来能力；
 - `true_resume_v1` 当前放在 timeout profile 里会误导实现，应该拆出去。
+
+
+---
+
+## FA-2A 决策包四审（2026-08-04：3 决策级歧义 → v3.2，codex 判定修完可直接拍 A/A/A/A）
+
+> 原文全文转录（tmp/决策包审查4.md，审查收尾轮）。处置：全部 accepted。v3.2：missing/present_but_not_admissible/permanent_rejection 三态精确归类（安全泄漏/身份矛盾/artifact 污染从"真缺员"改正为 permanent_rejection——completion fact 不被训练策略改写）；strict_missing_v1 更名 strict_horizon_excluded_v1；三 disposition 精确枚举；audit_only 双候选 profile 并行计算（candidate_dispositions_by_profile）；test_execution_timeout 落 GradingFailureCategory（outcome=unresolved/reward=0，三条件归因守卫）；model_proxy_failure 双重角色拆三层（termination_kind=model_call_regeneration_exhausted / failure_category=model_proxy_failure / reason_code=max_regenerations_exceeded）；D4 改三张枚举字面值映射表（RuntimeFailureCategory 13 值逐字 / GradingFailureCategory / SecurityImpact 载体=AntiCheatFinding）+ 集合相等测试；05 计划旧 SUBMITTED→TRAINED→ACKED 与 GBS 表述登记为拍板后计划回写必修项（不塞回决策包）。
+
+**结论**
+
+v3.1 已经非常接近可拍板，但仍有 **3 个决策级歧义**。它们不改变 `A/A/A/A` 方向，只需最后一次小范围文档修订。D2、D3 已可确认；D1、D4 建议修完再签字。
+
+**阻塞 1：事实与策略处置仍有一处自相矛盾**
+
+文档先正确区分了：
+
+- `missing`
+- `present_but_not_admissible`
+- `permanent_rejection`
+
+见 [fa2a_decision_package.md:124](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:124)。
+
+但后面又把安全泄漏、身份矛盾、artifact 污染称为“真缺员”，见 [第 176 行](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:176)。这会让 completion fact 再次被训练策略改写。
+
+同时 `strict_missing_v1` 这个名字也不准确：完整产生、可评分但被严格 profile 排除的 horizon 轨迹并没有“missing”。
+
+建议：
+
+```text
+strict_missing_v1
+-> strict_horizon_excluded_v1
+```
+
+并定义确切枚举：
+
+```text
+group_membership:
+  included | excluded_by_profile | unavailable
+
+reward_disposition:
+  included_in_advantage | excluded_from_advantage | unavailable
+
+gradient_disposition:
+  train | masked | excluded
+```
+
+分别列清：
+
+```text
+真正 missing：
+  半截响应、capture 不完整、无法静止、infra 重试耗尽
+
+present_but_not_admissible：
+  staleness 超限、严格 profile 排除的完整 horizon
+
+permanent_rejection：
+  executed 安全事件、身份/契约矛盾、artifact 污染
+```
+
+`audit_only` 在 D1b 尚未选 profile 时，也不能只记录一份 disposition。应同时计算两个候选 profile 的结果：
+
+```text
+candidate_dispositions_by_profile:
+  strict_horizon_excluded_v1: ...
+  scored_horizon_masked_v1: ...
+```
+
+这样 pre-RL 才能比较两种策略。
+
+**阻塞 2：两个新失败事实还没有明确契约载体**
+
+`test_execution_timeout` 已写入语义和 D4 表，但：
+
+- 没在 termination kind 清单中；
+- 现有 `GradingFailureCategory` 也没有这个值；
+- 当前 `GradingReport` 只能表达 `infra_failure / test_log_parse_failed / patch_apply_failed / tests_failed`。
+
+应明确：
+
+```text
+GradingFailureCategory 新增 test_execution_timeout
+outcome = unresolved
+reward = 0
+```
+
+但只有可归因条件成立才允许构造；否则仍是：
+
+```text
+failure_category = infra_failure
+outcome = failed_to_grade
+reward = None
+```
+
+另一个问题是 `model_proxy_failure` 同时被当作 termination kind 和 `RuntimeFailureCategory`。建议分开：
+
+```text
+termination_kind = model_call_regeneration_exhausted
+failure_category = model_proxy_failure
+reason_code = max_regenerations_exceeded
+```
+
+这能继续维持“停止事实、故障域、具体原因”三层分离。
+
+**阻塞 3：D4 还不是机器可穷举的映射**
+
+[D4 表](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:323)说会逐字覆盖全部 `RuntimeFailureCategory`，但仍使用：
+
+```text
+proxy / inference_service / sandbox / harness 基建故障
+security
+```
+
+而不是实际枚举：
+
+```text
+model_proxy_failure
+inference_service_failure
+sandbox_crash
+harness_crash
+security_violation
+```
+
+这无法直接做它承诺的集合相等测试。应把 D4 拆成三个精确映射表：
+
+```text
+RuntimeFailureCategory -> RecoveryAction
+GradingFailureCategory -> Reward/RecoveryAction
+SecurityImpact -> SecurityAction
+```
+
+`security_impact` 也需确定载体和枚举，例如放进 `AntiCheatFinding`：
+
+```text
+attempted_blocked_no_effect
+task_local_executed
+boundary_breach
+```
+
+否则 hidden-verifier 泄漏与 test tampering 仍只能共用一个 `security_violation`，实现时无法确定性分档。
+
+**不阻塞决策，但下一步计划审查必须修**
+
+[05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:139)仍保留旧状态机：
+
+```text
+SUBMITTED -> TRAINED -> ACKED
+```
+
+与 v3.1 的：
+
+```text
+HANDED_OFF / SUBMISSION_ACKED / TRAINED
+```
+
+不一致；[第 148 行](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:148)也仍提前规定所有 execution 都计入 GBS，而该问题已经递延 D1b/FA-4。它们可以在用户拍板后的“05 计划回写 + 计划审查”中修，不必再塞回决策包，但文档不应声称 05 已完全去重。
+
+**已经通过**
+
+- D2 已恢复为自包含决策，checkpoint 顺序、四层身份、fencing、ACK 语义和 crash 探针完整。
+- D3 单 owner 方案完整，可以直接选 A。
+- `true_resume` 从 termination profile 拆成 continuation mode 是正确修正。
+- 双时钟区间并集、成本单位和 provenance/algorithmic mask 分离均已正确。
+- `worker_crash` 恢复与 staleness controller 的责任边界已经合理。
+
+**最终建议**
+
+让 Claude 做一次非常有限的 v3.2：
+
+1. 修正 missing/rejection 术语并补 profile 矩阵。
+2. 明确两个 timeout/proxy 事实的契约载体。
+3. 将 D4 改成精确枚举映射并定义 `security_impact`。
+
+完成后无需再扩大审查，可直接拍：
+
+```text
+D1=A，D1b 延后
+D2=A
+D3=A
+D4=A
+```
+
+本轮只审查了文档；`git diff --check` 通过，没有修改文件。

@@ -1,7 +1,7 @@
-# FA-2A 决策包（v3.1：自包含版——只读本文即可完成四项决策）
+# FA-2A 决策包（v3.2：自包含版——只读本文即可完成四项决策）
 
 ```text
-status: draft（v3.1——codex 三审 13 条 + true_resume/K3 语义澄清全部采纳）
+status: draft（v3.2——四审 3 阻塞修订完毕，codex 判定可直接拍 A/A/A/A）
 owner_decision: （待拍板：D1=A/B，D2=A/B/C，D3=A/B，D4=A/备选）
 approved_at: （待定）
 authoritative_plan_ref: （拍板后回写 05 计划；05 计划只引用本文，不复制正文）
@@ -12,8 +12,10 @@ authoritative_plan_ref: （拍板后回写 05 计划；05 计划只引用本文�
 > 归档：`s2/codex_reviews.md`。本版验收条件（codex 三审）：不依赖
 > v2/git 历史可完成决策；"7 条正常 + 1 条 horizon-masked"可由 member
 > 级契约表达；provenance mask / 算法 mask / batch 计数不混用；全部
-> termination/failure/security 类别有唯一动作；D2 状态无含义重叠；
-> 05 计划不再维护第二份决策事实。
+> termination/failure/security 类别有唯一动作；D2 状态无含义重叠。
+> 已知残留：05 计划 FA-3 节仍有旧 `SUBMITTED→TRAINED→ACKED` 状态机与
+> "全 execution 计入 GBS"表述——**拍板后的 05 计划回写时一并修**（四审
+> 确认不阻塞本包决策，但计划审查必须修）。
 
 ---
 
@@ -43,10 +45,15 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
      ——控制面取消，默认不产生 reward（不属"正常完成"）
    基础设施族（missing，reward=None，进对应 fault domain 计数）：
      inference_timeout / sandbox_rpc_timeout / update_wait_timeout /
-     grading_infra_timeout / harness_crash / api_failure /
-     sandbox_failure / model_proxy_failure
-     ——model_proxy_failure 显式承接 max_regenerations_exceeded
-     （D-FA-3 重生成耗尽；重生成本身不是终止事件）
+     harness_crash / api_failure / sandbox_failure /
+     model_call_regeneration_exhausted
+     ——三层分离（停止事实 / 故障域 / 具体原因）：
+       termination_kind = model_call_regeneration_exhausted
+       failure_category = model_proxy_failure
+       reason_code      = max_regenerations_exceeded
+     （D-FA-3 重生成本身不是终止事件，耗尽才是）
+   注：grading 阶段的超时不是 rollout 终止类别（评分发生在终止之后），
+   其契约载体是 GradingFailureCategory（见第 2 条）
    正常族：completed
    ```
 
@@ -59,14 +66,18 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
      → member disposition（member 级结果）
    ```
 
-2. **评分超时拆两类**（不并入一个"grading timeout"）：
+2. **评分超时拆两类，契约载体 = GradingFailureCategory**（现值：
+   `infra_failure / test_log_parse_failed / patch_apply_failed /
+   tests_failed`，本包新增一值）：
 
    ```text
-   grading_infra_timeout      → reward=None，missing（基建族）
-   test_execution_timeout     → 仅当 clean grader 已正常启动、测试预算
-                                确定性、且超时可归因于 agent patch（如
-                                patch 引入死循环）时 reward=0（模型真实
-                                失败）；无法归因 → 仍按 infra，reward=None
+   基建性评分超时 → failure_category=infra_failure，
+                    outcome=failed_to_grade，reward=None（missing）
+   GradingFailureCategory 新增 test_execution_timeout：
+                    outcome=unresolved，reward=0（模型真实失败）
+                    ——仅当三条件全真才允许构造：clean grader 已正常
+                    启动 ∧ 测试预算确定性 ∧ 超时可归因于 agent patch
+                    （如 patch 引入死循环）；任一不成立 → 按 infra 构造
    ```
 
 3. **双时钟 = 区间并集口径**。保存原始事实而非派生数：
@@ -107,6 +118,12 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
    派生视图（不独立维护事实）：
      GroupOutcomeView      固定 n 个成员及 reward → advantage 计算
      TrainableBranchView   只含可构造训练张量的 branches → trainer
+
+   三个 disposition 的精确枚举：
+     group_membership     ∈ included | excluded_by_profile | unavailable
+     reward_disposition   ∈ included_in_advantage | excluded_from_advantage
+                            | unavailable
+     gradient_disposition ∈ train | masked | excluded
    ```
 
 6. **两种 mask 严格分离（纠正 v3——不放宽零 token 守卫）**：
@@ -121,25 +138,36 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
    没有任何可归因采样 token 的 execution 仍是**真缺员**——不伪造零
    token branch，不放宽 `zero_trainable_tokens_execution` 守卫。
 
-7. **三态区分**（staleness 是消费时刻的准入决定，不倒写成"rollout 没
-   产生"）：
+7. **三态区分与精确归类**（completion fact 不被训练策略改写；staleness
+   是消费时刻的准入决定，不倒写成"rollout 没产生"）：
 
    ```text
-   missing                    execution 事实未完整产生
-   present_but_not_admissible 事实完整，但 staleness 等使其不能进当前 batch
-   permanent_rejection        事实完整，但安全/契约禁止训练
+   missing（事实未完整产生）：
+     半截模型响应 / capture·logprob·version 账目不完整 /
+     workspace 无法静止 / 基建失败重试耗尽
+   present_but_not_admissible（事实完整，本次不可准入）：
+     staleness 超限 / 被严格 profile 排除的完整 horizon 轨迹
+   permanent_rejection（事实完整，禁止训练）：
+     executed 级安全事件 / 身份·契约矛盾 / artifact 污染
    ```
 
 8. **profile 是穷举映射，audit_only 是 enforcement mode**：
 
    ```text
-   profile ∈ { strict_missing_v1, scored_horizon_masked_v1 }
+   profile ∈ { strict_horizon_excluded_v1, scored_horizon_masked_v1 }
+     ——更名（四审）：严格档下完整可评分的 horizon 轨迹是
+       excluded_by_profile，不是 missing——"strict_missing"名字会把
+       profile 决定伪装成 completion fact
      ——每个 profile 必须对全部 termination_kind 给出唯一 disposition
        （含 horizon 族/看门狗/控制面/各类 infra/无法静止），缺项 = 配置
        非法拒绝启动
    enforcement_mode ∈ { audit_only, enforce }
-     ——FA 开发/诊断期 = audit_only（只记 disposition 不执行剔除）；
-       正式训练 = enforce + profile 与配置 digest 预注册
+     ——audit_only（FA 开发/诊断期）：不执行剔除，且**同时计算两个候选
+       profile 的 disposition** 记入
+       candidate_dispositions_by_profile: { strict_horizon_excluded_v1,
+       scored_horizon_masked_v1 }——pre-RL 才能比较两种策略的组存活率
+       与分布影响；
+       enforce（正式训练）：单一 profile + 配置 digest 预注册
    ```
 
    **true_resume 从 profile 中移除**（v3 错误；见下"续跑维度"）。
@@ -173,9 +201,10 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
     BatchAssembler 是否需补充 gradient-bearing execution。正式闸门在
     这些语义预注册前保持关闭。
 
-11. **真缺员清单**（任何 profile 下整组不进在线更新；固定 n，不做静默
-    n-1）：半截模型响应；capture/logprob/version 账目不完整；workspace
-    无法静止；基建失败重试耗尽；安全泄漏/身份矛盾/artifact 污染。
+11. **组完整性**：固定 n，不做静默 n-1。missing 与 permanent_rejection
+    成员（按第 7 条精确归类）使整组不进在线更新；present_but_not_
+    admissible 的处置由 profile 与 admission 决定（如 scored_horizon_
+    masked 下 horizon 成员保持 included）。
 
 ### D1b（pre-RL 诊断后拍板）：profile 选择与数值
 
@@ -191,12 +220,12 @@ trainer_wait_ratio / policy_version_lag。
 ≈ **35~141 GPU-hours**）；建议与 FA-5 短租合并成一次租期。
 
 诊断后决定：32K/50-turn 是否合适；watchdog 取成功轨迹 P90/P95 或分
-难度桶；是否启用 scored_horizon_masked_v1（参考：单员 5% 缺失率下
+难度桶；选 strict_horizon_excluded_v1 还是 scored_horizon_masked_v1（参考：单员 5% 缺失率下
 0.95^8=66.34% 完整组存活）；FA-4 算法五项（上文第 10 条）。
 
 **拍板选项**：
 - **A（推荐）**：D1a 契约按上文采纳；D1b 显式延后。
-- **B**：跳过诊断直接 strict_missing_v1——最快，但确定性长度/难度偏置。
+- **B**：跳过诊断直接 strict_horizon_excluded_v1——最快，但确定性长度/难度偏置。
 
 ---
 
@@ -320,25 +349,49 @@ CaptureRegistry（架构断言 + 测试）。
 commit/bundle 血缘矛盾 → task_quarantine 归因；`contract_violation` =
 run_halt 归因。
 
-**方案（推荐）——穷举映射**（映射表逐字覆盖全部 `RuntimeFailureCategory`
-枚举值并加**集合相等测试**；未知/未来类别默认 run_halt）：
+**方案（推荐）——三张精确映射表**（四审：表键必须是**枚举字面值**而非
+描述性合并词，否则承诺的集合相等测试无法执行。实现时对每张表加
+"表键集合 == 枚举集合"断言；未知/未来类别默认 run_halt）：
 
-| 类别 | 动作 |
+**表 1：RuntimeFailureCategory（13 值逐字）→ RecoveryAction**
+
+| 枚举值 | 动作 |
 |---|---|
-| contract_violation / 审计持久化失败 | run_halt |
-| **worker_crash** | **fence 旧 owner → `recovery_in_progress`（暂停消费）→ 走 D2 恢复；恢复检查失败才 terminal run_halt**（不是一步 halt） |
-| token_alignment_failure | 单发：该 execution missing + capture 域计数；频发超窗：run_halt |
-| proxy / inference_service / sandbox / harness 基建故障 | 组件级熔断（circuit open 停止派发），持续超窗升级 run_halt；不隔离任务 |
-| grading_infra_failure（含 grading_infra_timeout） | 组件级熔断（评分域）；不隔离任务 |
-| capture_incomplete | 该 execution missing + capture 域计数 |
-| identity_conflict（环境血缘） | task_quarantine |
-| 环境包确定性损坏 | task_quarantine |
-| cleanup_failure | 容器进隔离队列 + reconciler；持续超窗升级组件熔断 |
-| **staleness_exceeded** | **单条：BatchAdmission 判 present_but_not_admissible 排除本 batch**；短窗比例升高：由 `TrainingRuntimeCoordinator` 执行反压/暂停更新（**Monitor 不直接操作 trainer**）；不隔离任务 |
-| test_execution_timeout（可归因 agent patch） | reward=0 正常样本，不进熔断 |
-| 模型真实失败（reward=0） | 正常样本，不进熔断 |
-| security（三档，凭结构化 `security_impact` 字段确定性分档） | `attempted_blocked` 无泄漏/副作用 → present，只进安全指标；task-local `executed`（如 test tampering）→ permanent_rejection 整组；**边界击穿**（hidden verifier/secret 泄漏、sandbox escape、拦截器被绕过）→ 立即 run_halt + artifact quarantine |
-| 未知/未来类别 | run_halt |
+| `model_proxy_failure` | 组件级熔断（model-call 域，circuit open 停止派发），持续超窗升级 run_halt；不隔离任务 |
+| `inference_service_failure` | 组件级熔断（推理域），同上 |
+| `sandbox_crash` | 组件级熔断（sandbox 域），同上 |
+| `harness_crash` | 组件级熔断（harness 域），同上 |
+| `worker_crash` | fence 旧 owner → `recovery_in_progress`（暂停消费）→ 走 D2 恢复；恢复检查失败才 terminal run_halt |
+| `grading_infra_failure` | 组件级熔断（评分域）；不隔离任务 |
+| `capture_incomplete` | 该 execution missing + capture 域计数；频发超窗升级组件熔断 |
+| `token_alignment_failure` | 单发：该 execution missing + capture 域计数；频发超窗：run_halt |
+| `staleness_exceeded` | 单条：BatchAdmission 判 present_but_not_admissible 排除本 batch；短窗比例升高：由 `TrainingRuntimeCoordinator` 反压/暂停更新（Monitor 不直接操作 trainer）；不隔离任务 |
+| `security_violation` | 按表 3（security_impact 分档） |
+| `identity_conflict` | task_quarantine（环境血缘矛盾：镜像/commit/bundle） |
+| `contract_violation` | run_halt（含审计持久化失败、runtime 账目矛盾） |
+| `cleanup_failure` | 容器进隔离队列 + reconciler；持续超窗升级组件熔断 |
+| （未知/未来值） | run_halt |
+
+**表 2：GradingFailureCategory（含本包新增值）→ reward/动作**
+
+| 枚举值 | outcome / reward / 动作 |
+|---|---|
+| `infra_failure` | failed_to_grade / None / missing + 评分域计数 |
+| `test_log_parse_failed` | failed_to_grade / None / missing + 评分域计数 |
+| `patch_apply_failed` | unresolved / 0 / 模型负样本，不进熔断 |
+| `tests_failed` | unresolved / 0 / 模型负样本，不进熔断 |
+| `test_execution_timeout`（新增） | unresolved / 0 / 模型负样本——仅三条件全真可构造（D1a 第 2 条），否则按 `infra_failure` |
+
+**表 3：SecurityImpact（载体 = `AntiCheatFinding` 新增结构化字段）→ SecurityAction**
+
+| 枚举值 | 动作 |
+|---|---|
+| `attempted_blocked_no_effect` | present，继续评分；只进安全指标，不触发拒绝熔断 |
+| `task_local_executed`（如 test tampering） | permanent_rejection，整组不训练 |
+| `boundary_breach`（hidden verifier/secret 泄漏、sandbox escape、拦截器被绕过） | 立即 run_halt + artifact quarantine |
+
+（模型真实失败 reward=0 不在三表内——它不是 failure category，是正常
+样本，永不进熔断。）
 
 **运行期 owner**：`FaultDomainMonitor` 由 RolloutManager state owner
 持有，独占滚动计数与 breaker 状态；**重启后从 durable audit/outcome
