@@ -90,10 +90,15 @@ K3 是 2.8T MoE（104B 激活）+ 1M 上下文的开源前沿模型；对 rh2 �
   轨迹会暂停后继续运行到完成；Reasoning Effort 的 `reward=-1` 针对相对
   token budget，也不是 wall-clock timeout。截断评分方案若继续推荐，理由
   应来自长度偏置控制、可信静止快照与本项目消融，而不是“K3 已验证”。
-- K3 直接支持的是 05 计划 §6 递延的 `true-resume conditional path`：
-  固定 `K`、暂停慢轨迹、跨迭代恢复，直到组成员全部完成。该路径依赖可恢复
-  sandbox，但 AgentENV 只能恢复 sandbox 状态，不能替 RepoHarness 恢复
-  PromptGroup、capture ledger、policy version、ready queue 或 trainer ACK。
+- K3 的机制 = `checkpoint_resume_across_iterations`（**同步迭代框架**的
+  长尾解法）：暂停触发条件是"本轮已收够 λ 比例的完成轨迹"这一**迭代级
+  完成度**，不是单条轨迹达到 turn/context/wall 上限——不能称为"达到
+  episode 限制后恢复"（2026-08-04 澄清，用户指出混淆）。rh2 的正式方向
+  是 `continuous_live`（fully async 无全局屏障，活轨迹跨权重更新继续跑
+  + D-FA-3 当前 turn 重生成），两者是不同 continuation mode，决策包 v3.1
+  已把 true_resume 从终止处置 profile 中拆出为独立维度。AgentENV 只能
+  恢复 sandbox 状态，不能替 RepoHarness 恢复 PromptGroup、capture
+  ledger、policy version、ready queue 或 trainer ACK。
 - 终止原因至少应区分 `agentic_token_budget_exceeded`、`turn_limit`、
   `hard_wall_timeout` 与 `infra_timeout`，不能折成一个 `episode_time_limit`。
 - 决策 2（F2-4 恢复）：不变；K3 的"paused rollouts enqueued + resumed"

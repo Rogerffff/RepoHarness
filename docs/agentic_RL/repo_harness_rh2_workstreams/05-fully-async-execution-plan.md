@@ -88,13 +88,11 @@
 > **FA-2A 执行顺序（codex 轮次 14 定序——F2-4 语义必须先于 F2-1 编码，
 > 因为 crash replay 是否复用公开 execution id 直接决定身份格式）**：
 >
-> 1. **F2-4 定案（先设计后编码）**：崩溃恢复与 replay 身份语义。首版方案
->    （codex 轮次 14 建议，采纳）：slime data-source checkpoint + 与
->    rollout_id 绑定的 RH2 pending-state checkpoint + **replay-stable 公开
->    execution id** + 每次真实会话重新生成私有 capability + 下游按
->    execution_id/batch_id 幂等去重。**不做**完整 data source lease/ACK
->    改造（首版过重）；也**不允许**裸 at-least-once + dedup（无 cursor
->    回退则已预取但丢失的组永远取不回来）。
+> 1. **F2-4 定案（先设计后编码）**：崩溃恢复与 replay 身份语义——正文
+>    只在 `fa/fa2a_decision_package.md` 决策 2（v3.1：单一 checkpoint
+>    owner、提交顺序不变量、HANDED_OFF/SUBMISSION_ACKED/TRAINED 三态、
+>    四层身份、recovery_epoch 胜出规则、at-least-once 承诺），拍板后
+>    回写本节，此处不复制草案。
 > 2. **F2-0 代码提升**：正式运行时代码从 `experiments/s1_7a_bringup/`
 >    提升进 `src/repoharness2/`（capture_wire 的 registry/事务/守卫、glue
 >    的装配工厂——正式链承重墙不住在 experiments 目录）。

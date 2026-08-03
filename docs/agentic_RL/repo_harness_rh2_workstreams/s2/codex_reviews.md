@@ -3425,3 +3425,334 @@ policy_version_lag
 FA-2A 的身份、capture、持久性、quiescence 和计时可以继续推进，不需要等待训练配方。需要先改的是契约表达能力，不能把所有 timeout 都压成同一个 eligibility 结果。
 
 正式训练处置与数值阈值延后到 pre-RL 诊断，这是合理且更稳妥的安排；但 `rh2_formal_training_allowed` 必须保持关闭，直到 profile、阈值和组语义完成预注册。详细外部证据已经集中在[训练配方证据矩阵](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/agentic_rl_training_recipe_evidence_matrix.md)。
+
+
+---
+
+## FA-2A 决策包三审 + true_resume/K3 语义澄清（2026-08-04：13 条全采纳 → 决策包 v3.1）
+
+> 原文全文转录（tmp/决策包审查3.md）。处置：全部 accepted。v3.1 要点：member 级 disposition 契约 + GroupOutcomeView/TrainableBranchView 派生视图（单一事实来源）；provenance_loss_mask（事实）与 horizon_gradient_mask（算法决定）严格分离——**不放宽零 token 守卫**（纠正 v3 实质错误）；推导关系改多事实合成（termination fact + capture/quiescence/grading facts → class → profile → disposition）；owner_cancelled 出正常族；max_regenerations_exceeded → model_proxy_failure；audit_only 改 enforcement mode；hard_wall 恒非策略结果；评分超时拆 infra/test 两类；missing / present_but_not_admissible / permanent_rejection 三态（staleness 是消费时刻准入决定）；profile 穷举映射缺项拒启动；**true_resume 从 profile 拆出为 rollout_continuation_mode 独立维度**（K3 = 同步框架 λ 比例触发的 checkpoint_resume_across_iterations，非"到限恢复"；rh2 = continuous_live + turn 重生成——用户抓的混淆，两代 codex 与 Claude v3 都不准确）；双时钟改区间并集口径；成本单位修正（4.4~17.6 实例墙钟时 ≈ 35~141 GPU-hours）；D2 自包含 + HANDED_OFF/SUBMISSION_ACKED/TRAINED 三态（无 durable ACK 不得记 ACKED）；D4 worker_crash 先 fence+recovery_in_progress、staleness 单条走 BatchAdmission 排除、映射表集合相等测试、结构化 security_impact；05 计划 F2-4 残留"采纳"段去重。
+
+
+**综合判断**
+
+另一个 Codex 的建议与我的审查高度一致，可以合并为一份 v3.1 修改清单。方向仍是 `A/A/A/A`，但应先修文档再正式拍板。
+
+有一点需要特别收紧：`GroupOutcomeView / TrainableBranchView` 应是从同一权威报告派生的运行期视图，不要新增两套独立账本，否则会再次出现事实分叉。
+
+**建议反馈给 Claude**
+
+1. **处置必须按 member 记录**
+
+`PromptGroupAdmissionReport` 应包含：
+
+```text
+termination_policy_profile
+member_dispositions:
+  - rollout_execution_id
+    outcome_id
+    group_membership
+    reward_disposition
+    gradient_disposition
+    reason_codes
+```
+
+`termination_policy_profile` 是组或 run 级配置，三项 disposition 是 member 级结果。
+
+2. **组统计与训练 branch 分离，但保持单一事实来源**
+
+```text
+PromptGroupAdmissionReport.member_dispositions
+  -> 派生 GroupOutcomeView：固定 n 个成员及 reward，用于 advantage
+  -> 派生 TrainableBranchView：只给 trainer 提供可构造训练张量的 branches
+```
+
+这两个是派生视图，不单独维护权威事实。
+
+3. **不得放宽零 provenance-token 拒绝**
+
+horizon member 应保留真实 `provenance_loss_mask` 和非零 provenance token；在 trainer 侧额外使用 step-local `horizon_gradient_mask=0`。
+
+```text
+provenance_loss_mask：不可变历史事实
+horizon_gradient_mask：本次训练的算法决定
+```
+
+没有任何可归因采样 token 的 execution 仍是真缺员。不要伪造零 token branch，也不要放宽 `zero_trainable_tokens_execution` 守卫。
+
+4. **D1a 不提前决定 FA-4 算法**
+
+D1a 只保证 reward-only member 可表达。以下内容继续留给 D1b/FA-4：
+
+- 使用 GRPO mean 还是 leave-one-out；
+- 是否做标准差归一化；
+- masked member 是否进入 loss 的 execution 平均分母；
+- masked member 是否占 optimizer `global_batch_size`；
+- BatchAssembler 是否需补充其他 gradient-bearing execution。
+
+正式闸门在这些语义预注册前保持关闭。
+
+5. **修正终止分类推导关系**
+
+不要再写：
+
+```text
+termination_kind -> completion_class -> failure_category -> disposition
+```
+
+改成：
+
+```text
+termination fact
++ capture / quiescence / grading facts
+-> completion_class + optional failure_category
+-> selected profile
+-> member disposition
+```
+
+同时：
+
+- `owner_cancelled` 移出正常族，归控制面取消，默认不产生 reward。
+- 为 `max_regenerations_exceeded` 指定确切 termination kind 和 `model_proxy_failure` 映射。
+- `audit_only` 是 enforcement mode，不是 termination profile。
+- `hard_wall_timeout` 首版始终按非策略结果处理，不能被 profile 意外评分。
+
+6. **拆开评分超时**
+
+```text
+grading_infra_timeout
+  -> reward=None，missing
+
+test_execution_timeout
+  -> 只有在 clean grader 已正常启动、
+     使用确定性测试预算、
+     且超时可归因于 agent patch 时，才 reward=0
+  -> 无法归因时仍按 infra，reward=None
+```
+
+7. **区分 missing、当前不可准入和永久拒绝**
+
+```text
+missing
+  execution 事实未完整产生
+
+present_but_not_admissible
+  事实完整，但 staleness 等条件使其不能进入当前 batch
+
+permanent_rejection
+  事实完整，但安全或契约禁止训练
+```
+
+staleness 是消费时刻的 admission 决定，不应倒写成 rollout 没有产生。
+
+8. **每个 profile 必须穷举所有 termination kinds**
+
+至少覆盖 policy horizon、hard watchdog、owner cancellation、各类 infra/test timeout 和无法静止。`true_resume_v1` 标记为 `unsupported_until_capability_gate`，不能被正式配置启用。
+
+9. **双时钟以区间并集计算**
+
+保存：
+
+```text
+wall_start / wall_end
+non_chargeable_intervals:
+  start / end / reason / measurement_source
+```
+
+`chargeable_execution_seconds` 由同一 owner 对区间做并集后派生，避免重叠暂停被重复扣除。首版只明确扣除权重更新暂停和系统反压；其他阶段先观测。
+
+10. **修正成本单位**
+
+改成约 `4.4～17.6 个实例墙钟小时`，或在 8 GPU 实例上约 `35～141 GPU-hours`。标为初步估计，D1b 再批准真实租机预算。
+
+11. **D2 恢复为自包含决策**
+
+v3 必须完整写回：
+
+- pending/cursor 持久化顺序；
+- 全部状态；
+- 四层身份；
+- replay 与 fencing 规则；
+- 恢复承诺；
+- crash-point 验收；
+- B/C 方案与代价。
+
+并严格区分：
+
+```text
+HANDED_OFF
+SUBMISSION_ACKED
+TRAINED
+```
+
+没有 durable backend ACK 时不得写 `ACKED`，也不承诺 optimizer exactly-once。
+
+12. **D4 收紧运行期动作**
+
+- `worker_crash`：先 fence 旧 owner、进入 `recovery_in_progress`、暂停消费；恢复检查失败才 terminal `run_halt`。
+- staleness 单条超限由 BatchAdmission 排除；短窗比例升高时，由 `TrainingRuntimeCoordinator` 执行反压或暂停更新，不由 Monitor 直接操作 trainer。
+- 映射表逐字覆盖全部 `RuntimeFailureCategory`，加集合相等测试。
+- 增加结构化 `security_impact`，使 task-local tampering 与 hidden-verifier/sandbox boundary breach 可确定性分档。
+
+13. **拍板后清理 05 计划重复语义**
+
+删除仍提前“采纳”的旧 D2 段，并同步修正 group eligibility、GBS 计数和 ACK 状态机，不再复制决策包正文。
+
+**v3.1 验收条件**
+
+- 只读 v3.1 就能完成四项决策，不依赖 v2 或 git 历史。
+- “7 条正常 + 1 条 horizon-masked”可由 member 级契约完整表达。
+- provenance mask、algorithmic mask 和 batch cardinality 不混用。
+- 所有 termination/failure/security 类别都有唯一动作。
+- D2 状态中不存在 handoff、ACK、trained 含义重叠。
+- 05 计划不再维护第二份决策事实。
+
+
+不需要增加 D5，也不需要再扩大外部调研范围。
+
+关于k3相关的你说的：true_resume_v1
+达到限制后暂停 sandbox，以后从原状态继续运行，而不是从头重跑。
+这是 K3/AgentEnv 更接近的长期方向，但当前 Runtime 尚不具备完整能力。
+这里你和之前的codex对这一点理解的都不够准确，这里的 K3是同步RL，而我们这里没有恢复的
+codex:
+
+你的理解基本正确。**当前文档把 K3 partial rollout、RH2 的 turn 重生成和未来 sandbox resume 混在了一起。** `true_resume_v1` 那句“达到限制后暂停 sandbox”确实不准确。
+
+**K3 实际做什么**
+
+K3 报告原文描述的是：
+
+```text
+每轮对 N 个 prompt 各采 K 条轨迹
+-> 保持 N×K 条 active rollout
+-> 本轮有 λ×N×K 条轨迹完成后，不再等待所有长尾
+-> 暂停剩余未完成轨迹
+-> 使用已经完整的 PromptGroup 进行本轮训练
+-> 下一训练迭代优先恢复暂停的 rollout
+-> 同一 prompt 的 K 条全部完成后，才提交该组
+```
+
+所以暂停的触发条件是：
+
+```text
+当前训练迭代已经收集到足够多完成轨迹
+```
+
+不是：
+
+```text
+某条轨迹达到 turn/context/wall-clock 上限
+```
+
+K3 是在同步、按 iteration 组织的 RL 框架中，用 partial rollout 避免每轮被长尾轨迹卡住。它同时保留：
+
+- AgentENV 中的 sandbox/进程状态；
+- 外部 KV cache 中的模型上下文状态；
+- rollout 和 PromptGroup 状态。
+
+轨迹可能跨多个训练 iteration，因此内部 token 可能来自多个 policy version；K3 用 per-token regularization 处理这种陈旧性。
+
+**RH2 当前做的不是这个**
+
+RH2 的 fully async 没有“等本轮所有 rollout 完成再训练”的全局屏障：
+
+```text
+worker 持续生成 rollout
+-> 完整 PromptGroup 进入 ready queue
+-> trainer 持续取 ready group 训练
+-> 慢 rollout 继续执行
+```
+
+因此，trainer 做一步更新时，其他长 rollout 通常不需要被整体暂停和保存。它们可以继续执行，只是后续不同 turn 可能使用更新后的权重。
+
+当前 D-FA-3 处理的是更小的范围：
+
+```text
+Claude Code 正在等待当前模型请求
+-> SGLang 因权重更新 abort 这个请求
+-> proxy 丢弃这次尚未交付的部分 token
+-> 等新权重 ACTIVE
+-> 用相同 prompt 重新生成当前 turn
+-> 只把新生成的完整响应交给 Claude Code
+```
+
+这里：
+
+- 不重启整个任务；
+- 不重跑之前的工具调用；
+- workspace 和 Claude Code 进程仍然活着；
+- 只从头重采当前模型 response；
+- 已生成但未交付的旧 token 被丢弃；
+- 不是从旧 partial token 继续 decode；
+- 不需要 AgentENV snapshot/resume。
+
+所以你说的“不是从头执行任务，而是当前 turn 重新生成”是准确的。
+
+**四种机制不要混称**
+
+| 机制 | 触发原因 | 保存什么 | RH2 状态 |
+|---|---|---|---|
+| Fully async continuous rollout | trainer 和 rollout 独立推进 | live sandbox、历史 turn、逐 turn version | 当前目标架构 |
+| Proxy turn regeneration | 当前模型请求被权重更新 abort | 之前 turn 和 workspace；丢弃当前未交付 token | 已设计和实现主体，待 FA-4/FA-5 真协调器验收 |
+| Token-level response resume | 模型请求中断后，从已生成 token 继续 decode | input/output ids、KV、routing tape | slime 标准路径部分支持；RH2 `custom_generate` 尚不支持 |
+| K3 partial rollout resume | 同步 iteration 已收够 λ 比例，暂停长尾 | sandbox + KV + rollout/group 状态 | 未来能力，当前不需要 |
+| Timeout 后 checkpoint/resume | 超过某个时间片后延后继续 | 完整 Runtime 状态 | 当前未实现，也不是 K3 原始语义 |
+
+**决策包应该如何修正**
+
+我建议把 `true_resume_v1` 从 D1 的“终止处置 profile”里移除。
+
+因为一旦决定以后继续，它就不是 termination，而是：
+
+```text
+execution_state = deferred
+continuation_mode = checkpoint_resume
+```
+
+并且不同限制不能统一 resume：
+
+- `max_turns_exhausted`：这是定义好的任务 horizon，恢复会违反上限；
+- `context_limit_reached`：继续前需要 compaction、分段或新上下文，不是简单 resume；
+- `hard_wall_timeout`：如果以后继续，这实际上应叫 `timeslice_expired`，而不是 episode timeout；
+- 基础设施故障：只有 checkpoint 完整可信时才可能恢复。
+
+建议 D1 只保留：
+
+```text
+strict_missing_v1
+scored_horizon_masked_v1
+```
+
+另设一个独立的未来维度：
+
+```text
+rollout_continuation_mode:
+  continuous_live_v1
+  checkpoint_resume_across_iterations_v1
+  token_level_response_resume_v1
+```
+
+其中当前正式方向是：
+
+```text
+continuous_live_v1
++ model_call_regeneration_on_weight_update
+```
+
+K3 对应的则是：
+
+```text
+checkpoint_resume_across_iterations_v1
+```
+
+**一个需要注意的当前状态**
+
+RH2 的 proxy turn 重生成状态机已经实现了主体，但正式链现在仍使用 `StaticActiveCoordinator`。也就是说，本地测试证明了状态机逻辑，**真实 trainer 发布更新窗口、所有推理引擎确认新版本、proxy 再透明重生成的生产闭环还要等 FA-4/FA-5 验证**。
+
+因此最终结论是：
+
+- 你的理解正确；
+- K3 不是“达到 episode 限制后恢复”；
+- RH2 当前已经设计的是 live execution 跨训练步继续，以及必要时当前 turn 重生成；
+- K3 式 sandbox/KV checkpoint resume 是另一种用于同步迭代长尾的未来能力；
+- `true_resume_v1` 当前放在 timeout profile 里会误导实现，应该拆出去。
