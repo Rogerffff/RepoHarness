@@ -116,7 +116,11 @@
 >    durable manifest（snapshot/ack 事务接口已在，接 per-execution
 >    manifest 与双向引用）。
 >
-> **FA-2A 附带定义项（编码前定案）**：
+> **FA-2A 附带定义项（状态：`proposal_pending_FA2A_owner_approval`——
+> codex 决策包审查指出下列 D1/D4 语义此前被提前写成已采纳事实，实际
+> 尚未经用户拍板；以 `fa/fa2a_decision_package.md` v2 的拍板结果为准，
+> 批准后本块转正。已落地的代码事实除外：require↔非零 exit 启动断言
+> 解耦是已提交代码，不在待批范围）**：
 >
 > - **结构化终止结果枚举**（轮次 14 设计规则 2）：`completed /
 >   episode_time_limit / owner_cancelled / policy_update_abort /

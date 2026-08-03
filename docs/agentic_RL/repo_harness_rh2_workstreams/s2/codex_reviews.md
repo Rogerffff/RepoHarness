@@ -2727,3 +2727,207 @@ FA-1 closure
 - **一般 3：F2P/P2P 不变量未进 schema**。【修复：模型 validator 使矛盾评分事实不可表示；python_version 纳入消费期互检】
 - **一般 4：writer 仍许 pins=None**。【修复：正式 writer pins 必传；write_ingest_outputs_for_tests 显式命名 test-only】
 - codex 确认正确：T1 单字节漂移拒绝、此前旁路全关、真实产物 216 正常载入、44 定向 + 903 全套。
+
+
+---
+
+## FA-2A 决策包审查（2026-08-03：5 阻塞 + 2 一般 + T0 完整性扫描，全部采纳 → 决策包 v2）
+
+> 原文全文转录（tmp/codex_决策包审查.md）。处置：全部 accepted，决策包重写为 v2（quiescence 三硬条件、checkpoint 顺序不变量与四层身份、恢复承诺如实降级、attempted_blocked 按冻结契约修正、lineage/runtime 矛盾拆分、FaultDomainMonitor owner、termination_kind 单向映射且 policy_update_abort 不是终止类别、05 计划未批语义标 proposal_pending）。四个代码锚点（sandbox.py 无 kill、data_source cursor 先行、eligibility/gate 的 attempted_blocked 契约、fa_runtime identity_conflict 注释）全部独立核实属实。
+
+**审查结论**
+
+决策包总体方向正确，不需要推翻 FA-2A，但**不建议按当前文本直接拍板**。
+
+- 决策 3 可以直接选择 `A`。
+- 决策 1、2、4 需要先补齐关键语义，否则拍板后仍会在实施阶段重新触发 T0。
+- 不需要增加第五个顶层决策；缺失内容都可以收进现有 D1、D2、D4。
+
+**Findings**
+
+1. **[阻塞] D1 的“episode 超时”目前不是真正的进程终止**
+
+当前 `slime` 超时只停止轮询并返回 `-1`；它通过 `setsid` 启动的 Claude Code 进程仍可能继续运行。[sandbox.py](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/sandbox.py:63) 没有 kill/wait，而 RH2 会在容器清理前执行 capture、评分和 Gate，[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1541)。
+
+违反的不变量：进入“截断但有效”评分前，workspace 和模型调用面必须已经静止。
+
+影响：Claude Code 可能在评分期间继续改文件或发 API 请求，得到竞态 patch、评分污染和账目漂移。
+
+建议在 D1-A 增加三个硬条件：
+
+```text
+主动终止整个 harness process group
+-> 等待并确认 quiescence
+-> 冻结 workspace/patch snapshot
+-> 对冻结快照评分
+```
+
+最小探针：让超时后的子进程持续写文件；验收要求超时确认后文件 digest 不再变化、无新增模型请求、评分只读冻结快照。无法确认 quiescence 时必须缺员。
+
+2. **[阻塞] D2 双 checkpoint 没有定义防丢失的提交顺序**
+
+`get_samples()` 会立即推进 `sample_offset`，[data_source.py](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/rollout/data_source.py:90)；cursor 之后才由独立的 `torch.save()` 持久化，[data_source.py](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/rollout/data_source.py:127)。
+
+当前“两个 checkpoint 的并集”没有回答：
+
+```text
+cursor checkpoint 已写成功
+RH2 pending checkpoint 尚未写成功
+此时 actor 崩溃
+```
+
+这时预取组仍会永久丢失。
+
+D2-A 必须定下以下顺序不变量：
+
+```text
+pending manifest/WAL durable
+-> 才允许发布会跳过这些 execution 的 cursor checkpoint
+-> 两者携带同一 checkpoint_generation
+-> 恢复时交叉校验，不一致则 fail-closed
+```
+
+还需明确首版保障范围是 actor/process restart，还是包含 Ray 调度到另一节点；后者要求 pending store 位于共享持久存储。
+
+验收探针应在 pending 写前、pending 写后、cursor 写前、cursor 写后逐点 crash，重启后证明每个逻辑 execution 都是“恢复或明确去重”，没有静默丢失。
+
+3. **[阻塞] D4 把合法的 `attempted_blocked` 安全事件误判成拒绝**
+
+决策包写的是“模型触发安全策略 → 拒绝 execution/group”，[fa2a_decision_package.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:132)。但既有契约明确规定：
+
+- `attempted_blocked`：拦截成功，是合法训练信号。
+- `executed`：违规已经发生，拒绝训练。
+
+证据见 [eligibility.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/eligibility.py:89) 和 [gate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/governance/gate.py:381)。
+
+当前文本会系统性删除“模型尝试危险操作、系统正确拒绝、模型随后恢复”的轨迹，形成安全行为分布偏置。
+
+应改为：
+
+```text
+attempted_blocked 且无泄漏/副作用
+-> present，继续评分，不触发拒绝熔断
+
+executed / leaked / tampered
+-> permanent_rejection，整组不得训练
+```
+
+4. **[阻塞] D2 对去重能力表述过强，且缺少物理 attempt 身份**
+
+“去重保证不被训练两次”不成立。[决策包](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:62) 的去重最多保证 artifact/admission/submission 层幂等；如果 trainer 已完成 optimizer step、但在 ACK 或 checkpoint 前崩溃，仍不能证明端到端 exactly-once。
+
+应改成：
+
+```text
+rollout actor 恢复语义 = at-least-once
+artifact/admission/submission = 可幂等去重
+optimizer step exactly-once = 首版不承诺
+```
+
+同时身份需要两层：
+
+```text
+rollout_execution_id  # 逻辑执行，replay 时稳定
+physical_attempt_id   # 每次实际重放都不同
+attempt_number
+session capability    # 每次会话重新生成
+```
+
+否则旧 attempt 的 partial artifact、审计记录和新 replay 会共享同一个事实键。
+
+5. **[阻塞] D4 的 fault-domain 映射仍有歧义且缺少运行期 owner**
+
+“组件级暂停或 run_halt”不是确定动作；纯函数 `RecoveryPolicy` 也无法独自维护跨 execution 的滑动窗口计数。
+
+另一个冲突是：当前 `identity_conflict` 指镜像 digest、base commit、bundle lineage 矛盾，契约注释要求 `task_quarantine`，[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:74)；决策包却把所有“身份矛盾”映射为 `run_halt`。
+
+建议拆分：
+
+```text
+environment_lineage_conflict -> task_quarantine
+runtime_identity/accounting_conflict -> run_halt
+```
+
+并明确一个 actor/service 级 `FaultDomainMonitor` 拥有滚动计数和 breaker 状态。`RecoveryPolicy` 负责单事件分类，`PromptGroupAdmissionReport` 只记录最终动作，不拥有跨组状态。
+
+6. **[一般] D1 新终止枚举必须与现有失败分类建立单向映射**
+
+现有 `RuntimeFailureCategory` 已经描述执行失败，[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:63)。建议新增独立的 `termination_kind` 表示“为什么停止”，再集中映射到：
+
+```text
+termination_kind
+-> completion_class
+-> failure_category
+-> reward / eligibility 语义
+```
+
+`policy_update_abort` 通常只是 `ModelCallAttempt` 内部被透明重生成的事件，不应成为 episode 终止类别；只有重生成耗尽才形成 episode 失败。
+
+7. **[一般] 05 计划提前把 draft 推荐写成了已采纳事实**
+
+决策包仍是 `status: draft`，但 [05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:91) 已写“采纳”，并提前固化 D1/D4 语义。
+
+在用户拍板前，这些段落应标记为 `proposal_pending_FA2A_owner_approval`；拍板后再转为权威定案，避免审批沦为追认。
+
+**A~N 适用性**
+
+- 适用：A、B、C、D、F、G、H、I、K、L、M、N。
+- E 适用于上述 crash、timeout、双线程和 breaker 验收探针设计。
+- J 本轮 N/A：没有实现 diff；命名和事实重复问题已由 H/K 覆盖。
+- 额外重点：D2 涉及 checkpoint I/O 与队列活性，D3 单 owner 必须有有界命令队列和反压，D4 必须能聚合拒绝率。
+
+**T0 完整性扫描**
+
+- `confirmed T0`：D1、D2、D3、D4 都确实需要用户决定。
+- `missing T0`：超时后的 quiescence；checkpoint 提交顺序和持久化范围；逻辑 execution 与物理 attempt 身份；安全 attempted/executed 映射；breaker 状态 owner。
+- `false-positive T0`：D3 选定单 owner 后，具体使用队列还是请求/响应属于 T1。
+- `deferred T0`：DIS 分母在 FA-4 前决定；正式 breaker 阈值在 FA-5 校准后预注册，当前递延合理。
+- `experiment-required`：真实 CC process-group 终止、超时后无残余请求、冻结快照稳定性；checkpoint crash-point 故障注入；breaker 阈值校准。
+
+补充：
+
+1. D2 的 actor crash 精确定义为 RolloutManager state-owner process
+   restart。Claude Code、sandbox、adapter thread、SGLang engine 的单独
+   故障属于各自 failure domain；只有升级为整个 RolloutManager 重启时
+   才进入 D2。
+
+2. 明确 RH2 pending checkpoint 是 FA-2A 将新增的持久化面，目前不存在。
+   现有 model-call attempt audit 的 snapshot/write/ack 只负责审计，
+   不是 rollout recovery checkpoint。
+
+3. D2-A 固化：
+   pending durable -> cursor durable；
+   两者携带 checkpoint_generation；
+   pending 落后于 cursor 为不可恢复矛盾，fail-closed。
+   决策包只定恢复语义与持久化范围；JSON/SQLite/WAL 等格式留 T1。
+
+4. pending 状态至少表达 RESERVED、DISPATCHED、RUNNING、
+   OUTCOME_DURABLE、GROUP_READY、HANDED_OFF、ACKED。
+   首版对 DISPATCHED/RUNNING 从干净环境 replay，不承诺 mid-episode resume。
+
+5. 身份明确为：
+   rollout_execution_id 跨 replay 稳定；
+   physical_attempt_id 每次完整重跑不同；
+   model_call_attempt_id 只表示同一 physical attempt 内模型调用重生成；
+   session capability 每次 physical attempt 新生成，旧 capability 撤销。
+
+6. 恢复承诺改为：
+   rollout execution = at-least-once；
+   artifact/admission/submission = 幂等去重；
+   optimizer step exactly-once = 首版不承诺。
+
+7. D3 继续推荐 A，不新增 T0。05 计划补充有界命令队列、owner 死亡
+   fail-closed、生产路径禁止直接修改 CaptureRegistry 三项验收。
+
+8. D4 按原审查修正：
+   attempted_blocked 无副作用时保持 present；
+   executed/leaked/tampered 永久拒绝；
+   environment_lineage_conflict -> task_quarantine；
+   runtime_identity/accounting_conflict -> run_halt；
+   FaultDomainMonitor 独占滚动统计和 breaker 状态。
+
+9. fa2a_decision_package.md 继续保持 status: draft；
+   05 计划中尚未获 owner 批准的 D1/D2/D4 内容恢复为
+   proposal_pending_FA2A_owner_approval。
+
+
