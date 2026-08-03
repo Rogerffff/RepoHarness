@@ -36,7 +36,7 @@ docs/harness_improve/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf
 | R3 | Qwen3-Coder-Next Technical Report | `docs/harness_improve/external_paper_references/pdfs/R3_qwen3_coder_next_2603.00729.pdf` | coding-agent 数据、verifiable coding tasks、executable environments、SWE / Terminal-Bench 训练与评测、agentic training 对 RepoHarness taskset / environment 设计的启发。 |
 | R4 | MiniMax-M2 Series | `docs/harness_improve/external_paper_references/pdfs/R4_minimax_m2_series_2605.26494.pdf` | Forge、agent-driven data pipeline、verifiable trajectories、executable workspace、artifact-aligned reward、windowed-FIFO、prefix-tree merging、training / inference / agent 解耦。 |
 | R5 | GLM-5: from Vibe Coding to Agentic Engineering | `docs/harness_improve/external_paper_references/pdfs/R5_glm5_agentic_engineering_2602.15763.pdf` | 异步 agent RL、generation / training 解耦、slime 相关异步训练基础设施、多环境 agentic RL、从 vibe coding 到 agentic engineering 的定位。 |
-| R5b | GLM-5.2: Built for Long-Horizon Tasks | `https://z.ai/blog/glm-5.2`；辅助入口：`https://github.com/zai-org/GLM-5` 和 `https://docs.z.ai/guides/llm/glm-5.2` | 当前智谱最新网页短报告。尚未有完整技术报告，但 GLM-5.2 代表当前开源长程编码模型的重要水平，应作为“开源 frontier coding agent model”参考。重点关注 1M 上下文、长程工程任务、thinking effort、IndexShare、MTP speculative decoding、SGLang / vLLM 部署，以及其背后 GLM-5 / slime 异步强化学习基础设施。 |
+| R5b | GLM-5.2: Built for Long-Horizon Tasks | `docs/harness_improve/external_paper_references/pdfs/R5b_glm5_2_blog_zai.pdf`；来源：`https://z.ai/blog/glm-5.2`；辅助入口：`https://github.com/zai-org/GLM-5` 和 `https://docs.z.ai/guides/llm/glm-5.2` | 当前智谱最新网页短报告的本地 PDF 快照。重点关注长程工程任务、slime 的多种 rollout 形态、critic-PPO、CompactionRL、并行 OPD、anti-hack，以及 serving / rollout 配置复用。它不是完整可复现训练配方，具体算法需和 R14/R15 交叉核验。 |
 | R6a | DeepSeek-V3.2 | `docs/harness_improve/external_paper_references/pdfs/R6_deepseek_v3_2_2512.02556.pdf` | agentic task synthesis、large-scale tool-use data generation、scalable RL protocol、DeepSeek Sparse Attention、长上下文与 agent 性能结合。 |
 | R6b | DeepSeek-V4 | `docs/harness_improve/external_paper_references/pdfs/R6_deepseek_v4_pro_DeepSeek_V4.pdf` | million-token context、agentic coding、OPD / distillation / sandbox 相关线索、DSec 类 sandbox 基础设施参考。 |
 | R7a | Kimi K2 | `docs/harness_improve/external_paper_references/pdfs/R7_kimi_k2_2507.20534.pdf` | large-scale agentic data synthesis、joint RL、agentic intelligence、SWE-Bench / Tau2 / ACEBench 等 agentic benchmark 结果。 |
@@ -46,6 +46,9 @@ docs/harness_improve/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf
 | R10 | Let It Flow: Agentic Crafting on Rock and Roll | `docs/harness_improve/external_paper_references/pdfs/R10_let_it_flow_roll_rock_rome_2512.24873.pdf` | 阿里 ALE 生态总报告。重点关注 ROLL 训练框架、ROCK 沙箱环境管理、iFlow CLI agent runtime、Terminal-Bench-Pro、ROME 模型、Agent Native Mode、ModelProxyService、训练和部署 harness 一致性。 |
 | R11 | RollArt: Disaggregated Multi-Task Agentic RL Training at Scale | `docs/harness_improve/external_paper_references/pdfs/R11_rollart_disaggregated_agentic_rl_2512.22560.pdf` | 多任务 agentic RL 系统论文。重点关注轨迹级异步 rollout、LLMProxy、EnvManager、SampleBuffer、serverless reward、硬件亲和调度、bounded-staleness 权重同步、长尾环境和失败环境处理。 |
 | R12 | ROLL framework technical report | `docs/harness_improve/external_paper_references/pdfs/R12_roll_framework_2506.06122.pdf` | ROLL 训练框架技术报告。重点关注 Ray 多角色分布式架构、Parallel Worker、Rollout Scheduler、Environment Worker、Reward Worker、AutoDeviceMapping、vLLM / SGLang / Megatron / FSDP2 集成和 agentic pipeline。 |
+| R13 | Kimi K3: Open Frontier Intelligence | `docs/harness_improve/external_paper_references/pdfs/k3_tech_report.pdf` | SFT 冷启动、九个 RL expert 与 MOPD、固定 `K` 的 partial rollout、跨迭代暂停恢复、reasoning-effort token budget、统一可组合 harness、AET verifier 隔离、AgentENV 和 rollout auto-throttling。注意 K3 未披露 PPO / GRPO / DIS 公式，partial rollout 也不是 wall-clock 截断评分。 |
+| R14 | CompactionRL | `docs/harness_improve/external_paper_references/pdfs/2607.05378v1.pdf` | context compaction 作为可训练策略、summary / execution segment、token-level loss normalization、cross-trajectory GAE，以及长轨迹切段后 reward 和 loss 分母如何保持一致。 |
+| R15 | Single-Rollout Asynchronous Optimization（SAO） | `docs/harness_improve/external_paper_references/pdfs/2607.07508v1.pdf` | 用 single-rollout sampling 解除异步训练中的同题组等待，结合 critic、Skip-Observation GAE 和 double-sided token clipping 处理 credit assignment 与 off-policy。它是 GRPO 之后的算法候选，不是当前首训链的开箱即用替代。 |
 
 ## 2.1 参考代码库清单
 
@@ -67,8 +70,43 @@ docs/harness_improve/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf
 | Alibaba ROCK | `reference/ROCK/` | `reference/ROCK/CLAUDE.md`、`reference/ROCK/README.md`、`reference/ROCK/examples/install-agents/README.md` | 沙箱环境管理和 agent 执行服务。重点看 Admin / Worker / Rocklet / EnvHub、Sandbox SDK、GEM API、sandbox lifecycle、agent install/run、ModelService、OpenAI-compatible proxy record/replay、网络和 runtime 隔离。 |
 | iFlow CLI | `reference/iflow-cli/` | `reference/iflow-cli/README.md`、`reference/iflow-cli/docs_cn/` | 真实 terminal agent runtime 参考。重点看权限模式、Sub Agent、Task 工具、上下文压缩、hooks、workflow、checkpoint 和 OpenAI-compatible API 配置。注意该仓库声明 iFlow CLI 于 2026-04-17 停止服务，因此只作为设计参考，不建议作为长期依赖。 |
 | Terminal-Bench-Pro | `reference/terminal-bench-pro/` | `reference/terminal-bench-pro/README.md`、各 task 的 `instruction.md` / `task.toml` / `tests/` | 终端环境 benchmark 和任务包参考。重点看 400 个任务、公开 / 私有拆分、8 个领域、任务 metadata、环境资源声明、verifier timeout、测试布局和 Harbor / Terminal-Bench 2.0 格式兼容。 |
+| AgentENV | `reference/AgentEnv/` | `reference/AgentEnv/CLAUDE.md`、`reference/AgentEnv/docs/src/` | K3 使用的 Firecracker microVM 环境运行时。重点看 pause / resume、incremental snapshot、同节点 fork、持久化 artifact、生命周期指标和 E2B 兼容 API。它不拥有 hidden verifier、command policy、token capture、eligibility 或 artifact visibility；当前控制面认证和 domain 网络策略也不足以替代 RepoHarness SWE-Safety。slime 接入还需要 image-to-template 映射或薄 create adapter，不能只改 `E2B_API_URL`。 |
 
-## 2.2 ROLL 生态辅助网页和模型卡
+## 2.2 统一训练配方证据矩阵
+
+跨报告比较模型、数据、harness、预算、终止、组统计、reward、loss、异步、
+staleness、硬件规模和可复现性的统一入口：
+
+```text
+docs/harness_improve/external_paper_references/agentic_rl_training_recipe_evidence_matrix.md
+```
+
+该矩阵明确区分“报告精确披露”“官方代码事实”“工程推断”和“未披露”。
+需要判断训练参数或终止语义时，应先查矩阵，再回到原始 PDF / 代码位置；
+不要从本文的阅读重点反推外部团队使用了某个未公开算法或默认参数。
+
+## 2.3 在线专项论文、模型卡和代码
+
+以下来源本轮没有全部镜像成 PDF，但已经按统一字段登记进训练配方证据矩阵。
+它们优先使用论文、官方模型卡和官方仓库，不使用第三方文章作为训练事实的
+唯一依据。
+
+| 来源 | 官方入口 | 主要用途 |
+| --- | --- | --- |
+| SA-SWE / SkyRL-Agent | `https://arxiv.org/abs/2511.16108`、`https://github.com/NovaSky-AI/SkyRL` | Qwen3-32B、R2E-Gym、`n=8`、32K / 50 turns、LOO，以及“horizon 保留组 reward / advantage、屏蔽自身梯度”的主要成功配方锚点。 |
+| DeepSWE | `https://huggingface.co/agentica-org/DeepSWE-Preview` | direct RL、R2E-Gym、Compact Filtering、二元 verifier reward 和 20 分钟 generation timeout 参考；训练代码公开不完整。 |
+| R2E-Gym | `https://arxiv.org/abs/2504.07164`、`https://github.com/R2E-Gym/R2E-Gym` | executable SWE environment、RFT/SFT 轨迹生产、任务和环境数据源；不是在线 GRPO 配方。 |
+| SWE-Gym | `https://arxiv.org/abs/2412.21139` | 2438 个真实 SWE 任务、rejection-sampling fine-tuning 与有限自产数据实验。 |
+| Scale-SWE | `https://arxiv.org/abs/2602.09892` | Qwen3-30B-A3B 的大规模 coding SFT、长 context 与 teacher trajectory 证据；不是 RL。 |
+| SETA | `https://arxiv.org/abs/2607.10891`、`https://github.com/camel-ai/seta` | terminal GRPO、部分测试 reward、异步/staleness 和超时配置；当前仓库 main 与论文组语义存在冲突，需按版本核验。 |
+| Endless Terminals | `https://arxiv.org/abs/2601.16443`、`https://github.com/kanishkg/endless-terminals` | shell-only terminal PPO + critic 的可执行对照；环境和任务短于真实 Claude Code SWE。 |
+| AgentRL | `https://arxiv.org/abs/2510.04206`、`https://github.com/THUDM/AgentRL` | 多任务 fully async、ready queue、group-aware buffer、权重传输与跨策略数据参考。 |
+| OpenClaw-RL SWE-RL | `https://arxiv.org/abs/2603.10165`、`https://github.com/Gen-Verse/OpenClaw-RL/tree/main/swe-rl` | slime + Mini-SWE-Agent + 远程容器的最新工程接线；尚无足够公开结果证明其为成功 SWE 配方。 |
+| DAPO / Dr.GRPO / RLOO | `https://arxiv.org/abs/2503.14476`、`https://arxiv.org/abs/2503.20783`、`https://arxiv.org/abs/2402.14740` | overlong shaping、固定 token denominator、LOO 的同策略 i.i.d. 前提；用于准确命名当前算法。 |
+| SWE-rebench V2 | `https://arxiv.org/abs/2602.23866` | 32K+ 多语言 executable tasks 与更大候选集的环境生产参考，归数据流水线，不是首训 trainer 配方。 |
+| Long-Horizon-Terminal-Bench | `https://arxiv.org/abs/2607.08964` | 分钟到小时级 terminal 任务、细粒度 partial credit 与真实 wall-clock / token 分布参考，适合后续长程评测和预算校准。 |
+
+## 2.4 ROLL 生态辅助网页和模型卡
 
 下面这些资料不是本地 PDF 或代码仓库，但应该和 R10-R12 一起阅读：
 
@@ -95,6 +133,9 @@ R9 Composer 2
 R10 Let It Flow
 R11 RollArt
 R12 ROLL framework
+R13 Kimi K3
+R14 CompactionRL
+R15 SAO
 reference/prime-rl/
 ```
 
@@ -118,6 +159,7 @@ R4 MiniMax-M2
 R6a DeepSeek-V3.2
 R9 Composer 2
 R10 Let It Flow
+R13 Kimi K3
 reference/ROCK/
 reference/terminal-bench-pro/
 ```
@@ -147,7 +189,9 @@ R2 Nemotron 3 Ultra
 R6a DeepSeek-V3.2
 R6b DeepSeek-V4
 R10 Let It Flow
+R13 Kimi K3
 reference/ROCK/
+reference/AgentEnv/
 ```
 
 关注问题：
@@ -167,6 +211,8 @@ reference/ROCK/
 R2 Nemotron 3 Ultra
 R4 MiniMax-M2
 R8 MiniMax-M1
+R14 CompactionRL
+R15 SAO
 ```
 
 关注问题：
@@ -192,6 +238,7 @@ docs/agentic_RL/training_design/warm_start_offline_data_filtering_design.md
 R7a Kimi K2
 R7b Kimi K2.5
 R8 MiniMax-M1
+R13 Kimi K3
 ```
 
 关注问题：
@@ -214,7 +261,11 @@ R5 GLM-5
 R5b GLM-5.2
 R11 RollArt
 R12 ROLL framework
+R13 Kimi K3
+R14 CompactionRL
+R15 SAO
 reference/prime-rl/
+reference/AgentEnv/
 本次粘贴的 LLM serving、低精度、MTP 和长上下文基础讲义
 ```
 
@@ -290,6 +341,33 @@ reference/terminal-bench-pro/
 
 ```text
 docs/harness_improve/external_paper_references/roll_ecosystem_reference_intake_analysis.md
+```
+
+### 3.9 训练配方、终止语义和算法选择专项路线
+
+优先读：
+
+```text
+agentic_rl_training_recipe_evidence_matrix.md
+R2 Nemotron 3 Ultra
+R5 GLM-5
+R5b GLM-5.2
+R9 Composer 2
+R11 RollArt
+R13 Kimi K3
+R14 CompactionRL
+R15 SAO
+docs/agentic_RL/training_design/repoharness_sao_dis_grpo_ppo_analysis.md
+```
+
+关注问题：
+
+```text
+1. context / turn / token / wall-clock / grading / staleness budget 是否被正确拆开？
+2. 一条轨迹是否进入同题组统计、自身是否产生梯度、artifact 是否保留，是否为三个独立决定？
+3. fixed-n、冗余派发、整组动态替换、partial resume、single-rollout PPO 分别解决什么问题？
+4. 哪些数值来自成功论文配方，哪些只是框架默认、示例脚本或评测配置？
+5. 当前 Qwen3-Coder-30B-A3B + Claude Code + slime 组合有哪些直接证据，哪些仍需 RH2 自己验证？
 ```
 
 ## 4. 当前主设计文档中的吸收方式

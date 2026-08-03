@@ -8,6 +8,14 @@ ROLL / ROCK / iFlow CLI / Terminal-Bench-Pro 这一组完整 agentic RL 系统�
 到底补充了什么？哪些内容应该进入参考池？哪些内容已有参考已经足够？
 ```
 
+> **实现级补充（2026-08-03）**：本文的高层职责划分仍成立，但不应把
+> RollArt 论文协议等同于当前公开 ROLL 已完整实现，也不应把 ROME 的 SFT
+> error masking 外推为在线 RL 的 timeout 语义。当前 slime stock 不能正确
+> 接受隐式可变 `n` 的残组，fully-async 路径也没有 RH2 所需的完整
+> staleness admission、durable failure ledger 和 batch lease / ACK。精确训练
+> 配方、固定组、失败与版本证据见
+> `agentic_rl_training_recipe_evidence_matrix.md` 第 6、8 节。
+
 ## 1. 总结结论
 
 ROLL 生态应该加入 RepoHarness 的外部参考池，而且值得作为 P0 级系统参考继续跟踪，但它不需要推翻当前 `repo_harness_repositioning_after_polar.md` 的主方向。
@@ -87,7 +95,7 @@ P2: IPA semantic interaction chunk credit assignment, 留给后续训练算法�
 
 ## 3. 对既有参考仓库 freshness 的非破坏性检查
 
-> **勘误（2026-07）**：本节表格中 `reference/verifiers/` 一行的原结论不成立。后续核实发现该工作树的 `git log -1` 实际就是远端最新 `97be43bf`（工作树干净，仅 AGENTS.md / CLAUDE.md 为本地导览修改），并非"落后 236 个 commit / 停在 a01ce52f"。verifiers v1 当前源码已包含 Trace 消息图、interception、EnvServer 等新版结构（旧版 `runtime.py` / `sandbox.py` / `user.py` 等文件已删除），其根部 AGENTS.md 描述的是旧版结构、已过时，阅读应以 `reference/verifiers/CLAUDE.md` 和 `verifiers/v1/ARCHITECTURE.md` 为准。`reference/slime/` 一行已在本轮刷新到 `origin/main` 并更新导览。其余各行的 freshness 结论未逐一复核，实现级设计前仍建议单独 audit。详见 `docs/harness_improve/repo_harness_design_doc2_verifiers_based.md`。
+> **勘误（2026-07，2026-08-03 再核）**：本节表格中 `reference/verifiers/` 原先“落后 236 个 commit / 停在 `a01ce52f`”的结论来自错误工作树读数，不成立。该仓库后来已更新；本次再核时本地 `main` 与缓存的 `origin/main` 同为 `5885ab9c`，同时保留本地注释和中文导览修改。因为本次没有重新 fetch，这只证明本地与缓存远端引用一致，不能声称仍是 GitHub 最新。verifiers v1 当前源码已包含 Trace 消息图、interception、EnvServer 等新版结构，阅读应以 `reference/verifiers/CLAUDE.md` 和 `verifiers/v1/ARCHITECTURE.md` 为准。`reference/slime/` 一行曾在 2026-07 刷新并更新导览；其余 freshness 结论是历史快照，实现级设计前仍需单独 audit。详见 `docs/harness_improve/repo_harness_design_doc2_verifiers_based.md`。
 
 用户提到 Prime 系列可能后续需要检查是否更新。本轮对既有参考仓库只做了 `git fetch --all --prune`，没有 `pull`、没有切分支、没有覆盖本地导览文件。
 
@@ -95,7 +103,7 @@ P2: IPA semantic interaction chunk credit assignment, 留给后续训练算法�
 
 | 仓库 | 当前状态 | 当前本地 commit | 远端最新 commit | 处理建议 |
 | --- | --- | --- | --- | --- |
-| `reference/verifiers/` | `main` 落后 `origin/main` 236 个 commit；`AGENTS.md`、`CLAUDE.md` 有本地修改。 | `a01ce52f 2026-06-07 feat(v1/sandbox): canonical /vf/model bridge...` | `97be43bf 2026-06-28 fix: make uv-script prep hermetic...` | 需要单独 freshness audit。不能直接 pull，否则会和本地导览文件冲突。 |
+| `reference/verifiers/` | **历史勘误**：原“落后 236 个 commit”来自错误工作树读数。后续已更新；2026-08-03 本地 `main` 与当时缓存的 `origin/main` 同为 `5885ab9c`，但存在本地注释和中文导览修改。 | `5885ab9c 2026-07-03 feat: pluggable config-level judges...` | `5885ab9c`（本次未重新 fetch，不能据此声称仍是 GitHub 最新） | 阅读以 v1 当前源码、`CLAUDE.md` 和 `verifiers/v1/ARCHITECTURE.md` 为准；升级前另做非破坏性 fetch 与差异审计。 |
 | `reference/research-environments/` | `main` 落后 67 个 commit；`AGENTS.md`、`CLAUDE.md` 有本地修改。 | `4c08260f0 2026-06-04 Restrict opencode verifiers version` | `bae0ffe5a 2026-06-28 fix: parse scaleswe score...` | 需要单独 freshness audit。 |
 | `reference/renderers/` | `main` 落后 12 个 commit；`AGENTS.md`、`CLAUDE.md` 是未跟踪文件。 | `596c15f 2026-06-04 feat(nemotron3)...` | `a5efbb9 2026-06-26 feat(thinking)...` | 需要单独 freshness audit，尤其是 thinking retention / bridge 行为可能已变。 |
 | `reference/ProRL-Agent-Server/` | `stable` 落后 2 个 commit；`AGENTS.md`、`CLAUDE.md` 是未跟踪文件。 | `8bc67cc3 2026-05-31 vLLM support...` | `f0e8343a 2026-06-25 Harbor evaluator and TMAX example` | 需要后续检查 stable 最新代码对 Harbor / evaluator 的影响。 |

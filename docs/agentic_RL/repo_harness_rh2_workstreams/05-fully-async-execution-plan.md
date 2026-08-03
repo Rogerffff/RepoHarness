@@ -116,33 +116,14 @@
 >    durable manifest（snapshot/ack 事务接口已在，接 per-execution
 >    manifest 与双向引用）。
 >
-> **FA-2A 附带定义项（状态：`proposal_pending_FA2A_owner_approval`——
-> codex 决策包审查指出下列 D1/D4 语义此前被提前写成已采纳事实，实际
-> 尚未经用户拍板；以 `fa/fa2a_decision_package.md` v2 的拍板结果为准，
-> 批准后本块转正。已落地的代码事实除外：require↔非零 exit 启动断言
-> 解耦是已提交代码，不在待批范围）**：
->
-> - **结构化终止结果枚举**（轮次 14 设计规则 2）：`completed /
->   episode_time_limit / owner_cancelled / policy_update_abort /
->   harness_crash / api_failure / sandbox_failure`。事实依据：slime episode
->   时间预算耗尽返回 `EXIT_TIME_BUDGET_EXCEEDED = -1`（sandbox.py:60），
->   rh2 Docker RPC 超时返回 124——"所有非零 exit 一律拒绝"会确定性剔除
->   长任务（长度偏置）。`episode_time_limit` 在 capture 完整闭合、无半截
->   响应、workspace 可评分时按**截断但有效**的 rollout 评分，不自动判
->   infra failure。require_real_weight_versions 与非零 exit 拒绝的启动
->   断言硬耦合已解除（轮次 14 代码已落，推翻轮次 9）；FA-5 负责实测映射，
->   不承担首次定义语义。
-> - **按 fault domain 分类的熔断**（轮次 14 设计规则 3，实现挂 FA-2B 与
->   assembler 同批）：contract_violation/审计持久化失败/身份矛盾 → 立即
->   run_halt；模型服务/sandbox/capture 基建故障 → 组件级暂停或 run_halt
->   （**不隔离任务**）；环境包确定性损坏 → task_quarantine；模型真实失败
->   reward=0 → 正常样本不进熔断；安全策略触发 → 拒绝 execution/group 但
->   默认不隔离任务；staleness 偏高 → 反压/暂停权重更新协调，不隔离任务。
->   载体：现有 `RolloutAttemptOutcome` + 纯函数 `RecoveryPolicy` + 最终写
->   `PromptGroupAdmissionReport`——**不新增报告层**。
-> - **正式训练闸门补充**：`rh2_formal_training_allowed` 的前置检查显式
->   包含"overlap fail-fast 挡板已由 request 级归属替代"与"分类拒绝率
->   熔断在位"两条——临时挡板不解除不得开正式训练（防训练分布被隐性裁剪）。
+> **FA-2A 附带定义项（终止分类/超时处置/熔断映射/恢复语义）**：正文
+> **只在** `fa/fa2a_decision_package.md`（v3，status 见其头部）——本计划
+> 不再复制草案内容（codex 决策包二审：待批标签消除不了事实分叉，重复
+> 正文必然漂移）。用户拍板后按决策包回写本节转正。已落地代码事实不在
+> 待批范围（require↔非零 exit 启动断言解耦已提交）。
+> 既定闸门补充维持：`rh2_formal_training_allowed` 前置含"overlap 挡板
+> 已由 request 级归属替代""分类拒绝率熔断在位"，v3 起再加"termination
+> policy profile / 阈值 / 组语义已预注册"。
 
 1. 每条执行完成评分/投影/Gate 后才提交 `RolloutAttemptOutcome` 给 assembler；`PromptGroupState` 为进程内轻量状态机（定期 checkpoint，不注册公共 schema）；组终结时唯一落盘 `PromptGroupAdmissionReport`（admitted/rejected/quarantined + 讨论稿 §5.3 字段）。
 2. 状态机照讨论稿 §9（NEW→RUNNING→PRESENT/LOCAL_RETRY/MISSING/PERMANENT_REJECTED；组 OPEN→READY/EXPIRED/QUARANTINED；READY→BatchAdmission）。`WAITING_FOR_BATCH_ALIGNMENT` 不倒写 eligibility、不重跑 harness。

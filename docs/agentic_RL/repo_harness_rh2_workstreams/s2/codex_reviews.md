@@ -2931,3 +2931,497 @@ termination_kind
    proposal_pending_FA2A_owner_approval。
 
 
+
+
+---
+
+## FA-2A 决策包二审 + 计时调查 + 配方证据矩阵（2026-08-03：4 缺口全采纳 → 决策包 v3，D1 拆两阶段）
+
+> 原文全文转录（tmp/决策包审查2.md，三部分：v2 复审 4 缺口 / 链路计时调查（P3 分阶段分位数、四时钟错位、可救未存清单）/ 外部配方证据与 D1 两阶段建议）。处置：全部 accepted。决策包 v3：D1 拆 D1a（架构契约现在批：三族终止分类含 max_turns、双时钟、Runtime 级静止屏障、三正交 disposition、命名 profile、audit_only 默认）+ D1b（pre-RL 诊断后批 profile 与数值，成本 7~18 GPU 时注记）；D2 补单一 checkpoint owner/ACK=handoff 如实/recovery_epoch 胜出规则/generation 方向修正/manifest 绑定；D3 恢复六要素自包含格式；D4 穷举映射 + 安全三档（边界击穿 = run_halt + artifact quarantine）+ Monitor 重启从 durable 重建否则保持 open。05 计划改纯引用消除事实分叉。关键事实独立复核：trajectory.jsonl 从未保存、meta_info 计时只存 digest、slime 429 turn cap 存在。
+
+**结论**
+v2 已修正上一轮主要问题，四项继续推荐 **A**，不需要推翻方向。但我暂不建议现在正式拍板：仍有 **4 个会影响训练语义或安全边界的缺口**。它们不需要新增第五项决策，补入 D1、D2、D4 后形成 v3 即可。
+
+**拍板前必修**
+1. **D1 尚未区分“策略耗尽预算”和“基础设施耗掉墙钟”**
+
+当前 slime 用墙钟轮询超时；proxy 等待权重更新、推理阻塞和网络延迟也会消耗 deadline。若这些情况最终被归为 `episode_time_limit` 并给予 reward=0，就会把基础设施故障错误地训练成策略失败。
+
+D1 应明确：
+
+```text
+task_budget_exhausted / max_turns_exhausted
+  -> 可作为截断有效样本
+
+inference_timeout / sandbox_rpc_timeout / update_wait_timeout
+  -> 基础设施缺员，reward=None
+```
+
+还应定义预算时钟：至少排除明确的权重更新窗口和系统反压时间，并同时记录 `wall_clock_seconds` 与 `chargeable_execution_seconds`。
+
+另外，slime 的 turn cap 会返回 429，但当前终止枚举没有 `max_turns_exhausted`。它和时间预算一样会造成长度偏置，应在本次一起定案。
+
+2. **D1 的“终止进程组”仍不足以证明 quiescence**
+
+Claude Code 或工具命令可以启动新的 session/background process，单纯 kill 原 process group 不能证明 workspace 已停止变化。
+
+建议改成 Runtime 级静止屏障：
+
+```text
+撤销 adapter session，拒绝新模型请求
+-> 终止 sandbox execution scope（容器/cgroup/进程命名空间）
+-> 等待所有模型调用与文件写入 owner 确认归零
+-> 冻结不可变 workspace snapshot
+-> 只评分冻结副本
+```
+
+digest 连续不变只能作为探针，不能作为唯一静止证明。Runtime 无法确认时必须缺员。
+
+3. **D2 仍缺 checkpoint owner、ACK 语义与 replay 胜出规则**
+
+“pending 先 durable，再允许 cursor durable”是正确的，但必须由一个 owner 同时控制 reservation 和 slime cursor 发布，否则另一个保存路径仍可越过顺序。
+
+还需补清：
+
+- `ACKED` 是“训练后端已接受 submission”，不是“optimizer 已执行”。
+- 使用 `recovery_epoch/fencing_token`，只有当前 physical attempt 能提交 canonical outcome；旧 attempt 的迟到结果只能进审计。
+- `pending_generation > cursor_generation` 是安全的可重放状态；反向才是不可恢复矛盾。
+- manifest 绑定 dataset revision、task/bundle digest、cursor/epoch、sampling 配置，防止同一 cursor 在漂移数据上指向另一任务。
+- 若 slime 没有 durable submission ACK，应如实写成“handoff acknowledged”，不能暗示 batch 不会丢失。
+
+4. **D4 的故障映射仍不完整，且安全事件分档还太粗**
+
+当前 `RuntimeFailureCategory` 还包括 `worker_crash`、`grading_infra_failure`、`token_alignment_failure`、`cleanup_failure` 等，但 v2 没有逐项规定动作。应建立穷举映射，并规定未知类别默认 `run_halt`，避免编码时临时决定。
+
+安全事件也应进一步拆开：
+
+```text
+attempted_blocked，无泄漏/副作用
+  -> present，继续评分；只做安全指标
+
+task-local executed，例如 test tampering
+  -> permanent_rejection，整组不训练
+
+hidden verifier/secret 泄漏、sandbox escape、拦截器被绕过
+  -> security boundary breach，立即 run_halt + artifact quarantine
+```
+
+否则 hidden verifier 已泄漏时系统仍可能只是丢一组数据后继续运行。
+
+`FaultDomainMonitor` 还应说明：它由 RolloutManager state owner 持有；重启后从 durable audit/outcome 重建，无法重建时保持 circuit open，而不是清零计数继续训练。
+
+**一般修正**
+- [05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:91) 仍把旧 D2 写成“采纳”；[同一文件](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:125) 还残留 `policy_update_abort`、旧安全映射和无 quiescence 的 D1。待批准标签没有消除事实分叉。建议暂时只引用决策包，不重复草案正文。
+- [D3](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:137) 被压缩成“v1 内容不变”，D4 也没有列出替代方案、长期代价和可逆性，不符合协作协议的六项格式。应恢复成自包含决策。
+- K3 证据应标为“方向旁证”。K3 对未完成 rollout 的做法是暂停后续跑，并没有证明 SWE 超时轨迹应直接冻结评分；Reasoning Effort 的 token-budget reward 也不是同一实验条件。
+
+**可以保持不变**
+- D1：任务契约预算耗尽可保留为真实失败信号。
+- D2：双 checkpoint、四层身份、同节点首版、明确不承诺 optimizer exactly-once。
+- D3：选择单 owner 消息传递。
+- D4：保留 `attempted_blocked`、区分 lineage/runtime 冲突、引入 `FaultDomainMonitor`。
+
+建议让 Claude 按上述内容出 **v3**，然后你可以直接拍 `D1=A（带预算时钟与 Runtime quiescence 修正）/ D2=A / D3=A / D4=A（带穷举映射与安全边界分档）`。本轮只做审查，没有修改文件。
+
+
+
+
+
+关于链路耗时相关调查：
+```mermaid
+flowchart TD
+    R["作业冷启动，仅一次<br/>Ray / Megatron / SGLang / Adapter<br/>当前没有统一计时"]:::missing
+    Q["等待 worker / sandbox 名额<br/>当前只有反压次数，没有等待秒数"]:::missing
+
+    M["Sandbox 物化<br/>0 → 5.40s<br/>已记录：5.40s"]:::measured
+
+    subgraph H["harness_run_seconds：5.40 → 605.32s，共 599.92s，目前只有一个总数"]
+        H1["上传、安装 Claude Code<br/>版本校验<br/>未单独计时"]:::bucket
+        H2["创建 agent 用户<br/>chown / 配置 / launcher<br/>未单独计时"]:::bucket
+        H3["启动 Claude Code 进程<br/>600 秒 episode budget 从这里开始"]:::bucket
+
+        subgraph L["Claude Code 循环执行多轮"]
+            A["Adapter 收到模型请求<br/>解析 + renderer + tokenize<br/>未单独计时"]:::bucket
+            W["等待 ACTIVE / 限流名额<br/>未记录等待秒数"]:::bucket
+            S["SGLang 请求<br/>queue / prefill / decode<br/>服务器有数据，但 RH2 未保存"]:::available
+            F["Adapter 解析输出<br/>SSE flush + capture commit<br/>未单独计时"]:::bucket
+            P["Claude Code 内部规划与调度<br/>黑盒，只能作为残差"]:::unknown
+            T["Read / Edit / Bash / Tests<br/>事件可能取得，但当前未保存工具计时"]:::available
+
+            A --> W --> S --> F --> P --> T
+            T -. "下一轮模型请求" .-> A
+        end
+
+        H1 --> H2 --> H3 --> A
+    end
+
+    C["Capture + Backfill<br/>605.32 → 605.81s<br/>已记录：0.49s"]:::measured
+    G["评分<br/>605.81 → 615.11s<br/>已记录：9.30s<br/>其中 test 5.06s"]:::measured
+    P2["Projection<br/>615.11 → 616.59s<br/>已记录：1.48s"]:::measured
+    E["Eligibility Gate<br/>已记录：0.003s"]:::measured
+    D["Delivery<br/>已记录：1.47s"]:::measured
+    X["Cleanup<br/>已记录：0.45s<br/>总计 618.52s"]:::measured
+    B["PromptGroup / Ready Queue / Batch Admission<br/>当前缺少完整排队与驻留时间"]:::missing
+    TR["Trainer<br/>train_wait / preprocess / loss / optimizer<br/>已有 slime 计时"]:::measured
+
+    R -.-> Q --> M --> H --> C --> G --> P2 --> E --> D --> X --> B --> TR
+
+    classDef measured fill:#d8f3dc,stroke:#2d6a4f,color:#102a1b
+    classDef bucket fill:#ffe5a5,stroke:#b7791f,color:#3d2a00
+    classDef available fill:#dbeafe,stroke:#2563eb,color:#102a43
+    classDef missing fill:#e5e7eb,stroke:#6b7280,color:#1f2937
+    classDef unknown fill:#f3e8ff,stroke:#7e22ce,color:#301044
+```
+
+**核心结论**
+
+当前计时只能回答“时间主要耗在 `harness_run_seconds` 大桶里”，还不能回答“Claude Code 真正执行策略用了多少、基础设施等待用了多少”。
+
+P3 的 32 条真实 rollout 中：
+
+| 阶段 | 最小 / 中位 / 最大 |
+|---|---:|
+| 整条 rollout 墙钟 | 302 / 633 / 1116 秒 |
+| sandbox 物化 | 1.8 / 5.4 / 8.6 秒 |
+| `harness_run_seconds` | 280 / 613 / 1080 秒 |
+| capture + backfill | 0.37 / 0.50 / 6.69 秒 |
+| grading | 4.1 / 13.1 / 27.3 秒 |
+| projection | 1.2 / 1.6 / 6.0 秒 |
+| gate | 0.002 / 0.003 / 0.058 秒 |
+| delivery | 0.48 / 1.49 / 3.91 秒 |
+| cleanup | 0.37 / 0.55 / 6.73 秒 |
+
+所以约 97% 的中位墙钟落在 `harness_run_seconds`，但这个字段混合了多种完全不同的工作。
+
+**完整时间链路**
+
+```text
+作业级冷启动
+  Ray / Megatron / SGLang / tokenizer / renderer / adapter / 镜像预拉取
+    ↓
+任务排队、worker slot 等待
+    ↓
+rollout sandbox 物化
+  image inspect → docker run → digest/HEAD 校验
+  → 未跟踪文件快照 → public bundle / BASH_ENV 写入
+    ↓
+harness 准备
+  上传并安装 Claude Code → 版本检查
+  → 创建 agent 用户 → chown -R → 写配置与 launcher
+    ↓
+Claude Code episode
+  CLI 启动与初始化
+  → 请求 adapter
+     → 协调器 ACTIVE 等待
+     → model-call 限流等待
+     → renderer/tokenize
+     → SGLang queue / prefill / decode
+     → adapter 解析、SSE flush、capture commit
+  → Claude Code 内部调度
+  → Bash/Edit/Read/测试等工具执行
+  → 下一轮模型调用
+    ↓
+session drain → trajectory/backfill
+    ↓
+评分队列 → clean grading container → patch/test
+    ↓
+projection → eligibility gate
+    ↓
+PromptGroup ready queue → batch admission → converter
+    ↓
+trainer preprocess → logprob/loss → optimizer → 权重同步
+```
+
+**现在最关键的时钟错位**
+
+1. `RolloutAudit` 从 `custom_generate` 开始，记录粗粒度全过程，见 [generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1174)。
+
+2. `harness_run_seconds` 在调用 `ClaudeCodeDriver.run()` 前开始，因此包含 Claude Code 安装、版本检查、用户创建和 `chown`，[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1481)、[glue.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:155)。
+
+3. slime 的 `time_budget_sec` 直到 Claude Code detached 进程已经启动后才开始计时，[sandbox.py](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/sandbox.py:63)。它不包含安装、`chown` 和大部分启动准备。
+
+4. timeout 后 slime 只是返回 `-1`，并没有杀掉 `setsid` 启动的进程。这意味着“预算耗尽”不等于“workspace 已停止变化”。
+
+5. RH2 proxy 的 episode deadline 当前从**第一次模型请求**才开始，[capture_wire.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/capture_wire.py:190)。它比 Claude Code 进程预算晚启动，二者不是同一个 deadline。
+
+P3 中 5 条 `exit=-1` 的轨迹，其 `harness_run_seconds` 比 600 秒预算多出 181～480 秒。这直接证明现有大桶不能拿来判断“策略运行超时”。
+
+**哪些已经能记录**
+
+- sandbox、harness、capture、grading、projection、gate、cleanup 的粗粒度墙钟。
+- grading 已经细分到镜像拉取、环境重置、准备、测试、队列等待和峰值内存，[timing.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/timing.py:26)。
+- slime trainer 已有 `train_wait`、`data_preprocess`、logprob、`actor_train`、`train`、`update_weights` 等计时。
+- P3 已测得一步 1387 秒，其中 trainer 等 rollout 1135 秒、训练约 252 秒、权重同步约 11.45 秒，[preflight_report.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/preflight/preflight_report.md:40)。
+
+**能记录，但当前没有保存**
+
+- sandbox 物化每个子步骤。
+- Claude Code 上传、安装、版本检查、`chown`、配置和真实进程运行时间。
+- 每次模型调用的 adapter 排队、ACTIVE 等待、限流等待、render、HTTP、解析、SSE flush、capture commit。
+- SGLang 已返回 `queue_time`、`e2e_latency`、decode throughput，以及 PD prefill/decode 子阶段，[trace_utils.py](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/utils/trace_utils.py:18)。RH2 当前只保存 `raw_meta_info_digest`，把这些时间事实丢掉了。
+- Claude Code 已生成 `.harness/trajectory.jsonl`，但 RH2 在删除 rollout 容器前没有保存或解析它。
+- fully async worker 目前只有反压次数等计数，没有 task 排队、worker slot 等待、group ready queue 驻留和 trainer ack 时长。
+
+**无法可靠精确拆分的部分**
+
+- Claude Code 黑盒内部的规划、消息整理、调度和内部 bookkeeping。
+- continuous batching 下，某一请求“独占了多少 GPU 时间”。可以得到服务器报告的 queue/prefill/decode 延迟，但不能把共享 kernel 时间精确分摊。
+- 并行工具/subagent 的时间不能简单相加，否则会超过 episode 墙钟。
+- Bash 工具结束后遗留的后台子进程，不等于工具已经真正静止。
+- 不同进程的 monotonic timestamp 不能直接相减；跨进程只能使用关联 ID，或各自在 owner 进程记录 duration。
+- 已经结束且未保存 `trajectory.jsonl` 的历史 rollout，无法事后恢复准确工具时间。
+
+`--include-hook-events` 也不会自动给出所有工具的准确耗时。后续可以通过 `tool_use_id` 关联 `PreToolUse/PostToolUse`、stream-json timestamp 和 adapter turn，但必须保存经过脱敏的事件账本。
+
+**建议的计时模型**
+
+下一步应同时保留五层记录：
+
+- `RunTiming`：模型、Ray、SGLang、adapter 和镜像冷启动。
+- `ExecutionTiming`：排队、物化、harness 准备、真实 agent 进程、drain、评分与清理。
+- `ModelCallTiming`：协调等待、限流等待、render、SGLang queue/prefill/decode、SSE 和 capture。
+- `ToolTiming`：`tool_use_id`、工具名、开始/结束、父 subagent、是否后台化。
+- `GroupBatchTiming`：member ready、group ready、ready queue、batch admission、trainer handoff/ack。
+
+每个时间还应带 `measurement_source`：`owner_measured`、`server_reported`、`correlated` 或 `residual_estimate`。
+
+因此现在不应该直接把超时归为“策略耗尽预算”或“基础设施耗尽墙钟”。先补齐上述分段，尤其是 `harness_prepare_seconds`、`agent_process_wall_seconds`、逐模型调用时间和工具时间，再决定 D1 的超时与截断语义。此次只做了调查，没有修改文件。
+
+
+codex调查了现有技术报告以及工作，生成了相关文档：
+已完成这轮扩展调查，并将结果固化到项目资料库。
+
+**主要产物**
+
+- 新增统一入口：[agentic_rl_training_recipe_evidence_matrix.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/agentic_rl_training_recipe_evidence_matrix.md)
+- 更新报告与代码索引：[README.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/README.md)
+- 更新报告哈希账本：[manifest.json](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/manifest.json)
+- 修正 K3 / AgentENV 分析：[k3_agentenv_relevance_notes.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/k3_agentenv_relevance_notes.md)
+- 修正 ROLL 生态历史状态：[roll_ecosystem_reference_intake_analysis.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/roll_ecosystem_reference_intake_analysis.md)
+
+调查覆盖 19 份本地报告，以及 SA-SWE、DeepSWE、R2E-Gym、SWE-Gym、Scale-SWE、SETA、Endless Terminals、AgentRL、OpenClaw-RL 等近期公开工作，并结合 ROLL、slime、AgentENV 等代码核验。
+
+**关键结论**
+
+1. 没有任何公开工作给出一套可以直接照抄的“Qwen3-Coder-30B-A3B + Claude Code 黑盒 harness + SWE-Gym + token-faithful fully async GRPO/DIS”完整配方。RH2 是有证据支持的组合设计，不是某篇论文的复现。
+
+2. 超时语义必须拆成三个正交决定：
+
+   ```text
+   group_membership
+   reward_disposition
+   gradient_disposition
+   ```
+
+   [SA-SWE](https://arxiv.org/abs/2511.16108)明确支持 horizon 轨迹保留 reward/advantage、只屏蔽自身梯度；DeepSWE 只公开了 loss masking，是否保留组统计仍是未知，文档已避免外推。
+
+3. 公开实现普遍保持固定 `n/K`，没有支持“缺一条后静默按 `n-1` 继续 GRPO”的可靠依据。但这不等于所有超限结果都是真缺员：可信的策略 horizon、模型真实失败、基础设施丢失需要分开处理。
+
+4. [K3](https://arxiv.org/abs/2607.24653)采用固定 `K` 的暂停与跨迭代恢复，直到成员完成后才提交组；它不是 wall-clock 截断后立即评分。K3 更支持未来 `true_resume`，不能替当前 episode timeout 决策直接背书。
+
+5. [AgentENV](https://github.com/kvcache-ai/AgentENV)可作为 pause/resume、snapshot、fork 的 Runtime 候选，但 fork 只是 grader-side 隔离组件，不自动等于 clean grading；hidden verifier、可信快照、digest/reset 和权限隔离仍归 RepoHarness。
+
+6. [CompactionRL](https://arxiv.org/abs/2607.05378)与 [SAO](https://arxiv.org/abs/2607.07508)适合作为未来算法演进参考，不应在首训前和当前 GRPO + DIS 一次性混入。
+
+独立审查没有发现 P0，发现的 4 项 P1 和 3 项 P2 已全部修正。`manifest.json` 合法，19 个报告路径、ID 和 SHA-256 全部验证通过；本轮没有修改 RH2 源码，也没有提交 git。
+
+
+
+codex 建议：
+**结论**
+
+你的思路基本正确：**不必现在拍死首训的 timeout 数值和训练处置策略，可以先完成链路、计时和可配置契约，再用 pre-RL 诊断定案。**
+
+但有一个结构性问题必须现在修正：当前决策包把 `episode_time_limit` 近似视为一种统一结果，并在“全部拒绝”和“截断后评分”之间二选一。外部证据表明这个问题拆得还不够细，建议先把 D1 改成“两阶段决策”。
+
+## 调查改变了什么
+
+### 1. 超时不是一种结果
+
+至少应区分：
+
+```text
+turn_limit
+context_limit
+generation_length_limit
+policy_token_budget
+hard_wall_timeout
+tool_timeout
+grading_timeout
+model_service_timeout
+sandbox_timeout
+```
+
+其中：
+
+- turn/context/token limit 是相对稳定的策略 horizon；
+- raw wall-clock 会受 GPU 排队、模型服务负载、容器启动和测试速度影响；
+- grader/container/model service 超时通常是基础设施事实；
+- 测试因为模型 patch 陷入死循环，则可能是模型真实失败。
+
+因此，当前单一的 `episode_time_limit` 太粗。
+
+### 2. “是否属于组”和“是否产生梯度”必须解耦
+
+[SA-SWE](https://arxiv.org/abs/2511.16108)明确采用：
+
+```text
+达到 context/turn horizon
+-> reward 和 advantage 仍参与同题统计
+-> 该 execution 自身 token 不产生梯度
+```
+
+这说明一条轨迹可以同时满足：
+
+```text
+group_membership = included
+reward_disposition = included
+gradient_disposition = masked
+```
+
+它不是缺员，固定 `n=8` 仍然完整。
+
+当前 FA-2 计划里“只有 eligibility 合格的完整成员才能组装”需要调整，否则会把 horizon member 错当成 missing member。
+
+### 3. 整组拒绝只适合“真正缺员”
+
+以下情况才应视为真正缺员：
+
+- 模型响应只生成一半；
+- capture/logprob/version 账目不完整；
+- workspace 无法静止；
+- grader、sandbox 或模型服务基础设施失败且重试耗尽；
+- 安全泄漏、身份矛盾或 artifact 污染；
+- staleness 超限到不能进入本次更新。
+
+这类成员不能静默按 `n-1` 计算，首版仍应整组不进入在线更新。
+
+但如果只是可信的 turn/context horizon，把它也当缺员并整组拒绝，会系统性偏向短任务和简单任务。假设每个成员只有 5% 缺失率，`n=8` 的完整组存活率也只有：
+
+```text
+0.95^8 = 66.34%
+```
+
+因此错误分类会造成很大的数据浪费和训练分布偏移。
+
+### 4. raw wall-clock 暂时不应直接成为策略目标
+
+不同公开系统对 timeout 的处理明显冲突：
+
+- SA-SWE：保留组统计，屏蔽自身梯度；
+- Nemotron：多类未完成轨迹屏蔽 loss；
+- Composer 2：没有观察到 overlong masking 的收益；
+- K3：使用 token budget 惩罚，并暂停恢复未完成轨迹；
+- Endless Terminals：wall timeout 和 turn exhaustion 甚至采用不同评分流程。
+
+所以没有统一“最佳做法”。
+
+我的建议是首训优先使用 turn、context、生成 token 作为可复现的策略 horizon；wall-clock 首先作为较宽的安全 watchdog，而不是直接 reward 信号。速度奖励以后单独消融。
+
+### 5. K3 不支持当前直接采用 true-resume
+
+[K3](https://arxiv.org/abs/2607.24653)支持固定 `K`、暂停慢轨迹、跨迭代恢复，直到组完整。这证明 `true_resume` 是长期可行方向，但依赖可恢复 sandbox、KV 和组状态，当前不应阻塞 FA 首版。
+
+## 建议如何修改 D1
+
+不要现在选择原来的 A 或 B，而是改成：
+
+### D1a：现在拍板架构契约
+
+现在确定：
+
+```text
+RolloutAttemptOutcome
+  - termination_kind
+  - termination_phase
+  - quiescence_status
+  - frozen_snapshot_ref
+  - capture_completeness
+
+PromptGroupAdmissionReport
+  - group_membership
+  - reward_disposition
+  - gradient_disposition
+  - termination_policy_profile
+```
+
+不需要再新增四层报告对象。环境层记录事实，训练策略通过一个纯映射产生三种 disposition，最终写进现有 admission report 即可。
+
+同时保留硬规则：
+
+```text
+终止进程组
+-> 确认无写入、无新模型请求
+-> 冻结 workspace
+-> 只评分冻结快照
+```
+
+无法完成静止序列时，不能因为配置开关而强行评分。
+
+### D1b：pre-RL 后拍板训练策略
+
+建议预留三个命名 profile，禁止任意布尔开关自由组合：
+
+```text
+strict_missing_v1
+  所有 timeout 都视为缺员
+
+scored_horizon_masked_v1
+  可评分的策略 horizon 保留组统计，自身梯度屏蔽
+
+true_resume_v1
+  暂停并恢复到完成，未来实现
+```
+
+FA 开发与诊断阶段使用 `audit_only`，正式训练必须显式选择 profile 并记录配置 digest，不允许依赖默认值。
+
+## Pre-RL 应收集什么
+
+建议跑 50～100 题、每题 `n=8`，记录原始时间区间而不是只记录派生总数：
+
+```text
+environment_materialize
+sandbox_start
+harness_install_and_start
+model_queue
+model_generation
+tool_execution
+sandbox_idle_while_model
+quiescence_and_snapshot
+grading_queue
+grading_prepare
+grading_tests
+projection_and_gate
+prompt_group_wait
+batch_admission_wait
+```
+
+还要记录：
+
+```text
+turn_count
+generated_tokens
+model_call_count
+termination_kind
+success/reward
+group_survival
+ready_queue_depth
+trainer_wait_ratio
+policy_version_lag
+```
+
+注意 fully async 中多个阶段会重叠，不能简单把各项 duration 相加；应保存 monotonic start/end timestamp 和 execution/request ID。
+
+诊断结束后再决定：
+
+- 32K / 50 turns 是否适合当前模型和题集；
+- wall watchdog 取成功轨迹 P90、P95 还是分难度桶；
+- horizon 是否采用 `scored_horizon_masked_v1`；
+- timeout 对完整组存活率和难度分布的影响；
+- reserve groups 和队列水位需要多少。
+
+**最终建议**
+
+FA-2A 的身份、capture、持久性、quiescence 和计时可以继续推进，不需要等待训练配方。需要先改的是契约表达能力，不能把所有 timeout 都压成同一个 eligibility 结果。
+
+正式训练处置与数值阈值延后到 pre-RL 诊断，这是合理且更稳妥的安排；但 `rh2_formal_training_allowed` 必须保持关闭，直到 profile、阈值和组语义完成预注册。详细外部证据已经集中在[训练配方证据矩阵](/Users/roger/Desktop/claude-code-verl-stage0h/docs/harness_improve/external_paper_references/agentic_rl_training_recipe_evidence_matrix.md)。
