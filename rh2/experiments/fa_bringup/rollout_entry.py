@@ -333,11 +333,11 @@ async def _bootstrap_via_glue(args: Any, data_buffer: Any) -> None:
     """
 
     try:
-        from s1_7a_bringup import glue  # noqa: PLC0415 —— 生产环境的既有启动面
+        from repoharness2.adapters.slime import bringup as glue  # noqa: PLC0415 —— F2-0 后的正式启动面
     except ImportError as exc:  # pragma: no cover - 生产环境必有
         raise FaEntryError(
             "glue_bootstrap_unavailable",
-            f"args.rh2_orchestrator 缺失且 s1_7a_bringup.glue 不可导入（{exc}）——"
+            f"args.rh2_orchestrator 缺失且 repoharness2.adapters.slime.bringup 不可导入（{exc}）——"
             "检查 PYTHONPATH 与启动顺序。",
         ) from exc
     await glue.ensure_fa_started(args)

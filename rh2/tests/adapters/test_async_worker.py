@@ -1306,7 +1306,7 @@ def test_snapshot_weight_versions_survives_concurrent_mutation():
     from pathlib import Path as _Path
 
     _sys.path.insert(0, str(_Path(__file__).resolve().parents[2] / "experiments"))
-    from s1_7a_bringup.capture_wire import CaptureRegistry
+    from repoharness2.adapters.slime.capture_wire import CaptureRegistry
 
     class _Hook:
         def on_generate_response(self, **kwargs):

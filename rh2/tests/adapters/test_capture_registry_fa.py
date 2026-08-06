@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
 
-from s1_7a_bringup.capture_wire import (  # noqa: E402
+from repoharness2.adapters.slime.capture_wire import (  # noqa: E402
     CapturePendingOverlapError,
     CaptureRegistry,
     PendingTurn,
@@ -290,7 +290,7 @@ def test_register_rejects_duplicate_active_sid():
     """codex 轮次 12：健康 SID 并发重复注册不得静默覆盖 hook/账目——
     临时守卫直接拒绝（FA-2 唯一身份根治）。"""
 
-    from s1_7a_bringup.capture_wire import DuplicateActiveSessionError
+    from repoharness2.adapters.slime.capture_wire import DuplicateActiveSessionError
 
     registry = CaptureRegistry()
     registry.register("sid_D12", FakeHook())
@@ -382,7 +382,7 @@ async def test_session_guard_middleware_rejects_unknown_and_poisoned():
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
 
-    from s1_7a_bringup.capture_wire import build_session_guard_middleware
+    from repoharness2.adapters.slime.capture_wire import build_session_guard_middleware
 
     registry = CaptureRegistry()
     registry.register("sid_OK", FakeHook())

@@ -13,8 +13,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
 
-from s1_7a_bringup.capture_wire import CaptureRegistry  # noqa: E402
-from s1_7a_bringup.glue import (  # noqa: E402
+from repoharness2.adapters.slime.capture_wire import CaptureRegistry  # noqa: E402
+from repoharness2.adapters.slime.bringup import (  # noqa: E402
     build_production_model_call_proxy,
     make_per_rollout_adapter,
     write_execution_audit_record,
