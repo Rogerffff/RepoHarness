@@ -4502,3 +4502,91 @@ src.ARTIFACT_DIR                               仍为原值
 - `s1_7a_bringup.glue.generate` 动态入口：成功解析到 src 函数。
 
 因此可以认定 **F2-0 源码迁移正确**。先完成上述文档收口，并把顺序调整为“身份先于带身份字段的计时”，随后再发 F2-0b Owner Brief 开工，不需要重新做一轮大范围设计审查。
+
+
+---
+
+## F2-1a 切片审查（2026-08-07：2 P0 + 2 P1 身份链缺陷，全采纳 + 补测试）
+
+> 原文全文转录（tmp/codexF2-1a.md）。处置：全部 accepted。P0-1 paid 登记改 fail-closed 原子（活跃会话/已 stage 冲突身份拒绝，不覆盖）；P0-2 attempt 命名空间从稳定 SID 改 paid（wire execution_scope=paid，boundary check 与 audit drain 同步按 paid 键；replay 后 model_call_attempt_id 不再碰撞；sid 只负责认证/路由/poison）；P1-3 两个 wait helper 透传 paid，失败记录不再写 None；P1-4 FA 入口 metadata fail-closed（非 dict 结构化失败）+ rh2_* 覆盖不 setdefault + failure_sink 带 paid。补测试 4 条。递延：physical_attempt_seq 重启从 1 + _attempt_seq 无界 → F2-4 checkpoint，训前闸门。测试 927→930。
+
+**结论**
+
+F2-0 审查收口没有新增阻塞，可以接受。
+
+F2-1a 暂时不能验收，也不建议立即进入 F2-0b。发现 2 个 P0 和 2 个 P1，都是本地可确定性复现的身份链问题，不需要 GPU，也不需要新的 T0 决策。
+
+**阻塞问题**
+
+1. **P0：后来的同 SID execution 能覆盖活跃 execution 的 paid**
+
+[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1469) 在 `open_session()` 检查重复 SID 之前写入映射，而 [capture_wire.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/capture_wire.py:184) 无条件覆盖已有值。
+
+最小探针结果：
+
+```text
+before: exec-A#p1-a
+overwrite: exec-B#p1-b
+later register: DuplicateActiveSessionError
+active session now points to: exec-B#p1-b
+```
+
+B 虽然最终被重复会话守卫拒绝，却已经把 A 后续模型调用的身份改成 B。
+
+修复应把 `hook + paid` 作为一次原子 session 注册，重复 SID 必须在任何状态修改前拒绝。物化失败也不能遗留 paid 映射。
+
+2. **P0：replay 后 `model_call_attempt_id` 会重复**
+
+[capture_wire.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/capture_wire.py:551) 仍以稳定 SID 作为 `execution_scope`；[async_worker.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:842) 据此生成 attempt id。
+
+探针得到：
+
+```text
+exec#p1-A -> stable_sid/t1_a1
+exec#p1-B -> stable_sid/t1_a1
+```
+
+而 [bringup.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:616) 明确以 attempt id 单独生成 artifact 文件名。合法 replay 可能因此触发 artifact 身份碰撞。
+
+`model_call_attempt_id` 必须以 paid 命名空间生成，例如 `{paid}/t1_a1`；SID 只负责认证和路由。随后同步调整 ledger 的 snapshot、ack 和 pending-draft 查询键。
+
+3. **P1：部分失败路径仍然丢失 paid**
+
+[async_worker.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:757) 和 [async_worker.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py:971) 没有接收 paid，因此发前等待超时、fencing 错误、版本恢复超时等记录会写成 `physical_attempt_id=None`。
+
+探针已复现：
+
+```text
+engine_not_active_before_send
+-> non_delivered_failed, physical_attempt_id=None
+```
+
+现有 [test_f2_1a_identity.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/adapters/test_f2_1a_identity.py:99) 名称声称覆盖 failed，实际只覆盖 abort 后成功交付。应补失败分支矩阵。
+
+4. **P1：FA 入口的身份传播仍然 fail-open**
+
+[rollout_entry.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:243) 遇到非 `dict` metadata 会静默跳过全部身份字段；`setdefault()` 还会保留复用 Sample 中的陈旧 group/execution 身份。
+
+建议：
+
+- FA 路径要求 metadata 可写，否则结构化失败。
+- `rh2_*` 系统字段覆盖或校验旧值，不使用 `setdefault()`。
+- 常规 worker failure record 也要携带 paid，目前 [rollout_entry.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:236) 会丢掉它。
+
+**可递延项**
+
+`physical_attempt_seq` 在 actor 重启后会从 1 重新开始，且 `_attempt_seq` 随执行数量无界增长。这可以明确交给 F2-4 checkpoint owner 处理，不必阻塞 F2-0b，但必须登记为正式训练前闸门。
+
+权威状态页仍写着“下一切片 F2-1a”，完成修复后需要同步更新 [implementation-notes.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/implementation-notes.md:17)。
+
+**审查强度**
+
+应继续遵守 `review-standards.md`，但不必每轮机械展开十四个标题。本轮因为涉及 identity、replay 和跨线程共享状态，必须实质覆盖 A/D/E/F/G/H/L/M/N；报告保留“发现、证据、修复验收、递延项、验证结果”即可。
+
+本次验证结果：`927 passed`、ruff 全绿、S1 inspector 全绿。它们证明基线没有整体回归，但现有测试 oracle 没覆盖上述三种关键交错。
+
+::code-comment{title="[P0] 活跃会话 paid 可被覆盖" body="该 setter 在重复 SID 守卫之前执行且允许覆盖。后来的 execution 即使最终被 DuplicateActiveSessionError 拒绝，也可能先改写活跃 execution 的模型调用身份。应把 hook 与 paid 原子注册，并拒绝活跃会话上的身份替换。" file="/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/capture_wire.py" start=184 end=188 priority=0}
+
+::code-comment{title="[P0] Attempt 键未包含 physical attempt" body="proxy.call 仍以稳定 SID 作为 execution_scope，replay 后 turn 序号重置会再次生成相同 model_call_attempt_id；持久 artifact sink 又以该 id 单独命名，可能产生身份碰撞。应使用 paid 或 sid+paid 作为 attempt 命名空间。" file="/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/capture_wire.py" start=551 end=558 priority=0}
+
+::code-comment{title="[P1] 等待失败记录丢失 paid" body="发前 ACTIVE 等待和版本恢复 helper 没有接收 physical_attempt_id，其失败记录会落成 None。现有测试只覆盖 abort 后成功，不覆盖这些 failed 分支。" file="/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/async_worker.py" start=757 end=776 priority=1}

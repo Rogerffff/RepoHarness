@@ -760,6 +760,7 @@ class ModelCallProxy:
         scoped: str,
         attempt_number: int,
         deadline_monotonic: float | None,
+        physical_attempt_id: str | None = None,
     ) -> None:
         """发前 ACTIVE 等待：窗口更新中不发注定被 abort 的请求（codex 轮次 7）。"""
 
@@ -772,7 +773,8 @@ class ModelCallProxy:
                 return
             if self._clock() >= deadline:
                 self._record_failed(
-                    attempts, scoped, f"{scoped}_presend_timeout", attempt_number
+                    attempts, scoped, f"{scoped}_presend_timeout", attempt_number,
+                    physical_attempt_id=physical_attempt_id,
                 )
                 raise UnattributableModelCallError(
                     "engine_not_active_before_send",
@@ -856,7 +858,8 @@ class ModelCallProxy:
                     "——不再尝试，session 中毒，execution 缺员。",
                 )
             await self._wait_active_before_send(
-                attempts, scoped, attempt_number, deadline_monotonic
+                attempts, scoped, attempt_number, deadline_monotonic,
+                physical_attempt_id=physical_attempt_id,
             )
             window_before = self._coordinator.current_window()
             failure: BaseException | None = None
@@ -942,7 +945,8 @@ class ModelCallProxy:
             # replace 静默失败 + 测试假阳性双重漏网——教训：无 assert 的文本
             # 替换不可信，修复必须配"真进到目标分支"的测试断言）
             await self._wait_version_advance(
-                attempts, scoped, attempt_number, window_now, deadline_monotonic
+                attempts, scoped, attempt_number, window_now, deadline_monotonic,
+                physical_attempt_id=physical_attempt_id,
             )
 
     def _record_failed(
@@ -975,6 +979,7 @@ class ModelCallProxy:
         attempt_number: int,
         abort_window: TrainingRuntimeWindow,
         deadline_monotonic: float | None = None,
+        physical_attempt_id: str | None = None,
     ) -> None:
         """守卫 3：恢复必须**达到 abort 窗口的 target_version**（轮次 6 严重 6）；
         等待受 episode 绝对 deadline 约束（轮次 8 P0-3：此前用独立固定 60s，
@@ -983,7 +988,7 @@ class ModelCallProxy:
         try:
             target = _version_int(abort_window.target_version)
         except ValueError:
-            self._record_failed(attempts, scoped, f"{scoped}_nonnum", attempt_number)
+            self._record_failed(attempts, scoped, f"{scoped}_nonnum", attempt_number, physical_attempt_id=physical_attempt_id)
             raise UnattributableModelCallError(
                 "non_numeric_version_in_window",
                 f"abort 窗口 target_version={abort_window.target_version!r} 非数值。",
@@ -997,7 +1002,7 @@ class ModelCallProxy:
                 try:
                     active = _version_int(window.active_version)
                 except ValueError:
-                    self._record_failed(attempts, scoped, f"{scoped}_nonnum", attempt_number)
+                    self._record_failed(attempts, scoped, f"{scoped}_nonnum", attempt_number, physical_attempt_id=physical_attempt_id)
                     raise UnattributableModelCallError(
                         "non_numeric_version_in_window",
                         f"恢复窗口 active_version={window.active_version!r} 非数值。",
@@ -1006,7 +1011,7 @@ class ModelCallProxy:
                     if window.fencing_token != abort_window.fencing_token:
                         self._record_failed(
                             attempts, scoped, f"{scoped}_fence", attempt_number
-                        )
+                        , physical_attempt_id=physical_attempt_id)
                         raise UnattributableModelCallError(
                             "fencing_token_mismatch",
                             f"{scoped}: 同 epoch 的 ACTIVE 窗口 fencing 与 abort 窗口不一致。",
@@ -1016,7 +1021,7 @@ class ModelCallProxy:
                     if active > target:  # 同 epoch 版本超过 target：协议矛盾
                         self._record_failed(
                             attempts, scoped, f"{scoped}_overshoot", attempt_number
-                        )
+                        , physical_attempt_id=physical_attempt_id)
                         raise UnattributableModelCallError(
                             "version_overshoot_same_epoch",
                             f"{scoped}: 同 epoch active({active}) > target({target})——协议矛盾。",
@@ -1027,14 +1032,14 @@ class ModelCallProxy:
                     # 更晚 epoch 但版本仍低于目标：协议矛盾（版本必须单调）
                     self._record_failed(
                         attempts, scoped, f"{scoped}_regress", attempt_number
-                    )
+                    , physical_attempt_id=physical_attempt_id)
                     raise UnattributableModelCallError(
                         "version_regressed_across_epochs",
                         f"{scoped}: epoch 前进但 active({active}) < abort target({target})。",
                     )
                 # window.update_epoch < abort_window.update_epoch：陈旧快照，继续等
             if self._clock() >= deadline:
-                self._record_failed(attempts, scoped, f"{scoped}_timeout", attempt_number)
+                self._record_failed(attempts, scoped, f"{scoped}_timeout", attempt_number, physical_attempt_id=physical_attempt_id)
                 raise UnattributableModelCallError(
                     "version_did_not_advance",
                     f"{scoped}: 等待 {self._wait_timeout}s 后未达 abort 窗口 target_version。",

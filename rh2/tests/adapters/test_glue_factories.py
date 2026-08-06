@@ -65,10 +65,10 @@ def test_open_session_rollback_on_underlying_failure():
     assert "sid_RB" in registry.hooks
 
 
-def _fake_audit(sid: str) -> types.SimpleNamespace:
+def _fake_audit(sid: str, paid: str | None = None) -> types.SimpleNamespace:
     return types.SimpleNamespace(
         session_id=sid,
-        physical_attempt_id=f"{sid}#p1-test",
+        physical_attempt_id=paid,
         trajectory_id="traj_x",
         task_id="task_x",
         finalized=None,
@@ -85,7 +85,7 @@ def _fake_audit(sid: str) -> types.SimpleNamespace:
     )
 
 
-def _proxy_with_attempt(sid: str):
+def _proxy_with_attempt(sid: str, paid: str | None = None):
     import asyncio
 
     from repoharness2.adapters.slime.async_worker import ModelCallProxy
@@ -114,7 +114,7 @@ def _proxy_with_attempt(sid: str):
         async def send(attempt: int) -> dict:
             return {"text": "ok", "meta_info": {"id": "rid", "weight_version": "1"}}
 
-        result = await proxy.call(sid, "turn_0", send)
+        result = await proxy.call(paid or sid, "turn_0", send, physical_attempt_id=paid)
         result.finalize_delivered("cap_ref")
 
     asyncio.new_event_loop().run_until_complete(scenario())
@@ -125,10 +125,10 @@ def test_write_execution_audit_success_acks_and_enriches(tmp_path):
     """轮次 14 仍需修正 2/4：成功路径——记录含 timeline/timing/disposition/
     attempts，且持久化成功后 ledger 才被 ack 清空。"""
 
-    proxy = _proxy_with_attempt("sid_AU")
+    proxy = _proxy_with_attempt("sid_AU", "sid_AU#p1-x")
     assert len(proxy.attempts_ledger) == 1
     path = tmp_path / "audit.jsonl"
-    write_execution_audit_record(proxy, _fake_audit("sid_AU"), path)
+    write_execution_audit_record(proxy, _fake_audit("sid_AU", "sid_AU#p1-x"), path)
     record = json.loads(path.read_text().strip())
     assert record["timeline"] == [{"name": "step1", "at": 1.0}]  # 时间线不再丢
     assert record["timing_summary"] == {"total_seconds": 2.5}
@@ -141,8 +141,8 @@ def test_write_execution_audit_failure_keeps_ledger(tmp_path):
     """轮次 14 仍需修正 2 的反例回归：写失败（目录不存在）时 attempt **不被
     摘走**——不会"既拒绝 rollout 又丢审计依据"。"""
 
-    proxy = _proxy_with_attempt("sid_AF")
+    proxy = _proxy_with_attempt("sid_AF", "sid_AF#p1-y")
     bad_path = tmp_path / "no_such_dir" / "audit.jsonl"
     with pytest.raises(OSError):
-        write_execution_audit_record(proxy, _fake_audit("sid_AF"), bad_path)
+        write_execution_audit_record(proxy, _fake_audit("sid_AF", "sid_AF#p1-y"), bad_path)
     assert len(proxy.attempts_ledger) == 1  # 内存证据仍在（修复前已被 drain 丢失）

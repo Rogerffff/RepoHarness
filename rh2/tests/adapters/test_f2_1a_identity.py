@@ -85,15 +85,37 @@ async def test_worker_mints_new_physical_attempt_per_dispatch():
 
 
 def test_registry_paid_map_lifecycle():
-    """sid→paid 映射：登记/读取/unregister 清理（有界）。"""
+    """sid→paid 映射：生产顺序（set 先于 register，原子登记）/读取/清理。"""
 
     registry = CaptureRegistry()
-    registry.register("sid_P", _Hook())
-    registry.set_physical_attempt_id("sid_P", "exec_R#p1-abc")
+    registry.set_physical_attempt_id("sid_P", "exec_R#p1-abc")  # 生产：先登记 paid
     assert registry.physical_attempt_id_for("sid_P") == "exec_R#p1-abc"
     assert registry.physical_attempt_id_for(None) is None
+    registry.register("sid_P", _Hook())  # 再注册 hook
     registry.unregister("sid_P")
     assert registry.physical_attempt_id_for("sid_P") is None  # 随会话清理
+
+
+def test_paid_registration_fails_closed_on_active_or_conflict():
+    """codex F2-1a 复核 P0-1：活跃会话/已 stage 冲突身份 → 拒绝，不覆盖。"""
+
+    from repoharness2.adapters.slime.capture_wire import DuplicateActiveSessionError
+
+    # 活跃会话（hook 在场）不许替换身份
+    r1 = CaptureRegistry()
+    r1.set_physical_attempt_id("sid_A", "exec_A#p1-a")
+    r1.register("sid_A", _Hook())
+    with pytest.raises(DuplicateActiveSessionError):
+        r1.set_physical_attempt_id("sid_A", "exec_B#p1-b")
+    assert r1.physical_attempt_id_for("sid_A") == "exec_A#p1-a"  # 未被覆盖
+
+    # register 前的窗口：另一 execution 已 stage 不同 paid → 拒绝
+    r2 = CaptureRegistry()
+    r2.set_physical_attempt_id("sid_A", "exec_A#p1-a")
+    with pytest.raises(DuplicateActiveSessionError):
+        r2.set_physical_attempt_id("sid_A", "exec_B#p1-b")
+    # 幂等：同 paid 重登记不炸
+    r2.set_physical_attempt_id("sid_A", "exec_A#p1-a")
 
 
 async def test_proxy_stamps_paid_on_all_attempt_paths():
@@ -143,3 +165,84 @@ async def test_proxy_stamps_paid_on_all_attempt_paths():
     assert len(proxy.attempts_ledger) >= 2  # aborted + delivered
     for attempt in proxy.attempts_ledger:
         assert attempt.physical_attempt_id == "exec_R#p1-abc", attempt.model_call_attempt_id
+
+
+async def test_attempt_id_unique_across_replay_via_paid_scope():
+    """codex F2-1a 复核 P0-2：两次物理重放（不同 paid）的同 turn 序号不再
+    产生相同 model_call_attempt_id——artifact sink 命名不碰撞。"""
+
+    now = datetime.now(timezone.utc)
+
+    class Active:
+        def current_window(self):
+            return TrainingRuntimeWindow(
+                update_epoch=1, phase="ACTIVE", old_version="0", target_version="1",
+                active_version="1", window_started_at=now,
+                window_completed_at=now + timedelta(seconds=1), fencing_token="f1",
+            )
+
+    async def _no_sleep(_s):
+        await asyncio.sleep(0)
+
+    proxy = ModelCallProxy(Active(), sleeper=_no_sleep)
+
+    async def send(attempt):
+        return {"text": "ok", "meta_info": {"id": "rid", "weight_version": "1"}}
+
+    # 生产键法：execution_scope = paid（wire 同款）
+    r1 = await proxy.call("exec#p1-AAAA", "t1", send, physical_attempt_id="exec#p1-AAAA")
+    r1.finalize_delivered("c1")
+    r2 = await proxy.call("exec#p2-BBBB", "t1", send, physical_attempt_id="exec#p2-BBBB")
+    r2.finalize_delivered("c2")
+    ids = [a.model_call_attempt_id for a in proxy.attempts_ledger]
+    assert ids[0] != ids[1]  # 修复前两者都是 stable_sid/t1_a1
+    assert ids[0].startswith("exec#p1-AAAA/") and ids[1].startswith("exec#p2-BBBB/")
+
+
+async def test_paid_stamped_on_presend_wait_failure():
+    """codex F2-1a 复核 P1-3：发前 ACTIVE 等待超时的失败记录也带 paid
+    （此前 wait helper 不接收 paid，写成 None）。"""
+
+    now = datetime.now(timezone.utc)
+
+    class NeverActive:
+        def current_window(self):
+            return TrainingRuntimeWindow(
+                update_epoch=2, phase="UPDATING", old_version="1", target_version="2",
+                active_version="1", window_started_at=now,
+                window_completed_at=None, fencing_token="f2",
+            )
+
+    async def _no_sleep(_s):
+        await asyncio.sleep(0)
+
+    from repoharness2.adapters.slime.async_worker import (
+        SessionPoisonRegistry,
+        UnattributableModelCallError,
+    )
+
+    proxy = ModelCallProxy(NeverActive(), sleeper=_no_sleep, wait_timeout_seconds=1.0)
+    clock = {"t": 0.0}
+    proxy._clock = lambda: clock["t"]
+
+    async def send(attempt):  # 永不到达（发前等待就超时）
+        return {"text": "x", "meta_info": {"id": "r", "weight_version": "2"}}
+
+    async def advance():
+        for _ in range(50):
+            clock["t"] += 0.5
+            await asyncio.sleep(0)
+
+    reg = SessionPoisonRegistry()
+    with pytest.raises(UnattributableModelCallError, match="engine_not_active_before_send"):
+        await asyncio.gather(
+            proxy.call(
+                "exec#p1-W", "t1", send,
+                session_id="sid_W", poison_registry=reg,
+                physical_attempt_id="exec#p1-W", deadline_monotonic=5.0,
+            ),
+            advance(),
+        )
+    assert proxy.attempts_ledger, "发前超时应落一条 failed 记录"
+    for attempt in proxy.attempts_ledger:
+        assert attempt.physical_attempt_id == "exec#p1-W", attempt.model_call_attempt_id

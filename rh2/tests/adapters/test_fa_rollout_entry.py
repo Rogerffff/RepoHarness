@@ -32,6 +32,9 @@ class FakeSample:
     def __init__(self, name: str, remove: bool = False) -> None:
         self.name = name
         self.remove_sample = remove
+        # 生产 slime Sample 有 metadata dict（F2-1a 身份注入的落点）——
+        # fixture 同形，否则 FA 入口按 P1-4 fail-closed 拒绝
+        self.metadata: dict = {}
 
     def __repr__(self) -> str:  # pragma: no cover - 调试便利
         return f"FakeSample({self.name}, remove={self.remove_sample})"
@@ -97,7 +100,10 @@ async def test_service_drops_group_on_member_failure_and_keeps_collecting():
     batches = await service.collect_batch()
     assert len(batches) == 2  # 坏组被跳过，两个好组成批
     assert len(service.failure_records) == 1
-    assert service.failure_records[0][2].startswith("RuntimeError")
+    # P1-4：失败记录带 paid（worker 对每次 dispatch 铸造，含失败的这次）
+    _grp, _exec, _paid, _err = service.failure_records[0]
+    assert _paid and _paid.startswith(_exec + "#p")  # 非 None 且属该 execution
+    assert _err.startswith("RuntimeError")
 
 
 async def test_service_drops_group_on_abort_shaped_delivery():
@@ -363,12 +369,7 @@ async def test_execute_stamps_identity_into_member_metadata():
     （rh2_* 键）——orchestrator 由此读入 audit 并登记 sid→paid。replay
     同组第二次执行会得到不同 paid（worker dispatch 铸造语义）。"""
 
-    class MetaSample(FakeSample):
-        def __init__(self, name: str) -> None:
-            super().__init__(name)
-            self.metadata: dict = {}
-
-    groups = [[MetaSample("g1_m0"), MetaSample("g1_m1")]]
+    groups = [[FakeSample("g1_m0"), FakeSample("g1_m1")]]
     seen_meta: list[dict] = []
 
     async def execute(member):

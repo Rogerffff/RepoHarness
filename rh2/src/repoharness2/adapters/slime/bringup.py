@@ -309,7 +309,9 @@ def write_execution_audit_record(proxy, audit, path) -> None:
 
     attempts_snapshot = []
     if proxy is not None and audit.session_id:
-        attempts_snapshot = proxy.snapshot_attempts(audit.session_id)
+        # P0-2：attempt 账目按 paid 命名空间；paid 缺失（S1 兼容）回退 sid
+        _attempt_scope = audit.physical_attempt_id or audit.session_id
+        attempts_snapshot = proxy.snapshot_attempts(_attempt_scope)
     finalized = audit.finalized
     eligibility_ref = None
     disposition = "aborted"
@@ -350,7 +352,7 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         os.fsync(fh.fileno())
     # 持久化成功才移除热内存（ack）
     if proxy is not None and audit.session_id:
-        proxy.ack_attempts(audit.session_id)
+        proxy.ack_attempts(_attempt_scope)
 
 
 def build_production_model_call_proxy(

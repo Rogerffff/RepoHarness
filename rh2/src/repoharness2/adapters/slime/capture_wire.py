@@ -148,11 +148,14 @@ class CaptureRegistry:
         problems: list[str] = []
         with self._lock:
             pending_count = len(self.pending.get(sid) or [])
+            # P0-2：attempt 命名空间 = paid（见 rh2_call_sglang_generate 的
+            # execution_scope），boundary 也按 paid 前缀查
+            scope = self._physical_attempt_ids.get(sid) or sid
         if pending_count:
             problems.append(f"pending_turns={pending_count}")
         proxy = self.model_call_proxy
         if proxy is not None:
-            stale = [a for a in proxy.unfinalized_deliveries if a.startswith(f"{sid}/")]
+            stale = [a for a in proxy.unfinalized_deliveries if a.startswith(f"{scope}/")]
             if stale:
                 problems.append(f"unfinalized_drafts={sorted(stale)}")
         if problems:
@@ -182,9 +185,21 @@ class CaptureRegistry:
         return queue[0]
 
     def set_physical_attempt_id(self, sid: str, physical_attempt_id: str) -> None:
-        """F2-1a：orchestrator 在 open_session 前登记本次物理重放身份。"""
+        """F2-1a（codex F2-1a 复核 P0-1）：登记本次物理重放身份，**fail-closed**。
+
+        此前无条件覆盖——后来的同 SID execution（replay/并发重复）能在被
+        DuplicateActiveSessionError 拒绝**之前**改写活跃 execution 的 paid，
+        使 A 的后续模型调用落到 B 名下。现在两条守卫（锁内原子）：
+        活跃会话（sid 已在 hooks）不许替换身份；另一 execution 已 stage
+        了不同 paid（register 前的窗口）也拒绝。抛出即 execution 缺员。
+        """
 
         with self._lock:
+            if sid in self.hooks:
+                raise DuplicateActiveSessionError(sid)  # 活跃会话身份不可替换
+            existing = self._physical_attempt_ids.get(sid)
+            if existing is not None and existing != physical_attempt_id:
+                raise DuplicateActiveSessionError(sid)  # 另一 execution 已 stage
             self._physical_attempt_ids[sid] = physical_attempt_id
 
     def physical_attempt_id_for(self, sid: str | None) -> str | None:
@@ -548,13 +563,17 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
             assert session_id is not None  # session_known 已保证
             registry.poison.check(session_id)
             turn_seq = registry.next_turn_seq(session_id)
+            # P0-2：execution_scope = paid（每次物理重放唯一）→ attempt id
+            # `{paid}/t{n}_a{k}` 不再随 replay 的 turn 序号重置而碰撞；
+            # session_id 仍传给 poison/认证（sid 只负责认证与路由）
+            paid = registry.physical_attempt_id_for(session_id)
             proxy_result = await proxy.call(
-                session_id,
+                paid or session_id,
                 f"t{turn_seq}",
                 _send_once,
                 session_id=session_id,
                 poison_registry=registry.poison,
-                physical_attempt_id=registry.physical_attempt_id_for(session_id),
+                physical_attempt_id=paid,
                 deadline_monotonic=registry.session_deadline(session_id),
             )
             data = dict(proxy_result.response)

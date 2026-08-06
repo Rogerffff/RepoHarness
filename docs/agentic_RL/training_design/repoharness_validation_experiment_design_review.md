@@ -2,13 +2,48 @@
 
 审查对象：`docs/agentic_RL/training_design/repoharness_validation_experiment_design.md`
 
-审查时间基线：2026-07-07
+审查时间基线：初版 2026-07-07；S0 后修订 2026-07-08
 
-本文只审查实验设计决策底稿，不替换原文，不修改实现代码。结论来自三类材料交叉检查：
+本文审查实验设计决策底稿，不替换原文，不修改实现代码。2026-07-08 补充读取了 rh2 S0 阶段的完整产物，并把已经由 S0 消除的未知从“待验证”改为“已定案”或“后续阶段待关闭”。结论来自四类材料交叉检查：
 
 1. 本地设计文档与技术报告摘录，包括 `repo_harness_design_doc2_verifiers_based.md`、`repo_harness_final_review_before_implementation.md`、`glm5.2_blog_RL.md`、warm-start 设计文档，以及 `external_paper_references` 目录下的技术报告索引。
 2. 本地参考代码库，包括 `reference/verifiers`、`reference/renderers`、`reference/slime`、`reference/prime-rl`。
 3. 公开资料补充核查，包括 GLM-5.2、DeepSWE、SkyRL-Agent、SERA、SWE-Gym、R2E-Gym、SWE-Master、OpenHands RFT、SWE-Bench Pro 等。
+4. rh2 S0 阶段 evidence，包括 `s0_acceptance_summary.json`、`v2_renderer_report.md`、`v3_protocol_report.md`、`topology_ab_report.md`、`swe_smoke_report.md`、`s0_8_expdesign_review.md`。
+
+## 0. S0 后修订结论
+
+S0 已完成，`rh2_s0_complete = true`。S0 的核心判定是：
+
+```text
+V1 依赖与 Docker 使用层：通过
+V2 renderer：通过，Qwen3-30B-A3B 精确命中 Qwen3Renderer
+V3 token 协议链路：通过，vLLM /inference/v1/generate + TrainClient 全链 token 保真成立
+V4 MoE 张量穿透：通过，但形态 B 被定为 MoE 训练主形态
+```
+
+因此，本文初版中几个“需要 S0 验证”的判断已经可以收口：
+
+1. **训练链路选择已有阶段性结论**：首个 MoE RL 训练主形态应改为 **形态 B：SGLang + slime patch 镜像的原生 `/generate` 路径**。形态 A（verifiers 中心 + vLLM `/inference/v1/generate`）保留为协议基线、dense/eval/调试路径。
+2. **分水岭不是 routing tape，而是 top-p tape**：S0 证明两条形态都能拿到 routing tape；top-p tape 在 stock vLLM 与 stock SGLang 中都不是开箱即用。形态 B 有 slime 维护的 SGLang patch 与镜像，形态 A 则需要改推理引擎、wire schema 与消费端，工程代价明显更高。
+3. **模型选择基本收口为 Qwen3-30B-A3B**：V2 证明 hand-coded renderer 覆盖，V3/V4 证明真实端点 token/logprob/routing 可行。35B-A3B 升级应推迟到 S4 前预实验，不进入第一轮默认方案。
+4. **算力判断需要更保守**：S0 只验证了单卡 96GB 推理侧，不等于验证了 8 卡训练侧。多卡训练、权重同步、slime 镜像在 sm_120 上的实际可用性分别留给 U-C 与 U-H。
+5. **SWE smoke 的 7/8 解出不能作为能力基准**：deepseek-chat 明显存在 SWE-bench 题目污染或背题嫌疑。S0-7 只能证明链路、评分和 F2P/P2P 判据工作，不能证明目标模型能力。
+
+所以，实验决策的最新判断应写成：
+
+```text
+首训主链路：
+  slime 原生形态 B + Claude Code harness + Qwen3-30B-A3B + GRPO。
+
+评测与治理：
+  train=evaluate 同 harness；
+  形态 A 只作为协议基线和可审计对照，不承担 before/after 主口径。
+
+必须先关的未知：
+  U-H：slime patch 镜像在 sm_120 / Blackwell 上可用，并能产出 top-p tape；
+  U-C：8 卡训练侧吞吐、显存、权重同步和 CPU offload 可接受。
+```
 
 ## 1. 总结论
 
@@ -17,18 +52,18 @@
 我赞成保留的核心路线是：
 
 ```text
-首训目标：MoE 开源模型，优先 30B-A3B / 35B-A3B 档
-训练后端：slime 作为首个在线训练后端候选
+首训目标：Qwen3-30B-A3B，35B-A3B 推迟到 S4 前预实验
+训练链路：形态 B，即 slime 原生 SGLang /generate 路径作为 MoE RL 主形态
 算法起点：首版关 compaction，用 GRPO / GRPO++ 风格配置起步
 数据路线：SWE-Gym / R2E-Gym 等开源可执行任务起步，不使用 SWE-bench Verified 训练
 评测方式：同一 harness 的 before/after 配对评测，辅以治理证据
 治理边界：clean grading、anti-cheat、hidden verifier 隔离、eligibility gate 不可省略
 ```
 
-但是，底稿中有几处内容需要在定稿前修正，否则会把“需要 S0 验证的工程假设”写成“已经被框架支持的事实”。最重要的三点是：
+S0 后仍然需要修正的重点变成：
 
-1. `verifiers + renderers` 与 `slime coding_agent_rl` 不是一条已经天然接通的链路。前者是 vLLM 风格的精确 token 渲染与 Trace 路径，后者是 SGLang 原生黑盒 harness 路径。它们互补，但目前不能写成同一个现成能力。
-2. MoE routing、top-p token tape、renderer bridge 在 slime 标准 rollout 中支持较好，但在 slime 的黑盒 coding-agent adapter 中还没有完全确认，需要作为 S0 动态验证项。
+1. `verifiers + renderers` 与 `slime coding_agent_rl` 仍然不是同一条现成链路。S0 的结论不是“它们已经接好了”，而是“为了 MoE 首训，应走 slime 原生形态 B；治理层通过中立 `TrajectoryProjection` 兼容两条形态”。
+2. MoE routing 已经动态验证通过；top-p tape 才是真正分水岭。正式实现必须 pin slime patch 镜像，并在启动时用 `top_p < 1.0` 探针 fail closed。
 3. SWE-bench Verified 适合作为内部快速 before/after 信号，但不能单独作为“真实世界能力证明”。实验叙事应明确它是内部 sanity check，并增加 SWE-Bench Pro public 小集、Terminal-Bench Pro 小集或其他可信补充评测面。
 
 ## 2. 必须修正的问题
@@ -59,41 +94,43 @@
 路径 2：slime coding_agent_rl custom_generate
   目标：最快跑通黑盒 coding-agent 在线训练。
   优势：SGLang 原生、GRPO/GSPO/PPO 训练后端成熟、Claude Code / Codex harness 示例现成。
-  风险：renderer bridge、message attribution、top-p tape、routed experts 在黑盒路径中需要 S0 验证或扩展。
+  S0 后状态：routing 已动态验证可取；top-p tape 依赖 slime patch 镜像，
+    U-H 必须在 S1 关闭；renderer bridge 不来自 renderers，而由
+    slime TrajectoryManager / RepoHarness TrajectoryProjection 承担等价治理。
 
 路径 3：RepoHarness governance layer
   目标：sandbox、clean grading、hidden verifier、anti-cheat、eligibility、artifact projection。
   边界：不假设 verifiers 或 slime 已经完整提供这些治理能力。
 ```
 
-### 2.2 “MoE 使形态 B 显著加分”可以保留，但必须变成 S0 验证项
+### 2.2 S0 后 MoE 形态已经定案：形态 B 是首训主形态
 
-底稿把 MoE 与形态 B 绑定得比较强，这个倾向有道理，因为 slime 与 SGLang 的生态对 MoE、routing replay、top-p tape 更友好。但当前只能写成“优先验证形态 B”，不能写成“形态 B 已经满足所有 MoE 训练契约”。
-
-本地代码支持与缺口如下：
-
-- `reference/slime/slime/utils/types.py` 的 `Sample` 已有 `rollout_id` 等字段，slime 的训练数据结构也支持 top-p 与 routed experts 相关字段。
-- `reference/slime/slime/rollout/sglang_rollout.py` 在标准 rollout 路径里可以请求 `return_top_p_token_ids` 与 `return_routed_experts`。
-- 但是 `reference/slime/slime/agent/adapters/common.py` 的 black-box coding-agent SGLang 调用目前主要返回 `prompt_ids`、`output_ids`、`finish_reason`、`output_log_probs`。
-
-因此 S0 必须增加一个阻塞检查：
+底稿把 MoE 与形态 B 绑定得比较强，这个倾向已经被 S0 动态验证支持。现在不应再写成“优先验证形态 B”，而应写成：
 
 ```text
-S0-MoE-Capture：
-  对目标模型运行 1 条真实 coding-agent rollout。
-  检查每次模型调用是否能得到：
-    prompt token ids
-    completion token ids
-    completion logprobs
-    sampling parameters
-    top-p token tape（如果训练后端需要）
-    routed experts（如果使用 routing replay / MoE 稳定性分析）
-  若 slime coding-agent adapter 当前不透传 top-p 或 routed experts，
-  必须明确选择：
-    A. 扩展 adapter；
-    B. 首训暂不使用相关训练特性；
-    C. 改走 verifiers/renderers 路径或协议 shim。
+形态 B 是 Qwen3-30B-A3B 首训的主形态；
+形态 A 保留为协议基线、dense/eval/调试路径。
 ```
+
+S0 的关键事实是：
+
+```text
+routing tape：
+  形态 A 和形态 B 都能拿到；
+  两侧 wire 形状不同，但都可归一到 TrajectoryProjection。
+
+top-p tape：
+  stock vLLM 与 stock SGLang 都不是开箱即用；
+  形态 B 有 slime 维护的 sglang-top_p.patch 与官方镜像；
+  形态 A 需要改引擎、wire schema、消费端三处，工程成本高。
+
+正式实现要求：
+  pin slime patch 镜像；
+  服务启动后立刻跑 top_p < 1.0 探针；
+  如果 meta_info 缺 top_p_token_ids / top_p_token_offsets，直接 fail closed。
+```
+
+仍需注意：形态 B 的 `Sample` 不是审计 artifact。RepoHarness 的治理事实仍应进入中立 `TrajectoryProjection`，不能散落在 slime 训练后端 adapter 中。
 
 ### 2.3 附录 A 的 reward/K 分摊说法需要删除
 
@@ -187,30 +224,31 @@ RFT / SFT 对照：
   它不一定进入首训主链路，但可以防止最后出现“RL 提升不如简单 SFT”的解释漏洞。
 ```
 
-### 2.7 C1 硬件可行性仍然只是估计
+### 2.7 硬件可行性：S0 只验证了推理半边，训练半边仍是 U-C
 
-底稿已经把 C1 写得比之前扎实很多：8 张 RTX Pro 6000 Blackwell，单卡 96GB，PCIe，无 NVLink，必须 colocate 与 CPU offload。这是正确方向。
+底稿把 C1 写成 8 张 RTX Pro 6000 Blackwell、单卡 96GB、PCIe、无 NVLink、colocate 与 CPU offload，这是正确约束。但 S0 的实测范围比底稿原先设想更窄：S0 只在单卡 96GB 上验证了 30B-A3B 推理侧可加载、vLLM 0.24.0 可用、SGLang 原生 `/generate` 可产出 token/logprob/routing。
 
-但 30B-A3B / 35B-A3B 是否能稳定做 32K 上下文训练，不能只靠显存粗算。真正阻塞项包括：
+因此现在应把 C1 写成：
 
 ```text
-SGLang 对 sm_120 Blackwell 工作站卡的 kernel 支持；
-Megatron / slime 训练侧对该卡的 kernel 支持；
-PCIe 下 MoE expert parallel all-to-all 吞吐；
-CPU offload 对训练 step 墙钟的影响；
-Docker / sandbox 并发和评分尾波是否反过来成为主瓶颈。
+推理侧：
+  S0 已证明单卡 96GB 可跑 Qwen3-30B-A3B bf16 推理，
+  Blackwell 稳定参数组合已记录。
+
+训练侧：
+  8 卡训练、权重同步、CPU offload、PCIe 通信、SGLang/slime 镜像在 sm_120 上的真实表现仍未验证。
+  该未知编号为 U-C / U-H，不得在实验设计里写成已通过。
 ```
 
-建议把 S0 V5 写成阻塞退出条件：
+S4 前预实验至少要补：
 
 ```text
-S0 V5 不通过，则不得锁定 E1/E2/E6。
-V5 至少包括：
-  目标模型加载成功；
-  1 step × 8 prompt × n=2/4 最小训练冒烟；
-  真实 32K prompt 或接近 32K 的压力样本；
+1 step × 8 prompt × n=2/4 最小训练冒烟；
+真实 32K 或接近 32K 的压力样本；
+slime patch 镜像在 sm_120 上启动与 top-p tape 探针；
+8 卡权重同步与训练 step 墙钟；
+显存峰值、CPU 内存峰值、吞吐 token/s、失败类型统计；
   生成 / 沙箱执行 / 评分 / 训练 step 四段墙钟分解；
-  显存峰值、CPU 内存峰值、吞吐 token/s、失败类型统计。
 ```
 
 ### 2.8 “关 compaction ↔ GRPO”必须写成硬前提
@@ -291,16 +329,19 @@ test tamper 检测；
 
 ### E1 训练目标模型
 
-我同意 30B-A3B / 35B-A3B 档 MoE 的方向。公开资料与 slime 示例都支持 3B active parameter 这个量级有训练价值。
+S0 后，E1 可以从“候选倾向”收口为：**Qwen3-30B-A3B 是第一轮默认训练目标**。理由是 V2 已证明 `Qwen/Qwen3-30B-A3B` 精确命中 `Qwen3Renderer`，V3 已证明真实端点 token/logprob/Trace identity 可行，V4 已证明 MoE routing 动态可取。
 
-需要补充的是：具体 checkpoint 不应在文档层提前锁死。即使 Qwen3.6-35B-A3B 公开声称兼容 vLLM / SGLang，仍需 S0 验证：
+E1 仍需保留两个守门条件：
 
 ```text
-权重可获得；
-tokenizer 与 renderer 匹配；
-renamed / fine-tuned checkpoint 是否命中 hand-coded renderer；
-SGLang / Megatron / slime 在 Blackwell 工作站卡上可跑；
-32K 上下文吞吐可接受。
+U-G renderer 守门：
+  本地路径加载可能静默降级 DefaultRenderer；
+  所有训练脚本必须用 HF id 或显式 renderer config，
+  并启动断言 renderer class == Qwen3Renderer。
+
+35B-A3B：
+  不进入首训默认项；
+  仅在 S4 前预实验确认显存、吞吐和镜像兼容后升级。
 ```
 
 ### E2 算法族与后端配置
@@ -380,14 +421,19 @@ infra_failure_category
 
 ### E7 接入形态
 
-我建议把 S0 默认假设写成：
+S0 后，E7 应直接定案为：
 
 ```text
-MoE 首训优先验证形态 B：slime coding_agent_rl custom_generate。
-形态 B 通过的条件是：token ids、logprobs、sampling params、eligibility、reward facts、anti-cheat facts、必要的 MoE backend tensors 都能被无损记录或可解释地降级。
+MoE 首训主形态：
+  形态 B，即 SGLang + slime patch 镜像的原生 /generate 路径。
 
-形态 A 保留为可审计基准路径：verifiers default harness + renderers + offline export / prime-rl 风格 sample。
-形态 A 接 slime 需要 protocol shim 或新 TrainClient，因此不应默认更快。
+形态 A：
+  保留为协议基线、dense/eval/调试路径；
+  不承担第一轮 Qwen3-30B-A3B MoE RL 主链路。
+
+治理层：
+  不直接绑定 verifiers Trace 或 slime Sample；
+  全部经 TrajectoryProjection 中立契约。
 ```
 
 ### E8 成功证据
@@ -430,15 +476,16 @@ Anti-Hack / protected artifact / GitHub 回捞拦截：第一轮实验的安全�
 
 我赞成单 harness、train=evaluate。
 
-建议将候选改写为：
+S0-8 已经把 E10 收口为：**训练与 before/after 评测使用同一 harness，首选 slime Claude Code harness；形态 A 不承担主 before/after 口径**。如果后续因为可安装性、许可或稳定性改用 Codex harness，也必须同步改训练与评测，不允许训练用 Claude Code、评测用另一套 scaffold 后还把结果解释为同一能力变化。
 
 ```text
 形态 B：
-  slime Claude Code harness 或 slime Codex harness。
-  首选哪个取决于本地可安装性、许可、额度、拦截稳定性和 S0 token capture 结果。
+  slime Claude Code harness 为当前推荐主口径；
+  Codex harness 是同层候选，但不能混用到同一 before/after 主实验。
 
 形态 A：
-  verifiers default harness（edit=true，search=false 起步）。
+  verifiers default harness（edit=true，search=false 起步）只作为回退或对照；
+  若切形态 A，报告必须显式标注 scaffold 已改变。
 
 不建议：
   mini-swe-agent / bash-only 作为首训主 harness。
@@ -487,7 +534,7 @@ DefaultRenderer 不能自动提供高置信 bridge；
 
 ### 5.3 slime
 
-`slime` 足以作为第一个在线训练后端候选。它已经支持 GRPO、GSPO、PPO、SGLang rollout、custom_generate、coding_agent_rl、Claude Code / Codex harness、Sample fan-out、logprob 捕获等能力。
+S0 后，`slime` 不再只是“第一个在线训练后端候选”，而是 **Qwen3-30B-A3B MoE 首训主链路的训练后端与原生 SGLang 路径**。它已经支持 GRPO、GSPO、PPO、SGLang rollout、custom_generate、coding_agent_rl、Claude Code / Codex harness、Sample fan-out、logprob 捕获等能力。
 
 但它不替代 RepoHarness：
 
@@ -499,13 +546,14 @@ slime 是训练后端 + agentic rollout substrate；
 不是 task quality / anti-cheat / eligibility 的唯一权威。
 ```
 
-特别需要写进 S0 的 slime 检查：
+S0 后对 slime 的要求应改成：
 
 ```text
-coding_agent_rl 示例脚本当前走 train.py，不应直接描述成 fully async 示例；
-示例默认偏 E2B sandbox，如果项目第一阶段用 Docker，需要适配；
-黑盒 adapter 当前使用 tokenizer.apply_chat_template，不是 renderers；
-top-p tape 与 routed experts 在黑盒路径中是否可用需要实测。
+必须 pin slime patch 镜像，而不是误连 stock SGLang；
+启动后必须跑 top_p < 1.0 探针，确认 meta_info 含 top_p_token_ids / top_p_token_offsets；
+routing/top-p 解码与校验只在 TrajectoryProjection 中实现一次；
+slime Sample 仍然只是训练容器，不是 RepoHarness 的审计 artifact；
+示例默认偏 E2B sandbox，如果 RepoHarness 第一阶段用 Docker，需要单独适配。
 ```
 
 ### 5.4 prime-rl
@@ -586,29 +634,37 @@ Verified 可作为内部 held-out sanity check。
 
 如果下一步要把底稿改成可执行实验设计，我建议按下面方式定稿。
 
-### 7.1 S0 阻塞验证
+### 7.1 S0 后剩余阻塞项
 
 ```text
-V1 目标 checkpoint 可获得，license 与 tokenizer 正常。
-V2 renderer resolution 命中 hand-coded renderer，bridge_to_next_turn 通过。
-V3 SGLang 能在 RTX Pro 6000 Blackwell 上运行目标模型。
-V4 slime / Megatron 训练最小 step 通过。
-V5 32K 压力样本测出显存、CPU 内存、token/s、训练 step 墙钟。
-V6 black-box harness 模型调用能捕获 prompt ids、completion ids、logprobs。
-V7 如果使用 MoE routing/top-p replay，确认 coding-agent path 可透传；否则明确降级。
-V8 clean grading、anti-cheat、eligibility sidecar 能与训练样本关联。
+已由 S0 关闭：
+  V1 依赖与 Docker 使用层；
+  V2 Qwen3-30B-A3B renderer coverage；
+  V3 token 协议链路；
+  V4 routing passthrough 与形态 A/B 评估。
+
+S1 必须关闭：
+  U-H：slime patch 镜像在 sm_120 / Blackwell 上可用；
+  top_p < 1.0 探针确认 top-p tape 存在；
+  TrajectoryProjection 能保存 token/logprob/routing/top-p 引用与治理事实。
+
+S4 前必须关闭：
+  U-C：8 卡训练侧最小 step；
+  32K 压力样本；
+  CPU offload、权重同步、PCIe 通信与训练 step 墙钟；
+  显存峰值、CPU 内存峰值、token/s、失败类型统计。
 ```
 
 ### 7.2 首训配置
 
 ```text
 模型：
-  Qwen3-30B-A3B 档起步；
-  35B-A3B 仅在 S0 通过后升级。
+  Qwen3-30B-A3B；
+  35B-A3B 不进第一轮默认配置，仅作 S4 前升级候选。
 
 接入：
-  优先验证形态 B：slime coding_agent_rl custom_generate。
-  形态 A：verifiers default harness + renderers，作为可审计基准路径。
+  形态 B：slime 原生 SGLang /generate + slime patch 镜像，是 MoE 首训主形态。
+  形态 A：verifiers default harness + renderers，作为协议基线、dense/eval/调试路径。
 
 算法：
   GRPO / GRPO++；
@@ -664,15 +720,15 @@ infra_failure 大量出现：
 
 ### D1 首训默认形态
 
-我的建议：默认先验证形态 B，也就是 slime coding_agent_rl custom_generate + Claude Code 或 Codex harness。原因是它最接近黑盒 coding-agent 训练，且 MoE / SGLang / slime 后端路径更现实。
+S0 后我的建议变为：**直接接受形态 B 作为首训默认形态**，不再把它写成待验证候选。原因是 topology 报告已经证明 top-p tape 是硬分水岭，形态 B 有 slime patch 镜像这条现成维护路径，形态 A 则要改三端协议。
 
-但必须保留形态 A 作为可审计路径，因为它的 token provenance 更干净，更适合验证 RepoHarness 的 artifact 与 adapter 设计。
+但必须保留形态 A 作为协议基线和可审计对照，因为它的 TrainClient + renderers + Trace 路径已经由 S0-5 证明可用，且适合 dense/eval/调试。
 
 ### D2 首训 harness
 
-需要在 Claude Code 与 Codex 之间选一个首训主 harness。
+需要确认是否接受 S0-8 的建议：**slime Claude Code harness 作为首训主 harness**。Codex harness 是同层候选，但不应在第一次 before/after 主实验里与 Claude Code 混用。
 
-我的建议：优先选 slime 示例最成熟、最容易跑通的那个。如果 Claude Code 的可安装版本、额度、许可、回连 adapter 最稳定，就选 Claude Code；如果 Codex CLI 更容易控制，则选 Codex。不要在第一次实验同时混训多个 harness。
+我的建议：若 Claude Code 的可安装版本、额度、许可、回连 adapter 稳定，就批准 Claude Code。若转向 Codex，训练与评测必须同时切到 Codex scaffold，并在报告中标注 scaffold 选择变化。
 
 ### D3 首训规模
 
@@ -694,9 +750,19 @@ Terminal-Bench Pro 小集；
 
 ### D6 MoE backend tensor 要求
 
-需要决定首训是否强依赖 top-p tape 与 routed experts。
+S0 后这个问题已经拆成两层：
 
-我的建议：如果只是跑通第一个可信训练闭环，可以允许“记录 token ids / logprobs / sampling params，暂不启用 routing replay”。如果目标是专门验证 MoE 训练稳定性，则必须在 S0 扩展 slime coding-agent adapter 或选择能保留这些 backend tensors 的路径。
+```text
+routing tape：
+  已动态验证可取，应纳入 TrajectoryProjection。
+
+top-p tape：
+  是否成为硬依赖取决于 E2 的训练 rollout top_p。
+  如果 top_p != 1.0，例如 0.95，则 top-p tape 是 slime loss 的硬依赖，U-H 必须在 S1 关闭。
+  如果 top_p = 1.0，则可以绕开 top-p tape，但会偏离多数前沿采样配置。
+```
+
+我的建议：保持 `top_p < 1.0` 的前沿配方，并把 U-H 作为 S1 必关项，而不是为了绕开镜像问题把采样退化到 `top_p = 1.0`。
 
 ## 9. 建议修改原底稿的清单
 
@@ -709,9 +775,11 @@ Terminal-Bench Pro 小集；
 7. E3 增加 pre-RL 行为诊断，避免等 20 个 RL step 后才发现必须 SFT。
 8. E4 增加 `dataset_freeze_report` 作为数据冻结硬产物。
 9. E6 将环境并发、镜像冷启动、工具执行、评分尾波纳入首训必采 timing 指标。
-10. S0 增加 MoE routing/top-p tape 在 slime coding-agent path 的动态验证项。
-11. S0 增加 renderer resolution 与 bridge 测试，防止 renamed checkpoint 退回 `DefaultRenderer`。
-12. 明确 mini-swe-agent / bash-only 只作为 baseline 或 transfer gap 对照，不作为首训主 harness。
+10. E7 写入 S0 定案：形态 B 是 MoE 首训主形态；形态 A 是协议基线、dense/eval/调试路径。
+11. E1 写入 S0 定案：Qwen3-30B-A3B 为默认目标；U-G renderer 守门必须作为启动断言。
+12. E2 显式拍板训练 rollout 的 `top_p`：若 `top_p != 1.0`，S1 必须 pin slime patch 镜像并用启动探针确认 top-p tape。
+13. E6 修正算力表述：S0 只验证单卡推理侧，8 卡训练侧留 U-C / S4 前预实验。
+14. 明确 mini-swe-agent / bash-only 只作为 baseline 或 transfer gap 对照，不作为首训主 harness。
 
 ## 10. 参考资料与链接
 
@@ -720,6 +788,12 @@ Terminal-Bench Pro 小集；
 - `docs/agentic_RL/training_design/repoharness_validation_experiment_design.md`
 - `docs/harness_improve/repo_harness_design_doc2_verifiers_based.md`
 - `docs/harness_improve/repo_harness_final_review_before_implementation.md`
+- `docs/agentic_RL/repo_harness_rh2_workstreams/s0/s0_acceptance_summary.json`
+- `docs/agentic_RL/repo_harness_rh2_workstreams/s0/v2_renderer_report.md`
+- `docs/agentic_RL/repo_harness_rh2_workstreams/s0/v3_protocol_report.md`
+- `docs/agentic_RL/repo_harness_rh2_workstreams/s0/topology_ab_report.md`
+- `docs/agentic_RL/repo_harness_rh2_workstreams/s0/swe_smoke_report.md`
+- `docs/agentic_RL/repo_harness_rh2_workstreams/s0/s0_8_expdesign_review.md`
 - `docs/harness_improve/external_paper_references/pdfs/glm5.2_blog_RL.md`
 - `docs/agentic_RL/training_design/warm_start_offline_data_filtering_design.md`
 - `reference/verifiers/verifiers/v1/clients/train.py`

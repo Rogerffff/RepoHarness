@@ -1,6 +1,6 @@
 # RepoHarness rh2 当前训练链路、轨迹保真与批调度基础教程
 
-更新时间：2026-07-11。
+更新时间：2026-07-20。本文是持续更新的代码走读，不是一次性设计稿。
 
 本文用于系统整理以下几类容易互相混淆的问题：
 
@@ -13,7 +13,8 @@
 7. Task、rollout、Sample、microbatch、global batch、optimizer step 分别是什么。
 8. TP、PP、CP、DP、VPP、`mb_group`、梯度累计和 `align_to` 的基础知识。
 9. P3 中 `19 < 32`、`23 mbs; need 24` 和 `gbs20` 成功分别意味着什么。
-10. 下一步为什么必须实现 batch admission preflight/repair，以及它应当如何工作。
+10. batch admission preflight/repair 为什么必要，以及它应当如何工作。
+11. fully async 的持续 worker、PromptGroup、ready queue、权重窗口和 faithful DIS 如何组成正式训练链。
 
 本文是教学文档，不替代机器可校验的阶段账本。项目实时状态仍以
 `docs/agentic_RL/repo_harness_rh2_workstreams/00-project-status.md`、各阶段 acceptance summary、
@@ -21,16 +22,342 @@
 
 ---
 
+## 0. 第 0 讲：先建立完整地图
+
+这一节先不钻进某个 Python 函数。目标是让读者先能回答四个问题：
+
+1. 一个 SWE 任务从哪里来，最后怎样变成一次参数更新。
+2. RepoHarness、slime、SGLang、Claude Code 分别负责什么。
+3. S1/P3 已经真实跑通的链路，与目标 fully async 链路有什么区别。
+4. 当前 FA-0～FA-5 到底完成了哪些部分，哪些代码虽然已经存在，但还没有接成正式训练闭环。
+
+### 0.1 先记住四种状态标记
+
+后面的图使用以下标记，避免把“写了一个类”误解为“生产链已经完成”：
+
+```text
+[EXTERNAL]  外部框架已经提供，本项目调用它，例如 slime、SGLang、Claude Code
+[DONE]      rh2 已实现，并且至少有本机回归或既有真机证据
+[PARTIAL]   已有局部实现或离线参考实现，但生产接线、恢复语义或真机验收未完成
+[TODO]      仍属于后续 FA 阶段
+```
+
+当前最重要的状态判断是：
+
+> FA-1 已经建立持续 worker、模型 proxy 和 slime rollout 入口，但完整的
+> version-aware fully async 正式训练链还没有闭环。FA-2 的身份与组装基座、
+> FA-3 的 ready batch 消费、FA-4 的真实权重窗口协调与 Megatron DIS 接线、
+> FA-5 真机验收仍未完成。
+
+因此现在适合讲解，也适合继续实现；但不应把当前代码描述成“fully async 已完成”。
+
+### 0.2 图一：整个项目分层图
+
+```mermaid
+flowchart TD
+  subgraph DATA["任务与环境生产"]
+    D0["原始 SWE 数据集"] --> D1["S2 ingestion [PARTIAL]<br/>字段剥离、镜像 pin、三分 bundle"]
+    D1 --> D2["EnvironmentPackage<br/>Public / Grading / Validation"]
+  end
+
+  subgraph SOURCE["slime 任务供给与 rollout 调度"]
+    S0["slime DataSource [EXTERNAL]"] --> S1["FA rollout 入口 [DONE]<br/>generate_rollout"]
+    S1 --> S2["ContinuousExecutionWorker [DONE]"]
+    S2 --> S3["RolloutOrchestrator [DONE]"]
+  end
+
+  subgraph EXEC["一次 RolloutExecution"]
+    E0["rollout Docker 沙箱 [DONE]"] --> E1["Claude Code 2.1.205 [EXTERNAL]"]
+    E1 --> E2["aiohttp Anthropic adapter [EXTERNAL + rh2 接线]"]
+    E2 --> E3["ModelCallProxy [DONE]"]
+    E3 --> E4["SGLang /generate [EXTERNAL]"]
+    E4 --> E5["token ids / logprobs<br/>top-p tape / routing tape / weight version"]
+    E5 --> E1
+  end
+
+  subgraph GOVERN["评分与训练治理"]
+    G0["TrajectoryManager 叶链 [EXTERNAL]"] --> G1["capture 回链和 tape backfill [DONE]"]
+    G1 --> G2["clean grading 第二沙箱 [DONE]"]
+    G2 --> G3["TrajectoryProjection + EligibilityGate [DONE]"]
+  end
+
+  subgraph ASYNC["fully async 组装与训练消费"]
+    A0["RolloutAttemptOutcome [契约 DONE]"] --> A1["PromptGroupAssembler [TODO FA-2]"]
+    A1 --> A2["QualifiedPromptGroupQueue [TODO FA-2]"]
+    A2 --> A3["SlimeBatchAssembler + lease/ACK [TODO FA-3]"]
+    A3 --> A4["build_dp_schedule 预检<br/>离线参考实现 [PARTIAL]"]
+  end
+
+  subgraph TRAIN["训练与权重更新"]
+    T0["Ray object store / rollout_data [EXTERNAL]"] --> T1["Megatron trainer [EXTERNAL]"]
+    T1 --> T2["faithful DIS<br/>数值参考 DONE / 接线 TODO"]
+    T2 --> T3["optimizer step"]
+    T3 --> T4["TrainingRuntimeCoordinator [TODO FA-4]"]
+    T4 --> T5["pause / update / continue SGLang"]
+  end
+
+  D2 --> S0
+  S3 --> E0
+  E1 --> G0
+  G3 --> A0
+  A4 --> T0
+  T5 -. "新权重版本" .-> E4
+```
+
+这张图里，RepoHarness 的核心价值不是替代 slime 或 SGLang，而是补上它们通常不拥有的事实和边界：
+
+- 什么任务包可以让模型看到，什么只能进入评分环境。
+- 一次黑盒 harness 执行产生了哪些真实模型调用。
+- 哪些 token 有可验证的采样来源，可以进入 loss。
+- `reward=0` 是可信任务失败，还是基础设施坏了后伪造的数值。
+- 同一 prompt 的固定 `n` 个执行是否完整且版本相容。
+- 训练 batch 是否满足 slime/Megatron 的分布式装箱约束。
+
+`verifiers v1` 没有出现在这张“当前可执行主链”中，是因为它目前主要是 rh2 的长期架构基座和中立投影参考。S1/P3 真机跑通的是 slime 形态 B，不是 `verifiers EnvServer -> slime trainer` 的直接链路。这两件事不能混写。
+
+### 0.3 图二：用一个真实 SWE 任务走完整链路
+
+后续各讲统一使用 S1 真机任务 `django__django-16139`。它的问题是 Django
+`UserChangeForm` 中密码修改链接在通过 `to_field` 访问 admin 时生成错误 URL。
+任务基线提交为 `d559cb02da30f74debbb1fc3a46de0df134d2d80`，冻结镜像、题面和 bundle digest
+记录在：
+
+```text
+rh2/src/repoharness2/envpack/data/swe_smoke_tasks.json
+rh2/src/repoharness2/envpack/data/frozen_v1.json
+```
+
+S1 run8 的真实轨迹是：
+
+```text
+trajectory_id = 4a25c5a4-f07f-422b-a6a4-acaab80af12f
+真实模型调用 = 6 次
+真实采样输出 = 2772 token
+最终进入 loss = 2148 token
+评分结果 = resolved，reward = 1.0
+```
+
+完整过程如下：
+
+```mermaid
+sequenceDiagram
+  participant DS as slime DataSource
+  participant FA as RH2 FA rollout service
+  participant OR as RolloutOrchestrator
+  participant SB as rollout Docker
+  participant CC as Claude Code
+  participant AD as aiohttp adapter + proxy
+  participant SG as SGLang
+  participant GR as clean grading Docker
+  participant GT as Projection + Gate
+  participant PG as PromptGroup / Batch assembler
+  participant TR as Megatron trainer
+
+  DS->>FA: 取一个 prompt group（S1 n=4；正式首训目标 n=8）
+  FA->>OR: 分派一个 RolloutExecution
+  OR->>SB: 按 public bundle 物化 django 基线
+  OR->>CC: 注入题面、工作目录、模型代理地址并启动 CLI
+
+  loop 六次真实模型调用 t0...t5
+    CC->>AD: POST /v1/messages（当前 Bearer=sid；FA-2 目标为私有 capability）
+    AD->>SG: /generate + top-p/routing/logprob 请求
+    SG-->>AD: token ids、logprobs、tape、weight_version
+    AD-->>CC: Anthropic SSE 响应
+    AD->>AD: stage 后在 record_turn 时 commit capture
+    CC->>SB: 执行 bash、读代码、改文件、跑测试
+  end
+
+  CC-->>OR: harness 退出，提交工作区状态
+  OR->>AD: finish_session，先 drain 所有在飞模型轮次
+  AD-->>OR: 叶链 Sample + capture records
+  OR->>OR: REALIGN/FORK 后按 token identity 回链并 backfill tape
+  OR->>GR: 导出清洁 patch，在第二个 clean checkout 中评分
+  GR-->>OR: GradingReport(reward=1.0)
+  OR->>GT: grade -> project -> scan -> eligibility
+  GT-->>FA: 合格 Sample + sidecar，或 remove_sample 缺员结果
+
+  FA->>PG: [当前是 interim collector；目标是 FA-2/FA-3]
+  PG->>TR: 完整组、合法 schedule、训练张量
+  TR->>TR: GRPO advantage + faithful DIS + optimizer step
+  TR-->>SG: 发布新权重版本
+```
+
+这条 sequence diagram 同时包含“已经发生过的真实部分”和“目标 fully async 后半段”：
+
+- 从任务物化到 `EligibilityGate`，S1/P3 已经真实跑通。
+- `ContinuousExecutionWorker` 和持久 FA 入口已有本机实现。
+- 图中 `PromptGroup / Batch assembler` 仍是正在建设的边界。目前代码使用
+  `_InterimGroupCollector` 临时收组，它不能代替 FA-2/FA-3 的正式状态机、持久恢复和 batch lease。
+- `faithful DIS` 已有可对拍的数值参考函数，但尚未接进真实 Megatron loss。
+- “训练时发布权重窗口，proxy 按窗口透明重生成”目前只有 proxy 消费侧，真实协调器尚未接通。
+
+### 0.4 图三：三种异步程度不要混淆
+
+项目经历了三种形态：
+
+```mermaid
+flowchart LR
+  subgraph SYNC["A. batch synchronous"]
+    A1["生成 batch N 全部 rollout"] --> A2["训练 batch N"]
+    A2 --> A3["更新权重"]
+    A3 --> A4["生成 batch N+1"]
+  end
+
+  subgraph TA["B. slime train_async，S1/P3 形态"]
+    B1["生成 batch N+1"] -. "与训练重叠" .- B2["训练 batch N"]
+    B1 --> B3["仍需等待 N+1 中最慢 rollout"]
+    B2 --> B4["到更新间隔时先同步 generation，再更新权重"]
+  end
+
+  subgraph FA["C. 目标 version-aware fully async"]
+    C1["worker 持续生成独立 execution"] --> C2["完整合格 PromptGroup ready queue"]
+    C2 --> C3["assembler 选择可装箱 batch"]
+    C3 --> C4["trainer 持续消费"]
+    C4 --> C5["权重窗口显式发布"]
+    C5 -. "逐轮版本 + DIS" .-> C1
+  end
+```
+
+关键区别不是“有没有 `async def`”，而是等待边界在哪里：
+
+| 形态 | rollout 与训练能否重叠 | 是否等待 batch 内最慢轨迹 | rollout 进行时能否发生权重更新 |
+| --- | --- | --- | --- |
+| batch synchronous | 不能 | 是 | 否 |
+| slime `train_async` | batch N 训练与 N+1 rollout 可重叠 | **仍然是** | 默认在更新前同步 generation |
+| 目标 fully async | 持续重叠 | 不等待某个固定 batch 的最慢轨迹，只等 ready 供给 | 可以，但必须记录版本、处理更新窗口 abort，并用 DIS 修正 |
+
+P3 测得 `wait_time_ratio=0.82`、尾部空闲 26%～28%，说明当前主要成本确实在 rollout 长尾，
+所以正式首训改成 fully async 是有数据依据的，不是为了追求更复杂的架构。
+
+### 0.5 图四：目标 fully async 的两条并行流水线
+
+fully async 不是“trainer 不再等任何东西”。trainer 仍需调用 rollout 函数取得一个可训练 batch；
+真正的变化是，rollout 函数背后有一个跨调用保温的生产系统，持续准备 ready 组。
+
+```mermaid
+flowchart TD
+  subgraph PRODUCER["生产流水线，持续运行"]
+    P0["DataSource"] --> P1["ExecutionTaskSpec"]
+    P1 --> P2["ContinuousExecutionWorker"]
+    P2 --> P3["Orchestrator finalize"]
+    P3 --> P4["RolloutAttemptOutcome"]
+    P4 --> P5["PromptGroupAssembler"]
+    P5 -->|"固定 n 完整、资格合格、版本可接受"| P6["QualifiedPromptGroupQueue"]
+    P5 -->|"缺员 / 安全拒绝 / 过期"| PX["审计、隔离或丢弃，不进在线训练"]
+  end
+
+  subgraph CONSUMER["训练消费流水线，按需取 batch"]
+    C0["SlimeBatchAssembler"] --> C1["预留完整组 batch lease"]
+    C1 --> C2["build_dp_schedule 差分预检"]
+    C2 -->|"不合法"| C3["释放租约，换组或等待更多 ready 组"]
+    C3 --> C0
+    C2 -->|"合法"| C4["RolloutFnTrainOutput"]
+    C4 --> C5["slime converter / Ray object store"]
+    C5 --> C6["Megatron optimizer step"]
+    C6 --> C7["trainer ACK，组进入 TRAINED/ACKED"]
+  end
+
+  P6 --> C0
+```
+
+这里的 `QualifiedPromptGroupQueue` 首版可以是进程内有界异步队列加持久账本，
+不一定是 Kafka、Redis 之类的独立服务。Python 的 `asyncio.Queue` 也叫队列，
+但它只是同一进程/事件循环中的协作数据结构。只有当跨进程、跨机器或需要独立扩缩容时，
+才需要真正的网络消息队列。
+
+### 0.6 图五：权重更新为什么需要协调器和 proxy
+
+目标链选择的是 version-aware fully async。假设 Claude Code 的第 4 轮模型请求
+正好撞上 trainer 把推理权重从 v7 更新到 v8：
+
+```mermaid
+sequenceDiagram
+  participant CC as Claude Code
+  participant PX as ModelCallProxy
+  participant CO as TrainingRuntimeCoordinator
+  participant SG as SGLang
+  participant TR as Trainer
+
+  CC->>PX: 一个 HTTP 请求，logical_turn_id=t4
+  PX->>CO: 查询窗口，ACTIVE(v7)
+  PX->>SG: attempt_1，request_id=r1
+  TR->>CO: phase=PAUSING，old=v7，target=v8，fence=f8
+  TR->>SG: pause_generation / update weights
+  SG-->>PX: attempt_1 aborted，未交付给 CC
+  PX->>CO: 核对中断与已知窗口重叠
+  TR->>CO: phase=ACTIVE，active=v8，fence=f8
+  PX->>SG: attempt_2，request_id=r2，同一个逻辑轮
+  SG-->>PX: 成功，weight_version=v8
+  PX-->>CC: 只交付一次成功 SSE
+```
+
+这不是让 Claude Code 自己重试。proxy 必须在同一个 HTTP handler 内完成重生成，
+否则 Claude Code 对 5xx 的原生重试会产生新的 HTTP 请求，可能造成 turn/capture 身份混乱。
+
+当前完成情况：
+
+- `ModelCallProxy` 的 attempt 账目、deadline、poison、内部重生成状态机已有实现和故障注入测试。
+- 当前 glue 使用 `StaticActiveCoordinator`。它没有 trainer 发布的真实窗口事实，
+  所以正式语义只能保守地把不可归因中断判成缺员，不能宣称透明重生成生产可用。
+- FA-4 需要把 trainer 的 `pause -> update -> continue` 生命周期发布为
+  `TrainingRuntimeWindow`，并由所有 proxy 读取一致的 consensus version。
+- batch 消费时还要比较 current policy 与各 token 的 rollout policy，
+  过度陈旧 token/组拒绝；其余用 faithful DIS 计算重要性权重。
+
+### 0.7 当前 FA 阶段的真实完成度
+
+| 阶段 | 已完成 | 仍未完成 |
+| --- | --- | --- |
+| FA-0 | `ExecutionIdentity`、`RolloutAttemptOutcome`、`TrainingRuntimeWindow`、`ModelCallAttempt` 契约；真实 weight version 字段管道；compaction 守卫 | 契约要在 FA-2/FA-4 的生产对象中全部消费 |
+| FA-1 | `ContinuousExecutionWorker`、有界交付队列、资源限额、`ModelCallProxy`、session poison、同步 FA rollout 入口、capture wire 接线 | 最近完整审计仍发现跨线程 version snapshot、execution audit 事务/run-halt、持久 timing 等收口项；还未通过 FA-5 真机 |
+| FA-2 | 尚未实现正式组装器 | F2-1～F2-6 runtime identity 与 durability 基座；`PromptGroupAssembler`；`QualifiedPromptGroupQueue`；组状态机与恢复 |
+| FA-3 | `batch_admission.py` 离线预检；J4/J5 失败夹具；与真实 `build_dp_schedule` 差分测试 | ready queue 消费、组 lease/ACK、换组搜索、trainer 提交/恢复接线 |
+| FA-4 | `faithful_dis.py` 数值参考、torch autograd 对拍 | Megatron custom loss、真实 `TrainingRuntimeCoordinator`、消费时 staleness gate、指标落盘 |
+| FA-5 | 验收清单已写 | 本地全链故障注入收口、真实 Claude Code/SGLang/8 GPU 集成、闸门翻转 |
+
+所以接下来最合理的实施顺序是：
+
+```text
+FA-1 短收口
+  -> FA-2A Runtime Identity & Durability Foundation
+  -> FA-2B PromptGroupAssembler + ready queue
+  -> FA-3 生产接线和 batch lease/ACK
+  -> FA-4 协调器 + Megatron DIS 接线
+  -> FA-5 本地故障战役 + 短租真机验收
+```
+
+FA-2A 不只是“给对象多加几个 id”。它要同时解决：公开执行身份与私有 bearer 凭证分离、
+request 级 capture 归属、预取后 actor 崩溃的恢复语义、组成员不变量、attempt 到 Outcome 的双向证据链。
+这些没有定牢之前直接写组状态机，会把恢复和安全问题永久嵌进错误的数据结构。
+
+### 0.8 后续逐讲路线
+
+后续在本文继续追加和修订，建议按以下顺序学习：
+
+1. **第 1 讲：真实任务与环境包**。从 `django__django-16139` 原始行开始，解释 public/grading/validation 三分 bundle、镜像、base commit 和 Docker 物化。
+2. **第 2 讲：一次 RolloutExecution**。逐段读 `RolloutOrchestrator.generate`，解释 Python 对象、依赖注入、`async def`、`await`、`try/finally` 和资源所有权。
+3. **第 3 讲：Claude Code 到 SGLang 的一次 HTTP 调用**。解释 aiohttp server、middleware、Bearer capability、SSE、stage/commit capture、线程和 event loop。
+4. **第 4 讲：token-faithful 轨迹**。用六轮真实 token 数解释 `CLEAN/REALIGN/FORK`、loss mask、logprob、top-p 和 routing tape。
+5. **第 5 讲：clean grading 与 EligibilityGate**。解释 `reward=0` 与 `reward=None`、hidden verifier 隔离和 fail-closed。
+6. **第 6 讲：PromptGroup 与 fully async 调度**。解释 worker、backpressure、队列、缺员组、预取恢复和 FA-2 状态机。
+7. **第 7 讲：batch scheduling**。解释 Sample、rollout execution、branch、microbatch、DP/PP/VPP、J4 `19<32` 和 J5 `23<24`。
+8. **第 8 讲：训练与权重更新**。解释 GRPO、faithful DIS、Ray actor、Megatron optimizer step、权重同步和 staleness。
+
+先把第 0 讲完全看懂，比现在就追 `asyncio.Lock` 或 Megatron 张量维度更重要。后面的基础知识会在它第一次真正影响正确性的地方解释，而不是单独堆一章术语表。
+
+---
+
 ## 1. 阅读路线
 
 如果只想快速恢复上下文，按以下顺序阅读：
 
-1. 第 2 节：项目目前处于什么位置。
-2. 第 4 节：当前真实在线训练链路全图。
-3. 第 6、7 节：`REALIGN` 和真实任务例子。
-4. 第 8 节：为什么在线强化学习能训练，离线导出暂时不能。
-5. 第 10～15 节：batch 和并行训练基础，以及 P3 失败原因。
-6. 第 16、17 节：下一步系统设计和实施顺序。
+1. 第 0 节：先建立当前链路与目标链路的完整地图。
+2. 第 2 节：项目目前处于什么位置。
+3. 第 4 节：S1/P3 已真实跑通的在线训练链路。
+4. 第 6、7 节：`REALIGN` 和真实任务例子。
+5. 第 8 节：为什么在线强化学习能训练，离线导出暂时不能。
+6. 第 10～15 节：batch 和并行训练基础，以及 P3 失败原因。
+7. 第 16、17 节：旧版 batch admission 设计；fully async 的最新边界以第 0 节和 `05-fully-async-execution-plan.md` 为准。
 
 如果第一次学习这些概念，建议从头阅读，不要直接从 P3 错误日志开始。
 
@@ -74,23 +401,25 @@ RepoHarness rh2 =
 | 阶段 | 状态 | 核心结论 |
 | --- | --- | --- |
 | S0 可行性验证 | 已完成 | verifiers pin、renderer、协议和 MoE 张量链路方向可行 |
-| S1 最小闭环 | 已完成，项目账本仍保留检查点确认注记 | task、环境、黑盒 harness、capture、clean grading、projection、eligibility、slime debug training step 已闭环 |
+| S1 最小闭环 | 已完成，检查点 2 已确认 | task、环境、黑盒 harness、capture、clean grading、projection、eligibility、slime debug training step 已闭环 |
 | P1 数据冻结 | 已完成 | 正式首训数据候选完成 revision pin、hints 剥离和静态门筛选 |
 | P3 八卡预实验 | 已完成 | 30B MoE 训练内核、routing/top-p replay、权重同步、T3 分离放置和 fully async 可启动性均已验证 |
-| S2 SWE-Safety 加固 | 尚未开工 | 需要补安全 Runtime、反作弊、数据四门、离线导出器重建和 batch admission |
+| FA fully async | 进行中 | FA-0 完成；FA-1 主体完成但有收口项；FA-3 离线和 FA-4 数值对拍完成；FA-2、生产接线与 FA-5 待做 |
+| S2 SWE-Safety 加固 | 并行进行中 | ingestion 已构造 216/216 EnvironmentPackage；安全 Runtime、反作弊、数据四门和离线导出器等仍待继续 |
 
 当前闸门含义：
 
 ```text
 rh2_s0_complete             = true
-rh2_s1_closed_loop          = true，账本保留 checkpoint-2 confirmation 注记
+rh2_s1_closed_loop          = true，checkpoint-2 已确认
 rh2_s2_signal_trusted       = false
+rh2_fully_async_training_path_verified = false
 rh2_formal_training_allowed = false
 ```
 
 因此，项目已经证明“链路能够跑通”，但还没有进入正式训练。
 
-### 2.3 两个最重要的剩余技术问题
+### 2.3 当前最重要的剩余工作
 
 第一项是 S1 留下的离线导出问题：
 
@@ -107,7 +436,21 @@ token_reconstruction_mismatch
 可能不满足 global_batch_size 和 dp_size × mb_group 约束。
 ```
 
-它是正式在线训练的直接前置阻塞，比离线导出器更应优先处理。
+它已经有 FA-3 离线预检器和差分测试，但尚未接到 ready queue 与 trainer 提交边界。
+
+第三项是 fully async 的运行时闭环：
+
+```text
+唯一 execution 身份与私有会话凭证
+-> PromptGroupAssembler
+-> QualifiedPromptGroupQueue
+-> batch lease / trainer ACK
+-> TrainingRuntimeCoordinator
+-> Megatron faithful DIS
+```
+
+它是正式在线训练的直接前置阻塞，比离线导出器更应优先处理。第 16、17 节形成于
+fully-async-first 定案之前，仍适合学习 batch 约束，但实施顺序应以第 0 节和 05 计划为准。
 
 ---
 

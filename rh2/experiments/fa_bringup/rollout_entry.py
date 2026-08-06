@@ -187,7 +187,7 @@ class FaRolloutService:
         self._limits = limits
         self._member_backlog: deque[ExecutionTaskSpec] = deque()
         self._group_seq = 0
-        self.failure_records: list[tuple[str, str, str]] = []  # (group, execution, error)
+        self.failure_records: list[tuple[str, str, str | None, str]] = []  # (group, execution, paid, error)
         # 持久运行时（跨 collect_batch 保温，codex 轮次 7 P0-3）
         self._queue: BoundedDeliveryQueue | None = None
         self._collector: _InterimGroupCollector | None = None
@@ -234,8 +234,14 @@ class FaRolloutService:
         self._collector = self._collector or _InterimGroupCollector(self._group_size)
 
         def failure_sink(spec: ExecutionTaskSpec, exc: BaseException) -> None:
+            # F2-1a 复核 P1-4：worker failure record 也带 physical_attempt_id
             self.failure_records.append(
-                (spec.prompt_group_id, spec.rollout_execution_id, f"{type(exc).__name__}: {exc}")
+                (
+                    spec.prompt_group_id,
+                    spec.rollout_execution_id,
+                    spec.physical_attempt_id,
+                    f"{type(exc).__name__}: {exc}",
+                )
             )
             assert self._collector is not None
             self._collector.add_failure(spec, f"{type(exc).__name__}: {exc}")
@@ -246,13 +252,22 @@ class FaRolloutService:
             # metadata 读入 audit 并登记 sid→paid 映射
             payload = spec.payload
             meta = getattr(payload, "metadata", None)
-            if isinstance(meta, dict):
-                meta.setdefault("rh2_rollout_execution_id", spec.rollout_execution_id)
-                meta.setdefault("rh2_prompt_group_id", spec.prompt_group_id)
-                meta.setdefault("rh2_member_slot", spec.member_slot)
-                if spec.physical_attempt_id is not None:
-                    meta["rh2_physical_attempt_id"] = spec.physical_attempt_id
-                    meta["rh2_physical_attempt_seq"] = spec.physical_attempt_seq
+            # P1-4：FA 路径要求 metadata 可写——否则身份无处安放，结构化失败
+            # （不 fail-open 静默跳过，否则后续全链 paid=None 又难归因）
+            if not isinstance(meta, dict):
+                raise FaEntryError(
+                    "member_metadata_not_writable",
+                    f"member {spec.rollout_execution_id} 的 metadata 不是 dict"
+                    f"（得到 {type(meta).__name__}）——FA 身份无法注入。",
+                )
+            # 系统字段**覆盖**旧值（复用 Sample 可能带陈旧 group/execution 身份，
+            # setdefault 会保留脏值）
+            meta["rh2_rollout_execution_id"] = spec.rollout_execution_id
+            meta["rh2_prompt_group_id"] = spec.prompt_group_id
+            meta["rh2_member_slot"] = spec.member_slot
+            if spec.physical_attempt_id is not None:
+                meta["rh2_physical_attempt_id"] = spec.physical_attempt_id
+                meta["rh2_physical_attempt_seq"] = spec.physical_attempt_seq
             return await self._execute_member(payload)
 
         self._worker = ContinuousExecutionWorker(
