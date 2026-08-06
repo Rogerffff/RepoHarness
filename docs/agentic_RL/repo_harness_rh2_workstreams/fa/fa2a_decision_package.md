@@ -207,7 +207,12 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
        profile 决定伪装成 completion fact
      ——每个 profile 必须对全部 termination_kind 给出唯一 disposition
        （含 horizon 族/看门狗/控制面/各类 infra/无法静止），缺项 = 配置
-       非法拒绝启动
+       非法拒绝启动。**批准后勘误（2026-08-07，六审 3——与 owner 批准
+       范围第 ④⑤ 点对齐）**：D1b 前 candidate profile 只对**已定案**
+       类别计算 disposition；`hard_wall_timeout`（present_truncated）
+       标 `decision_deferred`；含 decision_deferred 的映射下 `enforce`
+       模式禁止启动——"必须穷举"自 D1b 发布完整映射的正式 profile
+       版本起生效
    enforcement_mode ∈ { audit_only, enforce }
      ——audit_only（FA 开发/诊断期）：不执行 profile 剔除，且**同时计算
        两个候选 profile 的 disposition** 记入

@@ -4257,3 +4257,77 @@ chargeable policy time: not defined; may ultimately be unnecessary
 本文的目的是先让决策包和调查文档可以在不预决算法语义的前提下支持
 FA-2A 实现，不是替代项目所有者完成四项 T0 拍板。
 
+
+
+---
+
+## FA-2A 执行计划审查（六审，2026-08-07 后：5 阻塞全采纳——"决策包批准有效，计划未过 §3.2，先修再开工"）
+
+> 原文全文转录（tmp/codex建议6.md）。处置：全部 accepted。要点：计时提案加"V0 唯一可执行清单"并把 L4/chargeable/deadline 切换摘出 F2 归属（P1-5 移 D1b——统一起点改变超时分布是行为变更）；六审 2 = F2-1 新增 **RolloutAttemptOutcome v2**（completion 新枚举不兼容 v1，不原地改，crosswalk+双读+正式链只产 v2+round-trip 测试；grader 基建失败只令 reward unavailable 不倒写 completion）；决策包批准后勘误——D1b 前 candidate profile 只算已定案类别、hard_wall 标 decision_deferred、enforce 禁启动；场景 22 撤 optimizer exactly-once 暗诺（只测 submission 幂等 + uncertain_trained 结构化账目）；F2-0 展开为可执行切片（输入/产物/迁移序/回滚/本机验收/GPU 排除）+ FA/S2 文件 ownership 表（contracts/grading.py 与 grading/manager.py S2 优先）+ F2-0~F2-6 切片总表（Observability V0 旁路接线，FaultDomainMonitor 归 FA-2B）；残留 v3.1 引用清理、F2-4 定案改完成态。
+
+**结论**
+
+暂时不要开工。`4866b42b` 对 D1-D4 的落账基本正确，但执行计划审查发现 5 个阻塞项。它们不需要重新讨论 FA 方向，也没有推翻你的拍板；Claude 修正计划后做一次聚焦复核即可进入 F2-0。
+
+**阻塞问题**
+
+1. **Observability V0 仍混入被明确延后的实现。**
+
+计时文档顶部正确写了“不做 L4、不定义 chargeable policy time”，但实施表仍要求 F2-0 写入 `chargeable_execution_seconds`、解析 `trajectory.jsonl`，并把 L4 标为 F2-0 工作；P1-5 还会改变 deadline 起点和实际超时分布。[timing_model_proposal.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:319) [同文件](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:444) [05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:327)
+
+修复要求：另列唯一的 V0 可执行清单；删除 L4、`chargeable_execution_seconds` 和 deadline 行为切换的 F2 归属。V1+ 研究内容可保留，但必须标为不可执行设计储备。
+
+2. **新 completion 语义与现有公共 schema 完全不兼容，计划没有迁移步骤。**
+
+v4 定义：
+
+```text
+present_complete | present_truncated | missing
+```
+
+现有 `RolloutAttemptOutcome v1` 却是：
+
+```text
+present | missing_after_local_retry | permanent_rejection
+```
+
+而且现有 validator 把完成事实、评分事实和永久拒绝混在同一字段。[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:109) [决策包](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:89)
+
+修复要求：计划明确新增 `RolloutAttemptOutcome v2`，不得原地改 v1；写清 v1→v2 crosswalk、双版本读取、正式链只生产 v2、registry/CLI round-trip 测试。还应明确：grader 基建失败是否改变 execution completion，还是只令 reward unavailable。我的建议是后者，避免评分故障倒写执行事实。
+
+3. **`hard_wall_timeout` 延后处置与 profile“必须穷举”互相矛盾。**
+
+文档一边延后 hard-wall 的 group/reward/gradient 处置，一边要求两个候选 profile 对所有 termination kind 产生 disposition。[决策包](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:201)
+
+修复要求：D1b 前，候选 profile 只计算已定案类别；hard wall 标记为 `decision_deferred`，`enforce` 模式禁止启动。D1b 批准完整映射后再发布正式 profile 版本。
+
+4. **FA-3 验收仍暗中承诺 optimizer exactly-once。**
+
+D2 明确不承诺 optimizer step exactly-once，但场景 22 又要求 handoff 后崩溃、lease 重放时“同一 batch 不被重复计入 optimizer step”。当前 slime 没有 durable ACK，这个保证做不到。[05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:251)
+
+修复要求：测试只承诺 submission 幂等、重复风险有结构化账目；有 trainer durable evidence 才禁止 release。无法确定是否已训练的 crash window 必须如实记录，不得用 batch ID 宣称 optimizer 已去重。
+
+5. **F2-0 还不是可执行切片。**
+
+计划只说“把代码从 experiments 提升到 src”，没有目标模块、切换顺序、回滚、验收或文件 ownership。当前真实 FA 入口仍直接导入实验目录中的 `glue`，大量测试也直接导入 `capture_wire`。[05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:96) [rollout_entry.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:331)
+
+F2-0 至少应写清：
+
+```text
+输入：实验目录中的 capture_wire/glue + 既有测试
+产物：src 下唯一权威模块 + experiments 薄兼容壳
+迁移：先建 src → 测 parity → 原入口改导入 src → 禁止双实现
+回滚：只回滚导入绑定，不回滚/转换任何持久事实
+本机验收：全套测试、双线程探针、生产入口 import、rg 禁止 src 反向依赖 experiments
+GPU 验收：不在 F2-0，真实 slime/CC/SGLang 留 FA-5
+```
+
+还需增加 FA/S2 文件 ownership 表，尤其是 `contracts/grading.py`、`grading/manager.py` 可能被两条线程同时修改。
+
+**切片建议**
+
+计划应显式覆盖：F2-0 纯迁移、F2-1 identity + outcome v2、F2-2 session capability + Runtime quiescence、F2-3 request capture + single owner、F2-4 checkpoint recovery、F2-5 collector 不变量、F2-6 durable manifest。Observability V0 作为每个切片的旁路事件接线，最终统一验收；D4 `FaultDomainMonitor` 明确归 FA-2B。
+
+另外应清掉仍写着 v3.1、v3.2 的执行引用，并把已经完成的“F2-4 定案”从未来步骤改为完成状态。
+
+因此当前判定是：**决策包批准有效，但执行计划尚未通过 §3.2，先修上述 5 项，不开代码。**

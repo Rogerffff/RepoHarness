@@ -23,6 +23,18 @@ evidence: P3 真实数据 = docs/agentic_RL/repo_harness_rh2_workstreams/
 > trajectory.jsonl、不新增工具级脱敏 artifact、不声称工具级精确计时**
 > （CC 内部时间记 residual_estimate）——本文 §4b 的 L4 方案与三个 T0
 > 候选全部转入 D1b 批次待议。本文其余细节契约作为 V1+ 设计储备保留。
+>
+> **V0 唯一可执行清单**（六审 1：与储备内容物理分开，F2 切片只做这些）：
+> 1. `RolloutAudit.timeline` 扩事件名（服务启动/单 rollout/模型调用/
+>    组与 batch 四组事件表，见 codex 五审 §3）+ 每事件三字段
+>    （clock_domain_id / owner_role / physical_attempt_id）；
+> 2. execution audit 记录加 `wall_*` 原始时间与候选
+>    `non_chargeable_intervals`（**不派生 chargeable 值**）；
+> 3. `ModelCallAttempt` optional 等待/发送区间字段（同 clock domain）；
+> 4. SGLang `server_timing` 白名单保存（§4a 方案，T1）。
+> **明确不在 V0**：L4 全部；chargeable_execution_seconds；deadline 起点
+> 切换（P1-5 行为变更——改变超时分布，转 D1b 批次）；任何用新计时改变
+> termination/reward/admission/gradient 的路径。
 
 ## 0. 三条全局规则（所有层共用）
 
@@ -323,7 +335,7 @@ queue_wait + 峰值内存，生产于 grading/manager.py:631-632），L5 直接
 | --- | ----- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | L2    | rh2/src/repoharness2/adapters/slime/generate.py:1160-1166, 1204-1213                           | `RolloutTimelineEntry`/`audit.mark`——只扩事件名集合，机制不动                                                                                                                               |
 | 2   | L2    | rh2/experiments/s1_7a_bringup/glue.py:155-188（F2-0 后为 src 内正式位置）                               | `ClaudeCodeDriver.run` 加 optional `phase_sink` 参数，orchestrator 传 `audit.mark`                                                                                                   |
-| 3   | L2    | rh2/experiments/s1_7a_bringup/glue.py:298-349                                                  | `write_execution_audit_record`：`rh2.fa.execution_audit.v1` 记录加 `wall_*` / `non_chargeable_intervals` / `chargeable_execution_seconds` 三键（dict 记录追加键，读方 `timing_summary` 消费不受影响） |
+| 3   | L2    | rh2/experiments/s1_7a_bringup/glue.py:298-349                                                  | `write_execution_audit_record`：记录加 `wall_*` 与候选 `non_chargeable_intervals`（**只记录原始区间**；`chargeable_execution_seconds` 派生值 = D1b 决策，V0 不写入——六审 1） |
 | 4   | L2/L3 | rh2/src/repoharness2/adapters/slime/async_worker.py:644-651                                    | 并集派生走既有 `snapshot_attempts()` 跨线程安全接口，不新增共享可变状态                                                                                                                                 |
 | 5   | L3    | rh2/src/repoharness2/contracts/fa_runtime.py:306-369                                           | `ModelCallAttempt` 新增 optional 区间字段（validator 保持既有 delivered/non-delivered 约束不动）                                                                                                |
 | 6   | L3    | rh2/src/repoharness2/adapters/slime/async_worker.py:753-777, 748, 858, 960-1037                | `ModelCallProxy` 四个等待/发送点各包一段区间测量（`self._clock` 已注入可测试）                                                                                                                         |
@@ -441,9 +453,9 @@ event type / CC 事件时间戳 / uuid / tool_use_id / parent_tool_use_id /
   residual_estimate，精度显著下降。
 ```
 
-**归属**：解析器与脱敏器（纯函数 + 夹具单测）可在 FA-2A **F2-0** 随
-提升落地；真实 CC 端到端验真挂 **FA-5** 短租（本机无真实 CC 冒烟，与
-既有 cc_version/compaction guard 验真同批）。
+**归属（六审 1 修正）**：L4 整层（trajectory.jsonl 解析/脱敏）为
+**不可执行设计储备**——不属于任何 F2 切片；其三个 T0 候选随 D1b 批次
+拍板后才产生实施归属。V0 期间 CC 内部时间一律 residual_estimate。
 
 ---
 

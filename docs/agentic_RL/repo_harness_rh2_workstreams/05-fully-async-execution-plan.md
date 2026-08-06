@@ -88,14 +88,21 @@
 > **FA-2A 执行顺序（codex 轮次 14 定序——F2-4 语义必须先于 F2-1 编码，
 > 因为 crash replay 是否复用公开 execution id 直接决定身份格式）**：
 >
-> 1. **F2-4 定案（先设计后编码）**：崩溃恢复与 replay 身份语义——正文
->    只在 `fa/fa2a_decision_package.md` 决策 2（v3.1：单一 checkpoint
->    owner、提交顺序不变量、HANDED_OFF/SUBMISSION_ACKED/TRAINED 三态、
->    四层身份、recovery_epoch 胜出规则、at-least-once 承诺），拍板后
->    回写本节，此处不复制草案。
-> 2. **F2-0 代码提升**：正式运行时代码从 `experiments/s1_7a_bringup/`
->    提升进 `src/repoharness2/`（capture_wire 的 registry/事务/守卫、glue
->    的装配工厂——正式链承重墙不住在 experiments 目录）。
+> 1. ~~F2-4 定案（先设计后编码）~~ **已完成**（2026-08-07 随决策包 v4
+>    批准：单一 checkpoint owner、提交顺序不变量、HANDED_OFF/
+>    SUBMISSION_ACKED/TRAINED、四层身份、recovery_epoch 胜出、
+>    at-least-once 承诺——正文见决策包决策 2）。实现归 F2-4 切片。
+> 2. **F2-0 代码提升（六审 5 展开为可执行切片）**：
+>    输入 = experiments 的 capture_wire/glue + 既有测试；
+>    产物 = `src/repoharness2/` 下唯一权威模块 + experiments 薄兼容壳
+>    （只做 re-export，禁止双实现）；
+>    迁移顺序 = 先建 src 模块 → parity 测试（新旧同输入同输出）→
+>    原入口（fa_bringup/rollout_entry、全部测试 import）改指 src →
+>    兼容壳标弃用；
+>    回滚 = 只回滚导入绑定，不回滚/转换任何持久事实；
+>    本机验收 = 全套测试 + 双线程探针 + 生产入口 import 链检查 +
+>    `rg` 断言 src 不反向依赖 experiments；
+>    GPU 验收 = 不在 F2-0（真实 slime/CC/SGLang 归 FA-5）。
 > 3. **F2-1/F2-2 身份与凭证**：ExecutionIdentity 贯穿 worker→orchestrator
 >    →session→proxy→capture→grading→artifact→Outcome；公开
 >    `rollout_execution_id`（可审计、replay-stable）与
@@ -113,6 +120,24 @@
 >    重复投递拒绝、混合 branch 策略显式、dropped 有界）；attempt→Outcome
 >    durable manifest（snapshot/ack 事务接口已在，接 per-execution
 >    manifest 与双向引用）。
+>
+> **FA-2A 切片总表（六审切片建议）**：F2-0 纯迁移（上文）→ F2-1
+> identity 贯穿 + **RolloutAttemptOutcome v2**（六审 2：completion 新
+> 枚举与 v1 不兼容——**新增 v2 不原地改 v1**；v1→v2 crosswalk、双版本
+> 读取、正式链只生产 v2、registry/CLI round-trip 测试；grader 基建失败
+> **只令 reward unavailable，不改写 execution completion**——评分故障
+> 不倒写执行事实）→ F2-2 session capability + Runtime quiescence →
+> F2-3 request 级 capture + 单 owner → F2-4 checkpoint recovery →
+> F2-5 collector 不变量 → F2-6 durable manifest。Observability V0 =
+> 每切片旁路事件接线（计时提案"V0 唯一可执行清单"），F2-6 统一验收；
+> `FaultDomainMonitor` 归 **FA-2B**。
+>
+> **FA/S2 文件 ownership**（六审 5：防两线程同改）：`contracts/
+> grading.py`、`grading/manager.py` 当前 **S2 线程优先**——FA 侧需要的
+> `test_execution_timeout` 新值等 F2-1 落 Outcome v2 时经 S2 线程协调
+> 后再动；FA 独占 = adapters/slime/*、experiments/fa_bringup/*、
+> experiments/s1_7a_bringup/*（S2-1 ingestion 目录除外）、contracts/
+> fa_runtime.py；冲突时先协调后提交。
 >
 > **FA-2A 附带定义项（终止分类/超时处置/熔断映射/恢复语义）**：正文
 > **只在** `fa/fa2a_decision_package.md`（**v4 approved，2026-08-07 用户
@@ -249,9 +274,12 @@ FA-5 本地（2~3 人日）→ 短租（数小时，与 S2 G10 合并）
     -> 显式拒绝（fail-fast），错误信息指向 before/after 标准路径；
        before/after 评测在 worker 停止后可正常执行。
 22. trainer 在 HANDED_OFF 之后、SUBMISSION_ACKED/TRAINED 确认之前崩溃
-    -> batch lease 到期 → RELEASED 重新可选；重启后凭
-       batch_id+optimizer_step_id 去重，同一 batch 不被重复计入
-       optimizer step（at-least-once 语义的两侧都要测）。
+    -> batch lease 到期 → RELEASED 重新可选。测试只承诺（六审 4，与 D2
+       "不承诺 optimizer exactly-once"一致）：submission 幂等（同
+       batch_id 重复提交可去重）+ **重复训练风险有结构化账目**（无法
+       确定是否已训练的 crash window 如实记录 uncertain_trained 事实，
+       不得用 batch id 宣称 optimizer 已去重）；只有拿到 trainer 侧
+       durable evidence 才允许禁止 release。
 23. trainer 长时间停滞（权重不更新）
     -> ready 组的 wall_clock_ttl 正确过期（版本 TTL 此时永不触发）；
        各资源分类限额分别反压，sandbox/评分容器不被 ready 积压饿死。
@@ -324,7 +352,7 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 | P1-2 | 生产 shutdown 链缺失：actor teardown 时 worker/GradingQueue/adapter 线程/在途 sandbox/artifact writer 的统一关闭 + 退出校验（账平、in-flight=0、无 open session、隔离区移交） | FA-5 前 |
 | P1-3 | 单例 + monkeypatch 不支持进程内恢复——当前恢复语义显式定为 **halt→整 actor 重启**；可重绑 registry holder 前不得声称进程内 recovery | 文档已定，FA-5 验收 |
 | P1-4 | 长运行内存无界残余：`audits`/`failure_records`/`dropped_groups`/`cleanup_quarantine`/`GradingQueue.events`（后者还有 O(N²) 扫描）——durable sink + 有界窗口（attempts_ledger 已 drain 化） | FA-2 audit 面 |
-| P1-5 | episode deadline 起点晚（首次模型调用起表，未含 CLI 安装/workspace/CC 启动）——orchestrator 在 execution 启动时生成绝对 deadline 并注册 | FA-2 身份批 |
+| P1-5 | episode deadline 起点晚（首次模型调用起表）——统一起点会**改变实际超时分布**（行为变更，非观测），与 watchdog 数值同批 | **D1b**（六审 1 从 FA-2A 移出） |
 | P1-7 | cleanup_quarantine 只有内存 list——最小 reconciler（持久化 + 重试 + run-halt 阈值） | FA-5 前 |
 | P1-8 | StaticActiveCoordinator 永远 ACTIVE：正式链**不会**透明重生成（只保守缺员）；version provider 同步 requests 在 TTL miss 时阻塞 adapter loop ≤5s——trainer 发布、全引擎 ACK 的异步 consensus 快照替换 | FA-4 |
 | P1-9 | `/abort_request` 失败无事实记录——计数 + 引擎健康告警；FA-5 四方对账（HTTP req id / RID / abort ACK / attempt status） | FA-5 |
