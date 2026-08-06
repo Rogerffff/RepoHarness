@@ -241,7 +241,19 @@ class FaRolloutService:
             self._collector.add_failure(spec, f"{type(exc).__name__}: {exc}")
 
         async def execute(spec: ExecutionTaskSpec) -> Sequence[Any]:
-            return await self._execute_member(spec.payload)
+            # F2-1a：把 dispatch 时铸造的身份戳进 member metadata（鸭子类型：
+            # slime Sample 有 metadata dict；假件同形）——orchestrator 从
+            # metadata 读入 audit 并登记 sid→paid 映射
+            payload = spec.payload
+            meta = getattr(payload, "metadata", None)
+            if isinstance(meta, dict):
+                meta.setdefault("rh2_rollout_execution_id", spec.rollout_execution_id)
+                meta.setdefault("rh2_prompt_group_id", spec.prompt_group_id)
+                meta.setdefault("rh2_member_slot", spec.member_slot)
+                if spec.physical_attempt_id is not None:
+                    meta["rh2_physical_attempt_id"] = spec.physical_attempt_id
+                    meta["rh2_physical_attempt_seq"] = spec.physical_attempt_seq
+            return await self._execute_member(payload)
 
         self._worker = ContinuousExecutionWorker(
             task_source=self._task_source,

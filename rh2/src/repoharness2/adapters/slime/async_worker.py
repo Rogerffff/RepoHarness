@@ -32,9 +32,10 @@ import hashlib
 import json
 import random
 import time
+import uuid
 from datetime import datetime, timezone
 from collections.abc import Awaitable, Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Protocol
 
 from repoharness2.contracts.fa_runtime import (
@@ -466,6 +467,7 @@ class DeliveredDraft:
     attempt_id: str
     attempt_number: int
     weight_version: str
+    physical_attempt_id: str | None = None
 
 
 @dataclass
@@ -512,6 +514,7 @@ class ProxyCallResult:
             attempt_number=self.draft.attempt_number,
             delivery_status="non_delivered_failed",
             evidence_refs=evidence,
+            physical_attempt_id=self.draft.physical_attempt_id,
         )
         self._finalized = attempt
         with self._proxy._ledger_lock:
@@ -533,6 +536,7 @@ class ProxyCallResult:
             delivery_status="delivered",
             capture_record_ref=capture_record_ref,
             weight_version=self.draft.weight_version,
+            physical_attempt_id=self.draft.physical_attempt_id,
         )
         self._finalized = attempt
         with self._proxy._ledger_lock:
@@ -795,6 +799,7 @@ class ModelCallProxy:
         poison_registry: "SessionPoisonRegistry | None" = None,
         deadline_monotonic: float | None = None,
         min_attempt_budget_seconds: float = 5.0,
+        physical_attempt_id: str | None = None,
     ) -> ProxyCallResult:
         """一次逻辑轮（codex 轮次 7/8：poison / episode deadline / 发前等待）。
 
@@ -814,6 +819,7 @@ class ModelCallProxy:
                 poison_registry=poison_registry,
                 deadline_monotonic=deadline_monotonic,
                 min_attempt_budget_seconds=min_attempt_budget_seconds,
+                physical_attempt_id=physical_attempt_id,
             )
         except UnattributableModelCallError as exc:
             self._poison(sid, poison_registry, exc.reason_code)
@@ -829,6 +835,7 @@ class ModelCallProxy:
         poison_registry: "SessionPoisonRegistry | None",
         deadline_monotonic: float | None,
         min_attempt_budget_seconds: float,
+        physical_attempt_id: str | None = None,
     ) -> ProxyCallResult:
         if not execution_scope:
             raise ValueError("execution_scope 必填（attempt 全局身份的组成部分）。")
@@ -842,7 +849,7 @@ class ModelCallProxy:
                 poison_registry.check(sid)
             remaining = self._remaining(deadline_monotonic)
             if remaining is not None and remaining < min_attempt_budget_seconds:
-                self._record_failed(attempts, scoped, attempt_id, attempt_number)
+                self._record_failed(attempts, scoped, attempt_id, attempt_number, physical_attempt_id=physical_attempt_id)
                 raise UnattributableModelCallError(
                     "episode_deadline_exhausted",
                     f"{attempt_id}: 剩余预算 {remaining:.1f}s < {min_attempt_budget_seconds}s"
@@ -860,7 +867,7 @@ class ModelCallProxy:
                 # CC/客户端取消必须原样传播（aiohttp handler_cancellation 链），
                 # 但先落账 + poison——取消后 CC 的重试不得复活该 session
                 ref = self._store_artifact(attempt_id, "client_cancelled")
-                self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
+                self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref], physical_attempt_id=physical_attempt_id)
                 self._poison(sid, poison_registry, "client_cancelled")  # 取消不走外层统一路径
                 raise
             except Exception as exc:  # noqa: BLE001 —— 归因在下方守卫做
@@ -876,7 +883,7 @@ class ModelCallProxy:
                     ref = self._store_artifact(attempt_id, response)
                     self._record_failed(
                         attempts, scoped, attempt_id, attempt_number, evidence=[ref]
-                    )
+                    , physical_attempt_id=physical_attempt_id)
                     raise UnattributableModelCallError(
                         "delivered_response_missing_weight_version",
                         f"{attempt_id}: 响应缺 meta_info.weight_version，provenance 不完整。",
@@ -886,6 +893,7 @@ class ModelCallProxy:
                     attempt_id=attempt_id,
                     attempt_number=attempt_number,
                     weight_version=weight_version,
+                    physical_attempt_id=physical_attempt_id,
                 )
                 with self._ledger_lock:
                     self.attempts_ledger.extend(attempts)
@@ -905,7 +913,7 @@ class ModelCallProxy:
             )
             ref = self._store_artifact(attempt_id, payload)
             if not overlapped:
-                self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref])
+                self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref], physical_attempt_id=physical_attempt_id)
                 raise UnattributableModelCallError(
                     "no_overlapping_update_window",
                     f"{attempt_id}: 中断与任何更新窗口不重叠——按缺员处置，不做透明重试。",
@@ -919,12 +927,13 @@ class ModelCallProxy:
                     abort_update_epoch=window_now.update_epoch,
                     abort_fencing_token=window_now.fencing_token,
                     evidence_refs=[ref],
+                    physical_attempt_id=physical_attempt_id,
                 )
             )
             if attempt_number > self._max_regenerations:
                 self._record_failed(
                     attempts, scoped, f"{attempt_id}_cap", attempt_number, evidence=[ref]
-                )
+                , physical_attempt_id=physical_attempt_id)
                 raise UnattributableModelCallError(
                     "max_regenerations_exceeded",
                     f"{scoped}: 连续 {attempt_number} 次被 abort——超过重生成上限。",
@@ -944,6 +953,7 @@ class ModelCallProxy:
         attempt_number: int,
         *,
         evidence: list[str] | None = None,
+        physical_attempt_id: str | None = None,
     ) -> None:
         attempts.append(
             ModelCallAttempt(
@@ -952,6 +962,7 @@ class ModelCallProxy:
                 attempt_number=attempt_number,
                 delivery_status="non_delivered_failed",
                 evidence_refs=evidence or [],
+                physical_attempt_id=physical_attempt_id,
             )
         )
         with self._ledger_lock:
@@ -1063,6 +1074,10 @@ class ExecutionTaskSpec:
     prompt_group_id: str
     member_slot: int
     payload: Any = None
+    # F2-1a：物理重放身份——worker 在 **dispatch 时刻**铸造（D2：每次
+    # 实际重放都不同；task_source 重供同一逻辑执行 = 新 dispatch = 新值）
+    physical_attempt_id: str | None = None
+    physical_attempt_seq: int | None = None
 
 
 @dataclass
@@ -1132,6 +1147,7 @@ class ContinuousExecutionWorker:
         self._clock = clock
         self.counters = WorkerCounters()
         self.unrecorded_failures: list[tuple[ExecutionTaskSpec, str, str]] = []
+        self._attempt_seq: dict[str, int] = {}  # F2-1a：逻辑执行 → 已铸序号
         self.abandoned_deliveries: list[tuple[ExecutionTaskSpec, Any]] = []
         self.halt_reason: str | None = None
 
@@ -1199,6 +1215,17 @@ class ContinuousExecutionWorker:
                                 break
                             if spec is None:  # 暂无新任务（持续 worker：下轮再询）
                                 break
+                            # F2-1a：dispatch 即铸造物理身份（replay 语义：
+                            # 同一 rollout_execution_id 再次 dispatch 得新值）
+                            seq = self._attempt_seq.get(spec.rollout_execution_id, 0) + 1
+                            self._attempt_seq[spec.rollout_execution_id] = seq
+                            spec = replace(
+                                spec,
+                                physical_attempt_id=(
+                                    f"{spec.rollout_execution_id}#p{seq}-{uuid.uuid4().hex[:8]}"
+                                ),
+                                physical_attempt_seq=seq,
+                            )
                             task = asyncio.create_task(self._guarded_execute(spec))
                             in_flight[task] = spec
                             self.counters.dispatched += 1

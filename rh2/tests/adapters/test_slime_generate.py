@@ -1843,3 +1843,32 @@ async def test_audit_sink_failure_formal_chain_raises_fatal():
     orch2 = build(_formal_config())
     with pytest.raises(FatalExecutionInfrastructureError, match="execution_audit_write_failed"):
         await orch2.generate(_Args(), FixtureSlimeSample(index=0), dict(SAMPLING_PARAMS))
+
+
+async def test_orchestrator_reads_paid_from_metadata_and_registers():
+    """F2-1a：member metadata 的 rh2_physical_attempt_id → audit 字段 +
+    经注入点登记 sid→paid（glue 接 registry.set_physical_attempt_id）；
+    metadata 缺失时（S1 兼容路径）audit 为 None 且不调用登记点。"""
+
+    registered: list[tuple[str, str]] = []
+    chain = build_dense_chain()
+    chain.orchestrator._physical_attempt_registrar = (
+        lambda sid, paid: registered.append((sid, paid))
+    )
+    sample = FixtureSlimeSample(index=0)
+    sample.metadata = dict(getattr(sample, "metadata", {}) or {})
+    sample.metadata["rh2_physical_attempt_id"] = "exec_X#p1-abcd1234"
+    await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.physical_attempt_id == "exec_X#p1-abcd1234"
+    assert registered == [(audit.session_id, "exec_X#p1-abcd1234")]
+
+    # S1 兼容：无 metadata 键 → None + 不登记
+    registered.clear()
+    chain2 = build_dense_chain()
+    chain2.orchestrator._physical_attempt_registrar = (
+        lambda sid, paid: registered.append((sid, paid))
+    )
+    await chain2.orchestrator.generate(_Args(), FixtureSlimeSample(index=1), dict(SAMPLING_PARAMS))
+    assert chain2.orchestrator.audits[0].physical_attempt_id is None
+    assert registered == []

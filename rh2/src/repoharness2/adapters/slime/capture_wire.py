@@ -124,6 +124,9 @@ class CaptureRegistry:
         self.session_deadlines: dict[str, float] = {}
         self.default_session_budget_seconds: float | None = None
         self._turn_seq: dict[str, int] = {}
+        # F2-1a：sid → physical_attempt_id 映射（orchestrator 经注入点登记；
+        # wire 读出后随每条 ModelCallAttempt 落账；unregister 清理）
+        self._physical_attempt_ids: dict[str, str] = {}
 
     def register(self, sid: str, hook: GenerationCaptureHook) -> None:
         # 轮次 11 身份兜底：中毒 SID（含归档）不得复用注册——稳定 ID
@@ -178,6 +181,18 @@ class CaptureRegistry:
             )
         return queue[0]
 
+    def set_physical_attempt_id(self, sid: str, physical_attempt_id: str) -> None:
+        """F2-1a：orchestrator 在 open_session 前登记本次物理重放身份。"""
+
+        with self._lock:
+            self._physical_attempt_ids[sid] = physical_attempt_id
+
+    def physical_attempt_id_for(self, sid: str | None) -> str | None:
+        if sid is None:
+            return None
+        with self._lock:
+            return self._physical_attempt_ids.get(sid)
+
     def snapshot_weight_versions(self) -> dict[str, list[str]]:
         """锁内复制全部会话的版本序列（codex 轮次 14 仍需修正 1：provider
         此前无锁遍历 dict.values()，并发 commit/unregister 会
@@ -217,6 +232,7 @@ class CaptureRegistry:
             self.session_deadlines.pop(sid, None)
             self._turn_seq.pop(sid, None)
             self.weight_versions.pop(sid, None)
+            self._physical_attempt_ids.pop(sid, None)
         self._finish_unregister(sid, leftover_locked)
         return
 
@@ -538,6 +554,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 _send_once,
                 session_id=session_id,
                 poison_registry=registry.poison,
+                physical_attempt_id=registry.physical_attempt_id_for(session_id),
                 deadline_monotonic=registry.session_deadline(session_id),
             )
             data = dict(proxy_result.response)

@@ -356,3 +356,41 @@ async def test_worker_crash_not_silently_restarted():
     # 下一批调用必须传播故障，不静默重启
     with pytest.raises(WorkerHalted):
         await service.collect_batch()
+
+
+async def test_execute_stamps_identity_into_member_metadata():
+    """F2-1a：service 在执行前把 dispatch 铸造的身份戳进 member.metadata
+    （rh2_* 键）——orchestrator 由此读入 audit 并登记 sid→paid。replay
+    同组第二次执行会得到不同 paid（worker dispatch 铸造语义）。"""
+
+    class MetaSample(FakeSample):
+        def __init__(self, name: str) -> None:
+            super().__init__(name)
+            self.metadata: dict = {}
+
+    groups = [[MetaSample("g1_m0"), MetaSample("g1_m1")]]
+    seen_meta: list[dict] = []
+
+    async def execute(member):
+        seen_meta.append(dict(member.metadata))
+        return [FakeSample(f"{member.name}_leaf")]
+
+    service = FaRolloutService(
+        group_source=_group_source_from(groups),
+        execute_member=execute,
+        group_size=2,
+        rollout_batch_size=1,
+        concurrency=2,
+        drain_timeout_seconds=1.0,
+    )
+    await service.collect_batch()
+    await service.shutdown()
+    assert len(seen_meta) == 2
+    for meta in seen_meta:
+        assert meta["rh2_prompt_group_id"]  # 组身份在场
+        assert meta["rh2_physical_attempt_id"].startswith(
+            meta["rh2_rollout_execution_id"] + "#p"
+        )
+        assert meta["rh2_physical_attempt_seq"] == 1  # 首次 dispatch
+    # 两个成员各自独立的 execution 身份
+    assert seen_meta[0]["rh2_rollout_execution_id"] != seen_meta[1]["rh2_rollout_execution_id"]

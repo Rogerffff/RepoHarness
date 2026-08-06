@@ -104,6 +104,21 @@ class ExecutionIdentity(StrictModel):
         default=None,
         description="跨 rollout 的 GRPO 同题兄弟组标识（与 RewardFacts.parent_rollout_id 同义）。",
     )
+    # F2-1a（D2 批准的四层身份，T1 可选字段——按已批设计新增，v1 消费者不受影响）：
+    # physical_attempt_id = 每次实际重放都不同的事实键（artifact/审计归属）；
+    # rollout_execution_id 跨 replay 稳定（逻辑执行/去重键）。
+    physical_attempt_id: NonEmptyStr | None = Field(
+        default=None, description="本次物理重放身份（worker 每次 dispatch 铸造；replay 即新值）。"
+    )
+    physical_attempt_seq: int | None = Field(
+        default=None, ge=1, description="同一逻辑执行内的物理重放序号（1 起）。"
+    )
+
+    @model_validator(mode="after")
+    def _physical_attempt_pair(self) -> "ExecutionIdentity":
+        if (self.physical_attempt_id is None) != (self.physical_attempt_seq is None):
+            raise ValueError("physical_attempt_id 与 physical_attempt_seq 必须同现同缺。")
+        return self
 
 
 CompletionClass = Literal[
@@ -314,6 +329,10 @@ class ModelCallAttempt(StrictModel):
 
     schema_id: Literal["rh2.fa.model_call_attempt.v1"] = Field(
         default="rh2.fa.model_call_attempt.v1", description="schema 判别字段。"
+    )
+    physical_attempt_id: NonEmptyStr | None = Field(
+        default=None,
+        description="F2-1a：所属物理重放身份（wire 经 registry 的 sid→paid 映射填入；可选）。",
     )
     logical_turn_id: NonEmptyStr = Field(
         description="逻辑轮 id（同一 harness 轮的多个 attempt 共享；示例：turn_7）。"

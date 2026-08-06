@@ -323,6 +323,7 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "schema_id": "rh2.fa.execution_audit.v1",
         "trajectory_id": audit.trajectory_id,
         "session_id": audit.session_id,
+        "physical_attempt_id": audit.physical_attempt_id,
         "task_id": audit.task_id,
         "disposition": disposition,
         "eligibility_report_ref": eligibility_ref,
@@ -692,6 +693,8 @@ class BringupService:
             capture_boundary_check=self.registry.assert_session_clean,
             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
             audit_sink=self._write_execution_audit,
+            # F2-1a：物理重放身份登记（wire 据此给每条 ModelCallAttempt 落账）
+            physical_attempt_registrar=self.registry.set_physical_attempt_id,
         )
 
     def _registry_max_version(self) -> int | None:

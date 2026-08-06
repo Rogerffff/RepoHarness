@@ -68,6 +68,7 @@ def test_open_session_rollback_on_underlying_failure():
 def _fake_audit(sid: str) -> types.SimpleNamespace:
     return types.SimpleNamespace(
         session_id=sid,
+        physical_attempt_id=f"{sid}#p1-test",
         trajectory_id="traj_x",
         task_id="task_x",
         finalized=None,
