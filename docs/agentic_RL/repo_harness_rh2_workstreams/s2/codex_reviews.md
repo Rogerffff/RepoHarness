@@ -4331,3 +4331,92 @@ GPU 验收：不在 F2-0，真实 slime/CC/SGLang 留 FA-5
 另外应清掉仍写着 v3.1、v3.2 的执行引用，并把已经完成的“F2-4 定案”从未来步骤改为完成状态。
 
 因此当前判定是：**决策包批准有效，但执行计划尚未通过 §3.2，先修上述 5 项，不开代码。**
+
+
+---
+
+## FA-2A 执行计划聚焦复核（六审后，2026-08-07：3 项已闭 + 2 项仍阻 F2-0 + 2 项 F2-1 前置，全采纳）
+
+> 原文全文转录（tmp/codex建议6.md 第二版）。处置：全部 accepted。计时提案归属表/wiring 表清双口径（L4 与 deadline 切换摘除 F2 归属，P1-5 同步 D1b，v3.2 表述升 v4，新增 F2-0b 切片承载 V0 计时）；F2-0 依赖闭合（docker_sandbox 入迁移集三文件、目标模块路径写死、container_train.sh 模块路径引用坐实兼容壳硬需求、壳配 import/parity 测试）；决策包勘误 2（completion 只由 runtime/capture/quiescence/snapshot 决定，grading facts 只进 reward/admission——表 2 infra 行与推导链同步）；F2-1 crosswalk 规则（permanent_rejection 不默认映射 missing，evidence 可重建才迁，否则 legacy_unmappable/audit-only）。批准后可发 F2-0 Owner Brief 开工。
+
+**结论**
+
+目前**还不建议直接宣布计划复审通过并开工 F2-0**。六审五项中有三项已正确闭合，另外两项仍直接阻塞 F2-0。修正量不大，不需要再扩大设计讨论。
+
+**阻塞 F2-0**
+
+1. **Observability V0 仍存在两套执行口径**
+
+计时文档顶部明确规定：V0 不做 L4、`chargeable_execution_seconds`、deadline 起点切换，这是正确的。[timing_model_proposal.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:27)
+
+但后面的实施表仍然写着：
+
+- L4 解析器归 F2-0：[同文档](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:473)
+- deadline 切换归 F2-1/F2-2：[同文档](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:477)
+- wiring 表也仍保留 L4、deadline 实现项：[同文档](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:344)
+
+而 05 计划把 F2-0 定义为“纯迁移”。迁移和新增计时字段、公共 schema 字段不能混在一个切片，否则 parity 与回滚都失去清晰边界。
+
+建议：
+
+- F2-0 只迁移，不增加任何计时事件或字段。
+- V0 计时按 ownership 分配到 F2-1～F2-6，或单列 F2-0b。
+- 删除实施汇总表中 L4/deadline 的现行 F2 归属。
+- 将计时文档状态和旧 `v3.2` 表述同步到批准后的 v4。
+
+2. **F2-0 迁移依赖集不闭合**
+
+计划只列出迁移 `capture_wire/glue`：[05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:95)
+
+但 `glue.py` 还直接导入 experiments 中的 `DockerSandbox`：[glue.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:63)
+
+这样移动后必然违反计划自己的“`src` 不反向依赖 experiments”验收。
+
+F2-0 开工前应明确：
+
+- `capture_wire.py`、`glue.py`、`docker_sandbox.py` 各自迁往哪个精确模块。
+- 或者明确把 `DockerSandbox` 变成注入端口，由 experiments 兼容壳提供。
+- 哪些 FA 入口改用新模块，哪些 S1/P3 历史脚本继续走兼容壳。
+- 兼容壳本身必须有 import/parity 测试，不能在“全部测试切新路径”后无人验证。
+
+**F2-1 前修复**
+
+3. **评分基建故障是否改写 completion 仍然自相矛盾**
+
+05 计划现在正确写成“grader 基建失败只令 reward unavailable，不改写 execution completion”：[05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:127)
+
+但权威决策包仍写成 `infra_failure → reward=None（missing）`，并把 grading facts 放入 completion 推导：[决策包](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:90)、[同文档](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/fa2a_decision_package.md:104)
+
+应统一为：
+
+```text
+execution completion
+  只由 runtime/capture/quiescence/snapshot 完整性决定
+
+grading infra failure
+  reward unavailable
+  admission 不通过
+  不倒写 completion
+```
+
+这不阻塞纯迁移的 F2-0，但必须在 F2-1 Outcome v2 编码前修正。
+
+4. **v1→v2 crosswalk 不能假设总能无损映射**
+
+v1 的 `permanent_rejection` 混合了执行事实与准入决定：[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:109)。仅凭 v1 记录无法判断它在 v2 应是 `present_complete`、`present_truncated` 还是 `missing`。
+
+计划应规定：
+
+- 能由原始 evidence 重建则迁移；
+- 无法重建则标为 legacy-unmappable/audit-only；
+- 不得把所有 `permanent_rejection` 默认映射成 `missing`；
+- 正式链只生产 v2，这一点保持不变。
+
+**已正确闭合**
+
+- hard-wall 的 `decision_deferred` 与 enforce 禁止启动已经合理解决。
+- 场景 22 已撤销 optimizer exactly-once 承诺。
+- FA/S2 文件 ownership 方向正确。
+- F2-0 已补迁移顺序、回滚与本机/GPU边界，框架明显比上一版完整。
+
+建议让 Claude 只修上述两项 F2-0 阻塞，并把另外两项登记为 F2-1 前置闸门。完成后无需再做一轮大范围审查，发一页 F2-0 Owner Brief 即可开工。此次提交只有文档修改；我做了 diff、源码依赖与交叉一致性检查，没有运行代码测试。

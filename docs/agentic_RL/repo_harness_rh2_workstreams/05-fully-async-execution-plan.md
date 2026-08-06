@@ -93,7 +93,17 @@
 >    SUBMISSION_ACKED/TRAINED、四层身份、recovery_epoch 胜出、
 >    at-least-once 承诺——正文见决策包决策 2）。实现归 F2-4 切片。
 > 2. **F2-0 代码提升（六审 5 展开为可执行切片）**：
->    输入 = experiments 的 capture_wire/glue + 既有测试；
+>    **纯迁移：不新增任何计时事件/字段/schema 键**（V0 计时单列
+>    F2-0b 切片）。依赖闭合（六审后聚焦复核 2）：迁移集 = 三个文件——
+>    `capture_wire.py → src/repoharness2/adapters/slime/capture_wire.py`、
+>    `glue.py → src/repoharness2/adapters/slime/bringup.py`、
+>    `docker_sandbox.py → src/repoharness2/adapters/slime/docker_sandbox.py`
+>    （glue 直接依赖 DockerSandbox，不迁则违反"src 不反依赖
+>    experiments"验收）。FA 入口（fa_bringup/rollout_entry）与全部测试
+>    改导 src；S1/P3 历史脚本与 GPU 启动链（container_train.sh 按模块
+>    路径引用 `s1_7a_bringup.glue.generate`）继续走兼容壳；**兼容壳自身
+>    有 import/parity 测试**（断言壳导出与 src 同对象）。
+>    输入 = experiments 的 capture_wire/glue/docker_sandbox + 既有测试；
 >    产物 = `src/repoharness2/` 下唯一权威模块 + experiments 薄兼容壳
 >    （只做 re-export，禁止双实现）；
 >    迁移顺序 = 先建 src 模块 → parity 测试（新旧同输入同输出）→
@@ -121,12 +131,17 @@
 >    durable manifest（snapshot/ack 事务接口已在，接 per-execution
 >    manifest 与双向引用）。
 >
-> **FA-2A 切片总表（六审切片建议）**：F2-0 纯迁移（上文）→ F2-1
+> **FA-2A 切片总表（六审切片建议）**：F2-0 纯迁移（上文）→ **F2-0b
+> Observability V0 事件接线**（计时提案"V0 唯一可执行清单"专属切片——
+> 与迁移分离，parity 与回滚边界才干净）→ F2-1
 > identity 贯穿 + **RolloutAttemptOutcome v2**（六审 2：completion 新
 > 枚举与 v1 不兼容——**新增 v2 不原地改 v1**；v1→v2 crosswalk、双版本
 > 读取、正式链只生产 v2、registry/CLI round-trip 测试；grader 基建失败
 > **只令 reward unavailable，不改写 execution completion**——评分故障
-> 不倒写执行事实）→ F2-2 session capability + Runtime quiescence →
+> 不倒写执行事实；**crosswalk 规则（聚焦复核 4）**：v1
+> `permanent_rejection` 混合了执行事实与准入决定——能由原始 evidence
+> 重建则迁移，无法重建标 `legacy_unmappable`/audit-only，**禁止把
+> permanent_rejection 默认映射成 missing**；正式链只生产 v2）→ F2-2 session capability + Runtime quiescence →
 > F2-3 request 级 capture + 单 owner → F2-4 checkpoint recovery →
 > F2-5 collector 不变量 → F2-6 durable manifest。Observability V0 =
 > 每切片旁路事件接线（计时提案"V0 唯一可执行清单"），F2-6 统一验收；

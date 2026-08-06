@@ -341,10 +341,10 @@ queue_wait + 峰值内存，生产于 grading/manager.py:631-632），L5 直接
 | 6   | L3    | rh2/src/repoharness2/adapters/slime/async_worker.py:753-777, 748, 858, 960-1037                | `ModelCallProxy` 四个等待/发送点各包一段区间测量（`self._clock` 已注入可测试）                                                                                                                         |
 | 7   | L3'   | rh2/experiments/s1_7a_bringup/capture_wire.py:546-578                                          | `PendingTurn` 增 `server_timing` 字段：stage 时从 `meta` 摘白名单键（§4a）                                                                                                                   |
 | 8   | L3'   | rh2/src/repoharness2/adapters/slime/generate.py:493-536；contracts/capture.py:58-153            | `GenerationCaptureRecord` 新增 optional `server_timing` 子模型；:511 的 `raw_meta_info_digest` 照旧全量 hash，语义不变                                                                          |
-| 9   | L4    | rh2/src/repoharness2/adapters/slime/generate.py:1539 之后、:1698 cleanup 之前（终态挂静止屏障确认后）           | 容器删除前读 `{workdir}/.harness/trajectory.jsonl` → 宿主侧脱敏 → `ARTIFACT_DIR/rollouts/` 下 tool_event_ledger，execution_audit 记 ref（§4b）                                                  |
+| 9   | L4    | **（储备，无 F2 归属）**                                                                                | ~~trajectory.jsonl 脱敏导出~~——D1b 拍板前不可执行（六审 1）；V0 期间 CC 内部时间 = residual_estimate                                                  |
 | 10  | L5    | FA-2B `PromptGroupState`/`PromptGroupAdmissionReport`（05 计划 :126-128）；FA-3 lease 状态机（:139-146） | admission report 加 optional timing 段；queue 结构补入/出队时刻                                                                                                                            |
 | 11  | L1    | rh2/experiments/s1_7a_bringup/glue.py:508-525                                                  | `startup_evidence.json` 加 `timing` 段                                                                                                                                            |
-| 12  | 预算统一  | rh2/experiments/s1_7a_bringup/capture_wire.py:190-205 + generate.py:1496-1502                  | 落实已登记的 P1-5（05 计划 :320）：orchestrator 在 `open_session` 时显式 `arm_session_deadline(sid, deadline)`，废除首调惰性起表；deadline 数值语义见 §7 待 T0 项                                               |
+| 12  | 预算统一  | **（D1b，无 F2 归属）**                                                                              | ~~deadline 起点切换~~——行为变更随 D1b 与 watchdog 数值同批（六审 1）                                               |
 
 
 单一事实来源核对：全部 12 项中新增持久化面只有 #9 一处（tool_event_
@@ -466,15 +466,15 @@ event type / CC 事件时间戳 / uuid / tool_use_id / parent_tool_use_id /
 
 | 项                                           | 分级                               | 判据                                                                           | 归属批次                           |
 | ------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------- | ------------------------------ |
-| L2 timeline 新事件名 + phase_sink 参数            | T2~T1（报告一句）                      | 旁路观测，不改契约必填面；driver 协议是内部协议                                                  | F2-0                           |
-| L2 execution_audit 加双时钟三键                   | T1 强报告                           | 按 v3.2 已批的双时钟口径加字段（audit 记录非注册 schema，读方兼容）                                  | F2-0（字段）＋ F2-3（proxy 区间真接线）    |
+| L2 timeline 新事件名 + phase_sink 参数            | T2~T1（报告一句）                      | 旁路观测，不改契约必填面；driver 协议是内部协议                                                  | **F2-0b**（F2-0 纯迁移不加字段） |
+| L2 execution_audit 加原始 wall/候选区间两键          | T1 强报告                           | 按 **v4 已批** V0 口径只记原始区间（不派生 chargeable）                                  | **F2-0b**（字段）＋ F2-3（proxy 区间真接线）    |
 | L3 `ModelCallAttempt` optional 区间字段         | T1 强报告                           | 公共 schema **加 optional 字段**（协议 §2 粒度条）；任何字段转必填 = T0 另议                       | F2-3（与 request 级归属重写同批，改同一块代码） |
-| L3' `GenerationCaptureRecord.server_timing` | T1 强报告                           | 同上；`raw_meta_info_digest` 语义不动                                               | F2-0                           |
-| L4 trajectory.jsonl 脱敏保存                    | **T0（白名单基线拍板）**                  | 新增持久化面 + 内容来自不可信域 + 安全白名单设计                                                  | F2-0 落解析器；FA-5 验真              |
+| L3' `GenerationCaptureRecord.server_timing` | T1 强报告                           | 同上；`raw_meta_info_digest` 语义不动                                               | **F2-0b**                       |
+| L4 trajectory.jsonl 脱敏保存                    | **T0（白名单基线拍板）**                  | 新增持久化面 + 内容来自不可信域 + 安全白名单设计                                                  | **无 F2 归属**——不可执行储备，随 D1b 拍板后再定 |
 | L4 数据用途限制（只诊断、不进判定）                         | T0 附带条款（写进同一决策）                  | 防止未来悄悄变成准入输入（拒绝路径偏置，升级规则 4）                                                  | 随上项                            |
 | L5 admission report / lease 账本 timing 段     | T1 强报告                           | 按已批 FA-2B/FA-3 结构加 optional 段                                                | FA-2B（组）＋ FA-3（batch）          |
-| L1 startup_evidence timing 段                | T2                               | 观测文件加键，无消费者契约                                                                | F2-0 顺路或 FA-5                  |
-| P1-5 落实：deadline 统一从 execution 启动起表         | T1 强报告（已登记决定的实施）                 | 05 计划 :320 已定方向；但会改变哪些 execution 判 `episode_deadline_exhausted` → 实施时附前后对比数据 | F2-1/F2-2（身份批，05 计划既定归属）       |
+| L1 startup_evidence timing 段                | T2                               | 观测文件加键，无消费者契约                                                                | F2-0b 顺路或 FA-5                 |
+| P1-5 落实：deadline 统一从 execution 启动起表         | **行为变更（非观测）**                 | 改变超时分布（六审 1）——与 watchdog 数值同批 | **D1b**（已从 FA-2A 移出）       |
 | **预算判定切换到 chargeable 时钟**                   | **T0（v3.2 未定案的残留，见 §7）**         | 改变拒绝路径分布与终止语义（升级规则 1/4）                                                      | 决议归 D1b；实施 FA-5 前              |
 | 熔断/告警若引用新计时字段                               | 数值阈值 = T0 预注册（决策 4 既定）；统计口径 = T1 | 决策包 D4 待定参数条                                                                 | FA-2B/FA-5                     |
 

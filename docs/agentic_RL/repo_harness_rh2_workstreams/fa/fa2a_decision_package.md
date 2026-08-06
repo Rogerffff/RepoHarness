@@ -64,9 +64,10 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
    看门狗族：hard_wall_timeout
      ——**仅为 termination trigger**（五审 4.2 撤回"恒 missing"预决：
        触发者身份不决定事实完整性）。completion 由事实推导：capture
-       closure + Runtime quiescence + 冻结 snapshot + grading 事实全部
-       成立 → completion 候选 = **present_truncated**（不得仅因 hard
-       wall 触发改写为 missing）；任一不成立 → missing。
+       closure + Runtime quiescence + 冻结 snapshot 全部成立 →
+       completion 候选 = **present_truncated**（不得仅因 hard wall 触发
+       改写为 missing）；任一不成立 → missing。评分是否成功不参与
+       completion（勘误 2）。
        present_truncated 的 group/reward/gradient/GBS 处置留 D1b/FA-4
    控制面族：owner_cancelled
      ——控制面取消，默认不产生 reward（不属"正常完成"）
@@ -87,7 +88,10 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
    **推导不是线性链**，disposition 由多个事实共同决定：
 
    ```text
-   termination fact + capture/quiescence/grading facts
+   termination fact + capture/quiescence/snapshot facts
+     ——**批准后勘误 2（2026-08-07，六审后聚焦复核）：completion 只由
+       runtime/capture/quiescence/snapshot 完整性决定；grading facts
+       只进入 reward 与 admission，评分基建故障不倒写执行事实**
      → completion_class ∈ { present_complete, present_truncated, missing }
        （事实层；与消费侧三态 missing/present_but_not_admissible/
         permanent_rejection 的关系：completion 是事实，后者是准入判定）
@@ -102,7 +106,9 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
 
    ```text
    基建性评分超时 → failure_category=infra_failure，
-                    outcome=failed_to_grade，reward=None（missing）
+                    outcome=failed_to_grade，reward=None
+                    （reward unavailable + admission 不通过；
+                     **不倒写 execution completion**——勘误 2）
    GradingFailureCategory 新增 test_execution_timeout：
                     outcome=unresolved，reward=0（模型真实失败）
                     ——仅当三条件全真才允许构造：clean grader 已正常
@@ -433,8 +439,8 @@ run_halt 归因。
 
 | 枚举值 | outcome / reward / 动作 |
 |---|---|
-| `infra_failure` | failed_to_grade / None / missing + 评分域计数 |
-| `test_log_parse_failed` | failed_to_grade / None / missing + 评分域计数 |
+| `infra_failure` | failed_to_grade / None / reward unavailable + admission 不通过 + 评分域计数（不倒写 completion——勘误 2） |
+| `test_log_parse_failed` | failed_to_grade / None / 同上 |
 | `patch_apply_failed` | unresolved / 0 / 模型负样本，不进熔断 |
 | `tests_failed` | unresolved / 0 / 模型负样本，不进熔断 |
 | `test_execution_timeout`（新增） | unresolved / 0 / 模型负样本——仅三条件全真可构造（D1a 第 2 条），否则按 `infra_failure` |
