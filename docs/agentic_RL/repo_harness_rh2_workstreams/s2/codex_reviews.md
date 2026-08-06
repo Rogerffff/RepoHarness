@@ -4420,3 +4420,85 @@ v1 的 `permanent_rejection` 混合了执行事实与准入决定：[fa_runtime.
 - F2-0 已补迁移顺序、回滚与本机/GPU边界，框架明显比上一版完整。
 
 建议让 Claude 只修上述两项 F2-0 阻塞，并把另外两项登记为 F2-1 前置闸门。完成后无需再做一轮大范围审查，发一页 F2-0 Owner Brief 即可开工。此次提交只有文档修改；我做了 diff、源码依赖与交叉一致性检查，没有运行代码测试。
+
+
+---
+
+## F2-0 切片审查（2026-08-07：迁移判定正确（AST 等价/921 全绿/入口可解析），4 项收口全采纳）
+
+> 原文全文转录（tmp/codex建议F2-0.md）。处置：全部 accepted。要点：切片重排 F2-1a 身份 → F2-0b 计时 → F2-1b Outcome v2（T1 调整——physical_attempt_id 尚不存在，先于身份落计时会伪造/留空/SID 冒充）；计时提案归属统一（ModelCallAttempt 区间字段归 F2-0b、"F2-0 顺路加"残留清除）；权威状态页记 F2-0 完成 + "代码住 experiments"挡板解除；learning-log 落"对象同一 ≠ 模块别名"条目（含 codex 实测：壳模块全局变量重绑不传播——壳承诺范围显式收窄为导出对象 identity + 动态入口可解析）。
+
+**总体结论**
+
+F2-0 的代码迁移本身基本正确，没有发现逻辑回归或训练数据分布变化。三个模块经 AST 归一化后与迁移前完全一致，生产模块路径也能解析。
+
+但**暂时不要直接进入 F2-0b**。还有两个下一切片阻塞问题，以及两个 F2-0 收口问题。
+
+**主要问题**
+
+1. **F2-0b 依赖尚未存在的 `physical_attempt_id`**
+
+Observability V0 要求每个事件携带 `physical_attempt_id`：[timing_model_proposal.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:16)
+
+但当前 `ExecutionIdentity v1` 只有 `rollout_execution_id`，没有 physical attempt：[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:80)
+
+计划却把 F2-0b 排在 F2-1 身份落地之前：[05 计划](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/05-fully-async-execution-plan.md:134)
+
+这样 F2-0b 只能伪造、留空或者使用稳定 SID 冒充 physical attempt，都会破坏身份语义。
+
+建议重排为：
+
+```text
+F2-1a：四层身份与 physical_attempt_id
+-> F2-0b：Observability V0
+-> F2-1b：Outcome v2 与 crosswalk
+```
+
+这是 T1 切片调整，不需要新的 T0 决策。
+
+2. **F2-0b 的范围仍有两套说法**
+
+顶部“唯一可执行清单”把四项都放进 V0，但实施表又把 `ModelCallAttempt` 区间字段放在 F2-3：[timing_model_proposal.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:467)
+
+另外仍残留“事件在 F2-0 顺路加”的旧文字：[同文档](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/timing_model_proposal.md:209)
+
+应在 F2-0b Owner Brief 前统一每项的实际切片归属。
+
+3. **权威状态页没有记录 F2-0 已完成**
+
+[implementation-notes.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/implementation-notes.md:11)仍写着“实现未开工”，临时挡板表仍写 `capture_wire/glue` 位于 experiments：[同文档](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/implementation-notes.md:47)
+
+而协作协议明确要求 T1 决策、挡板变化与学习摘要持久化。还需要：
+
+- 将 F2-0 标为完成并记录 commit/test。
+- 将“代码住在 experiments”挡板标为解除。
+- 在 `learning-log.md` 写入兼容壳对象同一性这一条。
+- 更新下一切片顺序。
+
+4. **兼容壳只保证符号对象相同，不保证模块级 monkeypatch 相同**
+
+当前壳使用 `from ... import *`：[glue.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/s1_7a_bringup/glue.py:8)。我实测：
+
+```text
+shell.generate is src.generate                 True
+shell module is src module                     False
+shell.ARTIFACT_DIR = /tmp/... 后
+src.ARTIFACT_DIR                               仍为原值
+```
+
+因此“module-level monkeypatch 不分叉”的表述过强。当前生产链只通过旧路径加载 `generate`，没有发现实际消费者修改旧模块全局变量，所以这不是生产阻塞。
+
+建议采取较保守的处理：明确兼容范围只是“导出函数/类对象 identity + 旧动态入口可解析”，不承诺对旧模块变量重新绑定的传播。没有必要为了未使用的兼容能力引入复杂模块代理。
+
+**独立验证**
+
+我实际重跑了：
+
+- 全套：`921 passed in 23.26s`，无 skip。
+- F2-0 及相关测试：`72 passed`。
+- `ruff check .`：通过。
+- `inspect-rh2-s1`：22 个 evidence、64 个 code digest 全部通过。
+- 三个迁移模块 AST 等价检查：全部通过。
+- `s1_7a_bringup.glue.generate` 动态入口：成功解析到 src 函数。
+
+因此可以认定 **F2-0 源码迁移正确**。先完成上述文档收口，并把顺序调整为“身份先于带身份字段的计时”，随后再发 F2-0b Owner Brief 开工，不需要重新做一轮大范围设计审查。

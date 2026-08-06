@@ -131,20 +131,27 @@
 >    durable manifest（snapshot/ack 事务接口已在，接 per-execution
 >    manifest 与双向引用）。
 >
-> **FA-2A 切片总表（六审切片建议）**：F2-0 纯迁移（上文）→ **F2-0b
-> Observability V0 事件接线**（计时提案"V0 唯一可执行清单"专属切片——
-> 与迁移分离，parity 与回滚边界才干净）→ F2-1
-> identity 贯穿 + **RolloutAttemptOutcome v2**（六审 2：completion 新
+> **FA-2A 切片总表（六审建议 + F2-0 复核 1 重排）**：F2-0 纯迁移
+> （已完成，commit f8580789）→ **F2-1a 四层身份**（`physical_attempt_id`
+> 等——**必须先于带身份字段的计时**，否则 F2-0b 事件只能伪造/留空/用
+> SID 冒充 physical attempt，破坏身份语义）→ **F2-0b Observability V0
+> 事件接线**（计时提案"V0 唯一可执行清单"，每事件带 physical_attempt_id）
+> → **F2-1b Outcome v2 与 crosswalk** → F2-2
+> session capability + Runtime quiescence → F2-3 request 级 capture +
+> 单 owner → F2-4 checkpoint recovery → F2-5 collector 不变量 →
+> F2-6 durable manifest。
+>
+> **F2-1a/F2-1b 拆分说明**：F2-1a 只落身份（四层 + physical_attempt_id
+> 贯穿 worker→orchestrator→session→proxy→capture）；F2-1b 落
+> **RolloutAttemptOutcome v2**（六审 2：completion 新
 > 枚举与 v1 不兼容——**新增 v2 不原地改 v1**；v1→v2 crosswalk、双版本
 > 读取、正式链只生产 v2、registry/CLI round-trip 测试；grader 基建失败
 > **只令 reward unavailable，不改写 execution completion**——评分故障
 > 不倒写执行事实；**crosswalk 规则（聚焦复核 4）**：v1
 > `permanent_rejection` 混合了执行事实与准入决定——能由原始 evidence
 > 重建则迁移，无法重建标 `legacy_unmappable`/audit-only，**禁止把
-> permanent_rejection 默认映射成 missing**；正式链只生产 v2）→ F2-2 session capability + Runtime quiescence →
-> F2-3 request 级 capture + 单 owner → F2-4 checkpoint recovery →
-> F2-5 collector 不变量 → F2-6 durable manifest。Observability V0 =
-> 每切片旁路事件接线（计时提案"V0 唯一可执行清单"），F2-6 统一验收；
+> permanent_rejection 默认映射成 missing**；正式链只生产 v2）。
+> Observability V0 后续切片只做增量事件接线，F2-6 统一验收；
 > `FaultDomainMonitor` 归 **FA-2B**。
 >
 > **FA/S2 文件 ownership**（六审 5：防两线程同改）：`contracts/

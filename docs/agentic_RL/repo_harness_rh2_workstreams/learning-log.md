@@ -116,3 +116,32 @@ audit_failure_keeps_ledger`）。
 
 **延伸阅读**：05 计划 FA-2A 节"结构化终止枚举"；协作协议 §2 的 T0
 升级规则 4（新增剔除轨迹的拒绝路径必须 owner 拍板的原因）。
+
+## 8. 模块系统、迁移与兼容层
+
+### 条目 8.1：兼容壳的保证边界——对象同一 ≠ 模块别名（F2-0，2026-08-07）
+
+**场景**：F2-0 把 capture_wire/glue/docker_sandbox 提升进 src，
+experiments 留 `from src_module import *` 薄壳。GPU 启动链按模块路径
+`s1_7a_bringup.glue.generate` 动态解析，必须继续工作。
+
+**机制**：`from X import *` 把 X 的顶层名**绑定**进壳的命名空间——
+`shell.generate is src.generate == True`（同一函数对象），所以
+isinstance、类属性单例（`BringupService._instance`）、对**对象**的
+monkeypatch 在两条导入路径下命中同一份状态。但壳和 src 是**两个
+module 对象**（`shell is src == False`）：对**模块全局变量**的重绑
+（`shell.ARTIFACT_DIR = X`）只改壳的名字绑定，src 内部读的还是自己的
+全局——**不传播**（codex F2-0 复核实测）。
+
+**不变量**：兼容壳的承诺范围必须显式声明为"导出函数/类对象 identity +
+旧动态入口可解析"，**不含**旧模块变量重绑传播；测试断言用 `is` 而不是
+`==`（行为等价掩盖状态分叉）。
+
+**失败场景**：若某消费者靠 `glue.SOME_CONST = new_value` 调参，迁移后
+静默失效——生产链核查确认无此用法（唯一动态消费是 `glue.generate`）；
+若未来出现，要么改注入接口，要么升级为模块代理（为未用能力引入代理
+不值得）。
+
+**延伸阅读**：`rh2/tests/adapters/test_f2_0_migration.py`（identity
+parity / src 反依赖扫描 / 壳无实现扫描三断言）；Python 文档 import
+system 的名字绑定语义。

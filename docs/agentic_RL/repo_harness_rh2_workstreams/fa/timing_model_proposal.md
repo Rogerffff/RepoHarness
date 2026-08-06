@@ -24,7 +24,10 @@ evidence: P3 真实数据 = docs/agentic_RL/repo_harness_rh2_workstreams/
 > （CC 内部时间记 residual_estimate）——本文 §4b 的 L4 方案与三个 T0
 > 候选全部转入 D1b 批次待议。本文其余细节契约作为 V1+ 设计储备保留。
 >
-> **V0 唯一可执行清单**（六审 1：与储备内容物理分开，F2 切片只做这些）：
+> **V0 唯一可执行清单**（六审 1：与储备内容物理分开）。**切片前置
+> （F2-0 复核 1）**：本清单每个事件带 `physical_attempt_id`，而该字段
+> 属四层身份——**F2-1a（身份先行）必须先于本清单落地**；切片顺序 =
+> F2-1a 身份 → **F2-0b** 本清单 → F2-1b Outcome v2。四项均归 F2-0b：
 > 1. `RolloutAudit.timeline` 扩事件名（服务启动/单 rollout/模型调用/
 >    组与 batch 四组事件表，见 codex 五审 §3）+ 每事件三字段
 >    （clock_domain_id / owner_role / physical_attempt_id）；
@@ -210,7 +213,8 @@ RH2 重测**——slime 已有（preflight_report.md:40 附近：一步 1387s，
 给 driver 协议加可选 `phase_sink: Callable[[str], None]` 参数，
 orchestrator 传 `audit.mark`（driver.run 在同一 asyncio loop 内被 await，
 generate.py:1503-1512，无跨线程问题）。slime 内部的 spawn/marker 两个
-事件在 F2-0 把 driver 代码提升进 `src/repoharness2/` 时顺路加（不改
+事件归 **F2-0b**（F2-0 已完成且为纯迁移，不加任何事件——复核 2 消除
+"F2-0 顺路加"旧文字）：driver 提升后的代码在 F2-0b 加事件（不改
 `reference/slime`，见 §6 不做清单）。
 
 **(2) 双时钟字段**（v3.2 D1a 第 3 条的直接落点）：
@@ -468,7 +472,7 @@ event type / CC 事件时间戳 / uuid / tool_use_id / parent_tool_use_id /
 | ------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------- | ------------------------------ |
 | L2 timeline 新事件名 + phase_sink 参数            | T2~T1（报告一句）                      | 旁路观测，不改契约必填面；driver 协议是内部协议                                                  | **F2-0b**（F2-0 纯迁移不加字段） |
 | L2 execution_audit 加原始 wall/候选区间两键          | T1 强报告                           | 按 **v4 已批** V0 口径只记原始区间（不派生 chargeable）                                  | **F2-0b**（字段）＋ F2-3（proxy 区间真接线）    |
-| L3 `ModelCallAttempt` optional 区间字段         | T1 强报告                           | 公共 schema **加 optional 字段**（协议 §2 粒度条）；任何字段转必填 = T0 另议                       | F2-3（与 request 级归属重写同批，改同一块代码） |
+| L3 `ModelCallAttempt` optional 区间字段         | T1 强报告                           | 公共 schema **加 optional 字段**（协议 §2 粒度条）；任何字段转必填 = T0 另议                       | **F2-0b**（V0 清单第 3 项；字段本身加在 F2-0b，proxy 四点区间真接线随 F2-3 request 归属重写同批填值） |
 | L3' `GenerationCaptureRecord.server_timing` | T1 强报告                           | 同上；`raw_meta_info_digest` 语义不动                                               | **F2-0b**                       |
 | L4 trajectory.jsonl 脱敏保存                    | **T0（白名单基线拍板）**                  | 新增持久化面 + 内容来自不可信域 + 安全白名单设计                                                  | **无 F2 归属**——不可执行储备，随 D1b 拍板后再定 |
 | L4 数据用途限制（只诊断、不进判定）                         | T0 附带条款（写进同一决策）                  | 防止未来悄悄变成准入输入（拒绝路径偏置，升级规则 4）                                                  | 随上项                            |

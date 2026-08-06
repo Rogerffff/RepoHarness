@@ -11,8 +11,12 @@
 **阶段状态**：FA-0 完成；FA-1 本机实现完成（codex 轮次 6~14 九轮审查全部
 处置，closure 批次已落地）；FA-3 离线/FA-4 对拍完成（接线未做）；
 **FA-2A 决策包 v4 已批准（2026-08-07，用户拍板 D1=A 带修订/D2=A/D3=A/
-D4=A；D1b 延后清单见决策包 owner_decision）**，实现未开工（首批
-F2-0）；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+D4=A；D1b 延后清单见决策包 owner_decision）**；**F2-0 纯迁移已完成**
+（commit f8580789，测试 917→921：capture_wire/glue→bringup/
+docker_sandbox 三模块提升 src，experiments 留带 parity 测试的薄兼容壳，
+GPU 链模块路径经壳保持可解析）；下一切片顺序 = **F2-1a 四层身份 →
+F2-0b Observability V0 → F2-1b Outcome v2**（F2-0 复核 1 重排：身份
+先于带身份字段的计时）；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
 **false**。测试基线 903+。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
@@ -52,7 +56,7 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 | DuplicateActiveSessionError | 轮次 12 | F2-1 execution 唯一身份 |
 | 中毒 SID（含归档）拒绝 register | 轮次 11 | F2-1/F2-2 身份与凭证分离（poison 改绑 session/attempt） |
 | StaticActiveCoordinator（永远 ACTIVE，只保守缺员） | 轮次 7 | FA-4 真协调器（consensus version） |
-| capture_wire/glue 住在 experiments/ | S1 沿革 | F2-0 提升进 src/repoharness2 |
+| ~~capture_wire/glue 住在 experiments/~~ | S1 沿革 | **已解除**（2026-08-07 F2-0，commit f8580789——src 唯一权威 + 薄兼容壳；壳兼容范围 = 导出对象 identity + 旧动态入口可解析，**不承诺旧模块全局变量重绑传播**） |
 | ruff F401 豁免（s2_1_ingestion/resolve_image_digests.py） | 2026-07-24 | owner = S2 线程；S2 收敛后清理并删豁免；gate = 训前总审计前 |
 
 **未闭合项**：见 05 计划 §6.1 递延表（P1×8 + P2×4）与 FA-2A 批次定义。

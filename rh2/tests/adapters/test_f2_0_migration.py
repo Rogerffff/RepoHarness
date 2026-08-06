@@ -3,7 +3,9 @@
 三条硬断言：
 1. 壳 parity——壳导出与 src 是**同一对象**（identity，不是 equal）；
    container_train.sh 按模块路径引用的 `s1_7a_bringup.glue.generate`
-   必须继续可解析（GPU 启动链硬需求）。
+   必须继续可解析（GPU 启动链硬需求）。兼容边界（F2-0 复核 4）：identity
+   只覆盖导出对象；对壳模块**全局变量**的重绑不传播到 src（两个 module
+   对象）——该能力不在承诺范围，生产链无此消费。
 2. src 不反向依赖 experiments（按 import 语句扫描，文档字符串不算）。
 3. 禁止双实现——壳文件不得含 class/def 定义（只许 re-export）。
 """
