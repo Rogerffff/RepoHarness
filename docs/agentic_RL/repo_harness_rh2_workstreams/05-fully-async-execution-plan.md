@@ -115,10 +115,11 @@
 >    manifest 与双向引用）。
 >
 > **FA-2A 附带定义项（终止分类/超时处置/熔断映射/恢复语义）**：正文
-> **只在** `fa/fa2a_decision_package.md`（v3，status 见其头部）——本计划
-> 不再复制草案内容（codex 决策包二审：待批标签消除不了事实分叉，重复
-> 正文必然漂移）。用户拍板后按决策包回写本节转正。已落地代码事实不在
-> 待批范围（require↔非零 exit 启动断言解耦已提交）。
+> **只在** `fa/fa2a_decision_package.md`（**v4 approved，2026-08-07 用户
+> 拍板**：D1=A 带修订（Observability V0 / audit_only 不放宽守卫 /
+> hard_wall 仅 trigger + present_truncated 事实推导）、D2=A、D3=A、
+> D4=A；D1b 清单显式延后）。本计划不复制正文，实现以决策包
+> owner_decision 范围为准。
 > 既定闸门补充维持：`rh2_formal_training_allowed` 前置含"overlap 挡板
 > 已由 request 级归属替代""分类拒绝率熔断在位"，v3 起再加"termination
 > policy profile / 阈值 / 组语义已预注册"。
@@ -139,13 +140,19 @@
 1. 输入只来自 ready queue 的完整组；事务式选取，**带 lease 与 trainer 确认**（codex #4：裸 peek→consume 无法处理 trainer 崩溃——提交前删丢 batch，训完删又可能重启后重复训练）：
    ```text
    READY → RESERVED(batch_lease_id, expires_at)
-         → SUBMITTED(optimizer_step_id) → TRAINED → ACKED / RELEASED
-   恢复语义 = at-least-once 提交 + batch_id+optimizer_step_id 去重；
-   lease 到期未 ACK → RELEASED 重新可选。不承诺 exactly-once
-   （队列账本与 trainer checkpoint 无法原子提交）。
+         → HANDED_OFF（已交训练侧，无后端确认）
+         → SUBMISSION_ACKED（仅当训练后端提供 durable 确认；slime 当前
+           无 durable ACK 时账面止于 HANDED_OFF，不暗示 batch 不会丢）
+         → TRAINED（可从 trainer 侧证据推断 optimizer 已消费时）
+         / RELEASED（lease 到期未确认 → 重新可选）
+   恢复语义 = at-least-once 提交 + batch_id+optimizer_step_id 去重
+   （D2 批准语义；不承诺 optimizer step exactly-once——队列账本与
+   trainer checkpoint 无法原子提交）。
    ```
 1b. **训练进度权威（codex #8）**：完全异步后 slime 名义 epoch / `train_iters`（按名义 rollout 数推导）与 lr 调度会漂移——数据源为 reserve/rejected 组持续推进。进度权威 = **已确认 optimizer step / 已消费 RolloutExecution / 有效 token**；attempted 与 trained 的 prompt coverage 分开记账（与 FA-5 第 7 项覆盖率对账共用计数）。
-2. **按唯一 `rollout_execution_id` 计数** global batch；branch 不计数。GRPO 归一化按 `group_index` 键控（原型：`reference/slime/slime/rollout/_fanout_test_helpers.py::grpo_normalize_by_group_index`），advantage 广播给 branches，rollout 级分母。
+2. global batch 计数：branch 不计数（防分叉充数不变）；execution 级
+   计数中 **reward-only/masked member 是否计入 GBS = D1b/FA-4 延后
+   决策，此处不预决**（五审 2.5 删除"全部 execution 必然计入"预决）。GRPO 归一化按 `group_index` 键控（原型：`reference/slime/slime/rollout/_fanout_test_helpers.py::grpo_normalize_by_group_index`），advantage 广播给 branches，rollout 级分母。
 3. 修复动作只有：**换组（按 token 长度分桶 + 有界搜索）→ 等待更多 ready 组 → 预注册 fallback**（首版 fallback 只登记不启用，见 §5）。禁止：拆组、复制成员、branch 充数、改 eligibility、重跑 harness、人工碰运气改 gbs。
 4. **差分验证**：同一输入喂我方预检器与 slime 真 `build_dp_schedule`（纯 Python import），成功/失败类别、step 数、microbatch 数三项一致。
 
@@ -241,7 +248,7 @@ FA-5 本地（2~3 人日）→ 短租（数小时，与 S2 G10 合并）
 21. eval 请求进入 FA 路径
     -> 显式拒绝（fail-fast），错误信息指向 before/after 标准路径；
        before/after 评测在 worker 停止后可正常执行。
-22. trainer 在 SUBMITTED 之后、ACK 之前崩溃
+22. trainer 在 HANDED_OFF 之后、SUBMISSION_ACKED/TRAINED 确认之前崩溃
     -> batch lease 到期 → RELEASED 重新可选；重启后凭
        batch_id+optimizer_step_id 去重，同一 batch 不被重复计入
        optimizer step（at-least-once 语义的两侧都要测）。

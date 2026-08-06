@@ -3938,3 +3938,322 @@ D4=A
 ```
 
 本轮只审查了文档；`git diff --check` 通过，没有修改文件。
+
+
+---
+
+## FA-2A 决策包五审 + 调查文档收缩（2026-08-07：7 项修改全采纳 → 决策包 v4；同日用户拍板 D1=A 带修订/D2=A/D3=A/D4=A）
+
+> 原文全文转录（tmp/决策包和调查文档审查5.md）。处置：全部 accepted。核心修正：三类内容分离（运行事实 / 工程 watchdog / 训练语义）——FA-2A 只做 Observability V0；hard_wall 撤回"恒 missing"预决改为 termination trigger + 事实推导 completion（present_truncated 入 completion class 枚举）；audit_only 收紧（不放宽守卫、不产正式 batch）；不定义 chargeable_policy_seconds（是否存在留 D1b）；L4 不导出 trajectory.jsonl；05 计划状态机改 HANDED_OFF/SUBMISSION_ACKED/TRAINED + GBS 预决删除；digest=integrity fingerprint、LOO/mean 仅理想代数等价、faithful_dis.py=数值参考三处措辞收紧。用户随后正式拍板（决策包 v4 header 全文记录批准范围与延后清单）。
+
+# FA-2A 决策包与调查文档第五轮审查意见
+
+```text
+status: review_feedback_only
+owner_decision: not_made
+scope: 修正决策包、计时调查与 05 执行计划的事实/语义冲突
+important: 本文不代表项目所有者已批准 D1/D2/D3/D4，也不得据此打开正式训练闸门
+```
+
+## 1. 总体结论
+
+决策包 v3.2 和两个调查线程的主方向没有需要推翻 FA 架构的新问题。
+但当前文档仍把三类内容混在一起：
+
+1. 为排障和优化吞吐量而记录的运行时事实；
+2. 用于防止系统无限卡住的工程 watchdog；
+3. 将时间/截断解释成 reward、advantage 或 gradient 的训练语义。
+
+FA-2A 现在只需完成第 1 类的 Observability V0，并为第 2、3 类保留
+可表达的事实契约。不应在没有 pre-RL 数据时就让新计时结果改变
+termination、reward、PromptGroup admission 或梯度。
+
+## 2. 需要修正的问题
+
+### 2.1 FA-2A 只记录时间事实，不切换预算判定时钟
+
+决策包一处写“预算判定使用 `chargeable` 时钟”，计时调查又建议到
+D1b 才切换，两者冲突。应统一为：
+
+```text
+FA-2A:
+  记录原始时间事实
+  生成诊断派生值
+  不用新派生值改变 termination/reward/admission/gradient
+
+D1b / pre-RL 之后:
+  再决定是否存在 chargeable policy time
+  再决定哪些区间可以扣除及数值阈值
+```
+
+开发/诊断期保持 `audit_only`，正式训练闸门保持关闭。
+
+### 2.2 不要在首版生成名不副实的 `chargeable_policy_seconds`
+
+如果一个派生值从 execution 启动一直算到 cleanup，并包含评分、投影、
+Gate 等阶段，它不是“策略执行时间”。首版只保留：
+
+```text
+workflow_wall_seconds
+agent_episode_wall_seconds
+per_stage_durations
+```
+
+可以记录候选 `non_chargeable_intervals`，但不得在 D1b 前把它们扣除成具有
+训练含义的最终数值。
+
+### 2.3 收紧 `audit_only` 的语义
+
+`audit_only` 只表示：
+
+- 同时计算并记录不同 timeout/horizon profile 的候选 disposition；
+- 不用候选 profile 改变当前运行结果；
+- 不产出可进入正式在线训练的 batch。
+
+`audit_only` **不表示**关闭 security、identity、token provenance、capture 完整性、
+hidden verifier 隔离等守卫。这些已定的安全/事实规则仍然 fail-closed。
+
+### 2.4 Observability V0 不做 L4 工具级伪精确计时
+
+当前 Claude Code hook 数据不足以稳定产出每个工具的可信开始/结束时间：
+
+- `--include-hook-events` 只输出实际配置并运行的 hooks；
+- 当前没有可依赖的 Pre/PostToolUse timing hook 配置与时间戳契约；
+- `trajectory.jsonl` 含高敏感完整内容，导出它会新增脱敏、可见性和持久化面。
+
+因此首版：
+
+```text
+不导出 trajectory.jsonl
+不新增工具级脱敏 artifact
+不声称拥有每个工具的精确耗时
+将模型调用与可观测阶段之外的 CC 时间记为 residual_estimate
+```
+
+未来若真正配置稳定 hook 并完成隐私/安全决策，再升级 L4。
+
+### 2.5 05 执行计划不得预决状态机和 GBS 语义
+
+决策包拍板后回写 05 计划时，必须：
+
+1. 替换旧的 `SUBMITTED -> TRAINED -> ACKED` 状态机，与 D2 最终批准的
+   handoff/ack/recovery 语义一致；
+2. 删除“全部 execution 必然计入 optimizer GBS”的预决。reward-only/masked member
+   是否占 GBS 属于 D1b/FA-4 算法决策。
+
+在所有者拍板前，05 计划只能引用 draft，不得写成“已采纳”。
+
+### 2.6 两个措辞/算法证据修正
+
+1. digest 只能称为 integrity/lineage fingerprint，可用于检测内容是否变化和关联
+   lineage，不能单独“验证真伪”。
+2. leave-one-out 与 group-mean advantage 即使在理想代数上只差常数，在 Adam、
+   gradient clipping、动态 batch 与有限精度下也不得宣称训练完全等价。
+   `faithful_dis.py` 是数值参考/对拍实现，尚不是已验证的生产 reducer。
+
+## 3. Observability V0 建议
+
+无需现在建五套计时公共契约、独立时序服务或数据库。扩展现有
+`RolloutAudit.timeline` 即可。事件持久化原始 monotonic timestamp，成对事件在同一
+clock domain 内派生 duration。
+
+### 3.1 服务启动
+
+```text
+service_init_started
+tokenizer_ready
+adapter_ready
+task_catalog_ready
+grading_manager_ready
+service_ready
+```
+
+### 3.2 单条 rollout
+
+```text
+execution_received
+materialize_started / materialize_completed
+harness_install_started / harness_install_completed
+agent_user_prepare_started / agent_user_prepare_completed
+cc_process_spawned
+harness_exit_observed
+quiescence_started / quiescence_confirmed
+capture_finalize_started / capture_finalize_completed
+grading_started / grading_completed
+projection_started / projection_completed
+gate_started / gate_completed
+cleanup_started / cleanup_completed
+```
+
+### 3.3 模型调用
+
+```text
+active_wait_started / active_wait_completed
+limiter_wait_started / limiter_wait_completed
+model_send_started / model_send_completed
+weight_update_wait_started / weight_update_wait_completed
+sglang_queue_time
+sglang_e2e_latency
+```
+
+SGLang 内部 latency 是对 `model_send` 的解释维度，不得与外层 duration 重复相加。
+
+### 3.4 组与训练 batch
+
+```text
+member_received
+group_ready
+ready_queue_dequeued
+admission_decided
+trainer_handoff
+trainer_handoff_acknowledged
+```
+
+### 3.5 每个事件最小额外字段
+
+```text
+clock_domain_id
+owner_role
+physical_attempt_id
+```
+
+事件本身还应有现有的 event name、monotonic timestamp、execution/group 关联键。
+缺少结束事件自然表示 crash/incomplete，首版无需为每一段再设计复杂的 nullable
+interval 状态机。只有相同 `clock_domain_id` 的 monotonic timestamp 允许相减。
+
+这一 V0 已足够回答：
+
+- 慢在镜像物化、Claude Code 安装还是用户/chown 准备；
+- 慢在模型排队、生成还是 CC 内部 residual；
+- 慢在评分、group ready queue、admission 还是 trainer 等待；
+- 预烤用户、Node 和 Claude Code 到镜像后实际节省多少时间。
+
+## 4. timeout/watchdog 的层次与暂不拍板的语义
+
+### 4.1 三层时间上限
+
+```text
+组件局部 timeout
+  Docker RPC、模型请求、评分测试、工具命令分别防止局部操作永久卡住
+
+agent episode watchdog
+  关注 cc_process_spawned 到 quiescence 的整体 episode
+  目的是防止黑盒 harness/后台进程无限运行
+
+workflow watchdog
+  关注 execution_received 到 cleanup_completed 的完整编排
+  目的是防止整个 runtime 永久卡住
+```
+
+本地 Claude Code TypeScript 快照显示 Bash 有自身默认/最大 timeout，但后台命令可能越过
+单个工具调用继续运行。因此 RH2 的 Runtime quiescence 与外层 watchdog 仍然是
+必需的，不得依赖 Claude Code 内部 timeout 作为安全边界。
+
+### 4.2 修正：`hard_wall_timeout` 的处置现在不拍板
+
+撤回先前“两个 watchdog 在首版都固定是
+`missing -> reward=None`”的建议。这会把“谁触发了停止”与“execution 是否形成了
+完整可信的事实”错误地绑定。
+
+决策包当前的：
+
+```text
+hard_wall_timeout
+  -> 首版恒 missing
+  -> reward=None
+  -> 任何 profile 不得评分
+```
+
+应改为：
+
+```text
+hard_wall_timeout 仅是 termination trigger，不直接决定 completion 或 member disposition。
+
+termination trigger
+  + capture closure facts
+  + Runtime quiescence facts
+  + frozen snapshot facts
+  + grading facts
+  -> completion class
+  -> （D1b 后）group/reward/gradient disposition
+```
+
+在事实层可以区分：
+
+```text
+若 capture 完整、Runtime quiescence 已确认、冻结 snapshot 可评分：
+  completion candidate = present_truncated
+  不得仅因 hard wall 触发就把它改写为 missing
+
+若存在半截模型响应、capture/logprob/version 不完整、
+无法 drain 在飞请求、无法确认 workspace 静止或无法冻结：
+  completion = missing
+```
+
+但对 `present_truncated` 的下列问题，**本轮仍不拍板**：
+
+```text
+group_membership 是 included 还是 excluded_by_profile
+reward 是否进入 advantage 统计
+gradient 是 train、masked 还是 excluded
+是否占 optimizer global_batch_size
+如何与 GRPO / DIS 的分母和组统计交互
+```
+
+这些属于 D1b/FA-4，等 pre-RL 诊断和算法决策后再定。目前
+`audit_only` 可以记录候选结果，但不得将它发往正式在线训练。
+
+### 4.3 hard wall 终止逻辑的 ownership
+
+全局 episode/workflow watchdog 应由 `RolloutExecution` 的 Runtime owner 拥有，不由
+trainer、PromptGroupAssembler 或 ModelProxy 单独决定训练处置：
+
+```text
+Runtime watchdog 触发
+  -> 撤销 adapter session，禁止新模型请求
+  -> ModelProxy drain/abort 当前请求
+  -> HarnessRunner 终止 sandbox execution scope（容器/cgroup 级）
+  -> Capture owner 关闭交付账目
+  -> Runtime 确认 quiescence
+  -> 冻结 snapshot
+  -> 根据完整性事实分类
+  -> 后续 profile 再导出训练处置
+```
+
+为尽可能把 wall cutoff 收口在已提交 turn 边界，可在实施上预留
+quiescence/cleanup reserve，停止开启新 turn，再以 absolute hard kill 作最后安全上限。
+这是减少 missing 的正确方向；不应为了保住固定 n 而把不完整 execution
+重标成 present。
+
+## 5. 给 Claude 的本轮修改清单
+
+1. 修改 `fa2a_decision_package.md`：删除 `hard_wall_timeout -> 恒 missing/reward=None`
+   的预决，改成第 4.2 节的事实推导；组/reward/gradient 处置显式留 D1b。
+2. 消除“FA-2A 立即切换 chargeable 预算判定”的冲突；新计时只记录、不改行为。
+3. 将计时提案收缩为 Observability V0：扩展现有 timeline，不建新服务/数据库、
+   不导出 L4 `trajectory.jsonl`、不伪称工具级精确计时。
+4. 在决策包里写清 `audit_only` 不放宽安全/事实守卫，且不产出正式训练 batch。
+5. 回写 05 计划时修正旧 handoff/ack 状态机和 GBS 预决，但在所有者拍板前
+   不得标为 accepted/approved。
+6. 收紧 digest、LOO/group mean 与 `faithful_dis.py` 的证据措辞。
+7. 返回修改时，单独列出“只改可表达能力/观测”与“仍待所有者拍板”的清单，
+   防止 draft 建议被写成已定案语义。
+
+## 6. 本轮明确未做的决策
+
+```text
+D1: not approved
+D2: not approved
+D3: not approved
+D4: not approved
+
+hard_wall_timeout training disposition: deferred
+timeout/horizon profile selection: deferred to D1b
+timeout thresholds: deferred to pre-RL diagnostics
+reward-only/masked member GRPO/DIS semantics: deferred to FA-4
+chargeable policy time: not defined; may ultimately be unnecessary
+```
+
+本文的目的是先让决策包和调查文档可以在不预决算法语义的前提下支持
+FA-2A 实现，不是替代项目所有者完成四项 T0 拍板。
+

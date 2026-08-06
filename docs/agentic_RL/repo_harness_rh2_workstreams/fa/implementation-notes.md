@@ -9,9 +9,18 @@
 > 以本页为准；被推翻的机制在括号里标注了替代它的轮次。
 
 **阶段状态**：FA-0 完成；FA-1 本机实现完成（codex 轮次 6~14 九轮审查全部
-处置，closure 批次已落地）；FA-3 离线/FA-4 对拍完成（接线未做）；FA-2 未
-开工（下一步，先 2A）；FA-5 未开工。闸门
-`rh2_fully_async_training_path_verified` = **false**。测试基线 903+。
+处置，closure 批次已落地）；FA-3 离线/FA-4 对拍完成（接线未做）；
+**FA-2A 决策包 v4 已批准（2026-08-07，用户拍板 D1=A 带修订/D2=A/D3=A/
+D4=A；D1b 延后清单见决策包 owner_decision）**，实现未开工（首批
+F2-0）；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+**false**。测试基线 903+。
+
+**FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
+行为；audit_only 不放宽任何守卫、不产正式训练 batch；hard_wall 仅
+termination trigger（completion 按事实推导，present_truncated 处置留
+D1b）；不定义 chargeable_policy_seconds；不导出 trajectory.jsonl；
+profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延后
+（D1b/FA-4/pre-RL）。
 
 **当前有效的关键机制**（历史轮次里的旧形态全部作废）：
 

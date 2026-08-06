@@ -1,10 +1,32 @@
-# FA-2A 决策包（v3.2：自包含版——只读本文即可完成四项决策）
+# FA-2A 决策包（v4：已批准版——含 codex 五审修订）
 
 ```text
-status: draft（v3.2——四审 3 阻塞修订完毕，codex 判定可直接拍 A/A/A/A）
-owner_decision: （待拍板：D1=A/B，D2=A/B/C，D3=A/B，D4=A/备选）
-approved_at: （待定）
-authoritative_plan_ref: （拍板后回写 05 计划；05 计划只引用本文，不复制正文）
+status: approved
+owner_decision:
+  D1 = A（带修订批准，非原样批准 v3.2）：
+    ① 批准 D1a 事实表达能力（termination fact 与 disposition 分离 /
+       quiescence 后才冻结评分 / 三 disposition 正交 / 两 mask 分离 /
+       固定 n 不静默 n-1 / continuation mode 与 profile 分离）；
+    ② FA-2A 只实现 Observability V0（只记录，不用新计时改变 termination
+       /reward/admission/gradient；不定义 chargeable_policy_seconds；
+       不导出 trajectory.jsonl，不声称工具级精确计时）；
+    ③ audit_only 不关闭 security/identity/capture/provenance 守卫，
+       且不产出正式在线训练 batch；
+    ④ hard_wall_timeout 仅为 termination trigger，completion 由事实
+       推导（present_truncated 处置留 D1b/FA-4）；
+    ⑤ D1b 显式延后（profile 选择 / watchdog 数值 / 截断处置 /
+       chargeable policy time 是否存在 / masked member 的
+       GRPO·DIS·分母·GBS 语义）。
+  D2 = A（同节点首版 / 单一 checkpoint owner / pending-before-cursor /
+       四层身份 / recovery_epoch+fencing；不承诺 optimizer exactly-once，
+       跨节点延后）。
+  D3 = A（adapter 线程单 owner；有界命令/快照接口；owner 死亡
+       fail-closed；生产路径禁绕过）。
+  D4 = A（穷举映射 / FaultDomainMonitor ownership / 安全三档 / worker
+       recovery 与 staleness 控制动作；正式阈值数值延后 pre-RL/FA-5
+       校准后单独 T0 预注册）。
+approved_at: 2026-08-07
+authoritative_plan_ref: 05-fully-async-execution-plan.md FA-2A 节（已回写为引用本文 approved 语义）
 ```
 
 > 外部证据入口：`docs/harness_improve/external_paper_references/
@@ -40,7 +62,12 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
      task_token_budget_exhausted / max_turns_exhausted（slime 429 turn
      cap）/ context_limit_reached
    看门狗族：hard_wall_timeout
-     ——首版恒按非策略结果处理（missing），任何 profile 不得把它评分
+     ——**仅为 termination trigger**（五审 4.2 撤回"恒 missing"预决：
+       触发者身份不决定事实完整性）。completion 由事实推导：capture
+       closure + Runtime quiescence + 冻结 snapshot + grading 事实全部
+       成立 → completion 候选 = **present_truncated**（不得仅因 hard
+       wall 触发改写为 missing）；任一不成立 → missing。
+       present_truncated 的 group/reward/gradient/GBS 处置留 D1b/FA-4
    控制面族：owner_cancelled
      ——控制面取消，默认不产生 reward（不属"正常完成"）
    基础设施族（missing，reward=None，进对应 fault domain 计数）：
@@ -61,7 +88,10 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
 
    ```text
    termination fact + capture/quiescence/grading facts
-     → completion_class + （可选）failure_category
+     → completion_class ∈ { present_complete, present_truncated, missing }
+       （事实层；与消费侧三态 missing/present_but_not_admissible/
+        permanent_rejection 的关系：completion 是事实，后者是准入判定）
+       + （可选）failure_category
      → 选定 profile（组/run 级配置）
      → member disposition（member 级结果）
    ```
@@ -89,9 +119,13 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
    （重叠暂停不得重复扣除）
    ```
 
-   首版只把**权重更新暂停**与**系统反压等待**列为 non-chargeable，其他
-   阶段先观测不扣除。预算判定用 chargeable 时钟（否则基建等待被训练成
-   策略失败）。
+   **FA-2A 只记录，不切换预算判定时钟**（五审 2.1 消除 v3.2 冲突）：
+   候选 non_chargeable_intervals（权重更新暂停、系统反压等待）如实
+   记录，但 D1b 前**不得**扣除成带训练含义的派生值；首版不定义
+   `chargeable_policy_seconds`（含评分/投影/清理的全程派生值不是
+   "策略时间"，五审 2.2——该量是否最终需要存在也留 D1b）。首版只保留
+   workflow_wall_seconds / agent_episode_wall_seconds /
+   per_stage_durations 三个如实命名的量。
 
 4. **Runtime 级静止屏障**（"杀进程组"不充分——CC/工具可再起新 session
    或后台进程）：
@@ -105,6 +139,19 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
    ```
 
    digest 稳定只是探针；无法确认静止 → missing，禁止配置开关强行评分。
+
+   **watchdog 三层与 ownership**（五审 4.1/4.3）：组件局部 timeout
+   （Docker RPC/模型请求/评分测试/工具命令）防局部卡死；agent episode
+   watchdog 看 `cc_process_spawned → quiescence` 段；workflow watchdog
+   看 `execution_received → cleanup_completed` 全程。全局 watchdog 由
+   **RolloutExecution 的 Runtime owner** 拥有（trainer/assembler/proxy
+   都不单独决定训练处置），触发序列 = 撤销 session → proxy drain/abort
+   → 终止 execution scope → capture 关账 → 确认 quiescence → 冻结 →
+   按完整性事实分类 → profile 后置导出处置。实施上预留 quiescence/
+   cleanup reserve（先停开新 turn，absolute hard kill 只作最后上限）
+   ——把 wall cutoff 尽量收口在已提交 turn 边界以减少 missing；但
+   **不得为保固定 n 把不完整 execution 重标 present**。CC 内部的 Bash
+   timeout 不可作为安全边界（后台命令可越过单工具调用存活）。
 
 5. **member 级处置契约**（不新增账本，单一事实来源 + 派生视图）：
 
@@ -162,11 +209,12 @@ token 预算罚分 / Endless Terminals 对 wall 与 turn 耗尽分流程），�
        （含 horizon 族/看门狗/控制面/各类 infra/无法静止），缺项 = 配置
        非法拒绝启动
    enforcement_mode ∈ { audit_only, enforce }
-     ——audit_only（FA 开发/诊断期）：不执行剔除，且**同时计算两个候选
-       profile 的 disposition** 记入
-       candidate_dispositions_by_profile: { strict_horizon_excluded_v1,
-       scored_horizon_masked_v1 }——pre-RL 才能比较两种策略的组存活率
-       与分布影响；
+     ——audit_only（FA 开发/诊断期）：不执行 profile 剔除，且**同时计算
+       两个候选 profile 的 disposition** 记入
+       candidate_dispositions_by_profile（pre-RL 比较组存活率与分布）。
+       **audit_only 不放宽任何守卫**（五审 2.3）：security / identity /
+       token provenance / capture 完整性 / hidden verifier 隔离照常
+       fail-closed；audit_only 模式**不产出可进正式在线训练的 batch**。
        enforce（正式训练）：单一 profile + 配置 digest 预注册
    ```
 
@@ -219,9 +267,13 @@ trainer_wait_ratio / policy_version_lag。
 按 P3 中位 633s、并发 8~16 → 约 **4.4~17.6 实例墙钟小时**（8 GPU 实例
 ≈ **35~141 GPU-hours**）；建议与 FA-5 短租合并成一次租期。
 
-诊断后决定：32K/50-turn 是否合适；watchdog 取成功轨迹 P90/P95 或分
-难度桶；选 strict_horizon_excluded_v1 还是 scored_horizon_masked_v1（参考：单员 5% 缺失率下
-0.95^8=66.34% 完整组存活）；FA-4 算法五项（上文第 10 条）。
+诊断后决定（D1b 完整延后清单，与 owner 批准范围第 ⑤ 点一致）：
+timeout/horizon profile 选择（参考：单员 5% 缺失率下 0.95^8=66.34%
+完整组存活）；watchdog 数值（**必须用拆桶后的 cc_process_spawned→
+quiescence 段校准**，不能用混合桶）；hard-wall 截断（present_truncated）
+的训练处置；chargeable policy time 是否存在（可能最终不需要）；
+reward-only/masked member 的 GRPO/DIS/分母/GBS 语义（FA-4 决策包）；
+32K/50-turn 校准。
 
 **拍板选项**：
 - **A（推荐）**：D1a 契约按上文采纳；D1b 显式延后。
