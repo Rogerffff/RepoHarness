@@ -14,10 +14,11 @@
 D4=A；D1b 延后清单见决策包 owner_decision）**；**F2-0 纯迁移已完成**
 （commit f8580789，测试 917→921：capture_wire/glue→bringup/
 docker_sandbox 三模块提升 src，experiments 留带 parity 测试的薄兼容壳，
-GPU 链模块路径经壳保持可解析）；**F2-1a 四层身份：实现 + 两轮复核修复完毕，待 codex 终核**（e5ddd13a
-主体；一审修复 63e2772c；二审 P0 触发**修复循环熔断**→所有权收敛重构：
-paid 并入 register 单锁原子事务、经 open_session 传入、删除预登记
-setter——materialize 失败无残留、replay 畅通）；下一切片 =
+GPU 链模块路径经壳保持可解析）；**F2-1a 四层身份：完成，codex 终核通过**（e5ddd13a 主体；一审 63e2772c；
+二审 P0 触发修复循环熔断→所有权收敛重构 4e704d03；终核仅剩 P1
+SessionAdapter Protocol 签名同步，已修）。**F2-2 验收前置登记**：稳定
+SID 在 slime closed 集合下不可复用，需 F2-2 的每 physical attempt 新
+session_auth_capability 解决（05 计划 F2-2 节已钉验收）。下一切片 =
 **F2-0b Observability V0 → F2-1b Outcome v2**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
 **false**。测试基线 903+。
 

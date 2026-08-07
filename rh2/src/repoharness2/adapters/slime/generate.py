@@ -954,12 +954,20 @@ class HarnessDriver(Protocol):
 class SessionAdapter(Protocol):
     """slime BaseAdapter 的会话生命周期面（open/finish/drop，字段名逐一对应）。
 
-    真实实现 = slime `AnthropicAdapter`（含内部 TrajectoryManager）；
+    真实实现 = `PerRolloutAdapter`（bringup.py）包装共享 slime
+    `AnthropicAdapter`——wrapper 负责把 `physical_attempt_id` 与 hook 一并
+    原子注册进 CaptureRegistry（F2-1a 所有权收敛），并把 open/注册纳入
+    同一回滚路径；底层 TrajectoryManager 仍来自 AnthropicAdapter。
     finish_session 返回叶链 Sample 列表（TrajectoryManager.get_trajectory 语义）。
     """
 
     def open_session(
-        self, sid: str, *, sampling_defaults: dict | None = None, max_context_tokens: int = 0
+        self,
+        sid: str,
+        *,
+        sampling_defaults: dict | None = None,
+        max_context_tokens: int = 0,
+        physical_attempt_id: str | None = None,  # F2-1a：经 open 事务原子绑定
     ) -> None: ...
 
     async def finish_session(

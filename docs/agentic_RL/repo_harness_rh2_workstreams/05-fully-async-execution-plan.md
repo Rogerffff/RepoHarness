@@ -141,6 +141,14 @@
 > 单 owner → F2-4 checkpoint recovery → F2-5 collector 不变量 →
 > F2-6 durable manifest。
 >
+> **F2-2 必须钉住的验收（codex F2-1a 终核提出）**：真实 slime 在
+> finish/drop_session 后把 SID 留在 `closed` 集合，open_session 不清除
+> ——已真正 open 过的 session 不能复用稳定 SID，否则 replay 请求收 503。
+> 每次 physical attempt 新 `session_auth_capability`（F2-2 本职）必须
+> 显式证明：旧 capability 被拒 / 新 attempt 用新 capability 且不受旧
+> closed 状态与 turn counter 影响 / 新请求正常通过。不阻塞 F2-0b，但
+> 阻塞正式 replay 与 FA 训练闸门。
+
 > **F2-1a/F2-1b 拆分说明**：F2-1a 只落身份（四层 + physical_attempt_id
 > 贯穿 worker→orchestrator→session→proxy→capture）；F2-1b 落
 > **RolloutAttemptOutcome v2**（六审 2：completion 新
