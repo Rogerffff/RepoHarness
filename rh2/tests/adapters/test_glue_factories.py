@@ -71,6 +71,8 @@ def _fake_audit(sid: str, paid: str | None = None) -> types.SimpleNamespace:
     return types.SimpleNamespace(
         session_id=sid,
         physical_attempt_id=paid,
+        started_epoch_seconds=1000.0,
+        non_chargeable_intervals=[],
         trajectory_id="traj_x",
         task_id="task_x",
         finalized=None,

@@ -129,6 +129,16 @@ class GenerationCaptureRecord(StrictModel):
             "测试路径与历史记录（S1 evidence）允许为 None。"
         ),
     )
+    server_timing: dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "F2-0b Observability V0：SGLang meta_info 的服务端计时白名单"
+            "（queue_time/e2e_latency/decode_throughput 等，trace_utils "
+            "SGLANG_TRACE_META_KEYS）——此前只留 raw_meta_info_digest，计时事实"
+            "被丢弃。server_reported 口径，不与外层 duration 相加。缺失=引擎"
+            "未返回该字段（非错误）。"
+        ),
+    )
     logprobs_ref: ArtifactRef | None = Field(
         default=None, description="逐 token logprob（meta_info.output_token_logprobs）的引用。"
     )

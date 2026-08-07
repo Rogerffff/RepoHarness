@@ -335,6 +335,11 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "steps": list(audit.steps),
         "timeline": audit.timeline_dicts(),
         "timing_summary": audit.timing_summary(),
+        # F2-0b Observability V0：双时钟**原始事实**（wall + 候选区间）——
+        # D1b 前不派生 chargeable_execution_seconds（五审 2.1/2.2）
+        "wall_start_epoch": audit.started_epoch_seconds,
+        "wall_end_epoch": time.time(),
+        "non_chargeable_intervals": list(audit.non_chargeable_intervals),
         "harness_exit_code": audit.harness_exit_code,
         "failure_records": [
             {"stage": f.stage, "error_type": f.error_type, "detail": f.detail}

@@ -18,8 +18,12 @@ GPU 链模块路径经壳保持可解析）；**F2-1a 四层身份：完成，co
 二审 P0 触发修复循环熔断→所有权收敛重构 4e704d03；终核仅剩 P1
 SessionAdapter Protocol 签名同步，已修）。**F2-2 验收前置登记**：稳定
 SID 在 slime closed 集合下不可复用，需 F2-2 的每 physical attempt 新
-session_auth_capability 解决（05 计划 F2-2 节已钉验收）。下一切片 =
-**F2-0b Observability V0 → F2-1b Outcome v2**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+session_auth_capability 解决（05 计划 F2-2 节已钉验收）。**F2-0b Observability V0 已完成**（V0 唯一可执行清单四项：timeline 每
+事件带 clock_domain_id/owner_role/physical_attempt_id；ModelCallAttempt
+加 optional 区间字段（proxy 填值随 F2-3）；SGLang server_timing 白名单
+提取进 GenerationCaptureRecord；audit 原始双时钟 wall_*+non_chargeable_
+intervals，**不派生 chargeable**）；下一切片 = **F2-1b Outcome v2 与
+crosswalk**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
 **false**。测试基线 903+。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

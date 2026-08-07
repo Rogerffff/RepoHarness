@@ -362,6 +362,18 @@ class ModelCallAttempt(StrictModel):
     evidence_refs: list[NonEmptyStr] = Field(
         default_factory=list, description="审计证据（含 non-delivered 半截输出的留痕引用）。"
     )
+    # F2-0b Observability V0（optional 区间，只记录不改判定）：proxy 侧四个
+    # 等待/发送段的耗时事实，供 D1b 诊断（ACTIVE 等待/限流等待/发送/权重
+    # 更新等待）。单位秒，同 clock domain（proxy 所在 adapter 线程）。
+    wait_active_seconds: float | None = Field(
+        default=None, ge=0.0, description="发前 ACTIVE 等待耗时（proxy 观测）。"
+    )
+    wait_version_seconds: float | None = Field(
+        default=None, ge=0.0, description="abort 后版本恢复等待耗时（proxy 观测）。"
+    )
+    send_seconds: float | None = Field(
+        default=None, ge=0.0, description="本 attempt 的 send_fn 往返耗时（proxy 观测）。"
+    )
 
     @model_validator(mode="after")
     def _check_delivery_consistency(self) -> "ModelCallAttempt":

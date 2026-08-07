@@ -509,6 +509,7 @@ class GenerationCaptureHook:
                 self._store_int32(f"{record_id}_output_ids", output_ids) if generated else None
             ),
             raw_meta_info_digest=canonical_json_digest(dict(meta)),
+            server_timing=_extract_server_timing(meta),
             logprobs_ref=(
                 self._store_f64(f"{record_id}_logprobs", output_log_probs) if generated else None
             ),
@@ -1164,6 +1165,27 @@ class RolloutFailureRecord:
     failure_category: GradingFailureCategory = "infra_failure"
 
 
+# F2-0b Observability V0：SGLang meta_info 服务端计时白名单——源码 pin
+# `reference/slime/slime/utils/trace_utils.py:SGLANG_TRACE_META_KEYS`
+# （slime 本地不可 import，硬编码 + pin；升级 slime 时 fully_async 表面
+# 契约测试守 HEAD，白名单漂移人工核对）。只取数值型计时，不含内容。
+_SGLANG_SERVER_TIMING_KEYS = (
+    "prompt_tokens", "completion_tokens", "cached_tokens",
+    "queue_time", "e2e_latency", "decode_throughput",
+)
+
+
+def _extract_server_timing(meta: Mapping[str, Any]) -> dict[str, float] | None:
+    """从 meta_info 摘白名单计时键（数值型才收）；全缺返回 None。"""
+
+    out: dict[str, float] = {}
+    for key in _SGLANG_SERVER_TIMING_KEYS:
+        val = meta.get(key)
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            out[key] = float(val)
+    return out or None
+
+
 @dataclass
 class RolloutTimelineEntry:
     """一次 rollout 内部的时间线事件。
@@ -1176,6 +1198,10 @@ class RolloutTimelineEntry:
     step: str
     seconds_since_start: float
     epoch_seconds: float
+    # F2-0b Observability V0（每事件三字段，同 clock_domain 才允许相减）：
+    clock_domain_id: str = "orchestrator_loop"  # 记录该时刻的进程/loop 域
+    owner_role: str | None = None  # 记录者角色（orchestrator/proxy/grading...）
+    physical_attempt_id: str | None = None  # 本次物理重放身份（可关联全链）
 
 
 @dataclass
@@ -1207,19 +1233,34 @@ class RolloutAudit:
     # F2-1a：本次物理重放身份（worker dispatch 铸造，经 member metadata
     # 传入；S1 兼容路径可为 None）
     physical_attempt_id: str | None = None
+    # F2-0b Observability V0：候选 non-chargeable 区间（权重更新暂停/系统
+    # 反压等待，proxy 侧填；V0 只**记录原始区间**，D1b 前不派生
+    # chargeable_execution_seconds）。每项 {start, end, reason, source}。
+    non_chargeable_intervals: list[dict[str, Any]] = field(default_factory=list)
 
     def step(self, name: str) -> None:
         self.steps.append(name)
         self.mark(name)
 
-    def mark(self, name: str) -> None:
-        """记录不改变 S1 生命周期步骤语义的旁路时间线事件。"""
+    def mark(
+        self,
+        name: str,
+        *,
+        clock_domain_id: str = "orchestrator_loop",
+        owner_role: str | None = None,
+    ) -> None:
+        """记录不改变 S1 生命周期步骤语义的旁路时间线事件（F2-0b：每事件带
+        clock_domain_id/owner_role/physical_attempt_id 三字段——同 clock
+        domain 才允许 timestamp 相减；缺结束事件天然表示 crash）。"""
 
         self.timeline.append(
             RolloutTimelineEntry(
                 step=name,
                 seconds_since_start=round(time.monotonic() - self.started_monotonic, 3),
                 epoch_seconds=round(time.time(), 3),
+                clock_domain_id=clock_domain_id,
+                owner_role=owner_role,
+                physical_attempt_id=self.physical_attempt_id,
             )
         )
 
@@ -1229,6 +1270,9 @@ class RolloutAudit:
                 "step": entry.step,
                 "seconds_since_start": entry.seconds_since_start,
                 "epoch_seconds": entry.epoch_seconds,
+                "clock_domain_id": entry.clock_domain_id,
+                "owner_role": entry.owner_role,
+                "physical_attempt_id": entry.physical_attempt_id,
             }
             for entry in self.timeline
         ]
