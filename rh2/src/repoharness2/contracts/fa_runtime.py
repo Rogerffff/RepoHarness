@@ -362,18 +362,37 @@ class ModelCallAttempt(StrictModel):
     evidence_refs: list[NonEmptyStr] = Field(
         default_factory=list, description="审计证据（含 non-delivered 半截输出的留痕引用）。"
     )
-    # F2-0b Observability V0（optional 区间，只记录不改判定）：proxy 侧四个
-    # 等待/发送段的耗时事实，供 D1b 诊断（ACTIVE 等待/限流等待/发送/权重
-    # 更新等待）。单位秒，同 clock domain（proxy 所在 adapter 线程）。
-    wait_active_seconds: float | None = Field(
-        default=None, ge=0.0, description="发前 ACTIVE 等待耗时（proxy 观测）。"
+    # F2-0b Observability V0（optional **原始区间**，只记录不改判定）：proxy
+    # 侧四段等待/发送的成对 monotonic start/end + clock_domain（codex F2-0b
+    # P1-3：存原始区间而非派生 duration——才能合并重叠 non-chargeable 区间、
+    # 校验同 clock domain、重建时间线；四段 = ACTIVE 等待/限流等待/权重恢复
+    # 等待/发送）。填值随 F2-3 request 归属重写同批（本切片只加形状）。
+    timing_clock_domain: NonEmptyStr | None = Field(
+        default=None, description="上述区间所属进程级 clock domain（同 domain 才可减）。"
     )
-    wait_version_seconds: float | None = Field(
-        default=None, ge=0.0, description="abort 后版本恢复等待耗时（proxy 观测）。"
+    wait_active_interval: tuple[float, float] | None = Field(
+        default=None, description="发前 ACTIVE 等待 (start,end) monotonic。"
     )
-    send_seconds: float | None = Field(
-        default=None, ge=0.0, description="本 attempt 的 send_fn 往返耗时（proxy 观测）。"
+    limiter_wait_interval: tuple[float, float] | None = Field(
+        default=None, description="model_call 限流等待 (start,end) monotonic。"
     )
+    wait_version_interval: tuple[float, float] | None = Field(
+        default=None, description="abort 后版本恢复等待 (start,end) monotonic。"
+    )
+    send_interval: tuple[float, float] | None = Field(
+        default=None, description="send_fn 往返 (start,end) monotonic。"
+    )
+
+    @model_validator(mode="after")
+    def _check_timing_intervals(self) -> "ModelCallAttempt":
+        for name in (
+            "wait_active_interval", "limiter_wait_interval",
+            "wait_version_interval", "send_interval",
+        ):
+            iv = getattr(self, name)
+            if iv is not None and iv[1] < iv[0]:
+                raise ValueError(f"{name} end < start（非法区间）。")
+        return self
 
     @model_validator(mode="after")
     def _check_delivery_consistency(self) -> "ModelCallAttempt":

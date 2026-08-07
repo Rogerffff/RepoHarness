@@ -69,6 +69,7 @@ import asyncio
 import hashlib
 import json
 import math
+import os
 import re
 import secrets
 import struct
@@ -96,6 +97,7 @@ from repoharness2.contracts import (
     CleanupPolicy,
     CompactedSubTraceLineage,
     GenerationCaptureRecord,
+    ServerTiming,
     GradingFailureCategory,
     GradingReport,
     HarnessLaunchSpec,
@@ -1175,15 +1177,28 @@ _SGLANG_SERVER_TIMING_KEYS = (
 )
 
 
-def _extract_server_timing(meta: Mapping[str, Any]) -> dict[str, float] | None:
-    """从 meta_info 摘白名单计时键（数值型才收）；全缺返回 None。"""
+# F2-0b：进程级 monotonic 时钟实例标识——同进程所有线程读同一单调钟，
+# 属同一 clock domain，timestamp 可互减（跨进程才不可比）。用 pid 标识。
+_PROCESS_CLOCK_DOMAIN = f"proc-{os.getpid()}"
+
+
+def _extract_server_timing(meta: Mapping[str, Any]) -> "ServerTiming | None":
+    """从 meta_info 摘白名单计时键（数值型才收）→ 严格模型 ServerTiming；
+    全缺或全部非法返回 None。负值/非有限由 ServerTiming validator 兜底
+    （引擎异常值不进遥测——宁缺毋污染）。"""
 
     out: dict[str, float] = {}
     for key in _SGLANG_SERVER_TIMING_KEYS:
         val = meta.get(key)
         if isinstance(val, (int, float)) and not isinstance(val, bool):
-            out[key] = float(val)
-    return out or None
+            out[key] = val
+    if not out:
+        return None
+    try:
+        return ServerTiming(**out)
+    except Exception:
+        # 引擎返回负值/非有限等非法计时——不阻断 capture，只丢该遥测
+        return None
 
 
 @dataclass
@@ -1198,9 +1213,12 @@ class RolloutTimelineEntry:
     step: str
     seconds_since_start: float
     epoch_seconds: float
-    # F2-0b Observability V0（每事件三字段，同 clock_domain 才允许相减）：
-    clock_domain_id: str = "orchestrator_loop"  # 记录该时刻的进程/loop 域
-    owner_role: str | None = None  # 记录者角色（orchestrator/proxy/grading...）
+    monotonic_ts: float  # F2-0b：原始 monotonic 时间戳（不舍入；相减用它）
+    # clock_domain_id = **进程级时钟实例**（同进程各线程共享 monotonic，
+    # 属同一 domain，可互减——codex F2-0b P1-2 纠正：不按线程拆 domain）；
+    # owner_role 才区分记录者线程角色（orchestrator/adapter/grading）。
+    clock_domain_id: str = _PROCESS_CLOCK_DOMAIN
+    owner_role: str | None = None
     physical_attempt_id: str | None = None  # 本次物理重放身份（可关联全链）
 
 
@@ -1246,18 +1264,20 @@ class RolloutAudit:
         self,
         name: str,
         *,
-        clock_domain_id: str = "orchestrator_loop",
         owner_role: str | None = None,
+        clock_domain_id: str = _PROCESS_CLOCK_DOMAIN,
     ) -> None:
-        """记录不改变 S1 生命周期步骤语义的旁路时间线事件（F2-0b：每事件带
-        clock_domain_id/owner_role/physical_attempt_id 三字段——同 clock
-        domain 才允许 timestamp 相减；缺结束事件天然表示 crash）。"""
+        """记录旁路时间线事件（F2-0b）：保存**原始 monotonic 时间戳**，
+        clock_domain_id 默认本进程实例（同进程各线程可互减），owner_role
+        区分记录者线程角色。缺结束事件天然表示 crash。"""
 
+        now_mono = time.monotonic()
         self.timeline.append(
             RolloutTimelineEntry(
                 step=name,
-                seconds_since_start=round(time.monotonic() - self.started_monotonic, 3),
+                seconds_since_start=round(now_mono - self.started_monotonic, 3),
                 epoch_seconds=round(time.time(), 3),
+                monotonic_ts=now_mono,
                 clock_domain_id=clock_domain_id,
                 owner_role=owner_role,
                 physical_attempt_id=self.physical_attempt_id,
@@ -1270,6 +1290,7 @@ class RolloutAudit:
                 "step": entry.step,
                 "seconds_since_start": entry.seconds_since_start,
                 "epoch_seconds": entry.epoch_seconds,
+                "monotonic_ts": entry.monotonic_ts,
                 "clock_domain_id": entry.clock_domain_id,
                 "owner_role": entry.owner_role,
                 "physical_attempt_id": entry.physical_attempt_id,

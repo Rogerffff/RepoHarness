@@ -33,6 +33,7 @@ from repoharness2.contracts.anti_hack import AntiHackEvent
 from repoharness2.contracts.capture import (
     CaptureSamplingParams,
     GenerationCaptureRecord,
+    ServerTiming,
 )
 from repoharness2.contracts.constants import (
     FORBIDDEN_PUBLIC_MARKERS,
@@ -133,6 +134,7 @@ __all__ = [
     "AntiHackEvent",
     "CaptureSamplingParams",
     "GenerationCaptureRecord",
+    "ServerTiming",
     "FORBIDDEN_PUBLIC_MARKERS",
     "MarkerHit",
     "find_forbidden_marker",

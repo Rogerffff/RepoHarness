@@ -18,12 +18,15 @@ GPU 链模块路径经壳保持可解析）；**F2-1a 四层身份：完成，co
 二审 P0 触发修复循环熔断→所有权收敛重构 4e704d03；终核仅剩 P1
 SessionAdapter Protocol 签名同步，已修）。**F2-2 验收前置登记**：稳定
 SID 在 slime closed 集合下不可复用，需 F2-2 的每 physical attempt 新
-session_auth_capability 解决（05 计划 F2-2 节已钉验收）。**F2-0b Observability V0 已完成**（V0 唯一可执行清单四项：timeline 每
-事件带 clock_domain_id/owner_role/physical_attempt_id；ModelCallAttempt
-加 optional 区间字段（proxy 填值随 F2-3）；SGLang server_timing 白名单
-提取进 GenerationCaptureRecord；audit 原始双时钟 wall_*+non_chargeable_
-intervals，**不派生 chargeable**）；下一切片 = **F2-1b Outcome v2 与
-crosswalk**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+session_auth_capability 解决（05 计划 F2-2 节已钉验收）。**F2-0b Observability V0：基础字段完成，生产接线未完成**（codex F2-0b
+复核 4 P1 修正后的诚实口径——契约与提取器就位，但 43 个事件中生产代码
+只命中约 4 个，其余按 owner 分批接线：execution 事件随各切片、model
+调用区间填值随 F2-3、group/batch 事件随 F2-5/F2-6）。已闭合：clock_
+domain=进程实例（同进程线程可互减，owner_role 区分线程）+ 原始
+monotonic 时间戳；ModelCallAttempt 四原始区间（成对 start/end +
+timing_clock_domain）；server_timing = 严格模型 ServerTiming（白名单
+六键 + 非负有限，污染键/负值挡在契约外）；audit 原始双时钟不派生
+chargeable。下一切片 = **F2-1b Outcome v2 与 crosswalk**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
 **false**。测试基线 903+。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
@@ -66,6 +69,7 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 | ~~capture_wire/glue 住在 experiments/~~ | S1 沿革 | **已解除**（2026-08-07 F2-0，commit f8580789——src 唯一权威 + 薄兼容壳；壳兼容范围 = 导出对象 identity + 旧动态入口可解析，**不承诺旧模块全局变量重绑传播**） |
 | ruff F401 豁免（s2_1_ingestion/resolve_image_digests.py） | 2026-07-24 | owner = S2 线程；S2 收敛后清理并删豁免；gate = 训前总审计前 |
 | physical_attempt_seq 重启后从 1 重数 + `_attempt_seq` 随执行数无界 | 2026-08-07 F2-1a | owner = F2-4 checkpoint（seq 纳入 pending checkpoint / 有界化）；gate = 训前总审计前（codex F2-1a 复核递延项） |
+| V0 timeline 43 事件仅约 4 个有生产调用点 | 2026-08-07 F2-0b | owner = 各切片（execution 事件随切片接线 / model 区间填值 F2-3 / group·batch 事件 F2-5-F2-6）；gate = 训前总审计前（codex F2-0b 复核 P1-1） |
 
 **未闭合项**：见 05 计划 §6.1 递延表（P1×8 + P2×4）与 FA-2A 批次定义。
 

@@ -55,6 +55,33 @@ class CaptureSamplingParams(StrictModel):
     )
 
 
+class ServerTiming(StrictModel):
+    """SGLang 服务端计时白名单（F2-0b Observability V0）。
+
+    严格模型：只六个已知键、全 optional、数值非负且有限——防其他生产者
+    或损坏 artifact 塞任意键/负值污染遥测（codex F2-0b P1-4）。键与
+    `_extract_server_timing` 的白名单、trace_utils SGLANG_TRACE_META_KEYS
+    保持一致（三处漂移由 fully_async 表面契约测试守 HEAD 兜底）。
+    """
+
+    prompt_tokens: int | None = Field(default=None, ge=0)
+    completion_tokens: int | None = Field(default=None, ge=0)
+    cached_tokens: int | None = Field(default=None, ge=0)
+    queue_time: float | None = Field(default=None, ge=0.0)
+    e2e_latency: float | None = Field(default=None, ge=0.0)
+    decode_throughput: float | None = Field(default=None, ge=0.0)
+
+    @model_validator(mode="after")
+    def _finite(self) -> "ServerTiming":
+        import math as _math
+
+        for name in ("queue_time", "e2e_latency", "decode_throughput"):
+            v = getattr(self, name)
+            if v is not None and not _math.isfinite(v):
+                raise ValueError(f"{name} 必须有限（得到 {v}）。")
+        return self
+
+
 class GenerationCaptureRecord(StrictModel):
     """一次 /generate 调用的原始事实 sidecar（A4 字段清单的逐项落点）。
 
@@ -129,14 +156,13 @@ class GenerationCaptureRecord(StrictModel):
             "测试路径与历史记录（S1 evidence）允许为 None。"
         ),
     )
-    server_timing: dict[str, float] | None = Field(
+    server_timing: ServerTiming | None = Field(
         default=None,
         description=(
-            "F2-0b Observability V0：SGLang meta_info 的服务端计时白名单"
-            "（queue_time/e2e_latency/decode_throughput 等，trace_utils "
-            "SGLANG_TRACE_META_KEYS）——此前只留 raw_meta_info_digest，计时事实"
-            "被丢弃。server_reported 口径，不与外层 duration 相加。缺失=引擎"
-            "未返回该字段（非错误）。"
+            "F2-0b Observability V0：SGLang meta_info 服务端计时白名单"
+            "（严格模型 ServerTiming——只六个已知键、非负有限，防其他生产者/"
+            "损坏 artifact 塞任意键或负值污染遥测；codex F2-0b P1-4）。"
+            "server_reported 口径，不与外层 duration 相加。缺失=引擎未返回。"
         ),
     )
     logprobs_ref: ArtifactRef | None = Field(

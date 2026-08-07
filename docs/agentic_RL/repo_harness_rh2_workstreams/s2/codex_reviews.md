@@ -4743,3 +4743,101 @@ materialize 成功
 - [implementation-notes.md:17](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/implementation-notes.md:17) 暂时不应写“F2-1a 已完成/登记原子化”；第 57 行 `DuplicateActiveSessionError` 的移除条件也应从 F2-1 改为真正完成身份与 capability 分离的 F2-2。
 
 已确认正确的部分：replay attempt 使用 `paid` 命名空间、wait failure 身份透传、metadata fail-closed 与 failure record 携带 `paid`。`physical_attempt_seq` 重启恢复及 `_attempt_seq` 有界化继续留给 F2-4是合理的。
+
+
+---
+
+## F2-0b 切片审查（2026-08-07：4 P1 契约/完成口径缺口，全采纳）
+
+> 原文全文转录（tmp/codex_F2-0b.md）。处置：全部 accepted。P1-1 完成口径改"基础字段完成、生产接线未完成"（43 事件仅约 4 个有生产调用点，其余按 owner 分批接线并登记递延）；P1-2 clock_domain 语义纠正——同进程各线程共享 monotonic 属**同一** domain（用 proc-pid 标识，owner_role 区分线程），并保存**原始 monotonic 时间戳**（此前只存舍入 duration）；P1-3 ModelCallAttempt 改**四个原始区间**（wait_active/limiter_wait/wait_version/send 成对 start/end + timing_clock_domain + end<start validator，填值仍随 F2-3）；P1-4 server_timing 从 dict[str,float] 改**严格模型 ServerTiming**（白名单六键 + 非负有限，未知键/负值挡在契约外，防污染遥测）。补测试含真实 GenerationCaptureHook 端到端路径。测试 936→937。
+
+**结论**
+
+F2-1a 终核没有发现新问题。F2-0b 没有 P0 或训练语义错误，但有 **4 个 P1 验收缺口**，目前不能标记为“Observability V0 已完成”。建议先做一轮聚焦修复；F2-1b 虽可并行推进，但不应掩盖 F2-0b 的未闭合状态。
+
+**主要问题**
+
+1. **V0 事件没有接入生产路径。**
+
+权威清单定义了 43 个事件。目前生产代码精确命中的只有：
+
+```text
+grading_started
+projection_started
+cleanup_started
+cleanup_completed
+```
+
+其余 39 个，包括物化、Claude Code 安装、用户准备、模型等待、组装和 trainer handoff，都没有真实调用点。测试只是手动调用 `audit.mark()`，只能证明 API 可用，不能证明真实 rollout 会留下事件。[test_f2_0b_observability.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/adapters/test_f2_0b_observability.py:21)
+
+因此当前产物仍然回答不了“慢在安装、chown、模型排队还是 group queue”。
+
+建议按 owner 分批接线并如实登记：
+
+```text
+服务启动事件 -> startup_evidence timeline
+execution 事件 -> RolloutAudit
+模型调用事件 -> ModelCallAttempt / execution audit
+组与 batch 事件 -> assembler/admission owner 落地时接线
+```
+
+尚不存在 owner 的 group/batch 事件可以递延到 F2-5/F2-6，但必须把 F2-0b 状态改为“基础字段完成、生产接线未完成”。
+
+2. **原始 monotonic 时间和 clock domain 语义不正确。**
+
+[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1198)只保存舍入后的 `seconds_since_start` 和 epoch；[bringup.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:338)也只新增了 epoch 起止，没有落盘 `wall_start_monotonic/wall_end_monotonic`。
+
+此外测试把 adapter 线程标成 `adapter_loop`，编排线程标成 `orchestrator_loop`，但两者在同一进程、共享同一个 monotonic clock，权威计时规则明确说它们属于同一 clock domain。当前设计会阻止本应合法的跨线程区间比较。
+
+应改为：
+
+- `clock_domain_id` 表示进程级时钟实例；
+- `owner_role` 区分 orchestrator、adapter、grading；
+- 事件保存原始 monotonic timestamp；
+- execution audit 明确保存 monotonic 起止及 epoch 副本。
+
+3. **ModelCallAttempt 加的是三个 duration，不是四个原始区间。**
+
+[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:365)目前只有：
+
+```text
+wait_active_seconds
+wait_version_seconds
+send_seconds
+```
+
+缺少 `limiter_wait`，而且没有 start/end/clock domain，无法：
+
+- 合并重叠的 non-chargeable 区间；
+- 验证区间属于同一 clock domain；
+- 重建权重恢复和限流等待的真实时间线。
+
+建议现在把字段形状修正为四个 optional 原始区间或成对事件；具体填值仍可按原计划留给 F2-3。这不会引入训练行为变化。
+
+4. **`server_timing` 只有生产 helper 白名单，契约本身仍 fail-open。**
+
+[capture.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/capture.py:132)使用任意 `dict[str, float]`。我实际构造后，下面数据能通过验证：
+
+```python
+{
+    "hidden_verifier_secret_channel": 123.0,
+    "queue_time": -7.0,
+}
+```
+
+这会让其他生产者或损坏 artifact 绕过白名单并污染遥测。应使用严格嵌套模型或字段 validator：
+
+- 只允许六个已知键；
+- duration/throughput 非负且有限；
+- token count 保持非负整数；
+- 增加未知键、负值和真实 `GenerationCaptureHook` 路径测试。
+
+**已确认正确**
+
+- SGLang 白名单与当前 slime 源码一致。
+- `_extract_server_timing()` 已接入真实 capture hook。
+- 新计时没有参与 termination、reward、admission 或 gradient。
+- F2-1a 的 Protocol 同步与 F2-2 replay 验收登记合理。
+- 独立验证结果：`936 passed`、ruff 全绿、`inspect-rh2-s1` 通过。
+
+因此建议：先关闭上述契约与完成口径问题，再正式宣布 F2-0b 完成。无需新增 T0 决策，也不需要 GPU。
