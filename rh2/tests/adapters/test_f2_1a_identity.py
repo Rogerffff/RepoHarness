@@ -84,38 +84,40 @@ async def test_worker_mints_new_physical_attempt_per_dispatch():
     assert a.physical_attempt_id.startswith("exec_R#p1-")
 
 
-def test_registry_paid_map_lifecycle():
-    """sid→paid 映射：生产顺序（set 先于 register，原子登记）/读取/清理。"""
+def test_registry_paid_atomic_with_register():
+    """熔断后收敛版：paid 与 hook 单锁原子绑定（register 参数），同生命
+    周期清理——不存在预登记面，materialize 失败没有任何可残留的状态。"""
 
     registry = CaptureRegistry()
-    registry.set_physical_attempt_id("sid_P", "exec_R#p1-abc")  # 生产：先登记 paid
+    registry.register("sid_P", _Hook(), physical_attempt_id="exec_R#p1-abc")
     assert registry.physical_attempt_id_for("sid_P") == "exec_R#p1-abc"
     assert registry.physical_attempt_id_for(None) is None
-    registry.register("sid_P", _Hook())  # 再注册 hook
     registry.unregister("sid_P")
     assert registry.physical_attempt_id_for("sid_P") is None  # 随会话清理
 
 
-def test_paid_registration_fails_closed_on_active_or_conflict():
-    """codex F2-1a 复核 P0-1：活跃会话/已 stage 冲突身份 → 拒绝，不覆盖。"""
+def test_duplicate_register_rejected_before_any_mutation():
+    """codex F2-1a 复核 P0-1 终修：重复 SID 在任何状态修改前拒绝——
+    后来者带不同 paid 也不会改写活跃 execution 的身份。"""
 
     from repoharness2.adapters.slime.capture_wire import DuplicateActiveSessionError
 
-    # 活跃会话（hook 在场）不许替换身份
-    r1 = CaptureRegistry()
-    r1.set_physical_attempt_id("sid_A", "exec_A#p1-a")
-    r1.register("sid_A", _Hook())
+    registry = CaptureRegistry()
+    registry.register("sid_A", _Hook(), physical_attempt_id="exec_A#p1-a")
     with pytest.raises(DuplicateActiveSessionError):
-        r1.set_physical_attempt_id("sid_A", "exec_B#p1-b")
-    assert r1.physical_attempt_id_for("sid_A") == "exec_A#p1-a"  # 未被覆盖
+        registry.register("sid_A", _Hook(), physical_attempt_id="exec_B#p1-b")
+    assert registry.physical_attempt_id_for("sid_A") == "exec_A#p1-a"  # 未被覆盖
 
-    # register 前的窗口：另一 execution 已 stage 不同 paid → 拒绝
-    r2 = CaptureRegistry()
-    r2.set_physical_attempt_id("sid_A", "exec_A#p1-a")
-    with pytest.raises(DuplicateActiveSessionError):
-        r2.set_physical_attempt_id("sid_A", "exec_B#p1-b")
-    # 幂等：同 paid 重登记不炸
-    r2.set_physical_attempt_id("sid_A", "exec_A#p1-a")
+
+def test_open_failure_leaves_no_residue_and_replay_proceeds():
+    """codex F2-1a 二审 P0 验收：open 前失败不残留映射（无预登记面），
+    replay 用新 paid 可正常注册。"""
+
+    registry = CaptureRegistry()
+    assert registry.physical_attempt_id_for("sid_M") is None  # 从未 open = 无绑定
+    registry.register("sid_M", _Hook(), physical_attempt_id="exec_M#p2-new")
+    assert registry.physical_attempt_id_for("sid_M") == "exec_M#p2-new"
+    registry.unregister("sid_M")
 
 
 async def test_proxy_stamps_paid_on_all_attempt_paths():

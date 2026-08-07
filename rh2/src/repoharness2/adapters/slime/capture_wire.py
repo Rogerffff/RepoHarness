@@ -128,17 +128,28 @@ class CaptureRegistry:
         # wire 读出后随每条 ModelCallAttempt 落账；unregister 清理）
         self._physical_attempt_ids: dict[str, str] = {}
 
-    def register(self, sid: str, hook: GenerationCaptureHook) -> None:
-        # 轮次 11 身份兜底：中毒 SID（含归档）不得复用注册——稳定 ID
-        # （task+index+group）跨补采/epoch 复用时先 fail-fast，不让 harness
-        # 带毒起跑。execution 唯一身份是 FA-2 第一验收项。
+    def register(
+        self,
+        sid: str,
+        hook: GenerationCaptureHook,
+        physical_attempt_id: str | None = None,
+    ) -> None:
+        """会话注册（F2-1a 熔断后所有权收敛版）：hook 与 paid **单锁原子
+        绑定**，同生命周期——重复 SID 在任何状态修改前拒绝；绑定发生在
+        open_session 事务内（materialize 之后），underlying open 失败走
+        既有 rollback unregister 连带清 paid。**不存在预登记**，所以
+        materialize 失败不可能残留映射（codex F2-1a 二审 P0 的根因修）。"""
+
+        # 轮次 11 身份兜底：中毒 SID（含归档）不得复用注册
         self.poison.check(sid)
         with self._lock:
             if sid in self.hooks:
-                raise DuplicateActiveSessionError(sid)  # 轮次 12：不静默覆盖
+                raise DuplicateActiveSessionError(sid)  # 任何状态修改前拒绝
             self.hooks[sid] = hook
             self.weight_versions[sid] = []
             self.pending.setdefault(sid, [])
+            if physical_attempt_id is not None:
+                self._physical_attempt_ids[sid] = physical_attempt_id
 
     def assert_session_clean(self, sid: str) -> None:
         """评分/Gate 前边界断言（codex 轮次 12 P0 层 1）：该 SID 不得残留
@@ -183,24 +194,6 @@ class CaptureRegistry:
                 f"session {sid} 暂存轮数量异常：{len(queue)}（期望恰好 1）。"
             )
         return queue[0]
-
-    def set_physical_attempt_id(self, sid: str, physical_attempt_id: str) -> None:
-        """F2-1a（codex F2-1a 复核 P0-1）：登记本次物理重放身份，**fail-closed**。
-
-        此前无条件覆盖——后来的同 SID execution（replay/并发重复）能在被
-        DuplicateActiveSessionError 拒绝**之前**改写活跃 execution 的 paid，
-        使 A 的后续模型调用落到 B 名下。现在两条守卫（锁内原子）：
-        活跃会话（sid 已在 hooks）不许替换身份；另一 execution 已 stage
-        了不同 paid（register 前的窗口）也拒绝。抛出即 execution 缺员。
-        """
-
-        with self._lock:
-            if sid in self.hooks:
-                raise DuplicateActiveSessionError(sid)  # 活跃会话身份不可替换
-            existing = self._physical_attempt_ids.get(sid)
-            if existing is not None and existing != physical_attempt_id:
-                raise DuplicateActiveSessionError(sid)  # 另一 execution 已 stage
-            self._physical_attempt_ids[sid] = physical_attempt_id
 
     def physical_attempt_id_for(self, sid: str | None) -> str | None:
         if sid is None:

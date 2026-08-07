@@ -14,10 +14,11 @@
 D4=A；D1b 延后清单见决策包 owner_decision）**；**F2-0 纯迁移已完成**
 （commit f8580789，测试 917→921：capture_wire/glue→bringup/
 docker_sandbox 三模块提升 src，experiments 留带 parity 测试的薄兼容壳，
-GPU 链模块路径经壳保持可解析）；**F2-1a 四层身份已完成**（commit e5ddd13a + F2-1a 复核修复：P0-1 paid
-登记 fail-closed 原子化、P0-2 attempt id 用 paid 命名空间去 replay 碰撞、
-P1-3 wait helper 失败记录带 paid、P1-4 entry metadata fail-closed）；
-下一切片 = **F2-0b Observability V0 → F2-1b Outcome v2**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+GPU 链模块路径经壳保持可解析）；**F2-1a 四层身份：实现 + 两轮复核修复完毕，待 codex 终核**（e5ddd13a
+主体；一审修复 63e2772c；二审 P0 触发**修复循环熔断**→所有权收敛重构：
+paid 并入 register 单锁原子事务、经 open_session 传入、删除预登记
+setter——materialize 失败无残留、replay 畅通）；下一切片 =
+**F2-0b Observability V0 → F2-1b Outcome v2**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
 **false**。测试基线 903+。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
@@ -54,7 +55,7 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 | 挡板 | 加于 | 移除条件 |
 |------|------|----------|
 | overlap fail-fast（并行 subagent 被拒） | 轮次 9 | F2-3 request 级归属落地；且列入 `rh2_formal_training_allowed` 前置 |
-| DuplicateActiveSessionError | 轮次 12 | F2-1 execution 唯一身份 |
+| DuplicateActiveSessionError | 轮次 12 | **F2-2**（身份与 capability 真正分离后才可拆；F2-1a 只落了身份，二审确认移除条件后移） |
 | 中毒 SID（含归档）拒绝 register | 轮次 11 | F2-1/F2-2 身份与凭证分离（poison 改绑 session/attempt） |
 | StaticActiveCoordinator（永远 ACTIVE，只保守缺员） | 轮次 7 | FA-4 真协调器（consensus version） |
 | ~~capture_wire/glue 住在 experiments/~~ | S1 沿革 | **已解除**（2026-08-07 F2-0，commit f8580789——src 唯一权威 + 薄兼容壳；壳兼容范围 = 导出对象 identity + 旧动态入口可解析，**不承诺旧模块全局变量重绑传播**） |
@@ -724,3 +725,37 @@ orchestrator→adapter 线程→proxy→SGLang→capture→评分→collector→
   排查过程排除了 openai 2.44/verifiers pin/renderers pull 三个嫌疑
   （逐层最小复现定位到 wire 大小写）。
 - 测试 903 → 911。
+
+
+## F2-1a 二审（2026-08-07，codex 复核 P0 → **修复循环熔断首次触发**；
+## 原文存档 `../s2/codex_reviews.md`）
+
+**熔断事实**：一审的 P0-1 修复（fail-closed setter）自身引入新 P0——
+预登记的 paid 在 materialize 失败后永久残留（session_open 未置位 →
+finally 不清理），而 fail-closed 又拒绝 replay 的新 paid → 可恢复的
+基建故障变成该 SID 永久拒绝 + prompt group 持续缺员。按协议 §5"修复
+引入新 P0"触发熔断：停止给 setter 叠补丁。
+
+**根因分析**：paid 生命周期被拆成两个 owner——orchestrator 在 audit
+构造时（T1）经 registrar 预登记，registry 在 open_session（T3）绑
+hook，清理却统一挂在 T3 之后才置位的 session_open 标志。T1~T3 之间
+任何失败（materialize 在 T2）都产生无主状态；一审只是把无主状态的
+症状从"可被覆盖"改成"永久拒绝"，没有消灭无主窗口本身。
+
+**替代设计（所有权收敛，codex 处方 + 实施）**：paid 与 hook **同生命
+周期**——`register(sid, hook, physical_attempt_id)` 单锁原子绑定；
+绑定发生在 open_session 事务内（materialize 之后），underlying open
+失败走既有 rollback unregister 连带清 paid；drop 后整体释放。**删除**
+预登记 setter 与 registrar 注入点——无预登记 = 无残留窗口（消灭状态而
+不是防御状态）。验收：materialize 失败无残留、replay 新 paid 畅通、
+open 失败整体回滚、活跃冲突仍拒绝、失败均有结构化审计。测试 930→931。
+
+**提交纪律违规自查（codex 指出）**：`63e2772c` 因 `git add -A` 混入
+约 2600 行非本切片内容。provenance 声明：`python_async_concurrency_
+foundations.md`、`repo_harness_code_walkthrough.md`、
+`rh2_training_path_and_batch_scheduling_tutorial.md`（增量）、
+`training_design/repoharness_validation_experiment_design_review.md`
+（增量）属**并行教学/设计线程**产出；`fa/fa_onboarding_walkthrough.md`
+是本线程此前的走读文档。内容全部保留（不删并行线程成果），但该
+commit 不可作为干净切片回滚单元——回滚 F2-1a 一审需按文件而非按
+commit。纪律修正：此后 git add 只用显式路径清单，禁 `-A`。

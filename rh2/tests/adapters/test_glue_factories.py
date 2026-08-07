@@ -53,16 +53,18 @@ def test_open_session_rollback_on_underlying_failure():
 
     adapter = make_per_rollout_adapter(registry, ExplodingSharedAdapter(), FakeHook())
     with pytest.raises(RuntimeError, match="underlying open failed"):
-        adapter.open_session("sid_RB")
+        adapter.open_session("sid_RB", physical_attempt_id="exec_RB#p1-a")
     assert "sid_RB" not in registry.hooks  # 已回滚
+    assert registry.physical_attempt_id_for("sid_RB") is None  # paid 同步回滚（二审 P0）
 
     class OkSharedAdapter:
         def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
-            pass
+            pass  # shared adapter（slime AnthropicAdapter）不接收 paid——paid 只进 registry
 
     adapter2 = make_per_rollout_adapter(registry, OkSharedAdapter(), FakeHook())
-    adapter2.open_session("sid_RB")  # 回滚干净 -> 同 SID 可重新打开
+    adapter2.open_session("sid_RB", physical_attempt_id="exec_RB#p2-b")  # replay 新 paid
     assert "sid_RB" in registry.hooks
+    assert registry.physical_attempt_id_for("sid_RB") == "exec_RB#p2-b"  # replay 畅通（二审 P0 验收）
 
 
 def _fake_audit(sid: str, paid: str | None = None) -> types.SimpleNamespace:

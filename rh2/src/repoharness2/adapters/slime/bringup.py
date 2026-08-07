@@ -386,11 +386,14 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
     语义可本地回归）。"""
 
     class PerRolloutAdapter:
-        def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0):
+        def open_session(
+            self, sid, *, sampling_defaults=None, max_context_tokens=0,
+            physical_attempt_id=None,
+        ):
             # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
-            # 注册（否则 session_open 未置位、finally 不 drop，健康 SID
-            # 永久占用 registry）
-            registry.register(sid, hook)
+            # 注册。F2-1a 熔断后收敛：paid 与 hook 同一原子注册、同一
+            # rollback（不存在预登记残留面）。
+            registry.register(sid, hook, physical_attempt_id=physical_attempt_id)
             try:
                 shared_adapter.open_session(
                     sid,
@@ -695,8 +698,6 @@ class BringupService:
             capture_boundary_check=self.registry.assert_session_clean,
             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
             audit_sink=self._write_execution_audit,
-            # F2-1a：物理重放身份登记（wire 据此给每条 ModelCallAttempt 落账）
-            physical_attempt_registrar=self.registry.set_physical_attempt_id,
         )
 
     def _registry_max_version(self) -> int | None:

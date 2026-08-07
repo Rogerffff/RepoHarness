@@ -174,11 +174,18 @@ class MockSessionAdapter:
         self.dropped: list[str] = []
 
     def open_session(
-        self, sid: str, *, sampling_defaults: dict | None = None, max_context_tokens: int = 0
+        self,
+        sid: str,
+        *,
+        sampling_defaults: dict | None = None,
+        max_context_tokens: int = 0,
+        physical_attempt_id: str | None = None,
     ) -> None:
         if sid in self.opened:  # 真实 BaseAdapter.open_session 的唯一性约束
             raise ValueError(f"session_id {sid!r} already exists")
         self.opened.append(sid)
+        self.opened_paids = getattr(self, "opened_paids", [])
+        self.opened_paids.append(physical_attempt_id)
 
     async def run_all_turns(self) -> None:
         """由 harness 替身调用：逐轮把 mock SGLang 响应喂给真实 capture 钩子。"""
@@ -1845,30 +1852,23 @@ async def test_audit_sink_failure_formal_chain_raises_fatal():
         await orch2.generate(_Args(), FixtureSlimeSample(index=0), dict(SAMPLING_PARAMS))
 
 
-async def test_orchestrator_reads_paid_from_metadata_and_registers():
-    """F2-1a：member metadata 的 rh2_physical_attempt_id → audit 字段 +
-    经注入点登记 sid→paid（glue 接 registry.set_physical_attempt_id）；
-    metadata 缺失时（S1 兼容路径）audit 为 None 且不调用登记点。"""
+async def test_orchestrator_reads_paid_from_metadata_and_passes_to_open():
+    """F2-1a（熔断后收敛版）：member metadata 的 rh2_physical_attempt_id →
+    audit 字段 + 经 open_session 事务传给 adapter（原子绑定，无预登记）；
+    metadata 缺失时（S1 兼容路径）audit 与传参均为 None。"""
 
-    registered: list[tuple[str, str]] = []
     chain = build_dense_chain()
-    chain.orchestrator._physical_attempt_registrar = (
-        lambda sid, paid: registered.append((sid, paid))
-    )
     sample = FixtureSlimeSample(index=0)
     sample.metadata = dict(getattr(sample, "metadata", {}) or {})
     sample.metadata["rh2_physical_attempt_id"] = "exec_X#p1-abcd1234"
     await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.physical_attempt_id == "exec_X#p1-abcd1234"
-    assert registered == [(audit.session_id, "exec_X#p1-abcd1234")]
+    adapter = chain.adapter_ref["adapter"]
+    assert adapter.opened_paids == ["exec_X#p1-abcd1234"]  # 经 open 事务传入
 
-    # S1 兼容：无 metadata 键 → None + 不登记
-    registered.clear()
+    # S1 兼容：无 metadata 键 → None
     chain2 = build_dense_chain()
-    chain2.orchestrator._physical_attempt_registrar = (
-        lambda sid, paid: registered.append((sid, paid))
-    )
     await chain2.orchestrator.generate(_Args(), FixtureSlimeSample(index=1), dict(SAMPLING_PARAMS))
     assert chain2.orchestrator.audits[0].physical_attempt_id is None
-    assert registered == []
+    assert chain2.adapter_ref["adapter"].opened_paids == [None]

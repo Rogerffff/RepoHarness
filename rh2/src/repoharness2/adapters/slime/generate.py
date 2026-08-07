@@ -1356,7 +1356,6 @@ class RolloutOrchestrator:
         session_poison_release: Callable[[str], None] | None = None,
         capture_boundary_check: Callable[[str], None] | None = None,
         audit_sink: Callable[[Any], None] | None = None,
-        physical_attempt_registrar: Callable[[str, str], None] | None = None,
     ) -> None:
         if config.require_real_weight_versions:
             # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
@@ -1428,9 +1427,6 @@ class RolloutOrchestrator:
         # audit/attempt/清理事实此前只在无界内存）。每个 execution 结束时
         # 调用一次；正式链落盘失败 fail-closed（glue 侧实现语义）。
         self._audit_sink = audit_sink
-        # F2-1a：sid→physical_attempt_id 登记点（glue 接 registry.set_
-        # physical_attempt_id；mock 链为 None 零影响）
-        self._physical_attempt_registrar = physical_attempt_registrar
         self.audits: list[RolloutAudit] = []
         self.cleanup_quarantine: list[str] = []
 
@@ -1466,8 +1462,6 @@ class RolloutOrchestrator:
             session_id=sid,
             physical_attempt_id=physical_attempt_id,
         )
-        if self._physical_attempt_registrar is not None and physical_attempt_id:
-            self._physical_attempt_registrar(sid, physical_attempt_id)
         self.audits.append(audit)
         audit.step("step1_custom_generate_invoked")
 
@@ -1513,6 +1507,7 @@ class RolloutOrchestrator:
             audit.launch_spec = launch
             adapter.open_session(
                 sid,
+                physical_attempt_id=physical_attempt_id,
                 sampling_defaults=session_defaults,
                 max_context_tokens=self.config.max_context_len,
             )

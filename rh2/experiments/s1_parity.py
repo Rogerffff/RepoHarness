@@ -194,7 +194,10 @@ class MockAdapter:
         self.turns = turns
         self.leaves = leaves
 
-    def open_session(self, sid: str, *, sampling_defaults=None, max_context_tokens: int = 0) -> None:
+    def open_session(
+        self, sid: str, *, sampling_defaults=None, max_context_tokens: int = 0,
+        physical_attempt_id: str | None = None,  # F2-1a：paid 经 open 事务传入
+    ) -> None:
         pass
 
     async def run_all_turns(self) -> None:
