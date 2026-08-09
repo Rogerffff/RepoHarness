@@ -72,6 +72,7 @@ def _fake_audit(sid: str, paid: str | None = None) -> types.SimpleNamespace:
         session_id=sid,
         physical_attempt_id=paid,
         started_epoch_seconds=1000.0,
+        started_monotonic=500.0,
         non_chargeable_intervals=[],
         trajectory_id="traj_x",
         task_id="task_x",
@@ -134,6 +135,14 @@ def test_write_execution_audit_success_acks_and_enriches(tmp_path):
     path = tmp_path / "audit.jsonl"
     write_execution_audit_record(proxy, _fake_audit("sid_AU", "sid_AU#p1-x"), path)
     record = json.loads(path.read_text().strip())
+    # F2-0b 复核 P1-B：execution wall 双时钟起止 + 时钟域必须真实落盘
+    # （timeline 首/末事件不能替代 wall——此处读 JSON 而非只查对象属性）
+    assert record["wall_start_epoch"] == 1000.0
+    assert record["wall_start_monotonic"] == 500.0
+    assert record["wall_end_monotonic"] >= 500.0 or record["wall_end_monotonic"] < 500.0  # 键在场且为数
+    assert isinstance(record["wall_end_epoch"], float)
+    assert record["wall_clock_domain_id"].startswith("proc-")
+    assert record["non_chargeable_intervals"] == []
     assert record["timeline"] == [{"name": "step1", "at": 1.0}]  # 时间线不再丢
     assert record["timing_summary"] == {"total_seconds": 2.5}
     assert record["disposition"] == "aborted" and record["lease_released"] is True

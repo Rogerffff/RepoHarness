@@ -20,13 +20,19 @@ SessionAdapter Protocol 签名同步，已修）。**F2-2 验收前置登记**�
 SID 在 slime closed 集合下不可复用，需 F2-2 的每 physical attempt 新
 session_auth_capability 解决（05 计划 F2-2 节已钉验收）。**F2-0b Observability V0：基础字段完成，生产接线未完成**（codex F2-0b
 复核 4 P1 修正后的诚实口径——契约与提取器就位，但 43 个事件中生产代码
-只命中约 4 个，其余按 owner 分批接线：execution 事件随各切片、model
+只命中约 4 个，其余按 owner 分批接线：**服务启动 6 事件归 BringupService
+（startup_evidence timeline）**、execution 事件随各切片、model
 调用区间填值随 F2-3、group/batch 事件随 F2-5/F2-6）。已闭合：clock_
 domain=进程实例（同进程线程可互减，owner_role 区分线程）+ 原始
 monotonic 时间戳；ModelCallAttempt 四原始区间（成对 start/end +
-timing_clock_domain）；server_timing = 严格模型 ServerTiming（白名单
-六键 + 非负有限，污染键/负值挡在契约外）；audit 原始双时钟不派生
-chargeable。下一切片 = **F2-1b Outcome v2 与 crosswalk**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+timing_clock_domain，**区间⟺domain 双向一致校验**——脱离时钟域的区间
+拒绝构造）；server_timing = 严格模型 ServerTiming（白名单六键 + 非负
+有限，污染键/负值挡在契约外；提取器只捕 ValidationError，程序错误照常
+暴露）；audit 落**双时钟 wall 起止**（wall_start/end_monotonic +
+epoch 副本 + wall_clock_domain_id，写 record 时各只读一次）不派生
+chargeable。训前处理项（codex 复核二轮登记）：proc-{pid} 非严格进程
+incarnation（fork 继承同值/pid 复用），F2-3/F2-4 前改含 incarnation 且
+fork 后刷新的 ID；非法遥测计数随 F2-3。下一切片 = **F2-1b Outcome v2 与 crosswalk**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
 **false**。测试基线 903+。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

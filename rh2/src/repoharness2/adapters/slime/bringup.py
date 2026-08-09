@@ -48,6 +48,7 @@ from typing import Any
 
 
 from repoharness2.adapters.slime.generate import (
+    PROCESS_CLOCK_DOMAIN,
     LeafFacts,
     RolloutOrchestrator,
     SlimeBindingConfig,
@@ -321,6 +322,11 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         eligibility_ref = getattr(report, "report_id", None)
     elif not audit.failure_records:
         disposition = "unknown_terminal"
+    # F2-0b 复核 P1-B：写 record 时只读一次 monotonic/epoch，monotonic 与
+    # epoch 两套起止一起落盘——timeline 首/末事件不等于构造/持久化时刻，
+    # 且 proxy 区间要能校验落在 execution wall 内
+    wall_end_monotonic = time.monotonic()
+    wall_end_epoch = time.time()
     record = {
         "schema_id": "rh2.fa.execution_audit.v1",
         "trajectory_id": audit.trajectory_id,
@@ -338,7 +344,10 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         # F2-0b Observability V0：双时钟**原始事实**（wall + 候选区间）——
         # D1b 前不派生 chargeable_execution_seconds（五审 2.1/2.2）
         "wall_start_epoch": audit.started_epoch_seconds,
-        "wall_end_epoch": time.time(),
+        "wall_start_monotonic": audit.started_monotonic,
+        "wall_end_epoch": wall_end_epoch,
+        "wall_end_monotonic": wall_end_monotonic,
+        "wall_clock_domain_id": PROCESS_CLOCK_DOMAIN,
         "non_chargeable_intervals": list(audit.non_chargeable_intervals),
         "harness_exit_code": audit.harness_exit_code,
         "failure_records": [

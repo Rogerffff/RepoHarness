@@ -385,13 +385,24 @@ class ModelCallAttempt(StrictModel):
 
     @model_validator(mode="after")
     def _check_timing_intervals(self) -> "ModelCallAttempt":
-        for name in (
+        interval_names = (
             "wait_active_interval", "limiter_wait_interval",
             "wait_version_interval", "send_interval",
-        ):
+        )
+        any_interval = False
+        for name in interval_names:
             iv = getattr(self, name)
-            if iv is not None and iv[1] < iv[0]:
-                raise ValueError(f"{name} end < start（非法区间）。")
+            if iv is not None:
+                any_interval = True
+                if iv[1] < iv[0]:
+                    raise ValueError(f"{name} end < start（非法区间）。")
+        # F2-0b 复核 P1-A：区间 ⟺ clock domain **双向一致**——脱离 domain 的
+        # 区间违反"同 clock domain 才允许相减"核心不变量（F2-3 若填入这种
+        # 记录将无法安全合并 non_chargeable_intervals）
+        if any_interval and self.timing_clock_domain is None:
+            raise ValueError("存在计时区间但 timing_clock_domain 缺失（区间必须锚定时钟域）。")
+        if not any_interval and self.timing_clock_domain is not None:
+            raise ValueError("timing_clock_domain 存在但无任何区间（悬空时钟域声明）。")
         return self
 
     @model_validator(mode="after")

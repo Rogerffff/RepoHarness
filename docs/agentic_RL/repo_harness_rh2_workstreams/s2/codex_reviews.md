@@ -4841,3 +4841,84 @@ send_seconds
 - 独立验证结果：`936 passed`、ruff 全绿、`inspect-rh2-s1` 通过。
 
 因此建议：先关闭上述契约与完成口径问题，再正式宣布 F2-0b 完成。无需新增 T0 决策，也不需要 GPU。
+
+
+---
+
+## codex F2-0b 复核二轮（2026-08-09，2 P1 契约缺口 + 3 训前处理项）
+
+**审查结论**
+
+四项修复方向基本正确，但仍有 **2 个 P1 契约缺口**。建议用一个小提交修完再正式进入 F2-1b；无需新 T0、无需 GPU，也不需要再做一轮扩大范围的审查。
+
+**P1：区间可以脱离 clock domain 单独存在**
+
+[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:365)目前会接受：
+
+```python
+ModelCallAttempt(
+    ...,
+    send_interval=(1.0, 2.0),
+    timing_clock_domain=None,
+)
+```
+
+这违反“只有同 clock domain 才允许相减”的核心不变量。F2-3 一旦填入这种记录，就无法安全合并 `non_chargeable_intervals`。
+
+应增加双向一致性校验：
+
+```text
+存在任一区间 <=> timing_clock_domain 必须存在
+没有任何区间 <=> timing_clock_domain 必须为 None
+```
+
+并补两个负测试：区间无 domain、domain 无区间。
+
+**P1：execution audit 仍未保存 monotonic wall 起止**
+
+[bringup.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:338)仍然只有：
+
+```text
+wall_start_epoch
+wall_end_epoch
+non_chargeable_intervals
+```
+
+没有已批准的：
+
+```text
+wall_start_monotonic
+wall_end_monotonic
+wall_clock_domain_id
+```
+
+每个 timeline 事件新增 `monotonic_ts` 是正确的，但不能替代 execution wall：
+
+- 第一条事件不一定等于 audit 构造时刻；
+- 最后一条事件不一定等于 audit 持久化时刻；
+- 无法验证 proxy 区间是否落在 execution wall 内。
+
+应在写 record 时只读取一次 `time.monotonic()` 和 `time.time()`，把 monotonic/epoch 两套起止一起落盘，并让测试读取真实 JSON 断言这些键，而不是只检查 `RolloutAudit` 对象存在空列表。
+
+**正式训练前处理**
+
+- `_PROCESS_CLOCK_DOMAIN = proc-{pid}` 不是严格的“进程实例”标识。实测 fork 后父子进程会继承相同值；PID 也可能在重启后复用。建议在 F2-3/F2-4 前改成可识别进程 incarnation、且 fork 后刷新的 ID。
+- 43 个事件的递延表漏写了“服务启动事件”的 owner。建议明确归 `BringupService`，不要让这 6 个事件没有落地切片。
+- `_extract_server_timing()` 最好只捕获 `ValidationError`，并为非法遥测留计数；当前 `except Exception -> None` 会静默掩盖程序错误。可随 F2-3 处理。
+
+**已验证**
+
+- `ServerTiming` 确实拒绝未知键、负数和非整数 token count。
+- 四类区间字段已经存在，`end < start` 会拒绝。
+- 生产接线未完成的状态与训前闸门已如实登记。
+- 独立重跑：`937 passed`、ruff 全绿、`inspect-rh2-s1` 通过。
+
+因此推荐顺序：
+
+```text
+小提交修复两个 P1
+-> 聚焦测试
+-> 进入 F2-1b
+```
+
+F2-1b 与这些问题没有架构依赖；若已经并行开工无需撤回，但不能把 F2-0b 契约标成最终闭合。

@@ -75,6 +75,8 @@ import secrets
 import struct
 import time
 import uuid
+
+from pydantic import ValidationError
 from collections.abc import Awaitable, Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -1179,7 +1181,10 @@ _SGLANG_SERVER_TIMING_KEYS = (
 
 # F2-0b：进程级 monotonic 时钟实例标识——同进程所有线程读同一单调钟，
 # 属同一 clock domain，timestamp 可互减（跨进程才不可比）。用 pid 标识。
-_PROCESS_CLOCK_DOMAIN = f"proc-{os.getpid()}"
+PROCESS_CLOCK_DOMAIN = f"proc-{os.getpid()}"
+# 注（F2-0b 复核，训前处理项）：proc-pid 不是严格进程 incarnation——fork
+# 继承同值、pid 可复用；F2-3/F2-4 前改为含 incarnation 且 fork 后刷新的 ID。
+_PROCESS_CLOCK_DOMAIN = PROCESS_CLOCK_DOMAIN
 
 
 def _extract_server_timing(meta: Mapping[str, Any]) -> "ServerTiming | None":
@@ -1196,8 +1201,9 @@ def _extract_server_timing(meta: Mapping[str, Any]) -> "ServerTiming | None":
         return None
     try:
         return ServerTiming(**out)
-    except Exception:
+    except ValidationError:
         # 引擎返回负值/非有限等非法计时——不阻断 capture，只丢该遥测
+        # （只捕 ValidationError，程序错误照常暴露；非法遥测计数留 F2-3）
         return None
 
 

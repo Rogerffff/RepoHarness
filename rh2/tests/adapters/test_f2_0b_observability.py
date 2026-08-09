@@ -85,6 +85,29 @@ def test_model_call_attempt_interval_fields_optional():
         )
 
 
+def test_interval_and_clock_domain_bidirectional():
+    """F2-0b 复核 P1-A：区间 ⟺ timing_clock_domain 双向一致——脱离时钟域
+    的区间违反"同 domain 才允许相减"不变量（F2-3 填入将无法安全合并
+    non_chargeable_intervals）；悬空 domain 声明同样拒绝。"""
+
+    import pytest
+
+    # 负 1：有区间无 domain
+    with pytest.raises(ValueError, match="timing_clock_domain 缺失"):
+        ModelCallAttempt(
+            logical_turn_id="s/t1", model_call_attempt_id="s/t1_a4",
+            attempt_number=4, delivery_status="non_delivered_failed",
+            send_interval=(1.0, 2.0),
+        )
+    # 负 2：有 domain 无区间
+    with pytest.raises(ValueError, match="悬空时钟域"):
+        ModelCallAttempt(
+            logical_turn_id="s/t1", model_call_attempt_id="s/t1_a5",
+            attempt_number=5, delivery_status="non_delivered_failed",
+            timing_clock_domain="proc-1",
+        )
+
+
 def test_audit_records_raw_dual_clock_not_chargeable():
     """项 2：audit 持有 non_chargeable_intervals 原始区间字段，V0 不派生
     chargeable——审计记录只出 wall_* + 原始区间（在 bringup 写入时）。"""
