@@ -32,8 +32,24 @@ timing_clock_domain，**区间⟺domain 双向一致校验**——脱离时钟�
 epoch 副本 + wall_clock_domain_id，写 record 时各只读一次）不派生
 chargeable。训前处理项（codex 复核二轮登记）：proc-{pid} 非严格进程
 incarnation（fork 继承同值/pid 复用），F2-3/F2-4 前改含 incarnation 且
-fork 后刷新的 ID；非法遥测计数随 F2-3。下一切片 = **F2-1b Outcome v2 与 crosswalk**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
-**false**。测试基线 903+。
+fork 后刷新的 ID；非法遥测计数随 F2-3。**F2-1b Outcome v2 与 crosswalk：完成**：
+`contracts/fa_runtime.py` 新增 TerminationKind 五族（与决策包 D1a 逐字
+一致，集合等式测试保证并集=全集且两两不交）+ RolloutAttemptOutcomeV2
+（completion 三值事实层 present_complete/present_truncated/missing；
+三层分离钉子 model_call_regeneration_exhausted→model_proxy_failure→
+max_regenerations_exceeded；勘误 2 通道 = reward_unavailable ⟺
+task_outcome=unknown，评分基建故障不倒写 completion）；v1 冻结不改。
+`contracts/outcome_crosswalk.py` = v1→v2 穷举规则表（42 组合全覆盖测试；
+无证据不捏造→legacy_unmappable；permanent_rejection 永不映射 missing，
+可迁移时落 present_* + legacy_admission_verdict 审计传递）+ 双版本读取
+read_rollout_attempt_outcome。registry 注册 v2；"正式链只产 v2"守卫 =
+src 扫描测试（v1 构造只许出现在契约定义/registry/crosswalk 三文件）。
+待 S2 协调项：GradingFailureCategory 新值 test_execution_timeout
+（contracts/grading.py S2 线程优先，D1a 第 2 条要求的三条件构造门随
+其落地）。下一切片 = **F2-2 session capability + Runtime quiescence**
+（验收已钉：旧 capability 被拒/新 attempt 不受 slime closed 集合与
+turn counter 影响）；FA-5 未开工。闸门
+`rh2_fully_async_training_path_verified` = **false**。测试基线 955。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
 行为；audit_only 不放宽任何守卫、不产正式训练 batch；hard_wall 仅

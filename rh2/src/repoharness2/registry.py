@@ -45,6 +45,7 @@ from repoharness2.contracts.fa_runtime import (
     ExecutionIdentity,
     ModelCallAttempt,
     RolloutAttemptOutcome,
+    RolloutAttemptOutcomeV2,
     TrainingRuntimeWindow,
 )
 from repoharness2.envpack.bundles import (
@@ -82,6 +83,9 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.bundle_pair.v1": BundlePair,
     "rh2.fa.execution_identity.v1": ExecutionIdentity,
     "rh2.fa.rollout_attempt_outcome.v1": RolloutAttemptOutcome,
+    # F2-1b：v2 = 事实层三值 completion + termination 五族（v1 冻结只读，
+    # 正式链只生产 v2；v1→v2 见 contracts/outcome_crosswalk.py）
+    "rh2.fa.rollout_attempt_outcome.v2": RolloutAttemptOutcomeV2,
     "rh2.fa.training_runtime_window.v1": TrainingRuntimeWindow,
     "rh2.fa.model_call_attempt.v1": ModelCallAttempt,
 }

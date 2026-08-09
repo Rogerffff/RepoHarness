@@ -44,13 +44,21 @@ from .trajectory import derive_weight_version_max_lag
 
 __all__ = [
     "CompletionClass",
+    "CompletionClassV2",
     "ExecutionIdentity",
     "ModelCallAttempt",
     "ModelCallDeliveryStatus",
     "RecoveryScope",
     "RolloutAttemptOutcome",
+    "RolloutAttemptOutcomeV2",
     "RuntimeFailureCategory",
     "TaskOutcome",
+    "TerminationKind",
+    "TERMINATION_KINDS_CONTROL",
+    "TERMINATION_KINDS_INFRA",
+    "TERMINATION_KINDS_NORMAL",
+    "TERMINATION_KINDS_POLICY_HORIZON",
+    "TERMINATION_KINDS_WATCHDOG",
     "TrainingRuntimePhase",
     "TrainingRuntimeWindow",
 ]
@@ -248,6 +256,216 @@ class RolloutAttemptOutcome(StrictModel):
             raise ValueError(
                 "current_version_at_consume / worst_token_lag 是消费时刻事实，"
                 "finalize 冻结记录中必须为 None（FA-3 assembler 另行落账）。"
+            )
+        return self
+
+
+# ---------------------------------------------------------------------------
+# F2-1b：Outcome v2（FA-2A 决策包 D1a 批准语义；v1 冻结不原地改）
+# ---------------------------------------------------------------------------
+
+# termination_kind 五族（决策包 D1a 第 1 条逐字枚举；D4 风格集合等式测试
+# 保证五族两两不交且并集 = TerminationKind 全集）。
+TerminationKind = Literal[
+    # 策略 horizon 族（可复现，截断有效的候选）
+    "task_token_budget_exhausted",
+    "max_turns_exhausted",
+    "context_limit_reached",
+    # 看门狗族（仅 termination trigger，completion 由事实推导——五审 4.2）
+    "hard_wall_timeout",
+    # 控制面族
+    "owner_cancelled",
+    # 基础设施族（⇒ completion=missing，reward=None，进 fault domain 计数）
+    "inference_timeout",
+    "sandbox_rpc_timeout",
+    "update_wait_timeout",
+    "harness_crash",
+    "api_failure",
+    "sandbox_failure",
+    "model_call_regeneration_exhausted",
+    # 正常族
+    "completed",
+]
+
+TERMINATION_KINDS_POLICY_HORIZON = frozenset(
+    {"task_token_budget_exhausted", "max_turns_exhausted", "context_limit_reached"}
+)
+TERMINATION_KINDS_WATCHDOG = frozenset({"hard_wall_timeout"})
+TERMINATION_KINDS_CONTROL = frozenset({"owner_cancelled"})
+TERMINATION_KINDS_INFRA = frozenset(
+    {
+        "inference_timeout",
+        "sandbox_rpc_timeout",
+        "update_wait_timeout",
+        "harness_crash",
+        "api_failure",
+        "sandbox_failure",
+        "model_call_regeneration_exhausted",
+    }
+)
+TERMINATION_KINDS_NORMAL = frozenset({"completed"})
+
+# completion 三值事实层（决策包 D1a 推导关系）：只由 runtime/capture/
+# quiescence/snapshot 完整性决定（勘误 2：评分事实不参与 completion）。
+# v1 的 permanent_rejection 是**准入判定**不是 completion 事实，v2 不再
+# 作为 completion 取值——由 PromptGroupAdmissionReport（FA-2）承载。
+CompletionClassV2 = Literal["present_complete", "present_truncated", "missing"]
+
+
+class RolloutAttemptOutcomeV2(StrictModel):
+    """Outcome v2：终止事实与处置分离后的执行结果记录（F2-1b）。
+
+    与 v1 的语义差（六审 2 + 勘误 2，新增 v2 不原地改 v1）：
+
+    - completion_class 换为三值**事实层**枚举——present_complete /
+      present_truncated / missing；v1 的 permanent_rejection（准入判定）
+      不在此层。
+    - 新增 termination_kind（五族）+ reason_code：终止 trigger、故障域、
+      具体原因三层分离（D-FA-3：重生成耗尽 = termination_kind=
+      model_call_regeneration_exhausted + failure_category=
+      model_proxy_failure + reason_code=max_regenerations_exceeded）。
+    - 勘误 2 硬化：评分基建故障只令 reward 不可用（reward_unavailable=
+      True + task_outcome=unknown），**不倒写** completion——v1 里
+      "present 必须有评分结局"的约束在 v2 放开为该受控通道。
+    - 版本事实/消费时刻字段/资格引用等约束与 v1 相同（span 互检、
+      consume 时刻必须 None、present_* 必须可回链 eligibility）。
+    """
+
+    schema_id: Literal["rh2.fa.rollout_attempt_outcome.v2"] = Field(
+        default="rh2.fa.rollout_attempt_outcome.v2", description="schema 判别字段。"
+    )
+    outcome_id: NonEmptyStr = Field(description="本记录唯一 id。")
+    identity: ExecutionIdentity = Field(
+        description="执行身份（branch_id 通常为 None——这是执行级账目）。"
+    )
+    member_slot: int = Field(ge=0, description="在 PromptGroup 内占用的成员槽位（0..n-1）。")
+    attempt_number: int = Field(
+        ge=1, description="第几次 attempt（首次=1；局部重试不增加，重新采样才增加——首版禁用后者）。"
+    )
+    completion_class: CompletionClassV2 = Field(
+        description="事实层完成类别（present_complete/present_truncated/missing）。"
+    )
+    termination_kind: TerminationKind = Field(
+        description="终止 trigger（五族；触发者身份不决定事实完整性——五审 4.2）。"
+    )
+    failure_category: RuntimeFailureCategory | None = Field(
+        default=None,
+        description=(
+            "故障域归因（三层分离第二层）。missing 必填；present_* 只允许 "
+            "None 或 grading_infra_failure（勘误 2 受控通道）。"
+        ),
+    )
+    reason_code: NonEmptyStr | None = Field(
+        default=None,
+        description="具体原因码（三层分离第三层；如 max_regenerations_exceeded）。",
+    )
+    failed_component: NonEmptyStr | None = Field(
+        default=None, description="失败组件（如 grading_container / model_proxy / sandbox）。"
+    )
+    recovery_scope: RecoveryScope = Field(
+        description="已采取/判定的恢复范围（fail-closed：none 表示无恢复动作）。"
+    )
+    task_outcome: TaskOutcome = Field(
+        description="任务结局（reward 可用时 resolved/unresolved；不可用时 unknown）。"
+    )
+    reward_unavailable: bool = Field(
+        default=False,
+        description=(
+            "reward 不可用标记（⟺ task_outcome=unknown）。present_* 时为 True "
+            "表示评分故障/未评分——completion 事实不因此改写（勘误 2）。"
+        ),
+    )
+    turn_weight_versions: list[NonEmptyStr] = Field(
+        default_factory=list,
+        description="逐轮真实 weight_version 序列（同 v1：按轮次序，保留重复）。",
+    )
+    intra_execution_version_span: int | None = Field(
+        default=None, ge=0,
+        description="执行内版本跨度（派生视图，须与重算一致；同 v1）。",
+    )
+    current_version_at_finalize: NonEmptyStr | None = Field(
+        default=None, description="finalize 时刻 current policy version（present_* 必填）。"
+    )
+    current_version_at_consume: NonEmptyStr | None = Field(
+        default=None, description="消费时刻事实——finalize 冻结时必须为 None（同 v1）。"
+    )
+    worst_token_lag: int | None = Field(
+        default=None, ge=0,
+        description="消费时刻最坏 token 滞后——finalize 冻结时必须为 None（同 v1）。",
+    )
+    eligibility_report_id: NonEmptyStr | None = Field(
+        default=None, description="EligibilityReport 引用（present_* 必填；权威在报告本体）。"
+    )
+    evidence_refs: list[NonEmptyStr] = Field(
+        default_factory=list, description="证据引用（audit/失败记录/capture/评分报告等）。"
+    )
+
+    @model_validator(mode="after")
+    def _check_v2_consistency(self) -> "RolloutAttemptOutcomeV2":
+        cc, tk = self.completion_class, self.termination_kind
+        # --- completion ⟷ termination 一致性（D1a 推导关系的契约面）---
+        if cc == "present_complete" and tk != "completed":
+            raise ValueError(
+                f"present_complete 只能来自 termination_kind=completed（得到 {tk}）——"
+                "非正常终止的完整轨迹是 present_truncated。"
+            )
+        if cc == "present_truncated" and tk not in (
+            TERMINATION_KINDS_POLICY_HORIZON
+            | TERMINATION_KINDS_WATCHDOG
+            | TERMINATION_KINDS_CONTROL
+        ):
+            raise ValueError(
+                f"present_truncated 只允许 horizon/看门狗/控制面终止（得到 {tk}）。"
+            )
+        # D1a"基础设施族 ⇒ missing"由上两条规则蕴含（infra ∉ {completed} ∪
+        # 截断族），不再重复分支——穷举测试验证该推导
+        # --- 三层分离钉子（D-FA-3）---
+        if tk == "model_call_regeneration_exhausted" and (
+            self.failure_category != "model_proxy_failure"
+            or self.reason_code != "max_regenerations_exceeded"
+        ):
+            raise ValueError(
+                "model_call_regeneration_exhausted 必须三层齐备："
+                "failure_category=model_proxy_failure + "
+                "reason_code=max_regenerations_exceeded。"
+            )
+        # --- failure_category 归属 ---
+        if cc == "missing" and self.failure_category is None:
+            raise ValueError("missing 必须携带 failure_category 归因（含 capture_incomplete）。")
+        if cc != "missing" and self.failure_category not in (None, "grading_infra_failure"):
+            raise ValueError(
+                f"present_* 只允许 failure_category ∈ {{None, grading_infra_failure}}"
+                f"（得到 {self.failure_category}）——执行没失败，失败归因属 missing。"
+            )
+        # --- 勘误 2：reward 可用性 ⟺ task_outcome，completion 不参与 ---
+        if (self.task_outcome == "unknown") != self.reward_unavailable:
+            raise ValueError(
+                "task_outcome=unknown ⟺ reward_unavailable=True（reward 不可用时"
+                "不得声称任务结局；可用时必须给出结局）。"
+            )
+        if cc == "missing" and self.task_outcome != "unknown":
+            raise ValueError("missing 的 task_outcome 必须 unknown（评分事实不完整）。")
+        if self.failure_category == "grading_infra_failure" and not self.reward_unavailable:
+            raise ValueError("grading_infra_failure ⇒ reward_unavailable=True（勘误 2）。")
+        # --- present_* 事实完整性要求（同 v1 present）---
+        if cc != "missing":
+            if not self.turn_weight_versions:
+                raise ValueError("present_* 必须携带至少 1 条逐轮 weight_version。")
+            if self.current_version_at_finalize is None:
+                raise ValueError("present_* 必须携带 current_version_at_finalize。")
+            if self.eligibility_report_id is None:
+                raise ValueError("present_* 必须引用 eligibility_report_id。")
+        # --- 版本派生互检 + 消费时刻冻结（同 v1）---
+        expected_span = derive_weight_version_max_lag(self.turn_weight_versions or [])
+        if self.turn_weight_versions and self.intra_execution_version_span != expected_span:
+            raise ValueError(
+                f"intra_execution_version_span({self.intra_execution_version_span}) 与重算不符："
+                f"应为 {expected_span}。"
+            )
+        if self.current_version_at_consume is not None or self.worst_token_lag is not None:
+            raise ValueError(
+                "current_version_at_consume / worst_token_lag 是消费时刻事实，"
+                "finalize 冻结记录中必须为 None。"
             )
         return self
 

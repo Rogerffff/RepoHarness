@@ -35,6 +35,7 @@ EXPECTED_EXTRA_IDS = {
     # FA-0（2026-07-12）：fa_runtime 四契约（S1 核心 15 个保持冻结，走聚合扩展）
     "rh2.fa.execution_identity.v1",
     "rh2.fa.rollout_attempt_outcome.v1",
+    "rh2.fa.rollout_attempt_outcome.v2",
     "rh2.fa.training_runtime_window.v1",
     "rh2.fa.model_call_attempt.v1",
 }
@@ -174,6 +175,24 @@ def _fa_outcome_payload() -> dict:
     }
 
 
+def _fa_outcome_v2_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+        "outcome_id": "o2",
+        "identity": _fa_identity_payload(),
+        "member_slot": 2,
+        "attempt_number": 1,
+        "completion_class": "present_truncated",
+        "termination_kind": "task_token_budget_exhausted",
+        "task_outcome": "unresolved",
+        "recovery_scope": "none",
+        "turn_weight_versions": ["1", "1"],
+        "intra_execution_version_span": 0,
+        "current_version_at_finalize": "1",
+        "eligibility_report_id": "er_2",
+    }
+
+
 def _fa_window_payload() -> dict:
     return {
         "schema_id": "rh2.fa.training_runtime_window.v1",
@@ -261,6 +280,7 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.bundle_pair.v1": lambda: frozen_pair.model_dump(mode="json"),
         "rh2.fa.execution_identity.v1": _fa_identity_payload,
         "rh2.fa.rollout_attempt_outcome.v1": _fa_outcome_payload,
+        "rh2.fa.rollout_attempt_outcome.v2": _fa_outcome_v2_payload,
         "rh2.fa.training_runtime_window.v1": _fa_window_payload,
         "rh2.fa.model_call_attempt.v1": _fa_attempt_payload,
     }
