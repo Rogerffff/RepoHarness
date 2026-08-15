@@ -46,6 +46,8 @@ present 族迁移还要求 v1 记录携带完整 present 事实字段
     physical_attempt_id 不可重建      → legacy_unmappable（v1 身份缺失
                                         且证据未提供——v2 强制四层身份，
                                         不产身份不完整的"合法"记录）
+    v1 与证据身份不一致               → legacy_unmappable（身份血缘矛盾
+                                        fail-closed，不静默取任何一边）
     missing 且 v1.failure_category ∉ 执行事实集合
                                       → legacy_unmappable（staleness 等
                                         准入/控制面归因不进 v2 事实层）
@@ -54,8 +56,10 @@ present 族迁移还要求 v1 记录携带完整 present 事实字段
 
     migrated             干净迁移，v2 可进训练消费链
     migrated_audit_only  v1 permanent_rejection 迁移产物——v2 在场但
-                         **禁止训练**（verdict 必在）；训练侧必须经
-                         trainable_v2() 提取，该接口对本状态返回 None
+                         **禁止训练**（verdict 必在）；消费侧经
+                         migrated_v2() 提取干净迁移产物，该接口对本状态
+                         返回 None（注意：migrated ≠ 可训练——训练资格
+                         权威在 Eligibility/Admission 联合 Gate）
     legacy_unmappable    不产 v2，v1 经双版本读取留在审计面
 """
 
@@ -83,8 +87,8 @@ __all__ = [
     "OutcomeCrosswalkResult",
     "V1TerminationEvidence",
     "crosswalk_v1_to_v2",
+    "migrated_v2",
     "read_rollout_attempt_outcome",
-    "trainable_v2",
 ]
 
 _TRUNCATION_KINDS = (
@@ -128,7 +132,13 @@ class OutcomeCrosswalkResult(StrictModel):
     v1_outcome_id: NonEmptyStr = Field(description="源 v1 记录 id（审计回链）。")
     rule: NonEmptyStr = Field(description="命中的规则名（穷举表行，测试锚点）。")
     v2: RolloutAttemptOutcomeV2 | None = Field(
-        default=None, description="迁移产物（status=migrated 时必在，否则必空）。"
+        default=None,
+        description=(
+            "迁移产物（migrated 与 migrated_audit_only 均必在，"
+            "legacy_unmappable 必空）。audit-only 的 v2 **禁止拆出 wrapper "
+            "裸写训练数据面**——脱离 status/verdict 的裸 v2 会丢失永久拒绝"
+            "判定；干净产物经 migrated_v2() 提取。"
+        ),
     )
     legacy_admission_verdict: Literal["permanent_rejection"] | None = Field(
         default=None,
@@ -155,11 +165,15 @@ class OutcomeCrosswalkResult(StrictModel):
         return self
 
 
-def trainable_v2(result: OutcomeCrosswalkResult) -> RolloutAttemptOutcomeV2 | None:
-    """训练侧唯一提取口（fail-closed）：只有干净 migrated 才返回 v2。
+def migrated_v2(result: OutcomeCrosswalkResult) -> RolloutAttemptOutcomeV2 | None:
+    """干净迁移产物提取口（fail-closed）：只对 status=migrated 返回 v2，
+    audit-only（永久拒绝迁移产物）与 unmappable 一律 None。
 
-    消费者若绕过本接口直读 result.v2，migrated_audit_only 的被禁轨迹会
-    重新进入训练——测试钉死本接口对一切非 migrated 状态返回 None。
+    **本接口只过滤准入判定维，不宣称训练资格**（codex F2-1b 二轮 P1）：
+    migrated 也包含 completion=missing 的成功迁移，且 Outcome 本身从不
+    拥有训练资格——那是 EligibilityReport + AdmissionReport 联合 Gate 的
+    权威（v1 契约既有原则）。训练候选提取必须走该联合 Gate，不得以本
+    接口的返回值直接入训。
     """
 
     return result.v2 if result.status == "migrated" else None
@@ -238,7 +252,25 @@ def crosswalk_v1_to_v2(
                    "execution 级 Outcome v2（静默剥离 branch 属改写身份）。",
             verdict=gate_verdict, legacy_fc=gate_fc,
         )
-    # --- 结构性前置门 ②：四层身份必须可重建（v1 自带或证据补齐）---
+    # --- 结构性前置门 ②：四层身份必须可重建（v1 自带或证据补齐）；
+    # 两边都在场时必须完全一致——身份血缘矛盾 fail-closed（二轮 P1）---
+    if (
+        v1.identity.physical_attempt_id is not None
+        and evidence is not None
+        and evidence.physical_attempt_id is not None
+        and (
+            evidence.physical_attempt_id != v1.identity.physical_attempt_id
+            or evidence.physical_attempt_seq != v1.identity.physical_attempt_seq
+        )
+    ):
+        return _result(
+            v1, status="legacy_unmappable", rule="identity_evidence_conflict",
+            reason=f"身份血缘矛盾：v1 paid={v1.identity.physical_attempt_id}/"
+                   f"seq={v1.identity.physical_attempt_seq} 与证据 "
+                   f"paid={evidence.physical_attempt_id}/"
+                   f"seq={evidence.physical_attempt_seq} 不一致——不得静默取舍。",
+            verdict=gate_verdict, legacy_fc=gate_fc,
+        )
     if v1.identity.physical_attempt_id is not None:
         identity = v1.identity
     elif evidence is not None and evidence.physical_attempt_id is not None:

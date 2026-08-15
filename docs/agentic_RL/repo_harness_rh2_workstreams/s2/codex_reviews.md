@@ -5039,3 +5039,52 @@ F2-1b schema + crosswalk 完成
 - `inspect-rh2-s1`：通过
 
 测试全绿，但上述反例均可直接构造，说明是测试 oracle 缺口。建议先修前三项，再进入 F2-2；F2-2 的方案设计可以并行准备。
+
+
+---
+
+## codex F2-1b 审查二轮（2026-08-15，2 P1——全部采纳）
+
+
+**结论**
+
+F2-1b 的主要修复方向正确，原三条反例已经闭合，但目前仍有 **2 个 P1 阻塞项**。建议做一次很小的聚焦修复后再进入 F2-2，不需要再做整轮架构审查。
+
+::code-comment{title="[P1] 迁移成功被误称为可训练" body="trainable_v2() 只检查 status == migrated，但 migrated 也包含 completion_class=missing 的成功迁移。实测 missing_after_local_retry → migrated missing 后，该函数仍返回一个 eligibility_report_id=None 的 v2。Outcome 本身也不拥有最终训练资格，不能由这个 helper 宣称 trainable。应删除或改名为 migrated_v2/crosswalk_payload；真正的训练候选提取留给 Outcome + EligibilityReport + AdmissionReport 的联合 Gate。" file="/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/outcome_crosswalk.py" start=158 end=165 priority=1}
+
+::code-comment{title="[P1] 身份证据冲突被静默忽略" body="当 v1 已有 physical_attempt_id，而 V1TerminationEvidence 提供了不同的 id/seq 时，crosswalk 直接采用 v1.identity 并忽略冲突证据，仍返回 migrated。身份血缘矛盾应 fail-closed：两边都在场时必须完全一致，否则返回 identity_evidence_conflict/legacy_unmappable。" file="/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/outcome_crosswalk.py" start=238 end=250 priority=1}
+
+**实测反例**
+
+```text
+missing_after_local_retry
+-> crosswalk status = migrated
+-> v2.completion_class = missing
+-> eligibility_report_id = None
+-> trainable_v2(result) is not None   # 错误
+```
+
+另一个反例：
+
+```text
+v1 physical_attempt_id = exec_1#p1-aaaa1111
+evidence physical_attempt_id = DIFFERENT-PAID
+-> status = migrated                  # 应 fail-closed
+-> 冲突 evidence 被忽略
+```
+
+同时建议顺手修正文档：`OutcomeCrosswalkResult.v2` 的字段说明仍写着“`migrated` 时必在，否则必空”，但 `migrated_audit_only` 也携带 v2。并且 audit-only 的 wrapper 不应被拆成裸 v2 写入训练数据面，否则永久拒绝判定会丢失。
+
+**非阻塞项**
+
+当前 schema 仍允许 `termination_kind=completed + failure_category=harness_crash + completion=missing`。暂时不必扩大 F2-1b，因为完整的 termination/failure 交叉表尚未拍板；但 F2-2 producer 接线测试必须证明真实生产路径不会生成明显矛盾组合。
+
+**验证结果**
+
+- F2-1b 专项与 registry：`45 passed`
+- 全套：`961 passed`
+- Ruff：通过
+- `inspect-rh2-s1`：通过
+- 原有三个反例均已确认被拒绝
+
+所以准确状态是：**F2-1b 尚差一次聚焦修复；修完上述两项即可闭合并进入 F2-2，无需继续扩展检查范围。**

@@ -164,7 +164,11 @@
 > Outcome v2 producer 接线不在本切片**——真实 producer（quiescence 后
 > 按完整性事实构造 v2）、持久化、assembler 消费测试钉进 F2-2 起的
 > 切片验收（F2-2 产 completion 事实、F2-5 collector 消费），静态扫描
-> 只防倒退不证明接线。
+> 只防倒退不证明接线。producer 接线测试还须证明真实生产路径**不产生
+> 明显矛盾组合**（如 termination=completed + failure_category=
+> harness_crash + completion=missing——schema 层在完整 termination×
+> failure 交叉表拍板前暂不禁止，producer 层先行兜底；codex F2-1b
+> 二轮非阻塞项）。
 > Observability V0 后续切片只做增量事件接线，F2-6 统一验收；
 > `FaultDomainMonitor` 归 **FA-2B**。
 >

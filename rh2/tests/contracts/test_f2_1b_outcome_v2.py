@@ -6,7 +6,7 @@ F2-1b 审查三 P1）：completion 三值事实层；termination 五族集合等
 failure category 三分封闭集合（13×3 矩阵）；三层分离钉子；勘误 2
 （评分故障不倒写 completion）；v2 强制四层身份；permanent_rejection
 永不映射 missing 且迁移产物 audit-only；无证据/无引用不捏造；
-trainable_v2 fail-closed。
+migrated_v2 fail-closed（不宣称训练资格）。
 """
 
 from __future__ import annotations
@@ -34,8 +34,8 @@ from repoharness2.contracts.outcome_crosswalk import (
     OutcomeCrosswalkResult,
     V1TerminationEvidence,
     crosswalk_v1_to_v2,
+    migrated_v2,
     read_rollout_attempt_outcome,
-    trainable_v2,
 )
 
 
@@ -238,7 +238,7 @@ def _make_v1(cc: str) -> RolloutAttemptOutcome:
 
 def test_crosswalk_exhaustive_rule_table():
     """每个 (v1 类别, 证据) 组合都有确定结果；规则名集合与文档表等式；
-    trainable_v2 对 permanent_rejection 的一切路径 fail-closed。"""
+    migrated_v2 对 permanent_rejection 的一切路径 fail-closed。"""
 
     all_kinds = list(get_args(TerminationKind))
     seen_rules = set()
@@ -249,10 +249,10 @@ def test_crosswalk_exhaustive_rule_table():
             # 硬不变量：v2 在场 ⟺ 两种 migrated 状态（validator 也强制）
             assert (res.status != "legacy_unmappable") == (res.v2 is not None), (cc, tk)
             # 聚焦复核 4 + P1-3：permanent_rejection 不产 missing、
-            # 不产可训练 v2（只能 audit-only 或 unmappable）
+            # 干净提取口拿不到（只能 audit-only 或 unmappable）
             if cc == "permanent_rejection":
                 assert res.status != "migrated", (cc, tk)
-                assert trainable_v2(res) is None, (cc, tk)
+                assert migrated_v2(res) is None, (cc, tk)
                 if res.v2 is not None:
                     assert res.v2.completion_class != "missing", (cc, tk)
                     assert res.legacy_admission_verdict == "permanent_rejection"
@@ -270,7 +270,7 @@ def test_crosswalk_no_evidence_never_fabricates():
     for cc in ["present", "missing_after_local_retry", "permanent_rejection"]:
         res = crosswalk_v1_to_v2(_make_v1(cc), None)
         assert res.status == "legacy_unmappable"
-        assert res.v2 is None and trainable_v2(res) is None
+        assert res.v2 is None and migrated_v2(res) is None
 
 
 def test_crosswalk_present_with_evidence():
@@ -280,7 +280,7 @@ def test_crosswalk_present_with_evidence():
     assert res.v2.task_outcome == "unresolved"  # 评分结局照搬
     assert not res.v2.reward_unavailable
     assert "a1" in res.v2.evidence_refs  # 重建依据并入
-    assert trainable_v2(res) is res.v2  # 干净迁移可训练
+    assert migrated_v2(res) is res.v2  # 干净迁移可训练
 
     res2 = crosswalk_v1_to_v2(_v1(), _ev("max_turns_exhausted"))
     assert res2.v2.completion_class == "present_truncated"
@@ -288,7 +288,7 @@ def test_crosswalk_present_with_evidence():
 
 def test_crosswalk_rejection_is_audit_only_and_fail_closed():
     """codex F2-1b P1-3 验收：永久拒绝迁移产物 = migrated_audit_only；
-    只看 status/v2 的消费者拿不到"干净 migrated"，trainable_v2 返回 None
+    只看 status/v2 的消费者拿不到"干净 migrated"，migrated_v2 返回 None
     ——忽略 verdict 也不可能把被禁轨迹送进训练。"""
 
     res = crosswalk_v1_to_v2(_make_v1("permanent_rejection"), _ev("completed"))
@@ -298,7 +298,7 @@ def test_crosswalk_rejection_is_audit_only_and_fail_closed():
     assert res.v2.reward_unavailable and res.v2.task_outcome == "unknown"
     assert res.legacy_admission_verdict == "permanent_rejection"
     assert res.legacy_failure_category == "security_violation"
-    assert trainable_v2(res) is None  # fail-closed 提取口
+    assert migrated_v2(res) is None  # fail-closed 提取口
 
 
 def test_crosswalk_rejection_without_present_facts_unmappable():
@@ -355,6 +355,39 @@ def test_crosswalk_identity_gates():
     assert res3.status == "migrated"
     assert res3.v2.identity.physical_attempt_id == "exec_1#p1-bbbb2222"
     assert res3.v2.identity.physical_attempt_seq == 1
+
+
+def test_migrated_v2_is_not_a_trainability_claim():
+    """codex F2-1b 二轮 P1：missing 的成功迁移也会经 migrated_v2 提取出
+    ——接口只过滤 audit-only 维；返回对象可以是 missing、可以无
+    eligibility 引用。训练资格权威在 Eligibility/Admission 联合 Gate，
+    本测试钉住"提取成功 ≠ 可训练"的语义边界。"""
+
+    res = crosswalk_v1_to_v2(_make_v1("missing_after_local_retry"), _ev("harness_crash"))
+    got = migrated_v2(res)
+    assert got is not None and got.completion_class == "missing"
+    assert got.eligibility_report_id is None  # 明示：这不是训练资格证明
+
+
+def test_identity_evidence_conflict_fails_closed():
+    """codex F2-1b 二轮 P1：v1 与证据都带 paid 且不一致 → 不得静默取舍，
+    legacy_unmappable；完全一致则照常迁移。"""
+
+    ev_conflict = _ev("completed", physical_attempt_id="DIFFERENT-PAID",
+                      physical_attempt_seq=9)
+    res = crosswalk_v1_to_v2(_v1(), ev_conflict)
+    assert res.status == "legacy_unmappable"
+    assert res.rule == "identity_evidence_conflict"
+
+    # seq 单独不一致同样冲突
+    ev_seq = _ev("completed", physical_attempt_id="exec_1#p1-aaaa1111",
+                 physical_attempt_seq=2)
+    assert crosswalk_v1_to_v2(_v1(), ev_seq).rule == "identity_evidence_conflict"
+
+    # 完全一致 → 正常迁移
+    ev_same = _ev("completed", physical_attempt_id="exec_1#p1-aaaa1111",
+                  physical_attempt_seq=1)
+    assert crosswalk_v1_to_v2(_v1(), ev_same).status == "migrated"
 
 
 def test_evidence_and_result_fail_closed():

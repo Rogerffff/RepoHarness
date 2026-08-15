@@ -42,8 +42,15 @@ present_* 唯一 / 准入·控制·审计 5 值不进 finalize Outcome——stal
 crosswalk 加结构性前置门（branch 视角/身份不可重建 → legacy_unmappable，
 证据可补 paid）；③ crosswalk fail-closed（证据 evidence_refs ≥1；结果
 validator 强制 status ⟺ v2 在场性；permanent_rejection 迁移产物 =
-**migrated_audit_only** 独立状态 + trainable_v2() 唯一训练提取口对其
-返回 None——只读 status/v2 的消费者拿不到被禁轨迹）。
+**migrated_audit_only** 独立状态——只读 status/v2 的消费者拿不到被禁
+轨迹）。二轮复核再闭 2 P1：④ 提取口改名 **migrated_v2()**（原名
+trainable_v2 违反 v1 既有原则"训练资格唯一权威在 EligibilityReport"
+——migrated 含 missing 迁移，迁移成功≠可训练；接口只过滤 audit-only
+维）；⑤ 身份血缘矛盾 fail-closed（v1 与证据都带 paid 且不一致 →
+identity_evidence_conflict/legacy_unmappable，不静默取舍）。非阻塞
+递延：termination×failure 完整交叉表未拍板（schema 暂允许
+completed+harness_crash+missing 组合），F2-2 producer 接线测试先行
+兜底证明真实路径不产矛盾组合（05 计划已钉）。
 `contracts/fa_runtime.py` 新增 TerminationKind 五族（与决策包 D1a 逐字
 一致，集合等式测试保证并集=全集且两两不交）+ RolloutAttemptOutcomeV2
 （completion 三值事实层 present_complete/present_truncated/missing；
