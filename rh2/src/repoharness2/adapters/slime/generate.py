@@ -1137,7 +1137,15 @@ class SlimeBindingConfig:
     #   2. 装配期要求每个入训轮的 tape 都带真实 weight_version（缺失 fail-closed）；
     #   3. 握手的 staleness_steps 按真实版本差计算，不再恒 0。
     # False = S1 兼容/测试路径（默认），行为逐字不变。
+    # 注（F2-2 复核三轮）：本旗标同时是 **FA 正式模式的显式信号**——
+    # 正式拓扑的全部 fail-closed 决策（revoke 必备/audit sink 致命/身份
+    # 完整性强制/启动闸门）都以它为准，不得用"是否有 paid"推断模式。
     require_real_weight_versions: bool = False
+    # F2-2 复核三轮 P0-1：开发期 audit-only 探针。True = 正式模式允许在
+    # Runtime 屏障缺位时启动，但每条 rollout 都走 audit-only 收口（不评分
+    # /不交付/abort 形状/disposition=audit_only_rejected），产物绝不可训。
+    # False（默认）= 屏障缺位时正式模式启动即拒绝。
+    fa_audit_only_probe: bool = False
     # D-FA-6 兜底：装配期检测到"无法解释的上下文收缩"（compaction/Microcompact/
     # Context Collapse 的机械信号）时整条轨迹 fail-closed 退出（收口为 abort 形状，
     # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
@@ -1196,6 +1204,12 @@ _SGLANG_SERVER_TIMING_KEYS = (
 
 # F2-0b：进程级 monotonic 时钟实例标识——同进程所有线程读同一单调钟，
 # 属同一 clock domain，timestamp 可互减（跨进程才不可比）。用 pid 标识。
+# F2-2 复核三轮 P0-1：Runtime 静止屏障可用性（启动闸门信号）。F2-2b
+# 落地（scope 终止/写入归零/snapshot 冻结/只评冻结副本）时翻 True——
+# 在此之前正式模式（require_real_weight_versions=True）构造 orchestrator
+# 即拒绝启动，除非显式声明 fa_audit_only_probe（开发期探针，非训练）。
+RUNTIME_BARRIER_AVAILABLE = False
+
 PROCESS_CLOCK_DOMAIN = f"proc-{os.getpid()}"
 # 注（F2-0b 复核，训前处理项）：proc-pid 不是严格进程 incarnation——fork
 # 继承同值、pid 可复用；F2-3/F2-4 前改为含 incarnation 且 fork 后刷新的 ID。
@@ -1288,6 +1302,10 @@ class RolloutAudit:
     # F2-2 复核 P1-4：终止 trigger 提示（slime exit=-1 = 时间预算耗尽 →
     # hard_wall_timeout；不再误归 harness_crash/completed）
     termination_kind_hint: str | None = None
+    # F2-2 复核三轮 P1-2：audit-only 收口标记（屏障前正式探针/带身份
+    # bring-up）——bringup 落盘 disposition=audit_only_rejected，
+    # fault-domain 统计（FA-2B）按此排除，不污染 capture 故障率
+    audit_only: bool = False
     # F2-2 producer：本次 execution 的 Outcome v2（dict 形式随 audit 落盘；
     # S1 兼容路径（无四层身份）为 None）
     outcome_v2: dict[str, Any] | None = None
@@ -1476,6 +1494,17 @@ class RolloutOrchestrator:
                     "正式链必须用引擎探针实测的 weight_version（glue 假设 4 管道），"
                     "静态哨兵值只允许测试路径。",
                 )
+        if config.require_real_weight_versions and not RUNTIME_BARRIER_AVAILABLE:
+            # F2-2 复核三轮 P0-1（勘误 3"屏障未实现由启动闸门表达"的闸门
+            # 本体）：正式模式在屏障缺位时**worker dispatch 前拒绝启动**；
+            # 显式 audit-only 探针除外（其产物全部不可训）。
+            if not config.fa_audit_only_probe:
+                raise StartupCheckError(
+                    "runtime_barrier_unavailable_for_formal_mode",
+                    "require_real_weight_versions=True 但 Runtime 静止屏障"
+                    "（F2-2b）未落地——正式模式禁止启动；开发期请显式设置 "
+                    "fa_audit_only_probe=True（audit-only，产物不可训）。",
+                )
             try:
                 int(version, 10)
             except ValueError:
@@ -1562,14 +1591,21 @@ class RolloutOrchestrator:
         # 异常消息全用它）/ 秘密凭证（capability token，只出现在 CC 环境
         # 与 Authorization 头，guard 认证后即重写为 internal sid，不进入
         # 任何下游或持久面）。
-        trajectory_id = self._session_id(sample, task)
-
         raw_meta = getattr(sample, "metadata", None)
+        meta = raw_meta if isinstance(raw_meta, Mapping) else {}
         physical_attempt_id = (
-            str(raw_meta["rh2_physical_attempt_id"])
-            if isinstance(raw_meta, Mapping) and raw_meta.get("rh2_physical_attempt_id")
-            else None
+            str(meta["rh2_physical_attempt_id"])
+            if meta.get("rh2_physical_attempt_id") else None
         )
+        # F2-2 复核三轮 P0-2：FA 路径的稳定轨迹身份**直接取不可变的
+        # rh2_rollout_execution_id**——sample.session_id 会被本方法改写成
+        # 当前 attempt 的 internal sid，replay 时经 _session_id 的
+        # existing 分支回流会把上次会话身份污染成本次轨迹身份。
+        # S1 兼容路径（无 FA metadata）保持旧派生。
+        if meta.get("rh2_rollout_execution_id"):
+            trajectory_id = str(meta["rh2_rollout_execution_id"])
+        else:
+            trajectory_id = self._session_id(sample, task)
         capability = mint_session_capability(physical_attempt_id)
         sid = (
             f"s-{physical_attempt_id}"
@@ -1604,10 +1640,28 @@ class RolloutOrchestrator:
         }
         adapter = self._adapter_factory(hook, session_defaults)
 
-        stage = "materialize"
+        stage = "identity"
         sandbox: _MaterializedSandbox | None = None
         session_open = False
         try:
+            # F2-2 复核三轮 P0-1：正式模式（显式旗标，不用 paid 推断）在
+            # materialize 前强制完整四层身份——身份注入故障 fail-closed
+            # （结构化 abort + audit 落盘），不得静默回落 S1 形状（那会
+            # 绕过 audit-only 防线去评分/交付）。
+            if self.config.require_real_weight_versions and (
+                physical_attempt_id is None
+                or meta.get("rh2_physical_attempt_seq") is None
+                or not meta.get("rh2_rollout_execution_id")
+                or not meta.get("rh2_prompt_group_id")
+                or meta.get("rh2_group_index") is None
+                or meta.get("rh2_member_slot") is None
+            ):
+                raise SlimeBindingError(
+                    "fa_identity_incomplete_in_formal_mode",
+                    f"正式模式 member metadata 四层身份不全（trajectory={trajectory_id}）"
+                    "——entry 契约破损，fail-closed（不评分不交付）。",
+                )
+            stage = "materialize"
             sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit)
             audit.step("step2_workspace_materialized")
 
@@ -1832,6 +1886,7 @@ class RolloutOrchestrator:
             # remove_sample=True → collector 显式拒绝）。S1 兼容路径（无
             # paid）不受影响。屏障落地后本挡板整块删除。
             if physical_attempt_id is not None and not audit.runtime_quiescence_confirmed:
+                audit.audit_only = True
                 self._produce_outcome_v2(
                     audit=audit,
                     raw_meta=raw_meta,

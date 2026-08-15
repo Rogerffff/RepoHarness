@@ -5237,3 +5237,86 @@ reason_code 再区分：
 - 同步补 D4 recovery 映射、集合等式测试和旧 artifact 读取测试。
 
 因此我的建议是：先把上述两个 P0 和 T0 方案补全，再关闭 F2-2。当前不建议直接进入 F2-3。
+
+
+---
+
+## codex F2-2 复核三轮（2026-08-15，2 P0 + 3 P1——全部采纳）
+
+**结论**
+
+Claude 本轮对上一轮问题的修复大体正确，但 **F2-2 还不能闭合**。我确认了 2 个阻塞问题；应先做一个窄范围 closure commit，再进入 F2-2b。无需新增 T0，都是已批准语义的实现缺口。
+
+**P0 阻塞问题**
+
+1. **正式 FA 模式仍由 `physical_attempt_id` 隐式判断，存在 fail-open。**
+
+[generate.py:1834](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1834) 只有在 `physical_attempt_id is not None` 时才执行 pre-barrier 拒绝。
+
+我构造了以下真实反例：
+
+```text
+require_real_weight_versions = true
+正式训练配置
+physical_attempt_id = None（身份注入故障）
+
+结果：
+grading_calls = 1
+remove_sample = false
+outcome_v2 = None
+finalized = true
+```
+
+也就是说，身份字段恰好缺失时，系统反而绕过 audit-only 防线，评分并交付样本。
+
+同时，已批准勘误要求“屏障未实现由启动闸门表达”，但当前守卫是在完整 harness、capture 和 backfill 跑完后才执行，并不存在启动闸门。
+
+修复要求：
+
+- FA 拓扑必须有显式模式信号，不能用“是否有 paid”推断。
+- FA 入口在 materialize 前验证完整四层身份。
+- Runtime barrier 不可用时，正式模式应在 worker dispatch 前拒绝启动。
+- 如保留开发期 probe，必须显式标成非训练 audit 模式。
+
+2. **同一 Sample 重放会污染稳定 `trajectory_id`。**
+
+[generate.py:1565](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1565) 从 `sample.session_id` 生成 `trajectory_id`，随后 [generate.py:1579](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1579) 又把该字段改写成当前 attempt 的 internal SID。
+
+我用同一个 Sample 连续执行两次得到：
+
+```text
+attempt 1 trajectory_id = rh2-...随机值
+attempt 2 trajectory_id = s-exec_REPLAY#p1-a
+```
+
+第二次把第一次的会话身份当成了稳定轨迹身份。这样 audit、capture、workspace、评分和 artifact lineage 会跨重放漂移。
+
+正式 FA 路径的 `trajectory_id` 应直接来自不可变的 `rh2_rollout_execution_id`；internal SID 只能用于会话路由。必须新增“同一 Sample 两次 physical attempt”回归测试。
+
+**P1 问题**
+
+- T0 规定 `runtime_quiescence_failure` 只能配五个 reason code，但当前 [fa_runtime.py:409](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:409) 接受任意字符串甚至 `None`。我的探针确认 `totally_unknown_reason` 可成功构造。应增加双向 validator。
+- 当前 pre-barrier 结果实际被记为：
+
+```text
+failure_category = capture_incomplete
+reason_code = runtime_barrier_unavailable
+audit disposition = unknown_terminal
+```
+
+这与“不进入每 rollout 故障统计”冲突，也会污染 capture 故障率。[bringup.py:325](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:325) 的 `unknown_terminal` 也不符合实际 abort。启动闸门落地后不应产生这类 Outcome；开发 probe 至少应显式记作 `audit_only_rejected` 或 `aborted`。
+- [implementation-notes.md:82](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/fa/implementation-notes.md:82) 仍写旧的 `runtime_quiescence_unconfirmed`，和后面的 `runtime_barrier_unavailable` 冲突。当前权威页不应同时保存两套现行口径。
+
+**已验证正确**
+
+正确 paid 路径现在确实不评分、返回 `remove_sample=True`；评分类别过滤、fingerprint 删除、枚举分区也已生效。
+
+验证结果：
+
+```text
+pytest: 978 passed
+ruff: passed
+inspect-rh2-s1: passed
+```
+
+测试全绿但没有覆盖上述两个生产反例。建议顺序是：**F2-2 closure 小提交 → 聚焦复核 → F2-2b Runtime 静止屏障**。

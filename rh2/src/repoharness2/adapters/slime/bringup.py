@@ -322,6 +322,11 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         disposition = "finalized"
         report = getattr(finalized, "eligibility_report", None)
         eligibility_ref = getattr(report, "report_id", None)
+    elif getattr(audit, "audit_only", False):
+        # F2-2 复核三轮 P1-2：屏障前 audit-only 收口显式记名——不是
+        # unknown_terminal（那是"无失败记录且未 finalize"的兜底），
+        # fault-domain 统计（FA-2B）按本值排除，不污染 capture 故障率
+        disposition = "audit_only_rejected"
     elif not audit.failure_records:
         disposition = "unknown_terminal"
     # F2-0b 复核 P1-B：写 record 时只读一次 monotonic/epoch，monotonic 与

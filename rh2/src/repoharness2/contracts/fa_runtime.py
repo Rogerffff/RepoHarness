@@ -60,6 +60,7 @@ __all__ = [
     "TERMINATION_KINDS_POLICY_HORIZON",
     "TERMINATION_KINDS_WATCHDOG",
     "FAILURE_CATEGORIES_EXECUTION_FACT",
+    "RUNTIME_QUIESCENCE_REASON_CODES",
     "FAILURE_CATEGORIES_GRADING",
     "FAILURE_CATEGORIES_ADMISSION_CONTROL",
     "TrainingRuntimePhase",
@@ -362,6 +363,17 @@ assert sum(len(f) for f in _FC_FAMILIES) == len(get_args(RuntimeFailureCategory)
 # 作为 completion 取值——由 PromptGroupAdmissionReport（FA-2）承载。
 CompletionClassV2 = Literal["present_complete", "present_truncated", "missing"]
 
+# 勘误 3 配套（F2-2 复核三轮 P1-1）：runtime_quiescence_failure 的合法
+# reason_code 封闭集合——屏障五个失败点，双向绑定（该类别必配其一；
+# 这些码也只属于该类别）。
+RUNTIME_QUIESCENCE_REASON_CODES = frozenset({
+    "execution_scope_termination_timeout",
+    "active_writer_detected",
+    "late_model_request_detected",
+    "snapshot_freeze_failed",
+    "snapshot_integrity_mismatch",
+})
+
 
 class RolloutAttemptOutcomeV2(StrictModel):
     """Outcome v2：终止事实与处置分离后的执行结果记录（F2-1b）。
@@ -502,6 +514,22 @@ class RolloutAttemptOutcomeV2(StrictModel):
             raise ValueError(
                 "Outcome v2 是 execution 级账目，identity.branch_id 必须为 None"
                 "（branch 聚合在投影层，不在执行结果层）。"
+            )
+        # --- 勘误 3（P1-1）：runtime_quiescence_failure ⟺ 五 reason code ---
+        if self.failure_category == "runtime_quiescence_failure" and (
+            self.reason_code not in RUNTIME_QUIESCENCE_REASON_CODES
+        ):
+            raise ValueError(
+                f"runtime_quiescence_failure 的 reason_code 必须属于屏障五失败点"
+                f"（得到 {self.reason_code!r}）——勘误 3 封闭集合。"
+            )
+        if (
+            self.reason_code in RUNTIME_QUIESCENCE_REASON_CODES
+            and self.failure_category != "runtime_quiescence_failure"
+        ):
+            raise ValueError(
+                f"reason_code={self.reason_code!r} 专属 runtime_quiescence_failure"
+                f"（得到 failure_category={self.failure_category}）。"
             )
         # --- 勘误 2：reward 可用性 ⟺ task_outcome，completion 不参与 ---
         if (self.task_outcome == "unknown") != self.reward_unavailable:

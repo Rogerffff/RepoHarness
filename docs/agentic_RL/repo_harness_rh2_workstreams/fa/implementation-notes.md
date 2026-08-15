@@ -79,8 +79,9 @@ ANTHROPIC_AUTH_TOKEN，**只做认证**：guard 验证后把 Authorization 重�
 `session_plane_drained`（revoke→drain→poison/边界断言，已实现）与
 `runtime_quiescence_confirmed`（D1a 完整屏障：sandbox scope 终止/后台
 进程归零/不可变 snapshot/只评冻结副本——**未落地恒 False**）；
-completion 推导只信后者 ⇒ **完整屏障落地前正式链只产 missing +
-reason_code=runtime_quiescence_unconfirmed，不产 present_\***。正式链
+completion 推导只信后者 ⇒ **完整屏障落地前正式模式不启动（启动闸门）
+或显式 audit-only 探针下只产 missing + reason_code=
+runtime_barrier_unavailable，不产 present_\***。正式链
 adapter 缺 revoke_session 启动 fail-closed（不再 getattr 跳过）。
 ③ producer：终态 **CAS**（每 physical attempt 恒一条 Outcome，deliver
 失败不追加/不改写——复核 P0-2）；slime exit=-1（EXIT_TIME_BUDGET_
@@ -105,9 +106,23 @@ docstring 改为三层身份定稿（秘密只认证，标识符不保密）；�
 runtime_quiescence_failure（仅屏障执行失败；未实现走启动闸门）+ D4
 表 1 行 + 集合等式测试；⑤ DuplicateActiveSessionError 改判永久身份
 碰撞守卫；中毒 SID 拒 register 挡板解除（poison 已按 attempt 绑定）。
-下一切片 = **F2-2b Runtime 静止屏障**（scope 终止/写入归零确认/
-snapshot 冻结/只评冻结副本；落地时解除 audit-only 挡板），然后
-F2-3 request 级 capture + 单 owner；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
+**F2-2 复核三轮（2 P0 + 3 P1，全采纳）**：① 正式模式改**显式信号**
+（require_real_weight_versions，不用"是否有 paid"推断）——修复
+fail-open：正式配置 + 身份注入故障时曾绕过 audit-only 防线照常评分
+交付；正式模式现在 materialize 前强制完整四层身份（缺任一 →
+结构化 abort），且屏障缺位时**启动闸门**在 orchestrator 构造即拒绝
+（勘误 3"未实现由启动闸门表达"的闸门本体），开发期需显式
+fa_audit_only_probe=True（audit-only，产物不可训）；② trajectory_id
+在 FA 路径直接取不可变 rh2_rollout_execution_id——修复 replay 污染
+（sample.session_id 被改写成 internal sid 后经 _session_id existing
+分支回流，attempt2 曾把 attempt1 的会话身份当成轨迹身份）；③ 勘误 3
+五 reason code 双向封闭 validator（任意串/None/串门都拒）；④ audit-
+only 收口持久 disposition = audit_only_rejected（不再落 unknown_
+terminal，FA-2B 故障统计按此排除）；⑤ 权威页旧口径
+runtime_quiescence_unconfirmed 清除。下一切片 = **F2-2b Runtime 静止
+屏障**（scope 终止/写入归零确认/snapshot 冻结/只评冻结副本；落地时
+翻 RUNTIME_BARRIER_AVAILABLE 并解除 audit-only 挡板），然后 F2-3
+request 级 capture + 单 owner；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

@@ -162,8 +162,13 @@ def test_failure_category_completion_matrix_13x3():
     倒写 completion）。"""
 
     for fc in get_args(RuntimeFailureCategory):
-        # missing：只有执行事实集合合法
-        kwargs = _v2_missing_kwargs(failure_category=fc)
+        # missing：只有执行事实集合合法（runtime_quiescence_failure 须配
+        # 勘误 3 五 reason code 之一——双向 validator）
+        extra = (
+            {"reason_code": "active_writer_detected"}
+            if fc == "runtime_quiescence_failure" else {}
+        )
+        kwargs = _v2_missing_kwargs(failure_category=fc, **extra)
         if fc in FAILURE_CATEGORIES_EXECUTION_FACT:
             _v2(**kwargs)
         else:

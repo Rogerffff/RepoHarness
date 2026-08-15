@@ -17,6 +17,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
 
 from repoharness2.adapters.slime.capture_wire import CaptureRegistry
 from repoharness2.adapters.slime.outcome_producer import (
@@ -384,6 +385,126 @@ async def test_identity_incomplete_skips_production_no_fabrication():
     assert chain.orchestrator.outcomes == []
     # P0-1：Outcome 缺失的正式成员同样不得进 collector（abort 形状）
     assert all(getattr(x, "remove_sample", False) for x in delivered)
+
+
+async def test_formal_mode_identity_fault_fails_closed_not_open():
+    """复核三轮 P0-1：正式模式（显式旗标）+ 身份注入故障（paid=None）
+    不得绕过 audit-only 防线——不评分、不交付、abort 形状。修复前的
+    fail-open：恰好缺身份反而评分并 finalize。"""
+
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+    )
+
+    chain = build_dense_chain(config=_formal_config(policy_version="5"))
+    # 不 stamp 任何 FA 身份（模拟身份注入故障）
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
+    )
+    audit = chain.orchestrator.audits[0]
+    assert chain.grading.calls == []  # 修复前 = 1（fail-open 实锤位）
+    assert audit.finalized is None
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    assert any(
+        f.stage == "identity" and "fa_identity_incomplete" in f.detail
+        for f in audit.failure_records
+    )
+
+
+def test_formal_mode_startup_gate_without_probe():
+    """复核三轮 P0-1：屏障缺位 + 正式模式 + 未声明探针 → worker dispatch
+    前（orchestrator 构造时）拒绝启动。"""
+
+    from test_slime_generate import _formal_config, build_dense_chain
+
+    with pytest.raises(Exception, match="runtime_barrier_unavailable_for_formal_mode"):
+        build_dense_chain(
+            config=_formal_config(policy_version="5", fa_audit_only_probe=False)
+        )
+
+
+async def test_replay_same_sample_keeps_stable_trajectory():
+    """复核三轮 P0-2：同一 Sample 两次 physical attempt——trajectory_id
+    恒等于不可变 rh2_rollout_execution_id，不被上一 attempt 的 internal
+    sid 污染（修复前 attempt2 trajectory = s-exec_...#p1）。"""
+
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    chain1 = build_dense_chain()
+    s1 = chain1.base_sample
+    _stamp_fa_identity(s1)
+    s1.metadata["rh2_rollout_execution_id"] = "exec_REPLAY"
+    s1.metadata["rh2_physical_attempt_id"] = "exec_REPLAY#p1-a"
+    await chain1.orchestrator.generate(_Args(), s1, dict(SAMPLING_PARAMS))
+    a1 = chain1.orchestrator.audits[0]
+
+    chain2 = build_dense_chain()
+    s1.metadata["rh2_physical_attempt_id"] = "exec_REPLAY#p2-b"
+    s1.metadata["rh2_physical_attempt_seq"] = 2
+    await chain2.orchestrator.generate(_Args(), s1, dict(SAMPLING_PARAMS))
+    a2 = chain2.orchestrator.audits[0]
+
+    assert a1.trajectory_id == a2.trajectory_id == "exec_REPLAY"  # 稳定
+    assert a1.session_id != a2.session_id  # 会话身份按 attempt 隔离
+    assert a2.session_id == "s-exec_REPLAY#p2-b"
+
+
+def test_quiescence_failure_reason_codes_bidirectional():
+    """复核三轮 P1-1：runtime_quiescence_failure ⟺ 五 reason code 双向
+    封闭——任意字符串/None/串门都拒绝。"""
+
+    import pytest as _pytest
+
+    from repoharness2.contracts.fa_runtime import (
+        RUNTIME_QUIESCENCE_REASON_CODES,
+        ExecutionIdentity,
+        RolloutAttemptOutcomeV2,
+    )
+
+    def make(fc, rc):
+        return RolloutAttemptOutcomeV2(
+            outcome_id="o", identity=ExecutionIdentity(
+                prompt_group_id="g", group_index=0, rollout_execution_id="e",
+                physical_attempt_id="e#p1-x", physical_attempt_seq=1),
+            member_slot=0, attempt_number=1, completion_class="missing",
+            termination_kind="hard_wall_timeout", failure_category=fc,
+            reason_code=rc, recovery_scope="none", task_outcome="unknown",
+            reward_unavailable=True)
+
+    for rc in RUNTIME_QUIESCENCE_REASON_CODES:
+        make("runtime_quiescence_failure", rc)  # 五码全合法
+    with _pytest.raises(ValueError, match="五失败点"):
+        make("runtime_quiescence_failure", "totally_unknown_reason")
+    with _pytest.raises(ValueError, match="五失败点"):
+        make("runtime_quiescence_failure", None)
+    with _pytest.raises(ValueError, match="专属"):
+        make("capture_incomplete", "active_writer_detected")  # 码不许串门
+
+
+async def test_audit_only_disposition_in_persisted_record():
+    """复核三轮 P1-2：audit-only 收口的持久 disposition =
+    audit_only_rejected（不是 unknown_terminal，不污染故障统计口径）。"""
+
+    import json as _json
+    import tempfile
+
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    chain = build_dense_chain()
+    _stamp_fa_identity(chain.base_sample)
+    await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.audit_only is True
+    with tempfile.TemporaryDirectory() as td:
+        jsonl = Path(td) / "a.jsonl"
+        write_execution_audit_record(None, audit, jsonl)
+        rec = _json.loads(jsonl.read_text().strip())
+    assert rec["disposition"] == "audit_only_rejected"
 
 
 # ---------------------------------------------------------------------------

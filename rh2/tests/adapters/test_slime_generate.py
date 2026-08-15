@@ -1491,6 +1491,9 @@ def _formal_config(**overrides: Any) -> SlimeBindingConfig:
         policy_version="5",
         reject_context_shrink=True,
         reject_on_nonzero_harness_exit=True,  # codex 轮次 9 P0-3：正式链强制
+        # F2-2 复核三轮：Runtime 屏障（F2-2b）落地前，正式模式构造必须
+        # 显式声明 audit-only 探针，否则启动闸门直接拒绝（P0-1）
+        fa_audit_only_probe=True,
     )
     defaults.update(overrides)
     return dense_config(**defaults)
