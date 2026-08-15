@@ -5640,3 +5640,123 @@ QuiescenceRejected
 不需要动的部分包括四层身份、session capability、Outcome v2、显式 `execution_mode` 和 session-plane drain。也不需要现在扩展 D1b、熔断阈值或 dashboard。
 
 验证方面：现有 `986 passed`、`ruff` 和 S1 inspector 都通过，但上述三个定向探针暴露了现有测试未覆盖的生产控制流。因此当前结论是：**暂停 F2-2b，先完成一次 F2-2 root-closure；完成后再继续真实 Runtime barrier。**
+
+
+---
+
+## codex F2-2 复核七轮（2026-08-16，1 P0[T0 待拍板] + 2 强 P1——P1 已修，P0 出决策包）
+
+**结论**
+
+这次修复关闭了两项关键问题，但 **F2-2 root-closure 仍未完成**。还存在 **1 个 P0 和 2 个强 P1**，暂不应进入 F2-2b。
+
+不需要重写整个 F2-2；需要继续收敛“进程级 capture wire 与可重启 BringupService”的所有权边界。
+
+**P0：capture wire 与 startup 仍有根本所有权冲突**
+
+[bringup.py:496](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:496) 在配置校验前调用：
+
+```python
+install_capture_wire(self.registry)
+```
+
+该函数会把这个 registry 永久闭包进 slime 全局函数，并在 [capture_wire.py:517](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/capture_wire.py:517) 以后拒绝重复安装。
+
+确定性探针：
+
+```text
+第一次 install(r1)
+第二次 install(r2)
+
+generate_closes_r1 = True
+generate_closes_r2 = False
+record_closes_r1   = True
+record_closes_r2   = False
+```
+
+因此首次 Bringup 启动失败后，即使重新创建服务：
+
+```text
+新服务向 r2 注册 session
+capture wire 仍查询 r1
+-> UnknownSession / capture 与服务状态永久分家
+```
+
+启动事务也仍有两个缺口：
+
+- app 线程在 [bringup.py:519](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:519) 启动，随后 bundle 加载等构造步骤仍在 `__init__` 内，失败时没有对象可供回滚。
+- Claude Code guard 在 [bringup.py:574](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:574) 执行，仍位于事务 `try` 之前。
+
+故障注入结果：
+
+```text
+guard conflict -> app_stop_calls=0
+```
+
+这里不能再移动一两个 `try`。需要明确进程级 owner。推荐：
+
+```text
+CaptureWireRuntime（进程生命周期）
+  owns registry + slime monkeypatch
+
+BringupService（可启动/关闭）
+  owns app thread + queue + orchestrator
+```
+
+这属于状态 ownership，按协作协议最好作为一个很小的 T0 让你确认。推荐采用进程级唯一 `CaptureWireRuntime`，不要实现复杂的反向 monkeypatch。
+
+**P1：Fatal 已能停 worker，但持久审计仍丢失故障归因**
+
+本轮修复有效：
+
+```text
+barrier exception
+-> FatalExecutionInfrastructureError
+-> worker halt_reason=fatal_infrastructure:runtime_barrier_exception
+```
+
+我的 orchestrator→worker 探针已通过，账目也平衡。
+
+但显式 fatal catch 直接 `raise`，没有向 `audit.failure_records` 写入记录。最终持久 execution audit 会得到：
+
+```text
+disposition = unknown_terminal
+failure_records = []
+outcome_v2 = None
+```
+
+worker 内存中的 `failure_records` 有原因，但当前不是 durable manifest。应在 fatal catch 中先写结构化故障，再原样抛出，并测试最终 JSON audit 中存在 `runtime_barrier_exception`。
+
+**P1：静止结果联合类型仍只完成了一半**
+
+成功 lineage 已正确进入 Outcome，这项修复有效。
+
+但 [generate.py:968](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:968) 仍声明 `frozen_grading_workspace: Any`，普通 `object()` 可以通过；`QuiescenceRejected` 也允许空 `evidence_refs`。现有测试继续用 `object()`，没有证明冻结对象可被真实 grader 调用。
+
+此外：
+
+```python
+QuiescenceOutcome = "QuiescenceConfirmed | QuiescenceRejected"
+```
+
+只是字符串，不是真正的类型别名。
+
+建议在 F2-2b 前钉死：
+
+- `frozen_grading_workspace: WorkspaceRunner`
+- 测试对象真实实现 `run_bash`
+- confirmed/rejected 都要求 durable evidence
+- 使用真正的 union type alias
+- 删除 [test_f2_2_capability.py:447](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/adapters/test_f2_2_capability.py:447) 中已经失效但因分支未执行而未暴露的 `QuiescenceResult` 引用
+
+**验证结果**
+
+- `987 passed`
+- `ruff` 通过
+- S1 inspector 通过
+- Fatal→worker run-halt 探针通过
+- success snapshot lineage 探针通过
+- startup guard 回滚探针失败
+- registry 二次安装探针确认旧 registry 被永久闭包
+
+所以当前建议是：**暂停 F2-2b，再做一次聚焦于 `CaptureWireRuntime + BringupService` 所有权的修复；身份、capability、Outcome v2、execution mode 和 session drain 均保持不动。**

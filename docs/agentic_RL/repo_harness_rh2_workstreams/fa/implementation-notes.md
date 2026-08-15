@@ -158,10 +158,16 @@ run_halt 通道承接），验收 = Fatal 从 generate 逃逸测试；② bringu
 snapshot_ref lineage + 非空证据，任一缺失构造即拒）/
 QuiescenceRejected（五码），未知返回类型按 D4 → Fatal run_halt；
 成功路径 snapshot lineage（snapshot:sha256:...）随 extra_evidence
-进入成功 Outcome。下一切片 = **F2-2b Runtime 静止屏障实现**（真实
-RuntimeQuiescenceBarrier 实现类 + 注入 + bringup 解除 fa_formal 拒
-启动挡板；协议/封闭联合/冻结消费链/致命通道全部就位），然后 F2-3；
-FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
+进入成功 Outcome。**F2-2 复核七轮（2 强 P1 已修；P0 = capture wire 所有权 → T0 决策包
+待拍板）**：① Fatal 路径先写结构化 failure_record 再抛（持久 audit
+不再 unknown_terminal/空归因，JSON 断言）；② 联合类型钉死：冻结对象
+必须实现 run_bash（裸 object 拒）、Rejected 必带证据、真 union 别名、
+stale QuiescenceResult 引用清除。**待拍板 T0**：CaptureWireRuntime
+（进程级，owns registry+monkeypatch）与 BringupService（可重启，owns
+app 线程/queue/orchestrator）所有权拆分——install_capture_wire 首装
+永久闭包 registry，重启后新老 registry 分家（codex 探针实锤）；codex
+推荐进程级唯一 CaptureWireRuntime，不做反向 monkeypatch。拍板后实现，
+再进 F2-2b；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

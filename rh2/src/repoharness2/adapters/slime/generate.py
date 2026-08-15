@@ -969,13 +969,16 @@ class QuiescenceConfirmed:
     """屏障确认（复核六轮：封闭联合类型之一）。冻结副本 + snapshot
     lineage + 持久证据全部必填——评分链只消费本对象的冻结输入。"""
 
-    frozen_grading_workspace: Any
+    frozen_grading_workspace: Any  # 运行时鸭子校验 = WorkspaceRunner（run_bash）
     snapshot_ref: str
     evidence_refs: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        if self.frozen_grading_workspace is None:
-            raise ValueError("QuiescenceConfirmed 必须携带冻结 workspace。")
+        if not callable(getattr(self.frozen_grading_workspace, "run_bash", None)):
+            raise ValueError(
+                "QuiescenceConfirmed.frozen_grading_workspace 必须是可评分的 "
+                "WorkspaceRunner（实现 run_bash）——裸 object 不构成冻结副本。"
+            )
         if not self.snapshot_ref:
             raise ValueError("QuiescenceConfirmed 必须携带 snapshot_ref（lineage）。")
         if not self.evidence_refs:
@@ -992,11 +995,13 @@ class QuiescenceRejected:
     def __post_init__(self) -> None:
         from repoharness2.contracts.fa_runtime import RUNTIME_QUIESCENCE_REASON_CODES
 
+        if not self.evidence_refs:
+            raise ValueError("QuiescenceRejected 必须携带至少一条 evidence_refs（可审计拒绝）。")
         if self.reason_code not in RUNTIME_QUIESCENCE_REASON_CODES:
             raise ValueError(f"reason_code 必须是勘误 3 五码之一（得到 {self.reason_code!r}）。")
 
 
-QuiescenceOutcome = "QuiescenceConfirmed | QuiescenceRejected"
+QuiescenceOutcome = QuiescenceConfirmed | QuiescenceRejected  # 真 union 别名
 
 
 class RuntimeQuiescenceBarrier(Protocol):
@@ -1986,7 +1991,17 @@ class RolloutOrchestrator:
                     )
                 except Exception as exc:
                     # P1-4：未知 barrier 异常按已批 D4 表走 run_halt（基建
-                    # 级致命，worker 停机），禁止软降级成 capture 故障
+                    # 级致命，worker 停机），禁止软降级成 capture 故障。
+                    # 七轮 P1-1：先写结构化故障（finally 的 audit sink 会
+                    # 持久化归因），再走独立致命通道
+                    audit.failure_records.append(
+                        RolloutFailureRecord(
+                            stage="runtime_barrier",
+                            error_type="runtime_barrier_exception",
+                            detail=f"{type(exc).__name__}: {exc}"[:500],
+                        )
+                    )
+                    audit.mark("runtime_barrier_exception")
                     raise FatalExecutionInfrastructureError(
                         "runtime_barrier_exception",
                         f"Runtime 屏障执行异常：{type(exc).__name__}: {exc}——"

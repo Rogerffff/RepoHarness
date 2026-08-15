@@ -444,9 +444,15 @@ def test_fa_formal_startup_gates():
 
     class _GrantBarrier:
         async def establish(self, *, workspace, audit):
-            from repoharness2.adapters.slime.generate import QuiescenceResult
+            from repoharness2.adapters.slime.generate import QuiescenceConfirmed
 
-            return QuiescenceResult(confirmed=True)
+            class _Ws:
+                async def run_bash(self, script):
+                    pass
+
+            return QuiescenceConfirmed(
+                frozen_grading_workspace=_Ws(), snapshot_ref="sha256:g",
+                evidence_refs=("e",))
 
     from repoharness2.adapters.slime.generate import validate_execution_config
 
@@ -567,7 +573,11 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
             self.confirmed = confirmed
             self.calls = 0
 
-        frozen = object()  # 冻结副本句柄（评分只许消费它）
+        class _FrozenWs:
+            async def run_bash(self, script):  # WorkspaceRunner 鸭子面
+                raise AssertionError("测试不真执行")
+
+        frozen = _FrozenWs()  # 冻结副本句柄（评分只许消费它）
 
         async def establish(self, *, workspace, audit):
             self.calls += 1
@@ -575,7 +585,8 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
                 return QuiescenceConfirmed(
                     frozen_grading_workspace=self.frozen,
                     snapshot_ref="sha256:abc", evidence_refs=("snap_1",))
-            return QuiescenceRejected(reason_code="active_writer_detected")
+            return QuiescenceRejected(
+                reason_code="active_writer_detected", evidence_refs=("probe_w",))
 
     def _chain(barrier):
         # 版本契约（正交）在正式配置下强制真实 weight_version——mock 轮
@@ -629,18 +640,24 @@ def test_quiescence_closed_union_states():
         QuiescenceRejected,
     )
 
+    class _Ws:
+        async def run_bash(self, script):
+            pass
+
     with pytest.raises(ValueError, match="snapshot_ref"):
-        QuiescenceConfirmed(frozen_grading_workspace=object(), snapshot_ref="",
+        QuiescenceConfirmed(frozen_grading_workspace=_Ws(), snapshot_ref="",
                             evidence_refs=("e",))
     with pytest.raises(ValueError, match="evidence_refs"):
-        QuiescenceConfirmed(frozen_grading_workspace=object(),
+        QuiescenceConfirmed(frozen_grading_workspace=_Ws(),
                             snapshot_ref="sha256:x", evidence_refs=())
-    with pytest.raises(ValueError, match="冻结 workspace"):
-        QuiescenceConfirmed(frozen_grading_workspace=None,
+    with pytest.raises(ValueError, match="WorkspaceRunner"):
+        QuiescenceConfirmed(frozen_grading_workspace=object(),  # 裸 object 拒绝
                             snapshot_ref="sha256:x", evidence_refs=("e",))
     with pytest.raises(ValueError, match="五码之一"):
-        QuiescenceRejected(reason_code="whatever")
-    QuiescenceRejected(reason_code="snapshot_freeze_failed")
+        QuiescenceRejected(reason_code="whatever", evidence_refs=("e",))
+    with pytest.raises(ValueError, match="至少一条 evidence"):
+        QuiescenceRejected(reason_code="snapshot_freeze_failed")
+    QuiescenceRejected(reason_code="snapshot_freeze_failed", evidence_refs=("e",))
 
 
 async def test_barrier_fatal_exception_escapes_soft_catch():
@@ -675,6 +692,22 @@ async def test_barrier_fatal_exception_escapes_soft_catch():
     _stamp_fa_identity(chain.base_sample)
     with pytest.raises(FatalExecutionInfrastructureError, match="runtime_barrier_exception"):
         await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    # 七轮 P1-1：致命路径的持久审计仍有结构化归因（不再 unknown_terminal）
+    import json as _json
+    import tempfile
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    audit = chain.orchestrator.audits[0]
+    assert any(f.error_type == "runtime_barrier_exception" for f in audit.failure_records)
+    with tempfile.TemporaryDirectory() as td:
+        jsonl = Path(td) / "a.jsonl"
+        write_execution_audit_record(None, audit, jsonl)
+        rec = _json.loads(jsonl.read_text().strip())
+    assert rec["disposition"] == "aborted"
+    assert any(
+        f["error_type"] == "runtime_barrier_exception" for f in rec["failure_records"]
+    )
 
 
 def test_fa_entry_rejects_s1_compat_mode():
