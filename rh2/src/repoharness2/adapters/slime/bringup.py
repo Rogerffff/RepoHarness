@@ -310,8 +310,14 @@ def write_execution_audit_record(proxy, audit, path) -> None:
 
     attempts_snapshot = []
     if proxy is not None and audit.session_id:
-        # P0-2：attempt 账目按 paid 命名空间；paid 缺失（S1 兼容）回退 sid
-        _attempt_scope = audit.physical_attempt_id or audit.session_id
+        # P0-2：attempt 账目按 paid 命名空间；paid 缺失（S1 兼容）回退 wire
+        # scope（F2-2 起 audit.session_id 是 capability fingerprint，而账目
+        # 键是 token——指纹查账必空，须用内存里的 wire_session_scope）
+        _attempt_scope = (
+            audit.physical_attempt_id
+            or getattr(audit, "wire_session_scope", None)
+            or audit.session_id
+        )
         attempts_snapshot = proxy.snapshot_attempts(_attempt_scope)
     finalized = audit.finalized
     eligibility_ref = None
@@ -349,6 +355,12 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "wall_end_monotonic": wall_end_monotonic,
         "wall_clock_domain_id": PROCESS_CLOCK_DOMAIN,
         "non_chargeable_intervals": list(audit.non_chargeable_intervals),
+        # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
+        # assembler 消费归 F2-5）。session_id 自 F2-2 起是 capability
+        # fingerprint（capfp- 前缀）——凭证秘密不落盘
+        "quiescence_confirmed": audit.quiescence_confirmed,
+        "capture_closed": audit.capture_closed,
+        "outcome_v2": audit.outcome_v2,
         "harness_exit_code": audit.harness_exit_code,
         "failure_records": [
             {"stage": f.stage, "error_type": f.error_type, "detail": f.detail}
@@ -428,6 +440,12 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
                 extra_metadata=extra_metadata,
                 wait_timeout=wait_timeout,
             )
+
+        def revoke_session(self, sid):
+            # F2-2 quiescence 第一步：HTTP 层拒新请求（guard 按 revoked 集合
+            # 403）。同步方法——撤销只改 registry 状态，不做 IO；drain 仍由
+            # 随后的 finish/drop（slime shutdown_session 语义）完成。
+            registry.revoke(sid)
 
         async def drop_session(self, sid, *, wait_timeout=5.0):
             try:

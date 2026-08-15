@@ -172,6 +172,10 @@ class MockSessionAdapter:
         self.opened: list[str] = []
         self.finished: list[str] = []
         self.dropped: list[str] = []
+        self.revoked: list[str] = []  # F2-2：撤销记录（quiescence 顺序验收）
+
+    def revoke_session(self, sid: str) -> None:
+        self.revoked.append(sid)
 
     def open_session(
         self,
@@ -508,7 +512,12 @@ async def test_normal_path_nine_step_order():
     assert audit.lease_released is True
     # session 生命周期与 slime 例程一致：open -> finish -> drop（finally 必达）
     adapter = chain.adapter_ref["adapter"]
-    assert adapter.opened == adapter.finished == adapter.dropped == [audit.trajectory_id]
+    # F2-2：wire sid = 每 attempt 新铸 capability token（cap- 前缀），
+    # 不再等于稳定 trajectory_id；open/finish/drop 三处必须同一 token
+    assert adapter.opened == adapter.finished == adapter.dropped
+    cap_token = adapter.opened[0]
+    assert cap_token.startswith("cap-") and cap_token != audit.trajectory_id
+    assert audit.session_id.startswith("capfp-")  # audit 只落指纹，不落秘密
 
 
 async def test_normal_path_a5_eight_questions_as_schema_instances():
@@ -528,7 +537,11 @@ async def test_normal_path_a5_eight_questions_as_schema_instances():
     proxy = launch.model_proxy  # Q4 模型代理注入
     assert proxy.inject_env_var == "ANTHROPIC_BASE_URL"
     assert proxy.wire_protocol == "anthropic_messages"
-    assert proxy.session_id == audit.trajectory_id == driver_call["session_id"]
+    # F2-2：harness/proxy 拿到的是 capability token（wire 凭证），
+    # 稳定身份只进 audit.trajectory_id
+    assert proxy.session_id == driver_call["session_id"]
+    assert proxy.session_id.startswith("cap-")
+    assert proxy.session_id != audit.trajectory_id
     assert driver_call["adapter_url"] == proxy.base_url == "http://10.0.0.1:18001"
 
     assert lease.network_policy_owner == "slime_adapter"  # Q5 网络/权限策略归属
@@ -695,7 +708,8 @@ async def test_harness_crash_cleanup_still_runs_and_failure_recorded():
 
     # 清理仍执行（Q7）：容器被 rm，drop_session 也走到
     assert len(chain.docker.removed) == 1 and audit.lease_released is True
-    assert chain.adapter_ref["adapter"].dropped == [audit.trajectory_id]
+    dropped = chain.adapter_ref["adapter"].dropped
+    assert len(dropped) == 1 and dropped[0].startswith("cap-")  # F2-2 凭证会话
     # FailureCategory 记录：rollout 级故障归 infra_failure
     (failure,) = audit.failure_records
     assert failure.stage == "harness_run"

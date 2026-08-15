@@ -127,6 +127,11 @@ class CaptureRegistry:
         # F2-1a：sid → physical_attempt_id 映射（orchestrator 经注入点登记；
         # wire 读出后随每条 ModelCallAttempt 落账；unregister 清理）
         self._physical_attempt_ids: dict[str, str] = {}
+        # F2-2：quiescence 屏障第一步——已撤销 capability 集合。撤销与
+        # unregister 分离：revoke 后 guard 立即拒新请求（HTTP 层），但
+        # hook/暂存仍在场供 drain/对账；unregister 时一并清（会话关闭即
+        # 失效，之后未知 sid 由 guard 的 unknown 分支兜底）。
+        self._revoked: set[str] = set()
 
     def register(
         self,
@@ -233,8 +238,22 @@ class CaptureRegistry:
             self._turn_seq[key] = self._turn_seq.get(key, 0) + 1
             return self._turn_seq[key]
 
+    def revoke(self, sid: str) -> None:
+        """撤销 capability（quiescence 序列第一步：HTTP 层拒新请求）。
+
+        幂等；对未注册 sid 也可调用（撤销一个从未开张的凭证无害）。
+        不清任何账目——drain/边界断言仍按原序进行。"""
+
+        with self._lock:
+            self._revoked.add(sid)
+
+    def is_revoked(self, sid: str) -> bool:
+        with self._lock:
+            return sid in self._revoked
+
     def unregister(self, sid: str) -> None:
         with self._lock:
+            self._revoked.discard(sid)
             self.hooks.pop(sid, None)
             leftover_locked = self.pending.pop(sid, None) or []
             self.session_deadlines.pop(sid, None)
@@ -403,11 +422,19 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
         if token:
             with registry._lock:
                 known = token in registry.hooks
+                revoked = token in registry._revoked
             poisoned = registry.poison.is_poisoned(token)
         else:
-            known, poisoned = False, False
-        if token is None or not known or poisoned:
-            reason = "session_poisoned" if poisoned else "unknown_or_closed_session"
+            known, poisoned, revoked = False, False, False
+        if token is None or not known or poisoned or revoked:
+            # F2-2 quiescence：revoked = 撤销后迟到请求（drain 窗口内 hook
+            # 仍注册，但 HTTP 层已拒新——排在 unknown 之前判，审计可区分）
+            if poisoned:
+                reason = "session_poisoned"
+            elif revoked:
+                reason = "session_revoked"
+            else:
+                reason = "unknown_or_closed_session"
             return aiohttp_web.json_response(
                 {"error": {"type": f"rh2_{reason}", "message": "session not authorized"}},
                 status=403,

@@ -83,6 +83,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
+from repoharness2.adapters.slime.outcome_producer import (
+    FAILURE_CODE_TERMINATION_MAP,
+    STAGE_FALLBACK_TERMINATION_MAP,
+    build_outcome_v2,
+)
+from repoharness2.adapters.slime.session_capability import mint_session_capability
+from repoharness2.contracts.trajectory import derive_weight_version_max_lag
 from repoharness2.adapters.slime.projection import (
     ResponseContextRun,
     SlimeBranchAnnotation,
@@ -987,6 +994,13 @@ class SessionAdapter(Protocol):
 
     async def drop_session(self, sid: str, *, wait_timeout: float = 5.0) -> None: ...
 
+    def revoke_session(self, sid: str) -> None:
+        """F2-2 quiescence 第一步：HTTP 层拒新请求（registry revoked 集合）。
+
+        同步方法（只改状态不做 IO）。编排经 getattr 调用——S1 兼容 mock
+        可不实现（无撤销事件），正式 FA 链 PerRolloutAdapter 必须实现。"""
+        ...
+
 
 # 编排按 rollout 构造 hook 后，由工厂产出与之接线的 adapter（真实工厂 = 构造
 # AnthropicAdapter 并把 call_sglang_generate 包上捕获钩子；mock 工厂 = 测试替身）。
@@ -1261,6 +1275,18 @@ class RolloutAudit:
     # 反压等待，proxy 侧填；V0 只**记录原始区间**，D1b 前不派生
     # chargeable_execution_seconds）。每项 {start, end, reason, source}。
     non_chargeable_intervals: list[dict[str, Any]] = field(default_factory=list)
+    # F2-2 quiescence 事实（completion 推导的输入，D1a）：
+    # quiescence_confirmed = 撤销 + drain + poison 清白 + 交付账边界干净；
+    # capture_closed = capture 记录在场且回链装配完成
+    quiescence_confirmed: bool = False
+    capture_closed: bool = False
+    # F2-2 producer：本次 execution 的 Outcome v2（dict 形式随 audit 落盘；
+    # S1 兼容路径（无四层身份）为 None）
+    outcome_v2: dict[str, Any] | None = None
+    # F2-2：wire 会话 scope（= capability token，**秘密**）——仅供审计写盘
+    # 时在内存里按 scope 查 proxy attempt 账目（S1 兼容路径无 paid 时的
+    # 回退键）；禁止写进任何持久 record（record 里只有 fingerprint）
+    wire_session_scope: str | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -1507,6 +1533,7 @@ class RolloutOrchestrator:
         # 调用一次；正式链落盘失败 fail-closed（glue 侧实现语义）。
         self._audit_sink = audit_sink
         self.audits: list[RolloutAudit] = []
+        self.outcomes: list[Any] = []  # F2-2：正式链产出的 Outcome v2 序列
         self.cleanup_quarantine: list[str] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1525,9 +1552,12 @@ class RolloutOrchestrator:
             if isinstance(self._task_resolver, RolloutTaskSpec)
             else self._task_resolver(sample)
         )
-        sid = self._session_id(sample, task)
-        sample.session_id = sid
-        trajectory_id = sid
+        # F2-2：公开身份与会话凭证分离。trajectory_id = 稳定键（审计/
+        # artifact/GRPO 身份，跨 replay 不变）；wire sid = 每 physical
+        # attempt 新铸的 capability token（slime closed 集合与 turn counter
+        # 按 token 键控 → replay 天然不沾旧状态；token 是秘密，持久面只落
+        # fingerprint）。
+        trajectory_id = self._session_id(sample, task)
 
         raw_meta = getattr(sample, "metadata", None)
         physical_attempt_id = (
@@ -1535,12 +1565,16 @@ class RolloutOrchestrator:
             if isinstance(raw_meta, Mapping) and raw_meta.get("rh2_physical_attempt_id")
             else None
         )
+        capability = mint_session_capability(physical_attempt_id)
+        sid = capability.token
+        sample.session_id = sid  # 执行期路由亲和；交付/收口前 scrub 回稳定键
         audit = RolloutAudit(
             trajectory_id=trajectory_id,
             task_id=task.task_id,
-            session_id=sid,
+            session_id=capability.fingerprint,  # 秘密不落盘，只留指纹
             physical_attempt_id=physical_attempt_id,
         )
+        audit.wire_session_scope = sid  # 内存查询键（见字段注释），不入 record
         self.audits.append(audit)
         audit.step("step1_custom_generate_invoked")
 
@@ -1631,6 +1665,13 @@ class RolloutOrchestrator:
             audit.step("step3_harness_completed")
 
             stage = "assemble"
+            # F2-2 quiescence 第一步：撤销 capability（HTTP 层拒新请求）。
+            # 顺序 = revoke（拒新）→ finish/drain（清旧）→ poison/边界断言
+            # （对账）——撤销必须先于 drain，否则 drain 期间仍可能开新轮。
+            revoke = getattr(adapter, "revoke_session", None)
+            if revoke is not None:
+                revoke(sid)
+                audit.mark("session_revoked")
             # 轮次 13 P0-2：**drain 屏障先行**——finish_session 内部的
             # shutdown_session 才会等/取消该 SID 的全部 in-flight HTTP turn；
             # 在它之前做 poison/边界/records 检查读到的是不完整快照（false
@@ -1663,6 +1704,10 @@ class RolloutOrchestrator:
                         "capture_boundary_unclean",
                         f"评分前交付账边界断言失败（drain 之后）：{exc}",
                     ) from exc
+            # F2-2：会话面静止确认——撤销 + drain（finish_session 内部
+            # shutdown 语义）+ poison 清白 + 交付账边界干净全部成立
+            audit.quiescence_confirmed = True
+            audit.mark("quiescence_confirmed")
             if not hook.records:
                 raise SlimeBindingError(
                     "no_capture_records",
@@ -1743,6 +1788,7 @@ class RolloutOrchestrator:
                 )
                 for facts, used_ids in zip(leaf_facts, used_record_ids)
             ]
+            audit.capture_closed = True  # F2-2：记录在场且回链装配完成
             audit.step("step5_leaf_samples_assembled_and_backfilled")
 
             stage = "finalize"
@@ -1761,6 +1807,33 @@ class RolloutOrchestrator:
             )
             audit.finalized = finalized
             audit.step("step8_gate_finalized")
+
+            # F2-2 producer（成功收口）：termination=completed；评分三态
+            # 映射——resolved/unresolved 照实，failed_to_grade = 勘误 2 通道
+            # （reward 不可得，completion 不倒写）。凭证 scrub：交付样本的
+            # session_id 回写稳定键（capability 秘密不出执行期）。
+            grading_outcome = finalized.grading_report.outcome
+            self._produce_outcome_v2(
+                audit=audit,
+                raw_meta=raw_meta,
+                termination_kind="completed",
+                failure_category=(
+                    "grading_infra_failure" if grading_outcome == "failed_to_grade" else None
+                ),
+                reason_code=None,
+                failed_component=(
+                    "grading_container" if grading_outcome == "failed_to_grade" else None
+                ),
+                task_resolved=(
+                    None if grading_outcome == "failed_to_grade"
+                    else grading_outcome == "resolved"
+                ),
+                turn_weight_versions=list(handshake.weight_versions_seen),
+                current_version_at_finalize=handshake.policy_version,
+                eligibility_report_id=finalized.eligibility_report.report_id,
+            )
+            for leaf in samples:
+                leaf.session_id = trajectory_id
 
             stage = "deliver"
             return self._deliver(
@@ -1783,6 +1856,30 @@ class RolloutOrchestrator:
                     detail=str(exc)[:500],
                 )
             )
+            # F2-2 producer（异常收口）：错误码映射表优先，未知码按失败
+            # 阶段保守兜底（宁归 missing 不猜 present）；completion 仍由
+            # audit 上的 quiescence/capture 事实推导，映射只供 termination
+            # 与归因。
+            code = getattr(exc, "reason_code", None)
+            mapped = FAILURE_CODE_TERMINATION_MAP.get(code) if code else None
+            if mapped is None:
+                mapped = STAGE_FALLBACK_TERMINATION_MAP.get(
+                    stage, ("harness_crash", "harness_crash")
+                )
+            term_kind, fail_cat = mapped
+            self._produce_outcome_v2(
+                audit=audit,
+                raw_meta=raw_meta,
+                termination_kind=term_kind,
+                failure_category=fail_cat,
+                reason_code=code or "unmapped_failure_code",
+                failed_component=stage,
+                task_resolved=None,
+                turn_weight_versions=None,
+                current_version_at_finalize=None,
+                eligibility_report_id=None,
+            )
+            sample.session_id = trajectory_id  # scrub：凭证不随 abort 形状外泄
             return self._abort_result(
                 sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=top_p
             )
@@ -2314,6 +2411,63 @@ class RolloutOrchestrator:
             )
             return
         audit.lease_released = True  # release_lease 步骤 = 记账翻转
+
+    def _produce_outcome_v2(
+        self,
+        *,
+        audit: "RolloutAudit",
+        raw_meta: Any,
+        termination_kind: str,
+        failure_category: str | None,
+        reason_code: str | None,
+        failed_component: str | None,
+        task_resolved: bool | None,
+        turn_weight_versions: list[str] | None,
+        current_version_at_finalize: str | None,
+        eligibility_report_id: str | None,
+    ) -> None:
+        """F2-2 producer 收口：由事实构造 Outcome v2 并挂 audit（随 sink 落盘）。
+
+        S1 兼容路径（metadata 无四层身份）产不出 v2——build 返回 None，
+        audit.outcome_v2 保持 None（正式 FA 链 entry 必stamp 身份）。
+        构造失败 = 事实矛盾（validator 拒绝），fail-loud 不吞。
+        """
+
+        meta = raw_meta if isinstance(raw_meta, Mapping) else {}
+        seq_raw = meta.get("rh2_physical_attempt_seq")
+        slot_raw = meta.get("rh2_member_slot")
+        versions = list(turn_weight_versions or [])
+        span = derive_weight_version_max_lag(versions) if versions else None
+        outcome = build_outcome_v2(
+            outcome_id=f"ov2_{audit.physical_attempt_id or audit.trajectory_id}",
+            prompt_group_id=(
+                str(meta["rh2_prompt_group_id"]) if meta.get("rh2_prompt_group_id") else None
+            ),
+            group_index=0,
+            rollout_execution_id=(
+                str(meta["rh2_rollout_execution_id"])
+                if meta.get("rh2_rollout_execution_id")
+                else audit.trajectory_id
+            ),
+            physical_attempt_id=audit.physical_attempt_id,
+            physical_attempt_seq=int(seq_raw) if seq_raw is not None else None,
+            member_slot=int(slot_raw) if slot_raw is not None else None,
+            termination_kind=termination_kind,  # type: ignore[arg-type]
+            quiescence_confirmed=audit.quiescence_confirmed,
+            capture_closed=audit.capture_closed,
+            failure_category=failure_category,  # type: ignore[arg-type]
+            reason_code=reason_code,
+            failed_component=failed_component,
+            task_resolved=task_resolved,
+            turn_weight_versions=versions,
+            intra_execution_version_span=span,
+            current_version_at_finalize=current_version_at_finalize,
+            eligibility_report_id=eligibility_report_id,
+            evidence_refs=[f"audit:{audit.trajectory_id}"],
+        )
+        if outcome is not None:
+            audit.outcome_v2 = outcome.model_dump(mode="json")
+            self.outcomes.append(outcome)
 
     def _session_id(self, sample: Any, task: RolloutTaskSpec) -> str:
         """会话 id（兼作 auth token 与路由键）：形状对齐 slime 例程 _session_id。"""
