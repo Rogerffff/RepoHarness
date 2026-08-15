@@ -5320,3 +5320,94 @@ inspect-rh2-s1: passed
 ```
 
 测试全绿但没有覆盖上述两个生产反例。建议顺序是：**F2-2 closure 小提交 → 聚焦复核 → F2-2b Runtime 静止屏障**。
+
+
+---
+
+## codex F2-2 复核四轮（2026-08-15，root-closure：3 P0 + 1 P1——全部采纳）
+
+**结论**
+本轮修复解决了此前的身份污染、reason code 封闭和 audit disposition 问题，但 **F2-2 仍未闭合，暂不应直接进入 F2-2b**。当前修复引入了一个新的 P0，并且 RCA 所说的“显式运行模式”尚未真正落地。
+
+**阻塞问题**
+1. **P0：barrier 启用后，正式链守卫反而失效。**
+
+[generate.py:1497](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1497) 把以下校验错误缩进到了：
+
+```python
+if require_real_weight_versions and not RUNTIME_BARRIER_AVAILABLE:
+```
+
+因此 F2-2b 将 `RUNTIME_BARRIER_AVAILABLE=True` 后，这两项不再执行：
+
+- `policy_version` 必须是十进制版本；
+- `reject_context_shrink` 必须启用。
+
+我实际模拟 barrier 就绪状态，得到：
+
+```text
+non_numeric_policy_version ACCEPTED
+context_guard_disabled ACCEPTED
+```
+
+这正是 F2-2b 即将进入的分支，而现有测试只覆盖 `barrier=False`。应把所有正式链基础校验放在独立的 `if formal_mode:` 下，barrier 可用性只负责检查 barrier。
+
+2. **P0：根因分析声称的“显式模式”仍没有实现。**
+
+目前仍用三个间接信号决定行为：
+
+- [generate.py:1143](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1143) 的 `require_real_weight_versions`
+- [generate.py:1148](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1148) 的 `fa_audit_only_probe`
+- [generate.py:1888](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1888) 的 `physical_attempt_id is not None`
+
+也就是说，正式模式、真实版本要求和 audit 模式仍然混在一起，`paid` 存在性仍参与模式推断。`fa_audit_only_probe` 也没有接入 `BringupService` 的生产配置，只在测试夹具中使用。
+
+建议按 RCA 真正收敛为：
+
+```python
+execution_mode: Literal[
+    "s1_compat",
+    "fa_audit_only",
+    "fa_formal",
+]
+```
+
+并集中校验合法组合。`require_real_weight_versions` 保持为正交的版本契约，不再承担运行模式职责。这不需要新增 T0，只是在准确实现已经批准的语义。
+
+3. **P0/F2-2b 前置：barrier 应是注入的能力，不应是源码布尔常量。**
+
+[generate.py:1211](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1211) 的：
+
+```python
+RUNTIME_BARRIER_AVAILABLE = False
+```
+
+只能声明“代码作者认为它可用”，不能证明生产 `Runtime` 真的装配了 barrier。F2-2b 不应简单“翻 True”，而应注入类似：
+
+```python
+runtime_quiescence_barrier: RuntimeQuiescenceBarrier | None
+```
+
+`fa_formal` 构造时要求非空，执行时必须调用该对象并获得带证据的结果。这样启动闸门本身就能证明生产接线存在。
+
+4. **P1：所谓启动闸门发生得太晚，失败会遗留资源。**
+
+当前顺序是：
+
+- [bringup.py:508](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:508)：先启动 adapter 线程；
+- [bringup.py:567](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:567)：执行真实 SGLang 探针；
+- [bringup.py:568](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:568)：启动 grading queue；
+- [bringup.py:713](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:713)：最后构造 orchestrator，才触发模式/barrier 闸门。
+
+而 [bringup.py:997](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:997) 在 `async_start()` 失败时没有 rollback。误配置可能留下 adapter 线程、端口和评分队列。
+
+模式与能力检查应移到副作用之前；无法前移的启动步骤必须有统一 rollback 测试。
+
+**确认修好的部分**
+- replay 使用不可变 `rh2_rollout_execution_id`，轨迹身份污染已关闭。
+- 正式模式身份缺失会在评分前结构化拒绝。
+- quiescence reason code 已双向封闭。
+- audit-only 持久化为 `audit_only_rejected`，不再混入未知故障。
+- 完整验证通过：`983 passed`、`ruff` 全绿、S1 inspector 通过。
+
+建议把上述内容作为一次 **F2-2 root-closure 小切片**：模式枚举、注入式 barrier capability、正式守卫矩阵、启动 rollback。完成后再进入 F2-2b 的 Runtime 静止屏障实现。当前不需要扩大到 D1b、熔断阈值或 dashboard。

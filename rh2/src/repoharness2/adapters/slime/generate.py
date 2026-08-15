@@ -963,6 +963,80 @@ class HarnessDriver(Protocol):
     ) -> int: ...
 
 
+@dataclass(frozen=True)
+class QuiescenceResult:
+    """Runtime 静止屏障的执行结果（F2-2b 实现产出；带证据）。"""
+
+    confirmed: bool
+    reason_code: str | None = None  # 失败时 = 勘误 3 五码之一
+    evidence_refs: tuple[str, ...] = ()
+
+
+class RuntimeQuiescenceBarrier(Protocol):
+    """注入式屏障能力（复核四轮 P0-3）：布尔常量只能声明"作者认为可用"，
+    注入对象的存在性本身就是生产接线的证明。fa_formal 构造时必须非空，
+    执行时必须调用并取得带证据的结果。F2-2b 提供真实实现（scope 终止/
+    写入归零确认/snapshot 冻结/只评冻结副本）。"""
+
+    async def establish(self, *, workspace: Any, audit: "RolloutAudit") -> QuiescenceResult: ...
+
+
+def validate_execution_config(
+    config: "SlimeBindingConfig",
+    runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
+) -> None:
+    """启动配置集中校验（复核四轮 P1-4：bringup 在任何副作用前先调本函数；
+    orchestrator 构造时再调一次防绕过）。守卫矩阵：
+
+        模式合法性        execution_mode ∈ 三值
+        fa_formal 组合    require_real_weight_versions 必须 True + 屏障必须注入
+        版本契约（正交）   require_real_weight_versions=True ⇒ 数值版本 +
+                          context_shrink 拒绝开启——**与屏障可用性无关**
+                          （复核四轮 P0-1：曾被错误缩进进屏障分支）
+    """
+
+    mode = config.execution_mode
+    if mode not in ("s1_compat", "fa_audit_only", "fa_formal"):
+        raise StartupCheckError(
+            "unknown_execution_mode", f"execution_mode={mode!r} 不在三值枚举内。"
+        )
+    if mode == "fa_formal":
+        if not config.require_real_weight_versions:
+            raise StartupCheckError(
+                "fa_formal_requires_real_weight_versions",
+                "fa_formal 必须同时开启 require_real_weight_versions（版本契约）。",
+            )
+        if runtime_quiescence_barrier is None:
+            raise StartupCheckError(
+                "runtime_barrier_capability_missing",
+                "fa_formal 必须注入 RuntimeQuiescenceBarrier（F2-2b 提供实现）"
+                "——屏障缺位时正式模式禁止启动；探针用 execution_mode="
+                "fa_audit_only（audit-only，产物不可训）。",
+            )
+    if config.require_real_weight_versions:
+        version = config.policy_version
+        if version is None or version == "step_0":
+            raise StartupCheckError(
+                "static_policy_version_forbidden_in_formal_chain",
+                f"require_real_weight_versions=True 但 policy_version={version!r}——"
+                "必须用引擎探针实测的 weight_version，静态哨兵值只允许测试路径。",
+            )
+        try:
+            int(version, 10)
+        except ValueError:
+            raise StartupCheckError(
+                "policy_version_not_numeric_in_formal_chain",
+                f"policy_version={version!r} 不是十进制整数——引擎 update_weights "
+                "计数器语义要求数值版本，staleness 派生依赖它。",
+            ) from None
+        if not config.reject_context_shrink:
+            raise StartupCheckError(
+                "context_shrink_rejection_disabled_in_formal_chain",
+                "require_real_weight_versions=True 必须同时开启 "
+                "reject_context_shrink——D-FA-6 的收缩兜底是硬要求。",
+            )
+
+
 class SessionAdapter(Protocol):
     """slime BaseAdapter 的会话生命周期面（open/finish/drop，字段名逐一对应）。
 
@@ -1137,15 +1211,11 @@ class SlimeBindingConfig:
     #   2. 装配期要求每个入训轮的 tape 都带真实 weight_version（缺失 fail-closed）；
     #   3. 握手的 staleness_steps 按真实版本差计算，不再恒 0。
     # False = S1 兼容/测试路径（默认），行为逐字不变。
-    # 注（F2-2 复核三轮）：本旗标同时是 **FA 正式模式的显式信号**——
-    # 正式拓扑的全部 fail-closed 决策（revoke 必备/audit sink 致命/身份
-    # 完整性强制/启动闸门）都以它为准，不得用"是否有 paid"推断模式。
+    # 注（F2-2 复核四轮回归定位）：本旗标是**正交的版本契约**（真实
+    # weight_version 强制），模式职责移交 execution_mode。
     require_real_weight_versions: bool = False
-    # F2-2 复核三轮 P0-1：开发期 audit-only 探针。True = 正式模式允许在
-    # Runtime 屏障缺位时启动，但每条 rollout 都走 audit-only 收口（不评分
-    # /不交付/abort 形状/disposition=audit_only_rejected），产物绝不可训。
-    # False（默认）= 屏障缺位时正式模式启动即拒绝。
-    fa_audit_only_probe: bool = False
+    # F2-2 复核四轮：显式运行模式（见 ExecutionModeLiteral 注释）。
+    execution_mode: str = "s1_compat"
     # D-FA-6 兜底：装配期检测到"无法解释的上下文收缩"（compaction/Microcompact/
     # Context Collapse 的机械信号）时整条轨迹 fail-closed 退出（收口为 abort 形状，
     # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
@@ -1204,11 +1274,13 @@ _SGLANG_SERVER_TIMING_KEYS = (
 
 # F2-0b：进程级 monotonic 时钟实例标识——同进程所有线程读同一单调钟，
 # 属同一 clock domain，timestamp 可互减（跨进程才不可比）。用 pid 标识。
-# F2-2 复核三轮 P0-1：Runtime 静止屏障可用性（启动闸门信号）。F2-2b
-# 落地（scope 终止/写入归零/snapshot 冻结/只评冻结副本）时翻 True——
-# 在此之前正式模式（require_real_weight_versions=True）构造 orchestrator
-# 即拒绝启动，除非显式声明 fa_audit_only_probe（开发期探针，非训练）。
-RUNTIME_BARRIER_AVAILABLE = False
+# F2-2 复核四轮（root-closure）：运行模式 = 唯一显式拓扑信号。
+# s1_compat = S1 链（评分交付照旧，无 FA 门控，不产 Outcome）；
+# fa_audit_only = FA 探针（身份强制 + 不评分不交付 + audit-only Outcome）；
+# fa_formal = 正式链（身份强制 + 注入式 Runtime 屏障必备，屏障确认后
+# 才评分交付）。require_real_weight_versions 回归**正交的版本契约**，
+# 不再承担模式职责；paid 在场与否不参与任何模式推断。
+ExecutionModeLiteral = Literal["s1_compat", "fa_audit_only", "fa_formal"]
 
 PROCESS_CLOCK_DOMAIN = f"proc-{os.getpid()}"
 # 注（F2-0b 复核，训前处理项）：proc-pid 不是严格进程 incarnation——fork
@@ -1483,43 +1555,13 @@ class RolloutOrchestrator:
         session_poison_release: Callable[[str], None] | None = None,
         capture_boundary_check: Callable[[str], None] | None = None,
         audit_sink: Callable[[Any], None] | None = None,
+        runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
     ) -> None:
-        if config.require_real_weight_versions:
-            # FA-0 正式链启动断言：静态哨兵版本禁止进入正式链（05 计划 FA-0.3 验收项）。
-            version = config.policy_version
-            if version is None or version == "step_0":
-                raise StartupCheckError(
-                    "static_policy_version_forbidden_in_formal_chain",
-                    f"require_real_weight_versions=True 但 policy_version={version!r}——"
-                    "正式链必须用引擎探针实测的 weight_version（glue 假设 4 管道），"
-                    "静态哨兵值只允许测试路径。",
-                )
-        if config.require_real_weight_versions and not RUNTIME_BARRIER_AVAILABLE:
-            # F2-2 复核三轮 P0-1（勘误 3"屏障未实现由启动闸门表达"的闸门
-            # 本体）：正式模式在屏障缺位时**worker dispatch 前拒绝启动**；
-            # 显式 audit-only 探针除外（其产物全部不可训）。
-            if not config.fa_audit_only_probe:
-                raise StartupCheckError(
-                    "runtime_barrier_unavailable_for_formal_mode",
-                    "require_real_weight_versions=True 但 Runtime 静止屏障"
-                    "（F2-2b）未落地——正式模式禁止启动；开发期请显式设置 "
-                    "fa_audit_only_probe=True（audit-only，产物不可训）。",
-                )
-            try:
-                int(version, 10)
-            except ValueError:
-                raise StartupCheckError(
-                    "policy_version_not_numeric_in_formal_chain",
-                    f"policy_version={version!r} 不是十进制整数——引擎 update_weights "
-                    "计数器语义要求数值版本，staleness 派生依赖它。",
-                ) from None
-            if not config.reject_context_shrink:
-                raise StartupCheckError(
-                    "context_shrink_rejection_disabled_in_formal_chain",
-                    "正式链（require_real_weight_versions=True）必须同时开启 "
-                    "reject_context_shrink——D-FA-6 的收缩兜底是硬要求，"
-                    "不能只凭 DISABLE_COMPACT 环境变量宣布 compaction 已关闭。",
-                )
+        # F2-2 复核四轮：集中校验（模式合法性/fa_formal 组合/正交版本契约
+        # ——bringup 在副作用前已先调过一次，此处防绕过）
+        validate_execution_config(config, runtime_quiescence_barrier)
+        self._mode: str = config.execution_mode
+        self._runtime_barrier = runtime_quiescence_barrier
             # 轮次 14（推翻轮次 9 的硬耦合断言）：非零 exit 拒绝与真实权重
             # 版本不是同一个安全事实——slime episode 时间预算耗尽返回
             # EXIT_TIME_BUDGET_EXCEEDED=-1（sandbox.py:60），是主路径的正常
@@ -1648,7 +1690,7 @@ class RolloutOrchestrator:
             # materialize 前强制完整四层身份——身份注入故障 fail-closed
             # （结构化 abort + audit 落盘），不得静默回落 S1 形状（那会
             # 绕过 audit-only 防线去评分/交付）。
-            if self.config.require_real_weight_versions and (
+            if self._mode != "s1_compat" and (
                 physical_attempt_id is None
                 or meta.get("rh2_physical_attempt_seq") is None
                 or not meta.get("rh2_rollout_execution_id")
@@ -1658,7 +1700,7 @@ class RolloutOrchestrator:
             ):
                 raise SlimeBindingError(
                     "fa_identity_incomplete_in_formal_mode",
-                    f"正式模式 member metadata 四层身份不全（trajectory={trajectory_id}）"
+                    f"FA 模式 member metadata 四层身份不全（trajectory={trajectory_id}）"
                     "——entry 契约破损，fail-closed（不评分不交付）。",
                 )
             stage = "materialize"
@@ -1743,7 +1785,7 @@ class RolloutOrchestrator:
             # （对账）——撤销必须先于 drain，否则 drain 期间仍可能开新轮。
             revoke = getattr(adapter, "revoke_session", None)
             if revoke is None:
-                if self.config.require_real_weight_versions:
+                if self._mode != "s1_compat":
                     # 正式链禁绕过（D3）：没有撤销能力就没有 quiescence 序列
                     raise SlimeBindingError(
                         "adapter_missing_revoke_session",
@@ -1885,7 +1927,7 @@ class RolloutOrchestrator:
             # （missing + runtime_barrier_unavailable）+ abort 形状（
             # remove_sample=True → collector 显式拒绝）。S1 兼容路径（无
             # paid）不受影响。屏障落地后本挡板整块删除。
-            if physical_attempt_id is not None and not audit.runtime_quiescence_confirmed:
+            if self._mode == "fa_audit_only":
                 audit.audit_only = True
                 self._produce_outcome_v2(
                     audit=audit,
@@ -1903,6 +1945,34 @@ class RolloutOrchestrator:
                 return self._abort_result(
                     sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=top_p
                 )
+            if self._mode == "fa_formal":
+                # 复核四轮 P0-3：注入式屏障必须真实执行并出具带证据结果；
+                # 确认失败 → runtime_quiescence_failure（勘误 3 五码）+
+                # abort，绝不评分交付
+                result = await self._runtime_barrier.establish(
+                    workspace=sandbox.workspace, audit=audit
+                )
+                if result.confirmed:
+                    audit.runtime_quiescence_confirmed = True
+                    audit.mark("runtime_quiescence_confirmed")
+                else:
+                    self._produce_outcome_v2(
+                        audit=audit,
+                        raw_meta=raw_meta,
+                        termination_kind="completed",
+                        failure_category="runtime_quiescence_failure",
+                        reason_code=result.reason_code,
+                        failed_component="runtime_barrier",
+                        task_resolved=None,
+                        turn_weight_versions=None,
+                        current_version_at_finalize=None,
+                        eligibility_report_id=None,
+                    )
+                    audit.mark("runtime_quiescence_failed")
+                    return self._abort_result(
+                        sample, reason="rh2_runtime_quiescence_failed",
+                        task=task, top_p=top_p,
+                    )
 
             stage = "finalize"
             handshake = self._build_handshake(trajectory_id, samples)
@@ -1926,25 +1996,26 @@ class RolloutOrchestrator:
             # （reward 不可得，completion 不倒写）。凭证 scrub：交付样本的
             # session_id 回写稳定键（capability 秘密不出执行期）。
             grading_outcome = finalized.grading_report.outcome
-            self._produce_outcome_v2(
-                audit=audit,
-                raw_meta=raw_meta,
-                termination_kind="completed",
-                failure_category=(
-                    "grading_infra_failure" if grading_outcome == "failed_to_grade" else None
-                ),
-                reason_code=None,
-                failed_component=(
-                    "grading_container" if grading_outcome == "failed_to_grade" else None
-                ),
-                task_resolved=(
-                    None if grading_outcome == "failed_to_grade"
-                    else grading_outcome == "resolved"
-                ),
-                turn_weight_versions=list(handshake.weight_versions_seen),
-                current_version_at_finalize=handshake.policy_version,
-                eligibility_report_id=finalized.eligibility_report.report_id,
-            )
+            if self._mode != "s1_compat":
+                self._produce_outcome_v2(
+                    audit=audit,
+                    raw_meta=raw_meta,
+                    termination_kind="completed",
+                    failure_category=(
+                        "grading_infra_failure" if grading_outcome == "failed_to_grade" else None
+                    ),
+                    reason_code=None,
+                    failed_component=(
+                        "grading_container" if grading_outcome == "failed_to_grade" else None
+                    ),
+                    task_resolved=(
+                        None if grading_outcome == "failed_to_grade"
+                        else grading_outcome == "resolved"
+                    ),
+                    turn_weight_versions=list(handshake.weight_versions_seen),
+                    current_version_at_finalize=handshake.policy_version,
+                    eligibility_report_id=finalized.eligibility_report.report_id,
+                )
             stage = "deliver"
             return self._deliver(
                 task=task,
@@ -1977,18 +2048,19 @@ class RolloutOrchestrator:
                     stage, ("harness_crash", "harness_crash")
                 )
             term_kind, fail_cat = mapped
-            self._produce_outcome_v2(
-                audit=audit,
-                raw_meta=raw_meta,
-                termination_kind=term_kind,
-                failure_category=fail_cat,
-                reason_code=code or "unmapped_failure_code",
-                failed_component=stage,
-                task_resolved=None,
-                turn_weight_versions=None,
-                current_version_at_finalize=None,
-                eligibility_report_id=None,
-            )
+            if self._mode != "s1_compat":
+                self._produce_outcome_v2(
+                    audit=audit,
+                    raw_meta=raw_meta,
+                    termination_kind=term_kind,
+                    failure_category=fail_cat,
+                    reason_code=code or "unmapped_failure_code",
+                    failed_component=stage,
+                    task_resolved=None,
+                    turn_weight_versions=None,
+                    current_version_at_finalize=None,
+                    eligibility_report_id=None,
+                )
             return self._abort_result(
                 sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=top_p
             )
@@ -2034,7 +2106,7 @@ class RolloutOrchestrator:
                 try:
                     self._audit_sink(audit)
                 except Exception as exc:  # noqa: BLE001 —— 分链路处置
-                    if self.config.require_real_weight_versions:
+                    if self._mode != "s1_compat" or self.config.require_real_weight_versions:
                         # 轮次 14 仍需修正 3：裸 raise 会被 worker 当普通成员
                         # 失败（failure_sink 成功就继续 top-up）——包装成基建
                         # 级致命错误，worker 据此停机（真 run-halt）

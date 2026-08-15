@@ -119,10 +119,25 @@ fa_audit_only_probe=True（audit-only，产物不可训）；② trajectory_id
 五 reason code 双向封闭 validator（任意串/None/串门都拒）；④ audit-
 only 收口持久 disposition = audit_only_rejected（不再落 unknown_
 terminal，FA-2B 故障统计按此排除）；⑤ 权威页旧口径
-runtime_quiescence_unconfirmed 清除。下一切片 = **F2-2b Runtime 静止
-屏障**（scope 终止/写入归零确认/snapshot 冻结/只评冻结副本；落地时
-翻 RUNTIME_BARRIER_AVAILABLE 并解除 audit-only 挡板），然后 F2-3
-request 级 capture + 单 owner；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
+runtime_quiescence_unconfirmed 清除。**F2-2 复核四轮（root-closure，3 P0 + 1 P1 全采纳）**：① 显式运行模式
+`execution_mode ∈ {s1_compat, fa_audit_only, fa_formal}`——模式职责从
+require_real_weight_versions（回归正交版本契约）与 paid 观测中彻底
+剥离；`validate_execution_config` 集中校验（模式合法性/fa_formal 组合
+/版本契约），bringup 在副作用前先调、orchestrator 构造再调防绕过；
+② P0-1 修复：版本契约检查（数值版本/context_shrink 强制）曾被错误
+缩进进屏障分支（屏障翻 True 即消失）——现平铺在 require 旗标分支下与
+屏障无关，回归测试 = 屏障在场时契约仍拦截；③ 屏障改**注入式能力**
+（RuntimeQuiescenceBarrier Protocol + QuiescenceResult 带证据；
+RUNTIME_BARRIER_AVAILABLE 源码常量删除）：fa_formal 构造时必须注入
+非空、执行时必须调用——确认后才评分交付（present_*），拒绝 →
+runtime_quiescence_failure + 勘误 3 码 + abort；fa_audit_only 不评分
+不交付照旧；s1_compat 完全不产 Outcome（producer 模式门控）；
+④ P1-4：启动校验前移到 bringup 副作用之前 + grading queue 启动失败
+回滚（adapter 线程在 __init__ 起，其生命周期回滚登记 FA-5 容量/启动
+项）。生产旋钮 = RH2_EXECUTION_MODE（默认 s1_compat）。下一切片 =
+**F2-2b Runtime 静止屏障实现**（提供真实 RuntimeQuiescenceBarrier：
+scope 终止/写入归零确认/snapshot 冻结/只评冻结副本——协议与调用点
+已就位，纯新增实现类 + 注入），然后 F2-3；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

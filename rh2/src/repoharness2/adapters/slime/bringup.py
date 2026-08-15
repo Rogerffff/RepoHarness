@@ -79,6 +79,9 @@ ADAPTER_PORT = int(os.environ.get("ADAPTER_PORT", "18001"))
 ADAPTER_PUBLIC_HOST = os.environ.get("ADAPTER_PUBLIC_HOST", "172.17.0.1")
 ARTIFACT_DIR = Path(os.environ.get("RH2_BRINGUP_ARTIFACT_DIR", "/root/bringup/artifacts"))
 HARNESS_KIND = os.environ.get("RH2_BRINGUP_HARNESS", "claude_code")  # claude_code | simple
+# F2-2 复核四轮：显式运行模式（s1_compat | fa_audit_only | fa_formal；
+# fa_formal 还需注入 RuntimeQuiescenceBarrier——F2-2b 提供）
+EXECUTION_MODE = os.environ.get("RH2_EXECUTION_MODE", "s1_compat")
 AGENT_TIME_BUDGET_SEC = int(os.environ.get("SWE_AGENT_TIME_BUDGET_SEC", "600"))
 MAX_TURNS_PER_SID = int(os.environ.get("RH2_MAX_TURNS_PER_SID", "25"))
 INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
@@ -557,6 +560,18 @@ class BringupService:
         # D-FA-6 接线（FA-1）：启动即把 DISABLE_COMPACT=1 合并进
         # SLIME_AGENT_CC_EXTRA_ENVS（幂等；driver.run 内再合并一次是 no-op），
         # merged dict 进 startup evidence 供 inspector 比对。
+        # F2-2 复核四轮 P1-4：模式/组合校验前移到**任何副作用之前**
+        # （adapter 线程在 __init__ 已起，属既有结构——其生命周期回滚
+        # 登记 FA-5；本函数内的副作用从这里开始全部受校验保护）
+        from repoharness2.adapters.slime.generate import validate_execution_config as _vec
+        _vec_probe_cfg = SlimeBindingConfig(
+            model_name=MODEL_ID, backend_name="sglang", backend_version="probe",
+            renderer_cls_name="probe", expected_renderer_cls_name="probe",
+            tokenizer_name=MODEL_ID, template_hash="sha256:" + "0" * 64,
+            adapter_url="http://probe", harness_name=HARNESS_KIND,
+            execution_mode=EXECUTION_MODE,
+        )
+        _vec(_vec_probe_cfg, None)
         self.cc_compaction_guard_envs = None
         if HARNESS_KIND == "claude_code":
             from repoharness2.adapters.slime.generate import (
@@ -564,9 +579,20 @@ class BringupService:
             )
 
             self.cc_compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
-        await self._run_startup_checks()
-        await self.grading_queue.start()
-        self._queue_started = True
+        try:
+            await self._run_startup_checks()
+            await self.grading_queue.start()
+            self._queue_started = True
+        except BaseException:
+            # P1-4 回滚：启动半途失败不得遗留 grading queue（adapter 线程
+            # 生命周期归 FA-5 登记项）
+            if getattr(self, "_queue_started", False):
+                try:
+                    await self.grading_queue.stop()
+                except Exception:
+                    pass
+                self._queue_started = False
+            raise
 
         template_hash = "sha256:" + hashlib.sha256(
             (self.tokenizer.chat_template or "").encode()
@@ -580,6 +606,7 @@ class BringupService:
             moe_router_topk = getattr(args, "moe_router_topk", None)
 
         config = SlimeBindingConfig(
+            execution_mode=EXECUTION_MODE,
             model_name=MODEL_ID,
             backend_name="sglang",
             backend_version=f"sglang-{_sglang_version()}",

@@ -213,6 +213,14 @@ async def test_guard_rejects_revoked_capability():
 # 编排链 e2e：quiescence 顺序 + 凭证卫生 + producer
 # ---------------------------------------------------------------------------
 
+def _fa_cfg(**over):
+    """FA audit-only 探针模式配置（复核四轮：模式显式声明，不再靠 paid 推断）。"""
+
+    from test_slime_generate import dense_config
+
+    return dense_config(execution_mode="fa_audit_only", **over)
+
+
 def _stamp_fa_identity(sample) -> None:
     sample.metadata = dict(getattr(sample, "metadata", {}) or {})
     sample.metadata.update({
@@ -232,7 +240,7 @@ async def test_e2e_formal_path_audit_only_pre_barrier():
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
-    chain = build_dense_chain()
+    chain = build_dense_chain(config=_fa_cfg())
     _stamp_fa_identity(chain.base_sample)
     delivered = await chain.orchestrator.generate(
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
@@ -292,7 +300,7 @@ async def test_e2e_failure_path_produces_missing_outcome():
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
-    chain = build_dense_chain(crash=RuntimeError("claude cli exploded"))
+    chain = build_dense_chain(config=_fa_cfg(), crash=RuntimeError("claude cli exploded"))
     _stamp_fa_identity(chain.base_sample)
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     ov2 = chain.orchestrator.audits[0].outcome_v2
@@ -302,7 +310,7 @@ async def test_e2e_failure_path_produces_missing_outcome():
     assert ov2["failure_category"] == "harness_crash"
     assert ov2["reward_unavailable"] is True
 
-    # S1 兼容：无四层身份 → 不产 v2（宁缺毋伪造）
+    # s1_compat 模式：完全不产 v2（producer 按模式门控）
     chain2 = build_dense_chain(crash=RuntimeError("boom"))
     await chain2.orchestrator.generate(_Args(), chain2.base_sample, dict(SAMPLING_PARAMS))
     assert chain2.orchestrator.audits[0].outcome_v2 is None
@@ -345,7 +353,7 @@ async def test_hard_wall_exit_records_trigger_not_crash():
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
-    chain = build_dense_chain(harness_exit_code=-1)
+    chain = build_dense_chain(config=_fa_cfg(), harness_exit_code=-1)
     _stamp_fa_identity(chain.base_sample)
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
@@ -363,28 +371,36 @@ async def test_hard_wall_exit_records_trigger_not_crash():
     assert ov2["reason_code"] == "runtime_barrier_unavailable"
 
 
-async def test_identity_incomplete_skips_production_no_fabrication():
-    """codex F2-2 复核 P1-5：正式路径（有 paid）身份字段不全 → 不产 v2
-    （audit 留痕），绝不静默补 group_index=0/slot=0。"""
+async def test_identity_incomplete_rejected_in_fa_mode():
+    """复核四轮：FA 模式（显式声明）身份字段不全 → 结构化拒绝（不产 v2
+    不补值不交付）；s1_compat + 局部身份 → 完全不产 v2（模式门控）。"""
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
-    chain = build_dense_chain()
-    sample = chain.base_sample
-    sample.metadata = dict(getattr(sample, "metadata", {}) or {})
-    sample.metadata.update({
+    partial = {
         "rh2_rollout_execution_id": "exec_I",
         "rh2_physical_attempt_id": "exec_I#p1-dead0000",
         "rh2_physical_attempt_seq": 1,
         # 故意缺 rh2_prompt_group_id / rh2_group_index / rh2_member_slot
-    })
+    }
+    chain = build_dense_chain(config=_fa_cfg())
+    sample = chain.base_sample
+    sample.metadata = dict(getattr(sample, "metadata", {}) or {})
+    sample.metadata.update(partial)
     delivered = await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
-    assert audit.outcome_v2 is None
-    assert "outcome_v2_skipped_identity_incomplete" in [e.step for e in audit.timeline]
-    assert chain.orchestrator.outcomes == []
-    # P0-1：Outcome 缺失的正式成员同样不得进 collector（abort 形状）
+    assert audit.outcome_v2 is None and chain.orchestrator.outcomes == []
+    assert any(f.stage == "identity" for f in audit.failure_records)
     assert all(getattr(x, "remove_sample", False) for x in delivered)
+
+    # s1_compat：同样输入不触发任何 FA 门控，也绝不产 v2
+    chain2 = build_dense_chain()
+    s2 = chain2.base_sample
+    s2.metadata = dict(getattr(s2, "metadata", {}) or {})
+    s2.metadata.update(partial)
+    await chain2.orchestrator.generate(_Args(), s2, dict(SAMPLING_PARAMS))
+    assert chain2.orchestrator.audits[0].outcome_v2 is None
+    assert chain2.orchestrator.outcomes == []
 
 
 async def test_formal_mode_identity_fault_fails_closed_not_open():
@@ -395,11 +411,10 @@ async def test_formal_mode_identity_fault_fails_closed_not_open():
     from test_slime_generate import (
         SAMPLING_PARAMS,
         _Args,
-        _formal_config,
         build_dense_chain,
     )
 
-    chain = build_dense_chain(config=_formal_config(policy_version="5"))
+    chain = build_dense_chain(config=_fa_cfg())
     # 不 stamp 任何 FA 身份（模拟身份注入故障）
     delivered = await chain.orchestrator.generate(
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
@@ -414,15 +429,38 @@ async def test_formal_mode_identity_fault_fails_closed_not_open():
     )
 
 
-def test_formal_mode_startup_gate_without_probe():
-    """复核三轮 P0-1：屏障缺位 + 正式模式 + 未声明探针 → worker dispatch
-    前（orchestrator 构造时）拒绝启动。"""
+def test_fa_formal_startup_gates():
+    """复核四轮：fa_formal 组合校验——屏障未注入拒启动；require 旗标
+    未开拒启动；P0-1 回归 = 屏障注入后版本契约检查**依然执行**（曾被
+    错误缩进进屏障分支而消失）。"""
 
-    from test_slime_generate import _formal_config, build_dense_chain
+    from test_slime_generate import _formal_config, build_dense_chain, dense_config
 
-    with pytest.raises(Exception, match="runtime_barrier_unavailable_for_formal_mode"):
-        build_dense_chain(
-            config=_formal_config(policy_version="5", fa_audit_only_probe=False)
+    with pytest.raises(Exception, match="runtime_barrier_capability_missing"):
+        build_dense_chain(config=_formal_config(
+            policy_version="5", execution_mode="fa_formal"))
+    with pytest.raises(Exception, match="fa_formal_requires_real_weight_versions"):
+        build_dense_chain(config=dense_config(execution_mode="fa_formal"))
+
+    class _GrantBarrier:
+        async def establish(self, *, workspace, audit):
+            from repoharness2.adapters.slime.generate import QuiescenceResult
+
+            return QuiescenceResult(confirmed=True)
+
+    from repoharness2.adapters.slime.generate import validate_execution_config
+
+    # P0-1 回归：屏障在场 + 非数值版本 → 版本契约仍然拦截
+    with pytest.raises(Exception, match="policy_version_not_numeric"):
+        validate_execution_config(
+            _formal_config(policy_version="v5", execution_mode="fa_formal"),
+            _GrantBarrier(),
+        )
+    with pytest.raises(Exception, match="context_shrink_rejection_disabled"):
+        validate_execution_config(
+            _formal_config(policy_version="5", execution_mode="fa_formal",
+                           reject_context_shrink=False),
+            _GrantBarrier(),
         )
 
 
@@ -495,7 +533,7 @@ async def test_audit_only_disposition_in_persisted_record():
 
     from repoharness2.adapters.slime.bringup import write_execution_audit_record
 
-    chain = build_dense_chain()
+    chain = build_dense_chain(config=_fa_cfg())
     _stamp_fa_identity(chain.base_sample)
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
@@ -505,6 +543,70 @@ async def test_audit_only_disposition_in_persisted_record():
         write_execution_audit_record(None, audit, jsonl)
         rec = _json.loads(jsonl.read_text().strip())
     assert rec["disposition"] == "audit_only_rejected"
+
+
+async def test_fa_formal_with_injected_barrier_end_to_end():
+    """复核四轮 P0-3：注入式屏障真实驱动正式链——确认 → 评分交付 +
+    present_complete；拒绝 → runtime_quiescence_failure（勘误 3 码）+
+    abort 不评分。"""
+
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+    )
+
+    from repoharness2.adapters.slime.generate import QuiescenceResult
+
+    class _Barrier:
+        def __init__(self, confirmed):
+            self.confirmed = confirmed
+            self.calls = 0
+
+        async def establish(self, *, workspace, audit):
+            self.calls += 1
+            if self.confirmed:
+                return QuiescenceResult(confirmed=True, evidence_refs=("snap_1",))
+            return QuiescenceResult(confirmed=False, reason_code="active_writer_detected")
+
+    def _chain(barrier):
+        # 版本契约（正交）在正式配置下强制真实 weight_version——mock 轮
+        # 显式带版本（dense_turns 默认无版本，会被 assemble 期正确拦截）
+        from test_slime_generate import dense_turns
+
+        turns = dense_turns()
+        for t in turns:
+            t.response["meta_info"]["weight_version"] = "5"
+        chain = build_dense_chain(
+            config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+            runtime_quiescence_barrier=barrier,
+            turns=turns,
+        )
+        return chain, barrier
+
+    ok = _Barrier(confirmed=True)
+    chain, _ = _chain(ok)
+    _stamp_fa_identity(chain.base_sample)
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert ok.calls == 1 and audit.runtime_quiescence_confirmed is True
+    assert chain.grading.calls  # 屏障确认后才评分
+    assert audit.outcome_v2["completion_class"] == "present_complete"
+    assert any(not getattr(x, "remove_sample", False) for x in delivered)
+
+    deny = _Barrier(confirmed=False)
+    chain2, _ = _chain(deny)
+    _stamp_fa_identity(chain2.base_sample)
+    delivered2 = await chain2.orchestrator.generate(
+        _Args(), chain2.base_sample, dict(SAMPLING_PARAMS))
+    audit2 = chain2.orchestrator.audits[0]
+    assert chain2.grading.calls == []  # 拒绝 → 不评分
+    assert audit2.outcome_v2["failure_category"] == "runtime_quiescence_failure"
+    assert audit2.outcome_v2["reason_code"] == "active_writer_detected"
+    assert audit2.outcome_v2["completion_class"] == "missing"
+    assert all(getattr(x, "remove_sample", False) for x in delivered2)
 
 
 # ---------------------------------------------------------------------------
