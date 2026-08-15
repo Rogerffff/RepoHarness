@@ -965,11 +965,29 @@ class HarnessDriver(Protocol):
 
 @dataclass(frozen=True)
 class QuiescenceResult:
-    """Runtime 静止屏障的执行结果（F2-2b 实现产出；带证据）。"""
+    """Runtime 静止屏障的封闭结果（复核五轮 P0-1/P1-4）。
+
+    confirmed=True ⇒ 必须携带 frozen_grading_workspace（评分链只许消费
+    冻结副本，布尔确认不携带冻结输入 = 矛盾态，构造即拒）且不带
+    reason_code；confirmed=False ⇒ reason_code 必须是勘误 3 五码之一。
+    """
 
     confirmed: bool
-    reason_code: str | None = None  # 失败时 = 勘误 3 五码之一
+    frozen_grading_workspace: Any | None = None
+    reason_code: str | None = None
     evidence_refs: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        from repoharness2.contracts.fa_runtime import RUNTIME_QUIESCENCE_REASON_CODES
+
+        if self.confirmed:
+            if self.frozen_grading_workspace is None:
+                raise ValueError("confirmed=True 必须携带 frozen_grading_workspace（只评冻结副本）。")
+            if self.reason_code is not None:
+                raise ValueError("confirmed=True 不得携带 reason_code。")
+        else:
+            if self.reason_code not in RUNTIME_QUIESCENCE_REASON_CODES:
+                raise ValueError(f"拒绝结果的 reason_code 必须是五码之一（得到 {self.reason_code!r}）。")
 
 
 class RuntimeQuiescenceBarrier(Protocol):
@@ -1945,16 +1963,32 @@ class RolloutOrchestrator:
                 return self._abort_result(
                     sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=top_p
                 )
+            grading_workspace = sandbox.workspace  # s1_compat 既有语义
             if self._mode == "fa_formal":
                 # 复核四轮 P0-3：注入式屏障必须真实执行并出具带证据结果；
                 # 确认失败 → runtime_quiescence_failure（勘误 3 五码）+
                 # abort，绝不评分交付
-                result = await self._runtime_barrier.establish(
-                    workspace=sandbox.workspace, audit=audit
-                )
+                try:
+                    result = await self._runtime_barrier.establish(
+                        workspace=sandbox.workspace, audit=audit
+                    )
+                except Exception as exc:
+                    # P1-4：未知 barrier 异常按已批 D4 表走 run_halt（基建
+                    # 级致命，worker 停机），禁止软降级成 capture 故障
+                    from repoharness2.adapters.slime.async_worker import (
+                        FatalExecutionInfrastructureError,
+                    )
+
+                    raise FatalExecutionInfrastructureError(
+                        "runtime_barrier_exception",
+                        f"Runtime 屏障执行异常：{type(exc).__name__}: {exc}——"
+                        "未知屏障故障按 D4 run_halt，不得归因 capture。",
+                    ) from exc
                 if result.confirmed:
                     audit.runtime_quiescence_confirmed = True
                     audit.mark("runtime_quiescence_confirmed")
+                    grading_workspace = result.frozen_grading_workspace
+                    audit.mark("frozen_snapshot_adopted")
                 else:
                     self._produce_outcome_v2(
                         audit=audit,
@@ -1963,6 +1997,7 @@ class RolloutOrchestrator:
                         failure_category="runtime_quiescence_failure",
                         reason_code=result.reason_code,
                         failed_component="runtime_barrier",
+                        extra_evidence=list(result.evidence_refs),
                         task_resolved=None,
                         turn_weight_versions=None,
                         current_version_at_finalize=None,
@@ -1984,7 +2019,7 @@ class RolloutOrchestrator:
                 samples=samples,
                 leaf_facts=leaf_facts,
                 hook=hook,
-                workspace=sandbox.workspace,
+                workspace=grading_workspace,  # 复核五轮 P0-1：正式链 = 冻结副本
                 handshake=handshake,
                 audit=audit,
             )
@@ -2606,6 +2641,7 @@ class RolloutOrchestrator:
         turn_weight_versions: list[str] | None,
         current_version_at_finalize: str | None,
         eligibility_report_id: str | None,
+        extra_evidence: list[str] | None = None,
     ) -> None:
         """F2-2 producer 收口：由事实构造 Outcome v2 并挂 audit（随 sink 落盘）。
 
@@ -2664,7 +2700,7 @@ class RolloutOrchestrator:
             intra_execution_version_span=span,
             current_version_at_finalize=current_version_at_finalize,
             eligibility_report_id=eligibility_report_id,
-            evidence_refs=[f"audit:{audit.trajectory_id}"],
+            evidence_refs=[f"audit:{audit.trajectory_id}", *(extra_evidence or [])],
         )
         if outcome is not None:
             audit.outcome_v2 = outcome.model_dump(mode="json")

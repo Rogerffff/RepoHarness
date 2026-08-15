@@ -374,6 +374,16 @@ async def _bootstrap_via_glue(args: Any, data_buffer: Any) -> None:
 
 def _build_service(args: Any, data_buffer: Any) -> FaRolloutService:
     orchestrator = getattr(args, "rh2_orchestrator", None)
+    if orchestrator is not None:
+        _mode = getattr(getattr(orchestrator, "config", None), "execution_mode", "s1_compat")
+        if _mode not in ("fa_audit_only", "fa_formal"):
+            # 复核五轮 P0-2：FA 专用入口禁止 silent downgrade——忘配
+            # RH2_EXECUTION_MODE 时绝不能以 s1_compat 评分交付训练样本
+            raise FaEntryError(
+                "fa_entry_requires_fa_execution_mode",
+                f"FA 入口要求 execution_mode ∈ {{fa_audit_only, fa_formal}}"
+                f"（得到 {_mode!r}）——设置 RH2_EXECUTION_MODE 后重启。",
+            )
     if orchestrator is None:
         raise FaEntryError(
             "orchestrator_not_attached",

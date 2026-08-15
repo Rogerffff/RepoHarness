@@ -564,10 +564,14 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
             self.confirmed = confirmed
             self.calls = 0
 
+        frozen = object()  # 冻结副本句柄（P0-1：评分只许消费它）
+
         async def establish(self, *, workspace, audit):
             self.calls += 1
             if self.confirmed:
-                return QuiescenceResult(confirmed=True, evidence_refs=("snap_1",))
+                return QuiescenceResult(
+                    confirmed=True, frozen_grading_workspace=self.frozen,
+                    evidence_refs=("snap_1",))
             return QuiescenceResult(confirmed=False, reason_code="active_writer_detected")
 
     def _chain(barrier):
@@ -593,6 +597,8 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     audit = chain.orchestrator.audits[0]
     assert ok.calls == 1 and audit.runtime_quiescence_confirmed is True
     assert chain.grading.calls  # 屏障确认后才评分
+    # P0-1 验收：评分消费的是屏障产出的冻结输入，不是原 workspace
+    assert chain.grading.calls[0]["workspace"] is ok.frozen
     assert audit.outcome_v2["completion_class"] == "present_complete"
     assert any(not getattr(x, "remove_sample", False) for x in delivered)
 
@@ -607,6 +613,39 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     assert audit2.outcome_v2["reason_code"] == "active_writer_detected"
     assert audit2.outcome_v2["completion_class"] == "missing"
     assert all(getattr(x, "remove_sample", False) for x in delivered2)
+
+
+def test_quiescence_result_closed_states():
+    """复核五轮 P1-4：确认必带冻结句柄；拒绝必配五码——矛盾态构造即拒。"""
+
+    from repoharness2.adapters.slime.generate import QuiescenceResult
+
+    with pytest.raises(ValueError, match="frozen_grading_workspace"):
+        QuiescenceResult(confirmed=True)
+    with pytest.raises(ValueError, match="不得携带 reason_code"):
+        QuiescenceResult(confirmed=True, frozen_grading_workspace=object(),
+                         reason_code="active_writer_detected")
+    with pytest.raises(ValueError, match="五码之一"):
+        QuiescenceResult(confirmed=False, reason_code="whatever")
+    QuiescenceResult(confirmed=False, reason_code="snapshot_freeze_failed")
+
+
+def test_fa_entry_rejects_s1_compat_mode():
+    """复核五轮 P0-2：FA 专用入口对 s1_compat（含未配置默认值）拒绝启动
+    ——silent downgrade 关闭。"""
+
+    import sys
+    from types import SimpleNamespace
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
+    from fa_bringup import rollout_entry
+
+    args = SimpleNamespace(
+        rh2_orchestrator=SimpleNamespace(config=SimpleNamespace(execution_mode="s1_compat")),
+        rh2_sampling_params={"top_p": 1.0},
+    )
+    with pytest.raises(rollout_entry.FaEntryError, match="fa_entry_requires_fa_execution_mode"):
+        rollout_entry._build_service(args, object())
 
 
 # ---------------------------------------------------------------------------

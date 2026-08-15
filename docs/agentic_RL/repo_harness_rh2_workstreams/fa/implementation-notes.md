@@ -134,10 +134,21 @@ runtime_quiescence_failure + 勘误 3 码 + abort；fa_audit_only 不评分
 不交付照旧；s1_compat 完全不产 Outcome（producer 模式门控）；
 ④ P1-4：启动校验前移到 bringup 副作用之前 + grading queue 启动失败
 回滚（adapter 线程在 __init__ 起，其生命周期回滚登记 FA-5 容量/启动
-项）。生产旋钮 = RH2_EXECUTION_MODE（默认 s1_compat）。下一切片 =
-**F2-2b Runtime 静止屏障实现**（提供真实 RuntimeQuiescenceBarrier：
-scope 终止/写入归零确认/snapshot 冻结/只评冻结副本——协议与调用点
-已就位，纯新增实现类 + 注入），然后 F2-3；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
+项）。生产旋钮 = RH2_EXECUTION_MODE（默认 s1_compat）。**F2-2 复核五轮（follow-up，2 P0 + 2 P1 全采纳）**：① 冻结评分输入
+契约——QuiescenceResult 封闭化（confirmed ⇒ 必带
+frozen_grading_workspace 且无 reason；rejected ⇒ 五码必配；矛盾态
+构造即拒），正式链 _finalize 消费屏障产出的冻结句柄而非原
+workspace（验收 = grading 收到的对象同一性断言）；② FA 专用入口拒绝
+s1_compat（含未配置默认）——silent downgrade 关闭，旧 S1 入口不受
+影响；③ 启动序列：影子配置删除（静态项按真实值直接校验；fa_formal
+在 bringup 无屏障实现前直接拒启动），统一回滚补 app_handle.stop()
+（queue + adapter 线程都不遗留）；④ barrier 未知异常按 D4 走
+run_halt（FatalExecutionInfrastructureError，worker 停机），不再被
+误归 capture_incomplete；evidence_refs 经 producer 入 Outcome。
+下一切片 = **F2-2b Runtime 静止屏障实现**（真实
+RuntimeQuiescenceBarrier：scope 终止/写入归零确认/snapshot 冻结——
+协议、封闭结果、冻结消费链、调用点全部就位，纯新增实现类 + 注入 +
+bringup 解除 fa_formal 拒启动），然后 F2-3；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

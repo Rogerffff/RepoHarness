@@ -5411,3 +5411,107 @@ runtime_quiescence_barrier: RuntimeQuiescenceBarrier | None
 - 完整验证通过：`983 passed`、`ruff` 全绿、S1 inspector 通过。
 
 建议把上述内容作为一次 **F2-2 root-closure 小切片**：模式枚举、注入式 barrier capability、正式守卫矩阵、启动 rollback。完成后再进入 F2-2b 的 Runtime 静止屏障实现。当前不需要扩大到 D1b、熔断阈值或 dashboard。
+
+
+---
+
+## codex F2-2 复核五轮（2026-08-15，2 P0 + 2 P1——全部采纳）
+
+**结论**
+上一轮的守卫缩进错误和模式复用问题已经修正，但 **F2-2 仍有两个 P0，暂不建议直接实现 F2-2b**。主要问题已经从“是否调用 barrier”转移到“barrier 产出的冻结事实是否真的被评分链消费”。
+
+**阻塞问题**
+1. **P0：barrier 确认后仍然评分原活动 workspace。**
+
+[QuiescenceResult](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:967) 只有：
+
+```python
+confirmed
+reason_code
+evidence_refs
+```
+
+没有返回冻结 workspace 或 snapshot handle。成功后，[generate.py:1952](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1952) 仅把布尔值设为 `True`，随后仍把原始 `sandbox.workspace` 传给 `_finalize`：
+
+[generate.py:1980](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1980) → [generate.py:2425](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2425)。
+
+这尚未实现已批准的：
+
+```text
+静止 -> 冻结 snapshot -> 只对冻结副本评分
+```
+
+建议成功结果必须携带 `frozen_grading_workspace` 或等价 snapshot handle，grader 必须消费该对象。验收测试应断言评分收到的是 barrier 产出的冻结输入，而不是原 workspace。
+
+2. **P0：FA 专用入口仍默认静默进入 `s1_compat`。**
+
+[bringup.py:84](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:84) 默认：
+
+```python
+RH2_EXECUTION_MODE = "s1_compat"
+```
+
+而 [rollout_entry.py:424](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:424) 的 fully-async 专用入口没有拒绝该模式。忘记配置环境变量时，它会：
+
+- 不要求完整 FA 身份；
+- 不产 Outcome v2；
+- 不执行 Runtime barrier；
+- 仍可能评分并交付训练样本。
+
+这正是显式模式要消除的 silent downgrade。旧 S1 入口可以保留 `s1_compat`，但 FA 入口只能接受 `fa_audit_only` 或 `fa_formal`；缺少显式声明必须拒绝启动。
+
+**一般问题**
+3. **P1：启动校验仍是影子配置，回滚并未闭合。**
+
+[bringup.py:567](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:567) 校验的是手工构造的 `_vec_probe_cfg`，不包含实际的版本、context guard 和 barrier 配置。真实配置直到 SGLang 探针和 grading queue 启动后才在 [bringup.py:608](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:608) 构造。
+
+此外，adapter 线程在 [bringup.py:511](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:511) 已启动，而失败路径没有调用现成的 `app_handle.stop()`。这不应递延到 FA-5：配置错误后再次启动可能直接留下线程或端口冲突。
+
+应改为：
+
+```text
+纯函数解析实际静态配置
+-> 静态校验
+-> 事务式启动 adapter / probe / grading
+-> 动态版本校验
+-> 任一步失败统一 stop queue + stop app
+```
+
+4. **P1：QuiescenceResult 允许矛盾状态，异常还会被错误归因。**
+
+当前可以直接构造：
+
+```python
+QuiescenceResult(confirmed=True)
+```
+
+无需证据、snapshot 或冻结输入。`evidence_refs` 也没有进入 audit/outcome。
+
+我还注入了一个抛 `TimeoutError` 的 barrier，实际结果是：
+
+```text
+failure_stage = assemble
+failure_category = capture_incomplete
+reason_code = unmapped_failure_code
+```
+
+Runtime barrier 故障被错误记成 capture 故障，会驱动错误的熔断域。建议使用封闭结果：
+
+```text
+QuiescenceConfirmed
+  frozen_workspace / snapshot_ref / digest / evidence_refs
+
+QuiescenceRejected
+  reason_code（五值之一）/ evidence_refs
+```
+
+已知 barrier 失败映射 `runtime_quiescence_failure`；未知异常按已批准 D4 走 `run_halt`，不能软降级为 `capture_incomplete`。
+
+**已确认修好**
+- `barrier=True` 时非数字版本和关闭 context guard 仍会被拒绝。
+- `execution_mode` 已取代 `paid` 作为主要模式选择器。
+- 注入式 barrier 已进入 orchestrator 构造契约。
+- 身份、reason code、audit disposition 的前轮修复保持有效。
+- 验证：`984 passed`，`ruff` 全绿，S1 inspector 通过。
+
+建议再做一个很小的 root-closure follow-up：冻结评分输入契约、FA 入口禁兼容降级、启动事务回滚、barrier 结果与异常封闭。完成后即可进入 F2-2b 的真实 Docker/Runtime 屏障实现。

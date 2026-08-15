@@ -563,15 +563,16 @@ class BringupService:
         # F2-2 复核四轮 P1-4：模式/组合校验前移到**任何副作用之前**
         # （adapter 线程在 __init__ 已起，属既有结构——其生命周期回滚
         # 登记 FA-5；本函数内的副作用从这里开始全部受校验保护）
-        from repoharness2.adapters.slime.generate import validate_execution_config as _vec
-        _vec_probe_cfg = SlimeBindingConfig(
-            model_name=MODEL_ID, backend_name="sglang", backend_version="probe",
-            renderer_cls_name="probe", expected_renderer_cls_name="probe",
-            tokenizer_name=MODEL_ID, template_hash="sha256:" + "0" * 64,
-            adapter_url="http://probe", harness_name=HARNESS_KIND,
-            execution_mode=EXECUTION_MODE,
-        )
-        _vec(_vec_probe_cfg, None)
+        # 静态校验用**真实静态配置值**（模式/屏障可用性——动态项如
+        # policy_version 由探针后 SlimeBindingConfig 构造时经 orchestrator
+        # 再校验），不再构造影子配置
+        if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
+            raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
+        if EXECUTION_MODE == "fa_formal":
+            raise RuntimeError(
+                "fa_formal 需要注入 RuntimeQuiescenceBarrier——F2-2b 落地前"
+                "生产 bringup 无实现，禁止启动（探针用 fa_audit_only）。"
+            )
         self.cc_compaction_guard_envs = None
         if HARNESS_KIND == "claude_code":
             from repoharness2.adapters.slime.generate import (
@@ -584,14 +585,20 @@ class BringupService:
             await self.grading_queue.start()
             self._queue_started = True
         except BaseException:
-            # P1-4 回滚：启动半途失败不得遗留 grading queue（adapter 线程
-            # 生命周期归 FA-5 登记项）
+            # 复核五轮 P1-3：统一回滚——queue 与 adapter 线程（app_handle）
+            # 都不得遗留（配置错误后重启不能撞线程/端口）
             if getattr(self, "_queue_started", False):
                 try:
                     await self.grading_queue.stop()
                 except Exception:
                     pass
                 self._queue_started = False
+            handle = getattr(self, "app_handle", None)
+            if handle is not None:
+                try:
+                    handle.stop()
+                except Exception:
+                    pass
             raise
 
         template_hash = "sha256:" + hashlib.sha256(

@@ -174,7 +174,8 @@ async def test_entry_requires_orchestrator_and_sampling_params():
 
     with pytest.raises(FaEntryError, match="orchestrator_not_attached"):
         rollout_entry._build_service(SimpleNamespace(), FakeBuffer())
-    args = SimpleNamespace(rh2_orchestrator=object())
+    _fa_orch = SimpleNamespace(config=SimpleNamespace(execution_mode="fa_audit_only"))
+    args = SimpleNamespace(rh2_orchestrator=_fa_orch)
     with pytest.raises(FaEntryError, match="sampling_params_not_attached"):
         rollout_entry._build_service(args, FakeBuffer())
 
