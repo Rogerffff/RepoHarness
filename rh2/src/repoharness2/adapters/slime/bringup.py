@@ -508,6 +508,14 @@ class BringupService:
         from repoharness2.adapters.slime.capture_wire import build_session_guard_middleware
 
         self.adapter.app.middlewares.append(build_session_guard_middleware(self.registry))
+        # 复核六轮 P0-2：纯配置校验在**任何资源启动之前**（线程未起）
+        if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
+            raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
+        if EXECUTION_MODE == "fa_formal":
+            raise RuntimeError(
+                "fa_formal 需要注入 RuntimeQuiescenceBarrier——F2-2b 落地前"
+                "生产 bringup 无实现，禁止启动（探针用 fa_audit_only）。"
+            )
         self.app_handle = run_app_in_thread(
             self.adapter.app,
             host=ADAPTER_BIND_HOST,
@@ -563,16 +571,6 @@ class BringupService:
         # F2-2 复核四轮 P1-4：模式/组合校验前移到**任何副作用之前**
         # （adapter 线程在 __init__ 已起，属既有结构——其生命周期回滚
         # 登记 FA-5；本函数内的副作用从这里开始全部受校验保护）
-        # 静态校验用**真实静态配置值**（模式/屏障可用性——动态项如
-        # policy_version 由探针后 SlimeBindingConfig 构造时经 orchestrator
-        # 再校验），不再构造影子配置
-        if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
-            raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
-        if EXECUTION_MODE == "fa_formal":
-            raise RuntimeError(
-                "fa_formal 需要注入 RuntimeQuiescenceBarrier——F2-2b 落地前"
-                "生产 bringup 无实现，禁止启动（探针用 fa_audit_only）。"
-            )
         self.cc_compaction_guard_envs = None
         if HARNESS_KIND == "claude_code":
             from repoharness2.adapters.slime.generate import (
@@ -581,9 +579,7 @@ class BringupService:
 
             self.cc_compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
         try:
-            await self._run_startup_checks()
-            await self.grading_queue.start()
-            self._queue_started = True
+            await self._async_start_body(args)
         except BaseException:
             # 复核五轮 P1-3：统一回滚——queue 与 adapter 线程（app_handle）
             # 都不得遗留（配置错误后重启不能撞线程/端口）
@@ -600,6 +596,15 @@ class BringupService:
                 except Exception:
                     pass
             raise
+
+    async def _async_start_body(self, args: Any) -> None:
+        """启动事务主体（复核六轮 P0-2：探针/queue/config/orchestrator 全部
+        在同一事务内，任一步失败由 async_start 的统一回滚清理 queue+app）。"""
+
+        await self._run_startup_checks()
+        await self.grading_queue.start()
+        self._queue_started = True
+
 
         template_hash = "sha256:" + hashlib.sha256(
             (self.tokenizer.chat_template or "").encode()

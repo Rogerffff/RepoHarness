@@ -557,22 +557,25 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
         build_dense_chain,
     )
 
-    from repoharness2.adapters.slime.generate import QuiescenceResult
+    from repoharness2.adapters.slime.generate import (
+        QuiescenceConfirmed,
+        QuiescenceRejected,
+    )
 
     class _Barrier:
         def __init__(self, confirmed):
             self.confirmed = confirmed
             self.calls = 0
 
-        frozen = object()  # 冻结副本句柄（P0-1：评分只许消费它）
+        frozen = object()  # 冻结副本句柄（评分只许消费它）
 
         async def establish(self, *, workspace, audit):
             self.calls += 1
             if self.confirmed:
-                return QuiescenceResult(
-                    confirmed=True, frozen_grading_workspace=self.frozen,
-                    evidence_refs=("snap_1",))
-            return QuiescenceResult(confirmed=False, reason_code="active_writer_detected")
+                return QuiescenceConfirmed(
+                    frozen_grading_workspace=self.frozen,
+                    snapshot_ref="sha256:abc", evidence_refs=("snap_1",))
+            return QuiescenceRejected(reason_code="active_writer_detected")
 
     def _chain(barrier):
         # 版本契约（正交）在正式配置下强制真实 weight_version——mock 轮
@@ -600,6 +603,8 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     # P0-1 验收：评分消费的是屏障产出的冻结输入，不是原 workspace
     assert chain.grading.calls[0]["workspace"] is ok.frozen
     assert audit.outcome_v2["completion_class"] == "present_complete"
+    # 六轮强 P1：屏障 lineage 进成功 Outcome
+    assert "snapshot:sha256:abc" in audit.outcome_v2["evidence_refs"]
     assert any(not getattr(x, "remove_sample", False) for x in delivered)
 
     deny = _Barrier(confirmed=False)
@@ -615,19 +620,61 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     assert all(getattr(x, "remove_sample", False) for x in delivered2)
 
 
-def test_quiescence_result_closed_states():
-    """复核五轮 P1-4：确认必带冻结句柄；拒绝必配五码——矛盾态构造即拒。"""
+def test_quiescence_closed_union_states():
+    """复核六轮强 P1：封闭联合类型——确认必带冻结句柄+snapshot lineage+
+    证据；拒绝必配五码；矛盾/缺项构造即拒。"""
 
-    from repoharness2.adapters.slime.generate import QuiescenceResult
+    from repoharness2.adapters.slime.generate import (
+        QuiescenceConfirmed,
+        QuiescenceRejected,
+    )
 
-    with pytest.raises(ValueError, match="frozen_grading_workspace"):
-        QuiescenceResult(confirmed=True)
-    with pytest.raises(ValueError, match="不得携带 reason_code"):
-        QuiescenceResult(confirmed=True, frozen_grading_workspace=object(),
-                         reason_code="active_writer_detected")
+    with pytest.raises(ValueError, match="snapshot_ref"):
+        QuiescenceConfirmed(frozen_grading_workspace=object(), snapshot_ref="",
+                            evidence_refs=("e",))
+    with pytest.raises(ValueError, match="evidence_refs"):
+        QuiescenceConfirmed(frozen_grading_workspace=object(),
+                            snapshot_ref="sha256:x", evidence_refs=())
+    with pytest.raises(ValueError, match="冻结 workspace"):
+        QuiescenceConfirmed(frozen_grading_workspace=None,
+                            snapshot_ref="sha256:x", evidence_refs=("e",))
     with pytest.raises(ValueError, match="五码之一"):
-        QuiescenceResult(confirmed=False, reason_code="whatever")
-    QuiescenceResult(confirmed=False, reason_code="snapshot_freeze_failed")
+        QuiescenceRejected(reason_code="whatever")
+    QuiescenceRejected(reason_code="snapshot_freeze_failed")
+
+
+async def test_barrier_fatal_exception_escapes_soft_catch():
+    """复核六轮 P0-1：屏障异常 → Fatal 从 generate() **逃逸**（不被软
+    失败 catch 吞成缺员）；worker 对该异常有既有 run_halt 通道。"""
+
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+    )
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
+
+    class _Boom:
+        async def establish(self, *, workspace, audit):
+            raise TimeoutError("barrier hung")
+
+    from test_slime_generate import dense_turns
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"  # 版本契约（正交）
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_Boom(),
+        turns=turns,
+    )
+    _stamp_fa_identity(chain.base_sample)
+    with pytest.raises(FatalExecutionInfrastructureError, match="runtime_barrier_exception"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
 
 
 def test_fa_entry_rejects_s1_compat_mode():

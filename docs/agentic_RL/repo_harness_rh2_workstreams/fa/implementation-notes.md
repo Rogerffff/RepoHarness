@@ -145,10 +145,23 @@ s1_compat（含未配置默认）——silent downgrade 关闭，旧 S1 入口�
 （queue + adapter 线程都不遗留）；④ barrier 未知异常按 D4 走
 run_halt（FatalExecutionInfrastructureError，worker 停机），不再被
 误归 capture_incomplete；evidence_refs 经 producer 入 Outcome。
-下一切片 = **F2-2b Runtime 静止屏障实现**（真实
-RuntimeQuiescenceBarrier：scope 终止/写入归零确认/snapshot 冻结——
-协议、封闭结果、冻结消费链、调用点全部就位，纯新增实现类 + 注入 +
-bringup 解除 fa_formal 拒启动），然后 F2-3；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
+**F2-2 复核六轮（ownership 收敛，2 P0 + 1 强 P1 全采纳；熔断第二次
+触发——五轮声称的 run_halt/回滚被探针证伪）**：① 致命异常独立传播
+通道——generate() 的 catch 链显式 `except Fatal...: raise` 在通用
+Exception 之前（屏障系统故障不再被吞成缺员 + top-up；worker 既有
+run_halt 通道承接），验收 = Fatal 从 generate 逃逸测试；② bringup
+启动收敛单事务 owner：纯配置校验前移到 __init__ **线程启动之前**
+（invalid mode/fa_formal 在任何资源起来前拒绝），async_start 主体
+（探针/queue/config/orchestrator 装配）整体进 `_async_start_body`
+单 try，统一回滚 = stop queue + app_handle.stop()；③ 屏障结果改
+**封闭联合类型** QuiescenceConfirmed（typed 冻结 workspace +
+snapshot_ref lineage + 非空证据，任一缺失构造即拒）/
+QuiescenceRejected（五码），未知返回类型按 D4 → Fatal run_halt；
+成功路径 snapshot lineage（snapshot:sha256:...）随 extra_evidence
+进入成功 Outcome。下一切片 = **F2-2b Runtime 静止屏障实现**（真实
+RuntimeQuiescenceBarrier 实现类 + 注入 + bringup 解除 fa_formal 拒
+启动挡板；协议/封闭联合/冻结消费链/致命通道全部就位），然后 F2-3；
+FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改

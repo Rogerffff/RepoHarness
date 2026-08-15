@@ -5515,3 +5515,128 @@ QuiescenceRejected
 - 验证：`984 passed`，`ruff` 全绿，S1 inspector 通过。
 
 建议再做一个很小的 root-closure follow-up：冻结评分输入契约、FA 入口禁兼容降级、启动事务回滚、barrier 结果与异常封闭。完成后即可进入 F2-2b 的真实 Docker/Runtime 屏障实现。
+
+
+---
+
+## codex F2-2 复核六轮（2026-08-15，ownership 收敛：2 P0 + 1 强 P1——全部采纳，熔断第二次触发）
+
+**结论**
+
+当前**仍有 2 个 P0 和 1 个强 P1**，不能直接进入 F2-2b。
+
+需要停止“发现一点补一层守卫”的节奏，做一次有限范围的 **F2-2 ownership root-closure**。但不需要推翻或重写整个 F2-2：身份、capability、显式执行模式、Outcome v2、会话排空、冻结后评分这些核心方向都是正确的。
+
+**阻塞问题**
+
+1. **P0：barrier 致命异常仍被降级为普通缺员**
+
+屏障异常在 [generate.py:1971](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1971) 被包装为 `FatalExecutionInfrastructureError`，但随后被 [generate.py:2067](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2067) 的通用 `except Exception` 再次捕获。
+
+确定性探针结果：
+
+```text
+RETURNED_SOFT_ABORT
+failure_category = capture_incomplete
+reason_code = runtime_barrier_exception
+```
+
+因此实际行为是：
+
+```text
+barrier 系统故障
+-> 普通成员缺失
+-> worker 继续 top-up
+```
+
+而不是已批准的：
+
+```text
+barrier 未知故障
+-> FatalExecutionInfrastructureError
+-> worker run_halt
+```
+
+这会把系统性故障静默转化为训练样本损耗和分布偏移。
+
+验收必须贯穿到 `ContinuousExecutionWorker`：异常传播、`halt_reason` 写入、停止继续派发，而不只是断言包装异常被构造。
+
+2. **P0：启动资源回滚仍未形成事务**
+
+adapter 线程在 [bringup.py:511](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:511) 已启动，但模式校验在 [bringup.py:569](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:569)，位于回滚 `try` 之外。
+
+探针结果：
+
+```text
+invalid_mode -> app_stop_calls=0
+fa_formal   -> app_stop_calls=0
+```
+
+此外，真正的配置构造和 orchestrator 装配位于回滚块之后的 [bringup.py:615](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:615)。这些阶段失败同样会遗留 queue/thread。更早的 `__init__` 中，线程启动后加载 bundle 失败也没有清理机会。
+
+应把启动改成一个资源 owner：
+
+```text
+解析并校验纯配置
+-> 构造资源
+-> 启动 app
+-> 探针
+-> 启动 grading queue
+-> 构造 orchestrator
+-> commit started
+
+任一步失败
+-> stop queue
+-> stop app
+-> 验证 thread 已退出
+-> 清空半成品状态
+```
+
+不是继续把更多局部 `try/except` 塞进 `async_start()`。
+
+3. **强 P1：QuiescenceResult 仍不是真正封闭的冻结事实**
+
+[generate.py:967](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:967) 仍允许：
+
+```text
+confirmed=True + object() + 无 evidence
+confirmed=False + frozen workspace
+```
+
+测试本身也用普通 `object()` 充当冻结 workspace，只证明对象被传递，没有证明它实现 `WorkspaceRunner` 或绑定 snapshot lineage。
+
+同时，确认成功时的 `evidence_refs` 没有传入 [generate.py:2035](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2035) 的成功 Outcome。探针得到：
+
+```text
+OUTCOME_EVIDENCE = ["audit:exec_F22"]
+```
+
+屏障提供的 `snapshot:sha256:abc` 消失了。
+
+建议不要再给当前 dataclass 添布尔守卫，而是收敛成两个封闭结果：
+
+```text
+QuiescenceConfirmed
+  -> typed frozen WorkspaceRunner
+  -> snapshot_ref / digest
+  -> durable evidence_refs
+
+QuiescenceRejected
+  -> reason_code
+  -> evidence_refs
+```
+
+**是否需要重构**
+
+需要，但只做一次小范围 ownership 收敛：
+
+1. 致命异常建立独立传播通道，禁止进入 rollout 软失败 catch。
+2. Bringup 启动资源归一个事务 owner 管理。
+3. Barrier 结果改为封闭联合类型，并保留成功路径 lineage。
+4. 增加模式 × barrier 结果 × 异常 × 启动失败阶段的状态矩阵测试。
+
+这已经触发协作协议中的“修复循环熔断”：最新修复声称关闭的 `run_halt` 和启动回滚都被探针直接证伪。继续逐点叠守卫，风险会继续转移到下一个 catch 或生命周期窗口。
+
+不需要动的部分包括四层身份、session capability、Outcome v2、显式 `execution_mode` 和 session-plane drain。也不需要现在扩展 D1b、熔断阈值或 dashboard。
+
+验证方面：现有 `986 passed`、`ruff` 和 S1 inspector 都通过，但上述三个定向探针暴露了现有测试未覆盖的生产控制流。因此当前结论是：**暂停 F2-2b，先完成一次 F2-2 root-closure；完成后再继续真实 Runtime barrier。**

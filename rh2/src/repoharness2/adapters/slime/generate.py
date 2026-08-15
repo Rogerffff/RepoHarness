@@ -83,6 +83,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
+from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 from repoharness2.adapters.slime.outcome_producer import (
     FAILURE_CODE_TERMINATION_MAP,
     STAGE_FALLBACK_TERMINATION_MAP,
@@ -964,30 +965,38 @@ class HarnessDriver(Protocol):
 
 
 @dataclass(frozen=True)
-class QuiescenceResult:
-    """Runtime 静止屏障的封闭结果（复核五轮 P0-1/P1-4）。
+class QuiescenceConfirmed:
+    """屏障确认（复核六轮：封闭联合类型之一）。冻结副本 + snapshot
+    lineage + 持久证据全部必填——评分链只消费本对象的冻结输入。"""
 
-    confirmed=True ⇒ 必须携带 frozen_grading_workspace（评分链只许消费
-    冻结副本，布尔确认不携带冻结输入 = 矛盾态，构造即拒）且不带
-    reason_code；confirmed=False ⇒ reason_code 必须是勘误 3 五码之一。
-    """
+    frozen_grading_workspace: Any
+    snapshot_ref: str
+    evidence_refs: tuple[str, ...]
 
-    confirmed: bool
-    frozen_grading_workspace: Any | None = None
-    reason_code: str | None = None
+    def __post_init__(self) -> None:
+        if self.frozen_grading_workspace is None:
+            raise ValueError("QuiescenceConfirmed 必须携带冻结 workspace。")
+        if not self.snapshot_ref:
+            raise ValueError("QuiescenceConfirmed 必须携带 snapshot_ref（lineage）。")
+        if not self.evidence_refs:
+            raise ValueError("QuiescenceConfirmed 必须携带至少一条 evidence_refs。")
+
+
+@dataclass(frozen=True)
+class QuiescenceRejected:
+    """屏障拒绝（封闭联合类型之二）：五码之一 + 证据。"""
+
+    reason_code: str
     evidence_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         from repoharness2.contracts.fa_runtime import RUNTIME_QUIESCENCE_REASON_CODES
 
-        if self.confirmed:
-            if self.frozen_grading_workspace is None:
-                raise ValueError("confirmed=True 必须携带 frozen_grading_workspace（只评冻结副本）。")
-            if self.reason_code is not None:
-                raise ValueError("confirmed=True 不得携带 reason_code。")
-        else:
-            if self.reason_code not in RUNTIME_QUIESCENCE_REASON_CODES:
-                raise ValueError(f"拒绝结果的 reason_code 必须是五码之一（得到 {self.reason_code!r}）。")
+        if self.reason_code not in RUNTIME_QUIESCENCE_REASON_CODES:
+            raise ValueError(f"reason_code 必须是勘误 3 五码之一（得到 {self.reason_code!r}）。")
+
+
+QuiescenceOutcome = "QuiescenceConfirmed | QuiescenceRejected"
 
 
 class RuntimeQuiescenceBarrier(Protocol):
@@ -996,7 +1005,9 @@ class RuntimeQuiescenceBarrier(Protocol):
     执行时必须调用并取得带证据的结果。F2-2b 提供真实实现（scope 终止/
     写入归零确认/snapshot 冻结/只评冻结副本）。"""
 
-    async def establish(self, *, workspace: Any, audit: "RolloutAudit") -> QuiescenceResult: ...
+    async def establish(
+        self, *, workspace: Any, audit: "RolloutAudit"
+    ) -> "QuiescenceConfirmed | QuiescenceRejected": ...
 
 
 def validate_execution_config(
@@ -1964,6 +1975,7 @@ class RolloutOrchestrator:
                     sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=top_p
                 )
             grading_workspace = sandbox.workspace  # s1_compat 既有语义
+            barrier_evidence: list[str] = []
             if self._mode == "fa_formal":
                 # 复核四轮 P0-3：注入式屏障必须真实执行并出具带证据结果；
                 # 确认失败 → runtime_quiescence_failure（勘误 3 五码）+
@@ -1975,21 +1987,18 @@ class RolloutOrchestrator:
                 except Exception as exc:
                     # P1-4：未知 barrier 异常按已批 D4 表走 run_halt（基建
                     # 级致命，worker 停机），禁止软降级成 capture 故障
-                    from repoharness2.adapters.slime.async_worker import (
-                        FatalExecutionInfrastructureError,
-                    )
-
                     raise FatalExecutionInfrastructureError(
                         "runtime_barrier_exception",
                         f"Runtime 屏障执行异常：{type(exc).__name__}: {exc}——"
                         "未知屏障故障按 D4 run_halt，不得归因 capture。",
                     ) from exc
-                if result.confirmed:
+                if isinstance(result, QuiescenceConfirmed):
                     audit.runtime_quiescence_confirmed = True
                     audit.mark("runtime_quiescence_confirmed")
                     grading_workspace = result.frozen_grading_workspace
+                    barrier_evidence = [f"snapshot:{result.snapshot_ref}", *result.evidence_refs]
                     audit.mark("frozen_snapshot_adopted")
-                else:
+                elif isinstance(result, QuiescenceRejected):
                     self._produce_outcome_v2(
                         audit=audit,
                         raw_meta=raw_meta,
@@ -2007,6 +2016,12 @@ class RolloutOrchestrator:
                     return self._abort_result(
                         sample, reason="rh2_runtime_quiescence_failed",
                         task=task, top_p=top_p,
+                    )
+                else:
+                    raise FatalExecutionInfrastructureError(
+                        "runtime_barrier_invalid_result",
+                        f"屏障返回未知类型 {type(result).__name__}——封闭联合类型外的"
+                        "结果按 D4 未知故障 run_halt。",
                     )
 
             stage = "finalize"
@@ -2050,6 +2065,7 @@ class RolloutOrchestrator:
                     turn_weight_versions=list(handshake.weight_versions_seen),
                     current_version_at_finalize=handshake.policy_version,
                     eligibility_report_id=finalized.eligibility_report.report_id,
+                    extra_evidence=barrier_evidence,
                 )
             stage = "deliver"
             return self._deliver(
@@ -2063,6 +2079,12 @@ class RolloutOrchestrator:
                 top_p=top_p,
             )
         except asyncio.CancelledError:
+            raise
+        except FatalExecutionInfrastructureError:
+            # 复核六轮 P0-1（ownership 收敛项 1）：基建级致命错误走独立
+            # 传播通道——绝不进 rollout 软失败收口（那会把系统性故障静默
+            # 转成成员缺失 + worker 继续 top-up = 分布偏移）。worker 对本
+            # 异常触发 run_halt（async_worker 1167 行既有通道）。
             raise
         except Exception as exc:  # noqa: BLE001 - 收口为 abort，归因进 audit
             audit.failure_records.append(
@@ -2145,10 +2167,6 @@ class RolloutOrchestrator:
                         # 轮次 14 仍需修正 3：裸 raise 会被 worker 当普通成员
                         # 失败（failure_sink 成功就继续 top-up）——包装成基建
                         # 级致命错误，worker 据此停机（真 run-halt）
-                        from repoharness2.adapters.slime.async_worker import (
-                            FatalExecutionInfrastructureError,
-                        )
-
                         raise FatalExecutionInfrastructureError(
                             "execution_audit_write_failed",
                             f"审计存储不可用：{type(exc).__name__}: {exc}——"
