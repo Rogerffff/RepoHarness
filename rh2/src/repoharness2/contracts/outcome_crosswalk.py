@@ -38,16 +38,37 @@ present 族迁移还要求 v1 记录携带完整 present 事实字段
 （turn_weight_versions/current_version_at_finalize/eligibility_report_id
 ——v1 present 的 validator 本就保证；permanent_rejection 记录若缺失 =
 "无法由原始 evidence 重建" → legacy_unmappable）。
+
+结构性前置门（先于类别×证据表，F2-1b codex 审查 P1-2/P1-3）：
+
+    v1.identity.branch_id 非空        → legacy_unmappable（branch 视角
+                                        记录不是 execution 级账目）
+    physical_attempt_id 不可重建      → legacy_unmappable（v1 身份缺失
+                                        且证据未提供——v2 强制四层身份，
+                                        不产身份不完整的"合法"记录）
+    missing 且 v1.failure_category ∉ 执行事实集合
+                                      → legacy_unmappable（staleness 等
+                                        准入/控制面归因不进 v2 事实层）
+
+结果状态三值（fail-closed 消费协议）：
+
+    migrated             干净迁移，v2 可进训练消费链
+    migrated_audit_only  v1 permanent_rejection 迁移产物——v2 在场但
+                         **禁止训练**（verdict 必在）；训练侧必须经
+                         trainable_v2() 提取，该接口对本状态返回 None
+    legacy_unmappable    不产 v2，v1 经双版本读取留在审计面
 """
 
 from __future__ import annotations
 
 from typing import Literal, get_args
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from ._base import NonEmptyStr, StrictModel
 from .fa_runtime import (
+    FAILURE_CATEGORIES_EXECUTION_FACT,
+    ExecutionIdentity,
     TERMINATION_KINDS_CONTROL,
     TERMINATION_KINDS_INFRA,
     TERMINATION_KINDS_NORMAL,
@@ -63,6 +84,7 @@ __all__ = [
     "V1TerminationEvidence",
     "crosswalk_v1_to_v2",
     "read_rollout_attempt_outcome",
+    "trainable_v2",
 ]
 
 _TRUNCATION_KINDS = (
@@ -73,20 +95,36 @@ _TRUNCATION_KINDS = (
 class V1TerminationEvidence(StrictModel):
     """从原始 evidence 重建的终止证据（调用方从 audit/timeline 读出）。
 
-    termination_kind 必须是重建出的**事实**，不是猜测——没有证据就不要
-    构造本对象（传 None 走 legacy_unmappable）。
+    termination_kind 必须是重建出的**事实**，不是猜测；evidence_refs
+    至少一条（P1-3：不许无引用地"声明"事实）。physical_attempt_id/seq
+    可选——v1 身份缺失但审计可重建时经此补齐（P1-2）。
     """
 
     termination_kind: TerminationKind = Field(description="重建出的终止 trigger。")
     evidence_refs: list[NonEmptyStr] = Field(
-        default_factory=list, description="重建依据（audit record / timeline 等引用）。"
+        min_length=1, description="重建依据（audit record / timeline 等引用；至少 1 条）。"
     )
+    physical_attempt_id: NonEmptyStr | None = Field(
+        default=None, description="审计重建的物理 attempt 身份（v1 缺失时补齐用）。"
+    )
+    physical_attempt_seq: int | None = Field(
+        default=None, ge=1, description="与 physical_attempt_id 同现同缺。"
+    )
+
+    @model_validator(mode="after")
+    def _paid_pair(self) -> "V1TerminationEvidence":
+        if (self.physical_attempt_id is None) != (self.physical_attempt_seq is None):
+            raise ValueError("physical_attempt_id 与 physical_attempt_seq 必须同现同缺。")
+        return self
 
 
 class OutcomeCrosswalkResult(StrictModel):
-    """crosswalk 结果：migrated（携带 v2）或 legacy_unmappable（审计面保留 v1）。"""
+    """crosswalk 结果（状态三值语义见模块 docstring；validator 强制自洽——
+    status ⟺ v2 在场性 ⟺ verdict 在场性不可能错配）。"""
 
-    status: Literal["migrated", "legacy_unmappable"] = Field(description="迁移结果。")
+    status: Literal["migrated", "migrated_audit_only", "legacy_unmappable"] = Field(
+        description="迁移结果（migrated_audit_only = v2 在场但禁止训练）。"
+    )
     v1_outcome_id: NonEmptyStr = Field(description="源 v1 记录 id（审计回链）。")
     rule: NonEmptyStr = Field(description="命中的规则名（穷举表行，测试锚点）。")
     v2: RolloutAttemptOutcomeV2 | None = Field(
@@ -105,11 +143,32 @@ class OutcomeCrosswalkResult(StrictModel):
     )
     reason: NonEmptyStr = Field(description="人读说明（为何迁移成功/失败）。")
 
+    @model_validator(mode="after")
+    def _status_consistency(self) -> "OutcomeCrosswalkResult":
+        if (self.status in ("migrated", "migrated_audit_only")) != (self.v2 is not None):
+            raise ValueError(f"status={self.status} 与 v2 在场性矛盾（fail-closed 自洽）。")
+        if self.status == "migrated" and self.legacy_admission_verdict is not None:
+            raise ValueError("干净 migrated 不得携带 admission verdict——被禁记录必须走 "
+                             "migrated_audit_only。")
+        if self.status == "migrated_audit_only" and self.legacy_admission_verdict is None:
+            raise ValueError("migrated_audit_only 必须携带 legacy_admission_verdict。")
+        return self
+
+
+def trainable_v2(result: OutcomeCrosswalkResult) -> RolloutAttemptOutcomeV2 | None:
+    """训练侧唯一提取口（fail-closed）：只有干净 migrated 才返回 v2。
+
+    消费者若绕过本接口直读 result.v2，migrated_audit_only 的被禁轨迹会
+    重新进入训练——测试钉死本接口对一切非 migrated 状态返回 None。
+    """
+
+    return result.v2 if result.status == "migrated" else None
+
 
 def _result(
     v1: RolloutAttemptOutcome,
     *,
-    status: Literal["migrated", "legacy_unmappable"],
+    status: Literal["migrated", "migrated_audit_only", "legacy_unmappable"],
     rule: str,
     reason: str,
     v2: RolloutAttemptOutcomeV2 | None = None,
@@ -126,6 +185,7 @@ def _build_present_v2(
     v1: RolloutAttemptOutcome,
     evidence: V1TerminationEvidence,
     completion: Literal["present_complete", "present_truncated"],
+    identity: ExecutionIdentity,
     *,
     banned: bool,
 ) -> RolloutAttemptOutcomeV2:
@@ -134,7 +194,7 @@ def _build_present_v2(
     reward_unavailable = v1.task_outcome == "unknown"
     return RolloutAttemptOutcomeV2(
         outcome_id=f"{v1.outcome_id}::v2migrated",
-        identity=v1.identity,
+        identity=identity,
         member_slot=v1.member_slot,
         attempt_number=v1.attempt_number,
         completion_class=completion,
@@ -166,6 +226,36 @@ def crosswalk_v1_to_v2(
     """
 
     cc = v1.completion_class
+    # 拒绝类记录在任何前置门失败时也要保留准入判定的审计传递
+    gate_verdict = "permanent_rejection" if cc == "permanent_rejection" else None
+    gate_fc = v1.failure_category if cc == "permanent_rejection" else None
+
+    # --- 结构性前置门 ①：branch 视角记录不是 execution 级账目 ---
+    if v1.identity.branch_id is not None:
+        return _result(
+            v1, status="legacy_unmappable", rule="identity_not_execution_level",
+            reason="v1.identity.branch_id 非空——branch 视角记录不能迁为 "
+                   "execution 级 Outcome v2（静默剥离 branch 属改写身份）。",
+            verdict=gate_verdict, legacy_fc=gate_fc,
+        )
+    # --- 结构性前置门 ②：四层身份必须可重建（v1 自带或证据补齐）---
+    if v1.identity.physical_attempt_id is not None:
+        identity = v1.identity
+    elif evidence is not None and evidence.physical_attempt_id is not None:
+        identity = ExecutionIdentity(
+            **{
+                **v1.identity.model_dump(exclude={"schema_id"}),
+                "physical_attempt_id": evidence.physical_attempt_id,
+                "physical_attempt_seq": evidence.physical_attempt_seq,
+            }
+        )
+    else:
+        return _result(
+            v1, status="legacy_unmappable", rule="identity_unrebuildable",
+            reason="v1 无 physical_attempt_id 且证据未提供——v2 强制四层身份，"
+                   "不产身份不完整的名义合法记录。",
+            verdict=gate_verdict, legacy_fc=gate_fc,
+        )
 
     if cc == "present":
         if evidence is None:
@@ -178,13 +268,13 @@ def crosswalk_v1_to_v2(
             return _result(
                 v1, status="migrated", rule="present_completed",
                 reason="正常终止 + v1 present 事实完整 → present_complete。",
-                v2=_build_present_v2(v1, evidence, "present_complete", banned=False),
+                v2=_build_present_v2(v1, evidence, "present_complete", identity, banned=False),
             )
         if tk in _TRUNCATION_KINDS:
             return _result(
                 v1, status="migrated", rule="present_truncated",
                 reason=f"{tk} 截断 + v1 present 事实完整 → present_truncated。",
-                v2=_build_present_v2(v1, evidence, "present_truncated", banned=False),
+                v2=_build_present_v2(v1, evidence, "present_truncated", identity, banned=False),
             )
         return _result(  # infra 族
             v1, status="legacy_unmappable", rule="present_infra_contradiction",
@@ -199,6 +289,14 @@ def crosswalk_v1_to_v2(
                        "的映射有歧义，不猜。",
             )
         tk = evidence.termination_kind
+        # 前置门 ③：v1 归因不在执行事实集合（staleness 等准入/控制面
+        # 判定）→ 不得进 v2 事实层（P1-1 封闭集合的迁移面）
+        if v1.failure_category not in FAILURE_CATEGORIES_EXECUTION_FACT:
+            return _result(
+                v1, status="legacy_unmappable", rule="missing_category_not_execution",
+                reason=f"v1 failure_category={v1.failure_category} 属准入/控制面"
+                       "判定，不是执行事实归因——不迁移（防完整成员被算成缺员）。",
+            )
         if tk == "model_call_regeneration_exhausted" and (
             v1.failure_category != "model_proxy_failure"
         ):
@@ -209,7 +307,7 @@ def crosswalk_v1_to_v2(
             )
         v2 = RolloutAttemptOutcomeV2(
             outcome_id=f"{v1.outcome_id}::v2migrated",
-            identity=v1.identity,
+            identity=identity,
             member_slot=v1.member_slot,
             attempt_number=v1.attempt_number,
             completion_class="missing",
@@ -264,10 +362,10 @@ def crosswalk_v1_to_v2(
         "present_complete" if tk in TERMINATION_KINDS_NORMAL else "present_truncated"
     )
     return _result(
-        v1, status="migrated", rule=f"rejection_{completion}",
-        reason="事实完整可重建 → 迁 present_*；禁止训练判定经 "
-               "legacy_admission_verdict 传递（不进 v2 事实层）。",
-        v2=_build_present_v2(v1, evidence, completion, banned=True),
+        v1, status="migrated_audit_only", rule=f"rejection_{completion}",
+        reason="事实完整可重建 → 迁 present_*，但**禁止训练**（audit-only 状态；"
+               "训练侧必须经 trainable_v2() 提取，对本状态返回 None）。",
+        v2=_build_present_v2(v1, evidence, completion, identity, banned=True),
         verdict="permanent_rejection", legacy_fc=v1.failure_category,
     )
 

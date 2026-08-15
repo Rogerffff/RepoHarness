@@ -176,10 +176,16 @@ def _fa_outcome_payload() -> dict:
 
 
 def _fa_outcome_v2_payload() -> dict:
+    # v2 强制四层身份（F2-1b codex 审查 P1-2）：样例必须带 paid/seq
+    identity = {
+        **_fa_identity_payload(),
+        "physical_attempt_id": "exec_22#p1-cafe0123",
+        "physical_attempt_seq": 1,
+    }
     return {
         "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
         "outcome_id": "o2",
-        "identity": _fa_identity_payload(),
+        "identity": identity,
         "member_slot": 2,
         "attempt_number": 1,
         "completion_class": "present_truncated",

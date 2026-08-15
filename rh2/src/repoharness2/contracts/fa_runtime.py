@@ -35,7 +35,7 @@ faithful DIS 的前置约定）::
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, get_args
 
 from pydantic import AwareDatetime, Field, model_validator
 
@@ -59,6 +59,9 @@ __all__ = [
     "TERMINATION_KINDS_NORMAL",
     "TERMINATION_KINDS_POLICY_HORIZON",
     "TERMINATION_KINDS_WATCHDOG",
+    "FAILURE_CATEGORIES_EXECUTION_FACT",
+    "FAILURE_CATEGORIES_GRADING",
+    "FAILURE_CATEGORIES_ADMISSION_CONTROL",
     "TrainingRuntimePhase",
     "TrainingRuntimeWindow",
 ]
@@ -305,6 +308,46 @@ TERMINATION_KINDS_INFRA = frozenset(
 )
 TERMINATION_KINDS_NORMAL = frozenset({"completed"})
 
+# failure category 三分封闭集合（F2-1b codex 审查 P1-1，D4 风格）：
+# RuntimeFailureCategory 是整个生命周期的归因池，但 finalize Outcome v2
+# 只许出现前两类——第三类是准入/控制/审计时刻的判定，混进执行归因会把
+# 完整成员倒写成缺员（例：staleness 是消费时刻 present_but_not_admissible
+# 的理由，不是"执行未产生"）。分区等式由导入自检 + 13×3 矩阵测试保证。
+FAILURE_CATEGORIES_EXECUTION_FACT = frozenset({
+    # missing 的合法归因：执行事实未完整产生的原因
+    "model_proxy_failure",
+    "inference_service_failure",
+    "sandbox_crash",
+    "harness_crash",
+    "worker_crash",
+    "capture_incomplete",
+    "token_alignment_failure",
+})
+FAILURE_CATEGORIES_GRADING = frozenset({
+    # present_* 的唯一合法归因（勘误 2 受控通道：评分故障只动 reward）
+    "grading_infra_failure",
+})
+FAILURE_CATEGORIES_ADMISSION_CONTROL = frozenset({
+    # 准入/控制/审计判定——不得进入 finalize Outcome v2 的任何 completion
+    "staleness_exceeded",   # 消费时刻准入（present_but_not_admissible）
+    "security_violation",   # 准入永久拒绝材料（AdmissionReport/审计面）
+    "identity_conflict",    # task quarantine 控制面归因
+    "contract_violation",   # run halt 控制面归因
+    "cleanup_failure",      # 执行事实冻结之后的运维故障
+})
+
+# 分区导入自检（D4 风格）：三集合并集 = RuntimeFailureCategory 全集且
+# 两两不交——枚举加值而三分漏编时导入即炸，不等测试跑。
+_FC_FAMILIES = (
+    FAILURE_CATEGORIES_EXECUTION_FACT,
+    FAILURE_CATEGORIES_GRADING,
+    FAILURE_CATEGORIES_ADMISSION_CONTROL,
+)
+assert frozenset().union(*_FC_FAMILIES) == frozenset(get_args(RuntimeFailureCategory)), \
+    "failure category 三分并集 != 全集"
+assert sum(len(f) for f in _FC_FAMILIES) == len(get_args(RuntimeFailureCategory)), \
+    "failure category 三分存在交叠"
+
 # completion 三值事实层（决策包 D1a 推导关系）：只由 runtime/capture/
 # quiescence/snapshot 完整性决定（勘误 2：评分事实不参与 completion）。
 # v1 的 permanent_rejection 是**准入判定**不是 completion 事实，v2 不再
@@ -429,13 +472,28 @@ class RolloutAttemptOutcomeV2(StrictModel):
                 "failure_category=model_proxy_failure + "
                 "reason_code=max_regenerations_exceeded。"
             )
-        # --- failure_category 归属 ---
-        if cc == "missing" and self.failure_category is None:
-            raise ValueError("missing 必须携带 failure_category 归因（含 capture_incomplete）。")
+        # --- failure_category 归属（三分封闭集合，P1-1）---
+        if cc == "missing" and self.failure_category not in FAILURE_CATEGORIES_EXECUTION_FACT:
+            raise ValueError(
+                f"missing 的 failure_category 必须属于执行事实集合"
+                f"（得到 {self.failure_category}）——评分/准入/控制面归因"
+                "不得倒写 completion（勘误 2 + 消费时刻判定分离）。"
+            )
         if cc != "missing" and self.failure_category not in (None, "grading_infra_failure"):
             raise ValueError(
                 f"present_* 只允许 failure_category ∈ {{None, grading_infra_failure}}"
                 f"（得到 {self.failure_category}）——执行没失败，失败归因属 missing。"
+            )
+        # --- 四层身份强制（P1-2，D2/F2-1a）：v2 是正式 execution 级账目 ---
+        if self.identity.physical_attempt_id is None:
+            raise ValueError(
+                "Outcome v2 必须携带 physical_attempt_id（crash replay 的两次"
+                "物理 attempt 否则不可区分——D2 四层身份）。"
+            )
+        if self.identity.branch_id is not None:
+            raise ValueError(
+                "Outcome v2 是 execution 级账目，identity.branch_id 必须为 None"
+                "（branch 聚合在投影层，不在执行结果层）。"
             )
         # --- 勘误 2：reward 可用性 ⟺ task_outcome，completion 不参与 ---
         if (self.task_outcome == "unknown") != self.reward_unavailable:

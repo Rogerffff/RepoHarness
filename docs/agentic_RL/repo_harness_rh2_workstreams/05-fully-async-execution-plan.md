@@ -159,6 +159,12 @@
 > `permanent_rejection` 混合了执行事实与准入决定——能由原始 evidence
 > 重建则迁移，无法重建标 `legacy_unmappable`/audit-only，**禁止把
 > permanent_rejection 默认映射成 missing**；正式链只生产 v2）。
+> **F2-1b 完成口径（codex F2-1b 审查定）**：本切片交付 = schema +
+> crosswalk + 双版本读取 + src 无 v1 构造点静态守卫；**生产 finalize →
+> Outcome v2 producer 接线不在本切片**——真实 producer（quiescence 后
+> 按完整性事实构造 v2）、持久化、assembler 消费测试钉进 F2-2 起的
+> 切片验收（F2-2 产 completion 事实、F2-5 collector 消费），静态扫描
+> 只防倒退不证明接线。
 > Observability V0 后续切片只做增量事件接线，F2-6 统一验收；
 > `FaultDomainMonitor` 归 **FA-2B**。
 >

@@ -32,7 +32,18 @@ timing_clock_domain，**区间⟺domain 双向一致校验**——脱离时钟�
 epoch 副本 + wall_clock_domain_id，写 record 时各只读一次）不派生
 chargeable。训前处理项（codex 复核二轮登记）：proc-{pid} 非严格进程
 incarnation（fork 继承同值/pid 复用），F2-3/F2-4 前改含 incarnation 且
-fork 后刷新的 ID；非法遥测计数随 F2-3。**F2-1b Outcome v2 与 crosswalk：完成**：
+fork 后刷新的 ID；非法遥测计数随 F2-3。**F2-1b Outcome v2 与 crosswalk：
+schema + crosswalk 完成（producer 接线不在本切片，归 F2-2 起——见 05
+计划完成口径）**；codex F2-1b 审查三 P1 已闭合：① failure category
+三分封闭集合（执行事实 7 值 = missing 唯一合法归因池 / grading 1 值 =
+present_* 唯一 / 准入·控制·审计 5 值不进 finalize Outcome——staleness
+是消费时刻判定，混入会把完整成员算成缺员）+ 13×3 显式矩阵测试；
+② v2 强制四层身份（physical_attempt_id 必填、branch_id 必须 None），
+crosswalk 加结构性前置门（branch 视角/身份不可重建 → legacy_unmappable，
+证据可补 paid）；③ crosswalk fail-closed（证据 evidence_refs ≥1；结果
+validator 强制 status ⟺ v2 在场性；permanent_rejection 迁移产物 =
+**migrated_audit_only** 独立状态 + trainable_v2() 唯一训练提取口对其
+返回 None——只读 status/v2 的消费者拿不到被禁轨迹）。
 `contracts/fa_runtime.py` 新增 TerminationKind 五族（与决策包 D1a 逐字
 一致，集合等式测试保证并集=全集且两两不交）+ RolloutAttemptOutcomeV2
 （completion 三值事实层 present_complete/present_truncated/missing；

@@ -4922,3 +4922,120 @@ wall_clock_domain_id
 ```
 
 F2-1b 与这些问题没有架构依赖；若已经并行开工无需撤回，但不能把 F2-0b 契约标成最终闭合。
+
+
+---
+
+## codex F2-1b 审查（2026-08-15，3 P1 契约缺口 + 完成口径修正——全部采纳）
+
+**结论**
+
+F2-0b 上轮两个 P1 已正确闭合。F2-1b 仍有 **3 个 P1 契约问题**，暂不建议直接进入 F2-2 实现。它们都能用一个聚焦提交修复，不需要新 T0 或 GPU。
+
+**P1：failure category 仍可倒写错误的 completion**
+
+[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:432)只要求 `missing` 有任意 `failure_category`，因此以下非法状态均能构造：
+
+```text
+completion=missing
+termination=completed
+failure_category=grading_infra_failure
+```
+
+这直接违反“评分故障不倒写 completion”。
+
+同样可以构造：
+
+```text
+completion=missing
+failure_category=staleness_exceeded
+```
+
+但 staleness 是消费时刻的 `present_but_not_admissible`，不是执行未产生。它会让完整成员被错误算成缺员，进而丢掉整个 prompt group。
+
+建议按已批准 D4 定义封闭集合，例如：
+
+```text
+missing 可用的 execution failure categories
+present 可用的 grading category
+只属于 admission/control/audit、不得进入 finalize Outcome 的 categories
+```
+
+并对 `13 failure categories × 3 completion classes` 做显式期望矩阵测试。当前“42 组合”只穷举 termination/crosswalk，覆盖不到这个问题。
+
+**P1：Outcome v2 没有强制四层身份**
+
+[fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:337)仍接受：
+
+```text
+physical_attempt_id=None
+physical_attempt_seq=None
+branch_id="任意 branch"
+```
+
+但 v2 是正式 execution 级 Outcome，按 F2-1a/D2 应当：
+
+```text
+physical_attempt_id 必填
+physical_attempt_seq 必填
+branch_id 必须为 None
+```
+
+否则 crash replay 的两个物理 attempt 仍可能生成无法区分的 Outcome。
+
+相应地，crosswalk 遇到缺少 physical identity 的历史 v1 时，应：
+
+- 有审计证据可重建才迁移；
+- 无法重建则 `legacy_unmappable`；
+- 不应产生身份不完整但名义上合法的 v2。
+
+**P1：crosswalk 的“证据”和结果状态仍然 fail-open**
+
+[outcome_crosswalk.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/outcome_crosswalk.py:73)允许：
+
+```python
+V1TerminationEvidence(
+    termination_kind="completed",
+    evidence_refs=[],
+)
+```
+
+因此调用方仍能没有任何审计引用地“声明”终止事实并完成迁移，不符合“迁移不捏造”。
+
+[OutcomeCrosswalkResult](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/outcome_crosswalk.py:86)也接受：
+
+```text
+status=migrated, v2=None
+status=legacy_unmappable, v2=<某个 v2>
+```
+
+此外，永久拒绝目前返回 `status=migrated + present_* v2 + legacy_admission_verdict`。若消费者只读取 `status/v2` 而漏看 verdict，安全拒绝轨迹可能重新进入训练。
+
+建议：
+
+- `V1TerminationEvidence.evidence_refs` 至少一条；
+- validator 强制 `status=migrated ⇔ v2 存在`；
+- 永久拒绝使用明确的 audit-only/rejected 状态，或提供一个 fail-closed 的训练提取接口；
+- 测试证明忽略 verdict 不能拿到可训练 v2。
+
+**完成口径**
+
+[test_f2_1b_outcome_v2.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/contracts/test_f2_1b_outcome_v2.py:267)的静态扫描只能证明“当前源码没有构造 v1”，不能证明“正式链已经生产 v2”，因为当前生产路径根本没有 Outcome v2 producer。
+
+建议将状态写成：
+
+```text
+F2-1b schema + crosswalk 完成
+生产 finalize -> Outcome v2 接线归 F2-2/后续明确切片
+```
+
+并把真实 producer、持久化和 assembler 消费测试钉进 F2-2 验收。
+
+**验证**
+
+- 专项：`50 passed`
+- 全套：`955 passed`
+- ruff：通过
+- `inspect-rh2-s1`：通过
+
+测试全绿，但上述反例均可直接构造，说明是测试 oracle 缺口。建议先修前三项，再进入 F2-2；F2-2 的方案设计可以并行准备。
