@@ -5141,3 +5141,99 @@ slime _sid_turn_count
 验证
 现有测试均通过：974 passed；目标测试 11 passed；ruff 和 inspect-rh2-s1 均通过。上述问题之所以漏过，主要是现有测试没有覆盖交付后失败、完整持久审计、缺失 revoke、非零 timeout 和非零 group_index。
 建议 Claude 先修 P0 1–3，再修 timeout 与身份字段；容量问题可登记到 F2-3/F2-5，但必须绑定正式训练闸门。
+
+
+---
+
+## codex F2-2 复核二轮（2026-08-15，2 P0 + 3 一般 + T0 修订——全部采纳；T0 用户批准 codex 版本 = 勘误 3）
+
+**结论**
+
+本轮 capability 隔离方向正确，977 个测试、ruff、S1 inspector 均通过。但仍有 **2 个 P0 阻塞问题**，F2-2 还不能闭合，也不应立即进入 F2-3。新增 T0 的方案空间也需要补全后再拍板。
+
+**P0 阻塞问题**
+
+1. **Outcome 已是 `missing`，样本却仍能进入 fully-async collector。**
+
+[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1868) 仍调用 `_deliver()` 正常交付；[_deliver()](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2307) 完全不检查 Outcome。过渡 collector 又只检查 `remove_sample`，[rollout_entry.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/experiments/fa_bringup/rollout_entry.py:64)。
+
+实测三种情况：
+
+```text
+正常退出 + runtime_quiescence=false
+-> Outcome=missing
+-> remove_sample=false
+-> collector_member_ok=true
+
+hard_wall_timeout
+-> Outcome=missing
+-> remove_sample=false
+-> collector_member_ok=true
+
+正式身份字段不完整
+-> Outcome=None
+-> remove_sample=false
+-> collector_member_ok=true
+```
+
+现有测试甚至把这种矛盾写成正确预期：[test_f2_2_capability.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/tests/adapters/test_f2_2_capability.py:230)。
+
+修复验收条件：`missing`、Outcome 缺失、`decision_deferred` 的 hard-wall 成员都不得进入当前 collector；应返回 abort 形状或由 collector 显式拒绝。S1 兼容路径可以保持不变。
+
+2. **完整 Runtime 静止前仍对活动 workspace 评分。**
+
+代码只完成 `revoke + session drain`，[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1738) 随后立即把原 rollout workspace 交给 grader，[generate.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2245)。
+
+这对 `exit=-1` 尤其危险：slime 只是停止轮询 done marker，`setsid` 启动的 Claude Code 进程仍可能运行和写文件。当前是在活动目录上评分，违反已经批准的：
+
+```text
+终止 execution scope
+-> 确认无进程、无写入、无模型请求
+-> 冻结 snapshot
+-> 只评分冻结 snapshot
+```
+
+若完整屏障要留到后续切片，那么 F2-2 的正式 FA 路径必须先 fail-fast 或只产不可训练审计结果，不能继续评分和交付。更合理的是增加 F2-2b Runtime barrier；不要把 Runtime ownership 混进以 capture 单 owner 为主的 F2-3。
+
+**一般问题**
+
+- 身份完整但评分基建失败时，当前先构造出非法的 `missing + grading_infra_failure`，触发 `ValidationError`，随后被改记为 `capture_incomplete + unmapped_failure_code`。[outcome_producer.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/outcome_producer.py:141)  
+  实测确实如此。应保留 GradingReport 的真实故障，同时让 completion 的主要原因独立归因，不应产生内部校验错误。
+
+- 报告声称 fingerprint 机制已删除，但代码、测试和文档仍保留；模块还写着“token 就是 wire sid”，与新实现相反：[session_capability.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/session_capability.py:12)、[bringup.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:354)。这些涉及安全拓扑，应立即统一，避免以后重新把秘密当标识符。
+
+- `DuplicateActiveSessionError` 等临时挡板的移除条件仍写为 F2-2，但代码仍保留。应明确改判为“永久身份碰撞守卫”，或登记新的移除条件。
+
+**新增 T0**
+
+不建议直接在现有 A/B 中选择。当前选项把两件不同事情混在一起：
+
+```text
+barrier 尚未实现
+!=
+barrier 已执行但无法建立静止
+```
+
+建议把方案 A 修订为：
+
+```text
+新增 runtime_quiescence_failure
+仅在 Runtime barrier 已真实执行但失败时使用
+
+reason_code 再区分：
+- execution_scope_termination_timeout
+- active_writer_detected
+- late_model_request_detected
+- snapshot_freeze_failed
+- snapshot_integrity_mismatch
+```
+
+“屏障尚未实现”应由启动闸门表达，不应成为每条 rollout 的故障统计。
+
+另外，“给 v2 枚举加值向后兼容”的表述不准确：旧严格消费者会拒绝新枚举值。T0 还需明确：
+
+- 若 v2 尚无正式外部资产：批准一次 **pre-formal 原地修订**；
+- 若 v2 已视为冻结公共契约：升 schema 版本；
+- 同步补 D4 recovery 映射、集合等式测试和旧 artifact 读取测试。
+
+因此我的建议是：先把上述两个 P0 和 T0 方案补全，再关闭 F2-2。当前不建议直接进入 F2-3。

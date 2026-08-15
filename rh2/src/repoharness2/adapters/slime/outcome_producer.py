@@ -30,6 +30,7 @@ from __future__ import annotations
 from typing import Literal
 
 from repoharness2.contracts.fa_runtime import (
+    FAILURE_CATEGORIES_EXECUTION_FACT,
     TERMINATION_KINDS_INFRA,
     TERMINATION_KINDS_NORMAL,
     ExecutionIdentity,
@@ -141,18 +142,16 @@ def build_outcome_v2(
     if completion == "missing":
         # missing 归因必须属执行事实集合；调用方未给时兜底 capture_incomplete
         # （missing 的两条推导来源之一就是账目不完整）
-        fc = failure_category or "capture_incomplete"
+        # 复核二轮一般 1：归因过滤到执行事实集合——评分归因（grading_
+        # infra_failure）不得混进 missing（勘误 2），真实评分故障经
+        # failed_component/evidence 保留，不制造内部 ValidationError
+        fc = (
+            failure_category
+            if failure_category in FAILURE_CATEGORIES_EXECUTION_FACT
+            else "capture_incomplete"
+        )
         task_outcome: Literal["resolved", "unresolved", "unknown"] = "unknown"
         reward_unavailable = True
-        # 复核 P0-1：runtime 屏障未确认导致的 missing 显式留因——完整
-        # quiescence（sandbox scope 终止/snapshot 冻结）落地前正式链所有
-        # 记录都走这条（present_* 被压制的原因必须在审计可见）
-        if (
-            reason_code is None
-            and not quiescence_confirmed
-            and termination_kind not in TERMINATION_KINDS_INFRA
-        ):
-            reason_code = "runtime_quiescence_unconfirmed"
     else:
         # present_*：执行没失败——失败归因只保留勘误 2 通道
         # （grading_infra_failure 且仅当评分确实不可得），其余不进 present 记录

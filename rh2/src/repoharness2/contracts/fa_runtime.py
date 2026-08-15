@@ -85,6 +85,13 @@ RuntimeFailureCategory = Literal[
     "identity_conflict",  # 镜像 digest/base commit/bundle 血缘矛盾（task quarantine 归因）
     "contract_violation",  # schema/账目对账矛盾（run halt 归因）
     "cleanup_failure",  # 清理失败（资源泄漏风险）
+    # T0 2026-08-15（pre-formal 原地修订，v2 无正式外部资产时批准）：
+    # Runtime 静止屏障**已真实执行但失败**——"屏障尚未实现"由启动闸门
+    # 表达，不用本值（不进每 rollout 故障统计）。reason_code 细分：
+    # execution_scope_termination_timeout / active_writer_detected /
+    # late_model_request_detected / snapshot_freeze_failed /
+    # snapshot_integrity_mismatch
+    "runtime_quiescence_failure",
 ]
 
 
@@ -322,6 +329,7 @@ FAILURE_CATEGORIES_EXECUTION_FACT = frozenset({
     "worker_crash",
     "capture_incomplete",
     "token_alignment_failure",
+    "runtime_quiescence_failure",  # T0 2026-08-15：屏障执行失败 ⇒ missing 合法归因
 })
 FAILURE_CATEGORIES_GRADING = frozenset({
     # present_* 的唯一合法归因（勘误 2 受控通道：评分故障只动 reward）

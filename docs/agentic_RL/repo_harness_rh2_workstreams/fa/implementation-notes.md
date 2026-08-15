@@ -93,8 +93,21 @@ workspace 冻结面（owner F2-3+，落地后 runtime_quiescence_confirmed 才
 （F2-5）；**长运行无界状态**（复核 P1-6：orchestrator.audits/
 outcomes 两内存列表 owner=F2-5/F2-6 durable manifest 落地时改滚动；
 slime closed/`_sid_turn_count` 两容器 owner=FA-5 容量测试 + adapter
-轮换机制，绑定 `rh2_formal_training_allowed` 闸门前置）。下一切片 = **F2-3 request 级 capture + 单
-owner**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
+轮换机制，绑定 `rh2_formal_training_allowed` 闸门前置）。**F2-2 复核二轮（2 P0 + 3 一般 + T0 修订，全采纳）**：
+① 正式路径完整屏障前 **audit-only 收口**——capture 关账后不评分（活动
+workspace 上评分违反"只评冻结副本"）、不交付（abort 形状，collector
+_member_ok 拒绝），Outcome=missing + reason_code=
+runtime_barrier_unavailable；S1 兼容路径不变；② producer missing 归因
+过滤到执行事实集合（评分故障不再制造内部 ValidationError，真实故障经
+failed_component/evidence 保留）；③ fingerprint 机制彻底删除 + 模块
+docstring 改为三层身份定稿（秘密只认证，标识符不保密）；④ T0 勘误 3
+落地：RuntimeFailureCategory pre-formal 原地修订 +
+runtime_quiescence_failure（仅屏障执行失败；未实现走启动闸门）+ D4
+表 1 行 + 集合等式测试；⑤ DuplicateActiveSessionError 改判永久身份
+碰撞守卫；中毒 SID 拒 register 挡板解除（poison 已按 attempt 绑定）。
+下一切片 = **F2-2b Runtime 静止屏障**（scope 终止/写入归零确认/
+snapshot 冻结/只评冻结副本；落地时解除 audit-only 挡板），然后
+F2-3 request 级 capture + 单 owner；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
@@ -131,8 +144,8 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 | 挡板 | 加于 | 移除条件 |
 |------|------|----------|
 | overlap fail-fast（并行 subagent 被拒） | 轮次 9 | F2-3 request 级归属落地；且列入 `rh2_formal_training_allowed` 前置 |
-| DuplicateActiveSessionError | 轮次 12 | **F2-2**（身份与 capability 真正分离后才可拆；F2-1a 只落了身份，二审确认移除条件后移） |
-| 中毒 SID（含归档）拒绝 register | 轮次 11 | F2-1/F2-2 身份与凭证分离（poison 改绑 session/attempt） |
+| ~~DuplicateActiveSessionError~~ | 轮次 12 | **改判永久身份碰撞守卫**（2026-08-15 F2-2 复核二轮）：per-attempt internal sid 下重复注册不该自然发生，该守卫从"临时挡板"转正为不变量（碰撞 = 身份铸造/贯穿 bug 的第一现场），不再列移除条件 |
+| ~~中毒 SID（含归档）拒绝 register~~ | 轮次 11 | **已解除**（2026-08-15 F2-2：poison 按 internal sid = 按 attempt 绑定，稳定 SID 拉黑面消失；register 前置 poison.check 保留为常规防御） |
 | StaticActiveCoordinator（永远 ACTIVE，只保守缺员） | 轮次 7 | FA-4 真协调器（consensus version） |
 | ~~capture_wire/glue 住在 experiments/~~ | S1 沿革 | **已解除**（2026-08-07 F2-0，commit f8580789——src 唯一权威 + 薄兼容壳；壳兼容范围 = 导出对象 identity + 旧动态入口可解析，**不承诺旧模块全局变量重绑传播**） |
 | ruff F401 豁免（s2_1_ingestion/resolve_image_digests.py） | 2026-07-24 | owner = S2 线程；S2 收敛后清理并删豁免；gate = 训前总审计前 |

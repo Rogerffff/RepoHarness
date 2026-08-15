@@ -352,8 +352,8 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "wall_clock_domain_id": PROCESS_CLOCK_DOMAIN,
         "non_chargeable_intervals": list(audit.non_chargeable_intervals),
         # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
-        # assembler 消费归 F2-5）。session_id 自 F2-2 起是 capability
-        # fingerprint（capfp- 前缀）——凭证秘密不落盘
+        # assembler 消费归 F2-5）。session_id 自 F2-2 复核起 = 非秘密
+        # internal sid（s- 前缀）；capability token 只认证不落任何持久面
         "session_plane_drained": audit.session_plane_drained,
         "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,

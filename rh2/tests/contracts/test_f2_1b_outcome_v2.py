@@ -410,6 +410,22 @@ def test_evidence_and_result_fail_closed():
                                legacy_admission_verdict="permanent_rejection")
 
 
+def test_erratum3_runtime_quiescence_failure_value():
+    """勘误 3（T0 2026-08-15）：runtime_quiescence_failure 属执行事实集合
+    ——仅屏障真实执行失败时用（五 reason_code 之一）；pre-formal 原地
+    修订后旧记录照常读取（无正式外部资产，无兼容断裂）。"""
+
+    rec = _v2(**_v2_missing_kwargs(
+        termination_kind="hard_wall_timeout",
+        failure_category="runtime_quiescence_failure",
+        reason_code="active_writer_detected"))
+    assert rec.failure_category == "runtime_quiescence_failure"
+    # 旧 artifact 读取：修订前的合法类别构造的记录 JSON 往返不受影响
+    old = _v2(**_v2_missing_kwargs(failure_category="sandbox_crash"))
+    got = read_rollout_attempt_outcome(old.model_dump(mode="json"))
+    assert got == old
+
+
 # ---------------------------------------------------------------------------
 # 双版本读取 + src 无 v1 构造点守卫
 # ---------------------------------------------------------------------------

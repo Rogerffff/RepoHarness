@@ -137,7 +137,13 @@
 > SID 冒充 physical attempt，破坏身份语义）→ **F2-0b Observability V0
 > 事件接线**（计时提案"V0 唯一可执行清单"，每事件带 physical_attempt_id）
 > → **F2-1b Outcome v2 与 crosswalk** → F2-2
-> session capability + Runtime quiescence → F2-3 request 级 capture +
+> session capability + 会话面排空 → **F2-2b Runtime 静止屏障**（复核
+> 二轮增设，Runtime ownership 不混进以 capture 单 owner 为主的 F2-3）：
+> 终止 execution scope（容器/cgroup 级）→ 确认无进程/无写入/无在飞
+> 模型请求 → 冻结不可变 workspace snapshot → **只对冻结副本评分**；
+> 屏障真实执行且失败 → runtime_quiescence_failure（勘误 3 五
+> reason_code）；落地时解除"正式路径 audit-only + abort"挡板并允许
+> runtime_quiescence_confirmed=True → F2-3 request 级 capture +
 > 单 owner → F2-4 checkpoint recovery → F2-5 collector 不变量 →
 > F2-6 durable manifest。
 >

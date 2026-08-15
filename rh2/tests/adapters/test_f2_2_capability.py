@@ -25,10 +25,7 @@ from repoharness2.adapters.slime.outcome_producer import (
     build_outcome_v2,
     derive_completion,
 )
-from repoharness2.adapters.slime.session_capability import (
-    capability_fingerprint,
-    mint_session_capability,
-)
+from repoharness2.adapters.slime.session_capability import mint_session_capability
 from repoharness2.contracts.fa_runtime import (
     TERMINATION_KINDS_INFRA,
     TERMINATION_KINDS_NORMAL,
@@ -50,16 +47,16 @@ class _Hook:
 # ---------------------------------------------------------------------------
 
 def test_capability_minting_shape_and_uniqueness():
-    """128-bit 随机、cap- 前缀；同 paid 两次铸造必不同（replay = 新凭证）；
-    fingerprint 确定、可落盘、不等于 token。"""
+    """128-bit 随机、cap- 前缀；同 paid 两次铸造必不同（replay = 新凭证）。"""
 
     a = mint_session_capability("exec#p1-x")
     b = mint_session_capability("exec#p1-x")
     assert a.token != b.token  # 每次铸造全新
     assert a.token.startswith("cap-") and len(a.token) == 4 + 32  # 128-bit hex
-    assert a.fingerprint.startswith("capfp-") and a.fingerprint != a.token
-    assert a.fingerprint == capability_fingerprint(a.token)  # 确定性回链
     assert a.physical_attempt_id == "exec#p1-x"
+    # fingerprint 机制已删（复核二轮一般 2）：token 不落任何持久面，
+    # 无需可落盘的关联指纹——SessionCapability 只剩 token + paid
+    assert not hasattr(a, "fingerprint")
 
 
 # ---------------------------------------------------------------------------
@@ -227,10 +224,10 @@ def _stamp_fa_identity(sample) -> None:
     })
 
 
-async def test_e2e_quiescence_order_capability_hygiene_and_outcome():
-    """真实编排链（dense fixture）：撤销先于会话面排空；**完整持久审计
-    记录**全文无 capability 秘密；runtime 完整屏障未落地 → 成功收口也只
-    产 missing + 显式 reason_code（复核 P0-1：不产 present_*）。"""
+async def test_e2e_formal_path_audit_only_pre_barrier():
+    """复核二轮 P0-1/P0-2：完整屏障前，正式路径不评分、不交付——
+    abort 形状（collector 拒绝）+ audit-only missing Outcome；持久审计
+    全文无 capability 秘密；撤销先于会话面排空。"""
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
@@ -241,20 +238,31 @@ async def test_e2e_quiescence_order_capability_hygiene_and_outcome():
     )
     audit = chain.orchestrator.audits[0]
 
-    # 事实拆分（P0-1）：会话面排空 True；runtime 完整屏障未实现恒 False
+    # P0-2：评分从未发生（活动 workspace 不许评）
+    assert chain.grading.calls == []
+    # P0-1：交付 = abort 形状，collector（_member_ok 语义）拒绝
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "experiments"))
+    from fa_bringup.rollout_entry import _member_ok
+
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    assert _member_ok(delivered) is False
+    assert "formal_chain_audit_only_pre_barrier" in [e.step for e in audit.timeline]
+
+    # 事实拆分（P0-1 一轮）：会话面排空 True；runtime 屏障恒 False
     names = [e.step for e in audit.timeline]
-    assert audit.session_plane_drained and "session_plane_drained" in names
-    assert audit.runtime_quiescence_confirmed is False
+    assert audit.session_plane_drained and audit.runtime_quiescence_confirmed is False
     adapter = chain.adapter_ref["adapter"]
     assert adapter.revoked == adapter.finished  # 同一 internal sid
     assert names.index("session_revoked") < names.index("session_plane_drained")
 
-    # 三层身份：internal sid 非秘密（s-{paid}）；token 只进 harness
+    # 三层身份：internal sid 非秘密；token 只进 harness
     assert audit.session_id == "s-exec_F22#p1-cafe1234"
     token = chain.driver.calls[0]["session_id"]
     assert token.startswith("cap-") and token != audit.session_id
 
-    # 凭证卫生（P0-3 验收）：**完整持久 audit record** 全文扫描无 token
+    # 凭证卫生（P0-3 验收）：完整持久 record 全文扫描无 token
     import tempfile
 
     from repoharness2.adapters.slime.bringup import write_execution_audit_record
@@ -263,22 +271,18 @@ async def test_e2e_quiescence_order_capability_hygiene_and_outcome():
         jsonl = Path(td) / "execution_audit.jsonl"
         write_execution_audit_record(None, audit, jsonl)
         record_text = jsonl.read_text(encoding="utf-8")
-        assert token not in record_text  # 秘密不落盘（全文扫描，非挑选字段）
+        assert token not in record_text
         assert "cap-" not in record_text
-        assert audit.session_id in record_text  # internal sid 正常留档
+        assert audit.session_id in record_text
 
-    # producer（P0-1）：runtime 屏障未落地 → missing + 显式留因；
-    # 身份完整贯穿（group_index=5 不再被伪造成 0——P1-5）
+    # audit-only Outcome：missing + 屏障不可用留因；身份完整贯穿（P1-5）
     ov2 = audit.outcome_v2
     assert ov2 is not None
     assert ov2["completion_class"] == "missing"
-    assert ov2["reason_code"] == "runtime_quiescence_unconfirmed"
-    assert ov2["termination_kind"] == "completed"
+    assert ov2["reason_code"] == "runtime_barrier_unavailable"
     assert ov2["identity"]["group_index"] == 5
-    assert ov2["identity"]["physical_attempt_id"] == "exec_F22#p1-cafe1234"
     assert ov2["member_slot"] == 2
     assert len(chain.orchestrator.outcomes) == 1
-    assert delivered  # 交付本身正常
 
 
 async def test_e2e_failure_path_produces_missing_outcome():
@@ -303,28 +307,34 @@ async def test_e2e_failure_path_produces_missing_outcome():
     assert chain2.orchestrator.audits[0].outcome_v2 is None
 
 
-async def test_deliver_failure_keeps_single_terminal_outcome():
-    """codex F2-2 复核 P0-2：成功 Outcome 写入后 _deliver 抛错，异常分支
-    不得追加第二条——每 physical attempt 终态 CAS，总数恒 1。"""
+async def test_outcome_terminal_cas_single_write():
+    """复核 P0-2：终态 CAS——同一 audit 第二次生产不追加不改写（屏障
+    落地恢复交付后，deliver 失败路径靠它保持 Outcome 恒一条）。"""
 
-    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+    from repoharness2.adapters.slime.generate import RolloutAudit, RolloutOrchestrator
 
-    chain = build_dense_chain()
-    _stamp_fa_identity(chain.base_sample)
-    orch = chain.orchestrator
-
-    def _boom(**kwargs):
-        raise RuntimeError("deliver plumbing exploded")
-
-    orch._deliver = _boom  # 交付面故障注入（成功 Outcome 已写入之后）
-    await orch.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    audit = orch.audits[0]
-    # 终态唯一：内存视图与持久视图一致，completion 为第一次终态（执行
-    # 事实），deliver 故障进 failure_records 而不是改写 Outcome
+    orch = RolloutOrchestrator.__new__(RolloutOrchestrator)  # 只用 producer 面
+    orch.outcomes = []
+    audit = RolloutAudit(trajectory_id="t", task_id="k")
+    audit.physical_attempt_id = "exec_C#p1-abcd0000"
+    audit.capture_closed = True
+    meta = {
+        "rh2_rollout_execution_id": "exec_C", "rh2_prompt_group_id": "pg_C",
+        "rh2_group_index": 1, "rh2_member_slot": 0,
+        "rh2_physical_attempt_id": "exec_C#p1-abcd0000",
+        "rh2_physical_attempt_seq": 1,
+    }
+    kw = dict(audit=audit, raw_meta=meta, failure_category=None,
+              reason_code=None, failed_component=None, task_resolved=None,
+              turn_weight_versions=None, current_version_at_finalize=None,
+              eligibility_report_id=None)
+    orch._produce_outcome_v2(termination_kind="completed", **kw)
+    first = audit.outcome_v2
+    assert first is not None and len(orch.outcomes) == 1
+    # 第二次（如 deliver 失败后的异常收口）尝试改写为 harness_crash → 拒
+    orch._produce_outcome_v2(termination_kind="harness_crash", **kw)
+    assert audit.outcome_v2 is first  # CAS：未被改写
     assert len(orch.outcomes) == 1
-    assert audit.outcome_v2["outcome_id"] == orch.outcomes[0].outcome_id
-    assert audit.outcome_v2["termination_kind"] == "completed"
-    assert any(f.stage == "deliver" for f in audit.failure_records)
 
 
 async def test_hard_wall_exit_records_trigger_not_crash():
@@ -339,14 +349,17 @@ async def test_hard_wall_exit_records_trigger_not_crash():
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.termination_kind_hint == "hard_wall_timeout"
-    # 不是 crash：nonzero 拒绝没触发，管线走完（capture/评分照常）
+    # 不是 crash：nonzero 拒绝没触发；正式路径屏障前不评分（P0-2——
+    # -1 后 setsid 的 CC 进程可能仍在写活动 workspace）
     assert not any(
         f.error_type == "SlimeBindingError" and "nonzero" in f.detail
         for f in audit.failure_records
     )
+    assert chain.grading.calls == []
     ov2 = audit.outcome_v2
     assert ov2["termination_kind"] == "hard_wall_timeout"
     assert ov2["completion_class"] == "missing"  # 屏障未落地；处置留 D1b
+    assert ov2["reason_code"] == "runtime_barrier_unavailable"
 
 
 async def test_identity_incomplete_skips_production_no_fabrication():
@@ -364,11 +377,13 @@ async def test_identity_incomplete_skips_production_no_fabrication():
         "rh2_physical_attempt_seq": 1,
         # 故意缺 rh2_prompt_group_id / rh2_group_index / rh2_member_slot
     })
-    await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
+    delivered = await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.outcome_v2 is None
     assert "outcome_v2_skipped_identity_incomplete" in [e.step for e in audit.timeline]
     assert chain.orchestrator.outcomes == []
+    # P0-1：Outcome 缺失的正式成员同样不得进 collector（abort 形状）
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
 
 
 # ---------------------------------------------------------------------------

@@ -1823,6 +1823,32 @@ class RolloutOrchestrator:
             audit.capture_closed = True  # F2-2：记录在场且回链装配完成
             audit.step("step5_leaf_samples_assembled_and_backfilled")
 
+            # F2-2 复核二轮 P0-1/P0-2：完整 Runtime 静止屏障（F2-2b）落地
+            # 前，正式 FA 路径（有 physical attempt 身份）**不评分、不交付**
+            # ——评分会读仍可能被 setsid 后台进程写入的活动 workspace（违反
+            # 已批准的"只评冻结副本"），交付会把 missing 成员送进 collector
+            # （_member_ok 只看 remove_sample）。收口 = audit-only Outcome
+            # （missing + runtime_barrier_unavailable）+ abort 形状（
+            # remove_sample=True → collector 显式拒绝）。S1 兼容路径（无
+            # paid）不受影响。屏障落地后本挡板整块删除。
+            if physical_attempt_id is not None and not audit.runtime_quiescence_confirmed:
+                self._produce_outcome_v2(
+                    audit=audit,
+                    raw_meta=raw_meta,
+                    termination_kind="completed",  # producer 内 hard-wall hint 优先
+                    failure_category=None,
+                    reason_code="runtime_barrier_unavailable",
+                    failed_component=None,
+                    task_resolved=None,
+                    turn_weight_versions=None,
+                    current_version_at_finalize=None,
+                    eligibility_report_id=None,
+                )
+                audit.mark("formal_chain_audit_only_pre_barrier")
+                return self._abort_result(
+                    sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=top_p
+                )
+
             stage = "finalize"
             handshake = self._build_handshake(trajectory_id, samples)
             audit.handshake = handshake

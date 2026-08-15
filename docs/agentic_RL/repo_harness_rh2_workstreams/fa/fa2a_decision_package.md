@@ -26,6 +26,17 @@ owner_decision:
        recovery 与 staleness 控制动作；正式阈值数值延后 pre-RL/FA-5
        校准后单独 T0 预注册）。
 approved_at: 2026-08-07
+errata_3: |
+  勘误 3（2026-08-15，用户批准 codex F2-2 复核二轮 T0 建议）：
+  RuntimeFailureCategory pre-formal 原地修订新增 runtime_quiescence_failure
+  ——仅当 Runtime 静止屏障（F2-2b）**已真实执行但失败**时使用；reason_code
+  细分 execution_scope_termination_timeout / active_writer_detected /
+  late_model_request_detected / snapshot_freeze_failed /
+  snapshot_integrity_mismatch。"屏障尚未实现"由启动闸门表达，不产本值、
+  不进每 rollout 故障统计。修订依据：v2 尚无正式外部资产（producer 未上
+  GPU），旧严格消费者拒新枚举值的兼容问题不存在；若 v2 已冻结则须升
+  schema 版本（本次不适用）。同步：三分封闭集合（归执行事实集）、D4 表 1
+  新行、集合等式测试、旧 artifact 读取测试。
 authoritative_plan_ref: 05-fully-async-execution-plan.md FA-2A 节（已回写为引用本文 approved 语义）
 ```
 
@@ -416,7 +427,7 @@ run_halt 归因。
 描述性合并词，否则承诺的集合相等测试无法执行。实现时对每张表加
 "表键集合 == 枚举集合"断言；未知/未来类别默认 run_halt）：
 
-**表 1：RuntimeFailureCategory（13 值逐字）→ RecoveryAction**
+**表 1：RuntimeFailureCategory（勘误 3 后 14 值逐字）→ RecoveryAction**
 
 | 枚举值 | 动作 |
 |---|---|
@@ -433,6 +444,7 @@ run_halt 归因。
 | `identity_conflict` | task_quarantine（环境血缘矛盾：镜像/commit/bundle） |
 | `contract_violation` | run_halt（含审计持久化失败、runtime 账目矛盾） |
 | `cleanup_failure` | 容器进隔离队列 + reconciler；持续超窗升级组件熔断 |
+| `runtime_quiescence_failure` | 该 execution missing + runtime 域计数；频发超窗升级组件熔断（勘误 3 新增值；屏障**未实现**不产本值——由启动闸门表达） |
 | （未知/未来值） | run_halt |
 
 **表 2：GradingFailureCategory（含本包新增值）→ reward/动作**
