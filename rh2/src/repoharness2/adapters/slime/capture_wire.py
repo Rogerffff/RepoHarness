@@ -132,12 +132,21 @@ class CaptureRegistry:
         # hook/暂存仍在场供 drain/对账；unregister 时一并清（会话关闭即
         # 失效，之后未知 sid 由 guard 的 unknown 分支兜底）。
         self._revoked: set[str] = set()
+        # F2-2 复核 P0-3：capability token 只做**认证**——guard 验证后把
+        # Authorization 重写为非秘密 internal sid，slime 的 store/closed/
+        # turn-count/日志/routing key/异常消息全部只见 internal sid。
+        # token→internal 映射与 hook 同事务绑定/清理。
+        self._capability_tokens: dict[str, str] = {}
+        # 绑定了 token 的 internal sid 集合：这些会话**只能**经 token 认证
+        # 进入——internal sid 非秘密（进日志/审计），直接当 bearer 必须拒
+        self._capability_required: set[str] = set()
 
     def register(
         self,
         sid: str,
         hook: GenerationCaptureHook,
         physical_attempt_id: str | None = None,
+        capability_token: str | None = None,
     ) -> None:
         """会话注册（F2-1a 熔断后所有权收敛版）：hook 与 paid **单锁原子
         绑定**，同生命周期——重复 SID 在任何状态修改前拒绝；绑定发生在
@@ -155,6 +164,9 @@ class CaptureRegistry:
             self.pending.setdefault(sid, [])
             if physical_attempt_id is not None:
                 self._physical_attempt_ids[sid] = physical_attempt_id
+            if capability_token is not None:
+                self._capability_tokens[capability_token] = sid
+                self._capability_required.add(sid)
 
     def assert_session_clean(self, sid: str) -> None:
         """评分/Gate 前边界断言（codex 轮次 12 P0 层 1）：该 SID 不得残留
@@ -238,6 +250,14 @@ class CaptureRegistry:
             self._turn_seq[key] = self._turn_seq.get(key, 0) + 1
             return self._turn_seq[key]
 
+    def resolve_capability(self, token: str | None) -> str | None:
+        """认证：token → internal sid（未知 token → None，guard 拒绝）。"""
+
+        if token is None:
+            return None
+        with self._lock:
+            return self._capability_tokens.get(token)
+
     def revoke(self, sid: str) -> None:
         """撤销 capability（quiescence 序列第一步：HTTP 层拒新请求）。
 
@@ -254,6 +274,10 @@ class CaptureRegistry:
     def unregister(self, sid: str) -> None:
         with self._lock:
             self._revoked.discard(sid)
+            self._capability_tokens = {
+                t: i for t, i in self._capability_tokens.items() if i != sid
+            }
+            self._capability_required.discard(sid)
             self.hooks.pop(sid, None)
             leftover_locked = self.pending.pop(sid, None) or []
             self.session_deadlines.pop(sid, None)
@@ -419,14 +443,24 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
             return await handler(request)
         auth = request.headers.get("Authorization", "")
         token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else None
-        if token:
+        # F2-2 复核 P0-3：capability token 只做认证。命中 token 映射 →
+        # 解析出 internal sid 并**重写 Authorization**，下游（slime
+        # _session_id/store/closed/turn-count/日志/X-SMG-Routing-Key/异常
+        # 消息）只见非秘密 internal sid；token 不进入任何持久面。
+        # 兼容路径：sid 直接注册（启动探针等非秘密 id）→ 原样放行。
+        internal = registry.resolve_capability(token) if token else None
+        effective = internal if internal is not None else token
+        if effective:
             with registry._lock:
-                known = token in registry.hooks
-                revoked = token in registry._revoked
-            poisoned = registry.poison.is_poisoned(token)
+                known = effective in registry.hooks
+                # internal sid 非秘密：token 绑定的会话不许拿 internal 直接进门
+                if internal is None and effective in registry._capability_required:
+                    known = False
+                revoked = effective in registry._revoked
+            poisoned = registry.poison.is_poisoned(effective)
         else:
             known, poisoned, revoked = False, False, False
-        if token is None or not known or poisoned or revoked:
+        if effective is None or not known or poisoned or revoked:
             # F2-2 quiescence：revoked = 撤销后迟到请求（drain 窗口内 hook
             # 仍注册，但 HTTP 层已拒新——排在 unknown 之前判，审计可区分）
             if poisoned:
@@ -439,6 +473,10 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
                 {"error": {"type": f"rh2_{reason}", "message": "session not authorized"}},
                 status=403,
                 headers={"x-should-retry": "false"},
+            )
+        if internal is not None:
+            request = request.clone(
+                headers={**request.headers, "Authorization": f"Bearer {internal}"}
             )
         return await handler(request)
 

@@ -64,31 +64,36 @@ read_rollout_attempt_outcome。registry 注册 v2；"正式链只产 v2"守卫 =
 src 扫描测试（v1 构造只许出现在契约定义/registry/crosswalk 三文件）。
 待 S2 协调项：GradingFailureCategory 新值 test_execution_timeout
 （contracts/grading.py S2 线程优先，D1a 第 2 条要求的三条件构造门随
-其落地）。**F2-2 session capability + Runtime quiescence（会话面）+
-Outcome v2 producer：完成**。① 凭证分离（05 计划 F2-1/F2-2 身份与
-凭证）：wire sid = 每 physical attempt 新铸 `cap-{128bit}` capability
-token（= CC 的 ANTHROPIC_AUTH_TOKEN），稳定身份只留 trajectory_id/
-rollout_execution_id——slime 的 closed 集合与 `_sid_turn_count` 按
-token 键控，replay 天然不沾旧状态（钉死验收四条全过：稳定 SID 复用
-503 问题存在性 / 旧凭证被拒 / 新 attempt 计数全新 / 新请求正常；证明
-两层 = slime 源码语义钉住测试 + 忠实复刻行为验收）。token 是秘密：
-audit/record 只落 `capfp-` 指纹，交付样本 session_id scrub 回稳定键，
-内存查账走 audit.wire_session_scope（不入 record）。poison 随 wire
-sid 键控自动变为按 attempt 绑定（轮次 14 设计规则 1 病根治愈）。
-② 会话面 quiescence 序列：revoke（guard 403 session_revoked 拒新请求）
-→ finish/drain（slime shutdown 语义）→ poison/交付账边界断言 →
-`quiescence_confirmed` + `capture_closed` 两事实（V0 事件
-session_revoked/quiescence_confirmed 已接线）。③ producer
-（outcome_producer.py）：由事实推导 completion（infra ⇒ missing；
-账目不齐 ⇒ missing；completed ⇒ present_complete；horizon/看门狗/
-控制面 ⇒ present_truncated；present 级字段缺 ⇒ missing——finalize
-中途死亡即账目不完整），错误码映射表 + 阶段兜底表全域属性测试证明
-无矛盾组合；成功/异常两收口都产 v2 随 audit record 持久化（勘误 2
-通道 = failed_to_grade → present + reward_unavailable 已接线）；S1
-兼容（无四层身份）不产 v2。F2-2 新增递延：workspace 冻结面（不可变
-snapshot + 只对副本评分）随评分链集成（owner F2-3+）；watchdog 本体
-复用本切片 revoke→drain→confirm 原语（FA-2B/D1b 数值）；outcomes
-assembler 消费 F2-5。下一切片 = **F2-3 request 级 capture + 单
+其落地）。**F2-2 session capability + 会话面排空 + Outcome v2
+producer：完成（codex 复核 3 P0 + 3 P1 全采纳后的语义）**。① 三层身份分离（复核 P0-3 重构）：
+**公开稳定身份**（trajectory_id/rollout_execution_id）/ **非秘密会话
+身份**（internal sid = `s-{paid}`，每 attempt 唯一——slime store/
+closed/`_sid_turn_count`/日志/X-SMG-Routing-Key/异常消息全用它）/
+**秘密凭证**（capability token `cap-{128bit}` = CC 的
+ANTHROPIC_AUTH_TOKEN，**只做认证**：guard 验证后把 Authorization 重写
+为 internal sid，token 不进任何下游；token 绑定的会话拿 internal sid
+直接当 bearer 也被拒）。钉死验收四条全过（slime 源码语义钉住 + 忠实
+复刻行为验收两层证明）；凭证卫生验收 = **完整持久 audit record 全文
+扫描**无 token。poison 按 internal sid 键控 = 按 attempt 绑定（轮次
+14 设计规则 1 病根治愈）。② 会话面排空（复核 P0-1 拆分）：事实拆成
+`session_plane_drained`（revoke→drain→poison/边界断言，已实现）与
+`runtime_quiescence_confirmed`（D1a 完整屏障：sandbox scope 终止/后台
+进程归零/不可变 snapshot/只评冻结副本——**未落地恒 False**）；
+completion 推导只信后者 ⇒ **完整屏障落地前正式链只产 missing +
+reason_code=runtime_quiescence_unconfirmed，不产 present_\***。正式链
+adapter 缺 revoke_session 启动 fail-closed（不再 getattr 跳过）。
+③ producer：终态 **CAS**（每 physical attempt 恒一条 Outcome，deliver
+失败不追加/不改写——复核 P0-2）；slime exit=-1（EXIT_TIME_BUDGET_
+EXCEEDED）→ termination=hard_wall_timeout（不再误归 harness_crash/
+completed，不走 nonzero 拒绝，处置留 D1b——复核 P1-4）；正式路径身份
+字段（group_index/prompt_group_id/member_slot/seq）不全时**不产 v2 不
+补值**（entry 已戳 rh2_group_index 贯穿——复核 P1-5）。F2-2 递延：
+workspace 冻结面（owner F2-3+，落地后 runtime_quiescence_confirmed 才
+允许 True）；watchdog 本体（FA-2B/D1b）；outcomes assembler 消费
+（F2-5）；**长运行无界状态**（复核 P1-6：orchestrator.audits/
+outcomes 两内存列表 owner=F2-5/F2-6 durable manifest 落地时改滚动；
+slime closed/`_sid_turn_count` 两容器 owner=FA-5 容量测试 + adapter
+轮换机制，绑定 `rh2_formal_training_allowed` 闸门前置）。下一切片 = **F2-3 request 级 capture + 单
 owner**；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
 = **false**。测试基线 974。
 

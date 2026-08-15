@@ -74,7 +74,8 @@ def _fake_audit(sid: str, paid: str | None = None) -> types.SimpleNamespace:
         started_epoch_seconds=1000.0,
         started_monotonic=500.0,
         non_chargeable_intervals=[],
-        quiescence_confirmed=True,
+        session_plane_drained=True,
+        runtime_quiescence_confirmed=False,
         capture_closed=True,
         outcome_v2={"schema_id": "rh2.fa.rollout_attempt_outcome.v2"},
         trajectory_id="traj_x",
@@ -147,7 +148,9 @@ def test_write_execution_audit_success_acks_and_enriches(tmp_path):
     assert record["wall_clock_domain_id"].startswith("proc-")
     assert record["non_chargeable_intervals"] == []
     # F2-2：quiescence 事实与 outcome_v2 真实落盘
-    assert record["quiescence_confirmed"] is True and record["capture_closed"] is True
+    assert record["session_plane_drained"] is True
+    assert record["runtime_quiescence_confirmed"] is False  # 完整屏障未落地
+    assert record["capture_closed"] is True
     assert record["outcome_v2"]["schema_id"] == "rh2.fa.rollout_attempt_outcome.v2"
     assert record["timeline"] == [{"name": "step1", "at": 1.0}]  # 时间线不再丢
     assert record["timing_summary"] == {"total_seconds": 2.5}

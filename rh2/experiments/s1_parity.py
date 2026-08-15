@@ -197,6 +197,7 @@ class MockAdapter:
     def open_session(
         self, sid: str, *, sampling_defaults=None, max_context_tokens: int = 0,
         physical_attempt_id: str | None = None,  # F2-1a：paid 经 open 事务传入
+        capability_token: str | None = None,  # F2-2：认证映射（parity mock 不用）
     ) -> None:
         pass
 

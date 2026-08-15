@@ -310,14 +310,10 @@ def write_execution_audit_record(proxy, audit, path) -> None:
 
     attempts_snapshot = []
     if proxy is not None and audit.session_id:
-        # P0-2：attempt 账目按 paid 命名空间；paid 缺失（S1 兼容）回退 wire
-        # scope（F2-2 起 audit.session_id 是 capability fingerprint，而账目
-        # 键是 token——指纹查账必空，须用内存里的 wire_session_scope）
-        _attempt_scope = (
-            audit.physical_attempt_id
-            or getattr(audit, "wire_session_scope", None)
-            or audit.session_id
-        )
+        # P0-2：attempt 账目按 paid 命名空间；paid 缺失（S1 兼容）回退
+        # audit.session_id（F2-2 复核后 = 非秘密 internal sid，与 wire
+        # 账目键一致——token 只做认证，不再是任何键）
+        _attempt_scope = audit.physical_attempt_id or audit.session_id
         attempts_snapshot = proxy.snapshot_attempts(_attempt_scope)
     finalized = audit.finalized
     eligibility_ref = None
@@ -358,7 +354,8 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
         # assembler 消费归 F2-5）。session_id 自 F2-2 起是 capability
         # fingerprint（capfp- 前缀）——凭证秘密不落盘
-        "quiescence_confirmed": audit.quiescence_confirmed,
+        "session_plane_drained": audit.session_plane_drained,
+        "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,
         "outcome_v2": audit.outcome_v2,
         "harness_exit_code": audit.harness_exit_code,
@@ -414,12 +411,17 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
     class PerRolloutAdapter:
         def open_session(
             self, sid, *, sampling_defaults=None, max_context_tokens=0,
-            physical_attempt_id=None,
+            physical_attempt_id=None, capability_token=None,
         ):
             # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
             # 注册。F2-1a 熔断后收敛：paid 与 hook 同一原子注册、同一
-            # rollback（不存在预登记残留面）。
-            registry.register(sid, hook, physical_attempt_id=physical_attempt_id)
+            # rollback（不存在预登记残留面）。F2-2 复核 P0-3：capability
+            # token（认证映射）同事务绑定/回滚。
+            registry.register(
+                sid, hook,
+                physical_attempt_id=physical_attempt_id,
+                capability_token=capability_token,
+            )
             try:
                 shared_adapter.open_session(
                     sid,

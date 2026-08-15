@@ -184,6 +184,7 @@ class MockSessionAdapter:
         sampling_defaults: dict | None = None,
         max_context_tokens: int = 0,
         physical_attempt_id: str | None = None,
+        capability_token: str | None = None,  # F2-2：认证映射（mock 记录可选）
     ) -> None:
         if sid in self.opened:  # 真实 BaseAdapter.open_session 的唯一性约束
             raise ValueError(f"session_id {sid!r} already exists")
@@ -222,9 +223,15 @@ class MockClaudeCodeDriver:
 
     name = "mock_harness"
 
-    def __init__(self, adapter_ref: dict[str, MockSessionAdapter], crash: Exception | None = None):
+    def __init__(
+        self,
+        adapter_ref: dict[str, MockSessionAdapter],
+        crash: Exception | None = None,
+        exit_code: int = 0,
+    ):
         self.adapter_ref = adapter_ref
         self.crash = crash
+        self.exit_code = exit_code  # F2-2 复核 P1-4：-1 = slime 时间预算耗尽
         self.calls: list[dict[str, Any]] = []
 
     async def run(
@@ -249,7 +256,7 @@ class MockClaudeCodeDriver:
         if self.crash is not None:
             raise self.crash
         await self.adapter_ref["adapter"].run_all_turns()
-        return 0
+        return self.exit_code
 
 
 def make_grading_report(trajectory_id: str, task_id: str, *, infra: bool = False) -> GradingReport:
@@ -439,6 +446,7 @@ def build_dense_chain(
     leaf_samples: list[Any] | None = None,
     task: RolloutTaskSpec | None = None,
     docker: FakeRolloutDocker | None = None,
+    harness_exit_code: int = 0,
 ) -> Chain:
     docker = docker if docker is not None else FakeRolloutDocker(rm_fail=rm_fail)
     grading = GradingSubmitStub(infra=infra_grading)
@@ -452,7 +460,7 @@ def build_dense_chain(
         adapter_ref["adapter"] = adapter
         return adapter
 
-    driver = MockClaudeCodeDriver(adapter_ref, crash=crash)
+    driver = MockClaudeCodeDriver(adapter_ref, crash=crash, exit_code=harness_exit_code)
     orchestrator = RolloutOrchestrator(
         config=config or dense_config(),
         task_resolver=task if task is not None else make_task(TASK_ID_DENSE),
@@ -512,12 +520,12 @@ async def test_normal_path_nine_step_order():
     assert audit.lease_released is True
     # session 生命周期与 slime 例程一致：open -> finish -> drop（finally 必达）
     adapter = chain.adapter_ref["adapter"]
-    # F2-2：wire sid = 每 attempt 新铸 capability token（cap- 前缀），
-    # 不再等于稳定 trajectory_id；open/finish/drop 三处必须同一 token
+    # F2-2（复核 P0-3 后）：wire/slime 会话身份 = 非秘密 internal sid
+    # （s- 前缀，S1 兼容路径 = s-{trajectory}）；open/finish/drop 同一 id
     assert adapter.opened == adapter.finished == adapter.dropped
-    cap_token = adapter.opened[0]
-    assert cap_token.startswith("cap-") and cap_token != audit.trajectory_id
-    assert audit.session_id.startswith("capfp-")  # audit 只落指纹，不落秘密
+    internal_sid = adapter.opened[0]
+    assert internal_sid.startswith("s-") and not internal_sid.startswith("cap-")
+    assert audit.session_id == internal_sid  # 非秘密，直接落盘
 
 
 async def test_normal_path_a5_eight_questions_as_schema_instances():
@@ -537,11 +545,11 @@ async def test_normal_path_a5_eight_questions_as_schema_instances():
     proxy = launch.model_proxy  # Q4 模型代理注入
     assert proxy.inject_env_var == "ANTHROPIC_BASE_URL"
     assert proxy.wire_protocol == "anthropic_messages"
-    # F2-2：harness/proxy 拿到的是 capability token（wire 凭证），
-    # 稳定身份只进 audit.trajectory_id
-    assert proxy.session_id == driver_call["session_id"]
-    assert proxy.session_id.startswith("cap-")
-    assert proxy.session_id != audit.trajectory_id
+    # F2-2（复核 P0-3 后）：launch_spec/audit 走非秘密 internal sid；
+    # **只有 harness（CC env）拿秘密 capability token**做 auth
+    assert proxy.session_id.startswith("s-")
+    assert driver_call["session_id"].startswith("cap-")  # CC 的 auth token
+    assert driver_call["session_id"] != proxy.session_id
     assert driver_call["adapter_url"] == proxy.base_url == "http://10.0.0.1:18001"
 
     assert lease.network_policy_owner == "slime_adapter"  # Q5 网络/权限策略归属
@@ -709,7 +717,7 @@ async def test_harness_crash_cleanup_still_runs_and_failure_recorded():
     # 清理仍执行（Q7）：容器被 rm，drop_session 也走到
     assert len(chain.docker.removed) == 1 and audit.lease_released is True
     dropped = chain.adapter_ref["adapter"].dropped
-    assert len(dropped) == 1 and dropped[0].startswith("cap-")  # F2-2 凭证会话
+    assert len(dropped) == 1 and dropped[0].startswith("s-")  # internal sid 会话
     # FailureCategory 记录：rollout 级故障归 infra_failure
     (failure,) = audit.failure_records
     assert failure.stage == "harness_run"

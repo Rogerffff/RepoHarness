@@ -5088,3 +5088,56 @@ evidence physical_attempt_id = DIFFERENT-PAID
 - 原有三个反例均已确认被拒绝
 
 所以准确状态是：**F2-1b 尚差一次聚焦修复；修完上述两项即可闭合并进入 F2-2，无需继续扩展检查范围。**
+
+
+---
+
+## codex F2-2 审查（2026-08-15，3 P0 + 3 P1——全部采纳）
+
+P0 阻塞问题
+quiescence_confirmed 提前宣告，可能把仍在变化的 workspace 记为完整轨迹。
+当前只完成了 revoke → finish_session → capture 检查，随后就在 [generate.py (line 1667)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1667) 写入 quiescence_confirmed=True。但已批准的 D1a 要求还包括：
+终止 sandbox execution scope
+→ 确认无后台进程、模型请求和文件写入
+→ 冻结不可变 workspace snapshot
+→ 只评分冻结副本
+当前评分仍直接读取活动 workspace，且 [outcome_producer.py (line 78)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/outcome_producer.py:78) 已用这个不完整的布尔值生成 present_complete。
+我还构造了一个不实现 revoke_session 的 adapter：系统没有 session_revoked 事件，仍得到：
+quiescence_confirmed=true
+completion=present_complete
+修复验收：拆成 session_plane_drained 与真正的 runtime_quiescence_confirmed；完整屏障和 snapshot 未落地前不得产出 present_*。正式链缺 revoke_session 必须启动或运行时 fail-closed，不能用 getattr 跳过。
+同一 physical attempt 可以产生两个相互冲突的 Outcome。
+成功 Outcome 在 _deliver() 之前写入，见 [generate.py (line 1815)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1815)。若 _deliver() 抛错，异常分支又写一次，见同文件 [第 1851 行 (line 1851)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1851)。
+确定性探针结果：
+outcome_count = 2
+outcome_ids = [同一个 ID, 同一个 ID]
+completion = [present_complete, missing]
+这会让 F2-5 assembler 面对同一成员的两个事实。
+修复验收：每个 physical_attempt_id 只能执行一次终态 compare-and-set；交付失败测试必须断言 Outcome 总数仍为 1，且持久记录与内存视图一致。
+capability 原文确实进入了持久审计和依赖日志。
+异常消息在 [generate.py (line 1655)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1655) 拼入原始 sid，随后写入 failure_records.detail，并由 [bringup.py (line 365)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:365) 持久化。
+我的真实 JSONL 探针得到：
+persistent_audit_contains_cap_token = true
+detail = "... session cap-b547... 中毒 ..."
+此外 slime 会把 SID 写入日志、429 响应和 X-SMG-Routing-Key，见 [common.py (line 243)](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/common.py:243)、[第 295 行 (line 295)](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/common.py:295)。
+最稳妥的修复是 capability 只负责认证，认证后映射到非秘密的 attempt-scoped internal SID；至少也必须系统性脱敏异常、日志、响应和上游 header。测试必须扫描完整 audit JSONL，而不是只扫描三个挑选字段。
+P1 一般问题
+真实 timeout 事实仍被错误分类。
+slime 的 -1 表示时间预算耗尽，但当前：
+关闭拒绝开关时：-1 → completed / present_complete
+打开拒绝开关时：-1 → harness_crash / missing
+正式配置目前默认打开拒绝，见 [bringup.py (line 603)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:603)。
+这两种都违反已批准语义。应先记录 termination_kind=hard_wall_timeout，completion 再由完整性事实推导；group/reward/gradient 处置继续留给 D1b。这不是新决策。
+Outcome 身份字段存在伪造。
+生产代码把 group_index 固定为 0，见 [generate.py (line 2441)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2441)。我令输入样本 group_index=5，结果 Outcome 仍为 0。
+此外缺失 prompt_group_id 或 member_slot 时，producer 会分别伪造为 rollout_execution_id 和 0。正式 FA 路径应要求完整身份字段，不能静默补值。需要让 group_index 贯穿 ExecutionTaskSpec → metadata → Outcome。
+fully async 长运行状态仍无界增长。
+持续服务会累积：
+RolloutOrchestrator.audits
+RolloutOrchestrator.outcomes
+slime closed
+slime _sid_turn_count
+每 attempt 新 capability 避免了状态串扰，但没有解决容量问题。F2-5 可以消费 Outcome，却没有覆盖 audit 和 slime 两个容器。可不阻塞 F2-3 编码，但必须登记明确 owner、清理/轮换机制和 FA-5 容量测试，正式训练前关闭。
+验证
+现有测试均通过：974 passed；目标测试 11 passed；ruff 和 inspect-rh2-s1 均通过。上述问题之所以漏过，主要是现有测试没有覆盖交付后失败、完整持久审计、缺失 revoke、非零 timeout 和非零 group_index。
+建议 Claude 先修 P0 1–3，再修 timeout 与身份字段；容量问题可登记到 F2-3/F2-5，但必须绑定正式训练闸门。

@@ -14,7 +14,6 @@ finish/drop 后把 sid 永久留在 `closed` 集合且 turn counter 不清——
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
@@ -169,29 +168,42 @@ async def test_guard_rejects_revoked_capability():
 
     registry = CaptureRegistry()
     cap = mint_session_capability("exec#p1-g")
-    registry.register(cap.token, _Hook(), physical_attempt_id="exec#p1-g")
+    internal = "s-exec#p1-g"
+    registry.register(
+        internal, _Hook(), physical_attempt_id="exec#p1-g", capability_token=cap.token
+    )
 
-    async def ok(request):
-        return web.json_response({"ok": True})
+    async def echo_auth(request):
+        # P0-3 核心断言面：handler（= slime）看到的 Authorization 已被
+        # 重写为非秘密 internal sid——token 不进入下游
+        return web.json_response({"auth": request.headers.get("Authorization")})
 
     app = web.Application(middlewares=[build_session_guard_middleware(registry)])
-    app.router.add_post("/v1/messages", ok)
+    app.router.add_post("/v1/messages", echo_auth)
     client = TestClient(TestServer(app))
     await client.start_server()
     try:
         hdr = {"Authorization": f"Bearer {cap.token}"}
         r1 = await client.post("/v1/messages", headers=hdr)
         assert r1.status == 200  # 撤销前正常
+        assert (await r1.json())["auth"] == f"Bearer {internal}"  # 认证后重写
 
-        registry.revoke(cap.token)
+        # 直接拿 internal sid 当凭证 → 拒绝（internal 不是秘密，不能当钥匙）
+        r_fake = await client.post(
+            "/v1/messages", headers={"Authorization": f"Bearer {internal}"}
+        )
+        assert r_fake.status == 403
+
+        registry.revoke(internal)  # 撤销按 internal sid（quiescence 序列）
         r2 = await client.post("/v1/messages", headers=hdr)
         assert r2.status == 403
         assert r2.headers["x-should-retry"] == "false"
         assert (await r2.json())["error"]["type"] == "rh2_session_revoked"
-        assert cap.token in registry.hooks  # drain 窗口：账目仍在场
+        assert internal in registry.hooks  # drain 窗口：账目仍在场
 
-        registry.unregister(cap.token)
-        assert not registry.is_revoked(cap.token)  # 会话关闭即失效，集合不涨
+        registry.unregister(internal)
+        assert not registry.is_revoked(internal)  # 会话关闭即失效，集合不涨
+        assert registry.resolve_capability(cap.token) is None  # token 映射同清
         r3 = await client.post("/v1/messages", headers=hdr)
         assert r3.status == 403  # unknown 分支兜底
         assert (await r3.json())["error"]["type"] == "rh2_unknown_or_closed_session"
@@ -208,6 +220,7 @@ def _stamp_fa_identity(sample) -> None:
     sample.metadata.update({
         "rh2_rollout_execution_id": "exec_F22",
         "rh2_prompt_group_id": "pg_F22",
+        "rh2_group_index": 5,
         "rh2_member_slot": 2,
         "rh2_physical_attempt_id": "exec_F22#p1-cafe1234",
         "rh2_physical_attempt_seq": 1,
@@ -215,9 +228,9 @@ def _stamp_fa_identity(sample) -> None:
 
 
 async def test_e2e_quiescence_order_capability_hygiene_and_outcome():
-    """真实编排链（dense fixture）：撤销事件先于静止确认；audit JSON 全文
-    不含 capability 秘密（只有指纹）；成功收口产出 present_complete v2；
-    交付样本 session_id 已 scrub 回稳定键。"""
+    """真实编排链（dense fixture）：撤销先于会话面排空；**完整持久审计
+    记录**全文无 capability 秘密；runtime 完整屏障未落地 → 成功收口也只
+    产 missing + 显式 reason_code（复核 P0-1：不产 present_*）。"""
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
@@ -228,42 +241,44 @@ async def test_e2e_quiescence_order_capability_hygiene_and_outcome():
     )
     audit = chain.orchestrator.audits[0]
 
-    # quiescence 顺序：revoke（若 adapter 支持）→ …… → 静止确认 → 关账
+    # 事实拆分（P0-1）：会话面排空 True；runtime 完整屏障未实现恒 False
     names = [e.step for e in audit.timeline]
-    assert "quiescence_confirmed" in names
-    assert audit.quiescence_confirmed and audit.capture_closed
+    assert audit.session_plane_drained and "session_plane_drained" in names
+    assert audit.runtime_quiescence_confirmed is False
     adapter = chain.adapter_ref["adapter"]
-    # 撤销必须真实发生且先于 drain（finish）与静止确认——mock 记录三者顺序
-    assert adapter.revoked == adapter.finished  # 同一 capability token
-    assert names.index("session_revoked") < names.index("quiescence_confirmed")
+    assert adapter.revoked == adapter.finished  # 同一 internal sid
+    assert names.index("session_revoked") < names.index("session_plane_drained")
 
-    # 凭证卫生：audit 可序列化面无 cap- 秘密；session_id 是指纹
-    assert audit.session_id.startswith("capfp-")
-    audit_text = json.dumps(
-        {
-            "session_id": audit.session_id,
-            "timeline": [e.step for e in audit.timeline],
-            "outcome_v2": audit.outcome_v2,
-        },
-        ensure_ascii=False,
-    )
-    assert "cap-" not in audit_text
+    # 三层身份：internal sid 非秘密（s-{paid}）；token 只进 harness
+    assert audit.session_id == "s-exec_F22#p1-cafe1234"
+    token = chain.driver.calls[0]["session_id"]
+    assert token.startswith("cap-") and token != audit.session_id
 
-    # producer：成功收口 → present_complete + 评分结局 + 完整四层身份
-    assert audit.outcome_v2 is not None
+    # 凭证卫生（P0-3 验收）：**完整持久 audit record** 全文扫描无 token
+    import tempfile
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    with tempfile.TemporaryDirectory() as td:
+        jsonl = Path(td) / "execution_audit.jsonl"
+        write_execution_audit_record(None, audit, jsonl)
+        record_text = jsonl.read_text(encoding="utf-8")
+        assert token not in record_text  # 秘密不落盘（全文扫描，非挑选字段）
+        assert "cap-" not in record_text
+        assert audit.session_id in record_text  # internal sid 正常留档
+
+    # producer（P0-1）：runtime 屏障未落地 → missing + 显式留因；
+    # 身份完整贯穿（group_index=5 不再被伪造成 0——P1-5）
     ov2 = audit.outcome_v2
-    assert ov2["completion_class"] == "present_complete"
+    assert ov2 is not None
+    assert ov2["completion_class"] == "missing"
+    assert ov2["reason_code"] == "runtime_quiescence_unconfirmed"
     assert ov2["termination_kind"] == "completed"
+    assert ov2["identity"]["group_index"] == 5
     assert ov2["identity"]["physical_attempt_id"] == "exec_F22#p1-cafe1234"
-    assert ov2["identity"]["branch_id"] is None
-    assert ov2["task_outcome"] in ("resolved", "unresolved")
-    assert chain.orchestrator.outcomes[0].member_slot == 2
-
-    # 交付样本 scrub：稳定键，不带凭证
-    for s in delivered:
-        sid = getattr(s, "session_id", None)
-        if sid is not None:
-            assert not str(sid).startswith("cap-")
+    assert ov2["member_slot"] == 2
+    assert len(chain.orchestrator.outcomes) == 1
+    assert delivered  # 交付本身正常
 
 
 async def test_e2e_failure_path_produces_missing_outcome():
@@ -286,6 +301,74 @@ async def test_e2e_failure_path_produces_missing_outcome():
     chain2 = build_dense_chain(crash=RuntimeError("boom"))
     await chain2.orchestrator.generate(_Args(), chain2.base_sample, dict(SAMPLING_PARAMS))
     assert chain2.orchestrator.audits[0].outcome_v2 is None
+
+
+async def test_deliver_failure_keeps_single_terminal_outcome():
+    """codex F2-2 复核 P0-2：成功 Outcome 写入后 _deliver 抛错，异常分支
+    不得追加第二条——每 physical attempt 终态 CAS，总数恒 1。"""
+
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    chain = build_dense_chain()
+    _stamp_fa_identity(chain.base_sample)
+    orch = chain.orchestrator
+
+    def _boom(**kwargs):
+        raise RuntimeError("deliver plumbing exploded")
+
+    orch._deliver = _boom  # 交付面故障注入（成功 Outcome 已写入之后）
+    await orch.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = orch.audits[0]
+    # 终态唯一：内存视图与持久视图一致，completion 为第一次终态（执行
+    # 事实），deliver 故障进 failure_records 而不是改写 Outcome
+    assert len(orch.outcomes) == 1
+    assert audit.outcome_v2["outcome_id"] == orch.outcomes[0].outcome_id
+    assert audit.outcome_v2["termination_kind"] == "completed"
+    assert any(f.stage == "deliver" for f in audit.failure_records)
+
+
+async def test_hard_wall_exit_records_trigger_not_crash():
+    """codex F2-2 复核 P1-4：slime exit=-1（时间预算耗尽）→ termination=
+    hard_wall_timeout；不走 nonzero 拒绝（不误归 harness_crash），也不
+    伪装 completed；completion 由完整性事实推导（屏障未落地 → missing）。"""
+
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    chain = build_dense_chain(harness_exit_code=-1)
+    _stamp_fa_identity(chain.base_sample)
+    await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.termination_kind_hint == "hard_wall_timeout"
+    # 不是 crash：nonzero 拒绝没触发，管线走完（capture/评分照常）
+    assert not any(
+        f.error_type == "SlimeBindingError" and "nonzero" in f.detail
+        for f in audit.failure_records
+    )
+    ov2 = audit.outcome_v2
+    assert ov2["termination_kind"] == "hard_wall_timeout"
+    assert ov2["completion_class"] == "missing"  # 屏障未落地；处置留 D1b
+
+
+async def test_identity_incomplete_skips_production_no_fabrication():
+    """codex F2-2 复核 P1-5：正式路径（有 paid）身份字段不全 → 不产 v2
+    （audit 留痕），绝不静默补 group_index=0/slot=0。"""
+
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    chain = build_dense_chain()
+    sample = chain.base_sample
+    sample.metadata = dict(getattr(sample, "metadata", {}) or {})
+    sample.metadata.update({
+        "rh2_rollout_execution_id": "exec_I",
+        "rh2_physical_attempt_id": "exec_I#p1-dead0000",
+        "rh2_physical_attempt_seq": 1,
+        # 故意缺 rh2_prompt_group_id / rh2_group_index / rh2_member_slot
+    })
+    await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.outcome_v2 is None
+    assert "outcome_v2_skipped_identity_incomplete" in [e.step for e in audit.timeline]
+    assert chain.orchestrator.outcomes == []
 
 
 # ---------------------------------------------------------------------------

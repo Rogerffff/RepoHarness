@@ -264,6 +264,8 @@ class FaRolloutService:
             # setdefault 会保留脏值）
             meta["rh2_rollout_execution_id"] = spec.rollout_execution_id
             meta["rh2_prompt_group_id"] = spec.prompt_group_id
+            # F2-2 复核 P1-5：group_index 贯穿到 Outcome（producer 不许伪造 0）
+            meta["rh2_group_index"] = int(getattr(payload, "group_index", 0) or 0)
             meta["rh2_member_slot"] = spec.member_slot
             if spec.physical_attempt_id is not None:
                 meta["rh2_physical_attempt_id"] = spec.physical_attempt_id
