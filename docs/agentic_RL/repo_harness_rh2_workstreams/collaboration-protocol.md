@@ -248,7 +248,10 @@ authoritative_plan_ref: <拍板后回写的 05 计划小节>
 （特别提示：规则 4"新增剔除轨迹的拒绝路径 = T0"对 S2-1 的门 runner
 剔题逻辑**直接适用**——预注册门规格内的判据是已批 T1，执行中冒出的
 任何新剔除路径必须停下走 T0）；§5 分歧收敛三选一与修复循环熔断；
-`review-standards.md` 的维度定义 A~N、finding 八要素、N/A 证据规则、
+`review-standards.md` 的维度定义 A~N、finding 八要素、生产可达性标签
+（§10：运行时 finding 必标 production_observed/reachable/
+conditional_future/test_only；修复方案五问；熔断后五档方案空间；
+高风险问题强制 Production Tracer + Falsifier 双 subagent）、N/A 证据规则、
 "测试 oracle 不是 T2"、§7 交接自检清单。
 
 **裁剪与映射**（S2-1 为离线确定性数据管线，风险画像异于 FA 并发运行时）：
