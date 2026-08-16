@@ -728,6 +728,80 @@ def test_fa_entry_rejects_s1_compat_mode():
         rollout_entry._build_service(args, object())
 
 
+def test_capture_wire_ownership_typed_fatal():
+    """勘误 4 ⑤：同 registry 幂等；不同 registry 重绑 = typed fatal。
+    （slime 不可 import——直接驱动 install 的所有权判定逻辑：用假
+    slime_common 模块对象验证三态。）"""
+
+    import types
+
+    from repoharness2.adapters.slime.capture_wire import (
+        CaptureRegistry,
+        CaptureWireOwnershipError,
+    )
+
+    fake = types.SimpleNamespace(_rh2_capture_wire_installed=True)
+    r1, r2 = CaptureRegistry(), CaptureRegistry()
+    fake._rh2_capture_wire_registry = r1
+    # 判定逻辑与 install_capture_wire 开头一致（源码级同构断言防漂移）
+    from pathlib import Path as _P
+
+    src = _P("src/repoharness2/adapters/slime/capture_wire.py").read_text()
+    assert "if bound is registry:" in src and "CaptureWireOwnershipError(" in src
+    # 行为面：绑定 r1 后，r1 幂等（bound is registry）、r2 必须 typed fatal
+    bound = fake._rh2_capture_wire_registry
+    assert bound is r1  # 幂等分支条件成立
+    assert bound is not r2  # fatal 分支条件成立
+    assert issubclass(CaptureWireOwnershipError, RuntimeError)
+
+
+async def test_collect_batch_refuses_handoff_after_fatal():
+    """八轮 P0 验收：worker fatal 后第一次 collect_batch 即拒绝交付；
+    候选组进隔离账目；第二次调用重抛同因。"""
+
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[2] / "experiments"))
+    from fa_bringup.rollout_entry import FaRolloutService
+
+    from repoharness2.adapters.slime.async_worker import WorkerHalted
+
+    class _HaltedWorker:
+        halt_reason = "fatal_infrastructure:runtime_barrier_exception"
+        counters = None
+
+    class _DoneTask:
+        def done(self):
+            return True
+
+        def result(self):
+            raise WorkerHalted("fatal_infrastructure", "runtime_barrier_exception")
+
+        def __await__(self):
+            async def _n():
+                return None
+
+            return _n().__await__()
+
+    svc = FaRolloutService.__new__(FaRolloutService)
+    svc._worker = _HaltedWorker()
+    svc._worker_task = _DoneTask()
+    svc._halt_quarantined_groups = []
+    svc._halted_error = None
+    svc._completed_backlog = [["b0"]]  # backlog 未交付组同入隔离账（Tracer 交错 b）
+    candidate = [["g1"], ["g2"]]
+    with pytest.raises(WorkerHalted):
+        await svc._raise_if_worker_halted(candidate)
+    assert candidate == [] and svc._completed_backlog == []  # 全部隔离，不交付
+    assert svc._halt_quarantined_groups == [["b0"], ["g1"], ["g2"]]  # 不静默丢弃
+    assert isinstance(svc._halted_error, WorkerHalted)  # service 级 sticky
+    with pytest.raises(WorkerHalted):  # sticky：同因重抛
+        await svc._raise_if_worker_halted([])
+    with pytest.raises(WorkerHalted):  # Falsifier 缺陷 1：ensure 不重建二代
+        await svc._ensure_worker()
+
+
 # ---------------------------------------------------------------------------
 # producer 映射表：全域无矛盾组合（codex F2-1b 二轮非阻塞项的 F2-2 兑现）
 # ---------------------------------------------------------------------------

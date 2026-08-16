@@ -571,6 +571,33 @@ class BringupService:
         # F2-2 复核四轮 P1-4：模式/组合校验前移到**任何副作用之前**
         # （adapter 线程在 __init__ 已起，属既有结构——其生命周期回滚
         # 登记 FA-5；本函数内的副作用从这里开始全部受校验保护）
+        try:
+            await self._async_start_body(args)
+        except BaseException:
+            # 复核五轮 P1-3：统一回滚——queue 与 adapter 线程（app_handle）
+            # 都不得遗留（配置错误后重启不能撞线程/端口）
+            self._startup_rollback_errors: list[str] = []
+            if getattr(self, "_queue_started", False):
+                try:
+                    await self.grading_queue.close(drain=False)  # 真实 API（八轮：stop 不存在）
+                except BaseException as _rb_exc:  # noqa: BLE001 - 记录不覆盖首因
+                    self._startup_rollback_errors.append(f"queue_close: {_rb_exc}")
+                self._queue_started = False
+            handle = getattr(self, "app_handle", None)
+            if handle is not None:
+                try:
+                    handle.stop()
+                except BaseException as _rb_exc:  # noqa: BLE001
+                    self._startup_rollback_errors.append(f"app_stop: {_rb_exc}")
+            if self._startup_rollback_errors:
+                print(f"[rh2-bringup] 启动回滚清理告警（首因照抛）：{self._startup_rollback_errors}")
+            raise
+
+    async def _async_start_body(self, args: Any) -> None:
+        """启动事务主体（复核六轮 P0-2：探针/queue/config/orchestrator 全部
+        在同一事务内，任一步失败由 async_start 的统一回滚清理 queue+app）。"""
+
+        # 八轮：纯配置/CC guard 在资源型副作用（probe/queue）之前
         self.cc_compaction_guard_envs = None
         if HARNESS_KIND == "claude_code":
             from repoharness2.adapters.slime.generate import (
@@ -578,29 +605,6 @@ class BringupService:
             )
 
             self.cc_compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
-        try:
-            await self._async_start_body(args)
-        except BaseException:
-            # 复核五轮 P1-3：统一回滚——queue 与 adapter 线程（app_handle）
-            # 都不得遗留（配置错误后重启不能撞线程/端口）
-            if getattr(self, "_queue_started", False):
-                try:
-                    await self.grading_queue.stop()
-                except Exception:
-                    pass
-                self._queue_started = False
-            handle = getattr(self, "app_handle", None)
-            if handle is not None:
-                try:
-                    handle.stop()
-                except Exception:
-                    pass
-            raise
-
-    async def _async_start_body(self, args: Any) -> None:
-        """启动事务主体（复核六轮 P0-2：探针/queue/config/orchestrator 全部
-        在同一事务内，任一步失败由 async_start 的统一回滚清理 queue+app）。"""
-
         await self._run_startup_checks()
         await self.grading_queue.start()
         self._queue_started = True
@@ -1032,13 +1036,29 @@ class BringupService:
 
     # -- 单例接口 --------------------------------------------------------------
 
+    _startup_state: str = "NEW"  # NEW -> STARTING -> RUNNING | FAILED（sticky）
+    _startup_error: BaseException | None = None
+
     @classmethod
     async def get(cls, args: Any) -> "BringupService":
         async with _SERVICE_LOCK:
+            if cls._startup_state == "FAILED":
+                # 勘误 4：FAILED sticky——同进程绝不创建第二代（首因重抛）
+                raise cls._startup_error  # type: ignore[misc]
             if cls._instance is None:
-                service = BringupService(args)
-                await service.async_start(args)
+                cls._startup_state = "STARTING"
+                try:
+                    service = BringupService(args)
+                    await service.async_start(args)
+                except Exception as exc:
+                    # Falsifier 缺陷 4：只 latch Exception——CancelledError/
+                    # KeyboardInterrupt 原样传播不 latch（跨 task 重抛
+                    # CancelledError 会被 asyncio 判"被取消"而非失败）
+                    cls._startup_state = "FAILED"
+                    cls._startup_error = exc
+                    raise
                 cls._instance = service
+                cls._startup_state = "RUNNING"
             return cls._instance
 
 

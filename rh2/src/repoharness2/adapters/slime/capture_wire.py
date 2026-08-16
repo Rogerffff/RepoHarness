@@ -53,6 +53,10 @@ class PendingTurn:
     proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
 
 
+
+class CaptureWireOwnershipError(RuntimeError):
+    """capture wire 进程级单代所有权违反（勘误 4：不同 registry 重绑）。"""
+
 class UnknownSessionError(RuntimeError):
     """未知/未注册 SID 的模型调用（codex 轮次 13 P0-1）：此前直连 SGLang
     ——绕过 proxy/poison/版本/deadline/限额/capture 的未登记推理旁路，
@@ -515,7 +519,19 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
     from slime.agent.trajectory import TrajectoryManager
 
     if getattr(slime_common, "_rh2_capture_wire_installed", False):
-        return
+        bound = getattr(slime_common, "_rh2_capture_wire_registry", None)
+        if bound is registry:
+            return  # 同 registry 幂等
+        if bound is None:
+            # legacy：flag 在而 ref 缺（旧版本装的 wire）——收养而非误报
+            slime_common._rh2_capture_wire_registry = registry
+            return
+        # 勘误 4 ⑤：不同 registry 重绑 = 所有权错误，typed fatal 暴露
+        # （不是帮系统带病续跑——单代语义下这不该发生）
+        raise CaptureWireOwnershipError(
+            "capture wire 已绑定另一 registry——进程级单代所有权被违反"
+            "（第二代 BringupService/registry 不允许存在，勘误 4）。"
+        )
 
     # 404 -> 503 middleware（codex 轮次 9 一般 1：helper 必须真接线）——
     # BaseAdapter.__init__ 构造 app 后追加；aiohttp 允许 runner 起动前 append
@@ -688,3 +704,4 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
 
     TrajectoryManager.record_turn = rh2_record_turn
     slime_common._rh2_capture_wire_installed = True
+    slime_common._rh2_capture_wire_registry = registry

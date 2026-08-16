@@ -2033,6 +2033,14 @@ class RolloutOrchestrator:
                         task=task, top_p=top_p,
                     )
                 else:
+                    audit.failure_records.append(
+                        RolloutFailureRecord(
+                            stage="runtime_barrier",
+                            error_type="runtime_barrier_invalid_result",
+                            detail=f"type={type(result).__name__}",
+                        )
+                    )
+                    audit.mark("runtime_barrier_invalid_result")
                     raise FatalExecutionInfrastructureError(
                         "runtime_barrier_invalid_result",
                         f"屏障返回未知类型 {type(result).__name__}——封闭联合类型外的"

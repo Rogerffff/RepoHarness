@@ -195,6 +195,12 @@ class FaRolloutService:
         self._worker_task: asyncio.Task[None] | None = None
         self._stop = asyncio.Event()
         self._completed_backlog: list[list[Any]] = []
+        # 勘误 4：halt 时的候选批次隔离账目（不交付、不静默丢弃；durable
+        # 导出登记 F2-5/F2-6 manifest——当前为内存账 + 日志）
+        self._halt_quarantined_groups: list[list[Any]] = []
+        # Falsifier 缺陷 1：service 级 sticky halt——一旦 halt，任何公开
+        # API 序列（含 shutdown 后再 collect）都不得静默重建第二代 worker
+        self._halted_error: BaseException | None = None
 
     # ------------------------------------------------------------- 任务供给
     def _task_source(self) -> ExecutionTaskSpec | None:
@@ -217,6 +223,8 @@ class FaRolloutService:
 
     # ------------------------------------------------------------- 主收集
     async def _ensure_worker(self) -> None:
+        if self._halted_error is not None:
+            raise self._halted_error  # sticky：halt 后绝不重建二代 worker
         if self._worker_task is not None and not self._worker_task.done():
             return
         if self._worker_task is not None and self._worker_task.done():
@@ -284,6 +292,43 @@ class FaRolloutService:
         self._stop = asyncio.Event()
         self._worker_task = asyncio.create_task(self._worker.run(self._stop))
 
+    async def _raise_if_worker_halted(self, candidate: list[list[Any]]) -> None:
+        """worker 唯一 fatal 状态门（不建平行状态机）：halt_reason 在场 →
+        候选批次进隔离账目（不交付、不丢失）→ 等 worker 收尾 → 原样重抛
+        根因；后续每次调用重抛同一错误。"""
+
+        worker = self._worker
+        if worker is None or worker.halt_reason is None:
+            return
+        # Tracer 交错注记 (b)/Falsifier 缺陷 2：backlog 里未交付的完整组
+        # 与候选组同命运——一并进隔离账，不留"滞留即静默丢失"死角
+        if self._completed_backlog:
+            self._halt_quarantined_groups.extend(self._completed_backlog)
+            self._completed_backlog.clear()
+        if candidate:
+            self._halt_quarantined_groups.extend(candidate)
+            candidate.clear()
+        if self._halt_quarantined_groups:
+            print(
+                f"[rh2-fa] worker halt：隔离 {len(self._halt_quarantined_groups)} 个"
+                "完整组（不交付不丢弃；durable 导出归 F2-5/F2-6）"
+            )
+        task = self._worker_task
+        if task is not None:
+            if not task.done():
+                try:
+                    await task  # drain 协议有界收尾
+                except BaseException:
+                    pass
+            try:
+                task.result()  # WorkerHalted/Fatal 原样上抛（sticky：每次同因）
+            except BaseException as exc:
+                self._halted_error = exc  # service 级 sticky（缺陷 1）
+                raise
+        raise FaEntryError(
+            "worker_halted", f"worker run-halt（{worker.halt_reason}）——批次拒绝交付。"
+        )
+
     async def collect_batch(self) -> list[list[Any]]:
         """从持久运行时收满 rollout_batch_size 个完整组返回。
 
@@ -295,6 +340,7 @@ class FaRolloutService:
         await self._ensure_worker()
         assert self._queue is not None and self._collector is not None
         assert self._worker is not None and self._worker_task is not None
+        await self._raise_if_worker_halted([])  # 勘误 4/八轮 P0：入口先查 fatal
         completed: list[list[Any]] = []
         # 先吃上批结余（预取零丢失的另一半）
         while self._completed_backlog and len(completed) < self._rollout_batch_size:
@@ -303,6 +349,7 @@ class FaRolloutService:
 
         last_progress = _time.monotonic()
         while len(completed) < self._rollout_batch_size:
+            await self._raise_if_worker_halted(completed)
             if self._worker_task.done():
                 self._worker_task.result()  # WorkerHalted/异常原样抛给启动方
                 raise FaEntryError(
@@ -334,6 +381,9 @@ class FaRolloutService:
                     completed.append(group)
                 else:  # pragma: no cover - 防御（循环条件已挡）
                     self._completed_backlog.append(group)
+        # 勘误 4/八轮 P0：trainer handoff 前最后一次 fatal 检查——已判
+        # run-halt 后绝不再交出 batch（否则多训一个 optimizer step）
+        await self._raise_if_worker_halted(completed)
         return completed
 
     async def shutdown(self) -> None:
