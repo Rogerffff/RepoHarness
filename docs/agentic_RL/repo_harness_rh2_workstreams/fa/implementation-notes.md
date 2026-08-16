@@ -166,9 +166,23 @@ stale QuiescenceResult 引用清除。**待拍板 T0**：CaptureWireRuntime
 （进程级，owns registry+monkeypatch）与 BringupService（可重启，owns
 app 线程/queue/orchestrator）所有权拆分——install_capture_wire 首装
 永久闭包 registry，重启后新老 registry 分家（codex 探针实锤）；codex
-推荐进程级唯一 CaptureWireRuntime，不做反向 monkeypatch。拍板后实现，
-再进 F2-2b；FA-5 未开工。闸门 `rh2_fully_async_training_path_verified`
-= **false**。测试基线 974。
+推荐进程级唯一 CaptureWireRuntime，不做反向 monkeypatch。
+**→ 八轮改判为勘误 4（A′：单代启动 + fail-stop，用户批准）并已执行**：
+四修复 = collect_batch 三重 fatal 门 + 隔离账目（含 backlog）、
+BringupService 单代闩锁（NEW→STARTING→RUNNING|FAILED sticky，只
+latch Exception）+ grading_queue.close(drain=False) 真回滚（旧 stop()
+不存在 = 假回滚）+ CC guard 入事务、invalid_result 持久归因、wire
+不同 registry typed fatal（legacy flag 收养）。**§10.4 双 subagent
+首次实战**（Production Tracer + Falsifier 并行）：四修复功能全数成立；
+合流修掉 4 项缺陷——shutdown→collect 绕 sticky 重建二代 worker
+（service 级 _halted_error 关闭）、latch 吞 CancelledError、backlog
+组不入隔离账、legacy flag 误报所有权。登记递延：隔离账目 durable
+导出（F2-5/F2-6）；__init__ 晚段 adapter 线程泄漏（FA-5；闩锁已防
+端口二次抢占）；被 cancel 的 in-flight 协程不响应取消时收尾 await
+无独立超时（F2-2b watchdog 面）；闩锁/回滚行为测试 F2-2b 前补齐。
+审查机制收紧（review-standards §10）与勘误 4/F2-4 范围文档已单独
+提交。下一切片 = **F2-2b**；FA-5 未开工。闸门
+`rh2_fully_async_training_path_verified` = **false**。测试基线 989。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
 行为；audit_only 不放宽任何守卫、不产正式训练 batch；hard_wall 仅

@@ -5760,3 +5760,305 @@ QuiescenceOutcome = "QuiescenceConfirmed | QuiescenceRejected"
 - registry 二次安装探针确认旧 registry 被永久闭包
 
 所以当前建议是：**暂停 F2-2b，再做一次聚焦于 `CaptureWireRuntime + BringupService` 所有权的修复；身份、capability、Outcome v2、execution mode 和 session drain 均保持不动。**
+
+
+---
+
+## codex F2-2 复核八轮（2026-08-16，T0 改判勘误 4 + F2-4 范围 + 审查机制收紧——全部采纳）
+
+
+
+本轮不要只修几个代码点。请先修订 T0 决策包和审查机制，再实施代码，因为当前暴露的问题包含“生产可达性判断错误”和“修复方案复杂度失控”两类方法问题。
+
+**一、T0 为什么应改判为 A′：单代启动 + fail-stop**
+
+当前正式 FA 路径是：
+
+```text
+train_async
+-> 串行 RolloutManager.generate()
+-> generate_rollout_async()
+-> 首次 bootstrap BringupService
+-> 后续并发只发生在 FaRolloutService 内部 execution
+```
+
+因此，目标 FA 路径不会有多个 `generate_rollout_async()` 同时等待 `_SERVICE_LOCK`。首次启动失败会在 `ray.get()` 处终止当前训练 run，不会自然进入第二次 `BringupService.get()`。
+
+`r1/r2` 分叉仍然是真问题，但它当前只在以下条件成立：
+
+```text
+旧 stock custom_generate 并发启动
+或
+未来增加“同进程捕获异常后再次启动 BringupService”
+```
+
+所以它是兼容路径中的真实问题，也是未来恢复设计的约束，但不是建设可重启 `CaptureWireRuntime` 的充分理由。原方案 A 会主动引入当前不存在的同进程 reset、旧回调 fencing、残留 session 清理等恢复状态，明显扩大实现面。
+
+建议批准的语义是：
+
+```text
+每个 RolloutManager 进程只允许一代 capture wire、registry 和 BringupService。
+
+NEW -> STARTING -> RUNNING
+                 -> FAILED
+
+FAILED 是 sticky：
+记录第一处错误
+-> 尽力清理
+-> 原样向上抛出
+-> 后续 get() 重抛同一错误
+-> 绝不创建 r2
+```
+
+不要求大型 `CaptureWireRuntime`。使用 `BringupService` 类级状态或很薄的 `BringupProcessState` 即可，类名和组织形式属于 T1。
+
+整个启动过程不做通用指数退避。原因是整体重试会重复不可逆 monkeypatch、线程启动和资源分配，容易掩盖确定性错误。只允许对经过确认的幂等瞬时子操作做有限重试，例如 SGLang readiness 的短暂连接失败；配置、digest、renderer、权限、磁盘错误立即失败。
+
+当前恢复语义应如实写成“终止训练 run”。`WorkerHalted` 不会自动杀死和替换 Ray Actor；Actor replacement、checkpoint replay 和 fencing 属于 F2-4。
+
+**二、当前必须修复的真实问题**
+
+1. Fatal 后仍可能交付训练 batch。
+
+当前已复现：
+
+```text
+一个 execution -> FatalExecutionInfrastructureError
+另一个 execution -> 成功
+第一次 collect_batch() -> 返回成功 batch
+第二次 collect_batch() -> 才抛 WorkerHalted
+```
+
+这会导致系统已判定 run-halt 后仍可能多执行一个 optimizer step。它不是过度防御问题，而是违反已有 fail-stop 语义。
+
+修复应复用 worker 的唯一 fatal 状态；任何 trainer handoff 前必须检查该状态。不要再创建平行状态机。验收必须证明第一次 `collect_batch()` 就抛异常、候选 batch 有隔离账目、下一次调用重抛同一根因、ledger 仍守恒。
+
+2. 启动回滚调用不存在的 `grading_queue.stop()`，真实接口是 `close()`；异常又被吞掉。
+
+应把纯配置与 Claude Code guard 放在资源启动前。资源启动后的错误进入统一事务清理；清理失败单独记录，但不能覆盖第一处启动异常。
+
+3. `runtime_barrier_invalid_result` 直接抛 fatal，却没有先写持久 `RolloutFailureRecord`。
+
+应复用统一的“记录 fatal 事实并抛出”辅助路径，不新增状态机。
+
+4. `install_capture_wire()` 的静默重复安装需要收紧。
+
+同一 registry 重复安装可以幂等；不同 registry 重绑必须 typed fatal。该断言用于暴露所有权错误，而不是帮助系统带病继续运行。
+
+**三、以后如何防止过度设计、过度防御和假阳性 finding**
+
+请在 [review-standards.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md) 中收紧现有 E/G/I/K/M，不新增审查维度。
+
+每个运行时 finding 必须标注生产可达性：
+
+```text
+production_observed
+production_reachable
+conditional_future
+test_only
+```
+
+必须给出真实入口、配置模式、进程/线程/event loop 和异常捕获者。`conditional_future` 与 `test_only` 原则上不能定为当前 P0；但如果待实施方案即将引入该条件，可以作为设计阻塞项。
+
+每个修复方案必须回答：
+
+```text
+旧代码是否在真实入口失败？
+修复是否解决根因，还是只把错误转成 missing/rejected？
+新增了几个 owner、状态、retry、fallback 或 guard？
+为什么进程 fail-stop 或删除不支持能力不足以解决？
+正常路径和训练分布是否发生变化？
+```
+
+修复循环熔断后，方案空间必须包含：
+
+```text
+删除不支持的能力
+递延到正式训练闸门
+进程 fail-stop
+最小局部修复
+完整恢复机制
+```
+
+不能默认选择最复杂的完整恢复。
+
+**四、Claude 与 Codex 如何使用 subagent**
+
+高风险问题强制两类独立 subagent：
+
+```text
+A：Production Tracer
+只追踪当前真实调用链、并发基数、生命周期和异常传播，
+不向它提供预设修复结论。
+
+B：Falsifier / Simplifier
+专门尝试推翻 finding 严重度，检查训练分布影响，
+并寻找比新增状态机更小的方案。
+```
+
+若改动直接影响 reward、mask、group membership 或样本拒绝分布，再增加第三个 Training Semantics Reviewer。普通 schema、纯函数和 T2 不使用 subagent。
+
+强制触发条件包括：跨进程/线程/event loop、恢复与 fencing、同一边界第二次 P0、修复新增长期 owner/状态机、黑盒 CLI/GPU 行为、训前总审计。
+
+主审查者不能按多数票裁决，也不能原样转发报告；必须去重、核验证据、解释分歧，并向用户输出“事实、选项、推荐、理由、代价、仍未知内容”。
+
+**五、文档落点**
+
+详细规则只放 `review-standards.md`。`collaboration-protocol.md` 只增加治理摘要和链接；`AGENTS.md` 只保留一句强制规则，并把已经过时的“九维度”改为 A～N。三处不要复制完整正文。
+
+这次审查机制收紧属于 T1 强报告，可用独立文档 commit 落地。它应在本轮代码修改前完成，因为新的生产可达性规则正好要用于复核这次 F2-2 root-closure。
+
+---
+
+## Codex 补充审查：F2-4 恢复范围必须与 Bringup 启动失败分开
+
+本节由主审结合两个独立角色复核得到：一个只追踪当前权威文档与生产调用链，另一个专门反驳恢复范围、检查过度承诺和训练语义影响。两边结论一致：另一个 Codex 提出的阶段划分方向正确，但还必须增加“故障性质”这一维；不能简单写成“STARTING 不恢复、RUNNING 都恢复”。
+
+这不是要求在 F2-2 顺手建设新的高可用系统。相反，它是在缩小首版恢复范围，防止确定性错误被自动重启掩盖。
+
+### 一、为什么必须现在澄清
+
+当前文档混用了三个不同事实：
+
+```text
+BringupService 在 STARTING 阶段初始化失败
+WorkerHalted 在尚存活的 RolloutManager Actor 进程内传播
+RUNNING 后 RolloutManager state-owner 进程真正丢失
+```
+
+三者不能都写成“actor 重启并恢复”。当前代码里 `WorkerHalted` 只会令 rollout RPC / `ray.get()` 失败；它本身不杀死 Ray Actor，也没有完成 ActorHandle 替换、SGLang 重挂接或训练循环无感续跑。把这些写成当前能力，会让执行计划承诺一条尚不存在的生产链。
+
+已批准 D2 的核心是**恢复数据正确性契约**：`pending-before-cursor`、稳定逻辑身份、新物理 attempt、`recovery_epoch`、fencing、at-least-once replay 和幂等提交。它没有批准以下能力：
+
+```text
+同进程 BringupService reset
+WorkerHalted 自动杀死 Ray Actor
+Ray 自动创建 Actor 并替换 Driver 持有的 handle
+训练循环无感继续
+mid-episode resume
+optimizer step exactly-once
+```
+
+### 二、T0 范围澄清：生命周期阶段和故障性质必须正交判断
+
+建议将 Capture Wire T0 与 D2 的范围勘误一起确认如下：
+
+| 生命周期 | 故障性质 | 首版动作 |
+|---|---|---|
+| `STARTING` | 白名单中的幂等 readiness 瞬时故障 | 只在该子操作内有限重试 |
+| `STARTING` | 其他任何故障 | sticky `FAILED`，保留首个根因，终止当前训练 run；不进 F2-4 |
+| `RUNNING` | 配置、契约、安全、血缘、digest、权限或持久存储故障 | `run_halt`；不得自动恢复 |
+| `RUNNING` | 明确可恢复的 RolloutManager state-owner / 瞬时基础设施故障 | F2-4 完成后进入受控恢复 |
+| `RUNNING` | 未分类或无法可靠归因的故障 | 首版 `run_halt`；不得猜成瞬时故障 |
+
+因此，本轮建议的 T0 完整表述是：
+
+```text
+1. 每个 RolloutManager 进程只允许一代 capture wire、registry 和
+   BringupService 启动事务。
+2. 启动状态为 NEW -> STARTING -> RUNNING | FAILED；FAILED sticky，
+   同一进程不得创建第二代服务。
+3. STARTING 失败不走 F2-4，不自动重启 Actor；仅明确幂等的 readiness
+   子操作允许有限重试，其他错误立即向上抛并终止 run。
+4. RUNNING 不自动等于可恢复。只有明确分类为可恢复的 state-owner /
+   基础设施故障才有资格进入 F2-4；确定性和未知故障仍 run_halt。
+5. registry 生命周期属于进程级单代绑定；capture 可变状态的 mutation
+   owner 仍按已批准 D3，在 F2-3 收敛为 adapter event loop 单 owner。
+```
+
+实现上不要求新建大型 `CaptureWireRuntime`。`BringupService` 类级状态或很薄的进程级一次性闩锁都可以；类名和组织形式属于 T1。关键是禁止不同 registry 静默重绑：同一 registry 重复安装可幂等，不同 registry 必须 typed fatal。
+
+### 三、F2-4 v1 应承诺什么
+
+F2-4 v1 应只承诺以下能力：
+
+```text
+安全停止新的 rollout / batch 消费
+-> 读取并交叉验证 pending manifest、cursor checkpoint、checkpoint_generation
+-> 按持久状态恢复，而不是把所有记录一律重跑
+-> 对未完成 execution 从干净环境 replay
+-> rollout_execution_id 保持稳定
+-> physical_attempt_id 与 session capability 每次 replay 更新
+-> recovery_epoch / fencing 拒绝旧 owner 的迟到结果
+-> 恢复 ready group，并保持逻辑 execution 无静默丢失
+```
+
+恢复动作必须按持久状态区分：
+
+| 持久状态 | 恢复动作 |
+|---|---|
+| `RESERVED` | 重新派发 |
+| `DISPATCHED` / `RUNNING` | 从干净环境完整 replay，生成新 `physical_attempt_id` |
+| `OUTCOME_DURABLE` | 校验 artifact 后复用，不重跑 harness |
+| `GROUP_READY` | 重建并校验 ready group，不重跑已有 outcome |
+| `HANDED_OFF` | 进入 `uncertain_trained` 窗口，按已批准语义结构化留痕；不得声称无损恢复 |
+| `SUBMISSION_ACKED` | 不重复提交，按 durable trainer 证据继续 |
+| `TRAINED` | 必须有 trainer durable evidence；绝不 replay |
+| `RELEASED` | 按已批准调度语义重新进入可选集合 |
+
+`pending-before-cursor` 是必要条件，但并不自动覆盖 slime 内存 buffer、RH2 ready queue 和残组。manifest 至少要绑定 dataset revision、epoch、shuffle seed、sampling 配置、task bundle digest、policy / trainer checkpoint identity；`cursor` 已前进但 pending 缺失必须 fail-closed。
+
+### 四、F2-4 v1 明确不承诺什么
+
+以下能力不得在 F2-2 或 F2-4 v1 中顺手实现或写成既有验收：
+
+```text
+同进程 BringupService reset
+恢复 Claude Code / sandbox 的 mid-episode 现场
+自动销毁旧 Actor 并替换所有 ActorHandle
+跨节点恢复
+optimizer exactly-once
+rollout checkpoint 与 trainer checkpoint 的分布式原子提交
+未分类故障的自动恢复
+无限 Actor restart 或整个启动事务的通用指数退避
+```
+
+首版可以做到“安全停止后，从持久 checkpoint 受控重启同一逻辑 run，并 replay 未完成工作”。自动 Actor replacement 是独立后续能力，不是 F2-4 数据正确性契约的默认组成部分。
+
+还必须区分：
+
+```text
+A. RolloutManager-only recovery
+   trainer / active policy version 未回滚
+
+B. Whole-run checkpoint recovery
+   trainer 可能恢复到更旧 policy version
+```
+
+若 pending trajectory 来自 policy v12，而 trainer 恢复到 v10，不能直接复用 v12 ready group，也不能把 v12 outcome 与 v10 replay member 混为同一 GRPO group。F2-4 v1 可以只支持 A；若支持 B，必须先对账 trainer checkpoint identity 与 policy version，不兼容时整组从逻辑任务重建。联合 checkpoint 可以递延，但不得假装 rollout pending checkpoint 已经解决整条训练链恢复。
+
+### 五、Claude 需要修正的权威文档
+
+不能只把本节留在临时对话文档。完成 T0 勘误后，请最小同步：
+
+1. `fa/fa2a_decision_package.md`：在 D2 增加带日期的范围勘误，明确 `STARTING` 排除、`RUNNING` 的故障资格分类，以及自动 Actor replacement 未获承诺。
+2. `05-fully-async-execution-plan.md`：删除或改写“worker 死亡 -> actor 自动退出并重启”和“预取组不丢不重”。正确表述是：逻辑 execution 无静默丢失；重复 physical attempt 允许存在，但必须被识别、去重或 fencing，且只能形成一个 canonical outcome。
+3. `fa/implementation-notes.md` 当前权威状态：把“halt -> 整个 rollout actor 重启”改为当前真实行为；历史段可以保留，但必须标注 superseded。
+4. `00-project-status.md`：只增加一条压缩事实并链接 D2，不复制协议正文：F2-4 尚未实现；当前 `WorkerHalted` 为 fail-stop；自动 Actor replacement 未承诺。
+
+另外需要核对 F2-4 与后续 manifest 切片的依赖顺序：如果 F2-4 依赖 durable pending manifest，就不能在 manifest 尚不存在时声称完成恢复。可以把恢复所需 manifest 纳入 F2-4，或先落 manifest 再做恢复；但不得让两项各自假设对方已经实现。
+
+### 六、最低验收证据
+
+文档修正后，F2-4 实施计划至少应包含：
+
+```text
+启动确定性失败：无 r2、无自动重启循环、原始错误向上抛
+启动瞬时白名单子操作：有限重试耗尽后同样 fail-stop
+RUNNING 后确定性/未知故障：不进入恢复
+pending durable、cursor 未发布时崩溃：可恢复且不跳题
+cursor 已发布、pending 缺失：矛盾 fail-closed
+旧 owner 迟到结果：被 recovery_epoch / fencing 拒绝
+同一 rollout_execution_id replay：新 physical_attempt_id，不产生第二个 canonical outcome
+OUTCOME_DURABLE / GROUP_READY：恢复时不重复跑 harness
+HANDED_OFF：持久记录 uncertain_trained，不宣称 optimizer exactly-once
+trainer checkpoint / policy version 不相容：不得复用 pending trajectory
+```
+
+### 七、分期结论
+
+- **本轮 T0 文档阻塞**：确认“单代启动 + fail-stop”及上述 F2-4 范围勘误，消除权威文档中的自动重启过度承诺。
+- **F2-2 代码阻塞**：仍是前文列出的 fatal handoff、错误回滚 API、invalid barrier 缺少持久归因；F2-4 实现本身不应塞进 F2-2。
+- **F2-4 开工前阻塞**：补齐状态恢复表、manifest/cursor 写入顺序、trainer checkpoint / policy version 对账与 crash-point 测试计划。
+- **明确递延**：自动 ActorHandle replacement、跨节点恢复、mid-episode resume、optimizer exactly-once 和联合分布式 checkpoint。
+
