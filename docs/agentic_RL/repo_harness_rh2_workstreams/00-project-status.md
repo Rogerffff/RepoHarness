@@ -250,3 +250,5 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 | V / E / C / DF / G 系列      | 分别为 S0 验证项、实验设计决策项、硬约束、数据冻结任务、S2 待决策项的编号前缀                                                            |
 | batch schedule alignment   | P3 主要教训：治理过滤后可训练样本数须对齐 `dp_size × mb_group`，否则 slime `build_dp_schedule` 断言失败；须做纯 Python 准入预检         |
 | 账本（ledger）                 | 各阶段 acceptance summary JSON：digest 锁定 evidence + 代码，inspector 四步范式校验，防静默漂移                            |
+
+- 2026-08-16（勘误 4，见 `fa/fa2a_decision_package.md` D2）：F2-4 尚未实现；当前 `WorkerHalted` 为 fail-stop（终止训练 run）；自动 Actor replacement 未承诺。

@@ -396,7 +396,7 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 |---|------|------|
 | P1-1 | `retry_local_operation` 零生产调用点——逐操作（image/container/artifact/grading/发前请求）定幂等键+错误分类后接入，不做整段装饰器 | FA-2/FA-3 接线时 |
 | P1-2 | 生产 shutdown 链缺失：actor teardown 时 worker/GradingQueue/adapter 线程/在途 sandbox/artifact writer 的统一关闭 + 退出校验（账平、in-flight=0、无 open session、隔离区移交） | FA-5 前 |
-| P1-3 | 单例 + monkeypatch 不支持进程内恢复——当前恢复语义显式定为 **halt→整 actor 重启**；可重绑 registry holder 前不得声称进程内 recovery | 文档已定，FA-5 验收 |
+| P1-3 | 单例 + monkeypatch 不支持进程内恢复——**勘误 4（2026-08-16）改判**：单代启动 + sticky FAILED，当前恢复语义 = 终止训练 run（WorkerHalted 不自动杀/换 Actor；自动 ActorHandle replacement 未获承诺，属独立后续能力）；逻辑 execution 无静默丢失、重复 physical attempt 必须被识别/去重/fencing 且只形成一个 canonical outcome | 勘误 4 已定；F2-4 v1 范围见决策包 |
 | P1-4 | 长运行内存无界残余：`audits`/`failure_records`/`dropped_groups`/`cleanup_quarantine`/`GradingQueue.events`（后者还有 O(N²) 扫描）——durable sink + 有界窗口（attempts_ledger 已 drain 化） | FA-2 audit 面 |
 | P1-5 | episode deadline 起点晚（首次模型调用起表）——统一起点会**改变实际超时分布**（行为变更，非观测），与 watchdog 数值同批 | **D1b**（六审 1 从 FA-2A 移出） |
 | P1-7 | cleanup_quarantine 只有内存 list——最小 reconciler（持久化 + 重试 + run-halt 阈值） | FA-5 前 |
@@ -410,7 +410,7 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 **FA-5 验收增项（轮次 13 §11，并入 FA-5 清单）**：未知/伪造 SID 不达
 SGLang；并发 subagent 按 request id 归属；commit 故障无 pending draft
 残留；`rh2_fa_limit_model_call=1` 实测峰值 =1；actor kill/restart 预取组
-不丢不重；≥1h 热状态 cardinality 有上限；shutdown 全归零；update abort
+无静默丢失（重复 physical attempt 允许，须 fencing 归一）；≥1h 热状态 cardinality 有上限；shutdown 全归零；update abort
 的 RID/ACK/ledger/capture/sample 五方一致；CC 取消终止真实 SGLang 请求
 与 sandbox CLI；audit artifact 可重建四态守恒式。
 

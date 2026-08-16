@@ -197,7 +197,9 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 - 非零 harness exit：与正式链的启动断言**硬耦合已解除**（轮次 14 推翻
   轮次 9——slime episode 超时返回 EXIT_TIME_BUDGET_EXCEEDED=-1 是正常
   终止；旋钮保留、glue 默认仍联动；结构化终止枚举是 FA-2A 前置定义项）。
-- 恢复语义：halt → **整个 rollout actor 重启**（进程内线程重建不存在）。
+- 恢复语义（勘误 4 修正，2026-08-16；旧表述 superseded）：halt = **fail-stop
+  终止当前训练 run**——WorkerHalted 令 rollout RPC/ray.get 失败，不自动
+  杀死或替换 Ray Actor；受控恢复（checkpoint replay/fencing）属 F2-4。
 
 **临时挡板登记（每个都有替代任务与移除条件；FA-2A 完成时逐个显式裁决）**：
 

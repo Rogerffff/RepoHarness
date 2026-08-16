@@ -26,6 +26,35 @@ owner_decision:
        recovery 与 staleness 控制动作；正式阈值数值延后 pre-RL/FA-5
        校准后单独 T0 预注册）。
 approved_at: 2026-08-07
+errata_4: |
+  勘误 4（2026-08-16，用户经 codex 七/八轮讨论批准——capture wire 单代
+  启动 + D2 范围澄清）：
+  ① 每个 RolloutManager 进程只允许一代 capture wire / registry /
+    BringupService 启动事务；启动状态 NEW→STARTING→RUNNING|FAILED，
+    FAILED sticky（记录首个根因、尽力清理、原样上抛、后续 get() 重抛
+    同一错误、绝不创建第二代）。实现形态（类级状态或薄闩锁）属 T1，
+    不要求大型 CaptureWireRuntime，不做反向 monkeypatch。
+  ② 启动不做通用指数退避；仅白名单内幂等 readiness 瞬时子操作（如
+    SGLang 就绪探测）允许有限重试；配置/digest/renderer/权限/磁盘
+    错误立即失败。当前恢复语义如实为**终止训练 run**：WorkerHalted
+    不自动杀死/替换 Ray Actor；Actor replacement、checkpoint replay
+    与 fencing 属 F2-4。
+  ③ 生命周期 × 故障性质正交判定：STARTING 白名单瞬时故障→子操作内
+    有限重试；STARTING 其他→sticky FAILED 终止 run（不进 F2-4）；
+    RUNNING 确定性故障（配置/契约/安全/血缘/digest/权限/持久存储）→
+    run_halt 不自动恢复；RUNNING 明确可恢复的 state-owner/瞬时基建
+    故障→F2-4 后受控恢复；RUNNING 未分类→run_halt（不得猜成瞬时）。
+  ④ D2 未批准且 F2-2/F2-4 v1 不得顺手实现：同进程 BringupService
+    reset、WorkerHalted 自动杀 Actor、ActorHandle 自动替换、训练循环
+    无感续跑、mid-episode resume、optimizer exactly-once、跨节点恢复、
+    联合分布式 checkpoint、未分类故障自动恢复。F2-4 v1 = 安全停止后
+    从持久 checkpoint 受控重启同一逻辑 run 并 replay 未完成工作
+    （首版只支持 RolloutManager-only recovery；whole-run 恢复须先对账
+    trainer checkpoint identity 与 policy version，不兼容整组重建）。
+  ⑤ registry 生命周期 = 进程级单代绑定；capture 可变状态 mutation
+    owner 仍按已批 D3 于 F2-3 收敛为 adapter event loop 单 owner。
+    不同 registry 重绑 = typed fatal（暴露所有权错误）；同 registry
+    重复安装幂等。
 errata_3: |
   勘误 3（2026-08-15，用户批准 codex F2-2 复核二轮 T0 建议）：
   RuntimeFailureCategory pre-formal 原地修订新增 runtime_quiescence_failure
