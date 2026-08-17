@@ -464,7 +464,7 @@ run_halt 归因。
 | `inference_service_failure` | 组件级熔断（推理域），同上 |
 | `sandbox_crash` | 组件级熔断（sandbox 域），同上 |
 | `harness_crash` | 组件级熔断（harness 域），同上 |
-| `worker_crash` | fence 旧 owner → `recovery_in_progress`（暂停消费）→ 走 D2 恢复；恢复检查失败才 terminal run_halt |
+| `worker_crash` | **前提（勘误 4）：仅限 RUNNING 后、已分类可恢复、且 F2-4 能力闸门已通过**——fence 旧 owner → `recovery_in_progress` → 走 D2 恢复；STARTING 失败与确定性故障仍 run_halt；恢复检查失败 terminal run_halt |
 | `grading_infra_failure` | 组件级熔断（评分域）；不隔离任务 |
 | `capture_incomplete` | 该 execution missing + capture 域计数；频发超窗升级组件熔断 |
 | `token_alignment_failure` | 单发：该 execution missing + capture 域计数；频发超窗：run_halt |

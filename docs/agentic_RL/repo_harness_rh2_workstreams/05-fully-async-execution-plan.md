@@ -126,6 +126,12 @@
 >    问题的共同根源是共享可变状态跨三个执行域传播——停止叠锁，收敛所有权）。
 >    落地后解除 overlap fail-fast（并行 subagent 误杀解除）。
 > 5. **F2-4 实现**：按第 1 步定案落地恢复语义。
+> 5b. **两个 manifest 不是同一事实（终核 2026-08-17）**：F2-4 交付
+>    **恢复 manifest**（cursor + pending reservation，绑定 dataset
+>    revision/epoch/shuffle seed/sampling 配置/bundle digest/checkpoint
+>    identity；cursor 已前进而 pending 缺失 = fail-closed）；F2-6 交付
+>    **血缘 manifest**（physical attempt → Outcome）。F2-4 先于 F2-6
+>    可以，但必须自己交付前者，不得等待后者才补恢复事实。
 > 6. **F2-5/F2-6**：collector 组不变量（组长度 == n、slot 0..n-1 无重复、
 >    重复投递拒绝、混合 branch 策略显式、dropped 有界）；attempt→Outcome
 >    durable manifest（snapshot/ack 事务接口已在，接 per-execution
@@ -409,7 +415,7 @@ evidence 目录：docs/agentic_RL/repo_harness_rh2_workstreams/fa/
 
 **FA-5 验收增项（轮次 13 §11，并入 FA-5 清单）**：未知/伪造 SID 不达
 SGLang；并发 subagent 按 request id 归属；commit 故障无 pending draft
-残留；`rh2_fa_limit_model_call=1` 实测峰值 =1；actor kill/restart 预取组
+残留；`rh2_fa_limit_model_call=1` 实测峰值 =1；actor kill + 受控恢复验收（Ray 不自动替换 ActorHandle——勘误 4） 预取组
 无静默丢失（重复 physical attempt 允许，须 fencing 归一）；≥1h 热状态 cardinality 有上限；shutdown 全归零；update abort
 的 RID/ACK/ledger/capture/sample 五方一致；CC 取消终止真实 SGLang 请求
 与 sandbox CLI；audit artifact 可重建四态守恒式。

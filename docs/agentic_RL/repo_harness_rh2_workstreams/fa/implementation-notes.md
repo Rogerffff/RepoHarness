@@ -174,15 +174,25 @@ latch Exception）+ grading_queue.close(drain=False) 真回滚（旧 stop()
 不存在 = 假回滚）+ CC guard 入事务、invalid_result 持久归因、wire
 不同 registry typed fatal（legacy flag 收养）。**§10.4 双 subagent
 首次实战**（Production Tracer + Falsifier 并行）：四修复功能全数成立；
-合流修掉 4 项缺陷——shutdown→collect 绕 sticky 重建二代 worker
-（service 级 _halted_error 关闭）、latch 吞 CancelledError、backlog
-组不入隔离账、legacy flag 误报所有权。登记递延：隔离账目 durable
+合流处理 4 项缺陷（终核修正口径）：shutdown→collect 绕 sticky——
+终核补 `_closed` 终态闭合；latch 吞 CancelledError——终核改"当前调用
+传播取消 + 后续拿 typed fatal"闭合；backlog 组入隔离账（口径按终核
+收窄：**内存账只保存已组装 candidate/backlog；queue/in-flight 可恢复
+性归 F2-4 pending manifest**，不为"零丢失"提前复制完整训练数据）；
+legacy flag——终核改判 typed fatal（monkeypatch 闭包持旧 registry，
+改模块属性是假迁移，A′ 不支持进程内迁移）。登记递延：隔离账目 durable
 导出（F2-5/F2-6）；__init__ 晚段 adapter 线程泄漏（FA-5；闩锁已防
 端口二次抢占）；被 cancel 的 in-flight 协程不响应取消时收尾 await
 无独立超时（F2-2b watchdog 面）；闩锁/回滚行为测试 F2-2b 前补齐。
 审查机制收紧（review-standards §10）与勘误 4/F2-4 范围文档已单独
-提交。下一切片 = **F2-2b**；FA-5 未开工。闸门
-`rh2_fully_async_training_path_verified` = **false**。测试基线 989。
+提交。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
+fatal 发布时刻前移到 execution task 边界（_guarded_execute 捕获 Fatal
+即写 worker 唯一 halt_reason——"task done 未 reap 仍交付 batch"窗口
+关闭，账目仍由 reap 一次完成）；真实 worker+service 交错测试常驻（不
+预填 halt_reason）；测试诚实化（install_capture_wire 真调用三分支/
+闩锁 sticky 打桩/invalid_result 持久化断言）；Fatal docstring 恢复
+语义改勘误 4 口径。下一切片 = **F2-2b**；FA-5 未开工。闸门
+`rh2_fully_async_training_path_verified` = **false**。测试基线 992。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
 行为；audit_only 不放宽任何守卫、不产正式训练 batch；hard_wall 仅
