@@ -6296,3 +6296,77 @@ shutdown probe 得到 `service_closed`；startup cancellation 后状态为 FAILE
 提交补齐，不需要新增 T0、不需要再做 F2-2 根部重构，也不需要增加新的 guard、retry
 或恢复状态机。
 
+
+
+---
+
+## codex F2-2b 复核（2026-08-17，NO-GO：3 P0 + 2 P1——全部采纳；冻结对象 T0 待拍板）
+
+结论
+当前是 NO-GO：F2-2b 不能标记完成，也不应直接进入 F2-3。两个独立审查线程分别做了生产链追踪与反例攻击，均得出相同结论。
+此前 564af7fd 的 fatal handoff 修复本身已经闭合；问题集中在新提交 40395a80 的静止与冻结设计。
+阻塞问题
+P0：FrozenWorkspace 并没有冻结任何东西。
+它只是把命令继续委托给原 workspace：[quiescence_barrier.py (line 56)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/quiescence_barrier.py:56)。
+指纹 git status --porcelain + git diff：
+不包含未跟踪文件内容；
+不包含 staged 文件内容；
+修改未跟踪文件内容后，指纹可以完全不变。
+而评分器随后在同一个 workspace 执行 git add -N .：[manager.py (line 339)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/grading/manager.py:339)。这会主动修改 Git index，使合法的新文件轨迹被评分器自己触发 snapshot_integrity_mismatch。
+本地确定性探针已经得到：
+修改 untracked 文件内容前后：fingerprint 相同
+执行 git add -N 后：fingerprint 改变
+P3 真实评分日志也显示 .harness/ 被带进了评分 checkout：[eval log (line 137)](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/preflight/remote_evidence_20260708/preflight_evidence/preflight_j4_fail_converter_signature_/artifacts/eval_logs/evallog_fff6e16c-9042-44bd-b307-_e761db07.eval.log:137)。
+这同时产生：
+假阴性：workspace 已改变但校验通过；
+假阳性：workspace 没有外部写者，却被 grader 自己改出 mismatch。
+P0：pkill -u agent 不能证明 execution scope 已终止。
+当前实现见 [quiescence_barrier.py (line 44)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/quiescence_barrier.py:44)。
+真实 Docker 探针发现两个相反问题：
+python:3.12-slim：
+ps 不存在，但 `ps | wc -l` 仍返回 count=0
+=> fail-open，错误确认静止
+
+真实 SWE 镜像：
+agent detached process 退出后留下 zombie
+27  1  agent  Zs  sleep <defunct>
+count=1
+=> 永远无法静止，合法 rollout 被拒
+此外正式配置允许 SimpleLoopDriver，其模型控制的 Bash 默认以 root 运行：[bringup.py (line 265)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:265)。这些 root 写者完全绕过 pkill -u agent。
+还有一个安全问题：屏障以 root 执行模型可控制 Git 配置下的 git diff。模型可设置 diff.external，让屏障执行其脚本。冻结导出必须禁用 external diff/textconv，不能信任仓库内 Git 配置。
+P0：session_plane_drained=True 不是可信收据。
+slime 的 shutdown_session() 会捕获跨 event loop drain 异常、只记日志然后返回：[common.py (line 225)](/Users/roger/Desktop/claude-code-verl-stage0h/reference/slime/slime/agent/adapters/common.py:225)。
+RH2 随后仍无条件写入：
+audit.session_plane_drained = True
+见 [generate.py (line 1868)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:1868)。
+所以 adapter drain 失败时，屏障仍可能相信“模型请求已经排空”。这一项应在 F2-3 的 adapter 单 owner 改造中用 typed drain receipt 根治。
+P1：完整性失败后的持久账目自相矛盾。
+代码先设置 audit.finalized，再做完整性复核：[generate.py (line 2064)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/generate.py:2064)。
+漂移时 Outcome 是 missing，但审计 writer 因 audit.finalized 非空仍写：
+disposition = finalized
+eligibility_report_ref = ...
+见 [bringup.py (line 322)](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:322)。同一 execution 因而同时是 missing 和 finalized。
+P1：新增测试没有覆盖真实组合。
+当前测试用预制 D1/D2 字符串模拟 Git，并用 grading stub 直接返回成功，没有执行真实：
+git add -N；
+staged/untracked 变化；
+Docker UID/zombie；
+root writer；
+adapter drain 失败。
+所以虽然我独立验证了：
+1003 passed
+ruff: All checks passed
+inspect-rh2-s1: OK
+这些测试仍无法证明 F2-2b 的核心不变量。
+建议反馈 Claude
+先停止继续叠 pkill、指纹和 post-check 守卫，做一次边界收敛：
+恢复 fa_formal fail-stop，并将 F2-2b 状态改为“审查未通过、待重构”。
+新增一个很小的 T0：冻结对象选什么。A，推荐：FrozenPatchArtifact。静止后只导出一次评分真正消费的 immutable patch bytes。
+B：物理只读 workspace snapshot，语义更强但复制成本高。
+
+A 方案应以 base_commit 为锚，用临时 GIT_INDEX_FILE 覆盖 staged、unstaged、untracked；禁用 external diff/textconv；明确剔除 .harness/** 等运行时私有文件。
+SWEGradingManager 直接消费该不可变 patch，不再重新读取或修改 rollout workspace，也不再需要评分后的 source workspace 完整性复检。
+formal 路径强制所有模型控制进程使用非 root 用户；SimpleLoopDriver 要么降权，要么禁止进入 formal。
+F2-3 增加 adapter-owner 生成的 typed drain receipt；在它落地前不得声称完整 quiescence。
+增加真实临时 Git 仓库、真实评分器、真实 Docker zombie/root writer 和审计一致性测试。
+完成这些后才能关闭 F2-2b；F2-3 可以作为 drain receipt 的实现阶段参与收口，但不能在当前错误的“F2-2b 已完成”基础上直接推进。

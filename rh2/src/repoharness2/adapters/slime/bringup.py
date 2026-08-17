@@ -512,9 +512,15 @@ class BringupService:
         # 复核六轮 P0-2：纯配置校验在**任何资源启动之前**（线程未起）
         if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
             raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
-        # F2-2b：fa_formal 的屏障在 async_start 事务里构造并注入
-        # orchestrator（拒启动挡板解除；validate_execution_config 仍强制
-        # fa_formal 注入非空——构造点漏注入照样启动即炸）
+        if EXECUTION_MODE == "fa_formal":
+            # F2-2b 复核 NO-GO（2026-08-17）：DockerQuiescenceBarrier 的
+            # 指纹/pkill/收据三面均被证不健全——正式模式恢复 fail-stop，
+            # 待冻结对象 T0（FrozenPatchArtifact vs 物理只读副本）拍板后
+            # 重构再解除。探针仍用 fa_audit_only。
+            raise RuntimeError(
+                "fa_formal 暂禁：F2-2b 静止/冻结设计复核未通过（NO-GO），"
+                "待冻结对象 T0 拍板与重构。"
+            )
         self.app_handle = run_app_in_thread(
             self.adapter.app,
             host=ADAPTER_BIND_HOST,

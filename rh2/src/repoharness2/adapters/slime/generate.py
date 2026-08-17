@@ -2070,8 +2070,11 @@ class RolloutOrchestrator:
                 grading_workspace, "verify_integrity"
             ):
                 if not await grading_workspace.verify_integrity():
-                    # 复核证伪静止事实：先撤销，completion 由事实推导 missing
+                    # 复核证伪静止事实：先撤销，completion 由事实推导 missing；
+                    # 评分产物一并作废（P1-1：missing 不得与 disposition=
+                    # finalized 并存——finalized 引用先清）
                     audit.runtime_quiescence_confirmed = False
+                    audit.finalized = None
                     self._produce_outcome_v2(
                         audit=audit,
                         raw_meta=raw_meta,

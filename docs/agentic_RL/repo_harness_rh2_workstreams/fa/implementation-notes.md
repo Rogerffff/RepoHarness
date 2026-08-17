@@ -197,7 +197,19 @@ failed==0/第一次 collect 拒/好组留 queue 归 F2-4 manifest/放行后
 failed==1 账目守恒）+ **mutation witness 常驻测试**（恢复旧
 _guarded_execute 时同一交错必须交付 batch——oracle 判别力自证）；
 invalid_result 补真实落盘 JSONL 断言；shutdown→service_closed 与
-启动取消 sticky typed fatal 各补直接测试。**F2-2b Runtime 静止屏障实现：完成**（quiescence_barrier.py）。
+启动取消 sticky typed fatal 各补直接测试。**F2-2b Runtime 静止屏障：审查未通过、待重构（NO-GO，2026-08-17
+codex 复核三 P0 全实锤）**。已落代码（quiescence_barrier.py）保留但
+**fa_formal 拒启动挡板已恢复**（解除条件 = 冻结对象 T0 拍板 + 重构 +
+复核通过）。三 P0：① 指纹双向失效——git status --porcelain 只列未跟踪
+文件名不含内容（改内容不变=假阴性），评分器自跑 git add -N 改 index
+（自触发 mismatch=假阳性），.harness/ 混入评分面；② pkill -u agent
+不充分——slim 镜像无 ps 时 `ps|wc -l`=0 fail-open、真实镜像 zombie
+永不归零、SimpleLoopDriver 的 root bash 完全绕过、root 跑模型可控
+git config 的 diff 有 diff.external 代码执行面；③ session_plane_
+drained 非可信收据——slime shutdown_session 吞跨 loop drain 异常只记
+日志，RH2 无条件写 True（根治 = F2-3 adapter 单 owner 的 typed drain
+receipt）。P1 已修：完整性失败路径先清 audit.finalized（missing 不与
+disposition=finalized 并存）。原状态段（见下）作废保留存档：
 DockerQuiescenceBarrier 按 D1a 序列：① pkill -9 -u agent + 有界重试
 验证进程归零（超时 → execution_scope_termination_timeout）；② 会话面
 未排空前提检查（→ late_model_request_detected）+ workspace 双读指纹
