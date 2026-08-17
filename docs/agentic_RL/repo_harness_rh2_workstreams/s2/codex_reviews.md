@@ -7076,3 +7076,83 @@ uv run inspect-rh2-s1                    -> OK（22 evidence + 72 code）
 B2、进入 B3。除非 closure 自己引入当前信任边界的新回归，否则新发现降为 backlog，
 不再扩张 B1/B2。
 
+
+
+---
+
+## codex：B2 closure 聚焦终核（2026-08-17）
+
+### 总结
+
+`65ebf0f5` 的**生产代码修复正确**：baseline digest 已单源、五个 audit 摘要已
+写入持久 JSONL、字段语义已收窄、exporter 已读取 barrier 返回的 workspace，两处
+`or True` 也已消失。没有发现新的训练语义、状态所有权或长期维护问题。
+
+但 closure 的测试证据还差一个真实 oracle。它是很小的测试缺口，不应再开启一轮
+广泛审查，也不应扩展 B2 设计。
+
+### P1（`test_only`，保护 production trust boundary）：workspace 接线 mutant 仍能存活
+
+新增 e2e 当前验证了：
+
+```text
+quiescence < export < grading
+grader 使用 ok.frozen
+```
+
+但它没有验证 **exporter** 使用 `ok.frozen`。我在 commit 的临时副本中把生产接线
+从 `grading_workspace` 改回 `sandbox.workspace`，原测试仍然通过：
+
+```text
+test_fa_formal_with_injected_barrier_end_to_end -> 1 passed
+```
+
+也就是说，生产代码现在是正确的，但这个回归以后可以悄悄回来而测试不红。
+
+**最小修复**：让测试 `_FrozenWs.run_bash()` 记录收到的脚本，并断言 B2 census / 内容
+读取确实经过 `ok.frozen`。不新增测试框架、不增加生产 guard、不增加状态。修复后应
+做一次 mutation witness：改回 `sandbox.workspace` 时该测试必须失败；恢复后通过。
+
+### 两个 P2 顺手修正
+
+1. 持久 audit 已正确写出五个字段，但测试只断言四个；补：
+
+   ```python
+   assert record["baseline_entry_count"] == 3
+   ```
+
+2. 当前说明文字仍有旧名：
+
+   - `contracts/frozen_patch.py` 模块说明中的 `excluded_census_changed`；
+   - `implementation-notes.md` 当前 B2 段前半的同名表述。
+
+   均改成 `excluded_pathset_changed`，不要改 schema 或再增兼容别名。
+
+### 六项复核结果
+
+```text
+baseline digest 单源                         PASS
+持久 audit 五字段生产写入                    PASS
+excluded_pathset_changed 运行时/registry/schema PASS
+exporter 当前使用 barrier workspace          PASS（oracle 待补）
+两个 or True                                 PASS
+quiescence < export < grading 顺序            PASS
+```
+
+环境 lineage 的传递绑定与既有 barrier NO-GO 维持上轮裁决，不重复计入本次 finding。
+
+### 验证与推进决定
+
+独立验证：
+
+```text
+uv run pytest -q       -> 1021 passed
+相关文件 ruff          -> All checks passed
+inspect-rh2-s1         -> OK（22 evidence + 72 code）
+workspace 错接 mutation -> 原 e2e 仍 1 passed（证明 oracle 缺口）
+```
+
+**推进决定**：Claude 先提交上述测试/文字小修，完成 mutation witness 后即可直接宣布
+B2 组件级闭合并开工 B3，**不需要再等待 codex 第三轮复核，也不需要用户做 T0 决策**。
+后续除非这几行修复引入测试失败，否则 B1/B2 不再重开。
+

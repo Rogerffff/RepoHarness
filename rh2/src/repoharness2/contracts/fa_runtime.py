@@ -547,8 +547,13 @@ class RolloutAttemptOutcomeV2(StrictModel):
                 raise ValueError("present_* 必须携带至少 1 条逐轮 weight_version。")
             if self.current_version_at_finalize is None:
                 raise ValueError("present_* 必须携带 current_version_at_finalize。")
-            if self.eligibility_report_id is None:
-                raise ValueError("present_* 必须引用 eligibility_report_id。")
+            if self.eligibility_report_id is None and not self.reward_unavailable:
+                raise ValueError(
+                    "present_* 必须引用 eligibility_report_id（例外：reward_"
+                    "unavailable=True 时资格链未运行——A-prime 失败表 unsafe/"
+                    "评分不可得两行的 present 事实不伪造资格引用；pre-formal "
+                    "原地修订 2026-08-17）。"
+                )
         # --- 版本派生互检 + 消费时刻冻结（同 v1）---
         expected_span = derive_weight_version_max_lag(self.turn_weight_versions or [])
         if self.turn_weight_versions and self.intra_execution_version_span != expected_span:

@@ -43,6 +43,7 @@ from repoharness2.contracts import (
 )
 from repoharness2.contracts.baseline_manifest import BaselineWorkspaceManifestV1
 from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1
+from repoharness2.contracts.scoring_projection import ScoringProjectionArtifactV1
 from repoharness2.contracts.fa_runtime import (
     ExecutionIdentity,
     ModelCallAttempt,
@@ -92,6 +93,8 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.fa.baseline_workspace_manifest.v1": BaselineWorkspaceManifestV1,
     # B2（A-prime T0 第 4/5 条）：评分消费的不可变文件 delta
     "rh2.fa.frozen_patch_artifact.v1": FrozenPatchArtifactV1,
+    # B3：grader 消费面（引用式派生）
+    "rh2.fa.scoring_projection.v1": ScoringProjectionArtifactV1,
     "rh2.fa.training_runtime_window.v1": TrainingRuntimeWindow,
     "rh2.fa.model_call_attempt.v1": ModelCallAttempt,
 }

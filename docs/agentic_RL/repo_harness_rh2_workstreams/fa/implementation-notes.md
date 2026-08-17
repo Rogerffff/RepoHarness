@@ -233,8 +233,27 @@ Git**——正式组合链的 DockerQuiescenceBarrier 指纹仍跑 git status/di
 检查**（不是全树 writer-zero——那是屏障的 owner 职责）。环境 lineage
 裁决：不复制进 FrozenPatch（经 baseline digest 传递绑定已成立）；
 formal 开闸前加具名检查 environment_package_digest is not None（只阻
-开闸不阻 B3）。**B2 组件级完成**。递延：提取性能（FA-5）。下一片 =
-**B3 hygiene/security 分类 + ScoringProjectionArtifact**。
+开闸不阻 B3）。**B2 组件级完成**（终核 P1 oracle 补齐：_FrozenWs 记录脚本 + mutation
+red-green 见证——期间发现同秒改写的 stale .pyc 会让 mutation 假红绿，
+witness 流程加清缓存步骤）。**B3 hygiene 分类 + ScoringProjection：
+完成**（contracts/scoring_projection.py）。HygieneReport 二值判定
+（unsafe 必带 reasons/projectable 不得带）；v1 unsafe 规则 = entry 落
+排除 namespace（结构矛盾）+ symlink target 逃逸（绝对路径/.. 段——
+干净 checkout 隔离击穿面）；ScoringProjectionArtifactV1 **按引用**
+（路径列表 + raw digest 锚，无内容字段——不成为第二本事实账）。
+runtime 私有面：excluded_pathset_changed 只作事实进 report（**不判
+tamper**——需权限/命令证据，A-prime 6）。接线 = export 后分类先于
+grader（A-prime 5/7）；unsafe → **present_complete + 永久拒绝**
+（reason_code=unsafe_artifact_permanent_rejection，不跑 grader、
+reward 不可得、abort 剔除、audit 落 reasons）；unsupported 对象改判
+兑现（B2 登记项：同 unsafe 收口）。**v2 契约 pre-formal 原地修订
+（2026-08-17，A-prime 失败表 unsafe/评分不可得行的执行面）**：
+present_* + reward_unavailable=True 时 eligibility_report_id 可为
+None——资格链未运行是事实，不伪造引用；producer present-facts 门
+同步。版本事实取 capture 真值（hook.records weight_version）。
+递延：分类规则扩充（计划既定）；AdmissionReport 本体（FA-2/F2-5）。
+下一片 = **B4 fresh grader 消费 projection（动 grading/manager.py
+前先 S2 协调）**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

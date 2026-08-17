@@ -1416,6 +1416,10 @@ class RolloutAudit:
     frozen_patch_digest: str | None = None
     patch_entry_count: int = 0
     excluded_pathset_changed: bool = False
+    # B3：hygiene/projection 摘要（AdmissionReport 本体归 FA-2/F2-5）
+    runtime_private_pathset_changed: bool = False
+    unsafe_artifact_reasons: list[str] = field(default_factory=list)
+    scoring_projection_entry_count: int = 0
     # F2-2 复核三轮 P1-2：audit-only 收口标记（屏障前正式探针/带身份
     # bring-up）——bringup 落盘 disposition=audit_only_rejected，
     # fault-domain 统计（FA-2B）按此排除，不污染 capture 故障率
@@ -2086,11 +2090,93 @@ class RolloutOrchestrator:
                             physical_attempt_id=physical_attempt_id,
                         )
                     except PatchExportError as exc:
+                        if exc.reason_code == "unsupported_object_in_patch":
+                            # B3 兑现 B2 登记：模型产出不支持对象 = unsafe
+                            # artifact（present + 永久拒绝，不评分）
+                            audit.unsafe_artifact_reasons = [exc.reason_code]
+                            audit.mark("unsafe_artifact_rejected")
+                            self._produce_outcome_v2(
+                                audit=audit,
+                                raw_meta=raw_meta,
+                                termination_kind="completed",
+                                failure_category=None,
+                                reason_code="unsafe_artifact_permanent_rejection",
+                                failed_component="patch_hygiene",
+                                task_resolved=None,
+                                turn_weight_versions=[
+                                    r.weight_version for r in hook.records
+                                    if r.weight_version
+                                ] or None,
+                                current_version_at_finalize=(
+                                    self._current_policy_version_provider()
+                                    if self._current_policy_version_provider is not None
+                                    else self.config.policy_version
+                                ),
+                                eligibility_report_id=None,
+                                extra_evidence=[*barrier_evidence, exc.reason_code],
+                            )
+                            return self._abort_result(
+                                sample, reason="rh2_unsafe_artifact_rejected",
+                                task=task, top_p=top_p,
+                            )
                         raise SlimeBindingError(exc.reason_code, str(exc)) from exc
                     audit.frozen_patch_digest = compute_frozen_patch_digest(frozen_patch)
                     audit.patch_entry_count = len(frozen_patch.entries)
                     audit.excluded_pathset_changed = frozen_patch.excluded_pathset_changed
                     audit.mark("frozen_patch_exported")
+                    # B3：hygiene 分类必须先于 grader（A-prime 第 5/7 条）。
+                    # unsafe → present + 永久拒绝：不运行 grader、reward
+                    # 不可得、abort 形状（训练面剔除）；准入 verdict 记
+                    # audit（AdmissionReport 本体归 FA-2/F2-5）。
+                    from repoharness2.contracts.scoring_projection import (
+                        classify_frozen_patch,
+                    )
+
+                    hygiene, projection = classify_frozen_patch(
+                        frozen_patch,
+                        excluded_namespaces=baseline_manifest.policy.excluded_namespaces,
+                        frozen_patch_digest=audit.frozen_patch_digest,
+                    )
+                    audit.runtime_private_pathset_changed = (
+                        hygiene.runtime_private_pathset_changed
+                    )
+                    if hygiene.verdict == "unsafe_artifact":
+                        audit.unsafe_artifact_reasons = list(hygiene.reason_codes)
+                        audit.mark("unsafe_artifact_rejected")
+                        self._produce_outcome_v2(
+                            audit=audit,
+                            raw_meta=raw_meta,
+                            termination_kind="completed",
+                            failure_category=None,
+                            reason_code="unsafe_artifact_permanent_rejection",
+                            failed_component="patch_hygiene",
+                            task_resolved=None,  # 不评分 → reward 不可得
+                            # present 事实的版本链取 capture 真值（A-prime
+                            # unsafe 行 = present + 永久拒绝）
+                            turn_weight_versions=[
+                                r.weight_version for r in hook.records
+                                if r.weight_version
+                            ] or None,
+                            current_version_at_finalize=(
+                                self._current_policy_version_provider()
+                                if self._current_policy_version_provider is not None
+                                else self.config.policy_version
+                            ),
+                            eligibility_report_id=None,
+                            extra_evidence=[
+                                *barrier_evidence,
+                                f"frozen_patch:{audit.frozen_patch_digest}",
+                                *hygiene.reason_codes,
+                            ],
+                        )
+                        return self._abort_result(
+                            sample, reason="rh2_unsafe_artifact_rejected",
+                            task=task, top_p=top_p,
+                        )
+                    audit.scoring_projection_entry_count = len(
+                        projection.included_entry_paths
+                    )
+                    audit.mark("scoring_projection_built")
                 elif isinstance(result, QuiescenceRejected):
                     self._produce_outcome_v2(
                         audit=audit,

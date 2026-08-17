@@ -38,6 +38,7 @@ EXPECTED_EXTRA_IDS = {
     "rh2.fa.rollout_attempt_outcome.v2",
     "rh2.fa.baseline_workspace_manifest.v1",
     "rh2.fa.frozen_patch_artifact.v1",
+    "rh2.fa.scoring_projection.v1",
     "rh2.fa.training_runtime_window.v1",
     "rh2.fa.model_call_attempt.v1",
 }
@@ -248,6 +249,16 @@ def _frozen_patch_payload() -> dict:
     }
 
 
+def _scoring_projection_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.scoring_projection.v1",
+        "frozen_patch_digest": "sha256:" + "f" * 64,
+        "rollout_execution_id": "exec_1",
+        "physical_attempt_id": "exec_1#p1-aaaa",
+        "included_entry_paths": ["a.py"],
+    }
+
+
 def _fa_window_payload() -> dict:
     return {
         "schema_id": "rh2.fa.training_runtime_window.v1",
@@ -338,6 +349,7 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.fa.rollout_attempt_outcome.v2": _fa_outcome_v2_payload,
         "rh2.fa.baseline_workspace_manifest.v1": _baseline_manifest_payload,
         "rh2.fa.frozen_patch_artifact.v1": _frozen_patch_payload,
+        "rh2.fa.scoring_projection.v1": _scoring_projection_payload,
         "rh2.fa.training_runtime_window.v1": _fa_window_payload,
         "rh2.fa.model_call_attempt.v1": _fa_attempt_payload,
     }

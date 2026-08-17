@@ -143,7 +143,10 @@ def build_outcome_v2(
     if completion != "missing" and (
         not turn_weight_versions
         or current_version_at_finalize is None
-        or eligibility_report_id is None
+        or (eligibility_report_id is None and task_resolved is not None)
+        # eligibility 例外与 v2 契约同步（pre-formal 修订 2026-08-17）：
+        # reward 不可得（unsafe 拒评/评分故障）时资格链未运行，present
+        # 事实不因缺资格引用而降级 missing
     ):
         completion = "missing"
         failure_category = "capture_incomplete"
