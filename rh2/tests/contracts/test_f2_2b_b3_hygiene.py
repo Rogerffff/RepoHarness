@@ -142,6 +142,131 @@ def test_hygiene_report_consistency():
                       runtime_private_pathset_changed=False)
 
 
+async def test_contract_mismatch_goes_fatal_not_missing():
+    """P1-1 反例：baseline 互检失败 → Fatal 逃逸（worker run-halt），
+    不收口为缺员继续训练；audit 落结构化归因。"""
+
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[1] / "adapters"))
+    from test_f2_2_capability import _stamp_fa_identity
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+        dense_turns,
+    )
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
+    from repoharness2.adapters.slime.generate import QuiescenceConfirmed
+    import repoharness2.adapters.slime.patch_exporter as pe
+
+    class _FrozenWs:
+        def __init__(self, u):
+            self._u = u
+
+        async def run_bash(self, script):
+            return await self._u.run_bash(script)
+
+    class _Barrier:
+        async def establish(self, *, workspace, audit):
+            return QuiescenceConfirmed(
+                frozen_grading_workspace=_FrozenWs(workspace),
+                snapshot_ref="sha256:abc", evidence_refs=("s",))
+
+    # 注入：exporter 产出带错误 baseline 锚的 artifact（两份事实分家）
+    real_export = pe.export_frozen_patch
+
+    async def poisoned_export(workspace, baseline, **kw):
+        art = await real_export(workspace, baseline, **kw)
+        return art.model_copy(update={
+            "baseline_manifest_digest": "sha256:" + "0" * 64})
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_Barrier(), turns=turns)
+    _stamp_fa_identity(chain.base_sample)
+    pe.export_frozen_patch = poisoned_export
+    try:
+        with pytest.raises(FatalExecutionInfrastructureError,
+                           match="baseline_digest_mismatch"):
+            await chain.orchestrator.generate(
+                _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    finally:
+        pe.export_frozen_patch = real_export
+    audit = chain.orchestrator.audits[0]
+    assert any(f.error_type == "baseline_digest_mismatch"
+               for f in audit.failure_records)
+    assert chain.grading.calls == []  # 互检失败不评分
+
+
+def test_exemption_requires_reward_unavailable():
+    """P1-2 反例：resolved + reward 可得 + unsafe reason + 无 eligibility
+    = 矛盾形状，构造即拒。"""
+
+    from repoharness2.contracts.fa_runtime import (
+        ExecutionIdentity,
+        RolloutAttemptOutcomeV2,
+    )
+
+    with pytest.raises(ValueError, match="豁免集合"):
+        RolloutAttemptOutcomeV2(
+            outcome_id="o", identity=ExecutionIdentity(
+                prompt_group_id="g", group_index=0, rollout_execution_id="e",
+                physical_attempt_id="e#p1-x", physical_attempt_seq=1),
+            member_slot=0, attempt_number=1,
+            completion_class="present_complete", termination_kind="completed",
+            reason_code="unsafe_artifact_permanent_rejection",
+            failed_component="patch_hygiene",
+            task_outcome="resolved", reward_unavailable=False,  # 矛盾核
+            recovery_scope="none", turn_weight_versions=["1"],
+            intra_execution_version_span=0, current_version_at_finalize="1",
+            eligibility_report_id=None,
+        )
+
+
+def test_permanent_rejected_disposition_requires_present_fact():
+    """P1-3 反例：completion=missing + unsafe reason → disposition 不得
+    派生 permanent_rejected（reason 字符串不足）。"""
+
+    import json as _json
+    import tempfile
+    import types
+    from pathlib import Path as _P
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    audit = types.SimpleNamespace(
+        trajectory_id="t", task_id="k", session_id="s-x",
+        physical_attempt_id=None,
+        started_epoch_seconds=1000.0, started_monotonic=500.0,
+        non_chargeable_intervals=[], steps=[], harness_exit_code=None,
+        delivered_sample_count=0, lease_released=False,
+        repair_signal_forwarded=False, failure_records=[], cleanup_failures=[],
+        context_shrink_reasons=[], finalized=None, audit_only=False,
+        session_plane_drained=False, runtime_quiescence_confirmed=False,
+        capture_closed=False, baseline_manifest_digest=None,
+        baseline_entry_count=0, frozen_patch_digest=None, patch_entry_count=0,
+        excluded_pathset_changed=False, runtime_private_pathset_changed=False,
+        unsafe_artifact_reasons=[], scoring_projection_entry_count=0,
+        timeline_dicts=lambda: [], timing_summary=lambda: {},
+        outcome_v2={"reason_code": "unsafe_artifact_permanent_rejection",
+                    "completion_class": "missing"},
+    )
+    with tempfile.TemporaryDirectory() as td:
+        jsonl = _P(td) / "a.jsonl"
+        write_execution_audit_record(None, audit, jsonl)
+        rec = _json.loads(jsonl.read_text().strip())
+    assert rec["disposition"] != "permanent_rejected"  # missing 不派生拒绝
+
+
 async def test_e2e_unsupported_object_present_rejected_no_grader():
     """oracle 1：模型产出不支持对象（FIFO 等）→ present + 永久拒绝、
     不跑 grader、remove_sample（旧 fallback 表 missing 行已删，防退回）。"""

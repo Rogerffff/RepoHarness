@@ -329,6 +329,10 @@ def write_execution_audit_record(proxy, audit, path) -> None:
     elif (
         audit.outcome_v2 is not None
         and audit.outcome_v2.get("reason_code") == "unsafe_artifact_permanent_rejection"
+        # B3 复核 P1-3：permanent_rejected 只对 present 事实成立——
+        # completion=missing 时 reason 字符串不足以派生该 disposition
+        and audit.outcome_v2.get("completion_class")
+        in ("present_complete", "present_truncated")
     ):
         # 阻塞 4：unsafe 永久拒绝从既有 outcome 事实派生 disposition
         # （不建第二份可独立修改的准入账），不再落 unknown_terminal

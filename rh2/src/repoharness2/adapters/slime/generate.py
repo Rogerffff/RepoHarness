@@ -2141,9 +2141,23 @@ class RolloutOrchestrator:
                             frozen_patch, baseline_manifest
                         )
                     except ProjectionContractError as exc:
-                        # A-prime 失败表"exact baseline 不一致"行：reward=None
-                        # quarantine 域（FA-2B 熔断计数；missing 收口）
-                        raise SlimeBindingError(exc.reason_code, str(exc)) from exc
+                        # B3 复核 P1-1：baseline/lineage 互检失败是**系统性
+                        # 契约错误**（同进程内两份事实分家），不是该成员的
+                        # 样本损耗——走 fatal/run-halt（worker 停机），不许
+                        # 伪装成 capture_incomplete 缺员继续训练。
+                        audit.failure_records.append(
+                            RolloutFailureRecord(
+                                stage="scoring_projection",
+                                error_type=exc.reason_code,
+                                detail=str(exc)[:500],
+                            )
+                        )
+                        audit.mark("projection_contract_mismatch")
+                        raise FatalExecutionInfrastructureError(
+                            exc.reason_code,
+                            f"projection 契约互检失败：{exc}——按 A-prime 失败表"
+                            "run-halt，不得作为缺员继续。",
+                        ) from exc
                     audit.runtime_private_pathset_changed = (
                         hygiene.runtime_private_pathset_changed
                     )

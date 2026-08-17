@@ -7291,3 +7291,22 @@ execution_audit.disposition = unknown_terminal
 **Stop condition**：只修上面 4 个阻塞项并补 2 个小 oracle，做一次聚焦复核即关闭
 B3；不要再发起一轮开放式 B3 扩展审查。随后再按 ownership 表协调并进入 B4。
 
+
+
+---
+
+## codex B3 closure 复核（2026-08-18，3 P1——全部采纳）
+
+结论：B3 closure 暂时仍是 NO-GO，但只剩 3 个 P1，均可局部修复。 不需要新增 T0、状态机、恢复协议或扩大安全范围。完整审查已追加到 [F2-2b-B.md](/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/tmp/F2-2b-B.md)。
+主要问题：
+baseline/lineage 不一致虽然被 classifier 棥出，却被上层映射成普通 capture_incomplete 缺员，系统仍可继续训练。这里应走现有 fatal/run-halt 路径，避免把系统性契约错误伪装成样本损耗。
+unsafe_artifact_permanent_rejection 的例外校验不完整。目前仅凭 reason/component，仍能构造 resolved + reward available + 无 eligibility report 的矛盾 Outcome。
+顶层 permanent_rejected disposition 仍只看 reason 字符串，可能与 completion_class=missing 等事实冲突。
+已确认正确的部分包括：symlink 词法解析、raw digest 重算、baseline/lineage 校验本体、unsupported object 端到端拒绝、grader 不执行、审计字段持久化，以及 projection 引用式存储。两个独立审查视角结论一致；额外 6,240 组 symlink 词法对拍没有发现误判。
+本轮新鲜验证：
+聚焦测试：94 passed
+全量测试：1030 passed
+ruff：通过
+inspect-rh2-s1：通过
+建议 Claude 只修上述三项并补对应反例测试，随后做一次聚焦终核即关闭 B3。暂不进入 B4/B5，尤其 B5 会再次触碰 generate.py / bringup.py 的 finalize 边界，先把这里收干净更省返工。
+

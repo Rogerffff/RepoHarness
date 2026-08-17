@@ -264,9 +264,13 @@ patch_hygiene 的 unsafe 永久拒绝；任意 reason_code 绕过关闭；两处
 outcome 事实派生 **permanent_rejected**（不再 unknown_terminal，
 generate→JSONL 回归钉死）；oracle：unsupported 对象 e2e（present+拒+
 无 grader+剔除）+ 旧 fallback missing 行删除防退回 + JSONL 三新键
-断言。**B3 闭合**。已知环境噪声：8 个 SWE-bench 测试因 GitHub raw
-requirements 网络拉取失败（codex 独立确认与 B 系列无关，不改代码修
-绿）——排除后 1014 全绿。递延：分类规则扩充（计划既定）；
+断言。**B3 复核（3 P1 全 accepted）**：① 契约互检失败改走 **fatal/run-halt**
+（系统性契约错误不伪装缺员——结构化归因后 Fatal 逃逸，worker 停机；
+e2e 反例钉死不评分不继续）；② eligibility 豁免加 **reward_unavailable
+必要条件**（resolved+reward 可得+unsafe reason 的矛盾形状构造即拒）；
+③ permanent_rejected disposition 加 **completion=present_* 事实一致性**
+（missing + reason 字符串不派生拒绝）。**B3 闭合**（网络恢复后全量
+1033 绿）。递延：分类规则扩充（计划既定）；
 AdmissionReport 本体（FA-2/F2-5）。下一片 = **B4 fresh grader 消费
 projection（动 grading/manager.py 前先 S2 协调）**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**

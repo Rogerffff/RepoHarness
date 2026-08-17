@@ -553,7 +553,9 @@ class RolloutAttemptOutcomeV2(StrictModel):
                 # 只有 A-prime 已批准的两行允许无资格引用——评分基建故障、
                 # unsafe artifact 永久拒绝（patch_hygiene 出具）。其余
                 # present 记录必须可回链资格权威；D1b/B4 批新形状再显式扩。
-                exempt = (
+                exempt = self.reward_unavailable and (
+                    # B3 复核 P1-2：豁免必须以 reward 不可得为前提——
+                    # resolved/reward 可得却无资格引用的矛盾形状构造即拒
                     self.failure_category == "grading_infra_failure"
                     or (
                         self.reason_code == "unsafe_artifact_permanent_rejection"
