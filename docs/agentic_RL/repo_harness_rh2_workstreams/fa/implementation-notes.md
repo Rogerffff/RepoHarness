@@ -197,9 +197,24 @@ failed==0/第一次 collect 拒/好组留 queue 归 F2-4 manifest/放行后
 failed==1 账目守恒）+ **mutation witness 常驻测试**（恢复旧
 _guarded_execute 时同一交错必须交付 batch——oracle 判别力自证）；
 invalid_result 补真实落盘 JSONL 断言；shutdown→service_closed 与
-启动取消 sticky typed fatal 各补直接测试。下一切片 = **F2-2b**（终核
-判定 GO）；FA-5 未开工。闸门
-`rh2_fully_async_training_path_verified` = **false**。测试基线 995。
+启动取消 sticky typed fatal 各补直接测试。**F2-2b Runtime 静止屏障实现：完成**（quiescence_barrier.py）。
+DockerQuiescenceBarrier 按 D1a 序列：① pkill -9 -u agent + 有界重试
+验证进程归零（超时 → execution_scope_termination_timeout）；② 会话面
+未排空前提检查（→ late_model_request_detected）+ workspace 双读指纹
+（git status --porcelain + diff 的 sha256，两读不一致 →
+active_writer_detected；读失败 → snapshot_freeze_failed）；③ 冻结出具
+FrozenWorkspace（snapshot_ref = 稳定指纹）——评分链只消费该封装，
+评分后 orchestrator 调 verify_integrity() 复核，漂移 → **先撤销
+runtime_quiescence_confirmed 事实再产 outcome**（missing +
+runtime_quiescence_failure + snapshot_integrity_mismatch + abort，
+评分结果作废）。冻结语义 v1 口径 = 写者集合证空 + 双读静止 + 评分后
+复核（不做物理 cp 副本——写者为零时副本不增加保证；若审查要求可加
+而不动调用面）。bringup fa_formal 拒启动挡板解除（async_start 事务内
+构造 DockerQuiescenceBarrier 注入；validate_execution_config 仍强制
+非空）。真实容器验证归 FA-5（本机 = 脚本路由假件 + 全链 e2e：真实
+屏障类进正式链、评分收到 FrozenWorkspace 同一性断言、漂移收口）。
+FA-5 未开工。闸门 `rh2_fully_async_training_path_verified` =
+**false**。测试基线 1003。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
 行为；audit_only 不放宽任何守卫、不产正式训练 batch；hard_wall 仅

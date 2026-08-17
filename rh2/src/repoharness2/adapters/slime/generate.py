@@ -2064,6 +2064,35 @@ class RolloutOrchestrator:
             audit.finalized = finalized
             audit.step("step8_gate_finalized")
 
+            # F2-2b ③：评分后复核冻结完整性——指纹漂移 = 评分读到过
+            # 非冻结状态，评分结果作废，execution 按 missing 收口
+            if self._mode == "fa_formal" and hasattr(
+                grading_workspace, "verify_integrity"
+            ):
+                if not await grading_workspace.verify_integrity():
+                    # 复核证伪静止事实：先撤销，completion 由事实推导 missing
+                    audit.runtime_quiescence_confirmed = False
+                    self._produce_outcome_v2(
+                        audit=audit,
+                        raw_meta=raw_meta,
+                        termination_kind="completed",
+                        failure_category="runtime_quiescence_failure",
+                        reason_code="snapshot_integrity_mismatch",
+                        failed_component="runtime_barrier",
+                        task_resolved=None,
+                        turn_weight_versions=None,
+                        current_version_at_finalize=None,
+                        eligibility_report_id=None,
+                        extra_evidence=[
+                            f"snapshot:{grading_workspace.snapshot_ref}"
+                        ],
+                    )
+                    audit.mark("snapshot_integrity_mismatch")
+                    return self._abort_result(
+                        sample, reason="rh2_snapshot_integrity_mismatch",
+                        task=task, top_p=top_p,
+                    )
+
             # F2-2 producer（成功收口）：termination=completed；评分三态
             # 映射——resolved/unresolved 照实，failed_to_grade = 勘误 2 通道
             # （reward 不可得，completion 不倒写）。凭证 scrub：交付样本的

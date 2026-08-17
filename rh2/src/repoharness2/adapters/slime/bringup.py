@@ -512,11 +512,9 @@ class BringupService:
         # 复核六轮 P0-2：纯配置校验在**任何资源启动之前**（线程未起）
         if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
             raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
-        if EXECUTION_MODE == "fa_formal":
-            raise RuntimeError(
-                "fa_formal 需要注入 RuntimeQuiescenceBarrier——F2-2b 落地前"
-                "生产 bringup 无实现，禁止启动（探针用 fa_audit_only）。"
-            )
+        # F2-2b：fa_formal 的屏障在 async_start 事务里构造并注入
+        # orchestrator（拒启动挡板解除；validate_execution_config 仍强制
+        # fa_formal 注入非空——构造点漏注入照样启动即炸）
         self.app_handle = run_app_in_thread(
             self.adapter.app,
             host=ADAPTER_BIND_HOST,
@@ -754,7 +752,15 @@ class BringupService:
             raise RuntimeError("正式链必须配置持久 artifact_sink（evidence_refs 不可悬空）。")
         self.registry.default_session_budget_seconds = float(AGENT_TIME_BUDGET_SEC)
 
+        runtime_barrier = None
+        if EXECUTION_MODE == "fa_formal":
+            from repoharness2.adapters.slime.quiescence_barrier import (
+                DockerQuiescenceBarrier,
+            )
+
+            runtime_barrier = DockerQuiescenceBarrier()
         self.orchestrator = RolloutOrchestrator(
+            runtime_quiescence_barrier=runtime_barrier,
             config=config,
             task_resolver=self._resolve_task,
             adapter_factory=self._adapter_factory,
