@@ -35,7 +35,7 @@ RepoHarness =
   剔除轨迹的拒绝路径/安全边界/重要依赖/重大成本/推翻既有定案）必须用户
   **写码前**拍板，以决策包格式提出；T1 实现后报告；T2 只留 commit。
 - **报告六段模板**：待拍板 T0 / T1 决策 / 挡板变动 / 推翻的旧结论 /
-  测试与账本 / 学习摘要（进 `learning-log.md`）。
+  测试与账本。（学习摘要段已于 2026-08-17 取消，learning-log.md 冻结归档。）
 - **codex 审查维度 A~N**：以 `review-standards.md` §2 为唯一权威（九维度
   表述已过时）。高风险 finding/修复强制双 subagent（Production Tracer +
   Falsifier，见 review-standards §10.4）；运行时 finding 必标生产可达性。
