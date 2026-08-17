@@ -12,7 +12,7 @@ inline base64 + digest 双载（读取方必须重算 digest 比对）；blob �
 按引用存储随 B5 持久化再做，不提前建 CAS。
 
 排除区口径（A-prime 第 6 条）：排除 namespace 不进 entries；exporter
-另行出具排除区 census 变化事实（excluded_census_changed），tamper 判定
+另行出具排除区路径集合变化事实（excluded_pathset_changed），tamper 判定
 （需权限/命令/ownership 证据）归 B3 hygiene，不在本契约预决。
 """
 

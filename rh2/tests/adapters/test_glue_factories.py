@@ -155,6 +155,7 @@ def test_write_execution_audit_success_acks_and_enriches(tmp_path):
     # F2-2：quiescence 事实与 outcome_v2 真实落盘
     # B2 closure P1-2：B1/B2 摘要真实落盘
     assert record["baseline_manifest_digest"] == "sha256:" + "b" * 64
+    assert record["baseline_entry_count"] == 3
     assert record["frozen_patch_digest"] == "sha256:" + "f" * 64
     assert record["patch_entry_count"] == 2
     assert record["excluded_pathset_changed"] is False

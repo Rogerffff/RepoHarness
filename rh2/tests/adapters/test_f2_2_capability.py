@@ -571,8 +571,10 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     class _FrozenWs:
         def __init__(self, underlying):
             self._u = underlying
+            self.scripts: list[str] = []  # B2 closure 终核：记录经手脚本
 
         async def run_bash(self, script):  # 委托底层（真 FrozenWorkspace 同形）
+            self.scripts.append(script)
             return await self._u.run_bash(script)
 
     class _Barrier:
@@ -622,6 +624,9 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
             < steps.index("frozen_patch_exported")
             < steps.index("grading_started"))
     assert audit.frozen_patch_digest is not None
+    # 终核 P1：exporter 的 census/内容读取必须经 barrier 返回的 frozen
+    # 句柄（mutation witness：接线改回 sandbox.workspace 时本断言红）
+    assert any("find ." in sc for sc in ok.frozen.scripts)
     # P0-1 验收：评分消费的是屏障产出的冻结输入，不是原 workspace
     assert chain.grading.calls[0]["workspace"] is ok.frozen
     assert audit.outcome_v2["completion_class"] == "present_complete"
