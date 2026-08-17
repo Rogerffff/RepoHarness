@@ -37,6 +37,7 @@ EXPECTED_EXTRA_IDS = {
     "rh2.fa.rollout_attempt_outcome.v1",
     "rh2.fa.rollout_attempt_outcome.v2",
     "rh2.fa.baseline_workspace_manifest.v1",
+    "rh2.fa.frozen_patch_artifact.v1",
     "rh2.fa.training_runtime_window.v1",
     "rh2.fa.model_call_attempt.v1",
 }
@@ -223,6 +224,30 @@ def _baseline_manifest_payload() -> dict:
     }
 
 
+def _frozen_patch_payload() -> dict:
+    import base64 as _b64
+    import hashlib as _h
+
+    raw = b"data"
+    return {
+        "schema_id": "rh2.fa.frozen_patch_artifact.v1",
+        "task_id": "t1",
+        "rollout_execution_id": "exec_1",
+        "physical_attempt_id": "exec_1#p1-aaaa",
+        "baseline_manifest_digest": "sha256:" + "b" * 64,
+        "public_bundle_digest": "sha256:" + "e" * 64,
+        "runtime_image_digest": "sha256:" + "1" * 64,
+        "materialized_head": "a" * 40,
+        "entries": [{
+            "path": "a.py", "operation": "add", "object_type": "regular",
+            "mode": "100644",
+            "content_b64": _b64.b64encode(raw).decode(),
+            "content_digest": "sha256:" + _h.sha256(raw).hexdigest(),
+        }],
+        "excluded_census_changed": False,
+    }
+
+
 def _fa_window_payload() -> dict:
     return {
         "schema_id": "rh2.fa.training_runtime_window.v1",
@@ -312,6 +337,7 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.fa.rollout_attempt_outcome.v1": _fa_outcome_payload,
         "rh2.fa.rollout_attempt_outcome.v2": _fa_outcome_v2_payload,
         "rh2.fa.baseline_workspace_manifest.v1": _baseline_manifest_payload,
+        "rh2.fa.frozen_patch_artifact.v1": _frozen_patch_payload,
         "rh2.fa.training_runtime_window.v1": _fa_window_payload,
         "rh2.fa.model_call_attempt.v1": _fa_attempt_payload,
     }

@@ -204,8 +204,24 @@ _baseline_manifests 字典删除——baseline 为 execution-local 变量，B2 �
 显式参数消费（无 cache/TTL/清理线程）；③ 真实临时树 census→parse→
 digest 测试落地（644/755/symlink 不跟随/排除区留痕/重复执行 digest
 一致）。residual risk 显式接受（换行文件名/罕见 symlink target/跨平台
-兼容——fail-closed 不阻塞）。**B1 闭合**。下一片 =
-**B2 trusted exporter + FrozenPatchArtifactV1**。
+兼容——fail-closed 不阻塞）。**B1 闭合**。**B2 trusted exporter + FrozenPatchArtifactV1：完成**
+（contracts/frozen_patch.py + adapters/slime/patch_exporter.py）。
+契约 = 结构化 delta（regular/symlink × add/modify/delete，mode 三值，
+per-entry content_b64 + digest 互检，排序/唯一/前缀冲突拒，身份绑定
+task/bundle/image/baseline/execution/attempt）；digest 外部重算不自
+引用。exporter **全程不调 git**（post census 复用 B1 find/sha256sum
+枚举，host 侧纯函数 diff——staged/unstracked 差别在字节比较下天然
+消失，untracked 内容变化（旧指纹假阴性盲区）被 digest 捕获；mode-only
+/类型变化/删除/二进制/symlink target 全检出）；census 与内容抓取双读
+digest 互检（静止期写者 → content_digest_race fail-closed）；排除区
+census 变化只记事实（excluded_census_changed），tamper 判定留 B3。
+接线 = fa_formal 屏障确认后导出，artifact execution-local（B3 显式
+消费），audit 落 digest/计数；失败码族入 producer 映射（missing 收口；
+unsupported_object_in_patch 单列——B3 落地后改判 present_* +
+permanent_rejection，已登记）。验收 = 真实树 e2e 含 **Git 注入负测试**
+（hooks/gitattributes/diff.external 注入 marker 不触发 + 脚本文本无
+git 调用）+ 确定性重导出同 digest。递延：提取性能（FA-5）。下一片 =
+**B3 hygiene/security 分类 + ScoringProjectionArtifact**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

@@ -1412,6 +1412,10 @@ class RolloutAudit:
     # 内存 + B5 receipt 持久化）
     baseline_manifest_digest: str | None = None
     baseline_entry_count: int = 0
+    # B2：冻结 patch artifact 摘要（本体 execution-local，B5 持久化）
+    frozen_patch_digest: str | None = None
+    patch_entry_count: int = 0
+    excluded_census_changed: bool = False
     # F2-2 复核三轮 P1-2：audit-only 收口标记（屏障前正式探针/带身份
     # bring-up）——bringup 落盘 disposition=audit_only_rejected，
     # fault-domain 统计（FA-2B）按此排除，不污染 capture 故障率
@@ -2054,6 +2058,37 @@ class RolloutOrchestrator:
                     grading_workspace = result.frozen_grading_workspace
                     barrier_evidence = [f"snapshot:{result.snapshot_ref}", *result.evidence_refs]
                     audit.mark("frozen_snapshot_adopted")
+                    # B2：静止确认后导出 FrozenPatchArtifact（无 git 枚举，
+                    # host 侧对 B1 baseline 结构化比较）。artifact 为
+                    # execution-local，B3 hygiene 显式消费；audit 只落
+                    # digest/计数。失败 → typed SlimeBindingError（missing
+                    # 收口；unsupported 对象单列码供 B3 分类）。
+                    from repoharness2.adapters.slime.patch_exporter import (
+                        PatchExportError,
+                        export_frozen_patch,
+                    )
+                    from repoharness2.contracts.frozen_patch import (
+                        compute_frozen_patch_digest,
+                    )
+
+                    try:
+                        frozen_patch = await export_frozen_patch(
+                            sandbox.workspace,
+                            baseline_manifest,
+                            rollout_execution_id=(
+                                str(meta.get("rh2_rollout_execution_id"))
+                                if meta.get("rh2_rollout_execution_id")
+                                else trajectory_id
+                            ),
+                            physical_attempt_id=physical_attempt_id,
+                            baseline_manifest_digest=audit.baseline_manifest_digest,
+                        )
+                    except PatchExportError as exc:
+                        raise SlimeBindingError(exc.reason_code, str(exc)) from exc
+                    audit.frozen_patch_digest = compute_frozen_patch_digest(frozen_patch)
+                    audit.patch_entry_count = len(frozen_patch.entries)
+                    audit.excluded_census_changed = frozen_patch.excluded_census_changed
+                    audit.mark("frozen_patch_exported")
                 elif isinstance(result, QuiescenceRejected):
                     self._produce_outcome_v2(
                         audit=audit,

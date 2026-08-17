@@ -62,6 +62,15 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     "capture_record_unknown_in_backfill": ("completed", "capture_incomplete"),
     # D-FA-6：上下文收缩 = provenance 不可信 → 账目层拒绝
     "context_shrink_detected": ("completed", "capture_incomplete"),
+    # B2 exporter 失败族（A-prime 失败表第 1 行：无可信冻结输入 = missing）
+    "post_census_failed": ("completed", "capture_incomplete"),
+    "post_census_parse_failed": ("completed", "capture_incomplete"),
+    "content_fetch_failed": ("completed", "capture_incomplete"),
+    "content_fetch_incomplete": ("completed", "capture_incomplete"),
+    "content_digest_race": ("completed", "capture_incomplete"),
+    # 模型产出不支持对象：v1 先按 missing 收口，B3 hygiene 落地后改判
+    # present_* + permanent_rejection（unsafe artifact 行，已登记）
+    "unsupported_object_in_patch": ("completed", "capture_incomplete"),
 }
 
 # 未知错误码按失败阶段兜底（保守：宁可归 infra/missing，不猜 present）。
