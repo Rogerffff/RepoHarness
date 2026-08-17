@@ -776,11 +776,11 @@ async def test_collect_batch_refuses_handoff_after_fatal():
         await svc._ensure_worker()
 
 
-async def test_fatal_done_before_reap_first_collect_refuses():
-    """终核阻塞项常驻验收：真实 ContinuousExecutionWorker + FaRolloutService。
-    交错构造 = 好组先入 delivery queue，fatal task 之后才完成（发布前移后
-    task 完成即写 halt_reason，无需等 reap）——第一次 collect_batch() 必须
-    抛 WorkerHalted 且不返回任何 batch。不预填 fake halt_reason。"""
+async def _fatal_interleave(patch_old_guard: bool):
+    """终核指定交错（batch_size=1）：好组先入 queue → fatal task 完成 →
+    worker 被受控 sleeper 挡在下一轮 reap 之前 → 调 collect_batch。
+    返回 (结果或异常, svc, worker)。patch_old_guard=True 时把
+    _guarded_execute 换回 84027af0 之前的实现（fatal 只在 reap 发布）。"""
 
     import asyncio
     import sys
@@ -794,28 +794,20 @@ async def test_fatal_done_before_reap_first_collect_refuses():
         WorkerHalted,
     )
 
-    good_delivered = asyncio.Event()
-
-    class _Spec:
-        def __init__(self, rid, payload):
-            self.rollout_execution_id = rid
-            self.prompt_group_id = "pg_X"
-            self.member_slot = 0
-            self.payload = payload
-            self.physical_attempt_id = None
-            self.physical_attempt_seq = None
-
     class _Member:
         def __init__(self):
             self.metadata = {}
             self.remove_sample = False
 
     good_member, bad_member = _Member(), _Member()
+    allow_fatal = asyncio.Event()
+    resume_worker = asyncio.Event()
+    paused = asyncio.Event()
 
     async def execute_member(payload):
         if payload is good_member:
-            return [payload]  # 好组立即交付
-        await good_delivered.wait()  # fatal 等好组入 queue 之后才完成
+            return [payload]
+        await allow_fatal.wait()
         raise FatalExecutionInfrastructureError("probe_fatal", "barrier exploded")
 
     groups = [[good_member], [bad_member]]
@@ -827,24 +819,82 @@ async def test_fatal_done_before_reap_first_collect_refuses():
         group_source=group_source,
         execute_member=execute_member,
         group_size=1,
-        rollout_batch_size=2,
+        rollout_batch_size=1,
         concurrency=2,
     )
+    await svc._ensure_worker()
+    worker = svc._worker
 
-    async def _watch_delivered():
-        while True:
-            w = svc._worker
-            if w is not None and w.counters.delivered >= 1:
-                good_delivered.set()  # 好组已入 delivery queue，此刻放行 fatal
-                return
-            await asyncio.sleep(0)
+    if patch_old_guard:
+        # mutation：恢复修复前 _guarded_execute（无 task 边界 fatal 发布）
+        async def old_guarded(spec):
+            if worker._limits is None:
+                return await worker._execute_fn(spec)
+            async with worker._limits.acquire(worker._resource_class):
+                return await worker._execute_fn(spec)
 
-    watcher = asyncio.ensure_future(_watch_delivered())
-    with pytest.raises(WorkerHalted, match="probe_fatal"):
-        await asyncio.wait_for(svc.collect_batch(), timeout=20)
-    watcher.cancel()
-    # 无 batch 交付；好组进隔离账（不静默丢失）
-    assert svc._halt_quarantined_groups or svc._completed_backlog == []
+        worker._guarded_execute = old_guarded
+
+    real_sleep = asyncio.sleep
+
+    async def gate_sleeper(seconds):
+        # 好组已交付后：放行 fatal，然后把 worker 挡在本轮 sleep 里，
+        # 直到测试显式 resume——保证 fatal task done 而 reap 未发生
+        if worker.counters.delivered >= 1 and not allow_fatal.is_set():
+            allow_fatal.set()
+            await real_sleep(0)  # 让 fatal task 在同一 loop 完成
+            paused.set()
+            await resume_worker.wait()
+            return
+        if paused.is_set() and not resume_worker.is_set():
+            await resume_worker.wait()
+            return
+        await real_sleep(0)
+
+    worker._sleeper = gate_sleeper
+    await paused.wait()
+    # 交错事实断言：fatal task 已 done、worker 未 done、reap 未发生
+    assert svc._worker_task is not None and not svc._worker_task.done()
+    assert worker.counters.failed == 0  # reap 尚未发生
+
+    collect = asyncio.ensure_future(svc.collect_batch())
+    await real_sleep(0.05)  # 让 collect 走到 gate（新码：入口即见 halt）
+    resume_worker.set()  # 放行 reap/drain
+    try:
+        result = await asyncio.wait_for(collect, timeout=20)
+        return result, svc, worker, WorkerHalted
+    except WorkerHalted as exc:
+        return exc, svc, worker, WorkerHalted
+
+
+async def test_fatal_done_before_reap_first_collect_refuses():
+    """终核阻塞项常驻验收（红绿有效版）：batch_size=1 + 受控 sleeper——
+    fatal task done、reap 未发生时，第一次 collect_batch 即拒绝，零交付；
+    放行 reap 后 failed==1、failure record 恰一条、账目守恒。"""
+
+    outcome, svc, worker, WorkerHalted = await _fatal_interleave(patch_old_guard=False)
+    assert isinstance(outcome, WorkerHalted)  # 第一次 collect 即拒
+    assert "probe_fatal" in str(outcome)
+    # 未 handoff：好组仍在 delivery queue（入口 gate 拒绝，candidate 为空
+    # ——queue/in-flight 的可恢复性归 F2-4 pending manifest，不谎称已隔离）
+    assert svc._queue.qsize() == 1
+    assert svc._halt_quarantined_groups == []
+    # reap 放行后：账目守恒
+    assert worker.counters.failed == 1
+    assert worker.counters.delivered == 1
+    assert len(svc.failure_records) == 1
+    assert worker.halt_reason == "fatal_infrastructure:probe_fatal"
+
+
+async def test_fatal_interleave_mutation_witness_old_guard_delivers():
+    """mutation red-green 常驻见证：把 _guarded_execute 恢复成修复前实现，
+    同一交错下第一次 collect_batch **返回好 batch**（旧缺陷复现）——证明
+    上面的测试对该回归有判别力（若两版行为相同，本测试先红）。"""
+
+    outcome, svc, worker, WorkerHalted = await _fatal_interleave(patch_old_guard=True)
+    assert not isinstance(outcome, WorkerHalted)  # 旧实现：batch 被交付
+    assert len(outcome) == 1  # 好组 handoff 给了 trainer（缺陷本体）
+
 
 
 def test_install_capture_wire_ownership_branches_real_call():
@@ -928,6 +978,61 @@ async def test_bringup_latch_sticky_failed():
          BringupService._startup_error) = saved
 
 
+async def test_shutdown_then_collect_refused_closed():
+    """终核 oracle 3a：shutdown 后 collect → service_closed（不重建二代）。
+    标签 test_only/conditional_future（生产尚无 shutdown 调用点）。"""
+
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[2] / "experiments"))
+    from fa_bringup.rollout_entry import FaEntryError, FaRolloutService
+
+    svc = FaRolloutService.__new__(FaRolloutService)
+    svc._halted_error = None
+    svc._closed = True  # shutdown() 置位的终态
+    with pytest.raises(FaEntryError, match="service_closed"):
+        await svc._ensure_worker()
+
+
+async def test_startup_cancellation_sticky_typed_fatal():
+    """终核 oracle 3b：启动被取消 → 当前调用传播取消；后续调用拿 typed
+    fatal（bringup_startup_cancelled），且只构造一代。"""
+
+    import asyncio
+
+    from repoharness2.adapters.slime.bringup import BringupService
+    from repoharness2.adapters.slime.generate import StartupCheckError
+
+    saved = (BringupService._instance, BringupService._startup_state,
+             BringupService._startup_error)
+    init_calls = {"n": 0}
+
+    def fake_init(self, args):
+        init_calls["n"] += 1
+
+    async def fake_start(self, args):
+        raise asyncio.CancelledError()
+
+    real_init, real_start = BringupService.__init__, BringupService.async_start
+    BringupService._instance = None
+    BringupService._startup_state = "NEW"
+    BringupService._startup_error = None
+    BringupService.__init__ = fake_init
+    BringupService.async_start = fake_start
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await BringupService.get(object())  # 当前调用：取消原样传播
+        assert BringupService._startup_state == "FAILED"
+        with pytest.raises(StartupCheckError, match="bringup_startup_cancelled"):
+            await BringupService.get(object())  # 后续：typed fatal
+        assert init_calls["n"] == 1  # 只一代
+    finally:
+        BringupService.__init__, BringupService.async_start = real_init, real_start
+        (BringupService._instance, BringupService._startup_state,
+         BringupService._startup_error) = saved
+
+
 async def test_invalid_barrier_result_writes_durable_record():
     """终核 P1-3：屏障返回联合类型之外的对象 → Fatal + 持久 failure_record
     （runtime_barrier_invalid_result）。"""
@@ -962,6 +1067,20 @@ async def test_invalid_barrier_result_writes_durable_record():
     audit = chain.orchestrator.audits[0]
     assert any(
         f.error_type == "runtime_barrier_invalid_result" for f in audit.failure_records
+    )
+    # 终核 oracle 修正：持久化断言读真实落盘 JSONL，不止内存对象
+    import json as _json
+    import tempfile
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    with tempfile.TemporaryDirectory() as td:
+        jsonl = Path(td) / "a.jsonl"
+        write_execution_audit_record(None, audit, jsonl)
+        rec = _json.loads(jsonl.read_text().strip())
+    assert any(
+        f["error_type"] == "runtime_barrier_invalid_result"
+        for f in rec["failure_records"]
     )
 
 

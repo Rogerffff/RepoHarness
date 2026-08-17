@@ -191,8 +191,15 @@ fatal 发布时刻前移到 execution task 边界（_guarded_execute 捕获 Fata
 关闭，账目仍由 reap 一次完成）；真实 worker+service 交错测试常驻（不
 预填 halt_reason）；测试诚实化（install_capture_wire 真调用三分支/
 闩锁 sticky 打桩/invalid_result 持久化断言）；Fatal docstring 恢复
-语义改勘误 4 口径。下一切片 = **F2-2b**；FA-5 未开工。闸门
-`rh2_fully_async_training_path_verified` = **false**。测试基线 992。
+语义改勘误 4 口径。**终核二（oracle 修正，2026-08-17）**：fatal 交错测试改 codex 规格
+（batch_size=1 + 受控 sleeper 挡 reap；断言 fatal done/worker 未 done/
+failed==0/第一次 collect 拒/好组留 queue 归 F2-4 manifest/放行后
+failed==1 账目守恒）+ **mutation witness 常驻测试**（恢复旧
+_guarded_execute 时同一交错必须交付 batch——oracle 判别力自证）；
+invalid_result 补真实落盘 JSONL 断言；shutdown→service_closed 与
+启动取消 sticky typed fatal 各补直接测试。下一切片 = **F2-2b**（终核
+判定 GO）；FA-5 未开工。闸门
+`rh2_fully_async_training_path_verified` = **false**。测试基线 995。
 
 **FA-2A 批准要点（实现必须遵守的边界）**：Observability V0 只记录不改
 行为；audit_only 不放宽任何守卫、不产正式训练 batch；hard_wall 仅

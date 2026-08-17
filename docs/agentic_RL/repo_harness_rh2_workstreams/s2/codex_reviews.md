@@ -6203,3 +6203,96 @@ manifest 负责。可额外落 compact IDs/counters/digests，不应为“零丢
 未 reap 的 handoff 窗口，并用真实 worker/service 交错测试证明。随后修正文档的
 假闭合口径；shutdown/cancellation 可按真实引入闸门递延。满足后即可进入 F2-2b。
 
+
+
+---
+
+## Codex 对 84027af0 / b6376d86 / cbedf74f 的复核（2026-08-17）
+
+### 总判定
+
+运行时修复本身成立：fatal 在 execution task 完成前发布到 worker 既有唯一
+`halt_reason`，旧的 done-but-unreaped handoff 窗口已经关闭；没有新增平行 fatal
+owner、没有重复计数，也没有把 fatal 降级成普通 missing/rejected。文档对 F2-4
+恢复前提、两类 manifest 与 FA-5 受控恢复的修订也正确。
+
+但当前仍是 **NO-GO**：只剩一个验收阻塞，不是实现阻塞。新增 fatal 回归测试在
+恢复旧 `_guarded_execute` 后仍然通过，不能证明修复不会回归。修正这个 oracle 并
+完成 red-green 后即可进入 F2-2b；不要继续修改 fatal 状态机。
+
+### P1 验收阻塞：fatal 回归测试会假绿
+
+**位置**：`test_f2_2_capability.py::test_fatal_done_before_reap_first_collect_refuses`。
+
+**原因**：测试设置 `rollout_batch_size=2`，但只有一个成功组和一个 fatal execution。
+好组到达后不可能收满 batch，旧实现也会继续等待，等 worker reap fatal 后同样抛
+`WorkerHalted`。所以测试只验证“最终会 fatal”，没有验证“旧代码会先 handoff”。
+
+主审与两个 subagent 都做了 mutation 验证：在内存中把 `_guarded_execute` 恢复成
+84027af0 之前的实现，新测试仍然 PASS：
+
+```text
+NEW_TEST_PASSED_WITH_PRE_FIX_GUARD
+```
+
+相反，真正区分新旧实现的确定性交错是：`batch_size=1`，先让好组进入 queue，
+再让 fatal task 完成，同时暂停 worker，不让它进入下一轮 reap：
+
+```text
+current:
+  fatal_task_done=true
+  worker_run_done=false
+  halt_reason=fatal_infrastructure:probe_fatal
+  failed_before_reap=0
+  collect_batch -> WorkerHalted
+
+pre-fix:
+  halt_reason_before_reap=None
+  first_collect_result=[["good"]]
+  eventual_worker_exception=WorkerHalted
+```
+
+**最小修复**：只改测试，不改生产代码。使用 `rollout_batch_size=1` 和受控 sleeper/event
+暂停 reap；显式断言 fatal task 已 done、worker task 未 done、`failed==0`、第一次
+collect 拒绝；放行 reap 后断言 `failed==1`、failure record 恰好一条、ledger 平衡。
+最后必须做 mutation red-green：当前实现通过；恢复旧 `_guarded_execute` 时测试失败
+或返回 batch。
+
+当前测试末尾：
+
+```python
+assert svc._halt_quarantined_groups or svc._completed_backlog == []
+```
+
+也不是有效 oracle：当 backlog 默认空时，无论是否真的隔离都会通过。应改成与所构造
+调度一致的精确断言；若该调度在入口 gate 就拒绝、好组仍留 queue，则不要谎称它已进
+candidate quarantine，改断言“未 handoff + queue/in-flight 归 F2-4 manifest”。
+
+### 另外两个 P1 oracle 缺口
+
+1. `test_invalid_barrier_result_writes_durable_record` 只检查内存中的
+   `audit.failure_records`，没有配置真实 audit sink 或读取落盘 JSONL，因此名称和
+   `implementation-notes.md` 的“持久化断言”过强。要么把测试改名为
+   `...records_failure_fact`，只承诺事实先入 audit；要么补真实 sink + 读盘断言。
+2. `_closed` 的 shutdown→collect 与 `CancelledError` 的 sticky startup fatal 已由
+   独立探针证明代码有效，但新增测试没有覆盖这两个新分支。它们属于
+   `test_only/conditional_future`，不要求再改设计；考虑到权威页写成“已闭合”，建议
+   各补一个很小的直接测试。ordinary `RuntimeError` sticky 测试不能替代取消分支。
+
+### 已独立验证
+
+```text
+pytest:     992 passed
+ruff:       All checks passed
+S1 inspect: 22 evidence + 67 code 全部命中
+```
+
+shutdown probe 得到 `service_closed`；startup cancellation 后状态为 FAILED，后续调用
+得到 `StartupCheckError(reason_code=bringup_startup_cancelled)`，且只构造一代。
+
+### 进入 F2-2b 的条件
+
+只需关闭上述 fatal 测试假绿并完成 mutation red-green。其余两个 oracle 可在同一小
+提交补齐，不需要新增 T0、不需要再做 F2-2 根部重构，也不需要增加新的 guard、retry
+或恢复状态机。
+
