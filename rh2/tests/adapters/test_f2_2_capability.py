@@ -728,36 +728,10 @@ def test_fa_entry_rejects_s1_compat_mode():
         rollout_entry._build_service(args, object())
 
 
-def test_capture_wire_ownership_typed_fatal():
-    """勘误 4 ⑤：同 registry 幂等；不同 registry 重绑 = typed fatal。
-    （slime 不可 import——直接驱动 install 的所有权判定逻辑：用假
-    slime_common 模块对象验证三态。）"""
-
-    import types
-
-    from repoharness2.adapters.slime.capture_wire import (
-        CaptureRegistry,
-        CaptureWireOwnershipError,
-    )
-
-    fake = types.SimpleNamespace(_rh2_capture_wire_installed=True)
-    r1, r2 = CaptureRegistry(), CaptureRegistry()
-    fake._rh2_capture_wire_registry = r1
-    # 判定逻辑与 install_capture_wire 开头一致（源码级同构断言防漂移）
-    from pathlib import Path as _P
-
-    src = _P("src/repoharness2/adapters/slime/capture_wire.py").read_text()
-    assert "if bound is registry:" in src and "CaptureWireOwnershipError(" in src
-    # 行为面：绑定 r1 后，r1 幂等（bound is registry）、r2 必须 typed fatal
-    bound = fake._rh2_capture_wire_registry
-    assert bound is r1  # 幂等分支条件成立
-    assert bound is not r2  # fatal 分支条件成立
-    assert issubclass(CaptureWireOwnershipError, RuntimeError)
-
 
 async def test_collect_batch_refuses_handoff_after_fatal():
-    """八轮 P0 验收：worker fatal 后第一次 collect_batch 即拒绝交付；
-    候选组进隔离账目；第二次调用重抛同因。"""
+    """helper 级验收（终核口径修正：只证明**已发布** halt 后 helper 拒绝
+    交付/隔离/sticky——"done 未 reap"窗口由上面的真实链交错测试覆盖）。"""
 
     import sys
     from pathlib import Path as _P
@@ -800,6 +774,195 @@ async def test_collect_batch_refuses_handoff_after_fatal():
         await svc._raise_if_worker_halted([])
     with pytest.raises(WorkerHalted):  # Falsifier 缺陷 1：ensure 不重建二代
         await svc._ensure_worker()
+
+
+async def test_fatal_done_before_reap_first_collect_refuses():
+    """终核阻塞项常驻验收：真实 ContinuousExecutionWorker + FaRolloutService。
+    交错构造 = 好组先入 delivery queue，fatal task 之后才完成（发布前移后
+    task 完成即写 halt_reason，无需等 reap）——第一次 collect_batch() 必须
+    抛 WorkerHalted 且不返回任何 batch。不预填 fake halt_reason。"""
+
+    import asyncio
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[2] / "experiments"))
+    from fa_bringup.rollout_entry import FaRolloutService
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+        WorkerHalted,
+    )
+
+    good_delivered = asyncio.Event()
+
+    class _Spec:
+        def __init__(self, rid, payload):
+            self.rollout_execution_id = rid
+            self.prompt_group_id = "pg_X"
+            self.member_slot = 0
+            self.payload = payload
+            self.physical_attempt_id = None
+            self.physical_attempt_seq = None
+
+    class _Member:
+        def __init__(self):
+            self.metadata = {}
+            self.remove_sample = False
+
+    good_member, bad_member = _Member(), _Member()
+
+    async def execute_member(payload):
+        if payload is good_member:
+            return [payload]  # 好组立即交付
+        await good_delivered.wait()  # fatal 等好组入 queue 之后才完成
+        raise FatalExecutionInfrastructureError("probe_fatal", "barrier exploded")
+
+    groups = [[good_member], [bad_member]]
+
+    def group_source():
+        return groups.pop(0) if groups else None
+
+    svc = FaRolloutService(
+        group_source=group_source,
+        execute_member=execute_member,
+        group_size=1,
+        rollout_batch_size=2,
+        concurrency=2,
+    )
+
+    async def _watch_delivered():
+        while True:
+            w = svc._worker
+            if w is not None and w.counters.delivered >= 1:
+                good_delivered.set()  # 好组已入 delivery queue，此刻放行 fatal
+                return
+            await asyncio.sleep(0)
+
+    watcher = asyncio.ensure_future(_watch_delivered())
+    with pytest.raises(WorkerHalted, match="probe_fatal"):
+        await asyncio.wait_for(svc.collect_batch(), timeout=20)
+    watcher.cancel()
+    # 无 batch 交付；好组进隔离账（不静默丢失）
+    assert svc._halt_quarantined_groups or svc._completed_backlog == []
+
+
+def test_install_capture_wire_ownership_branches_real_call():
+    """终核 P1-2：真调用 install_capture_wire() 走三个所有权分支（假 slime
+    模块注入 sys.modules——分支都在重活之前，凭 flag/ref 即返回或抛）。"""
+
+    import sys
+    import types
+
+    fake_common = types.SimpleNamespace()
+    fake_traj = types.ModuleType("slime.agent.trajectory")
+    fake_traj.TrajectoryManager = type("TM", (), {})
+    fake_agent = types.ModuleType("slime.agent")
+    fake_adapters = types.ModuleType("slime.agent.adapters")
+    fake_adapters.common = fake_common
+    mods = {
+        "slime": types.ModuleType("slime"),
+        "slime.agent": fake_agent,
+        "slime.agent.adapters": fake_adapters,
+        "slime.agent.adapters.common": fake_common,
+        "slime.agent.trajectory": fake_traj,
+    }
+    saved = {k: sys.modules.get(k) for k in mods}
+    sys.modules.update(mods)
+    try:
+        from repoharness2.adapters.slime.capture_wire import (
+            CaptureRegistry,
+            CaptureWireOwnershipError,
+            install_capture_wire,
+        )
+
+        r1, r2 = CaptureRegistry(), CaptureRegistry()
+        fake_common._rh2_capture_wire_installed = True
+        fake_common._rh2_capture_wire_registry = r1
+        install_capture_wire(r1)  # 同 registry：幂等返回（无副作用）
+        with pytest.raises(CaptureWireOwnershipError, match="另一 registry"):
+            install_capture_wire(r2)  # 不同 registry：typed fatal
+        del fake_common._rh2_capture_wire_registry  # legacy flag 无 ref
+        with pytest.raises(CaptureWireOwnershipError, match="旧版本 wire"):
+            install_capture_wire(r1)  # 终核条件项 3：不收养，typed fatal
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = v
+
+
+async def test_bringup_latch_sticky_failed():
+    """终核 P1-3：普通启动异常 → sticky FAILED，第二次 get() 重抛同因、
+    不构造第二代（__init__/async_start 打桩，不起真实资源）。"""
+
+    from repoharness2.adapters.slime.bringup import BringupService
+
+    saved = (BringupService._instance, BringupService._startup_state,
+             BringupService._startup_error)
+    init_calls = {"n": 0}
+
+    def fake_init(self, args):
+        init_calls["n"] += 1
+
+    async def fake_start(self, args):
+        raise RuntimeError("probe startup boom")
+
+    real_init, real_start = BringupService.__init__, BringupService.async_start
+    BringupService._instance = None
+    BringupService._startup_state = "NEW"
+    BringupService._startup_error = None
+    BringupService.__init__ = fake_init
+    BringupService.async_start = fake_start
+    try:
+        with pytest.raises(RuntimeError, match="probe startup boom"):
+            await BringupService.get(object())
+        assert BringupService._startup_state == "FAILED"
+        with pytest.raises(RuntimeError, match="probe startup boom"):
+            await BringupService.get(object())  # sticky：同因重抛
+        assert init_calls["n"] == 1  # 绝不构造第二代
+    finally:
+        BringupService.__init__, BringupService.async_start = real_init, real_start
+        (BringupService._instance, BringupService._startup_state,
+         BringupService._startup_error) = saved
+
+
+async def test_invalid_barrier_result_writes_durable_record():
+    """终核 P1-3：屏障返回联合类型之外的对象 → Fatal + 持久 failure_record
+    （runtime_barrier_invalid_result）。"""
+
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+        dense_turns,
+    )
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
+
+    class _WrongType:
+        async def establish(self, *, workspace, audit):
+            return object()  # 联合类型之外
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_WrongType(),
+        turns=turns,
+    )
+    _stamp_fa_identity(chain.base_sample)
+    with pytest.raises(FatalExecutionInfrastructureError, match="invalid_result"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert any(
+        f.error_type == "runtime_barrier_invalid_result" for f in audit.failure_records
+    )
 
 
 # ---------------------------------------------------------------------------

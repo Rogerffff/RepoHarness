@@ -6062,3 +6062,144 @@ trainer checkpoint / policy version 不相容：不得复用 pending trajectory
 - **F2-4 开工前阻塞**：补齐状态恢复表、manifest/cursor 写入顺序、trainer checkpoint / policy version 对账与 crash-point 测试计划。
 - **明确递延**：自动 ActorHandle replacement、跨节点恢复、mid-episode resume、optimizer exactly-once 和联合分布式 checkpoint。
 
+
+
+---
+
+## Codex 四提交终核（2026-08-17）
+
+### 审查安排与总判定
+
+本轮按 `review-standards.md` §10 使用两个互相独立的审查角色：
+
+- Production Tracer：只证明当前真实入口、内部并发、生命周期与异常传播；
+- Falsifier / Simplifier：专门尝试推翻严重度，检查过度防御、训练分布影响和更小方案。
+
+主审查者另外重跑确定性调度探针、全套测试、ruff 和 S1 inspector 后合流。
+四个提交的方向总体正确，A′“单代启动 + fail-stop”不需要推翻，也不需要
+重构整个 F2-2；但目前**尚不能直接开始 F2-2b**，因为 fatal handoff 边界仍有
+一个真实竞态。修复该根因并补真实链测试后即可继续。
+
+### 阻塞 F2-2b：fatal 已发生但尚未 reap 时仍可交付 batch
+
+**生产可达性**：`conditional_future` 设计阻塞项。当前正式训练闸门仍关闭，
+因此不是“已经污染线上训练”的当前 P0；但一旦 F2-2b 解除 audit-only 并允许
+正式成功 handoff，该路径立即可达。它不依赖多个 `generate_rollout_async()`
+并发调用：即使上层一次只调用一个 `collect_batch()`，worker 内部默认仍有多个
+并发 execution task。
+
+**行为与不变量**：`FatalExecutionInfrastructureError` 只有在 worker 主循环
+reap 已结束 task 时才写入 `halt_reason`。因此存在以下窗口：fatal task 已完成，
+好组已进入 delivery queue，但 worker 尚未 reap fatal；`collect_batch()` 三次
+门检查看到的都是 `halt_reason is None`，于是先把好组交给 trainer，下一轮才抛
+`WorkerHalted`。这违反“fatal 发生后不得再 handoff batch”。
+
+**独立复现结果**：
+
+```text
+bad_task_done_before_collect = True
+halt_reason_before_reap = None
+first_collect_result = [['good-leaf']]
+eventual_worker_exception = WorkerHalted
+eventual_halt_reason = fatal_infrastructure:probe_fatal
+```
+
+**位置**：`async_worker.py::_guarded_execute/_account_failure/run` 与
+`rollout_entry.py::collect_batch/_raise_if_worker_halted` 的交界。
+
+**修复边界**：不要再给 `collect_batch()` 增加第四个轮询 guard，也不要新增
+平行 fatal 状态机。修复循环熔断已触发，应把 fatal 发布时刻前移到 execution
+task 自身捕获 `FatalExecutionInfrastructureError` 的边界，在 task 完成前写入
+worker 现有唯一 `halt_reason`；账目计数和 failure sink 仍由既有 reap 路径一次
+完成。若采用别的实现，也必须保持“一个 fatal owner、一个 halt 状态”。
+
+**验收条件**：把上述真实 `ContinuousExecutionWorker + FaRolloutService +
+collect_batch()` 确定性交错探针转为常驻测试。测试必须证明 fatal task 已经 done、
+worker 尚未 reap，然后第一次 `collect_batch()` 就抛同一 `WorkerHalted`，且无 batch
+返回；不能预先手工给 fake worker 填 `halt_reason`。
+
+### P1：新增测试没有覆盖提交声称的真实行为
+
+1. `test_collect_batch_refuses_handoff_after_fatal` 预先构造了
+   `halt_reason != None`，只能证明 helper 在已知 fatal 后会拒绝，不能证明上述
+   “task done、fatal 未发布”窗口安全。
+2. `test_capture_wire_ownership_typed_fatal` 没有调用 `install_capture_wire()`；
+   它读取源文本并在测试里重写一遍分支条件，源码逻辑改变时可能继续假绿。
+3. 本轮没有新增测试直接覆盖 ordinary startup error 的 sticky FAILED、真实 queue
+   close 回滚、invalid barrier 结果持久化。实现本身经独立探针成立，但完成口径应
+   是“代码修复成立、回归 oracle 尚需补齐”，不能声称全链已由两条测试覆盖。
+
+### 非阻塞但应修正的条件性问题
+
+#### 1. shutdown 后仍会静默创建新 worker
+
+**标签**：`test_only / conditional_future`。当前生产代码没有调用
+`FaRolloutService.shutdown()`，所以不是当前 P0；但本地真实探针证明：shutdown
+把 `_worker_task` 置为 `None`，随后 `collect_batch()` 会重新创建 worker。权威页
+“shutdown→collect 已关闭”的表述不实。首次接入生产 shutdown 前，用一个简单
+`_closed` 终态拒绝后续 collect 即可，不要为此建设恢复状态机。
+
+#### 2. startup cancellation 会留下 STARTING 并允许第二次构造
+
+**标签**：`conditional_future`。当前 slime 启动调用没有 timeout/cancel，actor
+死亡又会结束整个进程，因此不是当前生产阻塞；但 `get()` 只捕获 `Exception`，
+`CancelledError` 后状态仍为 STARTING，下一次会创建第二代。若以后给启动增加
+取消或 timeout，必须先把它收口为 sticky FAILED。当前可选择小修：当前调用仍
+传播 cancellation，同时为后续调用保存 typed fatal；也可明确递延到“引入启动
+取消机制”闸门。
+
+#### 3. capture wire 的 legacy “收养”分支不安全
+
+**标签**：`conditional_future`。当 installed flag 在而 registry ref 缺失时，
+代码只把模块属性改成新 registry，但旧 monkeypatch 闭包仍可能捕获旧 registry，
+模块属性赋值不会重绑闭包。A′ 本来就不支持进程内旧版 wire 迁移，最小且诚实的
+处理是 typed fatal；无需增加 legacy 恢复能力。
+
+#### 4. “隔离账不丢失”承诺过强
+
+真实探针中，一个 fatal 与四个成功 execution 并发时，candidate 能进入
+`_halt_quarantined_groups`，但仍有三个已 delivery 的结果留在 queue。当前
+fail-stop 会终止 run，因此正确性上没有 trainer handoff；没有必要现在把完整
+token/sample payload 全复制进第二个 durable store。应把口径收窄为：当前内存
+隔离只保存已组装 candidate/backlog，queue/in-flight 的可恢复性由 F2-4 pending
+manifest 负责。可额外落 compact IDs/counters/digests，不应为“零丢失”承诺提前
+复制完整训练数据。
+
+### 文档一致性修正
+
+1. `FatalExecutionInfrastructureError` docstring 仍写“恢复语义 = 整个 rollout
+   actor 重启”，与勘误 4 的当前事实“终止训练 run；自动 Actor replacement 未实现”
+   冲突。
+2. `implementation-notes.md` 仍声称 shutdown、CancelledError 与 legacy flag 三项
+   已闭合；应按上述生产可达性改成“条件性递延”或实际修复，不能保留假闭合。
+3. D4 的 `worker_crash -> D2 recovery` 应加前提：仅限 RUNNING 后、已分类为
+   可恢复、且 F2-4 能力闸门已通过；STARTING 失败和确定性故障仍是 run_halt。
+4. 05 计划需要明确两个 manifest 不是同一事实：F2-4 是 cursor + pending
+   reservation 恢复 manifest；F2-6 是 physical attempt -> Outcome 血缘 manifest。
+   F2-4 可以先于 F2-6，但必须自己交付前者，不能等待后者才补恢复事实。
+5. FA-5 的“actor kill/restart”应写成受控恢复验收，不得让读者误解为 Ray 已经
+   自动替换 ActorHandle。
+
+### 可以保持不变的部分
+
+- A′ 单代启动 + sticky ordinary startup failure 的方向正确，比进程内 reset 简单；
+- queue rollback 已改用真实 `close(drain=False)`，独立探针确认生效；
+- invalid barrier 先写结构化 failure record 再抛 fatal 的方向正确；
+- 不同、已知 registry 的重绑会 typed fatal；同 registry 幂等；
+- 已发布 `halt_reason` 后的入口/循环/handoff 三重检查有效，且不会把 fatal 静默
+  转成普通 member missing；
+- `review-standards.md` §10 的生产可达性与 Simplifier 机制方向正确。
+
+### Subagent 成本纪律（非代码阻塞）
+
+本轮双审查角色有价值，但不应为每一个 finding 各开一对完整上下文代理。建议把
+“强制双 subagent”解释为**每个高风险 ownership 边界或审查批次一对**；给每个
+角色限定文件、问题和停止条件，不默认携带全部线程历史。主审仍必须独立复现关键
+证据。这样保留交叉检查价值，同时避免每轮消耗约 15 万 token。
+
+### 进入下一步的判定
+
+当前不需要停下来重构整个 F2-2。先完成一项阻塞修复：关闭 fatal task done 但
+未 reap 的 handoff 窗口，并用真实 worker/service 交错测试证明。随后修正文档的
+假闭合口径；shutdown/cancellation 可按真实引入闸门递延。满足后即可进入 F2-2b。
+

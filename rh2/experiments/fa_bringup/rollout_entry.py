@@ -225,6 +225,10 @@ class FaRolloutService:
     async def _ensure_worker(self) -> None:
         if self._halted_error is not None:
             raise self._halted_error  # sticky：halt 后绝不重建二代 worker
+        if getattr(self, "_closed", False):
+            raise FaEntryError(
+                "service_closed", "FaRolloutService 已 shutdown——不重建二代 worker。"
+            )
         if self._worker_task is not None and not self._worker_task.done():
             return
         if self._worker_task is not None and self._worker_task.done():
@@ -388,6 +392,7 @@ class FaRolloutService:
 
     async def shutdown(self) -> None:
         """显式停机：stop + drain（worker 的 drain 协议接管账目）。"""
+        self._closed = True  # 终核条件项 1：shutdown 后 collect 拒绝，不再重建 worker
 
         if self._worker_task is None:
             return

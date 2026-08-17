@@ -50,6 +50,7 @@ from typing import Any
 from repoharness2.adapters.slime.generate import (
     PROCESS_CLOCK_DOMAIN,
     LeafFacts,
+    StartupCheckError,
     RolloutOrchestrator,
     SlimeBindingConfig,
     parse_bool_env_flag,
@@ -1050,10 +1051,17 @@ class BringupService:
                 try:
                     service = BringupService(args)
                     await service.async_start(args)
+                except asyncio.CancelledError:
+                    # 终核条件项 2：启动被取消——当前调用原样传播取消，
+                    # 但后续调用拿到 typed fatal（不残留 STARTING、不建二代）
+                    cls._startup_state = "FAILED"
+                    cls._startup_error = StartupCheckError(
+                        "bringup_startup_cancelled",
+                        "BringupService 启动被取消——单代语义下同进程不再重试。",
+                    )
+                    raise
                 except Exception as exc:
-                    # Falsifier 缺陷 4：只 latch Exception——CancelledError/
-                    # KeyboardInterrupt 原样传播不 latch（跨 task 重抛
-                    # CancelledError 会被 asyncio 判"被取消"而非失败）
+                    # 只 latch Exception；KeyboardInterrupt 等原样传播不 latch
                     cls._startup_state = "FAILED"
                     cls._startup_error = exc
                     raise

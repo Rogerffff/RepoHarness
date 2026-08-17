@@ -523,9 +523,13 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         if bound is registry:
             return  # 同 registry 幂等
         if bound is None:
-            # legacy：flag 在而 ref 缺（旧版本装的 wire）——收养而非误报
-            slime_common._rh2_capture_wire_registry = registry
-            return
+            # 终核条件项 3：flag 在而 ref 缺 = 旧版本 wire 的 monkeypatch
+            # 闭包可能仍持旧 registry——改模块属性重绑不了闭包，"收养"是
+            # 假迁移。A′ 不支持进程内旧版迁移，typed fatal。
+            raise CaptureWireOwnershipError(
+                "capture wire 已安装但无 registry 归属记录（旧版本 wire）——"
+                "单代语义不支持进程内迁移，重启进程。"
+            )
         # 勘误 4 ⑤：不同 registry 重绑 = 所有权错误，typed fatal 暴露
         # （不是帮系统带病续跑——单代语义下这不该发生）
         raise CaptureWireOwnershipError(

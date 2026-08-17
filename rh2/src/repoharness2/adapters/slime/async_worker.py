@@ -1056,7 +1056,8 @@ class FatalExecutionInfrastructureError(RuntimeError):
     """基建级致命错误（codex 轮次 14 建议 3）：审计存储不可用、账本存储
     不可用等——**不是**单个 execution 的失败，继续 top-up 会持续产出
     无审计依据的 rollout。worker 遇到它按系统故障停机（WorkerHalted），
-    恢复语义 = 整个 rollout actor 重启（05 计划已定案）。"""
+    恢复语义（勘误 4，2026-08-16）= **fail-stop 终止当前训练 run**；
+    自动 Actor replacement 未实现也未承诺，受控恢复属 F2-4。"""
 
     def __init__(self, reason_code: str, message: str) -> None:
         super().__init__(f"{reason_code}: {message}")
@@ -1157,10 +1158,22 @@ class ContinuousExecutionWorker:
         self.halt_reason: str | None = None
 
     async def _guarded_execute(self, spec: ExecutionTaskSpec) -> Any:
-        if self._limits is None:
-            return await self._execute_fn(spec)
-        async with self._limits.acquire(self._resource_class):
-            return await self._execute_fn(spec)
+        try:
+            if self._limits is None:
+                return await self._execute_fn(spec)
+            async with self._limits.acquire(self._resource_class):
+                return await self._execute_fn(spec)
+        except FatalExecutionInfrastructureError as exc:
+            # 终核阻塞项：fatal 发布时刻前移到 task 自身完成之前——
+            # 否则存在"fatal task 已 done、好组已入 delivery queue、worker
+            # 尚未 reap"的窗口，collect_batch 三门全见 halt_reason=None，
+            # 好 batch 先交付、下一轮才 WorkerHalted。写的是 worker 既有
+            # 唯一 halt 状态（or-guard 保首因）；计数与 failure_sink 仍由
+            # reap 的 _account_failure 一次完成——单 owner 不变。
+            self.halt_reason = self.halt_reason or (
+                f"fatal_infrastructure:{exc.reason_code}"
+            )
+            raise
 
     def _account_failure(self, spec: ExecutionTaskSpec, exc: BaseException) -> None:
         """失败必有账：sink 优先；sink 失败进 durable fallback + halt。
