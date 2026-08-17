@@ -61,6 +61,9 @@ __all__ = [
     "TERMINATION_KINDS_WATCHDOG",
     "FAILURE_CATEGORIES_EXECUTION_FACT",
     "RUNTIME_QUIESCENCE_REASON_CODES",
+    "UNSAFE_ARTIFACT_REJECTION_REASON",
+    "is_unsafe_artifact_rejection_shape",
+    "outcome_dict_is_unsafe_rejection",
     "FAILURE_CATEGORIES_GRADING",
     "FAILURE_CATEGORIES_ADMISSION_CONTROL",
     "TrainingRuntimePhase",
@@ -364,6 +367,47 @@ assert sum(len(f) for f in _FC_FAMILIES) == len(get_args(RuntimeFailureCategory)
 # 作为 completion 取值——由 PromptGroupAdmissionReport（FA-2）承载。
 CompletionClassV2 = Literal["present_complete", "present_truncated", "missing"]
 
+UNSAFE_ARTIFACT_REJECTION_REASON = "unsafe_artifact_permanent_rejection"
+
+
+def is_unsafe_artifact_rejection_shape(
+    *,
+    completion_class: str,
+    failure_category: str | None,
+    reason_code: str | None,
+    failed_component: str | None,
+    task_outcome: str,
+    reward_unavailable: bool,
+    eligibility_report_id: str | None,
+) -> bool:
+    """unsafe 永久拒绝的**唯一权威谓词**（B3 终核收口）：七字段全量组合，
+    schema validator / producer 豁免 / audit disposition 三处共用——任何
+    单字段偏离都不构成该形状（矛盾组合无法进入公共契约）。"""
+
+    return (
+        completion_class in ("present_complete", "present_truncated")
+        and failure_category is None
+        and reason_code == UNSAFE_ARTIFACT_REJECTION_REASON
+        and failed_component == "patch_hygiene"
+        and task_outcome == "unknown"
+        and reward_unavailable is True
+        and eligibility_report_id is None
+    )
+
+
+def outcome_dict_is_unsafe_rejection(outcome: dict) -> bool:
+    """dict 形式（audit.outcome_v2 / JSONL record）的同一谓词。"""
+
+    return is_unsafe_artifact_rejection_shape(
+        completion_class=outcome.get("completion_class", ""),
+        failure_category=outcome.get("failure_category"),
+        reason_code=outcome.get("reason_code"),
+        failed_component=outcome.get("failed_component"),
+        task_outcome=outcome.get("task_outcome", ""),
+        reward_unavailable=bool(outcome.get("reward_unavailable")),
+        eligibility_report_id=outcome.get("eligibility_report_id"),
+    )
+
 # 勘误 3 配套（F2-2 复核三轮 P1-1）：runtime_quiescence_failure 的合法
 # reason_code 封闭集合——屏障五个失败点，双向绑定（该类别必配其一；
 # 这些码也只属于该类别）。
@@ -516,6 +560,22 @@ class RolloutAttemptOutcomeV2(StrictModel):
                 "Outcome v2 是 execution 级账目，identity.branch_id 必须为 None"
                 "（branch 聚合在投影层，不在执行结果层）。"
             )
+        # --- B3 终核：声称 unsafe 永久拒绝 ⇒ 七字段全量谓词成立 ---
+        if self.reason_code == UNSAFE_ARTIFACT_REJECTION_REASON:
+            if not is_unsafe_artifact_rejection_shape(
+                completion_class=self.completion_class,
+                failure_category=self.failure_category,
+                reason_code=self.reason_code,
+                failed_component=self.failed_component,
+                task_outcome=self.task_outcome,
+                reward_unavailable=self.reward_unavailable,
+                eligibility_report_id=self.eligibility_report_id,
+            ):
+                raise ValueError(
+                    "unsafe_artifact_permanent_rejection 必须满足完整形状"
+                    "（present_*/无 failure_category/patch_hygiene/unknown/"
+                    "reward_unavailable/无 eligibility）——矛盾组合拒绝。"
+                )
         # --- 勘误 3（P1-1）：runtime_quiescence_failure ⟺ 五 reason code ---
         if self.failure_category == "runtime_quiescence_failure" and (
             self.reason_code not in RUNTIME_QUIESCENCE_REASON_CODES
@@ -554,13 +614,9 @@ class RolloutAttemptOutcomeV2(StrictModel):
                 # unsafe artifact 永久拒绝（patch_hygiene 出具）。其余
                 # present 记录必须可回链资格权威；D1b/B4 批新形状再显式扩。
                 exempt = self.reward_unavailable and (
-                    # B3 复核 P1-2：豁免必须以 reward 不可得为前提——
-                    # resolved/reward 可得却无资格引用的矛盾形状构造即拒
                     self.failure_category == "grading_infra_failure"
-                    or (
-                        self.reason_code == "unsafe_artifact_permanent_rejection"
-                        and self.failed_component == "patch_hygiene"
-                    )
+                    # unsafe 臂：全形状由上方谓词校验强制，此处判声称即可
+                    or self.reason_code == UNSAFE_ARTIFACT_REJECTION_REASON
                 )
                 if not exempt:
                     raise ValueError(

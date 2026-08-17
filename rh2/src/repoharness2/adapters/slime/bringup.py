@@ -47,6 +47,7 @@ from pathlib import Path
 from typing import Any
 
 
+from repoharness2.contracts.fa_runtime import outcome_dict_is_unsafe_rejection
 from repoharness2.adapters.slime.generate import (
     PROCESS_CLOCK_DOMAIN,
     LeafFacts,
@@ -326,14 +327,11 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         disposition = "finalized"
         report = getattr(finalized, "eligibility_report", None)
         eligibility_ref = getattr(report, "report_id", None)
-    elif (
-        audit.outcome_v2 is not None
-        and audit.outcome_v2.get("reason_code") == "unsafe_artifact_permanent_rejection"
-        # B3 复核 P1-3：permanent_rejected 只对 present 事实成立——
-        # completion=missing 时 reason 字符串不足以派生该 disposition
-        and audit.outcome_v2.get("completion_class")
-        in ("present_complete", "present_truncated")
+    elif audit.outcome_v2 is not None and outcome_dict_is_unsafe_rejection(
+        audit.outcome_v2
     ):
+        # B3 终核：disposition 与 schema/producer 共用唯一谓词（七字段
+        # 全量），reason 字符串或部分字段不足以派生 permanent_rejected
         # 阻塞 4：unsafe 永久拒绝从既有 outcome 事实派生 disposition
         # （不建第二份可独立修改的准入账），不再落 unknown_terminal
         disposition = "permanent_rejected"

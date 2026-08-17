@@ -269,8 +269,12 @@ generate→JSONL 回归钉死）；oracle：unsupported 对象 e2e（present+拒
 e2e 反例钉死不评分不继续）；② eligibility 豁免加 **reward_unavailable
 必要条件**（resolved+reward 可得+unsafe reason 的矛盾形状构造即拒）；
 ③ permanent_rejected disposition 加 **completion=present_* 事实一致性**
-（missing + reason 字符串不派生拒绝）。**B3 闭合**（网络恢复后全量
-1033 绿）。递延：分类规则扩充（计划既定）；
+（missing + reason 字符串不派生拒绝）。**B3 终核收口（1 P1 共同根因）**：unsafe 永久拒绝七字段全量组合收进
+**唯一权威谓词** `is_unsafe_artifact_rejection_shape`（present_*/fc
+None/patch_hygiene/unknown/reward_unavailable/无 eligibility）——schema
+validator（声称该 reason 即全形状强制）/producer 豁免/audit disposition
+三处共用；codex 两个矛盾反例（resolved+reward 可得、grading_infra 混
+搭）构造即拒，表驱动逐字段翻转测试钉死。**B3 闭合**（全量 1034 绿）。递延：分类规则扩充（计划既定）；
 AdmissionReport 本体（FA-2/F2-5）。下一片 = **B4 fresh grader 消费
 projection（动 grading/manager.py 前先 S2 协调）**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**

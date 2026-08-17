@@ -150,10 +150,13 @@ def build_outcome_v2(
                 or (
                     reason_code == "unsafe_artifact_permanent_rejection"
                     and failed_component == "patch_hygiene"
+                    and task_resolved is None  # 谓词一致：reward 必不可得
+                    and failure_category is None
                 )
             )
         )
-        # eligibility 豁免 = v2 契约封闭集合（阻塞 3 同步收窄）
+        # eligibility 豁免 = v2 契约封闭集合（与 is_unsafe_artifact_
+        # rejection_shape 谓词一致；schema validator 兜底全形状）
     ):
         completion = "missing"
         failure_category = "capture_incomplete"

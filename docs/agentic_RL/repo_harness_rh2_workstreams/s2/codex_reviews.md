@@ -7310,3 +7310,82 @@ ruff：通过
 inspect-rh2-s1：通过
 建议 Claude 只修上述三项并补对应反例测试，随后做一次聚焦终核即关闭 B3。暂不进入 B4/B5，尤其 B5 会再次触碰 generate.py / bringup.py 的 finalize 边界，先把这里收干净更省返工。
 
+
+
+---
+
+## codex B3 终核（2026-08-18，1 P1 共同根因——采纳，唯一谓词收口）
+
+**结论：B3 还不能正式关闭，但只剩一个共同根因的 P1。** 不需要新 T0、状态机或额外安全机制，做一次很小的契约收口后即可结束 B3。
+
+**P1：unsafe 永久拒绝的完整事实组合仍未闭合**
+
+当前校验只在“缺少 eligibility”时检查 `reward_unavailable`：
+
+- [fa_runtime.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/contracts/fa_runtime.py:551)
+- [outcome_producer.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/outcome_producer.py:143)
+
+我用真实契约成功构造了：
+
+```text
+reason_code = unsafe_artifact_permanent_rejection
+failed_component = patch_hygiene
+task_outcome = resolved
+reward_unavailable = false
+eligibility_report_id = elig
+```
+
+这个 Outcome 自相矛盾，却能通过校验。另一种被接受的矛盾组合是：
+
+```text
+failure_category = grading_infra_failure
+reason_code = unsafe_artifact_permanent_rejection
+failed_component = patch_hygiene
+reward_unavailable = true
+eligibility_report_id = None
+```
+
+随后 [bringup.py](/Users/roger/Desktop/claude-code-verl-stage0h/rh2/src/repoharness2/adapters/slime/bringup.py:329) 只凭 `reason_code + present_*`，将上述记录写成 `permanent_rejected`。
+
+当前 `generate.py` 的两个真实 unsafe 调用点传入的是正确组合，所以这不是正在污染 rollout 的错误；但 Outcome v2 是后续 assembler 将消费的公共契约，不能把矛盾形状留到 F2-5。
+
+**最小修复**
+
+建立一个小型纯谓词作为唯一权威。unsafe 永久拒绝必须同时满足：
+
+```text
+completion_class in {present_complete, present_truncated}
+failure_category is None
+reason_code == unsafe_artifact_permanent_rejection
+failed_component == patch_hygiene
+task_outcome == unknown
+reward_unavailable is True
+eligibility_report_id is None
+```
+
+让 schema、producer exemption 和 audit disposition 共用它，并增加表驱动测试，逐个改变上述字段都必须拒绝。
+
+**已确认闭合**
+
+baseline/lineage mismatch 的路径已经正确：
+
+```text
+ProjectionContractError
+-> FatalExecutionInfrastructureError
+-> worker halt
+-> WorkerHalted
+-> trainer handoff 前拒绝 batch
+```
+
+不存在继续按 missing 补采或多交一个训练 batch 的窗口。
+
+本轮验证：
+
+```text
+聚焦测试：113 passed
+全量测试：1033 passed
+ruff：通过
+inspect-rh2-s1：通过
+```
+
+建议只修这一处共同根因，然后做一次聚焦终核并关闭 B3，不再扩展检查范围。

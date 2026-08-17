@@ -216,7 +216,7 @@ def test_exemption_requires_reward_unavailable():
         RolloutAttemptOutcomeV2,
     )
 
-    with pytest.raises(ValueError, match="豁免集合"):
+    with pytest.raises(ValueError, match="完整形状"):
         RolloutAttemptOutcomeV2(
             outcome_id="o", identity=ExecutionIdentity(
                 prompt_group_id="g", group_index=0, rollout_execution_id="e",
@@ -265,6 +265,49 @@ def test_permanent_rejected_disposition_requires_present_fact():
         write_execution_audit_record(None, audit, jsonl)
         rec = _json.loads(jsonl.read_text().strip())
     assert rec["disposition"] != "permanent_rejected"  # missing 不派生拒绝
+
+
+def test_unsafe_rejection_shape_table_driven():
+    """B3 终核：七字段全量谓词——合法组合通过；逐字段翻转全部拒绝
+    （schema/producer/disposition 三处共用同一谓词）。"""
+
+    from repoharness2.contracts.fa_runtime import (
+        ExecutionIdentity,
+        RolloutAttemptOutcomeV2,
+        outcome_dict_is_unsafe_rejection,
+    )
+
+    valid = dict(
+        outcome_id="o", identity=ExecutionIdentity(
+            prompt_group_id="g", group_index=0, rollout_execution_id="e",
+            physical_attempt_id="e#p1-x", physical_attempt_seq=1),
+        member_slot=0, attempt_number=1,
+        completion_class="present_complete", termination_kind="completed",
+        failure_category=None,
+        reason_code="unsafe_artifact_permanent_rejection",
+        failed_component="patch_hygiene",
+        task_outcome="unknown", reward_unavailable=True,
+        recovery_scope="none", turn_weight_versions=["1"],
+        intra_execution_version_span=0, current_version_at_finalize="1",
+        eligibility_report_id=None,
+    )
+    rec = RolloutAttemptOutcomeV2(**valid)  # 合法形状通过
+    assert outcome_dict_is_unsafe_rejection(rec.model_dump(mode="json"))
+
+    mutations = [
+        {"failure_category": "grading_infra_failure"},   # codex 反例 2
+        {"task_outcome": "resolved", "reward_unavailable": False,
+         "eligibility_report_id": "elig"},               # codex 反例 1
+        {"failed_component": "other_component"},
+        {"eligibility_report_id": "elig"},
+        {"reward_unavailable": False},
+    ]
+    for mut in mutations:
+        with pytest.raises(ValueError):
+            RolloutAttemptOutcomeV2(**{**valid, **mut})
+    # missing + 该 reason：schema 拒（present_* 要求）；dict 谓词同样 False
+    assert not outcome_dict_is_unsafe_rejection(
+        {**rec.model_dump(mode="json"), "completion_class": "missing"})
 
 
 async def test_e2e_unsupported_object_present_rejected_no_grader():
