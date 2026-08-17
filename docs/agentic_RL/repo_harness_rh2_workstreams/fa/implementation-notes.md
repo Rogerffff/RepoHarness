@@ -185,7 +185,18 @@ legacy flag——终核改判 typed fatal（monkeypatch 闭包持旧 registry，
 端口二次抢占）；被 cancel 的 in-flight 协程不响应取消时收尾 await
 无独立超时（F2-2b watchdog 面）；闩锁/回滚行为测试 F2-2b 前补齐。
 审查机制收紧（review-standards §10）与勘误 4/F2-4 范围文档已单独
-提交。**A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
+提交。**B1 BaselineWorkspaceManifestV1：完成**（contracts/baseline_manifest.py
++ adapters/slime/baseline_census.py）。契约 = 单一基线权威（path/type/
+mode/content 或 symlink digest，lstat/no-follow；排序唯一；父子前缀
+冲突拒；**大小写共存合法**；排除 namespace 显式版本化进 policy digest，
+排除区独立 census digest——排除≠消失）；digest 由读写双方重算不自引用。
+生成器 = materialize 尾部（harness 获写权前，树仍可信）census 脚本 +
+确定性纯函数解析（UNSUPPORTED 对象 fail-closed）。接线 = 仅 FA 模式
+（s1_compat 零改动）；manifest 内存 per-attempt 供 B2 消费，audit 只落
+digest + entry 数（数万 entries 不进 JSONL——durable 持久化随 B5
+receipt）。递延：真实 SWE 镜像全量 census 性能（FA-5）。下一片 =
+**B2 trusted exporter + FrozenPatchArtifactV1**。
+**A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
 fatal 发布时刻前移到 execution task 边界（_guarded_execute 捕获 Fatal

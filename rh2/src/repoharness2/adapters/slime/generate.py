@@ -1408,6 +1408,10 @@ class RolloutAudit:
     # F2-2 复核 P1-4：终止 trigger 提示（slime exit=-1 = 时间预算耗尽 →
     # hard_wall_timeout；不再误归 harness_crash/completed）
     termination_kind_hint: str | None = None
+    # B1：评分基线 digest（manifest 本体不进 audit——数万 entries；
+    # 内存 + B5 receipt 持久化）
+    baseline_manifest_digest: str | None = None
+    baseline_entry_count: int = 0
     # F2-2 复核三轮 P1-2：audit-only 收口标记（屏障前正式探针/带身份
     # bring-up）——bringup 落盘 disposition=audit_only_rejected，
     # fault-domain 统计（FA-2B）按此排除，不污染 capture 故障率
@@ -1643,6 +1647,9 @@ class RolloutOrchestrator:
         self._audit_sink = audit_sink
         self.audits: list[RolloutAudit] = []
         self.outcomes: list[Any] = []  # F2-2：正式链产出的 Outcome v2 序列
+        # B1：per-attempt 基线（内存供 B2 exporter 消费；durable 持久化随
+        # B5 finalization receipt——audit 只落 digest + entry 数）
+        self._baseline_manifests: dict[str, Any] = {}
         self.cleanup_quarantine: list[str] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1740,6 +1747,43 @@ class RolloutOrchestrator:
             stage = "materialize"
             sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit)
             audit.step("step2_workspace_materialized")
+            # B1（A-prime 第 2 条）：harness 获写权前生成评分基线唯一权威。
+            # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
+            if self._mode != "s1_compat":
+                from repoharness2.adapters.slime.baseline_census import (
+                    generate_baseline_manifest,
+                )
+                from repoharness2.contracts.baseline_manifest import (
+                    compute_baseline_manifest_digest,
+                )
+
+                head = await sandbox.workspace.run_bash(
+                    f"git -C {task.workdir} rev-parse HEAD"
+                )
+                if head.exit_code != 0:
+                    raise SlimeBindingError(
+                        "baseline_head_unreadable",
+                        f"materialized HEAD 读取失败：{head.stderr.strip()[-200:]}",
+                    )
+                baseline = await generate_baseline_manifest(
+                    sandbox.workspace,
+                    task_id=task.task_id,
+                    workdir=task.workdir,
+                    environment_package_digest=task.public_bundle_digest,
+                    image_manifest_digest=(
+                        task.image_manifest_digest or f"local:{task.image}"
+                    ),
+                    materialized_head=head.stdout.strip(),
+                    task_base_commit=task.base_commit,
+                )
+                self._baseline_manifests[
+                    physical_attempt_id or trajectory_id
+                ] = baseline
+                audit.baseline_manifest_digest = compute_baseline_manifest_digest(
+                    baseline
+                )
+                audit.baseline_entry_count = len(baseline.entries)
+                audit.mark("baseline_manifest_generated")
 
             stage = "harness_run"
             launch = HarnessLaunchSpec(

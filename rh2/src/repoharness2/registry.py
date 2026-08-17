@@ -41,6 +41,7 @@ from repoharness2.contracts import (
     SCHEMA_REGISTRY,
     StrictModel,
 )
+from repoharness2.contracts.baseline_manifest import BaselineWorkspaceManifestV1
 from repoharness2.contracts.fa_runtime import (
     ExecutionIdentity,
     ModelCallAttempt,
@@ -86,6 +87,8 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     # F2-1b：v2 = 事实层三值 completion + termination 五族（v1 冻结只读，
     # 正式链只生产 v2；v1→v2 见 contracts/outcome_crosswalk.py）
     "rh2.fa.rollout_attempt_outcome.v2": RolloutAttemptOutcomeV2,
+    # B1（A-prime T0 第 2 条）：评分基线唯一权威
+    "rh2.fa.baseline_workspace_manifest.v1": BaselineWorkspaceManifestV1,
     "rh2.fa.training_runtime_window.v1": TrainingRuntimeWindow,
     "rh2.fa.model_call_attempt.v1": ModelCallAttempt,
 }

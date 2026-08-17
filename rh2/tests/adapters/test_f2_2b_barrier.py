@@ -33,6 +33,10 @@ class _Exec:
 
     async def run_bash(self, script: str):
         self.scripts.append(script)
+        if "rev-parse" in script:  # B1 baseline 锚
+            return SimpleNamespace(exit_code=0, stdout="a" * 40 + "\n", stderr="")
+        if "find ." in script:  # B1 census（空树 = 零 entries 合法基线）
+            return SimpleNamespace(exit_code=0, stdout="", stderr="")
         if "pkill" in script:
             return SimpleNamespace(exit_code=0, stdout="", stderr="")
         if "ps -o pid=" in script:

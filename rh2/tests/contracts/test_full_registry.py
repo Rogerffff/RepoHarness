@@ -36,6 +36,7 @@ EXPECTED_EXTRA_IDS = {
     "rh2.fa.execution_identity.v1",
     "rh2.fa.rollout_attempt_outcome.v1",
     "rh2.fa.rollout_attempt_outcome.v2",
+    "rh2.fa.baseline_workspace_manifest.v1",
     "rh2.fa.training_runtime_window.v1",
     "rh2.fa.model_call_attempt.v1",
 }
@@ -199,6 +200,29 @@ def _fa_outcome_v2_payload() -> dict:
     }
 
 
+def _baseline_manifest_payload() -> dict:
+    from repoharness2.contracts.baseline_manifest import (
+        BASELINE_MANIFEST_POLICY_V1,
+        compute_policy_digest,
+    )
+
+    return {
+        "schema_id": "rh2.fa.baseline_workspace_manifest.v1",
+        "task_id": "t1",
+        "workdir": "/testbed",
+        "environment_package_digest": "sha256:" + "e" * 64,
+        "image_manifest_digest": "sha256:" + "i" * 64,
+        "materialized_head": "a" * 40,
+        "task_base_commit": "b" * 40,
+        "policy": BASELINE_MANIFEST_POLICY_V1.model_dump(mode="json"),
+        "policy_digest": compute_policy_digest(BASELINE_MANIFEST_POLICY_V1),
+        "entries": [{
+            "path": "a.py", "object_type": "regular", "mode": "100644",
+            "content_digest": "sha256:" + "c" * 64,
+        }],
+    }
+
+
 def _fa_window_payload() -> dict:
     return {
         "schema_id": "rh2.fa.training_runtime_window.v1",
@@ -287,6 +311,7 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.fa.execution_identity.v1": _fa_identity_payload,
         "rh2.fa.rollout_attempt_outcome.v1": _fa_outcome_payload,
         "rh2.fa.rollout_attempt_outcome.v2": _fa_outcome_v2_payload,
+        "rh2.fa.baseline_workspace_manifest.v1": _baseline_manifest_payload,
         "rh2.fa.training_runtime_window.v1": _fa_window_payload,
         "rh2.fa.model_call_attempt.v1": _fa_attempt_payload,
     }
