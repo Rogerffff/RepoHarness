@@ -140,7 +140,7 @@ codex finding 必须包含八要素：
   当前行为 / 违反的不变量 / 证据 / 影响 / 建议分期
   / 文件与行号 / 复现命令或最小探针 / 修复验收条件
 
-Claude 对每项只能三选一回应：
+Claude 对每项四选一回应（§10.5 第 4 条，2026-08-17）：
   accepted / rejected_with_evidence / deferred_with_owner_and_gate
 ```
 

@@ -9,8 +9,9 @@
 1. FA formal 评分只消费不可变 FrozenPatchArtifact 经 hygiene 后得到的
    ScoringProjectionArtifact；grader 不得回读 rollout workspace。
 2. 评分基线唯一权威 = **BaselineWorkspaceManifestV1**：trusted
-   materialization 完成后、harness 获得写权限前生成；覆盖全部
-   score-relevant tracked/untracked 文件；记录 path/type/mode/content
+   materialization 完成后、harness 获得写权限前生成；覆盖 **scoreable
+   tree 内全部受支持路径**（不由实现者自行判断"与评分无关"）；所有
+   排除 namespace 必须显式、版本化并进入 manifest policy digest；记录 path/type/mode/content
    或 symlink digest（lstat/no-follow）；绑定 image、environment、
    materialized head 与 base_commit lineage；fresh grader 应用
    projection 前必须重建并验证同一 manifest digest。base_commit 与
@@ -22,8 +23,10 @@
    T1 手段。
 4. canonical artifact 是结构化、排序、可重算 digest 的文件 delta；v1
    支持 regular/symlink × add/modify/delete 与 mode
-   {100644,100755,120000}；FIFO/socket/device/大小写冲突/父子前缀冲突
-   fail-closed。**submodule 定案**：ingestion 先统计受影响题数，v1 不
+   {100644,100755,120000}；FIFO/socket/device/父子前缀冲突 fail-closed；
+   路径碰撞只拒绝**目标评分文件系统无法无损表达**的情形——Linux
+   case-sensitive grader 不因大小写不同自动拒绝（codex 三轮修正：
+   Foo.py 与 foo.py 在正式链合法共存，无证据支持将其设为拒绝条件）。**submodule 定案**：ingestion 先统计受影响题数，v1 不
    接收含 submodule/gitlink 的任务；覆盖率损失显著再回 owner 决策；
    不实现嵌套仓库 patch。
 5. artifact 身份：FrozenPatchArtifact 绑定 task/environment/image/

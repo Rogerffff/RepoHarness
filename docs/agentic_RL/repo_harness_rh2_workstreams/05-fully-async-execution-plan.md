@@ -126,6 +126,61 @@
 >    问题的共同根源是共享可变状态跨三个执行域传播——停止叠锁，收敛所有权）。
 >    落地后解除 overlap fail-fast（并行 subagent 误杀解除）。
 > 5. **F2-4 实现**：按第 1 步定案落地恢复语义。
+> 5a. **F2-2b 重构切片 B1~B6（A-prime 定稿后，2026-08-17；每片自带
+>    单元/契约测试，B6 只是跨组件真实组合测试，不得把验证拖到最后；
+>    与 F2-3 typed drain 交错实现，drain receipt 未落地前 fa_formal
+>    不开）**：
+>
+>    **B1 BaselineWorkspaceManifestV1**。输入 = materializer 完成后、
+>    harness 获写权前的容器文件树；输出 = 契约 + manifest 生成器 +
+>    manifest policy digest（排除 namespace 显式版本化）；ownership =
+>    contracts/（FA）+ generate.py materialize 段；接线点 =
+>    _materialize_rollout_sandbox 尾部；验收 = 契约往返/lstat 语义/
+>    policy digest 测试 + 生成器对假容器树的确定性测试；递延 = 真实
+>    SWE 镜像全量 census 性能（FA-5）；回滚 = 删契约与生成调用，不碰
+>    既有链；依赖 = 无（先于 drain receipt 可做）。
+>
+>    **B2 trusted exporter + FrozenPatchArtifactV1**。输入 = B1
+>    manifest + 静止后的容器文件树；输出 = exporter（T1 选型：host 侧
+>    按 baseline 枚举读容器文件，不执行任何 repo-controlled Git）+
+>    FrozenPatchArtifactV1 契约（结构化 delta，身份绑定 task/env/image/
+>    baseline/execution/attempt，不同 attempt 禁覆盖）；ownership =
+>    adapters/slime/ 新模块 + contracts/；接线点 = 屏障确认后、评分前；
+>    验收 = staged/unstaged/untracked/binary/symlink/mode 契约测试 +
+>    "repo-controlled Git 不被执行"负测试（hooks/filters 注入不触发）；
+>    递延 = 提取性能优化；回滚 = exporter 不接线即回到 fail-stop；
+>    依赖 = B1。
+>
+>    **B3 hygiene/security 分类 + ScoringProjectionArtifact**。输入 =
+>    raw FrozenPatchArtifact；输出 = schema/digest/baseline 校验 +
+>    分类器 + 引用式 projection（不复制内容）；ownership = FA（与 S2
+>    grading 契约只读对接）；接线点 = exporter 之后 grader 之前；验收
+>    = 九类失败语义表逐行测试（unsafe→present_*+permanent_rejection
+>    不跑 grader 等）+ runtime 私有文件记录而非 tamper 测试；递延 =
+>    分类规则扩充；回滚 = 分类器不接线则 B2 产物仅审计；依赖 = B2。
+>
+>    **B4 fresh grader 消费 projection**。输入 = projection + private
+>    tests（既有 SWEGradingManager 注入能力）；输出 = grader 改造
+>    （apply projection 到干净 checkout，重建并验证 baseline digest，
+>    不回读 rollout workspace）；ownership = grading/manager.py（S2
+>    线程优先——**动它前先协调**）；接线点 = _finalize 评分调用；验收
+>    = "grader 不回读 source"同一性负测试 + apply 失败=contract
+>    failure 不记 reward 0；递延 = 无；回滚 = 保留旧 workspace 评分仅
+>    限 s1_compat；依赖 = B3。
+>
+>    **B5 finalization receipt + cleanup 排序**。输入 = drain/终止/
+>    artifact/audit/Outcome 各引用；输出 = per-attempt finalization
+>    receipt（原子持久化）+ cleanup 后置；ownership = FA；接线点 =
+>    generate() finally 段重排；验收 = receipt 前 cleanup 不发生 +
+>    cleanup failure 附加不覆盖首因 + F2-4 可复用该 receipt 的字段
+>    完备性测试；递延 = F2-4 恢复消费；回滚 = receipt 只写不读；
+>    依赖 = B2（artifact 持久化）。
+>
+>    **B6 真实组合测试**。真实临时 git 仓库 + 真实评分器 + Docker
+>    zombie/root writer + 审计一致性；ownership = tests/；验收 = A-prime
+>    第 10 条三前置中"真实组合测试"项闭合；依赖 = B1~B5 + F2-3 drain
+>    receipt（fa_formal 开闸的最后一项）。
+>
 > 5b. **两个 manifest 不是同一事实（终核 2026-08-17）**：F2-4 交付
 >    **恢复 manifest**（cursor + pending reservation，绑定 dataset
 >    revision/epoch/shuffle seed/sampling 配置/bundle digest/checkpoint

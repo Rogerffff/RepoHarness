@@ -185,7 +185,9 @@ legacy flag——终核改判 typed fatal（monkeypatch 闭包持旧 registry，
 端口二次抢占）；被 cancel 的 in-flight 协程不响应取消时收尾 await
 无独立超时（F2-2b watchdog 面）；闩锁/回滚行为测试 F2-2b 前补齐。
 审查机制收紧（review-standards §10）与勘误 4/F2-4 范围文档已单独
-提交。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
+提交。**A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
+（八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
+B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
 fatal 发布时刻前移到 execution task 边界（_guarded_execute 捕获 Fatal
 即写 worker 唯一 halt_reason——"task done 未 reap 仍交付 batch"窗口
 关闭，账目仍由 reap 一次完成）；真实 worker+service 交错测试常驻（不
