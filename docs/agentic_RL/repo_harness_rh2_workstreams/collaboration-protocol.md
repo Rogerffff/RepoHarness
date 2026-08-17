@@ -151,10 +151,12 @@ codex 审查的处置）收尾时 Claude 在**对话里发给用户的总结消�
 ```text
 codex finding 必须包含：当前行为、违反的不变量、证据、影响、建议分期。
 
-Claude 对每项只能三选一回应：
+Claude 对每项四选一回应（第四项 2026-08-17 增补，判据见
+review-standards §10.5 第 4 条——选 accepted 须说明为何必须现在修）：
   accepted                     —— 采纳并修复
   rejected_with_evidence       —— 拒绝，附源码/论文/实测证据
   deferred_with_owner_and_gate —— 递延，指明归属批次与闸门
+no_fix_accept_residual_risk（保留 residual risk 不修——须给触发前提与影响评估）
 
 codex 最多再复核一轮：
   涉及 T0 或正式训练闸门仍有分歧 → 交用户决定；
@@ -248,7 +250,7 @@ authoritative_plan_ref: <拍板后回写的 05 计划小节>
 **原样采纳**（引用即生效，不复制正文）：§2 决策分级与全部升级规则
 （特别提示：规则 4"新增剔除轨迹的拒绝路径 = T0"对 S2-1 的门 runner
 剔题逻辑**直接适用**——预注册门规格内的判据是已批 T1，执行中冒出的
-任何新剔除路径必须停下走 T0）；§5 分歧收敛三选一与修复循环熔断；
+任何新剔除路径必须停下走 T0）；§5 分歧收敛四选一（含 no_fix_accept_residual_risk）与修复循环熔断；阻塞按 review-standards §10.5 比例原则裁决，每轮审查附 stop condition；
 `review-standards.md` 的维度定义 A~N、finding 八要素、生产可达性标签
 （§10：运行时 finding 必标 production_observed/reachable/
 conditional_future/test_only；修复方案五问；熔断后五档方案空间；

@@ -44,8 +44,8 @@ RepoHarness =
   强制独立上下文 + 证据产物清单）/ 训前总审计出 Owner Gate Packet），唯一权威 =
   `docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md`。
   finding 八要素（行为/不变量/证据/影响/分期/位置/复现/修复验收条件）；
-  N/A 与"未发现问题"必须给证据；Claude 只能三选一回应（accepted /
-  rejected_with_evidence / deferred_with_owner_and_gate），复核最多一轮，
+  N/A 与"未发现问题"必须给证据；Claude 四选一回应（accepted /
+  rejected_with_evidence / deferred_with_owner_and_gate / no_fix_accept_residual_risk），复核最多一轮，
   T0 分歧交用户。测试 oracle 改动不是 T2。
 - **修复循环熔断**：同一状态边界连续两轮新 P0 / 修复引入新 P0 / 修复
   跨多个 ownership 边界 → 停止增量修补，先出根因分析与替代设计。

@@ -15,7 +15,7 @@
 - T0 必须以决策包形式提出（要决定什么/代码事实/2~3 个方案/推荐及理由/长期代价/哪些以后还能改），不许只问"同意吗"。
 - 每轮收尾报告固定五段：① 待拍板 T0；② T1 决策及理由；③ 临时挡板新增/命中/解除；④ 推翻或修正了哪些旧结论；⑤ 测试/证据/账本状态。末尾附"本轮没有改变哪些已定案语义"。（2026-08-17 用户裁定：原⑥学习摘要取消，`learning-log.md` 冻结为历史归档，不再追加——精力专注代码与设计正确性。）
 - 节奏：阶段级确认——阶段决策包拍板一次；小批开工前发一页 Owner Brief 供了解但不等回复；批内冒出新 T0 即停下来问。
-- 对 codex finding 只能三选一回应：accepted / rejected_with_evidence / deferred_with_owner_and_gate；T0 或闸门相关分歧交用户，普通 T1 分歧记录双方证据后收束。
+- 对 codex finding 四选一回应：accepted / rejected_with_evidence / deferred_with_owner_and_gate / no_fix_accept_residual_risk（2026-08-17 增补；阻塞按 review-standards §10.5 比例原则，每轮审查附 stop condition）；T0 或闸门相关分歧交用户，普通 T1 分歧记录双方证据后收束。
 - 修复循环熔断：同一状态边界连续两轮新 P0、或修复引入新 P0、或修复跨越原切片多个 ownership 边界——停止叠补丁，先出根因分析与替代设计。
 - 协议修改权：改 T0/T1/T2 边界、角色权限、审批节奏 = T0；审查标准按 review-standards.md §9 三档（补锚点 T2 / 收紧或新增自检项 T1 / 增删维度、移晚检查、取消强制、降独立上下文要求、缩小覆盖 = T0）；纯文字澄清 = T2。
 - 审查维度/自检清单/风格政策以 `docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md` 为准：每批交接前过其 §7 机械自检（形状改动全仓搜消费点、新配置指认消费者、修复配真进分支的测试、文本替换带 assert、新拒绝路径登记剔除面、测试 oracle 改动升 T1、pytest+账本+ruff）。

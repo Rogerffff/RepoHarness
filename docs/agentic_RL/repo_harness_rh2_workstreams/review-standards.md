@@ -330,6 +330,31 @@ C：Training Semantics Reviewer——仅当改动直接影响 reward/mask/
 原样转发子报告；必须独立复现关键证据、去重、解释分歧，并输出
 "事实 / 选项 / 推荐 / 理由 / 代价 / 仍未知内容"。
 
+## 10.5 比例原则与 stop condition（2026-08-17，用户授权定稿）
+
+1. 触发前提/合理频率/最坏影响/探测能力/修复成本/主线延误/吞吐与训练
+   分布影响的完整分析，**只强制用于阻塞性 P0/P1、热路径或新增拒绝
+   路径**；普通 finding 不要求逐项填写。"合理频率"允许定性判断或
+   unknown，不得伪造数字。
+2. 阻塞优先级 = 生产可达性 × 影响 × 合理可能性，与修复成本共同裁决；
+   纯理论反例、需未计划能力才可达的反例，默认 residual risk 或
+   deferred，不得只因最小单测可复现就定 P0。
+3. 安全例外仅适用于已批准 trust boundary 且后果为高权限执行/秘密泄漏/
+   reward 污染；即便适用也优先删除能力、缩小权限或 fail-stop。
+4. finding 处置**四选一**：accepted / rejected_with_evidence /
+   deferred_with_owner_and_gate / no_fix_accept_residual_risk。选择
+   accepted 时必须说明为什么必须现在修、为什么不是删除/延后/fail-stop。
+5. fail-closed 修复必须报告拒绝哪类正常轨迹与预计影响；可观测性埋点
+   **只在决策确实依赖数据且成本较低时**添加，否则允许删除/fail-stop/
+   延后/接受 residual risk；不得把 fatal 静默变 missing。
+6. 同一 ownership boundary 完成一次聚焦复核后，新 P1/P2 默认进阶段
+   backlog；例外（仍可阻塞）：当前生产可达、即将被当前 gate 启用、
+   修复新引入的回归、公共契约或安全边界。新 P0 须先经 Production
+   Tracer + Falsifier 证明当前生产可达且非上一修复制造的复杂度。
+7. subagent 沿用 §10.4（强制场景最多一对；schema/纯函数/文案/T2 不用）。
+8. 每轮审查必须给出 stop condition：哪些已足以进入下一切片、哪些只
+   登记——"还能想出反例"不构成继续阻塞理由。
+
 ### 变更记录
 
 | 版本 | 日期 | 变更 | 触发 |
@@ -340,3 +365,4 @@ C：Training Semantics Reviewer——仅当改动直接影响 reward/mask/
 | **v1** | 2026-07-24 | 定案前修正五条（六级更名/修改权方向性原则/ruff 承诺如实/适用性扫描/退役条件收紧）+ Gate Packet 补 digest 字段 | codex 定案前审查；**用户确认生效** |
 - 2026-08-16：§10 生产可达性标签、修复五问、熔断方案空间、强制 subagent 分工（触发事故：F2-2 复核循环——不可达 P0 与方案复杂度失控；T1 强报告落地）。
 - 2026-08-17：§10.4 增补 subagent 成本纪律（每边界/批次一对，限定范围与停止条件；触发事故：F2-2 八轮单批约 15 万 token）。
+- 2026-08-17：§10.5 比例原则（用户授权按 codex 修订版定稿）；finding 处置三选一改四选一（同步 protocol/AGENTS/CLAUDE.md）。
