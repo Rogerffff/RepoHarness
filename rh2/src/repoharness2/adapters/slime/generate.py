@@ -2132,11 +2132,18 @@ class RolloutOrchestrator:
                         classify_frozen_patch,
                     )
 
-                    hygiene, projection = classify_frozen_patch(
-                        frozen_patch,
-                        excluded_namespaces=baseline_manifest.policy.excluded_namespaces,
-                        frozen_patch_digest=audit.frozen_patch_digest,
+                    from repoharness2.contracts.scoring_projection import (
+                        ProjectionContractError,
                     )
+
+                    try:
+                        hygiene, projection = classify_frozen_patch(
+                            frozen_patch, baseline_manifest
+                        )
+                    except ProjectionContractError as exc:
+                        # A-prime 失败表"exact baseline 不一致"行：reward=None
+                        # quarantine 域（FA-2B 熔断计数；missing 收口）
+                        raise SlimeBindingError(exc.reason_code, str(exc)) from exc
                     audit.runtime_private_pathset_changed = (
                         hygiene.runtime_private_pathset_changed
                     )

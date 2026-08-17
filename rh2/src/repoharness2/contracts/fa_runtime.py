@@ -157,8 +157,9 @@ class RolloutAttemptOutcome(StrictModel):
     设计约束（codex 轮次 3 #5/#6，2026-07-12）：
 
     - completion_class 用 `present` 而不是 "present_trainable"——本对象只记录
-      在场事实并**引用** eligibility_report_id；在线训练资格的唯一权威仍是
-      EligibilityReport，这里绝不复制其结论。
+      在场事实并**引用** eligibility_report_id（v2 起有封闭豁免集合：评分
+      基建故障 / unsafe 永久拒绝时资格链未运行，引用可为 None）；在线训练
+      资格的唯一权威仍是 EligibilityReport，这里绝不复制其结论。
     - 版本事实**不是单值**：一次执行可跨多个 weight_version（fully async 下
       每轮模型调用各有版本）。`turn_weight_versions` 按轮次序保存原始序列，
       `intra_execution_version_span` 是派生视图（互检，不可手填任意值）。
@@ -547,13 +548,24 @@ class RolloutAttemptOutcomeV2(StrictModel):
                 raise ValueError("present_* 必须携带至少 1 条逐轮 weight_version。")
             if self.current_version_at_finalize is None:
                 raise ValueError("present_* 必须携带 current_version_at_finalize。")
-            if self.eligibility_report_id is None and not self.reward_unavailable:
-                raise ValueError(
-                    "present_* 必须引用 eligibility_report_id（例外：reward_"
-                    "unavailable=True 时资格链未运行——A-prime 失败表 unsafe/"
-                    "评分不可得两行的 present 事实不伪造资格引用；pre-formal "
-                    "原地修订 2026-08-17）。"
+            if self.eligibility_report_id is None:
+                # 豁免封闭集合（阻塞 3 收窄，pre-formal 修订 2026-08-17）：
+                # 只有 A-prime 已批准的两行允许无资格引用——评分基建故障、
+                # unsafe artifact 永久拒绝（patch_hygiene 出具）。其余
+                # present 记录必须可回链资格权威；D1b/B4 批新形状再显式扩。
+                exempt = (
+                    self.failure_category == "grading_infra_failure"
+                    or (
+                        self.reason_code == "unsafe_artifact_permanent_rejection"
+                        and self.failed_component == "patch_hygiene"
+                    )
                 )
+                if not exempt:
+                    raise ValueError(
+                        "present_* 缺 eligibility_report_id 仅限已批准豁免集合"
+                        "（grading_infra_failure 或 patch_hygiene 的 unsafe 永久"
+                        "拒绝）——不许以任意 reason_code 绕过资格回链。"
+                    )
         # --- 版本派生互检 + 消费时刻冻结（同 v1）---
         expected_span = derive_weight_version_max_lag(self.turn_weight_versions or [])
         if self.turn_weight_versions and self.intra_execution_version_span != expected_span:

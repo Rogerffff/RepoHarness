@@ -68,9 +68,9 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     "content_fetch_failed": ("completed", "capture_incomplete"),
     "content_fetch_incomplete": ("completed", "capture_incomplete"),
     "content_digest_race": ("completed", "capture_incomplete"),
-    # 模型产出不支持对象：v1 先按 missing 收口，B3 hygiene 落地后改判
-    # present_* + permanent_rejection（unsafe artifact 行，已登记）
-    "unsupported_object_in_patch": ("completed", "capture_incomplete"),
+    # unsupported_object_in_patch：B3 起在 generate 特殊分支收口为
+    # present + 永久拒绝（unsafe 行），不再经本表——不留可退回 missing
+    # 的旧行（B3 closure oracle 1）
 }
 
 # 未知错误码按失败阶段兜底（保守：宁可归 infra/missing，不猜 present）。
@@ -143,10 +143,17 @@ def build_outcome_v2(
     if completion != "missing" and (
         not turn_weight_versions
         or current_version_at_finalize is None
-        or (eligibility_report_id is None and task_resolved is not None)
-        # eligibility 例外与 v2 契约同步（pre-formal 修订 2026-08-17）：
-        # reward 不可得（unsafe 拒评/评分故障）时资格链未运行，present
-        # 事实不因缺资格引用而降级 missing
+        or (
+            eligibility_report_id is None
+            and not (
+                failure_category == "grading_infra_failure"
+                or (
+                    reason_code == "unsafe_artifact_permanent_rejection"
+                    and failed_component == "patch_hygiene"
+                )
+            )
+        )
+        # eligibility 豁免 = v2 契约封闭集合（阻塞 3 同步收窄）
     ):
         completion = "missing"
         failure_category = "capture_incomplete"

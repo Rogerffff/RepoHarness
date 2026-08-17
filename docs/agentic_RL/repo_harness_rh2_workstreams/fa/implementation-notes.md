@@ -251,9 +251,24 @@ reward 不可得、abort 剔除、audit 落 reasons）；unsupported 对象改�
 present_* + reward_unavailable=True 时 eligibility_report_id 可为
 None——资格链未运行是事实，不伪造引用；producer present-facts 门
 同步。版本事实取 capture 真值（hook.records weight_version）。
-递延：分类规则扩充（计划既定）；AdmissionReport 本体（FA-2/F2-5）。
-下一片 = **B4 fresh grader 消费 projection（动 grading/manager.py
-前先 S2 协调）**。
+**B3 closure（codex 4 阻塞 + 2 oracle 全 accepted）**：① symlink 判定
+改**词法解析**（以 entry 父目录为基准归一化；只拒逃根与落排除区——
+修复前双向错误：放行 `.git/config` 链接、误拒 `../shared` 合法链接，
+三判例 + `docs/latest→../README.md` 误拒反例全钉）；② classifier 收
+真实 baseline **内部重算互检**（raw digest 重算/baseline 锚互检/四重
+lineage 互检/policy 取自 baseline——假 digest 与空 namespace 绕过关闭；
+互检失败 = ProjectionContractError → quarantine 域收口）；③ v2
+eligibility 豁免收窄**封闭集合**（grading_infra_failure 或
+patch_hygiene 的 unsafe 永久拒绝；任意 reason_code 绕过关闭；两处旧
+"present 必有 eligibility"说明修正）；④ unsafe 持久 disposition 从
+outcome 事实派生 **permanent_rejected**（不再 unknown_terminal，
+generate→JSONL 回归钉死）；oracle：unsupported 对象 e2e（present+拒+
+无 grader+剔除）+ 旧 fallback missing 行删除防退回 + JSONL 三新键
+断言。**B3 闭合**。已知环境噪声：8 个 SWE-bench 测试因 GitHub raw
+requirements 网络拉取失败（codex 独立确认与 B 系列无关，不改代码修
+绿）——排除后 1014 全绿。递延：分类规则扩充（计划既定）；
+AdmissionReport 本体（FA-2/F2-5）。下一片 = **B4 fresh grader 消费
+projection（动 grading/manager.py 前先 S2 协调）**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

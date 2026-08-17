@@ -7156,3 +7156,138 @@ workspace 错接 mutation -> 原 e2e 仍 1 passed（证明 oracle 缺口）
 B2 组件级闭合并开工 B3，**不需要再等待 codex 第三轮复核，也不需要用户做 T0 决策**。
 后续除非这几行修复引入测试失败，否则 B1/B2 不再重开。
 
+
+
+---
+
+## Codex 对 B2 终核 + B3 的聚焦审查（2026-08-17）
+
+### 总结论
+
+- **B2 可以关闭**：`2d471a42` 的 frozen-workspace consumption witness、
+  `baseline_entry_count` 持久断言和旧字段名清理均真实生效。
+- **B3 暂不关闭，也暂不进入 B4**：还剩 1 个 symlink 安全边界问题和 3 个
+  局部契约/持久化问题。它们都能在现有模块内修复，**不需要新增 owner、状态机、
+  恢复协议、规则引擎或新的 T0**。
+- 本轮按审查标准安排了 Production Tracer 与 Falsifier 两个独立检查；二者都独立
+  复现了 projection digest 错绑和 Outcome 豁免过宽，另分别发现持久
+  disposition 错位与 symlink 判定双向错误。以下已经去重并按生产可达性裁决。
+
+### 阻塞 1：symlink 判定既漏拦隔离边界，又误拒仓库内合法链接（P0，安全边界；B4 启用即生产可达）
+
+位置：`rh2/src/repoharness2/contracts/scoring_projection.py:74-78,95-98`。
+
+当前规则把任何含 `..` 的 target 都判为逃逸，却没有结合 symlink 自身路径解析：
+
+```text
+repo_config_link -> .git/config       当前错误放行（跨入排除 namespace）
+pkg/link -> ../shared/file            当前错误拒绝（解析后仍在仓库内）
+pkg/link -> ../../outside             应拒绝（解析后逃出 workspace 根）
+```
+
+这不是为了防模型的低概率恶意行为而扩规则，而是 B3 已批准的“symlink 不得跨评分
+隔离边界”本体没有正确实现；同时现状会系统性裁掉带常见父目录相对链接的正常轨迹。
+
+最小修复：以 `PatchEntry.path` 的父目录为基准，对 target 做**纯词法** POSIX
+归一化，只拒绝两类结果：逃出 workspace 根，或落入 authoritative baseline policy
+的排除 namespace（`.git/`、`.harness/` 等）。补上上面三条测试并保留 unsafe 路径
+grader 零调用断言。**本轮不要扩展到 symlink 图遍历、循环解析或真实文件系统
+follow；这些不是 B3 v1 的必要范围。**
+
+### 阻塞 2：ScoringProjection 的 raw digest 与 baseline policy 仍由调用方自行声明（P1，contract-reachable）
+
+位置：`scoring_projection.py:81-86,90-115`，现有 oracle：
+`rh2/tests/contracts/test_f2_2b_b3_hygiene.py:53-55`。
+
+确定性反例：
+
+```text
+fake_digest_accepted = true
+empty_namespace_bypass(.harness/x) = projectable
+```
+
+`classify_frozen_patch()` 接受任意 `frozen_patch_digest` 和
+`excluded_namespaces`，再未经重算直接写 projection。当前 `generate.py` 恰好传入
+正确值，所以尚未污染现有运行；但 B3 计划明确承诺 schema/digest/baseline 校验，
+而 B4 将把这个 projection 当成 raw artifact 的定位锚，不能把正确性留给调用方自律。
+
+最小修复：让 classifier 接收实际 `BaselineWorkspaceManifestV1`，内部：
+
+1. 对实际 artifact 重算 `compute_frozen_patch_digest()`，不再接收外填 digest；
+2. 重算 baseline digest，并与 `artifact.baseline_manifest_digest` 互检；
+3. 互检 task/bundle/image/materialized HEAD 等已有 lineage；
+4. 只从 `baseline.policy.excluded_namespaces` 取得排除目录。
+
+失败复用既有 contract-failure 收口，不新增第二本账或新状态机。测试必须断言
+projection digest 等于 raw artifact 的真实重算值，并证明错误 baseline/identity 被拒。
+
+### 阻塞 3：`eligibility_report_id=None` 的 public contract 豁免超过 A-prime 批准范围（P1，contract-reachable）
+
+位置：`rh2/src/repoharness2/contracts/fa_runtime.py:545-555`、
+`rh2/src/repoharness2/adapters/slime/outcome_producer.py:143-150`。
+
+现状允许任意 `present_* + reward_unavailable=True` 在没有 eligibility、没有已批准
+失败原因时通过。我已构造 `reason_code=arbitrary_ungraded_path` 的记录，schema 接受。
+这会把“明确永久拒绝”和“莫名没有评分/资格”的公共 Outcome 形状混为一类。
+
+最小修复：无 eligibility 引用的 present 记录只允许当前已批准的封闭集合：
+
+```text
+failure_category == grading_infra_failure
+或
+reason_code == unsafe_artifact_permanent_rejection
+且 failed_component == patch_hygiene
+```
+
+未来 D1b/B4 若批准新形状，再显式扩集合。不要伪造 synthetic EligibilityReport。
+同时修正 `fa_runtime.py:393-394,459-460` 仍声称“present 必须有 eligibility”的旧说明。
+
+### 阻塞 4：unsafe 永久拒绝在持久审计中被写成 `unknown_terminal`（P1，production-reachable）
+
+位置：`rh2/src/repoharness2/adapters/slime/bringup.py:322-335`；unsafe 分支在
+`generate.py:2143-2175`。
+
+当前 unsafe 路径正确产出 `present_complete + unsafe_artifact_permanent_rejection`、
+不调用 grader 并剔除样本，但没有 `finalized`、`audit_only` 或 failure record，serializer
+最终写入：
+
+```text
+outcome.reason_code = unsafe_artifact_permanent_rejection
+execution_audit.disposition = unknown_terminal
+```
+
+这会污染 unknown-terminal/fault-domain 统计，也让同一持久记录内部自相矛盾。
+
+最小修复：从已有 `outcome_v2.reason_code` 派生 `permanent_rejected` disposition，
+不要新增第二份可独立修改的准入事实；补真实 `generate -> JSONL` 回归测试。
+
+### 小型 oracle 补齐（不单独扩阶段）
+
+1. 为 `unsupported_object_in_patch` 加一条端到端测试，钉住
+   `present + permanent rejection + no grader + remove_sample`；当前代码已有特殊分支，
+   但旧 fallback 表仍写 missing 且没有测试，容易后续退回旧语义。
+2. 在现有 audit JSONL 测试中直接断言 B3 三个新键，不新建测试体系。
+3. unsupported object 的具体 path/type 证据属于 P2；可登记 backlog，本轮不要求为此
+   扩 schema 或阻塞 B4。
+
+### 明确不作为本轮问题
+
+- grader 当前仍消费 frozen workspace 而非 projection：这是 **B4 的既定工作**，不是
+  B3 回归；但在 B4 完成前不得声称 A-prime 评分链端到端闭合。
+- 不要求在 B3 增加 CAS、长期 retention、完整 symlink 图解析、自动恢复、更多
+  anti-cheat 规则或推测模型恶意行为频率。
+- `runtime_private_pathset_changed` 只记事实而不判 tamper 的方向正确，保持不变。
+
+### 验证证据与一次性收口条件
+
+- 本地最小反例已复现：fake digest 被接受、空 namespace 绕过 `.harness/x`、
+  `docs/latest -> ../README.md` 被误拒。
+- B2/B3/Outcome/registry 聚焦测试：`92 passed`；两名独立检查的扩展聚焦集分别
+  `108 passed` / `63 passed`。
+- `ruff` 全绿；`inspect-rh2-s1` 通过。
+- 全量：`1020 passed, 8 failed`；8 项均为 SWE-bench 测试运行时访问 GitHub raw
+  requirements 失败，与 B2/B3 commits 无关，不应改代码来“修绿”该环境故障。
+
+**Stop condition**：只修上面 4 个阻塞项并补 2 个小 oracle，做一次聚焦复核即关闭
+B3；不要再发起一轮开放式 B3 扩展审查。随后再按 ownership 表协调并进入 B4。
+

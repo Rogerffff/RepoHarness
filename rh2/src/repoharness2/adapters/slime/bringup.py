@@ -326,6 +326,13 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         disposition = "finalized"
         report = getattr(finalized, "eligibility_report", None)
         eligibility_ref = getattr(report, "report_id", None)
+    elif (
+        audit.outcome_v2 is not None
+        and audit.outcome_v2.get("reason_code") == "unsafe_artifact_permanent_rejection"
+    ):
+        # 阻塞 4：unsafe 永久拒绝从既有 outcome 事实派生 disposition
+        # （不建第二份可独立修改的准入账），不再落 unknown_terminal
+        disposition = "permanent_rejected"
     elif getattr(audit, "audit_only", False):
         # F2-2 复核三轮 P1-2：屏障前 audit-only 收口显式记名——不是
         # unknown_terminal（那是"无失败记录且未 finalize"的兜底），

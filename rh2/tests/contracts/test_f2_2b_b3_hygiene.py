@@ -20,6 +20,24 @@ from repoharness2.contracts.scoring_projection import (
 
 _NS = (".git/", ".harness/")
 
+from repoharness2.contracts.baseline_manifest import (  # noqa: E402
+    BASELINE_MANIFEST_POLICY_V1,
+    BaselineWorkspaceManifestV1,
+    compute_baseline_manifest_digest,
+    compute_policy_digest,
+)
+
+_BASELINE = BaselineWorkspaceManifestV1(
+    task_id="t1", workdir="/testbed",
+    public_bundle_digest="sha256:" + "e" * 64,
+    runtime_image_digest="sha256:" + "1" * 64,
+    materialized_head="a" * 40, task_base_commit="b" * 40,
+    policy=BASELINE_MANIFEST_POLICY_V1,
+    policy_digest=compute_policy_digest(BASELINE_MANIFEST_POLICY_V1),
+    entries=(),
+)
+_BASELINE_DIGEST = compute_baseline_manifest_digest(_BASELINE)
+
 
 def _b64(data: bytes):
     return (base64.b64encode(data).decode(),
@@ -38,21 +56,22 @@ def _link_entry(path, target: bytes):
                       mode="120000", content_b64=b64, content_digest=dg)
 
 
-def _art(entries, pathset_changed=False):
-    return FrozenPatchArtifactV1(
+def _art(entries, pathset_changed=False, **over):
+    base = dict(
         task_id="t1", rollout_execution_id="exec_1",
         physical_attempt_id="exec_1#p1-aaaa",
-        baseline_manifest_digest="sha256:" + "b" * 64,
+        baseline_manifest_digest=_BASELINE_DIGEST,  # 真锚（classifier 互检）
         public_bundle_digest="sha256:" + "e" * 64,
         runtime_image_digest="sha256:" + "1" * 64,
         materialized_head="a" * 40,
         entries=tuple(entries), excluded_pathset_changed=pathset_changed,
     )
+    base.update(over)
+    return FrozenPatchArtifactV1(**base)
 
 
 def _classify(art):
-    return classify_frozen_patch(
-        art, excluded_namespaces=_NS, frozen_patch_digest="sha256:" + "f" * 64)
+    return classify_frozen_patch(art, _BASELINE)
 
 
 def test_projectable_projection_is_reference_only():
@@ -63,14 +82,43 @@ def test_projectable_projection_is_reference_only():
     assert "content" not in str(sorted(ScoringProjectionArtifactV1.model_fields))
 
 
-def test_symlink_escape_unsafe_no_projection():
-    for target in [b"/etc/passwd", b"../outside", b"a/../../x"]:
-        report, proj = _classify(_art([_link_entry("l", target)]))
-        assert report.verdict == "unsafe_artifact" and proj is None
-        assert any("unsafe_symlink_escape" in r for r in report.reason_codes)
-    # 相对不逃逸合法
-    report, proj = _classify(_art([_link_entry("l", b"sub/dir/file")]))
+def test_symlink_lexical_resolution_three_codex_cases():
+    """阻塞 1 三判例：跨入排除区拒；仓库内父目录相对链接放行；逃根拒。"""
+
+    # repo_config_link -> .git/config：解析落排除区 → 拒（修复前误放行）
+    report, proj = _classify(_art([_link_entry("repo_config_link", b".git/config")]))
+    assert report.verdict == "unsafe_artifact" and proj is None
+    assert any("into_excluded_namespace" in r for r in report.reason_codes)
+    # pkg/link -> ../shared/file：解析 = shared/file 仍在根内 → 放行（修复前误拒）
+    report, proj = _classify(_art([_link_entry("pkg/link", b"../shared/file")]))
     assert report.verdict == "projectable"
+    # pkg/link -> ../../outside：逃出根 → 拒
+    report, proj = _classify(_art([_link_entry("pkg/link", b"../../outside")]))
+    assert report.verdict == "unsafe_artifact"
+    assert any("unsafe_symlink_escape" in r for r in report.reason_codes)
+    # 绝对路径仍拒；根级 ../ 拒
+    for path, target in [("l", b"/etc/passwd"), ("l", b"../x")]:
+        report, _ = _classify(_art([_link_entry(path, target)]))
+        assert report.verdict == "unsafe_artifact"
+    # docs/latest -> ../README.md（codex 误拒反例）→ 放行
+    report, _ = _classify(_art([_link_entry("docs/latest", b"../README.md")]))
+    assert report.verdict == "projectable"
+
+
+def test_classifier_recomputes_digest_and_rejects_mismatch():
+    """阻塞 2：digest/lineage 由 classifier 内部重算互检——假锚/错 lineage 拒。"""
+
+    from repoharness2.contracts.frozen_patch import compute_frozen_patch_digest
+    from repoharness2.contracts.scoring_projection import ProjectionContractError
+
+    art = _art([_reg_entry("a.py")])
+    report, proj = _classify(art)
+    assert proj.frozen_patch_digest == compute_frozen_patch_digest(art)  # 真重算
+    with pytest.raises(ProjectionContractError, match="baseline_digest_mismatch"):
+        _classify(_art([_reg_entry("a.py")],
+                       baseline_manifest_digest="sha256:" + "0" * 64))
+    with pytest.raises(ProjectionContractError, match="lineage_mismatch"):
+        _classify(_art([_reg_entry("a.py")], task_id="t-other"))
 
 
 def test_entry_in_excluded_namespace_unsafe():
@@ -92,6 +140,73 @@ def test_hygiene_report_consistency():
     with pytest.raises(ValueError, match="不得携带"):
         HygieneReport(verdict="projectable", reason_codes=("x",),
                       runtime_private_pathset_changed=False)
+
+
+async def test_e2e_unsupported_object_present_rejected_no_grader():
+    """oracle 1：模型产出不支持对象（FIFO 等）→ present + 永久拒绝、
+    不跑 grader、remove_sample（旧 fallback 表 missing 行已删，防退回）。"""
+
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[1] / "adapters"))
+    from test_f2_2_capability import _stamp_fa_identity
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+        dense_turns,
+    )
+
+    from repoharness2.adapters.slime.generate import QuiescenceConfirmed
+
+    class _FrozenWs:
+        def __init__(self, underlying):
+            self._u = underlying
+
+        async def run_bash(self, script):
+            if "find ." in script:
+                from types import SimpleNamespace
+
+                return SimpleNamespace(exit_code=0,
+                                       stdout="UNSUPPORTED\tweird_fifo\n", stderr="")
+            return await self._u.run_bash(script)
+
+    class _Barrier:
+        async def establish(self, *, workspace, audit):
+            return QuiescenceConfirmed(
+                frozen_grading_workspace=_FrozenWs(workspace),
+                snapshot_ref="sha256:abc", evidence_refs=("s",))
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_Barrier(), turns=turns)
+    _stamp_fa_identity(chain.base_sample)
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert chain.grading.calls == []
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    assert audit.outcome_v2["completion_class"] == "present_complete"
+    assert audit.outcome_v2["reason_code"] == "unsafe_artifact_permanent_rejection"
+    # oracle 2 一并：真实 generate → JSONL 的 disposition 回归（阻塞 4）
+    import json as _json
+    import tempfile
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    with tempfile.TemporaryDirectory() as td:
+        jsonl = _P(td) / "a.jsonl"
+        write_execution_audit_record(None, audit, jsonl)
+        rec = _json.loads(jsonl.read_text().strip())
+    assert rec["disposition"] == "permanent_rejected"  # 不再 unknown_terminal
+    assert rec["unsafe_artifact_reasons"] == ["unsupported_object_in_patch"]
+    assert "runtime_private_pathset_changed" in rec
+    assert "scoring_projection_entry_count" in rec
 
 
 async def test_e2e_unsafe_artifact_present_rejected_no_grader(tmp_path):

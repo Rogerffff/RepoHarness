@@ -20,11 +20,17 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
+from typing import TYPE_CHECKING
+
 from ._base import NonEmptyStr, Sha256Digest, StrictModel
 from .frozen_patch import FrozenPatchArtifactV1
 
+if TYPE_CHECKING:
+    from .baseline_manifest import BaselineWorkspaceManifestV1
+
 __all__ = [
     "HygieneReport",
+    "ProjectionContractError",
     "ScoringProjectionArtifactV1",
     "classify_frozen_patch",
 ]
@@ -71,21 +77,66 @@ class ScoringProjectionArtifactV1(StrictModel):
         return self
 
 
-def _symlink_target_escapes(target: bytes) -> bool:
+def _resolve_symlink_lexically(entry_path: str, target: bytes) -> str | None:
+    """以 entry 父目录为基准做**纯词法** POSIX 归一化（阻塞 1：不做图
+    遍历/循环解析/真实 follow）。返回归一化相对路径；逃出 workspace 根
+    或绝对路径 → None。"""
+
     text = target.decode("utf-8", errors="replace")
-    if text.startswith("/"):
-        return True
-    return any(seg == ".." for seg in text.split("/"))
+    if text.startswith("/") or "\x00" in text:
+        return None
+    parts = entry_path.split("/")[:-1]  # 父目录
+    for seg in text.split("/"):
+        if seg in ("", "."):
+            continue
+        if seg == "..":
+            if not parts:
+                return None  # 逃出 workspace 根
+            parts.pop()
+        else:
+            parts.append(seg)
+    return "/".join(parts)
+
+
+class ProjectionContractError(RuntimeError):
+    """阻塞 2：artifact/baseline 契约互检失败（A-prime 失败表"exact
+    baseline 不一致"行——reward=None、quarantine/run-halt 域；不是
+    unsafe artifact，也不是任务失败）。"""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        self.reason_code = reason_code
+        super().__init__(f"{reason_code}: {message}")
 
 
 def classify_frozen_patch(
     artifact: FrozenPatchArtifactV1,
-    *,
-    excluded_namespaces: tuple[str, ...],
-    frozen_patch_digest: str,
+    baseline: "BaselineWorkspaceManifestV1",
 ) -> tuple[HygieneReport, ScoringProjectionArtifactV1 | None]:
     """分类 raw artifact；projectable 时出具引用式 projection，unsafe 时
-    projection = None（不运行 grader——A-prime 失败表 unsafe 行）。"""
+    projection = None（不运行 grader——A-prime 失败表 unsafe 行）。
+
+    阻塞 2：digest 与 policy 不再由调用方声明——classifier 内部对实际
+    对象重算 raw digest、重算 baseline digest 与 artifact 锚互检、互检
+    lineage、从 baseline.policy 取排除 namespace；互检失败抛
+    ProjectionContractError（quarantine 域收口，调用方不得吞）。"""
+
+    from .baseline_manifest import compute_baseline_manifest_digest
+    from .frozen_patch import compute_frozen_patch_digest
+
+    frozen_patch_digest = compute_frozen_patch_digest(artifact)
+    baseline_digest = compute_baseline_manifest_digest(baseline)
+    if artifact.baseline_manifest_digest != baseline_digest:
+        raise ProjectionContractError(
+            "baseline_digest_mismatch",
+            f"artifact 锚 {artifact.baseline_manifest_digest} != baseline 重算 {baseline_digest}",
+        )
+    for field_name in ("task_id", "public_bundle_digest",
+                       "runtime_image_digest", "materialized_head"):
+        if getattr(artifact, field_name) != getattr(baseline, field_name):
+            raise ProjectionContractError(
+                "lineage_mismatch", f"{field_name} 在 artifact 与 baseline 间不一致"
+            )
+    excluded_namespaces = baseline.policy.excluded_namespaces
 
     reasons: list[str] = []
     for e in artifact.entries:
@@ -94,8 +145,15 @@ def classify_frozen_patch(
                 reasons.append(f"entry_in_excluded_namespace:{e.path}")
         if e.object_type == "symlink" and e.operation != "delete":
             target = base64.b64decode(e.content_b64 or "", validate=True)
-            if _symlink_target_escapes(target):
+            resolved = _resolve_symlink_lexically(e.path, target)
+            if resolved is None:
                 reasons.append(f"unsafe_symlink_escape:{e.path}")
+            else:
+                for ns in excluded_namespaces:
+                    if resolved == ns.rstrip("/") or resolved.startswith(ns):
+                        reasons.append(
+                            f"unsafe_symlink_into_excluded_namespace:{e.path}"
+                        )
     if reasons:
         report = HygieneReport(
             verdict="unsafe_artifact",
