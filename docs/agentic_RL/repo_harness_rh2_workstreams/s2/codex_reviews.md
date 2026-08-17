@@ -6370,3 +6370,360 @@ formal 路径强制所有模型控制进程使用非 root 用户；SimpleLoopDri
 F2-3 增加 adapter-owner 生成的 typed drain receipt；在它落地前不得声称完整 quiescence。
 增加真实临时 Git 仓库、真实评分器、真实 Docker zombie/root writer 和审计一致性测试。
 完成这些后才能关闭 F2-2b；F2-3 可以作为 drain receipt 的实现阶段参与收口，但不能在当前错误的“F2-2b 已完成”基础上直接推进。
+
+
+---
+
+## Codex 对冻结、导出与评分完整边界的设计建议（2026-08-17）
+
+> 本节是给 Claude 的设计反馈，不是已经批准的 T0，也不是实现完成声明。
+> 在 owner 明确拍板前，`fa_formal` 必须继续 fail-stop，F2-2b 仍是
+> `review_failed_pending_redesign`。
+
+### 1. 总结论
+
+我同意主方向采用：
+
+```text
+FrozenPatchArtifact v1
+-> hygiene / security classification
+-> ScoringProjectionArtifact
+-> fresh clean grading container
+-> private tests / official parser
+```
+
+但不建议直接批准上文当前版本的方案 A。它仍把“以 `base_commit` 为锚”以及
+“在 rollout workspace 内使用临时 `GIT_INDEX_FILE`”写得过强，尚未完整定义
+真实初始环境、Git 信任边界、artifact 持久交接和失败语义。
+
+推荐把 T0 改成下文的 **A-prime：结构化 FrozenPatchArtifact + 精确基线 +
+artifact-first cleanup**。T0 冻结不变量与 ownership；具体用 host-side archive、
+trusted helper 还是临时完整复制来提取文件，属于 T1 实现选择。
+
+### 2. 为什么选择 FrozenPatchArtifact，而不是继续修指纹
+
+评分消费者真正需要的不是一个仍可运行命令的 rollout workspace，而是模型相对
+可信初始环境产生的最终文件变化。把可变 workspace 继续传给 grader，会同时引入：
+
+1. grader 与后台进程争用同一个文件树；
+2. grader 自己的 Git 操作改变被复核对象；
+3. rollout repo 内的 `.git/config`、`.gitattributes`、hooks、filter 或 diff driver
+   影响 root 权限导出命令；
+4. cleanup、评分和 capture finalize 的时序互相纠缠。
+
+FrozenPatchArtifact 把这条共享可变边界删除：rollout workspace 只负责执行，导出层
+只负责冻结文件事实，grader 只消费不可变 artifact。物理只读 workspace snapshot
+虽然更强，但首版没有需要读取整个 workspace 的正式评分消费者，默认采用会增加
+复制、存储与回收成本。它可以保留为 T1 的安全实现手段或诊断后备，而不应成为
+另一套长期公共契约。
+
+### 3. 推荐的完整数据流与 ownership
+
+```mermaid
+flowchart TD
+  A["EnvironmentPackage<br/>可信镜像与精确初始树"] --> B["RolloutWorkspace<br/>模型可变、运行期私有"]
+  B --> C["Typed Drain Receipt<br/>模型请求与 capture 已排空"]
+  C --> D["Execution Scope Termination<br/>终止并确认模型控制写者"]
+  D --> E["Trusted Exporter<br/>不信任 workspace Git 元数据"]
+  A --> E
+  E --> F["FrozenPatchArtifact v1<br/>结构化不可变 delta"]
+  F --> G["Artifact Validation<br/>schema、digest、baseline、路径与类型"]
+  G --> H["Hygiene / Security Classification"]
+  H --> I["ScoringProjectionArtifact<br/>仅允许评分的变化"]
+  I --> J["Fresh Clean Grading Container<br/>同一环境版本、断网、私有测试"]
+  J --> K["GradingReport / RewardFacts"]
+  F --> L["Durable Attempt Manifest"]
+  C --> L
+  K --> L
+  L --> M["Trainer handoff 或拒绝 / 隔离"]
+  L --> N["确认持久交接后清理 rollout workspace"]
+```
+
+各对象只拥有一类事实：
+
+| 对象 | owner | 负责的事实 | 不负责的内容 |
+|---|---|---|---|
+| `EnvironmentPackage` / baseline manifest | 环境生产与 materializer | 初始文件树、镜像、任务与评分材料版本 | 模型执行后的变化 |
+| `RolloutWorkspace` | Runtime | 可变执行现场 | 训练准入、最终 reward |
+| typed drain / termination receipt | adapter owner + Runtime | 请求排空、capture 完成、执行作用域已停止 | patch 内容 |
+| `FrozenPatchArtifact` | trusted exporter | 相对精确初始树的不可变文件 delta | hygiene 判决、reward |
+| `ScoringProjectionArtifact` | hygiene / security layer | grader 被允许看到和应用的 delta | 原始私有审计材料 |
+| fresh grader | `SWEGradingManager` | 应用 projection、私有测试、评分事实 | 回读 rollout workspace |
+| attempt manifest | FA 持久状态 owner | 上述对象的引用、身份与 handoff 状态 | 复制各对象内部事实 |
+
+### 4. 基线不能只写 `base_commit`
+
+SWE 环境镜像可能在 `base_commit` 上还有环境生产期的 overlay commit、预装文件或
+可信未跟踪内容。若导出器只比较 `base_commit`，会把环境生产者的变化误认为模型
+变化，或者在 fresh grader 中重建出不同初始状态。
+
+首版至少要绑定：
+
+```text
+task_base_commit
+materialized_head
+baseline_tree_manifest_digest
+baseline_untracked_census_digest
+image_manifest_digest
+environment_package_digest
+```
+
+`task_base_commit` 是 lineage，不是完整评分基线。真正的 delta 基准是 control plane
+冻结并验证过的“精确初始 workspace tree”。该 manifest 应使用 `lstat` / no-follow
+语义记录规范化相对路径、对象类型、mode、内容 digest 或 symlink target；不得在
+export 时临时相信 rollout repo 自报的基线。
+
+### 5. FrozenPatchArtifact v1 建议契约
+
+canonical artifact 建议是结构化文件变化，而不是把一段 unified diff 当唯一事实：
+
+```text
+FrozenPatchArtifactV1
+  schema_version
+  artifact_id / artifact_digest
+  rollout_execution_id
+  physical_attempt_id
+  environment_package_digest
+  image_manifest_digest
+  baseline_tree_manifest_digest
+  entries[]
+    path
+    operation: add | modify | delete
+    object_type: regular | symlink
+    mode: 100644 | 100755 | 120000
+    content_ref / content_digest       # add、modify regular file
+    symlink_target_bytes_ref/digest    # symlink
+  excluded_runtime_paths_report_ref
+  export_receipt_ref
+```
+
+硬校验：
+
+- 路径必须是 canonical POSIX relative path，拒绝绝对路径、`..`、NUL；
+- entries 排序且唯一，拒绝大小写冲突和父子前缀冲突；
+- 全程 `lstat` / no-follow，symlink 保存 target bytes，不跟随读取目标；
+- 拒绝 FIFO、socket、device 等特殊对象；hardlink 首版按普通文件内容处理；
+- add/modify 必须带内容引用与 digest，delete 不得带内容；
+- 只允许 `100644`、`100755`、`120000`；
+- counts、总字节数、entry digest 和 artifact digest 由读取方重算；
+- artifact 自身 digest 应由外层 `ArtifactRef` 承载，或在计算自身 digest 时明确排除
+  该字段，避免自引用定义；
+- 原始 artifact 是 runtime-private 且数据最小化，不把完整模型输出、密钥或私有测试
+  混入文件 delta。
+
+`.harness/**` 不能只是静默剔除。runtime 合法生成的私有文件应独立落 audit ref；
+模型对 runtime-owned path 的修改应形成 tamper/security fact，再由准入层决定拒绝，
+不能通过“排除路径”让行为从审计面消失。
+
+submodule 也不要写成“ingestion 时排除 dirty submodule”，因为 dirty 是 rollout 后才
+产生的状态。v1 可以选择：任务含任何 submodule 即不进入首训；或者允许可信 gitlink
+但运行时检测到 submodule path 变化就永久拒绝。不要在首版实现完整嵌套仓库 patch。
+
+### 6. 导出器的 Git 信任边界
+
+T0 应冻结下面的不变量，而不是冻结某一条 shell 命令：
+
+```text
+正式导出器不得执行或信任模型可写 workspace 中的 Git 配置、hooks、attributes、
+filter、external diff、textconv 或 index；模型可控 repo 元数据不得成为 root 代码执行面。
+```
+
+因此，“临时 `GIT_INDEX_FILE` + `--no-ext-diff --no-textconv`”不能单独作为 T0
+保证。它仍可能读取 repo-local config / attributes，并且继续把 Git 进程放在模型
+控制的 repository context 内。
+
+T1 可以比较以下实现：
+
+1. host / Runtime 侧按 baseline manifest 枚举并读取容器文件；
+2. 只负责字节导出的非 root trusted helper，完全不读取 rollout `.git`；
+3. 将工作树文件复制到 trusted temporary area 后，对 control-plane baseline 做结构化
+   比较；
+4. 经过证明的受限 Git 导出实现。
+
+首版优先选择最容易证明“不执行 repo-controlled 行为”的方案。不要为了避免一次
+临时复制而留下 root 执行模型脚本的边界，也不要现在建设通用快照服务。
+
+### 7. hygiene 必须发生在 fresh grader 之前
+
+顺序必须是：
+
+```text
+raw FrozenPatchArtifact
+-> schema / digest / exact-baseline validation
+-> hygiene 与 security classification
+-> ScoringProjectionArtifact
+-> fresh clean checkout
+-> apply projection
+-> 注入 private tests
+-> test / official parser
+```
+
+不能先把 raw artifact 应用到 grading container，再在容器内“清理”。否则恶意
+symlink、特殊文件、评分脚本覆盖或 runtime-private 内容已经跨过隔离边界。
+
+private tests 只由 grader owner 在 projection 应用完成后注入一次。继续复用现有
+`SWEGradingManager` 的 test reset / test patch 能力，不要建立第二套 private test owner。
+
+### 8. cleanup 必须等待 durable handoff
+
+“artifact 有 digest”不等于“可以删除现场”。删除 rollout workspace 前，至少需要
+durable attempt manifest 证明这些事实已持久化并相互对账：
+
+```text
+rollout_execution_id / physical_attempt_id / recovery_epoch
+typed drain receipt / termination receipt
+capture、token ids、logprobs、routing tape refs
+FrozenPatchArtifact manifest 与 blobs
+export receipt / hygiene report / scoring projection ref
+execution audit / failure facts / Outcome v2
+environment、image、private bundle、grader identity
+handoff state 与后端 ACK（若存在）
+```
+
+这应复用 F2-4 已批准的 pending / attempt manifest，不要再建一套 FrozenPatch 专用
+ledger。推荐顺序：
+
+```text
+revoke capability
+-> typed drain
+-> terminate execution scope
+-> confirm exit / quiescence
+-> trusted export
+-> validate and persist artifact
+-> persist attempt manifest
+-> cleanup workspace
+```
+
+任何一步失败都要保留原始失败归因；cleanup failure 作为额外事实记录，不能覆盖
+前面的根因。
+
+### 9. 失败语义需要在实现前写清
+
+| 场景 | execution 事实 | reward | 默认控制动作 |
+|---|---|---|---|
+| exporter 读取、持久化或 digest 失败 | `missing`（没有可信冻结输入） | `None` | component failure；有限幂等重试后 fail-stop / 缺员 |
+| exact baseline / lineage 不匹配 | 完整性矛盾，不能当任务失败 | `None` | quarantine 或 run halt，按影响域处理 |
+| artifact 路径、类型、内容契约不安全 | `present_*`，但 permanent rejection | 不运行 grader；`None` | 隔离 artifact / task；严重边界击穿可 run halt |
+| matching baseline 上 projection apply 失败 | grader / artifact contract failure | `None` | 不能记成模型 reward 0 |
+| patch 正常应用但测试失败 | `present_*` | `0` 或 rubric 低分 | 有效负样本 |
+| 模型 patch 让测试确定性超时 | `present_*` | 通常 `0` | 有效任务失败；与 grading infra timeout 分开 |
+| grader 容器、调度或 hidden verifier 服务超时 | completion 不被评分倒写 | `None` | grading infra failure |
+| hidden verifier 泄漏 / sandbox escape | `present_*` + permanent rejection | `None` | artifact 隔离 + run halt |
+
+上表中的 `present_truncated` 如何参与 group/reward/gradient 仍属于 D1b，不能在
+F2-2b 顺手预决。
+
+### 10. retention 与性能边界
+
+- digest-only 证据不能支持复核或 regrade。完整 FrozenPatchArtifact 至少保留到 run
+  关闭、训练准入和 checkpoint 对账完成，并覆盖预注册的 regrade 窗口；
+- security / infra / quarantine 样本可以保留更久，但必须遵守私有 artifact 策略；
+- 首版用 per-execution immutable artifact directory 即可；全局 CAS、跨 run 引用计数
+  GC、自动压缩和分层存储暂缓；
+- grader queue 同时按 item count 与 artifact bytes 做反压。`concurrency=4`、
+  `queue=8` 只能是 T1 初值，不能冻结成 T0；
+- FA v1 不保留“同 workspace 正式评分”第二条运行时路径。历史 S1 兼容路径冻结，
+  需要比较时用离线诊断工具，不让两套评分语义长期并存。
+
+### 11. 建议 owner 拍板的 T0 文本
+
+建议不是简单回复当前的 `A`，而是批准下面的 **A-prime**：
+
+```text
+T0 选择 A-prime：FrozenPatchArtifact v1 + fresh clean grading。
+
+1. FA formal 评分只消费不可变 FrozenPatchArtifact 经 hygiene 后得到的
+   ScoringProjectionArtifact；grader 不得回读 rollout workspace。
+2. delta 相对于 control plane 冻结的精确初始 workspace tree；base_commit 只作
+   lineage，不能单独充当评分基线。
+3. 正式 exporter 不得执行或信任模型可控 repo 的 Git 配置、hooks、attributes、
+   filters、external diff、textconv 或 index。具体提取机制属于 T1。
+4. canonical artifact 是结构化、排序、可重算 digest 的文件 delta；v1 支持
+   regular file / symlink / add / modify / delete 和有限 mode，其他对象 fail-closed。
+5. raw artifact 必须先做 schema、digest、baseline、hygiene 与 security 检查，之后才
+   可产生 grading projection；private tests 只由 fresh grader owner 注入。
+6. workspace cleanup 必须晚于 typed drain、scope termination、artifact 持久化和
+   durable attempt manifest handoff；artifact digest 单独存在不足以授权删除。
+7. export / baseline / replay 基础设施失败不得伪装成 reward=0；真实测试失败才是
+   task negative；安全污染保持 present 事实但永久拒绝训练。
+8. FA v1 不提供同 workspace formal grading，不建设全局 CAS，也不承诺自动恢复
+   exporter / grader。
+9. F2-3 typed drain receipt、formal non-root execution、真实 Git / grader / Docker
+   组合测试未通过前，fa_formal 闸门保持关闭。
+```
+
+如果 owner 批准 A-prime，Claude 再写实现切片；本轮不要以“当前 A 已大致正确”为由
+先写 exporter。
+
+### 12. 关于过度防御与无限审查
+
+#### 12.1 当前规则已经有什么
+
+`review-standards.md` 已经要求 production reachability 标签、最小充分方案比较、
+修复对训练分布的影响，以及高风险问题的 Production Tracer / Falsifier 双审；
+`collaboration-protocol.md` 也允许 Claude 用 `rejected_with_evidence` 或
+`deferred_with_owner_and_gate` 回应，而不是只能接受。这些方向正确。
+
+当前缺口是：没有把“发生概率 / 预期损失 / 修复成本 / 主线延误”写成明确比例原则，
+也没有明确告诉实现者“保留 residual risk、不修”本身可以是正确答案。因此看起来
+成立的反例容易被自动升级成补丁任务。
+
+#### 12.2 本次风险如何分级
+
+| 风险 | 生产可达性与影响 | 首版处置 |
+|---|---|---|
+| 初始镜像含 overlay，但只按 base commit 比较 | 当前环境真实可达；会系统性污染评分 | 现在修，定义精确 baseline |
+| hygiene 在 apply raw artifact 之后 | 即将实现路径必达；安全边界顺序错误 | 现在修，重排边界 |
+| 模型修改 Git config / attributes 触发 exporter 脚本 | 当前模型未必主动做，但 formal harness 有任意 Bash，RL 还会搜索奖励漏洞；一旦发生可 root 执行或污染 reward | 用“一条所有权不变量”消掉，不做签名黑名单和多层补丁 |
+| FIFO/socket/device、case conflict 等稀有文件 | 低概率，但统一 `lstat` 类型门成本很低 | typed reject；不实现支持与恢复 |
+| 同 workspace audit-only 评分 | 没有正式消费者 | 删除运行时能力，必要时离线诊断 |
+| 全局 CAS、跨节点 grader 恢复、所有 Git edge case | 当前主线无需求，开发成本高 | 明确延后，不阻塞 F2-3 |
+
+这里需要特别澄清：防止 repo-controlled Git 行为不是因为断言“模型一定会恶意改
+Git”，而是因为 formal 信任边界已经允许任意 Bash，训练目标会主动搜索奖励漏洞，
+而 exporter 可能以高权限运行。该风险的影响大，且最小修复是删除信任关系，比叠加
+检查更简单。相反，不应为每一种恶意 Git 配置分别新增检测器和恢复状态机。
+
+#### 12.3 建议补入审查规范的最小规则
+
+以下内容先作为提案，不在 owner 批准前直接修改两份权威文档：
+
+1. 每个 finding 除现有生产可达性标签外，必须给出：触发前提、合理发生频率、最坏
+   影响、现有探测能力、修复成本、主线延误、对吞吐和训练分布的影响。
+2. 当前阻塞优先级按“生产可达性 × 影响 × 合理可能性”与修复成本共同裁决。纯理论
+   反例、需要未计划能力才可达的反例，默认记 residual risk 或 deferred，不得只因
+   最小单测可复现就定 P0。
+3. 安全例外仅适用于已经批准的 trust boundary，且后果是高权限执行、秘密泄漏或
+   reward 污染。即便适用，也优先删除能力、缩小权限或进程 fail-stop，不建设完整
+   自动恢复系统。
+4. `no_fix / accept_residual_risk` 应成为合法处置。Claude 不能默认
+   `accepted`；选择 accepted 时必须说明“为什么必须现在修”以及为什么不是删除、
+   延后或 fail-stop。
+5. 每个 fail-closed 修复必须报告它会拒绝哪类正常轨迹、预计拒绝率、是否增加延迟
+   或降低 GPU 利用率。无法量化时先加可观测性，不得把 fatal 静默变成 missing。
+6. 同一 ownership boundary 完成一次聚焦复核后，新出现的 P1/P2 默认进入阶段 backlog，
+   不继续阻塞；新 P0 必须先通过 Production Tracer + Falsifier 证明当前生产可达、
+   且不是上一修复制造的复杂度，再决定重构或阻塞。
+7. subagent 不是越多越安全。继续沿用现有规则：仅跨线程/进程、恢复/fencing、
+   安全边界、训练语义或同边界第二次严重问题时使用最多一对；普通 schema、纯函数、
+   文案和 T2 不使用。
+8. 每轮审查结束必须给出 stop condition：哪些问题已足以进入下一切片、哪些只登记，
+   防止“还能想出反例”本身成为无限检查理由。
+
+建议 Claude 先针对这些原则提出对 `review-standards.md` 与
+`collaboration-protocol.md` 的最小 diff，作为独立文档 commit 交 owner 审批；不要与
+F2-2b 代码重构混在一个提交中，也不要复制两份权威正文到 `AGENTS.md`。
+
+### 13. 给 Claude 的下一步清单
+
+1. 先把冻结对象 T0 重写为上面的 A-prime，列出与当前 A 的差异，不写代码；
+2. owner 批准后，给出 exporter / artifact / grader / cleanup 的小切片顺序和回滚点；
+3. F2-2b 与 F2-3 允许交错实现，但 typed drain receipt 未落地前不能关闭完整
+   quiescence，也不能打开 `fa_formal`；
+4. 测试以真实生产不变量为主：精确 baseline、staged/unstaged/untracked、binary、
+   symlink、mode、repo-controlled Git 不执行、fresh grader 不回读 source、durable
+   handoff 后才 cleanup。不要为未支持的特殊对象写恢复系统，验证它们被统一拒绝即可；
+5. 单独提交审查比例原则提案，由 owner 决定是否修改协作权威文档；
+6. 对后续 codex finding 必须独立选择 accepted / rejected_with_evidence /
+   deferred_with_owner_and_gate，不得因为“反例看起来成立”就无条件接受。
+
