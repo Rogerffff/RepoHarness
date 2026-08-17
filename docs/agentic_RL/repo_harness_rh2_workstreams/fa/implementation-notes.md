@@ -194,7 +194,17 @@ mode/content 或 symlink digest，lstat/no-follow；排序唯一；父子前缀
 确定性纯函数解析（UNSUPPORTED 对象 fail-closed）。接线 = 仅 FA 模式
 （s1_compat 零改动）；manifest 内存 per-attempt 供 B2 消费，audit 只落
 digest + entry 数（数万 entries 不进 JSONL——durable 持久化随 B5
-receipt）。递延：真实 SWE 镜像全量 census 性能（FA-5）。下一片 =
+receipt）。递延：真实 SWE 镜像全量 census 性能（FA-5）。**B1 closure（codex 聚焦
+审查 3 P1 全 accepted，一次 commit 闭合）**：① lineage 事实收紧——
+Sha256Digest/GitSha 类型全覆盖（`not-a-digest`/`local:tag`/`HEAD` 构造
+即拒）；public_bundle_digest 按真实名记录；runtime_image_digest = lease
+实测不可变 digest；environment_package_digest 未接通保持 None **不伪造**
+（"正式链环境包 lineage 未接通"登记为 formal gate blocker）；② 服务级
+_baseline_manifests 字典删除——baseline 为 execution-local 变量，B2 以
+显式参数消费（无 cache/TTL/清理线程）；③ 真实临时树 census→parse→
+digest 测试落地（644/755/symlink 不跟随/排除区留痕/重复执行 digest
+一致）。residual risk 显式接受（换行文件名/罕见 symlink target/跨平台
+兼容——fail-closed 不阻塞）。**B1 闭合**。下一片 =
 **B2 trusted exporter + FrozenPatchArtifactV1**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =

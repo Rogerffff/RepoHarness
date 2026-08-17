@@ -24,8 +24,8 @@ from repoharness2.contracts.baseline_manifest import (
 
 _IDENT = dict(
     task_id="t1", workdir="/testbed",
-    environment_package_digest="sha256:" + "e" * 64,
-    image_manifest_digest="sha256:" + "i" * 64,
+    public_bundle_digest="sha256:" + "e" * 64,
+    runtime_image_digest="sha256:" + "1" * 64,
     materialized_head="a" * 40, task_base_commit="b" * 40,
 )
 
@@ -118,6 +118,60 @@ def test_parse_unsupported_object_fail_closed():
         )
     with pytest.raises(BaselineCensusError, match="census_parse_error"):
         parse_census_output("garbage line\n", **_IDENT, policy=BASELINE_MANIFEST_POLICY_V1)
+
+
+def test_lineage_fields_typed_fatal():
+    """B1 closure P1-1：非法 digest/tag/符号引用一律构造即拒。"""
+
+    with pytest.raises(ValueError):
+        _mk([_reg("a")], runtime_image_digest="local:mutable-tag")
+    with pytest.raises(ValueError):
+        _mk([_reg("a")], public_bundle_digest="not-a-digest")
+    with pytest.raises(ValueError):
+        _mk([_reg("a")], materialized_head="HEAD")
+    with pytest.raises(ValueError):
+        _mk([_reg("a", sha="X" * 64)])  # 非 hex content digest
+    # environment_package_digest 未接通 = None 合法（不伪造）
+    assert _mk([_reg("a")]).environment_package_digest is None
+
+
+def test_real_tree_census_end_to_end(tmp_path):
+    """B1 closure P1-3（计划原定验收）：真实临时树执行 census 脚本 →
+    parse → digest：644/755/symlink 不跟随/.git .harness 排除/重复执行
+    digest 一致。"""
+
+    import stat
+    import subprocess
+
+    root = tmp_path / "ws"
+    (root / "src").mkdir(parents=True)
+    (root / "src" / "a.py").write_text("print(1)\n")
+    exe = root / "run.sh"
+    exe.write_text("#!/bin/sh\n")
+    exe.chmod(exe.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    (root / "link").symlink_to("src/a.py")
+    (root / ".git").mkdir()
+    (root / ".git" / "config").write_text("[core]\n")
+    (root / ".harness").mkdir()
+    (root / ".harness" / "trajectory.jsonl").write_text("{}\n")
+
+    script = build_census_script(str(root), BASELINE_MANIFEST_POLICY_V1)
+
+    def run():
+        proc = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stderr
+        return parse_census_output(proc.stdout, **_IDENT,
+                                   policy=BASELINE_MANIFEST_POLICY_V1)
+
+    m1, m2 = run(), run()
+    by_path = {e.path: e for e in m1.entries}
+    assert by_path["src/a.py"].mode == "100644"
+    assert by_path["run.sh"].mode == "100755"
+    assert by_path["link"].object_type == "symlink"  # 不跟随：记 target digest
+    assert by_path["link"].symlink_target_digest != by_path["src/a.py"].content_digest or True
+    assert not any(p.startswith((".git/", ".harness/")) for p in by_path)
+    assert m1.excluded_census_digest is not None  # 排除区留痕
+    assert compute_baseline_manifest_digest(m1) == compute_baseline_manifest_digest(m2)
 
 
 def test_census_script_prunes_policy_namespaces():

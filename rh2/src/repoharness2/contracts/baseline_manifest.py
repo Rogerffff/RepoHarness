@@ -24,7 +24,7 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
-from ._base import NonEmptyStr, StrictModel
+from ._base import GitSha, NonEmptyStr, Sha256Digest, StrictModel
 
 __all__ = [
     "BASELINE_MANIFEST_POLICY_V1",
@@ -88,10 +88,10 @@ class BaselineEntry(StrictModel):
     path: NonEmptyStr = Field(description="canonical POSIX 相对路径。")
     object_type: Literal["regular", "symlink"] = Field(description="对象类型。")
     mode: Literal["100644", "100755", "120000"] = Field(description="git 语义 mode。")
-    content_digest: NonEmptyStr | None = Field(
-        default=None, description="regular：内容 sha256（sha256: 前缀）。"
+    content_digest: Sha256Digest | None = Field(
+        default=None, description="regular：内容 sha256。"
     )
-    symlink_target_digest: NonEmptyStr | None = Field(
+    symlink_target_digest: Sha256Digest | None = Field(
         default=None, description="symlink：target 字节 sha256（不跟随读取目标）。"
     )
 
@@ -119,20 +119,29 @@ class BaselineWorkspaceManifestV1(StrictModel):
     )
     task_id: NonEmptyStr = Field(description="任务 id。")
     workdir: NonEmptyStr = Field(description="容器内 scoreable tree 根（如 /testbed）。")
-    environment_package_digest: NonEmptyStr = Field(description="环境包 lineage。")
-    image_manifest_digest: NonEmptyStr = Field(description="镜像 lineage。")
-    materialized_head: NonEmptyStr = Field(
+    # B1 closure（codex P1-1）：lineage 按**真实事实名**记录，不互相冒充。
+    # public_bundle_digest = FA task 现有事实；environment_package_digest =
+    # EnvironmentPackageV1.digest()，正式链接通前保持 None（不许用 bundle
+    # digest 填空——"环境包 lineage 未接通"是 formal gate blocker）。
+    public_bundle_digest: Sha256Digest = Field(description="公开 bundle digest。")
+    environment_package_digest: Sha256Digest | None = Field(
+        default=None, description="环境包 digest（正式链接通前 None，不伪造）。"
+    )
+    runtime_image_digest: Sha256Digest = Field(
+        description="实际运行镜像的不可变 digest（sandbox lease 实测；tag 不得伪装）。"
+    )
+    materialized_head: GitSha = Field(
         description="materialize 完成时刻的 HEAD commit（真实 delta 基准锚）。"
     )
-    task_base_commit: NonEmptyStr = Field(
+    task_base_commit: GitSha = Field(
         description="任务 base commit——**仅 lineage**，不是评分基线。"
     )
     policy: BaselineManifestPolicy = Field(description="排除 namespace 政策。")
-    policy_digest: NonEmptyStr = Field(description="政策 digest（须与重算一致）。")
+    policy_digest: Sha256Digest = Field(description="政策 digest（须与重算一致）。")
     entries: tuple[BaselineEntry, ...] = Field(
         description="scoreable tree 全部受支持路径（按 path 排序且唯一）。"
     )
-    excluded_census_digest: NonEmptyStr | None = Field(
+    excluded_census_digest: Sha256Digest | None = Field(
         default=None,
         description="排除区（.harness/ 等）独立 census 的 digest——审计回链，"
         "排除不等于消失（A-prime 第 6 条）。",

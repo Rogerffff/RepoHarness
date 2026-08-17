@@ -1647,9 +1647,8 @@ class RolloutOrchestrator:
         self._audit_sink = audit_sink
         self.audits: list[RolloutAudit] = []
         self.outcomes: list[Any] = []  # F2-2：正式链产出的 Outcome v2 序列
-        # B1：per-attempt 基线（内存供 B2 exporter 消费；durable 持久化随
-        # B5 finalization receipt——audit 只落 digest + entry 数）
-        self._baseline_manifests: dict[str, Any] = {}
+        # B1 closure（codex P1-2）：baseline 是 execution-local 变量（generate()
+        # 作用域），B2 exporter 以显式参数消费——不建服务级字典/缓存/TTL
         self.cleanup_quarantine: list[str] = []
 
     # ------------------------------------------------------------------ 入口
@@ -1765,24 +1764,22 @@ class RolloutOrchestrator:
                         "baseline_head_unreadable",
                         f"materialized HEAD 读取失败：{head.stderr.strip()[-200:]}",
                     )
-                baseline = await generate_baseline_manifest(
+                baseline_manifest = await generate_baseline_manifest(
                     sandbox.workspace,
                     task_id=task.task_id,
                     workdir=task.workdir,
-                    environment_package_digest=task.public_bundle_digest,
-                    image_manifest_digest=(
-                        task.image_manifest_digest or f"local:{task.image}"
-                    ),
+                    public_bundle_digest=task.public_bundle_digest,
+                    # 实际运行镜像的不可变 digest（lease 实测）——tag 不得
+                    # 伪装；环境包 lineage 未接通 = formal gate blocker，
+                    # 不用 bundle digest 填空（codex B1 P1-1）
+                    runtime_image_digest=sandbox.lease.image_digest,
                     materialized_head=head.stdout.strip(),
                     task_base_commit=task.base_commit,
                 )
-                self._baseline_manifests[
-                    physical_attempt_id or trajectory_id
-                ] = baseline
                 audit.baseline_manifest_digest = compute_baseline_manifest_digest(
-                    baseline
+                    baseline_manifest
                 )
-                audit.baseline_entry_count = len(baseline.entries)
+                audit.baseline_entry_count = len(baseline_manifest.entries)
                 audit.mark("baseline_manifest_generated")
 
             stage = "harness_run"

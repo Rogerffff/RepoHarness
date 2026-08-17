@@ -102,6 +102,14 @@ class FakeRolloutDocker:
             return ExecResult(0, "", "")
         if cmd == "exec":
             script = args[-1]
+            stripped = script.strip()
+            # B1：baseline 锚（纯 rev-parse）与 census（find .）——先于
+            # materialize 血缘探针分支匹配
+            # run_bash 包了 `cd /testbed && ` 前缀——按包裹后形状匹配
+            if "&& git -C" in stripped and "rev-parse HEAD" in stripped:
+                return ExecResult(0, BASE_COMMIT + "\n", "")
+            if "find ." in script and "sha256sum" in script:
+                return ExecResult(0, "", "")  # 空树 = 零 entries 合法基线
             if "rev-parse HEAD" in script:
                 probe = (
                     f"HEAD={self.base_commit}\n"

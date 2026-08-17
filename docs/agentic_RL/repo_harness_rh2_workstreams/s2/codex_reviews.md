@@ -6727,3 +6727,183 @@ F2-2b 代码重构混在一个提交中，也不要复制两份权威正文到 `
 6. 对后续 codex finding 必须独立选择 accepted / rejected_with_evidence /
    deferred_with_owner_and_gate，不得因为“反例看起来成立”就无条件接受。
 
+
+
+---
+
+## Codex 对 B1 的聚焦审查（2026-08-17）
+
+### 1. 总结论
+
+**B1 的总体路线正确，不需要推翻，也不需要新增阶段。** baseline 的生成时机
+确实位于 materialize 完成后、harness 启动前；普通文件、可执行文件、symlink
+和 `.harness/` 排除区的真实临时树探针均能正常工作。
+
+但当前还不能把 B1 标成闭合：有 **2 个当前 FA 路径可达的 P1** 和 **1 个计划中
+明确写明却尚未完成的验收缺口**。只允许做一个小型 B1 closure commit，修完后
+立即进入 B2，不再扩查 B1。
+
+本轮按 `review-standards.md` §10.4 只安排了一对窄范围 subagent：
+
+- Production Tracer：只证明真实 FA 调用链、生命周期和生产可达性；
+- Falsifier / Simplifier：专门尝试推翻严重度，并寻找不新增 owner、状态机、
+  cache 的更小方案。
+
+两者均未发现需要扩大设计的新问题，且结论与主审的独立代码检查和探针一致。
+
+### 2. 必须在 B2 消费可信 baseline 前修复
+
+#### P1-1：lineage 字段允许并实际写入错误种类的事实
+
+**可达性：`production_reachable`。**
+
+证据：
+
+- `contracts/baseline_manifest.py` 把内容 digest、policy digest、环境/镜像
+  digest、HEAD 与 base commit 都声明为 `NonEmptyStr`。本地探针证实
+  `not-a-digest`、`local:mutable-tag`、`HEAD` 都能构造合法 manifest。
+- `generate.py:1772` 把 `task.public_bundle_digest` 写入名为
+  `environment_package_digest` 的字段。`PublicTaskBundle.digest()` 与
+  `EnvironmentPackageV1.digest()` 是两种不同事实，不能互相冒充。
+- `generate.py:1773-1775` 在本地镜像分支把 `local:<image tag>` 写入名为
+  `image_manifest_digest` 的字段；tag 不是不可变 digest。
+- 现有测试甚至使用 `"sha256:" + "i" * 64` 作为镜像 digest，说明测试 oracle
+  也没有验证十六进制格式。
+
+影响：B2 会把 B1 manifest 作为 `FrozenPatchArtifactV1` 的身份锚。若在这里
+错标事实，后面即使 digest 重算、fresh grader 和 receipt 全部通过，也只能证明
+“错误字段被稳定保存”，不能证明真实环境与镜像 lineage。
+
+**最小修复要求：**
+
+1. 直接复用已有 `Sha256Digest` / `GitSha`，覆盖 entry content、symlink target、
+   policy、excluded census、环境/镜像 lineage、materialized HEAD 与 base commit；
+   不再另造格式 validator。
+2. `public_bundle_digest` 必须按真实名字记录，不能写进
+   `environment_package_digest`。
+3. image lineage 至少绑定实际运行镜像的不可变 digest（已有
+   `sandbox.lease.image_digest`）；有 registry manifest digest 时可另行如实记录，
+   但本地 tag 不得伪装成 digest。
+4. 若当前 FA task 尚未携带真正的 `EnvironmentPackageV1.digest()`，可以把
+   “正式链环境包 lineage 未接通”保留为 formal gate blocker；**不得用 public
+   bundle digest 填空后宣称 A-prime 已满足**。本轮不要求为了修这个字段强行
+   把 FA 与整个 S2 ingestion 生产线耦合。
+
+为什么现在修：这是 B2 即将消费的公共事实契约，且错误在每条 FA rollout 上
+可达；延后会迫使 B2、B3、B4 一起迁移错误 schema。修复只需收紧已有字段和
+更正现有取值，不新增运行期 owner、retry、fallback 或拒绝路径。
+
+#### P1-2：完整 manifest 存入长期字典但没有任何释放点
+
+**可达性：`production_reachable`。**
+
+证据：
+
+- `generate.py:1652` 创建服务级 `_baseline_manifests`；
+- `generate.py:1779-1781` 每条 FA execution 写入完整 manifest；
+- 全仓没有对应 `pop`、drain、delete 或消费者；
+- fully async service 跨 batch 保温，因此字典不会随一次 `generate()` 返回而释放。
+
+影响：manifest 可能含数万 entry，长训练会按 physical attempt 数持续占用内存。
+这不是低概率边角，而是当前 `fa_audit_only` 路径的确定性增长。
+
+**最小修复要求：删除该共享字典。** baseline 保持为 `generate()` 的
+execution-local 变量，后续以显式参数交给 B2 exporter；execution 结束后由正常
+局部生命周期释放。不要为它新建 manifest cache、registry、TTL、清理线程或
+生命周期状态机。
+
+为什么现在修：B1 刚刚引入这份无界状态，现在删除成本最低；让它进入 B2 后再
+补清理会制造新的 ownership 协议。不过它不需要单独的新切片，可与 lineage 修复
+放在同一个 closure commit。
+
+#### P1-3：计划要求的“假容器树真实生成器测试”没有落地
+
+**可达性：`test_only`，属于明确验收缺口，不是新发现的生产故障。**
+
+当前测试只做两件事：把手写文本交给 `parse_census_output()`，以及检查生成的
+shell 字符串里含 `sha256sum` / `readlink` / `-prune`。没有测试真正建立临时树、
+执行 `build_census_script()`，再把真实输出交给 parser。
+
+**最小修复要求：只加 1 条本机临时目录测试**，覆盖：
+
+- 普通文件得到 `100644`；
+- executable 得到 `100755`；
+- symlink 得到 `120000` 且不跟随；
+- `.git/` / `.harness/` 不进入 entries，排除 census 有记录；
+- 同一棵树重复执行结果 digest 一致。
+
+无需 Docker、无需多平台矩阵、无需穷举所有文件系统对象。该测试是计划
+`05-fully-async-execution-plan.md:139` 的原定验收，不是审查临时扩张。
+
+### 3. 明确不在本轮修复的内容
+
+以下全部采取 `no_fix_accept_residual_risk` 或既有递延，不得继续阻塞 B1/B2：
+
+- 文件名含换行/制表符：当前协议无法完整表达，但会 parse error/fail-closed，
+  当前 SWE 首训数据出现概率低；不为此改成 NUL/base64 传输协议。
+- symlink target 含换行：当前 `tr -d '\n'` 不精确；作为低概率已知 residual
+  risk 记录，除非廉价 corpus 扫描证明当前数据命中，否则首训前不重写协议。
+- 全量 census 性能：继续归 FA-5，用代表性 SWE 镜像测时长、entry 数和峰值
+  内存；现在不做增量 census、cache 或并行扫描器。
+- 任意 workdir、跨平台 shell、特殊文件系统兼容：首训基线为 Linux 容器和
+  `/testbed`，不扩展产品化兼容面。
+- B2-B6 的 exporter、hygiene、grader、receipt 和恢复语义：保持各自既定切片，
+  不提前塞进 B1 closure。
+
+### 4. 本轮验证证据
+
+- `uv run pytest -q tests/contracts/test_f2_2b_b1_baseline.py tests/adapters/test_f2_2b_barrier.py`
+  ：`16 passed`；这证明现有契约测试绿，但不能替代缺失的真实脚本回归。
+- `uv run ruff check ...`：B1 相关源文件与测试 `All checks passed`。
+- `uv run inspect-rh2-s1`：`OK`，22 份 evidence + 70 项 code digest 命中。
+- 主审独立临时树探针：regular/executable/symlink/exclusion 主路径成功。
+- 反例探针：`environment_package_digest="not-a-digest"`、
+  `image_manifest_digest="local:mutable-tag"`、`materialized_head="HEAD"` 均被
+  当前 schema 接受。
+
+### 5. 防止阶段无限膨胀的执行规则及原因
+
+本轮不是再发明一套治理规则，而是把 `review-standards.md` §10.1~§10.5
+落实到 B1，Claude 回应和后续实现必须遵守：
+
+1. **一个 closure commit，禁止新增 B1.x 子阶段。**
+   原因：三项修复共享同一 baseline producer 边界，拆阶段只增加文档和账本成本。
+2. **只修当前生产可达、即将被 B2 消费的错误事实与明确验收缺口。**
+   原因：理论上还能构造奇异文件名，不等于值得推迟首训。
+3. **每个 finding 四选一，并说明为何必须现在修。** 本文已经给出：三项
+   `accepted`；四类边角明确 `no_fix_accept_residual_risk` / FA-5 deferred。
+   Claude 不应因为 finding “看起来正确”就无条件增加代码。
+4. **禁止用防御层掩盖错误。** 本轮不得新增 fallback digest、自动猜 lineage、
+   TTL cache 或“缺字段就记 missing”的守卫；错误事实应直接在构造边界暴露，
+   formal lineage 未接通就保持 gate 关闭。
+5. **不新增第二账本或长期 owner。** baseline 是单次 execution 的输入，局部变量
+   足够；若修复方案需要 registry/actor/cache，先证明局部显式参数为什么不够。
+6. **测试按风险配比。** 本轮只补一条真实组合测试；不把低概率 filesystem
+   语法做成庞大矩阵。测试应证明生产命令真实执行，而不是只钉 shell 文案。
+7. **只允许一轮修复复核。** closure commit 后只核对上述四条验收；若通过，
+   立即关闭 B1。新 P1/P2 默认进入阶段 backlog，除非是该修复新引入的回归、
+   当前生产可达的事实污染或已批准公共契约被破坏。
+8. **subagent 只按风险启用。** 本轮使用一对 Tracer/Falsifier，是因为同时涉及
+   长生命周期状态和后续 artifact 信任锚；普通 schema 文案、小纯函数和常规
+   T2 不得默认开 subagent，更不得让多个 agent 重复读同一范围。
+
+这些限制的目的不是降低正确性，而是把正确性资源集中到会污染 artifact、耗尽
+长训练内存或使真实生成器未被执行的地方。对不会影响当前首训、能 fail-closed、
+且合理概率很低的情形，明确接受 residual risk 比继续堆守卫更可维护。
+
+### 6. 给 Claude 的直接执行结论
+
+```text
+B1 方向保留，不新增 T0，不新增阶段。
+
+请只做一个 B1 closure commit：
+1. 用既有 Sha256Digest/GitSha 收紧字段，并修正 environment/public bundle/
+   runtime image lineage 的事实命名与取值；没有真实 environment package 时不许伪造。
+2. 删除服务级 _baseline_manifests；baseline 改为 execution-local，供 B2 显式消费。
+3. 补一条真实临时树执行 census -> parse -> digest 的测试。
+4. 更新 B1 完成口径和账本。
+
+验收通过后直接进入 B2。换行文件名、罕见 symlink、census 性能和跨平台兼容
+不再检查、不阻塞；禁止为它们新增协议、cache、owner 或子阶段。
+```
+
