@@ -74,6 +74,11 @@ def _fake_audit(sid: str, paid: str | None = None) -> types.SimpleNamespace:
         started_epoch_seconds=1000.0,
         started_monotonic=500.0,
         non_chargeable_intervals=[],
+        baseline_manifest_digest="sha256:" + "b" * 64,
+        baseline_entry_count=3,
+        frozen_patch_digest="sha256:" + "f" * 64,
+        patch_entry_count=2,
+        excluded_pathset_changed=False,
         session_plane_drained=True,
         runtime_quiescence_confirmed=False,
         capture_closed=True,
@@ -148,6 +153,11 @@ def test_write_execution_audit_success_acks_and_enriches(tmp_path):
     assert record["wall_clock_domain_id"].startswith("proc-")
     assert record["non_chargeable_intervals"] == []
     # F2-2：quiescence 事实与 outcome_v2 真实落盘
+    # B2 closure P1-2：B1/B2 摘要真实落盘
+    assert record["baseline_manifest_digest"] == "sha256:" + "b" * 64
+    assert record["frozen_patch_digest"] == "sha256:" + "f" * 64
+    assert record["patch_entry_count"] == 2
+    assert record["excluded_pathset_changed"] is False
     assert record["session_plane_drained"] is True
     assert record["runtime_quiescence_confirmed"] is False  # 完整屏障未落地
     assert record["capture_closed"] is True

@@ -568,20 +568,24 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
         QuiescenceRejected,
     )
 
+    class _FrozenWs:
+        def __init__(self, underlying):
+            self._u = underlying
+
+        async def run_bash(self, script):  # 委托底层（真 FrozenWorkspace 同形）
+            return await self._u.run_bash(script)
+
     class _Barrier:
         def __init__(self, confirmed):
             self.confirmed = confirmed
             self.calls = 0
 
-        class _FrozenWs:
-            async def run_bash(self, script):  # WorkspaceRunner 鸭子面
-                raise AssertionError("测试不真执行")
-
-        frozen = _FrozenWs()  # 冻结副本句柄（评分只许消费它）
+        frozen = None  # establish 时绑定（B2 exporter 会真实消费它）
 
         async def establish(self, *, workspace, audit):
             self.calls += 1
             if self.confirmed:
+                self.frozen = _FrozenWs(workspace)
                 return QuiescenceConfirmed(
                     frozen_grading_workspace=self.frozen,
                     snapshot_ref="sha256:abc", evidence_refs=("snap_1",))
@@ -611,6 +615,13 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     audit = chain.orchestrator.audits[0]
     assert ok.calls == 1 and audit.runtime_quiescence_confirmed is True
     assert chain.grading.calls  # 屏障确认后才评分
+    # B2 closure oracle：生产顺序 quiescence < export < grading，且 B2
+    # 真的被调（删接线则本断言红）
+    steps = [e.step for e in audit.timeline]
+    assert (steps.index("runtime_quiescence_confirmed")
+            < steps.index("frozen_patch_exported")
+            < steps.index("grading_started"))
+    assert audit.frozen_patch_digest is not None
     # P0-1 验收：评分消费的是屏障产出的冻结输入，不是原 workspace
     assert chain.grading.calls[0]["workspace"] is ok.frozen
     assert audit.outcome_v2["completion_class"] == "present_complete"

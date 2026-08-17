@@ -6907,3 +6907,172 @@ B1 方向保留，不新增 T0，不新增阶段。
 不再检查、不阻塞；禁止为它们新增协议、cache、owner 或子阶段。
 ```
 
+
+
+---
+
+## codex：B1 closure + B2 切片审查（2026-08-17）
+
+### 结论
+
+本轮采用两个独立视角检查：
+
+- **Production Tracer**：只追 `materialize -> baseline -> barrier -> exporter -> audit -> grading` 的真实调用链和持久化事实；
+- **Falsifier / Security**：专门尝试推翻严重度、复现 Git 注入，并检查修复是否会引入过度防御或扩大训练剔除面。
+
+两边结论基本一致：**B1 可以维持闭合；B2 的结构化 delta 与 exporter 核心算法成立，但 B2 还需要一个小型 closure commit，暂不应原样宣布闭合。** 不需要新阶段、新状态机、新 owner、CAS、cache 或新的 T0。完成下列小修并做一次聚焦复核后，立即进入 B3。
+
+### 阻塞 B2 闭合的必要修复
+
+#### P1-1（`conditional_future`）：baseline digest 存在两个事实源
+
+`export_frozen_patch()` 同时接收完整 `baseline` 和调用方提供的
+`baseline_manifest_digest`，却不核对二者。当前测试可以传入任意合法格式的
+digest，artifact 仍会接受并声称它绑定了该 baseline。
+
+这不是理论上的额外防御：B3 将把该 digest 当作 raw artifact 的身份锚，若
+允许调用方另填一个值，B3 无法判断 delta 究竟由哪份 baseline 计算。
+
+**最小修复**：删除 `baseline_manifest_digest` 参数，由 exporter 内部调用
+`compute_baseline_manifest_digest(baseline)`；不要新增 mismatch 状态机，也不需要
+多存一份账。补一个测试证明 artifact 中的 digest 等于 exporter 实际消费对象的
+重算值。
+
+#### P1-2（`conditional_future`）：B1/B2 摘要只在内存，未写入持久 audit
+
+`RolloutAudit` 已赋值以下字段，但 `fa_execution_audit.jsonl` 的 serializer 没有
+写出它们：
+
+```text
+baseline_manifest_digest
+baseline_entry_count
+frozen_patch_digest
+patch_entry_count
+excluded_census_changed（按下项改名后使用新名字）
+```
+
+因此报告中“audit 落 digest/计数/排除区变化”的说法目前不成立。B3/B5 也无法从
+持久审计确认 execution 实际产生了哪份 B1/B2 事实。
+
+**最小修复**：只给现有 JSONL record 增加这些摘要键，并补一条读取真实 JSONL
+的测试；不要为此新增 artifact ledger。完整 artifact 仍按计划由 B5 持久化。
+
+#### P1-3（`conditional_future`）：`excluded_census_changed` 名称和报告夸大了实现能力
+
+当前排除区 digest 只哈希排序后的**路径集合**，不哈希文件内容、mode 或 symlink
+target。修改已有 `.git/config` 内容但不增删路径时，该布尔值仍为 `False`。所以
+第 33 行“`.git/config` 改动落在排除区变化标志里”是错误陈述。
+
+**首训最小方案**：
+
+- 将字段收窄为 `excluded_pathset_changed`（或同义的明确名字）；
+- 文档明确它只表示排除路径集合变化，B3 不得把它解释为内容 tamper；
+- 内容篡改继续依赖已批准的权限、命令或 ownership 证据。
+
+不要为了修这个命名去哈希整个 `.git/objects`，也不要新建排除区安全扫描系统。
+
+#### P1-4（`conditional_future`）：接线绕过 barrier 返回的冻结 workspace
+
+屏障确认后，代码已把 `result.frozen_grading_workspace` 赋给
+`grading_workspace`，但 exporter 又读取 `sandbox.workspace`。当前
+`FrozenWorkspace` 只是同一底层对象的包装，所以现时结果相同；一旦屏障改成真正
+冻结句柄或物理快照，exporter 会悄悄绕回 live rollout workspace。
+
+**最小修复**：B2 调用传 `grading_workspace`。这既符合 B2 的输入定义，也不要求
+现在实现物理副本。
+
+### 测试 oracle 必须一并修正
+
+两个断言含 `or True`，永远不会失败：
+
+```text
+test_f2_2b_b1_baseline.py：symlink target digest 断言
+test_f2_2b_b2_exporter.py：.gitattributes 不在 delta 的断言
+```
+
+删除 `or True`，让既有固定 fixture 真正验证预期。再扩充现有 formal-chain e2e
+测试，而不是创建新测试框架：断言 B2 确实被调用并满足顺序
+
+```text
+runtime_quiescence_confirmed
+  < frozen_patch_exported
+  < grading_started
+```
+
+同时确认 exporter 收到的是 barrier 返回的 workspace。这样删除 B2 接线时测试会
+失败，而不只是证明 exporter API 单独可用。
+
+### 已知 barrier NO-GO：必须保留，但不要误算成 B2 新阶段
+
+B2 exporter 自身确实没有调用 Git；但是正式组合链的前置
+`DockerQuiescenceBarrier._digest_script()` 仍运行：
+
+```text
+git status --porcelain
+git diff
+```
+
+独立探针已复现：模型可控 `.git/config` 的 `diff.external` 会在该 `git diff`
+阶段执行外部命令。现有 B2 Git 负测试只调用 exporter，没有经过 barrier，所以它
+只能证明“exporter 无 Git”，不能证明“正式组合链无 Git”。
+
+这不是 B2 新引入的回归：`implementation-notes.md` 已将该 barrier 标为 NO-GO，
+`bringup.py` 也仍拒绝所有 `fa_formal` 启动。因此本轮的正确处置是：
+
+1. 修正文档和测试名称，只声称 B2 exporter 无 Git；
+2. 在既有 F2-2b root closure / B6 formal gate 中，用 git-free census/fingerprint
+   替换 barrier 的 Git 指纹，并做真实 barrier + exporter 组合负测试；
+3. 在这项完成前绝不解除 `fa_formal` 挡板；
+4. **不要求先完成 barrier 重构才写 B3**。B2 上述小修完成后，B3 的纯契约和分类
+   实现可以继续，formal/B4/B6 仍由既有挡板保护。
+
+`implementation-notes.md` 的状态也应诚实更新为：T0 已批准，B1 完成，B2 在本次
+closure 后组件级完成；barrier 无 Git/完整 writer-scope/drain receipt 仍待闭合。
+
+### Environment lineage 的裁决
+
+A-prime 要求 patch 绑定 environment。这里**不建议**再把
+`environment_package_digest` 复制进 `FrozenPatchArtifactV1`：
+
+```text
+FrozenPatchArtifact.baseline_manifest_digest
+  -> BaselineWorkspaceManifestV1.environment_package_digest
+```
+
+只要 exporter 内部重算 baseline digest，以上传递绑定已经成立，而且避免同一环境
+事实在两个契约中独立维护。正式开闸前必须增加具名检查：
+`BaselineWorkspaceManifestV1.environment_package_digest is not None`；当前总
+`fa_formal` 挡板尚在，因此这项**不阻塞 B3 编码，只阻塞 formal 开闸**。
+
+### 已确认正确、无需继续扩查
+
+- B1 baseline 已是 execution-local，不存在服务级无界 cache；
+- regular/symlink 的 add/modify/delete、mode-only、二进制、untracked 与删除均能
+  表达，per-entry 内容 digest 会重算；
+- B2 失败会结构化收口，完整 artifact 暂为 execution-local 符合 B3 紧邻消费边界；
+- inline base64 v1 可以保留，不提前建设 CAS；
+- 本轮不继续扩查换行文件名、hardlink、xattr、sparse file、罕见 symlink target
+  或性能优化；这些不是当前首训主线阻塞。
+
+“双读 race guard”应改称**变更内容一致性检查**：它只覆盖已识别 add/modify
+entry，不是全树 writer-zero 证明。不要为改名再加第三次扫描；writer-zero 的 owner
+仍是 quiescence barrier。
+
+### 验证与停止条件
+
+独立验证：
+
+```text
+uv run pytest -q                         -> 1021 passed
+相关文件 ruff                            -> All checks passed
+uv run inspect-rh2-s1                    -> OK（22 evidence + 72 code）
+```
+
+测试全绿只证明已有 oracle 全绿；上面的持久化遗漏、任意 baseline digest 和
+`or True` 正说明当前 oracle 覆盖不足。
+
+**停止条件**：Claude 只做一个 B2 closure commit，覆盖 P1-1~P1-4、两个
+`or True` 和一条生产接线/顺序测试。codex 随后只聚焦复核这些项目一次；通过即关闭
+B2、进入 B3。除非 closure 自己引入当前信任边界的新回归，否则新发现降为 backlog，
+不再扩张 B1/B2。
+

@@ -23,7 +23,10 @@ from repoharness2.adapters.slime.baseline_census import (
     build_census_script,
     parse_census_output,
 )
-from repoharness2.contracts.baseline_manifest import BaselineWorkspaceManifestV1
+from repoharness2.contracts.baseline_manifest import (
+    BaselineWorkspaceManifestV1,
+    compute_baseline_manifest_digest,
+)
 from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1, PatchEntry
 
 __all__ = ["PatchExportError", "diff_census_against_baseline", "export_frozen_patch"]
@@ -108,8 +111,10 @@ async def export_frozen_patch(
     *,
     rollout_execution_id: str,
     physical_attempt_id: str,
-    baseline_manifest_digest: str,
 ) -> FrozenPatchArtifactV1:
+    # B2 closure P1-1：baseline digest 单一事实源——由 exporter 对实际
+    # 消费的 baseline 对象内部重算，不接受调用方另填（B3 以此为身份锚）
+    baseline_manifest_digest = compute_baseline_manifest_digest(baseline)
     # 1) post-run census（同 B1 脚本；无 git；UNSUPPORTED fail-closed）
     result = await workspace.run_bash(
         build_census_script(baseline.workdir, baseline.policy)
@@ -160,8 +165,9 @@ async def export_frozen_patch(
             path, _, b64 = line.partition("\t")
             contents[path] = b64
 
-    # 3) 组装（digest 与 census 侧互检：抓取内容重算必须等于 census digest
-    # ——两次读取之间的写者会在这里暴露，fail-closed）
+    # 3) 组装 + **变更内容一致性检查**（closure 更名：只覆盖已识别
+    # add/modify entry 的抓取内容 vs census digest，不是全树 writer-zero
+    # 证明——writer-zero 的 owner 是 quiescence barrier）
     entries: list[PatchEntry] = []
     for c in changes:
         if c["operation"] == "delete":
@@ -194,7 +200,7 @@ async def export_frozen_patch(
         runtime_image_digest=baseline.runtime_image_digest,
         materialized_head=baseline.materialized_head,
         entries=tuple(entries),
-        excluded_census_changed=(
+        excluded_pathset_changed=(
             post.excluded_census_digest != baseline.excluded_census_digest
         ),
     )

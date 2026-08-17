@@ -52,7 +52,7 @@ def _art(entries, **over):
         public_bundle_digest="sha256:" + "e" * 64,
         runtime_image_digest="sha256:" + "1" * 64,
         materialized_head="a" * 40,
-        entries=tuple(entries), excluded_census_changed=False,
+        entries=tuple(entries), excluded_pathset_changed=False,
     )
     base.update(over)
     return FrozenPatchArtifactV1(**base)
@@ -190,7 +190,6 @@ async def test_real_tree_export_end_to_end_git_not_executed(tmp_path):
     art = await export_frozen_patch(
         ws, baseline, rollout_execution_id="exec_R",
         physical_attempt_id="exec_R#p1-abcd",
-        baseline_manifest_digest="sha256:" + "b" * 64,
     )
     ops = {e.path: e for e in art.entries}
     assert ops["src/mod.py"].operation == "modify"
@@ -200,16 +199,21 @@ async def test_real_tree_export_end_to_end_git_not_executed(tmp_path):
     assert ops["src/gone.py"].operation == "delete"
     assert ops["link"].object_type == "symlink"
     assert base64.b64decode(ops["link"].content_b64) == b"chmod.sh"  # target 字节
-    assert ".gitattributes" not in ops or True  # gitattributes 是普通文件事实
+    assert ".gitattributes" not in ops  # 未改动的普通文件不进 delta
     # Git 未被执行：marker 不存在 + 全部脚本无 git 调用
     assert not marker.exists()
     assert all(" git " not in s and not s.strip().startswith("git ")
                for s in ws.scripts)
+    # P1-1：artifact 的 baseline digest = exporter 实际消费对象的重算值
+    from repoharness2.contracts.baseline_manifest import (
+        compute_baseline_manifest_digest,
+    )
+
+    assert art.baseline_manifest_digest == compute_baseline_manifest_digest(baseline)
     # 确定性：重复导出同 digest
     art2 = await export_frozen_patch(
         ws, baseline, rollout_execution_id="exec_R",
         physical_attempt_id="exec_R#p1-abcd",
-        baseline_manifest_digest="sha256:" + "b" * 64,
     )
     assert compute_frozen_patch_digest(art) == compute_frozen_patch_digest(art2)
 
@@ -235,7 +239,6 @@ async def test_export_digest_race_fail_closed():
         await export_frozen_patch(
             _RaceWs(), empty, rollout_execution_id="e",
             physical_attempt_id="e#p1-a",
-            baseline_manifest_digest="sha256:" + "b" * 64,
         )
 
 
@@ -249,5 +252,4 @@ async def test_unsupported_object_in_post_tree_typed():
         await export_frozen_patch(
             _FifoWs(), empty, rollout_execution_id="e",
             physical_attempt_id="e#p1-a",
-            baseline_manifest_digest="sha256:" + "b" * 64,
         )

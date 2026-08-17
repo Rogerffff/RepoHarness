@@ -106,9 +106,10 @@ class FrozenPatchArtifactV1(StrictModel):
     entries: tuple[PatchEntry, ...] = Field(
         description="文件 delta（按 path 排序且唯一；空 = 模型零改动）。"
     )
-    excluded_census_changed: bool = Field(
-        description="排除区（.harness/ 等）census 相对基线是否变化——事实记录，"
-        "tamper 判定归 B3（需权限/命令证据，不得仅凭变化推断）。"
+    excluded_pathset_changed: bool = Field(
+        description="排除区（.harness/ 等）**路径集合**相对基线是否变化——"
+        "只哈希排序路径名，不含内容/mode/target；B3 不得将其解释为内容 "
+        "tamper（内容篡改判定需权限/命令/ownership 证据——A-prime 第 6 条）。"
     )
 
     @model_validator(mode="after")

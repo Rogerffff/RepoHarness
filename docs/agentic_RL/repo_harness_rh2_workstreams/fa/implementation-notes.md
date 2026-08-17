@@ -218,9 +218,22 @@ census 变化只记事实（excluded_census_changed），tamper 判定留 B3。
 接线 = fa_formal 屏障确认后导出，artifact execution-local（B3 显式
 消费），audit 落 digest/计数；失败码族入 producer 映射（missing 收口；
 unsupported_object_in_patch 单列——B3 落地后改判 present_* +
-permanent_rejection，已登记）。验收 = 真实树 e2e 含 **Git 注入负测试**
-（hooks/gitattributes/diff.external 注入 marker 不触发 + 脚本文本无
-git 调用）+ 确定性重导出同 digest。递延：提取性能（FA-5）。下一片 =
+permanent_rejection，已登记）。验收 = 真实树 e2e 含 **Git 注入负测试**（只声称 **B2 exporter 无
+Git**——正式组合链的 DockerQuiescenceBarrier 指纹仍跑 git status/diff，
+该 NO-GO 既有登记有效：B6/root-closure 用 git-free census 替换屏障
+指纹并做屏障+exporter 组合负测试，此前 fa_formal 挡板不解除）+ 确定性
+重导出同 digest。**B2 closure（codex 审查 4 P1 + oracle 全 accepted）**：
+① baseline digest 单一事实源（exporter 内部重算，删调用方参数）；
+② B1/B2 摘要键入持久 audit JSONL（读盘断言）；③ excluded_census_changed
+改名 **excluded_pathset_changed**（只哈希路径集合——上轮"`.git/config`
+改动落在标志里"陈述错误，已更正：内容篡改判定仍需权限/命令证据）；
+④ exporter 消费屏障产出的冻结 workspace（不绕回 live sandbox）；
+两处 `or True` 假断言修正；e2e 补生产顺序 oracle（quiescence < export
+< grading + B2 digest 在场）。"双读 race guard"更名**变更内容一致性
+检查**（不是全树 writer-zero——那是屏障的 owner 职责）。环境 lineage
+裁决：不复制进 FrozenPatch（经 baseline digest 传递绑定已成立）；
+formal 开闸前加具名检查 environment_package_digest is not None（只阻
+开闸不阻 B3）。**B2 组件级完成**。递延：提取性能（FA-5）。下一片 =
 **B3 hygiene/security 分类 + ScoringProjectionArtifact**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =

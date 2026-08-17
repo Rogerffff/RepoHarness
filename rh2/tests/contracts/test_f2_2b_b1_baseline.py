@@ -168,7 +168,11 @@ def test_real_tree_census_end_to_end(tmp_path):
     assert by_path["src/a.py"].mode == "100644"
     assert by_path["run.sh"].mode == "100755"
     assert by_path["link"].object_type == "symlink"  # 不跟随：记 target digest
-    assert by_path["link"].symlink_target_digest != by_path["src/a.py"].content_digest or True
+    import hashlib as _h
+
+    # 不跟随：target digest = sha256(b"src/a.py")（路径字节），非文件内容
+    assert by_path["link"].symlink_target_digest == (
+        "sha256:" + _h.sha256(b"src/a.py").hexdigest())
     assert not any(p.startswith((".git/", ".harness/")) for p in by_path)
     assert m1.excluded_census_digest is not None  # 排除区留痕
     assert compute_baseline_manifest_digest(m1) == compute_baseline_manifest_digest(m2)

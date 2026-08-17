@@ -244,7 +244,7 @@ def _frozen_patch_payload() -> dict:
             "content_b64": _b64.b64encode(raw).decode(),
             "content_digest": "sha256:" + _h.sha256(raw).hexdigest(),
         }],
-        "excluded_census_changed": False,
+        "excluded_pathset_changed": False,
     }
 
 

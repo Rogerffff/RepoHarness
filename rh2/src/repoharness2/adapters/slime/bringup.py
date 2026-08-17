@@ -363,6 +363,12 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
         # assembler 消费归 F2-5）。session_id 自 F2-2 复核起 = 非秘密
         # internal sid（s- 前缀）；capability token 只认证不落任何持久面
+        # B2 closure P1-2：B1/B2 摘要入持久审计（完整 artifact 归 B5）
+        "baseline_manifest_digest": audit.baseline_manifest_digest,
+        "baseline_entry_count": audit.baseline_entry_count,
+        "frozen_patch_digest": audit.frozen_patch_digest,
+        "patch_entry_count": audit.patch_entry_count,
+        "excluded_pathset_changed": audit.excluded_pathset_changed,
         "session_plane_drained": audit.session_plane_drained,
         "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,

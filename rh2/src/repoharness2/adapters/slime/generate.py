@@ -1415,7 +1415,7 @@ class RolloutAudit:
     # B2：冻结 patch artifact 摘要（本体 execution-local，B5 持久化）
     frozen_patch_digest: str | None = None
     patch_entry_count: int = 0
-    excluded_census_changed: bool = False
+    excluded_pathset_changed: bool = False
     # F2-2 复核三轮 P1-2：audit-only 收口标记（屏障前正式探针/带身份
     # bring-up）——bringup 落盘 disposition=audit_only_rejected，
     # fault-domain 统计（FA-2B）按此排除，不污染 capture 故障率
@@ -2072,8 +2072,11 @@ class RolloutOrchestrator:
                     )
 
                     try:
+                        # B2 closure P1-4：exporter 消费屏障产出的冻结
+                        # workspace（不绕回 live sandbox.workspace——当前
+                        # 包装同底层，物理快照落地后语义即分叉）
                         frozen_patch = await export_frozen_patch(
-                            sandbox.workspace,
+                            grading_workspace,
                             baseline_manifest,
                             rollout_execution_id=(
                                 str(meta.get("rh2_rollout_execution_id"))
@@ -2081,13 +2084,12 @@ class RolloutOrchestrator:
                                 else trajectory_id
                             ),
                             physical_attempt_id=physical_attempt_id,
-                            baseline_manifest_digest=audit.baseline_manifest_digest,
                         )
                     except PatchExportError as exc:
                         raise SlimeBindingError(exc.reason_code, str(exc)) from exc
                     audit.frozen_patch_digest = compute_frozen_patch_digest(frozen_patch)
                     audit.patch_entry_count = len(frozen_patch.entries)
-                    audit.excluded_census_changed = frozen_patch.excluded_census_changed
+                    audit.excluded_pathset_changed = frozen_patch.excluded_pathset_changed
                     audit.mark("frozen_patch_exported")
                 elif isinstance(result, QuiescenceRejected):
                     self._produce_outcome_v2(
