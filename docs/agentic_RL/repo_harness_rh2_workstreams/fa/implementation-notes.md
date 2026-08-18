@@ -342,8 +342,29 @@ B6 真实镜像裁定）。**新增剔除面登记（§7）**：① 含控制字
 baseline 软链的写入被拒（环境决定、非模型行为相关；fa_formal 闭闸故当前
 不可达）。**递延登记**：baseline_census 对 symlink target 做
 `tr -d '\n'` 后哈希（`a\nb` 与 `ab` 不可分）——census-vs-census 两侧同法
-计算内部自洽、非模型可控，归 B6/FA-5 与全树 census 性能一并处理。下一片
-= **B5 finalization receipt + cleanup 排序**。
+计算内部自洽、非模型可控，归 B6/FA-5 与全树 census 性能一并处理。
+**B4 二次复核闭合（2026-08-18，codex 1P0+2P1 全采纳）**：
+**P0**——`materialized_head==spec.base_commit` 绑定会把官方 SWE 镜像全部
+误杀（镜像 HEAD 是构建 overlay commit 且内容可非空，S0-7 实证，合法形态
+HEAD^==base）；修复 = spec 绑定只留 task_base_commit==spec.base_commit，
+`_clean_checkout` 返回探针实测 HEAD，`_verify_baseline_rebuild` 入口对账
+grader 实际 HEAD == baseline.materialized_head（同镜像同 overlay；不等 =
+grading_head_mismatch run-halt）；exact baseline digest 比对原样保留；
+overlay 正例 + HEAD 漂移负例入册。**P1-1（推翻上轮"S1 镜像 strip+cap"
+T1 决策）**：gate 对篡改事实 executed 级拒训（gate.py:406/442），strip+
+cap 的 reward=0 记录根本进不了训练——只污染 reward/task_outcome/审计并
+白跑一次 grader；且 T0 失败表 unsafe 行逐字要求"不运行 grader、
+reward=None"。修复 = task 级 hygiene（同一 HygieneRules 权威）移到
+generate 在 grader 之前判定，命中走既有 unsafe 永久拒绝闭合
+（present_* + permanent_rejection + task_outcome=unknown + 不提交
+grader，audit 落 test_file_modified/forbidden_path_touched 归因）；
+manager 留 fail-closed 保险杠（漏筛 delta 到达 = unscreened_hygiene_hit
+infra，容器都不起）。**P1-2**：`_verify_frozen_delta_binding` 升级为三
+对象完整对账——artifact⟷baseline 血缘四元组、projection⟷artifact 身份、
+路径集**相等**（只查"多出"会放过"隐去测试文件拿 resolved"）、逐 entry
+前置状态（add 原先不存在/modify+delete 必须存在/delete 类型一致，防
+"删除不存在路径"被 rm -f 幂等吞掉）；此对账即 B5 持久化再装配后的信任
+边界。下一片 = **B5 finalization receipt + cleanup 排序**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

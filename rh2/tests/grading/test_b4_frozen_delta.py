@@ -281,10 +281,11 @@ def test_screen_frozen_entries_priorities():
     assert plan.applied_entry_set_digest == clean.applied_entry_set_digest
 
 
-async def test_test_tampering_entry_is_stripped_and_capped():
-    """codex B4-P1 闭合（S1 语义镜像）：tests/** entry 不应用、事实如实
-    上报、resolved 被封顶为 unresolved+reward 0（模型负样本，与 S1 一致；
-    不是训练面剔除）。"""
+async def test_unscreened_tampering_entry_is_infra_belt():
+    """codex B4 复核 P1-1：篡改 delta 不得"剥掉违规文件评剩余 patch"。
+    判定权威在 generate（unsafe 永久拒绝、不提交 grader）；漏筛的 delta
+    到达 manager = 编排缺陷 → fail-closed infra（reward=None），grader
+    容器一个都不起、eval 一次都不跑。"""
 
     b64, dg = _b64(b"broken oracle")
     delta = _delta([
@@ -299,14 +300,128 @@ async def test_test_tampering_entry_is_stripped_and_capped():
         trajectory_id="traj_tamp", workspace=None, spec=make_spec(),
         frozen_delta=delta,
     )
-    assert report.outcome == "unresolved"  # eval 本判 resolved，被封顶
-    assert report.reward == 0.0
-    assert report.patch_hygiene.verdict == "rejected_test_tampering"
-    assert report.patch_hygiene.test_files_modified is True
-    joined = "\n".join(
-        c[-1] for c in fake.calls if c[0] == "exec" and isinstance(c[-1], str)
+    assert report.outcome == "failed_to_grade"
+    assert report.reward is None
+    assert "unscreened_hygiene_hit" in (report.infra_failure_detail or "")
+    assert not any(c[0] == "run" for c in fake.calls)  # 容器都没起
+
+
+# ------------------------------------------------- P0 官方镜像 overlay HEAD
+OVERLAY = "b" * 40  # 官方镜像构建叠加 commit（HEAD^ == base_commit 形态）
+
+
+async def test_official_overlay_head_image_grades_normally():
+    """codex B4 复核 P0 正例：materialized_head = overlay commit ≠
+    task_base_commit（官方 SWE 镜像常态，S0-7 实证），rollout 与 grader
+    HEAD 一致 → 正常评分，不得 run-halt。"""
+
+    b64, dg = _b64(b"fix")
+    delta = _delta(
+        [PatchEntry(path="src/fix.py", operation="add", object_type="regular",
+                    mode="100644", content_b64=b64, content_digest=dg)],
+        materialized_head=OVERLAY,
     )
-    assert "test_hidden_behavior" not in joined  # 篡改 entry 未被应用
+    fake = _fake_with_baseline(delta)
+    fake.head_commit = OVERLAY  # grader checkout 与 rollout 同一 overlay HEAD
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_ov", workspace=None, spec=make_spec(),
+        frozen_delta=delta,
+    )
+    assert report.outcome == "resolved"
+
+
+async def test_grader_head_differs_from_materialized_head_is_run_halt():
+    """P0 负例：grader 实际 HEAD ≠ baseline.materialized_head（评分树与
+    模型开工树不是同一 commit）→ grading_head_mismatch run-halt。"""
+
+    b64, dg = _b64(b"fix")
+    delta = _delta(
+        [PatchEntry(path="src/fix.py", operation="add", object_type="regular",
+                    mode="100644", content_b64=b64, content_digest=dg)],
+        materialized_head=OVERLAY,
+    )
+    fake = _fake_with_baseline(delta)  # 探针默认 HEAD=BASE ≠ OVERLAY
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(fake).grade(
+            trajectory_id="traj_hm", workspace=None, spec=make_spec(),
+            frozen_delta=delta,
+        )
+    assert exc_info.value.reason_code == "grading_head_mismatch"
+
+
+# ------------------------------------------------- P1-2 三对象完整对账
+async def test_projection_omitting_entry_is_run_halt():
+    """codex 反例 (a)：raw delta 同时改源码和测试、projection 隐去测试
+    entry → 路径集不等 → run-halt（不再 resolved/reward=1）。"""
+
+    b64, dg = _b64(b"x")
+    good = _delta([
+        PatchEntry(path="src/fix.py", operation="add", object_type="regular",
+                   mode="100644", content_b64=b64, content_digest=dg),
+        PatchEntry(path="tests/test_evil.py", operation="add",
+                   object_type="regular", mode="100644",
+                   content_b64=b64, content_digest=dg),
+    ])
+    hiding = FrozenDeltaSource(
+        frozen_patch=good.frozen_patch,
+        baseline_manifest=good.baseline_manifest,
+        projection=good.projection.model_copy(
+            update={"included_entry_paths": ("src/fix.py",)}  # 隐去测试 entry
+        ),
+        frozen_patch_digest=good.frozen_patch_digest,
+    )
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(_fake_with_baseline(good)).grade(
+            trajectory_id="traj_hide", workspace=None, spec=make_spec(),
+            frozen_delta=hiding,
+        )
+    assert exc_info.value.reason_code == "frozen_delta_binding_mismatch"
+    assert "路径集" in str(exc_info.value)
+
+
+async def test_delete_of_path_absent_from_baseline_is_run_halt():
+    """codex 反例 (b)：删除 baseline 不存在的路径 → 语义矛盾 delta，
+    prestate 对账拒绝（不再被 rm -f 幂等静默吞掉后 resolved）。"""
+
+    delta = _delta([PatchEntry(
+        path="ghost.py", operation="delete", object_type="regular")])
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(_fake_with_baseline(delta)).grade(
+            trajectory_id="traj_ghost", workspace=None, spec=make_spec(),
+            frozen_delta=delta,
+        )
+    assert exc_info.value.reason_code == "frozen_delta_prestate_mismatch"
+
+
+async def test_delete_object_type_mismatch_and_add_collision_prestate():
+    """delete 类型必须与 baseline 一致；add 路径必须原先不存在。"""
+
+    b64, dg = _b64(b"x")
+    type_mismatch = _delta(
+        [PatchEntry(path="link", operation="delete", object_type="regular")],
+        baseline_entries=[BaselineEntry(
+            path="link", object_type="symlink", mode="120000",
+            symlink_target_digest="sha256:" + "c" * 64)],
+    )
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(_fake_with_baseline(type_mismatch)).grade(
+            trajectory_id="traj_tm", workspace=None, spec=make_spec(),
+            frozen_delta=type_mismatch,
+        )
+    assert exc_info.value.reason_code == "frozen_delta_prestate_mismatch"
+    add_collision = _delta(
+        [PatchEntry(path="exists.py", operation="add", object_type="regular",
+                    mode="100644", content_b64=b64, content_digest=dg)],
+        baseline_entries=[BaselineEntry(
+            path="exists.py", object_type="regular", mode="100644",
+            content_digest="sha256:" + "d" * 64)],
+    )
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(_fake_with_baseline(add_collision)).grade(
+            trajectory_id="traj_ac", workspace=None, spec=make_spec(),
+            frozen_delta=add_collision,
+        )
+    assert exc_info.value.reason_code == "frozen_delta_prestate_mismatch"
 
 
 # ------------------------------------------------- D1a 契约

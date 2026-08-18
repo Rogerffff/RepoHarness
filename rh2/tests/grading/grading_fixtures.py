@@ -276,6 +276,9 @@ class FakeDocker:
     # B4 exact-baseline 重建：census 脚本的罐头输出（默认空树 census）。
     census_output: str = ""
     census_exit_code: int = 0
+    # B4 P0 修复：探针 HEAD（默认 = base_commit；官方镜像 overlay commit
+    # 场景设为不同 sha，PARENT 自动指回 base_commit 以过血缘判据）。
+    head_commit: str = ""
     ps_stdout: str = ""
     rm_fail_names: tuple[str, ...] = ()
     # 镜像 RepoDigests 罐头值（codex#1 运行期比对用；json 序列化后返回）。
@@ -291,10 +294,12 @@ class FakeDocker:
     pulled_images: set[str] = field(default_factory=set)
 
     def _probe_stdout(self) -> str:
+        head = self.head_commit or self.base_commit
+        parent = self.base_commit if head != self.base_commit else "none"
         return (
-            f"HEAD={self.base_commit}\n"
+            f"HEAD={head}\n"
             "BASE_OBJECT_OK\n"
-            "PARENT=none\n"
+            f"PARENT={parent}\n"
             "DIFFSTAT=\n"
         )
 

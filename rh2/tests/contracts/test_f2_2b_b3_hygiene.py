@@ -527,3 +527,84 @@ async def test_baseline_integrity_error_goes_fatal_not_member_loss():
     assert any(
         e.step == "grading_baseline_integrity_mismatch" for e in audit.timeline
     )
+
+
+async def test_e2e_test_tampering_is_permanent_rejection_no_grader(tmp_path):
+    """codex B4 复核 P1-1（T0 失败表 unsafe 行）：修改测试文件的 delta 在
+    generate 侧永久拒绝——不运行 grader、reward 不可得、audit 落
+    test_file_modified 归因；绝不"剥掉违规文件评剩余 patch"。"""
+
+    import dataclasses
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[1] / "adapters"))
+    from test_f2_2_capability import _stamp_fa_identity
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        TASK_ID_DENSE,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+        dense_turns,
+        make_task,
+    )
+
+    from repoharness2.adapters.slime.generate import QuiescenceConfirmed
+    from repoharness2.grading.manager import HygieneRules
+
+    content = b"def test_evil():\n    assert True\n"
+    sha = hashlib.sha256(content).hexdigest()
+    b64 = base64.b64encode(content).decode()
+
+    class _FrozenWs:
+        """post census 注入一个被修改的测试文件（模型产物）。"""
+
+        def __init__(self, underlying):
+            self._u = underlying
+
+        async def run_bash(self, script):
+            from types import SimpleNamespace
+
+            if "find ." in script:
+                return SimpleNamespace(exit_code=0, stdout=(
+                    f"regular\t100644\t{sha}\ttests/test_evil.py\n"), stderr="")
+            if "base64 <" in script:
+                return SimpleNamespace(exit_code=0,
+                                       stdout=f"tests/test_evil.py\t{b64}\n",
+                                       stderr="")
+            return await self._u.run_bash(script)
+
+    class _Barrier:
+        async def establish(self, *, workspace, audit):
+            return QuiescenceConfirmed(
+                frozen_grading_workspace=_FrozenWs(workspace),
+                snapshot_ref="sha256:abc", evidence_refs=("s",))
+
+    base_task = make_task(TASK_ID_DENSE)
+    task = dataclasses.replace(
+        base_task,
+        grading_spec=dataclasses.replace(
+            base_task.grading_spec,
+            hygiene=HygieneRules(test_globs=("tests/*",)),
+        ),
+    )
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_Barrier(), turns=turns, task=task)
+    _stamp_fa_identity(chain.base_sample)
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert chain.grading.calls == []  # 不运行 grader
+    assert all(getattr(x, "remove_sample", False) for x in delivered)  # 剔除
+    ov2 = audit.outcome_v2
+    assert ov2["completion_class"] == "present_complete"
+    assert ov2["reason_code"] == "unsafe_artifact_permanent_rejection"
+    assert ov2["reward_unavailable"] is True
+    assert ov2["task_outcome"] == "unknown"  # 没评分，不许伪装成 unresolved
+    assert any(r == "test_file_modified:tests/test_evil.py"
+               for r in audit.unsafe_artifact_reasons)

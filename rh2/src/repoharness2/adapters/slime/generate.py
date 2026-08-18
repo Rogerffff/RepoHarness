@@ -2162,8 +2162,33 @@ class RolloutOrchestrator:
                     audit.runtime_private_pathset_changed = (
                         hygiene.runtime_private_pathset_changed
                     )
+                    unsafe_reasons: list[str] = []
                     if hygiene.verdict == "unsafe_artifact":
-                        audit.unsafe_artifact_reasons = list(hygiene.reason_codes)
+                        unsafe_reasons = list(hygiene.reason_codes)
+                    else:
+                        # B4 P1-1（T0 失败表 unsafe 行逐字：不运行 grader、
+                        # reward=None）：task 级 hygiene（测试文件/禁区
+                        # 路径，规则与 grader 同一 HygieneRules 权威）在
+                        # grader 之前判定，命中即 unsafe 永久拒绝。不做
+                        # "剥掉违规 entry 评剩余 patch"——gate 对篡改事实
+                        # 反正拒训（gate.py executed 级），评了只会污染
+                        # reward/task_outcome/审计并白跑一次 grader。
+                        from repoharness2.grading.manager import (
+                            screen_frozen_entries,
+                        )
+
+                        plan = screen_frozen_entries(
+                            list(frozen_patch.entries), task.grading_spec.hygiene
+                        )
+                        if plan.verdict != "clean":
+                            unsafe_reasons = [
+                                *(f"test_file_modified:{p}"
+                                  for p in plan.stripped_test_paths),
+                                *(f"forbidden_path_touched:{p}"
+                                  for p in plan.forbidden_paths),
+                            ]
+                    if unsafe_reasons:
+                        audit.unsafe_artifact_reasons = unsafe_reasons
                         audit.mark("unsafe_artifact_rejected")
                         self._produce_outcome_v2(
                             audit=audit,
@@ -2188,7 +2213,7 @@ class RolloutOrchestrator:
                             extra_evidence=[
                                 *barrier_evidence,
                                 f"frozen_patch:{audit.frozen_patch_digest}",
-                                *hygiene.reason_codes,
+                                *unsafe_reasons,
                             ],
                         )
                         return self._abort_result(

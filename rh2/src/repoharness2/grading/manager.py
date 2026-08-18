@@ -858,6 +858,19 @@ class SWEGradingManager:
                     [e for e in frozen_delta.frozen_patch.entries if e.path in included],
                     spec.hygiene,
                 )
+                if fa_plan.verdict != "clean":
+                    # B4 P1-1 保险杠：task 级 hygiene 命中的 delta 按 T0
+                    # 失败表 unsafe 行在 generate 侧就该走永久拒绝（不
+                    # 提交 grader）。到达这里 = 编排层漏筛（缺陷），
+                    # fail-closed 记 infra（reward=None）——绝不"剥掉
+                    # 违规文件评剩余 patch"（gate 反正拒训，评了只会
+                    # 污染 reward/outcome/审计）。
+                    raise GradingInfraError(
+                        "unscreened_hygiene_hit:"
+                        + ",".join(
+                            (*fa_plan.stripped_test_paths, *fa_plan.forbidden_paths)
+                        )[:200]
+                    )
             else:
                 if workspace is None:
                     raise GradingInfraError(
@@ -878,7 +891,7 @@ class SWEGradingManager:
             reset_start = time.monotonic()
             record = await self._start_container(trajectory_id, spec, nonce)
             await self._verify_image_digest(record, spec)
-            await self._clean_checkout(record, spec)
+            checkout_head = await self._clean_checkout(record, spec)
             timing_parts["env_reset"] = time.monotonic() - reset_start
 
             # 阶段 4（prep 后半）：frozen delta 路径 = 先 exact-baseline
@@ -887,7 +900,9 @@ class SWEGradingManager:
             prep_start = time.monotonic()
             replay_started = True
             if frozen_delta is not None:
-                await self._verify_baseline_rebuild(record, spec, frozen_delta)
+                await self._verify_baseline_rebuild(
+                    record, spec, frozen_delta, checkout_head
+                )
                 assert fa_plan is not None  # 阶段 1 已构造
                 await self._apply_frozen_delta(record, spec, frozen_delta, fa_plan)
                 apply_ok = True  # 应用失败已作 infra 抛出（A-prime：非模型负样本）
@@ -1150,8 +1165,13 @@ class SWEGradingManager:
             )
 
     # ------------------------------------------------------------------ 内部：评分各阶段
-    async def _clean_checkout(self, record: _ContainerRecord, spec: GradingEnvSpec) -> None:
-        """A7 条 2：准备 clean checkout 并用 S1-2 血缘判据核验。"""
+    async def _clean_checkout(self, record: _ContainerRecord, spec: GradingEnvSpec) -> str:
+        """A7 条 2：准备 clean checkout 并用 S1-2 血缘判据核验。
+
+        返回容器内 /testbed 的实际 HEAD sha（探针实测值）。血缘判据接受
+        HEAD==base 或 HEAD^==base（官方镜像 overlay commit 形态，
+        materialize.py S0-7）；B4 用返回值与 baseline.materialized_head
+        对账——评分树必须与模型开工的树是**同一个 commit**。"""
 
         if spec.checkout_mode == "clone_from_readonly_snapshot":
             clone = await self._exec_bash_checked(
@@ -1178,14 +1198,22 @@ class SWEGradingManager:
             raise GradingInfraError(
                 f"grading_checkout_lineage_failed:{check.failure_message()[:300]}"
             )
+        return check.head
 
     def _verify_frozen_delta_binding(
         self, spec: GradingEnvSpec, source: "FrozenDeltaSource"
     ) -> None:
-        """B4 P0-1 纯检查半区：source 内部一致性 + source⟷spec 绑定。
+        """B4 P0-1 + P1-2 纯检查半区：source 三对象完整对账 + source⟷spec 绑定。
 
         不需要容器，放在评分早段（起容器之前）fail-fast。任何不一致 =
-        BaselineIntegrityError（run-halt 通道）。"""
+        BaselineIntegrityError（run-halt 通道）。B5 起这些对象会被持久化
+        再装配，本函数是装配后的信任边界（不管 source 来自内存还是磁盘）。
+
+        materialized_head 故意**不**与 spec.base_commit 绑定：官方 SWE
+        镜像的 /testbed HEAD 是构建时叠加的 overlay commit（且内容不保证
+        为空——materialize.py S0-7 实证），合法形态是 HEAD^==base_commit。
+        它与 grader 实际 checkout HEAD 的对账在 _verify_baseline_rebuild
+        （容器半区）完成。"""
 
         from repoharness2.contracts.baseline_manifest import (
             compute_baseline_manifest_digest,
@@ -1194,16 +1222,17 @@ class SWEGradingManager:
 
         art = source.frozen_patch
         baseline = source.baseline_manifest
+        proj = source.projection
         art_digest = compute_frozen_patch_digest(art)
         if art_digest != source.frozen_patch_digest:
             raise BaselineIntegrityError(
                 "frozen_delta_binding_mismatch",
                 f"artifact 重算 digest {art_digest} != source 声明 {source.frozen_patch_digest}",
             )
-        if art_digest != source.projection.frozen_patch_digest:
+        if art_digest != proj.frozen_patch_digest:
             raise BaselineIntegrityError(
                 "frozen_delta_binding_mismatch",
-                f"projection 锚 {source.projection.frozen_patch_digest} != artifact {art_digest}",
+                f"projection 锚 {proj.frozen_patch_digest} != artifact {art_digest}",
             )
         base_digest = compute_baseline_manifest_digest(baseline)
         if art.baseline_manifest_digest != base_digest:
@@ -1212,25 +1241,68 @@ class SWEGradingManager:
                 f"artifact.baseline_manifest_digest {art.baseline_manifest_digest} "
                 f"!= baseline 重算 {base_digest}",
             )
+        # artifact ⟷ baseline 血缘四元组（classify 已互检过；grader 独立
+        # 复核——B5 装配后 classify 的结论不随对象同行）
+        for field_name in ("task_id", "public_bundle_digest",
+                           "runtime_image_digest", "materialized_head"):
+            if getattr(art, field_name) != getattr(baseline, field_name):
+                raise BaselineIntegrityError(
+                    "frozen_delta_binding_mismatch",
+                    f"lineage {field_name}: artifact={getattr(art, field_name)!r} "
+                    f"!= baseline={getattr(baseline, field_name)!r}",
+                )
+        # projection ⟷ artifact 身份绑定
+        for field_name in ("rollout_execution_id", "physical_attempt_id"):
+            if getattr(proj, field_name) != getattr(art, field_name):
+                raise BaselineIntegrityError(
+                    "frozen_delta_binding_mismatch",
+                    f"identity {field_name}: projection={getattr(proj, field_name)!r} "
+                    f"!= artifact={getattr(art, field_name)!r}",
+                )
+        # v1：clean artifact 的 projection 路径集必须**等于** artifact 路径集
+        # （只查"多出"会放过"隐去"——raw delta 同时改源码和测试、projection
+        # 隐去测试文件即可带着篡改事实拿 resolved）
         entry_paths = {e.path for e in art.entries}
-        extra = set(source.projection.included_entry_paths) - entry_paths
-        if extra:
+        included = set(proj.included_entry_paths)
+        if included != entry_paths:
+            diff = sorted(included.symmetric_difference(entry_paths))[:5]
             raise BaselineIntegrityError(
                 "frozen_delta_binding_mismatch",
-                f"projection 引用了 artifact 之外的路径：{sorted(extra)[:5]}",
+                f"projection 路径集 != artifact 路径集（对称差示例：{diff}）",
             )
-        # source ⟷ spec 绑定（task/workdir/base/head）。materialized_head 必须
-        # 等于 spec.base_commit：grading checkout 只能重现 base_commit（血缘
-        # 探针核验容器 HEAD==spec.base_commit），若 rollout 物化头不同，
-        # census 重建对比就是在对比两个不同版本的树。镜像绑定不在此处做
-        # 相等断言：rollout 镜像 = 官方任务镜像 + harness 层，与评分镜像
-        # 合法不同（评分镜像自身由 _verify_image_digest 对 RepoDigests
-        # fail-closed）；树内容等价性由 census 重建比对直接证明。
+        # 逐 entry 前置状态 vs baseline：add 必须原先不存在；modify/delete
+        # 必须存在；delete 的对象类型必须与 baseline 一致（modify 允许类型
+        # 变化——symlink→regular 是合法 delta）。防"删除 baseline 不存在的
+        # 路径"这类语义矛盾 delta 静默成功（rm -f 幂等吞掉）。
+        base_by_path = {e.path: e for e in baseline.entries}
+        for e in art.entries:
+            if e.operation == "add" and e.path in base_by_path:
+                raise BaselineIntegrityError(
+                    "frozen_delta_prestate_mismatch",
+                    f"add 路径在 baseline 已存在：{e.path!r}",
+                )
+            if e.operation in ("modify", "delete") and e.path not in base_by_path:
+                raise BaselineIntegrityError(
+                    "frozen_delta_prestate_mismatch",
+                    f"{e.operation} 路径在 baseline 不存在：{e.path!r}",
+                )
+            if (
+                e.operation == "delete"
+                and base_by_path[e.path].object_type != e.object_type
+            ):
+                raise BaselineIntegrityError(
+                    "frozen_delta_prestate_mismatch",
+                    f"delete 对象类型不符：entry={e.object_type} "
+                    f"baseline={base_by_path[e.path].object_type}（{e.path!r}）",
+                )
+        # source ⟷ spec 绑定。镜像不做相等断言：rollout 镜像 = 官方任务
+        # 镜像 + harness 层，与评分镜像合法不同（评分镜像自身由
+        # _verify_image_digest 对 RepoDigests fail-closed）；树内容等价性
+        # 由 census 重建比对直接证明。
         for label, got, expect in (
             ("task_id", baseline.task_id, spec.task_id),
             ("workdir", baseline.workdir, spec.testbed_path),
             ("task_base_commit", baseline.task_base_commit, spec.base_commit),
-            ("materialized_head", baseline.materialized_head, spec.base_commit),
         ):
             if got != expect:
                 raise BaselineIntegrityError(
@@ -1239,7 +1311,11 @@ class SWEGradingManager:
                 )
 
     async def _verify_baseline_rebuild(
-        self, record: "_ContainerRecord", spec: GradingEnvSpec, source: "FrozenDeltaSource"
+        self,
+        record: "_ContainerRecord",
+        spec: GradingEnvSpec,
+        source: "FrozenDeltaSource",
+        checkout_head: str,
     ) -> None:
         """B4 P0-1 容器半区（T0 拍板文本第 2 条逐字）：apply 前在 fresh
         checkout 上用 B1 的同一 census 脚本/解析器**重建完整
@@ -1247,7 +1323,21 @@ class SWEGradingManager:
         模型开工时的树 → run-halt。lineage 字段从 source.baseline 复制
         （容器内无法重推导；它们的真伪由绑定检查与 digest 自包含性负责），
         因此本比对的有效信号 = 全部 entries（path/type/mode/content 或
-        symlink digest，lstat/no-follow）+ 排除区路径集 + policy。"""
+        symlink digest，lstat/no-follow）+ 排除区路径集 + policy。
+
+        入口先做 HEAD 对账：grader 实际 checkout HEAD（探针实测）必须
+        等于 baseline.materialized_head——官方镜像 HEAD 是 overlay commit
+        （≠ base_commit 且内容可非空），两侧同镜像 → 同 overlay HEAD；
+        不等说明评分树与模型开工树不是同一个 commit。"""
+
+        if checkout_head != source.baseline_manifest.materialized_head:
+            raise BaselineIntegrityError(
+                "grading_head_mismatch",
+                f"grader checkout HEAD {checkout_head!r} != "
+                f"baseline.materialized_head "
+                f"{source.baseline_manifest.materialized_head!r}"
+                "（评分树与模型开工树不是同一 commit）",
+            )
 
         # 局部 import：baseline_census 属 adapters.slime 包，包 __init__ 会
         # 拉起 generate → generate 反向 import 本模块，模块级互相引用成环；
