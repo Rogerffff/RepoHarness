@@ -139,7 +139,9 @@ async def test_receipt_fields_reusable_by_f2_4():
     assert receipt.artifact_bodies_persisted is True
     assert receipt.grading_report_id == audit.finalized.grading_report.report_id
     assert receipt.eligibility_report_id == audit.finalized.eligibility_report.report_id
-    assert receipt.drain_receipt_ref is None  # F2-3 落地前恒 None
+    # F2-3 批 1：drain receipt 内嵌 + ref 一致
+    assert receipt.drain_receipt is not None
+    assert receipt.drain_receipt_ref == receipt.drain_receipt.receipt_id
     # 本体确实可解引用（digest 匹配）
     from repoharness2.contracts.frozen_patch import compute_frozen_patch_digest
 

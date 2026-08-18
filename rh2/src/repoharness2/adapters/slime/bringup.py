@@ -895,6 +895,8 @@ class BringupService:
                 if EXECUTION_MODE != "s1_compat"
                 else None
             ),
+            # F2-3 批 1：drain receipt 的 registry 账目读数
+            drain_snapshot_source=self.registry.drain_snapshot,
         )
 
     def _registry_max_version(self) -> int | None:

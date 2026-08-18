@@ -481,6 +481,8 @@ class Chain:
     repair_signals: list[Any]
     base_sample: FixtureSlimeSample
     finalization: FakeFinalizationStore | None = None
+    # F2-3 批 1：sid → 预置 drain 读数（测试注入脏账目用）
+    drain_snapshots: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 def build_dense_chain(
@@ -518,6 +520,22 @@ def build_dense_chain(
     finalization = finalization_store
     if finalization is None and the_config.execution_mode == "fa_formal":
         finalization = FakeFinalizationStore()
+
+    # F2-3 批 1：非 s1 模式需要 drain_snapshot 注入（正式链 fail-closed）。
+    # 默认替身 = 干净会话面读数；测试可改 chain.drain_snapshots 预置脏读数。
+    drain_snapshots: dict[str, dict[str, Any]] = {}
+
+    def fake_drain_snapshot(sid: str) -> dict[str, Any]:
+        return drain_snapshots.get(sid) or {
+            "pending_turns": 0,
+            "unfinalized_drafts": 0,
+            "poison_clean": True,
+            "revoke_enforced": True,
+            "late_requests_rejected_after_revoke": 0,
+            "turn_seq_high_water": 2,
+            "weight_versions_seen": ["5"],
+            "physical_attempt_id": None,
+        }
     orchestrator = RolloutOrchestrator(
         config=the_config,
         task_resolver=task if task is not None else make_task(TASK_ID_DENSE),
@@ -530,10 +548,15 @@ def build_dense_chain(
         artifact_dir=artifact_dir,
         runtime_quiescence_barrier=runtime_quiescence_barrier,
         finalization_store=finalization,
+        drain_snapshot_source=(
+            fake_drain_snapshot if the_config.execution_mode != "s1_compat" else None
+        ),
     )
     base_sample = FixtureSlimeSample(index=0)
-    return Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals,
-                 base_sample, finalization)
+    chain = Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals,
+                  base_sample, finalization)
+    chain.drain_snapshots = drain_snapshots
+    return chain
 
 
 SAMPLING_PARAMS = {"temperature": 1.0, "top_p": 0.95, "max_new_tokens": 4096}

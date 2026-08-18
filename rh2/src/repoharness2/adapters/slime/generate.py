@@ -123,6 +123,7 @@ from repoharness2.contracts.finalization import (
     FinalizationReceiptV1,
     FinalizationStoreConflict,
     RejectedObjectEvidenceV1,
+    SessionDrainReceiptV1,
 )
 from repoharness2.envpack import bundles, materialize
 from repoharness2.governance import FinalizedRollout, GroupRepairSignal, finalize_rollout
@@ -275,7 +276,12 @@ def build_finalization_receipt(
         ),
         delivered_sample_count=audit.delivered_sample_count,
         runtime_quiescence_confirmed=audit.runtime_quiescence_confirmed,
-        drain_receipt_ref=None,  # F2-3 落地后填
+        drain_receipt_ref=(
+            audit.session_drain_receipt.receipt_id
+            if audit.session_drain_receipt is not None
+            else None
+        ),
+        drain_receipt=audit.session_drain_receipt,
         started_epoch_seconds=audit.started_epoch_seconds,
         finalized_at_utc=_now_utc(),
     )
@@ -1532,6 +1538,9 @@ class RolloutAudit:
     outcome_v2: dict[str, Any] | None = None
     # B5 复核三轮 P1-1：artifact 建立前永久拒绝的对象证据（receipt 内嵌）
     rejection_evidence: Any | None = None
+    # F2-3 批 1：typed session-plane drain receipt（session_plane_drained
+    # bool 的升级形态；finalization receipt 内嵌 durable）
+    session_drain_receipt: Any | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -1708,6 +1717,7 @@ class RolloutOrchestrator:
         audit_sink: Callable[[Any], None] | None = None,
         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
         finalization_store: "FinalizationStore | None" = None,
+        drain_snapshot_source: Callable[[str], dict[str, Any]] | None = None,
     ) -> None:
         # F2-2 复核四轮：集中校验（模式合法性/fa_formal 组合/正交版本契约
         # ——bringup 在副作用前已先调过一次，此处防绕过）
@@ -1722,6 +1732,8 @@ class RolloutOrchestrator:
                 "durable handoff）；s1_compat/fa_audit_only 可缺省。",
             )
         self._finalization_store = finalization_store
+        # F2-3 批 1：registry 账目读数注入（bringup 接 registry.drain_snapshot）
+        self._drain_snapshot_source = drain_snapshot_source
         self._mode: str = config.execution_mode
         self._runtime_barrier = runtime_quiescence_barrier
             # 轮次 14（推翻轮次 9 的硬耦合断言）：非零 exit 拒绝与真实权重
@@ -2035,6 +2047,45 @@ class RolloutOrchestrator:
             # 尚未落地，runtime_quiescence_confirmed 保持 False
             audit.session_plane_drained = True
             audit.mark("session_plane_drained")
+            # F2-3 批 1：会话面排空升级为 typed receipt（fa_formal 闸门
+            # 前置件、B6 消费件）。此点位于 drain + poison + 边界断言全部
+            # 通过之后——receipt 构造器的"只在干净时可构造"校验是第二道锁。
+            # 事实来源 = 注入的 drain_snapshot 读数（bringup 接
+            # registry.drain_snapshot；测试链注入替身）；缺注入的正式链
+            # fail-closed。
+            if self._mode != "s1_compat":
+                if self._drain_snapshot_source is None:
+                    raise SlimeBindingError(
+                        "drain_snapshot_source_missing",
+                        "正式链需要 drain_snapshot 注入（registry 账目读数）"
+                        "——没有账目就没有 typed drain receipt。",
+                    )
+                snap = self._drain_snapshot_source(sid)
+                attempt_key = physical_attempt_id or trajectory_id
+                audit.session_drain_receipt = SessionDrainReceiptV1(
+                    receipt_id=(
+                        "drain_" + re.sub(r"[^A-Za-z0-9._-]", "_", attempt_key)
+                    ),
+                    session_id=sid,
+                    physical_attempt_id=snap.get("physical_attempt_id")
+                    or physical_attempt_id,
+                    trajectory_id=trajectory_id,
+                    task_id=task.task_id,
+                    revoke_enforced=bool(snap.get("revoke_enforced")),
+                    late_requests_rejected_after_revoke=int(
+                        snap.get("late_requests_rejected_after_revoke") or 0
+                    ),
+                    pending_turns_after_drain=int(snap.get("pending_turns") or 0),
+                    unfinalized_drafts_after_drain=int(
+                        snap.get("unfinalized_drafts") or 0
+                    ),
+                    poison_clean=bool(snap.get("poison_clean")),
+                    capture_record_count=len(hook.records),
+                    turn_seq_high_water=int(snap.get("turn_seq_high_water") or 0),
+                    weight_versions_seen=list(snap.get("weight_versions_seen") or []),
+                    drained_at_utc=_now_utc(),
+                )
+                audit.mark("session_drain_receipt_issued")
             if not hook.records:
                 raise SlimeBindingError(
                     "no_capture_records",
@@ -2178,6 +2229,12 @@ class RolloutOrchestrator:
                     audit.mark("runtime_quiescence_confirmed")
                     grading_workspace = result.frozen_grading_workspace
                     barrier_evidence = [f"snapshot:{result.snapshot_ref}", *result.evidence_refs]
+                    if audit.session_drain_receipt is not None:
+                        # F2-3 批 1：drain receipt 进屏障证据链（Outcome
+                        # evidence_refs 可回链到 typed 会话面排空事实）
+                        barrier_evidence.append(
+                            f"drain_receipt:{audit.session_drain_receipt.receipt_id}"
+                        )
                     audit.mark("frozen_snapshot_adopted")
                     # B2：静止确认后导出 FrozenPatchArtifact（无 git 枚举，
                     # host 侧对 B1 baseline 结构化比较）。artifact 为

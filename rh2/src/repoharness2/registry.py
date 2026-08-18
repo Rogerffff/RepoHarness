@@ -45,6 +45,7 @@ from repoharness2.contracts.baseline_manifest import BaselineWorkspaceManifestV1
 from repoharness2.contracts.finalization import (
     CleanupResultAppendV1,
     FinalizationReceiptV1,
+    SessionDrainReceiptV1,
 )
 from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1
 from repoharness2.contracts.scoring_projection import ScoringProjectionArtifactV1
@@ -105,6 +106,8 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     # （F2-4 恢复端的读取面——受体 typed 嵌入 Outcome v2）
     "rh2.fa.finalization_receipt.v1": FinalizationReceiptV1,
     "rh2.fa.cleanup_result_append.v1": CleanupResultAppendV1,
+    # F2-3 批 1：typed session-plane drain receipt（fa_formal 闸门前置件）
+    "rh2.fa.session_drain_receipt.v1": SessionDrainReceiptV1,
 }
 
 _overlap = set(EXTRA_SCHEMA_REGISTRY) & set(SCHEMA_REGISTRY)

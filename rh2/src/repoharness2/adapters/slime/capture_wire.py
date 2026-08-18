@@ -136,6 +136,9 @@ class CaptureRegistry:
         # hook/暂存仍在场供 drain/对账；unregister 时一并清（会话关闭即
         # 失效，之后未知 sid 由 guard 的 unknown 分支兜底）。
         self._revoked: set[str] = set()
+        # F2-3 批 1：撤销后被 guard 拒掉的迟到请求计数（撤销真实生效的
+        # 运行期证据，进 SessionDrainReceiptV1）。unregister 一并清理。
+        self.revoked_rejections: dict[str, int] = {}
         # F2-2 复核 P0-3：capability token 只做**认证**——guard 验证后把
         # Authorization 重写为非秘密 internal sid，slime 的 store/closed/
         # turn-count/日志/routing key/异常消息全部只见 internal sid。
@@ -275,9 +278,41 @@ class CaptureRegistry:
         with self._lock:
             return sid in self._revoked
 
+    def note_revoked_rejection(self, sid: str) -> None:
+        """guard 在 revoked 分支计一笔迟到请求（F2-3 drain receipt 证据）。"""
+
+        with self._lock:
+            self.revoked_rejections[sid] = self.revoked_rejections.get(sid, 0) + 1
+
+    def drain_snapshot(self, sid: str) -> dict[str, object]:
+        """F2-3 批 1：会话面排空账目快照（drain + 边界断言之后读取，供
+        SessionDrainReceiptV1 构造）。纯读取，不改任何状态。"""
+
+        with self._lock:
+            pending_count = len(self.pending.get(sid) or [])
+            scope = self._physical_attempt_ids.get(sid) or sid
+            facts: dict[str, object] = {
+                "pending_turns": pending_count,
+                "revoke_enforced": sid in self._revoked,
+                "late_requests_rejected_after_revoke": self.revoked_rejections.get(sid, 0),
+                "turn_seq_high_water": self._turn_seq.get(sid, 0),
+                "weight_versions_seen": list(self.weight_versions.get(sid) or []),
+                "physical_attempt_id": self._physical_attempt_ids.get(sid),
+            }
+        proxy = self.model_call_proxy
+        drafts = 0
+        if proxy is not None:
+            drafts = sum(
+                1 for a in proxy.unfinalized_deliveries if a.startswith(f"{scope}/")
+            )
+        facts["unfinalized_drafts"] = drafts
+        facts["poison_clean"] = not self.poison.is_poisoned(sid)
+        return facts
+
     def unregister(self, sid: str) -> None:
         with self._lock:
             self._revoked.discard(sid)
+            self.revoked_rejections.pop(sid, None)
             self._capability_tokens = {
                 t: i for t, i in self._capability_tokens.items() if i != sid
             }
@@ -471,6 +506,10 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
                 reason = "session_poisoned"
             elif revoked:
                 reason = "session_revoked"
+                # F2-3 批 1：迟到请求计数（drain receipt 的撤销生效证据；
+                # revoked=True 蕴含 effective 非空——None 分支恒 False）
+                if effective:
+                    registry.note_revoked_rejection(effective)
             else:
                 reason = "unknown_or_closed_session"
             return aiohttp_web.json_response(

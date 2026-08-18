@@ -44,7 +44,72 @@ __all__ = [
     "FinalizationReceiptV1",
     "FinalizationStoreConflict",
     "RejectedObjectEvidenceV1",
+    "SessionDrainReceiptV1",
 ]
+
+
+class SessionDrainReceiptV1(StrictModel):
+    """F2-3 批 1：typed session-plane drain receipt（fa_formal 闸门前置、
+    B6 消费件；把 F2-2 的 `session_plane_drained` bool 升级为可审计的
+    typed 事实）。
+
+    语义：这是**正向断言对象**（同 QuiescenceConfirmed 家族）——只有
+    会话面真正干净时才允许构造：pending 暂存轮与 unfinalized draft 必须
+    为 0、poison 必须清白（校验器锁死，构造脏 receipt = 契约违约当场炸）。
+    流程在生成本 receipt 之前就该对脏状态 raise（边界断言），本校验是
+    第二道锁。
+
+    覆盖面定界：只声明**会话面**排空（HTTP 层拒新 + in-flight 清账 +
+    交付账干净）；完整 runtime quiescence（execution scope 终止/snapshot
+    冻结）由屏障另行确认，两者各自出证据、互不冒充。"""
+
+    schema_id: Literal["rh2.fa.session_drain_receipt.v1"] = Field(
+        default="rh2.fa.session_drain_receipt.v1", description="schema 身份。"
+    )
+    receipt_id: NonEmptyStr
+    session_id: NonEmptyStr = Field(description="非秘密 internal sid。")
+    physical_attempt_id: str | None = None
+    trajectory_id: NonEmptyStr
+    task_id: NonEmptyStr
+    revoke_enforced: bool = Field(
+        description="capability 撤销已执行（HTTP 层拒新请求先于 drain）。"
+    )
+    late_requests_rejected_after_revoke: int = Field(
+        default=0,
+        description="撤销后被 guard 403 拒掉的迟到请求数（撤销真实生效的"
+        "运行期证据；0 = drain 窗口内无迟到请求，也正常）。",
+    )
+    pending_turns_after_drain: int = Field(
+        description="drain 后残留 pending 暂存轮数——receipt 只在 0 时可构造。"
+    )
+    unfinalized_drafts_after_drain: int = Field(
+        description="drain 后残留 unfinalized delivered draft 数——必须 0。"
+    )
+    poison_clean: bool = Field(description="poison 清白（必须 True）。")
+    capture_record_count: int = Field(
+        description="冻结时刻的 capture 记录条数（A4 事实面大小）。"
+    )
+    turn_seq_high_water: int = Field(
+        default=0, description="该会话的轮序号高水位（registry 计数）。"
+    )
+    weight_versions_seen: list[str] = Field(default_factory=list)
+    drained_at_utc: datetime
+
+    @staticmethod
+    def _require(cond: bool, message: str) -> None:
+        if not cond:
+            raise ValueError(message)
+
+    def model_post_init(self, __context: object) -> None:
+        self._require(
+            self.pending_turns_after_drain == 0,
+            "drain receipt 不许带残留 pending 暂存轮（脏状态该在边界断言处炸）。",
+        )
+        self._require(
+            self.unfinalized_drafts_after_drain == 0,
+            "drain receipt 不许带 unfinalized draft。",
+        )
+        self._require(self.poison_clean, "poison 不清白不得出 drain receipt。")
 
 
 class FinalizationStoreConflict(RuntimeError):
@@ -134,7 +199,14 @@ class FinalizationReceiptV1(StrictModel):
     )
     runtime_quiescence_confirmed: bool = False
     drain_receipt_ref: str | None = Field(
-        default=None, description="F2-3 typed drain receipt 引用（未落地恒 None）。"
+        default=None,
+        description="内嵌 drain_receipt 的 receipt_id（F2-3 批 1 起填充；"
+        "S1 兼容路径为 None）。",
+    )
+    drain_receipt: SessionDrainReceiptV1 | None = Field(
+        default=None,
+        description="typed session-plane drain receipt 内嵌（与 outcome_v2 "
+        "同法：随 finalization receipt 一起 durable，F2-4/B6 单次读取）。",
     )
     started_epoch_seconds: float
     finalized_at_utc: datetime

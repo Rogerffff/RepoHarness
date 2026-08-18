@@ -436,6 +436,27 @@ artifact_bodies_persisted=True 与两 digest 皆 None 的矛盾组合 schema
 fencing/恢复切片。**主线顺序（codex 提示 + 05 计划 :179 确认）**：B5
 关闭后先做 **F2-3 typed drain receipt**，再执行并闭合 B6——B6 验收依赖
 F2-3，可先备 fixture 但不得提前宣称 B6 完成。
+**F2-3 批 1：typed session-plane drain receipt——完成（2026-08-19，用户
+放行 F2-3 后首批）**。契约 = `SessionDrainReceiptV1`（正向断言对象，同
+QuiescenceConfirmed 家族：pending/draft 残留为 0、poison 清白才允许
+构造——第二道锁；覆盖面定界 = 只声明会话面排空，runtime quiescence 由
+屏障另行出证，互不冒充）。字段 = 撤销执行 + **撤销后迟到请求 403 计数**
+（guard revoked 分支计账 `registry.revoked_rejections`，撤销真实生效的
+运行期证据）+ drain 后账目读数（pending/draft/poison）+ capture 记录数
++ 轮序高水位 + weight versions。事实来源 = 注入的
+`drain_snapshot_source`（bringup 接 `registry.drain_snapshot` 纯读快照；
+正式链缺注入 fail-closed `drain_snapshot_source_missing`）。签发点 =
+drain + poison + 边界断言全部通过之后（audit.session_drain_receipt +
+mark）；下游 = **内嵌 FinalizationReceiptV1**（`drain_receipt` 字段 +
+`drain_receipt_ref`=receipt_id，B5 占位兑现）+ 屏障证据链
+`drain_receipt:<id>` 进 Outcome evidence_refs。schema registry 注册
+（rh2.fa.session_drain_receipt.v1）。s1_compat 零变化（不签发）。
+**F2-3 剩余批次（未做）**：批 2 = `(execution_id, request_id)` request
+级 capture 归属 + CaptureRegistry 单 owner 串行化收敛（capture_wire
+:111 既有登记）+ 落地后解除 pending overlap fail-fast（并行 subagent
+误杀解除）——跨线程高风险边界，按 §10.4 配 Tracer+Falsifier 对。fa_formal
+闸门四前置现状：**typed drain receipt ✅（本批）**；writer-scope T1 手段
+/ B6 真实组合 / barrier git-free 仍开放。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
