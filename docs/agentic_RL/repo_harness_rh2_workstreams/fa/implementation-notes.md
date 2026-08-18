@@ -364,7 +364,34 @@ infra，容器都不起）。**P1-2**：`_verify_frozen_delta_binding` 升级为
 路径集**相等**（只查"多出"会放过"隐去测试文件拿 resolved"）、逐 entry
 前置状态（add 原先不存在/modify+delete 必须存在/delete 类型一致，防
 "删除不存在路径"被 rm -f 幂等吞掉）；此对账即 B5 持久化再装配后的信任
-边界。下一片 = **B5 finalization receipt + cleanup 排序**。
+边界。**B5 finalization receipt + cleanup 排序：完成（2026-08-18，复核
+放行后实施）**。契约 = `contracts/finalization.py`：
+`FinalizationReceiptV1`（disposition 四分 delivered/aborted/
+fatal_run_halt/cancelled + outcome_v2 **verbatim** 内嵌 + handed_off
+（F2-4 uncertain_trained 判据）+ frozen_patch/baseline digest 引用 +
+grading/eligibility ids + `drain_receipt_ref` F2-3 占位恒 None；校验
+哲学从宽——receipt 是 finally 段证据记录器不是语义执法者，outcome 生产
+时已全量校验）+ `CleanupResultAppendV1`（独立追加记录）。generate()
+finally 重排（A-prime 第 7 条尾段；revoke/drain/terminate 归属屏障已在
+F2-2 落地）：**receipt 原子持久化 → cleanup（drop_session + 容器）→
+poison release → cleanup 结果追加（独立文件，永不改写 receipt）→
+audit sink**。失败语义：**artifact 本体持久化失败**（组装时刻，
+content-addressed，receipt 之前）= T0 失败表第 1 行 → missing/abort
+不评分；**receipt 持久化失败** = 第 2 行 durable handoff 失败 → 现场
+保留（session 不 drop、容器不清入隔离队列、poison 不释放）+ run halt
+（正常退出路径抛 Fatal；异常在途只落账不掩盖首因；s1_compat 容忍档与
+audit sink 同口径照常清理）；**追加自身失败**只落账绝不反向掩盖。
+fa_formal ctor 强制注入 finalization_store（缺失构造即拒——正式链评分
+产物不许随容器清理蒸发）。文件实现 `FileFinalizationStore`（bringup）：
+tmp+fsync+os.replace+**父目录 fsync**（rename 本身耐久）；artifact 本体
+content-addressed 幂等去重（baseline 同任务跨 attempt 实际一份，frozen
+patch 每 attempt KB 级）。验收测试 9 项全过：正序（bodies→receipt→
+docker rm→append）、persist 失败保留现场+Fatal+无悬空追加、rm 失败追加
+不改写 receipt（byte-equal）、F2-4 字段复用断言、abort/body-fail 路径
+receipt、S1 无 store 逐字回归、文件实现原子/去重/独立追加。下一片 =
+**B6 真实组合验证**（fa_formal 开闸前置：F2-3 typed drain receipt、
+writer-scope T1 手段、barrier git-free 指纹替换、
+environment_package_digest 非 None 检查）。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

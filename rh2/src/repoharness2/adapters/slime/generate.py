@@ -73,6 +73,7 @@ import os
 import re
 import secrets
 import struct
+import sys
 import time
 import uuid
 
@@ -115,6 +116,11 @@ from repoharness2.contracts import (
     SandboxLease,
     WorkspaceHandle,
     canonical_json_digest,
+)
+from repoharness2.contracts.finalization import (
+    CleanupFailureFact,
+    CleanupResultAppendV1,
+    FinalizationReceiptV1,
 )
 from repoharness2.envpack import bundles, materialize
 from repoharness2.governance import FinalizedRollout, GroupRepairSignal, finalize_rollout
@@ -176,6 +182,83 @@ LIFECYCLE_STEPS = (
     "step8_gate_finalized",
     "step9_samples_delivered",  # 或 step9_degraded_signal_forwarded
 )
+
+
+class FinalizationStore(Protocol):
+    """B5 durable handoff 通道（A-prime 第 7 条）。三个方法三个时刻：
+
+    - put_artifact_bodies：FrozenDeltaSource 组装后立刻（content-addressed，
+      幂等；失败 = T0 失败表第 1 行"无法建立可信 artifact"→ missing 收口）；
+    - persist_receipt：finally 段 cleanup **之前**（原子；失败 = 第 2 行
+      "durable handoff 失败"→ run halt 并保留 workspace/容器）;
+    - append_cleanup_result：cleanup 之后（独立追加，永不改写 receipt；
+      失败只落账不再抛——追加失败不许反过来掩盖首因）。"""
+
+    def put_artifact_bodies(self, *, frozen_patch: Any, baseline_manifest: Any) -> None: ...
+
+    def persist_receipt(self, receipt: FinalizationReceiptV1) -> None: ...
+
+    def append_cleanup_result(self, result: CleanupResultAppendV1) -> None: ...
+
+
+def build_finalization_receipt(
+    audit: "RolloutAudit",
+    *,
+    in_flight_exception: BaseException | None,
+    artifact_bodies_persisted: bool,
+) -> FinalizationReceiptV1:
+    """从 audit 事实构造 receipt（纯函数，独立可测）。
+
+    disposition 推导：致命异常在途 → fatal_run_halt；取消在途 → cancelled；
+    step9 已标记 → delivered（handed_off 只认真实样本交付那条腿）；其余 =
+    aborted。abort_reason 只是摘要（outcome_v2 才是权威归因）。"""
+
+    if isinstance(in_flight_exception, FatalExecutionInfrastructureError):
+        disposition = "fatal_run_halt"
+    elif isinstance(in_flight_exception, asyncio.CancelledError):
+        disposition = "cancelled"
+    elif (
+        "step9_samples_delivered" in audit.steps
+        or "step9_degraded_signal_forwarded" in audit.steps
+    ):
+        disposition = "delivered"
+    else:
+        disposition = "aborted"
+    abort_reason: str | None = None
+    if disposition == "aborted":
+        if audit.outcome_v2 is not None:
+            abort_reason = audit.outcome_v2.get("reason_code")
+        elif audit.failure_records:
+            abort_reason = audit.failure_records[-1].error_type
+    attempt_key = audit.physical_attempt_id or audit.trajectory_id
+    return FinalizationReceiptV1(
+        receipt_id=f"rcpt_{re.sub(r'[^A-Za-z0-9._-]', '_', attempt_key)}",
+        task_id=audit.task_id,
+        trajectory_id=audit.trajectory_id,
+        session_id=audit.session_id,
+        physical_attempt_id=audit.physical_attempt_id,
+        attempt_disposition=disposition,
+        abort_reason=abort_reason,
+        outcome_v2=audit.outcome_v2,
+        frozen_patch_digest=audit.frozen_patch_digest,
+        baseline_manifest_digest=audit.baseline_manifest_digest,
+        artifact_bodies_persisted=artifact_bodies_persisted,
+        grading_report_id=(
+            audit.finalized.grading_report.report_id if audit.finalized else None
+        ),
+        grading_outcome=(
+            audit.finalized.grading_report.outcome if audit.finalized else None
+        ),
+        eligibility_report_id=(
+            audit.finalized.eligibility_report.report_id if audit.finalized else None
+        ),
+        handed_off="step9_samples_delivered" in audit.steps,
+        delivered_sample_count=audit.delivered_sample_count,
+        runtime_quiescence_confirmed=audit.runtime_quiescence_confirmed,
+        drain_receipt_ref=None,  # F2-3 落地后填
+        started_epoch_seconds=audit.started_epoch_seconds,
+        finalized_at_utc=_now_utc(),
+    )
 
 
 class SlimeBindingError(RuntimeError):
@@ -1602,10 +1685,21 @@ class RolloutOrchestrator:
         capture_boundary_check: Callable[[str], None] | None = None,
         audit_sink: Callable[[Any], None] | None = None,
         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
+        finalization_store: "FinalizationStore | None" = None,
     ) -> None:
         # F2-2 复核四轮：集中校验（模式合法性/fa_formal 组合/正交版本契约
         # ——bringup 在副作用前已先调过一次，此处防绕过）
         validate_execution_config(config, runtime_quiescence_barrier)
+        # B5：fa_formal 必须带 finalization store——冻结 artifact 的 durable
+        # handoff（本体 + receipt）是 A-prime 第 7 条 cleanup 顺序的前提，
+        # 缺失时正式链的评分产物会随容器清理蒸发（audit 只有 digest 摘要）。
+        if config.execution_mode == "fa_formal" and finalization_store is None:
+            raise SlimeBindingError(
+                "finalization_store_required",
+                "fa_formal 需要 finalization_store（receipt + artifact body "
+                "durable handoff）；s1_compat/fa_audit_only 可缺省。",
+            )
+        self._finalization_store = finalization_store
         self._mode: str = config.execution_mode
         self._runtime_barrier = runtime_quiescence_barrier
             # 轮次 14（推翻轮次 9 的硬耦合断言）：非零 exit 拒绝与真实权重
@@ -2224,6 +2318,23 @@ class RolloutOrchestrator:
                         projection.included_entry_paths
                     )
                     audit.mark("scoring_projection_built")
+                    # B5：artifact 本体 durable 持久化（content-addressed，
+                    # receipt 之前）——容器清理后评分产物仍可审计/复评。
+                    # 失败 = T0 失败表第 1 行"无法建立可信 artifact
+                    # （持久化失败）"→ SlimeBindingError → missing 收口
+                    # （有限幂等重试归 F2-4，v1 不在此重试）。
+                    try:
+                        assert self._finalization_store is not None  # fa_formal ctor 已强制
+                        self._finalization_store.put_artifact_bodies(
+                            frozen_patch=frozen_patch,
+                            baseline_manifest=baseline_manifest,
+                        )
+                    except Exception as exc:
+                        raise SlimeBindingError(
+                            "frozen_artifact_persist_failed",
+                            f"artifact 本体持久化失败：{type(exc).__name__}: {exc}",
+                        ) from exc
+                    audit.mark("artifact_bodies_persisted")
                     # B4：组装 grader 消费源（不读 workspace 的评分路径）
                     from repoharness2.grading.manager import FrozenDeltaSource
 
@@ -2398,36 +2509,91 @@ class RolloutOrchestrator:
                 sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=top_p
             )
         finally:
-            audit.mark("cleanup_started")
-            if session_open:
+            # ---- B5（A-prime 第 7 条）：cleanup 只许发生在 finalization
+            # receipt 原子持久化**之后**。receipt 持久化失败 = T0 失败表
+            # 第 2 行"durable handoff 失败"→ 保留 workspace/容器（不清理、
+            # poison 不释放、容器进隔离队列）+ run halt（正常退出路径抛
+            # Fatal；异常在途时只落账不掩盖首因异常）。s1/audit-only 未注入
+            # store 时跳过 receipt（行为与 B5 前逐字一致）。
+            in_flight = sys.exc_info()[1]
+            receipt: FinalizationReceiptV1 | None = None
+            receipt_persist_failed = False
+            if self._finalization_store is not None:
+                receipt = build_finalization_receipt(
+                    audit,
+                    in_flight_exception=in_flight,
+                    artifact_bodies_persisted=(
+                        "artifact_bodies_persisted" in audit.steps
+                        or any(
+                            e.step == "artifact_bodies_persisted"
+                            for e in audit.timeline
+                        )
+                    ),
+                )
                 try:
-                    await adapter.drop_session(sid, wait_timeout=5.0)
-                except Exception as exc:  # noqa: BLE001 - 清理失败必须留痕（Q8）
-                    audit.cleanup_failures.append(
-                        CleanupFailureRecord(
-                            lease_id=sandbox.lease.lease_id if sandbox else f"lease_{sid}",
-                            step="drop_session",
-                            detail=str(exc)[:300],
+                    self._finalization_store.persist_receipt(receipt)
+                    audit.mark("finalization_receipt_persisted")
+                except Exception as exc:  # noqa: BLE001 —— 分路处置，绝不静默
+                    receipt_persist_failed = True
+                    audit.failure_records.append(
+                        RolloutFailureRecord(
+                            stage="finalization_receipt",
+                            error_type="finalization_receipt_write_failed",
+                            detail=f"{type(exc).__name__}: {exc}"[:500],
                         )
                     )
-            cleanup_exception = False
-            if sandbox is not None:
-                try:
-                    await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
-                except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
-                    # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
-                    # 不让清理异常覆盖 rollout 结果
-                    cleanup_exception = True
                     audit.cleanup_failures.append(
                         CleanupFailureRecord(
-                            lease_id=sandbox.lease.lease_id,
-                            step="container_cleanup_exception",
+                            lease_id=(
+                                sandbox.lease.lease_id if sandbox else f"lease_{sid}"
+                            ),
+                            step="finalization_receipt_write_failed",
                             detail=f"{type(exc).__name__}: {exc}"[:300],
                         )
                     )
-                    self.cleanup_quarantine.append(sandbox.container_name)
+                    if sandbox is not None:
+                        self.cleanup_quarantine.append(sandbox.container_name)
+                    audit.mark("finalization_receipt_write_failed")
+            audit.mark("cleanup_started")
+            cleanup_exception = False
+            if receipt_persist_failed and self._mode != "s1_compat":
+                # 保留现场：session 不 drop、容器不清、poison 不释放
+                # （s1_compat 容忍档与 audit sink 同口径：落账后照常清理）。
+                pass
+            else:
+                if session_open:
+                    try:
+                        await adapter.drop_session(sid, wait_timeout=5.0)
+                    except Exception as exc:  # noqa: BLE001 - 清理失败必须留痕（Q8）
+                        audit.cleanup_failures.append(
+                            CleanupFailureRecord(
+                                lease_id=sandbox.lease.lease_id if sandbox else f"lease_{sid}",
+                                step="drop_session",
+                                detail=str(exc)[:300],
+                            )
+                        )
+                if sandbox is not None:
+                    try:
+                        await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+                    except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
+                        # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
+                        # 不让清理异常覆盖 rollout 结果
+                        cleanup_exception = True
+                        audit.cleanup_failures.append(
+                            CleanupFailureRecord(
+                                lease_id=sandbox.lease.lease_id,
+                                step="container_cleanup_exception",
+                                detail=f"{type(exc).__name__}: {exc}"[:300],
+                            )
+                        )
+                        self.cleanup_quarantine.append(sandbox.container_name)
             audit.mark("cleanup_completed")
-            if cleanup_exception or (audit.cleanup_failures and not audit.lease_released):
+            poison_released = False
+            if (
+                receipt_persist_failed
+                or cleanup_exception
+                or (audit.cleanup_failures and not audit.lease_released)
+            ):
                 # 清理未确认成功：poison **不释放**（active 保持拒绝力），
                 # 容器进隔离队列等重试/人工——release 只在清理确认后发生
                 pass
@@ -2435,6 +2601,46 @@ class RolloutOrchestrator:
                 # 真正的 execution 清理 ACK：harness 终止 + 会话撤销 + 容器
                 # 清理都已完成，active poison 此刻才允许归档（轮次 11）
                 self._session_poison_release(sid)
+                poison_released = True
+            if (
+                self._finalization_store is not None
+                and receipt is not None
+                and not receipt_persist_failed
+            ):
+                # B5：cleanup 结果**追加**（独立记录，永不改写 receipt——
+                # "cleanup failure 附加不覆盖首因"）。receipt 没落盘就没有
+                # 追加对象（悬空 cleanup 记录禁止）。追加自身失败只落账。
+                try:
+                    self._finalization_store.append_cleanup_result(
+                        CleanupResultAppendV1(
+                            receipt_id=receipt.receipt_id,
+                            cleanup_failures=[
+                                CleanupFailureFact(
+                                    lease_id=f.lease_id, step=f.step, detail=f.detail
+                                )
+                                for f in audit.cleanup_failures
+                            ],
+                            quarantined_container=(
+                                sandbox.container_name
+                                if sandbox is not None
+                                and sandbox.container_name in self.cleanup_quarantine
+                                else None
+                            ),
+                            lease_released=audit.lease_released,
+                            poison_released=poison_released,
+                            completed_at_utc=_now_utc(),
+                        )
+                    )
+                except Exception as exc:  # noqa: BLE001 —— 追加失败不掩盖首因
+                    audit.cleanup_failures.append(
+                        CleanupFailureRecord(
+                            lease_id=(
+                                sandbox.lease.lease_id if sandbox else f"lease_{sid}"
+                            ),
+                            step="cleanup_result_append_failed",
+                            detail=f"{type(exc).__name__}: {exc}"[:300],
+                        )
+                    )
             if self._audit_sink is not None:
                 try:
                     self._audit_sink(audit)
@@ -2449,6 +2655,16 @@ class RolloutOrchestrator:
                             "继续 top-up 只会积累无审计依据的 rollout。",
                         ) from exc
                     print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
+            if receipt_persist_failed and self._mode != "s1_compat" and in_flight is None:
+                # B5（T0 失败表第 2 行）：durable handoff 失败 → run halt
+                # （worker 停机）。现场已保留（上方跳过 cleanup + 隔离队列）。
+                # 异常在途时不抛——不许掩盖首因，Fatal/取消按原样传播，
+                # receipt 缺失由 F2-4 恢复端按"未终局"fail-closed 处理。
+                raise FatalExecutionInfrastructureError(
+                    "finalization_receipt_write_failed",
+                    "finalization receipt 持久化失败——workspace 已保留、"
+                    "容器入隔离队列；继续 top-up 会产生无终局记录的 attempt。",
+                )
 
     # ------------------------------------------------------------------ 步骤 2
     def _default_mount_planner(self, task: RolloutTaskSpec) -> list[BundleMount]:

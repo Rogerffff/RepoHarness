@@ -80,6 +80,81 @@ ADAPTER_PORT = int(os.environ.get("ADAPTER_PORT", "18001"))
 # rollout 容器（bridge 网络）反连宿主侧 adapter 的地址：默认 docker0 网关
 ADAPTER_PUBLIC_HOST = os.environ.get("ADAPTER_PUBLIC_HOST", "172.17.0.1")
 ARTIFACT_DIR = Path(os.environ.get("RH2_BRINGUP_ARTIFACT_DIR", "/root/bringup/artifacts"))
+
+
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """原子 + 耐久写：临时文件 fsync → os.replace → 父目录 fsync（B5
+    receipt 的"原子持久化"原语；崩溃只会留下完整旧态或完整新态，不会
+    半行——目录 fsync 保证 rename 本身也落盘，缺它则崩溃后文件可能整个
+    消失，receipt 的 durable 承诺不成立）。"""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, sort_keys=True, default=str)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+    dir_fd = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
+
+
+class FileFinalizationStore:
+    """B5 durable handoff 的文件实现（generate.FinalizationStore 协议）。
+
+    布局（root = ARTIFACT_DIR/finalization）：
+    - artifacts/frozen_patch/<hex>.json、artifacts/baseline_manifest/<hex>.json
+      ——content-addressed，按 digest 幂等去重（baseline 同任务同镜像跨
+      attempt 复用，实际只落一份；frozen patch 每 attempt 一份、KB 级）；
+    - receipts/<attempt>.receipt.json——原子替换（persist_receipt）；
+    - receipts/<attempt>.cleanup.json——**独立文件**追加 cleanup 结果，
+      永不改写 receipt 本体。
+    """
+
+    def __init__(self, root: Path) -> None:
+        self.root = Path(root)
+
+    @staticmethod
+    def _safe(name: str) -> str:
+        return re.sub(r"[^A-Za-z0-9._-]", "_", name)
+
+    def _put_body(self, kind: str, digest: str, payload: dict[str, Any]) -> None:
+        path = self.root / "artifacts" / kind / f"{digest.removeprefix('sha256:')}.json"
+        if path.exists():  # content-addressed：同 digest 即同内容，幂等跳过
+            return
+        _atomic_write_json(path, payload)
+
+    def put_artifact_bodies(self, *, frozen_patch: Any, baseline_manifest: Any) -> None:
+        from repoharness2.contracts.baseline_manifest import (
+            compute_baseline_manifest_digest,
+        )
+        from repoharness2.contracts.frozen_patch import compute_frozen_patch_digest
+
+        self._put_body(
+            "frozen_patch",
+            compute_frozen_patch_digest(frozen_patch),
+            frozen_patch.model_dump(mode="json"),
+        )
+        self._put_body(
+            "baseline_manifest",
+            compute_baseline_manifest_digest(baseline_manifest),
+            baseline_manifest.model_dump(mode="json"),
+        )
+
+    def persist_receipt(self, receipt: Any) -> None:
+        _atomic_write_json(
+            self.root / "receipts" / f"{self._safe(receipt.receipt_id)}.receipt.json",
+            receipt.model_dump(mode="json"),
+        )
+
+    def append_cleanup_result(self, result: Any) -> None:
+        _atomic_write_json(
+            self.root / "receipts" / f"{self._safe(result.receipt_id)}.cleanup.json",
+            result.model_dump(mode="json"),
+        )
 HARNESS_KIND = os.environ.get("RH2_BRINGUP_HARNESS", "claude_code")  # claude_code | simple
 # F2-2 复核四轮：显式运行模式（s1_compat | fa_audit_only | fa_formal；
 # fa_formal 还需注入 RuntimeQuiescenceBarrier——F2-2b 提供）
@@ -811,6 +886,8 @@ class BringupService:
             capture_boundary_check=self.registry.assert_session_clean,
             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
             audit_sink=self._write_execution_audit,
+            # B5：receipt + artifact body durable handoff（cleanup 前置条件）
+            finalization_store=FileFinalizationStore(ARTIFACT_DIR / "finalization"),
         )
 
     def _registry_max_version(self) -> int | None:

@@ -433,6 +433,38 @@ def dense_leaf_sample() -> FixtureSlimeSample:
 
 
 @dataclass
+class FakeFinalizationStore:
+    """generate.FinalizationStore 替身：记录调用序 + 可注入失败。"""
+
+    fail_persist_receipt: bool = False
+    fail_put_bodies: bool = False
+    fail_append: bool = False
+    bodies: list[dict[str, Any]] = field(default_factory=list)
+    receipts: list[Any] = field(default_factory=list)
+    cleanup_results: list[Any] = field(default_factory=list)
+    call_order: list[str] = field(default_factory=list)
+
+    def put_artifact_bodies(self, *, frozen_patch, baseline_manifest):
+        self.call_order.append("put_artifact_bodies")
+        if self.fail_put_bodies:
+            raise OSError("fake body store down")
+        self.bodies.append({"frozen_patch": frozen_patch,
+                            "baseline_manifest": baseline_manifest})
+
+    def persist_receipt(self, receipt):
+        self.call_order.append("persist_receipt")
+        if self.fail_persist_receipt:
+            raise OSError("fake receipt store down")
+        self.receipts.append(receipt)
+
+    def append_cleanup_result(self, result):
+        self.call_order.append("append_cleanup_result")
+        if self.fail_append:
+            raise OSError("fake append down")
+        self.cleanup_results.append(result)
+
+
+@dataclass
 class Chain:
     orchestrator: RolloutOrchestrator
     docker: FakeRolloutDocker
@@ -441,6 +473,7 @@ class Chain:
     grading: GradingSubmitStub
     repair_signals: list[Any]
     base_sample: FixtureSlimeSample
+    finalization: FakeFinalizationStore | None = None
 
 
 def build_dense_chain(
@@ -457,6 +490,7 @@ def build_dense_chain(
     docker: FakeRolloutDocker | None = None,
     harness_exit_code: int = 0,
     runtime_quiescence_barrier=None,
+    finalization_store: FakeFinalizationStore | None = None,
 ) -> Chain:
     docker = docker if docker is not None else FakeRolloutDocker(rm_fail=rm_fail)
     grading = GradingSubmitStub(infra=infra_grading)
@@ -471,8 +505,14 @@ def build_dense_chain(
         return adapter
 
     driver = MockClaudeCodeDriver(adapter_ref, crash=crash, exit_code=harness_exit_code)
+    the_config = config or dense_config()
+    # B5：fa_formal ctor 强制 finalization store；测试链默认自动配 fake
+    # （s1_compat 不自动配——保持 store 缺省时行为逐字等于 B5 之前）。
+    finalization = finalization_store
+    if finalization is None and the_config.execution_mode == "fa_formal":
+        finalization = FakeFinalizationStore()
     orchestrator = RolloutOrchestrator(
-        config=config or dense_config(),
+        config=the_config,
         task_resolver=task if task is not None else make_task(TASK_ID_DENSE),
         adapter_factory=adapter_factory,
         harness_driver=driver,
@@ -482,9 +522,11 @@ def build_dense_chain(
         mount_planner=mount_planner,
         artifact_dir=artifact_dir,
         runtime_quiescence_barrier=runtime_quiescence_barrier,
+        finalization_store=finalization,
     )
     base_sample = FixtureSlimeSample(index=0)
-    return Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals, base_sample)
+    return Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals,
+                 base_sample, finalization)
 
 
 SAMPLING_PARAMS = {"temperature": 1.0, "top_p": 0.95, "max_new_tokens": 4096}
