@@ -217,7 +217,11 @@ async def test_e2e_real_barrier_class_confirms_and_grades_frozen():
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
     )
     audit = chain.orchestrator.audits[0]
-    assert isinstance(chain.grading.calls[0]["workspace"], FrozenWorkspace)
+    # B4：grader 不再收 workspace（None），改收 frozen_delta（含 raw
+    # artifact + baseline + projection；"不回读 rollout workspace"契约级）
+    assert chain.grading.calls[0]["workspace"] is None
+    fd = chain.grading.calls[0]["frozen_delta"]
+    assert fd is not None and fd.frozen_patch_digest == audit.frozen_patch_digest
     assert audit.runtime_quiescence_confirmed is True
     assert audit.outcome_v2["completion_class"] == "present_complete"
     assert any(not getattr(x, "remove_sample", False) for x in delivered)

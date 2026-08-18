@@ -83,8 +83,9 @@ class GradingQueueConfig:
 @dataclass
 class _QueueItem:
     trajectory_id: str
-    workspace: WorkspaceRunner
+    workspace: WorkspaceRunner | None
     spec: GradingEnvSpec
+    frozen_delta: object | None  # B4：FA formal 冻结 delta 源
     future: asyncio.Future
     submitted_monotonic: float
     depth_at_enqueue: int
@@ -147,8 +148,9 @@ class GradingQueue:
         self,
         *,
         trajectory_id: str,
-        workspace: WorkspaceRunner,
+        workspace: WorkspaceRunner | None,
         spec: GradingEnvSpec,
+        frozen_delta=None,  # B4：FA formal 冻结 delta 源（透传 manager.grade）
     ) -> GradingReport:
         """提交一条评分请求并等待其 GradingReport。
 
@@ -177,6 +179,7 @@ class GradingQueue:
             trajectory_id=trajectory_id,
             workspace=workspace,
             spec=spec,
+            frozen_delta=frozen_delta,
             future=asyncio.get_running_loop().create_future(),
             submitted_monotonic=time.monotonic(),  # 等待计时含反压阻塞段
             depth_at_enqueue=depth,
@@ -197,6 +200,7 @@ class GradingQueue:
                     trajectory_id=item.trajectory_id,
                     workspace=item.workspace,
                     spec=item.spec,
+                    frozen_delta=getattr(item, "frozen_delta", None),
                     queue_wait_seconds=queue_wait,
                     queue_depth_at_enqueue=item.depth_at_enqueue,
                     backpressure_triggered=item.backpressure,

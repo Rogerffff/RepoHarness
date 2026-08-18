@@ -38,6 +38,13 @@ GradingFailureCategory = Literal[
     "test_log_parse_failed",  # 测试跑了但日志解析不出结果（infra 族：强制 reward=None）
     "patch_apply_failed",  # patch 在 clean checkout 上 apply 失败（模型负样本）
     "tests_failed",  # 测试跑了且解析成功但未全过（模型负样本）
+    # FA-2A 决策包 D1a 第 2 条新增（S2 协调后 2026-08-18 落地，B4 批次）：
+    # 模型 patch 令测试**确定性超时**（如引入死循环）——模型真实失败，
+    # outcome=unresolved、reward=0。三条件构造门（缺一按 infra 构造）：
+    # clean grader 已正常启动 ∧ 测试预算确定性 ∧ 超时可归因于 agent
+    # patch。生产 producer = grading 超时分类器（未实现，落地时随
+    # 该实现走三条件判定；本值先行进契约防 schema 二次迁移）。
+    "test_execution_timeout",  # 模型 patch 致测试确定性超时（模型负样本）
 ]
 
 # infra 族归因：评分链路自身的故障，与模型产出质量无关。
@@ -224,19 +231,26 @@ class GradingReport(StrictModel):
                 )
         elif self.outcome == "unresolved":
             # 2. 未解决必须归因，且 reward 恰为 0.0（binary_v1 二值锁）
-            if self.failure_category not in ("patch_apply_failed", "tests_failed"):
+            if self.failure_category not in (
+                "patch_apply_failed", "tests_failed", "test_execution_timeout"
+            ):
                 raise ValueError(
-                    "outcome=unresolved 必须归因为 patch_apply_failed 或 tests_failed，"
-                    f"得到 {self.failure_category}。"
+                    "outcome=unresolved 必须归因为 patch_apply_failed / tests_failed"
+                    f" / test_execution_timeout，得到 {self.failure_category}。"
                 )
             if self.reward != 0.0:
                 raise ValueError(
                     f"outcome=unresolved 要求 reward 恰为 0.0（reward_scale_version=binary_v1），"
                     f"得到 {self.reward}。放宽二值语义必须先升 reward_scale_version 并改本校验器。"
                 )
-            if self.failure_category == "patch_apply_failed":
+            if self.failure_category in ("patch_apply_failed", "test_execution_timeout"):
+                # test_execution_timeout：测试被超时截断，无可信计数
+                # （D1a 三条件门在 producer 侧；计数缺席是该类别的语义）
                 if any(value is not None for value in test_counts):
-                    raise ValueError("patch_apply_failed 时不得携带 F2P/P2P 计数（测试未运行）。")
+                    raise ValueError(
+                        f"{self.failure_category} 时不得携带 F2P/P2P 计数"
+                        "（测试未运行/未可信完成）。"
+                    )
             else:  # tests_failed
                 if any(value is None for value in test_counts):
                     raise ValueError(

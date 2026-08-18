@@ -61,7 +61,7 @@ def test_unresolved_requires_failure_category():
     payload["outcome"] = "unresolved"
     payload["failure_category"] = None
     payload["reward"] = 0.0
-    with pytest.raises(ValidationError, match="patch_apply_failed 或 tests_failed"):
+    with pytest.raises(ValidationError, match="patch_apply_failed / tests_failed"):
         GradingReport.model_validate(payload)
 
 
@@ -151,7 +151,7 @@ def test_log_parse_failed_not_allowed_under_unresolved():
 
     payload = valid_tests_failed_report()
     payload["failure_category"] = "test_log_parse_failed"
-    with pytest.raises(ValidationError, match="patch_apply_failed 或 tests_failed"):
+    with pytest.raises(ValidationError, match="patch_apply_failed / tests_failed"):
         GradingReport.model_validate(payload)
 
 

@@ -2030,6 +2030,7 @@ class RolloutOrchestrator:
                 )
             grading_workspace = sandbox.workspace  # s1_compat 既有语义
             barrier_evidence: list[str] = []
+            frozen_delta = None  # B4：仅 fa_formal 屏障确认后组装
             if self._mode == "fa_formal":
                 # 复核四轮 P0-3：注入式屏障必须真实执行并出具带证据结果；
                 # 确认失败 → runtime_quiescence_failure（勘误 3 五码）+
@@ -2198,6 +2199,15 @@ class RolloutOrchestrator:
                         projection.included_entry_paths
                     )
                     audit.mark("scoring_projection_built")
+                    # B4：组装 grader 消费源（不读 workspace 的评分路径）
+                    from repoharness2.grading.manager import FrozenDeltaSource
+
+                    frozen_delta = FrozenDeltaSource(
+                        frozen_patch=frozen_patch,
+                        baseline_manifest=baseline_manifest,
+                        projection=projection,
+                        frozen_patch_digest=audit.frozen_patch_digest,
+                    )
                 elif isinstance(result, QuiescenceRejected):
                     self._produce_outcome_v2(
                         audit=audit,
@@ -2236,6 +2246,7 @@ class RolloutOrchestrator:
             handshake = self._build_handshake(trajectory_id, samples)
             audit.handshake = handshake
             finalized = await self._finalize(
+                frozen_delta=frozen_delta,
                 task=task,
                 trajectory_id=trajectory_id,
                 base_sample=sample,
@@ -2691,6 +2702,7 @@ class RolloutOrchestrator:
     async def _finalize(
         self,
         *,
+        frozen_delta=None,
         task: RolloutTaskSpec,
         trajectory_id: str,
         base_sample: Any,
@@ -2716,7 +2728,12 @@ class RolloutOrchestrator:
         async def _grade() -> GradingReport:
             audit.mark("grading_started")
             report = await self._grading_submit(
-                trajectory_id=trajectory_id, workspace=workspace, spec=task.grading_spec
+                trajectory_id=trajectory_id,
+                # B4：frozen_delta 在场时 grader 不读 workspace（传 None，
+                # 契约级保证"不回读 rollout workspace"）
+                workspace=None if frozen_delta is not None else workspace,
+                spec=task.grading_spec,
+                **({"frozen_delta": frozen_delta} if frozen_delta is not None else {}),
             )
             audit.step("step6_grading_completed")
             return report

@@ -628,7 +628,9 @@ async def test_fa_formal_with_injected_barrier_end_to_end():
     # 句柄（mutation witness：接线改回 sandbox.workspace 时本断言红）
     assert any("find ." in sc for sc in ok.frozen.scripts)
     # P0-1 验收：评分消费的是屏障产出的冻结输入，不是原 workspace
-    assert chain.grading.calls[0]["workspace"] is ok.frozen
+    # B4：grader 收 frozen_delta（workspace=None，不回读）
+    assert chain.grading.calls[0]["workspace"] is None
+    assert chain.grading.calls[0]["frozen_delta"].frozen_patch_digest == audit.frozen_patch_digest
     assert audit.outcome_v2["completion_class"] == "present_complete"
     # 六轮强 P1：屏障 lineage 进成功 Outcome
     assert "snapshot:sha256:abc" in audit.outcome_v2["evidence_refs"]

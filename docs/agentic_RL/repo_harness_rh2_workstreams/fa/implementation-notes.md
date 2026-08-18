@@ -275,8 +275,28 @@ None/patch_hygiene/unknown/reward_unavailable/无 eligibility）——schema
 validator（声称该 reason 即全形状强制）/producer 豁免/audit disposition
 三处共用；codex 两个矛盾反例（resolved+reward 可得、grading_infra 混
 搭）构造即拒，表驱动逐字段翻转测试钉死。**B3 闭合**（全量 1034 绿）。递延：分类规则扩充（计划既定）；
-AdmissionReport 本体（FA-2/F2-5）。下一片 = **B4 fresh grader 消费
-projection（动 grading/manager.py 前先 S2 协调）**。
+AdmissionReport 本体（FA-2/F2-5）。**B4 fresh grader 消费 projection：完成（S2 协调确认：S2-1 闲置无并发，
+2026-08-18 用户授权）**。核心 = `FrozenDeltaSource`（frozen_patch +
+baseline + projection + digest）作为 grade() 的新输入源：设置时
+**grader 零 workspace 访问**（workspace 传 None，Poison 同一性负测试
+钉死"回读即炸"）；应用 = **直接文件写入**（per-entry base64 →
+cat/chmod/ln -s/rm，无 git、无 diff 文本——二进制/symlink/mode 原生
+支持）；应用前做 **pre-image 靶向验证**（modify/delete 路径在 clean
+checkout 的现值 digest 必须等于 baseline entry digest——A-prime"重建
+并验证"的被改动路径覆盖面；全树 census 对账仍归 B6/FA-5 既有登记）。
+失败语义按 A-prime 表：pre-image/应用失败一律 GradingInfraError
+（failed_to_grade + reward=None，**不得记模型 reward 0**）；直接写入
+无"冲突"概念 → S1 的 patch_apply_failed 在 FA 路径消失，模型坏 patch
+只能在测试阶段表现为 unresolved。hygiene 契约面：FA 路径以 raw
+artifact digest 为锚构造 clean 形状（B3 已判 projectable 才到得了
+grader）。接线 = generate() fa_formal 分支组装 FrozenDeltaSource →
+_finalize → GradingQueue.submit 透传（_QueueItem 携带）→
+manager.grade。**D1a 第 2 条兑现**：GradingFailureCategory 新增
+`test_execution_timeout`（模型负样本：unresolved+reward 0；无可信
+计数是其语义；三条件构造门注释进契约，producer = 未来 grading 超时
+分类器——先行进契约防 schema 二次迁移）。S1 评分路径逐字不变
+（frozen_delta 未设时原链）。下一片 = **B5 finalization receipt +
+cleanup 排序**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

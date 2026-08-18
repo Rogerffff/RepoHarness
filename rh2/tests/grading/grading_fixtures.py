@@ -340,6 +340,13 @@ class FakeDocker:
             return ExecResult(0, "", "")
         if cmd == "exec":
             script = args[-1]
+            if "sha256sum" in script:
+                # B4 pre-image 验证旋钮：sha256_by_path[path] -> digest hex
+                mapping = getattr(self, "sha256_by_path", {})
+                for path, hexd in mapping.items():
+                    if f"'{path}'" in script or f" {path} " in script or script.rstrip().endswith(path):
+                        return ExecResult(0, hexd + "\n", "")
+                return ExecResult(1, "", "sha256sum: no such file (fake)")
             if "rev-parse HEAD" in script:
                 return ExecResult(0, self._probe_stdout(), "")
             if "cat > " in script:

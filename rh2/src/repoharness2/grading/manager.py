@@ -352,6 +352,22 @@ def build_export_patch_script(manifest_path: str = BASE_UNTRACKED_MANIFEST) -> s
 EXPORT_PATCH_SCRIPT = build_export_patch_script()
 
 
+@dataclass(frozen=True)
+class FrozenDeltaSource:
+    """B4（A-prime 第 1/5 条）：FA formal 评分的唯一输入源——冻结 delta
+    经 hygiene 后的 projection + raw artifact + baseline（pre-image 验证）。
+    设置本源时 grade() **不读取 rollout workspace**（workspace 参数可为
+    None）；应用 = 直接文件写入（无 git、无 diff 文本），application
+    失败一律 contract/infra failure（A-prime 失败表：不得记模型 reward 0；
+    S1 的 patch_apply_failed 语义不适用于本路径——直接写入不存在冲突，
+    模型的"坏 patch"只能在测试阶段表现为 unresolved）。"""
+
+    frozen_patch: "object"  # FrozenPatchArtifactV1（避免 contracts 循环 import 用鸭子）
+    baseline_manifest: "object"  # BaselineWorkspaceManifestV1
+    projection: "object"  # ScoringProjectionArtifactV1
+    frozen_patch_digest: str
+
+
 async def export_cleaned_patch(
     workspace: WorkspaceRunner,
     rules: HygieneRules,
@@ -607,8 +623,9 @@ class SWEGradingManager:
         self,
         *,
         trajectory_id: str,
-        workspace: WorkspaceRunner,
+        workspace: WorkspaceRunner | None,
         spec: GradingEnvSpec,
+        frozen_delta: "FrozenDeltaSource | None" = None,
         queue_wait_seconds: float = 0.0,
         queue_depth_at_enqueue: int | None = None,
         backpressure_triggered: bool = False,
@@ -648,7 +665,19 @@ class SWEGradingManager:
 
         def _hygiene() -> PatchHygieneResult | None:
             # 没走到重放阶段的 infra 报告不附 hygiene（附了反而暗示做过 clean 重放）。
-            if cleaned is None or not replay_started:
+            if not replay_started:
+                return None
+            if frozen_delta is not None:
+                # B4：hygiene 判定在 B3（projectable 才到得了这里）；此处
+                # 以 raw artifact digest 为锚构造 clean 形状（S1 契约面）
+                return PatchHygieneResult(
+                    verdict="clean",
+                    cleaned_patch_digest=frozen_delta.frozen_patch_digest,
+                    test_files_modified=False,
+                    forbidden_path_touched=False,
+                    replayed_on_clean_checkout=True,
+                )
+            if cleaned is None:
                 return None
             return cleaned.hygiene_result(replayed_on_clean_checkout=True)
 
@@ -661,12 +690,22 @@ class SWEGradingManager:
         )
 
         try:
-            # 阶段 1+2（prep 前半）：导出 + hygiene 清洗（A7 条 1/3/4）
+            # 阶段 1+2（prep 前半）：B4 起两源互斥——frozen_delta（FA
+            # formal：hygiene 已在 B3 完成，**不读 workspace**）或 S1 导出
             prep_start = time.monotonic()
-            try:
-                cleaned = await export_cleaned_patch(workspace, spec.hygiene)
-            except WorkspaceExportError as exc:
-                raise GradingInfraError(f"workspace_patch_export_failed: {exc}") from exc
+            if frozen_delta is not None:
+                cleaned = None  # FA 路径无 diff 文本；hygiene 事实见 B3 报告
+            else:
+                if workspace is None:
+                    raise GradingInfraError(
+                        "workspace_missing_without_frozen_delta"
+                    )
+                try:
+                    cleaned = await export_cleaned_patch(workspace, spec.hygiene)
+                except WorkspaceExportError as exc:
+                    raise GradingInfraError(
+                        f"workspace_patch_export_failed: {exc}"
+                    ) from exc
             timing_parts["prep"] += time.monotonic() - prep_start
 
             # 阶段 3 前置：镜像就绪（P10 第一档，预拉取命中记 0.0）
@@ -679,10 +718,14 @@ class SWEGradingManager:
             await self._clean_checkout(record, spec)
             timing_parts["env_reset"] = time.monotonic() - reset_start
 
-            # 阶段 4（prep 后半）：写入并重放 cleaned patch
+            # 阶段 4（prep 后半）：frozen delta 直接应用，或 S1 重放
             prep_start = time.monotonic()
             replay_started = True
-            apply_ok = await self._replay_patch(record, spec, cleaned)
+            if frozen_delta is not None:
+                await self._apply_frozen_delta(record, spec, frozen_delta)
+                apply_ok = True  # 应用失败已作 infra 抛出（A-prime：非模型负样本）
+            else:
+                apply_ok = await self._replay_patch(record, spec, cleaned)
             timing_parts["prep"] += time.monotonic() - prep_start
             if not apply_ok:
                 # A7 条 6 三分之一：cleaned patch 在 clean checkout 上 apply 失败 = 模型负样本
@@ -968,6 +1011,92 @@ class SWEGradingManager:
             raise GradingInfraError(
                 f"grading_checkout_lineage_failed:{check.failure_message()[:300]}"
             )
+
+    async def _apply_frozen_delta(
+        self, record: "_ContainerRecord", spec: GradingEnvSpec, source: "FrozenDeltaSource"
+    ) -> None:
+        """B4：在 clean checkout 上直接应用冻结 delta（无 git、无 diff）。
+
+        步骤：① pre-image 靶向验证——modify/delete 路径在 checkout 里的
+        现值 digest 必须等于 baseline entry digest（A-prime"重建并验证"
+        的被改动路径覆盖面；全树 census 对账已登记 B6/FA-5）；② 按
+        projection 引用的 entries 直接写入/删除/建链。任何失败 =
+        GradingInfraError（contract failure，reward=None——不得记模型
+        reward 0）。"""
+
+        import base64 as _b64
+        import hashlib as _hashlib
+
+        entries = {e.path: e for e in source.frozen_patch.entries}
+        included = set(source.projection.included_entry_paths)
+        base_by_path = {e.path: e for e in source.baseline_manifest.entries}
+
+        # ① pre-image 验证（只对 modify/delete 的 regular 文件做内容核对）
+        preimage = [
+            (path, base_by_path[path].content_digest)
+            for path, e in entries.items()
+            if path in included and e.operation in ("modify", "delete")
+            and path in base_by_path
+            and base_by_path[path].object_type == "regular"
+        ]
+        for path, expect in preimage:
+            q = "'" + path.replace("'", "'\\''") + "'"
+            res = await self._exec_bash_checked(
+                record,
+                f"cd {spec.testbed_path} && sha256sum {q} | cut -d' ' -f1",
+                phase="preimage_verify",
+                timeout=spec.apply_timeout_seconds,
+            )
+            got = f"sha256:{res.stdout.strip()}" if res.exit_code == 0 else None
+            if got != expect:
+                raise GradingInfraError(
+                    f"baseline_preimage_mismatch:{path}:expect={expect}:got={got}"
+                )
+
+        # ② 直接应用（delete → 写入/建链；mkdir -p 先行）
+        for path in sorted(included):
+            e = entries[path]
+            q = "'" + path.replace("'", "'\\''") + "'"
+            if e.operation == "delete":
+                res = await self._exec_bash_checked(
+                    record,
+                    f"cd {spec.testbed_path} && rm -f {q}",
+                    phase="delta_delete",
+                    timeout=spec.apply_timeout_seconds,
+                )
+                if res.exit_code != 0:
+                    raise GradingInfraError(
+                        f"delta_delete_failed:{path}:{res.stderr.strip()[-200:]}"
+                    )
+                continue
+            raw = _b64.b64decode(e.content_b64, validate=True)
+            digest = "sha256:" + _hashlib.sha256(raw).hexdigest()
+            if digest != e.content_digest:
+                raise GradingInfraError(f"delta_content_digest_mismatch:{path}")
+            parent = "/".join(path.split("/")[:-1])
+            mk = f"mkdir -p '{parent}' && " if parent else ""
+            if e.object_type == "symlink":
+                target = raw.decode("utf-8", errors="strict")
+                tq = "'" + target.replace("'", "'\\''") + "'"
+                res = await self._exec_bash_checked(
+                    record,
+                    f"cd {spec.testbed_path} && {mk}rm -f {q} && ln -s {tq} {q}",
+                    phase="delta_symlink",
+                    timeout=spec.apply_timeout_seconds,
+                )
+            else:
+                perm = "755" if e.mode == "100755" else "644"
+                res = await self._exec_bash_checked(
+                    record,
+                    f"cd {spec.testbed_path} && {mk}cat > {q} && chmod {perm} {q}",
+                    phase="delta_write",
+                    timeout=spec.apply_timeout_seconds,
+                    input_bytes=raw,
+                )
+            if res.exit_code != 0:
+                raise GradingInfraError(
+                    f"delta_apply_failed:{path}:{res.stderr.strip()[-200:]}"
+                )
 
     async def _replay_patch(
         self, record: _ContainerRecord, spec: GradingEnvSpec, cleaned: CleanedPatch

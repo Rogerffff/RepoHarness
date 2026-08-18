@@ -318,7 +318,8 @@ class GradingSubmitStub:
     calls: list[dict[str, Any]] = field(default_factory=list)
 
     async def __call__(self, *, trajectory_id: str, workspace: Any, spec: GradingEnvSpec, **kw):
-        self.calls.append({"trajectory_id": trajectory_id, "workspace": workspace, "spec": spec})
+        self.calls.append({"trajectory_id": trajectory_id, "workspace": workspace,
+                           "spec": spec, "frozen_delta": kw.get("frozen_delta")})
         return make_grading_report(trajectory_id, spec.task_id, infra=self.infra)
 
 
