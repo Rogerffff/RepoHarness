@@ -53,6 +53,45 @@ class PendingTurn:
     proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
 
 
+@dataclasses.dataclass(frozen=True)
+class SessionPlaneDrainResult:
+    """F2-3 批 2a：单 owner drain 的 typed 内部交接对象（持久形态是
+    SessionDrainReceiptV1；本对象是 owner→orchestrator 的进程内契约）。
+
+    orchestrator 消费规则（codex 批 2 首验收）：owner 缺失/异常/返回非本
+    类型/paid 矛盾 = **内部契约损坏 → Fatal → WorkerHalted**；类型正确但
+    事实不干净（inflight 未归零/pending 残留/poison）= 单 execution 的
+    drain 失败（成员级收口），不冒充干净。"""
+
+    physical_attempt_id: str | None
+    revoke_enforced: bool
+    inflight_at_drain_start: int
+    inflight_zero_confirmed: bool
+    pending_turns: int
+    unfinalized_drafts: int
+    poison_clean: bool
+    late_requests_rejected_after_revoke: int
+    turn_seq_high_water: int
+    weight_versions_seen: list[str]
+    drain_owner: str
+
+
+def make_threadsafe_session_drain_owner(
+    registry: "CaptureRegistry", loop: "asyncio.AbstractEventLoop"
+):
+    """把 registry.drain_session_plane 绑定到 **adapter event loop** 上执行
+    （run_coroutine_threadsafe），返回 orchestrator loop 可 await 的 owner
+    callable。bringup 用 app_handle.loop 构造。"""
+
+    async def owner(sid: str) -> SessionPlaneDrainResult:
+        cfut = asyncio.run_coroutine_threadsafe(
+            registry.drain_session_plane(sid), loop
+        )
+        return await asyncio.wrap_future(cfut)
+
+    return owner
+
+
 
 class CaptureWireOwnershipError(RuntimeError):
     """capture wire 进程级单代所有权违反（勘误 4：不同 registry 重绑）。"""
@@ -139,6 +178,10 @@ class CaptureRegistry:
         # F2-3 批 1：撤销后被 guard 拒掉的迟到请求计数（撤销真实生效的
         # 运行期证据，进 SessionDrainReceiptV1）。unregister 一并清理。
         self.revoked_rejections: dict[str, int] = {}
+        # F2-3 批 2a：guard 层 in-flight 计数（授权通过即计入，finally
+        # 退账；drain owner 在 adapter loop 上等它归零）
+        self._inflight: dict[str, int] = {}
+        self._inflight_zero_events: dict[str, Any] = {}
         # F2-2 复核 P0-3：capability token 只做**认证**——guard 验证后把
         # Authorization 重写为非秘密 internal sid，slime 的 store/closed/
         # turn-count/日志/routing key/异常消息全部只见 internal sid。
@@ -283,6 +326,73 @@ class CaptureRegistry:
 
         with self._lock:
             self.revoked_rejections[sid] = self.revoked_rejections.get(sid, 0) + 1
+
+    # ---- F2-3 批 2a：adapter event-loop 单 owner drain -------------------
+    # inflight 追踪在 guard middleware（授权通过与计入之间无 await——同
+    # loop 原子），drain owner 在 adapter loop 上执行 revoke→等 inflight
+    # 归零→账目读取，返回 typed 结果。消灭"多锁快照看不到真实 HTTP
+    # inflight"的假阳性窗口（批 1 复核 P1-1 根修）。
+
+    def _inflight_enter(self, sid: str) -> None:
+        with self._lock:
+            self._inflight[sid] = self._inflight.get(sid, 0) + 1
+
+    def _inflight_exit(self, sid: str) -> None:
+        event: Any = None
+        with self._lock:
+            n = self._inflight.get(sid, 0) - 1
+            if n <= 0:
+                self._inflight.pop(sid, None)
+                event = self._inflight_zero_events.get(sid)
+            else:
+                self._inflight[sid] = n
+        if event is not None:
+            event.set()
+
+    async def drain_session_plane(
+        self, sid: str, *, timeout_seconds: float = 30.0
+    ) -> "SessionPlaneDrainResult":
+        """单 owner drain（**必须在 adapter event loop 上执行**——
+        middleware 的 inflight 计数在同一 loop，等待与读数不会撕裂）。
+
+        步骤：revoke（幂等；guard 即拒新）→ 等 rh2 自己观测的 inflight
+        归零（超时 = 不干净结果，交调用方按成员级失败收口，不冒充干净）
+        → 账目读取 → typed 结果。"""
+
+        import asyncio as _asyncio
+
+        self.revoke(sid)
+        with self._lock:
+            inflight_start = self._inflight.get(sid, 0)
+            event: _asyncio.Event | None = None
+            if inflight_start > 0:
+                event = self._inflight_zero_events.setdefault(sid, _asyncio.Event())
+        zero_confirmed = inflight_start == 0
+        if event is not None:
+            try:
+                await _asyncio.wait_for(event.wait(), timeout=timeout_seconds)
+                zero_confirmed = True
+            except TimeoutError:
+                zero_confirmed = False
+            finally:
+                with self._lock:
+                    self._inflight_zero_events.pop(sid, None)
+        snap = self.drain_snapshot(sid)
+        return SessionPlaneDrainResult(
+            physical_attempt_id=snap["physical_attempt_id"],  # type: ignore[arg-type]
+            revoke_enforced=bool(snap["revoke_enforced"]),
+            inflight_at_drain_start=inflight_start,
+            inflight_zero_confirmed=zero_confirmed,
+            pending_turns=int(snap["pending_turns"]),  # type: ignore[arg-type]
+            unfinalized_drafts=int(snap["unfinalized_drafts"]),  # type: ignore[arg-type]
+            poison_clean=bool(snap["poison_clean"]),
+            late_requests_rejected_after_revoke=int(
+                snap["late_requests_rejected_after_revoke"]  # type: ignore[arg-type]
+            ),
+            turn_seq_high_water=int(snap["turn_seq_high_water"]),  # type: ignore[arg-type]
+            weight_versions_seen=list(snap["weight_versions_seen"]),  # type: ignore[arg-type]
+            drain_owner="adapter_event_loop",
+        )
 
     def drain_snapshot(self, sid: str) -> dict[str, object]:
         """F2-3 批 1：会话面排空账目快照（drain + 边界断言之后读取，供
@@ -521,7 +631,15 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
             request = request.clone(
                 headers={**request.headers, "Authorization": f"Bearer {internal}"}
             )
-        return await handler(request)
+        # F2-3 批 2a：授权判定与 inflight 计入之间**无 await**（同 loop
+        # 原子）——drain owner 在本 loop 上 revoke 后读到的 inflight 必然
+        # 包含所有已过闸请求，不存在"过了闸还没计入就被 drain 越过"的
+        # 交错（批 1 复核 Falsifier 复现的窗口）。
+        registry._inflight_enter(effective)
+        try:
+            return await handler(request)
+        finally:
+            registry._inflight_exit(effective)
 
     return session_guard
 

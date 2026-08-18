@@ -1717,7 +1717,7 @@ class RolloutOrchestrator:
         audit_sink: Callable[[Any], None] | None = None,
         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
         finalization_store: "FinalizationStore | None" = None,
-        drain_snapshot_source: Callable[[str], dict[str, Any]] | None = None,
+        session_drain_owner: Callable[[str], Awaitable[Any]] | None = None,
     ) -> None:
         # F2-2 复核四轮：集中校验（模式合法性/fa_formal 组合/正交版本契约
         # ——bringup 在副作用前已先调过一次，此处防绕过）
@@ -1732,8 +1732,9 @@ class RolloutOrchestrator:
                 "durable handoff）；s1_compat/fa_audit_only 可缺省。",
             )
         self._finalization_store = finalization_store
-        # F2-3 批 1：registry 账目读数注入（bringup 接 registry.drain_snapshot）
-        self._drain_snapshot_source = drain_snapshot_source
+        # F2-3 批 2a：adapter event-loop 单 owner drain（bringup 接
+        # make_threadsafe_session_drain_owner(registry, app_handle.loop)）
+        self._session_drain_owner = session_drain_owner
         self._mode: str = config.execution_mode
         self._runtime_barrier = runtime_quiescence_barrier
             # 轮次 14（推翻轮次 9 的硬耦合断言）：非零 exit 拒绝与真实权重
@@ -2054,94 +2055,76 @@ class RolloutOrchestrator:
             # registry.drain_snapshot；测试链注入替身）；缺注入的正式链
             # fail-closed。
             if self._mode != "s1_compat":
-                if self._drain_snapshot_source is None:
-                    raise SlimeBindingError(
-                        "drain_snapshot_source_missing",
-                        "正式链需要 drain_snapshot 注入（registry 账目读数）"
-                        "——没有账目就没有 typed drain receipt。",
-                    )
-                snap = self._drain_snapshot_source(sid)
-                # 批 1 复核二轮 P1-1：严格读数——关键键缺失 = 账目源不完整
-                # fail-closed；**类型不做任何强转**（`bool("false")==True`、
-                # `int(0.9)==0`、`list("5")==["5"]` 都会把坏输入洗成干净
-                # 事实）；physical_attempt_id 必填且必须等于 audit 身份。
-                def _snap_bool(key: str) -> bool:
-                    v = snap.get(key)
-                    if not isinstance(v, bool):
-                        raise SlimeBindingError(
-                            "drain_snapshot_invalid_type",
-                            f"drain 快照键 {key} 需要 bool，得到 {type(v).__name__}",
-                        )
-                    return v
+                # F2-3 批 2a（codex 首验收）：typed 单 owner drain。契约
+                # 违约族 = **Fatal → WorkerHalted**（owner 缺注入/抛异常/
+                # 返回非 typed 结果/paid 矛盾——内部事实源损坏，绝不降级
+                # 成缺员伪装成数据不足）；类型正确但事实不干净 = 单
+                # execution 的 drain 失败（成员级收口，不冒充干净）。
+                from repoharness2.adapters.slime.capture_wire import (
+                    SessionPlaneDrainResult,
+                )
 
-                def _snap_int(key: str) -> int:
-                    v = snap.get(key)
-                    # bool 是 int 子类——显式排除（True 混进计数同样是洗白）
-                    if isinstance(v, bool) or not isinstance(v, int):
-                        raise SlimeBindingError(
-                            "drain_snapshot_invalid_type",
-                            f"drain 快照键 {key} 需要 int，得到 {type(v).__name__}",
-                        )
-                    return v
-
-                missing = [
-                    k
-                    for k in (
-                        "pending_turns",
-                        "unfinalized_drafts",
-                        "poison_clean",
-                        "revoke_enforced",
-                        "late_requests_rejected_after_revoke",
-                        "turn_seq_high_water",
-                        "weight_versions_seen",
-                        "physical_attempt_id",
+                if self._session_drain_owner is None:
+                    raise FatalExecutionInfrastructureError(
+                        "session_drain_owner_missing",
+                        "正式链未注入 session_drain_owner——drain 所有权缺席"
+                        "是部署级契约损坏，run-halt。",
                     )
-                    if k not in snap
-                ]
-                if missing:
-                    raise SlimeBindingError(
-                        "drain_snapshot_incomplete",
-                        f"drain 账目快照缺关键键 {missing}——缺失不等于干净，"
-                        "fail-closed。",
+                try:
+                    drain_result = await self._session_drain_owner(sid)
+                except Exception as exc:
+                    raise FatalExecutionInfrastructureError(
+                        "session_drain_owner_failed",
+                        f"drain owner 异常：{type(exc).__name__}: {exc}",
+                    ) from exc
+                if not isinstance(drain_result, SessionPlaneDrainResult):
+                    raise FatalExecutionInfrastructureError(
+                        "session_drain_owner_contract_violation",
+                        f"drain owner 返回 {type(drain_result).__name__}，"
+                        "非 SessionPlaneDrainResult。",
                     )
-                snap_paid = snap["physical_attempt_id"]
-                if not isinstance(snap_paid, str) or not snap_paid:
-                    raise SlimeBindingError(
-                        "drain_receipt_missing_attempt_identity",
-                        "fa 模式签发 drain receipt 必须有非空 physical_attempt_id。",
+                if drain_result.physical_attempt_id != physical_attempt_id:
+                    raise FatalExecutionInfrastructureError(
+                        "session_drain_attempt_mismatch",
+                        f"drain owner 身份 {drain_result.physical_attempt_id!r} "
+                        f"!= audit 身份 {physical_attempt_id!r}——两份事实分家。",
                     )
-                if snap_paid != physical_attempt_id:
-                    raise SlimeBindingError(
-                        "drain_snapshot_attempt_mismatch",
-                        f"账目快照身份 {snap_paid!r} != audit 身份 "
-                        f"{physical_attempt_id!r}——两份事实分家，fail-closed。",
-                    )
-                wv = snap["weight_versions_seen"]
-                if not isinstance(wv, list) or not all(
-                    isinstance(x, str) for x in wv
+                if not (
+                    drain_result.revoke_enforced
+                    and drain_result.inflight_zero_confirmed
+                    and drain_result.pending_turns == 0
+                    and drain_result.unfinalized_drafts == 0
+                    and drain_result.poison_clean
                 ):
                     raise SlimeBindingError(
-                        "drain_snapshot_invalid_type",
-                        "weight_versions_seen 需要 list[str]。",
+                        "session_plane_drain_unclean",
+                        "drain 未达干净态："
+                        f"revoke={drain_result.revoke_enforced} "
+                        f"inflight_zero={drain_result.inflight_zero_confirmed} "
+                        f"pending={drain_result.pending_turns} "
+                        f"drafts={drain_result.unfinalized_drafts} "
+                        f"poison_clean={drain_result.poison_clean}",
                     )
+                assert physical_attempt_id is not None  # fa 模式恒有（上方相等已证）
                 audit.session_drain_receipt = SessionDrainReceiptV1(
                     receipt_id=(
-                        "drain_" + re.sub(r"[^A-Za-z0-9._-]", "_", snap_paid)
+                        "drain_"
+                        + re.sub(r"[^A-Za-z0-9._-]", "_", physical_attempt_id)
                     ),
                     session_id=sid,
-                    physical_attempt_id=snap_paid,
+                    physical_attempt_id=physical_attempt_id,
                     trajectory_id=trajectory_id,
                     task_id=task.task_id,
-                    revoke_enforced=_snap_bool("revoke_enforced"),
-                    late_requests_rejected_after_revoke=_snap_int(
-                        "late_requests_rejected_after_revoke"
+                    revoke_enforced=drain_result.revoke_enforced,
+                    late_requests_rejected_after_revoke=(
+                        drain_result.late_requests_rejected_after_revoke
                     ),
-                    pending_turns_after_drain=_snap_int("pending_turns"),
-                    unfinalized_drafts_after_drain=_snap_int("unfinalized_drafts"),
-                    poison_clean=_snap_bool("poison_clean"),
+                    pending_turns_after_drain=drain_result.pending_turns,
+                    unfinalized_drafts_after_drain=drain_result.unfinalized_drafts,
+                    poison_clean=drain_result.poison_clean,
                     capture_record_count=len(hook.records),
-                    turn_seq_high_water=_snap_int("turn_seq_high_water"),
-                    weight_versions_seen=wv,
+                    turn_seq_high_water=drain_result.turn_seq_high_water,
+                    weight_versions_seen=list(drain_result.weight_versions_seen),
                     drained_at_utc=_now_utc(),
                 )
                 audit.mark("session_drain_receipt_issued")

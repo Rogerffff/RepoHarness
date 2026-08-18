@@ -487,6 +487,30 @@ FinalizationReceiptV1 校验：paid 在场 ∧ delivery_prepared →
 drain_receipt 必须内嵌（S1 无 fa 身份、drain 前终止的 aborted/fatal/
 cancelled 不受影响不误伤）。测试链替身按 F2-2 约定 `sid = s-{paid}`
 回推身份。
+**F2-3 批 2a：adapter event-loop 单 owner drain——完成（2026-08-19）**。
+核心 = `SessionPlaneDrainResult`（typed 进程内交接对象）+
+`registry.drain_session_plane`（**必须在 adapter loop 上执行**：revoke →
+等 rh2 自有 inflight 计数归零（超时=不干净结果，不冒充）→ 账目读取）+
+`make_threadsafe_session_drain_owner(registry, app_handle.loop)` 跨线程
+桥。inflight 追踪在 guard middleware：授权判定与计入之间**无 await**
+（同 loop 原子）——"过闸未计入就被 drain 越过"的交错窗口关闭（批 1
+复核 P1-1 根修，不再依赖 slime shutdown 的不上抛 drain）。orchestrator
+消费按 codex 批 2 首验收分层：**契约违约族**（owner 缺注入/抛异常/返回
+非 typed/paid 矛盾）→ FatalExecutionInfrastructureError → WorkerHalted
+（e2e 测试钉死，绝不降级成 dropped group/batch_starved 伪装数据不足）；
+**类型正确但事实不干净** → `session_plane_drain_unclean` 成员级收口。
+真双线程交错测试：慢请求在飞时 owner 等归零才返回（在飞请求允许完成非
+砍杀）、drain 后新请求 403 不触达内层 handler、迟到计数入账。dict 快照
+路径整体删除（`drain_snapshot_source` → `session_drain_owner`）。
+**批 2b（未做）**：request 级 capture 归属（(sid, rid) 键位，rid 已在
+PendingTurn；contextvar 贯穿 stage/commit）+ overlap fail-fast 解除
+（并行 subagent 误杀）+ §10.4 Tracer/Falsifier 对 + 批 1+2 联合终核。
+**非阻塞登记（F2-4 前置，codex 批 2 放行轮）**：① FinalizationReceiptV1
+外层 paid ↔ outcome_v2.identity.physical_attempt_id 交叉校验（当前
+writer 不产矛盾对象）；② SessionDrainReceiptV1 局部严格 bool/int 校验
+（防 Pydantic 宽松强转 "true"/"0"/0.0；不全局改 StrictModel）——两项在
+F2-4 读取持久 receipt 前落地。（原"错类型测试参数化"登记随 dict 路径
+删除而作废。）
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

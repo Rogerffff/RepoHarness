@@ -481,8 +481,8 @@ class Chain:
     repair_signals: list[Any]
     base_sample: FixtureSlimeSample
     finalization: FakeFinalizationStore | None = None
-    # F2-3 批 1：sid → 预置 drain 读数（测试注入脏账目用）
-    drain_snapshots: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # F2-3 批 2a：sid → 预置 drain 结果/异常（测试注入用）
+    drain_results: dict[str, Any] = field(default_factory=dict)
 
 
 def build_dense_chain(
@@ -521,23 +521,28 @@ def build_dense_chain(
     if finalization is None and the_config.execution_mode == "fa_formal":
         finalization = FakeFinalizationStore()
 
-    # F2-3 批 1：非 s1 模式需要 drain_snapshot 注入（正式链 fail-closed）。
-    # 默认替身 = 干净会话面读数；测试可改 chain.drain_snapshots 预置脏读数。
-    drain_snapshots: dict[str, dict[str, Any]] = {}
+    # F2-3 批 2a：非 s1 模式注入 typed 单 owner drain 替身（干净结果；
+    # 测试可改 chain.drain_results 预置定制结果或让 owner 抛异常）。
+    drain_results: dict[str, Any] = {}
 
-    def fake_drain_snapshot(sid: str) -> dict[str, Any]:
-        return drain_snapshots.get(sid) or {
-            "pending_turns": 0,
-            "unfinalized_drafts": 0,
-            "poison_clean": True,
-            "revoke_enforced": True,
-            "late_requests_rejected_after_revoke": 0,
-            "turn_seq_high_water": 2,
-            "weight_versions_seen": ["5"],
-            # fa 模式 internal sid = s-{paid}（F2-2）；复核二轮 P1-1 要求
-            # 快照身份必填且与 audit 身份相等，替身按此约定回推
-            "physical_attempt_id": sid.removeprefix("s-"),
-        }
+    async def fake_drain_owner(sid: str):
+        from repoharness2.adapters.slime.capture_wire import (
+            SessionPlaneDrainResult,
+        )
+
+        if sid in drain_results:
+            v = drain_results[sid]
+            if isinstance(v, Exception):
+                raise v
+            return v
+        return SessionPlaneDrainResult(
+            physical_attempt_id=sid.removeprefix("s-"),
+            revoke_enforced=True, inflight_at_drain_start=0,
+            inflight_zero_confirmed=True, pending_turns=0,
+            unfinalized_drafts=0, poison_clean=True,
+            late_requests_rejected_after_revoke=0, turn_seq_high_water=2,
+            weight_versions_seen=["5"], drain_owner="fake_adapter_loop",
+        )
     orchestrator = RolloutOrchestrator(
         config=the_config,
         task_resolver=task if task is not None else make_task(TASK_ID_DENSE),
@@ -550,14 +555,14 @@ def build_dense_chain(
         artifact_dir=artifact_dir,
         runtime_quiescence_barrier=runtime_quiescence_barrier,
         finalization_store=finalization,
-        drain_snapshot_source=(
-            fake_drain_snapshot if the_config.execution_mode != "s1_compat" else None
+        session_drain_owner=(
+            fake_drain_owner if the_config.execution_mode != "s1_compat" else None
         ),
     )
     base_sample = FixtureSlimeSample(index=0)
     chain = Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals,
                   base_sample, finalization)
-    chain.drain_snapshots = drain_snapshots
+    chain.drain_results = drain_results
     return chain
 
 

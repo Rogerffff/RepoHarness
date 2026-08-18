@@ -175,162 +175,230 @@ async def test_guard_rejects_and_counts_revoked_request(aiohttp_client=None):
     ] == 1
 
 
-async def test_formal_chain_without_snapshot_source_fails_closed():
-    """真实执行链路（批 1 复核测试问题修正）：缺注入跑到 drain 点必须
-    fail-closed 收口（abort + 归因），不产 receipt、不评分。"""
+async def test_missing_drain_owner_is_fatal_run_halt():
+    """批 2a：owner 缺注入 = 部署级契约损坏 → Fatal（不再 abort 缺员）。"""
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
 
     chain = _formal_chain()
-    chain.orchestrator._drain_snapshot_source = None  # 拔掉注入
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
-    audit = chain.orchestrator.audits[0]
-    assert audit.session_drain_receipt is None
-    assert chain.grading.calls == []  # 不评分
-    assert audit.outcome_v2["reason_code"] == "drain_snapshot_source_missing"
-    assert any("drain_snapshot_source_missing" in f.detail
-               for f in audit.failure_records)
-
-
-async def test_incomplete_snapshot_fails_closed():
-    """严格读数：关键键缺失 ≠ 干净——fail-closed（批 1 复核 P1-2）。"""
-
-    chain = _formal_chain()
-
-    def _broken(sid):
-        return {"pending_turns": 0}  # 缺 poison_clean 等关键键
-
-    chain.orchestrator._drain_snapshot_source = _broken
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
-    audit = chain.orchestrator.audits[0]
-    assert audit.session_drain_receipt is None
-    assert audit.outcome_v2["reason_code"] == "drain_snapshot_incomplete"
-
-
-def test_finalization_receipt_identity_cross_check():
-    """内嵌 drain receipt 与 finalization receipt 的身份/引用互检。"""
-
-    from datetime import datetime, timezone
-
-    from repoharness2.contracts.finalization import FinalizationReceiptV1
-
-    dr = SessionDrainReceiptV1(
-        receipt_id="drain_e_p1", session_id="s-e", trajectory_id="t",
-        task_id="k", physical_attempt_id="e#p1-x", revoke_enforced=True,
-        pending_turns_after_drain=0, unfinalized_drafts_after_drain=0,
-        poison_clean=True, capture_record_count=1,
-        drained_at_utc=datetime.now(timezone.utc),
-    )
-    common = dict(
-        receipt_id="rcpt_e_p1", task_id="k", trajectory_id="t",
-        session_id="s-e", physical_attempt_id="e#p1-x",
-        attempt_disposition="delivery_prepared",
-        started_epoch_seconds=1.0,
-        finalized_at_utc=datetime.now(timezone.utc),
-    )
-    ok = FinalizationReceiptV1(**common, drain_receipt=dr,
-                               drain_receipt_ref=dr.receipt_id)
-    assert ok.drain_receipt_ref == "drain_e_p1"
-    with pytest.raises(ValueError, match="receipt_id"):  # ref 与内嵌不符
-        FinalizationReceiptV1(**common, drain_receipt=dr,
-                              drain_receipt_ref="drain_other")
-    with pytest.raises(ValueError, match="悬空"):  # ref 在场但内嵌缺失
-        FinalizationReceiptV1(**common, drain_receipt=None,
-                              drain_receipt_ref="drain_e_p1")
-    with pytest.raises(ValueError, match="trajectory_id"):  # 身份分家
-        FinalizationReceiptV1(**{**common, "trajectory_id": "other"},
-                              drain_receipt=dr, drain_receipt_ref=dr.receipt_id)
-
-
-async def test_s1_compat_no_drain_receipt():
-    chain = build_dense_chain()  # s1 默认
-    await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    chain.orchestrator._session_drain_owner = None
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="session_drain_owner_missing"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     assert chain.orchestrator.audits[0].session_drain_receipt is None
 
 
-# ------------------------------------------- 批 1 复核二轮（P1-1/2）
-async def test_snapshot_missing_paid_fails_closed():
-    """快照缺 physical_attempt_id → fail-closed（不回填 audit 身份洗白）。"""
+async def test_drain_owner_exception_and_bad_type_are_fatal():
+    """owner 抛异常 / 返回非 typed 结果 → Fatal（内部事实源损坏）。"""
 
-    chain = _formal_chain()
-    base = dict(pending_turns=0, unfinalized_drafts=0, poison_clean=True,
-                revoke_enforced=True, late_requests_rejected_after_revoke=0,
-                turn_seq_high_water=2, weight_versions_seen=["5"])
-
-    chain.orchestrator._drain_snapshot_source = lambda sid: dict(base)  # 缺 paid
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
-    audit = chain.orchestrator.audits[0]
-    assert audit.session_drain_receipt is None
-    assert audit.outcome_v2["reason_code"] == "drain_snapshot_incomplete"
-
-
-async def test_snapshot_wrong_paid_fails_closed():
-    """快照身份 ≠ audit 身份 → 两份事实分家，fail-closed。"""
-
-    chain = _formal_chain()
-
-    def _wrong(sid):
-        return dict(pending_turns=0, unfinalized_drafts=0, poison_clean=True,
-                    revoke_enforced=True, late_requests_rejected_after_revoke=0,
-                    turn_seq_high_water=2, weight_versions_seen=["5"],
-                    physical_attempt_id="exec_other#p9-zzzz")
-
-    chain.orchestrator._drain_snapshot_source = _wrong
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
-    audit = chain.orchestrator.audits[0]
-    assert audit.session_drain_receipt is None
-    assert audit.outcome_v2["reason_code"] == "drain_snapshot_attempt_mismatch"
-
-
-async def test_snapshot_wrong_types_fail_closed():
-    """codex 注入原样反测：字符串 bool/浮点计数/字符串 list 不再被
-    bool()/int()/list() 洗成干净事实。"""
-
-    chain = _formal_chain()
-
-    def _coerced(sid):
-        return {
-            "revoke_enforced": "false",
-            "poison_clean": "false",
-            "pending_turns": 0.9,
-            "unfinalized_drafts": 0.2,
-            "late_requests_rejected_after_revoke": 0,
-            "turn_seq_high_water": 2,
-            "weight_versions_seen": "5",
-            "physical_attempt_id": sid.removeprefix("s-"),
-        }
-
-    chain.orchestrator._drain_snapshot_source = _coerced
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
-    audit = chain.orchestrator.audits[0]
-    assert audit.session_drain_receipt is None
-    assert audit.outcome_v2["reason_code"] == "drain_snapshot_invalid_type"
-
-
-def test_fa_success_receipt_requires_drain_proof():
-    """复核二轮 P1-2：paid 在场 + delivery_prepared 而无 drain receipt =
-    无排空证据的成功，构造即拒；aborted/无 paid 不受影响。"""
-
-    from datetime import datetime, timezone
-
-    from repoharness2.contracts.finalization import FinalizationReceiptV1
-
-    common = dict(
-        receipt_id="rcpt_x", task_id="k", trajectory_id="t",
-        started_epoch_seconds=1.0, finalized_at_utc=datetime.now(timezone.utc),
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
     )
-    with pytest.raises(ValueError, match="drain_receipt"):
-        FinalizationReceiptV1(**common, physical_attempt_id="e#p1-x",
-                              attempt_disposition="delivery_prepared")
-    FinalizationReceiptV1(**common, physical_attempt_id="e#p1-x",
-                          attempt_disposition="aborted")  # drain 前终止合法
-    FinalizationReceiptV1(**common, physical_attempt_id=None,
-                          attempt_disposition="delivery_prepared")  # S1 无 fa 身份
+
+    chain = _formal_chain()
+
+    async def _raiser(sid):
+        raise OSError("owner exploded")
+
+    chain.orchestrator._session_drain_owner = _raiser
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="session_drain_owner_failed"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+
+    chain2 = _formal_chain()
+
+    async def _dict_owner(sid):
+        return {"pending_turns": 0}  # dict 时代形状：契约违约
+
+    chain2.orchestrator._session_drain_owner = _dict_owner
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="session_drain_owner_contract_violation"):
+        await chain2.orchestrator.generate(
+            _Args(), chain2.base_sample, dict(SAMPLING_PARAMS))
+
+
+async def test_drain_owner_paid_mismatch_is_fatal():
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
+    from repoharness2.adapters.slime.capture_wire import SessionPlaneDrainResult
+
+    chain = _formal_chain()
+
+    async def _wrong(sid):
+        return SessionPlaneDrainResult(
+            physical_attempt_id="exec_other#p9-zzzz", revoke_enforced=True,
+            inflight_at_drain_start=0, inflight_zero_confirmed=True,
+            pending_turns=0, unfinalized_drafts=0, poison_clean=True,
+            late_requests_rejected_after_revoke=0, turn_seq_high_water=1,
+            weight_versions_seen=["5"], drain_owner="fake")
+
+    chain.orchestrator._session_drain_owner = _wrong
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="session_drain_attempt_mismatch"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+
+
+async def test_dirty_drain_result_is_member_level_failure():
+    """类型正确但事实不干净（inflight 未归零）→ 单 execution 收口
+    （abort 缺员，不 run-halt、不冒充干净）。"""
+
+    from repoharness2.adapters.slime.capture_wire import SessionPlaneDrainResult
+
+    chain = _formal_chain()
+
+    async def _dirty(sid):
+        return SessionPlaneDrainResult(
+            physical_attempt_id=sid.removeprefix("s-"), revoke_enforced=True,
+            inflight_at_drain_start=2, inflight_zero_confirmed=False,
+            pending_turns=0, unfinalized_drafts=0, poison_clean=True,
+            late_requests_rejected_after_revoke=0, turn_seq_high_water=1,
+            weight_versions_seen=["5"], drain_owner="fake")
+
+    chain.orchestrator._session_drain_owner = _dirty
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is None
+    assert audit.outcome_v2["reason_code"] == "session_plane_drain_unclean"
+
+
+async def test_real_adapter_loop_interleaving_no_request_after_drain():
+    """批 2 核心证明（真双线程）：adapter loop 上慢请求在飞时 drain owner
+    等 inflight 归零才返回；drain 返回后新请求 403、不触达内层 handler
+    （SGLang 替身零命中）。"""
+
+    import asyncio
+    import threading
+
+    import aiohttp
+    from aiohttp import web as aiohttp_web
+    from aiohttp.test_utils import TestServer
+
+    from repoharness2.adapters.slime.capture_wire import (
+        CaptureRegistry,
+        build_session_guard_middleware,
+        make_threadsafe_session_drain_owner,
+    )
+
+    registry = CaptureRegistry()
+
+    class _Hook:
+        records: list = []
+
+    registry.register("s-ix", _Hook(), physical_attempt_id="exec_ix#p1-aaaa")
+    reached_after_drain = []
+    in_handler = asyncio.Event()  # 在 adapter loop 上创建/等待
+
+    loop_holder: dict = {}
+    server_ready = threading.Event()
+    drained_flag = threading.Event()
+
+    async def handler(request):
+        in_handler.set()
+        await asyncio.sleep(0.3)  # 慢请求：drain 必须等它
+        if drained_flag.is_set():
+            reached_after_drain.append("late-inner")  # 不该发生（在飞的允许完成）
+        return aiohttp_web.json_response({"ok": True})
+
+    def adapter_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop_holder["loop"] = loop
+
+        async def _serve():
+            app = aiohttp_web.Application(
+                middlewares=[build_session_guard_middleware(registry)])
+            app.router.add_post("/v1/messages", handler)
+            server = TestServer(app)
+            await server.start_server()
+            loop_holder["port"] = server.port
+            server_ready.set()
+            await asyncio.sleep(30)  # 挂住直到测试结束取消
+
+        try:
+            loop.run_until_complete(_serve())
+        except RuntimeError:
+            pass
+
+    t = threading.Thread(target=adapter_thread, daemon=True)
+    t.start()
+    assert server_ready.wait(5)
+    port = loop_holder["port"]
+    owner = make_threadsafe_session_drain_owner(registry, loop_holder["loop"])
+
+    async with aiohttp.ClientSession() as client:
+        slow = asyncio.create_task(client.post(
+            f"http://127.0.0.1:{port}/v1/messages",
+            headers={"Authorization": "Bearer s-ix"}, json={}))
+        # 等慢请求真正进入 handler（inflight >= 1）
+        for _ in range(100):
+            if registry._inflight.get("s-ix"):
+                break
+            await asyncio.sleep(0.01)
+        assert registry._inflight.get("s-ix") == 1
+        result = await owner("s-ix")  # 必须等 inflight 归零
+        drained_flag.set()
+        assert result.inflight_at_drain_start == 1
+        assert result.inflight_zero_confirmed is True
+        assert result.pending_turns == 0
+        assert registry._inflight.get("s-ix") is None  # 真归零
+        resp_slow = await slow
+        assert resp_slow.status == 200  # 在飞请求被允许完成（等待而非砍杀）
+        late = await client.post(
+            f"http://127.0.0.1:{port}/v1/messages",
+            headers={"Authorization": "Bearer s-ix"}, json={})
+        assert late.status == 403  # drain 后新请求拒之门外
+        body = await late.json()
+        assert body["error"]["type"] == "rh2_session_revoked"
+    assert reached_after_drain == []  # drain 返回后无新请求触达内层
+    assert registry.drain_snapshot("s-ix")[
+        "late_requests_rejected_after_revoke"] == 1
+    loop_holder["loop"].call_soon_threadsafe(
+        lambda: [t.cancel() for t in asyncio.all_tasks(loop_holder["loop"])])
+
+
+async def test_contract_violation_reaches_worker_halted():
+    """codex 批 2 首验收 e2e：owner 契约违约 → Fatal → WorkerHalted
+    （绝不伪装成 dropped group/batch_starved）。"""
+
+    import asyncio
+
+    from repoharness2.adapters.slime.async_worker import (
+        BoundedDeliveryQueue,
+        ContinuousExecutionWorker,
+        ExecutionTaskSpec,
+        WorkerHalted,
+    )
+
+    chain = _formal_chain()
+
+    async def _raiser(sid):
+        raise OSError("owner exploded")
+
+    chain.orchestrator._session_drain_owner = _raiser
+    specs = [ExecutionTaskSpec(
+        rollout_execution_id="exec_drain_1", prompt_group_id="g", member_slot=0)]
+    queue = list(specs)
+    failures: list = []
+
+    async def execute(spec):
+        return await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+
+    worker = ContinuousExecutionWorker(
+        task_source=lambda: queue.pop(0) if queue else None,
+        execute_fn=execute,
+        delivery_queue=BoundedDeliveryQueue(maxsize=8),
+        failure_sink=lambda spec, exc: failures.append(type(exc).__name__),
+        concurrency=1,
+    )
+    stop = asyncio.Event()
+    with pytest.raises(WorkerHalted, match="session_drain_owner_failed"):
+        await asyncio.wait_for(worker.run(stop), timeout=10)

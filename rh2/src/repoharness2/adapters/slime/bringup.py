@@ -67,7 +67,11 @@ from repoharness2.grading.manager import (
 )
 from repoharness2.grading.queue import GradingQueue, GradingQueueConfig
 
-from repoharness2.adapters.slime.capture_wire import CaptureRegistry, install_capture_wire
+from repoharness2.adapters.slime.capture_wire import (
+    CaptureRegistry,
+    install_capture_wire,
+    make_threadsafe_session_drain_owner,
+)
 from repoharness2.adapters.slime.docker_sandbox import DockerSandbox
 
 # ---------------------------------------------------------------------------
@@ -895,8 +899,11 @@ class BringupService:
                 if EXECUTION_MODE != "s1_compat"
                 else None
             ),
-            # F2-3 批 1：drain receipt 的 registry 账目读数
-            drain_snapshot_source=self.registry.drain_snapshot,
+            # F2-3 批 2a：adapter event-loop 单 owner drain（app 线程已在
+            # 上方启动，loop 句柄可用）
+            session_drain_owner=make_threadsafe_session_drain_owner(
+                self.registry, self.app_handle.loop
+            ),
         )
 
     def _registry_max_version(self) -> int | None:
