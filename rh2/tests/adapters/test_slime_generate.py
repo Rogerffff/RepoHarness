@@ -534,7 +534,9 @@ def build_dense_chain(
             "late_requests_rejected_after_revoke": 0,
             "turn_seq_high_water": 2,
             "weight_versions_seen": ["5"],
-            "physical_attempt_id": None,
+            # fa 模式 internal sid = s-{paid}（F2-2）；复核二轮 P1-1 要求
+            # 快照身份必填且与 audit 身份相等，替身按此约定回推
+            "physical_attempt_id": sid.removeprefix("s-"),
         }
     orchestrator = RolloutOrchestrator(
         config=the_config,

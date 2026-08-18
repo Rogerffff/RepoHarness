@@ -474,6 +474,19 @@ schema/producer scaffold 完成，production proof 待批 2**（含真实双线�
 交错测试证明 receipt 签发后无请求触达 SGLang）；批 1+批 2 联合终核后
 B6 才可信任该 receipt。writer-scope T1 手段 / B6 真实组合 / barrier
 git-free 仍开放。
+**批 1 二轮复核闭合（2026-08-19，codex 2P1 全采纳，定向复核通过即关
+批 1 直进批 2）**：**P1-1**——producer 的 `bool()/int()/list()` 强转会
+把坏输入洗成干净事实（`bool("false")==True`/`int(0.9)==0`/
+`list("5")==["5"]`），且 paid 缺失时静默回填 audit 身份；修复 = 零强转
+严格类型检查（bool 显式排除出 int 计数）、paid 进必填键且必须等于
+audit 身份（不等 = `drain_snapshot_attempt_mismatch` 两份事实分家
+fail-closed）、`weight_versions_seen` 必须真 list[str]；codex 注入
+payload 原样反测 + 缺 paid/错 paid/错类型三条真实执行负测试。
+**P1-2**——FA 成功 receipt 曾可完全没有 drain 证明；修复 =
+FinalizationReceiptV1 校验：paid 在场 ∧ delivery_prepared →
+drain_receipt 必须内嵌（S1 无 fa 身份、drain 前终止的 aborted/fatal/
+cancelled 不受影响不误伤）。测试链替身按 F2-2 约定 `sid = s-{paid}`
+回推身份。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

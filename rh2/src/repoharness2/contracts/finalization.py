@@ -229,6 +229,19 @@ class FinalizationReceiptV1(StrictModel):
                 raise ValueError(
                     "drain_receipt_ref 在场但内嵌 drain_receipt 缺失（引用悬空）。"
                 )
+            # 批 1 复核二轮 P1-2：FA 成功收口必须携带 drain 证明——
+            # physical_attempt_id 在场（fa 身份）且 delivery_prepared
+            # （样本备好交付）而没有 drain receipt = 无排空证据的成功，
+            # 构造即拒。S1（无 fa 身份）与 drain 前终止的
+            # aborted/fatal/cancelled 合法无 receipt，不误伤。
+            if (
+                self.physical_attempt_id is not None
+                and self.attempt_disposition == "delivery_prepared"
+            ):
+                raise ValueError(
+                    "FA delivery_prepared receipt 必须携带 drain_receipt"
+                    "（会话面排空证明缺席的成功不可信）。"
+                )
             return
         if self.drain_receipt_ref != dr.receipt_id:
             raise ValueError(

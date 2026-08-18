@@ -2061,49 +2061,87 @@ class RolloutOrchestrator:
                         "——没有账目就没有 typed drain receipt。",
                     )
                 snap = self._drain_snapshot_source(sid)
-                # 批 1 复核 P1-2：严格读数——关键键缺失 = 账目源不完整，
-                # fail-closed（`.get(... or 0)` 会把缺失当干净值，假阳性）。
-                required_keys = (
-                    "pending_turns",
-                    "unfinalized_drafts",
-                    "poison_clean",
-                    "revoke_enforced",
-                    "late_requests_rejected_after_revoke",
-                    "turn_seq_high_water",
-                    "weight_versions_seen",
-                )
-                missing = [k for k in required_keys if k not in snap]
+                # 批 1 复核二轮 P1-1：严格读数——关键键缺失 = 账目源不完整
+                # fail-closed；**类型不做任何强转**（`bool("false")==True`、
+                # `int(0.9)==0`、`list("5")==["5"]` 都会把坏输入洗成干净
+                # 事实）；physical_attempt_id 必填且必须等于 audit 身份。
+                def _snap_bool(key: str) -> bool:
+                    v = snap.get(key)
+                    if not isinstance(v, bool):
+                        raise SlimeBindingError(
+                            "drain_snapshot_invalid_type",
+                            f"drain 快照键 {key} 需要 bool，得到 {type(v).__name__}",
+                        )
+                    return v
+
+                def _snap_int(key: str) -> int:
+                    v = snap.get(key)
+                    # bool 是 int 子类——显式排除（True 混进计数同样是洗白）
+                    if isinstance(v, bool) or not isinstance(v, int):
+                        raise SlimeBindingError(
+                            "drain_snapshot_invalid_type",
+                            f"drain 快照键 {key} 需要 int，得到 {type(v).__name__}",
+                        )
+                    return v
+
+                missing = [
+                    k
+                    for k in (
+                        "pending_turns",
+                        "unfinalized_drafts",
+                        "poison_clean",
+                        "revoke_enforced",
+                        "late_requests_rejected_after_revoke",
+                        "turn_seq_high_water",
+                        "weight_versions_seen",
+                        "physical_attempt_id",
+                    )
+                    if k not in snap
+                ]
                 if missing:
                     raise SlimeBindingError(
                         "drain_snapshot_incomplete",
                         f"drain 账目快照缺关键键 {missing}——缺失不等于干净，"
                         "fail-closed。",
                     )
-                snap_paid = snap.get("physical_attempt_id") or physical_attempt_id
-                if not snap_paid:
+                snap_paid = snap["physical_attempt_id"]
+                if not isinstance(snap_paid, str) or not snap_paid:
                     raise SlimeBindingError(
                         "drain_receipt_missing_attempt_identity",
-                        "fa 模式签发 drain receipt 必须有 physical_attempt_id。",
+                        "fa 模式签发 drain receipt 必须有非空 physical_attempt_id。",
                     )
-                attempt_key = snap_paid
+                if snap_paid != physical_attempt_id:
+                    raise SlimeBindingError(
+                        "drain_snapshot_attempt_mismatch",
+                        f"账目快照身份 {snap_paid!r} != audit 身份 "
+                        f"{physical_attempt_id!r}——两份事实分家，fail-closed。",
+                    )
+                wv = snap["weight_versions_seen"]
+                if not isinstance(wv, list) or not all(
+                    isinstance(x, str) for x in wv
+                ):
+                    raise SlimeBindingError(
+                        "drain_snapshot_invalid_type",
+                        "weight_versions_seen 需要 list[str]。",
+                    )
                 audit.session_drain_receipt = SessionDrainReceiptV1(
                     receipt_id=(
-                        "drain_" + re.sub(r"[^A-Za-z0-9._-]", "_", attempt_key)
+                        "drain_" + re.sub(r"[^A-Za-z0-9._-]", "_", snap_paid)
                     ),
                     session_id=sid,
                     physical_attempt_id=snap_paid,
                     trajectory_id=trajectory_id,
                     task_id=task.task_id,
-                    revoke_enforced=bool(snap["revoke_enforced"]),
-                    late_requests_rejected_after_revoke=int(
-                        snap["late_requests_rejected_after_revoke"]
+                    revoke_enforced=_snap_bool("revoke_enforced"),
+                    late_requests_rejected_after_revoke=_snap_int(
+                        "late_requests_rejected_after_revoke"
                     ),
-                    pending_turns_after_drain=int(snap["pending_turns"]),
-                    unfinalized_drafts_after_drain=int(snap["unfinalized_drafts"]),
-                    poison_clean=bool(snap["poison_clean"]),
+                    pending_turns_after_drain=_snap_int("pending_turns"),
+                    unfinalized_drafts_after_drain=_snap_int("unfinalized_drafts"),
+                    poison_clean=_snap_bool("poison_clean"),
                     capture_record_count=len(hook.records),
-                    turn_seq_high_water=int(snap["turn_seq_high_water"]),
-                    weight_versions_seen=list(snap["weight_versions_seen"]),
+                    turn_seq_high_water=_snap_int("turn_seq_high_water"),
+                    weight_versions_seen=wv,
                     drained_at_utc=_now_utc(),
                 )
                 audit.mark("session_drain_receipt_issued")

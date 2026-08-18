@@ -303,20 +303,23 @@ def test_file_finalization_store_per_attempt_immutable(tmp_path):
     assert not (tmp_path / "fin" / "artifacts").exists()
     assert not list((tmp_path / "fin").rglob("*.tmp"))  # 原子写无残留
 
-    def receipt(disposition):
+    def receipt(reason):
+        # 复核二轮 P1-2 后 delivery_prepared 需带 drain 证明；本测试只关心
+        # 存储不可变性，用 aborted + 不同归因构造"同 ID 不同内容"对
         return FinalizationReceiptV1(
             receipt_id="rcpt_e1_p1-aaaa", task_id="t", trajectory_id="traj",
-            physical_attempt_id="e1#p1-aaaa", attempt_disposition=disposition,
+            physical_attempt_id="e1#p1-aaaa", attempt_disposition="aborted",
+            terminal_reason_code=reason,
             started_epoch_seconds=1.0,
             finalized_at_utc=datetime(2026, 8, 18, tzinfo=timezone.utc),
         )
 
-    store.persist_receipt(receipt("aborted"))
-    store.persist_receipt(receipt("aborted"))  # 同内容幂等
-    with pytest.raises(FinalizationStoreConflict):  # aborted 改 delivery_prepared：拒绝
-        store.persist_receipt(receipt("delivery_prepared"))
+    store.persist_receipt(receipt("reason_a"))
+    store.persist_receipt(receipt("reason_a"))  # 同内容幂等
+    with pytest.raises(FinalizationStoreConflict):  # 同 ID 改归因：拒绝
+        store.persist_receipt(receipt("reason_b"))
     rfile = adir / "receipt.json"
-    assert json.loads(rfile.read_text())["attempt_disposition"] == "aborted"  # 未被覆盖
+    assert json.loads(rfile.read_text())["terminal_reason_code"] == "reason_a"  # 未被覆盖
 
     def cleanup(failures):
         return CleanupResultAppendV1(

@@ -248,3 +248,89 @@ async def test_s1_compat_no_drain_receipt():
     chain = build_dense_chain()  # s1 默认
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     assert chain.orchestrator.audits[0].session_drain_receipt is None
+
+
+# ------------------------------------------- 批 1 复核二轮（P1-1/2）
+async def test_snapshot_missing_paid_fails_closed():
+    """快照缺 physical_attempt_id → fail-closed（不回填 audit 身份洗白）。"""
+
+    chain = _formal_chain()
+    base = dict(pending_turns=0, unfinalized_drafts=0, poison_clean=True,
+                revoke_enforced=True, late_requests_rejected_after_revoke=0,
+                turn_seq_high_water=2, weight_versions_seen=["5"])
+
+    chain.orchestrator._drain_snapshot_source = lambda sid: dict(base)  # 缺 paid
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is None
+    assert audit.outcome_v2["reason_code"] == "drain_snapshot_incomplete"
+
+
+async def test_snapshot_wrong_paid_fails_closed():
+    """快照身份 ≠ audit 身份 → 两份事实分家，fail-closed。"""
+
+    chain = _formal_chain()
+
+    def _wrong(sid):
+        return dict(pending_turns=0, unfinalized_drafts=0, poison_clean=True,
+                    revoke_enforced=True, late_requests_rejected_after_revoke=0,
+                    turn_seq_high_water=2, weight_versions_seen=["5"],
+                    physical_attempt_id="exec_other#p9-zzzz")
+
+    chain.orchestrator._drain_snapshot_source = _wrong
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is None
+    assert audit.outcome_v2["reason_code"] == "drain_snapshot_attempt_mismatch"
+
+
+async def test_snapshot_wrong_types_fail_closed():
+    """codex 注入原样反测：字符串 bool/浮点计数/字符串 list 不再被
+    bool()/int()/list() 洗成干净事实。"""
+
+    chain = _formal_chain()
+
+    def _coerced(sid):
+        return {
+            "revoke_enforced": "false",
+            "poison_clean": "false",
+            "pending_turns": 0.9,
+            "unfinalized_drafts": 0.2,
+            "late_requests_rejected_after_revoke": 0,
+            "turn_seq_high_water": 2,
+            "weight_versions_seen": "5",
+            "physical_attempt_id": sid.removeprefix("s-"),
+        }
+
+    chain.orchestrator._drain_snapshot_source = _coerced
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is None
+    assert audit.outcome_v2["reason_code"] == "drain_snapshot_invalid_type"
+
+
+def test_fa_success_receipt_requires_drain_proof():
+    """复核二轮 P1-2：paid 在场 + delivery_prepared 而无 drain receipt =
+    无排空证据的成功，构造即拒；aborted/无 paid 不受影响。"""
+
+    from datetime import datetime, timezone
+
+    from repoharness2.contracts.finalization import FinalizationReceiptV1
+
+    common = dict(
+        receipt_id="rcpt_x", task_id="k", trajectory_id="t",
+        started_epoch_seconds=1.0, finalized_at_utc=datetime.now(timezone.utc),
+    )
+    with pytest.raises(ValueError, match="drain_receipt"):
+        FinalizationReceiptV1(**common, physical_attempt_id="e#p1-x",
+                              attempt_disposition="delivery_prepared")
+    FinalizationReceiptV1(**common, physical_attempt_id="e#p1-x",
+                          attempt_disposition="aborted")  # drain 前终止合法
+    FinalizationReceiptV1(**common, physical_attempt_id=None,
+                          attempt_disposition="delivery_prepared")  # S1 无 fa 身份
