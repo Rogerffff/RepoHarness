@@ -210,8 +210,13 @@ def build_finalization_receipt(
     """从 audit 事实构造 receipt（纯函数，独立可测）。
 
     disposition 推导：致命异常在途 → fatal_run_halt；取消在途 → cancelled；
-    step9 已标记 → delivered（handed_off 只认真实样本交付那条腿）；其余 =
-    aborted。abort_reason 只是摘要（outcome_v2 才是权威归因）。"""
+    step9 已标记 → **delivery_prepared**（样本备好交回 slime——不是
+    trainer handoff，见 contracts/finalization docstring；B5 复核 P0）；
+    其余 = aborted。abort_reason 只是摘要（outcome_v2 才是权威归因）。
+    outcome_v2 typed 嵌入会复跑 Outcome v2 全量不变量——构造失败由调用方
+    并入 receipt 持久化失败通道（durable handoff 失败），不静默。"""
+
+    from repoharness2.contracts.fa_runtime import RolloutAttemptOutcomeV2
 
     if isinstance(in_flight_exception, FatalExecutionInfrastructureError):
         disposition = "fatal_run_halt"
@@ -221,7 +226,7 @@ def build_finalization_receipt(
         "step9_samples_delivered" in audit.steps
         or "step9_degraded_signal_forwarded" in audit.steps
     ):
-        disposition = "delivered"
+        disposition = "delivery_prepared"
     else:
         disposition = "aborted"
     abort_reason: str | None = None
@@ -239,7 +244,11 @@ def build_finalization_receipt(
         physical_attempt_id=audit.physical_attempt_id,
         attempt_disposition=disposition,
         abort_reason=abort_reason,
-        outcome_v2=audit.outcome_v2,
+        outcome_v2=(
+            RolloutAttemptOutcomeV2.model_validate(audit.outcome_v2)
+            if audit.outcome_v2 is not None
+            else None
+        ),
         frozen_patch_digest=audit.frozen_patch_digest,
         baseline_manifest_digest=audit.baseline_manifest_digest,
         artifact_bodies_persisted=artifact_bodies_persisted,
@@ -252,7 +261,6 @@ def build_finalization_receipt(
         eligibility_report_id=(
             audit.finalized.eligibility_report.report_id if audit.finalized else None
         ),
-        handed_off="step9_samples_delivered" in audit.steps,
         delivered_sample_count=audit.delivered_sample_count,
         runtime_quiescence_confirmed=audit.runtime_quiescence_confirmed,
         drain_receipt_ref=None,  # F2-3 落地后填
@@ -2219,6 +2227,24 @@ class RolloutOrchestrator:
                     audit.patch_entry_count = len(frozen_patch.entries)
                     audit.excluded_pathset_changed = frozen_patch.excluded_pathset_changed
                     audit.mark("frozen_patch_exported")
+                    # B5 复核 P1-2（T0 第 9 条 retention）：artifact 建立
+                    # 后**立刻**持久化本体——先于任何 hygiene 分支返回。
+                    # unsafe 只影响评分与准入，不销毁审计证据（否则 unsafe
+                    # 拒绝的 delta 随容器清理蒸发，digest 引用悬空）。
+                    # 失败 = T0 失败表第 1 行"无法建立可信 artifact
+                    # （持久化失败）"→ missing 收口。
+                    try:
+                        assert self._finalization_store is not None  # fa_formal ctor 已强制
+                        self._finalization_store.put_artifact_bodies(
+                            frozen_patch=frozen_patch,
+                            baseline_manifest=baseline_manifest,
+                        )
+                    except Exception as exc:
+                        raise SlimeBindingError(
+                            "frozen_artifact_persist_failed",
+                            f"artifact 本体持久化失败：{type(exc).__name__}: {exc}",
+                        ) from exc
+                    audit.mark("artifact_bodies_persisted")
                     # B3：hygiene 分类必须先于 grader（A-prime 第 5/7 条）。
                     # unsafe → present + 永久拒绝：不运行 grader、reward
                     # 不可得、abort 形状（训练面剔除）；准入 verdict 记
@@ -2318,23 +2344,6 @@ class RolloutOrchestrator:
                         projection.included_entry_paths
                     )
                     audit.mark("scoring_projection_built")
-                    # B5：artifact 本体 durable 持久化（content-addressed，
-                    # receipt 之前）——容器清理后评分产物仍可审计/复评。
-                    # 失败 = T0 失败表第 1 行"无法建立可信 artifact
-                    # （持久化失败）"→ SlimeBindingError → missing 收口
-                    # （有限幂等重试归 F2-4，v1 不在此重试）。
-                    try:
-                        assert self._finalization_store is not None  # fa_formal ctor 已强制
-                        self._finalization_store.put_artifact_bodies(
-                            frozen_patch=frozen_patch,
-                            baseline_manifest=baseline_manifest,
-                        )
-                    except Exception as exc:
-                        raise SlimeBindingError(
-                            "frozen_artifact_persist_failed",
-                            f"artifact 本体持久化失败：{type(exc).__name__}: {exc}",
-                        ) from exc
-                    audit.mark("artifact_bodies_persisted")
                     # B4：组装 grader 消费源（不读 workspace 的评分路径）
                     from repoharness2.grading.manager import FrozenDeltaSource
 
@@ -2519,18 +2528,21 @@ class RolloutOrchestrator:
             receipt: FinalizationReceiptV1 | None = None
             receipt_persist_failed = False
             if self._finalization_store is not None:
-                receipt = build_finalization_receipt(
-                    audit,
-                    in_flight_exception=in_flight,
-                    artifact_bodies_persisted=(
-                        "artifact_bodies_persisted" in audit.steps
-                        or any(
-                            e.step == "artifact_bodies_persisted"
-                            for e in audit.timeline
-                        )
-                    ),
-                )
                 try:
+                    # B5 复核 P1-5：构造也在失败通道内——typed outcome_v2
+                    # 嵌入会复跑全量不变量，构造失败同样是 durable handoff
+                    # 失败，不许从 finally 裸逃（掩盖首因）。
+                    receipt = build_finalization_receipt(
+                        audit,
+                        in_flight_exception=in_flight,
+                        artifact_bodies_persisted=(
+                            "artifact_bodies_persisted" in audit.steps
+                            or any(
+                                e.step == "artifact_bodies_persisted"
+                                for e in audit.timeline
+                            )
+                        ),
+                    )
                     self._finalization_store.persist_receipt(receipt)
                     audit.mark("finalization_receipt_persisted")
                 except Exception as exc:  # noqa: BLE001 —— 分路处置，绝不静默
@@ -2554,13 +2566,16 @@ class RolloutOrchestrator:
                     if sandbox is not None:
                         self.cleanup_quarantine.append(sandbox.container_name)
                     audit.mark("finalization_receipt_write_failed")
-            audit.mark("cleanup_started")
             cleanup_exception = False
-            if receipt_persist_failed and self._mode != "s1_compat":
+            cleanup_skipped = receipt_persist_failed and self._mode != "s1_compat"
+            if cleanup_skipped:
                 # 保留现场：session 不 drop、容器不清、poison 不释放
                 # （s1_compat 容忍档与 audit sink 同口径：落账后照常清理）。
-                pass
+                # B5 复核 P1-4：跳过就如实标注跳过——不写
+                # cleanup_started/cleanup_completed 假事件。
+                audit.mark("cleanup_skipped_receipt_failure")
             else:
+                audit.mark("cleanup_started")
                 if session_open:
                     try:
                         await adapter.drop_session(sid, wait_timeout=5.0)
@@ -2587,7 +2602,8 @@ class RolloutOrchestrator:
                             )
                         )
                         self.cleanup_quarantine.append(sandbox.container_name)
-            audit.mark("cleanup_completed")
+            if not cleanup_skipped:
+                audit.mark("cleanup_completed")
             poison_released = False
             if (
                 receipt_persist_failed
@@ -2645,7 +2661,18 @@ class RolloutOrchestrator:
                 try:
                     self._audit_sink(audit)
                 except Exception as exc:  # noqa: BLE001 —— 分链路处置
-                    if self._mode != "s1_compat" or self.config.require_real_weight_versions:
+                    if receipt_persist_failed and self._mode != "s1_compat":
+                        # B5 复核 P1-4：双存储失败时**首因优先**——receipt
+                        # 失败发生在前，sink 失败只记 secondary fact，最终
+                        # 抛的必须是 finalization_receipt_write_failed。
+                        audit.failure_records.append(
+                            RolloutFailureRecord(
+                                stage="finalization_receipt",
+                                error_type="audit_sink_failed_secondary",
+                                detail=f"{type(exc).__name__}: {exc}"[:500],
+                            )
+                        )
+                    elif self._mode != "s1_compat" or self.config.require_real_weight_versions:
                         # 轮次 14 仍需修正 3：裸 raise 会被 worker 当普通成员
                         # 失败（failure_sink 成功就继续 top-up）——包装成基建
                         # 级致命错误，worker 据此停机（真 run-halt）
@@ -2654,7 +2681,8 @@ class RolloutOrchestrator:
                             f"审计存储不可用：{type(exc).__name__}: {exc}——"
                             "继续 top-up 只会积累无审计依据的 rollout。",
                         ) from exc
-                    print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
+                    else:
+                        print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
             if receipt_persist_failed and self._mode != "s1_compat" and in_flight is None:
                 # B5（T0 失败表第 2 行）：durable handoff 失败 → run halt
                 # （worker 停机）。现场已保留（上方跳过 cleanup + 隔离队列）。

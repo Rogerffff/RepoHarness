@@ -82,36 +82,28 @@ ADAPTER_PUBLIC_HOST = os.environ.get("ADAPTER_PUBLIC_HOST", "172.17.0.1")
 ARTIFACT_DIR = Path(os.environ.get("RH2_BRINGUP_ARTIFACT_DIR", "/root/bringup/artifacts"))
 
 
-def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
-    """原子 + 耐久写：临时文件 fsync → os.replace → 父目录 fsync（B5
-    receipt 的"原子持久化"原语；崩溃只会留下完整旧态或完整新态，不会
-    半行——目录 fsync 保证 rename 本身也落盘，缺它则崩溃后文件可能整个
-    消失，receipt 的 durable 承诺不成立）。"""
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False, sort_keys=True, default=str)
-        fh.flush()
-        os.fsync(fh.fileno())
-    os.replace(tmp, path)
-    dir_fd = os.open(path.parent, os.O_RDONLY)
-    try:
-        os.fsync(dir_fd)
-    finally:
-        os.close(dir_fd)
+class FinalizationStoreConflict(RuntimeError):
+    """同一路径第二次写入且内容不同 = 不可变性违约（typed fatal 通道：
+    body 冲突走"无法建立可信 artifact"，receipt 冲突走 durable handoff
+    失败——都不会静默覆盖已落盘事实）。"""
 
 
 class FileFinalizationStore:
     """B5 durable handoff 的文件实现（generate.FinalizationStore 协议）。
 
-    布局（root = ARTIFACT_DIR/finalization）：
-    - artifacts/frozen_patch/<hex>.json、artifacts/baseline_manifest/<hex>.json
-      ——content-addressed，按 digest 幂等去重（baseline 同任务同镜像跨
-      attempt 复用，实际只落一份；frozen patch 每 attempt 一份、KB 级）；
-    - receipts/<attempt>.receipt.json——原子替换（persist_receipt）；
-    - receipts/<attempt>.cleanup.json——**独立文件**追加 cleanup 结果，
-      永不改写 receipt 本体。
+    T0 第 9 条逐字（B5 复核 P1-3 纠正首版共享 CAS 偏离）：
+    **per-execution immutable 目录、不建全局 CAS**。布局（root =
+    ARTIFACT_DIR/finalization）：
+
+        attempts/<attempt_key>/frozen_patch.json
+        attempts/<attempt_key>/baseline_manifest.json
+        attempts/<attempt_key>/receipt.json
+        attempts/<attempt_key>/cleanup.json     （独立追加，非 receipt 改写）
+
+    全部文件 **write-once**：同内容重复写幂等成功；同路径不同内容 =
+    FinalizationStoreConflict（typed，绝不覆盖）。baseline manifest 因此
+    每 attempt 一份（不去重）——存储成本随 attempt 数线性，真实尺寸在
+    B6/FA-5 实测；若需共享 CAS 必须按 T0 重新提案，不得 T1 偷渡。
     """
 
     def __init__(self, root: Path) -> None:
@@ -121,38 +113,52 @@ class FileFinalizationStore:
     def _safe(name: str) -> str:
         return re.sub(r"[^A-Za-z0-9._-]", "_", name)
 
-    def _put_body(self, kind: str, digest: str, payload: dict[str, Any]) -> None:
-        path = self.root / "artifacts" / kind / f"{digest.removeprefix('sha256:')}.json"
-        if path.exists():  # content-addressed：同 digest 即同内容，幂等跳过
-            return
-        _atomic_write_json(path, payload)
+    def _attempt_dir(self, attempt_key: str) -> Path:
+        return self.root / "attempts" / self._safe(attempt_key)
+
+    @staticmethod
+    def _write_once(path: Path, payload: dict[str, Any]) -> None:
+        canonical = json.dumps(
+            payload, ensure_ascii=False, sort_keys=True, default=str
+        )
+        if path.exists():
+            if path.read_text(encoding="utf-8") == canonical:
+                return  # 同内容重写：幂等
+            raise FinalizationStoreConflict(
+                f"immutable 违约：{path} 已存在且内容不同（拒绝覆盖）"
+            )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(canonical)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+        dir_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
 
     def put_artifact_bodies(self, *, frozen_patch: Any, baseline_manifest: Any) -> None:
-        from repoharness2.contracts.baseline_manifest import (
-            compute_baseline_manifest_digest,
-        )
-        from repoharness2.contracts.frozen_patch import compute_frozen_patch_digest
-
-        self._put_body(
-            "frozen_patch",
-            compute_frozen_patch_digest(frozen_patch),
-            frozen_patch.model_dump(mode="json"),
-        )
-        self._put_body(
-            "baseline_manifest",
-            compute_baseline_manifest_digest(baseline_manifest),
-            baseline_manifest.model_dump(mode="json"),
+        adir = self._attempt_dir(frozen_patch.physical_attempt_id)
+        self._write_once(adir / "frozen_patch.json", frozen_patch.model_dump(mode="json"))
+        self._write_once(
+            adir / "baseline_manifest.json", baseline_manifest.model_dump(mode="json")
         )
 
     def persist_receipt(self, receipt: Any) -> None:
-        _atomic_write_json(
-            self.root / "receipts" / f"{self._safe(receipt.receipt_id)}.receipt.json",
+        attempt_key = receipt.physical_attempt_id or receipt.trajectory_id
+        self._write_once(
+            self._attempt_dir(attempt_key) / "receipt.json",
             receipt.model_dump(mode="json"),
         )
 
     def append_cleanup_result(self, result: Any) -> None:
-        _atomic_write_json(
-            self.root / "receipts" / f"{self._safe(result.receipt_id)}.cleanup.json",
+        # receipt_id = "rcpt_" + 已消毒 attempt key（generate 构造保证）
+        attempt_key = result.receipt_id.removeprefix("rcpt_")
+        self._write_once(
+            self._attempt_dir(attempt_key) / "cleanup.json",
             result.model_dump(mode="json"),
         )
 HARNESS_KIND = os.environ.get("RH2_BRINGUP_HARNESS", "claude_code")  # claude_code | simple
@@ -886,8 +892,14 @@ class BringupService:
             capture_boundary_check=self.registry.assert_session_clean,
             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
             audit_sink=self._write_execution_audit,
-            # B5：receipt + artifact body durable handoff（cleanup 前置条件）
-            finalization_store=FileFinalizationStore(ARTIFACT_DIR / "finalization"),
+            # B5：receipt + artifact body durable handoff（cleanup 前置
+            # 条件）。s1_compat 不注入——与"无 store 的 S1 回归"口径一致
+            # （B5 复核非阻塞项）；receipt 语义从 fa_audit_only 起生效。
+            finalization_store=(
+                FileFinalizationStore(ARTIFACT_DIR / "finalization")
+                if EXECUTION_MODE != "s1_compat"
+                else None
+            ),
         )
 
     def _registry_max_version(self) -> int | None:

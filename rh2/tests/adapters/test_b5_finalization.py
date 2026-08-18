@@ -1,7 +1,7 @@
 """B5 验收（05 计划 5a 节）：
 ① receipt 前 cleanup 不发生（正序 + persist 失败保留现场 run-halt）；
 ② cleanup failure 追加、不覆盖首因（独立记录，receipt 不改写）；
-③ F2-4 可复用 receipt 字段（outcome_v2 verbatim / handed_off / digest 引用）；
+③ F2-4 可复用 receipt 字段（outcome_v2 typed / delivery_prepared 定界 / digest 引用）；
 另：artifact 本体持久化失败 = T0 失败表第 1 行（missing 收口）；
 S1 无 store 行为逐字不变；FileFinalizationStore 原子写单元测试。
 """
@@ -112,7 +112,7 @@ async def test_cleanup_failure_appended_receipt_untouched():
     assert len(store.receipts) == 1  # receipt 恰好持久化一次，从未改写
     assert store.call_order.count("persist_receipt") == 1
     receipt = store.receipts[0]
-    assert receipt.attempt_disposition == "delivered"  # 首因事实完好
+    assert receipt.attempt_disposition == "delivery_prepared"  # 首因事实完好
     assert len(store.cleanup_results) == 1
     append = store.cleanup_results[0]
     assert append.receipt_id == receipt.receipt_id
@@ -126,9 +126,13 @@ async def test_receipt_fields_reusable_by_f2_4():
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     receipt = chain.finalization.receipts[0]
-    assert receipt.attempt_disposition == "delivered"
-    assert receipt.handed_off is True  # HANDED_OFF → F2-4 uncertain_trained 判据
-    assert receipt.outcome_v2 == audit.outcome_v2  # 事实层 verbatim
+    assert receipt.attempt_disposition == "delivery_prepared"
+    # B5 复核 P0：receipt 不承载 trainer handoff 语义（HANDED_OFF 归 F2-5/6）
+    assert not hasattr(receipt, "handed_off")
+    # typed 嵌入 = 同一事实（构造期已复跑 Outcome v2 不变量）
+    from repoharness2.contracts.fa_runtime import RolloutAttemptOutcomeV2
+
+    assert receipt.outcome_v2 == RolloutAttemptOutcomeV2.model_validate(audit.outcome_v2)
     assert receipt.physical_attempt_id == audit.physical_attempt_id
     assert receipt.frozen_patch_digest == audit.frozen_patch_digest
     assert receipt.baseline_manifest_digest == audit.baseline_manifest_digest
@@ -194,9 +198,11 @@ async def test_abort_path_still_gets_receipt():
     store = chain.finalization
     receipt = store.receipts[0]
     assert receipt.attempt_disposition == "aborted"  # 软失败收口
-    assert receipt.handed_off is False
     assert receipt.abort_reason == "unsafe_artifact_permanent_rejection"
-    assert receipt.outcome_v2["reason_code"] == "unsafe_artifact_permanent_rejection"
+    # B5 复核 P1-2（T0 第 9 条 retention）：unsafe 拒绝也保留 artifact 本体
+    assert store.bodies, "unsafe 分支必须先持久化本体再返回"
+    assert receipt.artifact_bodies_persisted is True
+    assert receipt.outcome_v2.reason_code == "unsafe_artifact_permanent_rejection"
     assert store.call_order.index("persist_receipt") < store.call_order.index("docker_rm")
 
 
@@ -212,10 +218,9 @@ async def test_artifact_body_persist_failure_is_missing_abort():
     assert chain.grading.calls == []  # 不评分
     receipt = store.receipts[0]
     assert receipt.attempt_disposition == "aborted"
-    assert receipt.handed_off is False
     assert receipt.artifact_bodies_persisted is False
     assert receipt.abort_reason == "frozen_artifact_persist_failed"
-    assert receipt.outcome_v2["reward_unavailable"] is True
+    assert receipt.outcome_v2.reward_unavailable is True
 
 
 # ------------------------------------------- S1 回归 + 文件实现
@@ -246,14 +251,17 @@ def test_fa_formal_requires_store():
         )
 
 
-def test_file_finalization_store_atomic_and_append_only(tmp_path):
-    """文件实现：原子写（无 .tmp 残留）、content-addressed 去重、cleanup
-    独立文件（receipt 本体不改写）。"""
+def test_file_finalization_store_per_attempt_immutable(tmp_path):
+    """T0 第 9 条：per-execution immutable 目录、无全局 CAS；write-once
+    （同内容幂等 / 不同内容 typed 冲突）；cleanup 独立文件不改写 receipt。"""
 
     import json
     from datetime import datetime, timezone
 
-    from repoharness2.adapters.slime.bringup import FileFinalizationStore
+    from repoharness2.adapters.slime.bringup import (
+        FileFinalizationStore,
+        FinalizationStoreConflict,
+    )
     from repoharness2.contracts.baseline_manifest import (
         BASELINE_MANIFEST_POLICY_V1,
         BaselineWorkspaceManifestV1,
@@ -264,10 +272,7 @@ def test_file_finalization_store_atomic_and_append_only(tmp_path):
         CleanupResultAppendV1,
         FinalizationReceiptV1,
     )
-    from repoharness2.contracts.frozen_patch import (
-        FrozenPatchArtifactV1,
-        compute_frozen_patch_digest,
-    )
+    from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1
 
     store = FileFinalizationStore(tmp_path / "fin")
     baseline = BaselineWorkspaceManifestV1(
@@ -289,27 +294,90 @@ def test_file_finalization_store_atomic_and_append_only(tmp_path):
         entries=(), excluded_pathset_changed=False,
     )
     store.put_artifact_bodies(frozen_patch=art, baseline_manifest=baseline)
-    store.put_artifact_bodies(frozen_patch=art, baseline_manifest=baseline)  # 幂等
-    fp_dir = tmp_path / "fin" / "artifacts" / "frozen_patch"
-    assert len(list(fp_dir.glob("*.json"))) == 1
-    fp_file = next(fp_dir.glob("*.json"))
-    assert fp_file.stem == compute_frozen_patch_digest(art).removeprefix("sha256:")
+    store.put_artifact_bodies(frozen_patch=art, baseline_manifest=baseline)  # 同内容幂等
+    adir = tmp_path / "fin" / "attempts" / "e1_p1-aaaa"
+    assert (adir / "frozen_patch.json").exists()
+    assert (adir / "baseline_manifest.json").exists()  # per-attempt，无共享 CAS 目录
+    assert not (tmp_path / "fin" / "artifacts").exists()
     assert not list((tmp_path / "fin").rglob("*.tmp"))  # 原子写无残留
 
-    receipt = FinalizationReceiptV1(
-        receipt_id="rcpt_e1_p1-aaaa", task_id="t", trajectory_id="traj",
-        physical_attempt_id="e1#p1-aaaa", attempt_disposition="delivered",
-        started_epoch_seconds=1.0,
-        finalized_at_utc=datetime.now(timezone.utc),
-    )
-    store.persist_receipt(receipt)
-    rfile = tmp_path / "fin" / "receipts" / "rcpt_e1_p1-aaaa.receipt.json"
+    def receipt(disposition):
+        return FinalizationReceiptV1(
+            receipt_id="rcpt_e1_p1-aaaa", task_id="t", trajectory_id="traj",
+            physical_attempt_id="e1#p1-aaaa", attempt_disposition=disposition,
+            started_epoch_seconds=1.0,
+            finalized_at_utc=datetime(2026, 8, 18, tzinfo=timezone.utc),
+        )
+
+    store.persist_receipt(receipt("aborted"))
+    store.persist_receipt(receipt("aborted"))  # 同内容幂等
+    with pytest.raises(FinalizationStoreConflict):  # aborted 改 delivery_prepared：拒绝
+        store.persist_receipt(receipt("delivery_prepared"))
+    rfile = adir / "receipt.json"
+    assert json.loads(rfile.read_text())["attempt_disposition"] == "aborted"  # 未被覆盖
+
+    def cleanup(failures):
+        return CleanupResultAppendV1(
+            receipt_id="rcpt_e1_p1-aaaa",
+            cleanup_failures=failures,
+            completed_at_utc=datetime(2026, 8, 18, 0, 0, 5, tzinfo=timezone.utc),
+        )
+
+    from repoharness2.contracts.finalization import CleanupFailureFact
+
+    first = cleanup([CleanupFailureFact(lease_id="l", step="rm", detail="rm failed")])
+    store.append_cleanup_result(first)
     before = rfile.read_bytes()
-    store.append_cleanup_result(CleanupResultAppendV1(
-        receipt_id=receipt.receipt_id,
-        completed_at_utc=datetime.now(timezone.utc),
-    ))
-    cfile = tmp_path / "fin" / "receipts" / "rcpt_e1_p1-aaaa.cleanup.json"
-    assert cfile.exists()  # 独立追加文件
-    assert rfile.read_bytes() == before  # receipt 本体逐字未动
-    assert json.loads(rfile.read_text())["attempt_disposition"] == "delivered"
+    with pytest.raises(FinalizationStoreConflict):  # 第二次写抹掉失败事实：拒绝
+        store.append_cleanup_result(cleanup([]))
+    assert rfile.read_bytes() == before  # receipt 本体始终未动
+    stored = json.loads((adir / "cleanup.json").read_text())
+    assert stored["cleanup_failures"][0]["step"] == "rm"  # 首次失败事实保留
+
+
+# ------------------------------------------- P0 / P1-4 复核负测试
+async def test_receipt_then_audit_sink_failure_never_claims_handoff():
+    """B5 复核 P0 场景：receipt 成功后 audit sink 失败 → generate 抛
+    Fatal，样本从未离开 orchestrator——receipt 只说 delivery_prepared，
+    没有任何 trainer handoff 字段可被 F2-4 误读成 uncertain_trained。"""
+
+    chain = _formal_chain()
+
+    def _failing_sink(audit):
+        raise OSError("audit store down")
+
+    chain.orchestrator._audit_sink = _failing_sink
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="execution_audit_write_failed"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    receipt = chain.finalization.receipts[0]
+    assert receipt.attempt_disposition == "delivery_prepared"
+    assert not hasattr(receipt, "handed_off")  # trainer handoff 语义不存在
+
+
+async def test_double_store_failure_first_cause_wins():
+    """B5 复核 P1-4：receipt 失败 + audit sink 也失败 → 最终抛的是
+    finalization_receipt_write_failed（最早首因），sink 失败记 secondary；
+    不写 cleanup_started/cleanup_completed 假事件，标 cleanup_skipped。"""
+
+    store = FakeFinalizationStore(fail_persist_receipt=True)
+    chain = _formal_chain(store)
+
+    def _failing_sink(audit):
+        raise OSError("audit store down")
+
+    chain.orchestrator._audit_sink = _failing_sink
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="finalization_receipt_write_failed"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    steps = [e.step for e in audit.timeline]
+    assert "cleanup_skipped_receipt_failure" in steps
+    assert "cleanup_started" not in steps  # 跳过就不写假事件
+    assert "cleanup_completed" not in steps
+    assert any(f.error_type == "audit_sink_failed_secondary"
+               for f in audit.failure_records)
+    assert any(f.error_type == "finalization_receipt_write_failed"
+               for f in audit.failure_records)

@@ -41,6 +41,9 @@ EXPECTED_EXTRA_IDS = {
     "rh2.fa.scoring_projection.v1",
     "rh2.fa.training_runtime_window.v1",
     "rh2.fa.model_call_attempt.v1",
+    # B5：finalization receipt + cleanup 追加（F2-4 恢复读取面）
+    "rh2.fa.finalization_receipt.v1",
+    "rh2.fa.cleanup_result_append.v1",
 }
 
 
@@ -333,6 +336,27 @@ def _environment_package_payload():
     }
 
 
+def _finalization_receipt_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.finalization_receipt.v1",
+        "receipt_id": "rcpt_exec_1_p1-aaaa",
+        "task_id": "swe_gym_lite::getmoto__moto-1",
+        "trajectory_id": "traj_1",
+        "physical_attempt_id": "exec_1#p1-aaaa",
+        "attempt_disposition": "delivery_prepared",
+        "started_epoch_seconds": 1.0,
+        "finalized_at_utc": "2026-08-18T00:00:00+00:00",
+    }
+
+
+def _cleanup_result_payload() -> dict:
+    return {
+        "schema_id": "rh2.fa.cleanup_result_append.v1",
+        "receipt_id": "rcpt_exec_1_p1-aaaa",
+        "completed_at_utc": "2026-08-18T00:00:05+00:00",
+    }
+
+
 @pytest.mark.parametrize("schema_id", sorted(EXPECTED_EXTRA_IDS))
 def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
     factories = {
@@ -352,6 +376,8 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.fa.scoring_projection.v1": _scoring_projection_payload,
         "rh2.fa.training_runtime_window.v1": _fa_window_payload,
         "rh2.fa.model_call_attempt.v1": _fa_attempt_payload,
+        "rh2.fa.finalization_receipt.v1": _finalization_receipt_payload,
+        "rh2.fa.cleanup_result_append.v1": _cleanup_result_payload,
     }
     payload = factories[schema_id]()
     payload["unexpected_extra_field"] = "smuggled"

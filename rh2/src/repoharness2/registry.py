@@ -42,6 +42,10 @@ from repoharness2.contracts import (
     StrictModel,
 )
 from repoharness2.contracts.baseline_manifest import BaselineWorkspaceManifestV1
+from repoharness2.contracts.finalization import (
+    CleanupResultAppendV1,
+    FinalizationReceiptV1,
+)
 from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1
 from repoharness2.contracts.scoring_projection import ScoringProjectionArtifactV1
 from repoharness2.contracts.fa_runtime import (
@@ -97,6 +101,10 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.fa.scoring_projection.v1": ScoringProjectionArtifactV1,
     "rh2.fa.training_runtime_window.v1": TrainingRuntimeWindow,
     "rh2.fa.model_call_attempt.v1": ModelCallAttempt,
+    # B5（A-prime T0 第 7/9 条）：per-attempt 终局记录 + cleanup 追加事实
+    # （F2-4 恢复端的读取面——受体 typed 嵌入 Outcome v2）
+    "rh2.fa.finalization_receipt.v1": FinalizationReceiptV1,
+    "rh2.fa.cleanup_result_append.v1": CleanupResultAppendV1,
 }
 
 _overlap = set(EXTRA_SCHEMA_REGISTRY) & set(SCHEMA_REGISTRY)

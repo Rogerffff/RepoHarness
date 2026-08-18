@@ -388,10 +388,35 @@ content-addressed 幂等去重（baseline 同任务跨 attempt 实际一份，fr
 patch 每 attempt KB 级）。验收测试 9 项全过：正序（bodies→receipt→
 docker rm→append）、persist 失败保留现场+Fatal+无悬空追加、rm 失败追加
 不改写 receipt（byte-equal）、F2-4 字段复用断言、abort/body-fail 路径
-receipt、S1 无 store 逐字回归、文件实现原子/去重/独立追加。下一片 =
-**B6 真实组合验证**（fa_formal 开闸前置：F2-3 typed drain receipt、
-writer-scope T1 手段、barrier git-free 指纹替换、
-environment_package_digest 非 None 检查）。
+receipt、S1 无 store 逐字回归、文件实现原子/去重/独立追加。
+**B5 复核闭合（2026-08-18，codex 1P0+4P1 全采纳）**：**P0**——receipt
+在 finally 写入时结果还没离开 orchestrator（后有 worker queue/组装/
+collect_batch 三道关），"delivered/handed_off"是结构上不可能成立的
+声明；改为 **delivery_prepared** 定界并**删除 handed_off 字段**——
+trainer HANDED_OFF 只能由 F2-5/F2-6 在 batch 真正交付时记录，F2-4 读法
+= delivery_prepared 且无交付记录 → 未进训练（负测试：receipt 成功 +
+audit sink 失败 → Fatal，receipt 无 handoff 语义可误读）。**P1-2**——
+本体持久化移到 export 后、任何 hygiene 分支返回**之前**：unsafe 拒绝也
+保留审计证据（T0 第 9 条 retention），负测试断言 unsafe 路径 bodies 已
+落。**P1-3（纠正我对 T0 第 9 条的偏离）**——首版共享 digest CAS +
+os.replace 覆盖违反"per-execution immutable 目录、不建全局 CAS"逐字
+文本；重写为 attempts/<attempt_key>/ 独立目录、全文件 write-once（同
+内容幂等 / 不同内容 FinalizationStoreConflict typed 拒绝，aborted 改
+delivery_prepared、二次 cleanup 抹失败事实均有拒绝测试）；baseline 每
+attempt 一份的存储成本登记 B6/FA-5 实测，共享 CAS 若确需按 T0 重新提案。
+**P1-4**——跳过 cleanup 时不再写 cleanup_started/completed 假事件（标
+cleanup_skipped_receipt_failure）；双存储失败时首因优先：sink 失败记
+audit_sink_failed_secondary，最终抛 finalization_receipt_write_failed。
+**P1-5**——两契约入 EXTRA_SCHEMA_REGISTRY（rh2.fa.finalization_receipt
+.v1 / rh2.fa.cleanup_result_append.v1，unknown-field 参数化测试覆盖）；
+`outcome_v2` 从裸 dict 改 **RolloutAttemptOutcomeV2 typed 嵌入**（构造
+期复跑全量不变量），receipt **构造**失败也并入 durable-handoff 失败
+通道（不从 finally 裸逃）。非阻塞登记：同步 fsync 阻塞 event loop
+（探针 ~0.62s）——B6/FA-5 真实尺寸实测后再定 to_thread；bringup 改为
+s1_compat 不注入 store（与"无 store S1 回归"口径一致，receipt 从
+fa_audit_only 起生效）。下一片 = **B6 真实组合验证**（fa_formal 开闸
+前置：F2-3 typed drain receipt、writer-scope T1 手段、barrier git-free
+指纹替换、environment_package_digest 非 None 检查）。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
