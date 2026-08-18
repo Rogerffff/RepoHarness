@@ -2726,15 +2726,36 @@ class RolloutOrchestrator:
         ]
 
         async def _grade() -> GradingReport:
+            from repoharness2.grading.manager import BaselineIntegrityError
+
             audit.mark("grading_started")
-            report = await self._grading_submit(
-                trajectory_id=trajectory_id,
-                # B4：frozen_delta 在场时 grader 不读 workspace（传 None，
-                # 契约级保证"不回读 rollout workspace"）
-                workspace=None if frozen_delta is not None else workspace,
-                spec=task.grading_spec,
-                **({"frozen_delta": frozen_delta} if frozen_delta is not None else {}),
-            )
+            try:
+                report = await self._grading_submit(
+                    trajectory_id=trajectory_id,
+                    # B4：frozen_delta 在场时 grader 不读 workspace（传 None，
+                    # 契约级保证"不回读 rollout workspace"）
+                    workspace=None if frozen_delta is not None else workspace,
+                    spec=task.grading_spec,
+                    **({"frozen_delta": frozen_delta} if frozen_delta is not None else {}),
+                )
+            except BaselineIntegrityError as exc:
+                # B4 P0-1：exact-baseline 重建/绑定矛盾 = grader 看到的树
+                # ≠ 模型开工时的树（或同进程事实分家）——系统性契约错误，
+                # 与 B3 ProjectionContractError 同通道 run-halt，不许转
+                # failed_to_grade 当成员损耗继续训练。
+                audit.failure_records.append(
+                    RolloutFailureRecord(
+                        stage="grading_baseline_verify",
+                        error_type=exc.reason_code,
+                        detail=str(exc)[:500],
+                    )
+                )
+                audit.mark("grading_baseline_integrity_mismatch")
+                raise FatalExecutionInfrastructureError(
+                    exc.reason_code,
+                    f"exact-baseline 校验失败：{exc}——按 A-prime 失败表 "
+                    "run-halt，不得作为成员损耗继续。",
+                ) from exc
             audit.step("step6_grading_completed")
             return report
 

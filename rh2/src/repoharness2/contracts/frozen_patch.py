@@ -37,8 +37,15 @@ __all__ = [
 def _check_canonical_path(path: str) -> None:
     if path.startswith("/"):
         raise ValueError(f"路径必须相对：{path!r}")
-    if "\x00" in path:
-        raise ValueError("路径含 NUL。")
+    # 控制字符（含 TAB 0x09 / LF 0x0a / NUL 0x00 / DEL 0x7f）一律拒绝。
+    # 双重理由：① census 线协议是 `\t` 分隔、`\n` 分行的（baseline_census
+    # 与 patch_exporter），路径里带这些字节会破坏解析；② applied_entry_set
+    # canonical digest 也是 `\t`/`\n` 拼接，若路径可含这些字节则单条 entry
+    # 能伪造多条 entry 的规范行 → digest 碰撞（Falsifier F5）。空格（0x20）
+    # 是合法文件名字符，保留。
+    for ch in path:
+        if ch < "\x20" or ch == "\x7f":
+            raise ValueError(f"路径含控制字符（0x{ord(ch):02x}）：{path!r}")
     if any(p in ("", ".", "..") for p in path.split("/")):
         raise ValueError(f"路径必须 canonical：{path!r}")
 

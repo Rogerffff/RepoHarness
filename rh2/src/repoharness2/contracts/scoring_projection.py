@@ -79,10 +79,15 @@ class ScoringProjectionArtifactV1(StrictModel):
 
 def _resolve_symlink_lexically(entry_path: str, target: bytes) -> str | None:
     """以 entry 父目录为基准做**纯词法** POSIX 归一化（阻塞 1：不做图
-    遍历/循环解析/真实 follow）。返回归一化相对路径；逃出 workspace 根
-    或绝对路径 → None。"""
+    遍历/循环解析/真实 follow）。返回归一化相对路径；逃出 workspace 根、
+    绝对路径或非 UTF-8 target → None（B4 修正 c：v1 不支持非 UTF-8
+    target——半支持状态会让它穿过 B2/B3 却在 B4 应用层裸抛
+    UnicodeDecodeError；此处 typed fail-closed，归 unsafe 家族拒收）。"""
 
-    text = target.decode("utf-8", errors="replace")
+    try:
+        text = target.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return None
     if text.startswith("/") or "\x00" in text:
         return None
     parts = entry_path.split("/")[:-1]  # 父目录
@@ -145,6 +150,14 @@ def classify_frozen_patch(
                 reasons.append(f"entry_in_excluded_namespace:{e.path}")
         if e.object_type == "symlink" and e.operation != "delete":
             target = base64.b64decode(e.content_b64 or "", validate=True)
+            try:
+                target.decode("utf-8", errors="strict")
+            except UnicodeDecodeError:
+                # B4 修正 c：非 UTF-8 target v1 不支持——在这里 typed
+                # fail-closed（unsafe 家族、独立 reason code），绝不带着
+                # 半支持状态流进 B4 应用层变成裸 UnicodeDecodeError。
+                reasons.append(f"unsupported_symlink_target_encoding:{e.path}")
+                continue
             resolved = _resolve_symlink_lexically(e.path, target)
             if resolved is None:
                 reasons.append(f"unsafe_symlink_escape:{e.path}")

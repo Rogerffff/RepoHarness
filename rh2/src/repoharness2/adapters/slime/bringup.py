@@ -971,7 +971,11 @@ class BringupService:
     def _adapter_factory(self, hook, session_defaults):
         return make_per_rollout_adapter(self.registry, self.adapter, hook)
 
-    async def _grading_submit(self, *, trajectory_id, workspace, spec):
+    async def _grading_submit(self, *, trajectory_id, workspace, spec, frozen_delta=None):
+        # frozen_delta 透传（B4 tracer 发现的潜伏缺口）：bringup 今日硬拒
+        # fa_formal（唯一会组装 frozen_delta 的模式），但签名若不同步，
+        # fa_formal 解禁时 _grade 传 kwarg 会 TypeError 塌成 per-member
+        # abort，B4 绑定/重建检查一次都不执行——先把管道铺平。
         if INJECT_INFRA_INSTANCE and spec.task_id == INJECT_INFRA_INSTANCE:
             fired = False
             try:  # marker 文件 O_EXCL 原子创建 = 恰好注入一次
@@ -984,7 +988,8 @@ class BringupService:
             if fired:
                 spec = dataclasses.replace(spec, eval_script=_INJECTED_EVAL_SCRIPT)
         return await self.grading_queue.submit(
-            trajectory_id=trajectory_id, workspace=workspace, spec=spec
+            trajectory_id=trajectory_id, workspace=workspace, spec=spec,
+            frozen_delta=frozen_delta,
         )
 
     # -- 事件记录 --------------------------------------------------------------

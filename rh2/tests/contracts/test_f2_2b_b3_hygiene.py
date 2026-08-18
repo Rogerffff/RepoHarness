@@ -440,3 +440,90 @@ async def test_e2e_unsafe_artifact_present_rejected_no_grader(tmp_path):
     assert ov2["reason_code"] == "unsafe_artifact_permanent_rejection"
     assert ov2["reward_unavailable"] is True
     assert any("unsafe_symlink_escape" in r for r in audit.unsafe_artifact_reasons)
+
+
+def test_non_utf8_symlink_target_rejected_fail_closed():
+    """B4 修正 c：非 UTF-8 symlink target 不再半支持穿过 B3——typed
+    fail-closed（unsafe 家族独立 reason code），B4 应用层不可能再遇到
+    裸 UnicodeDecodeError。"""
+
+    bad = b"\xff\xfe-target"
+    entry = PatchEntry(
+        path="src/badlink", operation="add", object_type="symlink",
+        mode="120000",
+        content_b64=base64.b64encode(bad).decode(),
+        content_digest="sha256:" + hashlib.sha256(bad).hexdigest(),
+    )
+    report, proj = _classify(_art([entry]))
+    assert report.verdict == "unsafe_artifact"
+    assert proj is None
+    assert any(
+        r == "unsupported_symlink_target_encoding:src/badlink"
+        for r in report.reason_codes
+    )
+
+
+async def test_baseline_integrity_error_goes_fatal_not_member_loss():
+    """B4 P0-1 run-halt e2e：grader 侧 exact-baseline 校验失败（穿队列
+    上抛 BaselineIntegrityError）→ generate 转 Fatal（worker run-halt），
+    audit 落 grading_baseline_verify 归因；不许转 failed_to_grade 当成员
+    损耗继续训练。"""
+
+    import sys
+    from pathlib import Path as _P
+
+    sys.path.insert(0, str(_P(__file__).resolve().parents[1] / "adapters"))
+    from test_f2_2_capability import _stamp_fa_identity
+    from test_slime_generate import (
+        SAMPLING_PARAMS,
+        _Args,
+        _formal_config,
+        build_dense_chain,
+        dense_turns,
+    )
+
+    from repoharness2.adapters.slime.async_worker import (
+        FatalExecutionInfrastructureError,
+    )
+    from repoharness2.adapters.slime.generate import QuiescenceConfirmed
+    from repoharness2.grading.manager import BaselineIntegrityError
+
+    class _FrozenWs:
+        def __init__(self, u):
+            self._u = u
+
+        async def run_bash(self, script):
+            return await self._u.run_bash(script)
+
+    class _Barrier:
+        async def establish(self, *, workspace, audit):
+            return QuiescenceConfirmed(
+                frozen_grading_workspace=_FrozenWs(workspace),
+                snapshot_ref="sha256:abc", evidence_refs=("s",))
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_Barrier(), turns=turns)
+    _stamp_fa_identity(chain.base_sample)
+
+    async def _raising_submit(**kw):
+        raise BaselineIntegrityError(
+            "baseline_digest_mismatch", "fresh checkout 树漂移（测试注入）")
+
+    chain.orchestrator._grading_submit = _raising_submit
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="baseline_digest_mismatch"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert any(
+        f.stage == "grading_baseline_verify"
+        and f.error_type == "baseline_digest_mismatch"
+        for f in audit.failure_records
+    )
+    assert any(
+        e.step == "grading_baseline_integrity_mismatch" for e in audit.timeline
+    )

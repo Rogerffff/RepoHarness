@@ -74,7 +74,18 @@ class PatchHygieneResult(StrictModel):
     """
 
     cleaned_patch_digest: Sha256Digest = Field(
-        description="从 agent workspace 导出并清洗后的 final patch 内容 digest（重放与审计锚点）。"
+        description="重放/应用载荷的 digest（审计锚点）。语义由 digest_kind 决定。"
+    )
+    digest_kind: Literal["cleaned_diff_text", "applied_entry_set"] = Field(
+        default="cleaned_diff_text",
+        description=(
+            "cleaned_patch_digest 的取值语义（B4 修正：两种载荷不得混装同一"
+            "字段却不声明）。cleaned_diff_text = S1 清洗后 diff 文本的 sha256；"
+            "applied_entry_set = FA frozen-delta 路径下**实际应用的 entry 子集**"
+            "的 canonical digest（grading.manager.compute_applied_entry_set_digest，"
+            "hygiene 剔除后 ≠ 完整 FrozenPatchArtifact digest——完整 artifact "
+            "digest 在 audit/Outcome 侧另有记录）。"
+        ),
     )
     replayed_on_clean_checkout: bool = Field(
         description="是否在 fresh grading sandbox / clean checkout 上重放（A7 要求 True；False 表示同容器评分的旧形态，gate 会降级）。"

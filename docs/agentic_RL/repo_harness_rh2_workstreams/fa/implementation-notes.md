@@ -276,27 +276,74 @@ validator（声称该 reason 即全形状强制）/producer 豁免/audit disposi
 三处共用；codex 两个矛盾反例（resolved+reward 可得、grading_infra 混
 搭）构造即拒，表驱动逐字段翻转测试钉死。**B3 闭合**（全量 1034 绿）。递延：分类规则扩充（计划既定）；
 AdmissionReport 本体（FA-2/F2-5）。**B4 fresh grader 消费 projection：完成（S2 协调确认：S2-1 闲置无并发，
-2026-08-18 用户授权）**。核心 = `FrozenDeltaSource`（frozen_patch +
-baseline + projection + digest）作为 grade() 的新输入源：设置时
-**grader 零 workspace 访问**（workspace 传 None，Poison 同一性负测试
-钉死"回读即炸"）；应用 = **直接文件写入**（per-entry base64 →
-cat/chmod/ln -s/rm，无 git、无 diff 文本——二进制/symlink/mode 原生
-支持）；应用前做 **pre-image 靶向验证**（modify/delete 路径在 clean
-checkout 的现值 digest 必须等于 baseline entry digest——A-prime"重建
-并验证"的被改动路径覆盖面；全树 census 对账仍归 B6/FA-5 既有登记）。
-失败语义按 A-prime 表：pre-image/应用失败一律 GradingInfraError
-（failed_to_grade + reward=None，**不得记模型 reward 0**）；直接写入
-无"冲突"概念 → S1 的 patch_apply_failed 在 FA 路径消失，模型坏 patch
-只能在测试阶段表现为 unresolved。hygiene 契约面：FA 路径以 raw
-artifact digest 为锚构造 clean 形状（B3 已判 projectable 才到得了
-grader）。接线 = generate() fa_formal 分支组装 FrozenDeltaSource →
-_finalize → GradingQueue.submit 透传（_QueueItem 携带）→
+2026-08-18 用户授权；同日 codex B4 审查 3 阻塞项全采纳后闭合）**。核心 =
+`FrozenDeltaSource`（frozen_patch + baseline + projection + digest）作为
+grade() 的新输入源：设置时 **grader 零 workspace 访问**（workspace 传
+None，Poison 同一性负测试钉死"回读即炸"）。**P0-1 修复（首版靶向
+pre-image 是对已批 T0 第 2 条的缩水，已推翻）**：apply 前先做纯绑定
+检查（source 内部 digest 互检 + source⟷spec 的 task/workdir/base/head
+四元组，起容器前 fail-fast），再在 fresh checkout 上**复用 B1 census
+脚本/解析器重建完整 BaselineWorkspaceManifestV1 并比对 digest**（局部
+import 避 adapters↔grading 模块环）；任何不一致 =
+`BaselineIntegrityError`——**故意不被 grade() 捕获**，穿队列由 generate
+`_grade` 转 FatalExecutionInfrastructureError（run-halt，与
+ProjectionContractError 同通道，绝不转 failed_to_grade 成员损耗）。
+镜像绑定说明：rollout 镜像（官方镜像+harness 层）与评分镜像合法不同，
+不做相等断言——评分镜像自身走既有 RepoDigests fail-closed，树等价性由
+census 重建比对直接证明。**P0-2 修复（写穿 symlink）**：应用命令改为
+纯函数构造（build_delta_{delete,write,symlink}_command），regular
+modify **先 `rm -f` unlink 旧对象再 `cat >`**（否则重定向跟随旧
+symlink 把模型内容写穿进 target——真实文件系统测试确定性复现过）；
+add 断言目标原不存在（exit 3）；路径操作数一律 `./` 前缀+单引号（`-`
+开头路径免疫选项解析；BSD chmod 不认 mode 后的 `--`，realfs 测试在
+macOS 抓到）；symlink target 逐字保留走 `ln -s --`。**P1 修复（generic
+projectable ≠ task 级 clean）**：apply 前对 entries 做 task-aware
+hygiene 筛查（`screen_frozen_entries`，复用同一 HygieneRules 匹配器）——
+命中 test/forbidden 的 entry **剔除不应用**、事实如实进
+PatchHygieneResult、既有"resolved 封顶降级"生效 = **与 S1 语义完全一致
+（模型负样本 reward 0，不是训练面剔除；未新增拒绝路径，无准入语义
+分叉）**。hygiene 契约面修正：新增 `digest_kind`
+（cleaned_diff_text|applied_entry_set，默认前者保 S1），FA 路径记**实际
+应用子集**的 canonical digest（compute_applied_entry_set_digest），
+`replayed_on_clean_checkout` 只有应用完成才 True。**修正 c**：非 UTF-8
+symlink target 在 B3 typed fail-closed（unsafe 家族
+`unsupported_symlink_target_encoding`），B4 留 typed infra 兜底，不再有
+裸 UnicodeDecodeError 逃逸面。失败语义按 A-prime 表：应用动作失败一律
+GradingInfraError（reward=None，**不得记模型 reward 0**）；S1 的
+patch_apply_failed 在 FA 路径消失。接线 = generate() fa_formal 分支组装
+FrozenDeltaSource → _finalize → GradingQueue.submit 透传 →
 manager.grade。**D1a 第 2 条兑现**：GradingFailureCategory 新增
 `test_execution_timeout`（模型负样本：unresolved+reward 0；无可信
 计数是其语义；三条件构造门注释进契约，producer = 未来 grading 超时
 分类器——先行进契约防 schema 二次迁移）。S1 评分路径逐字不变
-（frozen_delta 未设时原链）。下一片 = **B5 finalization receipt +
-cleanup 排序**。
+（frozen_delta 未设时新代码零执行）。已知 watch-item（B6 真实组合验证
+时确认）：excluded census 的路径集与基线未跟踪文件在 rollout 物化与
+评分 checkout 间必须同形——image_embedded 模式两侧都是"镜像原树+只读
+探针"，预期成立；若真实镜像出现系统性漂移（如 .git/ORIG_HEAD），按
+证据走 T0 复议缩小比对面，不得静默放宽。**§10.4 高风险边界双 subagent
+复核（2026-08-18，文件系统应用语义 + 跨组件 fatal 通道）**：Production
+Tracer 裁 BaselineIntegrityError 全链 CONFIRMED-run-halt（无吞点、S1 零
+执行），发现潜伏 P2——bringup `_grading_submit` 转发缺 frozen_delta 形参
+（今日 bringup 硬拒 fa_formal 不可达，但解禁时会 TypeError 塌成
+per-member abort）→ 已补形参透传。Falsifier 11 项对抗探针：注入/dash
+选项/写穿/intra-delta 软链祖先排序/崩溃面全 SAFE（builder 引号 +
+frozen_patch 父子前缀校验 + `./` 前缀），另出两项已修：**F5**——
+applied_entry_set canonical digest 用 `\t`/`\n` 拼接而 PatchEntry.path
+曾允许控制字符 → 单 entry 可伪造多 entry 规范行致 digest 碰撞（今日仅
+审计锚、非生产闸，P2）；修复 = 两个 `_check_canonical_path`（frozen_patch
++ baseline_manifest）统一拒绝 <0x20/0x7f 控制字符（空格保留），同时硬化
+census 线协议；**F6**——baseline 树若自带逃逸目录软链 `d -> /outside`，
+写入 `d/x` 会跟随软链写出 testbed（非模型可控：模型软链是 entry 被父子
+前缀挡掉 + census 等价证明，只有官方镜像自带逃逸软链才可达；无上游拦截）
+→ apply 前加 baseline 祖先软链检测，命中即 GradingInfraError 成员损耗
+（不升 run-halt——树与 baseline 一致是环境形状问题；是否因系统性升级留
+B6 真实镜像裁定）。**新增剔除面登记（§7）**：① 含控制字符路径构造即拒
+（census tab/newline 线协议本就无法承载，无真实样本偏置）；② 祖先为
+baseline 软链的写入被拒（环境决定、非模型行为相关；fa_formal 闭闸故当前
+不可达）。**递延登记**：baseline_census 对 symlink target 做
+`tr -d '\n'` 后哈希（`a\nb` 与 `ab` 不可分）——census-vs-census 两侧同法
+计算内部自洽、非模型可控，归 B6/FA-5 与全树 census 性能一并处理。下一片
+= **B5 finalization receipt + cleanup 排序**。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

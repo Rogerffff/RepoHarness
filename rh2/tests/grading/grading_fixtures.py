@@ -273,6 +273,9 @@ class FakeDocker:
     eval_exit_code: int = 0
     apply_exit_code: int = 0
     container_running: bool = True
+    # B4 exact-baseline 重建：census 脚本的罐头输出（默认空树 census）。
+    census_output: str = ""
+    census_exit_code: int = 0
     ps_stdout: str = ""
     rm_fail_names: tuple[str, ...] = ()
     # 镜像 RepoDigests 罐头值（codex#1 运行期比对用；json 序列化后返回）。
@@ -340,13 +343,10 @@ class FakeDocker:
             return ExecResult(0, "", "")
         if cmd == "exec":
             script = args[-1]
-            if "sha256sum" in script:
-                # B4 pre-image 验证旋钮：sha256_by_path[path] -> digest hex
-                mapping = getattr(self, "sha256_by_path", {})
-                for path, hexd in mapping.items():
-                    if f"'{path}'" in script or f" {path} " in script or script.rstrip().endswith(path):
-                        return ExecResult(0, hexd + "\n", "")
-                return ExecResult(1, "", "sha256sum: no such file (fake)")
+            if "-prune" in script and "readlink" in script:
+                # B4 exact-baseline 重建旋钮：census 脚本 → census_output
+                # 罐头（默认空树；census_exit_code 可模拟脚本失败）。
+                return ExecResult(self.census_exit_code, self.census_output, "")
             if "rev-parse HEAD" in script:
                 return ExecResult(0, self._probe_stdout(), "")
             if "cat > " in script:

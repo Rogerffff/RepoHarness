@@ -39,8 +39,12 @@ __all__ = [
 def _check_canonical_path(path: str) -> None:
     if path.startswith("/"):
         raise ValueError(f"路径必须相对：{path!r}")
-    if "\x00" in path:
-        raise ValueError("路径含 NUL。")
+    # 控制字符（含 TAB/LF/NUL/DEL）一律拒绝：census 线协议 `\t` 分隔 `\n`
+    # 分行，带这些字节会破坏解析并让 digest 可碰撞（Falsifier F5，与
+    # frozen_patch._check_canonical_path 同一收口）。空格保留。
+    for ch in path:
+        if ch < "\x20" or ch == "\x7f":
+            raise ValueError(f"路径含控制字符（0x{ord(ch):02x}）：{path!r}")
     parts = path.split("/")
     if any(p in ("", ".", "..") for p in parts):
         raise ValueError(f"路径必须 canonical（无空段/./..）：{path!r}")

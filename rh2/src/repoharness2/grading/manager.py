@@ -47,6 +47,8 @@ docker 调用函数是构造参数（P7 backend-neutral）：单测注入 FakeDo
 from __future__ import annotations
 
 import asyncio
+import base64
+import hashlib
 import re
 import time
 import uuid
@@ -354,18 +356,146 @@ EXPORT_PATCH_SCRIPT = build_export_patch_script()
 
 @dataclass(frozen=True)
 class FrozenDeltaSource:
-    """B4（A-prime 第 1/5 条）：FA formal 评分的唯一输入源——冻结 delta
-    经 hygiene 后的 projection + raw artifact + baseline（pre-image 验证）。
+    """B4（A-prime 第 1/2/5 条）：FA formal 评分的唯一输入源——冻结 delta
+    经 hygiene 后的 projection + raw artifact + baseline。
     设置本源时 grade() **不读取 rollout workspace**（workspace 参数可为
-    None）；应用 = 直接文件写入（无 git、无 diff 文本），application
-    失败一律 contract/infra failure（A-prime 失败表：不得记模型 reward 0；
-    S1 的 patch_apply_failed 语义不适用于本路径——直接写入不存在冲突，
-    模型的"坏 patch"只能在测试阶段表现为 unresolved）。"""
+    None）；应用前必须（T0 拍板文本第 2 条）在 fresh checkout 上**重建
+    完整 BaselineWorkspaceManifestV1 并比对 digest**，并核验
+    source/spec/容器三方的 task/workdir/base/head 绑定；应用 = 直接文件
+    写入（无 git、无 diff 文本）。失败语义：baseline/绑定矛盾 →
+    BaselineIntegrityError（run-halt，不是成员损耗）；应用动作失败 →
+    GradingInfraError（reward=None，不得记模型 reward 0——直接写入不存在
+    "冲突"，S1 的 patch_apply_failed 不适用，模型坏 patch 只能在测试阶段
+    表现为 unresolved）。"""
 
     frozen_patch: "object"  # FrozenPatchArtifactV1（避免 contracts 循环 import 用鸭子）
     baseline_manifest: "object"  # BaselineWorkspaceManifestV1
     projection: "object"  # ScoringProjectionArtifactV1
     frozen_patch_digest: str
+
+
+def _shq(text: str) -> str:
+    """POSIX 单引号安全包裹。"""
+
+    return "'" + text.replace("'", "'\\''") + "'"
+
+
+def _shq_rel(path: str) -> str:
+    """相对路径操作数：`./` 前缀 + 单引号。`./` 让 `-` 开头的路径不会被
+    rm/chmod/ln/mkdir 当成选项——比 `--` 更可移植（BSD chmod 不接受
+    mode 之后的 `--`，真实文件系统测试在 macOS 上抓到过）。仅用于路径
+    操作数；symlink target 必须逐字保留（改写会改变链内容），走 `ln -s --`。"""
+
+    return _shq("./" + path)
+
+
+@dataclass
+class FrozenApplyPlan:
+    """B4 P1：task-aware hygiene 筛查 + 应用计划（对 S1 clean_patch 的镜像）。
+
+    S1 语义原样保留：test/forbidden 命中的 entry **剔除不应用**、事实如实
+    记入 PatchHygieneResult；剩余 entry 照常应用并跑测试；非 clean verdict
+    由既有"resolved 降级封顶"（grade 阶段 7 + contracts 校验器）保证拿不到
+    resolved——这是模型负样本（reward 0），不是训练面剔除。"""
+
+    applied_paths: tuple[str, ...]
+    stripped_test_paths: tuple[str, ...]
+    forbidden_paths: tuple[str, ...]
+    applied_entry_set_digest: str
+    apply_completed: bool = False
+
+    @property
+    def verdict(self) -> str:
+        # 优先级与 CleanedPatch.verdict / contracts 校验器一致：篡改 > 污染
+        if self.stripped_test_paths:
+            return "rejected_test_tampering"
+        if self.forbidden_paths:
+            return "rejected_forbidden_contamination"
+        return "clean"
+
+
+def compute_applied_entry_set_digest(entries: "list[object]") -> str:
+    """实际应用的 entry 子集的 canonical digest（PatchHygieneResult
+    digest_kind=applied_entry_set 的取值；hygiene 剔除后 ≠ 完整 artifact
+    digest，两种 digest 语义用 digest_kind 显式区分，不得混装）。"""
+
+    lines = sorted(
+        f"{e.operation}\t{e.object_type}\t{e.mode or ''}\t{e.content_digest or ''}\t{e.path}"
+        for e in entries
+    )
+    return "sha256:" + hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+
+
+def screen_frozen_entries(
+    entries: "list[object]", rules: HygieneRules
+) -> FrozenApplyPlan:
+    """对冻结 entries 做 task-aware hygiene 筛查（S1 clean_patch 的 FA 镜像；
+    匹配器复用同一个 HygieneRules，规则语义零分叉）。纯函数，独立可测。"""
+
+    applied: list[object] = []
+    stripped_test: list[str] = []
+    forbidden: list[str] = []
+    for e in entries:
+        test_hit = rules.is_test_path(e.path)
+        forbidden_hit = rules.is_forbidden_path(e.path)
+        if test_hit:
+            stripped_test.append(e.path)
+        if forbidden_hit:
+            forbidden.append(e.path)
+        if test_hit or forbidden_hit:
+            continue
+        applied.append(e)
+    return FrozenApplyPlan(
+        applied_paths=tuple(e.path for e in applied),
+        stripped_test_paths=tuple(dict.fromkeys(stripped_test)),
+        forbidden_paths=tuple(sorted(dict.fromkeys(forbidden))),
+        applied_entry_set_digest=compute_applied_entry_set_digest(applied),
+    )
+
+
+def build_delta_delete_command(testbed_path: str, path: str) -> str:
+    """delete：`rm -f` 对 symlink 是 no-follow（删链本体不碰 target）。"""
+
+    return f"cd {_shq(testbed_path)} && rm -f {_shq_rel(path)}"
+
+
+def build_delta_write_command(
+    testbed_path: str, path: str, *, mode: str, operation: str
+) -> str:
+    """regular add/modify（内容经 stdin 送入，二进制安全）。
+
+    P0-2 修复核心：**写入前必须先 unlink 旧对象**——`cat > path` 的 shell
+    重定向会跟随既有 symlink，把模型内容写进 target（合法的
+    symlink→regular 类型变化就会写穿评分树外的文件）。`rm -f` 先删掉
+    旧对象（regular 或 symlink 本体，绝不跟随），再创建全新 regular 文件。
+    add 额外断言目标原本不存在（census 重建比对已证树==baseline，此处是
+    防御性双保险，命中即应用失败走 infra）。"""
+
+    q = _shq_rel(path)
+    parent = "/".join(path.split("/")[:-1])
+    mk = f"mkdir -p {_shq_rel(parent)} && " if parent else ""
+    perm = "755" if mode == "100755" else "644"
+    guard = (
+        f"if [ -e {q} ] || [ -L {q} ]; then echo add_target_exists:{q} >&2; exit 3; fi; "
+        if operation == "add"
+        else f"rm -f {q} && "
+    )
+    return (
+        f"cd {_shq(testbed_path)} && {mk}{guard}cat > {q} && chmod {perm} {q}"
+    )
+
+
+def build_delta_symlink_command(testbed_path: str, path: str, target: str) -> str:
+    """symlink add/modify：先 unlink 旧对象再 `ln -s --`（同 P0-2 纪律）。
+    target 逐字保留（`--` 终止选项解析，覆盖 `-` 开头 target；路径操作数
+    用 `./` 前缀）。"""
+
+    parent = "/".join(path.split("/")[:-1])
+    mk = f"mkdir -p {_shq_rel(parent)} && " if parent else ""
+    return (
+        f"cd {_shq(testbed_path)} && {mk}"
+        f"rm -f {_shq_rel(path)} && ln -s -- {_shq(target)} {_shq_rel(path)}"
+    )
 
 
 async def export_cleaned_patch(
@@ -516,6 +646,22 @@ class GradingInfraError(RuntimeError):
         self.category = category
 
 
+class BaselineIntegrityError(RuntimeError):
+    """B4 P0-1：exact-baseline 重建/绑定校验失败 = **系统性契约错误**。
+
+    与 GradingInfraError 的分界（A-prime 失败表）：infra = 该次评分动作
+    自身的故障（容器/网络/超时），可以按成员损耗记 failed_to_grade；而
+    baseline/lineage 矛盾意味着"grader 看到的树 ≠ 模型看到的树"或
+    "同进程两份事实分家"——继续训练会系统性污染样本。因此本异常**故意
+    不被 grade() 捕获**，穿队列上抛，由 generate 转
+    FatalExecutionInfrastructureError（run-halt），与 B3
+    ProjectionContractError 同通道。"""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        self.reason_code = reason_code
+        super().__init__(f"{reason_code}: {message}")
+
+
 @dataclass
 class _ContainerRecord:
     """per-容器记账条目（P1：TTL GC 与孤儿判定的数据底座）。"""
@@ -641,6 +787,7 @@ class SWEGradingManager:
         timing_parts = {"image_pull": 0.0, "env_reset": 0.0, "prep": 0.0, "test": 0.0}
         record: _ContainerRecord | None = None
         cleaned: CleanedPatch | None = None
+        fa_plan: FrozenApplyPlan | None = None
         replay_started = False
         eval_log_text: str | None = None
         peak_memory_mb = 0.0
@@ -668,14 +815,21 @@ class SWEGradingManager:
             if not replay_started:
                 return None
             if frozen_delta is not None:
-                # B4：hygiene 判定在 B3（projectable 才到得了这里）；此处
-                # 以 raw artifact digest 为锚构造 clean 形状（S1 契约面）
+                # B4 P1：task-aware 筛查事实如实上报（generic projectable
+                # ≠ task 级 clean）；digest = 实际应用子集的 canonical
+                # digest（digest_kind 显式区分，不冒充 cleaned diff）；
+                # replayed 只有应用**完成**才是 True——中途 infra 失败的
+                # 报告不得声称已重放。
+                if fa_plan is None:
+                    return None
                 return PatchHygieneResult(
-                    verdict="clean",
-                    cleaned_patch_digest=frozen_delta.frozen_patch_digest,
-                    test_files_modified=False,
-                    forbidden_path_touched=False,
-                    replayed_on_clean_checkout=True,
+                    verdict=fa_plan.verdict,
+                    cleaned_patch_digest=fa_plan.applied_entry_set_digest,
+                    digest_kind="applied_entry_set",
+                    test_files_modified=bool(fa_plan.stripped_test_paths),
+                    forbidden_path_touched=bool(fa_plan.forbidden_paths),
+                    forbidden_paths=list(fa_plan.forbidden_paths),
+                    replayed_on_clean_checkout=fa_plan.apply_completed,
                 )
             if cleaned is None:
                 return None
@@ -691,10 +845,19 @@ class SWEGradingManager:
 
         try:
             # 阶段 1+2（prep 前半）：B4 起两源互斥——frozen_delta（FA
-            # formal：hygiene 已在 B3 完成，**不读 workspace**）或 S1 导出
+            # formal，**不读 workspace**）或 S1 导出。FA 路径先做纯绑定
+            # 检查（source 内部一致 + source⟷spec，起容器前 fail-fast，
+            # 矛盾 = BaselineIntegrityError run-halt），再做 task-aware
+            # hygiene 筛查（P1：S1 clean_patch 的镜像，命中剔除不应用）。
             prep_start = time.monotonic()
             if frozen_delta is not None:
-                cleaned = None  # FA 路径无 diff 文本；hygiene 事实见 B3 报告
+                cleaned = None  # FA 路径无 diff 文本
+                self._verify_frozen_delta_binding(spec, frozen_delta)
+                included = set(frozen_delta.projection.included_entry_paths)
+                fa_plan = screen_frozen_entries(
+                    [e for e in frozen_delta.frozen_patch.entries if e.path in included],
+                    spec.hygiene,
+                )
             else:
                 if workspace is None:
                     raise GradingInfraError(
@@ -718,11 +881,15 @@ class SWEGradingManager:
             await self._clean_checkout(record, spec)
             timing_parts["env_reset"] = time.monotonic() - reset_start
 
-            # 阶段 4（prep 后半）：frozen delta 直接应用，或 S1 重放
+            # 阶段 4（prep 后半）：frozen delta 路径 = 先 exact-baseline
+            # 重建比对（T0 第 2 条；mismatch → BaselineIntegrityError
+            # run-halt），再直接应用筛查后的子集；S1 路径 = 重放 cleaned patch
             prep_start = time.monotonic()
             replay_started = True
             if frozen_delta is not None:
-                await self._apply_frozen_delta(record, spec, frozen_delta)
+                await self._verify_baseline_rebuild(record, spec, frozen_delta)
+                assert fa_plan is not None  # 阶段 1 已构造
+                await self._apply_frozen_delta(record, spec, frozen_delta, fa_plan)
                 apply_ok = True  # 应用失败已作 infra 抛出（A-prime：非模型负样本）
             else:
                 apply_ok = await self._replay_patch(record, spec, cleaned)
@@ -1012,91 +1179,218 @@ class SWEGradingManager:
                 f"grading_checkout_lineage_failed:{check.failure_message()[:300]}"
             )
 
-    async def _apply_frozen_delta(
+    def _verify_frozen_delta_binding(
+        self, spec: GradingEnvSpec, source: "FrozenDeltaSource"
+    ) -> None:
+        """B4 P0-1 纯检查半区：source 内部一致性 + source⟷spec 绑定。
+
+        不需要容器，放在评分早段（起容器之前）fail-fast。任何不一致 =
+        BaselineIntegrityError（run-halt 通道）。"""
+
+        from repoharness2.contracts.baseline_manifest import (
+            compute_baseline_manifest_digest,
+        )
+        from repoharness2.contracts.frozen_patch import compute_frozen_patch_digest
+
+        art = source.frozen_patch
+        baseline = source.baseline_manifest
+        art_digest = compute_frozen_patch_digest(art)
+        if art_digest != source.frozen_patch_digest:
+            raise BaselineIntegrityError(
+                "frozen_delta_binding_mismatch",
+                f"artifact 重算 digest {art_digest} != source 声明 {source.frozen_patch_digest}",
+            )
+        if art_digest != source.projection.frozen_patch_digest:
+            raise BaselineIntegrityError(
+                "frozen_delta_binding_mismatch",
+                f"projection 锚 {source.projection.frozen_patch_digest} != artifact {art_digest}",
+            )
+        base_digest = compute_baseline_manifest_digest(baseline)
+        if art.baseline_manifest_digest != base_digest:
+            raise BaselineIntegrityError(
+                "frozen_delta_binding_mismatch",
+                f"artifact.baseline_manifest_digest {art.baseline_manifest_digest} "
+                f"!= baseline 重算 {base_digest}",
+            )
+        entry_paths = {e.path for e in art.entries}
+        extra = set(source.projection.included_entry_paths) - entry_paths
+        if extra:
+            raise BaselineIntegrityError(
+                "frozen_delta_binding_mismatch",
+                f"projection 引用了 artifact 之外的路径：{sorted(extra)[:5]}",
+            )
+        # source ⟷ spec 绑定（task/workdir/base/head）。materialized_head 必须
+        # 等于 spec.base_commit：grading checkout 只能重现 base_commit（血缘
+        # 探针核验容器 HEAD==spec.base_commit），若 rollout 物化头不同，
+        # census 重建对比就是在对比两个不同版本的树。镜像绑定不在此处做
+        # 相等断言：rollout 镜像 = 官方任务镜像 + harness 层，与评分镜像
+        # 合法不同（评分镜像自身由 _verify_image_digest 对 RepoDigests
+        # fail-closed）；树内容等价性由 census 重建比对直接证明。
+        for label, got, expect in (
+            ("task_id", baseline.task_id, spec.task_id),
+            ("workdir", baseline.workdir, spec.testbed_path),
+            ("task_base_commit", baseline.task_base_commit, spec.base_commit),
+            ("materialized_head", baseline.materialized_head, spec.base_commit),
+        ):
+            if got != expect:
+                raise BaselineIntegrityError(
+                    "grading_spec_binding_mismatch",
+                    f"{label}: baseline={got!r} != spec={expect!r}",
+                )
+
+    async def _verify_baseline_rebuild(
         self, record: "_ContainerRecord", spec: GradingEnvSpec, source: "FrozenDeltaSource"
     ) -> None:
-        """B4：在 clean checkout 上直接应用冻结 delta（无 git、无 diff）。
+        """B4 P0-1 容器半区（T0 拍板文本第 2 条逐字）：apply 前在 fresh
+        checkout 上用 B1 的同一 census 脚本/解析器**重建完整
+        BaselineWorkspaceManifestV1**，digest 不等 = grader 看到的树 ≠
+        模型开工时的树 → run-halt。lineage 字段从 source.baseline 复制
+        （容器内无法重推导；它们的真伪由绑定检查与 digest 自包含性负责），
+        因此本比对的有效信号 = 全部 entries（path/type/mode/content 或
+        symlink digest，lstat/no-follow）+ 排除区路径集 + policy。"""
 
-        步骤：① pre-image 靶向验证——modify/delete 路径在 checkout 里的
-        现值 digest 必须等于 baseline entry digest（A-prime"重建并验证"
-        的被改动路径覆盖面；全树 census 对账已登记 B6/FA-5）；② 按
-        projection 引用的 entries 直接写入/删除/建链。任何失败 =
-        GradingInfraError（contract failure，reward=None——不得记模型
-        reward 0）。"""
+        # 局部 import：baseline_census 属 adapters.slime 包，包 __init__ 会
+        # 拉起 generate → generate 反向 import 本模块，模块级互相引用成环；
+        # 延迟到调用时（彼时两模块都已初始化完毕）是最小解。census 算法
+        # 本体仍是 B1 单一权威，这里零复制。
+        from repoharness2.adapters.slime.baseline_census import (
+            BaselineCensusError,
+            build_census_script,
+            parse_census_output,
+        )
+        from repoharness2.contracts.baseline_manifest import (
+            compute_baseline_manifest_digest,
+        )
 
-        import base64 as _b64
-        import hashlib as _hashlib
+        baseline = source.baseline_manifest
+        res = await self._exec_bash_checked(
+            record,
+            build_census_script(spec.testbed_path, baseline.policy),
+            phase="baseline_rebuild",
+            timeout=spec.env_reset_timeout_seconds,
+        )
+        if res.exit_code != 0:
+            raise BaselineIntegrityError(
+                "baseline_rebuild_census_failed",
+                f"census 脚本失败（exit={res.exit_code}）：{res.stderr.strip()[-300:]}",
+            )
+        try:
+            rebuilt = parse_census_output(
+                res.stdout,
+                task_id=baseline.task_id,
+                workdir=baseline.workdir,
+                public_bundle_digest=baseline.public_bundle_digest,
+                runtime_image_digest=baseline.runtime_image_digest,
+                materialized_head=baseline.materialized_head,
+                task_base_commit=baseline.task_base_commit,
+                policy=baseline.policy,
+            )
+        except BaselineCensusError as exc:
+            raise BaselineIntegrityError(
+                "baseline_rebuild_parse_failed", str(exc)
+            ) from exc
+        expect = compute_baseline_manifest_digest(baseline)
+        got = compute_baseline_manifest_digest(rebuilt)
+        if got != expect:
+            raise BaselineIntegrityError(
+                "baseline_digest_mismatch",
+                f"fresh checkout 重建 manifest digest {got} != baseline {expect}"
+                f"（rebuilt_entries={len(rebuilt.entries)}, "
+                f"baseline_entries={len(baseline.entries)}）",
+            )
+
+    async def _apply_frozen_delta(
+        self,
+        record: "_ContainerRecord",
+        spec: GradingEnvSpec,
+        source: "FrozenDeltaSource",
+        plan: FrozenApplyPlan,
+    ) -> None:
+        """B4：在已通过 baseline 重建校验的 checkout 上直接应用冻结 delta
+        （无 git、无 diff 文本）。只应用 plan.applied_paths（task-aware
+        hygiene 剔除后的子集）。全部命令带 `--` 且写入前先 unlink 旧对象
+        （P0-2：`cat >` 会跟随旧 symlink 写穿 target）。任何失败 =
+        GradingInfraError（评分动作故障，reward=None，不得记模型 reward 0）。"""
 
         entries = {e.path: e for e in source.frozen_patch.entries}
-        included = set(source.projection.included_entry_paths)
-        base_by_path = {e.path: e for e in source.baseline_manifest.entries}
+        included = [p for p in plan.applied_paths if p in entries]
 
-        # ① pre-image 验证（只对 modify/delete 的 regular 文件做内容核对）
-        preimage = [
-            (path, base_by_path[path].content_digest)
-            for path, e in entries.items()
-            if path in included and e.operation in ("modify", "delete")
-            and path in base_by_path
-            and base_by_path[path].object_type == "regular"
-        ]
-        for path, expect in preimage:
-            q = "'" + path.replace("'", "'\\''") + "'"
+        # 防御纵深（Falsifier F6，非模型可控但无上游拦截）：若 baseline 树
+        # 里某个祖先目录本身是 symlink（如官方镜像在 base_commit 就带
+        # `d -> /outside` 的目录软链），则 `mkdir -p ./d && cat > ./d/x`
+        # 会**跟随该软链写到 testbed 之外**。模型无法注入这种祖先（模型的
+        # 任何 symlink 都是独立 entry，被 frozen_patch 父子前缀校验挡掉，
+        # 且 census 等价证明树==baseline），所以这里只可能由 baseline 自身
+        # 的软链形状触发。拒绝应用（apply 安全性拒绝 = GradingInfraError
+        # 成员损耗、reward=None，非模型负样本；不升 run-halt——树本身与
+        # baseline 一致，是环境形状问题不是事实分家。是否因"官方镜像系统性
+        # 带逃逸软链"升级为 run-halt，留 B6 真实镜像证据裁定）。
+        baseline_symlink_paths = {
+            e.path for e in source.baseline_manifest.entries
+            if e.object_type == "symlink"
+        }
+        if baseline_symlink_paths:
+            for path in included:
+                segs = path.split("/")
+                for i in range(1, len(segs)):
+                    ancestor = "/".join(segs[:i])
+                    if ancestor in baseline_symlink_paths:
+                        raise GradingInfraError(
+                            f"apply_path_ancestor_is_symlink:{path}:祖先 "
+                            f"{ancestor!r} 在 baseline 中是软链，拒绝跟随写出"
+                        )
+
+        async def _run(script: str, phase: str, input_bytes: bytes | None = None) -> None:
             res = await self._exec_bash_checked(
                 record,
-                f"cd {spec.testbed_path} && sha256sum {q} | cut -d' ' -f1",
-                phase="preimage_verify",
+                script,
+                phase=phase,
                 timeout=spec.apply_timeout_seconds,
+                input_bytes=input_bytes,
             )
-            got = f"sha256:{res.stdout.strip()}" if res.exit_code == 0 else None
-            if got != expect:
-                raise GradingInfraError(
-                    f"baseline_preimage_mismatch:{path}:expect={expect}:got={got}"
-                )
-
-        # ② 直接应用（delete → 写入/建链；mkdir -p 先行）
-        for path in sorted(included):
-            e = entries[path]
-            q = "'" + path.replace("'", "'\\''") + "'"
-            if e.operation == "delete":
-                res = await self._exec_bash_checked(
-                    record,
-                    f"cd {spec.testbed_path} && rm -f {q}",
-                    phase="delta_delete",
-                    timeout=spec.apply_timeout_seconds,
-                )
-                if res.exit_code != 0:
-                    raise GradingInfraError(
-                        f"delta_delete_failed:{path}:{res.stderr.strip()[-200:]}"
-                    )
-                continue
-            raw = _b64.b64decode(e.content_b64, validate=True)
-            digest = "sha256:" + _hashlib.sha256(raw).hexdigest()
-            if digest != e.content_digest:
-                raise GradingInfraError(f"delta_content_digest_mismatch:{path}")
-            parent = "/".join(path.split("/")[:-1])
-            mk = f"mkdir -p '{parent}' && " if parent else ""
-            if e.object_type == "symlink":
-                target = raw.decode("utf-8", errors="strict")
-                tq = "'" + target.replace("'", "'\\''") + "'"
-                res = await self._exec_bash_checked(
-                    record,
-                    f"cd {spec.testbed_path} && {mk}rm -f {q} && ln -s {tq} {q}",
-                    phase="delta_symlink",
-                    timeout=spec.apply_timeout_seconds,
-                )
-            else:
-                perm = "755" if e.mode == "100755" else "644"
-                res = await self._exec_bash_checked(
-                    record,
-                    f"cd {spec.testbed_path} && {mk}cat > {q} && chmod {perm} {q}",
-                    phase="delta_write",
-                    timeout=spec.apply_timeout_seconds,
-                    input_bytes=raw,
-                )
             if res.exit_code != 0:
                 raise GradingInfraError(
-                    f"delta_apply_failed:{path}:{res.stderr.strip()[-200:]}"
+                    f"{phase}_failed:{res.stderr.strip()[-200:]}"
                 )
+
+        # 两遍应用：先全部 delete，再写入/建链——dir↔file 互换类 delta 里
+        # 旧对象必须先消失（同名前缀路径的写入才不会撞上残留）。
+        for path in sorted(included):
+            if entries[path].operation == "delete":
+                await _run(
+                    build_delta_delete_command(spec.testbed_path, path),
+                    "delta_delete",
+                )
+        for path in sorted(included):
+            e = entries[path]
+            if e.operation == "delete":
+                continue
+            raw = base64.b64decode(e.content_b64, validate=True)
+            digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+            if digest != e.content_digest:
+                raise GradingInfraError(f"delta_content_digest_mismatch:{path}")
+            if e.object_type == "symlink":
+                try:
+                    target = raw.decode("utf-8", errors="strict")
+                except UnicodeDecodeError as exc:
+                    # B3 已 fail-closed 拒收非 UTF-8 target（unsafe），此处
+                    # 是防裸异常逃逸的兜底：typed infra，不许穿透评分链。
+                    raise GradingInfraError(
+                        f"delta_symlink_target_undecodable:{path}"
+                    ) from exc
+                await _run(
+                    build_delta_symlink_command(spec.testbed_path, path, target),
+                    "delta_symlink",
+                )
+            else:
+                await _run(
+                    build_delta_write_command(
+                        spec.testbed_path, path, mode=e.mode, operation=e.operation
+                    ),
+                    "delta_write",
+                    input_bytes=raw,
+                )
+        plan.apply_completed = True
 
     async def _replay_patch(
         self, record: _ContainerRecord, spec: GradingEnvSpec, cleaned: CleanedPatch
