@@ -42,7 +42,39 @@ __all__ = [
     "CleanupFailureFact",
     "CleanupResultAppendV1",
     "FinalizationReceiptV1",
+    "FinalizationStoreConflict",
+    "RejectedObjectEvidenceV1",
 ]
+
+
+class FinalizationStoreConflict(RuntimeError):
+    """同一 attempt 路径第二次写入且内容不同 = 不可变性违约。
+
+    这是**身份复用或持久化事实矛盾**（同一 physical_attempt_id 出现两套
+    不同 artifact/receipt），不是单条样本损耗——消费侧必须映射为
+    FatalExecutionInfrastructureError（run-halt），绝不许包装成普通
+    缺员继续训练（B5 复核三轮 P1-3）。定义放 contracts：store 实现
+    （bringup）与消费方（generate）都要引用，且 adapters 内部互 import
+    会成环。"""
+
+
+class RejectedObjectEvidenceV1(StrictModel):
+    """轻量 attempt-bound 拒绝证据（B5 复核三轮 P1-1）。
+
+    场景：unsupported 对象（FIFO/socket/设备）在 FrozenPatchArtifact
+    构造**之前**就触发永久拒绝——没有 artifact 本体可持久化，workspace
+    清理后若只剩通用 reason code，具体对象路径/类型就消失了。本模型由
+    receipt 内嵌，让拒绝证据随 receipt 一起 durable。"""
+
+    reason_code: NonEmptyStr
+    object_path: str | None = Field(
+        default=None, description="触发拒绝的对象相对路径（census 实测）。"
+    )
+    object_type: str | None = Field(
+        default=None,
+        description="对象类型（fifo/socket/block_device/char_device/unknown；"
+        "旧格式 census 无类型时为 None）。",
+    )
 
 # attempt 终局四分：
 # - delivery_prepared：generate 正常收口，样本（或降级/abort 形状）已
@@ -68,10 +100,17 @@ class FinalizationReceiptV1(StrictModel):
         default=None, description="F2-1a 物理身份；S1 兼容路径为 None。"
     )
     attempt_disposition: AttemptDisposition
-    abort_reason: str | None = Field(
+    terminal_reason_code: str | None = Field(
         default=None,
-        description="aborted 时的归因摘要（outcome_v2.reason_code 或最后一条"
-        "failure_record 的 error_type；outcome_v2 才是权威归因）。",
+        description="统一终局归因摘要（B5 复核三轮 P1-2）：aborted → "
+        "outcome_v2.reason_code 或最后一条 failure_record；fatal_run_halt → "
+        "在途 Fatal 的 reason_code；cancelled → 'cancelled'；"
+        "delivery_prepared → None。outcome_v2 在场时以其为权威归因。",
+    )
+    rejection_evidence: RejectedObjectEvidenceV1 | None = Field(
+        default=None,
+        description="artifact 建立前就永久拒绝时的对象证据（unsupported "
+        "对象路径/类型）；有 artifact 本体的拒绝走 digest 引用，此字段为 None。",
     )
     outcome_v2: RolloutAttemptOutcomeV2 | None = Field(
         default=None,

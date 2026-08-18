@@ -30,8 +30,19 @@ __all__ = ["BaselineCensusError", "build_census_script", "generate_baseline_mani
 
 
 class BaselineCensusError(RuntimeError):
-    def __init__(self, reason_code: str, message: str) -> None:
+    def __init__(
+        self,
+        reason_code: str,
+        message: str,
+        *,
+        object_path: str | None = None,
+        object_type: str | None = None,
+    ) -> None:
         self.reason_code = reason_code
+        # B5 复核三轮 P1-1：不支持对象的路径/类型作为结构化事实随异常
+        # 携带（workspace 清理后 receipt 仍能给出可解引用的拒绝证据）。
+        self.object_path = object_path
+        self.object_type = object_type
         super().__init__(f"{reason_code}: {message}")
 
 
@@ -59,7 +70,8 @@ find . {prunes} \\( -type f -o -type l -o \\( ! -type d ! -type f ! -type l \\) 
     sha=$(sha256sum "$p" | cut -d' ' -f1)
     printf 'regular\\t%s\\t%s\\t%s\\n' "$perm" "$sha" "$rel"
   else
-    printf 'UNSUPPORTED\\t%s\\n' "$rel"
+    if [ -p "$p" ]; then t=fifo; elif [ -S "$p" ]; then t=socket; elif [ -b "$p" ]; then t=block_device; elif [ -c "$p" ]; then t=char_device; else t=unknown; fi
+    printf 'UNSUPPORTED\\t%s\\t%s\\n' "$t" "$rel"
   fi
 done
 {excl_finds}
@@ -86,9 +98,19 @@ def parse_census_output(
             continue
         parts = line.split("\t")
         if parts[0] == "UNSUPPORTED":
+            # 新格式 3 字段 UNSUPPORTED\t<type>\t<path>；兼容旧 2 字段
+            # （type 未知）。路径/类型进结构化异常字段（B5 复核三轮 P1-1：
+            # receipt 拒绝证据）。
+            if len(parts) >= 3:
+                obj_type, obj_path = parts[1], parts[2]
+            else:
+                obj_type, obj_path = None, (parts[1] if len(parts) > 1 else "?")
             raise BaselineCensusError(
                 "unsupported_object_in_baseline",
-                f"scoreable tree 含不支持对象：{parts[1] if len(parts) > 1 else '?'}",
+                f"scoreable tree 含不支持对象：{obj_path}"
+                f"（type={obj_type or 'unknown'}）",
+                object_path=obj_path,
+                object_type=obj_type,
             )
         if parts[0] == "EXCL":
             excluded_paths.append(parts[1])

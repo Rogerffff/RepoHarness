@@ -338,7 +338,8 @@ async def test_e2e_unsupported_object_present_rejected_no_grader():
                 from types import SimpleNamespace
 
                 return SimpleNamespace(exit_code=0,
-                                       stdout="UNSUPPORTED\tweird_fifo\n", stderr="")
+                                       stdout="UNSUPPORTED\tfifo\tweird_fifo\n",
+                                       stderr="")
             return await self._u.run_bash(script)
 
     class _Barrier:
@@ -372,7 +373,12 @@ async def test_e2e_unsupported_object_present_rejected_no_grader():
         write_execution_audit_record(None, audit, jsonl)
         rec = _json.loads(jsonl.read_text().strip())
     assert rec["disposition"] == "permanent_rejected"  # 不再 unknown_terminal
-    assert rec["unsafe_artifact_reasons"] == ["unsupported_object_in_patch"]
+    assert rec["unsafe_artifact_reasons"] == [
+        "unsupported_object_in_patch:weird_fifo:fifo"
+    ]
+    # B5 复核三轮 P1-1：路径/类型作为 typed 证据挂 audit（receipt 内嵌面）
+    assert audit.rejection_evidence.object_path == "weird_fifo"
+    assert audit.rejection_evidence.object_type == "fifo"
     assert "runtime_private_pathset_changed" in rec
     assert "scoring_projection_entry_count" in rec
 

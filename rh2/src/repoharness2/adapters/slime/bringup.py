@@ -48,6 +48,7 @@ from typing import Any
 
 
 from repoharness2.contracts.fa_runtime import outcome_dict_is_unsafe_rejection
+from repoharness2.contracts.finalization import FinalizationStoreConflict
 from repoharness2.adapters.slime.generate import (
     PROCESS_CLOCK_DOMAIN,
     LeafFacts,
@@ -80,12 +81,6 @@ ADAPTER_PORT = int(os.environ.get("ADAPTER_PORT", "18001"))
 # rollout 容器（bridge 网络）反连宿主侧 adapter 的地址：默认 docker0 网关
 ADAPTER_PUBLIC_HOST = os.environ.get("ADAPTER_PUBLIC_HOST", "172.17.0.1")
 ARTIFACT_DIR = Path(os.environ.get("RH2_BRINGUP_ARTIFACT_DIR", "/root/bringup/artifacts"))
-
-
-class FinalizationStoreConflict(RuntimeError):
-    """同一路径第二次写入且内容不同 = 不可变性违约（typed fatal 通道：
-    body 冲突走"无法建立可信 artifact"，receipt 冲突走 durable handoff
-    失败——都不会静默覆盖已落盘事实）。"""
 
 
 class FileFinalizationStore:

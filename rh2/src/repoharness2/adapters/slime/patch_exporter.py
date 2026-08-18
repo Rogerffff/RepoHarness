@@ -33,8 +33,18 @@ __all__ = ["PatchExportError", "diff_census_against_baseline", "export_frozen_pa
 
 
 class PatchExportError(RuntimeError):
-    def __init__(self, reason_code: str, message: str) -> None:
+    def __init__(
+        self,
+        reason_code: str,
+        message: str,
+        *,
+        object_path: str | None = None,
+        object_type: str | None = None,
+    ) -> None:
         self.reason_code = reason_code
+        # B5 复核三轮 P1-1：unsupported 对象的路径/类型结构化透传
+        self.object_path = object_path
+        self.object_type = object_type
         super().__init__(f"{reason_code}: {message}")
 
 
@@ -138,7 +148,12 @@ async def export_frozen_patch(
     except BaselineCensusError as exc:
         # 不支持对象（模型产出 FIFO 等）单列（B3 按 unsafe artifact 分类）
         if exc.reason_code == "unsupported_object_in_baseline":
-            raise PatchExportError("unsupported_object_in_patch", str(exc)) from exc
+            raise PatchExportError(
+                "unsupported_object_in_patch",
+                str(exc),
+                object_path=exc.object_path,
+                object_type=exc.object_type,
+            ) from exc
         raise PatchExportError("post_census_parse_failed", str(exc)) from exc
 
     post_by_path = {e.path: e for e in post.entries}

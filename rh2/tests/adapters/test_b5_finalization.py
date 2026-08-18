@@ -198,7 +198,7 @@ async def test_abort_path_still_gets_receipt():
     store = chain.finalization
     receipt = store.receipts[0]
     assert receipt.attempt_disposition == "aborted"  # 软失败收口
-    assert receipt.abort_reason == "unsafe_artifact_permanent_rejection"
+    assert receipt.terminal_reason_code == "unsafe_artifact_permanent_rejection"
     # B5 复核 P1-2（T0 第 9 条 retention）：unsafe 拒绝也保留 artifact 本体
     assert store.bodies, "unsafe 分支必须先持久化本体再返回"
     assert receipt.artifact_bodies_persisted is True
@@ -219,7 +219,7 @@ async def test_artifact_body_persist_failure_is_missing_abort():
     receipt = store.receipts[0]
     assert receipt.attempt_disposition == "aborted"
     assert receipt.artifact_bodies_persisted is False
-    assert receipt.abort_reason == "frozen_artifact_persist_failed"
+    assert receipt.terminal_reason_code == "frozen_artifact_persist_failed"
     assert receipt.outcome_v2.reward_unavailable is True
 
 
@@ -381,3 +381,97 @@ async def test_double_store_failure_first_cause_wins():
                for f in audit.failure_records)
     assert any(f.error_type == "finalization_receipt_write_failed"
                for f in audit.failure_records)
+
+
+# ------------------------------------------- B5 复核三轮（P1-1/2/3）
+async def test_barrier_fatal_plus_sink_failure_first_cause_wins():
+    """三轮 P1-2：在途 Fatal（barrier 炸）+ audit sink 失败 → 传播的仍是
+    首因 Fatal（不被 execution_audit_write_failed 顶替）；receipt 记
+    fatal_run_halt + terminal_reason_code=首因；sink 失败记 secondary。"""
+
+    class _FatalBarrier:
+        async def establish(self, *, workspace, audit):
+            raise FatalExecutionInfrastructureError(
+                "primary_barrier_fatal", "barrier 基建炸（测试注入）")
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_FatalBarrier(), turns=turns)
+    _stamp_fa_identity(chain.base_sample)
+
+    def _failing_sink(audit):
+        raise OSError("audit store down")
+
+    chain.orchestrator._audit_sink = _failing_sink
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="primary_barrier_fatal") as exc_info:
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    # 首因未被 sink 错误顶替（既有屏障包装层转 runtime_barrier_exception，
+    # 消息链保留原始 primary_barrier_fatal）
+    assert exc_info.value.reason_code == "runtime_barrier_exception"
+    receipt = chain.finalization.receipts[0]
+    assert receipt.attempt_disposition == "fatal_run_halt"
+    # receipt 记录实际在途传播的 Fatal 归因（可恢复）
+    assert receipt.terminal_reason_code == "runtime_barrier_exception"
+    audit = chain.orchestrator.audits[0]
+    assert any(f.error_type == "audit_sink_failed_secondary"
+               for f in audit.failure_records)
+
+
+async def test_store_conflict_is_run_halt_not_member_loss():
+    """三轮 P1-3：immutable 违约（同 attempt 不同内容）→ Fatal run-halt，
+    绝不 remove_sample 缺员继续训练。"""
+
+    store = FakeFinalizationStore(conflict_put_bodies=True)
+    chain = _formal_chain(store)
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="finalization_store_conflict"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    # receipt 仍产出（fatal 在途），归因可恢复
+    receipt = store.receipts[0]
+    assert receipt.attempt_disposition == "fatal_run_halt"
+    assert receipt.terminal_reason_code == "finalization_store_conflict"
+
+
+async def test_unsupported_object_rejection_evidence_survives_in_receipt():
+    """三轮 P1-1：FIFO 等不支持对象在 artifact 建立前触发永久拒绝——
+    对象路径/类型经 typed 证据内嵌 receipt，workspace 清理后不消失。"""
+
+    class _FifoWs(_FrozenWs):
+        async def run_bash(self, script):
+            from types import SimpleNamespace
+
+            if "find ." in script:
+                return SimpleNamespace(
+                    exit_code=0, stdout="UNSUPPORTED\tfifo\tevil_pipe\n", stderr="")
+            return await self._u.run_bash(script)
+
+    class _FifoBarrier:
+        async def establish(self, *, workspace, audit):
+            return QuiescenceConfirmed(
+                frozen_grading_workspace=_FifoWs(workspace),
+                snapshot_ref="sha256:abc", evidence_refs=("s",))
+
+    turns = dense_turns()
+    for t in turns:
+        t.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        runtime_quiescence_barrier=_FifoBarrier(), turns=turns)
+    _stamp_fa_identity(chain.base_sample)
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    receipt = chain.finalization.receipts[0]
+    assert receipt.attempt_disposition == "aborted"
+    assert receipt.rejection_evidence is not None
+    assert receipt.rejection_evidence.reason_code == "unsupported_object_in_patch"
+    assert receipt.rejection_evidence.object_path == "evil_pipe"
+    assert receipt.rejection_evidence.object_type == "fifo"
+    assert receipt.frozen_patch_digest is None  # artifact 未建立，证据仍在
+    assert "object:evil_pipe:fifo" in receipt.outcome_v2.evidence_refs

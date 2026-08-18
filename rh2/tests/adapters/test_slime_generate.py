@@ -438,6 +438,7 @@ class FakeFinalizationStore:
 
     fail_persist_receipt: bool = False
     fail_put_bodies: bool = False
+    conflict_put_bodies: bool = False  # 模拟 immutable 违约（typed）
     fail_append: bool = False
     bodies: list[dict[str, Any]] = field(default_factory=list)
     receipts: list[Any] = field(default_factory=list)
@@ -446,6 +447,12 @@ class FakeFinalizationStore:
 
     def put_artifact_bodies(self, *, frozen_patch, baseline_manifest):
         self.call_order.append("put_artifact_bodies")
+        if self.conflict_put_bodies:
+            from repoharness2.contracts.finalization import (
+                FinalizationStoreConflict,
+            )
+
+            raise FinalizationStoreConflict("fake immutable 违约（同 attempt 不同内容）")
         if self.fail_put_bodies:
             raise OSError("fake body store down")
         self.bodies.append({"frozen_patch": frozen_patch,

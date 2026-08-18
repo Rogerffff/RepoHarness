@@ -121,6 +121,8 @@ from repoharness2.contracts.finalization import (
     CleanupFailureFact,
     CleanupResultAppendV1,
     FinalizationReceiptV1,
+    FinalizationStoreConflict,
+    RejectedObjectEvidenceV1,
 )
 from repoharness2.envpack import bundles, materialize
 from repoharness2.governance import FinalizedRollout, GroupRepairSignal, finalize_rollout
@@ -229,12 +231,21 @@ def build_finalization_receipt(
         disposition = "delivery_prepared"
     else:
         disposition = "aborted"
-    abort_reason: str | None = None
-    if disposition == "aborted":
+    # B5 复核三轮 P1-2：统一终局归因——fatal/cancelled 的 receipt 同样
+    # 要有可恢复的 reason（F2-4 只读 receipt 就能裁定，无需翻 audit）。
+    terminal_reason_code: str | None = None
+    if disposition == "fatal_run_halt":
+        terminal_reason_code = (
+            getattr(in_flight_exception, "reason_code", None)
+            or type(in_flight_exception).__name__
+        )
+    elif disposition == "cancelled":
+        terminal_reason_code = "cancelled"
+    elif disposition == "aborted":
         if audit.outcome_v2 is not None:
-            abort_reason = audit.outcome_v2.get("reason_code")
+            terminal_reason_code = audit.outcome_v2.get("reason_code")
         elif audit.failure_records:
-            abort_reason = audit.failure_records[-1].error_type
+            terminal_reason_code = audit.failure_records[-1].error_type
     attempt_key = audit.physical_attempt_id or audit.trajectory_id
     return FinalizationReceiptV1(
         receipt_id=f"rcpt_{re.sub(r'[^A-Za-z0-9._-]', '_', attempt_key)}",
@@ -243,7 +254,8 @@ def build_finalization_receipt(
         session_id=audit.session_id,
         physical_attempt_id=audit.physical_attempt_id,
         attempt_disposition=disposition,
-        abort_reason=abort_reason,
+        terminal_reason_code=terminal_reason_code,
+        rejection_evidence=audit.rejection_evidence,
         outcome_v2=(
             RolloutAttemptOutcomeV2.model_validate(audit.outcome_v2)
             if audit.outcome_v2 is not None
@@ -1518,6 +1530,8 @@ class RolloutAudit:
     # F2-2 producer：本次 execution 的 Outcome v2（dict 形式随 audit 落盘；
     # S1 兼容路径（无四层身份）为 None）
     outcome_v2: dict[str, Any] | None = None
+    # B5 复核三轮 P1-1：artifact 建立前永久拒绝的对象证据（receipt 内嵌）
+    rejection_evidence: Any | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -2195,8 +2209,20 @@ class RolloutOrchestrator:
                     except PatchExportError as exc:
                         if exc.reason_code == "unsupported_object_in_patch":
                             # B3 兑现 B2 登记：模型产出不支持对象 = unsafe
-                            # artifact（present + 永久拒绝，不评分）
-                            audit.unsafe_artifact_reasons = [exc.reason_code]
+                            # artifact（present + 永久拒绝，不评分）。
+                            # B5 复核三轮 P1-1：此分支在 artifact 建立之前
+                            # 返回——对象路径/类型作为 typed 证据挂 audit，
+                            # 由 receipt 内嵌 durable（workspace 清理后
+                            # 拒绝证据不消失）。
+                            audit.rejection_evidence = RejectedObjectEvidenceV1(
+                                reason_code=exc.reason_code,
+                                object_path=exc.object_path,
+                                object_type=exc.object_type,
+                            )
+                            audit.unsafe_artifact_reasons = [
+                                f"{exc.reason_code}:{exc.object_path or '?'}"
+                                f":{exc.object_type or 'unknown'}"
+                            ]
                             audit.mark("unsafe_artifact_rejected")
                             self._produce_outcome_v2(
                                 audit=audit,
@@ -2216,7 +2242,12 @@ class RolloutOrchestrator:
                                     else self.config.policy_version
                                 ),
                                 eligibility_report_id=None,
-                                extra_evidence=[*barrier_evidence, exc.reason_code],
+                                extra_evidence=[
+                                    *barrier_evidence,
+                                    exc.reason_code,
+                                    f"object:{exc.object_path or '?'}"
+                                    f":{exc.object_type or 'unknown'}",
+                                ],
                             )
                             return self._abort_result(
                                 sample, reason="rh2_unsafe_artifact_rejected",
@@ -2239,6 +2270,16 @@ class RolloutOrchestrator:
                             frozen_patch=frozen_patch,
                             baseline_manifest=baseline_manifest,
                         )
+                    except FinalizationStoreConflict as exc:
+                        # B5 复核三轮 P1-3：同一 physical attempt 出现不同
+                        # artifact = 身份复用/持久化事实矛盾——系统性错误，
+                        # 不是该成员的样本损耗。绝不包装成 SlimeBindingError
+                        # 缺员继续训练（那会把事实冲突伪装成 remove_sample）。
+                        raise FatalExecutionInfrastructureError(
+                            "finalization_store_conflict",
+                            f"artifact immutable 违约：{exc}——身份/事实矛盾，"
+                            "run-halt，不重试不补采。",
+                        ) from exc
                     except Exception as exc:
                         raise SlimeBindingError(
                             "frozen_artifact_persist_failed",
@@ -2661,10 +2702,14 @@ class RolloutOrchestrator:
                 try:
                     self._audit_sink(audit)
                 except Exception as exc:  # noqa: BLE001 —— 分链路处置
-                    if receipt_persist_failed and self._mode != "s1_compat":
-                        # B5 复核 P1-4：双存储失败时**首因优先**——receipt
-                        # 失败发生在前，sink 失败只记 secondary fact，最终
-                        # 抛的必须是 finalization_receipt_write_failed。
+                    if (
+                        receipt_persist_failed and self._mode != "s1_compat"
+                    ) or in_flight is not None:
+                        # B5 复核 P1-4 + 三轮 P1-2：**首因优先**——receipt
+                        # 失败在前、或任何 Fatal/取消在途时，sink 失败只记
+                        # secondary fact；从 finally 抛新异常会**替换**在途
+                        # 异常，把 barrier fatal 等首因顶掉成
+                        # execution_audit_write_failed。
                         audit.failure_records.append(
                             RolloutFailureRecord(
                                 stage="finalization_receipt",

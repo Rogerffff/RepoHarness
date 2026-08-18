@@ -414,9 +414,28 @@ audit_sink_failed_secondary，最终抛 finalization_receipt_write_failed。
 通道（不从 finally 裸逃）。非阻塞登记：同步 fsync 阻塞 event loop
 （探针 ~0.62s）——B6/FA-5 真实尺寸实测后再定 to_thread；bringup 改为
 s1_compat 不注入 store（与"无 store S1 回归"口径一致，receipt 从
-fa_audit_only 起生效）。下一片 = **B6 真实组合验证**（fa_formal 开闸
-前置：F2-3 typed drain receipt、writer-scope T1 手段、barrier git-free
-指纹替换、environment_package_digest 非 None 检查）。
+fa_audit_only 起生效）。**B5 三轮复核闭合（2026-08-18，codex 3 局部
+P1 全采纳）**：**P1-1**——unsupported 对象（FIFO 等）在 artifact 建立前
+永久拒绝，路径/类型证据原随 workspace 清理消失；修复 = census
+UNSUPPORTED 行升 3 字段（type 探测 fifo/socket/block/char，解析双格式
+兼容旧 2 字段）→ BaselineCensusError/PatchExportError 结构化携带
+object_path/object_type → 新契约 `RejectedObjectEvidenceV1` 内嵌
+receipt（audit.rejection_evidence 挂载；outcome evidence_refs 同步带
+`object:<path>:<type>`）。**P1-2**——sink 失败首因保护从"仅 receipt
+失败"扩到**任何在途异常**（finally 抛新异常会替换在途 Fatal/取消——
+barrier fatal 曾被顶成 execution_audit_write_failed）；receipt 归因
+统一为 `terminal_reason_code`（aborted/fatal/cancelled 全覆盖，fatal
+取在途异常 reason_code，替换原 abort_reason 字段）。**P1-3**——
+`FinalizationStoreConflict` 移居 contracts/finalization（adapters 互
+import 成环故不能放 bringup），generate 单独捕获映射
+FatalExecutionInfrastructureError("finalization_store_conflict") run-
+halt——身份复用/事实矛盾绝不包装成 SlimeBindingError 缺员继续训练
+（实测曾 remove_sample 后照常训练）。非阻塞登记（F2-4 前置）：①
+artifact_bodies_persisted=True 与两 digest 皆 None 的矛盾组合 schema
+校验（当前 producer 不产生）；② 固定 .tmp 名多进程竞争归 F2-4
+fencing/恢复切片。**主线顺序（codex 提示 + 05 计划 :179 确认）**：B5
+关闭后先做 **F2-3 typed drain receipt**，再执行并闭合 B6——B6 验收依赖
+F2-3，可先备 fixture 但不得提前宣称 B6 完成。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：
