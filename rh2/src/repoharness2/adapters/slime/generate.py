@@ -2061,28 +2061,49 @@ class RolloutOrchestrator:
                         "——没有账目就没有 typed drain receipt。",
                     )
                 snap = self._drain_snapshot_source(sid)
-                attempt_key = physical_attempt_id or trajectory_id
+                # 批 1 复核 P1-2：严格读数——关键键缺失 = 账目源不完整，
+                # fail-closed（`.get(... or 0)` 会把缺失当干净值，假阳性）。
+                required_keys = (
+                    "pending_turns",
+                    "unfinalized_drafts",
+                    "poison_clean",
+                    "revoke_enforced",
+                    "late_requests_rejected_after_revoke",
+                    "turn_seq_high_water",
+                    "weight_versions_seen",
+                )
+                missing = [k for k in required_keys if k not in snap]
+                if missing:
+                    raise SlimeBindingError(
+                        "drain_snapshot_incomplete",
+                        f"drain 账目快照缺关键键 {missing}——缺失不等于干净，"
+                        "fail-closed。",
+                    )
+                snap_paid = snap.get("physical_attempt_id") or physical_attempt_id
+                if not snap_paid:
+                    raise SlimeBindingError(
+                        "drain_receipt_missing_attempt_identity",
+                        "fa 模式签发 drain receipt 必须有 physical_attempt_id。",
+                    )
+                attempt_key = snap_paid
                 audit.session_drain_receipt = SessionDrainReceiptV1(
                     receipt_id=(
                         "drain_" + re.sub(r"[^A-Za-z0-9._-]", "_", attempt_key)
                     ),
                     session_id=sid,
-                    physical_attempt_id=snap.get("physical_attempt_id")
-                    or physical_attempt_id,
+                    physical_attempt_id=snap_paid,
                     trajectory_id=trajectory_id,
                     task_id=task.task_id,
-                    revoke_enforced=bool(snap.get("revoke_enforced")),
+                    revoke_enforced=bool(snap["revoke_enforced"]),
                     late_requests_rejected_after_revoke=int(
-                        snap.get("late_requests_rejected_after_revoke") or 0
+                        snap["late_requests_rejected_after_revoke"]
                     ),
-                    pending_turns_after_drain=int(snap.get("pending_turns") or 0),
-                    unfinalized_drafts_after_drain=int(
-                        snap.get("unfinalized_drafts") or 0
-                    ),
-                    poison_clean=bool(snap.get("poison_clean")),
+                    pending_turns_after_drain=int(snap["pending_turns"]),
+                    unfinalized_drafts_after_drain=int(snap["unfinalized_drafts"]),
+                    poison_clean=bool(snap["poison_clean"]),
                     capture_record_count=len(hook.records),
-                    turn_seq_high_water=int(snap.get("turn_seq_high_water") or 0),
-                    weight_versions_seen=list(snap.get("weight_versions_seen") or []),
+                    turn_seq_high_water=int(snap["turn_seq_high_water"]),
+                    weight_versions_seen=list(snap["weight_versions_seen"]),
                     drained_at_utc=_now_utc(),
                 )
                 audit.mark("session_drain_receipt_issued")

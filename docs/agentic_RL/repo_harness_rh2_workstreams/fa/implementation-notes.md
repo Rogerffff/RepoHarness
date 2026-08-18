@@ -454,9 +454,26 @@ mark）；下游 = **内嵌 FinalizationReceiptV1**（`drain_receipt` 字段 +
 **F2-3 剩余批次（未做）**：批 2 = `(execution_id, request_id)` request
 级 capture 归属 + CaptureRegistry 单 owner 串行化收敛（capture_wire
 :111 既有登记）+ 落地后解除 pending overlap fail-fast（并行 subagent
-误杀解除）——跨线程高风险边界，按 §10.4 配 Tracer+Falsifier 对。fa_formal
-闸门四前置现状：**typed drain receipt ✅（本批）**；writer-scope T1 手段
-/ B6 真实组合 / barrier git-free 仍开放。
+误杀解除）——跨线程高风险边界，按 §10.4 配 Tracer+Falsifier 对。
+**批 1 复核闭合（2026-08-19，codex 2P1 全采纳，作为批 2 首个 closure
+commit）**：**P1-2 契约收紧**——SessionDrainReceiptV1 的
+revoke_enforced 必须 True（正向断言对象）、physical_attempt_id 必填
+（fa 模式恒有物理身份）、全计数 ge=0；producer 严格读数（关键键缺失 =
+`drain_snapshot_incomplete` fail-closed，废除 `.get(...or 0)` 把缺失当
+干净值）；FinalizationReceiptV1 对内嵌 drain receipt 做身份/引用互检
+（ref==receipt_id、session/task/trajectory/attempt 全一致、ref 在场而
+内嵌缺失=悬空拒绝）。测试修正：`A == B or A` 优先级 bug 改严格相等；
+"缺注入 fail-closed"改真实执行链路（abort + reason_code 归因断言）。
+**P1-1 假阳性窗口（承认，修复=批 2 本体）**：slime shutdown_session 跨
+线程 drain 失败只记日志不上抛、registry 快照看不到真实 HTTP inflight
+——受体上 receipt 可在 drain 实际失败时仍构造"干净"。正确修复 =
+adapter event loop 上原子执行 revoke+停止准入+等 inflight+capture 对账
+→ 返回 typed drain result → orchestrator 据此签发（不在多锁快照上叠
+guard）。因此 fa_formal 闸门口径改为：**typed drain receipt =
+schema/producer scaffold 完成，production proof 待批 2**（含真实双线程
+交错测试证明 receipt 签发后无请求触达 SGLang）；批 1+批 2 联合终核后
+B6 才可信任该 receipt。writer-scope T1 手段 / B6 真实组合 / barrier
+git-free 仍开放。
 **A-prime 定稿（2026-08-17 用户授权）+ B1~B6 切片已入 05 计划 5a 节**
 （八要素逐片；B4 动 grading/manager.py 前须 S2 协调；fa_formal 开闸 =
 B6 + F2-3 drain receipt + writer-scope T1 手段三前置）。**终核（四提交复核，2026-08-17，阻塞项 + P1 + 4 条件项全采纳）**：

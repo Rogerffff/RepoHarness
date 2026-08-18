@@ -68,29 +68,34 @@ class SessionDrainReceiptV1(StrictModel):
     )
     receipt_id: NonEmptyStr
     session_id: NonEmptyStr = Field(description="非秘密 internal sid。")
-    physical_attempt_id: str | None = None
+    physical_attempt_id: NonEmptyStr = Field(
+        description="F2-1a 物理身份（**必填**——只有 fa 模式签发本 receipt，"
+        "fa 模式恒有物理身份；批 1 复核 P1-2 收紧）。"
+    )
     trajectory_id: NonEmptyStr
     task_id: NonEmptyStr
     revoke_enforced: bool = Field(
         description="capability 撤销已执行（HTTP 层拒新请求先于 drain）。"
+        "正向断言对象里必须为 True（校验器锁死）。"
     )
     late_requests_rejected_after_revoke: int = Field(
         default=0,
+        ge=0,
         description="撤销后被 guard 403 拒掉的迟到请求数（撤销真实生效的"
         "运行期证据；0 = drain 窗口内无迟到请求，也正常）。",
     )
     pending_turns_after_drain: int = Field(
-        description="drain 后残留 pending 暂存轮数——receipt 只在 0 时可构造。"
+        ge=0, description="drain 后残留 pending 暂存轮数——receipt 只在 0 时可构造。"
     )
     unfinalized_drafts_after_drain: int = Field(
-        description="drain 后残留 unfinalized delivered draft 数——必须 0。"
+        ge=0, description="drain 后残留 unfinalized delivered draft 数——必须 0。"
     )
     poison_clean: bool = Field(description="poison 清白（必须 True）。")
     capture_record_count: int = Field(
-        description="冻结时刻的 capture 记录条数（A4 事实面大小）。"
+        ge=0, description="冻结时刻的 capture 记录条数（A4 事实面大小）。"
     )
     turn_seq_high_water: int = Field(
-        default=0, description="该会话的轮序号高水位（registry 计数）。"
+        default=0, ge=0, description="该会话的轮序号高水位（registry 计数）。"
     )
     weight_versions_seen: list[str] = Field(default_factory=list)
     drained_at_utc: datetime
@@ -101,6 +106,10 @@ class SessionDrainReceiptV1(StrictModel):
             raise ValueError(message)
 
     def model_post_init(self, __context: object) -> None:
+        self._require(
+            self.revoke_enforced,
+            "revoke 未执行不得出 drain receipt（正向断言对象；批 1 复核 P1-2）。",
+        )
         self._require(
             self.pending_turns_after_drain == 0,
             "drain receipt 不许带残留 pending 暂存轮（脏状态该在边界断言处炸）。",
@@ -208,6 +217,35 @@ class FinalizationReceiptV1(StrictModel):
         description="typed session-plane drain receipt 内嵌（与 outcome_v2 "
         "同法：随 finalization receipt 一起 durable，F2-4/B6 单次读取）。",
     )
+
+    def model_post_init(self, __context: object) -> None:
+        # 批 1 复核 P1-2：内嵌 drain receipt 与本 receipt 的身份/引用互检
+        # ——两份事实分家（session/task/trajectory/attempt 不一致、ref 与
+        # 内嵌 id 不符）构造即拒。这是内部一致性锁，不是新语义执法；
+        # 构造失败走 B5 既有 durable-handoff 失败通道（run halt）。
+        dr = self.drain_receipt
+        if dr is None:
+            if self.drain_receipt_ref is not None:
+                raise ValueError(
+                    "drain_receipt_ref 在场但内嵌 drain_receipt 缺失（引用悬空）。"
+                )
+            return
+        if self.drain_receipt_ref != dr.receipt_id:
+            raise ValueError(
+                f"drain_receipt_ref {self.drain_receipt_ref!r} != 内嵌 "
+                f"receipt_id {dr.receipt_id!r}。"
+            )
+        for label, mine, theirs in (
+            ("task_id", self.task_id, dr.task_id),
+            ("trajectory_id", self.trajectory_id, dr.trajectory_id),
+            ("session_id", self.session_id, dr.session_id),
+            ("physical_attempt_id", self.physical_attempt_id, dr.physical_attempt_id),
+        ):
+            if mine != theirs:
+                raise ValueError(
+                    f"finalization 与 drain receipt 的 {label} 不一致："
+                    f"{mine!r} != {theirs!r}。"
+                )
     started_epoch_seconds: float
     finalized_at_utc: datetime
 

@@ -61,7 +61,7 @@ async def test_drain_receipt_issued_embedded_and_referenced():
     dr = audit.session_drain_receipt
     assert dr is not None
     assert dr.session_id == audit.session_id
-    assert dr.physical_attempt_id == audit.physical_attempt_id or dr.physical_attempt_id
+    assert dr.physical_attempt_id == audit.physical_attempt_id  # 严格相等
     assert dr.revoke_enforced is True
     assert dr.pending_turns_after_drain == 0
     assert dr.unfinalized_drafts_after_drain == 0
@@ -88,9 +88,17 @@ def test_dirty_drain_receipt_construction_rejected():
 
     common = dict(
         receipt_id="drain_x", session_id="s-x", trajectory_id="t",
-        task_id="k", revoke_enforced=True, capture_record_count=1,
+        task_id="k", physical_attempt_id="e#p1-x", revoke_enforced=True,
+        capture_record_count=1,
         drained_at_utc=datetime.now(timezone.utc),
     )
+    with pytest.raises(ValueError, match="revoke"):  # 批1复核：撤销未执行即拒
+        SessionDrainReceiptV1(**{**common, "revoke_enforced": False},
+                              pending_turns_after_drain=0,
+                              unfinalized_drafts_after_drain=0, poison_clean=True)
+    with pytest.raises(ValueError):  # 负计数拒绝（ge=0）
+        SessionDrainReceiptV1(**common, pending_turns_after_drain=-1,
+                              unfinalized_drafts_after_drain=0, poison_clean=True)
     with pytest.raises(ValueError, match="pending"):
         SessionDrainReceiptV1(**common, pending_turns_after_drain=1,
                               unfinalized_drafts_after_drain=0, poison_clean=True)
@@ -168,26 +176,72 @@ async def test_guard_rejects_and_counts_revoked_request(aiohttp_client=None):
 
 
 async def test_formal_chain_without_snapshot_source_fails_closed():
-    from test_slime_generate import (
-        TASK_ID_DENSE,
-        FakeFinalizationStore,
-        GradingSubmitStub,
-        make_task,
-    )
+    """真实执行链路（批 1 复核测试问题修正）：缺注入跑到 drain 点必须
+    fail-closed 收口（abort + 归因），不产 receipt、不评分。"""
 
-    from repoharness2.adapters.slime.generate import RolloutOrchestrator
+    chain = _formal_chain()
+    chain.orchestrator._drain_snapshot_source = None  # 拔掉注入
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is None
+    assert chain.grading.calls == []  # 不评分
+    assert audit.outcome_v2["reason_code"] == "drain_snapshot_source_missing"
+    assert any("drain_snapshot_source_missing" in f.detail
+               for f in audit.failure_records)
 
-    orch = RolloutOrchestrator(
-        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
-        task_resolver=make_task(TASK_ID_DENSE),
-        adapter_factory=lambda hook, defaults: None,
-        harness_driver=object(),
-        grading_submit=GradingSubmitStub(),
-        runtime_quiescence_barrier=_Barrier(),
-        finalization_store=FakeFinalizationStore(),
-        drain_snapshot_source=None,  # 缺注入
+
+async def test_incomplete_snapshot_fails_closed():
+    """严格读数：关键键缺失 ≠ 干净——fail-closed（批 1 复核 P1-2）。"""
+
+    chain = _formal_chain()
+
+    def _broken(sid):
+        return {"pending_turns": 0}  # 缺 poison_clean 等关键键
+
+    chain.orchestrator._drain_snapshot_source = _broken
+    delivered = await chain.orchestrator.generate(
+        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is None
+    assert audit.outcome_v2["reason_code"] == "drain_snapshot_incomplete"
+
+
+def test_finalization_receipt_identity_cross_check():
+    """内嵌 drain receipt 与 finalization receipt 的身份/引用互检。"""
+
+    from datetime import datetime, timezone
+
+    from repoharness2.contracts.finalization import FinalizationReceiptV1
+
+    dr = SessionDrainReceiptV1(
+        receipt_id="drain_e_p1", session_id="s-e", trajectory_id="t",
+        task_id="k", physical_attempt_id="e#p1-x", revoke_enforced=True,
+        pending_turns_after_drain=0, unfinalized_drafts_after_drain=0,
+        poison_clean=True, capture_record_count=1,
+        drained_at_utc=datetime.now(timezone.utc),
     )
-    assert orch._drain_snapshot_source is None  # 构造允许，执行期 fail-closed
+    common = dict(
+        receipt_id="rcpt_e_p1", task_id="k", trajectory_id="t",
+        session_id="s-e", physical_attempt_id="e#p1-x",
+        attempt_disposition="delivery_prepared",
+        started_epoch_seconds=1.0,
+        finalized_at_utc=datetime.now(timezone.utc),
+    )
+    ok = FinalizationReceiptV1(**common, drain_receipt=dr,
+                               drain_receipt_ref=dr.receipt_id)
+    assert ok.drain_receipt_ref == "drain_e_p1"
+    with pytest.raises(ValueError, match="receipt_id"):  # ref 与内嵌不符
+        FinalizationReceiptV1(**common, drain_receipt=dr,
+                              drain_receipt_ref="drain_other")
+    with pytest.raises(ValueError, match="悬空"):  # ref 在场但内嵌缺失
+        FinalizationReceiptV1(**common, drain_receipt=None,
+                              drain_receipt_ref="drain_e_p1")
+    with pytest.raises(ValueError, match="trajectory_id"):  # 身份分家
+        FinalizationReceiptV1(**{**common, "trajectory_id": "other"},
+                              drain_receipt=dr, drain_receipt_ref=dr.receipt_id)
 
 
 async def test_s1_compat_no_drain_receipt():
