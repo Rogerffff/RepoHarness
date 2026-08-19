@@ -502,6 +502,21 @@ cancelled 不受影响不误伤）。测试链替身按 F2-2 约定 `sid = s-{pa
 真双线程交错测试：慢请求在飞时 owner 等归零才返回（在飞请求允许完成非
 砍杀）、drain 后新请求 403 不触达内层 handler、迟到计数入账。dict 快照
 路径整体删除（`drain_snapshot_source` → `session_drain_owner`）。
+**批 2a 复核闭合（2026-08-19，codex 1P1 顺序根修）**：旧序 revoke →
+finish_session（轨迹冻结/弹树）→ 边界 → owner drain 违反核心不变量
+"**先证明不再有 turn 写入，才能冻结 trajectory**"——已过 guard 未进
+slime inflight 的请求可在冻结后 record_turn，owner 事后仍报 clean
+（codex 真实 AnthropicAdapter 交错探针复现"冻结后写入的树重现"）。
+修复 = owner drain（adapter loop 上 revoke + inflight 归零 + typed
+clean 验证）**移到 finish_session 之前**；正式链的跨线程提前
+adapter.revoke_session 删除（撤销线性化点 = owner 内 registry.revoke；
+s1_compat 保留兼容 revoke）；`session_plane_drained` 置位与 timeline
+事件移到 clean 结果 + 边界断言全过之后——dirty 时不再出现"drained=True
+与 unclean 归因并存"的审计矛盾（回归钉：顺序断言 owner 先于
+finish_session；dirty 断言 drained=False 无事件）。交错测试改干净收尾
+（server 线程 join，warning 清零）。非阻塞登记（FA-5/F2-4）：
+make_threadsafe_session_drain_owner 在 adapter loop 已停未关时永久等待
+——届时调用侧有界 wait_for + 取消 future，无须新状态机。
 **批 2b（未做）**：request 级 capture 归属（(sid, rid) 键位，rid 已在
 PendingTurn；contextvar 贯穿 stage/commit）+ overlap fail-fast 解除
 （并行 subagent 误杀）+ §10.4 Tracer/Falsifier 对 + 批 1+2 联合终核。

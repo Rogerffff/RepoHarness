@@ -267,6 +267,41 @@ async def test_dirty_drain_result_is_member_level_failure():
     audit = chain.orchestrator.audits[0]
     assert audit.session_drain_receipt is None
     assert audit.outcome_v2["reason_code"] == "session_plane_drain_unclean"
+    # 批 2a 复核 P1：dirty 时绝不出现"drained=True 与 unclean 并存"
+    assert audit.session_plane_drained is False
+    assert "session_plane_drained" not in [e.step for e in audit.timeline]
+
+
+async def test_drain_owner_runs_before_trajectory_freeze():
+    """批 2a 复核 P1 顺序钉：owner drain（证明不再写）必须先于
+    finish_session（轨迹冻结/弹树）。"""
+
+    from test_slime_generate import MockSessionAdapter
+
+    chain = _formal_chain()
+    order: list[str] = []
+    orig_owner = chain.orchestrator._session_drain_owner
+
+    async def logging_owner(sid):
+        order.append("drain_owner")
+        return await orig_owner(sid)
+
+    chain.orchestrator._session_drain_owner = logging_owner
+    orig_finish = MockSessionAdapter.finish_session
+
+    async def logging_finish(self, *a, **kw):
+        order.append("finish_session")
+        return await orig_finish(self, *a, **kw)
+
+    MockSessionAdapter.finish_session = logging_finish
+    try:
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    finally:
+        MockSessionAdapter.finish_session = orig_finish
+    assert order == ["drain_owner", "finish_session"]  # 先证不写，再冻结
+    audit = chain.orchestrator.audits[0]
+    assert audit.session_drain_receipt is not None  # 冻结后照常签发
 
 
 async def test_real_adapter_loop_interleaving_no_request_after_drain():
@@ -312,6 +347,9 @@ async def test_real_adapter_loop_interleaving_no_request_after_drain():
         asyncio.set_event_loop(loop)
         loop_holder["loop"] = loop
 
+        stop_event = asyncio.Event()
+        loop_holder["stop"] = stop_event
+
         async def _serve():
             app = aiohttp_web.Application(
                 middlewares=[build_session_guard_middleware(registry)])
@@ -320,12 +358,11 @@ async def test_real_adapter_loop_interleaving_no_request_after_drain():
             await server.start_server()
             loop_holder["port"] = server.port
             server_ready.set()
-            await asyncio.sleep(30)  # 挂住直到测试结束取消
+            await stop_event.wait()  # 干净收尾：主线程置位后正常退出
+            await server.close()
 
-        try:
-            loop.run_until_complete(_serve())
-        except RuntimeError:
-            pass
+        loop.run_until_complete(_serve())
+        loop.close()
 
     t = threading.Thread(target=adapter_thread, daemon=True)
     t.start()
@@ -360,8 +397,9 @@ async def test_real_adapter_loop_interleaving_no_request_after_drain():
     assert reached_after_drain == []  # drain 返回后无新请求触达内层
     assert registry.drain_snapshot("s-ix")[
         "late_requests_rejected_after_revoke"] == 1
-    loop_holder["loop"].call_soon_threadsafe(
-        lambda: [t.cancel() for t in asyncio.all_tasks(loop_holder["loop"])])
+    loop_holder["loop"].call_soon_threadsafe(loop_holder["stop"].set)
+    t.join(timeout=5)
+    assert not t.is_alive()  # server 线程干净退出
 
 
 async def test_contract_violation_reaches_worker_halted():

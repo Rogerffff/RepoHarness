@@ -1995,24 +1995,29 @@ class RolloutOrchestrator:
             # F2-2 quiescence 第一步：撤销 capability（HTTP 层拒新请求）。
             # 顺序 = revoke（拒新）→ finish/drain（清旧）→ poison/边界断言
             # （对账）——撤销必须先于 drain，否则 drain 期间仍可能开新轮。
-            revoke = getattr(adapter, "revoke_session", None)
-            if revoke is None:
-                if self._mode != "s1_compat":
-                    # 正式链禁绕过（D3）：没有撤销能力就没有 quiescence 序列
-                    raise SlimeBindingError(
-                        "adapter_missing_revoke_session",
-                        "正式链 adapter 未实现 revoke_session——quiescence "
-                        "第一步（拒新请求）无法执行，fail-closed。",
-                    )
-            else:
-                revoke(sid)
+            drain_result = None
+            if self._mode != "s1_compat":
+                # F2-3 批 2a 复核 P1（顺序根修）：**单 owner drain 必须先于
+                # 轨迹冻结**——先在 adapter loop 上证明"不再有 turn 写入"
+                # （revoke + inflight 归零 + typed clean 结果），才允许
+                # finish_session 弹出轨迹树。旧顺序（先冻结后 drain）下，
+                # 已过 guard 未进 slime inflight 的请求可在冻结后 record_
+                # turn，owner 事后仍报 clean——冻结先于最后一次写。跨线程
+                # 的提前 adapter.revoke_session 不再是正式链线性化点
+                # （owner 内的 registry.revoke 在 adapter loop 上原子生效）。
+                drain_result = await self._drain_session_plane_owned(
+                    sid, physical_attempt_id
+                )
                 audit.mark("session_revoked")
-            # 轮次 13 P0-2：**drain 屏障先行**——finish_session 内部的
-            # shutdown_session 才会等/取消该 SID 的全部 in-flight HTTP turn；
-            # 在它之前做 poison/边界/records 检查读到的是不完整快照（false
-            # reject：正常轮还在 flush；false accept：drain 期间才 commit/
-            # overlap/sink 失败）。顺序：drain -> poison -> 非零 exit ->
-            # 边界断言 -> 冻结 records 快照。
+            else:
+                revoke = getattr(adapter, "revoke_session", None)
+                if revoke is not None:  # S1 兼容路径：尽力拒新，无 owner 语义
+                    revoke(sid)
+                    audit.mark("session_revoked")
+            # 轮次 13 P0-2：**drain 屏障先行**——正式链上方 owner 已证
+            # inflight 归零；finish_session 此刻冻结/弹出轨迹树是安全的。
+            # 之后 poison/边界断言读到的是完整快照。顺序：drain ->
+            # freeze -> poison -> 非零 exit -> 边界断言 -> 冻结 records 快照。
             samples = await adapter.finish_session(
                 sid,
                 base_sample=sample,
@@ -2043,69 +2048,16 @@ class RolloutOrchestrator:
                         "capture_boundary_unclean",
                         f"评分前交付账边界断言失败（drain 之后）：{exc}",
                     ) from exc
-            # F2-2（复核 P0-1）：只宣告**会话面**排空——完整 runtime
-            # quiescence（sandbox scope 终止/snapshot 冻结/只评冻结副本）
-            # 尚未落地，runtime_quiescence_confirmed 保持 False
+            # F2-2（复核 P0-1）+ 批 2a 复核 P1：只宣告**会话面**排空，且
+            # 只在 typed clean 结果（正式链）+ 边界断言全部通过之后置位
+            # ——dirty owner 已在 finish_session 之前 abort，绝不出现
+            # "drained=True 与 unclean 归因并存"的审计矛盾。完整 runtime
+            # quiescence 由屏障另行确认。
             audit.session_plane_drained = True
             audit.mark("session_plane_drained")
-            # F2-3 批 1：会话面排空升级为 typed receipt（fa_formal 闸门
-            # 前置件、B6 消费件）。此点位于 drain + poison + 边界断言全部
-            # 通过之后——receipt 构造器的"只在干净时可构造"校验是第二道锁。
-            # 事实来源 = 注入的 drain_snapshot 读数（bringup 接
-            # registry.drain_snapshot；测试链注入替身）；缺注入的正式链
-            # fail-closed。
             if self._mode != "s1_compat":
-                # F2-3 批 2a（codex 首验收）：typed 单 owner drain。契约
-                # 违约族 = **Fatal → WorkerHalted**（owner 缺注入/抛异常/
-                # 返回非 typed 结果/paid 矛盾——内部事实源损坏，绝不降级
-                # 成缺员伪装成数据不足）；类型正确但事实不干净 = 单
-                # execution 的 drain 失败（成员级收口，不冒充干净）。
-                from repoharness2.adapters.slime.capture_wire import (
-                    SessionPlaneDrainResult,
-                )
-
-                if self._session_drain_owner is None:
-                    raise FatalExecutionInfrastructureError(
-                        "session_drain_owner_missing",
-                        "正式链未注入 session_drain_owner——drain 所有权缺席"
-                        "是部署级契约损坏，run-halt。",
-                    )
-                try:
-                    drain_result = await self._session_drain_owner(sid)
-                except Exception as exc:
-                    raise FatalExecutionInfrastructureError(
-                        "session_drain_owner_failed",
-                        f"drain owner 异常：{type(exc).__name__}: {exc}",
-                    ) from exc
-                if not isinstance(drain_result, SessionPlaneDrainResult):
-                    raise FatalExecutionInfrastructureError(
-                        "session_drain_owner_contract_violation",
-                        f"drain owner 返回 {type(drain_result).__name__}，"
-                        "非 SessionPlaneDrainResult。",
-                    )
-                if drain_result.physical_attempt_id != physical_attempt_id:
-                    raise FatalExecutionInfrastructureError(
-                        "session_drain_attempt_mismatch",
-                        f"drain owner 身份 {drain_result.physical_attempt_id!r} "
-                        f"!= audit 身份 {physical_attempt_id!r}——两份事实分家。",
-                    )
-                if not (
-                    drain_result.revoke_enforced
-                    and drain_result.inflight_zero_confirmed
-                    and drain_result.pending_turns == 0
-                    and drain_result.unfinalized_drafts == 0
-                    and drain_result.poison_clean
-                ):
-                    raise SlimeBindingError(
-                        "session_plane_drain_unclean",
-                        "drain 未达干净态："
-                        f"revoke={drain_result.revoke_enforced} "
-                        f"inflight_zero={drain_result.inflight_zero_confirmed} "
-                        f"pending={drain_result.pending_turns} "
-                        f"drafts={drain_result.unfinalized_drafts} "
-                        f"poison_clean={drain_result.poison_clean}",
-                    )
-                assert physical_attempt_id is not None  # fa 模式恒有（上方相等已证）
+                assert drain_result is not None  # 正式链在冻结前已过 owner
+                assert physical_attempt_id is not None  # fa 模式恒有（owner 相等已证）
                 audit.session_drain_receipt = SessionDrainReceiptV1(
                     receipt_id=(
                         "drain_"
@@ -3111,6 +3063,62 @@ class RolloutOrchestrator:
             accepted=True,
             handshaked_at_utc=_now_utc(),
         )
+
+    async def _drain_session_plane_owned(
+        self, sid: str, physical_attempt_id: str | None
+    ):
+        """F2-3 批 2a：单 owner drain 的消费半区（codex 批 2 首验收分层）。
+
+        契约违约族（owner 缺注入/抛异常/返回非 typed/paid 矛盾）=
+        FatalExecutionInfrastructureError → WorkerHalted——内部事实源损坏
+        绝不降级成缺员伪装 batch_starved；类型正确但事实不干净 =
+        session_plane_drain_unclean（成员级收口，不冒充干净）。返回已验证
+        的 clean SessionPlaneDrainResult。"""
+
+        from repoharness2.adapters.slime.capture_wire import SessionPlaneDrainResult
+
+        if self._session_drain_owner is None:
+            raise FatalExecutionInfrastructureError(
+                "session_drain_owner_missing",
+                "正式链未注入 session_drain_owner——drain 所有权缺席"
+                "是部署级契约损坏，run-halt。",
+            )
+        try:
+            drain_result = await self._session_drain_owner(sid)
+        except Exception as exc:
+            raise FatalExecutionInfrastructureError(
+                "session_drain_owner_failed",
+                f"drain owner 异常：{type(exc).__name__}: {exc}",
+            ) from exc
+        if not isinstance(drain_result, SessionPlaneDrainResult):
+            raise FatalExecutionInfrastructureError(
+                "session_drain_owner_contract_violation",
+                f"drain owner 返回 {type(drain_result).__name__}，"
+                "非 SessionPlaneDrainResult。",
+            )
+        if drain_result.physical_attempt_id != physical_attempt_id:
+            raise FatalExecutionInfrastructureError(
+                "session_drain_attempt_mismatch",
+                f"drain owner 身份 {drain_result.physical_attempt_id!r} "
+                f"!= audit 身份 {physical_attempt_id!r}——两份事实分家。",
+            )
+        if not (
+            drain_result.revoke_enforced
+            and drain_result.inflight_zero_confirmed
+            and drain_result.pending_turns == 0
+            and drain_result.unfinalized_drafts == 0
+            and drain_result.poison_clean
+        ):
+            raise SlimeBindingError(
+                "session_plane_drain_unclean",
+                "drain 未达干净态："
+                f"revoke={drain_result.revoke_enforced} "
+                f"inflight_zero={drain_result.inflight_zero_confirmed} "
+                f"pending={drain_result.pending_turns} "
+                f"drafts={drain_result.unfinalized_drafts} "
+                f"poison_clean={drain_result.poison_clean}",
+            )
+        return drain_result
 
     async def _finalize(
         self,

@@ -263,7 +263,9 @@ async def test_e2e_formal_path_audit_only_pre_barrier():
     names = [e.step for e in audit.timeline]
     assert audit.session_plane_drained and audit.runtime_quiescence_confirmed is False
     adapter = chain.adapter_ref["adapter"]
-    assert adapter.revoked == adapter.finished  # 同一 internal sid
+    # 批 2a 复核 P1：正式链撤销移入 drain owner（adapter loop 上
+    # registry.revoke），adapter.revoke_session 不再是线性化点
+    assert adapter.revoked == []
     assert names.index("session_revoked") < names.index("session_plane_drained")
 
     # 三层身份：internal sid 非秘密；token 只进 harness
