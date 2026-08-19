@@ -134,9 +134,10 @@ class CapturePendingOverlapError(RuntimeError):
     作为独立 asyncio task 并发执行（common.py inflight，无 per-session 串行
     锁），record_turn 按**完成序**到达——FIFO 弹最旧会把请求 A 的 token/
     logprob/weight_version 记到请求 B 名下（结构合法但内容串账的训练轨迹，
-    比丢数据更危险，codex 探针确定性复现）。request 级归属（record_turn 传
-    request_id，需改 slime 签名）是 FA-2 第一验收项；落地前 overlap 一律
-    fail-closed：poison session + 本请求失败 + execution 缺员。"""
+    比丢数据更危险，codex 探针确定性复现）。**F2-3 批 2b 已落地 request 级
+    归属**（ContextVar 请求键）：不同请求键并行暂存合法共存；本异常现在
+    只在两种真异常时抛——同键二次 stage、多条在场且无请求键的歧义
+    commit（都 fail-closed：poison + abandon，绝不猜测归属）。"""
 
     def __init__(self, session_id: str) -> None:
         super().__init__(
@@ -154,7 +155,9 @@ class CaptureRegistry:
 
         # 轮次 13 P0-3：register/assert/unregister 在 AsyncLoopThread，
         # stage/commit 在 aiohttp 线程——共享容器全部走短临界区锁（只移动
-        # 所有权，hook/磁盘/回调都在锁外）。单 owner 消息化重构留 FA-2。
+        # 所有权，hook/磁盘/回调都在锁外）。F2-3 批 2a/2b 已收敛：drain
+        # 生命周期决策单 owner（adapter loop）+ request 级归属；剩余共享
+        # map 仍走本锁（全量消息化未做也无当前必要）。
         self._lock = threading.Lock()
         self.hooks: dict[str, GenerationCaptureHook] = {}
         # F2-3 批 2b：request 级归属——sid → {request_key → PendingTurn}。

@@ -611,13 +611,15 @@ class BringupService:
         if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
             raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
         if EXECUTION_MODE == "fa_formal":
-            # F2-2b 复核 NO-GO（2026-08-17）：DockerQuiescenceBarrier 的
-            # 指纹/pkill/收据三面均被证不健全——正式模式恢复 fail-stop，
-            # 待冻结对象 T0（FrozenPatchArtifact vs 物理只读副本）拍板后
-            # 重构再解除。探针仍用 fa_audit_only。
+            # fa_formal 闸门（2026-08-19 现状）：A-prime T0 已拍板、B1~B5
+            # 与 F2-3 批 1/2a/2b 已落地；开闸剩余前置 = F2-3 批 1+2 联合
+            # 终核（含 §10.4 配对）、B6 真实组合验证、writer-scope T1
+            # 手段、barrier git-free 指纹替换（_digest_script 仍跑 git，
+            # diff.external RCE 面未除）。全清前保持 fail-stop；探针用
+            # fa_audit_only。
             raise RuntimeError(
-                "fa_formal 暂禁：F2-2b 静止/冻结设计复核未通过（NO-GO），"
-                "待冻结对象 T0 拍板与重构。"
+                "fa_formal 暂禁：开闸前置未全清（联合终核/B6/writer-scope/"
+                "barrier git-free），详见 fa/implementation-notes.md 文末。"
             )
         self.app_handle = run_app_in_thread(
             self.adapter.app,
