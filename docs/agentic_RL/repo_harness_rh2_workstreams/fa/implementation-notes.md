@@ -523,9 +523,20 @@ codex 手工探针——真实 HTTP turn 在飞时 owner 等待完成（非砍�
 drain 干净后 finish_session 弹树恰好一次（二次 get_trajectory 为空 =
 无冻结后残留）、迟到请求 403 + 计数、线程干净退出。**批 2a 复核结束，
 下一步批 2b。**
-**批 2b（未做）**：request 级 capture 归属（(sid, rid) 键位，rid 已在
-PendingTurn；contextvar 贯穿 stage/commit）+ overlap fail-fast 解除
-（并行 subagent 误杀）+ §10.4 Tracer/Falsifier 对 + 批 1+2 联合终核。
+**批 2b：request 级 capture 归属——完成（2026-08-19）**。pending 容器
+sid→list 改 **sid→{request_key→PendingTurn}**；请求键 =
+`_capture_request_key` ContextVar（guard middleware 授权后铸 uuid，
+stage/commit 在同一请求 task 内读取——并行 subagent 请求各持独立键；
+直调回退 turn.request_id）。**overlap 误杀解除**：不同键并行暂存合法
+共存、各按键 commit 不串账（rid_2 先完成不再拿走 rid_1 的轮——FIFO
+串账根修）；保留的 fail-closed 面 = 同键二次 stage（真异常，poison +
+两轮 abandon）与"多条在场 + 无请求键"的歧义 commit（绝不猜测）。
+single_pending_turn 探针形状权威照旧拒多条。测试：并行共存 + 按键
+commit 归属断言、同键 fail-closed、歧义 commit fail-closed。
+**待办（批 2b 收尾前）**：§10.4 Tracer/Falsifier 配对复核**递延到
+批 1+2 联合终核轮一并执行**（本轮会话上下文见底，配对报告无法有效
+消化；stop condition = 配对未跑完不关闭 F2-3）；联合终核后 fa_formal
+闸门的 drain receipt 前置才算 production proof 完成。
 **非阻塞登记（F2-4 前置，codex 批 2 放行轮）**：① FinalizationReceiptV1
 外层 paid ↔ outcome_v2.identity.physical_attempt_id 交叉校验（当前
 writer 不产矛盾对象）；② SessionDrainReceiptV1 局部严格 bool/int 校验

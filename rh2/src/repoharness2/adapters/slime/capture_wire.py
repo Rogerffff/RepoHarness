@@ -29,9 +29,16 @@
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import dataclasses
 import uuid
 from typing import Any
+
+# F2-3 批 2b：per-HTTP-request 捕获归属键（guard middleware 进入时铸造，
+# stage/commit 在同一请求 task 内读取——并行 subagent 请求各持独立键）
+_capture_request_key: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "rh2_capture_request_key", default=None
+)
 
 import aiohttp
 from aiohttp import web as aiohttp_web
@@ -150,10 +157,10 @@ class CaptureRegistry:
         # 所有权，hook/磁盘/回调都在锁外）。单 owner 消息化重构留 FA-2。
         self._lock = threading.Lock()
         self.hooks: dict[str, GenerationCaptureHook] = {}
-        # 容器保持 list（FA-2 request 级归属会改成 rid 映射），但 stage 对已有
-        # 未 commit 暂存 **fail-closed**（CapturePendingOverlapError）——不做
-        # FIFO 猜测。不变量：len(pending[sid]) <= 1。
-        self.pending: dict[str, list[PendingTurn]] = {}
+        # F2-3 批 2b：request 级归属——sid → {request_key → PendingTurn}。
+        # 并行不同请求各占独立键（overlap 误杀解除）；同键二次 stage 或
+        # 无键歧义 commit 仍 fail-closed（CapturePendingOverlapError）。
+        self.pending: dict[str, dict[str, PendingTurn]] = {}
         self.weight_versions: dict[str, list[str]] = {}
         self.stats = {
             "staged": 0,
@@ -211,7 +218,7 @@ class CaptureRegistry:
                 raise DuplicateActiveSessionError(sid)  # 任何状态修改前拒绝
             self.hooks[sid] = hook
             self.weight_versions[sid] = []
-            self.pending.setdefault(sid, [])
+            self.pending.setdefault(sid, {})
             if physical_attempt_id is not None:
                 self._physical_attempt_ids[sid] = physical_attempt_id
             if capability_token is not None:
@@ -251,7 +258,7 @@ class CaptureRegistry:
         断言：无暂存或多于一条都显式报错。"""
 
         with self._lock:
-            queue = list(self.pending.get(sid) or [])
+            queue = list((self.pending.get(sid) or {}).values())
         if not queue:
             raise RuntimeError(
                 f"session {sid} 无暂存轮——capture wire 未接上（A4）或已被 commit。"
@@ -428,7 +435,7 @@ class CaptureRegistry:
             }
             self._capability_required.discard(sid)
             self.hooks.pop(sid, None)
-            leftover_locked = self.pending.pop(sid, None) or []
+            leftover_locked = list((self.pending.pop(sid, None) or {}).values())
             self.session_deadlines.pop(sid, None)
             self._turn_seq.pop(sid, None)
             self.weight_versions.pop(sid, None)
@@ -462,37 +469,30 @@ class CaptureRegistry:
     def stage(self, sid: str | None, turn: PendingTurn) -> None:
         if sid is None:
             return  # 非 rh2 会话不捕获（未知 SID 的拒绝在 wire 入口，轮次 13 P0-1）
+        key = _capture_request_key.get() or turn.request_id
+        stale = None
         with self._lock:
             if sid not in self.hooks:
                 return
-            queue = self.pending.setdefault(sid, [])
-            overlap = bool(queue)
-            stale = queue.pop(0) if overlap else None
-            if not overlap:
-                queue.append(turn)
-                self.stats["staged"] += 1
-                return
-        if overlap:
-            # P0-2（codex 轮次 9）：overlap = 并发同 session 请求在飞——FIFO
-            # 猜测会串账，fail-closed：poison + 两轮 abandon（锁外：磁盘写；
-            # 轮次 14：stats 增量补锁）。
-            with self._lock:
+            slot = self.pending.setdefault(sid, {})
+            if key in slot:
+                # 同一请求键二次 stage = 真异常（非并行误杀），fail-closed
+                stale = slot.pop(key)
                 self.stats["concurrent_overlap_seen"] += 1
                 self.stats["dropped_uncommitted"] += 1
-            self.poison.poison(sid, "capture_pending_overlap")
-            if stale.proxy_result is not None:
+            else:
+                slot[key] = turn
+                self.stats["staged"] += 1
+        if stale is None:
+            return
+        self.poison.poison(sid, "capture_pending_overlap")
+        for t in (stale, turn):
+            if t.proxy_result is not None:
                 try:
-                    stale.proxy_result.abandon_delivered("capture_pending_overlap")
+                    t.proxy_result.abandon_delivered("capture_pending_overlap")
                 except ValueError:
                     pass  # 已定案（幂等）
-            if turn.proxy_result is not None:
-                try:
-                    turn.proxy_result.abandon_delivered("capture_pending_overlap")
-                except ValueError:
-                    pass
-            raise CapturePendingOverlapError(sid)
-        queue.append(turn)
-        self.stats["staged"] += 1
+        raise CapturePendingOverlapError(sid)
 
     def commit(self, sid: str) -> None:
         """PENDING -> COMMITTING -> COMMITTED/ABANDONED（轮次 13 P0-3 事务化）。
@@ -502,12 +502,25 @@ class CaptureRegistry:
         abandon 先关账再传播）；hook 后复检会话仍在（unregister 竞态时
         弃置本轮，不给已销毁会话追加版本——KeyError 竞态的根修）。"""
 
+        key = _capture_request_key.get()
+        ambiguous = False
         with self._lock:
             hook = self.hooks.get(sid)
-            queue = self.pending.get(sid)
-            if hook is None or not queue:
+            slot = self.pending.get(sid)
+            if hook is None or not slot:
                 return
-            turn = queue.pop(0)  # COMMITTING：所有权已移出共享容器
+            if key is not None and key in slot:
+                turn = slot.pop(key)  # COMMITTING：按请求键取own（批 2b）
+            elif len(slot) == 1:
+                turn = slot.pop(next(iter(slot)))  # 无键上下文且无歧义（探针直调）
+            else:
+                ambiguous = True
+                turn = None
+        if ambiguous:
+            # 多条在场且无请求键 = 归属不可判——猜测会串账，fail-closed
+            self.poison.poison(sid, "capture_pending_overlap")
+            raise CapturePendingOverlapError(sid)
+        assert turn is not None
         try:
             hook.on_generate_response(
                 prompt_token_ids=turn.prompt_ids,
@@ -636,9 +649,11 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
         # 包含所有已过闸请求，不存在"过了闸还没计入就被 drain 越过"的
         # 交错（批 1 复核 Falsifier 复现的窗口）。
         registry._inflight_enter(effective)
+        token = _capture_request_key.set(uuid.uuid4().hex)  # 批 2b：请求归属键
         try:
             return await handler(request)
         finally:
+            _capture_request_key.reset(token)
             registry._inflight_exit(effective)
 
     return session_guard

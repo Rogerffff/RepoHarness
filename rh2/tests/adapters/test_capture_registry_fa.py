@@ -88,27 +88,60 @@ def test_unregister_abandons_uncommitted_draft():
     assert registry.session_deadlines.get("sid_B") is None  # 会话状态清理（有界）
 
 
-def test_concurrent_stage_overlap_fails_closed():
-    """codex 轮次 9 P0-2：并发同 session 暂存重叠 fail-closed——slime 的
-    record_turn 按完成序到达，FIFO 弹最旧会把 A 的 token 记到 B 名下（串账
-    比丢数据更危险）。request 级归属是 FA-2 第一验收项；落地前：poison +
-    两轮 abandon + 抛 CapturePendingOverlapError。"""
+def test_parallel_requests_no_longer_killed_same_rid_still_fails():
+    """F2-3 批 2b（overlap 误杀解除）：不同请求键的并行暂存合法共存、各
+    自 commit 不串账；**同键**二次 stage 仍 fail-closed（poison + 两轮
+    abandon）；多条在场且无请求键的 commit 归属不可判，同样 fail-closed。"""
+
+    from repoharness2.adapters.slime.capture_wire import _capture_request_key
 
     registry = CaptureRegistry()
     hook = FakeHook()
     registry.register("sid_C", hook)
     p1, p2 = FakeProxyResult("a1"), FakeProxyResult("a2")
+    # 并行不同请求：独立键（直调回退 turn.request_id）→ 共存
     registry.stage("sid_C", _turn("rid_1", version="1", proxy=p1))
+    registry.stage("sid_C", _turn("rid_2", version="2", proxy=p2))
+    assert len(registry.pending["sid_C"]) == 2  # 误杀解除
+    # 按请求键各自 commit：rid_2 先完成也不会拿走 rid_1 的轮（串账根修）
+    tok = _capture_request_key.set("rid_2")
+    try:
+        registry.commit("sid_C")
+    finally:
+        _capture_request_key.reset(tok)
+    assert hook.calls[-1]["response"]["meta_info"]["id"] == "rid_2"
+    tok = _capture_request_key.set("rid_1")
+    try:
+        registry.commit("sid_C")
+    finally:
+        _capture_request_key.reset(tok)
+    assert hook.calls[-1]["response"]["meta_info"]["id"] == "rid_1"
+    assert not registry.poison.is_poisoned("sid_C")
+
+    # 同键二次 stage：真异常，fail-closed 原语义保留
+    p3, p4 = FakeProxyResult("a3"), FakeProxyResult("a4")
+    registry.stage("sid_C", _turn("rid_dup", version="3", proxy=p3))
     with pytest.raises(CapturePendingOverlapError):
-        registry.stage("sid_C", _turn("rid_2", version="2", proxy=p2))
+        registry.stage("sid_C", _turn("rid_dup", version="4", proxy=p4))
     assert registry.stats["concurrent_overlap_seen"] == 1
-    assert registry.poison.is_poisoned("sid_C")  # session 中毒
-    # 两轮都不可信（完成序未知）：全部 abandon，不做归属猜测
-    assert p1.state.startswith("abandoned:capture_pending_overlap")
-    assert p2.state.startswith("abandoned:capture_pending_overlap")
-    registry.commit("sid_C")
-    assert len(hook.calls) == 0  # 什么都没进树
-    assert registry.pending["sid_C"] == []  # 无残留
+    assert registry.poison.is_poisoned("sid_C")
+    assert p3.state.startswith("abandoned:capture_pending_overlap")
+    assert p4.state.startswith("abandoned:capture_pending_overlap")
+
+
+def test_ambiguous_commit_without_request_key_fails_closed():
+    """多条在场 + 无请求键 = 归属不可判——绝不猜测（批 2b 保留的
+    fail-closed 面）。"""
+
+    registry = CaptureRegistry()
+    hook = FakeHook()
+    registry.register("sid_A", hook)
+    registry.stage("sid_A", _turn("rid_x", version="1"))
+    registry.stage("sid_A", _turn("rid_y", version="2"))
+    with pytest.raises(CapturePendingOverlapError):
+        registry.commit("sid_A")
+    assert registry.poison.is_poisoned("sid_A")
+    assert len(hook.calls) == 0
 
 
 def test_commit_without_pending_is_noop():
@@ -228,9 +261,9 @@ def test_single_pending_turn_shape_authority():
     turn = registry.single_pending_turn("sid_P")
     assert turn.raw_response == {"meta_info": {"id": "rid_probe"}}  # 探针消费的两个字段
     assert turn.capture_params["top_p"] == 0.95
-    # 多于一条（理论防御路径）：先 commit 掉再 stage 两次会触发 overlap
+    # 多于一条（理论防御路径）：批 2b 后不同键可共存，探针形状权威仍拒多条
     # fail-closed，所以 len>1 分支只做直接构造验证
-    registry.pending["sid_P"].append(_turn("rid_extra"))
+    registry.pending["sid_P"]["rid_extra"] = _turn("rid_extra")
     with pytest.raises(RuntimeError, match="数量异常"):
         registry.single_pending_turn("sid_P")
 
@@ -353,7 +386,7 @@ def test_commit_midpoint_hook_failure_abandons_and_poisons():
         registry.commit("sid_MID")
     assert registry.poison.is_poisoned("sid_MID")  # 修复前 false
     assert proxy.state.startswith("abandoned:capture_commit_hook_failed")  # 修复前悬挂
-    assert registry.pending["sid_MID"] == []
+    assert registry.pending["sid_MID"] == {}
 
 
 def test_commit_after_unregister_does_not_resurrect():
