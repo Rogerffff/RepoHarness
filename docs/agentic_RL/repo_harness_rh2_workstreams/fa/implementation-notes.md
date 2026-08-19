@@ -516,7 +516,13 @@ s1_compat 保留兼容 revoke）；`session_plane_drained` 置位与 timeline
 finish_session；dirty 断言 drained=False 无事件）。交错测试改干净收尾
 （server 线程 join，warning 清零）。非阻塞登记（FA-5/F2-4）：
 make_threadsafe_session_drain_owner 在 adapter loop 已停未关时永久等待
-——届时调用侧有界 wait_for + 取消 future，无须新状态机。
+——届时调用侧有界 wait_for + 取消 future，无须新状态机。**测试证据缺口
+闭合（复核终轮）**：真实 AnthropicAdapter + TrajectoryManager CPU 回归
+（test_f2_3_real_adapter_freeze，reference/slime 缺席时 skip）固化
+codex 手工探针——真实 HTTP turn 在飞时 owner 等待完成（非砍杀）、
+drain 干净后 finish_session 弹树恰好一次（二次 get_trajectory 为空 =
+无冻结后残留）、迟到请求 403 + 计数、线程干净退出。**批 2a 复核结束，
+下一步批 2b。**
 **批 2b（未做）**：request 级 capture 归属（(sid, rid) 键位，rid 已在
 PendingTurn；contextvar 贯穿 stage/commit）+ overlap fail-fast 解除
 （并行 subagent 误杀）+ §10.4 Tracer/Falsifier 对 + 批 1+2 联合终核。
