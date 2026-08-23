@@ -146,3 +146,155 @@ async def test_real_adapter_drain_before_freeze_invariant():
         loop_holder["loop"].call_soon_threadsafe(loop_holder["stop"].set)
         t.join(timeout=5)
     assert not t.is_alive()  # server 线程干净退出
+
+
+class _RecProxy:
+    def __init__(self):
+        self.finalized = None
+        self.abandoned = None
+
+    def finalize_delivered(self, ref):
+        self.finalized = ref
+
+    def abandon_delivered(self, reason):
+        self.abandoned = reason
+
+
+class _RecHook:
+    """返回带真实 record_id 的替身（P1 引用断言用）。"""
+
+    def __init__(self):
+        self.calls = []
+        self.records = []
+
+    def on_generate_response(self, *, prompt_token_ids, sampling_params, response):
+        from types import SimpleNamespace
+
+        self.calls.append(response["meta_info"]["marker"])
+        rec = SimpleNamespace(record_id=f"cap_real_t{len(self.calls) - 1}")
+        return rec
+
+
+async def _run_capture_chain(markers_cfg, requests):
+    """真实 AnthropicAdapter + 包装 record_turn + 真实 stage/commit 链。
+
+    markers_cfg: marker -> (sleep_s, do_stage, proxy|None)
+    requests: [(marker, ...)]；返回 (registry, hook, proxies)
+    """
+
+    import aiohttp
+    import slime.agent.adapters.common as slime_common
+    from aiohttp.test_utils import TestServer
+    from slime.agent.adapters.anthropic import AnthropicAdapter
+    from slime.agent.trajectory import TrajectoryManager
+
+    from repoharness2.adapters.slime.capture_wire import PendingTurn
+
+    sid = "s-exec_cc#p1-bbbb"
+    registry = CaptureRegistry()
+    hook = _RecHook()
+    registry.register(sid, hook, physical_attempt_id="exec_cc#p1-bbbb")
+
+    orig_call = slime_common.call_sglang_generate
+
+    async def staged_canned(prompt_ids, session, body, *, adapter, session_id):
+        marker = body["messages"][0]["content"]
+        sleep_s, do_stage, proxy = markers_cfg[marker]
+        if do_stage:
+            registry.stage(session_id, PendingTurn(
+                prompt_ids=list(prompt_ids), capture_params={"top_p": 1.0},
+                raw_response={"meta_info": {"marker": marker}},
+                weight_version="7", request_id=f"rid_{marker}",
+                proxy_result=proxy))
+        await asyncio.sleep(sleep_s)
+        return slime_common.TurnRecord(
+            prompt_ids=list(prompt_ids), output_ids=[7],
+            finish_reason="length" if not do_stage else "stop",
+            output_log_probs=[0.0])
+
+    slime_common.call_sglang_generate = staged_canned
+    orig_record = TrajectoryManager.record_turn
+
+    def wrapped_record(self, sid_, *a, **kw):
+        out = orig_record(self, sid_, *a, **kw)
+        registry.commit(sid_)  # 同请求 task 内（ContextVar 键在场）
+        return out
+
+    TrajectoryManager.record_turn = wrapped_record
+    adapter = AnthropicAdapter(tokenizer=_FakeTokenizer(), sglang_url="http://x")
+    adapter.app.middlewares.append(build_session_guard_middleware(registry))
+    adapter.open_session(sid)
+
+    loop_holder: dict = {}
+    server_ready = threading.Event()
+
+    def adapter_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop_holder["loop"] = loop
+        stop_event = asyncio.Event()
+        loop_holder["stop"] = stop_event
+
+        async def _serve():
+            server = TestServer(adapter.app)
+            await server.start_server()
+            loop_holder["port"] = server.port
+            server_ready.set()
+            await stop_event.wait()
+            await server.close()
+
+        loop.run_until_complete(_serve())
+        loop.close()
+
+    t = threading.Thread(target=adapter_thread, daemon=True)
+    t.start()
+    assert server_ready.wait(5)
+    port = loop_holder["port"]
+    try:
+        async with aiohttp.ClientSession() as client:
+            async def post(marker):
+                return await client.post(
+                    f"http://127.0.0.1:{port}/v1/messages",
+                    headers={"Authorization": f"Bearer {sid}"},
+                    json={"model": "m", "max_tokens": 8,
+                          "messages": [{"role": "user", "content": marker}]})
+
+            resps = await asyncio.gather(*[post(m) for m, in requests])
+            assert all(r.status == 200 for r in resps)
+    finally:
+        slime_common.call_sglang_generate = orig_call
+        TrajectoryManager.record_turn = orig_record
+        loop_holder["loop"].call_soon_threadsafe(loop_holder["stop"].set)
+        t.join(timeout=5)
+    return registry, hook, sid
+
+
+async def test_out_of_order_completion_capture_matches_each_turn():
+    """收口回归 1：同 SID 两请求乱序完成——各按请求键 commit，capture 与
+    各自 turn 一一对应（先完成的先进树但绝不拿错轮）。"""
+
+    pa, pb = _RecProxy(), _RecProxy()
+    registry, hook, sid = await _run_capture_chain(
+        {"r_slow": (0.35, True, pa), "r_fast": (0.1, True, pb)},
+        [("r_slow",), ("r_fast",)])
+    assert hook.calls == ["r_fast", "r_slow"]  # 完成序进树，且各归其轮
+    assert pb.finalized == "cap_real_t0" and pa.finalized == "cap_real_t1"
+    assert registry.stats["committed"] == 2
+    assert not registry.poison.is_poisoned(sid)
+    assert registry.pending[sid] == {}
+
+
+async def test_commit_without_stage_never_steals_pending():
+    """收口回归 2（P0 复现型）：A 已 stage 在飞，B 走 max-context 短路
+    （无 stage）先 record_turn——B 的 commit 不得消费/finalize A。"""
+
+    pa = _RecProxy()
+    registry, hook, sid = await _run_capture_chain(
+        {"a_slow": (0.4, True, pa), "b_len": (0.05, False, None)},
+        [("a_slow",), ("b_len",)])
+    assert hook.calls == ["a_slow"]  # 只有 A 进 capture（B 无 stage）
+    assert pa.finalized == "cap_real_t0"  # A 由自己的 commit finalize（P1 真实引用）
+    assert registry.stats["commit_without_stage"] == 1  # B 落账后返回
+    assert registry.stats["committed"] == 1
+    assert not registry.poison.is_poisoned(sid)  # 不误毒
+    assert registry.pending[sid] == {}

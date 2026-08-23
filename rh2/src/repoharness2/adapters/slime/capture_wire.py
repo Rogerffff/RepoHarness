@@ -512,8 +512,18 @@ class CaptureRegistry:
             slot = self.pending.get(sid)
             if hook is None or not slot:
                 return
-            if key is not None and key in slot:
-                turn = slot.pop(key)  # COMMITTING：按请求键取own（批 2b）
+            if key is not None:
+                if key in slot:
+                    turn = slot.pop(key)  # COMMITTING：按请求键精确取own（批 2b）
+                else:
+                    # 批 2b 收口 P0：本请求从未 stage（如 max-context 短路
+                    # 轮直接 record_turn）——**绝不触碰其他请求的暂存**。
+                    # 旧写法落进 len==1 分支会把别人的轮偷走并 finalize
+                    #（静默串账）。落账后返回。
+                    self.stats["commit_without_stage"] = (
+                        self.stats.get("commit_without_stage", 0) + 1
+                    )
+                    return
             elif len(slot) == 1:
                 turn = slot.pop(next(iter(slot)))  # 无键上下文且无歧义（探针直调）
             else:
@@ -524,8 +534,9 @@ class CaptureRegistry:
             self.poison.poison(sid, "capture_pending_overlap")
             raise CapturePendingOverlapError(sid)
         assert turn is not None
+        record = None
         try:
-            hook.on_generate_response(
+            record = hook.on_generate_response(
                 prompt_token_ids=turn.prompt_ids,
                 sampling_params=turn.capture_params,
                 response=turn.raw_response,
@@ -559,8 +570,17 @@ class CaptureRegistry:
             return
         # COMMITTED：finalize（重复 finalize = 契约违规，poison 不静默吞）
         if turn.proxy_result is not None:
+            # 批 2b 收口 P1：finalize 引用用 hook 返回的**真实**
+            # GenerationCaptureRecord.record_id（cap_{traj}_t{n}）——旧
+            # 自造 "capture:{sid}:{rid}" 无法解引用，attempt 审计与
+            # BranchProjection 会持两套血缘身份。hook 替身返回 None 时
+            # 回退旧形状（仅测试面）。
+            capture_ref = (
+                getattr(record, "record_id", None)
+                or f"capture:{sid}:{turn.request_id}"
+            )
             try:
-                turn.proxy_result.finalize_delivered(f"capture:{sid}:{turn.request_id}")
+                turn.proxy_result.finalize_delivered(capture_ref)
             except ValueError:
                 self.poison.poison(sid, "duplicate_finalize_contract_violation")
                 self.stats["duplicate_finalize_violations"] = (

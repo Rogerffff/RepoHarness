@@ -533,10 +533,26 @@ stage/commit 在同一请求 task 内读取——并行 subagent 请求各持独
 两轮 abandon）与"多条在场 + 无请求键"的歧义 commit（绝不猜测）。
 single_pending_turn 探针形状权威照旧拒多条。测试：并行共存 + 按键
 commit 归属断言、同键 fail-closed、歧义 commit fail-closed。
-**待办（批 2b 收尾前）**：§10.4 Tracer/Falsifier 配对复核**递延到
-批 1+2 联合终核轮一并执行**（本轮会话上下文见底，配对报告无法有效
-消化；stop condition = 配对未跑完不关闭 F2-3）；联合终核后 fa_formal
-闸门的 drain receipt 前置才算 production proof 完成。
+**批 2b 收口轮（2026-08-23，codex 1P0+1P1+1 结构项）**：
+**P0**——commit 的 `elif len(slot)==1` 分支未要求 key is None：带键但
+从未 stage 的请求（max-context 短路轮直接 record_turn）会偷走并
+finalize 别人的暂存轮（三方独立复现的静默串账）。修复 = key 非空未
+命中 → 记 `commit_without_stage` 落账返回、绝不触碰他人暂存；四分支
+语义 = 精确命中/未 stage 返回/无键单条探针回退/无键多条 fail-closed。
+**P1**——finalize 引用曾自造 `capture:{sid}:{rid}`（不可解引用，与真实
+`cap_{traj}_t{n}` 两套血缘）；修复 = 用 hook.on_generate_response 返回
+的真实 record_id（替身返回 None 时回退旧形状仅限测试面）。两条真实
+AnthropicAdapter CPU 回归入册：同 SID 乱序完成 capture 与各自 turn
+一一对应 + finalize 引用真实 id；A 在飞 + B 无 stage 时 B 绝不消费 A。
+**结构项（codex 裁定）**：批 2a/2b 只完成 drain 单 owner + request 级
+归属，register/unregister/boundary 仍是共享锁——与 05 计划 :123 的
+完整 single-owner（D3）不一致；**批 2b 可关，但 F2-3 不得宣告完成**，
+必须接 **批 2c：CaptureRegistry 单 owner 命令/快照接口**（若决定不做
+完整 D3 则需重走 T0，不得把 drain 单 owner 冒充完整 D3）。
+**待办（F2-3 关闭前）**：批 2c 实施 + §10.4 Tracer/Falsifier 配对
+（stop condition 不变：配对未跑完不关闭 F2-3）+ 批 1+2+2c 联合终核；
+联合终核后 fa_formal 闸门的 drain receipt 前置才算 production proof
+完成。
 **非阻塞登记（F2-4 前置，codex 批 2 放行轮）**：① FinalizationReceiptV1
 外层 paid ↔ outcome_v2.identity.physical_attempt_id 交叉校验（当前
 writer 不产矛盾对象）；② SessionDrainReceiptV1 局部严格 bool/int 校验
