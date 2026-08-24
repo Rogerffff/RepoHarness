@@ -91,10 +91,21 @@ def make_threadsafe_session_drain_owner(
     callable。bringup 用 app_handle.loop 构造。"""
 
     async def owner(sid: str) -> SessionPlaneDrainResult:
+        # 窄 T0 共同必修：bridge 层有界 deadline（45s > 内部 30s 等待），
+        # owner loop 停转/卡死时取消命令（不得迟到生效）并抛 typed 错——
+        # 上层 _drain_session_plane_owned 转 Fatal → WorkerHalted，绝不
+        # 永久 in-flight 或伪装缺员。
         cfut = asyncio.run_coroutine_threadsafe(
             registry.drain_session_plane(sid), loop
         )
-        return await asyncio.wrap_future(cfut)
+        try:
+            return await asyncio.wait_for(asyncio.wrap_future(cfut), timeout=45.0)
+        except (TimeoutError, asyncio.TimeoutError) as exc:
+            cfut.cancel()
+            raise RuntimeError(
+                "session_drain_owner_bridge_timeout: adapter loop 未在 45s 内"
+                "完成 drain（loop 停转或卡死）——已取消命令。"
+            ) from exc
 
     return owner
 
@@ -153,16 +164,14 @@ class CaptureRegistry:
     def __init__(self) -> None:
         import threading
 
-        # F2-3 批 2c（D3 完整口径）：**单 owner 命令/快照接口**——绑定
-        # owner loop（生产 = adapter event loop）后，所有公有变更/复合读
-        # 方法内部经 _run_on_owner 路由：已在 owner loop 或未绑定（单线程
-        # 测试/S1 直调）直通执行；跨线程调用（orchestrator AsyncLoopThread
-        # 的 register/unregister/boundary/快照）提交到 owner loop 并有界
-        # 阻塞取回——状态变更由 owner 串行化，调用点零改动。
-        # 锁保留为**冗余纵深**（非新增守卫）：单 owner 生效后它不再是
-        # 正确性依据；物理移除留批 1+2+2c 联合终核带 soak 证据裁定。
+        # 所有权模型定案（2026-08-24 窄 T0 方案 A，混合模型）：
+        # **owner 独占域** = revoke/inflight/drain 生命周期临界段（批 2a，
+        # 必须在 adapter loop 上执行）+ request 级归属键（批 2b）；
+        # **锁域** = 其余短态 map（hooks/pending/versions/stats 等），由
+        # 本显式锁保护（5000 轮竞态压测实证）。批 2c 命令桥已撤回。
+        # 纪律：新增状态必须声明所属域，禁跨域混用；poison 为独立线程
+        # 安全对象。全量单 owner 若未来需要须带证据重新提案（T0）。
         self._lock = threading.Lock()
-        self._owner_loop: asyncio.AbstractEventLoop | None = None
         self.hooks: dict[str, GenerationCaptureHook] = {}
         # F2-3 批 2b：request 级归属——sid → {request_key → PendingTurn}。
         # 并行不同请求各占独立键（overlap 误杀解除）；同键二次 stage 或
@@ -205,57 +214,7 @@ class CaptureRegistry:
         # 进入——internal sid 非秘密（进日志/审计），直接当 bearer 必须拒
         self._capability_required: set[str] = set()
 
-    # ---- F2-3 批 2c：单 owner 路由 ---------------------------------------
-    def bind_owner_loop(self, loop: "asyncio.AbstractEventLoop") -> None:
-        """绑定状态所有权 loop（生产 = adapter event loop；bringup 在 app
-        线程起来后调用）。重绑到不同 loop = 所有权违反（fail-fast）。"""
-
-        with self._lock:
-            if self._owner_loop is not None and self._owner_loop is not loop:
-                raise CaptureWireOwnershipError(
-                    "owner loop 重绑到不同 loop——registry 状态所有权唯一。"
-                )
-            self._owner_loop = loop
-
-    def _run_on_owner(self, fn, *args, **kwargs):
-        """把状态操作路由到 owner loop 执行（命令接口本体）。
-
-        三态：未绑定（单线程测试/S1 直调）或当前已在 owner loop → 直通；
-        跨线程 → run_coroutine_threadsafe 提交并**有界**阻塞取回（owner
-        loop 只做微秒级字典操作且从不反向等待本线程，无死锁环；超时 =
-        owner loop 卡死，fail-fast 抛错不静默）。"""
-
-        owner = self._owner_loop
-        if owner is not None:
-            try:
-                running = asyncio.get_running_loop()
-            except RuntimeError:
-                running = None
-            if running is not owner:
-                async def _cmd():
-                    return fn(*args, **kwargs)
-
-                with self._lock:
-                    self.stats["owner_bridged_calls"] = (
-                        self.stats.get("owner_bridged_calls", 0) + 1
-                    )
-                return asyncio.run_coroutine_threadsafe(_cmd(), owner).result(
-                    timeout=10.0
-                )
-        return fn(*args, **kwargs)
-
     def register(
-        self,
-        sid: str,
-        hook: GenerationCaptureHook,
-        physical_attempt_id: str | None = None,
-        capability_token: str | None = None,
-    ) -> None:
-        return self._run_on_owner(
-            self._register, sid, hook, physical_attempt_id, capability_token
-        )
-
-    def _register(
         self,
         sid: str,
         hook: GenerationCaptureHook,
@@ -283,13 +242,6 @@ class CaptureRegistry:
                 self._capability_required.add(sid)
 
     def assert_session_clean(self, sid: str) -> None:
-        """评分/Gate 前边界断言（codex 轮次 12 P0 层 1）：该 SID 不得残留
-        pending 暂存轮或 unfinalized delivered draft——任一在场说明交付账
-        不完整（flush 失败/abandon 未闭合），先 poison 再抛，execution 缺员。"""
-
-        return self._run_on_owner(self._assert_session_clean, sid)
-
-    def _assert_session_clean(self, sid: str) -> None:
         problems: list[str] = []
         with self._lock:
             pending_count = len(self.pending.get(sid) or [])
@@ -336,9 +288,6 @@ class CaptureRegistry:
             return self._physical_attempt_ids.get(sid)
 
     def snapshot_weight_versions(self) -> dict[str, list[str]]:
-        return self._run_on_owner(self._snapshot_weight_versions)
-
-    def _snapshot_weight_versions(self) -> dict[str, list[str]]:
         """锁内复制全部会话的版本序列（codex 轮次 14 仍需修正 1：provider
         此前无锁遍历 dict.values()，并发 commit/unregister 会
         `dictionary changed size during iteration`——变成未归因 adapter 500
@@ -379,14 +328,6 @@ class CaptureRegistry:
             return self._capability_tokens.get(token)
 
     def revoke(self, sid: str) -> None:
-        """撤销 capability（quiescence 序列第一步：HTTP 层拒新请求）。
-
-        幂等；对未注册 sid 也可调用（撤销一个从未开张的凭证无害）。
-        不清任何账目——drain/边界断言仍按原序进行。"""
-
-        return self._run_on_owner(self._revoke, sid)
-
-    def _revoke(self, sid: str) -> None:
         with self._lock:
             self._revoked.add(sid)
 
@@ -468,13 +409,6 @@ class CaptureRegistry:
         )
 
     def drain_snapshot(self, sid: str) -> dict[str, object]:
-        """F2-3 批 1：会话面排空账目快照（drain + 边界断言之后读取，供
-        SessionDrainReceiptV1 构造）。纯读取，不改任何状态。批 2c：经
-        owner 路由——跨线程读也拿 owner 串行化的一致快照。"""
-
-        return self._run_on_owner(self._drain_snapshot, sid)
-
-    def _drain_snapshot(self, sid: str) -> dict[str, object]:
         with self._lock:
             pending_count = len(self.pending.get(sid) or [])
             scope = self._physical_attempt_ids.get(sid) or sid
@@ -497,9 +431,6 @@ class CaptureRegistry:
         return facts
 
     def unregister(self, sid: str) -> None:
-        return self._run_on_owner(self._unregister, sid)
-
-    def _unregister(self, sid: str) -> None:
         with self._lock:
             self._revoked.discard(sid)
             self.revoked_rejections.pop(sid, None)

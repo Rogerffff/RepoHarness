@@ -418,6 +418,15 @@ exactly-once），但改外部仓库、首版过重。
 
 ## 决策 3：CaptureRegistry 终局——单 owner 消息传递 vs 长期共享锁
 
+> **修订（2026-08-24 窄 T0，用户拍板方案 A，见
+> fa/pending_t0_capture_ownership.md）**：终局改为**混合模型**——
+> 生命周期临界段（revoke/inflight/drain）adapter loop 独占（F2-3 批
+> 2a）+ request 级归属（批 2b）；其余短态操作长期由显式锁保护；
+> SessionPoisonRegistry 保持独立线程安全对象。批 2c 命令桥撤回（其
+> 三 P1 与双所有权模型复杂度为撤回依据；5000 轮竞态压测为锁模型
+> 实证）。"完整单 owner"若未来需要（F2-4 重放/并发扩张）须带证据
+> 重新提案。
+
 **要决定什么**：capture 状态（hooks/pending/versions/poison）的最终
 所有权模型。
 

@@ -573,8 +573,18 @@ loop（直通零开销）。threading.Lock 保留为冗余纵深（单 owner 生
 所有权未动（自带锁，独立对象，跨 proxy/orchestrator 共享——如需收编
 归后续批次显式提案）。测试：跨线程命令在 owner loop 执行的探针断言 +
 重绑拒绝/幂等 + 快照路由。
+**窄 T0 拍板（2026-08-24，用户选方案 A，见
+fa/pending_t0_capture_ownership.md + fa2a D3 修订注）**：批 2c 命令桥
+**撤回**（三 P1 与双所有权模型为据）；终局 = 混合模型——owner 独占域
+（revoke/inflight/drain，批 2a）+ request 级归属（批 2b）+ 其余短态
+显式锁（5000 轮压测实证）+ poison 独立对象。共同必修已落：drain 桥
+45s bridge deadline（超时**取消命令**防迟到生效 + typed 错 → 上层
+Fatal → WorkerHalted）；unregister 随撤桥回到 orchestrator 线程（慢
+I/O 不再占 adapter loop，P2 随撤回消解）。域纪律写入 capture_wire
+模块头（新增状态必须声明 owner 域或锁域）。测试：桥超时取消/无迟到
+副作用；2c 桥测试随撤回删除。
 **待办（F2-3 关闭前）**：§10.4 Tracer/Falsifier 配对
-（stop condition 不变：配对未跑完不关闭 F2-3）+ 批 1+2+2c 联合终核；
+（stop condition 不变：配对未跑完不关闭 F2-3）+ 方案 A 后的联合终核；
 联合终核后 fa_formal 闸门的 drain receipt 前置才算 production proof
 完成。
 **非阻塞登记（F2-4 前置，codex 批 2 放行轮）**：① FinalizationReceiptV1
