@@ -632,6 +632,9 @@ class BringupService:
             },
         )
         self.adapter_url = f"http://{ADAPTER_PUBLIC_HOST}:{self.app_handle.port}"
+        # F2-3 批 2c：registry 状态所有权绑定 adapter loop（此后跨线程的
+        # register/unregister/boundary/快照由 owner 串行化执行）
+        self.registry.bind_owner_loop(self.app_handle.loop)
 
         # -- 任务面：冻结 8 题（防漂移校验开启）
         self.pairs = {pair.instance_id: pair for pair in bundles.load_bundle_pairs()}

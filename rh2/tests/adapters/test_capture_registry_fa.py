@@ -453,3 +453,57 @@ async def test_session_guard_middleware_rejects_unknown_and_poisoned():
         assert r5.status == 200
     finally:
         await client.close()
+
+
+async def test_owner_loop_serializes_cross_thread_commands():
+    """F2-3 批 2c：绑定 owner loop 后，跨线程 register/unregister/快照经
+    命令桥在 owner loop 上执行；重绑不同 loop 拒绝。"""
+
+    import asyncio
+    import threading
+
+    from repoharness2.adapters.slime.capture_wire import CaptureWireOwnershipError
+
+    registry = CaptureRegistry()
+    loop_holder: dict = {}
+
+    def owner_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop_holder["loop"] = loop
+        stop = asyncio.Event()
+        loop_holder["stop"] = stop
+        loop.run_until_complete(stop.wait())
+        loop.close()
+
+    t = threading.Thread(target=owner_thread, daemon=True)
+    t.start()
+    for _ in range(100):
+        if "loop" in loop_holder and loop_holder["loop"].is_running():
+            break
+        await asyncio.sleep(0.01)
+    registry.bind_owner_loop(loop_holder["loop"])
+
+    exec_loops: list = []
+    orig = registry._register
+
+    def probing_register(*a, **kw):
+        exec_loops.append(asyncio.get_running_loop())
+        return orig(*a, **kw)
+
+    registry._register = probing_register
+    try:
+        registry.register("sid_OWN", FakeHook())  # 本线程 loop ≠ owner → 桥接
+    finally:
+        registry._register = orig
+    assert exec_loops == [loop_holder["loop"]]  # 变更在 owner loop 上执行
+    assert registry.stats["owner_bridged_calls"] >= 1
+    assert registry.snapshot_weight_versions() == {"sid_OWN": []}  # 快照同路由
+    registry.unregister("sid_OWN")
+    assert "sid_OWN" not in registry.hooks
+    with pytest.raises(CaptureWireOwnershipError):
+        registry.bind_owner_loop(asyncio.get_running_loop())  # 重绑拒绝
+    registry.bind_owner_loop(loop_holder["loop"])  # 同 loop 幂等
+    loop_holder["loop"].call_soon_threadsafe(loop_holder["stop"].set)
+    t.join(timeout=5)
+    assert not t.is_alive()

@@ -559,7 +559,21 @@ _RecHook 按契约返回并**存**记录，正例断言 finalize 引用可解析
 hook.records（非字符串巧合），负例断言 None-hook 绝不产出 delivered
 attempt。非阻塞项随同补丁：`commit_without_stage` 空 slot 时漏计已修
 （计数移到 key 未命中分支统一口径）。**批 2b 关闭（待聚焦复核确认）**。
-**待办（F2-3 关闭前）**：批 2c 实施 + §10.4 Tracer/Falsifier 配对
+**批 2c：CaptureRegistry 单 owner 命令/快照接口——完成（2026-08-24，
+D3 完整口径）**。`bind_owner_loop(loop)`（bringup 绑 app_handle.loop；
+重绑不同 loop = CaptureWireOwnershipError，同 loop 幂等）+
+`_run_on_owner` 命令路由内嵌公有方法（调用点零改动）：已在 owner loop
+或未绑定（单线程测试/S1 直调）直通；跨线程（orchestrator 的 register/
+unregister/revoke/assert_session_clean/snapshot_weight_versions/
+drain_snapshot）提交 owner loop 有界阻塞取回（10s 超时 fail-fast；
+owner 只做微秒级字典操作且从不反向等待，无死锁环）。遥测
+`owner_bridged_calls`。stage/commit/inflight/turn_seq 本就在 owner
+loop（直通零开销）。threading.Lock 保留为冗余纵深（单 owner 生效后
+非正确性依据；物理移除留联合终核带 soak 证据裁定）。poison registry
+所有权未动（自带锁，独立对象，跨 proxy/orchestrator 共享——如需收编
+归后续批次显式提案）。测试：跨线程命令在 owner loop 执行的探针断言 +
+重绑拒绝/幂等 + 快照路由。
+**待办（F2-3 关闭前）**：§10.4 Tracer/Falsifier 配对
 （stop condition 不变：配对未跑完不关闭 F2-3）+ 批 1+2+2c 联合终核；
 联合终核后 fa_formal 闸门的 drain receipt 前置才算 production proof
 完成。
