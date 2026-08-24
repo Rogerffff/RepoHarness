@@ -600,8 +600,20 @@ Task 后传播 cancel，drain 开头的同步 revoke 先跑）；修复 = 单次
 阳性测试删除，新测试用真实 helper + 短超时 + **恢复 loop** 断言无迟到
 revoke。**P1-3**——05 计划 :123 与 fa2a D3 摘要行按方案 A 回写（不再
 只靠修订注），pending_t0_capture_ownership.md 加 status: approved 头。
-**待办（F2-3 关闭前）**：§10.4 Tracer/Falsifier 配对
-（stop condition 不变）+ 聚焦复核；
+**F2-3 关闭（2026-08-24）**：codex 收口清单五项全清——①闩线性化
+（admit/expire 与首次 revoke 共 _lock 临界区）②真实链 fatal 测试
+③文档 supersede 回写 ④§10.4 聚焦配对：Tracer 两代码修复 CONFIRMED
+（唯一文档残留已修）；Falsifier 两不变量 SAFE（55k 轮竞态探针零违例，
+含真实锁持跨 timeout/停转恢复/同刻双向竞争三态混合）⑤全量 1094/ruff/
+inspector 全绿。**配对残余注记（留档 watch item）**：a) 闩不变量的
+字面口径在"同 sid 多命令"下不成立（B 命令 admitted 的合法副作用；
+正式链 Fatal 无重试故不可达）；b) finally 族 Fatal（audit-sink/receipt
+写失败）绕过 generate notifier、单点依赖 _guarded_execute catch——
+今日零可观测窗（2-6µs 无 loop tick 且 cleanup 先于该类 Fatal），若
+未来传播路径引入带真 await 的 __aexit__/inner-finally 即开窗，改动
+该族传播链前先复核此点。fa_formal 闸门余项（B6 阶段）：writer-scope
+T1 手段、B6 真实组合、barrier git-free；drain receipt production
+proof 随本关闭成立。
 联合终核后 fa_formal 闸门的 drain receipt 前置才算 production proof
 完成。
 **非阻塞登记（F2-4 前置，codex 批 2 放行轮）**：① FinalizationReceiptV1
@@ -667,8 +679,10 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 - capture 暂存（superseded 2026-08-23 批 2b）：**request-key 归属**
   （sid→{key→turn}，并行不同键共存；同键二次 stage/无键歧义 commit 才
   fail-closed）；commit 事务化 PENDING→COMMITTING→COMMITTED/ABANDONED
-  （轮次 13）；registry/proxy 短临界区锁（轮次 13/14；终局 = FA-2A 单
-  owner 重构，锁是明知要重写的脚手架）。
+  （轮次 13）；registry/proxy 短临界区锁（轮次 13/14；**终局已定
+  （superseded 2026-08-24 窄 T0 方案 A）**：短态显式锁即终局机制、
+  非脚手架——owner 独占域仅限 authorize→inflight→revoke→drain 线性化，
+  "单 owner 全量重构"目标撤回）。
 - poison 生命周期：active 绝不容量淘汰 → orchestrator 在**容器清理完成后**
   release 归档（轮次 11/12；轮次 10 的"unregister 即 release"已废弃）；
   poison 触发跨线程主动取消 harness（call_soon_threadsafe，轮次 10）。
