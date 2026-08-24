@@ -2568,11 +2568,19 @@ class RolloutOrchestrator:
             )
         except asyncio.CancelledError:
             raise
-        except FatalExecutionInfrastructureError:
+        except FatalExecutionInfrastructureError as exc:
             # 复核六轮 P0-1（ownership 收敛项 1）：基建级致命错误走独立
-            # 传播通道——绝不进 rollout 软失败收口（那会把系统性故障静默
-            # 转成成员缺失 + worker 继续 top-up = 分布偏移）。worker 对本
-            # 异常触发 run_halt（async_worker 1167 行既有通道）。
+            # 传播通道——绝不进 rollout 软失败收口。联合终核 P1-1：finally
+            # 的异步 cleanup（drop_session/容器清理）会推迟异常到达
+            # worker——在此**同步**经 task-local notifier 先置 halt，
+            # cleanup 窗口内好组即被 collect_batch 拒绝交付。
+            from repoharness2.adapters.slime.async_worker import (
+                fatal_halt_notifier,
+            )
+
+            notifier = fatal_halt_notifier.get()
+            if notifier is not None:
+                notifier(exc)
             raise
         except Exception as exc:  # noqa: BLE001 - 收口为 abort，归因进 audit
             audit.failure_records.append(

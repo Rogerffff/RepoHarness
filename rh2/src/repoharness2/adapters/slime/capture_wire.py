@@ -84,27 +84,41 @@ class SessionPlaneDrainResult:
 
 
 def make_threadsafe_session_drain_owner(
-    registry: "CaptureRegistry", loop: "asyncio.AbstractEventLoop"
+    registry: "CaptureRegistry",
+    loop: "asyncio.AbstractEventLoop",
+    *,
+    timeout_seconds: float = 45.0,
 ):
     """把 registry.drain_session_plane 绑定到 **adapter event loop** 上执行
     （run_coroutine_threadsafe），返回 orchestrator loop 可 await 的 owner
     callable。bringup 用 app_handle.loop 构造。"""
 
     async def owner(sid: str) -> SessionPlaneDrainResult:
-        # 窄 T0 共同必修：bridge 层有界 deadline（45s > 内部 30s 等待），
-        # owner loop 停转/卡死时取消命令（不得迟到生效）并抛 typed 错——
-        # 上层 _drain_session_plane_owned 转 Fatal → WorkerHalted，绝不
-        # 永久 in-flight 或伪装缺员。
-        cfut = asyncio.run_coroutine_threadsafe(
-            registry.drain_session_plane(sid), loop
-        )
+        # 窄 T0 共同必修 + 联合终核 P1-2：bridge 层有界 deadline，超时
+        # **先落准入闩（expired）再尽力 cancel**——run_coroutine_threadsafe
+        # 在 loop 恢复时先建 Task 后传播 cancel，裸 cancel 挡不住
+        # drain_session_plane 开头的同步 revoke 迟到生效；闩在 owner loop
+        # 上的任何状态变更之前检查，过期命令零副作用。上层转 Fatal →
+        # WorkerHalted，绝不永久 in-flight 或伪装缺员。
+        expired = False
+
+        async def _admitted():
+            if expired:
+                raise RuntimeError("session_drain_command_expired")
+            return await registry.drain_session_plane(sid)
+
+        cfut = asyncio.run_coroutine_threadsafe(_admitted(), loop)
         try:
-            return await asyncio.wait_for(asyncio.wrap_future(cfut), timeout=45.0)
+            return await asyncio.wait_for(
+                asyncio.wrap_future(cfut), timeout=timeout_seconds
+            )
         except (TimeoutError, asyncio.TimeoutError) as exc:
+            expired = True  # 准入闩先落，cancel 只是尽力清理
             cfut.cancel()
             raise RuntimeError(
-                "session_drain_owner_bridge_timeout: adapter loop 未在 45s 内"
-                "完成 drain（loop 停转或卡死）——已取消命令。"
+                "session_drain_owner_bridge_timeout: adapter loop 未在 "
+                f"{timeout_seconds}s 内完成 drain（loop 停转或卡死）——"
+                "命令已过期（迟到调度零副作用）。"
             ) from exc
 
     return owner

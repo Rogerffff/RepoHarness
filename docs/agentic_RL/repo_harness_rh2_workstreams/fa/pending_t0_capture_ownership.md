@@ -1,5 +1,9 @@
 # 窄 T0 决策包：CaptureRegistry 所有权模型定案（F2-3 批 2c 复核后）
 
+> **status: approved（方案 A，用户拍板，2026-08-24；实施 commit
+> fa8e796a + 联合终核修正）**——本文件是所有权模型的现行权威，后续
+> 实现者不得重新实现已撤回的批 2c 命令桥。
+
 ## 要决定什么
 
 D3 已批文本要求 CaptureRegistry **完整** single-owner（hooks/pending/

@@ -28,6 +28,7 @@ import，本机静态审查 + 假件测试，GPU 行为验证归 FA-5）。
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import hashlib
 import json
 import random
@@ -1052,6 +1053,13 @@ class ModelCallProxy:
 # ---------------------------------------------------------------------------
 
 
+# F2-3 联合终核 P1-1：task-local fatal 通知器。_guarded_execute 安装，
+# generate 的 Fatal catch 在进入异步 cleanup 前同步调用（见 _note_fatal）。
+fatal_halt_notifier: contextvars.ContextVar = contextvars.ContextVar(
+    "rh2_fatal_halt_notifier", default=None
+)
+
+
 class FatalExecutionInfrastructureError(RuntimeError):
     """基建级致命错误（codex 轮次 14 建议 3）：审计存储不可用、账本存储
     不可用等——**不是**单个 execution 的失败，继续 top-up 会持续产出
@@ -1157,7 +1165,17 @@ class ContinuousExecutionWorker:
         self.abandoned_deliveries: list[tuple[ExecutionTaskSpec, Any]] = []
         self.halt_reason: str | None = None
 
+    def _note_fatal(self, exc: "FatalExecutionInfrastructureError") -> None:
+        # F2-3 联合终核 P1-1：generate 在进入任何异步 cleanup **之前**经
+        # task-local notifier 同步调用本方法——halt 在 cleanup 窗口内即
+        # 对 collect_batch 三门可见，好组无法在窗口内交付 trainer。
+        # 写的仍是唯一 halt 状态（or-guard 保首因），无第二套状态机。
+        self.halt_reason = self.halt_reason or (
+            f"fatal_infrastructure:{exc.reason_code}"
+        )
+
     async def _guarded_execute(self, spec: ExecutionTaskSpec) -> Any:
+        token = fatal_halt_notifier.set(self._note_fatal)
         try:
             if self._limits is None:
                 return await self._execute_fn(spec)
@@ -1174,6 +1192,8 @@ class ContinuousExecutionWorker:
                 f"fatal_infrastructure:{exc.reason_code}"
             )
             raise
+        finally:
+            fatal_halt_notifier.reset(token)
 
     def _account_failure(self, spec: ExecutionTaskSpec, exc: BaseException) -> None:
         """失败必有账：sink 优先；sink 失败进 durable fallback + halt。

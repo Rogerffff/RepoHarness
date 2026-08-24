@@ -20,8 +20,11 @@ owner_decision:
   D2 = A（同节点首版 / 单一 checkpoint owner / pending-before-cursor /
        四层身份 / recovery_epoch+fencing；不承诺 optimizer exactly-once，
        跨节点延后）。
-  D3 = A（adapter 线程单 owner；有界命令/快照接口；owner 死亡
-       fail-closed；生产路径禁绕过）。
+  D3 = A'（2026-08-24 窄 T0 修订，原"完整单 owner"撤回：混合模型——
+       adapter loop 独占 authorize→inflight→revoke→drain 线性化 +
+       request key 归属；其余短态显式锁；poison 独立对象；owner 桥
+       故障 typed fatal + 过期闩防迟到生效。见
+       fa/pending_t0_capture_ownership.md）。
   D4 = A（穷举映射 / FaultDomainMonitor ownership / 安全三档 / worker
        recovery 与 staleness 控制动作；正式阈值数值延后 pre-RL/FA-5
        校准后单独 T0 预注册）。

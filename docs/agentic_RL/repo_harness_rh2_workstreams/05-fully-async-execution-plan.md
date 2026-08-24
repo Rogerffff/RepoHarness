@@ -120,11 +120,13 @@
 >    artifact、会话关闭即失效）分离。**poison 只绑定实际 session/attempt，
 >    不绑任务槽位**（轮次 14 设计规则 1：当前稳定 SID + 归档毒 = 非确定性
 >    任务拉黑，一次 infra 抖动可能整 run 排除一个题——身份拆分后此病根治）。
-> 4. **F2-3 request 级 capture 归属 + 单 owner 状态变更**：
->    `(execution_id, request_id)` 键替代 SID+fail-closed；同时把
->    CaptureRegistry 从"散锁"收敛到单 owner 串行化状态变更（连续多轮竞态
->    问题的共同根源是共享可变状态跨三个执行域传播——停止叠锁，收敛所有权）。
->    落地后解除 overlap fail-fast（并行 subagent 误杀解除）。
+> 4. **F2-3 request 级 capture 归属 + 所有权定案（2026-08-24 窄 T0
+>    方案 A 回写，原"完整单 owner"目标撤回——见
+>    fa/pending_t0_capture_ownership.md）**：共享 registry 状态由显式锁
+>    保护；adapter loop 负责 authorize → inflight → revoke → drain 的
+>    线性化顺序（owner 独占域）；request key 负责 capture 归属；
+>    orchestrator 在 drain 后负责终态 unregister/cleanup；poison 保持
+>    独立线程安全对象。overlap fail-fast 已随 request 级归属解除。
 > 5. **F2-4 实现**：按第 1 步定案落地恢复语义。
 > 5a. **F2-2b 重构切片 B1~B6（A-prime 定稿后，2026-08-17；每片自带
 >    单元/契约测试，B6 只是跨组件真实组合测试，不得把验证拖到最后；

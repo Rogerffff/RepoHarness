@@ -583,8 +583,25 @@ Fatal → WorkerHalted）；unregister 随撤桥回到 orchestrator 线程（慢
 I/O 不再占 adapter loop，P2 随撤回消解）。域纪律写入 capture_wire
 模块头（新增状态必须声明 owner 域或锁域）。测试：桥超时取消/无迟到
 副作用；2c 桥测试随撤回删除。
+**联合终核首轮闭合（2026-08-24，codex 2 运行时 P1 + 1 文档 P1，双
+代理复核）**：**P1-1**——Fatal 被 finally 的异步 cleanup（drop_session/
+容器清理）推迟到达 worker，cleanup 窗口内 halt_reason 为空、好组可交付
+trainer（多执行一个 optimizer step 风险）；修复 = async_worker 增
+task-local `fatal_halt_notifier`（_guarded_execute 安装/复位），
+generate 的 Fatal catch 在进入任何异步 cleanup **之前**同步调用——写的
+仍是唯一 halt 状态（or-guard 保首因，无第二状态机）；受控交错测试
+（cleanup 阻塞中断言 halt 已可见）落独立文件
+test_f2_3_fatal_visibility.py（test_async_worker.py 存在模块级干扰，
+lone-run 也失败，独立文件即过——干扰源未深挖，登记维护项）。
+**P1-2**——桥超时后 cfut.cancel() 挡不住迟到执行（loop 恢复时先建
+Task 后传播 cancel，drain 开头的同步 revoke 先跑）；修复 = 单次命令
+**准入/过期闩**（超时先置 expired 再尽力 cancel；闩在 owner loop 任何
+状态变更前检查，过期命令零副作用）+ timeout 可注入；旧手写 0.2s 假
+阳性测试删除，新测试用真实 helper + 短超时 + **恢复 loop** 断言无迟到
+revoke。**P1-3**——05 计划 :123 与 fa2a D3 摘要行按方案 A 回写（不再
+只靠修订注），pending_t0_capture_ownership.md 加 status: approved 头。
 **待办（F2-3 关闭前）**：§10.4 Tracer/Falsifier 配对
-（stop condition 不变：配对未跑完不关闭 F2-3）+ 方案 A 后的联合终核；
+（stop condition 不变）+ 聚焦复核；
 联合终核后 fa_formal 闸门的 drain receipt 前置才算 production proof
 完成。
 **非阻塞登记（F2-4 前置，codex 批 2 放行轮）**：① FinalizationReceiptV1
