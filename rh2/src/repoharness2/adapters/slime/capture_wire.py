@@ -100,10 +100,10 @@ def make_threadsafe_session_drain_owner(
         # drain_session_plane 开头的同步 revoke 迟到生效；闩在 owner loop
         # 上的任何状态变更之前检查，过期命令零副作用。上层转 Fatal →
         # WorkerHalted，绝不永久 in-flight 或伪装缺员。
-        expired = False
+        latch: dict = {}  # PENDING→ADMITTED|EXPIRED，registry._lock 保护
 
         async def _admitted():
-            if expired:
+            if not registry.try_admit_drain(sid, latch):
                 raise RuntimeError("session_drain_command_expired")
             return await registry.drain_session_plane(sid)
 
@@ -113,12 +113,13 @@ def make_threadsafe_session_drain_owner(
                 asyncio.wrap_future(cfut), timeout=timeout_seconds
             )
         except (TimeoutError, asyncio.TimeoutError) as exc:
-            expired = True  # 准入闩先落，cancel 只是尽力清理
+            verdict = registry.expire_drain(latch)  # 与准入同锁排他定局
             cfut.cancel()
             raise RuntimeError(
-                "session_drain_owner_bridge_timeout: adapter loop 未在 "
-                f"{timeout_seconds}s 内完成 drain（loop 停转或卡死）——"
-                "命令已过期（迟到调度零副作用）。"
+                f"session_drain_owner_bridge_timeout:{verdict}: adapter loop "
+                f"未在 {timeout_seconds}s 内完成 drain——"
+                + ("命令已过期，零副作用。" if verdict == "expired"
+                   else "owner 已抢先准入（revoke 已生效），如实上报。")
             ) from exc
 
     return owner
@@ -340,6 +341,28 @@ class CaptureRegistry:
             return None
         with self._lock:
             return self._capability_tokens.get(token)
+
+    def try_admit_drain(self, sid: str, latch: dict) -> bool:
+        """联合终核二轮 P1-1：drain 命令准入——PENDING→ADMITTED 与**首次
+        revoke 在同一 _lock 临界区**完成（真线性化：超时方与准入方在同一
+        锁上排他，谁先拿到锁谁定局）。已过期返回 False（命令零副作用）。"""
+
+        with self._lock:
+            if latch.get("expired"):
+                return False
+            latch["admitted"] = True
+            self._revoked.add(sid)  # 准入即撤销（同临界区，不可再迟到）
+            return True
+
+    def expire_drain(self, latch: dict) -> str:
+        """超时方转移：PENDING→EXPIRED（同一锁）。若 owner 已抢先准入，
+        如实返回 admitted_but_timed_out——不再声称"过期且零副作用"。"""
+
+        with self._lock:
+            if latch.get("admitted"):
+                return "admitted_but_timed_out"
+            latch["expired"] = True
+            return "expired"
 
     def revoke(self, sid: str) -> None:
         with self._lock:

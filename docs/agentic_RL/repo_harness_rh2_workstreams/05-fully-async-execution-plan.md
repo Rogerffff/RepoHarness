@@ -201,7 +201,8 @@
 > 事件接线**（计时提案"V0 唯一可执行清单"，每事件带 physical_attempt_id）
 > → **F2-1b Outcome v2 与 crosswalk** → F2-2
 > session capability + 会话面排空 → **F2-2b Runtime 静止屏障**（复核
-> 二轮增设，Runtime ownership 不混进以 capture 单 owner 为主的 F2-3）：
+> 二轮增设；F2-3 终态 = 混合所有权（2026-08-24 窄 T0 方案 A），原
+> "capture 单 owner"表述 superseded）：
 > 终止 execution scope（容器/cgroup 级）→ 确认无进程/无写入/无在飞
 > 模型请求 → 冻结不可变 workspace snapshot → **只对冻结副本评分**；
 > 屏障真实执行且失败 → runtime_quiescence_failure（勘误 3 五

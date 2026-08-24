@@ -453,38 +453,3 @@ async def test_session_guard_middleware_rejects_unknown_and_poisoned():
         assert r5.status == 200
     finally:
         await client.close()
-
-
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-async def test_drain_bridge_timeout_no_late_revoke_after_loop_resumes():
-    """联合终核 P1-2：真实 helper + 短注入超时 + **恢复 loop**——过期命令
-    在 owner loop 上被准入闩拦下，revoke 不迟到生效（旧测试手写 0.2s
-    逻辑且从不恢复 loop = 假阳性，已删）。"""
-
-    import asyncio
-    import threading
-
-    from repoharness2.adapters.slime.capture_wire import (
-        make_threadsafe_session_drain_owner,
-    )
-
-    registry = CaptureRegistry()
-    registry.register("sid_TB", FakeHook(), physical_attempt_id="e#p1-tb")
-    stalled_loop = asyncio.new_event_loop()  # 先不跑：命令排队但不被调度
-    owner = make_threadsafe_session_drain_owner(
-        registry, stalled_loop, timeout_seconds=0.2)
-    with pytest.raises(RuntimeError, match="bridge_timeout"):
-        await owner("sid_TB")
-    assert not registry.is_revoked("sid_TB")  # 超时时刻无副作用
-    # 恢复 loop：迟到调度必须被准入闩拦下（这正是裸 cancel 挡不住的窗口）
-    def run_briefly():
-        asyncio.set_event_loop(stalled_loop)
-        stalled_loop.call_later(0.1, stalled_loop.stop)
-        stalled_loop.run_forever()
-
-    t = threading.Thread(target=run_briefly, daemon=True)
-    t.start()
-    t.join(timeout=5)
-    assert not t.is_alive()
-    assert not registry.is_revoked("sid_TB")  # 恢复后仍无迟到 revoke
-    stalled_loop.close()

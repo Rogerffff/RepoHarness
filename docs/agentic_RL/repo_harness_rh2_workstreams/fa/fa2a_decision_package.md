@@ -54,8 +54,10 @@ errata_4: |
     从持久 checkpoint 受控重启同一逻辑 run 并 replay 未完成工作
     （首版只支持 RolloutManager-only recovery；whole-run 恢复须先对账
     trainer checkpoint identity 与 policy version，不兼容整组重建）。
-  ⑤ registry 生命周期 = 进程级单代绑定；capture 可变状态 mutation
-    owner 仍按已批 D3 于 F2-3 收敛为 adapter event loop 单 owner。
+  ⑤ registry 生命周期 = 进程级单代绑定；capture 可变状态所有权按
+    D3=A'（2026-08-24 窄 T0）混合模型定案：adapter loop 独占
+    authorize→inflight→revoke→drain 线性化；其余短态显式锁；request
+    key 归属；"完整单 owner"目标已撤回（superseded）。
     不同 registry 重绑 = typed fatal（暴露所有权错误）；同 registry
     重复安装幂等。
 errata_3: |

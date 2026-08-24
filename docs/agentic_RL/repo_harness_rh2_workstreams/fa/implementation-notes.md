@@ -589,10 +589,10 @@ I/O 不再占 adapter loop，P2 随撤回消解）。域纪律写入 capture_wir
 trainer（多执行一个 optimizer step 风险）；修复 = async_worker 增
 task-local `fatal_halt_notifier`（_guarded_execute 安装/复位），
 generate 的 Fatal catch 在进入任何异步 cleanup **之前**同步调用——写的
-仍是唯一 halt 状态（or-guard 保首因，无第二状态机）；受控交错测试
-（cleanup 阻塞中断言 halt 已可见）落独立文件
-test_f2_3_fatal_visibility.py（test_async_worker.py 存在模块级干扰，
-lone-run 也失败，独立文件即过——干扰源未深挖，登记维护项）。
+仍是唯一 halt 状态（or-guard 保首因，无第二状态机）；受控交错测试落独立文件
+test_f2_3_fatal_visibility.py（二轮改为真实生产链：generate 真实
+notifier 接线 + drop_session 阻塞窗口断言；此前"test_async_worker.py
+模块级干扰"记录经 codex 复核无法复现，**撤回该维护项**）。
 **P1-2**——桥超时后 cfut.cancel() 挡不住迟到执行（loop 恢复时先建
 Task 后传播 cancel，drain 开头的同步 revoke 先跑）；修复 = 单次命令
 **准入/过期闩**（超时先置 expired 再尽力 cancel；闩在 owner loop 任何
@@ -664,8 +664,9 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 
 **当前有效的关键机制**（历史轮次里的旧形态全部作废）：
 
-- capture 暂存：stage 单槽 + overlap **fail-closed**（轮次 9；轮次 8 的
-  FIFO 已废弃）；commit 事务化 PENDING→COMMITTING→COMMITTED/ABANDONED
+- capture 暂存（superseded 2026-08-23 批 2b）：**request-key 归属**
+  （sid→{key→turn}，并行不同键共存；同键二次 stage/无键歧义 commit 才
+  fail-closed）；commit 事务化 PENDING→COMMITTING→COMMITTED/ABANDONED
   （轮次 13）；registry/proxy 短临界区锁（轮次 13/14；终局 = FA-2A 单
   owner 重构，锁是明知要重写的脚手架）。
 - poison 生命周期：active 绝不容量淘汰 → orchestrator 在**容器清理完成后**
@@ -690,7 +691,7 @@ profile 选择/watchdog 数值/masked member 算法语义/熔断阈值全部延�
 
 | 挡板 | 加于 | 移除条件 |
 |------|------|----------|
-| overlap fail-fast（并行 subagent 被拒） | 轮次 9 | F2-3 request 级归属落地；且列入 `rh2_formal_training_allowed` 前置 |
+| ~~overlap fail-fast（并行 subagent 被拒）~~ | 轮次 9 | **已解除**（2026-08-23 F2-3 批 2b：request-key 归属落地；剩余 fail-closed 面 = 同键二次 stage 与无键歧义 commit） |
 | ~~DuplicateActiveSessionError~~ | 轮次 12 | **改判永久身份碰撞守卫**（2026-08-15 F2-2 复核二轮）：per-attempt internal sid 下重复注册不该自然发生，该守卫从"临时挡板"转正为不变量（碰撞 = 身份铸造/贯穿 bug 的第一现场），不再列移除条件 |
 | ~~中毒 SID（含归档）拒绝 register~~ | 轮次 11 | **已解除**（2026-08-15 F2-2：poison 按 internal sid = 按 attempt 绑定，稳定 SID 拉黑面消失；register 前置 poison.check 保留为常规防御） |
 | StaticActiveCoordinator（永远 ACTIVE，只保守缺员） | 轮次 7 | FA-4 真协调器（consensus version） |
