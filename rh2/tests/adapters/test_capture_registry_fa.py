@@ -28,9 +28,15 @@ from repoharness2.adapters.slime.capture_wire import (  # noqa: E402
 class FakeHook:
     def __init__(self) -> None:
         self.calls: list[dict] = []
+        self.records: list = []
 
-    def on_generate_response(self, *, prompt_token_ids, sampling_params, response) -> None:
+    def on_generate_response(self, *, prompt_token_ids, sampling_params, response):
+        from types import SimpleNamespace
+
         self.calls.append({"prompt": list(prompt_token_ids), "response": response})
+        rec = SimpleNamespace(record_id=f"cap_fake_t{len(self.calls) - 1}")
+        self.records.append(rec)
+        return rec
 
 
 class FakeProxyResult:
@@ -72,7 +78,7 @@ def test_finalize_happens_at_commit_not_stage():
     registry.stage("sid_A", _turn("rid_1", proxy=proxy))
     assert proxy.state == "pending"  # stage 后仍未交付定案
     registry.commit("sid_A")
-    assert proxy.state.startswith("finalized:capture:sid_A:rid_1")  # 真实 request_id
+    assert proxy.state.startswith("finalized:cap_fake_t0")  # 真实 record_id（收口二轮）
     assert len(hook.calls) == 1
 
 
@@ -397,7 +403,9 @@ def test_commit_after_unregister_does_not_resurrect():
 
     class UnregisterDuringHook(FakeHook):
         def on_generate_response(self, **kwargs):
+            # 先触发 unregister 竞态，再按契约返回带 record_id 的记录
             registry.unregister("sid_RC")  # 模拟另一线程在 hook 窗口完成销毁
+            return super().on_generate_response(**kwargs)
 
     registry.register("sid_RC", UnregisterDuringHook())
     proxy = FakeProxyResult("sid_RC/t1_a1")

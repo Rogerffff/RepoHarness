@@ -172,6 +172,7 @@ class _RecHook:
 
         self.calls.append(response["meta_info"]["marker"])
         rec = SimpleNamespace(record_id=f"cap_real_t{len(self.calls) - 1}")
+        self.records.append(rec)  # 引用必须可解析回真实记录（收口二轮）
         return rec
 
 
@@ -279,6 +280,8 @@ async def test_out_of_order_completion_capture_matches_each_turn():
         [("r_slow",), ("r_fast",)])
     assert hook.calls == ["r_fast", "r_slow"]  # 完成序进树，且各归其轮
     assert pb.finalized == "cap_real_t0" and pa.finalized == "cap_real_t1"
+    resolvable = {r.record_id for r in hook.records}
+    assert {pa.finalized, pb.finalized} <= resolvable  # 引用可解析（非字符串巧合）
     assert registry.stats["committed"] == 2
     assert not registry.poison.is_poisoned(sid)
     assert registry.pending[sid] == {}
@@ -298,3 +301,29 @@ async def test_commit_without_stage_never_steals_pending():
     assert registry.stats["committed"] == 1
     assert not registry.poison.is_poisoned(sid)  # 不误毒
     assert registry.pending[sid] == {}
+
+
+def test_hook_without_record_id_never_finalizes():
+    """收口二轮 P1 负例：hook 返回 None/无 record_id → 走 hook-failure
+    事务路径（poison + abandon + 抛错），绝不产出 delivered attempt。"""
+
+    from repoharness2.adapters.slime.capture_wire import CaptureRegistry, PendingTurn
+
+    registry = CaptureRegistry()
+
+    class _BadHook:
+        records: list = []
+
+        def on_generate_response(self, **kw):
+            return None  # 违约：无记录
+
+    registry.register("s-bad", _BadHook())
+    proxy = _RecProxy()
+    registry.stage("s-bad", PendingTurn(
+        prompt_ids=[1], capture_params={}, raw_response={"meta_info": {}},
+        weight_version=None, request_id="rid_bad", proxy_result=proxy))
+    with pytest.raises(RuntimeError, match="capture_hook_returned_no_record_id"):
+        registry.commit("s-bad")
+    assert proxy.finalized is None  # 绝不 finalize
+    assert proxy.abandoned == "capture_commit_hook_failed"
+    assert registry.poison.is_poisoned("s-bad")

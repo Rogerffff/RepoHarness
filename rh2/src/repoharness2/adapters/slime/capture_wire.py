@@ -510,20 +510,24 @@ class CaptureRegistry:
         with self._lock:
             hook = self.hooks.get(sid)
             slot = self.pending.get(sid)
-            if hook is None or not slot:
+            if hook is None:
                 return
             if key is not None:
-                if key in slot:
+                if slot and key in slot:
                     turn = slot.pop(key)  # COMMITTING：按请求键精确取own（批 2b）
                 else:
                     # 批 2b 收口 P0：本请求从未 stage（如 max-context 短路
                     # 轮直接 record_turn）——**绝不触碰其他请求的暂存**。
                     # 旧写法落进 len==1 分支会把别人的轮偷走并 finalize
                     #（静默串账）。落账后返回。
+                    # slot 为空或键未命中都计（收口二轮非阻塞项：空 slot
+                    # 的 no-stage commit 此前漏计，只影响遥测）
                     self.stats["commit_without_stage"] = (
                         self.stats.get("commit_without_stage", 0) + 1
                     )
                     return
+            elif not slot:
+                return
             elif len(slot) == 1:
                 turn = slot.pop(next(iter(slot)))  # 无键上下文且无歧义（探针直调）
             else:
@@ -534,13 +538,21 @@ class CaptureRegistry:
             self.poison.poison(sid, "capture_pending_overlap")
             raise CapturePendingOverlapError(sid)
         assert turn is not None
-        record = None
+        capture_ref = None
         try:
             record = hook.on_generate_response(
                 prompt_token_ids=turn.prompt_ids,
                 sampling_params=turn.capture_params,
                 response=turn.raw_response,
             )
+            # 收口二轮 P1：capture provenance 不许 fail-open——record_id
+            # 缺失/为空与 hook 抛异常同罪（poison + abandon + 抛错，绝不
+            # 用合成引用 finalize 出不可解析的 delivered attempt）。
+            capture_ref = getattr(record, "record_id", None)
+            if not capture_ref:
+                raise RuntimeError(
+                    f"capture_hook_returned_no_record_id: {type(record).__name__}"
+                )
         except Exception:
             # 中点异常：poison + 关闭 draft（最小 FailureFact），再传播
             self.poison.poison(sid, "capture_commit_hook_failed")
@@ -570,15 +582,9 @@ class CaptureRegistry:
             return
         # COMMITTED：finalize（重复 finalize = 契约违规，poison 不静默吞）
         if turn.proxy_result is not None:
-            # 批 2b 收口 P1：finalize 引用用 hook 返回的**真实**
-            # GenerationCaptureRecord.record_id（cap_{traj}_t{n}）——旧
-            # 自造 "capture:{sid}:{rid}" 无法解引用，attempt 审计与
-            # BranchProjection 会持两套血缘身份。hook 替身返回 None 时
-            # 回退旧形状（仅测试面）。
-            capture_ref = (
-                getattr(record, "record_id", None)
-                or f"capture:{sid}:{turn.request_id}"
-            )
+            # 批 2b 收口 P1：finalize 引用 = hook 返回的**真实**
+            # GenerationCaptureRecord.record_id（cap_{traj}_t{n}），上方
+            # 已强制非空——无 fallback（合成引用是 provenance 旁路）。
             try:
                 turn.proxy_result.finalize_delivered(capture_ref)
             except ValueError:

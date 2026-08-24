@@ -549,6 +549,16 @@ AnthropicAdapter CPU 回归入册：同 SID 乱序完成 capture 与各自 turn
 完整 single-owner（D3）不一致；**批 2b 可关，但 F2-3 不得宣告完成**，
 必须接 **批 2c：CaptureRegistry 单 owner 命令/快照接口**（若决定不做
 完整 D3 则需重走 T0，不得把 drain 单 owner 冒充完整 D3）。
+**收口二轮（2026-08-24，codex 1P1）**：finalize 引用的测试兼容
+fallback（record_id 缺失时合成 `capture:{sid}:{rid}`）是 capture
+provenance 的 fail-open 旁路——hook 违约返回 None 时会把不存在的引用
+记成 delivered 且不 poison 不报错；修复 = 删除 fallback，record_id
+缺失/为空与 hook 抛异常同罪（复用 capture_commit_hook_failed 事务
+路径：poison + abandon + 抛错，绝不 finalize）。测试面：FakeHook/
+_RecHook 按契约返回并**存**记录，正例断言 finalize 引用可解析回
+hook.records（非字符串巧合），负例断言 None-hook 绝不产出 delivered
+attempt。非阻塞项随同补丁：`commit_without_stage` 空 slot 时漏计已修
+（计数移到 key 未命中分支统一口径）。**批 2b 关闭（待聚焦复核确认）**。
 **待办（F2-3 关闭前）**：批 2c 实施 + §10.4 Tracer/Falsifier 配对
 （stop condition 不变：配对未跑完不关闭 F2-3）+ 批 1+2+2c 联合终核；
 联合终核后 fa_formal 闸门的 drain receipt 前置才算 production proof
