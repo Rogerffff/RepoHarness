@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
 import types
 from argparse import Namespace
@@ -159,6 +160,19 @@ def _vendor_slime_world():
 # ---------------------------------------------------------------------------
 
 
+class FakeClock:
+    """治理测试用假时钟（governed buffer 的 clock 注入位）。"""
+
+    def __init__(self) -> None:
+        self.t = 0.0
+
+    def __call__(self) -> float:
+        return self.t
+
+    def advance(self, dt: float) -> None:
+        self.t += dt
+
+
 class _World:
     """惰性 import 汇集点：测试模块不得模块级 import 这些名字。"""
 
@@ -172,6 +186,9 @@ class _World:
             canonicalize_group,
             canonicalize_sample,
         )
+        from repoharness2.adapters.miles import attempt_ledger as attempt_ledger_mod
+        from repoharness2.adapters.miles import governed_buffer as governed_buffer_mod
+        from repoharness2.adapters.miles import lifecycle as lifecycle_mod
 
         self.MS = MilesSample
         self.SS = SlimeSample
@@ -179,6 +196,20 @@ class _World:
         self.Rh2MilesGenerateFn = Rh2MilesGenerateFn
         self.canonicalize_group = canonicalize_group
         self.canonicalize_sample = canonicalize_sample
+
+        # -- 治理件（C3/C7）：模块对象直挂，状态常量经 world.ledger_states 取用
+        self.ledger_states = attempt_ledger_mod
+        self.governed_buffer_mod = governed_buffer_mod
+        self.lifecycle_mod = lifecycle_mod
+        self.Rh2AttemptLedger = attempt_ledger_mod.Rh2AttemptLedger
+        self.LedgerError = attempt_ledger_mod.LedgerError
+        self.ATTEMPT_KEY = attempt_ledger_mod.ATTEMPT_KEY
+        self.Rh2GovernedBuffer = governed_buffer_mod.Rh2GovernedBuffer
+        self.Rh2GovernanceConfig = governed_buffer_mod.Rh2GovernanceConfig
+        self.GovernedBufferError = governed_buffer_mod.GovernedBufferError
+        self.Rh2RolloutLifecycle = lifecycle_mod.Rh2RolloutLifecycle
+        self.LifecycleClosedError = lifecycle_mod.LifecycleClosedError
+        self.FakeClock = FakeClock
         # 工具转发：测试模块不 `import conftest`（tests/ 下多目录同名
         # conftest.py，按 sys.path 裸 import 会撞名），统一走 world。
         self.install_sglang_stub = install_sglang_stub
@@ -251,6 +282,86 @@ class _World:
         )
         base.update(over)
         return Namespace(**base)
+
+    # -- 治理件工厂（C3/C7 测试用；形状对齐 miles 真实构造路径）--------------
+
+    def mk_governed_buffer(self, *, ledger=None, clock=None, lease=10.0, **args_over):
+        """按 miles 真实装配形状构造治理 buffer：
+        buffer_cls(DataBufferConstructorInput(args, unused_handler_fn))，
+        治理对象经 args.rh2_governance 注入（生产同路径）。
+        返回 (buf, ledger, clock, recycled)——recycled 是下游 unused_handler
+        观察窗（模拟 --async-unused-samples-handler 的回收面）。
+        """
+
+        from miles.rollout.fully_async_data_buffer import DataBufferConstructorInput
+
+        ledger = ledger if ledger is not None else self.Rh2AttemptLedger()
+        clock = clock if clock is not None else FakeClock()
+        args = self.mk_miles_args(**args_over)
+        args.rh2_governance = self.Rh2GovernanceConfig(ledger=ledger, lease_seconds=lease, clock=clock)
+        recycled: list = []
+        buf = self.Rh2GovernedBuffer(
+            DataBufferConstructorInput(args=args, unused_handler_fn=recycled.append)
+        )
+        return buf, ledger, clock, recycled
+
+    def mk_gov_prompt_group(self, prompt_id: str, n: int = 2) -> list:
+        """治理测试的 prompt 组（miles Sample，metadata 带 prompt_id）。"""
+
+        out = []
+        for i in range(n):
+            s = self.MS(index=i, prompt=f"prompt-{prompt_id}")
+            s.metadata["prompt_id"] = prompt_id
+            out.append(s)
+        return out
+
+    def mk_gov_finished_group(self, prompt_group: list, versions=(7, 7), rewards=None) -> list:
+        """模拟 generate 完成：与 prompt 组同 attempt 身份的完成样本
+        （metadata 继承 = attempt 盖章传播，生产链中由 rollout function 层保证）。
+
+        默认 rewards=None 时逐样本 reward=float(i)（0.0/1.0，方差非零——
+        stock check_reward_nonzero_std 会 keep）；传 rewards 可制造全同
+        reward 触发 drop。
+        """
+
+        out = []
+        for i, (p, v) in enumerate(zip(prompt_group, versions)):
+            s = self.MS(index=i, prompt=p.prompt)
+            s.status = self.MS.Status.COMPLETED
+            s.reward = float(rewards[i]) if rewards is not None else float(i)
+            s.weight_versions = [str(v)]
+            s.metadata = dict(p.metadata)  # 继承 prompt_id + physical_attempt_id
+            out.append(s)
+        return out
+
+    def mk_entry(self, prompt_group: list, group: list):
+        from miles.rollout.fully_async_data_buffer import DataBufferInput
+
+        return DataBufferInput(prompt_group=prompt_group, group=group)
+
+    async def run_attempt(self, ledger, buf, prompt_group, gate: asyncio.Event, fail=None):
+        """模拟 rollout function 层的一次组生产：dispatch → 生成 → put。
+
+        crash 记账放在这里（而非 buffer 内）——put 之前的失败到不了 buffer，
+        "从未提交"这笔账只能由 put 的调用方（rollout function 层）来记；
+        mark_crashed_before_put 幂等，与 governed put 的背压 cancel 记账、
+        lifecycle 关停扫尾不双记。
+        """
+
+        aid = ledger.dispatch(prompt_group)
+        try:
+            await gate.wait()  # 模拟生成在飞
+            if fail == "exception":
+                raise RuntimeError("simulated generate crash")
+            group = self.mk_gov_finished_group(prompt_group)
+            await buf.put(self.mk_entry(prompt_group, group))
+            return aid
+        except asyncio.CancelledError:
+            ledger.mark_crashed_before_put(aid, kind="cancelled")
+            raise
+        except RuntimeError:
+            ledger.mark_crashed_before_put(aid, kind="exception")
+            raise
 
 
 @pytest.fixture
