@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 import types
 from argparse import Namespace
@@ -36,7 +37,17 @@ import pytest
 
 RH2_SRC = Path(__file__).resolve().parents[2] / "src"
 REPO_ROOT = Path(__file__).resolve().parents[3]
-MILES_ROOT = REPO_ROOT / "reference" / "miles"
+# miles checkout 选择（C1′ 测试面重定向）：默认打只读 pin reference/miles；
+# 设 RH2_MILES_PATH（绝对路径）可切到别的 checkout——当前用途是
+# reference/miles-rh2-integration（pin f2b7c7929 + 上游 PR #2595/#2596
+# cherry-pick，分支 rh2-integration-v2）。源码事实断言测试（train_async
+# 预取顺序、fully_async_rollout drain 文本）经 world.miles_root 读同一
+# checkout，保证"跑的代码"与"断言的源码"永远同源。
+MILES_ROOT = Path(os.environ.get("RH2_MILES_PATH") or (REPO_ROOT / "reference" / "miles")).resolve()
+if not (MILES_ROOT / "miles" / "utils" / "types.py").is_file():
+    raise RuntimeError(
+        f"RH2_MILES_PATH/默认 miles checkout 无效：{MILES_ROOT} 下找不到 miles/utils/types.py"
+    )
 
 collect_ignore: list[str] = []
 
@@ -214,6 +225,7 @@ class _World:
         # conftest.py，按 sys.path 裸 import 会撞名），统一走 world。
         self.install_sglang_stub = install_sglang_stub
         self.rh2_src = RH2_SRC
+        self.miles_root = MILES_ROOT  # 源码事实断言与运行时 import 同源
 
     # -- 样本工厂（形状对齐 vendor to_sample / rh2 收口路径的真实输出）------
 

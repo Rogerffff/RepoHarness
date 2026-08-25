@@ -551,10 +551,7 @@ def test_abc_surface_facts(world):
     # (2)(4) driver 源码事实。直接读文件文本断言（fully_async_rollout 的
     # import 链经 generate_utils 拉 sglang/pybase64 等重依赖，CPU venv 不装；
     # 与 train_async 预取顺序测试同一取证模式）。
-    repo_root = world.rh2_src.parents[1]
-    driver_src = (repo_root / "reference" / "miles" / "miles" / "rollout" / "fully_async_rollout.py").read_text(
-        encoding="utf-8"
-    )
+    driver_src = (world.miles_root / "miles" / "rollout" / "fully_async_rollout.py").read_text(encoding="utf-8")
     assert "self._output.get(current_version=current_version)" in driver_src
     # (4) get_metrics 在 _drain 的 return 语句里（drain 结束 = 批组装完，训练还没开始）
     assert "return RolloutFnTrainOutput(samples=data, metrics=self._output.get_metrics())" in driver_src

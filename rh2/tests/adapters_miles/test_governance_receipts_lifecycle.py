@@ -139,8 +139,7 @@ def test_train_async_prefetch_true_order_source_facts(world):
     推论：存在真实窗口——get(version=V+1)（batch N+2 的 drain）已发生，
     而 batch N+1 仍 HANDED_OFF 未训练。版本前进因此不能当训练回执。"""
 
-    repo_root = world.rh2_src.parents[1]
-    src = (repo_root / "reference" / "miles" / "train_async.py").read_text(encoding="utf-8")
+    src = (world.miles_root / "train_async.py").read_text(encoding="utf-8")
 
     i_prefetch_head = src.index("rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)")
     i_await_curr = src.index("rollout_data_curr_ref = await rollout_data_next_future")
