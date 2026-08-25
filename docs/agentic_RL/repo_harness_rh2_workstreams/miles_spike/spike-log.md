@@ -94,7 +94,7 @@
 
 本地 spike P0-1/2/3 的调查与原型目标完成;R5-ext 修正后,**首个付费 GPU 作业前**的 CPU/CI 前置（迁移分支执行,按 R5 §11 最短顺序）：
 
-- [ ] **C0 Sample canonicalization 边界 + C4 扩大**（先做,已复现的直接崩溃,工作面最小）：`Rh2MilesGenerateFn` 递归转换器 + 纵切测试到 train conversion,覆盖 COMPLETED/TRUNCATED/ABORTED/remove_sample 与 nested fan-out;真实 BringupService 构造（无 slime 安装环境,闭包补 processing_utils 或改接自有 tokenizer loader）。
+- [x] **C0 Sample canonicalization 边界 + C4 扩大** ✅ 2026-08-25（miles-migration 分支）：vendor 落库 `rh2/src/slime/`（19 文件 3816 行,取 pin blob 字节级零修补——注意 reference/slime 工作树 common.py 有 30 行本地注释标注,vendor 不携带;sha256 表在 VENDOR_README.md）;`adapters/miles/canonicalize.py`（30 字段全覆盖映射表,PENDING 拒绝、`COMPLETED+metadata["truncated"]` 显式升级 TRUNCATED、中止语义优先、未知字段 fail-closed、模块加载时两侧 dataclass 字段集核对——任一侧加字段当场炸;双形态输入:slime 转换/miles 直通）+ `generate_fn.py`（Rh2MilesGenerateFn 新签名类）;测试 39 个全绿:B1 三症状按文档化断言复现且 canonicalize 后全消、纵切**实际到达 convert_samples_to_train_data**（sglang 只卡 base_types 链;真实缺口是 ray,conftest 用 4 符号最小 stub）、真实 BringupService 在无 reference/slime path 条件下构造成功（B8 闭包补齐验证）。全仓 1133 passed,既有 321 逐数不变。agent 的 8 条 T1 决策记录在会话报告（要点:vendor 取 blob 非工作树、pillow 进 dev 组、remove_sample 纳入复制面、rollout_routed_experts 非 None 拒绝留 C1 显式接、测试 module 级装卸 vendor 世界防混跑遮蔽）。
 - [ ] **C1 目标 Megatron 路径 sampling-mask 完整 CPU 纵切 + faithful DIS custom loss**（接线缺口 ④⑤⑥⑦⑨⑩⑪ + rh2 faithful DIS 成为 miles --custom-loss-function-path 真实 loss;验收含 mask 对齐/target fail-closed/provenance/detach/拒绝 token 零梯度/branch 不进分母/execution 归约对拍/全零 step;修改范围= miles 数据 plumbing 可审计 integration patch,**触碰 worker/scheduler/staleness/权重更新语义即停并重评**;只覆盖 Megatron/30B 路径,不为 FSDP/VPP/CP 扩门）。
 - [ ] **C2 target-in-support 训练端 fail-closed**（并入 C1）。
 - [ ] **C3 dynamic-filter 逐 attempt 记账**（rh2 custom buffer 外层唯一 verdict,关 inner filter;验收探针=拒绝终态+不在 inventory+守恒）。

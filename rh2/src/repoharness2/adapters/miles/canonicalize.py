@@ -1,0 +1,351 @@
+"""slime Sample -> miles Sample 的 canonicalization 边界（miles 迁移 C0）。
+
+背景（spike-log R5-ext B1，已复现的崩溃链）：形态甲下 rh2 复用 vendor slime
+的 agent 层，`TrajectoryManager._SampleBuilder.to_sample()`（rh2/src/slime/
+agent/trajectory.py）无条件构造 **slime** `Sample`；而 miles fully-async 主链
+（buffer 过滤、metrics、rollout_id 校验、train conversion）只认 **miles**
+`Sample`。两个类不同、嵌套的 `Status` 枚举互不相等（实测
+`SlimeSample.Status.ABORTED == MilesSample.Status.ABORTED -> False`），直接
+把 vendor 输出还给 miles 会触发三个真实症状：
+
+1. `fully_async_data_buffer.DefaultDataBuffer.put()` 用
+   `s.status == MilesSample.Status.ABORTED` 过滤——slime 的 ABORTED 样本
+   **漏过滤**混进 buffer；
+2. `DefaultDataBuffer.get_metrics()` 经 `group_oldest_weight_version` 访问
+   `s.oldest_weight_version`——slime Sample 没有该属性，AttributeError；
+3. `rollout_data_conversion.validate_compact_rollout_ids()` 断言节点
+   `isinstance(node, MilesSample)`——slime Sample 直接 AssertionError。
+
+因此规定：**任何 rh2 generate 输出在返回 miles 之前必须经过本模块的
+`canonicalize_group()`**（由 generate_fn.Rh2MilesGenerateFn 调用）。
+
+映射原则（fail-closed，宁炸不猜）：
+
+- status 按**字符串值**映射到 miles 枚举（绝不复制枚举对象）；PENDING 拒绝
+  （vendor 输出必须是终态，PENDING 意味着生成从未发生）。
+- vendor 只在 `metadata["truncated"]`（bool）里记录"最后一轮 finish_reason
+  == length"这一事实（to_sample 硬编码 status=COMPLETED，见
+  trajectory.py `_chain_to_samples`）；canonicalize 把
+  `COMPLETED + metadata truncated=True` 显式升级为 miles
+  `Status.TRUNCATED`（miles 训练侧 `truncated` 列与 buffer 准入都依赖
+  status，不看 metadata）。ABORTED/FAILED 不被该 flag 改写（中止/失败
+  语义优先）；flag 非 bool 直接拒绝。
+- miles 输入样本独有的路由/评分/分发字段（`adapter`/`reward_spec`/
+  `routing_key`/`generate_function_path`/`multimodal_inputs`）从输入样本
+  保留——vendor 输出不可能携带它们。
+- slime 独有且 miles 无对应位置的字段：出现非默认值一律拒绝（见
+  `_REJECTED_SLIME_FIELDS`），唯一例外是 `session_id`（显式丢弃，miles 侧
+  的会话路由身份由输入样本的 `routing_key` 承担）。
+- 两侧 dataclass 字段集在模块加载时与硬编码允许集核对，vendor/miles 任何
+  一侧加字段都会当场把本模块炸掉，逼迫人工重审映射表（而不是静默丢数据）。
+
+sampling-mask 一等字段预留位：miles 的 `RolloutSamplingMask`（CSR
+ids+offsets）接线（P0-3 / C1）落地后，slime 侧 `rollout_top_p_token_ids/
+offsets`（或 capture 层直接产出的支持集 tape）应在本模块新增显式转换分支
+（slime 零宽 span <-> miles 观察位单例支持集的对账见 spike-log P0-3）；在
+那之前这两个字段出现非 None 值会 fail-closed（见下），不会被静默丢弃。
+
+导入面说明：本模块只 import `miles.utils.types` 与 `slime.utils.types`
+（两者均无 sglang 依赖，CPU 可导）；不得 import `miles.rollout.*`
+（base_types 经 data_source -> chat_template_utils 拉 sglang）。
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from miles.utils.types import Sample as MilesSample
+from slime.utils.types import Sample as SlimeSample
+
+
+class CanonicalizationError(RuntimeError):
+    """canonicalize 边界 fail-closed 错误（reason_code 机器可读）。"""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        self.reason_code = reason_code
+        super().__init__(f"[{reason_code}] {message}")
+
+
+# ---------------------------------------------------------------------------
+# 允许集（显式列出，两侧任何字段增删都会触发 import 时报错）
+# ---------------------------------------------------------------------------
+
+# slime pin e848052a 的 Sample dataclass 字段全集（30 个）。
+_SLIME_FIELDS_EXPECTED = frozenset(
+    {
+        "group_index", "index", "rollout_id", "prompt", "tokens",
+        "multimodal_inputs", "multimodal_train_inputs", "multimodal_train_input_id",
+        "apply_chat_template_kwargs", "response", "response_length", "label",
+        "reward", "loss_mask", "weight_versions", "rollout_log_probs",
+        "rollout_top_p_token_ids", "rollout_top_p_token_offsets",
+        "rollout_routed_experts", "remove_sample", "teacher_log_probs", "status",
+        "metadata", "generate_function_path", "custom_rm_path", "train_metadata",
+        "session_id", "non_generation_time", "spec_info", "prefix_cache_info",
+    }
+)
+
+# miles pin f2b7c7929 的 Sample dataclass 字段全集（29 个）。
+_MILES_FIELDS_EXPECTED = frozenset(
+    {
+        "group_index", "index", "rollout_id", "prompt", "tokens",
+        "multimodal_inputs", "multimodal_train_inputs", "response",
+        "response_length", "label", "reward", "loss_mask", "weight_versions",
+        "rollout_log_probs", "rollout_routed_experts", "rollout_indexer_topk",
+        "remove_sample", "teacher_log_probs", "opd_reverse_kl", "status",
+        "metadata", "generate_function_path", "train_metadata", "adapter",
+        "reward_spec", "routing_key", "non_generation_time", "spec_info",
+        "prefix_cache_info",
+    }
+)
+
+
+def _assert_field_sets() -> None:
+    for cls, expected, pin in (
+        (SlimeSample, _SLIME_FIELDS_EXPECTED, "slime e848052a"),
+        (MilesSample, _MILES_FIELDS_EXPECTED, "miles f2b7c7929"),
+    ):
+        actual = frozenset(cls.__dataclass_fields__)
+        if actual != expected:
+            raise CanonicalizationError(
+                "sample_schema_drift",
+                f"{pin} 的 Sample 字段集与 canonicalize 映射表不一致："
+                f"新增={sorted(actual - expected)} 缺失={sorted(expected - actual)}。"
+                "必须人工重审本模块映射表后更新允许集，禁止静默通过。",
+            )
+
+
+_assert_field_sets()
+
+
+# status 按字符串值映射（不复制枚举对象）。PENDING 有意不在表内：vendor
+# 输出必须是终态（COMPLETED/TRUNCATED/ABORTED/FAILED），PENDING 说明生成
+# 从未发生，放行会把未完成样本混进训练准入。
+_STATUS_BY_VALUE: dict[str, Any] = {
+    "completed": MilesSample.Status.COMPLETED,
+    "truncated": MilesSample.Status.TRUNCATED,
+    "aborted": MilesSample.Status.ABORTED,
+    "failed": MilesSample.Status.FAILED,
+}
+
+# slime 独有、miles 无对应位置的字段：值偏离 slime dataclass 默认值即拒绝。
+# 表内为 {字段名: (默认值判定函数, 拒绝理由)}。
+_REJECTED_SLIME_FIELDS: dict[str, tuple[Any, str]] = {
+    "multimodal_train_inputs": (
+        lambda v: v is None,
+        "多模态训练输入的 slime->miles 转换未定义（C0 范围外）",
+    ),
+    "multimodal_train_input_id": (
+        lambda v: v is None,
+        "miles Sample 没有 multimodal_train_input_id 字段",
+    ),
+    "apply_chat_template_kwargs": (
+        lambda v: not v,
+        "miles Sample 没有 apply_chat_template_kwargs 字段",
+    ),
+    "rollout_top_p_token_ids": (
+        lambda v: v is None,
+        "top-p tape -> miles RolloutSamplingMask 的一等字段接线归 C1"
+        "（本模块 docstring 的 sampling-mask 预留位），静默丢弃会丢采样支持集事实",
+    ),
+    "rollout_top_p_token_offsets": (
+        lambda v: v is None,
+        "同 rollout_top_p_token_ids（成对字段）",
+    ),
+    "rollout_routed_experts": (
+        lambda v: v is None,
+        "routing tape 的 torch->numpy 形状/dtype 转换语义未定义（归硬件段前的 C1+）",
+    ),
+    "custom_rm_path": (
+        lambda v: v is None,
+        "miles 侧评分分发由输入样本的 reward_spec 承担，复制路径字符串会造成双事实源",
+    ),
+    "generate_function_path": (
+        lambda v: v is None,
+        "miles 侧分发字段从输入样本保留；vendor 输出携带它说明有未知改写",
+    ),
+}
+
+# miles 输入样本身上允许出现的**非字段**属性（rh2 编排层 setattr 所致）。
+# session_id：generate.py `_session_id()` 会把会话 id 写回输入样本
+# （sample.session_id = sid）；miles Sample 没有该字段，canonicalize 时剥除
+# （miles 侧路由身份 = routing_key，会话 id 已进 audit/capture 记录）。
+_ALLOWED_MILES_EXTRA_ATTRS = frozenset({"session_id"})
+
+
+# ---------------------------------------------------------------------------
+# 单样本
+# ---------------------------------------------------------------------------
+
+
+def canonicalize_sample(slime_sample: Any, *, miles_input_sample: Any) -> Any:
+    """把一条 rh2 generate 输出样本转换/校验为 miles Sample。
+
+    两个合法输入形态（rh2 generate 的真实输出面）：
+
+    1. vendor slime `Sample`（TrajectoryManager 叶链产物）——构造新的 miles
+       Sample，逐字段按模块映射表复制；
+    2. miles `Sample`（abort/eval 收口路径把**输入样本本体**原地改写后返回，
+       见 generate.py `_abort_result` / `_deliver` 评测分支）——校验后原对象
+       返回（剥除 rh2 附加的 session_id 属性，回填输入侧保留字段）。
+
+    其余类型一律拒绝。
+    """
+
+    if miles_input_sample is None or not isinstance(miles_input_sample, MilesSample):
+        raise CanonicalizationError(
+            "miles_input_sample_invalid",
+            f"miles_input_sample 必须是 miles Sample，got {type(miles_input_sample).__name__}。",
+        )
+
+    if isinstance(slime_sample, MilesSample):
+        return _canonicalize_miles_passthrough(slime_sample, miles_input_sample)
+    if isinstance(slime_sample, SlimeSample):
+        return _convert_slime_sample(slime_sample, miles_input_sample)
+    raise CanonicalizationError(
+        "unexpected_output_type",
+        f"generate 输出节点类型 {type(slime_sample).__name__} 不是 slime/miles Sample。",
+    )
+
+
+def _map_status(status: Any, metadata: dict, *, source: str) -> Any:
+    """status 字符串值映射 + truncated metadata 显式升级（fail-closed）。"""
+
+    value = getattr(status, "value", None)
+    if not isinstance(value, str) or value not in _STATUS_BY_VALUE:
+        raise CanonicalizationError(
+            "status_unmappable",
+            f"{source} 样本 status={status!r}（value={value!r}）不在允许映射集 "
+            f"{sorted(_STATUS_BY_VALUE)} 内（PENDING/未知值一律拒绝）。",
+        )
+    mapped = _STATUS_BY_VALUE[value]
+
+    if "truncated" in metadata:
+        flag = metadata["truncated"]
+        if not isinstance(flag, bool):
+            raise CanonicalizationError(
+                "truncated_flag_not_bool",
+                f"{source} 样本 metadata['truncated']={flag!r} 不是 bool——"
+                "vendor 只会写 bool，其他类型说明上游数据被污染。",
+            )
+        if flag and mapped is MilesSample.Status.COMPLETED:
+            # vendor to_sample 硬编码 COMPLETED，截断事实只在 metadata 里；
+            # miles buffer/训练侧只看 status，这里显式恢复 TRUNCATED。
+            mapped = MilesSample.Status.TRUNCATED
+    return mapped
+
+
+def _reject_unknown_extras(sample: Any, allowed: frozenset[str], fields: frozenset[str], *, source: str) -> None:
+    extras = set(sample.__dict__) - set(fields) - set(allowed)
+    if extras:
+        raise CanonicalizationError(
+            "unknown_sample_attrs",
+            f"{source} 样本携带映射表外属性 {sorted(extras)}——fail-closed，"
+            "先在 canonicalize 映射表登记去向（复制/拒绝/丢弃）再放行。",
+        )
+
+
+def _canonicalize_miles_passthrough(sample: Any, miles_input_sample: Any) -> Any:
+    """miles Sample 直通分支（abort/eval 收口路径）：校验 + 清理 + 回填。"""
+
+    _reject_unknown_extras(
+        sample, _ALLOWED_MILES_EXTRA_ATTRS, _MILES_FIELDS_EXPECTED, source="miles 直通"
+    )
+    # 剥除 rh2 编排层 setattr 的会话 id（见 _ALLOWED_MILES_EXTRA_ATTRS 注释）。
+    sample.__dict__.pop("session_id", None)
+
+    metadata = sample.metadata or {}
+    sample.status = _map_status(sample.status, metadata, source="miles 直通")
+
+    # 输入侧保留字段回填（同对象时是恒等写；不同对象时对齐输入事实）。
+    sample.adapter = miles_input_sample.adapter
+    sample.reward_spec = miles_input_sample.reward_spec
+    sample.routing_key = miles_input_sample.routing_key
+    sample.generate_function_path = miles_input_sample.generate_function_path
+    return sample
+
+
+def _convert_slime_sample(s: Any, miles_input_sample: Any) -> Any:
+    """vendor slime Sample -> 新 miles Sample（逐字段显式映射）。"""
+
+    _reject_unknown_extras(s, frozenset(), _SLIME_FIELDS_EXPECTED, source="slime")
+
+    for name, (is_default, why) in _REJECTED_SLIME_FIELDS.items():
+        value = getattr(s, name)
+        if not is_default(value):
+            raise CanonicalizationError(
+                f"slime_field_rejected:{name}",
+                f"slime 样本字段 {name}={value!r} 无 miles 对应位置：{why}。",
+            )
+
+    # 身份一致性：叶链样本的 index/group_index 由 to_sample 从 base_sample
+    # 复制而来，必须与本次 generate 的 miles 输入一致（防串组，B4 验收项）。
+    for name in ("index", "group_index"):
+        if getattr(s, name) != getattr(miles_input_sample, name):
+            raise CanonicalizationError(
+                "identity_mismatch",
+                f"slime 输出样本 {name}={getattr(s, name)!r} != miles 输入 "
+                f"{getattr(miles_input_sample, name)!r}——输出不属于本次 generate 的输入。",
+            )
+
+    metadata = dict(s.metadata or {})
+    out = MilesSample(
+        # -- 身份（来自 vendor 输出；rollout_id 保留 vendor 的
+        #    "None 回退 index / sibling 共享" 语义，不改写）
+        group_index=s.group_index,
+        index=s.index,
+        rollout_id=s.rollout_id,
+        # -- prompt/response 事实（vendor 输出逐字段复制；容器浅拷贝，
+        #    防止 miles 侧 reset_for_retry 等原地改写波及 vendor 侧持有的引用）
+        prompt=s.prompt,
+        tokens=list(s.tokens or []),
+        response=s.response,
+        response_length=s.response_length,
+        label=s.label,
+        reward=s.reward,
+        loss_mask=None if s.loss_mask is None else list(s.loss_mask),
+        weight_versions=list(s.weight_versions or []),
+        rollout_log_probs=None if s.rollout_log_probs is None else list(s.rollout_log_probs),
+        teacher_log_probs=None if s.teacher_log_probs is None else list(s.teacher_log_probs),
+        remove_sample=s.remove_sample,
+        metadata=metadata,
+        train_metadata=None if s.train_metadata is None else dict(s.train_metadata),
+        non_generation_time=s.non_generation_time,
+        # -- status：字符串值映射 + truncated metadata 升级
+        status=_map_status(s.status, metadata, source="slime"),
+        # -- miles 输入侧保留字段（vendor 输出不可能携带）
+        adapter=miles_input_sample.adapter,
+        reward_spec=miles_input_sample.reward_spec,
+        routing_key=miles_input_sample.routing_key,
+        generate_function_path=miles_input_sample.generate_function_path,
+        multimodal_inputs=miles_input_sample.multimodal_inputs,
+        # -- miles 独有的响应侧字段：vendor 链路不产生，保持默认 None
+        #    （rollout_routed_experts / rollout_indexer_topk / opd_reverse_kl；
+        #    multimodal_train_inputs 同理——slime 侧非 None 已在上方拒绝）
+    )
+    # 统计信息容器：两侧嵌套类同构但类型不同，经 dict 往返换成 miles 类实例。
+    out.spec_info = MilesSample.SpecInfo.from_dict(s.spec_info.to_dict())
+    out.prefix_cache_info = MilesSample.PrefixCacheInfo.from_dict(s.prefix_cache_info.to_dict())
+    return out
+
+
+# ---------------------------------------------------------------------------
+# 递归组
+# ---------------------------------------------------------------------------
+
+
+def canonicalize_group(output: Any, *, miles_input_sample: Any) -> Any:
+    """递归转换 rh2 generate 的整个输出（Sample | list，任意嵌套深度）。
+
+    形状原样保留：list 结构、元素顺序、fan-out sibling 的 rollout_id 共享
+    都不改写（rollout_id 逐样本复制，siblings 天然继续共享）。空 list 拒绝
+    （无事实的输出形状，放行会在 miles flatten/校验层制造更晦涩的错误）。
+    """
+
+    if isinstance(output, list):
+        if not output:
+            raise CanonicalizationError(
+                "empty_output_list",
+                "generate 输出出现空 list——上游必须显式给出样本或抛错，不许交空壳。",
+            )
+        return [canonicalize_group(item, miles_input_sample=miles_input_sample) for item in output]
+    return canonicalize_sample(output, miles_input_sample=miles_input_sample)

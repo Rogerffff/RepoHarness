@@ -33,6 +33,9 @@ dev = [
     "torch>=2.13.0",
     # 风格工具化（review-standards.md §8）：机器可判定的问题不进审查
     "ruff>=0.9",
+    # vendor slime 闭包（rh2/src/slime/utils/processing_utils.py，B8 补项）
+    # 模块级 `from PIL import Image`；真实训练镜像自带，此处补齐本机测试环境
+    "pillow>=12.3.0",
 ]
 
 [build-system]
