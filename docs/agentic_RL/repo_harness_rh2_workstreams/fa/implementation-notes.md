@@ -10,7 +10,7 @@
 
 **阶段状态**：FA-0 完成；FA-1 本机实现完成（codex 轮次 6~14 九轮审查全部
 处置，closure 批次已落地）；FA-3 离线/FA-4 对拍完成（接线未做）；
-**FA-2A 决策包 v4 已批准（2026-08-07，用户拍板 D1=A 带修订/D2=A/D3=A/
+**FA-2A 决策包 v4 已批准（2026-08-07，用户拍板 D1=A 带修订/D2=A/D3=A'/
 D4=A；D1b 延后清单见决策包 owner_decision）**；**F2-0 纯迁移已完成**
 （commit f8580789，测试 917→921：capture_wire/glue→bringup/
 docker_sandbox 三模块提升 src，experiments 留带 parity 测试的薄兼容壳，
@@ -22,7 +22,8 @@ session_auth_capability 解决（05 计划 F2-2 节已钉验收）。**F2-0b Obs
 复核 4 P1 修正后的诚实口径——契约与提取器就位，但 43 个事件中生产代码
 只命中约 4 个，其余按 owner 分批接线：**服务启动 6 事件归 BringupService
 （startup_evidence timeline）**、execution 事件随各切片、model
-调用区间填值随 F2-3、group/batch 事件随 F2-5/F2-6）。已闭合：clock_
+调用区间填值随 F2-6 Observability 统一验收、group/batch 事件随
+F2-5/F2-6）。已闭合：clock_
 domain=进程实例（同进程线程可互减，owner_role 区分线程）+ 原始
 monotonic 时间戳；ModelCallAttempt 四原始区间（成对 start/end +
 timing_clock_domain，**区间⟺domain 双向一致校验**——脱离时钟域的区间
@@ -31,8 +32,10 @@ timing_clock_domain，**区间⟺domain 双向一致校验**——脱离时钟�
 暴露）；audit 落**双时钟 wall 起止**（wall_start/end_monotonic +
 epoch 副本 + wall_clock_domain_id，写 record 时各只读一次）不派生
 chargeable。训前处理项（codex 复核二轮登记）：proc-{pid} 非严格进程
-incarnation（fork 继承同值/pid 复用），F2-3/F2-4 前改含 incarnation 且
-fork 后刷新的 ID；非法遥测计数随 F2-3。**F2-1b Outcome v2 与 crosswalk：
+incarnation（fork 继承同值/pid 复用），owner=F2-4，须改为含
+incarnation 且 fork 后刷新的 ID；非法遥测计数与 model 调用区间填值
+owner=F2-6 Observability 统一验收。以上三项 gate 均为训前总审计。
+**F2-1b Outcome v2 与 crosswalk：
 schema + crosswalk 完成（producer 接线不在本切片，归 F2-2 起——见 05
 计划完成口径）**；codex F2-1b 审查三 P1 已闭合：① failure category
 三分封闭集合（执行事实 7 值 = missing 唯一合法归因池 / grading 1 值 =

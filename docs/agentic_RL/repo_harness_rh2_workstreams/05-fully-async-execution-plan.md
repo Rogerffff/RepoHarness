@@ -1,6 +1,6 @@
 # 05 — FA 独立工作流执行计划：version-aware fully async 训练链
 
-日期：2026-07-12（状态更新 2026-07-20）。状态：**执行中**——FA-0 完成；FA-1 本机实现完成（含 codex 轮次 6~14 九轮审查修复，closure 批次落地）；FA-3 离线/FA-4 对拍完成（接线未做）；FA-2 下一步（先 2A 身份与持久性基座，见 FA-2 节分批重排）；闸门 `rh2_fully_async_training_path_verified` 仍 false。
+日期：2026-07-12（状态更新 2026-08-25）。状态：**执行中**——FA-0、FA-1 已完成；FA-2A 已推进至 F2-3 关闭（F2-2b B1~B5 与 F2-3 已完成，下一步是 B6 真实组合验证，随后继续 F2-4~F2-6）；FA-3 离线/FA-4 对拍完成（接线未做）；闸门 `rh2_fully_async_training_path_verified` 仍 false。
 
 输入：P3 收口结论（`preflight/preflight_report.md`：wait_time_ratio=0.82、尾闲 26~28% > 25% 阈值）、FA 设计讨论稿（`fully_async_rollout_pipeline_design_discussion.md`，codex，2026-07-12——**机制分析与对象模型的权威出处，本计划不复述其论证**）、fully_async 升级设计（`preflight/slime_fully_async_upgrade_design.md`：四缺口 + slime 机制知识）、原 S2-0b 硬化规格（问题 A~E，自 `04-s2-execution-plan.md` 迁入并废止原节）、算法分析（`../training_design/repoharness_sao_dis_grpo_ppo_analysis.md`：GRPO 保持首训、faithful DIS 为正确性组件）、orchestrator 审查（2026-07-12：proxy 边界、eval 路径、契约测试先行、reward 广播语义核实）。
 
@@ -208,7 +208,7 @@
 > 屏障真实执行且失败 → runtime_quiescence_failure（勘误 3 五
 > reason_code）；落地时解除"正式路径 audit-only + abort"挡板并允许
 > runtime_quiescence_confirmed=True → F2-3 request 级 capture +
-> 单 owner → F2-4 checkpoint recovery → F2-5 collector 不变量 →
+> 混合所有权（D3=A'）→ F2-4 checkpoint recovery → F2-5 collector 不变量 →
 > F2-6 durable manifest。
 >
 > **F2-2 必须钉住的验收（codex F2-1a 终核提出）**：真实 slime 在
@@ -252,7 +252,7 @@
 > **FA-2A 附带定义项（终止分类/超时处置/熔断映射/恢复语义）**：正文
 > **只在** `fa/fa2a_decision_package.md`（**v4 approved，2026-08-07 用户
 > 拍板**：D1=A 带修订（Observability V0 / audit_only 不放宽守卫 /
-> hard_wall 仅 trigger + present_truncated 事实推导）、D2=A、D3=A、
+> hard_wall 仅 trigger + present_truncated 事实推导）、D2=A、D3=A'、
 > D4=A；D1b 清单显式延后）。本计划不复制正文，实现以决策包
 > owner_decision 范围为准。
 > 既定闸门补充维持：`rh2_formal_training_allowed` 前置含"overlap 挡板
