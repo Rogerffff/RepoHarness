@@ -48,5 +48,13 @@ class Rh2MilesGenerateFn:
             input.sampling_params,
             evaluation=input.evaluation,
         )
-        samples = canonicalize_group(raw, miles_input_sample=input.sample)
+        # C1′-b mask 闸透传：miles 配置 rollout_top_p<1.0 即开 sampling-support
+        # replay（上游严格开关），此时 slime->miles 构造分支必须带装配 mask，
+        # 缺失由 canonicalize fail-closed 拒绝。args 无该属性（老测试面/非
+        # miles args）时传 None，闸不生效。
+        samples = canonicalize_group(
+            raw,
+            miles_input_sample=input.sample,
+            rollout_top_p=getattr(input.args, "rollout_top_p", None),
+        )
         return GenerateFnOutput(samples=samples)

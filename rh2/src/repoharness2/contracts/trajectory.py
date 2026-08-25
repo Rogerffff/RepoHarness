@@ -144,6 +144,14 @@ class LossMaskSpan(StrictModel):
 # ---------------------------------------------------------------------------
 
 
+# rollout logprob 列的归一化口径（C1′-b：T0-B 双 logprob 列的 provenance 枚举）。
+RolloutLogprobNormalization = Literal[
+    "behavior_support_normalized",  # 支持集内重归一化（正式 DIS/TIS 分母列）
+    "full_vocab",  # 全词表 softmax（仅诊断列，不进 loss 分母）
+    "not_captured",  # 未捕获（文本中继等，禁止伪造口径）
+]
+
+
 class LogprobProvenance(StrictModel):
     """rollout logprob 的出处标注（设计文档 2 §5.7 M4：logprob_source）。
 
@@ -171,6 +179,17 @@ class LogprobProvenance(StrictModel):
     weight_version: NonEmptyStr | None = Field(
         default=None,
         description="引擎侧权重版本标签（SGLang meta_info.weight_version，例如 \"default\"）。",
+    )
+    normalization: RolloutLogprobNormalization | None = Field(
+        default=None,
+        description=(
+            "rollout logprob 列的归一化口径（C1′-b，T0-B 双列拍板的机器可读标注）："
+            "behavior_support_normalized = 支持集内重归一化（sglang-miles "
+            "output_token_sampling_logprobs，DIS/TIS 正式分母列）；full_vocab = 全词表 "
+            "softmax（stock output_token_logprobs，仅诊断）；not_captured = 未捕获"
+            "（文本中继等）。None = 旧数据未标注（新增不改旧：既有产物不因加字段失效，"
+            "消费方要求明确口径时应把 None 当 fail-closed 处理）。"
+        ),
     )
 
 
@@ -300,6 +319,15 @@ SamplingMaskKind = Literal[
     "not_applicable_top_p_1",  # top_p=1.0 时不存在采样截断，无 tape（必须显式声明）
     "not_captured_text_relay",  # 文本中继（verifiers EvalClient）：采样发生在 provider 侧，
     # top_p 数值与核集合都未被捕获——禁止伪造 top_p=1.0 或空 tape（S1-8 显式降级标注）
+    "sampler_support_token_ids",  # sglang-miles sampling-support replay tape（C1′-b 新增，
+    # 新增不改旧——旧三态语义原封）。支持集构成：**引擎采样位** = top-k∪top-p∪min-p
+    # 联合保留集 + force-include 采样 token（引擎出站保证）；**观察/工具位**（loss_mask=0，
+    # 含掉落轮残留上下文）= 单例支持集 {该 token 本身}（上游 append_forced_sampling_tokens
+    # 语义 = slime 零宽 span 的等价物）。因此**没有零宽 span**：每个 response token
+    # 支持集 >= 1，kept_token_count >= response_token_count 是本 kind 的硬下界
+    # （与 top_p_kept_token_ids 的零宽 pad 语义刚好相反，校验器分开走）。
+    # 必填 top_k（有限支持集硬上界，T0-A）；offsets 按 int64 描述（上游训练 wire
+    # dtype：rollout_sampling_mask_offsets=int64，ids=int32）。
 ]
 
 
@@ -330,6 +358,16 @@ class SamplingMaskRef(StrictModel):
             "rollout 实际使用的 top_p（E2 定案 0.95；bring-up 应急才允许 1.0）。"
             "None 只允许与 mask_kind=not_captured_text_relay 搭配——采样发生在 provider "
             "侧、参数未被捕获时禁止伪造任何数值（S1-8）。"
+        ),
+    )
+    top_k: int | None = Field(
+        default=None,
+        ge=1,
+        description=(
+            "rollout 实际使用的 top_k（C1′-b：sampler_support_token_ids 必填——它是"
+            "支持集大小的硬上界，T0-A 拍板 spike 期取有效 vocab size；上游 "
+            "should_return_sampling_mask 要求有限正 top_k，否则引擎直接拒绝）。"
+            "其他 mask_kind 必须为 None（旧三态语义不携带 top_k，新增不改旧）。"
         ),
     )
     token_ids_ref: ArtifactRef | None = Field(
@@ -367,6 +405,11 @@ class SamplingMaskRef(StrictModel):
             "offsets_len": self.offsets_len,
             "kept_token_count": self.kept_token_count,
         }
+        if self.mask_kind != "sampler_support_token_ids" and self.top_k is not None:
+            raise ValueError(
+                f"mask_kind={self.mask_kind} 不得携带 top_k（={self.top_k}）——top_k 只属于 "
+                "sampler_support_token_ids（C1′-b 新增不改旧：旧三态不因新枚举获得新字段语义）。"
+            )
         if self.mask_kind == "not_captured_text_relay":
             if self.top_p is not None:
                 raise ValueError(
@@ -397,6 +440,43 @@ class SamplingMaskRef(StrictModel):
             if present:
                 raise ValueError(
                     f"mask_kind=not_applicable_top_p_1 时不得携带 tape 字段，但发现 {present}。"
+                )
+            return self
+
+        if self.mask_kind == "sampler_support_token_ids":
+            # C1′-b：sglang-miles sampling-support replay tape。
+            if self.top_k is None:
+                raise ValueError(
+                    "mask_kind=sampler_support_token_ids 要求 top_k 必填——有限支持集"
+                    "硬上界是 replay 可行性的前提（上游 should_return_sampling_mask "
+                    "对无界 top_k 直接拒绝，T0-A）。"
+                )
+            if self.top_p >= 1.0:
+                raise ValueError(
+                    "mask_kind=sampler_support_token_ids 要求 top_p < 1.0——上游 replay "
+                    f"开关 = rollout_top_p < 1.0 严格判定（C1′-a 边界事实），得到 {self.top_p}。"
+                )
+            missing = [name for name, value in tape_fields.items() if value is None]
+            if missing:
+                raise ValueError(
+                    f"mask_kind=sampler_support_token_ids 必须携带完整支持集 tape 字段，"
+                    f"缺失 {missing}（无 tape 的 support replay 不可表示）。"
+                    "注意 dtype：ids 为 int32、offsets 为 int64（上游训练 wire "
+                    "rollout_sampling_mask_ids/offsets 的 dtype 约定）。"
+                )
+            assert self.offsets_len is not None and self.response_token_count is not None
+            if self.offsets_len != self.response_token_count + 1:
+                raise ValueError(
+                    f"support offsets 长度必须等于 response_token_count + 1："
+                    f"offsets_len={self.offsets_len}，response_token_count={self.response_token_count}。"
+                )
+            assert self.kept_token_count is not None
+            if self.kept_token_count < self.response_token_count:
+                raise ValueError(
+                    f"sampler_support_token_ids 无零宽 span：每个 response token（含观察位"
+                    f"单例）支持集至少 1 个，kept_token_count({self.kept_token_count}) 不得小于 "
+                    f"response_token_count({self.response_token_count})——与 top_p_kept_token_ids "
+                    "的零宽 pad 语义相反，见 SamplingMaskKind 注释。"
                 )
             return self
 
@@ -839,7 +919,11 @@ class BranchProjection(StrictModel):
                     f"response_token_count({self.response_token_count}) 不一致。"
                 )
         if (
-            self.sampling_mask.mask_kind == "top_p_kept_token_ids"
+            # C1′-b：sampler_support_token_ids 与 top_p_kept_token_ids 同享
+            # "tape 覆盖数 == 分支 response 数"互检（kept 下界两 kind 语义不同，
+            # 分别在 SamplingMaskRef 层（support：kept>=response，无零宽）与
+            # 下方 N-4（top-p：kept>=Σmask=1）校验）。
+            self.sampling_mask.mask_kind in ("top_p_kept_token_ids", "sampler_support_token_ids")
             and self.sampling_mask.response_token_count != self.response_token_count
         ):
             raise ValueError(

@@ -49,6 +49,36 @@ if not (MILES_ROOT / "miles" / "utils" / "types.py").is_file():
         f"RH2_MILES_PATH/默认 miles checkout 无效：{MILES_ROOT} 下找不到 miles/utils/types.py"
     )
 
+# base 探测（C1′-b）：integration base（rh2-integration-v2 = pin f2b7c7929 +
+# 上游 PR #2595/#2596 cherry-pick）的判别特征 = Sample 带 rollout_sampling_mask
+# 一等字段（C1′-a 已核实这是两 PR 唯一的 Sample 新字段；pin 的 types.py 零命中）。
+# 用**静态文本探测**而不是 import：收集期 vendor 世界还没装配，不能提前把
+# miles 拉进 sys.modules。
+MILES_BASE_HAS_SAMPLING_MASK = (
+    "rollout_sampling_mask" in (MILES_ROOT / "miles" / "utils" / "types.py").read_text()
+)
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "integration_base: C1′-b delta 测试——需要 integration base"
+        "（RH2_MILES_PATH=reference/miles-rh2-integration）；默认 pin base 自动 skip",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if MILES_BASE_HAS_SAMPLING_MASK:
+        return
+    skip = pytest.mark.skip(
+        reason="需要 integration base（pin f2b7c7929 无 rollout_sampling_mask 字段）："
+        "RH2_MILES_PATH=<repo>/reference/miles-rh2-integration 重跑"
+    )
+    for item in items:
+        if item.get_closest_marker("integration_base"):
+            item.add_marker(skip)
+
+
 collect_ignore: list[str] = []
 
 

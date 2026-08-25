@@ -809,6 +809,35 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
             custom["return_top_p_token_ids"] = True
             sp["custom_params"] = custom
 
+        # C1′-b（miles 迁移）：sampling-support mask 捕获。会话默认键
+        # `return_sampling_mask` 翻译成**请求体顶层旗标**（sglang-miles 约定，
+        # 对照 miles/rollout/sglang_rollout.py:181-189 的 payload 注入）。
+        # 与上面 custom_params 里的 `return_top_p_token_ids` 是**双约定并存期**：
+        # vendor slime patch 引擎只认 custom_params 键、对顶层旗标无感；
+        # sglang-miles 只认顶层旗标、custom_params 约定对它无效。用哪个由
+        # 编排层按目标引擎在会话默认键里二选一，本函数不猜引擎型号。
+        want_sampling_mask = bool(sp.pop("return_sampling_mask", False))
+        if want_sampling_mask:
+            # 前置校验 fail-closed（对照上游 should_return_sampling_mask：
+            # top_k 有限、温度与会话配置一致、penalties/logit_bias 拒绝——
+            # 不可忠实 replay 的请求不发出去）。lazy import：
+            # repoharness2.adapters.miles 包 __init__ 依赖 miles checkout，
+            # 现有 321 测试面（无 miles 环境）不得因 import 本文件被迫加载。
+            from repoharness2.adapters.miles.sampling_mask_assembly import (
+                validate_sampling_mask_request,
+            )
+
+            defaults = session.sampling_defaults or {}
+            configured_top_k = defaults.get("top_k")
+            validate_sampling_mask_request(
+                sp,
+                expected_temperature=float(defaults.get("temperature", 1.0)),
+                # 上游 request_top_k <= configured_top_k 的会话侧等价物：请求
+                # body 不得静默放大会话配置的支持集硬上界（未配置则不设上界,
+                # T0-A 兼容）
+                configured_top_k=(int(configured_top_k) if configured_top_k is not None else None),
+            )
+
         if session.max_context_tokens > 0:
             remaining = session.max_context_tokens - len(prompt_ids)
             if remaining <= 0:
@@ -830,6 +859,9 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         }
         if want_routing:
             base_payload["return_routed_experts"] = True
+        if want_sampling_mask:
+            # C1′-b：顶层旗标（sglang-miles wire 形态，见上方双约定注释）
+            base_payload["return_sampling_mask"] = True
         headers = (
             {"X-SMG-Routing-Key": session_id} if session_id and session_id != "default" else None
         )
@@ -902,6 +934,21 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         output_log_probs = [float(x[0]) for x in pairs]
         finish = (meta.get("finish_reason") or {}).get("type", "stop") or "stop"
 
+        if want_sampling_mask:
+            # C1′-b 响应侧：解析并校验 output_token_sampling_mask/_logprobs
+            # （逐 token sampled∈support、长度对齐；abort 且零输出豁免——语义
+            # 对照上游 append_sampling_metadata，rh2 侧实现不 import 上游），
+            # 并把 TurnRecord 的 logprob 列**切换为 support-normalized 值**
+            # （对照 miles/rollout/sglang_rollout.py:255-256 的同款替换；T0-B：
+            # 该列经 vendor 叶链落 Sample.rollout_log_probs = DIS/TIS 正式分母，
+            # provenance=behavior_support_normalized）。全词表 logprob 原样留在
+            # raw_response（output_token_logprobs -> capture store），只作诊断列。
+            from repoharness2.adapters.miles.sampling_mask_assembly import (
+                parse_turn_sampling_support,
+            )
+
+            _turn_support, output_log_probs = parse_turn_sampling_support(output_ids, meta)
+
         # 暂存捕获（record_turn 时提交）。capture 参数记录**生效值**：
         # temperature/top_p 若请求未带则为引擎默认 1.0（SGLang SamplingParams 默认）。
         # P0-1（codex 轮次 8）：proxy_result 挂进 PendingTurn，**finalize 移到
@@ -920,6 +967,11 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                     "max_new_tokens": int(sp.get("max_new_tokens", 4096)),
                     "return_top_p_token_ids": want_top_p_tape,
                     "return_routed_experts": want_routing,
+                    # C1′-b 生效值补记：top_k 是支持集硬上界（T0-A；mask 开启时
+                    # 已被前置校验强制为有限正整数），return_sampling_mask 记录
+                    # 引擎实际收到的顶层旗标。
+                    "top_k": (int(sp["top_k"]) if sp.get("top_k") is not None else None),
+                    "return_sampling_mask": want_sampling_mask,
                 },
                 raw_response=data,
                 weight_version=(

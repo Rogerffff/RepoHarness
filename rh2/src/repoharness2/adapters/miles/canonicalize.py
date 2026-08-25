@@ -39,11 +39,23 @@ agent/trajectory.py）无条件构造 **slime** `Sample`；而 miles fully-async
 - 两侧 dataclass 字段集在模块加载时与硬编码允许集核对，vendor/miles 任何
   一侧加字段都会当场把本模块炸掉，逼迫人工重审映射表（而不是静默丢数据）。
 
-sampling-mask 一等字段预留位：miles 的 `RolloutSamplingMask`（CSR
-ids+offsets）接线（P0-3 / C1）落地后，slime 侧 `rollout_top_p_token_ids/
-offsets`（或 capture 层直接产出的支持集 tape）应在本模块新增显式转换分支
-（slime 零宽 span <-> miles 观察位单例支持集的对账见 spike-log P0-3）；在
-那之前这两个字段出现非 None 值会 fail-closed（见下），不会被静默丢弃。
+sampling-mask 一等字段（C1′-b 落地，取代原预留位说明）：
+
+- **miles 直通分支**：`rollout_sampling_mask` 是 miles 自有字段，原样直通
+  （abort/eval 收口路径样本本就没有或已带正确值）。
+- **slime->miles 构造分支**：装配层（sampling_mask_assembly）把各轮引擎
+  支持集 + 观察位单例装配成 `AssembledSamplingMask`，以附加属性
+  `rh2_sampling_mask` 挂在 vendor 输出样本上；本模块消费该属性、转成
+  miles `RolloutSamplingMask`（CSR ids int32 / offsets int64）。
+  fail-closed 闸：调用方传入 `rollout_top_p`（miles args.rollout_top_p）
+  且 < 1.0 时，slime 构造分支**必须**带装配 mask，缺失即拒绝——top_p<1
+  无支持集的样本不可忠实 replay，不得进训练（对照上游"top_p<1.0 即开
+  replay"的严格开关，C1′-a 边界事实 (d)）。
+- slime 旧 top-p tape 字段（`rollout_top_p_token_ids/offsets`）仍然拒绝
+  （见 `_REJECTED_SLIME_FIELDS`）：miles 链路的支持集事实走装配层，
+  不从 slime tape 字段静默转换（两套账禁止并行）。
+- pin base（无 `rollout_sampling_mask` 字段）上出现装配 mask 一律拒绝
+  （`MILES_HAS_SAMPLING_MASK_FIELD` 分流），不存在静默丢弃路径。
 
 导入面说明：本模块只 import `miles.utils.types` 与 `slime.utils.types`
 （两者均无 sglang 依赖，CPU 可导）；不得 import `miles.rollout.*`
@@ -56,6 +68,13 @@ from typing import Any
 
 from miles.utils.types import Sample as MilesSample
 from slime.utils.types import Sample as SlimeSample
+
+from repoharness2.adapters.miles.sampling_mask_assembly import (
+    ATTACHED_MASK_ATTR as _ATTACHED_MASK_ATTR,
+)
+from repoharness2.adapters.miles.sampling_mask_assembly import (
+    AssembledSamplingMask,
+)
 
 
 class CanonicalizationError(RuntimeError):
@@ -85,7 +104,7 @@ _SLIME_FIELDS_EXPECTED = frozenset(
 )
 
 # miles pin f2b7c7929 的 Sample dataclass 字段全集（29 个）。
-_MILES_FIELDS_EXPECTED = frozenset(
+_MILES_FIELDS_PIN = frozenset(
     {
         "group_index", "index", "rollout_id", "prompt", "tokens",
         "multimodal_inputs", "multimodal_train_inputs", "response",
@@ -98,23 +117,46 @@ _MILES_FIELDS_EXPECTED = frozenset(
     }
 )
 
-
-def _assert_field_sets() -> None:
-    for cls, expected, pin in (
-        (SlimeSample, _SLIME_FIELDS_EXPECTED, "slime e848052a"),
-        (MilesSample, _MILES_FIELDS_EXPECTED, "miles f2b7c7929"),
-    ):
-        actual = frozenset(cls.__dataclass_fields__)
-        if actual != expected:
-            raise CanonicalizationError(
-                "sample_schema_drift",
-                f"{pin} 的 Sample 字段集与 canonicalize 映射表不一致："
-                f"新增={sorted(actual - expected)} 缺失={sorted(expected - actual)}。"
-                "必须人工重审本模块映射表后更新允许集，禁止静默通过。",
-            )
+# integration base（rh2-integration-v2 = pin + PR #2595/#2596）的字段全集：
+# pin + rollout_sampling_mask（C1′-a 已核实：这是两 PR 唯一的 Sample 新字段）。
+# **双 base 过渡期允许集**：canonicalize 同时兼容 pin 与 integration base
+# ——匹配到哪个集合决定 MILES_HAS_SAMPLING_MASK_FIELD；两个集合都不匹配
+# 仍然当场炸（除该字段外的任何增删照旧触发人工重审）。上游 PR 合并、pin
+# 前移后应收敛回单集合并删除本段注释。
+_MILES_FIELDS_INTEGRATION = _MILES_FIELDS_PIN | {"rollout_sampling_mask"}
 
 
-_assert_field_sets()
+def _resolve_miles_field_set() -> tuple[frozenset[str], bool]:
+    actual = frozenset(MilesSample.__dataclass_fields__)
+    if actual == _MILES_FIELDS_PIN:
+        return _MILES_FIELDS_PIN, False
+    if actual == _MILES_FIELDS_INTEGRATION:
+        return _MILES_FIELDS_INTEGRATION, True
+    base = _MILES_FIELDS_INTEGRATION if "rollout_sampling_mask" in actual else _MILES_FIELDS_PIN
+    raise CanonicalizationError(
+        "sample_schema_drift",
+        "miles（pin f2b7c7929 / rh2-integration-v2）的 Sample 字段集与 canonicalize "
+        f"映射表不一致：新增={sorted(actual - base)} 缺失={sorted(base - actual)}。"
+        "必须人工重审本模块映射表后更新允许集，禁止静默通过。",
+    )
+
+
+def _assert_field_sets() -> tuple[frozenset[str], bool]:
+    actual_slime = frozenset(SlimeSample.__dataclass_fields__)
+    if actual_slime != _SLIME_FIELDS_EXPECTED:
+        raise CanonicalizationError(
+            "sample_schema_drift",
+            "slime e848052a 的 Sample 字段集与 canonicalize 映射表不一致："
+            f"新增={sorted(actual_slime - _SLIME_FIELDS_EXPECTED)} "
+            f"缺失={sorted(_SLIME_FIELDS_EXPECTED - actual_slime)}。"
+            "必须人工重审本模块映射表后更新允许集，禁止静默通过。",
+        )
+    return _resolve_miles_field_set()
+
+
+# 解析后的 miles 允许集（当前加载的 checkout 实际匹配到的那份）与
+# sampling-mask 一等字段在场标志（C1′-b：mask 转换分支按它分流/拒绝）。
+_MILES_FIELDS_EXPECTED, MILES_HAS_SAMPLING_MASK_FIELD = _assert_field_sets()
 
 
 # status 按字符串值映射（不复制枚举对象）。PENDING 有意不在表内：vendor
@@ -177,7 +219,9 @@ _ALLOWED_MILES_EXTRA_ATTRS = frozenset({"session_id"})
 # ---------------------------------------------------------------------------
 
 
-def canonicalize_sample(slime_sample: Any, *, miles_input_sample: Any) -> Any:
+def canonicalize_sample(
+    slime_sample: Any, *, miles_input_sample: Any, rollout_top_p: float | None = None
+) -> Any:
     """把一条 rh2 generate 输出样本转换/校验为 miles Sample。
 
     两个合法输入形态（rh2 generate 的真实输出面）：
@@ -189,6 +233,10 @@ def canonicalize_sample(slime_sample: Any, *, miles_input_sample: Any) -> Any:
        返回（剥除 rh2 附加的 session_id 属性，回填输入侧保留字段）。
 
     其余类型一律拒绝。
+
+    ``rollout_top_p``：miles `args.rollout_top_p`（调用方 = generate_fn 透传；
+    None = 调用方不携带该配置，闸不生效）。< 1.0 时 slime 构造分支强制要求
+    装配 mask 在场（见模块 docstring 的 sampling-mask 段）。
     """
 
     if miles_input_sample is None or not isinstance(miles_input_sample, MilesSample):
@@ -200,7 +248,7 @@ def canonicalize_sample(slime_sample: Any, *, miles_input_sample: Any) -> Any:
     if isinstance(slime_sample, MilesSample):
         return _canonicalize_miles_passthrough(slime_sample, miles_input_sample)
     if isinstance(slime_sample, SlimeSample):
-        return _convert_slime_sample(slime_sample, miles_input_sample)
+        return _convert_slime_sample(slime_sample, miles_input_sample, rollout_top_p=rollout_top_p)
     raise CanonicalizationError(
         "unexpected_output_type",
         f"generate 输出节点类型 {type(slime_sample).__name__} 不是 slime/miles Sample。",
@@ -264,10 +312,21 @@ def _canonicalize_miles_passthrough(sample: Any, miles_input_sample: Any) -> Any
     return sample
 
 
-def _convert_slime_sample(s: Any, miles_input_sample: Any) -> Any:
+def _convert_slime_sample(s: Any, miles_input_sample: Any, *, rollout_top_p: float | None) -> Any:
     """vendor slime Sample -> 新 miles Sample（逐字段显式映射）。"""
 
-    _reject_unknown_extras(s, frozenset(), _SLIME_FIELDS_EXPECTED, source="slime")
+    # C1′-b：装配 mask 附加属性（sampling_mask_assembly.attach_assembled_mask
+    # 挂上；是唯一允许的 slime 侧附加属性，消费后不进 miles 对象 __dict__ 外挂）。
+    attached_mask = getattr(s, _ATTACHED_MASK_ATTR, None)
+    _reject_unknown_extras(s, frozenset({_ATTACHED_MASK_ATTR}), _SLIME_FIELDS_EXPECTED, source="slime")
+
+    if rollout_top_p is not None and float(rollout_top_p) < 1.0 and attached_mask is None:
+        raise CanonicalizationError(
+            "sampling_mask_required",
+            f"rollout_top_p={rollout_top_p} < 1.0 的 slime->miles 构造分支缺装配 mask"
+            "（rh2_sampling_mask 附加属性）——top_p<1 无支持集不可忠实 replay，"
+            "fail-closed 拒绝（对照上游 top_p<1.0 即开 replay 的严格开关）。",
+        )
 
     for name, (is_default, why) in _REJECTED_SLIME_FIELDS.items():
         value = getattr(s, name)
@@ -325,7 +384,45 @@ def _convert_slime_sample(s: Any, miles_input_sample: Any) -> Any:
     # 统计信息容器：两侧嵌套类同构但类型不同，经 dict 往返换成 miles 类实例。
     out.spec_info = MilesSample.SpecInfo.from_dict(s.spec_info.to_dict())
     out.prefix_cache_info = MilesSample.PrefixCacheInfo.from_dict(s.prefix_cache_info.to_dict())
+    if attached_mask is not None:
+        out.rollout_sampling_mask = _to_miles_sampling_mask(attached_mask, out)
     return out
+
+
+def _to_miles_sampling_mask(attached: Any, out: Any) -> Any:
+    """AssembledSamplingMask -> miles RolloutSamplingMask（C1′-b 转换点）。
+
+    fail-closed 三闸：类型必须是装配层产物（不接受任意 CSR 二元组）；
+    当前 miles base 必须有 rollout_sampling_mask 一等字段（pin base 拒绝，
+    禁止把 mask 静默丢掉或塞 metadata——P0-3 已证 metadata 不透传训练侧）；
+    覆盖长度必须等于 response_length（miles Sample.validate 同款不变量，
+    这里提前到边界抛可读错误）。
+    """
+
+    if not isinstance(attached, AssembledSamplingMask):
+        raise CanonicalizationError(
+            "sampling_mask_wrong_type",
+            f"rh2_sampling_mask 附加属性类型 {type(attached).__name__} 不是 "
+            "AssembledSamplingMask——装配必须经 sampling_mask_assembly。",
+        )
+    if not MILES_HAS_SAMPLING_MASK_FIELD:
+        raise CanonicalizationError(
+            "sampling_mask_field_absent",
+            "当前 miles checkout（pin f2b7c7929）的 Sample 没有 rollout_sampling_mask "
+            "一等字段——mask 链路要求 integration base（rh2-integration-v2）；"
+            "静默丢弃或走 metadata 都被禁止（metadata 不在训练 wire 白名单）。",
+        )
+    if attached.response_token_count != out.response_length:
+        raise CanonicalizationError(
+            "sampling_mask_length_mismatch",
+            f"装配 mask 覆盖 {attached.response_token_count} 个 token != 样本 "
+            f"response_length={out.response_length}。",
+        )
+    # lazy import：pin/integration base 都有该模块（primitive #2200 已在 pin 内），
+    # 放函数内只为让"无 mask 输入"的 canonicalize 路径完全不碰 torch。
+    from miles.utils.sampling_mask import RolloutSamplingMask
+
+    return RolloutSamplingMask(ids=list(attached.ids), offsets=list(attached.offsets))
 
 
 # ---------------------------------------------------------------------------
@@ -333,12 +430,15 @@ def _convert_slime_sample(s: Any, miles_input_sample: Any) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def canonicalize_group(output: Any, *, miles_input_sample: Any) -> Any:
+def canonicalize_group(
+    output: Any, *, miles_input_sample: Any, rollout_top_p: float | None = None
+) -> Any:
     """递归转换 rh2 generate 的整个输出（Sample | list，任意嵌套深度）。
 
     形状原样保留：list 结构、元素顺序、fan-out sibling 的 rollout_id 共享
     都不改写（rollout_id 逐样本复制，siblings 天然继续共享）。空 list 拒绝
     （无事实的输出形状，放行会在 miles flatten/校验层制造更晦涩的错误）。
+    ``rollout_top_p`` 逐样本透传（见 canonicalize_sample 的 mask 闸说明）。
     """
 
     if isinstance(output, list):
@@ -347,5 +447,12 @@ def canonicalize_group(output: Any, *, miles_input_sample: Any) -> Any:
                 "empty_output_list",
                 "generate 输出出现空 list——上游必须显式给出样本或抛错，不许交空壳。",
             )
-        return [canonicalize_group(item, miles_input_sample=miles_input_sample) for item in output]
-    return canonicalize_sample(output, miles_input_sample=miles_input_sample)
+        return [
+            canonicalize_group(
+                item, miles_input_sample=miles_input_sample, rollout_top_p=rollout_top_p
+            )
+            for item in output
+        ]
+    return canonicalize_sample(
+        output, miles_input_sample=miles_input_sample, rollout_top_p=rollout_top_p
+    )
