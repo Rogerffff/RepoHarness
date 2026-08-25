@@ -12,6 +12,10 @@
 | 2026-08-25 | 中期判定 Conditional Go(我方+codex 独立一致):继续本地纵切,硬件段并入下次合并短租;最终 Migration-Go 等租期五项全绿(sm_120 镜像/4+4/R3-on/权重更新语义/逐 token logprob parity) | 下方 S1~S4 + codex R2/R3 |
 | 2026-08-25 | CC 接入形态**定选形态甲**:vendor slime agent 层(~1800 行)做冻结兼容包 + miles legacy custom_generate,保留 stage/commit、capability、poison、drain 纪律。形态乙(miles session server TITO)降为远期备选,理由:TITO mismatch 只记 metadata 不阻断、并发关闭时"已交付不记账"、session id 明文 URL 无认证——三条均违反 rh2 fail-closed 纪律 | S2 映射 + codex R3 §3 |
 | 2026-08-25 | 用户批准执行 P0-1 vendor 纵切;要求维护本 spike 日志 | 本线程用户确认 |
+| 2026-08-25 | **T0-A 拍板**：暂取选项 1（top_k := 有效 vocab size 作为硬件 spike 实验配置）,实测 mask 体积/显存/吞吐后再定正式实验配置——现在不锁定 | 用户决策 |
+| 2026-08-25 | **T0-B 拍板**：双 logprob 列（behavior_support_logprob 作 DIS/TIS 正式分母 + model_full_vocab_logprob 仅诊断,带 provenance 枚举） | 用户决策 |
+| 2026-08-25 | T1：暂保留 vendor 的 openai.py/codex.py 不裁剪 | 用户决策 |
+| 2026-08-25 | 用户批准：新建迁移分支,执行 GPU 前 CPU/CI 前置;新 T0 或需外部 codex 检查时停下汇报 | 用户决策 |
 
 ## Spike 记录
 
@@ -76,17 +80,28 @@
 **新增 T0 候选（进决策包,待用户拍板）**：(a) top_k 必须有限——现行采样参数策略要变,触碰训练样本准入判据;(b) rollout_log_probs 选源——直接影响 DIS/TIS ratio 语义。
 产物：scratchpad/test_miles_spike_p03_mask.py。
 
+### 2026-08-25 R5-ext：外部 codex 阻塞复核（用户安排,tmp/codex_miles_local_spike_blockers_20260825.md）+ 本线程逐条源码核实
+五个阻塞主张**全部核实成立且真实可达**：
+- **B1 Sample 类型边界（已复现,最重）**：vendor `TrajectoryManager.to_sample()`（trajectory.py:248）无条件构造 slime Sample;两个 Sample 类不同、Status enum 互不相等（实测 `SS.Status.ABORTED == MS.Status.ABORTED → False`）、slime Sample 缺 `oldest_weight_version`。后果链：ABORTED 漏过 miles buffer 过滤→get_metrics AttributeError→validate_compact_rollout_ids 断言炸→train conversion 缺字段。**P0-1 结论正式修正为"加载面通过,运行纵切未通过"**——等价测试只覆盖 rh2 面向 slime 一侧,未覆盖返回 miles 一侧。修复 = `Rh2MilesGenerateFn` 显式 canonicalize（status 按字符串值映射、保留 miles 输入侧字段、递归 nested、为 mask 字段预留位）。
+- **B2 版本前进隐式 ACK 证伪**：train_async.py:79-81 在训练当前批**之前**发起下一轮 generate——get 看到新版本不代表 HANDED_OFF 批已训练。**删除该路径（含 fallback 用法）**,改为训练入口 `after_train_success` 显式回执;崩溃窗口落 `uncertain_trained`（与决策包 v4 at-least-once 语义一致,不新增承诺）。P0-2 条目该推断作废。
+- **B3 C1 验收边界扩大**：mask 接线只解决归一化,不自动实现 faithful DIS;C1 必须到"miles custom loss 调用 rh2 faithful DIS"为止,否则硬件段验证的是另一套算法。接受。
+- **B4 C4 终点太早**：原终点 drain 之后正好漏掉 B1;扩至 stock FullyAsyncRolloutFn→…→canonicalize→governed buffer→postprocess→reward normalization→train conversion,含真实 SWE task、连续 drain 两批、nested 形状与 GBS 计数断言。接受。
+- **B5 关闭面缺失**：rollout_manager.dispose()（:131-140 实测）不关 fully-async worker;CPU 段先定义最小 close/dispose seam（幂等、分类记账、dispose 触发）。
+- **B8 闭包漏项**：bringup.py:574 函数内 `from slime.utils.processing_utils import load_tokenizer` 不在 18 文件闭包——C4 必须在"无完整 slime 安装"条件下构造真实 BringupService 防路径掩盖。
+- §10 为两个 T0 列的证据缺口清单（top_k 实测分布/安全边界、双 logprob 逐 token ratio 对拍）并入硬件段验收;§12"本轮不要求"清单接受（无 exactly-once、无大抽象层、vendor 不裁剪）。
+
 ## 待办
 
-本地 spike P0-1/P0-2/P0-3 ✅ 全部完成（见上方条目）。按 codex R4 终审,**首个付费 GPU 作业前**还需完成以下 CPU/CI 前置（迁移分支上做）：
+本地 spike P0-1/2/3 的调查与原型目标完成;R5-ext 修正后,**首个付费 GPU 作业前**的 CPU/CI 前置（迁移分支执行,按 R5 §11 最短顺序）：
 
-- [ ] C1 sampling-mask 一等字段完整 CPU 纵切（接线缺口表 ④⑤⑥⑦⑨⑩⑪,均有 R3 先例可循）。
-- [ ] C2 target-in-support 训练端 fail-closed 校验。
-- [ ] C3 dynamic-filter drop 逐 attempt 记账（R4 finding 的最小修复 + 验收探针）。
-- [ ] C4 形态甲集成测试：同一链 Miles loader→vendor→CC 多轮 HTTP→stage/commit→drain。
-- [ ] C5 miles fast-test 子集 CI,绑定 pin f2b7c7929,GPU 作业前变绿。
-- [ ] C6 两个 T0（top_k 策略、rollout_log_probs 选源）拍板并写入迁移决策包。
-- [ ] P1 vendor 闭包/许可证清点;LegacyGenerateFnAdapter 移除风险哨兵;vendor 是否砍 openai/codex.py（T1 待拍板）。
+- [ ] **C0 Sample canonicalization 边界 + C4 扩大**（先做,已复现的直接崩溃,工作面最小）：`Rh2MilesGenerateFn` 递归转换器 + 纵切测试到 train conversion,覆盖 COMPLETED/TRUNCATED/ABORTED/remove_sample 与 nested fan-out;真实 BringupService 构造（无 slime 安装环境,闭包补 processing_utils 或改接自有 tokenizer loader）。
+- [ ] **C1 目标 Megatron 路径 sampling-mask 完整 CPU 纵切 + faithful DIS custom loss**（接线缺口 ④⑤⑥⑦⑨⑩⑪ + rh2 faithful DIS 成为 miles --custom-loss-function-path 真实 loss;验收含 mask 对齐/target fail-closed/provenance/detach/拒绝 token 零梯度/branch 不进分母/execution 归约对拍/全零 step;修改范围= miles 数据 plumbing 可审计 integration patch,**触碰 worker/scheduler/staleness/权重更新语义即停并重评**;只覆盖 Megatron/30B 路径,不为 FSDP/VPP/CP 扩门）。
+- [ ] **C2 target-in-support 训练端 fail-closed**（并入 C1）。
+- [ ] **C3 dynamic-filter 逐 attempt 记账**（rh2 custom buffer 外层唯一 verdict,关 inner filter;验收探针=拒绝终态+不在 inventory+守恒）。
+- [ ] **C7 trainer-success 回执 + close/dispose seam**（B2/B5 修复;连续 drain 两批的 CPU 调度测试固定预取真顺序;HANDED_OFF 重启/恢复探针;seam 幂等两次调用）。
+- [ ] **C5 miles fast-test 子集 CI**,绑定 pin f2b7c7929,GPU 作业前变绿（不要求全量 suite）。
+- [x] C6 两个 T0 已拍板（见决策表;top_k 正式配置留待硬件实测后定）。
+- [ ] P1 vendor 闭包/许可证清点;LegacyGenerateFnAdapter 移除风险哨兵。
 
 ## 硬件段清单（并入下次合并短租）
 
