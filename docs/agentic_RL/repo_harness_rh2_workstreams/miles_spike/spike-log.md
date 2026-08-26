@@ -47,6 +47,16 @@
 结论：**10/10 通过**。rh2 嵌套 fan-out 形状（branch 共享 rollout_id）原样通过 DefaultDataBuffer put/get、stock dynamic filter（嵌套感知）、staleness 双时点过滤、validate_compact_rollout_ids（断言即 rh2 Branch 语义）;DataBuffer ABC 三方法足以承载 rh2 准入原型（FA-2B 缩减路径可行）。**迁移约束：组内不得混用裸 Sample 与 list[Sample]**（flatten 残留嵌套,测试已固定）。附 codex 提醒：ABC 面足够承载"准入",但 drain receipt/exactly-once finalization 不属于该 ABC,归 P0-2 验证。
 另：miles wire codec（SAMPLES_VALUE_SPEC 静态表）只影响形态乙;形态甲 Sample 在进程内,tape 可暂走 metadata,待验证"训练侧 batch 是否透传 metadata"。
 
+### 2026-08-26 R6-ext：C1 完整审查（spike-first 收敛版,tmp/codex_miles_c1_review_spike_first_20260826.md）+ 本线程核实
+用户简化原则生效：优先接通链路与首训进度,防治理过度设计。六条 finding 全部核实成立：
+- **B1**（bootstrap 缺失,细化:bringup ensure_fa_started 存在但 miles 路径无人调用）→ 修复=Rh2MilesGenerateFn 惰性复用现有 bringup,不建新抽象。
+- **B2**（mask 未跨 capture→leaf→projection,装配件零生产调用,grep 实证）→ 修复=orchestrator 按引擎选新旧约定、commit 后保留逐轮 support、装配结果同写 Sample 与投影;验收=禁手工 attach 的组合链测试（两轮+观察位单例+掉落轮,不扩环境）。
+- **B3**（model.py mask 字段条件 `loss_type=="policy_loss"` 排除 custom_loss,源码实证）→ 修复=integration 分支最小 miles commit。**规则修订（T1）**：rh2-integration 分支从"只承载上游原样 commit"改为"允许最小可审计 rh2 commit,逐个登记 SHA"。
+- **B4（真算法 bug,本线程裁决 codex 正确）**：C1′-b 把"D 成员语义（provenance_tokens v1）"与"归约层次"混为一谈——标量权威 `faithful_dis_loss_by_execution`（faithful_dis.py:198-229,branch 分子→execution 级 provenance 分母→batch execution 等权,对接 FA-3 rollout_loss_denominator）才是正式层次;miles `rollout_mask_sums+sum_of_sample_mean` 即其现成实现。修复=逐 token 分子交 miles reducer,不自建 DP/CP 归约;验收=三组 metamorphic（branch split/sibling 跨 microbatch/DP partition 不变）对拍 by_execution。
+- **B5**（CSR 钉 CPU vs CUDA target 跨设备比较,MPS 复现）→ CPU 侧完成检查或最小张量同设备。
+- **B6**（全零有效 token 仍走 optimizer,AdamW weight decay 改参）→ spike 级 fail-stop（optimizer 前显式终止,权重/optimizer/scheduler/weight version 全不前进）;正式首训前收敛为 FA-4 §4 的 skip+计数+熔断。
+**§2 范围收缩接受（推翻 R4/R5 部分排序,记录在案）**：C3/C7 ledger/governed buffer 保留为未接线原型,其内部 finding（_recycle_watch/reap_expired/seal_batch/无持久化）不修;首轮 GPU 用 stock DefaultDataBuffer + run-fatal;后续无明确收益可删。C5 定形=双 lane（pin 兼容 63+95skip / integration 资格 158 零 skip）+ 可复跑 manifest（base SHA+两 PR SHA+tree digest）。§5 递延清单接受（含 vendor LICENSE 整理推迟到公开 push 前）。
+
 ### 2026-08-25 codex 复核记录
 - R2（架构方案评审,scratchpad/codex_arch_review.md）：提出方案 E（F2-4 前闸门）;修正"官方 30B fully-async 需 16 卡"——miles 有 8 卡 6+2 CI（tests/e2e/megatron/test_qwen3_30B_A3B/test_fully_async.py,H100/MI350,use_r3=False,本线程已源码验证）;指出 F2-4 是新增 slime 耦合最重件。
 - R3（spike 中期发现对抗复核,scratchpad/codex_spike_review.md）：发现 S1b;定选形态甲;预判 Conditional Go（与我方一致）;重排剩余本地项;纠正我方两点（mask_kind 枚举不等于放弃 fail-closed;patch dry-run 统计口径不作主证据）。
