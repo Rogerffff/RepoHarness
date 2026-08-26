@@ -1,0 +1,9 @@
+{
+  "purpose": "integration base 可复跑构造事实（C5 manifest）",
+  "upstream_repo": "https://github.com/radixark/miles.git",
+  "base_pin": "f2b7c7929",
+  "cherry_picks_upstream": {"pr2595": "9b6579a125b2e9345a194c07dd145828c2764dc6", "pr2596": "ee648b17d376c7b58652d09713e1ed96c0fd0e0d"},
+  "rh2_patch": "patches/0001-rh2-integration-transport-sampling-mask-wire-fields-.patch",
+  "expected_tree": "9d7617bf5294d11918c9f7495fe7285ed80a35d5",
+  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> git am patches/0001-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree"
+}

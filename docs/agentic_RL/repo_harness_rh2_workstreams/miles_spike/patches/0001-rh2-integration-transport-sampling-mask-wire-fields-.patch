@@ -1,0 +1,39 @@
+From f6aab6542b78ab8f285fe2302a762efdd8c3269f Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Wed, 26 Aug 2026 18:12:53 +0800
+Subject: [PATCH] [rh2-integration] transport sampling-mask wire fields for all
+ loss types under replay
+
+The train-path get_batch key list included rollout_sampling_mask_ids/
+offsets only when loss_type == "policy_loss". Custom loss functions
+(--loss-type custom_loss) that score support-renormalized log-probs
+never received the wire fields (R6-ext B3). Gate the keys on
+top_p_sampling_replay_enabled(args) alone; replay-off behavior and the
+policy_loss path are unchanged, forward_only is caller-gated already.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ miles/backends/megatron_utils/model.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/miles/backends/megatron_utils/model.py b/miles/backends/megatron_utils/model.py
+index 5d85af609..ac8ed70a6 100644
+--- a/miles/backends/megatron_utils/model.py
++++ b/miles/backends/megatron_utils/model.py
+@@ -472,9 +472,12 @@ def train_one_step(
+         custom_before_train_step_hook = load_function(args.custom_megatron_before_train_step_hook_path)
+         custom_before_train_step_hook(args, rollout_id, step_id, model, optimizer, opt_param_scheduler)
+ 
++    # Sampling-support transport is gated by replay alone, not by loss_type:
++    # custom loss functions (e.g. --loss-type custom_loss) also need the mask
++    # wire fields to score support-renormalized log-probs.
+     sampling_mask_keys = (
+         ("rollout_sampling_mask_ids", "rollout_sampling_mask_offsets")
+-        if args.loss_type == "policy_loss" and top_p_sampling_replay_enabled(args)
++        if top_p_sampling_replay_enabled(args)
+         else ()
+     )
+ 
+-- 
+2.50.1 (Apple Git-155)
+
