@@ -1,9 +1,18 @@
 {
-  "purpose": "integration base 可复跑构造事实（C5 manifest）",
+  "purpose": "integration base 可复跑构造事实（C5 manifest;GPU 前收口第 3 项加固后为 miles_integration_lanes.sh 的唯一事实源——计数/digest 变更必须改这里,可审计）",
   "upstream_repo": "https://github.com/radixark/miles.git",
   "base_pin": "f2b7c7929",
+  "base_pin_full": "f2b7c79298a53c53861514d099f7def73bd29f4a",
   "cherry_picks_upstream": {"pr2595": "9b6579a125b2e9345a194c07dd145828c2764dc6", "pr2596": "ee648b17d376c7b58652d09713e1ed96c0fd0e0d"},
   "rh2_patch": "patches/0001-rh2-integration-transport-sampling-mask-wire-fields-.patch",
+  "rh2_patch_sha256": "cee3cd5e8faa9366bd979a177e8968929f3c3d3ae62b08e0501223d02271c8c7",
   "expected_tree": "9d7617bf5294d11918c9f7495fe7285ed80a35d5",
-  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> git am patches/0001-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree"
+  "expected_counts": {
+    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。",
+    "lane_a_passed": 68,
+    "lane_a_skipped": 111,
+    "lane_b_passed": 179,
+    "lane_b_skipped": 0
+  },
+  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> git am patches/0001-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且 sha256(patch) == rh2_patch_sha256"
 }

@@ -88,12 +88,29 @@ execution 的 token 扁平平均）已删除——那是 B4 指出的真算法 b
   `model.py` train_one_step（optimizer.step 之前）-> `model.train` ->
   `actor.py`,全链无 try/except,integration base 已核）,job 在 optimizer
   step 前终止,权重/optimizer state/scheduler/weight version 都不前进。
-  已知边界（有意接受,不建跨 microbatch 协议）：触发粒度是 microbatch——
-  "某个 microbatch 全拒但全局 accepted>0" 也会 fail-stop（宁可误停,不让
-  AdamW weight decay 在零梯度下静默改参）。正式首训前收敛为 FA-4 §4 的
-  skip+计数+熔断语义（05-fully-async-execution-plan.md）。
+  **显式 gate 豁免候选（GPU 前收口 B6 半收口,豁免待 owner 批准）**：
+  触发粒度是 **microbatch** 而非全局 step,即**可能误停**——这与 B6 原
+  验收"不得误停"正面冲突,不作"B6 已关闭"记账,以 spike-log 的 gate
+  豁免候选条目为准;正式首训前按 FA-4 §4 收敛时相关专项测试预期翻转。
+  有意不建跨 microbatch 协议（全局判定需要跨 microbatch/DP 的第二条归约
+  通道,spike 级不值得）：宁可误停,不让 AdamW weight decay 在零梯度下
+  静默改参。正式首训前收敛为 FA-4 §4 的 skip+计数+熔断语义
+  （05-fully-async-execution-plan.md）。
 
-fail-closed 面（任一违反即抛错,样本不进梯度）：replay 未开启
+- **实验 FT trainer 锁定（B6 半收口配套,fail-closed）**：
+  ``MILES_EXPERIMENTAL_FT_TRAINER`` 开启时（miles/utils/environ.py
+  ``enable_experimental_ft_trainer``,placement_group 的
+  ``_select_train_group_class`` 据此选 miles/ray/train/group.py 的实验
+  RayTrainGroup）本函数直接拒绝。理由：上面整段 fail-stop 语义依赖
+  "异常直达、job 在 optimizer 前终止";而实验 FT trainer 的 ``train()``
+  用 ``_execute_all_alive_and_catch`` 捕获 cell 异常并
+  ``retry(_fn, max_attempts=30)`` 盲重试,部分 cell 失败、其余 normal 时
+  甚至判 no_retry 继续前进（group.py ``_check_train_one_attempt``）——
+  fail-stop 会被吞掉或退化成 30 次重试后的迟滞失败。spike 拓扑锁定默认
+  actor group（miles/ray/actor_group.py,异常无捕获直达 optimizer 之前）。
+
+fail-closed 面（任一违反即抛错,样本不进梯度）：实验 FT trainer 开启、
+replay 未开启
 （rollout_top_p>=1.0）、calculate_per_token_loss、缺 rollout_sampling_mask
 wire 字段、缺 rollout_log_probs、缺/矛盾 rollout_mask_sums、mask 覆盖数
 !=response 长度、loss_mask 非 0/1、各列长度不一致、logp/advantage 非有限、
@@ -110,6 +127,7 @@ import torch
 from miles.backends.training_utils.loss_hub.logit_processors import get_log_probs_and_entropy
 from miles.backends.training_utils.parallel import get_parallel_state
 from miles.backends.training_utils.sampling_mask import get_rollout_sampling_masks
+from miles.utils.environ import enable_experimental_ft_trainer
 from miles.utils.sampling import top_p_sampling_replay_enabled
 
 from repoharness2.training.faithful_dis import (
@@ -147,6 +165,13 @@ class FaithfulDisZeroAcceptedStop(FaithfulDisLossError):
 
     单列子类（而不是只用 reason_code）是为了让训练循环侧将来实现 FA-4 §4
     skip+熔断时可以精确 except 这一类,不误捕其它 fail-closed 错误。
+
+    **显式 gate 豁免候选（豁免待 owner 批准,GPU 前收口 B6 半收口）**：
+    判定粒度是 **microbatch**,不是全局 step——"某个 microbatch 全拒、
+    全局 accepted>0" 也会触发,即**可能误停**,与 B6 原验收"不得误停"
+    冲突。该偏差有意保留（不建跨 microbatch 归约协议）,以 spike-log 的
+    豁免候选条目记账,不作 B6 已关闭;正式首训前按 FA-4 §4 收敛为
+    skip+计数+熔断。
     """
 
     REASON_CODE = "dis_zero_accepted_fail_stop"
@@ -256,6 +281,20 @@ def faithful_dis_loss_function(
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     """faithful DIS loss（miles custom loss 入口;语义见模块 docstring）。"""
 
+    # B6 半收口：实验 FT trainer 会吞掉 fail-stop（catch+retry(30)+部分失败
+    # 继续,见模块 docstring）——本 loss 的全部 fail-closed 语义只在默认
+    # actor group 下成立,启用即拒绝。旗标与 placement_group 选型同源
+    # （enable_experimental_ft_trainer 读 MILES_EXPERIMENTAL_FT_TRAINER）。
+    if enable_experimental_ft_trainer():
+        raise FaithfulDisLossError(
+            "experimental_ft_trainer_locked",
+            "MILES_EXPERIMENTAL_FT_TRAINER 已开启——实验 FT trainer 捕获 cell "
+            "异常并最多重试 30 次,部分 cell 失败其余 normal 时不重试继续前进"
+            "（miles/ray/train/group.py train→_execute_all_alive_and_catch→"
+            "_check_train_one_attempt）,会吞掉 faithful DIS 的 fail-stop 语义。"
+            "spike 锁定默认 actor group;解锁 = FT 语义与 fail-stop 交互经 owner"
+            " 审定后另行放行。",
+        )
     parallel_state = get_parallel_state()
     if parallel_state.cp.size != 1:
         raise FaithfulDisLossError(
@@ -363,7 +402,10 @@ def faithful_dis_loss_function(
             "全部被 DIS 信任区间拒绝或无 provenance 位）——spike 阶段 fail-stop:"
             "在 optimizer step 前终止,权重/optimizer/scheduler/weight version"
             " 不前进（AdamW 的 weight decay 在零梯度下也会改参,不允许静默走"
-            " optimizer）。正式首训前按 FA-4 §4 收敛为 skip+计数+熔断。"
+            " optimizer）。注意判定粒度是 microbatch 而非全局 step——本次停机"
+            "可能是误停（其它 microbatch 的全局 accepted 可能 >0）;这是显式"
+            " gate 豁免候选（豁免待 owner 批准,见 spike-log B6 半收口条目）,"
+            "正式首训前按 FA-4 §4 收敛为 skip+计数+熔断。"
         )
 
     # 逐 token 分子（provenance 掩码与 execution 分母都由 miles reducer 施加;

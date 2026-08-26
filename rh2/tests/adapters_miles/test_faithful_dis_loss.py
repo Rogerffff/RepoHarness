@@ -465,6 +465,30 @@ def test_mask_length_mismatch_rejected(dis):
     assert exc.value.reason_code == "sampling_mask_length_mismatch"
 
 
+def test_experimental_ft_trainer_locked_fail_closed(dis, monkeypatch):
+    """B6 半收口：实验 FT trainer 旗标开启时整体拒绝（fail-stop 会被其
+    catch+retry(30)/部分失败继续的语义吞掉,见 faithful_dis_loss docstring）。
+
+    旗标与 miles placement_group 选型同源：MILES_EXPERIMENTAL_FT_TRAINER
+    经 enable_experimental_ft_trainer() 读取（"1"/"true"/"on"/"yes" 均真）。
+    """
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    monkeypatch.setenv("MILES_EXPERIMENTAL_FT_TRAINER", "1")
+    with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "experimental_ft_trainer_locked"
+
+    # 旗标关掉（缺省态）同一 batch 正常出 loss——锁只针对 FT trainer
+    monkeypatch.delenv("MILES_EXPERIMENTAL_FT_TRAINER")
+    loss, _metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
+    assert bool(torch.isfinite(loss))
+
+
 def test_cp_not_supported_fail_closed(dis):
     torch = dis.torch
     args = _mk_args()

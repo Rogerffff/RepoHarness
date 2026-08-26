@@ -1,0 +1,17 @@
+# miles GPU spike 的 rh2 custom config（B2 生产绑定,GPU 前最小收口第 1 项）。
+#
+# 注入方式：miles 启动参数 `--custom-config-path <本文件绝对路径>`。
+# 解析位置：miles/utils/arguments.py `miles_validate_args` 的 custom_config_path
+# 块——`yaml.safe_load(resolve_file_arg(path))` 后逐 key `setattr(args, k, v)`。
+# 因此本文件里的 `true` 会以 Python bool True 落到 `args.rh2_engine_sampling_mask`。
+# CPU 验证：tests/adapters_miles/test_gpu_spike_custom_config.py（用 miles 真实
+# resolve_file_arg + 同一 yaml.safe_load/setattr 语义加载本文件并断言为 True）。
+#
+# 语义：rh2_engine_sampling_mask=True 时 capture wire 走新 `return_sampling_mask`
+# 顶层约定（旧 slime top-p tape 约定关闭）,mask 纵链（capture→装配→投影→
+# canonicalize→conversion）启用;缺省 False = 旧 slime 链逐字不变（见
+# repoharness2/adapters/slime/generate.py 的开关注释）。
+#
+# 简化原则：本文件只承载这一个 key,不放其它配置（治理对象 rh2_governance
+# 等是代码内构造,不走 YAML）。
+rh2_engine_sampling_mask: true

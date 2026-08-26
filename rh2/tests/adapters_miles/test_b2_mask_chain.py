@@ -6,9 +6,12 @@
     -> Rh2MilesGenerateFn -> 真实 RolloutOrchestrator.generate（9 步生命周期）
     -> 真实 rh2_call_sglang_generate（install_capture_wire 后的 wire 本体）
        打 fake HTTP 引擎，收 sglang-miles wire 形态响应
-    -> 真实 capture stage（wire 内）/ commit（registry.commit——生产链由
-       record_turn 包装调用同一函数；脚本化轮不经 TrajectoryManager，
-       驱动替身在每轮响应后按同一时点调它）
+    -> 真实 capture stage（wire 内）/ commit 经真实 TrajectoryManager.
+       record_turn——capture_wire 安装的 rh2_record_turn 包装（生产 commit
+       接线本体，capture_wire.py `TrajectoryManager.record_turn = ...` 处）
+       是链上唯一的 registry.commit 调用方；本测试不直接调 registry.commit
+    -> 真实 TrajectoryManager.get_trajectory -> _SampleBuilder.to_sample
+       产叶链 Sample（finish_session 只转调，不手工构造叶对象）
     -> 真实 leaf backfill + assemble_leaf_sampling_mask（generate step5）
     -> 真实 project_from_slime（经 project_group_with_sampler_support 换成
        sampler_support_token_ids + behavior_support_normalized 事实）
@@ -16,9 +19,14 @@
     -> miles DefaultDataBuffer put/get -> postprocess -> convert_samples_to_train_data
 
     替身面只有：HTTP 客户端（fake aiohttp 短路到内存 fake 引擎）、docker、
-    harness 驱动（把脚本轮喂进真实 wire）、评分提交、叶链树侧
-    （finish_session 按 vendor to_sample 形状产叶——TrajectoryManager 本体
-    归真实 CC 链）。capture/装配/投影/canonicalize/转换全是生产代码。
+    harness 驱动（把脚本轮喂进真实 wire + 真实 record_turn）、评分提交。
+    capture/commit/树/叶链/装配/投影/canonicalize/转换全是生产代码。
+
+    B2 生产接线依赖（GPU 前收口验收）：commit 只会由 capture_wire 安装的
+    rh2_record_turn 包装触发——删除 capture_wire 里的该生产接线，本测试的
+    `committed == 3` 与后续装配链断言必然变红（staged 草稿在 unregister 时
+    被 abandon，装配抛 sampling_mask_tape_missing_in_assembly）。哨兵断言
+    见 MaskWireAdapter.open_session（wrapper 确在安装态）。
 
     orchestrator 说明：这里的 args.rh2_orchestrator 是**真实
     RolloutOrchestrator**（按其文档化注入点配 CPU 替身），不是 fake 同形
@@ -29,6 +37,10 @@
 
 覆盖恰好三个场景（审查明示不扩）：两轮生成、观察/工具位单例 support、
 一个掉落轮（committed 但 token 不进叶链，装配与回链都必须跳过它）。
+掉落轮的产生机制走 TrajectoryManager 的真实路径：掉落轮先经 record_turn
+进树（commit 因此发生），下一轮 prompt 重放该 assistant 消息的改写版，
+`_try_merge_assistant_rewrite` 把它降级为 routing-only——token 不再进叶链，
+与 CC harness 改写/压缩历史的真实行为同构。
 """
 
 from __future__ import annotations
@@ -100,6 +112,27 @@ TURN_SCRIPT = [
         PROMPT + GEN1 + TOOL,
         _engine_payload(GEN2, GEN2_SUPPORTS, GEN2_SUPPORT_LOGPROBS),
     ),
+]
+
+# 消息脚本（与 TURN_SCRIPT 逐条对齐）：喂给真实 TrajectoryManager.record_turn
+# 的 (prompt_messages, response_message)。第 3 轮 prompt 重放掉落轮 assistant
+# 消息的**改写版**（内容不等于原 response_message）——真实 rewrite-merge 路径
+# 把掉落轮降为 routing-only，其 token 不进叶链（docstring 场景 3 的机制）。
+_USER_MSG = {"role": "user", "content": "fix the issue"}
+_ASST1_MSG = {
+    "role": "assistant",
+    "content": "gen1",
+    "tool_calls": [{"id": "call_1", "type": "function"}],  # -> metadata use_tool=True
+}
+_TOOL_MSG = {"role": "tool", "content": "tool output"}
+_DROPPED_DRAFT_MSG = {"role": "assistant", "content": "dropped draft"}
+_DROPPED_REWRITTEN_MSG = {"role": "assistant", "content": "dropped draft [rewritten]"}
+_GEN2_MSG = {"role": "assistant", "content": "gen2"}
+
+MESSAGE_SCRIPT = [
+    ([_USER_MSG], _ASST1_MSG),
+    ([_USER_MSG, _ASST1_MSG, _TOOL_MSG], _DROPPED_DRAFT_MSG),
+    ([_USER_MSG, _ASST1_MSG, _TOOL_MSG, _DROPPED_REWRITTEN_MSG], _GEN2_MSG),
 ]
 
 
@@ -273,18 +306,21 @@ def _make_grading_report(trajectory_id: str, task_id: str):
 
 
 # ---------------------------------------------------------------------------
-# 会话替身：把脚本轮喂进**真实 wire**，commit 用**真实 registry.commit**
+# 会话替身：把脚本轮喂进**真实 wire**，commit 经**真实 record_turn 包装**，
+# 叶链经**真实 get_trajectory/to_sample**——替身只剩消息脚本本身
 # ---------------------------------------------------------------------------
 
 
-def _make_mask_wire_adapter(registry, hook, session_defaults, leaf_builder):
+def _make_mask_wire_adapter(registry, hook, session_defaults):
     import slime.agent.adapters.common as slime_common
+    from slime.agent.trajectory import TrajectoryManager
 
     class MaskWireAdapter:
-        """SessionAdapter 形状：wire/stage/commit 全真，只有树侧是脚本。"""
+        """SessionAdapter 形状：wire/stage/commit/树/叶链全真，只有消息脚本是替身。"""
 
         def __init__(self):
             self.sid: str | None = None
+            self.manager: TrajectoryManager | None = None
 
         def open_session(
             self,
@@ -295,8 +331,17 @@ def _make_mask_wire_adapter(registry, hook, session_defaults, leaf_builder):
             physical_attempt_id=None,
             capability_token=None,
         ):
+            # B2 收口哨兵：生产 commit 接线（capture_wire 安装的 rh2_record_turn
+            # 包装）必须在安装态——本测试的 commit 全部由它触发。若有人删掉
+            # capture_wire 里 `TrajectoryManager.record_turn = rh2_record_turn`
+            # 的生产接线，这里当场红，而不是靠后面 committed 计数间接发现。
+            assert TrajectoryManager.record_turn.__name__ == "rh2_record_turn", (
+                "capture_wire 的生产 commit 接线（rh2_record_turn 包装）未安装——"
+                "B2 验收要求 commit 只能经真实 record_turn 触发"
+            )
             self.sid = sid
             self.sampling_defaults = dict(sampling_defaults or {})
+            self.manager = TrajectoryManager()
             registry.register(sid, hook, physical_attempt_id=physical_attempt_id)
 
         def revoke_session(self, sid):
@@ -309,25 +354,36 @@ def _make_mask_wire_adapter(registry, hook, session_defaults, leaf_builder):
                 stop_keys=("stop",),
                 sglang_url="http://fake-engine:1",
             )
-            for prompt_ids, _payload in TURN_SCRIPT:
+            for (prompt_ids, _payload), (prompt_messages, response_message) in zip(
+                TURN_SCRIPT, MESSAGE_SCRIPT, strict=True
+            ):
                 session = slime_common.Session(
                     sampling_defaults=dict(self.sampling_defaults),
                     max_context_tokens=0,
                 )
                 # 真实 wire：翻译旗标/前置校验/发 HTTP/解析校验/stage
-                await slime_common.call_sglang_generate(
+                turn = await slime_common.call_sglang_generate(
                     list(prompt_ids), session, {}, adapter=adapter_ns,
                     session_id=self.sid,
                 )
-                # 真实 commit：生产链由 rh2_record_turn（record_turn 包装）在
-                # 该轮确定进入轨迹树后调用 registry.commit——这里按同一时点
-                # 调用同一函数（不是 _pop_staged 手工绕过）。
-                registry.commit(self.sid)
+                # 真实 commit 时点：record_turn 是生产链唯一的 registry.commit
+                # 调用方（capture_wire 包装在 record_turn 成功后 commit）。
+                # 本测试**不直接调 registry.commit**——commit 不发生即测试红。
+                self.manager.record_turn(
+                    self.sid,
+                    turn=turn,
+                    prompt_messages=[dict(m) for m in prompt_messages],
+                    response_message=dict(response_message),
+                )
 
         async def finish_session(
             self, sid, *, base_sample, reward=0.0, extra_metadata=None, wait_timeout=5.0
         ):
-            return [leaf_builder()]
+            # 真实叶链：get_trajectory 线性化消息树 -> _SampleBuilder.to_sample。
+            # 掉落轮已被第 3 轮的 rewrite-merge 降为 routing-only，不产 token。
+            return self.manager.get_trajectory(
+                sid, base_sample=base_sample, reward=reward, extra_metadata=extra_metadata
+            )
 
         async def drop_session(self, sid, *, wait_timeout=5.0):
             registry.unregister(sid)
@@ -378,35 +434,13 @@ async def test_b2_mask_real_chain_two_turns_singleton_and_dropped_turn(world):
             policy_version="7",
         )
 
-        def leaf_builder():
-            # vendor TrajectoryManager to_sample 形状的叶链（树侧脚本）：
-            # 不带 tape/weight_versions，logprob 列 = TurnRecord 的
-            # support-normalized 值（wire 已切换）+ 工具位 0.0。
-            return world.SS(
-                index=0,
-                group_index=0,
-                rollout_id=0,
-                prompt="prompt",
-                tokens=list(LEAF_TOKENS),
-                response="resp",
-                response_length=len(LEAF_LOSS_MASK),
-                loss_mask=list(LEAF_LOSS_MASK),
-                rollout_log_probs=list(LEAF_LOGPROBS),
-                reward=0.0,
-                weight_versions=[],
-                status=world.SS.Status.COMPLETED,
-                metadata={"truncated": False, "use_tool": True, "ill_formed": False},
-            )
-
         adapter_holder: dict = {}
 
         def adapter_factory(hook, session_defaults):
             # 请求侧二选一在这里可见：mask 引擎会话默认键必须带新约定
             assert session_defaults.get("return_sampling_mask") is True
             assert session_defaults.get("return_top_p_token_ids") is False
-            adapter = _make_mask_wire_adapter(
-                registry, hook, session_defaults, leaf_builder
-            )
+            adapter = _make_mask_wire_adapter(registry, hook, session_defaults)
             adapter_holder["adapter"] = adapter
             adapter_holder["hook"] = hook
             return adapter
@@ -479,6 +513,12 @@ async def test_b2_mask_real_chain_two_turns_singleton_and_dropped_turn(world):
         assert isinstance(delivered, world.MS)
         assert delivered.status is world.MS.Status.COMPLETED
         assert delivered.reward == 1.0 and grading_calls
+        # 真实 to_sample 叶链输出（B2 收口）：token 布局/loss_mask 由
+        # TrajectoryManager 线性化产出——掉落轮 token 不在其中
+        assert delivered.tokens == list(LEAF_TOKENS)
+        assert delivered.loss_mask == list(LEAF_LOSS_MASK)
+        assert delivered.response_length == len(LEAF_LOSS_MASK)
+        assert delivered.metadata["use_tool"] is True  # 真实链从 tool_calls 推导
         mask = delivered.rollout_sampling_mask
         assert isinstance(mask, RolloutSamplingMask)
         mask_ids, mask_offsets = mask._as_tensors()
