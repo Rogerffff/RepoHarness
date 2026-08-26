@@ -395,6 +395,33 @@ def startup_checks(
         evidence["top_p_token_offsets_len"] = len(offsets)
         evidence["top_p_kept_token_count"] = len(ids)
 
+    # B2（R6-ext）：sampling-mask 探针断言（sglang-miles 引擎路径）。请求了
+    # return_sampling_mask 的探针必须收到 output_token_sampling_mask/
+    # _logprobs——stock/slime-patch 引擎会静默缺席，与 U-H top-p 探针同一
+    # "请求了就必须在响应里"的启动期守门。解析/校验复用装配层同一实现
+    # （lazy import：旧链不加载 adapters.miles）。
+    if bool(probe_sampling_params.get("return_sampling_mask")):
+        from repoharness2.adapters.miles.sampling_mask_assembly import (
+            SamplingMaskAssemblyError,
+            parse_turn_sampling_support,
+        )
+
+        probe_output_ids = [item[1] for item in pairs]
+        try:
+            probe_support, _probe_support_logprobs = parse_turn_sampling_support(
+                probe_output_ids, meta
+            )
+        except SamplingMaskAssemblyError as exc:
+            raise StartupCheckError(
+                "sampling_mask_missing_in_probe",
+                "请求了 return_sampling_mask 但探针响应不含合法 sampling-support "
+                f"tape（{exc.reason_code}）——目标引擎不是带原生 sampling-mask "
+                "primitive 的 sglang-miles 构建，或配置错配。必须在启动期 fail"
+                "（U-H 同款），不得进入训练循环。",
+            ) from exc
+        evidence["sampling_mask_supports"] = len(probe_support.supports)
+        evidence["sampling_mask_top_k"] = probe_sampling_params.get("top_k")
+
     routing_raw = meta.get(_ROUTED_EXPERTS_META_KEY)
     if expect_routing_tape:
         if not probe_sampling_params.get("return_routed_experts"):
@@ -457,6 +484,13 @@ class TurnTape:
     # FA-0：本轮引擎真实 weight_version（meta_info.weight_version 原文透传；
     # 权重更新可发生在轮与轮之间，逐轮记录是 faithful DIS 的前置事实）。
     weight_version: str | None = None
+    # B2（R6-ext，miles sampling-support 链）：本轮每个生成 token 的引擎支持
+    # 集（return_sampling_mask 会话才非 None；旧 top-p 链恒 None）。commit
+    # 后由叶链装配层（sampling_mask_assembly.assemble_leaf_sampling_mask）
+    # 消费——TurnTape 不进契约，支持集只在进程内走到装配。注意本 tape 的
+    # output_log_probs 仍是全词表诊断列（mask 会话的 support-normalized 列
+    # 走 TurnRecord -> Sample.rollout_log_probs，capture_wire 已切换）。
+    sampling_supports: tuple[tuple[int, ...], ...] | None = None
 
 
 class GenerationCaptureHook:
@@ -520,6 +554,7 @@ class GenerationCaptureHook:
         prompt_token_ids: Sequence[int],
         sampling_params: Mapping[str, Any],
         response: Mapping[str, Any],
+        turn_support: Any | None = None,  # B2：wire 已解析的 miles TurnSupport
     ) -> GenerationCaptureRecord:
         """处理一轮 /generate 响应。响应字段名与 SGLang wire 形态逐一对应。"""
 
@@ -607,6 +642,41 @@ class GenerationCaptureHook:
         elif params.return_routed_experts:
             missing.append("routing_tape")
 
+        # B2（R6-ext）：sampling-support tape（miles sglang-miles 引擎会话）。
+        # 会话默认键 return_sampling_mask 随 capture_params 到达（capture
+        # schema 冻结，flag 不进 CaptureSamplingParams——tape 只落 TurnTape，
+        # raw meta_info digest 已覆盖原始事实）。wire 路径在 stage 前解析过
+        # 一次并经 PendingTurn.turn_support 传入；直调路径（探针/测试替身）
+        # 用**同一个** parse_turn_sampling_support 从响应重建，不存在第二套
+        # 解析实现。缺失/对不上按既有 tape 记账口径落 missing/mismatch
+        # （partial 记录随后被装配层与投影层双重拒绝，不静默降级）。
+        want_sampling_mask = bool(sampling_params.get("return_sampling_mask", False))
+        sampling_supports: tuple[tuple[int, ...], ...] | None = None
+        if want_sampling_mask:
+            parsed_support = turn_support
+            if parsed_support is None:
+                # lazy import：不带 miles 环境的既有 321 测试面不因本文件被
+                # 迫加载 adapters.miles 包（与 capture_wire 同一口径）。
+                from repoharness2.adapters.miles.sampling_mask_assembly import (
+                    SamplingMaskAssemblyError,
+                    parse_turn_sampling_support,
+                )
+
+                try:
+                    parsed_support, _support_logprobs = parse_turn_sampling_support(
+                        output_ids, meta
+                    )
+                except SamplingMaskAssemblyError as exc:
+                    parsed_support = None
+                    if exc.reason_code == "sampling_mask_missing_in_response":
+                        missing.append("sampling_mask_tape")
+                    else:
+                        mismatches.append(f"sampling_mask:{exc.reason_code}")
+            if parsed_support is not None:
+                sampling_supports = tuple(
+                    tuple(int(t) for t in support) for support in parsed_support.supports
+                )
+
         if generated < 1:
             missing.append("output_tokens")
 
@@ -669,6 +739,7 @@ class GenerationCaptureHook:
                 top_p_token_offsets=tuple(top_p_offsets) if top_p_offsets is not None else None,
                 routed_experts_flat=tuple(routing_flat) if routing_flat is not None else None,
                 weight_version=turn_weight_version,
+                sampling_supports=sampling_supports,
             )
         )
         return record
@@ -1851,12 +1922,35 @@ class RolloutOrchestrator:
             template_hash=self.config.template_hash,
         )
         top_p = float(sampling_params.get("top_p", 1.0))
+        # B2（R6-ext）请求侧二选一：采样支持集的 wire 约定按**args 显式配置**
+        # 选择，不猜引擎型号——`args.rh2_engine_sampling_mask=True`（miles 训练
+        # 脚本/测试显式设置）= 目标引擎是带原生 sampling-mask primitive 的
+        # sglang-miles 构建，top_p<1.0 时开新顶层约定 `return_sampling_mask`；
+        # 缺省/False = 旧 slime patch 引擎回退面，保持旧 custom_params 约定
+        # `return_top_p_token_ids`，行为与 C1′-b 之前逐字不变。两约定互斥
+        # （同开会在装配层与旧投影分支间造两套账，capture_wire 只按会话默认
+        # 键各自翻译）。
+        use_mask_wire = bool(getattr(args, "rh2_engine_sampling_mask", False))
         session_defaults = {
             **sampling_params,
             # E2 硬依赖：top_p<1.0 必须请求 top-p tape；MoE 必须请求 routing tape。
-            "return_top_p_token_ids": top_p < 1.0,
+            "return_top_p_token_ids": top_p < 1.0 and not use_mask_wire,
             "return_routed_experts": self.config.expect_moe_routing,
         }
+        if use_mask_wire:
+            session_defaults["return_sampling_mask"] = top_p < 1.0
+        # mask 链路的占位/剔除样本不写旧 slime 零宽 top-p tape 字段：miles
+        # Sample 没有 rollout_top_p_token_ids/offsets（canonicalize 会按未知
+        # 属性拒绝），且 miles 训练转换也不消费该字段——传 None 让
+        # _abort_result/_deliver 的 eval 占位保持 miles 可回收形状。旧链
+        # tape_top_p == top_p，行为不变。
+        tape_top_p = None if use_mask_wire else top_p
+        # mask 链路投影需要的支持集硬上界（T0-A）：直接取本次 generate 的
+        # 采样配方 top_k（与 capture_wire 前置校验的会话上界同源；缺失/非法
+        # 值由投影装配层 fail-closed，不在此提前猜测）。旧链恒 None。
+        mask_top_k = (
+            sampling_params.get("top_k") if use_mask_wire and top_p < 1.0 else None
+        )
         adapter = self._adapter_factory(hook, session_defaults)
 
         stage = "identity"
@@ -2144,6 +2238,48 @@ class RolloutOrchestrator:
                     policy_version=self.config.policy_version,
                     require_real_weight_versions=self.config.require_real_weight_versions,
                 )
+                # B2（R6-ext）叶链装配：mask 链路（本次会话请求了
+                # return_sampling_mask）把逐轮引擎支持集装配成整条叶链的
+                # CSR mask 并挂到 Sample（rh2_sampling_mask 附加属性，
+                # canonicalize 的 slime 分支消费转 miles 一等字段）。装配用
+                # 与 top-p tape 回填**同一份** run<->turn 锚定实现
+                # （_mask1_runs/_match_turns_to_runs，掉落轮自动跳过），
+                # 观察/工具位（mask=0）补单例支持集。任一回链轮缺支持集
+                # tape = capture 面破损，fail-closed（收口为本 execution
+                # 的 abort，不静默交付无 mask 样本）。
+                if session_defaults.get("return_sampling_mask"):
+                    from repoharness2.adapters.miles.sampling_mask_assembly import (
+                        TurnSupport,
+                        assemble_leaf_sampling_mask,
+                        attach_assembled_mask,
+                    )
+
+                    turn_supports = []
+                    for tape in turns:
+                        if tape.sampling_supports is None:
+                            raise SlimeBindingError(
+                                "sampling_mask_tape_missing_in_assembly",
+                                f"叶链 {facts.branch_id} 回链轮 {tape.record_id} 无"
+                                " sampling-support tape——mask 会话每一轮都必须捕到"
+                                "支持集（partial 捕获不许进装配）。",
+                            )
+                        turn_supports.append(
+                            TurnSupport(
+                                output_ids=tape.output_ids,
+                                supports=tape.sampling_supports,
+                            )
+                        )
+                    leaf_loss_mask = list(leaf.loss_mask or [])
+                    leaf_tokens = list(leaf.tokens or [])
+                    leaf_response_tokens = (
+                        leaf_tokens[-len(leaf_loss_mask):] if leaf_loss_mask else []
+                    )
+                    attach_assembled_mask(
+                        leaf,
+                        assemble_leaf_sampling_mask(
+                            leaf_response_tokens, leaf_loss_mask, turn_supports
+                        ),
+                    )
                 # 分支注释只回链**入训轮**（掉落轮不支撑任何 mask=1 token；
                 # S1-7a token 锚定匹配的产物），空则回退 facts 原单
                 # （全 mask=0 的叶链在 gate 层按 no_trainable_tokens 收口）。
@@ -2187,7 +2323,7 @@ class RolloutOrchestrator:
                 )
                 audit.mark("formal_chain_audit_only_pre_barrier")
                 return self._abort_result(
-                    sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=top_p
+                    sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=tape_top_p
                 )
             grading_workspace = sandbox.workspace  # s1_compat 既有语义
             barrier_evidence: list[str] = []
@@ -2302,7 +2438,7 @@ class RolloutOrchestrator:
                             )
                             return self._abort_result(
                                 sample, reason="rh2_unsafe_artifact_rejected",
-                                task=task, top_p=top_p,
+                                task=task, top_p=tape_top_p,
                             )
                         raise SlimeBindingError(exc.reason_code, str(exc)) from exc
                     audit.frozen_patch_digest = compute_frozen_patch_digest(frozen_patch)
@@ -2430,7 +2566,7 @@ class RolloutOrchestrator:
                         )
                         return self._abort_result(
                             sample, reason="rh2_unsafe_artifact_rejected",
-                            task=task, top_p=top_p,
+                            task=task, top_p=tape_top_p,
                         )
                     audit.scoring_projection_entry_count = len(
                         projection.included_entry_paths
@@ -2462,7 +2598,7 @@ class RolloutOrchestrator:
                     audit.mark("runtime_quiescence_failed")
                     return self._abort_result(
                         sample, reason="rh2_runtime_quiescence_failed",
-                        task=task, top_p=top_p,
+                        task=task, top_p=tape_top_p,
                     )
                 else:
                     audit.failure_records.append(
@@ -2493,6 +2629,7 @@ class RolloutOrchestrator:
                 workspace=grading_workspace,  # 复核五轮 P0-1：正式链 = 冻结副本
                 handshake=handshake,
                 audit=audit,
+                sampler_support_top_k=mask_top_k,  # B2：mask 链投影替换开关
             )
             audit.finalized = finalized
             audit.step("step8_gate_finalized")
@@ -2526,7 +2663,7 @@ class RolloutOrchestrator:
                     audit.mark("snapshot_integrity_mismatch")
                     return self._abort_result(
                         sample, reason="rh2_snapshot_integrity_mismatch",
-                        task=task, top_p=top_p,
+                        task=task, top_p=tape_top_p,
                     )
 
             # F2-2 producer（成功收口）：termination=completed；评分三态
@@ -2564,7 +2701,7 @@ class RolloutOrchestrator:
                 hook=hook,
                 audit=audit,
                 evaluation=evaluation,
-                top_p=top_p,
+                top_p=tape_top_p,
             )
         except asyncio.CancelledError:
             raise
@@ -2615,7 +2752,7 @@ class RolloutOrchestrator:
                     eligibility_report_id=None,
                 )
             return self._abort_result(
-                sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=top_p
+                sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=tape_top_p
             )
         finally:
             # ---- B5（A-prime 第 7 条）：cleanup 只许发生在 finalization
@@ -3141,8 +3278,16 @@ class RolloutOrchestrator:
         workspace: RolloutContainerWorkspace,
         handshake: BackendHandshake | None,
         audit: RolloutAudit,
+        sampler_support_top_k: Any | None = None,
     ) -> FinalizedRollout:
-        """步骤 6~8：只准调 finalize_rollout（治理层唯一关口，顺序已被 wrapper 固化）。"""
+        """步骤 6~8：只准调 finalize_rollout（治理层唯一关口，顺序已被 wrapper 固化）。
+
+        ``sampler_support_top_k``（B2，R6-ext）：非 None = 本次 generate 走
+        miles sampling-mask 链路（generate() 按 args.rh2_engine_sampling_mask
+        且 top_p<1.0 传入采样配方 top_k），投影产出经
+        project_group_with_sampler_support 替换成 sampler_support_token_ids
+        事实；None = 旧 top-p tape 投影分支逐字不变。
+        """
 
         annotations = [
             SlimeBranchAnnotation(
@@ -3190,20 +3335,42 @@ class RolloutOrchestrator:
 
         def _project(report: GradingReport):
             audit.mark("projection_started")
-            projection = project_from_slime(
-                list(samples),
-                hook.records,
-                task_id=task.task_id,
-                annotations=annotations,
-                reward=self._reward_input(report, base_sample, task),
-                serving_precision=self.config.serving_precision,
-                serving_sampling_backend=self.config.serving_sampling_backend,
-                expected_renderer_cls_name=self.config.expected_renderer_cls_name,  # U-G
-                declared_segment_count=len(annotations),
-                moe_num_layers=self.config.moe_num_layers,
-                moe_router_topk=self.config.moe_router_topk,
-                artifact_store=hook.artifact_store,
-            )
+
+            def _run_projection():
+                return project_from_slime(
+                    list(samples),
+                    hook.records,
+                    task_id=task.task_id,
+                    annotations=annotations,
+                    reward=self._reward_input(report, base_sample, task),
+                    serving_precision=self.config.serving_precision,
+                    serving_sampling_backend=self.config.serving_sampling_backend,
+                    expected_renderer_cls_name=self.config.expected_renderer_cls_name,  # U-G
+                    declared_segment_count=len(annotations),
+                    moe_num_layers=self.config.moe_num_layers,
+                    moe_router_topk=self.config.moe_router_topk,
+                    artifact_store=hook.artifact_store,
+                )
+
+            if sampler_support_top_k is not None:
+                # B2（R6-ext）：mask 链路的投影接线放 miles 侧（projection.py
+                # 是冻结面）——helper 复用冻结面的结构校验后，把分支级
+                # SamplingMaskRef/LogprobProvenance 替换成
+                # sampler_support_token_ids + behavior_support_normalized
+                # 事实（T0-B），再整树重校验。lazy import 同 capture_wire
+                # 口径（无 miles 环境的旧测试面不加载 adapters.miles）。
+                from repoharness2.adapters.miles.projection_ext import (
+                    project_group_with_sampler_support,
+                )
+
+                projection = project_group_with_sampler_support(
+                    _run_projection,
+                    list(samples),
+                    top_k=sampler_support_top_k,
+                    store=hook.artifact_store,
+                )
+            else:
+                projection = _run_projection()
             audit.step("step7_projection_completed")
             return projection
 

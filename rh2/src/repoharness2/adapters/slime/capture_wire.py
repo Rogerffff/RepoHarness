@@ -58,6 +58,11 @@ class PendingTurn:
     weight_version: str | None
     request_id: str  # SGLang rid（本轮请求身份，P0-6 去覆盖的键）
     proxy_result: Any = None  # ProxyCallResult：commit 成功才 finalize（P0-1）
+    # B2（R6-ext）：本轮已解析校验的采样支持集（miles TurnSupport；
+    # return_sampling_mask 会话才非 None）。此前 wire 解析出 _turn_support
+    # 后即丢弃——mask 事实到不了 commit 之后的装配层。现在随暂存结构走到
+    # commit，由 hook 落进 TurnTape.sampling_supports（叶链装配的事实源）。
+    turn_support: Any = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -578,10 +583,19 @@ class CaptureRegistry:
         assert turn is not None
         capture_ref = None
         try:
+            # B2（R6-ext）：wire 已解析校验的逐轮支持集随 commit 交给 hook
+            # （TurnTape.sampling_supports）。仅在场时传 kwarg——探针/回归里
+            # 的最小 hook 替身没有该参数，非 mask 会话不动既有签名调用形状。
+            extra = (
+                {"turn_support": turn.turn_support}
+                if turn.turn_support is not None
+                else {}
+            )
             record = hook.on_generate_response(
                 prompt_token_ids=turn.prompt_ids,
                 sampling_params=turn.capture_params,
                 response=turn.raw_response,
+                **extra,
             )
             # 收口二轮 P1：capture provenance 不许 fail-open——record_id
             # 缺失/为空与 hook 抛异常同罪（poison + abandon + 抛错，绝不
@@ -934,6 +948,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         output_log_probs = [float(x[0]) for x in pairs]
         finish = (meta.get("finish_reason") or {}).get("type", "stop") or "stop"
 
+        turn_support = None
         if want_sampling_mask:
             # C1′-b 响应侧：解析并校验 output_token_sampling_mask/_logprobs
             # （逐 token sampled∈support、长度对齐；abort 且零输出豁免——语义
@@ -943,11 +958,13 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
             # 该列经 vendor 叶链落 Sample.rollout_log_probs = DIS/TIS 正式分母，
             # provenance=behavior_support_normalized）。全词表 logprob 原样留在
             # raw_response（output_token_logprobs -> capture store），只作诊断列。
+            # B2（R6-ext）：解析产物不再丢弃——挂进 PendingTurn.turn_support，
+            # commit 时交 hook 落 TurnTape（装配层的逐轮支持集事实源）。
             from repoharness2.adapters.miles.sampling_mask_assembly import (
                 parse_turn_sampling_support,
             )
 
-            _turn_support, output_log_probs = parse_turn_sampling_support(output_ids, meta)
+            turn_support, output_log_probs = parse_turn_sampling_support(output_ids, meta)
 
         # 暂存捕获（record_turn 时提交）。capture 参数记录**生效值**：
         # temperature/top_p 若请求未带则为引擎默认 1.0（SGLang SamplingParams 默认）。
@@ -979,6 +996,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 ),
                 request_id=request_id,
                 proxy_result=proxy_result,
+                turn_support=turn_support,
             ),
         )
         return slime_common.TurnRecord(

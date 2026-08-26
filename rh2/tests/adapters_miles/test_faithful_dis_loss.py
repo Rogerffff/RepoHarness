@@ -1,17 +1,27 @@
-"""C1′-b delta 测试 (d)：faithful DIS custom loss（miles 接线形态）。
+"""C1′-b delta 测试 (d)：faithful DIS custom loss（miles 接线形态,R6-ext B4/B5/B6 修订）。
 
-对拍权威 = `repoharness2.training.faithful_dis`（标量参考,不动）。用例数据
-风格沿 `tests/training/test_faithful_dis.py`：小 vocab、手工指定信任区间
-内/外的 log-ratio、逐位断言。
+对拍权威 = `repoharness2.training.faithful_dis` 的
+``faithful_dis_loss_by_execution``（标量参考,不动;B4 后归约层次 = branch
+分子 → execution provenance 分母 → batch execution 等权）。用例数据风格沿
+`tests/training/test_faithful_dis.py`：小 vocab、手工指定信任区间内/外的
+log-ratio、逐位断言。
+
+归约对拍口径（单 microbatch 情形）：被测函数把逐 token 分子交给 miles
+``sum_of_sample_mean``（``rollout_mask_sums`` 作 per-execution 分母）,返回
+的是 execution **部分和** Σ_e loss_e;÷N_exec 的 execution 等权在 miles
+dispatcher 层（``num_rollouts`` 缩放）——因此这里断言
+``loss == Σ per_execution_loss``、逐 token 梯度 = 权威梯度 × N_exec。完整
+dispatcher/megatron 缩放链的对拍见 test_train_seam_metamorphic.py。
 
 覆盖面：
-- 与标量参考同输入逐位一致（loss 标量 + 经链式法则展开的逐 logits 行梯度）;
+- 与 by_execution 权威同输入一致（loss 标量 + 经链式法则展开的逐 logits 行梯度）;
 - 区间外 token 梯度**精确**为零（backward 后逐位 == 0 断言,非 allclose）;
-- target∉support 即炸（C2,gather 前）;
+- target∉support 即炸（C2,gather 前;B5:检查在 CPU 侧完成,加速器张量照常工作）;
 - denominator 语义按预注册断言（provenance_tokens,与标量权威常量同源）;
-- 全零有效 token 保图零梯度 + zero_grad_step 信号;
-- fail-closed 面：replay 关闭/缺 wire 字段/缺 rollout_log_probs/非有限输入/
-  loss_mask 非 0/1/mask 长度错位。
+- accepted=0 → FaithfulDisZeroAcceptedStop（B6 spike fail-stop,reducer 前抛出）;
+- fail-closed 面：replay 关闭/calculate_per_token_loss/缺 wire 字段/缺
+  rollout_log_probs/缺或矛盾 rollout_mask_sums/非有限输入/loss_mask 非 0/1/
+  mask 长度错位。
 
 单进程 CPU 形态：ParallelState 全 trivial group（上游 loss_test_utils
 make_parallel_state 同款）,true_on_policy_mode=True 走全词表 log_softmax
@@ -31,7 +41,23 @@ VOCAB = 17
 
 
 def _boom_reducer(_t):
-    raise AssertionError("sum_of_sample_mean 不应被调用——分母语义是预注册的全局 token 数")
+    """fail-closed 用例专用：所有拒绝路径必须在调用 reducer 之前抛出。"""
+    raise AssertionError("fail-closed 路径不应触达 sum_of_sample_mean")
+
+
+def _mk_reducer(torch, batch, *, calculate_per_token_loss=False):
+    """真 reducer：miles dispatcher 同款构造（denominators=rollout_mask_sums）。"""
+    from miles.backends.training_utils.cp_utils import get_sum_of_sample_mean
+
+    return get_sum_of_sample_mean(
+        list(batch["total_lengths"]),
+        list(batch["response_lengths"]),
+        batch["loss_masks"],
+        calculate_per_token_loss,
+        "thd",
+        batch.get("max_seq_lens", None),
+        denominators=batch.get("rollout_mask_sums", None),
+    )
 
 
 @pytest.fixture()
@@ -130,6 +156,9 @@ def _mk_case(torch, *, seed=7):
         ],
         "rollout_sampling_mask_ids": [ids0, ids1],
         "rollout_sampling_mask_offsets": [offsets0, offsets1],
+        # 两样本各自成 execution（e0/e1）;单 microbatch 内 sibling 都在场,
+        # rollout_mask_sums = 各 execution 的 provenance 总数（3/3）
+        "rollout_mask_sums": torch.tensor([3.0, 3.0], dtype=torch.float32),
     }
     return batch, logits
 
@@ -160,26 +189,26 @@ def _fill_behavior_from_current(torch, dis, args, batch, logits):
     return [c.clone() for c in current]
 
 
-def _scalar_reference(dis, current_list, batch):
-    from repoharness2.training.faithful_dis import DisTokenRecord, faithful_dis_loss
+def _execution_reference(dis, current_list, batch):
+    """标量权威：faithful_dis_loss_by_execution（每样本一个 execution e{i}）。"""
+    from repoharness2.training.faithful_dis import (
+        DisTokenRecord,
+        faithful_dis_loss_by_execution,
+    )
 
-    records = []
-    for current, behavior, adv, mask in zip(
-        current_list, batch["rollout_log_probs"], batch["advantages"], batch["loss_masks"]
+    executions = {}
+    for i, (current, behavior, adv, mask) in enumerate(
+        zip(current_list, batch["rollout_log_probs"], batch["advantages"], batch["loss_masks"])
     ):
-        for c, b, a, m in zip(
-            current.tolist(), behavior.tolist(), adv.tolist(), mask.tolist()
-        ):
-            records.append(
-                DisTokenRecord(
-                    logp_current=c, logp_rollout=b, advantage=a, provenance_mask=int(m)
-                )
-            )
-    return records, faithful_dis_loss(records)
+        executions[f"e{i}"] = [
+            DisTokenRecord(logp_current=c, logp_rollout=b, advantage=a, provenance_mask=int(m))
+            for c, b, a, m in zip(current.tolist(), behavior.tolist(), adv.tolist(), mask.tolist())
+        ]
+    return executions, faithful_dis_loss_by_execution(executions)
 
 
 # ---------------------------------------------------------------------------
-# 与标量参考逐位一致 + denominator 预注册
+# 与 by_execution 权威一致 + denominator 预注册
 # ---------------------------------------------------------------------------
 
 
@@ -190,42 +219,49 @@ def test_denominator_semantics_preregistered(dis):
     assert dis.module.DENOMINATOR_SEMANTICS is DENOMINATOR_SEMANTICS_V1  # 同源,非复制
 
 
-def test_loss_matches_scalar_reference(dis):
+def test_loss_matches_execution_reference(dis):
     torch = dis.torch
     args = _mk_args()
     batch, logits = _mk_case(torch)
     current_list = _fill_behavior_from_current(torch, dis, args, batch, logits)
-    _, ref = _scalar_reference(dis, current_list, batch)
+    _, ref = _execution_reference(dis, current_list, batch)
 
-    loss, metrics = dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
 
-    assert loss.item() == pytest.approx(ref.loss, rel=1e-9)
-    # denominator = provenance token 数（6）而非 accepted 数（3）——预注册数值断言
-    assert metrics["dis_denominator"].item() == ref.denominator == 6
-    assert metrics["dis_accepted_tokens"].item() == ref.accepted_token_count == 3
-    assert metrics["dis_rejected_tokens"].item() == ref.rejected_token_count == 3
-    assert metrics["dis_zero_grad_step"].item() == 0.0
-    assert metrics["loss"].item() == pytest.approx(ref.loss, rel=1e-9)
+    # 单 microbatch：函数返回 execution 部分和 Σ_e loss_e;权威 loss = Σ/N
+    partial_sum = sum(ref.per_execution_loss.values())
+    assert loss.item() == pytest.approx(partial_sum, rel=1e-9)
+    assert loss.item() == pytest.approx(ref.loss * ref.execution_count, rel=1e-9)
+    assert ref.per_execution_denominator == {"e0": 3, "e1": 3}  # provenance 分母预注册数值
+    assert metrics["dis_microbatch_provenance_tokens"].item() == 6
+    assert metrics["dis_accepted_tokens"].item() == 3
+    assert metrics["dis_rejected_tokens"].item() == 3
+    assert metrics["loss"].item() == pytest.approx(partial_sum, rel=1e-9)
 
 
-def test_per_token_grads_match_scalar_reference_and_rejected_exactly_zero(dis):
-    """逐位梯度对拍：dL/dlogits 行 = g_p·(onehot − softmax_masked),g_p 取标量
-    参考 per_token_grad_logp_current;区间外/mask=0 行 **精确** == 0。"""
+def test_per_token_grads_match_execution_reference_and_rejected_exactly_zero(dis):
+    """逐位梯度对拍：dL/dlogits 行 = g_p·(onehot − softmax_masked),g_p 取权威
+    per_token_grad × N_exec（÷N_exec 的 execution 等权在 dispatcher 层）;
+    区间外/mask=0 行 **精确** == 0。"""
 
     torch = dis.torch
     args = _mk_args()
     batch, logits_data = _mk_case(torch)
     logits = logits_data.clone().requires_grad_(True)
     current_list = _fill_behavior_from_current(torch, dis, args, batch, logits_data)
-    records, ref = _scalar_reference(dis, current_list, batch)
+    _, ref = _execution_reference(dis, current_list, batch)
 
-    loss, _ = dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    loss, _ = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
     loss.backward()
     grad = logits.grad[0]  # [T, V]
 
     # thd/cp=1 行座标：样本 i 的 response 位 p -> 行 cum_total + total_i - resp_i - 1 + p
     supports_all = [_S0_SUPPORTS, _S1_SUPPORTS]
-    flat = 0
+    n_exec = ref.execution_count
     cum = 0
     rejected_rows = 0
     for i, (tokens, total, resp) in enumerate(
@@ -234,7 +270,7 @@ def test_per_token_grads_match_scalar_reference_and_rejected_exactly_zero(dis):
         base_row = cum + total - resp - 1
         for p in range(resp):
             row = base_row + p
-            g_p = ref.per_token_grad_logp_current[flat]
+            g_p = ref.per_token_grad_logp_current[f"e{i}"][p] * n_exec
             target = int(tokens[total - resp + p])
             support = torch.zeros(VOCAB, dtype=torch.bool)
             support[torch.tensor(supports_all[i][p])] = True
@@ -244,7 +280,8 @@ def test_per_token_grads_match_scalar_reference_and_rejected_exactly_zero(dis):
             onehot[target] = 1.0
             expected = g_p * (onehot - probs)
             assert torch.allclose(grad[row], expected, atol=1e-12), f"样本{i} 位{p}"
-            if ref.per_token_weight[flat] == 0.0:
+            # 用例里 advantage 全非零 -> 权威逐 token 梯度为 0 ⟺ f(r)=0 或 mask=0
+            if g_p == 0.0:
                 # 区间外 / mask=0：整行梯度精确为零（乘 0,不是数值近似小）
                 assert bool((grad[row] == 0.0).all()), f"样本{i} 位{p} 应精确零梯度"
                 rejected_rows += 1
@@ -255,7 +292,6 @@ def test_per_token_grads_match_scalar_reference_and_rejected_exactly_zero(dis):
                 # logits 的梯度**恰为零**（onehot == softmax_masked）——被
                 # 接受不代表有梯度,这是 support-renorm 语义的正确行为
                 assert bool((grad[row] == 0.0).all())
-            flat += 1
         # prompt 行不进 loss,梯度应全零
         for row in range(cum, base_row):
             assert bool((grad[row] == 0.0).all())
@@ -286,24 +322,84 @@ def test_target_not_in_support_raises_before_gather(dis):
 
 
 # ---------------------------------------------------------------------------
-# 全零有效 token / fail-closed 面
+# B6：accepted=0 fail-stop（reducer 前抛出,optimizer 不可达）
 # ---------------------------------------------------------------------------
 
 
-def test_zero_denominator_keeps_graph_and_signals(dis):
+def test_zero_provenance_batch_fail_stops_before_reducer(dis):
+    """全 microbatch loss_mask=0：accepted=0 → fail-stop（不再静默出零 loss）。"""
     torch = dis.torch
     args = _mk_args()
-    batch, logits_data = _mk_case(torch)
-    logits = logits_data.clone().requires_grad_(True)
-    _fill_behavior_from_current(torch, dis, args, batch, logits_data)
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
     batch["loss_masks"] = [torch.zeros_like(m) for m in batch["loss_masks"]]
 
-    loss, metrics = dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
-    assert loss.item() == 0.0
-    loss.backward()  # 保图：backward 可走,梯度精确全零
-    assert bool((logits.grad == 0.0).all())
-    assert metrics["dis_denominator"].item() == 0.0
-    assert metrics["dis_zero_grad_step"].item() == 1.0
+    with pytest.raises(dis.module.FaithfulDisZeroAcceptedStop) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "dis_zero_accepted_fail_stop"
+    assert isinstance(exc.value, dis.module.FaithfulDisLossError)  # 子类关系可精确 except
+
+
+def test_all_rejected_batch_fail_stops_before_reducer(dis):
+    """provenance>0 但全部落在信任区间外：accepted=0 → fail-stop（B6 主场景）。"""
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    # behavior 整体 -10：log_ratio 全部 ≈ +10,远超信任上界 log(1+ε_h)
+    batch["rollout_log_probs"] = [b - 10.0 for b in batch["rollout_log_probs"]]
+
+    with pytest.raises(dis.module.FaithfulDisZeroAcceptedStop):
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+
+
+# ---------------------------------------------------------------------------
+# fail-closed 面
+# ---------------------------------------------------------------------------
+
+
+def test_rollout_mask_sums_missing_rejected(dis):
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    del batch["rollout_mask_sums"]
+    with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "rollout_mask_sums_missing"
+
+
+def test_rollout_mask_sums_inconsistent_rejected(dis):
+    """execution 分母 < 本样本自身 provenance 数 = 账目矛盾。"""
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    batch["rollout_mask_sums"] = torch.tensor([2.0, 3.0], dtype=torch.float32)  # s0 自身有 3
+    with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "rollout_mask_sums_inconsistent"
+
+
+def test_rollout_mask_sums_zero_provenance_rejected(dis):
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    batch["loss_masks"][0] = torch.zeros_like(batch["loss_masks"][0])
+    batch["rollout_mask_sums"] = torch.tensor([0.0, 3.0], dtype=torch.float32)
+    with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "execution_zero_provenance"
+
+
+def test_calculate_per_token_loss_rejected(dis):
+    torch = dis.torch
+    args = _mk_args(calculate_per_token_loss=True)
+    batch, logits = _mk_case(torch)
+    with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "per_token_loss_not_supported"
 
 
 def test_replay_disabled_rejected(dis):
@@ -380,3 +476,72 @@ def test_cp_not_supported_fail_closed(dis):
         assert exc.value.reason_code == "cp_not_supported"
     finally:
         dis.mk_state(cp_size=1)
+
+
+# ---------------------------------------------------------------------------
+# B5：target∈support 检查的设备形状（CSR 恒在 CPU,tokens 在加速器上）
+# ---------------------------------------------------------------------------
+
+
+def _mps_available():
+    import torch
+
+    return torch.backends.mps.is_available()
+
+
+def test_assert_targets_in_support_accepts_cpu_and_accelerator(dis):
+    """单元级：合法 target 通过、损坏 target 抛结构化错——CPU 与（若可用）MPS
+    两种 response-token 设备都走同一条 CPU 侧检查路径。"""
+    torch = dis.torch
+    from miles.utils.sampling_mask import RolloutSamplingMask
+
+    ids, offsets = _csr(_S0_SUPPORTS)
+    mask = RolloutSamplingMask(ids=ids, offsets=offsets)
+    good = torch.tensor([4, 5, 6, 7], dtype=torch.long)
+    bad = torch.tensor([4, 3, 6, 7], dtype=torch.long)  # 位 1 的 target 3 ∉ 支持集 {5,2}
+
+    devices = ["cpu"] + (["mps"] if _mps_available() else [])
+    for device in devices:
+        dis.module._assert_targets_in_support(0, good.to(device), mask)  # 不抛
+        with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+            dis.module._assert_targets_in_support(0, bad.to(device), mask)
+        assert exc.value.reason_code == "target_not_in_support", device
+
+
+@pytest.mark.skipif(not _mps_available(), reason="需要 MPS 设备复现跨设备布局")
+def test_full_loss_on_accelerator_device_layout(dis):
+    """加速器形状（B5 验收）：批内张量列在 MPS（真实 GPU 链路中 get_rollout_data
+    已把各列搬上训练设备）,sampling mask wire 仍是 CPU CSR——合法 target 出有限
+    loss+可反传;损坏 target 抛结构化 target_not_in_support。MPS 无 float64,用
+    float32（数值口径不参与断言,只验设备布局与错误路径）。"""
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits64 = _mk_case(torch)
+    current_list = _fill_behavior_from_current(torch, dis, args, batch, logits64)
+    del current_list
+
+    device = torch.device("mps")
+    logits = logits64.to(device=device, dtype=torch.float32).requires_grad_(True)
+    batch["unconcat_tokens"] = [t.to(device) for t in batch["unconcat_tokens"]]
+    for key in ("loss_masks", "advantages", "rollout_log_probs"):
+        batch[key] = [torch.as_tensor(v).to(device=device, dtype=torch.float32) for v in batch[key]]
+    batch["loss_masks"] = [m.to(torch.int32) for m in batch["loss_masks"]]
+    batch["rollout_mask_sums"] = batch["rollout_mask_sums"].to(device)
+
+    loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
+    assert loss.device.type == "mps"
+    assert bool(torch.isfinite(loss).item())
+    loss.backward()
+    assert logits.grad is not None and bool(torch.isfinite(logits.grad).all())
+
+    # 损坏 s0 位 1 的支持集 -> 结构化 fail-closed（跨设备不再是 RuntimeError）
+    bad_supports = [list(s) for s in _S0_SUPPORTS]
+    bad_supports[1] = [2, 3]
+    ids, offsets = _csr(bad_supports)
+    batch["rollout_sampling_mask_ids"][0] = ids
+    batch["rollout_sampling_mask_offsets"][0] = offsets
+    with pytest.raises(dis.module.FaithfulDisLossError) as exc:
+        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    assert exc.value.reason_code == "target_not_in_support"

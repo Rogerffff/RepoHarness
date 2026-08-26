@@ -91,11 +91,27 @@ async def test_generate_fn_passthrough_abort_shape(world):
     assert "session_id" not in s.__dict__
 
 
-async def test_generate_fn_orchestrator_missing_fails_closed(world):
-    """args 缺 rh2_orchestrator：legacy 入口的 fail-closed 在新签名下保留。"""
+async def test_generate_fn_orchestrator_missing_triggers_bootstrap_fail_closed(
+    world, monkeypatch
+):
+    """args 缺 rh2_orchestrator：B1（R6-ext）后不再直接抛
+    orchestrator_not_configured，而是惰性走既有 bringup
+    （ensure_fa_started -> BringupService.get）。本用例的 args 缺全部
+    bringup 配置面（hf_checkpoint 等）——启动必须异常传播（fail-closed，
+    不静默吞掉继续跑），且 BringupService 按单代语义 latch FAILED。
+
+    monkeypatch 隔离单例类状态与模块级启动锁：本测试故意制造 FAILED，
+    不得泄漏到同进程其他 bringup 测试。"""
+
+    import asyncio
 
     world.install_sglang_stub()
-    from repoharness2.adapters.slime.generate import SlimeBindingError
+    import repoharness2.adapters.slime.bringup as bringup
+
+    monkeypatch.setattr(bringup.BringupService, "_instance", None)
+    monkeypatch.setattr(bringup.BringupService, "_startup_state", "NEW")
+    monkeypatch.setattr(bringup.BringupService, "_startup_error", None)
+    monkeypatch.setattr(bringup, "_SERVICE_LOCK", asyncio.Lock())
 
     fn = world.Rh2MilesGenerateFn()
     inp = world.mk_miles_input()
@@ -104,8 +120,10 @@ async def test_generate_fn_orchestrator_missing_fails_closed(world):
     gi = GenerateFnInput(
         state=SimpleNamespace(args=Namespace()), sample=inp, sampling_params={}, evaluation=False
     )
-    with pytest.raises(SlimeBindingError, match="orchestrator_not_configured"):
+    with pytest.raises(Exception):  # noqa: B017 - 启动首因类型不固定（缺字段即炸）
         await fn(gi)
+    assert bringup.BringupService._startup_state == "FAILED"  # 单代 latch
+    assert getattr(gi.args, "rh2_orchestrator", None) is None  # 不留半成品注入
 
 
 def test_miles_loader_instantiates_class_form(world):

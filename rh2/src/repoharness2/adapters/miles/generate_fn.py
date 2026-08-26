@@ -40,6 +40,26 @@ class Rh2MilesGenerateFn:
         # 延迟 import：见模块 docstring 的 sglang 卡点说明。
         from miles.rollout.base_types import GenerateFnOutput
 
+        # B1 最小 bootstrap（R6-ext）：miles 只配置
+        # --custom-generate-function-path 时没有任何生产代码构造
+        # args.rh2_orchestrator——首个样本会在 canonicalize 前因
+        # orchestrator_not_configured 失败。这里**复用既有** bringup 单例
+        # （ensure_fa_started：BringupService.get 幂等 + 挂 rh2_orchestrator/
+        # rh2_sampling_params），不新建任何 backend 抽象。每个 rollout actor
+        # 进程首次调用构造一次；后续调用（包括并发首调用，单例内有锁）拿同
+        # 一实例。启动失败按 BringupService 的 sticky FAILED 语义传播（同进
+        # 程不静默重试第二代）。
+        #
+        # 关闭 hook 说明（有意留给进程退出路径）：BringupService 持有的
+        # adapter HTTP 线程 / 评分队列没有 per-rollout 的 close 面，miles
+        # stock FullyAsyncRolloutFn 也没有 dispose 回调（spike R5-ext B5 已
+        # 登记）；CPU/首轮 GPU spike 按 run-fatal + 进程退出回收处理，正式
+        # 关停语义归硬件段的 close/dispose seam。
+        if getattr(input.args, "rh2_orchestrator", None) is None:
+            from repoharness2.adapters.slime.bringup import ensure_fa_started
+
+            await ensure_fa_started(input.args)
+
         # rh2 legacy 入口自己会从 args.rh2_orchestrator 取编排本体并 fail-closed
         # 校验；GenerateFnInput.args 即 state.args（miles base_types 的 property）。
         raw = await rh2_custom_generate(

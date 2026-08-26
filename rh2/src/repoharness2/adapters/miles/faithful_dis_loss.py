@@ -1,4 +1,4 @@
-"""faithful DIS 的 miles custom loss 接线（C1′-b delta 第 2 项）。
+"""faithful DIS 的 miles custom loss 接线（C1′-b delta 第 2 项;R6-ext B4/B5/B6 修订）。
 
 加载方式：miles `--loss-type custom_loss --custom-loss-function-path
 repoharness2.adapters.miles.faithful_dis_loss.faithful_dis_loss_function`
@@ -8,40 +8,65 @@ get_loss_function 的 "custom_loss" 分支 -> load_function 按点路径加载�
 sum_of_sample_mean) -> (loss, metrics)``，loss 是带梯度标量，metrics 是
 detached 标量 dict。
 
-语义权威 = `repoharness2.training.faithful_dis`（标量参考,FA-4;本模块
-**不改它**,只做 torch 同构实现,ε 与分母语义常量直接 import 同源）::
+语义权威 = `repoharness2.training.faithful_dis` 的
+``faithful_dis_loss_by_execution``（标量参考,FA-4;本模块**不改它**,只做
+torch 同构实现,ε 与分母语义常量直接 import 同源）::
 
-    L(θ)   = -( Σ_i f(r_i)·Â_i·logπ_θ(a_i) ) / D
-    r_i    = exp(logπ_θ(a_i) - logπ_rollout(a_i))
-    f(x)   = x  若 1-ε_ℓ < x < 1+ε_h（开区间,log 空间判定防溢出）,否则 0
+    loss_e   = -( Σ_{i∈e} f(r_i)·Â_i·logπ_θ(a_i) ) / D_e    D_e = execution e 的 provenance token 总数
+    loss     = ( Σ_e loss_e ) / N_exec                       （batch 内 execution 等权）
+    r_i      = exp(logπ_θ(a_i) - logπ_rollout(a_i))
+    f(x)     = x  若 1-ε_ℓ < x < 1+ε_h（开区间,log 空间判定防溢出）,否则 0
+
+归约层次（R6-ext B4 修订,逐 token 分子交 miles 既有 reducer,不自建
+DP/CP 归约层）——本函数**只产逐 token 分子**,三层归约由 miles 链路完成：
+
+1. **execution 级 provenance 分母**：``sum_of_sample_mean``（miles
+   `loss.py` dispatcher 用 ``denominators=batch["rollout_mask_sums"]``
+   构造,`cp_utils.get_sum_of_sample_mean`）对每个样本算
+   ``(numerator·loss_mask).sum() / rollout_mask_sum``。
+   ``rollout_mask_sums``（`train_data_conversion._compute_rollout_mask_sums`）
+   = 该样本所属 rollout（= execution）**全部** sibling 的 loss_mask 总和,
+   每个 sibling 都携带同一个整 rollout 分母——sibling 分散到不同
+   microbatch/DP rank 时,各片段 ``片段分子/D_e`` 跨 microbatch 求和恰好
+   重构出一个完整的 ``loss_e``。
+2. **batch execution 等权**：dispatcher 把返回的 loss 乘
+   ``num_microbatches/global_batch_size·loss_parallel_size``,其中
+   ``global_batch_size = num_rollouts``（本 step 全 DP rollout 总数
+   = N_exec）;megatron forward_backward 再 ÷num_microbatches、DDP 梯度
+   归约 ÷DP size 与 loss_parallel_size 相消——净效果 = Σ_e loss_e / N_exec。
+   （对照 integration base `loss.py:163-171` 与 `model.py` train_one_step
+   的 apply_megatron_loss_scaling=True 路径。）
+
+因此本函数返回的"loss"= 本 microbatch 各样本 ``片段分子/D_e`` 之和
+（execution 部分和）,不是最终标量;metrics["loss"] 同口径,经
+`aggregate_train_losses` 跨 microbatch 求和 ÷num_rollouts 后才等于权威
+标量。旧实现的 microbatch 扁平 ``provenance.sum()`` 分母（把不同
+execution 的 token 扁平平均）已删除——那是 B4 指出的真算法 bug。
 
 关键实现决策（与验收条款一一对应）：
 
 - **区间外 ratio 梯度精确为零**：f(r) 权重整体由 detach 后的 log_ratio
   构造（先 detach 再 exp/比较）,区间外权重恒 0——loss 项与 d loss/d logπ_θ
   都**精确**为 0（不是数值近似小,是乘 0）,与标量参考
-  `per_token_grad_logp_current = -(f(r_i)·Â_i)/D` 逐位一致。
+  `per_token_grad_logp_current = -(f(r_i)·Â_i)/(D_e·N_exec)` 逐位一致。
 - **ratio detach**：f(r) 是常数权重（faithful_dis.py 模块注释:RH2 显式
   算法决策,IcePop 族一致）；不 detach 变体必须另立函数名,本函数不留开关。
   ε 同理写死为预注册值（DIS_EPS_LOW/HIGH_PREREGISTERED）,消融另立名字。
 - **denominator 语义显式预注册（FA-4 §1）**：``DENOMINATOR_SEMANTICS =
-  DENOMINATOR_SEMANTICS_V1 = "provenance_tokens"``——D = 本 microbatch 的
+  DENOMINATOR_SEMANTICS_V1 = "provenance_tokens"``——D_e = execution 的
   provenance（loss_mask=1）token 总数,被 DIS 拒绝的 token **留在分母**
-  （梯度为零但不重归一化）。选择理由：(1) 与标量参考 v1 预注册同源 import,
-  不复制字面量,两处不可能漂移；(2) 与 slime stock TIS 的 rollout_mask_sums
-  口径一致,IcePop-style 对照可同分母比较；(3) 若用 accepted_tokens,拒绝率
-  波动会反向缩放幸存 token 的梯度,引入与拒绝率耦合的有效学习率漂移。
-  第四个入参 sum_of_sample_mean（miles 的 per-sample-mean CP 感知归约器）
-  **有意不用**：它实现的是"逐样本均值再平均"口径,与预注册的全局 token
-  分母不同——静默复用会改变分母语义。DP 跨卡归约与 execution 级三层归约
-  （faithful_dis_loss_by_execution 参考）归硬件段接线,本函数只承诺单
-  microbatch 语义,CP>1 直接 fail-closed 拒绝（见下）。
+  （梯度为零但不重归一化）。与标量参考 v1 预注册同源 import,不复制字面量。
+  fail-closed 配套：``rollout_mask_sums`` 缺失、per-sample 值 < 本样本
+  provenance 数（账目矛盾）、或 <1（零 provenance execution,上游 FA-3
+  应已拒绝）都拒绝整个 microbatch。``calculate_per_token_loss`` 模式下
+  miles 会把 reducer 换成全局 token 扁平和（正是 B4 要删除的口径）,
+  同样 fail-closed 拒绝。
 - **current logprob = support-renormalized**（rollout_sampling_mask masked
   路径）：经 miles `get_log_probs_and_entropy(rollout_sampling_mask=...)`
   计算——`build_local_sampling_mask` 产 dense bool mask,`compute_log_probs`
   masked_fill(-inf) 后 log_softmax（integration base logit_processors.py
-  247-252 / math_utils._apply_sampling_mask 的同一条消费路径,不自写第二份
-  softmax）。温度缩放同路径内完成（args.rollout_temperature）。
+  的同一条消费路径,不自写第二份 softmax）。温度缩放同路径内完成
+  （args.rollout_temperature）。
 - **behavior logprob = batch["rollout_log_probs"]**,provenance =
   support-normalized（T0-B 正式分母列）：上游 sglang_rollout
   `append_sampling_metadata` 用引擎 `output_token_sampling_logprobs` 整体
@@ -52,14 +77,27 @@ detached 标量 dict。
 - **target∈support 断言在 gather 之前（C2 收口）**：上游三层校验全在
   rollout 侧,loss 层没有——这里是训练端唯一防线（防传输错位/artifact
   损坏）。断言失败抛 FaithfulDisLossError,绝不静默出 -inf/NaN。
-- **全零有效 token**：D=0 时 loss = 0*logits.sum()（保 autograd 图,梯度
-  精确全零）,metrics 里 dis_zero_grad_step=1（FA-4:跳过 optimizer step
-  的信号由训练循环消费,本函数只出信号不做决定）。
+  设备约定（R6-ext B5）：`RolloutSamplingMask` 的 CSR 恒在 CPU
+  （`sampling_mask.py` _to_owned_cpu_integer_tensor）,而 response tokens
+  在训练设备上——检查在 **CPU 侧**完成（response tokens 是小整型张量,
+  搬 CPU 的代价可忽略;把 CSR 搬 GPU 反而每 microbatch 都要拷大数组）。
+- **全零 accepted token = fail-stop（R6-ext B6,spike 级）**：本 microbatch
+  accepted（信任区间内 provenance token）为 0 时抛
+  ``FaithfulDisZeroAcceptedStop``——异常沿 miles 链路无捕获传播
+  （losses.py -> loss.py dispatcher -> megatron forward_backward ->
+  `model.py` train_one_step（optimizer.step 之前）-> `model.train` ->
+  `actor.py`,全链无 try/except,integration base 已核）,job 在 optimizer
+  step 前终止,权重/optimizer state/scheduler/weight version 都不前进。
+  已知边界（有意接受,不建跨 microbatch 协议）：触发粒度是 microbatch——
+  "某个 microbatch 全拒但全局 accepted>0" 也会 fail-stop（宁可误停,不让
+  AdamW weight decay 在零梯度下静默改参）。正式首训前收敛为 FA-4 §4 的
+  skip+计数+熔断语义（05-fully-async-execution-plan.md）。
 
 fail-closed 面（任一违反即抛错,样本不进梯度）：replay 未开启
-（rollout_top_p>=1.0）、缺 rollout_sampling_mask wire 字段、缺
-rollout_log_probs、mask 覆盖数!=response 长度、loss_mask 非 0/1、各列
-长度不一致、logp/advantage 非有限、CP>1、target∉support。
+（rollout_top_p>=1.0）、calculate_per_token_loss、缺 rollout_sampling_mask
+wire 字段、缺 rollout_log_probs、缺/矛盾 rollout_mask_sums、mask 覆盖数
+!=response 长度、loss_mask 非 0/1、各列长度不一致、logp/advantage 非有限、
+CP>1、target∉support、accepted=0（fail-stop）。
 """
 
 from __future__ import annotations
@@ -83,6 +121,7 @@ from repoharness2.training.faithful_dis import (
 __all__ = [
     "DENOMINATOR_SEMANTICS",
     "FaithfulDisLossError",
+    "FaithfulDisZeroAcceptedStop",
     "faithful_dis_loss_function",
 ]
 
@@ -103,13 +142,28 @@ class FaithfulDisLossError(RuntimeError):
         super().__init__(f"[{reason_code}] {message}")
 
 
+class FaithfulDisZeroAcceptedStop(FaithfulDisLossError):
+    """B6 spike 级 fail-stop：microbatch accepted token=0,在 optimizer 前终止。
+
+    单列子类（而不是只用 reason_code）是为了让训练循环侧将来实现 FA-4 §4
+    skip+熔断时可以精确 except 这一类,不误捕其它 fail-closed 错误。
+    """
+
+    REASON_CODE = "dis_zero_accepted_fail_stop"
+
+    def __init__(self, message: str) -> None:
+        super().__init__(self.REASON_CODE, message)
+
+
 def _assert_targets_in_support(sample_index: int, response_tokens: torch.Tensor, mask) -> None:
-    """C2：gather 前逐 token 断言 target ∈ 其支持集。
+    """C2：gather 前逐 token 断言 target ∈ 其支持集（整个检查在 CPU 侧,B5）。
 
     读 CSR 用 `RolloutSamplingMask._as_tensors()`——与上游
     train_data_conversion 的出账读法同一私有面（升 pin 时若重构,此处
     与上游同批断链,哨兵性质与 governed_buffer 的 `_inner._dynamic_filter`
-    自检相同）。
+    自检相同）。CSR 由构造器钉死在 CPU;response tokens 在训练设备
+    （CUDA/MPS）上——先把这一小段整型 token 搬到 CPU,再做比较,避免
+    跨设备索引直接 RuntimeError（R6-ext B5 的 MPS 复现）。
     """
 
     resp_len = int(response_tokens.numel())
@@ -118,17 +172,19 @@ def _assert_targets_in_support(sample_index: int, response_tokens: torch.Tensor,
             "sampling_mask_length_mismatch",
             f"样本 {sample_index}: mask 覆盖 {len(mask)} 个 token != response 长度 {resp_len}。",
         )
+    # B5：完整性检查统一搬到 CPU（CSR 本来就在 CPU;tokens 是 [R] 小整型）
+    targets = response_tokens.detach().to(device="cpu", dtype=torch.long)
     ids, offsets = mask._as_tensors()
     lengths = (offsets[1:] - offsets[:-1]).to(torch.long)
     row = torch.repeat_interleave(torch.arange(resp_len, dtype=torch.long), lengths)
     hit = torch.zeros(resp_len, dtype=torch.bool)
-    hit[row[ids.to(torch.long) == response_tokens.to(torch.long)[row]]] = True
+    hit[row[ids.to(torch.long) == targets[row]]] = True
     if not bool(hit.all()):
         bad = int((~hit).nonzero()[0].item())
         raise FaithfulDisLossError(
             "target_not_in_support",
             f"样本 {sample_index}: response 第 {bad} 个 token "
-            f"{int(response_tokens[bad])} 不在其采样支持集内——引擎出站有 "
+            f"{int(targets[bad])} 不在其采样支持集内——引擎出站有 "
             "force-include 保证,出现此况即传输错位或数据损坏（C2,fail-closed:"
             "拒绝整个 microbatch,不静默产出 -inf logprob）。",
         )
@@ -155,6 +211,43 @@ def _cat_column(batch, key: str, response_lengths: list[int], *, detach: bool) -
     return torch.cat(tensors, dim=0)
 
 
+def _validate_rollout_mask_sums(batch, loss_masks_flat: torch.Tensor, response_lengths: list[int]) -> None:
+    """execution 分母账目核对（B4 配套 fail-closed;数值本身由 reducer 消费）。
+
+    `rollout_mask_sums[i]` = 样本 i 所属 execution 的全体 sibling loss_mask
+    总和,必须 >= 本样本自己的 provenance 数（sibling 只会加不会减）,且
+    >= 1（零 provenance execution 上游 FA-3 已拒绝,出现即账目矛盾——与
+    标量权威 `faithful_dis_loss_by_execution` 对 D_e=0 直接 raise 同义）。
+    """
+
+    sums = batch.get("rollout_mask_sums")
+    if sums is None:
+        raise FaithfulDisLossError(
+            "rollout_mask_sums_missing",
+            "faithful DIS 的 execution 分母依赖 batch[rollout_mask_sums]"
+            "（train_data_conversion 无条件产出;缺失说明转换链断账,或 reducer"
+            " 将退化为 per-sample-mean 口径——两者都不允许静默发生）。",
+        )
+    own_sums = [
+        float(chunk.sum().item()) for chunk in loss_masks_flat.split(response_lengths, dim=0)
+    ]
+    for i, (execution_sum, own_sum) in enumerate(zip(sums, own_sums, strict=True)):
+        execution_sum = float(execution_sum)
+        if not math.isfinite(execution_sum) or execution_sum < 1.0:
+            raise FaithfulDisLossError(
+                "execution_zero_provenance",
+                f"样本 {i}: rollout_mask_sums={execution_sum}——零 provenance "
+                "execution 上游（FA-3 归一化）已拒绝,出现在这里是账目矛盾。",
+            )
+        if execution_sum + 1e-6 < own_sum:
+            raise FaithfulDisLossError(
+                "rollout_mask_sums_inconsistent",
+                f"样本 {i}: rollout_mask_sums={execution_sum} < 本样本 provenance"
+                f" 数 {own_sum}——整 execution 分母不可能小于单个 sibling 的"
+                " provenance 数,上游账目矛盾。",
+            )
+
+
 def faithful_dis_loss_function(
     args: Namespace,
     batch,
@@ -163,14 +256,19 @@ def faithful_dis_loss_function(
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     """faithful DIS loss（miles custom loss 入口;语义见模块 docstring）。"""
 
-    del sum_of_sample_mean  # 有意不用：分母语义预注册为全局 provenance token 数
-
     parallel_state = get_parallel_state()
     if parallel_state.cp.size != 1:
         raise FaithfulDisLossError(
             "cp_not_supported",
             f"faithful DIS custom loss 尚未接 CP 归约（cp.size={parallel_state.cp.size}）——"
-            "分母/座标的 CP 切分语义归硬件段验证,此前 fail-closed。",
+            "target∈support/逐 token 对齐的 CP 切分语义归硬件段验证,此前 fail-closed。",
+        )
+    if getattr(args, "calculate_per_token_loss", False):
+        raise FaithfulDisLossError(
+            "per_token_loss_not_supported",
+            "calculate_per_token_loss 下 miles 把 reducer 换成全局 token 扁平和"
+            "（sum_of_token）,分母语义退化为跨 execution 扁平平均——正是 B4 删除"
+            "的口径,fail-closed。",
         )
     if not top_p_sampling_replay_enabled(args):
         raise FaithfulDisLossError(
@@ -192,7 +290,7 @@ def faithful_dis_loss_function(
             f"mask 条数 {len(sampling_masks)} != 样本数 {len(unconcat_tokens)}。",
         )
 
-    # C2：gather 前逐样本断言 target ∈ support
+    # C2：gather 前逐样本断言 target ∈ support（CPU 侧,B5）
     for i, (tokens, resp_len, mask) in enumerate(
         zip(unconcat_tokens, response_lengths, sampling_masks, strict=True)
     ):
@@ -221,16 +319,18 @@ def faithful_dis_loss_function(
 
     # behavior logprob：Sample.rollout_log_probs（support-normalized,T0-B）
     behavior_logp = _cat_column(batch, "rollout_log_probs", response_lengths, detach=True)
-    behavior_logp = behavior_logp.to(current_logp.dtype)
+    behavior_logp = behavior_logp.to(device=current_logp.device, dtype=current_logp.dtype)
     advantages = _cat_column(batch, "advantages", response_lengths, detach=True)
-    advantages = advantages.to(current_logp.dtype)
-    loss_masks = _cat_column(batch, "loss_masks", response_lengths, detach=True)
-    if not bool(((loss_masks == 0) | (loss_masks == 1)).all()):
+    advantages = advantages.to(device=current_logp.device, dtype=current_logp.dtype)
+    loss_masks_flat = _cat_column(batch, "loss_masks", response_lengths, detach=True)
+    if not bool(((loss_masks_flat == 0) | (loss_masks_flat == 1)).all()):
         raise FaithfulDisLossError(
             "loss_mask_not_binary",
             "loss_masks 只允许 0/1（provenance 语义;标量参考同禁）。",
         )
-    provenance = loss_masks.to(current_logp.dtype)
+
+    # execution 分母账目核对（数值由 reducer 消费,这里只核账,B4）
+    _validate_rollout_mask_sums(batch, loss_masks_flat, response_lengths)
 
     # fail-closed：任何非有限输入拒绝整个 microbatch（标量参考对 mask=0 位
     # 同样校验——掩码不豁免数据损坏检查）
@@ -249,25 +349,36 @@ def faithful_dis_loss_function(
     log_ratio = (current_logp - behavior_logp).detach()
     in_trust = (log_ratio > _LOG_TRUST_LOW) & (log_ratio < _LOG_TRUST_HIGH)
     ratio_weight = torch.where(in_trust, log_ratio, torch.zeros_like(log_ratio)).exp()
-    weight = ratio_weight * in_trust.to(current_logp.dtype) * provenance
+    weight = ratio_weight * in_trust.to(current_logp.dtype)
 
-    denominator = int(provenance.sum().item())
-    accepted = int((in_trust & (loss_masks == 1)).sum().item())
-    rejected = denominator - accepted
-    zero_grad_step = accepted == 0
+    provenance_bool = loss_masks_flat != 0
+    microbatch_provenance = int(provenance_bool.sum().item())
+    accepted = int((in_trust & provenance_bool).sum().item())
+    rejected = microbatch_provenance - accepted
 
-    if denominator == 0:
-        # 全零有效 token：保图零梯度 + 显式信号（绝不除零/静默 NaN）
-        loss = logits.sum() * 0.0
-    else:
-        loss = -(weight * advantages * current_logp).sum() / denominator
+    # B6 spike 级 fail-stop：optimizer 前显式终止（粒度=microbatch,见 docstring）
+    if accepted == 0:
+        raise FaithfulDisZeroAcceptedStop(
+            f"本 microbatch accepted token=0（provenance={microbatch_provenance},"
+            "全部被 DIS 信任区间拒绝或无 provenance 位）——spike 阶段 fail-stop:"
+            "在 optimizer step 前终止,权重/optimizer/scheduler/weight version"
+            " 不前进（AdamW 的 weight decay 在零梯度下也会改参,不允许静默走"
+            " optimizer）。正式首训前按 FA-4 §4 收敛为 skip+计数+熔断。"
+        )
+
+    # 逐 token 分子（provenance 掩码与 execution 分母都由 miles reducer 施加;
+    # 非 provenance 位数值有限（上面已断言）,reducer 乘 loss_mask=0 归零）
+    per_token_numerator = -(weight * advantages * current_logp)
+    loss = sum_of_sample_mean(per_token_numerator)
 
     device = logits.device
     metrics = {
+        # 注意口径：这里是本 microbatch 的 execution 部分和;经
+        # aggregate_train_losses 跨 microbatch 求和 ÷num_rollouts 后 =
+        # faithful_dis_loss_by_execution 的权威标量。
         "loss": loss.clone().detach(),
-        "dis_denominator": torch.tensor(float(denominator), device=device),
+        "dis_microbatch_provenance_tokens": torch.tensor(float(microbatch_provenance), device=device),
         "dis_accepted_tokens": torch.tensor(float(accepted), device=device),
         "dis_rejected_tokens": torch.tensor(float(rejected), device=device),
-        "dis_zero_grad_step": torch.tensor(1.0 if zero_grad_step else 0.0, device=device),
     }
     return loss, metrics

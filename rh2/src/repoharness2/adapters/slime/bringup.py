@@ -578,6 +578,15 @@ class BringupService:
         self.tokenizer = load_tokenizer(args.hf_checkpoint, trust_remote_code=True)
         self.sglang_url = f"http://{args.sglang_router_ip}:{args.sglang_router_port}"
         self.max_context_len = int(getattr(args, "rollout_max_context_len", 0) or 0)
+        # B2（R6-ext）请求侧引擎选择（与 generate.py session_defaults 同一
+        # args 显式开关，不猜引擎）：True = sglang-miles 构建（原生
+        # sampling-mask primitive），启动探针改请求新顶层约定
+        # return_sampling_mask（旧 custom_params 约定对该引擎无效，沿用会在
+        # U-H 探针假阳性 fail）。probe 的 top_k 上界取 args.rollout_top_k
+        # ——mask 请求要求有限 top_k（T0-A），缺失时探针在 wire 前置校验
+        # fail-closed（sampling_mask_param_missing），启动即暴露配置缺口。
+        self.engine_sampling_mask = bool(getattr(args, "rh2_engine_sampling_mask", False))
+        self._probe_top_k = getattr(args, "rollout_top_k", None)
 
         # -- U-G：renderer 显式配置 + 类名断言（v2_renderer_report §4 的规避写法）
         from renderers import Qwen3RendererConfig, create_renderer
@@ -1001,14 +1010,28 @@ class BringupService:
         )
         self.registry.register(probe_sid, probe_hook)
         try:
-            session = types.SimpleNamespace(
-                sampling_defaults={
+            # B2（R6-ext）：探针按引擎二选一请求 tape——两约定互斥（与
+            # generate.py 会话默认键同一开关来源 rh2_engine_sampling_mask）。
+            if self.engine_sampling_mask:
+                probe_defaults: dict[str, Any] = {
+                    "temperature": 1.0,
+                    "top_p": 0.95,
+                    # 有限支持集硬上界（T0-A）；None 会被 wire 前置校验拒绝
+                    "top_k": self._probe_top_k,
+                    "max_new_tokens": 16,
+                    "return_sampling_mask": True,
+                    "return_routed_experts": EXPECT_MOE_ROUTING,
+                }
+            else:
+                probe_defaults = {
                     "temperature": 1.0,
                     "top_p": 0.95,
                     "max_new_tokens": 16,
                     "return_top_p_token_ids": True,
                     "return_routed_experts": EXPECT_MOE_ROUTING,
-                },
+                }
+            session = types.SimpleNamespace(
+                sampling_defaults=probe_defaults,
                 max_context_tokens=0,
             )
             await slime_common.call_sglang_generate(
