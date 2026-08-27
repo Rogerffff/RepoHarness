@@ -1,0 +1,130 @@
+From 51e3cd969a6c100d2a2fbc22ca3e6e5758ae6c31 Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Thu, 27 Aug 2026 13:34:23 +0800
+Subject: [PATCH 3/3] [rh2-integration] gate weight publish on weights_dirty
+ across interval
+
+train_async.py previously ignored the actor train results and called
+update_weights() unconditionally at every update_weights_interval; the
+weight updater increments weight_version on publish, so an interval in
+which every optimizer step was a zero-signal skip would republish
+bit-identical parameters under a new version, inflating rollout
+staleness accounting and making monitoring believe the model moved.
+
+The driver now ORs the per-rollout weights_dirty fact (from the
+TrainRolloutReport each trainer rank returns) over the publish
+interval and only syncs generation + publishes when at least one real
+optimizer update happened; the flag resets after a publish. Anything
+that is not an explicit all-rank weights_dirty=False verdict counts as
+dirty (missing attribute, debug paths, critic-only warmup rollouts),
+so behavior is unchanged except for provable all-skip intervals.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ train_async.py | 61 +++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 55 insertions(+), 6 deletions(-)
+
+diff --git a/train_async.py b/train_async.py
+index fd6b9614d..832c3fe95 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -18,6 +18,26 @@ from miles.utils.tracking_utils.tracking import finish_tracking, init_tracking
+ logger = logging.getLogger(__name__)
+ 
+ 
++def _any_weights_dirty(train_results) -> bool:
++    """[rh2-integration] Did this train call possibly change the weights?
++
++    ``actor_model.train`` gathers one ``TrainRolloutReport`` per trainer rank
++    (a str subclass carrying ``weights_dirty``). ``weights_dirty=False`` is
++    only reported when *every* optimizer step of the rollout was a
++    zero-signal skip (exactly-zero global gradient), i.e. the weights are
++    provably unchanged. Anything that is not an explicit all-rank
++    weights_dirty=False verdict counts as dirty: results lacking the
++    attribute (debug paths, older return types) default to True, and a
++    missing/empty result list (e.g. a critic-only warmup rollout that never
++    trained the actor) also returns True -- the historical "publish on
++    interval" behavior is preserved for every case except a provable
++    all-skip.
++    """
++    if not train_results:
++        return True
++    return any(getattr(result, "weights_dirty", True) for result in train_results)
++
++
+ # The framework supports other asynchronous approaches such as fully async (see miles/rollout/fully_async_rollout.py).
+ async def train(args):
+     assert not args.colocate, "Colocation is not supported for async training."
+@@ -70,6 +90,10 @@ async def train(args):
+             await model.offload()
+ 
+     # async train loop.
++    # [rh2-integration] OR-accumulator over one publish interval: True as soon
++    # as any rollout in the interval possibly applied a real optimizer update.
++    # Reset only after an actual weight publish.
++    weights_dirty_since_publish = False
+     rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)
+     for rollout_id in range(args.start_rollout_id, args.num_rollout):
+         # Sync the last generation
+@@ -80,16 +104,24 @@ async def train(args):
+         if rollout_id + 1 < args.num_rollout:
+             rollout_data_next_future = rollout_manager.generate.remote(rollout_id + 1)
+ 
++        # [rh2-integration] Keep the actor train results: they carry the
++        # per-rollout weights_dirty fact used to gate weight publishing.
++        # Rollouts without an actor train (critic-only warmup) stay None and
++        # conservatively count as dirty via _any_weights_dirty's default.
++        actor_train_results = None
+         if args.use_critic:
+             values = await critic_model.train(rollout_id, rollout_data_curr_ref)
+             if args.offload_train:
+                 await critic_model.offload()
+             if rollout_id >= args.num_critic_only_steps:
+-                await actor_model.train(rollout_id, rollout_data_curr_ref, external_data=values)
++                actor_train_results = await actor_model.train(
++                    rollout_id, rollout_data_curr_ref, external_data=values
++                )
+                 if args.offload_train:
+                     await actor_model.offload()
+         else:
+-            await actor_model.train(rollout_id, rollout_data_curr_ref)
++            actor_train_results = await actor_model.train(rollout_id, rollout_data_curr_ref)
++        weights_dirty_since_publish |= _any_weights_dirty(actor_train_results)
+         remove_rollout_data_refs(args, rollout_data_curr_ref)
+ 
+         external_save = args.save_trigger_sentinel is not None and os.path.exists(args.save_trigger_sentinel)
+@@ -105,10 +137,27 @@ async def train(args):
+                 os.remove(args.save_trigger_sentinel)
+ 
+         if (rollout_id + 1) % args.update_weights_interval == 0:
+-            # sync generate before update weights to prevent update weight in the middle of generation
+-            rollout_data_curr_ref = (await x) if (x := rollout_data_next_future) is not None else None
+-            rollout_data_next_future = None
+-            await actor_model.update_weights(rollout_id=rollout_id)
++            # [rh2-integration] Publish only when at least one real optimizer
++            # update happened since the last publish. If every step in the
++            # interval was a zero-signal skip, the parameters are bit-identical
++            # to the last published version: re-publishing would only increment
++            # weight_version, inflating rollout staleness accounting and making
++            # monitoring believe the model moved. Skipping the publish also
++            # skips the generation sync, which is exactly the behavior of a
++            # non-publish rollout.
++            if weights_dirty_since_publish:
++                # sync generate before update weights to prevent update weight in the middle of generation
++                rollout_data_curr_ref = (await x) if (x := rollout_data_next_future) is not None else None
++                rollout_data_next_future = None
++                await actor_model.update_weights(rollout_id=rollout_id)
++                weights_dirty_since_publish = False
++            else:
++                logger.info(
++                    "skipping weight publish at rollout_id=%d: every optimizer step since the "
++                    "last publish was a zero-signal skip (weights unchanged, weight_version not "
++                    "incremented)",
++                    rollout_id,
++                )
+ 
+         if should_run_periodic_action(rollout_id, args.eval_interval, num_rollout_per_epoch, args.num_rollout):
+             await eval_dispatcher.dispatch(rollout_id, force=rollout_id == args.num_rollout - 1)
+-- 
+2.50.1 (Apple Git-155)
+

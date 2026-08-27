@@ -18,10 +18,13 @@ dispatcher/megatron 缩放链的对拍见 test_train_seam_metamorphic.py。
 - 区间外 token 梯度**精确**为零（backward 后逐位 == 0 断言,非 allclose）;
 - target∉support 即炸（C2,gather 前;B5:检查在 CPU 侧完成,加速器张量照常工作）;
 - denominator 语义按预注册断言（provenance_tokens,与标量权威常量同源）;
-- accepted=0 → FaithfulDisZeroAcceptedStop（B6 spike fail-stop,reducer 前抛出）;
+- accepted=0 → **零贡献 microbatch,不抛异常**（F2,取代 B6 fail-stop）：
+  记 dis_zero_contribution_microbatch=1,返回带 autograd 图的精确零 loss,
+  backward 后逐位梯度精确为零;全局零信号判定归 miles train_one_step 的
+  optimizer-step 边界（见 test_train_seam_metamorphic.py 的 F2 区段）;
 - fail-closed 面：replay 关闭/calculate_per_token_loss/缺 wire 字段/缺
   rollout_log_probs/缺或矛盾 rollout_mask_sums/非有限输入/loss_mask 非 0/1/
-  mask 长度错位。
+  mask 长度错位——数据损坏类**不因 F2 降级**,仍然 fail-stop。
 
 单进程 CPU 形态：ParallelState 全 trivial group（上游 loss_test_utils
 make_parallel_state 同款）,true_on_policy_mode=True 走全词表 log_softmax
@@ -238,6 +241,7 @@ def test_loss_matches_execution_reference(dis):
     assert metrics["dis_microbatch_provenance_tokens"].item() == 6
     assert metrics["dis_accepted_tokens"].item() == 3
     assert metrics["dis_rejected_tokens"].item() == 3
+    assert metrics["dis_zero_contribution_microbatch"].item() == 0.0  # 正常批不计零贡献
     assert metrics["loss"].item() == pytest.approx(partial_sum, rel=1e-9)
 
 
@@ -322,35 +326,111 @@ def test_target_not_in_support_raises_before_gather(dis):
 
 
 # ---------------------------------------------------------------------------
-# B6：accepted=0 fail-stop（reducer 前抛出,optimizer 不可达）
+# F2：accepted=0 = 零贡献 microbatch（不抛异常;带 autograd 图的精确零 loss）
 # ---------------------------------------------------------------------------
 
 
-def test_zero_provenance_batch_fail_stops_before_reducer(dis):
-    """全 microbatch loss_mask=0：accepted=0 → fail-stop（不再静默出零 loss）。"""
+def test_zero_provenance_batch_yields_connected_zero_loss(dis):
+    """全 microbatch loss_mask=0：accepted=0 → 零贡献指标 + 零 loss 继续。
+
+    注意 rollout_mask_sums 保持原值（execution 分母来自整 rollout 的
+    sibling 总和,本 microbatch 恰好不含 provenance 位是合法切片形态）。
+    """
     torch = dis.torch
     args = _mk_args()
-    batch, logits = _mk_case(torch)
-    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    batch, logits_data = _mk_case(torch)
+    logits = logits_data.clone().requires_grad_(True)
+    _fill_behavior_from_current(torch, dis, args, batch, logits_data)
     batch["loss_masks"] = [torch.zeros_like(m) for m in batch["loss_masks"]]
 
-    with pytest.raises(dis.module.FaithfulDisZeroAcceptedStop) as exc:
-        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
-    assert exc.value.reason_code == "dis_zero_accepted_fail_stop"
-    assert isinstance(exc.value, dis.module.FaithfulDisLossError)  # 子类关系可精确 except
+    loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
+    assert loss.item() == 0.0
+    assert loss.grad_fn is not None  # autograd 图连接:megatron backward 照常可调
+    assert metrics["dis_accepted_tokens"].item() == 0
+    assert metrics["dis_zero_contribution_microbatch"].item() == 1.0
+    loss.backward()
+    assert logits.grad is not None
+    assert bool((logits.grad == 0.0).all())  # 贡献精确为零(乘 0),不是数值近似小
 
 
-def test_all_rejected_batch_fail_stops_before_reducer(dis):
-    """provenance>0 但全部落在信任区间外：accepted=0 → fail-stop（B6 主场景）。"""
+def test_all_rejected_batch_yields_connected_zero_loss(dis):
+    """provenance>0 但全部落在信任区间外：accepted=0 → 零贡献继续（F2 主场景,
+    原 B6 fail-stop 的翻转——per-microbatch 全拒不再有权威停机,全局判定在
+    train_one_step 的 optimizer-step 边界）。"""
     torch = dis.torch
     args = _mk_args()
-    batch, logits = _mk_case(torch)
-    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    batch, logits_data = _mk_case(torch)
+    logits = logits_data.clone().requires_grad_(True)
+    _fill_behavior_from_current(torch, dis, args, batch, logits_data)
     # behavior 整体 -10：log_ratio 全部 ≈ +10,远超信任上界 log(1+ε_h)
     batch["rollout_log_probs"] = [b - 10.0 for b in batch["rollout_log_probs"]]
 
-    with pytest.raises(dis.module.FaithfulDisZeroAcceptedStop):
-        dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
+    loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
+    assert loss.item() == 0.0
+    assert loss.grad_fn is not None
+    assert metrics["dis_microbatch_provenance_tokens"].item() == 6
+    assert metrics["dis_accepted_tokens"].item() == 0
+    assert metrics["dis_rejected_tokens"].item() == 6
+    assert metrics["dis_zero_contribution_microbatch"].item() == 1.0
+    loss.backward()
+    assert bool((logits.grad == 0.0).all())
+
+
+def test_accepted_token_with_zero_advantage_no_gradient(dis):
+    """F2 规格 §7 用例 C 的指标级对拍（seam 级 SKIPPED 判定在
+    test_train_seam_metamorphic.py::test_f2_case_c_*）：advantage=[-1,0,+1],
+    非零 advantage 的 token 全部落在信任区间外,仅 advantage=0 的 token 在
+    区间内——dis_accepted_tokens==1 > 0,但 loss 与逐位梯度**精确**为零,
+    且不算零贡献 microbatch（accepted>0）。这就是"accepted>0 不能证明存在
+    梯度"的反例:全局判定必须看真实累计梯度,不能用 accepted 计数做代理。"""
+    torch = dis.torch
+    from miles.backends.training_utils.loss_hub.logit_processors import (
+        get_log_probs_and_entropy,
+    )
+    from miles.backends.training_utils.sampling_mask import get_rollout_sampling_masks
+
+    args = _mk_args()
+    supports = [[8, 3], [9, 2], [10, 11, 12]]  # 全部多元素支持集（排除单例干扰）
+    ids, offsets = _csr(supports)
+    tokens = torch.tensor([1, 2, 8, 9, 10], dtype=torch.long)
+    g = torch.Generator().manual_seed(11)
+    logits_data = torch.randn(1, 5, VOCAB, generator=g, dtype=torch.float64)
+    batch = {
+        "unconcat_tokens": [tokens],
+        "total_lengths": [5],
+        "response_lengths": [3],
+        "loss_masks": [torch.tensor([1, 1, 1], dtype=torch.long)],
+        "advantages": [torch.tensor([-1.0, 0.0, 1.0], dtype=torch.float64)],
+        "rollout_sampling_mask_ids": [ids],
+        "rollout_sampling_mask_offsets": [offsets],
+        "rollout_mask_sums": torch.tensor([3.0], dtype=torch.float32),
+    }
+    with torch.no_grad():
+        current = get_log_probs_and_entropy(
+            logits_data,
+            args=args,
+            unconcat_tokens=[tokens],
+            total_lengths=[5],
+            response_lengths=[3],
+            with_entropy=False,
+            rollout_sampling_mask=get_rollout_sampling_masks(batch),
+        )["log_probs"][0]
+    # 信任区间 (0.2,4.0) 开区间 ⇔ log 界约 (-1.609,1.386)：out-high/in/out-low
+    batch["rollout_log_probs"] = [current - torch.tensor([2.0, 0.0, -2.0], dtype=torch.float64)]
+
+    logits = logits_data.clone().requires_grad_(True)
+    loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
+    assert metrics["dis_accepted_tokens"].item() == 1  # accepted > 0
+    assert metrics["dis_zero_contribution_microbatch"].item() == 0.0
+    assert loss.item() == 0.0  # 但真实训练信号为零
+    loss.backward()
+    assert bool((logits.grad == 0.0).all())  # 逐位精确零梯度
 
 
 # ---------------------------------------------------------------------------

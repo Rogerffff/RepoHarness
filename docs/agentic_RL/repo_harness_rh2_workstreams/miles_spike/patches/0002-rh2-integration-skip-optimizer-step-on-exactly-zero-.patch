@@ -1,0 +1,363 @@
+From 620aa69247696e75ab25ea27c9c5f74012209ccf Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Thu, 27 Aug 2026 13:34:14 +0800
+Subject: [PATCH 2/3] [rh2-integration] skip optimizer step on exactly-zero
+ global gradient
+
+After all microbatch forward/backward passes and gradient reductions,
+train_one_step now scans the accumulated main_grad/grad for local
+any_nonzero/all_finite facts and MAX-reduces them across all trainer
+ranks so every rank reaches the same verdict. An exactly-zero global
+gradient (no epsilon; NaN/Inf compare non-equal to zero so corruption
+can never be masked) yields the new non-fatal SKIPPED_ZERO_SIGNAL
+outcome: the batch is consumed and grads are cleared, but
+optimizer.step()/scheduler.step() are skipped so parameters,
+exp_avg/exp_avg_sq and the LR schedule stay untouched (AdamW weight
+decay would otherwise mutate weights with no training signal).
+Non-zero finite gradients and the pre-existing found-inf /
+check_for_nan error paths are unchanged; multi-LoRA and
+debug_disable_optimizer are excluded from the scan.
+
+train() now returns a TrainRolloutReport aggregated over all optimizer
+steps of the call (applied_optimizer_steps / skipped_zero_signal_steps
+/ weights_dirty): with several steps per call, only the last outcome
+cannot tell the driver whether any real update happened. The report is
+a str subclass carrying the rollout-level outcome as its value, so
+every existing `== TrainStepOutcome.X` comparison (actor.py, FT group)
+keeps working without modification and instances survive Ray pickling.
+
+A configurable circuit breaker (args.max_consecutive_zero_signal_steps,
+injectable via --custom-config-path until a CLI flag exists; <=0
+disables) stops the job with diagnostics after N consecutive
+zero-signal steps, counted per optimizer instance.
+
+Scheduling, staleness and queue semantics are untouched.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ miles/backends/megatron_utils/ft/types.py |  88 ++++++++++++
+ miles/backends/megatron_utils/model.py    | 159 +++++++++++++++++++++-
+ 2 files changed, 243 insertions(+), 4 deletions(-)
+
+diff --git a/miles/backends/megatron_utils/ft/types.py b/miles/backends/megatron_utils/ft/types.py
+index 8015d0daf..80af7f5bd 100644
+--- a/miles/backends/megatron_utils/ft/types.py
++++ b/miles/backends/megatron_utils/ft/types.py
+@@ -1,3 +1,4 @@
++from collections.abc import Sequence
+ from enum import auto
+ 
+ try:
+@@ -9,3 +10,90 @@ except ImportError:
+ class TrainStepOutcome(StrEnum):
+     NORMAL = auto()
+     DISCARDED_SHOULD_RETRY = auto()
++    # [rh2-integration] Zero-signal skip (FA-4 §4 semantics): the fully reduced
++    # gradient of this optimizer step is exactly zero on every trainer rank, so
++    # optimizer.step()/scheduler.step() were skipped to keep parameters and
++    # optimizer state (AdamW weight decay / momentum would otherwise mutate
++    # them with no training signal). The batch is consumed; the step is
++    # non-fatal and reported through TrainRolloutReport so the driver can also
++    # skip weight publishing (weight_version must not grow without an update).
++    SKIPPED_ZERO_SIGNAL = auto()
++
++
++class TrainRolloutReport(str):
++    """[rh2-integration] Aggregated result of one ``train()`` call.
++
++    One ``train()`` call can contain several optimizer steps (e.g. 64 samples
++    with a global batch size of 32 gives two steps), so a single final-step
++    ``TrainStepOutcome`` cannot tell the driver whether any real parameter
++    update happened. This report carries the per-rollout facts.
++
++    It subclasses ``str`` with the rollout-level outcome as its string value,
++    so every existing call site that compares the ``train()`` return value
++    against ``TrainStepOutcome`` members (a StrEnum) keeps working unchanged
++    (``report == TrainStepOutcome.NORMAL`` etc.), while new consumers (the
++    async driver's weight-publish gate) read attributes. Instances survive
++    Ray/cloudpickle transport with attributes intact (``__getnewargs__``
++    restores the string value, the instance ``__dict__`` restores the rest);
++    this module stays import-light so the driver process can unpickle it
++    without pulling in megatron.
++
++    Rollout-level string value:
++      - ``discarded_should_retry`` if any step was discarded (only possible
++        for single-step indep-dp rollouts; unchanged semantics);
++      - ``skipped_zero_signal`` only if *every* optimizer step was a
++        zero-signal skip (weights provably unchanged since the call started);
++      - ``normal`` otherwise: a mixed rollout (one skip + one applied step)
++        must still count as NORMAL so weight backup/publish paths run.
++    """
++
++    applied_optimizer_steps: int
++    skipped_zero_signal_steps: int
++    weights_dirty: bool
++
++    def __new__(
++        cls,
++        outcome_value: str,
++        *,
++        applied_optimizer_steps: int = 0,
++        skipped_zero_signal_steps: int = 0,
++        weights_dirty: bool = True,
++    ) -> "TrainRolloutReport":
++        self = str.__new__(cls, outcome_value)
++        self.applied_optimizer_steps = applied_optimizer_steps
++        self.skipped_zero_signal_steps = skipped_zero_signal_steps
++        self.weights_dirty = weights_dirty
++        return self
++
++    def __getnewargs__(self) -> tuple[str]:
++        # Pickle support: the string value is a __new__ argument (str is
++        # immutable); the attribute dict is restored separately as state.
++        return (str(self),)
++
++    @classmethod
++    def from_step_outcomes(cls, step_outcomes: Sequence[TrainStepOutcome]) -> "TrainRolloutReport":
++        all_skipped = bool(step_outcomes) and all(
++            o == TrainStepOutcome.SKIPPED_ZERO_SIGNAL for o in step_outcomes
++        )
++        if any(o == TrainStepOutcome.DISCARDED_SHOULD_RETRY for o in step_outcomes):
++            value = TrainStepOutcome.DISCARDED_SHOULD_RETRY
++        elif all_skipped:
++            value = TrainStepOutcome.SKIPPED_ZERO_SIGNAL
++        else:
++            value = TrainStepOutcome.NORMAL
++        # ``applied_optimizer_steps`` counts steps that went down the normal
++        # (non-skipped, non-discarded) path. Pre-existing conflation is kept
++        # on purpose: a found-inf invalid step or debug_disable_optimizer run
++        # applies no real optimizer.step() yet still counts as NORMAL, exactly
++        # as before this report existed. ``weights_dirty`` is therefore
++        # conservative: it is False only when the rollout *provably* changed
++        # nothing (every step was a zero-signal skip); any other case keeps
++        # the historical "publish on interval" behavior.
++        return cls(
++            str(value),
++            applied_optimizer_steps=sum(1 for o in step_outcomes if o == TrainStepOutcome.NORMAL),
++            skipped_zero_signal_steps=sum(
++                1 for o in step_outcomes if o == TrainStepOutcome.SKIPPED_ZERO_SIGNAL
++            ),
++            weights_dirty=not all_skipped,
++        )
+diff --git a/miles/backends/megatron_utils/model.py b/miles/backends/megatron_utils/model.py
+index ac8ed70a6..0a324f84e 100644
+--- a/miles/backends/megatron_utils/model.py
++++ b/miles/backends/megatron_utils/model.py
+@@ -26,7 +26,7 @@ from megatron.training.global_vars import get_args
+ from megatron.training.training import get_model
+ 
+ from miles.backends.megatron_utils.ft.indep_dp import allreduce_grads_and_losses_across_replicas
+-from miles.backends.megatron_utils.ft.types import TrainStepOutcome
++from miles.backends.megatron_utils.ft.types import TrainRolloutReport, TrainStepOutcome
+ from miles.backends.megatron_utils.local_weight_checksum import dump_local_weight_checksums
+ from miles.backends.training_utils.sampling_mask import get_rollout_sampling_masks
+ from miles.utils.audit_utils.witness.allocator import WitnessInfo
+@@ -414,6 +414,105 @@ def _zero_grads(model: Sequence[DDP], optimizer: MegatronOptimizer | None, disab
+         optimizer.zero_grad()
+ 
+ 
++# --- [rh2-integration] global zero-signal detection (FA-4 §4 / F2) ----------
++
++
++def _scan_reduced_grads(model: Sequence[DDP]) -> tuple[bool, bool]:
++    """Scan this rank's fully reduced accumulated gradients.
++
++    Called only after every microbatch forward/backward and the gradient
++    reduction (DP allreduce via finalize_model_grads; indep-dp replica
++    allreduce when enabled) are complete, so ``main_grad``/``grad`` holds the
++    final intended training gradient of this optimizer step. Reads
++    ``main_grad`` first (the fp32 accumulation buffer Megatron DDP uses) and
++    falls back to ``grad``.
++
++    Returns ``(any_nonzero, all_finite)``. Note NaN/Inf compare non-equal to
++    zero, so a corrupted gradient always reports ``any_nonzero=True`` -- the
++    zero-signal skip can therefore never mask non-finite values; those keep
++    flowing into the pre-existing found-inf / check_for_nan_in_loss_and_grad
++    error handling unchanged.
++    """
++    any_nonzero = False
++    all_finite = True
++    for model_chunk in model:
++        for param in model_chunk.parameters():
++            if not param.requires_grad:
++                continue
++            grad = getattr(param, "main_grad", None)
++            if grad is None:
++                grad = param.grad
++            if grad is None:
++                continue
++            if not bool(torch.isfinite(grad).all()):
++                all_finite = False
++                any_nonzero = True  # non-finite is by definition not a zero signal
++            elif not any_nonzero and bool((grad != 0).any()):
++                any_nonzero = True
++    return any_nonzero, all_finite
++
++
++def _sync_grad_signal_flags(local_any_nonzero: bool, local_all_finite: bool) -> tuple[bool, bool]:
++    """All-reduce the two local gradient facts into one global verdict.
++
++    Every trainer rank (TP/PP/EP/DP, and indep-dp replicas when present --
++    they all live in the default process group) must reach the *same* step
++    outcome: if some ranks called optimizer.step() while others skipped, the
++    optimizer's own collectives would deadlock or diverge. MAX-reduce over
++    ``[any_nonzero, any_nonfinite]`` gives that agreement without any new
++    coordination framework.
++    """
++    dist = torch.distributed
++    if not (dist.is_available() and dist.is_initialized()) or dist.get_world_size() == 1:
++        return local_any_nonzero, local_all_finite
++    device = (
++        torch.device("cuda", torch.cuda.current_device())
++        if torch.cuda.is_available()
++        else torch.device("cpu")
++    )
++    flags = torch.tensor(
++        [1.0 if local_any_nonzero else 0.0, 0.0 if local_all_finite else 1.0],
++        dtype=torch.float32,
++        device=device,
++    )
++    dist.all_reduce(flags, op=dist.ReduceOp.MAX)
++    return bool(flags[0].item() > 0.0), not bool(flags[1].item() > 0.0)
++
++
++# One counter per optimizer instance (actor and critic optimizers are distinct
++# objects, so they are tracked independently; the counter naturally persists
++# across train_one_step calls for the lifetime of the trainer process).
++_ZERO_SIGNAL_FUSE_ATTR = "_miles_consecutive_zero_signal_steps"
++
++
++def _bump_zero_signal_fuse(args: Namespace, optimizer: MegatronOptimizer, rollout_id: int, step_id: int) -> None:
++    """Count consecutive zero-signal skips and fail loudly at the threshold.
++
++    A single zero-signal step is legal (skip and continue), but endless
++    skipping burns GPU while looking like training progress, so a
++    configurable circuit breaker stops the job with diagnostics instead.
++    ``args.max_consecutive_zero_signal_steps`` <= 0 or unset disables the
++    fuse; until a first-class CLI argument exists upstream the value can be
++    injected through ``--custom-config-path`` (arbitrary key -> setattr).
++    """
++    count = getattr(optimizer, _ZERO_SIGNAL_FUSE_ATTR, 0) + 1
++    setattr(optimizer, _ZERO_SIGNAL_FUSE_ATTR, count)
++    threshold = getattr(args, "max_consecutive_zero_signal_steps", 0) or 0
++    if threshold > 0 and count >= threshold:
++        raise RuntimeError(
++            f"zero-signal fuse tripped: {count} consecutive optimizer steps had an exactly-zero "
++            f"global training gradient (threshold={threshold}, latest rollout_id={rollout_id} "
++            f"step_id={step_id}). None of the skipped steps changed parameters, optimizer state, "
++            "or weight versions. Investigate upstream signal quality before resuming: dynamic "
++            "sampling accept rate, DIS trust-window rejection rate, rollout staleness, and "
++            "sampling-support width distribution."
++        )
++
++
++def _reset_zero_signal_fuse(optimizer: MegatronOptimizer) -> None:
++    setattr(optimizer, _ZERO_SIGNAL_FUSE_ATTR, 0)
++
++
+ def train_one_step(
+     args: Namespace,
+     rollout_id: int,
+@@ -607,7 +706,43 @@ def train_one_step(
+             outcome = TrainStepOutcome.DISCARDED_SHOULD_RETRY
+             valid_step = False
+ 
+-    if (not disable_optimizer) and (not multi_lora) and (not getattr(args, "check_for_nan_in_loss_and_grad", True)):
++    # [rh2-integration] Global zero-signal detection (FA-4 §4 / F2 semantics).
++    # All microbatch forward/backward passes and gradient reductions are done,
++    # so the accumulated gradient is the final fact for this optimizer step.
++    # If it is *exactly* zero on every trainer rank (e.g. all groups carried
++    # zero advantage, or every provenance token fell outside the DIS trust
++    # window), calling optimizer.step() would still mutate parameters through
++    # AdamW weight decay / momentum with no training signal. Semantics:
++    #   exactly zero everywhere -> SKIPPED_ZERO_SIGNAL: the batch is consumed,
++    #     gradients are cleared by the unconditional _zero_grads below, and
++    #     optimizer.step()/scheduler.step() are skipped so parameters,
++    #     exp_avg/exp_avg_sq and the LR schedule stay untouched; the driver
++    #     uses the aggregated TrainRolloutReport to also skip weight publish.
++    #   non-zero and finite -> NORMAL (unchanged path).
++    #   non-finite -> unchanged pre-existing error handling (found-inf /
++    #     check_for_nan_in_loss_and_grad); the scan never downgrades data
++    #     corruption into a silent skip (NaN/Inf report any_nonzero=True).
++    # "Exactly zero" is deliberate -- no epsilon, so a tiny-but-real gradient
++    # can never be misclassified. Multi-LoRA retains grads across train calls
++    # with per-slot stepping and keeps its own semantics, so it is excluded.
++    if outcome == TrainStepOutcome.NORMAL and (not disable_optimizer) and (not multi_lora):
++        global_any_nonzero, _global_all_finite = _sync_grad_signal_flags(*_scan_reduced_grads(model))
++        if not global_any_nonzero:
++            outcome = TrainStepOutcome.SKIPPED_ZERO_SIGNAL
++            valid_step = False
++            _bump_zero_signal_fuse(args, optimizer, rollout_id, step_id)
++        else:
++            _reset_zero_signal_fuse(optimizer)
++
++    # [rh2-integration] The SKIPPED_ZERO_SIGNAL guard is required: with an
++    # all-zero finite gradient this block would recompute valid_step back to
++    # True (grad_norm == 0.0 is neither NaN nor Inf) and un-skip the step.
++    if (
++        (not disable_optimizer)
++        and (not multi_lora)
++        and (not getattr(args, "check_for_nan_in_loss_and_grad", True))
++        and outcome != TrainStepOutcome.SKIPPED_ZERO_SIGNAL
++    ):
+         found_inf_flag = optimizer.prepare_grads()
+         if found_inf_flag:
+             valid_step = False
+@@ -701,7 +836,7 @@ def train(
+     witness_info: WitnessInfo | None,
+     attempt: int,
+     ft_test_action_executor: FTTestActionActorExecutor | None = None,
+-) -> TrainStepOutcome:
++) -> TrainRolloutReport:
+     """Run training over a rollout consisting of multiple steps.
+ 
+     The model is switched to train mode, training hooks are configured, and
+@@ -715,6 +850,17 @@ def train(
+         data_iterator (Sequence[DataIterator]): Iterable(s) yielding training batches.
+         num_microbatches (Sequence[int]): Microbatches per step in the rollout.
+         num_rollouts (Sequence[int]): Rollout count per step (total across DP).
++
++    Returns:
++        TrainRolloutReport: [rh2-integration] str-compatible aggregate over
++        all optimizer steps of this call (a rollout may contain several).
++        Existing ``== TrainStepOutcome.X`` comparisons keep working; the
++        async driver additionally reads ``weights_dirty`` /
++        ``applied_optimizer_steps`` / ``skipped_zero_signal_steps`` to decide
++        whether publishing weights is warranted. Returning only the last
++        step's outcome would be wrong: with e.g. two optimizer steps per
++        call, "step 0 applied, step 1 zero-signal-skipped" must still count
++        as weights_dirty=True.
+     """
+     parallel_state = get_parallel_state()
+     args = get_args()
+@@ -791,6 +937,10 @@ def train(
+     if parallel_state.indep_dp.size > 1:
+         assert num_steps_per_rollout == 1, "indep_dp is incompatible with num_steps_per_rollout>1 currently"
+ 
++    # [rh2-integration] Collect every step's outcome (not just the last one)
++    # so the returned report can state whether any real update happened.
++    step_outcomes: list[TrainStepOutcome] = []
++
+     # Run training iterations till done.
+     for step_id in range(num_steps_per_rollout):
+ 
+@@ -809,6 +959,7 @@ def train(
+             attempt=attempt,
+             ft_test_action_executor=ft_test_action_executor,
+         )
++        step_outcomes.append(train_step_outcome)
+ 
+         if step_id == 0:
+             # Enable forward pre-hook after training step has successfully run. All subsequent
+@@ -886,7 +1037,7 @@ def train(
+     if pre_hook_enabled:
+         disable_forward_pre_hook(model)
+ 
+-    return train_step_outcome
++    return TrainRolloutReport.from_step_outcomes(step_outcomes)
+ 
+ 
+ def save(
+-- 
+2.50.1 (Apple Git-155)
+

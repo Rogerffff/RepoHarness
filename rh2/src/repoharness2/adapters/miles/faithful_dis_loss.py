@@ -81,40 +81,42 @@ execution 的 token 扁平平均）已删除——那是 B4 指出的真算法 b
   （`sampling_mask.py` _to_owned_cpu_integer_tensor）,而 response tokens
   在训练设备上——检查在 **CPU 侧**完成（response tokens 是小整型张量,
   搬 CPU 的代价可忽略;把 CSR 搬 GPU 反而每 microbatch 都要拷大数组）。
-- **全零 accepted token = fail-stop（R6-ext B6,spike 级）**：本 microbatch
-  accepted（信任区间内 provenance token）为 0 时抛
-  ``FaithfulDisZeroAcceptedStop``——异常沿 miles 链路无捕获传播
-  （losses.py -> loss.py dispatcher -> megatron forward_backward ->
-  `model.py` train_one_step（optimizer.step 之前）-> `model.train` ->
-  `actor.py`,全链无 try/except,integration base 已核）,job 在 optimizer
-  step 前终止,权重/optimizer state/scheduler/weight version 都不前进。
-  **显式 gate 豁免候选（GPU 前收口 B6 半收口,豁免待 owner 批准）**：
-  触发粒度是 **microbatch** 而非全局 step,即**可能误停**——这与 B6 原
-  验收"不得误停"正面冲突,不作"B6 已关闭"记账,以 spike-log 的 gate
-  豁免候选条目为准;正式首训前按 FA-4 §4 收敛时相关专项测试预期翻转。
-  有意不建跨 microbatch 协议（全局判定需要跨 microbatch/DP 的第二条归约
-  通道,spike 级不值得）：宁可误停,不让 AdamW weight decay 在零梯度下
-  静默改参。正式首训前收敛为 FA-4 §4 的 skip+计数+熔断语义
-  （05-fully-async-execution-plan.md）。
+- **全零 accepted token = 零贡献 microbatch,继续（F2,取代 B6 临时
+  fail-stop）**：本 microbatch accepted（信任区间内 provenance token）为 0
+  时**不再抛异常**——记 ``dis_zero_contribution_microbatch=1`` 指标,照常
+  返回逐 token 分子（f(r) 权重全为 0,数值与梯度都精确为零,但乘法保留
+  autograd 图连接）,让 megatron 完成本 microbatch 的 backward 与全部
+  pipeline/collective 调用。理由（codex 零信号建议 §3）：microbatch 只是
+  梯度累积切片,不是参数更新边界——"某 microbatch 全拒、其它 microbatch
+  有效"是合法状态,per-microbatch 停机会误停有效的 global step。
+  "零梯度不得静默走 AdamW"（B6 的真实风险:weight decay/momentum 在零梯度
+  下仍改参）改由 **miles train_one_step 的全局 optimizer-step 边界**兜底：
+  归约完成后扫描累计梯度,全局精确为零 → SKIPPED_ZERO_SIGNAL（不
+  optimizer.step/不 scheduler.step/不发布权重/不增 weight_version,batch
+  视为已消费）,并带连续跳过熔断（rh2-integration-v2 分支 model.py,
+  commit 620aa6924）。数据损坏类（NaN/Inf、target∉support、长度错位、
+  缺字段）**保持 fail-stop 不降级**,见下面 fail-closed 面。
 
-- **实验 FT trainer 锁定（B6 半收口配套,fail-closed）**：
+- **实验 FT trainer 锁定（fail-closed,保留）**：
   ``MILES_EXPERIMENTAL_FT_TRAINER`` 开启时（miles/utils/environ.py
   ``enable_experimental_ft_trainer``,placement_group 的
   ``_select_train_group_class`` 据此选 miles/ray/train/group.py 的实验
-  RayTrainGroup）本函数直接拒绝。理由：上面整段 fail-stop 语义依赖
-  "异常直达、job 在 optimizer 前终止";而实验 FT trainer 的 ``train()``
-  用 ``_execute_all_alive_and_catch`` 捕获 cell 异常并
-  ``retry(_fn, max_attempts=30)`` 盲重试,部分 cell 失败、其余 normal 时
-  甚至判 no_retry 继续前进（group.py ``_check_train_one_attempt``）——
-  fail-stop 会被吞掉或退化成 30 次重试后的迟滞失败。spike 拓扑锁定默认
-  actor group（miles/ray/actor_group.py,异常无捕获直达 optimizer 之前）。
+  RayTrainGroup）本函数直接拒绝。理由：数据损坏类 fail-stop（本模块全部
+  FaithfulDisLossError 拒绝路径）依赖"异常直达、job 在 optimizer 前终止";
+  而实验 FT trainer 的 ``train()`` 用 ``_execute_all_alive_and_catch``
+  捕获 cell 异常并 ``retry(_fn, max_attempts=30)`` 盲重试,部分 cell 失败、
+  其余 normal 时甚至判 no_retry 继续前进（group.py
+  ``_check_train_one_attempt``）——fail-stop 会被吞掉或退化成 30 次重试后
+  的迟滞失败。spike 拓扑锁定默认 actor group（miles/ray/actor_group.py,
+  异常无捕获直达 optimizer 之前）。
 
 fail-closed 面（任一违反即抛错,样本不进梯度）：实验 FT trainer 开启、
 replay 未开启
 （rollout_top_p>=1.0）、calculate_per_token_loss、缺 rollout_sampling_mask
 wire 字段、缺 rollout_log_probs、缺/矛盾 rollout_mask_sums、mask 覆盖数
 !=response 长度、loss_mask 非 0/1、各列长度不一致、logp/advantage 非有限、
-CP>1、target∉support、accepted=0（fail-stop）。
+CP>1、target∉support。注意 accepted=0 **不在**此面里（F2:零贡献指标 +
+零 loss 继续,全局零信号由 train_one_step 的 optimizer-step 边界处理）。
 """
 
 from __future__ import annotations
@@ -139,7 +141,6 @@ from repoharness2.training.faithful_dis import (
 __all__ = [
     "DENOMINATOR_SEMANTICS",
     "FaithfulDisLossError",
-    "FaithfulDisZeroAcceptedStop",
     "faithful_dis_loss_function",
 ]
 
@@ -158,26 +159,6 @@ class FaithfulDisLossError(RuntimeError):
     def __init__(self, reason_code: str, message: str) -> None:
         self.reason_code = reason_code
         super().__init__(f"[{reason_code}] {message}")
-
-
-class FaithfulDisZeroAcceptedStop(FaithfulDisLossError):
-    """B6 spike 级 fail-stop：microbatch accepted token=0,在 optimizer 前终止。
-
-    单列子类（而不是只用 reason_code）是为了让训练循环侧将来实现 FA-4 §4
-    skip+熔断时可以精确 except 这一类,不误捕其它 fail-closed 错误。
-
-    **显式 gate 豁免候选（豁免待 owner 批准,GPU 前收口 B6 半收口）**：
-    判定粒度是 **microbatch**,不是全局 step——"某个 microbatch 全拒、
-    全局 accepted>0" 也会触发,即**可能误停**,与 B6 原验收"不得误停"
-    冲突。该偏差有意保留（不建跨 microbatch 归约协议）,以 spike-log 的
-    豁免候选条目记账,不作 B6 已关闭;正式首训前按 FA-4 §4 收敛为
-    skip+计数+熔断。
-    """
-
-    REASON_CODE = "dis_zero_accepted_fail_stop"
-
-    def __init__(self, message: str) -> None:
-        super().__init__(self.REASON_CODE, message)
 
 
 def _assert_targets_in_support(sample_index: int, response_tokens: torch.Tensor, mask) -> None:
@@ -395,18 +376,15 @@ def faithful_dis_loss_function(
     accepted = int((in_trust & provenance_bool).sum().item())
     rejected = microbatch_provenance - accepted
 
-    # B6 spike 级 fail-stop：optimizer 前显式终止（粒度=microbatch,见 docstring）
-    if accepted == 0:
-        raise FaithfulDisZeroAcceptedStop(
-            f"本 microbatch accepted token=0（provenance={microbatch_provenance},"
-            "全部被 DIS 信任区间拒绝或无 provenance 位）——spike 阶段 fail-stop:"
-            "在 optimizer step 前终止,权重/optimizer/scheduler/weight version"
-            " 不前进（AdamW 的 weight decay 在零梯度下也会改参,不允许静默走"
-            " optimizer）。注意判定粒度是 microbatch 而非全局 step——本次停机"
-            "可能是误停（其它 microbatch 的全局 accepted 可能 >0）;这是显式"
-            " gate 豁免候选（豁免待 owner 批准,见 spike-log B6 半收口条目）,"
-            "正式首训前按 FA-4 §4 收敛为 skip+计数+熔断。"
-        )
+    # F2（取代 B6 per-microbatch fail-stop）：accepted=0 只记指标,不改控制流。
+    # 此时 f(r) 权重在全部 provenance 位上恰为 0,下面的逐 token 分子数值与
+    # 梯度都**精确**为零,但乘法保留 autograd 图——megatron 照常完成本
+    # microbatch 的 backward 与 pipeline/collective 调用（分布式训练里零贡献
+    # microbatch 不得提前退出,否则其它 rank 会在通信处挂起）。"全局是否零
+    # 信号"由 miles train_one_step 在归约完成后、optimizer 前统一判定
+    # （精确零 → SKIPPED_ZERO_SIGNAL,不 step/不发布/不增版本 + 连续跳过
+    # 熔断）,这里不再有权威。
+    zero_contribution = 1.0 if accepted == 0 else 0.0
 
     # 逐 token 分子（provenance 掩码与 execution 分母都由 miles reducer 施加;
     # 非 provenance 位数值有限（上面已断言）,reducer 乘 loss_mask=0 归零）
@@ -422,5 +400,8 @@ def faithful_dis_loss_function(
         "dis_microbatch_provenance_tokens": torch.tensor(float(microbatch_provenance), device=device),
         "dis_accepted_tokens": torch.tensor(float(accepted), device=device),
         "dis_rejected_tokens": torch.tensor(float(rejected), device=device),
+        # 聚合口径同上：aggregate_train_losses 跨 microbatch 求和 ÷num_rollouts,
+        # 因此聚合值 = 零贡献 microbatch 数 / num_rollouts（监控看非零即可）。
+        "dis_zero_contribution_microbatch": torch.tensor(zero_contribution, device=device),
     }
     return loss, metrics

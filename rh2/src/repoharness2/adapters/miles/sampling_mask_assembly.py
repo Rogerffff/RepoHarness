@@ -42,7 +42,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from repoharness2.adapters.slime.generate import _mask1_runs, _match_turns_to_runs
+from repoharness2.adapters.slime.generate import (
+    TurnIdentitySpan,
+    _mask1_runs,
+    _match_turns_to_runs,
+    _runs_from_identity_spans,
+)
 
 __all__ = [
     "ATTACHED_MASK_ATTR",
@@ -329,14 +334,20 @@ def assemble_leaf_sampling_mask(
     response_tokens: Sequence[int],
     loss_mask: Sequence[int],
     turns: Sequence[TurnSupport],
+    *,
+    identity_spans: Sequence[TurnIdentitySpan] | None = None,
 ) -> AssembledSamplingMask:
     """把各轮引擎支持集装配成叶链 response 的完整 CSR mask。
 
     步骤（每步的语义出处见模块 docstring）：
 
-    1. run<->turn 锚定：loss_mask=1 连续段必须被捕获轮的 output_ids 按序
-       逐位平铺（`_match_turns_to_runs`，与 top-p tape 回填同一实现——
-       掉落轮跳过，段无法平铺当场炸）；
+    1. run<->turn 锚定分两档（F1 身份制修复，与 backfill_leaf_sample 同款
+       双路径）：``identity_spans`` 非 None = 身份路径，归属由树侧身份
+       span 直取、token 相等降级为校验断言（`_runs_from_identity_spans`，
+       漂移 fail-closed；调用方保证 turns[i] 与 spans[i] 同轮）；None =
+       旧链，loss_mask=1 连续段必须被捕获轮的 output_ids 按序逐位平铺
+       （`_match_turns_to_runs`，与 top-p tape 回填同一实现——掉落轮
+       跳过，段无法平铺当场炸）；
     2. 采样位（mask=1）取该轮引擎支持集；防御性复检 response token ∈ 支持集
        （parse 层已按轮校验过 sampled∈support，这里按最终座标再核一次，
        防跨轮拼接错位）；
@@ -360,7 +371,14 @@ def assemble_leaf_sampling_mask(
 
     runs = _mask1_runs(list(loss_mask))
     try:
-        per_run, _used = _match_turns_to_runs(list(response_tokens), runs, list(turns))
+        if identity_spans is not None:
+            per_run, _used = _runs_from_identity_spans(
+                list(response_tokens), runs, list(turns), list(identity_spans)
+            )
+        else:
+            per_run, _used = _match_turns_to_runs(
+                list(response_tokens), runs, list(turns)
+            )
     except Exception as exc:  # SlimeBindingError：转成本模块错误类型，reason 保留
         raise SamplingMaskAssemblyError(
             "turns_vs_runs_mismatch",

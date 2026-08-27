@@ -53,13 +53,32 @@ def test_custom_config_sets_engine_sampling_mask_true(world):
     assert args.rh2_engine_sampling_mask is True
 
 
-def test_custom_config_carries_only_the_mask_flag(world):
-    """零扩张纪律：artifact 只承载这一个 key（多出的 key = 绕开评审的后门注入面）。"""
+def test_custom_config_sets_zero_signal_bindings(world):
+    """F2 配套两 key 的类型与数值（消费者见 yaml 注释）：熔断阈值必须是
+    正 int（miles _bump_zero_signal_fuse 与 0 比较、与计数比较）;MoE aux
+    coeff 必须是 float 0.0（model_provider 非 None 即覆写,0 关闭 aux 目标,
+    保证 total-gradient 零判定 ⇔ policy signal 零）。"""
+    args = _load_via_miles_semantics(CONFIG_PATH)
+    assert args.max_consecutive_zero_signal_steps == 8
+    assert isinstance(args.max_consecutive_zero_signal_steps, int)
+    assert args.moe_aux_loss_coeff == 0.0
+    assert isinstance(args.moe_aux_loss_coeff, float)
+
+
+def test_custom_config_carries_exactly_the_reviewed_keys(world):
+    """零扩张纪律：artifact 只承载已评审的 key 集,整 dict 断言（多出的 key =
+    绕开评审的后门注入面;增删必须同步改这里,构成可审计变更）。
+    2026-08-27 F2 扩张：+max_consecutive_zero_signal_steps（零信号连续跳过
+    熔断阈值）,+moe_aux_loss_coeff=0.0（训练目标单一化,零信号判定前提）。"""
     import yaml
     from miles.utils.file_arg_utils import resolve_file_arg
 
     data = yaml.safe_load(resolve_file_arg(str(CONFIG_PATH)))
-    assert data == {"rh2_engine_sampling_mask": True}
+    assert data == {
+        "rh2_engine_sampling_mask": True,
+        "max_consecutive_zero_signal_steps": 8,
+        "moe_aux_loss_coeff": 0.0,
+    }
 
 
 def test_miles_inline_loader_source_anchor(world):

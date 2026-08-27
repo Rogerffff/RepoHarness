@@ -153,6 +153,7 @@ __all__ = [
     "SlimeBindingConfig",
     "SlimeBindingError",
     "StartupCheckError",
+    "TurnIdentitySpan",
     "TurnTape",
     "backfill_leaf_sample",
     "assert_adapter_status_not_404",
@@ -961,6 +962,127 @@ def _match_turns_to_runs(
     return per_run, used
 
 
+# ---------------------------------------------------------------------------
+# F1 身份制（GPU 前收口，finding §3）：run<->turn 归属不再按内容反推
+# ---------------------------------------------------------------------------
+
+# 身份 span 挂在 vendor slime Sample 上的附加属性名（与 sampling-mask 的
+# ATTACHED_MASK_ATTR 同一携带机制）：bringup 的 finish_session 包装在树侧
+# 导出后写入，bringup_leaf_facts 读出装进 LeafFacts.turn_spans。
+RH2_TURN_IDENTITY_SPANS_ATTR = "rh2_turn_identity_spans"
+
+
+@dataclass(frozen=True)
+class TurnIdentitySpan:
+    """一条叶链 response 里一个 trained 轮的身份 span（F1 身份制修复）。
+
+    座标系与 ``Sample.loss_mask`` 相同（response 区，首轮 prompt 已剥除）：
+    ``start`` 是该轮响应在 response 里的起点，``length`` 是实际进入样本的
+    token 数，``capture_record_id`` 是 commit 时刻绑定的 capture 身份
+    （CaptureRegistry.bind_turn_identity 的账，树是唯一事实源）。
+    """
+
+    start: int
+    length: int
+    capture_record_id: str
+
+
+def _runs_from_identity_spans(
+    response_tokens: Sequence[int],
+    runs: Sequence[tuple[int, int]],
+    turns: Sequence[Any],
+    spans: Sequence[TurnIdentitySpan],
+) -> tuple[list[list[Any]], list[Any]]:
+    """身份制的 run<->turn 装配（F1 修复；返回形状与 `_match_turns_to_runs` 相同）。
+
+    与旧 matcher 的本质区别：归属由树侧身份 span **直接给出**（调用方保证
+    ``turns[i]`` 与 ``spans[i]`` 是同一轮——bringup 按 span 的
+    capture_record_id 顺序取 tape），token 逐位相等从"匹配依据"降级为
+    **校验断言**：任何不一致 = 树与 capture 漂移，fail-closed 当场炸。
+    身份制下不存在多候选；旧链（无身份信息）继续走 `_match_turns_to_runs`
+    原逻辑，行为不动。
+
+    校验项（全部 fail-closed）：
+    - spans 与 turns 一一对应；turns 元素带 record_id 属性时（TurnTape）
+      复核与 span.capture_record_id 对齐（TurnSupport 无该属性则跳过）；
+    - span 宽度必须等于捕获轮的 response_token_count（截断切进轮内 =
+      可训练 token 失去完整捕获凭据，与旧 matcher 同样拒绝）；
+    - span 覆盖区的 response token 与捕获轮 output_ids 逐位相等；
+    - spans 恰好平铺全部 mask=1 段（不多不少：有 span 落在 mask=0 区、
+      或 mask=1 段有位置无 span 覆盖，都是树/capture 漂移）。
+    """
+
+    if len(turns) != len(spans):
+        raise SlimeBindingError(
+            "identity_spans_turns_mismatch",
+            f"身份 span {len(spans)} 条与捕获轮 {len(turns)} 条不一致——"
+            "调用方必须按 span 顺序逐一供轮。",
+        )
+    prev_end = 0
+    for span in spans:
+        if span.length <= 0 or span.start < prev_end:
+            raise SlimeBindingError(
+                "identity_spans_not_ordered",
+                f"身份 span ({span.start},+{span.length}) 非正宽或与前一 span 重叠/乱序"
+                "——树侧导出损坏。",
+            )
+        prev_end = span.start + span.length
+    for span, tape in zip(spans, turns):
+        tape_record_id = getattr(tape, "record_id", None)
+        if tape_record_id is not None and tape_record_id != span.capture_record_id:
+            raise SlimeBindingError(
+                "identity_span_record_misaligned",
+                f"身份 span 指认 {span.capture_record_id!r} 但对位捕获轮是 "
+                f"{tape_record_id!r}——调用方供轮顺序与 span 不对齐。",
+            )
+        width = tape.response_token_count
+        if span.length != width:
+            raise SlimeBindingError(
+                "identity_span_width_mismatch",
+                f"身份 span ({span.start},+{span.length}) 与捕获轮 "
+                f"{span.capture_record_id} 宽度 {width} 不等——截断切进轮内或"
+                "树侧身份错位（可训练 token 必须有完整捕获凭据）。",
+            )
+        actual = tuple(response_tokens[span.start : span.start + span.length])
+        if actual != tuple(tape.output_ids):
+            raise SlimeBindingError(
+                "identity_span_token_drift",
+                f"身份 span ({span.start},+{span.length}) 的 response token 与捕获轮 "
+                f"{span.capture_record_id} 的 output_ids 逐位不等——树与 capture "
+                "漂移（身份制下这不该发生，fail-closed）。",
+            )
+    per_run: list[list[Any]] = []
+    span_idx = 0
+    for start, end in runs:
+        segment: list[Any] = []
+        position = start
+        while position < end:
+            if span_idx >= len(spans) or spans[span_idx].start != position:
+                raise SlimeBindingError(
+                    "identity_spans_do_not_tile_runs",
+                    f"mask=1 段 [{start},{end}) 自 {position} 起没有身份 span 覆盖"
+                    "——存在没有身份凭据的可训练 token。",
+                )
+            segment.append(turns[span_idx])
+            position += spans[span_idx].length
+            span_idx += 1
+        if position != end:
+            raise SlimeBindingError(
+                "identity_span_crosses_run_boundary",
+                f"身份 span 越过 mask=1 段边界 [{start},{end})（到 {position}）"
+                "——trained span 不可能覆盖 mask=0 位置，树/mask 漂移。",
+            )
+        per_run.append(segment)
+    if span_idx != len(spans):
+        raise SlimeBindingError(
+            "identity_spans_outside_runs",
+            f"{len(spans) - span_idx} 条身份 span 不落在任何 mask=1 段内"
+            "——trained 轮的 token 在样本里不是可训练位，树/mask 漂移。",
+        )
+    used = [tape for segment in per_run for tape in segment]
+    return per_run, used
+
+
 def _shape_routing_experts(flat: Sequence[int], *, rows: int, layers: int, topk: int) -> Any:
     """返回 slime 原生的 [rows, layers, topk] routing replay 形状。"""
 
@@ -985,6 +1107,7 @@ def backfill_leaf_sample(
     moe_router_topk: int | None = None,
     policy_version: str | None = None,
     require_real_weight_versions: bool = False,
+    identity_spans: Sequence[TurnIdentitySpan] | None = None,
 ) -> list[TurnTape]:
     """把 capture 钩子攒下的按轮 tape 回填到一条叶链 Sample 上（原地写字段）。
 
@@ -995,8 +1118,12 @@ def backfill_leaf_sample(
     （非 TrajectoryManager 路径）。这些字段在 slime Sample dataclass 上都存在、
     可写，本函数按 slime 自己的合并语义回填：
 
-    - run<->turn 归属：token 同一性锚定（见 `_match_turns_to_runs`——S1-7a 用
-      真实 TrajectoryManager 证伪了 mock 的"段数=轮数且等长"假设 3）；
+    - run<->turn 归属分两档（F1 身份制修复）：``identity_spans`` 非 None =
+      身份路径，归属由树侧身份 span 直取、token 相等降级为校验断言
+      （`_runs_from_identity_spans`，漂移 fail-closed）；None = 旧链，
+      token 同一性锚定（见 `_match_turns_to_runs`——S1-7a 用真实
+      TrajectoryManager 证伪了 mock 的"段数=轮数且等长"假设 3；内容反推
+      非单射的已知缺陷 = F1，身份路径修复，旧行为保留不动）；
     - top-p：按轮拼接（`_merge_rollout_top_p_token_data` 语义），mask=0 的
       工具/上下文 token（含掉落轮残留的上下文 token）写零宽 span
       （`_pad_rollout_top_p_offsets` 语义）；
@@ -1016,7 +1143,12 @@ def backfill_leaf_sample(
     tokens = list(sample.tokens or [])
     response_len = len(loss_mask)
     response_tokens = tokens[-response_len:] if response_len else []
-    per_run, used = _match_turns_to_runs(response_tokens, runs, turns)
+    if identity_spans is not None:
+        per_run, used = _runs_from_identity_spans(
+            response_tokens, runs, turns, identity_spans
+        )
+    else:
+        per_run, used = _match_turns_to_runs(response_tokens, runs, turns)
 
     with_top_p = [tape for tape in used if tape.top_p_token_ids is not None]
     if with_top_p:
@@ -1314,6 +1446,10 @@ class LeafFacts:
     capture_record_ids: tuple[str, ...]
     context_runs: tuple[ResponseContextRun, ...] = ()
     lineage: CompactedSubTraceLineage | None = None
+    # F1 身份制：非 None = 该叶链的 trained 轮身份 span（与 capture_record_ids
+    # 逐条对位；bringup 树走查导出）。backfill/装配走身份路径，token 相等
+    # 降级为校验断言；None = 旧链按内容锚定（`_match_turns_to_runs`）不动。
+    turn_spans: tuple[TurnIdentitySpan, ...] | None = None
 
 
 LeafFactsFn = Callable[[str, Sequence[Any], "GenerationCaptureHook"], Sequence[LeafFacts]]
@@ -2230,6 +2366,9 @@ class RolloutOrchestrator:
                             f"叶链 {facts.branch_id} 检测到无法解释的上下文收缩"
                             "（compaction 嫌疑），轨迹退出基线：" + "; ".join(branch_shrink),
                         )
+                # F1 身份制：树侧身份 span 在场（bringup 链）即走身份路径
+                # ——归属直取、token 相等只作校验断言；span 缺席（mock/
+                # default_leaf_facts 旧链）走原 token 锚定逻辑，行为不动。
                 used = backfill_leaf_sample(
                     leaf,
                     turns,
@@ -2237,6 +2376,7 @@ class RolloutOrchestrator:
                     moe_router_topk=self.config.moe_router_topk,
                     policy_version=self.config.policy_version,
                     require_real_weight_versions=self.config.require_real_weight_versions,
+                    identity_spans=facts.turn_spans,
                 )
                 # B2（R6-ext）叶链装配：mask 链路（本次会话请求了
                 # return_sampling_mask）把逐轮引擎支持集装配成整条叶链的
@@ -2277,7 +2417,10 @@ class RolloutOrchestrator:
                     attach_assembled_mask(
                         leaf,
                         assemble_leaf_sampling_mask(
-                            leaf_response_tokens, leaf_loss_mask, turn_supports
+                            leaf_response_tokens,
+                            leaf_loss_mask,
+                            turn_supports,
+                            identity_spans=facts.turn_spans,
                         ),
                     )
                 # 分支注释只回链**入训轮**（掉落轮不支撑任何 mask=1 token；
@@ -2293,9 +2436,16 @@ class RolloutOrchestrator:
                     capture_record_ids=used_ids,
                     context_runs=facts.context_runs,
                     lineage=facts.lineage,
+                    turn_spans=facts.turn_spans,
                 )
                 for facts, used_ids in zip(leaf_facts, used_record_ids)
             ]
+            # F1 身份制：span 附加属性只是 finish_session -> leaf_facts 的
+            # 运输载体，事实已进 LeafFacts.turn_spans——装配完成即从样本上
+            # 剥除，不让内部属性越过 canonicalize 的未知属性 fail-closed
+            # 边界（身份 span 不是训练面事实，miles Sample 没有对应位置）。
+            for leaf in samples:
+                leaf.__dict__.pop(RH2_TURN_IDENTITY_SPANS_ATTR, None)
             audit.capture_closed = True  # F2-2：记录在场且回链装配完成
             audit.step("step5_leaf_samples_assembled_and_backfilled")
 

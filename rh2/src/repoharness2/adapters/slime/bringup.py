@@ -511,6 +511,45 @@ def build_production_model_call_proxy(
     return proxy
 
 
+def bringup_leaf_facts(sid, samples, hook):
+    """bring-up 的树侧事实提取（F1 身份制版；模块级以便本地回归）。
+
+    多叶链（FORK/compaction）也放行——库层 default_leaf_facts 的单叶限制
+    保持不变，这里是 bring-up 面对真实 CC FORK（run6 实测 4/32）的显式
+    选择。旧做法（附"全部 session capture id"、归属交 `_match_turns_to_runs`
+    按 token 内容反推）已被 F1 身份制取代：PerRolloutAdapter.finish_session
+    在树走查后把身份 span 附在每条叶链 Sample 上（`RH2_TURN_IDENTITY_
+    SPANS_ATTR`），这里读出装进 LeafFacts——capture_record_ids 与
+    turn_spans 逐条对位，orchestrator 的 backfill/装配据此直取归属，token
+    相等只作校验断言。span 缺失 = finish 包装没走到（接线破损），
+    fail-closed。
+    """
+
+    from repoharness2.adapters.slime.generate import (
+        RH2_TURN_IDENTITY_SPANS_ATTR,
+        SlimeBindingError,
+    )
+
+    facts = []
+    for i, sample in enumerate(samples):
+        spans = getattr(sample, RH2_TURN_IDENTITY_SPANS_ATTR, None)
+        if spans is None:
+            raise SlimeBindingError(
+                "turn_identity_spans_missing_on_leaf",
+                f"叶链 b{i}（sid={sid}）没有身份 span 附加属性——"
+                "PerRolloutAdapter.finish_session 的身份导出没有生效，"
+                "拒绝退回按内容反推归属（F1 修复语义）。",
+            )
+        facts.append(
+            LeafFacts(
+                branch_id=f"b{i}",
+                capture_record_ids=tuple(s.capture_record_id for s in spans),
+                turn_spans=tuple(spans),
+            )
+        )
+    return facts
+
+
 def make_per_rollout_adapter(registry, shared_adapter, hook):
     """SessionAdapter 形状（轮次 14：从闭包提取为模块级，open rollback 等
     语义可本地回归）。"""
@@ -542,13 +581,57 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
         async def finish_session(
             self, sid, *, base_sample, reward=0.0, extra_metadata=None, wait_timeout=5.0
         ):
-            return await shared_adapter.finish_session(
+            # F1 身份制（叶侧）：先幂等 drain 掉在飞轮（underlying finish 内
+            # 会再 shutdown 一次，无副作用差异），再拿住树根引用——
+            # get_trajectory 随后弹树，但树对象仍被本引用持有，供只读树
+            # 走查导出身份 span。max_sample_tokens 必须在 finish 弹 store
+            # 之前读到（vendor finish_session 用同一值截断样本）。
+            manager = getattr(shared_adapter, "manager", None)
+            root = None
+            fork_threshold = 0
+            max_sample_tokens = 0
+            if manager is not None:
+                await shared_adapter.shutdown_session(sid, wait_timeout=wait_timeout)
+                root = manager._trees.get(sid)
+                fork_threshold = manager._fork_threshold
+                session = shared_adapter.store.get(sid)
+                max_sample_tokens = (
+                    int(getattr(session, "max_context_tokens", 0) or 0)
+                    if session is not None
+                    else 0
+                )
+            samples = await shared_adapter.finish_session(
                 sid,
                 base_sample=base_sample,
                 reward=reward,
                 extra_metadata=extra_metadata,
                 wait_timeout=wait_timeout,
             )
+            if samples:
+                from repoharness2.adapters.slime.generate import SlimeBindingError
+                from repoharness2.adapters.slime.turn_identity import (
+                    attach_turn_identity_spans,
+                )
+
+                if root is None:
+                    raise SlimeBindingError(
+                        "turn_identity_tree_unavailable",
+                        f"session {sid} 产出了叶链样本但树根不可得（shared "
+                        "adapter 无 TrajectoryManager 树）——身份 span 无从"
+                        "导出，fail-closed。",
+                    )
+                attach_turn_identity_spans(
+                    samples,
+                    root,
+                    fork_threshold=fork_threshold,
+                    max_sample_tokens=max_sample_tokens,
+                    resolve_capture_id=(
+                        lambda turn_index: registry.turn_capture_binding(
+                            sid, turn_index
+                        )
+                    ),
+                )
+            return samples
 
         def revoke_session(self, sid):
             # F2-2 quiescence 第一步：HTTP 层拒新请求（guard 按 revoked 集合
@@ -778,18 +861,6 @@ class BringupService:
         def repair_signal_sink(signal) -> None:
             with self.signals_path.open("a", encoding="utf-8") as fh:
                 fh.write(signal.model_dump_json() + "\n")
-
-        def bringup_leaf_facts(sid, samples, hook):
-            """多叶链（FORK/compaction）也放行：候选回链 = 全部捕获轮，
-            实际归属由 backfill 的 token 同一性匹配裁决（入训轮子集写回
-            分支注释）。库层 default_leaf_facts 的单叶限制保持不变，这里是
-            bring-up 面对真实 CC FORK（run6 实测 4/32）的显式选择。"""
-
-            all_ids = tuple(record.record_id for record in hook.records)
-            return [
-                LeafFacts(branch_id=f"b{i}", capture_record_ids=all_ids)
-                for i in range(len(samples))
-            ]
 
         self._require_real_weight_versions = config.require_real_weight_versions
         # FA-1 follow-up（codex 轮次 7 P0-4）：proxy 接入真实模型调用链。

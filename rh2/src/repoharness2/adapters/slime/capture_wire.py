@@ -213,6 +213,12 @@ class CaptureRegistry:
         # F2-1a：sid → physical_attempt_id 映射（orchestrator 经注入点登记；
         # wire 读出后随每条 ModelCallAttempt 落账；unregister 清理）
         self._physical_attempt_ids: dict[str, str] = {}
+        # F1 身份制（finding §3）：sid → {树 turn_index → capture record_id}。
+        # rh2_record_turn 包装在 commit 成功且树确实新增 turn 时写入——
+        # capture 身份从此正向流动到树侧（vendor 树只读，绑定账存这里）；
+        # 叶侧 span 导出（bringup finish_session 树走查）按 turn_index 解析
+        # 回 capture_record_id。unregister 一并清理。
+        self._turn_bindings: dict[str, dict[int, str]] = {}
         # F2-2：quiescence 屏障第一步——已撤销 capability 集合。撤销与
         # unregister 分离：revoke 后 guard 立即拒新请求（HTTP 层），但
         # hook/暂存仍在场供 drain/对账；unregister 时一并清（会话关闭即
@@ -338,6 +344,39 @@ class CaptureRegistry:
         with self._lock:
             self._turn_seq[key] = self._turn_seq.get(key, 0) + 1
             return self._turn_seq[key]
+
+    def bind_turn_identity(
+        self, sid: str, turn_index: int, capture_record_id: str
+    ) -> None:
+        """F1 身份制：commit 时刻登记 capture_id↔树 turn 绑定。
+
+        同 (sid, turn_index) 重复绑定 = 身份账损坏（turn_index 由
+        TrajectoryManager._turn_count 单调派发，正常不可能重复）——
+        poison + 抛错 fail-closed，绝不静默覆盖。"""
+
+        with self._lock:
+            slot = self._turn_bindings.setdefault(sid, {})
+            existing = slot.get(turn_index)
+            if existing is None:
+                slot[turn_index] = capture_record_id
+                return
+        self.poison.poison(sid, "turn_identity_binding_conflict")
+        raise RuntimeError(
+            f"turn_identity_binding_conflict: session {sid} turn {turn_index} 已绑定 "
+            f"{existing!r}，拒绝改绑 {capture_record_id!r}——身份账不可变。"
+        )
+
+    def turn_capture_binding(self, sid: str, turn_index: int) -> str | None:
+        """按树 turn_index 解析 capture record_id（无绑定返回 None）。"""
+
+        with self._lock:
+            return (self._turn_bindings.get(sid) or {}).get(turn_index)
+
+    def turn_identity_bindings(self, sid: str) -> dict[int, str]:
+        """锁内复制该会话全部 turn 身份绑定（测试/审计用）。"""
+
+        with self._lock:
+            return dict(self._turn_bindings.get(sid) or {})
 
     def resolve_capability(self, token: str | None) -> str | None:
         """认证：token → internal sid（未知 token → None，guard 拒绝）。"""
@@ -486,6 +525,7 @@ class CaptureRegistry:
             self._turn_seq.pop(sid, None)
             self.weight_versions.pop(sid, None)
             self._physical_attempt_ids.pop(sid, None)
+            self._turn_bindings.pop(sid, None)
         self._finish_unregister(sid, leftover_locked)
         return
 
@@ -540,13 +580,17 @@ class CaptureRegistry:
                     pass  # 已定案（幂等）
         raise CapturePendingOverlapError(sid)
 
-    def commit(self, sid: str) -> None:
+    def commit(self, sid: str) -> str | None:
         """PENDING -> COMMITTING -> COMMITTED/ABANDONED（轮次 13 P0-3 事务化）。
 
         锁内只摘取所有权；hook（capture store/tape 构造）在锁外执行——
         中点异常不再留永久悬挂 draft（turn 持有 proxy_result，事务化
         abandon 先关账再传播）；hook 后复检会话仍在（unregister 竞态时
-        弃置本轮，不给已销毁会话追加版本——KeyError 竞态的根修）。"""
+        弃置本轮，不给已销毁会话追加版本——KeyError 竞态的根修）。
+
+        返回值（F1 身份制）：commit 成功产出的 capture record_id；未发生
+        commit（无 hook/无暂存/no-stage/unregister 竞态弃置）返回 None——
+        rh2_record_turn 包装据此建立 capture_id↔turn 绑定。"""
 
         key = _capture_request_key.get()
         ambiguous = False
@@ -554,7 +598,7 @@ class CaptureRegistry:
             hook = self.hooks.get(sid)
             slot = self.pending.get(sid)
             if hook is None:
-                return
+                return None
             if key is not None:
                 if slot and key in slot:
                     turn = slot.pop(key)  # COMMITTING：按请求键精确取own（批 2b）
@@ -568,9 +612,9 @@ class CaptureRegistry:
                     self.stats["commit_without_stage"] = (
                         self.stats.get("commit_without_stage", 0) + 1
                     )
-                    return
+                    return None
             elif not slot:
-                return
+                return None
             elif len(slot) == 1:
                 turn = slot.pop(next(iter(slot)))  # 无键上下文且无歧义（探针直调）
             else:
@@ -631,7 +675,7 @@ class CaptureRegistry:
                     self.stats["abandon_evidence_failures"] = (
                         self.stats.get("abandon_evidence_failures", 0) + 1
                     )
-            return
+            return None
         # COMMITTED：finalize（重复 finalize = 契约违规，poison 不静默吞）
         if turn.proxy_result is not None:
             # 批 2b 收口 P1：finalize 引用 = hook 返回的**真实**
@@ -645,6 +689,7 @@ class CaptureRegistry:
                     self.stats.get("duplicate_finalize_violations", 0) + 1
                 )
         self.stats["committed"] += 1
+        return capture_ref
 
 
 @aiohttp_web.middleware
@@ -1011,8 +1056,21 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
     original_record_turn = TrajectoryManager.record_turn
 
     def rh2_record_turn(self, sid, *args, **kwargs):
+        turns_before = self.turn_count(sid)
         result = original_record_turn(self, sid, *args, **kwargs)
-        registry.commit(sid)  # 该轮已确定进入轨迹树（flush 成功之后才会走到这）
+        capture_ref = registry.commit(sid)  # 该轮已确定进入轨迹树（flush 成功之后才会走到这）
+        # F1 身份制（commit 时刻绑定）：本次调用真的给树追加了 assistant
+        # leaf（turn_count 增长；新 leaf 的 turn_index 恰为增长后的计数，
+        # _attach_assistant_leaf 的 `_turn_count+1` 语义）且 commit 产出了
+        # capture 记录 → 登记 capture_id↔turn 绑定。不绑定的两类情形都
+        # 有兜底：record_turn 因空 prompt_messages 跳过附着（after==before，
+        # capture 成孤儿、不被任何叶 span 引用）；max-context 短路轮无
+        # stage（commit 返回 None，该轮 output_ids 为空、不产 trained span，
+        # 若未来出现"有输出却无 capture"的轮，叶侧 span 导出会因解析不到
+        # 绑定而 fail-closed）。
+        turns_after = self.turn_count(sid)
+        if turns_after > turns_before and capture_ref is not None:
+            registry.bind_turn_identity(sid, turns_after, capture_ref)
         return result
 
     TrajectoryManager.record_turn = rh2_record_turn

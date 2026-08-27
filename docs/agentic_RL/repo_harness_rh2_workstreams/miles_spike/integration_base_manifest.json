@@ -6,13 +6,18 @@
   "cherry_picks_upstream": {"pr2595": "9b6579a125b2e9345a194c07dd145828c2764dc6", "pr2596": "ee648b17d376c7b58652d09713e1ed96c0fd0e0d"},
   "rh2_patch": "patches/0001-rh2-integration-transport-sampling-mask-wire-fields-.patch",
   "rh2_patch_sha256": "cee3cd5e8faa9366bd979a177e8968929f3c3d3ae62b08e0501223d02271c8c7",
-  "expected_tree": "9d7617bf5294d11918c9f7495fe7285ed80a35d5",
+  "rh2_patches_f2": {
+    "_comment": "F2 全局零信号语义两个窄 commit 的可复跑存档（2026-08-27,rh2-integration-v2 本地 SHA 620aa6924=train_one_step 零信号判定+富报告+熔断,51e3cd969=driver weights_dirty publish 门控;上游 PR 候选）。在 0001 之后按序 git am。",
+    "patches/0002-rh2-integration-skip-optimizer-step-on-exactly-zero-.patch": "445fcd950eac74ff3ce6356ed98cdb93b10346f45a5ed1a486a2883e2f911073",
+    "patches/0003-rh2-integration-gate-weight-publish-on-weights_dirty.patch": "6eda57c8662b4853f66d85319a8b89a03ebc42fc452573329ac516511c1abfb2"
+  },
+  "expected_tree": "e61a8423d3238c73d7bb6af3082ffb82ed2e4ecb",
   "expected_counts": {
-    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。",
-    "lane_a_passed": 68,
-    "lane_a_skipped": 111,
-    "lane_b_passed": 179,
+    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本次变更（两线程合账,实测）：F1 身份链 test_f1_turn_identity/test_f1_e2e_identity_chain;F2 零信号语义——faithful_dis_loss B6 用例翻转+用例 C 单元、train_seam F2 区段（用例 A~F+momentum 主验收,原 B6 两测删除）、新增 test_zero_signal_semantics.py（buffer filter 丢弃/富报告/驱动门控/源码锚定）、custom_config 新 key 断言。",
+    "lane_a_passed": 88,
+    "lane_a_skipped": 123,
+    "lane_b_passed": 211,
     "lane_b_skipped": 0
   },
-  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> git am patches/0001-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且 sha256(patch) == rh2_patch_sha256"
+  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> 依序 git am patches/0001-*.patch patches/0002-*.patch patches/0003-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件两张 patch 表"
 }

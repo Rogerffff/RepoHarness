@@ -37,6 +37,13 @@
     # top_k（top_p-only 直接 abort）。对照上游 #2596 E2E 用 top_p=0.8+top_k=32
     # ——若首开机想先复刻上游小支持集形态,可临时用 32,但正式 spike 记录以
     # T0-A 口径为准。
+
+--dynamic-sampling-filter-path miles.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
+    # F2 零信号语义第 1 处接线：reward 全相等（组内零方差 ⇒ GRPO advantage
+    # 全 0）的组在 DefaultDataBuffer.put 处丢弃,不进训练 buffer;fully-async
+    # 持续 producer 自然补足 batch,**不需要** over_sampling_batch_size。
+    # 漏网的全零 advantage 组由 trainer 侧全局零梯度判定兜底
+    # （SKIPPED_ZERO_SIGNAL,见下"训练目标单一化"与 custom_config.yaml 熔断）。
 ```
 
 PYTHONPATH 须含 `<repo>/rh2/src`（repoharness2 + vendor slime 同一源树）。
@@ -91,6 +98,32 @@ PYTHONPATH 须含 `<repo>/rh2/src`（repoharness2 + vendor slime 同一源树）
 --eps-clip`（CI 的 GSPO/TIS 配置,与 custom_loss 冲突面未审,首 spike 不混用）、
 `--use-routing-replay`（R3 语义归租期五项之一,单独开）、eval 参数组（首 spike
 不跑 eval lane）。
+
+## 3.1 训练目标单一化（F2 零信号判定的前提,显式锁死）
+
+trainer 侧 SKIPPED_ZERO_SIGNAL 的判定对象是 **total gradient**（optimizer 前
+的完整累计梯度）。只有当 faithful DIS policy loss 是**唯一**训练目标时,
+"total gradient 精确为零 ⇔ policy signal 为零"才成立;混入任何辅助目标
+（MTP/OPD/KL/entropy/MoE aux loss）后,零 advantage 批也会因辅助梯度非零而
+被误判 NORMAL 并照常 optimizer.step。因此下列目标必须显式关死（多数即默认
+值,仍显式写出并在启动自检核对,防 CI 模板抄写混入）：
+
+```
+（不带 --enable-mtp-training）        # MTP 训练关（store_true 默认 False）
+（不带 --use-opd）                    # OPD 蒸馏关（store_true 默认 False）
+（不带 --use-kl-loss）                # GRPO KL loss 关（store_true 默认 False）
+--kl-coef 0.0                         # reward 端 KL penalty 系数显式 0（默认已 0）
+--entropy-coef 0.0                    # entropy bonus 显式 0（默认已 0）
+moe_aux_loss_coeff: 0.0               # 经 custom_config.yaml 注入（miles 无同名
+                                      #   CLI 旗标;model_provider 在该 key 非
+                                      #   None 时覆写 provider 值——provider 缺省
+                                      #   来自 HF config 转换,不保证为 0,必须
+                                      #   显式置 0）
+```
+
+零信号连续跳过熔断（F2 语义配套,阈值可配）同样经 custom_config.yaml 注入
+`max_consecutive_zero_signal_steps`（见该文件注释;miles 尚无一等 CLI 旗标,
+custom-config setattr 是既有官方注入面）。
 
 ## 4. 开机自检顺序（要素级,非脚本）
 
