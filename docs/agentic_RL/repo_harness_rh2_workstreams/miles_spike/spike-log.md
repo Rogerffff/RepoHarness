@@ -16,6 +16,8 @@
 | 2026-08-25 | **T0-B 拍板**：双 logprob 列（behavior_support_logprob 作 DIS/TIS 正式分母 + model_full_vocab_logprob 仅诊断,带 provenance 枚举） | 用户决策 |
 | 2026-08-25 | T1：暂保留 vendor 的 openai.py/codex.py 不裁剪 | 用户决策 |
 | 2026-08-25 | 用户批准：新建迁移分支,执行 GPU 前 CPU/CI 前置;新 T0 或需外部 codex 检查时停下汇报 | 用户决策 |
+| 2026-08-27 | **F2 零信号语义拍板**：拒绝 microbatch 停机豁免,按 FA-4 §4 预注册语义正式实现——dynamic filter 补采 + 零贡献 microbatch 继续累积 + 全局 optimizer 边界精确零梯度判定 SKIPPED_ZERO_SIGNAL(不 step/不 scheduler/不发布/不增版本) + weights_dirty 门控 publish + 连续跳过熔断 + 损坏仍 fail-stop。取代 B6 临时方案,豁免问题关闭。miles 侧新增 train_one_step/train_async 两处窄 commit(登记 SHA,上游 PR 候选) | 用户决策 + tmp/F2修复建议.md |
+| 2026-08-27 | **F1 修法拍板**：按长期正确架构修——根因=身份在树→叶线性化被丢弃、内容反推非单射;修复=rh2_record_turn commit 时刻绑定 capture_id↔turn、叶侧树走查导出身份 span、token 相等降级为校验断言;不采用 fail-closed 挡板方案 | 用户决策 + 本线程根因分析 |
 | 2026-08-25 | **T0-C1 承载形态调整为 A′**（用户指示"核实成立即调整",已核实成立）：C1 不再自建 plumbing——上游 stacked PR #2595（transport,已获 code-owner approval）/#2596（bounded top-p capture+actor replay,待评审+E2E CI）已覆盖接线表 ④→⑪ 全部。integration base = pin f2b7c7929 + cherry-pick 两 PR commit + rh2 最小 downstream delta（faithful DIS custom loss/双 logprob provenance/Eligibility/ledger/CC capture/治理语义）。**不提交竞争 PR** | 用户指示 + tmp/miles迁移spike.md + 本线程核实 |
 
 ## Spike 记录
