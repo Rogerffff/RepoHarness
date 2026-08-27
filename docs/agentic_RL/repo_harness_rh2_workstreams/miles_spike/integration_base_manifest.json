@@ -13,10 +13,10 @@
   },
   "expected_tree": "e61a8423d3238c73d7bb6af3082ffb82ed2e4ecb",
   "expected_counts": {
-    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本次变更（两线程合账,实测）：F1 身份链 test_f1_turn_identity/test_f1_e2e_identity_chain;F2 零信号语义——faithful_dis_loss B6 用例翻转+用例 C 单元、train_seam F2 区段（用例 A~F+momentum 主验收,原 B6 两测删除）、新增 test_zero_signal_semantics.py（buffer filter 丢弃/富报告/驱动门控/源码锚定）、custom_config 新 key 断言。",
-    "lane_a_passed": 88,
+    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（F4+F5,2026-08-27,delta 两 lane 各 +34）：审计补强 test_generate_fn.py +2（F4 透传面:orchestrator.config moe 期望进 canonicalize 的正向+config_missing 反向）;F4 新增 test_canonicalize_routed_experts.py（+28,R3 tape 三形态转换/fail-closed/纵切到 convert_samples_to_train_data）,test_canonicalize.py 撤 1 个 rollout_routed_experts 拒绝参数（-1,字段改为转换）;F5 新增 test_capture_wire_draft_guard.py（+5,真实 ModelCallProxy 的 delivered draft ownership guard）。两文件均不打 integration_base 标记,lane A/B 都真实执行。上轮（两线程合账）：F1 身份链 test_f1_turn_identity/test_f1_e2e_identity_chain;F2 零信号语义——faithful_dis_loss B6 用例翻转+用例 C 单元、train_seam F2 区段（用例 A~F+momentum 主验收,原 B6 两测删除）、新增 test_zero_signal_semantics.py（buffer filter 丢弃/富报告/驱动门控/源码锚定）、custom_config 新 key 断言。",
+    "lane_a_passed": 122,
     "lane_a_skipped": 123,
-    "lane_b_passed": 211,
+    "lane_b_passed": 245,
     "lane_b_skipped": 0
   },
   "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> 依序 git am patches/0001-*.patch patches/0002-*.patch patches/0003-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件两张 patch 表"

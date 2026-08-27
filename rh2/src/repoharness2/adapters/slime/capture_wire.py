@@ -552,14 +552,24 @@ class CaptureRegistry:
         # session_deadlines/_turn_seq/weight_versions 已在锁内随会话清理；
         # poison 的归档（release）由 orchestrator 在容器清理后触发（轮次 11）。
 
-    def stage(self, sid: str | None, turn: PendingTurn) -> None:
+    def stage(self, sid: str | None, turn: PendingTurn) -> bool:
+        """暂存一条捕获轮。返回值 = 所有权接管事实（F5 guard 的判据）：
+
+        - True：registry 已接管 turn（含其 proxy_result draft 的生命周期——
+          此后 commit finalize / unregister abandon 二选一，调用方不得再碰）；
+        - False：**未**接管（sid None 的非 rh2 会话，或 stage 时会话已被并发
+          unregister 摘除）——draft 生命周期仍归调用方，泄漏责任在调用方兜底；
+        - 抛 CapturePendingOverlapError：同请求键二次 stage，poison + 双方
+          draft 都已在本方法内 abandon（调用方**不得**再 abandon，见 F5 guard
+          的幂等豁免）。"""
+
         if sid is None:
-            return  # 非 rh2 会话不捕获（未知 SID 的拒绝在 wire 入口，轮次 13 P0-1）
+            return False  # 非 rh2 会话不捕获（未知 SID 的拒绝在 wire 入口，轮次 13 P0-1）
         key = _capture_request_key.get() or turn.request_id
         stale = None
         with self._lock:
             if sid not in self.hooks:
-                return
+                return False
             slot = self.pending.setdefault(sid, {})
             if key in slot:
                 # 同一请求键二次 stage = 真异常（非并行误杀），fail-closed
@@ -570,7 +580,7 @@ class CaptureRegistry:
                 slot[key] = turn
                 self.stats["staged"] += 1
         if stale is None:
-            return
+            return True
         self.poison.poison(sid, "capture_pending_overlap")
         for t in (stale, turn):
             if t.proxy_result is not None:
@@ -987,63 +997,96 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
             data = dict(proxy_result.response)
             request_id = last_rid.get("rid", f"t{turn_seq}")
 
-        meta = data.get("meta_info") or {}
-        pairs = meta.get("output_token_logprobs") or []
-        output_ids = [x[1] for x in pairs]
-        output_log_probs = [float(x[0]) for x in pairs]
-        finish = (meta.get("finish_reason") or {}).get("type", "stop") or "stop"
+        # F5 统一 ownership guard：proxy.call 成功返回的瞬间，delivered draft
+        # 已挂在 proxy._pending_drafts；直到 registry.stage **真正接管**之前，
+        # draft 生命周期归本函数。此区间内任何解析异常（含 mask 解析失败）或
+        # 并发 unregister（stage 返回 False）都必须 poison + abandon，否则
+        # draft 永远留在 unfinalized_deliveries（drain 永不干净、生命周期账
+        # 无终态——finding §7）。stage 接管成功（True）或 overlap 路径（stage
+        # 内部已 poison + abandon 双方 draft）后不得 double-abandon。
+        staged = False
+        try:
+            meta = data.get("meta_info") or {}
+            pairs = meta.get("output_token_logprobs") or []
+            output_ids = [x[1] for x in pairs]
+            output_log_probs = [float(x[0]) for x in pairs]
+            finish = (meta.get("finish_reason") or {}).get("type", "stop") or "stop"
 
-        turn_support = None
-        if want_sampling_mask:
-            # C1′-b 响应侧：解析并校验 output_token_sampling_mask/_logprobs
-            # （逐 token sampled∈support、长度对齐；abort 且零输出豁免——语义
-            # 对照上游 append_sampling_metadata，rh2 侧实现不 import 上游），
-            # 并把 TurnRecord 的 logprob 列**切换为 support-normalized 值**
-            # （对照 miles/rollout/sglang_rollout.py:255-256 的同款替换；T0-B：
-            # 该列经 vendor 叶链落 Sample.rollout_log_probs = DIS/TIS 正式分母，
-            # provenance=behavior_support_normalized）。全词表 logprob 原样留在
-            # raw_response（output_token_logprobs -> capture store），只作诊断列。
-            # B2（R6-ext）：解析产物不再丢弃——挂进 PendingTurn.turn_support，
-            # commit 时交 hook 落 TurnTape（装配层的逐轮支持集事实源）。
-            from repoharness2.adapters.miles.sampling_mask_assembly import (
-                parse_turn_sampling_support,
-            )
+            turn_support = None
+            if want_sampling_mask:
+                # C1′-b 响应侧：解析并校验 output_token_sampling_mask/_logprobs
+                # （逐 token sampled∈support、长度对齐；abort 且零输出豁免——语义
+                # 对照上游 append_sampling_metadata，rh2 侧实现不 import 上游），
+                # 并把 TurnRecord 的 logprob 列**切换为 support-normalized 值**
+                # （对照 miles/rollout/sglang_rollout.py:255-256 的同款替换；T0-B：
+                # 该列经 vendor 叶链落 Sample.rollout_log_probs = DIS/TIS 正式分母，
+                # provenance=behavior_support_normalized）。全词表 logprob 原样留在
+                # raw_response（output_token_logprobs -> capture store），只作诊断列。
+                # B2（R6-ext）：解析产物不再丢弃——挂进 PendingTurn.turn_support，
+                # commit 时交 hook 落 TurnTape（装配层的逐轮支持集事实源）。
+                from repoharness2.adapters.miles.sampling_mask_assembly import (
+                    parse_turn_sampling_support,
+                )
 
-            turn_support, output_log_probs = parse_turn_sampling_support(output_ids, meta)
+                turn_support, output_log_probs = parse_turn_sampling_support(output_ids, meta)
 
-        # 暂存捕获（record_turn 时提交）。capture 参数记录**生效值**：
-        # temperature/top_p 若请求未带则为引擎默认 1.0（SGLang SamplingParams 默认）。
-        # P0-1（codex 轮次 8）：proxy_result 挂进 PendingTurn，**finalize 移到
-        # commit**——stage 只是本进程暂存，CC 的 SSE flush 发生在 slime
-        # _respond()（本函数返回之后）。在 flush 前 finalize 会造成"delivered
-        # 但 CC 没收到"的虚假交付；改到 record_turn/commit 成功（该轮确定进入
-        # 轨迹树、CC 已收到）才 finalize，会话销毁时未 commit 的 draft 由
-        # unregister abandon。
-        registry.stage(
-            session_id,
-            PendingTurn(
-                prompt_ids=list(prompt_ids),
-                capture_params={
-                    "temperature": float(sp.get("temperature", 1.0)),
-                    "top_p": top_p,
-                    "max_new_tokens": int(sp.get("max_new_tokens", 4096)),
-                    "return_top_p_token_ids": want_top_p_tape,
-                    "return_routed_experts": want_routing,
-                    # C1′-b 生效值补记：top_k 是支持集硬上界（T0-A；mask 开启时
-                    # 已被前置校验强制为有限正整数），return_sampling_mask 记录
-                    # 引擎实际收到的顶层旗标。
-                    "top_k": (int(sp["top_k"]) if sp.get("top_k") is not None else None),
-                    "return_sampling_mask": want_sampling_mask,
-                },
-                raw_response=data,
-                weight_version=(
-                    str(meta["weight_version"]) if meta.get("weight_version") is not None else None
+            # 暂存捕获（record_turn 时提交）。capture 参数记录**生效值**：
+            # temperature/top_p 若请求未带则为引擎默认 1.0（SGLang SamplingParams 默认）。
+            # P0-1（codex 轮次 8）：proxy_result 挂进 PendingTurn，**finalize 移到
+            # commit**——stage 只是本进程暂存，CC 的 SSE flush 发生在 slime
+            # _respond()（本函数返回之后）。在 flush 前 finalize 会造成"delivered
+            # 但 CC 没收到"的虚假交付；改到 record_turn/commit 成功（该轮确定进入
+            # 轨迹树、CC 已收到）才 finalize，会话销毁时未 commit 的 draft 由
+            # unregister abandon。
+            staged = registry.stage(
+                session_id,
+                PendingTurn(
+                    prompt_ids=list(prompt_ids),
+                    capture_params={
+                        "temperature": float(sp.get("temperature", 1.0)),
+                        "top_p": top_p,
+                        "max_new_tokens": int(sp.get("max_new_tokens", 4096)),
+                        "return_top_p_token_ids": want_top_p_tape,
+                        "return_routed_experts": want_routing,
+                        # C1′-b 生效值补记：top_k 是支持集硬上界（T0-A；mask 开启时
+                        # 已被前置校验强制为有限正整数），return_sampling_mask 记录
+                        # 引擎实际收到的顶层旗标。
+                        "top_k": (int(sp["top_k"]) if sp.get("top_k") is not None else None),
+                        "return_sampling_mask": want_sampling_mask,
+                    },
+                    raw_response=data,
+                    weight_version=(
+                        str(meta["weight_version"]) if meta.get("weight_version") is not None else None
+                    ),
+                    request_id=request_id,
+                    proxy_result=proxy_result,
+                    turn_support=turn_support,
                 ),
-                request_id=request_id,
-                proxy_result=proxy_result,
-                turn_support=turn_support,
-            ),
-        )
+            )
+            if proxy_result is not None and not staged:
+                # 并发 unregister：会话在 proxy 交付后、stage 前被摘除——
+                # unregister 的 leftover 扫尾看不到这条 draft（从未进 pending），
+                # 只能在这里 fail-closed（进下方统一 guard 关账）。
+                raise CaptureWireOwnershipError(
+                    f"sid={session_id} 在 proxy 交付后、stage 接管前被 unregister"
+                    "——delivered draft 无人接管，fail-closed。"
+                )
+        except CapturePendingOverlapError:
+            raise  # stage 内已 poison + abandon（含本轮 draft），再关会 double-abandon
+        except Exception as exc:
+            if proxy_result is not None and not staged:
+                registry.poison.poison(session_id, "delivered_draft_orphaned_before_stage")
+                try:
+                    proxy_result.abandon_delivered(
+                        f"pre_stage_failure:{type(exc).__name__}: {exc}"
+                    )
+                except ValueError:
+                    pass  # 已 finalize/abandon（幂等，不 double-abandon）
+                except Exception:  # noqa: BLE001 - abandon 已先关账（事务化）
+                    registry.stats["abandon_evidence_failures"] = (
+                        registry.stats.get("abandon_evidence_failures", 0) + 1
+                    )
+            raise
         return slime_common.TurnRecord(
             prompt_ids=list(prompt_ids),
             output_ids=output_ids,

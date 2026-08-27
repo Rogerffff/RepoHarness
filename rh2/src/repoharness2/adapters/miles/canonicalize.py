@@ -57,15 +57,31 @@ sampling-mask 一等字段（C1′-b 落地，取代原预留位说明）：
 - pin base（无 `rollout_sampling_mask` 字段）上出现装配 mask 一律拒绝
   （`MILES_HAS_SAMPLING_MASK_FIELD` 分流），不存在静默丢弃路径。
 
-导入面说明：本模块只 import `miles.utils.types` 与 `slime.utils.types`
-（两者均无 sglang 依赖，CPU 可导）；不得 import `miles.rollout.*`
-（base_types 经 data_source -> chat_template_utils 拉 sglang）。
+R3 routing tape 转换（F4 落地，取代原"非 None 拒绝"挡板）：
+
+- rh2 侧产生点（generate.py `backfill_leaf_sample`/`_shape_routing_experts`）
+  的三种形态——torch tensor `(rows, layers, topk)`、无 torch 环境的等价
+  嵌套 list、config 缺 layers/topk 时的 flat list——统一经
+  `_convert_routed_experts` 转成 **owned contiguous numpy.ndarray[int32]**，
+  形状严格 `(len(tokens)-1, moe_num_layers, moe_router_topk)`（miles Sample
+  契约：miles/utils/types.py 字段注释 + validate() 行数断言 +
+  train_data_conversion 的 int32 wire dtype）。
+- fail-closed 面：layers/topk 期望配置缺失、少行/多行、错 layer/topk、
+  非整数 dtype、超 int32 值域、ragged/未知形态一律拒绝。
+- R3-off（slime 侧字段为 None）：miles 侧保持默认 None，旧路径零改变。
+
+导入面说明：本模块只 import `miles.utils.types`、`slime.utils.types` 与
+`numpy`（miles.utils.types 本身依赖 numpy，三者均无 sglang 依赖，CPU 可
+导）；不得 import `miles.rollout.*`（base_types 经 data_source ->
+chat_template_utils 拉 sglang）；torch 只在 routing tape 真的以 tensor 形态
+出现时才在函数内 import（无 tape / R3-off 路径完全不碰 torch）。
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+import numpy
 from miles.utils.types import Sample as MilesSample
 from slime.utils.types import Sample as SlimeSample
 
@@ -193,10 +209,6 @@ _REJECTED_SLIME_FIELDS: dict[str, tuple[Any, str]] = {
         lambda v: v is None,
         "同 rollout_top_p_token_ids（成对字段）",
     ),
-    "rollout_routed_experts": (
-        lambda v: v is None,
-        "routing tape 的 torch->numpy 形状/dtype 转换语义未定义（归硬件段前的 C1+）",
-    ),
     "custom_rm_path": (
         lambda v: v is None,
         "miles 侧评分分发由输入样本的 reward_spec 承担，复制路径字符串会造成双事实源",
@@ -220,7 +232,12 @@ _ALLOWED_MILES_EXTRA_ATTRS = frozenset({"session_id"})
 
 
 def canonicalize_sample(
-    slime_sample: Any, *, miles_input_sample: Any, rollout_top_p: float | None = None
+    slime_sample: Any,
+    *,
+    miles_input_sample: Any,
+    rollout_top_p: float | None = None,
+    moe_num_layers: int | None = None,
+    moe_router_topk: int | None = None,
 ) -> Any:
     """把一条 rh2 generate 输出样本转换/校验为 miles Sample。
 
@@ -237,6 +254,11 @@ def canonicalize_sample(
     ``rollout_top_p``：miles `args.rollout_top_p`（调用方 = generate_fn 透传；
     None = 调用方不携带该配置，闸不生效）。< 1.0 时 slime 构造分支强制要求
     装配 mask 在场（见模块 docstring 的 sampling-mask 段）。
+
+    ``moe_num_layers``/``moe_router_topk``：R3 routing tape 的形状期望
+    （调用方 = generate_fn 从 orchestrator 的 SlimeBindingConfig 透传，与
+    backfill 产生 tape 用的是同一份配置）。仅当 slime 输出真的携带
+    `rollout_routed_experts` 时消费；tape 在场而期望缺失 = fail-closed。
     """
 
     if miles_input_sample is None or not isinstance(miles_input_sample, MilesSample):
@@ -248,7 +270,13 @@ def canonicalize_sample(
     if isinstance(slime_sample, MilesSample):
         return _canonicalize_miles_passthrough(slime_sample, miles_input_sample)
     if isinstance(slime_sample, SlimeSample):
-        return _convert_slime_sample(slime_sample, miles_input_sample, rollout_top_p=rollout_top_p)
+        return _convert_slime_sample(
+            slime_sample,
+            miles_input_sample,
+            rollout_top_p=rollout_top_p,
+            moe_num_layers=moe_num_layers,
+            moe_router_topk=moe_router_topk,
+        )
     raise CanonicalizationError(
         "unexpected_output_type",
         f"generate 输出节点类型 {type(slime_sample).__name__} 不是 slime/miles Sample。",
@@ -312,7 +340,14 @@ def _canonicalize_miles_passthrough(sample: Any, miles_input_sample: Any) -> Any
     return sample
 
 
-def _convert_slime_sample(s: Any, miles_input_sample: Any, *, rollout_top_p: float | None) -> Any:
+def _convert_slime_sample(
+    s: Any,
+    miles_input_sample: Any,
+    *,
+    rollout_top_p: float | None,
+    moe_num_layers: int | None,
+    moe_router_topk: int | None,
+) -> Any:
     """vendor slime Sample -> 新 miles Sample（逐字段显式映射）。"""
 
     # C1′-b：装配 mask 附加属性（sampling_mask_assembly.attach_assembled_mask
@@ -378,15 +413,160 @@ def _convert_slime_sample(s: Any, miles_input_sample: Any, *, rollout_top_p: flo
         generate_function_path=miles_input_sample.generate_function_path,
         multimodal_inputs=miles_input_sample.multimodal_inputs,
         # -- miles 独有的响应侧字段：vendor 链路不产生，保持默认 None
-        #    （rollout_routed_experts / rollout_indexer_topk / opd_reverse_kl；
-        #    multimodal_train_inputs 同理——slime 侧非 None 已在上方拒绝）
+        #    （rollout_indexer_topk / opd_reverse_kl；multimodal_train_inputs
+        #    同理——slime 侧非 None 已在上方拒绝；rollout_routed_experts 见
+        #    下方 F4 转换分支）
     )
     # 统计信息容器：两侧嵌套类同构但类型不同，经 dict 往返换成 miles 类实例。
     out.spec_info = MilesSample.SpecInfo.from_dict(s.spec_info.to_dict())
     out.prefix_cache_info = MilesSample.PrefixCacheInfo.from_dict(s.prefix_cache_info.to_dict())
     if attached_mask is not None:
         out.rollout_sampling_mask = _to_miles_sampling_mask(attached_mask, out)
+    # F4（R3 routing tape）：slime 侧 tape 在场才转换；R3-off（None）保持
+    # miles 默认 None，旧路径零改变。
+    if s.rollout_routed_experts is not None:
+        out.rollout_routed_experts = _convert_routed_experts(
+            s.rollout_routed_experts,
+            expected_rows=len(out.tokens) - 1,
+            moe_num_layers=moe_num_layers,
+            moe_router_topk=moe_router_topk,
+        )
     return out
+
+
+def _convert_routed_experts(
+    value: Any,
+    *,
+    expected_rows: int,
+    moe_num_layers: int | None,
+    moe_router_topk: int | None,
+) -> "numpy.ndarray":
+    """RH2 routing tape -> miles 契约的 owned contiguous numpy.ndarray[int32]。
+
+    输入三形态（rh2 产生点 = generate.py `_shape_routing_experts`，逐一对照）：
+
+    1. torch tensor，形状 `(rows, layers, topk)`（torch 在场的正常路径）；
+    2. 等价嵌套 list `[rows][layers][topk]`（无 torch 的轻量环境回退）；
+    3. flat list（backfill 时 config 缺 layers/topk 的保底形态）。
+
+    输出严格 `(expected_rows, moe_num_layers, moe_router_topk)`、dtype int32、
+    C-contiguous 且**拥有自己的内存**（不与 torch tensor / 输入 list 共享，
+    miles 侧 buffer/train conversion 持有期间 rh2 侧释放引用也安全）。
+
+    fail-closed（宁炸不猜）：期望配置缺失或非正、行数少/多（backfill 已做过
+    唯一允许的前缀裁剪，这里不再二次猜测）、layer/topk 与配置不符、非整数
+    dtype（含 bool/float）、超 int32 值域、ragged/混型/未知形态一律拒绝。
+    """
+
+    if moe_num_layers is None or moe_router_topk is None:
+        raise CanonicalizationError(
+            "routed_experts_config_missing",
+            "slime 输出携带 rollout_routed_experts，但 canonicalize 未拿到 "
+            f"moe_num_layers/moe_router_topk 期望（got {moe_num_layers!r}/"
+            f"{moe_router_topk!r}）——无形状期望不做转换（generate_fn 应从 "
+            "orchestrator 的 SlimeBindingConfig 透传，与 backfill 同源）。",
+        )
+    layers = int(moe_num_layers)
+    topk = int(moe_router_topk)
+    if layers <= 0 or topk <= 0:
+        raise CanonicalizationError(
+            "routed_experts_config_invalid",
+            f"moe_num_layers={layers}/moe_router_topk={topk} 必须为正整数。",
+        )
+    if expected_rows <= 0:
+        raise CanonicalizationError(
+            "routed_experts_rows_mismatch",
+            f"样本 tokens 不足 2 个（len(tokens)-1={expected_rows}），"
+            "不存在合法的 routing 行。",
+        )
+
+    # -- 形态识别（只接产生点的三形态；其余 fail-closed）--------------------
+    value_module = type(value).__module__ or ""
+    if value_module == "torch" or value_module.startswith("torch."):
+        # torch 只在 tape 真以 tensor 形态出现时才 import（见模块 docstring）。
+        import torch
+
+        if not isinstance(value, torch.Tensor):
+            raise CanonicalizationError(
+                "routed_experts_unknown_form",
+                f"routing tape 类型 {type(value).__name__}（torch 模块下的非 "
+                "Tensor 对象）不是已知产生形态。",
+            )
+        try:
+            arr = value.detach().cpu().numpy()
+        except Exception as exc:  # noqa: BLE001 - numpy 不支持的 torch dtype 等
+            raise CanonicalizationError(
+                "routed_experts_malformed",
+                f"torch tensor -> numpy 转换失败（dtype={value.dtype}）：{exc}",
+            ) from exc
+    elif isinstance(value, (list, tuple)):
+        try:
+            arr = numpy.asarray(value)
+        except (ValueError, TypeError, OverflowError) as exc:
+            raise CanonicalizationError(
+                "routed_experts_malformed",
+                f"routing tape list 无法构成规则数组（ragged/混型/超界）：{exc}",
+            ) from exc
+        if arr.dtype == object:
+            raise CanonicalizationError(
+                "routed_experts_malformed",
+                "routing tape list 构成 object 数组（ragged 或混型元素）——"
+                "不是规则的 [rows][layers][topk] / flat 形态。",
+            )
+    else:
+        raise CanonicalizationError(
+            "routed_experts_unknown_form",
+            f"routing tape 类型 {type(value).__name__} 不是已知产生形态"
+            "（torch tensor / 嵌套 list / flat list）。",
+        )
+
+    # -- dtype：必须是整数（bool kind='b'、float kind='f' 都在此拒绝）--------
+    if arr.dtype.kind not in ("i", "u"):
+        raise CanonicalizationError(
+            "routed_experts_not_integer",
+            f"routing tape dtype={arr.dtype} 不是整数——expert 索引必须为整数。",
+        )
+
+    # -- 形状：flat 按期望 reshape；3 维逐轴核对；其余维度拒绝 ---------------
+    if arr.ndim == 1:
+        expected_numel = expected_rows * layers * topk
+        if arr.size != expected_numel:
+            raise CanonicalizationError(
+                "routed_experts_numel_mismatch",
+                f"flat routing tape 元素数 {arr.size} != 期望 {expected_numel}"
+                f"（rows={expected_rows} x layers={layers} x topk={topk}）。",
+            )
+        arr = arr.reshape(expected_rows, layers, topk)
+    elif arr.ndim == 3:
+        rows_actual, layers_actual, topk_actual = arr.shape
+        if layers_actual != layers or topk_actual != topk:
+            raise CanonicalizationError(
+                "routed_experts_shape_mismatch",
+                f"routing tape 形状 {tuple(arr.shape)} 的 (layers, topk)="
+                f"({layers_actual}, {topk_actual}) != 配置期望 ({layers}, {topk})。",
+            )
+        if rows_actual != expected_rows:
+            raise CanonicalizationError(
+                "routed_experts_rows_mismatch",
+                f"routing tape {rows_actual} 行 != len(tokens)-1={expected_rows}"
+                "（少行/多行都拒绝；唯一允许的前缀裁剪已在 backfill 完成）。",
+            )
+    else:
+        raise CanonicalizationError(
+            "routed_experts_unknown_form",
+            f"routing tape ndim={arr.ndim} 不是 1（flat）或 3（rows, layers, topk）。",
+        )
+
+    # -- 值域：int32 收窄必须无损（miles wire dtype = int32）-----------------
+    info = numpy.iinfo(numpy.int32)
+    if int(arr.min()) < info.min or int(arr.max()) > info.max:
+        raise CanonicalizationError(
+            "routed_experts_out_of_int32_range",
+            f"routing tape 值域 [{int(arr.min())}, {int(arr.max())}] 超出 int32"
+            "——收窄会静默改写 expert 索引，拒绝。",
+        )
+    # copy=True + order="C"：owned、contiguous（不与输入共享内存）。
+    return numpy.array(arr, dtype=numpy.int32, order="C", copy=True)
 
 
 def _to_miles_sampling_mask(attached: Any, out: Any) -> Any:
@@ -431,14 +611,21 @@ def _to_miles_sampling_mask(attached: Any, out: Any) -> Any:
 
 
 def canonicalize_group(
-    output: Any, *, miles_input_sample: Any, rollout_top_p: float | None = None
+    output: Any,
+    *,
+    miles_input_sample: Any,
+    rollout_top_p: float | None = None,
+    moe_num_layers: int | None = None,
+    moe_router_topk: int | None = None,
 ) -> Any:
     """递归转换 rh2 generate 的整个输出（Sample | list，任意嵌套深度）。
 
     形状原样保留：list 结构、元素顺序、fan-out sibling 的 rollout_id 共享
     都不改写（rollout_id 逐样本复制，siblings 天然继续共享）。空 list 拒绝
     （无事实的输出形状，放行会在 miles flatten/校验层制造更晦涩的错误）。
-    ``rollout_top_p`` 逐样本透传（见 canonicalize_sample 的 mask 闸说明）。
+    ``rollout_top_p`` 逐样本透传（见 canonicalize_sample 的 mask 闸说明）；
+    ``moe_num_layers``/``moe_router_topk`` 同样逐样本透传（R3 routing tape
+    的形状期望，见 canonicalize_sample 说明）。
     """
 
     if isinstance(output, list):
@@ -449,10 +636,18 @@ def canonicalize_group(
             )
         return [
             canonicalize_group(
-                item, miles_input_sample=miles_input_sample, rollout_top_p=rollout_top_p
+                item,
+                miles_input_sample=miles_input_sample,
+                rollout_top_p=rollout_top_p,
+                moe_num_layers=moe_num_layers,
+                moe_router_topk=moe_router_topk,
             )
             for item in output
         ]
     return canonicalize_sample(
-        output, miles_input_sample=miles_input_sample, rollout_top_p=rollout_top_p
+        output,
+        miles_input_sample=miles_input_sample,
+        rollout_top_p=rollout_top_p,
+        moe_num_layers=moe_num_layers,
+        moe_router_topk=moe_router_topk,
     )

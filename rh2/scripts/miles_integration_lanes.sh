@@ -13,7 +13,20 @@
 #   4. 两条 lane 断言**精确 passed/skipped 计数**（manifest expected_counts）——
 #      删测试保绿的口子关死;测试增删必须同步改 manifest,构成可审计变更。
 # 重建方法见 docs/.../miles_spike/integration_base_manifest.json 的 rebuild 字段。
+# 用法：
+#   miles_integration_lanes.sh                # 完整双 lane（前置校验 + 两轮 pytest）
+#   miles_integration_lanes.sh --checks-only  # 只跑前置 1/2/2b/3（树哈希/干净工作树/
+#                                             # patch digest/pin），不跑 pytest。供
+#                                             # experiments/miles_gpu_spike/launch.sh
+#                                             # 的 preflight 复用（F3 收口），避免把
+#                                             # 同一套 manifest 断言复制第二份。
+#                                             # 注意：--checks-only 通过 ≠ lane 资格
+#                                             # 通过；租期开机前仍须完整跑一次本脚本。
 set -euo pipefail
+CHECKS_ONLY=0
+if [ "${1:-}" = "--checks-only" ]; then
+  CHECKS_ONLY=1
+fi
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MANIFEST="$ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/miles_spike/integration_base_manifest.json"
 MANIFEST_DIR="$(dirname "$MANIFEST")"
@@ -81,6 +94,11 @@ if [ "$pin_head" != "$pin_full" ]; then
   exit 1
 fi
 echo "reference/miles pin 校验通过：$pin_head"
+
+if [ "$CHECKS_ONLY" -eq 1 ]; then
+  echo "C5 前置校验全部通过（--checks-only：未跑 pytest 双 lane，不构成 lane 资格）"
+  exit 0
+fi
 
 cd "$ROOT/rh2"
 

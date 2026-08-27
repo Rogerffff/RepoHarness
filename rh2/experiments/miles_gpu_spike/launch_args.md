@@ -1,10 +1,13 @@
-# miles GPU spike 最小启动参数清单（占位,租期校准）
+# miles GPU spike 最小启动参数清单（要素说明;可执行事实源 = launch.sh）
 
-> **状态：硬件段占位。** 本清单只保证"要素齐"——rh2 侧必须绑定的参数一个不少、
-> 与 CPU 侧已验证语义一一对应;硬件相关数值（并行切分、显存参数、路径）在
-> 租期开机后按实际机型校准,不承诺本文件可直接跑通。
+> **状态：F3/P0-4 收口后本文件降级为"参数语义解释"。** 可直接执行的启动闭包
+> 是同目录 `launch.sh`（preflight/dry-run/run 三模式;env 钉死组、Ray runtime-env、
+> manifest/模型拓扑/tarball/custom_config/R3 显式选择断言全部在脚本内,本机可
+> preflight）。两者冲突以 launch.sh 为准并回改本文件。验收判定见 thresholds.md
+> + g1_acceptance.py（P0-6）;正控组预注册见 positive_control.md（P0-5）。
 > 背景：docs/agentic_RL/repo_harness_rh2_workstreams/miles_spike/spike-log.md
-> （硬件段清单一节）;GPU 前最小收口 B2 项（scratchpad/codex_bfix_recheck.md）。
+> （硬件段清单一节）;finding F3 = tmp/codex_miles_local_spike_closure_review_
+> 20260826.md §5。
 
 ## 0. 代码与环境前置
 

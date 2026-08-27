@@ -72,9 +72,20 @@ class Rh2MilesGenerateFn:
         # replay（上游严格开关），此时 slime->miles 构造分支必须带装配 mask，
         # 缺失由 canonicalize fail-closed 拒绝。args 无该属性（老测试面/非
         # miles args）时传 None，闸不生效。
+        #
+        # F4（R3 routing tape）：moe_num_layers/moe_router_topk 从 orchestrator
+        # 的 SlimeBindingConfig 透传——与 backfill_leaf_sample 产生 tape 用的是
+        # **同一份配置**（单一事实源），canonicalize 据此做 (len(tokens)-1,
+        # layers, topk) 的终检转换。R3-off（config 未配 / tape 为 None）时两参
+        # 不被消费，行为零改变；tape 在场而期望缺失由 canonicalize fail-closed。
+        binding_config = getattr(
+            getattr(input.args, "rh2_orchestrator", None), "config", None
+        )
         samples = canonicalize_group(
             raw,
             miles_input_sample=input.sample,
             rollout_top_p=getattr(input.args, "rollout_top_p", None),
+            moe_num_layers=getattr(binding_config, "moe_num_layers", None),
+            moe_router_topk=getattr(binding_config, "moe_router_topk", None),
         )
         return GenerateFnOutput(samples=samples)

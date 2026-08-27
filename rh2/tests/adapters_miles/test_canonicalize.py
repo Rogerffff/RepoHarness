@@ -172,7 +172,8 @@ def test_unknown_extra_attr_rejected(world):
         ("multimodal_train_input_id", "mm-1"),
         ("apply_chat_template_kwargs", {"enable_thinking": True}),
         ("generate_function_path", "a.b.c"),
-        ("rollout_routed_experts", [1, 2, 3]),
+        # rollout_routed_experts 已从拒绝表移除（F4：经 _convert_routed_experts
+        # 转换进 miles 字段），fail-closed 覆盖移至 test_canonicalize_routed_experts.py
     ],
 )
 def test_slime_only_fields_rejected(world, field, value):

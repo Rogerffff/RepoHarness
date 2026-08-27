@@ -126,6 +126,50 @@ async def test_generate_fn_orchestrator_missing_triggers_bootstrap_fail_closed(
     assert getattr(gi.args, "rh2_orchestrator", None) is None  # 不留半成品注入
 
 
+async def test_generate_fn_passes_moe_config_for_routing_tape(world):
+    """F4 透传面：generate_fn 从 args.rh2_orchestrator.config 取
+    moe_num_layers/moe_router_topk 交给 canonicalize（与 backfill 同源，
+    generate.py RolloutOrchestrator 调 backfill_leaf_sample 用的同一份
+    config）。属性链任何一环改名/断裂都会让 R3-on 样本被 config_missing
+    拒绝——本用例把该回归从"GPU 上才发现"提前到 CPU。"""
+
+    import numpy as np
+
+    world.install_sglang_stub()
+
+    rows, layers, topk = 4, 2, 3  # mk_vendor_sample tokens=5 -> rows=4
+    flat = list(range(rows * layers * topk))
+    orch = _FakeOrchestrator(
+        lambda sample: [world.mk_vendor_sample(rollout_routed_experts=list(flat))]
+    )
+    orch.config = SimpleNamespace(moe_num_layers=layers, moe_router_topk=topk)
+
+    fn = world.Rh2MilesGenerateFn()
+    out = await fn(_mk_input(world, orch, world.mk_miles_input()))
+    (s,) = out.samples
+    arr = s.rollout_routed_experts
+    assert isinstance(arr, np.ndarray) and arr.dtype == np.int32
+    assert arr.shape == (rows, layers, topk)
+    assert arr.reshape(-1).tolist() == flat
+
+
+async def test_generate_fn_moe_config_missing_tape_present_fail_closed(world):
+    """F4 反向：orchestrator.config 缺 moe 期望（或属性链断裂取到 None）而
+    tape 在场——必须 config_missing 拒绝，不允许静默猜形状/静默丢 tape。"""
+
+    world.install_sglang_stub()
+    from repoharness2.adapters.miles.canonicalize import CanonicalizationError
+
+    orch = _FakeOrchestrator(
+        lambda sample: [world.mk_vendor_sample(rollout_routed_experts=[0] * 24)]
+    )
+    orch.config = SimpleNamespace(moe_num_layers=None, moe_router_topk=None)
+
+    fn = world.Rh2MilesGenerateFn()
+    with pytest.raises(CanonicalizationError, match="routed_experts_config_missing"):
+        await fn(_mk_input(world, orch, world.mk_miles_input()))
+
+
 def test_miles_loader_instantiates_class_form(world):
     """miles load_generate_function 对类路径直接实例化（不套 Legacy adapter）。"""
 
