@@ -1,0 +1,862 @@
+From 52040081a7dfb3ebbecbc000b59a7b2511000b65 Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Fri, 28 Aug 2026 02:14:25 +0800
+Subject: [PATCH] [rh2-integration] structured G1 acceptance events +
+ integration-tree identity assertion
+
+rh2 pre-rental blockers B1/B2/B3 (miles side):
+
+- new miles/utils/rh2_event_log.py: append-only jsonl event log gated by
+  MILES_RH2_EVENT_DIR (no-op when unset), plus miles source-tree digest and
+  per-actor identity assertion pinned by RH2_EXPECTED_MILES_TREE_DIGEST.
+- train_one_step: emit per-optimizer-step 'train_step' events carrying the
+  independent facts the acceptance judge needs: optimizer_step_applied (true
+  only when optimizer.step() really ran; the NORMAL enum alone is not proof),
+  Adam/scheduler progress counters before/after, grad_norm, duration, and the
+  aggregated dis_* token-accounting metrics (aggregation hoisted so skipped
+  steps also report; collective stays rank-aligned).
+- train(): emit 'train_step_consumed' with each DP rank's contiguous per-step
+  sample-index slice (queue exactly-once + positive-control consumption).
+- actor: 'train_rollout' carries the trainer-side current weight version at
+  consumption time (behavior weight_versions must not stand in for it);
+  'logprob_compare' reports same-version |current-behavior| per sample over
+  the support-renormalized recomputed log_probs; 'weight_update' records
+  version before/after and duration on rank 0.
+- rollout_manager.generate: 'rollout_workers' (stable engine identity set)
+  and per-group 'rollout_group' sample identity/reward/behavior-version/
+  routing-tape-digest evidence; eval path emits 'eval_smoke'.
+- fully-async data buffer: 'group_filtered' rejection evidence (aborted /
+  dynamic-filter drops), proving zero-variance groups never trained.
+- train_async driver: 'weight_publish' / 'weight_publish_skipped' mark the
+  publish gate decision; driver + every actor kind assert tree identity at
+  startup and stop on mismatch.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ miles/backends/megatron_utils/actor.py   |  81 ++++++++++
+ miles/backends/megatron_utils/model.py   | 193 ++++++++++++++++++++++-
+ miles/ray/rollout/rollout_manager.py     |  78 ++++++++-
+ miles/ray/rollout/sglang_server_actor.py |   6 +
+ miles/rollout/fully_async_data_buffer.py |  33 ++++
+ miles/utils/rh2_event_log.py             | 148 +++++++++++++++++
+ train_async.py                           |  11 +-
+ 7 files changed, 542 insertions(+), 8 deletions(-)
+ create mode 100644 miles/utils/rh2_event_log.py
+
+diff --git a/miles/backends/megatron_utils/actor.py b/miles/backends/megatron_utils/actor.py
+index 2a43b58c8..ac737c22b 100644
+--- a/miles/backends/megatron_utils/actor.py
++++ b/miles/backends/megatron_utils/actor.py
+@@ -3,6 +3,7 @@ import logging
+ import os
+ import random
+ import shutil
++import time
+ from argparse import Namespace
+ from contextlib import ExitStack, nullcontext
+ from typing import TYPE_CHECKING
+@@ -27,6 +28,7 @@ from miles.utils.memory_utils import clear_memory, print_memory
+ from miles.utils.multi_lora import is_multi_lora_enabled
+ from miles.utils.processing_utils import load_tokenizer
+ from miles.utils.ray_utils import Box
++from miles.utils import rh2_event_log
+ from miles.utils.reloadable_process_group import destroy_process_groups, monkey_patch_torch_dist, reload_process_groups
+ from miles.utils.replay_base import all_replay_managers, routing_replay_manager
+ from miles.utils.sampling import top_p_sampling_replay_enabled
+@@ -101,6 +103,10 @@ class MegatronTrainRayActor(TrainRayActor):
+     ) -> int | None:
+         monkey_patch_torch_dist()
+ 
++        # [rh2-integration] Integration-tree identity: assert this Ray worker
++        # imported the pinned miles tree before doing any training work.
++        rh2_event_log.assert_and_emit_identity(f"megatron_train_{role}")
++
+         super().init(args, role, with_ref, with_opd_teacher=with_opd_teacher)
+ 
+         for m in all_replay_managers:
+@@ -466,6 +472,55 @@ class MegatronTrainRayActor(TrainRayActor):
+     def _use_rollout_replay(self, m) -> bool:
+         return getattr(self.args, f"use_rollout_{m.name}_replay", False)
+ 
++    def _emit_logprob_compare(self, rollout_id: int, rollout_data: RolloutBatch) -> None:
++        """[rh2-integration] Same-version behavior/current logprob comparison.
++
++        ``log_probs`` were just recomputed by this trainer over the captured
++        tokens (with ``use_rollout_sampling_mask`` under top-p replay, i.e.
++        support-renormalized -- the same normalization as the captured behavior
++        ``rollout_log_probs``), so per-token ``|current - behavior|`` is a
++        like-for-like discrepancy fact for the acceptance judge. Only
++        pp-last-stage ranks hold ``log_probs``; each effective-DP rank reports
++        its own shard, keyed by global sample index.
++        """
++        log_probs = rollout_data.get("log_probs")
++        behavior = rollout_data.get("rollout_log_probs")
++        sample_indices = rollout_data.get("sample_indices")
++        if not log_probs or behavior is None or sample_indices is None:
++            return
++        current_version = int(self.weight_updater.weight_version)
++        versions = rollout_data.get("weight_versions")
++        entries = []
++        for i, sample_index in enumerate(sample_indices):
++            cur = log_probs[i] if i < len(log_probs) else None
++            beh = behavior[i] if i < len(behavior) else None
++            if cur is None or beh is None:
++                continue
++            cur = cur.detach().float().flatten().cpu()
++            beh = beh.detach().float().flatten().cpu()
++            n = min(cur.numel(), beh.numel())
++            if n == 0:
++                continue
++            sample_versions = versions[i] if versions is not None and i < len(versions) else []
++            numeric = [int(v) for v in sample_versions if str(v).isdigit()]
++            same_version = bool(numeric) and all(v == current_version for v in numeric)
++            entries.append(
++                {
++                    "sample_index": int(sample_index),
++                    "same_version": same_version,
++                    "mean_abs_diff": round(float((cur[:n] - beh[:n]).abs().mean()), 6),
++                    "num_tokens": int(n),
++                    "length_mismatch": bool(cur.numel() != beh.numel()),
++                }
++            )
++        rh2_event_log.emit(
++            "logprob_compare",
++            rollout_id=rollout_id,
++            dp_rank=get_parallel_state().effective_dp.rank,
++            trainer_current_version=current_version,
++            entries=entries,
++        )
++
+     @with_logs
+     def train_actor(
+         self,
+@@ -476,6 +531,17 @@ class MegatronTrainRayActor(TrainRayActor):
+         witness_info: WitnessInfo | None,
+         attempt: int,
+     ) -> TrainStepOutcome:
++        # [rh2-integration] Trainer-side current weight version at consumption
++        # time -- the independent staleness fact (a sample's behavior
++        # ``weight_versions`` are per-turn generation versions and must not
++        # stand in for the trainer's current version).
++        if rh2_event_log.enabled() and dist.get_rank() == 0:
++            rh2_event_log.emit(
++                "train_rollout",
++                rollout_id=rollout_id,
++                trainer_current_version=int(self.weight_updater.weight_version),
++            )
++
+         # Create data iterator for log_probs and train.
+         data_iterator, num_microbatches = get_data_iterator(self.args, self.model, rollout_data)
+         num_optimizer_steps = len(num_microbatches)
+@@ -547,6 +613,9 @@ class MegatronTrainRayActor(TrainRayActor):
+                         if self._use_rollout_replay(m):
+                             m.clear_all_forward()
+ 
++                    if rh2_event_log.enabled():
++                        self._emit_logprob_compare(rollout_id, rollout_data)
++
+                 if self.args.use_critic:
+                     if external_data is not None and get_parallel_state().is_pp_last_stage:
+                         values_ref = external_data.get("values")
+@@ -771,6 +840,11 @@ class MegatronTrainRayActor(TrainRayActor):
+                 destroy_process_groups()
+             return
+ 
++        # [rh2-integration] Publish fact for the acceptance judge: trainer
++        # version advance and wall time of this update call.
++        rh2_update_start = time.monotonic()
++        rh2_version_before = int(getattr(self.weight_updater, "weight_version", 0))
++
+         version_update_names: list[str] = []
+         if is_multi_lora_enabled(self.args):
+             from miles.backends.megatron_utils.multi_lora_utils import select_adapters_to_push
+@@ -785,6 +859,13 @@ class MegatronTrainRayActor(TrainRayActor):
+             print_memory("after update_weights")
+             if dist.get_rank() == 0:
+                 ray.get(self.rollout_manager.set_weight_version.remote(self.weight_updater.weight_version))
++                rh2_event_log.emit(
++                    "weight_update",
++                    rollout_id=getattr(self, "_last_rollout_id", None),
++                    version_before=rh2_version_before,
++                    version_after=int(self.weight_updater.weight_version),
++                    duration_seconds=round(time.monotonic() - rh2_update_start, 3),
++                )
+ 
+             if is_multi_lora_enabled(self.args):
+                 from miles.backends.megatron_utils.multi_lora_utils import commit_weight_push
+diff --git a/miles/backends/megatron_utils/model.py b/miles/backends/megatron_utils/model.py
+index 0a324f84e..b600918fc 100644
+--- a/miles/backends/megatron_utils/model.py
++++ b/miles/backends/megatron_utils/model.py
+@@ -4,6 +4,7 @@ import dataclasses
+ import gc
+ import logging
+ import math
++import time
+ from argparse import Namespace
+ from collections.abc import Callable, Sequence
+ from contextlib import nullcontext
+@@ -34,6 +35,7 @@ from miles.utils.audit_utils.witness.module import witness_dump_and_clear_stale
+ from miles.utils.dumper_utils import DumperMegatronUtil, DumperPhase
+ from miles.utils.memory_utils import clear_memory
+ from miles.utils.multi_lora import is_multi_lora_enabled
++from miles.utils import rh2_event_log
+ from miles.utils.sampling import top_p_sampling_replay_enabled
+ from miles.utils.test_utils.ft_test_actions import FTTestActionActorExecutor
+ from miles.utils.tracking_utils.structured_log import log_structured
+@@ -513,6 +515,131 @@ def _reset_zero_signal_fuse(optimizer: MegatronOptimizer) -> None:
+     setattr(optimizer, _ZERO_SIGNAL_FUSE_ATTR, 0)
+ 
+ 
++# --- [rh2-integration] structured acceptance evidence (rh2 G1 / P0-5/P0-6) ---
++
++
++def _optimizer_progress_counts(
++    optimizer: MegatronOptimizer | None,
++    opt_param_scheduler: OptimizerParamScheduler | None,
++    disable_optimizer: bool,
++) -> tuple[int | None, int | None]:
++    """Independent optimizer/scheduler progress counters for step evidence.
++
++    Returns ``(adam_step_count, scheduler_num_steps)``. The Adam count is the
++    max ``step`` recorded in optimizer param groups / per-param state (0 before
++    the first applied step -- Adam state is lazily created); the scheduler
++    count is ``OptimizerParamScheduler.num_steps``. The acceptance judge
++    cross-checks these against ``optimizer_step_applied``: an applied step must
++    advance them, a skipped one must not. The ``NORMAL`` outcome enum alone is
++    not proof of an update (found-inf / debug paths stay NORMAL without an
++    ``optimizer.step()``), hence these independent facts. ``None`` = counter
++    genuinely unavailable; the judge records missing evidence, never a pass.
++    """
++    adam_step = None
++    if not disable_optimizer and optimizer is not None:
++        steps: list[int] = []
++        for chained in getattr(optimizer, "chained_optimizers", []):
++            inner = getattr(chained, "optimizer", None)
++            if inner is None:
++                continue
++            for group in getattr(inner, "param_groups", []):
++                if "step" in group:
++                    steps.append(int(group["step"]))
++            for state in getattr(inner, "state", {}).values():
++                step = state.get("step")
++                if step is not None:
++                    steps.append(int(step.item() if torch.is_tensor(step) else step))
++        adam_step = max(steps) if steps else 0
++    num_steps = getattr(opt_param_scheduler, "num_steps", None) if opt_param_scheduler is not None else None
++    return adam_step, (int(num_steps) if num_steps is not None else None)
++
++
++def _emit_train_step_event(
++    parallel_state,
++    *,
++    rollout_id: int,
++    step_id: int,
++    attempt: int,
++    outcome: TrainStepOutcome,
++    optimizer_step_applied: bool,
++    counts_before: tuple[int | None, int | None],
++    counts_after: tuple[int | None, int | None],
++    grad_norm,
++    duration_seconds: float,
++    loss_reduced: dict[str, float],
++) -> None:
++    dist = torch.distributed
++    is_last_stage = bool(mpu.is_pipeline_last_stage(ignore_virtual=True))
++    rh2_event_log.emit(
++        "train_step",
++        rollout_id=rollout_id,
++        step_id=step_id,
++        attempt=attempt,
++        outcome=outcome.name,
++        optimizer_step_applied=bool(optimizer_step_applied),
++        adam_step_before=counts_before[0],
++        adam_step_after=counts_after[0],
++        scheduler_steps_before=counts_before[1],
++        scheduler_steps_after=counts_after[1],
++        grad_norm=float(grad_norm) if grad_norm is not None else None,
++        duration_seconds=round(duration_seconds, 3),
++        rank=dist.get_rank() if dist.is_available() and dist.is_initialized() else 0,
++        dp_rank=parallel_state.effective_dp.rank,
++        is_pp_last_stage=is_last_stage,
++        metrics={k: float(v) for k, v in loss_reduced.items()} if is_last_stage else None,
++    )
++
++
++def _emit_train_step_consumed(
++    parallel_state,
++    *,
++    rollout_id: int,
++    step_id: int,
++    num_steps: int,
++    rollout_data,
++) -> None:
++    """Record which local sample indices this optimizer step consumed.
++
++    Steps partition each DP rank's shard contiguously (``get_data_iterator``
++    slices ``[step_id * num_local_gbs, (step_id + 1) * num_local_gbs)`` in both
++    the fixed and the dynamic micro-batch schedule -- dynamic balancing only
++    re-partitions *within* a step's range). The collector unions the per-rank
++    shards of one (rollout, step) into the step's consumed-sample fact, used
++    for queue exactly-once accounting and the positive-control "consumed by a
++    real applied optimizer step" proof.
++    """
++    dist = torch.distributed
++    rank = dist.get_rank() if dist.is_available() and dist.is_initialized() else 0
++    sample_indices = rollout_data.get("sample_indices")
++    if sample_indices is None or num_steps <= 0 or len(sample_indices) % num_steps != 0:
++        rh2_event_log.emit(
++            "train_step_consumed",
++            rollout_id=rollout_id,
++            step_id=step_id,
++            dp_rank=parallel_state.effective_dp.rank,
++            rank=rank,
++            sample_indices=None,
++            error=(
++                "sample_indices unavailable"
++                if sample_indices is None
++                else f"shard size {len(sample_indices)} not divisible by num_steps={num_steps}"
++            ),
++        )
++        return
++    per_step = len(sample_indices) // num_steps
++    lo, hi = step_id * per_step, (step_id + 1) * per_step
++    total_lengths = rollout_data.get("total_lengths")
++    rh2_event_log.emit(
++        "train_step_consumed",
++        rollout_id=rollout_id,
++        step_id=step_id,
++        dp_rank=parallel_state.effective_dp.rank,
++        rank=rank,
++        sample_indices=[int(i) for i in sample_indices[lo:hi]],
++        num_tokens=int(sum(total_lengths[lo:hi])) if total_lengths is not None else None,
++    )
++
++
+ def train_one_step(
+     args: Namespace,
+     rollout_id: int,
+@@ -556,6 +683,15 @@ def train_one_step(
+     disable_optimizer = args.debug_disable_optimizer or optimizer is None
+     multi_lora = is_multi_lora_enabled(args)
+ 
++    # [rh2-integration] Structured step evidence (see _emit_train_step_event).
++    rh2_events_on = rh2_event_log.enabled()
++    rh2_step_start = time.monotonic()
++    rh2_counts_before = (
++        _optimizer_progress_counts(optimizer, opt_param_scheduler, disable_optimizer)
++        if rh2_events_on
++        else (None, None)
++    )
++
+     if multi_lora:
+         from miles.backends.megatron_utils.multi_lora_optimizer import reset_grad_metadata_keep_grads
+ 
+@@ -690,6 +826,10 @@ def train_one_step(
+     outcome = TrainStepOutcome.NORMAL
+     grad_norm = 0.0
+     valid_step = True
++    # [rh2-integration] True only when a real optimizer.step() ran successfully
++    # below -- independent of the outcome enum (found-inf / debug paths stay
++    # NORMAL without applying an update).
++    optimizer_step_applied = False
+     indep_dp_loss_reduced: dict[str, float] = {}
+ 
+     if parallel_state.indep_dp.size > 1:
+@@ -773,6 +913,7 @@ def train_one_step(
+             grad_norm = step_stepped_adapter_slots(
+                 args, model, optimizer, data_iterator[0].rollout_data, rollout_id, step_id
+             )
++            optimizer_step_applied = True
+         else:
+             # Update parameters.
+             update_successful, grad_norm, num_zeros_in_grad = optimizer.step()
+@@ -780,6 +921,7 @@ def train_one_step(
+             # Update learning rate.
+             assert update_successful
+             opt_param_scheduler.step(increment=num_rollouts)
++            optimizer_step_applied = True
+ 
+     # release grad (multi-LoRA retains accumulated grads; stepped slots were
+     # zeroed selectively inside step_adapter_slots)
+@@ -796,18 +938,46 @@ def train_one_step(
+         valid_step=valid_step,
+     )
+ 
++    # [rh2-integration] Metric aggregation hoisted out of the NORMAL branch so
++    # skipped steps also report dis_* token accounting into the structured
++    # event log. aggregate_train_losses all-reduces across the DP group, so it
++    # must run on all last-stage ranks or none: both ``outcome`` (globally
++    # agreed via _sync_grad_signal_flags) and ``rh2_events_on`` (runtime-env
++    # variable shared by every rank) are rank-consistent, keeping the
++    # collective aligned. NORMAL-path values and the return contract are
++    # byte-identical to before.
++    loss_reduced: dict[str, float] = {}
++    if mpu.is_pipeline_last_stage(ignore_virtual=True) and (
++        outcome == TrainStepOutcome.NORMAL or rh2_events_on
++    ):
++        metric_num_rollouts = None if args.calculate_per_token_loss else num_rollouts
++        loss_reduced = (
++            indep_dp_loss_reduced
++            if parallel_state.indep_dp.size > 1
++            else aggregate_train_losses(losses_reduced, metric_num_rollouts)
++        )
++
++    if rh2_events_on:
++        _emit_train_step_event(
++            parallel_state,
++            rollout_id=rollout_id,
++            step_id=step_id,
++            attempt=attempt,
++            outcome=outcome,
++            optimizer_step_applied=optimizer_step_applied,
++            counts_before=rh2_counts_before,
++            counts_after=_optimizer_progress_counts(optimizer, opt_param_scheduler, disable_optimizer),
++            grad_norm=grad_norm,
++            duration_seconds=time.monotonic() - rh2_step_start,
++            loss_reduced=loss_reduced,
++        )
++
+     if outcome == TrainStepOutcome.NORMAL:
+         dump_local_weight_checksums(args=args, model=model, optimizer=optimizer)
+         if args.enable_witness:
+             witness_dump_and_clear_stale(model=model, witness_info=witness_info, optimizer=optimizer)
+ 
+         if mpu.is_pipeline_last_stage(ignore_virtual=True):
+-            metric_num_rollouts = None if args.calculate_per_token_loss else num_rollouts
+-            loss_reduced = (
+-                indep_dp_loss_reduced
+-                if parallel_state.indep_dp.size > 1
+-                else aggregate_train_losses(losses_reduced, metric_num_rollouts)
+-            )
+             return loss_reduced, grad_norm, outcome
+ 
+     return {}, grad_norm, outcome
+@@ -961,6 +1131,17 @@ def train(
+         )
+         step_outcomes.append(train_step_outcome)
+ 
++        # [rh2-integration] Per-step consumed-sample evidence (this DP rank's
++        # contiguous shard slice; see _emit_train_step_consumed).
++        if rh2_event_log.enabled():
++            _emit_train_step_consumed(
++                parallel_state,
++                rollout_id=rollout_id,
++                step_id=step_id,
++                num_steps=num_steps_per_rollout,
++                rollout_data=data_iterator[0].rollout_data,
++            )
++
+         if step_id == 0:
+             # Enable forward pre-hook after training step has successfully run. All subsequent
+             # forward passes will use the forward pre-hook / `param_sync_func` in
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index 2f74e4096..e249f2906 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -1,4 +1,5 @@
+ import asyncio
++import hashlib
+ import logging
+ import time
+ from dataclasses import dataclass
+@@ -29,7 +30,7 @@ from miles.rollout.base_types import (
+ )
+ from miles.rollout.checkpoint_eval import CheckpointEvalFn, EvalSkip
+ from miles.rollout.inference_rollout.compatibility import call_rollout_function, load_rollout_function
+-from miles.utils import object_store
++from miles.utils import object_store, rh2_event_log
+ from miles.utils.audit_utils.event_analyzer import analyzer as event_analyzer
+ from miles.utils.audit_utils.event_logger import checkpoint as event_logger_checkpoint
+ from miles.utils.audit_utils.process_identity import RolloutManagerProcessIdentity
+@@ -55,6 +56,9 @@ class RolloutManager:
+     """The class to run rollout and convert rollout data to training data."""
+ 
+     def __init__(self, args, pg):
++        # [rh2-integration] Integration-tree identity: assert this Ray actor
++        # imported the pinned miles tree before serving any rollout work.
++        rh2_event_log.assert_and_emit_identity("rollout_manager")
+         event_logger_checkpoint.restore(args)
+         configure_logger(args, source=RolloutManagerProcessIdentity())
+ 
+@@ -154,6 +158,8 @@ class RolloutManager:
+             data, metadata, metrics = await self._get_rollout_data(rollout_id=rollout_id)
+         save_debug_rollout_data(self.args, data, rollout_id=rollout_id, evaluation=False, metadata=metadata)
+         log_rollout_data(rollout_id, self.args, data, metrics, time.time() - start_time)
++        if rh2_event_log.enabled():
++            self._emit_rollout_evidence(rollout_id, data)
+         data = convert_samples_to_train_data(
+             self.args,
+             data,
+@@ -168,6 +174,72 @@ class RolloutManager:
+             data_ref = split_train_data_by_dp(self.args, data, self.train_parallel_config)
+         return dict(sample_indices=sample_indices, data_ref=data_ref)
+ 
++    def _emit_rollout_evidence(self, rollout_id: int, samples) -> None:
++        """[rh2-integration] Per-rollout structured evidence for G1 acceptance.
++
++        Emits one ``rollout_workers`` event (stable engine identity set for the
++        worker-warm check) and one ``rollout_group`` event per prompt group
++        carrying sample identity, rewards, per-turn behavior weight versions
++        and (under R3) routing-tape digest facts -- the acceptance collector
++        builds ``sample_records.jsonl`` from these instead of torch-loading
++        debug dumps or regex-scraping logs.
++        """
++        worker_ids = []
++        for name, srv in self.servers.items():
++            for pos, engine in enumerate(srv.engines):
++                identity = f"engine{pos}"
++                try:
++                    identity = engine.actor_handle._actor_id.hex()
++                except Exception:  # noqa: BLE001 - identity is best-effort; set stability is what the check needs
++                    pass
++                worker_ids.append(f"{name}/{identity}")
++        rh2_event_log.emit(
++            "rollout_workers",
++            rollout_id=rollout_id,
++            worker_ids=sorted(worker_ids),
++            weight_version=self.weight_version,
++        )
++
++        flat = [s for item in samples for s in (item if isinstance(item, list) else [item])]
++        groups: dict[object, list] = {}
++        for s in flat:
++            groups.setdefault(s.group_index, []).append(s)
++        for group_index, members in groups.items():
++            first = members[0]
++            meta = first.metadata or {}
++            rewards = []
++            for s in members:
++                try:
++                    rewards.append(float(s.get_reward_value(self.args)))
++                except Exception:  # noqa: BLE001 - non-scalar reward stays None; the judge fails loudly on None
++                    rewards.append(None)
++            tapes = []
++            for s in members:
++                arr = s.rollout_routed_experts
++                if arr is None:
++                    tapes.append(None)
++                else:
++                    tapes.append(
++                        {
++                            "shape": [int(x) for x in arr.shape],
++                            "dtype": str(arr.dtype),
++                            "digest": hashlib.sha256(arr.tobytes()).hexdigest(),
++                            "expected_rows": max(len(s.tokens) - 1, 0),
++                        }
++                    )
++            rh2_event_log.emit(
++                "rollout_group",
++                rollout_id=rollout_id,
++                group_index=group_index,
++                instance_id=meta.get("instance_id") if isinstance(meta, dict) else None,
++                sample_indices=[int(s.index) for s in members],
++                rewards=rewards,
++                behavior_versions=[list(s.weight_versions) for s in members],
++                statuses=[str(getattr(s.status, "value", s.status)) for s in members],
++                response_lengths=[int(s.response_length) for s in members],
++                routing_tape=tapes,
++            )
++
+     async def eval(
+         self,
+         rollout_id,
+@@ -202,6 +274,10 @@ class RolloutManager:
+         metrics = log_eval_rollout_data(rollout_id, self.args, data, result.metrics)
+         if self._metric_checker is not None:
+             self._metric_checker.on_eval(metrics)
++        # [rh2-integration] Eval-path smoke fact: reaching this line means the
++        # eval dispatch ran end to end after training consumption; a crash
++        # above leaves no event and the judge reports missing evidence.
++        rh2_event_log.emit("eval_smoke", rollout_id=rollout_id, ok=True, num_metrics=len(metrics or {}))
+ 
+     async def _eval_checkpoint(
+         self, rollout_id: int, hf_dir: str | None, export_time_seconds: float | None, require_marker: bool
+diff --git a/miles/ray/rollout/sglang_server_actor.py b/miles/ray/rollout/sglang_server_actor.py
+index cfbafdef8..58626fc5b 100644
+--- a/miles/ray/rollout/sglang_server_actor.py
++++ b/miles/ray/rollout/sglang_server_actor.py
+@@ -4,6 +4,8 @@ import ray
+ from sglang.srt.environ import envs
+ from sglang.srt.server_args import ServerArgs
+ 
++from miles.utils import rh2_event_log
++
+ 
+ class SGLangServerActor:
+     """Miles-owned process that hosts the SGLang HTTP server (RDT / use_ray).
+@@ -19,6 +21,10 @@ class SGLangServerActor:
+     def start(self, server_args: ServerArgs, bundle_indices: list[int]) -> list:
+         from sglang.srt.ray.http_server import launch_engine, serve_http
+ 
++        # [rh2-integration] Integration-tree identity: assert this Ray worker
++        # imported the pinned miles tree before hosting an engine.
++        rh2_event_log.assert_and_emit_identity("sglang_server")
++
+         # Set here: a parent actor's os.environ mutations do not reach this process.
+         envs.SGLANG_RAY_BUNDLE_INDICES.set(",".join(str(i) for i in bundle_indices))
+         placement_group = ray.util.get_current_placement_group()
+diff --git a/miles/rollout/fully_async_data_buffer.py b/miles/rollout/fully_async_data_buffer.py
+index 1e432488f..4c4bae347 100644
+--- a/miles/rollout/fully_async_data_buffer.py
++++ b/miles/rollout/fully_async_data_buffer.py
+@@ -15,6 +15,7 @@ from collections.abc import Callable, Iterator
+ from dataclasses import dataclass
+ 
+ from miles.rollout.filter_hub.base_types import MetricGatherer, call_dynamic_filter
++from miles.utils import rh2_event_log
+ from miles.utils.misc import load_function
+ from miles.utils.types import Sample
+ 
+@@ -126,12 +127,14 @@ class DefaultDataBuffer(DataBuffer):
+         # filters at receiving sample: abort filter, dynamic filter
+         if any(s.status == Sample.Status.ABORTED for s in iter_samples(input.group)):
+             self._metric_aborted_groups += 1
++            self._emit_group_filtered(input.group, reason="aborted")
+             self._unused_handler_fn(input.prompt_group)
+             return
+         filter_output = call_dynamic_filter(self._dynamic_filter, self._args, input.group)
+         if not filter_output.keep:
+             # Dropped, not recycled: no usable gradient signal.
+             self._metric_gatherer.on_dynamic_filter_drop(reason=filter_output.reason)
++            self._emit_group_filtered(input.group, reason=filter_output.reason or "dynamic_filter")
+             return
+ 
+         async with self._cond:
+@@ -161,6 +164,36 @@ class DefaultDataBuffer(DataBuffer):
+                 self._metric_stale_groups += 1
+                 self._unused_handler_fn(entry.prompt_group)
+ 
++    def _emit_group_filtered(self, group: Group, reason: str) -> None:
++        """[rh2-integration] Rejection-path evidence for G1 acceptance.
++
++        A dropped group never reaches training, so the trainer-side events
++        cannot account for it; this event is the judge's proof that e.g. a
++        zero-reward-variance group was excluded by the dynamic filter rather
++        than silently trained.
++        """
++        if not rh2_event_log.enabled():
++            return
++        samples = list(iter_samples(group))
++        if not samples:
++            return
++        first = samples[0]
++        meta = first.metadata or {}
++        rewards = []
++        for s in samples:
++            try:
++                rewards.append(float(s.get_reward_value(self._args)))
++            except Exception:  # noqa: BLE001 - aborted samples may carry no scalar reward
++                rewards.append(None)
++        rh2_event_log.emit(
++            "group_filtered",
++            reason=reason,
++            group_index=first.group_index,
++            instance_id=meta.get("instance_id") if isinstance(meta, dict) else None,
++            sample_indices=[int(s.index) for s in samples],
++            rewards=rewards,
++        )
++
+     def get_metrics(self) -> dict[str, float]:
+         prefix = "rollout/fully_async/"
+         metrics = {
+diff --git a/miles/utils/rh2_event_log.py b/miles/utils/rh2_event_log.py
+new file mode 100644
+index 000000000..c86ea1465
+--- /dev/null
++++ b/miles/utils/rh2_event_log.py
+@@ -0,0 +1,148 @@
++"""[rh2-integration] Structured acceptance-evidence event log (rh2 GPU spike G1).
++
++Production emitters append one JSON object per line to
++``$MILES_RH2_EVENT_DIR/rh2_events_<host>_<pid>.jsonl``. The rh2 acceptance
++collector (``rh2/experiments/miles_gpu_spike/g1_acceptance.py collect``)
++consumes these files instead of regex-scraping ``train.log``; the judge treats
++any missing event as MISSING_EVIDENCE (fail-closed), so emitters must never
++fake data -- an emit failure surfaces as an INCOMPLETE verdict, not a crash.
++
++Everything is a no-op when ``MILES_RH2_EVENT_DIR`` is unset, so upstream
++behavior is unchanged outside rh2 acceptance runs.
++
++This module additionally carries the integration-tree identity assertion
++(rh2 P0-4): every Ray actor calls :func:`assert_and_emit_identity` at startup,
++which records ``miles.__file__`` plus a content digest of the imported miles
++source tree and, when ``RH2_EXPECTED_MILES_TREE_DIGEST`` is set by the
++launcher, hard-fails on mismatch -- a worker silently importing a stock/stale
++miles from the image instead of the pinned integration tree must stop the job,
++not train with unpatched semantics.
++
++Import-light on purpose: no torch/megatron/ray imports, so the driver process
++and every actor kind can use it.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import logging
++import os
++import socket
++import threading
++import time
++from typing import Any
++
++logger = logging.getLogger(__name__)
++
++EVENT_DIR_ENV = "MILES_RH2_EVENT_DIR"
++EXPECTED_TREE_DIGEST_ENV = "RH2_EXPECTED_MILES_TREE_DIGEST"
++
++_emit_lock = threading.Lock()
++_emit_failure_logged = False
++_tree_digest_cache: str | None = None
++
++
++def enabled() -> bool:
++    return bool(os.environ.get(EVENT_DIR_ENV))
++
++
++def _json_default(obj: Any) -> Any:
++    # Tensors / numpy scalars carry .item(); everything else degrades to str.
++    item = getattr(obj, "item", None)
++    if callable(item):
++        try:
++            return item()
++        except Exception:  # noqa: BLE001 - best-effort serialization only
++            pass
++    return str(obj)
++
++
++def emit(kind: str, **fields: Any) -> None:
++    """Append one structured event; silently a no-op when disabled.
++
++    A write failure is logged once and otherwise swallowed: evidence loss is
++    fail-closed at judge time (MISSING_EVIDENCE -> INCOMPLETE), and killing a
++    training step over an evidence-file IO error would invert that design.
++    """
++    event_dir = os.environ.get(EVENT_DIR_ENV)
++    if not event_dir:
++        return
++    record = {
++        "event": kind,
++        "ts_unix": round(time.time(), 3),
++        "host": socket.gethostname(),
++        "pid": os.getpid(),
++        **fields,
++    }
++    global _emit_failure_logged
++    try:
++        os.makedirs(event_dir, exist_ok=True)
++        path = os.path.join(event_dir, f"rh2_events_{socket.gethostname()}_{os.getpid()}.jsonl")
++        line = json.dumps(record, ensure_ascii=False, default=_json_default)
++        with _emit_lock, open(path, "a", encoding="utf-8") as fh:
++            fh.write(line + "\n")
++    except Exception:  # noqa: BLE001 - see docstring: fail-closed at judge, not here
++        if not _emit_failure_logged:
++            _emit_failure_logged = True
++            logger.exception("rh2 event emit failed (further failures suppressed)")
++
++
++def miles_tree_digest() -> str:
++    """Content digest of the imported miles source tree (order-stable sha256).
++
++    Hashes every ``*.py`` under the package directory of the *imported* miles
++    module (relative path + content), so two processes agree iff they import
++    byte-identical miles sources -- the launcher pre-computes the same value
++    from ``$MILES_ROOT`` and pins it via ``RH2_EXPECTED_MILES_TREE_DIGEST``.
++    """
++    global _tree_digest_cache
++    if _tree_digest_cache is None:
++        import miles
++
++        root = os.path.dirname(os.path.abspath(miles.__file__))
++        digest = hashlib.sha256()
++        for dirpath, dirnames, filenames in os.walk(root):
++            dirnames[:] = sorted(d for d in dirnames if d != "__pycache__")
++            for name in sorted(f for f in filenames if f.endswith(".py")):
++                path = os.path.join(dirpath, name)
++                rel = os.path.relpath(path, root).replace(os.sep, "/")
++                digest.update(rel.encode("utf-8"))
++                digest.update(b"\0")
++                with open(path, "rb") as fh:
++                    digest.update(hashlib.sha256(fh.read()).digest())
++                digest.update(b"\0")
++        _tree_digest_cache = digest.hexdigest()
++    return _tree_digest_cache
++
++
++def assert_and_emit_identity(role: str) -> None:
++    """Record which miles tree this process imported; stop on a pinned mismatch.
++
++    Called once at startup of every actor kind (megatron trainer, rollout
++    manager, sglang server host) and by the driver. Emits an ``actor_identity``
++    event for the launcher's cross-actor consistency audit, then raises if the
++    launcher pinned an expected digest and this process imported a different
++    tree -- continuing would run unaudited code while the driver-side manifest
++    checks claim otherwise.
++    """
++    expected = os.environ.get(EXPECTED_TREE_DIGEST_ENV) or None
++    if expected is None and not enabled():
++        return
++    import miles
++
++    actual = miles_tree_digest()
++    emit(
++        "actor_identity",
++        role=role,
++        miles_file=os.path.abspath(miles.__file__),
++        tree_digest=actual,
++        expected_tree_digest=expected,
++    )
++    if expected is not None and actual != expected:
++        raise RuntimeError(
++            f"integration tree identity mismatch in role={role}: imported miles at "
++            f"{miles.__file__} has tree digest {actual}, launcher pinned {expected}. "
++            "This process would train/serve with a different miles source tree than "
++            "the audited integration checkout; stopping instead of running unaudited code."
++        )
+diff --git a/train_async.py b/train_async.py
+index 832c3fe95..e20613a10 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -4,7 +4,7 @@ import os
+ 
+ from miles.ray.placement_group import create_placement_groups, create_rollout_manager, create_training_models
+ from miles.ray.rollout.eval_dispatch import EvalDispatcher
+-from miles.utils import object_store
++from miles.utils import object_store, rh2_event_log
+ from miles.utils.arguments import parse_args, validate_async_off_policy_correction
+ from miles.utils.audit_utils.process_identity import MainProcessIdentity
+ from miles.utils.data import remove_rollout_data_refs
+@@ -40,6 +40,9 @@ def _any_weights_dirty(train_results) -> bool:
+ 
+ # The framework supports other asynchronous approaches such as fully async (see miles/rollout/fully_async_rollout.py).
+ async def train(args):
++    # [rh2-integration] Integration-tree identity for the driver process (the
++    # Ray actors assert their own at startup).
++    rh2_event_log.assert_and_emit_identity("driver")
+     assert not args.colocate, "Colocation is not supported for async training."
+     validate_async_off_policy_correction(args)
+     configure_logger(args, source=MainProcessIdentity())
+@@ -151,6 +154,7 @@ async def train(args):
+                 rollout_data_next_future = None
+                 await actor_model.update_weights(rollout_id=rollout_id)
+                 weights_dirty_since_publish = False
++                rh2_event_log.emit("weight_publish", rollout_id=rollout_id)
+             else:
+                 logger.info(
+                     "skipping weight publish at rollout_id=%d: every optimizer step since the "
+@@ -158,6 +162,11 @@ async def train(args):
+                     "incremented)",
+                     rollout_id,
+                 )
++                # [rh2-integration] Structured counterpart of the log line: the
++                # acceptance collector needs an explicit "publish skipped" fact
++                # to tell an intentional version hold apart from missing
++                # publish evidence.
++                rh2_event_log.emit("weight_publish_skipped", rollout_id=rollout_id)
+ 
+         if should_run_periodic_action(rollout_id, args.eval_interval, num_rollout_per_epoch, args.num_rollout):
+             await eval_dispatcher.dispatch(rollout_id, force=rollout_id == args.num_rollout - 1)
+-- 
+2.50.1 (Apple Git-155)
+

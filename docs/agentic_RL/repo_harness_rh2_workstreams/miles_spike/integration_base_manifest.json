@@ -11,13 +11,17 @@
     "patches/0002-rh2-integration-skip-optimizer-step-on-exactly-zero-.patch": "445fcd950eac74ff3ce6356ed98cdb93b10346f45a5ed1a486a2883e2f911073",
     "patches/0003-rh2-integration-gate-weight-publish-on-weights_dirty.patch": "6eda57c8662b4853f66d85319a8b89a03ebc42fc452573329ac516511c1abfb2"
   },
-  "expected_tree": "e61a8423d3238c73d7bb6af3082ffb82ed2e4ecb",
+  "rh2_patches_g1": {
+    "_comment": "租前终审 B1/B2/B3 修复的 miles 侧窄 commit 存档（2026-08-28,rh2-integration-v2 本地 SHA 52040081a：结构化 G1 验收事件 jsonl（MILES_RH2_EVENT_DIR 门控,step/sample/publish/filter/eval 事件 + optimizer_step_applied 等独立事实）+ 每类 actor 启动时 integration tree digest 断言（RH2_EXPECTED_MILES_TREE_DIGEST 钉死,不一致即停））。在 0003 之后 git am。",
+    "patches/0004-rh2-integration-structured-G1-acceptance-events-inte.patch": "bde10c847420c188f8595b301524ad8ee59ac177ad2d303d77bf20e453bc4c15"
+  },
+  "expected_tree": "56ab24a5be38edac75870061c25b4a76495ec2cc",
   "expected_counts": {
-    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（F4+F5,2026-08-27,delta 两 lane 各 +34）：审计补强 test_generate_fn.py +2（F4 透传面:orchestrator.config moe 期望进 canonicalize 的正向+config_missing 反向）;F4 新增 test_canonicalize_routed_experts.py（+28,R3 tape 三形态转换/fail-closed/纵切到 convert_samples_to_train_data）,test_canonicalize.py 撤 1 个 rollout_routed_experts 拒绝参数（-1,字段改为转换）;F5 新增 test_capture_wire_draft_guard.py（+5,真实 ModelCallProxy 的 delivered draft ownership guard）。两文件均不打 integration_base 标记,lane A/B 都真实执行。上轮（两线程合账）：F1 身份链 test_f1_turn_identity/test_f1_e2e_identity_chain;F2 零信号语义——faithful_dis_loss B6 用例翻转+用例 C 单元、train_seam F2 区段（用例 A~F+momentum 主验收,原 B6 两测删除）、新增 test_zero_signal_semantics.py（buffer filter 丢弃/富报告/驱动门控/源码锚定）、custom_config 新 key 断言。",
-    "lane_a_passed": 122,
-    "lane_a_skipped": 123,
-    "lane_b_passed": 245,
+    "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（租前终审 B1/B2/B3,2026-08-28,lane A +16p/+2s,lane B +18p）：新增 test_g1_acceptance_events.py——B1 代表性事件 collect→judge 全链 PASS + 9 类必要事件逐一删除必须 INCOMPLETE（parametrize 9）+ B2 oracle（NORMAL 非 applied/Adam 计数交叉验证/current_version 取 trainer 事实/正控须被 applied step 消费/零方差组进训必红/identity 不一致必红）；2 个 integration_base 专属：真实 miles rh2_event_log emitter 产出事件喂 collect 的 schema 同源测试 + tree digest 断言 raise 测试。上轮变更（F4+F5,2026-08-27,delta 两 lane 各 +34）：审计补强 test_generate_fn.py +2（F4 透传面:orchestrator.config moe 期望进 canonicalize 的正向+config_missing 反向）;F4 新增 test_canonicalize_routed_experts.py（+28,R3 tape 三形态转换/fail-closed/纵切到 convert_samples_to_train_data）,test_canonicalize.py 撤 1 个 rollout_routed_experts 拒绝参数（-1,字段改为转换）;F5 新增 test_capture_wire_draft_guard.py（+5,真实 ModelCallProxy 的 delivered draft ownership guard）。两文件均不打 integration_base 标记,lane A/B 都真实执行。上轮（两线程合账）：F1 身份链 test_f1_turn_identity/test_f1_e2e_identity_chain;F2 零信号语义——faithful_dis_loss B6 用例翻转+用例 C 单元、train_seam F2 区段（用例 A~F+momentum 主验收,原 B6 两测删除）、新增 test_zero_signal_semantics.py（buffer filter 丢弃/富报告/驱动门控/源码锚定）、custom_config 新 key 断言。",
+    "lane_a_passed": 138,
+    "lane_a_skipped": 125,
+    "lane_b_passed": 263,
     "lane_b_skipped": 0
   },
-  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> 依序 git am patches/0001-*.patch patches/0002-*.patch patches/0003-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件两张 patch 表"
+  "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> 依序 git am patches/0001-*.patch patches/0002-*.patch patches/0003-*.patch patches/0004-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件三张 patch 表"
 }

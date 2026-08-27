@@ -49,7 +49,10 @@
 
   "positive_control_instances": ["django__django-11099", "django__django-16139", "django__django-11133"],
   "positive_control_min_groups_with_reward_std": 1,
+  "positive_control_must_be_consumed_by_applied_step": true,
   "zero_variance_groups_must_not_train": true,
+
+  "integration_tree_identity_required": true,
 
   "max_consecutive_zero_signal_steps": 8,
 
@@ -70,19 +73,20 @@
 
 | 键 | 检查内容 | 证据来源 |
 |---|---|---|
-| `g1_min_rollouts` / `g1_min_applied_optimizer_steps` | ≥3 轮 rollout；≥2 个真实 applied optimizer step（SKIPPED_ZERO_SIGNAL 不计入 applied） | step_records.jsonl |
-| `g1_worker_warm_across_steps` | rollout worker/actor 标识跨 step 不变（常驻，非每 step 重建） | step_records.jsonl `worker_ids` |
-| `g1_checkpoint_save_reload_delete` | checkpoint 保存并 reload 验证一次，随后删除（探针 ckpt 不作任何后续起点） | evidence/checkpoint_probe.json（人工/脚本落盘） |
-| `g1_eval_smoke_after_worker_stop` | worker 停止后 before/after eval 路径冒烟一次 | evidence/eval_smoke.json |
-| `staleness_max_versions` | 每样本 behavior version 与 current version 差 ≤ N | sample_records.jsonl |
-| `weight_version_monotonic` | 版本只前进；`skipped_rollout_version_must_not_advance`：全 SKIPPED 轮版本不变（F2 patch 0003 语义） | step_records.jsonl |
-| `accepted_tokens_min_on_normal_step` | NORMAL step 的 dis_accepted_tokens ≥ 1；`token_accounting_must_balance`：accepted+rejected == provenance | step_records.jsonl（train.log 抽取） |
-| `logprob_same_version_mean_abs_diff_max` | 同版本 behavior/support/current 对拍摘要 | sample_records.jsonl |
-| `routing_tape_*` | R3=on：逐样本 shape/dtype/digest 记录且合形；R3=off：字段缺席 | sample_records.jsonl（rollout dumps 抽取） |
-| `positive_control_*` | 见 positive_control.md：指定 3 组中 ≥1 组 reward std>0；全等 reward 组必须走 filter 丢弃或 SKIPPED_ZERO_SIGNAL，不得进入 applied step | sample_records.jsonl + step_records.jsonl |
+| `g1_min_rollouts` / `g1_min_applied_optimizer_steps` | ≥3 轮 rollout；≥2 个 `optimizer_step_applied=True` 的 step（独立事实：真实 optimizer.step() 执行成功；NORMAL 枚举不作 applied 证据——found-inf/debug 路径可为 NORMAL 而未更新；judge 另以 `optimizer_step_progress_consistent` 交叉验证 Adam/scheduler 前后计数） | step_records.jsonl（miles train_step 事件） |
+| `g1_worker_warm_across_steps` | rollout worker/actor 标识跨 step 不变（常驻，非每 step 重建） | step_records.jsonl `worker_ids`（rollout_workers 事件） |
+| `g1_checkpoint_save_reload_delete` | checkpoint 保存并 reload 验证一次，随后删除（探针 ckpt 不作任何后续起点） | evidence/checkpoint_probe.json（launch.sh post-run 自动落盘） |
+| `g1_eval_smoke_after_worker_stop` | 训练消费结束后 eval 路径冒烟一次（末轮 train + publish 之后由 EvalDispatcher 触发） | evidence/eval_smoke.json（eval_smoke 事件） |
+| `staleness_max_versions` | 每样本 behavior version（逐 turn 最旧数值版本）与 trainer current version（train_rollout 事件独立事实，不取 behavior 列表末位）差 ≤ N | sample_records.jsonl |
+| `weight_version_monotonic` | 版本只前进；`skipped_rollout_version_must_not_advance`：全 SKIPPED 轮版本不变（F2 patch 0003 语义；显式 weight_publish_skipped 事实区分"有意保持"与证据缺失） | step_records.jsonl（weight_update / weight_publish_skipped 事件） |
+| `accepted_tokens_min_on_normal_step` | NORMAL step 的 dis_accepted_tokens ≥ 1；`token_accounting_must_balance`：accepted+rejected == provenance | step_records.jsonl（train_step 事件 metrics） |
+| `logprob_same_version_mean_abs_diff_max` | 同版本 behavior(support-normalized) vs current(support-renorm，trainer 复算) 对拍摘要 | sample_records.jsonl（logprob_compare 事件） |
+| `routing_tape_*` | R3=on：逐训练批样本 shape/dtype/digest 记录且合形；R3=off：字段缺席 | sample_records.jsonl（rollout_group 事件） |
+| `positive_control_*` | 见 positive_control.md：指定 3 组中 ≥1 组 reward std>0，且该组全部样本被消费、≥1 样本进入 `optimizer_step_applied=True` 的 step（`positive_control_must_be_consumed_by_applied_step`——方差 ≠ 驱动更新）；全等 reward 组必须走 filter 丢弃或 SKIPPED_ZERO_SIGNAL，不得进入 applied step | sample_records.jsonl + step_records.jsonl |
+| `integration_tree_identity_required` | 每类 actor（driver/trainer/rollout manager/sglang server）启动时输出的 miles tree digest 全部一致且与 launch 钉死值相符（P0-4 worker 侧） | evidence/actor_identity.json（actor_identity 事件） |
 | `max_consecutive_zero_signal_steps` | 熔断阈值与 custom_config.yaml 一致（配置漂移检测） | custom_config.yaml |
-| `shutdown_*` / `unfinalized_*` / `queue_*` | 关停后无孤儿 worker/未终结交付/重复消费 | evidence/shutdown_probe.json + step_records.jsonl |
-| `gpu_mem_peak_frac_max` / `throughput_min_tokens_per_sec` / `weight_update_seconds_max` | 显存峰值/吞吐/权重更新时间 | dmon CSV + step_records.jsonl |
+| `shutdown_*` / `unfinalized_*` / `queue_*` | 关停后无孤儿 worker/未终结交付/重复消费（消费 exactly-once 按 train_step_consumed 事件全局对账） | evidence/shutdown_probe.json + step_records.jsonl |
+| `gpu_mem_peak_frac_max` / `throughput_min_tokens_per_sec` / `weight_update_seconds_max` | 显存峰值/吞吐/权重更新时间 | dmon CSV + train_step/weight_update 事件 |
 
 ## G1 最小规模摘录（范围建议 §5，供现场对照）
 

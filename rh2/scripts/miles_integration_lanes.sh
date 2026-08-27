@@ -68,23 +68,28 @@ if [ "$patch_sha_expected" != "$patch_sha_actual" ]; then
 fi
 echo "rh2 patch digest 校验通过：$patch_sha_actual"
 
-# -- 前置 2b：F2 零信号语义 patch 存档 digest（manifest rh2_patches_f2 表驱动,
-#    0002/0003;与 0001 同性质——rebuild 输入本身钉死,存档漂移即红）----------
+# -- 前置 2b：语义 patch 存档 digest（manifest 全部 rh2_patches_* 表驱动,
+#    0002/0003=F2 零信号语义,0004=G1 结构化验收事件+identity 断言;与 0001 同
+#    性质——rebuild 输入本身钉死,存档漂移即红）--------------------------------
 python3 - "$MANIFEST" "$MANIFEST_DIR" <<'PYEOF'
 import hashlib, json, sys
 manifest, mdir = sys.argv[1], sys.argv[2]
-table = {
-    k: v
-    for k, v in json.load(open(manifest)).get("rh2_patches_f2", {}).items()
-    if k.startswith("patches/")
-}
-if not table:
+doc = json.load(open(manifest))
+tables = {name: t for name, t in doc.items() if name.startswith("rh2_patches_")}
+if "rh2_patches_f2" not in tables:
     sys.exit("FAIL: manifest 缺 rh2_patches_f2 patch 表（F2 语义 patch 未存档）")
-for rel, want in table.items():
-    got = hashlib.sha256(open(f"{mdir}/{rel}", "rb").read()).hexdigest()
-    if got != want:
-        sys.exit(f"FAIL: {rel} sha256 漂移 expected={want} actual={got}")
-print(f"F2 patch digest 校验通过：{len(table)} 个")
+if "rh2_patches_g1" not in tables:
+    sys.exit("FAIL: manifest 缺 rh2_patches_g1 patch 表（G1 结构化事件 patch 未存档）")
+count = 0
+for name, t in sorted(tables.items()):
+    for rel, want in t.items():
+        if not rel.startswith("patches/"):
+            continue
+        got = hashlib.sha256(open(f"{mdir}/{rel}", "rb").read()).hexdigest()
+        if got != want:
+            sys.exit(f"FAIL: {rel} sha256 漂移 expected={want} actual={got}")
+        count += 1
+print(f"语义 patch digest 校验通过：{count} 个（表：{', '.join(sorted(tables))}）")
 PYEOF
 
 # -- 前置 3：lane A 的默认 checkout 必须停在 pin ------------------------------

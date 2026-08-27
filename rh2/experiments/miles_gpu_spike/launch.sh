@@ -102,11 +102,14 @@ ADAPTER_PUBLIC_HOST="${ADAPTER_PUBLIC_HOST:-172.17.0.1}"
 ADAPTER_PORT="${ADAPTER_PORT:-18001}"
 RUN_ROOT="${RH2_SPIKE_RUN_ROOT:-/root/miles_gpu_spike}"
 EV="$RUN_ROOT/evidence"                              # 证据输出（g1_acceptance.py 输入）
+EVENTS_DIR="$EV/events"                              # miles 结构化事件（rh2_event_log jsonl）
 ARTIFACTS="$RUN_ROOT/artifacts"                      # rh2 bringup artifacts
 CKPT="$RUN_ROOT/ckpt"                                # checkpoint（G1：存/读验证一次后删除）
 DUMPS="$RUN_ROOT/rollout_dumps"
 PROMPT_DATA="$SCRIPT_DIR/data/gpu_spike_prompts.jsonl"
 PROMPT_DATA_SHA_EXPECTED="009b34e547f41e3be4053620d1d73c0967bfb41ee9c2ae02fe9191422c04cdc6"  # P0-5 预注册
+EVAL_SMOKE_DATA="$SCRIPT_DIR/data/eval_smoke_prompts.jsonl"  # G1 eval 冒烟（spike 数据首条，1 prompt）
+EVAL_SMOKE_SHA_EXPECTED="77e736d12fd3cf638c148ae9fa50361b5b01e03ecb1aa4cb6e01e3f791e41de0"
 
 # topo（默认 G1 的 6+2；G2 换 4+4 时经环境覆盖，cp 恒为 1——faithful_dis CP>1 fail-closed）
 ACTOR_GPUS="${RH2_SPIKE_ACTOR_GPUS:-6}"
@@ -233,6 +236,13 @@ if [ -f "$PROMPT_DATA" ]; then
 else
   fail "预注册 prompt 数据不存在：$PROMPT_DATA"
 fi
+if [ -f "$EVAL_SMOKE_DATA" ]; then
+  EVAL_SHA_ACTUAL="$(shasum -a 256 "$EVAL_SMOKE_DATA" | awk '{print $1}')"
+  [ "$EVAL_SHA_ACTUAL" = "$EVAL_SMOKE_SHA_EXPECTED" ] \
+    || fail "eval 冒烟数据 sha256 漂移 expected=$EVAL_SMOKE_SHA_EXPECTED actual=$EVAL_SHA_ACTUAL"
+else
+  fail "eval 冒烟数据不存在：$EVAL_SMOKE_DATA（G1 eval 路径冒烟依赖）"
+fi
 
 # P9. 其余路径闭包（Ray worker 将经 runtime-env 继承这些路径）
 [ -d "$MEGATRON_PATH" ]   || fail "Megatron 路径不存在：${MEGATRON_PATH}（RH2_MEGATRON_PATH）"
@@ -240,6 +250,32 @@ fi
   || fail "renderers 包不在场：$RENDERERS_PATH/renderers/__init__.py（RH2_RENDERERS_PATH 应指向含 renderers/ 包的仓库根；bringup 'from renderers import ...' 依赖）"
 [ -x "$DOCKER_CLI_DIR/docker" ] || fail "docker CLI 不可执行：$DOCKER_CLI_DIR/docker（RH2_DOCKER_CLI_DIR，沙箱驱动依赖）"
 [ -f "$MILES_ROOT/train_async.py" ] || fail "miles train_async.py 不存在：$MILES_ROOT/train_async.py"
+
+# P9b. reference checkpoint（--ref-load）tracker 存在性：坏 REF_LOAD 必须在
+#      preflight 红，不许拖到 Ray/Miles 启动阶段才失败（B4）。Megatron dist
+#      checkpoint 目录判据 = latest_checkpointed_iteration.txt tracker，或
+#      至少一个 iter_*/release 迭代目录。
+if [ -d "$REF_LOAD" ]; then
+  if [ -f "$REF_LOAD/latest_checkpointed_iteration.txt" ]; then
+    say "REF_LOAD tracker 校验通过：$REF_LOAD/latest_checkpointed_iteration.txt = $(cat "$REF_LOAD/latest_checkpointed_iteration.txt")"
+  elif compgen -G "$REF_LOAD/iter_*" >/dev/null || [ -d "$REF_LOAD/release" ]; then
+    say "REF_LOAD 无 tracker 但存在迭代目录（release/iter_*），按可加载处理：$REF_LOAD"
+  else
+    fail "REF_LOAD 不是可加载的 Megatron checkpoint：$REF_LOAD 缺 latest_checkpointed_iteration.txt 且无 iter_*/release 目录（RH2_REF_LOAD）"
+  fi
+else
+  fail "REF_LOAD 目录不存在：${REF_LOAD}（RH2_REF_LOAD）"
+fi
+
+# P9c. integration tree digest（B3）：用与 miles worker 完全相同的函数
+#      （miles.utils.rh2_event_log.miles_tree_digest，patch 0004）预计算钉死值。
+#      该值经 runtime-env 下发（RH2_EXPECTED_MILES_TREE_DIGEST），每类 Ray actor
+#      启动时自证一致，不一致当场 raise 停机；事件文件再由 post-run 汇总核对。
+#      这里同时证明 $MILES_ROOT 树里确实带 rh2_event_log 模块（旧树立即红）。
+MILES_TREE_DIGEST="$(PYTHONPATH="$MILES_ROOT" python3 -c \
+  "from miles.utils.rh2_event_log import miles_tree_digest; print(miles_tree_digest())")" \
+  || die "无法从 $MILES_ROOT 计算 miles tree digest（integration tree 缺 patch 0004 的 rh2_event_log 模块？）"
+say "miles tree digest（钉死值）：$MILES_TREE_DIGEST"
 
 # P10. 阈值/验收面在场（P0-6：不在租卡现场临时决定什么算通过）
 [ -f "$SCRIPT_DIR/thresholds.md" ]    || fail "thresholds.md 不存在（P0-6 判定阈值单页）"
@@ -253,10 +289,15 @@ say "preflight 全部通过"
 
 # ---------------------------------------------------------------- 参数组装
 # Ray worker runtime env（F3 核心：这些必须真实抵达 Ray actor，而不只在 driver shell。
-# 布局与取值参照 j4_full_step.sh:185-205 的已验证事实 + 本次 F3 增补的 RH2_* 钉死组）
+# 布局与取值参照 j4_full_step.sh:185-205 的已验证事实 + 本次 F3 增补的 RH2_* 钉死组。
+# B3：$MILES_ROOT 置于 PYTHONPATH **首位**——Ray worker 反序列化 miles.* actor 类
+# 时按 sys.path 顺序解析，首位保证加载 integration tree 而非镜像内 stock miles；
+# 每类 actor 再用 RH2_EXPECTED_MILES_TREE_DIGEST 自证（不一致 raise 停机）。）
 RUNTIME_ENV_JSON="{
   \"env_vars\": {
-    \"PYTHONPATH\": \"${MEGATRON_PATH}:${RH2}/src:${RH2}/experiments:${RENDERERS_PATH}\",
+    \"PYTHONPATH\": \"${MILES_ROOT}:${MEGATRON_PATH}:${RH2}/src:${RH2}/experiments:${RENDERERS_PATH}\",
+    \"MILES_RH2_EVENT_DIR\": \"${EVENTS_DIR}\",
+    \"RH2_EXPECTED_MILES_TREE_DIGEST\": \"${MILES_TREE_DIGEST}\",
     \"PYTHONUNBUFFERED\": \"1\",
     \"CUDA_DEVICE_MAX_CONNECTIONS\": \"1\",
     \"NCCL_NVLS_ENABLE\": \"${NCCL_NVLS_ENABLE:-0}\",
@@ -306,6 +347,11 @@ ROLLOUT_ARGS=(
   --custom-generate-function-path repoharness2.adapters.miles.generate_fn.Rh2MilesGenerateFn
   --dynamic-sampling-filter-path miles.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
   --save-debug-rollout-data "$DUMPS/rollout_{rollout_id}.pt"
+  # G1 eval 冒烟（B4）：eval-interval=NUM_ROLLOUT ⇒ 只在末轮（train+publish 之后）
+  # 触发一次共享引擎 eval；1 prompt × 1 样本走完整 eval 路径并产出 eval_smoke 事件。
+  --eval-interval "$NUM_ROLLOUT"
+  --eval-prompt-data smoke "$EVAL_SMOKE_DATA"
+  --n-samples-per-eval-prompt 1
 )
 LOSS_ARGS=(
   --loss-type custom_loss
@@ -390,21 +436,36 @@ if [ "$MODE" = "dry-run" ]; then
   printf '  %s\n' "${ALL_ARGS[@]}"
   say "（model args 共 ${#MODEL_ARGS[@]} 个 token，经 eval 解析后按数组传给进程）"
   say "拓扑：${ACTOR_GPUS} train + ${ROLLOUT_GPUS} rollout（TP${TP}/PP${PP}/CP${CP}/EP${EP}，engine=${ROLLOUT_GPUS_PER_ENGINE}）"
-  say "跑完后：python3 $SCRIPT_DIR/g1_acceptance.py judge --evidence-dir $EV --thresholds $SCRIPT_DIR/thresholds.md"
+  say "run 模式训练结束后将自动执行 post-run 闭环（identity 核对/checkpoint 存读删/shutdown 探针/collect/judge），退出码逐步记录在 $EV/postrun_status.json"
   exit 0
 fi
 
-# run：真实提交（租期 GPU 机）
-mkdir -p "$EV" "$ARTIFACTS" "$CKPT" "$DUMPS"
+# ---------------------------------------------------------------- run + post-run
+# B4：launch 自身完成证据闭环——训练结束后自动执行 identity 核对、checkpoint
+# 存/读/digest/删、shutdown/actor 探针、dmon 停止、collect、judge，并把每一步
+# 退出码写入 postrun_status.json；不再打印人工步骤。
+mkdir -p "$EV" "$EVENTS_DIR" "$ARTIFACTS" "$CKPT" "$DUMPS"
 LOG="$EV/train.log"
 {
   echo "mode=run r3=$RH2_GPU_SPIKE_R3 topo=${ACTOR_GPUS}+${ROLLOUT_GPUS} tp=$TP pp=$PP cp=$CP ep=$EP"
   echo "model_id=$RH2_MODEL_ID execution_mode=$RH2_EXECUTION_MODE (pre-formal,不翻闸门)"
   echo "prompt_data_sha256=$PROMPT_DATA_SHA_EXPECTED"
+  echo "miles_tree_digest=$MILES_TREE_DIGEST"
   date -u +"started_utc=%Y-%m-%dT%H:%M:%SZ"
 } | tee "$EV/launch_facts.txt"
 printf '%s\n' "$MODEL_ARGS_STR" "${ALL_ARGS[@]}" > "$EV/launch_args_resolved.txt"
 echo "$RUNTIME_ENV_JSON" > "$EV/runtime_env.json"
+
+# dmon 资源采样（后台；作业结束后停止）。无 nvidia-smi 时留缺口（judge 记 MISSING）。
+DMON_PID=""
+GPU_MEM_TOTAL_MB=""
+if command -v nvidia-smi >/dev/null 2>&1; then
+  nvidia-smi dmon -s mu -d 5 -o T > "$EV/dmon.csv" 2>/dev/null &
+  DMON_PID=$!
+  GPU_MEM_TOTAL_MB="$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -1 | tr -d ' ')"
+else
+  say "WARN: 无 nvidia-smi，dmon 显存证据缺失（judge 将记 MISSING_EVIDENCE）"
+fi
 
 T0=$(date +%s)
 set +e
@@ -417,8 +478,139 @@ set -e
 T1=$(date +%s)
 echo "wall_seconds=$((T1 - T0)) rc=$RC total_gpus=$TOTAL_GPUS" | tee -a "$EV/launch_facts.txt"
 
-say "训练作业结束 rc=${RC}。下一步："
-say "  1) python3 $SCRIPT_DIR/g1_acceptance.py collect --train-log $LOG --rollout-dumps $DUMPS --artifacts $ARTIFACTS --out-dir $EV"
-say "  2) python3 $SCRIPT_DIR/g1_acceptance.py judge --evidence-dir $EV --thresholds $SCRIPT_DIR/thresholds.md --r3 $RH2_GPU_SPIKE_R3 --out $EV/g1_verdict.json"
-say "  3) checkpoint 按 G1 判据：save/reload 验证一次后 rm -rf ${CKPT}（探针 checkpoint 不作任何后续起点）"
-exit "$RC"
+POSTRUN_STATUS="$EV/postrun_status.json"
+echo "{\"train_rc\": $RC" > "$POSTRUN_STATUS.tmp"
+postrun_step() { # $1=步骤名 $2...=命令；退出码记入 postrun_status.json，不中断后续步骤
+  local name="$1"; shift
+  local rc=0
+  set +e
+  "$@"
+  rc=$?
+  set -e
+  echo ", \"$name\": $rc" >> "$POSTRUN_STATUS.tmp"
+  say "post-run [$name] rc=$rc"
+  return 0
+}
+
+# 1) dmon 停止
+if [ -n "$DMON_PID" ]; then
+  postrun_step dmon_stop kill "$DMON_PID"
+fi
+
+# 2) checkpoint 存/读/digest/删 探针（G1：save 由训练期 --save-interval 1 完成；
+#    这里做结构化 reload（读 tracker + 迭代目录清单 + torch dist-ckpt metadata
+#    反序列化）、digest 记录，然后删除——探针 checkpoint 不作任何后续起点）
+postrun_step checkpoint_probe python3 - "$CKPT" "$EV/checkpoint_probe.json" <<'PYEOF'
+import hashlib, json, sys
+from pathlib import Path
+
+ckpt, out = Path(sys.argv[1]), Path(sys.argv[2])
+probe = {"saved": False, "reloaded": False, "deleted": False,
+         "reload_mode": "tracker+file-manifest+dist_ckpt_metadata", "digest": None, "note": None}
+tracker = ckpt / "latest_checkpointed_iteration.txt"
+iters = sorted(p for p in ckpt.glob("iter_*") if p.is_dir())
+if tracker.is_file() and iters:
+    probe["saved"] = True
+    latest = iters[-1]
+    files = sorted(p for p in latest.rglob("*") if p.is_file())
+    digest = hashlib.sha256()
+    digest.update(tracker.read_bytes())
+    for p in files:
+        digest.update(str(p.relative_to(ckpt)).encode())
+        digest.update(str(p.stat().st_size).encode())
+    probe["digest"] = digest.hexdigest()
+    probe["num_files"] = len(files)
+    meta = latest / ".metadata"
+    try:
+        if meta.is_file():
+            import torch  # noqa: PLC0415 - GPU 机在场；结构化反序列化验证可读性
+            torch.load(meta, map_location="cpu", weights_only=False)
+            probe["reloaded"] = True
+        else:
+            # 非 torch_dist 布局：以 common.pt / 首个 .pt 可反序列化为 reload 判据
+            cand = next((p for p in files if p.suffix == ".pt"), None)
+            if cand is not None:
+                import torch  # noqa: PLC0415
+                torch.load(cand, map_location="cpu", weights_only=False)
+                probe["reloaded"] = True
+            else:
+                probe["note"] = "未找到 .metadata/.pt，无法结构化 reload"
+    except Exception as exc:  # noqa: BLE001 - 探针如实记录失败，不吞
+        probe["note"] = f"reload 失败: {exc!r}"
+else:
+    probe["note"] = f"tracker={tracker.is_file()} iter_dirs={len(iters)}"
+if probe["saved"] and probe["reloaded"]:
+    import shutil
+    shutil.rmtree(ckpt)
+    probe["deleted"] = not ckpt.exists()
+out.write_text(json.dumps(probe, ensure_ascii=False, indent=1))
+print(json.dumps(probe, ensure_ascii=False))
+sys.exit(0 if (probe["saved"] and probe["reloaded"] and probe["deleted"]) else 1)
+PYEOF
+
+# 3) shutdown/actor 探针：孤儿 rollout 容器 + 存活 ray actor + 未终结交付
+postrun_step shutdown_probe python3 - "$ARTIFACTS" "$EV/shutdown_probe.json" <<'PYEOF'
+import json, subprocess, sys
+from pathlib import Path
+
+artifacts, out = Path(sys.argv[1]), Path(sys.argv[2])
+probe = {"orphan_workers": 0, "unfinalized_deliveries": 0, "detail": {}}
+
+# 孤儿 sandbox 容器（rh2 DockerSandbox 容器名前缀 rh2-rollout）
+try:
+    r = subprocess.run(["docker", "ps", "--filter", "name=rh2-rollout", "--format", "{{.Names}}"],
+                       capture_output=True, text=True, timeout=30)
+    names = [x for x in r.stdout.splitlines() if x.strip()]
+    probe["orphan_workers"] += len(names)
+    probe["detail"]["docker_containers"] = names
+except Exception as exc:  # noqa: BLE001
+    probe["detail"]["docker_error"] = repr(exc)
+
+# 作业结束后仍存活的 miles Ray actor（ray CLI 在场时）
+try:
+    r = subprocess.run(["ray", "list", "actors", "--filter", "state=ALIVE", "--format", "json"],
+                       capture_output=True, text=True, timeout=60)
+    if r.returncode == 0:
+        alive = [a.get("class_name") for a in json.loads(r.stdout or "[]")]
+        miles_alive = [c for c in alive if c and ("Train" in c or "Rollout" in c or "SGLang" in c)]
+        probe["orphan_workers"] += len(miles_alive)
+        probe["detail"]["ray_actors_alive"] = miles_alive
+    else:
+        probe["detail"]["ray_list_rc"] = r.returncode
+except Exception as exc:  # noqa: BLE001
+    probe["detail"]["ray_error"] = repr(exc)
+
+# 未终结交付：bringup FileFinalizationStore 布局 attempts/<key>/receipt.json
+attempts = artifacts / "finalization" / "attempts"
+if attempts.is_dir():
+    unfinalized = [p.name for p in attempts.iterdir() if p.is_dir() and not (p / "receipt.json").is_file()]
+    probe["unfinalized_deliveries"] = len(unfinalized)
+    probe["detail"]["unfinalized_attempts"] = unfinalized[:20]
+else:
+    probe["detail"]["finalization_store"] = "absent"
+out.write_text(json.dumps(probe, ensure_ascii=False, indent=1))
+print(json.dumps(probe, ensure_ascii=False))
+sys.exit(0 if probe["orphan_workers"] == 0 and probe["unfinalized_deliveries"] == 0 else 1)
+PYEOF
+
+# 4) collect：结构化事件 -> 归一化证据（含 identity 汇总核对：actor_identity.json）
+COLLECT_ARGS=(--events-dir "$EVENTS_DIR" --out-dir "$EV")
+if [ -s "$EV/dmon.csv" ] && [ -n "$GPU_MEM_TOTAL_MB" ]; then
+  COLLECT_ARGS+=(--dmon-csv "$EV/dmon.csv" --gpu-mem-total-mb "$GPU_MEM_TOTAL_MB")
+fi
+postrun_step collect python3 "$SCRIPT_DIR/g1_acceptance.py" collect "${COLLECT_ARGS[@]}"
+
+# 5) judge：机器判定（PASS/FAIL/INCOMPLETE；identity 一致性是其中一项检查）
+postrun_step judge python3 "$SCRIPT_DIR/g1_acceptance.py" judge \
+  --evidence-dir "$EV" --thresholds "$SCRIPT_DIR/thresholds.md" \
+  --r3 "$RH2_GPU_SPIKE_R3" --custom-config "$CUSTOM_CONFIG" --out "$EV/g1_verdict.json"
+
+echo "}" >> "$POSTRUN_STATUS.tmp"
+mv "$POSTRUN_STATUS.tmp" "$POSTRUN_STATUS"
+say "post-run 完成；各步退出码：$(cat "$POSTRUN_STATUS")"
+say "判定：$EV/g1_verdict.json；证据目录：$EV"
+if [ "$RC" -ne 0 ]; then
+  exit "$RC"
+fi
+JUDGE_RC=$(python3 -c "import json;print(json.load(open('$POSTRUN_STATUS')).get('judge', 1))")
+exit "$JUDGE_RC"
