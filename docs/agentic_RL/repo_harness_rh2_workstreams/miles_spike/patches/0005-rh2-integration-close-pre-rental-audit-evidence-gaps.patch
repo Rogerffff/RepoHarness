@@ -1,0 +1,714 @@
+From 2fff41c9560dc377b1a4b665fa81e15d3ddb739a Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Fri, 28 Aug 2026 17:28:00 +0800
+Subject: [PATCH] [rh2-integration] close pre-rental audit evidence gaps in the
+ event layer
+
+rh2 pre-rental full audit (codex_miles_prerental_full_audit_20260828.md)
+found the G1 acceptance evidence layer could green-light runs whose
+training facts were wrong. This commit closes the emitter-side gaps; the
+collector/judge counterparts live in rh2.
+
+- PR-P0-1: every event carries run_id when MILES_RH2_RUN_ID is set, so a
+  collector can reject events leaked from another run in a shared dir.
+- PR-P0-7: train_step_consumed attributes samples to optimizer steps via
+  the DataIterator's real micro-batch schedule (micro_batch_indices +
+  per-step num_microbatches, or fixed micro_batch_size slices) through
+  the new pure helper miles/utils/step_attribution.py. The old equal
+  split silently mis-attributed samples under variable fan-out (3/1
+  local rows were booked as 2/2).
+- PR-P0-5: narrow trainer-side R3 replay evidence: replay_fill (stream
+  count, records vs expected, per-sample converted-tape digests that
+  hash-match the rollout_group source digests), replay_consume (per
+  logprob forward pass and per optimizer step, min/max pop deltas), and
+  replay_exhausted (end-of-rollout drain) via
+  BaseReplayManager.consumption_snapshot. No algorithm change.
+- PR-P0-3A: eval_smoke now carries weight_version, so a pre-train eval
+  can no longer impersonate the post-train eval.
+- PR-P0-8: logprob_compare entries (miles/utils/logprob_compare.py)
+  count only loss_mask==1 provenance tokens and preserve length
+  mismatches as facts instead of truncating; train forward_step ships
+  sample_indices so a custom loss can attribute accepted-token facts.
+- PR-P1-2: independent zero_signal_scan_seconds timing on train_step.
+
+Everything stays no-op unless MILES_RH2_EVENT_DIR is set.
+---
+ miles/backends/megatron_utils/actor.py | 108 +++++++++++++++++-----
+ miles/backends/megatron_utils/model.py | 121 ++++++++++++++++++++-----
+ miles/ray/rollout/rollout_manager.py   |  16 +++-
+ miles/utils/logprob_compare.py         |  88 ++++++++++++++++++
+ miles/utils/replay_base.py             |  35 +++++++
+ miles/utils/rh2_event_log.py           |   7 ++
+ miles/utils/step_attribution.py        |  66 ++++++++++++++
+ 7 files changed, 389 insertions(+), 52 deletions(-)
+ create mode 100644 miles/utils/logprob_compare.py
+ create mode 100644 miles/utils/step_attribution.py
+
+diff --git a/miles/backends/megatron_utils/actor.py b/miles/backends/megatron_utils/actor.py
+index ac737c22b..06e5561e0 100644
+--- a/miles/backends/megatron_utils/actor.py
++++ b/miles/backends/megatron_utils/actor.py
+@@ -29,8 +29,9 @@ from miles.utils.multi_lora import is_multi_lora_enabled
+ from miles.utils.processing_utils import load_tokenizer
+ from miles.utils.ray_utils import Box
+ from miles.utils import rh2_event_log
++from miles.utils.logprob_compare import masked_compare_entries
+ from miles.utils.reloadable_process_group import destroy_process_groups, monkey_patch_torch_dist, reload_process_groups
+-from miles.utils.replay_base import all_replay_managers, routing_replay_manager
++from miles.utils.replay_base import all_replay_managers, replay_sample_digests, routing_replay_manager
+ from miles.utils.sampling import top_p_sampling_replay_enabled
+ from miles.utils.test_utils.ft_test_actions import FTTestActionActorExecutor
+ from miles.utils.timer import Timer, inverse_timer, timer
+@@ -482,6 +483,11 @@ class MegatronTrainRayActor(TrainRayActor):
+         like-for-like discrepancy fact for the acceptance judge. Only
+         pp-last-stage ranks hold ``log_probs``; each effective-DP rank reports
+         its own shard, keyed by global sample index.
++
++        Accounting semantics live in ``miles.utils.logprob_compare`` (rh2
++        PR-P0-8): only ``loss_mask == 1`` provenance tokens enter the mean, and
++        any length disagreement is preserved as a ``length_mismatch`` fact
++        instead of being truncated away.
+         """
+         log_probs = rollout_data.get("log_probs")
+         behavior = rollout_data.get("rollout_log_probs")
+@@ -489,30 +495,14 @@ class MegatronTrainRayActor(TrainRayActor):
+         if not log_probs or behavior is None or sample_indices is None:
+             return
+         current_version = int(self.weight_updater.weight_version)
+-        versions = rollout_data.get("weight_versions")
+-        entries = []
+-        for i, sample_index in enumerate(sample_indices):
+-            cur = log_probs[i] if i < len(log_probs) else None
+-            beh = behavior[i] if i < len(behavior) else None
+-            if cur is None or beh is None:
+-                continue
+-            cur = cur.detach().float().flatten().cpu()
+-            beh = beh.detach().float().flatten().cpu()
+-            n = min(cur.numel(), beh.numel())
+-            if n == 0:
+-                continue
+-            sample_versions = versions[i] if versions is not None and i < len(versions) else []
+-            numeric = [int(v) for v in sample_versions if str(v).isdigit()]
+-            same_version = bool(numeric) and all(v == current_version for v in numeric)
+-            entries.append(
+-                {
+-                    "sample_index": int(sample_index),
+-                    "same_version": same_version,
+-                    "mean_abs_diff": round(float((cur[:n] - beh[:n]).abs().mean()), 6),
+-                    "num_tokens": int(n),
+-                    "length_mismatch": bool(cur.numel() != beh.numel()),
+-                }
+-            )
++        entries = masked_compare_entries(
++            sample_indices=sample_indices,
++            log_probs=log_probs,
++            behavior_log_probs=behavior,
++            loss_masks=rollout_data.get("loss_masks"),
++            weight_versions=rollout_data.get("weight_versions"),
++            current_version=current_version,
++        )
+         rh2_event_log.emit(
+             "logprob_compare",
+             rollout_id=rollout_id,
+@@ -553,6 +543,15 @@ class MegatronTrainRayActor(TrainRayActor):
+ 
+         for m in all_replay_managers:
+             if self._use_rollout_replay(m):
++                # [rh2-integration] Converted-tape identity (R3 fill evidence):
++                # digest each per-sample tensor *before* fill_replay_data
++                # consumes and deletes the key. The digests are byte-compatible
++                # with the rollout-side ``rollout_group`` tape digests
++                # (sha256 over the int32 row-major buffer), so the judge can
++                # prove the trainer consumed the same tapes the rollout shipped.
++                rh2_fill_digests = (
++                    replay_sample_digests(rollout_data.get(m.data_key)) if rh2_event_log.enabled() else None
++                )
+                 fill_replay_data(
+                     args=self.args,
+                     models=self.model,
+@@ -565,6 +564,22 @@ class MegatronTrainRayActor(TrainRayActor):
+                     if_sp_region=m.if_sp_region,
+                     indices_are_token_positions=m.replay_indices_are_token_positions,
+                 )
++                if rh2_event_log.enabled():
++                    snap = m.consumption_snapshot()
++                    rh2_event_log.emit(
++                        "replay_fill",
++                        manager=m.name,
++                        rollout_id=rollout_id,
++                        rank=dist.get_rank() if dist.is_initialized() else 0,
++                        dp_rank=get_parallel_state().effective_dp.rank,
++                        enabled=bool(m.enabled),
++                        num_streams=snap["num_streams"],
++                        records_min=min(snap["queue_lens"], default=0),
++                        records_max=max(snap["queue_lens"], default=0),
++                        expected_records=int(sum(num_microbatches)),
++                        num_samples=len(rh2_fill_digests) if rh2_fill_digests is not None else None,
++                        sample_digests=rh2_fill_digests,
++                    )
+ 
+         with inverse_timer("train_wait"), timer("train"):
+             if self.args.compute_advantages_and_returns:
+@@ -611,6 +626,24 @@ class MegatronTrainRayActor(TrainRayActor):
+                     )
+                     for m in all_replay_managers:
+                         if self._use_rollout_replay(m):
++                            # [rh2-integration] Forward-consumption evidence of
++                            # the log-prob replay pass, captured before the
++                            # indices are reset for training.
++                            if rh2_event_log.enabled():
++                                snap = m.consumption_snapshot()
++                                rh2_event_log.emit(
++                                    "replay_consume",
++                                    phase="logprob_forward",
++                                    manager=m.name,
++                                    rollout_id=rollout_id,
++                                    rank=dist.get_rank() if dist.is_initialized() else 0,
++                                    dp_rank=get_parallel_state().effective_dp.rank,
++                                    num_streams=snap["num_streams"],
++                                    forward_pops_min=min(snap["forward_indices"], default=0),
++                                    forward_pops_max=max(snap["forward_indices"], default=0),
++                                    queue_len_min=min(snap["queue_lens"], default=0),
++                                    queue_len_max=max(snap["queue_lens"], default=0),
++                                )
+                             m.clear_all_forward()
+ 
+                     if rh2_event_log.enabled():
+@@ -662,6 +695,31 @@ class MegatronTrainRayActor(TrainRayActor):
+         train_dump_utils.save_debug_train_data(self.args, rollout_id=rollout_id, rollout_data=rollout_data)
+ 
+         for m in all_replay_managers:
++            # [rh2-integration] End-of-rollout drain evidence: every recorded
++            # micro-batch tensor must have been consumed by the training
++            # forward (pop_forward) and by the backward-recompute
++            # (pop_backward). Captured before clear_all erases the counters.
++            if self._use_rollout_replay(m) and rh2_event_log.enabled():
++                snap = m.consumption_snapshot()
++                exhausted = bool(snap["queue_lens"]) and (
++                    snap["forward_indices"] == snap["queue_lens"]
++                    and snap["backward_indices"] == snap["queue_lens"]
++                )
++                rh2_event_log.emit(
++                    "replay_exhausted",
++                    manager=m.name,
++                    rollout_id=rollout_id,
++                    rank=dist.get_rank() if dist.is_initialized() else 0,
++                    dp_rank=get_parallel_state().effective_dp.rank,
++                    num_streams=snap["num_streams"],
++                    queue_len_min=min(snap["queue_lens"], default=0),
++                    queue_len_max=max(snap["queue_lens"], default=0),
++                    forward_pops_min=min(snap["forward_indices"], default=0),
++                    forward_pops_max=max(snap["forward_indices"], default=0),
++                    backward_pops_min=min(snap["backward_indices"], default=0),
++                    backward_pops_max=max(snap["backward_indices"], default=0),
++                    exhausted=exhausted,
++                )
+             if m.enabled:
+                 m.clear_all()
+ 
+diff --git a/miles/backends/megatron_utils/model.py b/miles/backends/megatron_utils/model.py
+index b600918fc..a4dc1399f 100644
+--- a/miles/backends/megatron_utils/model.py
++++ b/miles/backends/megatron_utils/model.py
+@@ -36,7 +36,9 @@ from miles.utils.dumper_utils import DumperMegatronUtil, DumperPhase
+ from miles.utils.memory_utils import clear_memory
+ from miles.utils.multi_lora import is_multi_lora_enabled
+ from miles.utils import rh2_event_log
++from miles.utils.replay_base import all_replay_managers
+ from miles.utils.sampling import top_p_sampling_replay_enabled
++from miles.utils.step_attribution import step_local_sample_positions
+ from miles.utils.test_utils.ft_test_actions import FTTestActionActorExecutor
+ from miles.utils.tracking_utils.structured_log import log_structured
+ 
+@@ -566,6 +568,7 @@ def _emit_train_step_event(
+     counts_after: tuple[int | None, int | None],
+     grad_norm,
+     duration_seconds: float,
++    zero_signal_scan_seconds: float | None,
+     loss_reduced: dict[str, float],
+ ) -> None:
+     dist = torch.distributed
+@@ -583,6 +586,9 @@ def _emit_train_step_event(
+         scheduler_steps_after=counts_after[1],
+         grad_norm=float(grad_norm) if grad_norm is not None else None,
+         duration_seconds=round(duration_seconds, 3),
++        zero_signal_scan_seconds=(
++            round(zero_signal_scan_seconds, 6) if zero_signal_scan_seconds is not None else None
++        ),
+         rank=dist.get_rank() if dist.is_available() and dist.is_initialized() else 0,
+         dp_rank=parallel_state.effective_dp.rank,
+         is_pp_last_stage=is_last_stage,
+@@ -595,23 +601,41 @@ def _emit_train_step_consumed(
+     *,
+     rollout_id: int,
+     step_id: int,
+-    num_steps: int,
++    num_microbatches: Sequence[int],
++    data_iterator: DataIterator,
+     rollout_data,
+ ) -> None:
+     """Record which local sample indices this optimizer step consumed.
+ 
+-    Steps partition each DP rank's shard contiguously (``get_data_iterator``
+-    slices ``[step_id * num_local_gbs, (step_id + 1) * num_local_gbs)`` in both
+-    the fixed and the dynamic micro-batch schedule -- dynamic balancing only
+-    re-partitions *within* a step's range). The collector unions the per-rank
+-    shards of one (rollout, step) into the step's consumed-sample fact, used
+-    for queue exactly-once accounting and the positive-control "consumed by a
+-    real applied optimizer step" proof.
++    The step boundary comes from the iterator's real micro-batch schedule
++    (``micro_batch_indices`` + per-step ``num_microbatches``, or the fixed
++    ``micro_batch_size`` slices) via ``step_local_sample_positions`` -- never
++    from an equal split of the shard: under variable fan-out the rollout-side
++    schedule packs a different number of samples into each step, and an equal
++    split silently books samples into the wrong step. The collector unions the
++    per-rank shards of one (rollout, step) into the step's consumed-sample
++    fact, used for queue multiset accounting and the positive-control
++    "consumed by a real applied optimizer step" proof.
+     """
+     dist = torch.distributed
+     rank = dist.get_rank() if dist.is_available() and dist.is_initialized() else 0
+     sample_indices = rollout_data.get("sample_indices")
+-    if sample_indices is None or num_steps <= 0 or len(sample_indices) % num_steps != 0:
++    error = None
++    positions: list[int] | None = None
++    if sample_indices is None:
++        error = "sample_indices unavailable"
++    else:
++        try:
++            positions = step_local_sample_positions(
++                step_id=step_id,
++                num_microbatches=num_microbatches,
++                micro_batch_indices=data_iterator.micro_batch_indices,
++                micro_batch_size=data_iterator.micro_batch_size,
++                num_local_samples=len(sample_indices),
++            )
++        except ValueError as exc:
++            error = f"step attribution failed: {exc}"
++    if positions is None:
+         rh2_event_log.emit(
+             "train_step_consumed",
+             rollout_id=rollout_id,
+@@ -619,15 +643,9 @@ def _emit_train_step_consumed(
+             dp_rank=parallel_state.effective_dp.rank,
+             rank=rank,
+             sample_indices=None,
+-            error=(
+-                "sample_indices unavailable"
+-                if sample_indices is None
+-                else f"shard size {len(sample_indices)} not divisible by num_steps={num_steps}"
+-            ),
++            error=error,
+         )
+         return
+-    per_step = len(sample_indices) // num_steps
+-    lo, hi = step_id * per_step, (step_id + 1) * per_step
+     total_lengths = rollout_data.get("total_lengths")
+     rh2_event_log.emit(
+         "train_step_consumed",
+@@ -635,8 +653,14 @@ def _emit_train_step_consumed(
+         step_id=step_id,
+         dp_rank=parallel_state.effective_dp.rank,
+         rank=rank,
+-        sample_indices=[int(i) for i in sample_indices[lo:hi]],
+-        num_tokens=int(sum(total_lengths[lo:hi])) if total_lengths is not None else None,
++        sample_indices=[int(sample_indices[p]) for p in positions],
++        num_tokens=(
++            int(sum(total_lengths[p] for p in positions)) if total_lengths is not None else None
++        ),
++        num_microbatches=int(num_microbatches[step_id]),
++        attribution=(
++            "micro_batch_indices" if data_iterator.micro_batch_indices is not None else "fixed_micro_batch_size"
++        ),
+     )
+ 
+ 
+@@ -753,6 +777,12 @@ def train_one_step(
+                 "witness_ids",
+                 "opd_reverse_kl",
+                 "rollout_mask_sums",
++                # [rh2-integration] Global sample identity of this micro-batch:
++                # lets a custom loss attribute per-sample training-token facts
++                # (e.g. DIS accepted-token counts) to real sample indices for
++                # the acceptance evidence. Forwarded untouched by get_batch;
++                # None when the shard does not carry sample_indices.
++                "sample_indices",
+                 *sampling_mask_keys,
+             ],
+             args.data_pad_size_multiplier,
+@@ -765,8 +795,6 @@ def train_one_step(
+ 
+             set_tokens_per_adapter_slot(model, batch["adapter_token_counts"])
+ 
+-        from miles.utils.replay_base import all_replay_managers
+-
+         old_stages = [m.stage for m in all_replay_managers]
+         for m in all_replay_managers:
+             m.stage = "replay_forward"
+@@ -865,8 +893,16 @@ def train_one_step(
+     # "Exactly zero" is deliberate -- no epsilon, so a tiny-but-real gradient
+     # can never be misclassified. Multi-LoRA retains grads across train calls
+     # with per-slot stepping and keeps its own semantics, so it is excluded.
++    rh2_zero_scan_seconds = None
+     if outcome == TrainStepOutcome.NORMAL and (not disable_optimizer) and (not multi_lora):
+-        global_any_nonzero, _global_all_finite = _sync_grad_signal_flags(*_scan_reduced_grads(model))
++        # [rh2-integration] Independent timing fact for the scan itself (rh2
++        # PR-P1-2): the full-gradient isfinite/nonzero walk synchronizes
++        # GPU->host per tensor and may visibly tax a 30B step; the acceptance
++        # evidence must be able to show its cost separately from the step.
++        rh2_scan_start = time.monotonic()
++        local_any_nonzero, local_all_finite = _scan_reduced_grads(model)
++        rh2_zero_scan_seconds = time.monotonic() - rh2_scan_start
++        global_any_nonzero, _global_all_finite = _sync_grad_signal_flags(local_any_nonzero, local_all_finite)
+         if not global_any_nonzero:
+             outcome = TrainStepOutcome.SKIPPED_ZERO_SIGNAL
+             valid_step = False
+@@ -969,6 +1005,7 @@ def train_one_step(
+             counts_after=_optimizer_progress_counts(optimizer, opt_param_scheduler, disable_optimizer),
+             grad_norm=grad_norm,
+             duration_seconds=time.monotonic() - rh2_step_start,
++            zero_signal_scan_seconds=rh2_zero_scan_seconds,
+             loss_reduced=loss_reduced,
+         )
+ 
+@@ -1114,6 +1151,16 @@ def train(
+     # Run training iterations till done.
+     for step_id in range(num_steps_per_rollout):
+ 
++        # [rh2-integration] Per-step replay-consumption evidence (R3): snapshot
++        # the pop counters before/after this optimizer step so the per-step
++        # deltas prove the replay queues were consumed by this step's real
++        # forward/backward passes (recompute pops backward-side).
++        rh2_replay_pre = (
++            {m.name: m.consumption_snapshot() for m in all_replay_managers if m.enabled}
++            if rh2_event_log.enabled()
++            else {}
++        )
++
+         # Run training step.
+         loss_dict, grad_norm, train_step_outcome = train_one_step(
+             args,
+@@ -1131,16 +1178,42 @@ def train(
+         )
+         step_outcomes.append(train_step_outcome)
+ 
+-        # [rh2-integration] Per-step consumed-sample evidence (this DP rank's
+-        # contiguous shard slice; see _emit_train_step_consumed).
++        # [rh2-integration] Per-step consumed-sample evidence (real iterator
++        # boundaries; see _emit_train_step_consumed).
+         if rh2_event_log.enabled():
+             _emit_train_step_consumed(
+                 parallel_state,
+                 rollout_id=rollout_id,
+                 step_id=step_id,
+-                num_steps=num_steps_per_rollout,
++                num_microbatches=num_microbatches,
++                data_iterator=data_iterator[0],
+                 rollout_data=data_iterator[0].rollout_data,
+             )
++            for name, before in rh2_replay_pre.items():
++                after = next(m for m in all_replay_managers if m.name == name).consumption_snapshot()
++                fwd_delta = [a - b for a, b in zip(after["forward_indices"], before["forward_indices"], strict=True)]
++                bwd_delta = [a - b for a, b in zip(after["backward_indices"], before["backward_indices"], strict=True)]
++                rh2_event_log.emit(
++                    "replay_consume",
++                    phase="train_step",
++                    manager=name,
++                    rollout_id=rollout_id,
++                    step_id=step_id,
++                    rank=(
++                        torch.distributed.get_rank()
++                        if torch.distributed.is_available() and torch.distributed.is_initialized()
++                        else 0
++                    ),
++                    dp_rank=parallel_state.effective_dp.rank,
++                    num_streams=after["num_streams"],
++                    num_microbatches=int(num_microbatches[step_id]),
++                    forward_pops_min=min(fwd_delta, default=0),
++                    forward_pops_max=max(fwd_delta, default=0),
++                    backward_pops_min=min(bwd_delta, default=0),
++                    backward_pops_max=max(bwd_delta, default=0),
++                    queue_len_min=min(after["queue_lens"], default=0),
++                    queue_len_max=max(after["queue_lens"], default=0),
++                )
+ 
+         if step_id == 0:
+             # Enable forward pre-hook after training step has successfully run. All subsequent
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index e249f2906..05c977cec 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -275,9 +275,19 @@ class RolloutManager:
+         if self._metric_checker is not None:
+             self._metric_checker.on_eval(metrics)
+         # [rh2-integration] Eval-path smoke fact: reaching this line means the
+-        # eval dispatch ran end to end after training consumption; a crash
+-        # above leaves no event and the judge reports missing evidence.
+-        rh2_event_log.emit("eval_smoke", rollout_id=rollout_id, ok=True, num_metrics=len(metrics or {}))
++        # eval dispatch ran end to end; a crash above leaves no event and the
++        # judge reports missing evidence. ``weight_version`` binds the eval to
++        # the engine weights it actually ran against (rh2 PR-P0-3A: the default
++        # pre-train eval at rollout 0 runs on the initial version, so the judge
++        # can tell it apart from the post-train eval that must follow the last
++        # applied->publish and must not be impersonated by an earlier eval).
++        rh2_event_log.emit(
++            "eval_smoke",
++            rollout_id=rollout_id,
++            ok=True,
++            num_metrics=len(metrics or {}),
++            weight_version=self.weight_version,
++        )
+ 
+     async def _eval_checkpoint(
+         self, rollout_id: int, hf_dir: str | None, export_time_seconds: float | None, require_marker: bool
+diff --git a/miles/utils/logprob_compare.py b/miles/utils/logprob_compare.py
+new file mode 100644
+index 000000000..662338e35
+--- /dev/null
++++ b/miles/utils/logprob_compare.py
+@@ -0,0 +1,88 @@
++"""[rh2-integration] Same-version behavior/current logprob comparison entries.
++
++Extracted from the megatron actor so the comparison semantics are unit-testable
++without megatron. Accounting rules (rh2 PR-P0-8):
++
++- ``length_mismatch`` is a first-class fact, never silently truncated away: a
++  behavior/current length disagreement means token alignment is broken, and the
++  judge fails on it. The diff is still computed over the common masked prefix
++  for diagnostics.
++- The mean absolute diff counts **only** ``loss_mask == 1`` (provenance)
++  tokens. Observation/tool tokens carry no training gradient and would dilute
++  the discrepancy of the tokens that actually train the model.
++"""
++
++from __future__ import annotations
++
++import torch
++
++
++def masked_compare_entries(
++    *,
++    sample_indices,
++    log_probs,
++    behavior_log_probs,
++    loss_masks,
++    weight_versions,
++    current_version: int,
++) -> list[dict]:
++    """Build one comparison entry per sample of this rank's shard.
++
++    Args are the per-sample columns of ``rollout_data`` (lists indexed the same
++    way). Entries carry: ``sample_index``, ``same_version``, ``length_mismatch``
++    (any pairwise length disagreement between current / behavior / loss mask),
++    ``num_tokens`` (loss_mask==1 tokens actually compared), ``total_tokens``
++    (current logprob length) and ``mean_abs_diff`` over the masked common
++    prefix (``None`` when no masked token exists).
++    """
++    entries: list[dict] = []
++    for i, sample_index in enumerate(sample_indices):
++        cur = log_probs[i] if i < len(log_probs) else None
++        beh = behavior_log_probs[i] if i < len(behavior_log_probs) else None
++        if cur is None or beh is None:
++            continue
++        cur = cur.detach().float().flatten().cpu()
++        beh = beh.detach().float().flatten().cpu()
++        mask = None
++        if loss_masks is not None and i < len(loss_masks) and loss_masks[i] is not None:
++            mask = torch.as_tensor(loss_masks[i]).detach().flatten().cpu()
++        if mask is None:
++            # No provenance mask shipped for this sample: that is itself a
++            # broken-alignment fact -- record it instead of falling back to an
++            # all-token mean that the judge would mistake for the trained-token
++            # discrepancy.
++            entries.append(
++                {
++                    "sample_index": int(sample_index),
++                    "same_version": _same_version(weight_versions, i, current_version),
++                    "length_mismatch": True,
++                    "num_tokens": 0,
++                    "total_tokens": int(cur.numel()),
++                    "mean_abs_diff": None,
++                }
++            )
++            continue
++        length_mismatch = not (cur.numel() == beh.numel() == mask.numel())
++        n = min(cur.numel(), beh.numel(), mask.numel())
++        masked = mask[:n] != 0
++        num_masked = int(masked.sum())
++        mean_abs_diff = (
++            round(float((cur[:n][masked] - beh[:n][masked]).abs().mean()), 6) if num_masked else None
++        )
++        entries.append(
++            {
++                "sample_index": int(sample_index),
++                "same_version": _same_version(weight_versions, i, current_version),
++                "length_mismatch": bool(length_mismatch),
++                "num_tokens": num_masked,
++                "total_tokens": int(cur.numel()),
++                "mean_abs_diff": mean_abs_diff,
++            }
++        )
++    return entries
++
++
++def _same_version(weight_versions, i: int, current_version: int) -> bool:
++    sample_versions = weight_versions[i] if weight_versions is not None and i < len(weight_versions) else []
++    numeric = [int(v) for v in sample_versions if str(v).isdigit()]
++    return bool(numeric) and all(v == current_version for v in numeric)
+diff --git a/miles/utils/replay_base.py b/miles/utils/replay_base.py
+index 0415d1c66..af4581fea 100644
+--- a/miles/utils/replay_base.py
++++ b/miles/utils/replay_base.py
+@@ -1,3 +1,4 @@
++import hashlib
+ import logging
+ import os
+ 
+@@ -7,6 +8,24 @@ import torch.distributed as dist
+ logger = logging.getLogger(__name__)
+ 
+ 
++def replay_sample_digests(tensors) -> list[str] | None:
++    """[rh2-integration] Per-sample content digests of a replay tape column.
++
++    sha256 over the row-major element buffer, matching how the rollout manager
++    digests ``Sample.rollout_routed_experts`` (numpy ``tobytes()``), so a
++    converted trainer-side tape hashes equal to its rollout-side source iff the
++    values, dtype and layout survived the conversion. Used by the acceptance
++    ``replay_fill`` event to link trainer consumption back to the shipped tape.
++    """
++    if tensors is None:
++        return None
++    digests = []
++    for t in tensors:
++        arr = t.detach().cpu().contiguous().numpy() if torch.is_tensor(t) else t
++        digests.append(hashlib.sha256(arr.tobytes()).hexdigest())
++    return digests
++
++
+ def _get_rank():
+     return dist.get_rank() if dist.is_initialized() else 0
+ 
+@@ -84,6 +103,22 @@ class BaseReplayManager:
+         for replay in self.replays:
+             replay.clear_forward()
+ 
++    def consumption_snapshot(self) -> dict:
++        """[rh2-integration] Raw per-stream consumption counters for acceptance evidence.
++
++        Returns the live ``forward_index`` / ``backward_index`` / recorded queue
++        length of every registered stream. The trainer emits min/max summaries
++        (and per-step deltas) of these so the acceptance judge can prove the
++        replay queues were actually filled and drained by real forward/backward
++        passes instead of trusting that a source tape existed.
++        """
++        return {
++            "num_streams": len(self.replays),
++            "forward_indices": [r.forward_index for r in self.replays],
++            "backward_indices": [r.backward_index for r in self.replays],
++            "queue_lens": [len(r.top_indices_list) for r in self.replays],
++        }
++
+     def get_topk_fn(self, old_topk_fn, return_probs):
+         manager = self
+ 
+diff --git a/miles/utils/rh2_event_log.py b/miles/utils/rh2_event_log.py
+index c86ea1465..d2626f4bd 100644
+--- a/miles/utils/rh2_event_log.py
++++ b/miles/utils/rh2_event_log.py
+@@ -37,6 +37,10 @@ logger = logging.getLogger(__name__)
+ 
+ EVENT_DIR_ENV = "MILES_RH2_EVENT_DIR"
+ EXPECTED_TREE_DIGEST_ENV = "RH2_EXPECTED_MILES_TREE_DIGEST"
++# Unique-run binding (rh2 PR-P0-1): when the launcher sets MILES_RH2_RUN_ID,
++# every event carries it, so the acceptance collector can reject any event file
++# that leaked in from a different run sharing the same directory.
++RUN_ID_ENV = "MILES_RH2_RUN_ID"
+ 
+ _emit_lock = threading.Lock()
+ _emit_failure_logged = False
+@@ -75,6 +79,9 @@ def emit(kind: str, **fields: Any) -> None:
+         "pid": os.getpid(),
+         **fields,
+     }
++    run_id = os.environ.get(RUN_ID_ENV)
++    if run_id:
++        record.setdefault("run_id", run_id)
+     global _emit_failure_logged
+     try:
+         os.makedirs(event_dir, exist_ok=True)
+diff --git a/miles/utils/step_attribution.py b/miles/utils/step_attribution.py
+new file mode 100644
+index 000000000..f27f9e902
+--- /dev/null
++++ b/miles/utils/step_attribution.py
+@@ -0,0 +1,66 @@
++"""[rh2-integration] Map one optimizer step to the local sample positions it consumes.
++
++The acceptance event ``train_step_consumed`` must attribute every sample to the
++optimizer step that actually trained on it. The DataIterator consumption order
++is the single source of truth:
++
++- dynamic / rollout-side scheduled path: ``micro_batch_indices`` is one flat
++  list of micro-batches covering the whole rollout; step ``s`` consumes the
++  micro-batches ``[sum(num_microbatches[:s]), sum(num_microbatches[:s+1]))``.
++  Step sample counts are **not** equal in general -- variable fan-out packs a
++  different number of samples into each step (e.g. rollout_ids
++  ``[0,0,0,1,1,1,2,3]`` with global_batch_size=2 rollouts and dp=2 gives one
++  rank 3 samples in step 0 and 1 sample in step 1), so any equal-split
++  inference silently mis-attributes samples across steps.
++- fixed micro-batch path: step ``s`` consumes the contiguous slice of
++  ``micro_batch_size * num_microbatches[s]`` samples starting after the
++  previous steps' slices.
++
++Pure and torch-free so the mapping is unit-testable against
++``miles.utils.dp_schedule.build_dp_schedule`` outputs without megatron.
++"""
++
++from __future__ import annotations
++
++from collections.abc import Sequence
++
++
++def step_local_sample_positions(
++    *,
++    step_id: int,
++    num_microbatches: Sequence[int],
++    micro_batch_indices: Sequence[Sequence[int]] | None,
++    micro_batch_size: int | None,
++    num_local_samples: int,
++) -> list[int]:
++    """Local sample positions (indices into this rank's shard) consumed by ``step_id``.
++
++    Mirrors ``DataIterator.get_next`` exactly: the iterator either walks
++    ``micro_batch_indices`` one micro-batch per call, or advances a contiguous
++    ``micro_batch_size`` window. Raises ``ValueError`` on any inconsistency
++    (out-of-range step, schedule shorter than the step span, positions outside
++    the shard) -- the caller records the error as evidence instead of guessing.
++    """
++    if not 0 <= step_id < len(num_microbatches):
++        raise ValueError(f"step_id {step_id} out of range for num_microbatches={list(num_microbatches)}")
++    if micro_batch_indices is not None:
++        start = sum(num_microbatches[:step_id])
++        stop = start + num_microbatches[step_id]
++        if stop > len(micro_batch_indices):
++            raise ValueError(
++                f"micro_batch_indices has {len(micro_batch_indices)} micro-batches, "
++                f"step {step_id} needs [{start}, {stop})"
++            )
++        positions = [int(i) for mb in micro_batch_indices[start:stop] for i in mb]
++    else:
++        if micro_batch_size is None:
++            raise ValueError("neither micro_batch_indices nor micro_batch_size available")
++        sizes = [int(n) * int(micro_batch_size) for n in num_microbatches]
++        start = sum(sizes[:step_id])
++        positions = list(range(start, start + sizes[step_id]))
++    bad = [p for p in positions if not 0 <= p < num_local_samples]
++    if bad:
++        raise ValueError(
++            f"step {step_id} positions {bad[:4]} outside local shard of {num_local_samples} samples"
++        )
++    return positions
+-- 
+2.50.1 (Apple Git-155)
+

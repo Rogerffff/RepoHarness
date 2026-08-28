@@ -15,6 +15,9 @@
 - `FAIL`：证据在场但不满足阈值。
 - `MISSING_EVIDENCE`：证据缺失。**缺证据不算绿**——总判定只有全部检查 PASS 才是
   PASS；存在 MISSING_EVIDENCE 时总判定为 `INCOMPLETE`（不得记作通过）。
+- `NOT_APPLICABLE`：按执行模式设计上不存在的观测面（当前只有 s1_compat 的
+  finalization store 检查），如实标注、不冒充零、不影响总判定档位（租前审查
+  PR-P0-3B：该项在 s1_compat 下不构成 F5 内存 pending draft 收口证据）。
 
 ## 阈值表（机器可读）
 
@@ -25,40 +28,45 @@
 {
   "g1_min_rollouts": 3,
   "g1_min_applied_optimizer_steps": 2,
-  "g1_worker_warm_across_steps": true,
+  "g1_sglang_engines_stable_across_steps": true,
   "g1_checkpoint_save_reload_delete": true,
-  "g1_eval_smoke_after_worker_stop": true,
+  "g1_eval_smoke_post_train": true,
   "execution_mode_expected": "s1_compat",
   "pre_formal_note": "s1_compat 记 pre-formal，不翻正式闸门",
 
   "staleness_max_versions": 2,
   "weight_version_monotonic": true,
   "skipped_rollout_version_must_not_advance": true,
+  "update_weights_interval": 1,
+  "update_weights_interval_note": "publish 守恒的 interval 口径：launch 不带 --update-weights-interval（miles 默认 1）；改 launch 拓扑时必须同步改这里",
 
   "accepted_tokens_min_on_normal_step": 1,
   "token_accounting_must_balance": true,
 
   "logprob_same_version_mean_abs_diff_max": 0.05,
-  "logprob_same_version_note": "behavior(support-normalized) vs current(support-renorm) 同权重版本逐 token 均值绝对差上限；跨版本样本不进此对拍，calibrate",
+  "logprob_alignment_required": true,
+  "logprob_same_version_note": "behavior(support-normalized) vs current(support-renorm) 同权重版本、loss_mask=1 训练 token 口径逐 token 均值绝对差上限；length_mismatch 一票 FAIL；同版本训练样本必须全覆盖；跨版本样本不进此对拍，calibrate",
 
   "routing_tape_dtype": "int32",
   "routing_tape_num_layers": 48,
   "routing_tape_topk": 8,
   "routing_tape_rows_offset": -1,
-  "routing_tape_note": "shape=(len(tokens)-1, 48, 8)；R3=off 时字段必须缺席",
+  "routing_tape_note": "shape=(len(tokens)-1, 48, 8)；R3=off 时字段必须缺席，且 trainer 侧 replay 事件必须缺席",
 
   "positive_control_instances": ["django__django-11099", "django__django-16139", "django__django-11133"],
   "positive_control_min_groups_with_reward_std": 1,
   "positive_control_must_be_consumed_by_applied_step": true,
+  "positive_control_requires_accepted_tokens": true,
   "zero_variance_groups_must_not_train": true,
 
   "integration_tree_identity_required": true,
+  "identity_required_role_prefixes": ["driver", "megatron_train_", "rollout_manager", "sglang_server"],
 
   "max_consecutive_zero_signal_steps": 8,
 
   "shutdown_orphan_workers_max": 0,
-  "unfinalized_deliveries_max": 0,
-  "queue_duplicate_sample_ids_max": 0,
+  "expected_dp_ranks": 2,
+  "expected_dp_ranks_note": "6 actor GPU / (TP1*PP3*CP1) = dp 2；改拓扑时必须同步改这里（P0-8 rank 完整性判据）",
 
   "gpu_mem_peak_frac_max": 0.97,
   "gpu_mem_note": "calibrate：dmon 峰值/物理显存",
@@ -74,24 +82,24 @@
 | 键 | 检查内容 | 证据来源 |
 |---|---|---|
 | `g1_min_rollouts` / `g1_min_applied_optimizer_steps` | ≥3 轮 rollout；≥2 个 `optimizer_step_applied=True` 的 step（独立事实：真实 optimizer.step() 执行成功；NORMAL 枚举不作 applied 证据——found-inf/debug 路径可为 NORMAL 而未更新；judge 另以 `optimizer_step_progress_consistent` 交叉验证 Adam/scheduler 前后计数） | step_records.jsonl（miles train_step 事件） |
-| `g1_worker_warm_across_steps` | rollout worker/actor 标识跨 step 不变（常驻，非每 step 重建） | step_records.jsonl `worker_ids`（rollout_workers 事件） |
-| `g1_checkpoint_save_reload_delete` | checkpoint 保存并 reload 验证一次，随后删除（探针 ckpt 不作任何后续起点） | evidence/checkpoint_probe.json（launch.sh post-run 自动落盘） |
-| `g1_eval_smoke_after_worker_stop` | 训练消费结束后 eval 路径冒烟一次（末轮 train + publish 之后由 EvalDispatcher 触发） | evidence/eval_smoke.json（eval_smoke 事件） |
-| `staleness_max_versions` | 每样本 behavior version（逐 turn 最旧数值版本）与 trainer current version（train_rollout 事件独立事实，不取 behavior 列表末位）差 ≤ N | sample_records.jsonl |
-| `weight_version_monotonic` | 版本只前进；`skipped_rollout_version_must_not_advance`：全 SKIPPED 轮版本不变（F2 patch 0003 语义；显式 weight_publish_skipped 事实区分"有意保持"与证据缺失） | step_records.jsonl（weight_update / weight_publish_skipped 事件） |
+| `g1_sglang_engines_stable_across_steps` | SGLang engine actor 身份集合跨 step 不变（引擎常驻，非每 step 重建）。P1-1 改名：rollout_workers 事件记录的是引擎 actor 身份，不是 fully-async producer task 的保温证据，键名如实描述证据对象 | step_records.jsonl `worker_ids`（rollout_workers 事件） |
+| `g1_checkpoint_save_reload_delete` | checkpoint 保存并 reload 验证一次（P0-2：DCP `.metadata` 用 FileSystemReader 结构化反序列化，torch.load 读法对正常 checkpoint 必假红），随后删除（探针 ckpt 不作任何后续起点） | evidence/checkpoint_probe.json（postrun_probes.py checkpoint） |
+| `g1_eval_smoke_post_train` | 训后 eval 冒烟必须绑定最后一轮 + 期望终版权重版本（P0-3A：train_async 默认先跑 rollout 0 的 pre-train eval，不绑定版本时可冒充训后 eval）；`run_identity`：verdict 绑定唯一 run（manifest/collect run_id 与 thresholds digest 三方一致，P0-1） | collected/eval_smoke.json + publish 守恒推导的终版；evidence/run_manifest.json |
+| `staleness_max_versions` | 每训练样本必须有完整版本事实（缺版本 FAIL，不豁免），且 0 ≤ current − behavior ≤ N（负值 = behavior version 来自未来，版本账矛盾，P0-8） | sample_records.jsonl |
+| `weight_version_monotonic` | 版本只前进；`skipped_rollout_version_must_not_advance`：全 SKIPPED 轮版本不变（F2 patch 0003 语义）；`update_weights_interval` + `weight_publish_conservation`（P0-6）：interval 内有 applied step ⇔ 恰一次 weight_update（版本 +1、链续接）⇔ 恰一次 weight_publish、零 skip；全 skipped ⇔ 恰一次 weight_publish_skipped、零 update/publish | step_records.jsonl + collected/publish_records.json（weight_update / weight_publish / weight_publish_skipped 三类原始事实） |
 | `accepted_tokens_min_on_normal_step` | NORMAL step 的 dis_accepted_tokens ≥ 1；`token_accounting_must_balance`：accepted+rejected == provenance | step_records.jsonl（train_step 事件 metrics） |
-| `logprob_same_version_mean_abs_diff_max` | 同版本 behavior(support-normalized) vs current(support-renorm，trainer 复算) 对拍摘要 | sample_records.jsonl（logprob_compare 事件） |
-| `routing_tape_*` | R3=on：逐训练批样本 shape/dtype/digest 记录且合形；R3=off：字段缺席 | sample_records.jsonl（rollout_group 事件） |
-| `positive_control_*` | 见 positive_control.md：指定 3 组中 ≥1 组 reward std>0，且该组全部样本被消费、≥1 样本进入 `optimizer_step_applied=True` 的 step（`positive_control_must_be_consumed_by_applied_step`——方差 ≠ 驱动更新）；全等 reward 组必须走 filter 丢弃或 SKIPPED_ZERO_SIGNAL，不得进入 applied step | sample_records.jsonl + step_records.jsonl |
-| `integration_tree_identity_required` | 每类 actor（driver/trainer/rollout manager/sglang server）启动时输出的 miles tree digest 全部一致且与 launch 钉死值相符（P0-4 worker 侧） | evidence/actor_identity.json（actor_identity 事件） |
+| `logprob_same_version_mean_abs_diff_max` | 同版本 behavior(support-normalized) vs current(support-renorm，trainer 复算) 对拍，**只统计 loss_mask=1 训练 token**；`logprob_alignment_required`（P0-8）：任何 length_mismatch 一票 FAIL、同版本训练样本必须全覆盖、masked token 总数 > 0 | sample_records.jsonl（logprob_compare 事件） |
+| `routing_tape_*` | R3=on：逐训练批样本 shape/dtype/digest 记录且合形；R3=off：字段缺席且 trainer 侧 replay 事件缺席。`routing_replay_trainer_consumption` + `routing_replay_source_linkage`（P0-5）：replay_fill（stream 注册>0、record 数=期望 microbatch 数）、logprob 前向逐 microbatch pop、每 optimizer step forward/backward pop=该 step microbatch 数、rollout 末队列耗尽、trainer fill digest multiset == rollout tape digest multiset——source tape 运到门口不再单独作数 | sample_records.jsonl + collected/replay_records.json |
+| `positive_control_*` | 见 positive_control.md：指定 3 组中 ≥1 组 reward std>0，且该组全部样本被消费、≥1 样本进入 `optimizer_step_applied=True` 的 step（方差 ≠ 驱动更新）；`positive_control_requires_accepted_tokens`（P0-8）：正控组自身 accepted token > 0（共批 ≠ 归因，applied step 可能全由别的组驱动）；全等 reward 组必须走 filter 丢弃或 SKIPPED_ZERO_SIGNAL | sample_records.jsonl + step_records.jsonl（sample_dis_accounting 事件） |
+| `integration_tree_identity_required` | 四类生产 role（`identity_required_role_prefixes`：driver/megatron_train_*/rollout_manager/sglang_server）必须全部出现（P0-4：事件写失败只告警不停训，少 role = 无证据），expected digest 必须非空且来自审计 manifest（launch preflight 对 manifest `miles_source_tree_digest` + git expected_tree 双重核对，运行目标不许自我背书），全部一致 | evidence/actor_identity.json + integration_base_manifest.json |
 | `max_consecutive_zero_signal_steps` | 熔断阈值与 custom_config.yaml 一致（配置漂移检测） | custom_config.yaml |
-| `shutdown_*` / `unfinalized_*` / `queue_*` | 关停后无孤儿 worker/未终结交付/重复消费（消费 exactly-once 按 train_step_consumed 事件全局对账） | evidence/shutdown_probe.json + step_records.jsonl |
-| `gpu_mem_peak_frac_max` / `throughput_min_tokens_per_sec` / `weight_update_seconds_max` | 显存峰值/吞吐/权重更新时间 | dmon CSV + train_step/weight_update 事件 |
+| `shutdown_orphan_workers_max` / `shutdown_finalization` / `queue_*` / `expected_dp_ranks` | 关停探针：docker/ray **查询失败显式 FAIL（无法观测 ≠ 观测为零，P0-3B）**，查询成功且孤儿=0 才 PASS；finalization 在 s1_compat 如实 NOT_APPLICABLE（bringup 设计不建 store，不冒充零、不构成 F5 收口证据），fa_* 模式 store 必须在场且空。`queue_multiset_conservation`（P0-8）：admitted 训练样本 multiset == 消费 multiset（少/多一个都 FAIL），filtered 与二者不相交；`train_step_rank_coverage`：每 step 的 dp 分片 = 0..expected_dp_ranks-1 齐全 | evidence/shutdown_probe.json + step_records.jsonl + sample_records.jsonl |
+| `gpu_mem_peak_frac_max` / `throughput_min_tokens_per_sec` / `weight_update_seconds_max` | 显存峰值/吞吐/权重更新时间（train_step 另带 `zero_signal_scan_seconds` 独立计时，P1-2——scan 开销单独可见，阈值留待 GPU 实验设计轮） | dmon CSV + train_step/weight_update 事件 |
 
 ## G1 最小规模摘录（范围建议 §5，供现场对照）
 
-6+2 拓扑；n=8 组形态；≥3 轮 rollout；≥2 个真实 optimizer step；worker 跨 step
-保温；checkpoint 保存+reload 验证一次后删除；worker 停止后 eval 路径冒烟；
+6+2 拓扑；n=8 组形态；≥3 轮 rollout；≥2 个真实 optimizer step；sglang 引擎跨
+step 稳定；checkpoint 保存+reload 验证一次后删除；训后 eval 冒烟绑定末轮+终版；
 `s1_compat` 必须记为 pre-formal，不翻正式闸门。数据形态须覆盖：正常线性多轮、
 工具观察位单例 support、掉落轮、fan-out 多叶、非零 advantage 正控组、全零
 advantage 拒绝/skip 对照、全单例 support 拒绝/skip 对照、dynamic filter 后

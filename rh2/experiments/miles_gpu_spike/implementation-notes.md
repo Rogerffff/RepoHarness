@@ -88,3 +88,101 @@
   preflight 即红（负例实测）；
 - rh2 与 miles 改动文件 ruff 全过；`miles_integration_lanes.sh --checks-only`
   以新 expected_tree/patch 表通过。
+
+---
+
+# 租前完整审查 PR-P0-1~8 / PR-P1-1~2 修复记录（2026-08-28 第二轮）
+
+规格权威：`docs/.../tmp/codex_miles_prerental_full_audit_20260828.md` §2/§3/§5。
+范围铁律：§6 D1~D6（GPU 启动参数/实验编排）一律未动；未建监控框架/C3-C7
+ledger/完整 resume；只修 evidence/oracle/launch 链路与 miles 事件发射层。
+开工前逐条对照行号核实：**8 个 P0 + 2 个 P1 全部成立**（含 P0-2 的
+torch.load 假红本机复现"Invalid magic number; corrupt file?"、P0-7 的 3/1
+反例用真实 build_dp_schedule 复现）。
+
+## 修复落点总览
+
+- **miles 侧**（rh2-integration-v2）：新 commit `2fff41c95`
+  （`[rh2-integration] close pre-rental audit evidence gaps in the event
+  layer`），归档 `patches/0005-*.patch`，manifest 同步
+  （expected_tree=`59a94d4c2...`、新表 `rh2_patches_prerental`、新字段
+  `miles_source_tree_digest`）。内容：run_id 印章（P0-1）、
+  `miles/utils/step_attribution.py` 真实 step 边界（P0-7）、
+  replay fill/consume/exhausted 窄事件 + `consumption_snapshot` +
+  `replay_sample_digests`（P0-5）、eval_smoke 带 weight_version（P0-3A）、
+  `miles/utils/logprob_compare.py` loss_mask=1 口径 + length_mismatch 一等
+  事实 + 训练 forward 透传 sample_indices（P0-8）、zero_signal_scan_seconds
+  （P1-2）。
+- **rh2 侧**（按指示未 commit）：`launch.sh`（P0-1 run 隔离 + run manifest +
+  P0-4 manifest 双重钉死 + fail-closed 退出）、新 `postrun_probes.py`
+  （P0-2/P0-3B，heredoc 探针拆出可测）、`g1_acceptance.py` 大改
+  （collect 原子发布/run_id 校验/publish 三类事实/replay 记录/rank 记录/
+  logprob 与 dis 逐样本事实；judge 新增 run_identity、
+  weight_publish_conservation、queue_multiset_conservation、
+  train_step_rank_coverage、logprob_alignment_and_coverage、
+  positive_control_accepted_tokens、routing_replay_* 两键、shutdown 拆两键
+  含 NOT_APPLICABLE 档、eval 改 post_train 绑定；self-test 新增 ~25 个
+  审查反例负测试）、`thresholds.md` 键面同步、
+  `src/repoharness2/adapters/miles/faithful_dis_loss.py` 逐样本
+  sample_dis_accounting 事件、测试 5 个新文件 + 2 个文件扩展。
+
+## 设计决策（T1，实现后报告）
+
+1. **miles 侧一个 commit 而非多个**：全部改动同属"验收事件发射层"，单
+   commit 便于 patch 归档与 manifest 单条目审计；上游 PR 候选时可再拆。
+2. **NOT_APPLICABLE 判定档**（P0-3B）：s1_compat 的 finalization 检查新增
+   第四档——不计 FAIL/MISSING、不影响总判定，但 verdict 里如实注明"此项
+   不构成 F5 内存 pending draft 收口证据"。替代方案（直接删该检查）会丢掉
+   fa_* 模式下 store 必须在场且空的判定面；冒充 PASS 则复刻审查批评的
+   vacuous 零。
+3. **探针拆成 postrun_probes.py**：heredoc 内逻辑无法被 pytest 覆盖，而
+   本轮验收要求"每个假红/假绿反例都有对应负测试"。launch.sh 只保留接线。
+4. **run root 语义**：`RH2_SPIKE_RUN_ROOT` 由"固定输出目录"改为"基目录"，
+   run root = 基目录/run_id，已存在（哪怕为空）即拒绝。checkpoint 隔离由
+   run root 唯一性自动获得（--load/--save 都在新 run root 内），未另设
+   checkpoint 专用检查。
+5. **replay 消费判定编码了 `--recompute-granularity full`**：backward pop
+   数 == microbatch 数依赖"backward 重算触发 topk"（launch 钉死 full
+   recompute；这也正是 Replay 类设 backward_index 的原因）。若下一轮改
+   recompute 配置，此判定须随 thresholds 一起改——已在 §开放问题 登记。
+6. **正控 accepted-token 归因走"组级事实"方案**（审查给的两选一）：由
+   faithful_dis_loss 逐样本发 accepted/provenance 计数，judge 联结组与
+   applied step；未采用"独占受控 step"方案（需改数据调度，超最小修复）。
+7. **eval 绑定用 rollout_id + weight_version 双条件**，未加
+   `--skip-eval-before-train`（审查明示留到下一轮启动配置讨论）。
+8. **P1-1 选择改名**（`g1_sglang_engines_stable_across_steps`）而非补
+   producer 事实：证据对象如实化成本最低；producer task 保温证据留待
+   G3 生命周期实验设计轮一并定（若需要）。
+9. **bash 3.2 多字节变量名坑**：`"$VAR"` 后紧跟中文标点在 macOS bash 3.2
+   会被并入变量名（`set -u` 下 unbound）；launch.sh 相关位置统一
+   `${VAR}`。桩环境实跑发现，属实现细节但记录以防回归。
+
+## 偏离说明
+
+- 无对审查 §2/§3 条款的语义偏离。§5 批次顺序按 1→5 实施，批 2 与批 3/4 的
+  代码落点有交叉（同文件），提交粒度以文件为准而非批次。
+- `queue_duplicate_sample_ids_max`/`unfinalized_deliveries_max` 两个旧阈值
+  键被守恒/三态检查取代后删除（保留会成为无消费者的死配置；审查 §7 机械
+  自检"新配置指认消费者"的反向应用）。
+
+## 桩环境实跑证据（本机）
+
+- `launch.sh preflight`：桩 asset 全绿；`RH2_MILES_ROOT` 指向 pin 树 →
+  Ray 前红（P0-4 验收）；run root 复用 → Ray 前红且原目录零写入（P0-1）。
+- `launch.sh run`（桩 ray/nvidia-smi/docker + 真 DCP checkpoint + 代表性
+  事件）：全链 PASS、rc=0、postrun_status 全零。
+- 审查头号反例复现：新 run 事件损坏 → collect rc=1、collected/ 未发布、
+  judge INCOMPLETE、launch rc=1——"旧 PASS 洗绿新失败"结构性不可能
+  （run root 唯一 + 原子发布双保险）。
+
+## 开放问题
+
+1. replay backward pop 判定与 recompute 配置耦合（上文 T1-5）：改
+   `--recompute-granularity` 时 thresholds/judge 须同步，建议下一轮 GPU
+   实验设计时把该耦合写进 D1 参数讨论。
+2. `expected_dp_ranks=2`、`update_weights_interval=1` 是当前 6+2/TP1PP3
+   拓扑的推导值，写在 thresholds 并标注"改拓扑必须同步改"；G2 换 4+4 时
+   属 D2 议题。
+3. 本机全仓回归有 15 个 docker daemon 依赖测试因本机 docker 未运行而
+   skip（tests/grading/test_manager_docker.py，环境豁免非本轮引入）；租期
+   机器上应回到 0 skip。

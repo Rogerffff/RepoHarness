@@ -649,3 +649,56 @@ def test_full_loss_on_accelerator_device_layout(dis):
     with pytest.raises(dis.module.FaithfulDisLossError) as exc:
         dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
     assert exc.value.reason_code == "target_not_in_support"
+
+
+# ---------------------------------------------------------------------------
+# 租前完整审查 PR-P0-8：逐样本 accepted-token 事实（正控归因事件）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.integration_base
+def test_sample_dis_accounting_event_per_sample_counts(dis, tmp_path, monkeypatch):
+    """loss 在事件层开启且 batch 携带 sample_indices 时，发射逐样本
+    sample_dis_accounting：accepted = in_trust ∧ provenance 逐样本切片计数。
+    固定数据的预期：s0 只有位 0 是 in-trust 且 mask=1（位 2 in 但 mask=0）
+    → accepted=1/provenance=3；s1 位 0、1 in → accepted=2/provenance=3。
+    与 step 级 metrics（accepted 总数 3）构成同一事实的两个粒度。"""
+    import json
+
+    from miles.utils import rh2_event_log
+
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    batch["sample_indices"] = [41, 42]
+    events_dir = tmp_path / "events"
+    monkeypatch.setenv(rh2_event_log.EVENT_DIR_ENV, str(events_dir))
+
+    _loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits, _mk_reducer(torch, batch)
+    )
+    assert metrics["dis_accepted_tokens"].item() == 3
+
+    [path] = list(events_dir.glob("rh2_events_*.jsonl"))
+    rows = [json.loads(x) for x in path.read_text().splitlines() if x.strip()]
+    [event] = [r for r in rows if r["event"] == "sample_dis_accounting"]
+    assert event["entries"] == [
+        {"sample_index": 41, "accepted_tokens": 1, "provenance_tokens": 3},
+        {"sample_index": 42, "accepted_tokens": 2, "provenance_tokens": 3},
+    ]
+
+
+@pytest.mark.integration_base
+def test_sample_dis_accounting_silent_without_sample_indices(dis, tmp_path, monkeypatch):
+    """batch 无 sample_indices（旧树/单元构造）时不发射、不影响 loss 数值。"""
+    from miles.utils import rh2_event_log
+
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    events_dir = tmp_path / "events"
+    monkeypatch.setenv(rh2_event_log.EVENT_DIR_ENV, str(events_dir))
+    dis.module.faithful_dis_loss_function(args, batch, logits, _mk_reducer(torch, batch))
+    assert not events_dir.exists() or not list(events_dir.glob("rh2_events_*.jsonl"))

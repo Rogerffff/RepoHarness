@@ -179,10 +179,15 @@ def test_model_zero_signal_seam_position_source_anchor(world):
     valid_step 翻回 True,少了守卫 skip 会被静默撤销）。"""
     src = (world.miles_root / "miles" / "backends" / "megatron_utils" / "model.py").read_text()
 
-    scan_pos = src.index("_sync_grad_signal_flags(*_scan_reduced_grads(model))")
+    # 锚点更新（租前审查 P1-2,T2 补锚）：scan 与 allreduce 拆成两行以便给
+    # scan 单独计时（zero_signal_scan_seconds）,语义位置不变——scan 仍在全部
+    # 归约之后、optimizer.step 之前,且 allreduce 紧随 scan 消费其结果。
+    scan_pos = src.index("local_any_nonzero, local_all_finite = _scan_reduced_grads(model)")
+    sync_pos = src.index("_sync_grad_signal_flags(local_any_nonzero, local_all_finite)")
+    assert scan_pos < sync_pos
     assert src.index("losses_reduced = forward_backward_func(") < scan_pos
     assert src.index("allreduce_grads_and_losses_across_replicas(") < scan_pos
-    assert scan_pos < src.index("update_successful, grad_norm, num_zeros_in_grad = optimizer.step()")
+    assert sync_pos < src.index("update_successful, grad_norm, num_zeros_in_grad = optimizer.step()")
     # skip 后不 step/不 scheduler：valid_step=False + found-inf 分支守卫
     assert "outcome = TrainStepOutcome.SKIPPED_ZERO_SIGNAL" in src
     assert 'and outcome != TrainStepOutcome.SKIPPED_ZERO_SIGNAL' in src

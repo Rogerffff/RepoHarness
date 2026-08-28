@@ -5,38 +5,77 @@
   - 阈值唯一来源 = 同目录 thresholds.md 的第一个 ```json 代码块（judge 解析；
     脚本内不复制阈值常量）。
   - 证据输入 = miles 侧结构化事件 jsonl（miles/utils/rh2_event_log.py，由
-    MILES_RH2_EVENT_DIR 开启；patch 0004）。collect 只做归一化与联结，**不做
-    日志正则**，也没有任何"租期校准位"——事件缺失就在 collect_report 登记并
-    由 judge 记 MISSING_EVIDENCE（总判定 INCOMPLETE，缺证据不算绿）。
-  - 判定档位：PASS / FAIL / MISSING_EVIDENCE；总判定 PASS / FAIL / INCOMPLETE。
+    MILES_RH2_EVENT_DIR 开启；patch 0004/0005）。collect 只做归一化与联结，
+    **不做日志正则**，也没有任何"租期校准位"——事件缺失就在 collect_report
+    登记并由 judge 记 MISSING_EVIDENCE（总判定 INCOMPLETE，缺证据不算绿）。
+  - 判定档位：PASS / FAIL / MISSING_EVIDENCE / NOT_APPLICABLE；总判定
+    PASS / FAIL / INCOMPLETE。NOT_APPLICABLE 只用于按执行模式设计上不存在的
+    观测面（如 s1_compat 无 FileFinalizationStore），如实标注，不冒充零。
+
+租前完整审查（codex_miles_prerental_full_audit_20260828.md）修复要点：
+  - PR-P0-1：collect 校验每条事件的 run_id（--run-id），异 run 事件 = 污染
+    conflict（FAIL）；输出目录先写 .tmp 再原子 rename，collect 失败不会留下
+    可被 judge 消费的半成品；judge 用 run_manifest.json 反向核对 run_id 与
+    thresholds digest（run_identity 检查）。
+  - PR-P0-3A：eval 冒烟绑定 rollout/weight_version，只有发生在最后一次
+    applied→publish 之后（版本=期望终版、轮次=最后一轮）的 eval 才能关闭
+    g1_eval_smoke_post_train；pre-train eval 冒充必红。
+  - PR-P0-3B：shutdown 探针的 docker/ray 查询失败显式 FAIL（查询失败≠零）；
+    s1_compat 的 finalization 检查如实 NOT_APPLICABLE。
+  - PR-P0-4：integration_tree_identity 要求四类生产 role 全部到场
+    （identity_required_role_prefixes）且 expected digest 非空。
+  - PR-P0-5：R3 判定新增 trainer 侧 replay fill/consume/exhausted 窄事件
+    （routing_replay_trainer_consumption + routing_replay_source_linkage），
+    source tape 存在不再单独作数。
+  - PR-P0-6：weight_publish_conservation 按 update_weights_interval 双向联结
+    applied step ↔ weight_update ↔ weight_publish ↔ 版本 +1。
+  - PR-P0-7：train_step_consumed 由 miles 侧真实 micro-batch 边界产出
+    （等分推断已删）；collect 对同 (rollout,step,dp) 冲突内容记 conflict。
+  - PR-P0-8：queue_multiset_conservation（admitted==consumed、filtered 不相交）、
+    train_step_rank_coverage（预期 dp rank 齐全）、staleness 双边界
+    （0 <= s <= limit，缺版本 FAIL）、logprob_alignment_and_coverage
+    （length_mismatch 必红、同版本样本全覆盖、loss_mask=1 口径）、
+    positive_control_accepted_tokens（正控组自身要有 accepted token）。
 
 事件 -> 证据的联结关系（生产事件 schema 见 rh2_event_log 各 emit 调用点）：
   train_step            每 optimizer step、每 rank 一条：outcome、
                         optimizer_step_applied（真实 optimizer.step() 执行成功
                         才为 true——NORMAL 枚举不作 applied 证据）、Adam/scheduler
-                        前后计数、dis_* token 记账（pp 末级 rank 携带）。
+                        前后计数、dis_* token 记账（pp 末级 rank 携带）、
+                        zero_signal_scan_seconds（P1-2 独立计时）。
   train_step_consumed   每 (rollout, step, dp_rank) 一条：该分片被消费的全局
-                        sample index（queue exactly-once + 正控消费证明）。
-  train_rollout         trainer 侧消费时刻的 current weight version（staleness
-                        的独立事实；行为版本列表不得顶替）。
-  weight_update /       发布事实：version before/after、耗时；
-  weight_publish_skipped 全 SKIPPED 区间的"有意不发布"显式事实。
+                        sample index（真实 DataIterator 边界；queue multiset +
+                        正控消费证明）。
+  train_rollout         trainer 侧消费时刻的 current weight version。
+  weight_update /       发布事实（trainer 侧版本推进 + driver 侧 publish/
+  weight_publish /      有意跳过），三类原始事实全部保留供守恒判定。
+  weight_publish_skipped
   rollout_group         样本身份/reward/逐 turn 行为版本/routing tape digest。
-  rollout_workers       每轮引擎身份集合（worker 保温）。
+  rollout_workers       每轮引擎身份集合（sglang 引擎稳定性）。
   group_filtered        拒绝路径证据（aborted / 动态过滤丢弃的组）。
-  logprob_compare       同版本 behavior(support-normalized) vs current
-                        (support-renorm，trainer 复算) 逐 token 均值绝对差。
-  eval_smoke            eval 路径冒烟完成事实。
+  logprob_compare       同版本 behavior vs current 逐 token 均值绝对差
+                        （loss_mask=1 口径；length_mismatch 一等事实）。
+  sample_dis_accounting 逐样本 DIS accepted/provenance token 计数（custom loss
+                        产出；正控归因）。
+  replay_fill /         R3 trainer 侧消费证据（fill 队列、logprob 前向与逐
+  replay_consume /      optimizer step 的 pop 计数、耗尽）。
+  replay_exhausted
+  eval_smoke            eval 路径冒烟完成事实（rollout + weight_version 绑定）。
   actor_identity        每类 actor 的 miles tree digest（P0-4 一致性）。
 
-证据契约（evidence 目录，collect 产出 + launch post-run 探针）：
-  step_records.jsonl、sample_records.jsonl、actor_identity.json、
-  eval_smoke.json、resource_summary.json（collect 产出）；
-  checkpoint_probe.json、shutdown_probe.json（launch.sh post-run 产出）。
+证据契约（evidence 目录布局）：
+  evidence/
+    run_manifest.json         launch.sh 在 Ray 启动前写入（run_id/代码事实）
+    checkpoint_probe.json     postrun_probes.py checkpoint（launch post-run）
+    shutdown_probe.json       postrun_probes.py shutdown（launch post-run）
+    collected/                collect 原子发布的归一化证据目录：
+      step_records.jsonl  sample_records.jsonl  publish_records.json
+      replay_records.json actor_identity.json   eval_smoke.json
+      resource_summary.json  collect_report.json
 
 用法::
-  python3 g1_acceptance.py collect --events-dir E \
-      [--dmon-csv C --gpu-mem-total-mb N] --out-dir EV
+  python3 g1_acceptance.py collect --events-dir E [--run-id RID] \
+      [--dmon-csv C --gpu-mem-total-mb N] --out-dir EV/collected
   python3 g1_acceptance.py judge --evidence-dir EV --thresholds thresholds.md \
       --r3 on|off [--custom-config custom_config.yaml] [--out verdict.json]
   python3 g1_acceptance.py --self-test
@@ -45,9 +84,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import math
+import os
 import re
+import shutil
 import sys
 import tempfile
 from collections import Counter, defaultdict
@@ -55,7 +96,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
-PASS, FAIL, MISSING = "PASS", "FAIL", "MISSING_EVIDENCE"
+PASS, FAIL, MISSING, NA = "PASS", "FAIL", "MISSING_EVIDENCE", "NOT_APPLICABLE"
+
+COLLECTED_DIR_NAME = "collected"
 
 
 # ---------------------------------------------------------------------------
@@ -95,11 +138,21 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
 _EVENT_FILE_GLOB = "rh2_events_*.jsonl"
 
 
-def _load_events(events_dir: Path) -> dict[str, list[dict]]:
+def _load_events(events_dir: Path, run_id: str | None, conflicts: list[str]) -> dict[str, list[dict]]:
+    """读入全部事件；--run-id 给定时异 run 事件 = 证据污染（conflict/FAIL）。"""
     by_kind: dict[str, list[dict]] = defaultdict(list)
+    foreign: Counter = Counter()
     for path in sorted(events_dir.glob(_EVENT_FILE_GLOB)):
         for row in read_jsonl(path):
+            if run_id is not None and row.get("run_id") != run_id:
+                foreign[str(row.get("run_id"))] += 1
+                continue
             by_kind[row.get("event", "?")].append(row)
+    if foreign:
+        conflicts.append(
+            f"事件目录混入非本 run 事件（run_id 期望 {run_id}）：{dict(foreign)}——"
+            "run root 未隔离或旧证据泄漏，判定不可信"
+        )
     return by_kind
 
 
@@ -117,10 +170,26 @@ def _min_numeric_version(versions: list) -> int | None:
     return min(numeric) if numeric else None
 
 
+def _dedupe_fact(store: dict, key, fact: dict, label: str, conflicts: list[str]) -> None:
+    """同 key 重复事实（TP/PP 复本）内容必须一致；不一致 = conflict。"""
+    if key in store and store[key] != fact:
+        conflicts.append(f"{label} {key} 重复且内容冲突: {store[key]} vs {fact}")
+        return
+    store[key] = fact
+
+
 def cmd_collect(args: argparse.Namespace) -> int:
     events_dir = Path(args.events_dir)
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    final_dir = Path(args.out_dir)
+    if final_dir.exists():
+        raise SystemExit(
+            f"FAIL: collect 输出目录已存在：{final_dir}（unique run root 不变量——"
+            "同一 run 只 collect 一次；重跑请换 run root）"
+        )
+    # P0-1：先写 .tmp，全部成功后原子 rename 发布；中途失败不留半成品。
+    out_dir = final_dir.parent / (final_dir.name + ".tmp")
+    shutil.rmtree(out_dir, ignore_errors=True)
+    out_dir.mkdir(parents=True)
     missing: list[str] = []
     conflicts: list[str] = []
 
@@ -128,7 +197,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
         missing.append(f"events：{events_dir} 下无 {_EVENT_FILE_GLOB}（生产侧 MILES_RH2_EVENT_DIR 未启用？）")
         ev = defaultdict(list)
     else:
-        ev = _load_events(events_dir)
+        ev = _load_events(events_dir, args.run_id, conflicts)
 
     # -- trainer current version（rollout -> version）------------------------
     current_version: dict[int, int] = {}
@@ -142,10 +211,27 @@ def cmd_collect(args: argparse.Namespace) -> int:
     if not current_version:
         missing.append("train_rollout：无 trainer current version 事件（staleness/版本前进无独立事实）")
 
-    # -- 发布事实 -------------------------------------------------------------
-    weight_updates: dict[object, dict] = {}
+    # -- 发布事实（P0-6：update/publish/skipped 三类原始事实全部保留）---------
+    publish_records = {
+        "updates": [
+            {
+                "rollout_id": row.get("rollout_id"),
+                "version_before": row.get("version_before"),
+                "version_after": row.get("version_after"),
+                "duration_seconds": row.get("duration_seconds"),
+            }
+            for row in ev["weight_update"]
+        ],
+        "publishes": [row.get("rollout_id") for row in ev["weight_publish"]],
+        "skips": [row.get("rollout_id") for row in ev["weight_publish_skipped"]],
+    }
+    (out_dir / "publish_records.json").write_text(
+        json.dumps(publish_records, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+    weight_updates: dict[int, dict] = {}
     for row in ev["weight_update"]:
-        weight_updates[row.get("rollout_id")] = row
+        if row.get("rollout_id") is not None:
+            weight_updates[row["rollout_id"]] = row
     publish_skipped_rollouts = {row.get("rollout_id") for row in ev["weight_publish_skipped"]}
     if not ev["weight_update"] and not ev["weight_publish_skipped"]:
         missing.append("weight_update/weight_publish_skipped：无发布事实（weight_version_after 无法确定）")
@@ -156,12 +242,23 @@ def cmd_collect(args: argparse.Namespace) -> int:
         steps_by_key[(row["rollout_id"], row["step_id"])].append(row)
     consumed_by_key: dict[tuple[int, int], dict[int, dict]] = defaultdict(dict)
     for row in ev["train_step_consumed"]:
-        # 同 (rollout, step, dp_rank) 多条（TP/PP 复本）内容相同，保留一条。
-        consumed_by_key[(row["rollout_id"], row["step_id"])][row.get("dp_rank", 0)] = row
+        # 同 (rollout, step, dp_rank) 多条（TP/PP 复本）内容必须相同；冲突 =
+        # 消费账本被改写（P0-8），记 conflict 而不是静默覆盖。
+        key = (row["rollout_id"], row["step_id"])
+        dp = row.get("dp_rank", 0)
+        fact = {
+            "sample_indices": row.get("sample_indices"),
+            "num_tokens": row.get("num_tokens"),
+            "num_microbatches": row.get("num_microbatches"),
+            "error": row.get("error"),
+        }
+        _dedupe_fact(
+            consumed_by_key[key], dp, fact, f"train_step_consumed r{key[0]}s{key[1]} dp", conflicts
+        )
 
     workers_by_rollout = {row["rollout_id"]: row.get("worker_ids") for row in ev["rollout_workers"]}
     if not workers_by_rollout:
-        missing.append("rollout_workers：无引擎身份事件（worker 保温无证据）")
+        missing.append("rollout_workers：无引擎身份事件（sglang 引擎稳定性无证据）")
 
     step_rows: list[dict] = []
     last_step_of_rollout: dict[int, int] = {}
@@ -182,23 +279,28 @@ def cmd_collect(args: argparse.Namespace) -> int:
         consumed_shards = consumed_by_key.get((rid, sid), {})
         consumed_ids: list[str] | None = None
         num_tokens = None
+        dp_ranks: list[int] | None = None
         if consumed_shards:
             merged: list[int] = []
             tok = 0
             tok_known = True
-            for _dp, row in sorted(consumed_shards.items()):
-                if row.get("sample_indices") is None:
-                    conflicts.append(f"step r{rid}s{sid} consumed 分片缺 sample_indices: {row.get('error')}")
+            dp_ranks = sorted(consumed_shards)
+            for _dp, fact in sorted(consumed_shards.items()):
+                if fact.get("sample_indices") is None:
+                    conflicts.append(f"step r{rid}s{sid} consumed 分片缺 sample_indices: {fact.get('error')}")
                     continue
-                merged.extend(int(i) for i in row["sample_indices"])
-                if row.get("num_tokens") is None:
+                merged.extend(int(i) for i in fact["sample_indices"])
+                if fact.get("num_tokens") is None:
                     tok_known = False
                 else:
-                    tok += int(row["num_tokens"])
+                    tok += int(fact["num_tokens"])
             consumed_ids = sorted(str(i) for i in merged)
             num_tokens = tok if tok_known else None
         duration_vals = [r.get("duration_seconds") for r in rank_rows if r.get("duration_seconds") is not None]
         duration = max(duration_vals) if duration_vals else None
+        scan_vals = [
+            r.get("zero_signal_scan_seconds") for r in rank_rows if r.get("zero_signal_scan_seconds") is not None
+        ]
         v_before = current_version.get(rid)
         if sid == last_step_of_rollout.get(rid):
             if rid in weight_updates:
@@ -223,8 +325,10 @@ def cmd_collect(args: argparse.Namespace) -> int:
                 "dis_microbatch_provenance_tokens": metrics.get("dis_microbatch_provenance_tokens"),
                 "worker_ids": workers_by_rollout.get(rid),
                 "queue_consumed_sample_ids": consumed_ids,
+                "dp_ranks": dp_ranks,
                 "num_tokens": num_tokens,
                 "duration_seconds": duration,
+                "zero_signal_scan_seconds_max": max(scan_vals) if scan_vals else None,
                 "weight_update_seconds": (
                     weight_updates[rid].get("duration_seconds")
                     if sid == last_step_of_rollout.get(rid) and rid in weight_updates
@@ -247,14 +351,31 @@ def cmd_collect(args: argparse.Namespace) -> int:
                 row.get("optimizer_step_applied")
             )
 
-    # -- 对拍摘要：sample_index -> 同版本均值绝对差 ---------------------------
-    logprob_diff: dict[int, float] = {}
+    # -- 对拍摘要：sample_index -> loss_mask=1 口径事实（P0-8）----------------
+    logprob_facts: dict[int, dict] = {}
     for row in ev["logprob_compare"]:
         for entry in row.get("entries", []):
-            if entry.get("same_version") and entry.get("mean_abs_diff") is not None:
-                logprob_diff[int(entry["sample_index"])] = float(entry["mean_abs_diff"])
+            idx = int(entry["sample_index"])
+            fact = {
+                "same_version": bool(entry.get("same_version")),
+                "mean_abs_diff": entry.get("mean_abs_diff"),
+                "length_mismatch": entry.get("length_mismatch"),
+                "num_tokens": entry.get("num_tokens"),
+            }
+            _dedupe_fact(logprob_facts, idx, fact, "logprob_compare sample", conflicts)
     if not ev["logprob_compare"]:
         missing.append("logprob_compare：无对拍事件（同版本 logprob 差无证据）")
+
+    # -- 逐样本 DIS token 记账（正控归因，P0-8）-------------------------------
+    dis_facts: dict[int, dict] = {}
+    for row in ev["sample_dis_accounting"]:
+        for entry in row.get("entries", []):
+            idx = int(entry["sample_index"])
+            fact = {
+                "accepted_tokens": entry.get("accepted_tokens"),
+                "provenance_tokens": entry.get("provenance_tokens"),
+            }
+            _dedupe_fact(dis_facts, idx, fact, "sample_dis_accounting sample", conflicts)
 
     # -- sample 级：rollout_group + group_filtered ---------------------------
     sample_rows: list[dict] = []
@@ -267,9 +388,12 @@ def cmd_collect(args: argparse.Namespace) -> int:
         tapes = row.get("routing_tape") or []
         for i, sample_index in enumerate(indices):
             behavior_versions = versions[i] if i < len(versions) else []
+            lp = logprob_facts.get(int(sample_index))
+            dis = dis_facts.get(int(sample_index))
             sample_rows.append(
                 {
                     "sample_id": str(sample_index),
+                    "rollout_id": rid,
                     "source": "train_batch",
                     "instance_id": row.get("instance_id"),
                     "group_id": gid,
@@ -277,7 +401,14 @@ def cmd_collect(args: argparse.Namespace) -> int:
                     "behavior_versions": behavior_versions,
                     "behavior_version": _min_numeric_version(behavior_versions),
                     "current_version": current_version.get(rid),
-                    "same_version_mean_abs_logprob_diff": logprob_diff.get(int(sample_index)),
+                    "has_logprob_entry": lp is not None,
+                    "same_version_mean_abs_logprob_diff": (
+                        lp["mean_abs_diff"] if lp and lp["same_version"] else None
+                    ),
+                    "logprob_length_mismatch": lp["length_mismatch"] if lp else None,
+                    "logprob_masked_tokens": lp["num_tokens"] if lp else None,
+                    "dis_accepted_tokens": dis["accepted_tokens"] if dis else None,
+                    "dis_provenance_tokens": dis["provenance_tokens"] if dis else None,
                     "routing_tape": tapes[i] if i < len(tapes) else None,
                     "trained": consumed_step_applied.get(str(sample_index), False),
                 }
@@ -291,6 +422,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
             sample_rows.append(
                 {
                     "sample_id": str(sample_index),
+                    "rollout_id": None,
                     "source": "filtered",
                     "filtered_reason": row.get("reason"),
                     "instance_id": row.get("instance_id"),
@@ -299,12 +431,57 @@ def cmd_collect(args: argparse.Namespace) -> int:
                     "behavior_versions": None,
                     "behavior_version": None,
                     "current_version": None,
+                    "has_logprob_entry": False,
                     "same_version_mean_abs_logprob_diff": None,
+                    "logprob_length_mismatch": None,
+                    "logprob_masked_tokens": None,
+                    "dis_accepted_tokens": None,
+                    "dis_provenance_tokens": None,
                     "routing_tape": None,
                     "trained": False,
                 }
             )
     write_jsonl(out_dir / "sample_records.jsonl", sample_rows)
+
+    # -- R3 trainer 侧 replay 事实（P0-5）-------------------------------------
+    fills: dict[tuple, dict] = {}
+    for row in ev["replay_fill"]:
+        key = (row.get("manager"), row.get("rollout_id"), row.get("rank"))
+        fact = {k: row.get(k) for k in (
+            "manager", "rollout_id", "rank", "dp_rank", "enabled", "num_streams",
+            "records_min", "records_max", "expected_records", "num_samples", "sample_digests",
+        )}
+        _dedupe_fact(fills, key, fact, "replay_fill", conflicts)
+    consumes: dict[tuple, dict] = {}
+    for row in ev["replay_consume"]:
+        key = (row.get("manager"), row.get("rollout_id"), row.get("phase"), row.get("step_id"), row.get("rank"))
+        fact = {k: row.get(k) for k in (
+            "manager", "rollout_id", "phase", "step_id", "rank", "dp_rank", "num_streams",
+            "num_microbatches", "forward_pops_min", "forward_pops_max",
+            "backward_pops_min", "backward_pops_max", "queue_len_min", "queue_len_max",
+        )}
+        _dedupe_fact(consumes, key, fact, "replay_consume", conflicts)
+    exhausteds: dict[tuple, dict] = {}
+    for row in ev["replay_exhausted"]:
+        key = (row.get("manager"), row.get("rollout_id"), row.get("rank"))
+        fact = {k: row.get(k) for k in (
+            "manager", "rollout_id", "rank", "dp_rank", "num_streams", "exhausted",
+            "queue_len_min", "queue_len_max", "forward_pops_min", "forward_pops_max",
+            "backward_pops_min", "backward_pops_max",
+        )}
+        _dedupe_fact(exhausteds, key, fact, "replay_exhausted", conflicts)
+    (out_dir / "replay_records.json").write_text(
+        json.dumps(
+            {
+                "fills": list(fills.values()),
+                "consumes": list(consumes.values()),
+                "exhausted": list(exhausteds.values()),
+            },
+            ensure_ascii=False,
+            indent=1,
+        ),
+        encoding="utf-8",
+    )
 
     # -- identity ------------------------------------------------------------
     if ev["actor_identity"]:
@@ -327,10 +504,22 @@ def cmd_collect(args: argparse.Namespace) -> int:
     else:
         missing.append("actor_identity：无 identity 事件（P0-4 worker 侧 integration tree 无证据）")
 
-    # -- eval 冒烟 -----------------------------------------------------------
+    # -- eval 冒烟（P0-3A：保留 rollout/version 绑定事实）---------------------
     if ev["eval_smoke"]:
         (out_dir / "eval_smoke.json").write_text(
-            json.dumps({"ran": True, "ok": all(bool(r.get("ok")) for r in ev["eval_smoke"])}),
+            json.dumps(
+                {
+                    "events": [
+                        {
+                            "rollout_id": r.get("rollout_id"),
+                            "ok": bool(r.get("ok")),
+                            "weight_version": r.get("weight_version"),
+                        }
+                        for r in ev["eval_smoke"]
+                    ]
+                },
+                ensure_ascii=False,
+            ),
             encoding="utf-8",
         )
     else:
@@ -341,6 +530,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
         "gpu_mem_peak_frac": None,
         "throughput_tokens_per_sec": None,
         "weight_update_seconds_max_observed": None,
+        "zero_signal_scan_seconds_max": None,
     }
     throughputs = [r["throughput_tokens_per_sec"] for r in step_rows if r.get("throughput_tokens_per_sec")]
     if throughputs:
@@ -350,6 +540,9 @@ def cmd_collect(args: argparse.Namespace) -> int:
     update_secs = [r.get("duration_seconds") for r in ev["weight_update"] if r.get("duration_seconds") is not None]
     if update_secs:
         resource["weight_update_seconds_max_observed"] = max(update_secs)
+    scan_secs = [r["zero_signal_scan_seconds_max"] for r in step_rows if r.get("zero_signal_scan_seconds_max")]
+    if scan_secs:
+        resource["zero_signal_scan_seconds_max"] = max(scan_secs)
     if args.dmon_csv and args.gpu_mem_total_mb:
         peak = _dmon_peak_fb_mb(Path(args.dmon_csv))
         if peak is not None:
@@ -363,6 +556,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
     )
 
     report = {
+        "run_id": args.run_id,
         "event_counts": {k: len(v) for k, v in sorted(ev.items())},
         "step_rows": len(step_rows),
         "sample_rows": len(sample_rows),
@@ -372,6 +566,8 @@ def cmd_collect(args: argparse.Namespace) -> int:
     (out_dir / "collect_report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8"
     )
+    # 原子发布：全部文件就绪后一次 rename；此前任何失败都不会产出 collected/。
+    os.replace(out_dir, final_dir)
     print(json.dumps(report, ensure_ascii=False, indent=1))
     print("collect 完成；missing 项在 judge 中成为 MISSING_EVIDENCE，conflicts 项成为 FAIL（都不算绿）。")
     return 0
@@ -425,21 +621,30 @@ _VALID_OUTCOMES = {"NORMAL", "SKIPPED_ZERO_SIGNAL"}
 
 def cmd_judge(args: argparse.Namespace) -> int:
     ev = Path(args.evidence_dir)
+    coll = ev / COLLECTED_DIR_NAME
     th = load_thresholds(Path(args.thresholds))
     j = Judge(th, args.r3)
 
-    steps = read_jsonl(ev / "step_records.jsonl") if (ev / "step_records.jsonl").exists() else None
+    steps = read_jsonl(coll / "step_records.jsonl") if (coll / "step_records.jsonl").exists() else None
     if steps is not None and not steps:
         steps = None
     samples = (
-        read_jsonl(ev / "sample_records.jsonl") if (ev / "sample_records.jsonl").exists() else None
+        read_jsonl(coll / "sample_records.jsonl") if (coll / "sample_records.jsonl").exists() else None
     )
     if samples is not None and not samples:
         samples = None
     train_samples = [s for s in samples if s.get("source") == "train_batch"] if samples else None
+    publish = (
+        json.loads((coll / "publish_records.json").read_text())
+        if (coll / "publish_records.json").exists()
+        else None
+    )
+
+    # -- run 身份绑定（P0-1）：verdict 只绑定一次不可变 run --------------------
+    _judge_run_identity(j, ev, coll, Path(args.thresholds))
 
     # -- collect 联结冲突（证据在场但互相矛盾 = FAIL，不是 MISSING）-----------
-    report_path = ev / "collect_report.json"
+    report_path = coll / "collect_report.json"
     if report_path.exists():
         conflicts = json.loads(report_path.read_text()).get("conflicts", [])
         if conflicts:
@@ -500,20 +705,22 @@ def cmd_judge(args: argparse.Namespace) -> int:
                 "applied<=>Adam step +1 且 scheduler 前进；skip 步计数不动",
             )
 
-    # -- worker 保温 ----------------------------------------------------------
-    if th.get("g1_worker_warm_across_steps"):
+    # -- sglang 引擎稳定性（P1-1：改名如实描述证据对象——rollout_workers 记录的
+    #    是 SGLang engine actor 身份，证明引擎跨轮未重建；fully-async producer
+    #    task 的保温是另一对象，不得混称）------------------------------------
+    if th.get("g1_sglang_engines_stable_across_steps"):
         if not steps or any(s.get("worker_ids") is None for s in steps):
-            j.add("g1_worker_warm_across_steps", MISSING, "worker_ids 证据缺失")
+            j.add("g1_sglang_engines_stable_across_steps", MISSING, "worker_ids 证据缺失")
         else:
             sets = [frozenset(s["worker_ids"]) for s in steps]
             warm = all(x == sets[0] for x in sets)
             j.add(
-                "g1_worker_warm_across_steps",
+                "g1_sglang_engines_stable_across_steps",
                 PASS if warm else FAIL,
-                "worker 集合跨 step 不变" if warm else f"worker 集合变化：{[sorted(x) for x in sets]}",
+                "sglang 引擎集合跨 step 不变" if warm else f"引擎集合变化：{[sorted(x) for x in sets]}",
             )
 
-    # -- 版本前进性 / staleness ----------------------------------------------
+    # -- 版本前进性 / publish 守恒 / staleness --------------------------------
     if steps is None or any(
         s.get("weight_version_after") is None or s.get("weight_version_before") is None for s in steps
     ):
@@ -521,23 +728,50 @@ def cmd_judge(args: argparse.Namespace) -> int:
     else:
         ok, detail = _check_versions(steps)
         j.add("weight_version_monotonic", PASS if ok else FAIL, detail)
-    if train_samples is None:
-        j.add("staleness_max_versions", MISSING, "sample_records.jsonl 缺失")
+
+    expected_final_version: int | None = None
+    if steps is None or publish is None or (not publish["updates"] and not publish["skips"]):
+        j.add("weight_publish_conservation", MISSING, "step/publish 事实缺失，无法做 interval 守恒")
     else:
+        ok, problems, expected_final_version = _check_publish_conservation(
+            steps, publish, int(th.get("update_weights_interval", 1))
+        )
+        j.add(
+            "weight_publish_conservation",
+            PASS if ok else FAIL,
+            "applied<=>update<=>publish<=>版本+1 按 interval 双向守恒" if ok else "; ".join(problems[:5]),
+        )
+
+    if not train_samples:
+        j.add("staleness_max_versions", MISSING, "sample_records.jsonl 缺失或无训练批样本")
+    else:
+        incomplete = [
+            s["sample_id"]
+            for s in train_samples
+            if s.get("current_version") is None or s.get("behavior_version") is None
+        ]
         vals = [
             s["current_version"] - s["behavior_version"]
             for s in train_samples
             if s.get("current_version") is not None and s.get("behavior_version") is not None
         ]
-        if not vals:
+        if incomplete and not vals:
             j.add("staleness_max_versions", MISSING, "无版本对样本（train_rollout current version 缺失？）")
-        else:
-            worst = max(vals)
-            lim = th["staleness_max_versions"]
+        elif incomplete:
             j.add(
                 "staleness_max_versions",
-                PASS if worst <= lim else FAIL,
-                f"最大 staleness={worst}（上限 {lim}；current=trainer 事实，behavior=逐 turn 最旧版本）",
+                FAIL,
+                f"{len(incomplete)} 个训练样本缺完整版本事实（如 {incomplete[:4]}）——缺版本不豁免 staleness 判定",
+            )
+        else:
+            worst, least = max(vals), min(vals)
+            lim = th["staleness_max_versions"]
+            ok = 0 <= least and worst <= lim
+            j.add(
+                "staleness_max_versions",
+                PASS if ok else FAIL,
+                f"staleness 区间=[{least},{worst}]（要求 0 <= s <= {lim}；负值 = behavior version 来自未来，"
+                "版本事实矛盾）",
             )
 
     # -- token 记账 -----------------------------------------------------------
@@ -567,47 +801,47 @@ def cmd_judge(args: argparse.Namespace) -> int:
                 "accepted+rejected==provenance 且 NORMAL step accepted 达标" if bad == 0 else "; ".join(msgs),
             )
 
-    # -- logprob 对拍 ---------------------------------------------------------
-    if train_samples is None:
-        j.add("logprob_same_version_mean_abs_diff_max", MISSING, "sample_records.jsonl 缺失")
-    else:
-        diffs = [
-            s["same_version_mean_abs_logprob_diff"]
-            for s in train_samples
-            if s.get("same_version_mean_abs_logprob_diff") is not None
-        ]
-        if not diffs:
-            j.add("logprob_same_version_mean_abs_diff_max", MISSING, "无同版本对拍摘要（logprob_compare 事件缺失）")
-        else:
-            worst = max(diffs)
-            lim = th["logprob_same_version_mean_abs_diff_max"]
-            j.add(
-                "logprob_same_version_mean_abs_diff_max",
-                PASS if worst <= lim else FAIL,
-                f"同版本逐 token 均值绝对差最大={worst:.4g}（上限 {lim}）",
-            )
+    # -- logprob 对拍（P0-8：对齐 + 覆盖 + 上限三面）--------------------------
+    _judge_logprob(j, train_samples)
 
     # -- routing tape（R3 显式选择对应的形状义务；只约束进入训练批的样本）-----
     _judge_routing(j, train_samples)
 
-    # -- 正控组（P0-5：方差 + 被真实 applied step 消费）-----------------------
+    # -- R3 trainer 侧 replay 消费（P0-5）-------------------------------------
+    _judge_replay(j, coll, steps, train_samples)
+
+    # -- 正控组（P0-5/P0-8：方差 + applied 消费 + accepted token 归因）--------
     _judge_positive_control(j, samples, steps)
 
     # -- integration tree identity（P0-4 worker 侧）---------------------------
     if th.get("integration_tree_identity_required"):
-        ident_path = ev / "actor_identity.json"
+        ident_path = coll / "actor_identity.json"
         if not ident_path.exists():
             j.add("integration_tree_identity", MISSING, "actor_identity.json 缺失（无 identity 事件）")
         else:
             ident = json.loads(ident_path.read_text())
-            ok = bool(ident.get("consistent"))
+            roles = ident.get("roles", [])
+            required = th.get("identity_required_role_prefixes", [])
+            missing_roles = [
+                prefix for prefix in required if not any(str(r).startswith(prefix) for r in roles)
+            ]
+            expected = ident.get("expected_tree_digests") or []
+            problems = []
+            if missing_roles:
+                problems.append(f"缺必需 role 类别：{missing_roles}（已见 {roles}）——部分 actor 的树身份无证据")
+            if not expected:
+                problems.append("无任何 expected_tree_digest（launch 未钉死或事件缺字段）——一致性没有外部锚点")
+            if not ident.get("consistent"):
+                problems.append(
+                    f"tree digest 不一致或与钉死值不符：{ident.get('tree_digests')} vs {expected}"
+                )
             j.add(
                 "integration_tree_identity",
-                PASS if ok else FAIL,
+                PASS if not problems else FAIL,
                 (
-                    f"全部 actor（{', '.join(ident.get('roles', []))}）tree digest 一致且与钉死值相符"
-                    if ok
-                    else f"tree digest 不一致或与钉死值不符：{ident.get('tree_digests')} vs {ident.get('expected_tree_digests')}"
+                    f"必需 role（{', '.join(roles)}）全部到场，tree digest 一致且与钉死值相符"
+                    if not problems
+                    else "; ".join(problems)
                 ),
             )
 
@@ -627,38 +861,22 @@ def cmd_judge(args: argparse.Namespace) -> int:
     else:
         j.add("max_consecutive_zero_signal_steps", MISSING, f"custom_config 不存在：{cc}")
 
-    # -- 关停 / 队列 -----------------------------------------------------------
-    _judge_probe(
-        j, ev / "shutdown_probe.json", "shutdown_orphan_workers_max",
-        lambda d: d.get("orphan_workers", math.inf) <= th["shutdown_orphan_workers_max"]
-        and d.get("unfinalized_deliveries", math.inf) <= th["unfinalized_deliveries_max"],
-        "orphan_workers/unfinalized_deliveries 达标",
-    )
-    if steps and all(s.get("queue_consumed_sample_ids") is not None for s in steps):
-        seen = Counter(x for s in steps for x in s["queue_consumed_sample_ids"])
-        dups = {k: v for k, v in seen.items() if v > 1}
-        j.add(
-            "queue_duplicate_sample_ids_max",
-            PASS if len(dups) <= th["queue_duplicate_sample_ids_max"] else FAIL,
-            "无重复消费（跨全部 step/rollout exactly-once）" if not dups else f"重复消费：{dups}",
-        )
-    else:
-        j.add("queue_duplicate_sample_ids_max", MISSING, "queue_consumed_sample_ids 证据缺失")
+    # -- 关停（P0-3B：查询失败≠零；s1_compat finalization 如实 NOT_APPLICABLE）-
+    _judge_shutdown(j, ev / "shutdown_probe.json", th)
+
+    # -- 队列守恒（P0-8：multiset 相等 + rank 齐全，替代单纯查重）--------------
+    _judge_queue(j, steps, samples, th)
 
     # -- checkpoint / eval 冒烟 ------------------------------------------------
     _judge_probe(
         j, ev / "checkpoint_probe.json", "g1_checkpoint_save_reload_delete",
         lambda d: d.get("saved") and d.get("reloaded") and d.get("deleted"),
-        "checkpoint 存/读/删闭环",
+        "checkpoint 存/读/删闭环（DCP FileSystemReader 结构化反序列化）",
     )
-    _judge_probe(
-        j, ev / "eval_smoke.json", "g1_eval_smoke_after_worker_stop",
-        lambda d: d.get("ran") and d.get("ok"),
-        "训练消费完成后 eval 路径冒烟通过",
-    )
+    _judge_eval(j, coll / "eval_smoke.json", steps, expected_final_version)
 
     # -- 资源 ------------------------------------------------------------------
-    res_path = ev / "resource_summary.json"
+    res_path = coll / "resource_summary.json"
     if res_path.exists():
         res = json.loads(res_path.read_text())
         for key, val, lim, cmp_ok in (
@@ -688,6 +906,38 @@ def cmd_judge(args: argparse.Namespace) -> int:
     return 0 if verdict["overall"] == "PASS" else 1
 
 
+def _judge_run_identity(j: Judge, ev: Path, coll: Path, thresholds_path: Path) -> None:
+    """P0-1：verdict 绑定唯一 run——manifest、collect、thresholds 三方一致。"""
+    manifest_path = ev / "run_manifest.json"
+    report_path = coll / "collect_report.json"
+    if not manifest_path.exists():
+        j.add("run_identity", MISSING, "run_manifest.json 缺失（launch 未在 Ray 前写 run 事实）")
+        return
+    if not report_path.exists():
+        j.add("run_identity", MISSING, "collected/collect_report.json 缺失（collect 未成功发布）")
+        return
+    manifest = json.loads(manifest_path.read_text())
+    report = json.loads(report_path.read_text())
+    problems = []
+    m_rid, c_rid = manifest.get("run_id"), report.get("run_id")
+    if not m_rid:
+        problems.append("run_manifest.json 无 run_id")
+    elif c_rid != m_rid:
+        problems.append(f"collect run_id={c_rid!r} != manifest run_id={m_rid!r}（证据不属于本 run）")
+    want_sha = manifest.get("thresholds_sha256")
+    got_sha = hashlib.sha256(thresholds_path.read_bytes()).hexdigest()
+    if want_sha and want_sha != got_sha:
+        problems.append(
+            f"thresholds.md sha256 与 run manifest 不符（manifest={want_sha[:12]}… judge 输入={got_sha[:12]}…）"
+            "——判定阈值在 run 后被改动"
+        )
+    j.add(
+        "run_identity",
+        PASS if not problems else FAIL,
+        f"run_id={m_rid} 三方一致（manifest/collect/thresholds digest）" if not problems else "; ".join(problems),
+    )
+
+
 def _check_versions(steps: list[dict]) -> tuple[bool, str]:
     prev = None
     per_rollout_outcomes: dict = defaultdict(list)
@@ -707,6 +957,130 @@ def _check_versions(steps: list[dict]) -> tuple[bool, str]:
             if len(vs) > 1:
                 return False, f"rollout {rid} 全 SKIPPED 但版本前进（patch 0003 语义违约）：{sorted(vs)}"
     return True, "版本单调且全 SKIPPED 轮版本不前进"
+
+
+def _check_publish_conservation(
+    steps: list[dict], publish: dict, interval: int
+) -> tuple[bool, list[str], int | None]:
+    """P0-6：按 publish interval 做 applied↔update↔publish↔version 双向守恒。
+
+    interval 内存在 applied step <=> 恰好一次 trainer weight_update（版本 +1、
+    与上一次发布版本连续）<=> 恰好一次 driver weight_publish、零 skip；
+    interval 内全 skipped <=> 恰好一次 weight_publish_skipped、零 update/publish。
+    rollout_id=None 的 update 是训练前 bootstrap 发布（train_async 先
+    update_weights 让引擎拿到训练侧权重），作为版本链起点，不参与 interval 账。
+    返回 (ok, problems, 期望终版)。
+    """
+    problems: list[str] = []
+    updates_by_rollout: dict[int, list[dict]] = defaultdict(list)
+    bootstrap_after: int | None = None
+    for u in publish.get("updates", []):
+        if u.get("rollout_id") is None:
+            bootstrap_after = u.get("version_after")
+        else:
+            updates_by_rollout[u["rollout_id"]].append(u)
+    publishes = Counter(p for p in publish.get("publishes", []) if p is not None)
+    skips = Counter(s for s in publish.get("skips", []) if s is not None)
+
+    rids = sorted({s["rollout_id"] for s in steps if s.get("rollout_id") is not None})
+    boundaries = [rid for rid in rids if (rid + 1) % interval == 0]
+    boundary_set = set(boundaries)
+    for rid in sorted(updates_by_rollout):
+        if rid not in boundary_set:
+            problems.append(f"weight_update 出现在非 interval 边界 rollout {rid}")
+    for rid in sorted(set(publishes) - boundary_set):
+        problems.append(f"weight_publish 出现在非 interval 边界 rollout {rid}")
+    for rid in sorted(set(skips) - boundary_set):
+        problems.append(f"weight_publish_skipped 出现在非 interval 边界 rollout {rid}")
+
+    prev_after = bootstrap_after
+    for b in boundaries:
+        interval_rids = [r for r in rids if b - interval < r <= b]
+        any_applied = any(
+            s.get("optimizer_step_applied") is True for s in steps if s.get("rollout_id") in interval_rids
+        )
+        ups = updates_by_rollout.get(b, [])
+        n_pub, n_skip = publishes.get(b, 0), skips.get(b, 0)
+        tag = f"interval@r{b}"
+        if any_applied:
+            if len(ups) != 1:
+                problems.append(f"{tag}: 有 applied step 但 weight_update={len(ups)} 次（需恰好 1）")
+            if n_pub != 1:
+                problems.append(f"{tag}: 有 applied step 但 weight_publish={n_pub} 次（需恰好 1）")
+            if n_skip:
+                problems.append(f"{tag}: 有 applied step 却出现 weight_publish_skipped")
+            if len(ups) == 1:
+                u = ups[0]
+                vb, va = u.get("version_before"), u.get("version_after")
+                if vb is None or va is None or va != vb + 1:
+                    problems.append(f"{tag}: 版本未 +1（{vb}->{va}）")
+                if prev_after is not None and vb is not None and vb != prev_after:
+                    problems.append(f"{tag}: 版本链断裂（上次发布后 {prev_after}，本次 before={vb}）")
+                if va is not None:
+                    prev_after = va
+        else:
+            if ups:
+                problems.append(f"{tag}: 全 skipped 却有 weight_update（{len(ups)} 次）")
+            if n_pub:
+                problems.append(f"{tag}: 全 skipped 却有 weight_publish")
+            if n_skip != 1:
+                problems.append(f"{tag}: 全 skipped 但 weight_publish_skipped={n_skip} 次（需恰好 1）")
+    return (not problems, problems, prev_after)
+
+
+def _judge_logprob(j: Judge, train_samples: list[dict] | None) -> None:
+    if train_samples is None:
+        j.add("logprob_same_version_mean_abs_diff_max", MISSING, "sample_records.jsonl 缺失")
+        j.add("logprob_alignment_and_coverage", MISSING, "sample_records.jsonl 缺失")
+        return
+    th = j.th
+    with_entry = [s for s in train_samples if s.get("has_logprob_entry")]
+    if not with_entry:
+        j.add("logprob_same_version_mean_abs_diff_max", MISSING, "无对拍摘要（logprob_compare 事件缺失）")
+        j.add("logprob_alignment_and_coverage", MISSING, "无对拍摘要（logprob_compare 事件缺失）")
+        return
+    diffs = [
+        s["same_version_mean_abs_logprob_diff"]
+        for s in train_samples
+        if s.get("same_version_mean_abs_logprob_diff") is not None
+    ]
+    if not diffs:
+        j.add("logprob_same_version_mean_abs_diff_max", MISSING, "无同版本对拍摘要（全部样本跨版本？）")
+    else:
+        worst = max(diffs)
+        lim = th["logprob_same_version_mean_abs_diff_max"]
+        j.add(
+            "logprob_same_version_mean_abs_diff_max",
+            PASS if worst <= lim else FAIL,
+            f"同版本 loss_mask=1 逐 token 均值绝对差最大={worst:.4g}（上限 {lim}）",
+        )
+    if th.get("logprob_alignment_required"):
+        problems = []
+        mismatched = [s["sample_id"] for s in train_samples if s.get("logprob_length_mismatch")]
+        if mismatched:
+            problems.append(f"{len(mismatched)} 个样本 behavior/current 长度错位（如 {mismatched[:4]}）——token 对齐已破坏")
+        same_version = [
+            s
+            for s in train_samples
+            if s.get("current_version") is not None
+            and s.get("behavior_version") is not None
+            and s["current_version"] == s["behavior_version"]
+        ]
+        uncovered = [s["sample_id"] for s in same_version if not s.get("has_logprob_entry")]
+        if uncovered:
+            problems.append(f"{len(uncovered)} 个同版本训练样本无对拍条目（如 {uncovered[:4]}）——覆盖不完整")
+        total_masked = sum(s.get("logprob_masked_tokens") or 0 for s in with_entry)
+        if total_masked <= 0:
+            problems.append("loss_mask=1 对拍 token 总数为 0（训练 token 口径下无任何有效对拍）")
+        j.add(
+            "logprob_alignment_and_coverage",
+            PASS if not problems else FAIL,
+            (
+                f"无长度错位；同版本样本全覆盖；masked token 总数={total_masked}"
+                if not problems
+                else "; ".join(problems)
+            ),
+        )
 
 
 def _judge_routing(j: Judge, samples: list[dict] | None) -> None:
@@ -748,16 +1122,199 @@ def _judge_routing(j: Judge, samples: list[dict] | None) -> None:
     )
 
 
+def _judge_replay(j: Judge, coll: Path, steps: list[dict] | None, train_samples: list[dict] | None) -> None:
+    """P0-5：R3 的 Go 证据 = trainer 真实消费 tape，而不只是 tape 运到门口。
+
+    routing_replay_trainer_consumption：fill 队列（stream 注册、record 数 =
+    期望 microbatch 数）、logprob 前向逐 microbatch pop、每个 optimizer step
+    的 forward/backward pop 数与该 step 的 microbatch 数一致、rollout 末队列
+    耗尽。routing_replay_source_linkage：trainer 侧 fill 的逐样本 digest
+    multiset == rollout 侧 rollout_group tape digest multiset（同一份数据）。
+    """
+    ck, lk = "routing_replay_trainer_consumption", "routing_replay_source_linkage"
+    rec_path = coll / "replay_records.json"
+    rec = json.loads(rec_path.read_text()) if rec_path.exists() else None
+    fills = [f for f in (rec or {}).get("fills", []) if f.get("manager") == "routing"]
+    consumes = [c for c in (rec or {}).get("consumes", []) if c.get("manager") == "routing"]
+    exhausted = [x for x in (rec or {}).get("exhausted", []) if x.get("manager") == "routing"]
+    if j.r3 == "off":
+        extra = len(fills) + len(consumes) + len(exhausted)
+        j.add(
+            ck,
+            PASS if extra == 0 else FAIL,
+            "R3=off：无 trainer 侧 replay 事件" if extra == 0 else f"R3=off 但存在 {extra} 条 replay 事件",
+        )
+        return
+    if steps is None:
+        j.add(ck, MISSING, "step_records.jsonl 缺失，无法联结 replay 消费与 optimizer step")
+        j.add(lk, MISSING, "step_records.jsonl 缺失")
+        return
+    if not fills:
+        j.add(ck, MISSING, "R3=on 但无 replay_fill 事件——tape 是否被 trainer 消费无证据（source tape 不算数）")
+        j.add(lk, MISSING, "无 replay_fill 事件（无 trainer 侧 digest 可联结）")
+        return
+    problems: list[str] = []
+    for f in fills:
+        tag = f"fill r{f.get('rollout_id')} rank{f.get('rank')}"
+        if not f.get("enabled"):
+            problems.append(f"{tag}: replay manager 未启用（enabled=false）——tape 在场但 replay 实际失效")
+        if not f.get("num_streams"):
+            problems.append(f"{tag}: 注册 stream 数为 0（wrapper 未注册）")
+        exp = f.get("expected_records")
+        if not exp or f.get("records_min") != exp or f.get("records_max") != exp:
+            problems.append(
+                f"{tag}: 队列 record 数 {f.get('records_min')}~{f.get('records_max')} != 期望 {exp}"
+            )
+    step_keys = {(s["rollout_id"], s["step_id"]) for s in steps}
+    rollouts = {rid for rid, _ in step_keys}
+    train_consumes = {(c.get("rollout_id"), c.get("step_id")): True for c in consumes if c.get("phase") == "train_step"}
+    logprob_rollouts = {c.get("rollout_id") for c in consumes if c.get("phase") == "logprob_forward"}
+    for c in consumes:
+        tag = f"consume {c.get('phase')} r{c.get('rollout_id')}s{c.get('step_id')} rank{c.get('rank')}"
+        if c.get("phase") == "train_step":
+            nmb = c.get("num_microbatches")
+            for side in ("forward", "backward"):
+                lo, hi = c.get(f"{side}_pops_min"), c.get(f"{side}_pops_max")
+                if not nmb or lo != nmb or hi != nmb:
+                    problems.append(f"{tag}: {side} pop {lo}~{hi} != 本 step microbatch 数 {nmb}")
+        elif c.get("phase") == "logprob_forward":
+            lo, hi = c.get("forward_pops_min"), c.get("forward_pops_max")
+            ql, qh = c.get("queue_len_min"), c.get("queue_len_max")
+            if not ql or lo != ql or hi != qh or ql != qh:
+                problems.append(f"{tag}: logprob 前向 pop {lo}~{hi} != 队列长度 {ql}~{qh}")
+    for rid in sorted(rollouts):
+        if not any(f.get("rollout_id") == rid for f in fills):
+            problems.append(f"r{rid}: 无 replay_fill")
+        if rid not in logprob_rollouts:
+            problems.append(f"r{rid}: 无 logprob_forward 消费事件")
+        if not any(x.get("rollout_id") == rid for x in exhausted):
+            problems.append(f"r{rid}: 无 replay_exhausted（队列是否耗尽无证据）")
+    for key in sorted(step_keys):
+        if key not in train_consumes:
+            problems.append(f"r{key[0]}s{key[1]}: 无 train_step 消费事件（该 optimizer step 的 replay 消费无证据）")
+    for x in exhausted:
+        tag = f"exhausted r{x.get('rollout_id')} rank{x.get('rank')}"
+        ql, qh = x.get("queue_len_min"), x.get("queue_len_max")
+        ok = (
+            x.get("exhausted") is True
+            and ql == qh
+            and x.get("forward_pops_min") == x.get("forward_pops_max") == ql
+            and x.get("backward_pops_min") == x.get("backward_pops_max") == ql
+        )
+        if not ok:
+            problems.append(
+                f"{tag}: 未耗尽（queue {ql}~{qh} fwd {x.get('forward_pops_min')}~{x.get('forward_pops_max')} "
+                f"bwd {x.get('backward_pops_min')}~{x.get('backward_pops_max')}）"
+            )
+    j.add(
+        ck,
+        PASS if not problems else FAIL,
+        (
+            f"fill/logprob 前向/{len(step_keys)} 个 step 消费/耗尽全链一致"
+            if not problems
+            else "; ".join(problems[:6])
+        ),
+    )
+
+    # source -> trainer digest 联结
+    if not train_samples:
+        j.add(lk, MISSING, "sample_records.jsonl 缺失或无训练批样本（rollout 侧 tape 来源无证据）")
+        return
+    if any(f.get("sample_digests") is None for f in fills):
+        j.add(lk, MISSING, "replay_fill 缺 sample_digests（无 trainer 侧 tape 身份）")
+        return
+    link_problems: list[str] = []
+    for rid in sorted(rollouts):
+        expected = Counter(
+            (s.get("routing_tape") or {}).get("digest")
+            for s in train_samples
+            if s.get("rollout_id") == rid and s.get("routing_tape")
+        )
+        by_dp: dict[int, list[str]] = {}
+        for f in fills:
+            if f.get("rollout_id") == rid and f.get("dp_rank") is not None:
+                by_dp.setdefault(f["dp_rank"], f.get("sample_digests") or [])
+        actual = Counter(d for digests in by_dp.values() for d in digests)
+        if expected != actual:
+            miss = expected - actual
+            extra = actual - expected
+            link_problems.append(
+                f"r{rid}: trainer 消费的 tape 集合 != rollout 侧来源（缺 {sum(miss.values())} 个、"
+                f"多 {sum(extra.values())} 个）"
+            )
+    j.add(
+        lk,
+        PASS if not link_problems else FAIL,
+        "trainer fill digest multiset == rollout tape digest multiset（逐轮）"
+        if not link_problems
+        else "; ".join(link_problems[:4]),
+    )
+
+
+def _judge_queue(j: Judge, steps: list[dict] | None, samples: list[dict] | None, th: dict) -> None:
+    """P0-8：admitted==consumed multiset、filtered 不相交、预期 dp rank 齐全。"""
+    if steps is None or any(s.get("queue_consumed_sample_ids") is None for s in steps):
+        j.add("queue_multiset_conservation", MISSING, "queue_consumed_sample_ids 证据缺失")
+        j.add("train_step_rank_coverage", MISSING, "train_step_consumed 证据缺失")
+        return
+    consumed = Counter(x for s in steps for x in s["queue_consumed_sample_ids"])
+    train_rows = [s for s in samples if s.get("source") == "train_batch"] if samples else []
+    if not train_rows:
+        j.add("queue_multiset_conservation", MISSING, "无训练批样本事件（admitted 面无证据）")
+    else:
+        admitted = Counter(s["sample_id"] for s in train_rows)
+        filtered = {s["sample_id"] for s in samples if s.get("source") == "filtered"}
+        problems = []
+        missing_ids = admitted - consumed
+        extra_ids = consumed - admitted
+        if missing_ids:
+            problems.append(f"admitted 但未消费：{sorted(missing_ids)[:5]}（共 {sum(missing_ids.values())}）")
+        if extra_ids:
+            problems.append(f"消费了未 admitted 的样本：{sorted(extra_ids)[:5]}（共 {sum(extra_ids.values())}）")
+        dups = {k: v for k, v in consumed.items() if v > 1}
+        if dups:
+            problems.append(f"重复消费：{dict(list(dups.items())[:4])}")
+        overlap = filtered & (set(admitted) | set(consumed))
+        if overlap:
+            problems.append(f"filtered 样本出现在训练/消费面：{sorted(overlap)[:5]}")
+        j.add(
+            "queue_multiset_conservation",
+            PASS if not problems else FAIL,
+            (
+                f"admitted == consumed（{sum(admitted.values())} 样本 exactly-once），filtered 不相交"
+                if not problems
+                else "; ".join(problems)
+            ),
+        )
+    expected_ranks = th.get("expected_dp_ranks")
+    if expected_ranks is None:
+        j.add("train_step_rank_coverage", MISSING, "thresholds 缺 expected_dp_ranks（预期分片数未声明）")
+        return
+    want = list(range(int(expected_ranks)))
+    bad = [
+        f"r{s['rollout_id']}s{s['step_id']}: dp_ranks={s.get('dp_ranks')}"
+        for s in steps
+        if s.get("dp_ranks") != want
+    ]
+    j.add(
+        "train_step_rank_coverage",
+        PASS if not bad else FAIL,
+        f"每个 step 的 dp 分片齐全（0..{expected_ranks - 1}）" if not bad else "; ".join(bad[:4]),
+    )
+
+
 def _judge_positive_control(j: Judge, samples: list[dict] | None, steps: list[dict] | None) -> None:
     th = j.th
     if samples is None:
         j.add("positive_control_min_groups_with_reward_std", MISSING, "sample_records.jsonl 缺失")
         j.add("positive_control_consumed_by_applied_step", MISSING, "sample_records.jsonl 缺失")
+        j.add("positive_control_accepted_tokens", MISSING, "sample_records.jsonl 缺失")
         j.add("zero_variance_groups_must_not_train", MISSING, "sample_records.jsonl 缺失")
         return
     if not any(s.get("source") == "train_batch" for s in samples):
         j.add("positive_control_min_groups_with_reward_std", MISSING, "无训练批样本（rollout_group 事件缺失）")
         j.add("positive_control_consumed_by_applied_step", MISSING, "无训练批样本（rollout_group 事件缺失）")
+        j.add("positive_control_accepted_tokens", MISSING, "无训练批样本（rollout_group 事件缺失）")
         j.add("zero_variance_groups_must_not_train", MISSING, "无训练批样本（rollout_group 事件缺失）")
         return
     groups: dict = defaultdict(list)
@@ -779,29 +1336,72 @@ def _judge_positive_control(j: Judge, samples: list[dict] | None, steps: list[di
     )
 
     # B2：正控不止有方差，还必须被某个真实 applied optimizer step 消费。
+    qualifying: list[tuple] = []
+    consumed_evidence_ok = bool(steps) and not any(
+        s.get("queue_consumed_sample_ids") is None or s.get("optimizer_step_applied") is None for s in steps
+    )
     if th.get("positive_control_must_be_consumed_by_applied_step"):
-        if not steps or any(s.get("queue_consumed_sample_ids") is None or s.get("optimizer_step_applied") is None for s in steps):
+        if not consumed_evidence_ok:
             j.add("positive_control_consumed_by_applied_step", MISSING, "step 消费/applied 证据缺失")
         else:
             consumed_all = {x for s in steps for x in s["queue_consumed_sample_ids"]}
             applied_consumed = {
                 x for s in steps if s["optimizer_step_applied"] is True for x in s["queue_consumed_sample_ids"]
             }
-            qualifying = []
             for key in pc_groups_with_std:
                 rows = groups[key]
                 ids = {r["sample_id"] for r in rows}
                 if ids <= consumed_all and ids & applied_consumed:
-                    qualifying.append(key[1])
+                    qualifying.append(key)
             j.add(
                 "positive_control_consumed_by_applied_step",
                 PASS if qualifying else FAIL,
                 (
-                    f"正控组 {qualifying} 全部样本被消费且 ≥1 样本进入 optimizer_step_applied=True 的 step"
+                    f"正控组 {[k[1] for k in qualifying]} 全部样本被消费且 ≥1 样本进入 optimizer_step_applied=True 的 step"
                     if qualifying
                     else "没有任何 reward std>0 的正控组被真实 applied step 消费（方差 ≠ 驱动更新）"
                 ),
             )
+
+    # P0-8：共批 ≠ 归因——正控组自身必须存在 accepted（可产生梯度的）token，
+    # 否则该 applied step 可能完全由别的组驱动。
+    if th.get("positive_control_requires_accepted_tokens"):
+        if not consumed_evidence_ok:
+            j.add("positive_control_accepted_tokens", MISSING, "step 消费/applied 证据缺失，无法归因")
+        elif not qualifying:
+            j.add(
+                "positive_control_accepted_tokens",
+                FAIL if pc_groups_with_std else MISSING,
+                "无 qualifying 正控组（前置检查未过），accepted token 归因无从谈起",
+            )
+        else:
+            facts_missing = [
+                r["sample_id"]
+                for key in qualifying
+                for r in groups[key]
+                if r.get("dis_accepted_tokens") is None
+            ]
+            if facts_missing:
+                j.add(
+                    "positive_control_accepted_tokens",
+                    MISSING,
+                    f"正控组样本缺 sample_dis_accounting 事实（如 {facts_missing[:4]}）",
+                )
+            else:
+                good = [
+                    key
+                    for key in qualifying
+                    if sum(r.get("dis_accepted_tokens") or 0 for r in groups[key]) > 0
+                ]
+                j.add(
+                    "positive_control_accepted_tokens",
+                    PASS if good else FAIL,
+                    (
+                        f"正控组 {[k[1] for k in good]} 自身 accepted token > 0（真实贡献训练信号）"
+                        if good
+                        else "正控组 accepted token 全为 0——applied step 由其他组驱动，正控无有效归因"
+                    ),
+                )
 
     if th.get("zero_variance_groups_must_not_train"):
         offenders = []
@@ -816,6 +1416,87 @@ def _judge_positive_control(j: Judge, samples: list[dict] | None, steps: list[di
             if not offenders
             else f"进训的零方差组：{offenders}",
         )
+
+
+def _judge_shutdown(j: Judge, path: Path, th: dict) -> None:
+    """P0-3B：查询失败显式 FAIL；s1_compat finalization 如实 NOT_APPLICABLE。"""
+    if not path.exists():
+        j.add("shutdown_orphan_workers_max", MISSING, "shutdown_probe.json 缺失")
+        j.add("shutdown_finalization", MISSING, "shutdown_probe.json 缺失")
+        return
+    try:
+        d = json.loads(path.read_text())
+    except ValueError as exc:
+        j.add("shutdown_orphan_workers_max", FAIL, f"shutdown_probe.json 不是合法 JSON：{exc}")
+        j.add("shutdown_finalization", FAIL, f"shutdown_probe.json 不是合法 JSON：{exc}")
+        return
+    problems = []
+    if not d.get("docker_query_ok"):
+        problems.append(f"docker 查询失败（detail={d.get('detail', {})}）——无法观测 ≠ 观测为零")
+    if not d.get("ray_query_ok"):
+        problems.append(f"ray 查询失败（detail={d.get('detail', {})}）——无法观测 ≠ 观测为零")
+    orphans = d.get("orphan_workers")
+    lim = th["shutdown_orphan_workers_max"]
+    if not problems and (orphans is None or orphans > lim):
+        problems.append(f"orphan_workers={orphans}（上限 {lim}）")
+    j.add(
+        "shutdown_orphan_workers_max",
+        PASS if not problems else FAIL,
+        f"docker/ray 查询成功且孤儿 worker={orphans} ≤ {lim}" if not problems else "; ".join(problems),
+    )
+    fin = d.get("finalization") or {}
+    status = fin.get("status")
+    if status == "ok_empty":
+        j.add("shutdown_finalization", PASS, "finalization store 在场且无未终结交付")
+    elif status == "not_applicable":
+        j.add(
+            "shutdown_finalization",
+            NA,
+            "s1_compat 无 FileFinalizationStore（bringup 设计如此）——此项不构成 F5 内存 pending draft "
+            "已收口的证据，不冒充零",
+        )
+    elif status is None:
+        j.add("shutdown_finalization", MISSING, "探针未记录 finalization 状态")
+    else:
+        j.add("shutdown_finalization", FAIL, f"finalization 状态={status}：{fin}")
+
+
+def _judge_eval(j: Judge, path: Path, steps: list[dict] | None, expected_final_version: int | None) -> None:
+    """P0-3A：只有绑定到最后一轮、期望终版权重的 eval 才算训后冒烟。"""
+    key = "g1_eval_smoke_post_train"
+    if not path.exists():
+        j.add(key, MISSING, "eval_smoke.json 缺失（无 eval 事件）")
+        return
+    data = json.loads(path.read_text())
+    events = data.get("events", [])
+    if not events:
+        j.add(key, MISSING, "eval_smoke.json 无事件")
+        return
+    if steps is None:
+        j.add(key, MISSING, "step_records 缺失，无法确定最后一轮")
+        return
+    last_rid = max(s["rollout_id"] for s in steps if s.get("rollout_id") is not None)
+    if expected_final_version is None:
+        j.add(key, MISSING, "publish 守恒未闭合（期望终版未知），无法绑定训后 eval")
+        return
+    candidates = [e for e in events if e.get("rollout_id") == last_rid]
+    if any(e.get("weight_version") is None for e in candidates):
+        j.add(key, MISSING, "末轮 eval 事件缺 weight_version 绑定（emitter 版本过旧？）")
+        return
+    ok = [e for e in candidates if e.get("ok") and e.get("weight_version") == expected_final_version]
+    j.add(
+        key,
+        PASS if ok else FAIL,
+        (
+            f"末轮（r{last_rid}）eval 在期望终版 v{expected_final_version} 上冒烟通过"
+            if ok
+            else (
+                f"无绑定到末轮+终版的 eval（末轮 r{last_rid}、期望版本 {expected_final_version}；"
+                f"观测到 {[(e.get('rollout_id'), e.get('weight_version')) for e in events][:6]}）"
+                "——pre-train eval 不能冒充训后 eval"
+            )
+        ),
+    )
 
 
 def _judge_probe(j: Judge, path: Path, key: str, ok_fn, ok_msg: str) -> None:
@@ -838,10 +1519,13 @@ def _judge_probe(j: Judge, path: Path, key: str, ok_fn, ok_msg: str) -> None:
 _SELFTEST_SEQ = 0
 
 _TREE_DIGEST = "d1" * 32  # 代表性 identity digest
+_RUN_ID = "selftest-run"
 
 # 每 rollout 2 个 optimizer step、dp 2 分片、每轮 2 组 × 8 样本。
 _N_ROLLOUTS, _STEPS_PER_ROLLOUT, _GROUP_SIZE = 3, 2, 8
+_MB_PER_STEP = 2  # 每 dp rank 每 step 的 microbatch 数（replay 消费联结用）
 _WORKERS = ["train/aa01", "train/aa02"]
+_ROLES = ("driver", "megatron_train_actor", "rollout_manager", "sglang_server")
 
 
 def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
@@ -849,14 +1533,18 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
     events: list[dict] = []
 
     def emit(kind: str, **fields):
-        events.append({"event": kind, "ts_unix": 0.0, "host": "h", "pid": 1, **fields})
+        events.append({"event": kind, "ts_unix": 0.0, "host": "h", "pid": 1, "run_id": _RUN_ID, **fields})
 
-    for role in ("driver", "megatron_train_actor", "rollout_manager", "sglang_server"):
+    for role in _ROLES:
         digest = _TREE_DIGEST
         if mutate == "identity_mismatch" and role == "sglang_server":
             digest = "ee" * 32
+        expected = _TREE_DIGEST if mutate != "identity_no_expected" else None
         emit("actor_identity", role=role, miles_file=f"/opt/miles/{role}.py",
-             tree_digest=digest, expected_tree_digest=_TREE_DIGEST)
+             tree_digest=digest, expected_tree_digest=expected)
+    if mutate.startswith("drop_role_"):
+        gone = mutate.removeprefix("drop_role_")
+        events = [e for e in events if not (e["event"] == "actor_identity" and e["role"] == gone)]
 
     emit("weight_update", rollout_id=None, version_before=0, version_after=1, duration_seconds=40.0)
 
@@ -888,6 +1576,10 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
             behavior = [[str(version)] for _ in indices]
             if mutate == "stale_behavior" and rid == 0 and g == 0:
                 behavior = [["1", "3"] for _ in indices]  # trainer current=version；行为列表末位≠current
+            if mutate == "future_behavior_version" and rid == 0 and g == 0:
+                behavior = [[str(version + 3)] for _ in indices]  # 来自未来的版本 -> 负 staleness
+            if mutate == "missing_behavior_version" and rid == 0 and g == 0:
+                behavior = [[] for _ in indices]
             tapes = [
                 {"shape": [511, 48, 8], "dtype": "int32", "digest": "ab" * 32, "expected_rows": 511}
                 for _ in indices
@@ -914,13 +1606,31 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                  routing_tape=[{"shape": [511, 48, 8], "dtype": "int32", "digest": "cd" * 32, "expected_rows": 511}] * _GROUP_SIZE)
             rollout_sample_ids.extend(zero_var_indices)
 
+        lp_entries = []
+        for i in rollout_sample_ids:
+            mismatch = mutate == "logprob_length_mismatch_all"
+            lp_entries.append({"sample_index": i, "same_version": True,
+                               "mean_abs_diff": 0.01 if not mismatch else 0.01,
+                               "num_tokens": 320, "total_tokens": 400,
+                               "length_mismatch": mismatch})
+        if mutate == "logprob_partial_coverage":
+            lp_entries = lp_entries[:1]
         emit("logprob_compare", rollout_id=rid, dp_rank=0, trainer_current_version=version,
-             entries=[{"sample_index": i, "same_version": True, "mean_abs_diff": 0.01,
-                       "num_tokens": 400, "length_mismatch": False}
-                      for i in rollout_sample_ids])
+             entries=lp_entries)
+
+        # 逐样本 DIS token 记账（正控归因）：正控组样本 accepted>0；
+        # pc_zero_accepted 时正控组归零、其余组保持正数（"其他组驱动更新"）。
+        dis_entries = []
+        for i in rollout_sample_ids:
+            accepted = 120
+            if mutate == "pc_zero_accepted" and rid == 0 and i < _GROUP_SIZE:
+                accepted = 0
+            dis_entries.append({"sample_index": i, "accepted_tokens": accepted, "provenance_tokens": 320})
+        emit("sample_dis_accounting", entries=dis_entries)
 
         # 2 个 optimizer step；dp0/dp1 各消费一半。
         per_step = len(rollout_sample_ids) // _STEPS_PER_ROLLOUT
+        step_shards: dict[tuple[int, int], list[int]] = {}
         for sid in range(_STEPS_PER_ROLLOUT):
             outcome, applied = "NORMAL", True
             if mutate == "one_skipped_rollout" and rid == 2:
@@ -939,8 +1649,21 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
             step_samples = rollout_sample_ids[sid * per_step:(sid + 1) * per_step]
             half = len(step_samples) // 2
             for dp_rank, shard in ((0, step_samples[:half]), (1, step_samples[half:])):
+                shard = list(shard)
+                if mutate == "consumed_missing_sample" and rid == 0 and sid == 0 and dp_rank == 0 and shard:
+                    shard = shard[1:]
+                if mutate == "consumed_extra_sample" and rid == 0 and sid == 0 and dp_rank == 0:
+                    shard = [*shard, 9999]
+                if mutate == "consumed_missing_rank" and rid == 0 and sid == 0 and dp_rank == 1:
+                    continue
+                step_shards[(sid, dp_rank)] = shard
                 emit("train_step_consumed", rollout_id=rid, step_id=sid, dp_rank=dp_rank,
-                     rank=dp_rank, sample_indices=shard, num_tokens=500 * max(len(shard), 1))
+                     rank=dp_rank, sample_indices=shard, num_tokens=500 * max(len(shard), 1),
+                     num_microbatches=_MB_PER_STEP, attribution="micro_batch_indices")
+                if mutate == "consumed_rank_conflict" and rid == 0 and sid == 0 and dp_rank == 0:
+                    emit("train_step_consumed", rollout_id=rid, step_id=sid, dp_rank=dp_rank,
+                         rank=dp_rank + 2, sample_indices=list(reversed(shard))[:1],
+                         num_tokens=1, num_microbatches=_MB_PER_STEP, attribution="micro_batch_indices")
             for rank in range(2):
                 accepted = 900.0 if outcome == "NORMAL" else 0.0
                 rejected = 100.0 if outcome == "NORMAL" else 1000.0
@@ -949,6 +1672,7 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                      adam_step_before=adam_b, adam_step_after=adam,
                      scheduler_steps_before=sched_b, scheduler_steps_after=sched,
                      grad_norm=0.5 if applied else 0.0, duration_seconds=20.0,
+                     zero_signal_scan_seconds=0.4,
                      rank=rank, dp_rank=rank, is_pp_last_stage=(rank == 0),
                      metrics=(
                          {"dis_accepted_tokens": accepted, "dis_rejected_tokens": rejected,
@@ -956,22 +1680,79 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                          if rank == 0 else None
                      ))
 
+        # R3 trainer 侧消费事实（fill -> logprob 前向 -> 每 step -> 耗尽）。
+        queue_len = _MB_PER_STEP * _STEPS_PER_ROLLOUT
+        for dp_rank in (0, 1):
+            dp_samples = sorted(
+                x for (sid, dp), shard in step_shards.items() if dp == dp_rank for x in shard
+            )
+            fill_records = queue_len if mutate != "replay_count_mismatch" else queue_len - 1
+            digests = ["ab" * 32] * len(dp_samples)
+            if mutate == "replay_digest_mismatch" and rid == 0 and dp_rank == 0 and digests:
+                digests[0] = "ff" * 32
+            emit("replay_fill", manager="routing", rollout_id=rid, rank=dp_rank, dp_rank=dp_rank,
+                 enabled=mutate != "replay_fill_disabled",
+                 num_streams=16 if mutate != "replay_fill_disabled" else 0,
+                 records_min=fill_records, records_max=fill_records,
+                 expected_records=queue_len, num_samples=len(dp_samples),
+                 sample_digests=digests)
+            fwd = queue_len if mutate != "replay_zero_pops" else 0
+            emit("replay_consume", phase="logprob_forward", manager="routing", rollout_id=rid,
+                 rank=dp_rank, dp_rank=dp_rank, num_streams=16,
+                 forward_pops_min=fwd, forward_pops_max=fwd,
+                 queue_len_min=queue_len, queue_len_max=queue_len)
+            for sid in range(_STEPS_PER_ROLLOUT):
+                pops = _MB_PER_STEP if mutate != "replay_zero_pops" else 0
+                emit("replay_consume", phase="train_step", manager="routing", rollout_id=rid,
+                     step_id=sid, rank=dp_rank, dp_rank=dp_rank, num_streams=16,
+                     num_microbatches=_MB_PER_STEP,
+                     forward_pops_min=pops, forward_pops_max=pops,
+                     backward_pops_min=pops, backward_pops_max=pops,
+                     queue_len_min=queue_len, queue_len_max=queue_len)
+            drained = queue_len if mutate not in ("replay_zero_pops", "replay_not_exhausted") else 0
+            emit("replay_exhausted", manager="routing", rollout_id=rid, rank=dp_rank, dp_rank=dp_rank,
+                 num_streams=16, exhausted=mutate not in ("replay_zero_pops", "replay_not_exhausted"),
+                 queue_len_min=queue_len, queue_len_max=queue_len,
+                 forward_pops_min=drained, forward_pops_max=drained,
+                 backward_pops_min=drained, backward_pops_max=drained)
+
         # 发布语义与 patch 0003 对齐：本轮有 applied step 才发布并进版本。
         any_applied_this_rollout = not (
             (mutate == "one_skipped_rollout" and rid == 2) or mutate == "normal_not_applied"
         )
-        if any_applied_this_rollout:
+        if mutate == "applied_but_publish_skipped":
+            emit("weight_publish_skipped", rollout_id=rid)  # applied 在场却只发"有意跳过"
+        elif any_applied_this_rollout:
             before = version
             version += 1
             if mutate == "version_regress" and rid == 1:
                 version = before - 1
-            emit("weight_update", rollout_id=rid, version_before=before, version_after=version,
+            after = version
+            if mutate == "version_stuck":
+                after = before  # Adam 前进但版本账本不动
+                version = before
+            emit("weight_update", rollout_id=rid, version_before=before, version_after=after,
                  duration_seconds=40.0)
-            emit("weight_publish", rollout_id=rid)
+            if mutate != "update_without_publish":
+                emit("weight_publish", rollout_id=rid)
+            if mutate == "skip_and_update_same_rollout":
+                emit("weight_publish_skipped", rollout_id=rid)
         else:
             emit("weight_publish_skipped", rollout_id=rid)
 
-    emit("eval_smoke", rollout_id=_N_ROLLOUTS - 1, ok=True, num_metrics=3)
+    eval_rid, eval_version = _N_ROLLOUTS - 1, version
+    if mutate == "eval_pre_train_only":
+        eval_rid, eval_version = 0, 1
+    if mutate == "eval_wrong_version":
+        eval_version = 1
+    emit("eval_smoke", rollout_id=eval_rid, ok=True, num_metrics=3, weight_version=eval_version)
+
+    if mutate == "publish_without_update":
+        events = [e for e in events if not (e["event"] == "weight_update" and e.get("rollout_id") is not None)]
+    if mutate == "run_id_mismatch":
+        for e in events:
+            if e["event"] == "train_rollout":
+                e["run_id"] = "other-run"
 
     drop_kind = {
         "drop_train_step": "train_step",
@@ -982,11 +1763,14 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
         "drop_logprob_compare": "logprob_compare",
         "drop_eval_smoke": "eval_smoke",
         "drop_actor_identity": "actor_identity",
+        "drop_sample_dis": "sample_dis_accounting",
     }.get(mutate)
     if drop_kind:
         events = [e for e in events if e["event"] != drop_kind]
     if mutate == "drop_publish_facts":
         events = [e for e in events if e["event"] not in ("weight_update", "weight_publish", "weight_publish_skipped")]
+    if mutate == "drop_replay_events":
+        events = [e for e in events if not e["event"].startswith("replay_")]
 
     ev_dir.mkdir(parents=True)
     write_jsonl(ev_dir / "rh2_events_h_1.jsonl", events)
@@ -997,25 +1781,45 @@ def _selftest_evidence(tmp: Path, *, mutate: str = "") -> Path:
     _SELFTEST_SEQ += 1
     base = tmp / f"case_{_SELFTEST_SEQ}_{mutate or 'good'}"
     events_dir = base / "events"
-    out_dir = base / "evidence"
+    ev_dir = base / "evidence"
+    ev_dir.mkdir(parents=True)
     _selftest_write_events(events_dir, mutate=mutate)
     ns = argparse.Namespace(
-        events_dir=str(events_dir), dmon_csv=None, gpu_mem_total_mb=None, out_dir=str(out_dir)
+        events_dir=str(events_dir), dmon_csv=None, gpu_mem_total_mb=None,
+        out_dir=str(ev_dir / COLLECTED_DIR_NAME), run_id=_RUN_ID,
     )
     import contextlib
     import io
 
     with contextlib.redirect_stdout(io.StringIO()):
         cmd_collect(ns)
+    coll = ev_dir / COLLECTED_DIR_NAME
     # dmon 在 self-test 无输入：直接补一个合规资源摘要（launch 实跑时由 collect 产出）。
-    res = json.loads((out_dir / "resource_summary.json").read_text())
+    res = json.loads((coll / "resource_summary.json").read_text())
     if res.get("gpu_mem_peak_frac") is None:
         res["gpu_mem_peak_frac"] = 0.9
-    (out_dir / "resource_summary.json").write_text(json.dumps(res))
+    (coll / "resource_summary.json").write_text(json.dumps(res))
+    # launch.sh 在 Ray 前写 run_manifest；post-run 探针按 postrun_probes.py 契约。
+    (ev_dir / "run_manifest.json").write_text(json.dumps({
+        "run_id": _RUN_ID if mutate != "manifest_run_id_mismatch" else "another-run",
+        "thresholds_sha256": hashlib.sha256((HERE / "thresholds.md").read_bytes()).hexdigest(),
+    }))
     if mutate != "missing_shutdown":
-        (out_dir / "shutdown_probe.json").write_text('{"orphan_workers": 0, "unfinalized_deliveries": 0}')
-    (out_dir / "checkpoint_probe.json").write_text('{"saved": true, "reloaded": true, "deleted": true}')
-    return out_dir
+        shutdown = {
+            "execution_mode": "s1_compat",
+            "docker_query_ok": True,
+            "ray_query_ok": True,
+            "docker_orphan_containers": [],
+            "ray_alive_actors": [],
+            "orphan_workers": 0,
+            "finalization": {"status": "not_applicable"},
+            "detail": {},
+        }
+        if mutate == "shutdown_query_failed":
+            shutdown.update({"docker_query_ok": False, "orphan_workers": None})
+        (ev_dir / "shutdown_probe.json").write_text(json.dumps(shutdown))
+    (ev_dir / "checkpoint_probe.json").write_text('{"saved": true, "reloaded": true, "deleted": true}')
+    return ev_dir
 
 
 def _run_judge(ev: Path, r3: str = "on") -> dict:
@@ -1044,13 +1848,14 @@ def cmd_selftest() -> int:
 
         v = _run_judge(_selftest_evidence(tmp))
         check(v["overall"] == "PASS", f"好例应 PASS，得 {v['overall']}: "
-              + "; ".join(f"{c['check']}={c['status']}" for c in v["checks"] if c["status"] != PASS))
+              + "; ".join(f"{c['check']}={c['status']}:{c['detail']}" for c in v["checks"] if c["status"] not in (PASS, NA)))
 
         # --- 删任一必要事件 -> INCOMPLETE（B1 修复验收）---------------------
         for mutate in (
             "drop_train_step", "drop_train_step_consumed", "drop_train_rollout",
             "drop_rollout_group", "drop_rollout_workers", "drop_logprob_compare",
             "drop_eval_smoke", "drop_actor_identity", "drop_publish_facts",
+            "drop_sample_dis", "drop_replay_events",
         ):
             v = _run_judge(_selftest_evidence(tmp, mutate=mutate))
             check(
@@ -1070,7 +1875,10 @@ def cmd_selftest() -> int:
         # current_version 必须来自 train_rollout 的 trainer 事实，不得取行为
         # 版本列表末位（B2 复现：behavior=["1","3"] 而 trainer current=1）。
         ev_dir = _selftest_evidence(tmp, mutate="stale_behavior")
-        rows = [r for r in read_jsonl(ev_dir / "sample_records.jsonl") if r.get("behavior_versions") == ["1", "3"]]
+        rows = [
+            r for r in read_jsonl(ev_dir / COLLECTED_DIR_NAME / "sample_records.jsonl")
+            if r.get("behavior_versions") == ["1", "3"]
+        ]
         check(bool(rows) and all(r["current_version"] == 1 for r in rows),
               f"current_version 必须取 trainer 事实（=1）而非 behavior[-1]=3，got {[r.get('current_version') for r in rows][:3]}")
         check(bool(rows) and all(r["behavior_version"] == 1 for r in rows),
@@ -1095,20 +1903,115 @@ def cmd_selftest() -> int:
         check("routing_tape" in failed_checks(v), f"坏 tape 形状应 FAIL，got {failed_checks(v)}")
 
         v = _run_judge(_selftest_evidence(tmp, mutate="bad_tape_shape"), r3="off")
-        check("routing_tape" in failed_checks(v), f"R3=off 但携带 tape 应 FAIL，got {failed_checks(v)}")
+        check({"routing_tape", "routing_replay_trainer_consumption"} <= failed_checks(v),
+              f"R3=off 但携带 tape/replay 事件应 FAIL，got {failed_checks(v)}")
 
         v = _run_judge(_selftest_evidence(tmp, mutate="worker_churn"))
-        check("g1_worker_warm_across_steps" in failed_checks(v),
-              f"worker 集合变化应 FAIL，got {failed_checks(v)}")
+        check("g1_sglang_engines_stable_across_steps" in failed_checks(v),
+              f"引擎集合变化应 FAIL，got {failed_checks(v)}")
 
         v = _run_judge(_selftest_evidence(tmp, mutate="identity_mismatch"))
         check("integration_tree_identity" in failed_checks(v),
               f"actor tree digest 不一致应 FAIL，got {failed_checks(v)}")
 
+        # --- P0-4：role 类别不齐 / expected digest 缺失 ----------------------
+        for role in _ROLES:
+            v = _run_judge(_selftest_evidence(tmp, mutate=f"drop_role_{role}"))
+            check("integration_tree_identity" in failed_checks(v),
+                  f"缺 {role} identity 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="identity_no_expected"))
+        check("integration_tree_identity" in failed_checks(v),
+              f"无 expected digest 应 FAIL（自我背书口子），got {failed_checks(v)}")
+
+        # --- P0-1：run 身份污染 ---------------------------------------------
+        v = _run_judge(_selftest_evidence(tmp, mutate="run_id_mismatch"))
+        check("collect_consistency" in failed_checks(v),
+              f"异 run 事件混入应 FAIL collect_consistency，got {failed_checks(v)}")
+        check(v["overall"] != "PASS", "异 run 事件混入不得 PASS")
+        v = _run_judge(_selftest_evidence(tmp, mutate="manifest_run_id_mismatch"))
+        check("run_identity" in failed_checks(v),
+              f"manifest run_id 不符应 FAIL run_identity，got {failed_checks(v)}")
+
+        # --- P0-3A：pre-train eval 冒充 / 版本不符 ---------------------------
+        v = _run_judge(_selftest_evidence(tmp, mutate="eval_pre_train_only"))
+        check("g1_eval_smoke_post_train" in failed_checks(v),
+              f"只有 pre-train eval 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="eval_wrong_version"))
+        check("g1_eval_smoke_post_train" in failed_checks(v),
+              f"eval 版本非终版应 FAIL，got {failed_checks(v)}")
+
+        # --- P0-3B：查询失败 ≠ 零 -------------------------------------------
+        v = _run_judge(_selftest_evidence(tmp, mutate="shutdown_query_failed"))
+        check("shutdown_orphan_workers_max" in failed_checks(v),
+              f"docker 查询失败应 FAIL，got {failed_checks(v)}")
+
+        # --- P0-6：publish 守恒双向反例 --------------------------------------
+        v = _run_judge(_selftest_evidence(tmp, mutate="applied_but_publish_skipped"))
+        check("weight_publish_conservation" in failed_checks(v),
+              f"applied 但只发 skipped 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="version_stuck"))
+        check("weight_publish_conservation" in failed_checks(v),
+              f"applied 但版本不 +1 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="update_without_publish"))
+        check("weight_publish_conservation" in failed_checks(v),
+              f"update 无 publish 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="publish_without_update"))
+        check("weight_publish_conservation" in failed_checks(v),
+              f"publish 无 update 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="skip_and_update_same_rollout"))
+        check("weight_publish_conservation" in failed_checks(v),
+              f"update 与 skipped 同现应 FAIL，got {failed_checks(v)}")
+
+        # --- P0-8：multiset / rank / staleness / logprob / 正控归因 ----------
+        v = _run_judge(_selftest_evidence(tmp, mutate="consumed_missing_sample"))
+        check("queue_multiset_conservation" in failed_checks(v),
+              f"少消费一个样本应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="consumed_extra_sample"))
+        check("queue_multiset_conservation" in failed_checks(v),
+              f"多消费未知样本应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="consumed_missing_rank"))
+        check("train_step_rank_coverage" in failed_checks(v),
+              f"缺一个 dp rank 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="consumed_rank_conflict"))
+        check("collect_consistency" in failed_checks(v),
+              f"同 (r,s,dp) 冲突内容应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="future_behavior_version"))
+        check("staleness_max_versions" in failed_checks(v),
+              f"behavior version 来自未来（负 staleness）应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="missing_behavior_version"))
+        check("staleness_max_versions" in failed_checks(v),
+              f"训练样本缺版本应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="logprob_length_mismatch_all"))
+        check("logprob_alignment_and_coverage" in failed_checks(v),
+              f"全部长度错位应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="logprob_partial_coverage"))
+        check("logprob_alignment_and_coverage" in failed_checks(v),
+              f"对拍只剩一条应 FAIL 覆盖，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="pc_zero_accepted"))
+        check("positive_control_accepted_tokens" in failed_checks(v),
+              f"正控零 accepted token（其他组驱动更新）应 FAIL，got {failed_checks(v)}")
+
+        # --- P0-5：R3 trainer 消费反例 ---------------------------------------
+        v = _run_judge(_selftest_evidence(tmp, mutate="replay_fill_disabled"))
+        check("routing_replay_trainer_consumption" in failed_checks(v),
+              f"replay disabled 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="replay_zero_pops"))
+        check("routing_replay_trainer_consumption" in failed_checks(v),
+              f"零 pop 应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="replay_count_mismatch"))
+        check("routing_replay_trainer_consumption" in failed_checks(v),
+              f"record 数不符应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="replay_not_exhausted"))
+        check("routing_replay_trainer_consumption" in failed_checks(v),
+              f"队列未耗尽应 FAIL，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="replay_digest_mismatch"))
+        check("routing_replay_source_linkage" in failed_checks(v),
+              f"fill digest 与来源 tape 不符应 FAIL，got {failed_checks(v)}")
+
         v = _run_judge(_selftest_evidence(tmp, mutate="one_skipped_rollout"))
         check(v["overall"] == "PASS",
               f"全 SKIPPED 轮 + 显式不发布应 PASS（版本保持），得 {v['overall']}: "
-              + "; ".join(f"{c['check']}={c['status']}:{c['detail']}" for c in v["checks"] if c["status"] != PASS))
+              + "; ".join(f"{c['check']}={c['status']}:{c['detail']}" for c in v["checks"] if c["status"] not in (PASS, NA)))
 
         v = _run_judge(_selftest_evidence(tmp, mutate="missing_shutdown"))
         check(v["overall"] == "INCOMPLETE", f"缺 shutdown 证据应 INCOMPLETE，得 {v['overall']}")
@@ -1119,8 +2022,8 @@ def cmd_selftest() -> int:
             print("  -", f)
         return 1
     print(
-        "SELF-TEST PASS（代表性事件 collect->judge 全链好例 PASS；9 类事件删除均 INCOMPLETE；"
-        "B2 oracle 坏例（NORMAL 非 applied/计数不进/正控未被 applied 消费）及其余坏例命中对应 FAIL）"
+        "SELF-TEST PASS（代表性事件 collect->judge 全链好例 PASS；11 类事件删除均 INCOMPLETE；"
+        "租前审查 P0-1/3/4/5/6/8 全部假绿反例命中对应 FAIL；B2 oracle 坏例保持命中）"
     )
     return 0
 
@@ -1134,9 +2037,12 @@ def main(argv: list[str]) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     pc = sub.add_parser("collect")
     pc.add_argument("--events-dir", required=True)
+    pc.add_argument("--run-id", default=None,
+                    help="本 run 的唯一 id；给定时异 run 事件按污染记 conflict（P0-1）")
     pc.add_argument("--dmon-csv")
     pc.add_argument("--gpu-mem-total-mb", type=float)
-    pc.add_argument("--out-dir", required=True)
+    pc.add_argument("--out-dir", required=True,
+                    help="归一化证据输出目录（先写 .tmp 再原子发布；已存在即拒绝）")
     pj = sub.add_parser("judge")
     pj.add_argument("--evidence-dir", required=True)
     pj.add_argument("--thresholds", required=True)

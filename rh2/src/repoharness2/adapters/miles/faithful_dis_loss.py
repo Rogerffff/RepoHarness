@@ -132,6 +132,13 @@ from miles.backends.training_utils.sampling_mask import get_rollout_sampling_mas
 from miles.utils.environ import enable_experimental_ft_trainer
 from miles.utils.sampling import top_p_sampling_replay_enabled
 
+try:
+    # integration base（patch 0004+）才有事件层；pin base 下缺席 = 不发射，
+    # 不影响 loss 语义（GPU spike 只在 integration base 上跑）。
+    from miles.utils import rh2_event_log
+except ImportError:  # pragma: no cover - pin base 分支
+    rh2_event_log = None  # type: ignore[assignment]
+
 from repoharness2.training.faithful_dis import (
     DENOMINATOR_SEMANTICS_V1,
     DIS_EPS_HIGH_PREREGISTERED,
@@ -252,6 +259,35 @@ def _validate_rollout_mask_sums(batch, loss_masks_flat: torch.Tensor, response_l
                 f" 数 {own_sum}——整 execution 分母不可能小于单个 sibling 的"
                 " provenance 数,上游账目矛盾。",
             )
+
+
+def _emit_sample_dis_accounting(batch, *, in_trust, provenance, response_lengths) -> None:
+    """逐样本 DIS token 记账事件（sample_dis_accounting；P0-8 正控归因）。
+
+    ``in_trust``/``provenance`` 是按 response_lengths 顺序拼接的扁平布尔张量;
+    这里按样本切回片段并计数。只在事件层可用且 batch 携带 sample_indices 时
+    发射(miles 训练 forward 透传;单元测试构造的 batch 无此键则静默跳过,
+    loss 数值路径零改动)。
+    """
+    if rh2_event_log is None or not rh2_event_log.enabled():
+        return
+    sample_indices = batch.get("sample_indices") if hasattr(batch, "get") else None
+    if sample_indices is None:
+        return
+    entries = []
+    offset = 0
+    for sid, rlen in zip(sample_indices, response_lengths, strict=True):
+        span_trust = in_trust[offset : offset + rlen]
+        span_prov = provenance[offset : offset + rlen]
+        entries.append(
+            {
+                "sample_index": int(sid),
+                "accepted_tokens": int((span_trust & span_prov).sum().item()),
+                "provenance_tokens": int(span_prov.sum().item()),
+            }
+        )
+        offset += rlen
+    rh2_event_log.emit("sample_dis_accounting", entries=entries)
 
 
 def faithful_dis_loss_function(
@@ -390,6 +426,15 @@ def faithful_dis_loss_function(
     # 非 provenance 位数值有限（上面已断言）,reducer 乘 loss_mask=0 归零）
     per_token_numerator = -(weight * advantages * current_logp)
     loss = sum_of_sample_mean(per_token_numerator)
+
+    # 租前审查 P0-8：逐样本 accepted/provenance token 事实（正控归因）。
+    # "正控组与 applied step 共批"不足以证明正控产生了训练信号——同 step 可能
+    # 完全由其他组驱动;这里把 DIS 接受判定按样本切片发给验收事件层,judge 据此
+    # 要求正控组自身 accepted token > 0。batch["sample_indices"] 由 miles 训练
+    # forward 的 get_batch keys 透传(patch 0005),缺席时(单元测试/旧树)不发射。
+    _emit_sample_dis_accounting(
+        batch, in_trust=in_trust, provenance=provenance_bool, response_lengths=response_lengths
+    )
 
     device = logits.device
     metrics = {
