@@ -186,3 +186,71 @@ torch.load 假红本机复现"Invalid magic number; corrupt file?"、P0-7 的 3/
 3. 本机全仓回归有 15 个 docker daemon 依赖测试因本机 docker 未运行而
    skip（tests/grading/test_manager_docker.py，环境豁免非本轮引入）；租期
    机器上应回到 0 skip。
+
+---
+
+# 聚焦复核 3 残余 P0 oracle 缺口修复（codex_pr_p0_recheck，2026-08-28）
+
+范围：只关闭复核文档的 finding 1/2/3（judge/collect 侧收紧），未触碰 miles
+侧（生产 emitter 已逐 rank 携带 rank/dp_rank，无需补字段），未扩 §6。
+
+## 核实结论（开工前逐条）
+
+三个 finding 历史全部成立，且用红-绿流程二次证明：先落反例 fixture 与 11 个
+负测试、对修复前 judge 实跑，其中 8 个如复核所述判 PASS（洗绿复现）；
+`wrong_first_update_before`（bootstrap 在场时旧链检查可捕获）、
+`all_skipped_but_update`（分支已有、只缺提交测试）、`missing_behavior_version`
+（已有检查）3 个本就红，与复核定性一致。
+
+## 设计决策（T1，实现后报告）
+
+1. **finding 1 census 来源 = thresholds 声明**（新键
+   `expected_trainer_global_ranks=6`，与 `expected_dp_ranks` 同纪律：改
+   launch 拓扑必须同步改）。未采用"从事件自身归纳 census"——那正是复核
+   否定的"只检查已出现事实"；事件文件整体丢失时只有外部声明能兜住。
+   rank→dp 映射不做拓扑假设，只要求跨事件自洽 + dp 覆盖 0..D-1 +
+   无预期外 rank（census 声明失真也红）。
+2. **同 DP 副本 digest 一致性放在 source_linkage 检查**（digest 归属该
+   检查语义），逐副本 multiset 相等替代 `setdefault` 取首条。
+3. **finding 2 锚定实现为双向**：`update.version_before` ⇔ 本 interval
+   trainer current（train_rollout 独立事实）；发布后版本 ⇔ 下一 interval
+   trainer current；skip interval 同样锚定"版本保持"。bootstrap 有且唯一，
+   缺 version_after 也是显式 problem。锚定只在事实在场时执行——版本事实
+   缺失走既有 `weight_version_monotonic` 的 MISSING（总判定 INCOMPLETE，
+   不会洗绿）。
+4. **finding 3 逐项验证放在 judge**，collect 的 `behavior_version`（min
+   数值折叠）字段保留：完整列表 `behavior_versions` 本就随 sample 落盘，
+   judge 逐项验证（存在/可解析/<=current）后才用最旧版本算 staleness；
+   折叠值仅剩展示与 logprob 同版本分组用途，不再单独承担判定。
+5. **self-test fixture 拓扑升级为 6 global rank / dp=2**（train_step 与
+   replay 事件都逐 rank 发），使 fixture 与 thresholds 声明的生产拓扑
+   （TP1*PP3*CP1）一致——否则 census=6 与 2-rank fixture 自相矛盾。
+   dp = rank % 2 是代表性映射并加注释（oracle 不假设 megatron 排序）。
+
+## 负测试（每反例一个，fixture 与 --self-test 同源）
+
+- finding 1：`replay_missing_rank`（少一个 rank 的全部 replay 事件）、
+  `replay_missing_rank_step`（少某 rank 的一个 step 消费）、
+  `replay_dp_digest_conflict`（同 DP 副本 digest 冲突）。
+- finding 2：`drop_bootstrap`、`duplicate_bootstrap`、
+  `wrong_first_update_before`、`next_rollout_current_mismatch`、
+  `all_skipped_but_update`（补齐已有分支的提交测试）。
+- finding 3：`mixed_future_behavior`（["1","99"]+current=1）、
+  `nonnumeric_behavior_version`（数值+非数值混合）、
+  `missing_behavior_version`（空列表，已有，纳入参数化提交测试）。
+
+## 验证账本（本轮 fresh）
+
+- `g1_acceptance.py --self-test` PASS（新增 10 反例检查全部命中）。
+- 双 lane：A=167p/140s、B=307p/0s（manifest expected_counts 同步 +11/+11）。
+- 321 硬验收：`tests/adapters + tests/contract_slime_async` = 321 passed 逐数不变。
+- 全仓：默认 pin 1246p+155s（原 1235+155，+11）；integration base
+  1386p+15s（原 1375+15，+11；15 skip 仍为本机 docker 未运行的环境豁免）。
+- ruff 全仓过。rh2 侧未 commit；miles 两 checkout 零改动。
+
+## 开放问题（本轮未扩大）
+
+复核文档"触碰文件内其他问题/最小再验收"中不属于 3 finding 修复验收的项
+仍开放：manifest 缺 `thresholds_sha256` 时 run_identity 仍 PASS（truthy
+比较）、Ray rc1 独立负测试、launch 并发 run root TOCTOU、P0-7 生产
+emitter seam、checkpoint tracker 未被探针消费（P1）。待下一轮拍板归属。

@@ -171,6 +171,83 @@ def test_actor_identity_mismatch_fails(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 聚焦复核（codex_pr_p0_recheck）3 个残余 P0 假绿的直接负测试。
+# 反例 fixture 与 --self-test 同源（_selftest_write_events 单一事实源）；这里
+# 逐条钉住"修复前判 PASS、修复后必 FAIL"的判定项。
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 复核 finding 1：删除 rank5（6 rank 拓扑中最后一个）的全部
+        # replay fill/consume/exhausted——修复前 judge 只查 rollout/step 级
+        # 存在性，其余 rank 的事件即可洗绿。
+        "replay_missing_rank",
+        # 只删 rank5 在 r0s1 的 train_step 消费事件（census 细粒度）。
+        "replay_missing_rank_step",
+    ],
+)
+def test_replay_rank_census_incomplete_fails(tmp_path, mutate):
+    """finding 1（P0-5/P0-8）：预期 trainer global rank census（thresholds
+    expected_trainer_global_ranks）内任一 rank 的 replay 消费链不完整 → FAIL。"""
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "routing_replay_trainer_consumption" in _failed(verdict)
+
+
+def test_replay_same_dp_replica_digest_conflict_fails(tmp_path):
+    """finding 1（P0-5）：同 dp 组的 PP 副本消费同一份数据，sample_digests
+    必须一致；修复前 setdefault 只取每 dp 第一条 fill，rank4 与 rank0/2 的
+    冲突被静默吞掉。"""
+    verdict = _full_chain(tmp_path, mutate="replay_dp_digest_conflict")
+    assert "routing_replay_source_linkage" in _failed(verdict)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 复核 finding 2：bootstrap update（rollout_id=None）缺失——版本链
+        # 无可信起根，修复前 prev_after=None 时链检查整体跳过。
+        "drop_bootstrap",
+        # bootstrap 必须唯一。
+        "duplicate_bootstrap",
+        # 首个 regular update 声称 99->100，而 trainer current（train_rollout
+        # 独立事实）= 1——修复前 version_before 从不与 trainer current 比较。
+        "wrong_first_update_before",
+        # 发布账本自洽（0->1->2->3）但 r1 的 trainer current 与上一边界
+        # version_after 断链——version_after 必须与下一 rollout current 联结。
+        "next_rollout_current_mismatch",
+        # 全 skipped 轮却出现 weight_update（代码分支已有，此前无提交测试）。
+        "all_skipped_but_update",
+    ],
+)
+def test_publish_bootstrap_and_current_anchor(tmp_path, mutate):
+    """finding 2（P0-6）：bootstrap 有且唯一；每个 interval 的 update 版本必须
+    与 trainer current 双向锚定，缺锚/断链/无 applied 推版本一律 FAIL。"""
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "weight_publish_conservation" in _failed(verdict)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 复核 finding 3：behavior_versions=["1","99"]、current=1——修复前
+        # min 折叠成 1、staleness=0，future turn 被隐藏。
+        "mixed_future_behavior",
+        # 数值+非数值混合：不可解析项被 min 折叠静默丢弃。
+        "nonnumeric_behavior_version",
+        # 空列表（样本无任何版本事实）。
+        "missing_behavior_version",
+    ],
+)
+def test_behavior_version_list_validated_per_item(tmp_path, mutate):
+    """finding 3（P0-8）：逐 turn 版本列表必须逐项存在、可解析且
+    <= current_version；任何单项异常都不得被 min 折叠洗绿。"""
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "staleness_max_versions" in _failed(verdict)
+
+
+# ---------------------------------------------------------------------------
 # PR-P0-1：run 隔离 / 原子发布 / 污染拒绝（审查反例的直接负测试）
 # ---------------------------------------------------------------------------
 
