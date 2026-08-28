@@ -247,6 +247,32 @@ def test_behavior_version_list_validated_per_item(tmp_path, mutate):
     assert "staleness_max_versions" in _failed(verdict)
 
 
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 原始掩掉反例：diffs=[0.01,...,nan]，max 因 NaN 比较恒 False 返回
+        # 0.01——修复前上限项被静默判绿。
+        "logprob_diff_finite_then_nan",
+        # NaN 在首位：max 返回 nan，nan<=lim 为 False 本会 FAIL，但必须走
+        # 逐条校验的确定性 FAIL 路径（不依赖 max 的顺序运气）。
+        "logprob_diff_nan_then_finite",
+        # +Inf：isfinite 校验必须捕获。
+        "logprob_diff_inf",
+        # 负数：|diff| 均值不可能为负，出现即数据损坏。
+        "logprob_diff_negative",
+    ],
+)
+def test_logprob_diff_bad_values_fail_before_max(tmp_path, mutate):
+    """codex 复核 finding（P0-8 对拍面）：Python 的 max 对 NaN 顺序敏感
+    （max([0.01, nan]) == 0.01），坏对拍值必须在 max 之前逐条校验。四种坏值
+    形态经真实 collect→judge 路径（NaN/Inf 走生产同款 json.dumps/loads 往返，
+    即非严格 JSON 的 NaN/Infinity 字面量 wire 形态）都必须 FAIL 上限项且
+    总判定非 PASS。"""
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "logprob_same_version_mean_abs_diff_max" in _failed(verdict)
+    assert verdict["overall"] != "PASS"
+
+
 # ---------------------------------------------------------------------------
 # 租前聚焦修复批 #1：leaf 唯一身份（fan-out 假红/假绿双向的直接负测试）
 # ---------------------------------------------------------------------------

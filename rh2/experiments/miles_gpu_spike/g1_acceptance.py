@@ -1250,13 +1250,24 @@ def _judge_logprob(j: Judge, train_samples: list[dict] | None) -> None:
     if not diffs:
         j.add("logprob_same_version_mean_abs_diff_max", MISSING, "无同版本对拍摘要（全部样本跨版本？）")
     else:
-        worst = max(diffs)
-        lim = th["logprob_same_version_mean_abs_diff_max"]
-        j.add(
-            "logprob_same_version_mean_abs_diff_max",
-            PASS if worst <= lim else FAIL,
-            f"同版本 loss_mask=1 逐 token 均值绝对差最大={worst:.4g}（上限 {lim}）",
-        )
+        # 逐条有限性/非负校验必须先于 max：Python 的 max 对 NaN 顺序敏感
+        # （max([0.01, nan]) == 0.01），尾部 NaN 会被静默掩掉——parity 用的是
+        # 独立 forward-only 结果，训练 forward 的 finite 检查兜不住它。
+        bad = [d for d in diffs if not (isinstance(d, (int, float)) and math.isfinite(d) and d >= 0)]
+        if bad:
+            j.add(
+                "logprob_same_version_mean_abs_diff_max",
+                FAIL,
+                f"对拍摘要含非有限/负值 {bad[:4]}（共 {len(bad)} 条）——NaN/Inf/负数一律 FAIL",
+            )
+        else:
+            worst = max(diffs)
+            lim = th["logprob_same_version_mean_abs_diff_max"]
+            j.add(
+                "logprob_same_version_mean_abs_diff_max",
+                PASS if worst <= lim else FAIL,
+                f"同版本 loss_mask=1 逐 token 均值绝对差最大={worst:.4g}（上限 {lim}）",
+            )
     if th.get("logprob_alignment_required"):
         problems = []
         mismatched = [s["sample_id"] for s in train_samples if s.get("logprob_length_mismatch")]
@@ -2183,10 +2194,26 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
             rollout_leaves.extend((i, 0) for i in zero_var_indices)
 
         lp_entries = []
-        for i, o in rollout_leaves:
+        for pos, (i, o) in enumerate(rollout_leaves):
             mismatch = mutate == "logprob_length_mismatch_all"
+            # codex 复核反例：Python 的 max 对 NaN 顺序敏感（max([0.01, nan])
+            # == 0.01），尾部 NaN 会被静默掩掉——judge 必须逐条校验坏值。
+            # 四种坏值形态各占一个 mutate：尾部 NaN（原始掩掉反例）、首位
+            # NaN、+Inf、负数。NaN/Inf 经 write_jsonl 的 json.dumps 写成
+            # NaN/Infinity 字面量，与生产 rh2_event_log.emit 的 wire 形态一致。
+            first = rid == 0 and pos == 0
+            last = rid == _N_ROLLOUTS - 1 and pos == len(rollout_leaves) - 1
+            diff = 0.01
+            if mutate == "logprob_diff_finite_then_nan" and last:
+                diff = float("nan")
+            elif mutate == "logprob_diff_nan_then_finite" and first:
+                diff = float("nan")
+            elif mutate == "logprob_diff_inf" and first:
+                diff = float("inf")
+            elif mutate == "logprob_diff_negative" and first:
+                diff = -0.01
             lp_entries.append({"sample_index": i, "leaf_ordinal": o, "same_version": True,
-                               "mean_abs_diff": 0.01 if not mismatch else 0.01,
+                               "mean_abs_diff": diff,
                                "num_tokens": 320, "total_tokens": 400,
                                "length_mismatch": mismatch})
         if mutate == "logprob_partial_coverage":
@@ -2688,6 +2715,13 @@ def cmd_selftest() -> int:
         v = _run_judge(_selftest_evidence(tmp, mutate="logprob_partial_coverage"))
         check("logprob_alignment_and_coverage" in failed_checks(v),
               f"对拍只剩一条应 FAIL 覆盖，got {failed_checks(v)}")
+        # --- codex 复核：max 的 NaN 顺序敏感性不得掩掉坏对拍值 ----------------
+        for mutate in ("logprob_diff_finite_then_nan", "logprob_diff_nan_then_finite",
+                       "logprob_diff_inf", "logprob_diff_negative"):
+            v = _run_judge(_selftest_evidence(tmp, mutate=mutate))
+            check("logprob_same_version_mean_abs_diff_max" in failed_checks(v),
+                  f"{mutate} 应 FAIL 对拍上限项（坏值不得被 max 掩掉），got {failed_checks(v)}")
+            check(v["overall"] != "PASS", f"{mutate} 总判定不得 PASS，got {v['overall']}")
         v = _run_judge(_selftest_evidence(tmp, mutate="pc_zero_accepted"))
         check("positive_control_accepted_tokens" in failed_checks(v),
               f"正控零 accepted token（其他组驱动更新）应 FAIL，got {failed_checks(v)}")

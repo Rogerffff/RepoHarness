@@ -485,6 +485,27 @@ async def test_startup_sweep_age_and_ownership_rules():
     assert sorted(fake.removed) == ["orphan_badts", "orphan_old"]
 
 
+async def test_run_id_label_stamped_only_when_env_set(monkeypatch):
+    """miles GPU spike 聚焦修复批 #4：launch 经 Ray runtime env 下发
+    MILES_RH2_RUN_ID 时，评分容器必须携带本 run owner label
+    rh2.run_id=<run_id>（postrun_probes.py shutdown 探针按该 label 精确归属
+    本 run 遗留容器）；env 未设时 docker 参数保持原样（非 spike 链零扰动）。"""
+
+    monkeypatch.setenv("MILES_RH2_RUN_ID", "spike-run-1")
+    fake = FakeDocker(base_commit=BASE)
+    spec = make_spec()
+    await make_manager(fake)._start_container("traj_label", spec, "dddd0001")
+    run_call = next(c for c in fake.calls if c[0] == "run")
+    joined = " ".join(run_call)
+    assert "rh2.run_id=spike-run-1" in joined
+
+    monkeypatch.delenv("MILES_RH2_RUN_ID")
+    fake2 = FakeDocker(base_commit=BASE)
+    await make_manager(fake2)._start_container("traj_label2", spec, "eeee0001")
+    run_call2 = next(c for c in fake2.calls if c[0] == "run")
+    assert "rh2.run_id" not in " ".join(run_call2)
+
+
 async def test_cleanup_failure_is_recorded_not_swallowed():
     """Q8：容器 rm 失败必须留痕（cleanup_failures），供 S1-6 收口为 finding。"""
 
