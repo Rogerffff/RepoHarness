@@ -248,6 +248,128 @@ def test_behavior_version_list_validated_per_item(tmp_path, mutate):
 
 
 # ---------------------------------------------------------------------------
+# 租前聚焦修复批 #1：leaf 唯一身份（fan-out 假红/假绿双向的直接负测试）
+# ---------------------------------------------------------------------------
+
+
+def test_fanout_two_leaves_are_not_duplicate_consumption(tmp_path):
+    """假红消除的正例锚点：代表性 fixture 含一个双叶 fan-out run（两叶共享
+    sample_index、leaf_ordinal 0/1），全链必须 PASS——修复前 queue 守恒把两个
+    合法叶按纯 index 判成"重复消费"必红（G1 要求覆盖 fan-out，即真实运行
+    必然假红）。"""
+    verdict = _full_chain(tmp_path)
+    assert verdict["overall"] == "PASS"
+    coverage = next(c for c in verdict["checks"] if c["check"] == "g1_fanout_multileaf_coverage")
+    assert coverage["status"] == "PASS"
+
+
+def test_fanout_tape_swap_fails_source_linkage(tmp_path):
+    """假绿反例：把两个 fan-out 叶的 routing tape 对调——digest multiset 不变，
+    修复前 R3 source linkage 仍 PASS；leaf_id→digest 精确联结必须 FAIL。"""
+    verdict = _full_chain(tmp_path, mutate="fanout_tape_swap")
+    assert "routing_replay_source_linkage" in _failed(verdict)
+
+
+def test_same_leaf_consumed_twice_fails(tmp_path):
+    """同一 leaf 被消费两次（另一叶未消费）：纯 index multiset 不变（旧判定
+    洗绿），leaf 口径必须 FAIL queue 守恒。"""
+    verdict = _full_chain(tmp_path, mutate="fanout_duplicate_consumed")
+    assert "queue_multiset_conservation" in _failed(verdict)
+
+
+def test_all_linear_data_fails_fanout_coverage(tmp_path):
+    """G1 要求证明运行中真出现 ≥1 个多叶 fan-out：全线性数据（每 run 单叶）
+    不得冒充覆盖。"""
+    verdict = _full_chain(tmp_path, mutate="no_fanout")
+    assert "g1_fanout_multileaf_coverage" in _failed(verdict)
+
+
+def test_missing_leaf_identity_is_incomplete(tmp_path):
+    """旧 emitter/wire（无 leaf_ordinal 字段）必须 INCOMPLETE：身份缺失时
+    重复消费/tape 对调双向不可判，不得按纯 index 口径继续判绿。"""
+    verdict = _full_chain(tmp_path, mutate="strip_leaf_ordinals")
+    assert verdict["overall"] == "INCOMPLETE"
+    leaf = next(c for c in verdict["checks"] if c["check"] == "leaf_identity")
+    assert leaf["status"] == "MISSING_EVIDENCE"
+
+
+# ---------------------------------------------------------------------------
+# 租前聚焦修复批 #2：trainer per-rank oracle（三个已复现假绿反例 + census 边界）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 复现反例 1：删除 rank5 的全部 train_step（保留其 replay/consume 事件）
+        # ——聚合面 outcome/applied/计数一致性全部 PASS。
+        "rank_missing_all_steps",
+        # census 边界：预期拓扑之外的额外 rank。
+        "train_step_extra_rank",
+    ],
+)
+def test_train_step_rank_census(tmp_path, mutate):
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "train_step_global_rank_census" in _failed(verdict)
+
+
+def test_train_step_duplicate_rank_emission_is_conflict(tmp_path):
+    """同 (rollout, step, attempt, rank) 双重发射 = 证据账本冲突（FAIL），
+    不是静默去重。"""
+    verdict = _full_chain(tmp_path, mutate="train_step_dup_rank")
+    assert "collect_consistency" in _failed(verdict)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 复现反例 2：每个 applied step 都写成 Adam 0→1、scheduler 0→32
+        # （每步重建 optimizer）——单步自洽，跨 step 链断裂。
+        "optimizer_rebuilt",
+        # scheduler 步进必须精确 +num_rollouts，不是"前进了就行"。
+        "scheduler_wrong_increment",
+    ],
+)
+def test_optimizer_state_continuity_per_rank(tmp_path, mutate):
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "optimizer_state_continuity_per_rank" in _failed(verdict)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        # 复现反例 3：applied step 的 grad_norm 与 loss 改为 NaN。
+        "nan_loss_grad",
+        # PP-last 指标只覆盖 dp0（"随便取第一条 metrics"的反例形态）。
+        "pp_last_metrics_missing_dp",
+    ],
+)
+def test_train_step_metrics_coverage(tmp_path, mutate):
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "train_step_metrics_coverage" in _failed(verdict)
+
+
+# ---------------------------------------------------------------------------
+# 租前聚焦修复批 #5：run_manifest 的 thresholds digest 缺失/空/非法不得 PASS
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        "manifest_missing_thresholds_sha",
+        "manifest_empty_thresholds_sha",
+        "manifest_bad_thresholds_sha",
+    ],
+)
+def test_manifest_thresholds_digest_required(tmp_path, mutate):
+    """thresholds_sha256 缺失/空/非法时 run_identity 必须 FAIL——不得错误声称
+    "三方一致"（阈值页失去外部锚点）。"""
+    verdict = _full_chain(tmp_path, mutate=mutate)
+    assert "run_identity" in _failed(verdict)
+
+
+# ---------------------------------------------------------------------------
 # PR-P0-1：run 隔离 / 原子发布 / 污染拒绝（审查反例的直接负测试）
 # ---------------------------------------------------------------------------
 
@@ -321,27 +443,34 @@ def test_producer_emitter_schema_consumed_by_collect(tmp_path, monkeypatch, worl
     rh2_event_log.emit("train_rollout", rollout_id=0, trainer_current_version=1)
     rh2_event_log.emit("rollout_workers", rollout_id=0, worker_ids=["train/e0"], weight_version=1)
     rh2_event_log.emit("rollout_group", rollout_id=0, group_index=0, instance_id="django__django-11099",
-                       sample_indices=[0, 1], rewards=[1.0, 0.0], behavior_versions=[["1"], ["1"]],
+                       sample_indices=[0, 1], leaf_ordinals=[0, 0],
+                       rewards=[1.0, 0.0], behavior_versions=[["1"], ["1"]],
                        statuses=["Status.COMPLETED"] * 2, response_lengths=[8, 8],
                        routing_tape=[None, None])
     rh2_event_log.emit("logprob_compare", rollout_id=0, dp_rank=0, trainer_current_version=1,
-                       entries=[{"sample_index": 0, "same_version": True, "mean_abs_diff": 0.01,
+                       entries=[{"sample_index": 0, "leaf_ordinal": 0, "same_version": True,
+                                 "mean_abs_diff": 0.01,
                                  "num_tokens": 6, "total_tokens": 8, "length_mismatch": False}])
     rh2_event_log.emit("sample_dis_accounting",
-                       entries=[{"sample_index": 0, "accepted_tokens": 5, "provenance_tokens": 6}])
+                       entries=[{"sample_index": 0, "leaf_ordinal": 0,
+                                 "accepted_tokens": 5, "provenance_tokens": 6}])
     rh2_event_log.emit("train_step_consumed", rollout_id=0, step_id=0, dp_rank=0, rank=0,
-                       sample_indices=[0, 1], num_tokens=16, num_microbatches=1,
+                       sample_indices=[0, 1], leaf_ordinals=[0, 0],
+                       num_tokens=16, num_microbatches=1,
                        attribution="micro_batch_indices")
     rh2_event_log.emit("train_step", rollout_id=0, step_id=0, attempt=0, outcome="NORMAL",
                        optimizer_step_applied=True, adam_step_before=0, adam_step_after=1,
-                       scheduler_steps_before=0, scheduler_steps_after=32, grad_norm=0.5,
+                       scheduler_steps_before=0, scheduler_steps_after=32, num_rollouts=32,
+                       grad_norm=0.5,
                        duration_seconds=1.0, zero_signal_scan_seconds=0.05, rank=0, dp_rank=0,
                        is_pp_last_stage=True,
-                       metrics={"dis_accepted_tokens": 10.0, "dis_rejected_tokens": 2.0,
+                       metrics={"loss": 0.5, "dis_accepted_tokens": 10.0, "dis_rejected_tokens": 2.0,
                                 "dis_microbatch_provenance_tokens": 12.0})
     rh2_event_log.emit("replay_fill", manager="routing", rollout_id=0, rank=0, dp_rank=0,
                        enabled=True, num_streams=16, records_min=1, records_max=1,
-                       expected_records=1, num_samples=2, sample_digests=["aa" * 32, "bb" * 32])
+                       expected_records=1, num_samples=2,
+                       sample_indices=[0, 1], leaf_ordinals=[0, 0],
+                       sample_digests=["aa" * 32, "bb" * 32])
     rh2_event_log.emit("weight_update", rollout_id=0, version_before=1, version_after=2,
                        duration_seconds=3.0)
     rh2_event_log.emit("weight_publish", rollout_id=0)
@@ -357,20 +486,25 @@ def test_producer_emitter_schema_consumed_by_collect(tmp_path, monkeypatch, worl
     assert report["run_id"] == "prod-run-1"
     assert report["step_rows"] == 1 and report["sample_rows"] == 2
     assert not report["conflicts"]
+    assert report["leaf_identity_missing"] == []  # 生产 schema 携带完整 leaf 身份
     [step] = g1.read_jsonl(ev / "step_records.jsonl")
     assert step["outcome"] == "NORMAL"
     assert step["optimizer_step_applied"] is True
     assert step["adam_step_after"] == 1 and step["scheduler_steps_after"] == 32
     assert step["weight_version_before"] == 1 and step["weight_version_after"] == 2
-    assert step["queue_consumed_sample_ids"] == ["0", "1"]
+    assert step["queue_consumed_sample_ids"] == ["0:0", "1:0"]  # leaf id = index:ordinal
     assert step["dp_ranks"] == [0]
     assert step["worker_ids"] == ["train/e0"]
     assert step["dis_accepted_tokens"] == 10.0
     assert step["zero_signal_scan_seconds_max"] == 0.05
+    [rank_row] = g1.read_jsonl(ev / "step_rank_records.jsonl")
+    assert rank_row["rank"] == 0 and rank_row["num_rollouts"] == 32
+    assert rank_row["is_pp_last_stage"] is True and rank_row["metrics"]["loss"] == 0.5
     rows = g1.read_jsonl(ev / "sample_records.jsonl")
-    assert {r["sample_id"] for r in rows} == {"0", "1"}
+    assert {r["sample_id"] for r in rows} == {"0:0", "1:0"}
     assert all(r["current_version"] == 1 for r in rows)
-    s0 = next(r for r in rows if r["sample_id"] == "0")
+    s0 = next(r for r in rows if r["sample_id"] == "0:0")
+    assert s0["sample_index"] == 0 and s0["leaf_ordinal"] == 0
     assert s0["dis_accepted_tokens"] == 5 and s0["dis_provenance_tokens"] == 6
     assert s0["logprob_masked_tokens"] == 6 and s0["logprob_length_mismatch"] is False
     publish = json.loads((ev / "publish_records.json").read_text())
@@ -378,6 +512,8 @@ def test_producer_emitter_schema_consumed_by_collect(tmp_path, monkeypatch, worl
     assert publish["publishes"] == [0]
     replay = json.loads((ev / "replay_records.json").read_text())
     assert replay["fills"][0]["sample_digests"] == ["aa" * 32, "bb" * 32]
+    assert replay["fills"][0]["sample_indices"] == [0, 1]
+    assert replay["fills"][0]["leaf_ordinals"] == [0, 0]
     ident = json.loads((ev / "actor_identity.json").read_text())
     assert ident["consistent"] is True
     evals = json.loads((ev / "eval_smoke.json").read_text())["events"]

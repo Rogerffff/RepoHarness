@@ -3137,6 +3137,13 @@ class RolloutOrchestrator:
             lease.network_policy
         ]
         prefix = self.config.label_prefix
+        # 本 run owner label（miles GPU spike shutdown 探针的精确归属锚点）：
+        # launch.sh 经 Ray runtime env 下发 MILES_RH2_RUN_ID，探针用
+        # `--filter label=rh2.run_id=<run_id>` 找本 run 遗留容器；env 未设
+        # （单测/非 spike 链）时不加 label，docker 参数保持原样。
+        run_id_labels: tuple[str, ...] = ()
+        if run_id := os.environ.get("MILES_RH2_RUN_ID"):
+            run_id_labels = ("--label", f"rh2.run_id={run_id}")
         run = await self._docker(
             "run",
             "--detach",
@@ -3145,6 +3152,7 @@ class RolloutOrchestrator:
             f"{prefix}.trajectory={trajectory_id}",
             "--label",
             f"{prefix}.created_at_epoch={int(_now_utc().timestamp())}",
+            *run_id_labels,
             "--name",
             name,
             task.image,

@@ -254,3 +254,110 @@ torch.load 假红本机复现"Invalid magic number; corrupt file?"、P0-7 的 3/
 仍开放：manifest 缺 `thresholds_sha256` 时 run_identity 仍 PASS（truthy
 比较）、Ray rc1 独立负测试、launch 并发 run root TOCTOU、P0-7 生产
 emitter seam、checkpoint tracker 未被探针消费（P1）。待下一轮拍板归属。
+
+# 租前聚焦修复批：4 组 P0 + thresholds digest 顺手项（2026-08-28 第四轮）
+
+规格权威：docs/.../tmp/租卡前claude.md（5 项清单）。开工前逐条对照源码核实，
+5 项 finding **全部成立**（自证锚点：slime `trajectory.py` `to_sample()`
+`index=base_sample.index` 且 canonicalize 强制叶 index==输入 index；
+`sglang_engine.py` `_init_normal()` 只有 `use_rdt` 分支创建 SGLangServerActor，
+broadcast 走 `launch_server_process` 子进程，`sglang_server` identity 永不发出；
+`postrun_probes.py` 旧查询只有 `name=rh2-rollout`；`_judge_run_identity` 的
+`if want_sha and ...` 缺失即跳过）。文中"非阻塞留下一轮"项（checkpoint tracker
+iteration/TOCTOU/G3/拓扑参数）本批未动。
+
+## 修复落点总览
+
+- **miles 侧**（rh2-integration-v2）新 commit `0853f027b`（`[rh2-integration]
+  leaf identity on the train wire + per-rank step facts + engine-actor
+  identity`），归档 `patches/0006-*.patch`，manifest 同步
+  （expected_tree=`ea012ae7b...`、miles_source_tree_digest=`1200dc3c...`、
+  新表 `rh2_patches_focus`、lane 计数 A=186p/147s B=333p/0s）。
+- **rh2 侧**（未 commit）：`g1_acceptance.py`（collect/judge/self-test 三面）、
+  `thresholds.md`（identity 角色改 sglang_engine + 新键
+  `g1_min_multileaf_fanout_runs` + 文档表）、`postrun_probes.py` +
+  `launch.sh`（shutdown 探针 --run-id）、`adapters/slime/generate.py` 与
+  `grading/manager.py`（容器 `rh2.run_id` owner label）、
+  `faithful_dis_loss.py`（sample_dis_accounting 带 leaf_ordinal）、测试
+  `test_g1_acceptance_events.py`(+15)/`test_postrun_probes.py`(+4)/
+  `test_leaf_identity_wire.py`(新,6)/`test_logprob_compare_masked.py`(+1)/
+  `tests/grading/test_manager_unit.py`(+1)/`test_faithful_dis_loss.py`(改)。
+
+## 设计决策（T1，实现后报告）
+
+1. **leaf 身份选薄 (sample_index, leaf_ordinal)，不改写 Sample.index**（规格
+   给了两个可选方案）：ordinal = 该 agent run（run key = rollout_id，None 回退
+   index——与 miles `rollout_ids` 列同一回退规则）在扁平样本顺序里的出现
+   序号，由 `compute_leaf_ordinals` 单一实现供 train conversion 与
+   rollout_group 证据两处调用（同函数+同顺序 = 两侧身份逐行一致的根据）。
+   不改写 index 的原因：index 改写需要跨 generate 调用的全局编号协调，且会
+   波及 miles 内所有 index 消费点；薄 ordinal 只加一列 wire
+   （`leaf_ordinals`，VALUE_SPEC/dp 分片清单同步），rollout_id/group_index
+   分组语义零改动。
+2. **身份缺失 = MISSING（INCOMPLETE），不沿旧口径判**：judge 新增
+   `leaf_identity` 检查消费 collect_report 的 `leaf_identity_missing` 清单；
+   queue 守恒在身份缺失时也记 MISSING——纯 index 口径既会把合法 fan-out 判成
+   重复消费（假红）又检不出同 leaf 双消费（假绿），两个方向都不可信。
+3. **R3 联结升级为 leaf_id→digest 精确映射**：replay_fill 事件带行对齐
+   `sample_indices`+`leaf_ordinals`；同 dp 副本映射必须相等、跨 dp 键不相交、
+   并集 == rollout 侧逐 leaf 期望映射。fan-out 两叶 tape 对调（digest
+   multiset 不变）由 `fanout_tape_swap` 反例钉死必红。
+4. **fan-out 覆盖显式判定**：新阈值键 `g1_min_multileaf_fanout_runs=1`，
+   check `g1_fanout_multileaf_coverage`——训练批须真实出现 ≥1 个多叶 run，
+   全线性数据 FAIL。注意：launch 当前 `--disallowedTools Task` 关闭了
+   subagent，fan-out 只能来自 context-compaction FORK；若真实租期 run 全程
+   未触发 fork，该项会如实 FAIL——这是把 G1 数据形态要求显式化的预期行为，
+   届时应调整数据/预算促发 fork，而不是回撤判定（开放问题，见下）。
+5. **per-rank oracle 三检查落在新 collected 文件 `step_rank_records.jsonl`**：
+   聚合面 `step_records.jsonl` 保留（原检查不动），per-rank census/链条/
+   metrics 检查独立成 `train_step_global_rank_census`、
+   `optimizer_state_continuity_per_rank`、`train_step_metrics_coverage` 三键。
+   scheduler 精确步进需要每 step 的 num_rollouts——miles `train_step` 事件新增
+   `num_rollouts` 字段（`opt_param_scheduler.step(increment=num_rollouts)` 的
+   同源值）。metrics 一致性依据：`aggregate_train_losses` 在 effective_dp_cp
+   组内 all-reduce，全部 pp-last rank 应携带同一份 metrics（collect 端
+   `_consistent`、judge 端逐 rank dict 相等 + dp 覆盖 0..D-1）。
+6. **sglang identity**：`SGLangEngine.init()` 在传输模式分派（external/
+   normal、RDT/broadcast）之前 `assert_and_emit_identity("sglang_engine")`；
+   RDT 专属 `sglang_server` 发射保留。thresholds 必需角色由 sglang_server 改
+   为 sglang_engine（`identity_role_note` 记录未来切 RDT 时的增补规则）。
+   未改传输模式。
+7. **shutdown 探针**：三路 `docker ps`（rollout name / grading name /
+   `label=rh2.run_id=<run_id>`）取并集去重；任一路失败 = docker_query_ok=false
+   （P0-3B 语义在多查询下保持）。owner label 生产端：generate.py 与
+   grading/manager.py 仅在 `MILES_RH2_RUN_ID` 在环境中时追加
+   `--label rh2.run_id=...`——env 未设（全部现有单测/非 spike 链）docker 参数
+   逐字节不变，这也是 321 基线与 grading 既有测试零改动的保证。
+   `docker ps -a` 已退出未删容器按规格留 P1。
+8. **thresholds digest 收紧**：`thresholds_sha256` 必须是 64 位十六进制且与
+   judge 输入一致；缺失/空/非法 FAIL（三个反例 mutation）。
+
+## 偏离说明
+
+- 规格建议"最好用本 run 的 owner label"：已实现（而不只是 name 双查询），
+  代价是 rh2/src 两个容器启动点各 +4 行 env 门控 label；因该改动条件触发、
+  对非 spike 链零行为变化，按 T1 处理。
+- `test_faithful_dis_loss.py` 既有 sample_dis_accounting 断言从两个不同
+  index 改成同 index 双叶（oracle 改动，T1）：新断言严格更强（同 index 下
+  仍须逐叶区分计数），旧形态被新形态蕴含。
+
+## 开放问题（留用户/下一轮）
+
+- 真实 G1 run 能否稳定触发 ≥1 次 fan-out（compaction fork）未经 GPU 验证；
+  若首跑 FAIL `g1_fanout_multileaf_coverage`，处置应是调整 prompt/预算促发
+  fork（或 owner 拍板暂调阈值并留痕），不是删判定。
+- leaf_ordinal 依赖 conversion 与证据发射消费同一扁平顺序（同一 `data`
+  list）；若未来 miles 改变 `_get_rollout_data` 的展平/重排位置，两处必须
+  同步——已用 `test_rollout_group_event_uses_same_ordinal_rule` 源码锚点
+  钉住接线，但语义上仍是单点假设。
+
+## 验证账本（本轮）
+
+- `g1_acceptance.py --self-test` PASS（新反例全部命中：leaf 4、per-rank 7、
+  manifest digest 3；好例含双叶 fan-out）。
+- lanes：A=186 passed/147 skipped（skip 全部 integration_base 豁免），
+  B=333 passed/0 skipped，manifest 计数/树哈希/patch digest 同步。
+- 全仓：默认 pin 1266 passed/162 skipped（原 1246/155，+20p/+7s）；
+  integration base 1413 passed/15 skipped（原 1386/15，+27p）。
+- `tests/adapters/ + tests/contract_slime_async/` = **321 passed 逐数不变**。
+- ruff（rh2 全仓 + miles 改动文件）全过。

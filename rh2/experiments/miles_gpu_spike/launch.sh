@@ -563,10 +563,13 @@ postrun_step checkpoint_probe python3 "$SCRIPT_DIR/postrun_probes.py" checkpoint
   --ckpt "$CKPT" --out "$EV/checkpoint_probe.json"
 
 # 3) shutdown/actor 探针（P0-3B：查询失败显式非零，不冒充零孤儿；docker 用
-#    preflight 验证过的二进制；s1_compat finalization 如实 not_applicable）
+#    preflight 验证过的二进制；s1_compat finalization 如实 not_applicable；
+#    聚焦修复批 #4：rollout+grading 容器都查，--run-id 按本 run owner label
+#    rh2.run_id=<RUN_ID> 精确归属）
 postrun_step shutdown_probe python3 "$SCRIPT_DIR/postrun_probes.py" shutdown \
   --artifacts "$ARTIFACTS" --out "$EV/shutdown_probe.json" \
-  --docker-bin "$DOCKER_CLI_DIR/docker" --execution-mode "$RH2_EXECUTION_MODE"
+  --docker-bin "$DOCKER_CLI_DIR/docker" --execution-mode "$RH2_EXECUTION_MODE" \
+  --run-id "$RUN_ID"
 
 # 4) collect：结构化事件 -> 归一化证据（P0-1：--run-id 校验事件归属；输出到
 #    collected/ 子目录，先写 .tmp 再原子发布——collect 失败不产出可判证据）

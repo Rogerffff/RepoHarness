@@ -71,6 +71,16 @@ def test_missing_loss_mask_is_alignment_break_not_fallback(world):
     assert e["mean_abs_diff"] is None
 
 
+def test_leaf_ordinal_carried_per_entry(world):
+    """租前聚焦修复批 #1：entries 携带 (sample_index, leaf_ordinal) 唯一叶
+    身份（fan-out 叶共享 sample_index，仅 ordinal 可区分）；shard 缺列（旧
+    wire）时如实记 None——judge 侧对身份缺失 fail-closed（MISSING）。"""
+    [e] = _entries(world, leaf_ordinals=[1])
+    assert e["sample_index"] == 7 and e["leaf_ordinal"] == 1
+    [e] = _entries(world)
+    assert e["leaf_ordinal"] is None
+
+
 def test_all_masked_out_yields_no_mean(world):
     import torch
 

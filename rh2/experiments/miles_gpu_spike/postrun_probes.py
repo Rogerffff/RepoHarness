@@ -10,6 +10,11 @@ archive，正常 checkpoint 必然报 "Invalid magic number"）。现在：
   read_metadata()** 结构化反序列化（与 miles ``tools/convert_torch_dist_to_hf.py``
   的读取方式同族），成功后删除目录（探针 checkpoint 不作任何后续起点）。
 - ``shutdown`` 子命令：孤儿容器 / 存活 ray actor / finalization store 三面。
+  孤儿容器面（租前聚焦修复批 #4）同时覆盖 rollout（rh2-rollout）与真实评分
+  （rh2-grading）两类容器名前缀，并在 ``--run-id`` 给定时优先按本 run 的
+  owner label ``rh2.run_id=<run_id>``（launch 经 MILES_RH2_RUN_ID 下发，
+  rollout/评分容器启动时盖章）精确归属；只查仍在运行容器，``docker ps -a``
+  的已退出未删除容器留作 P1。
   租前审查 PR-P0-3B 的核心修复：**查询失败 ≠ 观测为零**——docker/ray 命令
   异常、非零退出码、坏 JSON 都显式记 ``*_query_ok=false`` 并导致探针非零退出；
   ``s1_compat`` 下 bringup 有意不建 FileFinalizationStore（bringup.py
@@ -105,7 +110,31 @@ def checkpoint_probe(ckpt: Path) -> dict:
 # shutdown 探针（PR-P0-3B）
 # ---------------------------------------------------------------------------
 
-def shutdown_probe(artifacts: Path, docker_bin: str, execution_mode: str) -> dict:
+def _docker_ps_names(docker_bin: str, filter_arg: str, detail: dict, tag: str) -> list[str] | None:
+    """一次 `docker ps`（只查仍在运行的容器）；失败返回 None 并写 detail。
+
+    已退出未删除容器（docker ps -a）留作 P1，见模块 docstring。
+    """
+    try:
+        r = subprocess.run(
+            [docker_bin, "ps", "--filter", filter_arg, "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except Exception as exc:  # noqa: BLE001 - 失败是显式事实（query_ok=false），不是零
+        detail[f"docker_error_{tag}"] = repr(exc)
+        return None
+    if r.returncode != 0:
+        detail[f"docker_rc_{tag}"] = r.returncode
+        detail[f"docker_stderr_{tag}"] = r.stderr[-500:]
+        return None
+    return [x for x in r.stdout.splitlines() if x.strip()]
+
+
+def shutdown_probe(
+    artifacts: Path, docker_bin: str, execution_mode: str, run_id: str | None = None
+) -> dict:
     probe = {
         "execution_mode": execution_mode,
         "docker_query_ok": False,
@@ -117,23 +146,28 @@ def shutdown_probe(artifacts: Path, docker_bin: str, execution_mode: str) -> dic
         "detail": {},
     }
 
-    # 孤儿 sandbox 容器（rh2 DockerSandbox 容器名前缀 rh2-rollout）。
+    # 孤儿 sandbox 容器：**rollout 与评分容器都查**（租前聚焦修复批 #4——
+    # 旧探针只查 name=rh2-rollout，G1 真实评分容器名前缀是 rh2-grading
+    # （grading/manager.py GradingManagerConfig.name_prefix），仅遗留一个
+    # 评分容器时曾报 orphan_workers=0）。优先本 run 的 owner label：
+    # launch 下发 MILES_RH2_RUN_ID 后，rollout（adapters/slime/generate.py）
+    # 与评分（grading/manager.py）容器都带 label rh2.run_id=<run_id>，
+    # --run-id 给定时按 label 精确匹配本 run；name 前缀查询同时保留，兜住
+    # 无 label 的旧容器/异常路径。三路查询任一失败 = docker_query_ok=false
+    # （查询失败 ≠ 观测为零，PR-P0-3B 语义不变）。
     # docker 二进制 = preflight 验证过的那一个（--docker-bin），不取 PATH。
-    try:
-        r = subprocess.run(
-            [docker_bin, "ps", "--filter", "name=rh2-rollout", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if r.returncode == 0:
-            probe["docker_query_ok"] = True
-            probe["docker_orphan_containers"] = [x for x in r.stdout.splitlines() if x.strip()]
-        else:
-            probe["detail"]["docker_rc"] = r.returncode
-            probe["detail"]["docker_stderr"] = r.stderr[-500:]
-    except Exception as exc:  # noqa: BLE001 - 失败是显式事实（query_ok=false），不是零
-        probe["detail"]["docker_error"] = repr(exc)
+    detail = probe["detail"]
+    queries = [
+        ("rollout_name", "name=rh2-rollout"),
+        ("grading_name", "name=rh2-grading"),
+    ]
+    if run_id:
+        queries.append(("run_label", f"label=rh2.run_id={run_id}"))
+    results = {tag: _docker_ps_names(docker_bin, flt, detail, tag) for tag, flt in queries}
+    if all(v is not None for v in results.values()):
+        probe["docker_query_ok"] = True
+        probe["docker_orphan_containers"] = sorted({name for v in results.values() for name in v})
+        probe["detail"]["docker_matches"] = {tag: v for tag, v in results.items()}
 
     # 作业结束后仍存活的 miles Ray actor
     try:
@@ -201,13 +235,17 @@ def main(argv: list[str]) -> int:
     ps.add_argument("--out", required=True)
     ps.add_argument("--docker-bin", required=True)
     ps.add_argument("--execution-mode", required=True)
+    ps.add_argument("--run-id", default=None,
+                    help="本 run 的唯一 id；给定时按容器 label rh2.run_id=<id> 精确匹配本 run 遗留容器")
     args = parser.parse_args(argv)
 
     if args.cmd == "checkpoint":
         probe = checkpoint_probe(Path(args.ckpt))
         ok = probe["saved"] and probe["reloaded"] and probe["deleted"]
     else:
-        probe = shutdown_probe(Path(args.artifacts), args.docker_bin, args.execution_mode)
+        probe = shutdown_probe(
+            Path(args.artifacts), args.docker_bin, args.execution_mode, run_id=args.run_id
+        )
         ok = shutdown_probe_ok(probe)
     Path(args.out).write_text(json.dumps(probe, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(probe, ensure_ascii=False))

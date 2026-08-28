@@ -671,7 +671,11 @@ def test_sample_dis_accounting_event_per_sample_counts(dis, tmp_path, monkeypatc
     args = _mk_args()
     batch, logits = _mk_case(torch)
     _fill_behavior_from_current(torch, dis, args, batch, logits)
-    batch["sample_indices"] = [41, 42]
+    # 聚焦修复批 #1：fan-out 两叶可共享 sample_index，(index, leaf_ordinal)
+    # 才是唯一叶身份——entries 必须逐样本携带 leaf_ordinal（wire 列缺失时为
+    # None，judge 侧 fail-closed）。这里模拟同 index 双叶（41,0)/(41,1)。
+    batch["sample_indices"] = [41, 41]
+    batch["leaf_ordinals"] = [0, 1]
     events_dir = tmp_path / "events"
     monkeypatch.setenv(rh2_event_log.EVENT_DIR_ENV, str(events_dir))
 
@@ -684,8 +688,8 @@ def test_sample_dis_accounting_event_per_sample_counts(dis, tmp_path, monkeypatc
     rows = [json.loads(x) for x in path.read_text().splitlines() if x.strip()]
     [event] = [r for r in rows if r["event"] == "sample_dis_accounting"]
     assert event["entries"] == [
-        {"sample_index": 41, "accepted_tokens": 1, "provenance_tokens": 3},
-        {"sample_index": 42, "accepted_tokens": 2, "provenance_tokens": 3},
+        {"sample_index": 41, "leaf_ordinal": 0, "accepted_tokens": 1, "provenance_tokens": 3},
+        {"sample_index": 41, "leaf_ordinal": 1, "accepted_tokens": 2, "provenance_tokens": 3},
     ]
 
 

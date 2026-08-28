@@ -274,14 +274,23 @@ def _emit_sample_dis_accounting(batch, *, in_trust, provenance, response_lengths
     sample_indices = batch.get("sample_indices") if hasattr(batch, "get") else None
     if sample_indices is None:
         return
+    # leaf 唯一身份（租前聚焦修复批 #1）：fan-out 叶继承同一 Sample.index，
+    # (sample_index, leaf_ordinal) 才是唯一叶身份。列缺失（旧 wire）时记 None，
+    # judge 侧对缺失身份 fail-closed。
+    leaf_ordinals = batch.get("leaf_ordinals") if hasattr(batch, "get") else None
     entries = []
     offset = 0
-    for sid, rlen in zip(sample_indices, response_lengths, strict=True):
+    for pos, (sid, rlen) in enumerate(zip(sample_indices, response_lengths, strict=True)):
         span_trust = in_trust[offset : offset + rlen]
         span_prov = provenance[offset : offset + rlen]
         entries.append(
             {
                 "sample_index": int(sid),
+                "leaf_ordinal": (
+                    int(leaf_ordinals[pos])
+                    if leaf_ordinals is not None and pos < len(leaf_ordinals)
+                    else None
+                ),
                 "accepted_tokens": int((span_trust & span_prov).sum().item()),
                 "provenance_tokens": int(span_prov.sum().item()),
             }

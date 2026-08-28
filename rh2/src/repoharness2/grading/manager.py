@@ -49,6 +49,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+import os
 import re
 import time
 import uuid
@@ -1065,6 +1066,12 @@ class SWEGradingManager:
             "--label",
             f"{prefix}.created_at_epoch={int(created_epoch)}",
         ]
+        # 本 run owner label（miles GPU spike shutdown 探针锚点，与 rollout
+        # 容器同款）：MILES_RH2_RUN_ID 在环境中时给评分容器盖同一 run 印章，
+        # postrun_probes.py shutdown 探针按 label=rh2.run_id=<run_id> 精确归属；
+        # 未设（单测/非 spike 链）时 docker 参数保持原样。
+        if run_id := os.environ.get("MILES_RH2_RUN_ID"):
+            args += ["--label", f"rh2.run_id={run_id}"]
         if spec.checkout_mode == "clone_from_readonly_snapshot":
             # P6：共享快照永远只读挂载，评分只在容器私有的 /testbed 副本上进行。
             args += ["--volume", f"{spec.snapshot_host_path}:{spec.snapshot_mount_path}:ro"]

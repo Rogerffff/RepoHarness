@@ -153,6 +153,85 @@ def test_shutdown_probe_orphan_container_detected(tmp_path, stub_bins):
     assert probes.shutdown_probe_ok(probe) is False
 
 
+# ---------------------------------------------------------------------------
+# 聚焦修复批 #4：shutdown 探针必须覆盖真实评分容器（rh2-grading-*）并支持
+# 本 run owner label 精确归属
+# ---------------------------------------------------------------------------
+
+
+def test_shutdown_probe_detects_grading_orphan(tmp_path, stub_bins):
+    """审查反例（聚焦修复批 #4）：只遗留一个仍在运行的评分容器（G1 真实评分
+    用 rh2-grading-* 名前缀，grading/manager.py name_prefix）时，旧探针只查
+    name=rh2-rollout 而报 orphan_workers=0——现在必须计为孤儿。"""
+    script = (
+        'case "$*" in\n'
+        '  *name=rh2-grading*) echo "rh2-grading-traj-abc123";;\n'
+        "esac\n"
+        "exit 0"
+    )
+    docker = _write_stub(stub_bins["dir"] / "docker_grading", script)
+    probe = probes.shutdown_probe(tmp_path / "artifacts", str(docker), "s1_compat")
+    assert probe["docker_query_ok"] is True
+    assert probe["docker_orphan_containers"] == ["rh2-grading-traj-abc123"]
+    assert probe["orphan_workers"] == 1
+    assert probes.shutdown_probe_ok(probe) is False
+
+
+def test_shutdown_probe_uses_run_owner_label(tmp_path, stub_bins):
+    """--run-id 给定时增加 label=rh2.run_id=<run_id> 查询（rollout/评分容器
+    启动时盖章），与两路 name 查询取并集去重——本 run 遗留容器即使名前缀
+    异常也能按 owner label 归属。"""
+    script = (
+        'case "$*" in\n'
+        '  *label=rh2.run_id=run-42*) echo "rh2-grading-traj-1"; echo "rh2-rollout-x-1";;\n'
+        '  *name=rh2-rollout*) echo "rh2-rollout-x-1";;\n'
+        "esac\n"
+        "exit 0"
+    )
+    docker = _write_stub(stub_bins["dir"] / "docker_label", script)
+    probe = probes.shutdown_probe(
+        tmp_path / "artifacts", str(docker), "s1_compat", run_id="run-42"
+    )
+    assert probe["docker_query_ok"] is True
+    assert probe["docker_orphan_containers"] == ["rh2-grading-traj-1", "rh2-rollout-x-1"]
+    assert probe["orphan_workers"] == 2
+    assert probe["detail"]["docker_matches"]["run_label"] == [
+        "rh2-grading-traj-1", "rh2-rollout-x-1",
+    ]
+    assert probes.shutdown_probe_ok(probe) is False
+
+
+def test_shutdown_probe_partial_docker_query_failure_is_not_zero(tmp_path, stub_bins):
+    """多查询下 P0-3B 语义不变：任一路 docker 查询失败（这里 grading name 查询
+    非零退出）→ docker_query_ok=false、orphan_workers=None，探针不 ok。"""
+    script = (
+        'case "$*" in\n'
+        '  *name=rh2-grading*) exit 3;;\n'
+        "esac\n"
+        "exit 0"
+    )
+    docker = _write_stub(stub_bins["dir"] / "docker_partial", script)
+    probe = probes.shutdown_probe(tmp_path / "artifacts", str(docker), "s1_compat")
+    assert probe["docker_query_ok"] is False
+    assert probe["orphan_workers"] is None
+    assert probes.shutdown_probe_ok(probe) is False
+
+
+def test_run_id_label_producers_wired():
+    """label 查询有生产者（消费者/生产者配对锚点）：rollout 容器
+    （adapters/slime/generate.py）与评分容器（grading/manager.py）的 docker
+    run 参数都在 MILES_RH2_RUN_ID 在场时盖 rh2.run_id=<run_id> label；评分侧
+    另有 FakeDocker 功能测试（tests/grading/test_manager_unit.py）。改动/移除
+    接线时本锚点红，提醒同步改 shutdown 探针的归属查询。"""
+    src_root = Path(__file__).resolve().parents[2] / "src" / "repoharness2"
+    gen = (src_root / "adapters" / "slime" / "generate.py").read_text()
+    assert 'os.environ.get("MILES_RH2_RUN_ID")' in gen
+    assert 'f"rh2.run_id={run_id}"' in gen
+    grading = (src_root / "grading" / "manager.py").read_text()
+    assert 'os.environ.get("MILES_RH2_RUN_ID")' in grading
+    assert 'f"rh2.run_id={run_id}"' in grading
+
+
 def test_shutdown_probe_finalization_required_outside_s1_compat(tmp_path, stub_bins):
     """非 s1_compat 模式下 store 缺失 = absent_required（FAIL 面），不再是
     "absent 只写 detail"的 fail-open。"""
