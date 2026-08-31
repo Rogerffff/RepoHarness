@@ -94,6 +94,7 @@
 | `g1_checkpoint_save_reload_delete` | checkpoint 保存并 reload 验证一次（P0-2：DCP `.metadata` 用 FileSystemReader 结构化反序列化，torch.load 读法对正常 checkpoint 必假红），随后删除（探针 ckpt 不作任何后续起点） | evidence/checkpoint_probe.json（postrun_probes.py checkpoint） |
 | `g1_eval_smoke_post_train` | 训后 eval 冒烟必须绑定最后一轮 + 期望终版权重版本（P0-3A：train_async 默认先跑 rollout 0 的 pre-train eval，不绑定版本时可冒充训后 eval）；`run_identity`：verdict 绑定唯一 run（manifest/collect run_id 与 thresholds digest 三方一致，P0-1；聚焦修复批 #5：manifest 的 thresholds_sha256 **缺失/空/非法直接 FAIL**——阈值页无外部锚点不得声称三方一致） | collected/eval_smoke.json + publish 守恒推导的终版；evidence/run_manifest.json |
 | `staleness_max_versions` | 每训练样本必须有完整版本事实（缺版本 FAIL，不豁免）；逐 turn 版本列表**逐项**验证存在、可解析、≤ current（聚焦复核 finding 3：`["1","99"]`+current=1 之类的 future/损坏项不得被 min 折叠隐藏），全部合法后才用最旧版本算 staleness，0 ≤ s ≤ N | sample_records.jsonl |
+| `weight_version_spans_coverage`（V2，无阈值键，纯语义检查） | per-token 权重版本区间证据独立审计面（staleness 的 min-over-spans 修复由上行检查自身承担，本检查证明记账层没有丢失或改写引擎报告的区间）：任一训练样本带 spans 证据（引擎已证明支持）⇒ 每个样本都必须有——逐轮校验区间结构（缝隙/重叠/空或倒置区间/首 start≠0/相邻同版本/版本不可解析 = FAIL），展平版本序列与 `behavior_versions` **逐项相等**（跨更新 turn 只记单数末版本的低报形态必红），engine_spans 轮的区间覆盖 token 总数与 logprob_compare 的 loss_mask=1 训练 token 数交叉相等（行无对拍/长度错位时跳过交叉，由对拍检查负责）；全无 spans 证据 ⇒ 看更新窗口：存在 mid-run 权重前进（publish updates 中 rollout_id 非 None，bootstrap 豁免）= FAIL（single_version_only 无法排除 turn 内跨更新低报），无 mid-run 更新 = PASS（单版本记账合法窗口），publish 事实缺失 = MISSING_EVIDENCE。诚实边界：引擎自身漏报区间无法从事件层证伪，由 pin 的 sglang 侧测试覆盖（SGLANG_COMMIT=4e230c3d 已含 weight_versions.py） | sample_records.jsonl（rollout_group 事件 `weight_version_spans` 列，源头 = 引擎 `meta_info.weight_versions` 经 canonicalize 落 `Sample.metadata`）+ collected/publish_records.json（更新窗口判定） |
 | `weight_version_monotonic` | 版本只前进；`skipped_rollout_version_must_not_advance`：全 SKIPPED 轮版本不变（F2 patch 0003 语义）；`update_weights_interval` + `weight_publish_conservation`（P0-6）：interval 内有 applied step ⇔ 恰一次 weight_update（版本 +1、链续接）⇔ 恰一次 weight_publish、零 skip；全 skipped ⇔ 恰一次 weight_publish_skipped、零 update/publish。聚焦复核 finding 2 收紧：bootstrap update（rollout_id=None）**有且唯一**；每个 interval 的 `update.version_before` 与发布后版本都必须与 train_rollout 的 trainer current 双向锚定（发布账本自洽、但与 trainer 版本两本账 = FAIL） | step_records.jsonl + collected/publish_records.json（weight_update / weight_publish / weight_publish_skipped 三类原始事实） |
 | `accepted_tokens_min_on_normal_step` | NORMAL step 的 dis_accepted_tokens ≥ 1；`token_accounting_must_balance`：accepted+rejected == provenance | step_records.jsonl（train_step 事件 metrics） |
 | `logprob_same_version_mean_abs_diff_max` | 同版本 behavior(support-normalized) vs current(support-renorm，trainer 复算) 对拍，**只统计 loss_mask=1 训练 token**；`logprob_alignment_required`（P0-8）：任何 length_mismatch 一票 FAIL、同版本训练样本必须全覆盖、masked token 总数 > 0 | sample_records.jsonl（logprob_compare 事件） |
@@ -103,6 +104,26 @@
 | `max_consecutive_zero_signal_steps` | 熔断阈值与 custom_config.yaml 一致（配置漂移检测） | custom_config.yaml |
 | `shutdown_orphan_workers_max` / `shutdown_finalization` / `queue_*` / `expected_dp_ranks` | 关停探针：docker/ray **查询失败显式 FAIL（无法观测 ≠ 观测为零，P0-3B）**，查询成功且孤儿=0 才 PASS；聚焦修复批 #4：孤儿容器面同时覆盖 rollout（rh2-rollout）与真实评分（rh2-grading）名前缀，并按本 run owner label `rh2.run_id=<run_id>` 精确归属（launch 传 --run-id；只查仍运行容器，`docker ps -a` 已退出未删容器留 P1）；finalization 在 s1_compat 如实 NOT_APPLICABLE（bringup 设计不建 store，不冒充零、不构成 F5 收口证据），fa_* 模式 store 必须在场且空。`queue_multiset_conservation`（P0-8 + 聚焦修复批 #1）：admitted **leaf** multiset == 消费 leaf multiset（少/多一个 FAIL；合法 fan-out 双叶不再假红，同一 leaf 双消费仍必红），filtered 按 sample_index 与训练/消费面不相交；`train_step_rank_coverage`：每 step 的 dp 分片 = 0..expected_dp_ranks-1 齐全 | evidence/shutdown_probe.json + step_records.jsonl + sample_records.jsonl |
 | `gpu_mem_peak_frac_max` / `throughput_min_tokens_per_sec` / `weight_update_seconds_max` | 显存峰值/吞吐/权重更新时间（train_step 另带 `zero_signal_scan_seconds` 独立计时，P1-2——scan 开销单独可见，阈值留待 GPU 实验设计轮） | dmon CSV + train_step/weight_update 事件 |
+
+## 拓扑限制登记（V3 vendor refresh：miles router 定向）
+
+不进上方 json 表（judge 没有对应消费键，加死键违反"新配置指认消费者"纪律），
+但属于**开机前不可现场推翻**的限制，与 json 表同等效力：
+
+- **rollout engine 数钉死 1**：launch.sh 钉 per-engine 卡数 := 全部 rollout 卡
+  （engine 数 = rollout_num_gpus // per_engine），preflight P11(d) 断言。原因：
+  `--use-miles-router`（#2596 fail-closed 强制，top_p<1 前提）启用的 MilesRouter
+  对每个 HTTP 请求独立取最小负载 worker、忽略 rh2 发送的 X-SMG-Routing-Key——
+  多 engine 下 `/abort_request` 与版本探测（`/model_info`，fallback
+  `/get_weight_version`，V3 审计移交收口后 bringup 双端点探测）会错发到任意
+  engine。
+  逐端点判定与解锁前置清单见同目录 `router_targeting_audit.md`；清单关闭前，
+  任何多 engine 配置 = 换实验（T0 级，不是现场可调项）。
+- 后果提示：sglang 推理 TP = per-engine 卡数。G2 换 4+4 时得到 1 engine × TP4，
+  吞吐口径与 2 engine × TP2 不可直接对比——`throughput_min_tokens_per_sec`
+  校准值绑定 engine 拓扑，若未来解锁多 engine 须重校准并留痕。
+- 既有 `g1_sglang_engines_stable_across_steps` 判定不受影响（它断言 engine
+  actor 身份集合跨 step 稳定，与 engine 数无关）；单 engine 下该集合恒为单元素。
 
 ## G1 最小规模摘录（范围建议 §5，供现场对照）
 

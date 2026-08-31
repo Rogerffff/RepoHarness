@@ -1004,11 +1004,12 @@ class BringupService:
     def _latest_engine_version(self) -> str:
         """finalize 时刻的 current version（codex 轮次 7 P0-5 权威化）。
 
-        权威来源 = 引擎 `/get_weight_version`（sglang_engine.get_weight_version
-        同端点）——trainer 更新后即便还没有新的成功响应，该端点也是新版本；
-        capture registry 最大值只作**交叉检查**（大于权威值 = 事实矛盾，
-        fail-closed）。HTTP 失败时：正式链 fail-closed，bring-up 回退
-        registry 最大值/启动探针值（口径 = "相对最近观测"，如实降级）。
+        权威来源 = 引擎版本端点，`/model_info` 优先、`/get_weight_version`
+        兜底（V3 审计移交收口，依据见方法体注释）——trainer 更新后即便还没有
+        新的成功响应，该端点也是新版本；capture registry 最大值只作**交叉
+        检查**（大于权威值 = 事实矛盾，fail-closed）。HTTP 失败时：正式链
+        fail-closed，bring-up 回退 registry 最大值/启动探针值（口径 =
+        "相对最近观测"，如实降级）。
         """
 
         # P1（codex 轮次 8）：不在 asyncio 请求路径同步阻塞——权威版本查询用
@@ -1019,13 +1020,31 @@ class BringupService:
 
         authoritative: str | None = None
         try:
-            response = requests.get(f"{self.sglang_url}/get_weight_version", timeout=5)
-            response.raise_for_status()
+            # V3 审计移交收口（router_targeting_audit.md §3 登记项）：钉死的
+            # SGLANG_COMMIT=4e230c3d（v0.5.18 线，integration manifest 的
+            # sglang_commit）中 `/get_weight_version` 路由仍注册但 handler
+            # 无条件抛 HTTPException(404 deprecated)——单端点探测对钉死引擎
+            # 100% 失败；current 版本改由 `/model_info` 返回体的
+            # "weight_version" 键承载（该 commit 的 http_server.py 实测：值 =
+            # tokenizer_manager.config_value("weight_version")，权重更新成功
+            # 即推进，与旧端点同一事实源）。探测顺序对齐引擎侧
+            # sglang_engine.get_weight_version 的"先新后旧"双端点 fallback
+            # （miles/backends/sglang_utils/sglang_engine.py:578）；旧端点仅
+            # 为未更名的旧引擎保留。两端点经 MilesRouter catch-all 代理均可
+            # 达引擎（miles/router/router.py:71 `/{path:path}`）。
+            response: Any = None
+            for endpoint in ("/model_info", "/get_weight_version"):
+                response = requests.get(f"{self.sglang_url}{endpoint}", timeout=5)
+                if response.status_code == 200:
+                    break
+            else:
+                response.raise_for_status()  # 双端点全非 200：按末次响应抛错
             authoritative = str(response.json()["weight_version"])
         except Exception as exc:  # noqa: BLE001 —— 分链路处置
             if self._require_real_weight_versions:
                 raise RuntimeError(
-                    f"正式链取权威 weight_version 失败（{type(exc).__name__}: {exc}）"
+                    "正式链取权威 weight_version 失败（/model_info 与 "
+                    f"/get_weight_version 双端点探测；{type(exc).__name__}: {exc}）"
                     "——fail-closed，不许用历史观测冒充 current。"
                 ) from exc
         registry_max = self._registry_max_version()

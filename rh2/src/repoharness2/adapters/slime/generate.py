@@ -469,6 +469,168 @@ def startup_checks(
 # ---------------------------------------------------------------------------
 
 
+def hook_turn_weight_versions(hook: "GenerationCaptureHook") -> list[str] | None:
+    """从 capture 钩子取逐轮版本序列（Outcome 记账用，FA-0 第 2 条）。
+
+    V2：spans 轮按区间序展开全部版本（一轮可贡献多个）——否则
+    `intra_execution_version_span`（max-min 派生互检）会与 Sample 侧同款
+    低报 turn 内跨更新。非 spans 轮取单数（failed 轮两者皆 None，自然
+    跳过——与旧 `[r.weight_version for r in hook.records if r.weight_version]`
+    的过滤语义逐轮等价，因为 record 与 tape 的 weight_version 同源同值）。
+    空序列返回 None（无版本事实，Outcome 校验器按 completion class 处置）。
+    """
+
+    versions: list[str] = []
+    for tape in hook.tapes:
+        if tape.weight_version_spans:
+            versions.extend(span.version for span in tape.weight_version_spans)
+        elif tape.weight_version:
+            versions.append(tape.weight_version)
+    return versions or None
+
+
+@dataclass(frozen=True)
+class WeightVersionSpan:
+    """一个 per-token 权重版本区间（sglang weight_versions.py wire 形态）。
+
+    wire 事实源 = sglang-miles 4e230c3d 的 `python/sglang/srt/utils/
+    weight_versions.py::add_weight_versions_to_meta_info`：
+    `meta_info["weight_versions"] = [{"version": str, "start": int,
+    "end": int}, ...]`——半开区间 [start, end) 按生成 token 位置计数，
+    version 是引擎权重版本字符串（miles 场景为十进制计数器）。
+    """
+
+    version: str
+    start: int
+    end: int
+
+
+# capture 逐轮版本 provenance 取值（TurnTape.weight_version_provenance）：
+# - engine_spans：引擎报了 meta_info.weight_versions（一手 per-token 证据）；
+# - single_version_only：引擎只报单数 meta_info.weight_version（旧引擎回退，
+#   turn 内跨权重更新时单数只等于最后区间版本——低报 staleness 的形态，
+#   消费方必须知道这份记账没有 turn 内多版本分辨力）。
+WEIGHT_VERSION_PROVENANCE_SPANS = "engine_spans"
+WEIGHT_VERSION_PROVENANCE_SINGLE = "single_version_only"
+
+
+def parse_weight_version_spans(
+    meta: Mapping[str, Any], *, generated: int
+) -> tuple[WeightVersionSpan, ...] | None:
+    """从 /generate 响应 meta_info 解析 per-token 权重版本区间（fail-closed）。
+
+    返回值：
+    - `None`：meta_info 没有 `weight_versions` 键——旧引擎/未启用版本跟踪，
+      调用方回退单数 `weight_version` 并记 provenance=single_version_only；
+    - 非空 tuple：解析并校验通过的区间序列。
+
+    引擎**报了就必须合法**（vendor refresh V2 拍板）：任何违反下列合同不变式
+    的形态都抛 `SlimeBindingError`（不猜测、不修正、不静默回退单数——坏 spans
+    回退单数会把"账目损坏"洗成"旧引擎"）。不变式逐条对照 sglang 单测
+    `test/registered/unit/utils/test_weight_versions.py::
+    test_spans_satisfy_the_contract_for_random_event_sequences` 与
+    `add_weight_versions_to_meta_info` 实现（同 commit 4e230c3d）：
+
+    1. 非空 list，每项含 version/start/end；version 为非空字符串（int 容忍并
+       str 化——JSON 数值版本），start/end 为非负 int（bool 拒绝）；
+    2. spans[0].start == 0；相邻区间 prev.end == cur.start（连续无缝隙无重叠）；
+    3. 相邻区间版本不同（引擎侧同版本必合并，重复出现 = 上游合同破坏）；
+    4. `generated == 0` 时恰好一个空区间 {v, 0, 0}；`generated > 0` 时每个
+       区间 start < end 且最后区间 end == generated（覆盖全部生成 token）；
+    5. 单数 `weight_version` 必须在场且 == spans[-1].version（sglang 在同一
+       函数里一起写两个键，单数 = finalize 时刻值——FA-0 收窄语义的 wire 面）。
+    """
+
+    raw = meta.get("weight_versions")
+    if raw is None:
+        return None
+
+    def _bad(reason: str, detail: str) -> SlimeBindingError:
+        return SlimeBindingError(
+            f"weight_version_spans_{reason}",
+            f"meta_info.weight_versions 非法（{detail}）——引擎报了 spans 就必须"
+            "满足 sglang weight_versions.py 合同，fail-closed 拒绝本轮。",
+        )
+
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
+        raise _bad("not_a_list", f"类型 {type(raw).__name__} 不是 list")
+    if not raw:
+        raise _bad("empty", "空 list（sglang 合同保证至少一个区间）")
+
+    spans: list[WeightVersionSpan] = []
+    for i, item in enumerate(raw):
+        if not isinstance(item, Mapping):
+            raise _bad("item_not_mapping", f"第 {i} 项类型 {type(item).__name__}")
+        missing_keys = {"version", "start", "end"} - set(item)
+        if missing_keys:
+            raise _bad("item_missing_keys", f"第 {i} 项缺键 {sorted(missing_keys)}")
+        version_raw = item["version"]
+        if isinstance(version_raw, str):
+            version = version_raw
+        elif isinstance(version_raw, int) and not isinstance(version_raw, bool):
+            version = str(version_raw)
+        else:
+            raise _bad("version_unparsable", f"第 {i} 项 version={version_raw!r}")
+        if not version:
+            raise _bad("version_empty", f"第 {i} 项 version 为空字符串")
+        bounds: list[int] = []
+        for key in ("start", "end"):
+            value = item[key]
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise _bad("bound_not_int", f"第 {i} 项 {key}={value!r}")
+            if value < 0:
+                raise _bad("bound_negative", f"第 {i} 项 {key}={value}")
+            bounds.append(value)
+        spans.append(WeightVersionSpan(version=version, start=bounds[0], end=bounds[1]))
+
+    if spans[0].start != 0:
+        raise _bad("first_start_nonzero", f"首区间 start={spans[0].start} != 0")
+    for prev, cur in zip(spans, spans[1:]):
+        if cur.start != prev.end:
+            kind = "gap" if cur.start > prev.end else "overlap"
+            raise _bad(
+                kind,
+                f"相邻区间 [{prev.start},{prev.end}) 与 [{cur.start},{cur.end}) "
+                f"{'有缝隙' if kind == 'gap' else '重叠'}",
+            )
+        if cur.version == prev.version:
+            raise _bad(
+                "adjacent_same_version",
+                f"相邻区间版本相同 {cur.version!r}（引擎侧必合并）",
+            )
+    if generated == 0:
+        if len(spans) != 1 or spans[0].end != 0:
+            raise _bad(
+                "zero_output_shape",
+                f"零输出轮应恰好一个空区间，got {[(s.version, s.start, s.end) for s in spans]}",
+            )
+    else:
+        for span in spans:
+            if span.start >= span.end:
+                raise _bad(
+                    "empty_span",
+                    f"区间 [{span.start},{span.end}) 非零输出轮不得为空/倒置",
+                )
+        if spans[-1].end != generated:
+            raise _bad(
+                "end_mismatch",
+                f"末区间 end={spans[-1].end} != 生成 token 数 {generated}（越界/欠覆盖）",
+            )
+    single_raw = meta.get("weight_version")
+    if single_raw is None:
+        raise _bad(
+            "single_version_missing",
+            "weight_versions 在场但单数 weight_version 缺失（sglang 同函数一起写两键）",
+        )
+    if str(single_raw) != spans[-1].version:
+        raise _bad(
+            "single_version_mismatch",
+            f"单数 weight_version={single_raw!r} != 末区间版本 {spans[-1].version!r}"
+            "（单数 = finalize 时刻值的合同被破坏）",
+        )
+    return tuple(spans)
+
+
 @dataclass(frozen=True)
 class TurnTape:
     """一轮 /generate 的解码后事实（capture 记录的回填伴生物，不进契约）。"""
@@ -492,6 +654,24 @@ class TurnTape:
     # output_log_probs 仍是全词表诊断列（mask 会话的 support-normalized 列
     # 走 TurnRecord -> Sample.rollout_log_probs，capture_wire 已切换）。
     sampling_supports: tuple[tuple[int, ...], ...] | None = None
+    # V2（vendor refresh 第二批）：本轮 per-token 权重版本区间（引擎
+    # meta_info.weight_versions，parse_weight_version_spans 校验后透传）。
+    # None = 引擎未报（旧引擎，provenance=single_version_only）；非 None 时
+    # 必然非空且 spans[-1].version == weight_version（parse 已校验）。backfill
+    # 把区间的**全部**版本并入 Sample.weight_versions（修 adv_miles 反例：
+    # 单数记账把 v10+v11 turn 记成全 v11，DefaultDataBuffer 的 oldest
+    # staleness 低报，可能放过期样本入训）。
+    weight_version_spans: tuple[WeightVersionSpan, ...] | None = None
+
+    @property
+    def weight_version_provenance(self) -> str:
+        """本轮版本记账 provenance（engine_spans / single_version_only）。"""
+
+        return (
+            WEIGHT_VERSION_PROVENANCE_SPANS
+            if self.weight_version_spans is not None
+            else WEIGHT_VERSION_PROVENANCE_SINGLE
+        )
 
 
 class GenerationCaptureHook:
@@ -556,6 +736,10 @@ class GenerationCaptureHook:
         sampling_params: Mapping[str, Any],
         response: Mapping[str, Any],
         turn_support: Any | None = None,  # B2：wire 已解析的 miles TurnSupport
+        # V2：wire 已解析校验的 per-token 权重版本区间（capture_wire 在 stage
+        # 前解析，commit 时仅在场才传——与 turn_support 同一双路径模式；直调
+        # 路径（探针/测试替身）不传，本方法自行用同一 parse 函数从响应重建）。
+        weight_version_spans: tuple[WeightVersionSpan, ...] | None = None,
     ) -> GenerationCaptureRecord:
         """处理一轮 /generate 响应。响应字段名与 SGLang wire 形态逐一对应。"""
 
@@ -678,6 +862,24 @@ class GenerationCaptureHook:
                     tuple(int(t) for t in support) for support in parsed_support.supports
                 )
 
+        # V2：per-token 权重版本区间。wire 路径已在 stage 前解析校验（非法
+        # 直接抛、poison+abandon，本方法收到的必是合法产物）；直调路径
+        # （探针/测试替身）用**同一个** parse_weight_version_spans 从响应
+        # 重建。直调解析失败按既有 tape 记账口径落 mismatch——partial 记录
+        # 随后被装配层与投影层拒绝，hook 本身只记录事实不抛错（与
+        # sampling mask 的双路径分工一致）。引擎未报（返回 None）= 旧引擎
+        # 回退单数，provenance 由 TurnTape.weight_version_provenance 显式
+        # 标 single_version_only。
+        turn_weight_version_spans = weight_version_spans
+        if turn_weight_version_spans is None:
+            try:
+                turn_weight_version_spans = parse_weight_version_spans(
+                    meta, generated=generated
+                )
+            except SlimeBindingError as exc:
+                turn_weight_version_spans = None
+                mismatches.append(exc.reason_code)
+
         if generated < 1:
             missing.append("output_tokens")
 
@@ -741,6 +943,7 @@ class GenerationCaptureHook:
                 routed_experts_flat=tuple(routing_flat) if routing_flat is not None else None,
                 weight_version=turn_weight_version,
                 sampling_supports=sampling_supports,
+                weight_version_spans=turn_weight_version_spans,
             )
         )
         return record
@@ -1231,9 +1434,20 @@ def backfill_leaf_sample(
     #   真实+回退的混合序列（回退值本身是显式配置事实，不是猜测）；
     # - 两档共同底线：某轮既无真实值又无回退值时**整个字段不写**
     #   （无事实——gate 的 policy_staleness 维会 fail-closed 降级）。
+    # V2（per-token spans）：轮 tape 带 weight_version_spans 时，把区间的
+    # **全部**版本依序并入（一轮可贡献多个版本）——这是 adv_miles 反例的
+    # 直接修复：v10 生成 300 token → 更新 v11 → 续生成 200 token 的轮，
+    # 旧口径只记 ["11"]，miles `Sample.oldest_weight_version`（min）随之
+    # 高估为 11、DefaultDataBuffer 的 staleness=current-oldest 低报 1 个
+    # 版本，可能把本应被 max_weight_staleness 拒绝的组放进训练。spans
+    # 口径记 ["10","11"]，oldest/min 语义自动恢复正确。spans[-1].version
+    # == tape.weight_version（parse 已校验），序列尾部仍是 finalize 时刻值。
     per_turn_versions: list[str] = []
     versions_complete = True
     for tape in used:
+        if tape.weight_version_spans:
+            per_turn_versions.extend(span.version for span in tape.weight_version_spans)
+            continue
         if require_real_weight_versions and tape.weight_version is None:
             raise SlimeBindingError(
                 "turn_weight_version_missing_in_formal_chain",
@@ -1247,6 +1461,46 @@ def backfill_leaf_sample(
         per_turn_versions.append(version)
     if versions_complete and (per_turn_versions or policy_version is not None):
         sample.weight_versions = per_turn_versions or [policy_version]
+
+    # V2：结构化 spans 走既有附加属性机制到 canonicalize（与 rh2_sampling_mask
+    # 同款：装配产物类型 + setattr + canonicalize 扩允许集消费转 miles 侧落点，
+    # fail-closed）。只在本叶链**存在 spans 事实**时装配（纯单数回退链不挂，
+    # 保持旧链路零改变；混合链逐轮 provenance 显式）。lazy import：
+    # repoharness2.adapters.miles 包 __init__ 依赖 miles checkout，无 spans
+    # 的既有 321 测试面不得因本函数被迫加载。
+    if versions_complete and any(tape.weight_version_spans for tape in used):
+        from repoharness2.adapters.miles.weight_version_facts import (
+            LeafWeightVersionFacts,
+            TurnWeightVersionFact,
+            attach_leaf_weight_version_facts,
+        )
+
+        turn_facts = []
+        for tape in used:
+            spans = tape.weight_version_spans
+            turn_facts.append(
+                TurnWeightVersionFact(
+                    capture_record_id=tape.record_id,
+                    provenance=tape.weight_version_provenance,
+                    spans=(
+                        tuple((s.version, s.start, s.end) for s in spans)
+                        if spans is not None
+                        else None
+                    ),
+                    single_version=(
+                        tape.weight_version
+                        if tape.weight_version is not None
+                        else policy_version
+                    ),
+                )
+            )
+        attach_leaf_weight_version_facts(
+            sample,
+            LeafWeightVersionFacts(
+                turns=tuple(turn_facts),
+                flat_versions=tuple(per_turn_versions),
+            ),
+        )
     return used
 
 
@@ -2569,10 +2823,7 @@ class RolloutOrchestrator:
                                 reason_code="unsafe_artifact_permanent_rejection",
                                 failed_component="patch_hygiene",
                                 task_resolved=None,
-                                turn_weight_versions=[
-                                    r.weight_version for r in hook.records
-                                    if r.weight_version
-                                ] or None,
+                                turn_weight_versions=hook_turn_weight_versions(hook),
                                 current_version_at_finalize=(
                                     self._current_policy_version_provider()
                                     if self._current_policy_version_provider is not None
@@ -2698,10 +2949,7 @@ class RolloutOrchestrator:
                             task_resolved=None,  # 不评分 → reward 不可得
                             # present 事实的版本链取 capture 真值（A-prime
                             # unsafe 行 = present + 永久拒绝）
-                            turn_weight_versions=[
-                                r.weight_version for r in hook.records
-                                if r.weight_version
-                            ] or None,
+                            turn_weight_versions=hook_turn_weight_versions(hook),
                             current_version_at_finalize=(
                                 self._current_policy_version_provider()
                                 if self._current_policy_version_provider is not None

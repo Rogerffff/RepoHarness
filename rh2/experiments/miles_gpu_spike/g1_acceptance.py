@@ -48,6 +48,19 @@
   - finding 3（P0-8）：staleness 判定逐 turn 验证完整 behavior_versions 列表
     （逐项存在、可解析、<= current），min 折叠不得隐藏 future/损坏项。
 
+V2（vendor refresh 第二批，per-token weight version spans）：
+  - `weight_version_spans_coverage`（新检查，无新阈值键、纯语义）：
+    rollout_group 事件新增 per-sample `weight_version_spans` 列（miles
+    Sample.metadata rh2_weight_version_spans，rh2 canonicalize 从引擎
+    meta_info.weight_versions 逐轮落下）。判定：记账列表
+    （behavior_versions）必须与引擎一手区间证据逐项一致（跨更新 turn 只记
+    单版本的 staleness 低报形态必红——此时 staleness_max_versions 自身按
+    记账算是绿的）；区间结构合法（缝隙/重叠/空区间/越界必红，token 覆盖
+    与 logprob_compare 的训练 token 数交叉）；生成期间权重前进过的 run
+    必须携带 spans 证据（single_version_only 只在无 mid-run 更新窗口时
+    合法，bootstrap 豁免）。staleness_max_versions 的逐项版本自动含区间
+    全部版本（min over spans）。
+
 事件 -> 证据的联结关系（生产事件 schema 见 rh2_event_log 各 emit 调用点）：
   train_step            每 optimizer step、每 rank 一条：outcome、
                         optimizer_step_applied（真实 optimizer.step() 执行成功
@@ -474,6 +487,10 @@ def cmd_collect(args: argparse.Namespace) -> int:
         rewards = row.get("rewards") or []
         versions = row.get("behavior_versions") or []
         tapes = row.get("routing_tape") or []
+        # V2：per-sample 结构化版本区间证据（miles Sample.metadata
+        # rh2_weight_version_spans -> rollout_group 事件同名列；旧 emitter
+        # 无该字段 -> 整列 None，judge 按"无 spans 证据面"处理）。
+        spans_col = row.get("weight_version_spans")
         ordinals = row.get("leaf_ordinals")
         if ordinals is None:
             identity_missing.append(f"rollout_group {gid}：缺 leaf_ordinals（emitter 过旧）")
@@ -500,6 +517,11 @@ def cmd_collect(args: argparse.Namespace) -> int:
                     "reward": rewards[i] if i < len(rewards) else None,
                     "behavior_versions": behavior_versions,
                     "behavior_version": _min_numeric_version(behavior_versions),
+                    "weight_version_spans": (
+                        spans_col[i]
+                        if isinstance(spans_col, list) and i < len(spans_col)
+                        else None
+                    ),
                     "current_version": current_version.get(rid),
                     "has_logprob_entry": lp is not None,
                     "same_version_mean_abs_logprob_diff": (
@@ -534,6 +556,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
                     "reward": rewards[i] if i < len(rewards) else None,
                     "behavior_versions": None,
                     "behavior_version": None,
+                    "weight_version_spans": None,
                     "current_version": None,
                     "has_logprob_entry": False,
                     "same_version_mean_abs_logprob_diff": None,
@@ -928,8 +951,12 @@ def cmd_judge(args: argparse.Namespace) -> int:
                 "staleness_max_versions",
                 PASS if ok else FAIL,
                 f"staleness 区间=[{least},{worst}]（要求 0 <= s <= {lim}；逐 turn 版本已逐项验证"
-                "存在/可解析/<=current）",
+                "存在/可解析/<=current；V2 起版本列表含 per-token 区间的全部版本，"
+                "min 覆盖 turn 内跨更新的真实最旧版本）",
             )
+
+    # -- V2：per-token 权重版本区间证据（spans 覆盖 / 低报审计）---------------
+    _judge_weight_version_spans(j, train_samples, publish)
 
     # -- token 记账 -----------------------------------------------------------
     if steps is None:
@@ -1067,6 +1094,229 @@ def cmd_judge(args: argparse.Namespace) -> int:
     print(out)
     print(f"OVERALL: {verdict['overall']}")
     return 0 if verdict["overall"] == "PASS" else 1
+
+
+def _judge_weight_version_spans(j: Judge, train_samples, publish) -> None:
+    """`weight_version_spans_coverage`：per-token 权重版本区间证据判定（V2）。
+
+    背景（adv_miles 反例）：sglang-miles（4e230c3d weight_versions.py）对跨
+    权重更新的请求返回 `meta_info.weight_versions=[{version,start,end},...]`，
+    单数 `weight_version` 只是最后区间——只记单数会把 v10+v11 的 turn 记成
+    全 v11，`staleness_max_versions` 用 min(behavior_versions) 算出的
+    staleness 因此低报，可能放本应拒绝的过期样本入训。**staleness 检查本身
+    已改逐区间参与**（capture/backfill 把区间全部版本并入 behavior_versions，
+    min over spans）；本检查补上独立审计面——记账列表必须与引擎一手区间
+    证据一致，有更新窗口的 run 必须携带区间证据。
+
+    证据形态（rollout_group 事件 `weight_version_spans` 列 -> sample_records
+    行同名字段）：逐入训轮列表，每轮
+    `{"provenance": "engine_spans", "spans": [{version,start,end},...]}` 或
+    `{"provenance": "single_version_only", "spans": null, "version": v}`。
+
+    判定规则（无新阈值键，纯语义）：
+
+    A. 全部训练样本无 spans 证据：若 run 内存在 mid-run 权重前进
+       （publish updates 中 rollout_id 非 None 的条目；bootstrap 豁免——它
+       发生在任何生成之前）→ FAIL（"权重更新期间在途 turn"的验收联结：
+       生成与更新并发的 run 里 single_version_only 无法排除 turn 内低报）；
+       无 mid-run 更新 → PASS（单版本记账合法窗口）；publish 事实缺失 →
+       MISSING（无法判定更新窗口，缺证据不算绿）。
+    B. 任一样本有 spans（引擎已证明支持）：每个训练样本都必须有——逐轮
+       校验结构（缝隙/重叠/空区间/首 start≠0/相邻同版本/版本不可解析 →
+       FAIL），展平版本序列必须与 behavior_versions **逐项相等**（跨更新
+       turn 只记单版本的低报形态在此必红），engine_spans 轮的区间覆盖
+       token 总数与训练 token 数（logprob_compare 的 loss_mask=1 计数，
+       独立证据面）交叉相等（区间越界/欠覆盖必红；行无对拍或长度错位时
+       跳过交叉，由对拍检查自己负责）。
+
+    诚实边界（detail 也写明）：引擎自身低报（该报多区间却只报一个）无法从
+    事件层证伪——那由 sglang 侧单测/GPU tests 覆盖（本仓 pin 的
+    SGLANG_COMMIT 已含）；本检查证明的是 rh2/miles 记账层没有丢失或改写
+    引擎报告的区间事实。
+    """
+
+    key = "weight_version_spans_coverage"
+    if not train_samples:
+        j.add(key, MISSING, "sample_records.jsonl 缺失或无训练批样本")
+        return
+    updates_mid_run = None
+    if publish is not None:
+        updates_mid_run = [
+            u for u in publish.get("updates", []) if u.get("rollout_id") is not None
+        ]
+    has_any = any(r.get("weight_version_spans") for r in train_samples)
+    if not has_any:
+        if updates_mid_run is None:
+            j.add(
+                key,
+                MISSING,
+                "无任何 spans 证据且 publish_records.json 缺失——无法判定 run 内是否存在更新窗口",
+            )
+        elif updates_mid_run:
+            j.add(
+                key,
+                FAIL,
+                f"生成期间权重版本前进 {len(updates_mid_run)} 次而训练样本无任何 per-token "
+                "spans 证据——single_version_only 记账只在无更新窗口时合法，turn 内跨更新的 "
+                "staleness 低报不可排除（需 sglang-miles spans 引擎 + emitter 的 "
+                "weight_version_spans 列）",
+            )
+        else:
+            j.add(
+                key,
+                PASS,
+                "run 内无 mid-run 权重更新（仅 bootstrap）——单版本记账处于合法窗口，"
+                "spans 证据缺席不构成低报风险",
+            )
+        return
+
+    problems: list[str] = []
+    checked = 0
+    multi_span_samples = 0
+    for r in train_samples:
+        sid_ = r["sample_id"]
+        entry = r.get("weight_version_spans")
+        if not entry:
+            problems.append(f"{sid_}: 缺 spans 证据（同 run 其它样本已证明引擎支持 spans）")
+            continue
+        if not isinstance(entry, list):
+            problems.append(f"{sid_}: spans 证据不是逐轮列表（{type(entry).__name__}）")
+            continue
+        flat: list[str] = []
+        total_tokens = 0
+        coverage_known = True  # single_version_only 轮无 token 覆盖声明 -> 跳过交叉
+        bad = False
+        for t_i, turn in enumerate(entry):
+            if not isinstance(turn, dict):
+                problems.append(f"{sid_}: 第 {t_i} 轮不是结构化对象")
+                bad = True
+                break
+            prov = turn.get("provenance")
+            spans = turn.get("spans")
+            if prov == "engine_spans":
+                if not isinstance(spans, list) or not spans:
+                    problems.append(
+                        f"{sid_}: 第 {t_i} 轮 provenance=engine_spans 但无区间列表"
+                    )
+                    bad = True
+                    break
+                prev_end: int | None = None
+                prev_version: str | None = None
+                for s_i, sp in enumerate(spans):
+                    shape_ok = (
+                        isinstance(sp, dict)
+                        and isinstance(sp.get("start"), int)
+                        and isinstance(sp.get("end"), int)
+                        and not isinstance(sp.get("start"), bool)
+                        and not isinstance(sp.get("end"), bool)
+                        and sp.get("version") is not None
+                    )
+                    if not shape_ok:
+                        problems.append(f"{sid_}: 第 {t_i} 轮第 {s_i} 区间形状非法 {sp!r}")
+                        bad = True
+                        break
+                    ver = str(sp["version"])
+                    if not ver.isdigit():
+                        problems.append(
+                            f"{sid_}: 第 {t_i} 轮区间版本不可解析 {ver!r}（miles 版本为十进制计数器）"
+                        )
+                        bad = True
+                        break
+                    if s_i == 0 and sp["start"] != 0:
+                        problems.append(f"{sid_}: 第 {t_i} 轮首区间 start={sp['start']} != 0")
+                        bad = True
+                        break
+                    if prev_end is not None and sp["start"] != prev_end:
+                        kind = "缝隙" if sp["start"] > prev_end else "重叠"
+                        problems.append(
+                            f"{sid_}: 第 {t_i} 轮区间{kind}：[..,{prev_end}) 与 "
+                            f"[{sp['start']},{sp['end']})"
+                        )
+                        bad = True
+                        break
+                    if prev_version is not None and ver == prev_version:
+                        problems.append(
+                            f"{sid_}: 第 {t_i} 轮相邻区间同版本 {ver!r}（引擎侧必合并，重复=证据被改写）"
+                        )
+                        bad = True
+                        break
+                    if sp["end"] <= sp["start"]:
+                        problems.append(
+                            f"{sid_}: 第 {t_i} 轮空/倒置区间 [{sp['start']},{sp['end']})"
+                        )
+                        bad = True
+                        break
+                    prev_end, prev_version = sp["end"], ver
+                    flat.append(ver)
+                if bad:
+                    break
+                total_tokens += prev_end or 0
+            elif prov == "single_version_only":
+                if spans:
+                    problems.append(
+                        f"{sid_}: 第 {t_i} 轮声称 single_version_only 却携带区间列表"
+                    )
+                    bad = True
+                    break
+                if updates_mid_run is None:
+                    problems.append(
+                        f"{sid_}: 第 {t_i} 轮 single_version_only 且 publish 事实缺失——无法证明无更新窗口"
+                    )
+                    bad = True
+                    break
+                if updates_mid_run:
+                    problems.append(
+                        f"{sid_}: 第 {t_i} 轮 provenance=single_version_only 而 run 内权重前进过"
+                        "——该轮 turn 内跨更新的低报不可排除"
+                    )
+                    bad = True
+                    break
+                ver_single = turn.get("version")
+                if ver_single is None:
+                    problems.append(f"{sid_}: 第 {t_i} 轮 single_version_only 缺 version")
+                    bad = True
+                    break
+                flat.append(str(ver_single))
+                coverage_known = False
+            else:
+                problems.append(f"{sid_}: 第 {t_i} 轮未知 provenance={prov!r}")
+                bad = True
+                break
+        if bad:
+            continue
+        behavior = [str(v) for v in (r.get("behavior_versions") or [])]
+        if flat != behavior:
+            problems.append(
+                f"{sid_}: 版本记账与引擎区间证据不一致：behavior_versions={behavior} vs "
+                f"spans 展平={flat}——跨更新 turn 只记单版本（staleness 低报）或记账被改写"
+            )
+            continue
+        if (
+            coverage_known
+            and r.get("has_logprob_entry")
+            and r.get("logprob_length_mismatch") is False
+            and isinstance(r.get("logprob_masked_tokens"), int)
+            and r["logprob_masked_tokens"] > 0
+            and total_tokens != r["logprob_masked_tokens"]
+        ):
+            problems.append(
+                f"{sid_}: 区间覆盖 token 总数 {total_tokens} != 训练 token 数 "
+                f"{r['logprob_masked_tokens']}（区间越界/欠覆盖——end 声明超出或不足真实生成量）"
+            )
+            continue
+        checked += 1
+        if len(set(flat)) > 1:
+            multi_span_samples += 1
+    if problems:
+        j.add(key, FAIL, "; ".join(problems[:4]))
+    else:
+        j.add(
+            key,
+            PASS,
+            f"{checked} 个训练样本的区间证据结构合法、与版本记账逐项一致、token 覆盖与训练 "
+            f"token 数交叉相符（其中 {multi_span_samples} 个样本携带跨更新多版本证据；"
+            "引擎自身漏报区间无法从事件层证伪，由 sglang 侧测试覆盖）",
+        )
 
 
 def _judge_run_identity(j: Judge, ev: Path, coll: Path, thresholds_path: Path) -> None:
@@ -2077,6 +2327,35 @@ def _leaf_digest(idx: int, ordinal: int) -> str:
     return f"{idx:06x}{ordinal:02x}" * 8
 
 
+def _wvs_entry(versions: list, total: int = 320) -> list | None:
+    """把一个叶的行为版本列表铺成与之一致的 engine_spans 证据（V2 基线）。
+
+    单入训轮、区间均分 ``total`` 个训练 token（= lp entry 的 num_tokens，
+    区间覆盖与训练 token 数的交叉校验因此成立）；空版本列表返回 None
+    （该叶无 spans 证据）。多版本时相邻区间版本天然不同（judge 相邻同
+    版本校验不受触发）。
+    """
+
+    if not versions:
+        return None
+    n = len(versions)
+    seg = max(total // n, 1)
+    spans = []
+    pos = 0
+    for k, v in enumerate(versions):
+        end = total if k == n - 1 else pos + seg
+        spans.append({"version": str(v), "start": pos, "end": end})
+        pos = end
+    return [
+        {
+            "capture_record_id": "cap_t0",
+            "provenance": "engine_spans",
+            "spans": spans,
+            "version": str(versions[-1]),
+        }
+    ]
+
+
 def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
     """生成与 miles rh2_event_log 生产 schema 同形的代表性事件文件。"""
     events: list[dict] = []
@@ -2160,6 +2439,46 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                 behavior = [[str(version), "corrupt"] for _ in leaves]
             if mutate == "missing_behavior_version" and rid == 0 and g == 0:
                 behavior = [[] for _ in leaves]
+            # V2 正向覆盖：基线必须真实出现"跨更新 turn 携带多区间证据"的
+            # 样本（rid2/g1 组：turn 从 version-1 跨到 version；version-1 <
+            # current，staleness=1 合法）——否则 spans 检查的多版本路径只被
+            # 负例触达。
+            if rid == 2 and g == 1:
+                behavior = [[str(version - 1), str(version)] for _ in leaves]
+            # V2 spans 证据基线：逐叶与 behavior 一致的 engine_spans 结构
+            # （单轮、区间覆盖 320 训练 token = lp num_tokens）。
+            spans_evidence = [_wvs_entry(b) for b in behavior]
+            if rid == 1 and g == 0:
+                if mutate == "span_understate":
+                    # 低报反例（adv_miles）：引擎区间证据 v1+v2，记账只记末
+                    # 版本 v2——staleness 用 min(behavior)=2 算出 0（静默低
+                    # 报），只有 spans 一致性检查能抓红。
+                    behavior = [["2"] for _ in leaves]
+                    spans_evidence = [_wvs_entry(["1", "2"]) for _ in leaves]
+                if mutate == "span_gap":
+                    behavior = [["1", "2"] for _ in leaves]
+                    spans_evidence = [[{
+                        "capture_record_id": "cap_t0", "provenance": "engine_spans",
+                        "spans": [{"version": "1", "start": 0, "end": 150},
+                                  {"version": "2", "start": 170, "end": 320}],
+                        "version": "2"}] for _ in leaves]
+                if mutate == "span_overlap":
+                    behavior = [["1", "2"] for _ in leaves]
+                    spans_evidence = [[{
+                        "capture_record_id": "cap_t0", "provenance": "engine_spans",
+                        "spans": [{"version": "1", "start": 0, "end": 200},
+                                  {"version": "2", "start": 150, "end": 320}],
+                        "version": "2"}] for _ in leaves]
+                if mutate == "span_out_of_bounds":
+                    # 区间声明覆盖 500 token，而该叶训练 token（lp num_tokens）
+                    # 只有 320——交叉校验必红（越界）。
+                    behavior = [["2"] for _ in leaves]
+                    spans_evidence = [[{
+                        "capture_record_id": "cap_t0", "provenance": "engine_spans",
+                        "spans": [{"version": "2", "start": 0, "end": 500}],
+                        "version": "2"}] for _ in leaves]
+            if mutate in ("spans_absent_with_update", "no_update_no_spans"):
+                spans_evidence = [None for _ in leaves]
             tapes = [
                 {"shape": [511, 48, 8], "dtype": "int32", "digest": _leaf_digest(i, o), "expected_rows": 511}
                 for (i, o) in leaves
@@ -2172,6 +2491,7 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                  leaf_ordinals=[o for _, o in leaves],
                  rewards=leaf_rewards,
                  behavior_versions=behavior,
+                 weight_version_spans=spans_evidence,
                  statuses=["Status.COMPLETED"] * len(leaves),
                  response_lengths=[400] * len(leaves),
                  routing_tape=tapes)
@@ -2186,6 +2506,7 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                  sample_indices=zero_var_indices, leaf_ordinals=[0] * _GROUP_SIZE,
                  rewards=[0.0] * _GROUP_SIZE,
                  behavior_versions=[[str(version)]] * _GROUP_SIZE,
+                 weight_version_spans=[_wvs_entry([str(version)])] * _GROUP_SIZE,
                  statuses=["Status.COMPLETED"] * _GROUP_SIZE, response_lengths=[400] * _GROUP_SIZE,
                  routing_tape=[
                      {"shape": [511, 48, 8], "dtype": "int32", "digest": _leaf_digest(i, 0), "expected_rows": 511}
@@ -2240,8 +2561,10 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
             outcome, applied = "NORMAL", True
             if mutate in ("one_skipped_rollout", "all_skipped_but_update") and rid == 2:
                 outcome, applied = "SKIPPED_ZERO_SIGNAL", False
-            if mutate == "normal_not_applied":
+            if mutate in ("normal_not_applied", "no_update_no_spans"):
                 applied = False  # found-inf 型：NORMAL 但没有真实 optimizer.step()
+                # no_update_no_spans（V2）：借同一"全场无 applied"形态制造
+                # "无 mid-run 更新窗口"的 run——单版本记账的合法窗口正例。
             if mutate == "pc_not_applied" and rid == 0 and sid == 0:
                 # 正控组所在 step 被跳过：方差在场但没有驱动更新。
                 outcome, applied = "SKIPPED_ZERO_SIGNAL", False
@@ -2397,7 +2720,7 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
         # 发布语义与 patch 0003 对齐：本轮有 applied step 才发布并进版本。
         any_applied_this_rollout = not (
             (mutate in ("one_skipped_rollout", "all_skipped_but_update") and rid == 2)
-            or mutate == "normal_not_applied"
+            or mutate in ("normal_not_applied", "no_update_no_spans")
         )
         if mutate == "applied_but_publish_skipped":
             emit("weight_publish_skipped", rollout_id=rid)  # applied 在场却只发"有意跳过"
@@ -2553,6 +2876,12 @@ def cmd_selftest() -> int:
         v = _run_judge(_selftest_evidence(tmp))
         check(v["overall"] == "PASS", f"好例应 PASS，得 {v['overall']}: "
               + "; ".join(f"{c['check']}={c['status']}:{c['detail']}" for c in v["checks"] if c["status"] not in (PASS, NA)))
+        # V2：基线必须真实包含"跨更新 turn 多区间证据"的正向覆盖（rid2/g1），
+        # 否则 spans 检查的多版本路径只被负例触达。
+        base_spans_detail = {c["check"]: c["detail"] for c in v["checks"]}[
+            "weight_version_spans_coverage"]
+        check("其中 0 个样本" not in base_spans_detail,
+              f"基线应包含跨更新多版本正例证据，got {base_spans_detail}")
 
         # --- 删任一必要事件 -> INCOMPLETE（B1 修复验收）---------------------
         for mutate in (
@@ -2709,6 +3038,29 @@ def cmd_selftest() -> int:
         v = _run_judge(_selftest_evidence(tmp, mutate="nonnumeric_behavior_version"))
         check("staleness_max_versions" in failed_checks(v),
               f"数值+非数值混合版本列表应 FAIL，got {failed_checks(v)}")
+        # --- V2：per-token weight version spans 覆盖/低报审计 -----------------
+        # 核心负测试（adv_miles 反例）：引擎区间证据 v1+v2、记账只记 v2——
+        # staleness 检查自身此时是**绿**的（min(behavior)=2、current=2、
+        # staleness=0，低报静默），必须由 spans 一致性检查抓红。
+        v = _run_judge(_selftest_evidence(tmp, mutate="span_understate"))
+        check("weight_version_spans_coverage" in failed_checks(v),
+              f"跨更新 turn 只记单版本（staleness 低报）应 FAIL spans 检查，got {failed_checks(v)}")
+        check("staleness_max_versions" not in failed_checks(v),
+              "低报形态下 staleness 检查按记账列表算是绿的——正是 spans 检查存在的理由；"
+              f"若它红了说明本反例构造错位，got {failed_checks(v)}")
+        check(v["overall"] != "PASS", f"低报 run 总判定不得 PASS，got {v['overall']}")
+        for mutate in ("span_gap", "span_overlap", "span_out_of_bounds", "spans_absent_with_update"):
+            v = _run_judge(_selftest_evidence(tmp, mutate=mutate))
+            check("weight_version_spans_coverage" in failed_checks(v),
+                  f"{mutate} 应 FAIL spans 检查，got {failed_checks(v)}")
+            check(v["overall"] != "PASS", f"{mutate} 总判定不得 PASS，got {v['overall']}")
+        # 正例：无 mid-run 更新窗口的 run，single_version_only（无 spans 证据）
+        # 合法——spans 检查必须 PASS（其余检查如 applied 步数按各自语义红）。
+        v = _run_judge(_selftest_evidence(tmp, mutate="no_update_no_spans"))
+        spans_status = {c["check"]: c["status"] for c in v["checks"]}.get(
+            "weight_version_spans_coverage")
+        check(spans_status == PASS,
+              f"无 mid-run 更新窗口时单版本记账（无 spans 证据）应 PASS spans 检查，got {spans_status}")
         v = _run_judge(_selftest_evidence(tmp, mutate="logprob_length_mismatch_all"))
         check("logprob_alignment_and_coverage" in failed_checks(v),
               f"全部长度错位应 FAIL，got {failed_checks(v)}")
@@ -2825,7 +3177,10 @@ def cmd_selftest() -> int:
         "租前聚焦修复批反例——leaf 身份（tape 对调/同 leaf 重复消费/全线性冒充 fan-out 覆盖/"
         "身份字段缺失 INCOMPLETE）、trainer per-rank oracle（rank 缺失/额外/重复、每步重建 "
         "optimizer、scheduler 步进不精确、NaN loss/grad_norm、pp-last 指标未覆盖全 DP）、"
-        "manifest thresholds digest 缺失/空/非法——全部命中）"
+        "manifest thresholds digest 缺失/空/非法——全部命中；"
+        "V2 weight-version spans 反例——跨更新 turn 只记单版本（staleness 自身绿时低报必由 "
+        "spans 一致性抓红）、区间缝隙/重叠/越界、有更新窗口的 run 无 spans 证据——全部命中 "
+        "FAIL，无更新窗口的 single_version_only 正例 PASS，基线含跨更新多区间正向覆盖）"
     )
     return 0
 

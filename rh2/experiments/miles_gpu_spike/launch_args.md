@@ -13,7 +13,7 @@
 
 | 项 | 值 | 说明 |
 |---|---|---|
-| miles checkout | `reference/miles-rh2-integration`,分支 `rh2-integration-v2`,HEAD `f6aab6542`,tree `9d7617bf5294d11918c9f7495fe7285ed80a35d5` | 开机前先跑 `rh2/scripts/miles_integration_lanes.sh`（C5 双 lane gate：树哈希/干净工作树/pin/patch digest/精确计数全过才算资格） |
+| miles checkout | `reference/miles-rh2-integration`,分支 `rh2-integration-v3`;HEAD/tree 的钉死值以 `docs/agentic_RL/repo_harness_rh2_workstreams/miles_spike/integration_base_manifest.json` 为唯一事实源（本文件不再复写具体 SHA,防双事实源漂移——launch preflight P9c 已按 manifest 双向核对） | 开机前先跑 `rh2/scripts/miles_integration_lanes.sh`（C5 双 lane gate：树哈希/干净工作树/pin/patch digest/精确计数全过才算资格） |
 | 训练脚本 | `train_async.py` | fully-async 专用（CI `_common.py` execute 同款选择） |
 | 环境变量 | `MILES_EXPERIMENTAL_FT_TRAINER` **必须不设**（或设 0） | B6 锁定：实验 FT trainer 会捕获 cell 异常重试最多 30 次并允许部分 cell 失败继续（miles/ray/train/group.py train→retry 链）,吞掉 faithful DIS 的 fail-stop 语义。`faithful_dis_loss_function` 已 fail-closed（reason_code `experimental_ft_trainer_locked`）,设了也会拒绝,但应在启动层就不设 |
 | 镜像 | sm_120 路径 (b)：官方镜像 + 重编 kernel wheel 清单 | spike-log S3;BF16-only |
@@ -41,6 +41,21 @@
     # ——若首开机想先复刻上游小支持集形态,可临时用 32,但正式 spike 记录以
     # T0-A 口径为准。
 
+--use-miles-router             # V3（vendor refresh 第三批）新增,与 top_p<1 绑定的硬前置。
+    # 为什么必须：#2596 最新语义把 sampling-support replay 收紧为 fail-closed——
+    # rollout_top_p<1 且未开 MilesRouter 时 miles_validate_args 直接 ValueError
+    # （miles/utils/arguments.py:2942-2948）,理由:SGLang model gateway 不转发
+    # 顶层 return_sampling_mask,mask 会被静默丢掉（mask 丢失 = faithful DIS 的
+    # 支持集证据链断裂）;PD 模式的 mask 支持亦已撤销。层次选择：这是 miles
+    # 一等 CLI 旗标（add_router_arguments,store_true）,所以放 launch 参数组,
+    # **不**进 custom_config.yaml（该文件纪律 = 只承载无一等旗标的 setattr 键）。
+    # 消费链：router_manager.py:40 start_router 起 MilesRouter;engine 起动后
+    # POST /add_worker 自注册（sglang_engine.py:317）;rh2 adapter 的 sglang_url
+    # 即 router 地址（bringup.py:662）,/generate、/abort_request、
+    # /get_weight_version 全部经 router catch-all 原样转发。
+    # ⚠️ 配套拓扑限制：MilesRouter 逐请求最小负载选 worker,忽略
+    # X-SMG-Routing-Key ⇒ engine 数钉死 1（见 §2 与 router_targeting_audit.md）。
+
 --dynamic-sampling-filter-path miles.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
     # F2 零信号语义第 1 处接线：reward 全相等（组内零方差 ⇒ GRPO advantage
     # 全 0）的组在 DefaultDataBuffer.put 处丢弃,不进训练 buffer;fully-async
@@ -61,7 +76,20 @@ PYTHONPATH 须含 `<repo>/rh2/src`（repoharness2 + vendor slime 同一源树）
 --actor-num-nodes 1
 --actor-num-gpus-per-node 6            # 占位:先复现 6+2,再收 4+4(spike 目标)
 --rollout-num-gpus 2
---rollout-num-gpus-per-engine 2
+--rollout-num-gpus-per-engine 2        # V3 起该值不再独立配置:launch.sh 钉死
+                                       # per-engine := rollout 卡数 ⇒ engine 数
+                                       # 恒 1（engine 数 = rollout_num_gpus //
+                                       # per_engine,rollout_server.py:49）。
+                                       # 原因:MilesRouter 忽略 X-SMG-Routing-Key,
+                                       # 多 engine 下 /abort_request、
+                                       # /get_weight_version 逐请求最小负载错发
+                                       # （审计+解锁前置清单 =
+                                       # router_targeting_audit.md;preflight
+                                       # P11(d) 断言 engine 数=1）。注意后果:
+                                       # sglang TP = per-engine 卡数,G2 改
+                                       # rollout 4 卡时是 1 engine × TP4。
+                                       # 旧环境覆盖位 RH2_SPIKE_ROLLOUT_GPUS_
+                                       # PER_ENGINE 已作废,设了 preflight 即红。
 --tensor-model-parallel-size 1
 --sequence-parallel
 --pipeline-model-parallel-size 3       # 占位:4+4 下需重切(如 pp2)
@@ -130,6 +158,11 @@ custom-config setattr 是既有官方注入面）。
 
 ## 4. 开机自检顺序（要素级,非脚本）
 
+0. `launch.sh preflight` 全绿——含 V3 新增 P11 语义闸:(a) top_p<1 ⇒
+   `--use-miles-router` 在参数组、top-k 正有限、无 `--recompute-logprobs-via-
+   prefill`（miles_validate_args 同判据,arguments.py:2931-2948）;(b)
+   qkv_format 非 thd 即红（#2798 BSHD 排序修复未吸收）;(c) PD 两入口
+   （--prefill-num-servers/--sglang-config）出现即红;(d) engine 数恒 1。
 1. `rh2/scripts/miles_integration_lanes.sh` 全绿（资格 gate）。
 2. 启动后看 startup 探针日志:mask 分支断言（`rh2_engine_sampling_mask` 生效、
    请求带顶层 `return_sampling_mask`、旧 `custom_params` tape 约定关闭）。

@@ -74,6 +74,19 @@ execution 的 token 扁平平均）已删除——那是 B4 指出的真算法 b
   capture_wire `parse_turn_sampling_support` 做同款替换。观察/工具位
   （loss_mask=0）在两条链上都是单例支持集,其 support-normalized logprob
   恒 0。全词表 logprob 只留在 raw_response 诊断列,不进本函数。
+- **weight-version spans 不改本函数任何计算（V2 交互确认）**：per-token
+  权重版本区间（sglang meta_info.weight_versions -> Sample.weight_versions
+  并入全部区间版本）**只修 staleness/版本记账**——buffer 准入
+  （DefaultDataBuffer 的 oldest=min(weight_versions)）与验收审计因此看到
+  turn 内跨更新的真实最旧版本。ratio 计算与它无关也不得有关：behavior
+  logprob 是**生成时刻**由当时在役权重逐 token 算出并随 wire 原样传输的
+  数值（跨更新轮的前段 token 天然是旧版本权重的 logprob，后段是新版本
+  的——数值本身已经 per-token faithful，不存在"按版本换列"的操作），
+  r_i = exp(logπ_θ - logπ_rollout) 与 f(r) 信任区间是纯数值判定，不看
+  版本。**本模块没有、也不得新增按 weight_version 的 token/样本 gating**
+  （排查结论：rh2/miles 两侧唯一按版本的准入 = buffer staleness 组级
+  过滤；miles logprob_compare 的 same_version 只影响 parity 对拍的分组
+  统计，不进 loss）。
 - **target∈support 断言在 gather 之前（C2 收口）**：上游三层校验全在
   rollout 侧,loss 层没有——这里是训练端唯一防线（防传输错位/artifact
   损坏）。断言失败抛 FaithfulDisLossError,绝不静默出 -inf/NaN。

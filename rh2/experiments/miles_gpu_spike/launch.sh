@@ -43,7 +43,11 @@
 #   num_experts_per_tok=8、decoder_sparse_step=1 且 mlp_only_layers=[] ⇒ 48 层全 MoE；
 #   与 miles scripts/models/qwen3-30B-A3B.py、slime scripts/models/qwen3-30B-A3B.sh 一致）；
 #   MILES_EXPERIMENTAL_FT_TRAINER 必须不设（B6 锁定：实验 FT trainer 的 retry/部分失败
-#   继续语义会吞掉 faithful DIS 的 fail-stop；loss 侧已 fail-closed，这里在启动层就不设）。
+#   继续语义会吞掉 faithful DIS 的 fail-stop；loss 侧已 fail-closed，这里在启动层就不设）；
+#   --use-miles-router + 单 engine 拓扑（V3 vendor refresh：#2596 最新 fail-closed 要求
+#   top_p<1 必须走 MilesRouter，而 MilesRouter 逐请求最小负载选 worker、忽略
+#   X-SMG-Routing-Key ⇒ engine 数钉死 1；见 topo 注释、SGLANG_ARGS 注释与
+#   同目录 router_targeting_audit.md）。
 #
 # execution mode 说明（F3 §5.1，防"把 s1_compat 误称 formal FA"）：
 #   s1_compat = pre-formal 硬件算法探针模式。fa_audit_only 返回 abort 样本不交训练；
@@ -122,7 +126,24 @@ EVAL_SMOKE_SHA_EXPECTED="77e736d12fd3cf638c148ae9fa50361b5b01e03ecb1aa4cb6e01e3f
 # topo（默认 G1 的 6+2；G2 换 4+4 时经环境覆盖，cp 恒为 1——faithful_dis CP>1 fail-closed）
 ACTOR_GPUS="${RH2_SPIKE_ACTOR_GPUS:-6}"
 ROLLOUT_GPUS="${RH2_SPIKE_ROLLOUT_GPUS:-2}"
-ROLLOUT_GPUS_PER_ENGINE="${RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE:-2}"
+# V3（vendor refresh 第三批）单 engine 钉死：per-engine 卡数 := 全部 rollout 卡
+# ⇒ engine 数恒为 1。miles 事实：engine 数 = rollout_num_gpus //
+# rollout_num_gpus_per_engine（miles/ray/rollout/rollout_server.py:49 实际按此
+# 建 engine；update_weight_from_distributed/p2p_transfer_utils.py:64 同式）。
+# 原因：本脚本启用 --use-miles-router（见 SGLANG_ARGS 注释）后，MilesRouter 对
+# 每个 HTTP 请求独立选最小负载 worker（miles/router/router.py:142 do_proxy →
+# :215 _use_url），忽略 rh2 capture wire 发送的 X-SMG-Routing-Key；多 engine 下
+# /abort_request、/get_weight_version 会被错发到任意 engine（逐端点判定与解锁
+# 前置清单：同目录 router_targeting_audit.md）。该清单关闭前不提供 per-engine
+# 覆盖位——旧 RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE 已作废，设了显式 FAIL（防旧
+# G2 配方静默改义）。语义后果要知道：sglang 推理 TP = per-engine 卡数
+# （miles/backends/sglang_utils/arguments.py:184 sglang_tp_size =
+# rollout_num_gpus_per_engine），因此 G2 覆盖 RH2_SPIKE_ROLLOUT_GPUS=4 时得到
+# 1 engine × TP4，而不是 2 engine × TP2。
+if [ -n "${RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE:-}" ]; then
+  die "RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE 覆盖位已移除（V3 router 定向限制：engine 数钉死 1，per-engine 恒等于 rollout 卡数=${ROLLOUT_GPUS}）。多 engine 解锁前置见 router_targeting_audit.md；确要改拓扑请改脚本留痕。"
+fi
+ROLLOUT_GPUS_PER_ENGINE="$ROLLOUT_GPUS"
 TP="${RH2_SPIKE_TP:-1}"; PP="${RH2_SPIKE_PP:-3}"; EP="${RH2_SPIKE_EP:-2}"
 CP=1                                                  # 不提供覆盖位：CP>1 直接换实验
 NUM_ROLLOUT="${RH2_SPIKE_NUM_ROLLOUT:-3}"             # G1 最小：≥3 轮 rollout
@@ -414,6 +435,19 @@ PERF_ARGS=(
   --max-tokens-per-gpu "$MAX_TOKENS_PER_GPU"
 )
 SGLANG_ARGS=(
+  # V3：显式启用 MilesRouter。这是 miles 一等 CLI 旗标（miles/utils/arguments.py
+  # add_router_arguments，store_true 默认 False——所以必须显式带，custom_config
+  # 不承载有一等旗标的键）。消费链：miles/ray/rollout/router_manager.py:40
+  # start_router 据此起 MilesRouter（而非 sgl-router），engine 起动后向其
+  # POST /add_worker 自注册（sglang_engine.py:317），rh2 adapter 的 sglang_url
+  # 就是该 router 地址（rh2 bringup.py:662）。为什么必须：#2596 最新 fail-closed
+  # ——rollout_top_p<1（本脚本 0.8）时 miles_validate_args 直接 ValueError
+  # （arguments.py:2942-2948），理由是 SGLang model gateway 不转发
+  # return_sampling_mask，sampling-support replay 的 mask 会被静默丢掉；PD 模式
+  # 亦已撤销 mask 支持。MilesRouter 的 catch-all 代理按原始 body 转发
+  # （router.py do_proxy content=body），顶层 return_sampling_mask 旗标可完整
+  # 抵达引擎。
+  --use-miles-router
   --rollout-num-gpus-per-engine "$ROLLOUT_GPUS_PER_ENGINE"
   --sglang-mem-fraction-static "${RH2_SGLANG_MEM_FRACTION:-0.7}"
   --sglang-max-running-requests 512
@@ -448,6 +482,63 @@ for tok in "${ALL_ARGS[@]}"; do
 done
 [ "$CP" = "1" ] || die "CP 必须为 1（faithful_dis CP>1 fail-closed）"
 
+# P11. V3 router/replay/PD/engine 语义闸（对最终提交的 token 流断言，三模式都
+#      执行——top_p<1 而 router 缺失这类组合在这里就红，不等 Ray/miles 启动）。
+#      判据 = integration tree miles/utils/arguments.py miles_validate_args 同
+#      判据（行号逐条注明）。不直接调用该函数：其 import 链需要 sglang_router
+#      （arguments.py:8），本机 preflight venv 无此依赖；同判据镜像检查 + 行号
+#      锚点是"本机可跑"约束下的替代，锚点漂移由 lanes 树 digest 钉住。
+has_tok() { local t; for t in "${MODEL_ARGS[@]}" "${ALL_ARGS[@]}"; do [ "$t" = "$1" ] && return 0; done; return 1; }
+# (a) sampling-support replay ⇒ 必须 MilesRouter + 正有限 top-k + 无 prefill 复算。
+#     replay 开关 = rollout_top_p < 1.0（miles/utils/sampling.py:4，严格小于）；
+#     三条 fail-closed 见 arguments.py:2931-2948（#2596 最新语义）。
+if awk "BEGIN{exit !($ROLLOUT_TOP_P < 1.0)}"; then
+  has_tok "--use-miles-router" \
+    || die "rollout_top_p=$ROLLOUT_TOP_P <1.0 但参数组缺 --use-miles-router：#2596 fail-closed（SGLang model gateway 不转发 return_sampling_mask，arguments.py:2942-2948 启动时必 ValueError）——preflight 提前红"
+  [ "$ROLLOUT_TOP_K" -ge 1 ] 2>/dev/null \
+    || die "rollout_top_p=$ROLLOUT_TOP_P <1.0 要求正的 --rollout-top-k 以约束支持集（当前='$ROLLOUT_TOP_K'；arguments.py:2932-2936）"
+  if has_tok "--recompute-logprobs-via-prefill"; then
+    die "sampling-support replay 与 --recompute-logprobs-via-prefill 互斥（prefill 复算不保留 rollout 采样支持集；arguments.py:2937-2941）"
+  fi
+fi
+# (b) qkv_format 必须 thd（防御断言）：launch 不带该旗标 = miles 默认 thd
+#     （arguments.py:271-276 choices thd/bshd default thd）。#2798（BSHD 下
+#     B>1 时 R3 tape token 排序错）未吸收，THD 是 R3 tape 语义前提——bshd
+#     出现属换实验，先吸收该修复再谈。
+QKV_SEEN=""
+_prev=""
+for tok in "${MODEL_ARGS[@]}" "${ALL_ARGS[@]}"; do
+  case "$tok" in --qkv-format=*) QKV_SEEN="${tok#--qkv-format=}" ;; esac
+  [ "$_prev" = "--qkv-format" ] && QKV_SEEN="$tok"
+  _prev="$tok"
+done
+if [ -n "$QKV_SEEN" ] && [ "$QKV_SEEN" != "thd" ]; then
+  die "qkv_format='$QKV_SEEN' ≠ thd：#2798 BSHD B>1 R3 tape 排序修复未吸收，THD 前提钉死（launch 缺省即 thd，谁显式改谁先补修复）"
+fi
+# (c) PD（prefill/decode 分离）必须关闭：#2596 已撤销 PD 的 sampling-mask
+#     支持，且 MilesRouter 本身 assert 不支持 PD（router_manager.py:41）。
+#     PD 的两个入口都不许出现：--prefill-num-servers（legacy 旗标，
+#     sglang_config.py:170 from_prefill_num_servers）与 --sglang-config
+#     （YAML server_groups 可声明 prefill/decode worker，sglang_config.py:95）。
+for tok in "${MODEL_ARGS[@]}" "${ALL_ARGS[@]}"; do
+  case "$tok" in
+    --prefill-num-servers|--prefill-num-servers=*)
+      die "参数组混入 --prefill-num-servers：PD 模式已撤销 sampling-mask 支持（#2596），MilesRouter 亦不支持 PD（router_manager.py:41）" ;;
+    --sglang-config|--sglang-config=*)
+      die "参数组混入 --sglang-config：server_groups 可引入 PD/多模型 worker（sglang_config.py:95），V3 钉死单模型单 engine，禁用该入口" ;;
+  esac
+done
+# (d) engine 数必须恰为 1：engine 数 = rollout_num_gpus //
+#     rollout_num_gpus_per_engine（rollout_server.py:49）。多 engine 解锁前提
+#     = router_targeting_audit.md 前置清单关闭（MilesRouter 忽略
+#     X-SMG-Routing-Key，/abort_request、/get_weight_version 逐请求最小负载
+#     错发面见该审计）。
+[ $((ROLLOUT_GPUS % ROLLOUT_GPUS_PER_ENGINE)) -eq 0 ] \
+  || die "rollout 卡数 $ROLLOUT_GPUS 不能被 per-engine $ROLLOUT_GPUS_PER_ENGINE 整除（miles 会静默丢余数卡或建错 engine 数）"
+ENGINE_COUNT=$((ROLLOUT_GPUS / ROLLOUT_GPUS_PER_ENGINE))
+[ "$ENGINE_COUNT" -eq 1 ] \
+  || die "engine 数=$ENGINE_COUNT ≠ 1：MilesRouter 定向缺口未关闭前禁止多 engine（router_targeting_audit.md 前置清单）"
+
 # ---------------------------------------------------------------- 输出/执行
 if [ "$MODE" = "preflight" ]; then
   say "preflight 完成（未组装 GPU 作业）。dry-run 可查看完整命令。"
@@ -463,7 +554,7 @@ if [ "$MODE" = "dry-run" ]; then
   echo "  $MODEL_ARGS_STR \\"
   printf '  %s\n' "${ALL_ARGS[@]}"
   say "（model args 共 ${#MODEL_ARGS[@]} 个 token，经 eval 解析后按数组传给进程）"
-  say "拓扑：${ACTOR_GPUS} train + ${ROLLOUT_GPUS} rollout（TP${TP}/PP${PP}/CP${CP}/EP${EP}，engine=${ROLLOUT_GPUS_PER_ENGINE}）"
+  say "拓扑：${ACTOR_GPUS} train + ${ROLLOUT_GPUS} rollout（TP${TP}/PP${PP}/CP${CP}/EP${EP}；engine 数=${ENGINE_COUNT}（V3 钉死 1），per-engine=${ROLLOUT_GPUS_PER_ENGINE} 卡 ⇒ sglang TP${ROLLOUT_GPUS_PER_ENGINE}；router=miles）"
   say "run 模式训练结束后将自动执行 post-run 闭环（identity 核对/checkpoint 存读删/shutdown 探针/collect/judge），退出码逐步记录在 $EV/postrun_status.json"
   exit 0
 fi
@@ -480,7 +571,7 @@ fi
 mkdir -p "$EV" "$EVENTS_DIR" "$ARTIFACTS" "$CKPT" "$DUMPS"
 LOG="$EV/train.log"
 {
-  echo "mode=run run_id=$RUN_ID r3=$RH2_GPU_SPIKE_R3 topo=${ACTOR_GPUS}+${ROLLOUT_GPUS} tp=$TP pp=$PP cp=$CP ep=$EP"
+  echo "mode=run run_id=$RUN_ID r3=$RH2_GPU_SPIKE_R3 topo=${ACTOR_GPUS}+${ROLLOUT_GPUS} tp=$TP pp=$PP cp=$CP ep=$EP engines=$ENGINE_COUNT per_engine=$ROLLOUT_GPUS_PER_ENGINE router=miles"
   echo "model_id=$RH2_MODEL_ID execution_mode=$RH2_EXECUTION_MODE (pre-formal,不翻闸门)"
   echo "prompt_data_sha256=$PROMPT_DATA_SHA_EXPECTED"
   echo "miles_tree_digest=$MILES_TREE_DIGEST"
@@ -509,6 +600,8 @@ manifest = {
     "r3": "$RH2_GPU_SPIKE_R3",
     "execution_mode": "$RH2_EXECUTION_MODE",
     "topology": {"actor_gpus": $ACTOR_GPUS, "rollout_gpus": $ROLLOUT_GPUS,
+                 "rollout_gpus_per_engine": $ROLLOUT_GPUS_PER_ENGINE,
+                 "rollout_engines": $ENGINE_COUNT, "use_miles_router": True,
                  "tp": $TP, "pp": $PP, "cp": $CP, "ep": $EP,
                  "num_rollout": $NUM_ROLLOUT, "global_batch_size": $GLOBAL_BATCH_SIZE},
 }

@@ -91,6 +91,14 @@ from repoharness2.adapters.miles.sampling_mask_assembly import (
 from repoharness2.adapters.miles.sampling_mask_assembly import (
     AssembledSamplingMask,
 )
+from repoharness2.adapters.miles.weight_version_facts import (
+    ATTACHED_WEIGHT_VERSION_SPANS_ATTR as _ATTACHED_WVS_ATTR,
+)
+from repoharness2.adapters.miles.weight_version_facts import (
+    WEIGHT_VERSION_SPANS_METADATA_KEY,
+    LeafWeightVersionFacts,
+    leaf_facts_to_metadata_payload,
+)
 
 
 class CanonicalizationError(RuntimeError):
@@ -351,9 +359,18 @@ def _convert_slime_sample(
     """vendor slime Sample -> 新 miles Sample（逐字段显式映射）。"""
 
     # C1′-b：装配 mask 附加属性（sampling_mask_assembly.attach_assembled_mask
-    # 挂上；是唯一允许的 slime 侧附加属性，消费后不进 miles 对象 __dict__ 外挂）。
+    # 挂上）；V2：weight-version spans 附加属性（backfill 的
+    # attach_leaf_weight_version_facts 挂上）。这两个是仅有的允许 slime 侧
+    # 附加属性，消费后都不进 miles 对象 __dict__ 外挂（mask 转一等字段，
+    # spans 转 metadata 落点）。
     attached_mask = getattr(s, _ATTACHED_MASK_ATTR, None)
-    _reject_unknown_extras(s, frozenset({_ATTACHED_MASK_ATTR}), _SLIME_FIELDS_EXPECTED, source="slime")
+    attached_wvs = getattr(s, _ATTACHED_WVS_ATTR, None)
+    _reject_unknown_extras(
+        s,
+        frozenset({_ATTACHED_MASK_ATTR, _ATTACHED_WVS_ATTR}),
+        _SLIME_FIELDS_EXPECTED,
+        source="slime",
+    )
 
     if rollout_top_p is not None and float(rollout_top_p) < 1.0 and attached_mask is None:
         raise CanonicalizationError(
@@ -422,6 +439,8 @@ def _convert_slime_sample(
     out.prefix_cache_info = MilesSample.PrefixCacheInfo.from_dict(s.prefix_cache_info.to_dict())
     if attached_mask is not None:
         out.rollout_sampling_mask = _to_miles_sampling_mask(attached_mask, out)
+    if attached_wvs is not None:
+        _apply_weight_version_facts(attached_wvs, out)
     # F4（R3 routing tape）：slime 侧 tape 在场才转换；R3-off（None）保持
     # miles 默认 None，旧路径零改变。
     if s.rollout_routed_experts is not None:
@@ -567,6 +586,55 @@ def _convert_routed_experts(
         )
     # copy=True + order="C"：owned、contiguous（不与输入共享内存）。
     return numpy.array(arr, dtype=numpy.int32, order="C", copy=True)
+
+
+def _apply_weight_version_facts(attached: Any, out: Any) -> None:
+    """LeafWeightVersionFacts -> miles Sample.metadata 落点（V2 转换点）。
+
+    fail-closed 三闸（风格同 `_to_miles_sampling_mask`）：
+
+    1. 类型必须是装配层产物（不接受任意 dict/list——结构化 spans 必须经
+       backfill 的 attach 机制，绕过装配的对象一律拒绝）；
+    2. 两本账互检：facts 的展平版本序列（逐轮逐区间）必须与刚复制到 miles
+       Sample 的 ``weight_versions`` 列表**逐项相等**——staleness 记账列表
+       与结构化区间证据对不上 = 记账损坏（正是 spans 要抓的低报形态，
+       转换边界自身先不许放行）；
+    3. metadata 落点键已存在 = 双事实源（输入样本不应携带该键——它只由
+       本函数写入），拒绝而不覆盖。
+
+    落点选 metadata 而非一等字段：miles Sample 没有 spans 字段；metadata
+    不进训练 wire 白名单（P0-3 已证不透传 trainer），但随 Sample 走完
+    buffer/rollout_manager——staleness 语义修复靠 ``weight_versions`` 本身
+    （上方已并入全部区间版本），metadata 只承载 G1 验收与审计要用的
+    结构化 provenance 证据，不承担训练语义。
+    """
+
+    if not isinstance(attached, LeafWeightVersionFacts):
+        raise CanonicalizationError(
+            "weight_version_spans_wrong_type",
+            f"{_ATTACHED_WVS_ATTR} 附加属性类型 {type(attached).__name__} 不是 "
+            "LeafWeightVersionFacts——结构化 spans 必须经 backfill 装配机制。",
+        )
+    flat_from_turns = list(attached.flatten_turn_versions())
+    declared = list(attached.flat_versions)
+    recorded = [str(v) for v in (out.weight_versions or [])]
+    if flat_from_turns != declared or declared != recorded:
+        raise CanonicalizationError(
+            "weight_version_spans_ledger_mismatch",
+            "结构化区间证据与版本记账两本账不一致："
+            f"逐轮区间展平={flat_from_turns} 装配声明={declared} "
+            f"Sample.weight_versions={recorded}——记账损坏，fail-closed 拒绝"
+            "（低报 staleness 的形态不得在转换边界放行）。",
+        )
+    metadata = out.metadata if isinstance(out.metadata, dict) else {}
+    if WEIGHT_VERSION_SPANS_METADATA_KEY in metadata:
+        raise CanonicalizationError(
+            "weight_version_spans_duplicate_source",
+            f"metadata 已有 {WEIGHT_VERSION_SPANS_METADATA_KEY}——该键只由 "
+            "canonicalize 从装配产物写入，输入携带 = 双事实源，拒绝覆盖。",
+        )
+    metadata[WEIGHT_VERSION_SPANS_METADATA_KEY] = leaf_facts_to_metadata_payload(attached)
+    out.metadata = metadata
 
 
 def _to_miles_sampling_mask(attached: Any, out: Any) -> Any:

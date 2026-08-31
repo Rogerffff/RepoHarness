@@ -1,0 +1,86 @@
+From 2f37869502e9c242d1cd1c6385984037bb23835c Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Mon, 31 Aug 2026 16:04:55 +0800
+Subject: [PATCH] [rh2-integration] book per-token weight-version spans into
+ Sample and the rollout_group event
+
+A request that lives through weight updates reports per-token spans
+(meta_info.weight_versions, sglang weight_versions.py); the scalar
+weight_version is only the last span. Booking just the scalar records a
+v10+v11 turn as all-v11: oldest_weight_version (min) over-estimates and
+DefaultDataBuffer staleness = current - oldest under-reports, letting
+groups past --max-weight-staleness that should have been rejected.
+
+- Sample.update_from_meta_info: append every span version (order kept,
+  tail still equals the scalar); contiguity asserted.
+- rollout_manager rollout_group event: new per-sample
+  weight_version_spans column (structured per-turn evidence written by
+  the rh2 canonicalize boundary into Sample.metadata
+  rh2_weight_version_spans; None = no span evidence) so the G1 judge can
+  cross-check behavior_versions against first-hand engine spans.
+
+Not touched: rollout/session/samples/merge.py still books the scalar --
+the session path is unused by the spike chain and its trim step
+(strip_last_output_tokens) needs truncate-aware span clipping before the
+same fix applies.
+---
+ miles/ray/rollout/rollout_manager.py | 14 ++++++++++++++
+ miles/utils/types.py                 | 17 ++++++++++++++++-
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index 08ff7b6c6..be3c7b139 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -248,6 +248,20 @@ class RolloutManager:
+                 leaf_ordinals=leaf_ordinals,
+                 rewards=rewards,
+                 behavior_versions=[list(s.weight_versions) for s in members],
++                # [rh2-integration] Per-token weight-version span evidence
++                # (sglang meta_info.weight_versions, structured per turn by the
++                # rh2 canonicalize boundary into Sample.metadata). The judge
++                # cross-checks ``behavior_versions`` against this first-hand
++                # engine evidence: a turn that spanned a weight update but was
++                # booked under a single version (staleness under-report) only
++                # shows up here. ``None`` per sample = no span evidence
++                # (single_version_only provenance / pre-spans engine).
++                weight_version_spans=[
++                    s.metadata.get("rh2_weight_version_spans")
++                    if isinstance(s.metadata, dict)
++                    else None
++                    for s in members
++                ],
+                 statuses=[str(getattr(s.status, "value", s.status)) for s in members],
+                 response_lengths=[int(s.response_length) for s in members],
+                 routing_tape=tapes,
+diff --git a/miles/utils/types.py b/miles/utils/types.py
+index 149deeaa7..c2ee102f7 100644
+--- a/miles/utils/types.py
++++ b/miles/utils/types.py
+@@ -296,7 +296,22 @@ class Sample:
+         # Collect prefix cache statistics
+         self.prefix_cache_info.add(meta_info=meta_info)
+ 
+-        if "weight_version" in meta_info:
++        # [rh2-integration] Per-token weight-version spans: a request that
++        # lives through weight updates reports
++        # ``meta_info["weight_versions"] = [{version, start, end}, ...]``
++        # (sglang weight_versions.py); the scalar ``weight_version`` is only
++        # the last span. Booking just the scalar records a v10+v11 turn as
++        # all-v11, so ``oldest_weight_version`` (min) over-estimates and the
++        # buffer's staleness = current - oldest under-reports, letting groups
++        # past ``--max-weight-staleness`` that should have been rejected.
++        # Append every span version (order preserved; the last one still
++        # equals the scalar, keeping tail semantics unchanged).
++        if spans := meta_info.get("weight_versions"):
++            assert spans[0]["start"] == 0 and all(
++                a["end"] == b["start"] for a, b in zip(spans, spans[1:])
++            ), f"malformed weight_versions spans from engine: {spans}"
++            self.weight_versions.extend(s["version"] for s in spans)
++        elif "weight_version" in meta_info:
+             self.weight_versions.append(meta_info["weight_version"])
+ 
+         match meta_info["finish_reason"]["type"]:
+-- 
+2.50.1 (Apple Git-155)
+

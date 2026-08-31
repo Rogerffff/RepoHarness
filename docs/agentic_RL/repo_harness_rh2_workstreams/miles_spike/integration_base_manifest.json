@@ -40,17 +40,21 @@
   "_comment": "V1 vendor refresh 新增（2026-08-31,v3 本地 SHA 62b476838）:docker/Dockerfile 钉死 SGLANG_COMMIT/MEGATRON_COMMIT（值见顶层 sglang_commit/megatron_ref 字段;SGLANG_COMMIT 原为空=构建时静默跟随移动分支 sglang-miles,与 0.5.18 基础镜像构成混合环境风险）。Dockerfile.rocm 有意不钉（rh2 部署面仅 CUDA/sm_120,不可验证的 pin 只会制造受控假象）。在 0006 之后 git am。",
   "patches/0007-rh2-integration-pin-sglang-miles-and-Megatron-commit.patch": "31db5bb65239e13c1acc1637f738481a3a0547071d42209b0be358eca4b02e89"
  },
- "expected_tree": "0f617d7bbca8bae9df700060196ceedef60de188",
- "miles_source_tree_digest": "bcba897da549d35e5bf47686b63724200d068a092fd27394f02c9cd2666d8064",
+ "rh2_patches_spans": {
+  "_comment": "V2 vendor refresh（2026-08-31,v3 本地 SHA 2f3786950）:per-token weight-version spans 记账。types.py update_from_meta_info 把 meta_info.weight_versions 区间的全部版本并入 Sample.weight_versions（修 adv_miles 反例:跨更新 turn 只记单数末版本,oldest/min 高估、buffer staleness 低报）;rollout_manager rollout_group 事件新增 per-sample weight_version_spans 列（来源 = rh2 canonicalize 写入 Sample.metadata 的 rh2_weight_version_spans 结构化证据,g1 judge 用它对 behavior_versions 做一手证据交叉）。session/samples/merge.py 有意不动（spike 链不用 session 路径,其 trim 步骤需截断感知的 span 裁剪,残余风险已登记）。在 0007 之后 git am。",
+  "patches/0008-rh2-integration-book-per-token-weight-version-spans-.patch": "fc120ca8ef959b1bf79e1c2b244d47872153e9dedd846da5334be64b67af1d69"
+ },
+ "expected_tree": "e84a07e110754e5c3185edf436438b9d0db2dff9",
+ "miles_source_tree_digest": "c699aee27de07564d9401809f18310f3f077ad37587a7ba33065e0d3c73315f2",
  "miles_source_tree_digest_note": "miles.utils.rh2_event_log.miles_tree_digest() 对 v3 integration tree 的实算值（P0-4 去自我背书：launch preflight 的 expected digest 以本字段为准,RH2_MILES_ROOT 指向别的树立即红;与 expected_tree 一起构成运行目标的双重身份钉死）",
  "expected_counts": {
-  "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（V1 vendor refresh 重建 integration base 为 rh2-integration-v3,2026-08-31）：计数不变（190/147/337/0）——v3 只更新上游选材与 Dockerfile pin,rh2 侧测试面零增删;历次计数演变记录见 git 历史中本文件的旧版本。",
-  "lane_a_passed": 190,
+  "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（V3 审计移交收口:bringup 权重版本双端点探测,2026-08-31）：lane A 231->235、lane B 378->382（+4 = tests/adapters_miles/test_bringup_weight_version_probe.py,不触 miles 双 base 均跑,零新增 skip;背景 = 钉死 sglang_commit 4e230c3d 中 /get_weight_version 已 404 deprecated,current 改由 /model_info 承载,详见 router_targeting_audit.md §3 已收口条目）;历次计数演变记录见 git 历史中本文件的旧版本。",
+  "lane_a_passed": 235,
   "lane_a_skipped": 147,
-  "lane_b_passed": 337,
+  "lane_b_passed": 382,
   "lane_b_skipped": 0
  },
- "rebuild": "clone -> git fetch origin && git fetch origin pull/2596/head -> checkout -b rh2-integration-v3 f2b7c7929 -> cherry-pick 29c2c3aee 3ac3adce3 cd464a1c4 dbbab1566 -> 依序 git am patches/0001-*.patch ... patches/0007-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件六张 patch 表",
+ "rebuild": "clone -> git fetch origin && git fetch origin pull/2596/head -> checkout -b rh2-integration-v3 f2b7c7929 -> cherry-pick 29c2c3aee 3ac3adce3 cd464a1c4 dbbab1566 -> 依序 git am patches/0001-*.patch ... patches/0008-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件七张 patch 表",
  "previous_base": {
   "_comment": "v2 回退面（分支保留不删）。构造=pin f2b7c7929 + cherry-pick 9b6579a12(#2595 旧 head)+ee648b17d(#2596 旧 head) + 六个语义 commit（f6aab6542/620aa6924/51e3cd969/52040081a/2fff41c95/0853f027b）;patch 存档在 patches/v2/。",
   "branch": "rh2-integration-v2",

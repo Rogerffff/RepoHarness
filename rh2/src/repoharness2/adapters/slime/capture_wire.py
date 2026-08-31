@@ -47,7 +47,10 @@ from repoharness2.adapters.slime.async_worker import (
     ModelCallProxy,
     SessionPoisonRegistry,
 )
-from repoharness2.adapters.slime.generate import GenerationCaptureHook
+from repoharness2.adapters.slime.generate import (
+    GenerationCaptureHook,
+    parse_weight_version_spans,
+)
 
 
 @dataclasses.dataclass
@@ -63,6 +66,15 @@ class PendingTurn:
     # 后即丢弃——mask 事实到不了 commit 之后的装配层。现在随暂存结构走到
     # commit，由 hook 落进 TurnTape.sampling_supports（叶链装配的事实源）。
     turn_support: Any = None
+    # V2（vendor refresh 第二批）：本轮已解析校验的 per-token 权重版本区间
+    # （generate.parse_weight_version_spans 产物，tuple[WeightVersionSpan,...]）。
+    # None = 引擎未报 meta_info.weight_versions（旧引擎，回退单数
+    # weight_version，provenance=single_version_only）；引擎报了但非法在
+    # wire 解析处已抛（fail-closed，走 F5 统一 guard poison+abandon），
+    # 不会以坏值到达这里。commit 时随 hook kwarg 落 TurnTape，且区间的
+    # **全部**版本并入 registry.weight_versions[sid]（drain receipt /
+    # handshake 的 weight_versions_seen 事实源）。
+    weight_version_spans: Any = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -640,11 +652,13 @@ class CaptureRegistry:
             # B2（R6-ext）：wire 已解析校验的逐轮支持集随 commit 交给 hook
             # （TurnTape.sampling_supports）。仅在场时传 kwarg——探针/回归里
             # 的最小 hook 替身没有该参数，非 mask 会话不动既有签名调用形状。
-            extra = (
-                {"turn_support": turn.turn_support}
-                if turn.turn_support is not None
-                else {}
-            )
+            # V2：weight_version_spans 同一模式（仅在场才传；未报 spans 的
+            # 旧引擎轮不动调用形状，hook 直调路径自行解析同一函数）。
+            extra: dict[str, Any] = {}
+            if turn.turn_support is not None:
+                extra["turn_support"] = turn.turn_support
+            if turn.weight_version_spans is not None:
+                extra["weight_version_spans"] = turn.weight_version_spans
             record = hook.on_generate_response(
                 prompt_token_ids=turn.prompt_ids,
                 sampling_params=turn.capture_params,
@@ -672,8 +686,17 @@ class CaptureRegistry:
             raise
         with self._lock:
             still_registered = sid in self.hooks
-            if still_registered and turn.weight_version is not None:
-                self.weight_versions[sid].append(turn.weight_version)
+            if still_registered:
+                # V2：spans 在场时把区间的**全部**版本依序并入（一轮可跨多次
+                # 权重更新；spans[-1].version == 单数 weight_version 已在解析
+                # 时校验，序列尾部仍是 finalize 时刻值——weight_versions_seen
+                # 的 FA-0 权威序列语义）。未报 spans 保持旧口径 append 单数。
+                if turn.weight_version_spans:
+                    self.weight_versions[sid].extend(
+                        span.version for span in turn.weight_version_spans
+                    )
+                elif turn.weight_version is not None:
+                    self.weight_versions[sid].append(turn.weight_version)
         if not still_registered:
             # commit 与 unregister 竞态：会话已销毁——本轮不进树后账，
             # poison + abandon（不静默复活已清理的会话容器）
@@ -1012,6 +1035,17 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
             output_log_probs = [float(x[0]) for x in pairs]
             finish = (meta.get("finish_reason") or {}).get("type", "stop") or "stop"
 
+            # V2：per-token 权重版本区间（sglang-miles meta_info.weight_versions，
+            # 键名/形态/边界合同以 sglang 4e230c3d weight_versions.py 为准）。
+            # **引擎报了就必须合法**：解析失败在这里抛 SlimeBindingError →
+            # 下方 F5 统一 guard poison + abandon（fail-closed，绝不把坏
+            # spans 静默降级成单数记账）。未报（None）= 旧引擎回退单数，
+            # provenance 由 TurnTape.weight_version_provenance 显式记
+            # single_version_only。
+            weight_version_spans = parse_weight_version_spans(
+                meta, generated=len(output_ids)
+            )
+
             turn_support = None
             if want_sampling_mask:
                 # C1′-b 响应侧：解析并校验 output_token_sampling_mask/_logprobs
@@ -1061,6 +1095,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                     request_id=request_id,
                     proxy_result=proxy_result,
                     turn_support=turn_support,
+                    weight_version_spans=weight_version_spans,
                 ),
             )
             if proxy_result is not None and not staged:

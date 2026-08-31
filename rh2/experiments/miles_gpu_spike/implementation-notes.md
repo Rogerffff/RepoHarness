@@ -361,3 +361,219 @@ iteration/TOCTOU/G3/拓扑参数）本批未动。
   integration base 1413 passed/15 skipped（原 1386/15，+27p）。
 - `tests/adapters/ + tests/contract_slime_async/` = **321 passed 逐数不变**。
 - ruff（rh2 全仓 + miles 改动文件）全过。
+
+---
+
+# V2 vendor refresh：per-token weight version spans 端到端（2026-08-31）
+
+背景（adv_miles.md 反例）：sglang-miles（SGLANG_COMMIT=4e230c3d，模块
+`python/sglang/srt/utils/weight_versions.py`）支持一条 /generate 跨多次权重
+更新并返回逐 token 版本区间 `meta_info.weight_versions=[{version,start,end},
+...]`；单数 `weight_version` 只是最后区间。只记单数会把 v10+v11 的 turn 记成
+全 v11——`Sample.oldest_weight_version`（min）高估、`DefaultDataBuffer` 的
+staleness=current-oldest 低报 1 个版本，可能把本应被 `--max-weight-staleness`
+拒绝的组放进训练。
+
+## wire 形态核实结论（以 sglang 源码为准，不以 adv_miles 转述为准）
+
+gh api 拉取 sgl-project/sglang@4e230c3d 的 `weight_versions.py` +
+`test/registered/unit/utils/test_weight_versions.py` +
+`test/registered/rl/test_weight_version_spans.py` + `tokenizer_manager.py`
+注入点核实：
+
+- 键名 `weight_versions`（复数），每项 `{"version": str, "start": int,
+  "end": int}`，半开区间按生成 token 位置计数；注入条件
+  `recv_obj.weight_versions is not None`（旧引擎/未启用时**整键缺席**），
+  `num_output_tokens=completion_tokens`。
+- 合同不变式（上游单测逐条断言）：非空；`spans[0].start==0`；相邻
+  `prev.end==cur.start` 且 `prev.version!=cur.version`（同版本必合并）；
+  零输出恰一个 `{v,0,0}` 空区间；非零输出每区间 `start<end` 且末区间
+  `end==生成 token 数`；版本可回归（v1→v2→v1），**不得假设单调**；
+  `meta_info["weight_version"]==spans[-1].version`（单数=finalize 时刻值，
+  与 FA-0 第 3 条收窄语义一致）。
+- `--weight-version` 可为任意字符串（上游测试用 "base-v0"）；miles 场景为
+  十进制计数器，judge 层保持 digit 校验。
+
+## 落点
+
+- `adapters/slime/generate.py`：`WeightVersionSpan` + `parse_weight_version_
+  spans()`（fail-closed 全量校验，上述不变式逐条 + 单数交叉验证）；
+  `TurnTape.weight_version_spans` + `weight_version_provenance` property
+  （engine_spans / single_version_only）；hook 直调路径解析失败按既有 tape
+  口径记 partial+mismatch（投影层拒收）；`backfill_leaf_sample` 把区间
+  **全部**版本依序并入 `Sample.weight_versions`（oldest/min 修复主体），并
+  在存在 spans 事实时挂 `LeafWeightVersionFacts` 附加属性。
+- `adapters/slime/capture_wire.py`：wire 在 stage 前解析（F5 guard 区间内，
+  引擎报了就必须合法——坏 spans 抛 SlimeBindingError，proxy 链 poison+
+  abandon，直连链异常传播零暂存）；`PendingTurn.weight_version_spans`；
+  commit 仅在场才传 hook kwarg（同 turn_support 模式）；registry
+  `weight_versions[sid]` 按区间 extend（drain receipt / handshake 的
+  weight_versions_seen 含全部版本，尾部仍是 finalize 值）。
+- `adapters/miles/weight_version_facts.py`（新，纯 stdlib）：装配产物类型 +
+  `rh2_weight_version_spans` 附加属性锚 + metadata payload 形态。
+- `adapters/miles/canonicalize.py`：允许集扩 `rh2_weight_version_spans`，
+  消费三闸 fail-closed（类型 / flat_versions 与 Sample.weight_versions
+  两本账互检 / metadata 键双事实源拒绝），转
+  `Sample.metadata["rh2_weight_version_spans"]`。
+- 契约：`BackendHandshake.weight_versions_seen` 与 `WeightVersionsHandshake.
+  weight_versions` **只填充语义不加字段**（description 注明 V2 起承载区间
+  全部版本；FA-0 权威序列语义照旧）。staleness=current-min(seen) 与
+  max_lag=max-min 自动修复，无代码改动。
+- `faithful_dis_loss.py`：docstring 增交互确认——spans 只修 staleness/版本
+  记账，不改 ratio（behavior logprob 逐 token 生成时刻已 faithful）；排查
+  结论：rh2/miles 无任何按单版本的 DIS token/样本 gating（唯一版本准入 =
+  buffer 组级 staleness；logprob_compare 的 same_version 只影响 parity 对拍
+  分组，且低报修复后跨版本样本会被正确剔出对拍集）。
+- miles 侧（commit 2f3786950，patch 0008 + manifest 同步）：
+  `Sample.update_from_meta_info` 并入区间全部版本（miles 自有 rollout 路径
+  同款低报修复，带连续性 assert）；`rollout_manager` rollout_group 事件新增
+  per-sample `weight_version_spans` 列（读 metadata）。
+- `g1_acceptance.py`：collect 落 `weight_version_spans` 行级列；新检查
+  `weight_version_spans_coverage`（无新阈值键，纯语义）：记账列表与引擎
+  一手区间证据逐项一致 + 区间结构合法 + token 覆盖与 logprob_compare 训练
+  token 数交叉 + 有 mid-run 更新的 run 必须携带 spans 证据
+  （single_version_only 仅在无更新窗口合法，bootstrap 豁免）；
+  staleness_max_versions 逐项版本自动含区间全部版本（min over spans）。
+
+## T1 决策（实现后报告）
+
+1. **坏 spans 在 hook 直调路径记 partial 而非抛错**：wire 路径（生产链）
+   fail-closed 抛错；hook 直调（探针/替身）与 sampling mask 同款记
+   partial+mismatch——hook 的既有哲学是"只记录事实"，partial 记录被装配/
+   投影双重拒绝，不产生第三种静默形态。
+2. **结构化 spans 落 miles Sample.metadata 而非一等字段**：miles Sample 无
+   spans 字段；staleness 语义修复完全由 `weight_versions` 本身承担（区间
+   版本并入），metadata 只承载 G1/审计的 provenance 证据（metadata 不进
+   训练 wire——P0-3 已证——但随 Sample 走完 buffer/rollout_manager，事件
+   取证点在 wire 之前）。转换仍走附加属性+扩表 fail-closed（用户指定风格）。
+3. **纯单数链不挂附加属性**：避免无 spans 的既有 321 面被迫 lazy import
+   miles 包；per-turn provenance 在混合链里仍显式。
+4. **judge 对 single_version_only 的合法窗口口径**＝run 内无 mid-run
+   weight_update（publish updates 的 rollout_id 非 None 条目；bootstrap
+   豁免）。有更新而全无 spans 证据 → FAIL（缺证据不算绿；pin-base 引擎或
+   旧 emitter 的真实 run 会红——这正是"GPU 前必须吸收 spans 引擎"的强制）。
+5. **相邻同版本区间判非法**：上游合并语义保证不出现；出现即证据被改写。
+6. **registry 版本账按区间 extend**（去重不做）：保序保重复与既有逐轮
+   append 语义一致，序列尾部仍是 finalize 时刻值。
+7. **miles session/samples/merge.py 不修**（残余登记）：session 路径 spike
+   不用；其 `strip_last_output_tokens` trim 发生在版本 append 之前，直接
+   并入区间会把已被 trim 掉的尾段版本计入——需要按 sglang
+   `truncate_weight_version_events` 语义做截断感知裁剪，超出"最小 commit"
+   范围。若未来启用 session 模式必须先补。
+8. **spans 总 token 与训练 token 的交叉校验**只在行有 logprob 对拍、无
+   length_mismatch 且 masked>0 时强制——两个独立证据面的相等关系
+   （入训轮生成 token 总数 == loss_mask=1 计数）；对拍缺失时由
+   logprob_alignment 检查自己负责，不重复定罪。
+9. **Outcome 的 turn_weight_versions 同步扩 spans**（generate.py 新
+   `hook_turn_weight_versions()`，unsafe-artifact 两处 Outcome 记账改用
+   它）：否则 `intra_execution_version_span`（max-min 派生互检，FA-0 第 2
+   条）会与 Sample 侧同款低报；非 spans 链与旧
+   `[r.weight_version for r in hook.records if r.weight_version]` 逐轮等价
+   （record 与 tape 的单数同源同值，failed 轮两侧皆无）。
+
+## 开放问题 / 待并行线程或后续
+
+- thresholds.md 本轮由另一线程独占（只读）：`weight_version_spans_coverage`
+  的"各键对应的检查"表格行待补（无阈值键，建议行文本见 dev 汇报）；判定
+  逻辑不依赖该文档。
+- 引擎自身漏报区间（该报多段只报一段）无法从事件层证伪——由 sglang 侧
+  单测/GPU tests 覆盖（pin 的 SGLANG_COMMIT 已含）；judge detail 已写明
+  该诚实边界。
+- `_build_handshake` 的 staleness 修复未加专测（seen 内容由 backfill 测试
+  锚定，current-min(seen) 数学由既有 handshake 测试覆盖）。
+
+## 验证账本（本轮）
+
+- 新测试：`tests/adapters_miles/test_weight_version_spans.py` 41 条
+  （parse 正 6/负 18 参数化、hook 直调 3、Outcome 版本序列 helper 2、wire 3、
+  backfill 4、canonicalize 5——含 adv_miles 反例的 oldest==10 端到端断言与
+  低报 ledger_mismatch 红证明）。
+- lanes：A=231 passed/147 skipped（190+41；skip 全 integration_base 豁免），
+  B=378 passed/0 skipped（337+41），manifest 计数/expected_tree/
+  miles_source_tree_digest/patch 0008 digest 全同步。
+- `tests/adapters/ + tests/contract_slime_async/` = **321 passed 逐数不变**；
+  全套非 miles 面 1080 passed/15 skipped 不变。
+- `g1_acceptance.py --self-test` PASS；judge 红绿证明（独立复跑）：
+  baseline PASS（含 8 样本跨更新多区间正向覆盖）；`span_understate`（低报）
+  FAIL 且 **staleness_max_versions 同时保持绿**（低报静默的活证明——只有
+  spans 一致性能抓）；`span_gap`/`span_overlap`/`span_out_of_bounds`/
+  `spans_absent_with_update` 各自命中 FAIL；`no_update_no_spans` 的 spans
+  检查 PASS（单版本合法窗口）。
+- ruff 触及文件全过。rh2 侧未 commit（按任务要求）；miles 侧一个窄 commit
+  2f3786950（patch 0008 存档 + manifest 更新）。
+
+# V2/V3 收尾两小项：bringup 权重版本双端点探测 + thresholds.md spans 表行（2026-08-31）
+
+## 核实结论（开工前，gh api 对钉死 commit 的一手核实）
+
+- 钉死 `SGLANG_COMMIT=4e230c3d85cefdab5b65eeb6f6f87793a707a6fb`
+  （sgl-project/sglang 的 sglang-miles 分支，v0.5.18 线；来源 =
+  integration manifest `sglang_commit` / docker/Dockerfile:24）的
+  `http_server.py` 真实路由：
+  - `/get_weight_version`（含别名 `/weight_version`）**路由仍注册但 handler
+    无条件抛 HTTPException(404 deprecated)**——比 V3 审计登记的"可能已更名"
+    更确定：旧单端点探测对钉死引擎是必然 404，不是概率风险。
+    `RH2_REQUIRE_REAL_WEIGHT_VERSIONS=1` 下 finalize 必 fail-closed 崩溃
+    （单 engine 也炸）；bring-up 链则每次静默降级到历史观测。
+  - `/model_info` 返回体含 `"weight_version"` 键 =
+    `tokenizer_manager.config_value("weight_version")`（manager 持有的
+    current，权重更新成功即推进——与旧端点同一事实源，无键名差异）。
+- 引擎侧 v3 树 `sglang_engine.get_weight_version`（miles/backends/
+  sglang_utils/sglang_engine.py:573-582）已是双端点探测，顺序**先
+  `/model_info` 后 `/get_weight_version`**（先新后旧）。
+- MilesRouter 是 catch-all 代理（miles/router/router.py:71
+  `/{path:path}`），`/model_info` 经 router 可达引擎——探测走
+  `sglang_url`（router 地址）无路由层阻塞。
+
+## 落点
+
+- `rh2/src/repoharness2/adapters/slime/bringup.py`
+  `_latest_engine_version`：单端点 GET 改为
+  `("/model_info", "/get_weight_version")` 双端点 fallback（顺序**对齐引擎
+  侧**而非"先旧后新"——旧端点对钉死引擎必然 404，先旧只会每次 finalize 多
+  烧一个死请求；注释写明 gh api 核实依据）；两端点全非 200 按末次响应
+  raise_for_status，`RH2_REQUIRE_REAL_WEIGHT_VERSIONS=1` 下仍 fail-closed
+  （错误消息注明双端点），bring-up 降级链（registry 最大观测 → 启动探针值）
+  逐字不变；registry 交叉检查逐字不变。
+- 新单测 `rh2/tests/adapters_miles/test_bringup_weight_version_probe.py`
+  （4 条，真回环 HTTP server 而非 monkeypatch requests）：仅新端点（钉死
+  引擎形态，且断言只发一次请求 = 顺序证据）/仅旧端点 fallback/双灭 +
+  require_real=1 拒绝（断言两端点都真实试过）/双灭 + bring-up 降级语义
+  锚定。红证明：stash 掉修复后 3/4 失败（降级测试双态皆绿，符合其"锚定
+  不变语义"定位）。
+- manifest `expected_counts`：lane A 231→235、lane B 378→382（+4，不触
+  miles，双 base 均跑零 skip）。
+- `thresholds.md`：补 `weight_version_spans_coverage` 表行（V2 开放项收口；
+  无现成行文本落盘，按 g1_acceptance.py `_judge_weight_version_spans`
+  实现写成：A/B 两分支判定 + 结构校验清单 + 交叉相等 + MISSING 档 + 诚实
+  边界，证据来源两列齐）；拓扑限制登记里版本探测端点提法同步双端点。
+- `router_targeting_audit.md`：§3 残余风险的更名登记项改写为**已收口**
+  （保留核实事实与修复/测试锚点）；§1 调用点表、§3/§4 端点行、§5 前置
+  2/7 的端点名与 bringup.py 行号锚点同步（§5 前置 2 的"逐 worker 全等
+  断言"在多 engine 解锁前依旧开放，双端点落地不改变该项状态）。
+
+## T1 决策（实现后报告）
+
+1. **探测顺序取"对齐引擎侧"（先新后旧）而非任务给的另一选项"先旧后新"**：
+   两者对三形态（仅新/仅旧/双灭）判定结果相同，但钉死引擎上旧端点必然
+   404——先旧意味着每次 finalize 固定多一个死请求 + 引擎日志噪音，且与
+   sglang_engine.get_weight_version 的顺序不一致（同一语义两处两个顺序，
+   审计时要解释两遍）。
+2. **连接级异常（如 ConnectionError）不做端点间 fallback**：同 host:port，
+   第二个端点必然同样失败；引擎侧同款行为（requests.get 抛异常直接出
+   循环）。失败处置仍由既有 except 分链路（正式 fail-closed / bring-up
+   降级）承担。
+3. **200 但缺 "weight_version" 键按整体探测失败处置（不试下一端点）**：
+   与引擎侧 KeyError 直接传播同语义；对 rh2 落进既有 except 分支——正式链
+   fail-closed，bring-up 降级，与修复前对坏 body 的行为一致。
+4. **audit 文档登记项就地改写为已收口而不是删除**：核实出的事实
+   （404 deprecated 而非移除）修正了登记时的预估，保留在案供租期镜像上
+   复核对照。
+
+## 验证账本（本轮）
+
+- lane A（默认 pin base）：`tests/adapters_miles/` = 235 passed/147
+  skipped；lane B（RH2_MILES_PATH=reference/miles-rh2-integration）=
+  382 passed/0 skipped——均与更新后 manifest 逐数一致。
+- `tests/adapters/ + tests/contract_slime_async/` = 321 passed 逐数不变。
+- ruff 触及文件全过。未 commit（按任务要求）。

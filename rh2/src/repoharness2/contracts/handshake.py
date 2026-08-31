@@ -104,7 +104,16 @@ class BackendHandshake(StrictModel):
     )
     weight_versions_seen: list[NonEmptyStr] = Field(
         min_length=1,
-        description="rollout 期间引擎报告过的权重版本列表（slime Sample.weight_versions 语义；跨版本即 mid-rollout 权重更新的证据）。",
+        description=(
+            "rollout 期间引擎报告过的权重版本列表（slime Sample.weight_versions 语义；"
+            "跨版本即 mid-rollout 权重更新的证据）。V2 起承载 per-token 版本区间的"
+            "全部版本：引擎报 meta_info.weight_versions（一条请求跨权重更新的逐 "
+            "token 区间）时，单轮按区间序贡献多个版本（如 v10 生成 300 token 后"
+            "更新为 v11 续生成 → 本列表含 \"10\",\"11\" 两项，而单数只会记 "
+            "\"11\"）——staleness 用 min(seen) 才能看到真实最旧版本。字段形状不变，"
+            "FA-0 第 3 条的权威序列语义照旧：多版本事实以本序列为准，"
+            "policy_version 单值收窄为 finalize 时刻值。"
+        ),
     )
     staleness_steps: int = Field(
         ge=0, description="off-policy 步数（当前训练 step - 生成时 policy 版本的 step）。"

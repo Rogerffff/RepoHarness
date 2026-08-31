@@ -728,7 +728,11 @@ class WeightVersionsHandshake(StrictModel):
         min_length=1,
         description=(
             "rollout 期间引擎逐轮报告的权重版本（slime Sample.weight_versions 语义，"
-            "跨分支按分支序展平，保留重复）。"
+            "跨分支按分支序展平，保留重复）。V2 起：引擎报 per-token 版本区间"
+            "（meta_info.weight_versions）时，单轮按区间序贡献多个版本——本列表"
+            "= 逐（分支序, 轮次序, 区间序）展平的全部版本，max_lag=max-min 因此"
+            "覆盖 turn 内跨权重更新的真实跨度（单数记账会把跨更新轮折成最后"
+            "区间版本、低报 lag）。字段形状与派生互检不变。"
         ),
     )
     max_lag: int | None = Field(
