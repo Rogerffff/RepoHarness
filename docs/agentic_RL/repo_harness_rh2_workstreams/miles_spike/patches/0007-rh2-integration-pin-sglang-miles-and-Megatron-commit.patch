@@ -1,0 +1,59 @@
+From 62b476838024bf972debcc7de1d8340e81f3491a Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Mon, 31 Aug 2026 13:18:04 +0800
+Subject: [PATCH 7/7] [rh2-integration] pin sglang-miles and Megatron commits
+ in the Dockerfile
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+SGLANG_COMMIT was empty, so every build silently followed the moving
+sglang-miles branch (FETCH_HEAD) while the base image stayed at the
+SGLANG_IMAGE_TAG version — the exact mixed-environment drift the rh2
+integration base exists to prevent. Freeze both moving refs:
+
+- SGLANG_COMMIT=4e230c3d85cefdab5b65eeb6f6f87793a707a6fb
+  (sglang-miles HEAD, 2026-08-31; verified to contain the per-request
+  weight-version spans module python/sglang/srt/utils/weight_versions.py
+  and to match the v0.5.18 image line the tree already uses)
+- MEGATRON_COMMIT=235952df607b3820716e5e67728a5ab470ca33ae
+  (radixark/Megatron-LM miles-main HEAD, 2026-08-31)
+
+Dockerfile.rocm is intentionally left unpinned: the rh2 deployment
+surface is the CUDA/sm_120 image only, and an unverifiable pin would
+only look controlled.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ docker/Dockerfile | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/docker/Dockerfile b/docker/Dockerfile
+index 067142ae4..80296afb9 100644
+--- a/docker/Dockerfile
++++ b/docker/Dockerfile
+@@ -17,12 +17,18 @@ FROM lmsysorg/sglang:${SGLANG_IMAGE_TAG} AS sglang
+ # ======================================== Arguments =============================================
+ 
+ ARG SGLANG_BRANCH=sglang-miles
+-ARG SGLANG_COMMIT=""
++# [rh2-integration] Freeze the moving sglang-miles branch so builds are
++# reproducible. 4e230c3d8 = sglang-miles HEAD at 2026-08-31; it carries the
++# per-request weight-version spans (python/sglang/srt/utils/weight_versions.py)
++# that rh2 consumes, and matches the v0.5.18 image line above.
++ARG SGLANG_COMMIT="4e230c3d85cefdab5b65eeb6f6f87793a707a6fb"
+ 
+ ARG MEGATRON_REPO=radixark/Megatron-LM
+ ARG MEGATRON_BRANCH=miles-main
+-# Empty means the branch HEAD at build time; release builds set it to freeze one commit.
+-ARG MEGATRON_COMMIT=""
++# [rh2-integration] Freeze miles-main for reproducible builds
++# (235952df6 = branch HEAD at 2026-08-31; overriding to "" restores
++# branch-HEAD-at-build-time behavior).
++ARG MEGATRON_COMMIT="235952df607b3820716e5e67728a5ab470ca33ae"
+ 
+ ARG ENABLE_CUDA_13=1
+ 
+-- 
+2.50.1 (Apple Git-155)
+

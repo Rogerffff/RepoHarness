@@ -1,8 +1,8 @@
-From 6c6bebd4fb02b2cedaedf61fb4773db4a7beaa31 Mon Sep 17 00:00:00 2001
+From 2fff41c9560dc377b1a4b665fa81e15d3ddb739a Mon Sep 17 00:00:00 2001
 From: Codex <codex@local>
 Date: Fri, 28 Aug 2026 17:28:00 +0800
-Subject: [PATCH 5/7] [rh2-integration] close pre-rental audit evidence gaps in
- the event layer
+Subject: [PATCH] [rh2-integration] close pre-rental audit evidence gaps in the
+ event layer
 
 rh2 pre-rental full audit (codex_miles_prerental_full_audit_20260828.md)
 found the G1 acceptance evidence layer could green-light runs whose
@@ -556,7 +556,7 @@ index 000000000..662338e35
 +    numeric = [int(v) for v in sample_versions if str(v).isdigit()]
 +    return bool(numeric) and all(v == current_version for v in numeric)
 diff --git a/miles/utils/replay_base.py b/miles/utils/replay_base.py
-index e7fd02560..b57a7c6d8 100644
+index 0415d1c66..af4581fea 100644
 --- a/miles/utils/replay_base.py
 +++ b/miles/utils/replay_base.py
 @@ -1,3 +1,4 @@

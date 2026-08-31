@@ -1,40 +1,61 @@
 {
  "purpose": "integration base 可复跑构造事实（C5 manifest;GPU 前收口第 3 项加固后为 miles_integration_lanes.sh 的唯一事实源——计数/digest 变更必须改这里,可审计）",
  "upstream_repo": "https://github.com/radixark/miles.git",
+ "integration_branch": "rh2-integration-v3",
  "base_pin": "f2b7c7929",
  "base_pin_full": "f2b7c79298a53c53861514d099f7def73bd29f4a",
- "cherry_picks_upstream": {
-  "pr2595": "9b6579a125b2e9345a194c07dd145828c2764dc6",
-  "pr2596": "ee648b17d376c7b58652d09713e1ed96c0fd0e0d"
+ "upstream_selection": {
+  "_comment": "V1 vendor refresh（2026-08-31）的上游选材 SHA 表。#2595 PR head 未再更新（9b6579a12）且已 squash 合入 main 为 29c2c3aee,两者 git patch-id 完全一致（a8d492fcb453…）——v3 取合并版 29c2c3aee 贴上游最终事实;#2596 head 自 ee648b17d 更新为 3ac3adce3（单 commit 骑在 main 的 ca25d697c 上）,新旧语义 diff 见 spike-log V1 条目;cd464a1c4 经 git show --stat 核实确为 SGLANG_IMAGE_TAG v0.5.16→v0.5.18 + wheels tag + sglang 0.5.18 API 适配（sglang_engine/sglang_server_actor/reloadable_process_group/replay_base/det_process_group）+ 删两个 0.5.16-base 专属 pin 段;dbbab1566 为其 flash-linear-attention 0.4.2→0.5.2 后续（纯 Dockerfile 两行）。cherry-pick 到 pin 上全部零冲突（pin..cd464a1c4^ 无任何 commit 触碰其文件面,#2596 触碰文件的 4 个中间 commit 改动全部 3-way 自动收敛且逐文件语义复核通过）。",
+  "pr2595_merged": "29c2c3aee4be0c6d426ca0695880819899b1a2e6",
+  "pr2595_head_unchanged": "9b6579a125b2e9345a194c07dd145828c2764dc6",
+  "pr2596_head": "3ac3adce3e1aef0a2e2bce7c3381c5d063937c62",
+  "sglang_0518_matrix": "cd464a1c4c91546ea43abb2233b97bc1bc90eb97",
+  "fla_052_followup": "dbbab1566ae438f7202fff653eae938e07b1d4b6"
  },
+ "sglang_commit": "4e230c3d85cefdab5b65eeb6f6f87793a707a6fb",
+ "sglang_commit_note": "docker/Dockerfile ARG SGLANG_COMMIT 的钉死值（patches/0007）。选择依据:sglang-miles 分支（sgl-project/sglang）HEAD@2026-08-31,gh api 核实该 SHA 含 per-request weight-version spans 模块 python/sglang/srt/utils/weight_versions.py（blob 6ea1db20a,3728 字节）,且为上游 miles main（cd464a1c4 之后）缺省构建（FETCH_HEAD）当日解析到的同一 SHA——只把移动值冻结,不引入未被上游组合过的版本。",
+ "megatron_ref": "235952df607b3820716e5e67728a5ab470ca33ae",
+ "megatron_ref_note": "docker/Dockerfile ARG MEGATRON_COMMIT 的钉死值（patches/0007）= radixark/Megatron-LM miles-main HEAD@2026-08-31（git ls-remote）。MEGATRON_BRANCH 保持 miles-main。",
+ "sglang_image_tag": "v0.5.18",
  "rh2_patch": "patches/0001-rh2-integration-transport-sampling-mask-wire-fields-.patch",
- "rh2_patch_sha256": "cee3cd5e8faa9366bd979a177e8968929f3c3d3ae62b08e0501223d02271c8c7",
+ "rh2_patch_sha256": "d58ef1bde23939f2148f3606334a8c73b02453e8b5883936227b00167bd2908f",
  "rh2_patches_f2": {
-  "_comment": "F2 全局零信号语义两个窄 commit 的可复跑存档（2026-08-27,rh2-integration-v2 本地 SHA 620aa6924=train_one_step 零信号判定+富报告+熔断,51e3cd969=driver weights_dirty publish 门控;上游 PR 候选）。在 0001 之后按序 git am。",
-  "patches/0002-rh2-integration-skip-optimizer-step-on-exactly-zero-.patch": "445fcd950eac74ff3ce6356ed98cdb93b10346f45a5ed1a486a2883e2f911073",
-  "patches/0003-rh2-integration-gate-weight-publish-on-weights_dirty.patch": "6eda57c8662b4853f66d85319a8b89a03ebc42fc452573329ac516511c1abfb2"
+  "_comment": "F2 全局零信号语义两个窄 commit（v3 本地 SHA 32b749e9e=train_one_step 零信号判定+富报告+熔断,68226dc2c=driver weights_dirty publish 门控;上游 PR 候选）。在 0001 之后按序 git am。",
+  "patches/0002-rh2-integration-skip-optimizer-step-on-exactly-zero-.patch": "b48e0ab1654ea26447860780fef752fb89946f4c33279ab9e5182fed82b53d2a",
+  "patches/0003-rh2-integration-gate-weight-publish-on-weights_dirty.patch": "c3071e19776908a451e2f887151cd66e1a9242afd6459d485c4aec00db23dffd"
  },
  "rh2_patches_g1": {
-  "_comment": "租前终审 B1/B2/B3 修复的 miles 侧窄 commit 存档（2026-08-28,rh2-integration-v2 本地 SHA 52040081a：结构化 G1 验收事件 jsonl（MILES_RH2_EVENT_DIR 门控,step/sample/publish/filter/eval 事件 + optimizer_step_applied 等独立事实）+ 每类 actor 启动时 integration tree digest 断言（RH2_EXPECTED_MILES_TREE_DIGEST 钉死,不一致即停））。在 0003 之后 git am。",
-  "patches/0004-rh2-integration-structured-G1-acceptance-events-inte.patch": "bde10c847420c188f8595b301524ad8ee59ac177ad2d303d77bf20e453bc4c15"
+  "_comment": "租前终审 B1/B2/B3 修复的 miles 侧窄 commit（v3 本地 SHA 68f2ac1c0:结构化 G1 验收事件 jsonl + 每类 actor 启动时 integration tree digest 断言）。在 0003 之后 git am。",
+  "patches/0004-rh2-integration-structured-G1-acceptance-events-inte.patch": "e592615e25c18a5910de3026dc6b9ac7cff338615ca7ecfcd775708c6e0be710"
  },
  "rh2_patches_prerental": {
-  "_comment": "租前完整审查（codex_miles_prerental_full_audit_20260828.md）事件层修复的 miles 侧窄 commit 存档（2026-08-28,rh2-integration-v2 本地 SHA 2fff41c95：P0-1 事件 run_id 印章（MILES_RH2_RUN_ID）;P0-7 train_step_consumed 用 DataIterator 真实 micro-batch 边界（新增 miles/utils/step_attribution.py,删等分推断）;P0-5 replay_fill/replay_consume/replay_exhausted 窄事件 + BaseReplayManager.consumption_snapshot + replay_sample_digests;P0-3A eval_smoke 绑定 weight_version;P0-8 logprob_compare 改 loss_mask=1 口径并保留 length_mismatch（新增 miles/utils/logprob_compare.py）,训练 forward 透传 sample_indices;P1-2 train_step 事件带 zero_signal_scan_seconds）。在 0004 之后 git am。",
-  "patches/0005-rh2-integration-close-pre-rental-audit-evidence-gaps.patch": "90f5f5ff20d4c75776a2412ee190f9fd2b0a1834eec1535103abf55562f55f0e"
+  "_comment": "租前完整审查（codex_miles_prerental_full_audit_20260828.md）事件层修复的 miles 侧窄 commit（v3 本地 SHA 6c6bebd4f:P0-1 run_id 印章/P0-7 真实 micro-batch 边界/P0-5 replay 三事件/P0-3A eval 版本绑定/P0-8 logprob_compare loss_mask 口径/P1-2 scan 计时）。在 0004 之后 git am。",
+  "patches/0005-rh2-integration-close-pre-rental-audit-evidence-gaps.patch": "146cac9797e9e0da1babbbd16351a2f6534d60d2371a27a71d04355dd3f0e6f2"
  },
- "expected_tree": "ea012ae7b4fc53e46ef1445b4d95e108a8b10f90",
- "miles_source_tree_digest": "1200dc3c8e041fbb4dfe5c790ab45a0b45b850705824abd03413c65a9f15e36a",
- "miles_source_tree_digest_note": "miles.utils.rh2_event_log.miles_tree_digest() 对 integration tree 的实算值（P0-4 去自我背书：launch preflight 的 expected digest 以本字段为准,RH2_MILES_ROOT 指向别的树立即红;与 expected_tree 一起构成运行目标的双重身份钉死）",
+ "rh2_patches_focus": {
+  "_comment": "租前聚焦修复批的 miles 侧窄 commit（v3 本地 SHA fb17a5616:#1 leaf 唯一身份 wire 列 + #2 train_step num_rollouts + #3 SGLangEngine.init identity 事件）。在 0005 之后 git am。注意:v3 重新 format-patch 后文件名与 v2 存档略有不同（git 命名截断算法差异）,内容语义相同。",
+  "patches/0006-rh2-integration-leaf-identity-on-the-train-wire-per-.patch": "090e59b32d69de3ac8a74408bb03934fa6ff0ada1c8a36919f00e14427283b0e"
+ },
+ "rh2_patches_pin": {
+  "_comment": "V1 vendor refresh 新增（2026-08-31,v3 本地 SHA 62b476838）:docker/Dockerfile 钉死 SGLANG_COMMIT/MEGATRON_COMMIT（值见顶层 sglang_commit/megatron_ref 字段;SGLANG_COMMIT 原为空=构建时静默跟随移动分支 sglang-miles,与 0.5.18 基础镜像构成混合环境风险）。Dockerfile.rocm 有意不钉（rh2 部署面仅 CUDA/sm_120,不可验证的 pin 只会制造受控假象）。在 0006 之后 git am。",
+  "patches/0007-rh2-integration-pin-sglang-miles-and-Megatron-commit.patch": "31db5bb65239e13c1acc1637f738481a3a0547071d42209b0be358eca4b02e89"
+ },
+ "expected_tree": "0f617d7bbca8bae9df700060196ceedef60de188",
+ "miles_source_tree_digest": "bcba897da549d35e5bf47686b63724200d068a092fd27394f02c9cd2666d8064",
+ "miles_source_tree_digest_note": "miles.utils.rh2_event_log.miles_tree_digest() 对 v3 integration tree 的实算值（P0-4 去自我背书：launch preflight 的 expected digest 以本字段为准,RH2_MILES_ROOT 指向别的树立即红;与 expected_tree 一起构成运行目标的双重身份钉死）",
  "expected_counts": {
-  "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（codex 复核 logprob parity NaN 掩掉收尾,2026-08-29,lane A +4p,lane B +4p）：test_g1_acceptance_events.py +4（test_logprob_diff_bad_values_fail_before_max 参数化 4：logprob_diff_finite_then_nan——max([0.01,nan])==0.01 的原始掩掉反例/logprob_diff_nan_then_finite/logprob_diff_inf/logprob_diff_negative,全部经真实 collect→judge 路径,NaN/Inf 走生产同款 json.dumps/loads 的 NaN/Infinity 字面量 wire 往返）;self-test 同步新增同名 4 反例检查（judge 侧 worst=max(diffs) 前的逐条有限性/非负校验命中 logprob_same_version_mean_abs_diff_max=FAIL）。不打 integration_base 标记,两 lane 都真实执行。上轮变更（租前聚焦修复批 5 项,2026-08-28,lane A +19p/+7s,lane B +26p）：test_g1_acceptance_events.py +15（#1 leaf 身份:好例 fan-out 双叶不再假红/fanout_tape_swap/fanout_duplicate_consumed/no_fanout 覆盖/strip_leaf_ordinals INCOMPLETE 5 测;#2 per-rank oracle:rank_missing_all_steps/train_step_extra_rank/train_step_dup_rank/optimizer_rebuilt/scheduler_wrong_increment/nan_loss_grad/pp_last_metrics_missing_dp 7 测;#5 manifest thresholds digest 缺失/空/非法 3 测）;test_postrun_probes.py +4（#4:grading 孤儿容器/run owner label/多查询任一失败不为零/label 生产者接线锚点）;integration_base 专属 +7：新增 test_leaf_identity_wire.py（6,#1 miles wire 纵切:compute_leaf_ordinals/convert 对齐/dp 分片存活/rollout_group 同序锚点/trainer emitter 锚点/#3 sglang_engine 发射位置锚点）+ test_logprob_compare_masked.py +1（entries 携带 leaf_ordinal）;test_faithful_dis_loss.py 的 sample_dis_accounting 断言改为含 leaf_ordinal 的同 index 双叶（计数不变）;self-test 同步新增同名反例检查,fixture 好例含双叶 fan-out run、train_step 全 pp-last rank 携带一致 metrics(含 loss)+num_rollouts。上轮变更（聚焦复核 codex_pr_p0_recheck 3 残余 P0 oracle 缺口修复,2026-08-28,lane A +11p,lane B +11p）：test_g1_acceptance_events.py 新增 11 个直接负测试（finding 1 R3 rank census:replay_missing_rank/replay_missing_rank_step/replay_dp_digest_conflict 3 测;finding 2 publish bootstrap 唯一+trainer current 锚定:drop_bootstrap/duplicate_bootstrap/wrong_first_update_before/next_rollout_current_mismatch/all_skipped_but_update 5 测;finding 3 逐 turn 版本逐项验证:mixed_future_behavior/nonnumeric_behavior_version/missing_behavior_version 3 测）,反例 fixture 与 --self-test 同源（self-test 同步新增同名 10 反例检查）;fixture 拓扑升级为 6 global rank/dp2（与 thresholds 新键 expected_trainer_global_ranks=6 一致）。上轮变更（租前完整审查 P0-1~P0-8/P1-1/P1-2 修复,2026-08-28,lane A +18p/+15s,lane B +33p）：test_g1_acceptance_events.py 重构（drop 参数化 9→11,新增 P0-1 原子发布/目录不可复用/异 run 污染/manifest 绑定 4 测 + 全量 self-test 执行 1 测;self-test 内含 P0-3/4/5/6/8 全部假绿反例负测试;integration_base +1：manifest miles_source_tree_digest 与实算一致）;新增 test_postrun_probes.py（11,P0-2 真实 DCP fixture 正例+损坏负例+torch.load 假红锚点,P0-3B 查询失败/孤儿/finalization 三态）;新增 integration_base 专属：test_step_attribution.py（4,P0-7 审查 3/1 反例用真实 build_dp_schedule 对拍+DataIterator 消费次序 oracle）、test_replay_evidence.py（2,P0-5 消费快照+digest 字节兼容）、test_logprob_compare_masked.py（6,P0-8 loss_mask 口径/length_mismatch 一等事实）、test_faithful_dis_loss.py +2（sample_dis_accounting 逐样本 accepted 计数）;test_zero_signal_semantics.py 源码锚点更新（P1-2 scan 计时拆行,T2 补锚）。上轮变更（租前终审 B1/B2/B3,2026-08-28,lane A +16p/+2s,lane B +18p）：新增 test_g1_acceptance_events.py——B1 代表性事件 collect→judge 全链 PASS + 9 类必要事件逐一删除必须 INCOMPLETE（parametrize 9）+ B2 oracle（NORMAL 非 applied/Adam 计数交叉验证/current_version 取 trainer 事实/正控须被 applied step 消费/零方差组进训必红/identity 不一致必红）；2 个 integration_base 专属：真实 miles rh2_event_log emitter 产出事件喂 collect 的 schema 同源测试 + tree digest 断言 raise 测试。上轮变更（F4+F5,2026-08-27,delta 两 lane 各 +34）：审计补强 test_generate_fn.py +2（F4 透传面:orchestrator.config moe 期望进 canonicalize 的正向+config_missing 反向）;F4 新增 test_canonicalize_routed_experts.py（+28,R3 tape 三形态转换/fail-closed/纵切到 convert_samples_to_train_data）,test_canonicalize.py 撤 1 个 rollout_routed_experts 拒绝参数（-1,字段改为转换）;F5 新增 test_capture_wire_draft_guard.py（+5,真实 ModelCallProxy 的 delivered draft ownership guard）。两文件均不打 integration_base 标记,lane A/B 都真实执行。上轮（两线程合账）：F1 身份链 test_f1_turn_identity/test_f1_e2e_identity_chain;F2 零信号语义——faithful_dis_loss B6 用例翻转+用例 C 单元、train_seam F2 区段（用例 A~F+momentum 主验收,原 B6 两测删除）、新增 test_zero_signal_semantics.py（buffer filter 丢弃/富报告/驱动门控/源码锚定）、custom_config 新 key 断言。",
+  "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（V1 vendor refresh 重建 integration base 为 rh2-integration-v3,2026-08-31）：计数不变（190/147/337/0）——v3 只更新上游选材与 Dockerfile pin,rh2 侧测试面零增删;历次计数演变记录见 git 历史中本文件的旧版本。",
   "lane_a_passed": 190,
   "lane_a_skipped": 147,
   "lane_b_passed": 337,
   "lane_b_skipped": 0
  },
- "rebuild": "clone -> git fetch origin pull/2596/head -> checkout -b rh2-integration-v2 f2b7c7929 -> cherry-pick 9b6579a12 ee648b17d -> 依序 git am patches/0001-*.patch patches/0002-*.patch patches/0003-*.patch patches/0004-*.patch patches/0005-*.patch patches/0006-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件五张 patch 表",
- "rh2_patches_focus": {
-  "_comment": "租前聚焦修复批的 miles 侧窄 commit 存档（2026-08-28,rh2-integration-v2 本地 SHA 0853f027b：#1 leaf 唯一身份——convert_samples_to_train_data 新增 leaf_ordinals wire 列（compute_leaf_ordinals 按 run key=rollout_id 回退 index 在扁平顺序上数出现序号,VALUE_SPEC/dp 分片清单同步）,rollout_group/train_step_consumed/replay_fill/logprob_compare 事件全部携带 (sample_index, leaf_ordinal) 叶身份,replay_fill 另带行对齐 sample_indices 供 leaf→digest 精确联结;#2 train_step 事件新增 num_rollouts（scheduler 精确步进 oracle）;#3 SGLangEngine.init() 在传输模式分派前发 sglang_engine identity（broadcast/RDT 都创建的 actor;RDT 专属 sglang_server 保留不动,不改传输模式））。在 0005 之后 git am。",
-  "patches/0006-rh2-integration-leaf-identity-train-wire-per-rank-st.patch": "f9ed5e870cf7b578ccc2dfe0b7a3e8a827301d7699cb288a1b9e25047b85d117"
+ "rebuild": "clone -> git fetch origin && git fetch origin pull/2596/head -> checkout -b rh2-integration-v3 f2b7c7929 -> cherry-pick 29c2c3aee 3ac3adce3 cd464a1c4 dbbab1566 -> 依序 git am patches/0001-*.patch ... patches/0007-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件六张 patch 表",
+ "previous_base": {
+  "_comment": "v2 回退面（分支保留不删）。构造=pin f2b7c7929 + cherry-pick 9b6579a12(#2595 旧 head)+ee648b17d(#2596 旧 head) + 六个语义 commit（f6aab6542/620aa6924/51e3cd969/52040081a/2fff41c95/0853f027b）;patch 存档在 patches/v2/。",
+  "branch": "rh2-integration-v2",
+  "expected_tree": "ea012ae7b4fc53e46ef1445b4d95e108a8b10f90",
+  "miles_source_tree_digest": "1200dc3c8e041fbb4dfe5c790ab45a0b45b850705824abd03413c65a9f15e36a",
+  "pr2596_head_old": "ee648b17d376c7b58652d09713e1ed96c0fd0e0d"
  }
 }

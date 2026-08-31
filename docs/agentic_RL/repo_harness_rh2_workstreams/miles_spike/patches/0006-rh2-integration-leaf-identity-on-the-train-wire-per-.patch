@@ -1,0 +1,322 @@
+From fb17a5616b8a75bd8e619d3147615992a896098b Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Fri, 28 Aug 2026 23:00:15 +0800
+Subject: [PATCH 6/7] [rh2-integration] leaf identity on the train wire +
+ per-rank step facts + engine-actor identity
+
+Pre-rental focused-fix batch (rh2 miles GPU spike G1 acceptance):
+
+1. Unique fan-out leaf identity (rh2 #1): fan-out sibling Samples inherit one
+   agent run's Sample.index, so sample_indices alone cannot tell two
+   legitimate leaves apart nor bind a per-leaf routing tape to the right
+   leaf. Add the thin pair (sample_index, leaf_ordinal):
+   - train_data_conversion: compute_leaf_ordinals() (occurrence index per
+     run key = rollout_id falling back to index, over the flattened sample
+     order) + new 'leaf_ordinals' rollout_data column (VALUE_SPEC + dp-shard
+     split list). rollout_ids/group_index grouping semantics untouched.
+   - rollout_manager._emit_rollout_evidence: rollout_group events carry
+     leaf_ordinals computed with the same function over the same order.
+   - megatron model.py: get_batch forwards leaf_ordinals; train_step_consumed
+     events carry per-position leaf_ordinals.
+   - megatron actor.py: replay_fill events carry sample_indices +
+     leaf_ordinals row-aligned with sample_digests (leaf_id -> digest exact
+     linkage instead of digest multisets); logprob_compare entries carry
+     leaf_ordinal (miles/utils/logprob_compare.py, optional column).
+
+2. Per-rank step oracle input (rh2 #2): train_step events carry
+   num_rollouts (the exact opt_param_scheduler.step increment), so the
+   acceptance judge can require scheduler_steps_after == before +
+   num_rollouts per rank instead of 'advanced by something'.
+
+3. SGLang identity under broadcast (rh2 #3): SGLangEngine.init() asserts and
+   emits the 'sglang_engine' integration-tree identity before the transfer-
+   mode dispatch -- the actor exists under both broadcast and RDT, while
+   SGLangServerActor ('sglang_server', kept) only exists on the RDT branch,
+   so a server-actor-only identity is deterministically absent on broadcast
+   runs. No transfer-mode change.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ miles/backends/megatron_utils/actor.py       |  8 ++++++
+ miles/backends/megatron_utils/model.py       | 17 ++++++++++++
+ miles/backends/sglang_utils/sglang_engine.py | 11 ++++++++
+ miles/ray/rollout/rollout_manager.py         | 19 +++++++++++---
+ miles/ray/rollout/train_data_conversion.py   | 27 ++++++++++++++++++++
+ miles/utils/logprob_compare.py               | 18 +++++++++----
+ 6 files changed, 92 insertions(+), 8 deletions(-)
+
+diff --git a/miles/backends/megatron_utils/actor.py b/miles/backends/megatron_utils/actor.py
+index 06e5561e0..278b0bccf 100644
+--- a/miles/backends/megatron_utils/actor.py
++++ b/miles/backends/megatron_utils/actor.py
+@@ -497,6 +497,7 @@ class MegatronTrainRayActor(TrainRayActor):
+         current_version = int(self.weight_updater.weight_version)
+         entries = masked_compare_entries(
+             sample_indices=sample_indices,
++            leaf_ordinals=rollout_data.get("leaf_ordinals"),
+             log_probs=log_probs,
+             behavior_log_probs=behavior,
+             loss_masks=rollout_data.get("loss_masks"),
+@@ -578,6 +579,13 @@ class MegatronTrainRayActor(TrainRayActor):
+                         records_max=max(snap["queue_lens"], default=0),
+                         expected_records=int(sum(num_microbatches)),
+                         num_samples=len(rh2_fill_digests) if rh2_fill_digests is not None else None,
++                        # [rh2-integration] Per-leaf tape binding: digests are
++                        # row-aligned with this shard's sample columns, so the
++                        # judge can require leaf_id -> digest exact linkage
++                        # (a digest multiset alone cannot detect two fan-out
++                        # leaves whose tapes were swapped).
++                        sample_indices=rollout_data.get("sample_indices"),
++                        leaf_ordinals=rollout_data.get("leaf_ordinals"),
+                         sample_digests=rh2_fill_digests,
+                     )
+ 
+diff --git a/miles/backends/megatron_utils/model.py b/miles/backends/megatron_utils/model.py
+index a4dc1399f..9c10887c1 100644
+--- a/miles/backends/megatron_utils/model.py
++++ b/miles/backends/megatron_utils/model.py
+@@ -570,6 +570,7 @@ def _emit_train_step_event(
+     duration_seconds: float,
+     zero_signal_scan_seconds: float | None,
+     loss_reduced: dict[str, float],
++    num_rollouts: int,
+ ) -> None:
+     dist = torch.distributed
+     is_last_stage = bool(mpu.is_pipeline_last_stage(ignore_virtual=True))
+@@ -584,6 +585,11 @@ def _emit_train_step_event(
+         adam_step_after=counts_after[0],
+         scheduler_steps_before=counts_before[1],
+         scheduler_steps_after=counts_after[1],
++        # [rh2-integration] Exact scheduler-increment oracle: an applied step
++        # calls opt_param_scheduler.step(increment=num_rollouts), so the judge
++        # can require scheduler_steps_after == before + num_rollouts instead of
++        # the weaker "advanced by something".
++        num_rollouts=int(num_rollouts),
+         grad_norm=float(grad_norm) if grad_norm is not None else None,
+         duration_seconds=round(duration_seconds, 3),
+         zero_signal_scan_seconds=(
+@@ -620,6 +626,7 @@ def _emit_train_step_consumed(
+     dist = torch.distributed
+     rank = dist.get_rank() if dist.is_available() and dist.is_initialized() else 0
+     sample_indices = rollout_data.get("sample_indices")
++    leaf_ordinals = rollout_data.get("leaf_ordinals")
+     error = None
+     positions: list[int] | None = None
+     if sample_indices is None:
+@@ -654,6 +661,11 @@ def _emit_train_step_consumed(
+         dp_rank=parallel_state.effective_dp.rank,
+         rank=rank,
+         sample_indices=[int(sample_indices[p]) for p in positions],
++        # [rh2-integration] Paired leaf identity (None on shards from an older
++        # wire without the column; the acceptance judge fails closed on that).
++        leaf_ordinals=(
++            [int(leaf_ordinals[p]) for p in positions] if leaf_ordinals is not None else None
++        ),
+         num_tokens=(
+             int(sum(total_lengths[p] for p in positions)) if total_lengths is not None else None
+         ),
+@@ -783,6 +795,10 @@ def train_one_step(
+                 # the acceptance evidence. Forwarded untouched by get_batch;
+                 # None when the shard does not carry sample_indices.
+                 "sample_indices",
++                # [rh2-integration] Fan-out leaf ordinal paired with
++                # sample_indices: (sample_index, leaf_ordinal) is the unique
++                # leaf identity (fan-out siblings share the run's index).
++                "leaf_ordinals",
+                 *sampling_mask_keys,
+             ],
+             args.data_pad_size_multiplier,
+@@ -1007,6 +1023,7 @@ def train_one_step(
+             duration_seconds=time.monotonic() - rh2_step_start,
+             zero_signal_scan_seconds=rh2_zero_scan_seconds,
+             loss_reduced=loss_reduced,
++            num_rollouts=num_rollouts,
+         )
+ 
+     if outcome == TrainStepOutcome.NORMAL:
+diff --git a/miles/backends/sglang_utils/sglang_engine.py b/miles/backends/sglang_utils/sglang_engine.py
+index 817a64c4f..a2d4a0176 100644
+--- a/miles/backends/sglang_utils/sglang_engine.py
++++ b/miles/backends/sglang_utils/sglang_engine.py
+@@ -22,6 +22,7 @@ from miles.backends.megatron_utils.lora_utils import (
+ )
+ from miles.ray.ray_actor import RayActor
+ from miles.ray.rollout.sglang_server_actor import SGLangServerActor
++from miles.utils import rh2_event_log
+ from miles.utils.env_report import collect_and_print_node_env_report
+ from miles.utils.http_utils import get_host_info
+ from miles.utils.lora import LORA_ADAPTER_NAME, lora_rollout_enabled
+@@ -203,6 +204,16 @@ class SGLangEngine(RayActor):
+         router_port=None,
+         engine_info_bootstrap_port=None,
+     ):
++        # [rh2-integration] Integration-tree identity of the engine actor
++        # itself. Emitted here -- not only in SGLangServerActor -- because this
++        # actor exists under BOTH weight-transfer modes: broadcast launches the
++        # server as a subprocess (no SGLangServerActor is ever created), so a
++        # server-actor-only identity would deterministically be absent on
++        # broadcast runs while the acceptance thresholds require an SGLang-side
++        # identity. Asserting before any engine launch also stops a stale-tree
++        # worker before it serves tokens.
++        rh2_event_log.assert_and_emit_identity("sglang_engine")
++
+         if env_report := self.args.env_report:
+             collect_and_print_node_env_report(
+                 role="rollout",
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index 05c977cec..08ff7b6c6 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -18,6 +18,7 @@ from miles.ray.rollout.router_manager import start_session_server
+ from miles.ray.rollout.server_cell import get_cell_indexer_of_id_map
+ from miles.ray.rollout.train_data_conversion import (
+     ROLLOUT_DATA_VALUE_SPEC,
++    compute_leaf_ordinals,
+     convert_samples_to_train_data,
+     split_train_data_by_dp,
+ )
+@@ -201,10 +202,21 @@ class RolloutManager:
+         )
+ 
+         flat = [s for item in samples for s in (item if isinstance(item, list) else [item])]
++        # [rh2-integration] Per-leaf identity: fan-out siblings of one agent run
++        # inherit the run's ``Sample.index``, so ``sample_indices`` alone is not
++        # a leaf identity. The ordinal is computed over the same flattened order
++        # (and with the same run key) as ``convert_samples_to_train_data``, so
++        # rollout-side (sample_index, leaf_ordinal) matches the trainer-side
++        # ``leaf_ordinals`` wire column row for row.
++        ordinals = compute_leaf_ordinals(
++            [s.rollout_id if s.rollout_id is not None else s.index for s in flat]
++        )
+         groups: dict[object, list] = {}
+-        for s in flat:
+-            groups.setdefault(s.group_index, []).append(s)
+-        for group_index, members in groups.items():
++        for s, ordinal in zip(flat, ordinals, strict=True):
++            groups.setdefault(s.group_index, []).append((s, ordinal))
++        for group_index, group_members in groups.items():
++            members = [s for s, _ in group_members]
++            leaf_ordinals = [ordinal for _, ordinal in group_members]
+             first = members[0]
+             meta = first.metadata or {}
+             rewards = []
+@@ -233,6 +245,7 @@ class RolloutManager:
+                 group_index=group_index,
+                 instance_id=meta.get("instance_id") if isinstance(meta, dict) else None,
+                 sample_indices=[int(s.index) for s in members],
++                leaf_ordinals=leaf_ordinals,
+                 rewards=rewards,
+                 behavior_versions=[list(s.weight_versions) for s in members],
+                 statuses=[str(getattr(s.status, "value", s.status)) for s in members],
+diff --git a/miles/ray/rollout/train_data_conversion.py b/miles/ray/rollout/train_data_conversion.py
+index 289b36b09..91231eade 100644
+--- a/miles/ray/rollout/train_data_conversion.py
++++ b/miles/ray/rollout/train_data_conversion.py
+@@ -35,6 +35,7 @@ ROLLOUT_DATA_VALUE_SPEC: dict[str, ValueSpec] = {
+     "truncated": ValueSpec(codec="ndarray", dtype="int64"),
+     "round_number": ValueSpec(codec="ndarray", dtype="int64"),
+     "sample_indices": ValueSpec(codec="ndarray", dtype="int64"),
++    "leaf_ordinals": ValueSpec(codec="ndarray", dtype="int64"),
+     "rollout_ids": ValueSpec(codec="ndarray", dtype="int64"),
+     "rollout_mask_sums": ValueSpec(codec="ndarray", dtype="int64"),
+     "multimodal_train_inputs": ValueSpec(codec="ragged_tensor_dict"),
+@@ -84,6 +85,13 @@ def convert_samples_to_train_data(
+         "sample_indices": [sample.index for sample in samples],
+         "rollout_ids": [s.rollout_id if s.rollout_id is not None else s.index for s in samples],
+     }
++    # [rh2-integration] Unique leaf identity for fan-out siblings: every leaf
++    # Sample of one agent run inherits the run's ``index``, so ``sample_indices``
++    # alone cannot tell two legitimate fan-out leaves apart (nor bind a
++    # per-leaf artifact such as an R3 routing tape to the right leaf). The pair
++    # (sample_index, leaf_ordinal) is unique; grouping semantics of
++    # ``rollout_ids``/``group_index`` are untouched.
++    train_data["leaf_ordinals"] = compute_leaf_ordinals(train_data["rollout_ids"])
+ 
+     # loss mask
+     # TODO: compress the loss mask
+@@ -180,6 +188,24 @@ def convert_samples_to_train_data(
+     return train_data
+ 
+ 
++def compute_leaf_ordinals(rollout_keys: list) -> list[int]:
++    """[rh2-integration] Occurrence index of each sample within its agent run.
++
++    ``rollout_keys`` is the per-sample run key column (``rollout_ids``: the
++    sample's ``rollout_id``, falling back to ``index``). Fan-out siblings share
++    that key, so the running occurrence count is a stable per-leaf ordinal as
++    long as callers iterate the same flattened sample list in the same order --
++    which conversion and the rollout-side evidence emitter both do.
++    """
++    seen: dict = {}
++    ordinals: list[int] = []
++    for key in rollout_keys:
++        ordinal = seen.get(key, 0)
++        seen[key] = ordinal + 1
++        ordinals.append(ordinal)
++    return ordinals
++
++
+ def _compute_rollout_mask_sums(rollout_ids: list[int], loss_masks: list[list[int]]) -> list[int]:
+     """Whole-rollout loss-mask total per sample: every sibling of one rollout carries
+     the sum over all of that rollout's samples, so the loss reducer reconstructs one
+@@ -384,6 +410,7 @@ def _package_shards(args, data: dict[str, Any], partitions) -> list[dict[str, An
+             "loss_masks",
+             "round_number",
+             "sample_indices",
++            "leaf_ordinals",
+             "rollout_ids",
+             "rollout_mask_sums",
+             "rollout_log_probs",
+diff --git a/miles/utils/logprob_compare.py b/miles/utils/logprob_compare.py
+index 662338e35..30a350657 100644
+--- a/miles/utils/logprob_compare.py
++++ b/miles/utils/logprob_compare.py
+@@ -25,18 +25,24 @@ def masked_compare_entries(
+     loss_masks,
+     weight_versions,
+     current_version: int,
++    leaf_ordinals=None,
+ ) -> list[dict]:
+     """Build one comparison entry per sample of this rank's shard.
+ 
+     Args are the per-sample columns of ``rollout_data`` (lists indexed the same
+-    way). Entries carry: ``sample_index``, ``same_version``, ``length_mismatch``
+-    (any pairwise length disagreement between current / behavior / loss mask),
+-    ``num_tokens`` (loss_mask==1 tokens actually compared), ``total_tokens``
+-    (current logprob length) and ``mean_abs_diff`` over the masked common
+-    prefix (``None`` when no masked token exists).
++    way). Entries carry: ``sample_index``, ``leaf_ordinal`` (fan-out leaf
++    identity paired with ``sample_index``; ``None`` when the shard lacks the
++    column), ``same_version``, ``length_mismatch`` (any pairwise length
++    disagreement between current / behavior / loss mask), ``num_tokens``
++    (loss_mask==1 tokens actually compared), ``total_tokens`` (current logprob
++    length) and ``mean_abs_diff`` over the masked common prefix (``None`` when
++    no masked token exists).
+     """
+     entries: list[dict] = []
+     for i, sample_index in enumerate(sample_indices):
++        leaf_ordinal = (
++            int(leaf_ordinals[i]) if leaf_ordinals is not None and i < len(leaf_ordinals) else None
++        )
+         cur = log_probs[i] if i < len(log_probs) else None
+         beh = behavior_log_probs[i] if i < len(behavior_log_probs) else None
+         if cur is None or beh is None:
+@@ -54,6 +60,7 @@ def masked_compare_entries(
+             entries.append(
+                 {
+                     "sample_index": int(sample_index),
++                    "leaf_ordinal": leaf_ordinal,
+                     "same_version": _same_version(weight_versions, i, current_version),
+                     "length_mismatch": True,
+                     "num_tokens": 0,
+@@ -72,6 +79,7 @@ def masked_compare_entries(
+         entries.append(
+             {
+                 "sample_index": int(sample_index),
++                "leaf_ordinal": leaf_ordinal,
+                 "same_version": _same_version(weight_versions, i, current_version),
+                 "length_mismatch": bool(length_mismatch),
+                 "num_tokens": num_masked,
+-- 
+2.50.1 (Apple Git-155)
+
