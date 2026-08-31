@@ -577,3 +577,101 @@ gh api 拉取 sgl-project/sglang@4e230c3d 的 `weight_versions.py` +
   382 passed/0 skipped——均与更新后 manifest 逐数一致。
 - `tests/adapters/ + tests/contract_slime_async/` = 321 passed 逐数不变。
 - ruff 触及文件全过。未 commit（按任务要求）。
+
+---
+
+# vendor refresh 复核 P2 #1/#2/#5 收口（2026-08-31 第三轮）
+
+规格权威：`codex_vendor_refresh_recheck.md`（复核终判 PASS_WITH_P2_RESIDUALS）
+的 P2 #1/#2/#5 逐条验收条件；#3（零输出 judge 合同）/#4（hermetic 构建）本轮
+明确不做，已另行登记。
+
+## 修复落点
+
+- **#1 rh2 侧**（`src/repoharness2/adapters/slime/generate.py`
+  `parse_weight_version_spans`）：
+  1. "键缺失"与 `weight_versions: null` 判然两分——只有键**不在场**才返回
+     None 回退单数；键在场值为 null 抛 `weight_version_spans_null`
+     fail-closed（pinned writer 只会不写键或写非空 list，null=账目损坏，
+     不得洗成"旧引擎"）。
+  2. span 的 version 必须是非空**字符串**：int/float 一律
+     `weight_version_spans_version_not_string` 拒绝，删除原 int→str 宽容
+     转换（writer 写入前显式 str 化，wire 上不存在数值版本）。原 reason
+     code `version_unparsable` 更名 `version_not_string`（全仓无消费者，
+     测试 oracle 同步——T1 登记见下）。
+  3. 负例：parametrize 新增 null 行 + int 行；原正例
+     `test_parse_int_version_coerced_to_str` 反转为负例。
+- **#1 miles 侧**（integration tree 新 commit `63c7a94e7`，patch
+  `0009-rh2-integration-validate-weight-version-spans-with-r.patch`，
+  sha256 `f7ecf894…`；manifest 新表 `rh2_patches_spans_strict`、
+  expected_tree=`a4b60c891…`、miles_source_tree_digest=`ef05b2ff…`）：
+  `miles/utils/types.py` 的 spans 记账入口从 `if spans := get(...)` +
+  assert 改为模块级纯函数 `_validated_weight_version_spans()`（ValueError
+  真异常，`python -O` 不消失），补齐与 rh2 parser 同款结构不变式：null/空
+  list/非 list/项非 dict/缺键/version 非字符串/边界非负 int(bool 拒)/首段
+  0/连续无缝无重叠/相邻版本必不同/空段只许零输出唯一 [v,0,0)/单数
+  weight_version 在场且等于末段。旧 walrus 真值判断会把 null 和 [] 静默落
+  进单数回退分支——该洗绿口关死。负例 16 条 + 正例 4 条
+  （`test_weight_version_spans.py` §6，integration_base 标记）。
+- **#2 P11 覆写防护**（`launch.sh`）：新增 **P6b** custom_config.yaml 顶层
+  键白名单——只放行现三个安全键的**精确钉死行**（与 P6 同形态），其余任何
+  顶层行（P11 相关键、未知键、带引号键、`---`、重复白名单键等）一律
+  preflight FAIL；同时"preflight 全部通过"从 FAIL 聚合点（原 :336）移到
+  P11 (d) 之后输出——P11 也是 preflight 闭包，成功宣告不得先于它。
+- **#5 文档漂移**：patches/README.md 头与表更新到 0001-0009（补 0008/0009
+  行）；integration 树 `docs/developer/versions.md` 三处更新（build-arg 表
+  SGLANG_IMAGE_TAG v0.5.16→v0.5.18、SGLANG_COMMIT/MEGATRON_COMMIT 空默认→
+  0007 钉死值、"Bumping principle"段补本树有意偏离说明），并入 0009 miles
+  commit；`router_targeting_audit.md` 5 处 capture_wire 行号校正
+  （948-950→971-973、956-962→979-985、961-962→984-985×2、934-935→957-959×2）。
+
+## T1 决策（实现后报告）
+
+1. **reason code `version_unparsable` 更名 `version_not_string`**：语义从
+   "解析不了"收紧为"必须是字符串"，旧名成为误导；全仓 grep 无生产消费者，
+   仅测试 oracle 同步（float 1.5 行随迁）。
+2. **versions.md 修正并入 0009 语义 commit 而非单独 patch 0010**：规格两
+   选项皆许；单 commit 少一张 manifest patch 表与一次重建步骤，commit
+   message 双列说明保持可审计。versions.md 第 140 行"Bumping principle"
+   的"empty by default"陈述与钉死事实直接矛盾，超出规格点名的两行但属同
+   一处漂移，一并修正。
+3. **miles 侧不做 `end == 本次生成 token 数` 覆盖检查（诚实边界）**：
+   `update_from_meta_info(self, args, meta_info)` 拿不到本次调用的生成
+   token 数（`Sample.response_length` 是跨 partial-rollout 累计值；
+   `meta_info["completion_tokens"]` 在 miles 自身消费里始终 `.get(...,0)`
+   可缺省，且 spec-decode 下计数语义未经 pinned 源核证——错的强不变式会
+   在 stock 路径制造假红）。结构不变式全量对齐，覆盖检查留在 rh2 parser
+   （其有 `generated` 一手值）。改函数签名传入 token 数会扩大 vendored
+   窗口（两处调用点+session 路径 TODO），不符"最小 commit"约束。
+4. **P6b 用白名单而非 P11 键黑名单**：黑名单要枚举"拓扑/PD/qkv 类"的完整
+   键面（arguments.py 数百键，漂移即漏）；白名单=现三个安全键的精确行，
+   fail-closed 且与 test_gpu_spike_custom_config.py 的整 dict 断言同构。
+   附带关死两个旁路：带引号键/`---` 等非常规顶层行（逐行兜底规则）与重复
+   白名单键（yaml 取末次赋值的改值后门，awk 计数检出）。
+5. **P6b 放 P6 区（fail 聚合）而非 P11 区（die）**：YAML 键面属启动闭包
+   资产校验，与三键在场检查同源同形态；聚合报告让操作员一次看全所有
+   preflight 违规。
+
+## 临时挡板
+
+- 无新增。本轮无 stub/skip/豁免类挡板；preflight 负例用临时注入 YAML 行
+  实证后逐字节还原（diff 证明）。
+
+## 验证账本（本轮）
+
+- lanes 双 base 全绿：lane A = 236 passed/167 skipped、lane B = 403
+  passed/0 skipped，与更新后 manifest expected_counts 逐数一致（+1 双 lane
+  = parser 负例净增；+20 integration_base = miles stock §6）。
+- `tests/adapters/ + tests/contract_slime_async/` = **321 passed 逐数不变**。
+- `g1_acceptance.py --self-test` PASS。
+- launch preflight 桩 asset 实跑：正例 preflight/dry-run 双绿（rc=0，
+  "preflight 全部通过"输出于 P11 之后、dry-run 段之前）；负例 5 形态
+  （use_miles_router:false / rollout_num_gpus / qkv_format / 
+  prefill_num_servers / 重复 max_consecutive_zero_signal_steps 改值）全部
+  rc=1、P6b FAIL 指名行号与内容、"全部通过"零出现；custom_config.yaml
+  事后 diff 逐字节还原。
+- ruff：rh2 generate.py + test_weight_version_spans.py、miles types.py
+  全过；`bash -n launch.sh` 过；`miles_integration_lanes.sh --checks-only`
+  以新 expected_tree/digest/8 张 patch 表通过。
+- rh2 侧未 commit（按任务要求）；miles 侧一个 commit（63c7a94e7，
+  patch 0009 已存档 + manifest 同步）。

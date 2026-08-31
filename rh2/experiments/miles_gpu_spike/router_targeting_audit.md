@@ -18,12 +18,12 @@ http://{args.sglang_router_ip}:{args.sglang_router_port}`，bringup.py:662——
 
 | 调用点 | 代码位置 | 语义 |
 |---|---|---|
-| `POST /generate` | capture_wire.py:948-950 | 每 turn 的采样请求（顶层 `return_sampling_mask`、逐 attempt 唯一 rid） |
-| `POST /abort_request {"rid": ...}` | capture_wire.py:956-962 | cancel/超时后释放引擎槽位；**异常整体吞掉**（961-962 `except Exception: pass`） |
+| `POST /generate` | capture_wire.py:971-973 | 每 turn 的采样请求（顶层 `return_sampling_mask`、逐 attempt 唯一 rid） |
+| `POST /abort_request {"rid": ...}` | capture_wire.py:979-985 | cancel/超时后释放引擎槽位；**异常整体吞掉**（984-985 `except Exception: pass`） |
 | `GET /model_info`（fallback `GET /get_weight_version`） | bringup.py:1036-1042 | finalize 时刻的权威 current 版本，双端点探测先新后旧（V3 审计移交收口，见 §3 已收口条目；顺序对齐引擎侧 sglang_engine.py:578）；`RH2_REQUIRE_REAL_WEIGHT_VERSIONS=1` 时双端点都失败即 fail-closed（1044-1049），并与 capture registry 最大观测交叉检查（1050-1058：registry_max > authoritative ⇒ RuntimeError） |
 
 rh2 还随 `/generate` 发送 `X-SMG-Routing-Key: <session_id>` 头
-（capture_wire.py:934-935），意图是会话粘滞路由。
+（capture_wire.py:957-959），意图是会话粘滞路由。
 
 **不经 router** 的控制面（多 engine 判定时不受路由影响）：
 
@@ -54,7 +54,7 @@ rh2 还随 `/generate` 发送 `X-SMG-Routing-Key: <session_id>` 头
   sgl-router 的 `consistent_hashing`/`manual` policy
   （miles/rollout/generate_utils/generate_endpoint_utils.py:38-50
   `policy_uses_routing_key`），MilesRouter 没有对应实现。因此 rh2
-  capture_wire.py:934-935 发出的路由头在 MilesRouter 下是死字节。
+  capture_wire.py:957-959 发出的路由头在 MilesRouter 下是死字节。
 - 健康检查（:87-127）：每 `rollout_health_check_interval`（默认 30s，
   arguments.py:949-952）对全部 worker GET `/health`；连续
   `miles_router_health_check_failure_threshold`（默认 3）次失败 → 加入
@@ -116,7 +116,7 @@ try 块内、raise 之后），engine actor 残留——G1 未启用 FT（launch
 | 端点 | 错发行为 | 后果定级 |
 |---|---|---|
 | `/generate` | 每 turn 独立最小负载选 worker，会话跨 turn 在 engine 间漂移 | **数据仍正确**：mask/logprob/`weight_versions` spans 由真实服务该请求的 engine 打，逐响应自洽。代价是 radix/KV 前缀局部性全失（纯性能），以及把 abort 与 generate 的 worker 解耦（见下）。若未来权重更新选 `in_place`，#2783 的旧权重 KV 复用问题按 engine 数扩面 |
-| `/abort_request {"rid"}` | 与当初服务该 rid 的 worker 解耦：命中概率 ≈ 1/N。错发 = SGLang 对不认识的 rid 静默无操作，router 照样 200，rh2 侧本就吞异常（capture_wire.py:961-962） | **静默失效**：被放弃的生成继续占 engine 槽位与算力直至自然完成。放大面：capture wire 的 cancel/超时 abort 与 proxy 更新窗口 abort 全部失准 → 容量泄漏、延迟堆积、deadline 超时增多 → degraded 样本（reward=0 + remove_sample）比例上升。属资源/证据噪声，非系统性样本偏置（丢弃与内容无关），但吞吐/latency 阈值证据会被污染 |
+| `/abort_request {"rid"}` | 与当初服务该 rid 的 worker 解耦：命中概率 ≈ 1/N。错发 = SGLang 对不认识的 rid 静默无操作，router 照样 200，rh2 侧本就吞异常（capture_wire.py:984-985） | **静默失效**：被放弃的生成继续占 engine 槽位与算力直至自然完成。放大面：capture wire 的 cancel/超时 abort 与 proxy 更新窗口 abort 全部失准 → 容量泄漏、延迟堆积、deadline 超时增多 → degraded 样本（reward=0 + remove_sample）比例上升。属资源/证据噪声，非系统性样本偏置（丢弃与内容无关），但吞吐/latency 阈值证据会被污染 |
 | 版本探测（`/model_info`，fallback `/get_weight_version`） | 查询到任意 worker。稳态各 engine 版本一致时结果正确；**更新窗口竞态**：capture 已从某个已更新 engine 观测到新版本，而探测命中未更新 engine → `registry_max > authoritative` → bringup.py:1050-1058 把瞬态偏斜判成"版本管道错乱" RuntimeError（fail-closed 假红崩溃）。反向（探测到新、观测旧）则 staleness 分母被抬高，交叉检查不拦 | **假红崩溃面**（方向安全但可用性差）；单 engine 下结构性不存在 |
 | `/remove_worker` | 错发 + 无路由双重问题（§3）；被停 engine 残留在池中直到健康检查隔离（最长 interval×threshold ≈ 90s），期间 min-load 仍可能把 `/generate` 发给已死 worker → httpx 连接错误 → 500 → turn 失败 | FT/弹性回收路径不可用 |
 | 健康隔离 | dead worker 永不回池 → 容量单调衰减；N-1 台 dead 仍可服务 | 弹性缺失，显性 |

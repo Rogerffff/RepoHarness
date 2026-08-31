@@ -4,12 +4,13 @@
 可复跑存档（`git format-patch` 产物），与 `../integration_base_manifest.json` 的
 patch 表一一对应（sha256 钉死，`rh2/scripts/miles_integration_lanes.sh` 前置校验）。
 
-## 当前版本：rh2-integration-v3（2026-08-31 V1 vendor refresh 重排）
+## 当前版本：rh2-integration-v3（2026-08-31 V1 vendor refresh 重排后续排至 0009）
 
-顶层 `0001-0007` 从 v3 分支重新导出（编号重排，非续排）。构造顺序见 manifest 的
+顶层 `0001-0009`。其中 `0001-0007` 是 V1 vendor refresh 时从 v3 分支重新导出
+（编号重排，非续排）；`0008/0009` 为其后的续排新增。构造顺序见 manifest 的
 `rebuild` 字段：pin `f2b7c7929` → cherry-pick 上游四选材（`29c2c3aee` #2595 已合并版 /
 `3ac3adce3` #2596 新 head / `cd464a1c4` sglang 0.5.18 矩阵 / `dbbab1566` fla 0.5.2）
-→ 依序 `git am 0001..0007`。
+→ 依序 `git am 0001..0009`。
 
 | patch | v3 SHA | 内容 |
 |---|---|---|
@@ -20,9 +21,12 @@ patch 表一一对应（sha256 钉死，`rh2/scripts/miles_integration_lanes.sh`
 | 0005 | 6c6bebd4f | 租前审查事件层证据缺口收口（P0-1~P0-8/P1-2） |
 | 0006 | fb17a5616 | leaf 身份 wire 列 + per-rank step 事实 + engine identity |
 | 0007 | 62b476838 | **V1 新增**：Dockerfile 钉死 SGLANG_COMMIT/MEGATRON_COMMIT |
+| 0008 | 2f3786950 | **V2 新增**：per-token weight-version spans 入 Sample 记账 + rollout_group 事件列 |
+| 0009 | 63c7a94e7 | **复核 P2 #1/#5**：spans 校验 assert→真异常并补齐 writer 合同全量结构不变式（null/空表 fail-closed、version 必须字符串等）；versions.md v0.5.16/空 commit 漂移修正 |
 
 0001-0006 与 v2 存档语义相同（重铺产物，diff 内容一致；0006 文件名因 git
-format-patch 命名截断算法差异略有不同）。0007 为 V1 批新增。
+format-patch 命名截断算法差异略有不同）。0007 为 V1 批新增，0008 为 V2 批
+新增，0009 为 vendor refresh 复核（2026-08-31）批新增。
 
 ## v2/ 子目录：rh2-integration-v2 存档（回退面）
 

@@ -15,7 +15,8 @@
 # 用法：
 #   bash launch.sh preflight   # 不起任何 GPU 作业：断言环境闭包（env 齐全、tarball
 #                              # 在场、manifest 校验过、模型拓扑一致、custom_config
-#                              # 键在位、R3 显式选择合法）。本机可跑（用桩 asset）。
+#                              # 键在位且顶层键收白名单（P6b，防 P11 后置覆写）、
+#                              # R3 显式选择合法）。本机可跑（用桩 asset）。
 #   bash launch.sh dry-run     # preflight + 打印完整 ray job submit 命令与
 #                              # runtime-env JSON，不提交。
 #   bash launch.sh run         # preflight + 真实 ray job submit（租期 GPU 机上执行）。
@@ -238,6 +239,32 @@ grep -qE '^moe_aux_loss_coeff: 0\.0$' "$CUSTOM_CONFIG" \
 grep -qE '^max_consecutive_zero_signal_steps: [0-9]+$' "$CUSTOM_CONFIG" \
   || fail "custom_config.yaml 缺 'max_consecutive_zero_signal_steps: <N>'（F2 熔断）"
 
+# P6b. custom_config.yaml 顶层键白名单（vendor refresh 复核 P2 #2：P11 后置
+#      覆写防护）。miles 事实：miles_validate_args 在**全部参数校验之后**才把
+#      YAML 逐键 setattr 到 args（integration arguments.py:3521 附近），即 YAML
+#      里的 use_miles_router/拓扑/PD/qkv 类键可以在 P11 与 miles 自身校验都跑完
+#      后静默改写 effective args——CLI token 检查（P11）对这条后门无感。收法 =
+#      白名单而非黑名单（fail-closed）：只放行现有三个安全键的**精确钉死行**
+#      （与 P6 同一形态），其余任何顶层行（未知键、带引号键、`---` 文档分隔、
+#      flow mapping、同键重复出现等一切形态）一律 preflight 红。新键必须先过
+#      评审加进本白名单，并同步 test_gpu_spike_custom_config.py 的整 dict 断言。
+#      注意缩进行放行的边界：miles 只 setattr 顶层键，缩进行只能是白名单键的
+#      嵌套值——而三个白名单行都是钉死的标量形态，不会有合法缩进从属行，故
+#      任何缩进行意味着顶层行已先违规或文件被改坏，仍由顶层行检出。
+CC_KEY_VIOLATIONS="$(awk '
+  /^[[:space:]]*#/ { next }                       # 注释行
+  /^[[:space:]]*$/ { next }                       # 空行
+  /^[[:space:]]/   { next }                       # 缩进行（见上方边界说明）
+  /^rh2_engine_sampling_mask: true$/              { if (++seen_mask  > 1) print NR": 重复键 rh2_engine_sampling_mask（yaml 取末次赋值,重复=改值后门）"; next }
+  /^max_consecutive_zero_signal_steps: [0-9]+$/   { if (++seen_fuse  > 1) print NR": 重复键 max_consecutive_zero_signal_steps（yaml 取末次赋值,重复=改值后门）"; next }
+  /^moe_aux_loss_coeff: 0\.0$/                    { if (++seen_coeff > 1) print NR": 重复键 moe_aux_loss_coeff（yaml 取末次赋值,重复=改值后门）"; next }
+  { print NR": "$0 }
+' "$CUSTOM_CONFIG")"
+if [ -n "$CC_KEY_VIOLATIONS" ]; then
+  fail "custom_config.yaml 存在白名单外的顶层行（miles 会在校验后逐键 setattr——P11 语义可被后置覆写,fail-closed 拒绝;违规行如下）：
+$CC_KEY_VIOLATIONS"
+fi
+
 # P7. R3 显式选择的可行性闸：on 要求 P0-3（F4）本地 adapter 已关闭。当前判据 =
 #     canonicalize.py 的 _REJECTED_SLIME_FIELDS 仍把 rollout_routed_experts 钉为
 #     必须 None（"torch->numpy 转换语义未定义"）。该拒绝面在场 ⇒ R3-on 样本在进
@@ -333,7 +360,9 @@ python3 "$SCRIPT_DIR/g1_acceptance.py" --self-test >/dev/null 2>&1 \
 if [ "$FAIL" -ne 0 ]; then
   die "preflight 未通过（见上方 FAIL 各行）——不满足 GPU 启动闭包"
 fi
-say "preflight 全部通过"
+# 注意：这里**不**宣告 preflight 通过——P11 语义闸（参数组装后的 token 流断言）
+# 也是 preflight 闭包的一部分，"preflight 全部通过"移到 P11 之后输出（vendor
+# refresh 复核 P2 #2：防止 P11 红之前已经打出全绿字样误导操作员/日志判读）。
 
 # ---------------------------------------------------------------- 参数组装
 # Ray worker runtime env（F3 核心：这些必须真实抵达 Ray actor，而不只在 driver shell。
@@ -538,6 +567,9 @@ done
 ENGINE_COUNT=$((ROLLOUT_GPUS / ROLLOUT_GPUS_PER_ENGINE))
 [ "$ENGINE_COUNT" -eq 1 ] \
   || die "engine 数=$ENGINE_COUNT ≠ 1：MilesRouter 定向缺口未关闭前禁止多 engine（router_targeting_audit.md 前置清单）"
+
+# P11 是 preflight 闭包的最后一段，成功宣告必须在它之后（P2 #2 排序修复）。
+say "preflight 全部通过"
 
 # ---------------------------------------------------------------- 输出/执行
 if [ "$MODE" = "preflight" ]; then

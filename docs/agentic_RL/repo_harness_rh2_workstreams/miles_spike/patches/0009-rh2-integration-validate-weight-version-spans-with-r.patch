@@ -1,0 +1,168 @@
+From 63c7a94e736e9535c1f27b8b4e3aefffab043aec Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Mon, 31 Aug 2026 17:07:01 +0800
+Subject: [PATCH] [rh2-integration] validate weight-version spans with real
+ exceptions and the full writer contract
+
+The 0008 booking guarded the spans with a bare assert that only checked
+the first start and contiguity, and the `if spans := meta_info.get(...)`
+walrus made an explicit null (or an empty list) fall through to the
+scalar fallback as if the engine simply had not reported spans. Both
+disguise a corrupt staleness account: asserts vanish under python -O,
+and the washed-in fallback books a broken turn as a healthy
+single-version one.
+
+- miles/utils/types.py: new _validated_weight_version_spans() enforcing
+  the pinned writer contract (sglang weight_versions.py, 4e230c3d) with
+  ValueError: a present key must be a non-empty list of
+  {version: str, start/end: non-negative int} spans, first start 0,
+  contiguous, adjacent versions distinct, the only legal empty span the
+  zero-output [v, 0, 0) singleton, and the scalar weight_version present
+  and equal to the last span's version. Only a truly absent key falls
+  back to the scalar. Numeric versions are rejected, not coerced: the
+  writer stringifies explicitly, so a number on the wire is corruption,
+  not a dialect. The per-request generated-token count is not among the
+  function's inputs, so the end == num-generated coverage check stays
+  with the rh2-side parser.
+- docs/developer/versions.md: refresh the build-arg table and the
+  bumping principle to this tree's actual defaults (SGLANG_IMAGE_TAG
+  v0.5.18; SGLANG_COMMIT / MEGATRON_COMMIT pinned since the 0007
+  Dockerfile pin, no longer empty).
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ docs/developer/versions.md |  8 ++--
+ miles/utils/types.py       | 83 +++++++++++++++++++++++++++++++++++---
+ 2 files changed, 82 insertions(+), 9 deletions(-)
+
+diff --git a/docs/developer/versions.md b/docs/developer/versions.md
+index 17fa31e8d..13e9e1be8 100644
+--- a/docs/developer/versions.md
++++ b/docs/developer/versions.md
+@@ -37,10 +37,10 @@ The default build-args are the version surface:
+ 
+ | Build-arg | Default | What it selects |
+ |---|---|---|
+-| `SGLANG_IMAGE_TAG` | `v0.5.16` | The `lmsysorg/sglang` base image, which brings torch, CUDA and Transformer Engine |
++| `SGLANG_IMAGE_TAG` | `v0.5.18` | The `lmsysorg/sglang` base image, which brings torch, CUDA and Transformer Engine |
+ | `SGLANG_BRANCH` | `sglang-miles` | The branch fetched into the base image's SGLang checkout |
+-| `SGLANG_COMMIT` | empty | Empty means the branch HEAD at build time; set it to freeze one commit |
+-| `MEGATRON_REPO` / `MEGATRON_BRANCH` / `MEGATRON_COMMIT` | `radixark/Megatron-LM` / `miles-main` / empty | The Megatron-LM checkout; an empty commit follows branch HEAD, while a release build supplies the locked commit |
++| `SGLANG_COMMIT` | `4e230c3d85cefdab5b65eeb6f6f87793a707a6fb` | The SGLang commit checked out inside the image; an empty value would follow the branch HEAD at build time, and this tree pins the audited commit as the default |
++| `MEGATRON_REPO` / `MEGATRON_BRANCH` / `MEGATRON_COMMIT` | `radixark/Megatron-LM` / `miles-main` / `235952df607b3820716e5e67728a5ab470ca33ae` | The Megatron-LM checkout; an empty commit would follow the branch HEAD, and this tree pins the audited commit as the default |
+ | `MILES_COMMIT` | `main` | The Miles checkout baked into the image |
+ | `ENABLE_CUDA_13` | `1` | CUDA 13 plus the Mooncake structured-object-store wheel; `0` selects the CUDA 12.9 path |
+ | `WHEELS_REPO` | `yueming-yuan/miles-wheels` | The prebuilt-wheels repository |
+@@ -137,7 +137,7 @@ The ROCm stage is the exception: it takes SGLang and Megatron-LM from `rocm/sgl-
+ moves in `docker/build.py`. If a bump needs edits in two of the three, one of them is in the
+ wrong place.
+ 
+-**Prefer moving the branch to pinning a commit during rolling development.** `SGLANG_COMMIT` and `MEGATRON_COMMIT` are empty by default, so ordinary images follow `sglang-miles` and `miles-main` together. A versioned release is the deliberate exception: its lockfile supplies both exact commits to CI and the final image build.
++**Prefer moving the branch to pinning a commit during rolling development.** Upstream keeps `SGLANG_COMMIT` and `MEGATRON_COMMIT` empty by default, so ordinary images follow `sglang-miles` and `miles-main` together. This tree deviates deliberately (`[rh2-integration]`): both commits are pinned in `docker/Dockerfile` so a rebuilt CUDA image cannot silently absorb newer branch heads, while `Dockerfile.rocm` stays unpinned. A versioned release is the other exception: its lockfile supplies both exact commits to CI and the final image build.
+ 
+ **Validate an image-affecting bump on the PR that makes it.** A PR touching
+ `docker/Dockerfile`, `docker/build.py`, `docker/verify_transformer_engine.py`,
+diff --git a/miles/utils/types.py b/miles/utils/types.py
+index c2ee102f7..a29122686 100644
+--- a/miles/utils/types.py
++++ b/miles/utils/types.py
+@@ -24,6 +24,77 @@ class RewardSpec:
+     custom_rm_path: str | None = None
+ 
+ 
++def _validated_weight_version_spans(meta_info: dict) -> list[dict] | None:
++    """[rh2-integration] Return the validated ``meta_info["weight_versions"]``
++    span list, or ``None`` when the key is absent (older engine: the caller
++    falls back to the scalar ``weight_version``).
++
++    The pinned sglang writer (``sglang/srt/utils/weight_versions.py::
++    add_weight_versions_to_meta_info``, commit 4e230c3d) emits
++    ``[{"version": str, "start": int, "end": int}, ...]``: half-open
++    contiguous intervals over generated-token positions starting at 0,
++    adjacent spans merged (so neighbours differ in version), exactly one
++    empty span ``[v, 0, 0)`` for a zero-output request, and the scalar
++    ``weight_version`` always written alongside, equal to the last span's
++    version. ``version`` is explicitly stringified by the writer, so a
++    numeric version on the wire is corruption, not a dialect.
++
++    Any deviation raises ``ValueError`` -- a real exception, not ``assert``:
++    it must survive ``python -O``, and a present-but-broken value (including
++    an explicit ``null`` or ``[]``) must never be treated as "key absent" and
++    silently washed into the scalar fallback, because that would disguise a
++    corrupt staleness account as an old engine. The per-request generated
++    token count is not part of this function's inputs, so the final
++    ``end == num_generated_tokens`` coverage check stays with the caller-side
++    consumers that know it; all structural invariants are enforced here.
++    """
++    if "weight_versions" not in meta_info:
++        return None
++    spans = meta_info["weight_versions"]
++
++    def _bad(detail: str) -> ValueError:
++        return ValueError(f"malformed weight_versions spans from engine ({detail}): {spans!r}")
++
++    if spans is None:
++        raise _bad("explicit null; the writer either omits the key or writes a non-empty list")
++    if not isinstance(spans, list):
++        raise _bad(f"expected a list, got {type(spans).__name__}")
++    if not spans:
++        raise _bad("empty list; the writer emits at least one span")
++    for i, item in enumerate(spans):
++        if not isinstance(item, dict):
++            raise _bad(f"span {i} is {type(item).__name__}, not a dict")
++        missing_keys = {"version", "start", "end"} - item.keys()
++        if missing_keys:
++            raise _bad(f"span {i} misses keys {sorted(missing_keys)}")
++        if not isinstance(item["version"], str) or not item["version"]:
++            raise _bad(f"span {i} version {item['version']!r} is not a non-empty string")
++        for key in ("start", "end"):
++            value = item[key]
++            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
++                raise _bad(f"span {i} {key}={value!r} is not a non-negative int")
++    if spans[0]["start"] != 0:
++        raise _bad(f"first span starts at {spans[0]['start']}, not 0")
++    for prev, cur in zip(spans, spans[1:], strict=False):  # tail is one shorter by design
++        if cur["start"] != prev["end"]:
++            raise _bad(
++                f"spans [{prev['start']},{prev['end']}) and [{cur['start']},{cur['end']}) "
++                "are not contiguous"
++            )
++        if cur["version"] == prev["version"]:
++            raise _bad(f"adjacent spans share version {cur['version']!r}; the writer merges those")
++    if not (len(spans) == 1 and spans[0]["end"] == 0):  # sole legal empty form: zero output
++        for i, item in enumerate(spans):
++            if item["start"] >= item["end"]:
++                raise _bad(f"span {i} [{item['start']},{item['end']}) is empty or inverted")
++    scalar = meta_info.get("weight_version")
++    if scalar is None:
++        raise _bad("scalar weight_version missing; the writer always writes both keys")
++    if str(scalar) != spans[-1]["version"]:
++        raise _bad(f"scalar weight_version {scalar!r} != last span version {spans[-1]['version']!r}")
++    return spans
++
++
+ @dataclass
+ class Sample:
+     """The sample generated"""
+@@ -305,11 +376,13 @@ class Sample:
+         # buffer's staleness = current - oldest under-reports, letting groups
+         # past ``--max-weight-staleness`` that should have been rejected.
+         # Append every span version (order preserved; the last one still
+-        # equals the scalar, keeping tail semantics unchanged).
+-        if spans := meta_info.get("weight_versions"):
+-            assert spans[0]["start"] == 0 and all(
+-                a["end"] == b["start"] for a, b in zip(spans, spans[1:])
+-            ), f"malformed weight_versions spans from engine: {spans}"
++        # equals the scalar, keeping tail semantics unchanged). The spans are
++        # validated first (real exceptions, full writer-contract invariants;
++        # see _validated_weight_version_spans): only a truly absent key means
++        # "older engine, fall back to the scalar" -- a present-but-broken
++        # value must never be washed into the scalar fallback.
++        spans = _validated_weight_version_spans(meta_info)
++        if spans is not None:
+             self.weight_versions.extend(s["version"] for s in spans)
+         elif "weight_version" in meta_info:
+             self.weight_versions.append(meta_info["weight_version"])
+-- 
+2.50.1 (Apple Git-155)
+

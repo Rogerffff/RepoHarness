@@ -78,12 +78,6 @@ def test_parse_adv_miles_example_ok(world):
     assert [(s.version, s.start, s.end) for s in spans] == [("10", 0, 300), ("11", 300, 500)]
 
 
-def test_parse_int_version_coerced_to_str(world):
-    meta = {"weight_versions": [{"version": 7, "start": 0, "end": 3}], "weight_version": 7}
-    spans = _parse(world, meta, 3)
-    assert spans[0].version == "7"
-
-
 def test_parse_zero_output_empty_span_ok(world):
     """sglang 合同：零输出轮恰好一个空区间 {v, 0, 0}。"""
 
@@ -111,11 +105,17 @@ def test_parse_version_can_return_after_tokens(world):
 @pytest.mark.parametrize(
     ("reason", "meta_builder", "generated"),
     [
+        # 键在场值为 null ≠ 键缺失（P2 #1）：writer 只会不写键或写非空 list，
+        # null 走 fail-closed，不得洗成"旧引擎"回退单数
+        ("null", lambda: {"weight_versions": None, "weight_version": "10"}, 3),
         ("not_a_list", lambda: {"weight_versions": "10", "weight_version": "10"}, 3),
         ("empty", lambda: {"weight_versions": [], "weight_version": "10"}, 3),
         ("item_not_mapping", lambda: _meta([["10", 0, 3]], single="10"), 3),
         ("item_missing_keys", lambda: _meta([{"version": "10", "start": 0}], single="10"), 3),
-        ("version_unparsable", lambda: _meta([{"version": 1.5, "start": 0, "end": 3}], single="1.5"), 3),
+        # version 必须是字符串（P2 #1，pin 的 writer 显式 str 化）：int 不再
+        # 宽容转换——原正例 test_parse_int_version_coerced_to_str 改为本负例
+        ("version_not_string", lambda: _meta([{"version": 7, "start": 0, "end": 3}], single="7"), 3),
+        ("version_not_string", lambda: _meta([{"version": 1.5, "start": 0, "end": 3}], single="1.5"), 3),
         ("version_empty", lambda: _meta([{"version": "", "start": 0, "end": 3}], single=""), 3),
         ("bound_not_int", lambda: _meta([{"version": "10", "start": True, "end": 3}], single="10"), 3),
         ("bound_negative", lambda: _meta([{"version": "10", "start": -1, "end": 3}], single="10"), 3),
@@ -770,3 +770,152 @@ def test_canonicalize_without_facts_unchanged(world):
     )
     assert out.weight_versions == ["7"]
     assert "rh2_weight_version_spans" not in (out.metadata or {})
+
+
+# ---------------------------------------------------------------------------
+# 6. miles stock `update_from_meta_info`（vendor refresh 复核 P2 #1 miles 半场，
+#    patch 0009）：assert 改真异常 + 与 rh2 parser 同款结构不变式。
+#    integration_base：严格校验只存在于 integration tree（pin base 的
+#    update_from_meta_info 只读单数键，无 spans 语义可测）。
+#    诚实边界：stock 路径拿不到本次调用的生成 token 数（函数签名只有
+#    args/meta_info），rh2 parser 的 end==generated 覆盖检查不在此处——结构
+#    不变式（null/空表/类型/首段 0/连续/相邻版本/零输出唯一空段/单数一致）
+#    全部对齐。
+# ---------------------------------------------------------------------------
+
+
+def _stock_sample(world):
+    return world.MS()
+
+
+def _stock_args():
+    return SimpleNamespace(sglang_speculative_algorithm=None)
+
+
+def _stock_meta(**over):
+    meta = {"finish_reason": {"type": "stop"}}
+    meta.update(over)
+    return meta
+
+
+@pytest.mark.integration_base
+def test_stock_update_valid_spans_books_all_versions(world):
+    """正例：跨更新 turn 的全部区间版本入账（adv_miles 反例 miles 侧修复）。"""
+
+    s = _stock_sample(world)
+    s.update_from_meta_info(
+        _stock_args(),
+        _stock_meta(
+            weight_versions=[
+                {"version": "10", "start": 0, "end": 300},
+                {"version": "11", "start": 300, "end": 500},
+            ],
+            weight_version="11",
+        ),
+    )
+    assert s.weight_versions == ["10", "11"]
+    assert s.status == world.MS.Status.COMPLETED
+
+
+@pytest.mark.integration_base
+def test_stock_update_zero_output_span_ok(world):
+    """正例：零输出请求的唯一空区间 [v,0,0)（writer 合同形态）入账。"""
+
+    s = _stock_sample(world)
+    s.update_from_meta_info(
+        _stock_args(),
+        _stock_meta(weight_versions=[{"version": "9", "start": 0, "end": 0}], weight_version="9"),
+    )
+    assert s.weight_versions == ["9"]
+
+
+@pytest.mark.integration_base
+def test_stock_update_missing_key_falls_back_scalar(world):
+    """正例（旧引擎链不变）：键**缺失**才允许回退单数——与 null 判然两分。"""
+
+    s = _stock_sample(world)
+    s.update_from_meta_info(_stock_args(), _stock_meta(weight_version="7"))
+    assert s.weight_versions == ["7"]
+
+
+@pytest.mark.integration_base
+def test_stock_update_neither_key_books_nothing(world):
+    s = _stock_sample(world)
+    s.update_from_meta_info(_stock_args(), _stock_meta())
+    assert s.weight_versions == []
+
+
+@pytest.mark.parametrize(
+    ("label", "meta_over"),
+    [
+        # null ≠ 键缺失：显式 null 是账目损坏，禁止洗成"旧引擎"回退单数
+        ("null", {"weight_versions": None, "weight_version": "10"}),
+        # 空 list 同理（旧代码 walrus 真值判断会静默落进单数回退分支）
+        ("empty_list", {"weight_versions": [], "weight_version": "10"}),
+        ("not_a_list", {"weight_versions": "10", "weight_version": "10"}),
+        ("item_not_dict", {"weight_versions": [["10", 0, 3]], "weight_version": "10"}),
+        ("item_missing_keys", {"weight_versions": [{"version": "10", "start": 0}], "weight_version": "10"}),
+        # version 必须字符串（pin 的 writer 显式 str 化；int 不做宽容转换）
+        ("int_version", {"weight_versions": [{"version": 7, "start": 0, "end": 3}], "weight_version": "7"}),
+        ("empty_version", {"weight_versions": [{"version": "", "start": 0, "end": 3}], "weight_version": ""}),
+        ("bool_bound", {"weight_versions": [{"version": "10", "start": True, "end": 3}], "weight_version": "10"}),
+        ("negative_bound", {"weight_versions": [{"version": "10", "start": 0, "end": -3}], "weight_version": "10"}),
+        # 以下两条是旧 assert 覆盖的两个不变式——负例证明现在是真异常
+        ("first_start_nonzero", {"weight_versions": [{"version": "10", "start": 1, "end": 3}], "weight_version": "10"}),
+        (
+            "gap",
+            {
+                "weight_versions": [
+                    {"version": "10", "start": 0, "end": 1},
+                    {"version": "11", "start": 2, "end": 3},
+                ],
+                "weight_version": "11",
+            },
+        ),
+        (
+            "overlap",
+            {
+                "weight_versions": [
+                    {"version": "10", "start": 0, "end": 2},
+                    {"version": "11", "start": 1, "end": 3},
+                ],
+                "weight_version": "11",
+            },
+        ),
+        (
+            "adjacent_same_version",
+            {
+                "weight_versions": [
+                    {"version": "10", "start": 0, "end": 2},
+                    {"version": "10", "start": 2, "end": 3},
+                ],
+                "weight_version": "10",
+            },
+        ),
+        # 空区间只允许零输出的唯一 [v,0,0) 形态；混在多段里 = 损坏
+        (
+            "empty_span_mixed",
+            {
+                "weight_versions": [
+                    {"version": "10", "start": 0, "end": 0},
+                    {"version": "11", "start": 0, "end": 3},
+                ],
+                "weight_version": "11",
+            },
+        ),
+        ("scalar_missing", {"weight_versions": [{"version": "10", "start": 0, "end": 3}]}),
+        (
+            "scalar_mismatch",
+            {"weight_versions": [{"version": "10", "start": 0, "end": 3}], "weight_version": "11"},
+        ),
+    ],
+)
+@pytest.mark.integration_base
+def test_stock_update_bad_spans_raise_value_error(world, label, meta_over):
+    """负例逐条：ValueError（真异常，python -O 下不消失；AssertionError 不算数），
+    且版本账不得被坏轮污染（校验先于任何 extend）。"""
+
+    s = _stock_sample(world)
+    with pytest.raises(ValueError, match="malformed weight_versions spans"):
+        s.update_from_meta_info(_stock_args(), _stock_meta(**meta_over))
+    assert s.weight_versions == []

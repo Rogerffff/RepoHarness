@@ -520,8 +520,11 @@ def parse_weight_version_spans(
     """从 /generate 响应 meta_info 解析 per-token 权重版本区间（fail-closed）。
 
     返回值：
-    - `None`：meta_info 没有 `weight_versions` 键——旧引擎/未启用版本跟踪，
-      调用方回退单数 `weight_version` 并记 provenance=single_version_only；
+    - `None`：meta_info **没有 `weight_versions` 键**——旧引擎/未启用版本跟踪，
+      调用方回退单数 `weight_version` 并记 provenance=single_version_only。
+      注意"键缺失"与"键在场值为 null"是两回事（vendor refresh 复核 P2 #1）：
+      pinned writer 只会**不写键**或**写非空 list**，`weight_versions: null`
+      不是旧引擎形态而是账目损坏，走 fail-closed（下方不变式 0）；
     - 非空 tuple：解析并校验通过的区间序列。
 
     引擎**报了就必须合法**（vendor refresh V2 拍板）：任何违反下列合同不变式
@@ -531,8 +534,11 @@ def parse_weight_version_spans(
     test_spans_satisfy_the_contract_for_random_event_sequences` 与
     `add_weight_versions_to_meta_info` 实现（同 commit 4e230c3d）：
 
-    1. 非空 list，每项含 version/start/end；version 为非空字符串（int 容忍并
-       str 化——JSON 数值版本），start/end 为非负 int（bool 拒绝）；
+    0. 键在场则值不得为 `null`（None）；
+    1. 非空 list，每项含 version/start/end；version 为非空**字符串**（writer
+       写入前显式 str 化，wire 上不存在数值版本——int/float 一律拒绝，不做
+       宽容转换；宽容会把"上游换了 writer/序列化被改"洗成正常），start/end
+       为非负 int（bool 拒绝）；
     2. spans[0].start == 0；相邻区间 prev.end == cur.start（连续无缝隙无重叠）；
     3. 相邻区间版本不同（引擎侧同版本必合并，重复出现 = 上游合同破坏）；
     4. `generated == 0` 时恰好一个空区间 {v, 0, 0}；`generated > 0` 时每个
@@ -541,9 +547,9 @@ def parse_weight_version_spans(
        函数里一起写两个键，单数 = finalize 时刻值——FA-0 收窄语义的 wire 面）。
     """
 
-    raw = meta.get("weight_versions")
-    if raw is None:
+    if "weight_versions" not in meta:
         return None
+    raw = meta["weight_versions"]
 
     def _bad(reason: str, detail: str) -> SlimeBindingError:
         return SlimeBindingError(
@@ -552,6 +558,12 @@ def parse_weight_version_spans(
             "满足 sglang weight_versions.py 合同，fail-closed 拒绝本轮。",
         )
 
+    if raw is None:
+        raise _bad(
+            "null",
+            "键在场但值为 null——writer 只会不写键或写非空 list，"
+            "null 不是'旧引擎缺键'，不得回退单数",
+        )
     if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
         raise _bad("not_a_list", f"类型 {type(raw).__name__} 不是 list")
     if not raw:
@@ -564,13 +576,13 @@ def parse_weight_version_spans(
         missing_keys = {"version", "start", "end"} - set(item)
         if missing_keys:
             raise _bad("item_missing_keys", f"第 {i} 项缺键 {sorted(missing_keys)}")
-        version_raw = item["version"]
-        if isinstance(version_raw, str):
-            version = version_raw
-        elif isinstance(version_raw, int) and not isinstance(version_raw, bool):
-            version = str(version_raw)
-        else:
-            raise _bad("version_unparsable", f"第 {i} 项 version={version_raw!r}")
+        version = item["version"]
+        if not isinstance(version, str):
+            raise _bad(
+                "version_not_string",
+                f"第 {i} 项 version={version!r}（类型 {type(version).__name__}；"
+                "writer 合同 version 恒为字符串，数值不做宽容转换）",
+            )
         if not version:
             raise _bad("version_empty", f"第 {i} 项 version 为空字符串")
         bounds: list[int] = []
