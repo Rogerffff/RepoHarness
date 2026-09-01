@@ -112,3 +112,16 @@ termination 事实字段表（`TerminationFactsV1`，schema_id `rh2.termination_
 ## 7. 本轮没有改变哪些已定案语义
 
 ingest 四面构造/验证链逐字未动；v1/v2 bundle schema 未动；contracts（含 TerminationKind 五族、baseline manifest）未动；adapters 两侧未动；A5 的任何 disposition 选项未预设（记录布尔事实不携带任何"该不该训练"的暗示）；registry 的 S1 冻结口径未动。
+
+---
+
+> **2026-09-02 codex Wave1 复核后修正注记（append-only）**：本报告的完成口径改判为
+> **contract slice complete / runtime closure pending**——上文"runtime 通用消费链"的说法过宽：
+> 三个新组件在生产源码中尚无消费者，真实入口仍走 v1 BundlePair（复核 F6）。runtime 接线
+> （trusted-prep 一次性进程 → prepared artifact → RolloutDataSource/Bringup 复核 → generate 消费，
+> formal 入口不得回退 v1）并入 **W1b 第一集成切片**。同轮已修：F3（取数口深拷贝隔离 +
+> 消费时刻 `revalidated()` 重验）、F4（Controller 构造强制两侧配对校验）、F5（`TerminationFactsV1`
+> 独立记录**删除**,改为 `derive_termination_facts(receipt)` 只读派生——上文 §termination 字段表
+> 与"生产者接线"开放问题按新形态理解:事实全部派生自 FinalizationReceiptV1+RolloutAttemptOutcomeV2,
+> attempt 锚必带,capture_closed 不再复制（owner=eligibility 事实层）,duration 不承诺（归 monotonic timeline））。
+
