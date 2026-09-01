@@ -25,6 +25,10 @@ from __future__ import annotations
 from typing import Any
 
 from repoharness2.adapters.miles.canonicalize import canonicalize_group
+from repoharness2.adapters.miles.identity import (
+    mint_attempt_identity,
+    stamp_identity_on_outputs,
+)
 from repoharness2.adapters.slime.generate import rh2_custom_generate
 
 
@@ -60,6 +64,27 @@ class Rh2MilesGenerateFn:
 
             await ensure_fa_started(input.args)
 
+        # F4 / W1a 共用的配置读取点：orchestrator 的 SlimeBindingConfig
+        # （bringup 之后必然在场；老测试面的 fake orchestrator 可能没有
+        # config 属性——各 getattr 均按缺省容错，行为 = s1_compat 零改变）。
+        binding_config = getattr(
+            getattr(input.args, "rh2_orchestrator", None), "config", None
+        )
+
+        # W1a（计划 06 §3 / D0-2）：miles 派发路径的六字段身份铸造点。
+        # 只在非 s1_compat 模式铸造——与 generate.py:2366-2378 的强校验同一
+        # 门控（s1 兼容路径不要求身份，保持零改变）；本次 __call__ 即一次
+        # 物理 attempt 的派发时刻：retry（miles reset_for_retry 保留
+        # metadata 后重派发）在此换新 physical_attempt_id/seq，组/成员四
+        # 字段跨 retry 稳定。铸造语义详见 identity.py 模块 docstring。
+        execution_mode = getattr(binding_config, "execution_mode", "s1_compat")
+        minted_identity = None
+        if execution_mode != "s1_compat":
+            minted_identity = mint_attempt_identity(
+                input.sample,
+                n_samples_per_prompt=getattr(input.args, "n_samples_per_prompt", None),
+            )
+
         # rh2 legacy 入口自己会从 args.rh2_orchestrator 取编排本体并 fail-closed
         # 校验；GenerateFnInput.args 即 state.args（miles base_types 的 property）。
         raw = await rh2_custom_generate(
@@ -78,9 +103,6 @@ class Rh2MilesGenerateFn:
         # **同一份配置**（单一事实源），canonicalize 据此做 (len(tokens)-1,
         # layers, topk) 的终检转换。R3-off（config 未配 / tape 为 None）时两参
         # 不被消费，行为零改变；tape 在场而期望缺失由 canonicalize fail-closed。
-        binding_config = getattr(
-            getattr(input.args, "rh2_orchestrator", None), "config", None
-        )
         samples = canonicalize_group(
             raw,
             miles_input_sample=input.sample,
@@ -88,4 +110,10 @@ class Rh2MilesGenerateFn:
             moe_num_layers=getattr(binding_config, "moe_num_layers", None),
             moe_router_topk=getattr(binding_config, "moe_router_topk", None),
         )
+        # W1a round-trip 收口：vendor 叶链 metadata 由 to_sample 从
+        # extra_metadata 重建（不继承输入 metadata），六字段不会自动传播——
+        # canonicalize 之后统一把本次 attempt 的铸造结果盖回全部输出叶；
+        # fan-out 各叶共享同一身份，叶上已带不同值即伪造，fail-closed。
+        if minted_identity is not None:
+            stamp_identity_on_outputs(samples, minted_identity)
         return GenerateFnOutput(samples=samples)

@@ -11,12 +11,20 @@ from repoharness2.adapters.miles.canonicalize import (
     canonicalize_sample,
 )
 from repoharness2.adapters.miles.generate_fn import Rh2MilesGenerateFn
+from repoharness2.adapters.miles.identity import (
+    IDENTITY_KEYS,
+    MilesIdentityError,
+    mint_attempt_identity,
+    stamp_identity_on_outputs,
+)
 from repoharness2.adapters.miles.lifecycle import LifecycleClosedError, Rh2RolloutLifecycle
 
 __all__ = [
+    "IDENTITY_KEYS",
     "CanonicalizationError",
     "LedgerError",
     "LifecycleClosedError",
+    "MilesIdentityError",
     "Rh2AttemptLedger",
     "Rh2GovernanceConfig",
     "Rh2GovernedBuffer",
@@ -24,6 +32,8 @@ __all__ = [
     "Rh2RolloutLifecycle",
     "canonicalize_group",
     "canonicalize_sample",
+    "mint_attempt_identity",
+    "stamp_identity_on_outputs",
 ]
 
 # governed_buffer 模块级 import miles.rollout.*（其链条经 miles.utils.misc 拉
